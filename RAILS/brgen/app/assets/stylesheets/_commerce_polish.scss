@@ -1,0 +1,190 @@
+/* Commerce polish — tighten hierarchy without introducing a second dialect.
+   Marketplace keeps its restrained storefront language: flat surfaces, one
+   accent, hairlines, compact metadata, generous product imagery. */
+
+body.vertical-marketplace .store-results {
+  gap: 12px;
+}
+
+body.vertical-marketplace .store-results-head {
+  gap: 6px 10px;
+  margin-block: 8px 12px;
+}
+
+body.vertical-marketplace .store-results-count {
+  font-size: var(--text-sm);
+}
+
+body.vertical-marketplace .store-results-head .store-pills {
+  gap: 6px;
+}
+
+body.vertical-marketplace .deal-cat {
+  min-height: 40px;
+  padding-inline: 11px;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+}
+
+body.vertical-marketplace .store-pdp {
+  gap: 20px;
+}
+
+body.vertical-marketplace .store-pdp-info {
+  gap: 20px;
+}
+
+body.vertical-marketplace .store-pdp .page-header h1 {
+  max-width: 24ch;
+  font-size: clamp(1.35rem, 2.7vw, 2rem);
+  letter-spacing: var(--tracking-tight);
+}
+
+body.vertical-marketplace .store-buybox {
+  gap: 12px;
+  padding: 20px;
+  border: 1px solid var(--store-hairline);
+  box-shadow: none;
+}
+
+body.vertical-marketplace .store-buybox > p {
+  padding-block-end: 12px;
+}
+
+body.vertical-marketplace .store-buybox > :is(.listing-price, .store-buybox-price) {
+  letter-spacing: -0.02em;
+}
+
+body.vertical-marketplace .listing-buy-bar-actions > * {
+  flex: 1 1 10rem;
+}
+
+body.vertical-marketplace .store-pdp-description {
+  max-inline-size: 68ch;
+  margin-block: 4px var(--store-section);
+}
+
+.listing-ranking-reasons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-block-start: 3px;
+  min-width: 0;
+}
+
+.listing-ranking-reason {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  max-width: 100%;
+  padding: 4px 8px;
+  overflow: hidden;
+  border: 1px solid var(--store-hairline, var(--border));
+  border-radius: var(--radius-xs);
+  background: transparent;
+  color: var(--store-ink-soft, var(--text-secondary));
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.store-seller-center {
+  margin-block: var(--store-section) 0;
+  padding-block: 20px 4px;
+  border-block: 1px solid var(--store-hairline);
+}
+
+.store-seller-center > h2 {
+  margin-block-end: 12px;
+}
+
+.seller-summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 20px;
+  row-gap: 0;
+  margin: 0;
+  max-inline-size: 46rem;
+}
+
+.seller-summary dt,
+.seller-summary dd {
+  padding-block: 9px;
+  border-block-end: 1px solid var(--store-hairline);
+}
+
+.seller-summary dt {
+  color: var(--store-ink-soft);
+  font-size: var(--text-sm);
+}
+
+.seller-summary dd {
+  margin: 0;
+  color: var(--store-ink);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+}
+
+.order-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) max-content max-content;
+  align-items: center;
+  gap: 8px 16px;
+  padding: 12px 0;
+  border-block-end: 1px solid var(--store-hairline);
+}
+
+.order-title {
+  min-width: 0;
+}
+
+.order-title a {
+  font-weight: var(--weight-bold);
+}
+
+.order-row time {
+  color: var(--store-ink-soft);
+  font-size: var(--text-xs);
+  white-space: nowrap;
+}
+
+.order-row .chip {
+  min-height: 28px;
+}
+
+@media (max-width: 767px) {
+  body.vertical-marketplace .store-pdp {
+    gap: 16px;
+  }
+
+  body.vertical-marketplace .store-buybox {
+    padding: 16px;
+  }
+
+  .order-row {
+    grid-template-columns: minmax(0, 1fr) max-content;
+  }
+
+  .order-row time {
+    grid-column: 1;
+  }
+
+  .order-row .chip {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .seller-summary {
+    column-gap: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .listing-ranking-reason {
+    transition: none;
+  }
+}
