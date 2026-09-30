@@ -200,10 +200,25 @@ module Master
         end
 
         def illumination(lum, x, y, z, phase)
-          depth = ((z / 0.72) + 0.5).clamp(0.0, 1.0)
-          key = (0.5 + (0.32 * x) + (0.22 * y) + (0.46 * depth)).clamp(0.0, 1.0)
-          sweep = 0.5 + (0.5 * Math.sin((@t * 0.58) + phase))
-          (lum * (0.68 + (0.20 * depth) + (0.16 * key) + (0.08 * sweep))).clamp(0.0, 1.0)
+          nx = x / 0.62
+          ny = y / 0.62
+          nz = z / 0.72
+          length = Math.sqrt((nx * nx) + (ny * ny) + (nz * nz)).nonzero? || 1.0
+          nx /= length
+          ny /= length
+          nz /= length
+
+          key = dot(nx, ny, nz, -0.48, 0.28, 0.84)
+          fill = dot(nx, ny, nz, 0.34, -0.08, 0.94) * 0.52
+          rim_phase = 0.55 + (0.45 * Math.sin((@t * 0.31) + phase))
+          rim = [(nx * -0.25) + (nz * 0.96), 0.0].max * 0.22 * rim_phase
+          depth = ((nz + 1.0) * 0.5).clamp(0.0, 1.0)
+          grade = 0.78 + (0.12 * depth) + (0.05 * fill) + (0.12 * key) + rim
+          (lum * grade).clamp(0.0, 1.0)
+        end
+
+        def dot(ax, ay, az, bx, by, bz)
+          (ax * bx) + (ay * by) + (az * bz)
         end
 
         def specks
