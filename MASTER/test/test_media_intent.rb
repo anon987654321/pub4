@@ -51,7 +51,7 @@ class MediaIntentTest < Minitest::Test
 
   def test_natural_media_intent_does_not_read_digits_from_a_path_as_a_count
     parsed = Master::Io::NaturalIntent.resolve(
-      "run postpro over "/tmp/master-media-12345/new photos""
+      'run postpro over "/tmp/master-media-12345/new photos"'
     )
 
     refute_nil parsed
