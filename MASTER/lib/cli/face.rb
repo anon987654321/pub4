@@ -169,7 +169,8 @@ module Master
             rz = (y * sp) + (rz * cp)
             next if rz < NEAR
 
-            depth = CAMERA / (CAMERA - rz) * reach
+            camera = CAMERA / @look.dolly
+            depth = camera / (camera - rz) * reach
             px = mid_x + (((rx * cr) - (ry * sr)) * depth)
             py = mid_y - (((rx * sr) + (ry * cr)) * depth)
             @braille.dot(px.floor, py.floor, illumination(lum, x, y, z, phase))
