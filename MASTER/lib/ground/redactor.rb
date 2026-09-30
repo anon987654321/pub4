@@ -56,8 +56,9 @@ module Master
         marked = true
         array.map { |item| scrub_value(key, item, seen:) }
       ensure
-        seen.delete(array) if defined?(array) && seen
+        seen.delete(array) if marked
       end
+
       def self.truncate(value)
         text = value.to_s
         return text if text.length <= DMESG_MAX
