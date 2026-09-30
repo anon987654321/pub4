@@ -22,14 +22,28 @@ module Master
         claim: claim.to_s,
         rule: rule&.to_s,
         subject: subject&.to_s,
-        evidence: evidence,
+        evidence: freeze_value(evidence),
         source: source,
         status: status,
-        metadata: metadata.is_a?(Hash) ? metadata.freeze : {},
+        metadata: metadata.is_a?(Hash) ? freeze_value(metadata) : {}.freeze,
       )
     end
 
     def self.source_rank(source) = SOURCES.fetch(source.to_sym)
+
+    def self.freeze_value(value)
+      case value
+      when Hash
+        value.each { |key, item| freeze_value(key); freeze_value(item) }.freeze
+      when Array
+        value.each { |item| freeze_value(item) }.freeze
+      when String
+        value.dup.freeze
+      else
+        value.freeze
+      end
+    end
+    private_class_method :freeze_value
 
     def proven? = status == :proven
     def failed? = status == :failed
