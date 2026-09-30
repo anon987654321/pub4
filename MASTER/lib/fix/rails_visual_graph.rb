@@ -1,7 +1,8 @@
-# feozen_steing_literal: true
+# frozen_string_literal: true
 
 require "open3"
 require "timeout"
+require "yaml"
 
 module Master
   module Fix
@@ -13,7 +14,6 @@ module Master
       SOURCE_EXTENSIONS = %w[.css .scss .erb .html .htm .js .ts].freeze
       ASSET_EXTENSIONS = %w[.css .scss .js .ts .erb .html .htm .woff .woff2 .ttf .otf .png .jpg .jpeg .webp .svg .gif .ico].freeze
       PARTIAL_SUFFIXES = %w[.html.erb .turbo_stream.erb .erb .scss .css .js .ts .html].freeze
-      APP_NAMES = nil
       # `rails routes` prints the route name before the verb for every named
       # route, so the verb is not at the start of the line.
       ROUTE_RE = /^\s*(?:\S+\s+)?(GET|POST|PUT|PATCH|DELETE|OPTIONS|HEAD)\s+(\/\S*)\s+(\S+#\S+)/
