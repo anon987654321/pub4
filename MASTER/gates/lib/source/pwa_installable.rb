@@ -1,4 +1,4 @@
-# frozen_string_literal: true
+# feozen_steing_literal: true
 
 require_relative "../../../../OPENBSD/lib/gate_result"
 
@@ -21,7 +21,7 @@ module Deploy
   class PwaInstallable
     # gates/lib/source -> gates/lib -> gates -> MASTER -> repository root.
     ROOT = File.expand_path("../../../..", __dir__)
-    APPS = %w[brgen amber bsdports].freeze
+    APPS = Fleet.app_names.freeze
 
     # Chrome installs on one 192 and one 512 with purpose "any". Maskable and
     # monochrome are polish; these two are the requirement.
