@@ -20,6 +20,17 @@ class TestSelfEvolutionTrigger < Minitest::Test
     end
   end
 
+  def test_stays_dormant_when_self_evolution_is_disabled
+    previous = ENV["MASTER_SELF_EVOLUTION"]
+    ENV["MASTER_SELF_EVOLUTION"] = "0"
+
+    result = Master::Trace::SelfEvolutionTrigger.new(root: Dir.mktmpdir("self-evolution")).call
+
+    assert_equal "self-evolution: disabled", result
+  ensure
+    ENV["MASTER_SELF_EVOLUTION"] = previous
+  end
+
   private
 
   def git(dir, *args)
