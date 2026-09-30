@@ -291,6 +291,24 @@ class TestDependencyManager < Minitest::Test
     assert_equal ["install", "--jobs", "4", "--retry", "3"], @commands[3].first[1..]
   end
 
+  def test_install_repairs_when_the_install_command_itself_hits_stale_native_code
+    responses = [
+      [false, "", "linked to incompatible /opt/homebrew/Cellar/ruby/4.0.5/lib/libruby.4.0.dylib"],
+      [true, "Bundle complete", ""],
+      [true, "", ""],
+    ]
+    manager = fake_manager(responses)
+    FileUtils.mkdir_p(manager.send(:bundle_gems_path))
+
+    result = manager.ensure!
+
+    assert result.success?
+    assert result.changed
+    assert_equal ["check"], @commands[0].first[1..]
+    assert_equal ["install", "--jobs", "4", "--retry", "3"], @commands[1].first[1..]
+    assert_equal ["install", "--jobs", "4", "--retry", "3"], @commands[2].first[1..]
+  end
+
   def test_native_abi_repair_failure_does_not_install_os_packages
     responses = [
       [false, "", "dependencies missing"],
