@@ -64,14 +64,24 @@ module Master
       end
 
       def cycle
-        return report("control0: waiting — #{LoopOwner.active.fetch("loop", "loop")} owns the execution slot") if LoopOwner.active
-        return report("control0: waiting — working tree is dirty") unless clean?
+        if (owner = LoopOwner.active)
+          return report("control0: waiting — #{owner.fetch("loop", "loop")} owns the execution slot")
+        end
+        unless LoopOwner.claim("control_plane")
+          return report("control0: waiting — execution slot claimed concurrently")
+        end
 
-        fetch!
-        synchronize_refs!
-        deploy_if_needed!
-      rescue CommandError => e
-        report("control0: failed — #{e.message}")
+        begin
+          return report("control0: waiting — working tree is dirty") unless clean?
+
+          fetch!
+          synchronize_refs!
+          deploy_if_needed!
+        rescue CommandError => e
+          report("control0: failed — #{e.message}")
+        ensure
+          LoopOwner.release
+        end
       end
 
       private
