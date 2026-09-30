@@ -25,7 +25,7 @@ module Master
 
       module_function
 
-      def name(component)
+      def unit_name(component)
         MAP.fetch(component.to_s, "#{component}0")
       end
     end
@@ -98,14 +98,14 @@ module Master
         event = payload[:event].to_s
         component, action = event.split(":", 2)
         action ||= "ready"
-        unit = DmesgUnit.name(component)
+        unit = DmesgUnit.unit_name(component)
         parent = Fiber[:master_unit] || "master0"
         rest = Master::Ground::Redactor.payload(payload.except(:event, :ts))
         details = rest.map do |key, value|
           "#{key.to_s.tr("_", " ")} #{value}"
         end.join(", ")
         details = Master::Ground::Redactor.text(details)
-        attached = DmesgUnit.ATTACHED.include?(component.to_s)
+        attached = DmesgUnit::ATTACHED.include?(component.to_s)
         prefix = attached && parent != unit ? "#{unit} at #{parent}: #{action}" : "#{unit}: #{action}"
         details.empty? ? prefix : "#{prefix}, #{details}"
       end
