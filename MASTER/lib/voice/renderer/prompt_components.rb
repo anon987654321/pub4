@@ -232,6 +232,7 @@ module Master
             d("soul0: imports #{imports_loaded.join(' ')}"),
             d("soul0: #{active_orders_count} orders active"),
             *model_device_lines(context),
+            d("voice0 at mainbus0: #{ENV["MASTER_TTS_DEGRADED"] == "1" ? "degraded" : "ready"}"),
             d("mode0 at mainbus0: #{mode.first(3).join(', ')}"),
             d("mode0: #{mode.drop(3).join(', ')}"),
             d("aesthetic0 at mode0: #{Aesthetic.mode}"),
