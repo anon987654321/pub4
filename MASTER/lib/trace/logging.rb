@@ -43,20 +43,17 @@ module Master
 
       def format_entry(payload)
         event = payload[:event].to_s
-        if event.start_with?("tool:") && payload[:path]
-          op = payload.fetch(:op) { event.split(":", 2).last }
-          bytes = payload[:bytes] ? " #{payload[:bytes]}B" : ""
-          path = Master::Ground::Redactor.text(payload[:path].to_s)
-          return "tool: #{op} #{path}#{bytes}"
-        end
-
-        rest = Master::Ground::Redactor.payload(payload.except(:event, :ts))
         component, action = event.split(":", 2)
         action ||= "ready"
         unit = DmesgUnit.name(component)
-        details = rest.map { |k, v| "#{k}=#{v}" }.join(" ")
+        parent = Fiber[:master_unit] || "master0"
+        rest = Master::Ground::Redactor.payload(payload.except(:event, :ts))
+        details = rest.map do |key, value|
+          "#{key.to_s.tr("_", " ")} #{value}"
+        end.join(", ")
         details = Master::Ground::Redactor.text(details)
-        details.empty? ? "#{unit}: #{action}" : "#{unit}: #{action} #{details}"
+        prefix = parent == unit ? "#{unit}: #{action}" : "#{unit} at #{parent}: #{action}"
+        details.empty? ? prefix : "#{prefix}, #{details}"
       end
     end
 
