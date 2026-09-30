@@ -15,6 +15,7 @@ module Master
 
       def call
         return "self-evolution: disabled" if ENV["MASTER_SELF_EVOLUTION"] == "0"
+        return "self-evolution: dormant — set MASTER_SELF_EVOLUTION=1" unless ENV["MASTER_SELF_EVOLUTION"] == "1"
         return "self-evolution: no significant refactor" unless significant_refactor?
 
         before = diff_stat
