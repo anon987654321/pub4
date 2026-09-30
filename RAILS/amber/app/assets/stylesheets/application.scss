@@ -8,6 +8,7 @@
 @use "commerce_polish";
 @use "dialect_tokens" as x;
 @use "sass:meta";
+@use "surface_chrome_endgame" as endgame;
 
 // ============================================================ tokens
 
@@ -2695,3 +2696,4 @@ body[data-surface="luxury"] .amber-editorial-nav a {
     animation: none;
   }
 }
+@include endgame.amber;
