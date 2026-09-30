@@ -26,7 +26,7 @@ module Master
       end
 
       def self.plain_string(value)
-        string = value.is_a?(String) ? value : value.to_s
+        string = String === value ? value : value.to_s
         copy = String.allocate
         String.instance_method(:initialize_copy).bind(copy).call(string)
         copy
