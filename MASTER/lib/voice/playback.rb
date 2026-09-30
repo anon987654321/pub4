@@ -236,9 +236,10 @@ module Master
             end
 
             unless play(path, generation:)
-              unless generation_active?(generation) && (android_speak(text) || native_say(text))
-                warn_once("audio playback failed — #{player&.first || "no player or native speech"}")
-              end
+              # Never replace a failed reply audio path with the host's default
+              # speech voice. That voice is outside MASTER's policy and can be
+              # a different speaker, locale, rate, and engine from the reply.
+              warn_once("audio playback failed — #{player&.first || "no player or native speech"}")
             end
             spoken(text) if last && generation_active?(generation)
           rescue StandardError => e
