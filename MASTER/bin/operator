@@ -252,8 +252,10 @@ when "wishlist"
     exit 0
   end
   body = File.read(path, encoding: "UTF-8")
-  puts body unless ARGV.delete("--all")
-  puts body if ARGV.empty? && !body.empty? && !ARGV.include?("--all")
+  full = !ARGV.delete("--all").nil?
+  lines = body.lines
+  puts(full ? body : lines.first(60).join)
+  puts "wishlist0: truncated — use --all" unless full || lines.size <= 60
 when "event-bus"
   exec(RbConfig.ruby, File.join(ROOT, "MASTER", "tools", "event_bus_reach.rb"), *ARGV)
 when "post-pull"
