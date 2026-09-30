@@ -3,12 +3,11 @@
 module Master
   module Ground
     class Redactor
-      KEY_PATTERNS = [
-        /sk-[A-Za-z0-9_\-]{16,}/,
-        /sk-ant-[A-Za-z0-9_\-]{16,}/,
-        /Bearer\s+[A-Za-z0-9_\-\.]{16,}/i,
-        /\b[A-Za-z0-9]{32,}\b/,
-      ].freeze
+      ASCII_WHITESPACE = [9, 10, 11, 12, 13, 32].freeze
+      SECRET_ALPHANUMERIC = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+      SECRET_ALPHANUMERIC_DASH = "#{SECRET_ALPHANUMERIC}_-"
+      SECRET_BEARER = "#{SECRET_ALPHANUMERIC}_-."
+
 
       SENSITIVE_KEYS = /
         \A(?:password|passwd|secret|token|api[_-]?key|authorization|cookie|private[_-]?key)\z
@@ -18,11 +17,98 @@ module Master
       MAX_DEPTH = 16
 
       def self.text(value)
-        out = plain_string(value)
-        KEY_PATTERNS.each do |pattern|
-          out = redact_pattern(out, pattern)
+        redact_secrets(plain_string(value))
+      end
+
+      def self.redact_secrets(value)
+        out = value
+        offset = 0
+
+        while (match = next_secret_match(out, offset))
+          start, finish = match
+          out = out.byteslice(0, start) + "[REDACTED]" + out.byteslice(finish, out.bytesize - finish)
+          offset = start + "[REDACTED]".bytesize
         end
+
         out
+      end
+
+      def self.next_secret_match(value, offset)
+        matches = [
+          find_prefixed_secret(value, offset, "sk-ant-"),
+          find_prefixed_secret(value, offset, "sk-"),
+          find_bearer_secret(value, offset),
+          find_plain_secret(value, offset),
+        ].compact
+        matches.min_by(&:first)
+      end
+
+      def self.find_prefixed_secret(value, offset, prefix)
+        cursor = offset
+        while (start = value.index(prefix, cursor))
+          finish = start + prefix.bytesize
+          return [start, finish + secret_run_end(value, finish, SECRET_ALPHANUMERIC_DASH)] if secret_run_length(value, finish, SECRET_ALPHANUMERIC_DASH) >= 16
+          cursor = start + prefix.bytesize
+        end
+        nil
+      end
+
+      def self.find_bearer_secret(value, offset)
+        cursor = offset
+        while (start = value.downcase.index("bearer", cursor))
+          separator = start + 6
+          separator += 1 while separator < value.bytesize && ASCII_WHITESPACE.include?(value.getbyte(separator))
+          length = secret_run_length(value, separator, SECRET_BEARER)
+          return [start, secret_run_end(value, separator, SECRET_BEARER)] if separator > start + 6 && length >= 16
+          cursor = start + 6
+        end
+        nil
+      end
+
+      def self.find_plain_secret(value, offset)
+        cursor = offset
+        while cursor < value.bytesize
+          byte = value.getbyte(cursor)
+          unless alphanumeric_byte?(byte)
+            cursor += 1
+            next
+          end
+
+          start = cursor
+          cursor += 1 while cursor < value.bytesize && alphanumeric_byte?(value.getbyte(cursor))
+          finish = cursor
+          return [start, finish] if finish - start >= 32 && word_boundary?(value, start, finish)
+        end
+        nil
+      end
+
+      def self.secret_run_length(value, offset, alphabet)
+        cursor = offset
+        while cursor < value.bytesize && alphabet_byte?(value.getbyte(cursor), alphabet)
+          cursor += 1
+        end
+        cursor - offset
+      end
+
+      def self.secret_run_end(value, offset, alphabet)
+        offset + secret_run_length(value, offset, alphabet)
+      end
+
+      def self.alphabet_byte?(byte, alphabet)
+        return false unless byte
+        alphabet.include?(byte.chr)
+      end
+
+      def self.alphanumeric_byte?(byte)
+        byte && ((byte >= 48 && byte <= 57) || (byte >= 65 && byte <= 90) || (byte >= 97 && byte <= 122))
+      end
+
+      def self.word_boundary?(value, start, finish)
+        !word_byte?(value.getbyte(start - 1)) && !word_byte?(value.getbyte(finish))
+      end
+
+      def self.word_byte?(byte)
+        alphanumeric_byte?(byte) || byte == 95
       end
 
       def self.plain_string(value)
@@ -30,24 +116,6 @@ module Master
         copy = String.allocate
         String.instance_method(:initialize_copy).bind(copy).call(string)
         copy
-      end
-
-      def self.redact_pattern(value, pattern)
-        parts = []
-        offset = 0
-        match_method = Regexp.instance_method(:match)
-        byteslice = String.instance_method(:byteslice)
-        bytesize = String.instance_method(:bytesize)
-
-        while (match = match_method.bind(pattern).call(value, offset))
-          parts << byteslice.bind(value).call(offset, match.begin(0) - offset)
-          parts << "[REDACTED]"
-          offset = match.end(0)
-        end
-        return value if parts.empty?
-
-        parts << byteslice.bind(value).call(offset, bytesize.bind(value).call - offset)
-        parts.join
       end
 
       def self.payload(hash = nil, seen: {}, depth: 0, **fields)
