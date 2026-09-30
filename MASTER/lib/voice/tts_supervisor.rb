@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "digest"
 require "fileutils"
 require "socket"
 require "rbconfig"
@@ -80,7 +81,7 @@ module Master
         end
 
         with_daemon_lock(root, index:) do
-          return true if socket_alive?(path)
+          return true if socket_alive?(path, root:)
           return true if busy_not_dead?(path, index)
 
           replace_worker(root:, path:, index:)
@@ -202,19 +203,28 @@ module Master
         nil
       end
 
-      def socket_alive?(path)
+      def socket_alive?(path, root: Master::ROOT)
         return false unless File.socket?(path)
 
+        expected = worker_version(root)
         UNIXSocket.open(path) do |socket|
           socket.write(%({"health":true}\n))
           ready = IO.select([socket], nil, nil, 1)
           return false unless ready
 
-          return socket.gets.to_s.strip == "ok"
+          reply = socket.gets.to_s.strip
+          reply == "ok #{expected}"
         end
       rescue SystemCallError, EOFError, IOError => e
         Master::Ground::Swallow.log(e, context: "TtsSupervisor.socket_alive?")
         false
+      end
+
+      def worker_version(root)
+        worker = File.join(root, "bin", "tts-worker")
+        Digest::SHA256.file(worker).hexdigest[0, 16]
+      rescue SystemCallError
+        "missing"
       end
 
       def wait_for_socket(path)
