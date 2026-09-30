@@ -34,6 +34,40 @@ class MediaIntentTest < Minitest::Test
     end
   end
 
+  def test_natural_postpro_language_extracts_intent_and_entities
+    parsed = Master::Io::NaturalIntent.resolve(
+      "run postpro over the latest 3 jpg photos in my Downloads folder"
+    )
+
+    refute_nil parsed
+    assert_equal :postprocess, parsed.intent
+    assert_operator parsed.confidence, :>=, 0.9
+    assert_equal "latest", parsed.entities[:recency]
+    assert_equal 3, parsed.entities[:count]
+    assert_equal "downloads", parsed.entities[:location]
+    assert_equal "jpeg", parsed.entities[:file_type]
+    assert_equal "photo", parsed.entities[:object]
+  end
+
+  def test_natural_postpro_language_defaults_recent_selection_when_count_is_omitted
+    Dir.mktmpdir do |source|
+      6.times do |index|
+        path = File.join(source, "photo#{index}.jpg")
+        File.write(path, "")
+        File.utime(Time.now - (index * 10), Time.now - (index * 10), path)
+      end
+
+      selection = Master::Io::MediaIntent.send(
+        :postpro_selection,
+        "edit the latest photos",
+        source
+      )
+
+      assert_equal 5, selection[:files].size
+      assert_equal File.join(source, "photo0.jpg"), selection[:files].first
+    end
+  end
+
   def test_postpro_literal_is_a_media_intent
     assert Master::Io::MediaIntent.handles?("run postpro.rb over ~/Pictures/new")
     assert Master::Io::MediaIntent.handles?("use postpro for these photos in ~/Pictures/new")
