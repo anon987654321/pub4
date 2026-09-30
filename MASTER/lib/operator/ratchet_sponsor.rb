@@ -2,6 +2,7 @@
 
 require "open3"
 require "set"
+require "yaml"
 
 module Operator
   # A commit that changes a measured source population must carry the ceiling
@@ -21,35 +22,55 @@ module Operator
       return true if paths.empty?
       return true unless git_checkout?(root)
 
-      additions, deletions = source_population_delta(root, paths)
-      body_delta = master_lib_body_delta(root)
+      tree_deltas, additions, deletions = source_population_delta(root, paths)
+      body_delta = master_lib_body_delta(root, paths)
 
       return true if additions.zero? && deletions.zero? && body_delta.zero?
-      return true if paths.include?(TREE_CEILING)
+      return true if sponsored_ceiling?(root, tree_deltas, body_delta)
 
       raise "ratchet sponsorship required: #{TREE_CEILING} must change with source growth/deletion " \
             "(files +#{additions}/-#{deletions}, MASTER/lib body #{format("%+d", body_delta)} lines)"
     end
-
     def source_population_delta(root, paths)
       tracked = tracked_paths(root)
-      statuses = diff_statuses(root)
-      additions = statuses.count { |path, state| source_path?(path) && state.start_with?("A") }
-      deletions = statuses.count { |path, state| source_path?(path) && state.start_with?("D") }
+      statuses = diff_statuses(root, paths)
+      deltas = Hash.new(0)
 
-      additions += paths.count do |path|
-        source_path?(path) && !tracked.include?(path) && !statuses.key?(path)
-      end
-      deletions += paths.count do |path|
-        source_path?(path) && tracked.include?(path) &&
-          !File.exist?(File.join(root, path)) && !statuses.key?(path)
+      statuses.each do |path, state|
+        next unless source_path?(path)
+
+        tree = path.split("/", 2).first
+        deltas[tree] += 1 if state.start_with?("A")
+        deltas[tree] -= 1 if state.start_with?("D")
       end
 
-      [additions, deletions]
+      paths.each do |path|
+        next unless source_path?(path) && !statuses.key?(path)
+
+        tree = path.split("/", 2).first
+        deltas[tree] += 1 if !tracked.include?(path)
+        deltas[tree] -= 1 if tracked.include?(path) && !File.exist?(File.join(root, path))
+      end
+
+      additions = deltas.values.select(&:positive?).sum
+      deletions = -deltas.values.select(&:negative?).sum
+      [deltas, additions, deletions]
     end
+    def master_lib_body_delta(root, paths)
+      lib_paths = paths.select { |path| path.start_with?("MASTER/lib/") }
+      return 0 if lib_paths.empty?
 
-    def master_lib_body_delta(root)
-      out, status = Open3.capture2e("git", "-C", root, "diff", "--unified=0", "HEAD", "--", "MASTER/lib")
+      tracked = tracked_paths(root)
+      untracked_body = lib_paths.filter_map do |path|
+        next if tracked.include?(path)
+
+        full = File.join(root, path)
+        next unless File.file?(full)
+
+        File.read(full, encoding: "UTF-8").lines.count { |line| !body_ignorable?(line) }
+      end.sum
+
+      out, status = Open3.capture2e("git", "-C", root, "diff", "--unified=0", "HEAD", "--", *lib_paths)
       return 0 unless status.success?
 
       added = 0
@@ -64,7 +85,21 @@ module Operator
           deleted += 1
         end
       end
-      added - deleted
+      added - deleted + untracked_body
+    end
+    def sponsored_ceiling?(root, tree_deltas, body_delta)
+      before, status = Open3.capture2e("git", "-C", root, "show", "HEAD:#{TREE_CEILING}")
+      raise "ratchet sponsorship: #{TREE_CEILING} unreadable at HEAD: #{before}" unless status.success?
+
+      old = YAML.safe_load(before, aliases: true)
+      current = YAML.safe_load_file(File.join(root, TREE_CEILING), aliases: true)
+      old_source = old.fetch("pub4_source_ceilings", {})
+      current_source = current.fetch("pub4_source_ceilings", {})
+      source_ok = tree_deltas.all? { |tree, delta| delta.zero? || old_source[tree].to_i != current_source[tree].to_i }
+      body_ok = body_delta.zero? || old.dig("spine", "lib_body_ceiling").to_i != current.dig("spine", "lib_body_ceiling").to_i
+      source_ok && body_ok
+    rescue Psych::Exception => e
+      raise "ratchet sponsorship: #{TREE_CEILING} unreadable: #{e.class}: #{e.message}"
     end
 
     def body_ignorable?(line)
@@ -92,8 +127,8 @@ module Operator
       out.split("\x00").reject(&:empty?).to_set
     end
 
-    def diff_statuses(root)
-      out, status = Open3.capture2e("git", "-C", root, "diff", "--name-status", "HEAD")
+    def diff_statuses(root, paths = [])
+      out, status = Open3.capture2e("git", "-C", root, "diff", "--name-status", "HEAD", "--", *paths)
       return {} unless status.success?
 
       out.lines.each_with_object({}) do |line, result|
