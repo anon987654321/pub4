@@ -28,13 +28,20 @@ class TreeContractTest < Minitest::Test
     lib/voice/renderer
   ].freeze
 
-  FORBIDDEN_RELOCATIONS = {
-    "MASTER/bin/ruby" => "MASTER/bin/ruby",
-    "MASTER/bin/cli" => "MASTER/bin/cli",
-    "MASTER/lib" => "MASTER/lib",
-    "MASTER/data" => "MASTER/data",
-    "MASTER/law" => "MASTER/law",
-  }.freeze
+  PROTECTED_PATHS = %w[
+    MASTER/bin/ruby
+    MASTER/bin/cli
+    MASTER/lib
+    MASTER/data
+    MASTER/law
+    MASTER/tools/Rakefile
+    MASTER/tools/test
+    OPENBSD/tools
+    OPENBSD/var/nsd
+    RAILS/brgen/engines
+  ].freeze
+
+  BRGEN_ENGINES = %w[marketplace playlist tv takeaway dating maps].freeze
 
   def test_boot_spine_exists_in_its_canonical_locations
     BOOT_FILES.each do |relative|
@@ -53,12 +60,22 @@ class TreeContractTest < Minitest::Test
   end
 
   def test_protected_master_boundaries_remain_directories
-    FORBIDDEN_RELOCATIONS.values.uniq.each do |relative|
-      assert Dir.exist?(File.join(ROOT, relative)), "protected MASTER boundary moved: #{relative}"
+    PROTECTED_PATHS.each do |relative|
+      path = File.join(File.expand_path("../..", ROOT), relative)
+      assert Dir.exist?(path), "protected runtime/deploy boundary moved: #{relative}"
     end
 
     ZEITWERK_DIRECTORIES.each do |relative|
       assert Dir.exist?(File.join(ROOT, relative)), "Zeitwerk namespace moved or flattened: #{relative}"
+    end
+  end
+
+  def test_brgen_engine_boundaries_remain_mountable
+    BRGEN_ENGINES.each do |engine|
+      path = File.join(File.expand_path("../..", ROOT), "RAILS/brgen/engines", engine)
+      assert Dir.exist?(path), "brgen engine boundary moved: #{engine}"
+      assert File.file?(File.join(path, "config/routes.rb")), "#{engine} engine lost config/routes.rb"
+      assert File.file?(File.join(path, "lib", engine, "engine.rb")), "#{engine} engine lost its Rails::Engine class"
     end
   end
 
