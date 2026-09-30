@@ -82,7 +82,7 @@ module Master
         messages = Array(context) + [{ role: "user", content: apply_reasoning_mode(prompt) }]
         selected_model = operation ? model_for(operation:) : routed_models.first
         result = @dispatcher.send_with_cache(selected_model, messages, stream: false, image:, temperature:)
-        result = retry_on_broke_lane(result, selected_model, messages, image:, temperature:)
+        result = retry_on_broke_lane(result, selected_model, messages, image:, temperature:, promote: true)
         record_capability_outcome(operation:, selected_model:, result:)
         raise StandardError, result.message if result.is_a?(Master::Result::Err)
         result.to_s
@@ -93,7 +93,7 @@ module Master
         chosen = model || self.model
         sys = role_system(system, law:)
         result = @dispatcher.send_with_cache(chosen, messages, system: sys, stream: false, image:, temperature:, format:)
-        result = retry_on_broke_lane(result, chosen, messages, system: sys, image:, temperature:) if failover
+        result = retry_on_broke_lane(result, chosen, messages, system: sys, image:, temperature:, promote: model.nil?) if failover
         raise StandardError, result.message if result.is_a?(Master::Result::Err)
         result.to_s
       end
@@ -150,7 +150,7 @@ end
       # broke model. One hop to the claude_code chain head on any category a
       # retry cannot cure; the 2026-08-20 proof runs showed the error-severity
       # rules die in ask (via FixAttempt) after ask_once was fixed alone.
-      def retry_on_broke_lane(result, chosen, messages, system: nil, image: nil, temperature: nil)
+      def retry_on_broke_lane(result, chosen, messages, system: nil, image: nil, temperature: nil, promote: true)
         return result unless result.is_a?(Master::Result::Err)
 
         last = result
@@ -162,7 +162,7 @@ end
           attempted << fallback
           @bus&.publish("llm:ask_failover", from: chosen, to: fallback, category: last.category)
           hopped = @dispatcher.send_with_cache(fallback, messages, system:, stream: false, image:, temperature:)
-          return record_single_call_substitution(chosen, fallback, hopped) if hopped.is_a?(Master::Result::Ok)
+          return record_single_call_substitution(chosen, fallback, hopped, promote:) if hopped.is_a?(Master::Result::Ok)
 
           last = hopped
           break unless last.is_a?(Master::Result::Err)
@@ -181,9 +181,9 @@ end
         []
       end
 
-      def record_single_call_substitution(from, to, result)
+      def record_single_call_substitution(from, to, result, promote: true)
         if result.is_a?(Master::Result::Ok)
-          promote_runtime_model(from:, to:)
+          promote_runtime_model(from:, to:) if promote
           Io::QuotaGate.substituted(from:, to:)
         end
         result
