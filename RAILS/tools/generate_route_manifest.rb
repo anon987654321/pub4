@@ -32,16 +32,16 @@ module Deploy
     require File.join(ROOT, "MASTER", "lib", "operator", "ruby_runner")
     RAILS_ROOT = File.join(ROOT, "RAILS")
     PATH = File.join(RAILS_ROOT, "gates", "data", "route_manifest.yml")
-    def apps
-      YAML.safe_load_file(File.join(RAILS_ROOT, "apps.yml"), aliases: true).fetch("apps").keys.map(&:to_s).sort
-    end
-
     # Prefix and defaults are both optional and the prefix may be blank, so anchor
     # on the verb rather than counting columns.
     ROUTE_LINE = /^\s*(?<prefix>\S*)\s+(?<verb>[A-Z]+(?:\|[A-Z]+)*)\s+(?<pattern>\/\S*)\s+(?<endpoint>.+?)\s*$/
     ENDPOINT = /^(?<controller>[a-z0-9_\/]+)#(?<action>[a-z0-9_]+)(?:\s+\{(?<defaults>.*)\})?$/
 
     module_function
+    def apps
+      YAML.safe_load_file(File.join(RAILS_ROOT, "apps.yml"), aliases: true).fetch("apps").keys.map(&:to_s).sort
+    end
+
 
     def app_root(app) = File.join(RAILS_ROOT, app)
 
