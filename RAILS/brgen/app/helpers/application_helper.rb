@@ -8,6 +8,10 @@ module ApplicationHelper
   # which city the request had already resolved to.
   def city_name = Current.city_name
 
+  def city_network_entries
+    Brgen::DomainRegistry.city_network_entries
+  end
+
   def safe_http_link(label, url)
     safe_url = safe_http_url(url)
     return unless safe_url
