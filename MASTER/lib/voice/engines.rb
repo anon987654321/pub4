@@ -231,17 +231,15 @@ module Master
         return copy_single_part(parts, out_path) if parts.length == 1
         return concat_mp3(parts, out_path, tmp_dir) if ffmpeg?
 
-        # Without ffmpeg the remaining phrases cannot be joined, and afplay does
-        # not exist on the deploy host — so the fallback below is silent there
-        # and the caller receives phrase one alone. Load-bearing on purpose:
-        # ffmpeg is what makes phrase rendering safe to enable at all.
-        report_missing_ffmpeg("synth_edge_melodic", "phrases played separately, output holds only the first")
-        FileUtils.cp(parts.first.first, out_path)
-        parts.drop(1).each do |(path, _pause)|
-          system("afplay", path, out: File::NULL, err: File::NULL)
-          File.delete(path)
-        end
-        File.size?(out_path)
+        # A melodic plan is one spoken utterance. Without ffmpeg there is no safe
+        # way to join its phrase files into that utterance. Returning phrase one
+        # and playing the rest separately made the caller observe a truncated
+        # sentence, and on a host with another player it could overlap the normal
+        # playback path. Fail this engine cleanly so the chain can fall through to
+        # a complete non-melodic engine instead.
+        report_missing_ffmpeg("synth_edge_melodic", "melodic phrases not joined; falling through to next engine")
+        parts.each { |(path, _pause)| File.delete(path) if File.exist?(path) }
+        false
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "Engines.synth_edge_melodic")
         false
