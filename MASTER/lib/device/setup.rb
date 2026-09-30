@@ -21,7 +21,7 @@ module Master
       LOG = MasterPaths.state("face_setup.log")
       PACKAGES = %w[termux-api sox ffmpeg pulseaudio].freeze
       # The four commands the ear runs; pkg names differ from two of them.
-      PACKAGE_COMMANDS = %w[termux-speech-to-text sox ffmpeg parec].freeze
+      PACKAGE_COMMANDS = %w[termux-speech-to-text termux-tts-speak termux-media-player sox ffmpeg parec].freeze
       BUILD_TOOLS = %w[git cmake clang make curl].freeze
       # whisper-cpp awaits review in termux-packages (PR 28329, open on
       # 2026-09-25), under x11-packages. Asking pkg first costs a few seconds
