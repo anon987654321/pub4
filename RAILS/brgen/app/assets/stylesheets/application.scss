@@ -10827,3 +10827,56 @@ form[data-publishing="true"] .post-progressive-nav {
   }
 }
 
+
+
+/* City navigation is secondary chrome: compact, keyboard reachable, and flat.
+   The same partial feeds the search palette, More sheet, and footer. */
+.city-network-heading {
+  margin: 0 0 var(--space-2);
+  color: var(--text);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.city-network-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: var(--space-1);
+}
+
+.city-network-item {
+  display: flex;
+  min-block-size: var(--tap-min);
+  align-items: center;
+  padding-inline: var(--space-2);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.city-network-item:hover,
+.city-network-item:focus-visible {
+  border-color: var(--border);
+}
+
+.city-network-item[aria-current="page"] {
+  border-color: var(--border);
+  font-weight: 600;
+}
+
+.search_palette_cities {
+  margin-block: var(--space-4);
+  padding-block-end: var(--space-3);
+  border-block-end: 1px solid var(--border);
+}
+
+.mobile-sheet-cities {
+  margin-block-end: var(--space-3);
+  padding-block-end: var(--space-3);
+  border-block-end: 1px solid var(--border);
+}
+
+.mobile-sheet-cities .city-network-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
