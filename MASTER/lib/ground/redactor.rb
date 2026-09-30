@@ -57,8 +57,8 @@ module Master
       def self.find_bearer_secret(value, offset)
         cursor = offset
         downcase = String.instance_method(:downcase).bind(value)
-        index = String.instance_method(:index).bind(value)
         lowered = downcase.call
+        index = String.instance_method(:index).bind(lowered)
         while (start = index.call("bearer", cursor))
           separator = start + 6
           separator += 1 while separator < value.bytesize && ASCII_WHITESPACE.include?(value.getbyte(separator))
