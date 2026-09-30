@@ -3,7 +3,7 @@
 require_relative "test_helper"
 require "tmpdir"
 require "shellwords"
-require_relative "lib/io/media_intent"
+require_relative "../lib/io/media_intent"
 
 class MediaIntentTest < Minitest::Test
   def test_literal_postpro_command_accepts_a_directory
