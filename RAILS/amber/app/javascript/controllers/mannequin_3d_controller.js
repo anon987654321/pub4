@@ -66,7 +66,8 @@ export default class extends Controller {
 
     this.element.addEventListener("pointermove", this.pointerMove, { passive: true })
     this.element.addEventListener("pointerleave", this.pointerLeave)
-    this.element.addEventListener("amber:mannequin-change", this.onMannequinChange)
+    this.carouselElement = this.element.closest('[data-controller~="wardrobe-carousel"]')
+    this.carouselElement?.addEventListener("amber:mannequin-change", this.onMannequinChange)
     this.element.addEventListener("amber:mannequin-slide", this.onSlide)
 
     if (this.element.dataset.mannequin3dSlidesValue) this.setSlide(0)
@@ -80,7 +81,7 @@ export default class extends Controller {
     this.resizeObserver?.disconnect()
     this.element.removeEventListener("pointermove", this.pointerMove)
     this.element.removeEventListener("pointerleave", this.pointerLeave)
-    this.element.removeEventListener("amber:mannequin-change", this.onMannequinChange)
+    this.carouselElement?.removeEventListener("amber:mannequin-change", this.onMannequinChange)
     this.element.removeEventListener("amber:mannequin-slide", this.onSlide)
     if (this.hasTrackTarget) {
       this.trackTarget.removeEventListener("scroll", this.onTrackScroll)
