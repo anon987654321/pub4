@@ -76,8 +76,11 @@ module Master
 
       def run_self_scan
         result = Master::Review::Scan::SelfScan.new(scanner: @refs.scanner, root: @refs.root, event_bus: @refs.bus).call(stream: true, autofix: true)
-        line = result.ok? ? result.value!.line : result.message
-        puts @refs.renderer.render(line, mode: result.ok? ? :dim : :warning)
+        if result.ok?
+          Master::Trace::Dmesg.status("scan0", result.value!.line.delete_prefix("scan0: "))
+        else
+          Master::Trace::Dmesg.status("err0", result.message)
+        end
       end
 
       def scan_files(paths)
