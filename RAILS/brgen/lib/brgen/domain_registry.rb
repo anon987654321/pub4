@@ -154,6 +154,24 @@ module Brgen
       brgen.no oshlo.no stvanger.no trndheim.no cardff.uk edinbrgh.uk frankfrt.de
     ].freeze
 
+    def self.live_city_domain?(domain)
+      LIVE_DOMAINS.include?(domain.to_s)
+    end
+
+    # Resolve the existing host vocabulary for a vertical. nil means the
+    # surface is not city-scoped (for example MASTER AI).
+    def self.city_subdomain_for(subapp, entry)
+      case subapp.to_sym
+      when :marketplace then entry.marketplace_subdomain
+      when :radio, :playlist then RADIO_SUBDOMAINS.first
+      when :dating then DATING_SUBDOMAINS.first
+      when :takeaway then TAKEAWAY_SUBDOMAINS.first
+      when :messenger then MESSENGER_SUBDOMAINS.first
+      when :maps then MAPS_SUBDOMAINS.first
+      when :tv then TV_SUBDOMAINS.first
+      end
+    end
+
     def self.production_hosts
       ENTRIES.flat_map { |entry| [ entry.domain, /.*\.#{Regexp.escape(entry.domain)}\z/ ] }.uniq
     end
