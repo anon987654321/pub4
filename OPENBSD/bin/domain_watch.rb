@@ -9,8 +9,8 @@
 # nothing was watching. lndon.uk dropped the same way. Four .uk domains sit in
 # Nominet's grace window right now.
 #
-# RenderDns.zones lists the zones we serve. This asks each registry whether we still
-# hold the name, and diffs the answer against a committed snapshot so a domain
+# RenderDns.zones lists the zones we serve; RAILS/apps.yml also lists every domain we own.
+# This asks each registry whether we still hold the name, and diffs the answer against a committed snapshot so a domain
 # changing hands shows up as a reviewable diff instead of an outage.
 #
 #   ruby OPENBSD/bin/domain_watch.rb            # report against the snapshot
@@ -297,7 +297,7 @@ if $PROGRAM_NAME == __FILE__
   # Before the scan, which queries whois for every zone.
   if ARGV.intersect?(%w[-h --help])
     puts "usage: ruby OPENBSD/bin/domain_watch.rb [--update|--json]"
-    puts "  whois every served zone and diff the answers against data/domain_inventory.yml"
+    puts "  whois every served or owned domain and diff the answers against data/domain_inventory.yml"
     exit 0
   end
 
