@@ -14,22 +14,32 @@ module Master
         # A model the operator chose leads every chain until another is chosen.
         # config["model"] alone sits at the tail of the routed chain, where no
         # turn reaches it while an earlier lane answers.
-        def model = routed_models.first
+        def model
+          live = @runtime_model
+          return live if live.present? && @model_router&.unreachable_reason(live, wait: false).nil?
+
+          @runtime_model = nil if live.present?
+          routed_models.first
+        rescue StandardError => e
+          @bus&.publish("llm:model_state_error", error: e.message)
+          routed_models.first
+        end
 
         def model=(val)
           chosen = resolve_model_name(val.to_s)
           @config["model"] = chosen
           @pinned_model = chosen
+          @runtime_model = nil
         end
 
         def with_model(override, &blk)
           @model_mutex ||= Mutex.new
           @model_mutex.synchronize do
-            saved = [@pinned_model, @config["model"]]
+            saved = [@pinned_model, @config["model"], @runtime_model]
             self.model = override
             blk.call
           ensure
-            @pinned_model, @config["model"] = saved
+            @pinned_model, @config["model"], @runtime_model = saved
           end
         end
 
@@ -49,10 +59,25 @@ module Master
         # A pinned model that just failed is parked in the skip cache, and the
         # scan's model rules ask here one after another; they route around it
         # until it comes back instead of each failing on it in turn.
+        # A successful fallback becomes the live model for subsequent
+        # turns when the operator did not explicitly pin one. This changes
+        # runtime state, not the persistent preference, and lets the next prompt
+        # surface the model that actually answers instead of the dead one.
+        def promote_runtime_model(from:, to:)
+          return if @pinned_model
+          return if from.to_s.empty? || to.to_s.empty? || from.to_s == to.to_s
+          return unless @config["model"].to_s == from.to_s
+
+          @runtime_model = to.to_s
+          @bus&.publish("llm:model_switched", from:, to: @runtime_model, reason: "fallback_success")
+        rescue StandardError => e
+          @bus&.publish("llm:model_switch_error", from:, to:, error: e.message)
+        end
+
         def model_for(operation:)
           pinned = @pinned_model if @pinned_model && !Io::ModelSkipCache.skipped?(@pinned_model) &&
                                    pinned_model_reachable?
-          pinned || @model_router&.constrained_for(operation:) || model
+          pinned || model || @model_router&.constrained_for(operation:)
         end
 
         # The full fallback chain (cheap-first/strong-first as configured),
