@@ -201,7 +201,7 @@ media:
       latest: [latest, newest, most recent, last]
       recent: [recent, new, newer]
     quantities:
-      1: [one, a, single]
+      1: [one, single]
       2: [two]
       3: [three]
       4: [four]
@@ -214,10 +214,10 @@ media:
     locations:
       downloads: [downloads, download, my downloads, downloads folder, my downloads folder]
     file_types:
-      jpeg: [jpg, jpeg]
-      png: [png]
-      webp: [webp]
-      tiff: [tif, tiff]
+      jpeg: [jpg, jpgs, jpeg, jpegs]
+      png: [png, pngs]
+      webp: [webp, webps]
+      tiff: [tif, tifs, tiff, tiffs]
     presets:
       vhs_tape: [vhs, vhs tape, vhs look]
       crt_broadcast: [crt, crt broadcast, crt look]
