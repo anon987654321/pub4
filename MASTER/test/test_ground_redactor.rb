@@ -18,6 +18,12 @@ class GroundRedactorTest < Minitest::Test
     assert_equal "token [REDACTED] leaked", Master::Ground::Redactor.text(raw)
   end
 
+  def test_payload_accepts_keyword_fields
+    scrubbed = Master::Ground::Redactor.payload(text: "sk-#{'C' * 24}")
+
+    assert_equal "[REDACTED]", scrubbed[:text]
+  end
+
   def test_payload_terminates_on_a_self_referential_hash
     raw = {}
     raw[:child] = raw
@@ -73,7 +79,7 @@ class GroundRedactorTest < Minitest::Test
     scrubbed = Master::Ground::Redactor.payload({ value: raw })
 
     cursor = scrubbed[:value]
-    15.times { cursor = cursor[0] }
+    14.times { cursor = cursor[0] }
     assert_equal "[DEPTH]", cursor[0]
   end
 
