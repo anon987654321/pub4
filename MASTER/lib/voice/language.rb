@@ -2,12 +2,12 @@
 
 module Master
   module Voice
-    # Which language a phrase is in, for phrase-level voice selection.
+    # Which language a phrase is in, for phrase-level voice-family selection.
     #
     # Deliberately a small heuristic and not a classifier: the phrases are short
-    # and the only decision it feeds is which of two registered Edge voices reads
-    # a clause. Guessing :en is free -- that is the current behaviour for
-    # everything -- so the detector is built to be certain before it says :nb.
+    # and the decision feeds a registered language family. English is the default;
+    # Norwegian Bokmål and Malaysian Malay are explicit routes so they cannot
+    # silently fall through to the English mouth.
     #
     # Certainty comes from two signals, either of which is decisive. A
     # Norwegian-only letter, or a word that is not an English word at all.
