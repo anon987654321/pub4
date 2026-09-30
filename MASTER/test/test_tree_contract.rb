@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require "yaml"
 
 class TreeContractTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
@@ -13,6 +14,18 @@ class TreeContractTest < Minitest::Test
     lib/master.rb
     data/soul.yml
     data/rules.yml
+  ].freeze
+
+  ZEITWERK_DIRECTORIES = %w[
+    lib/ai
+    lib/cli/command_registry
+    lib/cli/session
+    lib/review/scan/rules
+    lib/review/scan/engines
+    lib/fix/fix_loop
+    lib/core/memory
+    lib/music
+    lib/voice/renderer
   ].freeze
 
   FORBIDDEN_RELOCATIONS = {
@@ -42,6 +55,17 @@ class TreeContractTest < Minitest::Test
   def test_protected_master_boundaries_remain_directories
     FORBIDDEN_RELOCATIONS.values.uniq.each do |relative|
       assert Dir.exist?(File.join(ROOT, relative)), "protected MASTER boundary moved: #{relative}"
+    end
+
+    ZEITWERK_DIRECTORIES.each do |relative|
+      assert Dir.exist?(File.join(ROOT, relative)), "Zeitwerk namespace moved or flattened: #{relative}"
+    end
+  end
+
+  def test_autoload_ignores_point_at_real_files
+    manifest = YAML.safe_load_file(File.join(ROOT, "data/autoload.yml")).fetch("autoload")
+    manifest.values.flatten.each do |relative|
+      assert File.file?(File.join(ROOT, "lib", relative)), "autoload ignore points at missing file: #{relative}"
     end
   end
 end
