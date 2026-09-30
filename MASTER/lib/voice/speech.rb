@@ -90,6 +90,7 @@ module Master
         fail: { rate: "-8%", pitch: "-40Hz" },
         question: { rate: "+0%", pitch: "+15Hz" },
         warm: { rate: "-3%", pitch: "+0Hz" },
+        soulful: { rate: "-4%", pitch: "-1Hz" },
 
         dramatic:     { rate: "-15%", pitch: "-60Hz" },
         intimate:     { rate: "-5%",  pitch: "-25Hz" },
