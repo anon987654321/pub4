@@ -79,7 +79,7 @@ class TtsController < ApplicationController
       bytes = job.bytes
       return head(:not_found) if bytes.nil? || bytes.empty?
 
-      return send_data bytes, type: Master::Voice::Speech.mime_type_for(".mp3"), disposition: "inline"
+      return send_data bytes, type: job.mime_type, disposition: "inline"
     end
 
     partial = job.partial_bytes
@@ -88,7 +88,7 @@ class TtsController < ApplicationController
     attach_pending_viseme_headers(job)
     response.headers["X-TTS-Bytes"] = partial.bytesize.to_s
     response.headers["X-TTS-Partial"] = "1"
-    send_data partial, type: Master::Voice::Speech.mime_type_for(".mp3"), disposition: "inline", status: :partial_content
+    send_data partial, type: job.mime_type, disposition: "inline", status: :partial_content
   end
 
   def destroy
@@ -204,7 +204,7 @@ class TtsController < ApplicationController
       set_viseme_header("X-TTS-Meta", meta.except("viseme_plan", "viseme_hints"),
                         budget: VISEME_HEADER_BUDGET - spent)
     end
-    send_data bytes, type: Master::Voice::Speech.mime_type_for(".mp3"), disposition: "inline"
+    send_data bytes, type: job.mime_type, disposition: "inline"
   end
 
   def attach_pending_viseme_headers(job)
