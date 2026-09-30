@@ -15,6 +15,7 @@ module Master
       /ix
 
       DMESG_MAX = 240
+      MAX_DEPTH = 16
 
       def self.text(value)
         out = value.to_s
@@ -22,27 +23,30 @@ module Master
         out
       end
 
-      def self.payload(hash, seen: {})
+      def self.payload(hash, seen: {}, depth: 0)
+        return "[DEPTH]" if depth >= MAX_DEPTH
+
         seen.compare_by_identity
         return "[CYCLE]" if seen.key?(hash)
 
         seen[hash] = true
         marked = true
         hash.each_with_object({}) do |(key, value), out|
-          out[key] = scrub_value(key, value, seen:)
+          out[key] = scrub_value(key, value, seen:, depth: depth + 1)
         end
       ensure
         seen.delete(hash) if marked
       end
 
-      def self.scrub_value(key, value, seen: {})
+      def self.scrub_value(key, value, seen: {}, depth: 0)
         return "[REDACTED]" if key.to_s.match?(SENSITIVE_KEYS)
+        return "[DEPTH]" if depth >= MAX_DEPTH && (value.is_a?(Hash) || value.is_a?(Array))
 
         case value
         when Hash
-          payload(value, seen:)
+          payload(value, seen:, depth:)
         when Array
-          scrub_array(key, value, seen:)
+          scrub_array(key, value, seen:, depth:)
         when String
           truncate(text(value))
         else
@@ -50,13 +54,15 @@ module Master
         end
       end
 
-      def self.scrub_array(key, array, seen:)
+      def self.scrub_array(key, array, seen:, depth: 0)
+        return "[DEPTH]" if depth >= MAX_DEPTH
+
         seen.compare_by_identity
         return "[CYCLE]" if seen.key?(array)
 
         seen[array] = true
         marked = true
-        array.map { |item| scrub_value(key, item, seen:) }
+        array.map { |item| scrub_value(key, item, seen:, depth: depth + 1) }
       ensure
         seen.delete(array) if marked
       end
