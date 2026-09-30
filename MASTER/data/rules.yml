@@ -137,6 +137,14 @@ architecture:
         - master
       check: MASTER/tools/runs.rb
 
+preserve_user_intent:
+  forbidden_changes_during_refactor:
+    - public_method_signature
+    - error_class_raised
+    - return_type_shape
+    - log_format_consumed_by_others
+    - side_effects_order
+
 plugins:
   social_browser:
     scope: external_web
