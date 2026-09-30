@@ -21,9 +21,9 @@ module Master
         # A head is not quite as deep as it is wide, and the painting's
         # brightness stands a little proud of it: nose and cheeks out,
         # sockets in.
-        DEPTH_RATIO = 1.05
-        RELIEF = 0.18
-        BACK_LIGHT = 0.34
+        DEPTH_RATIO = 1.10
+        RELIEF = 0.20
+        BACK_LIGHT = 0.28
         CACHE_LIMIT = 8
         # Where the eyes and the mouth void sit, in the points' own space, and
         # how far each reaches: the painted socket, the painted pupil, and the
