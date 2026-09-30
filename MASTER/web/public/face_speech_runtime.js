@@ -903,18 +903,18 @@ function highQualityVoiceEnabled() {
   return true;
 }
 function browserTtsFallbackAllowed() {
-  // The browser voice is the fallback now, not the default. It starts speaking
-  // immediately and costs the VPS nothing, which is why it led for a while --
-  // but the server's latency floor turned out not to be large enough to be
-  // worth giving up the voice for, and what a visitor heard instead was
-  // whatever face their browser happened to ship.
-  //
-  // This still returns true whenever the server voice is switched off, so the
-  // fallback path below is unchanged and a failed synthesis still speaks.
+  // A face must never be silent merely because the server TTS lane is absent
+  // from a local or freshly booted environment. Server synthesis remains the
+  // quality path; browser speech is the immediate safety net when synthesis
+  // does not start promptly.
   if (!highQualityVoiceEnabled()) return true;
   if (new URLSearchParams(window.location.search).get('tts_fallback') === '1') return true;
-  try { return localStorage.getItem('master:tts-fallback') === '1'; } catch (err) { window.MASTER_LOG?.warn?.("face_speech_runtime:fallback_allowed_read", err); }
-  return false;
+  try {
+    const stored = localStorage.getItem('master:tts-fallback');
+    if (stored === '0') return false;
+    if (stored === '1') return true;
+  } catch (err) { window.MASTER_LOG?.warn?.("face_speech_runtime:fallback_allowed_read", err); }
+  return true;
 }
 // speechSynthesis.getVoices() is populated asynchronously in Chrome: it
 // returns [] on first call and fills in on the 'voiceschanged' event. Touch it
@@ -1170,12 +1170,21 @@ function ttsTick() {
   const edgeBlob = tts.prefetch.get(text) || loadTTSBlob(text, voice, style);
   tts.prefetch.delete(text);
   tts.meta.delete(text);
+  let browserFallbackTimer = setTimeout(() => {
+    if (!tts.playing || tts.current !== text || token !== tts.cancelToken) return;
+    if (!speakWithBrowserTTS(text, token)) return;
+    tts.cancelToken++;
+    tts.playing = false;
+    tts.current = null;
+    setTTSLoading(false);
+  }, 1800);
   const nextSpeech = nextQueuedSpeech();
   if (nextSpeech) fetchTTS(nextSpeech);
 
   let settled = false;
 
   async function playEdge(blob) {
+    clearTimeout(browserFallbackTimer);
     if (settled || token !== tts.cancelToken) return;
     settled = true;
     const src = URL.createObjectURL(blob);
@@ -1213,6 +1222,7 @@ function ttsTick() {
   edgeBlob
     .then(blob => { if (!blob) throw new Error('empty'); playEdge(blob); })
     .catch(() => {
+      clearTimeout(browserFallbackTimer);
       tts.serverFailureCount = (tts.serverFailureCount || 0) + 1;
       tts.serverUnavailable = true;
       tts.serverUnavailableUntil = Date.now() + Math.min(30000, 5000 * tts.serverFailureCount);
