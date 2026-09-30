@@ -66,7 +66,7 @@ module Master
 
       def drain(state)
         until state[:queue].empty?
-            event, payload, conversation = state[:queue].shift
+          event, payload, conversation = state[:queue].shift
           state[:dispatched] += 1
           dispatch_one(event, payload, conversation)
         end
