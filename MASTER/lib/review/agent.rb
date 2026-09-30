@@ -182,7 +182,10 @@ end
       end
 
       def record_single_call_substitution(from, to, result)
-        Io::QuotaGate.substituted(from:, to:) if result.is_a?(Master::Result::Ok)
+        if result.is_a?(Master::Result::Ok)
+          promote_runtime_model(from:, to:)
+          Io::QuotaGate.substituted(from:, to:)
+        end
         result
       end
 
