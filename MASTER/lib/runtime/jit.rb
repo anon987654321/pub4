@@ -11,7 +11,7 @@ module Master
         configured = ENV.fetch("MASTER_JIT", "auto").to_s.strip.downcase
         return configured if MODES.include?(configured)
 
-        warn("jit0: unknown MASTER_JIT=#{configured.inspect} — using auto")
+        Master::Trace::Dmesg.status("jit0", "unknown MASTER_JIT=#{configured.inspect}, using auto")
         "auto"
       end
 
@@ -54,11 +54,11 @@ module Master
         return false unless available?
 
         RubyVM::YJIT.enable
-        warn("jit0: yjit enabled (#{reason})")
+        Master::Trace::Dmesg.status("jit0", "yjit enabled, #{reason}")
         true
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "Runtime::Jit.enable!")
-        warn("jit0: yjit unavailable — #{e.class}: #{e.message}")
+        Master::Trace::Dmesg.status("jit0", "yjit unavailable, #{e.class}: #{e.message}")
         false
       end
 
