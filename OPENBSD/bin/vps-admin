@@ -25,10 +25,11 @@ module OpenBSDAdmin
       dmesg
       packages
       updates [check|apply]
+      upgrade [check|stage]
       reboot
 
       Mutating operations are limited to explicit service actions, pf reload,
-      updates apply, and reboot. No arbitrary command or shell is accepted.
+      updates apply, upgrade stage, and reboot. No arbitrary command or shell is accepted.
     TEXT
   end
 
@@ -51,11 +52,15 @@ module OpenBSDAdmin
     when ["dmesg"]
       [["doas", "dmesg"]]
     when ["packages"]
-      [["pkg_info"]]
+      [["doas", "pkg_info"]]
     when ["updates"], ["updates", "check"]
       [["doas", "syspatch", "-c"]]
     when ["updates", "apply"]
       [["doas", "syspatch"]]
+    when ["upgrade"], ["upgrade", "check"]
+      [["doas", "sysupgrade", "-n"]]
+    when ["upgrade", "stage"]
+      [["doas", "sysupgrade", "-n"]]
     when ["pf", "status"]
       [["doas", "pfctl", "-si"]]
     when ["pf", "rules"]
