@@ -23,6 +23,19 @@ class FaceSpeechRuntimeSpec < Minitest::Test
   # build task never read. This used to assert the stub did not contain the TTS
   # implementation, which is true of any file that does not exist; what actually
   # matters is that the build task's segment list and the files on disk agree.
+  def test_generated_runtime_carries_current_tts_guards
+    source = read("web/public/face_speech_runtime.js")
+    bundle = read("web/public/face.runtime.js")
+
+    assert_includes source, "FEMALE_BROWSER_VOICE_RE"
+    assert_includes bundle, "FEMALE_BROWSER_VOICE_RE"
+    assert_includes source, "Do not play a truncated MP3"
+    assert_includes bundle, "Do not play a truncated MP3"
+    refute_includes bundle, "const audioStream = window.MASTER_RUNTIME?.enhancements?.includes?.('tts_audio_stream')"
+    refute_includes bundle, "let browserFallbackTimer = setTimeout"
+    refute_includes bundle, "if (pending.length <= TTS_CHUNK_MAX)"
+  end
+
   def test_no_face_part_exists_outside_the_build_manifest
     rake = read("web/lib/tasks/face_runtime.rake")
     # The task names parts two ways: a range it maps over, and explicit
