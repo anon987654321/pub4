@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "set"
+require "yaml"
 
 module Master
   module Io
@@ -16,7 +16,7 @@ module Master
 
       def resolve(text, domain: :media)
         message = normalize(text)
-        specs = Master.patterns_config.fetch(domain.to_s, {})
+        specs = patterns.fetch(domain.to_s, {})
         candidates = specs.filter_map do |name, spec|
           score, evidence = score_candidate(message, spec)
           next unless score
@@ -29,8 +29,15 @@ module Master
 
         Result.new(intent: best[0], confidence: best[1], entities: best[2].freeze)
       rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "NaturalIntent.resolve")
+        if defined?(Master::Ground::Swallow)
+          Master::Ground::Swallow.log(e, context: "NaturalIntent.resolve")
+        end
         nil
+      end
+
+      def patterns
+        path = File.expand_path("../../data/patterns.yml", __dir__)
+        YAML.safe_load_file(path) || {}
       end
 
       def normalize(text)
@@ -121,7 +128,7 @@ module Master
       end
 
       private_class_method :score_candidate, :extract_entities, :phrase_hits, :first_hit,
-                           :canonical_hit, :quantity, :path, :boundary_pattern
+                           :canonical_hit, :quantity, :path, :boundary_pattern, :patterns
     end
   end
 end
