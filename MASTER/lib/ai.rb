@@ -248,7 +248,7 @@ module Master
         end
 
         def banned_shell?(command)
-          BANNED_SHELL.any? { |word| command.match?(%r{(?:\A|\s|/)(?:#{Regexp.escape(word)})(?:\s|\z|-c\b)})
+          BANNED_SHELL.any? { |word| command.match?(%r{(?:\A|\s|/)(?:#{Regexp.escape(word)})(?:\s|\z|-c\b)}) }
         end
       end
 
