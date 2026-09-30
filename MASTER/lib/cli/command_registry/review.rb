@@ -2,6 +2,7 @@
 
 require_relative "../tribunal_feedback"
 require_relative "../../review/council/critique"
+require_relative "../../fix/execution_trace"
 
 module Master
   module CLI
@@ -57,6 +58,12 @@ module Master
         # /fix is the operator trace: every event is visible in the same append-only
         # OpenBSD dmesg grammar. An explicit quiet/normal/verbose flag still wins.
         rendered = with_dmesg_verbosity(raw, default: "trace") do
+          trace = Master::Fix::ExecutionTrace.new(root: Master.repo_root).run
+          Master::Trace::Dmesg.status("trace0", trace.summary)
+          unless trace.clean?
+            details = trace.failures.first(12).join(" | ")
+            return "fix: execution trace failed — #{details}"
+          end
           value = run_pass({ scanner:, fix_loop:, root:, deliberation:, bus:, swarm: },
                            target:, apply: apply.nil? || apply, critique: _critique.nil? ? true : _critique,
                            aesthetic:, only: nil)
