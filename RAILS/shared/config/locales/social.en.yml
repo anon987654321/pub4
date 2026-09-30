@@ -170,6 +170,10 @@ en:
     view: "View post"
     share: "Share post"
     share_short: "Share"
+    auth_prompt_title: "Join the conversation"
+    auth_prompt_body: "Sign in to keep your activity, follows and saved posts together."
+    auth_prompt_note: "Reading stays open without an account."
+    auth_prompt_trigger: "Join in"
   reactions:
     aria: "React with %{kind}"
     chip_aria: "%{count} %{kind}"

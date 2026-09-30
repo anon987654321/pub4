@@ -168,6 +168,10 @@ nb:
     view: "Se innlegg"
     share: "Del innlegg"
     share_short: "Del"
+    auth_prompt_title: "Bli med i samtalen"
+    auth_prompt_body: "Logg inn for å samle aktivitet, følgere og lagrede innlegg på én konto."
+    auth_prompt_note: "Du kan fortsatt lese uten konto."
+    auth_prompt_trigger: "Bli med"
   reactions:
     aria: "Reager med %{kind}"
     chip_aria: "%{count} %{kind}"
@@ -298,6 +302,9 @@ nb:
     settings_title: "Cookie-valg"
     settings_body: "Velg hvilke valgfrie formål du tillater. Nødvendig lagring er alltid på."
     purposes:
+      necessary:
+        title: "Nødvendig lagring"
+        body: "Påkrevd for sikkerhet, økter og grunnleggende funksjoner. Det kan ikke slås av her."
       analytics:
         title: "Statistikk"
         body: "Utvalgt ytelsesmåling, inkludert web-vitals-data."

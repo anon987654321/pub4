@@ -86,3 +86,92 @@
 }
 
 .mobile-sheet-links a:hover { background: var(--hover); }
+
+
+/* Small auth interruption: borrow X's focused follow/login popup without turning a read action into a full page detour. */
+.post-auth-prompt-host {
+  display: inline;
+}
+
+.post-auth-prompt {
+  inline-size: min(22rem, calc(100vw - (var(--space-4) * 2)));
+  margin: auto;
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.post-auth-prompt[popover] {
+  max-inline-size: min(22rem, calc(100vw - (var(--space-4) * 2)));
+  padding: var(--space-4);
+}
+
+.post-auth-prompt > :is(h2, p) {
+  margin: 0;
+}
+
+.post-auth-prompt h2 {
+  font-size: var(--text-base);
+  line-height: var(--leading-snug);
+}
+
+.post-auth-prompt p {
+  margin-block-start: var(--space-2);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+}
+
+.post-auth-prompt-actions {
+  display: grid;
+  gap: var(--space-2);
+  margin-block-start: var(--space-4);
+}
+
+.post-auth-prompt-actions .btn {
+  inline-size: 100%;
+}
+
+.post-auth-prompt-trigger {
+  min-block-size: var(--tap-min);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  font: inherit;
+  font-weight: var(--weight-bold);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+  cursor: pointer;
+}
+
+.post-auth-prompt-trigger:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 3px;
+}
+
+.post-auth-prompt-note {
+  margin-block-start: var(--space-3);
+  padding-block-start: var(--space-3);
+  border-block-start: 1px solid var(--border);
+  font-size: var(--text-xs);
+}
+
+.cookie-purpose--necessary {
+  color: var(--text-secondary);
+}
+
+.cookie-purpose-state {
+  display: grid;
+  place-items: center;
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  margin: var(--space-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  color: var(--text);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+}
