@@ -1,6 +1,8 @@
 <% container_class = local_assigns.fetch(:container_class, "city-network") %>
-<section class="<%= container_class %>" aria-labelledby="city-network-title">
-  <h2 id="city-network-title" class="city-network-heading"><%= t("nav.cities") %></h2>
+<% heading_class = local_assigns.fetch(:heading_class, "city-network-heading") %>
+<% heading_id = local_assigns.fetch(:heading_id, "city-network-title") %>
+<section class="<%= container_class %>" aria-labelledby="<%= heading_id %>">
+  <h2 id="<%= heading_id %>" class="<%= heading_class %>"><%= t("nav.cities") %></h2>
   <nav class="city-network-list" aria-label="<%= t("nav.cities") %>">
     <% city_network_entries.each do |entry| %>
       <% if entry.domain == Current.domain %>
