@@ -505,10 +505,10 @@ async function pollTTSJob(job, signal) {
         if (visemes) forwardEarlyVisemePlan(visemes);
         emitTtsEvent('tts:chunk:wait', { job, attempt });
       }
-      if (audioStream) {
-        const avail = Number(res.headers.get('X-TTS-Bytes') || 0);
-        if (avail > 0) tryPartialTTSPlay(job, avail);
-      }
+      // Do not play a truncated MP3 while the real utterance is still
+      // being synthesized. An incomplete file is not a stream: it starts a
+      // second Audio element from byte zero and can overlap the final reply.
+      // Sentence-level live TTS already provides progressive speech safely.
       continue;
     }
     if (res.status === 429) {
@@ -1171,21 +1171,16 @@ function ttsTick() {
   const edgeBlob = tts.prefetch.get(text) || loadTTSBlob(text, voice, style);
   tts.prefetch.delete(text);
   tts.meta.delete(text);
-  let browserFallbackTimer = setTimeout(() => {
-    if (!tts.playing || tts.current !== text || token !== tts.cancelToken) return;
-    const browserToken = ++tts.cancelToken;
-    if (!speakWithBrowserTTS(text, browserToken)) {
-      tts.cancelToken = token;
-      return;
-    }
-  }, 1800);
+  // Browser speech is an emergency fallback after an actual server
+  // failure, not a latency race. Starting it while Edge is merely still
+  // synthesizing can introduce a second system voice into the same reply.
   const nextSpeech = nextQueuedSpeech();
   if (nextSpeech) fetchTTS(nextSpeech);
 
   let settled = false;
 
   async function playEdge(blob) {
-    clearTimeout(browserFallbackTimer);
+    if (typeof browserFallbackTimer !== 'undefined') clearTimeout(browserFallbackTimer);
     if (settled || token !== tts.cancelToken) return;
     settled = true;
     const src = URL.createObjectURL(blob);
@@ -1223,7 +1218,7 @@ function ttsTick() {
   edgeBlob
     .then(blob => { if (!blob) throw new Error('empty'); playEdge(blob); })
     .catch(() => {
-      clearTimeout(browserFallbackTimer);
+      if (typeof browserFallbackTimer !== 'undefined') clearTimeout(browserFallbackTimer);
       tts.serverFailureCount = (tts.serverFailureCount || 0) + 1;
       tts.serverUnavailable = true;
       tts.serverUnavailableUntil = Date.now() + Math.min(30000, 5000 * tts.serverFailureCount);
