@@ -1,76 +1,97 @@
 # frozen_string_literal: true
 
-# Suggest similar commerce links for a wardrobe item from brand/title text.
+# Commerce suggestions are ordered from the user's own saved links first, then
+# explainable BRGEN local listings, then optional TradeDoubler inventory.
 #
-# Amber does not import TradeDoubler feeds itself (that lives on brgen). This
-# service ranks existing AffiliateLink rows on the item and, when
-# TRADEDOUBLER_TOKEN is present and a lightweight search helper is available,
-# returns remote suggestion hashes the UI can offer as one-click affiliate links.
+# BRGEN is the transaction owner. Amber only answers the wardrobe question:
+# "does this market item make sense here?" It never copies the marketplace DB.
 module ShopTheLook
-  Suggestion = Data.define(:title, :merchant, :url, :source, :score)
+  Suggestion = Data.define(:title, :merchant, :url, :source, :score, :reasons, :commerce_key)
 
   class << self
     def for_item(item, limit: 6)
-      local = local_links(item)
-      remote = remote_suggestions(item, limit: limit)
-      (local + remote).uniq(&:url).first(limit)
+      (local_links(item) + remote_suggestions(item, limit: limit))
+        .uniq(&:url)
+        .sort_by { |suggestion| [ -suggestion.score, suggestion.source == "saved" ? 0 : 1 ] }
+        .first(limit)
     end
 
-    # Saved links, attributed.
-    #
-    # This emitted `link.url` verbatim, which is the second reason amber earned
-    # nothing: with no website id in the URL a converting click pays nobody, so
-    # the whole "shop the look" surface was a link list. Shared::LinkConverter
-    # returns the URL unchanged when TRADEDOUBLER_WEBSITE_ID is unset (an
-    # unattributed link still works, and inventing tracking is what
-    # affiliate_honesty forbids) and when the owner already pasted a tracked URL.
-    #
-    # Server-side as well as through the Link Converter script, because the script
-    # is exactly what an ad blocker removes and this path does not depend on JS.
     def local_links(item)
       epi = Shared::LinkConverter.epi_for(surface: "amber", post_id: item.id)
 
       Array(item.affiliate_links).map do |link|
+        link_metadata = link.metadata.is_a?(Hash) ? link.metadata : {}
         Suggestion.new(
-          title: item.title.to_s,
-          merchant: link.merchant.to_s,
-          url: Shared::LinkConverter.wrap(link.url.to_s, epi: epi),
-          source: "saved",
-          score: 1.0
+          link_metadata["title"].to_s.presence || item.title.to_s,
+          link.merchant.to_s,
+          Shared::LinkConverter.wrap(link.url.to_s, epi: epi),
+          "saved",
+          1.0,
+          [ I18n.t("commerce_fit.saved", default: "Saved by you.") ],
+          link_metadata["commerce_key"].to_s.presence
         )
       end
     end
 
-    # Why the remote feed cannot answer, or nil when it can.
-    #
-    # Not two silent `return []` guards. The second was unconditional in amber:
-    # the feed client lives in brgen's app/services and is not loaded in this
-    # process, so setting TRADEDOUBLER_TOKEN in
-    # /etc/amber.env passed the first gate, hit the second, and produced nothing
-    # — configuration with no reader, reporting nothing. Naming the reason is
-    # what made that visible instead of empty.
-    #
-    # It is `Shared::Tradedoubler` now and amber loads it, so a token set here
-    # reaches a client that can answer. The guard stays because the reasons are
-    # still distinct and still worth telling apart: no token, no client, no
-    # query. It is no longer the one that is always true.
     def remote_unavailable_reason(item = nil)
-      return :no_token unless ENV["TRADEDOUBLER_TOKEN"].present? || ENV["TRADEDOUBLER_PRODUCTS_TOKEN"].present?
-      return :no_feed_client unless defined?(Shared::Tradedoubler) && Shared::Tradedoubler.respond_to?(:deals)
       return :no_query if item && query_for(item).blank?
+      return nil if BrgenCommerce.available?
+      return nil if tradedoubler_configured?
 
-      nil
+      :no_market_sources
     end
 
-    def remote_available? = remote_unavailable_reason.nil?
+    def remote_available?
+      remote_unavailable_reason.nil?
+    end
 
     def query_for(item)
-      [ item.brand, item.title, item.category ].compact.join(" ").strip
+      [ item.brand, item.title, item.category, item.color, item.material ].compact.join(" ").strip
     end
 
     def remote_suggestions(item, limit:)
-      return [] if remote_unavailable_reason(item)
+      query = query_for(item)
+      return [] if query.blank?
 
+      suggestions = brgen_suggestions(item, limit: limit)
+      suggestions.concat(tradedoubler_suggestions(item, limit: limit)) if tradedoubler_available?
+      suggestions.sort_by { |suggestion| -suggestion.score }.first(limit)
+    rescue StandardError => e
+      Rails.logger.warn("shop_the_look scoring failed: #{e.class}: #{e.message}")
+      []
+    end
+
+    def brgen_suggestions(item, limit:)
+      BrgenCommerce.search(item:, limit: [ limit * 2, 12 ].min).filter_map do |product|
+        fit = CommerceFit.evaluate(item, product)
+        next if fit.score < 0.20
+
+        Suggestion.new(
+          product.title,
+          product.merchant,
+          product.url,
+          "brgen",
+          fit.score,
+          (fit.reasons + product.reasons).first(3),
+          product.id
+        )
+      end
+    rescue StandardError => e
+      Rails.logger.warn("brgen commerce scoring failed: #{e.class}: #{e.message}")
+      []
+    end
+
+    def tradedoubler_available?
+      tradedoubler_configured? &&
+        defined?(Shared::Tradedoubler) &&
+        Shared::Tradedoubler.respond_to?(:deals)
+    end
+
+    def tradedoubler_configured?
+      ENV["TRADEDOUBLER_TOKEN"].present? || ENV["TRADEDOUBLER_PRODUCTS_TOKEN"].present?
+    end
+
+    def tradedoubler_suggestions(item, limit:)
       query = query_for(item)
 
       Shared::Tradedoubler.deals(limit: limit).filter_map do |deal|
@@ -80,25 +101,23 @@ module ShopTheLook
         next if score < 0.15
 
         Suggestion.new(
-          title: deal.title,
-          merchant: deal.merchant,
-          url: deal.click_url,
-          source: "tradedoubler",
-          score: score
+          deal.title,
+          deal.merchant,
+          deal.click_url,
+          "tradedoubler",
+          score,
+          [ I18n.t("commerce_fit.feed_match", default: "Matches the available product feed.") ],
+          nil
         )
-      end.sort_by { |s| -s.score }.first(limit)
-    rescue StandardError => e
-      Rails.logger.warn("shop_the_look scoring failed: #{e.class}: #{e.message}")
-      []
+      end
     end
 
     def text_score(query, candidate)
-      q = query.downcase.split(/\W+/).reject { |w| w.length < 3 }
-      return 0.0 if q.empty?
+      words = query.downcase.split(/\W+/).reject { |word| word.length < 3 }.uniq
+      return 0.0 if words.empty?
 
-      c = candidate.downcase
-      hits = q.count { |w| c.include?(w) }
-      hits.to_f / q.size
+      candidate_text = candidate.downcase
+      (words.count { |word| candidate_text.include?(word) }.to_f / words.length).clamp(0.0, 1.0)
     end
   end
 end

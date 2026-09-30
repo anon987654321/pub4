@@ -37,7 +37,13 @@ class Marketplace::ListingsController < Marketplace::BaseController
     scope = scope.where("price_cents >= ?", (params[:min_price].to_f * 100).to_i) if params[:min_price].present?
     scope = scope.where("price_cents <= ?", (params[:max_price].to_f * 100).to_i) if params[:max_price].present?
     @sort = Marketplace::Listing::SORTS.include?(params[:sort]) ? params[:sort] : "rank"
-    @pagy, @listings = pagy(scope.sorted_by(@sort))
+    if @sort == "rank"
+      @search_ranker = Marketplace::SearchRanker.new(scope, query: live_search_query, viewer: Current.user)
+      scope = @search_ranker.relation
+    else
+      scope = scope.sorted_by(@sort)
+    end
+    @pagy, @listings = pagy(scope)
     @listing_distances = listing_distances(@listings, lat: @search_lat, lng: @search_lng)
     @categories = Marketplace::Category.roots.includes(:children)
     @top_offers = top_offers_for_index(@kind)

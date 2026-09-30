@@ -67,4 +67,32 @@ class MarketplaceMaturityTest < ActiveSupport::TestCase
     assert_operator score, :>=, 0.2
     assert_operator score, :<=, 1.0
   end
+
+  test "request-time relevance outranks an unrelated global quality prior" do
+    chair = Marketplace::Listing.create!(
+      user: @seller,
+      title: "Maturity chair",
+      description: "A simple chair",
+      category: @category,
+      price_cents: 5_000,
+      status: "active",
+      currency: "NOK",
+      delivery_promise: Marketplace::Listing::DELIVERY_PROMISES[:three_to_five_days],
+      fulfilment_method: Marketplace::Listing::FULFILMENT_METHODS[:self_ship],
+      ranking_score: 0.95
+    )
+    @listing.update_columns(ranking_score: 0.20)
+
+    ranked = Marketplace::SearchRanker.new(
+      Marketplace::Listing.where(id: [ @listing.id, chair.id ]),
+      query: "bicycle"
+    ).relation.to_a
+
+    assert_equal @listing.id, ranked.first.id
+    reasons = Marketplace::SearchRanker.new(
+      Marketplace::Listing.where(id: [ @listing.id ]),
+      query: "bicycle"
+    ).reasons(@listing)
+    assert reasons.any? { |reason| reason.downcase.include?("search") }
+  end
 end

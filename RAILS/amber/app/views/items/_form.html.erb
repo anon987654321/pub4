@@ -1,5 +1,11 @@
 <% draft_key = "amber-item-#{item.to_param || 'new'}" %>
 <%= form_with(model: item, class: "form", data: { controller: "draft-store autosave", "draft-store-key-value": draft_key, **autosave_data(key: draft_key, url: draft_path(draft_key)) }) do |f| %>
+  <% commerce = item.metadata.is_a?(Hash) ? item.metadata["commerce"] : nil %>
+  <% if commerce.is_a?(Hash) && commerce["key"].present? %>
+    <%= hidden_field_tag "item[commerce_key]", commerce["key"] %>
+    <%= hidden_field_tag "item[source_url]", commerce["source_url"] %>
+    <p class="form-note"><%= t("commerce_fit.handoff", default: "Started from a BRGEN marketplace item. Saving keeps the source reference with this wardrobe record.") %></p>
+  <% end %>
   <%= render "shared/errors", object: item %>
   <div class="field"><%= f.label :title %><%= f.text_field :title, autofocus: true %></div>
   <div class="field">
