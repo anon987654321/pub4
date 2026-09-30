@@ -36,6 +36,32 @@ class TestContextWindow < Minitest::Test
     assert_equal ["turn 6", "turn 7", "turn 8", "turn 9", "late turn"], contents.drop(1)
   end
 
+  def test_compaction_keeps_decisions_files_and_open_work_structured
+    6.times { |i| session.add_message(role: :user, content: "turn #{i}") }
+    agent = Object.new
+    agent.define_singleton_method(:ask) do |_prompt, context:|
+      raise "unexpected context size" unless context.size == 2
+
+      JSON.generate(
+        goal: "repair MASTER",
+        decisions: ["keep one execution slot"],
+        facts: ["vm23 is the production host"],
+        files: ["MASTER/lib/ops/control_plane.rb"],
+        open_work: ["run the live gate"],
+        constraints: ["no GitHub Actions"],
+        uncertainty: ["browser proof remains pending"],
+      )
+    end
+    window = Master::CLI::ContextWindow.new(session:, agent:)
+
+    assert_predicate window.send(:compact!, :hard), :ok?
+    body = session.messages.first[:content]
+    assert_match(/schema 1/, body)
+    assert_match(/decisions:\n- keep one execution slot/, body)
+    assert_match(/files:\n- MASTER\/lib\/ops\/control_plane\.rb/, body)
+    assert_match(/open_work:\n- run the live gate/, body)
+  end
+
   def test_the_providers_input_count_raises_pressure_past_the_estimate
     session.add_message(role: :user, content: "short")
     agent = SlowAgent.new
