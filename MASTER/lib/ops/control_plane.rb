@@ -127,10 +127,10 @@ module Master
 
         return report("control0: waiting — loop slot active") if LoopOwner.active
 
-        result = command("zsh", @deploy, "all")
-        unless result[:status].success?
+        status = stream_command("zsh", @deploy, "all")
+        unless status.success?
           save_state(head, "failed")
-          raise CommandError.new(["zsh", @deploy, "all"], result[:stdout].to_s + result[:stderr].to_s)
+          raise CommandError.new(["zsh", @deploy, "all"], "exit=#{status.exitstatus}")
         end
 
         save_state(head, "ok")
@@ -152,6 +152,28 @@ module Master
       def command(*argv)
         stdout, stderr, status = Open3.capture3(*argv, chdir: @repo)
         { stdout:, stderr:, status: }
+      end
+
+      def stream_command(*argv)
+        Open3.popen3(*argv, chdir: @repo) do |stdin, stdout, stderr, wait|
+          stdin.close
+          readers = [stdout, stderr]
+          until readers.empty?
+            ready = IO.select(readers, nil, nil, 1)
+            next unless ready
+
+            ready.first.each do |io|
+              line = io.gets
+              if line
+                @out.write(line)
+              else
+                readers.delete(io)
+                io.close unless io.closed?
+              end
+            end
+          end
+          wait.value
+        end
       end
 
       def load_state
