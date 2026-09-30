@@ -17,7 +17,6 @@ module Master
         return if key.empty?
 
         rule_lineage(key) ||
-          path_ownership(key) ||
           design_law(key) ||
           law(key) ||
           # The declared rule first: it carries tier and name, and registry_rule
@@ -34,47 +33,9 @@ module Master
       private
 
       def rule_lineage(key)
-        return unless key.include?("/") || File.file?(File.join(@root, key))
-
-        RuleLineage.new(root: @root).explain(key)
-      end
-
-      # A path, not a rule id. An agent mid-task cannot re-read 4,215 lines of
-      # rules.yml, so the question it actually has is "what governs this file".
-      # PATH_OWNERSHIP.yml has answered that all along and had no reader.
-      def path_ownership(key)
         return unless key.include?("/") || File.exist?(File.join(@root, key))
 
-        owned = (Master.load_yaml(File.join(@root, "PATH_OWNERSHIP.yml")) || {})["ownership"] || {}
-        return if owned.empty?
-
-        rel = key.to_s.delete_prefix("#{@root}/").delete_prefix("./")
-        hit = owned.find { |k, _| covers?(k.to_s, rel) }
-        return uncovered(rel) unless hit
-
-        name, meta = hit
-        [
-          "path: #{name}",
-          ("  purpose: #{meta['purpose']}" if meta.is_a?(Hash) && meta["purpose"]),
-          ("  risk: #{meta['risk']}" if meta.is_a?(Hash) && meta["risk"]),
-          ("  check: #{meta['check']}" if meta.is_a?(Hash) && meta["check"]),
-        ].compact.join("\n")
-      end
-
-      def covers?(k, rel)
-        return true if k == rel
-        return true if k.end_with?("/") && "#{rel}/".start_with?(k)
-        return true if k.include?("*") && File.fnmatch?(k, rel)
-
-        false
-      end
-
-      # Silence here would read as "nothing governs this", which is the opposite
-      # of what an undeclared path means.
-      def uncovered(rel)
-        "path: #{rel}\n  purpose: UNDECLARED — no entry in PATH_OWNERSHIP.yml\n" \
-          "  fix: add one naming its purpose and risk, or move these files under a path that has one\n" \
-          "  rule: PATH_PURPOSE"
+        RuleLineage.new(root: @root).explain(key)
       end
 
       # The design law. It sits at rules.yml#beauty, line 92 of 4,215, and an
