@@ -35,14 +35,18 @@ module Master
       def self.redact_pattern(value, pattern)
         parts = []
         offset = 0
-        while (match = pattern.match(value, offset))
-          parts << value.byteslice(offset, match.begin(0) - offset)
+        match_method = Regexp.instance_method(:match)
+        byteslice = String.instance_method(:byteslice)
+        bytesize = String.instance_method(:bytesize)
+
+        while (match = match_method.bind(pattern).call(value, offset))
+          parts << byteslice.bind(value).call(offset, match.begin(0) - offset)
           parts << "[REDACTED]"
           offset = match.end(0)
         end
         return value if parts.empty?
 
-        parts << value.byteslice(offset, value.bytesize - offset)
+        parts << byteslice.bind(value).call(offset, bytesize.bind(value).call - offset)
         parts.join
       end
 
