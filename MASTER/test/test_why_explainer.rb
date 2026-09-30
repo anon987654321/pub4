@@ -35,6 +35,25 @@ class WhyExplainerTest < Minitest::Test
     assert_nil explainer.explain("   ")
   end
 
+  def test_explain_path_returns_constitutional_lineage
+    out = explainer.explain("lib/trace/why_explainer.rb")
+
+    assert_includes out, "lineage: MASTER/lib/trace/why_explainer.rb"
+    assert_includes out, "boundary: master"
+    assert_includes out, "purpose: evidence, events, telemetry, replay, snapshots"
+    assert_includes out, "constitution: data/rules.yml"
+    assert_includes out, "executable_law: law/"
+  end
+
+  def test_explain_rails_path_returns_boundary_lineage
+    out = explainer.explain("../RAILS/brgen/app/helpers/application_helper.rb")
+
+    assert_includes out, "boundary: rails"
+    assert_includes out, "entry: RAILS/bin/triangle"
+    assert_includes out, "proof: MASTER/gates/runner.rb --all"
+  end
+
+
   def test_explain_style_section
     out = explainer.explain("ruby.quotes")
     assert_includes out, "style: ruby.quotes"
