@@ -32,7 +32,9 @@ module Deploy
     require File.join(ROOT, "MASTER", "lib", "operator", "ruby_runner")
     RAILS_ROOT = File.join(ROOT, "RAILS")
     PATH = File.join(RAILS_ROOT, "gates", "data", "route_manifest.yml")
-    APPS = %w[brgen amber bsdports].freeze
+    def apps
+      YAML.safe_load_file(File.join(RAILS_ROOT, "apps.yml"), aliases: true).fetch("apps").keys.map(&:to_s).sort
+    end
 
     # Prefix and defaults are both optional and the prefix may be blank, so anchor
     # on the verb rather than counting columns.
@@ -91,14 +93,14 @@ module Deploy
       endpoint[:defaults].to_s.scan(/:?\w+:?\s*=?>?\s*"([a-z0-9_]+)"/).flatten
     end
 
-    def build(apps = APPS)
+    def build(apps = self.apps)
       {
         "schema" => 1,
         "apps" => apps.to_h { |app| [app, { "digest" => digest(app), "routes" => parse(capture_routes(app)) }] },
       }
     end
 
-    def write(apps = APPS)
+    def write(apps = self.apps)
       manifest = build(apps)
       File.write(PATH, YAML.dump(manifest))
       manifest
@@ -116,8 +118,9 @@ if $PROGRAM_NAME == __FILE__
   # one stale digest into a different, larger failure. A documented footgun is
   # still a footgun; the argument list is checkable, so it is checked.
   requested = ARGV.reject { |arg| arg == "--partial" }
-  apps = requested.empty? ? Deploy::RouteManifest::APPS : requested
-  missing = Deploy::RouteManifest::APPS - apps
+  canonical = Deploy::RouteManifest.apps
+  apps = requested.empty? ? canonical : requested
+  missing = canonical - apps
 
   if missing.any? && !ARGV.include?("--partial")
     warn "generate_route_manifest: this REWRITES the whole manifest, so naming " \
