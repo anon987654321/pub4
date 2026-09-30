@@ -68,7 +68,7 @@ namespace :postpro do
 end
 
 namespace :replicate do
-  require_relative "replicate/lib/schema_snapshot"
+  require_relative "replicate/schema_snapshot"
   desc "Compare MODEL_CAPABILITIES against the schemas Replicate currently declares"
   task :schema_audit do
     # The second-source-of-truth problem, made visible. replicate keeps its own

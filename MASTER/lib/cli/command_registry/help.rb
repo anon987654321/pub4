@@ -182,16 +182,16 @@ module Master
         (HELP_TOPICS.keys.map { |k| "/#{k}" } + %w[/exit /quit]).uniq.sort
       end
 
-      # The list is a table, so its second column is aligned; everywhere else
-      # in the CLI one space separates.
       def help_summary
-        width = HELP_TOPICS.keys.map(&:length).max + 1
-        lines = HELP_TOPICS.map { |cmd, topic| "/#{cmd.ljust(width)} #{topic[:summary]}" }
-        lines << ""
-        lines << "work is a sentence. /fix is the one operation that writes: it observes,"
-        lines << "critiques, repairs and observes again until the tree converges."
-        lines << "/review and /critique read and argue without changing anything."
-        lines.join("\n")
+        [
+          "commands: /status /doctor /voice /model",
+          "          /review /critique /fix /face",
+          "          /session /clear /undo /snapshot",
+          "          /pair /device /owner /orders",
+          "          /soul /rules /why /plugin /help /exit",
+          "input:    !cmd governed shell, << multiline, /help X details",
+          "write:    /fix is the write path; everything else is read, route or chat",
+        ].join("\n")
       end
     end
   end

@@ -23,7 +23,7 @@ module Master
           mission.transition!(:plan, plan: Master::Ground::ActivePlan.read(root) || "fold plan: constitutional turn loop")
           world = build_world(root:, container:)
           mission.transition!(:execute)
-          done = build_fold(model:, memory:, world:, max_turns:, observer:).run(goal)
+          done = build_fold(root:, model:, memory:, world:, max_turns:, observer:).run(goal)
           mission.transition!(:verify, summary: continuation_summary(done))
           settle_mission(mission, done)
 
@@ -220,7 +220,7 @@ module Master
         end
       end
 
-      def build_fold(model:, memory:, world:, max_turns:, observer:)
+      def build_fold(root:, model:, memory:, world:, max_turns:, observer:)
         Master::Core::Fold.new(
           model:,
           constitution: Master::Core::Constitution.load(data_dir: Master.data_path, verify: scan_verifier,

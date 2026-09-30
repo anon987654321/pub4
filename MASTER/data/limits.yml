@@ -280,6 +280,7 @@ validation:
   scan_file: bundle exec ruby bin/cli scan lib/FILE.rb
 dmesg:
   enabled: true
+  verbosity: normal
   style: openbsd
   format: "unitN at parent: detail | unitN: key=val"
   env: MASTER_DMESG

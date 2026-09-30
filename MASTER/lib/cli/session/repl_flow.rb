@@ -44,7 +44,7 @@ module Master
         puts
         return if close_requested?
 
-        puts @refs.renderer.render("^C again within #{CLOSE_WINDOW_S}s to close", mode: :dim)
+        puts @refs.renderer.render("^C again to exit", mode: :dim)
         :interrupted
       end
 
@@ -133,7 +133,7 @@ module Master
       end
 
       def run_chitchat
-        puts @refs.renderer.render("hello. MASTER is awake. describe a goal.", mode: :dim)
+        puts @refs.renderer.render("hello — goal?", mode: :dim)
       end
 
       # !command runs one zsh line through the Io::Shell the model's zsh tool

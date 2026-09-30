@@ -63,7 +63,7 @@ module Operator
 # service, nsd.conf names the zone — and nothing failed when a pair
 # stopped agreeing.
 Probe.new(unit: "obsdreach", trees: %w[OPENBSD],
-          run: -> { sibling("OPENBSD", "tools/reach.rb") }),
+          run: -> { sibling("OPENBSD", "bin/reach") }),
 # MASTER/tools's coverage was never thin, only unreported here: gate.rb parses
 # every first-party file, checks dilla's manifest against the disk, and
 # boots the guarded entry points. `rake tools` already runs it; this is
