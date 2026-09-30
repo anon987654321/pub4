@@ -219,20 +219,20 @@ module Master
           player = Voice::Playback.player
           enabled = Voice::Playback.enabled?
           engine = Voice::Speech.synthesis_mode
-          "voice0: #{enabled ? "on" : "off"} player=#{player ? player.first : "none"} engine=#{engine}"
+          "voice0 at mainbus0: #{enabled ? "on" : "off"}, player #{player ? player.first : "none"}, engine #{engine}"
         when "test"
           ok = Voice::Playback.speak_now("MASTER voice test.")
           player = Voice::Playback.player
           if ok
-            "voice0: test passed player=#{player ? player.first : "none"}"
+            "voice0 at mainbus0: test passed, player #{player ? player.first : "none"}"
           else
-            "voice0: test failed — see voice/tts diagnostics"
+            "voice0 at mainbus0: test failed, see voice/tts diagnostics"
           end
         else
           "voice  voice status  voice test"
         end
       rescue StandardError => e
-        "voice0: failed — #{e.class}: #{e.message}"
+        "voice0 at mainbus0: failed, #{e.class}: #{e.message}"
       end
 
       def device_command(arg)
