@@ -149,6 +149,19 @@ class CritiqueImplementationTest < Minitest::Test
     assert_includes css, "mannequin-3d"
   end
 
+  def test_amber_mannequin_particles_are_sparse_cool_and_open
+    css = read("amber/app/assets/stylesheets/application.scss")
+    renderer = read("amber/app/javascript/controllers/mannequin_3d_controller.js")
+    mannequin_css = read("amber/app/assets/stylesheets/_mannequin_3d.scss")
+
+    assert_includes css, "--figure-ink: #8eaee3;"
+    assert_includes renderer, "for (let i = 0; i < 432; i += 1)"
+    assert_includes renderer, '"ambient"'
+    assert_includes renderer, "ctx.globalAlpha = 0.06 + geometry.depth * 0.22"
+    assert_includes mannequin_css, "--particle-ink: var(--figure-ink);"
+    refute_includes mannequin_css, "amber-look-figure::after"
+  end
+
   def test_commerce_polish_keeps_marketplace_and_amber_distinct
     brgen_css = read("brgen/app/assets/stylesheets/application.scss")
     brgen_polish = read("brgen/app/assets/stylesheets/_commerce_polish.scss")
