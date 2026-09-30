@@ -16,6 +16,10 @@ module Master
       module PromptComponents
         TOKEN_KILO_THRESHOLD = 1000
         PROMPT_PATH_MAX = 44
+        ANSI_ESCAPE = /\e\[[0-9;?]*[ -\/]*[@-~]/
+        BOOT_FG = "\e[37m"
+        BOOT_BG = "\e[44m"
+        BOOT_RESET = "\e[0m"
         # The prompt token alone carries the phase; the path and state stay quiet.
         PHASE_COLORS = {
           "discover" => :yellow,
@@ -107,6 +111,14 @@ module Master
         end
 
         private
+
+        def boot_surface(text)
+          return text unless $stdout.tty?
+          return text if ENV["NO_COLOR"] || ENV["MASTER_BOOT_COLOR"] == "0"
+
+          plain = text.to_s.gsub(ANSI_ESCAPE, "")
+          "#{BOOT_BG}#{BOOT_FG}#{plain}#{BOOT_RESET}"
+        end
 
         # The prompt is set like text, not a status bar: location first,
         # repository state second, phase third, cursor last. Keep the whole line
