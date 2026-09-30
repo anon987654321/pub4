@@ -139,6 +139,28 @@ class TestPipeline < Minitest::Test
     assert_equal ["what is fix_loop for?"], recorder.calls
   end
 
+  def test_fix_claims_the_vm23_control_plane_slot
+    probe = Object.new
+    seen = nil
+    probe.define_singleton_method(:run) do |_target, requested: false|
+      seen = Master::Ops::LoopOwner.active
+      Master::Result.ok(:done)
+    end
+
+    pass = Master::CLI::Pipeline::Pass.allocate
+    pass.instance_variable_set(:@fix_loop, probe)
+    pass.instance_variable_set(:@failed_stages, [])
+    pass.instance_variable_set(:@bus, nil)
+
+    result = pass.send(:run_fix, File.expand_path("../tmp", __dir__))
+
+    assert_equal true, result == "done"
+    assert_equal "fix", seen.fetch("loop")
+    assert_nil Master::Ops::LoopOwner.active
+  ensure
+    Master::Ops::LoopOwner.release
+  end
+
   def test_intake_rejects_an_empty_message
     result = Master::CLI::Pipeline.new([Master::CLI::Stages::Intake.new])
                                    .call(Master::CLI::PipelineContext.build(user_message: "   "))
