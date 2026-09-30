@@ -21,7 +21,16 @@ module Marketplace
     def show
       @listings = @store.listings.live.recent.with_attached_photos.includes(:user, :category).limit(100)
       @other_stores = Marketplace::Store.publicly_visible.where.not(id: @store.id).limit(6)
-      @pagy_payouts, @payouts = pagy(@store.payouts.order(created_at: :desc), limit: 20) if Current.user&.id == @store.owner_id
+      if Current.user&.id == @store.owner_id
+        @pagy_payouts, @payouts = pagy(@store.payouts.order(created_at: :desc), limit: 20)
+        @seller_summary = Marketplace::SellerPerformance.new(@store).summary
+        @inventory_summary = {
+          live: @store.listings.live.count,
+          expiring: @store.listings.expiring_soon.count,
+          sold: @store.listings.where(status: "sold").count,
+          out_of_stock: @store.listings.live.where.not(stock: nil).where(stock: 0).count
+        }
+      end
     end
 
     def new

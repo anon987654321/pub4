@@ -67,7 +67,13 @@ class PostsController < ApplicationController
   end
 
   def new
-    @post = Post.new(community: @community)
+    shared_url = params[:url].to_s.strip
+    shared_text = params[:text].to_s.strip
+    @post = Post.new(
+      community: @community,
+      title: params[:title].to_s.strip.presence,
+      content: [ shared_text.presence, shared_url.presence ].compact.join("\n\n")
+    )
   end
 
   def create

@@ -5,6 +5,7 @@
 # brgen config/routes.rb. The Amazon-style multi-seller storefront.
 Marketplace::Engine.routes.draw do
   root "listings#index"
+  get "catalog.json" => "catalog#index", as: :catalog
   get "merchant-feed.xml" => "merchant_feeds#show", as: :merchant_feed
   resources :shops, controller: "stores" do
     resources :payouts, only: :create

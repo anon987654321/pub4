@@ -20,6 +20,30 @@
     <% end %>
   <% end %>
 
+  <% if @seller_summary %>
+    <section aria-labelledby="store-seller-center">
+      <h2 id="store-seller-center"><%= t("marketplace.seller_center.title", default: "Seller centre") %></h2>
+      <dl class="seller-summary">
+        <dt><%= t("marketplace.seller_center.live", default: "Live listings") %></dt>
+        <dd><%= @inventory_summary[:live] %></dd>
+        <dt><%= t("marketplace.seller_center.expiring", default: "Expiring soon") %></dt>
+        <dd><%= @inventory_summary[:expiring] %></dd>
+        <dt><%= t("marketplace.seller_center.sold", default: "Sold") %></dt>
+        <dd><%= @inventory_summary[:sold] %></dd>
+        <dt><%= t("marketplace.seller_center.out_of_stock", default: "Out of stock") %></dt>
+        <dd><%= @inventory_summary[:out_of_stock] %></dd>
+        <dt><%= t("marketplace.seller_center.purchases, default: "Purchases"") %></dt>
+        <dd><%= @seller_summary[:purchases] %></dd>
+        <dt><%= t("marketplace.seller_center.delivery_rate", default: "Delivery completion") %></dt>
+        <dd><%= @seller_summary[:delivery_completion_rate] ? number_to_percentage(@seller_summary[:delivery_completion_rate] * 100, precision: 1) : "—" %></dd>
+        <dt><%= t("marketplace.seller_center.return_rate", default: "Return rate") %></dt>
+        <dd><%= @seller_summary[:return_rate] ? number_to_percentage(@seller_summary[:return_rate] * 100, precision: 1) : "—" %></dd>
+        <dt><%= t("marketplace.seller_center.rating", default: "Average rating") %></dt>
+        <dd><%= @seller_summary[:average_rating] || "—" %></dd>
+      </dl>
+    </section>
+  <% end %>
+
   <% if @payouts %>
     <%# A frame, so paging through payouts leaves the listings below in place. The
         release button targets _top: its redirect is the whole store page. %>
