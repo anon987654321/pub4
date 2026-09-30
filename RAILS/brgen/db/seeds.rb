@@ -6,8 +6,8 @@
 
 require 'faker'
 
-# Ensure Cities exist for automatic TLD/domain-based resolution (no city switcher).
-# Each city domain is an isolated experience.
+# Ensure Cities exist for automatic TLD/domain-based resolution.
+# City network links do not change the tenant isolation of each apex.
 Brgen::CitySeed.sync! if defined?(Brgen::CitySeed) && ActiveRecord::Base.connection.table_exists?(:cities)
 
 # Scale for "wildly popular" impression in dev/demo: SEED_SCALE=50 for thousands of users/posts
