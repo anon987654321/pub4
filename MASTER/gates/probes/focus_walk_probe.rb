@@ -8,11 +8,11 @@
 # of trusting that the CSS reaches every component. A stop with outline:none
 # and no border/background change is a place a keyboard user is lost.
 #
-#   ruby gates/probes/focus_walk_probe.rb                    # default pages
-#   ruby gates/probes/focus_walk_probe.rb <url> [steps]
+#   ruby gates/focus_walk_probe.rb                    # default pages
+#   ruby gates/focus_walk_probe.rb <url> [steps]
 
-require_relative "../support/cdp_session"
-require_relative "../support/fleet"
+require_relative "support/cdp_session"
+require_relative "support/fleet"
 require "json"
 
 PAGES = Fleet.urls({
