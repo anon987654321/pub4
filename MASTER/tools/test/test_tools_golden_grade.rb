@@ -6,7 +6,7 @@ require "tmpdir"
 require "open3"
 require "rbconfig"
 require "digest"
-require_relative "../postpro/lib/uncanny"
+require_relative "../postpro/uncanny"
 
 # What a grade DOES, not merely that it did something.
 #

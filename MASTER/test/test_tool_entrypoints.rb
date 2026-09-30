@@ -15,4 +15,24 @@ class TestToolEntrypoints < Minitest::Test
     missing = paths.reject { |path| File.file?(File.join(ROOT, path)) }
     assert_empty missing, "Rakefile references missing tool file(s): #{missing.join(', ')}"
   end
+
+  def test_tool_shelves_are_flattened_without_compatibility_shims
+    expected = %w[
+      tools/master_design.rb
+      tools/scss_rules.rb
+      tools/frontend_rule_set.rb
+      tools/postpro/uncanny.rb
+      tools/postpro/frame_set.rb
+      tools/postpro/rescue.rb
+      tools/replicate/chain.rb
+      tools/replicate/craft.rb
+      tools/replicate/schema_snapshot.rb
+    ]
+    missing = expected.reject { |path| File.file?(File.join(ROOT, path)) }
+    assert_empty missing, "flattened tool file(s) missing: #{missing.join(', ')}"
+
+    retired = %w[tools/design tools/postpro/lib tools/replicate/lib]
+    present = retired.select { |path| Dir.exist?(File.join(ROOT, path)) }
+    assert_empty present, "retired tool shelf(s) remain: #{present.join(', ')}"
+  end
 end

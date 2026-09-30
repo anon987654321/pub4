@@ -8,8 +8,8 @@ require_relative "../../../../OPENBSD/lib/deploy_inventory"
 require_relative "../../../../RAILS/tools/crawl_support"
 require_relative "../../support/geometry_probe"
 require_relative "../../support/design_metrics"
-require_relative "../../../tools/design/master_design"
-require_relative "../../../tools/design/scss_rules"
+require_relative "../../../tools/master_design"
+require_relative "../../../tools/scss_rules"
 
 module Deploy
   # P2: measure design_rules.yml (type, contrast, touch, spacing, measure)

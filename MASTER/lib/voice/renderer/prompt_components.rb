@@ -49,8 +49,7 @@ module Master
           return false if ENV["MASTER_QUIET"] == "1"
           return false if %w[0 quiet].include?(ENV["MASTER_DMESG"].to_s.downcase)
 
-          $stdout.tty? ||
-            ENV["MASTER_BOOT_STATUS"] == "1" ||
+          ENV["MASTER_BOOT_STATUS"] == "1" ||
             ENV["MASTER_CLI_VERBOSE"] == "1" ||
             ENV["MASTER_CLI_TRACE"] == "1"
         end
@@ -62,11 +61,8 @@ module Master
           status << "web: ready" if splash_web_url.to_s.include?("http")
           mode = Master::CLI::RuntimeMode.summary(config: @config).split(", ").first(3).join(", ")
           [
-            d("MASTER #{soul_version} ##{context[:build]}"),
-            d("    #{context[:user]}@#{context[:host]}:#{@config['root'] || Dir.pwd}"),
-            d(status.join("  ")),
-            d("mode: #{mode}"),
-            "",
+            d("MASTER #{soul_version} ##{context[:build]}  #{status.join('  ')}"),
+            d("#{context[:user]}@#{context[:host]}:#{@config['root'] || Dir.pwd}"),
             splash_ready_line(context),
           ].join("\n")
         rescue StandardError
@@ -86,9 +82,9 @@ module Master
         end
 
         def state_line(model, **options)
-          bits = ["model: #{short_model(model)}", "ctx: #{context_label(options[:tokens], model)}"]
+          bits = ["#{short_model(model)}", context_label(options[:tokens], model)]
           violations = options.fetch(:violations, 0).to_i
-          bits << "scan: #{violations} violations" if violations.positive?
+          bits << "#{violations} violations" if violations.positive?
           d(bits.join(", "))
         end
 

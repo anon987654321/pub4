@@ -118,6 +118,7 @@ module Master
         end
 
         text = line.to_s.gsub(/\s+/, " ").strip
+        return nil if verbosity == "normal" && normal_noise?(text)
         # Clears the repainting "thinking" line first, or the unit prints on
         # the end of it.
         # Dim like the boot lines above it: kernel lines recede, and the reply
@@ -126,6 +127,13 @@ module Master
         $stdout.puts($stdout.tty? ? pastel.dim(text) : text)
         $stdout.flush
         text
+      def normal_noise?(text)
+        return false if text.match?(/\Allm\d+: no lane answered/)
+
+        text.match?(/\A(?:cache|error|tool|evidence)\d+:/) ||
+          text.match?(/\Allm\d+: (?:request|retry_attempt|provider_error|failover_|cache|cost|transparency)/)
+      end
+
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "Trace::Dmesg.emit")
         nil
