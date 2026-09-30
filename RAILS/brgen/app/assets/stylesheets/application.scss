@@ -11159,3 +11159,122 @@ body.vertical-marketplace .deal-price {
     font-size: clamp(2rem, 9vw, 3rem);
   }
 }
+
+
+/* BRGEN core + vertical typography pass
+   The shared Helvetica stack remains the working face for navigation, utility,
+   transactions and conversation. Editorial surfaces earn a serif only where
+   the reader is browsing stories, programmes or place-led features. This keeps
+   contrast purposeful rather than turning every screen into a magazine. */
+:root {
+  --font-brgen-editorial: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+}
+
+body:not([data-surface="luxury"]) {
+  font-kerning: normal;
+  font-variant-ligatures: common-ligatures;
+}
+
+body:not([data-surface="luxury"]) :is(
+  .feed-header h1,
+  .feed-post-show h1,
+  .post-reading-title,
+  .page-header h1
+) {
+  font-family: var(--font-brgen-editorial);
+  font-weight: 400;
+  line-height: 1.02;
+  letter-spacing: -0.012em;
+  text-wrap: balance;
+}
+
+body:not([data-surface="luxury"]) :is(
+  .feed-post-prose,
+  .post-reading-body-preview,
+  .feed-post-body,
+  main article > p
+) {
+  max-inline-size: 66ch;
+  line-height: 1.55;
+}
+
+body:not([data-surface="luxury"]) :is(
+  .nav_link,
+  .nav-block,
+  button,
+  input,
+  select,
+  textarea
+) {
+  font-family: var(--font);
+  font-kerning: normal;
+}
+
+body.vertical-tv :is(
+  .radio-section-header h2,
+  .channel-card h2,
+  .show-card h2,
+  .tv-show-title
+) {
+  font-family: var(--font-brgen-editorial);
+  font-weight: 400;
+  line-height: 1.04;
+  letter-spacing: -0.012em;
+  text-wrap: balance;
+}
+
+body.vertical-maps .place-card h2,
+body.vertical-maps article.place h1 {
+  font-family: var(--font-brgen-editorial);
+  font-weight: 400;
+  line-height: 1.08;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+/* Keep interaction-heavy verticals deliberately sans: the content is scanned,
+   compared or acted upon rather than read as a continuous editorial column. */
+body.vertical-dating,
+body.vertical-takeaway,
+body.vertical-messenger,
+body.vertical-playlist {
+  font-family: var(--font);
+}
+
+body.vertical-dating :is(h1, h2, h3),
+body.vertical-takeaway :is(h1, h2, h3),
+body.vertical-messenger :is(h1, h2, h3),
+body.vertical-playlist :is(h1, h2, h3) {
+  font-family: var(--font);
+  text-wrap: balance;
+}
+
+/* Bringhurst's measure is a reading constraint, not a grid width. */
+body:not([data-surface="luxury"]) :is(
+  .feed-post-prose,
+  .post-reading-body-preview,
+  .feed-post-body,
+  main article > p
+) {
+  max-width: 66ch;
+}
+
+@media (max-width: 767px) {
+  body:not([data-surface="luxury"]) :is(
+    .feed-header h1,
+    .feed-post-show h1,
+    .post-reading-title
+  ) {
+    font-size: clamp(2rem, 9vw, 3rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body:not([data-surface="luxury"]) :is(
+    .feed-header h1,
+    .feed-post-show h1,
+    .post-reading-title
+  ) {
+    transition: none;
+  }
+}
