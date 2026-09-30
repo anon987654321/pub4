@@ -284,6 +284,10 @@ module Operator
       !scan_only && ENV.fetch("PUB4_GATE_COUNCIL_FIX", "1") != "0"
     end
 
+    def strict_env
+      Operator::StrictMode.flags
+    end
+
     def gate(tier, scan_only:, trees: TREES)
       scope = trees == TREES ? [] : ["--tree=#{trees.join(',')}"]
       capture(RUBY, File.join(MASTER, "bin", "gate"), tier, *scope, *(scan_only ? ["--scan-only"] : []))
@@ -296,11 +300,12 @@ module Operator
     def rails_gates(scan_only:)
       capture(RUBY, File.join(MASTER, "gates", "runner.rb"), "--all",
               chdir: File.join(ROOT, "RAILS"),
-              env: { "GATE_AUTOFIX" => scan_only ? "0" : "1" })
+              env: strict_env.merge("GATE_AUTOFIX" => scan_only ? "0" : "1"))
     end
 
     def openbsd_gates
-      capture(RUBY, File.join(ROOT, "OPENBSD", "bin", "check-openbsd"), chdir: ROOT)
+      capture(RUBY, File.join(ROOT, "OPENBSD", "bin", "check-openbsd"),
+              chdir: ROOT, env: strict_env)
     end
 
     # Every file runs, then the run fails once with all of them named. Aborting
