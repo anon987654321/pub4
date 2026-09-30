@@ -60,8 +60,25 @@ body.vertical-marketplace .listing-buy-bar-actions > * {
 }
 
 body.vertical-marketplace .store-pdp-description {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
   max-inline-size: 68ch;
   margin-block: 4px var(--store-section);
+}
+
+body.vertical-marketplace .store-pdp-description > div {
+  flex: 1 1 100%;
+  min-inline-size: 0;
+}
+
+body.vertical-marketplace .store-pdp-description .btn-share,
+body.vertical-marketplace .store-pdp-description a.btn {
+  min-height: var(--tap-min);
+  padding-inline: 10px;
+  color: var(--store-ink);
+  font-size: var(--text-sm);
 }
 
 .listing-ranking-reasons {
