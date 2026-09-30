@@ -82,11 +82,17 @@ module Master
       # dependencies as /review because it is the same pipeline with the
       # repair turned on -- the one verb that writes.
       def review_verbs(d)
-        deps = [d[:scanner], d[:fix_loop], d[:deliberation], d[:root], d[:bus], d[:swarm]]
+        # These dispatchers are keyword-only. Build the calls as keyword calls
+        # here rather than relying on positional-to-keyword recovery in Command;
+        # Ruby 3+ deliberately keeps those argument kinds separate.
+        deps = {
+          scanner: d[:scanner], fix_loop: d[:fix_loop], deliberation: d[:deliberation],
+          root: d[:root], bus: d[:bus], swarm: d[:swarm]
+        }
         {
-          "review" => command(:dispatch_review, *deps),
-          "critique" => command(:dispatch_critique, *deps),
-          "fix" => command(:dispatch_fix, *deps),
+          "review" => Command.new { |ctx| dispatch_review(**deps, ctx:) },
+          "critique" => Command.new { |ctx| dispatch_critique(**deps, ctx:) },
+          "fix" => Command.new { |ctx| dispatch_fix(**deps, ctx:) },
         }
       end
 
