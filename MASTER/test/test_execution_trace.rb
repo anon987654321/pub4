@@ -37,6 +37,20 @@ class TestExecutionTrace < Minitest::Test
     end
   end
 
+  def test_live_graph_reports_missing_dependency_methods
+    trace = Master::Fix::ExecutionTrace.new(
+      root: Master::ROOT,
+      files: [],
+      dependencies: { scanner: Object.new, fix_loop: nil, deliberation: Object.new, bus: Object.new }
+    )
+
+    failures = []
+    trace.send(:verify_live_graph, failures)
+
+    assert_includes failures, "live_graph: fix_loop missing"
+    assert failures.any? { |failure| failure.include?("scanner missing #scan") }
+  end
+
   def test_canonical_boot_configuration_does_not_depend_on_workflow_yml
     refute_includes Master::Fix::ExecutionTrace::BOOT_CONFIG, "MASTER/data/workflow.yml"
     assert_includes Master::Fix::ExecutionTrace::BOOT_CONFIG, "MASTER/data/limits.yml"
