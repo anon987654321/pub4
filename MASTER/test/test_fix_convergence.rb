@@ -104,6 +104,17 @@ class TestFixConvergence < Minitest::Test
     assert_equal Master::RAILS_ROOT, resolver.resolve_target("RAILS/**/*")
   end
 
+  def test_openbsd_recursive_tree_globs_resolve_to_the_tree_root
+    resolver = Class.new do
+      include Master::CLI::Pipeline::TargetResolver
+      def initialize(root) = @root = root
+    end.new(Master::ROOT)
+
+    openbsd = File.join(Master::REPO_ROOT, "OPENBSD")
+    assert_equal openbsd, resolver.resolve_target("OPENBSD/**")
+    assert_equal openbsd, resolver.resolve_target("OPENBSD/**/*")
+  end
+
   def test_all_three_tree_names_resolve_to_the_pub4_root
     resolver = Class.new do
       include Master::CLI::Pipeline::TargetResolver
