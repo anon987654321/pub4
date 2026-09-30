@@ -13,6 +13,7 @@ module Master
       BOOT_TIME = Process.clock_gettime(Process::CLOCK_MONOTONIC, :millisecond)
       PATTERN_CACHE_MAX = 512
       MAX_DISPATCHED_EVENTS = 64
+      FAILURE_WARNING_LIMIT = 8
 
       def initialize(event_log: nil, evidence_log: nil)
         super()
@@ -20,6 +21,8 @@ module Master
         @pattern_cache = {}
         @event_log = event_log || Master::Trace::Log::Event.new
         @evidence_log = evidence_log
+        @failure_mutex = Mutex.new
+        @failure_warnings = {}
       end
 
       def subscribe(pattern, &handler)
@@ -90,9 +93,33 @@ module Master
           handlers.each do |h|
             h.call(enriched)
           rescue StandardError => e
-            Master::Ground::Swallow.log(e, context: "event_bus.handler", event:)
+            report_handler_failure(event, e)
           end
         end
+      end
+
+      def report_handler_failure(event, error)
+        warn_failure("handler #{event}", error)
+        return if event.to_s == "error:swallowed"
+
+        Master::Ground::Swallow.log(error, context: "event_bus.handler", event:)
+      rescue StandardError => e
+        warn_failure("handler-report #{event}", e)
+      end
+
+      def warn_failure(key, error)
+        should_warn = @failure_mutex.synchronize do
+          next false if @failure_warnings.size >= FAILURE_WARNING_LIMIT && !@failure_warnings.key?(key)
+          next false if @failure_warnings[key]
+
+          @failure_warnings[key] = true
+          true
+        end
+        return unless should_warn
+
+        Kernel.warn("event_bus: #{key} failed — #{error.class}: #{error.message}")
+      rescue StandardError
+        nil
       end
 
       def warn_dispatch_limit(state, event)
@@ -109,8 +136,7 @@ module Master
         @event_log.append(event, safe_payload)
         @evidence_log&.append(event, safe_payload) if @evidence_log&.operational?(event)
       rescue StandardError => e
-        # warn-only: routing through the bus here recurses
-        Master::Ground::Swallow.log(e, context: "event_bus.persist_event", event:)
+        warn_failure("persist #{event}", e)
       end
 
       def elapsed_ms
