@@ -105,7 +105,7 @@ it is and what it runs on.
 ```console
 $ cd MASTER && bin/cli
 
-MASTER 2.8.0 (CONSTITUTIONAL) #8021: Fri Sep  4 17:39:16 CEST 2026
+MASTER 1.0.0 (CONSTITUTIONAL) #8021: Fri Sep  4 17:39:16 CEST 2026
     mac@Mac.lan:/Users/mac/Documents/GitHub/pub4/MASTER
 real memory = 8589934592 (8192MB)
 available memory = 1813561344 (1729MB)
@@ -114,7 +114,7 @@ cpu0 at mainbus0: Apple M2
 kern0 at mainbus0: Darwin 25.5.0 arm64
 ruby0 at mainbus0: ruby 4.0.5 arm64-darwin25
 shell0 at mainbus0: zsh, user mac
-soul0 at mainbus0: constitution rev 2.8.0
+release0 at mainbus0: pub4 1.0.0\nsoul0 at mainbus0: constitution rev 2.8.0
 soul0: imports soul rules limits state patterns openbsd
 soul0: 3 orders active
 model0 at mainbus0: nemotron-3-super-120b-a12b
