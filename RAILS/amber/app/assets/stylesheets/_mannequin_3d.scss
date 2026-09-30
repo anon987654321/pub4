@@ -32,21 +32,11 @@
   position: absolute;
   inset: 0 0 3rem;
   height: calc(100% - 3rem);
-  --particle-ink: #8eaee3;
-  --figure-ink: #8eaee3;
+  --particle-ink: var(--figure-ink);
   z-index: 1;
   pointer-events: auto;
 }
 
-.amber-look-figure::after {
-  content: "";
-  position: absolute;
-  inset: 12% 28% 8%;
-  border-radius: 50%;
-  border: 1px solid color-mix(in srgb, #8eaee3 18%, transparent);
-  opacity: .35;
-  pointer-events: none;
-}
 
 .amber-look-track {
   position: absolute;
