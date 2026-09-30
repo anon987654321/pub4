@@ -300,6 +300,25 @@ module Operator
 
     def recorded_members(name = "law") = Array(recorded[KEYS.fetch(name)[:members]])
 
+    # A member is stale when its recorded file is gone or its recorded line no longer exists.
+    # This is warning-only: the baseline remains evidence until a fresh measured run rewrites it.
+    def stale_recorded_members(name = "law", root: ROOT)
+      recorded_members(name).filter_map do |member|
+        match = member.to_s.match(/\A\S+\s+(.+):(\d+)\z/)
+        next member unless match
+
+        path, line = match.captures
+        absolute = File.join(root, path)
+        next member unless File.file?(absolute)
+
+        line_number = line.to_i
+        line_number.positive? && File.foreach(absolute, encoding: "UTF-8").take(line_number).length < line_number ? member : nil
+      end
+    rescue StandardError => e
+      Master::Ground::Swallow.log(e, context: "self_findings.stale_members", path: root)
+      []
+    end
+
     # Which rules moved since the baseline, and by how much.
     def report_drift(counts, known = recorded_by_rule)
       if known.empty?
@@ -367,6 +386,11 @@ module Operator
       counts = tally(current)
       puts "self_findings #{name}: #{current.size} across #{files.size} files from #{rules_behind(name)} rules"
       counts.first(10).each { |id, n| puts format("  %-26s %5d", id, n) }
+      stale = stale_recorded_members(name)
+      unless stale.empty?
+        warn "self_findings #{name}: #{stale.size} recorded member(s) stale — fresh attribution required"
+        stale.first(20).each { |member| warn "  stale: #{member}" }
+      end
       return true unless current.size > ceiling(name)
 
       warn "self_findings #{name}: exceeds baseline — #{current.size} > #{ceiling(name)}"
