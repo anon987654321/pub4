@@ -125,22 +125,34 @@ class TestFixConvergence < Minitest::Test
     assert_equal openbsd, resolver.resolve_target("OPENBSD/**/*")
   end
 
-  def test_all_three_tree_names_resolve_to_the_pub4_root
+  def test_all_four_tree_names_resolve_to_the_pub4_root
     resolver = Class.new do
       include Master::CLI::Pipeline::TargetResolver
       def initialize(root) = @root = root
     end.new(Master::ROOT)
 
-    assert_equal Master::REPO_ROOT, resolver.resolve_target("MASTER RAILS OPENBSD")
-    assert_equal Master::REPO_ROOT, resolver.resolve_target("openbsd, rails, master")
+    assert_equal Master::REPO_ROOT, resolver.resolve_target("MASTER RAILS OPENBSD STUDIO")
+    assert_equal Master::REPO_ROOT, resolver.resolve_target("openbsd, rails, master, studio")
     refute_equal Master::REPO_ROOT, resolver.resolve_target("MASTER RAILS")
   end
 
-  def test_gate_chain_recognizes_all_three_tree_names
+  def test_gate_chain_recognizes_all_four_tree_names
     assert_equal %w[MASTER RAILS OPENBSD STUDIO],
-                 Operator::GateChain.trees_for_target("MASTER RAILS OPENBSD")
+                 Operator::GateChain.trees_for_target("MASTER RAILS OPENBSD STUDIO")
     assert_equal %w[MASTER RAILS OPENBSD STUDIO],
-                 Operator::GateChain.trees_for_target("openbsd,rails,master")
+                 Operator::GateChain.trees_for_target("openbsd,rails,master,studio")
+  end
+
+
+  def test_studio_recursive_tree_globs_resolve_to_the_tree_root
+    resolver = Class.new do
+      include Master::CLI::Pipeline::TargetResolver
+      def initialize(root) = @root = root
+    end.new(Master::ROOT)
+
+    studio = File.join(Master::REPO_ROOT, "STUDIO")
+    assert_equal studio, resolver.resolve_target("STUDIO/**")
+    assert_equal studio, resolver.resolve_target("STUDIO/**/*")
   end
 
   def test_exact_all_tree_fix_command_targets_the_repo_and_preserves_gate_scope
