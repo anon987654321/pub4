@@ -334,7 +334,7 @@ if ARGV[0] == "--daemon"
       next unless line && !line.empty?
       req = JSON.parse(line)
       if req["health"]
-        client.write("ok\n")
+        client.write("ok #{WORKER_VERSION}\n")
         next
       end
       request = SynthRequest.new(
