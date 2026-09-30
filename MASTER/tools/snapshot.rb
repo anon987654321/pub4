@@ -120,7 +120,7 @@ module Operator
         ### 7. The law you are reviewing against
 
         This repository is governed by MASTER, and its law is data rather than prose. Read it before
-        you judge anything, in this order — all three governed trees are represented by their own snapshots:
+        you judge anything, in this order — all four governed trees are represented by their own snapshots:
 
         1. `MASTER/data/soul.yml` — the kernel: absolutes, work rules, anti-simulation.
         2. `MASTER/data/rules.yml` — 242 declared rules, each with tier, severity and fix.
