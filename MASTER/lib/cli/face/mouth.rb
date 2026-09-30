@@ -111,14 +111,20 @@ module Master
         end
 
         def play(path, part, on_level:, stop:)
-          levels = envelope(path)
-          length = levels.empty? ? part.length / CHARS_PER_S : levels.size * FRAME_S
+          envelope_job = Thread.new { envelope(path) }
           state = start(path)
           playing, halt, status = state
           started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
           stopped = false
+          levels = []
+          length = part.length / CHARS_PER_S
           loop do
             elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
+            if envelope_job.join(0)
+              levels = envelope_job.value
+              length = levels.size * FRAME_S unless levels.empty?
+              envelope_job = nil
+            end
             if stop.call
               stopped = true
               quietly(halt)
@@ -129,6 +135,7 @@ module Master
             on_level.call(levels.empty? ? nil : levels.fetch((elapsed / FRAME_S).floor, 0.0))
             sleep FRAME_S
           end
+          levels = envelope_job.value if envelope_job
           on_level.call(0.0)
           return true if stopped
 
@@ -173,8 +180,7 @@ module Master
           false
         end
 
-        def show_direct_fallback(text)
-          return if text.to_s.empty?
+        def show_direct_fallback
           return unless direct_speech?
 
           Master::Trace::Dmesg.status("voice0", "synthesis unavailable, using direct speech")
