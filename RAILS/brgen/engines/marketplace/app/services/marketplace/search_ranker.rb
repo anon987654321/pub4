@@ -79,16 +79,17 @@ module Marketplace
     end
 
     def preferred_category_ids
-      @preferred_category_ids ||= if viewer
-        viewer.marketplace_favorites
-              .joins(:listing)
-              .distinct
-              .limit(50)
-              .pluck("marketplace_listings.category_id")
-              .compact
-      else
-        []
-      end
+      @preferred_category_ids ||= begin
+        if viewer
+          viewer.marketplace_favorites
+                .joins(:listing)
+                .distinct
+                .limit(50)
+                .pluck("marketplace_listings.category_id")
+                .compact
+        else
+          []
+        end
       rescue StandardError
         []
       end
