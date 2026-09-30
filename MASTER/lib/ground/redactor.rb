@@ -26,11 +26,12 @@ module Master
         return "[CYCLE]" if seen.key?(hash)
 
         seen[hash] = true
+        marked = true
         hash.each_with_object({}) do |(key, value), out|
           out[key] = scrub_value(key, value, seen:)
         end
       ensure
-        seen.delete(hash) if defined?(hash) && seen
+        seen.delete(hash) if marked
       end
 
       def self.scrub_value(key, value, seen: {})
@@ -52,6 +53,7 @@ module Master
         return "[CYCLE]" if seen.key?(array)
 
         seen[array] = true
+        marked = true
         array.map { |item| scrub_value(key, item, seen:) }
       ensure
         seen.delete(array) if defined?(array) && seen
