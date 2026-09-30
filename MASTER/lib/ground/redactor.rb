@@ -18,14 +18,18 @@ module Master
       MAX_DEPTH = 16
 
       def self.text(value)
-        # Normalize String subclasses before redaction. Redaction stays on a
-        # plain String and uses Regexp#match so String#gsub overrides cannot
-        # re-enter this method.
-        out = value.is_a?(String) ? String.new(value) : String.new(value.to_s)
+        out = plain_string(value)
         KEY_PATTERNS.each do |pattern|
           out = redact_pattern(out, pattern)
         end
         out
+      end
+
+      def self.plain_string(value)
+        return value if value.instance_of?(String)
+        return String.instance_method(:bytes).bind(value).call.pack("C*") if value.is_a?(String)
+
+        value.to_s
       end
 
       def self.redact_pattern(value, pattern)
