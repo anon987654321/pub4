@@ -97,6 +97,9 @@
      from shared/_tokens.scss through stack_brgen's @forward "tokens", so they are
      not declared here. */
   --elev-1: 1px solid var(--border);
+  --brgen-header-bg: #143d5b;
+  --brgen-header-ink: #f5f7fa;
+  --brgen-header-muted: #c4d0dc;
 }
 
 /* brgen's light palette, stated once. Shared [data-theme=light] is the social
@@ -11279,4 +11282,63 @@ body:not([data-surface="luxury"]) :is(
     transition: none;
   }
 }
+/* BRGEN_OLD-inspired top header: retain the current feed anatomy, but
+   restore the dark-blue utility/header band from the legacy visual language. */
+.brgen-top-chrome {
+  display: none;
+}
+
+body:not([class*="vertical-"]) .brgen-top-chrome {
+  display: block;
+  position: fixed;
+  inset: 0 0 auto;
+  block-size: var(--nav-swiper-h);
+  z-index: calc(var(--z-nav) - 1);
+  background: var(--brgen-header-bg);
+  pointer-events: none;
+}
+
+body:not([class*="vertical-"]) :is(.brand-mark.brgen-logo-mark,
+.search_palette_trigger,
+.chrome-corner .chrome-auth,
+.chrome-corner .theme-toggle) {
+  color: var(--brgen-header-ink);
+}
+
+body:not([class*="vertical-"]) .nav_swiper_bar {
+  background: var(--brgen-header-bg);
+  color: var(--brgen-header-ink);
+  mask-image: linear-gradient(to right, transparent 0, var(--brgen-header-bg) var(--nav-fade-lead), var(--brgen-header-bg) var(--nav-fade-start), transparent var(--nav-fade-stop));
+}
+
+body:not([class*="vertical-"]) .nav_link {
+  color: var(--brgen-header-muted);
+}
+
+body:not([class*="vertical-"]) .nav_link:hover {
+  color: var(--brgen-header-ink);
+  background: color-mix(in srgb, var(--brgen-header-ink) 10%, transparent);
+}
+
+body:not([class*="vertical-"]) .nav_link.active {
+  color: var(--brgen-header-ink);
+}
+
+body:not([class*="vertical-"]) .chrome-corner .theme-toggle {
+  background: transparent;
+}
+
+@media (max-width: 767px) {
+  body:not([class*="vertical-"]) .brgen-top-chrome {
+    block-size: calc(var(--top-band-block) + var(--nav-swiper-h));
+  }
+}
+
+@media (min-width: 1265px) {
+  body:not([class*="vertical-"]) .chrome-corner .chrome-auth {
+    background: var(--brgen-header-ink);
+    color: var(--brgen-header-bg);
+  }
+}
+
 @include endgame.brgen;
