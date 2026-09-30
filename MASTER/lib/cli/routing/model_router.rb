@@ -80,11 +80,13 @@ module Master
 
           empirical_best = @capability_map.best_model_for(task_type)
           candidates = reachable_candidates(task_type)
-          return @config.model if candidates.empty?
+          return live_config_model(task_type:) if candidates.empty?
 
           ids = healthy(candidates).filter_map { |model| model["id"] }
           ids = floor_candidates(candidates, operation: task_type).filter_map { |model| model["id"] } if ids.empty?
-          @compute_pool.select(ids, task_type:, empirical_best:) || @config.model
+          @compute_pool.select(ids, task_type:, empirical_best:) ||
+            ids.first ||
+            live_config_model(task_type:)
         end
 
         # Only models the pool can reach. Free cloud lanes follow the tiers and
@@ -174,7 +176,25 @@ module Master
         end
 
         def floor_candidates(models, operation:)
-          models.select { |model| @availability.meets_floor?(model["id"], operation:) }
+          models.select do |model|
+            id = model["id"]
+            @availability.meets_floor?(id, operation:) &&
+              !Io::ModelSkipCache.skipped?(id) &&
+              !unhealthy?(id)
+          end
+        end
+
+        def live_config_model(task_type:)
+          id = @config.model.to_s
+          return if id.empty?
+          return id if !Io::ModelSkipCache.skipped?(id) &&
+                       !unhealthy?(id) &&
+                       (reachable?(id))
+
+          fallback_chain(task_type:).first
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "model_router.live_config_model", model: id)
+          nil
         end
 
         def prefer_floor(all_models, fresh_models, operation:)
