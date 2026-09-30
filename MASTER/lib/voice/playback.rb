@@ -40,6 +40,8 @@ module Master
       @pending = nil
       @last_said = nil
       @last_at = 0.0
+      @generation = 0
+      @playing_pid = nil
 
       module_function
 
@@ -108,7 +110,8 @@ module Master
         # then spoke. The worker stays single, so they are heard in order.
         parts = Speech.chunks(str)
         parts = [str] if parts.empty?
-        parts.each_with_index { |part, index| queue.push([str, part, index == parts.size - 1]) }
+        generation = current_generation
+        parts.each_with_index { |part, index| queue.push([str, part, index == parts.size - 1, generation]) }
         nil
       end
 
@@ -151,6 +154,24 @@ module Master
 
       # Under the lock the queue is built with, so a push and a drain cannot
       # disagree about what is pending.
+      # A voice-first session must be interruptible at the audio boundary, not only
+      # at the turn/process boundary. In-flight synthesis may finish in the background,
+      # but its generation becomes stale and therefore can never reach the speaker.
+      def interrupt!(_reason = nil)
+        @lock.synchronize do
+          @generation += 1
+          @queue&.clear
+          @pending&.clear
+          @last_said = nil
+          terminate_player_locked if @playing_pid
+        end
+        Device::Audio.stop if Device::Audio.media_player_available?
+        true
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "Voice::Playback.interrupt")
+        false
+      end
+
       def echo?(str)
         @lock.synchronize do
           now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
@@ -184,9 +205,13 @@ module Master
       def drain
         while (job = @queue.pop)
           begin
-            text, part, last = job.is_a?(Array) ? job : [job, job, true]
+            text, part, last, generation = job.is_a?(Array) ? [job[0], job[1], job[2], job[3]] : [job, job, true, current_generation]
+            generation ||= current_generation
+            next unless generation_active?(generation)
+
             path = synthesize(part)
-            spoken(text) if last
+            next unless generation_active?(generation)
+
             unless path
               next if native_say(text)
 
@@ -194,11 +219,12 @@ module Master
               next
             end
 
-            unless play(path)
-              unless android_speak(text) || native_say(text)
+            unless play(path, generation:)
+              unless generation_active?(generation) && (android_speak(text) || native_say(text))
                 warn_once("audio playback failed — #{player&.first || "no player or native speech"}")
               end
             end
+            spoken(text) if last && generation_active?(generation)
             File.delete(path) if path.start_with?("/tmp/m_tts_") && File.exist?(path)
           rescue StandardError => e
             warn_once("playback worker failed — #{e.class}: #{e.message}")
@@ -244,8 +270,9 @@ module Master
         false
       end
 
-      def play(path)
+      def play(path, generation: current_generation)
         return false unless File.exist?(path)
+        return false unless generation_active?(generation)
 
         if Device::Audio.media_player_available?
           return Device::Audio.play(path)
@@ -254,10 +281,34 @@ module Master
         name, args = player
         return false unless name && args
 
-        system(name, *args, path, out: File::NULL, err: File::NULL)
+        pid = Process.spawn(name, *args, path, out: File::NULL, err: File::NULL)
+        @lock.synchronize { @playing_pid = pid if generation_active?(generation) }
+        Process.wait(pid)
+        true
+      rescue Errno::ESRCH, Errno::ECHILD
+        false
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "Voice::Playback.play")
         false
+      end
+
+      def current_generation
+        @lock.synchronize { @generation }
+      end
+
+      def generation_active?(generation)
+        @lock.synchronize { generation == @generation }
+      end
+
+      def terminate_player_locked
+        return unless @playing_pid
+
+        Process.kill("TERM", @playing_pid)
+        Process.kill("KILL", @playing_pid) rescue nil
+      rescue Errno::ESRCH, Errno::ECHILD
+        nil
+      ensure
+        @playing_pid = nil
       end
 
       # A missing player is a real condition the operator can fix, so it is said
