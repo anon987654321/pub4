@@ -22,7 +22,7 @@ Master::Boot::Entrypoint.prepare!(root: File.expand_path("..", __dir__))
 # includes MASTER alongside whatever was named.
 
 require "open3"
-require_relative "../lib/operator/ruby_runner"
+require_relative "../lib/operator/ruby_runner"\nrequire_relative "../lib/operator/strict_mode"
 
 ROOT = File.expand_path("..", __dir__)
 REPO = File.expand_path("..", ROOT)
@@ -32,7 +32,7 @@ BUNDLE = Operator::RubyRunner.bundle_cmd
 # MASTER_SCAN_AUTOFIX gates the deterministic AstFixer pass, which defaults on
 # and would otherwise write before the repair stage is reached.
 # MASTER/gates/lib/constitutional_scan.rb carries the same pair.
-SAFE_ENV = {
+STRICT_ENV = Operator::StrictMode.flags\n\nSAFE_ENV = {
   "MASTER_SAFE_MODE" => "1",
   "MASTER_BACKGROUND" => "0",
   "MASTER_AUTOFIX" => "0",
@@ -218,7 +218,6 @@ end
 def git_diff(*paths)
   run_command("git", "diff", "--", *paths, chdir: REPO)
 end
-
 # The chain ends with a clean tree or it does not end.
 #
 # A dirty tree here is not a bug in /fix. After real work the first run should
