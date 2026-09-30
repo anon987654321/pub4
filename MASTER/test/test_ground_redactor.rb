@@ -19,6 +19,17 @@ class GroundRedactorTest < Minitest::Test
     assert_equal "token [REDACTED] leaked", Master::Ground::Redactor.text(raw)
   end
 
+  def test_text_normalizes_string_returned_by_to_s
+    string_class = Class.new(String) do
+      define_method(:to_str) { Master::Ground::Redactor.text(self) }
+    end
+    value_class = Class.new do
+      define_method(:to_s) { string_class.new("token sk-#{'D' * 24}") }
+    end
+
+    assert_equal "[REDACTED]", Master::Ground::Redactor.text(value_class.new)
+  end
+
   def test_payload_accepts_keyword_fields
     scrubbed = Master::Ground::Redactor.payload(text: "sk-#{'C' * 24}")
 
