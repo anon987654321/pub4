@@ -1,4 +1,4 @@
-# frozen_string_literal: true
+<sub># frozen_string_literal: true
 
 require "test_helper"
 
@@ -68,3 +68,4 @@ class MarketplaceMaturityTest < ActiveSupport::TestCase
     assert_operator score, :<=, 1.0
   end
 end
+</sub>
