@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "uri"
+
 module Marketplace
   class CatalogController < Marketplace::BaseController
     include StorefrontSearch
