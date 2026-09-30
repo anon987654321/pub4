@@ -17,10 +17,9 @@ module Master
     module CommandRegistry
       module_function
 
-      # Closed public surface: every verb here has a help topic, and every file
-      # under command_registry/ holds the dispatchers these verbs reach or the
-      # stages Pipeline::Pass calls. Observation and critique stay as methods the
-      # pass calls; they are not slash verbs.
+      # Closed public surface: every verb here has a help topic. Review and
+      # critique remain compatibility adapters; /fix is the canonical lifecycle
+      # and the only public verb that may write.
       #
       # The surface is closed on purpose. Work is a sentence: TurnRouter reaches
       # the Fold and MediaIntent reaches MASTER/tools from plain language, and every
