@@ -5,10 +5,11 @@
 # Agent entry with the subapp table:
 #   AGENTS.md
 #
-# There is no city switcher. A visitor on lsangeles.com never sees Bergen.
-# Verticals are subdomains of the city apex, not path prefixes and not
-# separate Rails apps. Every DomainRegistry city works this way — Bergen and
-# Los Angeles are examples. Apexes are usually the city with a vowel missing
+# The footer links the public city network. A click changes apex and therefore
+# tenant; it does not merge city data. Verticals are subdomains of the city
+# apex, not path prefixes and not separate Rails apps. Every DomainRegistry city
+# works this way — Bergen and Los Angeles are examples. Apexes are usually the
+# city with a vowel missing
 # (brgen.no, oshlo.no, lndon.uk, chcago.us).
 
 # <subapp>.<city-apex>
