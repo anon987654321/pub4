@@ -21,7 +21,7 @@ class TtsControllerTest < ActionDispatch::IntegrationTest
 
   teardown do
     Array(@created_job_ids).each do |job_id|
-      %w[.mp3 .job .err .meta.json].each { |ext| FileUtils.rm_f(@cache_dir.join("#{job_id}#{ext}")) }
+      (TtsJob::AUDIO_EXTENSIONS + %w[.job .err .meta.json]).each { |ext| FileUtils.rm_f(@cache_dir.join("#{job_id}#{ext}")) }
     end
   end
 
@@ -83,6 +83,20 @@ class TtsControllerTest < ActionDispatch::IntegrationTest
     assert_response :service_unavailable
     assert_equal "synthesis_failed", JSON.parse(response.body)["error"]
     refute_includes response.body, "secret"
+  end
+
+  test "status serves native wav with audio wav media type" do
+    text = "status wav"
+    voice = Master::Voice::Speech.resolve_voice(Master::Voice::Speech::DEFAULT_VOICE)
+    style = Master::Voice::Speech.default_style
+    job = track(TtsJob.new(text:, voice:, style:))
+    File.binwrite(@cache_dir.join("#{job.job_id}.wav"), "RIFF fake-wav")
+    File.write(@cache_dir.join("#{job.job_id}.job"), { text:, voice:, style: }.to_json)
+
+    get "/chat/tts/status", params: { job: job.job_id }
+
+    assert_response :success
+    assert_equal "audio/wav", response.media_type
   end
 
   test "status returns audio when job is ready" do
