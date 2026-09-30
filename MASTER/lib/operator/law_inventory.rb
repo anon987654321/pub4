@@ -43,7 +43,7 @@ module Operator
           semantic: !!rule&.ask,
           practice: !!rule&.practice,
           fixture: rule ? !rule.bad.to_s.empty? && !rule.good.to_s.empty? : fixture_on_registry?(scan),
-          successor: Array(row["successor"]).presence || Array(row["successor_ids"]).presence,
+          successor: first_present(row["successor"], row["successor_ids"]),
           dependencies: Array(deps[id]),
           council_axes: councils.filter_map do |persona|
             emphasizes = Array(persona["emphasizes"]).map(&:to_s)
@@ -187,7 +187,7 @@ module Operator
       require "master"
       raw = Master.load_rules(root: MASTER)
       entries = Master.flatten_rules(raw.fetch("rules", {}))
-      entries.filter_map.with_object({}) do |entry, rows|
+      entries.each_with_object({}) do |entry, rows|
         next unless entry.is_a?(Hash) && entry["id"]
 
         rows[entry["id"].to_s.downcase] = entry
@@ -213,7 +213,7 @@ module Operator
       {}
     end
 
-    def source_mentions_any?(rule, axes)
+    def first_present(*values)\n      values.each do |value|\n        array = Array(value)\n        return array unless array.empty?\n      end\n      []\n    end\n\n    def source_mentions_any?(rule, axes)
       source = rule&.source.to_s.upcase
       axes.any? { |axis| source.include?(axis.to_s.upcase) }
     end
