@@ -56,11 +56,17 @@ class ItemsController < ApplicationController
   end
 
   def new
-    @item = Current.user.items.build
+    @commerce_seed = commerce_seed
+    @item = Current.user.items.build(
+      title: @commerce_seed[:title],
+      category: @commerce_seed[:category],
+      metadata: @commerce_seed[:metadata]
+    )
   end
 
   def create
-    @item = Current.user.items.build(item_params)
+    @item = Current.user.items.build(item_params.except(:commerce_key, :source_url))
+    @item.metadata = commerce_metadata_from_params
     if @item.save
       WardrobeMediaJob.perform_later(@item.id) if @item.photos.attached?
       @item.record_activity!("AmberItemCreated", source_vertical: "amber")
@@ -200,8 +206,29 @@ class ItemsController < ApplicationController
       :title, :category, :color, :size, :material,
       :brand, :price, :times_worn, :purchase_date,
       :mood_effect, :life_phase, :occasion_tags, :season,
+      :commerce_key, :source_url,
       photos: []
     )
+  end
+
+  def commerce_seed
+    title = params[:title].to_s.strip
+    category = Item::CATEGORIES.find { |value| value.casecmp?(params[:category].to_s) }
+    key = params[:commerce_key].to_s.strip
+    source_url = params[:source_url].to_s.strip
+    metadata = {}
+    metadata["commerce"] = { "key" => key, "source_url" => source_url } if key.present? || source_url.present?
+
+    { title: title.presence, category:, metadata: metadata.presence || {} }
+  end
+
+  def commerce_metadata_from_params
+    existing = @item.metadata.is_a?(Hash) ? @item.metadata : {}
+    key = params.dig(:item, :commerce_key).to_s.strip
+    source_url = params.dig(:item, :source_url).to_s.strip
+    return existing unless key.present? || source_url.present?
+
+    existing.merge("commerce" => { "key" => key, "source_url" => source_url }.compact)
   end
 
   def share_title
