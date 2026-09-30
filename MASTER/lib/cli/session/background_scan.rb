@@ -59,8 +59,7 @@ module Master
 
         summary = result.value!
         set_violations(summary.violation_count)
-        $stdout.puts "\n#{@refs.renderer.render(boot_scan_line(summary), mode: :dim)}"
-        $stdout.flush
+        Master::Trace::Dmesg.status("scan0", boot_scan_line(summary).delete_prefix("scan0: "))
       rescue StandardError => e
         @refs.bus&.publish("cli:warn", error: e.message)
       end
@@ -115,9 +114,8 @@ module Master
         set_violations(n)
         sign = delta.positive? ? "+#{delta}" : delta.to_s
         msg = n.positive? ? "scan0: lib/ #{n} violations, #{sign}" : "scan0: lib/ clean, #{sign}"
-        $stdout.puts "\n#{@refs.renderer.render(msg, mode: :dim)}"
+        Master::Trace::Dmesg.status("scan0", msg.delete_prefix("scan0: "))
         @refs.bus&.publish("cli:violation_delta", count: n, delta:, previous: prev)
-        $stdout.flush
       rescue StandardError => e
         @refs.bus&.publish("cli:bg_error", error: e.message)
       end
