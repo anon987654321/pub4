@@ -1422,6 +1422,43 @@ async function swapMask(imageUrl) {
   }
 }
 
+const CLI_FACE_WEB_DENSITY = 2400;
+let orbitalGeometry = null;
+let orbitalMaterial = null;
+let orbitalField = null;
+
+function ensureOrbitalField() {
+  if (orbitalField || !_hasWebGL || !THREE || !scene || !head) return;
+
+  orbitalGeometry = new THREE.BufferGeometry();
+  const positions = new Float32Array(CLI_FACE_WEB_DENSITY * 3);
+  const seeds = new Float32Array(CLI_FACE_WEB_DENSITY * 3);
+  for (let i = 0; i < CLI_FACE_WEB_DENSITY; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const r = 1.08 + Math.pow(Math.random(), 0.72) * 1.45;
+    const j = i * 3;
+    positions[j] = Math.cos(a) * r;
+    positions[j + 1] = Math.sin(a) * r * 0.72;
+    positions[j + 2] = (Math.random() - 0.5) * 0.42;
+    seeds[j] = a;
+    seeds[j + 1] = r;
+    seeds[j + 2] = Math.random();
+  }
+  orbitalGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  orbitalGeometry.setAttribute('seed', new THREE.BufferAttribute(seeds, 3));
+  orbitalMaterial = new THREE.PointsMaterial({
+    color: 0xffffff,
+    size: 1,
+    sizeAttenuation: false,
+    transparent: true,
+    opacity: 0.34,
+    depthWrite: false
+  });
+  orbitalField = new THREE.Points(orbitalGeometry, orbitalMaterial);
+  orbitalField.renderOrder = -1;
+  scene.add(orbitalField);
+}
+
 let frameLoopActive = false;
 function ensureFrameLoop() {
   if (State.hidden || document.hidden) return;
@@ -3057,8 +3094,8 @@ function enqueueSpeech(text, opts = {}) {
     .trim();
   if (!clean) return;
   if (!shouldEnqueueTtsChunk(clean, opts)) return;
-  const decorated = _quirkifyTts(clean, opts);
   const _v = speechVoiceForText(decorated);
+  const decorated = _quirkifyTts(clean, opts);
   applyParalinguisticState(decorated);
   if (tts.meta.size > 32) tts.meta.clear();
   tts.meta.set(decorated, {
