@@ -2503,3 +2503,211 @@ body[data-surface="luxury"] .commerce-handoff-note {
     transition: none;
   }
 }
+
+/* Fashion/beauty typography
+   AMBER keeps the existing Caprasimo wordmark. Page typography uses a high-contrast
+   editorial serif for display and a compact sans for navigation, product data and
+   interaction. That contrast gives the page a Vogue-like editorial voice while
+   retaining the scanning speed a beauty catalogue needs. */
+@font-face {
+  font-family: "DM Sans";
+  src: url("https://fonts.gstatic.com/s/dmsans/v16/rP2Yp2ywxg089UriI5-g7M8btVsD8Ck0q7u0-K6z9mXg.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 100 1000;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Bodoni Moda";
+  src: url("https://fonts.gstatic.com/s/bodonimoda/v25/aFTQ7PxzY382XsXX63LUYJSKSKg.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+}
+
+body[data-surface="luxury"] {
+  --font-beauty-sans: "DM Sans", var(--font), Arial, sans-serif;
+  --font-editorial: "Bodoni Moda", "Bodoni 72", "Didot", "Iowan Old Style", Georgia, serif;
+  font-family: var(--font-beauty-sans);
+  font-optical-sizing: auto;
+}
+
+body[data-surface="luxury"] :is(
+  main h1,
+  main section > h2,
+  .luxury-title,
+  .amber-look-title,
+  .post-reading-title
+) {
+  font-family: var(--font-editorial);
+  font-weight: 400;
+  letter-spacing: -0.015em;
+  line-height: 0.98;
+  text-wrap: balance;
+  font-kerning: normal;
+  font-variant-ligatures: common-ligatures;
+}
+
+body[data-surface="luxury"] main h1 {
+  font-size: clamp(2.2rem, 5vw, 4.5rem);
+}
+
+body[data-surface="luxury"] main section > h2 {
+  font-size: clamp(1.7rem, 3vw, 2.7rem);
+}
+
+body[data-surface="luxury"] .luxury-title {
+  font-size: clamp(2.4rem, 5vw, 5rem);
+  max-inline-size: 12ch;
+}
+
+body[data-surface="luxury"] .amber-look-title {
+  font-size: clamp(2.6rem, 6vw, 6rem);
+}
+
+body[data-surface="luxury"] .item-card--luxury .item-title,
+body[data-surface="luxury"] .item-card--luxury .item-meta,
+body[data-surface="luxury"] .commerce-fit-source,
+body[data-surface="luxury"] .commerce-fit-reasons,
+body[data-surface="luxury"] .shop-feed-note,
+body[data-surface="luxury"] nav,
+body[data-surface="luxury"] button,
+body[data-surface="luxury"] input,
+body[data-surface="luxury"] select,
+body[data-surface="luxury"] textarea {
+  font-family: var(--font-beauty-sans);
+  font-optical-sizing: auto;
+}
+
+body[data-surface="luxury"] .item-card--luxury .item-title {
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+body[data-surface="luxury"] .item-card--luxury .item-meta,
+body[data-surface="luxury"] .commerce-fit-reasons,
+body[data-surface="luxury"] .shop-feed-note {
+  line-height: 1.5;
+}
+
+body[data-surface="luxury"] :is(
+  .feed-post-prose,
+  .post-reading-body-preview,
+  .commerce-handoff-note,
+  .item-detail p,
+  .luxury-section > p
+) {
+  max-inline-size: 66ch;
+  line-height: 1.55;
+}
+
+body[data-surface="luxury"] .amber-editorial-nav {
+  font-family: var(--font-beauty-sans);
+}
+
+body[data-surface="luxury"] .amber-editorial-nav a {
+  font-weight: 600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body[data-surface="luxury"] .amber-logo-svg {
+    animation: none;
+  }
+}
+
+/* 8-bit stardust belongs around the logo; the canonical logo artwork stays intact. */
+.amber-instance--stardust {
+  position: relative;
+  isolation: isolate;
+}
+
+.amber-instance--stardust .amber-logo-svg {
+  position: relative;
+  z-index: 1;
+}
+
+.amber-logo-stardust {
+  position: absolute;
+  inset: -10%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.amber-stardust-spark,
+.amber-stardust-speck {
+  position: absolute;
+  display: block;
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+
+.amber-stardust-spark {
+  width: 4px;
+  height: 4px;
+  background: currentColor;
+}
+
+.amber-stardust-spark::before,
+.amber-stardust-spark::after {
+  position: absolute;
+  display: block;
+  content: "";
+  background: currentColor;
+}
+
+.amber-stardust-spark::before {
+  width: 4px;
+  height: 12px;
+  inset-inline-start: 0;
+  inset-block-start: -4px;
+}
+
+.amber-stardust-spark::after {
+  width: 12px;
+  height: 4px;
+  inset-inline-start: -4px;
+  inset-block-start: 0;
+}
+
+.amber-stardust-spark--1 { inset-inline-start: 8%; inset-block-start: 40%; color: var(--amber-pink-strong); }
+.amber-stardust-spark--2 { inset-inline-start: 22%; inset-block-start: 14%; color: var(--amber-lilac); transform: scale(.72); }
+.amber-stardust-spark--3 { inset-inline-start: 46%; inset-block-start: 2%; color: var(--amber-blue); transform: scale(.58); }
+.amber-stardust-spark--4 { inset-inline-end: 20%; inset-block-start: 10%; color: var(--amber-pink-strong); transform: scale(.78); }
+.amber-stardust-spark--5 { inset-inline-end: 8%; inset-block-start: 39%; color: var(--amber-lilac); }
+.amber-stardust-spark--6 { inset-inline-end: 20%; inset-block-end: 12%; color: var(--amber-mint); transform: scale(.64); }
+.amber-stardust-spark--7 { inset-inline-start: 25%; inset-block-end: 6%; color: var(--amber-yellow); transform: scale(.52); }
+
+.amber-stardust-speck {
+  width: 3px;
+  height: 3px;
+  background: currentColor;
+}
+
+.amber-stardust-speck--1 { inset-inline-start: 15%; inset-block-start: 28%; color: var(--amber-mint); }
+.amber-stardust-speck--2 { inset-inline-start: 33%; inset-block-start: 7%; color: var(--amber-pink-strong); }
+.amber-stardust-speck--3 { inset-inline-end: 32%; inset-block-start: 5%; color: var(--amber-yellow); }
+.amber-stardust-speck--4 { inset-inline-end: 12%; inset-block-start: 58%; color: var(--amber-blue); }
+.amber-stardust-speck--5 { inset-inline-end: 36%; inset-block-end: 4%; color: var(--amber-lilac); }
+.amber-stardust-speck--6 { inset-inline-start: 12%; inset-block-end: 16%; color: var(--amber-pink-strong); }
+.amber-stardust-speck--7 { inset-inline-start: 41%; inset-block-end: 10%; color: var(--amber-mint); }
+
+@keyframes amber-stardust-twinkle {
+  0%, 100% { opacity: .55; }
+  50% { opacity: 1; }
+}
+
+.amber-stardust-spark--2,
+.amber-stardust-spark--4,
+.amber-stardust-speck--1,
+.amber-stardust-speck--5 {
+  animation: amber-stardust-twinkle 4.8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .amber-stardust-spark--2,
+  .amber-stardust-spark--4,
+  .amber-stardust-speck--1,
+  .amber-stardust-speck--5 {
+    animation: none;
+  }
+}
