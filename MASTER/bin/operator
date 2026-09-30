@@ -17,6 +17,8 @@ $LOAD_PATH.unshift(File.join(ROOT, "MASTER", "lib")) unless $LOAD_PATH.include?(
 require "operator/environment"
 require "operator/ruby_runner"
 require "operator/status_report"
+require "operator/strict_mode"
+require "operator/law_inventory"
 
 RUBY = Operator::RubyRunner.ruby_cmd
 BUNDLE = Operator::RubyRunner.bundle_cmd
@@ -26,7 +28,7 @@ def usage
     operator — repo-wide operator surface
 
     Usage:
-      bin/operator gate [--scan-only] [--only=a,b] [--tree=T] [--list]  every gate in the repo, fixing as it goes
+      bin/operator gate [--scan-only] [--only=a,b] [--tree=T] [--list] [--release]  every gate in the repo, fixing as it goes
       bin/operator status [--json]
       bin/operator vps state [--json] [--remote]
       bin/operator vps deploy <app|master> [--remote]
@@ -40,7 +42,7 @@ def usage
       bin/operator test [<path>...]       smallest complete proof for the paths (default: dirty files)
       bin/operator land -m <msg> <path>...  commit, rebase, re-check, push
       bin/operator worktree <name>|finish own checkout, or finish (rebase, push the branch, do not merge main)
-      bin/operator rules <ID> [--card] [--json] [--corpus MASTER|all] [path...]
+      bin/operator rules <ID> [--card] [--health] [--deep] [--json] [--corpus MASTER|all] [path...]
                                       the rule, its exemption, then what it finds
       bin/operator hooks                  install the shared-tree commit guard
       bin/operator readers <path>         who reaches this file, across all three governed trees
@@ -80,6 +82,8 @@ when "gate"
   # changed, under its own name, so a bad fix is attributable to the stage that
   # made it rather than to the diff as a whole.
   require "operator/gate_chain"
+  release = !ARGV.delete("--release").nil?
+  ENV["MASTER_STRICT"] = "deploy" if release
   scan_only = !ARGV.delete("--scan-only").nil? || ENV["MASTER_GATE_SCAN_ONLY"] == "1"
   # --explain is the same question people actually ask before starting an hour
   # of gates: what is this going to run.
@@ -254,6 +258,22 @@ when "worktree"
   name = ARGV.shift
   abort("usage: bin/operator worktree <name>|finish [--remove]") if name.to_s.empty?
   exec("sh", File.join(OPENBSD_OPS, "dev", "agent_worktree.sh"), name, *ARGV)
+when "law:silent"
+  output = Operator::LawInventory.render_collection(:silent, json: ARGV.include?("--json"))
+  puts output if output
+  exit 0
+when "law:costly"
+  output = Operator::LawInventory.render_collection(:costly, json: ARGV.include?("--json"))
+  puts output if output
+  exit 0
+when "law:twin"
+  output = Operator::LawInventory.render_collection(:twin, json: ARGV.include?("--json"))
+  puts output if output
+  exit 0
+when "law:matrix"
+  output = Operator::LawInventory.render_collection(:matrix, json: ARGV.include?("--json"))
+  puts output if output
+  exit 0
 when "rules"
   # One rule: what it says, what it spares, and what it finds — in that order.
   # The same word as the CLI's /rules, which lists them; this is one in full.
@@ -274,6 +294,8 @@ when "rules"
   require "review/scan/infra_helpers"
   require "yaml"
   require "json"
+  health = !ARGV.delete("--health").nil? || !ARGV.delete("--deep").nil?
+  json_health = ARGV.include?("--json")
   id = ARGV.shift.to_s
   abort("usage: bin/operator rules <ID> [--card] [--json] [--corpus MASTER|all] [path...]") if id.empty?
 
@@ -283,6 +305,11 @@ when "rules"
   as_json = !ARGV.delete("--json").nil?
   ENV["MASTER_SCAN_DETERMINISTIC"] = "1"
   master_root = File.join(ROOT, "MASTER")
+
+  if health
+    puts Operator::LawInventory.render(id:, deep: true, json: json_health)
+    exit 0
+  end
 
   # The declaration, from the file CLAUDE.md calls the law. A rule can be
   # declared here and have no detector — 78 of them are — so this is looked up
