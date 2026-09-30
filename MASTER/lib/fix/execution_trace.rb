@@ -34,14 +34,14 @@ module Master
         MASTER/lib/ground/swallow.rb
       ].freeze
 
-      BOOT_CONFIG = %w[
-        MASTER/data/rules.yml
-        MASTER/data/soul.yml
-        MASTER/data/providers.yml
-        MASTER/data/patterns.yml
-        MASTER/data/limits.yml
-        MASTER/data/scan_coverage.yml
-      ].freeze
+      BOOT_CONFIG = {
+        "MASTER/data/rules.yml" => %w[zsh preserve_user_intent],
+        "MASTER/data/soul.yml" => [],
+        "MASTER/data/providers.yml" => [],
+        "MASTER/data/patterns.yml" => [],
+        "MASTER/data/limits.yml" => [],
+        "MASTER/data/scan_coverage.yml" => []
+      }.freeze
 
       Result = Data.define(:ok, :files, :bytes, :ruby_files, :phases, :failures) do
         def clean?
@@ -131,7 +131,7 @@ module Master
       end
 
       def verify_configuration(failures)
-        BOOT_CONFIG.each do |path|
+        BOOT_CONFIG.each do |path, required_sections|
           full = File.join(@root, path)
           unless File.file?(full)
             failures << "#{path}: missing"
@@ -139,7 +139,14 @@ module Master
           end
 
           body = Master.load_yaml(full)
-          failures << "#{path}: expected a hash" unless body.is_a?(Hash)
+          unless body.is_a?(Hash)
+            failures << "#{path}: expected a hash"
+            next
+          end
+
+          required_sections.each do |section|
+            failures << "#{path}: missing #{section}: section" unless body.key?(section)
+          end
         rescue StandardError => e
           failures << "#{path}: unreadable: #{e.class}: #{e.message}"
         end
