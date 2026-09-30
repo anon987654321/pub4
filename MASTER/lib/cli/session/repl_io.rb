@@ -126,7 +126,7 @@ module Master
           break if inner.nil? || inner.strip.empty?
           lines << inner
           if lines.size >= MULTILINE_MAX_LINES
-            puts @refs.renderer.render("multiline: capped at #{MULTILINE_MAX_LINES} lines", mode: :warning)
+            Master::Trace::Dmesg.status("cli0", "multiline capped at #{MULTILINE_MAX_LINES} lines")
             break
           end
         end
