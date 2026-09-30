@@ -9,6 +9,11 @@ class TestVersion < Minitest::Test
     assert_equal expected, Master::VERSION
   end
 
+  def test_gemspec_uses_the_same_release_version
+    spec = Gem::Specification.load(File.join(Master::ROOT, "master.gemspec"))
+    assert_equal Master::VERSION, spec.version.to_s
+  end
+
   def test_constitution_revision_remains_separate
     soul = Master.load_yaml(Master.data_path("soul.yml"))
     assert_equal "2.8.0", soul.fetch("version")
