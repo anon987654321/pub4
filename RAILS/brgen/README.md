@@ -20,9 +20,8 @@ Germany; the others are the same word everywhere. `ai.brgen.no` is MASTER and no
 a vertical at all.
 
 Tenancy is `acts_as_tenant` on `city_id`, taken from the apex.
-`Brgen::DomainRegistry` resolves the city from the hostname, each apex is an
-isolated experience with no cross-city switcher, and development defaults to
-Bergen. Shared concerns arrive through `pub4-shared`. The backlog is `apps.yml`
+`Brgen::DomainRegistry` resolves the city from the hostname, and the footer links
+the public city network without merging tenants. Development defaults to Bergen. Shared concerns arrive through `pub4-shared`. The backlog is `apps.yml`
 under `brgen.features`; the parity gaps against the apps brgen is measured by,
 and the four features whose tables exist with nothing reading them, are in
 `../TODO.md`.
