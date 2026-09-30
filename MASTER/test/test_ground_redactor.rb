@@ -65,6 +65,52 @@ class GroundRedactorTest < Minitest::Test
     assert status.success?, output
   end
 
+  def test_text_survives_hostile_core_string_dispatch
+    script = <<~'RUBY'
+      require "ground/redactor"
+
+      module HostileStringMethods
+        def bytesize(*)
+          Master::Ground::Redactor.text(self)
+        end
+
+        def getbyte(*)
+          Master::Ground::Redactor.text(self)
+        end
+
+        def byteslice(*)
+          Master::Ground::Redactor.text(self)
+        end
+
+        def length(*)
+          Master::Ground::Redactor.text(self)
+        end
+
+        def [](*)
+          Master::Ground::Redactor.text(self)
+        end
+
+        def +(other)
+          Master::Ground::Redactor.text(self)
+        end
+      end
+
+      String.prepend(HostileStringMethods)
+
+      raw = "authorization Bearer FFFFFFFFFFFFFFFFFFFFFFFF"
+      expected = "authorization [REDACTED]"
+      actual = Master::Ground::Redactor.text(raw)
+      abort actual unless actual == expected
+    RUBY
+
+    output, status = Open3.capture2e(
+      RbConfig.ruby,
+      "-I#{File.expand_path("../lib", __dir__)}",
+      "-e", script
+    )
+    assert status.success?, output
+  end
+
   def test_text_redacts_long_bare_alphanumeric_tokens
     raw = "value #{'G' * 32}"
     assert_equal "value [REDACTED]", Master::Ground::Redactor.text(raw)
