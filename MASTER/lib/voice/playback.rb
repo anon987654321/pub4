@@ -42,6 +42,7 @@ module Master
       @last_at = 0.0
       @generation = 0
       @playing_pid = nil
+      @job_generations = {}
 
       module_function
 
@@ -111,7 +112,14 @@ module Master
         parts = Speech.chunks(str)
         parts = [str] if parts.empty?
         generation = current_generation
-        parts.each_with_index { |part, index| queue.push([str, part, index == parts.size - 1, generation]) }
+        parts.each_with_index do |part, index|
+          job = [str, part, index == parts.size - 1]
+          @lock.synchronize do
+            next unless generation == @generation
+            @job_generations[job.object_id] = generation
+            queue << job
+          end
+        end
         nil
       end
 
@@ -161,6 +169,7 @@ module Master
         @lock.synchronize do
           @generation += 1
           @queue&.clear
+          @job_generations.clear
           @pending&.clear
           @last_said = nil
           terminate_player_locked if @playing_pid
@@ -205,8 +214,8 @@ module Master
       def drain
         while (job = @queue.pop)
           begin
-            text, part, last, generation = job.is_a?(Array) ? [job[0], job[1], job[2], job[3]] : [job, job, true, current_generation]
-            generation ||= current_generation
+            text, part, last = job.is_a?(Array) ? [job[0], job[1], job[2]] : [job, job, true]
+            generation = @lock.synchronize { @job_generations.delete(job.object_id) || @generation }
             next unless generation_active?(generation)
 
             path = synthesize(part)
@@ -285,6 +294,8 @@ module Master
         @lock.synchronize { @playing_pid = pid if generation_active?(generation) }
         Process.wait(pid)
         true
+      ensure
+        @lock.synchronize { @playing_pid = nil if @playing_pid == pid }
       rescue Errno::ESRCH, Errno::ECHILD
         false
       rescue StandardError => e
