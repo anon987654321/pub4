@@ -4,6 +4,7 @@
 @use "sass:meta";
 @use "dialect_tokens" as x;
 @use "sass:list";
+@use "surface_chrome_endgame" as endgame;
 
 // ============================================================ tokens
 
@@ -11278,3 +11279,4 @@ body:not([data-surface="luxury"]) :is(
     transition: none;
   }
 }
+@include endgame.brgen;
