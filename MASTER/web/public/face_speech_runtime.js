@@ -953,7 +953,7 @@ const NOVELTY_VOICE_RE = /\b(albert|bad news|bahh|bells|boing|bubbles|cellos|goo
 // A machine without them has no tier-1 voice at all and correctly falls to
 // tier 2.
 const NEURAL_VOICE_RE = /(neural|natural|enhanced|premium|siri|google\s|microsoft\s)/i;
-const DECENT_VOICE_RE = /(samantha|alex|nora|serena|daniel|karen|moira|tessa)/i;
+const FEMALE_BROWSER_VOICE_RE = /(jenny|samantha|ava|serena|karen|moira|tessa|fiona|nora|siri\b)/i;
 
 function pickBrowserVoice(lang) {
   let voices = [];
@@ -975,21 +975,13 @@ function pickBrowserVoice(lang) {
       || null;
   }
 
-  // A neural voice in the right locale beats everything. Below that, a good
-  // concatenative voice in the right locale beats a neural one in the wrong
-  // one — accent errors are more distracting than synthesis age. The platform
-  // default comes last of the named options, because it is usually the oldest
-  // voice still shipped.
-  return exact.find((v) => NEURAL_VOICE_RE.test(named(v)))
-      || exact.find((v) => DECENT_VOICE_RE.test(named(v)))
-      || exact.find((v) => v.default)
-      || exact[0]
-      || loose.find((v) => NEURAL_VOICE_RE.test(named(v)))
-      || loose.find((v) => DECENT_VOICE_RE.test(named(v)))
-      || loose.find((v) => v.default)
-      || loose[0]
-      || pool.find((v) => v.default)
-      || pool[0];
+  // Browser fallback is a safety net, not a new narrator. Only a
+  // known female voice is eligible here, so a server failure cannot turn a
+  // female MASTER reply into an unrelated male system voice.
+  return exact.find((v) => FEMALE_BROWSER_VOICE_RE.test(named(v)) && NEURAL_VOICE_RE.test(named(v)))
+      || exact.find((v) => FEMALE_BROWSER_VOICE_RE.test(named(v)))
+      || loose.find((v) => FEMALE_BROWSER_VOICE_RE.test(named(v)))
+      || null;
 }
 // Warm the voice list as soon as this segment loads, so the first thing said
 // in Voice Mode is not the one utterance that finds getVoices() still empty.

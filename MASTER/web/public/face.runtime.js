@@ -291,20 +291,12 @@ function dayNightTint() {
 }
 
 const SENT_BREAK = /([.!?…]+["'\u201D]?\s+|[\n]{2,})/;
-const TTS_CHUNK_MAX = 220;
 const TTS_MIN_CHUNK = 48;
 function pullStreamingTtsChunk(pending) {
   if (!pending) return { chunk: '', rest: '' };
   const sentBreak = pending.match(SENT_BREAK);
-  if (sentBreak) {
-    const cut = sentBreak.index + sentBreak[0].length;
-    return { chunk: pending.slice(0, cut).trim(), rest: pending.slice(cut) };
-  }
-  if (pending.length <= TTS_CHUNK_MAX) return { chunk: '', rest: pending };
-  const slice = pending.slice(0, TTS_CHUNK_MAX);
-  let cut = TTS_CHUNK_MAX;
-  const lastSpace = slice.lastIndexOf(' ');
-  if (lastSpace > 48) cut = lastSpace + 1;
+  if (!sentBreak) return { chunk: '', rest: pending };
+  const cut = sentBreak.index + sentBreak[0].length;
   return { chunk: pending.slice(0, cut).trim(), rest: pending.slice(cut) };
 }
 function shouldEnqueueTtsChunk(text, opts = {}) {
@@ -2740,7 +2732,6 @@ async function tryPartialTTSPlay(job, bytes) {
 
 async function pollTTSJob(job, signal) {
   const streamChunk = window.MASTER_RUNTIME?.enhancements?.includes?.('tts_stream_chunk');
-  const audioStream = window.MASTER_RUNTIME?.enhancements?.includes?.('tts_audio_stream');
   // ~3 minutes of patience, not ~26s: synthesis is a serial queue on a 1-CPU
   // VPS, so a reply behind a few other chunks legitimately takes 30-60s+.
   // Giving up early threw "tts timeout", which latched serverUnavailable and
@@ -2771,10 +2762,10 @@ async function pollTTSJob(job, signal) {
         if (visemes) forwardEarlyVisemePlan(visemes);
         emitTtsEvent('tts:chunk:wait', { job, attempt });
       }
-      if (audioStream) {
-        const avail = Number(res.headers.get('X-TTS-Bytes') || 0);
-        if (avail > 0) tryPartialTTSPlay(job, avail);
-      }
+      // Do not play a truncated MP3 while the real utterance is still
+      // being synthesized. An incomplete file is not a stream: it starts a
+      // second Audio element from byte zero and can overlap the final reply.
+      // Sentence-level live TTS already provides progressive speech safely.
       continue;
     }
     if (res.status === 429) {
@@ -3220,7 +3211,7 @@ const NOVELTY_VOICE_RE = /\b(albert|bad news|bahh|bells|boing|bubbles|cellos|goo
 // A machine without them has no tier-1 voice at all and correctly falls to
 // tier 2.
 const NEURAL_VOICE_RE = /(neural|natural|enhanced|premium|siri|google\s|microsoft\s)/i;
-const DECENT_VOICE_RE = /(samantha|alex|nora|serena|daniel|karen|moira|tessa)/i;
+const FEMALE_BROWSER_VOICE_RE = /(jenny|samantha|ava|serena|karen|moira|tessa|fiona|nora|siri\b)/i;
 
 function pickBrowserVoice(lang) {
   let voices = [];
@@ -3242,21 +3233,13 @@ function pickBrowserVoice(lang) {
       || null;
   }
 
-  // A neural voice in the right locale beats everything. Below that, a good
-  // concatenative voice in the right locale beats a neural one in the wrong
-  // one — accent errors are more distracting than synthesis age. The platform
-  // default comes last of the named options, because it is usually the oldest
-  // voice still shipped.
-  return exact.find((v) => NEURAL_VOICE_RE.test(named(v)))
-      || exact.find((v) => DECENT_VOICE_RE.test(named(v)))
-      || exact.find((v) => v.default)
-      || exact[0]
-      || loose.find((v) => NEURAL_VOICE_RE.test(named(v)))
-      || loose.find((v) => DECENT_VOICE_RE.test(named(v)))
-      || loose.find((v) => v.default)
-      || loose[0]
-      || pool.find((v) => v.default)
-      || pool[0];
+  // Browser fallback is a safety net, not a new narrator. Only a
+  // known female voice is eligible here, so a server failure cannot turn a
+  // female MASTER reply into an unrelated male system voice.
+  return exact.find((v) => FEMALE_BROWSER_VOICE_RE.test(named(v)) && NEURAL_VOICE_RE.test(named(v)))
+      || exact.find((v) => FEMALE_BROWSER_VOICE_RE.test(named(v)))
+      || loose.find((v) => FEMALE_BROWSER_VOICE_RE.test(named(v)))
+      || null;
 }
 // Warm the voice list as soon as this segment loads, so the first thing said
 // in Voice Mode is not the one utterance that finds getVoices() still empty.
@@ -3437,21 +3420,15 @@ function ttsTick() {
   const edgeBlob = tts.prefetch.get(text) || loadTTSBlob(text, voice, style);
   tts.prefetch.delete(text);
   tts.meta.delete(text);
-  let browserFallbackTimer = setTimeout(() => {
-    if (!tts.playing || tts.current !== text || token !== tts.cancelToken) return;
-    const browserToken = ++tts.cancelToken;
-    if (!speakWithBrowserTTS(text, browserToken)) {
-      tts.cancelToken = token;
-      return;
-    }
-  }, 1800);
+  // Browser speech is an emergency fallback after an actual server
+  // failure, not a latency race. Starting it while Edge is merely still
+  // synthesizing can introduce a second system voice into the same reply.
   const nextSpeech = nextQueuedSpeech();
   if (nextSpeech) fetchTTS(nextSpeech);
 
   let settled = false;
 
   async function playEdge(blob) {
-    clearTimeout(browserFallbackTimer);
     if (settled || token !== tts.cancelToken) return;
     settled = true;
     const src = URL.createObjectURL(blob);
@@ -3489,7 +3466,6 @@ function ttsTick() {
   edgeBlob
     .then(blob => { if (!blob) throw new Error('empty'); playEdge(blob); })
     .catch(() => {
-      clearTimeout(browserFallbackTimer);
       tts.serverFailureCount = (tts.serverFailureCount || 0) + 1;
       tts.serverUnavailable = true;
       tts.serverUnavailableUntil = Date.now() + Math.min(30000, 5000 * tts.serverFailureCount);
