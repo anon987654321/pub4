@@ -125,7 +125,7 @@ module Master
       # can refer to it. Fast mode builds no governor, so it refuses.
       def run_bang(command)
         shell = bang_shell
-        return puts(@refs.renderer.render("!: no governor in this mode", mode: :warning)) unless shell
+        return Master::Trace::Dmesg.status("shell0", "governor unavailable") unless shell
 
         result = shell.call(command:)
         text = result.ok? ? result.value!.to_s : result.message.to_s
@@ -146,7 +146,7 @@ module Master
 
       def run_direct_shell(command)
         shell = bang_shell
-        return puts @refs.renderer.render("shell: unavailable", mode: :warning) unless shell
+        return Master::Trace::Dmesg.status("shell0", "unavailable") unless shell
 
         result = shell.call(command:)
         text = result.ok? ? result.value!.to_s : result.message.to_s
@@ -157,14 +157,14 @@ module Master
 
       def repeat_last
         input = @last_repeatable_input.to_s
-        return puts @refs.renderer.render("repeat: nothing to repeat", mode: :warning) if input.empty?
+        return Master::Trace::Dmesg.status("cli0", "nothing to repeat") if input.empty?
 
         run_input(input)
       end
 
       def run_agent_turn(line)
         if (refusal = host_refusal_for(line))
-          puts @refs.renderer.render(refusal, mode: :warning)
+          Master::Trace::Dmesg.status("host0", refusal)
           return
         end
 
@@ -175,7 +175,7 @@ module Master
         Master::Ground::HostBudget.refuse_heavy_prompt?(line)
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "CLI.host_refusal_for")
-        "host budget unavailable: #{e.class}: #{e.message}"
+        "host budget unavailable, #{e.class}: #{e.message}"
       end
 
     end
