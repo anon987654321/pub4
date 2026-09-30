@@ -256,7 +256,7 @@ module Master
           File.open(path, "a") { |io| io.write(line, "\n") }
         rescue StandardError => e
           # Cannot route through Swallow.log — it would recurse into this stream.
-          Kernel.warn("swallow_ledger: flush failed — #{e.class}: #{e.message}")
+          Master::Trace::Dmesg.once("error0", "ledger flush failed, #{e.class}: #{e.message}")
         end
       end
     end
