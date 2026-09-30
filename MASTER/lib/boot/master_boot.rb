@@ -94,10 +94,10 @@ module Master
       ENV["MASTER_TTS_REASON"] = reason.to_s[0, 160]
       blocker = Voice::Speech.edge_tts_blocker
       if ENV["MASTER_CLI_TRACE"] == "1" || ENV["MASTER_BOOT_STATUS"] == "1"
-        warn("tts0: degraded — #{reason}")
-        warn("tts0: edge blocker — #{blocker}") unless blocker.to_s.empty?
+        Trace::Dmesg.status("voice0", "degraded, #{reason}")
+        Trace::Dmesg.status("voice0", "edge blocker, #{blocker}") unless blocker.to_s.empty?
       else
-        warn("voice: unavailable — /doctor")
+        Trace::Dmesg.status("voice0", "unavailable, /doctor")
       end
       false
     end
@@ -133,7 +133,7 @@ module Master
       set_up_device
       Ground::Pledge.stage1_boot!(root)
       service_ok = ensure_services!(root:)
-      warn("master0: continuing in degraded presentation mode") unless service_ok
+      Trace::Dmesg.status("master0", "continuing in degraded presentation mode") unless service_ok
       container = bootstrap_container(root:)
       Ground::Pledge.stage2_lock!
       CLI::WebServer.start(container[:config]) unless ENV["MASTER_WEB"] == "0"
