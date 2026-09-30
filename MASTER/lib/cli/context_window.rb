@@ -8,7 +8,9 @@ module Master
       SOFT_THRESHOLD = 0.65
       HARD_THRESHOLD = 0.90
       KEEP_TAIL = 4
-      private_constant :SOFT_THRESHOLD, :HARD_THRESHOLD, :KEEP_TAIL
+      CONTEXT_SCHEMA = 1
+      STRUCTURED_KEYS = %w[goal decisions facts files open_work constraints uncertainty].freeze
+      private_constant :SOFT_THRESHOLD, :HARD_THRESHOLD, :KEEP_TAIL, :CONTEXT_SCHEMA, :STRUCTURED_KEYS
 
       attr_reader :session, :agent, :model_context
 
@@ -67,17 +69,66 @@ module Master
         snapshot = session.messages.dup
         head = snapshot.size > KEEP_TAIL ? snapshot[0...-KEEP_TAIL] : snapshot
         summary = agent.ask(
-          "Summarize our progress as bullet points. Preserve all file paths, decisions, and remaining tasks.",
+          structured_summary_prompt,
           context: head,
         )
-        body = "[Context compacted — #{tier}]\n\n#{summary}"
+        body, structured = render_compacted_context(summary, tier:)
         session.compact_prefix!(head.size, body)
-        @bus&.publish("compaction:done", summary: summary.to_s, token_est: session.token_est, tier:)
-        append_daily_log(summary, tier:)
+        @bus&.publish("compaction:done", summary: body, structured:, token_est: session.token_est, tier:)
+        append_daily_log(body, tier:)
         Result.ok(:compacted)
       rescue StandardError => e
         @bus&.publish("compaction:error", error: e.message, tier:)
         Result.err("context compaction failed: #{e.message}", category: :infrastructure)
+      end
+
+      def structured_summary_prompt
+        <<~PROMPT
+          Compress the supplied conversation into JSON only. Preserve facts, decisions,
+          file paths, open work and constraints. Do not invent anything. Use exactly these
+          keys: goal, decisions, facts, files, open_work, constraints, uncertainty.
+          Every value except goal must be an array of short strings. Use [] when there is
+          no evidence. Keep concrete paths and commands verbatim. Do not include Markdown.
+        PROMPT
+      end
+
+      def render_compacted_context(raw, tier:)
+        data = parse_structured_summary(raw)
+        return [structured_body(data, tier:), true] if data
+
+        ["[Context compacted — #{tier}]\n\n#{raw}", false]
+      end
+
+      def parse_structured_summary(raw)
+        data = JSON.parse(raw.to_s)
+        return unless data.is_a?(Hash)
+
+        normalized = {}
+        STRUCTURED_KEYS.each do |key|
+          value = data[key] || data[key.to_sym]
+          if key == "goal"
+            normalized[key] = value.to_s.strip
+          else
+            return unless value.is_a?(Array)
+            normalized[key] = value.map { |item| item.to_s.strip }.reject(&:empty?).first(12)
+          end
+        end
+        normalized["goal"] = normalized["goal"][0, 320]
+        normalized
+      rescue JSON::ParserError, TypeError
+        nil
+      end
+
+      def structured_body(data, tier:)
+        lines = ["[Context compacted — #{tier}; schema #{CONTEXT_SCHEMA}]"]
+        STRUCTURED_KEYS.each do |key|
+          value = key == "goal" ? data[key] : data[key]
+          next if value.respond_to?(:empty?) && value.empty?
+
+          lines << "#{key}:"
+          Array(value).each { |item| lines << "- #{item}" }
+        end
+        lines.join("\\n")
       end
 
       def append_daily_log(summary, tier:)
