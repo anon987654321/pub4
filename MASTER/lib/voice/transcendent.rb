@@ -107,6 +107,7 @@ module Master
       end
 
       def synthesize_via_chain(clean, cfg, emotion, melody, resolved_voice, resolved_rate, resolved_pitch, out_path)
+        @_clean_for_chain = clean
         chain = build_engine_chain(cfg, emotion)
         played, used_engine = try_engine_chain(
           chain, clean, cfg, emotion, melody, resolved_voice, resolved_rate, resolved_pitch, out_path
@@ -179,7 +180,10 @@ module Master
         chain = cfg["engine_chain"].to_s.split(",").map(&:strip).reject(&:empty?)
         chain = chain.reject { |e| e == "edge_melodic" } unless phrase_rendered?(cfg, emotion)
         chain = chain.reject { |e| %w[mlx chatterbox].include?(e) } unless cfg["emotion_enabled"]
-        chain
+        # The current adapters are wired for English output. Native Norwegian
+        # and Malay utterances must stay on their declared language families.
+        language = Language.detect(@_clean_for_chain.to_s)
+        chain.reject { |e| %w[mlx chatterbox].include?(e) && language != :en }
       end
 
       def try_engine_chain(chain, clean, cfg, emotion, melody, resolved_voice, resolved_rate, resolved_pitch, out_path)
