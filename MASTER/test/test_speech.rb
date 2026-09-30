@@ -400,6 +400,15 @@ class TestSpeech < Minitest::Test
     assert long <= Master::Voice::Speech::WORKER_TIMEOUT_MAX
   end
 
+  def test_fast_tts_timeout_is_bounded_to_seconds_not_minutes
+    speech = Master::Voice::Speech
+    speech.stub(:fast_tts_mode?, true) do
+      assert_equal 4, speech.send(:worker_timeout, 0)
+      assert_equal 6, speech.send(:worker_timeout, 4000)
+    end
+  end
+
+
   def test_worker_timeout_respects_explicit_env_override_regardless_of_length
     ENV["MASTER_TTS_TIMEOUT"] = "7"
     assert_equal 7, Master::Voice::Speech.send(:worker_timeout, Master::Voice::Speech::MAX_CHARS)
