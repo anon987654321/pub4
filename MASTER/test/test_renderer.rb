@@ -50,7 +50,7 @@ class TestRenderer < Minitest::Test
     ENV.delete("MASTER_BOOT_STATUS")
   end
 
-  def test_interactive_splash_defaults_to_full_boot_and_blue_surface
+  def test_interactive_splash_leaves_the_terminal_background_alone
     renderer = FakeRenderer.new(config: {})
     old_dmesg = ENV["MASTER_DMESG"]
     ENV.delete("MASTER_DMESG")
@@ -58,7 +58,7 @@ class TestRenderer < Minitest::Test
     $stdout.stub(:tty?, true) do
       text = renderer.splash("model")
 
-      assert_includes text, "\e[44m"
+      refute_includes text, "\e[44m"
       assert_includes text, "\e[37m"
       assert_includes text, "boot line 0"
       assert_includes text, "root on master0"
@@ -98,12 +98,12 @@ class TestRenderer < Minitest::Test
     refute_empty truncated
   end
 
-  def test_shell_prompt_has_quiet_typographic_hierarchy
+  def test_shell_prompt_has_a_ruby_orb_and_quiet_typographic_hierarchy
     renderer = FakeRenderer.new(config: {})
     state, prompt = renderer.prompt_line("model", "discover", tokens: 45_000)
 
     clean = strip_ansi(prompt)
-    assert_match(%r{\A(?:~|…|/|[A-Za-z0-9_])}, clean)
+    assert_match(%r{\A◉ (?:~|…|/|[A-Za-z0-9_])}, clean)
     refute_includes clean, "(discover)"
     refute_includes clean, "  "
     assert_match(/(?:discover )?[%$] \z/, clean)
