@@ -26,14 +26,10 @@ module Master
       end
 
       def self.plain_string(value)
-        return value if value.instance_of?(String)
-        if value.is_a?(String)
-          bytes = String.instance_method(:bytes).bind(value).call.pack("C*")
-          encoding = String.instance_method(:encoding).bind(value).call
-          return String.instance_method(:force_encoding).bind(bytes).call(encoding)
-        end
-
-        value.to_s
+        string = value.is_a?(String) ? value : value.to_s
+        copy = String.allocate
+        String.instance_method(:initialize_copy).bind(copy).call(string)
+        copy
       end
 
       def self.redact_pattern(value, pattern)
