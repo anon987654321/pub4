@@ -63,7 +63,11 @@ module Master
       end
 
       def available?
-        !player.nil?
+        !player.nil? || native_say_available?
+      end
+
+      def native_say_available?
+        which("say") != nil
       end
 
       # Speaking is for a person sitting at a terminal. A pipe, a test, a CI
@@ -84,7 +88,7 @@ module Master
         return unless enabled?
 
         unless available?
-          warn_once("no audio player found (looked for #{PLAYERS.keys.join(', ')}) — replies stay silent")
+          warn_once("no audio output found (no player or native speech) — replies stay silent")
           return
         end
 
@@ -122,8 +126,9 @@ module Master
         end
 
         ok = play(path)
+        ok = native_say(str) unless ok
         unless ok
-          warn_once("audio player failed — #{player&.first || "no player"}")
+          warn_once("audio playback failed — #{player&.first || "no player or native speech"}")
         else
           spoken(str)
         end
@@ -179,7 +184,7 @@ module Master
             end
 
             unless play(path)
-              warn_once("audio player failed — #{player&.first || "no player"}")
+              native_say(text)
             end
             File.delete(path) if path.start_with?("/tmp/m_tts_") && File.exist?(path)
           rescue StandardError => e
@@ -206,6 +211,15 @@ module Master
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "Voice::Playback.synthesize")
         nil
+      end
+
+      def native_say(text)
+        return false unless native_say_available?
+
+        system("say", text.to_s, out: File::NULL, err: File::NULL)
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "Voice::Playback.native_say")
+        false
       end
 
       def play(path)
