@@ -2,7 +2,6 @@
 
 require "fileutils"
 require "json"
-require "open3"
 require "socket"
 require "time"
 
@@ -127,10 +126,11 @@ module Master
 
         return report("control0: waiting — loop slot active") if LoopOwner.active
 
-        status = stream_command("zsh", @deploy, "all")
+        report("control0: deploying #{short(head)} -> master brgen amber bsdports")
+        _stdout, stderr, status = run_deploy("zsh", @deploy, "all")
         unless status.success?
           save_state(head, "failed")
-          raise CommandError.new(["zsh", @deploy, "all"], "exit=#{status.exitstatus}")
+          raise CommandError.new(["zsh", @deploy, "all"], "exit=#{status.exitstatus}: #{stderr}")
         end
 
         save_state(head, "ok")
@@ -150,30 +150,13 @@ module Master
       end
 
       def command(*argv)
-        stdout, stderr, status = Open3.capture3(*argv, chdir: @repo)
+        stdout, stderr, status = Master::Io::Exec.capture3(*argv, chdir: @repo)
         { stdout:, stderr:, status: }
       end
 
-      def stream_command(*argv)
-        Open3.popen3(*argv, chdir: @repo) do |stdin, stdout, stderr, wait|
-          stdin.close
-          readers = [stdout, stderr]
-          until readers.empty?
-            ready = IO.select(readers, nil, nil, 1)
-            next unless ready
-
-            ready.first.each do |io|
-              line = io.gets
-              if line
-                @out.write(line)
-              else
-                readers.delete(io)
-                io.close unless io.closed?
-              end
-            end
-          end
-          wait.value
-        end
+      def run_deploy(*argv)
+        stdout, stderr, status = Master::Io::Exec.capture3(*argv, timeout: 3_600, chdir: @repo)
+        [stdout, stderr, status]
       end
 
       def load_state
