@@ -474,7 +474,6 @@ async function tryPartialTTSPlay(job, bytes) {
 
 async function pollTTSJob(job, signal) {
   const streamChunk = window.MASTER_RUNTIME?.enhancements?.includes?.('tts_stream_chunk');
-  const audioStream = window.MASTER_RUNTIME?.enhancements?.includes?.('tts_audio_stream');
   // ~3 minutes of patience, not ~26s: synthesis is a serial queue on a 1-CPU
   // VPS, so a reply behind a few other chunks legitimately takes 30-60s+.
   // Giving up early threw "tts timeout", which latched serverUnavailable and
