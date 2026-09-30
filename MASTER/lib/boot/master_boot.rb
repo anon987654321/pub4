@@ -109,9 +109,9 @@ module Master
       # the boot says it once; /doctor device still lists each.
       lines = Device.status_lines
       lines = lines.first(2) unless Device.termux?
-      lines.each { |line| warn(line) }
+      lines.each { |line| Trace::Dmesg.status("device0", line.delete_prefix("device0: ")) }
     rescue StandardError => e
-      warn("device0: capability discovery failed — #{e.class}: #{e.message}")
+      Trace::Dmesg.status("device0", "capability discovery failed, #{e.class}: #{e.message}")
     end
 
     # The first interactive boot on a host says what is present and what is
@@ -123,7 +123,7 @@ module Master
     def set_up_device
       Device::Setup.start!
     rescue StandardError => e
-      warn("ear0: setup did not start — #{e.class}: #{e.message}")
+      Trace::Dmesg.status("ear0", "setup did not start, #{e.class}: #{e.message}")
     end
 
     def boot(root: Dir.pwd)
