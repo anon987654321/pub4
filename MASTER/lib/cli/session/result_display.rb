@@ -48,10 +48,10 @@ module Master
           # the line that asked for it, at full weight among dim system lines.
           puts @refs.renderer.measure(text.chomp, width: reply_measure) unless routine
         end
-        # The reply is printed before it is spoken, and speaking does not block
-        # the prompt. A routine success returns above and stays silent: "ok" is
-        # not worth a synthesis.
-        Master::Voice::Playback.speak(spoken_form(text)) unless routine
+        # Every conversational reply is speakable, including short replies.
+        # Routine output used to be deliberately silent, which meant the
+        # smallest and most useful CLI TTS test ("hello") never reached audio.
+        Master::Voice::Playback.speak(spoken_form(text))
         print_fix_activity_footer
         print_parallel_errors_footer(ok)
         print_capability_stamp(ok)
