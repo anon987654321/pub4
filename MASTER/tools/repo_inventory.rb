@@ -34,6 +34,12 @@ ALLOWED_ROOT_FILES = %w[
   TREE.md
   VERSION
 ].freeze
+GENERATED_ROOT_FILES = %w[
+  snapshot_MASTER.md
+  snapshot_RAILS.md
+  snapshot_OPENBSD.md
+  snapshot_STUDIO.md
+].freeze
 ALLOWED_ROOT_DIRS = %w[
   .claude
   .github
@@ -88,7 +94,9 @@ end
 def loose_root_entries
   root_entries.filter_map do |name|
     full_path = File.join(INVENTORY_ROOT, name)
-    if File.directory?(full_path)
+    if GENERATED_ROOT_FILES.include?(name)
+      next
+    elsif File.directory?(full_path)
       next if ALLOWED_ROOT_DIRS.include?(name)
       Entry.new(path: name, kind: "root_dir", reason: "non-canonical top-level directory")
     else
