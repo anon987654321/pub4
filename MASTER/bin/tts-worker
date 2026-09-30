@@ -54,7 +54,11 @@ if ENV["TTS_WORKER_REEXEC_DONE"] != "1"
   exec(clean_env, RbConfig.ruby, __FILE__, *ARGV, unsetenv_others: true)
 end
 
-BUNDLE_ISOLATION_KEYS.each { |key| ENV.delete(key) }
+# Entrypoint.prepare! has already sanitized and activated MASTER's private
+# bundle. Keep that context intact: deleting BUNDLE_PATH here made Bundler fall
+# back to the machine-global gem set, which is exactly what the isolated worker
+# must never do. The re-exec above is the isolation boundary for inherited web
+# Bundler state; this point is the activation boundary for MASTER's own bundle.
 ENV["BUNDLE_GEMFILE"] = File.join(ROOT, "Gemfile")
 
 require "bundler/setup"
