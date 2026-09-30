@@ -173,6 +173,35 @@ class TestTraceSupport < Minitest::Test
     assert_equal "plain line", Master::Trace::Dmesg.plain("plain line\r")
   end
 
+  def test_logging_does_not_reenter_when_redaction_publishes_an_event
+    event_log = Object.new
+    def event_log.append(*) = nil
+
+    bus = Master::Trace::EventBus.new(event_log:)
+    logging = Master::Trace::Logging.new(ring_buffer: [], event_bus: bus)
+    redactor = Master::Ground::Redactor
+    singleton = class << redactor; self; end
+    original = singleton.instance_method(:text)
+    nested = 0
+
+    singleton.send(:define_method, :text) do |value|
+      if nested.zero?
+        nested += 1
+        bus.publish("trace:nested", note: "redaction")
+      end
+      original.bind_call(value)
+    end
+
+    Master::Trace::Dmesg.with_verbosity("normal") do
+      bus.publish("boot", ts: 1)
+    end
+
+    assert_equal 1, nested
+    assert_equal ["boot0: ready"], logging.dmesg.lines.map(&:chomp)
+  ensure
+    singleton&.send(:define_method, :text, original) if original
+  end
+
   def test_logging_formats_tool_events_and_redacts_details
     bus = Bus.new
     logging = Master::Trace::Logging.new(ring_buffer: [], event_bus: bus)
