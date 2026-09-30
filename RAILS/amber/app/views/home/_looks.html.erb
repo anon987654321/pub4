@@ -1,29 +1,42 @@
 <%# locals: looks — Amber::HomeLooks::Look, four of them.
-
-    Each look is a carousel over one standing figure. The figure (the particle
-    mannequin) stays put while the slides scroll over it: the first slide wears the
-    whole outfit, each one after it a single piece, so a swipe dresses and
-    undresses the same body. Native scroll-snap does the swiping, so a row
-    starts on its first slide with no script and no scroll position to restore. %>
+    The 3D mannequin is the visual anchor. The small track below it chooses the
+    whole look or one garment; uploaded photos become curved surface textures. %>
 <section class="amber-looks" aria-label="<%= t("home.looks.title") %>">
   <% looks.each_with_index do |look, index| %>
     <% name = look.name %>
+    <% slides = [ [ t("home.looks.whole"), look.garments ] ] + look.garments.map { |garment| [ garment.title, [ garment ] ] } %>
+    <% slides_json = slides.map { |caption, garments|
+         {
+           caption: caption,
+           zones: garments.each_with_object({}) { |garment, memo|
+             memo[garment.zone] = {
+               id: garment.id,
+               name: garment.title,
+               url: garment.photos.attached? ? responsive_image_url(garment.photos.first, widths: [720]) : nil
+             }
+           }
+         }
+       }.to_json %>
     <section class="amber-look" aria-labelledby="amber-look-<%= index %>">
       <h2 class="amber-look-title" id="amber-look-<%= index %>"><%= name %></h2>
-      <div class="amber-look-stage">
-        <%# The dressing room's particle mannequin, the same body: its controller
-            draws the canvas into this box, and --particle-ink paints it grey. %>
-        <div class="amber-look-figure" data-controller="particle-mannequin" data-particle-mannequin-count-value="1800" data-particle-mannequin-opacity-value="0.9" aria-hidden="true"></div>
-        <div class="amber-look-track" tabindex="0" role="group" aria-label="<%= t("home.looks.swipe", name: name) %>">
-          <% slides = [ [ t("home.looks.whole"), look.garments ] ] + look.garments.map { |garment| [ garment.title, [ garment ] ] } %>
-          <% slides.each_with_index do |(caption, garments), position| %>
+      <div class="amber-look-stage"
+           data-controller="mannequin-3d"
+           data-mannequin-3d-slides-value="<%= slides_json %>">
+        <div class="amber-look-figure" aria-hidden="true">
+          <span class="sr-only"><%= t("home.looks.mannequin_label", default: "3D wardrobe mannequin") %></span>
+        </div>
+
+        <div class="amber-look-track"
+             data-mannequin-3d-target="track"
+             tabindex="0"
+             role="group"
+             aria-label="<%= t("home.looks.swipe", name: name) %>">
+          <% slides.each_with_index do |(caption, _garments), position| %>
             <figure class="amber-look-slide">
-              <div class="amber-look-body">
-                <% garments.each do |garment| %>
-                  <span class="look-zone look-zone--<%= garment.zone %>"><%= garment_silhouette(garment) %></span>
-                <% end %>
-              </div>
-              <figcaption><%= caption %> <span class="amber-look-position"><%= t("home.looks.position", index: position + 1, count: slides.size) %></span></figcaption>
+              <figcaption>
+                <span><%= caption %></span>
+                <span class="amber-look-position"><%= t("home.looks.position", index: position + 1, count: slides.size) %></span>
+              </figcaption>
             </figure>
           <% end %>
         </div>
