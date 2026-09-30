@@ -219,8 +219,12 @@ module Master
 
           if @mouth.available?
             set(:speaking, [reply])
-            @mouth.say(reply, on_level: ->(level) { change { @level = level } },
-                              on_chunk: ->(part) { show([part]) }, stop: -> { stop_key? })
+            spoken = @mouth.say(reply, on_level: ->(level) { change { @level = level } },
+                               on_chunk: ->(part) { show([part]) }, stop: -> { stop_key? })
+            unless spoken
+              set(:idle, [@mouth.last_error || "voice0: audio did not play"])
+              return
+            end
           end
           set(:idle, [reply])
           nudge(:nod)
