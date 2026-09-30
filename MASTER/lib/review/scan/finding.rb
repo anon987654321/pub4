@@ -62,6 +62,18 @@ module Master
           }.compact
         end
 
+        def to_proof(source: :deterministic, status: :open, subject: nil, evidence: nil)
+          Master::Proof.build(
+            claim: message,
+            rule: rule_id || rule,
+            subject:,
+            evidence: evidence || message,
+            source:,
+            status:,
+            metadata: to_h,
+          )
+        end
+
         def merge(extras)
           to_h.merge(extras)
         end
