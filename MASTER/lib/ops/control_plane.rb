@@ -16,9 +16,10 @@ module Master
     # convergence. A second MASTER process must never be started to do the same
     # work.
     class ControlPlane
+      include Master::Io::AtomicWrite
+
       DEFAULT_INTERVAL = 30
-      STATE_PATH = File.join(Master::ROOT, ".master", "control_plane.json").freeze
-      DEPLOY = File.join(Master::REPO_ROOT, "OPENBSD", "bin", "vps-deploy").freeze
+      DEFAULT_DEPLOY = File.join("OPENBSD", "bin", "vps-deploy").freeze
 
       def self.start!(root: Master::ROOT, interval: nil, out: $stderr)
         new(root:, interval:, out:).start!
@@ -27,6 +28,8 @@ module Master
       def initialize(root:, interval:, out:)
         @root = File.expand_path(root)
         @repo = File.expand_path("..", @root)
+        @state_path = File.join(@root, ".master", "control_plane.json")
+        @deploy = File.join(@repo, DEFAULT_DEPLOY)
         @interval = [interval.to_i, 5].max if interval
         @interval ||= DEFAULT_INTERVAL
         @out = out
@@ -124,10 +127,10 @@ module Master
 
         return report("control0: waiting — loop slot active") if LoopOwner.active
 
-        result = command("zsh", DEPLOY, "all")
+        result = command("zsh", @deploy, "all")
         unless result[:status].success?
           save_state(head, "failed")
-          raise CommandError.new(["zsh", DEPLOY, "all"], result[:stdout].to_s + result[:stderr].to_s)
+          raise CommandError.new(["zsh", @deploy, "all"], result[:stdout].to_s + result[:stderr].to_s)
         end
 
         save_state(head, "ok")
@@ -152,13 +155,13 @@ module Master
       end
 
       def load_state
-        JSON.parse(File.read(STATE_PATH))
+        JSON.parse(File.read(@state_path))
       rescue Errno::ENOENT, JSON::ParserError
         {}
       end
 
       def save_state(sha, status)
-        dir = File.dirname(STATE_PATH)
+        dir = File.dirname(@state_path)
         FileUtils.mkdir_p(dir)
         payload = JSON.pretty_generate(
           "pid" => Process.pid,
@@ -168,7 +171,7 @@ module Master
           "deployed_sha" => status == "ok" ? sha : load_state["deployed_sha"],
           "at" => Time.now.utc.iso8601
         )
-        File.write(STATE_PATH, payload + "\n", mode: "w", perm: 0o600)
+        write_atomic(@state_path, payload + "\n", fsync: true, fsync_dir: true, mode: 0o600)
       end
 
       def short(sha)
