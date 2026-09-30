@@ -209,6 +209,20 @@ class AudioEngine {
     this.loadCurrentTrack()
     this.updateTrackDisplay()
     this.#syncMediaSession()
+    this.#publishTrack()
+  }
+
+  #publishTrack() {
+    const track = this.tracks[this.currentTrack]
+    publishVisual("radio:track", {
+      topology: "tunnel",
+      mode: "radio:tunnel",
+      activity: 0.72,
+      arousal: 0.62,
+      confidence: 0.9,
+      beat: 0.65,
+      name: track?.title || "radio"
+    })
   }
 
   nextTrack() {
@@ -217,6 +231,7 @@ class AudioEngine {
     this.loadCurrentTrack()
     this.updateTrackDisplay()
     this.#syncMediaSession()
+    this.#publishTrack()
   }
 
   getAudioData() {
@@ -265,16 +280,26 @@ class AudioEngine {
       return { bass, mid, high, average, beat: this.beat, flux: spectralFlux }
     }
 
-    // A YouTube embed cannot be analysed. Rather than invent a spectrum for it,
-    // report a low steady level: the tunnel keeps its own breathing and lean,
-    // which are autonomous, and simply does not claim to be hearing anything.
-    const level = 0.18
-    this.bassLevel = level
-    this.midLevel = level
-    this.highLevel = level * 0.5
-    this.beat *= 0.72
-    this.audioLevel = level
-    return { bass: level, mid: level, high: level * 0.5, average: level, beat: this.beat, flux: 0 }
+    // YouTube is cross-origin, so the iframe cannot supply an AnalyserNode.
+    // Restore the reference's musical motion as a deterministic visual groove:
+    // it is not presented to the renderer as a measured spectrum. Local hosted
+    // tracks above still use their real FFT values.
+    const t = (performance.now() - this.startTime) / 1000
+    const bpm = 84 + (this.currentTrack * 5) % 17
+    const beatPhase = t * bpm / 60 * Math.PI * 2
+    const swing = Math.sin(t * 1.73 + this.currentTrack) * 0.08
+    const pocket = Math.cos(t * 0.61 + this.currentTrack * 0.37) * 0.05
+    const bass = Math.max(0, Math.min(1, 0.22 + 0.40 * (0.5 + 0.5 * Math.sin(beatPhase + pocket)) + swing)) * this.bassInfluence
+    const mid = Math.max(0, Math.min(1, 0.28 + 0.24 * (0.5 + 0.5 * Math.sin(beatPhase * 2.0 + swing)))) * this.midInfluence
+    const high = Math.max(0, Math.min(1, 0.10 + 0.22 * (0.5 + 0.5 * Math.sin(beatPhase * 3.0 + pocket)))) * this.highInfluence
+    const average = (bass + mid + high) / 3
+    const pulse = Math.max(0, Math.sin(beatPhase))
+    this.beat = Math.max(pulse * 0.8, this.beat * 0.72)
+    this.bassLevel = bass
+    this.midLevel = mid
+    this.highLevel = high
+    this.audioLevel = average
+    return { bass, mid, high, average, beat: this.beat, flux: pulse * 0.5, proxy: true }
   }
 
   updateTrackDisplay() {
@@ -964,7 +989,7 @@ class VisualEngine {
   setPerformanceMode(value) {
     this.isMobile = value
     this.config.particleCountPerRow = value ? 32 : 48
-    this.config.zStep = value ? 6 : 4
+    this.config.zStep = value ? 7 : 5
     this.initParticles()
   }
 }
@@ -1111,7 +1136,7 @@ export class RadioBrgen {
           this._lastVisualSignalAt = visualNow
           publishVisual("radio:audio", {
             topology: "tunnel",
-            mode: this.vizMode === 0 ? "radio:tunnel" : "radio:deck",
+            mode: "radio:tunnel",
             activity: audioData.average,
             arousal: audioData.average,
             confidence: 0.92,
