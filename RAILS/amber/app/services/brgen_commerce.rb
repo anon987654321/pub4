@@ -17,7 +17,8 @@ class BrgenCommerce
 
   class << self
     def search(item:, limit: 6)
-      query = [ item.brand, item.title, item.category, item.color, item.material ].compact.join(" ").strip
+      query = item.title.to_s.strip
+      query = [ item.brand, item.category ].compact.join(" ").strip if query.blank?
       return [] if query.blank?
 
       payload = Rails.cache.fetch(cache_key(query, limit), expires_in: CACHE_TTL) do
