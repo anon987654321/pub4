@@ -17,9 +17,6 @@ module Master
         .git .bundle node_modules vendor tmp log coverage storage cache dist build knowledge public var
       ].freeze
 
-      # /review — the read-only pass. It observes, asks the council and prints
-      # the principle map; it changes nothing. The verb that changes the tree is
-      # /fix, and it owns the repair.
       # /review is a read-only compatibility adapter over the canonical /fix
       # pipeline. It cannot turn writes back on, even if a stale caller passes
       # --apply.
@@ -59,7 +56,7 @@ module Master
         apply, _critique, aesthetic, _only, target = parse_pass_flags(raw)
         rendered = with_dmesg_verbosity(raw) do
           run_pass({ scanner:, fix_loop:, root:, deliberation:, bus:, swarm: },
-                   target:, apply: apply.nil? || apply, critique: true, aesthetic:, only: nil)
+                   target:, apply: apply.nil? || apply, critique: _critique.nil? ? true : _critique, aesthetic:, only: nil)
         end
         return rendered unless apply.nil? || apply
 
@@ -75,7 +72,7 @@ module Master
           rendered = [rendered, "gate: verification changed #{gate_changed.size} file(s); re-entering /fix"].join("\n")
           rendered = with_dmesg_verbosity(raw) do
             run_pass({ scanner:, fix_loop:, root:, deliberation:, bus:, swarm: },
-                     target:, apply: true, critique: false, aesthetic:, only: "fix")
+                     target:, apply: true, critique: _critique.nil? ? true : _critique, aesthetic:, only: "fix")
           end
         end
 
