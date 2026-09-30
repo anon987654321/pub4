@@ -564,43 +564,45 @@ when "vps"
     action = ARGV.shift.to_s
     remote = !ARGV.delete("--remote").nil?
     abort("usage: bin/operator vps master <status|start|stop|restart> [--remote]") unless %w[status start stop restart].include?(action) && ARGV.empty?
-    script = <<~SH
+    script = <<~ZSH
       set -e
       cd /home/dev/pub4
       case #{Shellwords.escape(action)} in
       status)
-        if screen -list 2>/dev/null | grep -q '[.]master'; then
-          echo "master0: screen master active"
+        sessions="$(screen -ls 2>/dev/null || true)"
+        if [[ "$sessions" == *".master"* ]]; then
+          print "master0: screen master active"
           screen -S master -Q select . 2>&1 || true
         else
-          echo "master0: screen master stopped"
+          print "master0: screen master stopped"
         fi
         ruby40 -I MASTER/lib -e 'require "master"; p=Master::Ops::ProcessLock.owner(File.join(Master::ROOT, ".master", "process.lock")); puts(p.empty? ? "master0: process lock free" : "master0: pid=#{p["pid"]} host=#{p["host"]} mode=#{p["mode"]}")'
         ;;
       stop)
         screen -S master -X quit 2>/dev/null || true
-        echo "master0: screen master stopped"
+        print "master0: screen master stopped"
         ;;
       start)
-        if screen -list 2>/dev/null | grep -q '[.]master'; then
-          echo "master0: screen master already active"
+        sessions="$(screen -ls 2>/dev/null || true)"
+        if [[ "$sessions" == *".master"* ]]; then
+          print "master0: screen master already active"
         else
-          screen -dmS master sh -lc 'cd /home/dev/pub4 && exec MASTER/bin/master --daemon'
-          echo "master0: screen master started"
+          screen -dmS master zsh -lc 'cd /home/dev/pub4; exec MASTER/bin/master --daemon'
+          print "master0: screen master started"
         fi
         ;;
       restart)
         screen -S master -X quit 2>/dev/null || true
         sleep 1
-        screen -dmS master sh -lc 'cd /home/dev/pub4 && exec MASTER/bin/master --daemon'
-        echo "master0: screen master restarted"
+        screen -dmS master zsh -lc 'cd /home/dev/pub4; exec MASTER/bin/master --daemon'
+        print "master0: screen master restarted"
         ;;
       esac
-    SH
+    ZSH
     if remote
-      ssh_run(script)
+      ssh_run(Shellwords.join(["zsh", "-fc", script]))
     else
-      exec("sh", "-lc", script)
+      exec("zsh", "-fc", script)
     end
   when "state"
     if ARGV.delete("--remote")
