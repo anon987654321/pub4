@@ -123,13 +123,13 @@ class TestTtsSupervisor < Minitest::Test
       thread = Thread.new do
         client = server.accept
         received = client.gets
-        client.write("ok #{expected}\\n")
+        client.write("ok #{expected}\n")
         client.close
       end
 
       assert Sup.socket_alive?(path, root: dir), "current worker generation must pass health"
       thread.join
-      assert_equal "{\"health\":true}\\n", received
+      assert_equal "{\"health\":true}\n", received
     ensure
       server&.close
       thread&.kill
@@ -146,7 +146,7 @@ class TestTtsSupervisor < Minitest::Test
       thread = Thread.new do
         client = server.accept
         client.gets
-        client.write("ok\\n")
+        client.write("ok\n")
         client.close
       end
 
