@@ -169,3 +169,49 @@ wshingtondc.com:
 zrich.ch:
   state: unknown
   note: registry referral, not a domain record
+
+# Registrar-held names present in the 2026-09-30 Domeneshop export but absent from
+# the prior snapshot. domain_watch --update on vm23 will refresh these fields from
+# registry data; ownership stays separate from service exposure.
+amberapp.no:
+  state: registered
+  holder_since: '2026-09-25'
+  expires: '2027-09-25'
+  renew: true
+  registrar: Domeneshop AS
+  source: Domeneshop export 2026-09-30
+amberapp.online:
+  state: registered
+  holder_since: '2026-09-25'
+  expires: '2027-09-25'
+  renew: true
+  registrar: Domeneshop AS
+  source: Domeneshop export 2026-09-30
+bsdports.net:
+  state: registered
+  holder_since: '2022-08-08'
+  expires: '2027-08-08'
+  renew: true
+  registrar: Domeneshop AS
+  source: Domeneshop export 2026-09-30
+lsangeles.store:
+  state: registered
+  holder_since: '2026-09-23'
+  expires: '2027-09-23'
+  renew: true
+  registrar: Domeneshop AS
+  source: Domeneshop export 2026-09-30
+svalbrd.no:
+  state: registered
+  holder_since: '2020-09-06'
+  expires: '2026-09-06'
+  renew: true
+  registrar: Domeneshop AS
+  source: Domeneshop export 2026-09-30
+wshingtondc.us:
+  state: registered
+  holder_since: '2021-08-20'
+  expires: '2027-08-20'
+  renew: true
+  registrar: Domeneshop AS
+  source: Domeneshop export 2026-09-30
