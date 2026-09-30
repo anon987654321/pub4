@@ -58,6 +58,14 @@ class TestExpression < Minitest::Test
     assert_equal "expression_phoneme_heuristic", stream[:source]
   end
 
+  def test_voice_idle_signature_source_has_no_duplicate_keys
+    source = File.read(File.expand_path("../lib/voice/expression.rb", __dir__))
+    body = source[/VOICE_IDLE_SIGNATURES = \{(.*?)\n\s*\}\.freeze/m, 1]
+    keys = body.to_s.scan(/^\s*(\w+): \{/).flatten
+
+    assert_equal keys.uniq.sort, keys.sort
+  end
+
   def test_idle_signature_for_voice
     sig = Master::Voice::Expression.idle_signature_for(:osman)
     assert sig[:breath] > Master::Voice::Expression.idle_signature_for(:wayne)[:breath]
