@@ -282,7 +282,7 @@ dmesg:
   enabled: true
   verbosity: normal
   style: openbsd
-  format: "unitN at parent: detail | unitN: key=val"
+  format: "unitN at parent: detail | unitN: detail"
   env: MASTER_DMESG
   through: true
   scan_progress: true
