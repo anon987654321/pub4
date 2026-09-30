@@ -31,7 +31,7 @@ module Master
 
       def session_line(name, messages = 0)
         kept = messages.positive? ? ", #{messages} messages kept" : ""
-        @p.dim("session0: #{name.to_s.downcase}#{kept}")
+        @p.dim("session0 at master0: #{name.to_s.downcase}#{kept}")
       end
 
       def uptime
