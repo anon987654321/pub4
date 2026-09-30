@@ -47,6 +47,16 @@ class TestSemanticIndex < Minitest::Test
     assert_equal 1, calls
   end
 
+  def test_scope_prevents_cross_model_near_hits
+    idx = make_semantic_index(
+      { "same question A" => [1.0, 0.0], "same question B" => [0.999, 0.01] },
+    )
+    idx.remember("same question A", "MODEL_A", scope: "model-a")
+
+    assert_nil idx.nearest("same question B", scope: "model-b")
+    assert_equal "MODEL_A", idx.nearest("same question B", scope: "model-a")
+  end
+
   def test_disabled_embedder_is_a_noop
     idx = make_semantic_index({ "q" => [1.0] }, enabled: false)
     idx.remember("q", "ANSWER")
