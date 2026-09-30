@@ -68,7 +68,7 @@ module Master
 
       Regexp.timeout = value
     rescue ArgumentError, TypeError => e
-      warn("regexp0: invalid timeout — #{e.message}; using #{REGEXP_TIMEOUT_S}s")
+      warn("boot0: regexp timeout invalid, #{e.message}; using #{REGEXP_TIMEOUT_S}s")
       Regexp.timeout = REGEXP_TIMEOUT_S
     end
 
@@ -78,7 +78,7 @@ module Master
       Ops::ProcessBudget.validate_loop_slot!
       Ops::RuntimeLoopGuards.install!
     rescue LoadError => e
-      warn("process_guards: #{e.message}")
+      warn("boot0: process guards unavailable, #{e.message}")
     end
 
     def provider_config(root: ROOT) = load_yaml(File.join(root, "data", "providers.yml"))
@@ -224,7 +224,7 @@ module Master
 
         setter = "#{attribute}="
         unless config.respond_to?(setter)
-          warn("providers.yml: RubyLLM has no #{setter} — #{env_var} ignored")
+          warn("provider0: #{env_var} ignored, RubyLLM has no #{setter}")
           next
         end
 
