@@ -33,12 +33,19 @@ module Master
       end
 
       def record(payload)
-        units = @mutex.synchronize { @console.lines(payload) }.map { |line| Master::Ground::Redactor.text(line) }
-        return @buffer.push(format_entry(payload)) if units.empty?
+        return [] if Thread.current.thread_variable_get(:master_trace_logging_active)
 
-        units.each { |line| @buffer.push(line) }
-        listeners = @mutex.synchronize { @listeners.dup }
-        units.each { |line| listeners.each { |listener| listener.call(line) } }
+        Thread.current.thread_variable_set(:master_trace_logging_active, true)
+        begin
+          units = @mutex.synchronize { @console.lines(payload) }.map { |line| Master::Ground::Redactor.text(line) }
+          return @buffer.push(format_entry(payload)) if units.empty?
+
+          units.each { |line| @buffer.push(line) }
+          listeners = @mutex.synchronize { @listeners.dup }
+          units.each { |line| listeners.each { |listener| listener.call(line) } }
+        ensure
+          Thread.current.thread_variable_set(:master_trace_logging_active, false)
+        end
       end
 
       def format_entry(payload)
