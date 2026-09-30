@@ -13,7 +13,6 @@ module Master
         puts
         unless summary.empty?
           puts @refs.renderer.measure(summary, width: reply_measure)
-          Master::Voice::Playback.speak(summary)
         end
         Master::Trace::Dmesg.status("fold0", "#{fold[:reason]}, #{fold[:turns]} turns") unless @unit_sub
       end
