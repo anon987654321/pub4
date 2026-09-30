@@ -54,7 +54,9 @@ module Master
       def dispatch_fix(scanner:, fix_loop:, deliberation:, root:, bus:, ctx: nil, swarm: nil, **_legacy)
         raw = arg_for(ctx).to_s.strip
         apply, _critique, aesthetic, _only, target = parse_pass_flags(raw)
-        rendered = with_dmesg_verbosity(raw) do
+        # /fix is the operator trace: every event is visible in the same append-only
+        # OpenBSD dmesg grammar. An explicit quiet/normal/verbose flag still wins.
+        rendered = with_dmesg_verbosity(raw, default: "trace") do
           run_pass({ scanner:, fix_loop:, root:, deliberation:, bus:, swarm: },
                    target:, apply: apply.nil? || apply, critique: _critique.nil? ? true : _critique, aesthetic:, only: nil)
         end
@@ -69,7 +71,7 @@ module Master
           break if gate_status == 0 && gate_changed.empty?
           break if gate_changed.empty? || gate_rounds >= MAX_FIX_GATE_ROUNDS
 
-          rendered = [rendered, "gate: verification changed #{gate_changed.size} file(s); re-entering /fix"].join("\n")
+          rendered = [rendered, "gate0: verification changed #{gate_changed.size} file(s), re-entering /fix"].join("\n")
           rendered = with_dmesg_verbosity(raw) do
             run_pass({ scanner:, fix_loop:, root:, deliberation:, bus:, swarm: },
                      target:, apply: true, critique: _critique.nil? ? true : _critique, aesthetic:, only: "fix")
@@ -77,10 +79,10 @@ module Master
         end
 
         if gate_status != 0
-          rendered = [rendered, "fix: gate verification did not pass (status #{gate_status})"].join("\n")
+          rendered = [rendered, "gate0: verification did not pass, status #{gate_status}"].join("\n")
         end
         if gate_rounds >= MAX_FIX_GATE_ROUNDS && gate_status == 0 && gate_changed.any?
-          rendered = [rendered, "fix: gate verification reached #{MAX_FIX_GATE_ROUNDS} rounds without a stable tree"].join("\n")
+          rendered = [rendered, "gate0: verification reached #{MAX_FIX_GATE_ROUNDS} rounds without a stable tree"].join("\n")
         end
 
         return rendered unless Master::Fix::CodeWatch.requested?
@@ -149,8 +151,9 @@ module Master
         end
       end
 
-      def with_dmesg_verbosity(raw)
+      def with_dmesg_verbosity(raw, default: nil)
         level = raw.to_s.split(/\s+/).filter_map { |token| DMESG_FLAGS[token.downcase] }.last
+        level ||= default
         return yield unless level
 
         Master::Trace::Dmesg.with_verbosity(level) { yield }
