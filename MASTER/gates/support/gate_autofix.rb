@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 require "set"
-require_relative "../../tools/design/scss_rules"
-require_relative "../../tools/design/frontend_rule_set"
+require_relative "../../tools/scss_rules"
+require_relative "../../tools/frontend_rule_set"
 
 module Deploy
   # Immediate mechanical autofix + remeasure for RAILS gates.
