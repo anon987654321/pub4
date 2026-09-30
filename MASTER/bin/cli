@@ -102,6 +102,7 @@ end
 initial_message_from_argv(ARGV.dup) if ARGV.include?("-h") || ARGV.include?("--help")
 
 cli = nil
+control_plane = nil
 
 def save_cli_session_safely(cli)
   cli&.container&.dig(:session)&.save!
@@ -113,6 +114,12 @@ def stop_cli_background_loop_safely(cli)
   cli&.send(:stop_background_loop)
 rescue StandardError => e
   warn "cli: background stop failed: #{e.class}: #{e.message}"
+end
+
+def stop_control_plane_safely(control_plane)
+  control_plane&.stop!
+rescue StandardError => e
+  warn "control0: stop failed: #{e.class}: #{e.message}"
 end
 
 trap("INT") { $stderr.puts "\nexiting"; exit!(130) }
@@ -133,6 +140,17 @@ unless $stdin.tty?
 end
 cli = Master.boot(root: Dir.pwd)
 Master::Ops::RuntimeLoopGuards.install!
+
+if ENV["MASTER_CONTROL_PLANE"] == "1" && !fast_boot && ENV["MASTER_FOLD"] != "1"
+  control_plane = Master::Ops::ControlPlane.start!(
+    root: Dir.pwd,
+    interval: ENV["MASTER_CONTROL_INTERVAL"],
+    out: $stderr
+  )
+  interval = ENV["MASTER_CONTROL_INTERVAL"].to_i
+  interval = Master::Ops::ControlPlane::DEFAULT_INTERVAL unless interval.positive?
+  warn "control0: vm23 sync/deploy active every #{interval}s"
+end
 
 # --fold routes one coding goal through the core Fold, then exits. Plain-language
 # agent turns and /run <goal> use the Fold; other slash commands dispatch directly.
@@ -158,12 +176,14 @@ if $stdin.tty?
   if !fast_boot && Master::CLI::Face::Window.asked?(message.split)
     result = Master::CLI::CommandRegistry.dispatch_face
     puts result if result && result != "face0: closed"
+    stop_control_plane_safely(control_plane)
     stop_cli_background_loop_safely(cli)
     save_cli_session_safely(cli)
     exit!(0)
   end
   if fast_boot
     cli.pipe(message) unless message.empty?
+    stop_control_plane_safely(control_plane)
     stop_cli_background_loop_safely(cli)
     save_cli_session_safely(cli)
     exit!(cli.exit_code || 0)
@@ -177,6 +197,7 @@ else
   message = initial_message_from_argv(ARGV)
   cli.pipe(message) unless message.empty?
   $stdin.each_line { |line| cli.pipe(line) }
+  stop_control_plane_safely(control_plane)
   stop_cli_background_loop_safely(cli)
   save_cli_session_safely(cli)
   $stdout.flush
@@ -184,4 +205,5 @@ else
   exit!(cli.exit_code || 0)
 end
 
+stop_control_plane_safely(control_plane)
 exit(cli.exit_code || 0)
