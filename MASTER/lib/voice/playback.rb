@@ -296,13 +296,13 @@ module Master
         @lock.synchronize { @playing_pid = pid if generation_active?(generation) }
         Process.wait(pid)
         true
-      ensure
-        @lock.synchronize { @playing_pid = nil if @playing_pid == pid }
       rescue Errno::ESRCH, Errno::ECHILD
         false
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "Voice::Playback.play")
         false
+      ensure
+        @lock.synchronize { @playing_pid = nil if @playing_pid == pid }
       end
 
       def current_generation
