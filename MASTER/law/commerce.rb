@@ -29,7 +29,7 @@ Law.define(:COMMERCE_EXTERNAL_SOURCES_STAY_EXPLAINABLE) do
   severity :error
   mode :violation
   path "RAILS/amber/app/services/"
-  detect { |line| line.match?(/Suggestion\.new\(/) && !line.match?(/source|reasons|commerce_key/) }
+  detect { |line| line.match?(/Suggestion\.new\([^\n]*\bscore\b[^\n]*\)/) }
   fix "Use ShopTheLook::Suggestion with source, reasons, and commerce_key so a commercial recommendation is attributable and explainable."
   bad "Suggestion.new(title, merchant, url, "remote", score)"
   good "Suggestion.new(title, merchant, url, "brgen", score, reasons, commerce_key)"
