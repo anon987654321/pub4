@@ -51,6 +51,11 @@ class TestGateChain < Minitest::Test
                  G.suite_jobs(%w[RAILS]).map(&:first)
   end
 
+  def test_suite_stage_has_a_human_readable_purpose
+    assert_equal "complete test suites over all four trees", G.suite_purpose(G::TREES)
+    assert_equal "complete test suites over MASTER, RAILS, OPENBSD", G.suite_purpose(%w[MASTER RAILS OPENBSD])
+  end
+
   def test_openbsd_scope_has_a_gate_stage
     scoped = G.stages(scan_only: true, trees: %w[OPENBSD]).map(&:name)
 
