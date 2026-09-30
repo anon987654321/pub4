@@ -34,6 +34,7 @@ transcendent:
   phrase_language_switching: true
   phrase_language_voices:
     nb: pernille
+    ms: yasmin
     en: jenny
   # Local MLX (Apple Silicon)
   mlx_model: mlx-community/Kokoro-82M-bf16
