@@ -62,10 +62,7 @@ module Master
           )
         end
 
-        def annotate(rendered, findings)
-          categories = findings.select { |finding| finding.severity == :error }.map(&:category).uniq
-          "#{rendered}\n\n#{@renderer.render("output warning: #{categories.join(', ')}", mode: :warning)}"
-        end
+
       end
     end
   end
