@@ -120,7 +120,7 @@ module Master
           length = part.length / CHARS_PER_S
           loop do
             elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
-            if envelope_job.join(0)
+            if envelope_job && envelope_job.join(0)
               levels = envelope_job.value
               length = levels.size * FRAME_S unless levels.empty?
               envelope_job = nil
