@@ -18,6 +18,20 @@ class TestSelfEvolutionTrigger < Minitest::Test
       assert_equal "self-evolution: no significant refactor", result
       refute File.exist?(File.join(dir, "runtime", "self_evolution.md"))
     end
+  ensure
+    ENV["MASTER_SELF_EVOLUTION"] = previous
+  end
+
+  def test_is_dormant_without_an_explicit_enable
+    previous = ENV.delete("MASTER_SELF_EVOLUTION")
+    dir = Dir.mktmpdir("self-evolution")
+
+    result = Master::Trace::SelfEvolutionTrigger.new(root: dir).call
+
+    assert_equal "self-evolution: dormant — set MASTER_SELF_EVOLUTION=1", result
+  ensure
+    ENV["MASTER_SELF_EVOLUTION"] = previous
+    FileUtils.remove_entry(dir) if dir && Dir.exist?(dir)
   end
 
   def test_stays_dormant_when_self_evolution_is_disabled
