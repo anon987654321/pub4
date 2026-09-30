@@ -29,7 +29,7 @@ module Master
         # a recorded decision, and this is the one thing that would break it.
         # The machinery is here so the choice is a flag rather than a rewrite.
         "phrase_language_switching" => true,
-        "phrase_language_voices" => { "nb" => "pernille", "en" => "jenny" },
+        "phrase_language_voices" => { "nb" => "pernille", "ms" => "yasmin", "en" => "jenny" },
         "mlx_model" => "mlx-community/chatterbox-fp16",
         "mlx_voice" => "default",
         "exaggeration" => 0.62,
