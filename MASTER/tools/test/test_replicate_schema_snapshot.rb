@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "tools_helper"
-require_relative "../replicate/lib/schema_snapshot"
+require_relative "../replicate/schema_snapshot"
 require "tmpdir"
 require "time"
 
