@@ -79,7 +79,7 @@ module Master
           def local_server_for(model_id) = local_server_index[model_id.to_s]
 
           def start_pool_probes
-            return {} if ENV["MASTER_NO_POOL_PROBES"] == "1"
+            return {} if ENV["MASTER_NO_POOL_PROBES"] == "1" || ENV["MASTER_LOCAL_ONLY"] == "1"
 
             @pool_probes ||= cli_lanes.keys.to_h { |name| [name, Thread.new { probe_cli_lane(name) }] }.merge(
               "openrouter_credits" => Thread.new { probe_openrouter_credits },
