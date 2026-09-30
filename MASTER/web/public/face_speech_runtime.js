@@ -1172,11 +1172,11 @@ function ttsTick() {
   tts.meta.delete(text);
   let browserFallbackTimer = setTimeout(() => {
     if (!tts.playing || tts.current !== text || token !== tts.cancelToken) return;
-    if (!speakWithBrowserTTS(text, token)) return;
-    tts.cancelToken++;
-    tts.playing = false;
-    tts.current = null;
-    setTTSLoading(false);
+    const browserToken = ++tts.cancelToken;
+    if (!speakWithBrowserTTS(text, browserToken)) {
+      tts.cancelToken = token;
+      return;
+    }
   }, 1800);
   const nextSpeech = nextQueuedSpeech();
   if (nextSpeech) fetchTTS(nextSpeech);
