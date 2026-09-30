@@ -17,16 +17,16 @@ class TestBootBanner < Minitest::Test
     ENV["MASTER_BOOT_STATUS"] = "1"
     io = StringIO.new
     Master::CLI::BootBanner.print(io:)
-    assert_includes io.string, "master: boot safe="
-    assert_includes io.string, "master: ready dmesg=preserved"
+    assert_includes io.string, "boot0 at mainbus0: safe "
+    assert_includes io.string, "master0: ready"
   ensure
     ENV.delete("MASTER_BOOT_STATUS")
   end
 
   def test_banner_lines_reflect_env_flags
     lines = Master::CLI::BootBanner.banner_lines
-    assert(lines.any? { |line| line.start_with?("master: boot safe=") })
-    assert(lines.any? { |line| line.start_with?("master: aesthetic=") })
+    assert(lines.any? { |line| line.start_with?("boot0 at mainbus0: safe ") })
+    assert(lines.any? { |line| line.start_with?("style0 at master0: ") })
   end
 
   # Regression: bin/cli's --boot-status flag set MASTER_BOOT_STATUS=1 but
@@ -46,6 +46,6 @@ class TestBootBanner < Minitest::Test
                                   chdir: Master::ROOT, stdin_data: "")
     assert status.success?, "bin/cli --help exited #{status.exitstatus}: #{out.lines.last(3).join}"
     assert_includes out, "Usage: bin/cli"
-    refute_includes out, "master: boot", "bin/cli --help started the boot"
+    refute_includes out, "boot0 at mainbus0: safe", "bin/cli --help started the boot"
   end
 end
