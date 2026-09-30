@@ -10,8 +10,9 @@ same `<subapp>.<apex>` rule.
 
 Apex names are the city with a vowel dropped (or similar): Bergen → `brgen.no`,
 Oslo → `oshlo.no`, Los Angeles → `lsangeles.com`, London → `lndon.uk`. Do not
-invent a host; the list is only `ENTRIES`. Linking a row that has no TLS is
-`LIVE_DOMAINS` in that file, not a product decision here.
+invent a host; the list is only `ENTRIES`. The footer links the deliberate
+`CITY_NETWORK_DOMAINS` subset; `LIVE_DOMAINS` remains the TLS/deployment fact
+set, so a network link never implies that a certificate is already installed.
 
 The Host header picks both the city (`acts_as_tenant`) and the vertical. Same
 users, same session, same deploy.
