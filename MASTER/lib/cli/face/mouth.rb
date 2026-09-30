@@ -14,7 +14,7 @@ module Master
       # no ffmpeg the mouth moves on a timer instead.
       class Mouth
         FRAME_S = 0.05
-        RATE = 8_000
+        RATE = 4_000
         # Without an envelope a termux-media-player take has no known length,
         # and speech runs near fourteen characters a second.
         CHARS_PER_S = 14.0
@@ -135,9 +135,14 @@ module Master
             on_level.call(levels.empty? ? nil : levels.fetch((elapsed / FRAME_S).floor, 0.0))
             sleep FRAME_S
           end
+          if stopped
+            envelope_job&.kill
+            on_level.call(0.0)
+            return true
+          end
+
           levels = envelope_job.value if envelope_job
           on_level.call(0.0)
-          return true if stopped
 
           process_status = status.call
           process_status ? process_status.success? : false
