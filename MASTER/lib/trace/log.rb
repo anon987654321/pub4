@@ -42,7 +42,11 @@ module Master
         return if @warned[key]
 
         @warned[key] = true
-        ::Kernel.warn(message)
+        if defined?(Master::Trace::Dmesg)
+          Master::Trace::Dmesg.once("event0", message.sub(/\A[^:]+:\s*/, ""))
+        else
+          ::Kernel.warn(message)
+        end
       end
 
       # Append-only tool invocation log; subscribes to tool:before on EventBus.
