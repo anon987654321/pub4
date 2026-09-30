@@ -32,7 +32,7 @@
         <dd><%= @inventory_summary[:sold] %></dd>
         <dt><%= t("marketplace.seller_center.out_of_stock", default: "Out of stock") %></dt>
         <dd><%= @inventory_summary[:out_of_stock] %></dd>
-        <dt><%= t("marketplace.seller_center.purchases, default: "Purchases"") %></dt>
+        <dt><%= t("marketplace.seller_center.purchases", default: "Purchases") %></dt>
         <dd><%= @seller_summary[:purchases] %></dd>
         <dt><%= t("marketplace.seller_center.delivery_rate", default: "Delivery completion") %></dt>
         <dd><%= @seller_summary[:delivery_completion_rate] ? number_to_percentage(@seller_summary[:delivery_completion_rate] * 100, precision: 1) : "—" %></dd>
