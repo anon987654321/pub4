@@ -108,13 +108,30 @@ module Master
           return Master::Result.ok(feedback: [], issues: [], cherry_picks: [], ideas: [], mode: :general) unless hard_critique_enabled?
 
           briefing = hard_briefing(files)
-          Master::Review::Council::Critique.new(
+          result = Master::Review::Council::Critique.new(
             mode: :general,
             agent: @agent,
             event_bus: @bus,
             files:,
             briefing:,
           ).run
+          unless result.ok?
+            @bus&.publish("fix_loop:hard_critique_inconclusive", files: files.size, error: result.message.to_s[0, 180])
+            Master::Trace::Dmesg.status("fix0", "hard critique INCONCLUSIVE: #{result.message.to_s[0, 120]}")
+          else
+            value = result.value!
+            @bus&.publish(
+              "fix_loop:hard_critique",
+              files: files.size,
+              issues: Array(value[:issues]).size,
+              cherry_picks: Array(value[:cherry_picks]).size,
+            )
+            Master::Trace::Dmesg.status(
+              "fix0",
+              "hard critique #{Array(value[:issues]).size} issue(s), #{Array(value[:cherry_picks]).size} repair candidate(s)",
+            )
+          end
+          result
         rescue StandardError => e
           @bus&.publish("fix_loop:hard_critique_inconclusive", files: files.size, error: e.message[0, 180])
           Master::Trace::Dmesg.status("fix0", "hard critique INCONCLUSIVE: #{e.class}: #{e.message[0, 120]}")
