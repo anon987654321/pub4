@@ -196,7 +196,8 @@ media:
       - camcorder look
       - cinematic look
     actions: [run, use, call, invoke, apply, give, process, grade, edit, transform, put]
-    objects: [photo, photos, photograph, photographs, picture, pictures, image, images]
+    objects:
+      photo: [photo, photos, photograph, photographs, picture, pictures, image, images]
     recency:
       latest: [latest, newest, most recent, last]
       recent: [recent, new, newer]
