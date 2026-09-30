@@ -41,8 +41,18 @@ class WhyExplainerTest < Minitest::Test
     assert_includes out, "lineage: MASTER/lib/trace/why_explainer.rb"
     assert_includes out, "boundary: master"
     assert_includes out, "purpose: evidence, events, telemetry, replay, snapshots"
+    assert_includes out, "status: RESOLVED"
     assert_includes out, "constitution: data/rules.yml"
+    assert_includes out, "laws: ROBUSTNESS, SINGULARITY, LINEARITY, PROXIMITY, ABSTRACTION, DENSITY, RENDERED_VALUES"
     assert_includes out, "executable_law: law/"
+  end
+
+
+  def test_explain_path_uses_most_specific_ownership
+    out = explainer.explain("lib/trace")
+
+    assert_includes out, "purpose: evidence, events, telemetry, replay, snapshots"
+    assert_includes out, "risk: high"
   end
 
   def test_explain_rails_path_returns_boundary_lineage
