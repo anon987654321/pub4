@@ -22,7 +22,9 @@ module Master
         # framework strings with overridden to_s/gsub; redaction must never call
         # back into itself through those overrides.
         out = value.is_a?(String) ? String.new(value) : value.to_s
-        KEY_PATTERNS.each { |pattern| out = String.instance_method(:gsub).bind(out).call(pattern, "[REDACTED]") }
+        KEY_PATTERNS.each do |pattern|
+          out = String.instance_method(:gsub).bind(out).call(pattern, "[REDACTED]")
+        end
         out
       end
 
