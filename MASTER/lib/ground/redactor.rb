@@ -45,8 +45,7 @@ module Master
 
       def self.find_prefixed_secret(value, offset, prefix)
         cursor = offset
-        index = String.instance_method(:index).bind(value)
-        while (start = index.call(prefix, cursor))
+        while (start = literal_index(value, prefix, cursor))
           finish = start + prefix.bytesize
           return [start, secret_run_end(value, finish, SECRET_ALPHANUMERIC_DASH)] if secret_run_length(value, finish, SECRET_ALPHANUMERIC_DASH) >= 16
           cursor = start + prefix.bytesize
@@ -56,15 +55,41 @@ module Master
 
       def self.find_bearer_secret(value, offset)
         cursor = offset
-        downcase = String.instance_method(:downcase).bind(value)
-        lowered = downcase.call
-        index = String.instance_method(:index).bind(lowered)
-        while (start = index.call("bearer", cursor))
+        while (start = literal_index(value, "bearer", cursor, ignore_case: true))
           separator = start + 6
           separator += 1 while separator < value.bytesize && ASCII_WHITESPACE.include?(value.getbyte(separator))
           length = secret_run_length(value, separator, SECRET_BEARER)
           return [start, secret_run_end(value, separator, SECRET_BEARER)] if separator > start + 6 && length >= 16
           cursor = start + 6
+        end
+        nil
+      end
+
+      # Do not route secret matching through String#index/downcase. Those methods
+      # may be instrumented or prepended by a dependency, and redaction is itself
+      # used by the dependency/bootstrap trace path. A call back into #text here
+      # turns one secret into an unbounded redaction recursion.
+      def self.literal_index(value, needle, offset, ignore_case: false)
+        needle_length = needle.bytesize
+        limit = value.bytesize - needle_length
+        cursor = offset
+
+        while cursor <= limit
+          matched = true
+          needle_length.times do |index|
+            left = value.getbyte(cursor + index)
+            right = needle.getbyte(index)
+            if ignore_case
+              left -= 32 if left && left >= 65 && left <= 90
+              right -= 32 if right && right >= 65 && right <= 90
+            end
+            if left != right
+              matched = false
+              break
+            end
+          end
+          return cursor if matched
+          cursor += 1
         end
         nil
       end

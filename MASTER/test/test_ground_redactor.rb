@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "test_helper"
+require "open3"
 
 class GroundRedactorTest < Minitest::Test
   def test_text_redacts_api_key_patterns
@@ -33,6 +34,33 @@ class GroundRedactorTest < Minitest::Test
   def test_text_redacts_bearer_tokens
     raw = "authorization Bearer #{'F' * 24}"
     assert_equal "authorization [REDACTED]", Master::Ground::Redactor.text(raw)
+  end
+
+  def test_text_survives_hostile_string_search_methods
+    script = <<~'RUBY'
+      module HostileStringMethods
+        def index(*)
+          Master::Ground::Redactor.text(self)
+        end
+
+        def downcase(*)
+          Master::Ground::Redactor.text(self)
+        end
+      end
+
+      String.prepend(HostileStringMethods)
+
+      raw = "authorization Bearer FFFFFFFFFFFFFFFFFFFFFFFF"
+      expected = "authorization [REDACTED]"
+      abort Master::Ground::Redactor.text(raw) unless Master::Ground::Redactor.text(raw) == expected
+    RUBY
+
+    output, status = Open3.capture2e(
+      RbConfig.ruby,
+      "-I#{File.expand_path("../lib", __dir__)}",
+      "-e", script
+    )
+    assert status.success?, output
   end
 
   def test_text_redacts_long_bare_alphanumeric_tokens
