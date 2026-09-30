@@ -8,9 +8,9 @@ module Master
   module MD
     Issue = Struct.new(:line, :code, :message, keyword_init: true)
 
-    FENCE = /^\\s{0,3}(\\`{3,}|~{3,})/.freeze
-    HEADING = /^ {0,3}\\#{1,6}(?:\\s|$)/.freeze
-    BULLET = /^(\\s{0,3})[*+](\\s+)/.freeze
+    FENCE = /\A\s{0,3}(`{3,}|~{3,})/.freeze
+    HEADING = /\A {0,3}\#{1,6}(?:\s|$)/.freeze
+    BULLET = /\A(\s{0,3})[*+](\s+)/.freeze
 
     module_function
 
