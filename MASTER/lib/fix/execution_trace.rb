@@ -1,5 +1,6 @@
-require_relative "../io/exec"
 # frozen_string_literal: true
+
+require_relative "../io/exec"
 
 require "digest"
 require "yaml"
