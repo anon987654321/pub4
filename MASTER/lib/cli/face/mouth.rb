@@ -22,7 +22,10 @@ module Master
         def initialize(device: Master::Device, synthesize: ->(text) { Master::Voice::Playback.synthesize(text) })
           @device = device
           @synthesize = synthesize
+          @last_error = nil
         end
+
+        attr_reader :last_error
 
         # Nil when the mouth can speak. Playback.enabled? is the switch the
         # session obeys — MASTER_CLI_SPEAK=0, MASTER_SKIP_TTS, CI, no terminal.
@@ -42,7 +45,12 @@ module Master
         # it is heard and on_level with the mouth's opening while it plays.
         # stop ends it between frames. False when nothing could be spoken.
         def say(text, on_level:, on_chunk: nil, stop: -> { false })
-          return false unless available?
+          @last_error = nil
+          unless available?
+            @last_error = missing
+            Master::Trace::Dmesg.status("voice0", @last_error)
+            return false
+          end
 
           spoken = false
           chunks(text).each do |part|
@@ -54,10 +62,16 @@ module Master
               played = play(path, part, on_level:, stop:)
               played = direct_speak(part) unless played
               spoken ||= played
-              show_direct_fallback unless played
+              unless played
+                @last_error = "audio playback failed"
+                show_direct_fallback
+              end
             else
               spoken ||= direct_speak(part)
-              show_direct_fallback unless spoken
+              unless spoken
+                @last_error = "speech synthesis failed"
+                show_direct_fallback
+              end
             end
           ensure
             File.delete(path) if path && File.exist?(path)
@@ -143,6 +157,7 @@ module Master
 
           ok = system("say", text.to_s, out: File::NULL, err: File::NULL)
           Master::Trace::Dmesg.status("voice0", "direct speech #{ok ? "ready" : "failed"}")
+          @last_error = "direct speech failed" unless ok
           ok
         rescue StandardError => e
           Master::Trace::Dmesg.status("voice0", "direct speech failed, #{e.class}: #{e.message}")
