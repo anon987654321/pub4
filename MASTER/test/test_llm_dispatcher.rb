@@ -220,6 +220,20 @@ def test_no_provider_key_refuses_at_the_door
 
   assert_predicate result, :err?
   assert_equal :no_api_key, result.category
+  def test_local_only_rejects_a_remote_model_before_send
+    dispatcher = Master::Review::LLMDispatcher.allocate
+    previous = ENV["MASTER_LOCAL_ONLY"]
+    ENV["MASTER_LOCAL_ONLY"] = "1"
+
+    result = dispatcher.send(:local_only_refusal, "anthropic/claude-sonnet-4")
+
+    assert_instance_of Master::Result::Err, result
+    assert_equal :offline, result.category
+  ensure
+    ENV["MASTER_LOCAL_ONLY"] = previous
+  end
+
+
 end
 
   # Two claude subprocesses at once, process-wide: the dispatcher's latency
