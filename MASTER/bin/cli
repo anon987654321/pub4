@@ -55,6 +55,7 @@ def parse_initial_message_options(argv)
       puts "Fast mode:  bin/cli --fast   (skip optional boot services; one command, then exit)"
       puts "Headless:   bin/cli --headless -p PROMPT   (JSON mission receipt, non-interactive)"
       puts "Gates:      MASTER/bin/check --profile=contributor|agent|full"
+      puts "Offline:    MASTER_LOCAL_ONLY=1 uses local Ollama/local-server models only; no remote LLM probes"
       puts "VPS 1GB:    auto-skips TTS/boot-scan/web — scope a scan to a path, not the whole repo"
       exit 0
     end
