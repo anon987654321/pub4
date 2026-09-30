@@ -32,10 +32,10 @@ module Master
           ],
         },
         "review" => {
-          summary: "read-only: the council and the principle map",
+          summary: "read-only compatibility view over the /fix pipeline",
           detail: [
-            "/review [path] — the council reads the path and argues about it, then",
-            "the principle map. It writes nothing; /fix is the verb that writes.",
+            "/review [path] — runs the /fix observation, critique and map stages",
+            "without writing. /fix is the canonical lifecycle and owns repair.",
             "",
             "--only <stage> runs one part: --only critique or --only map, and",
             "`council` is a spelling of critique. --only fix gives the reading and",
