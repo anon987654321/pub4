@@ -62,7 +62,7 @@ module Master
           @think_paused = true
           print "\r\e[K"
         end
-        print "#{@refs.renderer.render("#{prompt} [y/N]", mode: :warning)} "
+        print "#{@refs.renderer.render("ask0 at fold0: #{prompt} [y/N]", mode: :dmesg)} "
         $stdout.flush
         $stdin.gets.to_s.strip
       ensure
