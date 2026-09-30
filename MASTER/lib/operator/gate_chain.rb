@@ -60,11 +60,12 @@ module Operator
     # order it was written.
     TREES = %w[MASTER RAILS OPENBSD].freeze
 
-    # /fix already owns lexical observation and repair. Its verification tail must
-    # therefore prove the repaired tree without recursively invoking /fix again.
+    # /fix already owns observation, council critique and repair. Its verification
+    # tail proves the repaired tree without recursively invoking /fix or debating
+    # the same tree a second time.
     def verify_fix(target:)
       trees = trees_for_target(target)
-      selected = stages(scan_only: false, trees:).reject { |stage| stage.name == "lexical" }
+      selected = stages(scan_only: false, trees:).reject { |stage| %w[lexical council].include?(stage.name) }
       return [0, []] if selected.empty?
 
       report(selected, scan_only: false, trees:, return_results: true)
