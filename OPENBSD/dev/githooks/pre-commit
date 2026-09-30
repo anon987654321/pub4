@@ -132,6 +132,28 @@ if staged_trees.size > 1 && ENV["PUB4_CROSS_TREE"] != "1"
   exit 1
 end
 
+# Any staged Ruby file must parse before it lands. The broken law inventory regression
+# exposed why Dilla-only protection was insufficient: the same shared checkout can
+# commit a malformed MASTER/lib file and the next process dies before /fix can
+# start. This is deliberately local, cheap, and scoped to staged Ruby only.
+if ENV["PUB4_RUBY_PARSE_SKIP"] != "1"
+  require "open3"
+  ruby_staged = staged.select { |path| path.end_with?(".rb") }
+  ruby_staged.each do |path|
+    out, status = Open3.capture2e(RbConfig.ruby, "-c", path)
+    next if status.success?
+
+    warn ""
+    warn "pre-commit: REFUSED — #{path} does not parse:"
+    warn "  #{out.lines.first(4).join.strip}"
+    warn ""
+    warn "  Fix the Ruby syntax error before committing."
+    warn "  Bypass only this one commit: PUB4_RUBY_PARSE_SKIP=1 git commit -- <paths>"
+    warn ""
+    exit 1
+  end
+end
+
 # The dilla engine is one program: dilla.rb plus lib/*.rb. A syntax error
 # anywhere in it stops every render — bed, demux, mix — at load, and one
 # shipped on 2026-09-19: four orphaned lines a rewrite left behind, caught
