@@ -47,7 +47,10 @@ module Master
       # A cancel carries the turn's children; a publisher with none to name,
       # such as the web face starting a new turn, stops nothing.
       def subscribe_interrupt(bus)
-        bus.subscribe("user:interrupt") { |event| event[:children]&.kill_all }
+        bus.subscribe("user:interrupt") do |event|
+          event[:children]&.kill_all
+          Voice::Playback.interrupt!(event[:reason])
+        end
       end
     end
 
