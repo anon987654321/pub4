@@ -21,7 +21,7 @@ module Operator
   class DocNumbers
     ROOT = File.expand_path("../..", __dir__)
     RULES = File.join(ROOT, "MASTER/data/rules.yml")
-    TREES = %w[MASTER RAILS OPENBSD].freeze
+    TREES = %w[MASTER RAILS OPENBSD STUDIO].freeze
     SKIP = %r{/(node_modules|vendor|knowledge|output|tmp|\.master)/}
 
     # Naming any of these makes the number traceable.

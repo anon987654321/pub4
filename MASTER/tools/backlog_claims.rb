@@ -28,7 +28,7 @@ require "set"
 ROOT = File.expand_path("../..", __dir__)
 TODO = File.join(ROOT, "TODO.md")
 
-TREES = %w[MASTER RAILS OPENBSD].freeze
+TREES = %w[MASTER RAILS OPENBSD STUDIO].freeze
 
 # A verdict already written into the item — these have been decided.
 DECIDED = /\*\*(?:Fixed|Done|Already|Closed|Declined|Overtaken|Measured|False|Partly|Argued|Held|Confirmed)\b/i

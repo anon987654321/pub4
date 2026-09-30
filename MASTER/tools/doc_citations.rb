@@ -33,7 +33,7 @@ module Operator
   class DocCitations
     ROOT = File.expand_path("../..", __dir__)
     MASTER = File.join(ROOT, "MASTER")
-    TREES = %w[MASTER RAILS OPENBSD].freeze
+    TREES = %w[MASTER RAILS OPENBSD STUDIO].freeze
     SKIP = %r{/(node_modules|vendor|knowledge|output|tmp|\.master|\.git)/}
 
     CITE = /<!--\s*cite:\s*([^\s#]+)#([^\s]+)\s*-->/
