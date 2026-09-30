@@ -65,6 +65,32 @@ class GroundRedactorTest < Minitest::Test
     assert status.success?, output
   end
 
+  def test_text_reentry_guard_survives_fiber_boundary
+    script = <<~'RUBY'
+      require "ground/redactor"
+
+      module HostileStringMethods
+        def bytesize(*)
+          Fiber.new { Master::Ground::Redactor.text(self) }.resume
+          super
+        end
+      end
+
+      String.prepend(HostileStringMethods)
+
+      raw = "plain text without a secret"
+      actual = Master::Ground::Redactor.text(raw)
+      abort actual unless actual == raw
+    RUBY
+
+    output, status = Open3.capture2e(
+      RbConfig.ruby,
+      "-I#{File.expand_path("../lib", __dir__)}",
+      "-e", script
+    )
+    assert status.success?, output
+  end
+
   def test_text_survives_hostile_core_string_dispatch
     script = <<~'RUBY'
       require "ground/redactor"
