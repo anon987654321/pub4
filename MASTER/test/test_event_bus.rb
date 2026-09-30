@@ -29,6 +29,19 @@ class TestEventBus < Minitest::Test
     assert_equal %i[outer inner], seen
   end
 
+  def test_nested_publish_from_another_fiber_stays_on_the_same_dispatch_queue
+    seen = []
+    @bus.subscribe("outer") do
+      seen << :outer
+      Fiber.new { @bus.publish("inner") }.resume
+    end
+    @bus.subscribe("inner") { seen << :inner }
+
+    @bus.publish("outer")
+
+    assert_equal %i[outer inner], seen
+  end
+
   def test_recursive_event_cascade_is_bounded
     seen = 0
     @bus.subscribe("loop") do
