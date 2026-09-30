@@ -58,25 +58,24 @@ module Master
           return
         end
 
-        state[:queue] << [event, payload]
+        state[:queue] << [event, payload, Fiber[:master_conversation]]
       end
 
       def drain(state)
         until state[:queue].empty?
-          event, payload = state[:queue].shift
+            event, payload, conversation = state[:queue].shift
           state[:dispatched] += 1
-          dispatch_one(event, payload)
+          dispatch_one(event, payload, conversation)
         end
       end
 
-      def dispatch_one(event, payload)
+      def dispatch_one(event, payload, conversation)
         ts = elapsed_ms
         # One process-wide bus. ChatService (and anything else that writes a
         # visitor's SSE from a handler) must be able to ignore another
         # conversation's events — without this stamp, subscribe("**") and even
         # named tool:before handlers dump visitor B's turn into visitor A's stream.
         enriched = payload.merge(event:, ts:)
-        conversation = Fiber[:master_conversation]
         enriched[:conversation] = conversation if conversation
         handlers = synchronize { matching_handlers(event) }
 
