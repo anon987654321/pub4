@@ -14,7 +14,8 @@ module Master
         key = id.to_s.strip
         return if key.empty?
 
-        path_ownership(key) ||
+        rule_lineage(key) ||
+          path_ownership(key) ||
           design_law(key) ||
           law(key) ||
           # The declared rule first: it carries tier and name, and registry_rule
@@ -29,6 +30,12 @@ module Master
       end
 
       private
+
+      def rule_lineage(key)
+        return unless key.include?("/") || File.file?(File.join(@root, key))
+
+        RuleLineage.new(root: @root).explain(key)
+      end
 
       # A path, not a rule id. An agent mid-task cannot re-read 4,215 lines of
       # rules.yml, so the question it actually has is "what governs this file".
