@@ -58,7 +58,7 @@ class TestPhraseLanguage < Minitest::Test
 
   def test_language_switching_is_on_by_default_and_uses_registered_voices
     assert T::DEFAULTS["phrase_language_switching"]
-    assert_equal({ nb: :pernille, ms: :yasmin, en: :jenny }, T.phrase_languages(T::DEFAULTS))
+    assert_equal({ en: :jenny, nb: :pernille, ms: :yasmin }, T.phrase_languages(T::DEFAULTS))
   end
 
   def test_turning_language_switching_off_removes_phrase_voice_overrides
@@ -66,11 +66,11 @@ class TestPhraseLanguage < Minitest::Test
     assert_nil T.phrase_languages(cfg)
   end
 
-  def test_the_mapped_voice_is_one_the_registry_actually_knows
-    T::DEFAULTS["phrase_language_voices"].each_value do |key|
-      next if key.to_s.empty?
-
-      assert Master::Voice::Speech::VOICES.key?(key.to_sym), "#{key} is not a registered voice"
+  def test_the_language_family_voices_are_registered
+    Master::Voice::Policy.language_voice_families.each_value do |family|
+      family.each_value do |key|
+        assert Master::Voice::Speech::VOICES.key?(key.to_sym), "#{key} is not a registered voice"
+      end
     end
   end
 end
