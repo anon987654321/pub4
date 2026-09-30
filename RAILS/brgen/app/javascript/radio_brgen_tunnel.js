@@ -3,26 +3,14 @@ import { publishVisual } from "pub4/visual_field"
 'use strict'
 
 const DEFAULT_TRACKS = [
-  { title: "Microphone Master", id: "9EGHwkDix78", artist: "J Dilla" },
-  { title: "In Space", id: "vO2nWXCVt6o", artist: "J Dilla" },
-  { title: "Timeless", id: "dbbfo9_7D8g", artist: "J Dilla" },
-  { title: "Due Time", id: "WC09qDzU9y4", artist: "AFTA-1" },
-  { title: "Massage Situation", id: "6oUx6wGCekM", artist: "Flying Lotus" },
-  { title: "Eye", id: "ScVz2mntmCE", artist: "Madlib" },
-  { title: "Players", id: "KsULjOCYdnY", artist: "Slum Village" },
-  { title: "Exhibit A", id: "H3UIHZshNQ0", artist: "Jay Electronica" },
-  { title: "La La (Instrumental)", id: "EYJxxHQ7sX0", artist: "Slum Village" },
-  { title: "Get It Together", id: "t6T-Q6HMbEo", artist: "Slum Village" },
-  { title: "Fantastic", id: "a3ISYWWYgz8", artist: "Slum Village" },
-  { title: "me Yesterday//Corded", id: "8DgAhgmpXNA", artist: "Flying Lotus" },
-  { title: "Camel", id: "fU9YRGLPDQ8", artist: "Flying Lotus" },
-  { title: "Golden Diva", id: "iu4FVvR2QQs", artist: "Flying Lotus" },
-  { title: "Worlds Full of Sadness", id: "MU3nfxsz2XA", artist: "Slum Village" },
-  { title: "Sarria's Mind", id: "gFKArkiz8vU", artist: "A. Mochi & Takaaki Itoh" },
-  { title: "Rounded", id: "oeaY2h_cKsg", artist: "Samiyam" },
-  { title: "Traffic", id: "bH-30pDoQdo", artist: "Chase Swayze" },
-  { title: "Underrated", id: "1jjFk2Vp5ok", artist: "Chase Swayze" },
-  { title: "BTS Radio 2006", id: "6nWdggkulHk", artist: "Flying Lotus" }
+  { title: "Microphone Master [Extended]", id: "9EGHwkDix78", artist: "J Dilla" },
+  { title: "Sounds Like Love (Extended)", id: "jnP3tRG-LZs", artist: "J Dilla" },
+  { title: "Searchin' (Instrumental)", id: "1XJLtZJ9Ook", artist: "Jay Dee Aka J Dilla" },
+  { title: "Get It Together (Instrumental)", id: "t6T-Q6HMbEo", artist: "J-88 (Slum Village)" },
+  { title: "Hustle (Instrumental Mix)", id: "zoGTC7uROZE", artist: "J Dilla" },
+  { title: "Stupid Lies (Instrumental)", id: "7611GgbJAbM", artist: "J Dilla" },
+  { title: "Fantastic (Instrumental)", id: "j0z_-7TfPeM", artist: "J Dilla" },
+  { title: "Can I Be Me (Instrumental)", id: "Fo7WoYn_FEs", artist: "J Dilla" }
 ]
 
 // Radio Bergen opens on the same track every session. A station has a signature
@@ -30,7 +18,7 @@ const DEFAULT_TRACKS = [
 // whichever of 24 tracks Math.random landed on. AFTA-1's "Due Time" is the
 // opener by operator decision. Rotation is random only after it has played, and
 // the lookup is by id so reordering the manifest cannot silently unpin it.
-const OPENING_TRACK_ID = "WC09qDzU9y4"
+const OPENING_TRACK_ID = "9EGHwkDix78"
 
 // FFT band edges as a fraction of the spectrum. 2048 bins over ~44.1kHz puts
 // bass under ~250Hz, mids to ~2kHz, highs above — the split that makes a kick
@@ -39,9 +27,8 @@ const BAND_BASS = 0.012
 const BAND_MID = 0.09
 
 class AudioEngine {
-  constructor({ iframe, trackDisplay, tracks = DEFAULT_TRACKS, onTrackChange }) {
+  constructor({ iframe, trackDisplay, tracks = DEFAULT_TRACKS }) {
     this.iframe = iframe
-    this.onTrackChange = onTrackChange
     this.trackDisplay = trackDisplay
     this.tracks = tracks.length ? tracks : DEFAULT_TRACKS
     this.isPlaying = false
@@ -222,7 +209,6 @@ class AudioEngine {
     this.loadCurrentTrack()
     this.updateTrackDisplay()
     this.#syncMediaSession()
-    this.onTrackChange?.()
   }
 
   nextTrack() {
@@ -231,7 +217,6 @@ class AudioEngine {
     this.loadCurrentTrack()
     this.updateTrackDisplay()
     this.#syncMediaSession()
-    this.onTrackChange?.()
   }
 
   getAudioData() {
@@ -904,15 +889,10 @@ export class RadioBrgen {
     this.isStarted = false
     this.isMobile = window.innerWidth < 768 || "ontouchstart" in window
     this._boundHandlers = []
-    // 0 is the tunnel. Each new track steps to the next of radio_visualizers.js's
-    // seven 2D renderers and wraps back round to the tunnel.
-    this.vizMode = 0
-
     this.audioEngine = new AudioEngine({
       iframe: options.youtubePlayer,
       trackDisplay: options.trackDisplay,
-      tracks: options.tracks,
-      onTrackChange: () => this.cycleVisualizer()
+      tracks: options.tracks
     })
     this.visualEngine = new VisualEngine(this.canvas)
 
@@ -931,31 +911,6 @@ export class RadioBrgen {
     this.audioEngine.start()
     if (this.overlay) this.overlay.hidden = true
     this.onStart?.()
-  }
-
-  // The renderers load on the first track change rather than with the page, so
-  // a visit that hears one track fetches none of them.
-  async cycleVisualizer() {
-    this._deck ??= import("radio_visualizers")
-      .then(({ VisualizerDeck }) => new VisualizerDeck(this.canvas))
-      .catch((error) => {
-        console.warn("radio_brgen_tunnel: visualizers unavailable, staying on the tunnel", error)
-        this._deck = null
-        return null
-      })
-    publishVisual("radio:track", {
-      topology: "tunnel",
-      mode: "radio:track",
-      activity: 0.72,
-      arousal: 0.62,
-      confidence: 0.9,
-      beat: 0.65
-    })
-    const deck = await this._deck
-    if (!deck || this._destroyed) return
-    this.deck = deck
-    this.vizMode = (this.vizMode + 1) % deck.size
-    deck.show(this.vizMode, this.visualEngine.w, this.visualEngine.h)
   }
 
   setupEventListeners() {
@@ -1003,7 +958,7 @@ export class RadioBrgen {
       clearTimeout(this._resizeTimer)
       this._resizeTimer = setTimeout(() => {
         this.visualEngine.resize()
-        this.deck?.resize(this.vizMode, this.visualEngine.w, this.visualEngine.h)
+
       }, 250)
     }
 
@@ -1078,14 +1033,7 @@ export class RadioBrgen {
             beat: audioData.beat
           })
         }
-        const visualInput = {
-          ...audioData,
-          parallax: this.visualEngine.parallaxOffset(audioData)
-        }
-        // The tunnel keeps its state moving underneath a 2D renderer, so it
-        // resumes mid-flight rather than from a cold start when the cycle returns.
-        if (this.vizMode === 0 || !this.deck) this.visualEngine.render()
-        else this.deck.frame(this.vizMode, visualInput)
+        this.visualEngine.render()
       } catch (error) {
         if (typeof console !== "undefined" && console.warn) {
           console.warn("radio_brgen_tunnel: animation frame failed, continuing", error)
@@ -1099,7 +1047,6 @@ export class RadioBrgen {
   destroy() {
     this._destroyed = true
     cancelAnimationFrame(this._raf)
-    this.deck?.destroy()
     this.audioEngine.stop()
     if (this.gui) this.gui.destroy()
     this._boundHandlers.forEach(([target, event, handler]) => {
