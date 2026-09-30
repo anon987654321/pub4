@@ -23,6 +23,7 @@ module Master
         manager.activate_environment!
         reexec_mismatched_bundler!(root:, env:, out:, argv:, program:)
         activate_bundle!(root)
+        verify_import_graph!(root:, out:)
 
         true
       end
@@ -48,6 +49,21 @@ module Master
         exec(clean_env, File.expand_path(program), *argv)
       rescue Errno::ENOENT => e
         out.puts("bundler0: cannot re-exec #{program}: #{e.message}")
+        exit 78
+      end
+
+      def verify_import_graph!(root:, out:)
+        return if ENV["MASTER_SKIP_IMPORT_PREFLIGHT"] == "1"
+
+        require_relative "../../tools/require_graph"
+        report = Operator::RequireGraph.run(root:, trees: ["MASTER"])
+        return if report["clean"]
+
+        report["broken"].first(12).each do |row|
+          out.puts("boot0: #{row["file"]}:#{row["line"]}: #{row["require_relative"]} -> #{row["target"]}")
+        end
+        out.puts("boot0: #{report["broken"].size} broken MASTER import(s)")
+        out.puts("boot0: run MASTER/bin/ruby MASTER/tools/require_graph.rb")
         exit 78
       end
 
