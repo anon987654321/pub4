@@ -35,7 +35,7 @@ MASTER = File.join(ROOT, "MASTER")
 CLI = File.join(MASTER, "bin", "cli")
 
 unless File.executable?(CLI) || File.file?(CLI)
-  warn "master: #{CLI} is missing — is this a full pub4 checkout?"
+  warn "master0: #{CLI} missing, full pub4 checkout required"
   exit 1
 end
 
