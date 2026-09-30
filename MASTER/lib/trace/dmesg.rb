@@ -333,7 +333,7 @@ module Master
         def event_line(payload)
           event = payload[:event].to_s
           component, action = event.split(":", 2)
-          unit = DmesgUnit.name(component)
+          unit = DmesgUnit.unit_name(component)
           detail = event_detail(payload, action:)
           detail = trace_detail(payload) if Dmesg.trace?
           detail.empty? ? "#{unit}: #{action || "event"}" : "#{unit}: #{action || "event"}, #{detail}"
