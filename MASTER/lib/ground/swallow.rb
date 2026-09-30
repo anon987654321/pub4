@@ -57,7 +57,11 @@ module Master
           # Last resort: stderr if even the logger fails, once per cause. On a
           # full disk every swallow fails alike, and each line lands mid-prompt.
           @unrecorded ||= {}
-          warn "swallow: cannot record errors: #{e.class}: #{e.message}" unless @unrecorded[e.class]
+          if defined?(Master::Trace::Dmesg)
+            Master::Trace::Dmesg.once("error0", "cannot record error, #{e.class}: #{e.message}") unless @unrecorded[e.class]
+          else
+            warn "error0: cannot record error, #{e.class}: #{e.message}" unless @unrecorded[e.class]
+          end
           @unrecorded[e.class] = true
         end
 
