@@ -743,10 +743,10 @@ beauty:
   - thorough_environmentally_friendly
   - as_little_design_as_possible
   code_martin:
-  - meaningful_names_intention_revealing
-  - functions_do_one_thing_small
-  - comments_explain_why_not_what
-  - error_handling_separate_from_logic
+    meaningful_names_intention_revealing: MEANINGFUL_NAMES
+    functions_do_one_thing_small: SMALL_FUNCTIONS
+    comments_explain_why_not_what: WHY_NOT_WHAT
+    error_handling_separate_from_logic: FAIL_VISIBLY
   zen_japanese:
     wabi_sabi: imperfect_authentic
     ma: emptiness_pause
