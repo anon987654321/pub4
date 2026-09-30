@@ -1,10 +1,5 @@
-/* Shared sign-in/sign-up form shell — shared/_offline_page.scss's sibling.
-   Explicit top padding: pages using this aren't guaranteed the ambient
-   clearance the home feed gets from its own header block, and this form
-   is short enough to otherwise sit directly under the fixed brand/nav
-   chrome every app pins to the top of the viewport. */
+/* Shared sign-in/sign-up form shell — shared/_offline_page.scss's sibling. */
 
-/* Chrome-light auth: keep brand + theme; hide app chrome that fights the form. */
 body.auth-surface {
   .tab-bar,
   .tab-bar-peel,
@@ -18,12 +13,9 @@ body.auth-surface {
   .sidebar-swiper,
   .widgets-swiper,
   .push-enable-btn {
-    /* ERASE guarantee (NO_IMPORTANT doctrine): the auth page must never
-       show feed chrome, whatever a vertical adds later. */
     display: none !important;
   }
 
-  /* Main is the form only — no feed gutters competing for attention. */
   main#main-content,
   main[role="main"] {
     max-width: 28rem;
@@ -47,8 +39,6 @@ body.auth-surface {
 }
 
 .auth-form-lead {
-  /* Capped in ch: design_rules.typography.line_length wants prose inside the
-     measure, and this ran past it. */
   max-width: var(--measure-narrow);
   margin: 0 0 var(--space-4);
   font-size: var(--text-sm);
@@ -106,7 +96,6 @@ body.auth-surface {
   outline-offset: 1px;
 }
 
-/* Password + Show on one row; input takes remaining width. */
 .auth-form .password-field {
   display: grid;
   grid-template-columns: 1fr auto;
@@ -145,9 +134,6 @@ body.auth-surface {
   color: var(--text-secondary);
 }
 
-/* "Create account" is the second most-pressed control on this page and
-   measured 105x22 against the 44px fitts floor. inline-flex so the anchor box
-   grows without breaking the wrapped row above it. */
 .auth-form-footer a {
   display: inline-flex;
   align-items: center;
@@ -169,19 +155,82 @@ body.auth-surface {
   user-select: none;
 }
 
-/* OAuth block — only rendered when at least one provider is configured. */
 .oauth-links {
   display: grid;
   gap: var(--space-2);
-  margin-bottom: var(--space-4);
+  margin: 0 0 var(--space-4);
 }
 
-.oauth-links .btn,
-.oauth-links button {
+.oauth-links form {
   width: 100%;
-  min-height: var(--tap-min);
-  justify-content: center;
+  margin: 0;
 }
+
+.oauth-button {
+  position: relative;
+  width: 100%;
+  min-height: 3.25rem;
+  justify-content: flex-start !important;
+  padding-inline: 3.25rem 3rem;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font-size: var(--text-sm);
+  letter-spacing: -0.01em;
+  transition: background 160ms var(--ease-out), border-color 160ms var(--ease-out), transform var(--duration-m3-short) var(--ease-m3-spring);
+}
+
+.oauth-button::before,
+.oauth-button::after {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.oauth-button::before {
+  left: 1rem;
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 1px solid currentColor;
+  border-radius: 0.5rem;
+  font-size: 0.7rem;
+  font-weight: var(--weight-heavy);
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.oauth-button::after {
+  content: "→";
+  right: 1rem;
+  font-size: 1rem;
+  opacity: 0.55;
+}
+
+.oauth-button:hover {
+  opacity: 1;
+  background: var(--hover-subtle);
+  border-color: var(--text-secondary);
+}
+
+.oauth-button.oauth-vipps {
+  background: var(--text);
+  border-color: var(--text);
+  color: var(--bg);
+}
+
+.oauth-button.oauth-vipps:hover {
+  background: var(--text);
+  border-color: var(--text);
+  opacity: 0.92;
+}
+
+.oauth-vipps::before { content: "V"; }
+.oauth-google::before { content: "G"; }
+.oauth-facebook::before { content: "f"; text-transform: lowercase; }
+.oauth-snapchat::before { content: "S"; }
+.oauth-github::before { content: "GH"; font-size: 0.55rem; }
 
 .oauth-divider {
   display: flex;
@@ -212,10 +261,12 @@ body.auth-surface {
   height: auto;
 }
 
-/* CRT apps: zero radius on auth controls. */
 body.wscons .auth-form input,
 body.wscons .auth-form .password-field input,
 body[data-theme="wscons"] .auth-form input,
-:root:has(body.bsdports) .auth-form input {
+:root:has(body.bsdports) .auth-form input,
+body.wscons .oauth-button,
+body[data-theme="wscons"] .oauth-button,
+:root:has(body.bsdports) .oauth-button {
   border-radius: 0;
 }
