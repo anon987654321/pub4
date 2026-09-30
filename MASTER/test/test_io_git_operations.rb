@@ -81,6 +81,15 @@ class GitOperationsTest < Minitest::Test
     assert(@git.status_lines.any? { |line| line.include?("README.md") })
   end
 
+  def test_changed_paths_include_a_deleted_tracked_file
+    write("lib/deleted.rb", "# deleted\\n")
+    sh("git", "add", "lib/deleted.rb", chdir: @repo)
+    sh("git", "commit", "-m", "add deleted fixture", chdir: @repo)
+    FileUtils.rm_f(File.join(@repo, "lib/deleted.rb"))
+
+    assert_includes @git.changed_paths, "lib/deleted.rb"
+  end
+
   # dirty?(path) scopes to a path — a change elsewhere must not make lib/ dirty.
   def test_dirty_is_scoped_to_its_path
     write("docs/notes.md", "x\n")
@@ -152,6 +161,30 @@ class GitOperationsTest < Minitest::Test
     write("lib/refused.rb", "# refused\n")
 
     assert_raises(RuntimeError) { @git.commit("refused", paths: ["lib/refused.rb"]) }
+  end
+
+  def test_commit_refuses_paths_outside_the_runtime_root
+    assert_raises(ArgumentError) { @git.commit("escape", paths: ["../outside.rb"]) }
+    assert_raises(ArgumentError) { @git.commit("absolute", paths: [File.join(@repo, "outside.rb")]) }
+  end
+
+  def test_commit_uses_a_nul_pathspec_file_for_large_path_sets
+    paths = Array.new(20_000) { |i| "lib/generated/#{i.to_s.rjust(5, "0")}/#{("x" * 32)}.rb" }
+    argv = []
+    pathspecs = []
+
+    @git.define_singleton_method(:git!) do |*args|
+      argv << args
+      argument = args.find { |value| value.start_with?("--pathspec-from-file=") }
+      pathspecs << File.binread(argument.delete_prefix("--pathspec-from-file=")) if argument
+      ""
+    end
+
+    @git.commit("bulk change", paths:)
+
+    assert_equal 2, argv.length
+    assert_equal paths, pathspecs.first.split("\0").reject(&:empty?)
+    refute argv.flatten.any? { |arg| paths.include?(arg) }, "large path sets must not become argv entries"
   end
 
   def test_commit_refuses_without_paths
