@@ -6,7 +6,7 @@
 
 .sidebar-card {
   background: var(--surface-elevated);
-  border-radius: var(--radius-card);
+  border-radius: 0;
   padding: 1rem;
   margin-bottom: 1rem;
 }
@@ -32,7 +32,7 @@
   align-items: center;
   gap: 0.75rem;
   background: var(--search-bg);
-  border-radius: var(--radius-pill);
+  border-radius: 0;
   padding: 0.75rem 1rem; /* 12/16 */
   margin-bottom: 1rem;
   transition: background var(--transition-fast) var(--ease-out);
@@ -68,7 +68,7 @@
 .flash-alert {
   background: var(--hover-subtle);
   color: var(--text-secondary);
-  border-radius: var(--radius-card);
+  border-radius: 0;
   padding: 0.75rem 16px;
   margin: 0.75rem 16px;
 }
