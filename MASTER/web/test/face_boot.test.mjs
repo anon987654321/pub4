@@ -414,6 +414,15 @@ test("topology registry exposes canonical classifier", () => {
   assert.match(registry, /bootRemoteTopologies\(\)/);
 });
 
+test("chat_actions retains interrupted transport failures without duplicating partial replies", () => {
+  const actions = readFileSync(join(publicDir, "chat_actions.js"), "utf8");
+  assert.match(actions, /function transportFailure\(err\)/);
+  assert.match(actions, /async function queueTransportFailure\(message, err, assistantText\)/);
+  assert.match(actions, /if \(assistantText\?\.trim\(\)\) return false;/);
+  assert.match(actions, /if \(!transportFailure\(err\)\) return false;/);
+  assert.match(actions, /queueTransportFailure\(message, err, assistantBuffer\)/);
+});
+
 test("chat_actions posts chat stream instead of EventSource GET", () => {
   const actions = readFileSync(join(publicDir, "chat_actions.js"), "utf8");
   const runtime = readFileSync(join(publicDir, "face.runtime.js"), "utf8");
