@@ -186,12 +186,17 @@ module Master
 
         def live_config_model(task_type:)
           id = @config.model.to_s
-          return if id.empty?
-          return id if !Io::ModelSkipCache.skipped?(id) &&
-                       !unhealthy?(id) &&
-                       (reachable?(id))
+          if !id.empty? && !Io::ModelSkipCache.skipped?(id) && !unhealthy?(id) && reachable?(id)
+            return id
+          end
 
-          fallback_chain(task_type:).first
+          ids = tier_ids.select do |candidate|
+            !Io::ModelSkipCache.skipped?(candidate) &&
+              !unhealthy?(candidate) &&
+              reachable?(candidate) &&
+              @availability.meets_floor?(candidate, operation: task_type)
+          end
+          ids.first
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "model_router.live_config_model", model: id)
           nil
