@@ -39,7 +39,7 @@ module Master
 
       def relative_path(path)
         absolute = File.expand_path(path.to_s, @root)
-        repo = Master::Phoenix.send(:repo_root, @root)
+        repo = Master::Phoenix.repository_root(root: @root)
         absolute.delete_prefix("#{repo}/")
       end
 
