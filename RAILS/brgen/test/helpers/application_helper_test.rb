@@ -142,6 +142,20 @@ class ApplicationHelperTest < ActionView::TestCase
     assert_equal "Brgen", city_name
   end
 
+  test "city network includes every owned domain that is a city apex" do
+    apps = YAML.safe_load(
+      File.read(File.expand_path("../../../apps.yml", __dir__)),
+      aliases: false
+    )
+    owned_city_domains = apps.fetch("owned_domains").select do |domain|
+      Brgen::DomainRegistry::ENTRIES_BY_DOMAIN.key?(domain)
+    end
+
+    assert_equal owned_city_domains.sort, Brgen::DomainRegistry::CITY_NETWORK_DOMAINS.sort
+    assert_includes Brgen::DomainRegistry::CITY_NETWORK_DOMAINS, "lsangeles.com"
+    assert_includes city_network_entries.map(&:city), "Los Angeles"
+  end
+
   test "schema_url_for makes listing URLs absolute on the marketplace host" do
     user = User.strict_loading(false).create!(
       email_address: "seo-#{SecureRandom.hex(4)}@example.com",
