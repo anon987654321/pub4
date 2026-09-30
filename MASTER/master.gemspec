@@ -1,14 +1,12 @@
 # frozen_string_literal: true
 
-require "yaml"
+require_relative "lib/version"
 
 Gem::Specification.new do |spec|
   spec.name    = "master"
-  # soul.yml is the one version this repo actually bumps (soul propose ->
-  # soul approve). A second hardcoded number here drifted to "0.1.0" against
-  # soul's 2.8.0 because nothing kept them in sync; read it instead of
-  # copying it.
-  spec.version = YAML.safe_load_file(File.join(__dir__, "data", "soul.yml")).fetch("version")
+  # Release version is canonical at the pub4 root; soul.yml remains the
+  # constitutional revision and is intentionally independent.
+  spec.version = Master::RELEASE_VERSION
   spec.authors = ["dev"]
   spec.summary = "Constitutional AI agent"
 
