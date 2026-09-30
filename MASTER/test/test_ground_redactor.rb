@@ -21,7 +21,7 @@ class GroundRedactorTest < Minitest::Test
     raw = []
     raw << raw
 
-    scrubbed = Master::Ground::Redactor.payload(value: raw)
+    scrubbed = Master::Ground::Redactor.payload({ value: raw })
 
     assert_equal "[CYCLE]", scrubbed[:value][0]
   end
