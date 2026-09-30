@@ -151,6 +151,29 @@ class TestCliTerminalFace < Minitest::Test
     File.delete("/tmp/fake-face-tts.mp3") if File.exist?("/tmp/fake-face-tts.mp3")
   end
 
+  def test_android_face_falls_back_to_termux_tts_when_synthesis_is_missing
+    spoken = []
+    mouth = Master::CLI::Face::Mouth.new(
+      device: Object.new.tap { |d| d.define_singleton_method(:android?) { true } },
+      synthesize: ->(_) { nil },
+    )
+
+    Master::Voice::Playback.stub(:enabled?, true) do
+      Master::Voice::Speech.stub(:available?, true) do
+        Master::Voice::Speech.stub(:chunks, ["hello"]) do
+          Master::Device::Audio.stub(:available?, true) do
+            Master::Device::Audio.stub(:speak, ->(text) { spoken << text; true }) do
+              refute mouth.send(:direct_speech?)
+              assert mouth.say("hello", on_level: ->(_level) {})
+            end
+          end
+        end
+      end
+    end
+
+    assert_equal ["hello"], spoken
+  end
+
   def test_face_keeps_audio_failure_visible
     mouth = Quiet.new(nil)
     face = Master::CLI::Face::Window.new(

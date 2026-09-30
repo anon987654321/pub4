@@ -19,6 +19,8 @@ module Master
       wifi: "termux-wifi-connectioninfo",
       volume: "termux-volume",
       torch: "termux-torch",
+      tts: "termux-tts-speak",
+      media_player: "termux-media-player",
     }.freeze
 
     COMMAND_TIMEOUT = 3

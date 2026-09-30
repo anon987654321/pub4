@@ -34,7 +34,7 @@ module Master
         def missing
           return "voice0: off here — replies stay text" unless Master::Voice::Playback.enabled?
           return "voice0: speech synthesis unavailable — replies stay text" unless Master::Voice::Speech.available?
-          return if termux? || Master::Voice::Playback.player || direct_speech?
+          return if Master::Device::Audio.available? || Master::Voice::Playback.player || direct_speech?
 
           "voice0: no audio path — #{Ear::HINT}; replies stay text"
         end
@@ -60,6 +60,7 @@ module Master
             if path && File.exist?(path)
               on_chunk&.call(part)
               played = play(path, part, on_level:, stop:)
+              played = Master::Device::Audio.speak(part) if !played && @device.android?
               played = direct_speak(part) unless played
               spoken ||= played
               unless played
@@ -67,6 +68,7 @@ module Master
                 show_direct_fallback
               end
             else
+              spoken ||= Master::Device::Audio.speak(part) if @device.android?
               spoken ||= direct_speak(part)
               unless spoken
                 @last_error = "speech synthesis failed"
@@ -95,7 +97,7 @@ module Master
         private
 
         def termux?
-          @device.android? && Master::Voice::Playback.which("termux-media-player")
+          @device.android? && Master::Device::Audio.media_player_available?
         end
 
         def chunks(text)
@@ -145,6 +147,8 @@ module Master
           on_level.call(0.0)
 
           process_status = status.call
+          return true if process_status == true
+
           process_status ? process_status.success? : false
         rescue StandardError => e
           Master::Trace::Dmesg.status("voice0", "playback failed, #{e.class}: #{e.message}")
@@ -164,9 +168,8 @@ module Master
         end
 
         def termux_take(path)
-          pid = Process.spawn("termux-media-player", "play", path, out: File::NULL, err: File::NULL)
-          waiter = Process.detach(pid)
-          [->(elapsed, length) { elapsed < length }, -> { system("termux-media-player", "stop", out: File::NULL, err: File::NULL) }, -> { waiter.value }]
+          Master::Device::Audio.play(path)
+          [->(elapsed, length) { elapsed < length }, -> { Master::Device::Audio.stop }, -> { true }]
         end
 
         def direct_speech?
