@@ -20,9 +20,11 @@ module Master
         return "[REDACTED]" if Fiber[:master_redactor_active]
 
         Fiber[:master_redactor_active] = true
-        redact_secrets(plain_string(value))
-      ensure
-        Fiber[:master_redactor_active] = false
+        begin
+          redact_secrets(plain_string(value))
+        ensure
+          Fiber[:master_redactor_active] = false
+        end
       end
 
       def self.redact_secrets(value)
