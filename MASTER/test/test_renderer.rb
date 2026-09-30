@@ -43,7 +43,7 @@ class TestRenderer < Minitest::Test
     old = ENV.delete("MASTER_BOOT_STATUS")
     $stdout.stub(:tty?, false) do
       text = FakeRenderer.new(config: {}).splash("model")
-      assert_includes strip_ansi(text), "MASTER 1.0.0"
+      assert_includes strip_ansi(text), "master0 at mainbus0: MASTER 1.0.0"
     end
   ensure
     ENV["MASTER_BOOT_STATUS"] = old if old
@@ -126,9 +126,10 @@ class TestRenderer < Minitest::Test
     end
     filled = lines.reject(&:empty?)
 
-    assert_match(/\AMASTER \S+ \(CONSTITUTIONAL\) #\d+: /, filled.first)
-    assert_match(/\A {4}\w+@\S+:\//, filled[1])
-    assert(filled.any? { |line| line.start_with?("root on master0 (") })
+    assert_match(/\Amaster0 at mainbus0: MASTER \S+ #\d+, model /, filled.first)
+    assert_match(/\Ahost0 at mainbus0: \w+@\S+:\//, filled[1])
+    assert(filled.any? { |line| line == "root on master0" })
+    assert(filled.all? { |line| line.match?(/\A(?:[a-z]+\d+ at [a-z]+\d+: |[a-z]+\d+: |root on )/) })
     assert_empty filled.grep(/[^\x20-\x7e]/), "the boot must stay plain ASCII"
   end
 
