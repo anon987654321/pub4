@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "rule_lineage"
+
 module Master
   module Trace
   # Local lookup for /why <id>; falls back to LLM when nothing matches.
