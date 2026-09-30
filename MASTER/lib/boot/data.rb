@@ -33,7 +33,7 @@ module Master
       warn_unreadable_once(path, e)
       default
     rescue Psych::Exception, Timeout::Error => e
-      warn("load_yaml: #{path}: #{e.message}")
+      warn("boot0: yaml #{path}: #{e.message}")
       raise
     end
 
@@ -116,7 +116,7 @@ module Master
       return if yaml_unreadable.key?(key)
 
       yaml_unreadable[key] = true
-      warn("load_yaml: #{error.message}")
+      warn("boot0: yaml #{error.message}")
     end
 
     def yaml_unreadable
@@ -162,7 +162,7 @@ module Master
 
     def publish_yaml_errors(errors, bus)
       errors.each do |relative, message|
-        warn("yaml_validation: #{relative}: #{message}")
+        warn("boot0: yaml validation #{relative}: #{message}")
         bus&.publish("data:yaml_parse_error", path: relative, error: message)
       end
     end
