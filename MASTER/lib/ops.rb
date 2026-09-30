@@ -18,7 +18,10 @@ module Master
         path ||= File.join(root, ".master", "process.lock")
         FileUtils.mkdir_p(File.dirname(path))
         io = File.open(path, File::RDWR | File::CREAT, 0o600)
-        return nil unless io.flock(File::LOCK_EX | File::LOCK_NB)
+        unless io.flock(File::LOCK_EX | File::LOCK_NB)
+          io.close
+          return nil
+        end
 
         io.close_on_exec = false
         io.rewind
@@ -50,9 +53,15 @@ module Master
       def owner(path: PATH)
         return {} unless File.exist?(path)
 
-        JSON.parse(File.read(path))
+        io = File.open(path, File::RDWR)
+        return {} if io.flock(File::LOCK_EX | File::LOCK_NB) && io.flock(File::LOCK_UN)
+
+        io.rewind
+        JSON.parse(io.read)
       rescue JSON::ParserError, SystemCallError
         {}
+      ensure
+        io&.close
       end
     end
 
