@@ -31,10 +31,12 @@ class TestRenderer < Minitest::Test
   end
 
   def test_splash_is_compact_by_default
-    lines = FakeRenderer.new(config: {}).splash("model").lines
+    $stdout.stub(:tty?, false) do
+      lines = FakeRenderer.new(config: {}).splash("model").lines
 
-    assert_operator lines.size, :<=, 8
-    assert_empty lines.grep(/boot line/)
+      assert_operator lines.size, :<=, 8
+      assert_empty lines.grep(/boot line/)
+    end
   end
 
   def test_splash_keeps_multiline_boot_shape_when_verbose
@@ -56,8 +58,8 @@ class TestRenderer < Minitest::Test
     $stdout.stub(:tty?, true) do
       text = renderer.splash("model")
 
-      assert_includes text, "e[44m"
-      assert_includes text, "e[37m"
+      assert_includes text, "\\e[44m"
+      assert_includes text, "\\e[37m"
       assert_includes text, "boot line 0"
       assert_includes text, "root on master0"
     end
@@ -109,7 +111,9 @@ class TestRenderer < Minitest::Test
   end
 
   def test_splash_is_plain_ascii_in_dmesg_shape
-    lines = FakeRenderer.new(config: {}).splash("model").lines.map { |l| strip_ansi(l).chomp }
+    lines = $stdout.stub(:tty?, false) do
+      FakeRenderer.new(config: {}).splash("model").lines.map { |l| strip_ansi(l).chomp }
+    end
     filled = lines.reject(&:empty?)
 
     assert_match(/\AMASTER \S+ \(CONSTITUTIONAL\) #\d+: /, filled.first)
@@ -120,7 +124,9 @@ class TestRenderer < Minitest::Test
 
   def test_splash_never_prints_the_web_token
     secret = "s3cr3t-token-value-that-must-not-print"
-    text = strip_ansi(FakeRenderer.new(config: { "web_token" => secret }).splash("model"))
+    text = $stdout.stub(:tty?, false) do
+      strip_ansi(FakeRenderer.new(config: { "web_token" => secret }).splash("model"))
+    end
 
     refute_includes text, secret
     assert_includes text, "/pair issue"
@@ -145,7 +151,9 @@ class TestRenderer < Minitest::Test
   end
 
   def test_the_boot_has_one_blank_line_and_no_edges
-    lines = strip_ansi(FakeRenderer.new(config: {}).splash("model")).lines.map(&:chomp)
+    lines = $stdout.stub(:tty?, false) do
+      strip_ansi(FakeRenderer.new(config: {}).splash("model")).lines.map(&:chomp)
+    end
 
     refute_empty lines.first
     refute_empty lines.last
