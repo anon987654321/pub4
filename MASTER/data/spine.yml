@@ -275,7 +275,8 @@ spine:
   # verify whose exit status meets the objective — with the per-domain reach
   # that keeps a finance or household objective out of the coding tools. 179
   # body lines across lib/core, lib/cli, lib/ground and lib/fix.
-  lib_body_ceiling: 35302
+  # 35302 -> 35425: this repair series is fully sponsored here.
+  lib_body_ceiling: 35425
   # Raw-line anchors from before the 2026-08-10 code-line unit change, kept only
   # so the old numbers stay legible. Not comparable to lib_body_ceiling.
   lib_raw_at_switch: 47753
@@ -656,7 +657,8 @@ pub4_source_ceilings:
   # 715 -> 718: three new repository-source files added by this architecture pass —
   # the Bplans contract plus the Air Superiority and Social Browser plugin READMEs.
   # These are deliberate contract surfaces, not absorbed growth.
-  MASTER: 718
+  # 718 -> 719: ratchet_sponsor.rb is the one new governed MASTER source file in this series.
+  MASTER: 719
 
   # 2359 -> 2360 for MASTER/gates/face_capture_probe.rb, which gets the
   # MASTER face past its primer gate so it can be recorded. A probe, not a gate:
