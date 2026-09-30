@@ -87,7 +87,7 @@ module Master
         return if question.to_s.empty?
 
         line = "next0: your previous question — #{question}"
-        puts @refs.renderer.render(line, mode: :dim)
+        Master::Trace::Dmesg.status("next0", question)
         Master::Voice::Playback.speak(question)
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "cli.previous_question_footer", event_bus: @refs.bus)
@@ -99,7 +99,7 @@ module Master
         summary = @activity&.fix_summary
         return if summary.to_s.empty?
 
-        puts @refs.renderer.render(summary, mode: :dim)
+        Master::Trace::Dmesg.status("fix0", summary.delete_prefix("fix0: "))
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "cli.fix_activity_footer", event_bus: @refs.bus)
       end
@@ -130,7 +130,7 @@ module Master
         lines << stage_err unless stage_err.empty?
         return if lines.empty?
 
-        puts @refs.renderer.render("parallel0: #{lines.first(3).join("; ")}", mode: :warning)
+        Master::Trace::Dmesg.status("parallel0", lines.first(3).join("; "))
       end
 
       def success_text(ok)
