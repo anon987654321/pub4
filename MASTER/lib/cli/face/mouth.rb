@@ -25,13 +25,15 @@ module Master
         end
 
         # Nil when the mouth can speak. Playback.enabled? is the switch the
-        # session obeys — MASTER_CLI_SPEAK=0, MASTER_SKIP_TTS, CI, no terminal
-        # — so the face falls silent exactly where the session does.
+        # session obeys — MASTER_CLI_SPEAK=0, MASTER_SKIP_TTS, CI, no terminal.
+        # A face also needs a synthesiser, because player presence alone says
+        # nothing about whether Speech can produce audio.
         def missing
           return "voice0: off here — replies stay text" unless Master::Voice::Playback.enabled?
-          return if termux? || Master::Voice::Playback.player
+          return "voice0: speech synthesis unavailable — replies stay text" unless Master::Voice::Speech.available?
+          return if termux? || Master::Voice::Playback.player || direct_speech?
 
-          "voice0: no player — on Termux #{Ear::HINT}; replies stay text"
+          "voice0: no audio path — #{Ear::HINT}; replies stay text"
         end
 
         def available? = missing.nil?
@@ -47,11 +49,13 @@ module Master
             break if stop.call
 
             path = @synthesize.call(part)
-            next unless path
-
-            on_chunk&.call(part)
-            play(path, part, on_level:, stop:)
-            spoken = true
+            if path && File.exist?(path)
+              on_chunk&.call(part)
+              spoken ||= play(path, part, on_level:, stop:)
+            else
+              spoken ||= direct_speak(part)
+              show_direct_fallback(part) unless path
+            end
           ensure
             File.delete(path) if path && File.exist?(path)
           end
@@ -103,6 +107,10 @@ module Master
             sleep FRAME_S
           end
           on_level.call(0.0)
+          true
+        rescue StandardError => e
+          Master::Trace::Dmesg.status("voice0", "playback failed, #{e.class}: #{e.message}")
+          false
         end
 
         # Two callables: whether the take is still playing, and how to cut it
@@ -121,6 +129,28 @@ module Master
           pid = Process.spawn("termux-media-player", "play", path, out: File::NULL, err: File::NULL)
           Process.detach(pid)
           [->(elapsed, length) { elapsed < length }, -> { system("termux-media-player", "stop", out: File::NULL, err: File::NULL) }]
+        end
+
+        def direct_speech?
+          !RUBY_PLATFORM.include?("openbsd") && Master::Voice::Playback.which("say")
+        end
+
+        def direct_speak(text)
+          return false unless direct_speech?
+
+          ok = system("say", text.to_s, out: File::NULL, err: File::NULL)
+          Master::Trace::Dmesg.status("voice0", "direct speech #{ok ? "ready" : "failed"}")
+          ok
+        rescue StandardError => e
+          Master::Trace::Dmesg.status("voice0", "direct speech failed, #{e.class}: #{e.message}")
+          false
+        end
+
+        def show_direct_fallback(text)
+          return if text.to_s.empty?
+          return unless direct_speech?
+
+          Master::Trace::Dmesg.status("voice0", "synthesis unavailable, using direct speech")
         end
 
         def quietly(halt)
