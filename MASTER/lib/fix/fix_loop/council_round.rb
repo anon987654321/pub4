@@ -79,11 +79,96 @@ module Master
 
         private
 
+        HARD_REVIEW = <<~TEXT.strip
+          This is the /fix hard critique, not a courtesy code review.
+          Treat the files as evidence, not as the authority about themselves.
+          Attack the current design before proposing repairs.
+
+          Inspect explicitly:
+          - authority: identify every source of truth, registry, generated projection, compatibility shim, and precedence rule; flag competing authorities and dead policy
+          - topology: trace direct callers, callees, entrypoints, side effects, mutable state, event-bus edges, and cross-tree reach
+          - scope: identify the smallest correct write boundary and anything the change could accidentally touch outside it
+          - bypasses: look for environment flags, fast paths, fallback modes, skip switches, rescue branches, defaults, or aliases that can silently weaken a safety property
+          - evidence: distinguish measured behavior from comments, prompts, assumptions, and model opinion; never count "could not check" as "passed"
+          - duplication: look for semantic duplicates even when filenames, classes, or registries differ; prefer one executable authority
+          - generated and private material: detect stale copies, generated outputs, secrets, personal media, caches, and tracked material that should have a custody boundary
+          - runtime/deployment: inspect the path from source change to real execution, including packaging, sync, restart, browser/device, network, and production gates where applicable
+          - complexity: challenge new abstractions, orchestration, scoring, registries, and layers; delete machinery when an existing primitive is sufficient
+          - failure modes: identify catastrophic, silent, partial, retry, concurrency, stale-state, and rollback failures
+          - verification: name the smallest deterministic test or measurement that would actually falsify each concern
+          - inversion: assume the proposed repair is wrong and state what breaks, where, and when
+
+          For every actionable finding, anchor it to a repository-relative file plus stable line or symbol.
+          Classify claims as observed, plausible, or requiring validation.
+          Do not invent defects, redesign working systems from taste, or praise the implementation.
+          Prefer the smallest existing primitive that can enforce the property.
+        TEXT
+
         def critique(files)
-          Master::Review::Council::Critique.new(mode: :general, agent: @agent, event_bus: @bus, files:).run
+          return Master::Result.ok(feedback: [], issues: [], cherry_picks: [], ideas: [], mode: :general) unless hard_critique_enabled?
+
+          briefing = hard_briefing(files)
+          result = Master::Review::Council::Critique.new(
+            mode: :general,
+            agent: @agent,
+            event_bus: @bus,
+            files:,
+            briefing:,
+          ).run
+          unless result.ok?
+            @bus&.publish("fix_loop:hard_critique_inconclusive", files: files.size, error: result.message.to_s[0, 180])
+            Master::Trace::Dmesg.status("fix0", "hard critique INCONCLUSIVE: #{result.message.to_s[0, 120]}")
+          else
+            value = result.value!
+            @bus&.publish(
+              "fix_loop:hard_critique",
+              files: files.size,
+              issues: Array(value[:issues]).size,
+              cherry_picks: Array(value[:cherry_picks]).size,
+            )
+            Master::Trace::Dmesg.status(
+              "fix0",
+              "hard critique #{Array(value[:issues]).size} issue(s), #{Array(value[:cherry_picks]).size} repair candidate(s)",
+            )
+          end
+          result
         rescue StandardError => e
+          @bus&.publish("fix_loop:hard_critique_inconclusive", files: files.size, error: e.message[0, 180])
+          Master::Trace::Dmesg.status("fix0", "hard critique INCONCLUSIVE: #{e.class}: #{e.message[0, 120]}")
           Master::Ground::Swallow.log(e, context: "fix_loop.council_round", event_bus: @bus)
           nil
+        end
+
+        def hard_critique_enabled?
+          ENV.fetch("MASTER_FIX_HARD_CRITIQUE", "1") != "0"
+        end
+
+        def hard_briefing(files)
+          rows = Array(files).select { |path| File.file?(path) }.first(FILES_PER_ROUND)
+          relative = rows.map { |path| repo_relative(path) }.uniq
+          boundary = if defined?(Master::Phoenix)
+                       rows.map { |path| Master::Phoenix.scope_for(path, root: @root) }.flatten.uniq.sort
+                     else
+                       []
+                     end
+          runners = load_runners(rows)
+          deterministic = [
+            "target files: #{relative.join(", ")}",
+            boundary.empty? ? nil : "write/runtime boundaries: #{boundary.join(", ")}",
+            runners.empty? ? nil : "known test entrypoints reaching target: #{runners.join(", ")}",
+            "hard critique is scoped to the files above; inspect adjacent files only when they are required to prove a dependency, authority, or runtime edge",
+          ].compact
+          [HARD_REVIEW, deterministic.join("\n")].join("\n\n")
+        rescue StandardError => e
+          Master::Trace::Dmesg.status("fix0", "hard critique context reduced: #{e.class}: #{e.message[0, 100]}")
+          HARD_REVIEW
+        end
+
+        def load_runners(files)
+          require_relative "../../../tools/runs"
+          Array(files).flat_map { |path| Operator::Runs.who_runs(repo_relative(path)) }.uniq.first(12)
+        rescue StandardError
+          []
         end
 
         def improvement_findings(value, files)

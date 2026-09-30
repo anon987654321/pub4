@@ -11,7 +11,7 @@ module Master
       class Critique
         MODES = Modes::TABLE
 
-        def initialize(mode:, agent:, event_bus: nil, audio_path: nil, files: nil, visual_image: nil, visual_context: nil)
+        def initialize(mode:, agent:, event_bus: nil, audio_path: nil, files: nil, visual_image: nil, visual_context: nil, briefing: nil)
           @mode = MODES.fetch(mode) { raise ArgumentError, "unknown critique mode: #{mode}" }
           @agent = agent
           @bus = event_bus
@@ -19,6 +19,7 @@ module Master
           @files_override = files
           @visual_image = visual_image
           @visual_context = visual_context
+          @briefing = briefing.to_s.strip
         end
 
         def run
@@ -89,12 +90,14 @@ module Master
 
         def ideation_prompt(feedback)
           issues = panel_issues(feedback)
+          hard = @briefing.empty? ? nil : "Apply the HARD REVIEW BRIEFING above to solution generation too. Reject proposals that add authority layers, bypass evidence, widen scope, or duplicate an existing primitive."
           if issues.empty?
-            return "#{@mode[:ideation_prompt]}\n\nNo registered violation was found. Conduct a clean-tree improvement review: find real, evidence-backed micro-improvements in simplification, naming, duplication, complexity, prose, accessibility, layout or maintainability. Generate 5 to 20 materially different candidates, and anchor every actionable candidate to a repository-relative file and stable line or symbol. Do not invent defects, redesign working systems, or use taste as evidence."
+            return [@mode[:ideation_prompt], hard, "No registered violation was found. Conduct a clean-tree improvement review: find real, evidence-backed micro-improvements in simplification, naming, duplication, complexity, prose, accessibility, layout or maintainability. Generate 5 to 20 materially different candidates, and anchor every actionable candidate to a repository-relative file and stable line or symbol. Do not invent defects, redesign working systems, or use taste as evidence."].compact.join("\n\n")
           end
 
           <<~PROMPT
             #{@mode[:ideation_prompt]}
+            #{hard}
 
             The council raised the issues below. For each one, propose
             #{IDEAS_PER_ISSUE.first} to #{IDEAS_PER_ISSUE.last} materially different repairs — different in what
@@ -141,7 +144,8 @@ module Master
         end
 
         def build_context
-          Context.new(preset_key: @mode[:preset_key], quality_kind: @mode[:quality_kind]).to_s
+          base = Context.new(preset_key: @mode[:preset_key], quality_kind: @mode[:quality_kind]).to_s
+          [base, @briefing.empty? ? nil : "HARD REVIEW BRIEFING\n#{@briefing}"].compact.join("\n\n")
         end
 
         def load_preset
