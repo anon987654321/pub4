@@ -23,6 +23,62 @@ class ControlPlaneSpec < Minitest::Test
     end
   end
 
+  def test_main_checkout_pulls_when_origin_is_ahead
+    Dir.mktmpdir("master-control") do |root|
+      plane = Master::Ops::ControlPlane.new(root:, interval: 5, out: StringIO.new)
+      commands = [
+        [["git", "-C", File.expand_path("..", root), "branch", "--show-current"], { stdout: "main\n", stderr: "", status: Status.new(true) }],
+        [["git", "-C", File.expand_path("..", root), "rev-parse", "HEAD"], { stdout: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n", stderr: "", status: Status.new(true) }],
+        [["git", "-C", File.expand_path("..", root), "rev-parse", "origin/main"], { stdout: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n", stderr: "", status: Status.new(true) }],
+        [["git", "-C", File.expand_path("..", root), "merge-base", "--is-ancestor", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"], { stdout: "", stderr: "", status: Status.new(true) }],
+        [["git", "-C", File.expand_path("..", root), "pull", "--ff-only", "origin", "main"], { stdout: "", stderr: "", status: Status.new(true) }]
+      ]
+      plane.define_singleton_method(:command) { |*argv| commands.shift.fetch(1) }
+
+      plane.send(:synchronize_refs!)
+
+      assert_empty commands
+    end
+  end
+
+  def test_main_checkout_pushes_when_it_is_ahead
+    Dir.mktmpdir("master-control") do |root|
+      plane = Master::Ops::ControlPlane.new(root:, interval: 5, out: StringIO.new)
+      commands = [
+        { stdout: "main\n", stderr: "", status: Status.new(true) },
+        { stdout: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n", stderr: "", status: Status.new(true) },
+        { stdout: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n", stderr: "", status: Status.new(true) },
+        { stdout: "", stderr: "", status: Status.new(false) },
+        { stdout: "", stderr: "", status: Status.new(true) }
+      ]
+      seen = []
+      plane.define_singleton_method(:command) do |*argv|
+        seen << argv
+        commands.shift
+      end
+
+      plane.send(:synchronize_refs!)
+
+      assert_equal ["git", "-C", File.expand_path("..", root), "push", "origin", "main"], seen.last
+    end
+  end
+
+  def test_main_checkout_stops_on_divergence
+    Dir.mktmpdir("master-control") do |root|
+      plane = Master::Ops::ControlPlane.new(root:, interval: 5, out: StringIO.new)
+      commands = [
+        { stdout: "main\n", stderr: "", status: Status.new(true) },
+        { stdout: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n", stderr: "", status: Status.new(true) },
+        { stdout: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n", stderr: "", status: Status.new(true) },
+        { stdout: "", stderr: "", status: Status.new(false) },
+        { stdout: "", stderr: "", status: Status.new(false) }
+      ]
+      plane.define_singleton_method(:command) { |*argv| commands.shift }
+
+      assert_raises(Master::Ops::ControlPlane::CommandError) { plane.send(:synchronize_refs!) }
+    end
+  end
+
   def test_cycle_rejects_a_non_main_checkout
     Dir.mktmpdir("master-control") do |root|
       plane = Master::Ops::ControlPlane.new(root:, interval: 5, out: StringIO.new)
@@ -60,7 +116,7 @@ class ControlPlaneSpec < Minitest::Test
       writer.close
       assert_equal "blocked\n", reader.read
       Process.wait(child)
-      assert_equal 0, $CHILD_STATUS.exitstatus
+      assert_equal 0, $?.exitstatus
     ensure
       reader&.close
       writer&.close
