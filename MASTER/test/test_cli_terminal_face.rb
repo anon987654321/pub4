@@ -151,6 +151,25 @@ class TestCliTerminalFace < Minitest::Test
     File.delete("/tmp/fake-face-tts.mp3") if File.exist?("/tmp/fake-face-tts.mp3")
   end
 
+  def test_face_keeps_audio_failure_visible
+    mouth = Quiet.new(nil)
+    face = Master::CLI::Face::Window.new(
+      turn: ->(_) { Master::Result.ok("Reply") },
+      ear: Quiet.new(false),
+      mouth:,
+      input: StringIO.new,
+      output: StringIO.new,
+      size: -> { [24, 80] }
+    )
+    mouth.define_singleton_method(:say) { |*| false }
+    mouth.define_singleton_method(:last_error) { "voice0: audio did not play" }
+
+    face.send(:answer, "hello")
+    text = rows_of(face.screen(24, 80, 1.0)).values.join("\n")
+
+    assert_includes text, "voice0: audio did not play"
+  end
+
   def test_speaking_does_not_arm_the_microphone
     face = Master::CLI::Face::Window.new(
       turn: ->(_) {},
