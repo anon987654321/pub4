@@ -114,8 +114,8 @@ module Marketplace
     end
 
     def amber_handoff_url(listing)
-      base = ENV.fetch("AMBER_PUBLIC_URL", "https://amberapp.art")
-      query = URI.encode_www_form(
+      Shared::Commerce.amber_handoff_url(
+        base: ENV.fetch("AMBER_PUBLIC_URL", "https://amberapp.art"),
         title: listing.title,
         category: amber_category(listing.category&.name),
         source_url: listing_url(listing),
@@ -126,9 +126,6 @@ module Marketplace
           record_id: listing.id
         )
       )
-      "#{base.sub(%r{/$}, "")}/items/new?#{query}"
-    rescue StandardError
-      nil
     end
 
     def amber_category(name)
