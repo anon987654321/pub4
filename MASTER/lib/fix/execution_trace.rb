@@ -84,9 +84,14 @@ module Master
         verify_live_graph(failures)
         phases[:live_graph] = "scanner/fix_loop/council/bus"
 
-        Result.new
-(ok: failures.empty?, files: files.size, bytes:, ruby_files: ruby_files.size,
-                   phases:, failures:)
+        Result.new(
+          ok: failures.empty?,
+          files: files.size,
+          bytes: bytes,
+          ruby_files: ruby_files.size,
+          phases: phases,
+          failures: failures
+        )
       rescue StandardError => e
         Result.new(ok: false, files: 0, bytes: 0, ruby_files: 0,
                    phases:, failures: ["execution trace crashed: #{e.class}: #{e.message}"])
