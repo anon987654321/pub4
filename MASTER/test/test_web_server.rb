@@ -10,10 +10,9 @@ class TestWebServer < Minitest::Test
     running = true
     Master.stub_const(:RUBY_PLATFORM, "openbsd") do
       Kernel.stub(:system, running) do
-        out, = capture_io do
-          Master::CLI::WebServer.openbsd_status(config:, host: "127.0.0.1", port: 53187, io: $stderr)
-        end
-        assert_includes out, "web0: https://ai.brgen.no, up"
+        out = StringIO.new
+        Master::CLI::WebServer.openbsd_status(config:, host: "127.0.0.1", port: 53187, io: out)
+        assert_includes out.string, "web0: https://ai.brgen.no, up"
       end
     end
   ensure
@@ -31,14 +30,14 @@ class TestWebServer < Minitest::Test
   def test_openbsd_status_reports_down_when_no_process_matches
     io = StringIO.new
     Master::CLI::WebServer.openbsd_status(config: {}, host: "127.0.0.1", port: 599_99, io:)
-    assert_includes io.string, "down — run: doas rcctl start master"
+    assert_includes io.string, "web0: https://ai.brgen.no, down — run: doas rcctl start master"
   end
 
   def test_openbsd_status_reports_web_token_hint_when_configured
     io = StringIO.new
     config = { "web_token" => "a" * 12 }
     Master::CLI::WebServer.openbsd_status(config:, host: "127.0.0.1", port: 599_98, io:)
-    assert_includes io.string, "web: token set"
+    assert_includes io.string, "web0: token set"
   end
 
   # Regression: spawn_local's env hash used to only add RAILS_ENV/
