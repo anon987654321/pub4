@@ -75,7 +75,7 @@ module Master
 
         words = t.split.length
         return stable_style(%i[calm intimate], t) if bad_news?(t)
-        return stable_style(%i[warm amused energetic], t) if t.match?(GOOD_NEWS_RE)
+        return stable_style(%i[warm soulful energetic], t) if t.match?(GOOD_NEWS_RE)
         return :question if t.end_with?("?")
         return stable_style(%i[warm clear brief], t) if words <= SHORT_WORD_COUNT
 
@@ -86,7 +86,7 @@ module Master
         end
 
         return stable_style(%i[amused warm storyteller], t) if t.match?(HUMOR_RE) || t.match?(/[!]{1,2}/)
-        return stable_style(%i[storyteller warm clear], t) if words > LONG_WORD_COUNT
+        return stable_style(%i[storyteller soulful warm], t) if words > LONG_WORD_COUNT
 
         :warm
       end
