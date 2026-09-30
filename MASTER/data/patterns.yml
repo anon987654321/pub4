@@ -178,6 +178,55 @@ infer:
   - pattern: "\\bscan\\s+(?:my\\s+)?(?:inbox|email|calendar)\\b"
     blocks: [scan]
   destructive: [clear, rebuild, resync, shell, rollback]
+
+media:
+  postprocess:
+    aliases:
+      - postpro
+      - postpro.rb
+      - post-process
+      - post process
+      - postprocess
+      - colour grade
+      - color grade
+      - film look
+      - vhs look
+      - vhs tape look
+      - crt look
+      - camcorder look
+      - cinematic look
+    actions: [run, use, call, invoke, apply, give, process, grade, edit, transform, put]
+    objects: [photo, photos, photograph, photographs, picture, pictures, image, images]
+    recency:
+      latest: [latest, newest, most recent, last]
+      recent: [recent, new, newer]
+    quantities:
+      1: [one, a, single]
+      2: [two]
+      3: [three]
+      4: [four]
+      5: [five, a few]
+      6: [six]
+      7: [seven]
+      8: [eight]
+      9: [nine]
+      10: [ten]
+    locations:
+      downloads: [downloads, download, my downloads, downloads folder, my downloads folder]
+    file_types:
+      jpeg: [jpg, jpeg]
+      png: [png]
+      webp: [webp]
+      tiff: [tif, tiff]
+    presets:
+      vhs_tape: [vhs, vhs tape, vhs look]
+      crt_broadcast: [crt, crt broadcast, crt look]
+      camcorder_glitch: [camcorder, camcorder glitch, mini dv, hi 8]
+      portrait: [portrait]
+      noir: [noir, black and white]
+      lo_fi: [lofi, lo-fi]
+      magic_hour: [magic hour, golden hour]
+    recent_count: 5
 prompt_archaeology:
   policy:
     id: safe_prompt_archaeology
