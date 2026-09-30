@@ -1,4 +1,7 @@
 <% content_for :title, t("pages.home_title", city: city_name) %>
+<% content_for :head do %>
+  <%= stylesheet_link_tag "vertical_promo", "data-turbo-track": "reload" %>
+<% end %>
 <%# The "Bergen, akkurat nå" intro banner and its paths/AI line were removed:
     the front page opens straight into the feed. Wayfinding to the verticals
     (main / AI / playlist / marketplace / dating) lives in the top nav, and the

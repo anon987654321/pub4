@@ -12,9 +12,12 @@
    <% if params[:view].to_s == "media" %>
      <%= render "home/media_card", post: post, media_index: index %>
    <% else %>
+     <% position = index + 1 %>
      <li>
        <%= render "posts/post", post: post %>
-       <% if ((index + 1) % Brgen::HomeFeed::AFFILIATE_EVERY).zero? && index + 1 < @posts.size %>
+       <% if live_search_query.blank? && Brgen::HomeFeed.promotion_slot?(position) && position < @posts.size %>
+         <%= render "home/vertical_promo_unit", promotion: Brgen::HomeFeed.promotion_for(position) %>
+       <% elsif ((position % Brgen::HomeFeed::AFFILIATE_EVERY).zero? && position < @posts.size) %>
          <%= render "shared/affiliate_feed_unit", surface: "brgen" %>
        <% end %>
      </li>

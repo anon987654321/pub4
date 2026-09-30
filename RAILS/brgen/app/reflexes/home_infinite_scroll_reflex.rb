@@ -18,16 +18,22 @@ class HomeInfiniteScrollReflex < Shared::InfiniteScrollReflex
     scope.where("title LIKE ? OR content LIKE ?", term, term)
   end
 
-  # The in-feed affiliate unit, on appended pages too.
-  #
-  # The first screen carried it and the scroll did not, which is most of the
-  # feed: home/_live_search_results interleaves in its own loop and this reflex
-  # renders one partial per row, so everything past the first page was units
-  # short. `after_row` is the parent's seam for that, and the slot it hands over
-  # already counts from the top of the feed rather than the top of the page.
+  # The in-feed unit, on appended pages too. Commercial slots remain every two
+  # posts; every third slot is a first-party vertical promotion instead.
   def after_row(_record, slot)
+    return unless element.dataset["q"].to_s.blank?
     return unless (slot % Brgen::HomeFeed::AFFILIATE_EVERY).zero?
 
-    render(partial: "shared/affiliate_feed_unit", locals: { surface: "brgen" })
+    if Brgen::HomeFeed.promotion_slot?(slot)
+      render(
+        partial: "home/vertical_promo_unit",
+        locals: { promotion: Brgen::HomeFeed.promotion_for(slot) }
+      )
+    else
+      render(
+        partial: "shared/affiliate_feed_unit",
+        locals: { surface: "brgen" }
+      )
+    end
   end
 end
