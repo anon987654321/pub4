@@ -294,15 +294,8 @@ const TTS_MIN_CHUNK = 48;
 function pullStreamingTtsChunk(pending) {
   if (!pending) return { chunk: '', rest: '' };
   const sentBreak = pending.match(SENT_BREAK);
-  if (sentBreak) {
-    const cut = sentBreak.index + sentBreak[0].length;
-    return { chunk: pending.slice(0, cut).trim(), rest: pending.slice(cut) };
-  }
-  if (pending.length <= TTS_CHUNK_MAX) return { chunk: '', rest: pending };
-  const slice = pending.slice(0, TTS_CHUNK_MAX);
-  let cut = TTS_CHUNK_MAX;
-  const lastSpace = slice.lastIndexOf(' ');
-  if (lastSpace > 48) cut = lastSpace + 1;
+  if (!sentBreak) return { chunk: '', rest: pending };
+  const cut = sentBreak.index + sentBreak[0].length;
   return { chunk: pending.slice(0, cut).trim(), rest: pending.slice(cut) };
 }
 function shouldEnqueueTtsChunk(text, opts = {}) {
