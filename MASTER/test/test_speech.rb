@@ -155,6 +155,26 @@ class TestSpeech < Minitest::Test
     assert_equal :jenny, Master::Voice::Speech.voice_for_text("The system is ready.")
   end
 
+  def test_language_voice_families_keep_male_counterparts
+    assert_equal :finn, Master::Voice::Policy.voice_for_language(:nb, gender: :male)
+    assert_equal :pernille, Master::Voice::Policy.voice_for_language(:nb, gender: :female)
+    assert_equal :osman, Master::Voice::Policy.voice_for_language(:ms, gender: :male)
+    assert_equal :yasmin, Master::Voice::Policy.voice_for_language(:ms, gender: :female)
+  end
+
+  def test_malay_text_resolves_to_yasmin
+    assert_equal :yasmin, Master::Voice::Speech.voice_for_text("Ini adalah sistem yang sudah siap.")
+  end
+
+  def test_male_language_override_stays_inside_language_family
+    original = ENV["MASTER_TTS_GENDER"]
+    ENV["MASTER_TTS_GENDER"] = "male"
+    assert_equal :finn, Master::Voice::Speech.voice_for_text("Dette er klart nå.")
+    assert_equal :osman, Master::Voice::Speech.voice_for_text("Ini adalah berita yang penting.")
+  ensure
+    ENV["MASTER_TTS_GENDER"] = original
+  end
+
   def test_synthesize_bytes_returns_nil_for_empty
     assert_nil Master::Voice::Speech.synthesize_bytes("")
   end
