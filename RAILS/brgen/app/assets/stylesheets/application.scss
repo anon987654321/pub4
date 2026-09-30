@@ -11085,3 +11085,93 @@ body.vertical-marketplace .store-buybox .btn-primary:hover {
     transition: none;
   }
 }
+
+/* Commerce typography
+   Functional shopping UI stays sans; campaign/display moments get a restrained
+   serif contrast. The pairing follows the practical/editorial split visible in
+   fashion-commerce publishing without turning catalogue metadata into magazine copy. */
+@font-face {
+  font-family: "DM Sans";
+  src: url("https://fonts.gstatic.com/s/dmsans/v16/rP2Yp2ywxg089UriI5-g7M8btVsD8Ck0q7u0-K6z9mXg.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 100 1000;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "DM Serif Display";
+  src: url("https://fonts.gstatic.com/s/dmserifdisplay/v16/-nFnOHM81r4j6k0gjAW3mujVU2B2G_Bx0vrx52g.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+body.vertical-marketplace {
+  --font-commerce-sans: "DM Sans", var(--font), Arial, sans-serif;
+  --font-commerce-display: "DM Serif Display", Georgia, serif;
+}
+
+body.vertical-marketplace .bol-market-hero-copy h2,
+body.vertical-marketplace .store-promo-art :is(h1, h2, h3),
+body.vertical-marketplace .store-heading {
+  font-family: var(--font-commerce-display);
+  font-weight: 400;
+  letter-spacing: -0.018em;
+  text-wrap: balance;
+}
+
+body.vertical-marketplace .bol-market-hero-copy h2 {
+  font-size: clamp(2.25rem, 4.4vw, 4.25rem);
+  line-height: 0.98;
+}
+
+body.vertical-marketplace :is(
+  .deal-card-title,
+  .deal-price,
+  .deal-meta,
+  .store-badge,
+  .listing-filter-group,
+  .bol-kind-tabs,
+  .bol-primary,
+  #navBar
+) {
+  font-family: var(--font-commerce-sans);
+  font-optical-sizing: auto;
+}
+
+body.vertical-marketplace .store-pdp-info h1,
+body.vertical-marketplace .marketplace-listing-header h1 {
+  font-family: var(--font-commerce-display);
+  font-size: clamp(2rem, 3.4vw, 3.5rem);
+  font-weight: 400;
+  line-height: 0.98;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+body.vertical-marketplace .store-pdp-description > div {
+  max-inline-size: 66ch;
+  font-family: var(--font-commerce-sans);
+  line-height: 1.55;
+}
+
+body.vertical-marketplace .deal-card-title {
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+body.vertical-marketplace .deal-price {
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 767px) {
+  body.vertical-marketplace .bol-market-hero-copy h2 {
+    font-size: clamp(2rem, 10vw, 3rem);
+  }
+
+  body.vertical-marketplace .store-pdp-info h1,
+  body.vertical-marketplace .marketplace-listing-header h1 {
+    font-size: clamp(2rem, 9vw, 3rem);
+  }
+}
