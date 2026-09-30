@@ -43,9 +43,27 @@ module Master
           units.each { |line| @buffer.push(line) }
           listeners = @mutex.synchronize { @listeners.dup }
           units.each { |line| listeners.each { |listener| listener.call(line) } }
+        rescue StandardError => e
+          warn_logging_failure(e)
+          safe_line = "trace0: logging failed — #{e.class}: #{e.message}"
+          begin
+            @buffer.push(safe_line)
+          rescue StandardError
+            nil
+          end
+          []
         ensure
           Thread.current.thread_variable_set(:master_trace_logging_active, false)
         end
+      end
+
+      def warn_logging_failure(error)
+        return if @logger_failure_warned
+
+        @logger_failure_warned = true
+        Kernel.warn("trace: logging degraded — #{error.class}: #{error.message}")
+      rescue StandardError
+        nil
       end
 
       def format_entry(payload)
