@@ -408,28 +408,30 @@ function frame(t) {
     const saccadeX = attn.saccadeX || 0;
     const microJitter = attn.microJitter || 0;
     _attnEyeClose = attn.eyeCloseTarget || 0;
-    const yaw   = State.mouseX * 0.7 * openness + State.tiltX * 0.5 + Math.sin(sec * 0.2) * 0.05 * composureFactor + saccadeX + microJitter;
-    const pitch = State.mouseY * 0.4 * openness + State.tiltY * 0.4 + Math.sin(sec * 0.27) * 0.03 * composureFactor + (attn.fixationPitch || 0);
+    const yaw   = State.mouseX * 0.9 * openness + State.tiltX * 0.62 + Math.sin(sec * 0.2) * 0.055 * composureFactor + saccadeX + microJitter;
+    const pitch = State.mouseY * 0.52 * openness + State.tiltY * 0.5 + Math.sin(sec * 0.27) * 0.035 * composureFactor + (attn.fixationPitch || 0);
     if (camera) {
       const pInput = State.coarsePointer
         ? { x: State.tiltX, y: -State.tiltY }
         : { x: State.mouseX, y: -State.mouseY };
-      State.parX += (pInput.x * 0.055 - State.parX) * 0.04;
-      State.parY += (pInput.y * 0.032 - State.parY) * 0.04;
+      State.parX += (pInput.x * 0.095 - State.parX) * 0.055;
+      State.parY += (pInput.y * 0.060 - State.parY) * 0.055;
       const camOffX = 0.015 + State.parX, camOffY = 0.008 + State.parY;
-      camera.position.x += (Math.sin(sec * 0.11) * 0.018 + camOffX - camera.position.x) * 0.04;
-      camera.position.y += (Math.cos(sec * 0.09) * 0.012 + camOffY - camera.position.y) * 0.04;
+      const camDepth = Math.max(-0.16, Math.min(0.16, Math.hypot(pInput.x, pInput.y) * 0.16));
+      camera.position.x += (Math.sin(sec * 0.11) * 0.018 + camOffX - camera.position.x) * 0.055;
+      camera.position.y += (Math.cos(sec * 0.09) * 0.012 + camOffY - camera.position.y) * 0.055;
+      camera.position.z += (4.6 - camDepth - camera.position.z) * 0.045;
     }
     head.rotation.y += (yaw   - head.rotation.y) * 0.06;
     head.rotation.x += (pitch - head.rotation.x) * 0.06;
     nodImpulse *= 0.87;
     head.rotation.x += nodImpulse;
-    const microOrbit = Math.sin(sec * 0.157) * 0.014 * composureFactor;
+    const microOrbit = Math.sin(sec * 0.157) * 0.022 * composureFactor;
     head.rotation.z = -0.021 + microOrbit * 0.3;
     const silenceScale = (State.mode === 'idle' && !tts.playing) ? 0.982 : 1.0;
     const hiddenTab = State.hidden || document.hidden;
     const breathHz = hiddenTab ? 0.55 : 1.1;
-    const breathAmp = hiddenTab ? 0.018 : (0.009 + (1 - State.confidence) * 0.006 + (State.entropy || 0) * 0.004);
+    const breathAmp = hiddenTab ? 0.018 : (0.014 + (1 - State.confidence) * 0.008 + (State.entropy || 0) * 0.005);
     const councilBreath = document.documentElement.dataset.councilBreath === '1' ? Math.sin(sec * 0.85) * 0.018 : 0;
     if (gestureStart) State.pressureTension = Math.min(1, (t - pressStart) / 1200);
     else State.pressureTension = Math.max(0, (State.pressureTension || 0) * 0.92);
