@@ -8,8 +8,8 @@ module Master
     # The canonical /fix execution contract. This is procedure, not a second
     # constitution: soul.yml and executable law remain authoritative.
     module Protocol
-      VERSION = 2
-      STAGES = %w[load inventory scan semantic repair verify repeat report].freeze
+      VERSION = 3
+      STAGES = %w[load trace inventory scan semantic repair verify repeat report].freeze
       TERMINAL_STATES = %w[DONE PLATEAU HUMAN_DECISION BLOCKED VALIDATION_FAILED DELIVERY_FAILED TIMEOUT FAILED RELOADING].freeze
 
       module_function
@@ -28,40 +28,46 @@ module Master
           paths, verification commands, and target contract. Do not rely on a
           remembered rule count.
 
-          2. INVENTORY
+          2. TRACE
+          Before mutation, reread the whole working repository: hash every
+          tracked and non-ignored untracked file, parse every Ruby file without
+          executing it, verify the boot entrypoint chain, and load the boot-critical
+          configuration. A failed trace stops /fix before it writes.
+
+          3. INVENTORY
           Traverse the target recursively and establish the complete eligible
           corpus. Record explicit exclusions and their reasons. Never silently
           narrow scope.
 
-          3. SCAN
+          4. SCAN
           For every active rule and every applicable file, inspect source
           lexically and structurally. Verify each detector against its worked
           positive and negative examples before trusting its findings.
 
-          4. SEMANTIC
+          5. SEMANTIC
           Semantic ask rules are executable. The model is the semantic analyst,
           not a spectator. Read the actual file, its surrounding code, callers
           and relevant related files before deciding whether the rule is
           violated.
 
-          5. REPAIR
+          6. REPAIR
           Attempt a repair for every actionable finding. Use the smallest
           evidence-backed strategy that satisfies the rule: mechanical, AST,
           semantic-model, structural, or rendered-surface repair as applicable.
           "No deterministic fixer exists" is not a terminal state.
 
-          6. VERIFY
+          7. VERIFY
           Reread the changed file, re-run the affected rule, and run the
           narrowest behavioral or surface check that proves the repair. A failed
           verification rejects or rolls back that repair.
 
-          7. REPEAT
+          8. REPEAT
           Rescan filenames, contents, semantic rules, and prior failures after
           every kept batch. Continue until DONE, PLATEAU, HUMAN_DECISION, or
           BLOCKED. A pass limit, timeout, or process death ends only the attempt;
           it does not mean the mission is complete.
 
-          8. REPORT
+          9. REPORT
           Report commands, corpus, findings before and after, repairs attempted,
           repairs rejected, verification output, and unresolved findings. Never
           convert an unmeasured state into a pass and never describe a future
