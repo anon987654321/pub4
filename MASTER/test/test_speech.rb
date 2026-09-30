@@ -137,6 +137,27 @@ class TestSpeech < Minitest::Test
     assert_nil Master::Voice::Speech.synthesize("   ")
   end
 
+  def test_fast_tts_is_the_default_but_explicit_transcendent_still_wins
+    speech = Master::Voice::Speech
+    original = ENV["MASTER_TTS_MODE"]
+    ENV.delete("MASTER_TTS_MODE")
+
+    speech::Transcendent.stub(:load_config, { "fast_mode" => true, "default_mode" => "transcendent" }) do
+      assert_equal "classic", speech.synthesis_mode
+      ENV["MASTER_TTS_MODE"] = "transcendent"
+      assert_equal "transcendent", speech.synthesis_mode
+    end
+  ensure
+    ENV["MASTER_TTS_MODE"] = original
+  end
+
+  def test_native_audio_mime_types
+    assert_equal "audio/mpeg", Master::Voice::Speech.mime_type_for(".mp3")
+    assert_equal "audio/wav", Master::Voice::Speech.mime_type_for(".wav")
+    assert_equal "audio/mp4", Master::Voice::Speech.mime_type_for(".m4a")
+  end
+
+
   def test_clean_text_does_not_cut_the_tail
     text = ("Norwegian tail stays present. " * 220).strip
     assert_equal text, Master::Voice::Speech.clean_text(text)
@@ -224,6 +245,23 @@ class TestSpeech < Minitest::Test
         end
       end
     end
+  end
+
+  def test_streaming_espeak_fallback_keeps_wav_instead_of_encoding_mp3
+    output = File.join(Dir.tmpdir, "m3_native_tts_test.mp3")
+    wav = File.join(Dir.tmpdir, "m3_native_tts_source.wav")
+    File.binwrite(wav, "fake-wav-data")
+
+    Master::Voice::Speech.stub(:espeak_path, "/usr/bin/espeak") do
+      Master::Voice::Speech.stub(:synthesize_espeak, wav) do
+        result = Master::Voice::Speech.send(:attempt_espeak_synthesis, "hello", output, nil)
+        assert_equal output.sub(/\.mp3\z/, ".wav"), result
+        assert_equal "fake-wav-data", File.binread(result)
+        refute File.exist?(output)
+      end
+    end
+  ensure
+    [output, wav, output&.sub(/\.mp3\z/, ".wav")].compact.uniq.each { |path| File.delete(path) if File.exist?(path) }
   end
 
   def test_streaming_falls_back_to_say_when_edge_and_espeak_miss
