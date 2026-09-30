@@ -58,8 +58,8 @@ class TestRenderer < Minitest::Test
     $stdout.stub(:tty?, true) do
       text = renderer.splash("model")
 
-      assert_includes text, "\\e[44m"
-      assert_includes text, "\\e[37m"
+      assert_includes text, "\e[44m"
+      assert_includes text, "\e[37m"
       assert_includes text, "boot line 0"
       assert_includes text, "root on master0"
     end
