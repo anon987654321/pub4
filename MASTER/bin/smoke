@@ -112,26 +112,30 @@ failures << "launcher" unless step("bin/ruby bin/cli boot") do
   ) do |reader, writer, pid|
     writer.close
     deadline = Time.now + PIPE_TIMEOUT_SECONDS
-    loop do
-      break if Process.waitpid(pid, Process::WNOHANG)
 
-      if Time.now >= deadline
-        Process.kill("TERM", pid) rescue nil
-        Process.wait(pid) rescue nil
-        return [false, "launcher boot timed out after #{PIPE_TIMEOUT_SECONDS}s"]
+    until status
+      if reader.wait_readable(0.2)
+        begin
+          output << reader.readpartial(4096)
+        rescue Errno::EIO, EOFError
+          nil
+        end
       end
 
-      output << reader.readpartial(4096) if reader.wait_readable(0.2)
-    rescue Errno::EIO, EOFError
+      _done, status = Process.waitpid2(pid, Process::WNOHANG)
+      next unless Time.now >= deadline
+
+      Process.kill("TERM", pid) rescue nil
+      _done, status = Process.waitpid2(pid) rescue [nil, nil]
       break
     end
-    _, status = Process.waitpid2(pid) unless status
   ensure
     writer.close unless writer.closed?
     reader.close unless reader.closed?
   end
 
-  [status&.success? && output.match?(/boot0:|ready|master@/i), status&.success? ? nil : output.lines.last&.strip]
+  ok = status&.success? && output.match?(/boot0:|ready|master@/i)
+  [ok, ok ? nil : output.lines.last.to_s.strip]
 rescue StandardError => e
   [false, "launcher boot: #{e.class}: #{e.message}"]
 end
