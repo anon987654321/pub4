@@ -300,27 +300,6 @@ module Operator
 
     def recorded_members(name = "law") = Array(recorded[KEYS.fetch(name)[:members]])
 
-    # Reports recorded members whose file is gone or whose line is beyond EOF.
-    # Warning-only: a fresh measured run remains the authority for rewriting the baseline.
-    def stale_recorded_members(name = "law", root: ROOT)
-      recorded_members(name).filter_map do |member|
-        match = member.to_s.match(/\A\S+\s+(.+):(\d+)\z/)
-        next member unless match
-
-        path, line = match.captures
-        absolute = File.join(root, path)
-        next member unless File.file?(absolute)
-
-        line_number = line.to_i
-        member if line_number.positive? && File.foreach(absolute, encoding: "UTF-8").take(line_number).length < line_number
-      end
-    rescue StandardError => e
-      Master::Ground::Swallow.log(e, context: "self_findings.stale_members", path: root)
-      []
-    end
-
-    # A member is stale when its recorded file is gone or its recorded line no longer exists.
-    # This is warning-only: the baseline remains evidence until a fresh measured run rewrites it.
     def stale_recorded_members(name = "law", root: ROOT)
       recorded_members(name).filter_map do |member|
         match = member.to_s.match(/\A\S+\s+(.+):(\d+)\z/)
