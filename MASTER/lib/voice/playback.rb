@@ -121,8 +121,10 @@ module Master
 
         path = synthesize(str)
         unless path
-          warn_once("synthesis failed#{Speech.last_error ? ": #{Speech.last_error}" : ""}")
-          return false
+          ok = native_say(str)
+          warn_once("synthesis failed#{Speech.last_error ? ": #{Speech.last_error}" : ""}") unless ok
+          spoken(str) if ok
+          return ok
         end
 
         ok = play(path)
@@ -179,12 +181,16 @@ module Master
             path = synthesize(part)
             spoken(text) if last
             unless path
+              next if native_say(text)
+
               warn_once("synthesis failed#{Speech.last_error ? ": #{Speech.last_error}" : ""}")
               next
             end
 
             unless play(path)
-              native_say(text)
+              unless native_say(text)
+                warn_once("audio playback failed — #{player&.first || "no player or native speech"}")
+              end
             end
             File.delete(path) if path.start_with?("/tmp/m_tts_") && File.exist?(path)
           rescue StandardError => e
