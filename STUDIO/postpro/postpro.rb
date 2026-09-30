@@ -12,7 +12,7 @@ require "digest"
 # postpro lives two levels below MASTER/, so ../../lib/io resolves to
 # MASTER/lib/io. Keep this anchored path rather than depending on the operator's
 # working directory.
-require_relative "../../lib/io/analog_capabilities"
+require_relative "../../MASTER/lib/io/analog_capabilities"
 
 require "open3"
 require "rbconfig"
