@@ -19,6 +19,7 @@ module Operator
     def validate!(root:, changed_paths:)
       paths = Array(changed_paths).map { |path| path.to_s.sub(%r{\A\./}, "") }.reject(&:empty?).uniq
       return true if paths.empty?
+      return true unless git_checkout?(root)
 
       additions, deletions = source_population_delta(root, paths)
       body_delta = master_lib_body_delta(root)
@@ -75,6 +76,11 @@ module Operator
       return false if path.match?(%r{/test/}) || path.match?(EXCLUDED_DIRS)
 
       SOURCE_EXTENSIONS.include?(File.extname(path).downcase)
+    end
+
+    def git_checkout?(root)
+      _out, status = Open3.capture2e("git", "-C", root, "rev-parse", "--git-dir")
+      status.success?
     end
 
     def tracked_paths(root)
