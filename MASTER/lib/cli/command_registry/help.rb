@@ -109,7 +109,7 @@ module Master
         "voice" => {
           summary: "CLI voice status and an explicit speaker test",
           detail: ["/voice — player, synthesis mode and on/off state.",
-                   "/voice test — synthesize and queue “MASTER voice test.” through the same CLI playback path."],
+                   "/voice test — synthesize and play “MASTER voice test.” synchronously; the result reports the speaker outcome."],
         },
         "help" => {
           summary: "this list",
