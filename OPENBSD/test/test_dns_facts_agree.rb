@@ -256,6 +256,13 @@ class OwnedDomainFactsAgreeTest < Minitest::Test
     assert_equal EXPECTED, inventory
   end
 
+  def test_owned_domain_facts_match_owned_domains
+    inventory = YAML.safe_load_file(RAILS_APPS)
+    assert_equal inventory.fetch("owned_domains").sort, inventory.fetch("owned_domain_facts").keys.sort
+    assert_equal false, inventory.fetch("owned_domain_facts").fetch("foball.no").fetch("renew")
+    assert_equal "2026-09-06", inventory.fetch("owned_domain_facts").fetch("svalbrd.no").fetch("expires").to_s
+  end
+
   def test_openbsd_owned_domains_match_rails_inventory
     operator = File.read(OPERATOR, encoding: "UTF-8")
     block = operator[/^OWNED_DOMAINS=\(\n.*?\n\)$/m]
