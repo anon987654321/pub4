@@ -41,10 +41,13 @@ module Master
         # directory, tools/<tool>/<tool>.rb (e.g. postpro/postpro.rb). Media
         # tools (dilla, postpro, replicate) were extracted out of MASTER/tools/
         # into the sibling MASTER/tools/<tool>/<tool>.rb — checked last so anything
-        # still living under MASTER/tools/ keeps taking priority.
-        candidates = [requested_root, MasterPaths.root].uniq.flat_map do |candidate|
-          [File.join(candidate, "tools", "#{tool}.rb"),
-           File.join(candidate, "tools", tool, "#{tool}.rb")]
+
+        candidates = [requested_root, MasterPaths.repo, MasterPaths.root].uniq.flat_map do |candidate|
+          [
+            File.join(candidate, "STUDIO", tool, "#{tool}.rb"),
+            File.join(candidate, "tools", "#{tool}.rb"),
+            File.join(candidate, "tools", tool, "#{tool}.rb")
+          ]
         end
         candidates.find { |candidate| File.file?(candidate) } || candidates.first
       end
@@ -58,6 +61,13 @@ module Master
           relative = script.delete_prefix(tools_root + File::SEPARATOR)
           return File.dirname(script) if relative.include?(File::SEPARATOR)
           return File.expand_path("..", requested_root)
+        end
+
+        studio_root = File.join(MasterPaths.repo, "STUDIO")
+        if script.start_with?(studio_root + File::SEPARATOR)
+          relative = script.delete_prefix(studio_root + File::SEPARATOR)
+          return File.dirname(script) if relative.include?(File::SEPARATOR)
+          return MasterPaths.repo
         end
 
         master_tools = File.join(MasterPaths.repo, "MASTER", "tools")
