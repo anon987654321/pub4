@@ -138,7 +138,7 @@ module Master
                           &blk)
         started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
         selected_model = answering_model(selected_model, image)
-        refusal = refusal_before_send(selected_model)
+        refusal = local_only_refusal(selected_model) || refusal_before_send(selected_model)
         return refusal if refusal
 
         @bus&.publish("llm:send", model: selected_model)
@@ -239,6 +239,21 @@ module Master
         return if Master.llm_reachable?(selected_model)
 
         Result.err(Master.no_api_key_message, category: :no_api_key)
+      end
+
+      def local_only_refusal(model)
+        return unless ENV["MASTER_LOCAL_ONLY"] == "1"
+        return if local_model_id?(model)
+
+        Result.err("local-only mode rejects non-local model #{model}", category: :offline)
+      end
+
+      def local_model_id?(model)
+        id = model.to_s
+        return true if id.start_with?("local:")
+        return false unless id.start_with?("ollama:", "ollama/")
+
+        !id.sub(%r{Aollama[:/]}, "").match?(/A.+(?::cloud|-cloud)z/)
       end
 
       def forced_lane_unavailable(model)
