@@ -225,6 +225,8 @@ work is shed when measured CPU load, RSS, file-descriptor, thread, or disk press
 reaches critical limits. Deterministic work can therefore continue under pressure
 without turning a resource emergency into a restart storm.
 
+**Deep `/fix` trace.** Before `/fix` is allowed to mutate, it rereads the whole working repository, including tracked and non-ignored untracked files, hashes every file, syntax-checks every file MASTER classifies as Ruby, verifies the boot entrypoint chain, reloads boot-critical YAML, and checks the live scanner/fix-loop/council/bus graph. A trace failure stops the repair before the first write; the gate and re-observation remain the final proof after repairs.
+
 **Rendered convergence.** Source-clean is not improvement-clean. Every `/fix` pass starts with deterministic
 observation and, for `RAILS/` or `MASTER/web`, a real rendered observation. MASTER captures real browser surfaces through the existing
 GeometryProbe/CDP gates, gives the screenshot and measured geometry to the UI
