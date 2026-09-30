@@ -19,18 +19,17 @@ module Master
         brutalist = ENV["MASTER_BRUTALIST"] == "1"
         aesthetic = Master::Voice::Aesthetic.mode
         lines = [
-          "master: boot safe=#{ENV.fetch("MASTER_SAFE_MODE", "1")} web=#{ENV.fetch("MASTER_WEB", "0")}",
-          "master: background=#{ENV.fetch("MASTER_BACKGROUND", "0")} watch=#{ENV.fetch("MASTER_WATCH", "0")}",
-          "master: loop=#{status.fetch(:selected, "none")} owner=#{status.fetch(:owner, "none")}",
-          "master: budget valid=#{budget[:valid]} slot=#{budget.fetch(:slot, "unknown")}",
-          "master: aesthetic=#{aesthetic}",
-          "master: motd #{motd_spotlight}",
-          "master: ready dmesg=preserved",
+          "boot0 at mainbus0: safe #{ENV.fetch("MASTER_SAFE_MODE", "1")}, web #{ENV.fetch("MASTER_WEB", "0")}",
+          "loop0 at master0: #{status.fetch(:selected, "none")}, owner #{status.fetch(:owner, "none")}",
+          "budget0 at master0: valid #{budget[:valid]}, slot #{budget.fetch(:slot, "unknown")}",
+          "style0 at master0: #{aesthetic}",
+          "motd0 at master0: #{motd_spotlight}",
+          "master0: ready",
         ]
         if brutalist || aesthetic == "wscons"
           profile = aesthetic == "wscons" ? "wscons" : "brutalist"
-          lines << "master: profile=#{profile} motion=steps typography=mono"
-          lines << "master: H=entropy C=confidence mode=inspectable"
+          lines << "style0 at master0: profile #{profile}, motion steps, typography mono"
+          lines << "style0: entropy and confidence inspectable"
         end
         lines
       end
