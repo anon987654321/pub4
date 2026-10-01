@@ -261,19 +261,5 @@ class ChatController < ApplicationController
     @web_logger ||= WebEventLogger.new(container[:bus])
   end
 
-  SMOKE_CHAT_MESSAGES = %w[ping pong health up].freeze
-
-  def smoke_chat_message?(text)
-    SMOKE_CHAT_MESSAGES.include?(text.to_s.strip.downcase)
-  end
-
-  def stream_smoke_reply(input)
-    body = case input.to_s.strip.downcase
-           when "ping" then "pong"
-           when "pong" then "ping"
-           else "ok"
-           end
-    stream_plain(body)
-  end
 
 end
