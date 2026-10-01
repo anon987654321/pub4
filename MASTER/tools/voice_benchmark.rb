@@ -5,13 +5,14 @@ require "json"
 require "time"
 require_relative "../lib/master"
 require_relative "../lib/voice/benchmark"
+require_relative "../lib/trace/dmesg"
 
 root = File.expand_path("..", __dir__)
 out_dir = File.join(root, ".master", "voice_benchmark")
 FileUtils.mkdir_p(out_dir)
 
 unless Master::Voice::Benchmark.available?
-  warn "voice_benchmark: ffmpeg/ffprobe unavailable; audio gate skipped"
+  Master::Trace::Dmesg.status("voice0", "ffmpeg/ffprobe unavailable, audio gate skipped", io: $stderr)
   exit 0
 end
 
@@ -36,11 +37,15 @@ report = {
 }
 
 File.write(File.join(out_dir, "report.json"), JSON.pretty_generate(report))
-puts JSON.pretty_generate(report)
-
-abort "voice_benchmark: no samples synthesized" if results.empty?
+Master::Trace::Dmesg.attach("voice0", "master0", "#{report[:summary][:samples]} samples, engines #{report[:summary][:engines].join(", ")}")
+Master::Trace::Dmesg.status("voice0", "mean score #{report[:summary][:mean_score]}")
+if results.empty?
+  Master::Trace::Dmesg.status("voice0", "failed, no samples synthesized", io: $stderr)
+  exit 1
+end
 
 threshold = Master::Voice::Benchmark.config["min_score"].to_f
-if results.any? && report[:summary][:mean_score] < threshold
-  abort "voice_benchmark: mean score #{report[:summary][:mean_score]} below #{threshold}"
+if report[:summary][:mean_score] < threshold
+  Master::Trace::Dmesg.status("voice0", "below threshold, #{report[:summary][:mean_score]}, threshold #{threshold}", io: $stderr)
+  exit 1
 end
