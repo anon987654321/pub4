@@ -167,6 +167,46 @@ class TestTraceSupport < Minitest::Test
 
   # The fallback format is for an event the console gives no line, which is
   # normal mode; under verbose, the default, every event has a console line.
+  def test_report_attaches_plain_output_to_one_unit
+    rendered = Master::Trace::Dmesg::Report.render(
+      unit: "check0",
+      parent: "master0",
+      text: "first\nsecond"
+    )
+
+    assert_equal "check0 at master0: first\ncheck0: second", rendered
+  end
+
+  def test_report_preserves_existing_dmesg_units
+    rendered = Master::Trace::Dmesg::Report.render(
+      unit: "check0",
+      parent: "master0",
+      text: "probe0 at check0: scan\nprobe0: clean"
+    )
+
+    assert_equal "probe0 at check0: scan\nprobe0: clean", rendered
+  end
+
+  def test_report_preserves_one_blank_line_between_groups
+    rendered = Master::Trace::Dmesg::Report.render(
+      unit: "check0",
+      parent: "master0",
+      text: "first\n\nsecond"
+    )
+
+    assert_equal "check0 at master0: first\n\ncheck0 at master0: second", rendered
+  end
+
+  def test_report_keeps_explicit_unit_names_without_double_prefixing
+    rendered = Master::Trace::Dmesg::Report.render(
+      unit: "operator0",
+      parent: "master0",
+      text: "status0 at operator0: clean"
+    )
+
+    assert_equal "status0 at operator0: clean", rendered
+  end
+
   def test_dmesg_finding_filters_accept_ansi_and_verdict_lines
     text = "\e[31mfix0: MASTER/lib/example.rb:12: missing gate\e[0m\r\n"
     assert_equal ["fix0: MASTER/lib/example.rb:12: missing gate"], Master::Trace::Dmesg.findings(text)
