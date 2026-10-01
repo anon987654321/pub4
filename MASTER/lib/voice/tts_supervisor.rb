@@ -295,8 +295,14 @@ module Master
 
       def daemon_env(root)
         env = spawn_env(root).dup
-        # Wipe bundle keys so child tts-worker doesn't inherit web bundle state.
-        BUNDLE_ISOLATION_KEYS.each { |key| env[key] = nil }
+        # Keep MASTER's already-prepared private bundle. The parent has removed
+        # ambient web/deployment variables in Entrypoint, so this carries the
+        # exact dependency context the daemon would otherwise have to rediscover.
+        %w[BUNDLE_PATH BUNDLE_APP_CONFIG BUNDLE_USER_CONFIG BUNDLE_DISABLE_SHARED_GEMS
+           GEM_HOME GEM_PATH].each do |key|
+          env[key] = ENV[key] if ENV[key]
+        end
+        env["BUNDLE_GEMFILE"] = File.join(root, "Gemfile")
         env
       end
 

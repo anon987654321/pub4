@@ -46,32 +46,33 @@ class TestScriptDispatch < Minitest::Test
     assert File.file?(path)
   end
 
-  def test_tool_child_does_not_inherit_master_bundle_environment
+  def test_tool_child_inherits_master_bundle_environment
     Dir.mktmpdir("master-tool-dispatch") do |root|
       tool_dir = File.join(root, "tools", "probe")
       FileUtils.mkdir_p(tool_dir)
       script = File.join(tool_dir, "probe.rb")
       File.write(script, <<~'RUBY')
-        puts [ENV["BUNDLE_GEMFILE"], ENV["BUNDLE_BIN_PATH"], ENV["RUBYOPT"]].map(&:inspect).join(" ")
+        puts [ENV["BUNDLE_GEMFILE"], ENV["BUNDLE_PATH"], ENV["GEM_HOME"], ENV["RUBYOPT"]].map(&:inspect).join(" ")
       RUBY
 
-      previous = ENV.to_h.select { |key, _| key.start_with?("BUNDLE_") || key == "RUBYOPT" }
+      previous = ENV.to_h.select { |key, _| key.start_with?("BUNDLE_") || %w[GEM_HOME GEM_PATH RUBYOPT].include?(key) }
       begin
-        ENV["BUNDLE_GEMFILE"] = File.join(root, "missing", "Gemfile")
-        ENV["BUNDLE_BIN_PATH"] = File.join(root, "missing", "bundler")
-        ENV["RUBYOPT"] = "-rbundler/setup"
+        ENV["BUNDLE_GEMFILE"] = File.join(root, "Gemfile")
+        ENV["BUNDLE_PATH"] = File.join(root, "bundle")
+        ENV["GEM_HOME"] = File.join(root, "gems")
+        ENV["GEM_PATH"] = File.join(root, "gems")
+        ENV["RUBYOPT"] = ""
 
         result = Master::Io::ScriptDispatch.run(root:, tool: "probe")
 
         assert result.ok?, -> { result.message.to_s }
-        assert_equal "nil nil nil", result.value!
+        assert_equal %Q{"#{ENV["BUNDLE_GEMFILE"]}" "#{ENV["BUNDLE_PATH"]}" "#{ENV["GEM_HOME"]}" ""}, result.value!
       ensure
-        ENV.keys.grep(/\A(?:BUNDLE_|RUBYOPT\z)/).each { |key| ENV.delete(key) }
+        ENV.keys.grep(/A(?:BUNDLE_|GEM_HOME|GEM_PATH|RUBYOPT)$/).each { |key| ENV.delete(key) }
         previous.each { |key, value| ENV[key] = value }
       end
     end
   end
-
 end
 
 

@@ -339,7 +339,7 @@ POSTPRO_USAGE = <<~TXT
     --input FILE --output FILE --preset NAME   grade one image
     --reference FILE                  add a quality report against a reference
     --compare                         side-by-side after a one-shot grade
-    --random [--count N] [--rough]    three to five chains, into Downloads
+    --random [--count N] [--rough]    five to ten analog variations per image
     --watch [DIR] [--preset NAME]     grade every new photo that lands in DIR
     --auto                            grade the default globs without prompting
     --from-replicate                   grade what replicate just wrote
@@ -4239,7 +4239,7 @@ end
 # frame whose sidecar carries it can be re-graded identically by checking out
 # the commit whose files hash to it.
 GRADE_VERSION = Digest::SHA256.hexdigest(
-  [__FILE__, *Dir[File.join(__dir__, "lib", "*.rb")].sort].map { |path| File.binread(path) }.join,
+  [__FILE__, *Dir[File.join(__dir__, "*.rb"), File.join(__dir__, "lib", "*.rb")].sort].uniq.map { |path| File.binread(path) }.join,
 )[0, 12].freeze
 
 # The four uncanny numbers on the picture that went in and the one that came

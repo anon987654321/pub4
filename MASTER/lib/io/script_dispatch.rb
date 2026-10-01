@@ -29,7 +29,7 @@ module Master
             chdir: working_directory(requested_root, script),
           )
         end
-        out, status = Bundler.with_unbundled_env(&runner)
+        out, status = runner.call
         status.success? ? Result.ok(out.strip) : Result.err("#{tool}: exit=#{status.exitstatus}\n#{out.strip}")
       rescue ArgumentError => e
         Result.err("#{tool}: bad arguments: #{e.message}", category: :validation)

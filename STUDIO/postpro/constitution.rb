@@ -43,8 +43,7 @@ module Postpro
     module_function
 
     def law_sources
-      @law_sources ||= (LAW_PATHS.map { |path| File.read(path, encoding: "UTF-8") }.join("
-")).freeze
+      @law_sources ||= (LAW_PATHS.map { |path| File.read(path, encoding: "UTF-8") }.join("\n")).freeze
     end
 
     def rules_catalog
