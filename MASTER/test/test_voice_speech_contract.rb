@@ -39,4 +39,10 @@ class SpeechContractSpec < Minitest::Test
     ENV["MASTER_TTS_VOICE"] = old_voice
     ENV["MASTER_TTS_STYLE"] = old_style
   end
+  def test_native_say_fallback_has_no_host_default_voice_path
+    assert_equal "Samantha", Master::Voice::Engines::MACOS_VOICE_FALLBACKS.fetch(:jenny)
+    assert_equal "Alex", Master::Voice::Engines::MACOS_VOICE_FALLBACKS.fetch(:andrew)
+    refute Master::Voice::Engines::MACOS_VOICE_FALLBACKS.key?(:pernille)
+    refute Master::Voice::Engines::MACOS_VOICE_FALLBACKS.key?(:finn)
+  end
 end
