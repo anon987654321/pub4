@@ -205,13 +205,13 @@ when "land"
     o.on("-F FILE") { |v| message_file = v }
   end.parse!(ARGV)
   paths = ARGV
-  abort("usage: bin/operator land -m <message> <path>...  (paths are required; nothing is swept)") if paths.empty?
-  abort("usage: bin/operator land needs -m <message> or -F <file>") unless message || message_file
+  die("land", "usage, bin/operator land -m <message> <path>...", 64) if paths.empty?
+  die("land", "usage, bin/operator land needs -m <message> or -F <file>", 64) unless message || message_file
 
   # A worktree carries .git as a file. In the shared checkout the rebase below
   # would carry other sessions' local commits onto origin/main with this one.
   unless File.file?(File.join(ROOT, ".git"))
-    abort("land: refused outside a worktree — `bin/operator worktree <name>` first; the shared checkout holds other sessions' commits")
+    die("land", "refused outside a worktree, use bin/operator worktree <name> first")
   end
 
   def run!(*cmd, chdir: ROOT)
@@ -221,15 +221,15 @@ when "land"
 
   measure_out, measure_ok = run!(File.join(__dir__, "operator"), "measure")
   unless measure_ok
-    warn measure_out
-    abort("land: a ratchet is off before you started — fix that first, or it lands with your change")
+    Master::Trace::Dmesg::Report.print("measure", measure_out, io: $stderr)
+    die("land", "ratchet is off before you started")
   end
   Master::Trace::Dmesg.status("land0", "ratchets clean")
 
   commit = ["git", "commit", "-q"]
   commit += message_file ? ["-F", message_file] : ["-m", message]
   _, ok = run!(*commit, "--", *paths)
-  abort("land: nothing committed (paths matched no changes?)") unless ok
+  die("land", "nothing committed, paths matched no changes?") unless ok
 
   run!("git", "fetch", "-q", "origin")
   rebase_out, rebased = run!("git", "rebase", "-q", "origin/main")
@@ -239,8 +239,8 @@ when "land"
   # yours, and theirs can put a ceiling over the edge that yours did not.
   after_out, after_ok = run!(File.join(__dir__, "operator"), "measure")
   unless after_ok
-    warn after_out
-    abort("land: green before the rebase, off after it — origin/main moved under you")
+    Master::Trace::Dmesg::Report.print("measure", after_out, io: $stderr)
+    die("land", "green before rebase, off after it, origin/main moved under you")
   end
 
   ahead, = run!("git", "log", "--oneline", "origin/main..HEAD")
@@ -280,7 +280,7 @@ when "worktree"
   # finish rebases onto origin/main and pushes the branch — it does not merge
   # to local main, which is how another session's push published commits twice.
   name = ARGV.shift
-  abort("usage: bin/operator worktree <name>|finish [--remove]") if name.to_s.empty?
+  die("worktree", "usage, bin/operator worktree <name>|finish [--remove]", 64) if name.to_s.empty?
   exec("sh", File.join(OPENBSD_OPS, "dev", "agent_worktree.sh"), name, *ARGV)
 when "law:silent"
   output = Operator::LawInventory.render_collection(:silent, json: ARGV.include?("--json"))
@@ -323,7 +323,7 @@ when "rules"
   health = !ARGV.delete("--health").nil? || !ARGV.delete("--deep").nil?
   json_health = ARGV.include?("--json")
   id = ARGV.shift.to_s
-  abort("usage: bin/operator rules <ID> [--card] [--json] [--corpus MASTER|all] [path...]") if id.empty?
+  die("rules", "usage, bin/operator rules <ID> [--card] [--json] [--corpus MASTER|all] [path...]", 64) if id.empty?
 
   corpus = "MASTER"
   ARGV.delete_if { |arg| (m = arg.match(/\A--corpus=(.+)\z/)) && (corpus = m[1]) }
@@ -334,8 +334,9 @@ when "rules"
 
   if health
     row = Operator::LawInventory.health(id)
-    abort("rule: nothing named #{id.inspect}") unless row
-    puts Operator::LawInventory.render(id:, deep: true, json: json_health)
+    die("rules", "nothing named #{id.inspect}") unless row
+    output = Operator::LawInventory.render(id:, deep: true, json: json_health)
+    json_health ? puts(output) : Master::Trace::Dmesg::Report.print("rules", output)
     exit 0
   end
 
@@ -463,7 +464,7 @@ when "rules"
     exit 0
   end
 
-  abort("rule: #{card[:id]} has no detector, so there is nothing to run") unless rule
+  die("rules", "#{card[:id]} has no detector, nothing to run") unless rule
 
   one = Master::Review::Scan::Scanner.new(rules: [rule])
   default = corpus.casecmp?("all") ? ROOT : master_root
@@ -489,7 +490,7 @@ when "readers"
   # instead of raising and dilla rendered without coltrane for days.
   require "operator/readers"
   target = ARGV.shift
-  abort("usage: bin/operator readers <path>   (e.g. bin/operator readers MASTER/lib/boot/hash_dig_compat.rb)") if target.to_s.empty?
+  die("readers", "usage, bin/operator readers <path>", 64) if target.to_s.empty?
 
   hits = Operator::Readers.find(root: ROOT, target: target)
   if hits.empty?
@@ -522,7 +523,7 @@ when "hooks"
   # defect this repo has the most of.
   hooks = File.join(OPENBSD_OPS, "dev", "githooks")
   system("git", "-C", ROOT, "config", "core.hooksPath", "OPENBSD/dev/githooks") ||
-    abort("pub4 hooks: git config failed")
+    die("hooks", "git config failed")
   Master::Trace::Dmesg.attach("hooks0", "operator0", "core.hooksPath -> OPENBSD/dev/githooks")
   Dir.children(hooks).sort.each { |hook| Master::Trace::Dmesg.status("hooks0", "#{hook}#{File.executable?(File.join(hooks, hook)) ? "" : ", not executable"}") }
   Master::Trace::Dmesg.status("hooks0", "cross-tree commits refused unless PUB4_CROSS_TREE=1")
@@ -573,7 +574,7 @@ when "test"
     jobs << ["OPENBSD minitests", ["ruby", "-e", runner], File.join(ROOT, "OPENBSD"), {}]
   end
   if jobs.empty?
-    abort("pub4 test: no suite maps to #{paths.first(3).join(', ')}")
+    die("test", "no suite maps to #{paths.first(3).join(", ")}", 64)
   end
 
   # Say what was chosen before running it, so a surprising suite is visible
@@ -591,7 +592,7 @@ when "vps"
   when "master"
     action = ARGV.shift.to_s
     remote = !ARGV.delete("--remote").nil?
-    abort("usage: bin/operator vps master <status|start|stop|restart> [--remote]") unless %w[status start stop restart].include?(action) && ARGV.empty?
+    die("vps", "usage, bin/operator vps master <status|start|stop|restart> [--remote]", 64) unless %w[status start stop restart].include?(action) && ARGV.empty?
     script = <<~ZSH
       set -e
       cd /home/dev/pub4
@@ -604,7 +605,7 @@ when "vps"
         else
           print "master0: screen master stopped"
         fi
-        ruby40 -I MASTER/lib -e 'require "master"; p=Master::Ops::ProcessLock.owner(File.join(Master::ROOT, ".master", "process.lock")); puts(p.empty? ? "master0: process lock free" : "master0: pid=#{p["pid"]} host=#{p["host"]} mode=#{p["mode"]}")'
+        ruby40 -I MASTER/lib -e 'require "master"; p=Master::Ops::ProcessLock.owner(File.join(Master::ROOT, ".master", "process.lock")); puts(p.empty? ? "master0: process lock free" : "master0: process #{p["pid"]} on #{p["host"]}, mode #{p["mode"]}")'
         ;;
       stop)
         screen -S master -X quit 2>/dev/null || true
@@ -640,7 +641,7 @@ when "vps"
     end
   when "deploy"
     app = ARGV.shift
-    abort(usage) if app.to_s.empty?
+    die("vps", usage.lines.first.to_s.strip, 64) if app.to_s.empty?
     if ARGV.delete("--remote")
       ssh_run("cd /home/dev/pub4 && #{Shellwords.join(["zsh", "OPENBSD/bin/vps-deploy", app])}")
     else
@@ -649,7 +650,7 @@ when "vps"
   when "admin"
     remote = !ARGV.delete("--remote").nil?
     args = ARGV.dup
-    abort("usage: bin/operator vps admin <status|services|service|pf|disk|memory|swap|dmesg|packages|updates|upgrade|reboot> [args] [--remote]") if args.empty?
+    die("vps", "usage, bin/operator vps admin <status|services|service|pf|disk|memory|swap|dmesg|packages|updates|upgrade|reboot> [args] [--remote]", 64) if args.empty?
     command = ["ruby40", "OPENBSD/bin/vps-admin", *args]
     if remote
       ssh_run("cd /home/dev/pub4 && #{Shellwords.join(command)}")
@@ -665,14 +666,14 @@ when "vps"
       exec(File.join(OPENBSD_OPS, "bin", "vps-logs"), app, *ARGV)
     end
   else
-    warn usage
+    Master::Trace::Dmesg::Report.print("/help", usage, io: $stderr)
     exit 2
   end
 when "pushed?"
   # Cherry-picking onto a moving origin/main rewrites SHAs, so "is my work
   # pushed?" cannot be answered by commit id. Content vs origin/main can.
   paths = ARGV
-  abort("usage: bin/operator pushed? <path>...") if paths.empty?
+  die("pushed", "usage, bin/operator pushed? <path>...", 64) if paths.empty?
 
   failed = false
   paths.each do |path|
