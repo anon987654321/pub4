@@ -197,3 +197,68 @@ module Postpro
     end
   end
 end
+
+
+module Postpro
+  module LegacyEffects
+    def film_grain(image, intensity = 0.5, _mode = "professional")
+      stock = :kodak_portra
+      grain(image, STOCKS.fetch(stock).fetch(:speed), stock, intensity.to_f.clamp(0.0, 1.0))
+    end
+
+    def film_halation(image, intensity = 0.6, _mode = "professional")
+      halation(image, intensity.to_f.clamp(0.0, 1.0), tint: halation_tint_for(:kodak_vision3))
+    end
+
+    def bloom_effect(image, intensity = 0.5, _mode = "professional")
+      bloom_pro(image, intensity.to_f.clamp(0.0, 1.0))
+    end
+
+    def cross_process(image, intensity = 0.5, _mode = "professional")
+      cross_fade(image, intensity.to_f.clamp(0.0, 1.0))
+    end
+
+    def golden_hour_glow(image, intensity = 0.5, _mode = "professional")
+      i = intensity.to_f.clamp(0.0, 1.0)
+      warmth(bloom_pro(image, 0.35 * i), 0.55 * i)
+    end
+
+    def lomo(image, intensity = 0.5, _mode = "professional")
+      i = intensity.to_f.clamp(0.0, 1.0)
+      base = vintage_lens(image, "lomo", 0.45 * i)
+      base = base.linear([1.0 + 0.12 * i] * base.bands, [0.0] * base.bands)
+      safe_cast(base)
+    rescue StandardError
+      safe_cast(image)
+    end
+
+    def sepia(image, intensity = 0.5, _mode = "professional")
+      i = intensity.to_f.clamp(0.0, 1.0)
+      matrix = Vips::Image.new_from_array([
+        [0.393, 0.769, 0.189],
+        [0.349, 0.686, 0.168],
+        [0.272, 0.534, 0.131],
+      ])
+      toned = image.recomb(matrix)
+      safe_cast(image.cast("float") * (1.0 - i) + toned.cast("float") * i)
+    end
+
+    def teal_and_orange(image, intensity = 0.5, _mode = "professional")
+      teal_orange(image, intensity.to_f.clamp(0.0, 1.0))
+    end
+
+    def glitch(image, intensity = 0.5, _mode = "professional")
+      i = intensity.to_f.clamp(0.0, 1.0)
+      r, g, b = image.bandsplit
+      shift = [[image.width * 0.004 * i, 1.0].max.round, 1].max
+      shifted = Vips::Image.bandjoin([
+        r.roll(shift, 0),
+        g,
+        b.roll(-shift, 0),
+      ])
+      noise = Vips::Image.gaussnoise(image.width, image.height, sigma: 6.0 * i)
+      noise = rgb_bands(noise, image.bands)
+      safe_cast(shifted.cast("float") + noise.cast("float") * 0.18)
+    end
+  end
+end
