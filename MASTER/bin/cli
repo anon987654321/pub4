@@ -105,7 +105,9 @@ def acquire_master_process_lock
   inherited = ENV["MASTER_PROCESS_LOCK_FD"]
   if inherited
     begin
-      return IO.for_fd(Integer(inherited, 10))
+      io = IO.for_fd(Integer(inherited, 10))
+      io.close_on_exec = true
+      return io
     rescue ArgumentError, Errno::EBADF => e
       warn "master0: inherited process lock is invalid, #{e.message}"
       exit 75
