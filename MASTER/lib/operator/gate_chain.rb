@@ -118,20 +118,29 @@ module Operator
     end
 
     def explain(selected, scan_only:, trees:)
-      puts "gate: #{scan_only ? "scan-only" : "full-fix"} — #{selected.size} stage(s) over #{trees.join(", ")}"
-      selected.each { |s| puts format("  %-9s %s%s", s.name, s.purpose, s.mutates ? "  [writes]" : "") }
+      Master::Trace::Dmesg.attach(
+        "gate0", "master0",
+        "#{scan_only ? "scan-only" : "full fix"}, #{selected.size} stages, #{trees.join(", ")}"
+      )
+      selected.each do |stage|
+        unit = stage_unit(stage)
+        detail = stage.mutates ? "#{stage.purpose}, writes" : stage.purpose
+        Master::Trace::Dmesg.attach(unit, "gate0", detail)
+      end
       0
     end
 
     def report(selected, scan_only:, trees:, return_results: false)
       foreign = dirty
-      mode = scan_only ? "scan-only (writes nothing)" : "full-fix (writes)"
-      puts "gate: #{mode} over #{trees.join(", ")} — #{selected.map(&:name).join(" -> ")}"
+      mode = scan_only ? "scan-only, writes nothing" : "full fix, writes"
+      Master::Trace::Dmesg.attach(
+        "gate0", "master0",
+        "#{mode}, #{selected.size} stages, #{trees.join(", ")}"
+      )
       announce_foreign(foreign)
 
       seen = foreign.dup
-      results = selected.each_with_index.map do |stage, index|
-        puts "gate: #{index + 1}/#{selected.size} #{stage.name}"
+      results = selected.map do |stage|
         result = run_stage(stage, seen)
         seen |= result.changed
         result
@@ -421,47 +430,85 @@ module Operator
     end
 
     def run_stage(stage, seen)
-      puts "\n== #{stage.name}: #{stage.purpose}"
+      unit = stage_unit(stage)
+      Master::Trace::Dmesg.attach(
+        unit, "gate0",
+        stage.mutates ? "#{stage.purpose}, writes" : stage.purpose
+      )
       ok, body, exitstatus = stage.run.call
       changed = dirty - seen
       state = classify(ok, exitstatus)
       state = "failed" if changed.any? && !stage.mutates
-      puts "   #{state}: #{verdict(body)}"
-      body.last(state == "ok" ? 0 : 12).each { |line| puts "   | #{line}" }
-      announce_changed(stage, changed)
-      Result.new(stage: stage.name, state:, summary: verdict(body), changed:)
+      summary = verdict(body)
+      Master::Trace::Dmesg.status(unit, "#{state}, #{summary}")
+      detail = body.last(state == "ok" ? 0 : 12)
+      Master::Trace::Dmesg::Report.print(unit, detail.join("\n"), parent: "gate0") unless detail.empty?
+      announce_changed(unit, stage, changed)
+      Result.new(stage: stage.name, state:, summary:, changed:)
+    end
+
+    def stage_unit(stage)
+      {
+        "lexical" => "law0",
+        "source" => "source0",
+        "openbsd" => "openbsd0",
+        "suites" => "suite0",
+        "ratchets" => "ratchet0",
+        "sprawl" => "sprawl0",
+        "council" => "council0",
+      }.fetch(stage.name) { "#{stage.name}0" }
     end
 
     def announce_foreign(foreign)
-      return puts("gate: tree clean at the start — everything below belongs to this run") if foreign.empty?
+      if foreign.empty?
+        Master::Trace::Dmesg.status("gate0", "tree clean at start, all changes below are this run")
+        return
+      end
 
-      puts "gate: #{foreign.size} file(s) were ALREADY modified before this run — not this chain's, leave them:"
-      foreign.first(20).each { |path| puts "   ~ #{path}" }
-      puts "   ~ … and #{foreign.size - 20} more" if foreign.size > 20
+      Master::Trace::Dmesg.attach("foreign0", "gate0", "#{foreign.size} pre-existing change(s), left untouched")
+      foreign.first(20).each { |path| Master::Trace::Dmesg.status("foreign0", path) }
+      more = foreign.size - 20
+      Master::Trace::Dmesg.status("foreign0", "#{more} more") if more.positive?
     end
 
-    def announce_changed(stage, changed)
+    def announce_changed(unit, stage, changed)
       return if changed.empty?
 
-      label = stage.mutates ? "changed by #{stage.name}" : "CHANGED BY A STAGE THAT PROMISED NOT TO WRITE"
-      puts "   #{changed.size} file(s) #{label}:"
-      changed.first(30).each { |path| puts "   + #{path}#{path.match?(GENERATED) ? "   GENERATED — revert" : ""}" }
-      puts "   + … and #{changed.size - 30} more" if changed.size > 30
+      label = stage.mutates ? "changed by #{stage.name}" : "changed by non-mutating stage"
+      Master::Trace::Dmesg.status(unit, "#{changed.size} file(s), #{label}")
+      changed.first(30).each do |path|
+        detail = path.match?(GENERATED) ? "#{path}, generated, revert" : path
+        Master::Trace::Dmesg.status(unit, detail)
+      end
+      more = changed.size - 30
+      Master::Trace::Dmesg.status(unit, "#{more} more") if more.positive?
     end
 
     def summarise(results, foreign)
       changed = results.flat_map(&:changed)
       generated = changed.grep(GENERATED)
       clean = results.count { |result| result.state == "ok" }
-      puts "\ngate: #{clean}/#{results.size} stage(s) clean, #{changed.size} changed, #{foreign.size} foreign"
-      results.select { |r| r.state == "skipped" }.each { |r| puts "gate: #{r.stage} NOT MEASURED — #{r.summary}" }
-      results.select { |r| r.state == "failed" }.each { |r| puts "gate: #{r.stage} FAILED — #{r.summary}" }
-      generated.each { |path| puts "gate: generated file rewritten, revert it — #{path}" }
+      skipped = results.count { |result| result.state == "skipped" }
+      failed = results.count { |result| result.state == "failed" }
+
+      Master::Trace::Dmesg.status(
+        "gate0",
+        "#{clean} clean, #{failed} failed, #{skipped} skipped, #{changed.size} changed, #{foreign.size} foreign"
+      )
+      results.select { |r| r.state == "skipped" }.each do |r|
+        Master::Trace::Dmesg.status("gate0", "#{r.stage}, skipped, #{r.summary}")
+      end
+      results.select { |r| r.state == "failed" }.each do |r|
+        Master::Trace::Dmesg.status("gate0", "#{r.stage}, failed, #{r.summary}")
+      end
+      generated.each do |path|
+        Master::Trace::Dmesg.status("gate0", "generated file rewritten, revert, #{path}")
+      end
 
       return 1 if results.any? { |r| r.state == "failed" } || generated.any?
       return 3 if results.any? { |r| r.state == "skipped" }
 
-      puts "gate: clean"
+      Master::Trace::Dmesg.status("gate0", "clean")
       0
     end
   end
