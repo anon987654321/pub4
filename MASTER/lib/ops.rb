@@ -51,8 +51,6 @@ module Master
       MEDIA_PLAYER_COMMAND = %r{(?:/|\\)(?:STUDIO/dilla|MASTER/tools/dilla)/(?:liveset|royksopp)\.rb(?:\s|$)}.freeze
 
       def reclaimable?(path)
-        read_metadata(path)
-
         probe = File.open(path, File::RDWR | File::CREAT, 0o600)
         return true if probe.flock(File::LOCK_EX | File::LOCK_NB) == true
 
@@ -76,25 +74,52 @@ module Master
         holders = lock_holders(path)
         return false if holders.nil? || holders.empty?
 
+        out, status = Open3.capture2("ps", "-ax", "-o", "pid=,ppid=,pgid=,command=")
+        return false unless status.success?
+
+        rows = out.lines.filter_map do |line|
+          match = line.strip.match(/\A(\d+)\s+(\d+)\s+(\d+)\s+(.+)\z/)
+          next unless match
+
+          pid, ppid, pgid = match.captures.first(3).map(&:to_i)
+          { pid:, ppid:, pgid:, command: match[4] }
+        end
+        by_parent = rows.group_by { |row| row[:ppid] }
         roots = holders.filter_map do |pid|
-          out, status = Open3.capture2("ps", "-p", pid.to_i.to_s, "-o", "pid=,pgid=,command=")
-          next unless status.success?
+          row = rows.find { |candidate| candidate[:pid] == pid }
+          next unless row && row[:command].match?(MEDIA_PLAYER_COMMAND)
 
-          row = out.to_s.strip.match(/\A(\d+)\s+(\d+)\s+(.+)\z/)
-          next unless row && row[3].match?(MEDIA_PLAYER_COMMAND)
-
-          [row[1].to_i, row[2].to_i]
-        end.uniq
+          row
+        end.uniq { |row| row[:pid] }
         return false if roots.empty?
 
-        roots.each do |pid, pgid|
-          group = pgid.positive? && pgid == pid ? -pgid : pid
-          Process.kill("TERM", group)
-        rescue Errno::ESRCH, Errno::EPERM
-          nil
+        victims = roots.flat_map do |root|
+          descendants = []
+          queue = [root[:pid]]
+          until queue.empty?
+            parent = queue.shift
+            by_parent.fetch(parent, []).each do |child|
+              next if descendants.include?(child[:pid])
+
+              descendants << child[:pid]
+              queue << child[:pid]
+            end
+          end
+          [root[:pid], *descendants]
+        end.uniq.reject { |pid| pid == Process.pid }
+
+        victims.reverse_each { |pid| Process.kill("TERM", pid) rescue nil }
+        deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 0.25
+        loop do
+          probe = File.open(path, File::RDWR | File::CREAT, 0o600)
+          free = probe.flock(File::LOCK_EX | File::LOCK_NB) == true
+          probe.flock(File::LOCK_UN) if free
+          probe.close
+          return true if free
+          break if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
+          sleep 0.025
         end
-        sleep 0.05
-        true
+        false
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "ProcessLock.reclaim_detached_media_holders")
         false
