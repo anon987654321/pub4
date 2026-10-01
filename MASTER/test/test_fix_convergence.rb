@@ -86,13 +86,13 @@ class TestFixConvergence < Minitest::Test
     refute_includes Master::CLI::Pipeline::Pass::STAGES, "scan"
   end
 
-  def test_bare_fix_resolves_to_the_pub4_root
+  def test_bare_fix_resolves_to_the_current_master_checkout
     resolver = Class.new do
       include Master::CLI::Pipeline::TargetResolver
       def initialize(root) = @root = root
     end.new(Master::ROOT)
 
-    assert_equal Master::REPO_ROOT, resolver.resolve_target("")
+    assert_equal Master::ROOT, resolver.resolve_target("")
     assert_equal Master::REPO_ROOT, resolver.resolve_target("everything")
     assert_equal Master::RAILS_ROOT, resolver.resolve_target("RAILS")
   end
