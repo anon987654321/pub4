@@ -1798,7 +1798,7 @@ module Livesets
     @stopping = false
     sets = name ? [name] : ROTATION
     sets.cycle do |set|
-      pid = Process.spawn(RbConfig.ruby, File.join(D, "dilla.rb"), "live", "set", set, pgroup: true)
+      pid = Process.spawn(RbConfig.ruby, File.join(D, "dilla.rb"), "live", "set", set, pgroup: true, close_others: true)
       trap("INT") { interrupt!(pid) }
       Process.wait(pid)
       break if @stopping
@@ -3338,7 +3338,7 @@ module LiveSynth
       stop!
       FileUtils.mkdir_p(home)
       pid = Process.spawn(RbConfig.ruby, engine, "live", *args, chdir: Livesets::D, in: File::NULL,
-                                                                out: [log_file, "a"], err: [:child, :out], pgroup: true)
+                                                                out: [log_file, "a"], err: [:child, :out], pgroup: true, close_others: true)
       Process.detach(pid)
       pid
     end
