@@ -10,8 +10,9 @@ commands = [
 ]
 
 commands.each do |cmd|
-  puts "+ #{cmd.join(' ')}"
+  unit = "verify#{commands.index(cmd) || 0}"
+  Master::Trace::Dmesg.attach(unit, "verify0", cmd.join(" "))
   system(*cmd) or exit($?.exitstatus || 1)
 end
 
-puts "tools verify passed"
+Master::Trace::Dmesg.status("verify0", "passed")
