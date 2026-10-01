@@ -5,6 +5,7 @@ require "fileutils"
 require "open3"
 require "optparse"
 require "shellwords"
+require_relative "../lib/trace/dmesg"
 
 MASTER_DIR = File.expand_path("..", __dir__)
 DEFAULT_OUT = File.join(MASTER_DIR, "reports", "screenshots", "home.png")
@@ -26,7 +27,10 @@ end.parse!
 
 options[:url] = ARGV.shift
 options[:out] = ARGV.shift || options[:out]
-abort "FAIL web-screenshot: URL required" unless options[:url]
+unless options[:url]
+  Master::Trace::Dmesg.status("screenshot0", "URL required", io: $stderr)
+  exit 64
+end
 
 FileUtils.mkdir_p(File.dirname(options[:out]))
 
@@ -34,7 +38,10 @@ browser = %w[chromium chromium-browser google-chrome chrome].find do |cmd|
   system("command", "-v", cmd, out: File::NULL, err: File::NULL)
 end
 
-abort "FAIL web-screenshot: chromium/google-chrome not found" unless browser
+unless browser
+  Master::Trace::Dmesg.status("screenshot0", "chromium or google-chrome not found", io: $stderr)
+  exit 1
+end
 
 args = [
   browser,
@@ -49,6 +56,10 @@ args = [
 ]
 
 stdout, stderr, status = Open3.capture3(*args)
-abort "FAIL web-screenshot: #{stderr.empty? ? stdout : stderr}" unless status.success? && File.exist?(options[:out]) && File.size(options[:out]).positive?
+unless status.success? && File.exist?(options[:out]) && File.size(options[:out]).positive?
+  Master::Trace::Dmesg::Report.print("screenshot0", stderr.empty? ? stdout : stderr, io: $stderr)
+  Master::Trace::Dmesg.status("screenshot0", "failed", io: $stderr)
+  exit(status.exitstatus || 1)
+end
 
-puts "OK screenshot: #{options[:out]}"
+Master::Trace::Dmesg.status("screenshot0", "screenshot #{options[:out]}")
