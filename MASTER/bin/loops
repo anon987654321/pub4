@@ -29,6 +29,8 @@ Master::Boot::Entrypoint.prepare!(root: File.expand_path("..", __dir__))
 # not, so the face take is never regenerated here.
 
 require "fileutils"
+require "tmpdir"
+require_relative "../lib/trace/dmesg"
 
 ROOT = File.expand_path("../..", __dir__)
 MASTER = File.join(ROOT, "MASTER")
@@ -40,9 +42,13 @@ def sh(*args)
 end
 
 def report(path)
-  return puts("  #{File.basename(path)}: not written") unless File.file?(path)
+  name = File.basename(path)
+  unless File.file?(path)
+    Master::Trace::Dmesg.status("loops0", "#{name}, not written")
+    return
+  end
 
-  puts "  #{File.basename(path)}: #{(File.size(path) / 1024.0 / 1024).round(2)} MB"
+  Master::Trace::Dmesg.status("loops0", "#{name}, #{(File.size(path) / 1024.0 / 1024).round(2)} MB")
 end
 
 # A gif of whatever mp4 was just written, two-pass so the palette is the film's
@@ -92,8 +98,11 @@ def wordmark_png
 end
 
 def build_face
-  puts "loop1 — the face, with the wordmark"
-  return puts("  #{SOURCE} missing; nothing to build from") unless File.file?(SOURCE)
+  Master::Trace::Dmesg.attach("loop1", "loops0", "face, with the wordmark")
+  unless File.file?(SOURCE)
+    Master::Trace::Dmesg.status("loop1", "#{SOURCE} missing, nothing to build from")
+    return
+  end
 
   mark = wordmark_png
   out = File.join(MASTER, "loop1.mp4")
@@ -108,7 +117,7 @@ def build_face
        "-map", "0:v", "-map", "[a]", "-c:v", "libx264", "-crf", "30", "-preset", "slow", "-pix_fmt", "yuv420p",
        "-movflags", "+faststart", "-c:a", "aac", "-b:a", "192k", out)
   else
-    warn "  #{DEMO} not rendered yet — keeping the narration alone"
+    Master::Trace::Dmesg.status("loop1", "#{DEMO} not rendered yet, keeping the narration alone")
     sh("ffmpeg", "-y", "-i", SOURCE, "-i", mark, "-filter_complex", overlay,
        "-c:v", "libx264", "-crf", "30", "-preset", "slow", "-movflags", "+faststart",
        "-c:a", "copy", out)
@@ -118,7 +127,7 @@ def build_face
 end
 
 def build_shell
-  puts "loop2 — the shell"
+  Master::Trace::Dmesg.attach("loop2", "loops0", "shell")
   sh("ruby", File.join(ROOT, "MASTER", "gates", "shell_loop_record.rb"),
      "--out", File.join(MASTER, "loop2.mp4"), "--audio", DEMO, "--fps", "20")
   report(File.join(MASTER, "loop2.mp4"))
