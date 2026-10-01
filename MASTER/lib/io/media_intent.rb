@@ -208,7 +208,7 @@ module Master
 
       def stop_live_audio(root: MasterPaths.root)
         Voice::Playback.interrupt!("operator requested audio stop") if defined?(Voice::Playback)
-        result = ScriptDispatch.run(root:, tool: "dilla", arg: "live stop")
+        result = ScriptDispatch.run(root:, tool: "dilla", arg: "live stop", env: { "DILLA_COLTRANE" => "0" })
         return result unless result.ok?
 
         Result.ok({ output: result.value!, rendered: result.value!, media: :dilla_stop })
@@ -320,14 +320,19 @@ module Master
       # its own running and returns, one that steers or stops it sends the
       # word to that player.
       def play_background_music(root: MasterPaths.root)
-        result = ScriptDispatch.run(root:, tool: "dilla", arg: "live default")
+        result = ScriptDispatch.run(
+          root:, tool: "dilla", arg: "live default", env: { "DILLA_COLTRANE" => "0" }
+        )
         return result unless result.ok?
 
         Result.ok({ output: result.value!, rendered: result.value!, media: :dilla_background })
       end
 
       def live_synth(text, root: MasterPaths.root)
-        result = ScriptDispatch.run(root:, tool: "dilla", arg: "live say #{Shellwords.escape(text)}")
+        result = ScriptDispatch.run(
+          root:, tool: "dilla", arg: "live say #{Shellwords.escape(text)}",
+          env: { "DILLA_COLTRANE" => "0" }
+        )
         result.ok? ? Result.ok({ output: result.value!, rendered: result.value!, media: :dilla_live }) : result
       end
 
