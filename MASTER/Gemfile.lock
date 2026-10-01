@@ -168,13 +168,13 @@ GEM
       rubocop-ast (>= 1.49.0, < 2.0)
       ruby-progressbar (~> 1.7)
       unicode-display_width (>= 2.4.0, < 4.0)
-    ruby-vips (2.3.0)
-      ffi (~> 1.12)
-      logger
     rubocop-ast (1.50.0)
       parser (>= 3.3.7.2)
       prism (~> 1.7)
     ruby-progressbar (1.13.0)
+    ruby-vips (2.3.0)
+      ffi (~> 1.12)
+      logger
     ruby_llm (2.0.0)
       base64
       event_stream_parser (~> 1)
