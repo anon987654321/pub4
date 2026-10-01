@@ -50,11 +50,12 @@ module Master
         def scan_dir(dir, depth: :deep, glob: SCAN_GLOB, stream: false, autofix: false, autofix_root: nil, rules: nil)
           validate_depth!(depth)
           paths = Dir.glob(File.join(dir, glob)).select { |path| scannable_path?(path, dir) }
-          reset_scan_progress(paths.size) if stream
+          rule_set = rules || active_rules(depth)
+          reset_scan_progress(paths.size, rules: rule_set) if stream
           unit = stream ? @scan_progress[:unit] : Fiber[:master_unit]
           pairs = Master::Trace::Dmesg.under(unit) do
             parallel_map(paths) do |path, idx|
-              scan_one(dir:, path:, depth:, stream:, index: idx, autofix:, autofix_root:, rules:)
+              scan_one(dir:, path:, depth:, stream:, index: idx, autofix:, autofix_root:, rules: rule_set)
             end
           end
           pairs.concat(cross_file_pairs(dir, paths))
