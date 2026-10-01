@@ -3,6 +3,7 @@
 
 require "yaml"
 require_relative "design/master_design"
+require_relative "../lib/trace/dmesg"
 
 module DesignTokens
   ROOT = File.expand_path("../..", __dir__)
@@ -257,5 +258,8 @@ module DesignTokens
 end
 
 if $PROGRAM_NAME == __FILE__
-  puts DesignTokens.sync_design_artifact! ? "design_tokens: generated from MASTER/data/rules.yml" : "design_tokens: already in sync"
+  Master::Trace::Dmesg.status(
+    "design0",
+    DesignTokens.sync_design_artifact! ? "generated from MASTER/data/rules.yml" : "already in sync"
+  )
 end
