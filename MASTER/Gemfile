@@ -19,6 +19,7 @@ gem "tty-command", "~> 0.10"
 gem "pastel", "~> 0.8"
 gem "diffy", "~> 3.4"
 gem "ferrum", "~> 0.15"
+gem "ruby-vips", "~> 2.3"
 group :fan_ops do
   gem "mail", "~> 2.9"
 end
