@@ -1,6 +1,6 @@
-# openbsd.yml — what each OpenBSD daemon config must and should carry, for
-# OpenBSD 7.8. Ground::OpenbsdConfig reads it, and test_openbsd_config.rb
-# holds every known config under OPENBSD/etc to it.
+# openbsd.yml — baseline expectations for OpenBSD daemon configs. Revalidate
+# release-specific details against the deployed system's man pages. Ground::OpenbsdConfig
+# reads it, and test_openbsd_config.rb holds every known config under OPENBSD/etc to it.
 
 configs:
   pf.conf:
