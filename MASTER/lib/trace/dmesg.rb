@@ -187,27 +187,36 @@ module Master
         emit(line, io:)
       end
 
-      def emit(line, io: $stdout)
-        return unless enabled?
+      def emit(line, io: $stdout, force: false)
+        return unless enabled? || force
 
-        # Normal mode keeps conversational turns quiet. Verbose and trace are
-        # explicit operator modes and therefore expose the top-level work too.
-        if verbosity == "normal" && Fiber[:master_unit] == "master0" && line.match?(/at \w+0|llm\d+:/)
+        # Normal mode keeps conversational turns quiet. Explicit command reports
+        # force their already-rendered lines through the same presenter.
+        if !force && verbosity == "normal" && Fiber[:master_unit] == "master0" && line.match?(/at \w+0|llm\d+:/)
           return
         end
 
         text = line.to_s.gsub(/\s+/, " ").strip
-        # Clears the repainting "thinking" line first, or the unit prints on
-        # the end of it.
-        # Dim like the boot lines above it: kernel lines recede, and the reply
-        # is the one thing at full weight.
-        io.print "\r\e[K" if io.tty?
-        io.puts(io.tty? ? pastel.dim(text) : text)
-        io.flush
+        io.print "\r\e[K" if io.respond_to?(:tty?) && io.tty?
+        io.puts(io.respond_to?(:tty?) && io.tty? ? style(text) : text)
+        io.flush if io.respond_to?(:flush)
         text
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "Trace::Dmesg.emit")
         nil
+      end
+
+      def style(text)
+        return text unless $stdout.tty?
+
+        match = text.match(/\A([a-z][a-z0-9_]*\d+)(?: at ([a-z][a-z0-9_]*\d+))?:\s*(.*)\z/)
+        return pastel.dim(text) unless match
+
+        unit, parent, detail = match.values_at(1, 2, 3)
+        relation = parent ? " at #{parent}" : ""
+        "#{pastel.bold(unit)}#{pastel.dim(relation)}: #{detail}"
+      rescue StandardError
+        text
       end
 
       ANSI = /\e\[[0-9;?]*[A-Za-z]/
