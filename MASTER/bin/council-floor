@@ -3,9 +3,13 @@
 
 require_relative "../lib/boot/entrypoint"
 Master::Boot::Entrypoint.prepare!(root: File.expand_path("..", __dir__))
+require_relative "../lib/trace/dmesg"
 require "review/council/deterministic_floor"
 
 target = ARGV.shift || "."
-abort "usage: bin/council-floor <file-or-directory>" unless ARGV.empty?
+unless ARGV.empty?
+  Master::Trace::Dmesg.status("council0", "usage, bin/council-floor <file-or-directory>", io: $stderr)
+  exit 64
+end
 
 exit Master::Review::Council::DeterministicFloor.run(target)
