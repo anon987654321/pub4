@@ -73,6 +73,7 @@ require "securerandom"
 require "openssl"
 require "uri"
 require "digest"
+require_relative "../lib/trace/dmesg"
 
 WORKER_VERSION = Digest::SHA256.file(__FILE__).hexdigest[0, 16]
 
@@ -150,7 +151,7 @@ module EdgeIntermediates
     ssl.post_connection_check(host)
     Array(ssl.peer_cert_chain).drop(1).reverse
   rescue StandardError => e
-    warn "tts-worker: intermediates for #{host} unavailable: #{e.class}: #{e.message}"
+    Master::Trace::Dmesg.status("tts0", "intermediates for #{host} unavailable, #{e.class}: #{e.message}", io: $stderr)
     []
   ensure
     ssl&.close rescue nil
@@ -199,7 +200,7 @@ def synth_subprocess(request, out_path)
     stdin_data: request.text.to_s
   )
   unless status.success?
-    warn "tts-worker: one-shot failed: #{err.to_s.strip}" unless err.to_s.strip.empty?
+    Master::Trace::Dmesg.status("tts0", "one-shot failed, #{err.to_s.strip}", io: $stderr) unless err.to_s.strip.empty?
     return false
   end
   File.exist?(out_path) && File.size(out_path) > 0
@@ -290,7 +291,7 @@ if ARGV[0] == "--daemon"
   rescue Errno::ENOSYS, Errno::EOPNOTSUPP
     warn "tts-worker: chmod unsupported for #{sock_path}; continuing with filesystem permissions"
   end
-  warn "tts-worker: daemon ready on #{sock_path}"
+  Master::Trace::Dmesg.status("tts0", "daemon ready on #{sock_path}")
   # Unlink on exit ONLY if the path still refers to the socket this process
   # bound. An older daemon dying after a newer one has already re-bound the
   # same path would otherwise unlink the newer daemon's socket out from under
