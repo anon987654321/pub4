@@ -26,18 +26,18 @@
 
 $LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
 require "master"
+require_relative "../lib/trace/dmesg"
 
 root = File.expand_path("..", __dir__)
 scanner = Master::Review::Scan::InfraHelpers.build_scanner(root:)
 
-puts "#{scanner.rules.size} rules registered, e.g. #{scanner.rules.first(5).map(&:id).join(', ')}"
-puts
+Master::Trace::Dmesg.attach("example0", "master0", "#{scanner.rules.size} rules registered")
+Master::Trace::Dmesg.status("example0", "sample, #{scanner.rules.first(5).map(&:id).join(", ")}")
 
 target = ARGV.first ? File.expand_path(ARGV.first, root) : File.join(root, "tools", "fixtures")
 hits = scanner.findings([target], depth: :deep)
 hits.each do |finding|
   rel = finding[:path].to_s.sub("#{root}/", "")
-  puts "#{rel}:#{finding[:line]}: [#{finding[:rule]}] #{finding[:message]}"
+  Master::Trace::Dmesg.status("example0", "#{rel}:#{finding[:line]}, #{finding[:rule]}, #{finding[:message]}")
 end
-puts
-puts "#{hits.size} finding(s)"
+Master::Trace::Dmesg.status("example0", "#{hits.size} finding(s)")
