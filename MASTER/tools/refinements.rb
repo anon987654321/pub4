@@ -112,14 +112,15 @@ module Operator
       def print_groups(rows)
         groups = rows.group_by { |row| row[:rule] }.sort_by { |_, members| -members.size }
         Master::Trace::Dmesg.attach("refine0", "master0", "#{rows.size} refinements in #{rows.map { |r| r[:file] }.uniq.size} files, #{groups.size} groups")
-        groups.each do |rule, members|
+        groups.each_with_index do |(rule, members), index|
           trees = members.group_by { |row| row[:tree] }
                          .sort_by { |_, rows_in_tree| -rows_in_tree.size }
                          .map { |tree, rows_in_tree| "#{tree} #{rows_in_tree.size}" }
                          .join(", ")
-          Master::Trace::Dmesg.attach("refine#{members.object_id.abs % 10}", "refine0", "#{rule}, #{members.size} findings in #{members.map { |m| m[:file] }.uniq.size} files")
-          Master::Trace::Dmesg.status("refine#{members.object_id.abs % 10}", "trees #{trees}")
-          Master::Trace::Dmesg.status("refine#{members.object_id.abs % 10}", CLOSING.fetch(rule, "no closing sentence written yet"))
+          unit = "refine#{index}"
+          Master::Trace::Dmesg.attach(unit, "refine0", "#{rule}, #{members.size} findings in #{members.map { |m| m[:file] }.uniq.size} files")
+          Master::Trace::Dmesg.status(unit, "trees #{trees}")
+          Master::Trace::Dmesg.status(unit, CLOSING.fetch(rule, "no closing sentence written yet"))
         end
       end
 
