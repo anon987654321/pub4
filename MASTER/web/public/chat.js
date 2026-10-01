@@ -526,13 +526,8 @@ document.querySelectorAll('.tool').forEach(btn => {
     { action: 'voice_mode', label: 'hands-free voice mode', hint: 'continuous listening, no mic press' }
   );
 
-  fetch('/chat/skills').then(r => r.json()).then((skills) => {
-    if (!Array.isArray(skills)) return;
-    skills.forEach((skill) => {
-      COMMANDS.push({ cmd: skill.name, label: skill.name, hint: skill.description || 'skill' });
-    });
-  }).catch(() => {});
-
+  // Skills are runtime capabilities, not CLI commands. Keep them out of the
+  // command palette unless CommandRegistry explicitly promotes one to the slash surface.
   let root = document.getElementById('cmd-palette');
   if (!root) {
     root = document.createElement('div');
