@@ -41,6 +41,7 @@ module Master
       LIVE_STYLE_RE = /\b(?:röyksopp|royksopp|melody\s+a\.m\.)\b/i.freeze
       LIVE_STYLE_VERB_RE = /\b(?:play|start|resume|switch|change|move|go|use|put\s+on|queue)\b|\b(?:sound\s*card|speakers?)\b/i.freeze
       LIVE_STYLE_QUERY_RE = /\b(?:switch|change|move|go)\b.*\bstyle\b/i.freeze
+      LIVE_STYLE_ALONE_RE = /\A\s*(?:röyksopp|royksopp|melody\s+a\.m\.)\s*[.!]?\s*\z/i.freeze
       BACKGROUND_MUSIC_RE = /\b(?:play|start|resume|put on|queue)\b.*\b(?:your|some|the|my)?\s*music\b.*\bbackground\b/i.freeze
       LIVE_SYNTH_ALONE_RE = /\A\s*(?:stop|silence|enough)\b|\bstop\s+(?:the\s+)?(?:music|playing|synth\w*|improvi\w*|jam)\b|\b(?:improvi[sz]e|keep\s+playing)\b|\A\s*(?:please\s+)?play(?:\s+(?:some\s+)?music)?\s*[.!]?\s*\z/i.freeze
       POSTPRO_COMMAND_RE = /\b(?:run|use|call|invoke)\s+postpro(?:\.rb)?\b/i.freeze
@@ -52,6 +53,7 @@ module Master
       DESKTOP_RE = /\b(?:my\s+|the\s+)?(?:local\s+)?desktop(?:\s+folder)?\b/i.freeze
       POSTPRO_RANDOM_RE = /\b(?:random|randomly|variations?|versions?)\b/i.freeze
       POSTPRO_EXTREME_RE = /\b(?:extreme|wild|aggressive|rough)\b/i.freeze
+      POSTPRO_IMAGE_GLOB_RE = %r{(?:~|/)[^\s"\']*[\*?\[\]{}][^\s"\']*\.(?:jpe?g|png|webp|tiff?)\b}i.freeze
 
       def handles?(text)
         text.match?(KICK_RE) || text.match?(PLAY_LAST_RE) || text.match?(SYNTH_RE) || text.match?(LIVE_AUDIO_STOP_RE) || live_synth?(text) ||
@@ -76,7 +78,7 @@ module Master
         parsed = NaturalIntent.resolve(text)
         return true if parsed&.intent == :postprocess
 
-        text.match?(POSTPRO_COMMAND_RE) || text.match?(POSTPRO_RE)
+        text.match?(POSTPRO_COMMAND_RE) || text.match?(POSTPRO_RE) || text.match?(POSTPRO_IMAGE_GLOB_RE)
       end
 
       def generate_cloud_image(prompt, root:)
@@ -288,7 +290,7 @@ module Master
       end
 
       def live_synth?(text)
-        [LIVE_MUSIC_RE, LIVE_SYNTH_ALONE_RE, LIVE_SYNTH_PLAY_RE, LIVE_SYNTH_KNOB_RE, LIVE_STYLE_QUERY_RE].any? { |pattern| text.match?(pattern) } ||
+        [LIVE_MUSIC_RE, LIVE_SYNTH_ALONE_RE, LIVE_SYNTH_PLAY_RE, LIVE_SYNTH_KNOB_RE, LIVE_STYLE_QUERY_RE, LIVE_STYLE_ALONE_RE].any? { |pattern| text.match?(pattern) } ||
           (text.match?(LIVE_STYLE_RE) && text.match?(LIVE_STYLE_VERB_RE))
       end
 
