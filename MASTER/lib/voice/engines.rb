@@ -17,6 +17,11 @@ module Master
       # fallback if edge-tts is ever unavailable.
       OPENBSD_CHAIN = %w[edge_melodic edge say].freeze
       DEFAULT_CHAIN = %w[mlx chatterbox edge_melodic edge say].freeze
+      # Native macOS `say` is only a controlled fallback. A bare `say` invocation
+      # can select the host default voice, which is allowed to be a different
+      # speaker. Keep only deliberate aliases here; an unmapped neural voice must
+      # fail this engine and let the caller choose its other safe fallbacks.
+      MACOS_VOICE_FALLBACKS = { jenny: "Samantha", andrew: "Alex" }.freeze
       # major*10+minor version-code encoding (e.g. Python 3.10 -> 310); MLX needs 3.10+.
       MIN_MLX_PYTHON_VERSION_CODE = 310
 
@@ -49,7 +54,7 @@ module Master
         when "replicate_kokoro" then synth_replicate_kokoro(text, out_path, cfg, emotion)
         when "edge_melodic" then synth_edge_melodic(text, out_path, melody, voice, rate, pitch)
         when "edge" then synth_edge(text, out_path, voice, rate, pitch)
-        when "say" then synth_say(text, out_path)
+        when "say" then synth_say(text, out_path, voice:)
         else false
         end
       end
@@ -328,11 +333,19 @@ module Master
         ok && File.size?(out_path)
       end
 
-      def synth_say(text, out_path)
+      def synth_say(text, out_path, voice: nil)
         aiff = out_path.sub(/\.[^.]+\z/, ".aiff")
+        voice_key = if voice
+                      Speech::VOICE_ALIASES.key(voice.to_s) || voice.to_sym
+                    else
+                      Speech.voice_for_text(text).to_sym
+                    end
+        mac_voice = MACOS_VOICE_FALLBACKS[voice_key]
+        return false unless mac_voice
+
         spd = 175 + rand(25)
-        ok = system("say", "-v", "Samantha", "-r", spd.to_s, "-o", aiff, text.to_s, out: File::NULL, err: File::NULL) ||
-             system("say", "-o", aiff, text.to_s, out: File::NULL, err: File::NULL)
+        ok = system("say", "-v", mac_voice, "-r", spd.to_s, "-o", aiff, text.to_s,
+                    out: File::NULL, err: File::NULL)
         return false unless ok && File.size?(aiff)
 
         if system("which", "afconvert", out: File::NULL, err: File::NULL)
