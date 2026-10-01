@@ -112,7 +112,7 @@ module Master
         parts = Speech.chunks(str)
         parts = [str] if parts.empty?
         reply_voice = Speech.voice_for_text(str)
-        reply_style = Speech.infer_style(str, fallback: Speech.default_style)
+        reply_style = transcendent_mode? ? :auto : Speech.infer_style(str, fallback: Speech.default_style)
         generation = current_generation
         parts.each_with_index do |part, index|
           job = [str, part, index == parts.size - 1, reply_voice, reply_style]
@@ -265,14 +265,15 @@ module Master
       # it either, and inventing a fourth reader for it here would change how
       # MASTER sounds on an assumption rather than a decision.
       def synthesize(text, voice: nil, style: nil)
+        dynamic = transcendent_mode?
         Speech.synthesize(
           text,
           voice:,
-          style: style || Speech.default_style,
-          rate: Policy.default_rate,
-          pitch: Policy.default_pitch,
+          style: dynamic ? :auto : (style || Speech.default_style),
+          rate: dynamic ? nil : Policy.default_rate,
+          pitch: dynamic ? nil : Policy.default_pitch,
           voice_locked: true,
-          style_locked: true,
+          style_locked: !dynamic,
         )
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "Voice::Playback.synthesize")
@@ -335,6 +336,12 @@ module Master
           [path, PLAYERS.fetch(candidate)] if path
         end
         [preferred, *fallback].compact.uniq
+      end
+
+      def transcendent_mode?
+        Speech.synthesis_mode.to_s == "transcendent"
+      rescue StandardError
+        false
       end
 
       def current_generation
