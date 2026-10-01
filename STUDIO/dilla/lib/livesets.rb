@@ -42,6 +42,7 @@ require "rbconfig"
 require "shellwords"
 require "time"
 require "yaml"
+require_relative "../royksopp"
 
 module Livesets
   D = File.expand_path("..", __dir__)
@@ -2804,7 +2805,7 @@ module LiveSynth
       defaults = table.fetch("soul_jazz_six").except("chords")
       @name = name
       @p = defaults.merge(resolve(table, table.fetch(name) { { "names" => catalogue(name) } }))
-      @chords = @p["chords"] || voiced(@p.fetch("names"))
+      @chords = name.to_s == "royksopp_live" ? voiced(catalogue(name)) : (@p["chords"] || voiced(@p.fetch("names")))
       @pads = pads&.map { |pad| Patches.name!(pad) } ||
               (family && LiveSynth.config.dig("improvise", "families", family, "pads")) || @p["pads"]
       @rng = rng
@@ -2902,7 +2903,11 @@ module LiveSynth
       AnalogSynth.blend(from, spec, (done + 1).to_f / (steps + 1))
     end
 
-    def catalogue(name) = CHORD_PROGRESSIONS[name.to_sym] || abort("live0: no progression #{name}")
+    def catalogue(name)
+      return Royksopp::SUITE if name.to_s == "royksopp_live"
+
+      CHORD_PROGRESSIONS[name.to_sym] || abort("live0: no progression #{name}")
+    end
 
     # An entry `from:` another is that one with its own keys laid over it,
     # nested tables merged key by key, as far back as the chain goes.
@@ -3406,14 +3411,15 @@ module LiveSynth
       key = STYLE_ALIASES.keys.sort_by { |name| -name.length }.find { |name| words.include?(name) }
       return "style: say what to switch to (röyksopp, moog, prophet, rhodes)" unless key
 
-      if STYLE_ALIASES.fetch(key) == :royksopp
-        pid = Session.spawn!([], engine: ROYKSOPP)
-        return "#{key} live — Melody A.M. chord pads, original Dilla arrangement (pid #{pid}, log #{Session.log_file})"
-      end
-
-      args = STYLE_ALIASES.fetch(key)
+      args = style_args(key)
       pid = Session.spawn!(args)
       "#{key} style — original Dilla interpretation, not a reproduction (pid #{pid}, log #{Session.log_file})"
+    end
+
+    def style_args(key)
+      return %w[progression royksopp_live] if STYLE_ALIASES.fetch(key) == :royksopp
+
+      STYLE_ALIASES.fetch(key)
     end
 
     # "fm lead [preset]", or a part switched on or off -- a command for the
