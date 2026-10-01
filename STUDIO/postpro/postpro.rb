@@ -4094,11 +4094,14 @@ def process_file(file, variations, preset_name = nil, recipe_data = nil, random_
       # component containing the extension (shoots/2024.jpg/frame.jpg) was
       # rewritten and the write went to a path that does not exist.
       ext = File.extname(file)
-      output = File.join(File.dirname(file), "#{File.basename(file, ext)}_#{suffix}_v#{i + 1}_#{timestamp}#{ext}")
+      safe_stem = File.basename(file, ext).gsub(/[^0-9A-Za-z_-]+/, "_")
+      output_ext = ARGV.include?("--tiff16") ? ".tif" : ext
+      output = File.join(Postpro::Constitution::OUTPUT_DIR,
+                         "postpro_#{safe_stem}_#{suffix}_v#{i + 1}_#{timestamp}#{output_ext}")
+      Postpro::Constitution.verify_output!(input_path: file, output_path: output)
 
       quality = CONFIG["jpeg_quality"] || 95
       if ARGV.include?("--tiff16") || output.end_with?(".tif", ".tiff")
-        output = output.sub(/\.(jpg|jpeg|png|webp)$/i, ".tif")
         processed.cast("ushort").write_to_file(output)
       else
         processed.write_to_file(output, Q: quality)
@@ -4136,7 +4139,7 @@ def get_input
     ])
 
     patterns = PROMPT.ask("File patterns:", default: "**/*.{jpg,jpeg,png,webp}").strip.split(",").map(&:strip)
-    variations = PROMPT.ask("Variations per image:", convert: :int, default: CONFIG["variations"] || 2) { |q| q.in("1-5") }
+    variations = PROMPT.ask("Variations per image:", convert: :int, default: CONFIG["variations"] || 7) { |q| q.in("5-10") }
 
     case workflow
     when "Masterpiece Presets (Recommended)"
@@ -4156,7 +4159,7 @@ def get_input
   else
     # Fallback mode without tty-prompt
     patterns = ["**/*.{jpg,jpeg,png,webp}"]
-    variations = CONFIG["variations"] || 2
+    variations = CONFIG["variations"] || 7
     preset_name = CONFIG["default_preset"] || "house"
     [patterns, variations, { type: :preset, preset: preset_name }]
   end
@@ -4165,7 +4168,7 @@ end
 def auto_mode
   PostproBootstrap.dmesg "auto mode enabled"
   patterns = ["**/*.{jpg,jpeg,png,webp}"]
-  variations = CONFIG["variations"] || 2
+  variations = CONFIG["variations"] || 7
   preset_name = CONFIG["default_preset"] || "house"
 
   [patterns, variations, { type: :preset, preset: preset_name }]
