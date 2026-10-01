@@ -233,15 +233,16 @@ module Master
         false
       end
 
-      def synth_chatterbox(text, out_path, cfg, emotion)
+      def synth_chatterbox(text, out_path, cfg, emotion, rate: nil, pitch: nil)
         enriched = Enrich.apply(text, emotion)
         wav = out_path.sub(/\.mp3\z/, ".wav")
         ref = cfg["reference_clip"].to_s
         ref = File.expand_path(ref) unless ref.empty?
         device = cfg["chatterbox_device"] || "mps"
         exag = emotion.fetch(:exaggeration) { cfg["exaggeration"] || 0.55 }
+        cfg_weight = cfg.fetch("cfg_weight", 0.42)
 
-        py = chatterbox_py_script(enriched, device, ref, wav)
+        py = chatterbox_py_script(enriched, device, ref, wav, exaggeration: exag, cfg_weight:)
         _out, _err, status = Master::Io::Exec.capture3("python3", "-c", py)
         return convert_to_mp3(wav, out_path) if status.success? && File.size?(wav)
 
@@ -251,12 +252,16 @@ module Master
         false
       end
 
-      def chatterbox_py_script(enriched, device, ref, wav)
+      def chatterbox_py_script(enriched, device, ref, wav, exaggeration:, cfg_weight:)
         <<~PY
           import torchaudio as ta
           from chatterbox.mtl_tts import ChatterboxMultilingualTTS
           model = ChatterboxMultilingualTTS.from_pretrained(device=#{device.inspect}, t3_model="v3")
-          kwargs = {"language_id": "en"}
+          kwargs = {
+              "language_id": "en",
+              "exaggeration": #{exaggeration.to_f},
+              "cfg_weight": #{cfg_weight.to_f},
+          }
           ref = #{ref.inspect}
           kwargs["audio_prompt_path"] = ref if ref
           wav = model.generate(#{enriched.inspect}, **kwargs)
