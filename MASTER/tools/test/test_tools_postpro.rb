@@ -702,9 +702,10 @@ class TestPostproFilm < Minitest::Test
 
   def test_recovered_legacy_postpro_vocabulary_is_reachable
     names = %w[
-      double_exposure polaroid_frame tape_degradation frame_distortion super8_flicker
-      cinemascope_bars halftone_print film_scratches film_stock_emulation sprocket_holes
-      lens_flare vhs_degrade color_fade anamorphic_simulation soft_focus
+      film_grain film_halation bloom_effect cross_process golden_hour_glow lomo sepia
+      teal_and_orange anamorphic_simulation vhs_degrade color_fade soft_focus double_exposure
+      polaroid_frame tape_degradation frame_distortion super8_flicker cinemascope_bars
+      halftone_print film_scratches film_stock_emulation sprocket_holes lens_flare glitch
     ]
     names.each { |name| assert send(:respond_to?, name, true), "legacy effect #{name} is not loaded" }
 
