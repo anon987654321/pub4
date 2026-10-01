@@ -14,6 +14,7 @@ Encoding.default_external = Encoding::UTF_8
 
 require "open3"
 require "rbconfig"
+require_relative "../lib/trace/dmesg"
 
 MASTER_ROOT = File.expand_path("..", __dir__)
 REPO_ROOT = File.expand_path("..", MASTER_ROOT)
@@ -28,8 +29,8 @@ SELFSCAN_SRC = <<~SCRIPT.freeze
   result = container[:scanner].scan(File.join(%q{#{MASTER_ROOT}}, "lib", "master.rb"), depth: :deep)
   findings = result.ok? ? result.value! : []
   bad = findings.select { |f| %i[error critical].include?(f[:severity].to_sym) }
-  puts "selfscan: findings=" + findings.size.to_s + " critical=" + bad.size.to_s
-  bad.first(10).each { |f| warn "\#{f[:file]}:\#{f[:line]} [\#{f[:severity]}] \#{f[:rule]}: \#{f[:message]}" }
+  Master::Trace::Dmesg.status("scan0", "#{findings.size} finding(s), #{bad.size} critical")
+  bad.first(10).each { |f| Master::Trace::Dmesg.status("scan0", "#{f[:file]}:#{f[:line]}, #{f[:severity]}, #{f[:rule]}, #{f[:message]}") }
   exit(bad.empty? ? 0 : 1)
 SCRIPT
 
@@ -175,13 +176,10 @@ def expand_args(args)
 end
 
 def print_usage
-  warn "usage: bin/probe [#{(CHECKS.keys + ALIASES.keys).sort.join("|")}]..."
-  warn
-  warn "checks:"
-  CHECKS.each { |name, meta| warn "  #{name.ljust(9)} #{meta[:desc]}" }
-  warn
-  warn "aliases:"
-  ALIASES.each { |name, checks| warn "  #{name.ljust(9)} #{checks.join(", ")}" }
+  Master::Trace::Dmesg.attach("probe0", "master0", "checks")
+  CHECKS.each { |name, meta| Master::Trace::Dmesg.status("probe0", "#{name}, #{meta[:desc]}") }
+  Master::Trace::Dmesg.status("probe0", "aliases")
+  ALIASES.each { |name, checks| Master::Trace::Dmesg.status("probe0", "#{name}, #{checks.join(", ")}") }
 end
 
 checks = expand_args(ARGV)
@@ -197,20 +195,23 @@ checks.each do |name|
   meta = CHECKS.fetch(name)
 
   if meta[:skip]&.call
-    puts "probe: #{name.ljust(9)} skip - #{meta.fetch(:skip_reason)}"
+    Master::Trace::Dmesg.status("probe0", "#{name}, skipped, #{meta.fetch(:skip_reason)}")
     next
   end
 
-  puts "probe: #{name.ljust(9)} #{meta[:desc]}"
+  unit = "probe#{checks.index(name) || 0}"
+  Master::Trace::Dmesg.attach(unit, "probe0", "#{name}, #{meta[:desc]}")
   out, status = Open3.capture2e(*meta[:cmd], chdir: meta[:cwd])
-  puts out unless out.empty?
+  unit = "probe#{checks.index(name) || 0}"
+  Master::Trace::Dmesg::Report.print(unit, out, parent: "probe0") unless out.empty?
+  Master::Trace::Dmesg.status(unit, status.success? ? "clean" : "failed, exit #{status.exitstatus}")
   failures << name unless status.success?
 end
 
 if failures.empty?
-  puts "probe: clean"
+  Master::Trace::Dmesg.status("probe0", "clean")
   exit 0
 end
 
-warn "probe: #{failures.size} failure(s): #{failures.join(", ")}"
+Master::Trace::Dmesg.status("probe0", "#{failures.size} failure(s), #{failures.join(", ")}")
 exit 1
