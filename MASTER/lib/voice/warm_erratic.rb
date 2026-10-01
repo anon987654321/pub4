@@ -23,6 +23,7 @@ module Master
       LONG_WORD_COUNT = 40
 
       STYLES = {
+        warm: { rate: "-3%", pitch: "+0Hz" },
         calm: { rate: "-6%", pitch: "-4Hz" },
         intimate: { rate: "-4%", pitch: "-2Hz" },
         storyteller: { rate: "-5%", pitch: "+1Hz" },
