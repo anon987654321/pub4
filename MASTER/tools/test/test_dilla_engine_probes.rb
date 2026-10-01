@@ -165,6 +165,19 @@ class TestDilla < Minitest::Test
     refute_includes result.fetch("dispatch_keys"), "camel"
   end
 
+  def test_coltrane_is_opt_in_so_live_boot_does_not_probe_it
+    result = eval_in_engine(<<~RUBY)
+      puts JSON.generate(
+        enabled: DillaMusicGems.coltrane_enabled?,
+        bootstrapped: DillaMusicGems.bootstrap!,
+        coltrane: DillaMusicGems.coltrane?
+      )
+    RUBY
+    refute result.fetch("enabled")
+    assert result.fetch("bootstrapped")
+    refute result.fetch("coltrane")
+  end
+
   def test_unknown_command_is_a_hard_failure
     assert_includes DILLA_SOURCE, 'abort("dilla: unknown command'
   end
