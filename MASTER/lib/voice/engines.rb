@@ -189,7 +189,7 @@ module Master
         ref = File.expand_path(ref) unless ref.empty?
         ref = nil unless File.file?(ref)
         exag = emotion.fetch(:exaggeration) { cfg["exaggeration"] || 0.45 }.to_f.clamp(0.0, 1.0)
-        cfg_weight = cfg.fetch("cfg_weight", 0.42).to_f.clamp(0.0, 1.0)
+        cfg_weight = emotion.fetch(:cfg_weight) { cfg.fetch("cfg_weight", 0.42) }.to_f.clamp(0.0, 1.0)
         temperature = cfg.fetch("temperature", 0.8).to_f
         repetition_penalty = cfg.fetch("repetition_penalty", 1.2).to_f
         min_p = cfg.fetch("min_p", 0.05).to_f
