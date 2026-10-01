@@ -225,27 +225,27 @@ def synth_forked(request, out_path)
     begin
       Process.setproctitle("tts-worker: synth")
     rescue StandardError => e
-      warn "tts-worker: setproctitle failed: #{e.class}: #{e.message}"
+      Master::Trace::Dmesg.status("tts0", "setproctitle failed, #{e.class}: #{e.message}", io: $stderr)
     end
     begin
       ok = synth(request, out_path)
       exit!(ok ? 0 : 1)
     rescue StandardError => e
-      warn "tts-worker: fork child error: #{e.class}: #{e.message}"
+      Master::Trace::Dmesg.status("tts0", "fork child error, #{e.class}: #{e.message}", io: $stderr)
       exit!(1)
     end
   end
   _pid, status = Process.wait2(pid)
   status.success? && File.exist?(out_path) && File.size(out_path) > 0
 rescue NotImplementedError, StandardError => e
-  warn "tts-worker: fork unavailable, falling back to subprocess: #{e.class}: #{e.message}"
+  Master::Trace::Dmesg.status("tts0", "fork unavailable, using subprocess, #{e.class}: #{e.message}", io: $stderr)
   synth_subprocess(request, out_path)
 end
 
 def require_eventmachine_ssl!
   return unless EventMachine.respond_to?(:ssl?) && !EventMachine.ssl?
 
-  warn "tts-worker: EventMachine SSL support unavailable; reinstall eventmachine with OpenSSL support or install espeak"
+  Master::Trace::Dmesg.status("tts0", "EventMachine SSL support unavailable; reinstall eventmachine with OpenSSL support or install espeak", io: $stderr)
   exit 69
 end
 
@@ -260,13 +260,17 @@ if ARGV[0] == "--selftest"
     "eventmachine" => (EventMachine::VERSION rescue "?"),
     "rb_edge_tts" => (RbEdgeTTS::VERSION rescue "?"),
   }
-  puts "tts-worker: ok #{versions.map { |k, v| "#{k}=#{v}" }.join(' ')}"
+  Master::Trace::Dmesg.status("tts0", "selftest ok, #{versions.map { |k, v| "#{k} #{v}" }.join(", ")}")
   exit 0
 end
 
 if ARGV[0] == "--daemon"
   require_eventmachine_ssl!
-  sock_path = ARGV[1] or abort "tts-worker --daemon: missing SOCKET_PATH"
+  sock_path = ARGV[1]
+  unless sock_path
+    Master::Trace::Dmesg.status("tts0", "usage, tts-worker --daemon SOCKET_PATH", io: $stderr)
+    exit 64
+  end
   FileUtils.mkdir_p(File.dirname(sock_path))
   # Refuse to steal a live daemon's socket: if something answers the health
   # probe at this path, a healthy daemon owns it and a second spawn (racing
@@ -276,7 +280,7 @@ if ARGV[0] == "--daemon"
       UNIXSocket.open(sock_path) do |probe|
         probe.write(%({"health":true}\n))
         if IO.select([probe], nil, nil, 1) && probe.gets.to_s.strip == "ok"
-          warn "tts-worker: healthy daemon already bound to #{sock_path}; exiting"
+          Master::Trace::Dmesg.status("tts0", "healthy daemon already bound to #{sock_path}, exiting")
           exit 0
         end
       end
@@ -289,7 +293,7 @@ if ARGV[0] == "--daemon"
   begin
     File.chmod(0o660, sock_path)
   rescue Errno::ENOSYS, Errno::EOPNOTSUPP
-    warn "tts-worker: chmod unsupported for #{sock_path}; continuing with filesystem permissions"
+    Master::Trace::Dmesg.status("tts0", "chmod unsupported for #{sock_path}, continuing with filesystem permissions", io: $stderr)
   end
   Master::Trace::Dmesg.status("tts0", "daemon ready on #{sock_path}")
   # Unlink on exit ONLY if the path still refers to the socket this process
@@ -302,7 +306,7 @@ if ARGV[0] == "--daemon"
     begin
       File.unlink(sock_path) if bound_ino && File.stat(sock_path).ino == bound_ino
     rescue StandardError => e
-      warn "tts-worker: could not remove #{sock_path}: #{e.class}: #{e.message}"
+      Master::Trace::Dmesg.status("tts0", "could not remove #{sock_path}, #{e.class}: #{e.message}", io: $stderr)
     end
     exit 0
   end
@@ -326,7 +330,7 @@ if ARGV[0] == "--daemon"
   loop do
     ready = IO.select([server], nil, nil, idle_limit)
     unless ready
-      warn "tts-worker: idle #{idle_limit}s on #{sock_path} — exiting"
+      Master::Trace::Dmesg.status("tts0", "idle #{idle_limit}s on #{sock_path}, exiting")
       cleanup.call
     end
     client = server.accept
@@ -356,7 +360,7 @@ if ARGV[0] == "--daemon"
       end
       File.unlink(out) rescue nil
     rescue StandardError => e
-      warn "tts-worker: #{e.class}: #{e.message}"
+      Master::Trace::Dmesg.status("tts0", "#{e.class}: #{e.message}", io: $stderr)
     ensure
       client.close rescue nil
     end
@@ -373,7 +377,7 @@ end
 $stdin.set_encoding(Encoding::UTF_8)
 text = $stdin.read.force_encoding(Encoding::UTF_8)
 if text.to_s.strip.empty?
-  warn "tts-worker: empty stdin"
+  Master::Trace::Dmesg.status("tts0", "empty stdin", io: $stderr)
   exit 65
 end
 require_eventmachine_ssl!
@@ -382,6 +386,6 @@ begin
   ok = synth_forked(SynthRequest.new(voice:, rate:, pitch:, text:), out_path)
   exit(ok ? 0 : 1)
 rescue StandardError => e
-  warn "tts-worker: #{e.class}: #{e.message}"
+  Master::Trace::Dmesg.status("tts0", "#{e.class}: #{e.message}", io: $stderr)
   exit 1
 end
