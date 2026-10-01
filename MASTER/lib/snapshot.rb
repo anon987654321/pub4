@@ -8,7 +8,7 @@ module Master
       "MASTER" => "MASTER",
       "RAILS" => "RAILS",
       "OPENBSD" => "OPENBSD",
-      "STUDIO" => "MASTER/tools",
+      "STUDIO" => "STUDIO",
     }.freeze
     DEFAULT_TREES = TREE_PATHS.keys.freeze
     DEFAULT_OUTPUT = File.join(REPO_ROOT, "snapshot_MASTER.md")
