@@ -43,12 +43,13 @@ class TestTtsSupervisor < Minitest::Test
   end
 
   def test_daemon_env_carries_the_prepared_master_bundle
+    previous = %w[BUNDLE_PATH BUNDLE_APP_CONFIG GEM_HOME GEM_PATH].to_h { |key| [key, ENV[key]] }
     ENV["BUNDLE_PATH"] = "/tmp/master-private-bundle"
     ENV["BUNDLE_APP_CONFIG"] = "/tmp/master-private-app"
     ENV["GEM_HOME"] = "/tmp/master-private-gems"
     ENV["GEM_PATH"] = "/tmp/master-private-gems"
 
-    env = described_class.daemon_env(Master::ROOT)
+    env = Sup.daemon_env(Master::ROOT)
 
     assert_equal "/tmp/master-private-bundle", env["BUNDLE_PATH"]
     assert_equal "/tmp/master-private-app", env["BUNDLE_APP_CONFIG"]
@@ -56,7 +57,7 @@ class TestTtsSupervisor < Minitest::Test
     assert_equal "/tmp/master-private-gems", env["GEM_PATH"]
     assert_equal File.join(Master::ROOT, "Gemfile"), env["BUNDLE_GEMFILE"]
   ensure
-    %w[BUNDLE_PATH BUNDLE_APP_CONFIG GEM_HOME GEM_PATH].each { |key| ENV.delete(key) }
+    previous&.each { |key, value| value ? ENV[key] = value : ENV.delete(key) }
   end
 
   def test_retire_daemon_stops_the_predecessor
