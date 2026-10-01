@@ -160,6 +160,28 @@ progressions:
   # nearest-note, and takes everything else from soul_jazz_six.
   dilla_love:
     names: [Cm9, Fm9, Bb13, Abmaj9]
+
+  # Verified Melody A.M.-era chord cells from royksopp.rb, rendered through the
+  # same steerable DFAM/progression/session path as every other live set.
+  royksopp_live:
+    from: moog_dfam
+    loops: 0
+    bar_seconds: 4.486
+    pad_every: 2
+    pads: [juno_pad, vp330_ensemble, e_piano, rhodes_tine, prophet_pad]
+    bass_patch: moog_bass
+    pad_gain: 0.24
+    bass_hits: [[0.0, 2.2, 0.52], [2.35, 1.1, 0.38]]
+    master:
+      - { vcs: { depth: 0.34, smear: 2.4, db: 0.0 } }
+      - { sonitex: { bits: 12, lo: 40, hi: 13000, drive: 1.12, mix: 0.72 } }
+      - { vcs: { depth: 0.28, smear: 2.8, db: 0.0 } }
+      - { sonitex: { bits: 11, lo: 42, hi: 12000, drive: 1.16, mix: 0.82, samples: 2 } }
+      - { vcs: { depth: 0.4, smear: 1.9, db: 0.0 } }
+      - { console_stack: { instances: 3, offset: 0.10, param: 1.2, speed: 0.1 } }
+      - { sonitex: { bits: 10, lo: 48, hi: 11000, drive: 1.22, mix: 0.95, samples: 2 } }
+      - { vcs: { depth: 0.3, smear: 3.6, db: 0.0 } }
+      - { filter: "alimiter=limit=0.95" }
 # Any name in CHORD_PROGRESSIONS plays too, voiced the same way.
 
 # What `live patch <name>` plays for a patch that carries no phrase of its
