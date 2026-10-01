@@ -17,7 +17,10 @@ SKIP_PREFIX = ["#{ENV.fetch("SUBJECT", "")}_final_", "hf_flux_"].freeze
 SKIP_SUFFIX = /(?:contact|grid|reel|_portrait|_cinematic|_quality_uplift|_blockbuster|_magic_hour|_postpro)\b/i
 
 def repo_root
-  ROOT.ascend.find { |path| path.join("STUDIO", "postpro", "postpro.rb").file? }
+  ROOT.ascend.find do |path|
+    path.join("MASTER", "tools", "postpro", "postpro.rb").file? ||
+      path.join("STUDIO", "postpro", "postpro.rb").file?
+  end
 end
 
 def parse_options
@@ -99,7 +102,8 @@ def main
   root = repo_root
   abort "warn: MASTER/tools/postpro/postpro.rb not found" unless root
 
-  postpro = options[:postpro] || root.join("STUDIO", "postpro", "postpro.rb")
+  postpro = options[:postpro] || root.join("MASTER", "tools", "postpro", "postpro.rb")
+  postpro = root.join("STUDIO", "postpro", "postpro.rb") unless postpro.file?
   abort "warn: postpro missing at #{postpro}" unless postpro.file?
   abort "warn: input dir missing #{options[:input_dir]}" unless options[:input_dir].directory?
   # The dataset is the training set; a graded copy written into it trains the grade.
