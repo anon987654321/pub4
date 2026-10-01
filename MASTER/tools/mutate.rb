@@ -13,6 +13,7 @@
 require "fileutils"
 require "prism"
 require "tmpdir"
+require_relative "../lib/trace/dmesg"
 
 src = File.expand_path(ARGV[0].to_s)
 test = File.expand_path(ARGV[1].to_s)
@@ -72,9 +73,10 @@ mutations.each do |name, mutated|
   end
 end
 if survivors.empty?
-  puts "mutate: #{mutations.size} mutation(s), 0 survivors"
+  Master::Trace::Dmesg.status("mutate0", "#{mutations.size} mutations, 0 survivors")
   exit 0
 end
 
-survivors.each { |name| puts "  survived: #{name}" }
-abort "mutate: #{survivors.size}/#{mutations.size} mutation(s) survived — the test does not catch them"
+Master::Trace::Dmesg.status("mutate0", "#{survivors.size}/#{mutations.size} mutations survived")
+survivors.each { |name| Master::Trace::Dmesg.status("mutate0", "survived, #{name}") }
+exit 1
