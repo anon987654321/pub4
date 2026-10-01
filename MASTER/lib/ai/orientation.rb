@@ -34,7 +34,7 @@ module Master
           "target: #{target ? relative(target, repo_root) : relative(root, repo_root)}",
           "contract: orient → inspect → act → verify",
           "verification: evidence before completion",
-          "trees: MASTER, RAILS, OPENBSD, STUDIO; MASTER/tools = canonical tool plane inside MASTER",
+          "trees: MASTER, RAILS, OPENBSD, STUDIO; STUDIO = canonical media source, MASTER/tools = compatibility plane",
           "head: #{git_head(repo_root)}",
           "docs: #{key_docs(repo_root).join(", ")}",
         ]
