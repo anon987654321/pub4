@@ -5,6 +5,7 @@ require "net/http"
 require "optparse"
 require "set"
 require "uri"
+require_relative "../lib/trace/dmesg"
 
 options = { url: "https://brgen.no/", limit: 250, timeout: 10 }
 OptionParser.new do |opts|
@@ -50,6 +51,6 @@ while (uri = queue.shift) && seen.length < options[:limit]
   end
 end
 
-puts "dead-link-census: pages=#{seen.length} findings=#{findings.length}"
-findings.each { |finding| warn finding.inspect }
+Master::Trace::Dmesg.attach("links0", "master0", "#{seen.length} pages, #{findings.length} findings")
+findings.each { |finding| Master::Trace::Dmesg.status("links0", finding.inspect, io: $stderr) }
 exit 1 unless findings.empty?
