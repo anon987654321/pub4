@@ -102,8 +102,13 @@ module Master
       end
 
       def ruby_requires(content, rel)
-        content.scan(/require(?:_relative)?\s+["']([^"']+)["']/).flatten.each do |target|
-          edge(from: rel, to: normalize_require(target), type: :require, weight: 1.0)
+        content.scan(/\b(require_relative|require)\s+["']([^"']+)["']/).each do |kind, target|
+          to = if kind == "require_relative"
+            resolve_relative_require(rel, target)
+          else
+            normalize_require(target)
+          end
+          edge(from: rel, to:, type: :require, weight: 1.0)
         end
       end
 
@@ -125,8 +130,15 @@ module Master
         end
       end
 
+      def resolve_relative_require(rel, target)
+        base = File.dirname(File.join(@root, rel))
+        absolute = File.expand_path(target, base)
+        relative = absolute.delete_prefix("#{@root}/")
+        normalize_require(relative)
+      end
+
       def normalize_require(target)
-        cleaned = target.gsub("../", "")
+        cleaned = target.sub(%r{\A\./}, "")
         cleaned.end_with?(".rb") ? cleaned : "#{cleaned}.rb"
       end
 
