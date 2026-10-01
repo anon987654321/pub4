@@ -36,7 +36,8 @@ class TestDillaLivesets < Minitest::Test
   # the kit and the progression it played, not whatever is exported today.
   def test_live_players_close_inherited_master_descriptors
     source = File.read(File.expand_path("../dilla/lib/livesets.rb", __dir__))
-    assert_includes source, "pgroup: true, close_others: true"
+    assert_includes source, "ProcessSpawn.options"
+    assert_includes source, "pgroup: true"
   end
 
   def test_the_kept_take_recalls_from_the_journal

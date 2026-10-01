@@ -6,6 +6,16 @@ require_relative "../lib/io/exec"
 class TestReachExec < Minitest::Test
   E = Master::Io::Exec
 
+  def test_process_spawn_closes_an_inherited_master_lock_fd
+    original = ENV["MASTER_PROCESS_LOCK_FD"]
+    ENV["MASTER_PROCESS_LOCK_FD"] = "91"
+    options = Master::Ops::ProcessSpawn.options(pgroup: true)
+    assert_equal :close, options.fetch(91)
+    assert options[:close_others]
+  ensure
+    original.nil? ? ENV.delete("MASTER_PROCESS_LOCK_FD") : ENV["MASTER_PROCESS_LOCK_FD"] = original
+  end
+
   def test_capture2e_merges_streams_and_reports_success
     out, status = E.capture2e("sh", "-c", "echo out; echo err 1>&2")
     assert_includes out, "out"

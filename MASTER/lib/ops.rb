@@ -48,13 +48,17 @@ module Master
         raise
       end
 
+      MEDIA_PLAYER_COMMAND = %r{(?:/|\\)(?:STUDIO/dilla|MASTER/tools/dilla)/(?:liveset|royksopp)\.rb(?:\s|$)}.freeze
+
       def reclaimable?(path)
         data = read_metadata(path)
         pid = data["pid"].to_i
         return false if pid.positive? && process_alive?(pid)
 
         probe = File.open(path, File::RDWR | File::CREAT, 0o600)
-        probe.flock(File::LOCK_EX | File::LOCK_NB) == true
+        return true if probe.flock(File::LOCK_EX | File::LOCK_NB) == true
+
+        reclaim_detached_media_holders(path)
       rescue Errno::ENOENT
         true
       rescue StandardError => e
@@ -65,6 +69,34 @@ module Master
           probe.flock(File::LOCK_UN) rescue nil
           probe.close rescue nil
         end
+      end
+
+      def reclaim_detached_media_holders(path)
+        holders = lock_holders(path)
+        return false if holders.nil? || holders.empty?
+
+        roots = holders.filter_map do |pid|
+          out, status = Open3.capture2("ps", "-p", pid.to_i.to_s, "-o", "pid=,pgid=,command=")
+          next unless status.success?
+
+          row = out.to_s.strip.match(/\A(\d+)\s+(\d+)\s+(.+)\z/)
+          next unless row && row[3].match?(MEDIA_PLAYER_COMMAND)
+
+          [row[1].to_i, row[2].to_i]
+        end.uniq
+        return false if roots.empty?
+
+        roots.each do |pid, pgid|
+          group = pgid.positive? && pgid == pid ? -pgid : pid
+          Process.kill("TERM", group)
+        rescue Errno::ESRCH, Errno::EPERM
+          nil
+        end
+        sleep 0.05
+        true
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "ProcessLock.reclaim_detached_media_holders")
+        false
       end
 
       def process_alive?(pid)

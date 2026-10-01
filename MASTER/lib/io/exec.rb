@@ -7,6 +7,7 @@ require "timeout"
 # rescue paths call Swallow. Without this require the swallow raises NameError
 # and the timeout path never kills the process group it exists to kill.
 require_relative "../ground/swallow"
+require_relative "../ops/process_spawn"
 
 module Master
   module Io
@@ -31,7 +32,7 @@ module Master
 
       def capture3(*cmd, timeout: DEFAULT_TIMEOUT, **opts)
         stdin_data, spawn_opts = split_opts(opts)
-        Open3.popen3(*cmd, pgroup: true, **spawn_opts) do |stdin, stdout, stderr, wait_thr|
+        Open3.popen3(*cmd, **Master::Ops::ProcessSpawn.options(spawn_opts.merge(pgroup: true))) do |stdin, stdout, stderr, wait_thr|
           feed(stdin, stdin_data)
           out_reader = reader_for(stdout)
           err_reader = reader_for(stderr)
@@ -42,7 +43,7 @@ module Master
 
       def capture2e(*cmd, timeout: DEFAULT_TIMEOUT, **opts)
         stdin_data, spawn_opts = split_opts(opts)
-        Open3.popen2e(*cmd, pgroup: true, **spawn_opts) do |stdin, stdout_err, wait_thr|
+        Open3.popen2e(*cmd, **Master::Ops::ProcessSpawn.options(spawn_opts.merge(pgroup: true))) do |stdin, stdout_err, wait_thr|
           feed(stdin, stdin_data)
           reader = reader_for(stdout_err)
           status = bounded_wait(wait_thr, timeout, [reader])
@@ -52,7 +53,7 @@ module Master
 
       def capture2(*cmd, timeout: DEFAULT_TIMEOUT, **opts)
         stdin_data, spawn_opts = split_opts(opts)
-        Open3.popen2(*cmd, pgroup: true, **spawn_opts) do |stdin, stdout, wait_thr|
+        Open3.popen2(*cmd, **Master::Ops::ProcessSpawn.options(spawn_opts.merge(pgroup: true))) do |stdin, stdout, wait_thr|
           feed(stdin, stdin_data)
           reader = reader_for(stdout)
           status = bounded_wait(wait_thr, timeout, [reader])

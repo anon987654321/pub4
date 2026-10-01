@@ -83,6 +83,13 @@ class BootSafetySpec < Minitest::Test
       runtime_source.index("install_process_guards!", runtime_source.index("def prepare_runtime!"))
   end
 
+  def test_stale_process_lock_can_reclaim_a_dilla_player_only
+    source = File.read(File.expand_path("../lib/ops.rb", __dir__))
+    assert_includes source, "reclaim_detached_media_holders"
+    assert_includes source, "STUDIO/dilla"
+    assert_includes source, "royksopp\\.rb"
+  end
+
   def test_constitution_drift_requires_explicit_env
     source = File.read(MASTER_BOOT)
     assert_includes source, "def start_constitution_drift"

@@ -96,6 +96,7 @@ if $PROGRAM_NAME == __FILE__
   require "fileutils"
   require "json"
   require "sound"
+  require_relative "../../MASTER/lib/ops/process_spawn"
 
   module RoyksoppLive
     RATE = 32_000
@@ -146,7 +147,7 @@ if $PROGRAM_NAME == __FILE__
 
     def self.render
       command = player_command or abort "royksopp: no local soundcard player — install sox or ffplay"
-      player = IO.popen(command, "wb")
+      player = IO.popen(command, "wb", **Master::Ops::ProcessSpawn.options(pgroup: true))
       stopped = false
       stop = lambda do
         stopped = true
