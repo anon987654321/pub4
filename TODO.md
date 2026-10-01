@@ -22,6 +22,7 @@
 - The current main boot baseline includes the post-baseline Ruby/runtime fixes that are independent of topology: the stale builder rollback require is removed; PassRunner, swallow ledger, prompt syntax and runtime YAML fixes are restored.
 - Source audit confirms these previously-open seams are already implemented in this tree and now require evidence rather than another implementation pass: CQS memoisation contracts, per-process resource RSS recording, TTS socket health reporting, browser-gate inconclusive semantics, reason-coded guest-page coverage, drag-only reorder controls, and offline send storage.
 - 2026-09-30: interrupted browser-face turns now remain recoverable when the transport dies before any assistant content arrives. Completed or partially streamed turns are not blindly requeued.
+- 2026-10-01: removed the unused `head_music` dependency and dead Dilla adapter branch. The MASTER lock no longer carries the ActiveSupport/i18n/tzinfo chain solely for that unused integration; the remaining Dilla gems are coltrane, midilib and wavefile.
 - Remaining work is evidence- or operator-bound unless a future re-measurement proves otherwise: Mac runtime boot proof, Rails/browser rendered gates, vm23 deployment/DNS/resource checks, payment staging, Termux ear proof, Dilla asset/audio verification, registrar/money actions, visual/taste decisions, and final snapshots.
 - backup/main-before-sprawl-rollback-20260930 preserves the pre-recovery tree; recovery/pre-sprawl-20260930 preserves the clean rollback point.
 
@@ -104,10 +105,11 @@ Reference order: GitHub upstream implementation/release history → official Rai
    English phrase through pulseaudio and a source-built whisper.cpp.
    Operator: the phone.
 4. **The two faces at parity, behaviour first.** Entry: "The web and terminal
-   faces differ". The terminal's missing echo guard comes first, because a
-   face that hears itself answers itself. Done when each gap is closed or
-   argued beside the code. Operator: anything that changes how either face
-   looks.
+   faces differ". The terminal echo guard and interrupted-turn recovery are
+   implemented and regression-tested. The remaining parity work is the
+   browser-side IdeaPicture/voice-bed runtime path and executable depth-map
+   comparison; neither is claimed complete without a watched browser/runtime
+   result. Operator: anything that changes how either face looks.
 5. **The Gemfile lock for both hosts.** Entry: "One `MASTER/Gemfile.lock`".
    After the next watched deploy. Operator: a console on vm23.
 
@@ -241,15 +243,12 @@ the "One chrome", ad system and layout sections bring back for a decision.
     pulls EventMachine 1.2.7 into the `:tts` group for `bin/tts-worker`; keep
     that group isolated and verify `Speech.edge_tts_ready?` still works as a
     spawn probe rather than a boot-time `require`.
-  - **`:dilla` pulls `head_music` 15.1, which pulls ActiveSupport 8, i18n,
-    tzinfo and concurrent-ruby into a constitutional CLI's lock** for a
-    music-theory gem nothing in `MASTER/lib/music/` calls —
-    `Music::Synth`/`Realtime` implement sine/square/triangle themselves, and
-    `wavefile` (also in `:dilla`) writes WAVs that live playback does not use.
-    Moving `:dilla` to MASTER's bundle (or dropping `head_music`
-    specifically) takes ActiveSupport out of MASTER's lock; `AGENTS.md`
-    already asks for `Bundler.with_unbundled_env` when a child process needs
-    STUDIO's bundle, which is the seam to use.
+  - **`:dilla` no longer pulls `head_music` into the constitutional lock.** Closed
+    2026-10-01: no live caller used the `DillaMusicGems` pitch-class adapter,
+    so the dead integration was removed and its ActiveSupport/i18n/tzinfo chain
+    disappeared from `MASTER/Gemfile.lock`. The dependency test pins the lean
+    Dilla group and rejects the retired packages. Watched vm23 bundle/restart
+    proof remains open.
   - **MCP compatibility is now on RubyLLM 2 + MCP 1.6.** The former
     `ruby_llm-mcp` compatibility item is resolved on `main`; keep the
     provider-key contract tests covering the current RubyLLM API.
