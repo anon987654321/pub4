@@ -2,6 +2,7 @@
 
 require "fileutils"
 require "json"
+require "open3"
 require "time"
 require "socket"
 require "timeout"
@@ -17,28 +18,87 @@ module Master
       def acquire!(path: nil, root: Master::ROOT, mode: "master")
         path ||= File.join(root, ".master", "process.lock")
         FileUtils.mkdir_p(File.dirname(path))
-        io = File.open(path, File::RDWR | File::CREAT, 0o600)
-        unless io.flock(File::LOCK_EX | File::LOCK_NB)
-          io.close
-          return nil
-        end
+        attempts = 0
 
-        io.close_on_exec = false
-        io.rewind
-        io.truncate(0)
-        io.write(JSON.generate(
-          pid: Process.pid,
-          host: Socket.gethostname,
-          mode: mode.to_s,
-          at: Time.now.utc.iso8601
-        ))
-        io.write("\n")
-        io.flush
-        io.fsync
-        io
+        loop do
+          io = File.open(path, File::RDWR | File::CREAT, 0o600)
+          if io.flock(File::LOCK_EX | File::LOCK_NB)
+            io.close_on_exec = false
+            io.rewind
+            io.truncate(0)
+            io.write(JSON.generate(
+              pid: Process.pid,
+              host: Socket.gethostname,
+              mode: mode.to_s,
+              at: Time.now.utc.iso8601
+            ))
+            io.write("\n")
+            io.flush
+            io.fsync
+            return io
+          end
+
+          io.close
+          return nil unless attempts.zero? && reclaimable?(path)
+
+          attempts += 1
+        end
       rescue StandardError
         io&.close
         raise
+      end
+
+      def reclaimable?(path)
+        data = read_metadata(path)
+        pid = data["pid"].to_i
+        return false if pid.positive? && process_alive?(pid)
+
+        holders = lock_holders(path)
+        return false unless holders
+        return false unless holders.empty?
+
+        File.delete(path)
+        true
+      rescue Errno::ENOENT
+        true
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "ProcessLock.reclaimable?")
+        false
+      end
+
+      def process_alive?(pid)
+        Process.kill(0, pid)
+        true
+      rescue Errno::ESRCH
+        false
+      rescue Errno::EPERM
+        true
+      end
+
+      def read_metadata(path)
+        return {} unless File.file?(path)
+
+        JSON.parse(File.read(path))
+      rescue JSON::ParserError, SystemCallError
+        {}
+      end
+
+      # On a locked file, metadata can lag the real process after a crash/restart.
+      # lsof is advisory here: recovery only happens when the recorded pid is dead
+      # and no actual process has the inode open. Without lsof, leave the lock alone.
+      def lock_holders(path)
+        lsof = ["/usr/sbin/lsof", "/usr/bin/lsof", "lsof"].find do |candidate|
+          candidate == "lsof" || File.executable?(candidate)
+        end
+        return nil unless lsof
+
+        out, status = Open3.capture2(lsof, "-t", path)
+        return nil unless status.success? || status.exitstatus == 1
+
+        out.lines.filter_map { |line| Integer(line.strip, exception: false) }.uniq.reject { |pid| pid == Process.pid }
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "ProcessLock.lock_holders")
+        nil
       end
 
       def release(io)
@@ -54,10 +114,21 @@ module Master
         return {} unless File.exist?(path)
 
         io = File.open(path, File::RDWR)
-        return {} if io.flock(File::LOCK_EX | File::LOCK_NB) && io.flock(File::LOCK_UN)
+        if io.flock(File::LOCK_EX | File::LOCK_NB)
+          io.flock(File::LOCK_UN)
+          return {}
+        end
 
         io.rewind
-        JSON.parse(io.read)
+        data = JSON.parse(io.read)
+        holders = lock_holders(path)
+        if holders&.any?
+          data["lock_holder_pid"] = holders.first
+          data["pid"] = holders.first unless process_alive?(data["pid"].to_i)
+        elsif !process_alive?(data["pid"].to_i)
+          data["stale"] = true
+        end
+        data
       rescue JSON::ParserError, SystemCallError
         {}
       ensure
