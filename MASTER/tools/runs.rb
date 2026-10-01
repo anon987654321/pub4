@@ -18,6 +18,7 @@
 # runners whose glob lives inside a framework rather than in this repo.
 
 require "json"
+require_relative "../lib/trace/dmesg"
 
 module Operator
   class Runs
@@ -138,7 +139,7 @@ if $PROGRAM_NAME == __FILE__
   if (index = ARGV.index("--who"))
     target = ARGV[index + 1] or abort "usage: runs.rb --who <path>"
     runners = Operator::Runs.who_runs(target)
-    puts runners.empty? ? "nothing runs #{target}" : runners.join("\n")
+    Master::Trace::Dmesg::Report.print("runs0", runners.empty? ? "nothing runs #{target}" : runners.join("\n"))
     exit(runners.empty? ? 1 : 0)
   end
 
@@ -147,11 +148,10 @@ if $PROGRAM_NAME == __FILE__
   if ARGV.include?("--json")
     puts JSON.pretty_generate(report)
   else
-    puts "#{report[:reached]}/#{report[:tests]} test files reachable from an entrypoint"
+    Master::Trace::Dmesg.attach("runs0", "master0", "#{report[:reached]}/#{report[:tests]} test files reachable from an entrypoint")
     unless report[:orphans].empty?
-      puts
-      puts "nothing runs these:"
-      report[:orphans].each { |file| puts "  #{file}" }
+      Master::Trace::Dmesg.status("runs0", "nothing runs these")
+      report[:orphans].each { |file| Master::Trace::Dmesg.status("runs0", file) }
     end
   end
 
