@@ -96,6 +96,18 @@ class TestTraceSupport < Minitest::Test
     end
   end
 
+  def test_command_reports_do_not_restore_column_alignment
+    rendered = Master::Trace::Dmesg::Report.render(
+      unit: "check0",
+      parent: "master0",
+      text: "alpha\nbeta"
+    )
+
+    refute_match(/alpha\s{2,}beta/, rendered)
+    refute_includes rendered, " | "
+    refute_match(/\A\s+/, rendered)
+  end
+
   def test_a_span_runs_its_block_once_when_tracing_is_off
     runs = 0
     value = Master::Trace::Telemetry.span("x") { runs += 1 }
