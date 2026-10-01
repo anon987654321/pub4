@@ -24,6 +24,7 @@
 # reading and the rest, which is the whole point.
 
 require "set"
+require_relative "../lib/trace/dmesg"
 
 ROOT = File.expand_path("../..", __dir__)
 TODO = File.join(ROOT, "TODO.md")
@@ -179,19 +180,10 @@ def symbol_report
     working_set << [number, text.lines.first.strip[0, 88]] if kind == :every_name_is_ours
   end
 
-  puts "TODO.md: #{items.size} items, #{symbols.size} identifiers indexed from the tree"
-  puts
-  tally.sort_by { |_, n| -n }.each { |k, n| puts "  #{k.to_s.ljust(20)} #{n}" }
-  puts
-  puts "decided            — a verdict is already written into the item"
-  puts "every_name_is_ours — every backticked identifier exists here: the working set"
-  puts "mixed_names        — some ours, some external vocabulary; needs reading"
-  puts "no_name_is_ours    — names only external vocabulary, or names something gone"
-  puts "no_code_token      — prose with no code anchor at all"
-  puts
-  puts "Working set (#{working_set.size}):"
-  working_set.first(Integer(ENV.fetch("LIMIT", "25"))).each { |n, head| puts "  #{n}. #{head}" }
-  puts "  ... #{working_set.size - 25} more" if working_set.size > 25
+  Master::Trace::Dmesg.attach("claims0", "master0", "#{items.size} items, #{symbols.size} identifiers indexed")
+  tally.sort_by { |_, n| -n }.each { |k, n| Master::Trace::Dmesg.status("claims0", "#{k}, #{n}") }
+  Master::Trace::Dmesg.status("claims0", "working set, #{working_set.size}")
+  working_set.first(Integer(ENV.fetch("LIMIT", "25"))).each { |n, head| Master::Trace::Dmesg.status("claims0", "#{n}, #{head}") }
 end
 
 # Which tree does an item belong to?
@@ -232,17 +224,11 @@ def partition_report
   end
 
   total = by_tree.values.sum(&:size)
-  puts "#{total} undecided items, partitioned by the tree they touch."
-  puts "The pre-commit hook refuses a commit spanning two trees, so this split is"
-  puts "enforced rather than agreed: two agents on different trees cannot collide."
-  puts
+  Master::Trace::Dmesg.attach("claims0", "master0", "#{total} undecided items, partitioned by tree")
   by_tree.sort_by { |_, v| -v.size }.each do |tree, numbers|
-    puts "  #{tree.to_s.ljust(12)} #{numbers.size.to_s.rjust(4)}"
+    Master::Trace::Dmesg.status("claims0", "#{tree}, #{numbers.size}, #{numbers.first(3).join(", ")}")
   end
-  puts
-  puts "TODO.md itself is the one shared file — whoever edits it commits it with"
-  puts "their own tree's change, and :spans_trees plus :shared are the items to"
-  puts "divide by hand."
+  Master::Trace::Dmesg.status("claims0", "TODO.md is the shared file; spans_trees and shared need manual division")
 end
 
   def run
@@ -256,17 +242,16 @@ end
       stale << [number, v.last, text.lines.first.strip[0, 96]] if v.is_a?(Array)
     end
 
-    puts "TODO.md: #{items.size} numbered items"
-    tally.sort_by { |_, n| -n }.each { |k, n| puts "  #{k.to_s.ljust(16)} #{n}" }
+    Master::Trace::Dmesg.attach("claims0", "master0", "#{items.size} numbered items")
+    tally.sort_by { |_, n| -n }.each { |k, n| Master::Trace::Dmesg.status("claims0", "#{k}, #{n}") }
 
     return if stale.empty?
 
-    puts "\nItems whose own citation no longer resolves (#{stale.size}):"
+    Master::Trace::Dmesg.status("claims0", "#{stale.size} stale citations")
     stale.first(Integer(ENV.fetch("LIMIT", "40"))).each do |number, detail, head|
-      puts "  #{number}. #{head}"
-      puts "      #{Array(detail).join('; ')}"
+      Master::Trace::Dmesg.status("claims0", "#{number}, #{head}")
+      Master::Trace::Dmesg.status("claims0", Array(detail).join("; "))
     end
-    puts "  ... #{stale.size - 40} more" if stale.size > 40
   end
 end
 
