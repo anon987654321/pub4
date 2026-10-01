@@ -47,6 +47,15 @@ class TreeContractTest < Minitest::Test
 
   BRGEN_ENGINES = %w[marketplace playlist tv takeaway dating maps].freeze
 
+  def test_ruby_sources_never_contain_transport_markup
+    Dir.glob(File.join(ROOT, "**", "*.rb")).each do |path|
+      next if path.include?("/vendor/")
+
+      source = File.read(path, encoding: "UTF-8")
+      refute_match(/(?:^|\n)<\/?sub>(?:$|\n)/, source, "transport wrapper leaked into #{path}")
+    end
+  end
+
   def test_boot_spine_exists_in_its_canonical_locations
     BOOT_FILES.each do |relative|
       assert File.file?(File.join(ROOT, relative)), "missing boot-critical path: #{relative}"
