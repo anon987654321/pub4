@@ -4,6 +4,7 @@ require "etc"
 require "json"
 require "fileutils"
 require_relative "../ops/process_spawn"
+require_relative "../trace/dmesg"
 
 module Master
   module Device
@@ -158,7 +159,7 @@ module Master
         File.write(@state_path, JSON.pretty_generate(state.merge(entry)))
       end
 
-      def say(line) = @out.puts("ear0: #{line}")
+      def say(line) = Master::Trace::Dmesg.status("ear0", line, io: @out)
 
       # Output goes to the log, not the terminal the session is using, and
       # nothing can stop to ask a question.
