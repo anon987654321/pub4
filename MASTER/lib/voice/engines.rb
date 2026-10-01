@@ -64,7 +64,7 @@ module Master
       end
 
       def synth_replicate_kokoro(text, out_path, cfg, emotion)
-        enriched = Enrich.apply(text, emotion)
+        enriched = Enrich.apply(text, emotion, tags: cfg["paralinguistic_tags"] == true)
         client = Io::ReplicateClient.new
         url = predict_kokoro_url(client, cfg, enriched)
         return false unless url
@@ -141,7 +141,7 @@ module Master
         model = cfg["mlx_model"] || "mlx-community/Kokoro-82M-bf16"
         voice = cfg["mlx_voice"] || "af_bella"
         speed = (cfg["mlx_speed"] || 1.15).to_f
-        enriched = Enrich.apply(text, emotion)
+        enriched = Enrich.apply(text, emotion, tags: cfg["paralinguistic_tags"] == true)
         out_dir = File.dirname(out_path)
         FileUtils.mkdir_p(out_dir)
 
@@ -234,7 +234,7 @@ module Master
       end
 
       def synth_chatterbox(text, out_path, cfg, emotion, rate: nil, pitch: nil)
-        enriched = Enrich.apply(text, emotion)
+        enriched = Enrich.apply(text, emotion, tags: cfg["paralinguistic_tags"] == true)
         wav = out_path.sub(/\.mp3\z/, ".wav")
         ref = cfg["reference_clip"].to_s
         ref = File.expand_path(ref) unless ref.empty?
