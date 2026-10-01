@@ -49,8 +49,8 @@ module Master
 
       def synth(name, text:, out_path:, cfg:, emotion:, melody:, voice:, rate:, pitch:)
         case name.to_s
-        when "mlx" then synth_mlx(text, out_path, cfg, emotion)
-        when "chatterbox" then synth_chatterbox(text, out_path, cfg, emotion)
+        when "mlx" then synth_mlx(text, out_path, cfg, emotion, rate:, pitch:)
+        when "chatterbox" then synth_chatterbox(text, out_path, cfg, emotion, rate:, pitch:)
         when "replicate_kokoro" then synth_replicate_kokoro(text, out_path, cfg, emotion)
         when "edge_melodic" then synth_edge_melodic(text, out_path, melody, voice, rate, pitch)
         when "edge" then synth_edge(text, out_path, voice, rate, pitch)
@@ -134,7 +134,7 @@ module Master
         status.success?
       end
 
-      def synth_mlx(text, out_path, cfg, emotion)
+      def synth_mlx(text, out_path, cfg, emotion, rate: nil, pitch: nil)
         py = mlx_python
         return false unless py
 
@@ -144,13 +144,26 @@ module Master
         enriched = Enrich.apply(text, emotion)
         out_dir = File.dirname(out_path)
         FileUtils.mkdir_p(out_dir)
-        bin = cfg["mlx_bin"].to_s.strip
-        bin = "mlx_audio.tts.generate" if bin.empty?
 
-        attempted, result = try_mlx_cli(bin, model, enriched, voice, speed, out_dir, out_path)
-        return result if attempted
+        # Chatterbox on MLX is the expressive local path. Its voice argument is
+        # intentionally ignored by the model; speaker identity comes from
+        # precomputed conditionals or a reference clip. Use the Python API so
+        # emotion controls and the language code actually reach Chatterbox.
+        unless model.downcase.include?("chatterbox")
+          bin = cfg["mlx_bin"].to_s.strip
+          bin = "mlx_audio.tts.generate" if bin.empty?
+          attempted, result = try_mlx_cli(bin, model, enriched, voice, speed, out_dir, out_path)
+          return result if attempted
+        end
 
-        try_mlx_python_api(py, model, enriched, voice, speed, out_path)
+        try_mlx_python_api(
+          py, model, enriched, voice, speed, out_path,
+          emotion:,
+          rate:,
+          pitch:,
+          reference_clip: cfg["reference_clip"],
+          cfg:,
+        )
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "Engines.synth_mlx")
         false
@@ -170,22 +183,44 @@ module Master
         [false, nil]
       end
 
-      def try_mlx_python_api(py, model, enriched, voice, speed, out_path)
+      def try_mlx_python_api(py, model, enriched, voice, speed, out_path, emotion:, rate:, pitch:, reference_clip:, cfg:)
         wav = out_path.sub(/\.mp3\z/, ".wav")
+        ref = reference_clip.to_s.strip
+        ref = File.expand_path(ref) unless ref.empty?
+        ref = nil unless File.file?(ref)
+        exag = emotion.fetch(:exaggeration) { cfg["exaggeration"] || 0.45 }.to_f.clamp(0.0, 1.0)
+        cfg_weight = cfg.fetch("cfg_weight", 0.42).to_f.clamp(0.0, 1.0)
+        temperature = cfg.fetch("temperature", 0.8).to_f
+        repetition_penalty = cfg.fetch("repetition_penalty", 1.2).to_f
+        min_p = cfg.fetch("min_p", 0.05).to_f
+        top_p = cfg.fetch("top_p", 1.0).to_f
+        lang_code = "en"
+
         py_script = <<~PY
           import numpy as np
           import soundfile as sf
           from mlx_audio.tts.utils import load_model
+
           model = load_model(#{model.inspect})
+          kwargs = {
+              "text": #{enriched.inspect},
+              "exaggeration": #{exag},
+              "cfg_weight": #{cfg_weight},
+              "temperature": #{temperature},
+              "repetition_penalty": #{repetition_penalty},
+              "min_p": #{min_p},
+              "top_p": #{top_p},
+              "lang_code": #{lang_code.inspect},
+              "verbose": False,
+          }
+          ref_audio = #{ref.inspect}
+          kwargs["ref_audio"] = ref_audio if ref_audio else None
           chunks = []
           sample_rate = None
-          for result in model.generate(
-              text=#{enriched.inspect},
-              voice=#{voice.inspect},
-              speed=#{speed},
-              lang_code="a",
-          ):
-              chunks.append(np.asarray(result.audio))
+          for result in model.generate(**kwargs):
+              chunk = np.asarray(result.audio).reshape(-1)
+              if chunk.size:
+                  chunks.append(chunk)
               sample_rate = result.sample_rate
           if not chunks or sample_rate is None:
               raise RuntimeError("mlx generated no audio")
