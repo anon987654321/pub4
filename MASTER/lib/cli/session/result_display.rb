@@ -1,5 +1,6 @@
-require_relative "../turn_presentation"
 # frozen_string_literal: true
+
+require_relative "../turn_presentation"
 
 require_relative "../capability_stamp"
 
@@ -30,7 +31,7 @@ module Master
       # The error and nothing else, on one line. The category sets the exit
       # code; a playbook lesson on another subject is noise beside an error.
       def format_error_message(err)
-        text = err.message.to_s
+        text = Master::CLI::TurnPresentation.error_text(err)
         text.length <= ERROR_TEXT_MAX_CHARS ? text : "#{text[0, ERROR_TEXT_MAX_CHARS - 1]}…"
       end
 
@@ -135,9 +136,7 @@ module Master
       end
 
       def success_text(ok)
-        value = ok.value
-        rendered = value.respond_to?(:[]) ? value[:rendered] : nil
-        rendered || (value.respond_to?(:[]) ? value[:output].to_s : value.to_s)
+        Master::CLI::TurnPresentation.success_text(ok)
       end
 
       def routine_success?(text)
