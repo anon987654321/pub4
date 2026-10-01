@@ -3663,18 +3663,20 @@ RANDOM_DRAW_ATTEMPTS = 40
 
 # Effects that can start a chain: not damage, not the backbone, and known to
 # some preset, so that the walk has somewhere to go.
-def random_seeds
-  @random_seeds ||= begin
-    (random_pool - random_common_spine) & random_affinity.keys.flatten.uniq
-  end
-end
-
 # What a chain may draw from. The wear shelf is not in it unless --rough says
 # so, and the shape step is appended rather than drawn, so it never has to
 # argue with the co-occurrence graph it appears in no preset of.
-def random_pool
+def random_seeds(lane = nil)
+  (random_pool(lane) - random_common_spine) & random_affinity.keys.flatten.uniq
+end
+
+def random_pool(lane = nil)
   rough = ARGV.include?("--rough")
-  RECIPE_ALLOWED - [RANDOM_ALWAYS] - RANDOM_SHAPES - (rough ? [] : RANDOM_WEAR)
+  allowed = lane ? RANDOM_LANES.fetch(lane).fetch(:effects) : RECIPE_ALLOWED - [RANDOM_ALWAYS] - RANDOM_SHAPES
+  allowed &= RECIPE_ALLOWED
+  allowed -= RANDOM_SHAPES
+  allowed -= RANDOM_WEAR unless rough
+  allowed
 end
 
 # Which effects a colourist actually puts together, counted off the presets.
@@ -3716,14 +3718,15 @@ end
 # versions of one picture is the other way to waste somebody's afternoon.
 def random_chain(rng = Random.new(postpro_seed), avoid: [])
   closest = nil
+  lane = random_lane(rng)
   RANDOM_DRAW_ATTEMPTS.times do
-    picked, wildcard = random_draw(rng)
+    picked, wildcard = random_draw(rng, lane:)
     overlap = avoid.map { |other| random_similarity(picked, other.map(&:first)) }.max || 0.0
-    return random_finish(picked, wildcard, rng, avoid) if overlap <= RANDOM_SIMILARITY_CEILING
+    return random_finish(picked, wildcard, rng, avoid, lane:) if overlap <= RANDOM_SIMILARITY_CEILING
 
     closest = [overlap, picked, wildcard] if closest.nil? || overlap < closest.first
   end
-  random_finish(closest[1], closest[2], rng, avoid)
+  random_finish(closest[1], closest[2], rng, avoid, lane:)
 end
 
 # Two chains that share optical_blur, spectral_temp and film_curve share a
@@ -3751,8 +3754,8 @@ def random_common_spine
 end
 
 # Grow from one effect, admitting only what some preset puts beside all of it.
-def random_draw(rng)
-  pool = random_pool
+def random_draw(rng, lane:)
+  pool = random_pool(lane)
   target = rng.rand(RANDOM_CHAIN_LENGTH)
   # Seeded on something that could be the subject, and that can grow. Starting
   # from an artefact grows a chain of nothing but damage — reticulation into
@@ -3761,7 +3764,11 @@ def random_draw(rng)
   # seventy-three have no affinity with anything, and seeding on one of those
   # rendered a picture whose whole grade was dual_base_density and grain. They
   # stay reachable as the wildcard, which is where a stranger belongs.
-  picked = [random_seeds.sample(random: rng)]
+  seeds = random_seeds(lane)
+  seeds = random_pool(lane) if seeds.empty?
+  picked = [seeds.sample(random: rng)]
+  analog = (pool & RANDOM_ANALOG_CORE).sample(random: rng)
+  picked << analog unless picked.include?(analog)
   while picked.length < target
     admissible = (pool - picked).select do |candidate|
       next false if RANDOM_WEAR.include?(candidate) &&
@@ -3777,7 +3784,7 @@ def random_draw(rng)
   [picked + [wildcard].compact + [RANDOM_SHAPES.sample(random: rng)], wildcard]
 end
 
-def random_finish(picked, wildcard, rng, avoid = [])
+def random_finish(picked, wildcard, rng, avoid = [], lane: random_lane(rng))
   # Nor is the backbone the subject. optical_blur, spectral_temp and film_curve
   # are in most presets because most pictures want a little of each; leading
   # with optical_blur at 0.95 is not a look, it is an out-of-focus photograph.
@@ -3806,7 +3813,8 @@ def random_finish(picked, wildcard, rng, avoid = [])
            end
     [fx, (band.first + rng.rand * (band.last - band.first)).round(2)]
   end
-  chain << [RANDOM_ALWAYS, { "intensity" => (0.3 + rng.rand * 0.35).round(2),
+  band = RANDOM_LANES.fetch(lane).fetch(:strength)
+  chain << [RANDOM_ALWAYS, { "intensity" => (band.first + rng.rand * (band.last - band.first)).round(2),
                              "stock" => random_stock(rng, avoid).to_s }]
 end
 
