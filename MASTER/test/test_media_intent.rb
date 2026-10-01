@@ -96,6 +96,34 @@ class MediaIntentTest < Minitest::Test
     assert_equal "live default", calls.first[:arg]
   end
 
+  def test_desktop_postpro_variations_keep_the_desktop_source
+    Dir.mktmpdir("master-home") do |home|
+      desktop = File.join(home, "Desktop")
+      Dir.mkdir(desktop)
+      previous_home = ENV["HOME"]
+      ENV["HOME"] = home
+      calls = []
+
+      Master::Io::ScriptDispatch.stub(
+        :run,
+        lambda do |root:, tool:, arg:, env: {}|
+          calls << { root:, tool:, arg:, env: }
+          Master::Result.ok("postpro: varied")
+        end
+      ) do
+        result = Master::Io::MediaIntent.dispatch(
+          "run 5 random extreme postpro.rb variations of the new images in my local Desktop folder",
+          root: home
+        )
+        assert result.ok?, -> { result.message.to_s }
+      end
+
+      assert_equal [desktop, "--random", "--count", "5", "--rough"], Shellwords.split(calls.fetch(0).fetch(:arg))
+    ensure
+      ENV["HOME"] = previous_home
+    end
+  end
+
   def test_postpro_literal_is_a_media_intent
     assert Master::Io::MediaIntent.handles?("run postpro.rb over ~/Pictures/new")
     assert Master::Io::MediaIntent.handles?("use postpro for these photos in ~/Pictures/new")
