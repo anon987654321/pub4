@@ -334,7 +334,7 @@ BOOTSTRAP = PostproBootstrap.run
 # budget it is held to; a path that cannot do those is not worth having back.
 POSTPRO_USAGE = <<~TXT
   usage: postpro.rb [flags]           with no flags, asks what to grade
-  usage: postpro.rb IMAGE | DIR       three to five random chains of it, beside the source
+  usage: postpro.rb IMAGE | DIR       five to ten analog variations per image
 
     --input FILE --output FILE --preset NAME   grade one image
     --reference FILE                  add a quality report against a reference
@@ -4810,7 +4810,7 @@ def run_random(subject = nil)
 
   # A fresh seed per run unless one was asked for, because the point of a random
   # run is that the next one differs. It is printed and written into every
-  # sidecar, so POSTPRO_SEED=<that> renders the same three pictures again.
+  # sidecar, so POSTPRO_SEED=<that> renders the same variation family again.
   $postpro_seed = Random.new_seed % 2_147_483_647 unless ENV.key?("POSTPRO_SEED")
   rng = Random.new(postpro_seed)
   override = (argv_flag("--count") || argv_flag("-n"))&.to_i
