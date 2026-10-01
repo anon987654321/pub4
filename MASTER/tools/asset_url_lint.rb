@@ -3,6 +3,7 @@
 require_relative "baseline_ratchet"
 
 require "set"
+require_relative "../lib/trace/dmesg"
 
 module Operator
   # The other half of css_coverage_lint: a stylesheet asking for a *file* that is
@@ -66,17 +67,18 @@ module Operator
 
     def run
       findings = scan
+      Master::Trace::Dmesg.attach("asset0", "master0", "#{findings.size} findings")
       counts(findings).each do |kind, count|
         baseline = BASELINES.fetch(kind)
-        note = count < baseline ? " — under baseline, lower it" : ""
-        puts "asset_url_lint: #{kind} #{count} (baseline #{baseline})#{note}"
+        note = count < baseline ? ", under baseline, lower it" : ""
+        Master::Trace::Dmesg.status("asset0", "#{kind}, #{count}, baseline #{baseline}#{note}")
       end
-      findings.sort_by(&:ref).each { |f| puts format("  %-52s %s", f.ref, f.sheet) }
+      findings.sort_by(&:ref).each { |finding| Master::Trace::Dmesg.status("asset0", "#{finding.ref}, #{finding.sheet}") }
 
       exceeded = over_baseline(findings)
       return true if exceeded.empty?
 
-      warn "asset_url_lint: exceeds baseline — #{exceeded.join("; ")}"
+      Master::Trace::Dmesg.status("asset0", "exceeds baseline, #{exceeded.join("; ")}", io: $stderr)
       false
     end
 
