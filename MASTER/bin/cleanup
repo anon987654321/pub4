@@ -9,6 +9,7 @@ require "json"
 require "open3"
 require "optparse"
 require "time"
+require_relative "../lib/trace/dmesg"
 
 ROOT = File.expand_path("..", __dir__)
 REPO = File.expand_path("..", ROOT)
@@ -47,24 +48,29 @@ rescue StandardError => e
   ["#{name}: unavailable: #{e.message}\n", false]
 end
 
-abort "FAIL cleanup: working tree dirty" unless clean_tree?
+unless clean_tree?
+  Master::Trace::Dmesg.status("cleanup0", "failed, working tree dirty", io: $stderr)
+  exit 1
+end
 
 reports = {
   "inventory_before.json" => maybe_run_tool("inventory", "ruby", "tools/repo_inventory.rb", "--json"),
   "history_before.txt" => maybe_run_tool("history", "ruby", "tools/history_valuables.rb", "."),
 }
+Master::Trace::Dmesg.attach("cleanup0", "master0", "reports")
 reports.each do |file, (body, ran)|
   path = write_report(file, body)
-  puts ran ? "OK wrote #{path}" : "WARN wrote #{path}, but the tool did not run: #{body.strip}"
+  Master::Trace::Dmesg.status("cleanup0", ran ? "wrote #{path}" : "wrote #{path}, tool did not run: #{body.strip}")
 end
 
 candidates = Dir.glob(File.join(REPO, "test_*.jpg")).map { |path| path.sub(REPO + "/", "") }
-puts candidates.empty? ? "OK no root test_*.jpg candidates" : "WARN cleanup candidates:\n#{candidates.map { |c| "  #{c}" }.join("\n")}"
+Master::Trace::Dmesg.status("cleanup0", candidates.empty? ? "no root test_*.jpg candidates" : "#{candidates.size} cleanup candidate(s)")
+candidates.each { |candidate| Master::Trace::Dmesg.status("cleanup0", candidate) }
 
 if options[:apply]
   candidates.each { |rel| File.delete(File.join(REPO, rel)) if File.file?(File.join(REPO, rel)) } # scan: intentional — each candidate was listed above and --apply names them
   capture("git", "add", "-u", *candidates, chdir: REPO) unless candidates.empty?
-  puts "OK applied cleanup candidates"
+  Master::Trace::Dmesg.status("cleanup0", "applied cleanup candidates")
 else
-  puts "OK dry-run only; rerun with --apply to remove candidates"
+  Master::Trace::Dmesg.status("cleanup0", "dry run only, rerun with --apply to remove candidates")
 end
