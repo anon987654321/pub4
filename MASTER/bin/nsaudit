@@ -11,6 +11,7 @@ Encoding.default_external = Encoding::UTF_8
 $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 require "bundler/setup"
 require "master"
+require_relative "../lib/trace/dmesg"
 
 # Eager-load so Zeitwerk-ignored fragments (loaded via explicit require, e.g.
 # review/scan/rules/*.rb) are defined and resolve like any other constant. Without
@@ -42,14 +43,15 @@ end
 
 unresolved = refs.reject { |name, _| resolve(name) }
 if unresolved.empty?
-  puts "nsaudit: clean (#{refs.size} distinct refs)"
+  Master::Trace::Dmesg.status("nsaudit0", "clean, #{refs.size} distinct refs")
   exit 0
 end
 
-puts "nsaudit: #{unresolved.size} unresolved ref(s):"
-unresolved.sort.each do |name, sites|
-  puts "  #{name}"
-  sites.first(5).each { |s| puts "    #{s}" }
-  puts "    (+#{sites.size - 5} more)" if sites.size > 5
+Master::Trace::Dmesg.attach("nsaudit0", "master0", "#{unresolved.size} unresolved refs")
+unresolved.sort.each_with_index do |(name, sites), index|
+  unit = "nsref#{index}"
+  Master::Trace::Dmesg.attach(unit, "nsaudit0", name)
+  sites.first(5).each { |site| Master::Trace::Dmesg.status(unit, site) }
+  Master::Trace::Dmesg.status(unit, "#{sites.size - 5} more") if sites.size > 5
 end
 exit 1
