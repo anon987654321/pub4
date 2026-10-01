@@ -712,6 +712,18 @@ class TestPostproFilm < Minitest::Test
                  DILLA_ANALOG_PRESETS.fetch("summing_phasy")
   end
 
+  def test_dilla_analog_vocabulary_is_reachable
+    names = %w[dilla_head_bump dilla_tape_saturation dilla_vinyl_bandlimit dilla_phasy dilla_console_sum]
+    names.each { |name| assert send(:respond_to?, name, true), "dilla analog effect #{name} is not loaded" }
+
+    assert_equal %i[dilla_head_bump dilla_vinyl_bandlimit dilla_phasy],
+                 DILLA_ANALOG_PRESETS.fetch("vinyl_hot")
+    assert_equal %i[dilla_head_bump dilla_phasy],
+                 DILLA_ANALOG_PRESETS.fetch("summing_phasy")
+    assert_equal %i[dilla_head_bump dilla_tape_saturation dilla_vinyl_bandlimit],
+                 DILLA_ANALOG_PRESETS.fetch("acetate")
+  end
+
   def test_recovered_legacy_postpro_vocabulary_is_reachable
     names = %w[
       film_grain film_halation bloom_effect cross_process golden_hour_glow lomo sepia
