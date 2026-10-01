@@ -42,8 +42,18 @@ class TestRecoveryPubManifest < Minitest::Test
     manifest = YAML.safe_load(ROOT.join("MASTER/data/recovery/legacy_manifest.yml").read, permitted_classes: [Date])
     states = manifest.fetch("states")
 
-    %w[restored ported absorbed archived missing retired].each do |state|
+    %w[restored ported absorbed archived missing partial retired].each do |state|
       assert states.key?(state), "state #{state} must be defined"
     end
+  end
+
+  def test_legacy_manifest_uses_declared_states
+    manifest = YAML.safe_load(ROOT.join("MASTER/data/recovery/legacy_manifest.yml").read, permitted_classes: [Date])
+    declared = manifest.fetch("states").keys
+    used = manifest.fetch("legacy_roots").filter_map { |item| item["state"] }
+    used.concat(manifest.fetch("rails_restore_debt").values.filter_map { |item| item["state"] })
+
+    invalid = used.uniq.reject { |state| declared.include?(state) }
+    assert_empty invalid, "undeclared recovery states: #{invalid.join(", ")}"
   end
 end
