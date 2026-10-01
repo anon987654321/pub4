@@ -6,8 +6,6 @@ require "securerandom"
 require_relative "../../../lib/cli/turn_presentation"
 
 class ChatService
-  SMOKE_MESSAGES = %w[ping pong health up].freeze
-
   WRITE_TOOLS = %w[Write Edit Create FilePatch].freeze
   BUS_DMESG_SKIP = %w[
     infer:resolved infer:confidence tool:before tool:after client_action
