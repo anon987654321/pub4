@@ -28,6 +28,7 @@
 require "json"
 require "prism"
 require_relative "../lib/io/exec"
+require_relative "../lib/trace/dmesg"
 
 module Operator
   module Rename
@@ -222,11 +223,11 @@ module Operator
     def report_candidates
       rows = candidates
       named = rows.count(&:proposal)
-      puts "rename: #{rows.size} name(s) carry a category or a stutter, #{named} with a free shorter name"
+      Master::Trace::Dmesg.attach("rename0", "master0", "#{rows.size} names carry a category or stutter, #{named} have a free shorter name")
       rows.sort_by(&:file).each do |row|
-        target = row.proposal ? "-> #{row.proposal}" : "(no free name — say what it does)"
-        puts "  #{row.file.sub("#{ROOT}/", "")}:#{row.line}  #{row.constant} #{target}"
-        puts "      #{row.reason}"
+        target = row.proposal ? "-> #{row.proposal}" : "no free name"
+        Master::Trace::Dmesg.status("rename0", "#{row.file.sub("#{ROOT}/", "")}:#{row.line}, #{row.constant}, #{target}")
+        Master::Trace::Dmesg.status("rename0", row.reason)
       end
       rows.empty? ? 0 : 1
     end
@@ -250,24 +251,24 @@ module Operator
       abort "rename: #{new_name} already resolves" if Object.const_defined?(new_name.to_sym) && !apply
 
       if apply && dirty.any?
-        warn "rename: #{dirty.size} uncommitted change(s) — commit or stash them first:"
-        dirty.first(10).each { |line| warn "  #{line}" }
-        abort "rename: refusing to mix a repo-wide rewrite into an existing diff"
+        Master::Trace::Dmesg.status("rename0", "#{dirty.size} uncommitted changes, commit or stash them first", io: $stderr)
+        dirty.first(10).each { |line| Master::Trace::Dmesg.status("rename0", line, io: $stderr) }
+        exit 1
       end
 
       hits = references(old_name, basename: File.basename(path, ".rb"))
-      puts "rename: #{old_name} -> #{new_name}, defined at #{path.sub("#{ROOT}/", "")}"
-      puts "rename: #{hits.sum { |hit| hit[:lines].size }} line(s) in #{hits.size} file(s)"
+      Master::Trace::Dmesg.attach("rename0", "master0", "#{old_name} -> #{new_name}, defined at #{path.sub("#{ROOT}/", "")}")
+      Master::Trace::Dmesg.status("rename0", "#{hits.sum { |hit| hit[:lines].size }} lines in #{hits.size} files")
       unless apply
-        hits.first(20).each { |hit| puts "  #{hit[:file].sub("#{ROOT}/", "")} (#{hit[:lines].size})" }
-        puts "rename: nothing written — add --apply"
+        hits.first(20).each { |hit| Master::Trace::Dmesg.status("rename0", "#{hit[:file].sub("#{ROOT}/", "")}, #{hit[:lines].size} references") }
+        Master::Trace::Dmesg.status("rename0", "nothing written, add --apply")
         return 0
       end
 
       result = apply!(old_name, new_name)
-      puts "rename: moved #{result[:moved].join(' -> ')}" if result[:moved]
-      puts "rename: rewrote #{result[:files].size} file(s)"
-      puts "rename: run the suite — a rewrite that parses is not a rewrite that works"
+      Master::Trace::Dmesg.status("rename0", "moved #{result[:moved].join(" -> ")}") if result[:moved]
+      Master::Trace::Dmesg.status("rename0", "rewrote #{result[:files].size} files")
+      Master::Trace::Dmesg.status("rename0", "run the suite, a rewrite that parses is not a rewrite that works")
       0
     end
   end
