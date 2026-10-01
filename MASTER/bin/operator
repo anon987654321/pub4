@@ -19,6 +19,7 @@ require "operator/ruby_runner"
 require "operator/status_report"
 require "operator/strict_mode"
 require "operator/law_inventory"
+require_relative "../lib/trace/dmesg"
 
 RUBY = Operator::RubyRunner.ruby_cmd
 BUNDLE = Operator::RubyRunner.bundle_cmd
@@ -100,7 +101,8 @@ when "gate"
   exit Operator::GateChain.run(scan_only:, only:, list:, trees:)
 when "status", nil
   json = ARGV.include?("--json")
-  puts Operator::StatusReport.new(root: ROOT).render(json:)
+  output = Operator::StatusReport.new(root: ROOT).render(json:)
+  json ? puts(output) : Master::Trace::Dmesg::Report.print("/status", output)
 when "measure"
   # Every ratchet in the repo, current beside recorded. Non-zero when any is over
   # its ceiling OR slack beneath it, because a ceiling above the real number is
@@ -117,15 +119,19 @@ when "measure"
   since ||= ARGV[ARGV.index("--since") + 1] if ARGV.include?("--since")
   abort("usage: bin/operator measure --since <ref>") if ARGV.include?("--since") && since.to_s.empty?
   if since
-    puts Operator::Ratchets.since(since)
+    Master::Trace::Dmesg::Report.print("measure", Operator::Ratchets.since(since))
     exit 0
   end
   rows = Operator::Ratchets.all(deep:)
   if why
-    puts Operator::Ratchets.why(rows, why)
+    Master::Trace::Dmesg::Report.print("measure", Operator::Ratchets.why(rows, why))
     exit 0
   end
-  puts ARGV.include?("--json") ? Operator::Ratchets.json(rows) : Operator::Ratchets.render(rows)
+  if ARGV.include?("--json")
+    puts Operator::Ratchets.json(rows)
+  else
+    Master::Trace::Dmesg::Report.print("measure", Operator::Ratchets.render(rows))
+  end
   exit(Operator::Ratchets.ok?(rows) ? 0 : 1)
 when "lint"
   # Inheritance made mechanical. The same deterministic rules MASTER runs on
@@ -167,13 +173,13 @@ when "lint"
     rows.map { |finding| [path, finding] }
   end
   if findings.empty?
-    puts "lint: clean — #{files.size} file(s), no law broken"
+    Master::Trace::Dmesg.status("lint0", "clean, #{files.size} files, no law broken")
     exit 0
   end
+  Master::Trace::Dmesg.attach("lint0", "master0", "#{findings.size} finding(s) across #{findings.map(&:first).uniq.size} files")
   findings.sort_by { |path, finding| [path, finding[:line].to_i] }.each do |path, finding|
-    puts "  #{path.sub("#{ROOT}/", "")}:#{finding[:line]} #{finding[:message]}"
+    Master::Trace::Dmesg.status("lint0", "#{path.sub("#{ROOT}/", "")}:#{finding[:line]}, #{finding[:message]}")
   end
-  puts "lint: #{findings.size} finding(s) across #{findings.map(&:first).uniq.size} file(s)"
   exit 1
 when "land"
   # Commit, rebase onto origin/main, re-check, push — in that order, because the
@@ -213,7 +219,7 @@ when "land"
     warn measure_out
     abort("land: a ratchet is off before you started — fix that first, or it lands with your change")
   end
-  puts "land: ratchets clean"
+  Master::Trace::Dmesg.status("land0", "ratchets clean")
 
   commit = ["git", "commit", "-q"]
   commit += message_file ? ["-F", message_file] : ["-m", message]
@@ -233,11 +239,11 @@ when "land"
   end
 
   ahead, = run!("git", "log", "--oneline", "origin/main..HEAD")
-  puts "land: publishing"
-  ahead.lines.each { |line| puts "  #{line.chomp}" }
+  Master::Trace::Dmesg.attach("land0", "master0", "publishing")
+  ahead.each_line { |line| Master::Trace::Dmesg.status("land0", line.chomp) }
   push_out, pushed = run!("git", "push", "origin", "HEAD:main")
   abort("land: push refused\n#{push_out}") unless pushed
-  puts "land: on origin/main"
+  Master::Trace::Dmesg.status("land0", "on origin/main")
 when "snapshot"
   # Regenerates snapshot_<TREE>.md — the verbatim packs handed to another model
   # when it needs the whole tree rather than a summary. The generator that made
@@ -248,14 +254,14 @@ when "snapshot"
 when "wishlist"
   path = File.join(ROOT, "MASTER", "runtime", "wishlist.md")
   unless File.file?(path)
-    puts "wishlist0: empty — a successful /fix run will draft the next queue"
+    Master::Trace::Dmesg.status("wishlist0", "empty, a successful /fix run will draft the next queue")
     exit 0
   end
   body = File.read(path, encoding: "UTF-8")
   full = !ARGV.delete("--all").nil?
   lines = body.lines
-  puts(full ? body : lines.first(60).join)
-  puts "wishlist0: truncated — use --all" unless full || lines.size <= 60
+  Master::Trace::Dmesg::Report.print("wishlist", full ? body : lines.first(60).join)
+  Master::Trace::Dmesg.status("wishlist0", "truncated, use --all") unless full || lines.size <= 60
 when "event-bus"
   exec(RbConfig.ruby, File.join(ROOT, "MASTER", "tools", "event_bus_reach.rb"), *ARGV)
 when "post-pull"
@@ -273,7 +279,9 @@ when "worktree"
   exec("sh", File.join(OPENBSD_OPS, "dev", "agent_worktree.sh"), name, *ARGV)
 when "law:silent"
   output = Operator::LawInventory.render_collection(:silent, json: ARGV.include?("--json"))
-  puts output if output
+  if output
+    ARGV.include?("--json") ? puts(output) : Master::Trace::Dmesg::Report.print(command.to_s, output)
+  end
   exit 0
 when "law:costly"
   output = Operator::LawInventory.render_collection(:costly, json: ARGV.include?("--json"))
@@ -507,11 +515,11 @@ when "hooks"
   hooks = File.join(OPENBSD_OPS, "dev", "githooks")
   system("git", "-C", ROOT, "config", "core.hooksPath", "OPENBSD/dev/githooks") ||
     abort("pub4 hooks: git config failed")
-  puts "hooks: core.hooksPath -> OPENBSD/dev/githooks"
-  Dir.children(hooks).sort.each { |hook| puts "  #{hook}#{File.executable?(File.join(hooks, hook)) ? '' : '  (NOT EXECUTABLE)'}" }
-  puts "hooks: cross-tree commits now refused unless PUB4_CROSS_TREE=1"
-  puts "hooks: post-commit records this session's SHAs, so pre-push names the foreign ones"
-  puts "hooks: PUB4_SESSION=<name> keys that ledger explicitly; without it the shell is the key"
+  Master::Trace::Dmesg.attach("hooks0", "operator0", "core.hooksPath -> OPENBSD/dev/githooks")
+  Dir.children(hooks).sort.each { |hook| Master::Trace::Dmesg.status("hooks0", "#{hook}#{File.executable?(File.join(hooks, hook)) ? "" : ", not executable"}") }
+  Master::Trace::Dmesg.status("hooks0", "cross-tree commits refused unless PUB4_CROSS_TREE=1")
+  Master::Trace::Dmesg.status("hooks0", "post-commit records this session SHAs")
+  Master::Trace::Dmesg.status("hooks0", "PUB4_SESSION keys that ledger explicitly; without it the shell is the key")
 when "test"
   # The smallest COMPLETE proof for the paths given (dirty files when none
   # are). Complete means whole suites — a green over hand-picked tests is
@@ -562,12 +570,12 @@ when "test"
 
   # Say what was chosen before running it, so a surprising suite is visible
   # up front rather than after a long run.
-  puts "pub4 test: #{paths.size} path(s) -> #{jobs.map(&:first).uniq.join(', ')}"
+  Master::Trace::Dmesg.attach("test0", "master0", "#{paths.size} paths, #{jobs.map(&:first).uniq.join(", ")}")
   failed = jobs.reject do |name, cmd, dir, env|
-    puts "== #{name}"
+    Master::Trace::Dmesg.attach("test#{jobs.index([name, cmd, dir, env]) || 0}", "test0", name)
     system(env, *cmd, chdir: dir)
   end
-  failed.each { |name, *| warn "pub4 test: FAILED #{name}" }
+  failed.each { |name, *| Master::Trace::Dmesg.status("test0", "failed, #{name}") }
   exit(failed.empty? ? 0 : 1)
 when "vps"
   sub = ARGV.shift
@@ -662,21 +670,21 @@ when "pushed?"
   paths.each do |path|
     porcelain, = Open3.capture2e("git", "-C", ROOT, "status", "--porcelain", "--", path)
     unless porcelain.strip.empty?
-      puts "dirty #{path}"
+      Master::Trace::Dmesg.status("pushed0", "dirty, #{path}")
       failed = true
       next
     end
     ahead, = Open3.capture2e("git", "-C", ROOT, "log", "--oneline", "origin/main..HEAD", "--", path)
     if ahead.strip.empty?
-      puts "pushed #{path}"
+      Master::Trace::Dmesg.status("pushed0", "pushed, #{path}")
     else
-      puts "unpushed #{path}"
-      ahead.each_line { |line| puts "  #{line.chomp}" }
+      Master::Trace::Dmesg.attach("pushed0", "master0", "unpushed, #{path}")
+      ahead.each_line { |line| Master::Trace::Dmesg.status("pushed0", line.chomp) }
       failed = true
     end
   end
   exit(failed ? 1 : 0)
 else
-  warn usage
+  Master::Trace::Dmesg::Report.print("/help", usage, io: $stderr)
   exit 2
 end
