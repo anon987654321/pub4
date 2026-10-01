@@ -97,7 +97,11 @@ module Master
             persist!
             resumed = true
           else
-            raise active_mission_conflict(current, goal:, scope:) if active_for_other_target?(current, goal:, scope:)
+            if manually_supersedable?(current, origin:)
+              supersede_waiting_unlocked!(current, goal:, scope:)
+            elsif active_for_other_target?(current, goal:, scope:)
+              raise active_mission_conflict(current, goal:, scope:)
+            end
 
             start_unlocked!(goal:, scope:, model:, effort:, plan:, origin:, auto_continue:)
             persist!
@@ -374,6 +378,24 @@ module Master
       end
 
       private
+
+      def manually_supersedable?(record, origin:)
+        origin.to_s == "manual" && record && record["state"].to_s == "waiting" && record["lease_owner"].to_s.empty?
+      end
+
+      def supersede_waiting_unlocked!(record, goal:, scope:)
+        @record = record
+        @id = record["id"]
+        @record["state"] = "interrupted"
+        @record["stage"] = "deliver"
+        @record["summary"] = "superseded by manual /fix for #{relative(scope)}".byteslice(0, MAX_GOAL_BYTES)
+        @record["lease_owner"] = nil
+        @record["lease_until"] = nil
+        @record["next_wake_at"] = nil
+        @record["finished_at"] = now
+        @record["last_seen_at"] = now
+        persist!
+      end
 
       def reusable_for?(record, scope, goal)
         return false unless record
