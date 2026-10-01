@@ -9,14 +9,14 @@
 #   ruby dilla.rb live patch <name>         one patch's own phrase
 #   ruby dilla.rb live say "<sentence>"     what MASTER sends
 #
-# MASTER's main sound -- what a plain "play", "improvise" or "play something"
-# plays -- is not here: it is liveset.rb beside dilla.rb, the live set the
-# operator froze on 2026-09-24, and `live default` runs that file as it is.
-# The takes the operator approved on the way to it are in takes/, and the
-# progressions below reproduce them sample for sample: soul_jazz_six is
+# MASTER's generic "play" is the steerable moog_improv showcase:
+# walking harmony, rotating pads and basses, DFAM, arp and its full analogue
+# rack. Explicit `live default` still runs liveset.rb, the take the operator
+# froze on 2026-09-24, unchanged.
+# The approved takes remain in takes/: soul_jazz_six is
 # takes/loved_moog_loop.rb, moog_dfam takes/moog_dfam_loop.rb, and
 # moog_improv takes/liveset_db4ddf1a.rb, each before any ffmpeg console.
-# These numbers are those sounds, so they change only on the operator's word.
+# Those frozen numbers change only on the operator's word.
 stream:
   rate: 32000
   block_frames: 1024
@@ -140,14 +140,19 @@ progressions:
       # A sub on every beat -- four steps of the sequencer -- falling from
       # base_hz + drop_hz to base_hz, into tanh.
       kick: { every: 4, level: 0.34, drive: 2.8, base_hz: 45.0, drop_hz: 105.0, drop_seconds: 0.035, decay_seconds: 0.32, click: 0.5, click_seconds: 0.005, length_seconds: 0.5 }
-    # A Nasty VCS, a Sonitex STX-1260 and a second VCS, built by Livesets.vcs
-    # and Livesets.sonitex, then a limiter. The VCS stages are level-neutral
-    # (db 0.0): at the livesets' -7.5 dB, five of them sank the pads 37 dB
-    # under the kick. The colour stays; the loss does not.
+    # The showcase rack: four consecutive Nasty VCS phases, three heavy
+    # Sonitex STX-1260 passes and a measured three-stage console summing stack.
+    # VCS stays level-neutral; the 1260 passes progressively harder reduction and
+    # sample-rate damage. The final limiter is only gain protection.
     master:
       - { vcs: { depth: 0.34, smear: 2.4, db: 0.0 } }
-      - { sonitex: { bits: 12, lo: 40, hi: 13000, drive: 1.12 } }
-      - { vcs: { depth: 0.3, smear: 2.8, db: 0.0 } }
+      - { sonitex: { bits: 12, lo: 40, hi: 13000, drive: 1.12, mix: 0.72 } }
+      - { vcs: { depth: 0.28, smear: 2.8, db: 0.0 } }
+      - { sonitex: { bits: 11, lo: 42, hi: 12000, drive: 1.16, mix: 0.82, samples: 2 } }
+      - { vcs: { depth: 0.4, smear: 1.9, db: 0.0 } }
+      - { console_stack: { instances: 3, offset: 0.10, param: 1.2, speed: 0.1 } }
+      - { sonitex: { bits: 10, lo: 48, hi: 11000, drive: 1.22, mix: 0.95, samples: 2 } }
+      - { vcs: { depth: 0.3, smear: 3.6, db: 0.0 } }
       - { filter: "alimiter=limit=0.95" }
   # MASTER's Theory calls i7 iv7 bVII7 bVI7 dilla_love; these are its chords
   # in C with the ninths and the thirteenth dilla voices them with. A
