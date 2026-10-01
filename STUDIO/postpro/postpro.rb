@@ -3675,7 +3675,7 @@ def random_pool(lane = nil)
   allowed = lane ? RANDOM_LANES.fetch(lane).fetch(:effects) : RECIPE_ALLOWED - [RANDOM_ALWAYS] - RANDOM_SHAPES
   allowed &= RECIPE_ALLOWED
   allowed -= RANDOM_SHAPES
-  allowed -= RANDOM_WEAR unless rough
+  allowed -= RANDOM_WEAR unless rough || lane == :bleeding_edge_analog
   allowed
 end
 
@@ -4852,8 +4852,10 @@ def run_uplift(dir, files)
 
       processed = rgb_bands(apply_finishing_grain(preset_chain(image, [base, layer]), base))
       ext = File.extname(file)
-      output = File.join(File.dirname(file),
-                         "#{File.basename(file, ext)}_#{base}+#{layer}_v#{i + 1}_#{Time.now.strftime("%Y%m%d%H%M%S")}#{ext}")
+      safe_stem = File.basename(file, ext).gsub(/[^0-9A-Za-z_-]+/, "_")
+      output = File.join(Postpro::Constitution::OUTPUT_DIR,
+                         "postpro_#{safe_stem}_#{base}+#{layer}_v#{i + 1}_#{Time.now.strftime("%Y%m%d%H%M%S")}#{ext}")
+      Postpro::Constitution.verify_output!(input_path: file, output_path: output)
       processed.write_to_file(output, Q: CONFIG["jpeg_quality"] || 95)
       write_grade_sidecar(file, output, [base, layer], image, processed)
       PostproBootstrap.dmesg "write chain=#{base}+#{layer} out=#{File.basename(output)}"
@@ -4890,8 +4892,9 @@ def run_watch
       seen[path] = mtime
       next if File.size(path) < 50_000
       ext = File.extname(path)
-      base = File.basename(path, ext)
-      out = File.join(dir, "#{base}_#{preset_name}#{ext}")
+      base = File.basename(path, ext).gsub(/[^0-9A-Za-z_-]+/, "_")
+      out = File.join(Postpro::Constitution::OUTPUT_DIR, "postpro_#{base}_#{preset_name}#{ext}")
+      Postpro::Constitution.verify_output!(input_path: path, output_path: out)
       PostproBootstrap.dmesg "new path=#{File.basename(path)} -> #{File.basename(out)}"
       begin
         grade_watched(path, out, preset_name)
