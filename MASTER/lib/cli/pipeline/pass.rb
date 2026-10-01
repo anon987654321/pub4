@@ -139,7 +139,7 @@ module Master
           end
 
           before = git.head
-          sections << ["repair", log_phase("fix0", "converge", "path=#{shell} max_passes=#{posture[:max_fix_passes]}") do
+          sections << ["repair", log_phase("fix0", "converge", "path #{shell}, max #{posture[:max_fix_passes]} passes") do
             run_fix(resolved)
           end]
           sections << ["changes", changes_section(before)]
@@ -186,7 +186,7 @@ module Master
         # under one unit, because they are one look at one tree.
         def observe_section(title:, unit:, shell:, aesthetic:)
           @observe_units << unit
-          [title, log_phase(unit, "observe", "path=#{shell}") do
+          [title, log_phase(unit, "observe", "path #{shell}") do
             readings = []
             readings << run_observation("aesthetic #{shell}", unit:) if aesthetic
             readings << run_observation(shell, unit:)
