@@ -12,18 +12,29 @@ class TestVoiceSupport < Minitest::Test
   def test_enrich_tags_a_later_sentence_when_the_dice_allow
     text = "One. Two. Three."
     Master::Voice::Enrich.stub(:rand, ->(*args) { args.empty? ? 0.0 : 1 }) do
-      assert_equal "One. [chuckle] Two. Three.", Master::Voice::Enrich.apply(text, { primary: :humor, scores: {} })
+      assert_equal "One. [chuckle] Two. Three.", Master::Voice::Enrich.apply(
+        text, { primary: :humor, scores: {} }, tags: true
+      )
     end
     Master::Voice::Enrich.stub(:rand, ->(*args) { args.empty? ? 0.99 : 1 }) do
-      assert_equal text, Master::Voice::Enrich.apply(text, { primary: :humor, scores: {} })
+      assert_equal text, Master::Voice::Enrich.apply(
+        text, { primary: :humor, scores: {} }, tags: true
+      )
     end
   end
 
   def test_enrich_leaves_single_sentences_and_quiet_comfort_alone
     Master::Voice::Enrich.stub(:rand, ->(*args) { args.empty? ? 0.0 : 1 }) do
-      assert_equal "Only one.", Master::Voice::Enrich.apply("Only one.", { primary: :humor })
-      assert_equal "A. B.", Master::Voice::Enrich.apply("A. B.", { primary: :comfort, scores: { comfort: 0.1 } })
+      assert_equal "Only one.", Master::Voice::Enrich.apply("Only one.", { primary: :humor }, tags: true)
+      assert_equal "A. B.", Master::Voice::Enrich.apply(
+        "A. B.", { primary: :comfort, scores: { comfort: 0.1 } }, tags: true
+      )
     end
+  end
+
+  def test_enrich_is_dry_by_default
+    result = Master::Voice::Enrich.apply("One. Two.", { primary: :humor, scores: { humor: 1.0 } })
+    refute_includes result, "["
   end
 
   def with_env(values)
