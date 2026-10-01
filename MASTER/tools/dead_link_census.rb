@@ -53,4 +53,5 @@ end
 
 Master::Trace::Dmesg.attach("links0", "master0", "#{seen.length} pages, #{findings.length} findings")
 findings.each { |finding| Master::Trace::Dmesg.status("links0", finding.inspect, io: $stderr) }
+Master::Trace::Dmesg.status("links0", "clean") if findings.empty?
 exit 1 unless findings.empty?
