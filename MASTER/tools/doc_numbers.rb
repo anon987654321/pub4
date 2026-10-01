@@ -16,6 +16,7 @@
 
 require "json"
 require "yaml"
+require_relative "../lib/trace/dmesg"
 
 module Operator
   class DocNumbers
@@ -101,12 +102,11 @@ if $PROGRAM_NAME == __FILE__
   if ARGV.include?("--json")
     puts JSON.pretty_generate(report)
   else
+    Master::Trace::Dmesg.attach("docnum0", "master0", "#{report[:values]} token values across #{report[:docs]} documents, #{count} untraceable")
     report[:findings].each do |doc, rows|
-      puts doc
-      rows.each { |row| puts "  #{row['value'].ljust(9)} owned by #{row['tokens'].join(', ')}" }
+      Master::Trace::Dmesg.attach("docnum#{doc.hash.abs % 10}", "docnum0", doc)
+      rows.each { |row| Master::Trace::Dmesg.status("docnum#{doc.hash.abs % 10}", "#{row["value"]}, owned by #{row["tokens"].join(", ")}") }
     end
-    puts
-    puts "#{report[:values]} token values checked across #{report[:docs]} documents, #{count} untraceable"
   end
 
   exit(count.zero? ? 0 : 1)
