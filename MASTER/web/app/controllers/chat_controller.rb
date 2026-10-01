@@ -166,7 +166,6 @@ class ChatController < ApplicationController
     return head(:bad_request) if input.empty?
     return redeem_pair_from_chat(input) if visitor? && pair_redeem_arg(input)
     return head(:forbidden) if visitor? && input.start_with?("/")
-    return stream_smoke_reply(input) if smoke_chat_message?(input)
 
     response.headers["Content-Type"]      = "text/event-stream"
     response.headers["Cache-Control"]     = "no-cache"
