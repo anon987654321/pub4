@@ -700,6 +700,18 @@ class TestPostproFilm < Minitest::Test
     assert_equal columns * 48 + (columns - 1) * STOCK_SHEET_GAP, sheet.width
   end
 
+  def test_dilla_analog_translations_are_reachable
+    names = %w[dilla_head_bump dilla_tape_saturation dilla_vinyl_bandlimit dilla_phasy dilla_console_sum]
+    names.each do |name|
+      assert send(:respond_to?, name, true), "Dilla analog effect #{name} is not loaded"
+      assert_includes RECIPE_ALLOWED, name, "Dilla analog effect #{name} is not recipe-visible"
+    end
+    assert_equal %i[dilla_head_bump dilla_vinyl_bandlimit dilla_phasy],
+                 DILLA_ANALOG_PRESETS.fetch("vinyl_hot")
+    assert_equal %i[dilla_head_bump dilla_phasy],
+                 DILLA_ANALOG_PRESETS.fetch("summing_phasy")
+  end
+
   def test_recovered_legacy_postpro_vocabulary_is_reachable
     names = %w[
       film_grain film_halation bloom_effect cross_process golden_hour_glow lomo sepia
