@@ -24,6 +24,7 @@ require "optparse"
 require_relative "../lib/operator/check_runner"
 require_relative "../lib/operator/check_brief"
 require_relative "../lib/operator/ruby_runner"
+require_relative "../lib/trace/dmesg"
 
 ROOT = File.expand_path("..", __dir__)
 RUBY = Operator::RubyRunner.ruby_cmd
@@ -36,7 +37,10 @@ OptionParser.new do |parser|
   parser.on("--profile=NAME") { |value| profile = value }
   parser.on("--format=NAME") { |value| format = value }
 end.parse!
-abort "check: unknown format '#{format}' (have: human, brief)" unless %w[human brief].include?(format)
+unless %w[human brief].include?(format)
+  Master::Trace::Dmesg.status("check0", "unknown format #{format}, have human or brief")
+  exit 64
+end
 
 rake = ->(*task) { [task.join(" "), BUNDLE, "exec", "rake", *task] }
 run_bin = ->(name, *args) { ["bin/#{name} #{args.join(' ')}".strip, RUBY, File.join(ROOT, "bin", name), *args] }
@@ -79,7 +83,7 @@ if ENV["MASTER_CI_BROWSER"] == "1"
     ENV["PROBE_REQUIRE_BROWSER"] ||= "1"
     ci_steps << ["webgl probe", node_bin, webgl]
   else
-    warn "check[ci]: webgl probe skipped — #{node_bin ? "missing #{webgl}" : 'no node'}"
+    Master::Trace::Dmesg.status("web0", "webgl probe skipped, #{node_bin ? "missing #{webgl}" : "no node"}")
   end
 end
 
@@ -123,11 +127,15 @@ PROFILES = {
 lib_rbs = Dir[File.join(ROOT, "lib/**/*.rb")]
 oversized = lib_rbs.select { |f| File.readlines(f).size > 300 }
 if profile != "contributor" && oversized.any?
-  warn "check: oversized (>300 lines) in lib: #{oversized.map { |f| File.basename(f) }.join(', ')}"
+  Master::Trace::Dmesg.status("check0", "oversized lib files, #{oversized.map { |f| File.basename(f) }.join(", ")}")
 end
 
-steps = PROFILES[profile] or abort "check: unknown profile '#{profile}' (have: #{PROFILES.keys.join(', ')})"
-warn "check[web]: live web checks skipped (set MASTER_WEB_LIVE=1)" if profile == "web" && !web_live
+steps = PROFILES[profile]
+unless steps
+  Master::Trace::Dmesg.status("check0", "unknown profile #{profile}, have #{PROFILES.keys.join(", ")}")
+  exit 64
+end
+Master::Trace::Dmesg.status("web0", "live web checks skipped, set MASTER_WEB_LIVE=1") if profile == "web" && !web_live
 
 # Hang guard, not a performance budget — see CheckRunner::SLOW_STEP_FRACTION.
 # 360 was under `rake test`'s real cost the moment anything else used the CPU
@@ -139,17 +147,12 @@ runner = Operator::CheckRunner.new(prefix: "check:#{profile}", root: ROOT, timeo
 
 steps.each { |step| runner.run(*step) }
 failures = runner.results.reject { |r| r.success }.map(&:name)
-if failures.empty?
-  if format == "brief"
-    puts Operator::CheckBrief.render(profile:, results: runner.results)
-  else
-    puts "check[#{profile}]: clean"
-  end
-  exit 0
-end
-if format == "brief"
-  puts Operator::CheckBrief.render(profile:, results: runner.results)
-else
-  puts "check[#{profile}]: #{failures.size} failure(s): #{failures.join(', ')}"
-end
-exit 1
+body = if format == "brief"
+         Operator::CheckBrief.render(profile:, results: runner.results)
+       elsif failures.empty?
+         "clean"
+       else
+         "#{failures.size} failure(s), #{failures.join(", ")}"
+       end
+Master::Trace::Dmesg::Report.print("check0", body, parent: "master0")
+exit(failures.empty? ? 0 : 1)
