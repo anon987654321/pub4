@@ -24,3 +24,15 @@ class TestDillaRoyksopp < Minitest::Test
     assert_equal({ symbol: "Bb", root_pc: 10, tones: [2, 5, 10, 2] }, Royksopp.chord("Bb"))
   end
 end
+
+
+  def test_style_routing_uses_the_shared_steerable_progression
+    assert_equal %w[progression royksopp_live], LiveSynth::Say.style_args("röyksopp")
+  end
+
+  def test_royksopp_live_progression_uses_the_verified_suite
+    score = LiveSynth::Progression.new("royksopp_live", rng: Random.new(1), loops: 1)
+    chords = score.instance_variable_get(:@chords).map { |chord| chord["name"] }
+    assert_equal Royksopp::SUITE.first(8), chords
+    refute score.instance_variable_get(:@p).fetch("master").empty?
+  end
