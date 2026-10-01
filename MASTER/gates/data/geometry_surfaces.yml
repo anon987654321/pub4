@@ -86,7 +86,6 @@ surfaces:
     path: /privacy
     viewports: [mobile, desktop]
 
-
   # BEGIN generated view surfaces
   # Every HTML GET route that rendered for a guest on the local fleet, from
   # RAILS/tools/view_surfaces/generate.rb. Hand-declared surfaces above win;

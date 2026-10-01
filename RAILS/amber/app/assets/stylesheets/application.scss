@@ -2292,7 +2292,6 @@ main#main-content .amber-look-title {
   }
 }
 
-
 /* AMBER commerce finish
    Lyko direction: white paper, playful Nordic pastels, compact product cards,
    clear category navigation and friendly retail controls. The existing Amber
@@ -2379,11 +2378,11 @@ body[data-surface="luxury"] .amber-look-title {
 
 body[data-surface="luxury"] .item-grid--luxury {
   grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
-  gap: 18px;
+  gap: 16px;
 }
 
 body[data-surface="luxury"] .item-card--luxury {
-  gap: 10px;
+  gap: 8px;
   padding: 0 0 14px;
   overflow: hidden;
   border: 1px solid var(--amber-rule);
@@ -2420,7 +2419,7 @@ body[data-surface="luxury"] .item-card--luxury .item-photo {
 body[data-surface="luxury"] .item-card--luxury .item-title,
 body[data-surface="luxury"] .item-card--luxury .item-meta,
 body[data-surface="luxury"] .item-card--luxury nav {
-  margin-inline: 14px;
+  margin-inline: 16px;
 }
 
 body[data-surface="luxury"] .item-card--luxury .item-title {
@@ -2431,7 +2430,7 @@ body[data-surface="luxury"] .item-card--luxury .item-title {
 }
 
 body[data-surface="luxury"] .item-card--luxury nav {
-  inset-inline: 14px;
+  inset-inline: 16px;
   bottom: 12px;
 }
 

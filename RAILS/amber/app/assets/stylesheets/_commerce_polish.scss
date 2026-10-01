@@ -15,7 +15,7 @@
 }
 
 .item-detail--luxury .luxury-tags {
-  gap: 6px;
+  gap: 8px;
 }
 
 .item-detail--luxury .luxury-meta-list {
@@ -45,7 +45,7 @@
 .commerce-fit-suggestion {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 5px;
+  gap: 8px;
   min-width: 0;
   padding-block: 12px;
   border-block-start: 1px solid var(--luxury-border);

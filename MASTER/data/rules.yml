@@ -112,7 +112,6 @@ zsh:
     - python
     - bash
 
-
 architecture:
   # Phoenix preserves these boundaries while allowing their implementations to be
   # regenerated. This is architecture, not a second command or dependency registry.

@@ -575,7 +575,6 @@ test("service worker avoids stale undigested precache", () => {
   assert.match(sw, /pathname\.startsWith\('\/assets\/'\)/);
 });
 
-
 test("Android wake reaches the existing face event pipe", () => {
   const bridge = readFileSync(join(publicDir, "visual_bridge.js"), "utf8");
   const events = readFileSync(join(root, "app", "controllers", "events_controller.rb"), "utf8");
