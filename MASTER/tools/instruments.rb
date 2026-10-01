@@ -30,6 +30,7 @@
 # Wired as `rake lint:instruments`, pinned by test/test_instruments.rb.
 
 require "json"
+require_relative "../lib/trace/dmesg"
 
 module Operator
   class Instruments
@@ -119,10 +120,9 @@ if $PROGRAM_NAME == __FILE__
   if ARGV.include?("--json")
     puts JSON.pretty_generate(report)
   else
-    report["findings"].each { |row| puts "#{row['fixture']}: #{row['message']}" }
-    puts
-    puts "#{report['checks']} declared answer(s) across #{report['fixtures']} fixture(s)"
-    puts "instruments: #{report['findings'].empty? ? 'agree' : "#{report['findings'].size} disagreement(s)"}"
+    Master::Trace::Dmesg.attach("instrument0", "master0", "#{report["checks"]} declared answers across #{report["fixtures"]} fixtures")
+    report["findings"].each { |row| Master::Trace::Dmesg.status("instrument0", "#{row["fixture"]}, #{row["message"]}") }
+    Master::Trace::Dmesg.status("instrument0", report["findings"].empty? ? "agree" : "#{report["findings"].size} disagreement(s)")
   end
 
   exit(report["findings"].empty? ? 0 : 1)
