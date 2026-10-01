@@ -699,4 +699,18 @@ class TestPostproFilm < Minitest::Test
     columns = Math.sqrt(stocks.length).ceil
     assert_equal columns * 48 + (columns - 1) * STOCK_SHEET_GAP, sheet.width
   end
+
+  def test_recovered_legacy_postpro_vocabulary_is_reachable
+    names = %w[
+      double_exposure polaroid_frame tape_degradation frame_distortion super8_flicker
+      cinemascope_bars halftone_print film_scratches film_stock_emulation sprocket_holes
+      lens_flare vhs_degrade color_fade anamorphic_simulation soft_focus
+    ]
+    names.each { |name| assert send(:respond_to?, name, true), "legacy effect #{name} is not loaded" }
+
+    source = File.read(File.join(File.dirname(POSTPRO_SOURCE), "legacy_effects.rb"))
+    names.each { |name| assert_includes source, "def #{name}", "legacy source lost #{name}" }
+    assert_equal :kodak_portra, PRESETS.fetch(:legacy_stock_compat)[:stock] if PRESETS.key?(:legacy_stock_compat)
+  end
+
 end
