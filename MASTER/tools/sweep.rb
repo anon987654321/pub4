@@ -30,6 +30,7 @@
 require "json"
 require "yaml"
 require "open3"
+require_relative "../lib/trace/dmesg"
 
 module Operator
   module Sweep
@@ -112,18 +113,19 @@ def verdict(body)
   (summary || body.last).to_s.sub(/\A\w+[_a-z]*:\s*/, "")
 end
 
-    def dmesg(line) = puts(line.to_s.gsub(/\s+/, " ").strip)
+    def dmesg(line) = Master::Trace::Dmesg.emit(line.to_s.gsub(/\s+/, " ").strip, force: true)
 
     def sweep(tree, unit_index)
-      dmesg "#{tree.downcase}0 at sweep0: #{tree_summary(tree)}"
+      Master::Trace::Dmesg.attach("#{tree.downcase}0", "sweep0", tree_summary(tree))
       rows = probes.select { |p| p.trees.include?(tree) }
       rows.each_with_index do |probe, i|
         ok, body = probe.scoped ? probe.run.call(tree) : probe.run.call
-        dmesg "#{probe.unit}#{unit_index + i} at #{tree.downcase}0: #{verdict(body)}"
+        unit = "#{probe.unit}#{unit_index + i}"
+        Master::Trace::Dmesg.attach(unit, "#{tree.downcase}0", verdict(body))
         next if ok
 
         summary = verdict(body)
-        body.reject { |l| l.include?(summary) }.last(4).each { |l| dmesg "  #{probe.unit}#{unit_index + i}: #{l}" }
+        body.reject { |line| line.include?(summary) }.last(4).each { |line| Master::Trace::Dmesg.status(unit, line) }
       end
       rows.map.with_index { |p, i| [p.unit, unit_index + i] }
     end
@@ -149,15 +151,15 @@ end
     def run(trees, json: false)
       return puts(JSON.pretty_generate(trees: trees.to_h { |t| [t, probes.select { |p| p.trees.include?(t) }.map(&:unit)] })) if json
 
-      dmesg "sweep0 at pub4 root: #{trees.join(' ')}"
-      dmesg "real files = #{Dir.glob(File.join(ROOT, '**', '*.rb')).size} avail probes = #{probes.size}"
+      Master::Trace::Dmesg.attach("sweep0", "master0", "pub4 root, #{trees.join(", ")}")
+      Master::Trace::Dmesg.status("sweep0", "#{Dir.glob(File.join(ROOT, "**", "*.rb")).size} Ruby files, #{probes.size} probes")
       idx = 0
       trees.each { |tree| idx += sweep(tree, idx).size }
 
       counts = ledger_counts
-      dmesg "ledger0 at sweep0: open=#{counts['open'].to_i} landed=#{counts['landed'].to_i} " \
-            "refuted=#{counts['refuted'].to_i}"
-      dmesg "root on #{trees.first.downcase}0 swap on ledger0 dump on ledger0"
+      Master::Trace::Dmesg.attach("ledger0", "sweep0", "proposals")
+      Master::Trace::Dmesg.status("ledger0", "open #{counts["open"].to_i}, landed #{counts["landed"].to_i}, refuted #{counts["refuted"].to_i}")
+      Master::Trace::Dmesg.status("sweep0", "root on #{trees.first.downcase}0, swap on ledger0, dump on ledger0")
       0
     end
   end
@@ -168,6 +170,9 @@ if $PROGRAM_NAME == __FILE__
   trees = ARGV.include?("--all") ? Operator::Sweep::TREES : ARGV.reject { |a| a.start_with?("--") }
   trees = %w[MASTER] if trees.empty?
   bad = trees - Operator::Sweep::TREES
-  abort "sweep: unknown tree(s): #{bad.join(', ')}" if bad.any?
+  unless bad.empty?
+    Master::Trace::Dmesg.status("sweep0", "unknown tree(s), #{bad.join(", ")}", io: $stderr)
+    exit 64
+  end
   exit Operator::Sweep.run(trees, json:)
 end
