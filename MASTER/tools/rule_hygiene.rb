@@ -21,6 +21,7 @@
 
 require "yaml"
 require "json"
+require_relative "../lib/trace/dmesg"
 
 module Operator
   module RuleHygiene
@@ -233,22 +234,22 @@ module Operator
       return (puts JSON.pretty_generate(r)) || true if json
 
       r[:id_case_collisions].each do |pair|
-        warn "rule_hygiene: #{pair.inspect} differ only by case — two ids, one rule, split history"
+        Master::Trace::Dmesg.status("rule0", "#{pair.inspect} differ only by case, one rule, split history", io: $stderr)
       end
       r[:alias_shadows_live_rule].each do |a|
-        warn "rule_hygiene: #{a[:rule]} claims alias `#{a[:alias_name]}`, which is itself a live rule — an unfinished fold"
+        Master::Trace::Dmesg.status("rule0", "#{a[:rule]} claims alias #{a[:alias_name]}, itself a live rule, unfinished fold", io: $stderr)
       end
       unless r[:missing_metadata].empty?
-        puts "rule_hygiene: #{r[:missing_metadata].size} rule(s) declare neither tier nor severity"
+        Master::Trace::Dmesg.status("rule0", "#{r[:missing_metadata].size} rules declare neither tier nor severity")
       end
       r[:statement_conflicts].each do |c|
-        warn "rule_hygiene: #{c[:rule]} says one thing in rules.yml and another in #{c[:home]} (#{c[:reasons].join('; ')})"
+        Master::Trace::Dmesg.status("rule0", "#{c[:rule]} differs between rules.yml and #{c[:home]}, #{c[:reasons].join("; ")}", io: $stderr)
       end
 
       c = ceilings
       over = r.keys.select { |k| r[k].size > c.fetch(k.to_s) }
-      over.each { |k| warn "rule_hygiene: exceeds baseline — #{k} #{r[k].size} > #{c.fetch(k.to_s)}" }
-      puts "rule_hygiene: #{r.map { |k, v| "#{k} #{v.size}" }.join(', ')}"
+      over.each { |k| Master::Trace::Dmesg.status("rule0", "exceeds baseline, #{k} #{r[k].size}, ceiling #{c.fetch(k.to_s)}", io: $stderr) }
+      Master::Trace::Dmesg.status("rule0", r.map { |k, v| "#{k} #{v.size}" }.join(", "))
       over.empty?
     end
   end
