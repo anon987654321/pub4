@@ -85,8 +85,8 @@ module Master
       end
 
       # On a locked file, metadata can lag the real process after a crash/restart.
-      # lsof is advisory here: recovery only happens when the recorded pid is dead
-      # and no actual process has the inode open. Without lsof, leave the lock alone.
+      # lsof is advisory for owner reporting; stale-lock recovery probes the OS
+      # flock directly, so recovery does not depend on an external process listing.
       def lock_holders(path)
         lsof = ["/usr/sbin/lsof", "/usr/bin/lsof", "lsof"].find do |candidate|
           candidate == "lsof" || File.executable?(candidate)
