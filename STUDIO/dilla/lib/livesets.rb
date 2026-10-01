@@ -37,6 +37,7 @@
 # stop with "no beds" rather than playing silence; `dig` refills it.
 require "fileutils"
 require "json"
+require "open3"
 require "rbconfig"
 require "shellwords"
 require "time"
@@ -3197,18 +3198,64 @@ module LiveSynth
     end
 
     def stop!
-      record = playing or return "nothing is playing"
+      record = playing
+      return stop_orphans if record.nil?
 
       pid = record["pid"]
-      Process.kill("TERM", pid)
-      deadline = Time.now + STOP_WAIT_SECONDS
-      sleep 0.05 while alive?(pid) && Time.now < deadline
-      alive?(pid) ? kill_group(pid) : end_group(pid)
+      terminate_player(pid)
       FileUtils.rm_f(record_file)
       "stopped #{record['what']} (pid #{pid})"
     rescue Errno::ESRCH
       FileUtils.rm_f(record_file)
-      "stopped"
+      stop_orphans
+    end
+
+    # Old players can predate player.json (or crash before writing it), while
+    # ffmpeg and sox keep the soundcard open. Find only Dilla's own detached
+    # player entrypoints and terminate their process groups; never match the
+    # MASTER CLI or an arbitrary Ruby process.
+    def stop_orphans
+      rows = orphan_players
+      return "nothing is playing" if rows.empty?
+
+      rows.each { |row| terminate_player(row[:pid], pgid: row[:pgid]) }
+      "stopped #{rows.length} orphaned Dilla player#{rows.length == 1 ? "" : "s"}"
+    rescue StandardError => e
+      Master::Ground::Swallow.log(e, context: "Dilla::Session.stop_orphans")
+      "nothing is playing"
+    end
+
+    def orphan_players
+      out, status = Open3.capture2("ps", "-ax", "-o", "pid=,pgid=,command=")
+      return [] unless status.success?
+
+      [File.expand_path("../liveset.rb", __dir__), File.expand_path("../royksopp.rb", __dir__)].then do |targets|
+        out.lines.filter_map do |line|
+          match = line.strip.match(/\A(\d+)\s+(\d+)\s+(.+)\z/)
+          next unless match
+
+          pid, pgid, command = match.captures.map { |value| value.to_i }.then { |nums| [nums[0], nums[1]] } + [match[3]]
+          next if pid == Process.pid
+          next unless targets.any? { |target| command.include?(target) }
+
+          { pid:, pgid: }
+        end
+      end
+    rescue StandardError => e
+      Master::Ground::Swallow.log(e, context: "Dilla::Session.orphan_players")
+      []
+    end
+
+    def terminate_player(pid, pgid: pid)
+      Process.kill("TERM", -pgid.to_i) if pgid.to_i.positive?
+      deadline = Time.now + STOP_WAIT_SECONDS
+      sleep 0.05 while alive?(pid) && Time.now < deadline
+      if alive?(pid)
+        Process.kill("KILL", -pgid.to_i) if pgid.to_i.positive?
+        Process.kill("KILL", pid)
+      end
+    rescue Errno::ESRCH, Errno::EPERM
+      nil
     end
 
     # A player that ignored TERM goes with everything it started: a spawned
