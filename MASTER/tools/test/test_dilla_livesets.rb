@@ -317,6 +317,12 @@ class TestDillaLivesets < Minitest::Test
     assert_raises(SystemExit) { with_env("LIVE_HOCKET" => "9") { Livesets.knob_int("LIVE_HOCKET", 3, 1..4) } }
   end
 
+  def test_royksopp_research_requires_play_intent_and_has_no_coltrane_alias
+    assert_equal false, Master::LiveSynth::Say.style_query?("röyksopp chord progressions")
+    assert_equal true, Master::LiveSynth::Say.style_query?("play röyksopp chord pads")
+    refute_includes Master::LiveSynth::Say::STYLE_ALIASES.keys, "coltrane"
+  end
+
   # A knob a set reads and nobody documented is a knob nobody can steer by.
   def test_every_knob_a_set_reads_is_documented_and_recalled_knobs_are_among_them
     source = File.read(File.join(__dir__, "..", "dilla", "lib", "livesets.rb"))
