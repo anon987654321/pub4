@@ -148,19 +148,25 @@ class TestDillaLiveSynth < Minitest::Test
     assert_raises(ArgumentError) { knobs.turn("volume", clock: 0.0, seconds: 1.0, by: 0.1) }
   end
 
-  # Nothing named is the main sound, and so are the moog patches it is made
-  # of; a named progression, patch, family or part asks for that instead.
+  # Generic play is the steerable showcase. Explicit improvisation remains
+  # the improviser, while named progressions and patches keep their names.
   def test_sentences_become_live_commands
     say = LiveSynth::Say
-    ["play", "improvise", "keep playing", "play something", "play me something with moog patches",
+    ["play", "keep playing", "play something", "play me something with moog patches",
      "play me a chord progression with a few different moog patches",].each do |sentence|
-      assert_equal %w[default], say.play_args(sentence), sentence
+      assert_equal %w[progression moog_improv], say.play_args(sentence), sentence
     end
+    assert_equal %w[improvise], say.play_args("improvise")
     assert_equal %w[patch fat_bass], say.play_args("play a moog bass")
     assert_equal %w[progression dilla_love pads=lofi_pad], say.play_args("play a lofi pad morphing through dilla_love")
     assert_equal %w[progression dilla_love family=rhodes], say.play_args("play a rhodes through dilla_love")
     assert_equal %w[improvise], say.play_args("improvise with drums")
     assert_equal %w[improvise family=moog], say.play_args("play it on the minimoog")
+
+    assert_equal %w[progression moog_improv], say.play_args("play music")
+    assert_equal 4, LiveSynth.config.dig("progressions", "moog_improv", "master").count { |stage| stage.key?("vcs") }
+    assert_equal 3, LiveSynth.config.dig("progressions", "moog_improv", "master").count { |stage| stage.key?("sonitex") }
+    assert_equal 1, LiveSynth.config.dig("progressions", "moog_improv", "master").count { |stage| stage.key?("console_stack") }
     assert_equal({ "knob" => "cutoff", "seconds" => 30, "amount" => "+0.35" }, say.knob_command("cutoff", "slowly open the filter"))
     assert_equal "-0.35", say.knob_command("cutoff", "close the filter")["amount"]
     assert_equal({ "toggle" => "drums", "on" => false }, say.steering("drums off"))
