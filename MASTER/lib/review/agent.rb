@@ -99,7 +99,10 @@ module Master
       end
 
       def consensus
-        @consensus ||= Master::Review::Consensus.new(agent: self, event_bus: @bus)
+        return @consensus if @consensus && !local_only?
+
+        models = local_only? ? local_consensus_models : nil
+        @consensus = Master::Review::Consensus.new(agent: self, event_bus: @bus, models:)
       end
 
       def call(ctx)
@@ -126,6 +129,23 @@ module Master
       end
 
       private
+
+      def local_only?
+        ENV["MASTER_LOCAL_ONLY"] == "1"
+      end
+
+      def local_consensus_models
+        router = @model_router
+        return [] unless router
+
+        models = []
+        models.concat(Array(router.local_models)) if router.respond_to?(:local_models)
+        models.concat(Array(router.local_server_models)) if router.respond_to?(:local_server_models)
+        models.map(&:to_s)
+              .reject(&:empty?)
+              .reject { |id| id.end_with?(":cloud", "-cloud") }
+              .uniq
+      end
 
       # A hop in retry_on_broke_lane answers with the fallback model, not the
       # one routed to; Result::Ok#model (settle's with_model) names whichever
