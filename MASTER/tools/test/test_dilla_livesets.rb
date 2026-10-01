@@ -34,6 +34,11 @@ class TestDillaLivesets < Minitest::Test
   # The one take kept through `recall keep` before renders/ went. Its journal
   # row is what recall reads, so the seed has to reach the set it names with
   # the kit and the progression it played, not whatever is exported today.
+  def test_live_players_close_inherited_master_descriptors
+    source = File.read(File.expand_path("../dilla/lib/livesets.rb", __dir__))
+    assert_includes source, "pgroup: true, close_others: true"
+  end
+
   def test_the_kept_take_recalls_from_the_journal
     handed = nil
     stubbing(exec: ->(*args) { handed = args }) { Livesets.recall!(["1133818290"]) }
