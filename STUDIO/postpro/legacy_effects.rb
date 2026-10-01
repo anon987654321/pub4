@@ -1,9 +1,77 @@
 # frozen_string_literal: true
 
+# Creative effects recovered from anon987654321/pub/postpro.
+# These compatibility treatments use the current postpro image/runtime helpers.
 module Postpro
   module LegacyEffects
-    def legacy_effect_available
-      true
+    def double_exposure(image, second_image_path = nil, blend_mode = "over", _mode = "professional")
+      second = second_image_path.to_s.empty? ? image : load_image(second_image_path)
+      raise ArgumentError, "double_exposure: second image could not be loaded" unless second
+
+      second = fit_legacy_image(second, image)
+      alpha = 0.45
+      one = image.cast("float")
+      two = second.cast("float")
+      result = case blend_mode.to_s
+               when "add" then one + (two * alpha)
+               when "multiply" then (one * two) / 255.0
+               else (one * (1.0 - alpha)) + (two * alpha)
+               end
+      safe_cast(result)
+    end
+
+    def polaroid_frame(image, intensity = 0.8, border_style = "classic", _mode = "professional")
+      i = intensity.to_f.clamp(0.05, 1.0)
+      border = [(image.width * 0.035 * i).round, 8].max
+      bottom = (border * 1.5).round
+      width = image.width + border * 2
+      height = image.height + border * 2 + bottom
+      frame = Vips::Image.black(width, height, bands: image.bands)
+      frame = frame.draw_rect([245] * image.bands, 0, 0, width, height, fill: true)
+      if border_style.to_s == "worn"
+        inner = frame.draw_rect([216] * image.bands, border / 2, border / 2,
+                                width - border, height - border, fill: true)
+      else
+        inner = frame
+      end
+      safe_cast(inner.composite2(image, "over", x: border, y: border))
+    end
+
+    def tape_degradation(image, intensity = 0.6, _mode = "professional")
+      i = intensity.to_f.clamp(0.0, 1.0)
+      blur = image.gaussblur([0.5 + i * 1.7, 0.5].max)
+      noise = Vips::Image.gaussnoise(image.width, image.height, sigma: 5.0 + 10.0 * i)
+      noise = rgb_bands(noise, image.bands)
+      result = blur.cast("float") + noise.cast("float") * 0.18
+      safe_cast(result)
+    end
+
+    def frame_distortion(image, intensity = 0.5, _mode = "professional")
+      i = intensity.to_f.clamp(0.0, 1.0)
+      angle = 2.5 * i * (((image.width * 13 + image.height * 7) % 3) - 1)
+      rotated = image.rotate(angle)
+      return image if rotated.width < image.width || rotated.height < image.height
+
+      x = [(rotated.width - image.width) / 2, 0].max
+      y = [(rotated.height - image.height) / 2, 0].max
+      safe_cast(rotated.crop(x, y, image.width, image.height))
+    end
+
+    def super8_flicker(image, intensity = 0.5, _mode = "professional")
+      i = intensity.to_f.clamp(0.0, 1.0)
+      flicker = Vips::Image.black(image.width, image.height, bands: image.bands)
+      count = 3
+      seed = (image.width * 31 + image.height * 17).abs
+      count.times do |n|
+        x = (seed * (n + 3) * 97) % [image.width, 1].max
+        y = (seed * (n + 5) * 53) % [image.height, 1].max
+        w = [8, (image.width * 0.08).round].max
+        h = [6, (image.height * 0.06).round].max
+        w = [w, image.width - x].min
+        h = [h, image.height - y].min
+        flicker = flicker.draw_rect([10 + (n * 3)] * image.bands, x, y, w, h, fill: true)
+      end
+      safe_cast(image.cast("float") + flicker.gaussblur([image.width / 160.0, 1.0].max) * i)
     end
   end
 end
