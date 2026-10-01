@@ -234,7 +234,6 @@ DEPENDENCIES
   faraday (>= 2.0)
   ferrum (~> 0.15)
   fiddle
-  head_music (~> 15.1)
   mail (~> 2.9)
   mcp (~> 1.6)
   midilib (~> 4.0)

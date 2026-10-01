@@ -18,7 +18,6 @@ module DillaMusicGems
   # flags to false and the only report was gated behind DILLA_DEBUG. That is how
   # a broken `require` survived: 797af1469's rename sweep matched the bare word
   # `coltrane` and rewrote the gem name — and the require of a gem that does not
-  # exist reported nothing, disabled head_music/midilib/wavefile which had loaded
   # fine, and left chord parsing silently on the inline fallback for two days.
   #
   # A bundler/setup conflict genuinely does poison the whole set (see dilla.rb's
