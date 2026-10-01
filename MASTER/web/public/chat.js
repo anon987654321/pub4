@@ -505,18 +505,13 @@ document.querySelectorAll('.tool').forEach(btn => {
 });
 
 (function wireCommandPalette() {
-  const COMMANDS = [
-    { cmd: '/fix ', hint: 'observe, critique, repair, observe again' },
-    { cmd: '/review ', hint: 'the council and the principle map, read-only' },
-    { cmd: '/status', hint: 'one-frame health' },
-    { cmd: '/undo', hint: 'revert last recorded change' },
-    { cmd: '/commit', hint: 'record the current diff' },
-    { cmd: '/model', hint: 'show or switch the model' },
-    { cmd: '/pair', hint: 'issue or redeem a pairing code' },
-    { cmd: '/doctor', hint: 'host and exposure health' },
-    { cmd: '/help', hint: 'list commands' },
-    { cmd: '/clear', hint: 'clear the session transcript' },
-    { cmd: 'ping', hint: 'smoke test connection' },
+  const COMMANDS = (window.MASTER_COMMANDS || []).map((entry) => ({
+    cmd: entry.cmd,
+    hint: entry.hint || ''
+  }));
+  // Non-command controls stay local to the browser; actual MASTER commands
+  // are always sourced from CommandRegistry so the CLI and face cannot drift.
+  COMMANDS.push(
     { action: 'dashboard', label: 'mission control', hint: 'open /dashboard' },
     { action: 'history', label: 'toggle history', hint: 'sidebar · Ctrl+Shift+H' },
     { action: 'export', label: 'export session', hint: 'markdown download · Ctrl+Shift+E' },
@@ -529,7 +524,7 @@ document.querySelectorAll('.tool').forEach(btn => {
     { action: 'preview', label: 'preview voice', hint: 'play voice blurb' },
     { action: 'shortcuts', label: 'keyboard shortcuts', hint: 'press ?' },
     { action: 'voice_mode', label: 'hands-free voice mode', hint: 'continuous listening, no mic press' }
-  ];
+  );
 
   fetch('/chat/skills').then(r => r.json()).then((skills) => {
     if (!Array.isArray(skills)) return;
