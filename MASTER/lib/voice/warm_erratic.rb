@@ -24,6 +24,7 @@ module Master
 
       STYLES = {
         warm: { rate: "-3%", pitch: "+0Hz" },
+        soulful: { rate: "-4%", pitch: "-1Hz" },
         calm: { rate: "-6%", pitch: "-4Hz" },
         intimate: { rate: "-4%", pitch: "-2Hz" },
         storyteller: { rate: "-5%", pitch: "+1Hz" },
