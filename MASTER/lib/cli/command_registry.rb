@@ -219,7 +219,20 @@ module Master
           player = Voice::Playback.player
           enabled = Voice::Playback.enabled?
           engine = Voice::Speech.synthesis_mode
-          "voice0 at mainbus0: #{enabled ? "on" : "off"}, player #{player ? player.first : "none"}, engine #{engine}"
+          last = Voice::Transcendent.last_pick
+          detail = if last
+            "last=#{last[:engine] || "none"} voice=#{last[:voice] || "none"} primary=#{last[:primary] || "none"}"
+          else
+            "last=none"
+          end
+          error = Voice::Speech.last_error
+          "#{[
+            "voice0 at mainbus0: #{enabled ? "on" : "off"}",
+            "player=#{player ? player.first : "none"} engine=#{engine}",
+            detail,
+            ("error=#{error}" if error && !error.empty?)
+          ].compact.join("
+")}"
         when "test"
           ok = Voice::Playback.speak_now("MASTER voice test.")
           player = Voice::Playback.player
