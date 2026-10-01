@@ -3,6 +3,7 @@
 require "json"
 require "open3"
 require "securerandom"
+require_relative "../../../lib/cli/turn_presentation"
 
 class ChatService
   SMOKE_MESSAGES = %w[ping pong health up].freeze
