@@ -24,12 +24,17 @@ function validatedFeltState() {
 }
 
 async function runSlashCommand(text) {
-  window._chatOnUser?.(text);
+  const command = String(text || "").trim();
+  // /unlock is an authentication handshake, not a turn. Every other slash
+  // command uses the exact same SSE TurnRouter path as plain language.
+  if (!/^\/unlock(?:\s|$)/i.test(command)) return sendMessage(command, { command: true });
+
+  window._chatOnUser?.(command);
   try {
     const resp = await fetch("/chat/command", {
       method: "POST",
       headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken() },
-      body: JSON.stringify({ command: text })
+      body: JSON.stringify({ command })
     });
     const data = await resp.json().catch(() => ({ output: "" }));
     const out = (data.output || "(no output)").toString();
@@ -41,7 +46,6 @@ async function runSlashCommand(text) {
     window._chatOnError?.("command failed");
   }
 }
-
 function loopsMusicUrl() {
   return window.MASTER_ASSET_PATHS?.faceModules?.["face_loops_music.js"] || "/face_loops_music.js";
 }
