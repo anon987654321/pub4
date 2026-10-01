@@ -1,6 +1,8 @@
 <sub># frozen_string_literal: true
 
 require_relative "test_helper"
+require "fileutils"
+require "tmpdir"
 
 class TestScriptDispatch < Minitest::Test
   def test_finds_master_tool_when_operating_from_workspace_root
@@ -43,6 +45,32 @@ class TestScriptDispatch < Minitest::Test
     assert_equal File.join(MasterPaths.repo, "MASTER", "tools", "dilla", "dilla.rb"), path
     assert File.file?(path)
   end
+  def test_tool_child_does_not_inherit_master_bundle_environment
+    Dir.mktmpdir("master-tool-dispatch") do |root|
+      tool_dir = File.join(root, "tools", "probe")
+      FileUtils.mkdir_p(tool_dir)
+      script = File.join(tool_dir, "probe.rb")
+      File.write(script, <<~'RUBY')
+        puts [ENV["BUNDLE_GEMFILE"], ENV["BUNDLE_BIN_PATH"], ENV["RUBYOPT"]].map(&:inspect).join(" ")
+      RUBY
+
+      previous = ENV.to_h.select { |key, _| key.start_with?("BUNDLE_") || key == "RUBYOPT" }
+      begin
+        ENV["BUNDLE_GEMFILE"] = File.join(root, "missing", "Gemfile")
+        ENV["BUNDLE_BIN_PATH"] = File.join(root, "missing", "bundler")
+        ENV["RUBYOPT"] = "-rbundler/setup"
+
+        result = Master::Io::ScriptDispatch.run(root:, tool: "probe")
+
+        assert result.ok?, -> { result.message.to_s }
+        assert_equal "nil nil nil", result.value!
+      ensure
+        ENV.keys.grep(/A(?:BUNDLE_|RUBYOPTz)/).each { |key| ENV.delete(key) }
+        previous.each { |key, value| ENV[key] = value }
+      end
+    end
+  end
+
 end
 
 
