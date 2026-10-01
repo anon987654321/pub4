@@ -299,8 +299,7 @@ return if collisions.any?
     # zero files is a blind instrument, not a clean one — so it says so and exits 2.
     def run(dir, json: false)
       if Dir.glob(File.join(dir, "*.rb")).empty?
-        warn "cohesion: #{dir} holds no .rb file at its top level — nothing was read; " \
-             "for a whole tree use --census --tree=<TREE> --list"
+        Master::Trace::Dmesg.status("cohesion0", "#{dir} holds no .rb file; nothing was read; use --census --tree=<TREE> --list", io: $stderr)
         return 2
       end
 
@@ -427,12 +426,15 @@ return if collisions.any?
       total = rows.sum { |_, plans| plans.size }
       scope = tree ? " in #{tree}" : ""
       ceil = tree ? "-" : ceiling
-      puts "cohesion_census: #{total} family/families across #{rows.size} directories#{scope} (ceiling #{ceil})"
+      Master::Trace::Dmesg.attach("cohesion0", "master0", "#{total} families across #{rows.size} directories#{scope}, ceiling #{ceil}")
 
       if list
         rows.each do |dir, plans|
-          puts "  #{dir}"
-          plans.each { |p| puts format("     %-8s %-12s %2d files %5d lines", p[:plan], p[:family], p[:files].size, p[:lines]) }
+          Master::Trace::Dmesg.attach("cohesion#{rows.index([dir, plans]) || 0}", "cohesion0", dir)
+          plans.each do |plan|
+            unit = "cohesion#{rows.index([dir, plans]) || 0}"
+            Master::Trace::Dmesg.status(unit, "#{plan[:plan]}, #{plan[:family]}, #{plan[:files].size} files, #{plan[:lines]} lines")
+          end
         end
         return 0
       end
@@ -445,30 +447,32 @@ return if collisions.any?
       # deadlock exactly when the attribution is wanted.
       if ratchet && total <= ceiling
         File.write(CENSUS, { "families" => total, "family_members" => members }.to_yaml)
-        puts "cohesion_census: recorded #{total} with its members"
+        Master::Trace::Dmesg.status("cohesion0", "recorded #{total} with its members")
         return 0
       end
       return 0 unless total > ceiling
 
       report_arrivals(members)
-      rows.sort_by { |_, plans| -plans.sum { |p| p[:lines] } }.first(6).each do |dir, plans|
-        puts "  #{dir}: #{plans.map { |p| "#{p[:family]} (#{p[:files].size})" }.join(', ')}"
+      rows.sort_by { |_, plans| -plans.sum { |p| p[:lines] } }.first(6).each_with_index do |(dir, plans), index|
+        unit = "cohesion#{index}"
+        Master::Trace::Dmesg.attach(unit, "cohesion0", dir)
+        plans.each { |plan| Master::Trace::Dmesg.status(unit, "#{plan[:family]}, #{plan[:files].size} files, #{plan[:lines]} lines") }
       end
-      puts "cohesion_census: a new family appeared — regroup it, merge it, or price the ceiling"
+      Master::Trace::Dmesg.status("cohesion0", "new family appeared, regroup it, merge it, or price the ceiling")
       1
     end
 
     def report_arrivals(members)
       if recorded_members.empty?
-        puts "cohesion_census: no members recorded with the ceiling — run --ratchet once to make the next rise attributable"
+        Master::Trace::Dmesg.status("cohesion0", "no members recorded with the ceiling; run --ratchet once to make the next rise attributable")
         return
       end
 
       arrived = members - recorded_members
       left = recorded_members - members
-      puts "cohesion_census: #{arrived.size} arrived since the low was recorded:"
-      arrived.each { |id| puts "  + #{id}" }
-      puts "cohesion_census: #{left.size} of the recorded families are gone (#{left.join(', ')})" unless left.empty?
+      Master::Trace::Dmesg.status("cohesion0", "#{arrived.size} arrived since the low was recorded")
+      arrived.each { |id| Master::Trace::Dmesg.status("cohesion0", "arrived, #{id}") }
+      Master::Trace::Dmesg.status("cohesion0", "#{left.size} recorded families are gone, #{left.join(", ")}") unless left.empty?
     end
 
   end
