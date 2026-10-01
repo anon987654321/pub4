@@ -3290,8 +3290,15 @@ module LiveSynth
   # the instrument's vocabulary -- its patches, progressions, knobs -- lives
   # here with the instrument.
   module Say
-    STOP = /\A\s*(?:stop|silence|quiet|enough|shh+)\b|\b(?:stop|end|kill)\s+(?:the\s+)?(?:music|playing|synth\w*|improvi\w*|jam|sound|it|that)\b/.freeze
-    MORPH = /\b(?:morph|switch|change|fade|move|turn|go)\w*\s+(?:it\s+|over\s+|across\s+|slowly\s+)?(?:to|into)\b/.freeze
+    STOP = /\A\s*(?:stop|silence|quiet|enough|shh+)\b|\b(?:stop|end|kill|mute|shut\s+off)\b(?:\s+(?:the|my|this|that|current|existing|now|currently|already|all))*\s+(?:music|playing|sound|audio|synth\w*|improvi\w*|jam|liveset|it|that)\b/i.freeze
+    MORPH = /\b(?:morph|switch|change|fade|move|turn|go)\w*\s+(?:it\s+|the\s+|this\s+|that\s+|over\s+|across\s+|slowly\s+)?(?:to|into)\b/i.freeze
+    STYLE_QUERY = /\b(?:switch|change|move|go)\b.*\bstyle\b/i.freeze
+    STYLE_ALIASES = {
+      "röyksopp" => %w[progression dilla_love family=prophet],
+      "royksopp" => %w[progression dilla_love family=prophet],
+      "melody a.m." => %w[progression dilla_love family=prophet],
+      "coltrane" => %w[progression soul_jazz_six family=rhodes],
+    }.freeze
     # The improviser with drums, dub and FM is asked for by those parts.
     JAM = /\b(?:drums?|dub|fm|industrial|jam\w*|kick|snare|beat)\b/.freeze
     MODEL_D = /\b(?:model\s*d|minimoog)\b/.freeze
@@ -3318,9 +3325,11 @@ module LiveSynth
 
     def call(text)
       words = text.downcase
+      return Session.stop! if words.match?(STOP)
+      return style_request(words) if style_query?(words)
+
       steer = steering(words)
       return Session.post!(steer) if steer
-      return Session.stop! if words.match?(STOP)
 
       knob = KNOBS.find { |_, pattern| words.match?(pattern) }&.first
       return Session.post!(knob_command(knob, words)) if knob && !play?(words)
@@ -3331,6 +3340,19 @@ module LiveSynth
     end
 
     def play?(words) = words.match?(/\bplay\b/) && !words.match?(MORPH)
+
+    def style_query?(words)
+      STYLE_QUERY.match?(words) || STYLE_ALIASES.keys.any? { |name| words.include?(name) }
+    end
+
+    def style_request(words)
+      key = STYLE_ALIASES.keys.sort_by { |name| -name.length }.find { |name| words.include?(name) }
+      return "style: say what to switch to (röyksopp, coltrane, moog, prophet, rhodes)" unless key
+
+      args = STYLE_ALIASES.fetch(key)
+      pid = Session.spawn!(args)
+      "#{key} style — original Dilla interpretation, not a reproduction (pid #{pid}, log #{Session.log_file})"
+    end
 
     # "fm lead [preset]", or a part switched on or off -- a command for the
     # player, or nil when the sentence asks for neither.
@@ -3358,6 +3380,9 @@ module LiveSynth
     # progression, patch, or other family, or one of the improviser's parts,
     # asks for that instead.
     def play_args(words)
+      style = STYLE_ALIASES.keys.sort_by { |name| -name.length }.find { |name| words.include?(name) }
+      return STYLE_ALIASES.fetch(style) if style
+
       patches = Patches.find(words)
       family = FAMILIES.find { |name| words.match?(/\b#{name}\b/) }
       progression = progression_in(words)
