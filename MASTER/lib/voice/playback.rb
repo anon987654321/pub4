@@ -21,6 +21,7 @@ module Master
       # Engines.synth_edge_melodic, which relies on the same absence.
       PLAYERS = {
         "afplay" => [],
+        "sox" => %w[-q],
         "ffplay" => %w[-nodisp -autoexit -loglevel quiet],
         "mpv" => %w[--no-video --really-quiet],
         "aucat" => %w[-i],
