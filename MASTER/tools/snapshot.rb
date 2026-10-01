@@ -17,6 +17,7 @@
 
 require "fileutils"
 require "open3"
+require_relative "../lib/trace/dmesg"
 
 module Operator
   module Snapshot
@@ -162,7 +163,10 @@ module Operator
 
     def write(tree, io: $stdout)
       paths = tracked(tree)
-      return io.puts("snapshot: #{tree} has no tracked files — skipped") if paths.empty?
+      if paths.empty?
+        Master::Trace::Dmesg.status("snapshot0", "#{tree}, no tracked files, skipped", io:)
+        return
+      end
 
       binaries, texts = paths.partition { |p| binary?(File.join(REPO, p)) }
       # The repo root, which is where an operator hands these to another model
@@ -214,9 +218,11 @@ module Operator
         f.puts "snapshot0: complete tree=#{tree} files=#{paths.size} text=#{texts.size} binary=#{binaries.size}"
       end
 
-      io.puts format("snapshot: %-8s %5d files (%d binary) → %s (%.1f MB)",
-                     tree, paths.size, binaries.size, out.delete_prefix(REPO + "/"),
-                     File.size(out) / 1_048_576.0)
+      Master::Trace::Dmesg.status(
+        "snapshot0",
+        "#{tree}, #{paths.size} files, #{binaries.size} binary, #{out.delete_prefix(REPO + "/")}, #{(File.size(out) / 1_048_576.0).round(1)} MB",
+        io:
+      )
     end
 
     def run(trees = TREES, io: $stdout)
