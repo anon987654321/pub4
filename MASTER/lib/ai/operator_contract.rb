@@ -27,7 +27,8 @@ module Master
           "OPENBSD = deploy identity, operator recipes, service/config lifecycle and live health",
           "reason through authority, topology, runtime, privilege, network edge, lifecycle, " +
           "resources and recovery before acting",
-          "RAILS behavior comes from its pinned source and lockfile; OPENBSD release behavior comes from the target man pages",
+          "RAILS behavior comes from its pinned source and lockfile; " \
+          "OPENBSD release behavior comes from the target man pages",
           "file/data parsing and rewriting: Ruby",
           "Ruby subprocesses: argv through Master::Io::Exec; avoid backticks and shell interpolation when argv is enough",
           "shell execution: zsh only; prefer zsh globs and builtins over GNU text pipelines",
