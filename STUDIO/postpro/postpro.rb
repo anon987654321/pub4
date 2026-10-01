@@ -17,7 +17,9 @@ require_relative "../../MASTER/lib/io/analog_capabilities"
 require "open3"
 require "rbconfig"
 require_relative "legacy_effects"
+require_relative "dilla_analog"
 include Postpro::LegacyEffects
+include Postpro::DillaAnalog
 
 BOOT_TIME = Time.now.freeze
 
@@ -1098,6 +1100,18 @@ PRESETS = {
   legacy_glitch: { fx: %w[glitch], stock: :kodak_portra,
                    temp: 6500, intensity: 0.68 },
 
+
+  dilla_vinyl_hot: { fx: %w[dilla_head_bump dilla_vinyl_bandlimit dilla_phasy grain],
+                     stock: :kodak_portra, temp: 5000, intensity: 0.72 },
+
+  dilla_summing_phasy: { fx: %w[dilla_head_bump dilla_phasy film_curve grain],
+                         stock: :kodak_ektar100, temp: 5200, intensity: 0.70 },
+
+  dilla_tape: { fx: %w[dilla_head_bump dilla_tape_saturation dilla_vinyl_bandlimit grain],
+                stock: :kodak_vision3_500t, temp: 4700, intensity: 0.74 },
+
+  dilla_acetate: { fx: %w[dilla_head_bump dilla_tape_saturation dilla_vinyl_bandlimit film_curve],
+                   stock: :fuji_pro400h, temp: 4900, intensity: 0.68 },
 }.freeze
 
 # Finishing grain uses the preset's own stock and box speed, not a second
@@ -3492,6 +3506,11 @@ def preset(image, name, stock: nil)
              when "sepia"               then sepia(processed, p[:intensity])
              when "teal_and_orange"     then teal_and_orange(processed, p[:intensity])
              when "glitch"              then glitch(processed, p[:intensity])
+             when "dilla_head_bump"      then dilla_head_bump(processed, p[:intensity])
+             when "dilla_tape_saturation" then dilla_tape_saturation(processed, p[:intensity])
+             when "dilla_vinyl_bandlimit" then dilla_vinyl_bandlimit(processed, p[:intensity])
+             when "dilla_phasy"          then dilla_phasy(processed, p[:intensity])
+             when "dilla_console_sum"    then dilla_console_sum(processed, p[:intensity])
              else
                # Was a bare `else processed` — an fx name with no arm here returned
                # the image untouched, and the dmesg line below then reported the
@@ -3770,7 +3789,8 @@ RECIPE_ALLOWED = %w[
   cinemascope_bars halftone_print film_scratches film_stock_emulation sprocket_holes
   lens_flare vhs_degrade color_fade anamorphic_simulation soft_focus
   film_grain film_halation bloom_effect cross_process golden_hour_glow lomo sepia
-  teal_and_orange glitch
+  teal_and_orange glitch dilla_head_bump dilla_tape_saturation dilla_vinyl_bandlimit
+  dilla_phasy dilla_console_sum
 ].freeze
 
 # Where a recipe's single number actually belongs.
