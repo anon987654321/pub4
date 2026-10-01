@@ -105,8 +105,11 @@ module Master
 
         "rails: feature_truth=RAILS/apps.yml; architecture=RAILS/CLAUDE.md; " +
         "shared=RAILS/shared; design=RAILS/shared/README.md; entry=RAILS/bin/triangle; " +
+        "coupling=shared engine + sibling copy-tree affects every Rails app; " +
+        "deployed_copy=/home/<app>/app + /home/<app>/shared; " +
         "proof=RAILS/gates/gates.yml+RAILS/bin/triangle+<app>/bin/ci; " +
         "live=OPENBSD/bin/check-vps+OPENBSD/bin/vps-state; " +
+        "rendered=Chrome/CDP via rendered_suite; " +
         "visual_graph=MASTER/lib/fix/rails_visual_graph.rb; apps=#{rows.join(", ")}"
       rescue StandardError
         "rails: feature_truth=RAILS/apps.yml; architecture=RAILS/CLAUDE.md; inventory unavailable"
@@ -160,9 +163,11 @@ module Master
         "recipes=OPENBSD/data/operator.yml; runbook=OPENBSD/RUNBOOK.md; configs=OPENBSD/etc; " +
         "service_lifecycle=rcctl; privilege_boundary=doas; sandbox_model=MASTER/lib/ground/pledge.rb; " +
         "edge=pf→relayd→loopback; " +
+        "runtime=Falcon+SQLite+Solid Queue/Cache; secrets=/etc/*.env; " +
         "dns_tls=httpd/acme-client/nsd; proof=OPENBSD/bin/check-openbsd+check-vps+vps-state; " +
         "live=target host diagnostics and public health; " +
-        "resource_guard=OPENBSD/bin/resource_guard.sh; apps=#{apps.join(", ")}; master=#{master}"
+        "recovery=tmux+vps-deploy; resource_guard=OPENBSD/bin/resource_guard.sh; " +
+        "apps=#{apps.join(", ")}; master=#{master}"
       rescue StandardError
         "openbsd: deploy identity or operational inventory unavailable; " +
         "inspect OPENBSD/CLAUDE.md and OPENBSD/RUNBOOK.md"
