@@ -96,7 +96,7 @@ module Master
         files = incremental ? @file_collector.collect_changed(target) : @file_collector.collect(target)
         journal = @run_journal.start_or_resume(target:, files:, max_passes:, budget_seconds:)
         run_id = journal["id"]
-        mission = mission_for(target:)
+        mission = mission_for(target:, requested:)
         budget_error = exhausted_budget(journal:, run_id:)
         if budget_error
           mission.defer!(reason: budget_error.message)
@@ -207,7 +207,7 @@ module Master
         finish_run(result, target, run_id, mission:, requested:)
       end
 
-      def mission_for(target:)
+      def mission_for(target:, requested: false)
         checkpoint = lambda do |id:, root:, files:|
           Checkpoint.new(root:, dir: File.join(root, ".master", "checkpoints")).create(
             label: "mission-#{id}", files:,
