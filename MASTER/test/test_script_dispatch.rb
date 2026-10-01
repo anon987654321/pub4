@@ -46,7 +46,18 @@ class TestScriptDispatch < Minitest::Test
     workspace = File.expand_path("../..", __dir__)
     path = Master::Io::ScriptDispatch.script_path(workspace, "dilla")
 
-    assert_equal File.join(MasterPaths.repo, "MASTER", "tools", "dilla", "dilla.rb"), path
+    assert_equal File.join(MasterPaths.repo, "STUDIO", "dilla", "dilla.rb"), path
     assert File.file?(path)
+  end
+
+  def test_master_tools_compatibility_link_resolves_to_studio
+    workspace = File.expand_path("../..", __dir__)
+    legacy = File.join(MasterPaths.repo, "MASTER", "tools", "dilla", "dilla.rb")
+    canonical = File.join(MasterPaths.repo, "STUDIO", "dilla", "dilla.rb")
+
+    assert File.file?(legacy)
+    assert File.file?(canonical)
+    assert_equal File.realpath(canonical), File.realpath(legacy)
+    assert_equal canonical, Master::Io::ScriptDispatch.script_path(workspace, "dilla")
   end
 end
