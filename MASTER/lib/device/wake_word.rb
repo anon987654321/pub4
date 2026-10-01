@@ -160,7 +160,7 @@ module Master
       end
 
       def emit(line)
-        text = line.to_s.sub(/Awake0:s*/i, "").sub(/Awake_word0:s*/i, "")
+        text = line.to_s.sub(/Awake0:s*/i, "").sub(/Awake_word0:s*/i, "").sub(/Awake0:s*/i, "")
         Master::Trace::Dmesg.status("wake0", text, io: @out)
       end
 
