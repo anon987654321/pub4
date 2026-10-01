@@ -3,7 +3,7 @@
 # Routine (on vm23): cd ~/pub4 && doas zsh OPENBSD/OPERATOR.sh
 # Installs OPENBSD/{etc,usr,var} onto /, validates pf/relayd, restarts services.
 # Rare: --first-install | --stage-1 (DNS wipe) | --stage-2 (full app bootstrap)
-# VERIFIED AGAINST: OpenBSD 7.8 manual pages (2026-01-06)
+# PLATFORM BASELINE: OpenBSD 7.9; release-specific behavior must be checked against the target man pages
 #
 # IDEMPOTENCY NOTES (CC14):
 # - Safe to re-run: bootstrap_rails_app (cp tree, bundle install, db:prepare), sync_openbsd_configs
