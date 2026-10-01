@@ -6,7 +6,6 @@ require "timeout"
 #   coltrane  — pedrozath/coltrane — chord parsing, voicings, progression analysis
 #   midilib   — jimm/midilib — Standard MIDI File I/O
 #   wavefile  — jstrait/wavefile — WAV read without ffmpeg
-#   head_music — roberthead/head_music — pitch-class / interval analysis
 #
 # Falls back to dilla.rb's inline theory when gems are unavailable.
 module DillaMusicGems
@@ -28,7 +27,7 @@ module DillaMusicGems
   def bootstrap!
     return @bootstrapped if defined?(@bootstrapped) && @bootstrapped
 
-    @coltrane = @midilib = @wavefile = @head_music = false
+    @coltrane = @midilib = @wavefile = false
     @bootstrapped = true
 
     gemfile = File.expand_path("../../../Gemfile", __dir__)
@@ -38,13 +37,11 @@ module DillaMusicGems
         require "bundler/setup"
       rescue LoadError, StandardError => e
         warn "dilla gems: bundler/setup failed (#{e.class}: #{e.message}) — " \
-             "all four gems unavailable, falling back to inline theory"
+             "the Dilla gems unavailable, falling back to inline theory"
         return @bootstrapped
       end
     end
 
-    # head_music must load before coltrane — loading it after breaks ClassicScales on Ruby 4.
-    @head_music = load_gem("head_music") { require "ostruct"; require "head_music" }
     @coltrane = load_gem("coltrane") do
       require "coltrane"
       require File.expand_path("../../../MASTER/lib/boot/hash_dig_compat", __dir__)
@@ -67,7 +64,7 @@ module DillaMusicGems
 
   def available?
     bootstrap!
-    @coltrane || @midilib || @wavefile || @head_music
+    @coltrane || @midilib || @wavefile
   end
 
   def coltrane?
@@ -83,11 +80,6 @@ module DillaMusicGems
   def wavefile?
     bootstrap!
     @wavefile == true
-  end
-
-  def head_music?
-    bootstrap!
-    @head_music == true
   end
 
   # Map dilla/Jazz symbols → coltrane names (always use M for major).
@@ -241,22 +233,12 @@ module DillaMusicGems
     nil
   end
 
-  def pitch_class_set(pitch_classes)
-    return unless head_music?
-
-    pcs = pitch_classes.map { |pc| pc.to_i % 12 }
-    ::HeadMusic::Analysis::PitchClassSet.new(pcs)
-  rescue StandardError
-    nil
-  end
-
   def status
     bootstrap!
     {
       coltrane: coltrane?,
       midilib: midilib?,
       wavefile: wavefile?,
-      head_music: head_music?,
     }
   end
 end

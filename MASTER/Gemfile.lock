@@ -1,19 +1,6 @@
 GEM
   remote: https://rubygems.org/
   specs:
-    activesupport (8.1.3)
-      base64
-      bigdecimal
-      concurrent-ruby (~> 1.0, >= 1.3.1)
-      connection_pool (>= 2.2.5)
-      drb
-      i18n (>= 1.6, < 2)
-      json
-      logger (>= 1.4.2)
-      minitest (>= 5.1)
-      securerandom (>= 0.3)
-      tzinfo (~> 2.0, >= 2.0.5)
-      uri (>= 0.13.1)
     addressable (2.8.9)
       public_suffix (>= 2.0.2, < 8.0)
     ast (2.4.3)
@@ -25,11 +12,9 @@ GEM
       paint (~> 2.0)
       pedrozath-mercenary (~> 0.3)
     concurrent-ruby (1.3.6)
-    connection_pool (3.0.2)
     date (3.5.1)
     diffy (3.4.4)
     docile (1.4.1)
-    drb (2.2.3)
     dry-configurable (1.3.0)
       dry-core (~> 1.1)
       zeitwerk (~> 2.6)
@@ -85,13 +70,6 @@ GEM
     ffi (1.17.4-x86_64-linux-gnu)
     fiddle (1.1.8)
     hana (1.3.7)
-    head_music (15.1.0)
-      activesupport (>= 7.0, < 10)
-      humanize (~> 2.0)
-      i18n (~> 1.8)
-    humanize (2.5.1)
-    i18n (1.15.2)
-      concurrent-ruby (~> 1.0)
     io-console (0.8.2)
     json (2.19.1)
     json_schemer (2.5.0)
@@ -113,7 +91,6 @@ GEM
       json_schemer (>= 2.4)
     midilib (4.0.2)
     mini_mime (1.1.5)
-    mini_portile2 (2.8.9)
     minitest (5.27.0)
     multipart-post (2.4.1)
     net-http (0.9.1)
@@ -207,7 +184,6 @@ GEM
       schematist (~> 1.1)
       zeitwerk (~> 2)
     schematist (1.1.0)
-    securerandom (0.4.1)
     simplecov (0.22.0)
       docile (~> 1.1)
       simplecov-html (~> 0.11)
@@ -234,8 +210,6 @@ GEM
       tty-screen (~> 0.8)
       wisper (~> 2.0)
     tty-screen (0.8.2)
-    tzinfo (2.0.6)
-      concurrent-ruby (~> 1.0)
     unicode-display_width (2.6.0)
     uri (1.1.1)
     wavefile (1.1.2)
@@ -290,7 +264,6 @@ DEPENDENCIES
   zeitwerk (~> 2.7)
 
 CHECKSUMS
-  activesupport (8.1.3) sha256=21a5e0dfbd4c3ddd9e1317ec6a4d782fa226e7867dc70b0743acda81a1dca20e
   addressable (2.8.9) sha256=cc154fcbe689711808a43601dee7b980238ce54368d23e127421753e46895485
   ast (2.4.3) sha256=954615157c1d6a382bc27d690d973195e79db7f55e9765ac7c481c60bdb4d383
   base64 (0.3.0) sha256=27337aeabad6ffae05c265c450490628ef3ebd4b67be58257393227588f5a97b
@@ -298,11 +271,9 @@ CHECKSUMS
   color (1.8) sha256=0a8512ecf6a8fe14928707f7d2766680c955b3a2224de198c1e25c837cd36f82
   coltrane (2.1.5) sha256=dde5c071fac815a85414967c51ef90341e06a29dceb6b697788b9056c98d109e
   concurrent-ruby (1.3.6) sha256=6b56837e1e7e5292f9864f34b69c5a2cbc75c0cf5338f1ce9903d10fa762d5ab
-  connection_pool (3.0.2) sha256=33fff5ba71a12d2aa26cb72b1db8bba2a1a01823559fb01d29eb74c286e62e0a
   date (3.5.1) sha256=750d06384d7b9c15d562c76291407d89e368dda4d4fff957eb94962d325a0dc0
   diffy (3.4.4) sha256=79384ab5ca82d0e115b2771f0961e27c164c456074bd2ec46b637ebf7b6e47e3
   docile (1.4.1) sha256=96159be799bfa73cdb721b840e9802126e4e03dfc26863db73647204c727f21e
-  drb (2.2.3) sha256=0b00d6fdb50995fe4a45dea13663493c841112e4068656854646f418fda13373
   dry-configurable (1.3.0) sha256=882d862858567fc1210d2549d4c090f34370fc1bb7c5c1933de3fe792e18afa8
   dry-core (1.2.0) sha256=0cc5a7da88df397f153947eeeae42e876e999c1e30900f3c536fb173854e96a1
   dry-inflector (1.3.1) sha256=7fb0c2bb04f67638f25c52e7ba39ab435d922a3a5c3cd196120f63accb682dcc
@@ -323,9 +294,6 @@ CHECKSUMS
   ffi (1.17.4-x86_64-linux-gnu) sha256=9d3db14c2eae074b382fa9c083fe95aec6e0a1451da249eab096c34002bc752d
   fiddle (1.1.8) sha256=7fa8ee3627271497f3add5503acdbc3f40b32f610fc1cf49634f083ef3f32eee
   hana (1.3.7) sha256=5425db42d651fea08859811c29d20446f16af196308162894db208cac5ce9b0d
-  head_music (15.1.0) sha256=d8dacb80e0b1c948cf885fa2ff44b6de1376baa0bbd044536d5baf4a1d0517a1
-  humanize (2.5.1) sha256=a9c881396d6f51179f4f3e2dfdd53f334463ee84da40cf7cb4f37d977f57da21
-  i18n (1.15.2) sha256=00f9eb62412fe593b2a65a97daa75300d37abb8f7202ec748e94b6d46a9dd1b5
   io-console (0.8.2) sha256=d6e3ae7a7cc7574f4b8893b4fca2162e57a825b223a177b7afa236c5ef9814cc
   json (2.19.1) sha256=dd94fdc59e48bff85913829a32350b3148156bc4fd2a95a2568a78b11344082d
   json_schemer (2.5.0) sha256=2f01fb4cce721a4e08dd068fc2030cffd0702a7f333f1ea2be6e8991f00ae396
@@ -337,7 +305,6 @@ CHECKSUMS
   mcp (1.6.0) sha256=73fe3be93df68cffd6e73c852e7a1182a0a5eacdaff586b864bfeac22ae6f7be
   midilib (4.0.2) sha256=2eb9a981c792f647298bc8945fbb01f48007d35ac609cdaa8169adee3d81749e
   mini_mime (1.1.5) sha256=8681b7e2e4215f2a159f9400b5816d85e9d8c6c6b491e96a12797e798f8bccef
-  mini_portile2 (2.8.9) sha256=0cd7c7f824e010c072e33f68bc02d85a00aeb6fce05bb4819c03dfd3c140c289
   minitest (5.27.0) sha256=2d3b17f8a36fe7801c1adcffdbc38233b938eb0b4966e97a6739055a45fa77d5
   multipart-post (2.4.1) sha256=9872d03a8e552020ca096adadbf5e3cb1cd1cdd6acd3c161136b8a5737cdb4a8
   net-http (0.9.1) sha256=25ba0b67c63e89df626ed8fac771d0ad24ad151a858af2cc8e6a716ca4336996
@@ -376,7 +343,6 @@ CHECKSUMS
   ruby-progressbar (1.13.0) sha256=80fc9c47a9b640d6834e0dc7b3c94c9df37f08cb072b7761e4a71e22cff29b33
   ruby_llm (2.0.0) sha256=b3ea5978f544c1c1edf74636fe4ac1d24129127deb44e4c4e7c58df11a4b9e3b
   schematist (1.1.0) sha256=905d8f0286830926e77e0d631bee325ee741c4b99640bc99735593b40ba73e7b
-  securerandom (0.4.1) sha256=cc5193d414a4341b6e225f0cb4446aceca8e50d5e1888743fac16987638ea0b1
   simplecov (0.22.0) sha256=fe2622c7834ff23b98066bb0a854284b2729a569ac659f82621fc22ef36213a5
   simplecov-html (0.13.2) sha256=bd0b8e54e7c2d7685927e8d6286466359b6f16b18cb0df47b508e8d73c777246
   simplecov_json_formatter (0.1.4) sha256=529418fbe8de1713ac2b2d612aa3daa56d316975d307244399fa4838c601b428
@@ -393,7 +359,6 @@ CHECKSUMS
   tty-prompt (0.23.1) sha256=fcdbce905238993f27eecfdf67597a636bc839d92192f6a0eef22b8166449ec8
   tty-reader (0.9.0) sha256=c62972c985c0b1566f0e56743b6a7882f979d3dc32ff491ed490a076f899c2b1
   tty-screen (0.8.2) sha256=c090652115beae764336c28802d633f204fb84da93c6a968aa5d8e319e819b50
-  tzinfo (2.0.6) sha256=8daf828cc77bcf7d63b0e3bdb6caa47e2272dcfaf4fbfe46f8c3a9df087a829b
   unicode-display_width (2.6.0) sha256=12279874bba6d5e4d2728cef814b19197dbb10d7a7837a869bab65da943b7f5a
   uri (1.1.1) sha256=379fa58d27ffb1387eaada68c749d1426738bd0f654d812fcc07e7568f5c57c6
   wavefile (1.1.2) sha256=0b1ea029702454d39f64450bc55a9d99d650d3d95a5d5f46e2dd9a4501574199

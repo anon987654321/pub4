@@ -88,9 +88,17 @@ class TestDependencyManager < Minitest::Test
   def test_dilla_music_dependencies_stay_inside_the_dilla_group
     source = File.read(File.join(Master::ROOT, "Gemfile"))
     group = source[/group :dilla do\n(.*?)^end/m, 1].to_s
+    lock = File.read(File.join(Master::ROOT, "Gemfile.lock"))
 
-    assert_includes group, 'gem "head_music", "~> 15.1"'
+    assert_includes group, 'gem "coltrane", "~> 2.1"'
+    assert_includes group, 'gem "midilib", "~> 4.0"'
     assert_includes group, 'gem "wavefile", "~> 1.1"'
+    assert_includes group, 'gem "ostruct", "~> 0.6"'
+    refute_includes group, "head_music"
+    refute_match(/^    head_music /, lock)
+    refute_match(/^    activesupport /, lock)
+    refute_match(/^    humanize /, lock)
+    refute_match(/^    mini_portile2 /, lock)
     assert_match(/group :dilla do/, source)
   end
 
