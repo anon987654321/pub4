@@ -36,26 +36,34 @@ module Master
       def display_ok(ok:, accumulated:, streamed:)
         text = streamed ? accumulated : success_text(ok)
         routine = !streamed && routine_success?(text)
+        command = diagnostic_command(@last_input)
+
         if streamed
           puts unless text.end_with?("\n")
+        elsif command
+          # Pipeline commands already streamed their live dmesg units. Other
+          # commands get their final returned text attached to their command unit.
+          unless %w[fix review critique].include?(command)
+            Master::Trace::Dmesg::Report.print(command, text)
+          end
         else
           print "\r\e[K" if $stdout.isatty
           puts(text) if routine
-
-          # Printed, never paged: a pager takes the terminal from Reline while
-          # other threads still write to it, and a ^C there lands in the shell.
-          # Scrollback is the pager. No speaker tag either: the reply sits under
-          # the line that asked for it, at full weight among dim system lines.
           puts @refs.renderer.measure(text.chomp, width: reply_measure) unless routine
         end
-        # Every conversational reply is speakable, including short replies.
-        # Routine output used to be deliberately silent, which meant the
-        # smallest and most useful CLI TTS test ("hello") never reached audio.
+
         Master::Voice::Playback.speak(spoken_form(text))
         print_fix_activity_footer
         print_previous_question_footer
         print_parallel_errors_footer(ok)
         print_capability_stamp(ok)
+      end
+
+      def diagnostic_command(input)
+        word = input.to_s.strip.split(/\s+/, 2).first.to_s
+        return unless word.start_with?("/") || input.to_s.strip.match?(/\A(?:fix|review|critique)\b/i)
+
+        word.delete_prefix("/").downcase
       end
 
       # A pass report is a log, and reading a log aloud from the top takes
