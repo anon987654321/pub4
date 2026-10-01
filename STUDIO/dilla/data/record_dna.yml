@@ -1,0 +1,100 @@
+# Review-derived behavioural DNA for original Dilla engine material.
+#
+# These profiles synthesize recurring review descriptions, not track
+# reproductions. Numeric values are implementation controls/hypotheses, not
+# measured facts about the records.
+version: 1
+schema: dilla.record_dna.v1
+
+review_sources:
+  melody_am:
+    - title: "Melody A.M. — Pitchfork"
+      url: "https://pitchfork.com/reviews/albums/6860-melody-am/"
+    - title: "Melody A.M. — AllMusic"
+      url: "https://www.allmusic.com/album/melody-am-mw0000324941"
+  los_angeles:
+    - title: "Los Angeles — Pitchfork"
+      url: "https://pitchfork.com/article/record_review/144656-flying-lotus-los-angeles"
+    - title: "Los Angeles — Drowned in Sound"
+      url: "https://drownedinsound.com/releases/13446/reviews/3450987-flying-lotus-los-angeles"
+    - title: "Los Angeles — AllMusic"
+      url: "https://www.allmusic.com/album/los-angeles-mw0000788516"
+  fantastic_1:
+    - title: "The Fan-Tas-Tic Box Set — Pitchfork"
+      url: "https://pitchfork.com/reviews/albums/21904-the-fan-tas-tic-box-set/"
+    - title: "Fan-Tas-Tic Vol. 1 — Sputnikmusic"
+      url: "https://www.sputnikmusic.com/review/76748/Slum-Village-Fan-Tas-Tic-Vol.1/"
+  fantastic_2:
+    - title: "Fantastic, Vol. 2 — AllMusic"
+      url: "https://www.allmusic.com/album/fantastic-vol-2-mw0000602592"
+    - title: "Fantastic Vol. 2 — Vibe retrospective"
+      url: "https://www.hiphopnostalgia.com/2015/04/slum-village-fantastic-vol2-vibe.html"
+
+profiles:
+  melody_am:
+    evidence: review_synthesis
+    traits: [micro_events, warm_architecture, dub_space, careful_flow, local_texture]
+    phrase_bars: 8
+    chord_bars: 2
+    density: 0.56
+    negative_space: 0.24
+    micro_event_odds: 0.30
+    ghost_density: 0.20
+    bass_late_ticks: 5
+    swing: 54
+    texture_change_bars: 4
+    texture_jump: 0.18
+    chord_tone_share: 0.72
+    final_hold_beats: 2.0
+    drum_density: 0.52
+
+  los_angeles:
+    evidence: review_synthesis
+    traits: [local_density, global_sparseness, particulate_texture, deep_bass, abrupt_change]
+    phrase_bars: 8
+    chord_bars: 2
+    density: 0.68
+    negative_space: 0.36
+    micro_event_odds: 0.42
+    ghost_density: 0.34
+    bass_late_ticks: 6
+    swing: 54
+    texture_change_bars: 2
+    texture_jump: 0.34
+    chord_tone_share: 0.70
+    final_hold_beats: 3.0
+    drum_density: 0.60
+
+  fantastic_1:
+    evidence: review_synthesis
+    traits: [tiny_cells, negative_space, rough_print, exposed_pocket, short_form]
+    phrase_bars: 4
+    chord_bars: 1
+    density: 0.42
+    negative_space: 0.48
+    micro_event_odds: 0.23
+    ghost_density: 0.30
+    bass_late_ticks: 8
+    swing: 56
+    texture_change_bars: 2
+    texture_jump: 0.25
+    chord_tone_share: 0.68
+    final_hold_beats: 1.0
+    drum_density: 0.48
+
+  fantastic_2:
+    evidence: review_synthesis
+    traits: [cleaner_funk, shuffling_drums, melodic_loops, quiet_surface, extra_knock]
+    phrase_bars: 8
+    chord_bars: 2
+    density: 0.54
+    negative_space: 0.30
+    micro_event_odds: 0.24
+    ghost_density: 0.38
+    bass_late_ticks: 5
+    swing: 55
+    texture_change_bars: 4
+    texture_jump: 0.16
+    chord_tone_share: 0.74
+    final_hold_beats: 2.0
+    drum_density: 0.70
