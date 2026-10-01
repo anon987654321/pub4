@@ -83,6 +83,22 @@ class TreeContractTest < Minitest::Test
     end
   end
 
+  def test_studio_owns_media_tools_and_master_keeps_compatibility_links
+    links = {
+      "dilla" => "../../STUDIO/dilla",
+      "lora" => "../../STUDIO/lora",
+      "postpro" => "../../STUDIO/postpro",
+      "replicate" => "../../STUDIO/replicate"
+    }
+
+    links.each do |name, target|
+      path = File.join(ROOT, "tools", name)
+      assert File.symlink?(path), "MASTER/tools/#{name} must remain a compatibility symlink"
+      assert_equal target, File.readlink(path), "MASTER/tools/#{name} points somewhere other than STUDIO/#{name}"
+      assert File.file?(File.join(path, "#{name}.rb")), "STUDIO/#{name}/#{name}.rb is not reachable through the compatibility path"
+    end
+  end
+
   def test_autoload_ignores_point_at_real_files
     manifest = YAML.safe_load_file(File.join(ROOT, "data/autoload.yml")).fetch("autoload")
     manifest.values.flatten.each do |relative|
