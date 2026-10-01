@@ -94,6 +94,7 @@ class MediaIntentTest < Minitest::Test
     end
     assert_equal "dilla", calls.first[:tool]
     assert_equal "live default", calls.first[:arg]
+    assert_equal "0", calls.first[:env]["DILLA_COLTRANE"]
   end
 
   def test_desktop_postpro_variations_keep_the_desktop_source
