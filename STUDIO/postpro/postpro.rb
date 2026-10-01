@@ -3767,8 +3767,11 @@ def random_draw(rng, lane:)
   seeds = random_seeds(lane)
   seeds = random_pool(lane) if seeds.empty?
   picked = [seeds.sample(random: rng)]
-  analog = (pool & RANDOM_ANALOG_CORE).sample(random: rng)
-  picked << analog unless picked.include?(analog)
+  analog_pool = pool & (RANDOM_ANALOG_CORE - [RANDOM_ALWAYS])
+  2.times do
+    analog = (analog_pool - picked).sample(random: rng)
+    picked << analog if analog
+  end
   while picked.length < target
     admissible = (pool - picked).select do |candidate|
       next false if RANDOM_WEAR.include?(candidate) &&
@@ -3831,6 +3834,13 @@ end
 
 def random_chain_name(chain)
   chain.map { |fx, _| fx }.tally.map { |fx, n| n > 1 ? "#{fx}x#{n}" : fx }.join("-")
+end
+
+def random_chain_lane(chain)
+  effects = chain.map(&:first).map(&:to_s)
+  RANDOM_LANES.max_by do |_name, spec|
+    (effects & spec.fetch(:effects)).uniq.length
+  end&.first || :subtle_analog
 end
 
 RECIPE_ALLOWED = %w[
@@ -4088,7 +4098,8 @@ def process_file(file, variations, preset_name = nil, recipe_data = nil, random_
       processed = apply_finishing_grain(processed, preset_name, grained:)
       processed = rgb_bands(processed)
       timestamp = Time.now.strftime("%Y%m%d%H%M%S")
-      suffix = preset_name || (recipe_data ? random_chain_name(recipe_data)[0, 60] : "processed")
+      lane = recipe_data ? random_chain_lane(recipe_data) : nil
+      suffix = preset_name || (recipe_data ? "#{lane}_#{random_chain_name(recipe_data)[0, 50]}" : "processed")
       # Built from dirname + basename, not String#sub on the extension: sub
       # matches the first occurrence anywhere in the path, so a directory
       # component containing the extension (shoots/2024.jpg/frame.jpg) was
@@ -4099,6 +4110,7 @@ def process_file(file, variations, preset_name = nil, recipe_data = nil, random_
       output = File.join(Postpro::Constitution::OUTPUT_DIR,
                          "postpro_#{safe_stem}_#{suffix}_v#{i + 1}_#{timestamp}#{output_ext}")
       Postpro::Constitution.verify_output!(input_path: file, output_path: output)
+      Postpro::Constitution.verify_chain!(chain: recipe_data, stage_rank: random_stage_rank) if recipe_data
 
       quality = CONFIG["jpeg_quality"] || 95
       if ARGV.include?("--tiff16") || output.end_with?(".tif", ".tiff")
@@ -4269,6 +4281,7 @@ def write_chain_sidecar(input_path, output_path, chain)
     output: File.expand_path(output_path),
     grade_version: GRADE_VERSION,
     seed: $postpro_seed,
+    lane: random_chain_lane(chain).to_s,
     chain: chain.map { |fx, params| { fx => params } },
   })
 rescue StandardError => e
