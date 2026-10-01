@@ -63,7 +63,9 @@ namespace :postpro do
     # could gem-install and reach for brew/apt/pkg_add. A check observes the
     # environment; repairing it is a separate command, and this is it.
     ENV["POSTPRO_INSTALL_DEPS"] = "1"
-    ruby File.expand_path("postpro/postpro.rb", __dir__), "--vocab-check"
+    script = File.expand_path("../../STUDIO/postpro/postpro.rb", __dir__)
+    abort "postpro: missing canonical entrypoint #{script}" unless File.file?(script)
+    ruby script, "--vocab-check"
   end
 end
 
