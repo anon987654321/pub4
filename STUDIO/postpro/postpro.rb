@@ -358,7 +358,7 @@ end
 # three of the four layers a photograph fails on are beyond any grade, and a
 # tool that quietly tries everything and reports success is lying about them.
 if ARGV.include?("--rescue")
-  require_relative "lib/rescue"
+  require_relative "rescue"
   subject = ARGV[ARGV.index("--rescue") + 1]
   if subject.nil? || !File.file?(subject)
     PostproBootstrap.dmesg("ERROR --rescue needs a readable file")
@@ -388,7 +388,7 @@ if ARGV.include?("--rescue")
     exit 1
   end
 
-  require_relative "lib/uncanny"
+  require_relative "uncanny"
   comparison = Postpro::Uncanny.compare(subject, target)
   Postpro::Uncanny.verdict(comparison).each { |line| PostproBootstrap.dmesg("rescue: #{line}") }
   PostproBootstrap.dmesg("rescue: wrote #{target}")
