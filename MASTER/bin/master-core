@@ -6,6 +6,7 @@ Master::Boot::Entrypoint.prepare!(root: File.expand_path("..", __dir__))
 
 require "optparse"
 require "rbconfig"
+require_relative "../lib/trace/dmesg"
 
 # The fold spine only. bin/master boots the full runtime (soul, scan, voice).
 # This drives lib/core.rb with a scripted model unless --real.
@@ -54,7 +55,7 @@ parser.parse!(ARGV)
 goal = ARGV.join(" ").strip
 
 if goal.empty?
-  warn parser.to_s
+  Master::Trace::Dmesg::Report.print("/help", parser.to_s, io: $stderr)
   exit 64
 end
 
@@ -79,14 +80,16 @@ result = Master::Core::Fold.new(
 ).run(goal)
 
 if options[:real]
-  puts "master-core: #{result.reason} turns=#{result.turns} summary=#{result.summary}"
+  Master::Trace::Dmesg.attach("core0", "master0", "#{result.reason}, #{result.turns} turns")
+  Master::Trace::Dmesg.status("core0", result.summary)
   exit(result.reason == :complete ? 0 : 1)
 end
 
 if result.reason != :complete && refusals.any? { |detail| detail.include?("evidence_for_done") }
-  puts "master-core: held — done refused without passing evidence (#{refusals.last})"
+  Master::Trace::Dmesg.attach("core0", "master0", "held, done refused without passing evidence")
+  Master::Trace::Dmesg.status("core0", refusals.last)
   exit 0
 end
 
-puts "master-core: #{result.reason} — the scripted done was not refused for want of evidence"
+Master::Trace::Dmesg.status("core0", "#{result.reason}, scripted done was not refused for evidence")
 exit 1
