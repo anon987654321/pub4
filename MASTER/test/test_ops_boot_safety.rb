@@ -88,6 +88,9 @@ class BootSafetySpec < Minitest::Test
     assert_includes source, "reclaim_detached_media_holders"
     assert_includes source, "STUDIO/dilla"
     assert_includes source, "royksopp\\.rb"
+    assert_includes source, 'ps", "-ax", "-o", "pid=,ppid=,pgid=,command="'
+    refute_includes source, 'return false if pid.positive? && process_alive?(pid)'
+    assert_includes source, "0.25"
   end
 
   def test_constitution_drift_requires_explicit_env
