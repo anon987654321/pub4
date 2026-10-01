@@ -29,6 +29,7 @@ require "fileutils"
 require "net/http"
 require "shellwords"
 require "tmpdir"
+require_relative "../lib/trace/dmesg"
 
 # The runtime, for Voice::Policy — the one reader of data/voice.yml.
 $LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
@@ -139,7 +140,7 @@ def prose
   found = paragraphs(kept)
   if highlights_only?
     found = found.select { |para| highlight?(para) }
-    warn "readme_take: #{found.size} of #{HIGHLIGHTS.size} highlights matched — README.md has moved" if found.size < HIGHLIGHTS.size
+    Master::Trace::Dmesg.status("readme0", "#{found.size} of #{HIGHLIGHTS.size} highlights matched, README.md has moved", io: $stderr) if found.size < HIGHLIGHTS.size
   end
   found.map { |para| speakable(para) }.reject(&:empty?)
 end
@@ -212,16 +213,22 @@ def speak!
                 File.join(ROOT, "bin", "tts-worker"), reader_for(policy, index),
                 policy.default_rate, policy.default_pitch, out,
                 in: text, out: File::NULL, err: File::NULL)
-    abort "tts-worker failed on paragraph #{index}" unless ok && File.size?(out)
+    unless ok && File.size?(out)
+      Master::Trace::Dmesg.status("readme0", "tts-worker failed on paragraph #{index}", io: $stderr)
+      exit 1
+    end
     out
   end
 
   list = File.join(parts_dir, "parts.txt")
   File.write(list, parts.map { |part| "file '#{part}'" }.join("\n") + "\n")
   system("ffmpeg", "-y", "-loglevel", "error", "-f", "concat", "-safe", "0",
-         "-i", list, "-ar", "44100", "-ac", "1", "-c:a", "pcm_s16le", WAV) or abort "ffmpeg concat failed"
+         "-i", list, "-ar", "44100", "-ac", "1", "-c:a", "pcm_s16le", WAV) or begin
+    Master::Trace::Dmesg.status("readme0", "ffmpeg concat failed", io: $stderr)
+    exit 1
+  end
   shape!(policy)
-  puts "#{parts.size} paragraphs -> #{WAV} (#{File.size(WAV) / 1_048_576} MB)"
+  Master::Trace::Dmesg.status("readme0", "#{parts.size} paragraphs, #{WAV}, #{File.size(WAV) / 1_048_576} MB")
 end
 
 # The take through the chain MASTER speaks through.
@@ -240,7 +247,10 @@ def shape!(policy)
   shaped = "#{WAV}.shaped.wav"
   ok = system("ffmpeg", "-y", "-loglevel", "error", "-i", WAV, "-af", chain,
               "-ar", "44100", "-ac", "1", "-c:a", "pcm_s16le", shaped)
-  return warn("readme_take: post_chain failed, keeping the dry take") unless ok && File.size?(shaped)
+  unless ok && File.size?(shaped)
+    Master::Trace::Dmesg.status("readme0", "post_chain failed, keeping dry take", io: $stderr)
+    return
+  end
 
   FileUtils.mv(shaped, WAV)
 end
@@ -252,12 +262,15 @@ rescue StandardError
 end
 
 def record!
-  abort "no face at #{FACE_URL} — start it with: cd MASTER/web && ruby bin/rails server -p 53187" unless face_up?
+  unless face_up?
+    Master::Trace::Dmesg.status("readme0", "no face at #{FACE_URL}, start MASTER/web", io: $stderr)
+    exit 1
+  end
 
   frames = (duration_of(WAV) * FPS).floor
   (0...frames).step(SLICE) do |from|
     to = [from + SLICE, frames].min
-    puts "slice #{from}...#{to}"
+    Master::Trace::Dmesg.status("readme0", "record slice #{from}...#{to}")
     ok = false
     ATTEMPTS.times do |attempt|
       ok = system({ "RBENV_VERSION" => PINNED_RUBY }, "rbenv", "exec", "ruby",
