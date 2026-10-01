@@ -35,6 +35,7 @@
 
 require "prism"
 require "set"
+require_relative "../lib/trace/dmesg"
 
 # The checkout this file sits in, not the one it was written in. A hardcoded
 # /Users/mac/Documents/GitHub/pub4 measured the main tree from inside every
@@ -110,21 +111,20 @@ definitions = Dir.glob(File.join(MASTER, "lib/**/*.rb")).sort.flat_map do |path|
   found
 end
 
-puts "send-prefix dispatch: #{prefixes.to_a.sort.join(', ')}"
-puts "Prism::Visitor hooks: #{visitors.size}"
-puts "definitions in MASTER/lib: #{definitions.size}"
+Master::Trace::Dmesg.attach("method0", "master0", "#{definitions.size} definitions")
+Master::Trace::Dmesg.status("method0", "send-prefix dispatch, #{prefixes.to_a.sort.join(", ")}")
+Master::Trace::Dmesg.status("method0", "Prism::Visitor hooks, #{visitors.size}")
 
 dead = definitions.reject do |(_f, _l, name, _b)|
   FRAMEWORK.include?(name) || visitors.include?(name) ||
     prefixes.any? { |p| name.start_with?("#{p}_") } || uses[name].positive?
 end
 
-puts "named nowhere in code: #{dead.size}, carrying #{dead.sum { |d| d[3] }} body lines"
-puts
+Master::Trace::Dmesg.status("method0", "#{dead.size} named nowhere in code, #{dead.sum { |d| d[3] }} body lines")
 dead.group_by { |d| d[0] }.sort_by { |_, ds| -ds.sum { |d| d[3] } }.each do |file, ds|
-  puts "  #{file}  #{ds.size}, #{ds.sum { |d| d[3] }} lines: #{ds.map { |d| d[2] }.join(', ')}"
+  Master::Trace::Dmesg.attach("methodfile#{file.hash.abs % 10}", "method0", "#{file}, #{ds.size} methods, #{ds.sum { |d| d[3] }} lines")
+  ds.map { |d| d[2] }.sort.each { |name| Master::Trace::Dmesg.status("methodfile#{file.hash.abs % 10}", name) }
 end
-puts
 %w[public_method_count swarm_review run_snapshot run_chitchat dispatch_grep].each do |name|
-  puts "control #{name}: #{uses[name]} use(s), #{defs[name]} def(s)"
+  Master::Trace::Dmesg.status("method0", "control #{name}, #{uses[name]} use(s), #{defs[name]} def(s)")
 end
