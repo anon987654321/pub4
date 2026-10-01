@@ -33,12 +33,6 @@ class ChatService
 
   def call
     stream_open!
-    if smoke_reply?
-      write_chunk(smoke_response)
-      @stream.write("data: [DONE]\n\n")
-      return
-    end
-
     prepare_turn
     subscribe_to_events
     publish_canvas_state
@@ -71,19 +65,6 @@ class ChatService
     @stream.write(": connected\n\n")
     @stream.write("event: trace\ndata: #{JSON.generate(trace_id: @trace_id)}\n\n")
     @stream.write("data: #{JSON.generate(type: "trace", trace_id: @trace_id)}\n\n")
-  end
-
-  def smoke_reply?
-    SMOKE_MESSAGES.include?(@params[:message].to_s.strip.downcase)
-  end
-
-  def smoke_response
-    case @params[:message].to_s.strip.downcase
-    when "ping" then "pong"
-    when "pong" then "ping"
-    when "health", "up" then "ok"
-    else "ok"
-    end
   end
 
   def prepare_turn
