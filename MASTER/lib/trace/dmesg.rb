@@ -144,7 +144,7 @@ module Master
           rendered.lines.each do |line|
             line = line.chomp
             if line.empty?
-              io.puts if enabled?
+              io.puts if enabled? || force
             else
               Dmesg.emit(line, io:, force: true)
             end
@@ -198,7 +198,7 @@ module Master
 
         text = line.to_s.gsub(/\s+/, " ").strip
         io.print "\r\e[K" if io.respond_to?(:tty?) && io.tty?
-        io.puts(io.respond_to?(:tty?) && io.tty? ? style(text) : text)
+        io.puts(io.respond_to?(:tty?) && io.tty? ? style(text, io:) : text)
         io.flush if io.respond_to?(:flush)
         text
       rescue StandardError => e
@@ -206,8 +206,8 @@ module Master
         nil
       end
 
-      def style(text)
-        return text unless $stdout.tty?
+      def style(text, io: $stdout)
+        return text unless io.respond_to?(:tty?) && io.tty?
 
         match = text.match(/\A([a-z][a-z0-9_]*\d+)(?: at ([a-z][a-z0-9_]*\d+))?:\s*(.*)\z/)
         return pastel.dim(text) unless match
