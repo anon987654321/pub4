@@ -3,6 +3,7 @@
 require "ripper"
 require "set"
 require "json"
+require_relative "../lib/trace/dmesg"
 
 module Operator
   module EventBusReach
