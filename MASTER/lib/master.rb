@@ -5,11 +5,12 @@ require "timeout"
 require "zeitwerk"
 require "yaml"
 require_relative "security_error"
+require_relative "trace/dmesg"
 
 begin
   require "openssl"
 rescue LoadError => e
-  warn "crypto0: #{e.message}, LLM calls fail"
+  Master::Trace::Dmesg.status("crypto0", "#{e.message}, LLM calls fail", io: $stderr)
 end
 
 module Master
