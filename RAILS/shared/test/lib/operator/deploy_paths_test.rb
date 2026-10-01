@@ -5,29 +5,29 @@ require "pathname"
 require_relative "../../../lib/operator/deploy_paths"
 
 class DeployPathsTest < Minitest::Test
-  def test_postpro_resolves_under_master_tools
+  def test_postpro_prefers_studio
     with_env("PUB4_ROOT" => repo_root, "PUB4_RAILS_ROOT" => rails_root) do
       script = Operator::DeployPaths.postpro_script
       assert script, "expected postpro script"
-      assert_includes script.to_s, "/MASTER/tools/postpro/postpro.rb"
+      assert_equal File.join(repo_root, "STUDIO/postpro/postpro.rb"), script.to_s
       assert File.file?(script)
     end
   end
 
-  def test_replicate_resolves_under_master_tools
+  def test_replicate_prefers_studio
     with_env("PUB4_ROOT" => repo_root, "PUB4_RAILS_ROOT" => rails_root) do
       script = Operator::DeployPaths.replicate_script
       assert script, "expected replicate script"
-      assert_includes script.to_s, "/MASTER/tools/replicate/replicate.rb"
+      assert_equal File.join(repo_root, "STUDIO/replicate/replicate.rb"), script.to_s
       assert File.file?(script)
     end
   end
 
-  def test_dilla_resolves_under_master_tools
+  def test_dilla_prefers_studio
     with_env("PUB4_ROOT" => repo_root, "PUB4_RAILS_ROOT" => rails_root) do
       script = Operator::DeployPaths.dilla_script
       assert script, "expected dilla script"
-      assert_includes script.to_s, "/MASTER/tools/dilla/dilla.rb"
+      assert_equal File.join(repo_root, "STUDIO/dilla/dilla.rb"), script.to_s
       assert File.file?(script)
     end
   end
@@ -54,6 +54,15 @@ class DeployPathsTest < Minitest::Test
         assert File.file?(resolved), "#{script} resolved to a non-file: #{resolved}"
         assert resolved.to_s.start_with?(repo_root), "#{script} resolved outside the checkout: #{resolved}"
       end
+    end
+  end
+
+  def test_master_tools_compatibility_links_are_valid
+    %w[postpro replicate dilla].each do |tool|
+      path = File.join(repo_root, "MASTER/tools", tool, "#{tool}.rb")
+      canonical = File.join(repo_root, "STUDIO", tool, "#{tool}.rb")
+      assert File.file?(path), "#{path} must remain a compatibility entrypoint"
+      assert_equal File.realpath(canonical), File.realpath(path)
     end
   end
 
