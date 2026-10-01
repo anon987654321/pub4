@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "../lib/trace/dmesg"
+
 # \b next to punctuation has now cost this repo three incidents: TODO.md read
 # as a work marker, and OPEN_CLOSED's is_a? clause which could never match.
 # A word boundary needs a word character beside it.
@@ -28,7 +30,7 @@ Dir.glob(File.join(root, "law", "*.rb")).each { |path| scan.call(path, File.read
 Dir.glob(File.join(root, "lib", "review", "scan", "rules", "*.rb")).each { |path| scan.call(path, File.read(path)) }
 
 if hits.empty?
-  puts "word_boundary: clean"
+  Master::Trace::Dmesg.status("word0", "clean")
   exit 0
 end
 
