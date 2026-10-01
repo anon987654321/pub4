@@ -227,9 +227,9 @@ stage_2() {
 
   check_dns_propagation
 
-  # `vmstat -s`'s "free memory" line doesn't exist on every OpenBSD release
-  # (absent on 7.8) -- read plain `vmstat`'s "fre" column instead, which is
-  # always present and (unlike -s) matches what top(1) reports as Free.
+  # Do not depend on a version-specific `vmstat -s` field for the free-memory
+  # check. Read plain `vmstat`'s "fre" column instead, which reports the free
+  # list directly.
   typeset _fre_field; _fre_field=${${(z)$(vmstat | tail -1)}[4]}
   typeset _mem_free_kb
   case $_fre_field in
