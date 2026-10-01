@@ -372,8 +372,11 @@ def default_apply?(*) = false
 
         def deliberation_critique(abs)
           Master::CLI::CommandRegistry.dispatch_critique(
+            scanner: @scanner,
+            fix_loop: @fix_loop,
             deliberation: @deliberation,
             root: @root,
+            bus: @bus,
             ctx: { args: abs },
           )
         rescue StandardError => e

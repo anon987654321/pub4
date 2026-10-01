@@ -206,6 +206,34 @@ class TestFixConvergence < Minitest::Test
     assert_includes result, "DONE: clean"
   end
 
+  def test_critique_dispatch_receives_all_pipeline_dependencies
+    captured = nil
+    fix_loop = Object.new
+    scanner = Object.new
+    deliberation = Object.new
+    bus = Object.new
+
+    Master::CLI::CommandRegistry.stub(
+      :dispatch_critique,
+      ->(**kwargs) { captured = kwargs; "critique: ok" },
+    ) do
+      pass = Master::CLI::Pipeline::Pass.new(
+        scanner:,
+        fix_loop:,
+        root: Master::ROOT,
+        deliberation:,
+        bus:,
+      )
+      assert_equal "critique: ok", pass.send(:deliberation_critique, Master::ROOT)
+    end
+
+    assert_equal scanner, captured[:scanner]
+    assert_equal fix_loop, captured[:fix_loop]
+    assert_equal deliberation, captured[:deliberation]
+    assert_equal Master::ROOT, captured[:root]
+    assert_equal bus, captured[:bus]
+  end
+
   def test_fix_runs_deep_execution_trace_before_repair
     order = []
     fake_trace = Object.new

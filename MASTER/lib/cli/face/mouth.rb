@@ -179,7 +179,11 @@ module Master
         def direct_speak(text)
           return false unless direct_speech?
 
-          ok = system("say", text.to_s, out: File::NULL, err: File::NULL)
+          voice = Master::Voice::Speech.voice_for_text(text).to_sym
+          mac_voice = Master::Voice::Engines::MACOS_VOICE_FALLBACKS[voice]
+          return false unless mac_voice
+
+          ok = system("say", "-v", mac_voice, text.to_s, out: File::NULL, err: File::NULL)
           Master::Trace::Dmesg.status("voice0", "direct speech #{ok ? "ready" : "failed"}")
           @last_error = "direct speech failed" unless ok
           ok

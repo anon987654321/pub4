@@ -219,6 +219,7 @@ module Master
           model: @agent.respond_to?(:model) ? @agent.model : ENV["MASTER_MODEL"],
           effort: ENV.fetch("MASTER_EFFORT", "high"),
           plan: mission_plan,
+          origin: requested ? "manual" : "supervisor",
         )
       rescue StandardError => e
         @bus&.publish("mission:error", error: e.message, phase: "start")
