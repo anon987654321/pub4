@@ -102,7 +102,7 @@ module Master
           "clear" => "cli0", "orders" => "orders0", "soul" => "soul0",
         }.freeze
 
-        UNIT_RE = /A[a-z][a-z0-9_]*d+(?: at [a-z][a-z0-9_]*d+)?:/
+        UNIT_RE = /\A[a-z][a-z0-9_]*\d+(?: at [a-z][a-z0-9_]*\d+)?:/
 
         module_function
 
@@ -152,6 +152,8 @@ module Master
 
         def command_unit(command)
           word = command.to_s.strip.split(/\s+/, 2).first.to_s.delete_prefix("/").downcase
+          return word if word.match?(/\A[a-z][a-z0-9_]*\d+\z/)
+
           COMMAND_UNITS.fetch(word) { safe_unit(word) }
         end
 
