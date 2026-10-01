@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "open3"
+require_relative "../lib/trace/dmesg"
 
 # Lines that recent commits deleted or moved and that look worth a second look:
 # definitions, schema, secrets, OpenBSD daemons.
@@ -73,12 +74,13 @@ module HistoryValuables
     paths = argv.empty? ? ["."] : argv
     found = hits(git_log(window, paths))
     if found.empty?
-      puts "ok: no deleted or moved valuables matched in #{window} for #{paths.join(", ")}"
+      Master::Trace::Dmesg.status("history0", "clean, no deleted or moved valuables matched in #{window} for #{paths.join(", ")}")
       return
     end
 
-    found.each { |hit| puts "#{hit[:commit]} #{hit[:file]} :: #{hit[:line]}" }
-    abort "err: possible lost valuables detected (#{found.size})"
+    Master::Trace::Dmesg.attach("history0", "master0", "#{found.size} deleted or moved valuables")
+    found.each { |hit| Master::Trace::Dmesg.status("history0", "#{hit[:commit]} #{hit[:file]}, #{hit[:line]}", io: $stderr) }
+    exit 1
   end
 end
 
