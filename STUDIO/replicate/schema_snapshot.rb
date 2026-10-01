@@ -3,12 +3,12 @@
 require "fileutils"
 require "time"
 require "yaml"
-require_relative "../../lib/io/atomic_write"
+require_relative "../../MASTER/lib/io/atomic_write"
 
 module Replicate
   module SchemaSnapshot
     VERSION = 1
-    DEFAULT_PATH = File.expand_path("../data/schema_snapshot.yml", __dir__)
+    DEFAULT_PATH = File.expand_path("../../MASTER/data/schema_snapshot.yml", __dir__)
 
     module_function
 
