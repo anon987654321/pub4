@@ -120,12 +120,27 @@ class ControlPlaneSpec < Minitest::Test
     dir = Dir.mktmpdir("master-lock-stale")
     path = File.join(dir, "master.lock")
     File.write(path, JSON.generate(pid: 999_999_999, host: "dead", mode: "cli", at: Time.now.utc.iso8601) + "\n")
-    Master::Ops::ProcessLock.stub(:lock_holders, []) do
+    Master::Ops::ProcessLock.stub(:lock_holders, ->(_) { raise "lsof must not be required for stale lock recovery" }) do
       lock = Master::Ops::ProcessLock.acquire!(path:, mode: "test")
       refute_nil lock
       Master::Ops::ProcessLock.release(lock)
     end
   ensure
+    FileUtils.remove_entry(dir) if dir && Dir.exist?(dir)
+  end
+
+  def test_process_lock_does_not_reclaim_a_live_os_lock_with_dead_metadata
+    dir = Dir.mktmpdir("master-lock-held")
+    path = File.join(dir, "master.lock")
+    holder = File.open(path, File::RDWR | File::CREAT, 0o600)
+    assert holder.flock(File::LOCK_EX | File::LOCK_NB)
+    File.write(path, JSON.generate(pid: 999_999_999, host: "dead", mode: "cli", at: Time.now.utc.iso8601) + "\n")
+
+    lock = Master::Ops::ProcessLock.acquire!(path:, mode: "test")
+    assert_nil lock
+  ensure
+    holder&.flock(File::LOCK_UN) rescue nil
+    holder&.close rescue nil
     FileUtils.remove_entry(dir) if dir && Dir.exist?(dir)
   end
 
