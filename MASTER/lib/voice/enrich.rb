@@ -6,9 +6,9 @@ module Master
     module Enrich
       module_function
 
-      def apply(text, emotion)
+      def apply(text, emotion, tags: false)
         t = text.to_s
-        return t if t.strip.empty?
+        return t if t.strip.empty? || !tags
 
         primary = emotion[:primary]
         scores = emotion.fetch(:scores, {})
