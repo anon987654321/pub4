@@ -38,7 +38,8 @@ module Master
       LIVE_SYNTH_KNOB_RE = /\b(?:open|close|sweep|raise|lower|turn)\b.*\b(?:filter|cutoff|resonance|emphasis|detune|contour)\b/i.freeze
       LIVE_MUSIC_RE = /\b(?:play|start|resume|put on|queue)\b.*\b(?:liveset|default\s+music)\b/i.freeze
       LIVE_AUDIO_STOP_RE = /\b(?:stop|kill|silence|mute|shut\s+off)\b.*\b(?:music|playing|sound|audio|synth\w*|liveset|jam)\b|\b(?:music|playing|sound|audio|synth\w*|liveset)\b.*\b(?:stop|kill|silence|mute|shut\s+off)\b/i.freeze
-      LIVE_STYLE_RE = /\b(?:röyksopp|royksopp|melody\s+a\.m\.|coltrane)\b|\b(?:switch|change|move|go)\b.*\bstyle\b/i.freeze
+      LIVE_STYLE_RE = /\b(?:röyksopp|royksopp|melody\s+a\.m\.)\b/i.freeze
+      LIVE_STYLE_VERB_RE = /\b(?:play|start|resume|switch|change|move|go|use|put\s+on|queue)\b|\b(?:sound\s*card|speakers?)\b/i.freeze
       BACKGROUND_MUSIC_RE = /\b(?:play|start|resume|put on|queue)\b.*\b(?:your|some|the|my)?\s*music\b.*\bbackground\b/i.freeze
       LIVE_SYNTH_ALONE_RE = /\A\s*(?:stop|silence|enough)\b|\bstop\s+(?:the\s+)?(?:music|playing|synth\w*|improvi\w*|jam)\b|\b(?:improvi[sz]e|keep\s+playing)\b|\A\s*(?:please\s+)?play(?:\s+(?:some\s+)?music)?\s*[.!]?\s*\z/i.freeze
       POSTPRO_COMMAND_RE = /\b(?:run|use|call|invoke)\s+postpro(?:\.rb)?\b/i.freeze
@@ -285,7 +286,8 @@ module Master
       end
 
       def live_synth?(text)
-        [LIVE_MUSIC_RE, LIVE_SYNTH_ALONE_RE, LIVE_SYNTH_PLAY_RE, LIVE_SYNTH_KNOB_RE, LIVE_STYLE_RE].any? { |pattern| text.match?(pattern) }
+        [LIVE_MUSIC_RE, LIVE_SYNTH_ALONE_RE, LIVE_SYNTH_PLAY_RE, LIVE_SYNTH_KNOB_RE].any? { |pattern| text.match?(pattern) } ||
+          (text.match?(LIVE_STYLE_RE) && text.match?(LIVE_STYLE_VERB_RE))
       end
 
       def repeatable?(text)
