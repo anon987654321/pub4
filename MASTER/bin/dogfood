@@ -18,16 +18,16 @@ TIMEOUT_SECONDS = Integer(ENV.fetch("MASTER_DOGFOOD_TIMEOUT", "90"))
 BAD_OUTPUT = /\b(NameError|NoMethodError|LoadError|SyntaxError|ArgumentError|uninitialized constant|unknown category|aborted)\b/i
 
 def run_step(name, env, *cmd, stdin_data: nil, chdir: MASTER_ROOT)
-  Master::Trace::Dmesg.status("test0", "dogfood=#{name} state=running")
+  Master::Trace::Dmesg.status("test0", "#{name}, running")
   out, status = Timeout.timeout(TIMEOUT_SECONDS) do
     Open3.capture2e(env, *cmd, stdin_data:, chdir:)
   end
   bad_line = out.lines.find { |line| line.match?(BAD_OUTPUT) }
   if status.success? && bad_line.nil?
-    Master::Trace::Dmesg.status("test0", "dogfood=#{name} state=ok")
+    Master::Trace::Dmesg.status("test0", "#{name}, ok")
     true
   else
-    Master::Trace::Dmesg.status("test0", "dogfood=#{name} state=failed")
+    Master::Trace::Dmesg.status("test0", "#{name}, failed")
     warn out.lines.last(120).join
     false
   end
