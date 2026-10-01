@@ -1082,6 +1082,22 @@ PRESETS = {
   legacy_scratch_print: { fx: %w[film_curve film_scratches color_fade], stock: :kodachrome,
                           temp: 5400, intensity: 0.68 },
 
+
+  legacy_cross_process: { fx: %w[film_curve cross_process film_halation film_grain], stock: :fuji_velvia,
+                          temp: 5500, intensity: 0.72 },
+
+  legacy_golden_hour: { fx: %w[film_curve golden_hour_glow], stock: :kodak_portra,
+                        temp: 4800, intensity: 0.72 },
+
+  legacy_lomo: { fx: %w[film_curve lomo grain], stock: :fuji_pro400h,
+                 temp: 5000, intensity: 0.70, lens: "lomo" },
+
+  legacy_sepia: { fx: %w[film_curve sepia film_grain], stock: :ilford_hp5,
+                  temp: 5400, intensity: 0.68 },
+
+  legacy_glitch: { fx: %w[glitch], stock: :kodak_portra,
+                   temp: 6500, intensity: 0.68 },
+
 }.freeze
 
 # Finishing grain uses the preset's own stock and box speed, not a second
@@ -3467,6 +3483,15 @@ def preset(image, name, stock: nil)
              when "color_fade"          then color_fade(processed, p[:intensity])
              when "anamorphic_simulation" then anamorphic_simulation(processed, p[:intensity])
              when "soft_focus"          then soft_focus(processed, p[:intensity])
+             when "film_grain"          then film_grain(processed, p[:intensity])
+             when "film_halation"       then film_halation(processed, p[:intensity])
+             when "bloom_effect"        then bloom_effect(processed, p[:intensity])
+             when "cross_process"       then cross_process(processed, p[:intensity])
+             when "golden_hour_glow"    then golden_hour_glow(processed, p[:intensity])
+             when "lomo"                then lomo(processed, p[:intensity])
+             when "sepia"               then sepia(processed, p[:intensity])
+             when "teal_and_orange"     then teal_and_orange(processed, p[:intensity])
+             when "glitch"              then glitch(processed, p[:intensity])
              else
                # Was a bare `else processed` — an fx name with no arm here returned
                # the image untouched, and the dmesg line below then reported the
@@ -3744,6 +3769,8 @@ RECIPE_ALLOWED = %w[
   double_exposure polaroid_frame tape_degradation frame_distortion super8_flicker
   cinemascope_bars halftone_print film_scratches film_stock_emulation sprocket_holes
   lens_flare vhs_degrade color_fade anamorphic_simulation soft_focus
+  film_grain film_halation bloom_effect cross_process golden_hour_glow lomo sepia
+  teal_and_orange glitch
 ].freeze
 
 # Where a recipe's single number actually belongs.
