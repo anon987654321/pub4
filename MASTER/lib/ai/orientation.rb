@@ -4,7 +4,12 @@ require "digest"
 require "json"
 require "time"
 require "yaml"
-require_relative "../../../OPENBSD/lib/deploy_inventory"
+begin
+  require_relative "../../../OPENBSD/lib/deploy_inventory"
+rescue LoadError
+  # MASTER can be extracted or tested alone. Cross-tree inventory becomes
+  # unmeasured until OPENBSD is present rather than making the runtime unloadable.
+end
 
 module Master
   module AI
