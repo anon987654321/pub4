@@ -198,7 +198,11 @@ module Master
           stages = [("aesthetic" if aesthetic && run?("fix")), ("fix" if run?("fix")),
                     ("critique" if critique && run?("critique")), ("map" if run?("map"))].compact.join(", ")
           Master::Trace::Dmesg.attach(@unit, "master0",
-            "#{resolved}, #{apply ? "writes" : "read-only"}, #{posture[:name]}, #{stages}")
+            "#{resolved}, #{apply ? "writes" : "read-only"}, #{stages}")
+          Master::Trace::Dmesg.attach(
+            "mode0", @unit,
+            Master::Ground::ModePosture.new(root: @root).line(posture)
+          )
         end
 
         def posture_line(_posture)
@@ -284,8 +288,14 @@ def default_apply?(*) = false
           # plane cannot fetch, rebase or deploy while the fix loop is mutating main.
           Master::Ops::LoopOwner.with_claim("fix") do
             result = @fix_loop.run(abs, requested: true)
-            msg = result.ok? ? result.value!.to_s : "fix: #{result.message}"
-            Master::Trace::Dmesg.status("fix0", result.ok? ? msg[0, 80] : "failed: #{result.message}")
+            unless result.ok?
+              @failed_stages << "fix" unless @failed_stages.include?("fix")
+              Master::Trace::Dmesg.status("fix0", "failed, #{result.message}")
+              next "fix failed: #{result.message}"
+            end
+
+            msg = result.value!.to_s
+            Master::Trace::Dmesg.status("fix0", msg[0, 120])
             msg
           end
         rescue StandardError => e
