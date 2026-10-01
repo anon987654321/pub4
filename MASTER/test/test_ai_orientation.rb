@@ -70,6 +70,17 @@ class TestAiOrientation < Minitest::Test
     assert_includes text, "live=target host diagnostics and public health"
   end
 
+  def test_render_surfaces_inventory_drift
+    File.write(
+      File.join(@root, "OPENBSD", "deploy_inventory.json"),
+      '{"apps":[{"name":"brgen","domain":"brgen.no","port":99999}],"master_face":{"domain":"ai.brgen.no","port":53187}}'
+    )
+
+    text = Master::AI::Orientation.render(root: @master)
+
+    assert_includes text, "inventory_alignment: mismatch divergent=brgen"
+  end
+
   def test_digest_is_stable_for_the_same_observation
     first = Master::AI::Orientation.digest(root: @master)
     second = Master::AI::Orientation.digest(root: @master)
