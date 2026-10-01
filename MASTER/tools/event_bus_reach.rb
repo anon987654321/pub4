@@ -4,6 +4,7 @@ require "ripper"
 require "set"
 require "json"
 require_relative "../lib/trace/dmesg"
+require_relative "../lib/trace/dmesg"
 
 module Operator
   module EventBusReach
@@ -272,24 +273,27 @@ module Operator
         return strict && (result[:unpublished].any? || result[:unconsumed].any?) ? 1 : 0
       end
 
-      io.puts "event_bus: #{result[:publishers].size} publishers, #{result[:subscribers].size} Ruby subscribers, " \
-              "#{result[:listeners].size} browser listeners, #{result[:references].size} browser references"
+      Master::Trace::Dmesg.attach(
+        "eventbus0", "master0",
+        "#{result[:publishers].size} publishers, #{result[:subscribers].size} Ruby subscribers, #{result[:listeners].size} browser listeners, #{result[:references].size} browser references",
+        io:
+      )
 
       unless result[:unpublished].empty?
-        io.puts "event_bus: topics with no publisher:"
+        Master::Trace::Dmesg.status("eventbus0", "topics with no publisher", io:)
         result[:unpublished].each do |topic|
           roles = []
-          roles << "ruby subscribers: #{result[:subscribers][topic].join(', ')}" if result[:subscribers].key?(topic)
-          roles << "browser listeners: #{result[:listeners][topic].join(', ')}" if result[:listeners].key?(topic)
-          roles << "browser references: #{result[:references][topic].join(', ')}" if result[:references].key?(topic)
-          io.puts "  #{topic} — #{roles.join('; ')}"
+          roles << "ruby subscribers #{result[:subscribers][topic].join(", ")}" if result[:subscribers].key?(topic)
+          roles << "browser listeners #{result[:listeners][topic].join(", ")}" if result[:listeners].key?(topic)
+          roles << "browser references #{result[:references][topic].join(", ")}" if result[:references].key?(topic)
+          Master::Trace::Dmesg.status("eventbus0", "#{topic}, #{roles.join("; ")}", io:)
         end
       end
 
       unless result[:unconsumed].empty?
-        io.puts "event_bus: published topics with no subscriber/listener:"
+        Master::Trace::Dmesg.status("eventbus0", "published topics with no subscriber or listener", io:)
         result[:unconsumed].each do |topic|
-          io.puts "  #{topic} — publishers: #{result[:publishers][topic].join(', ')}"
+          Master::Trace::Dmesg.status("eventbus0", "#{topic}, publishers #{result[:publishers][topic].join(", ")}", io:)
         end
       end
 
