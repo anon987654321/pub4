@@ -39,7 +39,7 @@ entries:
   description: pub4/MASTER — constitutional AI runtime and repo-wide governance kernel
   type: project
   body: |-
-    MASTER is the constitutional AI runtime in pure Ruby. The repository is governed as three top-level trees: MASTER, RAILS and OPENBSD; `MASTER/tools/` is the canonical tool plane inside MASTER.
+    MASTER is the constitutional AI runtime in pure Ruby.  The repository is governed as four top-level trees: MASTER, RAILS, OPENBSD and STUDIO; STUDIO owns media implementations and MASTER/tools/ exposes compatibility symlinks.
 
     The public runtime surfaces are `MASTER/bin/master` for the agent session and `MASTER/bin/operator` for repository-wide operations. `/review` is read-only; `/critique` invokes council; `/fix` is the write/convergence operation. `MASTER/bin/operator gate` runs the repository ladder with autofix enabled, while `--scan-only` is the measurement-only variant.
 
