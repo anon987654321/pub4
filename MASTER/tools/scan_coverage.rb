@@ -17,6 +17,7 @@
 
 require "json"
 require "yaml"
+require_relative "../lib/trace/dmesg"
 
 module Operator
   class ScanCoverage
@@ -126,13 +127,13 @@ if $PROGRAM_NAME == __FILE__
   if ARGV.include?("--json")
     puts JSON.pretty_generate(report)
   else
-    report["findings"].each { |row| puts "#{row['kind']}: #{row['dir']} — #{row['message']}" }
-    puts
     covered = report["covered"]
     exempt = report["exempt"]
-    puts "scanned:  #{covered.map { |dir, n| "#{dir} (#{n})" }.join(', ')} = #{covered.values.sum} files"
-    puts "exempt:   #{exempt.map { |dir, n| "#{dir} (#{n})" }.join(', ')} = #{exempt.values.sum} files"
-    puts "scan_coverage: #{report['findings'].empty? ? 'clean' : "#{report['findings'].size} finding(s)"}"
+    Master::Trace::Dmesg.attach("coverage0", "master0", "#{covered.values.sum} scanned files")
+    covered.each { |dir, n| Master::Trace::Dmesg.status("coverage0", "covered #{dir}, #{n} files") }
+    exempt.each { |dir, n| Master::Trace::Dmesg.status("coverage0", "exempt #{dir}, #{n} files") }
+    report["findings"].each { |row| Master::Trace::Dmesg.status("coverage0", "#{row["kind"]}, #{row["dir"]}, #{row["message"]}") }
+    Master::Trace::Dmesg.status("coverage0", report["findings"].empty? ? "clean" : "#{report["findings"].size} finding(s)")
   end
 
   exit(report["findings"].empty? ? 0 : 1)
