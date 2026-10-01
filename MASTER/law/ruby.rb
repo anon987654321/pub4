@@ -350,7 +350,7 @@ Law.define(:RUBY_NUMERIC_UNDERSCORE) do
     # would have written `44_100` into a filter string and broken the render.
     # Ruby spaces its assignment; a `=` flush against the digits is a config
     # token in some other language.
-    masked.match?(/(?<![\d_.:\w=])\d{5,}(?![\d_])/)
+    masked.match?(/(?<![\w.:=])\d{5,}(?![\d_])/)
   end
   fix "Group digits in threes: one million is 1_000_000."
   bad  "max = 1000000"

@@ -134,7 +134,7 @@ Law.define(:NO_COLUMN_ALIGN) do
     next false if s.start_with?("*") || s.match?(/\A[-=]+\z/)
 
     line.gsub(/"[^"\n]*"|'[^'\n]*'/) { |m| "\0" * m.length }
-        .match?(/\S {2,}(?:=>|[^=!<>=]?=[^=>]|:\s)/)
+        .match?(/\S {2,}(?:=>|[^=!<>]?=[^=>]|:\s)/)
   end
   fix "Remove padding; one space before operators. Column alignment decays and hides diffs."
   bad "name    = 1"

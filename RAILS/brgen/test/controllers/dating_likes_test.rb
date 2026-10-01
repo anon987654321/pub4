@@ -26,7 +26,6 @@ class DatingLikesTest < ActionDispatch::IntegrationTest
     profile = Dating::Profile.new(user: user, age: 30, bio: "hei", visible: true)
     attach_pixel!(profile.photos)
     profile.save!
-    profile
     user
   end
 

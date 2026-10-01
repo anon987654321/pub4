@@ -6877,14 +6877,19 @@ def build_bass_bus_filter(idx, duration)
   vol = ENV.fetch("BASS_BUS_VOL", "1.4").to_f
   sub_g = ENV.fetch("BASS_BUS_SUB_DB", "3.0").to_f
   mud_g = ENV.fetch("BASS_BUS_MUD_DB", "-1.5").to_f
+  # The Pultec move on top of the two bands below: a broad lift under 100 Hz
+  # and a narrower dip near 280 -- the shape no single control produces, and
+  # the reason a fifty-year-old passive equaliser is still on every low end.
+  # Measured at +3.7 dB and -1.9 dB, flat again by a kilohertz.
+  #
+  # This comment sits above the string, not inside it: a comment line between
+  # two backslash-continued literals ends the expression, so Ruby discarded
+  # everything before it and the method returned only the tail (no input label,
+  # no volume, no highpass, no EQ bands).
   "[#{idx}:a]aformat=channel_layouts=stereo,#{bus_analog_filter(:bass)}volume=#{vol}," \
     "highpass=f=26," \
     "equalizer=f=70:t=o:w=1.1:g=#{sub_g}," \
     "equalizer=f=180:t=o:w=1.2:g=#{mud_g}," \
-    # The Pultec move on top of the two bands above: a broad lift under 100 Hz
-    # and a narrower dip near 280 -- the shape no single control produces, and
-    # the reason a fifty-year-old passive equaliser is still on every low end.
-    # Measured at +3.7 dB and -1.9 dB, flat again by a kilohertz.
     "#{Outboard.pultec_low}," \
     "lowpass=f=1400," \
     "acompressor=threshold=-20dB:ratio=2.4:attack=14:release=150:makeup=1.5," \
