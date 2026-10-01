@@ -71,7 +71,7 @@ class TestSnapshotGenerator < Minitest::Test
     assert_includes source, '".zsh" => "zsh"'
     assert_includes source, '"## Snapshot complete"'
     assert_includes source, 'snapshot0: complete tree='
-    assert_includes source, '"STUDIO" => "MASTER/tools"'
+    assert_includes source, '"STUDIO" => "STUDIO"'
     assert_includes source, '" — git "'
   end
 
