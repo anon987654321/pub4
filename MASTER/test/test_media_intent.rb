@@ -124,6 +124,31 @@ class MediaIntentTest < Minitest::Test
     end
   end
 
+  def test_absolute_image_glob_dispatches_without_truncating_the_path
+    Dir.mktmpdir("master-desktop") do |dir|
+      2.times { |index| File.write(File.join(dir, "new#{index}.jpg"), "fixture") }
+      calls = []
+
+      Master::Io::ScriptDispatch.stub(
+        :run,
+        lambda do |root:, tool:, arg:, env: {}|
+          calls << { root:, tool:, arg:, env: }
+          Master::Result.ok("postpro: varied")
+        end
+      ) do
+        pattern = File.join(dir, "*.jpg")
+        result = Master::Io::MediaIntent.dispatch(
+          "run 5 random extreme postpro.rb variations of #{pattern}"
+        )
+        assert result.ok?, -> { result.message.to_s }
+      end
+
+      assert_equal "postpro", calls.fetch(0).fetch(:tool)
+      assert_equal [dir, "--random", "--count", "5", "--rough"],
+                   Shellwords.split(calls.fetch(0).fetch(:arg))
+    end
+  end
+
   def test_postpro_literal_is_a_media_intent
     assert Master::Io::MediaIntent.handles?("run postpro.rb over ~/Pictures/new")
     assert Master::Io::MediaIntent.handles?("use postpro for these photos in ~/Pictures/new")
