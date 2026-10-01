@@ -6,7 +6,6 @@
 require "bundler"
 require "rake/testtask"
 require "timeout"
-require "bundler"
 
 def run_tool(path, *args)
   sh RbConfig.ruby, File.join(__dir__, path), *args
