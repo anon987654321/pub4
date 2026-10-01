@@ -22,6 +22,7 @@
 # that position, which is the first thing worth knowing about this backlog.
 
 require "English"
+require_relative "../lib/trace/dmesg"
 
 module Operator
   module BacklogTriage
@@ -141,12 +142,12 @@ module Operator
 
       def print_items(judged, wanted)
         rows = judged.select { |_, verdict| verdict == wanted }
+        Master::Trace::Dmesg.attach("backlog0", "master0", "#{rows.size} #{wanted} items")
         rows.each do |item, _|
           first = item.text.lines.first.to_s.strip
-          puts format("  TODO.md:%-6d %s", item.line_no, first[0, 104])
-          puts format("            names: %s", item.paths.first(3).join(", "))
+          Master::Trace::Dmesg.status("backlog0", "TODO.md:#{item.line_no}, #{first[0, 104]}")
+          Master::Trace::Dmesg.status("backlog0", "names, #{item.paths.first(3).join(", ")}") unless item.paths.empty?
         end
-        puts "# #{rows.size} #{wanted}"
       end
     end
   end
