@@ -3015,6 +3015,16 @@ module Outboard
   #   dB rather than the -5.0 dB that symmetry with the drive would suggest;
   #   measured net for the whole unit is -0.08 dB. An uncompensated version of
   #   this cost 4 dB and would have read as "the phasy racks are quieter".
+
+  # Programme memory: a deliberately small, stateful dynamics stage. Its slow
+  # release lets a loud passage leave the virtual bus slightly compressed for
+  # the following transient. It is an analogue behaviour model, not a claim of
+  # circuit-level emulation.
+  def program_memory(threshold: -18, ratio: 1.2, attack: 12, release: 420)
+    "acompressor=threshold=#{threshold}dB:ratio=#{ratio}:attack=#{attack}:release=#{release}:" \
+      "knee=4:detection=rms:makeup=1.0"
+  end
+
   def console_sum(drive: 5, offset: 0.10, param: 1.2, makeup: -1.0, speed: 0.1)
     "allpass=f=90:width_type=q:w=0.6:order=2," \
       "allpass=f=1800:width_type=q:w=0.5:order=2," \
