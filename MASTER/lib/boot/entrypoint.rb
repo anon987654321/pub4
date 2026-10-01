@@ -2,6 +2,7 @@
 
 require "rubygems"
 require_relative "dependency_manager"
+require_relative "../trace/dmesg"
 
 module Master
   module Boot
@@ -14,9 +15,9 @@ module Master
         manager = DependencyManager.new(root:, env:, out:)
         result = manager.ensure!
         unless result.ok
-          out.puts("deps0: #{result.message}")
+          Master::Trace::Dmesg.status("deps0", result.message, io: out)
           detail = result.output.to_s.strip
-          out.puts(detail) unless detail.empty?
+          Master::Trace::Dmesg.status("deps0", detail, io: out) unless detail.empty?
           exit 78
         end
 
@@ -44,10 +45,10 @@ module Master
           BUNDLE_USER_HOME BUNDLE_VERSION BUNDLE_WITH BUNDLE_WITHOUT
         ].each { |key| clean_env.delete(key) }
         clean_env["MASTER_BUNDLER_REEXEC_DONE"] = "1"
-        out.puts("bundler0: switching #{active} to #{lock_version}")
+        Master::Trace::Dmesg.status("bundler0", "switching #{active} to #{lock_version}", io: out)
         exec(clean_env, File.expand_path(program), *argv)
       rescue Errno::ENOENT => e
-        out.puts("bundler0: cannot re-exec #{program}, #{e.message}")
+        Master::Trace::Dmesg.status("bundler0", "cannot re-exec #{program}, #{e.message}", io: out)
         exit 78
       end
 
@@ -79,7 +80,7 @@ module Master
 
         wrapper = File.join(root, "bin", "ruby")
         unless File.executable?(wrapper)
-          out.puts("ruby0: #{RUBY_VERSION}, #{expected} required, #{wrapper} unavailable")
+          Master::Trace::Dmesg.status("ruby0", "#{RUBY_VERSION}, #{expected} required, #{wrapper} unavailable", io: out)
           exit 78
         end
 
@@ -87,10 +88,10 @@ module Master
         # program and argv through it lets every executable share that logic.
         return if File.expand_path(program) == File.expand_path(wrapper)
 
-        out.puts("ruby0: switching #{RUBY_VERSION} to #{expected}")
+        Master::Trace::Dmesg.status("ruby0", "switching #{RUBY_VERSION} to #{expected}", io: out)
         exec(wrapper, File.expand_path(program), *argv)
       rescue ArgumentError
-        out.puts("ruby0: invalid .ruby-version, #{version_file}")
+        Master::Trace::Dmesg.status("ruby0", "invalid .ruby-version, #{version_file}", io: out)
         exit 78
       end
     end
