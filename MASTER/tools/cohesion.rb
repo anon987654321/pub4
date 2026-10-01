@@ -40,6 +40,7 @@
 
 require "json"
 require "yaml"
+require_relative "../lib/trace/dmesg"
 
 module Operator
   module Cohesion
@@ -346,10 +347,10 @@ return if collisions.any?
     end
 
     def print_regroup(plan)
-      puts "  #{plan[:family]} [regroup, by #{plan[:keyed_by]}]: #{plan[:files].size} files, #{plan[:lines]} lines"
-      puts "    #{plan[:files].join(' + ')}"
-      puts "    -> #{plan[:into]}#{plan[:subdirectory_exists] ? ' (exists already)' : ''}, parent #{plan[:parent]}"
-      plan[:moves].each { |m| puts "       #{m[:from]} -> #{m[:to]}   #{m[:constant]}" }
+      Master::Trace::Dmesg.attach("regroup0", "cohesion0", "#{plan[:family]}, #{plan[:keyed_by]}, #{plan[:files].size} files, #{plan[:lines]} lines")
+      plan[:files].each { |file| Master::Trace::Dmesg.status("regroup0", file) }
+      Master::Trace::Dmesg.status("regroup0", "into #{plan[:into]}#{plan[:subdirectory_exists] ? " exists already" : ""}, parent #{plan[:parent]}")
+      plan[:moves].each { |m| Master::Trace::Dmesg.status("regroup0", "#{m[:from]} -> #{m[:to]}, #{m[:constant]}") }
     end
 
     # ---- census -------------------------------------------------------------
