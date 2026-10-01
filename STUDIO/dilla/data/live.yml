@@ -153,6 +153,7 @@ progressions:
       - { console_stack: { instances: 3, offset: 0.10, param: 1.2, speed: 0.1 } }
       - { sonitex: { bits: 10, lo: 48, hi: 11000, drive: 1.22, mix: 0.95, samples: 2 } }
       - { vcs: { depth: 0.3, smear: 3.6, db: 0.0 } }
+      - { program_memory: { threshold: -18, ratio: 1.2, attack: 12, release: 420 } }
       - { filter: "alimiter=limit=0.95" }
   # MASTER's Theory calls i7 iv7 bVII7 bVI7 dilla_love; these are its chords
   # in C with the ninths and the thirteenth dilla voices them with. A
