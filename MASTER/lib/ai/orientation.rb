@@ -12,10 +12,14 @@ module Master
     # are read from the live tree and durable state, while OperatorContract owns
     # the behavioral law.
     module Orientation
-      VERSION = 2
+      VERSION = 3
       DEFAULT_DEPTH = 2
       MAX_ENTRIES = 80
       ATLAS_MAX_BYTES = 3_000
+      LENSES = %w[
+        authority topology runtime privilege security design lifecycle resources
+        recovery observability provenance seams
+      ].freeze
       SKIP = %w[.git .bundle vendor node_modules tmp log coverage storage .master knowledge output sockets pids cache]
                   .freeze
 
@@ -58,9 +62,12 @@ module Master
 
         lines = [
           "cross-tree atlas:",
-          "lenses: authority, topology, runtime, privilege, security, design, lifecycle, resources, recovery",
+          "lenses: #{LENSES.join(", ")}",
           rails,
           openbsd,
+          "evidence_ladder: source authority → executable proof → live evidence; " +
+          "disagreement means drift to diagnose, not permission to guess",
+          "bridge: RAILS/apps.yml → OPENBSD/deploy_inventory.json → vps-deploy → rcctl → public health",
           "bridge: MASTER/data/soul.yml + MASTER/data/rules.yml are law; " +
           "MASTER/gates/ is the cross-tree verification plane",
           "research pointers: Rails=RAILS/CLAUDE.md + RAILS/apps.yml; " +
@@ -97,6 +104,8 @@ module Master
 
         "rails: feature_truth=RAILS/apps.yml; architecture=RAILS/CLAUDE.md; " +
         "shared=RAILS/shared; design=RAILS/shared/README.md; entry=RAILS/bin/triangle; " +
+        "proof=RAILS/gates/gates.yml+RAILS/bin/triangle+<app>/bin/ci; " +
+        "live=OPENBSD/bin/check-vps+OPENBSD/bin/vps-state; " +
         "visual_graph=MASTER/lib/fix/rails_visual_graph.rb; apps=#{rows.join(", ")}"
       rescue StandardError
         "rails: feature_truth=RAILS/apps.yml; architecture=RAILS/CLAUDE.md; inventory unavailable"
@@ -120,7 +129,8 @@ module Master
         "recipes=OPENBSD/data/operator.yml; runbook=OPENBSD/RUNBOOK.md; configs=OPENBSD/etc; " +
         "service_lifecycle=rcctl; privilege_boundary=doas; sandbox_model=MASTER/lib/ground/pledge.rb; " +
         "edge=pf→relayd→loopback; " +
-        "dns_tls=httpd/acme-client/nsd; live_check=OPENBSD/bin/check-vps; " +
+        "dns_tls=httpd/acme-client/nsd; proof=OPENBSD/bin/check-openbsd+check-vps+vps-state; " +
+        "live=target host diagnostics and public health; " +
         "resource_guard=OPENBSD/bin/resource_guard.sh; apps=#{apps.join(", ")}; master=#{master}"
       rescue StandardError
         "openbsd: deploy identity or operational inventory unavailable; " +

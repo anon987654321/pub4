@@ -41,7 +41,7 @@ class TestAiOrientation < Minitest::Test
   def test_render_is_compact_live_context_and_includes_pending_work
     text = Master::AI::Orientation.render(root: @master, target: File.join(@master, "lib"))
 
-    assert_includes text, "MASTER orientation v2"
+    assert_includes text, "MASTER orientation v3"
     assert_includes text, "target: MASTER/lib"
     assert_includes text, "active plan: repair boot verify again"
     assert_includes text, "pending wishes: 1. Better boot receipt"
@@ -62,7 +62,11 @@ class TestAiOrientation < Minitest::Test
     assert_includes text, "edge=pf→relayd→loopback"
     assert_includes text, "design=RAILS/shared/README.md"
     assert_includes text, "sandbox_model=MASTER/lib/ground/pledge.rb"
-    assert_includes text, "lenses: authority, topology, runtime"
+    assert_includes text, "lenses: authority, topology, runtime, privilege, security, design, lifecycle, resources, recovery, observability, provenance, seams"
+    assert_includes text, "evidence_ladder: source authority → executable proof → live evidence"
+    assert_includes text, "bridge: RAILS/apps.yml → OPENBSD/deploy_inventory.json → vps-deploy → rcctl → public health"
+    assert_includes text, "proof=RAILS/gates/gates.yml+RAILS/bin/triangle+<app>/bin/ci"
+    assert_includes text, "live=target host diagnostics and public health"
   end
 
   def test_digest_is_stable_for_the_same_observation
