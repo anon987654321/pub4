@@ -11,20 +11,29 @@ module Master
 
         private
 
-        def reset_scan_progress(total, unit: nil)
+        def reset_scan_progress(total, unit: nil, rules: [])
           @scan_unit_seq = (@scan_unit_seq || -1) + 1
           name = unit || @through_scan_unit || "scan#{@scan_unit_seq}"
+          rule_unit = "rules#{@scan_unit_seq}"
           @scan_progress = {
             total:,
             done: 0,
             violations: 0,
             dirty_files: 0,
             rules: Hash.new(0),
+            rule_unit:,
+            selected_rule_count: Array(rules).size,
             unit: name,
             started_at: Process.clock_gettime(Process::CLOCK_MONOTONIC),
           }
           $stdout.sync = true
           Master::Trace::Dmesg.attach(name, "master0", Master::Trace::Dmesg.counted(total, "file"))
+          selected = Array(rules)
+          Master::Trace::Dmesg.attach(rule_unit, name, "checking #{selected.size} rules")
+          selected.each_with_index do |rule, index|
+            id = rule.respond_to?(:id) ? rule.id.to_s : rule.class.name.to_s
+            Master::Trace::Dmesg.attach("rule#{index + 1}", rule_unit, id)
+          end
         end
 
         def emit_scan_progress(dir:, path:, file_result:)
@@ -45,6 +54,7 @@ module Master
           append_scan_hits_jsonl(path, findings)
           log_scan_checkpoint(unit:, done:, total:, viol_total:, dirty:, top:, elapsed:, eta_s:)
           log_scan_completion(unit:, done:, total:, viol_total:, dirty:, elapsed:) if done == total
+          log_rule_completion if done == total
           @bus&.publish("scan:progress", done:, total:, path: rel, violations: count, eta_s:, top: top.to_h)
         end
 
@@ -117,6 +127,16 @@ module Master
           skipped = Master::Io::QuotaGate.report
           parts << skipped if skipped
           Master::Trace::Dmesg.status(unit, parts.join(", "))
+        end
+
+
+        def log_rule_completion
+          return unless @scan_progress
+
+          unit = @scan_progress[:rule_unit]
+          selected = @scan_progress[:selected_rule_count].to_i
+          hit_count = @scan_progress[:rules].values.sum
+          Master::Trace::Dmesg.status(unit, "checked #{selected} rules, #{Master::Trace::Dmesg.counted(hit_count, "finding")}")
         end
 
         def tally(violations, dirty)
