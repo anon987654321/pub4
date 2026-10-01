@@ -2,6 +2,7 @@
 
 require "open3"
 require "rbconfig"
+require_relative "../lib/trace/dmesg"
 
 # Which tests only pass because of the company they keep, and which only fail.
 #
@@ -58,11 +59,11 @@ class ToolsIsolation
     rounds = suite_rounds
     suite_failures = rounds.flatten.uniq
     intermittent = suite_failures.reject { |name| rounds.all? { |r| r.include?(name) } }
-    @io.puts "isolation: suite reports #{suite_failures.length} failing test(s) across #{ENV.fetch(%q(SUITE_ROUNDS), %q(3))} round(s)"
+    Master::Trace::Dmesg.attach("isolation0", "master0", "suite reports #{suite_failures.length} failing test(s) across #{ENV.fetch(%q(SUITE_ROUNDS), %q(3))} rounds", io: @io)
 
     names = files.flat_map { |f| test_names(f).map { |n| [ n, f ] } }
     names = names.select { |n, _| n.include?(@pattern) } if @pattern
-    @io.puts "isolation: running #{names.length} test(s) one process each — this is slow on purpose"
+    Master::Trace::Dmesg.status("isolation0", "running #{names.length} tests one process each", io: @io)
 
     outcomes = names.map do |name, file|
       alone = passes_alone?(file, name)
@@ -97,23 +98,23 @@ class ToolsIsolation
 
   def report(outcomes, intermittent, rounds)
     if intermittent.any?
-      @io.puts "isolation: fails in some suite rounds and not others — a race, not an unlucky red"
-      intermittent.each { |name| @io.puts "  #{name}" }
+      Master::Trace::Dmesg.status("isolation0", "fails in some suite rounds and not others, a race")
+      intermittent.each { |name| Master::Trace::Dmesg.status("isolation0", name, io: @io) }
     end
     suite_only = outcomes.select { |o| o.alone && !o.suite }
     alone_only = outcomes.select { |o| !o.alone && o.suite }
 
     if suite_only.any?
-      @io.puts "isolation: passes alone, fails in the suite — something before it interferes"
-      suite_only.each { |o| @io.puts "  #{o.name}" }
+      Master::Trace::Dmesg.status("isolation0", "passes alone, fails in the suite, something before it interferes", io: @io)
+      suite_only.each { |o| Master::Trace::Dmesg.status("isolation0", o.name, io: @io) }
     end
     if alone_only.any?
-      @io.puts "isolation: fails alone, passes in the suite — it depends on a neighbour's setup,"
-      @io.puts "isolation: so it is asserting less than its name claims"
-      alone_only.each { |o| @io.puts "  #{o.name}" }
+      Master::Trace::Dmesg.status("isolation0", "fails alone, passes in the suite, depends on neighbour setup", io: @io)
+      Master::Trace::Dmesg.status("isolation0", "the test asserts less than its name claims", io: @io)
+      alone_only.each { |o| Master::Trace::Dmesg.status("isolation0", o.name, io: @io) }
     end
     if suite_only.empty? && alone_only.empty? && intermittent.empty?
-      @io.puts "isolation: every test agrees with itself alone, in company, and across #{rounds} rounds"
+      Master::Trace::Dmesg.status("isolation0", "every test agrees alone, in company, across #{rounds} rounds", io: @io)
       return 0
     end
     suite_only.length + alone_only.length + intermittent.length
