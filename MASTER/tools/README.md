@@ -5,13 +5,10 @@ it.** Four media tools share that conviction. `dilla/` builds beats, Detroit in
 its lean and genre-agnostic in intent. `postpro/` is the house grade, analog
 photographic emulation for stills. `replicate/` generates images, and
 chains radically different models to do it. `lora/` trains person-specific
-fine-tunes, so a name survives across worlds. `bplans/` holds the business
-plans as YAML, waiting for a generator that has not been written. When it is,
-it sets them as HTML and PDF in Norwegian, on the layout of the HTU letters,
-under MASTER's law, Bringhurst and Strunk & White, and the plans lost from
-the older pub, pub2 and pub3 repositories come back from there. Each tool keeps
-its own contract in its own README, and the reasons behind a setting sit in a
-comment beside it.
+fine-tunes, so a name survives across worlds. Historical business-plan material
+lives in recovery provenance rather than an active MASTER tool; the measured
+source had no generator to restore. Each tool keeps its own contract in its own
+README, and the reasons behind a setting sit in a comment beside it.
 
 ## Read this part first
 

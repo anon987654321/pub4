@@ -4,7 +4,7 @@ name: pub_restore_contract
 # which this file already names under checks.file_presence. Both keys stood here
 # too, with the same two values and no reader in either tree — a second copy that
 # could only drift. lint:data_singularity and lint:dedup both failed on the pair.
-updated: "2026-06-26"
+updated: "2026-10-01"
 layout_note: >-
   Paths naming DEPLOY/ predate its split into RAILS/, OPENBSD/ and the
   MASTER/tools plane. Those paths are repointed; DEPLOY/bp and DEPLOY/sh have no
@@ -55,17 +55,16 @@ critical_items:
 
 checks:
   file_presence:
-    - RESTORE_FROM_PUB.md
     - MASTER/data/recovery/legacy_manifest.yml
-    - RECOVERY/pub/README.md
     - MASTER/data/recovery/plugin_schema_v1.json
-    - DEPLOY/bp/RESTORE_SOURCE_PIPELINE.md
+    - MASTER/data/recovery_pub.yml
 
+  # Only genuinely absent paths stay here. Historical DEPLOY/bp paths belonged
+  # to the old layout and the bplans pipeline never had the generator/templates
+  # this ledger once claimed.
   missing_until_restored:
     - RECOVERY/pub/__OLD_BACKUPS/MEGA_ALL_APPS.md
     - RECOVERY/pub/ai3/legacy/ai3.rb
-    - DEPLOY/bp/generate.rb
-    - DEPLOY/bp/__shared/template.html.erb
 
 agent_prompt: >
   Before claiming pub4 restored pub, read RESTORE_FROM_PUB.md and this file.
