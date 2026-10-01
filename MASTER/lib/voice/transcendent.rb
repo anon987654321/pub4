@@ -111,7 +111,7 @@ module Master
           chain, clean, cfg, emotion, melody, resolved_voice, resolved_rate, resolved_pitch, out_path
         )
         log_pick(used_engine, resolved_voice, resolved_rate, resolved_pitch, emotion)
-        played || Engines.synth_say(clean, out_path)
+        played || Engines.synth_say(clean, out_path, voice: resolved_voice, rate: resolved_rate)
       end
 
       def resolve_voice_and_prosody(clean, cfg, voice:, style:, rate:, pitch:, voice_locked:, style_locked:)
