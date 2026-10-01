@@ -31,7 +31,7 @@ def step(name)
   t0 = Process.clock_gettime(Process::CLOCK_MONOTONIC)
   ok, msg = yield
   dt = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - t0) * 1000).round
-  Master::Trace::Dmesg.status("test0", "smoke=#{name} state=#{ok ? "ok" : "failed"} ms=#{dt}#{msg ? " error=#{msg}" : ""}")
+  Master::Trace::Dmesg.status("test0", "#{name}, #{ok ? "ok" : "failed"}, #{dt}ms#{msg ? ", #{msg}" : ""}")
   ok
 end
 
@@ -181,7 +181,7 @@ if ARGV.include?("--web")
 end
 
 if failures.empty?
-  Master::Trace::Dmesg.status("test0", "smoke state=clean")
+  Master::Trace::Dmesg.status("test0", "clean")
   exit 0
 else
   Master::Trace::Dmesg.status("test0", "smoke state=failed failures=#{failures.join(",")}")
