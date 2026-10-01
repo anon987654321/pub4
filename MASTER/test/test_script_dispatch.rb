@@ -45,6 +45,7 @@ class TestScriptDispatch < Minitest::Test
     assert_equal File.join(MasterPaths.repo, "MASTER", "tools", "dilla", "dilla.rb"), path
     assert File.file?(path)
   end
+
   def test_tool_child_does_not_inherit_master_bundle_environment
     Dir.mktmpdir("master-tool-dispatch") do |root|
       tool_dir = File.join(root, "tools", "probe")
@@ -65,7 +66,7 @@ class TestScriptDispatch < Minitest::Test
         assert result.ok?, -> { result.message.to_s }
         assert_equal "nil nil nil", result.value!
       ensure
-        ENV.keys.grep(/A(?:BUNDLE_|RUBYOPTz)/).each { |key| ENV.delete(key) }
+        ENV.keys.grep(/\A(?:BUNDLE_|RUBYOPT\z)/).each { |key| ENV.delete(key) }
         previous.each { |key, value| ENV[key] = value }
       end
     end
