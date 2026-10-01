@@ -84,7 +84,7 @@ class MasterBootTest < Minitest::Test
       assert_equal({ "size" => 3 }, Master.load_yaml(aliased)["copy"])
 
       recursive = File.join(dir, "recursive.yml")
-      File.write(recursive, "root: &root\\n  name: root\\n  self: *root\\n")
+      File.write(recursive, "root: &root\n  name: root\n  self: *root\n")
       first = Master.load_yaml(recursive)
       second = Master.load_yaml(recursive)
       assert_equal "root", first.dig("root", "name")
