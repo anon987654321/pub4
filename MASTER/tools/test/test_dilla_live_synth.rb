@@ -21,6 +21,27 @@ class TestDillaLiveSynth < Minitest::Test
     end
   end
 
+  def test_orphan_stop_reaps_legacy_player_descendants_without_hitting_the_terminal
+    ps = <<~PS
+      4602 999 3001 /Users/mac/Documents/GitHub/pub4/STUDIO/dilla/liveset.rb
+      4647 4602 91 /bin/bash -c ffmpeg
+      4648 4647 91 /opt/homebrew/bin/ffmpeg -f s16le
+      4649 4647 91 /opt/homebrew/bin/sox -t raw
+      22968 999 91 -zsh
+    PS
+    terminated = nil
+    status = Struct.new(:success?).new(true)
+
+    Open3.stub(:capture2, [ps, status]) do
+      Livesets::Session.stub(:terminate_processes, ->(pids) { terminated = pids }) do
+        result = Livesets::Session.stop_orphans
+        assert_equal "stopped 1 orphaned Dilla player", result
+      end
+    end
+
+    assert_equal [4649, 4648, 4647, 4602], terminated
+  end
+
   # Played quietly into a StringIO: the samples a sink would have received.
   def perform(score, seconds:)
     stage = LiveSynth::Stage.new(rate: RATE, rng: score.rng)
