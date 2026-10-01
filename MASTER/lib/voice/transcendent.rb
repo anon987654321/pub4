@@ -211,6 +211,15 @@ module Master
         )
       end
 
+      def last_pick
+        path = File.join(Master::ROOT, ".master", "tts_last.json")
+        return unless File.file?(path)
+
+        JSON.parse(File.read(path), symbolize_names: true)
+      rescue JSON::ParserError, SystemCallError
+        nil
+      end
+
       def log_pick(engine, voice, rate, pitch, emotion)
         path = File.join(Master::ROOT, ".master", "tts_last.json")
         FileUtils.mkdir_p(File.dirname(path))
