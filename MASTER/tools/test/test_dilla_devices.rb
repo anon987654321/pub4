@@ -467,6 +467,13 @@ class TestDevices < Minitest::Test
     end
   end
 
+  def test_program_memory_is_bounded_and_runtime_addressable
+    filter = Outboard.program_memory
+    assert_includes filter, "acompressor="
+    assert_includes filter, "release=420"
+    assert_raises(NoMethodError) { Outboard.public_send(:program_memori) }
+  end
+
   # Past four is unmeasured, and an unmeasured drive is the thing sound.rb
   # exists not to carry.
   def test_the_stack_clamps_to_what_was_measured
