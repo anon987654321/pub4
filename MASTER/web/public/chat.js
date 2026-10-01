@@ -512,6 +512,7 @@ document.querySelectorAll('.tool').forEach(btn => {
   // Browser-only controls are local UI actions; actual MASTER commands come from
   // CommandRegistry so the CLI and face cannot drift.
   COMMANDS.push(
+    { cmd: 'ping', hint: 'smoke test connection' },
     { action: 'dashboard', label: 'mission control', hint: 'open /dashboard' },
     { action: 'history', label: 'toggle history', hint: 'sidebar · Ctrl+Shift+H' },
     { action: 'export', label: 'export session', hint: 'markdown download · Ctrl+Shift+E' },
@@ -526,8 +527,16 @@ document.querySelectorAll('.tool').forEach(btn => {
     { action: 'voice_mode', label: 'hands-free voice mode', hint: 'continuous listening, no mic press' }
   );
 
-  // Skills are runtime capabilities, not CLI commands. Keep them out of the
-  // command palette unless CommandRegistry explicitly promotes one to the slash surface.
+  // Runtime skills are suggestions, not slash commands. Preserve them as
+  // input-fill entries; a skill name is not submitted until the visitor sends it.
+  fetch('/chat/skills').then(r => r.json()).then((skills) => {
+    if (!Array.isArray(skills)) return;
+    skills.forEach((skill) => {
+      if (!skill?.name) return;
+      COMMANDS.push({ cmd: skill.name, label: skill.name, hint: skill.description || 'skill' });
+    });
+    filterItems(panelInput?.value || '');
+  }).catch(() => {});
 
   let root = document.getElementById('cmd-palette');
   if (!root) {

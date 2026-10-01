@@ -181,7 +181,8 @@ class GateContractSpec < Minitest::Test
     assert_includes view, "CommandRegistry.command_surface"
     assert_equal Master::CLI::CommandRegistry.slash_commands.sort, surface.map { |row| row.fetch(:cmd) }.sort
     assert_includes chat, "(window.MASTER_COMMANDS || [])"
-    refute_includes chat, "fetch('/chat/skills')"
+    assert_includes chat, "fetch('/chat/skills')"
+    assert_includes chat, "{ cmd: 'ping', hint: 'smoke test connection' }"
     refute_includes chat, "const COMMANDS = ["
   end
 

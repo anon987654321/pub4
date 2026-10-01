@@ -54,7 +54,7 @@ A finding is a hypothesis. Historical dated sections below are evidence records,
 - Run the full Rails 8.2 contract suite on a clean checkout, including `bin/rails herb:check`, the database migration exercise and the security/autoloading/routing/rendering/cache/job/mailer/Active Storage/PWA/system-test gates.
 - Run `RAILS/bin/triangle up` from a fresh checkout and then a real rendered gate with Chrome, recording a measured result rather than an inconclusive precondition.
 - Re-run the one-content-column/vertical consistency pass at mobile and 1440px widths; re-measure CSS budgets, magic values, type scale, leading, spacing, interaction contrast and unused selectors from the current assets; recompute the current `needs_id` guest-page census from live routes/data.
-- Run the three-tree `MASTER /fix MASTER RAILS OPENBSD` from a clean checkout and re-measure MASTER ratchets before changing any ceiling. Do not substitute static source proof for the watched run.
+- Run the four-tree `MASTER /fix MASTER RAILS OPENBSD STUDIO` from a clean checkout and re-measure MASTER ratchets before changing any ceiling. Do not substitute static source proof for the watched run.
 - Validate Dintero staging signatures/replay/capture/refund/per-line splits, Stripe Connect seller/balance/transfer behavior and the current Amazon/TradeDoubler boundaries with real staging credentials; missing credentials must remain fail-closed.
 - Prove the real Termux Norwegian/English ear path and vm23 Edge TTS MP3/socket path, or record the exact hardware/runtime blocker.
 - Verify the real vm23 Ruby package/interpreter seam, watched OpenBSD deployment, nsd/relayd state, bsdports repeated deploys, backup/restore consistency, storage and RAM headroom.

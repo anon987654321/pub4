@@ -82,7 +82,7 @@ legacy_roots:
   - path: README.md
     state: ported
     priority: medium
-    target_path: MASTER/tools/postpro/README.md
+    target_path: STUDIO/postpro/README.md
     reason: >
       Old root README described the image-processing/analog-engine product
       positioning; the current postpro boundary carries that purpose in its
