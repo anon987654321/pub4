@@ -15,6 +15,7 @@
 #
 # Wired into Operator::Ratchets#deep_rows, so `bin/check --profile=full` holds it.
 require "yaml"
+require_relative "../lib/trace/dmesg"
 
 module Operator
   module DesignBaseline
@@ -110,13 +111,13 @@ module Operator
              "#{" removed #{gone.join(', ')}" unless gone.empty?}; re-record with --ratchet"
       end
 
-      puts "design_baseline: #{total} violation(s) (ceiling #{recorded_total || "unrecorded"})"
-      current.sort.each { |app, count| puts "  #{app}: #{count} (ceiling #{recorded.dig("apps", app) || "-"})" }
+      Master::Trace::Dmesg.attach("design0", "master0", "#{total} violation(s), ceiling #{recorded_total || "unrecorded"}")
+      current.sort.each { |app, count| Master::Trace::Dmesg.status("design0", "#{app}, #{count}, ceiling #{recorded.dig("apps", app) || "unrecorded"}") }
 
       if ratchet
         File.write(CEILING, { "total" => total, "apps" => current.sort.to_h,
                               "rule_ceilings" => DESIGN_RULES.sort }.to_yaml)
-        puts "design_baseline: recorded #{total} as the new low"
+        Master::Trace::Dmesg.status("design0", "recorded #{total} as the new low")
         return true
       end
 
