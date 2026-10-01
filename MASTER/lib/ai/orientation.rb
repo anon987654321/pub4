@@ -16,7 +16,8 @@ module Master
       DEFAULT_DEPTH = 2
       MAX_ENTRIES = 80
       ATLAS_MAX_BYTES = 3_000
-      SKIP = %w[.git .bundle vendor node_modules tmp log coverage storage .master knowledge output sockets pids cache].freeze
+      SKIP = %w[.git .bundle vendor node_modules tmp log coverage storage .master knowledge output sockets pids cache]
+                  .freeze
 
       module_function
 
