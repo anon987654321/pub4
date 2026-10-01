@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "open3"
+require_relative "../lib/trace/dmesg"
 
 # SWEEP_ROOT, not ROOT. This file is required by test/test_security_sweep.rb,
 # and 25 files in this repo define a bare top-level ROOT, each pointing at a
@@ -143,10 +144,10 @@ if $PROGRAM_NAME == __FILE__
   failures, = sweep
 
   if failures.any?
-    warn "Security sweep failures:"
-    failures.each { |failure| warn "  - #{failure}" }
+    Master::Trace::Dmesg.attach("security0", "master0", "#{failures.size} tracked-secret finding(s)", io: $stderr)
+    failures.each { |failure| Master::Trace::Dmesg.status("security0", failure, io: $stderr) }
     exit 1
   end
 
-  puts "Security sweep passed (0 tracked secrets)."
+  Master::Trace::Dmesg.status("security0", "passed, 0 tracked secrets")
 end
