@@ -4,13 +4,6 @@ require "digest"
 require "json"
 require "time"
 require "yaml"
-begin
-  require_relative "../../../OPENBSD/lib/deploy_inventory"
-rescue LoadError
-  # MASTER can be extracted or tested alone. Cross-tree inventory becomes
-  # unmeasured until OPENBSD is present rather than making the runtime unloadable.
-end
-
 module Master
   module AI
     # The compact orientation frame every model turn receives before it touches
@@ -122,6 +115,9 @@ module Master
       end
 
       def inventory_alignment(repo_root)
+        unless defined?(Deploy::Inventory)
+          require_relative "../../../OPENBSD/lib/deploy_inventory"
+        end
         return "unmeasured" unless defined?(Deploy::Inventory)
 
         inventory = Deploy::Inventory.new(root: repo_root)
