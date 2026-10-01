@@ -60,11 +60,12 @@ module Master
       # the formatter the status line uses.
       def line(spec = current)
         council = case spec[:council]
-                  when true then "council=on"
-                  when false then "council=off"
-                  else "council=#{spec[:council]}"
+                  when true then "council on"
+                  when false then "council off"
+                  else "council #{spec[:council]}"
                   end
-        "mode=#{spec[:name]} profile=#{spec[:scan_profile]} #{council} fix_passes=#{spec[:max_fix_passes]}"
+        profile = spec[:scan_profile].to_s.tr("_", " ")
+        "#{spec[:name]}, #{profile} scan, #{council}, #{spec[:max_fix_passes]} fix passes"
       end
 
       private
