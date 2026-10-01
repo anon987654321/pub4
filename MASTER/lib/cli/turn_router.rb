@@ -11,9 +11,12 @@ module Master
       # Chained elsif nests one IfNode inside the previous one's else-branch,
       # so a 6-way route chain reads flat but is 6 deep in the AST. Guard
       # clauses keep each check a standalone, unnested IfNode.
+      SMOKE_RESPONSES = { "ping" => "pong", "pong" => "ping", "health" => "ok", "up" => "ok" }.freeze
+
       def call(message:, container:, felt_sense: nil, on_turn: nil, on_chunk: nil, image: nil)
         text = message.to_s.strip
         return Master::Result.err("empty message", category: :validation) if text.empty?
+        return Master::Result.ok({ rendered: SMOKE_RESPONSES[text.downcase] }) if SMOKE_RESPONSES.key?(text.downcase)
         return dispatch_slash(rewrite_slash(text), container:, felt_sense:, on_turn:) if text.start_with?("/")
 
         # Visitors (no web token — i.e. the open internet on ai.brgen.no) get the
