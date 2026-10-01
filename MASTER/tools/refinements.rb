@@ -19,6 +19,7 @@
 require "English"
 require "json"
 require_relative "../lib/master"
+require_relative "../lib/trace/dmesg"
 
 module Operator
   module Refinements
@@ -110,24 +111,23 @@ module Operator
 
       def print_groups(rows)
         groups = rows.group_by { |row| row[:rule] }.sort_by { |_, members| -members.size }
-        puts "refinements: #{rows.size} in #{rows.map { |r| r[:file] }.uniq.size} files, #{groups.size} groups"
-        puts
+        Master::Trace::Dmesg.attach("refine0", "master0", "#{rows.size} refinements in #{rows.map { |r| r[:file] }.uniq.size} files, #{groups.size} groups")
         groups.each do |rule, members|
           trees = members.group_by { |row| row[:tree] }
                          .sort_by { |_, rows_in_tree| -rows_in_tree.size }
                          .map { |tree, rows_in_tree| "#{tree} #{rows_in_tree.size}" }
                          .join(", ")
-          puts format("%-32s %5d in %4d files", rule, members.size, members.map { |m| m[:file] }.uniq.size)
-          puts "    #{trees}"
-          puts "    #{CLOSING.fetch(rule, "no closing sentence written yet")}"
+          Master::Trace::Dmesg.attach("refine#{members.object_id.abs % 10}", "refine0", "#{rule}, #{members.size} findings in #{members.map { |m| m[:file] }.uniq.size} files")
+          Master::Trace::Dmesg.status("refine#{members.object_id.abs % 10}", "trees #{trees}")
+          Master::Trace::Dmesg.status("refine#{members.object_id.abs % 10}", CLOSING.fetch(rule, "no closing sentence written yet"))
         end
       end
 
       def print_items(rows)
+        Master::Trace::Dmesg.attach("refine0", "master0", "#{rows.size} refinements")
         rows.sort_by { |row| [row[:file], row[:line].to_i] }.each do |row|
-          puts format("%s:%s  %s — %s", row[:file], row[:line], row[:rule], row[:message])
+          Master::Trace::Dmesg.status("refine0", "#{row[:file]}:#{row[:line]}, #{row[:rule]}, #{row[:message]}")
         end
-        puts "# #{rows.size} refinements"
       end
 
       def findings
