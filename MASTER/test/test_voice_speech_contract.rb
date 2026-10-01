@@ -39,6 +39,16 @@ class SpeechContractSpec < Minitest::Test
     ENV["MASTER_TTS_VOICE"] = old_voice
     ENV["MASTER_TTS_STYLE"] = old_style
   end
+  def test_transcendent_engine_chain_can_be_overridden
+    old = ENV["MASTER_TTS_ENGINE_CHAIN"]
+    ENV["MASTER_TTS_ENGINE_CHAIN"] = "edge,say"
+
+    cfg = Master::Voice::Transcendent.load_config
+    assert_equal "edge,say", cfg["engine_chain"]
+  ensure
+    old.nil? ? ENV.delete("MASTER_TTS_ENGINE_CHAIN") : ENV["MASTER_TTS_ENGINE_CHAIN"] = old
+  end
+
   def test_native_say_fallback_has_no_host_default_voice_path
     assert_equal "Samantha", Master::Voice::Engines::MACOS_VOICE_FALLBACKS.fetch(:jenny)
     assert_equal "Alex", Master::Voice::Engines::MACOS_VOICE_FALLBACKS.fetch(:andrew)
