@@ -209,20 +209,18 @@ async function startChatStream(payload, handlers) {
   }
 }
 
-async function sendMessage(text) {
+async function sendMessage(text, { command = false } = {}) {
   const input = chatInput();
   const message = String(text ?? input?.value ?? "").trim();
   if (!message) return false;
   if (window.MASTER_FACE?.sendMessage && window.MASTER_FACE.sendMessage !== sendMessage) {
     return window.MASTER_FACE.sendMessage(message);
   }
+  if (!command && isBangCommand(message) && message.length > 1) return sendMessage(`/shell ${message.slice(1).trim()}`, { command: true });
   if (!navigator.onLine) {
     const queued = await queueOfflineSend(message);
     if (queued) return true;
   }
-  if (isBangCommand(message) && message.length > 1) return runSlashCommand(`/shell ${message.slice(1).trim()}`);
-  if (message.startsWith("/")) return runSlashCommand(message);
-
   window._chatOnUser?.(message);
   const imageToken = window._imageToken || null;
   window._imageToken = null;
