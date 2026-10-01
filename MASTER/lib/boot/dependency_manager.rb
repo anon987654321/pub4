@@ -5,6 +5,7 @@ require "fileutils"
 require "open3"
 require "rbconfig"
 require "rubygems"
+require_relative "../trace/dmesg"
 
 module Master
   module Boot
@@ -712,7 +713,7 @@ module Master
 
       def join_output(*parts) = parts.flatten.compact.map(&:to_s).reject(&:empty?).join("\n").strip
 
-      def report(message) = @out.puts("deps0: #{message}")
+      def report(message) = Master::Trace::Dmesg.status("deps0", message, io: @out)
     end
   end
 end
