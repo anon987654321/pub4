@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../voice/aesthetic"
+require_relative "../trace/dmesg"
 
 module Master
   module CLI
@@ -10,7 +11,14 @@ module Master
       def print(io: $stderr)
         return unless ENV["MASTER_BOOT_STATUS"] == "1"
 
-        banner_lines.each { |line| io.puts(line) }
+        banner_lines.each do |line|
+          Master::Trace::Dmesg::Report.print(
+            line.split(":", 2).first.to_s,
+            line,
+            parent: "master0",
+            io:,
+          )
+        end
       end
 
       def banner_lines
