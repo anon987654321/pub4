@@ -231,8 +231,7 @@ module Master
             "player=#{player ? player.first : "none"} engine=#{engine}",
             detail,
             ("error=#{error}" if error && !error.empty?)
-          ].compact.join("
-")}"
+          ].compact.join("\n")}"
         when "test"
           ok = Voice::Playback.speak_now("MASTER voice test.")
           player = Voice::Playback.player
