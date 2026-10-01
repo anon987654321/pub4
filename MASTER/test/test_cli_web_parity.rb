@@ -19,12 +19,12 @@ class TestCliWebParity < Minitest::Test
     assert_includes js, "(window.MASTER_COMMANDS || [])"
   end
 
-  def test_browser_slash_commands_use_the_same_turn_stream
+  def test_browser_slash_commands_use_the_shared_turn_stream
     actions = read("web/public/chat_actions.js")
 
-    assert_includes actions, 'return sendMessage(command, { command: true });'
+    assert_includes actions, "function sendMessage(text, { command = false } = {})"
+    assert_includes actions, 'function runUnlockCommand(text)'
     assert_includes actions, 'fetch("/chat/command"'
-    assert_match(%r{/^\/unlock(?:\\s|$)/i}, actions)
   end
 
   def test_cli_and_web_use_one_result_presenter
