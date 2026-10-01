@@ -30,7 +30,8 @@ module Master
           "RAILS behavior comes from its pinned source and lockfile; " \
           "OPENBSD release behavior comes from the target man pages",
           "file/data parsing and rewriting: Ruby",
-          "Ruby subprocesses: argv through Master::Io::Exec; avoid backticks and shell interpolation when argv is enough",
+          "Ruby subprocesses: argv through Master::Io::Exec; avoid backticks and shell interpolation " \
+          "when argv is enough",
           "shell execution: zsh only; prefer zsh globs and builtins over GNU text pipelines",
           "keep commands readable; one meaningful operation per line; use && only for a real dependency",
           "never claim success without observable verification",
