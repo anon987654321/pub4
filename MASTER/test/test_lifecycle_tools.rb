@@ -30,6 +30,41 @@ class LifecycleToolsSpec < Minitest::Test
                  "repo_inventory's ALLOWED_ROOT_DIRS and the repo root have drifted"
   end
 
+  def test_master_boot_surface_is_physically_stable
+    %w[
+      bin/ruby
+      bin/cli
+      lib/master.rb
+      lib/boot/entrypoint.rb
+      lib/cli/command_registry.rb
+    ].each do |relative|
+      assert File.file?(File.join(ROOT, relative)), "missing MASTER/#{relative}"
+    end
+
+    assert_match(/zsh\z|zsh/, File.read(File.join(ROOT, "bin", "ruby"), 80),
+                 "MASTER/bin/ruby must remain the zsh Ruby resolver")
+  end
+
+  def test_studio_is_canonical_and_master_tool_paths_are_compatibility_symlinks
+    %w[dilla lora postpro replicate].each do |tool|
+      link = File.join(ROOT, "tools", tool)
+      target = "../../STUDIO/#{tool}"
+
+      assert File.symlink?(link), "MASTER/tools/#{tool} must remain a compatibility symlink"
+      assert_equal target, File.readlink(link), "MASTER/tools/#{tool} target drifted"
+
+      entry = File.join(ROOT, "..", "STUDIO", tool, "#{tool}.rb")
+      assert File.file?(entry), "missing canonical STUDIO/#{tool}/#{tool}.rb"
+    end
+  end
+
+  def test_media_tools_have_one_physical_home
+    %w[dilla lora postpro replicate].each do |tool|
+      path = File.join(ROOT, "tools", tool)
+      assert File.symlink?(path), "MASTER/tools/#{tool} must not become a second physical tool tree"
+    end
+  end
+
   private
 
   # The tool is a script with top-level constants and a `$PROGRAM_NAME` guard, so
