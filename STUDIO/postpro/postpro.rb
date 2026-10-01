@@ -436,7 +436,7 @@ end
 # says which way each number moved and whether that is the direction film
 # emulation should move it.
 if ARGV.include?("--measure")
-  require_relative "lib/uncanny"
+  require_relative "uncanny"
   subject = ARGV[ARGV.index("--measure") + 1]
   if subject.nil? || !File.file?(subject)
     PostproBootstrap.dmesg("ERROR --measure needs a readable file")
