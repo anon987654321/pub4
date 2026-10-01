@@ -55,10 +55,11 @@ class WorkflowInferenceTest < Minitest::Test
   def test_fix_renders_observe_repair_and_observe_again
     out = dispatch(critique: false, apply: true)
 
-    %w[mode observe repair re-observe].each do |section|
-      assert_includes out.lines.map(&:chomp), section
-    end
-    assert_match(/review\d+: complete/, out)
+    assert_match(/^mode0 at review0: /, out)
+    assert_match(/^obs0 at review0: observe/, out)
+    assert_match(/^fix0 at review0: repair/, out)
+    assert_match(/^obs1 at review0: re-observe/, out)
+    assert_match(/review0: complete/, out)
   end
 
   # The dmesg progress and the report print to one terminal, so the posture
@@ -67,9 +68,9 @@ class WorkflowInferenceTest < Minitest::Test
     previous = ENV["MASTER_DMESG"]
     ENV["MASTER_DMESG"] = "1"
     posture = Master::Ground::ModePosture.new(root: File.expand_path("..", __dir__)).line
-    printed, = capture_io { print dispatch(critique: false) }
+    rendered = dispatch(critique: false)
 
-    assert_equal 1, printed.scan(posture).size, printed
+    assert_equal 1, rendered.scan(posture).size, rendered
   ensure
     ENV["MASTER_DMESG"] = previous
   end
@@ -78,9 +79,9 @@ class WorkflowInferenceTest < Minitest::Test
   def test_dry_run_says_what_it_would_repair_instead_of_repairing
     out = dispatch(critique: false)
 
-    assert_includes out.lines.map(&:chomp), "observe"
-    assert_includes out.lines.map(&:chomp), "would repair"
-    refute_includes out.lines.map(&:chomp), "re-observe"
+    assert_match(/^obs0 at review0: observe/, out)
+    assert_match(/^fix0 at review0: would repair/, out)
+    refute_match(/^obs1 at review0: re-observe/, out)
   end
 
   # /review is where the council is a stage of its own. Inside /fix it argues
@@ -132,7 +133,7 @@ class WorkflowInferenceTest < Minitest::Test
     out = dispatch(critique: false, fix_loop: flaky, apply: true)
 
     assert_includes out, "fix failed: Errno::ENOENT"
-    assert_match(/review\d+: incomplete — fix failed/, out)
+    assert_match(/review\d+: incomplete, failed fix/, out)
     refute_includes out, "complete\n"
   end
 
