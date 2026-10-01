@@ -422,32 +422,35 @@ when "rules"
   }
 
   unless as_json
-    # Three states, not two. A rule can carry a scan-registry detector, or none
-    # there and a law/ definition instead, or nothing at all — and 78 of the 228
-    # declarations are in the third state, which is the file's own point.
-    reach = if card[:detector] then ""
-            elsif card[:defined_at].to_s.start_with?("MASTER/law/") then "  (no scan-registry rule; enforced from law/)"
-            else "  (declared only — no detector anywhere; it resolves through a fold or a prompt)"
+    lines = []
+    reach = if card[:detector]
+              nil
+            elsif card[:defined_at].to_s.start_with?("MASTER/law/")
+              "no scan-registry rule, enforced from law/"
+            else
+              "declared only, no detector; resolves through a fold or prompt"
             end
-    puts "rule: #{card[:id]}#{reach}"
+    lines << "rule #{card[:id]}, #{reach}" if reach
+    lines << "rule #{card[:id]}" unless reach
     if declared
       %w[name source tier severity autofix fix detect detect_semantic detect_structural].each do |key|
-        puts "  #{key}: #{declared[key]}" if declared[key]
+        lines << "#{key}, #{declared[key]}" if declared[key]
       end
     end
     if executable_law
       surfaces = [("detector" if executable_law.detect), ("semantic" if executable_law.ask), ("practice" if executable_law.practice)].compact
-      puts "  enforcement: #{surfaces.join("+")}" unless surfaces.empty?
-      puts "  mode: #{executable_law.mode}" if executable_law.mode
-      puts "  fix: #{executable_law.fix}" if !declared || declared["fix"].nil?
+      lines << "enforcement, #{surfaces.join(", ")}" unless surfaces.empty?
+      lines << "mode, #{executable_law.mode}" if executable_law.mode
+      lines << "fix, #{executable_law.fix}" if !declared || declared["fix"].nil?
     end
-    puts "  detector: #{card[:detector]}" if card[:detector]
+    lines << "detector, #{card[:detector]}" if card[:detector]
     if card[:definition]
-      puts "  defined at #{card[:defined_at]} — its fixtures and its exemption, verbatim:"
-      card[:definition].each_line { |line| puts "    #{line.chomp}" }
+      lines << "defined at #{card[:defined_at]}, fixtures and exemption follow"
+      card[:definition].each_line { |line| lines << line.chomp.strip }
     else
-      puts "  no definition found under law/ or lib/review/scan/rules/"
+      lines << "no definition found under law/ or lib/review/scan/rules/"
     end
+    Master::Trace::Dmesg::Report.print("rules", lines.join("\n"))
   end
 
   if card_only
@@ -468,8 +471,8 @@ when "rules"
   if as_json
     puts JSON.pretty_generate(card.merge(corpus: corpus, findings: rows))
   else
-    rows.each { |row| puts "#{row[:path]}:#{row[:line]} #{row[:rule]} #{row[:message]}" }
-    puts "rule: #{rule.id} #{rows.size} finding(s) over #{corpus}"
+    Master::Trace::Dmesg.attach("rules0", "operator0", "#{rule.id}, #{rows.size} finding(s) over #{corpus}")
+    rows.each { |row| Master::Trace::Dmesg.status("rules0", "#{row[:path]}:#{row[:line]}, #{row[:rule]}, #{row[:message]}") }
   end
   exit(rows.empty? ? 0 : 1)
 when "readers"
@@ -485,8 +488,8 @@ when "readers"
 
   hits = Operator::Readers.find(root: ROOT, target: target)
   if hits.empty?
-    puts "readers: no reference to #{target} anywhere in #{Operator::Readers::TREES.join(', ')}"
-    puts "readers: that is the only case where deleting it is a reader-count question and not a judgement call"
+    Master::Trace::Dmesg.status("readers0", "no reference to #{target} anywhere in #{Operator::Readers::TREES.join(", ")}")
+    Master::Trace::Dmesg.status("readers0", "deleting it is a reader-count question")
     exit 0
   end
 
@@ -497,15 +500,15 @@ when "readers"
     rows = by_kind[kind] or next
     label = { require: "require", path_build: "path built at runtime", render: "rendered by name", test: "asserted by a test",
               constant: "constant (Zeitwerk or direct)", mention: "mentioned" }.fetch(kind)
-    puts "readers: #{label} — #{rows.length}"
-    rows.first(40).each { |r| puts "  #{r.path}:#{r.line}  #{r.text[0, 120]}" }
-    puts "  … and #{rows.length - 40} more" if rows.length > 40
+    Master::Trace::Dmesg.attach("reader#{kind}", "readers0", "#{label}, #{rows.length}")
+    rows.first(40).each { |r| Master::Trace::Dmesg.status("reader#{kind}", "#{r.path}:#{r.line}, #{r.text[0, 120]}") }
+    Master::Trace::Dmesg.status("reader#{kind}", "#{rows.length - 40} more") if rows.length > 40
   end
   # A constant reference is a Zeitwerk load and breaks exactly like a require;
   # prose mentions were reclassified before they got here.
   hard = (by_kind[:require].to_a + by_kind[:path_build].to_a + by_kind[:render].to_a +
           by_kind[:test].to_a + by_kind[:constant].to_a).length
-  puts "readers: #{hard} reference(s) would break on delete or move"
+  Master::Trace::Dmesg.status("readers0", "#{hard} references would break on delete or move")
   exit(hard.zero? ? 0 : 1)
 
 when "hooks"
