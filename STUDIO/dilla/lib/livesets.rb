@@ -3236,6 +3236,7 @@ module LiveSynth
 
           pid, pgid, command = match.captures.map { |value| value.to_i }.then { |nums| [nums[0], nums[1]] } + [match[3]]
           next if pid == Process.pid
+          next unless pgid == pid
           next unless targets.any? { |target| command.include?(target) }
 
           { pid:, pgid: }
@@ -3247,11 +3248,13 @@ module LiveSynth
     end
 
     def terminate_player(pid, pgid: pid)
-      Process.kill("TERM", -pgid.to_i) if pgid.to_i.positive?
+      group = pgid.to_i == pid.to_i ? -pid.to_i : nil
+      Process.kill("TERM", group) if group
+      Process.kill("TERM", pid) unless group
       deadline = Time.now + STOP_WAIT_SECONDS
       sleep 0.05 while alive?(pid) && Time.now < deadline
       if alive?(pid)
-        Process.kill("KILL", -pgid.to_i) if pgid.to_i.positive?
+        Process.kill("KILL", group) if group
         Process.kill("KILL", pid)
       end
     rescue Errno::ESRCH, Errno::EPERM
