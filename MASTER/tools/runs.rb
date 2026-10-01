@@ -19,6 +19,7 @@
 
 require "json"
 require_relative "../lib/trace/dmesg"
+require_relative "../lib/trace/dmesg"
 
 module Operator
   class Runs
@@ -137,7 +138,11 @@ end
 
 if $PROGRAM_NAME == __FILE__
   if (index = ARGV.index("--who"))
-    target = ARGV[index + 1] or abort "usage: runs.rb --who <path>"
+    target = ARGV[index + 1]
+    unless target
+      Master::Trace::Dmesg.status("runs0", "usage, runs.rb --who <path>", io: $stderr)
+      exit 64
+    end
     runners = Operator::Runs.who_runs(target)
     Master::Trace::Dmesg::Report.print("runs0", runners.empty? ? "nothing runs #{target}" : runners.join("\n"))
     exit(runners.empty? ? 1 : 0)
