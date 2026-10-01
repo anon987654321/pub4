@@ -144,7 +144,7 @@ module Master
           rendered.lines.each do |line|
             line = line.chomp
             if line.empty?
-              io.puts if enabled? || force
+              io.puts
             else
               Dmesg.emit(line, io:, force: true)
             end
