@@ -4,6 +4,7 @@ require "fileutils"
 require "json"
 require "socket"
 require "time"
+require_relative "../trace/dmesg"
 
 module Master
   module Ops
@@ -196,7 +197,8 @@ module Master
       def report(message)
         return if message == @last_report
         @last_report = message
-        @out.puts(message)
+        detail = message.to_s.sub(/Acontrol0:s*/, "")
+        Master::Trace::Dmesg.status("control0", detail, io: @out)
       end
 
       def sleep_interruptibly(seconds)
