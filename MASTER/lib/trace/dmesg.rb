@@ -88,6 +88,80 @@ module Master
         emit("#{unit}: #{msg}", io:)
       end
 
+      # Finished command and stage reports use the same grammar as live events.
+      # Existing dmesg lines pass through unchanged; plain lines attach to one
+      # unit instead of inventing headings, gutters or column alignment.
+      module Report
+        COMMAND_UNITS = {
+          "fix" => "fix0", "review" => "review0", "critique" => "crit0",
+          "status" => "status0", "help" => "help0", "model" => "model0",
+          "plugin" => "plugin0", "device" => "device0", "voice" => "voice0",
+          "pair" => "pair0", "owner" => "owner0", "wake" => "wake0",
+          "doctor" => "doctor0", "rules" => "rules0", "snapshot" => "snapshot0",
+          "why" => "why0", "session" => "session0", "undo" => "undo0",
+          "clear" => "cli0", "orders" => "orders0", "soul" => "soul0",
+        }.freeze
+
+        UNIT_RE = /A[a-z][a-z0-9_]*d+(?: at [a-z][a-z0-9_]*d+)?:/
+
+        module_function
+
+        def command(command, text, parent: "master0")
+          word = command.to_s.strip.split(/\s+/, 2).first.to_s.delete_prefix("/").downcase
+          unit = COMMAND_UNITS.fetch(word) { safe_unit(word) }
+          render(unit:, parent:, text:)
+        end
+
+        def render(unit:, parent:, text:)
+          source = text.to_s.scrub.gsub(ANSI, "").delete("\r")
+          return "" if source.strip.empty?
+
+          lines = []
+          attached = false
+          source.lines.each do |raw|
+            line = raw.chomp.strip
+            if line.empty?
+              lines << "" unless lines.empty? || lines.last.empty?
+              attached = false
+              next
+            end
+
+            if UNIT_RE.match?(line)
+              lines << line
+              attached = true
+            elsif attached
+              lines << "#{unit}: #{line}"
+            else
+              lines << "#{unit} at #{parent}: #{line}"
+              attached = true
+            end
+          end
+          lines.join("\n").strip
+        end
+
+        def print(command, text, parent: "master0", io: $stdout)
+          rendered = render(unit: command_unit(command), parent:, text:)
+          rendered.lines.each do |line|
+            next if line.chomp.empty?
+
+            Dmesg.emit(line.chomp, io:, force: true)
+          end
+          io.flush if io.respond_to?(:flush)
+          rendered
+        end
+
+        def command_unit(command)
+          word = command.to_s.strip.split(/\s+/, 2).first.to_s.delete_prefix("/").downcase
+          COMMAND_UNITS.fetch(word) { safe_unit(word) }
+        end
+
+        def safe_unit(word)
+          word = word.gsub(/[^a-z0-9_]+/, "_").sub(/\A\d+/, "")
+          word = "cli" if word.empty?
+          "#{word}0"
+        end
+      end
+
       # Work that calls a model names itself, and the calls attach under it.
       # Fiber storage reaches the threads the work spawns, and is put back after.
       def under(unit)
