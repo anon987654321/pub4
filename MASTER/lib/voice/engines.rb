@@ -342,7 +342,7 @@ module Master
         ok && File.size?(out_path)
       end
 
-      def synth_say(text, out_path, voice: nil)
+      def synth_say(text, out_path, voice: nil, rate: nil)
         aiff = out_path.sub(/\.[^.]+\z/, ".aiff")
         voice_key = if voice
                       Speech::VOICE_ALIASES.key(voice.to_s) || voice.to_sym
@@ -352,7 +352,8 @@ module Master
         mac_voice = MACOS_VOICE_FALLBACKS[voice_key]
         return false unless mac_voice
 
-        spd = 175 + rand(25)
+        pct = rate.to_s.match?(/\A[+-]?\d+(?:\.\d+)?%\z/) ? rate.to_f : 0.0
+        spd = (175 * (1.0 + (pct / 100.0))).round.clamp(120, 220)
         ok = system("say", "-v", mac_voice, "-r", spd.to_s, "-o", aiff, text.to_s,
                     out: File::NULL, err: File::NULL)
         return false unless ok && File.size?(aiff)
@@ -362,7 +363,7 @@ module Master
           File.delete(aiff)
           File.size?(out_path)
         else
-          FileUtils.mv(aiff, out_path.sub(/\.mp3\z/, ".aiff"))
+          FileUtils.mv(aiff, out_path)
           true
         end
       rescue StandardError => e
