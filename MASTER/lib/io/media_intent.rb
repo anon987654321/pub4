@@ -38,6 +38,7 @@ module Master
       LIVE_SYNTH_KNOB_RE = /\b(?:open|close|sweep|raise|lower|turn)\b.*\b(?:filter|cutoff|resonance|emphasis|detune|contour)\b/i.freeze
       LIVE_MUSIC_RE = /\b(?:play|start|resume|put on|queue)\b.*\b(?:liveset|default\s+music)\b/i.freeze
       LIVE_AUDIO_STOP_RE = /\b(?:stop|kill|silence|mute|shut\s+off)\b.*\b(?:music|playing|sound|audio|synth\w*|liveset|jam)\b|\b(?:music|playing|sound|audio|synth\w*|liveset)\b.*\b(?:stop|kill|silence|mute|shut\s+off)\b/i.freeze
+      LIVE_AUDIO_DIAGNOSTIC_RE = /\b(?:i\s+)?(?:can't|cannot|can\s*not|don't|do\s+not)\s+(?:hear|listen\s+to)\b|\b(?:no|nothing|zero)\s+(?:sound|audio|music)\b|\b(?:it's|it\s+is)\s+silent\b/i.freeze
       LIVE_STYLE_RE = /\b(?:röyksopp|royksopp|melody\s+a\.m\.)\b/i.freeze
       LIVE_STYLE_VERB_RE = /\b(?:play|start|resume|switch|change|move|go|use|put\s+on|queue)\b|\b(?:sound\s*card|speakers?)\b/i.freeze
       LIVE_STYLE_QUERY_RE = /\b(?:switch|change|move|go)\b.*\bstyle\b/i.freeze
@@ -57,7 +58,7 @@ module Master
 
       def handles?(text)
         text.match?(KICK_RE) || text.match?(PLAY_LAST_RE) || text.match?(SYNTH_RE) || text.match?(LIVE_AUDIO_STOP_RE) || live_synth?(text) ||
-          text.match?(BACKGROUND_MUSIC_RE) || text.match?(AUDIO_RE) || postpro_intent?(text) ||
+          text.match?(BACKGROUND_MUSIC_RE) || text.match?(LIVE_AUDIO_DIAGNOSTIC_RE) || text.match?(AUDIO_RE) || postpro_intent?(text) ||
           text.match?(IMAGE_RE) && text.match?(/\b(?:photo|portrait|image|picture)\b/i)
       end
 
@@ -66,6 +67,7 @@ module Master
         return play_last(text, root:) if text.match?(PLAY_LAST_RE)
         return generate_tone(text, root:) if text.match?(SYNTH_RE)
         return stop_live_audio(root:) if text.match?(LIVE_AUDIO_STOP_RE)
+        return diagnose_live_audio(root:) if text.match?(LIVE_AUDIO_DIAGNOSTIC_RE)
         return live_synth(text, root:) if live_synth?(text)
         return play_background_music(root:) if text.match?(BACKGROUND_MUSIC_RE)
         return postprocess(text, root:) if postpro_intent?(text)
@@ -210,6 +212,19 @@ module Master
         return result unless result.ok?
 
         Result.ok({ output: result.value!, rendered: result.value!, media: :dilla_stop })
+      end
+
+      def diagnose_live_audio(root: MasterPaths.root)
+        result = ScriptDispatch.run(root:, tool: "dilla", arg: "live status")
+        return result unless result.ok?
+
+        status = result.value!.to_s.strip
+        rendered = if status.match?(/\bnothing is playing\b/i)
+                     "audio0: #{status}; the Dilla player is not running."
+                   else
+                     "audio0: #{status}; Dilla can verify the live player process, but not whether the operating-system output route is physically audible."
+                   end
+        Result.ok({ output: rendered, rendered:, media: :dilla_audio_diagnostic })
       end
 
       def recent_count_default

@@ -57,6 +57,21 @@ class TestMusicSynthIntent < Minitest::Test
     end
   end
 
+  def test_cant_hear_is_a_live_audio_diagnostic_not_a_chat_claim
+    sent = nil
+    Master::Io::ScriptDispatch.stub(:run, ->(root:, tool:, arg:) {
+      sent = [tool, arg]
+      Master::Result.ok("live0: playing royksopp live (pid 64893, since 07:20:00)")
+    }) do
+      assert INTENT.handles?("i cant hear anything")
+      result = INTENT.dispatch("i cant hear anything")
+      assert result.ok?
+      assert_equal :dilla_audio_diagnostic, result.value[:media]
+      assert_match(/Dilla can verify the live player process/, result.value[:output])
+    end
+    assert_equal ["dilla", "live status"], sent
+  end
+
   # "play it" after a render plays that render, whatever else the sentence says.
   def test_play_it_plays_the_last_rendered_file
     played = nil
