@@ -2164,7 +2164,7 @@ module LiveSynth
     return params if kind == "filter"
 
     args = params.transform_keys(&:to_sym)
-    return Outboard.public_send(kind.to_sym, **args) if %w[console_sum console_stack].include?(kind.to_s)
+    return Outboard.public_send(kind.to_sym, **args) if %w[console_sum console_stack program_memory].include?(kind.to_s)
 
     Livesets.public_send(kind.to_sym, **args)
   end
