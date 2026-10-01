@@ -507,7 +507,8 @@ end
       expected = ["Master", *File.dirname(relative).split("/").reject { |part| part == "." },
                   File.basename(relative, ".rb")]
       expected = [expected.first, *expected.drop(1).map { |part| inflector.camelize(part, path) }]
-      opened = File.read(path).scan(/^\s*(?:class|module)\s+([A-Z][\w:]*)/).flatten      if opened.first(expected.size) == expected
+      opened = File.read(path).scan(/^\s*(?:class|module)\s+([A-Z][\w:]*)/).flatten
+      if opened.first(expected.size) == expected
         problems << "#{relative}: defines #{expected.join("::")}, so Zeitwerk can load it — drop the ignore"
       end
     end
