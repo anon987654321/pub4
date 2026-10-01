@@ -6,6 +6,7 @@ Master::Boot::Entrypoint.prepare!(root: File.expand_path("..", __dir__))
 
 require "json"
 require "optparse"
+require_relative "../lib/trace/dmesg"
 require_relative "../lib/io/catalog_index"
 
 options = { limit: 50 }
@@ -25,14 +26,20 @@ index = Master::Io::CatalogIndex.new
 case command
 when "refresh"
   source = ARGV.shift || options[:source]
-  abort parser.to_s unless source
+  unless source
+    Master::Trace::Dmesg::Report.print("/help", parser.to_s, io: $stderr)
+    exit 64
+  end
   token = options[:token] || ENV["#{source.upcase}_API_TOKEN"] || ENV["#{source.upcase}_API_KEY"]
   count = index.refresh(source, token: token, url: options[:url])
   puts JSON.pretty_generate(source: source, refreshed: count)
 when "import"
   source = ARGV.shift || options[:source]
   path = ARGV.shift
-  abort parser.to_s unless source && path
+  unless source && path
+    Master::Trace::Dmesg::Report.print("/help", parser.to_s, io: $stderr)
+    exit 64
+  end
   count = index.import_file(source, path, normalizer: options[:normalizer])
   puts JSON.pretty_generate(source: source, imported: count)
 when "search"
@@ -41,5 +48,6 @@ when "search"
 when "sources"
   puts JSON.pretty_generate(Master::Io::CatalogIndex::SOURCES)
 else
-  abort parser.to_s
+  Master::Trace::Dmesg::Report.print("/help", parser.to_s, io: $stderr)
+  exit 64
 end
