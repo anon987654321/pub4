@@ -92,7 +92,7 @@ daemon = ARGV.delete("--daemon")
 ENV["MASTER_CONTROL_PLANE"] = "1" if daemon
 require_relative "../lib/master"
 $MASTER_PROCESS_LOCK = Master::Ops::ProcessLock.acquire!(
-  root: MASTER, mode: daemon ? "control_plane" : "interactive"
+  root: MASTER, mode: daemon ? "control_plane" : "interactive", inherit_fd: true
 )
 unless $MASTER_PROCESS_LOCK
   owner = Master::Ops::ProcessLock.owner(File.join(MASTER, ".master", "process.lock"))
