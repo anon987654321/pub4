@@ -41,9 +41,11 @@ transcendent:
     ms: yasmin
     en: jenny
   # Local MLX (Apple Silicon)
-  mlx_model: mlx-community/Kokoro-82M-bf16
-  mlx_voice: af_bella
-  mlx_speed: 1.05
+  # The local Apple-Silicon path uses the expressive Chatterbox MLX model first;
+  # Kokoro remains a provider fallback rather than the conversational default.
+  mlx_model: mlx-community/chatterbox-fp16
+  mlx_voice: default
+  mlx_speed: 1.0
   exaggeration: 0.45
   cfg_weight: 0.42
   chatterbox_device: mps
