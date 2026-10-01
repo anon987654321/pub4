@@ -50,7 +50,7 @@ module PostproBootstrap
   # This is conditional. Unconditional, with `BOOTSTRAP = PostproBootstrap.run`
   # running at file scope, *loading* postpro.rb can `gem install ruby-vips`, and on a
   # miss go on to `brew install vips`, `apt install libvips-dev` or
-  # `doas pkg_add vips`. STUDIO's own gate loads this file to check that it
+  # `doas pkg_add -I libvips`. STUDIO's own gate loads this file to check that it
   # boots, which made `rake gate` a command that could mutate the machine it was
   # supposed to be measuring. A check observes; it does not repair.
   #
@@ -242,7 +242,7 @@ module PostproBootstrap
     gems = ensure_gems
 
     unless gems[:vips]
-      dmesg "FATAL libvips unavailable; macOS: brew install vips; Ubuntu: apt install libvips-dev; OpenBSD: doas pkg_add vips"
+      dmesg "FATAL libvips unavailable; macOS: brew install vips; Ubuntu: apt install libvips-dev; OpenBSD: doas pkg_add -I libvips"
       exit 1
     end
 
