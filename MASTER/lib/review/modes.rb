@@ -16,7 +16,7 @@ module Master
         prompt = load_prompt(selected)
         format(prompt.fetch("template", "%{message}"), message: message.to_s)
       rescue StandardError => e
-        Master::Trace::Dmesg.status("mode0", "wrap failed, mode=#{mode}, #{e.class}: #{e.message}")
+        Master::Trace::Dmesg.status("mode0", "wrap failed, #{mode}, #{e.class}: #{e.message}")
         message.to_s
       end
 
