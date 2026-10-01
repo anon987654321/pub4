@@ -94,7 +94,7 @@ module Operator
       return ["MASTER"] if abs == MASTER || abs.start_with?("#{MASTER}/")
 
       Master::Trace::Dmesg.status("gate0", "target outside pub4 trees, #{target}")
-      return nil
+      raise ArgumentError, "target outside pub4 trees: #{target}"
     end
 
     def run(scan_only:, only: nil, list: false, trees: nil)
@@ -120,7 +120,7 @@ module Operator
       unknown = named - TREES
       if unknown.any?
         Master::Trace::Dmesg.status("gate0", "no tree named #{unknown.join(", ")}, have #{TREES.join(", ")}")
-        return []
+        raise ArgumentError, "no tree named #{unknown.join(", ")}"
       end
       named
     end
