@@ -67,6 +67,11 @@ class TestAiOrientation < Minitest::Test
     assert_includes text, "bridge: RAILS/apps.yml → OPENBSD/deploy_inventory.json → vps-deploy → rcctl → public health"
     assert_includes text, "inventory_alignment: clean"
     assert_includes text, "proof=RAILS/gates/gates.yml+RAILS/bin/triangle+<app>/bin/ci"
+    assert_includes text, "coupling=shared engine + sibling copy-tree affects every Rails app"
+    assert_includes text, "deployed_copy=/home/<app>/app + /home/<app>/shared"
+    assert_includes text, "rendered=Chrome/CDP via rendered_suite"
+    assert_includes text, "runtime=Falcon+SQLite+Solid Queue/Cache; secrets=/etc/*.env"
+    assert_includes text, "recovery=tmux+vps-deploy"
     assert_includes text, "live=target host diagnostics and public health"
   end
 
