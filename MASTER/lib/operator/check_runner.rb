@@ -36,7 +36,7 @@ module Operator
     SLOW_STEP_FRACTION = 0.6
 
     def run(name, *cmd, env: {})
-      unit = "#{@prefix}#{@results.size}"
+      unit = "#{@prefix}#{@results.size + 1}"
       Master::Trace::Dmesg.attach(unit, "#{@prefix}0", name) unless @quiet
       started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
       out, status = capture(env, *cmd)
