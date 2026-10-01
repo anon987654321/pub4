@@ -23,12 +23,8 @@ function validatedFeltState() {
   return null;
 }
 
-async function runSlashCommand(text) {
+async function runUnlockCommand(text) {
   const command = String(text || "").trim();
-  // /unlock is an authentication handshake, not a turn. Every other slash
-  // command uses the exact same SSE TurnRouter path as plain language.
-  if (!/^\/unlock(?:\s|$)/i.test(command)) return sendMessage(command, { command: true });
-
   window._chatOnUser?.(command);
   try {
     const resp = await fetch("/chat/command", {
@@ -220,6 +216,7 @@ async function sendMessage(text, { command = false } = {}) {
   if (window.MASTER_FACE?.sendMessage && window.MASTER_FACE.sendMessage !== sendMessage) {
     return window.MASTER_FACE.sendMessage(message);
   }
+  if (/^\/unlock(?:\s|$)/i.test(message)) return runUnlockCommand(message);
   if (!command && isBangCommand(message) && message.length > 1) return sendMessage(`/shell ${message.slice(1).trim()}`, { command: true });
   if (!navigator.onLine) {
     const queued = await queueOfflineSend(message);
