@@ -83,6 +83,17 @@ class MasterBootTest < Minitest::Test
       File.write(aliased, "base: &base\n  size: 3\ncopy: *base\n")
       assert_equal({ "size" => 3 }, Master.load_yaml(aliased)["copy"])
 
+      recursive = File.join(dir, "recursive.yml")
+      File.write(recursive, "root: &root\n  name: root\n  self: *root\n")
+      first = Master.load_yaml(recursive)
+      second = Master.load_yaml(recursive)
+      assert_equal "root", first.dig("root", "name")
+      assert_same first["root"], first["root"]["self"]
+      refute_same first["root"], second["root"]
+      assert_same second["root"], second["root"]["self"]
+      first["root"]["name"] = "changed"
+      assert_equal "root", second["root"]["name"]
+
       tagged = File.join(dir, "tagged.yml")
       File.write(tagged, "--- !ruby/object:OpenStruct\ntable: {}\n")
       assert_raises(Psych::DisallowedClass) { Master.load_yaml(tagged) }

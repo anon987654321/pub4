@@ -132,19 +132,43 @@ module Master
     # YAML.safe_load yields only hashes, arrays, strings, symbols, numbers,
     # booleans, nil, Date and Time; the containers and strings are what a caller
     # can mutate, so those are what get copied.
-    def yaml_copy(value)
+    # YAML aliases can be shared or recursive. Preserve container identity while
+    # copying and freezing, otherwise a valid recursive alias walks forever.
+    def yaml_copy(value, seen = {})
       case value
-      when Hash then value.each_with_object({}) { |(k, v), out| out[yaml_copy(k)] = yaml_copy(v) }
-      when Array then value.map { |item| yaml_copy(item) }
+      when Hash
+        id = value.object_id
+        return seen[id] if seen.key?(id)
+
+        copy = {}
+        seen[id] = copy
+        value.each { |k, v| copy[yaml_copy(k, seen)] = yaml_copy(v, seen) }
+        copy
+      when Array
+        id = value.object_id
+        return seen[id] if seen.key?(id)
+
+        copy = []
+        seen[id] = copy
+        value.each { |item| copy << yaml_copy(item, seen) }
+        copy
       when String then value.dup
       else value
       end
     end
 
-    def yaml_deep_freeze(value)
+    def yaml_deep_freeze(value, seen = {})
       case value
-      when Hash then value.each { |k, v| yaml_deep_freeze(k); yaml_deep_freeze(v) }
-      when Array then value.each { |item| yaml_deep_freeze(item) }
+      when Hash, Array
+        id = value.object_id
+        return value if seen.key?(id)
+
+        seen[id] = true
+        if value.is_a?(Array)
+          value.each { |item| yaml_deep_freeze(item, seen) }
+        else
+          value.each { |k, v| yaml_deep_freeze(k, seen); yaml_deep_freeze(v, seen) }
+        end
       end
       value.freeze
     end
