@@ -23,6 +23,8 @@ module Postpro
       DOMAIN_LANGUAGE
     ].freeze
 
+    DEFAULT_VARIATION_RANGE = (5..10).freeze
+
     ANALOG_CORE = %w[
       film_curve
       grain
@@ -72,7 +74,7 @@ module Postpro
 
     def verify_batch!(variation_count:, explicit_count:)
       verify_law_catalog!
-      return true if explicit_count || RANDOM_VARIATION_RANGE.cover?(variation_count)
+      return true if explicit_count || DEFAULT_VARIATION_RANGE.cover?(variation_count)
 
       raise ArgumentError, "constitutional batch must generate five to ten variations per source by default"
     end
