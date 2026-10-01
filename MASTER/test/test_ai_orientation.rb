@@ -65,6 +65,7 @@ class TestAiOrientation < Minitest::Test
     assert_includes text, "lenses: authority, topology, runtime, privilege, security, design, lifecycle, resources, recovery, observability, provenance, seams"
     assert_includes text, "evidence_ladder: source authority → executable proof → live evidence"
     assert_includes text, "bridge: RAILS/apps.yml → OPENBSD/deploy_inventory.json → vps-deploy → rcctl → public health"
+    assert_includes text, "inventory_alignment: clean"
     assert_includes text, "proof=RAILS/gates/gates.yml+RAILS/bin/triangle+<app>/bin/ci"
     assert_includes text, "live=target host diagnostics and public health"
   end

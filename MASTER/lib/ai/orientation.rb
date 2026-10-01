@@ -68,6 +68,7 @@ module Master
           "evidence_ladder: source authority → executable proof → live evidence; " +
           "disagreement means drift to diagnose, not permission to guess",
           "bridge: RAILS/apps.yml → OPENBSD/deploy_inventory.json → vps-deploy → rcctl → public health",
+          "inventory_alignment: #{inventory_alignment(repo_root)}",
           "bridge: MASTER/data/soul.yml + MASTER/data/rules.yml are law; " +
           "MASTER/gates/ is the cross-tree verification plane",
           "research pointers: Rails=RAILS/CLAUDE.md + RAILS/apps.yml; " +
@@ -109,6 +110,36 @@ module Master
         "visual_graph=MASTER/lib/fix/rails_visual_graph.rb; apps=#{rows.join(", ")}"
       rescue StandardError
         "rails: feature_truth=RAILS/apps.yml; architecture=RAILS/CLAUDE.md; inventory unavailable"
+      end
+
+      def inventory_alignment(repo_root)
+        rails_path = File.join(repo_root, "RAILS", "apps.yml")
+        openbsd_path = File.join(repo_root, "OPENBSD", "deploy_inventory.json")
+        return "unmeasured" unless File.file?(rails_path) && File.file?(openbsd_path)
+
+        rails = YAML.safe_load_file(rails_path, aliases: true)
+        openbsd = JSON.parse(File.read(openbsd_path, encoding: "UTF-8"))
+        rails_apps = Hash(rails.is_a?(Hash) ? rails.fetch("apps", {}) : {}).filter_map do |name, config|
+          next unless config.is_a?(Hash)
+          [name.to_s, [config["domain"].to_s, config["port"].to_i]]
+        end.to_h
+        openbsd_apps = Array(openbsd["apps"]).filter_map do |app|
+          next unless app.is_a?(Hash) && app["name"]
+          [app["name"].to_s, [app["domain"].to_s, app["port"].to_i]]
+        end.to_h
+
+        rails_only = rails_apps.keys - openbsd_apps.keys
+        openbsd_only = openbsd_apps.keys - rails_apps.keys
+        divergent = (rails_apps.keys & openbsd_apps.keys).select { |name| rails_apps[name] != openbsd_apps[name] }
+        return "clean" if rails_only.empty? && openbsd_only.empty? && divergent.empty?
+
+        parts = ["mismatch"]
+        parts << "rails_only=#{rails_only.join(",")}" unless rails_only.empty?
+        parts << "openbsd_only=#{openbsd_only.join(",")}" unless openbsd_only.empty?
+        parts << "divergent=#{divergent.join(",")}" unless divergent.empty?
+        parts.join(" ")
+      rescue StandardError
+        "unmeasured"
       end
 
       def openbsd_atlas(repo_root)
