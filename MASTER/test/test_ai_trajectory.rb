@@ -22,6 +22,10 @@ class TestAiTrajectory < Minitest::Test
     assert_includes prompt, "style: openbsd"
     assert_includes prompt, "shell: zsh"
     assert_includes prompt, "source tree"
+    assert_includes prompt, "cross-tree reasoning"
+    assert_includes prompt, "authority, topology, runtime"
+    assert_includes prompt, "pinned source and lockfile"
+    assert_includes prompt, "target man pages"
     assert_operator prompt.bytesize, :<, 4_000
   end
 

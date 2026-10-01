@@ -20,16 +20,24 @@ module Master
           "each turn receives a compact live orientation frame; treat it as context, not proof",
           "broad or unfamiliar work: establish the source tree before selecting files",
           "tree is orientation, never proof of file understanding",
-          "when the instruction is /fix, follow Master::Fix::Protocol; external agents can consume `MASTER/bin/master --fix-context <target>`",
+          "when the instruction is /fix, follow Master::Fix::Protocol; " +
+          "external agents can consume `MASTER/bin/master --fix-context <target>`",
           "read relevant source systematically; complete where practical, contiguous ranges for large files",
+          "cross-tree reasoning: RAILS = feature truth, shared engine, app runtime and rendered graph; " +
+          "OPENBSD = deploy identity, operator recipes, service/config lifecycle and live health",
+          "reason through authority, topology, runtime, privilege, network edge, lifecycle, " +
+          "resources and recovery before acting",
+          "RAILS behavior comes from its pinned source and lockfile; " \
+          "OPENBSD release behavior comes from the target man pages",
           "file/data parsing and rewriting: Ruby",
-          "Ruby subprocesses: argv through Master::Io::Exec; avoid backticks and shell interpolation when argv is enough",
+          "Ruby subprocesses: argv through Master::Io::Exec; avoid backticks and shell interpolation " \
+          "when argv is enough",
           "shell execution: zsh only; prefer zsh globs and builtins over GNU text pipelines",
           "keep commands readable; one meaningful operation per line; use && only for a real dependency",
           "never claim success without observable verification",
           "failure is explicit: unknown, unmeasured, blocked, and failed are distinct states",
-          "human output has four layers: conversation, result, state, diagnostic; raw telemetry never masquerades as prose",
-          "context has typed layers: conversation and task are primary; state and telemetry stay out of model context unless explicitly needed",
+          "human output has four layers: conversation, result, state, diagnostic; " \
+          "raw telemetry never masquerades as prose",
           "MASTER owns its constitution; RAILS and OPENBSD retain their own base-tree contracts and dialects",
           "child agents inherit the same contract and may not spawn recursively"
         ]

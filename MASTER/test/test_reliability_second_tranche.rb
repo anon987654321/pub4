@@ -504,7 +504,7 @@ class TestReliabilitySecondTranche < Minitest::Test
                  disk_free_gb: 50, network: true, llm_quota_exhausted: 0 }
 
     mac = Master::Fix::ResourceBudget.new(root: Dir.pwd, cpus: 1, config:, platform: "arm64-darwin25")
-    vm23 = Master::Fix::ResourceBudget.new(root: Dir.pwd, cpus: 1, config:, platform: "x86_64-openbsd7.8")
+    vm23 = Master::Fix::ResourceBudget.new(root: Dir.pwd, cpus: 1, config:, platform: "x86_64-openbsd7.9")
 
     assert_equal :ok, mac.send(:classify, **idle_mac)[:state]
     assert vm23.critical?(vm23.send(:classify, **idle_mac))
