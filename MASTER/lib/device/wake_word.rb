@@ -4,6 +4,7 @@ require "json"
 require "fileutils"
 require "open3"
 require "tempfile"
+require_relative "../trace/dmesg"
 
 module Master
   module Device
@@ -159,7 +160,8 @@ module Master
       end
 
       def emit(line)
-        @out.puts(line)
+        text = line.to_s.sub(/Awake0:s*/i, "").sub(/Awake_word0:s*/i, "")
+        Master::Trace::Dmesg.status("wake0", text, io: @out)
       end
 
       def command?(command)
