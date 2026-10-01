@@ -320,7 +320,7 @@ module Master
       end
 
       def copy_if_synthesized(text, out_path, voice, rate, pitch)
-        path = Speech.synthesize_edge(text, voice:, style_config: { rate:, pitch: })
+        path = Speech.synthesize_edge(text, voice:, style_config: { rate:, pitch: }, shape: false)
         return false unless path && File.size?(path)
 
         FileUtils.cp(path, out_path)
