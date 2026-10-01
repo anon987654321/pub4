@@ -83,7 +83,7 @@ module Master
         return requested_root if File.directory?(requested_root)
 
         MasterPaths.repo
-      endd
+      end
 
     end
   end
