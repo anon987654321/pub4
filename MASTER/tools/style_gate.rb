@@ -3,6 +3,7 @@
 
 require "open3"
 require_relative "../lib/operator/ruby_runner"
+require_relative "../lib/trace/dmesg"
 
 ROOT = File.expand_path("..", __dir__)
 REPO = File.expand_path("../..", ROOT)
@@ -52,16 +53,17 @@ if File.file?(eslint)
 end
 
 failed = results.reject { |row| row[:ok] }
-results.each do |row|
-  tag = row[:ok] ? "ok:" : "warn:"
-  puts "#{tag} #{row[:label]}"
-  puts row[:body] unless row[:body].empty?
+results.each_with_index do |row, index|
+  unit = "style#{index}"
+  Master::Trace::Dmesg.attach(unit, "style0", row[:label])
+  Master::Trace::Dmesg::Report.print(unit, row[:body], parent: "style0") unless row[:body].empty?
+  Master::Trace::Dmesg.status(unit, row[:ok] ? "clean" : "failed")
 end
 
 if failed.any?
-  warn "warn: style_gate #{failed.size} check(s) failed"
+  Master::Trace::Dmesg.status("style0", "#{failed.size} check(s) failed")
   exit 1
 end
 
-puts "ok: style_gate passed"
+Master::Trace::Dmesg.status("style0", "passed")
 exit 0
