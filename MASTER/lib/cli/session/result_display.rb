@@ -1,3 +1,4 @@
+require_relative "../turn_presentation"
 # frozen_string_literal: true
 
 require_relative "../capability_stamp"
