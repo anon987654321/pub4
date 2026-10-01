@@ -71,6 +71,13 @@ class TestGateChain < Minitest::Test
     assert_includes check_source, 'rake["selftest"]'
   end
 
+  def test_gate_chain_loads_strict_mode_directly
+    flags = G.send(:strict_env)
+
+    assert_equal "0", flags.fetch("GATE_REQUIRE_LIVE")
+    assert_equal "0", flags.fetch("GATE_STRICT_ERRORS")
+  end
+
   def test_every_runtime_stage_uses_the_shared_ruby_selection
     assert_equal Operator::RubyRunner.gate_ruby, G::RUBY
     assert_equal Operator::RubyRunner.bundle_cmd, G::BUNDLE
