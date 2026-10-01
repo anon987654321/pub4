@@ -85,6 +85,27 @@ class TestVoiceSupport < Minitest::Test
     FileUtils.rm_rf(dir)
   end
 
+  def test_failed_preferred_player_falls_through_to_working_player
+    dir = Dir.mktmpdir("voice-players")
+    bad = File.join(dir, "afplay")
+    good = File.join(dir, "ffplay")
+    audio = File.join(dir, "reply.mp3")
+    File.write(bad, "#!/bin/sh\nexit 7\n")
+    File.write(good, "#!/bin/sh\nexit 0\n")
+    [bad, good].each { |path| File.chmod(0o755, path) }
+    File.write(audio, "audio")
+
+    PB.stub(:player, [bad, []]) do
+      PB.stub(:which, ->(cmd) { cmd == "ffplay" ? good : nil }) do
+        PB.stub(:generation_active?, true) do
+          assert PB.play(audio)
+        end
+      end
+    end
+  ensure
+    FileUtils.rm_rf(dir)
+  end
+
   def test_failed_audio_playback_does_not_fall_through_to_native_voice
     spoken = []
     PB.stub(:player, ["/tmp/missing-player", []]) do
