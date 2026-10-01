@@ -36,6 +36,7 @@
 require "set"
 require "yaml"
 require_relative "../lib/trace/dmesg"
+require_relative "../lib/trace/dmesg"
 
 module Operator
   module DataReach
@@ -156,8 +157,14 @@ module Operator
     # corpus has no keys to report and passes clean, which is the quiet one and
     # the reason this exists.
     def check_corpus!(data_files)
-      abort("data_reach: no data/*.yml found -- a report of zero unnamed keys read nothing") if data_files.empty?
-      abort("data_reach: the code corpus is empty, so every key reads as unnamed") if code.empty?
+      if data_files.empty?
+        Master::Trace::Dmesg.status("data0", "no data/*.yml found, nothing was read", io: $stderr)
+        raise "data_reach: empty data corpus"
+      end
+      if code.empty?
+        Master::Trace::Dmesg.status("data0", "code corpus empty, every key would read as unnamed", io: $stderr)
+        raise "data_reach: empty code corpus"
+      end
 
       data_files.each { |path| document(path) }
       # Only this corpus's files. The error table lives as long as the process,
