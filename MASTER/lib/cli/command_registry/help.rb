@@ -182,6 +182,18 @@ module Master
         (HELP_TOPICS.keys.map { |k| "/#{k}" } + %w[/exit /quit]).uniq.sort
       end
 
+      def command_surface
+        slash_commands.filter_map do |slash|
+          key = slash.delete_prefix("/")
+          next { cmd: slash, hint: "exit the session" } if %w[exit quit].include?(key)
+
+          topic = HELP_TOPICS[key]
+          next unless topic
+
+          { cmd: slash, hint: topic[:summary] }
+        end
+      end
+
       def help_summary
         [
           "commands: /status /doctor /voice /model",

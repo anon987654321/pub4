@@ -51,6 +51,7 @@
     window.MASTER_VOICE_POLICY = <%= raw Master::Voice::Policy.browser_payload.to_json %>;
     window.MASTER_SOUL_SUMMARY = "persona <%= persona&.name || 'anchor' %>; voice <%= Master::Voice::Policy.neural_voice %> (TTS fixed; persona affects text only); constitutional face";
     window.MASTER_RUNTIME = <%= raw Master::Ground::RuntimeCatalog.web_boot_payload_minimal.to_json %>;
+    window.MASTER_COMMANDS = <%= raw Master::CLI::CommandRegistry.command_surface.to_json %>;
     window.MASTER_I18N = <%= raw t("face.js").to_json %>;
     window.MASTER_T = function (key, fallback, vars) {
       var text = window.MASTER_I18N && typeof window.MASTER_I18N[key] === "string" ? window.MASTER_I18N[key] : fallback;
