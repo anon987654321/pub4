@@ -2,6 +2,7 @@
 
 require "open3"
 require "timeout"
+require_relative "../trace/dmesg"
 
 module Operator
   class CheckRunner
@@ -35,38 +36,29 @@ module Operator
     SLOW_STEP_FRACTION = 0.6
 
     def run(name, *cmd, env: {})
-      announce(name)
+      unit = "#{@prefix}#{@results.size}"
+      Master::Trace::Dmesg.attach(unit, "#{@prefix}0", name) unless @quiet
       started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
       out, status = capture(env, *cmd)
       elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
       ok = status.success?
       @results << Result.new(name:, success: ok, output: out)
-      report(name, ok, elapsed)
-      warn out if !out.empty? && (!ok || ENV["CHECK_VERBOSE"] == "1")
+      report(unit, name, ok, elapsed)
+      Master::Trace::Dmesg::Report.print(unit, out, parent: "#{@prefix}0") if !out.empty? && (!ok || ENV["CHECK_VERBOSE"] == "1")
       ok
     end
 
     private
 
-    def announce(name)
+    def report(unit, name, ok, elapsed)
       return if @quiet
 
-      print "#{@prefix}: #{name.ljust(22)} "
-      $stdout.flush
-    end
-
-    def report(name, ok, elapsed)
-      if @quiet
-        warn "#{@prefix}: #{name} #{ok ? 'ok' : 'fail'}"
-      else
-        puts(ok ? "ok" : "fail")
-      end
+      Master::Trace::Dmesg.status(unit, ok ? "clean" : "failed")
       return unless ok && elapsed > @timeout * SLOW_STEP_FRACTION
 
-      warn format(
-        "%s: %s took %ds of a %ds budget — raise MASTER_CHECK_TIMEOUT or split the step " \
-        "before it starts failing on a busy machine",
-        @prefix, name, elapsed.round, @timeout
+      Master::Trace::Dmesg.status(
+        unit,
+        "#{elapsed.round}s of #{@timeout}s timeout, consider splitting #{name}"
       )
     end
 
