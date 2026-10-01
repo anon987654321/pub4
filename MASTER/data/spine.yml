@@ -296,7 +296,7 @@ spine:
   core_files: 7
   core_recursive_files: 7
 
-# The coarse sprawl net over the three top-level trees: one source-file ceiling each, so a
+# The coarse sprawl net over the four top-level trees: one source-file ceiling each, so a
 # new file anywhere fails `bin/operator measure` until it folds into an existing one
 # or the ceiling is raised here with the reason in the commit. dilla's engine has
 # a finer per-part guard in MASTER/tools/gate.rb. On-disk source files (code, style,

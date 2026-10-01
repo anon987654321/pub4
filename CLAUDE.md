@@ -63,7 +63,7 @@ Run the smallest check that proves the work, and do not report done without its
 output. `--profile=agent` may fail on known debt tagged `agent-ignore`; do not
 chase scan noise on unrelated patches.
 
-`bin/operator gate` is the whole ladder in one command: the scanner over all three
+`bin/operator gate` is the whole ladder in one command: the scanner over all four
 governed trees with autofix on, every RAILS gate, every suite, the ratchets, the sprawl
 census, and last the council. It writes by default and says which files each
 stage changed, under that stage's name, so a bad fix is attributable to the

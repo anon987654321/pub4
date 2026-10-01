@@ -89,7 +89,7 @@ class GateContractSpec < Minitest::Test
     # --apply as a directory the moment the full-fix line grew one.
     paths = gate_explain.scan(%r{bin/cli /\w+((?:\s+--[\w-]+)*)\s+(\S+)}).map(&:last).uniq
 
-    assert_operator paths.size, :>=, 3, "expected the default ladder to name all three trees"
+    assert_operator paths.size, :>=, 4, "expected the default ladder to name all four trees"
     paths.each do |relative|
       absolute = File.expand_path(relative, ROOT)
       assert File.directory?(absolute), "bin/gate references missing directory: #{relative}"

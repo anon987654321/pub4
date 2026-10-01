@@ -214,7 +214,7 @@ module Operator
     # The row above read "what our own rules find in our own trees" and
     # counted the law alone, so this second population counts the 145 rules
     # the scanner builds: rule_audit runs them over a sixth of the tree and
-    # measures blindness, and bin/operator gate runs them over all three top-level trees
+    # measures blindness, and bin/operator gate runs them over all four top-level trees
     # and records nothing.
     def self_findings_rows
       [master_row("self_findings.law", "data/self_findings.yml", "what the 122 laws find in our own trees") do
@@ -253,7 +253,7 @@ module Operator
 
     def sprawl_rows
       %w[lone_dirs stutter vague_names].map do |kind|
-        master_row("sprawl.#{kind}", "data/sprawl_census.yml", "the shape of the tree, in all three top-level trees") do
+        master_row("sprawl.#{kind}", "data/sprawl_census.yml", "the shape of the tree, in all four top-level trees") do
           require File.join(MASTER, "lib/operator/sprawl_census")
           [Operator::SprawlCensus.counts.fetch(kind), Operator::SprawlCensus.ceilings.fetch(kind),
            Array(Operator::SprawlCensus.public_send(kind))]
@@ -452,7 +452,7 @@ end
       tracked_source_files.select { |path| path.start_with?("#{tree}/") }
     end
 
-    # One call for all three top-level trees, so this stays fast enough for a hook. Nothing
+    # One call for all four top-level trees, so this stays fast enough for a hook. Nothing
     # is rescued: a growth row measured without asking git what it tracks is the
     # blind instrument this file exists to catch, and pub4_growth_rows turns the
     # raise into an unreadable row, which fails.
@@ -670,7 +670,7 @@ end
 
 def deep_rows
   [
-    # Deep because it parses every tracked Ruby file in three top-level trees with Prism.
+    # Deep because it parses every tracked Ruby file in four top-level trees with Prism.
     # Fast means "reads files" in this register and name_candidates reads 2,500
     # of them through a parser, which is the line the header draws.
     *name_rows,
@@ -726,7 +726,7 @@ def deep_rows
     # --why: the members behind one number.
     #
     # A prefix match, because the row names are long and the useful ones are
-    # families — `--why sprawl` answers all three at once, `--why growth.rails`
+    # families — `--why sprawl` answers all four at once, `--why growth.rails`
     # answers one. Naming nothing lists the rows that can answer, which is the
     # question a reader has before they have a row name.
     def why(rows, query)

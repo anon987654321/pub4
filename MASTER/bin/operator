@@ -46,7 +46,7 @@ def usage
       bin/operator rules <ID> [--card] [--health] [--deep] [--json] [--corpus MASTER|all] [path...]
                                       the rule, its exemption, then what it finds
       bin/operator hooks                  install the shared-tree commit guard
-      bin/operator readers <path>         who reaches this file, across all three governed trees
+      bin/operator readers <path>         who reaches this file, across all four governed trees
       bin/operator pushed? <path>...      is this content on origin/main, or only here
       bin/operator snapshot [...]         regenerate the snapshot packs (MASTER/tools/snapshot.rb)
       bin/operator event-bus [--strict] [--json]  census Ruby publishers/subscribers and browser event references
@@ -92,7 +92,7 @@ when "gate"
   list = !ARGV.delete("--list").nil? || !ARGV.delete("--explain").nil?
   only = ARGV.filter_map { |arg| arg[/\A--only=(.+)\z/, 1] }.flat_map { |value| value.split(",") }
   # --tree is the common case made cheap: working inside one tree, the other
-  # three trees' suites and gates prove nothing about the change and cost most of
+  # four trees' suites and gates prove nothing about the change and cost most of
   # the wall clock. It drops whole stages rather than shrinking them; the
   # reasoning is in lib/operator/gate_chain.rb.
   trees = ARGV.filter_map { |arg| arg[/\A--tree=(.+)\z/, 1] }
@@ -241,7 +241,7 @@ when "land"
 when "snapshot"
   # Regenerates snapshot_<TREE>.md — the verbatim packs handed to another model
   # when it needs the whole tree rather than a summary. The generator that made
-  # them was bin/snapshot, deleted with the DEPLOY tree, so the three files sat
+  # them was bin/snapshot, deleted with the DEPLOY tree, so the four files sat
   # stale at a commit no checkout still has and nothing could refresh them.
   # Lives in MASTER/tools so it is one implementation, reachable from here.
   exec(RbConfig.ruby, File.join(ROOT, "MASTER", "tools", "snapshot.rb"), *ARGV)

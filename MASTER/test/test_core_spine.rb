@@ -191,7 +191,7 @@ class TestKernelSpine < Minitest::Test
     assert_equal :scope_creep, verdict.by
   end
 
-  # The repo root holds three governed trees. A bin/ or dotfiles/ segment sits inside one
+  # The repo root holds four governed trees. A bin/ or dotfiles/ segment sits inside one
   # of them, so a MASTER-relative bin/ write is not a fourth tree.
   def test_a_bin_segment_is_not_a_tree
     memory = Master::Core::Memory.new
