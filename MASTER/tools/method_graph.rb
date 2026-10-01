@@ -25,6 +25,7 @@
 
 require "prism"
 require "set"
+require_relative "../lib/trace/dmesg"
 
 module Operator
   module MethodGraph
@@ -183,17 +184,16 @@ module Operator
 
     def report
       dead, total, prefixes, visitors = unreachable
-      puts "send-prefix dispatch: #{prefixes.to_a.sort.join(', ')}"
-      puts "Prism::Visitor hooks: #{visitors.size}"
-      puts "definitions in MASTER/lib: #{total}"
-      puts "unreachable from every root: #{dead.size}, #{dead.sum { |d| d[:last] - d[:first] }} body lines"
-      puts
+      Master::Trace::Dmesg.attach("methodgraph0", "master0", "#{total} definitions, #{dead.size} unreachable")
+      Master::Trace::Dmesg.status("methodgraph0", "send-prefix dispatch, #{prefixes.to_a.sort.join(", ")}")
+      Master::Trace::Dmesg.status("methodgraph0", "Prism::Visitor hooks, #{visitors.size}")
       dead.group_by { |definition| definition[:file] }
           .sort_by { |_, group| -group.sum { |d| d[:last] - d[:first] } }
           .each do |path, group|
         rel = path.sub("#{ROOT}/", "")
         lines = group.sum { |d| d[:last] - d[:first] }
-        puts "  #{rel}  #{group.size}, #{lines} lines: #{group.map { |d| d[:name] }.sort.join(', ')}"
+        Master::Trace::Dmesg.attach("methodfile#{path.hash.abs % 10}", "methodgraph0", "#{rel}, #{group.size} methods, #{lines} lines")
+        group.map { |d| d[:name] }.sort.each { |name| Master::Trace::Dmesg.status("methodfile#{path.hash.abs % 10}", name) }
       end
     end
   end
