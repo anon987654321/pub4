@@ -37,16 +37,14 @@ module Master
       # or another repository it operates on. Media entrypoints stay
       # discoverable in every case.
       def script_path(requested_root, tool)
-        # A tool entrypoint is either tools/<tool>.rb or, once it grows its own
-        # directory, tools/<tool>/<tool>.rb (e.g. postpro/postpro.rb). Media
-        # tools (dilla, postpro, replicate) were extracted out of MASTER/tools/
-        # into the sibling MASTER/tools/<tool>/<tool>.rb — checked last so anything
-
+        # Canonical tool entrypoints live at MASTER/tools/<tool>/<tool>.rb.
+        # Flat tools/<tool>.rb and the old STUDIO/<tool>/<tool>.rb location are
+        # compatibility paths only.
         candidates = [requested_root, MasterPaths.repo, MasterPaths.root].uniq.flat_map do |candidate|
           [
-            File.join(candidate, "STUDIO", tool, "#{tool}.rb"),
+            File.join(candidate, "tools", tool, "#{tool}.rb"),
             File.join(candidate, "tools", "#{tool}.rb"),
-            File.join(candidate, "tools", tool, "#{tool}.rb")
+            File.join(candidate, "STUDIO", tool, "#{tool}.rb")
           ]
         end
         candidates.find { |candidate| File.file?(candidate) } || candidates.first
