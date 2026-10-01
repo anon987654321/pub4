@@ -22,6 +22,7 @@ Master::Boot::Entrypoint.prepare!(root: File.expand_path("..", __dir__))
 # includes MASTER alongside whatever was named.
 
 require "open3"
+require_relative "../lib/trace/dmesg"
 require_relative "../lib/operator/ruby_runner"
 require_relative "../lib/operator/strict_mode"
 
@@ -54,9 +55,10 @@ SAFE_ENV = {
 KNOWN_FLAGS = %w[--scan-only --lexical-only --semantic-only --explain --help -h].freeze
 unknown = ARGV.reject { |arg| KNOWN_FLAGS.include?(arg) || arg.start_with?("--tree=") }
 unless unknown.empty?
-  warn "gate: unknown argument#{"s" if unknown.size > 1}: #{unknown.join(" ")}"
-  warn "gate: known flags are #{KNOWN_FLAGS.join(" ")}"
-  warn "gate: refusing rather than falling through to full-fix, which writes"
+  Master::Trace::Dmesg.status("gate0", "unknown argument#{"s" if unknown.size > 1}, #{unknown.join(" ")}")
+  Master::Trace::Dmesg.status("gate0", "known flags, #{KNOWN_FLAGS.join(" ")}")
+  Master::Trace::Dmesg.status("gate0", "refusing rather than falling through to full fix")
+
   exit 2
 end
 
@@ -105,7 +107,7 @@ TREE_PATHS = { "MASTER" => ".", "RAILS" => "../RAILS", "OPENBSD" => "../OPENBSD"
 # measures no tree and exits 0 is the failure this whole file is written against.
 named_trees = ARGV.filter_map { |arg| arg[/\A--tree=(.+)\z/, 1] }.flat_map { |value| value.split(",") }.map(&:upcase)
 unless (named_trees - TREE_PATHS.keys).empty?
-  warn "gate: unknown tree(s): #{(named_trees - TREE_PATHS.keys).join(" ")}; have #{TREE_PATHS.keys.join(" ")}"
+  Master::Trace::Dmesg.status("gate0", "unknown tree(s), #{(named_trees - TREE_PATHS.keys).join(" ")}; have #{TREE_PATHS.keys.join(" ")}")
   exit 2
 end
 SELECTED_TREES = (named_trees.empty? ? TREE_PATHS.keys : named_trees).freeze
@@ -127,11 +129,20 @@ COMMANDS = {
 # Always MASTER, whatever was named: see the --tree note in the header.
 ASSERT_PATHS = (SELECTED_TREES | ["MASTER"]).freeze
 
+$gate_exec = 0
+
 def run_command(*argv, chdir: ROOT)
-  puts "$ #{argv.join(" ")}"
+  unit = "exec#{$gate_exec}"
+  $gate_exec += 1
+  Master::Trace::Dmesg.attach(unit, "gate0", argv.join(" "))
   stdout, status = Open3.capture2e(*argv, chdir: chdir)
-  puts stdout
-  abort "err: command failed: #{argv.join(" ")}" unless status.success?
+  unless stdout.to_s.empty?
+    Master::Trace::Dmesg::Report.print(unit, stdout, parent: "gate0")
+  end
+  return if status.success?
+
+  Master::Trace::Dmesg.status(unit, "failed, exit #{status.exitstatus}")
+  exit status.exitstatus || 1
 end
 
 # A stage that could not measure did not pass.
@@ -163,10 +174,15 @@ INCONCLUSIVE = [
 STAGE_TIMEOUT = Integer(ENV.fetch("MASTER_GATE_STAGE_TIMEOUT", "1200"))
 
 def run_master_line(line)
-  puts "master> #{line}"
+  unit = "stage#{$gate_exec}"
+  $gate_exec += 1
+  Master::Trace::Dmesg.attach(unit, "gate0", line)
   stdout, status = capture_with_timeout(line)
-  puts stdout
-  abort "err: MASTER command failed: #{line}" unless status.success?
+  Master::Trace::Dmesg::Report.print(unit, stdout, parent: "gate0") unless stdout.to_s.empty?
+  unless status.success?
+    Master::Trace::Dmesg.status(unit, "failed, exit #{status.exitstatus}")
+    exit status.exitstatus || 1
+  end
 
   hit = INCONCLUSIVE.find { |pattern| stdout.match?(pattern) }
   return unless hit
@@ -180,6 +196,7 @@ end
 # its caller can report the tier as skipped; every other mode keeps aborting,
 # because there the tier that went blind is the one that was supposed to work.
 def inconclusive!(message)
+  Master::Trace::Dmesg.status("gate0", "inconclusive, #{message}")
   # A deterministic checklist is not a semantic review. Running it here created
   # two different things with nearly the same operator-facing meaning: "the
   # semantic tier was unavailable" and "the semantic tier was satisfied by the
@@ -207,7 +224,7 @@ def capture_with_timeout(line)
       Process.kill("TERM", wait.pid)
       wait.join(10) || Process.kill("KILL", wait.pid)
       reader.join(5)
-      puts buffer
+      Master::Trace::Dmesg::Report.print("gate0", buffer, parent: "master0") unless buffer.empty?
       inconclusive! "#{line} produced no verdict in #{STAGE_TIMEOUT}s and was killed — " \
                     "#{buffer.empty? ? 'it printed nothing at all' : "it printed #{buffer.lines.length} line(s)"}. " \
                     "Nothing was measured; raise MASTER_GATE_STAGE_TIMEOUT only if you know the stage was working."
@@ -232,25 +249,26 @@ def assert_clean(*paths)
 
   changed, = Open3.capture2e("git", "diff", "--name-only", "--", *paths, chdir: REPO)
   files = changed.split("\n").reject(&:empty?)
-  abort <<~ERR
-    err: #{paths.join(", ")} is not clean after the chain — #{files.length} file(s) modified:
-    #{files.first(20).map { |f| "      #{f}" }.join("\n")}
-    #{files.length > 20 ? "      ... and #{files.length - 20} more\n" : ""}
-    The diff is printed above. This is the expected outcome when /fix had work to
-    do: review those changes, commit them, and run the gate again. It is only a
-    problem if you did not expect /fix to touch them, or if the tree was already
-    dirty before the gate started.
-  ERR
+  Master::Trace::Dmesg.attach("assert0", "gate0", "#{paths.join(", ")} not clean")
+  Master::Trace::Dmesg.status("assert0", "#{files.length} file(s) modified")
+  files.first(20).each { |file| Master::Trace::Dmesg.status("assert0", file) }
+  more = files.length - 20
+  Master::Trace::Dmesg.status("assert0", "#{more} more") if more.positive?
+  exit 1
 end
 
-puts "gate: mode=#{SCAN_ONLY ? 'scan-only' : 'full-fix'} tier=#{TIER} trees=#{SELECTED_TREES.join(',')}"
+Master::Trace::Dmesg.attach(
+  "gate0", "master0",
+  "#{SCAN_ONLY ? "scan-only" : "full fix"}, #{TIER}, #{SELECTED_TREES.join(", ")}"
+)
 
 if EXPLAIN
   COMMANDS.each do |name, lines|
-    puts "  #{name}:"
-    lines.each { |line| puts "    bin/cli #{line}" }
+    unit = "#{name}0"
+    Master::Trace::Dmesg.attach(unit, "gate0", name)
+    lines.each { |line| Master::Trace::Dmesg.status(unit, "bin/cli #{line}") }
   end
-  puts "gate: --explain, so nothing above was run"
+  Master::Trace::Dmesg.status("gate0", "explain, nothing run")
   exit 0
 end
 
@@ -271,4 +289,4 @@ COMMANDS[:deploy].each { |line| run_master_line(line) }
 git_diff(*ASSERT_PATHS) if lexical
 assert_clean(*ASSERT_PATHS) if lexical && !SCAN_ONLY
 
-puts SCAN_ONLY ? "ok: MASTER gate scan-only complete" : "ok: MASTER gate clean"
+Master::Trace::Dmesg.status("gate0", SCAN_ONLY ? "scan-only complete" : "clean")
