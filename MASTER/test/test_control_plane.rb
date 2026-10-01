@@ -116,6 +116,19 @@ class ControlPlaneSpec < Minitest::Test
     end
   end
 
+  def test_process_lock_reclaims_dead_metadata_when_no_process_holds_the_file
+    dir = Dir.mktmpdir("master-lock-stale")
+    path = File.join(dir, "master.lock")
+    File.write(path, JSON.generate(pid: 999_999_999, host: "dead", mode: "cli", at: Time.now.utc.iso8601) + "\n")
+    Master::Ops::ProcessLock.stub(:lock_holders, []) do
+      lock = Master::Ops::ProcessLock.acquire!(path:, mode: "test")
+      refute_nil lock
+      Master::Ops::ProcessLock.release(lock)
+    end
+  ensure
+    FileUtils.remove_entry(dir) if dir && Dir.exist?(dir)
+  end
+
   def test_process_lock_is_the_single_master_mutex
     dir = Dir.mktmpdir("master-lock")
     path = File.join(dir, "master.lock")
