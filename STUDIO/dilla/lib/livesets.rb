@@ -2104,6 +2104,7 @@ module LiveSynth
   # recorded as the player and then becomes it, keeping the pid `stop` needs.
   # Its knobs move by themselves; a sentence cannot turn them.
   LIVESET = File.join(Livesets::D, "liveset.rb")
+  ROYKSOPP = File.join(Livesets::D, "royksopp.rb")
 
   def standard_default!
     abort "live0: #{LIVESET} is missing" unless File.file?(LIVESET)
@@ -3237,10 +3238,10 @@ module LiveSynth
 
     # A player of its own, detached, so the sentence that started it returns
     # at once and the sound outlives it.
-    def spawn!(args)
+    def spawn!(args, engine: ENGINE)
       stop!
       FileUtils.mkdir_p(home)
-      pid = Process.spawn(RbConfig.ruby, ENGINE, "live", *args, chdir: Livesets::D, in: File::NULL,
+      pid = Process.spawn(RbConfig.ruby, engine, "live", *args, chdir: Livesets::D, in: File::NULL,
                                                                 out: [log_file, "a"], err: [:child, :out], pgroup: true)
       Process.detach(pid)
       pid
@@ -3294,11 +3295,11 @@ module LiveSynth
     MORPH = /\b(?:morph|switch|change|fade|move|turn|go)\w*\s+(?:it\s+|the\s+|this\s+|that\s+|over\s+|across\s+|slowly\s+)?(?:to|into)\b/i.freeze
     STYLE_QUERY = /\b(?:switch|change|move|go)\b.*\bstyle\b/i.freeze
     STYLE_ALIASES = {
-      "röyksopp" => %w[progression dilla_love family=prophet],
-      "royksopp" => %w[progression dilla_love family=prophet],
-      "melody a.m." => %w[progression dilla_love family=prophet],
-      "coltrane" => %w[progression soul_jazz_six family=rhodes],
+      "röyksopp" => :royksopp,
+      "royksopp" => :royksopp,
+      "melody a.m." => :royksopp,
     }.freeze
+    LIVE_STYLE_VERB = /\b(?:play|start|resume|switch|change|move|go|use|put\s+on|queue)\b/i.freeze
     # The improviser with drums, dub and FM is asked for by those parts.
     JAM = /\b(?:drums?|dub|fm|industrial|jam\w*|kick|snare|beat)\b/.freeze
     MODEL_D = /\b(?:model\s*d|minimoog)\b/.freeze
@@ -3342,12 +3343,20 @@ module LiveSynth
     def play?(words) = words.match?(/\bplay\b/) && !words.match?(MORPH)
 
     def style_query?(words)
-      STYLE_QUERY.match?(words) || STYLE_ALIASES.keys.any? { |name| words.include?(name) }
+      return true if STYLE_QUERY.match?(words)
+      return false unless STYLE_ALIASES.keys.any? { |name| words.include?(name) }
+
+      words.match?(LIVE_STYLE_VERB)
     end
 
     def style_request(words)
       key = STYLE_ALIASES.keys.sort_by { |name| -name.length }.find { |name| words.include?(name) }
-      return "style: say what to switch to (röyksopp, coltrane, moog, prophet, rhodes)" unless key
+      return "style: say what to switch to (röyksopp, moog, prophet, rhodes)" unless key
+
+      if STYLE_ALIASES.fetch(key) == :royksopp
+        pid = Session.spawn!([], engine: ROYKSOPP)
+        return "#{key} live — Melody A.M. chord pads, original Dilla arrangement (pid #{pid}, log #{Session.log_file})"
+      end
 
       args = STYLE_ALIASES.fetch(key)
       pid = Session.spawn!(args)
