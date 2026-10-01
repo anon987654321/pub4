@@ -49,9 +49,8 @@ module Master
         raw = File.exist?(path) ? YAML.safe_load(File.read(path), permitted_classes: [Symbol]) : {}
         section = raw.is_a?(Hash) ? (raw["transcendent"] || raw[:transcendent] || {}) : {}
         cfg = DEFAULTS.merge(stringify_keys(section))
-        if Engines.openbsd?
-          cfg["engine_chain"] = ENV.fetch("MASTER_TTS_ENGINE_CHAIN", Engines::OPENBSD_CHAIN.join(","))
-        end
+        default_chain = Engines.openbsd? ? Engines::OPENBSD_CHAIN.join(",") : cfg["engine_chain"]
+        cfg["engine_chain"] = ENV.fetch("MASTER_TTS_ENGINE_CHAIN", default_chain)
         cfg
       rescue StandardError
         DEFAULTS.dup
