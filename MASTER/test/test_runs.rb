@@ -45,16 +45,13 @@ class TestRuns < Minitest::Test
     assert_empty Operator::Runs.who_runs("MASTER/test/no_such_test.rb")
   end
 
-  # STUDIO was the fourth tree and the census never looked at it: 23 test files
-  # outside every question this gate asks. A runner that names one file outright
-  # runs it, which a glob-only extractor could not see — STUDIO's Rakefile lists
-  # test_studio_gate.rb by name on purpose.
-  def test_studio_is_in_the_census_and_its_named_runner_counts
-    studio = Operator::Runs.test_files.select { |path| path.start_with?("STUDIO/") }
-
-    assert_operator studio.size, :>, 15, "STUDIO's suite is not being read"
-    assert_includes Operator::Runs.who_runs("STUDIO/test/test_studio_gate.rb"), "STUDIO/Rakefile"
-    assert_includes Operator::Runs.who_runs("STUDIO/test/test_dilla_radio_bergen_study.rb"), "STUDIO/Rakefile"
+  # STUDIO is a governed source tree, while its media test suite is intentionally
+  # owned by MASTER/tools/Rakefile through the compatibility links. There is no
+  # STUDIO/test runner to enumerate here, so the census must not invent one.
+  def test_studio_is_a_governed_tree_without_a_fake_test_runner
+    assert_includes Operator::Runs.test_files, "MASTER/test/test_runs.rb"
+    refute Operator::Runs.test_files.any? { |path| path.start_with?("STUDIO/test/") },
+           "STUDIO must not claim a test tree that does not exist"
   end
 
   # What makes a file a test is the directory, not the name — three source files
