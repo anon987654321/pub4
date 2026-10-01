@@ -36,8 +36,8 @@ module Master
           "keep commands readable; one meaningful operation per line; use && only for a real dependency",
           "never claim success without observable verification",
           "failure is explicit: unknown, unmeasured, blocked, and failed are distinct states",
-          "human output has four layers: conversation, result, state, diagnostic; "           "raw telemetry never masquerades as prose",
-          "context has typed layers: conversation and task are primary; state and telemetry stay out "           "of model context unless explicitly needed",
+          "human output has four layers: conversation, result, state, diagnostic; " \
+          "raw telemetry never masquerades as prose",
           "MASTER owns its constitution; RAILS and OPENBSD retain their own base-tree contracts and dialects",
           "child agents inherit the same contract and may not spawn recursively"
         ]
