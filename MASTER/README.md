@@ -141,7 +141,7 @@ A successful interactive `/fix` also closes by surfacing the last substantive us
 
 **Phoenix architecture.** The implementation is disposable; the boundaries are not. Four
 regeneration boundaries are declared in the existing constitutional registry:
-MASTER, RAILS, OPENBSD and MASTER/tools as STUDIO's replaceable tool plane. Each
+MASTER, RAILS, OPENBSD and STUDIO as four governed boundaries. MASTER/tools remains STUDIO's stable compatibility plane. Each
 names its entrypoint, owner, dependencies and proof command. `rake architecture`
 checks the graph and its live paths without creating another configuration source.
 
@@ -287,7 +287,7 @@ Location is explicit rather than a boot probe because it is a user-sensitive cap
 
 The perception loop is bounded and stoppable. It does not automatically activate the camera, microphone, or location. Those remain explicit operations. Set `MASTER_DEVICE=0` to disable Android perception for a process.
 
-**Whole-tree verification.** From `MASTER/`, `rake test:all_trees` discovers the repository's top-level trees, checks Ruby syntax, parses YAML and JSON, and runs every discovered Ruby test file under a tree's `test/` directory. It is a smoke-and-contract gate across MASTER, OPENBSD and RAILS; MASTER/tools is governed inside MASTER; it does not pretend that syntax or smoke tests replace application-specific integration tests.
+**Whole-tree verification.** From `MASTER/`, `rake test:all_trees` discovers the repository's top-level trees, checks Ruby syntax, parses YAML and JSON, and runs every discovered Ruby test file under a tree's `test/` directory. It is a smoke-and-contract gate across MASTER, RAILS, OPENBSD and STUDIO; STUDIO's media tests run through MASTER/tools' compatibility registry; it does not pretend that syntax or smoke tests replace application-specific integration tests.
 
 **vm23 operator path.** From the authoritative OpenBSD checkout at `/home/dev/pub4`, run as `dev` rather than under `doas`:
 
@@ -299,7 +299,7 @@ The Markdown infrastructure is landed, including `Master::MD`, `Master::PDF`, th
 
 **Documents.** Markdown is the canonical document source. `Master::MD` applies the house normalization without touching fenced code, while `Master::PDF` is a thin derived-output adapter for an operator-supplied PDF engine. No document is authored twice: HTML and PDF are renderings of the same Markdown source.
 
-**Snapshots.** Run `/snapshot` to write one source snapshot per governed tree at the repository root: `../snapshot_MASTER.md`, `../snapshot_RAILS.md`, `../snapshot_OPENBSD.md`, and `../snapshot_STUDIO.md` (MASTER/tools). Snapshots include meaningful text source only: dot files and directories, temporary/generated/dependency trees, and binary/media files are excluded. The command is deterministic apart from files that change while it runs. Generated snapshots are artifacts, not a second source of truth.
+**Snapshots.** Run `/snapshot` to write one source snapshot per governed tree at the repository root: `../snapshot_MASTER.md`, `../snapshot_RAILS.md`, `../snapshot_OPENBSD.md`, and `../snapshot_STUDIO.md` (STUDIO). Snapshots include meaningful text source only: dot files and directories, temporary/generated/dependency trees, and binary/media files are excluded. The command is deterministic apart from files that change while it runs. Generated snapshots are artifacts, not a second source of truth.
 
 **Aegis and cognition.** Aegis remains a design horizon, not a scaffold. The buildable part today is the drift model: a pure function from entry position, sea state, current and elapsed time to a probable-position ellipse, testable against published search-and-rescue drift data. Marine sensing stays deferred until there is real hardware and a reader for every proposed sensor; placeholder sensing would violate anti-simulation.
 
