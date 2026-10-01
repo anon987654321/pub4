@@ -15,7 +15,7 @@ module Master
 
       module_function
 
-      def acquire!(path: nil, root: Master::ROOT, mode: "master")
+      def acquire!(path: nil, root: Master::ROOT, mode: "master", inherit_fd: false)
         path ||= File.join(root, ".master", "process.lock")
         FileUtils.mkdir_p(File.dirname(path))
         attempts = 0
@@ -23,7 +23,7 @@ module Master
         loop do
           io = File.open(path, File::RDWR | File::CREAT, 0o600)
           if io.flock(File::LOCK_EX | File::LOCK_NB)
-            io.close_on_exec = false
+            io.close_on_exec = !inherit_fd
             io.rewind
             io.truncate(0)
             io.write(JSON.generate(
