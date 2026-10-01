@@ -2,6 +2,7 @@
 
 require "fileutils"
 require_relative "../boot/paths"
+require_relative "../trace/dmesg"
 
 module Master
   module Device
@@ -62,7 +63,7 @@ module Master
 
         new(env:, out:).run
       rescue StandardError => e
-        out.puts("onboard0: skipped — #{e.class}: #{e.message}")
+        Master::Trace::Dmesg.status("onboard0", "skipped, #{e.class}: #{e.message}", io: out)
       end
 
       def initialize(env: ENV, out: $stderr, android: Device.android?, mark: MARK, env_file: ENV_FILE,
@@ -84,10 +85,10 @@ module Master
       def run
         first = first_run?
         created = ensure_env_file
-        @out.puts("onboard0: first run on this #{@android ? "phone" : "host"}") if first
-        @out.puts("env0: created #{home(@env_file)}, comments only; uncomment one key there") if created
-        @out.puts("pair0: this phone is not personal yet — say /pair owner [name] to pair it to yourself") if @android && !Device::Agent.paired?(root: @root)
-        checks.each { |check| @out.puts("#{check.name}0: #{check.says}") if first || !check.ok }
+        Master::Trace::Dmesg.status("onboard0", "first run on this #{@android ? "phone" : "host"}", io: @out) if first
+        Master::Trace::Dmesg.status("env0", "created #{home(@env_file)}, comments only; uncomment one key there", io: @out) if created
+        Master::Trace::Dmesg.status("pair0", "this phone is not personal yet, say /pair owner [name] to pair it to yourself", io: @out) if @android && !Device::Agent.paired?(root: @root)
+        checks.each { |check| Master::Trace::Dmesg.status("#{check.name}0", check.says, io: @out) if first || !check.ok }
         mark! if first
       end
 
