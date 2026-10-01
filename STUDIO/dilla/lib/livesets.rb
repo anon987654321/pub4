@@ -2162,7 +2162,10 @@ module LiveSynth
     kind, params = stage.first
     return params if kind == "filter"
 
-    Livesets.public_send(kind.to_sym, **params.transform_keys(&:to_sym))
+    args = params.transform_keys(&:to_sym)
+    return Outboard.public_send(kind.to_sym, **args) if %w[console_sum console_stack].include?(kind.to_s)
+
+    Livesets.public_send(kind.to_sym, **args)
   end
 
   # The patches the live side can name: every AnalogSynth patch and every
@@ -3434,24 +3437,24 @@ module LiveSynth
       Session.playing ? Session.post!(command) : "improvise pad=#{patch} (pid #{Session.spawn!(['improvise', "pad=#{patch}"])})"
     end
 
-    # Nothing named plays the main sound, which is soul_jazz_six's moog
-    # patches over a DFAM, so "moog patches" asks for it too. A named
-    # progression, patch, or other family, or one of the improviser's parts,
-    # asks for that instead.
+    # Generic play is the steerable showcase: the walking harmony, rotating
+    # analogue patches, DFAM, arp and full analogue rack. Explicit requests keep
+    # their own mode, so "live default" remains the frozen take.
     def play_args(words)
       style = STYLE_ALIASES.keys.sort_by { |name| -name.length }.find { |name| words.include?(name) }
       return STYLE_ALIASES.fetch(style) if style
+      return %w[improvise] if words.match?(/\bimprovise\b/)
 
       patches = Patches.find(words)
       family = FAMILIES.find { |name| words.match?(/\b#{name}\b/) }
       progression = progression_in(words)
       return ["progression", progression, *with(patches, family)] if progression
       return ["improvise", *(family ? ["family=#{family}"] : []), *(patches.any? ? ["pad=#{patches.first}"] : [])] if words.match?(JAM)
-      return patches.size > 1 || words.match?(PROGRESSION) ? ["progression", "soul_jazz_six", *with(patches, nil)] : ["patch", patches.first] if patches.any?
+      return patches.size > 1 || words.match?(PROGRESSION) ? ["progression", "moog_improv", *with(patches, nil)] : ["patch", patches.first] if patches.any?
       return %w[improvise family=moog] if words.match?(MODEL_D)
-      return ["progression", "soul_jazz_six", "family=#{family}"] if family && family != "moog"
+      return ["progression", "moog_improv", "family=#{family}"] if family && family != "moog"
 
-      ["default"]
+      %w[progression moog_improv]
     end
 
     def with(patches, family)
