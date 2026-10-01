@@ -129,6 +129,22 @@ class ControlPlaneSpec < Minitest::Test
     FileUtils.remove_entry(dir) if dir && Dir.exist?(dir)
   end
 
+  def test_process_lock_fd_is_closed_on_exec_unless_explicitly_inherited
+    dir = Dir.mktmpdir("master-lock-exec")
+    path = File.join(dir, "master.lock")
+    lock = Master::Ops::ProcessLock.acquire!(path:, mode: "test")
+    refute_nil lock
+    assert_equal true, lock.close_on_exec?
+    Master::Ops::ProcessLock.release(lock)
+
+    inherited = Master::Ops::ProcessLock.acquire!(path:, mode: "test", inherit_fd: true)
+    refute_nil inherited
+    assert_equal false, inherited.close_on_exec?
+    Master::Ops::ProcessLock.release(inherited)
+  ensure
+    FileUtils.remove_entry(dir) if dir && Dir.exist?(dir)
+  end
+
   def test_process_lock_is_the_single_master_mutex
     dir = Dir.mktmpdir("master-lock")
     path = File.join(dir, "master.lock")
