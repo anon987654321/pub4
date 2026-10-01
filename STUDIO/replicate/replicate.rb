@@ -18,8 +18,8 @@ require_relative "../../MASTER/lib/boot/paths"
 # Shellwords.escape is called in maybe_handoff_postpro; without this require
 # --postpro reaches a NameError instead of a handoff.
 require "shellwords"
-require_relative "lib/craft"
-require_relative "lib/chain"
+require_relative "craft"
+require_relative "chain"
 
 # What each Replicate model actually accepts, checked against the live schemas
 # rather than remembered.
