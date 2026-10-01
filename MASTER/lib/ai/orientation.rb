@@ -134,6 +134,8 @@ module Master
         parts << "openbsd_only=#{openbsd_only.join(",")}" unless openbsd_only.empty?
         parts << "divergent=#{divergent.join(",")}" unless divergent.empty?
         parts.join(" ")
+      rescue LoadError
+        "unmeasured"
       rescue StandardError
         "unmeasured"
       end
