@@ -28,6 +28,7 @@
 # Wired as `rake lint:swallowed`.
 
 require "json"
+require_relative "../lib/trace/dmesg"
 
 module Operator
   module SwallowedErrors
@@ -70,17 +71,18 @@ module Operator
       end
 
       if rows.empty?
-        puts "swallowed: no load-bearing errors in .master/swallowed_errors.jsonl"
+        Master::Trace::Dmesg.status("swallow0", "no load-bearing errors in .master/swallowed_errors.jsonl")
         return true
       end
 
-      puts "swallowed: #{rows.size} LOAD-BEARING error(s) swallowed, across #{grouped.size} context(s)"
-      puts "  these were classified load-bearing by the code that swallowed them —"
-      puts "  the caller decided this mattered, and then nothing looked."
+      Master::Trace::Dmesg.attach("swallow0", "master0", "#{rows.size} load-bearing errors across #{grouped.size} contexts")
       grouped.first(10).each do |ctx, v|
-        puts format("  %6d  %-46s %s", v[:count], ctx, v[:last]["error_message"].to_s[0, 60])
+        Master::Trace::Dmesg.status(
+          "swallow0",
+          "#{v[:count]}, #{ctx}, #{v[:last]["error_message"].to_s[0, 60]}"
+        )
       end
-      puts "  … #{grouped.size - 10} more context(s)" if grouped.size > 10
+      Master::Trace::Dmesg.status("swallow0", "#{grouped.size - 10} more contexts") if grouped.size > 10
       false
     end
   end
