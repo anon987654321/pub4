@@ -5,6 +5,7 @@ require "rbconfig"
 require "operator/ruby_runner"
 require "bundler"
 require_relative "strict_mode"
+require_relative "../trace/dmesg"
 
 module Operator
   # Every gate in the repo, in one order, fixing as it goes.
@@ -92,14 +93,18 @@ module Operator
       return ["STUDIO"] if abs == File.join(ROOT, "STUDIO") || abs.start_with?("#{File.join(ROOT, "STUDIO")}/")
       return ["MASTER"] if abs == MASTER || abs.start_with?("#{MASTER}/")
 
-      abort "gate: target is outside pub4 trees: #{target}"
+      Master::Trace::Dmesg.status("gate0", "target outside pub4 trees, #{target}")
+      return nil
     end
 
     def run(scan_only:, only: nil, list: false, trees: nil)
       trees = normalise_trees(trees)
       all = stages(scan_only:, trees:)
       selected = only&.any? ? all.select { |stage| only.include?(stage.name) } : all
-      abort "gate: no stage named #{only.join(", ")} (have: #{all.map(&:name).join(", ")})" if selected.empty?
+      if selected.empty?
+        Master::Trace::Dmesg.status("gate0", "no stage named #{only.join(", ")}, have #{all.map(&:name).join(", ")}")
+        return 1
+      end
       return explain(selected, scan_only:, trees:) if list
 
       report(selected, scan_only:, trees:)
@@ -113,7 +118,10 @@ module Operator
       return TREES if named.empty?
 
       unknown = named - TREES
-      abort "gate: no tree named #{unknown.join(", ")} (have: #{TREES.join(", ")})" if unknown.any?
+      if unknown.any?
+        Master::Trace::Dmesg.status("gate0", "no tree named #{unknown.join(", ")}, have #{TREES.join(", ")}")
+        return []
+      end
       named
     end
 
