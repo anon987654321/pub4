@@ -17,6 +17,8 @@ class TestCliWebParity < Minitest::Test
     assert_includes view, "CommandRegistry.command_surface"
     refute_match(/const COMMANDS = \\[/, js)
     assert_includes js, "(window.MASTER_COMMANDS || [])"
+    refute_includes js, "COMMANDS.push({ cmd: skill.name"
+    refute_includes js, "fetch('/chat/skills')"
   end
 
   def test_browser_slash_commands_use_the_shared_turn_stream
