@@ -79,6 +79,23 @@ class MediaIntentTest < Minitest::Test
     end
   end
 
+  def test_background_music_is_a_media_intent
+    assert Master::Io::MediaIntent.handles?("play your music in the background")
+    calls = []
+    Master::Io::ScriptDispatch.stub(
+      :run,
+      lambda do |root:, tool:, arg:, env: {}|
+        calls << { root:, tool:, arg:, env: }
+        Master::Result.ok("playing Dilla background")
+      end
+    ) do
+      result = Master::Io::MediaIntent.dispatch("play your music in the background", root: MasterPaths.root)
+      assert result.ok?
+    end
+    assert_equal "dilla", calls.first[:tool]
+    assert_equal "live default", calls.first[:arg]
+  end
+
   def test_postpro_literal_is_a_media_intent
     assert Master::Io::MediaIntent.handles?("run postpro.rb over ~/Pictures/new")
     assert Master::Io::MediaIntent.handles?("use postpro for these photos in ~/Pictures/new")
