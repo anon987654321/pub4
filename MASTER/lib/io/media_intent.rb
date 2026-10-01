@@ -184,12 +184,12 @@ module Master
 
       def run_postpro_random(source, text, root:)
         count = postpro_random_count(text)
-        args = if source.is_a?(Array)
-                 source
-               else
-                 [source]
-               end
-        command = args.map { |value| Shellwords.escape(value) } + ["--random", "--count", count.to_s]
+        subject = if source.is_a?(Array)
+                    File.dirname(source.first)
+                  else
+                    source
+                  end
+        command = [subject, "--random", "--count", count.to_s].map { |value| Shellwords.escape(value) }
         command << "--rough" if text.match?(POSTPRO_EXTREME_RE)
         result = ScriptDispatch.run(root:, tool: "postpro", arg: command.join(" "))
         return result unless result.ok?
@@ -285,7 +285,7 @@ module Master
       end
 
       def live_synth?(text)
-        [LIVE_MUSIC_RE, LIVE_SYNTH_ALONE_RE, LIVE_SYNTH_PLAY_RE, LIVE_SYNTH_KNOB_RE].any? { |pattern| text.match?(pattern) }
+        [LIVE_MUSIC_RE, LIVE_SYNTH_ALONE_RE, LIVE_SYNTH_PLAY_RE, LIVE_SYNTH_KNOB_RE, LIVE_STYLE_RE].any? { |pattern| text.match?(pattern) }
       end
 
       def repeatable?(text)
