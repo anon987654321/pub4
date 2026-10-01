@@ -189,11 +189,12 @@ module Operator
       Master::Trace::Dmesg.status("methodgraph0", "Prism::Visitor hooks, #{visitors.size}")
       dead.group_by { |definition| definition[:file] }
           .sort_by { |_, group| -group.sum { |d| d[:last] - d[:first] } }
-          .each do |path, group|
+          .each_with_index do |(path, group), index|
         rel = path.sub("#{ROOT}/", "")
         lines = group.sum { |d| d[:last] - d[:first] }
-        Master::Trace::Dmesg.attach("methodfile#{path.hash.abs % 10}", "methodgraph0", "#{rel}, #{group.size} methods, #{lines} lines")
-        group.map { |d| d[:name] }.sort.each { |name| Master::Trace::Dmesg.status("methodfile#{path.hash.abs % 10}", name) }
+        unit = "methodfile#{index}"
+        Master::Trace::Dmesg.attach(unit, "methodgraph0", "#{rel}, #{group.size} methods, #{lines} lines")
+        group.map { |d| d[:name] }.sort.each { |name| Master::Trace::Dmesg.status(unit, name) }
       end
     end
   end
