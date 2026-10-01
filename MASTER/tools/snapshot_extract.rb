@@ -3,6 +3,7 @@
 require "fileutils"
 require "optparse"
 require "tmpdir"
+require_relative "../lib/trace/dmesg"
 
 # Rehydrates the source files embedded in one or more snapshot packs into a
 # temporary repository-shaped tree. It never invents missing binaries or claim
@@ -69,7 +70,10 @@ OptionParser.new do |opts|
   opts.on("--to DIR") { |dir| options[:root] = dir }
 end.parse!(ARGV)
 
-abort "snapshot extract: give at least one snapshot" if ARGV.empty?
+if ARGV.empty?
+  Master::Trace::Dmesg.status("snapshot0", "give at least one snapshot", io: $stderr)
+  exit 64
+end
 root = File.expand_path(options.fetch(:root, Dir.mktmpdir("master-snapshot-")))
 FileUtils.mkdir_p(root)
 
@@ -77,4 +81,4 @@ count = ARGV.sum do |path|
   Operator::SnapshotExtract.write(Operator::SnapshotExtract.parse(path), root)
 end
 
-puts "snapshot0: rehydrated #{count} text file(s) into #{root}"
+Master::Trace::Dmesg.status("snapshot0", "rehydrated #{count} text file(s) into #{root}")
