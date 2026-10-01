@@ -24,6 +24,11 @@ require_relative "../lib/trace/dmesg"
 RUBY = Operator::RubyRunner.ruby_cmd
 BUNDLE = Operator::RubyRunner.bundle_cmd
 
+def die(command, message, code = 1)
+  Master::Trace::Dmesg.status("#{command}0", "failed, #{message}", io: $stderr)
+  exit code
+end
+
 def usage
   <<~HELP
     operator — repo-wide operator surface
@@ -117,7 +122,7 @@ when "measure"
   why ||= ARGV[ARGV.index("--why") + 1].to_s if ARGV.include?("--why")
   since = ARGV.filter_map { |arg| arg[/\A--since(?:=(.*))?\z/, 1] }.first
   since ||= ARGV[ARGV.index("--since") + 1] if ARGV.include?("--since")
-  abort("usage: bin/operator measure --since <ref>") if ARGV.include?("--since") && since.to_s.empty?
+  die("measure", "usage, bin/operator measure --since <ref>", 64) if ARGV.include?("--since") && since.to_s.empty?
   if since
     Master::Trace::Dmesg::Report.print("measure", Operator::Ratchets.since(since))
     exit 0
@@ -285,15 +290,15 @@ when "law:silent"
   exit 0
 when "law:costly"
   output = Operator::LawInventory.render_collection(:costly, json: ARGV.include?("--json"))
-  puts output if output
+  Master::Trace::Dmesg::Report.print(command.to_s, output) if output
   exit 0
 when "law:twin"
   output = Operator::LawInventory.render_collection(:twin, json: ARGV.include?("--json"))
-  puts output if output
+  Master::Trace::Dmesg::Report.print(command.to_s, output) if output
   exit 0
 when "law:matrix"
   output = Operator::LawInventory.render_collection(:matrix, json: ARGV.include?("--json"))
-  puts output if output
+  Master::Trace::Dmesg::Report.print(command.to_s, output) if output
   exit 0
 when "rules"
   # One rule: what it says, what it spares, and what it finds — in that order.
