@@ -110,8 +110,11 @@ Reference order: GitHub upstream implementation/release history → official Rai
    browser-side IdeaPicture/voice-bed runtime path and executable depth-map
    comparison; neither is claimed complete without a watched browser/runtime
    result. Operator: anything that changes how either face looks.
-5. **The Gemfile lock for both hosts.** Entry: "One `MASTER/Gemfile.lock`".
-   After the next watched deploy. Operator: a console on vm23.
+5. **The Gemfile lock for both hosts.** The code-owned lock work is closed
+   2026-10-01: platform-aware watcher declarations, complete checksums,
+   removal of the unused `head_music` dependency chain, and a regression test
+   all live on `main`. What remains is the watched vm23 bundle/restart proof.
+   Operator: a console on vm23.
 
 ### RAILS
 
@@ -225,19 +228,12 @@ the "One chrome", ad system and layout sections bring back for a decision.
 
 ### Needs vm23
 
-- **One `MASTER/Gemfile.lock` for the Mac and the box, in a watched deploy.**
-  `MASTER/Gemfile` guards `rb-kqueue` with a runtime `if RUBY_PLATFORM`, so the
-  lock is host-dependent; `install_if -> { RUBY_PLATFORM =~ /bsd|dragonfly/i }`
-  fixes it. `rb-inotify`'s Linux guard has the same shape and the same absence:
-  neither appears in `Gemfile.lock`'s `DEPENDENCIES`, so a regenerated lock is
-  the only way either actually installs on its target platform. The same
-  regenerated lock should fill the 25 empty `CHECKSUMS`
-  entries and drop `flay` (`MASTER/Gemfile:30`, no caller, no lock dependents).
-  It cannot land alone: `BUNDLE_FROZEN=true` fails on a Gemfile the lock does
-  not match, and any commit touching the lock conflicts with the box's
-  hand-repaired copy, CHECKSUMS deleted, that keeps TTS alive. Apply during a
-  deploy and verify with `rcctl restart master` and `vps state --remote`
-  reading `tts_socket=true`.
+- **One `MASTER/Gemfile.lock` for the Mac and the box, in a watched deploy.** The
+  repository side is closed 2026-10-01: `MASTER/Gemfile` uses `install_if` for
+  platform watcher dependencies, the lock records the supported watcher gems
+  and complete checksums, `flay` is absent, and the dead `head_music` chain is
+  gone. Apply during a deploy and verify with `rcctl restart master` and
+  `vps state --remote` reading `tts_socket=true`.
   - **`rb-edge-tts` is now a released RubyGems dependency, exact-pinned at 1.0.1.**
     The Git checkout failure class is removed from the normal boot path. It still
     pulls EventMachine 1.2.7 into the `:tts` group for `bin/tts-worker`; keep
