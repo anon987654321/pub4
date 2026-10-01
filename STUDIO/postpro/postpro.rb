@@ -3564,7 +3564,56 @@ RANDOM_CHAIN_LENGTH = (4..8)
 # emulsion is a physical process, and a chain with no crystals in it is a colour
 # filter with opinions.
 RANDOM_ALWAYS = "grain"
-RANDOM_OUTPUTS = (3..5)
+RANDOM_VARIATIONS = (5..10)
+RANDOM_VARIATION_RANGE = RANDOM_VARIATIONS.freeze
+
+RANDOM_ANALOG_CORE = %w[
+  film_curve grain halation stock_matrix dir_coupler adjacency_effects film_base_density
+  orange_mask print_film paper_texture dilla_head_bump dilla_tape_saturation
+  dilla_vinyl_bandlimit dilla_phasy dilla_console_sum
+].freeze
+
+RANDOM_LANES = {
+  subtle_analog: {
+    effects: %w[
+      spectral_temp film_curve stock_matrix dir_coupler adjacency_effects halation
+      film_base_density orange_mask print_film shadow_lift highlight_roll micro_contrast
+      warmth grain
+    ].freeze,
+    strength: (0.16..0.42)
+  },
+  cinematic_color: {
+    effects: %w[
+      spectral_temp color_temp film_curve stock_matrix halation orange_mask print_film
+      tonemap split_toning teal_orange warmth shadow_lift highlight_roll micro_contrast grain
+    ].freeze,
+    strength: (0.24..0.58)
+  },
+  artistic_analog: {
+    effects: %w[
+      film_curve grain halation stock_matrix dir_coupler adjacency_effects bloom_pro
+      double_exposure lith_print cyanotype technicolor faded_print polaroid_frame
+      soft_focus golden_hour_glow cross_process lens_flare film_scratches
+      dilla_head_bump dilla_tape_saturation dilla_vinyl_bandlimit dilla_phasy
+    ].freeze,
+    strength: (0.34..0.72)
+  },
+  bleeding_edge_analog: {
+    effects: %w[
+      film_curve grain halation stock_matrix dilla_head_bump dilla_tape_saturation
+      dilla_vinyl_bandlimit dilla_phasy dilla_console_sum vhs_luma_bleed
+      vhs_chroma_delay vhs_head_switch_band vhs_tracking_noise vhs_interlace_comb
+      crt_phosphor_bloom crt_scanlines minidv_block_dropout hi8_chroma_noise
+      scan_noise newton_rings reticulation gate_weave lens_ghosting anamorphic_flare
+    ].freeze,
+    strength: (0.48..0.88)
+  }
+}.freeze
+
+RANDOM_LANE_NAMES = RANDOM_LANES.keys.freeze
+
+def random_lane(rng) = RANDOM_LANE_NAMES.sample(random: rng)
+
 
 # One or two steps carry the look and the rest are barely there.
 #
