@@ -36,9 +36,13 @@ class TreeContractTest < Minitest::Test
     MASTER/law
     MASTER/tools/Rakefile
     MASTER/tools/test
-    OPENBSD/tools
     OPENBSD/var/nsd
     RAILS/brgen/engines
+    STUDIO
+    STUDIO/dilla
+    STUDIO/lora
+    STUDIO/postpro
+    STUDIO/replicate
   ].freeze
 
   BRGEN_ENGINES = %w[marketplace playlist tv takeaway dating maps].freeze
