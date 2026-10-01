@@ -586,6 +586,24 @@ for measurements and decodes, and `DILLA_PROBE_TIMEOUT` for one ffmpeg probe.
 `DILLA_FS_DRY` turns off fluidsynth's own chorus and reverb, which costs the
 pad its side channel.
 
+## Postpro analogue translations
+
+The reverse bridge is conceptual, not a claim that an image process and an audio
+process are physically identical.
+
+`film_curve` and `print_film` use Dilla's measured tape-transfer path; `halation`
+and `optical_blur` use the existing short echo as a time-domain bloom or smear;
+`adjacency_effects` uses the existing console-sum interaction; `spectral_temp`
+maps to the already present broad tonal device; `expired_film` and `gate_weave`
+map to the tape machine's drift; and `vhs_chroma_delay` maps to broadband phase
+rotation. `grain` stays in `sine_stream.rb`, where deterministic sample-domain
+noise and dropouts already live, because a generated noise source requires a
+multi-input filter graph rather than Dilla's ordinary single-chain `-af` path.
+
+Named bridge racks are available as `postpro_transfer`, `postpro_wear` and
+`postpro_space`. `Outboard.postpro_chain([...])` is the explicit programmatic form
+when a render needs a particular translation sequence.
+
 ## The stream, the catalogue and old sets
 
 The stream plays the whole progression pack, the priority ones first, and

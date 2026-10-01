@@ -3118,6 +3118,50 @@ module Outboard
     "#{stages.join(',')},volume=#{STACK_MAKEUP.fetch(n)}dB"
   end
 
+  # ---------------------------------------------------- Postpro reverse bridge
+  #
+  # Postpro and Dilla live in different media domains. These names are therefore
+  # semantic translations, not claims that a picture effect and an audio device
+  # are the same physical process. Reuse the audio mechanisms already present
+  # here rather than copying image-processing code into the music engine.
+  #
+  # Grain is deliberately sample-domain: a true noise source needs a multi-input
+  # filter graph and the sample renderer already owns deterministic texture,
+  # dropout and artefact generation.
+  POSTPRO_ANALOG_TRANSLATIONS = {
+    "film_curve" => :hedd_tape,
+    "halation" => :space_echo,
+    "adjacency_effects" => :console_sum,
+    "optical_blur" => :space_echo,
+    "spectral_temp" => :gml_matte,
+    "expired_film" => :tape_machine,
+    "gate_weave" => :tape_machine,
+    "print_film" => :hedd_tape,
+    "vhs_chroma_delay" => :phase_rotate,
+    "grain" => :sample_domain
+  }.freeze
+
+  def postpro_translation(effect, bpm: 90)
+    unit = POSTPRO_ANALOG_TRANSLATIONS.fetch(effect.to_s)
+    return nil if unit == :sample_domain
+
+    case unit
+    when :stc8 then stc8(bpm:)
+    when :tape_machine then tape_machine
+    when :hedd_tape then hedd_tape
+    when :space_echo then space_echo
+    when :gml_matte then gml_matte
+    when :console_sum then console_sum
+    when :phase_rotate then phase_rotate
+    else
+      raise ArgumentError, "unknown Postpro translation target: #{unit}"
+    end
+  end
+
+  def postpro_chain(effects, bpm: 90)
+    Array(effects).filter_map { |effect| postpro_translation(effect, bpm:) }.join(",")
+  end
+
   # ------------------------------------------- Bode frequency shifter
   #
   # Not a pitch shifter, and the difference is the whole unit.
@@ -3197,6 +3241,12 @@ module Outboard
     forward: %i[api_console stc8 gml_matte mono_bass],
     # The console alone, for when the material arrives already finished.
     light: %i[neve_80 stc8],
+
+    # Conceptual reverse-bridges from STUDIO/postpro. Each rack uses only
+    # outboard stages that already exist in Dilla; it does not import image code.
+    postpro_transfer: %i[hedd_tape],
+    postpro_wear: %i[tape_machine program_memory],
+    postpro_space: %i[space_echo console_sum],
 
     # SUMMED. The stack at the end rather than a channel strip at the front.
     #
@@ -3346,6 +3396,7 @@ module Outboard
       # them here would be exactly the kind of unmeasured number this file
       # refuses to carry.
       when :console_stack then console_stack(instances: ENV.fetch("CONSOLE_STACK", "3").to_i)
+      when :program_memory then program_memory
       when :space_echo then space_echo
       else
         missing&.call(unit)
