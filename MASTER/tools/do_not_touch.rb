@@ -31,6 +31,7 @@ require "open3"
 # Wired as `rake lint:do_not_touch`, pinned by test/test_do_not_touch.rb.
 
 require "json"
+require_relative "../lib/trace/dmesg"
 
 module Operator
   class DoNotTouch
