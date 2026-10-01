@@ -160,8 +160,14 @@ module PostproBootstrap
       end
     when /openbsd/
       if system("which", "pkg_add", out: File::NULL, err: File::NULL)
-        dmesg "attempting: pkg_add vips"
-        system("doas", "pkg_add", "vips")
+        dmesg "attempting: pkg_add libvips"
+        if Process.uid.zero?
+          system("pkg_add", "-I", "libvips")
+        elsif system("which", "doas", out: File::NULL, err: File::NULL)
+          system("doas", "-n", "pkg_add", "-I", "libvips")
+        else
+          dmesg "ERROR pkg_add needs root or doas"
+        end
       else
         dmesg "ERROR pkg_add not found"
       end
