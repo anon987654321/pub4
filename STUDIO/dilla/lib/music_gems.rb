@@ -47,7 +47,7 @@ module DillaMusicGems
     @head_music = load_gem("head_music") { require "ostruct"; require "head_music" }
     @coltrane = load_gem("coltrane") do
       require "coltrane"
-      require File.expand_path("../../../lib/boot/hash_dig_compat", __dir__)
+      require File.expand_path("../../../MASTER/lib/boot/hash_dig_compat", __dir__)
       Master.install_hash_dig_compat!
     end
     @midilib = load_gem("midilib") { require "midilib" }
