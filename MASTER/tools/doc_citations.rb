@@ -28,6 +28,7 @@
 
 require "json"
 require "yaml"
+require_relative "../lib/trace/dmesg"
 
 module Operator
   class DocCitations
