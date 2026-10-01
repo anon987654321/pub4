@@ -231,7 +231,7 @@ class TestFixConvergence < Minitest::Test
         deliberation:,
         bus:,
       )
-        assert_equal "critique: ok", pass.send(:deliberation_critique, Master::ROOT)
+      assert_equal "critique: ok", pass.send(:deliberation_critique, Master::ROOT)
       end
     end
 
