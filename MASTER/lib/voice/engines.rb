@@ -177,11 +177,20 @@ module Master
           import soundfile as sf
           from mlx_audio.tts.utils import load_model
           model = load_model(#{model.inspect})
-          audio = None
-          for result in model.generate(#{enriched.inspect}, voice=#{voice.inspect}, speed=#{speed}):
-              audio = np.array(result.audio)
-          if audio is None:
+          chunks = []
+          sample_rate = None
+          for result in model.generate(
+              text=#{enriched.inspect},
+              voice=#{voice.inspect},
+              speed=#{speed},
+              lang_code="a",
+          ):
+              chunks.append(np.asarray(result.audio))
+              sample_rate = result.sample_rate
+          if not chunks or sample_rate is None:
               raise RuntimeError("mlx generated no audio")
+          audio = np.concatenate(chunks)
+          sf.write(#{wav.inspect}, audio, int(sample_rate))
         PY
         _out, _err, status = Master::Io::Exec.capture3(py, "-c", py_script)
         return convert_to_mp3(wav, out_path) if status.success? && File.size?(wav)
