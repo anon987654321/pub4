@@ -371,14 +371,11 @@ def default_apply?(*) = false
         end
 
         def deliberation_critique(abs)
-          Master::CLI::CommandRegistry.dispatch_critique(
-            scanner: @scanner,
-            fix_loop: @fix_loop,
+          Master::CLI::CouncilCrit.run(
+            root: abs,
             deliberation: @deliberation,
-            root: @root,
             bus: @bus,
-            ctx: { args: abs },
-          )
+          ).then { |result| result.ok? ? result.value! : "critique: #{result.message}" }
         rescue StandardError => e
           stage_failure("critique", "crit0", e)
         end
