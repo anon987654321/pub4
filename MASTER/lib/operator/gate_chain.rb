@@ -4,6 +4,7 @@ require "open3"
 require "rbconfig"
 require "operator/ruby_runner"
 require "bundler"
+require_relative "strict_mode"
 
 module Operator
   # Every gate in the repo, in one order, fixing as it goes.
