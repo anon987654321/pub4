@@ -14,6 +14,14 @@ module DillaMusicGems
 
   module_function
 
+  # Coltrane is an optional research aid, not part of live playback. Keep it
+  # out of the normal boot path so a missing gem or compatibility shim cannot
+  # contaminate the sound path. Set DILLA_COLTRANE=1 only for analysis tools.
+
+  def coltrane_enabled?
+    ENV["DILLA_COLTRANE"] == "1"
+  end
+
   # One rescue used to wrap every require, so a single missing gem set all four
   # flags to false and the only report was gated behind DILLA_DEBUG. That is how
   # a broken `require` survived: 797af1469's rename sweep matched the bare word
@@ -41,10 +49,14 @@ module DillaMusicGems
       end
     end
 
-    @coltrane = load_gem("coltrane") do
-      require "coltrane"
-      require File.expand_path("../../../MASTER/lib/boot/hash_dig_compat", __dir__)
-      Master.install_hash_dig_compat!
+    @coltrane = if coltrane_enabled?
+      load_gem("coltrane") do
+        require "coltrane"
+        require File.expand_path("../../../MASTER/lib/boot/hash_dig_compat", __dir__)
+        Master.install_hash_dig_compat!
+      end
+    else
+      false
     end
     @midilib = load_gem("midilib") { require "midilib" }
     @wavefile = load_gem("wavefile") { require "wavefile" }
