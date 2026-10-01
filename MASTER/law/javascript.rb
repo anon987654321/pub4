@@ -3,17 +3,12 @@
 # law/javascript.rb — every javascript law, one Law.define per rule.
 # Was 7 one-rule files; Law.load_all and every fixture proof are
 # unchanged by the grouping (2026-08-19 file-sprawl consolidation).
-#
-# The vendored three.module.js is upstream code this repo does not author;
-# the registry twins carried that exclusion and it moved here with them
-# (2026-08-21 twin retirement).
 
 # Migrated from data/rules.yml ASYNC_AWAIT.
 Law.define(:ASYNC_AWAIT) do
   source "ECMAScript 2017 — async/await over raw promises"
   severity :warn
   languages %i[javascript]
-  path_exclude %r{/public/three\.module\.js\z}
   detect { |line| line.match?(/\.then\(.*\.then\(.*\.then\(/) }
   fix "Use async/await for readability."
   bad  "a().then(b).then(c).then(d)"
