@@ -35,6 +35,7 @@
 
 require "set"
 require "yaml"
+require_relative "../lib/trace/dmesg"
 
 module Operator
   module DataReach
@@ -73,7 +74,7 @@ module Operator
     rescue StandardError => e
       @document_errors ||= {}
       @document_errors[path] = e
-      warn "data_reach: #{File.basename(path)} does not parse "            "(#{e.class}: #{e.message.lines.first.to_s.strip}) — census is inconclusive"
+      Master::Trace::Dmesg.status("data0", "#{File.basename(path)} does not parse, #{e.class}: #{e.message.lines.first.to_s.strip}; census is inconclusive", io: $stderr)
       nil
     end
 
@@ -203,10 +204,10 @@ module Operator
       # `ceiling` re-reads on every call, so the report compared the new low
       # against itself and could only ever say "re-recorded".
       was = ceiling
-      puts "data_reach: #{out.size} top-level keys no code names (ceiling #{was})"
+      Master::Trace::Dmesg.status("data0", "#{out.size} top-level keys no code names, ceiling #{was}")
       unless misplaced.empty?
-        puts "data_reach: #{misplaced.size} named in code that never mentions their file:"
-        misplaced.each { |key| puts "  #{key} — name appears, but not next to #{key.split('#', 2).first}" }
+        Master::Trace::Dmesg.status("data0", "#{misplaced.size} named in code that never mentions their file")
+        misplaced.each { |key| Master::Trace::Dmesg.status("data0", "#{key}, name appears without its data file") }
       end
       # <=, not <, so a census sitting exactly at its ceiling can record its
       # members without having to fall first. That is the common case for a
@@ -222,7 +223,7 @@ module Operator
       if ratchet && out.size <= was
         File.write(CEILING, { "unnamed" => out.size, "unnamed_members" => out.sort }.to_yaml)
         verb = out.size < was ? "recorded #{out.size} as the new low" : "re-recorded #{out.size}"
-        puts "data_reach: #{verb}, with its members"
+        Master::Trace::Dmesg.status("data0", "#{verb}, with its members")
         return 0
       end
       return 0 unless out.size > was
@@ -243,15 +244,15 @@ module Operator
     def report_new(out)
       known = recorded_members
       if known.empty?
-        puts "data_reach: no members recorded with the ceiling — run --ratchet once to make the next rise attributable"
+        Master::Trace::Dmesg.status("data0", "no members recorded with the ceiling, run --ratchet once to make the next rise attributable")
         return
       end
 
       arrived = out - known
       left = known - out
-      puts "data_reach: #{arrived.size} arrived since the low was recorded:"
-      arrived.each { |k| puts "  + #{k}" }
-      puts "data_reach: #{left.size} of the recorded members are gone (#{left.join(', ')})" unless left.empty?
+      Master::Trace::Dmesg.status("data0", "#{arrived.size} arrived since the low was recorded")
+      arrived.each { |k| Master::Trace::Dmesg.status("data0", "arrived, #{k}") }
+      Master::Trace::Dmesg.status("data0", "#{left.size} recorded members are gone, #{left.join(", ")}") unless left.empty?
     end
   end
 end
