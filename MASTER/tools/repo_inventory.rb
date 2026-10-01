@@ -3,6 +3,7 @@
 
 require "open3"
 require "json"
+require_relative "../lib/trace/dmesg"
 
 # INVENTORY_ROOT, not ROOT. A bare top-level ROOT is harmless in its own process
 # and stops being harmless the moment two of them load together: Ruby warns
@@ -153,10 +154,14 @@ def report(argv)
     .sort_by { |entry| [entry.kind, entry.path] }
 
   return puts(JSON.pretty_generate(entries.map(&:to_h))) if argv.include?("--json")
-  return puts("ok: no repo sprawl detected") if entries.empty?
+  if entries.empty?
+    Master::Trace::Dmesg.status("inventory0", "clean, no repo sprawl detected")
+    return
+  end
 
-  entries.each { |entry| puts "#{entry.kind}: #{entry.path} — #{entry.reason}" }
-  abort "err: repo sprawl detected (#{entries.size})"
+  Master::Trace::Dmesg.attach("inventory0", "master0", "#{entries.size} sprawl finding(s)")
+  entries.each { |entry| Master::Trace::Dmesg.status("inventory0", "#{entry.kind}, #{entry.path}, #{entry.reason}") }
+  exit 1
 end
 
 # The guard every other tool here carries. Without it, reading the two
