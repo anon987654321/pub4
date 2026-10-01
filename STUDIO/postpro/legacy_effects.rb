@@ -151,3 +151,49 @@ module Postpro
     end
   end
 end
+
+
+module Postpro
+  module LegacyEffects
+    def vhs_degrade(image, intensity = 0.65, _mode = "professional")
+      i = intensity.to_f.clamp(0.0, 1.0)
+      result = respond_to?(:vhs_luma_bleed, true) ? vhs_luma_bleed(image, 0.30 * i) : image
+      result = vhs_chroma_delay(result, 0.28 * i) if respond_to?(:vhs_chroma_delay, true)
+      safe_cast(result)
+    end
+
+    def color_fade(image, intensity = 0.5, _mode = "professional")
+      i = intensity.to_f.clamp(0.0, 1.0)
+      if respond_to?(:faded_print, true)
+        safe_cast(faded_print(image, i))
+      else
+        safe_cast(image.linear([1.0 - 0.25 * i] * image.bands, [18.0 * i] * image.bands))
+      end
+    end
+
+    def anamorphic_simulation(image, intensity = 0.6, _mode = "professional")
+      i = intensity.to_f.clamp(0.0, 1.0)
+      result = respond_to?(:anamorphic_flare, true) ? anamorphic_flare(image, 0.55 * i) : image
+      safe_cast(result)
+    end
+
+    def soft_focus(image, intensity = 0.45, _mode = "professional")
+      i = intensity.to_f.clamp(0.0, 1.0)
+      radius = [image.width / 700.0, 0.8].max * (0.6 + i)
+      blurred = image.gaussblur(radius)
+      mix = 0.22
+      safe_cast(image.cast("float") * (1.0 - mix * i) + blurred.cast("float") * (mix * i))
+    end
+
+    private
+
+    def fit_legacy_image(image, target)
+      return image if image.width == target.width && image.height == target.height
+      scale = [target.width.to_f / image.width, target.height.to_f / image.height].max
+      fitted = image.resize(scale)
+      x = [(fitted.width - target.width) / 2, 0].max
+      y = [(fitted.height - target.height) / 2, 0].max
+      fitted.crop(x, y, target.width, target.height)
+    end
+  end
+end
