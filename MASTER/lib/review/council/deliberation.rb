@@ -378,6 +378,7 @@ module Master
           return quota_skipped(persona) if Io::QuotaGate.blocked?
 
           model = persona.respond_to?(:model) ? persona.model : nil
+          model = nil if ENV["MASTER_LOCAL_ONLY"] == "1"
           temperature = persona.respond_to?(:temperature) ? persona.temperature : nil
           prompt = build_prompt(persona:, code:, context:)
           response = if model
