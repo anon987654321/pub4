@@ -10,6 +10,16 @@ def run_tool(path, *args)
   sh RbConfig.ruby, File.join(__dir__, path), *args
 end
 
+namespace :postpro do
+  desc "Install postpro's runtime dependencies (ruby-vips, tty-prompt, libvips)"
+  task :bootstrap do
+    tools_root = File.expand_path("tools", __dir__)
+    Bundler.with_unbundled_env do
+      Dir.chdir(tools_root) { sh RbConfig.ruby, "-S", "rake", "postpro:bootstrap" }
+    end
+  end
+end
+
 Rake::TestTask.new(:test) do |t|
   t.libs << "test"
   t.libs << "lib"
