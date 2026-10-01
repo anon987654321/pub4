@@ -29,10 +29,10 @@ module Master
           $stdout.sync = true
           Master::Trace::Dmesg.attach(name, "master0", Master::Trace::Dmesg.counted(total, "file"))
           selected = Array(rules)
-          Master::Trace::Dmesg.attach(rule_unit, name, "checking #{selected.size} rules")
+          Master::Trace::Dmesg.attach(rule_unit, name, "selected #{selected.size} rules")
           selected.each_with_index do |rule, index|
             id = rule.respond_to?(:id) ? rule.id.to_s : rule.class.name.to_s
-            Master::Trace::Dmesg.attach("rule#{index + 1}", rule_unit, id)
+            Master::Trace::Dmesg.attach("rule#{index + 1}", rule_unit, "checking #{id}")
           end
         end
 
@@ -136,7 +136,7 @@ module Master
           unit = @scan_progress[:rule_unit]
           selected = @scan_progress[:selected_rule_count].to_i
           hit_count = @scan_progress[:rules].values.sum
-          Master::Trace::Dmesg.status(unit, "checked #{selected} rules, #{Master::Trace::Dmesg.counted(hit_count, "finding")}")
+          Master::Trace::Dmesg.status(unit, "selected #{selected} rules, #{Master::Trace::Dmesg.counted(hit_count, "finding")}")
         end
 
         def tally(violations, dirty)
