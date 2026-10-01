@@ -58,7 +58,7 @@ class ChatService
     trigger_post_mutation_work
   rescue StandardError => e
     Master::Ground::Swallow.log(e, context: "ChatService.call", event_bus: @container&.dig(:bus))
-    @stream.write("data: #{escape_sse(Master::CLI::TurnPresentation.error_text(Master::Result.err("stream failure", category: :infrastructure)))}\n\n")
+    @stream.write("data: #{escape_sse(Master::CLI::TurnPresentation::ERROR_PREFIX + Master::Ground::Redactor.public_error_message)}\n\n")
     @stream.write("data: [DONE]\n\n")
   ensure
     clear_fiber_flags
