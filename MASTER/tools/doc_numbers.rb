@@ -103,9 +103,10 @@ if $PROGRAM_NAME == __FILE__
     puts JSON.pretty_generate(report)
   else
     Master::Trace::Dmesg.attach("docnum0", "master0", "#{report[:values]} token values across #{report[:docs]} documents, #{count} untraceable")
-    report[:findings].each do |doc, rows|
-      Master::Trace::Dmesg.attach("docnum#{doc.hash.abs % 10}", "docnum0", doc)
-      rows.each { |row| Master::Trace::Dmesg.status("docnum#{doc.hash.abs % 10}", "#{row["value"]}, owned by #{row["tokens"].join(", ")}") }
+    report[:findings].each_with_index do |(doc, rows), index|
+      unit = "docnum#{index}"
+      Master::Trace::Dmesg.attach(unit, "docnum0", doc)
+      rows.each { |row| Master::Trace::Dmesg.status(unit, "#{row["value"]}, owned by #{row["tokens"].join(", ")}") }
     end
   end
 
