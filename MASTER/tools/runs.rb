@@ -26,7 +26,6 @@ module Operator
     # Files that orchestrate other files. Each is read for glob literals.
     RUNNERS = %w[
       MASTER/Rakefile
-      MASTER/tools/Rakefile
       MASTER/bin/check
       MASTER/bin/ci
       MASTER/bin/gate
@@ -63,7 +62,7 @@ module Operator
     # A runner naming one file outright runs it just as surely. tools/Rakefile
     # lists test_tools_gate.rb by name — deliberately, its comment says, because
     # the glob beside it would pull in the dilla and tool suites — and a
-    # glob-only extractor read that as a test nothing runs. A path literal that
+    # glob-only extractor can miss that as a test nothing runs. A path literal that
     # matches no test file matches nothing here, so this cannot invent coverage.
     EXACT = %r{["']((?:[A-Za-z0-9_.\-]+/)*(?:test|spec)/[A-Za-z0-9_.\-]+\.rb)["']}
 
