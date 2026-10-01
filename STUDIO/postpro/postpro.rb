@@ -16,6 +16,8 @@ require_relative "../../MASTER/lib/io/analog_capabilities"
 
 require "open3"
 require "rbconfig"
+require_relative "legacy_effects"
+include Postpro::LegacyEffects
 
 BOOT_TIME = Time.now.freeze
 
@@ -1043,6 +1045,43 @@ PRESETS = {
   # than the one that left the factory.
   takumar_sun: { fx: %w[optical_blur spectral_temp vintage_lens film_curve stock_matrix orange_mask warmth grain],
                  stock: :kodak_ektar100, temp: 5000, intensity: 0.85, lens: "takumar" },
+
+  legacy_polaroid: { fx: %w[film_curve faded_print polaroid_frame], stock: :polaroid_sx70,
+                     temp: 5800, intensity: 0.82 },
+
+  legacy_super8: { fx: %w[spectral_temp film_curve super8_flicker film_scratches], stock: :kodak_vision3_50d,
+                   temp: 5600, intensity: 0.78 },
+
+  legacy_cinemascope: { fx: %w[spectral_temp halation film_curve cinemascope_bars], stock: :kodak_vision3_500t,
+                        temp: 4500, intensity: 0.78, print_stock: :kodak_2383 },
+
+  legacy_halftone: { fx: %w[film_curve halftone_print], stock: :kodak_portra,
+                     temp: 5400, intensity: 0.72 },
+
+  legacy_vhs: { fx: %w[spectral_temp vhs_degrade], stock: :kodak_portra,
+                temp: 6500, intensity: 0.72 },
+
+  legacy_anamorphic: { fx: %w[spectral_temp halation film_curve anamorphic_simulation], stock: :kodak_vision3_500t,
+                       temp: 4200, intensity: 0.80, print_stock: :kodak_2383 },
+
+  legacy_tape: { fx: %w[film_curve tape_degradation color_fade], stock: :kodak_portra,
+                 temp: 5200, intensity: 0.70 },
+
+  legacy_frame: { fx: %w[film_curve frame_distortion film_scratches], stock: :ilford_hp5,
+                  temp: 5600, intensity: 0.70 },
+
+  legacy_sprocket: { fx: %w[film_curve sprocket_holes], stock: :kodak_portra,
+                     temp: 5400, intensity: 0.80 },
+
+  legacy_flare: { fx: %w[film_curve lens_flare], stock: :kodak_vision3,
+                  temp: 5400, intensity: 0.70 },
+
+  legacy_soft_focus: { fx: %w[film_curve soft_focus grain], stock: :kodak_portra,
+                       temp: 5200, intensity: 0.72 },
+
+  legacy_scratch_print: { fx: %w[film_curve film_scratches color_fade], stock: :kodachrome,
+                          temp: 5400, intensity: 0.68 },
+
 }.freeze
 
 # Finishing grain uses the preset's own stock and box speed, not a second
@@ -3413,6 +3452,21 @@ def preset(image, name, stock: nil)
              when "crt_scanlines"       then crt_scanlines(processed, p[:intensity] * 0.35)
              when "minidv_block_dropout" then minidv_block_dropout(processed, p[:intensity] * 0.35)
              when "hi8_chroma_noise"    then hi8_chroma_noise(processed, p[:intensity] * 0.40)
+             when "double_exposure"     then double_exposure(processed)
+             when "polaroid_frame"      then polaroid_frame(processed, p[:intensity], p.fetch(:border_style, "classic"))
+             when "tape_degradation"    then tape_degradation(processed, p[:intensity])
+             when "frame_distortion"    then frame_distortion(processed, p[:intensity])
+             when "super8_flicker"      then super8_flicker(processed, p[:intensity])
+             when "cinemascope_bars"    then cinemascope_bars(processed, p[:intensity], p.fetch(:aspect_ratio, "2.35:1"))
+             when "halftone_print"      then halftone_print(processed, p[:intensity])
+             when "film_scratches"      then film_scratches(processed, p[:intensity])
+             when "film_stock_emulation" then film_stock_emulation(processed, p[:intensity], p.fetch(:stock, "kodak_portra"))
+             when "sprocket_holes"      then sprocket_holes(processed, p[:intensity])
+             when "lens_flare"          then lens_flare(processed, p[:intensity])
+             when "vhs_degrade"         then vhs_degrade(processed, p[:intensity])
+             when "color_fade"          then color_fade(processed, p[:intensity])
+             when "anamorphic_simulation" then anamorphic_simulation(processed, p[:intensity])
+             when "soft_focus"          then soft_focus(processed, p[:intensity])
              else
                # Was a bare `else processed` — an fx name with no arm here returned
                # the image untouched, and the dmesg line below then reported the
@@ -3687,6 +3741,9 @@ RECIPE_ALLOWED = %w[
   adaptive_contrast film_shoulder clarity edge_aware_nr selective_sharpen
   vhs_luma_bleed vhs_chroma_delay vhs_head_switch_band vhs_tracking_noise
   vhs_interlace_comb crt_phosphor_bloom crt_scanlines minidv_block_dropout hi8_chroma_noise
+  double_exposure polaroid_frame tape_degradation frame_distortion super8_flicker
+  cinemascope_bars halftone_print film_scratches film_stock_emulation sprocket_holes
+  lens_flare vhs_degrade color_fade anamorphic_simulation soft_focus
 ].freeze
 
 # Where a recipe's single number actually belongs.
@@ -3755,6 +3812,18 @@ RECIPE_ADAPTERS = {
     type = p["type"].to_s
     vintage_lens(img, LENSES.key?(type.to_sym) ? type : "zeiss", i)
   },
+  "double_exposure" => ->(img, _i, p) {
+    second = p["second_image_path"] || p["image"]
+    raise ArgumentError, "double_exposure requires second_image_path" if second.to_s.empty?
+    double_exposure(img, second, p.fetch("blend_mode", "over"), p.fetch("mode", "professional"))
+  },
+  "cinemascope_bars" => ->(img, i, p) {
+    cinemascope_bars(img, i, p.fetch("aspect_ratio", "2.35:1"))
+  },
+  "film_stock_emulation" => ->(img, i, p) {
+    film_stock_emulation(img, i, p.fetch("stock", "kodak_portra"))
+  },
+
 }.freeze
 
 def recipe(image, recipe_data)
