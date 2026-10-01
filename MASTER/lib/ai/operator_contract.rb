@@ -20,8 +20,13 @@ module Master
           "each turn receives a compact live orientation frame; treat it as context, not proof",
           "broad or unfamiliar work: establish the source tree before selecting files",
           "tree is orientation, never proof of file understanding",
-          "when the instruction is /fix, follow Master::Fix::Protocol; external agents can consume `MASTER/bin/master --fix-context <target>`",
+          "when the instruction is /fix, follow Master::Fix::Protocol; " +
+          "external agents can consume `MASTER/bin/master --fix-context <target>`",
           "read relevant source systematically; complete where practical, contiguous ranges for large files",
+          "cross-tree reasoning: RAILS = feature truth, shared engine, app runtime and rendered graph; " +
+          "OPENBSD = deploy identity, operator recipes, service/config lifecycle and live health",
+          "reason through authority, topology, runtime, privilege, network edge, lifecycle, " +
+          "resources and recovery before acting",
           "file/data parsing and rewriting: Ruby",
           "Ruby subprocesses: argv through Master::Io::Exec; avoid backticks and shell interpolation when argv is enough",
           "shell execution: zsh only; prefer zsh globs and builtins over GNU text pipelines",
