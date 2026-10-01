@@ -1,6 +1,6 @@
-# MASTER's main sound, improvising live and endless: soul-jazz harmony chosen
-# chord by chord, each voiced nearest the last, the key moving on its own.
-# The chords play only Moog presets on dilla's ladder -- strings, stabs,
+# MASTER's main sound, improvising live and endless: verified Röyksopp
+# Melody A.M. chord cells are the harmonic spine, voiced nearest the last.
+# The arrangement is original: Dilla timing, Moog patches, bass, DFAM,
 # organ, a filter sweep and a choir, each with its own contour -- morphing
 # over four chords, whole and uncut, through a Juno-60 chorus, breathing on every beat
 # the way a sidechain would. Over them quiet Moog arpeggios, each note on its
@@ -12,6 +12,7 @@
 $LOAD_PATH.unshift File.expand_path("lib", __dir__)
 require "shellwords"
 require "sound"
+require_relative "royksopp"
 
 RATE = 32_000
 BLOCK = 1_024
@@ -20,11 +21,9 @@ P = S::PATCHES.dup
 
 def hz(midi) = 440.0 * (2.0**((midi - 69) / 12.0))
 
-# Fm9, Bbm9, Eb13, Abmaj9, Dbmaj7#11, C7alt: soul-jazz, Dilla territory.
-CHORDS = [
-  [41, [56, 60, 63, 67]], [46, [56, 61, 65, 68]], [39, [55, 60, 61, 65]],
-  [44, [55, 60, 63, 70]], [37, [60, 65, 67, 72]], [36, [58, 61, 64, 68]],
-]
+# Harmonic source: actual documented Melody A.M. chord cells, rendered through
+# this set's original Dilla/analogue arrangement. The source module keeps the
+# progression data out of the signal loop so it has one reader and one truth.
 SNAP = { amp: S::Envelope.new(attack: 0.004, decay: 0.3, sustain: 0.35, release: 0.18),
          filter_env: S::Envelope.new(attack: 0.002, decay: 0.22, sustain: 0.2, release: 0.15) }.freeze
 PROPHET_LEADS = {
@@ -108,24 +107,6 @@ def moog_morph(order, chord_i)
 end
 PADS = %i[warm_pad poly_strings prophet_five juno_pad prophet_pad vp330_ensemble soft_reed e_piano rhodes_tine glass_bell]
 BASSES = %i[moog_bass acid sub dub_bass]
-QUALITIES = {
-  m9: [3, 7, 10, 14], m11: [3, 7, 10, 17], maj9: [4, 7, 11, 14], maj7s11: [4, 7, 11, 18],
-  d13: [4, 10, 14, 21], alt: [4, 10, 13, 15], m6_9: [3, 7, 9, 14], sus13: [5, 10, 14, 21],
-}.freeze
-MOVES = {
-  [0, :m9] => [[5, :m9], [10, :d13], [8, :maj9], [5, :m11], [3, :maj9]],
-  [0, :m11] => [[5, :m9], [8, :maj7s11], [10, :sus13]],
-  [5, :m9] => [[10, :d13], [7, :alt], [3, :maj9], [0, :m6_9]],
-  [5, :m11] => [[10, :d13], [7, :alt]],
-  [10, :d13] => [[3, :maj9], [8, :maj9], [0, :m9]],
-  [10, :sus13] => [[10, :d13], [3, :maj9]],
-  [3, :maj9] => [[8, :maj9], [5, :m9], [1, :maj7s11]],
-  [8, :maj9] => [[1, :maj7s11], [7, :alt], [5, :m9]],
-  [8, :maj7s11] => [[7, :alt], [1, :maj7s11]],
-  [1, :maj7s11] => [[7, :alt], [0, :m9], [0, :m11]],
-  [7, :alt] => [[0, :m9], [0, :m11], [8, :maj9]],
-  [0, :m6_9] => [[5, :m9], [10, :d13]],
-}.freeze
 NAMES = %w[C Db D Eb E F Gb G Ab A Bb B].freeze
 
 def voice_lead(pcs, previous)
@@ -151,14 +132,11 @@ end
 
 voices = []
 rng = Random.new
-key = 5 # F minor, where the loved progression sits
-state = [0, :m9]
-voicing = CHORDS.first.last
+# Begin on the first verified chord, then walk the source suite in order. The
+# only things that improvise are the performance around the harmony.
+voicing = [53, 57, 60, 62]
 chord_i = 0
 moog_order = nil
-recent = []
-next_modulation = 8
-key = rng.rand(12)
 next_chord = 0.0
 LOG = File.open(File.join(__dir__, "moog_improv.log"), "a").tap { |f| f.sync = true }
 
@@ -446,29 +424,14 @@ two_pi = 2 * Math::PI
 while frame < frames
   # The next chord, chosen a second before it sounds.
   while next_chord < (frame.to_f / RATE) + 1.0
-    degree, quality = state
-    voicing = voice_lead(QUALITIES[quality].map { |iv| (key + degree + iv) % 12 }, voicing)
-    bass = 36 + ((key + degree) % 12)
-    bass += 12 if bass < 36
-    name = "#{NAMES[(key + degree) % 12]}#{quality}"
-    recent << [(key + degree) % 12, quality]
-    recent.shift if recent.size > 4
-    options = MOVES.fetch(state).reject { |d, q| recent.include?([(key + d) % 12, q]) }
-    options = MOVES.fetch(state) if options.empty?
-    state = options.sample(random: rng)
-    roll = rng.rand
-    if roll < 0.08 # the tritone substitute: a dominant a flat fifth away
-      key = (key + 6) % 12
-      name += " (tritone sub next)"
-    elsif roll < 0.14 # a chromatic side-step, up or down a semitone
-      key = (key + [1, 11].sample(random: rng)) % 12
-      name += " (side-step next)"
-    end
-    if chord_i >= next_modulation
-      key = (key + [5, 3, 8, 10, 2, 7].sample(random: rng)) % 12
-      state = [0, %i[m9 m11 m6_9].sample(random: rng)]
-      next_modulation = chord_i + rng.rand(8..16)
-      name += " -> #{NAMES[key]} minor"
+    symbol = Royksopp::SUITE[chord_i % Royksopp::SUITE.length]
+    chord = Royksopp.chord(symbol)
+    voicing = voice_lead(chord[:tones], voicing)
+    bass = 36 + chord[:root_pc]
+    name = symbol
+    if chord_i.positive? && (chord_i % 4).zero?
+      source = Royksopp.source_for(symbol)
+      LOG.puts "  harmony -> #{source[:title]}" if source
     end
     moog_order = MOOG_CHORDS.keys.shuffle(random: rng) if (chord_i % (MORPH_CHORDS * MOOG_CHORDS.size)).zero?
     pad = moog_morph(moog_order, chord_i)
