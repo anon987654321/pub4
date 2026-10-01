@@ -43,10 +43,17 @@ class TestCLI < Minitest::Test
   # closing line left to say.
   def test_a_pass_report_is_spoken_as_its_footer_and_a_reply_whole
     session = Master::CLI::Session.allocate
-    report = ["mode", "mode=balanced profile=full", "", "observe",
-              "scan0: done, 1127 files, 87 violations in 22 files", "", "repair",
-              "fix0: pass 1, 12 of 87 fixed", "", "changes", "abc1234 Master: a repair", "",
-              "review0: complete, 87 findings, 41 after the fix"].join("\n")
+    report = [
+      "review0 at master0: ., balanced",
+      "mode0 at review0: balanced, full scan, council off, 8 fix passes",
+      "obs0 at review0: observe",
+      "scan0: done, 1127 files, 87 violations in 22 files",
+      "fix0 at review0: repair",
+      "fix0: pass 1, 12 of 87 fixed",
+      "change0 at review0: changes",
+      "change0: abc1234 Master: a repair",
+      "review0: complete, 87 findings, 41 after the fix",
+    ].join("\n")
 
     assert_equal "review0: complete, 87 findings, 41 after the fix", session.send(:spoken_form, report)
     assert_equal "the pool is every model this machine can reach.",
