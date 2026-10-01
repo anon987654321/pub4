@@ -137,6 +137,22 @@ class TestSpeech < Minitest::Test
     assert_nil Master::Voice::Speech.synthesize("   ")
   end
 
+  def test_playback_leaves_transcendent_prosody_unlocked
+    playback = Master::Voice::Playback
+    options = nil
+
+    Master::Voice::Speech.stub(:synthesis_mode, "transcendent") do
+      Master::Voice::Speech.stub(:synthesize, ->(_text, **kwargs) { options = kwargs; nil }) do
+        playback.send(:synthesize, "A sentence.")
+      end
+    end
+
+    assert_equal :auto, options.fetch(:style)
+    assert_nil options[:rate]
+    assert_nil options[:pitch]
+    refute options.fetch(:style_locked)
+  end
+
   def test_transcendent_tts_is_the_default_but_classic_can_be_requested
     speech = Master::Voice::Speech
     original = ENV["MASTER_TTS_MODE"]
