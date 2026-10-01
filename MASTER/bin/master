@@ -3,6 +3,7 @@
 
 require_relative "../lib/boot/entrypoint"
 Master::Boot::Entrypoint.prepare!(root: File.expand_path("..", __dir__))
+require_relative "../lib/trace/dmesg"
 
 # Repo-wide instruction surface for the MASTER runtime.
 #
@@ -35,7 +36,7 @@ MASTER = File.join(ROOT, "MASTER")
 CLI = File.join(MASTER, "bin", "cli")
 
 unless File.executable?(CLI) || File.file?(CLI)
-  warn "master0: #{CLI} missing, full pub4 checkout required"
+  Master::Trace::Dmesg.status("master0", "#{CLI} missing, full pub4 checkout required", io: $stderr)
   exit 1
 end
 
@@ -46,7 +47,7 @@ if ARGV.first == "--fix-context"
 end
 
 if ARGV.first == "--help" || ARGV.first == "-h"
-  puts <<~HELP
+  Master::Trace::Dmesg::Report.print("/help", <<~HELP
     master — instruct the MASTER runtime with the whole repo in scope
 
     Usage:
@@ -97,7 +98,7 @@ $MASTER_PROCESS_LOCK = Master::Ops::ProcessLock.acquire!(
 unless $MASTER_PROCESS_LOCK
   owner = Master::Ops::ProcessLock.owner(File.join(MASTER, ".master", "process.lock"))
   detail = owner.empty? ? "" : " pid=#{owner["pid"]} host=#{owner["host"]} mode=#{owner["mode"]}"
-  warn "master0: another MASTER process owns the control plane#{detail}"
+  Master::Trace::Dmesg.status("master0", "another process owns the control plane#{detail}", io: $stderr)
   exit 75
 end
 ENV["MASTER_PROCESS_LOCK_FD"] = $MASTER_PROCESS_LOCK.fileno.to_s
