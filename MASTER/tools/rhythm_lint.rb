@@ -3,6 +3,7 @@
 require_relative "master_design"
 
 require "set"
+require_relative "../lib/trace/dmesg"
 
 module Operator
   # Validates every spacing-tagged value in MASTER's design_system and every --space
@@ -23,13 +24,13 @@ module Operator
     def run
       rules = load_design_rules
       unless rules
-        warn "rhythm_lint: could not find MASTER/data/rules.yml -- skipping"
+        Master::Trace::Dmesg.status("rhythm0", "could not find MASTER/data/rules.yml, skipped", io: $stderr)
         return true
       end
 
       allowed = rules.dig("pixel_perfection", "eight_px_rhythm")
       unless allowed
-        warn "rhythm_lint: design_rules.yml has no pixel_perfection.eight_px_rhythm -- skipping"
+        Master::Trace::Dmesg.status("rhythm0", "design rules have no pixel_perfection.eight_px_rhythm, skipped", io: $stderr)
         return true
       end
       allowed = allowed.map(&:to_i).to_set
@@ -39,11 +40,11 @@ module Operator
       violations.concat(scan_scss(allowed))
 
       if violations.empty?
-        puts "rhythm_lint: ok (#{allowed.size}-value rhythm, all spacing tokens compliant)"
+        Master::Trace::Dmesg.status("rhythm0", "clean, #{allowed.size}-value rhythm, all spacing tokens compliant")
         true
       else
         violations.each do |v|
-          warn "rhythm_lint: #{v.source} #{v.name} = #{v.value_px}px is not on the 8px rhythm (#{allowed.to_a.sort.join(', ')})"
+          Master::Trace::Dmesg.status("rhythm0", "#{v.source}, #{v.name}, #{v.value_px}px is not on the 8px rhythm, allowed #{allowed.to_a.sort.join(", ")}", io: $stderr)
         end
         false
       end
