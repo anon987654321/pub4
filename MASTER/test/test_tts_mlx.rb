@@ -34,7 +34,7 @@ class TtsMlxTest < Minitest::Test
             "default",
             1.0,
             out_path,
-            emotion: { exaggeration: 0.72 },
+            emotion: { exaggeration: 0.72, cfg_weight: 0.33 },
             rate: "-4%",
             pitch: "-12Hz",
             reference_clip: reference,
