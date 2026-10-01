@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require_relative "../lib/master"
+require_relative "../lib/trace/dmesg"
 
 module Master
   module Tools
@@ -36,17 +37,17 @@ module Master
           record_file(argv.fetch(0))
         when "export"
           count = Master::AI::Trajectory::Dataset.export(input: argv.fetch(0), output: argv.fetch(1))
-          puts "trajectory0: exported #{count} verified trajectory(s)"
+          Master::Trace::Dmesg.status("trajectory0", "exported #{count} verified trajectories")
         when "preferences"
           count = Master::AI::Trajectory::Dataset.export_preferences(input: argv.fetch(0), output: argv.fetch(1))
-          puts "trajectory0: exported #{count} preference pair(s)"
+          Master::Trace::Dmesg.status("trajectory0", "exported #{count} preference pairs")
         else
-          puts usage
+          Master::Trace::Dmesg::Report.print("/help", usage)
           return false
         end
         true
       rescue ArgumentError, JSON::ParserError => e
-        warn "trajectory0: #{e.class}: #{e.message}"
+        Master::Trace::Dmesg.status("trajectory0", "#{e.class}: #{e.message}", io: $stderr)
         false
       end
 
@@ -61,7 +62,7 @@ module Master
         record = Master::AI::Trajectory::Record.new(JSON.parse(File.read(path)))
         destination = File.join(Master::ROOT, ".master", "trajectories", "trajectories.ndjson")
         record.append!(destination)
-        puts "trajectory0: recorded #{destination}"
+        Master::Trace::Dmesg.status("trajectory0", "recorded #{destination}")
       end
     end
   end
