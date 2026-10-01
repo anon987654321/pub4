@@ -137,29 +137,35 @@ class TestSpeech < Minitest::Test
     assert_nil Master::Voice::Speech.synthesize("   ")
   end
 
-  def test_fast_tts_is_the_default_but_explicit_transcendent_still_wins
+  def test_transcendent_tts_is_the_default_but_classic_can_be_requested
     speech = Master::Voice::Speech
     original = ENV["MASTER_TTS_MODE"]
     ENV.delete("MASTER_TTS_MODE")
 
-    Master::Voice::Transcendent.stub(:load_config, { "fast_mode" => true, "default_mode" => "transcendent" }) do
-      assert_equal "classic", speech.synthesis_mode
-      ENV["MASTER_TTS_MODE"] = "transcendent"
+    Master::Voice::Transcendent.stub(:load_config, { "fast_mode" => false, "default_mode" => "transcendent" }) do
       assert_equal "transcendent", speech.synthesis_mode
+      ENV["MASTER_TTS_MODE"] = "classic"
+      assert_equal "classic", speech.synthesis_mode
     end
   ensure
     ENV["MASTER_TTS_MODE"] = original
   end
 
-  def test_streaming_skips_transcendent_when_fast_mode_is_enabled
+  def test_transcendent_streaming_is_default
     original = ENV["MASTER_TTS_MODE"]
     ENV.delete("MASTER_TTS_MODE")
 
-    Master::Voice::Transcendent.stub(:load_config, { "fast_mode" => true }) do
-      assert_equal false, Master::Voice::Speech.send(:transcendent_streaming_enabled?, {})
+    Master::Voice::Transcendent.stub(:load_config, { "fast_mode" => false, "default_mode" => "transcendent", "enabled" => true }) do
+      assert_equal true, Master::Voice::Speech.send(:transcendent_streaming_enabled?, {})
     end
   ensure
     ENV["MASTER_TTS_MODE"] = original
+  end
+
+  def test_fast_mode_remains_available_as_an_explicit_override
+    Master::Voice::Transcendent.stub(:load_config, { "fast_mode" => true, "default_mode" => "transcendent" }) do
+      assert_equal "classic", Master::Voice::Speech.synthesis_mode
+    end
   end
 
   def test_fast_socket_resolution_returns_nil_without_a_socket
