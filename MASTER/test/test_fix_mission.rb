@@ -18,6 +18,25 @@ class FixMissionTest < Minitest::Test
     end
   end
 
+  def test_manual_fix_can_supersede_an_unclaimed_waiting_mission
+    Dir.mktmpdir do |root|
+      mission = Master::Fix::Mission.new(root:).ensure_queued!(
+        goal: "play it on my sound card",
+        scope: File.join(root, "MASTER"),
+      )
+
+      replacement = Master::Fix::Mission.new(root:).start_or_resume!(
+        goal: "fix #{root}",
+        scope: root,
+        origin: "manual",
+      )
+
+      refute_equal mission.id, replacement.id
+      assert_equal "running", replacement.record["state"]
+      assert_equal "fix #{root}", replacement.record["goal"]
+    end
+  end
+
   def test_mission_lifecycle_persists_one_contract
     Dir.mktmpdir do |root|
       bus = Bus.new
