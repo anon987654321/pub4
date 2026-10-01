@@ -123,4 +123,14 @@ class TestExpression < Minitest::Test
     assert result[:rate].match?(/%/)
     assert result[:pitch].match?(/Hz/)
   end
+  def test_warm_erratic_accepts_locked_default_warm_style
+    voice = Master::Voice::Policy.single_voice_key
+    result = Master::Voice::WarmErratic.pick_for_voice(voice, "Hello there.", style: :warm)
+
+    assert_equal voice, result[:voice]
+    assert_equal :warm, result[:style]
+    assert result[:rate].match?(/%/)
+    assert result[:pitch].match?(/Hz/)
+  end
+
 end
