@@ -17,6 +17,7 @@
 
 require "digest"
 require "yaml"
+require_relative "../lib/trace/dmesg"
 
 module Operator
   module DupCensus
@@ -57,8 +58,8 @@ module Operator
     def check_corpus!(files)
       return files if files.size >= 500
 
-      abort("dup_census: git ls-files returned #{files.size} paths -- the corpus " \
-            "collapsed, so a report of zero duplicates measured nothing")
+      Master::Trace::Dmesg.status("dup0", "git ls-files returned #{files.size} paths; corpus collapsed", io: $stderr)
+      raise "dup_census: corpus collapsed"
     end
 
     def recorded
@@ -78,12 +79,12 @@ module Operator
 
     def report_delta(current)
       if recorded_members.empty?
-        puts "dup_census: no members recorded — attribution unavailable; run --ratchet to seed it"
+        Master::Trace::Dmesg.status("dup0", "no members recorded, attribution unavailable; run --ratchet to seed it")
         return
       end
 
-      (current - recorded_members).each { |set| puts "  + #{set}" }
-      (recorded_members - current).each { |set| puts "  - #{set}" }
+      (current - recorded_members).each { |set| Master::Trace::Dmesg.status("dup0", "arrived, #{set}") }
+      (recorded_members - current).each { |set| Master::Trace::Dmesg.status("dup0", "gone, #{set}") }
     end
 
 # The prose above `duplicate_sets:` records what each past collapse cost
@@ -98,13 +99,12 @@ end
 
     def run(ratchet: false, list: false)
       d = sets
-      puts "dup_census: #{d.size} duplicate set(s), " \
-           "#{d.sum { |(_, size), v| size * (v.size - 1) } / 1024}KB shadowed (ceiling #{ceiling})"
+      Master::Trace::Dmesg.status("dup0", "#{d.size} duplicate set(s), #{d.sum { |(_, size), v| size * (v.size - 1) } / 1024}KB shadowed, ceiling #{ceiling}")
       # A count nobody can act on is a ratchet, not a finding. --list prints
       # what was counted, largest shadow first, and changes no number.
       if list
         d.sort_by { |(_, size), v| -size * (v.size - 1) }.each do |(_, size), v|
-          puts "  #{size / 1024}KB x#{v.size}: #{v.join(' | ')}"
+          Master::Trace::Dmesg.status("dup0", "#{size / 1024}KB, #{v.size} copies, #{v.join(", ")}")
         end
         return 0
       end
@@ -114,16 +114,16 @@ end
       if ratchet && d.size <= ceiling
         previous = ceiling
         File.write(CEILING, rewritten_ceiling(d.size, members(d)))
-        puts "dup_census: #{d.size < previous ? "recorded #{d.size} as the new low" : "re-recorded #{d.size}"}, with its members"
+        Master::Trace::Dmesg.status("dup0", "#{d.size < previous ? "recorded #{d.size} as the new low" : "re-recorded #{d.size}"}, with its members")
         return 0
       end
       return 0 unless d.size > ceiling
 
       report_delta(members(d))
       d.sort_by { |(_, s), v| -s * (v.size - 1) }.first(10).each do |(_, size), v|
-        puts "  #{size / 1024}KB x#{v.size}: #{v.join(' | ')[0, 150]}"
+        Master::Trace::Dmesg.status("dup0", "#{size / 1024}KB, #{v.size} copies, #{v.join(", ")[0, 150]}")
       end
-      puts "dup_census: a tracked file now exists twice — collapse it or price the ceiling"
+      Master::Trace::Dmesg.status("dup0", "a tracked file now exists twice, collapse it or price the ceiling")
       1
     end
   end
