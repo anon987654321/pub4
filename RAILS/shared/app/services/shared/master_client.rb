@@ -6,22 +6,22 @@ require "uri"
 require "operator/deploy_paths"
 
 module Shared
-  # HTTP client for MASTER's authenticated bridge (TurnRouter / IngressRunner).
+  # HTTP client for MASTER's authenticated ingress (TurnRouter / IngressRunner).
   # Prefer this over shelling into bin/cli from Solid Queue workers.
   class MasterClient
     DEFAULT_TIMEOUT = 45
 
     def self.configured?
-      token.present?
+      !token.to_s.empty?
     end
 
     def self.token
-      ENV["MASTER_BRIDGE_TOKEN"].to_s.strip.presence ||
-        ENV["MASTER_INTERNAL_TOKEN"].to_s.strip.presence
+      value = ENV["MASTER_INGRESS_TOKEN"].to_s.strip
+      value unless value.empty?
     end
 
     def self.base_url
-      Operator::DeployPaths.master_bridge_base.to_s.sub(%r{/\z}, "")
+      Operator::DeployPaths.master_base.to_s.sub(%r{/\z}, "")
     end
 
     def initialize(base_url: self.class.base_url, token: self.class.token, timeout: DEFAULT_TIMEOUT)
@@ -37,19 +37,21 @@ module Shared
     end
 
     def health
-      get("/bridge/health")
+      get("/ingress/health")
     end
 
     # Constitutional agent turn. Returns { ok:, output:, error: }.
     def turn(message, session_key: nil, channel: "rails")
-      return { ok: false, error: "MASTER_BRIDGE_TOKEN not configured", output: "" } if @token.empty?
+      return { ok: false, error: "MASTER_INGRESS_TOKEN not configured", output: "" } if @token.empty?
 
+      key = session_key.to_s.strip
+      key = "rails:#{Process.pid}" if key.empty?
       body = {
         message: message.to_s,
-        session_key: session_key.presence || "rails:#{Process.pid}",
+        session_key: key,
         channel: channel.to_s,
       }
-      post("/bridge/turn", body)
+      post("/ingress/webhook/rails_master", body)
     rescue StandardError => e
       { ok: false, error: e.message, output: "" }
     end

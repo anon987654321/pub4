@@ -785,7 +785,12 @@ motd:
 #   enabled: false
 #   elevated: false
 #   message: "summarize latest deploy status"
-webhooks: []
+webhooks:
+  - name: rails_master
+    kind: webhook
+    enabled: true
+    elevated: false
+    message: "shared Rails assistant turn"
 
 # Merged from former cron_jobs.yml — cron ingress jobs, trigger via
 # POST /ingress/cron/:name (Bearer MASTER_INGRESS_TOKEN). Wire system crontab:

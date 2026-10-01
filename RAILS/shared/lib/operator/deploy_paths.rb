@@ -49,10 +49,9 @@ module Operator
       ]
     end
 
-    # MASTER web bridge (ai.brgen.no / loopback :53187) for constitutional turns.
-    def master_bridge_base
-      env_value("MASTER_BRIDGE_URL") ||
-        env_value("MASTER_WEB_URL") ||
+    # MASTER web ingress (ai.brgen.no / loopback :53187) for constitutional turns.
+    def master_base
+      env_value("MASTER_WEB_URL") ||
         "http://127.0.0.1:53187"
     end
 

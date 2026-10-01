@@ -14,7 +14,22 @@ class MasterMessengerTest < Minitest::Test
   Sender = Struct.new(:display_name)
   Message = Struct.new(:sender, :body)
 
-  def test_uses_one_shared_bridge_contract
+  def test_master_client_is_called_with_context_keywords
+    client = Client.new([])
+    sender = Sender.new("Ada")
+    latest = Message.new(sender, "ping")
+
+    Shared::MasterMessenger.new(client:).reply(
+      messages: [latest], sender:, message: latest,
+      session_key: "amber:1-2", channel: "amber-messenger"
+    )
+
+    call = client.calls.fetch(0)
+    assert_equal "amber:1-2", call.fetch(:session_key)
+    assert_equal "amber-messenger", call.fetch(:channel)
+  end
+
+  def test_uses_one_shared_ingress_contract
     client = Client.new([])
     sender = Sender.new("Ada")
     latest = Message.new(sender, "What changed?")

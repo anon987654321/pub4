@@ -1325,7 +1325,7 @@ face_enhancements:
     tier: p1
     status: implemented
     handler: both
-    summary: MASTER_BRIDGE_TOKEN and MASTER_INGRESS_TOKEN in master.env.sample + rc.d
+    summary: MASTER_INGRESS_TOKEN in master.env.sample + rc.d
   - id: bl_brgen_assets_cruft
     area: web
     tier: p1

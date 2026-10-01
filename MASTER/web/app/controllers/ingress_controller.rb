@@ -70,6 +70,8 @@ class IngressController < ApplicationController
     metadata = {
       ingress_channel: channel,
       ingress_job: job["name"],
+      source_channel: body[:channel].to_s[0, 64],
+      session_key: body[:session_key].to_s[0, 128],
       trust: elevated ? :owner : :untrusted,
     }
 

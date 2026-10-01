@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 module Shared
-  # One messenger adapter for every mounted app. It talks to the authenticated
-  # MASTER bridge, so brgen and Amber invite the same runtime rather than
+  # One messenger adapter for every mounted app. It talks to MASTER through authenticated
+  # ingress, so brgen and Amber invite the same runtime rather than
   # maintaining separate assistant personalities or memory.
   class MasterMessenger
     MAX_CONTEXT = 24
