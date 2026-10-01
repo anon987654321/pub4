@@ -1,7 +1,7 @@
 ---
 source_repo: anon987654321/pub
 target_repo: anon987654321/pub4
-audit_date: 2026-10-01
+audit_date: 2026-06-26
 purpose: >
   Machine-readable restore ledger for legacy pub material that pub4 has not
   fully restored as source, behavior, or explicit retirement decision.
@@ -12,7 +12,6 @@ states:
   absorbed: concept exists, but old source/provenance is not preserved
   archived: source is kept but not active
   missing: neither active nor archived
-  partial: some legacy capabilities are ported, while the listed capabilities remain missing
   retired: intentionally rejected with reason
 
 legacy_roots:
@@ -55,21 +54,20 @@ legacy_roots:
       importer into MASTER plugins/council roles.
 
   - path: bplans/consolidated/
-    state: missing
+    state: partial
     priority: high
-    target_path: owner decision — archive, import, or explicitly retire the source
+    target_path: RECOVERY/pub/bplans/consolidated/
     reason: >
-      The 2026-09-06 source measurement found 163 historical bplans files in pub,
-      but no generator or shared HTML template. pub4 deliberately retired the
-      dead generator brief instead of inventing a pipeline. Some source pages are
-      personal or sensitive, so copying them into public pub4 is an owner decision.
+      pub4 has static DEPLOY/bp pages, but the old markdown/source collection and
+      the generator/data/template pipeline described by IMPLEMENTATION_SUMMARY
+      are not present.
     known_files:
       - bplans/consolidated/README.md
       - bplans/technology/rails-ecosystem-overview.md
       - bplans/__letters/thor.html
     action: >
-      Preserve the source in pub history or record an explicit archive/retirement
-      decision. Do not rebuild a generator that never existed.
+      Rebuild DEPLOY/bp/generate.rb, DEPLOY/bp/__shared/template.html.erb, and
+      DEPLOY/bp/data/*.json or explicitly retire generated BP workflows.
 
   - path: plugin_schema_v1.json
     state: archived
@@ -96,49 +94,86 @@ legacy_roots:
       vulcheck exists in pub4 deploy tools. Keep source mapping for provenance.
 
   - path: brgen_app/
-    state: ported
+    state: partial
     priority: medium
     target_path: RAILS/brgen/
     reason: >
-      Old Rails app shell exists in pub; pub4 uses the active RAILS/brgen app
-      as its implementation. Preserve legacy intent as provenance, not as a
-      second application shell.
-    action: >
-      Keep the current RAILS/brgen implementation canonical; do not restore the
-      placeholder README as product truth.
+      Old Rails app shell exists in pub but pub4 uses a cleaner generated app.
+      Preserve intent only; do not restore placeholder README as product truth.
 
 rails_restore_debt:
-  # Reconciled 2026-10-01 against RAILS/apps.yml. This ledger records only
-  # capabilities still absent from the active trees; the inventory is the
-  # implementation source of truth.
   brgen:
-    state: ported
-    missing: []
+    state: partial
+    missing:
+      - proximity/geolocation filtering
+      - moderation tools
+      - media pipeline with Active Storage variants
+      - Tv::Show
+      - Tv::Episode
+      - video upload and variants
+      - VideoPublished and BroadcastScheduled events
+      - dating city/radius filter
+      - dating match to messaging handoff
+      - dating profile photos
+      - marketplace geo-localized listings
+      - marketplace locale subdomain routing
+      - marketplace FTS filtering completion
+      - playlist listens
+      - embeddable player completion
+      - Spotify/YouTube/SoundCloud import
+      - city-scoped trending feed
+      - expiration dates on tracks
+      - takeaway restaurant model/geocoding
+      - menu item availability state machine
+      - full takeaway order state machine
 
   amber:
     state: partial
     missing:
+      - wardrobe upload UI
       - garment segmentation/background removal
+      - outfit generation by weather/season/event
+      - style evolution timeline
+      - underused item surfacing
+      - wardrobe analytics dashboard completion
       - closet organisation tips AI
 
   blognet:
-    state: retired
-    missing: []
-    reason: >
-      Retired from the active stack on 2026-08-12. Old content-generation
-      material remains recovery-only context; its former feature backlog is not
-      active restore debt.
+    state: partial
+    missing:
+      - author profile
+      - RSS/Atom feed
+      - semantic search
+      - membership/subscription/paywall
+      - AI narration/TTS article
+      - citation system
+      - editorial workflow
+      - recipe model
+      - ingredient model
+      - step-by-step cooking view
+      - recipe collections/playlists
+      - rich media gallery
+      - short-form food clips
+      - locality-aware restaurant references
+      - seasonal food guides
+      - article to podcast
+      - article to summary
+      - article to video
+      - article to thread
 
   bsdports:
-    state: ported
-    missing: []
+    state: partial
+    missing:
+      - dependency tree visualization
+      - ports tree scheduled re-import job
+      - WCAG AAA compliance pass
+      - AI exploration assistant
 
   hjerterom:
-    state: retired
-    missing: []
-    reason: >
-      Retired from the active stack on 2026-08-12. Old source and databases are
-      recovery-only context; its former feature backlog is not active restore debt.
+    state: partial
+    missing:
+      - clothing/toy/book reuse tracking
+      - distribution route optimization
 
 active_app_decisions:
   # Decided 2026-09-06, after four months at archived_port. The fleet is three

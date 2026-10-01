@@ -1,6 +1,13 @@
 # MASTER tools
 
 **A claim about an image or a sound is worth nothing until something measures
+it.** The four media tools in this plane are `dilla/`, `postpro/`,
+`replicate/` and `lora/`. Historical business-plan material lives in
+recovery provenance rather than an active tool; the measured source had no
+generator to restore. Each tool keeps its own contract in its own README, and
+the reasons behind a setting sit in a comment beside it.
+
+**A claim about an image or a sound is worth nothing until something measures
 it.** Four media tools share that conviction. `dilla/` builds beats, Detroit in
 its lean and genre-agnostic in intent. `postpro/` is the house grade, analog
 photographic emulation for stills. `replicate/` generates images, and
