@@ -174,19 +174,8 @@ class ChatService
   end
 
   def rendered_text(result)
-    case result
-    when Master::Result::Ok
-      val = result.value
-      rendered = val.respond_to?(:[]) ? val[:rendered].to_s : ""
-      rendered.empty? ? val.to_s : rendered
-    when Master::Result::Err
-      if result.category == :no_api_key
-        result.message
-      else
-        log_turn_failure(result)
-        ERROR_PREFIX + Master::Ground::Redactor.public_error_message
-      end
-    end
+    log_turn_failure(result) if result.is_a?(Master::Result::Err) && result.category != :no_api_key
+    Master::CLI::TurnPresentation.text(result)
   end
 
   # TurnRouter failures reach here as a Result::Err, not a raised exception,
