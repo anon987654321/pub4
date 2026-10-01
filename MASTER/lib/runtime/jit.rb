@@ -11,7 +11,7 @@ module Master
         configured = ENV.fetch("MASTER_JIT", "auto").to_s.strip.downcase
         return configured if MODES.include?(configured)
 
-        Master::Trace::Dmesg.status("jit0", "unknown MASTER_JIT=#{configured.inspect}, using auto")
+        Master::Trace::Dmesg.status("jit0", "unknown configuration #{configured.inspect}, using auto")
         "auto"
       end
 
