@@ -34,11 +34,37 @@ class TestPostproDispatch < Minitest::Test
   end
 
   def graded_outputs(dir, name)
-    Dir[File.join(dir, "#{File.basename(name, File.extname(name))}_*_v1_*.jpg")]
+    Dir[File.join(dir, "postpro_#{File.basename(name, File.extname(name))}_*_v1_*.jpg")]
   end
 
   # The bare path grades that one image, and --count beside it is honoured
   # rather than read as a second subject ("3" is a count, not a file).
+  def test_random_contract_has_five_to_ten_default_variations
+    assert_equal(5..10, RANDOM_VARIATIONS)
+    refute_empty RANDOM_LANES
+  end
+
+  def test_random_chains_keep_a_heavy_analog_substrate
+    8.times do |seed|
+      chain = random_chain(Random.new(seed))
+      analog = chain.map(&:first).map(&:to_s) & Postpro::Constitution::ANALOG_CORE
+      assert_operator analog.uniq.length, :>=, 3, "seed #{seed} drifted below analog depth"
+    end
+  end
+
+  def test_outputs_use_postpro_prefix_in_the_postpro_directory
+    Dir.mktmpdir do |dir|
+      subject = frame(dir)
+      out, status = run_postpro(dir, subject, "--count", "2")
+      assert status.success?, "prefixed output failed:
+#{out}"
+      outputs = graded_outputs(dir, "frame.jpg")
+      assert_equal 2, outputs.size
+      assert outputs.all? { |path| File.dirname(path) == dir }
+      assert outputs.all? { |path| File.basename(path).start_with?("postpro_") }
+    end
+  end
+
   def test_a_bare_image_is_graded_beside_itself
     Dir.mktmpdir do |dir|
       subject = frame(dir)

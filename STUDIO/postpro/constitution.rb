@@ -6,7 +6,7 @@
 # into image-generation invariants rather than trying to lint aesthetics with regex.
 module Postpro
   module Constitution
-    OUTPUT_DIR = File.expand_path(__dir__).freeze
+    OUTPUT_DIR = File.expand_path(ENV.fetch("POSTPRO_OUTPUT_DIR", __dir__)).freeze
     RULES_PATH = File.expand_path("../../MASTER/data/rules.yml", __dir__).freeze
     LAW_PATHS = [
       File.expand_path("../../MASTER/law/universal.rb", __dir__),
