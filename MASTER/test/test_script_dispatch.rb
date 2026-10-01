@@ -19,31 +19,46 @@ class TestScriptDispatch < Minitest::Test
     assert_equal workspace, Master::Io::ScriptDispatch.working_directory(workspace, script)
   end
 
-  def test_finds_media_tool_under_master_tools
+  def test_finds_media_tool_under_studio
     workspace = File.expand_path("../..", __dir__)
     path = Master::Io::ScriptDispatch.script_path(workspace, "replicate")
 
-    assert_equal File.join(MasterPaths.repo, "MASTER", "tools", "replicate", "replicate.rb"), path
+    assert_equal File.join(MasterPaths.repo, "STUDIO", "replicate", "replicate.rb"), path
   end
 
-  def test_uses_own_directory_as_working_directory_for_master_tool
+  def test_uses_own_directory_as_working_directory_for_studio_tool
     workspace = File.expand_path("../..", __dir__)
     script = Master::Io::ScriptDispatch.script_path(workspace, "replicate")
 
-    assert_equal File.join(MasterPaths.repo, "MASTER", "tools", "replicate"), Master::Io::ScriptDispatch.working_directory(workspace, script)
+    assert_equal File.join(MasterPaths.repo, "STUDIO", "replicate"), Master::Io::ScriptDispatch.working_directory(workspace, script)
   end
 
-  # Regression test: dilla is the one media tool where MASTER/tools/dilla/ also
-  # contains an unrelated archived file (archive/hiphop_techno_experiment.rb)
-  # that used to sit at the old STUDIO/dilla/dilla.rb path and silently hijack this exact
-  # resolution path (MediaIntent's chat-driven beat requests resolved to it
-  # instead of the real engine, with no test catching it).
-  def test_finds_dilla_engine_under_master_tools
+  def test_media_compatibility_link_still_resolves
+    workspace = File.expand_path("../..", __dir__)
+    path = File.join(MasterPaths.repo, "MASTER", "tools", "dilla", "dilla.rb")
+
+    assert File.file?(path), "the MASTER/tools compatibility link must remain usable"
+    assert_equal File.join(MasterPaths.repo, "STUDIO", "dilla", "dilla.rb"),
+                 Master::Io::ScriptDispatch.script_path(workspace, "dilla")
+  end
+
+  def test_finds_dilla_engine_under_studio
     workspace = File.expand_path("../..", __dir__)
     path = Master::Io::ScriptDispatch.script_path(workspace, "dilla")
 
-    assert_equal File.join(MasterPaths.repo, "MASTER", "tools", "dilla", "dilla.rb"), path
+    assert_equal File.join(MasterPaths.repo, "STUDIO", "dilla", "dilla.rb"), path
     assert File.file?(path)
+  end
+
+  def test_master_tools_compatibility_link_resolves_to_studio
+    workspace = File.expand_path("../..", __dir__)
+    legacy = File.join(MasterPaths.repo, "MASTER", "tools", "dilla", "dilla.rb")
+    canonical = File.join(MasterPaths.repo, "STUDIO", "dilla", "dilla.rb")
+
+    assert File.file?(legacy)
+    assert File.file?(canonical)
+    assert_equal File.realpath(canonical), File.realpath(legacy)
+    assert_equal canonical, Master::Io::ScriptDispatch.script_path(workspace, "dilla")
   end
 
   def test_tool_child_inherits_master_bundle_environment

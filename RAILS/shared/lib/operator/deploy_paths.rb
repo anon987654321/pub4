@@ -24,8 +24,8 @@ module Operator
 
     def postpro_candidates
       [
-        repo_join("MASTER/tools/postpro/postpro.rb"),
         repo_join("STUDIO/postpro/postpro.rb"),
+        repo_join("MASTER/tools/postpro/postpro.rb"),
         Pathname.new("#{DEFAULT_REPO}/MASTER/tools/postpro/postpro.rb"),
         rails_root.join("../../MASTER/tools/postpro/postpro.rb"),
       ]
@@ -33,8 +33,8 @@ module Operator
 
     def replicate_candidates
       [
-        repo_join("MASTER/tools/replicate/replicate.rb"),
         repo_join("STUDIO/replicate/replicate.rb"),
+        repo_join("MASTER/tools/replicate/replicate.rb"),
         Pathname.new("#{DEFAULT_REPO}/MASTER/tools/replicate/replicate.rb"),
         rails_root.join("../../MASTER/tools/replicate/replicate.rb"),
       ]
@@ -42,8 +42,8 @@ module Operator
 
     def dilla_candidates
       [
-        repo_join("MASTER/tools/dilla/dilla.rb"),
         repo_join("STUDIO/dilla/dilla.rb"),
+        repo_join("MASTER/tools/dilla/dilla.rb"),
         Pathname.new("#{DEFAULT_REPO}/MASTER/tools/dilla/dilla.rb"),
         rails_root.join("../../MASTER/tools/dilla/dilla.rb"),
       ]

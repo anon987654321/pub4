@@ -1,21 +1,21 @@
 # MASTER tools
 
-**A claim about an image or a sound is worth nothing until something measures
-it.** The four media tools in this plane are `dilla/`, `postpro/`,
-`replicate/` and `lora/`. Historical business-plan material lives in
-recovery provenance rather than an active tool; the measured source had no
-generator to restore. Each tool keeps its own contract in its own README, and
-the reasons behind a setting sit in a comment beside it.
+`MASTER/tools/` is the stable compatibility and utility plane inside MASTER.
 
-**A claim about an image or a sound is worth nothing until something measures
-it.** Four media tools share that conviction. `dilla/` builds beats, Detroit in
-its lean and genre-agnostic in intent. `postpro/` is the house grade, analog
-photographic emulation for stills. `replicate/` generates images, and
-chains radically different models to do it. `lora/` trains person-specific
-fine-tunes, so a name survives across worlds. Historical business-plan material
-lives in recovery provenance rather than an active MASTER tool; the measured
-source had no generator to restore. Each tool keeps its own contract in its own
-README, and the reasons behind a setting sit in a comment beside it.
+The four media implementations live canonically in `STUDIO/`:
+
+- `dilla/dilla.rb` — music generation and playback
+- `lora/lora.rb` — LoRA training workflows
+- `postpro/postpro.rb` — image grading and processing
+- `replicate/replicate.rb` — provider-backed image generation
+
+The corresponding `MASTER/tools/{dilla,lora,postpro,replicate}` paths are compatibility
+symlinks to STUDIO. Keep them working for existing callers, but do not add a second
+physical implementation under MASTER/tools.
+
+Other files in this directory are MASTER-owned operators, scanners, audits and
+maintenance tools. Their source of truth remains here unless a tool is explicitly
+moved to a governed subtree.
 
 ## Read this part first
 

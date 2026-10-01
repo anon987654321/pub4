@@ -30,6 +30,26 @@ class LifecycleToolsSpec < Minitest::Test
                  "repo_inventory's ALLOWED_ROOT_DIRS and the repo root have drifted"
   end
 
+  def test_media_tool_compatibility_links_point_at_studio
+    %w[dilla lora postpro replicate].each do |tool|
+      link = File.join(ROOT, "tools", tool)
+      target = "../../STUDIO/#{tool}"
+
+      assert File.symlink?(link), "MASTER/tools/#{tool} must remain a compatibility symlink"
+      assert_equal target, File.readlink(link), "MASTER/tools/#{tool} target drifted"
+
+      entry = File.join(ROOT, "..", "STUDIO", tool, "#{tool}.rb")
+      assert File.file?(entry), "missing canonical STUDIO/#{tool}/#{tool}.rb"
+    end
+  end
+
+  def test_media_tools_have_one_physical_home
+    %w[dilla lora postpro replicate].each do |tool|
+      path = File.join(ROOT, "tools", tool)
+      assert File.symlink?(path), "MASTER/tools/#{tool} must not become a second physical tool tree"
+    end
+  end
+
   private
 
   # The tool is a script with top-level constants and a `$PROGRAM_NAME` guard, so
