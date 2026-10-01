@@ -90,6 +90,27 @@ class TestCouncilDeliberation < Minitest::Test
     old.nil? ? ENV.delete("MASTER_COUNCIL_LOCAL") : ENV["MASTER_COUNCIL_LOCAL"] = old
   end
 
+  def test_local_only_ignores_a_persona_cloud_model
+    old = ENV["MASTER_LOCAL_ONLY"]
+    ENV["MASTER_LOCAL_ONLY"] = "1"
+    asked = []
+
+    persona = Persona.new(name: "Architect", role: "r", bias: "b", prompt: "p")
+    persona.define_singleton_method(:model) { "anthropic/claude-sonnet-4" }
+
+    agent = Object.new
+    agent.define_singleton_method(:ask) { |_prompt, **_kwargs| asked << :local; "looks good" }
+    agent.define_singleton_method(:ask_once) { |_prompt, **_kwargs| raise "cloud persona model was used" }
+
+    delib = Master::Review::Council::Deliberation.new(personas: [persona], agent:, judge_enabled: false)
+    entry = delib.send(:ask_persona, persona:, code: "x = 1", context: nil)
+
+    assert_equal [:local], asked
+    assert_nil entry[:model]
+  ensure
+    old.nil? ? ENV.delete("MASTER_LOCAL_ONLY") : ENV["MASTER_LOCAL_ONLY"] = old
+  end
+
   def test_quorum_error_carries_the_failure_tally
     failing = BrokeAgent.new
     personas = Array.new(4) { |i| Persona.new(name: "P#{i}", role: "r", bias: "b", prompt: "p") }
