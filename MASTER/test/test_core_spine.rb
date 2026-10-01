@@ -191,7 +191,7 @@ class TestKernelSpine < Minitest::Test
     assert_equal :scope_creep, verdict.by
   end
 
-  # The repo root holds three governed trees. A bin/ or dotfiles/ segment sits inside one
+  # The repo root holds four governed trees. A bin/ or dotfiles/ segment sits inside one
   # of them, so a MASTER-relative bin/ write is not a fourth tree.
   def test_a_bin_segment_is_not_a_tree
     memory = Master::Core::Memory.new
@@ -206,7 +206,7 @@ class TestKernelSpine < Minitest::Test
     memory = Master::Core::Memory.new
     memory.record(Master::Core::Effect.write("MASTER/a.rb", "x\n" * 201), Master::Core::Observation.ok("ok"))
     # A command that can actually produce each kind. ["true"] used to stand in for
-    # all three, which PRODUCERS now scores at zero — the fixture would reach
+    # all four, which PRODUCERS now scores at zero — the fixture would reach
     # git_commit_evidence instead of the rule it is about.
     { test_pass: %w[bundle exec rake test], scan_clean: %w[bin/check],
       code_review: %w[bin/review] }.each do |kind, argv|
