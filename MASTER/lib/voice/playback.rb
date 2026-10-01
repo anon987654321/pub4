@@ -290,7 +290,11 @@ module Master
       def native_say(text)
         return false unless native_say_available?
 
-        system("say", text.to_s, out: File::NULL, err: File::NULL)
+        voice = Speech.voice_for_text(text).to_sym
+        mac_voice = Engines::MACOS_VOICE_FALLBACKS[voice]
+        return false unless mac_voice
+
+        system("say", "-v", mac_voice, text.to_s, out: File::NULL, err: File::NULL)
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "Voice::Playback.native_say")
         false
@@ -309,8 +313,8 @@ module Master
 
         pid = Process.spawn(name, *args, path, out: File::NULL, err: File::NULL)
         @lock.synchronize { @playing_pid = pid if generation_active?(generation) }
-        Process.wait(pid)
-        true
+        status = Process.wait(pid)
+        status.success?
       rescue Errno::ESRCH, Errno::ECHILD
         false
       rescue StandardError => e
