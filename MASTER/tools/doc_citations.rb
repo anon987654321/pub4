@@ -159,11 +159,12 @@ if $PROGRAM_NAME == __FILE__
   if ARGV.include?("--json")
     puts JSON.pretty_generate(report)
   else
-    report["findings"].each { |row| puts "#{row['doc']}#{row['line'] ? ":#{row['line']}" : ''}: #{row['message']}" }
-    puts
-    puts "#{report['docs']} documents, #{report['quotations']} quotation(s) and " \
-         "#{report['citations']} citation(s) checked against data/"
-    puts "doc_citations: #{report['findings'].empty? ? 'clean' : "#{report['findings'].size} drifted"}"
+    Master::Trace::Dmesg.attach("doccite0", "master0", "#{report["docs"]} documents, #{report["quotations"]} quotations, #{report["citations"]} citations")
+    report["findings"].each do |row|
+      location = "#{row["doc"]}#{row["line"] ? ":#{row["line"]}" : ""}"
+      Master::Trace::Dmesg.status("doccite0", "#{location}, #{row["message"]}", io: $stderr)
+    end
+    Master::Trace::Dmesg.status("doccite0", report["findings"].empty? ? "clean" : "#{report["findings"].size} drifted")
   end
 
   exit(report["findings"].empty? ? 0 : 1)
