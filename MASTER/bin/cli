@@ -19,28 +19,30 @@ Dir.chdir(File.expand_path("..", __dir__))
 require "ground/env_loader"
 Master::Ground::EnvLoader.load!
 
+require "optparse"
+require "master"
+
 if !$stdin.tty? && ENV["MASTER_FAST"] == "1"
   $stdin.each_line do |line|
-    case line.strip
-    when "/status"
-      puts ["status", "mode    fast pipe", "service master/not-booted fast", "pipeline fast"].join("\n")
-    when "/help", "/?"
-      puts "help: /status /help commands available in fast pipe mode"
-    else
-      puts "fast mode: /status /help only"
-    end
+    command = line.strip
+    body = case command
+           when "/status"
+             ["status", "fast pipe", "service master/not-booted", "pipeline fast"].join("\n")
+           when "/help", "/?"
+             "/status /help available in fast pipe mode"
+           else
+             "/status /help only in fast pipe mode"
+           end
+    Master::Trace::Dmesg::Report.print(command.empty? ? "/help" : command, body)
   end
   exit!(0)
 end
-
-require "optparse"
-require "master"
 
 def initial_message_from_argv(argv)
   options = parse_initial_message_options(argv)
   (options[:message] || argv.join(" ")).to_s.strip
 rescue OptionParser::ParseError => e
-  $stderr.puts "cli: #{e.message}"
+  Master::Trace::Dmesg.status("cli0", "option error, #{e.message}", io: $stderr)
   argv.reject { |arg| arg.start_with?("--") }.join(" ").strip
 end
 
@@ -109,7 +111,7 @@ def acquire_master_process_lock
       io.close_on_exec = true
       return io
     rescue ArgumentError, Errno::EBADF => e
-      warn "master0: inherited process lock is invalid, #{e.message}"
+      Master::Trace::Dmesg.status("master0", "inherited process lock invalid, #{e.message}", io: $stderr)
       exit 75
     end
   end
@@ -122,7 +124,7 @@ def acquire_master_process_lock
 
   owner = Master::Ops::ProcessLock.owner
   detail = owner.empty? ? "" : " pid=#{owner["pid"]} host=#{owner["host"]} mode=#{owner["mode"]}"
-  warn "master0: another MASTER process owns the control plane#{detail}"
+  Master::Trace::Dmesg.status("master0", "another process owns the control plane#{detail}", io: $stderr)
   exit 75
 end
 
@@ -134,25 +136,25 @@ control_plane = nil
 def save_cli_session_safely(cli)
   cli&.container&.dig(:session)&.save!
 rescue StandardError => e
-  warn "cli0: session save failed, #{e.class}: #{e.message}"
+  Master::Trace::Dmesg.status("cli0", "session save failed, #{e.class}: #{e.message}", io: $stderr)
 end
 
 def stop_cli_background_loop_safely(cli)
   cli&.send(:stop_background_loop)
 rescue StandardError => e
-  warn "cli0: background stop failed, #{e.class}: #{e.message}"
+  Master::Trace::Dmesg.status("cli0", "background stop failed, #{e.class}: #{e.message}", io: $stderr)
 end
 
 def stop_control_plane_safely(control_plane)
   control_plane&.stop!
 rescue StandardError => e
-  warn "control0: stop failed, #{e.class}: #{e.message}"
+  Master::Trace::Dmesg.status("control0", "stop failed, #{e.class}: #{e.message}", io: $stderr)
 end
 
-trap("INT") { $stderr.puts "\nexiting"; exit!(130) }
+trap("INT") { Master::Trace::Dmesg.status("cli0", "interrupt, exiting", io: $stderr); exit!(130) }
 trap("TERM") { exit!(143) }
 trap("TSTP") do
-  $stderr.puts "\ncli0: suspended — fg then /exit; Ctrl-Z leaves ~200MB ruby on 1GB hosts"
+  Master::Trace::Dmesg.status("cli0", "suspended, fg then /exit; Ctrl-Z leaves ~200MB ruby on 1GB hosts", io: $stderr)
   trap("TSTP", "DEFAULT")
   Process.kill("STOP", Process.pid)
 end
