@@ -42,9 +42,14 @@ module Master
           puts unless text.end_with?("\n")
         elsif command
           # Pipeline commands already streamed their live dmesg units. Other
-          # commands get their final returned text attached to their command unit.
+          # commands get their human-readable result attached to their command
+          # unit. Explicit JSON payloads remain payloads, not terminal prose.
           unless %w[fix review critique].include?(command)
-            Master::Trace::Dmesg::Report.print(command, text)
+            if structured_payload?(text)
+              puts text
+            else
+              Master::Trace::Dmesg::Report.print(command, text)
+            end
           end
         else
           print "\r\e[K" if $stdout.isatty
@@ -64,6 +69,11 @@ module Master
         return unless word.start_with?("/") || input.to_s.strip.match?(/\A(?:fix|review|critique)\b/i)
 
         word.delete_prefix("/").downcase
+      end
+
+      def structured_payload?(text)
+        stripped = text.to_s.lstrip
+        stripped.start_with?("{", "[") && stripped.match?(/[}\]]\s*\z/)
       end
 
       # A pass report is a log, and reading a log aloud from the top takes
