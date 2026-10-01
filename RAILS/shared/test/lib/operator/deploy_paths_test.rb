@@ -66,6 +66,15 @@ class DeployPathsTest < Minitest::Test
     end
   end
 
+  def test_master_tools_media_compatibility_links_are_preserved
+    %w[dilla postpro replicate].each do |tool|
+      legacy = File.join(repo_root, "MASTER/tools", tool, "#{tool}.rb")
+      canonical = File.join(repo_root, "STUDIO", tool, "#{tool}.rb")
+      assert File.file?(legacy), "#{legacy} must remain available"
+      assert_equal File.realpath(canonical), File.realpath(legacy)
+    end
+  end
+
   # repo_root used to be deploy_root/.., and deploy_root is already rails_root/..,
   # so the derived value sat one level above the checkout.
   def test_repo_root_is_the_checkout_not_its_parent
