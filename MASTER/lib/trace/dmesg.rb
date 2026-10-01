@@ -142,9 +142,12 @@ module Master
         def print(command, text, parent: "master0", io: $stdout)
           rendered = render(unit: command_unit(command), parent:, text:)
           rendered.lines.each do |line|
-            next if line.chomp.empty?
-
-            Dmesg.emit(line.chomp, io:, force: true)
+            line = line.chomp
+            if line.empty?
+              io.puts if enabled?
+            else
+              Dmesg.emit(line, io:, force: true)
+            end
           end
           io.flush if io.respond_to?(:flush)
           rendered
