@@ -43,8 +43,8 @@ def step(name)
     end
   ms = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - t0) * 1000).round
   state = ok ? "ok" : "failed"
-  detail_text = detail ? " detail=#{detail}" : ""
-  Master::Trace::Dmesg.status("web0", "smoke=#{name} state=#{state} ms=#{ms}#{detail_text}")
+  detail_text = detail ? ", #{detail}" : ""
+  Master::Trace::Dmesg.status("web0", "#{name}, #{state}, #{ms}ms#{detail_text}")
   Check.new(name:, ok:, detail:, ms:)
 end
 
@@ -62,7 +62,7 @@ def config_token
   candidate = cfg.is_a?(Hash) ? cfg["web_token"].to_s : ""
   candidate.length >= 43 ? candidate : ""
 rescue Psych::Exception, SystemCallError => e
-  Master::Trace::Dmesg.status("web0", "smoke=config state=unreadable detail=#{e.class}: #{e.message}")
+  Master::Trace::Dmesg.status("web0", "config, unreadable, #{e.class}: #{e.message}")
   ""
 end
 
