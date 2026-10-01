@@ -160,6 +160,18 @@ module Master
         },
       }.freeze
 
+      def command_surface
+        slash_commands.filter_map do |slash|
+          key = slash.delete_prefix("/")
+          next { cmd: slash, hint: "exit the session" } if %w[exit quit].include?(key)
+
+          topic = HELP_TOPICS[key]
+          next unless topic
+
+          { cmd: slash, hint: topic[:summary] }
+        end
+      end
+
       def help_text(command = nil)
         key = command.to_s.strip.sub(/\A\//, "")
         return help_summary if key.empty?
