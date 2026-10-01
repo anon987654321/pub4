@@ -213,21 +213,26 @@ class TestFixConvergence < Minitest::Test
     deliberation = Object.new
     bus = Object.new
 
-    Master::CLI::CouncilCrit.stub(
-      :run,
-      lambda do |root:, deliberation:, bus:|
-        captured = { root:, deliberation:, bus: }
-        Master::Result.ok("critique: ok")
-      end,
+    Master::CLI::CommandRegistry.stub(
+      :dispatch_critique,
+      ->(**) { raise "critique stage recursively re-entered dispatch_critique" },
     ) do
-      pass = Master::CLI::Pipeline::Pass.new(
+      Master::CLI::CouncilCrit.stub(
+        :run,
+        lambda do |root:, deliberation:, bus:|
+          captured = { root:, deliberation:, bus: }
+          Master::Result.ok("critique: ok")
+        end,
+      ) do
+        pass = Master::CLI::Pipeline::Pass.new(
         scanner:,
         fix_loop:,
         root: Master::ROOT,
         deliberation:,
         bus:,
       )
-      assert_equal "critique: ok", pass.send(:deliberation_critique, Master::ROOT)
+        assert_equal "critique: ok", pass.send(:deliberation_critique, Master::ROOT)
+      end
     end
 
     assert_equal Master::ROOT, captured[:root]
