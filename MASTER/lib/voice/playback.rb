@@ -308,20 +308,32 @@ module Master
           return Device::Audio.play(path)
         end
 
-        name, args = player
-        return false unless name && args
+        player_candidates(path).each do |name, args|
+          break unless generation_active?(generation)
 
-        pid = Process.spawn(name, *args, path, out: File::NULL, err: File::NULL)
-        @lock.synchronize { @playing_pid = pid if generation_active?(generation) }
-        status = Process.wait(pid)
-        status.success?
-      rescue Errno::ESRCH, Errno::ECHILD
+          pid = Process.spawn(name, *args, path, out: File::NULL, err: File::NULL)
+          @lock.synchronize { @playing_pid = pid if generation_active?(generation) }
+          begin
+            return true if Process.wait(pid).success?
+          rescue Errno::ESRCH, Errno::ECHILD
+            next
+          ensure
+            @lock.synchronize { @playing_pid = nil if @playing_pid == pid }
+          end
+        end
         false
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "Voice::Playback.play")
         false
-      ensure
-        @lock.synchronize { @playing_pid = nil if @playing_pid == pid }
+      end
+
+      def player_candidates(_path)
+        preferred = player
+        fallback = PLAYERS.keys.filter_map do |candidate|
+          path = which(candidate)
+          [path, PLAYERS.fetch(candidate)] if path
+        end
+        [preferred, *fallback].compact.uniq
       end
 
       def current_generation
