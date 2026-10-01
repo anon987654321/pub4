@@ -128,11 +128,9 @@ if $PROGRAM_NAME == __FILE__
   if ARGV.include?("--json")
     puts JSON.pretty_generate(report)
   else
-    report["findings"].each { |row| puts "Do Not Touch #{row['entry']}: #{row['message']}" }
-    puts
-    puts "#{report['entries']} entries — #{report['gated']} name a gate, " \
-         "#{report['ungated']} state why they cannot have one"
-    puts "do_not_touch: #{report['findings'].empty? ? 'clean' : "#{report['findings'].size} finding(s)"}"
+    Master::Trace::Dmesg.attach("touch0", "master0", "#{report["entries"]} entries, #{report["gated"]} gated, #{report["ungated"]} without a gate")
+    report["findings"].each { |row| Master::Trace::Dmesg.status("touch0", "entry #{row["entry"]}, #{row["message"]}", io: $stderr) }
+    Master::Trace::Dmesg.status("touch0", report["findings"].empty? ? "clean" : "#{report["findings"].size} finding(s)")
   end
 
   exit(report["findings"].empty? ? 0 : 1)
