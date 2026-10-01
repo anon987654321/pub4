@@ -73,7 +73,7 @@ end
 
 # An rc.d script that runs as an app user takes the rails login class.
 #
-# rc.subr(8) and rc.d(8) on vm23 (OpenBSD 7.8): daemon_class is read-only and
+# rc.subr(8) and rc.d(8) on the OpenBSD target: daemon_class is read-only and
 # set by rc.subr itself — the login.conf(5) class named after the script, or
 # "daemon" when there is none. rc.d/brgen gets `brgen`, which inherits `rails`.
 # Without a `brgen_jobs` class, rc.d/brgen_jobs runs its worker under `daemon`,
