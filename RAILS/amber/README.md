@@ -73,6 +73,19 @@ map. `ARCHITECTURE.md` has the components and layers, the comments on the models
 the shapes that look like bugs and are not, and `RAILS/shared/README.md` the shared
 tokens and concerns. The feature matrix is `RAILS/apps.yml` under `amber`.
 
+### Demo media
+
+The guest demo wardrobe uses a small, tracked set of rendered garment images so a
+fresh deploy is complete without a network fetch. `config/demo_media/default.yml`
+maps seed keys to files in the adjacent `images/` directory; missing files warn
+and skip the affected seed rather than blocking the whole seed run.
+
+The images are deterministic source/provenance records from the canonical
+`STUDIO/lora/seed_media.yml` and manifest, rendered and graded before they enter
+the app. No real person is represented. These final 1280px copies are intentionally
+tracked because recreating them costs provider time and money; full renders and
+temporary source material stay outside git.
+
 ## Architecture
 
 Amber is a wardrobe intelligence graph. Layers 1–4 are restored verbatim from

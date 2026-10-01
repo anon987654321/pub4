@@ -52,6 +52,18 @@ at a different tree than the one the code was loaded from.
 
 #
 
+### Demo media
+
+The guest/demo seed set uses a small tracked image catalogue so a fresh deploy can
+look complete without fetching remote media. `config/demo_media/bergen.yml` maps
+seed keys to files in `config/demo_media/images/`; missing files warn and skip the
+affected seed.
+
+The images come from the canonical `STUDIO/lora/seed_media.yml` and its manifest,
+then are filed here at the app's 1280px working size. They are general-model,
+adult subjects with no likeness target. The tracked copies are deliberate
+provenance artifacts; full renders and ungraded source material stay outside git.
+
 ## Commerce distribution
 
 The marketplace exposes a Google Merchant Center product feed at

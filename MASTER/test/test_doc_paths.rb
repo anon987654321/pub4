@@ -88,6 +88,12 @@ class TestDocPaths < Minitest::Test
                  "non-README Markdown needs a documented exception: #{extras.join(", ")}"
   end
 
+  def test_readmes_stay_at_app_or_concept_boundaries
+    forbidden = tracked.grep(%r{/(?:config/demo_media|lora/ideas)/README\.md\z})
+    assert_empty forbidden,
+                 "README.md belongs at an app or named concept boundary, not inside demo/artifact folders: #{forbidden.join(", ")}"
+  end
+
   def test_every_harness_file_points_at_the_law
     missing = HARNESS_FILES.reject { |relative| File.file?(File.join(REPO, relative)) }
 
