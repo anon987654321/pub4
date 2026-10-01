@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "open3"
+require_relative "../trace/dmesg"
 
 module Master
   module Ground
@@ -97,7 +98,7 @@ module Master
         return 0 if pids.empty?
 
         pids.each { |pid| Process.kill("KILL", pid) rescue Errno::ESRCH }
-        io.puts "host0: reaped #{pids.size} suspended ruby (#{pids.join(", ")})"
+        Master::Trace::Dmesg.status("host0", "reaped #{pids.size} suspended ruby (#{pids.join(", ")})", io:)
         pids.size
       end
 
@@ -108,7 +109,7 @@ module Master
         if constrained?
           reap_suspended_ruby!(io:)
         else
-          io.puts "cli: suspended ruby PIDs #{pids.join(", ")} — Ctrl-Z leaks memory; kill or /reap"
+          Master::Trace::Dmesg.status("host0", "suspended ruby PIDs #{pids.join(", ")}, Ctrl-Z leaves memory; kill or /reap", io:)
         end
       end
 
