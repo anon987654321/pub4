@@ -37,6 +37,7 @@ module Master
       LIVE_SYNTH_PLAY_RE = /\b(?:play|morph\w*|fade|switch|jam)\b.*\b(?:(?:mini)?moog|model\s*d|prophet|rhodes|juno|synth\w*|pads?|lead|bass(?:line)?|brass|strings|flute|pluck|lo-?fi|chords?|progressions?|something)\b/i.freeze
       LIVE_SYNTH_KNOB_RE = /\b(?:open|close|sweep|raise|lower|turn)\b.*\b(?:filter|cutoff|resonance|emphasis|detune|contour)\b/i.freeze
       LIVE_MUSIC_RE = /\b(?:play|start|resume|put on|queue)\b.*\b(?:liveset|default\s+music)\b/i.freeze
+      BACKGROUND_MUSIC_RE = /\b(?:play|start|resume|put on|queue)\b.*\b(?:your|some|the|my)?\s*music\b.*\bbackground\b/i.freeze
       LIVE_SYNTH_ALONE_RE = /\A\s*(?:stop|silence|enough)\b|\bstop\s+(?:the\s+)?(?:music|playing|synth\w*|improvi\w*|jam)\b|\b(?:improvi[sz]e|keep\s+playing)\b|\A\s*(?:please\s+)?play(?:\s+(?:some\s+)?music)?\s*[.!]?\s*\z/i.freeze
       POSTPRO_COMMAND_RE = /\b(?:run|use|call|invoke)\s+postpro(?:\.rb)?\b/i.freeze
       POSTPRO_RE = /\b(?:post-?process|colour\s+grade|color\s+grade|film\s+look|vhs(?:\s+tape)?\s+look|crt(?:\s+broadcast)?\s+look|camcorder(?:\s+glitch)?\s+look|make\s+this\s+(?:cinematic|analog|analogue))\b/i.freeze
@@ -47,7 +48,7 @@ module Master
 
       def handles?(text)
         text.match?(KICK_RE) || text.match?(PLAY_LAST_RE) || text.match?(SYNTH_RE) || live_synth?(text) ||
-          text.match?(AUDIO_RE) || postpro_intent?(text) ||
+          text.match?(BACKGROUND_MUSIC_RE) || text.match?(AUDIO_RE) || postpro_intent?(text) ||
           text.match?(IMAGE_RE) && text.match?(/\b(?:photo|portrait|image|picture)\b/i)
       end
 
@@ -56,6 +57,7 @@ module Master
         return play_last(text, root:) if text.match?(PLAY_LAST_RE)
         return generate_tone(text, root:) if text.match?(SYNTH_RE)
         return live_synth(text, root:) if live_synth?(text)
+        return play_background_music(root:) if text.match?(BACKGROUND_MUSIC_RE)
         return postprocess(text, root:) if postpro_intent?(text)
         return generate_beat(text, root:) if text.match?(AUDIO_RE)
 
@@ -225,6 +227,13 @@ module Master
       # dilla answers at once: a sentence that starts music leaves a player of
       # its own running and returns, one that steers or stops it sends the
       # word to that player.
+      def play_background_music(root: MasterPaths.root)
+        result = ScriptDispatch.run(root:, tool: "dilla", arg: "live default")
+        return result unless result.ok?
+
+        Result.ok({ output: result.value!, rendered: result.value!, media: :dilla_background })
+      end
+
       def live_synth(text, root: MasterPaths.root)
         result = ScriptDispatch.run(root:, tool: "dilla", arg: "live say #{Shellwords.escape(text)}")
         result.ok? ? Result.ok({ output: result.value!, rendered: result.value!, media: :dilla_live }) : result
