@@ -21,7 +21,14 @@ module Master
       # prediction/training/model-catalog API.
       module AssetTransfer
         def upload_file(path)
-          mime = path.end_with?(".png") ? "image/png" : "image/jpeg"
+          mime = case File.extname(path).downcase
+                 when ".jpg", ".jpeg" then "image/jpeg"
+                 when ".png" then "image/png"
+                 when ".webp" then "image/webp"
+                 when ".gif" then "image/gif"
+                 else
+                   raise ArgumentError, "unsupported image type #{File.extname(path)}"
+                 end
           upload_binary(path, mime:)
         end
 
