@@ -89,6 +89,7 @@ module Master
         # council.yml sizes (local_panel), and vm23 hears everyone.
         # MASTER_COUNCIL_LOCAL overrides in either direction.
         def self.local_posture?
+          return true if ENV["MASTER_LOCAL_ONLY"] == "1"
           ENV.fetch("MASTER_COUNCIL_LOCAL") { RUBY_PLATFORM.include?("darwin") ? "1" : "0" } == "1"
         end
 
@@ -358,6 +359,11 @@ module Master
         end
 
         def candidate_models_for(persona)
+          if ENV["MASTER_LOCAL_ONLY"] == "1"
+            router = @agent.respond_to?(:model_router) ? @agent.model_router : nil
+            return Array(router.local_models) + Array(router.local_server_models) if router
+          end
+
           override = persona&.respond_to?(:model) ? persona.model : nil
           return [override] if override
           return Array(@agent.candidate_models) if @agent.respond_to?(:candidate_models)
