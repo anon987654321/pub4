@@ -53,17 +53,18 @@ module Master
         pid = data["pid"].to_i
         return false if pid.positive? && process_alive?(pid)
 
-        holders = lock_holders(path)
-        return false unless holders
-        return false unless holders.empty?
-
-        File.delete(path)
-        true
+        probe = File.open(path, File::RDWR | File::CREAT, 0o600)
+        probe.flock(File::LOCK_EX | File::LOCK_NB) == true
       rescue Errno::ENOENT
         true
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "ProcessLock.reclaimable?")
         false
+      ensure
+        if probe
+          probe.flock(File::LOCK_UN) rescue nil
+          probe.close rescue nil
+        end
       end
 
       def process_alive?(pid)
