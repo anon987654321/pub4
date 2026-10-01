@@ -240,7 +240,7 @@ module Master
         ref = File.expand_path(ref) unless ref.empty?
         device = cfg["chatterbox_device"] || "mps"
         exag = emotion.fetch(:exaggeration) { cfg["exaggeration"] || 0.55 }
-        cfg_weight = cfg.fetch("cfg_weight", 0.42)
+        cfg_weight = emotion.fetch(:cfg_weight) { cfg.fetch("cfg_weight", 0.42) }
 
         py = chatterbox_py_script(enriched, device, ref, wav, exaggeration: exag, cfg_weight:)
         _out, _err, status = Master::Io::Exec.capture3("python3", "-c", py)
