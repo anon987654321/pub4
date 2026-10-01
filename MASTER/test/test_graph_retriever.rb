@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "fileutils"
+require "tmpdir"
 require_relative "test_helper"
 
 # GraphRAG retrieval: multi-hop dependency neighbours ranked by proximity (decay per hop).
@@ -24,6 +26,20 @@ class TestGraphRetriever < Minitest::Test
 
     result = retriever.neighbors(["#{root}/a.rb"], hops: 2)
     assert_equal %w[b.rb c.rb], result.first(2)
+  end
+
+  def test_ignores_pseudo_nodes_from_reference_graph
+    root = Dir.mktmpdir("graph-retriever")
+    FileUtils.mkdir_p(File.join(root, "RAILS"))
+    File.write(File.join(root, "RAILS", "a.rb"), "")
+    File.write(File.join(root, "RAILS", "b.rb"), "")
+
+    graph = FakeGraph.new(root, "RAILS/a.rb" => ["RAILS/b.rb", "const:Shared::Thing", "event:fix_loop:clean"])
+    retriever = Master::Review::GraphRetriever.new(reference_graph: graph, root:)
+
+    assert_equal ["RAILS/b.rb"], retriever.neighbors([File.join(root, "RAILS", "a.rb")])
+  ensure
+    FileUtils.rm_rf(root) if root
   end
 
   def test_excludes_seeds_and_caps_limit
