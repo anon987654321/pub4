@@ -51,13 +51,14 @@ module Master
       MEDIA_PLAYER_COMMAND = %r{(?:/|\\)(?:STUDIO/dilla|MASTER/tools/dilla)/(?:liveset|royksopp)\.rb(?:\s|$)}.freeze
 
       def reclaimable?(path)
-        data = read_metadata(path)
-        pid = data["pid"].to_i
-        return false if pid.positive? && process_alive?(pid)
+        read_metadata(path)
 
         probe = File.open(path, File::RDWR | File::CREAT, 0o600)
         return true if probe.flock(File::LOCK_EX | File::LOCK_NB) == true
 
+        # The metadata PID may still be alive when it is a legacy Dilla player.
+        # Inspect the real flock holders before declaring the control plane busy;
+        # current media children close the lock, but old players must be reaped.
         reclaim_detached_media_holders(path)
       rescue Errno::ENOENT
         true
