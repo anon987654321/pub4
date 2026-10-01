@@ -7,6 +7,7 @@ Master::Boot::Entrypoint.prepare!(root: File.expand_path("..", __dir__))
 require "open3"
 require "socket"
 require "yaml"
+require_relative "../lib/trace/dmesg"
 
 ROOT = File.expand_path("..", __dir__)
 REPO = File.expand_path("..", ROOT)
@@ -186,10 +187,10 @@ if ARGV.include?("--fix")
   require "fix/principle_map_repair"
   fixed = Master::Fix::PrincipleMapRepair.fix!(root: ROOT)
   if fixed.any?
-    puts "doctor --fix: removed #{fixed.size} dangling rule_id reference(s) from data/principle_map.yml (backup: .bak)"
-    fixed.each { |id, rid| puts "  #{id}: removed #{rid}" }
+    Master::Trace::Dmesg.status("doctor0", "removed #{fixed.size} dangling rule reference(s) from data/principle_map.yml, backup .bak")
+    fixed.each { |id, rid| Master::Trace::Dmesg.status("doctor0", "#{id}, removed #{rid}") }
   else
-    puts "doctor --fix: principle_map.yml rule_ids clean, nothing to repair"
+    Master::Trace::Dmesg.status("doctor0", "principle_map.yml rule ids clean, nothing to repair")
   end
 end
 
@@ -210,9 +211,10 @@ checks = [
   check_provider_catalog,
 ]
 
-puts "MASTER doctor"
+Master::Trace::Dmesg.attach("doctor0", "master0", "MASTER doctor, #{checks.size} checks")
 checks.each do |check|
-  puts "#{check.label} #{check.name}: #{check.detail}"
+  Master::Trace::Dmesg.attach("doctor#{checks.index(check) || 0}", "doctor0", "#{check.name}, #{check.label.downcase}")
+  Master::Trace::Dmesg.status("doctor#{checks.index(check) || 0}", check.detail)
 end
 
 # The receipt, under the probes rather than instead of them. doctor answers
@@ -221,23 +223,18 @@ end
 begin
   require "master"
   require "review/scan/rule_dsl"
-  puts
-  puts Master::Ground::BootReceipt.lines
-  # The receipt says what booted; the scorecard says what has been proven, and
-  # when. Beside each other because a capability the receipt reports present
-  # and the scorecard has not seen exercised in a month is two different facts.
-  puts Master::Ground::MaturityScorecard.load.summary_line
+  Master::Trace::Dmesg::Report.print("receipt0", Master::Ground::BootReceipt.lines, parent: "doctor0")
+  Master::Trace::Dmesg.status("doctor0", Master::Ground::MaturityScorecard.load.summary_line)
 rescue StandardError => e
-  puts "receipt: unavailable — #{e.class}: #{e.message.lines.first.to_s.strip}"
+  Master::Trace::Dmesg.status("receipt0", "unavailable, #{e.class}: #{e.message.lines.first.to_s.strip}")
 end
 
 # Named, not skipped. A host with three unmeasured checks is not the same host
 # as one with none, and the exit code cannot say so — so the line does.
 unmeasured_checks = checks.select(&:unmeasured?)
 if unmeasured_checks.any?
-  puts
-  puts "#{unmeasured_checks.size} check(s) measured nothing, and why:"
-  unmeasured_checks.each { |check| puts "  #{check.name}: #{check.detail}" }
+  Master::Trace::Dmesg.attach("doctor0", "master0", "#{unmeasured_checks.size} checks measured nothing")
+  unmeasured_checks.each { |check| Master::Trace::Dmesg.status("doctor0", "#{check.name}, #{check.detail}") }
 end
 
 failed = checks.reject(&:ok)
