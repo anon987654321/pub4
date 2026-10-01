@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "../lib/trace/dmesg"
+
 module Operator
   # Ratchet for free-form empty copy that never uses shared/empty_state.
   # Catches "No X yet" / "Nothing here" paragraphs without a following CTA link
