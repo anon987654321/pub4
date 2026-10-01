@@ -4800,23 +4800,25 @@ def run_random(subject = nil)
   # sidecar, so POSTPRO_SEED=<that> renders the same three pictures again.
   $postpro_seed = Random.new_seed % 2_147_483_647 unless ENV.key?("POSTPRO_SEED")
   rng = Random.new(postpro_seed)
-  count = (argv_flag("--count") || argv_flag("-n"))&.to_i || rng.rand(RANDOM_OUTPUTS)
-  PostproBootstrap.dmesg "random subject=#{subject || dir} pool=#{files.count} outputs=#{count} seed=#{$postpro_seed}"
+  override = (argv_flag("--count") || argv_flag("-n"))&.to_i
+  PostproBootstrap.dmesg "random subject=#{subject || dir} pool=#{files.count} variations=#{override || "#{RANDOM_VARIATIONS.first}-#{RANDOM_VARIATIONS.last}"} seed=#{$postpro_seed}"
 
-  # Every chain is drawn against the ones already made this run, and so is every
-  # source: five near-identical pictures of one face is the other way to waste
-  # somebody's afternoon.
-  drawn = []
-  used = []
-  count.clamp(1, 24).times do |index|
-    file = (files - used).sample(random: rng) || files.sample(random: rng)
-    used << file
-    chain = random_chain(rng, avoid: drawn)
-    drawn << chain
-    $cli_logger.info "#{index + 1}/#{count}: #{File.basename(file)} — #{random_chain_name(chain)}"
-    process_file(file, 1, nil, chain)
+  # Generate a curated family for each source. The default deliberately makes
+  # five to ten materially different attempts per image; --count remains an
+  # explicit escape hatch for small probes and operator-directed runs.
+  files.each_with_index do |file, file_index|
+    count = (override || rng.rand(RANDOM_VARIATIONS)).clamp(1, 24)
+    Postpro::Constitution.verify_batch!(variation_count: count, explicit_count: !override.nil?)
+    drawn = []
+    count.times do |index|
+      chain = random_chain(rng, avoid: drawn)
+      Postpro::Constitution.verify_chain!(chain: chain, stage_rank: random_stage_rank)
+      drawn << chain
+      $cli_logger.info "#{file_index + 1}/#{files.count} #{index + 1}/#{count}: #{File.basename(file)} — #{random_chain_name(chain)}"
+      process_file(file, 1, nil, chain)
+    end
   rescue StandardError => e
-    $logger.error "random #{index + 1}: #{e.message}"
+    $logger.error "random #{File.basename(file)}: #{e.message}"
   end
 end
 
