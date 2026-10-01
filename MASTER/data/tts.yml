@@ -25,6 +25,10 @@ transcendent:
   # route. Native-language routes are filtered in Engines.build_engine_chain.
   engine_chain: mlx, chatterbox, edge_melodic, edge, say
   emotion_enabled: true
+  # Chatterbox/MLX already receive the measured emotional controls. Random
+  # [laugh]/[chuckle]/[sigh] insertion is an effect, not an emotion measurement,
+  # so it stays off unless the operator explicitly enables it.
+  paralinguistic_tags: false
   # The pentatonic contour: a stylistic mode, for lyrical text only.
   melodic_enabled: true
   melodic_threshold: 0.28
