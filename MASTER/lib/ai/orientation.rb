@@ -109,7 +109,7 @@ module Master
         "proof=RAILS/gates/gates.yml+RAILS/bin/triangle+<app>/bin/ci; " +
         "live=OPENBSD/bin/check-vps+OPENBSD/bin/vps-state; " +
         "rendered=Chrome/CDP via rendered_suite; " +
-        "visual_graph=MASTER/lib/fix/rails_visual_graph.rb; apps=#{rows.join(", ")}"
+        "visual_graph=MASTER/lib/fix/rails_visual_graph.rb; active_apps=#{rows.join(", ")}"
       rescue StandardError
         "rails: feature_truth=RAILS/apps.yml; architecture=RAILS/CLAUDE.md; inventory unavailable"
       end
