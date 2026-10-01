@@ -7,6 +7,7 @@ require "fileutils"
 require "json"
 require "optparse"
 require "uri"
+require_relative "../lib/trace/dmesg"
 
 class HouseArtwork
   CHROME_PATHS = [
@@ -48,7 +49,10 @@ class HouseArtwork
   def run!
     require "ferrum"
     chrome = CHROME_PATHS.find { |path| File.executable?(path) }
-    abort("artwork: no Chrome executable") unless chrome
+    unless chrome
+      Master::Trace::Dmesg.status("artwork0", "no Chrome executable", io: $stderr)
+      exit 1
+    end
 
     FileUtils.mkdir_p(File.dirname(@options[:output]))
     html = File.join(Dir.tmpdir, "pub4-artwork-#{Process.pid}-#{@seed}.html")
@@ -68,6 +72,7 @@ class HouseArtwork
     browser.go_to("file://#{html}")
     browser.resize(width: @options[:width], height: @options[:height])
     browser.screenshot(path: @options[:output], full: false)
+    # JSON remains an explicit machine payload.
     puts JSON.generate(
       renderer: "g1",
       seed: @seed,
