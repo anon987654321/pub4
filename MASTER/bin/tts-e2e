@@ -28,7 +28,7 @@ def http_get(path, read_timeout: 30)
 end
 
 def fail!(message)
-  warn("tts_e2e: #{message}")
+  Master::Trace::Dmesg.status("tts0", "failed, #{message}", io: $stderr)
   exit 1
 end
 
@@ -58,7 +58,7 @@ res = nil
     res = http_get(query, read_timeout: 120)
     break
   rescue Net::ReadTimeout, Errno::ECONNREFUSED, Errno::ETIMEDOUT => e
-    warn("tts_e2e: request retry #{attempt + 1} (#{e.class})")
+    Master::Trace::Dmesg.status("tts0", "request retry #{attempt + 1}, #{e.class}", io: $stderr)
     sleep 4
   end
 end
@@ -67,7 +67,7 @@ fail!("initial TTS request failed") unless res
 job = res["X-TTS-Job"].to_s
 
 if res.code.to_i == 200 && res.content_type.to_s.include?("audio")
-  puts "tts_e2e: ok immediate mp3 (#{res.body.bytesize} bytes)"
+  Master::Trace::Dmesg.status("tts0", "immediate mp3, #{res.body.bytesize} bytes")
   exit 0
 end
 
@@ -79,12 +79,12 @@ MAX_POLLS.times do |attempt|
   poll = http_get("/chat/tts/status?job=#{URI.encode_www_form_component(job)}", read_timeout: 30)
   case poll.code.to_i
   when 202
-    Master::Trace::Dmesg.status("tts0", "poll state=waiting")
+    Master::Trace::Dmesg.status("tts0", "poll, waiting")
     next
   when 200
     fail!("empty audio body") if poll.body.to_s.empty?
     fail!("unexpected content-type #{poll.content_type}") unless poll.content_type.to_s.include?("audio")
-    puts "\ntts_e2e: ok polled mp3 (#{poll.body.bytesize} bytes, attempt #{attempt + 1})"
+    Master::Trace::Dmesg.status("tts0", "polled mp3, #{poll.body.bytesize} bytes, attempt #{attempt + 1}")
     exit 0
   when 503
     body = JSON.parse(poll.body) rescue {}
