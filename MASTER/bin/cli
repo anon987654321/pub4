@@ -51,14 +51,16 @@ def parse_initial_message_options(argv)
   parser = OptionParser.new do |opts|
     opts.banner = "Usage: bin/cli [-p PROMPT|-m MSG] [--continue [ID]|--session ID|--fork [ID]|--sessions] [--effort low|medium|high] [--headless] [--fast] [--verbose|--trace] [--web|--no-web] [--boot-status]"
     opts.on("-h", "--help") do
-      puts opts
-      puts ""
-      puts "Pipe mode:  echo '/status' | bin/cli"
-      puts "Fast mode:  bin/cli --fast   (skip optional boot services; one command, then exit)"
-      puts "Headless:   bin/cli --headless -p PROMPT   (JSON mission receipt, non-interactive)"
-      puts "Gates:      MASTER/bin/check --profile=contributor|agent|full"
-      puts "Offline:    MASTER_LOCAL_ONLY=1 uses local Ollama/local-server models only; no remote LLM probes"
-      puts "VPS 1GB:    auto-skips TTS/boot-scan/web — scope a scan to a path, not the whole repo"
+      help = [
+        opts.to_s,
+        "Pipe: /status",
+        "Fast: bin/cli --fast",
+        "Headless: bin/cli --headless -p PROMPT",
+        "Gates: MASTER/bin/check --profile=contributor|agent|full",
+        "Offline: MASTER_LOCAL_ONLY=1",
+        "VPS: auto-skips TTS, boot-scan and web; scope scans to a path",
+      ].join("\n")
+      Master::Trace::Dmesg::Report.print("/help", help)
       exit 0
     end
     opts.on("-m", "--message TEXT") { |text| options[:message] = text }
