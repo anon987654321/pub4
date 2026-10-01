@@ -66,6 +66,25 @@ class TestVoiceSupport < Minitest::Test
     PB.instance_variable_set(:@queue, nil)
   end
 
+  def test_failed_player_exit_is_reported_as_failed_playback
+    dir = Dir.mktmpdir("failed-player")
+    player_path = File.join(dir, "ffplay")
+    audio_path = File.join(dir, "reply.mp3")
+    File.write(player_path, "#!/bin/sh\nexit 7\n")
+    File.chmod(0o755, player_path)
+    File.write(audio_path, "audio")
+
+    PB.remove_instance_variable(:@player) if PB.instance_variable_defined?(:@player)
+    with_env("PATH" => dir) do
+      PB.stub(:generation_active?, true) do
+        refute PB.play(audio_path)
+      end
+    end
+  ensure
+    PB.remove_instance_variable(:@player) if PB.instance_variable_defined?(:@player)
+    FileUtils.rm_rf(dir)
+  end
+
   def test_failed_audio_playback_does_not_fall_through_to_native_voice
     spoken = []
     PB.stub(:player, ["/tmp/missing-player", []]) do
