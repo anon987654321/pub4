@@ -35,7 +35,7 @@ module Master
                 end
 
           log = File.open("/tmp/master-synth-play.log", "a")
-          pid = Process.spawn(*cmd, out: log, err: log)
+          pid = Process.spawn(*cmd, **Master::Ops::ProcessSpawn.options(out: log, err: log))
           log.close
           Process.detach(pid)
           pid

@@ -98,6 +98,13 @@ class TestSpeech < Minitest::Test
     end
   end
 
+  def test_audio_children_close_the_master_control_lock
+    source = File.read(File.expand_path("../lib/voice/playback.rb", __dir__))
+    assert_includes source, "ProcessSpawn.options"
+    source = File.read(File.expand_path("../lib/voice/tts_supervisor.rb", __dir__))
+    assert_includes source, "ProcessSpawn.options"
+  end
+
   def test_available_returns_boolean
     assert_includes [true, false], Master::Voice::Speech.available?
   end

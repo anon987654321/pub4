@@ -162,7 +162,7 @@ module Master
           return termux_take(path) if termux?
 
           name, args = Master::Voice::Playback.player
-          pid = Process.spawn(name, *args, path, out: File::NULL, err: File::NULL)
+          pid = Process.spawn(name, *args, path, **Master::Ops::ProcessSpawn.options(out: File::NULL, err: File::NULL))
           waiter = Process.detach(pid)
           [->(_elapsed, _length) { waiter.alive? }, -> { Process.kill("TERM", pid) }, -> { waiter.value }]
         end

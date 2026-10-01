@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "set"
+require_relative "../ops/process_spawn"
 
 module Master
   module Voice
@@ -313,7 +314,7 @@ module Master
         player_candidates(path).each do |name, args|
           break unless generation_active?(generation)
 
-          pid = Process.spawn(name, *args, path, out: File::NULL, err: File::NULL)
+          pid = Process.spawn(name, *args, path, **Master::Ops::ProcessSpawn.options(out: File::NULL, err: File::NULL))
           @lock.synchronize { @playing_pid = pid if generation_active?(generation) }
           begin
             return true if Process.wait(pid).success?

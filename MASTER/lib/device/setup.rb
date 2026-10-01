@@ -3,6 +3,7 @@
 require "etc"
 require "json"
 require "fileutils"
+require_relative "../ops/process_spawn"
 
 module Master
   module Device
@@ -163,7 +164,8 @@ module Master
       # nothing can stop to ask a question.
       def spawn_logged(argv)
         FileUtils.mkdir_p(File.dirname(LOG))
-        pid = Process.spawn({ "DEBIAN_FRONTEND" => "noninteractive" }, *argv, in: File::NULL, out: [LOG, "a"], err: [:child, :out])
+        pid = Process.spawn({ "DEBIAN_FRONTEND" => "noninteractive" }, *argv,
+                             **Master::Ops::ProcessSpawn.options(in: File::NULL, out: [LOG, "a"], err: [:child, :out]))
         Process.wait2(pid).last.success?
       rescue SystemCallError
         false
