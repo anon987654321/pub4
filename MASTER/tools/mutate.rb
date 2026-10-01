@@ -14,10 +14,14 @@ require "fileutils"
 require "prism"
 require "tmpdir"
 require_relative "../lib/trace/dmesg"
+require_relative "../lib/trace/dmesg"
 
 src = File.expand_path(ARGV[0].to_s)
 test = File.expand_path(ARGV[1].to_s)
-abort("usage: ruby tools/mutate.rb <source.rb> <test.rb>") unless File.file?(src) && File.file?(test)
+unless File.file?(src) && File.file?(test)
+  Master::Trace::Dmesg.status("mutate0", "usage, ruby tools/mutate.rb <source.rb> <test.rb>", io: $stderr)
+  exit 64
+end
 
 root = File.expand_path("..", __dir__)
 original = File.read(src)
