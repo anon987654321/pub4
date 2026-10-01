@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "fileutils"
+
 # Time: the groove score, the producer DNA presets that carry each lineage's
 # grid and swing, the groove engine and the rhythm macros.
 
@@ -3323,4 +3325,159 @@ module DillaRhythm
     return 1.0 if period <= 0 || bar.zero?
     (bar % period) < span ? 0.12 : 1.0
   end
+end
+
+
+module DillaRecordDna
+  DATA_FILE = File.expand_path("../data/record_dna.yml", __dir__)
+  PPQ = 480
+  module_function
+  def config = @config ||= YAML.load_file(DATA_FILE)
+  def names = config.fetch("profiles").keys
+  def profile(name) = config.fetch("profiles").fetch(name.to_s)
+
+  TRACKS = %i[harmony bass drums texture].freeze
+  ROOTS = { "C" => 0, "C#" => 1, "Db" => 1, "D" => 2, "D#" => 3, "Eb" => 3,
+            "E" => 4, "F" => 5, "F#" => 6, "Gb" => 6, "G" => 7, "G#" => 8,
+            "Ab" => 8, "A" => 9, "A#" => 10, "Bb" => 10, "B" => 11 }.freeze
+
+  def compose(name, chords:, bars: nil, seed: 4242, bpm: 90)
+    p = profile(name)
+    chords = Array(chords).map(&:to_s)
+    raise ArgumentError, "record DNA needs at least one chord" if chords.empty?
+    total_bars = (bars || p.fetch("phrase_bars").to_i * 2).to_i
+    chord_bars = p.fetch("chord_bars").to_i
+    raise ArgumentError, "bars must be positive" unless total_bars.positive?
+    rng = Random.new(seed.to_i)
+    tracks = TRACKS.to_h { |track| [track, []] }
+    bar_ticks = PPQ * 4
+    sixteenth = PPQ / 4
+    swing_ticks = ((p.fetch("swing").to_f - 50.0) / 100.0 * sixteenth).round
+
+    total_bars.times do |bar|
+      bar_at = bar * bar_ticks
+      symbol = chords[(bar / chord_bars) % chords.length]
+      notes = midi_chord(symbol)
+      pad = rootless_voicing(notes, shift: (bar / p.fetch("texture_change_bars").to_i) % 2)
+      gate = (p.fetch("density").to_f * (1.0 - p.fetch("negative_space").to_f * 0.35)).clamp(0.15, 1.0)
+      pad.each_with_index do |note, i|
+        next if rng.rand > gate && i > 0
+        held = (bar_ticks * (i.zero? ? 0.92 : 0.68)).round
+        held = [held, (p.fetch("final_hold_beats").to_f * PPQ).round].max if bar == total_bars - 1
+        tracks[:harmony] << event(bar_at + (i.zero? ? 0 : sixteenth / 2), held, note, 70 + rng.rand(-10..10), symbol)
+      end
+      [0, (PPQ * 2.5).round].each_with_index do |offset, i|
+        next if i.positive? && rng.rand > 0.35 + p.fetch("density").to_f * 0.55
+        tracks[:bass] << event(bar_at + offset + p.fetch("bass_late_ticks").to_i,
+                                (PPQ * (i.zero? ? 1.25 : 0.6)).round,
+                                notes.first - 24, i.zero? ? 92 : 72, symbol)
+      end
+      drum_step(bar_at, sixteenth, swing_ticks, p, rng, tracks)
+      texture_events(bar_at, sixteenth, notes, p, rng, tracks, symbol)
+    end
+    { profile: name.to_s, bpm: bpm.to_f, ppq: PPQ, bars: total_bars, tracks: tracks }
+  end
+
+  def event(at, duration, note, velocity, source_chord)
+    { at: at.to_i, duration: [duration.to_i, 1].max, note: note.to_i.clamp(0, 127),
+      velocity: velocity.to_i.clamp(1, 127), source_chord: source_chord }
+  end
+
+  def midi_chord(symbol)
+    match = symbol.match(/\A([A-G](?:#|b)?)(.*)\z/) or raise ArgumentError, "bad chord #{symbol.inspect}"
+    root = ROOTS.fetch(match[1])
+    quality = match[2].sub(/(?:nc|fil|low)\z/, "").sub(/\A[Mm]aj/, "maj")
+    quality = "maj" if quality.empty?
+    intervals = DillaLofiMachine::CHORD_TEMPLATES.fetch(quality) do
+      raise ArgumentError, "unknown Dilla chord quality #{quality.inspect}"
+    end
+    intervals.map { |interval| (root + interval) % 12 }.uniq
+  end
+
+  def rootless_voicing(pitch_classes, shift: 0)
+    pcs = pitch_classes.drop(1)
+    pcs = pitch_classes if pcs.length < 3
+    base = shift.to_i.even? ? 60 : 72
+    pcs.first(4).map do |pc|
+      note = base + pc
+      note += 12 while note < 55
+      note -= 12 while note > 79
+      note
+    end.sort
+  end
+
+  def drum_step(bar_at, sixteenth, swing_ticks, p, rng, tracks)
+    density = p.fetch("drum_density").to_f
+    [0, 6, 10, 14].each do |step|
+      next unless rng.rand < density * 0.9
+      at = bar_at + step * sixteenth + (step.odd? ? swing_ticks : 0)
+      tracks[:drums] << event(at, sixteenth / 2, 36, 92 + rng.rand(-8..6), nil)
+    end
+    [4, 12].each do |step|
+      next if rng.rand < p.fetch("negative_space").to_f * 0.45
+      at = bar_at + step * sixteenth + (step.odd? ? swing_ticks : 0)
+      tracks[:drums] << event(at + p.fetch("bass_late_ticks").to_i / 2, sixteenth / 2,
+                              38, 94 + rng.rand(-10..8), nil)
+      next unless rng.rand < p.fetch("ghost_density").to_f
+      tracks[:drums] << event([at - sixteenth / 4, 0].max, sixteenth / 4, 38, 28 + rng.rand(0..18), nil)
+    end
+    16.times do |step|
+      next unless step.even? && rng.rand < density * 0.82
+      at = bar_at + step * sixteenth + (step.odd? ? swing_ticks : 0)
+      tracks[:drums] << event(at, sixteenth / 3, 42, 42 + rng.rand(-8..12), nil)
+    end
+  end
+
+  def texture_events(bar_at, sixteenth, notes, p, rng, tracks, symbol)
+    return unless rng.rand < p.fetch("micro_event_odds").to_f
+    note = notes.sample(random: rng) + 12
+    at = bar_at + 15 * sixteenth + rng.rand(-2..2)
+    tracks[:texture] << event(at, sixteenth / 2, note, 35 + rng.rand(0..28), symbol)
+  end
+
+
+  def write_midi(name, chords:, bars:, dest:, seed: 4242, bpm: 90)
+    result = compose(name, chords:, bars:, seed:, bpm:)
+    FileUtils.mkdir_p(File.dirname(dest))
+    chunks = [midi_track("record DNA", result[:bpm], [], 0)]
+    result[:tracks].each do |track, events|
+      channel = { harmony: 0, bass: 1, drums: 9, texture: 2 }.fetch(track)
+      chunks << midi_track(track.to_s, result[:bpm], events, channel)
+    end
+    header = ["MThd", [6, 1, chunks.length, PPQ].pack("Nnnn")].pack("a4a*")
+    File.binwrite(dest, header + chunks.join)
+    { bars: result[:bars], notes: result[:tracks].values.sum(&:length), dest: dest }
+  end
+
+  def midi_track(name, bpm, events, channel)
+    bytes = +""
+    bytes << vlq(0) << [0xFF, 0x03].pack("C*") << vlq(name.bytesize) << name.b
+    us = (60_000_000.0 / bpm.to_f).round
+    bytes << vlq(0) << [0xFF, 0x51, 0x03].pack("C*") << [us].pack("N")[1, 3]
+    bytes << vlq(0) << [0xFF, 0x58, 0x04, 0x04, 0x02, 0x18, 0x08].pack("C*")
+    rows = []
+    events.each do |e|
+      rows << [e[:at].to_i, 1, [0x90 | channel, e[:note].to_i, e[:velocity].to_i]]
+      rows << [e[:at].to_i + e[:duration].to_i, 0, [0x80 | channel, e[:note].to_i, 0]]
+    end
+    previous = 0
+    rows.sort_by { |at, priority, _| [at, priority] }.each do |at, _priority, data|
+      bytes << vlq(at - previous) << data.pack("C*")
+      previous = at
+    end
+    bytes << vlq(0) << [0xFF, 0x2F, 0x00].pack("C*")
+    ["MTrk", [bytes.bytesize].pack("N"), bytes].join
+  end
+
+  def vlq(value)
+    value = [value.to_i, 0].max
+    buffer = [value & 0x7F]
+    value >>= 7
+    while value.positive?
+      buffer.unshift((value & 0x7F) | 0x80)
+      value >>= 7
+    end
+    buffer.pack("C*")
+  end
+
 end
