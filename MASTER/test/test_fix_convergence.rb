@@ -206,16 +206,19 @@ class TestFixConvergence < Minitest::Test
     assert_includes result, "DONE: clean"
   end
 
-  def test_critique_dispatch_receives_all_pipeline_dependencies
+  def test_critique_stage_calls_council_directly_without_reentering_pipeline
     captured = nil
     fix_loop = Object.new
     scanner = Object.new
     deliberation = Object.new
     bus = Object.new
 
-    Master::CLI::CommandRegistry.stub(
-      :dispatch_critique,
-      ->(**kwargs) { captured = kwargs; "critique: ok" },
+    Master::CLI::CouncilCrit.stub(
+      :run,
+      lambda do |root:, deliberation:, bus:|
+        captured = { root:, deliberation:, bus: }
+        Master::Result.ok("critique: ok")
+      end,
     ) do
       pass = Master::CLI::Pipeline::Pass.new(
         scanner:,
@@ -227,10 +230,8 @@ class TestFixConvergence < Minitest::Test
       assert_equal "critique: ok", pass.send(:deliberation_critique, Master::ROOT)
     end
 
-    assert_equal scanner, captured[:scanner]
-    assert_equal fix_loop, captured[:fix_loop]
-    assert_equal deliberation, captured[:deliberation]
     assert_equal Master::ROOT, captured[:root]
+    assert_equal deliberation, captured[:deliberation]
     assert_equal bus, captured[:bus]
   end
 
