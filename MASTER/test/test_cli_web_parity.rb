@@ -36,6 +36,16 @@ class TestCliWebParity < Minitest::Test
     assert_includes web, "Master::CLI::TurnPresentation.text(result)"
   end
 
+  def test_smoke_turns_have_one_router_owner
+    router = read("lib/cli/turn_router.rb")
+    controller = read("web/app/controllers/chat_controller.rb")
+    service = read("web/app/services/chat_service.rb")
+
+    assert_includes router, "SMOKE_RESPONSES"
+    refute_match(/smoke_chat_message\?|stream_smoke_reply/, controller)
+    refute_match(/SMOKE_MESSAGES|def smoke_reply\?|def smoke_response/, service)
+  end
+
   def test_command_surface_is_derived_from_the_real_slash_surface
     surface = Master::CLI::CommandRegistry.command_surface
     assert_equal Master::CLI::CommandRegistry.slash_commands.sort, surface.map { |row| row.fetch(:cmd) }.sort
