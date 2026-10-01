@@ -25,7 +25,7 @@ module Operator
       "MASTER" => "MASTER",
       "RAILS" => "RAILS",
       "OPENBSD" => "OPENBSD",
-      "STUDIO" => "MASTER/tools"
+      "STUDIO" => "STUDIO"
     }.freeze
     TREES = TREE_PATHS.keys.freeze
 
