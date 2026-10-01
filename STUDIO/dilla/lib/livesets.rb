@@ -3226,7 +3226,13 @@ module LiveSynth
       rows = orphan_players
       return "nothing is playing" if rows.empty?
 
-      rows.each { |row| terminate_player(row[:pid], pgid: row[:pgid]) }
+      rows.each do |row|
+        if row[:pgid] == row[:pid]
+          terminate_player(row[:pid], pgid: row[:pgid])
+        else
+          terminate_processes([*row[:descendants].reverse, row[:pid]])
+        end
+      end
       "stopped #{rows.length} orphaned Dilla player#{rows.length == 1 ? "" : "s"}"
     rescue StandardError => e
       Master::Ground::Swallow.log(e, context: "Dilla::Session.stop_orphans")
@@ -3234,25 +3240,57 @@ module LiveSynth
     end
 
     def orphan_players
-      out, status = Open3.capture2("ps", "-ax", "-o", "pid=,pgid=,command=")
+      out, status = Open3.capture2("ps", "-ax", "-o", "pid=,ppid=,pgid=,command=")
       return [] unless status.success?
 
-      [File.expand_path("../liveset.rb", __dir__), File.expand_path("../royksopp.rb", __dir__)].then do |targets|
-        out.lines.filter_map do |line|
-          match = line.strip.match(/\A(\d+)\s+(\d+)\s+(.+)\z/)
-          next unless match
+      targets = [File.expand_path("../liveset.rb", __dir__), File.expand_path("../royksopp.rb", __dir__)]
+      rows = out.lines.filter_map do |line|
+        match = line.strip.match(/\A(\d+)\s+(\d+)\s+(\d+)\s+(.+)\z/)
+        next unless match
 
-          pid, pgid, command = match.captures.map { |value| value.to_i }.then { |nums| [nums[0], nums[1]] } + [match[3]]
-          next if pid == Process.pid
-          next unless pgid == pid
-          next unless targets.any? { |target| command.include?(target) }
+        pid, ppid, pgid = match.captures.first(3).map(&:to_i)
+        command = match[4]
+        next if pid == Process.pid
 
-          { pid:, pgid: }
+        { pid:, ppid:, pgid:, command: }
+      end
+      roots = rows.select { |row| targets.any? { |target| row[:command].include?(target) } }
+      by_parent = rows.group_by { |row| row[:ppid] }
+
+      roots.filter_map do |root|
+        descendants = []
+        queue = [root[:pid]]
+        until queue.empty?
+          parent = queue.shift
+          children = by_parent.fetch(parent, [])
+          children.each do |child|
+            next if descendants.include?(child[:pid])
+
+            descendants << child[:pid]
+            queue << child[:pid]
+          end
         end
+        { pid: root[:pid], pgid: root[:pgid], descendants: }
       end
     rescue StandardError => e
       Master::Ground::Swallow.log(e, context: "Dilla::Session.orphan_players")
       []
+    end
+
+    def terminate_processes(pids)
+      ids = pids.map(&:to_i).select(&:positive?).uniq
+      ids.each do |pid|
+        Process.kill("TERM", pid)
+      rescue Errno::ESRCH, Errno::EPERM
+        nil
+      end
+      deadline = Time.now + STOP_WAIT_SECONDS
+      sleep 0.05 while ids.any? { |pid| alive?(pid) } && Time.now < deadline
+      ids.each do |pid|
+        Process.kill("KILL", pid) if alive?(pid)
+      rescue Errno::ESRCH, Errno::EPERM
+        nil
+      end
     end
 
     def terminate_player(pid, pgid: pid)
