@@ -25,6 +25,9 @@ class TestAiOrientation < Minitest::Test
         brgen:
           domain: brgen.no
           port: 38182
+          deploy_script: RAILS/brgen/brgen.sh
+          deploy_root: RAILS/brgen
+          public: true
     YAML
     File.write(File.join(@root, "OPENBSD", "RUNBOOK.md"), "edge runbook\n")
     File.write(File.join(@root, "OPENBSD", "data", "operator.yml"), "meta:\n  source: runtime authority\n")
