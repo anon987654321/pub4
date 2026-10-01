@@ -1,4 +1,4 @@
-# frozen_string_literal: true
+<sub># frozen_string_literal: true
 
 require_relative "test_helper"
 require "fileutils"
@@ -119,3 +119,4 @@ class TestScanOutput < Minitest::Test
     assert_equal long, report.send(:clipped, long, limit: 500)
   end
 end
+</sub>
