@@ -131,7 +131,7 @@ module Master
         log = log_path(root, index:)
         pid = Process.spawn(
           env, RbConfig.ruby, worker, "--daemon", path,
-          chdir: root, out: log, err: log, **Master::Ops::ProcessSpawn.options)
+          chdir: root, out: log, err: log, **Master::Ops::ProcessSpawn.options
         )
         Process.detach(pid)
         @daemon_pids[index] = pid
