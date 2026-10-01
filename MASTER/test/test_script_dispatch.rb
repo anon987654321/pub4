@@ -89,6 +89,3 @@ class TestScriptDispatch < Minitest::Test
     end
   end
 end
-
-
-</sub>
