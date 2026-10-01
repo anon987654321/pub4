@@ -37,6 +37,8 @@ module Master
       LIVE_SYNTH_PLAY_RE = /\b(?:play|morph\w*|fade|switch|jam)\b.*\b(?:(?:mini)?moog|model\s*d|prophet|rhodes|juno|synth\w*|pads?|lead|bass(?:line)?|brass|strings|flute|pluck|lo-?fi|chords?|progressions?|something)\b/i.freeze
       LIVE_SYNTH_KNOB_RE = /\b(?:open|close|sweep|raise|lower|turn)\b.*\b(?:filter|cutoff|resonance|emphasis|detune|contour)\b/i.freeze
       LIVE_MUSIC_RE = /\b(?:play|start|resume|put on|queue)\b.*\b(?:liveset|default\s+music)\b/i.freeze
+      LIVE_AUDIO_STOP_RE = /\b(?:stop|kill|silence|mute|shut\s+off)\b.*\b(?:music|playing|sound|audio|synth\w*|liveset|jam)\b|\b(?:music|playing|sound|audio|synth\w*|liveset)\b.*\b(?:stop|kill|silence|mute|shut\s+off)\b/i.freeze
+      LIVE_STYLE_RE = /\b(?:röyksopp|royksopp|melody\s+a\.m\.|coltrane)\b|\b(?:switch|change|move|go)\b.*\bstyle\b/i.freeze
       BACKGROUND_MUSIC_RE = /\b(?:play|start|resume|put on|queue)\b.*\b(?:your|some|the|my)?\s*music\b.*\bbackground\b/i.freeze
       LIVE_SYNTH_ALONE_RE = /\A\s*(?:stop|silence|enough)\b|\bstop\s+(?:the\s+)?(?:music|playing|synth\w*|improvi\w*|jam)\b|\b(?:improvi[sz]e|keep\s+playing)\b|\A\s*(?:please\s+)?play(?:\s+(?:some\s+)?music)?\s*[.!]?\s*\z/i.freeze
       POSTPRO_COMMAND_RE = /\b(?:run|use|call|invoke)\s+postpro(?:\.rb)?\b/i.freeze
@@ -44,10 +46,13 @@ module Master
       IMAGE_PATH_RE = /(?:["']([^"']+\.(?:jpe?g|png|webp|tiff?))["']|(?:\A|\s)([^\s"']+\.(?:jpe?g|png|webp|tiff?))(?=\z|\s))/i.freeze
       POSTPRO_SUBJECT_RE = /\bpostpro(?:\.rb)?\b.*?\b(?:over|on|in|for|from)\b\s+["']([^"']+)["']/i.freeze
       POSTPRO_SUBJECT_TOKEN_RE = /\bpostpro(?:\.rb)?\b.*?\b(?:over|on|in|for|from)\b\s+(?:these|the|my|new)?\s*(?:photos?|images?|pictures?|files?)?\s*(?:in|at|from|under)?\s*(~?(?:\/|\.\/|\.\.\/)?[^\s"']+\/?)(?=\z|\s)/i.freeze
-      POSTPRO_PATH_TOKEN_RE = /\b(?:in|at|from|under)\s+(~?(?:\/|\.\/|\.\.\/)?[^\s"']+\/?)(?=\z|\s)/i.freeze
+      POSTPRO_PATH_TOKEN_RE = /\b(?:in|at|from|under)\s+(~?(?:\/|\.\/|\.\.\/)[^\s"']+\/?)(?=\z|\s)/i.freeze
+      DESKTOP_RE = /\b(?:my\s+|the\s+)?(?:local\s+)?desktop(?:\s+folder)?\b/i.freeze
+      POSTPRO_RANDOM_RE = /\b(?:random|randomly|variations?|versions?)\b/i.freeze
+      POSTPRO_EXTREME_RE = /\b(?:extreme|wild|aggressive|rough)\b/i.freeze
 
       def handles?(text)
-        text.match?(KICK_RE) || text.match?(PLAY_LAST_RE) || text.match?(SYNTH_RE) || live_synth?(text) ||
+        text.match?(KICK_RE) || text.match?(PLAY_LAST_RE) || text.match?(SYNTH_RE) || text.match?(LIVE_AUDIO_STOP_RE) || live_synth?(text) ||
           text.match?(BACKGROUND_MUSIC_RE) || text.match?(AUDIO_RE) || postpro_intent?(text) ||
           text.match?(IMAGE_RE) && text.match?(/\b(?:photo|portrait|image|picture)\b/i)
       end
@@ -56,6 +61,7 @@ module Master
         return generate_kick(text, root:) if text.match?(KICK_RE)
         return play_last(text, root:) if text.match?(PLAY_LAST_RE)
         return generate_tone(text, root:) if text.match?(SYNTH_RE)
+        return stop_live_audio(root:) if text.match?(LIVE_AUDIO_STOP_RE)
         return live_synth(text, root:) if live_synth?(text)
         return play_background_music(root:) if text.match?(BACKGROUND_MUSIC_RE)
         return postprocess(text, root:) if postpro_intent?(text)
@@ -85,6 +91,9 @@ module Master
                     text.match?(/\b(?:my\s+|the\s+)?(?:local\s+)?downloads?(?:\s+folder)?\b/i)
         source = downloads_directory if downloads
         return Result.err("postpro: Downloads folder not found", category: :validation) if downloads && source.to_s.empty?
+        desktop = text.match?(DESKTOP_RE)
+        source = desktop_directory if desktop
+        return Result.err("postpro: Desktop folder not found", category: :validation) if desktop && source.to_s.empty?
         source ||= entities[:path]
         source ||= text.match(POSTPRO_SUBJECT_RE)&.captures&.first
         source ||= text.match(POSTPRO_SUBJECT_TOKEN_RE)&.captures&.first
@@ -92,8 +101,19 @@ module Master
         source ||= text.match(IMAGE_PATH_RE)&.captures&.compact&.first
         return Result.err("postpro: include an existing image file or directory path", category: :validation) if source.to_s.empty?
 
+        if source.to_s.match?(/[*?\[\]{}]/)
+          files = image_glob_files(source)
+          return run_postpro_random(files, text, root:) if postpro_random_request?(text)
+          return run_postpro_selection(files, text, root:) unless files.empty?
+          return Result.err("postpro: glob matched no images #{File.expand_path(source)}", category: :validation)
+        end
+
         source = File.expand_path(source)
         return Result.err("postpro: input not found #{source}", category: :validation) unless File.file?(source) || File.directory?(source)
+
+        if File.directory?(source) && postpro_random_request?(text)
+          return run_postpro_random(source, text, root:)
+        end
 
         selection = postpro_selection(text, source, intent:)
         return run_postpro_selection(selection[:files], text, root:) if selection
@@ -103,6 +123,13 @@ module Master
         result = ScriptDispatch.run(root:, tool: "postpro",
                                     arg: args.map { |value| Shellwords.escape(value) }.join(" "))
         result.ok? ? Result.ok({ output: result.value!, rendered: result.value!, media: :postpro, path: source }) : result
+      end
+
+      def desktop_directory
+        [
+          File.expand_path("~/Desktop"),
+          File.expand_path("~/desktop")
+        ].find { |path| File.directory?(path) }
       end
 
       def downloads_directory
@@ -134,6 +161,50 @@ module Master
         files.sort_by { |path| -File.mtime(path).to_f }.first([count, 24].min).then { |rows| { files: rows } }
       rescue StandardError
         { files: [] }
+      end
+
+      def image_glob_files(pattern)
+        Dir.glob(File.expand_path(pattern)).select do |path|
+          File.file?(path) && path.match?(/\.(?:jpe?g|png|webp|tiff?)\z/i)
+        end
+      rescue StandardError
+        []
+      end
+
+      def postpro_random_request?(text)
+        text.match?(POSTPRO_RANDOM_RE)
+      end
+
+      def postpro_random_count(text)
+        text.match(/\b(\d+)\s+(?:random\s+)?(?:variations?|versions?|images?|photos?)\b/i)&.captures&.first.to_i.clamp(1, 24).tap do |count|
+          return count if count.positive?
+        end
+        recent_count_default
+      end
+
+      def run_postpro_random(source, text, root:)
+        count = postpro_random_count(text)
+        args = if source.is_a?(Array)
+                 source
+               else
+                 [source]
+               end
+        command = args.map { |value| Shellwords.escape(value) } + ["--random", "--count", count.to_s]
+        command << "--rough" if text.match?(POSTPRO_EXTREME_RE)
+        result = ScriptDispatch.run(root:, tool: "postpro", arg: command.join(" "))
+        return result unless result.ok?
+
+        rendered = result.value!.to_s
+        Result.ok(output: rendered, rendered:, media: :postpro_random,
+                  paths: source.is_a?(Array) ? source : nil)
+      end
+
+      def stop_live_audio(root: MasterPaths.root)
+        Voice::Playback.interrupt!("operator requested audio stop") if defined?(Voice::Playback)
+        result = ScriptDispatch.run(root:, tool: "dilla", arg: "live stop")
+        return result unless result.ok?
+
+        Result.ok({ output: result.value!, rendered: result.value!, media: :dilla_stop })
       end
 
       def recent_count_default
