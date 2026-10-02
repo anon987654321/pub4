@@ -92,12 +92,14 @@ module Master
           end
 
           if gate_status != 0
-            Master::Trace::Dmesg.status("gate0", "verification did not pass, status #{gate_status}")
+            message = "gate verification did not pass (status #{gate_status})"
+            Master::Trace::Dmesg.status("gate0", message)
+            next Master::Result.err(message, category: :validation)
           end
-          if gate_rounds >= MAX_FIX_GATE_ROUNDS && gate_status == 0 && gate_changed.any?
-            Master::Trace::Dmesg.status(
-              "gate0", "verification reached #{MAX_FIX_GATE_ROUNDS} rounds without a stable tree"
-            )
+          if gate_rounds >= MAX_FIX_GATE_ROUNDS && gate_changed.any?
+            message = "gate verification reached #{MAX_FIX_GATE_ROUNDS} rounds without a stable tree"
+            Master::Trace::Dmesg.status("gate0", message)
+            next Master::Result.err(message, category: :validation)
           end
 
           value
