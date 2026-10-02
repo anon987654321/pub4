@@ -43,6 +43,10 @@ SAFE_ENV = {
   # Withholds the agent from the scanner. With one, AdversarialRule sends a
   # prompt per file and the lexical stage outruns its timeout.
   "MASTER_SCAN_DETERMINISTIC" => "1",
+  # The fix re-exec after origin/main moves (fetch, rebase --autostash, exec
+  # without the bundler wrapper) is a shared-checkout hazard and escapes the
+  # wrapper this file launches with — off under the gate.
+  "MASTER_FIX_HOT_RELOAD" => "0",
   "MASTER_WATCH" => "0",
   "MASTER_WATCHER" => "0",
   "MASTER_HEARTBEAT" => "0",

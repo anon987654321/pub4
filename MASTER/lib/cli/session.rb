@@ -182,7 +182,10 @@ module Master
         Result.err("turn returned invalid result: #{value.class}", category: :handler_exception)
       rescue NoMemoryError
         Result.err(host_oom_message, category: :infrastructure)
-      rescue StandardError => e
+      # ScriptError too: a SyntaxError re-raised from Thread#value inherits
+      # ScriptError, not StandardError — StandardError-only let one unparseable
+      # file in the preflight abort the whole process instead of failing a turn.
+      rescue StandardError, ScriptError => e
         Result.err("turn failed: #{e.class}: #{e.message}", category: :infrastructure)
       end
 

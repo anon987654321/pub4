@@ -28,7 +28,10 @@ module Master
 
           @bus&.publish("command:completed", command: ctx.command, bytes: output.bytesize)
           Result.ok(ctx.merge(output:))
-        rescue StandardError => e
+        # ScriptError too: a SyntaxError escaping the handler dies past every
+        # StandardError rescue and aborts the process instead of failing one
+        # command — the trace0 preflight crash of 2026-10-02.
+        rescue StandardError, ScriptError => e
           @bus&.publish("command:error", command: ctx.command, error: "#{e.class}: #{e.message}")
           Result.err("execute: #{e.message}", category: :unknown)
         end

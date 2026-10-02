@@ -297,7 +297,10 @@ module Master
         return Master::Result.err("command: registry unavailable", category: :infrastructure) unless commands
 
         run_command_pipeline(ctx, container:, commands:)
-      rescue StandardError => e
+      # ScriptError too: the outer rescue is the last one a re-raised
+      # SyntaxError from a pipeline thread can meet, and StandardError-only
+      # let it abort the whole session.
+      rescue StandardError, ScriptError => e
         Master::Result.err("command: #{e.message}", category: :infrastructure)
       end
 
