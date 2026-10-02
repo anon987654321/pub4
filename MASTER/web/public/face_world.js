@@ -62,7 +62,12 @@
   }
 
   function makeShell() {
-    const geometry = new THREE.SphereGeometry(1.58, 28, 20);
+    const shellSpec = SPATIAL.shell || {};
+    const geometry = new THREE.SphereGeometry(
+      finite(shellSpec.radius, 1.58),
+      finite(shellSpec.width_segments, 28),
+      finite(shellSpec.height_segments, 20)
+    );
     shellMaterial = new THREE.ShaderMaterial({
       uniforms: {
         uTime: { value: 0 },
@@ -241,6 +246,26 @@
     if (!geometry) return;
 
     const topology = String(state.topology || "papua-mask");
+    const kernel = window.ParticleKernel;
+    const eyePool = window.MASTER_FACE?.eyePool;
+    const mouthPool = window.MASTER_FACE?.mouthPool;
+    if (kernel && eyePool && mouthPool) {
+      for (let i = 0; i < eyePool.count; i += 1) if (eyePool.alive[i]) {
+        const base = i * kernel.FIELDS_PER_CELL;
+        eyePool.cells[base + kernel.FIELD.attention] = Math.max(
+          eyePool.cells[base + kernel.FIELD.attention] || 0,
+          geometry.eye_attention * 0.82
+        );
+      }
+      for (let i = 0; i < mouthPool.count; i += 1) if (mouthPool.alive[i]) {
+        const base = i * kernel.FIELDS_PER_CELL;
+        const speech = state.mode === "speaking" || state.mode === "listening" ? 1 : 0.52;
+        mouthPool.cells[base + kernel.FIELD.arousal] = Math.max(
+          mouthPool.cells[base + kernel.FIELD.arousal] || 0,
+          geometry.mouth_energy * speech
+        );
+      }
+    }
     const tilt = TOPOLOGY_TILT[topology] || TOPOLOGY_TILT["papua-mask"];
     const pointerX = finite(window.MASTER_FACE?.State?.mouseX, 0);
     const pointerY = finite(window.MASTER_FACE?.State?.mouseY, 0);
