@@ -148,7 +148,6 @@ module Studio
         true
       end
     end
-  end
 end
 
 Studio::AnalogCapabilities.validate!
