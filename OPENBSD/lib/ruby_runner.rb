@@ -29,10 +29,8 @@ module Deploy
       "bundle"
     end
 
-    # Resolve the executable from the repo's pinned Ruby instead of trusting the
-    # shell's current Ruby. This is the common seam between macOS rbenv and
-    # OpenBSD's ruby40/bundle40 binaries: callers receive one executable path,
-    # so they do not need to reproduce platform selection logic themselves.
+    # Resolve the project-pinned Ruby on rbenv and the supported package Ruby on
+    # OpenBSD. Callers receive one executable path and do not reproduce host logic.
     def rbenv_path(name, root: Environment.repo_root)
       version = pinned_version(root)
       return if version.empty?
