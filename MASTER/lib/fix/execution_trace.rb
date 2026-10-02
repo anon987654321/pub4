@@ -126,8 +126,7 @@ module Master
       def syntax_check(files, failures)
         files.each do |path|
           source = File.read(path, encoding: "UTF-8")
-          candidate = Master::Review::Scan::AstFixer.propose(path, source)
-          content = candidate.changed ? candidate.content : safe_transport_unwrap(source)
+          content = safe_transport_unwrap(source)
 
           if content == source
             @ruby_checker.call(path)
@@ -143,18 +142,25 @@ module Master
         end
       end
 
-      # Never compile a whole-file presentation wrapper as Ruby. This remains
-      # independent of AstFixer so a broken fixer cannot blind /fix preflight.
+      # Never let AstFixer repair the tree merely so preflight can call it
+      # parseable. Preflight measures the bytes on disk; the sole exception is
+      # accidental transport markup, which may be stripped only when the
+      # resulting Ruby parses. A malformed program therefore remains a failed
+      # preflight even if a fixer could invent a valid candidate.
       def safe_transport_unwrap(source)
-        lines = source.lines
-        return source if lines.empty?
+        return source if source.empty? || Prism.parse(source).success?
 
-        first = lines.first.to_s
-        last = lines.last.to_s.strip
-        return source unless first.start_with?("<sub>") && last == "</sub>"
+        candidate = source.dup
+        changed = false
+        if candidate.start_with?("<sub>")
+          candidate.delete_prefix!("<sub>")
+          changed = true
+        end
+        if candidate.sub!(%r{</sub>s*z}, "")
+          changed = true
+        end
 
-        inner = [first.delete_prefix("<sub>"), *lines[1...-1]].join
-        Prism.parse(inner).success? ? inner : source
+        changed && Prism.parse(candidate).success? ? candidate : source
       end
 
       def verify_boot_surface(failures)

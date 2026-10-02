@@ -88,6 +88,13 @@ module Master
       {}
     end
 
+    # Compatibility entry point for callers that learned the named accessor
+    # before the design thresholds were grouped under Thresholds. The value
+    # remains singular: Thresholds owns the YAML lookup.
+    def self.measure_ideal_ch(root: Master::ROOT)
+      Thresholds.measure_ideal_ch(root:)
+    end
+
     # The design-tier rules of data/rules.yml, for scanners and UI critique.
     class Thresholds
       def self.load(root: Master::ROOT)

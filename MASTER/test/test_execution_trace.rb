@@ -68,25 +68,57 @@ class TestExecutionTrace < Minitest::Test
     end
   end
 
-  def test_wrapped_ruby_has_a_preflight_fallback_even_if_ast_fixer_declines_it
+  def test_wrapped_ruby_is_checked_after_transport_unwrap
     Dir.mktmpdir("execution_trace_wrapper_fallback") do |root|
       path = File.join(root, "broken.rb")
       File.write(path, "<sub># frozen_string_literal: true\nVALUE = 1\n</sub>\n")
-      unchanged = Master::Review::Scan::AstFixer::Result.new(
+
+      result = Master::Fix::ExecutionTrace.new(
+        root:,
+        files: [path],
+        ruby_checker: ->(candidate) { RubyVM::InstructionSequence.compile_file(candidate) },
+      ).run
+
+      refute result.failures.any? { |failure| failure.include?("syntax failed") }, result.failures.inspect
+    end
+  end
+
+  def test_inline_transport_wrapper_is_unwrapped
+    Dir.mktmpdir("execution_trace_inline_wrapper") do |root|
+      path = File.join(root, "broken.rb")
+      File.write(path, "VALUE = 1\n</sub>\n")
+
+      result = Master::Fix::ExecutionTrace.new(
+        root:,
+        files: [path],
+        ruby_checker: ->(candidate) { RubyVM::InstructionSequence.compile_file(candidate) },
+      ).run
+
+      refute result.failures.any? { |failure| failure.include?("syntax failed") }, result.failures.inspect
+    end
+  end
+
+  def test_preflight_does_not_allow_ast_fixer_to_mask_syntax_damage
+    Dir.mktmpdir("execution_trace_no_fix") do |root|
+      path = File.join(root, "broken.rb")
+      File.write(path, "def broken(\n  true\nend\n")
+
+      candidate = Master::Review::Scan::AstFixer::Result.new(
         path:,
-        changed: false,
-        transforms: [],
-        content: File.read(path),
+        changed: true,
+        transforms: [:repair],
+        content: "def repaired; true; end\n",
       )
 
-      Master::Review::Scan::AstFixer.stub(:propose, unchanged) do
+      Master::Review::Scan::AstFixer.stub(:propose, candidate) do
         result = Master::Fix::ExecutionTrace.new(
           root:,
           files: [path],
-          ruby_checker: ->(candidate) { RubyVM::InstructionSequence.compile_file(candidate) },
+          ruby_checker: ->(candidate_path) { RubyVM::InstructionSequence.compile_file(candidate_path) },
         ).run
 
-        refute result.failures.any? { |failure| failure.include?("syntax failed") }, result.failures.inspect
+        assert result.failures.any? { |failure| failure.include?("syntax failed") },
+               result.failures.inspect
       end
     end
   end
