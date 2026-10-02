@@ -112,7 +112,7 @@ if args.length == 1 && !args.first.start_with?("-")
   args = ["-m", args.first]
 end
 
-# bin/ruby resolves pub4's preferred interpreter (ruby40 on OpenBSD, rbenv on
+# bin/ruby resolves pub4's preferred interpreter (ruby34/ruby33 on OpenBSD, rbenv on
 # the Mac). Inheriting whatever `env ruby` happened to pick is how the local
 # boot broke before .ruby-version was pinned, and MASTER needs ~> 3.4.
 Dir.chdir(MASTER)
