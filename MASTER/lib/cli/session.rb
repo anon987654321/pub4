@@ -65,9 +65,9 @@ module Master
         puts @refs.renderer.session_line(@refs.session.name, @refs.session.messages.size) if @refs.session.name
         print_repo_tree unless booted_before?
         puts
-        @running = true
         run_input(initial_message) if initial_message
-        repl_loop if @running
+        @running = true
+        repl_loop
       end
 
       def pipe(input)
@@ -139,26 +139,22 @@ module Master
 
       def dispatch_turn(input, accumulated:, state:)
         on_turn = build_on_turn_handler(accumulated, state)
-        on_chunk = build_on_chunk_handler(accumulated, state)
-        @pipeline_thread = spawn_pipeline_thread(input, on_turn, on_chunk)
+        @pipeline_thread = spawn_pipeline_thread(input, on_turn)
         fetch_pipeline_result
       end
 
       def build_on_turn_handler(accumulated, state)
         lambda do |line|
-          state[:streamed] = true
+          # The units console printed this turn as it ran; the transcript line
+          # would say it twice.
+          next state[:streamed] = true if @unit_sub
+
           accumulated << line << "\n"
-          # The units console already paints this line; keep the stream in the
-          # transcript accumulator, but do not paint it a second time.
-          handle_stream_text(line + "\n", state) if $stdout.isatty && !@unit_sub
+          handle_stream_text(line + "\n", state) if $stdout.isatty
         end
       end
 
-      def build_on_chunk_handler(accumulated, state)
-        build_stream_handler(accumulated) { |text| handle_stream_text(text, state) }
-      end
-
-      def spawn_pipeline_thread(input, on_turn, on_chunk)
+      def spawn_pipeline_thread(input, on_turn)
         @turn_children = Master::Io::Exec::Children.new
         Thread.new do
           Thread.current.report_on_exception = false
@@ -169,7 +165,6 @@ module Master
             container: @container,
             felt_sense: cli_felt_sense,
             on_turn:,
-            on_chunk:,
           )
         end
       end

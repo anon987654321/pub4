@@ -399,10 +399,9 @@ class ChatService
     return unless session.respond_to?(:token_est)
 
     est = session.token_est
-    raw_model = @container[:agent].model.to_s
-    limit = Master.context_window(raw_model)
+    limit = Master::DEFAULT_CONTEXT_WINDOW
     pct = limit.positive? ? ((est.to_f / limit) * 100).round(1) : 0
-    model = raw_model.split("/").last
+    model = @container[:agent].model.to_s.split("/").last
     write_json_event("ctx_footer", { model:, token_est: est, limit:, pct: })
   rescue StandardError => e
     Master::Ground::Swallow.log(e, context: "ChatService.write_turn_ctx_footer", event_bus: @container[:bus])

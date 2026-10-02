@@ -74,7 +74,7 @@ class TestCliTerminalFace < Minitest::Test
     refute_includes text, "job 1"
   end
 
-  def test_a_failed_turn_stays_visible_without_media_work
+  def test_a_failed_turn_does_not_start_picture_work
     face = Master::CLI::Face::Window.new(
       turn: ->(_) { Master::Result.err("talk0: empty response", category: :provider_error) },
       ear: Quiet.new(false),
@@ -83,12 +83,12 @@ class TestCliTerminalFace < Minitest::Test
       output: StringIO.new,
       size: -> { [24, 80] }
     )
-    face.send(:answer, "Bug and ember lay out.")
+    face.stub(:picture, ->(_) { flunk("picture work started after a failed turn") }) { face.send(:answer, "Bug and ember lay out.") }
     text = rows_of(face.screen(24, 80, 1.0)).values.join("\n")
     assert_includes text, "talk0: empty response"
   end
 
-  def test_ordinary_face_reply_does_not_start_media_work
+  def test_successful_turn_can_start_picture_work
     face = Master::CLI::Face::Window.new(
       turn: ->(_) { Master::Result.ok("Reply") },
       ear: Quiet.new(false),
@@ -97,9 +97,9 @@ class TestCliTerminalFace < Minitest::Test
       output: StringIO.new,
       size: -> { [24, 80] }
     )
-    face.send(:answer, "Bug and ember lay out.")
-    text = rows_of(face.screen(24, 80, 1.0)).values.join("\n")
-    assert_includes text, "Reply"
+    pictured = nil
+    face.stub(:picture, ->(text) { pictured = text }) { face.send(:answer, "Bug and ember lay out.") }
+    assert_equal "Bug and ember lay out.", pictured
   end
 
   def test_face_falls_back_to_native_speech_when_synthesis_is_missing
@@ -230,38 +230,12 @@ class TestCliTerminalFace < Minitest::Test
       size: -> { [24, 80] },
       event_bus: bus
     )
-    assert_equal %w[council:** core:** llm:** phantom:** pipeline:**], bus.patterns.keys.sort
+    assert_equal %w[council:** llm:** phantom:** pipeline:**], bus.patterns.keys.sort
     bus.publish("pipeline:stage_start")
     assert_equal [:thinking], face.instance_variable_get(:@events)
-    bus.publish(event: "core:turn", ok: true)
-    assert_equal [:thinking, :nod], face.instance_variable_get(:@events)
     face.send(:unsubscribe_from_bus)
     bus.publish("council:deliberation")
-    assert_equal [:thinking, :nod], face.instance_variable_get(:@events)
-  end
-
-  def test_face_turn_keeps_the_structured_result
-    container = Object.new
-    calls = []
-    turn = Master::CLI::Face::Window.turn { container }
-
-    Master::CLI::TurnRouter.stub(
-      :call,
-      ->(message:, container:) { calls << [message, container]; Master::Result.ok(rendered: "trace", core: { summary: "final answer" }) },
-    ) do
-      result = turn.call("check this")
-      assert_predicate result, :ok?
-    end
-
-    assert_equal [["check this", container]], calls
-  end
-
-  def test_face_speaks_a_fold_summary_not_its_execution_trace
-    result = Master::Result.ok(
-      rendered: "fold0: complete, 4 turns\n0: read -> ok\nfinal answer",
-      core: { summary: "final answer" },
-    )
-    assert_equal "final answer", Master::CLI::Face::Window.allocate.send(:reply_text, result)
+    assert_equal [:thinking], face.instance_variable_get(:@events)
   end
 
   def test_face_command_arguments_are_recognised

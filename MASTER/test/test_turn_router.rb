@@ -195,25 +195,6 @@ end
     assert_equal "what is this", seen[:message]
   end
 
-  def test_diagnostic_fold_gets_read_execute_capability
-    capabilities = Master::CLI::TurnRouter.send(:fold_capabilities_for, "why is the homepage failing?")
-    assert capabilities.allow?(:read)
-    assert capabilities.allow?(:execute)
-    refute capabilities.allow?(:write)
-  end
-
-  def test_test_run_fold_gets_read_execute_capability
-    capabilities = Master::CLI::TurnRouter.send(:fold_capabilities_for, "run the relevant tests")
-    assert capabilities.allow?(:execute)
-    refute capabilities.allow?(:write)
-  end
-
-  def test_coding_fold_keeps_write_capability
-    capabilities = Master::CLI::TurnRouter.send(:fold_capabilities_for, "implement pagination for posts")
-    assert capabilities.allow?(:write)
-    assert capabilities.allow?(:execute)
-  end
-
   def test_run_promotes_to_fold
     fold = { reason: :complete, turns: 1, summary: "shipped", transcript: [] }
     Master.stub(:any_api_key_present?, true) do

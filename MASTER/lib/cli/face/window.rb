@@ -43,7 +43,11 @@ module Master
           container = nil
           lambda do |text|
             lock.synchronize { container ||= boot.call }
-            TurnRouter.call(message: text, container:)
+            streamed = +""
+            result = TurnRouter.call(message: text, container:, on_turn: ->(line) { streamed << line << "\n" })
+            return result if streamed.strip.empty? || result.err?
+
+            streamed
           end
         end
 
@@ -224,6 +228,17 @@ module Master
           end
           set(:idle, [reply])
           nudge(:nod)
+          picture(text) if text.to_s.split.size >= 4
+        end
+
+        # The still is created only after a real reply, so a failed model turn
+        # cannot fall through into media work.
+        def picture(text)
+          set(:thinking, ["picture0: rendering"])
+          paths = Master::Io::IdeaPicture.new.write(text)
+          set(:idle, ["picture0: saved #{paths[:clip]}"])
+        rescue StandardError => e
+          set(:idle, ["picture0: failed — #{e.message.to_s[0, 140]}"])
         end
 
         # The turn runs beside the window so ^C can abandon it. It carries no
@@ -255,16 +270,9 @@ module Master
           return "error: #{result.message}" if result.err?
 
           value = result.value
-          # Fold results carry the human answer separately from their execution trace.
-          # Speak the answer, not the internal turn ledger.
-          if value.is_a?(Hash)
-            core = value[:core]
-            summary = core.is_a?(Hash) ? core[:summary].to_s.strip : ""
-            return summary unless summary.empty?
-
-            return (value[:rendered] || value[:output]).to_s.strip
-          end
-          value.to_s.strip
+          # Talk answers with a String, which also answers [] and would raise on a Symbol.
+          text = value.is_a?(Hash) ? (value[:rendered] || value[:output]) : nil
+          (text || value).to_s.strip
         end
 
         def stop_key?
@@ -323,7 +331,7 @@ module Master
         def subscribe_to_bus(event_bus)
           return [] unless event_bus.respond_to?(:subscribe)
 
-          %w[llm:** pipeline:** phantom:** council:** core:**].map do |pattern|
+          %w[llm:** pipeline:** phantom:** council:**].map do |pattern|
             event_bus.subscribe(pattern) { |event| bus_event(event) }
           end
         rescue StandardError => e
@@ -338,8 +346,6 @@ module Master
                    when /\Allm:(?:response|call_complete)\z/, /\Apipeline:(?:stage_complete|complete|done)\z/ then :nod
                    when /\Aphantom:(?:detected|recovery|halt|occurrence)\z/ then :phantom
                    when /\Acouncil:/ then :council
-                   when /\Acore:(?:reason|escalation)\z/ then :thinking
-                   when /\Acore:turn\z/ then event[:ok] ? :nod : :phantom
                    end
           nudge(motion) if motion
         rescue StandardError => e

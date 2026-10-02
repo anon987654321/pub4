@@ -3,6 +3,12 @@
 require_relative "test_helper"
 
 class TestCliFaceDispatch < Minitest::Test
+  def test_fix_registry_loads_the_foreign_gate_chain_before_dispatch
+    require_relative "../lib/cli/command_registry/review"
+
+    assert defined?(::Operator::GateChain), "fix registry must load top-level Operator::GateChain"
+  end
+
   def test_face_pauses_the_repl_background_scanner
     session = Master::CLI::Session.allocate
     session.instance_variable_set(:@running, true)

@@ -49,7 +49,7 @@ module Master
             next unless File.file?(path)
 
             content = File.read(path, encoding: "UTF-8")
-            content = content[0, 12_000] if content.length > 12_000
+            content = content.bytesize > 12_000 ? content.byteslice(0, 12_000) : content
             "[@#{ref}]\n```text\n#{content}\n```"
           rescue StandardError => e
             Master::Ground::Swallow.log(e, context: "Intake.expand_file_references")

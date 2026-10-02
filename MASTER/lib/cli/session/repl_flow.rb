@@ -114,16 +114,12 @@ module Master
         when "/face" then run_face
         else :unhandled
         end
-      end
 
       def run_face
-        background = @bg_thread&.alive?
-        stop_background_loop if background
         result = CommandRegistry.dispatch_face
         puts result if result && result != "face0: closed"
         nil
-      ensure
-        start_background_loop if background && @running
+      end
       end
 
       def run_chitchat

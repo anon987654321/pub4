@@ -35,7 +35,7 @@ module Master
             cost: @cost,
             ts: Time.now.to_i,
           }
-          write_atomic(@path, JSON.generate(json_safe(data)))
+          write_atomic(@path, JSON.generate(data))
           save_forks!
         end
 
@@ -83,24 +83,7 @@ module Master
               [key.to_s, { messages: conversation[:messages], token_est: conversation[:token_est], name: conversation[:name], input_tokens: conversation[:input_tokens] }]
             end.to_h
           end
-          write_atomic(forks_path, JSON.generate(json_safe(data)))
-        end
-
-        def json_safe(value)
-          case value
-          when String
-            utf8_safe(value)
-          when Hash
-            value.to_h { |key, item| [json_safe(key.to_s), json_safe(item)] }
-          when Array
-            value.map { |item| json_safe(item) }
-          else
-            value
-          end
-        end
-
-        def utf8_safe(value)
-          value.to_s.dup.force_encoding(Encoding::UTF_8).scrub("�")
+          write_atomic(forks_path, JSON.generate(data))
         end
 
         def load_forks!
@@ -300,12 +283,11 @@ module Master
       def messages(key = nil) = @mutex.synchronize { conversation(key || current_key)[:messages] }
 
       def add_message(role:, content:, layer: :conversation)
-        safe_content = utf8_safe(content)
-        msg = { role:, content: safe_content, layer: Master::CLI::ContextLayers.normalize(layer), ts: Time.now.to_i }
+        msg = { role:, content:, layer: Master::CLI::ContextLayers.normalize(layer), ts: Time.now.to_i }
         @mutex.synchronize do
           conversation(current_key)[:messages] << msg
-          conversation(current_key)[:token_est] += Session.estimate_tokens(safe_content)
-          conversation(current_key)[:name] ||= auto_name(safe_content) if role == :user
+          conversation(current_key)[:token_est] += Session.estimate_tokens(content)
+          conversation(current_key)[:name] ||= auto_name(content) if role == :user
         end
         msg
       end
@@ -343,7 +325,7 @@ module Master
           entry[:approximate] = true if approximate
         end
         rotate_costs! if File.exist?(@costs_path) && File.size(@costs_path) > COSTS_MAX_BYTES
-        File.open(@costs_path, "a") { |f| f.puts(JSON.generate(json_safe(entry))) }
+        File.open(@costs_path, "a") { |f| f.puts(JSON.generate(entry)) }
         entry
       end
 
@@ -382,7 +364,7 @@ module Master
 
       def summarize_message(msg)
         content = msg[:content].to_s.gsub(/\s+/, " ").strip
-        summary = content.length > SUMMARY_MAX_CHARS ? "#{content[0, SUMMARY_MAX_CHARS]}..." : content
+        summary = content.bytesize > SUMMARY_MAX_CHARS ? "#{content.byteslice(0, SUMMARY_MAX_CHARS)}..." : content
         msg.merge(content: "[summary] #{summary}", summarized: true)
       end
 

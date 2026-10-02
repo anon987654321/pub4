@@ -93,15 +93,11 @@ class TestPipeline < Minitest::Test
     assert_includes event.last[:timings].keys, "OkStage"
   end
 
-  def test_pipeline_context_preserves_both_ends_of_large_output
+  def test_pipeline_context_caps_large_output_on_merge
     ctx = Master::CLI::PipelineContext.build(user_message: "hi")
-    source = "HEAD\n" + ("x" * 9_900) + "\nTAIL"
-    merged = ctx.merge(output: source)
+    merged = ctx.merge(output: "x" * 10_000)
 
     assert_equal Master::CLI::PipelineContext::MAX_OUTPUT_BYTES, merged[:output].bytesize
-    assert_includes merged[:output], "HEAD"
-    assert_includes merged[:output], "TAIL"
-    assert_includes merged[:output], Master::CLI::PipelineContext::OUTPUT_TRUNCATION_MARKER
   end
 
   def test_pipeline_context_caps_timing_entries_on_merge

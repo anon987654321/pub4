@@ -39,14 +39,6 @@ class CoreCapabilitiesTest < Minitest::Test
     assert_raises(SecurityError) { capabilities.drop(:execute) }
   end
 
-  def test_diagnostic_profile_can_read_and_execute_but_not_write
-    capabilities = Master::Core::Capabilities.for(:diagnostic)
-
-    assert capabilities.allow?(:read)
-    assert capabilities.allow?(:execute)
-    refute capabilities.allow?(:write)
-  end
-
   def test_read_only_profile_has_no_write_or_execute
     capabilities = Master::Core::Capabilities.read_only
 

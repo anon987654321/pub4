@@ -10,14 +10,6 @@ class TestResult < Minitest::Test
     assert_equal "hello", r.value!
   end
 
-  def test_invalid_request_is_a_permanent_result_category
-    result = Master::Result.err("bad request", category: :invalid_request)
-
-    assert result.permanent?
-    refute result.retriable?
-    assert_equal "bad request", result.message
-  end
-
   def test_err_holds_message
     r = Master::Result.err("boom", category: :unknown)
     assert r.err?

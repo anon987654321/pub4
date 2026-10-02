@@ -21,9 +21,7 @@ module Master
       def spatial(root: Master::ROOT) = data(root:).fetch("spatial", {})
 
       def prompt_measure(root: Master::ROOT)
-        prompt(root:).fetch("measure_ch") do
-          Master::Design::Thresholds.measure_ideal_ch(root:)
-        end
+        prompt(root:).fetch("measure_ch", Master::Design.measure_ideal_ch(root:))
       end
 
       def budget(root: Master::ROOT) = spatial(root:).fetch("budget", {})
