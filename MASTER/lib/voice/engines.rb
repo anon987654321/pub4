@@ -400,6 +400,13 @@ module Master
       end
 
       def copy_if_synthesized(text, out_path, voice, rate, pitch)
+        # Edge needs a tempo: a request with an empty rate or pitch produces
+        # empty audio, and the failure costs a socket round trip plus a full
+        # one-shot subprocess boot — paid on every transcendent utterance the
+        # chain reaches edge with. Fail the engine before the legs; the chain
+        # falls through to the same engine it always fell through to.
+        return false if rate.to_s.strip.empty? || pitch.to_s.strip.empty?
+
         path = Speech.synthesize_edge(text, voice:, style_config: { rate:, pitch: }, shape: false)
         return false unless path && File.size?(path)
 

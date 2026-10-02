@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "open3"
 require "set"
 require_relative "../ops/process_spawn"
 
@@ -309,7 +310,7 @@ module Master
         result_queue = Queue.new
         thread = Thread.new do
           Thread.current[:name] = "voice-prefetch"
-          result_queue << prepare_job(job)
+          result_queue << prepare_job(job, live: false)
         rescue StandardError => e
           result_queue << prepare_job_failure(job, e)
         end
@@ -336,6 +337,124 @@ module Master
         PreparedAudio.new(**values, path: nil)
       end
 
+      # Live streaming needs a player that reads a pipe — ffplay does, afplay
+      # cannot — the framed daemon wire, and the classic mode: Transcendent owns
+      # its whole utterance, melody and phrase rhythm included, and is never
+      # piped piecemeal (MASTER_TTS_STREAM=0 turns the lane off).
+      def stream_playback_ready?
+        return false if ENV["MASTER_TTS_STREAM"] == "0"
+        return false if transcendent_mode?
+        return false unless Speech.edge_tts_available?
+        return false unless Speech.stream_wire_enabled?
+        return false unless Speech.worker_executable?
+        !stream_player.nil?
+      end
+
+      def stream_player
+        path = which("ffplay")
+        path && [path, PLAYERS.fetch("ffplay")]
+      end
+
+      def prepare_stream_job(values)
+        return unless stream_playback_ready?
+
+        voice_name, style_config = stream_voice_config(values)
+        thread = Thread.new do
+          Thread.current[:name] = "voice-stream"
+          Thread.current[:ok] = stream_utterance(values, voice_name, style_config)
+        end
+        StreamingPrepared.new(
+          job: values[:job],
+          text: values[:text],
+          part: values[:part],
+          last: values[:last],
+          generation: values[:generation],
+          thread:,
+        )
+      rescue StandardError => e
+        warn_once("voice stream prepare failed — #{e.class}: #{e.message}")
+        nil
+      end
+
+      # Mirrors Playback.synthesize's resolution: the policy tempo when the
+      # caller says nothing, style validated through resolve_voice_and_style.
+      def stream_voice_config(values)
+        voice = Speech.resolve_voice(values[:voice] || Speech.voice_for_text(values[:part]))
+        voice, style_config = Speech.resolve_voice_and_style(
+          values[:part],
+          voice:,
+          style: values[:style] || Speech.default_style,
+          rate: values[:rate] || Policy.default_rate,
+          pitch: values[:pitch] || Policy.default_pitch,
+          style_locked: true,
+        )
+        [Speech::VOICES.fetch(voice, Speech::VOICES[Speech.default_voice]), style_config]
+      end
+
+      # ffplay demuxes mp3 straight from a non-seekable stdin (-f forces the
+      # demuxer), applies the voice.yml post_chain with -af — the same chain
+      # Speech#shaped runs for the afplay path, so streaming never changes how
+      # a reply sounds — and exits on its own once stdin ends. Interrupt kills
+      # it the same way it kills afplay: through @playing_pid.
+      def stream_cmd(player_path, player_args)
+        cmd = [player_path, *player_args, "-f", "mp3"]
+        chain = Policy.post_chain
+        cmd += ["-af", chain] if chain && !chain.empty?
+        cmd << "pipe:0"
+        cmd
+      end
+
+      # One stream through one player process: register the player pid so
+      # interrupt can kill it, copy the wire into its stdin, keep the stream
+      # result so the caller can resynthesise anything truncated.
+      def pump_stream_pipe(cmd, spawn_opts, values, voice_name, style_config)
+        generation = values[:generation]
+        ok = false
+        Open3.popen3(*cmd, **spawn_opts) do |stdin, _o, _e, wait_thr|
+          active = generation_active?(generation)
+          @lock.synchronize { @playing_pid = wait_thr.pid if active }
+          begin
+            stale = -> { !generation_active?(generation) }
+            ok = Speech.stream_edge_to_io(text: values[:part], voice_name:, style_config:, io: stdin, stale_test: stale)
+          ensure
+            stdin.close
+            ok = ok && wait_thr.value.success?
+            @lock.synchronize { @playing_pid = nil if @playing_pid == wait_thr.pid }
+          end
+        end
+        ok
+      end
+
+      def stream_utterance(values, voice_name, style_config)
+        player_path, player_args = stream_player
+        return false unless player_path
+
+        spawn_opts = Master::Ops::ProcessSpawn.options(out: File::NULL, err: File::NULL)
+        cmd = stream_cmd(player_path, player_args)
+        ok = pump_stream_pipe(cmd, spawn_opts, values, voice_name, style_config)
+        return stream_fallback(values) if !ok && generation_active?(values[:generation])
+
+        ok
+      end
+
+      # A stream truncated mid-sentence is dropped before playback, so the
+      # whole utterance is recovered the expensive way rather than half-spoken.
+      def stream_fallback(values)
+        warn_once("voice stream truncated, resynthesising")
+        path = synthesize(
+          values[:part],
+          voice: values[:voice],
+          style: values[:style],
+          rate: values[:rate],
+          pitch: values[:pitch],
+        )
+        return false unless path
+
+        play_or_fallback(path, values[:text], generation: values[:generation], voice: values[:voice])
+      ensure
+        delete_temp_audio(path) if defined?(path) && path
+      end
+
       def prefetch_enabled?
         return false unless ENV.fetch("MASTER_TTS_PREFETCH", "1") != "0"
         return false unless Speech.synthesis_mode.to_s == "classic"
@@ -345,11 +464,23 @@ module Master
         false
       end
 
-      def prepare_job(job)
+      def prepare_job(job, live: true)
         @lock.synchronize { @job_generations.delete(job.object_id) }
         values = decode_job(job)
         return PreparedAudio.new(**values, path: nil) unless generation_active?(values[:generation])
 
+        stream_prepared = prepare_stream_job(values) if live
+        return stream_prepared if stream_prepared
+
+        synthesize_job(values)
+      rescue StandardError => e
+        warn_once("playback synthesis failed — #{e.class}: #{e.message}")
+        PreparedAudio.new(**(values || decode_job(job)), path: nil)
+      end
+
+      # The whole-file lane behind the live one: make the audio, then drop it
+      # the moment the generation died under us instead of speaking stale text.
+      def synthesize_job(values)
         path = synthesize(
           values[:part],
           voice: values[:voice],
@@ -357,16 +488,9 @@ module Master
           rate: values[:rate],
           pitch: values[:pitch],
         )
-        return PreparedAudio.new(**values, path: nil) unless path
-        unless generation_active?(values[:generation])
-          delete_temp_audio(path)
-          return PreparedAudio.new(**values, path: nil)
-        end
-
-        PreparedAudio.new(**values, path:)
-      rescue StandardError => e
-        warn_once("playback synthesis failed — #{e.class}: #{e.message}")
-        PreparedAudio.new(**(values || decode_job(job)), path: nil)
+        active = path && generation_active?(values[:generation])
+        delete_temp_audio(path) if path && !active
+        PreparedAudio.new(**values, path: active ? path : nil)
       end
 
       def decode_job(job)
@@ -410,16 +534,32 @@ module Master
       end
 
       def consume_prepared(prepared)
-        return false unless prepared
-        return false unless prepared.path
-        return false unless generation_active?(prepared.generation)
+        return consume_stream_prepared(prepared) if prepared.is_a?(StreamingPrepared)
+        return false unless prepared&.path && generation_active?(prepared.generation)
 
         unless play_or_fallback(prepared.path, prepared.text, generation: prepared.generation, voice: prepared.voice)
-          warn_once("audio playback failed — #{player&.first || "no player or native speech"}")
-          return false
+          return playback_failed!
         end
         spoken(prepared.text) if prepared.last && generation_active?(prepared.generation)
         true
+      end
+
+      def playback_failed!
+        warn_once("audio playback failed — #{player&.first || "no player or native speech"}")
+        false
+      end
+
+      # A streamed utterance plays while it synthesises: the prepare thread
+      # already owns the player process, joining it is the whole consumption.
+      def consume_stream_prepared(prepared)
+        return false unless prepared.thread
+
+        prepared.thread.join
+        ok = prepared.thread[:ok] == true
+        if ok && prepared.last && generation_active?(prepared.generation)
+          spoken(prepared.text)
+        end
+        ok
       end
 
       def delete_temp_audio(path)
@@ -432,7 +572,9 @@ module Master
       end
 
       def cleanup_prepared(prepared)
-        path = prepared&.path
+        return unless prepared.respond_to?(:path)
+
+        path = prepared.path
         return unless path
         return unless path.start_with?("/tmp/m_tts_")
         return unless File.exist?(path)
@@ -445,6 +587,17 @@ module Master
       PrefetchedAudio = Data.define(
         :thread,
         :result_queue,
+      )
+
+      # One utterance whose synthesis and playback overlap — the prepare thread
+      # holds the player process and pours socket frames into its stdin.
+      StreamingPrepared = Data.define(
+        :job,
+        :text,
+        :part,
+        :last,
+        :generation,
+        :thread,
       )
 
       PreparedAudio = Data.define(

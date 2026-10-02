@@ -178,6 +178,59 @@ def synth(request, out_path)
   File.exist?(out_path) && File.size(out_path) > 0
 end
 
+STREAM_FRAME_BYTES = 8
+ZERO_FRAME = "\x00".b * STREAM_FRAME_BYTES
+
+# Wire v2, on request "stream":true — each audio chunk rb_edge_tts delivers is
+# written to the client the moment it arrives, 8-byte length-prefixed, and a
+# zero-length frame closes the stream clean. The client can start playing
+# before synthesis finishes instead of waiting for save_sync to collect the
+# whole mp3. The response still comes from a fork: the EM reactor cannot be
+# reused across requests (4b9da6d2d).
+def synth_streamed(request, client)
+  pid = Process.fork { stream_child(request, client) }
+  _pid, status = Process.wait2(pid)
+  status.success?
+rescue NotImplementedError, StandardError => e
+  Master::Trace::Dmesg.status("tts0", "stream fork unavailable, using subprocess, #{e.class}: #{e.message}", io: $stderr)
+  out = "/tmp/m_tts_#{SecureRandom.hex(8)}.mp3"
+  ok = synth_subprocess(request, out)
+  if ok
+    File.open(out, "rb") { |f| IO.copy_stream(f, client) }
+  end
+  ok
+ensure
+  File.unlink(out) if defined?(out) && out && File.exist?(out)
+end
+
+def stream_child(request, client)
+  begin
+    Process.setproctitle("tts-worker: stream")
+  rescue StandardError
+    nil
+  end
+  sent = stream_audio_frames(request, client)
+  client.write(ZERO_FRAME)
+  exit!(sent ? 0 : 1)
+rescue Errno::ENOTCONN, Errno::EPIPE, Errno::ECONNRESET
+  exit!(1)
+rescue StandardError => e
+  Master::Trace::Dmesg.status("tts0", "stream fork child error, #{e.class}: #{e.message}", io: $stderr)
+  exit!(1)
+end
+
+def stream_audio_frames(request, client)
+  sent = false
+  RbEdgeTTS::Communicate.new(request.text, request.voice, rate: request.rate, pitch: request.pitch).stream_sync.each do |chunk|
+    next unless chunk.type == "audio"
+
+    client.write([chunk.data.bytesize].pack("Q>"))
+    client.write(chunk.data)
+    sent = true
+  end
+  sent
+end
+
 def worker_env
   wipe = ENV.keys.to_h { |key| [key, nil] }
   wipe.merge(
@@ -349,6 +402,10 @@ if ARGV[0] == "--daemon"
         text: req["text"].to_s,
       )
       next if request.voice.empty? || request.text.empty?
+      if req["stream"]
+        synth_streamed(request, client)
+        next
+      end
       out = "/tmp/m_tts_#{SecureRandom.hex(8)}.mp3"
       ok = synth_forked(request, out)
       if ok

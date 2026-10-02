@@ -69,13 +69,23 @@ module Master
       # a complete voice path; do not mark the session degraded or spend 15s
       # trying to start an Edge worker the CLI does not need.
       if Voice::Speech.available? && (!$stdout.tty? || Voice::Playback.available?)
-        ENV.delete("MASTER_TTS_DEGRADED")
-        ENV.delete("MASTER_TTS_REASON")
+        clear_tts_degraded!
+        warm_tts_pool(root:)
         return true
       end
 
-      supervisor = Ground::ServiceSupervisor.new(root:)
-      result = supervisor.ensure(
+      result = supervise_tts(root:)
+      if result.ok? && result.value!.healthy?
+        clear_tts_degraded!
+        true
+      else
+        mark_tts_degraded!(result.ok? ? result.value!.message : result.message)
+        false
+      end
+    end
+
+    def supervise_tts(root:)
+      Ground::ServiceSupervisor.new(root:).ensure(
         name: "tts",
         start: -> { Voice::TtsSupervisor.ensure_daemon!(root:) },
         healthy: -> { Voice::Speech.edge_tts_ready? && Voice::TtsSupervisor.socket_alive?(Voice::TtsSupervisor.socket_path(root)) },
@@ -83,13 +93,29 @@ module Master
         window_seconds: 300,
         wait_seconds: 5,
       )
-      if result.ok? && result.value!.healthy?
-        ENV.delete("MASTER_TTS_DEGRADED")
-        ENV.delete("MASTER_TTS_REASON")
-        return true
-      end
+    end
 
-      reason = result.ok? ? result.value!.message : result.message
+    def clear_tts_degraded!
+      ENV.delete("MASTER_TTS_DEGRADED")
+      ENV.delete("MASTER_TTS_REASON")
+    end
+
+    # The early return above exists so boot does not block on the Edge worker.
+    # It also meant every session started with a cold pool, and the first
+    # spoken reply paid the 2.5s daemon spawn on top of synthesis (measured
+    # 2026-10-02). Warm on a thread: boot stays instant, the pool is ready by
+    # the time a reply speaks, and a failure here says nothing — the first
+    # speak re-runs ensure_daemon! and reports if it matters.
+    def warm_tts_pool(root:)
+      warm = Thread.new do
+        Voice::TtsSupervisor.ensure_daemon!(root:)
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "master_boot.tts_warm")
+      end
+      warm.name = "tts-warmup"
+    end
+
+    def mark_tts_degraded!(reason)
       ENV["MASTER_TTS_DEGRADED"] = "1"
       ENV["MASTER_TTS_REASON"] = reason.to_s[0, 160]
       blocker = Voice::Speech.edge_tts_blocker
@@ -99,7 +125,6 @@ module Master
       else
         Trace::Dmesg.status("voice0", "unavailable, /doctor")
       end
-      false
     end
 
     def emit_device_status

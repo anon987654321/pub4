@@ -80,6 +80,7 @@ module Master
           rate: style_config[:rate],
           pitch: style_config[:pitch],
           text: text.to_s,
+          stream: stream_wire_enabled?,
         )
       end
 
@@ -93,23 +94,122 @@ module Master
         File.socket?(sock_path) ? sock_path : nil
       end
 
+      # Wire v2: 8-byte length-prefixed audio chunks, zero-length frame = clean
+      # end. A stream ending at EOF without the zero frame was truncated by the
+      # daemon mid-synthesis; those bytes are dropped so the caller falls back
+      # to whole-file synthesis instead of speaking a severed sentence. A
+      # legacy daemon ignores "stream" and answers with raw mp3, which misreads
+      # as an absurd frame header — detected and consumed raw.
+      FRAME_HEADER_S = 8
+      FRAME_MAX_S = 1 << 23 # 8 MiB; an Edge chunk is kilobytes
+
+      # One framed edge response, whatever consumes it — a temp file for the
+      # whole-file path, a player's stdin for live playback. on_chunk fires
+      # per frame with the bytes written so far; stale_test is checked between
+      # frames so an interrupted reply stops pulling audio off the wire.
+      StreamTarget = Data.define(:io, :on_chunk, :stale_test) do
+        # Data fields init as keywords, so the sinks that only observe or only
+        # test staleness pass nil for the rest through here instead.
+        def self.build(io:, on_chunk: nil, stale_test: nil)
+          new(io:, on_chunk:, stale_test:)
+        end
+      end
+
       def stream_socket_response(sock_path, req, audio_path, timeout, on_chunk)
         Timeout.timeout(timeout) do
           UNIXSocket.open(sock_path) do |s|
             s.write("#{req}\n")
             File.open(audio_path, "wb") do |f|
-              loop do
-                begin
-                  chunk = s.readpartial(8192)
-                rescue EOFError
-                  break
-                end
-                f.write(chunk)
-                on_chunk&.call(f.pos)
-              end
+              clean = pump_socket_stream(s, StreamTarget.build(io: f, on_chunk:))
+              File.unlink(audio_path) rescue nil unless clean
+              clean
             end
           end
         end
+      end
+
+      def stream_socket_to_io(sock_path, req, timeout, target)
+        Timeout.timeout(timeout) do
+          UNIXSocket.open(sock_path) do |s|
+            s.write("#{req}\n")
+            pump_socket_stream(s, target)
+          end
+        end
+      end
+
+      # Live playback facade: one utterance into io, framed and chunk-clocked.
+      # Returns true when the stream ran clean.
+      def stream_edge_to_io(text:, voice_name:, style_config:, io:, stale_test: nil)
+        sock_path = resolve_socket_path
+        return false unless sock_path
+
+        req = build_socket_request(voice_name, style_config, text)
+        target = StreamTarget.build(io:, stale_test:)
+        stream_socket_to_io(sock_path, req, worker_timeout(text.to_s.length), target)
+      rescue Timeout::Error, StandardError => e
+        warn_tts("edge stream error: #{e.class}: #{e.message}")
+        false
+      end
+
+      # Wire v2 ("stream":true) is the default; MASTER_TTS_WIRE=raw restores
+      # the v1 contract save_sync-and-copy against a daemon that predates it.
+      def stream_wire_enabled?
+        ENV.fetch("MASTER_TTS_WIRE", "stream") != "raw"
+      end
+
+      def pump_socket_stream(sock, target)
+        sink = target.io
+        written = 0
+        loop do
+          frame = read_frame(sock, sink)
+          return false if frame == :eof
+          return true if frame == :raw || frame == :clean
+
+          sink.write(frame[1])
+          written += frame[1].bytesize
+          target.on_chunk&.call(written)
+          return false if target.stale_test&.call
+        end
+      rescue Errno::EPIPE, Errno::ENOTCONN, Errno::ECONNRESET
+        false
+      end
+
+      # The next frame from the wire: an integer-length body for the common
+      # audio case, :clean for the zero terminator, :eof when the daemon hung
+      # up without one (a truncated stream), :raw when the bytes were really
+      # a legacy daemon's whole-file answer — which consume_raw_response has
+      # already forwarded untouched.
+      def read_frame(sock, sink)
+        header = read_socket_fill(sock, FRAME_HEADER_S)
+        return :eof unless header
+
+        size = header.unpack1("Q>")
+        return :clean if size.zero?
+        return consume_raw_response(header, sock, sink) if size > FRAME_MAX_S
+
+        body = read_socket_fill(sock, size)
+        return :eof unless body
+
+        [:audio, body]
+      end
+
+      # A legacy daemon ignores "stream" and answers with raw mp3 — the length
+      # prefix misreads as an absurd header. The bytes on the wire are already
+      # the whole answer; forward them untouched.
+      def consume_raw_response(header, sock, sink)
+        sink.write(header)
+        IO.copy_stream(sock, sink)
+        :raw
+      end
+
+      def read_socket_fill(sock, want)
+        buf = +"".b
+        while buf.bytesize < want
+          buf << sock.readpartial(want - buf.bytesize)
+        end
+        buf
+      rescue EOFError
+        buf.empty? ? nil : buf
       end
 
       def synthesize_espeak(text)

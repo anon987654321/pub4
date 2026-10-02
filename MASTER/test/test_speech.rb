@@ -364,34 +364,80 @@ class TestSpeech < Minitest::Test
   end
 
   def test_synthesize_edge_socket_treats_eof_as_success
-    path = File.join(Dir.tmpdir, "m3_socket_eof_tts_test.mp3")
-    audio = "fake-mp3-bytes"
-    Dir.mktmpdir("master_tts_sock") do |root|
-      socket_path = File.join(root, "tts.sock")
-      server = UNIXServer.new(socket_path)
-      server_thread = Thread.new do
-        client = server.accept
-        line = client.gets
-        client.write(audio)
-        client.close
-        line
-      end
-      Master::Voice::TtsSupervisor.stub(:next_socket, socket_path) do
-        result = Master::Voice::Speech.synthesize_edge_socket(
-          text: "hello",
-          voice_name: "en-GB-RyanNeural",
-          style_config: { rate: "+0%", pitch: "+0Hz" },
-          audio_path: path,
-        )
-        assert_equal path, result
-        assert_equal audio, File.binread(path)
-      end
-      server_thread.join
-    ensure
-      server&.close
+    wire = ->(client) { client.write("fake-mp3-bytes") }
+    result, _path, bytes = with_edge_stub_server(wire)
+    assert bytes, "a whole-file legacy answer must resolve to an audio path"
+    assert_equal "fake-mp3-bytes", bytes
+  end
+
+  # Wire v2: a daemon answering "stream":true sends 8-byte length-prefixed
+  # chunks and a zero-length frame. The file must hold exactly the payloads,
+  # assembled as they arrived. A legacy daemon that ignores "stream" and
+  # closes whole-file is still accepted — the eof test above covers it.
+  def test_synthesize_edge_socket_assembles_framed_stream
+    wire = lambda do |client|
+      client.write([5].pack("Q>"))
+      client.write("fake-")
+      client.write([4].pack("Q>"))
+      client.write("mp3-")
+      client.write([0].pack("Q>"))
     end
+    result, _path, bytes = with_edge_stub_server(wire)
+    assert bytes, "a clean framed stream must resolve to an audio path"
+    assert_equal "fake-mp3-", bytes
+  end
+
+  # A stream that ends without the zero frame was severed mid-synthesis. The
+  # partial bytes are dropped so the caller falls back instead of speaking a
+  # severed sentence.
+  def test_synthesize_edge_socket_drops_truncated_stream
+    wire = lambda do |client|
+      client.write([5].pack("Q>"))
+      client.write("fake-")
+    end
+    result, path, bytes = with_edge_stub_server(wire)
+    assert_nil result
+    assert_nil bytes, "a truncated stream must be dropped, not half-spoken"
+    refute File.exist?(path)
+  end
+
+  # Serves one synthesized utterance to the daemon wire, whatever shape the
+  # test writes through the client. Returns [result, audio_path, wire_bytes] —
+  # the temp audio is deleted on cleanup, so the bytes must be read here.
+  def with_edge_stub_server(client_io)
+    root = Dir.mktmpdir("master_tts_sock")
+    server = UNIXServer.new(File.join(root, "tts.sock"))
+    audio_path = File.join(Dir.tmpdir, "m3_#{$$}_tts.mp3")
+    File.delete(audio_path) if File.exist?(audio_path)
+    server_thread = serve_once(server, client_io)
+    result = Master::Voice::TtsSupervisor.stub(:next_socket, server.path) do
+      Master::Voice::Speech.synthesize_edge_socket(
+        text: "hello",
+        voice_name: "en-GB-RyanNeural",
+        style_config: { rate: "+0%", pitch: "+0Hz" },
+        audio_path:,
+      )
+    end
+    server_thread.join
+    [result, audio_path, audio_bytes(audio_path)]
   ensure
-    File.delete(path) if File.exist?(path)
+    server&.close
+    FileUtils.remove_entry(root) if defined?(root) && root
+    File.delete(audio_path) if defined?(audio_path) && audio_path && File.exist?(audio_path)
+  end
+
+  def audio_bytes(path)
+    File.exist?(path) ? File.binread(path) : nil
+  end
+
+  def serve_once(server, client_io)
+    Thread.new do
+      client = server.accept
+      client.gets
+      client_io.call(client)
+    ensure
+      client.close rescue nil
+    end
   end
 
   def test_synthesize_streaming_falls_back_to_oneshot_when_socket_fails
