@@ -169,6 +169,41 @@ class TestPhantomRecovery < Minitest::Test
     def tool_available_for_context?(_) = true
   end
 
+  class StreamingReactHarness < ReactHarness
+    def initialize(replies)
+      super()
+      @replies = replies.dup
+    end
+
+    def send_ruby_llm(*, stream:, &blk)
+      reply = @replies.shift || ""
+      blk.call(reply) if stream && blk
+      Master::Result.ok(reply)
+    end
+  end
+
+  def test_react_tool_call_markup_never_reaches_the_user_stream
+    harness = StreamingReactHarness.new([
+      %(<tool_call>{"name": "NilTool", "args": {}}</tool_call>),
+      "the final answer",
+    ])
+    seen = []
+    Master::CLI::SubagentContext.stub(:permits?, true) do
+      Master::Ground::Tool::Profile.stub(:allow?, true) do
+        result = harness.send(
+          :react_tool_loop,
+          "m",
+          [{ role: "user", content: "go" }],
+          sys: nil,
+          stream: true,
+        ) { |chunk| seen << chunk }
+        assert_predicate result, :ok?
+      end
+    end
+
+    assert_equal ["the final answer"], seen
+  end
+
   def test_the_react_loop_stops_after_two_empty_tool_rounds
     harness = ReactHarness.new
     result = Master::CLI::SubagentContext.stub(:permits?, true) do
