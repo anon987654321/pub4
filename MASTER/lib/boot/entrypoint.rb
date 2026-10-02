@@ -83,6 +83,24 @@ module Master
 
         current = Gem::Version.new(RUBY_VERSION)
         pinned = Gem::Version.new(expected)
+
+        # A version pin alone is not enough: two installations can carry the
+        # same RUBY_VERSION while their gem homes disagree (a homebrew ruby
+        # beside an rbenv one, each with its own default gem dir — a system
+        # thor beside bundler's vendored copy raises a superclass mismatch, and
+        # native extensions linked against the other installation LoadError).
+        # When the pinned rbenv binary exists, exec into it so bundle
+        # resolves from one gem home under one interpreter.
+        if (rbenv_root = env["RBENV_ROOT"] || File.expand_path("~/.rbenv"))
+          direct = File.join(rbenv_root, "versions", expected, "bin", "ruby")
+          if File.executable?(direct) && !same_file?(RbConfig.ruby, direct)
+            Master::Trace::Dmesg.status(
+              "ruby0", "switching #{RbConfig.ruby} to #{direct}", io: out
+            )
+            exec(direct, File.expand_path(program), *argv)
+          end
+        end
+
         return if current == pinned
         return if OPENBSD_RUBY_PATTERN.match?(RUBY_VERSION) && RUBY_PLATFORM.include?("openbsd")
 
@@ -101,6 +119,14 @@ module Master
       rescue ArgumentError
         Master::Trace::Dmesg.status("ruby0", "invalid .ruby-version, #{version_file}", io: out)
         exit 78
+      end
+
+      def same_file?(a, b)
+        return File.identical?(a, b) if File.exist?(a)
+
+        false
+      rescue StandardError
+        false
       end
     end
   end
