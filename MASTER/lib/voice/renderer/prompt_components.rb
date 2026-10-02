@@ -173,8 +173,12 @@ module Master
         # and working path still get priority over a theoretical line length.
         def prompt_path_budget(suffix_length: 0)
           screen = TTY::Screen.width
-          target = Master::Design.measure_ideal_ch(root: @config["root"] || Master::ROOT).to_i
-          available = [screen, PROMPT_MAX_CHARS].min - suffix_length - 1
+          contract = Master::Design.face_interface(root: @config["root"] || Master::ROOT)
+          target = contract.dig("prompt", "measure_ch").to_i
+          target = Master::Design.measure_ideal_ch(root: @config["root"] || Master::ROOT).to_i if target <= 0
+          max_ch = contract.dig("prompt", "max_ch").to_i
+          max_ch = PROMPT_MAX_CHARS if max_ch <= 0
+          available = [screen, max_ch].min - suffix_length - 1
           [available, target - suffix_length - 1, PROMPT_PATH_MAX].min
             .clamp(1, PROMPT_PATH_MAX)
         rescue StandardError
