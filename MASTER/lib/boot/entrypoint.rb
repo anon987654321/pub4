@@ -3,6 +3,7 @@
 require "rubygems"
 require_relative "dependency_manager"
 require_relative "../trace/dmesg"
+require_relative "../operator/environment"
 
 module Master
   module Boot

@@ -11,6 +11,14 @@ require_relative "../lib/operator/ruby_runner"
 class TestBinRuby < Minitest::Test
   BIN = File.expand_path("../bin/ruby", __dir__)
 
+  def test_openbsd_lane_is_allowed_by_the_wrapper
+    source = File.read(BIN)
+
+    assert_includes source, "$ACTUAL != $PINNED_VERSION"
+    assert_includes source, "$ACTUAL == 3.3.* || $ACTUAL == 3.4.*"
+    assert_includes source, "OpenBSD MASTER accepts ruby33/ruby34"
+  end
+
   def test_it_execs_a_ruby_with_the_arguments_intact
     out, err, status = unbundled { Open3.capture3(BIN, "-e", "print RUBY_VERSION, ' ', ARGV.join(',')", "--", "a b", "c") }
 
