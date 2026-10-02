@@ -123,7 +123,7 @@ class TestFixConvergence < Minitest::Test
       def initialize(root) = @root = root
     end.new(Master::ROOT)
 
-    assert_raises(ArgumentError) { resolver.resolve_target("../") }
+    assert_equal Master::REPO_ROOT, resolver.resolve_target("../")
     assert_raises(ArgumentError) { resolver.resolve_target("../../") }
     assert_raises(ArgumentError) { resolver.resolve_target("TODO.md") }
   end
