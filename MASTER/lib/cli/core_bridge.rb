@@ -11,7 +11,7 @@ module Master
       module_function
 
       def run(goal, root:, bus: nil, model: nil, model_id: nil, max_turns: 40, on_turn: nil, memory: nil,
-              container: nil, risk: :low)
+              container: nil, risk: :low, capabilities: nil)
         transcript = []
         observer = build_turn_observer(transcript, root:, bus:, on_turn:)
 
@@ -21,7 +21,7 @@ module Master
         seed_continuation(memory, mission.record)
         begin
           mission.transition!(:plan, plan: Master::Ground::ActivePlan.read(root) || "fold plan: constitutional turn loop")
-          capabilities = Master::Core::Capabilities.for(:fix)
+          capabilities ||= Master::Core::Capabilities.for(:fix)
           world = build_world(root:, container:, capabilities:)
           mission.transition!(:execute)
           done = build_fold(root:, model:, memory:, world:, max_turns:, observer:, capabilities:).run(goal)
