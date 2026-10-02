@@ -7,7 +7,9 @@ Master::Boot::Entrypoint.prepare!(root: File.expand_path("..", __dir__))
 ENV["MASTER_DEVICE_AGENT"] = "0"
 ENV["MASTER_WEB"] = "0"
 ENV["MASTER_SKIP_TTS"] = "0"
-ENV["MASTER_CLI_SPEAK"] = "0"
+# Interactive voice is enabled by default; MASTER_SKIP_TTS remains the explicit
+# opt-out. Do not set MASTER_CLI_SPEAK=0 here.
+ENV["MASTER_CLI_SPEAK"] = "1"
 
 ROOT = File.expand_path("..", __dir__)
 Dir.chdir(ROOT)
