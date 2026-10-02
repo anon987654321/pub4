@@ -346,6 +346,7 @@ module Master
       end
 
       def prepare_job(job)
+        @lock.synchronize { @job_generations.delete(job.object_id) }
         values = decode_job(job)
         return PreparedAudio.new(**values, path: nil) unless generation_active?(values[:generation])
 
