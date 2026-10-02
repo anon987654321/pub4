@@ -170,7 +170,7 @@ module Master
         # keeps its whole output under its own header, because the failures a
         # baseline compares are named deep in it, not in the last lines.
         def proof_runner(abs)
-          chain = Operator::GateChain
+          chain = ::Operator::GateChain
           if abs == Master::RAILS_ROOT || abs.start_with?("#{Master::RAILS_ROOT}/")
             return ["rails gates", -> { rails_proof(*chain.rails_gates(scan_only: true)) }]
           end

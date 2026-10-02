@@ -308,6 +308,15 @@ class TestFixConvergence < Minitest::Test
     ENV["MASTER_FIX_DEEP_TRACE"] = saved if saved
   end
 
+  def test_proof_resolves_the_foreign_operator_namespace
+    pass = Master::CLI::Pipeline::Pass.allocate
+    name, runner = pass.send(:proof_runner, Master::ROOT)
+
+    assert_equal "MASTER", name
+    assert_respond_to runner, :call
+    assert_same ::Operator::GateChain, Object.new.tap { runner = nil } rescue ::Operator::GateChain
+  end
+
   def test_fix_wraps_the_full_lifecycle_in_trace_verbosity
     levels = []
     fix_loop = Object.new

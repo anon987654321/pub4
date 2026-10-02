@@ -35,7 +35,7 @@ module Master
             cost: @cost,
             ts: Time.now.to_i,
           }
-          write_atomic(@path, JSON.generate(data))
+          write_atomic(@path, JSON.generate(json_safe(data)))
           save_forks!
         end
 
@@ -83,7 +83,22 @@ module Master
               [key.to_s, { messages: conversation[:messages], token_est: conversation[:token_est], name: conversation[:name], input_tokens: conversation[:input_tokens] }]
             end.to_h
           end
-          write_atomic(forks_path, JSON.generate(data))
+          write_atomic(forks_path, JSON.generate(json_safe(data)))
+        end
+
+        def json_safe(value)
+          case value
+          when String
+            value.encode("UTF-8", invalid: :replace, undef: :replace, replace: "\uFFFD")
+          when Hash
+            value.to_h { |key, item| [json_safe(key), json_safe(item)] }
+          when Array
+            value.map { |item| json_safe(item) }
+          when Symbol
+            value.to_s
+          else
+            value
+          end
         end
 
         def load_forks!

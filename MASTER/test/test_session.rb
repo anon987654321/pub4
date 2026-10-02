@@ -50,6 +50,20 @@ class TestSession < Minitest::Test
     end
   end
 
+  def test_save_replaces_invalid_utf8_without_crashing
+    Dir.mktmpdir("session_utf8") do |dir|
+      session = Master::Trace::Session.new(root: dir)
+      invalid = "hello ".dup.force_encoding("UTF-8")
+      invalid << "\xFF".b.force_encoding("UTF-8")
+      session.add_message(role: :user, content: invalid)
+
+      assert_silent { session.save! }
+
+      data = JSON.parse(File.read(File.join(dir, ".master", "session.json")))
+      assert_equal "hello \uFFFD", data["messages"].first["content"]
+    end
+  end
+
   def test_record_cost_bills_the_same_tokens_the_meter_shows
     Dir.mktmpdir("session_cost") do |dir|
       session = Master::Trace::Session.new(root: dir)
