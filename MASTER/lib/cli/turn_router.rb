@@ -311,7 +311,7 @@ module Master
         ctx = unwrap(Stages::DestructiveReview.new(deliberation: container[:deliberation], event_bus: bus).call(ctx))
         return ctx if ctx.is_a?(Master::Result)
 
-        ctx = unwrap(Stages::Execute.new.call(ctx))
+        ctx = unwrap(Stages::Execute.new(event_bus: bus).call(ctx))
         return ctx if ctx.is_a?(Master::Result)
 
         Stages::Render.new(
