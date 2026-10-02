@@ -30,12 +30,10 @@ module Master
           ctx = strip_confirm_flag(ctx) if @review_gate
           return @handler.call(ctx) if @handler
 
-          @receiver.public_send(@method_name, *@args, **@kwargs.merge(ctx:))
-        rescue ArgumentError => e
-          return @receiver.public_send(@method_name, *@args, **@kwargs) if e.message.include?("unknown keyword: :ctx")
-          raise unless keyword_dependency_error?(e)
+          method = @receiver.method(@method_name)
+          return method.call(*@args, **invoke_keywords(ctx, method.parameters)) if positional_parameters?(method.parameters)
 
-          @receiver.public_send(@method_name, **dependency_kwargs(ctx))
+          method.call(**dependency_kwargs(ctx))
         end
 
         private
@@ -55,9 +53,16 @@ module Master
             "re-run with #{CONFIRM_FLAG} to proceed"
         end
 
-        def keyword_dependency_error?(error)
-          error.message.include?("wrong number of arguments") ||
-            error.message.include?("missing keywords")
+        def positional_parameters?(parameters)
+          parameters.any? { |type, _name| %i[req opt rest].include?(type) }
+        end
+
+        def invoke_keywords(ctx, parameters)
+          keywords = @kwargs.dup
+          accepts_ctx = parameters.any? do |type, name|
+            type == :keyrest || (%i[key keyreq].include?(type) && name == :ctx)
+          end
+          accepts_ctx ? keywords.merge(ctx:) : keywords
         end
 
         def dependency_kwargs(ctx)

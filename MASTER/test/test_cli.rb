@@ -115,6 +115,19 @@ class TestCLI < Minitest::Test
     assert_match(/\Adry-run: 1 total violations \(no changes made\)/, output)
   end
 
+  def test_command_does_not_retry_a_handler_that_raises_argument_error
+    calls = 0
+    receiver = Object.new
+    receiver.define_singleton_method(:dispatch_example) do |**_kwargs|
+      calls += 1
+      raise ArgumentError, "wrong number of arguments"
+    end
+    command = Master::CLI::CommandRegistry::Command.new(receiver, :dispatch_example)
+
+    assert_raises(ArgumentError) { command.call(args: "ok") }
+    assert_equal 1, calls
+  end
+
   def test_command_maps_positional_dependencies_to_keyword_handler
     receiver = Module.new do
       module_function
