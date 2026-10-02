@@ -140,7 +140,7 @@ module Master
 
         model = cfg["mlx_model"] || "mlx-community/Kokoro-82M-bf16"
         voice = cfg["mlx_voice"] || "af_bella"
-        speed = (cfg["mlx_speed"] || 1.15).to_f
+        speed = ((cfg["mlx_speed"] || 1.15).to_f * rate_factor(rate)).clamp(0.80, 1.20)
         enriched = Enrich.apply(text, emotion, tags: cfg["paralinguistic_tags"] == true)
         out_dir = File.dirname(out_path)
         FileUtils.mkdir_p(out_dir)
@@ -152,11 +152,11 @@ module Master
         unless model.downcase.include?("chatterbox")
           bin = cfg["mlx_bin"].to_s.strip
           bin = "mlx_audio.tts.generate" if bin.empty?
-          attempted, result = try_mlx_cli(bin, model, enriched, voice, speed, out_dir, out_path)
+          attempted, result = try_mlx_cli(bin, model, enriched, voice, speed, out_dir, out_path, pitch)
           return result if attempted
         end
 
-        try_mlx_python_api(
+        result = try_mlx_python_api(
           py, model, enriched, voice, speed, out_path,
           emotion:,
           rate:,
@@ -164,12 +164,13 @@ module Master
           reference_clip: cfg["reference_clip"],
           cfg:,
         )
+        result ? realize_pitch(result, pitch) : false
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "Engines.synth_mlx")
         false
       end
 
-      def try_mlx_cli(bin, model, enriched, voice, speed, out_dir, out_path)
+      def try_mlx_cli(bin, model, enriched, voice, speed, out_dir, out_path, pitch)
         return [false, nil] unless system("which", bin, out: File::NULL, err: File::NULL)
 
         ok = system(
@@ -178,7 +179,10 @@ module Master
           out: File::NULL, err: File::NULL
         )
         candidate = Dir.glob(File.join(out_dir, "master*.wav")).max_by { |f| File.mtime(f) }
-        return [true, convert_to_mp3(candidate, out_path)] if ok && candidate
+        if ok && candidate
+          converted = convert_to_mp3(candidate, out_path)
+          return [true, converted ? realize_pitch(out_path, pitch) : false]
+        end
 
         [false, nil]
       end
@@ -244,7 +248,10 @@ module Master
 
         py = chatterbox_py_script(enriched, device, ref, wav, exaggeration: exag, cfg_weight:)
         _out, _err, status = Master::Io::Exec.capture3("python3", "-c", py)
-        return convert_to_mp3(wav, out_path) if status.success? && File.size?(wav)
+        if status.success? && File.size?(wav)
+          converted = convert_to_mp3(wav, out_path)
+          return realize_audio_prosody(out_path, rate:, pitch:) if converted && File.size?(out_path)
+        end
 
         false
       rescue StandardError => e
@@ -267,6 +274,79 @@ module Master
           wav = model.generate(#{enriched.inspect}, **kwargs)
           ta.save(#{wav.inspect}, wav, model.sr)
         PY
+      end
+
+      def rate_factor(rate)
+        percent = rate.to_s.delete("%").to_f
+        (1.0 + (percent / 100.0)).clamp(0.80, 1.20)
+      end
+
+      def pitch_delta_hz(pitch)
+        pitch.to_s.delete("Hz").to_f
+      end
+
+      def pitch_ratio(pitch)
+        delta = pitch_delta_hz(pitch)
+        return 1.0 if delta.zero?
+
+        reference = Speech::Policy.prosody.fetch("pitch_reference_hz", 180).to_f.clamp(120.0, 260.0)
+        ((reference + delta) / reference).clamp(0.85, 1.15)
+      end
+
+      def realize_audio_prosody(path, rate:, pitch:)
+        return path unless path && File.size?(path)
+        return path if rate_factor(rate) == 1.0 && pitch_delta_hz(pitch).zero?
+        return path unless ffmpeg?
+
+        filters = []
+        filters << "atempo=#{format("%.5f", rate_factor(rate))}" if rate_factor(rate) != 1.0
+        if pitch_delta_hz(pitch) != 0.0 && rubberband?
+          filters << "rubberband=pitch=#{format("%.6f", pitch_ratio(pitch))}"
+        end
+        return path if filters.empty?
+
+        out = path.sub(/\.mp3\\z/, "_prosody.mp3")
+        ok = system(
+          "ffmpeg", "-y", "-i", path, "-af", filters.join(","),
+          "-codec:a", "libmp3lame", "-q:a", "2", out,
+          out: File::NULL, err: File::NULL,
+        )
+        return path unless ok && File.size?(out)
+
+        File.delete(path) if path != out && File.exist?(path)
+        out
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "Engines.realize_audio_prosody")
+        path
+      end
+
+      def realize_pitch(path, pitch)
+        return path if pitch_delta_hz(pitch).zero?
+        return path unless path && File.size?(path) && ffmpeg? && rubberband?
+
+        out = path.sub(/\.mp3\\z/, "_pitch.mp3")
+        ok = system(
+          "ffmpeg", "-y", "-i", path,
+          "-af", "rubberband=pitch=#{format("%.6f", pitch_ratio(pitch))}",
+          "-codec:a", "libmp3lame", "-q:a", "2", out,
+          out: File::NULL, err: File::NULL,
+        )
+        return path unless ok && File.size?(out)
+
+        File.delete(path) if path != out && File.exist?(path)
+        out
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "Engines.realize_pitch")
+        path
+      end
+
+      def rubberband?
+        return @rubberband unless @rubberband.nil?
+
+        out, status = Master::Io::Exec.capture2("ffmpeg", "-filters", err: File::NULL)
+        @rubberband = status.success? && out.to_s.lines.any? { |line| line.include?("rubberband") }
+      rescue StandardError
+        @rubberband = false
       end
 
       def synth_edge(text, out_path, voice, rate, pitch)
