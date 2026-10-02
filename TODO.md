@@ -174,6 +174,15 @@ the "One chrome", ad system and layout sections bring back for a decision.
 
 ## MASTER
 
+### Interactive interface convergence — 2026-10-02
+
+- **One MASTER interface.** CLI, web and voice should consume one UI/state contract and one face language. No separate interaction model, wording, status grammar or visual vocabulary should survive merely because the transport differs.
+- **Speech-first operator control.** MASTER must understand ordinary spoken work requests, execute them through the same operator path as typed requests, speak concise professional replies, detect ambiguity, ask one precise spoken question when required, and never require “press Enter” to finish speech. Keyboard input remains a fallback, not a prerequisite.
+- **TTY as a first-class surface.** The CLI should borrow the strongest shell ergonomics without copying their ornament: ksh/ash restraint, zsh line editing and history, fish suggestions and completion, Oh My Zsh’s useful context, and Starship’s modular information budget. The prompt stays small, stable and immediately writable.
+- **Working-state line.** Keep one ASCII `*` line directly below the shell prompt. MASTER may animate `* + x +` with elapsed time while working, then return the same line to the operator for typing. It must never repaint across wrapped input or leave cursor garbage in scrollback.
+- **Quiet source.** Reduce line noise in MASTER and STUDIO source by preferring named intermediate values, multiline data and maintained parsing/formatting libraries over cryptic concatenation, regex-heavy rewriting and clever one-liners. AST- or parser-backed transformations should be the default where structure exists; hardcoded lexical fallbacks need an explicit reason.
+- **Dilla UI sound layer.** Add small STUDIO/dilla-derived M4L-style device emulations for MASTER boot, listening, working, success, error and other meaningful state changes. They should feel like instruments: short, restrained, level-matched and declared from one sound vocabulary rather than scattered effect code.
+
 ### Instruments and /fix — found 2026-09-25
 
 - **21 ratchet rows are off.** `bin/operator measure` on 2026-09-25: 19 OVER
