@@ -103,7 +103,10 @@ module Operator
       # nothing — and until this read existed, `rule_ceilings` was a key with a
       # writer and no reader, which is the defect this repo has most of.
       recorded_rules = Array(recorded["rule_ceilings"])
-      unless recorded_rules.empty? || recorded_rules == DESIGN_RULES.sort
+      # Compared as sets, not as arrays: data/design_baseline.yml stores the
+      # list unsorted, so a plain == reported a changed rule set with an empty
+      # added/removed diff — a verdict about ordering, not about the rules.
+      unless recorded_rules.empty? || recorded_rules.sort == DESIGN_RULES.sort
         added = DESIGN_RULES.sort - recorded_rules
         gone = recorded_rules - DESIGN_RULES.sort
         puts "design_baseline: rule set has changed since the baseline was recorded — " \
@@ -113,6 +116,13 @@ module Operator
 
       Master::Trace::Dmesg.attach("design0", "master0", "#{total} violation(s), ceiling #{recorded_total || "unrecorded"}")
       current.sort.each { |app, count| Master::Trace::Dmesg.status("design0", "#{app}, #{count}, ceiling #{recorded.dig("apps", app) || "unrecorded"}") }
+
+      # The machine-readable verdict line, last. Two consumers match it — the
+      # ratchet stage's /design_baseline: (\d+) violation/ and gate_chain's
+      # verdict scan, which takes the last bare "name:" line — and a7a8cf4b8
+      # dropped it in favour of the dmesg detail above, leaving both reading
+      # the current count as "?" and the ratchet row unreadable.
+      puts "design_baseline: #{total} violation(s) (ceiling #{recorded_total || "unrecorded"})"
 
       if ratchet
         File.write(CEILING, { "total" => total, "apps" => current.sort.to_h,
