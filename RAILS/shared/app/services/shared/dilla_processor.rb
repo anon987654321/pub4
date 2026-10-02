@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "operator/deploy_paths"
+require_relative "../../../contracts/studio"
 require "rbconfig"
 require "fileutils"
 require "open3"
@@ -15,7 +15,7 @@ module Shared
     module_function
 
     def script
-      Operator::DeployPaths.dilla_script
+      Contracts::Studio.dilla_script
     end
 
     def available?

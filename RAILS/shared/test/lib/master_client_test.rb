@@ -1,12 +1,14 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
-require_relative "../../../app/services/shared/master_client"
+require "json"
+require "net/http"
+require_relative "../../../contracts/master_client"
 
 class MasterClientTest < Minitest::Test
   def test_health_uses_ingress_health
     calls = []
-    client = Shared::MasterClient.new(base_url: "https://master.test", token: "t" * 16)
+    client = Contracts::MasterClient::Client.new(base_url: "https://master.test", token: "t" * 16)
 
     client.stub(:get, ->(path) { calls << path; { "ok" => true } }) do
       assert client.available?
@@ -17,7 +19,7 @@ class MasterClientTest < Minitest::Test
 
   def test_turn_uses_ingress_webhook
     calls = []
-    client = Shared::MasterClient.new(base_url: "https://master.test", token: "t" * 16)
+    client = Contracts::MasterClient::Client.new(base_url: "https://master.test", token: "t" * 16)
 
     client.stub(:post, lambda { |path, body|
       calls << [path, body]
@@ -41,8 +43,8 @@ class MasterClientTest < Minitest::Test
     ENV["MASTER_BRIDGE_TOKEN"] = "legacy-bridge-token"
     ENV["MASTER_INTERNAL_TOKEN"] = "internal-token"
 
-    assert_equal "", Shared::MasterClient.token
-    refute Shared::MasterClient.configured?
+    assert_equal "", Contracts::MasterClient.token
+    refute Contracts::MasterClient.configured?
   ensure
     previous.each { |k, v| v ? ENV[k] = v : ENV.delete(k) }
   end

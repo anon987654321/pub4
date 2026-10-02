@@ -16,8 +16,8 @@ GATE_UNIT = "gates0"
 GATE_PARENT = ENV.fetch("PUB4_DEPLOY_APP", "rails")
 SUBPROCESS_INCONCLUSIVE = 3
 
-$LOAD_PATH.unshift(ROOT, File.join(ROOT, "OPENBSD", "lib"), GATES_DIR)
-require File.join(ROOT, "OPENBSD", "lib", "gate_result")
+$LOAD_PATH.unshift(ROOT, GATES_DIR)
+require File.join(ROOT, "MASTER", "gates", "support", "gate_result")
 require File.join(ROOT, "OPENBSD", "lib", "gate_ledger")
 require File.join(ROOT, "MASTER", "lib", "trace", "dmesg")
 

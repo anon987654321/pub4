@@ -42,7 +42,7 @@ require "rbconfig"
 require "shellwords"
 require "time"
 require "yaml"
-require_relative "../../../MASTER/lib/ops/process_spawn"
+require_relative "process_spawn"
 require_relative "../royksopp"
 
 module Livesets
@@ -977,7 +977,7 @@ module Livesets
 
     pid = Process.spawn("/bin/zsh", "-c",
                         "#{cmd} -f wav - 2>/dev/null | #{FFPLAY} -nodisp -autoexit -loglevel quiet -i - 2>/dev/null",
-                        **Master::Ops::ProcessSpawn.options(pgroup: true))
+                        **Dilla::ProcessSpawn.options(pgroup: true))
     ticker = Thread.new { transport!(Process.clock_gettime(Process::CLOCK_MONOTONIC)) }
     Process.wait(pid)
     ticker.kill
@@ -1801,7 +1801,7 @@ module Livesets
     sets = name ? [name] : ROTATION
     sets.cycle do |set|
       pid = Process.spawn(RbConfig.ruby, File.join(D, "dilla.rb"), "live", "set", set,
-                         **Master::Ops::ProcessSpawn.options(pgroup: true))
+                         **Dilla::ProcessSpawn.options(pgroup: true))
       trap("INT") { interrupt!(pid) }
       Process.wait(pid)
       break if @stopping
@@ -2140,7 +2140,7 @@ module LiveSynth
     stage = Stage.new(rate:, rng: score.rng)
     %w[TERM INT].each { |signal| Signal.trap(signal) { stage.stop! } }
     log("#{score.describe} at #{rate} Hz -- `ruby dilla.rb live stop` to end")
-    IO.popen(command, "wb", **Master::Ops::ProcessSpawn.options(pgroup: true)) { |sink| stage.run(score, sink, seconds:) }
+    IO.popen(command, "wb", **Dilla::ProcessSpawn.options(pgroup: true)) { |sink| stage.run(score, sink, seconds:) }
     log("stopped, #{stage.meter}")
   rescue Errno::EPIPE
     log("the player closed")
@@ -3341,7 +3341,7 @@ module LiveSynth
       stop!
       FileUtils.mkdir_p(home)
       pid = Process.spawn(RbConfig.ruby, engine, "live", *args,
-                        **Master::Ops::ProcessSpawn.options(chdir: Livesets::D, in: File::NULL,
+                        **Dilla::ProcessSpawn.options(chdir: Livesets::D, in: File::NULL,
                                                            out: [log_file, "a"], err: [:child, :out], pgroup: true))
       Process.detach(pid)
       pid

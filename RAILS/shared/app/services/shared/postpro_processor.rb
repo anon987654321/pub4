@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "operator/deploy_paths"
+require_relative "../../../contracts/studio"
 require "rbconfig"
 require "fileutils"
 
@@ -12,7 +12,7 @@ module Shared
     module_function
 
     def script
-      Operator::DeployPaths.postpro_script
+      Contracts::Studio.postpro_script
     end
 
     def available?

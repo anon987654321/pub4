@@ -4,7 +4,7 @@ require "digest"
 require "fileutils"
 require "json"
 require "open-uri"
-require "operator/deploy_paths"
+require_relative "../../../contracts/studio"
 require "tmpdir"
 require "time"
 
@@ -73,7 +73,7 @@ module Shared
       end
 
       def postpro_script
-        Operator::DeployPaths.postpro_script&.to_s
+        Contracts::Studio.postpro_script&.to_s
       end
 
       def ledger_path

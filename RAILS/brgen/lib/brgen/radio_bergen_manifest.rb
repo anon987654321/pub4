@@ -1,17 +1,20 @@
 # frozen_string_literal: true
 
-require "operator/deploy_paths"
+require "yaml"
+require "pathname"
+require_relative "../../../contracts/master_client"
+require_relative "../../../contracts/studio"
 
 module Brgen
   # Shared Radio Bergen manifest loader — pub2 index.html archaeology split into data + Rails.
   class RadioBergenManifest
     class << self
       def manifest_path
-        Operator::DeployPaths.first_file(manifest_candidates)
+        manifest_candidates.find { |path| File.file?(path) }
       end
 
       def lessons_path
-        Operator::DeployPaths.first_file(lessons_candidates)
+        lessons_candidates.find { |path| File.file?(path) }
       end
 
       # One candidate now, not four. The three fallbacks pointed into
@@ -26,9 +29,7 @@ module Brgen
       def lessons_candidates
         [
           rails_root.join("config/radio_bergen/archive_lessons.yml"),
-          rails_root.join("../../../MASTER/data/pub_archive_restore.yml").expand_path,
-          Operator::DeployPaths.repo_join("MASTER/data/pub_archive_restore.yml"),
-          Pathname.new("#{Operator::DeployPaths::DEFAULT_REPO}/MASTER/data/pub_archive_restore.yml")
+          Pathname.new(File.expand_path("../../../../MASTER/data/pub_archive_restore.yml", __dir__))
         ]
       end
 
@@ -41,14 +42,12 @@ module Brgen
       def sonic_learnings_candidates
         [
           rails_root.join("config/radio_bergen/sonic.yml"),
-          rails_root.join("../../../MASTER/tools/dilla/data/reference_sonic.yml").expand_path,
-          Operator::DeployPaths.repo_join("MASTER/tools/dilla/data/reference_sonic.yml"),
-          Pathname.new("#{Operator::DeployPaths::DEFAULT_REPO}/MASTER/tools/dilla/data/reference_sonic.yml")
+          Pathname.new(Contracts::Studio.sonic_reference.to_s)
         ]
       end
 
       def sonic_learnings_path
-        Operator::DeployPaths.first_file(sonic_learnings_candidates)
+        sonic_learnings_candidates.find { |path| File.file?(path) }
       end
 
       def sonic_learnings

@@ -6,11 +6,6 @@ require_relative "../../OPENBSD/lib/deploy_inventory"
 require_relative "../../OPENBSD/lib/gate_result"
 require_relative "../../OPENBSD/bin/render_dns"
 
-begin
-  require_relative "../../RAILS/shared/lib/operator/deploy_paths"
-rescue LoadError
-  # ok for minimal ruby env
-end
 
 module Deploy
   class DomainAlignmentGate
@@ -32,14 +27,6 @@ module Deploy
       openbsd = RenderDns.city_zones
       registry = parse_registry_entries
       routes = parse_registry_subdomains
-
-      if defined?(Operator::DeployPaths) && Operator::DeployPaths.respond_to?(:validate_layout!)
-        begin
-          Operator::DeployPaths.validate_layout!
-        rescue StandardError => e
-          result.fail("deploy layout: #{e.message}")
-        end
-      end
 
       missing_dns = registry.keys - openbsd.keys
       result.fail("domain set mismatch: missing DNS #{missing_dns.sort.join(', ')}") if missing_dns.any?

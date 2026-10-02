@@ -3,7 +3,7 @@
 require "open3"
 require "yaml"
 require "rubygems"
-require_relative "../../../OPENBSD/lib/gate_result"
+require_relative "../support/gate_result"
 require_relative "../support/bounded_command"
 require_relative "../lib/source/apps_yml"
 # MASTER/gates, because these two measure MASTER rather than a Rails app. They

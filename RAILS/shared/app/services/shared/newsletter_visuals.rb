@@ -3,7 +3,7 @@
 require "date"
 require "json"
 require "net/http"
-require "operator/deploy_paths"
+require_relative "../../../contracts/studio"
 require "rbconfig"
 require "tmpdir"
 require "fileutils"
@@ -224,7 +224,7 @@ module Shared
       "file://#{path}"
     end
 
-    def postpro_script = Operator::DeployPaths.postpro_script&.to_s
+    def postpro_script = Contracts::Studio.postpro_script&.to_s
 
     def log(message)
       Rails.logger.warn("NewsletterVisuals: #{message}") if defined?(Rails)

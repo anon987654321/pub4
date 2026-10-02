@@ -38,7 +38,7 @@ require "optparse"
 require "pathname"
 require "yaml"
 
-require_relative "../../../MASTER/tools/postpro/uncanny"
+require_relative "../../postpro/uncanny"
 
 TOOLKIT = Pathname.new(__dir__).expand_path
 THRESHOLDS_FILE = TOOLKIT.join("judge_thresholds.yml")

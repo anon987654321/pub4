@@ -11,7 +11,7 @@
 # and the turntablist's crossfader waits behind CUTS_ON.
 $LOAD_PATH.unshift File.expand_path("lib", __dir__)
 require "shellwords"
-require_relative "../../MASTER/lib/ops/process_spawn"
+require_relative "lib/process_spawn"
 require "sound"
 require_relative "royksopp"
 
@@ -418,7 +418,7 @@ player_command = if SOX
                    [FFPLAY, "-f", "s16le", "-ar", RATE.to_s, "-ac", "2", "-nodisp", "-autoexit", "-loglevel", "quiet", "-i", "-"]
                  end
 pipeline = "#{Shellwords.join(ffmpeg_command)} | #{Shellwords.join(player_command)}"
-sox = IO.popen(["/bin/sh", "-c", pipeline], "wb", **Master::Ops::ProcessSpawn.options(pgroup: true))
+sox = IO.popen(["/bin/sh", "-c", pipeline], "wb", **Dilla::ProcessSpawn.options(pgroup: true))
 frame = 0
 frames = Float::INFINITY
 two_pi = 2 * Math::PI

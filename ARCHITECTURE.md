@@ -122,3 +122,14 @@ The clean architecture is not complete until:
 - runtime and rendered gates are watched, not inferred.
 
 The current migration is deliberately incremental inside pub4. The old pub5 experiment is not an active target.
+
+
+## Boundary enforcement
+
+Runtime code does not require sibling implementation files. MASTER's observation and gate tooling may read sibling source as evidence, but it does not become a product dependency.
+
+RAILS keeps brgen, amber and bsdports as ordinary Rails applications. Cross-tree product calls use explicit adapters under `RAILS/contracts/`.
+
+MASTER ingress is represented by `RAILS/contracts/master_client.rb`. Studio execution paths are represented by `RAILS/contracts/studio.rb`. These adapters expose the boundary; they do not load sibling internals.
+
+Dilla child-process options live under `STUDIO/dilla/lib/process_spawn.rb`, so Studio's musical runtime is independent of MASTER's process-control namespace.
