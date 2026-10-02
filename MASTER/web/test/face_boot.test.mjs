@@ -359,6 +359,35 @@ test("face.css keeps primer and prompt layering stable", () => {
   assert.match(css, /body\[data-runtime-profile="calm"\]/);
 });
 
+test("MASTER web and CLI share one monospaced face contract", () => {
+  const css = readFileSync(join(publicDir, "face.css"), "utf8");
+  const rules = readFileSync(join(root, "..", "data", "rules.yml"), "utf8");
+  assert.match(rules, /face_root:[\\s\\S]*font_label:.*JetBrainsMono/);
+  assert.match(css, /--font-label:\s*"JetBrainsMono/);
+  assert.match(css, /html, body[\\s\\S]*font:\s*16px\\/1\\.5 var\\(--font-mono\\)/);
+  assert.doesNotMatch(css, /var\\(--font-label\\)/, "MASTER face may not fall back to a second typography contract");
+  assert.match(css, /message\\.user,\\s*\\nmessage\\.assistant[\\s\\S]*border:\s*0;[\\s\\S]*background:\s*transparent/);
+  assert.match(css, /#chat-log[\\s\\S]*max-inline-size:\s*66ch/);
+});
+
+test("FaceWorld is one renderer projection, not a second renderer", () => {
+  const world = readFileSync(join(publicDir, "face_world.js"), "utf8");
+  const manifest = readFileSync(join(root, "config", "face_assets.yml"), "utf8");
+  const part3 = readFileSync(join(publicDir, "face.part3.txt"), "utf8");
+  const part5 = readFileSync(join(publicDir, "face.part5.txt"), "utf8");
+  assert.match(manifest, /- face_world\.js/);
+  assert.match(world, /window\\.MASTER_FACE_WORLD/);
+  assert.match(world, /master-sdf-shell/);
+  assert.match(world, /master-splat-field/);
+  assert.match(world, /master-node-lib/);
+  assert.doesNotMatch(world, /new THREE\\.WebGLRenderer/);
+  assert.doesNotMatch(world, /new THREE\\.Scene/);
+  assert.doesNotMatch(world, /requestAnimationFrame/);
+  assert.match(part3, /MASTER_FACE_WORLD\\?\\.update\\?\\.\\(performance\.now\(\)\)/);
+  assert.match(part5, /get scene\(\) \{ return scene; \}/);
+  assert.match(part5, /get camera\(\) \{ return camera; \}/);
+});
+
 test("face.css meets MASTER design_rules typography and touch baselines", () => {
   const css = readFileSync(join(publicDir, "face.css"), "utf8");
   assert.match(css, /font:\s*16px\/1\.5/);
