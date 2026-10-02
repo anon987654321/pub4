@@ -38,7 +38,7 @@
     face: {
       id: "face",
       label: "Cognition Mask",
-      renderer: "face.js",
+      renderer: "face_world.js",
       palette: "operator",
       zones: ["eyes", "mouth", "brows", "jaw", "crown", "attention_vector"],
       events: ["llm:request", "agent:start", "pipeline:stage_start", "chat:append", "speech:start"]
@@ -46,7 +46,7 @@
     codebase: {
       id: "codebase",
       label: "Repository Body",
-      renderer: "face.js",
+      renderer: "face_world.js",
       palette: "operator",
       zones: ["districts", "vectors", "bridges", "fractures", "field_density"],
       events: ["codebase:topology", "rule_loop:cycle", "rule_loop:clean", "rule_loop:converged", "fix_loop:idle", "fix_loop:pass"]
@@ -54,7 +54,7 @@
     ecology: {
       id: "ecology",
       label: "Runtime Ecosystem",
-      renderer: "cognition_ecology.js",
+      renderer: "face_world.js",
       palette: "review",
       zones: ["habitats", "flows", "clusters", "storms", "dead_zones", "growth"],
       events: ["memory:retriev", "tool", "scan", "sweep", "audit", "pressure:high"]
