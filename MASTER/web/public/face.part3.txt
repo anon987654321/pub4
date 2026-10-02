@@ -410,19 +410,9 @@ function frame(t) {
     _attnEyeClose = attn.eyeCloseTarget || 0;
     const yaw   = State.mouseX * 0.9 * openness + State.tiltX * 0.62 + Math.sin(sec * 0.2) * 0.055 * composureFactor + saccadeX + microJitter;
     const pitch = State.mouseY * 0.52 * openness + State.tiltY * 0.5 + Math.sin(sec * 0.27) * 0.035 * composureFactor + (attn.fixationPitch || 0);
-    if (camera) {
-      const pInput = State.coarsePointer
-        ? { x: State.tiltX, y: -State.tiltY }
-        : { x: State.mouseX, y: -State.mouseY };
-      State.parX += (pInput.x * 0.095 - State.parX) * 0.055;
-      State.parY += (pInput.y * 0.060 - State.parY) * 0.055;
-      const camOffX = 0.015 + State.parX, camOffY = 0.008 + State.parY;
-      const camDepth = Math.max(-0.16, Math.min(0.16, Math.hypot(pInput.x, pInput.y) * 0.16));
-      camera.position.x += (Math.sin(sec * 0.11) * 0.018 + camOffX - camera.position.x) * 0.055;
-      camera.position.y += (Math.cos(sec * 0.09) * 0.012 + camOffY - camera.position.y) * 0.055;
-      const speechDepth = (State.mode === 'speaking' || tts.playing) ? Math.min(0.12, (State.visemeAmp || 0) * 0.12) : 0;
-      camera.position.z += (4.6 - camDepth - speechDepth - camera.position.z) * 0.055;
-    }
+    // FaceWorld owns camera position, distance, field of view and parallax.
+    // The legacy face loop only owns the head pose and semantic state; keeping
+    // camera motion out of this clock prevents two targets fighting every frame.
     head.rotation.y += (yaw   - head.rotation.y) * 0.06;
     head.rotation.x += (pitch - head.rotation.x) * 0.06;
     nodImpulse *= 0.87;
