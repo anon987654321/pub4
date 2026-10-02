@@ -280,7 +280,7 @@ module Master
               next
             end
 
-            unless play_or_fallback(path, text, generation:)
+            unless play_or_fallback(path, text, generation:, voice:)
               warn_once("audio playback failed — #{player&.first || "no player or native speech"}")
             end
             spoken(text) if last && generation_active?(generation)
@@ -324,11 +324,11 @@ module Master
 
       # A failed player is recoverable when the policy-mapped native voice exists.
       # Never bypass synthesis failure itself; fallback begins only after a player error.
-      def play_or_fallback(path, text, generation:)
+      def play_or_fallback(path, text, generation:, voice: nil)
         return true if play(path, generation:)
         return false unless generation_active?(generation)
 
-        native_say(text)
+        native_say(text, voice:)
       end
 
       def android_speak(text)
@@ -340,10 +340,10 @@ module Master
         false
       end
 
-      def native_say(text)
+      def native_say(text, voice: nil)
         return false unless native_say_available?
 
-        voice = Speech.voice_for_text(text).to_sym
+        voice = Speech.resolve_voice(voice || Speech.voice_for_text(text)).to_sym
         mac_voice = Engines::MACOS_VOICE_FALLBACKS[voice]
         return false unless mac_voice
 
