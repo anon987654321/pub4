@@ -9,7 +9,7 @@ class TestReferenceGraph < Minitest::Test
   def test_resolves_require_relative_from_the_callers_directory
     Dir.mktmpdir("reference-graph") do |root|
       caller = File.join(root, "RAILS", "brgen", "config", "boot.rb")
-      shared = File.join(root, "RAILS", "shared", "lib", "operator", "deploy_paths.rb")
+      shared = File.join(root, "RAILS", "tools", "operator", "deploy_paths.rb")
       FileUtils.mkdir_p(File.dirname(caller))
       FileUtils.mkdir_p(File.dirname(shared))
       File.write(caller, 'require_relative "../../tools/operator/deploy_paths"' + "\n")
