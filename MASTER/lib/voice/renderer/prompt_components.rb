@@ -137,14 +137,13 @@ module Master
         # oh-my-zsh: one identity mark, the working path, git state, phase and
         # cursor. It stays information-dense without becoming a dashboard.
         def zsh_prompt(phase, last_ok)
-          parts = [
-            prompt_path,
-            git_prompt_text,
-            phase_label(phase),
-            phase_prompt(last_ok, phase),
-          ]
+          git = git_prompt_text
+          phase_text = phase_label(phase)
+          cursor = phase_prompt(last_ok, phase)
+          suffix = [git, phase_text, cursor].reject(&:empty?).join(" ")
+          path = prompt_path(suffix_length: visible_length(suffix) + 1)
 
-          "#{parts.reject(&:empty?).join(" ")}\n* "
+          [path, suffix].reject(&:empty?).join(" ") + "\n* "
         end
 
         # zsh's own %~: home as a tilde, and a long path cut from the left so
