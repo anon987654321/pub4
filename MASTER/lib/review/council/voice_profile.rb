@@ -60,6 +60,21 @@ module Master
           "NNGroup UX Researcher" => "en-US-NancyNeural",
         }.freeze
 
+        module_function
+
+        def profile(voice, rate, pitch, style, vernacular, speech_pattern, pause_after)
+          Profile.new(
+            voice:,
+            rate:,
+            pitch:,
+            style:,
+            vernacular:,
+            speech_pattern:,
+            pause_after:,
+          )
+        end
+        private_class_method :profile
+
         PROFILES = {
           "Architect" => profile("en-US-AndrewNeural", "-8%", "-12Hz", :deep, "boundary, interface, coupling", :measured, 1),
           "Data Steward" => profile("en-US-JaneNeural", "-5%", "+2Hz", :clear, "lineage, source row, provenance", :self_correcting, 1),
@@ -88,21 +103,6 @@ module Master
           "Cognitive Psychologist" => profile("en-US-TonyNeural", "-4%", "-3Hz", :neutral, "working memory, recognition, load", :explaining, 2),
           "NNGroup UX Researcher" => profile("en-US-NancyNeural", "+1%", "+7Hz", :clear, "heuristic, task, evidence", :methodical, 1),
         }.freeze
-
-        module_function
-
-        def profile(voice, rate, pitch, style, vernacular, speech_pattern, pause_after)
-          Profile.new(
-            voice:,
-            rate:,
-            pitch:,
-            style:,
-            vernacular:,
-            speech_pattern:,
-            pause_after:,
-          )
-        end
-        private_class_method :profile
 
         def for(persona)
           name = persona.respond_to?(:name) ? persona.name.to_s : persona.to_s
