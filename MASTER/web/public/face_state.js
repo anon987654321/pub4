@@ -146,16 +146,40 @@
   // Any future WebGPU, SDF, splat or mesh projection gets the same numbers.
   function geometryProfile(snapshotValue = snapshot()) {
     const s = snapshotValue;
+    const failure = Math.max(0, 1 - s.confidence);
+    const busy = Math.max(s.activity, s.arousal);
+    const risk = Math.min(1, Math.max(0, s.risk));
     return Object.freeze({
-      shell_scale: 1 + (s.activity * 0.05) + (1 - s.confidence) * 0.08,
+      shell_scale: 1 + (s.activity * 0.05) + failure * 0.08,
       shell_opacity: 0.10 + s.attention * 0.10 + s.confidence * 0.12,
-      shell_tension: 0.18 + s.risk * 0.72,
+      shell_tension: 0.18 + risk * 0.72,
+      shell_pulse: 0.12 + busy * 0.48,
+      shell_fracture: Math.max(0, risk - 0.30) * 1.65,
       eye_attention: 0.45 + s.attention * 0.55,
+      eye_convergence: 0.12 + s.focus * 0.38,
       mouth_energy: 0.15 + s.arousal * 0.85,
+      mouth_pressure: 0.08 + busy * 0.62,
       neural_density: 0.08 + s.activity * 0.92,
-      fracture: Math.max(0, s.risk - 0.35) * 1.54,
-      camera_parallax: 0.015 + s.attention * 0.035,
+      node_energy: 0.14 + busy * 0.86,
+      event_field: 0.10 + (s.entropy * 0.42) + (risk * 0.28),
+      fracture: Math.max(0, risk - 0.35) * 1.54,
+      camera_parallax: 0.015 + s.attention * 0.045,
+      camera_distance: 5.20 - s.attention * 0.18 + risk * 0.12,
       depth: 0.60 + s.activity * 0.40
+    });
+  }
+
+  function renderBudget() {
+    const budget = CONTRACT.spatial?.budget || {};
+    const mobile = matchMedia("(max-width: 767px)").matches || Number(navigator.hardwareConcurrency || 8) <= 4;
+    const maxPoints = Number(budget[mobile ? "mobile_points" : "desktop_points"]) || (mobile ? 420 : 1200);
+    const dpr = Math.min(Number(budget.max_device_pixel_ratio) || 2, Number(devicePixelRatio || 1));
+    return Object.freeze({
+      points: maxPoints,
+      dpr,
+      fps: document.hidden ? 0 : (state.mode === "idle" || state.mode === "sleeping"
+        ? Number(budget.idle_fps) || 12
+        : Number(budget.active_fps) || 60)
     });
   }
 
@@ -176,7 +200,8 @@
     apply,
     setMode,
     setAttention,
-    geometryProfile
+    geometryProfile,
+    renderBudget
   });
 
   window.addEventListener("DOMContentLoaded", () => {
