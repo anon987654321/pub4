@@ -504,6 +504,20 @@ end
     end
   end
 
+  def test_an_empty_success_is_an_error_instead_of_silence
+    renderer = Object.new
+    renderer.define_singleton_method(:render) { |text, mode:| "#{mode}: #{text}" }
+    cli = Master::CLI::Session.new(container: @container.merge(renderer:))
+
+    out, = capture_io do
+      cli.send(:display_result, result: Master::Result.ok(rendered: "", output: ""), accumulated: "", streamed: false)
+    end
+
+    assert_match(/err0: turn completed without output/, out)
+    assert_match(/err0: result=Hash/, out)
+    assert_equal 2, cli.exit_code
+  end
+
   def test_routine_success_emits_one_line
     result = Master::Result.ok(output: "saved")
 
