@@ -106,11 +106,21 @@ class GateContractSpec < Minitest::Test
     refute_includes source, "RUBY_PLATFORM.include?(\"openbsd\")"
   end
 
-  def test_gate_rejects_any_ruby_version_other_than_the_repo_pin
-    source = File.read(File.join(ROOT, "gates", "runner.rb"))
+  def test_ruby_runtime_contract_allows_openbsd_packages
+    environment = File.read(File.join(ROOT, "lib", "operator", "environment.rb"))
+    deploy_environment = File.read(File.join(ROOT, "../OPENBSD/lib", "environment.rb"))
+    entrypoint = File.read(File.join(ROOT, "lib", "boot", "entrypoint.rb"))
+    wrapper = File.read(File.join(ROOT, "bin", "ruby"))
+    gemfile = File.read(File.join(ROOT, "Gemfile"))
 
-    assert_includes source, "RUBY_VERSION != pinned"
-    refute_includes source, "RUBY_VERSION.start_with?"
+    [environment, deploy_environment, entrypoint].each do |source|
+      assert_includes source, "3\\.(?:3|4)"
+    end
+    assert_includes wrapper, "ruby34"
+    assert_includes wrapper, "ruby33"
+    assert_includes wrapper, "3.4.*"
+    assert_includes wrapper, "3.3.*"
+    assert_includes gemfile, 'ruby ">= 3.3", "< 4.1"'
   end
 
   def test_ruby_runner_openbsd_method_is_real_ruby_source
