@@ -1,19 +1,9 @@
 "use strict";
 
-const FACE_MODULES = window.MASTER_ASSET_PATHS?.faceModulesList || [
-  "attention_model.js",
-  "face_particles.js",
-  "face_audio_bridge.js",
-  "face_tts_bridge.js",
-  "face_expression_bridge.js",
-  "face_council_multi.js",
-  "face_phosphor_trail.js",
-  "face_offscreen_ecology.js",
-  "face_micro_interactions.js",
-  "face_perf_guards.js",
-  "face_brutalist.js",
-  "gravity_field.js"
-];
+const FACE_MODULES = window.MASTER_ASSET_PATHS?.faceModulesList;
+if (!Array.isArray(FACE_MODULES) || FACE_MODULES.length === 0) {
+  throw new Error("face boot manifest missing faceModulesList");
+}
 
 await Promise.all(FACE_MODULES.map(async (modulePath) => {
   const url = window.MASTER_ASSET_PATHS?.faceModules?.[modulePath]
