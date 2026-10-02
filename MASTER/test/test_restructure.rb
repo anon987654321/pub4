@@ -197,6 +197,15 @@ class TestRestructure < Minitest::Test
     assert_instance_of Restructure::ScriptProof, Restructure::Proof.for("STUDIO", @repo)
   end
 
+  def test_rails_proof_includes_mounted_engine_tests
+    FileUtils.mkdir_p(File.join(@repo, "RAILS/brgen/engines/takeaway/test/models/takeaway"))
+    engine_test = File.join(@repo, "RAILS/brgen/engines/takeaway/test/models/takeaway/order_test.rb")
+    File.write(engine_test, "class OrderTest < Minitest::Test; end\n")
+    plan = Restructure::Plan.parse("=== WRITE RAILS/brgen/engines/takeaway/app/models/takeaway/order.rb\nmodule Takeaway\nend\n=== END\n")
+    proof = Restructure::RailsProof.new(repo_root: @repo, tree: "RAILS")
+    assert_includes proof.send(:test_files, plan), engine_test
+  end
+
   def test_a_written_file_must_still_parse_as_what_it_is
     { "a.rb" => "def x\n", "a.yml" => "a: [1\n", "a.json" => "{", "a.sh" => "if true; then\n" }.each do |name, text|
       write(name, text)
