@@ -17,7 +17,7 @@ module Master
         "neural" => "en-US-JennyNeural",
         "persona_affects_text_only" => true,
         "stream_live_default" => true,
-        "default_rate" => "-7%",
+        "default_rate" => "-5%",
         "default_pitch" => "+0Hz",
         "rotation" => %w[jenny],
         "language_voices" => { "en" => "jenny", "nb" => "pernille", "ms" => "yasmin" },
