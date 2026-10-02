@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "tribunal"
+
 module Master
   module Review
     module Council
@@ -11,7 +13,7 @@ module Master
       class Critique
         MODES = Modes::TABLE
 
-        def initialize(mode:, agent:, event_bus: nil, audio_path: nil, files: nil, visual_image: nil, visual_context: nil, briefing: nil)
+        def initialize(mode:, agent:, event_bus: nil, audio_path: nil, files: nil, visual_image: nil, visual_context: nil, briefing: nil, speak_personas: false)
           @mode = MODES.fetch(mode) { raise ArgumentError, "unknown critique mode: #{mode}" }
           @agent = agent
           @bus = event_bus
@@ -20,6 +22,7 @@ module Master
           @visual_image = visual_image
           @visual_context = visual_context
           @briefing = briefing.to_s.strip
+          @speak_personas = speak_personas
         end
 
         def run
@@ -37,6 +40,8 @@ module Master
         private
 
         def build_run_result(preset, payload, feedback)
+          return inconclusive_run_result(payload, feedback) if feedback_inconclusive?(feedback)
+
           issues = panel_issue_entries(feedback)
           ideation_result = ideate(preset, feedback:)
           cherry = CherryPick.call(feedback, ideation_result)
@@ -56,8 +61,50 @@ module Master
         end
 
         def deliberate(panel, payload)
-          delib = Deliberation.new(personas: panel, agent: @agent, event_bus: @bus, judge_enabled: true)
-          delib.review(payload[:combined], context: build_context, image: payload[:visual_image])
+          Tribunal.new(
+            agent: @agent,
+            event_bus: @bus,
+            judge_enabled: true,
+            speak_personas: @speak_personas,
+          ).review(
+            evidence: evidence_for(payload),
+            personas: panel,
+            context: build_context,
+            image: payload[:visual_image],
+          )
+        end
+
+        def feedback_inconclusive?(feedback)
+          feedback.is_a?(Hash) && feedback[:status].to_s == "inconclusive"
+        end
+
+        def inconclusive_run_result(payload, feedback)
+          Master::Result.ok({
+            feedback:,
+            issues: [],
+            visual_clean: false,
+            ideas: [],
+            cherry_picks: [],
+            metrics: payload[:metrics],
+            mode: @mode[:preset_key],
+            harvest: nil,
+            status: :inconclusive,
+          })
+        end
+
+        def evidence_for(payload)
+          files = Array(payload[:files]).map(&:to_s)
+          observations = payload[:combined].to_s.strip
+          Evidence.new(
+            artifact: @mode[:preset_key],
+            domain: @mode[:quality_kind],
+            status: observations.empty? ? :inconclusive : :observed,
+            observations: observations.empty? ? [] : [observations],
+            measurements: payload[:metrics] || {},
+            structure: { file_count: files.size },
+            anchors: files,
+            provenance: { files: files },
+          )
         end
 
         def ideate(preset, feedback: nil)
