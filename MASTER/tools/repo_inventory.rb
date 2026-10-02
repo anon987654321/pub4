@@ -95,9 +95,7 @@ end
 def loose_root_entries
   root_entries.filter_map do |name|
     full_path = File.join(INVENTORY_ROOT, name)
-    if GENERATED_ROOT_FILES.include?(name)
-      next
-    elsif File.directory?(full_path)
+    if File.directory?(full_path)
       next if ALLOWED_ROOT_DIRS.include?(name)
       Entry.new(path: name, kind: "root_dir", reason: "non-canonical top-level directory")
     else

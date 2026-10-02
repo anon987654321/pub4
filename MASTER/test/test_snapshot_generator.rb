@@ -89,12 +89,12 @@ class TestSnapshotGenerator < Minitest::Test
   def test_bare_snapshot_command_roots_at_the_repository
     roots = []
     fake = Object.new
-    def fake.write! = %w[snapshot_MASTER.md snapshot_RAILS.md snapshot_OPENBSD.md snapshot_STUDIO.md]
+    def fake.write! = %w[.master/snapshots/snapshot_MASTER.md .master/snapshots/snapshot_RAILS.md .master/snapshots/snapshot_OPENBSD.md .master/snapshots/snapshot_STUDIO.md]
     capture = ->(root:, **) { roots << root; fake }
 
     out = Master::Snapshot.stub(:new, capture) { Master::CLI::CommandRegistry.dispatch_snapshot(nil, ctx: { args: "" }) }
 
     assert_equal [Master.repo_root], roots
-    assert_equal "snapshot_MASTER.md\nsnapshot_RAILS.md", out
+    assert_equal ".master/snapshots/snapshot_MASTER.md\n.master/snapshots/snapshot_RAILS.md", out
   end
 end
