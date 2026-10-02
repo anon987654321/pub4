@@ -113,16 +113,28 @@ class TestRenderer < Minitest::Test
     refute_empty truncated
   end
 
-  def test_shell_prompt_has_a_ruby_orb_and_quiet_typographic_hierarchy
+  def test_shell_prompt_is_small_and_two_line
     renderer = FakeRenderer.new(config: {})
-    state, prompt = renderer.prompt_line("model", "discover", tokens: 45_000)
+    _state, prompt = renderer.prompt_line("model", "discover", tokens: 45_000)
 
     clean = strip_ansi(prompt)
-    assert_match(%r{\A◉ (?:~|…|/|[A-Za-z0-9_])}, clean)
-    refute_includes clean, "(discover)"
+    lines = clean.lines.map(&:chomp)
+
+    assert_match(/\A(?:~|…|\/|[A-Za-z0-9_])/, lines.first)
+    refute_includes lines.first, "(discover)"
     refute_includes clean, "  "
-    assert_match(/(?:discover )?[%$] \z/, clean)
-    assert_operator clean.length, :<=, 67
+    assert_equal 2, lines.size
+    assert_match(/discover [%$]\z/, lines.first)
+    assert_equal "* ", lines.last
+    assert_operator lines.first.length, :<=, 67
+  end
+
+  def test_shell_prompt_home_path_uses_path_operations
+    renderer = FakeRenderer.new(config: {})
+    path = File.join(Dir.home, "src", "pub4")
+
+    assert_equal "~/src/pub4", renderer.send(:home_path, path)
+    assert_equal "/tmp/pub4", renderer.send(:home_path, "/tmp/pub4")
   end
 
   def test_splash_is_plain_ascii_in_dmesg_shape
