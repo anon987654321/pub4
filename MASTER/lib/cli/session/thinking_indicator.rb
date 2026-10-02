@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "tty-screen"
 require_relative "../stream_accumulator"
 
 module Master
@@ -45,6 +46,7 @@ module Master
       def init_thinking_state!
         @think_mutex = Mutex.new
         @think_t0 = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+        @think_paused = false
         @think_stage = "intake"
         @activity&.reset!
         # `**`: a single star is colon-free names only, and every stage event has one.
