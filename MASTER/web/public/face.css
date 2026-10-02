@@ -10,7 +10,7 @@
   --c-danger: oklch(60% 0.14 35);
   --c-code: oklch(74% 0.11 275);
   --font-mono: "JetBrainsMono Nerd Font", "JetBrains Mono", "Cascadia Code", "Fira Code", ui-monospace, monospace;
-  --font-label: "Helvetica Neue Pro", "Helvetica Neue", Arial, sans-serif;
+  --font-label: "JetBrainsMono Nerd Font", "JetBrains Mono", "Cascadia Code", "Fira Code", ui-monospace, monospace;
   color-scheme: dark;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
