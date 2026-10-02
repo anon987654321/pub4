@@ -1,9 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# Dilla's executable boundary. Music lives in lib/; the live entrypoints are
-# kept as separate programs so they can be run, stopped and inspected without
-# booting the full render engine.
+# Dilla's executable boundary. The music engine and live vocabulary live in
+# lib/; the frozen liveset and Röyksopp pad player remain separate programs.
 
 require "rbconfig"
 
@@ -34,14 +33,9 @@ when "live"
   when "stop"
     require_relative "lib/livesets"
     puts Livesets::Session.stop!
-  when "say"
-    require_relative "lib/livesets"
-    puts Livesets::Say.call(rest.join(" "))
   else
-    # LiveSynth commands are owned by livesets.rb; forward them through its
-    # command vocabulary rather than duplicating patch/knob parsing here.
     require_relative "lib/livesets"
-    puts Livesets::Say.call([mode, *rest].join(" "))
+    LiveSynth.main([mode, *rest])
   end
 when "royksopp", "royksopp.rb"
   run_script(ROYKSOPP, *args)
@@ -50,7 +44,7 @@ when "liveset", "liveset.rb"
 else
   abort <<~USAGE
     dilla: live audio entrypoint
-    usage: ruby dilla.rb live [default|royksopp|status|stop|say TEXT]
+    usage: ruby dilla.rb live [default|royksopp|status|stop|improvise|progression|patch|knob|morph|say]
            ruby dilla.rb royksopp
            ruby dilla.rb liveset
   USAGE
