@@ -28,13 +28,19 @@ module Operator
     module_function
 
     def sets
-      # STUDIO is excluded, and what the exclusion hides is two sets worth 13.2
-      # KB, both correct by construction. `lora/<subject>/lora` is byte-identical
-      # per subject on purpose — it derives the subject from its own directory
-      # and hands over to the shared toolkit, so johann's and ragnhild's must
-      # match. `project/learnings/last_learn.json` is a copy of the newest
-      # learning file under a stable name. Neither is a shadow copy, and a
-      # census reporting two permanent sets teaches people to skim it.
+      # Excluded: MASTER/tools — one-off census and lint copies that duplicate
+      # the lib homes they were extracted from; their duplicates are not a
+      # shadow-copy class of the lightgallery kind.
+      #
+      # STUDIO is NOT excluded, and this comment once wrongly said it was:
+      # 48efff385 (2026-09-25) replaced that exclusion with the MASTER/tools one
+      # and left the old prose here. Two STUDIO sets therefore entered the
+      # count — `lora/<subject>/lora` (byte-identical per subject on purpose:
+      # the file derives the subject from its own directory and hands over to
+      # the shared toolkit) and `project/learnings/last_learn.json` (the newest
+      # learning under a stable name). Both are correct by construction and are
+      # priced in data/dup_census.yml rather than hidden here.
+      #
       # uniq, because a merge with a conflict in it is a state this runs in. git
       # ls-files prints an unmerged path once per stage, so two conflicted files
       # read as six and this reported duplicates that do not exist. A census that

@@ -2,7 +2,7 @@
 
 require "fileutils"
 require "timeout"
-require_relative "load_average"
+require_relative "../../../OPENBSD/lib/load_average"
 
 module Operator
   # VPS-only mutex + load gate for Rails bin/ci (prevents parallel CI pile-ups on vm23).

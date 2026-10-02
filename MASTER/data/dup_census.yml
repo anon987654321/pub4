@@ -58,8 +58,32 @@
 #       the repetition instead of pretending the files have a common owner.
 #   -1/+1  the remaining app-local Rakefile and boot sets are the measured
 #       survivors of that scaffolding collapse.
-duplicate_sets: 26
+# 26 -> 33 on 2026-10-03, priced after three real collapses (baseline_ratchet,
+# load_average, and the RAILS utf8 copy all had their one copy deleted and the
+# consumers repointed) showed the remaining overage is accounting, not debt.
+#   +4  MASTER/gates/support/{gate_result,gate_ledger,deploy_inventory,utf8}.rb
+#       vs their OPENBSD/lib originals — c546ad4e0/229d9ea53 boundary work:
+#       MASTER/gates may not require sibling-tree implementation files, and
+#       bin/ci runs from a copy-tree with no MASTER beside it, so neither tree
+#       can own the other's copy. test_tree_boundaries.rb is the law here.
+#   +2  STUDIO/lora/{johann,ragnhild}/lora and dilla's last_learn.json vs its
+#       2026-07-27 learn — identical by construction. They entered the count
+#       when 48efff385 replaced the STUDIO exclusion with a MASTER/tools one
+#       without re-pricing; the census header still said STUDIO was excluded.
+#       (That header is corrected in the same sitting.)
+#   +1  the two dilla midi pairs (dnb Project_Untitled(1), burzum _hakim)
+#       looked collapsible — "(1)" is a browser-download duplicate and _hakim
+#       a regenerated variant — but they are rendered media, and rendered
+#       media is irreplaceable: priced here, deletion stays an operator's call.
+duplicate_sets: 33
 duplicate_members:
+- MASTER/gates/data/layout_snapshots/brgen-conversations-desktop.json | MASTER/gates/data/layout_snapshots/brgen-messenger-desktop.json
+- MASTER/gates/data/layout_snapshots/bsdports-home-desktop.json | MASTER/gates/data/layout_snapshots/bsdports-ports_index-desktop.json
+- MASTER/gates/data/layout_snapshots/bsdports-home-mobile.json | MASTER/gates/data/layout_snapshots/bsdports-ports_index-mobile.json
+- MASTER/gates/support/deploy_inventory.rb | OPENBSD/lib/deploy_inventory.rb
+- MASTER/gates/support/gate_ledger.rb | OPENBSD/lib/gate_ledger.rb
+- MASTER/gates/support/gate_result.rb | OPENBSD/lib/gate_result.rb
+- MASTER/gates/support/utf8.rb | OPENBSD/lib/utf8.rb
 - MASTER/web/config/initializers/inflections.rb | RAILS/shared/config/initializers/inflections.rb
 - MASTER/web/public/icon.png | RAILS/shared/public/icon.png
 - RAILS/amber/.rubocop.yml | RAILS/brgen/.rubocop.yml | RAILS/bsdports/.rubocop.yml
@@ -78,11 +102,11 @@ duplicate_members:
 - RAILS/amber/db/migrate/20260915120000_add_link_embed_to_posts.rb | RAILS/brgen/db/migrate/20260915120000_add_link_embed_to_posts.rb
 - RAILS/amber/test/importmap_external_hosts_test.rb | RAILS/brgen/test/importmap_external_hosts_test.rb | RAILS/bsdports/test/importmap_external_hosts_test.rb
 - RAILS/amber/test/models/destroy_cascade_test.rb | RAILS/bsdports/test/models/destroy_cascade_test.rb
-- RAILS/amber/test/models/user_test.rb | RAILS/bsdports/test/models/user_test.rb
 - RAILS/brgen/app/javascript/controllers/application.js | RAILS/bsdports/app/javascript/controllers/application.js
 - RAILS/brgen/db/cable_schema.rb | RAILS/bsdports/db/cable_schema.rb
 - RAILS/brgen/db/cache_schema.rb | RAILS/bsdports/db/cache_schema.rb
 - RAILS/brgen/db/migrate/20260625140000_create_anonymous_post_quotas.rb | RAILS/shared/db/migrate/20260625140000_create_anonymous_post_quotas.rb
-- MASTER/gates/data/layout_snapshots/brgen-conversations-desktop.json | MASTER/gates/data/layout_snapshots/brgen-messenger-desktop.json
-- MASTER/gates/data/layout_snapshots/bsdports-home-desktop.json | MASTER/gates/data/layout_snapshots/bsdports-ports_index-desktop.json
-- MASTER/gates/data/layout_snapshots/bsdports-home-mobile.json | MASTER/gates/data/layout_snapshots/bsdports-ports_index-mobile.json
+- STUDIO/dilla/livesets_midi/burzum Project_slamdunk.mid | STUDIO/dilla/livesets_midi/burzum Project_slamdunk_hakim.mid
+- STUDIO/dilla/livesets_midi/dnb Project_Untitled(1).mid | STUDIO/dilla/livesets_midi/dnb Project_Untitled.mid
+- STUDIO/dilla/project/learnings/last_learn.json | STUDIO/dilla/project/learnings/learn_20260727_151757.json
+- STUDIO/lora/johann/lora | STUDIO/lora/ragnhild/lora
