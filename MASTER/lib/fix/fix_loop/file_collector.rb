@@ -31,10 +31,8 @@ module Master
         end
 
         def collect(target)
-          tracked = collect_tracked(target)
-          return tracked unless tracked.empty?
-
-          candidates = Dir.glob(File.join(target, "**", "*")).select { |f| File.file?(f) }
+          candidates = repository_files(target)
+          candidates = Dir.glob(File.join(target, "**", "*")).select { |file| File.file?(file) } if candidates.empty?
           retain(candidates)
         end
 
@@ -42,7 +40,7 @@ module Master
           changed = changed_since_last_commit(target)
           return collect(target) if changed.empty?
 
-          changed
+          retain(changed)
         rescue StandardError => e
           @bus&.publish("fix_loop:incremental_error", error: e.message)
           raise "incremental fix scope unavailable: #{e.class}: #{e.message}"
@@ -50,34 +48,50 @@ module Master
 
         private
 
-        def collect_tracked(target)
-          out, _, status = Master::Io::Exec.capture3("git", "-C", @root, "ls-files", "-z")
-          unless status.success?
-            return [] unless File.exist?(File.join(@root, ".git"))
+        # Git paths are relative to the repository root, not to the FixLoop root.
+        # MASTER is normally @root, but RAILS/OPENBSD/STUDIO targets are not, and
+        # treating @root as the Git root quietly made incremental collection fall
+        # back to a full directory sweep.
+        def repository_files(target)
+          root = git_root
+          return [] unless root
 
-            raise "git ls-files failed while collecting #{@root}"
-          end
+          out, _, status = Master::Io::Exec.capture3(
+            "git", "-C", root, "ls-files", "-z", "--cached", "--others", "--exclude-standard"
+          )
+          raise "git ls-files failed while collecting #{target}" unless status.success?
 
-          tracked = out.split("\0").map { |rel| File.join(@root, rel) }
-                       .select { |file| File.file?(file) && under_path?(file, target) }
-          retain(tracked)
+          out.split("\0").map { |rel| File.join(root, rel) }
+             .select { |file| File.file?(file) && under_path?(file, target) }
         rescue StandardError => e
-          Master::Ground::Swallow.log(e, context: "FileCollector.collect_tracked")
+          Master::Ground::Swallow.log(e, context: "FileCollector.repository_files")
           []
         end
 
         def changed_since_last_commit(target)
-          out, _, status = Master::Io::Exec.capture3("git", "-C", @root, "diff", "--name-only", "HEAD")
-          unless status.success?
-            return [] unless File.exist?(File.join(@root, ".git"))
+          root = git_root
+          return [] unless root
 
-            raise "git diff failed while determining incremental fix scope"
-          end
+          tracked, _, tracked_status = Master::Io::Exec.capture3(
+            "git", "-C", root, "diff", "--name-only", "HEAD", "--"
+          )
+          raise "git diff failed while determining incremental fix scope" unless tracked_status.success?
 
-          out.lines.map(&:strip).reject(&:empty?)
-             .map { |rel| File.join(@root, rel) }
-             .select { |f| File.exist?(f) && f.start_with?(target) }
-             .then { |files| retain(files) }
+          untracked, _, untracked_status = Master::Io::Exec.capture3(
+            "git", "-C", root, "ls-files", "-z", "--others", "--exclude-standard"
+          )
+          raise "git ls-files failed while determining incremental fix scope" unless untracked_status.success?
+
+          paths = tracked.lines.map(&:strip).reject(&:empty?) + untracked.split("\0").reject(&:empty?)
+          paths.uniq.map { |rel| File.join(root, rel) }
+               .select { |file| File.file?(file) && under_path?(file, target) }
+        end
+
+        def git_root
+          out, _, status = Master::Io::Exec.capture3("git", "-C", @root, "rev-parse", "--show-toplevel")
+          return unless status.success?
+
+          out.to_s.strip.then { |path| path.empty? ? nil : File.expand_path(path) }
         end
 
         # Counted and published rather than quietly dropped — a fix pass that
