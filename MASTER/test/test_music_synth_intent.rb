@@ -115,6 +115,20 @@ class TestMusicSynthIntent < Minitest::Test
     end
   end
 
+  def test_explicit_dilla_files_and_soundcard_mean_live_music
+    sent = nil
+    sentence = "play music dilla.rb royksopp.rb liveset.rb on my local sound card"
+    Master::Io::ScriptDispatch.stub(:run, ->(root:, tool:, arg:, env: {}) { sent = [tool, arg, env]; Master::Result.ok("live0: playing") }) do
+      assert INTENT.handles?(sentence)
+      result = INTENT.dispatch(sentence)
+      assert result.ok?
+      assert_equal :dilla_background, result.value[:media]
+    end
+    assert_equal "dilla", sent[0]
+    assert_equal "live default", sent[1]
+    assert_equal "0", sent[2]["DILLA_COLTRANE"]
+  end
+
   def test_code_talk_is_not_music
     ["open the patch in the editor", "turn the lead generator into a service", "fix the filter in search",
      "what is a moog"].each do |sentence|
