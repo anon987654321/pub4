@@ -76,6 +76,7 @@ module Master
       }.freeze
 
       MAX_OUTPUT_BYTES = 8_192
+      OUTPUT_TRUNCATION_MARKER = "\n[output truncated]\n"
       MAX_TIMINGS = 20
 
       # Stage prerequisite contracts — checked before each stage runs.
@@ -136,7 +137,13 @@ module Master
         text = value.to_s
         return value if value.nil? || text.bytesize <= MAX_OUTPUT_BYTES
 
-        text.byteslice(-MAX_OUTPUT_BYTES, MAX_OUTPUT_BYTES)
+        text = text.encode("UTF-8", invalid: :replace, undef: :replace, replace: "?")
+        room = MAX_OUTPUT_BYTES - OUTPUT_TRUNCATION_MARKER.bytesize
+        head_bytes = (room / 2.0).ceil
+        tail_bytes = room - head_bytes
+        head = text.byteslice(0, head_bytes).to_s
+        tail = text.byteslice(-tail_bytes, tail_bytes).to_s
+        "#{head}#{OUTPUT_TRUNCATION_MARKER}#{tail}"
       end
 
       def cap_timings(value)
