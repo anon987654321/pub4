@@ -216,7 +216,15 @@ def test_a_reply_is_spoken_sentence_by_sentence_so_the_first_words_come_first
   PB.instance_variable_set(:@pending, nil)
   PB.instance_variable_set(:@last_said, nil)
 
-  PB.stub(:enabled?, true) { PB.stub(:available?, true) { PB.stub(:ensure_worker, queued) { PB.speak(reply) } } }
+  PB.stub(:enabled?, true) do
+    PB.stub(:available?, true) do
+      PB.stub(:transcendent_mode?, false) do
+        PB.stub(:ensure_queue, queued) do
+          PB.stub(:start_worker!, nil) { PB.speak(reply) }
+        end
+      end
+    end
+  end
 
   assert_operator queued.size, :>, 1, "the reply went out as one utterance"
   assert_equal reply, queued.map { |job| job[1] }.join(" "), "the words changed on the way out"
@@ -226,6 +234,53 @@ ensure
   PB.instance_variable_set(:@last_said, nil)
 end
 
+
+  def test_transcendent_reply_stays_one_synthesis_unit
+    queued = []
+    reply = "The melody must stay intact. The phrase contour belongs to one utterance."
+    PB.instance_variable_set(:@pending, nil)
+
+    PB.stub(:enabled?, true) do
+      PB.stub(:available?, true) do
+        PB.stub(:transcendent_mode?, true) do
+          PB.stub(:ensure_queue, queued) { PB.stub(:start_worker!, nil) { PB.speak(reply) } }
+        end
+      end
+    end
+
+    assert_equal 1, queued.size
+    assert_equal reply, queued.first[1]
+    assert_equal true, queued.first[2]
+  ensure
+    PB.instance_variable_set(:@pending, nil)
+  end
+
+  def test_prefetch_returns_prepared_audio_after_background_synthesis
+    job = ["second", "second", true, :jenny, :neutral, "+0%", "+0Hz", 0]
+    prepared = PB::PreparedAudio.new(
+      job:, text: "second", part: "second", last: true, voice: :jenny,
+      style: :neutral, rate: "+0%", pitch: "+0Hz", generation: 0,
+      path: "/tmp/m_tts_prefetch_test.mp3"
+    )
+
+    PB.instance_variable_set(:@generation, 0)
+    PB.stub(:prefetch_enabled?, true) do
+      PB.stub(:prepare_job, prepared) do
+        pending = PB.send(:start_prefetch, job)
+        result = PB.send(:await_prefetch, pending)
+        assert_same prepared, result
+        refute pending.thread.alive?
+      end
+    end
+  end
+
+  def test_prefetch_is_disabled_for_transcendent_mode
+    PB.stub(:transcendent_mode?, true) do
+      PB.stub(:prefetch_enabled?, false) do
+        refute PB.send(:prefetch_enabled?)
+      end
+    end
+  end
 
   def test_interrupt_clears_queued_speech_and_forgets_last_utterance
     queue = Queue.new
