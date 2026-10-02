@@ -27,6 +27,13 @@ module Master
           "ms" => { "female" => "yasmin", "male" => "osman" }
         },
         "post_chain" => nil,
+        "prosody" => {
+          "melody" => {
+            "rate" => ["-1%", "+2%", "+1%", "+3%", "0%", "-2%", "-1%", "+1%", "0%", "+2%"],
+            "pitch_hz" => [0, 6, 10, 6, 0, -6, -10, -6, 3, 0]
+          },
+          "pitch_reference_hz" => 180
+        },
         "bed" => nil,
       }.freeze
 
@@ -126,6 +133,13 @@ module Master
       #
       # Nil rather than an empty string, so a caller writes `if chain` and a
       # missing declaration cannot be confused with a chain that does nothing.
+      # Prosody knobs live beside the rest of the TTS policy so melody and
+      # engine adapters do not grow a second configuration source.
+      def prosody
+        value = data["prosody"]
+        value.is_a?(Hash) ? value : FALLBACK["prosody"]
+      end
+
       def post_chain
         value = data["post_chain"].to_s.strip
         value.empty? ? nil : value
