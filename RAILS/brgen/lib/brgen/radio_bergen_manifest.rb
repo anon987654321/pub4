@@ -2,7 +2,6 @@
 
 require "yaml"
 require "pathname"
-require_relative "../../../contracts/master_client"
 require_relative "../../../contracts/studio"
 
 module Brgen
