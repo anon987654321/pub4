@@ -16396,6 +16396,12 @@ def play(preset_name = nil, bars_count = 8)
       render(out)
     else
       ENV["TRACK"] = preset_name unless preset_name.to_s.empty? || preset_name == "dilla"
+      # Same sync the stream path does at every track change: a named preset
+      # plays its own progression, not whatever the boot soft-fill left in
+      # ENV["PROGRESSION"] (play madlib_figaro_documented arranged
+      # slum_village_intro_documented -- the preset name in the log, the slum
+      # chart in the chords).
+      sync_progression_to_track!(preset_name) unless preset_name.to_s.empty? || preset_name == "dilla"
       render_dilla(out)
     end
     ok = if quality_gate_enabled?
@@ -27062,7 +27068,6 @@ def voice_stack_lead!(path, events, duration)
     variation: ENV.fetch("VOICE_STACK_VARIATION", "0.25").to_f,
     detune_mode: ENV.fetch("VOICE_STACK_DETUNE", "fifths").to_sym,
     drift: ENV.fetch("VOICE_STACK_DRIFT", "9").to_f,
-    key_track: ENV.fetch("VOICE_STACK_KEYTRACK", "0.5").to_f,
     seed: seed_for("voicestack")
   )
   rendered = plan.filter_map do |voice|
