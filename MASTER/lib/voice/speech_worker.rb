@@ -34,6 +34,13 @@ module Master
       end
 
       def run_edge_worker(text, voice_name, style_config, audio_path, timeout)
+        missing = []
+        missing << "voice" if voice_name.to_s.strip.empty?
+        missing << "rate" if style_config[:rate].to_s.strip.empty?
+        missing << "pitch" if style_config[:pitch].to_s.strip.empty?
+        missing << "output_path" if audio_path.to_s.strip.empty?
+        raise ArgumentError, "edge worker inputs missing: #{missing.join(", ")}" unless missing.empty?
+
         # Delegate the timeout to Exec.capture3, which spawns in its own process
         # group and TERM/KILLs it on expiry. A previous outer Timeout.timeout
         # here fired first and bypassed that kill, orphaning a hung tts-worker

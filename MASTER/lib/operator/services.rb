@@ -55,7 +55,12 @@ module Master
       when "model" then model_state
       when "memory" then "ready"
       when "device" then "ready"
-      when "voice" then ENV["MASTER_TTS_DEGRADED"] == "1" ? "degraded" : "ready"
+      when "voice"
+        voice_error = Master::Voice::Speech.last_error if defined?(Master::Voice::Speech)
+        playback_error = Master::Voice::Playback.last_error if defined?(Master::Voice::Playback)
+        reason = [voice_error, playback_error].compact.map(&:to_s).reject(&:empty?).first
+        degraded = ENV["MASTER_TTS_DEGRADED"] == "1" || !reason.nil?
+        degraded ? "degraded#{reason ? ": #{reason}" : ""}" : "ready"
       when "web" then rcctl_state("master")
       else "unknown"
       end

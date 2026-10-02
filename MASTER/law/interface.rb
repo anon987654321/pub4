@@ -138,3 +138,25 @@ Law.define(:CLI_FACE_DEDICATED_TTY) do
       !text.match?(/File\.open\(["']\/dev\/tty["'],\s*["']r\+["']\)/)
   end
 end
+
+
+Law.define(:CAPABILITY_STATUS_MUST_BE_TRUTHFUL) do
+  source "OpenBSD-style status reporting — unavailable capabilities are not ready"
+  severity :error
+  languages %i[ruby]
+  path "MASTER/lib/operator/services.rb"
+  ask "Does a service status report readiness solely from a flag or optimistic default while the underlying capability may have failed? Status must derive from current observable capability state and preserve the failure reason."
+  fix "Derive service state from the capability's actual health or retained error; report degraded or unavailable with the reason instead of ready."
+  bad <<~'X'
+    when "voice" then ENV["MASTER_TTS_DEGRADED"] == "1" ? "degraded" : "ready"
+  X
+  good <<~'X'
+    when "voice"
+      reason = Voice::Speech.last_error || Voice::Playback.last_error
+      reason ? "degraded: #{reason}" : "ready"
+  X
+  detect do |text|
+    text.match?(/when\s+["']voice["'][^\n]*ENV\[/) &&
+      text.match?(/["']ready["']/)
+  end
+end

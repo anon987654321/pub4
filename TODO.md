@@ -189,6 +189,7 @@ the "One chrome", ad system and layout sections bring back for a decision.
 - `CLI_TREE_TARGET_RESOLUTION` is now executable error law. `Scan::Request` was resolving `STUDIO/lora` with the current process directory instead of the repository root. Explicit `MASTER`, `RAILS`, `OPENBSD` and `STUDIO` targets now share the repository-root rule.
 - `CLI_PROMPT_COMPOSITION` is an executable opportunity law. The prompt remains path + Git + meaningful phase/error + shell token, with the existing `*` working line beneath it; prompt Git state is now one bounded, cached probe.
 - `VOICE_FAILURES_ARE_ACTIONABLE` is an executable opportunity law. Empty synthesis, dead sockets, playback failure and worker errors remain a bounded capability state with a retained reason and declared fallback.
+- `CAPABILITY_STATUS_MUST_BE_TRUTHFUL` is an executable error law. `/status services` now derives voice state from retained Speech/Playback failures instead of an optimistic ready flag.
 
 #### Shell study decision
 

@@ -199,6 +199,7 @@ module Master
       def spoken(text)
         @lock.synchronize do
           @pending&.delete(text)
+          @last_error = nil
           @last_said = text
           @last_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
         end

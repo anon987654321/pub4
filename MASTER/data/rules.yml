@@ -10,6 +10,14 @@
 # Batch 8: Rails-specific semantic laws moved to law/rails.rb.
 schema: 1
 laws:
+  CAPABILITY_STATUS_MUST_BE_TRUTHFUL:
+    priority: 1
+    principle: Unavailable capabilities must never be reported as ready.
+    applies_to:
+    - security
+    - observability
+    - service_status
+    provenance: openbsd_status
   ROBUSTNESS:
     priority: 1
     principle: Errors fail safely; security first; handle edge cases.
