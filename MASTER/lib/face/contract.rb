@@ -24,6 +24,17 @@ module Master
         prompt(root:).fetch("measure_ch", Master::Design.measure_ideal_ch(root:))
       end
 
+      def budget(root: Master::ROOT) = spatial(root:).fetch("budget", {})
+      def camera(root: Master::ROOT) = spatial(root:).fetch("camera", {})
+      def layers(root: Master::ROOT)
+        Array(spatial(root:).fetch("layers", [])).map(&:to_s).freeze
+      end
+
+      def mode_aliases(root: Master::ROOT)
+        aliases = state(root:).fetch("mode_aliases", data(root:).fetch("mode_aliases", {}))
+        (aliases || {}).transform_keys(&:to_s).transform_values(&:to_s).freeze
+      end
+
       def prompt_max(root: Master::ROOT)
         prompt(root:).fetch("max_ch", 72)
       end
