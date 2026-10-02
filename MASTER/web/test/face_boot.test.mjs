@@ -336,6 +336,15 @@ test("nothing takes a 2D context on the shared #face canvas", () => {
   assert.doesNotMatch(fallback, /getElementById\(["']face["']\)\s*\.getContext/);
 });
 
+test("obsolete point renderer stays absent", () => {
+  const manifest = readFileSync(join(root, "config", "face_assets.yml"), "utf8");
+  const loader = readFileSync(join(publicDir, "face_deferred_loader.js"), "utf8");
+  assert.doesNotMatch(manifest, /face_points_gl\.js/);
+  assert.doesNotMatch(loader, /face_points_gl\.js/);
+  assert.doesNotMatch(readFileSync(join(publicDir, "face_world.js"), "utf8"), /new THREE\.WebGLRenderer/);
+  assert.doesNotMatch(readFileSync(join(publicDir, "face_world.js"), "utf8"), /requestAnimationFrame/);
+});
+
 test("face.css carries no knob for a glow that no longer exists", () => {
   const css = readFileSync(join(publicDir, "face.css"), "utf8");
   assert.doesNotMatch(css, /body::after/);
