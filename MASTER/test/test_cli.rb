@@ -593,6 +593,25 @@ end
     assert_equal "/foo", seen
   end
 
+  def test_exit_still_closes_when_session_save_fails
+    Dir.mktmpdir do |root|
+      cli = Master::CLI::Session.new(container: @container.merge(config: {}, root:))
+      cli.instance_variable_set(:@running, true)
+
+      @session.stub(:save!, -> { raise JSON::GeneratorError, "invalid UTF-8" }) do
+        @renderer.expect(:closing, "master0: closed")
+
+        out, err = capture_io { cli.send(:handle_repl_line, "/exit") }
+
+        assert_match(/session0: save failed — JSON::GeneratorError: invalid UTF-8/, out + err)
+        assert_equal "master0: closed
+", out
+        refute cli.instance_variable_get(:@running)
+        @renderer.verify
+      end
+    end
+  end
+
   def test_exit_saves_the_session_and_stops_the_repl
     Dir.mktmpdir do |root|
       cli = Master::CLI::Session.new(container: @container.merge(config: {}, root:))
