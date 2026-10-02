@@ -117,6 +117,27 @@ class TestFixConvergence < Minitest::Test
     assert_equal Master::ROOT, resolver.resolve_target("MASTER/**/*")
   end
 
+  def test_fix_target_resolver_rejects_paths_outside_governed_trees
+    resolver = Class.new do
+      include Master::CLI::Pipeline::TargetResolver
+      def initialize(root) = @root = root
+    end.new(Master::ROOT)
+
+    assert_raises(ArgumentError) { resolver.resolve_target("../") }
+    assert_raises(ArgumentError) { resolver.resolve_target("../../") }
+    assert_raises(ArgumentError) { resolver.resolve_target("TODO.md") }
+  end
+
+  def test_fix_target_resolver_keeps_existing_governed_files
+    resolver = Class.new do
+      include Master::CLI::Pipeline::TargetResolver
+      def initialize(root) = @root = root
+    end.new(Master::ROOT)
+
+    assert_equal Master::ROOT, resolver.resolve_target("MASTER")
+    assert_equal File.join(Master::RAILS_ROOT, "brgen"), resolver.resolve_target("RAILS/brgen")
+  end
+
   def test_openbsd_recursive_tree_globs_resolve_to_the_tree_root
     resolver = Class.new do
       include Master::CLI::Pipeline::TargetResolver
