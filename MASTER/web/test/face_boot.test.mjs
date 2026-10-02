@@ -336,6 +336,24 @@ test("nothing takes a 2D context on the shared #face canvas", () => {
   assert.doesNotMatch(fallback, /getElementById\(["']face["']\)\s*\.getContext/);
 });
 
+test("face runtime consumes the constitutional state contract", () => {
+  const contract = readFileSync(join(root, "..", "data", "rules.yml"), "utf8");
+  const state = readFileSync(join(publicDir, "face_state.js"), "utf8");
+  const index = readFileSync(join(root, "app", "views", "chat", "index.html.erb"), "utf8");
+  assert.match(contract, /face_interface:[\\s\\S]*schema: 1/);
+  assert.match(contract, /mode_aliases:[\\s\\S]*phantom: error/);
+  assert.match(state, /MASTER_FACE_CONTRACT/);
+  assert.match(state, /CONTRACT_STATE\.modes/);
+  assert.match(state, /MASTERTopology\.classifyEvent/);
+  assert.match(index, /MASTER_FACE_CONTRACT = <%= raw/);
+});
+
+test("face.js has no second fallback module list", () => {
+  const source = readFileSync(join(publicDir, "face.js"), "utf8");
+  assert.match(source, /MASTER_ASSET_PATHS\?\.faceModulesList/);
+  assert.doesNotMatch(source, /|| \[\s*"attention_model\.js"/);
+});
+
 test("obsolete point renderer stays absent", () => {
   const manifest = readFileSync(join(root, "config", "face_assets.yml"), "utf8");
   const loader = readFileSync(join(publicDir, "face_deferred_loader.js"), "utf8");
