@@ -15,7 +15,7 @@ module Operator
       return path if path
       actual = Gem::Version.new(RUBY_VERSION)
       required = Gem::Version.new(pinned_version(root))
-      return RbConfig.ruby if actual == required
+      return RbConfig.ruby if Environment.ruby_version_ok? || actual == required
 
       raise Environment.ruby_mismatch_message
     end
@@ -60,13 +60,13 @@ module Operator
     def openbsd_path(name, root: Environment.repo_root)
       return unless RUBY_PLATFORM.match?(/openbsd/)
 
-      version = pinned_version(root)
-      return unless version.match?(/\A4\.0\.\d+\z/)
+      %w[ruby34 ruby33].each do |ruby_command|
+        command = name == "ruby" ? ruby_command : ruby_command.sub("\\Aruby", "bundle")
+        path = command_path(command)
+        return path unless path.empty?
+      end
 
-      suffix = version.split(".")[0, 2].join
-      executable = "#{name}#{suffix}"
-      path = command_path(executable)
-      path unless path.empty?
+      ""
     end
 
     def command_path(name)
