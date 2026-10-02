@@ -358,7 +358,10 @@ module Master
           pitch: values[:pitch],
         )
         return PreparedAudio.new(**values, path: nil) unless path
-        return PreparedAudio.new(**values, path: nil) unless generation_active?(values[:generation])
+        unless generation_active?(values[:generation])
+          delete_temp_audio(path)
+          return PreparedAudio.new(**values, path: nil)
+        end
 
         PreparedAudio.new(**values, path:)
       rescue StandardError => e
@@ -417,6 +420,15 @@ module Master
         end
         spoken(prepared.text) if prepared.last && generation_active?(prepared.generation)
         true
+      end
+
+      def delete_temp_audio(path)
+        return unless path.to_s.start_with?("/tmp/m_tts_")
+        return unless File.exist?(path)
+
+        File.delete(path)
+      rescue StandardError
+        nil
       end
 
       def cleanup_prepared(prepared)
