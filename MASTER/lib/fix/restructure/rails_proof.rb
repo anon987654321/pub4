@@ -49,7 +49,13 @@ module Master
         def stylesheets?(plan) = plan.paths.any? { |path| path.end_with?(".scss", ".css") }
 
         def test_files(plan)
-          apps(plan).flat_map { |app| Dir.glob(File.join(@tree_root, app, "test", "**", "*_test.rb")) }
+          apps(plan).flat_map do |app|
+            root = File.join(@tree_root, app)
+            [
+              *Dir.glob(File.join(root, "test", "**", "*_test.rb")),
+              *Dir.glob(File.join(root, "engines", "*", "test", "**", "*_test.rb"))
+            ]
+          end
         end
 
         # brgen/test/models/post_test.rb runs as `bin/rails test` inside brgen.
