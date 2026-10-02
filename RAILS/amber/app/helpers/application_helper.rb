@@ -19,8 +19,8 @@ module ApplicationHelper
     WardrobeAi.configured?
   end
 
-  def master_photograph_available?
-    WardrobeAi.master_photograph_available?
+  def studio_photograph_available?
+    WardrobeAi.studio_photograph_available?
   end
 
 # "Pending media" is only true while something is going to pick the job up.

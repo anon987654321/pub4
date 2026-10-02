@@ -290,7 +290,7 @@ at 0-1-0, so it has to keep the later word.
 Every app writes its own rules below the `@use` lines.
 
 Gates and tests that once named a partial now name the rule: `Operator::ScssRules`
-(`shared/lib/operator/scss_rules.rb`) reads a stylesheet into selectors and the
+(`MASTER/tools/scss_rules.rb`) reads a stylesheet into selectors and the
 declarations each holds, so "the nav's tabs declare a tap floor" is asserted on
 `.feed-tab` wherever that rule sits. Product pens — the yep.com search, jOxVvNE,
 Amazon's nav bar and logo — are named once, in
@@ -835,7 +835,7 @@ The rule that came out of it, so the next file lands on the right side:
   is a shadowing hazard with no framework paying for it. `Shared::Scrape` is the
   only one there was.
 
-## `shared/lib/operator/` keeps a flat drawer (2026-09-10)
+## `RAILS/tools/operator/` keeps a flat drawer (2026-09-10)
 
 Thirteen of the twenty file names there end in `_lint` and the cohesion census
 proposes a `pub4/lint/` shelf. Decided against. The shelf is already spelled in

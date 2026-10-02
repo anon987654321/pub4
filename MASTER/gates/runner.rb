@@ -18,7 +18,7 @@ SUBPROCESS_INCONCLUSIVE = 3
 
 $LOAD_PATH.unshift(ROOT, GATES_DIR)
 require File.join(ROOT, "MASTER", "gates", "support", "gate_result")
-require File.join(ROOT, "OPENBSD", "lib", "gate_ledger")
+require File.join(ROOT, "MASTER", "gates", "support", "gate_ledger")
 require File.join(ROOT, "MASTER", "lib", "trace", "dmesg")
 
 GATES_FILE = ENV.fetch("GATES_FILE", REGISTRY_DEFAULT)

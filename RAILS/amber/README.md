@@ -254,7 +254,7 @@ relayd**.
 |-----|----------------|
 | `SECRET_KEY_BASE` | App boot |
 | `OPENROUTER_API_KEY` | LLM joy analysis, vision outfits, capsule LLM path |
-| `AMBER_ENABLE_MASTER_PHOTO=1` | Optional MASTER look photography (off by default) |
+| `AMBER_ENABLE_STUDIO_PHOTO=1` | Optional STUDIO look photography (off by default) |
 
 Without OpenRouter, Amber still works: **heuristics and rules** (joy from wear,
 rule-based outfits, local capsule). Buttons say so in the UI.

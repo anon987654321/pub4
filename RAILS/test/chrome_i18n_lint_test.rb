@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
-require_relative "../shared/lib/operator/chrome_i18n_lint"
+require_relative "../../MASTER/tools/chrome_i18n_lint"
 
 class ChromeI18nLintTest < Minitest::Test
   # Was assert_equal 0, findings.size. The lint now measures three kinds with

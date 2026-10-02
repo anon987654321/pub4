@@ -9,8 +9,8 @@ class PostproProcessorTest < Minitest::Test
     with_env("PUB4_ROOT" => repo_root, "PUB4_RAILS_ROOT" => rails_root) do
       script = Shared::PostproProcessor.script
       assert script, "postpro script not found"
-      # The media tools live under MASTER/tools since 9baa6047e.
-      assert_includes script.to_s, "/MASTER/tools/postpro/postpro.rb"
+      # The media tools live under STUDIO after the four-tree reset.
+      assert_includes script.to_s, "/STUDIO/postpro/postpro.rb"
       assert File.file?(script), "expected postpro at #{script}"
     end
   end

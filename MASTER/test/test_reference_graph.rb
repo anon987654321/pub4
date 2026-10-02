@@ -12,15 +12,15 @@ class TestReferenceGraph < Minitest::Test
       shared = File.join(root, "RAILS", "shared", "lib", "operator", "deploy_paths.rb")
       FileUtils.mkdir_p(File.dirname(caller))
       FileUtils.mkdir_p(File.dirname(shared))
-      File.write(caller, 'require_relative "../../shared/lib/operator/deploy_paths"' + "\n")
+      File.write(caller, 'require_relative "../../tools/operator/deploy_paths"' + "\n")
       File.write(shared, "module Operator; end\n")
 
       graph = Master::Review::ReferenceGraph.new(root:)
       result = graph.build
       edges = result[:edges].select { |edge| edge[:from] == "RAILS/brgen/config/boot.rb" && edge[:type] == :require }
 
-      assert_includes edges.map { |edge| edge[:to] }, "RAILS/shared/lib/operator/deploy_paths.rb"
-      refute_includes edges.map { |edge| edge[:to] }, "shared/lib/operator/deploy_paths.rb"
+      assert_includes edges.map { |edge| edge[:to] }, "RAILS/tools/operator/deploy_paths.rb"
+      refute_includes edges.map { |edge| edge[:to] }, "tools/operator/deploy_paths.rb"
     end
   end
 

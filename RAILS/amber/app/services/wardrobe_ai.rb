@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "zlib"
+require_relative "../../../contracts/studio"
 
 class WardrobeAi
   # The no-model answers. See wardrobe_ai/offline.rb — most machines and vm23
@@ -14,11 +15,11 @@ class WardrobeAi
     Shared::Llm.configured?
   end
 
-  def self.master_photograph_available?
+  def self.studio_photograph_available?
     return false if ENV["CI"] == "1" || Rails.env.test?
-    return false unless ENV["AMBER_ENABLE_MASTER_PHOTO"].to_s == "1"
+    return false unless ENV["AMBER_ENABLE_STUDIO_PHOTO"].to_s == "1"
 
-    Operator::DeployPaths.master_root.present?
+    Contracts::Studio.photograph_script.present?
   end
 
   # Pass client: nil to force offline heuristics (explicit); omit for auto OpenRouter.

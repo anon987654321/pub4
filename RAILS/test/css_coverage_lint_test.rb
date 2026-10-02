@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
-require_relative "../shared/lib/operator/css_coverage_lint"
+require_relative "../../MASTER/tools/css_coverage_lint"
 
 # The register has tracked unused CSS selectors since 2026-08-10 and said in its own
 # entry that no committed tool reproduces the number. This is that tool, and it

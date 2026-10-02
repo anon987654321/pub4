@@ -381,7 +381,7 @@ en:
     suggest_lead: "OpenRouter + wardrobe metadata%{vision}. Shopping links are not used for ranking."
     suggest_vision: " (vision when photos exist)"
     suggest_local_html: "<strong>OpenRouter not configured</strong> — suggestions use local rules from your joy/active wardrobe. Set <code>OPENROUTER_API_KEY</code> for LLM + vision styling."
-    master_photo_html: "MASTER photograph is enabled (<code>AMBER_ENABLE_MASTER_PHOTO=1</code>) — look photos may attach when generation succeeds."
+    studio_photo_html: "STUDIO photograph is enabled (<code>AMBER_ENABLE_STUDIO_PHOTO=1</code>) — look photos may attach when generation succeeds."
     submit_to_compose: "Submit the form to compose from clothes you already own."
   pwa:
     description: "Social fashion. Share outfits, keep a wardrobe, and dress with people you follow."

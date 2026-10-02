@@ -151,4 +151,4 @@ module Studio
   end
 end
 
-Master::Io::AnalogCapabilities.validate!
+Studio::AnalogCapabilities.validate!

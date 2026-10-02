@@ -10,7 +10,7 @@ module Studio
     ROOT = File.expand_path(__dir__)
     VENDORED = %r{/(?:.git|node_modules|tmp|.cache|storage|output|renders|samples|weights)/}
     FILES = -> { Dir.glob(File.join(ROOT, "**", "*.rb")).reject { |path| "/#{path.delete_prefix(ROOT + "/")}" =~ VENDORED }.sort }
-    ENTRYPOINTS = %w[dilla/dilla.rb postpro/postpro.rb replicate/replicate.rb].freeze
+    ENTRYPOINTS = %w[dilla/dilla.rb postpro/postpro.rb replicate/replicate.rb photograph.rb].freeze
     FORBIDDEN = %r{require(?:_relative)?\s+["'][^"']*(?:MASTER|RAILS|OPENBSD)/(?:lib|app|tools|shared|engines)[^"']*["']}
 
     def self.run = new.run

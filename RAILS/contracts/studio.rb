@@ -1,5 +1,9 @@
 # frozen_string_literal: true
 
+require "json"
+require "open3"
+require "rbconfig"
+
 module Contracts
   module Studio
     module_function

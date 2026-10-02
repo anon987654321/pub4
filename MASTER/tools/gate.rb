@@ -177,5 +177,3 @@ module Deploy
     end
   end
 end
-
-ToolsGate::ToolsGateError = StandardError unless defined?(ToolsGate::ToolsGateError)

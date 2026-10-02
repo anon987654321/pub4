@@ -23,13 +23,13 @@ class AiControllerTest < ActionDispatch::IntegrationTest
     assert_includes [ I18n.t("flash.joy_analysis_heuristic"), I18n.t("flash.joy_analysis_ai") ], flash[:notice]
   end
 
-  test "suggest outfits renders without the MASTER photograph bridge" do
+  test "suggest outfits renders without the STUDIO photograph bridge" do
     sign_in_as("ai-suggest@example.com")
 
     get ai_suggest_outfits_path
 
     assert_response :success
-    refute WardrobeAi.master_photograph_available?
+    refute WardrobeAi.studio_photograph_available?
   end
 
   test "suggest outfits stops at its own limit" do

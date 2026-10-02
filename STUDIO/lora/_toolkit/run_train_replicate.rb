@@ -29,7 +29,7 @@ require "tmpdir"
 require "time"
 
 # The subject is chosen by the wrapper that invoked this (see _toolkit/toolkit.sh):
-# SUBJECT_DIR points at MASTER/tools/lora/<subject>, and subject.env there names
+# SUBJECT_DIR points at STUDIO/lora/<subject>, and subject.env there names
 # SUBJECT, MODEL and TRIGGER.
 SUBJECT = ENV.fetch("SUBJECT") { abort "run a subject wrapper, not this script directly" }
 MODEL = ENV.fetch("MODEL") { abort "run a subject wrapper, not this script directly" }

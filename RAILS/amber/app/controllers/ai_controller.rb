@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "open3"
+require_relative "../../../contracts/studio"
 
 class AiController < ApplicationController
   before_action :require_real_user
@@ -10,8 +10,8 @@ class AiController < ApplicationController
   # write throttle does not see a GET, so it carries its own limit, and each
   # photograph is one bounded subprocess: a 1 GB box cannot hold a request open
   # on an unbounded render.
-  MASTER_PHOTOGRAPHS_PER_REQUEST = 1
-  MASTER_PHOTOGRAPH_TIMEOUT = 120
+  STUDIO_PHOTOGRAPHS_PER_REQUEST = 1
+  
 
   rate_limit to: 10, within: 10.minutes, only: :suggest_outfits,
              by: -> { "u#{Current.user&.id}" },
@@ -45,18 +45,16 @@ class AiController < ApplicationController
     @suggestions = service.suggest_outfits(
       occasion: params[:occasion], season: params[:season]
     )
-    @master_photo = WardrobeAi.master_photograph_available?
+    @studio_photo = WardrobeAi.studio_photograph_available?
 
-    return unless @master_photo
+    return unless @studio_photo
 
-    master_root = Operator::DeployPaths.master_root.to_s
-    @suggestions.select { |s| s.is_a?(Hash) }.first(MASTER_PHOTOGRAPHS_PER_REQUEST).each do |s|
+        @suggestions.select { |s| s.is_a?(Hash) }.first(MASTER_PHOTOGRAPHS_PER_REQUEST).each do |s|
       combo = "professional fashion photography of outfit '#{s['name']}' with #{Array(s['items']).join(', ')}. #{s['description']}. model, kodak portra, cinematic"
       begin
-        out = photograph(master_root, combo)
-        if out =~ /postpro.*(output\/[^\s]+_postpro)/
-          pdir = File.join(master_root, $1)
-          imgf = Dir.glob(File.join(pdir, "*.{jpg,jpeg,png}")).first
+        out = Contracts::Studio.photograph(prompt: combo)
+        if out["still"].to_s != ""
+          imgf = out["still"]
           if imgf && File.exist?(imgf)
             outfit = Current.user.outfits.create!(name: s["name"], description: s["description"].to_s)
             Array(s["items"]).each do |tit|
@@ -69,7 +67,7 @@ class AiController < ApplicationController
           end
         end
       rescue StandardError => e
-        Rails.logger.warn("MASTER photograph for suggestion failed: #{e.message}")
+        Rails.logger.warn("STUDIO photograph for suggestion failed: #{e.message}")
       end
     end
   end
@@ -179,21 +177,6 @@ class AiController < ApplicationController
   end
 
   private
-
-  # Argv array, never a shell string: the prompt carries text a model wrote.
-  # The child is killed at the timeout and its output so far is returned.
-  def photograph(master_root, prompt)
-    # brakeman :ignore Execute
-    Open3.popen2e("bundle", "exec", "ruby", "bin/cli", "photograph", prompt, chdir: master_root) do |stdin, output, wait|
-      stdin.close
-      reader = Thread.new { output.read }
-      unless wait.join(MASTER_PHOTOGRAPH_TIMEOUT)
-        Process.kill("TERM", wait.pid)
-        wait.join(5) || Process.kill("KILL", wait.pid)
-      end
-      reader.value.to_s
-    end
-  end
 
   def create_outfit_from_vision_suggestion(suggestion)
     name = suggestion["name"].presence || "Suggested outfit"

@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
-require_relative "../shared/lib/operator/visual_contract_lint"
-require_relative "../../MASTER/tools/master_design"
+require_relative "../../MASTER/tools/visual_contract_lint"
+require_relative "../tools/operator/master_design"
 
 class VisualContractLintTest < Minitest::Test
   L = Operator::VisualContractLint

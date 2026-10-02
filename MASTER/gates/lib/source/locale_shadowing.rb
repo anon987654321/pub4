@@ -1,3 +1,4 @@
+# MASTER-local gate support; sibling implementation imports are forbidden.
 # frozen_string_literal: true
 
 require "yaml"

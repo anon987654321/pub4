@@ -25,8 +25,8 @@ family_members:
 - RAILS/shared/app/controllers/concerns/shared#actions
 - RAILS/shared/app/controllers/concerns/shared#auth
 - RAILS/shared/app/models/shared#affiliate
-- RAILS/shared/lib/operator#lint
+- RAILS/tools/operator#lint
 - RAILS/shared/lib/shared#examples
-- MASTER/tools/dilla/lib#engine
-- MASTER/tools/dilla/lib#harmony
+- STUDIO/dilla/lib#engine
+- STUDIO/dilla/lib#harmony
 - MASTER/tools/dilla/lib#score

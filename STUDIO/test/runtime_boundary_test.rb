@@ -22,7 +22,7 @@ class StudioRuntimeBoundaryTest < Minitest::Test
   end
 
   def test_canonical_media_entrypoints_exist
-    %w[dilla/dilla.rb postpro/postpro.rb replicate/replicate.rb].each do |entry|
+    %w[dilla/dilla.rb postpro/postpro.rb replicate/replicate.rb photograph.rb].each do |entry|
       assert File.file?(File.join(ROOT, entry)), "missing STUDIO/#{entry}"
     end
   end

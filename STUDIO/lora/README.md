@@ -406,4 +406,4 @@ GraphQL-specific controls belong at the API boundary: authenticate and authorize
 
 LoRA is a creative/model tool under STUDIO/lora. MASTER provides governance and invocation; LoRA owns model composition, prompt construction, adapter data, and artifact provenance.
 
-New automation should reference STUDIO/lora, never the retired STUDIO/lora path.
+New automation should reference STUDIO/lora, never the retired MASTER/tools/lora path.

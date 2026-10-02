@@ -2,7 +2,7 @@
 
 require "minitest/autorun"
 require "tempfile"
-require_relative "../shared/lib/operator/breakpoint_lint"
+require_relative "../../MASTER/tools/breakpoint_lint"
 
 # TODO.md, rails_no_breakpoint_token: colour, space, motion,
 # elevation and the dialect maps are single-sourced; the viewport scale was not, so

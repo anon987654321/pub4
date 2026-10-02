@@ -473,14 +473,14 @@ end
 
     # Each is a module with BASELINES (per kind) or BASELINE (single) and a scan.
     RAILS_LINTS = {
-      "chrome_i18n" => "shared/lib/operator/chrome_i18n_lint.rb",
-      "breakpoint" => "shared/lib/operator/breakpoint_lint.rb",
-      "empty_state" => "shared/lib/operator/empty_state_lint.rb",
-      "css_coverage" => "shared/lib/operator/css_coverage_lint.rb",
-      "asset_url" => "shared/lib/operator/asset_url_lint.rb",
-      "visual_contract" => "shared/lib/operator/visual_contract_lint.rb",
-      "model_contract" => "shared/lib/operator/model_contract_lint.rb",
-      "destructive_action" => "shared/lib/operator/destructive_action_lint.rb",
+      "chrome_i18n" => "../MASTER/tools/chrome_i18n_lint.rb",
+      "breakpoint" => "../MASTER/tools/breakpoint_lint.rb",
+      "empty_state" => "../MASTER/tools/empty_state_lint.rb",
+      "css_coverage" => "../MASTER/tools/css_coverage_lint.rb",
+      "asset_url" => "../MASTER/tools/asset_url_lint.rb",
+      "visual_contract" => "../MASTER/tools/visual_contract_lint.rb",
+      "model_contract" => "tools/operator/model_contract_lint.rb",
+      "destructive_action" => "tools/operator/destructive_action_lint.rb",
     }.freeze
 
     def rails_lint_rows

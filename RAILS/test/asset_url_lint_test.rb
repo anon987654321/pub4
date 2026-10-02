@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
-require_relative "../shared/lib/operator/asset_url_lint"
+require_relative "../../MASTER/tools/asset_url_lint"
 
 # The gap css_coverage_lint left. It measures class names in both directions and
 # never looks inside a declaration, so no committed tool read `url()` — and the
