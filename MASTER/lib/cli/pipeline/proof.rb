@@ -37,8 +37,8 @@ module Master
         RUNNER_INCONCLUSIVE = 3
 
         PROOF_ROOTS = {
-          "MASTER" => Operator::GateChain::MASTER,
-          "OPENBSD" => File.join(Operator::GateChain::ROOT, "OPENBSD"),
+          "MASTER" => ::Operator::GateChain::MASTER,
+          "OPENBSD" => File.join(::Operator::GateChain::ROOT, "OPENBSD"),
         }.freeze
 
         # Every commit this runtime delivers opens with it. A baseline outlives
@@ -244,10 +244,10 @@ module Master
 
         def leftover_paths(abs)
           tree = abs.delete_prefix("#{Master::REPO_ROOT}/").split("/").first
-          return [] unless Operator::GateChain::TREES.include?(tree)
+          return [] unless ::Operator::GateChain::TREES.include?(tree)
 
           (repo_git.changed_paths - @start_dirty).select { |path| path.start_with?("#{tree}/") }
-                                                 .grep_v(Operator::GateChain::GENERATED)
+                                                 .grep_v(::Operator::GateChain::GENERATED)
         end
 
         def delivery_message(abs, verdict:, paths:)
