@@ -2,6 +2,7 @@
 
 require "io/console"
 require "io/wait"
+require_relative "../../io/exec"
 
 module Master
   module CLI
@@ -68,6 +69,7 @@ module Master
           @motion = Motion.new(seed: Random.new_seed % 1_000_003)
           @events = []
           @jobs = []
+          @event_bus = event_bus
           @event_unsubscribers = subscribe_to_bus(event_bus)
           @opened = now
         end
@@ -246,7 +248,9 @@ module Master
         # mode, so the face refuses what needs one, as the web face does. The
         # open-face mark stops a spoken "face" from opening a second one.
         def think(text)
+          children = Master::Io::Exec::Children.new
           worker = Thread.new do
+            Fiber[:master_children] = children
             Fiber[:master_terminal_ask] = nil
             Fiber[:master_face_open] = true
             @turn.call(text)
@@ -258,10 +262,19 @@ module Master
           until worker.join(0.05)
             next unless cancel_key?
 
-            worker.kill
-            return Master::Result.err("face0: turn cancelled", category: :timeout)
+            return cancel_worker(worker, children)
           end
           worker.value
+        end
+
+        def cancel_worker(worker, children)
+          worker.kill
+          children.kill_all
+          @event_bus&.publish(
+            "user:interrupt", reason: "face", source: "face", children:
+          )
+          worker.join(1)
+          Master::Result.err("face0: turn cancelled", category: :timeout)
         end
 
         # turn answers with a Result, or with the text it streamed.

@@ -102,6 +102,35 @@ class TestCliTerminalFace < Minitest::Test
     assert_equal "Bug and ember lay out.", pictured
   end
 
+  def test_face_cancellation_kills_turn_children_and_publishes_interrupt
+    events = []
+    bus = Object.new
+    bus.define_singleton_method(:publish) { |event, **details| events << [event, details] }
+    face = Master::CLI::Face::Window.new(
+      turn: ->(_) {},
+      ear: Quiet.new(nil),
+      mouth: Quiet.new(nil),
+      input: StringIO.new,
+      output: StringIO.new,
+      size: -> { [24, 80] },
+      event_bus: bus
+    )
+
+    order = []
+    worker = Object.new
+    worker.define_singleton_method(:kill) { order << :kill }
+    worker.define_singleton_method(:join) { |*| order << :join; true }
+    children = Object.new
+    children.define_singleton_method(:kill_all) { order << :children }
+
+    result = face.send(:cancel_worker, worker, children)
+
+    assert result.err?
+    assert_equal :timeout, result.category
+    assert_equal %i[kill children join], order
+    assert_equal [["user:interrupt", { reason: "face", source: "face", children: children }]], events
+  end
+
   def test_face_falls_back_to_native_speech_when_synthesis_is_missing
     spoken = []
     mouth = Master::CLI::Face::Mouth.new(
