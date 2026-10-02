@@ -104,13 +104,26 @@ module Master
         end
 
         def skipped?(path)
-          Master::Review::Scan::Scanner.skip_path?(path, root: @root) || binary?(path) || immutable?(path)
+          Master::Review::Scan::Scanner.skip_path?(path, root: @root) ||
+            binary?(path) ||
+            immutable?(path) ||
+            rails_history?(path)
         end
 
         # soul.yml is the constitutional source for sacred paths. The catalogue in
         # rules.yml describes laws; it does not own write protection.
         def immutable?(path)
           Master::Core::Paths.sacred?(path, root: @root)
+        end
+
+        # Rails migrations are historical record, not repairable source. They
+        # remain visible to migration-safety gates, but /fix must never rewrite
+        # them as ordinary violations because changing history does not repair
+        # the deployed database.
+        def rails_history?(path)
+          root = File.expand_path(@root)
+          relative = File.expand_path(path).delete_prefix("#{root}#{File::SEPARATOR}")
+          relative.match?(%r{ARAILS/(?:[^/]+/)*(?:db/migrate)(?:/|$)})
         end
 
         def relative(path)
