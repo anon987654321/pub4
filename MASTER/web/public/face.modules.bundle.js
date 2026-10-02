@@ -8,8 +8,6 @@
   }
   function pushBlend(patch) {
     mouthBlend = { ...mouthBlend, ...patch };
-    const engine = window.Face3DPreview?.engine;
-    if (engine?.setBlend) engine.setBlend(mouthBlend);
     window.dispatchEvent(new CustomEvent("face:mouth-blend", { detail: { ...mouthBlend } }));
   }
   function expressionToBlend(ex = {}) {
