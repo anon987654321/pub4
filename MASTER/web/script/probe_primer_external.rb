@@ -99,7 +99,7 @@ begin
         primerForm: !!document.getElementById('primer-form'),
         primerTitle: (document.getElementById('primer-title') || {}).textContent || '',
         primerFired: !!window._primerFired,
-        face3d: !!window.FACE3D_ACTIVE,
+        faceWorld: !!window.MASTER_FACE_WORLD,
         behindPrimer: document.body.dataset.faceBehindPrimer === '1',
         masterFace: typeof window.MASTER_FACE,
         errs: window._errs || []
@@ -109,7 +109,7 @@ begin
     puts "\n=== before tap ==="
     puts JSON.pretty_generate(before)
     failures << "primer missing before tap" unless before["primer"]
-    failures << "face3d inactive before tap" unless before["face3d"]
+    failures << "FaceWorld inactive before tap" unless before["faceWorld"]
 
     tap_mode = probe_evaluate(browser, <<~JS)
       (function() {
@@ -137,7 +137,7 @@ begin
           primerFiredProp: window.MASTER_FACE?.primerFired,
           uiStatus: (document.getElementById('ui-status') || {}).textContent || '',
           errorLive: (document.getElementById('error-live') || {}).textContent || '',
-          face3d: !!window.FACE3D_ACTIVE,
+          faceWorld: !!window.MASTER_FACE_WORLD,
           errs: window._errs || []
         })
       JS
