@@ -36,7 +36,6 @@ async function loadDeferredFaceLayer() {
     await Promise.all([
       loadScript(assetUrl("cognition_ecology.js")),
       loadScript(assetUrl("cognition_ecology_render.js")),
-      loadScript(assetUrl("face_points_gl.js"))
     ]);
     window.dispatchEvent(new CustomEvent("master:deferred-face-ready"));
   })().catch((err) => {
