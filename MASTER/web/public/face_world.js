@@ -28,16 +28,7 @@
     ["lib", "tools"], ["law", "web"], ["tools", "openbsd"], ["web", "lib"], ["openbsd", "law"]
   ];
 
-  const TOPOLOGY_TILT = Object.freeze({
-    "codebase": [0.00, 0.18],
-    "neural": [0.12, -0.08],
-    "terrain": [-0.08, 0.10],
-    "glitch": [0.18, 0.24],
-    "serpent": [0.14, -0.20],
-    "torus": [-0.14, 0.16],
-    "sphere": [0.00, 0.00],
-    "papua-mask": [0.00, 0.00]
-  });
+  const TOPOLOGY_PROFILES = Object.freeze(SPATIAL.topology_profiles || {});
 
   function finite(value, fallback) {
     const number = Number(value);
@@ -246,6 +237,7 @@
     if (!geometry) return;
 
     const topology = String(state.topology || "papua-mask");
+    const topologyProfile = TOPOLOGY_PROFILES[topology] || TOPOLOGY_PROFILES["papua-mask"] || {};
     const kernel = window.ParticleKernel;
     const eyePool = window.MASTER_FACE?.eyePool;
     const mouthPool = window.MASTER_FACE?.mouthPool;
@@ -266,12 +258,15 @@
         );
       }
     }
-    const tilt = TOPOLOGY_TILT[topology] || TOPOLOGY_TILT["papua-mask"];
+    const density = finite(topologyProfile.density, 1);
+    const fracture = finite(topologyProfile.fracture, 0);
+    const tiltX = finite(topologyProfile.tilt_x, 0);
+    const tiltY = finite(topologyProfile.tilt_y, 0);
     const pointerX = finite(window.MASTER_FACE?.State?.mouseX, 0);
     const pointerY = finite(window.MASTER_FACE?.State?.mouseY, 0);
 
-    world.rotation.y += ((pointerX * 0.045) + tilt[1] * geometry.fracture - world.rotation.y) * 0.035;
-    world.rotation.x += ((pointerY * 0.028) + tilt[0] * geometry.fracture - world.rotation.x) * 0.035;
+    world.rotation.y += ((pointerX * 0.045) + tiltY * (geometry.fracture + fracture) - world.rotation.y) * 0.035;
+    world.rotation.x += ((pointerY * 0.028) + tiltX * (geometry.fracture + fracture) - world.rotation.x) * 0.035;
 
     shell.scale.setScalar(geometry.shell_scale);
     shellMaterial.uniforms.uTime.value = now;
@@ -285,18 +280,18 @@
       const pulse = 1 + Math.sin(now * 0.0012 + phase) * 0.14 * geometry.neural_density;
       node.scale.setScalar(pulse);
       node.position.z = NODE_LAYOUT[node.userData.index][3] + Math.sin(now * 0.00065 + phase) * 0.05 * geometry.depth;
-      node.material.opacity = Math.min(0.85, 0.20 + geometry.neural_density * 0.55);
+      node.material.opacity = Math.min(0.85, 0.20 + geometry.neural_density * 0.55 * density);
       node.material.color.copy(shellMaterial.uniforms.uColor.value);
     });
 
     if (edges) {
-      edges.material.opacity = 0.035 + geometry.neural_density * 0.10;
+      edges.material.opacity = Math.min(0.28, (0.035 + geometry.neural_density * 0.10) * density);
       edges.material.color.copy(shellMaterial.uniforms.uColor.value);
     }
 
     if (splatProxy) {
       splatProxy.material.opacity =
-        Math.min(0.18, 0.03 + geometry.neural_density * 0.09 + geometry.fracture * 0.04);
+        Math.min(0.18, 0.03 + geometry.neural_density * 0.09 * density + (geometry.fracture + fracture) * 0.04);
       splatProxy.material.color.copy(shellMaterial.uniforms.uColor.value);
       splatProxy.rotation.z = now * 0.000018 * (0.5 + geometry.depth);
     }
