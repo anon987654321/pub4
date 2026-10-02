@@ -217,6 +217,25 @@ class TestRestructure < Minitest::Test
     assert Restructure::Syntax.valid?(File.join(@repo, "ok.yml"))
   end
 
+  def test_rails_restructure_proof_refuses_a_deleted_view_with_a_logical_render_reference
+    view = "RAILS/brgen/app/views/posts/_card.html.erb"
+    caller = "RAILS/brgen/app/views/posts/index.html.erb"
+    write(view, "<%# card %>\n")
+    write(caller, '<%= render "posts/card" %>\n')
+    plan = Restructure::Plan.parse("=== DELETE #{view}\n=== END\n")
+    proof = Restructure::RailsProof.new(repo_root: @repo, tree: "RAILS")
+    before = proof.baseline(plan)
+    File.delete(File.join(@repo, view))
+
+    assert_match(/render references/, proof.failure(plan, before))
+  end
+
+  def test_erb_restructure_content_is_syntax_checked
+    write("RAILS/brgen/app/views/posts/card.html.erb", '<%= missing( %>\n')
+
+    refute Restructure::Syntax.valid?(File.join(@repo, "RAILS/brgen/app/views/posts/card.html.erb"))
+  end
+
   # The box's mirrored paths and the database's history mean something outside
   # the tree, so no restructure moves them.
   def test_paths_that_mirror_the_box_or_the_database_are_refused
