@@ -15,22 +15,15 @@ class TraceDmesgTest < Minitest::Test
     io = Object.new
     def io.tty? = true
 
-    singleton = Master::Trace::Dmesg.singleton_class
-    original = singleton.instance_method(:require) if singleton.method_defined?(:require, true)
     Master::Trace::Dmesg.remove_instance_variable(:@pastel) if Master::Trace::Dmesg.instance_variable_defined?(:@pastel)
 
-    singleton.send(:define_method, :require) do |name|
-      raise LoadError, "cannot load such file -- #{name}"
+    Master::Trace::Dmesg.stub(:require, ->(name) { raise LoadError, "cannot load such file -- #{name}" }) do
+      assert_equal "deps0: installing bundle", Master::Trace::Dmesg.style(
+        "deps0: installing bundle",
+        io:
+      )
     end
-
-    assert_equal "deps0: installing bundle", Master::Trace::Dmesg.style(
-      "deps0: installing bundle",
-      io:
-    )
   ensure
-    if original
-      singleton.send(:define_method, :require, original)
-    end
     Master::Trace::Dmesg.remove_instance_variable(:@pastel) if Master::Trace::Dmesg.instance_variable_defined?(:@pastel)
   end
 
