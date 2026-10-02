@@ -27,7 +27,7 @@
     [/locale|lang|multilingual/i, [31]], [/whisper|ethereal|intimate/i, [32]],
     [/council:multi|council:speech|council:deliberation/i, [33]],
     [/stt:/i, [34]], [/tts:error|tts:job_cancelled/i, [35]],
-    [/face3d|visual:ready|compositor/i, [36]],
+    [/face_world|visual:ready|compositor/i, [36]],
     [/face-ready|boot|primer/i, [37, 40]],
     [/blend|user:expression|face:mouth/i, [38]], [/phosphor|trail/i, [39]]
   ];
