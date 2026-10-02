@@ -39,6 +39,19 @@ class RuntimeHardeningTest < Minitest::Test
     assert_equal "boom", result.message
   end
 
+  def test_execute_refuses_empty_handler_output_and_publishes_event
+    bus = EventBus.new
+    stage = Master::CLI::Stages::Execute.new(event_bus: bus)
+    ctx = Master::CLI::PipelineContext.build(user_message: "/doctor", command: "doctor", handler: ->(_ctx) { "" })
+
+    result = stage.call(ctx)
+
+    assert_instance_of Master::Result::Err, result
+    assert_equal :handler_exception, result.category
+    assert_match(%r{/doctor}, result.message)
+    assert_includes bus.events, ["command:empty", { command: "doctor" }]
+  end
+
   def test_circuit_breaker_honors_configured_rate_limit_category
     breaker = Master::Io::CircuitBreaker.new(budget_max: 0, req_max: 1, rate_window_s: 60)
 
