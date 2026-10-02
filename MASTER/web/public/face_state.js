@@ -1,71 +1,188 @@
-// MASTER face state bridge: status + visual events drive body masterState.
+// MASTER face state bridge: one semantic state for CLI, web HUD, 3D geometry and voice.
+// The browser is a projection of the same state vocabulary the terminal reports.
+// No renderer owns truth; this store owns the compact state vector and reflects it outward.
 (() => {
-  const MODE_BUSY = /thinking|speaking|listening|scanning|routing|submit|anticipate|stream|stage|tool/i;
-  const MODE_FAIL = /fail|error|blocked|unsafe|abort|crit|phantom|disconnected/i;
+  "use strict";
+
+  const MODE_BUSY = /thinking|speaking|listening|scanning|routing|submit|anticipate|stream|stage|tool|working/i;
+  const MODE_FAIL = /fail|error|blocked|unsafe|abort|crit|phantom|disconnected|veto/i;
+  const MODE_WARN = /warn|risk|careful|retry|fallback/i;
+
+  const MODES = Object.freeze([
+    "idle", "listening", "thinking", "working", "speaking",
+    "warning", "error", "sleeping", "ready"
+  ]);
+
+  const DEFAULTS = Object.freeze({
+    mode: "idle",
+    topology: "papua-mask",
+    entropy: 0.18,
+    confidence: 0.86,
+    attention: 1,
+    arousal: 0.22,
+    valence: 0.18,
+    focus: 0.86,
+    activity: 0.14,
+    risk: 0,
+    phase: "idle",
+    provider: "unknown"
+  });
+
+  const state = { ...DEFAULTS };
+  let lastEventAt = 0;
+
+  const clamp = (value, fallback = 0.0, min = 0.0, max = 1.0) => {
+    const number = Number(value);
+    return Number.isFinite(number) ? Math.max(min, Math.min(max, number)) : fallback;
+  };
 
   function classify(text, attr, detail = {}) {
-    const mode = (detail.mode || "").toString();
-    if (MODE_FAIL.test(mode) || MODE_FAIL.test(`${attr} ${text}`)) return "fail";
-    if (/warn|risk|careful|retry|fallback/i.test(`${attr} ${text}`)) return "warn";
-    if (MODE_BUSY.test(mode) || /busy|thinking|running|loading|stream|agent|model|working|stage/i.test(`${attr} ${text}`)) {
-      return "busy";
-    }
+    const mode = String(detail.mode || "");
+    if (MODE_FAIL.test(mode) || MODE_FAIL.test(`${attr} ${text}`)) return "error";
+    if (MODE_WARN.test(mode) || MODE_WARN.test(`${attr} ${text}`)) return "warning";
+    if (MODE_BUSY.test(mode) || /busy|loading|agent|model|running|stage/i.test(`${attr} ${text}`)) return "working";
     return "idle";
   }
 
-  function applyFrom(el, detail = {}) {
-    if (!el) return;
-    const state = classify(el.textContent, el.dataset.runtimeStatus, detail);
-    el.dataset.runtimeStatus = state;
-    document.body.dataset.masterState = state;
-    // Do NOT freeze the render on a "fail" status. A fail here is usually a
-    // backend health blip (TTS/replicate down, SSE disconnect) that has nothing
-    // to do with the GPU — freezing blacked the whole face out (see /health 503
-    // → masterState=fail → frozen). Keep rendering; masterState still carries
-    // "fail" so expression/color bridges can *react* to the fault. Visuals now
-    // pause only on tab-hidden (visual_governor).
-    document.body.dataset.visualRuntime = "face";
+  function modeFor(detail = {}) {
+    const explicit = String(detail.mode || "").toLowerCase();
+    if (MODES.includes(explicit)) return explicit;
+    if (/sleep/i.test(explicit)) return "sleeping";
+    if (/listen/i.test(explicit)) return "listening";
+    if (/speak|tts/i.test(explicit)) return "speaking";
+    if (/think|route|infer|memory|tool|stage|working/i.test(explicit)) return "thinking";
+    if (/fail|error|veto|blocked|rollback/i.test(explicit)) return "error";
+    if (/warn|risk|retry|fallback/i.test(explicit)) return "warning";
+    if (/ready|complete|done|pass/i.test(explicit)) return "ready";
+    return null;
+  }
+
+  function syncRuntimeFace() {
+    const runtime = window.MASTER_FACE?.State;
+    if (!runtime) return;
+
+    runtime.mode = state.mode;
+    runtime.entropy = state.entropy;
+    runtime.confidence = state.confidence;
+    runtime.attention = state.attention;
+    runtime.arousal = state.arousal;
+    runtime.valence = state.valence;
+    runtime.focus = state.focus;
+    runtime.activity = state.activity;
+    runtime.risk = state.risk;
+    runtime.phase = state.phase;
+  }
+
+  function reflect(detail = {}) {
+    const root = document.documentElement;
+    const body = document.body;
+    if (!root || !body) return;
+
+    root.dataset.masterMode = state.mode;
+    root.dataset.masterTopology = state.topology;
+    root.dataset.masterPhase = state.phase;
+    root.dataset.masterRisk = state.risk.toFixed(2);
+    root.dataset.masterConfidence = state.confidence.toFixed(2);
+    root.style.setProperty("--master-entropy", state.entropy.toFixed(3));
+    root.style.setProperty("--master-confidence", state.confidence.toFixed(3));
+    root.style.setProperty("--master-attention", state.attention.toFixed(3));
+    root.style.setProperty("--master-arousal", state.arousal.toFixed(3));
+    root.style.setProperty("--master-valence", state.valence.toFixed(3));
+
+    body.dataset.masterState = state.mode;
+    body.dataset.visualRuntime = "face";
+    body.dataset.mode = state.mode;
+
+    const status = detail.status || state.phase;
+    const element = document.getElementById("ui-status") || document.getElementById("zsh-status");
+    if (element && status && detail.reflectStatus === true) element.textContent = String(status);
   }
 
   function apply(detail = {}) {
-    applyFrom(document.getElementById("status"), detail);
-    applyFrom(document.getElementById("ui-status"), detail);
-    const stage = document.getElementById("pipeline-stage");
-    if (stage?.textContent) applyFrom(stage, detail);
-    const st = window.MASTER_FACE?.State;
-    if (st?.mode) document.body.dataset.mode = st.mode;
+    const payload = detail && typeof detail === "object" ? detail : {};
+    const text = String(payload.message || payload.text || payload.name || payload.mode || "");
+    const classified = classify(text, payload.mode || payload.name || "", payload);
+    const explicitMode = modeFor(payload);
+
+    state.mode = explicitMode || (classified !== "idle" ? classified : state.mode);
+    state.topology = String(payload.canonical_topology || payload.topology || state.topology);
+    state.entropy = clamp(payload.entropy, state.entropy);
+    state.confidence = clamp(payload.confidence, state.confidence);
+    state.attention = clamp(payload.attention, state.attention);
+    state.arousal = clamp(payload.arousal, state.arousal);
+    state.valence = clamp(payload.valence, state.valence, -1, 1);
+    state.focus = clamp(payload.focus, state.focus);
+    state.activity = clamp(
+      payload.activity,
+      Math.min(1, 0.14 + state.entropy * 0.5 + (1 - state.confidence) * 0.35)
+    );
+    state.risk = clamp(payload.risk, Math.max(0, state.entropy * 0.8 + (1 - state.confidence) * 0.2));
+    state.phase = String(payload.phase || payload.stage || payload.mode || state.mode || "idle");
+    state.provider = String(payload.provider || state.provider || "unknown");
+    lastEventAt = performance.now();
+
+    syncRuntimeFace();
+    reflect(payload);
+    return snapshot();
   }
 
-  function observe(el) {
-    if (!el) return;
-    // Observe text/child changes only — NOT attributes. applyFrom() writes
-    // el.dataset.runtimeStatus (a data-* attribute) on these same elements, so
-    // observing `attributes` here re-fired this callback on every write, an
-    // infinite mutation→observe→mutate microtask loop that permanently starved
-    // the main thread (page never finished loading, primer tap never handled).
-    // runtimeStatus is only ever written by this file, so there is no external
-    // attribute change worth observing; the real external signal is status text.
-    new MutationObserver(() => apply()).observe(el, {
-      childList: true, subtree: true, characterData: true
+  function setMode(mode, detail = {}) {
+    return apply({ ...detail, mode });
+  }
+
+  function setAttention(value) {
+    state.attention = clamp(value, state.attention);
+    document.documentElement.dataset.attention = state.attention.toFixed(2);
+    syncRuntimeFace();
+    reflect();
+    return snapshot();
+  }
+
+  function snapshot() {
+    return Object.freeze({
+      ...state,
+      age_ms: lastEventAt ? Math.max(0, performance.now() - lastEventAt) : 0
     });
   }
 
-  window.addEventListener("master:visual", (ev) => apply(ev.detail || {}));
-  document.addEventListener("visibilitychange", () => apply());
+  // Geometry parameters are deliberately semantic rather than renderer-specific.
+  // Any future WebGPU, SDF, splat or mesh projection gets the same numbers.
+  function geometryProfile(snapshotValue = snapshot()) {
+    const s = snapshotValue;
+    return Object.freeze({
+      shell_scale: 1 + (s.activity * 0.05) + (1 - s.confidence) * 0.08,
+      shell_opacity: 0.10 + s.attention * 0.10 + s.confidence * 0.12,
+      shell_tension: 0.18 + s.risk * 0.72,
+      eye_attention: 0.45 + s.attention * 0.55,
+      mouth_energy: 0.15 + s.arousal * 0.85,
+      neural_density: 0.08 + s.activity * 0.92,
+      fracture: Math.max(0, s.risk - 0.35) * 1.54,
+      camera_parallax: 0.015 + s.attention * 0.035,
+      depth: 0.60 + s.activity * 0.40
+    });
+  }
 
-  window.addEventListener("tts:playback:start", () => {
-    document.body.dataset.masterState = "speaking";
-  });
+  window.addEventListener("master:visual", (ev) => apply(ev.detail || {}), { passive: true });
+  window.addEventListener("master:emotion", (ev) => apply(ev.detail || {}), { passive: true });
 
-  window.addEventListener("tts:playback:end", () => {
-    document.body.dataset.masterState = "idle";
-    apply();
+  window.addEventListener("tts:playback:start", () => setMode("speaking"));
+  window.addEventListener("tts:playback:end", () => setMode("idle"));
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) return;
+    apply({ mode: "idle", confidence: state.confidence, entropy: state.entropy });
+  }, { passive: true });
+
+  window.MASTER_FACE_STATE = Object.freeze({
+    MODES,
+    DEFAULTS,
+    snapshot,
+    apply,
+    setMode,
+    setAttention,
+    geometryProfile
   });
 
   window.addEventListener("DOMContentLoaded", () => {
-    observe(document.getElementById("status"));
-    observe(document.getElementById("ui-status"));
-    observe(document.getElementById("pipeline-stage"));
-    apply();
-  });
+    apply({ mode: "idle", confidence: state.confidence, entropy: state.entropy });
+  }, { once: true });
 })();
