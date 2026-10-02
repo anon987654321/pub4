@@ -58,19 +58,27 @@ module Master
           # untouched because their intent cannot be inferred safely.
           def strip_accidental_sub_wrapper(src)
             return src unless ruby?
+            return src if Prism.parse(src).success?
+
             lines = src.lines
             return src if lines.empty?
 
             first = lines.first.to_s
-            last = lines.last.to_s.strip
-            return src unless first.start_with?("<sub>") && last == "</sub>"
+            last = lines.last.to_s
+            candidate = if first.start_with?("<sub>") && lines.last.to_s.strip == "</sub>"
+                          [first.delete_prefix("<sub>"), *lines[1...-1]].join
+                        elsif last.match?(%r{</sub>\s*\z})
+                          lines.dup.tap { |copy| copy[-1] = last.sub(%r{</sub>\s*\z}, "") }.join
+                        elsif first.start_with?("<sub>")
+                          [first.delete_prefix("<sub>"), *lines[1..]].join
+                        else
+                          return src
+                        end
 
-            first = first.delete_prefix("<sub>")
-            inner = [first, *lines[1...-1]].join
-            return src unless Prism.parse(inner).success?
+            return src unless Prism.parse(candidate).success?
 
             @transforms << :strip_accidental_sub_wrapper
-            inner
+            candidate
           end
 
           def add_frozen_header(src)

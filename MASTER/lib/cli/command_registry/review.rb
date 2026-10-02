@@ -67,7 +67,9 @@ module Master
             Master::Trace::Dmesg.status("trace0", trace.summary)
             unless trace.clean?
               details = trace.failures.first(12).join(" | ")
-              return "fix: execution trace failed — #{details}"
+              message = "fix: execution trace failed — #{details}"
+              Master::Trace::Dmesg.status("trace0", message)
+              next Master::Result.err(message, category: :validation)
             end
           end
           value = run_pass({ scanner:, fix_loop:, root:, deliberation:, bus:, swarm: },

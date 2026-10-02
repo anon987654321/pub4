@@ -210,11 +210,19 @@ class TestAstFixerSafety < Minitest::Test
     assert_equal "# frozen_string_literal: true\nVALUE = 1\n", result.content
   end
 
-  def test_partial_sub_wrapper_is_not_guessed_at
-    source = "VALUE = \"<sub>literal</sub>\"\n</sub>\n"
+  def test_partial_sub_wrapper_is_removed_when_the_tag_is_the_syntax_defect
+    source = "VALUE = \"literal\"\n</sub>\n"
     result = Master::Review::Scan::AstFixer.propose("broken.rb", source)
 
-    refute_includes result.transforms, :strip_accidental_sub_wrapper
+    assert_includes result.transforms, :strip_accidental_sub_wrapper
+    assert_equal "VALUE = \"literal\"\n", result.content
+  end
+
+  def test_valid_ruby_containing_sub_markup_is_never_rewritten
+    source = "VALUE = \"<sub>literal</sub>\"\n"
+    result = Master::Review::Scan::AstFixer.propose("broken.rb", source)
+
+    refute result.changed
   end
 
 end

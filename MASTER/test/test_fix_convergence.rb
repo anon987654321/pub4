@@ -273,6 +273,34 @@ class TestFixConvergence < Minitest::Test
     assert_equal bus, captured[:bus]
   end
 
+  def test_fix_reports_execution_trace_failure_as_validation_error
+    fake_trace = Struct.new(:clean?, :summary, :failures).new(
+      false,
+      "execution_trace: failed",
+      ["MASTER/test/broken.rb: syntax failed: Prism::ParseError"]
+    )
+
+    fix_loop = Object.new
+    fix_loop.define_singleton_method(:run) { |target, **| flunk("repair started after failed preflight") }
+    scanner = Object.new
+    scanner.define_singleton_method(:scan) { |*| Master::Result.ok([]) }
+    scanner.define_singleton_method(:scan_dir) { |*| Master::Result.ok([]) }
+
+    saved = ENV.delete("MASTER_FIX_DEEP_TRACE")
+    result = Master::Fix::ExecutionTrace.stub(:new, ->(**) { fake_trace }) do
+      Master::CLI::CommandRegistry.dispatch_fix(
+        scanner:, fix_loop:, deliberation: nil, root: Master::ROOT, bus: nil,
+        ctx: { args: "RAILS --no-aesthetic" }
+      )
+    end
+
+    assert_instance_of Master::Result::Err, result
+    assert_equal :validation, result.category
+    assert_includes result.message, "execution trace failed"
+  ensure
+    ENV["MASTER_FIX_DEEP_TRACE"] = saved if saved
+  end
+
   def test_fix_runs_deep_execution_trace_before_repair
     order = []
     fake_trace = Object.new
