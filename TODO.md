@@ -183,6 +183,25 @@ the "One chrome", ad system and layout sections bring back for a decision.
 - **Quiet source.** Reduce line noise in MASTER and STUDIO source by preferring named intermediate values, multiline data and maintained parsing/formatting libraries over cryptic concatenation, regex-heavy rewriting and clever one-liners. AST- or parser-backed transformations should be the default where structure exists; hardcoded lexical fallbacks need an explicit reason.
 - **Dilla UI sound layer.** Add small STUDIO/dilla-derived M4L-style device emulations for MASTER boot, listening, working, success, error and other meaningful state changes. They should feel like instruments: short, restrained, level-matched and declared from one sound vocabulary rather than scattered effect code.
 
+#### Shell/runtime evidence extracted on 2026-10-02
+
+- `NO_TRANSPORT_WRAPPER_IN_SOURCE` is now executable error law. Literal `<sub>...</sub>` transport markup around Ruby source made `/fix` fail at syntax preflight; the existing tree-boundary test is retained as a second guard.
+- `CLI_TREE_TARGET_RESOLUTION` is now executable error law. `Scan::Request` was resolving `STUDIO/lora` with the current process directory instead of the repository root. Explicit `MASTER`, `RAILS`, `OPENBSD` and `STUDIO` targets now share the repository-root rule.
+- `CLI_PROMPT_COMPOSITION` is an executable opportunity law. The prompt remains path + Git + meaningful phase/error + shell token, with the existing `*` working line beneath it; prompt Git state is now one bounded, cached probe.
+- `VOICE_FAILURES_ARE_ACTIONABLE` is an executable opportunity law. Empty synthesis, dead sockets, playback failure and worker errors remain a bounded capability state with a retained reason and declared fallback.
+
+#### Shell study decision
+
+The CLI refinement draws restraint from OpenBSD ksh and ash, line-buffer/history ergonomics from fish and zsh, optionality from Oh My Zsh, and explicit prompt cost budgets from Starship. MASTER keeps Reline as the line editor, does not grow a plugin/theme framework, and keeps detail behind explicit status/help commands.
+
+The prompt budget is deliberately hard: one Git status query with a 150 ms subprocess limit and a short-lived 250 ms cache; long branch names are truncated before they can push the working line around.
+
+#### Remaining proof
+
+- Run `/fix MASTER RAILS OPENBSD STUDIO` after these changes and verify the clean Ruby preflight plus no transport-wrapper findings.
+- Exercise `analyze STUDIO/lora`, `/status`, `/status security`, `/status services`, `/voice status`, `/face`, and one real speech turn on the Mac.
+- Run the prompt/scan/voice contract suite on vm23 for provider and hardware-dependent behavior.
+
 ### Instruments and /fix — found 2026-09-25
 
 - **21 ratchet rows are off.** `bin/operator measure` on 2026-09-25: 19 OVER
@@ -2840,12 +2859,3 @@ Reference starting points: Browser Use — https://github.com/browser-use/browse
 - [ ] UI-498: Make retry behaviour observable through dmesg-style events.
 - [ ] UI-499: Measure end-to-send latency for every voice turn.
 - [ ] UI-500: Record speech-start, speech-end and send timestamps separately.
-
-
-## Travel agent
-
-- [ ] TRAVEL-001: add provider-specific adapters where a stable authenticated API is stronger than DOM automation.
-- [ ] TRAVEL-002: add booking receipt extraction and email confirmation verification.
-- [ ] TRAVEL-003: add itinerary normalization across flights, hotels, restaurants, tours and transfers.
-- [ ] TRAVEL-004: add explicit cancellation/change flows with the same confirmation gate.
-- [ ] TRAVEL-005: add a pre-departure immigration/document checklist driven by current official sources.

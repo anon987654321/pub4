@@ -158,6 +158,18 @@ class TestFixConvergence < Minitest::Test
     assert_equal studio, resolver.resolve_target("STUDIO/**/*")
   end
 
+  def test_scan_request_resolves_all_four_trees_from_repo_root
+    {
+      "MASTER/lib" => Master::ROOT,
+      "RAILS/shared" => Master::RAILS_ROOT,
+      "OPENBSD/etc" => File.join(Master::REPO_ROOT, "OPENBSD", "etc"),
+      "STUDIO/lora" => File.join(Master::REPO_ROOT, "STUDIO", "lora")
+    }.each do |target, expected_root|
+      request = Master::CLI::Scan::Request.new(scanner: nil, root: Master::ROOT, arg: target)
+      assert_equal expected_root, request.send(:target_arg), target
+    end
+  end
+
   def test_exact_all_tree_fix_command_targets_the_repo_and_preserves_gate_scope
     repaired = []
     verified = []

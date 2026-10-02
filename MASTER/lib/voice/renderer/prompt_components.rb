@@ -16,6 +16,8 @@ module Master
       module PromptComponents
         TOKEN_KILO_THRESHOLD = 1000
         PROMPT_PATH_MAX = 44
+        PROMPT_GIT_CACHE_S = 0.25
+        PROMPT_MAX_CHARS = 72
         ANSI_ESCAPE = /\e\[[0-9;?]*[ -\/]*[@-~]/
         BOOT_FG = "\e[37m"
         BOOT_RESET = "\e[0m"
@@ -172,7 +174,7 @@ module Master
         def prompt_path_budget(suffix_length: 0)
           screen = TTY::Screen.width
           target = Master::Design.measure_ideal_ch(root: @config["root"] || Master::ROOT).to_i
-          available = screen - suffix_length - 1
+          available = [screen, PROMPT_MAX_CHARS].min - suffix_length - 1
           [available, target - suffix_length - 1, PROMPT_PATH_MAX].min
             .clamp(1, PROMPT_PATH_MAX)
         rescue StandardError
@@ -265,21 +267,40 @@ module Master
         end
 
         def git_prompt_text
-          ahead, behind = git_ahead_behind
-          branch = git_branch || "detached"
-          label = branch_status(branch:, ahead:, behind:)
+          state = prompt_git_state
+          return "" unless state
 
+          label = branch_status(**state)
           return d(label) if Aesthetic.wscons?
-          return @p.red(label) if git_dirty?
+          return @p.red(label) if state[:dirty]
 
           @p.cyan(label)
         end
 
-        def branch_status(branch:, ahead:, behind:)
-          parts = [git_dirty? ? "#{branch}*" : branch]
+        def branch_status(branch:, ahead:, behind:, dirty:)
+          branch = branch.to_s
+          branch = "#{branch[0, 26]}…" if branch.length > 27
+          parts = [dirty ? "#{branch}*" : branch]
           parts << "+#{ahead}" if ahead.positive?
           parts << "-#{behind}" if behind.positive?
           parts.join(" ")
+        end
+
+        def prompt_git_state
+          now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+          cwd = Dir.pwd
+          if @prompt_git_cache &&
+             @prompt_git_cache[:cwd] == cwd &&
+             now - @prompt_git_cache[:at] < PROMPT_GIT_CACHE_S
+            return @prompt_git_cache[:state]
+          end
+
+          state = git_prompt_state
+          @prompt_git_cache = { cwd:, at: now, state: }
+          state
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "renderer.prompt_git_state")
+          nil
         end
 
         def phase_label(phase)

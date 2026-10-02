@@ -126,7 +126,7 @@ class TestRenderer < Minitest::Test
     assert_equal 2, lines.size
     assert_match(/discover [%$]\z/, lines.first)
     assert_equal "* ", lines.last
-    assert_operator lines.first.length, :<=, 67
+    assert_operator lines.first.length, :<=, Master::Voice::Renderer::PromptComponents::PROMPT_MAX_CHARS
   end
 
   def test_shell_prompt_home_path_uses_path_operations
@@ -135,6 +135,30 @@ class TestRenderer < Minitest::Test
 
     assert_equal "~/src/pub4", renderer.send(:home_path, path)
     assert_equal "/tmp/pub4", renderer.send(:home_path, "/tmp/pub4")
+  end
+
+  def test_prompt_uses_one_bounded_git_status_probe
+    renderer = FakeRenderer.new(config: {})
+    calls = []
+    status = Struct.new(:success?).new(true)
+    output = "# branch.head main\n# branch.ab +2 -1\n1 .M N... 100644 100644 abc def app.rb\n"
+
+    Master::Io::Exec.stub(:capture3, ->(*args, **kwargs) { calls << [args, kwargs]; [output, "", status] }) do
+      state = renderer.send(:git_prompt_state)
+      assert_equal({ branch: "main", ahead: 2, behind: 1, dirty: true }, state)
+    end
+
+    assert_equal 1, calls.size
+    assert_equal 0.15, calls.first.last[:timeout]
+  end
+
+  def test_long_git_branch_is_bounded_before_prompt_layout
+    renderer = FakeRenderer.new(config: {})
+    renderer.stub(:git_prompt_state, branch: "feature/with/a/very/long/operator/branch/name", ahead: 0, behind: 0, dirty: false) do
+      _state, prompt = renderer.prompt_line("model", "discover", tokens: 10)
+      assert_operator strip_ansi(prompt).lines.first.length, :<=, Master::Voice::Renderer::PromptComponents::PROMPT_MAX_CHARS
+      assert_includes strip_ansi(prompt), "feature/with/a/very/long/o…"
+    end
   end
 
   def test_splash_is_plain_ascii_in_dmesg_shape
