@@ -1,3 +1,5 @@
+require_relative "../../operator/readers"
+
 # frozen_string_literal: true
 
 module Master
@@ -18,7 +20,20 @@ module Master
         def tree_baseline(plan) = stylesheets?(plan) ? FileRename::CssBuild.rules(@repo_root) : nil
 
         def tree_failure(plan, before)
-          zeitwerk_failure(plan) || css_failure(before)
+          view_reference_failure(plan) || zeitwerk_failure(plan) || css_failure(before)
+        end
+
+        def view_reference_failure(plan)
+          plan.deletes.each do |path|
+            next unless path.start_with?("RAILS/") && path.match?(%r{/app/views/.*\.erb\z})
+
+            hits = Operator::Readers.find(root: @repo_root, target: path).select { |ref| ref.kind == :render }
+            next if hits.empty?
+
+            sample = hits.first(4).map { |ref| "#{ref.path}:#{ref.line}" }.join(", ")
+            return "#{path} still has render references: #{sample}"
+          end
+          nil
         end
 
         def zeitwerk_failure(plan)
