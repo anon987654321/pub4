@@ -16,11 +16,11 @@
   const BUDGET = CONTRACT.spatial?.budget || {};
   const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
   const mobile = window.matchMedia?.("(max-width: 767px)")?.matches
-    || Number(navigator.hardwareConcurrency || 8) <= 4;
+    || Number(globalThis.navigator?.hardwareConcurrency || 8) <= 4;
   const profile = document.documentElement?.dataset?.runtimeProfile
     || document.querySelector('meta[name="master-visual-profile"]')?.content
     || "auto";
-  const mode = document.body?.dataset?.mode || "idle";
+  const mode = document.body?.dataset?.mode || "";
   const idle = mode === "idle" || mode === "sleeping";
   const activeFps = Number(BUDGET.active_fps) || 24;
   const idleFps = Number(BUDGET.idle_fps) || 12;
