@@ -96,4 +96,41 @@ class TestFixLoopFileCollector < Minitest::Test
     refute(files.any? { |f| f.start_with?("lib/core/") })
     assert_includes files, "lib/fix/fix_loop.rb"
   end
+
+  def test_repository_root_git_paths_are_resolved_for_master_and_rails_targets
+    Dir.mktmpdir do |dir|
+      FileUtils.mkdir_p(File.join(dir, "MASTER/lib"))
+      FileUtils.mkdir_p(File.join(dir, "RAILS/brgen/app"))
+      write(dir, "MASTER/lib/thing.rb")
+      write(dir, "RAILS/brgen/app/models/post.rb")
+      system("git", "-C", dir, "init", "-q", "--initial-branch=main")
+      system("git", "-C", dir, "config", "user.email", "test@example.invalid")
+      system("git", "-C", dir, "config", "user.name", "Test")
+      system("git", "-C", dir, "add", "-A")
+      system("git", "-C", dir, "commit", "-qm", "initial")
+
+      master_target = File.join(dir, "MASTER")
+      rails_target = File.join(dir, "RAILS")
+      assert_equal [File.join(dir, "MASTER/lib/thing.rb")], collector(dir).collect(master_target)
+      assert_equal [File.join(dir, "RAILS/brgen/app/models/post.rb")], collector(dir).collect(rails_target)
+    end
+  end
+
+  def test_incremental_collection_includes_untracked_files_and_respects_target
+    Dir.mktmpdir do |dir|
+      write(dir, "MASTER/lib/tracked.rb")
+      write(dir, "RAILS/brgen/app/models/post.rb")
+      system("git", "-C", dir, "init", "-q", "--initial-branch=main")
+      system("git", "-C", dir, "config", "user.email", "test@example.invalid")
+      system("git", "-C", dir, "config", "user.name", "Test")
+      system("git", "-C", dir, "add", "-A")
+      system("git", "-C", dir, "commit", "-qm", "initial")
+      write(dir, "RAILS/brgen/app/models/untracked.rb")
+      write(dir, "MASTER/lib/changed.rb")
+
+      changed = collector(dir).collect_changed(File.join(dir, "RAILS"))
+
+      assert_equal [File.join(dir, "RAILS/brgen/app/models/untracked.rb")], changed
+    end
+  end
 end
