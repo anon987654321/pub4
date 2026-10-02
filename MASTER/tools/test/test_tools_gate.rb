@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require "tmpdir"
 require_relative "../gate.rb"
 
 class TestToolsGate < Minitest::Test
@@ -18,6 +19,7 @@ class TestToolsGate < Minitest::Test
   def test_every_entry_point_exists_and_is_guarded
     GATE::TREES.each do |tree|
       next unless tree[:entry]
+
       path = File.join(GATE::ROOT, tree[:entry])
       assert File.file?(path)
       assert_match(/__FILE__\s*==\s*(\$PROGRAM_NAME|\$0)/, File.read(path))
