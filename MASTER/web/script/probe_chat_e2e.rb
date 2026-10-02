@@ -76,7 +76,7 @@ Timeout.timeout(BrowserProbeSupport::MAX_PROBE_SECONDS) do
   boot = BrowserProbeSupport.evaluate(browser, <<~JS)
     ({
       primer: !!document.getElementById('primer'),
-      face3d: !!window.FACE3D_ACTIVE,
+      faceWorld: !!window.MASTER_FACE_WORLD,
       felt: typeof window.MASTERFeltState,
       sse: typeof window.MASTER_SSE,
       container: typeof window.MASTER_CONTAINER,
