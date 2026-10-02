@@ -37,7 +37,7 @@ module Master
         case name
         when "status" then status
         when "inspect" then inspect_page(**args)
-        when "open" then open_page(**args)
+        when "open" then open(**args)
         when "login" then login(**args)
         when "fill" then fill(**args)
         when "click" then click(**args)
