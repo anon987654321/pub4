@@ -8,13 +8,24 @@
   const MODE_FAIL = /fail|error|blocked|unsafe|abort|crit|phantom|disconnected|veto/i;
   const MODE_WARN = /warn|risk|careful|retry|fallback/i;
 
-  const MODES = Object.freeze([
+  const FALLBACK_MODES = [
     "idle", "listening", "thinking", "working", "speaking",
     "warning", "error", "sleeping", "ready"
-  ]);
+  ];
 
   const CONTRACT = window.MASTER_FACE_CONTRACT || {};
   const CONTRACT_STATE = CONTRACT.state || {};
+  const CONTRACT_SPATIAL = CONTRACT.spatial || {};
+  const CONTRACT_BUDGET = CONTRACT_SPATIAL.budget || {};
+  const MODES = Object.freeze(Array.from(new Set(
+    (Array.isArray(CONTRACT_STATE.modes) ? CONTRACT_STATE.modes : FALLBACK_MODES)
+      .map((mode) => String(mode).toLowerCase())
+      .filter(Boolean)
+  )));
+  const MODE_ALIASES = Object.freeze(Object.fromEntries(
+    Object.entries(CONTRACT.mode_aliases || CONTRACT_STATE.mode_aliases || {})
+      .map(([key, value]) => [String(key).toLowerCase(), String(value).toLowerCase()])
+  ));
   const DEFAULTS = Object.freeze({
     mode: CONTRACT_STATE.default_mode || "idle",
     topology: CONTRACT_STATE.default_topology || "papua-mask",
@@ -170,16 +181,25 @@
   }
 
   function renderBudget() {
-    const budget = CONTRACT.spatial?.budget || {};
+    const budget = CONTRACT_BUDGET;
     const mobile = matchMedia("(max-width: 767px)").matches || Number(navigator.hardwareConcurrency || 8) <= 4;
     const maxPoints = Number(budget[mobile ? "mobile_points" : "desktop_points"]) || (mobile ? 420 : 1200);
+    const particles = Number(budget[mobile ? "mobile_particles" : "desktop_particles"]) || (mobile ? 120 : 200);
     const dpr = Math.min(Number(budget.max_device_pixel_ratio) || 2, Number(devicePixelRatio || 1));
+    const reducedMotion = !!matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const profile = document.documentElement?.dataset?.runtimeProfile || "";
+    const idle = state.mode === "idle" || state.mode === "sleeping";
+    let fps = Number(idle ? budget.idle_fps : budget.active_fps) || (idle ? 12 : 24);
+    if (reducedMotion) fps = Math.min(fps, Number(budget.reduced_motion_fps) || 8);
+    if (profile === "battery") fps = Math.min(fps, Number(budget.battery_fps) || 12);
     return Object.freeze({
       points: maxPoints,
+      particles,
+      reduced_motion_particles: Number(budget.reduced_motion_particles) || 64,
       dpr,
-      fps: document.hidden ? 0 : (state.mode === "idle" || state.mode === "sleeping"
-        ? Number(budget.idle_fps) || 12
-        : Number(budget.active_fps) || 60)
+      fps: document.hidden ? Number(budget.hidden_fps) || 0 : fps,
+      pulse_limit: Number(budget.pulse_limit) || 24,
+      hud_labels: Number(budget.hud_labels) || 5
     });
   }
 
