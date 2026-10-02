@@ -244,7 +244,15 @@ module Master
           memory:,
           container:,
           risk:,
+          capabilities: fold_capabilities_for(goal),
         )
+      end
+
+      def fold_capabilities_for(goal)
+        intent = CLI::IntentRouter.new.classify(goal)
+        return Master::Core::Capabilities.for(:diagnostic) if %i[inspect_repo diagnose_behaviour run_relevant_tests].include?(intent)
+
+        Master::Core::Capabilities.for(:fix)
       end
 
       def prepare_fold_memory(goal:, container:, risk:)
