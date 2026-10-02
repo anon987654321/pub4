@@ -35,6 +35,26 @@ test("face surface owns the full viewport", () => {
   assert.match(view, /<canvas id="face"/);
 });
 
+test("MASTER web face uses the same monospaced presentation contract as the CLI", () => {
+  const css = readFileSync(join(publicDir, "face.css"), "utf8");
+  const rules = readFileSync(join(root, "..", "data", "rules.yml"), "utf8");
+  assert.match(css, /html, body \{[\s\S]*?font:\s*16px\/1\.5 var\(--font-mono\)/);
+  assert.match(css, /--font-label:\s*"JetBrainsMono Nerd Font"/);
+  assert.match(rules, /face_interface:/);
+  assert.match(rules, /prompt:\s*\n\s+font: font_code/);
+});
+
+test("FaceWorld consumes the semantic layers and bounded render budget", () => {
+  const world = readFileSync(join(publicDir, "face_world.js"), "utf8");
+  const state = readFileSync(join(publicDir, "face_state.js"), "utf8");
+  assert.match(world, /LAYER_NAMES/);
+  assert.match(world, /master-face-layer-\$\{name\}/);
+  assert.match(world, /renderBudget/);
+  assert.match(world, /spawnPulse/);
+  assert.match(state, /mobile_points/);
+  assert.match(state, /max_device_pixel_ratio/);
+});
+
 test("installed MASTER PWA prefers fullscreen display", () => {
   const manifest = readFileSync(join(viewsDir, "pwa", "manifest.json.erb"), "utf8");
   assert.match(manifest, /"display":\s*"fullscreen"/);
