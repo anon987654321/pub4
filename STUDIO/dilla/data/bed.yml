@@ -345,6 +345,17 @@ drums:
     snare: { swing: 0.0,  shift: -0.014, drift: 0.002 }
     kick:  { swing: 0.17, shift: 0.016,  drift: 0.004 }
     ghost: { swing: 0.17, shift: 0.026,  drift: 0.004 }
+  # D'Angelo feel (FEEL_PROFILE=dangelo in dilla.rb, documented in its
+  # DAngeloFeel module). Derived numbers from the 2026-10-03 research — the
+  # hats keep the rigid reference, the backbeat drags behind them, the kick is
+  # swung and late, ghosts drag later still; swing between straight and the
+  # triplet, never 2:1. The drum research (Questlove interviews, Dilla Time)
+  # should refine these against measurements when it lands.
+  feels_dangelo:
+    hat:   { swing: 0.06, shift: 0.0,    drift: 0.002 }
+    snare: { swing: 0.06, shift: 0.03,   drift: 0.004 }
+    kick:  { swing: 0.10, shift: 0.02,   drift: 0.004 }
+    ghost: { swing: 0.10, shift: 0.032,  drift: 0.005 }
   hat_accents: { downbeat: 0.95, eighth: 0.7, sixteenth: 0.45, jitter: 0.3, open_odds: 0.35 }
   tape: { head_bump_hz: 60, head_bump_db: 3.4, drive: 1.7, wow_hz: 0.31, flutter_hz: 6.2, rolloff_hz: 14000 }
   slam: { threshold_db: -38, ratio: 12, attack_ms: 0.6, release_ms: 90, makeup_db: 8, blend: 0.6 }

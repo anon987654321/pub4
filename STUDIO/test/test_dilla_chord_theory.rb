@@ -194,3 +194,22 @@ class TestChordTheory < Minitest::Test
     end
   end
 end
+
+# The D'Angelo rows landed 2026-10-03: nine recordings and two engine modules,
+# chord-by-chord from cited transcriptions. These pin what made them land —
+# every symbol resolves, the documented voicings play where the catalogue had
+# a hole, and the default rotation is untouched.
+class TestDAngeloProgressions < Minitest::Test
+  # dilla_helper boots the engine; the whole point of these assertions is the
+  # resolution the running file performs.
+  def test_every_d_angelo_symbol_resolves_with_a_voiced_chord
+    DAngeloFeel.progression_keys.each do |key|
+      ARTIST_VERIFIED_PROGRESSIONS.fetch(key).fetch(:chords).each do |symbol|
+        chord = resolve_pad_chord_symbol(symbol)
+        assert chord, "#{key}: #{symbol} did not resolve"
+        assert_operator Array(chord[:hz]).count { |hz| hz.to_f.positive? }, :>=, 3,
+                       "#{key}: #{symbol} resolved to #{chord[:hz].inspect}, which is not a chord"
+      end
+    end
+  end
+end

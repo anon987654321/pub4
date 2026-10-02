@@ -82,7 +82,7 @@ require "json"
 require "yaml"
 require "shellwords"
 require "tmpdir"
-require_relative "../../MASTER/lib/io/analog_capabilities"
+require_relative "../../STUDIO/postpro/analog_capabilities"
 require "open3"
 require "timeout"
 # The engine's parts, one file per subject, in the order they load. sampling
@@ -10876,12 +10876,31 @@ EXTENDED_TENSION_CHORDS = [
   { name: "Dmaj9nc",    hz: [146.83, 185.00, 220.00, 277.18, 329.63] },
   { name: "DMaj7overG", hz: [98.00,  146.83, 185.00, 220.00, 277.18] },
 ].freeze
+# ---------------------------------------------------------------------------
+# D'Angelo voicings (2026-10-03 research, see ARTIST_VERIFIED_PROGRESSIONS).
+# The grips the transcription research handed over that the generic catalogue
+# does not already carry. The toolkit they follow: LH root or root+b7 shell in
+# C2-A2, RH 3-5-7-9/13 cluster in C3-A4, no plain triads
+# (pianolessonsonline.com/r-b-piano-chords-lesson/, Open Studio
+# youllhearit.com, pianocouture.com). Merged LAST into PAD_CHORD_LOOKUP so a
+# name already in the catalogue keeps its own grip — these only fill holes.
+# ---------------------------------------------------------------------------
+DA_ANGELO_VOICINGS = [
+  # "Untitled (How Does It Feel)" second chord: D6/9 with F# in the bass. The
+  # parser reads "6/9" as a 9-bass, so this one plays only through the lookup.
+  { name: "D6/9/F#", midi: [42, 50, 57, 59, 64] },
+  # "The Root" color turn: C minor-major 9 — the "sounds in two keys at once"
+  # stack the Nathan-the-Composer breakdown names as the vamp's lift.
+  { name: "Cmmaj9", midi: [36, 63, 67, 71, 74] },
+].map do |c|
+  { name: c[:name], hz: c[:midi].map { |n| (440.0 * (2**((n - 69) / 12.0))).round(2) } }
+end.freeze
 # The improvised chords go in last and cannot collide: every name they carry
 # ends in the `imp` tag, so the first-wins rule below never silently hands one
 # of them somebody else's voicing.
 PAD_CHORD_LOOKUP = (
   PAD_CHORDS + EXTENDED_NINTH_CHORDS + MODAL_MINOR_CHORDS + EXTENDED_TENSION_CHORDS +
-  DillaImprovisation.chords
+  DillaImprovisation.chords + DA_ANGELO_VOICINGS
 ).each_with_object({}) { |c, m| m[c[:name]] = c unless m[c[:name]] }.freeze
 # ---------------------------------------------------------------------------
 # ARTIST-VERIFIED progressions only (exact artist/sample harmony).
@@ -11004,9 +11023,127 @@ ARTIST_VERIFIED_PROGRESSIONS = {
     chords: %w[Ebm7fil Bbm7fil Ebm7fil Bbm7fil],
     sources: ["Same as eb_minor_two_chord"],
   },
+  # -----------------------------------------------------------------------
+  # D'Angelo, researched 2026-10-03. Nine progressions, each chord-by-chord
+  # from a cited transcription; the voicings follow the gospel toolkit above.
+  # Feel is documented in DAngeloFeel below and applies when FEEL_PROFILE
+  # asks for it; by default these rows change nothing already rendering, since
+  # DILLA_PROGRESSIONS_ONLY narrows the stream rotation to Dilla-produced
+  # rows and ARTIST_VERIFIED_ONLY stays opt-in.
+  # -----------------------------------------------------------------------
+  # 6/8 Mixolydian stasis — harmonic rhythm stops, tension lives inside the
+  # voicings. Guitar-bass unison, vocal behind the beat.
+  untitled_d_mixolydian_vamp: {
+    artist: "D'Angelo", title: "Untitled (How Does It Feel)", album: "Voodoo",
+    bpm_held: 113, meter: "6/8",
+    chords: %w[Bm9/D D6/9/F# Cadd9/G Am7 G13],
+    sources: [
+      "Hooktheory theorytab https://www.hooktheory.com/theorytab/view/dangelo/untitled-how-does-it-feel",
+      "playlikethegreats.com/dangelo/untitled-how-does-it-feel (note-for-note tabs)",
+    ],
+  },
+  # Halved-behind-the-beat vamp; off-beat stabs; space on 1. F13 is the tritone
+  # sub chromatic approach back to i.
+  brown_sugar_funk_vamp: {
+    artist: "D'Angelo", title: "Brown Sugar", album: "Brown Sugar",
+    bpm_held: 83,
+    chords: %w[Em9 A13 Bm9 F13],
+    sources: [
+      "Open Studio / youllhearit.com episode on Brown Sugar (chords + gospel lineage)",
+      "talkbass.com Brown Sugar thread: F13 tritone-sub approach",
+    ],
+  },
+  # Bass on the thumb-beat, chords choking on 16th upbeats — the Charlie Hunter
+  # polyphony modeled on Tribe's "Award Tour". Ghost-note rhythm beats voicing
+  # density here.
+  spanish_joint_swing_16ths: {
+    artist: "D'Angelo", title: "Spanish Joint", album: "Brown Sugar",
+    bpm_held: 88,
+    chords: %w[Dm9 Am9 Dm9 Gm7 Bbmaj7 Am7 D7b9 Gm7],
+    sources: [
+      "jameslsalter.co.uk/transcriptions/dangelospanishjoint",
+      "Guitar World, 'D'Angelo's Voodoo at Twenty-Five' (Hunter) — Brown Sugar charts: guitartabs.cc",
+    ],
+  },
+  # Lopsided 2.5-bar phrases in an 11-bar section — the "precise right amount
+  # of wrong". B7#9 turns on vi; Dilla-style early/late articulation
+  # destabilizes the bossa.
+  really_love_bossa_broken: {
+    artist: "D'Angelo", title: "Really Love", album: "Black Messiah",
+    bpm_held: 79,
+    chords: %w[Am7 D9 Gmaj7 B7#9 Em7],
+    sources: [
+      "Ethan Hein professor breakdown, musicradar.com — lopsided phrasing",
+      "Hooktheory theorytab dangelo/really-love",
+    ],
+  },
+  # Modal Aeolian vamp — i7–iv7 with no leading tone until the G7alt turn; the
+  # melody stacks Cmmaj9 over Ab, in two keys at once.
+  the_root_modal_vamp: {
+    artist: "D'Angelo", title: "The Root", album: "Voodoo",
+    bpm_held: 120,
+    chords: %w[Cm7 Cm7 Fm9 Fm9 Cm7 Cm7 Cmmaj9 G7alt],
+    sources: ["Nathan the Composer, 'Voodoo chord analysis' (YouTube); songbpm.com the-root"],
+  },
+  # Gospel iii–ii–Vsus–I turnaround; the song opens on a Cmaj7 swell that is NOT
+  # a functional V — lush non-resolving intro chord, resolve two bars in.
+  send_it_on_gospel_turnaround: {
+    artist: "D'Angelo", title: "Send It On", album: "Voodoo",
+    bpm_held: 127, meter: "3/4",
+    chords: %w[Cmaj7 Am7 Gm7 C7sus4 Fmaj7],
+    sources: [
+      "Hooktheory theorytab dangelo/send-it-on (Sea of Tranquility interpolation)",
+      "Jeff Schneider jeffschneidermusic.com blog on the intro swell; freebasstranscriptions.com send-it-on-live",
+    ],
+  },
+  # Gospel walk over a static C pedal, dim7 passing chords, and the album's
+  # signature cadence: sus → b9 → resolve.
+  another_life_pedal_descent: {
+    artist: "D'Angelo", title: "Another Life", album: "Black Messiah",
+    bpm_held: 63,
+    chords: %w[Ebdim7/C Dm/C C Bbmaj7/C Fmaj7/A Abdim7 Gm7 C7sus4 C7b9],
+    sources: ["wikichords.com Another Life; tutorial youtube.com/watch?v=cO6hZzVpTQU"],
+  },
+  # Dominant-7 PLANING: one 7-chord shell hopping semitones, tension never
+  # resolved — F7 IS the tonal center. Stride/Charleston left hand.
+  sugah_daddy_planing: {
+    artist: "D'Angelo", title: "Sugah Daddy", album: "Black Messiah",
+    bpm_held: 93,
+    chords: %w[G7 Gb7 E7 F7],
+    sources: [
+      "Ethan Hein, flypaper.soundfly.com — 'How D'Angelo uses funky dominant sevenths in Sugah Daddy'",
+      "pianocouture.com/dangelo-sugah-daddy-lick (shell voicing: root-3-b7, no 5th)",
+    ],
+  },
+  # Chromatic bass walk F–A–Bb under Fm9→Am7b5→Bbm7 (Meters "It Ain't No Use"
+  # sample); snare lands a 16th late.
+  left_and_right_chromatic_bass: {
+    artist: "D'Angelo", title: "Left & Right", album: "Voodoo",
+    bpm_held: 92,
+    chords: %w[Fm9 Am7b5 Bbm7],
+    sources: ["songbpm.com dangelo-method-man left-and-right; Meters sample documented"],
+  },
+  # The gospel 6/9 walk-up used on the ballads (module from the same research):
+  # I → I/3 → IV → #IVdim7 → I/5, RH shells 3-5-7-9 descending.
+  gospel_69_ballad_walk: {
+    artist: "D'Angelo", title: "gospel ballad walk-up (engine module, not a record)",
+    bpm_held: 63,
+    chords: %w[D D/F# G G#dim7 D/A],
+    sources: ["pianolessonsonline.com/r-b-piano-chords-lesson/ — gospel voicing toolkit"],
+  },
+  # Minor-11 ballad drift: i11–iv11 in the Rhodes register, slow harmonic
+  # rhythm — the documented "D'Angelo-style ballad" texture.
+  minor11_ballad_drift: {
+    artist: "D'Angelo", title: "m11 ballad drift (engine module, not a record)",
+    bpm_held: 64,
+    chords: %w[Dm11 Gm11 Dm11 Gm11],
+    sources: ["motifkit.com/neo-soul-chord-progressions/ — free MIDI pack"],
+  },
 }.freeze
 
-# The twelve entries above are seven recordings.
+# The twelve entries above were seven recordings; the 2026-10-03 research adds
+# nine recordings and two engine modules on top, so the grouping below now
+# covers the whole table.
 #
 # Five of the names are a second reading of a progression already in the table:
 # Time appears as sevenths and again as ninths, Fall in Love, Get Dis Money,
@@ -11044,6 +11181,50 @@ end
 # restores the full curated rotation.
 def dilla_progressions_only?
   ENV.fetch("DILLA_PROGRESSIONS_ONLY", "1") != "0"
+end
+
+# ---------------------------------------------------------------------------
+# D'Angelo feel, as the 2026-10-03 research documents it. Records run 79-127
+# BPM against a pulse the band hears halved; the drums drag instead of
+# quantizing — Questlove plays the snare roughly a sixteenth late and the
+# bass drifts ahead-then-behind — the swing sits between straight eighths and
+# the triplet, never 2:1, and the Voodoo/Black Messiah era tunes sit 20-50
+# cents off A440, so a global tune offset is a legitimate parameter, not an
+# error to fix. Voicing register: LH root or shell in C2-A2, RH 3-5-7-9/13
+# cluster in C3-A4, ninths and thirteenths by default and no plain triads.
+#
+# Nothing here reads until FEEL_PROFILE=dangelo asks for it and a row of
+# data/bed.yml `drums.feels_dangelo` carries the numbers; by default the
+# engine renders exactly as it did before this module landed.
+# ---------------------------------------------------------------------------
+module DAngeloFeel
+  module_function
+
+  TEMPI = (79..127).freeze
+  REGISTER_MIDI = { lh: [36, 45].freeze, rh: [51, 69].freeze }.freeze
+  PITCH_DRIFT_CENTS = (20..50).freeze
+  # The snare's lag, in sixteenths of a beat — the figure the research cites
+  # from Questlove's own accounts of the Voodoo sessions (the band practiced
+  # to be "perfectly wrong" together, per Poyser's Electric Lady sessions and
+  # the Ethan Hein breakdowns).
+  SNARE_LATE_SIXTEENTHS = 1.0
+
+  # How late the backbeat drags at a given tempo, in milliseconds. At 88 BPM
+  # this is 170 ms — the *grid* amount; the felt drag is smaller because the
+  # hats stay home and only the backbeat falls behind them, which is exactly
+  # what the alternate feel table in bed.yml encodes and what the drum research
+  # (Dilla Time, the Questlove interviews) should refine numbers for.
+  def snare_late_ms(bpm)
+    ((60.0 / bpm) * 4.0 * SNARE_LATE_SIXTEENTHS * 1000).round(1)
+  end
+
+  # The verified D'Angelo rows of ARTIST_VERIFIED_PROGRESSIONS, keyed as the
+  # engine names them.
+  def progressions
+    ARTIST_VERIFIED_PROGRESSIONS.select { |_, e| e[:artist] == "D'Angelo" }
+  end
+
+  def progression_keys = progressions.keys.freeze
 end
 
 # The Dilla core first, then everything else in the same key and mode.
@@ -11404,6 +11585,20 @@ CHORD_PROGRESSIONS = {
   # test by construction, and that vamp is the reason these records matter.
   minor_half_step_pair: %w[Dm7 Ebm7],
   dorian_two_chord_modal: %w[Dm7 Dm7 Ebm7 Dm7],
+  # --- Artist-verified: D'Angelo (researched 2026-10-03) ---------------------
+  # Every symbol here was checked against resolve_pad_chord_symbol before
+  # landing. Sources and feel live on the ARTIST_VERIFIED_PROGRESSIONS rows.
+  untitled_d_mixolydian_vamp: %w[Bm9/D D6/9/F# Cadd9/G Am7 G13],
+  brown_sugar_funk_vamp: %w[Em9 A13 Bm9 F13],
+  spanish_joint_swing_16ths: %w[Dm9 Am9 Dm9 Gm7 Bbmaj7 Am7 D7b9 Gm7],
+  really_love_bossa_broken: %w[Am7 D9 Gmaj7 B7#9 Em7],
+  the_root_modal_vamp: %w[Cm7 Cm7 Fm9 Fm9 Cm7 Cm7 Cmmaj9 G7alt],
+  send_it_on_gospel_turnaround: %w[Cmaj7 Am7 Gm7 C7sus4 Fmaj7],
+  another_life_pedal_descent: %w[Ebdim7/C Dm/C C Bbmaj7/C Fmaj7/A Abdim7 Gm7 C7sus4 C7b9],
+  sugah_daddy_planing: %w[G7 Gb7 E7 F7],
+  left_and_right_chromatic_bass: %w[Fm9 Am7b5 Bbm7],
+  gospel_69_ballad_walk: %w[D D/F# G G#dim7 D/A],
+  minor11_ballad_drift: %w[Dm11 Gm11 Dm11 Gm11],
   # --- Experimental / theory (blocked when ARTIST_VERIFIED_ONLY=1) ---
   soul: %w[Fm9 Bbm9 Ebmaj9 Dbmaj9],
   # Smoother minor turn — same key as timeless, less harsh dominant clutter.
@@ -13402,7 +13597,7 @@ def dilla_quality(path, baseline_path = nil)
     # "too quiet" warning on every single correctly-targeted dilla render.
     stereo_phase_correlation: phase,
     target: { integrated_lufs: DILLA_QUALITY_LUFS_TARGET, true_peak_max_dbtp: -1.0 }, warnings: [],
-    capabilities: Master::Io::AnalogCapabilities.for(:dilla).last(5).map { |entry| entry[:id] }
+    capabilities: Studio::AnalogCapabilities.for(:dilla).last(5).map { |entry| entry[:id] }
   )
   report[:warnings] << "true peak exceeds -1 dBTP" if report[:true_peak_dbtp] && report[:true_peak_dbtp] > -1.0
   report[:warnings] << "master is outside the #{DILLA_QUALITY_LUFS_TARGET} LUFS range" if report[:integrated_lufs] && !DILLA_QUALITY_LUFS_TARGET.cover?(report[:integrated_lufs])
@@ -36671,8 +36866,17 @@ module Bed
     [name.to_sym, { swing: Float(feel["swing"]), shift: Float(feel["shift"]), drift: Float(feel["drift"]) }]
   end.freeze
 
+  # The D'Angelo profile (see DAngeloFeel above), read only when FEEL_PROFILE
+  # asks for it. A role bed.yml has not yet filled falls back to the stock
+  # feel, so naming a half-landed profile can never stop a render; with the
+  # env unset this table is never consulted and nothing already hearing
+  # changes.
+  DANGELO_FEELS = DRUMS.fetch("feels_dangelo", {}).to_h do |name, feel|
+    [name.to_sym, { swing: Float(feel["swing"]), shift: Float(feel["shift"]), drift: Float(feel["drift"]) }]
+  end.freeze
+
   def step_time(step, feel)
-    bend = FEELS.fetch(feel)
+    bend = ENV["FEEL_PROFILE"] == "dangelo" && DANGELO_FEELS[feel] ? DANGELO_FEELS[feel] : FEELS.fetch(feel)
     base = step * STEP
     base += bend[:swing] * STEP if step.odd?
     base += bend[:shift]
@@ -38518,7 +38722,7 @@ module Ears
 end
 
 DISPATCH = {
-  "capabilities" => -> { puts Master::Io::AnalogCapabilities.report(:dilla) },
+  "capabilities" => -> { puts Studio::AnalogCapabilities.report(:dilla) },
   "quality" => -> { dilla_quality(ARGV.shift || File.join(OUTPUT_DIR, "full_track.mp3"), ARGV.shift) },
   "help" => -> { help(ARGV.shift) },
   "scan" => -> { scan },
