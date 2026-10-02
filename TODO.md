@@ -132,6 +132,22 @@ Reference order: GitHub upstream implementation/release history → official Rai
    guest probe is still meaningful; password-reset tokens and requester-scoped
    conversation/listening-party pages remain structurally unprobeable.
 4. **Marketplace money.** Entry: "Seller payouts need money". Operator: money.
+5. **RAILS/tools/operator lints are blind the way MASTER's were** (found
+   2026-10-03, after 30800dd02 fixed the MASTER side): `destructive_action_lint.rb:30`
+   and `model_contract_lint.rb:35` resolve three levels up from RAILS/tools/operator,
+   landing at the pub4 root, so their model/view globs find 0 files — 0 hits from the
+   root vs 147 from RAILS; `fallback_drift_lint.rb:154` carries the same root with a
+   "# RAILS/" comment stating the intent. Same silent-exit-0 family the MASTER
+   one-up-one-off fix just closed.
+6. **The lint debt 30800dd02 un-hid.** While RAILS_ROOT was blind, drift
+   accumulated beneath six exit-0 lints; the assertion failures now visible are
+   pre-existing content drift, not regressions: css_coverage undefined_class 22
+   vs 0 and unused_selector 116 vs 89, breakpoint unknown_edge 8 vs 0,
+   layout_stability unreserved_media 18 vs 13, chrome_i18n translate_default 153
+   vs 77, i18n_resolution 198 translation_missing, coverage_ratchet floor 23 vs
+   25 tested; visual_contract and scale name rules.yml keys
+   (typography.accessibility.large_text_contrast, layout_rules.touch.target_min_px)
+   that are gone. Raising baselines is the operator's call under the lint contract.
 
 ### OPENBSD and vm23
 
