@@ -55,6 +55,33 @@ test("FaceWorld consumes the semantic layers and bounded render budget", () => {
   assert.match(state, /max_device_pixel_ratio/);
 });
 
+test("Face state derives modes and aliases from the shared contract", () => {
+  const state = readFileSync(join(publicDir, "face_state.js"), "utf8");
+  const rules = readFileSync(join(root, "..", "data", "rules.yml"), "utf8");
+  assert.match(state, /CONTRACT_STATE\.modes/);
+  assert.match(state, /Object\.entries\(CONTRACT\.mode_aliases/);
+  assert.match(state, /mobile_particles/);
+  assert.match(state, /reduced_motion_fps/);
+  assert.match(rules, /desktop_particles: 200/);
+  assert.match(rules, /active_fps: 24/);
+});
+
+test("FaceWorld owns camera impulses and actual point draw range", () => {
+  const world = readFileSync(join(publicDir, "face_world.js"), "utf8");
+  const part1 = readFileSync(join(publicDir, "face.part1.txt"), "utf8");
+  const part2 = readFileSync(join(publicDir, "face.part2.txt"), "utf8");
+  const part3 = readFileSync(join(publicDir, "face.part3.txt"), "utf8");
+  assert.match(world, /cameraZoomAt/);
+  assert.match(world, /camera\.fov/);
+  assert.match(world, /setDrawRange\(0, activePoints\)/);
+  assert.match(world, /CanvasTexture/);
+  assert.match(part1, /FACE_CAMERA_DISTANCE/);
+  assert.match(part1, /faceRenderDpr/);
+  assert.match(part2, /State\.cameraZoomAt/);
+  assert.doesNotMatch(part2, /requestAnimationFrame\(forward\)/);
+  assert.doesNotMatch(part3, /camera\.position\.z \+=/);
+});
+
 test("installed MASTER PWA prefers fullscreen display", () => {
   const manifest = readFileSync(join(viewsDir, "pwa", "manifest.json.erb"), "utf8");
   assert.match(manifest, /"display":\s*"fullscreen"/);
