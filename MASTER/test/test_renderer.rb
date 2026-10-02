@@ -87,7 +87,7 @@ class TestRenderer < Minitest::Test
     state, prompt = renderer.prompt_line(nil, "idle", tokens: 0)
 
     assert_includes strip_ansi(state), "model: "
-    assert_match(/[%$] \z/, strip_ansi(prompt))
+    assert_equal "* ", strip_ansi(prompt).lines.last.chomp
   end
 
   def test_prompt_line_state_shows_context_usage
