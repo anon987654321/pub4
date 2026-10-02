@@ -1,10 +1,11 @@
 # frozen_string_literal: true
 
 require_relative "language"
+require_relative "policy"
 
 module Master
   module Voice
-    # Phrase segmentation and inter-phrase rests, plus the pentatonic contour that
+    # Phrase segmentation and inter-phrase rests, plus a bounded melodic contour that
     # sits on top of them for lyrical text (DiffSinger/CoMelSinger-inspired).
     #
     # Those are two different things and one name covered both. Segmentation and
@@ -17,9 +18,6 @@ module Master
     # the resolved rate/pitch through Engines.synthesize_phrase_parts' fetch
     # defaults.
     module Melody
-      PENTATONIC = [0, 2, 4, 7, 9, 12, 14, 16, 19, 21].freeze
-      RHYTHM = ["+2%", "+6%", "+4%", "+8%", "+3%"].freeze
-
       # Each phrase is its own Edge round trip, so segmentation is also a fan-out
       # multiplier on a 1 vCPU box. Past this many, trailing clauses are merged
       # back into the last phrase rather than adding calls.
@@ -59,8 +57,12 @@ module Master
           entry = entry.merge(voice_for(phrase, languages)) if languages
           next entry unless melodic
 
-          semitone = PENTATONIC[i % PENTATONIC.length]
-          entry.merge(rate: RHYTHM[i % RHYTHM.length], pitch: format("%+dHz", semitone * 7), semitone:)
+          config = Policy.prosody.fetch("melody", {})
+          rates = Array(config["rate"]).map(&:to_s).reject(&:empty?)
+          pitches = Array(config["pitch_hz"]).map { |value| Integer(value) rescue nil }.compact
+          rate = rates.empty? ? "0%" : rates.fetch(i % rates.length)
+          pitch_hz = pitches.empty? ? 0 : pitches.fetch(i % pitches.length)
+          entry.merge(rate:, pitch: format("%+dHz", pitch_hz))
         end
       end
 
