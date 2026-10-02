@@ -421,14 +421,13 @@ class TestWebUI < Minitest::Test
                  "absent, so one is enough to put it on screen: #{offenders.join(', ')}"
   end
 
-  def test_ecology_render_pauses_when_tab_hidden
+  def test_ecology_render_uses_the_shared_face_clock
     source = File.read(File.expand_path("../web/public/cognition_ecology_render.js", __dir__))
     ecology = File.read(File.expand_path("../web/public/cognition_ecology.js", __dir__))
     css = File.read(File.expand_path("../web/public/face.css", __dir__))
 
-    assert_includes source, "ecologyFrameActive = false"
-    assert_includes source, "ensureEcologyFrame"
-    assert_includes source, 'addEventListener("master:visual"'
+    assert_includes source, "MASTEREcologyRender = Object.freeze({ update })"
+    refute_includes source, "requestAnimationFrame"
     assert_includes ecology, "addEventListener(\"master:visual\""
     assert_includes ecology, "z-index:2"
     assert_match(/#cognition-ecology\s*\{[^}]*z-index:\s*2/m, css)
