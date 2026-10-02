@@ -156,7 +156,7 @@ module Master
           candidate.delete_prefix!("<sub>")
           changed = true
         end
-        if candidate.sub!(%r{</sub>s*z}, "")
+        if candidate.sub!(%r{</sub>\s*\z}, "")
           changed = true
         end
 
