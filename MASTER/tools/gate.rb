@@ -111,7 +111,7 @@ module Deploy
     end
 
     def probe_load(name, path)
-      script = "\$PROGRAM_NAME = "tools_gate_probe"\nload #{path.dump}\n"
+      script = "$PROGRAM_NAME = \"tools_gate_probe\"\nload #{path.dump}\n"
       out, status = capture_with_timeout(script)
 
       unless status

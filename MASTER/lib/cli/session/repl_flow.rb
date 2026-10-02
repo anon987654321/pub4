@@ -111,8 +111,15 @@ module Master
         when "/exit", "/quit" then exit_cli
         when "/undo" then run_undo
         when "/clear" then run_input("/clear")
+        when "/face" then run_face
         else :unhandled
         end
+
+      def run_face
+        result = CommandRegistry.dispatch_face
+        puts result if result && result != "face0: closed"
+        nil
+      end
       end
 
       def run_chitchat

@@ -60,7 +60,7 @@ module Master
         record = Master::Fix::Mission.current(root: mission.root)
         return unless record && %w[running waiting].include?(record["state"].to_s)
 
-        mission.defer!(reason: "core attempt: #{error.class}: #{error.message}")
+        mission.fail!("#{error.class}: #{error.message}")
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "CoreBridge.defer_mission_on_error")
       end
