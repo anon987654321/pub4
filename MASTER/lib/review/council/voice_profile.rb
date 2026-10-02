@@ -110,11 +110,11 @@ module Master
         end
 
         def unique_for(personas)
-          Array(personas).map { |persona| for(persona) }
+          Array(personas).map { |persona| self.for(persona) }
         end
 
         def render(text, persona:)
-          profile = for(persona)
+          profile = self.for(persona)
           value = text.to_s.strip
           return value if value.empty?
 
