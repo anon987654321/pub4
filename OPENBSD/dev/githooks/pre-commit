@@ -159,7 +159,7 @@ end
 # shipped on 2026-09-19: four orphaned lines a rewrite left behind, caught
 # only when renders died with a SyntaxError at boot. `ruby -c` costs
 # milliseconds against that, so a staged engine file must parse before it
-# lands. Scoped to MASTER/tools/dilla deliberately: that is the measured incident,
+# lands. Scoped to STUDIO/dilla deliberately: that is the measured incident,
 # and no broader parse gate has been proved against the rest of the repo.
 engine_staged = staged.select do |path|
   path == "STUDIO/dilla/dilla.rb" ||

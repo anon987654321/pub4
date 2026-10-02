@@ -42,18 +42,16 @@ class AiController < ApplicationController
     @suggestions = service.suggest_outfits(
       occasion: params[:occasion], season: params[:season]
     )
-    @master_photo = WardrobeAi.master_photograph_available?
+    @studio_photo = WardrobeAi.studio_photograph_available?
 
-    return unless @master_photo
+    return unless @studio_photo
 
-    master_root = Operator::DeployPaths.master_root.to_s
-    @suggestions.select { |s| s.is_a?(Hash) }.first(MASTER_PHOTOGRAPHS_PER_REQUEST).each do |s|
+      @suggestions.select { |s| s.is_a?(Hash) }.first(STUDIO_PHOTOGRAPHS_PER_REQUEST).each do |s|
       combo = "professional fashion photography of outfit '#{s['name']}' with #{Array(s['items']).join(', ')}. #{s['description']}. model, kodak portra, cinematic"
       begin
-        out = photograph(master_root, combo)
-        if out =~ /postpro.*(output\/[^\s]+_postpro)/
-          pdir = File.join(master_root, $1)
-          imgf = Dir.glob(File.join(pdir, "*.{jpg,jpeg,png}")).first
+        out = Contracts::Studio.photograph(prompt: combo)
+        if out["still"].to_s != ""
+          imgf = out["still"]
           if imgf && File.file?(imgf)
             outfit = Current.user.outfits.create!(name: s["name"], description: s["description"].to_s)
             Array(s["items"]).each do |tit|
