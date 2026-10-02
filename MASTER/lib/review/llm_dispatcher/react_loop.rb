@@ -42,13 +42,18 @@ module Master
         end
 
         def react_step(step, selected_model:, history:, react_sys:, stream:, image:, blk:)
-          img = (step.zero? ? image : nil)
-          result = send_ruby_llm(selected_model, history, sys: react_sys, stream: step.zero? ? stream : false, image: img, &(step.zero? ? blk : nil))
+          img = step.zero? ? image : nil
+          buffered = +""
+          callback = stream && blk ? ->(chunk) { buffered << chunk.to_s } : nil
+          result = send_ruby_llm(selected_model, history, sys: react_sys, stream: stream, image: img, &callback)
           return [result, true] if result.err?
 
           text = result.to_s
           calls = parse_tool_calls(text)
-          return [result, true] if calls.empty?
+          if calls.empty?
+            blk.call(buffered.empty? ? text : buffered) if blk
+            return [result, true]
+          end
 
           @bus&.publish("react:tool_calls", model: selected_model, step:, count: calls.size)
           history << { role: "assistant", content: text }
