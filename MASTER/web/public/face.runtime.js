@@ -1034,7 +1034,10 @@ function sampleDepthMapGrid(canvas, cols, rows) {
 function particleScale() {
   const area = Math.max(320 * 480, window.innerWidth * window.innerHeight);
   const dpr = Math.min(window.devicePixelRatio || 1, 1.25);
-  return Math.max(0.7, Math.min(1.35, Math.sqrt((area * dpr) / (1280 * 720))));
+  const areaScale = Math.sqrt((area * dpr) / (1280 * 720));
+  const budget = Number(faceRenderBudget().particles || 200);
+  const budgetScale = Math.sqrt(Math.max(0.25, budget / 200));
+  return Math.max(0.7, Math.min(1.35, areaScale, budgetScale));
 }
 const FACE_GRID_COLS = Math.round((State.coarsePointer ? 26 : 40) * particleScale());
 const FACE_GRID_ROWS = Math.round((State.coarsePointer ? 32 : 52) * particleScale());
@@ -1310,8 +1313,11 @@ function initSemanticPools() {
     if (z >= 0.68) mouthIdx.push(i);
     if (z >= 0.30 && z <= 0.55) eyeIdx.push(i);
   }
-  mouthPool = K.createPool(Math.min(140, Math.max(16, mouthIdx.length)));
-  eyePool = K.createPool(Math.min(96, Math.max(14, eyeIdx.length)));
+  const particleBudget = Math.max(30, Number(window.MASTER_FACE_STATE?.renderBudget?.().particles) || 200);
+  const mouthCapacity = Math.max(16, Math.min(140, Math.floor(particleBudget * 0.62)));
+  const eyeCapacity = Math.max(14, Math.min(96, particleBudget - mouthCapacity));
+  mouthPool = K.createPool(Math.min(mouthCapacity, mouthIdx.length));
+  eyePool = K.createPool(Math.min(eyeCapacity, eyeIdx.length));
   for (let mi = 0; mi < mouthIdx.length && mouthPool.count < mouthPool.capacity; mi++) {
     const i = mouthIdx[mi];
     K.spawn(mouthPool, faceHome[i * 3], faceHome[i * 3 + 1], {
