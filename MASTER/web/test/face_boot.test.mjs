@@ -429,11 +429,16 @@ test("visual_bridge connects SSE and normalizes visual events", () => {
   assert.match(bridge, /MASTER_FACE/);
 });
 
-test("ecology render starts RAF and resumes on visual events", () => {
+test("visual layers consume the canonical face frame", () => {
   const ecology = readFileSync(join(publicDir, "cognition_ecology_render.js"), "utf8");
-  assert.match(ecology, /ensureEcologyFrame/);
-  assert.match(ecology, /addEventListener\("master:visual"/);
-  assert.match(ecology, /ecologyFrameActive = false/);
+  const gravity = readFileSync(join(publicDir, "gravity_field.js"), "utf8");
+  const world = readFileSync(join(publicDir, "face_world.js"), "utf8");
+  assert.match(ecology, /MASTEREcologyRender = Object\.freeze\(\{ update \}\)/);
+  assert.match(gravity, /MASTER_GRAVITY_FIELD = Object\.freeze\(\{ update, resize, signal \}\)/);
+  assert.doesNotMatch(ecology, /requestAnimationFrame/);
+  assert.doesNotMatch(gravity, /requestAnimationFrame/);
+  assert.match(world, /MASTEREcologyRender\?\.update/);
+  assert.match(world, /MASTER_GRAVITY_FIELD\?\.update/);
 });
 
 test("topology registry exposes canonical classifier", () => {
