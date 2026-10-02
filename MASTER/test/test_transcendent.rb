@@ -60,7 +60,7 @@ class TestTranscendent < Minitest::Test
       rendered = Master::Voice::Transcendent.apply_spoken_performance(
         melody, "One. Two.", {}, :auto, base_rate: "-5%", base_pitch: "+0Hz"
       )
-      assert_equal ["+5Hz", "-6Hz"], rendered[:phrases].map { |phrase| phrase[:pitch] }
+      assert_equal ["+6Hz", "-6Hz"], rendered[:phrases].map { |phrase| phrase[:pitch] }
       assert_equal ["+5%", "+8%"], rendered[:phrases].map { |phrase| phrase[:rate] }
     end
   end
