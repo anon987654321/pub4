@@ -314,7 +314,6 @@ class TestFixConvergence < Minitest::Test
 
     assert_equal "MASTER", name
     assert_respond_to runner, :call
-    assert_same ::Operator::GateChain, Object.new.tap { runner = nil } rescue ::Operator::GateChain
   end
 
   def test_fix_wraps_the_full_lifecycle_in_trace_verbosity
