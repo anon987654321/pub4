@@ -46,12 +46,53 @@ function loopsMusicUrl() {
   return window.MASTER_ASSET_PATHS?.faceModules?.["face_loops_music.js"] || "/face_loops_music.js";
 }
 
+// The music chip: same toggle the server action means, for a visitor the
+// chat command path never reaches (the visitor gate sits above MediaIntent),
+// the chip is the only way the loop answers a hand.
+function wireMusicChip() {
+  const chip = document.getElementById("music-btn");
+  if (!chip || chip._wired) return;
+  chip._wired = true;
+  // start() flips `playing` only after its awaits, so the paint trails the
+  // click in a few steps rather than trusting one read.
+  chip.addEventListener("click", () => {
+    import(loopsMusicUrl())
+      .then(() => {
+        window._faceMusic?.toggle?.();
+        [0, 300, 900].forEach((ms) => setTimeout(syncMusicChip, ms));
+      })
+      .catch((err) => { window.MASTER_LOG?.warn?.("chat:face_music_chip", err); });
+  });
+}
+
+function syncMusicChip() {
+  const chip = document.getElementById("music-btn");
+  if (!chip) return;
+  chip.setAttribute("aria-pressed", window._faceMusic?.playing?.() ? "true" : "false");
+}
+syncMusicChip();
+wireMusicChip();
+
+function startFaceMusic(artist) {
+  import(loopsMusicUrl())
+    .then(() => { window._faceMusic?.toggle(artist); })
+    .catch((err) => { window.MASTER_LOG?.warn?.("chat:face_music", err); });
+}
+
 function triggerClientAction(data) {
   if (!data?.action) return;
   if (data.action === "dilla_bg") {
+    // Semantics the server relies on: a bare action toggles the loop; an
+    // action carrying an artist switches the harmony pack and plays; an
+    // explicit stop ends it.
     import(loopsMusicUrl())
-      .then(() => { window._dillaBg?.(); })
+      .then(() => {
+        if (data.stop) window._faceMusic?.stop?.();
+        else if (data.artist) window._faceMusic?.setArtist?.(String(data.artist));
+        else window._faceMusic?.toggle?.();
+      })
       .catch((err) => { window.MASTER_LOG?.warn?.("chat:dilla_bg", err); });
+    syncMusicChip();
     window.MASTERVisual?.event?.("music:dilla", { topology: "papua-mask", entropy: 0.22, confidence: 0.9, mode: "dilla" });
     return;
   }

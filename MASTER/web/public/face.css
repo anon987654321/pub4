@@ -853,6 +853,35 @@ body[data-tts-blocked="1"] #zsh-status::after { content: attr(data-blocked-label
 body[data-mode="thinking"] #spin-btn,
 body[data-mode="speaking"] #spin-btn { display: block; }
 
+/* Music toggle — always present, drawn square like #photo-button. The
+   square is ::before (inset 13px in the tap floor), so the optics do not
+   move; a playing state paints the square solid. */
+#music-btn {
+  appearance: none;
+  background: none;
+  border: 0;
+  color: var(--face-muted);
+  flex: none;
+  position: relative;
+  min-width: var(--tap-min);
+  min-height: var(--tap-min);
+  padding: 0;
+  cursor: pointer;
+}
+#music-btn::before {
+  content: "";
+  position: absolute;
+  inset: 13px;
+  border: 1px solid currentColor;
+}
+#music-btn[aria-pressed="true"] {
+  color: var(--face-fg);
+}
+#music-btn[aria-pressed="true"]::before {
+  background: currentColor;
+}
+#music-btn:hover { color: var(--face-fg); }
+
 :focus-visible { outline: 2px solid var(--face-fg); outline-offset: 2px; }
 
 @media (prefers-reduced-motion: reduce) {

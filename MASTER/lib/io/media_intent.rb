@@ -36,7 +36,7 @@ module Master
       # "open the patch" and "turn the lead into a test" stay chat.
       LIVE_SYNTH_PLAY_RE = /\b(?:play|morph\w*|fade|switch|jam)\b.*\b(?:(?:mini)?moog|model\s*d|prophet|rhodes|juno|synth\w*|pads?|lead|bass(?:line)?|brass|strings|flute|pluck|lo-?fi|chords?|progressions?|something)\b/i.freeze
       LIVE_SYNTH_KNOB_RE = /\b(?:open|close|sweep|raise|lower|turn)\b.*\b(?:filter|cutoff|resonance|emphasis|detune|contour)\b/i.freeze
-      LIVE_MUSIC_RE = /\b(?:play|start|resume|put on|queue)\b.*\b(?:liveset|default\s+music|dilla(?:\.rb)?|royksopp(?:\.rb)?|sound\s*card|speakers?)\b/i.freeze
+      LIVE_MUSIC_RE = /\b(?:play|start|resume|put on|queue)\b.*\b(?:liveset|default\s+music|dilla(?:\.rb)?|royksopp(?:\.rb)?|madlib(?:\.rb)?|fly(?:ing)?\s+lotus|flylo|sound\s*card|speakers?)\b/i.freeze
       LIVE_AUDIO_STOP_RE = /\b(?:stop|kill|silence|mute|shut\s+off)\b.*\b(?:music|playing|sound|audio|synth\w*|liveset|jam)\b|\b(?:music|playing|sound|audio|synth\w*|liveset)\b.*\b(?:stop|kill|silence|mute|shut\s+off)\b/i.freeze
       LIVE_AUDIO_DIAGNOSTIC_RE = /\b(?:i\s+)?(?:can't|cannot|can\s*not|don't|do\s+not)\s+(?:hear|listen\s+to)\b|\b(?:no|nothing|zero)\s+(?:sound|audio|music)\b|\b(?:it's|it\s+is)\s+silent\b/i.freeze
       LIVE_STYLE_RE = /\b(?:röyksopp|royksopp|melody\s+a\.m\.)\b/i.freeze
@@ -62,14 +62,14 @@ module Master
           text.match?(IMAGE_RE) && text.match?(/\b(?:photo|portrait|image|picture)\b/i)
       end
 
-      def dispatch(text, root: MasterPaths.root)
+      def dispatch(text, root: MasterPaths.root, bus: nil)
         return generate_kick(text, root:) if text.match?(KICK_RE)
         return play_last(text, root:) if text.match?(PLAY_LAST_RE)
         return generate_tone(text, root:) if text.match?(SYNTH_RE)
-        return stop_live_audio(root:) if text.match?(LIVE_AUDIO_STOP_RE)
+        return stop_live_audio(root:, bus: bus) if text.match?(LIVE_AUDIO_STOP_RE)
         return diagnose_live_audio(root:) if text.match?(LIVE_AUDIO_DIAGNOSTIC_RE)
-        return live_synth(text, root:) if live_synth?(text)
-        return play_background_music(root:) if text.match?(BACKGROUND_MUSIC_RE)
+        return live_synth(text, root:, bus: bus) if live_synth?(text)
+        return play_background_music(text, root:, bus: bus) if text.match?(BACKGROUND_MUSIC_RE)
         return postprocess(text, root:) if postpro_intent?(text)
         return generate_beat(text, root:) if text.match?(AUDIO_RE)
 
@@ -206,11 +206,31 @@ module Master
                   paths: source.is_a?(Array) ? source : nil)
       end
 
-      def stop_live_audio(root: MasterPaths.root)
+      # The browser face carries its own loop of the same music, so a music
+      # ask ships a client_action beside the speaker dispatch: a bare toggle,
+      # a named artist, or an explicit stop. Empty-handed when no harmony is
+      # named — the face keeps whatever artist it was playing.
+      FACE_MUSIC_ARTISTS = {
+        /\bmadlib\w*\b/i => "madlib",
+        /\bfly(?:ing)?\s+lotus\b|\bflylo\b/i => "flying_lotus",
+        /\br[öo]yksopp\b|\bmelody\s+a\.m\.\b/i => "royksopp",
+        /\bdilla\b|\bjslur\b/i => "j_dilla",
+      }.freeze
+
+      def face_music_artist(text)
+        FACE_MUSIC_ARTISTS.find { |pattern, _artist| text.match?(pattern) }&.last
+      end
+
+      def publish_face_music(bus, payload)
+        bus&.publish("client_action", { action: "dilla_bg" }.merge(payload))
+      end
+
+      def stop_live_audio(root: MasterPaths.root, bus: nil)
         Voice::Playback.interrupt!("operator requested audio stop") if defined?(Voice::Playback)
         result = ScriptDispatch.run(root:, tool: "dilla", arg: "live stop", env: { "DILLA_COLTRANE" => "0" })
         return result unless result.ok?
 
+        publish_face_music(bus, stop: true)
         Result.ok({ output: result.value!, rendered: result.value!, media: :dilla_stop })
       end
 
@@ -319,21 +339,30 @@ module Master
       # dilla answers at once: a sentence that starts music leaves a player of
       # its own running and returns, one that steers or stops it sends the
       # word to that player.
-      def play_background_music(root: MasterPaths.root)
+      def play_background_music(text, root: MasterPaths.root, bus: nil)
         result = ScriptDispatch.run(
           root:, tool: "dilla", arg: "live default", env: { "DILLA_COLTRANE" => "0" }
         )
         return result unless result.ok?
 
+        artist = face_music_artist(text)
+        publish_face_music(bus, artist ? { artist: } : {})
         Result.ok({ output: result.value!, rendered: result.value!, media: :dilla_background })
       end
 
-      def live_synth(text, root: MasterPaths.root)
+      def live_synth(text, root: MasterPaths.root, bus: nil)
         result = ScriptDispatch.run(
           root:, tool: "dilla", arg: "live say #{Shellwords.escape(text)}",
           env: { "DILLA_COLTRANE" => "0" }
         )
-        result.ok? ? Result.ok({ output: result.value!, rendered: result.value!, media: :dilla_live }) : result
+        unless result.ok?
+          return result
+        end
+
+        if (artist = face_music_artist(text))
+          publish_face_music(bus, artist:)
+        end
+        Result.ok({ output: result.value!, rendered: result.value!, media: :dilla_live })
       end
 
       # What this surface writes: tones and kicks as master-*.wav, beats as

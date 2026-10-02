@@ -34,7 +34,7 @@ module Master
       def route_message(message_text, ctx)
         client_actions = []
         unsub = @bus&.subscribe("client_action") do |ev|
-          client_actions << ev.slice(:action, :url, :label).compact
+          client_actions << ev.slice(:action, :artist, :stop, :url, :label).compact
         end
         result = if @container&.dig(:commands)
                    Master::CLI::TurnRouter.call(message: message_text, container: @container)

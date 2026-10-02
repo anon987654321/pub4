@@ -8,6 +8,17 @@ require_relative "../lib/io/media_intent"
 class MediaIntentSpec < Minitest::Test
   MediaIntent = Master::Io::MediaIntent
 
+  # ScriptDispatch.run hits real tools, so the routing tests swap it out the way
+  # Ruby itself does a singleton. minitest's stub is not available on this box.
+  def with_dispatch_stub(runner)
+    klass = Master::Io::ScriptDispatch
+    orig = klass.method(:run)
+    klass.define_singleton_method(:run) { |**kwargs| runner.call(**kwargs) }
+    yield
+  ensure
+    klass.define_singleton_method(:run, orig)
+  end
+
   def test_recognizes_explicit_image_requests
     assert MediaIntent.handles?("generate a photo of Bergen at the fjord")
   end
@@ -37,7 +48,7 @@ class MediaIntentSpec < Minitest::Test
         Master::Result.ok("processed")
       end
 
-      Master::Io::ScriptDispatch.stub(:run, runner) do
+      with_dispatch_stub(runner) do
         result = MediaIntent.dispatch(%(give "#{source}" a VHS tape look))
         assert result.ok?
       end
@@ -52,7 +63,7 @@ class MediaIntentSpec < Minitest::Test
       calls << kwargs
       Master::Result.ok("rendered")
     end
-    Master::Io::ScriptDispatch.stub(:run, runner) do
+    with_dispatch_stub(runner) do
       assert MediaIntent.dispatch("create a Bach-inspired instrumental").ok?
       assert MediaIntent.dispatch("make a Flying Lotus beat").ok?
     end
@@ -66,7 +77,7 @@ class MediaIntentSpec < Minitest::Test
       captured = kwargs
       Master::Result.ok("rendered")
     end
-    Master::Io::ScriptDispatch.stub(:run, runner) do
+    with_dispatch_stub(runner) do
       result = MediaIntent.dispatch("make me a beat")
       assert result.ok?
     end
@@ -84,7 +95,7 @@ class MediaIntentSpec < Minitest::Test
       Master::Result.ok("rendered")
     end
 
-    Master::Io::ScriptDispatch.stub(:run, runner) do
+    with_dispatch_stub(runner) do
       result = MediaIntent.dispatch("generate a photo of Bergen at the fjord")
       assert result.ok?
       assert_equal :replicate, result.value![:media]
@@ -92,5 +103,46 @@ class MediaIntentSpec < Minitest::Test
 
     assert_equal "replicate", captured[:tool]
     assert_includes captured[:arg], "--prompt generate\\ a\\ photo\\ of\\ Bergen\\ at\\ the\\ fjord"
+  end
+
+  def with_fake_bus
+    events = []
+    bus = Object.new
+    bus.define_singleton_method(:publish) { |event, payload| events << [event, payload] }
+    [bus, events]
+  end
+
+  def test_background_music_publishes_the_named_artist_to_the_bus
+    bus, events = with_fake_bus
+    runner = ->(**_kwargs) { Master::Result.ok("live default started") }
+
+    with_dispatch_stub(runner) do
+      result = MediaIntent.play_background_music("play some royksopp in the background", bus: bus)
+      assert result.ok?
+    end
+    assert_equal [["client_action", { action: "dilla_bg", artist: "royksopp" }]], events
+  end
+
+  def test_background_music_publishes_a_bare_toggle_without_an_artist
+    bus, events = with_fake_bus
+    runner = ->(**_kwargs) { Master::Result.ok("live default started") }
+
+    with_dispatch_stub(runner) do
+      assert MediaIntent.play_background_music("play some background music", bus: bus).ok?
+    end
+    assert_equal [["client_action", { action: "dilla_bg" }]], events
+  end
+
+  def test_live_stop_publishes_the_browser_stop
+    bus, events = with_fake_bus
+    # Voice::Playback may be undefined in this test process; stop_live_audio
+    # guards it with defined?. The stub only has to answer ScriptDispatch.run.
+    runner = ->(**_kwargs) { Master::Result.ok("stopped") }
+
+    with_dispatch_stub(runner) do
+      result = MediaIntent.stop_live_audio(bus: bus)
+      assert result.ok?
+    end
+    assert_equal [["client_action", { action: "dilla_bg", stop: true }]], events
   end
 end

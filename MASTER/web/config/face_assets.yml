@@ -68,6 +68,7 @@ singletons:
   faceRuntime: face.runtime.js
   visemePacks: viseme_packs.json
   clusterMiner: cluster_miner.js
+  musicPacks: face_music_packs.json
 
 # Synchronous, and loaded before #primer: every deferred ecology/worker module
 # and the post-primer face import may assume window.ParticleKernel already

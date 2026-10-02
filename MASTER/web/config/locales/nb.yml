@@ -66,6 +66,7 @@ nb:
     prompt_aria: "MASTER-skrivefelt"
     message_aria: "Melding"
     attach_photo: "Legg ved bilde"
+    music_loop: "Musikk på eller av"
     pause_speech: "Pause eller fortsett tale"
     placeholder: "spør om hva som helst"
     mic_state: "Mikrofon"

@@ -262,6 +262,32 @@ class TestWebUI < Minitest::Test
     assert_equal declared.uniq.sort, emitted.sort
   end
 
+  def test_face_music_pack_is_wellformed_and_declared
+    web = File.expand_path("../web", __dir__)
+    pack = JSON.parse(File.read(File.join(web, "public", "face_music_packs.json")))
+
+    # The engine fetches this one file and the pack is its only harmony table;
+    # a malformed entry would cost the whole loop, so shape is checked here.
+    artists = pack["artists"]
+    %w[j_dilla madlib flying_lotus royksopp].each { |id| assert artists.key?(id), id }
+    assert_equal pack["defaults"]["artist"], artists.keys.first
+
+    artists.each do |id, spec|
+      refute spec["progressions"].empty?, "#{id} carries no progressions"
+      spec["progressions"].each do |prog|
+        assert prog["voices"].is_a?(Array)
+        refute prog["voices"].flat_map { |v| Array(v) }.empty?, "#{id}/#{prog["name"]}"
+        next unless prog["bass"]
+
+        assert_equal prog["voices"].size, prog["bass"].size,
+                     "#{id}/#{prog["name"]}: bass count != chord count"
+      end
+    end
+
+    manifest = YAML.safe_load_file(File.join(web, "config", "face_assets.yml"))
+    assert_equal "face_music_packs.json", manifest["singletons"]["musicPacks"]
+  end
+
   def test_primer_tap_unlocks_prompt_before_face_ready
     index = File.read(File.expand_path("../web/app/views/chat/index.html.erb", __dir__))
     css = File.read(File.expand_path("../web/public/face.css", __dir__))
