@@ -79,6 +79,7 @@ module Master
 
           {
             topologies_path: "/runtime/topologies",
+            topology_catalog: Master.load_yaml(Master.data_path("topologies.yml"), default: {}),
             config_path: "/runtime/config",
             enhancements_pending_count: pending,
             enhancements: Array(runtime_cfg["enhancements"]),
