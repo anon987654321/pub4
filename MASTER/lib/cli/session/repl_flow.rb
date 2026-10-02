@@ -117,9 +117,13 @@ module Master
       end
 
       def run_face
+        was_running = @running
+        stop_background_loop
         result = CommandRegistry.dispatch_face
         puts result if result && result != "face0: closed"
         nil
+      ensure
+        start_background_loop if was_running && @running
       end
 
       def run_chitchat
