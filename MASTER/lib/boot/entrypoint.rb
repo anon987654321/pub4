@@ -9,6 +9,8 @@ module Master
     module Entrypoint
       module_function
 
+      OPENBSD_RUBY_PATTERN = /\\A3\\.(?:3|4)\\.\\d+\\z/
+
       def prepare!(root:, env: ENV, out: $stderr, argv: ARGV, program: $PROGRAM_NAME)
         root = File.expand_path(root)
         reexec_pinned_ruby!(root:, env:, out:, argv:, program:)
@@ -76,7 +78,12 @@ module Master
         return unless File.file?(version_file)
 
         expected = File.read(version_file).strip
-        return if expected.empty? || Gem::Version.new(RUBY_VERSION) == Gem::Version.new(expected)
+        return if expected.empty?
+
+        current = Gem::Version.new(RUBY_VERSION)
+        pinned = Gem::Version.new(expected)
+        return if current == pinned
+        return if OPENBSD_RUBY_PATTERN.match?(RUBY_VERSION) && RUBY_PLATFORM.include?("openbsd")
 
         wrapper = File.join(root, "bin", "ruby")
         unless File.executable?(wrapper)
