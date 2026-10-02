@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "../design"
+
 module Master
   module Face
     # One semantic contract for every MASTER surface. Browser code receives the
