@@ -599,9 +599,9 @@ body[data-mode="speaking"] #mic-dot {
 
 #chat-log:not(:empty) { pointer-events: auto; }
 /* TYPOGRAPHY.line_length: a reply is prose, 45–75ch, whatever the viewport. */
-.message { position:relative; max-inline-size: 66ch; margin-bottom: 8px; padding: 4px 12px; white-space: pre-wrap; word-break: break-word; scroll-snap-align: start; animation: msgIn 220ms var(--ease-spring) both; }
-.message.user { border-radius: 12px 12px 2px 12px; background: color-mix(in srgb, var(--c-accent) 10%, transparent); border: 1px solid color-mix(in srgb, var(--c-accent) 22%, transparent); }
-.message.assistant { border-radius: 12px 12px 12px 2px; background: color-mix(in srgb, var(--face-fg) 5%, transparent); border: 1px solid var(--border-faint); }
+.message { position:relative; max-inline-size: 66ch; margin-bottom: 8px; padding: 0; white-space: pre-wrap; word-break: break-word; scroll-snap-align: start; animation: msgIn 220ms var(--ease-spring) both; font: 1rem/1.5 var(--font-mono); }
+.message.user,
+.message.assistant { border: 0; border-radius: 0; background: transparent; }
 .message:focus-visible { outline: 1px solid var(--face-fg); outline-offset: 1px; }
 .msg-prompt { font-weight: 700; margin-inline-end: 0.35em; }
 .message.user .msg-prompt { color: var(--c-accent, var(--face-fg)); }
@@ -1404,3 +1404,22 @@ body.wscons-mode #face-phosphor-trail {
 /* UI_REFINEMENTS pass — face chrome only; does not touch WebGL boot path */
 #primer {
   display: grid;
+
+/* MASTER presentation contract: browser chat is terminal scrollback, not a bubble UI.
+   The face remains spatial; readable interaction remains one monospaced stream. */
+#chat-log {
+  max-inline-size: 66ch;
+  margin-inline: auto;
+  font-family: var(--font-mono);
+}
+#zsh,
+#zsh #zin,
+#zsh .pp,
+#zsh .sep2,
+#zsh #zsh-status {
+  font-family: var(--font-mono);
+}
+.message .msg-body,
+.message .msg-prompt {
+  font-family: var(--font-mono);
+}
