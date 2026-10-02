@@ -72,7 +72,8 @@ class TestEntrypointRequires < Minitest::Test
   def ruby_entrypoints
     entrypoints.filter_map do |script|
       source = File.read(script)
-      [script, source] if source.start_with?("#!") && source.match?(/\bruby\b/)
+      shebang = source.lines.first.to_s
+      [script, source] if shebang.start_with?("#!") && shebang.match?(/\bruby(?:\s|$)/)
     end
   end
 
