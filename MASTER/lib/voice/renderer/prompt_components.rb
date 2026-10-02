@@ -80,7 +80,7 @@ module Master
         # [state line or nil, prompt]. The state line carries what a status bar
         # used to: the caller prints it only when one of its values moves.
         def prompt_line(model, phase, **options)
-          [state_line(model, **options), zsh_prompt(phase, options.fetch(:last_ok, true))]
+          [state_line(model, **options), shell_prompt(phase, options.fetch(:last_ok, true))]
         end
 
         def state_line(model, **options)
@@ -129,14 +129,9 @@ module Master
           "#{BOOT_FG}#{body}#{BOOT_RESET}"
         end
 
-        # The prompt is set like text, not a status bar: location first,
-        # repository state second, phase third, cursor last. Keep the whole line
-        # near a 66-character measure when the terminal permits it, and let the
-        # path yield before the meaningful state does.
-        # A small shell prompt, borrowing the useful parts of nvim and
-        # oh-my-zsh: one identity mark, the working path, git state, phase and
-        # cursor. It stays information-dense without becoming a dashboard.
-        def zsh_prompt(phase, last_ok)
+        # The prompt is a command line, not a dashboard: path, Git, phase, cursor.
+        # The next line is reserved for the operator and the working indicator.
+        def shell_prompt(phase, last_ok)
           git = git_prompt_text
           phase_text = phase_label(phase)
           cursor = phase_prompt(last_ok, phase)
