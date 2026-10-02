@@ -40,4 +40,17 @@ class TestPreflight < Minitest::Test
       assert_empty Master::Fix::Preflight.new(root:).findings([path])
     end
   end
+  def test_named_ruby_entrypoints_use_ruby_preflight
+    Dir.mktmpdir do |root|
+      ["Gemfile", "Rakefile", "config.ru"].each do |name|
+        path = File.join(root, name)
+        File.write(path, "task :ok do\nend\n")
+        assert_empty Master::Fix::Preflight.new(root:).findings([path]), name
+      end
+
+      path = File.join(root, "Gemfile")
+      File.write(path, "if true\n")
+      assert_match(/Ruby syntax error/, Master::Fix::Preflight.new(root:).findings([path]).first[:message])
+    end
+  end
 end
