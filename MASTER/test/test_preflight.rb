@@ -53,4 +53,29 @@ class TestPreflight < Minitest::Test
       assert_match(/Ruby syntax error/, Master::Fix::Preflight.new(root:).findings([path]).first[:message])
     end
   end
+  def test_preflight_continues_after_named_ruby_files
+    Dir.mktmpdir do |root|
+      gemfile = File.join(root, "Gemfile")
+      broken = File.join(root, "broken.rb")
+      File.write(gemfile, "source 'https://rubygems.org'\n")
+      File.write(broken, "def broken(\n")
+
+      findings = Master::Fix::Preflight.new(root:).findings([gemfile, broken])
+
+      assert_equal 1, findings.size
+      assert_equal broken, findings.first[:file]
+    end
+  end
+
+  def test_preflight_uses_shebang_language_resolution
+    Dir.mktmpdir do |root|
+      path = File.join(root, "tool")
+      File.write(path, "#!/usr/bin/env ruby\ndef broken(\n")
+
+      finding = Master::Fix::Preflight.new(root:).findings([path]).first
+
+      assert_equal :critical, finding[:severity]
+      assert_match(/Ruby syntax error/, finding[:message])
+    end
+  end
 end
