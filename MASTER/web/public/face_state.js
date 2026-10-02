@@ -187,6 +187,8 @@
     const particles = Number(budget[mobile ? "mobile_particles" : "desktop_particles"]) || (mobile ? 120 : 200);
     const dpr = Math.min(Number(budget.max_device_pixel_ratio) || 2, Number(devicePixelRatio || 1));
     const reducedMotion = !!matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reducedMotionParticles = Number(budget.reduced_motion_particles) || 64;
+    const effectiveParticles = reducedMotion ? Math.min(particles, reducedMotionParticles) : particles;
     const profile = document.documentElement?.dataset?.runtimeProfile || "";
     const idle = state.mode === "idle" || state.mode === "sleeping";
     let fps = Number(idle ? budget.idle_fps : budget.active_fps) || (idle ? 12 : 24);
@@ -194,8 +196,8 @@
     if (profile === "battery") fps = Math.min(fps, Number(budget.battery_fps) || 12);
     return Object.freeze({
       points: maxPoints,
-      particles,
-      reduced_motion_particles: Number(budget.reduced_motion_particles) || 64,
+      particles: effectiveParticles,
+      reduced_motion_particles: reducedMotionParticles,
       dpr,
       fps: document.hidden ? Number(budget.hidden_fps) || 0 : fps,
       pulse_limit: Number(budget.pulse_limit) || 24,
