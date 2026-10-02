@@ -397,6 +397,18 @@ face_interface:
       openbsd: [-0.82, -1.05, -0.16]
     links: [[lib, law], [law, tools], [tools, web], [web, openbsd], [openbsd, lib],
             [lib, tools], [law, web], [tools, openbsd], [web, lib], [openbsd, law]]
+    layers: [identity, eyes, mouth, cognition, repository, event_field, camera, hud]
+    camera:
+      distance: 5.20
+      parallax: 0.06
+      orbit_limit: 0.16
+    budget:
+      desktop_points: 1200
+      mobile_points: 420
+      max_device_pixel_ratio: 2.0
+      active_fps: 60
+      idle_fps: 12
+      hidden_fps: 0
 brgen_old_dark:
   bg: "#000000"
   surface: "#111111"
