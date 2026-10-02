@@ -100,6 +100,13 @@ class TestRenderer < Minitest::Test
 
   # A dmesg is legible on a serial console: no box drawing, no arrows, no
   # check marks, nothing that a pipe or a 7-bit terminal turns into gibberish.
+  def test_cli_prompt_uses_face_interface_geometry
+    contract = Master::Design.face_interface(root: Master::ROOT)
+    refute_empty contract
+    assert_equal 66, contract.dig("prompt", "measure_ch")
+    assert_equal 72, contract.dig("prompt", "max_ch")
+  end
+
   def test_shell_prompt_measures_visible_cells_not_ansi_bytes
     renderer = FakeRenderer.new(config: {})
 
