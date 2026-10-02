@@ -164,6 +164,7 @@ class TestWebUI < Minitest::Test
     %w[cognition_ecology.js cognition_ecology_render.js].each do |name|
       assert_includes manifest["face_vision_deferred"], name
     end
+    assert_includes manifest["face_eager"], "face_world.js"
     assert_includes index, 'id="cognition-ecology"'
     ecology_idx = index.index("cognition-ecology")
     face_canvas_idx = index.index('id="face"')
@@ -202,12 +203,19 @@ class TestWebUI < Minitest::Test
     assert_includes topologies, "infer:resolved|route:resolved|llm:routed"
   end
 
-  def test_face_pauses_animation_loop_when_tab_hidden
+  def test_face_owns_the_single_animation_clock
     source = face_runtime_source
+    ecology = File.read(File.expand_path("../web/public/cognition_ecology_render.js", __dir__))
+    gravity = File.read(File.expand_path("../web/public/gravity_field.js", __dir__))
+    world = File.read(File.expand_path("../web/public/face_world.js", __dir__))
 
     assert_includes source, "ensureFrameLoop"
     assert_includes source, "frameLoopActive = false"
     assert_includes source, "dataset.hiddenTab"
+    refute_includes ecology, "requestAnimationFrame"
+    refute_includes gravity, "requestAnimationFrame"
+    assert_includes world, "MASTEREcologyRender?.update"
+    assert_includes world, "MASTER_GRAVITY_FIELD?.update"
   end
 
   def test_face_state_observer_does_not_watch_its_own_attribute_writes
