@@ -820,4 +820,10 @@ class TestFixConvergence < Minitest::Test
     pass = Master::CLI::Pipeline::Pass.allocate
     assert_equal "preview: 1 repair", pass.send(:preview_lines, total: 1, rules: {}, files: {})
   end
+
+  def test_gate_chain_is_explicitly_top_level_from_master_namespace
+    assert defined?(::Operator::GateChain)
+    refute defined?(Master::Operator::GateChain)
+  end
+
 end
