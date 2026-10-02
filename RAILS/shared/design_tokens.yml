@@ -402,6 +402,7 @@ face_interface:
         distance: 5.20
         parallax: 0.06
         orbit_limit: 0.16
+      fov: 38
       budget:
         desktop_points: 1200
         mobile_points: 420
