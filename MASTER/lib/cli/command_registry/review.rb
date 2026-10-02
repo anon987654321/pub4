@@ -3,6 +3,7 @@
 require_relative "../tribunal_feedback"
 require_relative "../../review/council/critique"
 require_relative "../../fix/execution_trace"
+require_relative "../../operator/gate_chain"
 
 module Master
   module CLI
@@ -78,7 +79,7 @@ module Master
           gate_status = 0
           gate_changed = []
           loop do
-            gate_status, gate_changed = Operator::GateChain.verify_fix(target:)
+            gate_status, gate_changed = ::Operator::GateChain.verify_fix(target:)
             gate_rounds += 1
             break if gate_status == 0 && gate_changed.empty?
             break if gate_changed.empty? || gate_rounds >= MAX_FIX_GATE_ROUNDS
