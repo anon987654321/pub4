@@ -111,11 +111,10 @@ module Master
       end
 
       def exit_cli
-        save_session_on_exit
-        save_cli_history
+        @running = false
         line = @refs.renderer.closing
         puts line if line
-        @running = false
+        close_session
       end
 
       def save_session_on_exit

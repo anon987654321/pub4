@@ -612,6 +612,18 @@ end
     end
   end
 
+  def test_close_session_is_idempotent
+    Dir.mktmpdir do |root|
+      cli = Master::CLI::Session.new(container: @container.merge(config: {}, root:))
+      @session.expect(:save!, nil)
+
+      cli.send(:close_session)
+      cli.send(:close_session)
+
+      @session.verify
+    end
+  end
+
   def test_exit_saves_the_session_and_stops_the_repl
     Dir.mktmpdir do |root|
       cli = Master::CLI::Session.new(container: @container.merge(config: {}, root:))

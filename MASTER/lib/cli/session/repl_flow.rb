@@ -56,9 +56,12 @@ module Master
       end
 
       def close_session
+        return if @closed
+
+        @closed = true
         stop_background_loop
         save_cli_history
-        @refs.session.save!
+        save_session_on_exit
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "cli.close_session", event_bus: @refs.bus)
       end

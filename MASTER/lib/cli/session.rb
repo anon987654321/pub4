@@ -117,6 +117,7 @@ module Master
         @exit_code = 0
         @activity = Master::CLI::Activity.new
         @last_repeatable_input = nil
+        @closed = false
       end
 
       def init_turn_state(input)
