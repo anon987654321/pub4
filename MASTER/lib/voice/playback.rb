@@ -291,7 +291,7 @@ module Master
           cleanup_prepared(prepared_current)
 
           current = following
-          prepared_current = prepared_following
+          prepared_current = await_prefetch(prepared_following)
           break unless current
         end
       end
@@ -306,13 +306,34 @@ module Master
         return unless job
         return unless prefetch_enabled?
 
-        Thread.new do
+        result_queue = Queue.new
+        thread = Thread.new do
           Thread.current[:name] = "voice-prefetch"
-          prepare_job(job)
+          result_queue << prepare_job(job)
+        rescue StandardError => e
+          result_queue << prepare_job_failure(job, e)
         end
+        PrefetchedAudio.new(thread:, result_queue:)
       rescue StandardError => e
         warn_once("voice prefetch failed to start — #{e.class}: #{e.message}")
         nil
+      end
+
+      def await_prefetch(prefetched)
+        return nil unless prefetched
+
+        prepared = prefetched.result_queue.pop
+        prefetched.thread.join
+        prepared
+      rescue StandardError => e
+        warn_once("voice prefetch failed — #{e.class}: #{e.message}")
+        nil
+      end
+
+      def prepare_job_failure(job, error)
+        warn_once("voice prefetch synthesis failed — #{error.class}: #{error.message}")
+        values = decode_job(job)
+        PreparedAudio.new(**values, path: nil)
       end
 
       def prefetch_enabled?
@@ -407,6 +428,11 @@ module Master
       rescue StandardError
         nil
       end
+
+      PrefetchedAudio = Data.define(
+        :thread,
+        :result_queue,
+      )
 
       PreparedAudio = Data.define(
         :job,
