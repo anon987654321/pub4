@@ -273,7 +273,7 @@ module Master
       def run_string(goal, root:, bus: nil, model: nil, model_id: nil)
         return "core: no goal" if goal.to_s.strip.empty?
         # An injected model (tests) runs offline; a real one needs a provider key.
-        return Master.no_api_key_message if model.nil? && !Master.any_api_key_present?
+        return Master.no_api_key_message if model.nil? && !Master.llm_reachable?(model_id)
 
         result = run(goal, root:, bus:, model:, model_id:)
         header = "core: #{result[:reason]} turns=#{result[:turns]}"
