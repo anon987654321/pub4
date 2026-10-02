@@ -87,6 +87,14 @@ class TestRenderer < Minitest::Test
     assert_equal Master::Face::Contract.prompt_measure, Master::Voice::Renderer::PromptComponents::PROMPT_MEASURE_CH
   end
 
+  def test_face_prompt_measure_falls_back_without_eager_evaluation
+    Master::Face::Contract.stub(:prompt, {}) do
+      assert_equal Master::Design::Thresholds.measure_ideal_ch(root: Master::ROOT),
+        Master::Face::Contract.prompt_measure(root: Master::ROOT)
+    end
+  end
+
+
   def test_face_contract_exposes_one_state_and_spatial_budget
     budget = Master::Face::Contract.budget
     aliases = Master::Face::Contract.mode_aliases
