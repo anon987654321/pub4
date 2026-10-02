@@ -47,7 +47,18 @@ module Master::Core
       @capabilities = capabilities
     end
 
-    def verbs = Master::Core::VERBS
+    def verbs
+      Master::Core::VERBS.select do |verb|
+        capability = Master::Core::Effect::CAPABILITIES.fetch(verb)
+        verb == :git ? @capabilities.allows?(:read) || @capabilities.allows?(:write) : @capabilities.allows?(capability)
+      end
+    end
+
+    def git_operations
+      return %w[diff] unless @capabilities.allows?(:write)
+
+      %w[diff stage commit]
+    end
 
     def perform(effect)
       @capabilities.require!(effect.capability)
