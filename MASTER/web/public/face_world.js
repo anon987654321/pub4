@@ -14,12 +14,18 @@
   let ready = false;
   let updating = false;
 
-  const NODE_LAYOUT = [
-    ["lib", -1.38, 0.10, -0.28],
-    ["law", -0.70, 1.18, -0.10],
-    ["tools", 1.40, 0.05, -0.20],
-    ["web", 0.70, -1.10, -0.12],
-    ["openbsd", -0.82, -1.05, -0.16]
+  const CONTRACT = window.MASTER_FACE_CONTRACT || {};
+  const SPATIAL = CONTRACT.spatial || {};
+  const NODE_LAYOUT = Object.entries(SPATIAL.nodes || {
+    lib: [-1.38, 0.10, -0.28],
+    law: [-0.70, 1.18, -0.10],
+    tools: [1.40, 0.05, -0.20],
+    web: [0.70, -1.10, -0.12],
+    openbsd: [-0.82, -1.05, -0.16]
+  }).map(([name, position]) => [name, ...position]);
+  const LINK_LAYOUT = Array.isArray(SPATIAL.links) ? SPATIAL.links : [
+    ["lib", "law"], ["law", "tools"], ["tools", "web"], ["web", "openbsd"], ["openbsd", "lib"],
+    ["lib", "tools"], ["law", "web"], ["tools", "openbsd"], ["web", "lib"], ["openbsd", "law"]
   ];
 
   const TOPOLOGY_TILT = Object.freeze({
@@ -126,10 +132,9 @@
     });
 
     const positions = [];
-    const links = [
-      [0, 1], [1, 2], [2, 3], [3, 4], [4, 0],
-      [0, 2], [1, 3], [2, 4], [3, 0], [4, 1]
-    ];
+    const indexByName = Object.fromEntries(NODE_LAYOUT.map(([name], index) => [name, index]));
+    const links = LINK_LAYOUT.map(([a, b]) => [indexByName[a], indexByName[b]])
+      .filter(([a, b]) => Number.isInteger(a) && Number.isInteger(b));
 
     links.forEach(([a, b]) => {
       positions.push(...nodes[a].position.toArray(), ...nodes[b].position.toArray());
