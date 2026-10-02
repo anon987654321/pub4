@@ -114,12 +114,12 @@ module Master
         when "/face" then run_face
         else :unhandled
         end
+      end
 
       def run_face
         result = CommandRegistry.dispatch_face
         puts result if result && result != "face0: closed"
         nil
-      end
       end
 
       def run_chitchat
