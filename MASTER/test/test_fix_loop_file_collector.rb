@@ -77,6 +77,20 @@ class TestFixLoopFileCollector < Minitest::Test
     end
   end
 
+  def test_rails_migrations_are_audit_input_but_not_fix_input
+    Dir.mktmpdir do |dir|
+      migration = write(dir, "RAILS/brgen/db/migrate/20261002000000_add_index.rb")
+      schema = write(dir, "RAILS/brgen/db/schema.rb")
+      source = write(dir, "RAILS/brgen/app/models/post.rb")
+
+      refute Master::Review::Scan::Scanner.skip_path?(migration, root: dir),
+             "migration safety must still be able to scan migrations"
+      assert collector(dir).__send__(:skipped?, migration)
+      assert collector(dir).__send__(:skipped?, schema)
+      refute collector(dir).__send__(:skipped?, source)
+    end
+  end
+
   def test_authored_source_is_off_limits_to_neither
     Dir.mktmpdir do |dir|
       path = write(dir, "lib/review/thing.rb")
