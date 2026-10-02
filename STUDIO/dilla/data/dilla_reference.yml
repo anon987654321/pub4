@@ -73,6 +73,122 @@ documented_progressions:
     source: "Flying Lotus - Los Angeles, 'Camel'"
     source_note: "Fmaj7#11 and G13 restored — both parse now. The #11 is the lydian shimmer that distinguishes this from Beginners Falafel; with both simplified the two entries were byte-identical in harmony. Still distinct from the chromatic_mediant_drift/quartal_west_coast profiles used by RENDER_MODE=camel, which are original compositions rather than transcriptions."
 
+  # Verified external transcriptions folded from the 2026-10-02 chord digest
+  # (Hooktheory TheoryTab pages; Reddit posts pulled from the Arctic Shift
+  # archive). Additive only — no default rotation pool changes. The face's
+  # browser voicing table (MASTER/web/public/face_music_packs.json) carries
+  # the same cells with their sources.
+  dilla_flowers_documented:
+    producer: dilla
+    key: "D minor"
+    bpm: 84
+    swing: 54
+    chord_bars: 2
+    phrase_bars: 4
+    voicing: rootless
+    chords: [Dm9, Am7]
+    source: "J Dilla - The Shining, 'Flowers'"
+    source_note: "Hooktheory: i9–v7 — minor-v instead of a dominant, the Dorian-ish softness."
+  dilla_so_far_to_go_documented:
+    producer: dilla
+    key: "Bb major"
+    bpm: 90
+    swing: 52
+    chord_bars: 2
+    phrase_bars: 8
+    voicing: rootless
+    chords: [Gm7, Cm, Bb, Cm7]
+    source: "J Dilla - The Shining, 'So Far To Go'"
+    source_note: "Hooktheory instrumental: Gm7 Cm Bb/D Gm7 Cm7. The Bb/D bass inversion does not parse, so the third in the bass is flattened to root Bb."
+  dilla_stakes_is_high_documented:
+    producer: dilla
+    key: "F minor"
+    bpm: 88
+    swing: 56
+    chord_bars: 1
+    phrase_bars: 8
+    voicing: rootless
+    chords: [Fm, Dbmaj7, Csus4, Bb9, Abmaj7, G7, C, Fm9]
+    source: "De La Soul - Stakes Is High (prod. Jay Dee)"
+    source_note: "r/WeAreTheMusicMakers/comments/ewgdi single-voice chart, uncorroborated — kept out of default rotation pools for that reason. Bb7add9 spelled Bb9; add9 and 7 are both in the 9."
+  madlib_accordion_loop_documented:
+    producer: madlib
+    key: "D minor"
+    bpm: 98
+    swing: 12
+    chord_bars: 2
+    phrase_bars: 8
+    voicing: rootless
+    chords: [Gm11, Cmaj7, Dm9, C]
+    source: "Madvillain - Madvillainy, 'Accordion' (Daedelus 'Experience' chord organ loop)"
+    source_note: "Hooktheory: Gm11 Cmaj7/B Dm(add9) C(no3). Cmaj7/B flattened to Cmaj7; C(no3) — a third-less spine — loses the bareness in the close voicing here."
+  madlib_figaro_documented:
+    producer: madlib
+    key: "G# minor"
+    bpm: 118
+    swing: 12
+    chord_bars: 2
+    phrase_bars: 6
+    voicing: rootless
+    chords: [G#m9, F#9, Ebm9]
+    source: "Madvillain - Madvillainy, 'Figaro'"
+    source_note: "Hooktheory: i9–vii9–vi9, a descending-third minor-9 cascade."
+  flylo_computer_face_documented:
+    producer: flylo
+    key: "E minor"
+    bpm: 155
+    swing: 10
+    chord_bars: 2
+    phrase_bars: 6
+    voicing: rootless
+    chords: [Bm7, Em7, Gm7]
+    source: "Flying Lotus - Cosmogramma, 'Computer Face//Pure Being'"
+    source_note: "Hooktheory: v7–i7–iii7, all-minor diatonic, no dominant — the FlyLo vamp signature."
+  flylo_massage_situation_documented:
+    producer: flylo
+    key: "Bb minor"
+    bpm: 93
+    swing: 10
+    chord_bars: 2
+    phrase_bars: 4
+    voicing: rootless
+    chords: [Bbm11, A7]
+    source: "Flying Lotus - 'Massage Situation'"
+    source_note: "Hooktheory: i7sus2 → vii7. m7sus2 does not parse, so the voicing reads Bbm11; the suspended Eb stays in the browser pack's row."
+  flylo_king_of_the_hill_documented:
+    producer: flylo
+    key: "C# Dorian"
+    bpm: 74
+    swing: 10
+    chord_bars: 4
+    phrase_bars: 8
+    voicing: rootless
+    chords: [C#m9, Bbm11]
+    source: "Thundercat ft. Flying Lotus, BADBADNOTGOOD - 'King of the Hill'"
+    source_note: "r/musictheory/comments/l1prjh, Arctic Shift archive pull — two-bar modal vamp, melody switching C# Dorian for Bb Dorian."
+  royksopp_what_else_is_there_documented:
+    producer: royksopp
+    key: "C# minor"
+    bpm: 114
+    swing: 0
+    chord_bars: 4
+    phrase_bars: 8
+    voicing: rootless
+    chords: [A, C#m]
+    source: "Röyksopp - The Understanding, 'What Else Is There?'"
+    source_note: "Hooktheory: VI–i, only two functions carried the whole chorus."
+  royksopp_happy_up_here_documented:
+    producer: royksopp
+    key: "F major"
+    bpm: 104
+    swing: 0
+    chord_bars: 2
+    phrase_bars: 10
+    voicing: rootless
+    chords: [Gm, F, Ab, Eb, Bb]
+    source: "Röyksopp - Junior, 'Happy Up Here'"
+    source_note: "Hooktheory: ii–I–bIII–bVII–IV, the borrowed Fm tonic doing the colouring."
+
 # Hard pre-flight rejects, not just advisory scores — a take failing any of
 # these should not be promoted even if beauty/groove scored well.
 loss_gates:
