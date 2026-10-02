@@ -1,7 +1,0 @@
-<%= turbo_stream.replace "new_message" do %>
-  <% if @conversation.channel? %>
-    <%= render "channels/composer", conversation: @conversation, message: Message.new %>
-  <% else %>
-    <%= render "conversations/composer", conversation: @conversation, message: Message.new %>
-  <% end %>
-<% end %>

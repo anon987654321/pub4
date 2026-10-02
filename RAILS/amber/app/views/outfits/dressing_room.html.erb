@@ -1,6 +1,0 @@
-<% content_for :title, t("dressing_room.title") %>
-
-<%# The composition itself lives in shared/_dressing_room, because the guest
-    landing page shows the same mannequin with the demo wardrobe. Here it is
-    yours, so it can save what the carousels are showing. %>
-<%= render "shared/dressing_room", zones: @zones, taste_reasons: @taste_reasons, savable: true %>

@@ -1,9 +1,0 @@
-# reader: Master::Io::DynamicTools
-# Dynamic HTTP tools — loaded at boot without code changes.
-# Example (disabled):
-# - name: status_ping
-#   enabled: false
-#   method: GET
-#   url: "https://ai.brgen.no/health"
-#   elevated: false
-#   description: Ping production health endpoint

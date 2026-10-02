@@ -1,6 +1,0 @@
-<% content_for :title, t("pages.categories") %>
-<%= tag.h1 t("pages.categories") %>
-
-<%= live_search_index url: categories_path, results_partial: "categories/live_search_results", placeholder: t("ports.categories_placeholder"), label: t("ports.categories_label"), frame_id: "bsdports-categories" %>
-
-<%= render "shared/pager", pagy: @pagy %>

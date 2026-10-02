@@ -1,7 +1,0 @@
-nb:
-  mailer:
-    abandoned_cart_subject: "Handlekurven din på Brgen venter fortsatt"
-    abandoned_cart_title: "Handlekurven din er fortsatt her"
-    abandoned_cart_lede: "Du la disse varene i handlekurven. De er fortsatt tilgjengelige når du er klar."
-    abandoned_cart_button: "Åpne handlekurven"
-    abandoned_cart_permission: "Du mottar dette fordi du har samtykket til markedsførings-e-post fra Brgen. Bruk lenken nedenfor for å endre innstillingene."
