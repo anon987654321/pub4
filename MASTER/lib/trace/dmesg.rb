@@ -209,12 +209,15 @@ module Master
       def style(text, io: $stdout)
         return text unless io.respond_to?(:tty?) && io.tty?
 
+        formatter = pastel
+        return text unless formatter
+
         match = text.match(/\A([a-z][a-z0-9_]*\d+)(?: at ([a-z][a-z0-9_]*\d+))?:\s*(.*)\z/)
-        return pastel.dim(text) unless match
+        return formatter.dim(text) unless match
 
         unit, parent, detail = match.values_at(1, 2, 3)
         relation = parent ? " at #{parent}" : ""
-        "#{pastel.bold(unit)}#{pastel.dim(relation)}: #{detail}"
+        "#{formatter.bold(unit)}#{formatter.dim(relation)}: #{detail}"
       rescue StandardError
         text
       end
@@ -251,8 +254,14 @@ module Master
       def counted(number, noun) = "#{number} #{noun}#{"s" unless number == 1}"
 
       def pastel
-        require "pastel"
-        @pastel ||= Pastel.new
+        return @pastel if defined?(@pastel)
+
+        @pastel = begin
+          require "pastel"
+          Pastel.new
+        rescue LoadError
+          nil
+        end
       end
 
       # A turn as the kernel would print it. Every model call, file, command
