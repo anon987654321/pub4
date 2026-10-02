@@ -38,25 +38,20 @@
     return Number.isFinite(number) ? Math.max(min, Math.min(max, number)) : fallback;
   };
 
-  function classify(text, attr, detail = {}) {
-    const mode = String(detail.mode || "");
-    if (MODE_FAIL.test(mode) || MODE_FAIL.test(`${attr} ${text}`)) return "error";
-    if (MODE_WARN.test(mode) || MODE_WARN.test(`${attr} ${text}`)) return "warning";
-    if (MODE_BUSY.test(mode) || /busy|loading|agent|model|running|stage/i.test(`${attr} ${text}`)) return "working";
-    return "idle";
+  function registryResult(text, detail = {}) {
+    const registry = window.MASTERTopology;
+    if (!registry || typeof registry.classifyEvent !== "function") return {};
+    const name = String(detail.name || detail.mode || text || "event");
+    try { return registry.classifyEvent(name, detail) || {}; } catch (_) { return {}; }
   }
 
   function modeFor(detail = {}) {
+    const registry = registryResult(detail.name || detail.mode || "", detail);
     const explicit = String(detail.mode || "").toLowerCase();
     if (MODES.includes(explicit)) return explicit;
-    if (/sleep/i.test(explicit)) return "sleeping";
-    if (/listen/i.test(explicit)) return "listening";
-    if (/speak|tts/i.test(explicit)) return "speaking";
-    if (/think|route|infer|memory|tool|stage|working/i.test(explicit)) return "thinking";
-    if (/fail|error|veto|blocked|rollback/i.test(explicit)) return "error";
-    if (/warn|risk|retry|fallback/i.test(explicit)) return "warning";
-    if (/ready|complete|done|pass/i.test(explicit)) return "ready";
-    return null;
+    const mapped = String(registry.mode || "").toLowerCase();
+    if (MODES.includes(mapped)) return mapped;
+    return MODE_ALIASES[mapped] || null;
   }
 
   function syncRuntimeFace() {
@@ -103,17 +98,17 @@
   function apply(detail = {}) {
     const payload = detail && typeof detail === "object" ? detail : {};
     const text = String(payload.message || payload.text || payload.name || payload.mode || "");
-    const classified = classify(text, payload.mode || payload.name || "", payload);
+    const registry = registryResult(text, payload);
     const explicitMode = modeFor(payload);
 
-    state.mode = explicitMode || (classified !== "idle" ? classified : state.mode);
-    state.topology = String(payload.canonical_topology || payload.topology || state.topology);
-    state.entropy = clamp(payload.entropy, state.entropy);
-    state.confidence = clamp(payload.confidence, state.confidence);
+    state.mode = explicitMode || state.mode;
+    state.topology = String(payload.canonical_topology || payload.topology || registry.topology || state.topology);
+    state.entropy = clamp(payload.entropy ?? registry.entropy, state.entropy);
+    state.confidence = clamp(payload.confidence ?? registry.confidence, state.confidence);
     state.attention = clamp(payload.attention, state.attention);
-    state.arousal = clamp(payload.arousal, state.arousal);
+    state.arousal = clamp(payload.arousal ?? registry.arousal, state.arousal);
     state.valence = clamp(payload.valence, state.valence, -1, 1);
-    state.focus = clamp(payload.focus, state.focus);
+    state.focus = clamp(payload.focus ?? registry.focus, state.focus);
     state.activity = clamp(
       payload.activity,
       Math.min(1, 0.14 + state.entropy * 0.5 + (1 - state.confidence) * 0.35)
