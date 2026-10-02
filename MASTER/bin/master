@@ -97,7 +97,7 @@ $MASTER_PROCESS_LOCK = Master::Ops::ProcessLock.acquire!(
   root: MASTER, mode: daemon ? "control_plane" : "interactive", inherit_fd: true
 )
 unless $MASTER_PROCESS_LOCK
-  owner = Master::Ops::ProcessLock.owner(File.join(MASTER, ".master", "process.lock"))
+  owner = Master::Ops::ProcessLock.owner(path: File.join(MASTER, ".master", "process.lock"))
   detail = owner.empty? ? "" : " pid=#{owner["pid"]} host=#{owner["host"]} mode=#{owner["mode"]}"
   Master::Trace::Dmesg.status("master0", "another process owns the control plane#{detail}", io: $stderr)
   exit 75
