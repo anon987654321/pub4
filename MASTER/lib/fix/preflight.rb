@@ -24,13 +24,15 @@ module Master
           next unless File.file?(path)
           next if Review::Scan::PathFilter.skip_path?(path, root: @root)
 
-          return ruby_finding(path) if Master.language_for(path) == "ruby"
-
-          case File.extname(path).downcase
-          when *RUBY_EXTENSIONS
+          if Master.language_for(path) == "ruby"
             ruby_finding(path)
-          when *YAML_EXTENSIONS
-            yaml_finding(path)
+          else
+            case File.extname(path).downcase
+            when *RUBY_EXTENSIONS
+              ruby_finding(path)
+            when *YAML_EXTENSIONS
+              yaml_finding(path)
+            end
           end
         end
       end
