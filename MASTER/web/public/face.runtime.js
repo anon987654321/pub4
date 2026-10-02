@@ -32,6 +32,27 @@ const zshIn = document.getElementById('zin');
 const ttsLive = document.getElementById('tts-live');
 const uiStatus = document.getElementById('ui-status');
 const rootBody = document.body;
+const FACE_CONTRACT = window.MASTER_FACE_CONTRACT || {};
+const FACE_SPATIAL = FACE_CONTRACT.spatial || {};
+const FACE_CAMERA = FACE_SPATIAL.camera || {};
+const FACE_BUDGET = FACE_SPATIAL.budget || {};
+const FACE_CAMERA_FOV = Number(FACE_CAMERA.fov) || 38;
+const FACE_CAMERA_DISTANCE = Number(FACE_CAMERA.distance) || 4.6;
+
+function faceRenderBudget() {
+  return window.MASTER_FACE_STATE?.renderBudget?.() || {};
+}
+
+function faceRenderDpr() {
+  const budget = faceRenderBudget();
+  return Number.isFinite(Number(budget.dpr))
+    ? Number(budget.dpr)
+    : Math.min(
+      Number(FACE_BUDGET.max_device_pixel_ratio) || 2,
+      Number(globalThis.devicePixelRatio || 1)
+    );
+}
+
 let FACE_PHOSPHOR_DECAY = 0.88;
 let FACE_RENDER_SCALE = 0.72;
 // The pixel grid is absolute, not a fraction of the display. Capping the render
@@ -403,6 +424,7 @@ const State = {
   questionPulse: 0,
   sleeping: false, sleepMuted: false,
   voiceMode: false, wakeArmed: false,
+  cameraZoom: 0, cameraZoomAt: 0,
   hidden: document.hidden, reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches,
   coarsePointer: matchMedia('(pointer: coarse)').matches,
   highContrast: new URLSearchParams(window.location.search).get('hc') === '1',
@@ -625,8 +647,8 @@ if (_hasWebGL && THREE) {
     window.MASTER?.boot?.signal?.('renderer_failed', { source: 'WebGLRenderer' });
   }
   scene = new THREE.Scene();
-  camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
-  camera.position.set(0, 0, 4.6);
+  camera = new THREE.PerspectiveCamera(FACE_CAMERA_FOV, 1, 0.1, 100);
+  camera.position.set(0, 0, FACE_CAMERA_DISTANCE);
   phosphorFadeScene = new THREE.Scene();
   phosphorFadeCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
   const fadeGeom = new THREE.PlaneGeometry(2, 2);
@@ -655,7 +677,7 @@ function resize() {
   if (!renderer) return;
   W = window.innerWidth; H = window.innerHeight;
   if (window.MASTER_FACE_PERF?.shouldResize && !window.MASTER_FACE_PERF.shouldResize(W, H)) return;
-  DPR = Math.min(window.devicePixelRatio || 1, State.coarsePointer ? 1.25 : 2);
+  DPR = faceRenderDpr();
 
   const profile = rootBody.dataset.runtimeProfile || 'full';
   const scaleMax = typeof FACE_RENDER_SCALE_MAX !== 'undefined' ? FACE_RENDER_SCALE_MAX : 0.72;
@@ -674,7 +696,7 @@ function resize() {
     internalH = Math.max(200, Math.floor(internalH * cap));
   }
 
-  renderer.setPixelRatio(1);
+  renderer.setPixelRatio(DPR);
   renderer.setSize(internalW, internalH, false);
   camera.aspect = internalW / internalH;
   camera.updateProjectionMatrix();
@@ -1356,29 +1378,10 @@ const bloomCtx = null;
 const bloomCv = null;
 
 function dollyZoom(intensity) {
-  if (!camera) return;
-  const startFOV = camera.fov, startZ = camera.position.z;
-  const targetFOV = Math.max(20, startFOV - intensity * 10);
-  const targetZ   = startZ + intensity * 0.55;
-  const t0 = performance.now();
-  function forward(now) {
-    const p = Math.min(1, (now - t0) / 1200);
-    const e = p < 0.5 ? 2*p*p : -1+(4-2*p)*p;
-    camera.fov = startFOV + (targetFOV - startFOV) * e;
-    camera.position.z = startZ + (targetZ - startZ) * e;
-    camera.updateProjectionMatrix();
-    if (p < 1) { requestAnimationFrame(forward); return; }
-    const t1 = performance.now();
-    function back(now2) {
-      const p2 = Math.min(1, (now2 - t1) / 2000);
-      camera.fov = targetFOV + (38 - targetFOV) * p2;
-      camera.position.z = targetZ + (4.6 - targetZ) * p2;
-      camera.updateProjectionMatrix();
-      if (p2 < 1) requestAnimationFrame(back);
-    }
-    requestAnimationFrame(back);
-  }
-  requestAnimationFrame(forward);
+  const value = Math.max(0, Math.min(1, Number(intensity) || 0));
+  if (!camera || value <= 0) return;
+  State.cameraZoom = Math.max(State.cameraZoom || 0, value);
+  State.cameraZoomAt = performance.now();
 }
 
 const _photoEl = document.getElementById('photo');
@@ -1838,19 +1841,9 @@ function frame(t) {
     _attnEyeClose = attn.eyeCloseTarget || 0;
     const yaw   = State.mouseX * 0.9 * openness + State.tiltX * 0.62 + Math.sin(sec * 0.2) * 0.055 * composureFactor + saccadeX + microJitter;
     const pitch = State.mouseY * 0.52 * openness + State.tiltY * 0.5 + Math.sin(sec * 0.27) * 0.035 * composureFactor + (attn.fixationPitch || 0);
-    if (camera) {
-      const pInput = State.coarsePointer
-        ? { x: State.tiltX, y: -State.tiltY }
-        : { x: State.mouseX, y: -State.mouseY };
-      State.parX += (pInput.x * 0.095 - State.parX) * 0.055;
-      State.parY += (pInput.y * 0.060 - State.parY) * 0.055;
-      const camOffX = 0.015 + State.parX, camOffY = 0.008 + State.parY;
-      const camDepth = Math.max(-0.16, Math.min(0.16, Math.hypot(pInput.x, pInput.y) * 0.16));
-      camera.position.x += (Math.sin(sec * 0.11) * 0.018 + camOffX - camera.position.x) * 0.055;
-      camera.position.y += (Math.cos(sec * 0.09) * 0.012 + camOffY - camera.position.y) * 0.055;
-      const speechDepth = (State.mode === 'speaking' || tts.playing) ? Math.min(0.12, (State.visemeAmp || 0) * 0.12) : 0;
-      camera.position.z += (4.6 - camDepth - speechDepth - camera.position.z) * 0.055;
-    }
+    // FaceWorld owns camera position, distance, field of view and parallax.
+    // The legacy face loop only owns the head pose and semantic state; keeping
+    // camera motion out of this clock prevents two targets fighting every frame.
     head.rotation.y += (yaw   - head.rotation.y) * 0.06;
     head.rotation.x += (pitch - head.rotation.x) * 0.06;
     nodImpulse *= 0.87;
