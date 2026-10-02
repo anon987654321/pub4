@@ -188,6 +188,7 @@ module Master
           language_voice_families: language_voice_families.transform_values { |family| family.transform_values(&:to_s) },
           voices: voice_aliases,
           post_chain:,
+          prosody:,
           bed:,
           persona_affects_text_only: persona_affects_text_only?,
           stream_live_default: stream_live_default?,
