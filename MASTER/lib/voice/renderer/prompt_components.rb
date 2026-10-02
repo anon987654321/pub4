@@ -131,8 +131,8 @@ module Master
           "#{BOOT_FG}#{body}#{BOOT_RESET}"
         end
 
-        # The prompt is a command line, not a dashboard: path, Git, phase, cursor.
-        # The next line is reserved for the operator and the working indicator.
+        # The prompt is one physical command line, not a dashboard: path, Git,
+        # phase, cursor. Reline owns editing; never embed a second prompt line.
         def shell_prompt(phase, last_ok)
           git = git_prompt_text
           phase_text = phase_label(phase)
@@ -140,7 +140,7 @@ module Master
           suffix = [git, phase_text, cursor].reject(&:empty?).join(" ")
           path = prompt_path(suffix_length: visible_length(suffix) + 1)
 
-          [path, suffix].reject(&:empty?).join(" ") + "\n* "
+          [path, suffix].reject(&:empty?).join(" ") + " "
         end
 
         # zsh's own %~: home as a tilde, and a long path cut from the left so
