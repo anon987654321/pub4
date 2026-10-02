@@ -35,6 +35,7 @@ module Master
 
       def display_ok(ok:, accumulated:, streamed:)
         text = streamed ? accumulated : success_text(ok)
+        return display_empty_success(ok) if text.to_s.strip.empty?
         routine = !streamed && routine_success?(text)
         command = diagnostic_command(@last_input)
 
@@ -62,6 +63,14 @@ module Master
         print_previous_question_footer
         print_parallel_errors_footer(ok)
         print_capability_stamp(ok)
+      end
+
+      def display_empty_success(ok)
+        @last_ok = false
+        @exit_code = 2
+        Master::Trace::Dmesg.status("err0", "turn completed without output")
+        value = ok.value
+        Master::Trace::Dmesg.status("err0", "result=#{value.class}") if value
       end
 
       def diagnostic_command(input)
