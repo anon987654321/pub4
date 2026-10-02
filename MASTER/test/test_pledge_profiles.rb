@@ -20,6 +20,20 @@ class PledgeProfileTest < Minitest::Test
     end
   end
 
+  def test_profile_constructor_normalizes_values
+    profile = Master::Ground::Pledge::Profile.new(
+      name: "fix",
+      capabilities: ["stdio", "write"],
+      promises: +"stdio rpath"
+    )
+
+    assert_equal :fix, profile.name
+    assert_equal %i[stdio write], profile.capabilities
+    assert_equal "stdio rpath", profile.promises
+    assert profile.capabilities.frozen?
+    assert profile.promises.frozen?
+  end
+
   def test_unknown_profile_is_rejected
     assert_raises(KeyError) { Master::Ground::Pledge.profile(:unknown) }
   end
