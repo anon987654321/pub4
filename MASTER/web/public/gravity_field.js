@@ -33,7 +33,6 @@
   let entropy = 0.20;
   let confidence = 0.82;
   let previous = performance.now();
-  let running = false;
 
   function clamp(value, fallback = 0) {
     const number = Number(value);
@@ -115,7 +114,6 @@
       count = nextCount;
       seed();
     }
-    ensureFrame();
   }
 
   function signal(detail = {}) {
@@ -133,7 +131,6 @@
     signal.timer = setTimeout(() => {
       root.dataset.gravityState = "quiet";
     }, 850);
-    ensureFrame();
   }
 
   function pointerMove(event) {
@@ -142,7 +139,6 @@
     pointer.y = event.clientY / Math.max(1, height);
     pointer.active = Math.min(1, pointer.active + 0.18);
     activity = Math.min(1, activity + 0.035);
-    ensureFrame();
   }
 
   function pointerLeave() {
@@ -226,18 +222,17 @@
     ctx.globalAlpha = 1;
   }
 
-  function frame(now) {
-    running = false;
-    if (document.hidden) return;
+  function update(now = performance.now()) {
+    if (document.hidden) {
+      previous = now;
+      return;
+    }
+    if (reduced) {
+      draw();
+      return;
+    }
     step(now);
     draw();
-    ensureFrame();
-  }
-
-  function ensureFrame() {
-    if (running || document.hidden || reduced) return;
-    running = true;
-    requestAnimationFrame(frame);
   }
 
   addEventListener("pointermove", pointerMove, { passive: true });
@@ -247,12 +242,10 @@
   addEventListener("master:emotion", (event) => signal(event.detail || {}));
   addEventListener("gravity:signal", (event) => signal(event.detail || {}));
   document.addEventListener("visibilitychange", () => {
-    if (!document.hidden) {
-      previous = performance.now();
-      ensureFrame();
-    }
+    if (!document.hidden) previous = performance.now();
   }, { passive: true });
 
   resize();
   if (reduced) draw();
+  window.MASTER_GRAVITY_FIELD = Object.freeze({ update, resize, signal });
 })();
