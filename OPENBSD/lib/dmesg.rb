@@ -27,6 +27,45 @@ module Deploy
 
     def status(unit, msg, io: $stdout) = io.puts("#{unit}: #{msg}")
 
+    # Finished-step reports, in the same grammar as MASTER/lib/trace/dmesg.rb:
+    # lines already speaking dmesg pass through, plain lines attach to the unit.
+    module Report
+      UNIT_RE = /\A[a-z][a-z0-9_]*\d+(?: at [a-z][a-z0-9_]*\d+)?:/
+
+      module_function
+
+      def render(unit:, parent:, text:)
+        source = Dmesg.plain(text)
+        return "" if source.strip.empty?
+
+        lines = []
+        attached = false
+        source.lines.each do |raw|
+          line = raw.chomp.strip
+          if line.empty?
+            lines << "" unless lines.empty? || lines.last.empty?
+            attached = false
+          elsif UNIT_RE.match?(line)
+            lines << line
+            attached = true
+          elsif attached
+            lines << "#{unit}: #{line}"
+          else
+            lines << "#{unit} at #{parent}: #{line}"
+            attached = true
+          end
+        end
+        lines.join("\n").strip
+      end
+
+      def print(command, text, parent: "deploy-openbsd0", io: $stdout)
+        rendered = render(unit: command.to_s, parent:, text:)
+        rendered.lines.each { |line| line.empty? ? io.puts : io.puts(line.chomp) }
+        io.flush if io.respond_to?(:flush)
+        rendered
+      end
+    end
+
     # Escapes are for a person at a terminal who has not asked for none.
     def escapes?(io = $stdout, env = ENV) = io.tty? && env["NO_COLOR"].to_s.empty?
 
