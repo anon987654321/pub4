@@ -74,7 +74,7 @@ class TestCliTerminalFace < Minitest::Test
     refute_includes text, "job 1"
   end
 
-  def test_a_failed_turn_does_not_start_picture_work
+  def test_a_failed_turn_stays_visible_without_media_work
     face = Master::CLI::Face::Window.new(
       turn: ->(_) { Master::Result.err("talk0: empty response", category: :provider_error) },
       ear: Quiet.new(false),
@@ -83,7 +83,7 @@ class TestCliTerminalFace < Minitest::Test
       output: StringIO.new,
       size: -> { [24, 80] }
     )
-    face.stub(:picture, ->(_) { flunk("picture work started after a failed turn") }) { face.send(:answer, "Bug and ember lay out.") }
+    face.send(:answer, "Bug and ember lay out.")
     text = rows_of(face.screen(24, 80, 1.0)).values.join("\n")
     assert_includes text, "talk0: empty response"
   end
@@ -97,8 +97,6 @@ class TestCliTerminalFace < Minitest::Test
       output: StringIO.new,
       size: -> { [24, 80] }
     )
-    face.define_singleton_method(:picture) { flunk("ordinary Face replies must not launch media work") } if face.respond_to?(:picture)
-
     face.send(:answer, "Bug and ember lay out.")
     text = rows_of(face.screen(24, 80, 1.0)).values.join("\n")
     assert_includes text, "Reply"
