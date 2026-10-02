@@ -2,15 +2,13 @@
 
 require_relative "../../../contracts/studio"
 
-
 class AiController < ApplicationController
   before_action :require_real_user
 
   # suggest_outfits is a GET that may ask STUDIO for one bounded photograph.
   # The request rate limit does not see generated media as a write, so this path
   # keeps its own one-photo ceiling.
-  MASTER_PHOTOGRAPHS_PER_REQUEST = 1
-  MASTER_PHOTOGRAPH_TIMEOUT = 120
+  STUDIO_PHOTOGRAPHS_PER_REQUEST = 1
 
   rate_limit to: 10, within: 10.minutes, only: :suggest_outfits,
              by: -> { "u#{Current.user&.id}" },
@@ -48,7 +46,7 @@ class AiController < ApplicationController
 
     return unless @studio_photo
 
-      @suggestions.select { |s| s.is_a?(Hash) }.first(STUDIO_PHOTOGRAPHS_PER_REQUEST).each do |s|
+    @suggestions.select { |s| s.is_a?(Hash) }.first(STUDIO_PHOTOGRAPHS_PER_REQUEST).each do |s|
       combo = "professional fashion photography of outfit '#{s['name']}' with #{Array(s['items']).join(', ')}. #{s['description']}. model, kodak portra, cinematic"
       begin
         out = Contracts::Studio.photograph(prompt: combo)
@@ -176,21 +174,6 @@ class AiController < ApplicationController
   end
 
   private
-
-  # Argv array, never a shell string: the prompt carries text a model wrote.
-  # The child is killed at the timeout and its output so far is returned.
-  def photograph(master_root, prompt)
-    # brakeman :ignore Execute
-    Open3.popen2e("bundle", "exec", "ruby", "bin/cli", "photograph", prompt, chdir: master_root) do |stdin, output, wait|
-      stdin.close
-      reader = Thread.new { output.read }
-      unless wait.join(MASTER_PHOTOGRAPH_TIMEOUT)
-        Process.kill("TERM", wait.pid)
-        wait.join(5) || Process.kill("KILL", wait.pid)
-      end
-      reader.value.to_s
-    end
-  end
 
   def create_outfit_from_vision_suggestion(suggestion)
     name = suggestion["name"].presence || "Suggested outfit"
