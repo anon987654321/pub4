@@ -82,8 +82,6 @@ module Master
       end
 
       def apply_spoken_performance(melody, clean, emotion, style, base_rate:, base_pitch:)
-        return melody if melody[:melodic]
-
         performance = Performance.apply(
           base_rate:,
           base_pitch:,
@@ -93,15 +91,33 @@ module Master
         )
         phrases = melody[:phrases].each_with_index.map do |phrase, index|
           variation = performance[index] || {}
+          rate = if melody[:melodic]
+                   blend_melodic_rate(phrase[:rate], variation[:rate], base_rate)
+                 else
+                   variation[:rate] || phrase[:rate]
+                 end
+          pitch = melody[:melodic] ? phrase[:pitch] : (variation[:pitch] || phrase[:pitch])
+
           phrase.merge(
-            rate: variation[:rate] || phrase[:rate],
-            pitch: variation[:pitch] || phrase[:pitch],
+            rate:,
+            pitch:,
             pause_ms: variation[:pause_ms] || phrase[:pause_ms],
             performance_role: variation[:role],
             emphasis: variation[:emphasis],
           )
         end
         melody.merge(phrases:)
+      end
+
+      def blend_melodic_rate(melodic_rate, performance_rate, base_rate)
+        return melodic_rate || performance_rate if melodic_rate.to_s.empty?
+        return melodic_rate if performance_rate.to_s.empty?
+
+        melodic = melodic_rate.to_s.delete("%").to_i
+        performance = performance_rate.to_s.delete("%").to_i
+        base = base_rate.to_s.delete("%").to_i
+        delta = performance - base
+        format("%+d%%", (melodic + delta).clamp(-12, 12))
       end
 
       def synthesize_via_chain(clean, cfg, emotion, melody, resolved_voice, resolved_rate, resolved_pitch, out_path)
