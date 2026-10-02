@@ -46,6 +46,7 @@ face_eager:
   - face_perf_guards.js
   - face_brutalist.js
   - gravity_field.js
+  - face_world.js
 
 # Imported lazily from the tail of face.part5.txt via _deferFaceMod(), after the
 # face itself is up.
