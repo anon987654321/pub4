@@ -13,17 +13,19 @@
     "warning", "error", "sleeping", "ready"
   ]);
 
+  const CONTRACT = window.MASTER_FACE_CONTRACT || {};
+  const CONTRACT_STATE = CONTRACT.state || {};
   const DEFAULTS = Object.freeze({
-    mode: "idle",
-    topology: "papua-mask",
-    entropy: 0.18,
-    confidence: 0.86,
-    attention: 1,
-    arousal: 0.22,
-    valence: 0.18,
-    focus: 0.86,
-    activity: 0.14,
-    risk: 0,
+    mode: CONTRACT_STATE.default_mode || "idle",
+    topology: CONTRACT_STATE.default_topology || "papua-mask",
+    entropy: Number(CONTRACT_STATE.entropy ?? 0.18),
+    confidence: Number(CONTRACT_STATE.confidence ?? 0.86),
+    attention: Number(CONTRACT_STATE.attention ?? 1),
+    arousal: Number(CONTRACT_STATE.arousal ?? 0.22),
+    valence: Number(CONTRACT_STATE.valence ?? 0.18),
+    focus: Number(CONTRACT_STATE.focus ?? 0.86),
+    activity: Number(CONTRACT_STATE.activity ?? 0.14),
+    risk: Number(CONTRACT_STATE.risk ?? 0),
     phase: "idle",
     provider: "unknown"
   });
