@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "baseline_ratchet"
+require_relative "../lib/operator/baseline_ratchet"
 
 require "set"
 
