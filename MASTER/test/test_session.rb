@@ -64,6 +64,34 @@ class TestSession < Minitest::Test
     end
   end
 
+  def test_record_cost_replaces_invalid_utf8_without_crashing
+    Dir.mktmpdir("session_cost_utf8") do |dir|
+      session = Master::Trace::Session.new(root: dir)
+      invalid = "model-".dup.force_encoding("UTF-8")
+      invalid << "\xFF".b.force_encoding("UTF-8")
+
+      assert_silent { session.record_cost(0.1, model: invalid, tokens: 1) }
+
+      row = JSON.parse(File.read(File.join(dir, ".master", "costs.jsonl"))).first
+      assert_equal "model-\uFFFD", row["model"]
+    end
+  end
+
+  def test_invalid_utf8_session_file_is_quarantined
+    Dir.mktmpdir("session_load_utf8") do |dir|
+      path = File.join(dir, ".master", "session.json")
+      FileUtils.mkdir_p(File.dirname(path))
+      File.binwrite(path, "{\"messages\":[\"\xFF\"]}")
+
+      session = Master::Trace::Session.new(root: dir)
+      assert_silent { session.load! }
+
+      assert_empty session.messages
+      refute File.exist?(path)
+      assert_equal 1, Dir.glob("#{path}.corrupt.*").size
+    end
+  end
+
   def test_record_cost_bills_the_same_tokens_the_meter_shows
     Dir.mktmpdir("session_cost") do |dir|
       session = Master::Trace::Session.new(root: dir)
