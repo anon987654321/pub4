@@ -30,6 +30,27 @@ const zshIn = document.getElementById('zin');
 const ttsLive = document.getElementById('tts-live');
 const uiStatus = document.getElementById('ui-status');
 const rootBody = document.body;
+const FACE_CONTRACT = window.MASTER_FACE_CONTRACT || {};
+const FACE_SPATIAL = FACE_CONTRACT.spatial || {};
+const FACE_CAMERA = FACE_SPATIAL.camera || {};
+const FACE_BUDGET = FACE_SPATIAL.budget || {};
+const FACE_CAMERA_FOV = Number(FACE_CAMERA.fov) || 38;
+const FACE_CAMERA_DISTANCE = Number(FACE_CAMERA.distance) || 4.6;
+
+function faceRenderBudget() {
+  return window.MASTER_FACE_STATE?.renderBudget?.() || {};
+}
+
+function faceRenderDpr() {
+  const budget = faceRenderBudget();
+  return Number.isFinite(Number(budget.dpr))
+    ? Number(budget.dpr)
+    : Math.min(
+      Number(FACE_BUDGET.max_device_pixel_ratio) || 2,
+      Number(globalThis.devicePixelRatio || 1)
+    );
+}
+
 let FACE_PHOSPHOR_DECAY = 0.88;
 let FACE_RENDER_SCALE = 0.72;
 // The pixel grid is absolute, not a fraction of the display. Capping the render
@@ -401,6 +422,7 @@ const State = {
   questionPulse: 0,
   sleeping: false, sleepMuted: false,
   voiceMode: false, wakeArmed: false,
+  cameraZoom: 0, cameraZoomAt: 0,
   hidden: document.hidden, reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches,
   coarsePointer: matchMedia('(pointer: coarse)').matches,
   highContrast: new URLSearchParams(window.location.search).get('hc') === '1',
@@ -623,8 +645,8 @@ if (_hasWebGL && THREE) {
     window.MASTER?.boot?.signal?.('renderer_failed', { source: 'WebGLRenderer' });
   }
   scene = new THREE.Scene();
-  camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
-  camera.position.set(0, 0, 4.6);
+  camera = new THREE.PerspectiveCamera(FACE_CAMERA_FOV, 1, 0.1, 100);
+  camera.position.set(0, 0, FACE_CAMERA_DISTANCE);
   phosphorFadeScene = new THREE.Scene();
   phosphorFadeCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
   const fadeGeom = new THREE.PlaneGeometry(2, 2);
@@ -653,7 +675,7 @@ function resize() {
   if (!renderer) return;
   W = window.innerWidth; H = window.innerHeight;
   if (window.MASTER_FACE_PERF?.shouldResize && !window.MASTER_FACE_PERF.shouldResize(W, H)) return;
-  DPR = Math.min(window.devicePixelRatio || 1, State.coarsePointer ? 1.25 : 2);
+  DPR = faceRenderDpr();
 
   const profile = rootBody.dataset.runtimeProfile || 'full';
   const scaleMax = typeof FACE_RENDER_SCALE_MAX !== 'undefined' ? FACE_RENDER_SCALE_MAX : 0.72;
@@ -672,7 +694,7 @@ function resize() {
     internalH = Math.max(200, Math.floor(internalH * cap));
   }
 
-  renderer.setPixelRatio(1);
+  renderer.setPixelRatio(DPR);
   renderer.setSize(internalW, internalH, false);
   camera.aspect = internalW / internalH;
   camera.updateProjectionMatrix();
