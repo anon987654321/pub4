@@ -352,6 +352,7 @@ face_interface:
   prompt:
     font: font_code
     measure_ch: 66
+    max_ch: 72
     line_height: 1.5
     user_token: "$"
     master_token: "master$"
