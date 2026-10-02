@@ -93,6 +93,8 @@ module Master
         mitchell: "en-NZ-MitchellNeural",
         oliver: "en-GB-OliverNeural",
         connor: "en-IE-ConnorNeural",
+        bree: "en-US-BreeNeural",
+        hollie: "en-GB-HollieNeural",
       }.freeze
 
       # Every voice answers to its full Edge name and to its short alias; full
