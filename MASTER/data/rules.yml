@@ -613,10 +613,17 @@ design_system:
       budget:
         desktop_points: 1200
         mobile_points: 420
+        desktop_particles: 200
+        mobile_particles: 120
+        reduced_motion_particles: 64
         max_device_pixel_ratio: 2.0
-        active_fps: 60
+        active_fps: 24
         idle_fps: 12
         hidden_fps: 0
+        reduced_motion_fps: 8
+        battery_fps: 12
+        pulse_limit: 24
+        hud_labels: 5
   # BRGEN_OLD dark — dark-inverted port of the real 2014 desktop.css/mobile.css
   # from pub/__OLD_BACKUPS/BRGEN_OLD. True neutral grayscale, no accent hue,
   # Arial. chrome_bg is the utility-bar tone (darker than bg), mirroring
