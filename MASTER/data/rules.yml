@@ -508,7 +508,7 @@ design_system:
       c_danger: "oklch(60% 0.14 35)"
       c_code: "oklch(74% 0.11 275)"
     font_mono: '"JetBrainsMono Nerd Font", "JetBrains Mono", "Cascadia Code", "Fira Code", ui-monospace, monospace'
-    font_label: '"Helvetica Neue Pro", "Helvetica Neue", Arial, sans-serif'
+    font_label: '"JetBrainsMono Nerd Font", "JetBrains Mono", "Cascadia Code", "Fira Code", ui-monospace, monospace'
     face_bg: "black"
     derived:
       face_fg: "var(--c-text)"
