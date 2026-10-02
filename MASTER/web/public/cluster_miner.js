@@ -122,8 +122,7 @@
     emitClusterState();
   }
 
-  function tick() {
-    const t = now();
+  function update(t = now()) {
     for (const cluster of state.clusters.values()) {
       const age = Math.max(0, t - cluster.lastSeenAt);
       const decay = age > 1200 ? 0.985 : 0.995;
@@ -131,7 +130,6 @@
       if (cluster.heat < 0.002) cluster.heat = 0;
     }
     if (t - state.lastEmissionAt > 1000) emitClusterState();
-    requestAnimationFrame(tick);
   }
 
   function emotionFromClusters() {
@@ -181,10 +179,6 @@
     state.lastEmissionAt = now();
     const detail = snapshot();
     window.dispatchEvent(new CustomEvent("master:clusters", { detail }));
-
-    if (window.Face3DPreview?.engine && detail.emotion) {
-      window.Face3DPreview.engine.setEmotion(detail.emotion);
-    }
   }
 
   window.addEventListener("master:visual", event => ingest(event.detail || {}));
@@ -196,8 +190,8 @@
     classify,
     ingest,
     snapshot,
-    emotion: emotionFromClusters
+    emotion: emotionFromClusters,
+    update
   });
 
-  requestAnimationFrame(tick);
 })();
