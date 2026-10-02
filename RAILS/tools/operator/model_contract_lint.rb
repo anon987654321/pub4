@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "baseline_ratchet"
+require_relative "../../../MASTER/lib/operator/baseline_ratchet"
 
 module Operator
   # What a model promises, measured instead of counted by hand.
