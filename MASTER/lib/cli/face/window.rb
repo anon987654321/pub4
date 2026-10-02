@@ -43,11 +43,7 @@ module Master
           container = nil
           lambda do |text|
             lock.synchronize { container ||= boot.call }
-            streamed = +""
-            result = TurnRouter.call(message: text, container:, on_turn: ->(line) { streamed << line << "\n" })
-            return result if streamed.strip.empty? || result.err?
-
-            streamed
+            TurnRouter.call(message: text, container:)
           end
         end
 
@@ -270,9 +266,16 @@ module Master
           return "error: #{result.message}" if result.err?
 
           value = result.value
-          # Talk answers with a String, which also answers [] and would raise on a Symbol.
-          text = value.is_a?(Hash) ? (value[:rendered] || value[:output]) : nil
-          (text || value).to_s.strip
+          # Fold results carry the human answer separately from their execution trace.
+          # Speak the answer, not the internal turn ledger.
+          if value.is_a?(Hash)
+            core = value[:core]
+            summary = core.is_a?(Hash) ? core[:summary].to_s.strip : ""
+            return summary unless summary.empty?
+
+            return (value[:rendered] || value[:output]).to_s.strip
+          end
+          value.to_s.strip
         end
 
         def stop_key?
