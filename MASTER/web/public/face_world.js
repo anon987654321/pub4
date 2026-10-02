@@ -246,7 +246,7 @@
     });
   }
 
-  function boot()
+  function boot() {
     if (ready || !window.MASTER_FACE?.scene) return;
 
     const scene = window.MASTER_FACE.scene;
