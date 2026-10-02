@@ -19,16 +19,11 @@
 # boots in a different group below.
 #
 #   particles  particle_kernel.js (shell_blocking) defines window.ParticleKernel,
-#              the cell pool. particle_worker.js (shell_manifest) is the Worker
-#              that steps a transferred pool off the main thread. face_particles.js
-#              (face_eager) builds the step context from face State after the tap.
-#              gravity_field.js (face_eager) is the ambient Antigravity-style
-#              constellation: deterministic shell, spring return and local pointer field.
-#   ecology    cognition_ecology.js (face_vision_deferred) owns the 2D canvas and
-#              window.MASTEREcology; cognition_ecology_render.js draws it, loaded
-#              straight after. face_offscreen_ecology.js (face_eager) moves that
-#              buffer to an OffscreenCanvas where the browser has one, and returns
-#              early when MASTEREcology is not up yet.
+#              the semantic cell pool. particle_worker.js warms the off-thread step;
+#              face_particles.js drives face expression from those cells.
+#   world      face_world.js owns the spatial projection and consumes the one face
+#              frame clock. gravity_field.js and cognition_ecology_render.js are
+#              retained as compatibility projections but never schedule their own RAF.
 
 # Imported eagerly by public/face.js immediately after the primer tap, in this
 # order. particle_kernel consumers must not precede attention_model.
