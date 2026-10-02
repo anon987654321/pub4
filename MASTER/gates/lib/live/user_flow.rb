@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 require "yaml"
-require_relative "../../../../OPENBSD/lib/deploy_inventory"
-require_relative "../../../../OPENBSD/lib/gate_result"
-require_relative "../../../../RAILS/tools/crawl_support"
+require_relative "../../support/deploy_inventory"
+require_relative "../../support/gate_result"
+require_relative "../../../../support/crawl_support"
 require_relative "../../support/gate_autofix"
 require_relative "../../support/brgen_vertical_surfaces"
 require_relative "../../support/guest_flow_persona"

@@ -259,7 +259,7 @@ module Deploy
     end
 
     def app_port(app)
-      require_relative "../../../OPENBSD/lib/deploy_inventory"
+      require_relative "deploy_inventory"
       Inventory.new(root: File.expand_path("..", RAILS_ROOT)).apps.find { |a| a.name == app }&.port
     rescue StandardError # scan: intentional — no inventory means no port; the autofix declines to guess
       nil

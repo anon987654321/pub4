@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "../../../../OPENBSD/lib/gate_result"
+require_relative "../../support/gate_result"
 require_relative "../../support/cdp_session"
 require_relative "../../support/geometry_probe"
 require_relative "../../../tools/crawl_support"

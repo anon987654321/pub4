@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require_relative "../../../../OPENBSD/lib/gate_result"
-require_relative "../../../../OPENBSD/lib/deploy_inventory"
+require_relative "../../support/gate_result"
+require_relative "../../support/deploy_inventory"
 require_relative "../../../tools/crawl_support"
 require_relative "../../support/exemplar_structure"
 require_relative "../../support/visual_quality"

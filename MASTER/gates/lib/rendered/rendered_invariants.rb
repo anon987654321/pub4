@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../../support/cdp_session"
-require_relative "../../../../OPENBSD/lib/gate_result"
+require_relative "../gate_result"
 
 module Deploy
   # Two facts about a rendered page that no source check can see, and that this

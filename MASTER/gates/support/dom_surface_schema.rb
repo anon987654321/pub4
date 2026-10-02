@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "yaml"
-require_relative "../../../OPENBSD/lib/gate_result"
+require_relative "gate_result"
 
 module Deploy
   # Structural HTML contracts for first-screen surfaces.

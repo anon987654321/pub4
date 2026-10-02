@@ -3,8 +3,8 @@
 require "yaml"
 require "net/http"
 require "uri"
-require_relative "../../../../OPENBSD/lib/deploy_inventory"
-require_relative "../../../../OPENBSD/lib/gate_result"
+require_relative "../../support/deploy_inventory"
+require_relative "../../support/gate_result"
 require_relative "../../../tools/crawl_support"
 require_relative "../../support/fleet"
 

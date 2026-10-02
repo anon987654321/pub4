@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "../../../../OPENBSD/lib/gate_result"
+require_relative "../../support/gate_result"
 
 module Deploy
   # Every view-owned content_for value must have a consumer in the layout that

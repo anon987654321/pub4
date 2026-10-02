@@ -7,7 +7,7 @@
 # source raised `invalid byte sequence in US-ASCII` from inside
 # domain_alignment.rb — a crash that could not happen when the same gate class
 # ran in-process.
-require_relative "../../OPENBSD/lib/utf8"
+require_relative "support/utf8"
 require "open3"
 require "rbconfig"
 require_relative "../../MASTER/lib/operator/ruby_runner"

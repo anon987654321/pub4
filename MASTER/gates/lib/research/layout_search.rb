@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "../../../../OPENBSD/lib/gate_result"
+require_relative "../../support/gate_result"
 require_relative "../../support/layout_search"
 require_relative "../../../tools/scss_rules"
 

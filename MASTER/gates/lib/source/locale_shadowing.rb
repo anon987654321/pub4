@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "yaml"
-require_relative "../../../../OPENBSD/lib/gate_result"
+require_relative "../../support/gate_result"
 
 module Deploy
   # An app overriding a shared translation, counted so each override is chosen.

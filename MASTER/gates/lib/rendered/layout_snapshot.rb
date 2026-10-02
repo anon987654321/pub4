@@ -2,7 +2,7 @@
 
 require "json"
 require "fileutils"
-require_relative "../../../../OPENBSD/lib/gate_result"
+require_relative "../../support/gate_result"
 require_relative "../../support/geometry_probe"
 require_relative "../../support/gate_autofix"
 require_relative "../../support/layout_snapshot_drift"

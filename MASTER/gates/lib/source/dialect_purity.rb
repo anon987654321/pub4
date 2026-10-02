@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../../../tools/master_design"
-require_relative "../../../../OPENBSD/lib/gate_result"
+require_relative "../../support/gate_result"
 require_relative "../../../tools/scss_rules"
 
 module Deploy

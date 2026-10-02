@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "json"
-require_relative "../../../../OPENBSD/lib/gate_result"
+require_relative "../../support/gate_result"
 require_relative "../../support/geometry_probe"
 
 module Deploy

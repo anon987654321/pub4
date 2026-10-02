@@ -3,7 +3,7 @@
 
 # Subprocess gates are started with system() and do not inherit runner.rb's
 # Encoding.default_external; see the same require in release.rb.
-require_relative "../../OPENBSD/lib/utf8"
+require_relative "support/utf8"
 require "open3"
 require "yaml"
 

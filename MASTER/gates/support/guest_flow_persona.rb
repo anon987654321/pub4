@@ -3,7 +3,7 @@
 require "net/http"
 require "uri"
 require "cgi"
-require_relative "../../../OPENBSD/lib/gate_result"
+require_relative "gate_result"
 
 module Deploy
   # Guest-open HTTP persona: cookie jar, optional location, capability asserts.

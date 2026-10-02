@@ -3,7 +3,7 @@
 require "open3"
 require "rbconfig"
 require "yaml"
-require_relative "../../../../OPENBSD/lib/gate_result"
+require_relative "../../support/gate_result"
 require_relative "../../support/bounded_command"
 
 module Deploy

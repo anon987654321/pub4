@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "../../../../OPENBSD/lib/gate_result"
+require_relative "../../support/gate_result"
 
 module Deploy
   # Gates that exist only to be run by RAILS/test/gate_failopen_test.rb through
