@@ -7,6 +7,8 @@ module Deploy
   module Environment
     module_function
 
+    OPENBSD_RUBY_PATTERN = /\\A3\\.(?:3|4)\\.\\d+\\z/
+
     def repo_root(from: __dir__)
       File.expand_path("../../..", from)
     end
@@ -32,6 +34,8 @@ module Deploy
     end
 
     def ruby_version_ok?
+      return OPENBSD_RUBY_PATTERN.match?(ruby_version.to_s) if on_openbsd?
+
       ruby_version == required_ruby
     end
 
@@ -75,7 +79,11 @@ module Deploy
     def ruby_mismatch_message
       return if ruby_version_ok?
 
-      "Ruby #{RUBY_VERSION} detected; pub4 requires .ruby-version"
+      if on_openbsd?
+        "Ruby #{RUBY_VERSION} detected; OpenBSD MASTER accepts Ruby 3.3.x or 3.4.x; local .ruby-version is #{required_ruby}"
+      else
+        "Ruby #{RUBY_VERSION} detected; pub4 requires .ruby-version"
+      end
     end
 
     def next_command_for(mode = self.mode)
