@@ -12,7 +12,8 @@ module Master::Core
       model: %i[stdio read model],
       fix: %i[stdio read write create execute],
       device: %i[stdio read device],
-      world: %i[stdio read world]
+      world: %i[stdio read world],
+      diagnostic: %i[stdio read execute]
     }.freeze
 
     def self.for(name)
