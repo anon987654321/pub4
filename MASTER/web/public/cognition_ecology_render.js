@@ -40,23 +40,13 @@
   }
 
   let previous = performance.now();
-  let ecologyFrameActive = false;
-  function ensureEcologyFrame() {
-    if (ecologyFrameActive || document.hidden) return;
-    ecologyFrameActive = true;
-    requestAnimationFrame(frame);
-  }
 
-  function frame(now) {
+  // The face runtime owns the only animation clock. This renderer is now a
+  // projection called from FaceWorld, never an independent RAF loop.
+  function update(now = performance.now()) {
     const E = eco();
-    if (!E) {
-      if (!document.hidden) requestAnimationFrame(frame);
-      else ecologyFrameActive = false;
-      return;
-    }
-    if (document.hidden) {
+    if (!E || document.hidden) {
       previous = now;
-      ecologyFrameActive = false;
       return;
     }
     const dt = Math.min(48, now - previous);
@@ -78,13 +68,7 @@
     if (!E.reducedMotion && !speaking && Math.random() < 0.025 + E.state.activity * 0.025) {
       E.spawnWeatherBurst(1, 0.25 + E.state.activity * 0.5);
     }
-    if (!document.hidden) requestAnimationFrame(frame);
-    else ecologyFrameActive = false;
   }
 
-  ensureEcologyFrame();
-  window.addEventListener("master:visual", () => ensureEcologyFrame(), { passive: true });
-  document.addEventListener("visibilitychange", () => {
-    if (!document.hidden) ensureEcologyFrame();
-  }, { passive: true });
+  window.MASTEREcologyRender = Object.freeze({ update });
 })();
