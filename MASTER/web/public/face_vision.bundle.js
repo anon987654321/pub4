@@ -28,7 +28,7 @@
     [/locale|lang|multilingual/i, [31]], [/whisper|ethereal|intimate/i, [32]],
     [/council:multi|council:speech|council:deliberation/i, [33]],
     [/stt:/i, [34]], [/tts:error|tts:job_cancelled/i, [35]],
-    [/face3d|visual:ready|compositor/i, [36]],
+    [/face_world|visual:ready|compositor/i, [36]],
     [/face-ready|boot|primer/i, [37, 40]],
     [/blend|user:expression|face:mouth/i, [38]], [/phosphor|trail/i, [39]]
   ];
@@ -508,9 +508,7 @@
 
   // 36–40 fusion
   V.register(36, "compositor hint", (ctx) => {
-    // The face3d overlay was removed on 2026-07-24 (commit 6f1867972) and
-    // nothing sets window.FACE3D_ACTIVE any more, so this branch always fell
-    // through to "particle2d". There is one compositor.
+    // FaceWorld is the one compositor; this stage only records the semantic hint.
     const hint = "particle2d";
     document.documentElement.dataset.compositor = hint;
     V.css("--face-compositor", "0");
@@ -528,9 +526,6 @@
   V.register(38, "blendshape dual-write", (ctx) => {
     const ex = ctx.detail.expression || ctx.detail;
     if (ex.arousal != null || ex.valence != null) blend()?.applyExpression?.(ex);
-    if (ctx.detail.blendshapes && window.Face3DPreview?.engine?.setBlend) {
-      window.Face3DPreview.engine.setBlend(ctx.detail.blendshapes);
-    }
     window.dispatchEvent(new CustomEvent("face:blend-dual", { detail: ex }));
   });
 
