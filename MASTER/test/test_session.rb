@@ -17,6 +17,21 @@ class TestSession < Minitest::Test
     assert_equal "hello from the stream\n", accumulated
   end
 
+  def test_pipeline_passes_a_chunk_stream_to_casual_llm_turns
+    session = Master::CLI::Session.allocate
+    session.instance_variable_set(:@container, {})
+    session.define_singleton_method(:cli_felt_sense) { nil }
+    session.define_singleton_method(:terminal_ask) { |_thread| nil }
+
+    seen = nil
+    Master::CLI::TurnRouter.stub(:call, ->(**kwargs) { seen = kwargs; Master::Result.ok("ok") }) do
+      thread = session.send(:spawn_pipeline_thread, "hello", ->(_line) {})
+      thread.value
+    end
+
+    assert_respond_to seen[:on_chunk], :call
+  end
+
   def test_save_prunes_old_messages_to_summaries
     Dir.mktmpdir("session_test") do |dir|
       session = Master::Trace::Session.new(root: dir)

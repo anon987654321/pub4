@@ -139,7 +139,8 @@ module Master
 
       def dispatch_turn(input, accumulated:, state:)
         on_turn = build_on_turn_handler(accumulated, state)
-        @pipeline_thread = spawn_pipeline_thread(input, on_turn)
+        on_chunk = build_on_chunk_handler(accumulated, state)
+        @pipeline_thread = spawn_pipeline_thread(input, on_turn, on_chunk)
         fetch_pipeline_result
       end
 
@@ -153,7 +154,11 @@ module Master
         end
       end
 
-      def spawn_pipeline_thread(input, on_turn)
+      def build_on_chunk_handler(accumulated, state)
+        build_stream_handler(accumulated) { |text| handle_stream_text(text, state) }
+      end
+
+      def spawn_pipeline_thread(input, on_turn, on_chunk)
         @turn_children = Master::Io::Exec::Children.new
         Thread.new do
           Thread.current.report_on_exception = false
@@ -164,6 +169,7 @@ module Master
             container: @container,
             felt_sense: cli_felt_sense,
             on_turn:,
+            on_chunk:,
           )
         end
       end
