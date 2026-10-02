@@ -6,7 +6,7 @@ require_relative "../tools/operator/master_design"
 
 class VisualContractLintTest < Minitest::Test
   L = Operator::VisualContractLint
-  SOURCE = File.expand_path("../shared/lib/operator/visual_contract_lint.rb", __dir__)
+  SOURCE = File.expand_path("../../MASTER/tools/visual_contract_lint.rb", __dir__)
 
   def test_text_contrast_min_reads_large_text_contrast
     law = Operator::MasterDesign.dig("typography", "accessibility", "large_text_contrast")
