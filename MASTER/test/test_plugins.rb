@@ -5,7 +5,7 @@ require_relative "test_helper"
 class TestPlugins < Minitest::Test
   def test_manifests_have_local_policy
     manifests = Master::Plugin.list
-    assert_equal %w[air_superiority social_browser], manifests.map(&:id)
+    assert_equal %w[air_superiority social_browser travel_browser], manifests.map(&:id)
     manifests.each { |manifest| assert Master::Plugin.policy(manifest.id).is_a?(Hash) }
   end
 
@@ -14,6 +14,34 @@ class TestPlugins < Minitest::Test
     result = plugin.call(action: "status")
     assert_equal %w[onlyfans fetlife snapchat], result[:sites].map { |site| site[:id] }
     assert_includes %w[ferrum unavailable], result[:browser]
+  end
+
+  def test_travel_status_exposes_hard_purchase_gate
+    result = Master::Plugin.load("travel_browser").call(action: "status")
+    assert_equal true, result[:final_purchase_gate]
+    assert_equal true, result[:sensitive_fields_manual]
+    assert_includes %w[ferrum unavailable], result[:browser]
+  end
+
+  def test_travel_final_purchase_requires_explicit_confirmation
+    plugin = Master::Plugin.load("travel_browser")
+    assert_raises(Master::Plugin::PolicyError) do
+      plugin.call(action: "book", session: "test", selector: "button[type=submit]", confirm_purchase: false)
+    end
+  end
+
+  def test_travel_rejects_non_https
+    plugin = Master::Plugin.load("travel_browser")
+    assert_raises(Master::Plugin::PolicyError) do
+      plugin.call(action: "open", session: "test", url: "http://example.com")
+    end
+  end
+
+  def test_travel_blocks_sensitive_fill_fields
+    plugin = Master::Plugin.load("travel_browser")
+    assert_raises(Master::Plugin::PolicyError) do
+      plugin.call(action: "fill", session: "test", selector: "input[name=card_number]", value: "4111111111111111")
+    end
   end
 
   def test_social_does_not_admit_unsolicited_actions
@@ -62,12 +90,16 @@ class TestPlugins < Minitest::Test
 
   def test_observable_actions_are_declared_by_manifest
     assert_equal %w[status inspect], Master::Plugin.info("social_browser").observe_actions
+    assert_equal %w[status inspect], Master::Plugin.info("travel_browser").observe_actions
     assert_equal %w[status scan], Master::Plugin.info("air_superiority").observe_actions
   end
 
   def test_observe_rejects_mutating_plugin_actions
     assert_raises(Master::Plugin::PolicyError) do
       Master::Plugin.observe("social_browser", action: "publish_owned")
+    end
+    assert_raises(Master::Plugin::PolicyError) do
+      Master::Plugin.observe("travel_browser", action: "book")
     end
   end
 
