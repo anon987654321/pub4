@@ -91,6 +91,14 @@ class TestFixLoopFileCollector < Minitest::Test
     end
   end
 
+  def test_migration_protection_also_works_when_fix_root_is_rails
+    Dir.mktmpdir do |dir|
+      rails = File.join(dir, "RAILS")
+      migration = write(dir, "RAILS/brgen/db/migrate/20261002000000_add_index.rb")
+      assert collector(rails).__send__(:skipped?, migration)
+    end
+  end
+
   def test_authored_source_is_off_limits_to_neither
     Dir.mktmpdir do |dir|
       path = write(dir, "lib/review/thing.rb")
