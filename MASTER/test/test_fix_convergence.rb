@@ -325,7 +325,9 @@ class TestFixConvergence < Minitest::Test
       end
     end
 
-    assert_includes result, "gate verification did not pass (status 1)"
+    assert_instance_of Master::Result::Err, result
+    assert_equal :validation, result.category
+    assert_equal "gate verification did not pass (status 1)", result.message
   end
 
   # 2-4. /fix observes, repairs what the reading found, and observes again.
