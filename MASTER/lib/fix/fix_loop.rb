@@ -132,12 +132,12 @@ module Master
         result
       end
 
-      # Structural sweeps/s run between repair passes, with no transaction open:
-      # a rename or restructure moves files the pass transactions track by path,
-      # so each sweep is isolated and a kept change returns to fresh observation.
-      def sweep_tree(target, run_id)
+      # Structural sweeps run outside repair transactions: a rename or restructure
+      # moves files the pass transaction tracks by path, so each kept change is
+      # isolated and returns to fresh observation.
+      def sweep_tree(target, run_id, phase: :normal)
         @sweeps.flat_map do |sweep|
-          sweep.run(target:, run_id:)
+          sweep.run(target:, run_id:, phase:)
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "fix_loop.#{sweep.class.name.split("::").last}", event_bus: @bus)
           []
@@ -289,6 +289,8 @@ module Master
 
         first_index = start_pass - 1
         remaining_passes = [max_passes - first_index, 0].max
+        structure_first(target:, files:, run_id:) if first_index.zero? && structural_target?(target)
+
         remaining_passes.times do |offset|
           i = first_index + offset
           outcome = run_one_pass(i, files:, target:, deadline:, budget_seconds:, state:, run_id:)
@@ -299,6 +301,32 @@ module Master
         # Reaching the bound is not finishing. The pass limit is a circuit
         # breaker, and a run that hit it has findings it never got to.
         terminal(:plateau, "pass limit (#{max_passes}) reached")
+      end
+
+      # The first structural pass is deliberately bounded: it gets one rename and
+      # one restructure candidate per tree, then the ordinary convergence sweep can
+      # keep working after repair. This makes collapse a default habit without
+      # spending an unbounded repair budget before the first source pass.
+      def structure_first(target:, files:, run_id:)
+        return if ENV["MASTER_FIX_STRUCTURE_FIRST"] == "0"
+
+        changes = sweep_tree(target, "#{run_id}-structure-first", phase: :structure_first)
+        return if changes.empty?
+
+        files.replace(@file_collector.collect(target))
+        Master::Trace::Dmesg.status("fix0", "structure-first kept #{changes.size}; corpus refreshed")
+        @bus&.publish("fix_loop:structure_first", target:, changes: changes.size)
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "fix_loop.structure_first", event_bus: @bus)
+      end
+
+      def structural_target?(target)
+        expanded = File.expand_path(target.to_s)
+        repo_root = File.basename(@root) == "MASTER" ? File.expand_path("..", @root) : File.expand_path(@root)
+        return true if expanded == repo_root
+        return false unless %w[MASTER RAILS OPENBSD STUDIO].include?(File.basename(expanded))
+
+        File.dirname(expanded) == repo_root
       end
 
       # Every ending carries its state, so a caller cannot read "clean after 2
@@ -354,7 +382,7 @@ module Master
       def structural_repair?(result, files:, target:, state:, run_id:, pass:)
         return false unless %i[clean plateau].include?(result.status)
 
-        structural = sweep_tree(target, run_id)
+        structural = sweep_tree(target, run_id, phase: :normal)
         return false if structural.empty?
 
         state[:consecutive_clean] = 0

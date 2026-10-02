@@ -6,17 +6,18 @@ require_relative "file_rename"
 
 module Master
   module Fix
-    # After /fix's passes, reviews a few file names under the target and renames
-    # the ones a clearer name would serve. Suspect names go first: the words the
-    # naming rules call vague or sequential, and brand or scratch prefixes that
-    # say nothing about the content. The rest take turns, a rotating slice per
-    # run, so every eligible file is reviewed over enough runs.
+    # /fix reviews names as part of structural cleanup. A tree-level run gets a
+    # bounded first review; later passes rotate through the remaining names.
+    # Suspect names go first: vague or sequential words and scratch prefixes that
+    # say nothing about the content.
     #
     # MASTER_FIX_RENAMES=0 switches it off; MASTER_FIX_RENAME_REVIEWS caps the
     # files reviewed per run, each costing two model calls.
     class RenameSweep
       REVIEWS = Integer(ENV.fetch("MASTER_FIX_RENAME_REVIEWS", 6))
       RENAMES = 2
+      FIRST_REVIEWS = 1
+      FIRST_RENAMES = 1
       SUSPECT = /(?:\A_?(?:zen|x|my|new|old|tmp|temp|misc)_|(?:_|\A_?)(?:util|utils|misc|stuff|things|manager|handler|helper2|copy|final|latest|bak|v\d+)(?:_|\z)|\d+\z)/
 
       def initialize(agent:, repo_root:, bus: nil, review: nil, rename: nil)
@@ -26,17 +27,34 @@ module Master
         @rename = rename || FileRename.new(repo_root:)
       end
 
-      def run(target:, run_id:)
+      def run(target:, run_id:, phase: :normal)
         return [] if ENV["MASTER_FIX_RENAMES"] == "0"
 
-        renamed = []
-        candidates(target, run_id).first(REVIEWS).each do |path, reason|
-          break if renamed.size >= RENAMES
+        reviews = phase == :structure_first ? FIRST_REVIEWS : REVIEWS
+        limit = phase == :structure_first ? FIRST_RENAMES : RENAMES
+        sweep_targets(target).flat_map do |tree_target|
+          renamed = []
+          candidates(tree_target, "#{run_id}-#{File.basename(tree_target)}").first(reviews).each do |path, reason|
+            break if renamed.size >= limit
 
-          result = rename_one(path, reason)
-          renamed << result.value! if result&.ok?
+            result = rename_one(path, reason)
+            renamed << result.value! if result&.ok?
+          end
+          renamed
         end
-        renamed
+      end
+
+      def sweep_targets(target)
+        expanded = File.expand_path(target.to_s, @repo_root)
+        return %w[MASTER RAILS OPENBSD STUDIO].filter_map do |tree|
+          path = File.join(@repo_root, tree)
+          path if File.directory?(path)
+        end if expanded == File.expand_path(@repo_root)
+
+        return [] unless %w[MASTER RAILS OPENBSD STUDIO].include?(File.basename(expanded))
+        return [] unless File.dirname(expanded) == File.expand_path(@repo_root)
+
+        [expanded]
       end
 
       def candidates(target, run_id)

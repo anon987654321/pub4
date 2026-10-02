@@ -664,6 +664,38 @@ class TestFixConvergence < Minitest::Test
   end
 
   # 7. Running out of passes is not finishing.
+  def test_structure_preflight_runs_before_the_first_repair_pass
+    target = File.join(@root, "RAILS")
+    FileUtils.mkdir_p(target)
+
+    order = []
+    loop = Master::Fix::FixLoop.allocate
+    loop.instance_variable_set(:@root, @root)
+    loop.define_singleton_method(:sweep_tree) do |target, run_id, phase:|
+      order << [:structure, target, run_id, phase]
+      []
+    end
+    loop.define_singleton_method(:run_one_pass) do |index, **|
+      order << [:pass, index]
+      Master::Result.ok("DONE: stub")
+    end
+
+    result = loop.send(
+      :run_passes,
+      files: [],
+      target:,
+      max_passes: 1,
+      deadline: nil,
+      budget_seconds: 60,
+      start_pass: 1,
+      run_id: "r1",
+    )
+
+    assert_match(/ADONE: /, result.value!)
+    assert_equal [:structure, target, "r1-structure-first", :structure_first], order.first
+    assert_equal [:pass, 0], order.last
+  end
+
   def test_a_pass_limit_is_a_plateau_not_a_done
     violations = [{ rule: "TEST_RULE", file: File.join(@root, "dummy.yml"), line: 1, message: "stays" }]
     result = build_loop(violations).run(@root, max_passes: 2)
