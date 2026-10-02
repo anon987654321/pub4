@@ -43,8 +43,7 @@ module Master::Core
     # from the constitutional one, which is the path that actually runs unattended.
     def self.load(data_dir:, verify: nil, sandbox: nil)
       rules_data = YAML.safe_load_file(File.join(data_dir, "rules.yml"), aliases: true)
-      soul_data = YAML.safe_load_file(File.join(data_dir, "soul.yml"), aliases: true) || {}
-      sacred_paths = Array(soul_data.dig("absolute", "sacred_paths")).map(&:to_s).freeze
+      sacred_paths = Paths.sacred_paths(root: File.dirname(data_dir))
       rules = default_rules(rules_data, sacred_paths:)
       rules += [scan_clean_rule(verify)] if verify
       rules += [sandboxed_exec_rule(sandbox)] if sandbox
