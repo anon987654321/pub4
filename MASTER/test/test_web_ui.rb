@@ -516,7 +516,7 @@ class TestWebUI < Minitest::Test
 
     refute_match(/mouthPool\.cells|eyePool\.cells/, semantics)
     assert_includes semantics, "MASTER_FACE_BLEND"
-    assert_includes semantics, "FACE3D_ACTIVE"
+    assert_includes semantics, "MASTER_FACE_STATE"
     assert_includes bridge, "boostEye"
     assert_includes bridge, "applyPressure"
   end
@@ -529,8 +529,7 @@ class TestWebUI < Minitest::Test
   # is gone from master_events.js and "face3d only"/"_hasWebGL = false" are
   # gone from face.part1.txt too; nothing here still applies. See also
   # test_face_semantics_routes_expression_through_blend_bridge_not_pools for
-  # the one intentionally-remaining FACE3D_ACTIVE reference (a harmless dead
-  # flag check in face_semantics.js the removal commit chose to leave).
+  # the old face3d flag is gone; the semantics bridge feeds MASTER_FACE_STATE.
 
   def test_public_asset_manifest_matches_source_files
     public_dir = File.expand_path("../web/public", __dir__)
