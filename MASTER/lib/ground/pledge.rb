@@ -44,7 +44,11 @@ module Master
 
       Profile = Data.define(:name, :capabilities, :promises) do
         def initialize(name:, capabilities:, promises:)
-          super(name.to_sym, capabilities.map(&:to_sym).freeze, promises.to_s.freeze)
+          super(
+            name: name.to_sym,
+            capabilities: capabilities.map(&:to_sym).freeze,
+            promises: promises.to_s.freeze
+          )
         end
 
         def allows?(capability) = capabilities.include?(capability.to_sym)
