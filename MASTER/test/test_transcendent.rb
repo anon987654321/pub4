@@ -16,6 +16,16 @@ class TestTranscendent < Minitest::Test
     assert plan[:phrases][0][:pitch].match?(/Hz\z/)
   end
 
+  def test_melody_pitch_contour_stays_small_and_centered
+    emotion = Master::Voice::Emotion.analyze("Done! Queue ready. Sing la la.")
+    plan = Master::Voice::Melody.plan("Done! Queue ready. Sing la la.", emotion)
+
+    pitches = plan[:phrases].map { |phrase| phrase[:pitch].delete("Hz").to_i }
+    assert pitches.all? { |pitch| (-10..10).cover?(pitch) }
+    assert_equal 0, pitches.first
+    assert_includes pitches, -6
+  end
+
   def test_warm_erratic_pick
     pick = Master::Voice::WarmErratic.pick("Sorry, that failed unfortunately.")
     assert Master::Voice::Speech::VOICES.key?(pick[:voice])
@@ -33,6 +43,28 @@ class TestTranscendent < Minitest::Test
 
   # Segmentation and rests are rhythm; the pentatonic pitch targets are a style.
   # They were one plan behind one threshold, so ordinary speech got neither.
+  def test_melodic_performance_changes_timing_without_replacing_melody_pitch
+    melody = {
+      melodic: true,
+      phrases: [
+        { text: "One.", rate: "+2%", pitch: "+6Hz", pause_ms: 90 },
+        { text: "Two.", rate: "+1%", pitch: "-6Hz", pause_ms: 140 },
+      ],
+    }
+    performance = [
+      { rate: "-2%", pitch: "+22Hz", pause_ms: 100, role: :opening, emphasis: :none },
+      { rate: "+2%", pitch: "-22Hz", pause_ms: 180, role: :closing, emphasis: :none },
+    ]
+
+    Master::Voice::Performance.stub(:apply, performance) do
+      rendered = Master::Voice::Transcendent.apply_spoken_performance(
+        melody, "One. Two.", {}, :auto, base_rate: "-5%", base_pitch: "+0Hz"
+      )
+      assert_equal ["+5Hz", "-6Hz"], rendered[:phrases].map { |phrase| phrase[:pitch] }
+      assert_equal ["+5%", "+8%"], rendered[:phrases].map { |phrase| phrase[:rate] }
+    end
+  end
+
   def test_plain_phrase_plan_keeps_rests_and_drops_the_contour
     text = "I found it. But there is a problem."
     emotion = Master::Voice::Emotion.analyze(text)
