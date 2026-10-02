@@ -21,6 +21,11 @@ module Master
                  else                  output.to_s
                  end
           rendered = @renderer.render(text, mode:)
+          # A presenter is allowed to transform output, never erase it. An empty
+          # render of non-empty source made /doctor, /fix and other commands look
+          # as though Enter did nothing. Preserve the source as the deterministic
+          # fallback; display_result can then diagnose a genuinely empty turn.
+          rendered = text.to_s if rendered.to_s.empty? && !text.to_s.empty?
 
           findings = @output_check ? @output_check.check(rendered) : []
           findings += guard_findings(rendered, mode)
