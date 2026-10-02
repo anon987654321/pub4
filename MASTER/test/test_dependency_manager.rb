@@ -46,6 +46,14 @@ class TestDependencyManager < Minitest::Test
     manager
   end
 
+  def test_master_requires_the_pinned_ruby_in_gemfile_and_lock
+    gemfile = File.read(File.join(Master::ROOT, "Gemfile"))
+    lock = File.read(File.join(Master::ROOT, "Gemfile.lock"))
+
+    assert_match(/^ruby "4\.0\.5"$/, gemfile)
+    assert_match(/^RUBY VERSION\n  ruby 4\.0\.5$/m, lock)
+  end
+
   def test_watcher_gems_are_locked_with_ffi_in_both_bundles
     [File.join(Master::ROOT, "Gemfile.lock"), File.join(Master::ROOT, "web", "Gemfile.lock")].each do |path|
       source = File.read(path)
