@@ -1870,3 +1870,430 @@ Messenger transport is also not yet one shared SSE transport. Brgen production c
 M0 capacity and storage decision -> social/messenger hardening -> identity/payment activation -> video/HLS -> agent actions in chat -> live audio/video -> E2EE and any telemetry-supported ranking work.
 
 The explicit non-goals remain streaks and dark-pattern retention, behavioral ad targeting, a global algorithmic feed before there is useful data, and a second billing or messaging architecture alongside the existing one.
+
+---
+
+## pub5 rewrite — from scratch, using pub4 as the source — 2026-10-02
+
+This is the architectural reset plan for `pub5`. `pub4` remains the source repository and is never rewritten by the migration. The first objective is a clean four-tree system; the second is to repair namespaces, dependencies, tests and runtime behavior against that simpler architecture.
+
+### Target architecture
+
+Keep exactly four root systems:
+
+```
+pub5/
+  MASTER/
+  RAILS/
+  OPENBSD/
+  STUDIO/
+```
+
+Their responsibilities are deliberately narrow:
+
+```
+MASTER   = brain / constitution / observation / repair
+RAILS    = product / people / data / presentation
+OPENBSD  = machine / network / security / deployment
+STUDIO   = sound / image / media / export
+```
+
+Siblings communicate through explicit contracts and adapters, never through internal imports.
+
+```
+MASTER -> RAILS
+MASTER -> OPENBSD
+MASTER -> STUDIO
+
+RAILS    -/-> MASTER internals
+OPENBSD  -/-> MASTER internals
+STUDIO   -/-> MASTER internals
+RAILS    -/-> OPENBSD internals
+STUDIO   -/-> RAILS internals
+```
+
+### MASTER target
+
+MASTER becomes a small kernel instead of a framework-shaped collection of managers.
+
+```
+MASTER/
+  bin/
+    master
+    gate
+    test
+
+  lib/
+    master.rb
+    core/
+      world.rb
+      constitution.rb
+      effect.rb
+      result.rb
+    observe/
+      scanner.rb
+      corpus.rb
+      finding.rb
+    fix/
+      loop.rb
+      planner.rb
+      repairer.rb
+      verifier.rb
+    io/
+      filesystem.rb
+      process.rb
+      git.rb
+      http.rb
+    model/
+      router.rb
+      provider.rb
+    runtime/
+      session.rb
+      events.rb
+
+  law/
+  data/
+    soul.yml
+    rules.yml
+    limits.yml
+    models.yml
+    principle_map.yml
+
+  test/
+  tools/
+  web/
+  gates/
+  plugins/
+```
+
+The core dependency direction is:
+
+```
+data / law
+    |
+  core
+    |
+  +----------+----------+
+  |          |          |
+observe     fix         io
+  |          |          |
+  +----------+----------+
+             |
+          runtime
+       /      |      \\
+   terminal  web    tools
+```
+
+The architectural rules are:
+
+- observation does not mutate;
+- planning does not mutate;
+- repair mutates;
+- verification does not mutate;
+- `/fix` owns collect -> observe -> prioritize -> propose -> repair -> verify -> repeat;
+- `/scan` is vocabulary inside observation rather than a second lifecycle;
+- sacred-path ownership has one source in `soul.yml`;
+- no obsolete `paths.immutable` authority;
+- semantic sampling is reported explicitly as sampling, never called “clean”;
+- deterministic mechanical rules, structural rules and model/semantic rules remain distinct;
+- manager/coordinator classes that only forward are candidates for collapse;
+- the target is materially smaller than current MASTER, while preserving proven behavior and regression coverage.
+
+### RAILS target
+
+RAILS remains a product monorepo, but each application is an ordinary Rails application with a small shared product layer.
+
+```
+RAILS/
+  brgen/
+    app/
+      models/
+      queries/
+      services/
+      policies/
+      channels/
+      jobs/
+      controllers/
+      views/
+      javascript/
+      stylesheets/
+    config/
+    db/
+    test/
+    public/
+
+  amber/
+    app/
+      models/
+      queries/
+      services/
+      policies/
+      channels/
+      jobs/
+      controllers/
+      views/
+      javascript/
+      stylesheets/
+    config/
+    db/
+    test/
+    public/
+
+  shared/
+    messaging/
+    identity/
+    notifications/
+    moderation/
+    media/
+    search/
+    location/
+    events/
+
+  contracts/
+    master/
+    openbsd/
+
+  tools/
+```
+
+Brgen owns its product nouns: listing, message, thread, place, order, radio, match, post, comment, vote, profile and notification.
+
+Amber owns its product nouns: garment, wardrobe, outfit, brand, designer, retailer, look, image, recommendation and profile.
+
+Messaging is a domain subsystem, not a generic infrastructure abstraction:
+
+```
+shared/messaging/
+  conversation.rb
+  participant.rb
+  message.rb
+  attachment.rb
+  event.rb
+  delivery.rb
+```
+
+MASTER integration stays narrow and structured:
+
+```
+RAILS -> MASTER
+  ask
+  observe
+  recommend
+  explain
+  summarize
+
+MASTER -> RAILS
+  structured result
+```
+
+The shared visual system remains one interaction grammar: shell -> navigation -> context -> artifact -> actions -> detail. Product surfaces can differ in content and tone without creating parallel design systems.
+
+### OPENBSD target
+
+OPENBSD describes the machine and deployment reality. It does not become another application framework.
+
+```
+OPENBSD/
+  etc/
+    rc.conf.local
+    pf.conf
+    relayd.conf
+    nsd.conf
+    acme-client.conf
+
+  host/
+    hostname
+    network
+    users
+    disks
+
+  services/
+    rails
+    master
+    relayd
+    nsd
+    smtp
+
+  deploy/
+    bootstrap.zsh
+    deploy.zsh
+    rollback.zsh
+    verify.zsh
+    upgrade.zsh
+
+  security/
+    pledge/
+    unveil/
+    permissions/
+
+  observability/
+    health.zsh
+    logs.zsh
+    processes.zsh
+    storage.zsh
+
+  test/
+    boot/
+    network/
+    security/
+    services/
+    deployment/
+```
+
+Deployment is one explicit lifecycle:
+
+```
+build
+  -> stage
+  -> verify
+  -> install
+  -> restart
+  -> probe
+  -> confirm
+```
+
+OPENBSD remains the authority for PF, relayd, NSD, rcctl, pledge, unveil, filesystem permissions and service ownership. MASTER may inspect and reason about those facts, but must not silently redefine them.
+
+### STUDIO target
+
+STUDIO is a media workshop, not the dumping ground for interesting code.
+
+```
+STUDIO/
+  dilla/
+    lib/
+      clock.rb
+      transport.rb
+      rhythm.rb
+      synth.rb
+      bass.rb
+      drums.rb
+      sampling.rb
+      effects.rb
+      mixer.rb
+    patches/
+    sets/
+    renders/
+    test/
+
+  visual/
+    generators/
+    shaders/
+    compositions/
+    renders/
+
+  media/
+    audio/
+    images/
+    video/
+
+  postpro/
+    processors/
+    presets/
+    pipelines/
+
+  export/
+    web/
+    stems/
+    masters/
+
+  contracts/
+    master.yml
+
+  test/
+```
+
+Dilla should have a simple runtime model:
+
+```
+clock
+  -> pattern
+  -> instrument
+  -> event
+  -> mixer
+  -> output
+```
+
+MASTER may request a composition or transformation. STUDIO owns synthesis, sequencing, rendering and export.
+
+### Migration rules
+
+1. `pub4` is immutable source material during the rewrite.
+2. Preserve behavior before deleting implementation.
+3. Move physical boundaries first; repair Ruby namespaces and load paths second.
+4. Keep regression tests with the behavior they protect.
+5. Delete only after the replacement has executable proof.
+6. No duplicate authority is introduced to make migration easier.
+7. No GitHub Actions are added; local and vm23 proof remains the release path.
+8. Generated assets, vendored material, snapshots and machine state are not treated as authored application source.
+9. No “migration complete” claim is allowed from directory movement alone.
+10. Every architectural deletion must leave either a surviving replacement or a recorded, deliberate non-goal.
+
+### Mechanical reset
+
+The first pub5 pass may be performed as a clean orphan-history rewrite:
+
+```
+old pub5 tip
+    -> preserve as a pre-rewrite tag
+    -> create orphan main
+    -> clear tree
+    -> migrate selected pub4 source
+    -> establish the four-tree target
+    -> commit
+    -> force-push pub5/main
+```
+
+The previous pub5 history should remain recoverable by tag, but must not determine the new architecture.
+
+### Migration order
+
+Phase 1: repository shape.
+
+Create the four target roots, remove history-shaped clutter, establish ownership and contracts, and make the new README/architecture documents describe reality.
+
+Phase 2: MASTER.
+
+Extract `core`, `observe`, `fix`, `io`, `model` and `runtime`. Collapse duplicate orchestration. Make constitution/sacred-path ownership canonical. Carry over the useful law, gates and tests.
+
+Phase 3: RAILS.
+
+Keep `brgen` and `amber` intact as Rails applications. Reduce `shared` to genuine product primitives. Move engine-style cross-host coupling behind explicit contracts. Keep current product behavior before improving scale.
+
+Phase 4: OPENBSD.
+
+Separate host configuration, security, deployment, services, verification and observability. Remove wrapper layers that merely invoke other wrappers. Preserve vm23 operational knowledge as executable checks and runbooks.
+
+Phase 5: STUDIO.
+
+Make Dilla, postpro, LoRA and image/audio generation first-class media tooling. Move media ownership out of MASTER. Preserve working renderers and provenance before collapsing abstractions.
+
+Phase 6: proof.
+
+Run syntax, unit tests, application tests, browser/rendered gates, OpenBSD/vm23 checks and STUDIO audio/media proofs. Regenerate snapshots only from the resulting checkout. Record measured failures rather than converting them into prose optimism.
+
+### First convergence gates
+
+The new pub5 is not considered structurally converged until all of these are true:
+
+- exactly four product/system roots: MASTER, RAILS, OPENBSD, STUDIO;
+- no sibling imports of another tree's internal implementation;
+- one source for constitutional/sacred-path rules;
+- MASTER core has no dependency on higher layers;
+- observation and repair have separate mutation contracts;
+- RAILS shared code is demonstrably shared rather than merely centralised;
+- OPENBSD deployment has one authoritative path;
+- STUDIO owns all media-generation implementation;
+- generated and vendored material is excluded from authored-source analysis;
+- tests cover every migrated critical boundary;
+- semantic scan coverage is reported honestly;
+- snapshots match the actual checkout;
+- pub4 remains untouched and recoverable.
+
+### Work that remains after the reset
+
+The reset itself is mechanical. The difficult part is the second pass: repairing require paths and namespaces, resolving dependency direction, collapsing duplicate abstractions, restoring application boots, and running the new architecture through its own tests.
+
+Do not recreate pub4's current architecture inside pub5 merely to achieve a quick green build. A temporary compatibility seam is acceptable only when it is explicit, isolated and scheduled for removal.
+
+The desired outcome is not “pub4 moved to another repository”. It is a smaller system that retains the valuable behavior of pub4 without retaining its accumulated architecture.
