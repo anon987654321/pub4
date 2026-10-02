@@ -18,7 +18,6 @@ const frame = F_FACE_SEM.frame || window.frame;
 const _dbgEl = F_FACE_SEM.dbgEl || document.getElementById('_dbg');
 const rootBody = document.body;
 const MASTER_FACE_BLEND = window.MASTER_FACE_BLEND;
-const FACE3D_ACTIVE = !!window.Face3DPreview;
 function mouthCells() { return mouthPool && mouthPool["cells"]; }
 function eyeCells() { return eyePool && eyePool["cells"]; }
 
@@ -235,7 +234,7 @@ window.addEventListener('master:visual', (ev) => {
   // built from council risk/reversibility and the evidence verdict) drives the
   // face directly. This is real state — not the event-name heuristics.
   const emo = d.emotion || ex.emotion;
-  if (emo) window.Face3DPreview?.engine?.setEmotion?.(emo);
+  if (emo) window.MASTER_FACE_STATE?.apply?.({ name: "clusters:emotion", ...emo });
 
   if ((d.entropy || 0) > 0.6 || d.mode === 'veto' || /veto|error|failure/.test(d.name || '')) {
     for (let i = 0; i < eyePool.count; i++) if (eyePool.alive[i]) {
@@ -307,10 +306,8 @@ window.addEventListener('tts:style:active', (ev) => {
   const d = ev.detail || {};
   const ex = d.expression || {};
   State.currentSpeechStyle = d.style || State.currentSpeechStyle;
-  if (ex.emotion) window.Face3DPreview?.engine?.setEmotion?.(ex.emotion);
-  if (d.blendshapes && window.Face3DPreview?.engine?.setBlend) {
-    window.Face3DPreview.engine.setBlend(d.blendshapes);
-  }
+  if (ex.emotion) window.MASTER_FACE_STATE?.apply?.({ name: "tts:emotion", ...ex.emotion });
+  if (d.blendshapes) window.MASTER_FACE_BLEND?.pushBlend?.(d.blendshapes);
   if (mouthPool && window.ParticleKernel) {
     const K = window.ParticleKernel;
     const hi = /dramatic|intense|energetic|storyteller/i.test(String(d.style || ''));
