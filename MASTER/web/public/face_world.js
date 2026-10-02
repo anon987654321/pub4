@@ -12,6 +12,8 @@
   let nodes = [];
   let edges = null;
   let pulses = [];
+  let hudSprites = [];
+  let splatCount = 0;
   let layers = {};
   let camera = null;
   let ready = false;
@@ -71,6 +73,8 @@
       uniforms: {
         uTime: { value: 0 },
         uTension: { value: 0.24 },
+        uPulse: { value: 0.12 },
+        uFracture: { value: 0 },
         uOpacity: { value: 0.12 },
         uEntropy: { value: 0.18 },
         uColor: { value: colorFromCss() }
@@ -85,11 +89,15 @@
         "  vPosition = position;",
         "  vec3 p = position;",
         "  float ripple = sin(p.y * 7.0 + uTime * 0.00055) * sin(p.x * 5.0 - uTime * 0.00031);",
-        "  p += normal * ripple * 0.018 * (0.25 + uTension);",
+        "  float pressure = 0.018 + uPulse * 0.010 + uFracture * 0.022;",
+        "  p += normal * ripple * pressure * (0.25 + uTension);",
+        "  p += normal * sin(p.x * 23.0 + p.y * 17.0 + uTime * 0.0011) * uFracture * 0.012;",
         "  gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);",
         "}"
       ].join("\n"),
       fragmentShader: [
+        "uniform float uPulse;",
+        "uniform float uFracture;",
         "uniform float uOpacity;",
         "uniform float uEntropy;",
         "uniform vec3 uColor;",
@@ -99,8 +107,9 @@
         "  float shell = abs(sin(vPosition.y * 11.0 + vPosition.x * 5.0));",
         "  float contour = smoothstep(0.92, 0.985, shell);",
         "  float latitude = smoothstep(0.985, 1.0, abs(vNormal.z));",
-        "  float alpha = contour * uOpacity + latitude * uOpacity * 0.35;",
-        "  alpha *= 0.65 + uEntropy * 0.35;",
+        "  float crack = smoothstep(0.80, 0.98, abs(sin(vPosition.z * 31.0 + vPosition.y * 17.0 + uTime * 0.0013))) * uFracture;",
+        "  float alpha = max(contour * uOpacity + latitude * uOpacity * 0.35, crack * uOpacity * 0.9);",
+        "  alpha *= 0.65 + uEntropy * 0.35 + uPulse * 0.12;",
         "  if (alpha < 0.012) discard;",
         "  gl_FragColor = vec4(uColor, alpha);",
         "}"
@@ -161,7 +170,8 @@
   }
 
   function makeSplatProxy() {
-    const count = 384;
+    const count = Math.max(384, Math.min(Number(BUDGET.desktop_points) || 1200, 1200));
+    splatCount = count;
     const positions = new Float32Array(count * 3);
     const sizes = new Float32Array(count);
     for (let i = 0; i < count; i += 1) {
@@ -197,7 +207,45 @@
       typeof THREE.GaussianSplat === "function" ? "native-capable-proxy" : "deterministic-points";
   }
 
-  function boot() {
+  function makeHud() {
+    const host = layers.hud || world;
+    const limit = Math.max(0, Math.min(NODE_LAYOUT.length, Number(BUDGET.hud_labels) || 5));
+    if (!host || !THREE || hudSprites.length || limit === 0) return;
+
+    NODE_LAYOUT.slice(0, limit).forEach(([name, x, y, z]) => {
+      const canvas = document.createElement("canvas");
+      canvas.width = 320;
+      canvas.height = 48;
+      const context = canvas.getContext("2d");
+      if (!context) return;
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      context.font = "18px monospace";
+      context.textBaseline = "middle";
+      context.fillStyle = "#ffffff";
+      context.fillText(name + "0", 8, 24);
+
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.generateMipmaps = false;
+      texture.minFilter = THREE.NearestFilter;
+      texture.magFilter = THREE.NearestFilter;
+
+      const material = new THREE.SpriteMaterial({
+        map: texture,
+        transparent: true,
+        opacity: 0,
+        depthTest: false,
+        depthWrite: false
+      });
+      const sprite = new THREE.Sprite(material);
+      sprite.name = "master-hud-" + name;
+      sprite.scale.set(0.72, 0.108, 1);
+      sprite.position.set(x, y, z + 0.12);
+      host.add(sprite);
+      hudSprites.push({ name, nodeName: "master-node-" + name, sprite });
+    });
+  }
+
+  function boot()
     if (ready || !window.MASTER_FACE?.scene) return;
 
     const scene = window.MASTER_FACE.scene;
@@ -218,6 +266,7 @@
     makeShell();
     makeNodes();
     makeSplatProxy();
+    makeHud();
 
     const budget = window.MASTER_FACE_STATE?.renderBudget?.() || {};
     const initialDpr = Math.min(Number(budget.dpr || 1), Number(BUDGET.max_device_pixel_ratio || 2));
@@ -251,7 +300,7 @@
   }
 
   function spawnPulse(fromName, toName, energy = 0.5) {
-    if (!world || !THREE || pulses.length >= 24) return;
+    if (!world || !THREE || pulses.length >= (Number(BUDGET.pulse_limit) || 24)) return;
     const from = nodes.find((node) => node.name === `master-node-${fromName}`);
     const to = nodes.find((node) => node.name === `master-node-${toName}`);
     if (!from || !to) return;
@@ -343,6 +392,8 @@
     shell.scale.setScalar(geometry.shell_scale);
     shellMaterial.uniforms.uTime.value = now;
     shellMaterial.uniforms.uTension.value = geometry.shell_tension;
+    shellMaterial.uniforms.uPulse.value = geometry.shell_pulse;
+    shellMaterial.uniforms.uFracture.value = geometry.shell_fracture;
     shellMaterial.uniforms.uOpacity.value = geometry.shell_opacity * (state.mode === "sleeping" ? 0.35 : 1);
     shellMaterial.uniforms.uEntropy.value = state.entropy;
     shellMaterial.uniforms.uColor.value.copy(colorFromCss());
@@ -369,22 +420,56 @@
     }
 
     if (camera) {
+      const runtimeState = window.MASTER_FACE?.State || {};
       const baseDistance = finite(CAMERA.distance, geometry.camera_distance);
-      const targetDistance = finite(geometry.camera_distance, baseDistance);
+      const started = finite(runtimeState.cameraZoomAt, 0);
+      const zoom = Math.max(0, Math.min(1, finite(runtimeState.cameraZoom, 0)));
+      const age = started > 0 ? now - started : Infinity;
+      const duration = 3200;
+      const progress = Math.max(0, Math.min(1, age / duration));
+      let envelope = 0;
+      if (zoom > 0 && progress < 1) {
+        if (progress < 0.375) {
+          const p = progress / 0.375;
+          envelope = p < 0.5 ? 2 * p * p : -1 + (4 - 2 * p) * p;
+        } else {
+          const p = (progress - 0.375) / 0.625;
+          envelope = 1 - (p < 0.5 ? 2 * p * p : -1 + (4 - 2 * p) * p);
+        }
+      } else if (zoom > 0) {
+        runtimeState.cameraZoom = 0;
+      }
+
+      const targetFov = finite(CAMERA.fov, 38) - envelope * zoom * 10;
+      const targetDistance = finite(geometry.camera_distance, baseDistance) + envelope * zoom * 0.55;
       camera.position.z += (targetDistance - camera.position.z) * 0.035;
       camera.position.x += (targetX - camera.position.x) * 0.035;
       camera.position.y += (targetY - camera.position.y) * 0.035;
+      camera.fov += (targetFov - camera.fov) * 0.08;
       camera.updateProjectionMatrix?.();
     }
 
+    hudSprites.forEach(({ nodeName, sprite }) => {
+      const node = nodes.find((item) => item.name === nodeName);
+      if (!node) return;
+      sprite.position.copy(node.position);
+      sprite.position.z += 0.12;
+      const busy = Math.max(state.activity, state.arousal);
+      sprite.material.opacity = Math.min(0.76, state.mode === "sleeping"
+        ? 0.04
+        : 0.10 + geometry.eye_attention * 0.12 + geometry.node_energy * 0.34 + busy * 0.18);
+    });
+
     updatePulses(now);
 
-    const activePoints = Number(budget.points || 420);
+    const activePoints = Math.max(0, Math.min(splatCount, Number(budget.points || 420)));
     if (splatProxy) {
-      const ceiling = Math.max(1, Number(BUDGET.desktop_points || 1200));
-      const visible = Math.min(1, activePoints / ceiling);
-      splatProxy.visible = visible > 0.02;
-      splatProxy.material.opacity *= visible;
+      splatProxy.geometry.setDrawRange(0, activePoints);
+      splatProxy.visible = activePoints > 0;
+      splatProxy.material.opacity = Math.min(
+        0.18,
+        0.03 + geometry.neural_density * 0.09 * density + (geometry.fracture + fracture) * 0.04
+      );
     }
 
     // All legacy visual projections consume this same frame; none schedules time.
