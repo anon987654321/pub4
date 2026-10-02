@@ -135,7 +135,7 @@ module Master
         return Result.ok(ctx) unless deploy_intent?(ctx)
         return Result.ok(ctx) unless @scanner && @root
 
-        result = Master::Review::Scan::SelfScan.new(scanner: @scanner, root: @root, event_bus: @bus).call(autofix: true)
+        result = Master::Review::Scan::SelfScan.new(scanner: @scanner, root: @root, event_bus: @bus).call(autofix: false)
         return Result.err(result.message, category: :infrastructure) unless result.ok?
 
         summary = result.value!
