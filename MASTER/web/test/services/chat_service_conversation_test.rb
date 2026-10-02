@@ -1,4 +1,4 @@
-# frozen_string_literal: true
+<sub># frozen_string_literal: true
 
 require "test_helper"
 
@@ -66,3 +66,4 @@ class ChatServiceConversationTest < ActiveSupport::TestCase
     assert_includes models.first, "fallback/answered"
   end
 end
+</sub>
