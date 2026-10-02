@@ -8,12 +8,10 @@ module Master
     # Phrase segmentation and inter-phrase rests, plus a bounded melodic contour that
     # sits on top of them for lyrical text (DiffSinger/CoMelSinger-inspired).
     #
-    # Those are two different things and one name covered both. Segmentation and
-    # rests are rhythm, which every utterance wants; the pentatonic pitch targets
-    # are a stylistic mode that only lyrical text should get. Because
-    # build_phrase_plan always attached both, the whole plan sat behind
-    # Transcendent's melodic_threshold and ordinary speech was rendered as one
-    # Edge call with one rate and one pitch, start to finish. `melodic: false`
+    # Segmentation and rests are rhythm, which every utterance wants; the
+    # bounded contour is a stylistic mode that only lyrical text should get.
+    # Phrase rhythm can remain enabled below the melodic threshold without
+    # introducing a large pitch staircase into ordinary speech. `melodic: false`
     # keeps the phrases and the rests and drops the contour, so a phrase inherits
     # the resolved rate/pitch through Engines.synthesize_phrase_parts' fetch
     # defaults.
