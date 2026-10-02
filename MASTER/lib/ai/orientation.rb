@@ -33,7 +33,7 @@ module Master
           "target: #{target ? relative(target, repo_root) : relative(root, repo_root)}",
           "contract: orient → inspect → act → verify",
           "verification: evidence before completion",
-          "trees: MASTER, RAILS, OPENBSD, STUDIO; STUDIO = canonical media plane; MASTER/tools = compatibility and utility plane",
+          "trees: MASTER, RAILS, OPENBSD, STUDIO; STUDIO = canonical media production plane; MASTER/tools = reasoning and governance utilities",
           "head: #{git_head(repo_root)}",
           "docs: #{key_docs(repo_root).join(", ")}",
         ]
@@ -103,7 +103,7 @@ module Master
         return if rows.empty? && !File.file?(File.join(repo_root, "RAILS", "CLAUDE.md"))
 
         "rails: feature_truth=RAILS/apps.yml; architecture=RAILS/CLAUDE.md; " +
-        "shared=RAILS/shared; design=RAILS/shared/README.md; entry=RAILS/bin/triangle; " +
+        "shared=RAILS/shared; tools=RAILS/tools; design=MASTER/data/rules.yml; entry=RAILS/bin/triangle; " +
         "coupling=shared engine + sibling copy-tree affects every Rails app; " +
         "deployed_copy=/home/<app>/app + /home/<app>/shared; " +
         "proof=RAILS/gates/gates.yml+RAILS/bin/triangle+<app>/bin/ci; " +
@@ -115,8 +115,8 @@ module Master
       end
 
       def inventory_alignment(repo_root)
-        unless defined?(Deploy::Inventory)
-          require_relative "../../../OPENBSD/lib/deploy_inventory"
+                unless defined?(Deploy::Inventory)
+          require_relative "../../gates/support/deploy_inventory"
         end
         return "unmeasured" unless defined?(Deploy::Inventory)
 

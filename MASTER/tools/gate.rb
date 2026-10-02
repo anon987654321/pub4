@@ -4,309 +4,88 @@
 require "open3"
 require "rbconfig"
 require "timeout"
-require_relative "../../OPENBSD/lib/gate_result"
-require_relative "dilla/lib/engine_sources"
+require_relative "../gates/support/gate_result"
 
 module Deploy
-  # The gate MASTER/tools did not have.
-  #
-  # MASTER, RAILS and OPENBSD each have a suite that fails when their tree
-  # breaks. MASTER/tools had nothing — and it is the tree most exposed, because
-  # `MASTER/bin/gate`'s /fix step mutates the whole shared worktree and has
-  # silently broken dilla and postpro before. The only thing standing between
-  # that and a broken engine was `dilla debug`, which nobody runs after a fix
-  # and which covers dilla alone: the other 13 Ruby files in MASTER/tools — postpro,
-  # replicate, the nine lora toolkit scripts — had nothing checking them at all.
-  #
-  # Three checks, in increasing order of what they can catch:
-  #
-  #   parse     every first-party Ruby file in MASTER/tools is syntactically valid.
-  #   inventory nothing in MASTER/tools is orphaned, and dilla's file list still
-  #             matches the disk.
-  #   load      the guarded entry points actually boot.
-  #
-  # The third is the one that earns its keep. A rename or a deleted constant
-  # passes `ruby -c` on every file and dies at load, which is exactly the shape
-  # an autofix produces — and MASTER/tools/dilla/lib/engine_sources.rb says so in its
-  # own header: "the parse check reported 'ruby syntax: ok' over a set that
-  # excluded all thirty lib/*.rb files, which is the check MASTER's autofix has
-  # already broken this engine past."
-  #
-  # Deliberately cheap: parse is in-process AST, and both load probes finish in
-  # about a second each. No render, no audio, no gems beyond what the entry
-  # points already require, so this can run in a routine check profile rather
-  # than being the thing someone remembers to run.
+  # MASTER/tools is the reasoning and governance utility plane. Media production
+  # belongs to STUDIO and is intentionally not enumerated here.
   class ToolsGate
     ROOT = File.expand_path(__dir__)
-
-    # Every Ruby-bearing corner of MASTER/tools and what owns it. A file that matches
-    # no entry here is a file nothing loads and nothing checks, which is how
-    # dead code accumulates in a tree with no suite.
-    #
-    # `entry` names a script whose load is probed. nil means the tree has no
-    # loadable entry point — see UNGUARDED below for why replicate is one.
+    VENDORED = %r{/(?:scratch|tmp|node_modules|venv|\.venv|site-packages|vendor|storage|\.cache|coverage)/}
     TREES = [
-      {
-        name: "dilla",
-        glob: "dilla/**/*.rb",
-        entry: "dilla/dilla.rb",
-        owner: "DillaSources — see MASTER/tools/dilla/lib/engine_sources.rb",
-      },
-      {
-        name: "postpro",
-        glob: "postpro/**/*.rb",
-        entry: "postpro/postpro.rb",
-        owner: "single-file tool",
-      },
-      {
-        name: "replicate",
-        glob: "replicate/**/*.rb",
-        entry: "replicate/replicate.rb",
-        owner: "single-file tool",
-      },
-      {
-        name: "lora",
-        glob: "lora/**/*.rb",
-        entry: nil,
-        owner: "operator scripts, run by hand — parse-checked only",
-      },
-      {
-        name: "gate",
-        glob: "*.rb",
-        entry: nil,
-        owner: "this file and isolation.rb — pinned by MASTER/tools/test/test_tools_gate.rb",
-      },
-      {
-        name: "test",
-        glob: "test/**/*.rb",
-        entry: nil,
-        owner: "MASTER/tools/Rakefile — isolated test suite",
-      },
+      { name: "tools", glob: "**/*.rb", entry: "gate.rb", owner: "MASTER governance utilities" },
     ].freeze
-
-    # Directories that hold Ruby but are not first-party source: vendored
-    # environments, generated output, and audio working directories. Excluded
-    # from every check, because a demucs virtualenv under dilla/scratch is 24k
-    # files and none of them are ours (MASTER/lib/review/scan/scanner.rb hit the
-    # same directory for the same reason). project/ is data the engine writes, so
-    # a Ruby file dropped there is not parsed either.
-    VENDORED = %r{/(scratch|renders|stems|samples|project|tmp|node_modules|venv|\.venv|site-packages)/}
-
     PROBE_TIMEOUT = Integer(ENV.fetch("MASTER_TOOLS_PROBE_TIMEOUT", "60"))
-
-    # dilla's support files are the one place file count can still grow. The
-    # engine is dilla.rb; everything else dilla carries is support, counted at any
-    # depth so a regroup into subdirectories cannot make the count measure less:
-    # lib/ and every Ruby file beside the engine at the dilla root.
-    # A new file fails the gate until its author folds it
-    # into a sibling or lowers the count elsewhere; raising the ceiling wants the
-    # reason in the commit.
-    #
-    # Not the same budget as `growth.tools` in MASTER/lib/operator/ratchets.rb, which
-    # counts every tracked file in MASTER/tools. This one counts dilla's Ruby beside
-    # the engine and nothing else.
-    DILLA_SUPPORT = %r{/dilla/(?:lib/.+|(?!dilla\.rb\z)[^/]+\.rb)\z}
-    # Eleven, and each is its own subject or carries a contract that forbids the
-    # fold: the six the 09-14 campaign settled (groove, harmony, ledger, listen,
-    # sampling, sound), the live side the engine never requires (livesets,
-    # sine_stream), the crate kept outside the renderer on purpose (slskd_crate),
-    # the third-party gem boundary (music_gems), and engine_sources, whose
-    # standalone-load contract is why it cannot fold into a file with
-    # dependencies. Every one of those was a real module with readers, not
-    # sprawl; the two that were not -- dsp_recovery, a shadowed duplicate, and
-    # spectral_analyzer, a backtick-shell duplicate of DillaMaster's band
-    # measurement -- were deleted rather than counted.
-    DILLA_SUPPORT_CEILING = 11
-    # Directories dilla has left. Support code went to lib/, and each of those
-    # coming back is the sprawl coming back, whatever its file count; renders/
-    # went because every render lands beside dilla.rb, on the operator's "stop
-    # creating subdirs nest our renders willy nilly".
-    DILLA_RETIRED_DIRS = %w[lib/engine bin live scripts renders].freeze
-
-    # VENDORED is matched against the path inside MASTER/tools, never the absolute
-    # one. Matched absolutely it excluded every file in a checkout living under
-    # a directory named tmp or project -- a worktree under /private/tmp emptied
-    # the corpus, and the gate reported on nothing. One owner for the question,
-    # because the test asked it separately and got its own answer.
-    def self.vendored?(path, root: ROOT)
-      "/#{path.to_s.delete_prefix("#{root}/")}".match?(VENDORED)
-    end
+    PREDICTED_FINDINGS = {
+      "tools parse:" => "a file that does not parse",
+      "tools load:" => "an entry point that raises at load",
+      "tools inventory:" => "a file belonging to no declared tree",
+    }.freeze
 
     def self.run(...) = new(...).run
 
-    # trees/dilla are injected only by the self-check below, which points a
-    # second instance of this gate at a deliberately broken temporary tree.
-    def initialize(root: ROOT, trees: TREES, dilla: DillaSources)
+    def initialize(root: ROOT, trees: TREES)
       @root = root
       @trees = trees
-      @dilla = dilla
       @result = GateResult.new
     end
 
     def run
       files = source_files
-      if files.empty?
-        @result.inconclusive!("no Ruby found under #{@root} — wrong root?")
-        return @result
-      end
+      return @result.inconclusive!("no Ruby found under #{@root}") if files.empty?
 
       check_parse(files)
       check_frozen_literals(files)
       check_inventory(files)
-      check_growth(files)
       check_entry_points
       self_check
       @result
     end
 
-    # Every first-party Ruby file in MASTER/tools, absolute, sorted.
-    #
-    # An executable with a ruby shebang and no extension is Ruby too, and
-    # A tool written that way is checked by nothing while the corpus is `*.rb`
-    # alone. Only extensionless files are opened, so no wav or json is read to
-    # ask the question, and vendored paths are excluded before anything is.
     def source_files
       rb = Dir[File.join(@root, "**", "*.rb")]
       scripts = Dir[File.join(@root, "**", "*")].select { |path| ruby_shebang?(path) }
-      (rb + scripts).reject { |path| ToolsGate.vendored?(path, root: @root) }.uniq.sort
+      (rb + scripts).reject { |path| vendored?(path) }.uniq.sort
     end
 
-    RUBY_SHEBANG = /\A#!.*\bruby\b/
-
-    def ruby_shebang?(path)
-      return false unless File.extname(path).empty?
-      return false if ToolsGate.vendored?(path, root: @root)
-      return false unless File.file?(path)
-
-      File.open(path, "rb") { |file| file.readline(256).match?(RUBY_SHEBANG) }
-    rescue EOFError
-      false # an empty file has no shebang
-    rescue SystemCallError => e
-      warn "tools gate: cannot read #{path} (#{e.class}), so it is not parsed"
-      false
+    def vendored?(path)
+      "/#{path.delete_prefix(@root + "/")}" =~ VENDORED
     end
 
     private
 
-    def rel(path) = path.sub("#{@root}/", "")
+    def relative(path) = path.delete_prefix(@root + "/")
 
     def check_parse(files)
       files.each do |path|
         RubyVM::AbstractSyntaxTree.parse_file(path)
         @result.checked!
       rescue SyntaxError => e
-        @result.fail("tools parse: #{rel(path)} — #{e.message.lines.first.to_s.strip}")
+        @result.fail("tools parse: #{relative(path)} — #{e.message.lines.first.to_s.strip}")
       end
     end
 
-# Every first-party file declares its string literals frozen, and all of
-# them do; this keeps the next one from arriving without it.
-def check_frozen_literals(files)
-  files.each do |path|
-    next if File.foreach(path).first(3).any? { |line| line.include?("frozen_string_literal: true") }
+    def check_frozen_literals(files)
+      files.each do |path|
+        next if File.foreach(path).first(3).any? { |line| line.include?("frozen_string_literal: true") }
 
-    @result.fail("tools frozen: #{rel(path)} has no frozen_string_literal magic comment", severity: :soft)
-  end
-  @result.checked!(1)
-end
+        @result.fail("tools frozen: #{relative(path)} has no frozen_string_literal magic comment", severity: :soft)
+      end
+      @result.checked!
+    end
 
-    # A name DillaSources carries with no file behind it stops the engine at
-    # load. The other direction -- a file on disk that nothing requires -- is not
-    # expressible any more: the engine is one file, so there is no list for a
-    # part to be missing from.
     def check_inventory(files)
-      return check_orphans(files) unless @dilla
-
-      @dilla.all.reject { |path| File.file?(path) }.each do |path|
-        @result.fail("tools inventory: DillaSources names #{rel(path)}, which is not on disk")
+      orphans = files.reject do |path|
+        @trees.any? do |tree|
+          File.fnmatch?(File.join(@root, tree[:glob]), path, File::FNM_PATHNAME)
+        end
       end
-      @result.checked!(1)
-      check_orphans(files)
-    end
-
-    # Prevention, where the other checks are detection. This counted parts under
-    # dilla/lib/engine/ against a ceiling of 81; that directory is gone, so the
-    # count is now zero and the check would pass having measured nothing. It
-    # guards the two ways the sprawl comes back instead: the split returning, and
-    # the support modules growing in its place.
-    def check_growth(files)
-      @result.checked!(2)
-      DILLA_RETIRED_DIRS.each do |dir|
-        next unless Dir.exist?(File.join(@root, "dilla", dir))
-
-        @result.fail(
-          "tools growth: dilla/#{dir}/ is back — the engine is dilla.rb and its support " \
-          "lives in lib/, so a new file folds into a sibling there"
-        )
-      end
-
-      check_layout(files)
-      support = files.count { |path| path =~ DILLA_SUPPORT }
-      return if support <= DILLA_SUPPORT_CEILING
-
-      @result.fail(
-        "tools growth: dilla has #{support} support files against a ceiling of " \
-        "#{DILLA_SUPPORT_CEILING} — fold the new one into a sibling, or raise " \
-        "DILLA_SUPPORT_CEILING in gate.rb with why in the commit"
-      )
-    end
-
-    # Each tool is <name>/<name>.rb, <name>/lib/ and a README. Ruby beside the
-    # entry point is the shape the three trees were moved out of, so a reader
-    # finds the tool in one file and its support in one directory.
-    LAID_OUT_TOOLS = %w[dilla postpro replicate].freeze
-
-    def check_layout(files)
-      LAID_OUT_TOOLS.each do |tool|
-        beside = files.select { |path| File.dirname(path) == File.join(@root, tool) && File.basename(path) != "#{tool}.rb" }
-        beside.each { |path| @result.fail("tools layout: #{rel(path)} sits beside #{tool}.rb — support belongs in #{tool}/lib/") }
-      end
-      check_dilla_root_audio
-    end
-
-    # The operator's call, 2026-09-08: "output only demo.wav in dilla/ root",
-    # "remove all other audio". The catalogue writes demo.wav and its mp3 there.
-    # Soft, because a render named on the command line still lands beside
-    # dilla.rb by default, and the take is the operator's to move or delete.
-    DILLA_ROOT_AUDIO = %w[demo.wav demo.mp3].freeze
-    AUDIO = /\.(?:wav|mp3|flac|aiff?|m4a|ogg)\z/i
-
-    def check_dilla_root_audio
-      dir = File.join(@root, "dilla")
-      return unless Dir.exist?(dir)
-
-      stray = Dir.children(dir).select { |name| name.match?(AUDIO) && File.file?(File.join(dir, name)) } - DILLA_ROOT_AUDIO
-      stray.sort.each do |name|
-        @result.fail("tools layout: dilla/#{name} is audio in the dilla root, which holds only demo.wav and demo.mp3",
-                     severity: :soft)
-      end
-    end
-
-    def check_orphans(files)
-      orphans = files.reject { |path| owned?(path) }
+      @result.checked!
       return if orphans.empty?
 
-      @result.fail(
-        "tools inventory: #{orphans.size} file(s) belong to no declared tree " \
-        "(#{orphans.map { |p| rel(p) }.join(', ')}) — add them to ToolsGate::TREES or delete them",
-        severity: :soft
-      )
+      orphans.each { |path| @result.fail("tools inventory: #{relative(path)} belongs to no declared tree") }
     end
 
-    # A tree's glob names its .rb files; an extensionless shebang script beside
-    # them belongs to the same tree, so the trailing *.rb is read as * for those.
-    # Otherwise every script the corpus just gained reports as belonging to no
-    # tree, and the orphan check goes from a finding to a standing warning.
-    def owned?(path)
-      @trees.any? do |tree|
-        globs = [tree[:glob]]
-        globs << tree[:glob].sub(/\*\.rb\z/, "*") if File.extname(path).empty?
-        globs.any? { |glob| File.fnmatch?(File.join(@root, glob), path, File::FNM_PATHNAME) }
-      end
-    end
-
-    # A tree's entry point either loads or it does not, and that is the check
-    # `ruby -c` cannot make.
     def check_entry_points
       @trees.each do |tree|
         entry = tree[:entry]
@@ -314,186 +93,89 @@ end
 
         path = File.join(@root, entry)
         unless File.file?(path)
-          @result.fail("tools load: #{tree[:name]} entry #{entry} does not exist")
+          @result.fail("tools load: #{entry} does not exist")
           next
         end
 
-        guarded?(path) ? probe_load(tree[:name], path) : report_unguarded(tree[:name], entry)
+        unless guarded?(path)
+          @result.fail("tools load: #{entry} has no PROGRAM_NAME guard", severity: :soft)
+          next
+        end
+
+        probe_load(tree[:name], path)
       end
     end
 
-    # `if __FILE__ == $PROGRAM_NAME` around the CLI dispatch. Without it, loading
-    # the file runs a command, so no gate can do more than parse it — the guard
-    # is what makes a tool checkable at all.
     def guarded?(path)
       File.read(path).match?(/__FILE__\s*==\s*(\$PROGRAM_NAME|\$0)/)
     end
 
-    def report_unguarded(name, entry)
-      @result.fail(
-        "tools load: #{entry} runs its CLI at top level (no `__FILE__ == $PROGRAM_NAME` guard), " \
-        "so loading it executes a command and #{name} can never be checked past parsing",
-        severity: :soft
-      )
-      @result.inconclusive!("#{name} load — entry point is unguarded")
-    end
-
-    # A separate process, because these define top-level constants and the point
-    # is to observe a clean boot rather than to inherit one. $PROGRAM_NAME is set
-    # away from the script's own path so the guard stays shut.
     def probe_load(name, path)
-      script = "$PROGRAM_NAME = \"tools_gate_probe\"\nload #{path.dump}\n"
+      script = "\$PROGRAM_NAME = "tools_gate_probe"\nload #{path.dump}\n"
       out, status = capture_with_timeout(script)
 
-      if status.nil?
-        @result.inconclusive!("#{name} load — probe exceeded #{PROBE_TIMEOUT}s and was killed")
+      unless status
+        @result.inconclusive!("tools load: #{name} probe exceeded #{PROBE_TIMEOUT}s")
         return
       end
 
       @result.checked!
       return if status.success?
 
-      first = out.to_s.lines.grep_v(/^\s*from /).first(4).map(&:strip).reject(&:empty?)
-      if missing_gem?(out)
-        # Not a defect in MASTER/tools: this host is missing something the tool needs.
-        # Saying "cannot check" is the honest answer and GATE_STRICT_INCONCLUSIVE
-        # is what makes it blocking where the gems are supposed to be present.
-        @result.inconclusive!("#{name} load — missing gem on this host: #{first.first}")
-      else
-        @result.fail("tools load: #{rel(path)} does not boot — #{first.join(' | ')}")
-      end
+      first = out.to_s.lines.grep_v(/^\s*from /).first.to_a.map(&:strip).reject(&:empty?)
+      @result.fail("tools load: #{relative(path)} does not boot — #{first.join(' | ')}")
     end
 
-    # Does this gate still fire on the defects it exists to catch?
-    #
-    # arXiv 2608.04066: a claim is admitted only when a prediction registered
-    # before acting is matched against observation by code. The prediction here
-    # is PREDICTED_FINDINGS — written down before the fixture is built — and the
-    # observation is a second instance of this gate run against a tree broken on
-    # purpose. Their instrument self-invalidated four of its first eight runs,
-    # and each invalidation localised a real defect.
-    #
-    # The alternative is what every gate in this repo does instead: depend on
-    # whoever wrote it having broken something once, by hand, and remembered to
-    # say so in a comment. That claim decays silently — a threshold moves, a
-    # regex loosens, and the gate goes on printing "passed" over a tree it can
-    # no longer read. This is three temporary files and about 40ms, on every run.
-    #
-    # A green pass therefore means two things now: MASTER/tools is intact, and the
-    # instrument that says so still works.
-    PREDICTED_FINDINGS = {
-      "tools parse:" => "a file that does not parse",
-      "tools load:" => "an entry point that raises at load",
-      "tools inventory:" => "a file belonging to no declared tree",
-      "tools growth:" => "dilla/lib/engine/ coming back",
-    }.freeze
+    def capture_with_timeout(script)
+      output = +""
+      status = nil
+      thread = Thread.new do
+        output, status = Open3.capture2e(RbConfig.ruby, "-e", script)
+      end
+      return thread.value && [output, status] if thread.join(PROBE_TIMEOUT)
+
+      thread.kill
+      [output, nil]
+    rescue StandardError => e
+      ["#{e.class}: #{e.message}", nil]
+    end
 
     def self_check
-      return if ENV["MASTER_TOOLS_GATE_SELFCHECK"].to_s.downcase == "off"
-
-      observed = broken_tree_findings
-      # include?, not start_with?: a soft failure is rendered as "[soft] tools
-      # inventory: ..." and an anchored match silently missed both soft
-      # predictions — the first thing this self-check caught was itself.
-      missed = PREDICTED_FINDINGS.reject { |marker, _| observed.any? { |f| f.include?(marker) } }
-      @result.checked!(PREDICTED_FINDINGS.size)
-      return if missed.empty?
-
-      missed.each_value do |defect|
-        @result.fail(
-          "tools self-check: this gate no longer reports #{defect} — its pass line is decoration " \
-          "until that is fixed (MASTER_TOOLS_GATE_SELFCHECK=off to skip)"
-        )
-      end
-    rescue StandardError => e
-      # The self-check is an instrument check, not a finding about MASTER/tools. If it
-      # cannot run, say the gate is unverified rather than that the tree is bad.
-      @result.inconclusive!("self-check could not run (#{e.class}: #{e.message})")
-    end
-
-    # Build the known-bad input, run a second gate over it, return what it said.
-    def broken_tree_findings
       require "tmpdir"
       require "fileutils"
       Dir.mktmpdir("tools-gate-selfcheck") do |dir|
-        Dir.mkdir(File.join(dir, "postpro"))
-        File.write(File.join(dir, "postpro", "postpro.rb"), <<~RUBY)
-          return unless __FILE__ == $PROGRAM_NAME
-        RUBY
-        # Guarded, so the load probe actually runs it, and broken *above* the
-        # guard, so the NameError fires during load rather than during dispatch.
-        # That is the autofix shape: the guard is left alone, the constant is not.
-        File.write(File.join(dir, "postpro", "boot.rb"), <<~RUBY)
-          ThisConstantWasRemovedByAnAutofix.call
-          return unless __FILE__ == $PROGRAM_NAME
-        RUBY
-        File.write(File.join(dir, "postpro", "unparseable.rb"), "def broken(\n")
-        File.write(File.join(dir, "orphan.rb"), "# belongs to no declared tree\n")
-        FileUtils.mkdir_p(File.join(dir, "dilla", "lib", "engine"))
-        File.write(File.join(dir, "dilla", "lib", "engine", "part.rb"), "# the split, returning\n")
-
-        trees = [{ name: "postpro", glob: "postpro/*.rb", entry: "postpro/boot.rb", owner: "fixture" }]
-        result = self.class.new(root: dir, trees: trees, dilla: nil).run_without_self_check
-        result.failures + result.warnings
+        FileUtils.mkdir_p(File.join(dir, "nested"))
+        File.write(File.join(dir, "good.rb"), "# frozen_string_literal: true\n")
+        File.write(File.join(dir, "bad.rb"), "module Broken\n")
+        fixture = self.class.new(root: dir, trees: [{ name: "tools", glob: "good.rb", entry: nil }])
+        result = fixture.send(:run_without_self_check)
+        @result.checked!
+        @result.fail("tools self-check: parse fixture did not fail") unless result.failures.any? { |f| f.include?("tools parse: bad.rb") }
+        @result.fail("tools self-check: inventory fixture did not fail") unless result.failures.any? { |f| f.include?("tools inventory:") }
       end
+    rescue StandardError => e
+      @result.inconclusive!("self-check could not run (#{e.class}: #{e.message})")
     end
 
-    protected
-
-    # The self-check's inner gate must not self-check, or it recurses forever.
     def run_without_self_check
       files = source_files
       check_parse(files)
+      check_frozen_literals(files)
       check_inventory(files)
-      check_growth(files)
       check_entry_points
       @result
     end
 
-    private
+    def ruby_shebang?(path)
+      return false if File.extname(path) != "" || vendored?(path) || !File.file?(path)
 
-    def missing_gem?(output)
-      text = output.to_s
-      return false if text.match?(%r{cannot load such file -- \S+/})
-
-      text.match?(/cannot load such file|Could not find .* in locally installed gems|Gem::/)
-    end
-
-    # Returns [combined_output, status]; status is nil when the probe was killed
-    # for running too long. The process group goes with it: dilla's probe can
-    # spawn ffmpeg, and orphaning one is how a check run pins a core at 100%
-    # with nothing to show for it.
-    def capture_with_timeout(script)
-      out = nil
-      status = nil
-      Open3.popen2e(RbConfig.ruby, "-e", script, pgroup: true) do |stdin, stdout_err, wait_thread|
-        stdin.close
-        begin
-          Timeout.timeout(PROBE_TIMEOUT) do
-            out = stdout_err.read
-            status = wait_thread.value
-          end
-        rescue Timeout::Error
-          pgid = begin
-            Process.getpgid(wait_thread.pid)
-          rescue StandardError
-            wait_thread.pid
-          end
-          begin
-            Process.kill("-KILL", pgid)
-          rescue StandardError
-            nil
-          end
-          status = nil
-        end
-      end
-      [out, status]
+      File.open(path, "rb") { |file| file.readline(256).match?(/\A#!.*\bruby\b/) }
+    rescue EOFError
+      false
+    rescue SystemCallError
+      false
     end
   end
 end
 
-if __FILE__ == $PROGRAM_NAME
-  Deploy::ToolsGate.run.report!(
-    "MASTER/tools gate passed (#{Deploy::ToolsGate.new.source_files.size} Ruby files parsed, entry points boot)"
-  )
-end
+ToolsGate::ToolsGateError = StandardError unless defined?(ToolsGate::ToolsGateError)

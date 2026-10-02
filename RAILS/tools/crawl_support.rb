@@ -4,7 +4,7 @@ require "json"
 require "net/http"
 require "socket"
 require "yaml"
-require_relative "../../OPENBSD/lib/utf8"
+require_relative "operator/utf8"
 
 module CrawlSupport
   ROOT = File.expand_path("../..", __dir__)
