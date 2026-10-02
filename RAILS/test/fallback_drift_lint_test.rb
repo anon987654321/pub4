@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
-require_relative "../shared/lib/operator/fallback_drift_lint"
+require_relative "../tools/operator/fallback_drift_lint"
 
 # The second half of the lint: a token declared nowhere at all.
 #

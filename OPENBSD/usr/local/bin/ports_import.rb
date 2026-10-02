@@ -15,12 +15,12 @@
 #
 # Fed to `bin/rails runner` by ports-import.sh, which is what cron calls.
 #
-# Operator::LoadAverage lives in shared/lib, which no app autoloads (only
+# Deploy::LoadAverage lives in shared/lib, which no app autoloads (only
 # app/* is on config.autoload_paths — see shared/lib/shared/engine.rb).
 # prune_guests.rb gets it for free because PruneGuestUsersJob happens to
 # require it; nothing here does that incidentally, so it needs its own
 # require.
-require "operator/load_average"
+require_relative "../../../lib/load_average"
 
 started = Time.now
 platform = Platform.active.find_by!(slug: "openbsd")
@@ -28,5 +28,5 @@ result = Ports::Importer.call(platform:)
 
 puts format(
   "platform=%s ports_count=%d tree_path=%s in %.1fs load=%s",
-  platform.slug, result.ports_count, result.tree_path, Time.now - started, Operator::LoadAverage.one.inspect
+  platform.slug, result.ports_count, result.tree_path, Time.now - started, Deploy::LoadAverage.one.inspect
 )

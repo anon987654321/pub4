@@ -17,7 +17,7 @@
 # Bare minitest, no Rails: RAILS/test/*.rb run under plain ruby.
 
 require "minitest/autorun"
-require_relative "../shared/lib/operator/load_average"
+require_relative "../tools/operator/load_average"
 
 ROOT = File.expand_path("..", __dir__)
 
@@ -57,7 +57,7 @@ class LoadAverageTest < Minitest::Test
   NEEDLE = "/proc/" + "loadavg"
 
   def test_nothing_outside_the_reader_asks_procfs_for_the_load
-    offenders = ruby_sources.reject { |p| p.end_with?("lib/operator/load_average.rb") }.flat_map do |path|
+    offenders = ruby_sources.reject { |p| p.end_with?("tools/operator/load_average.rb") }.flat_map do |path|
       code_lines(path).select { |_n, line| line.include?(NEEDLE) }
                       .map { |n, _line| "#{path.delete_prefix("#{ROOT}/")}:#{n}" }
     end

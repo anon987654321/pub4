@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require_relative "../../MASTER/lib/operator/environment"
-require_relative "../../MASTER/lib/operator/ruby_runner"
+require_relative "../lib/environment"
+require_relative "../lib/ruby_runner"
 
 module Deploy
   module GateEnvironment
@@ -37,13 +37,13 @@ module Deploy
 
     module_function
 
-    def skip_reason(gate, on_vps: Operator::Environment.on_vps?)
+    def skip_reason(gate, on_vps: Deploy::Environment.on_vps?)
       needs = Array(gate.needs)
       if needs.include?(:vps) && !on_vps
         return "not on VPS"
       end
-      if needs.include?(:bundle) && Operator::RubyRunner.runtime_gate_skipped?
-        return Operator::RubyRunner.runtime_skip_reason || "bundle runtime unavailable"
+      if needs.include?(:bundle) && Deploy::RubyRunner.runtime_gate_skipped?
+        return Deploy::RubyRunner.runtime_skip_reason || "bundle runtime unavailable"
       end
       if needs.include?(:browser) && ENV["PROBE_REQUIRE_BROWSER"] != "1" && ENV["MASTER_CI_BROWSER"] != "1"
         return "browser probe optional"
@@ -53,7 +53,7 @@ module Deploy
     end
 
     def post_pull_warning
-      return unless Operator::Environment.on_vps?
+      return unless Deploy::Environment.on_vps?
 
       <<~WARN
         integrity: note — source updated in /home/dev/pub4; deployed /home/<app>/app trees are unchanged.

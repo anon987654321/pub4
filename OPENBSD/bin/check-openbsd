@@ -1,18 +1,18 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-require_relative "../../MASTER/lib/operator/check_runner"
-require_relative "../../MASTER/lib/operator/environment"
-require_relative "../../MASTER/lib/operator/ruby_runner"
+require_relative "../lib/check_runner"
+require_relative "../lib/environment"
+require_relative "../lib/ruby_runner"
 
 ROOT = File.expand_path("../..", __dir__)
-RUBY = Operator::RubyRunner.gate_ruby
+RUBY = Deploy::RubyRunner.gate_ruby
 STEP_TIMEOUT = Integer(ENV.fetch("DEPLOY_CHECK_TIMEOUT", "240"))
-runner = Operator::CheckRunner.new(prefix: "deploy-openbsd", root: ROOT, timeout: STEP_TIMEOUT)
+runner = Deploy::CheckRunner.new(prefix: "deploy-openbsd", root: ROOT, timeout: STEP_TIMEOUT)
 
 # dns_zones queries our own nameserver and reports skipped_live when it cannot
 # reach it. On the box that serves the zone, unreachable is the finding.
-LIVE_ENV = Operator::Environment.on_vps? ? { "GATE_REQUIRE_LIVE" => "1" } : {}
+LIVE_ENV = Deploy::Environment.on_vps? ? { "GATE_REQUIRE_LIVE" => "1" } : {}
 
 failures = []
 failures << "identity" unless runner.run("identity", RUBY, "OPENBSD/gates/verify_deploy_identity.rb")

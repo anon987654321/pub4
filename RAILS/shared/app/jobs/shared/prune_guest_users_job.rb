@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "operator/load_average"
+require_relative "../../../../tools/operator/load_average"
 
 module Shared
   # Delete guest rows nobody is behind any more.

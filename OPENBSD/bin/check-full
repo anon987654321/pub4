@@ -1,13 +1,13 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-require_relative "../../MASTER/lib/operator/check_runner"
-require_relative "../../MASTER/lib/operator/ruby_runner"
+require_relative "../lib/check_runner"
+require_relative "../lib/ruby_runner"
 
 ROOT = File.expand_path("../..", __dir__)
-RUBY = Operator::RubyRunner.gate_ruby
+RUBY = Deploy::RubyRunner.gate_ruby
 STEP_TIMEOUT = Integer(ENV.fetch("DEPLOY_CHECK_TIMEOUT", "600"))
-runner = Operator::CheckRunner.new(prefix: "deploy-full", root: ROOT, timeout: STEP_TIMEOUT)
+runner = Deploy::CheckRunner.new(prefix: "deploy-full", root: ROOT, timeout: STEP_TIMEOUT)
 
 # The release gate, with each gate once. The integrity chain already runs
 # identity, production, phantom_fk, the deploy smoke gate and domain_alignment,

@@ -73,7 +73,7 @@ class RepoHygieneContractTest < Minitest::Test
   # /var/db/pub4/ci.lock and called itself the single source.
   def test_the_ruby_and_shell_ci_locks_are_the_same_file
     shell = File.read(File.expand_path("../OPENBSD/lib/ci_lock.sh", ROOT), encoding: "UTF-8")
-    ruby = File.read(File.join(ROOT, "shared/lib/operator/ci_guard.rb"), encoding: "UTF-8")
+    ruby = File.read(File.join(ROOT, "tools/operator/ci_guard.rb"), encoding: "UTF-8")
 
     assert_includes shell, "PUB4_CI_LOCK_DIR=/var/db/pub4"
     assert_includes shell, "PUB4_CI_LOCK_NAME=ci.lock"

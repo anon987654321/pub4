@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "../../../lib/operator/master_design"
+require_relative "../../../../tools/operator/master_design"
 
 module Shared
   class PromotionalArt

@@ -1,20 +1,20 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-require_relative "../../MASTER/lib/operator/check_runner"
-require_relative "../../MASTER/lib/operator/environment"
-require_relative "../../MASTER/lib/operator/ruby_runner"
+require_relative "../lib/check_runner"
+require_relative "../lib/environment"
+require_relative "../lib/ruby_runner"
 
 ROOT = File.expand_path("../..", __dir__)
 STEP_TIMEOUT = Integer(ENV.fetch("DEPLOY_CHECK_TIMEOUT", "240"))
 
-unless Operator::Environment.on_vps?
+unless Deploy::Environment.on_vps?
   warn "deploy-vps: skip — not on vm23/OpenBSD VPS (set DEPLOY_ASSUME_VPS=1 only when intentionally testing)"
   exit 0
 end
 
-RUBY = Operator::RubyRunner.gate_ruby
-runner = Operator::CheckRunner.new(prefix: "deploy-vps", root: ROOT, timeout: STEP_TIMEOUT)
+RUBY = Deploy::RubyRunner.gate_ruby
+runner = Deploy::CheckRunner.new(prefix: "deploy-vps", root: ROOT, timeout: STEP_TIMEOUT)
 
 failures = []
 failures << "health core" unless runner.run("health core", RUBY, "OPENBSD/gates/health_check.rb", "--core")

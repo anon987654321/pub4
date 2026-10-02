@@ -5,7 +5,7 @@ require "open3"
 require "rbconfig"
 require "stringio"
 require "tmpdir"
-require_relative "../../../lib/operator/dmesg"
+require_relative "../../../../tools/operator/dmesg
 
 class DmesgTest < Minitest::Test
   DMESG = File.expand_path("../../../lib/operator/dmesg.rb", __dir__)

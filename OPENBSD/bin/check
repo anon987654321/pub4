@@ -2,11 +2,11 @@
 # frozen_string_literal: true
 
 require "optparse"
-require_relative "../../MASTER/lib/operator/check_runner"
-require_relative "../../MASTER/lib/operator/ruby_runner"
+require_relative "../lib/check_runner"
+require_relative "../lib/ruby_runner"
 
 ROOT = File.expand_path("../..", __dir__)
-RUBY = Operator::RubyRunner.gate_ruby
+RUBY = Deploy::RubyRunner.gate_ruby
 STEP_TIMEOUT = Integer(ENV.fetch("DEPLOY_CHECK_TIMEOUT", "240"))
 profile = "operator"
 OptionParser.new do |parser|
@@ -28,7 +28,7 @@ OptionParser.new do |parser|
   parser.on("--profile=PROFILE", "contributor or operator (default)") { |value| profile = value }
 end.parse!
 
-runner = Operator::CheckRunner.new(prefix: "deploy-check", root: ROOT, timeout: STEP_TIMEOUT)
+runner = Deploy::CheckRunner.new(prefix: "deploy-check", root: ROOT, timeout: STEP_TIMEOUT)
 
 failures = []
 # check-openbsd owns identity and the deploy smoke gate, and brings installed

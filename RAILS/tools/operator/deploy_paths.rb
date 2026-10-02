@@ -74,7 +74,7 @@ module Operator
         return candidate if candidate.directory?
       end
 
-      # Source tree: this file is RAILS/shared/lib/operator/deploy_paths.rb, so RAILS/
+      # Source tree: this file is RAILS/tools/operator/deploy_paths.rb, so RAILS/
       # is three levels up. Works in any clone, and outside Rails entirely
       # (plain `ruby -Ilib` runs, gates, the deploy scripts).
       source_rails = Pathname.new(__dir__).join("../../..").expand_path

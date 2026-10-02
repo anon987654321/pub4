@@ -5,11 +5,10 @@ require "json"
 require "net/http"
 require "open3"
 require "yaml"
-require_relative "../../RAILS/shared/lib/operator/dmesg"
+require_relative "../lib/dmesg"
 
 ROOT = File.expand_path("../..", __dir__)
-$LOAD_PATH.unshift(File.join(ROOT, "MASTER", "lib"))
-require "operator/environment"
+require_relative "../lib/environment"
 
 STAMP_DIR = "/var/db/pub4"
 
@@ -33,7 +32,7 @@ rescue StandardError
 end
 
 def port_listening?(port)
-  Operator::Environment.port_open?(port) ? "listening" : "closed"
+  Deploy::Environment.port_open?(port) ? "listening" : "closed"
 end
 
 # The TTS socket is the half of master a green service and an open port do not
@@ -164,7 +163,7 @@ payload = {
 if ARGV.include?("--json")
   puts JSON.pretty_generate(payload)
 else
-  puts Operator::Dmesg.line("vps0", "host", "name=#{payload[:host]}")
+  puts Deploy::Dmesg.line("vps0", "host", "name=#{payload[:host]}")
   puts Operator::Dmesg.line("git0", "repo", "path=#{payload[:dev_repo]} sha=#{payload[:dev_sha]}")
   m = payload[:master]
   puts Operator::Dmesg.line("service0", "master", "state=#{m[:service]} port=#{m[:port]} port_state=#{m[:port_state]} tts=#{m[:tts_socket]}")

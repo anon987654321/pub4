@@ -23,7 +23,7 @@ end
 # Every gate in order, sorted into failures, warnings and skips. skip_reason
 # decides each skip from the needs the gate declares, so vps_health off the box
 # is skipped by the same rule as any other gate and never executed.
-def integrity_run(gates, root: INTEGRITY_ROOT, on_vps: Operator::Environment.on_vps?, execute: RUN_GATE, io: $stdout)
+def integrity_run(gates, root: INTEGRITY_ROOT, on_vps: Deploy::Environment.on_vps?, execute: RUN_GATE, io: $stdout)
   report = { failures: [], warnings: [], skipped: [] }
   gates.each do |gate|
     label = "integrity: #{gate.name.ljust(18)}"
@@ -39,7 +39,7 @@ def integrity_run(gates, root: INTEGRITY_ROOT, on_vps: Operator::Environment.on_
       next
     end
 
-    out, ok = execute.call([Operator::RubyRunner.gate_ruby, script, *Array(gate.args)])
+    out, ok = execute.call([Deploy::RubyRunner.gate_ruby, script, *Array(gate.args)])
     # A gate that measured nothing is neither a pass nor a failure. It is listed
     # as skipped with its own reason, and blocks only under
     # GATE_STRICT_INCONCLUSIVE=1, the same policy the RAILS runner applies.

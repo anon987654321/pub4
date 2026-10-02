@@ -2,12 +2,12 @@
 # frozen_string_literal: true
 
 require "optparse"
-require_relative "../../MASTER/lib/operator/check_runner"
-require_relative "../../MASTER/lib/operator/ruby_runner"
-require_relative "../../MASTER/lib/operator/environment"
+require_relative "../lib/check_runner"
+require_relative "../lib/ruby_runner"
+require_relative "../lib/environment"
 
 ROOT = File.expand_path("../..", __dir__)
-RUBY = Operator::RubyRunner.gate_ruby
+RUBY = Deploy::RubyRunner.gate_ruby
 STEP_TIMEOUT = Integer(ENV.fetch("DEPLOY_CHECK_TIMEOUT", "240"))
 profile = "operator"
 OptionParser.new do |parser|
@@ -17,7 +17,7 @@ OptionParser.new do |parser|
   end
 end.parse!
 
-runner = Operator::CheckRunner.new(prefix: "deploy-rails", root: ROOT, timeout: STEP_TIMEOUT)
+runner = Deploy::CheckRunner.new(prefix: "deploy-rails", root: ROOT, timeout: STEP_TIMEOUT)
 failures = []
 
 # On the deploy host every app is listening, so a live check that declines to
@@ -32,7 +32,7 @@ failures = []
 # rc.d script is renamed, and the hand-rolled one cannot be rehearsed —
 # on_vps? honours DEPLOY_ASSUME_VPS=1, which is how this gets exercised from a
 # laptop before it is trusted on the box.
-LIVE_ENV = Operator::Environment.on_vps? ? { "GATE_REQUIRE_LIVE" => "1" } : {}
+LIVE_ENV = Deploy::Environment.on_vps? ? { "GATE_REQUIRE_LIVE" => "1" } : {}
 
 GATES_RUNNER = "MASTER/gates/runner.rb"
 
@@ -119,7 +119,7 @@ if deep
   # CheckRunner's timeout is per-runner, and the default 240s would kill
   # constitutional_scan a fifth of the way in — a timeout kill reads as a gate
   # failure, which is worse than not running it.
-  deep_runner = Operator::CheckRunner.new(
+  deep_runner = Deploy::CheckRunner.new(
     prefix: "deploy-rails", root: ROOT,
     timeout: Integer(ENV.fetch("DEPLOY_DEEP_CHECK_TIMEOUT", "2400"))
   )
@@ -154,8 +154,8 @@ if profile == "contributor"
   puts "deploy-rails: runtime              skip — contributor profile"
 else
   failures << "auditor" unless runner.run("auditor", RUBY, GATES_RUNNER, "frontend_auditor")
-  if Operator::RubyRunner.runtime_gate_skipped?
-    puts "deploy-rails: runtime              skip — #{Operator::RubyRunner.runtime_skip_reason}"
+  if Deploy::RubyRunner.runtime_gate_skipped?
+    puts "deploy-rails: runtime              skip — #{Deploy::RubyRunner.runtime_skip_reason}"
   else
     # Called directly, not through the runner: --runtime is its own flag, and
     # the runner only forwards arguments to visual_contract.

@@ -2,7 +2,7 @@
 
 require "minitest/autorun"
 require "pathname"
-require_relative "../../../lib/operator/deploy_paths"
+require_relative "../../../../tools/operator/deploy_paths
 
 class DeployPathsTest < Minitest::Test
   def test_postpro_prefers_studio
