@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "open3"
+require_relative "../../core/paths"
 
 module Master
   module Fix
@@ -95,15 +96,7 @@ module Master
         # soul.yml is the constitutional source for sacred paths. The catalogue in
         # rules.yml describes laws; it does not own write protection.
         def immutable?(path)
-          rel = File.expand_path(path).delete_prefix("#{Master::ROOT}#{File::SEPARATOR}")
-          immutable_paths.any? do |entry|
-            entry = entry.delete_prefix("./")
-            entry.end_with?("/") ? rel.start_with?(entry.delete_suffix("/")) : rel == entry
-          end
-        end
-
-        def immutable_paths
-          @immutable_paths ||= Array(Master.soul_config.dig("absolute", "sacred_paths")).map(&:to_s)
+          Master::Core::Paths.sacred?(path, root: @root)
         end
 
         def relative(path)
