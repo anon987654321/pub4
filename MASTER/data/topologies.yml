@@ -1,7 +1,6 @@
 # reader: Master::Ground::RuntimeCatalog
-# Canonical topologies for the Pixel Field. Each topology names a renderable
-# semantic shape — face, codebase, ecology, attention. The registry consumes
-# this file at boot; particle_kernel.js renders cells per topology rules.
+# Canonical semantic topologies. Each topology describes what the one FaceWorld
+# should emphasize; no topology owns a second renderer or animation clock.
 
 event_classifier:
   - { pattern: "phantom:(detected|occurrence|recovery|halt)",         topology: ecology, entropy: 0.88, confidence: 0.18, mode: phantom }
@@ -89,7 +88,7 @@ topologies:
   - id: face
     label: Cognition Mask
     purpose: Symbolic cognition surface — brows, eyes, mouth, attention vectors, asymmetry, confidence zones
-    renderer: face.js
+    renderer: face_world.js
     anchors: [brow_left, brow_right, eye_left, eye_right, mouth, jaw, crown]
     zones:   [eyes, mouth, brows, jaw, crown, attention_vector]
     transitions: [thinking, speaking, listening, escalating, settling, error]
@@ -108,7 +107,7 @@ topologies:
     # confidence through visual_bridge.js and as a cluster in cluster_miner.js;
     # a canvas of its own would be a second layer over the face, and what the
     # face looks like is the operator's call.
-    renderer: face.js
+    renderer: face_world.js
     anchors: [module_centroids]
     zones:   [districts, vectors, bridges, fractures, field_density]
     transitions: [scanning, fixing, converged, drifting]
@@ -122,7 +121,7 @@ topologies:
   - id: ecology
     label: Runtime Ecosystem
     purpose: Memory, pressure, tools, councils, fix loops, risk, drift as habitat
-    renderer: cognition_ecology.js
+    renderer: face_world.js
     anchors: [habitat_centers]
     zones:   [habitats, flows, clusters, storms, dead_zones, growth]
     transitions: [calm, storming, draining, regenerating]
@@ -134,9 +133,3 @@ topologies:
       dead_zone: { kind: decay,     density: 0.2, decay: very_slow }
     attention_behavior: drift_with_runtime_pressure
 
-  - id: face3d
-    label: Semantic Bitmap Face
-    purpose: Anatomical regions as runtime signals — Gmail6 redesign
-    renderer: face3d_renderer.js
-    status: live
-    palette: operator
