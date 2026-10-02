@@ -177,7 +177,7 @@ module Master
           screen = TTY::Screen.width
           contract = Master::Design.face_interface(root: @config["root"] || Master::ROOT)
           target = contract.dig("prompt", "measure_ch").to_i
-          target = Master::Design.measure_ideal_ch(root: @config["root"] || Master::ROOT).to_i if target <= 0
+          target = Master::Design::Thresholds.measure_ideal_ch(root: @config["root"] || Master::ROOT).to_i if target <= 0
           max_ch = contract.dig("prompt", "max_ch").to_i
           max_ch = PROMPT_MAX_CHARS if max_ch <= 0
           available = [screen, max_ch].min - suffix_length - 1
