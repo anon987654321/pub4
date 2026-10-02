@@ -52,8 +52,8 @@ Law.define(:CLI_PROMPT_COMPOSITION) do
   mode :opportunity
   languages %i[ruby]
   path "MASTER/lib/voice/renderer/"
-  ask "Does this prompt renderer keep one compact grammar of location, repository state, meaningful transient phase/error state, and the shell prompt token? Look for decorative chrome, duplicated state, expensive work on every redraw, or information that belongs behind /status, /doctor or /help. Return CLEAN when the prompt is already compact and bounded."
-  fix "Keep the prompt to location + repository state + meaningful transient phase/error + prompt token; cache or bound external probes; move detail to explicit status/help surfaces."
+  ask "Does this prompt renderer keep one compact, single-line grammar of location, repository state, meaningful transient phase/error state, and the shell prompt token? Look for decorative chrome, embedded newlines, duplicated state, expensive work on every redraw, or information that belongs behind /status, /doctor or /help. Return CLEAN when the prompt is already compact, single-line and bounded."
+  fix "Keep one physical interactive line: location + repository state + meaningful transient phase/error + prompt token; cache or bound external probes; move detail to explicit status/help surfaces."
   bad <<~X
     def prompt
       system("git status")
