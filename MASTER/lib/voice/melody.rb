@@ -52,14 +52,15 @@ module Master
       end
 
       def build_phrase_plan(phrases, arousal, melodic: true, languages: nil)
+        config = Policy.prosody.fetch("melody", {})
+        rates = Array(config["rate"]).map(&:to_s).reject(&:empty?)
+        pitches = Array(config["pitch_hz"]).filter_map { |value| Integer(value) rescue nil }
+
         phrases.each_with_index.map do |phrase, i|
           entry = { text: phrase, pause_ms: pause_ms_for(i, arousal) }
           entry = entry.merge(voice_for(phrase, languages)) if languages
           next entry unless melodic
 
-          config = Policy.prosody.fetch("melody", {})
-          rates = Array(config["rate"]).map(&:to_s).reject(&:empty?)
-          pitches = Array(config["pitch_hz"]).map { |value| Integer(value) rescue nil }.compact
           rate = rates.empty? ? "0%" : rates.fetch(i % rates.length)
           pitch_hz = pitches.empty? ? 0 : pitches.fetch(i % pitches.length)
           entry.merge(rate:, pitch: format("%+dHz", pitch_hz))
