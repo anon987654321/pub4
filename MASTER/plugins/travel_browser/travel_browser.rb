@@ -88,9 +88,16 @@ module Master
         end
       end
 
-      def login(session:, **)
+      def login(session:, wait_seconds: 300, **)
         with_browser(session:, headless: false) do |page, run_dir|
           stop_on_challenge!(page)
+          deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + wait_seconds.to_i.clamp(10, 900)
+          loop do
+            sleep 2
+            stop_on_challenge!(page)
+            break if login_complete?(page)
+            break if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
+          end
           {
             action: "login",
             session: session.to_s,
@@ -100,6 +107,15 @@ module Master
             note: "Enter credentials and one-time codes yourself in this visible browser. MASTER does not receive or store them.",
           }
         end
+      end
+
+      def login_complete?(page)
+        fields = page.css("input").map do |node|
+          [node.attribute("type").to_s, node.attribute("name").to_s, node.attribute("autocomplete").to_s]
+        end
+        !fields.any? { |type, name, autocomplete| [type, name, autocomplete].join(" ").match?(SENSITIVE_FIELD) }
+      rescue StandardError
+        false
       end
 
       def fill(session:, selector:, value:, **)
