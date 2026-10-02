@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "quality_framework"
+require_relative "voice_profile"
 
 module Master
   module Review
@@ -77,6 +78,7 @@ module Master
           @bus = event_bus
           @rules = axioms
           @judge_enabled = options.fetch(:judge_enabled, true)
+          @voice_personas = options.fetch(:voice_personas, false)
           @mode = options.fetch(:mode, :parallel)
           @persona_failures = []
           @persona_failures_lock = Mutex.new
@@ -149,6 +151,7 @@ module Master
 
           context = reflexion_context(context)
           feedback = collect_feedback(active, code, context, image:)
+          speak_persona_feedback(feedback) if @voice_personas
           quorum = quorum_error(feedback)
           return quorum if quorum
 
@@ -422,11 +425,45 @@ module Master
         end
 
         def persona_entry(persona, response, model)
+          profile = VoiceProfile.for(persona)
           {
             persona: persona.name, role: persona.role, veto_role: veto_role?(persona),
             axiom: primary_axiom(persona), model:, feedback: response,
-            confidence: score_confidence(response)
+            confidence: score_confidence(response),
+            voice: profile.voice,
+            voice_profile: profile.to_h,
           }
+        end
+
+        def speak_persona_feedback(feedback)
+          return unless defined?(Master::Voice::Playback)
+          return unless Master::Voice::Playback.enabled? && Master::Voice::Playback.available?
+
+          Array(feedback).each do |entry|
+            persona = @personas.find { |item| item.name.to_s == entry[:persona].to_s }
+            next unless persona
+
+            profile = VoiceProfile.for(persona)
+            text = VoiceProfile.render(entry[:feedback], persona:)
+            Master::Voice::Playback.enqueue(
+              text,
+              voice: profile.voice,
+              style: profile.style,
+              rate: profile.rate,
+              pitch: profile.pitch,
+              last: true,
+            )
+            @bus&.publish(
+              :council_voice_queued,
+              persona: persona.name,
+              voice: profile.voice,
+              rate: profile.rate,
+              pitch: profile.pitch,
+              speech_pattern: profile.speech_pattern,
+            )
+          end
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "deliberation.persona_voice", event_bus: @bus)
         end
 
         def format_prior_turns(entries)

@@ -114,6 +114,7 @@ module Master
             event_bus: @bus,
             files:,
             briefing:,
+            speak_personas: true,
           ).run
           unless result.ok?
             @bus&.publish("fix_loop:hard_critique_inconclusive", files: files.size, error: result.message.to_s[0, 180])

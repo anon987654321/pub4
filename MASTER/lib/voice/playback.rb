@@ -110,15 +110,14 @@ module Master
 
         # Sentence by sentence, so the first complete thought is heard while
         # the rest is still being synthesised. The reply's voice and style are
-        # selected once here and carried through every chunk: a failed later
-        # synthesis must never rotate to a second narrator.
+        # selected once here and carried through every chunk.
         parts = Speech.chunks(str)
         parts = [str] if parts.empty?
         reply_voice = Speech.voice_for_text(str)
         reply_style = transcendent_mode? ? :auto : Speech.infer_style(str, fallback: Speech.default_style)
         generation = current_generation
         parts.each_with_index do |part, index|
-          job = [str, part, index == parts.size - 1, reply_voice, reply_style]
+          job = [str, part, index == parts.size - 1, reply_voice, reply_style, nil, nil, generation]
           @lock.synchronize do
             next unless generation == @generation
             @job_generations[job.object_id] = generation
@@ -126,6 +125,32 @@ module Master
           end
         end
         nil
+      end
+
+
+      # Session-owned enqueue path. Callers can provide a generation so
+      # interrupted work cannot reach the speaker later. When generation is
+      # omitted, Playback uses its current cancellation generation.
+      def enqueue(text, generation: nil, voice: nil, style: nil, rate: nil, pitch: nil, last: true)
+        str = text.to_s.strip
+        return false if str.empty?
+
+        queue = ensure_worker
+        @lock.synchronize do
+          current = generation || @generation
+          return false unless current == @generation
+
+          queue << {
+            text: str,
+            voice:,
+            style:,
+            rate:,
+            pitch:,
+            last:,
+            generation: current,
+          }
+        end
+        true
       end
 
       # Synchronous path for an operator-facing hardware test. Normal replies
@@ -170,6 +195,10 @@ module Master
       # A voice-first session must be interruptible at the audio boundary, not only
       # at the turn/process boundary. In-flight synthesis may finish in the background,
       # but its generation becomes stale and therefore can never reach the speaker.
+      def begin_generation!
+        @lock.synchronize { @generation += 1 }
+      end
+
       def interrupt!(_reason = nil)
         @lock.synchronize do
           @generation += 1
@@ -221,15 +250,26 @@ module Master
         while (job = @queue.pop)
           path = nil
           begin
-            text, part, last, voice, style = if job.is_a?(Array)
-              [job[0], job[1], job[2], job[3], job[4]]
+            text, part, last, voice, style, rate, pitch, explicit_generation = if job.is_a?(Hash)
+              [
+                job[:text],
+                job[:text],
+                job[:last],
+                job[:voice] || Speech.voice_for_text(job[:text]),
+                job[:style] || Speech.infer_style(job[:text], fallback: Speech.default_style),
+                job[:rate],
+                job[:pitch],
+                job[:generation],
+              ]
+            elsif job.is_a?(Array)
+              [job[0], job[1], job[2], job[3], job[4], job[5], job[6], job[7]]
             else
-              [job, job, true, Speech.voice_for_text(job), Speech.infer_style(job, fallback: Speech.default_style)]
+              [job, job, true, Speech.voice_for_text(job), Speech.infer_style(job, fallback: Speech.default_style), nil, nil, nil]
             end
-            generation = @lock.synchronize { @job_generations.delete(job.object_id) || @generation }
+            generation = explicit_generation || @lock.synchronize { @job_generations.delete(job.object_id) || @generation }
             next unless generation_active?(generation)
 
-            path = synthesize(part, voice:, style:)
+            path = synthesize(part, voice:, style:, rate:, pitch:)
             next unless generation_active?(generation)
 
             unless path
@@ -240,7 +280,7 @@ module Master
               next
             end
 
-            unless play_or_fallback(path, text, generation:)
+            unless play_or_fallback(path, text, generation:, voice:)
               warn_once("audio playback failed — #{player&.first || "no player or native speech"}")
             end
             spoken(text) if last && generation_active?(generation)
@@ -265,16 +305,17 @@ module Master
       # volume anywhere in the synthesis path, browser_payload does not carry
       # it either, and inventing a fourth reader for it here would change how
       # MASTER sounds on an assumption rather than a decision.
-      def synthesize(text, voice: nil, style: nil)
+      def synthesize(text, voice: nil, style: nil, rate: nil, pitch: nil)
         dynamic = transcendent_mode?
+        locked_style = style && style != :auto
         Speech.synthesize(
           text,
           voice:,
-          style: dynamic ? :auto : (style || Speech.default_style),
-          rate: dynamic ? nil : Policy.default_rate,
-          pitch: dynamic ? nil : Policy.default_pitch,
+          style: dynamic && !locked_style ? :auto : (style || Speech.default_style),
+          rate: dynamic ? rate : (rate || Policy.default_rate),
+          pitch: dynamic ? pitch : (pitch || Policy.default_pitch),
           voice_locked: true,
-          style_locked: !dynamic,
+          style_locked: !dynamic || locked_style || rate || pitch,
         )
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "Voice::Playback.synthesize")
@@ -283,11 +324,11 @@ module Master
 
       # A failed player is recoverable when the policy-mapped native voice exists.
       # Never bypass synthesis failure itself; fallback begins only after a player error.
-      def play_or_fallback(path, text, generation:)
+      def play_or_fallback(path, text, generation:, voice: nil)
         return true if play(path, generation:)
         return false unless generation_active?(generation)
 
-        native_say(text)
+        native_say(text, voice:)
       end
 
       def android_speak(text)
@@ -299,10 +340,10 @@ module Master
         false
       end
 
-      def native_say(text)
+      def native_say(text, voice: nil)
         return false unless native_say_available?
 
-        voice = Speech.voice_for_text(text).to_sym
+        voice = Speech.resolve_voice(voice || Speech.voice_for_text(text)).to_sym
         mac_voice = Engines::MACOS_VOICE_FALLBACKS[voice]
         return false unless mac_voice
 
