@@ -752,7 +752,7 @@ function handleFaceNamedEvent(event, data) {
       }
       if (lane) offsetCouncilMouthPool?.(lane, 0.22);
       if (plan?.length) tts.visemePlan = plan;
-      if (ex && window.Face3DPreview?.engine?.setBlend) window.Face3DPreview.engine.setBlend(blendshapes || ex.blendshapes || {});
+      if (ex || blendshapes) window.MASTER_FACE_BLEND?.pushBlend?.(blendshapes || ex?.blendshapes || {});
       if (voice && text && !tts.playing) {
         playDuo([[guardVoice(voice), text]], null, _nextTtsStyle(voice), { persona: label || persona, lane });
       }
