@@ -136,23 +136,22 @@ module Master
         # A small shell prompt, borrowing the useful parts of nvim and
         # oh-my-zsh: one identity mark, the working path, git state, phase and
         # cursor. It stays information-dense without becoming a dashboard.
-        PROMPT_ORB = "◉"
-
         def zsh_prompt(phase, last_ok)
-          git = git_prompt_segments
-          phase_text = phase_label(phase)
-          cursor = phase_prompt(last_ok, phase)
-          suffix = [git, phase_text, cursor].reject(&:empty?).join(" ")
-          path = prompt_path(suffix_length: visible_length(suffix) + visible_length(PROMPT_ORB) + 1)
-          orb = Aesthetic.wscons? ? PROMPT_ORB : @p.magenta(PROMPT_ORB)
-          [orb, d(path), suffix].reject(&:empty?).join(" ") + " "
+          parts = [
+            prompt_path,
+            git_prompt_text,
+            phase_label(phase),
+            phase_prompt(last_ok, phase),
+          ]
+
+          "#{parts.reject(&:empty?).join(" ")}\n* "
         end
 
         # zsh's own %~: home as a tilde, and a long path cut from the left so
         # the tail you are actually in stays readable. Use a typographic
         # ellipsis: it is quieter than three full stops and reads as one mark.
         def prompt_path(suffix_length: 0)
-          path = Dir.pwd.sub(/\A#{Regexp.escape(Dir.home)}/, "~")
+          path = home_path(Dir.pwd)
           budget = prompt_path_budget(suffix_length:)
           return path if path.length <= budget
 
@@ -161,6 +160,16 @@ module Master
           return File.basename(path) if File.basename(path).length <= budget
 
           path[-budget, budget]
+        end
+
+        def home_path(path)
+          home = Dir.home
+          return "~" if path == home
+
+          prefix = "#{home}/"
+          return "~#{path.delete_prefix(home)}" if path.start_with?(prefix)
+
+          path
         end
 
         # Use MASTER's typography contract rather than a second copy of its
@@ -261,18 +270,22 @@ module Master
           d("root on master0 (#{context[:revision]}) boot #{monotonic_milliseconds - @boot_ms}ms")
         end
 
-        def git_prompt_segments
+        def git_prompt_text
           ahead, behind = git_ahead_behind
-          dirty = git_dirty?
           branch = git_branch || "detached"
-          parts = [dirty ? "#{branch}*" : branch]
-          parts << "+#{ahead}" if ahead.positive?
-          parts << "-#{behind}" if behind.positive?
-          label = parts.join(" ")
+          label = branch_status(branch:, ahead:, behind:)
+
           return d(label) if Aesthetic.wscons?
-          return @p.red(label) if dirty
+          return @p.red(label) if git_dirty?
 
           @p.cyan(label)
+        end
+
+        def branch_status(branch:, ahead:, behind:)
+          parts = [git_dirty? ? "#{branch}*" : branch]
+          parts << "+#{ahead}" if ahead.positive?
+          parts << "-#{behind}" if behind.positive?
+          parts.join(" ")
         end
 
         def phase_label(phase)
