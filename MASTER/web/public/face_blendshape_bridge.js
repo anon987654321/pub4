@@ -1,4 +1,4 @@
-// Routes mouth expression signals through blendshape targets (f3d_006).
+// Routes mouth expression signals through the canonical MASTER face state.
 (() => {
   "use strict";
 
@@ -11,8 +11,6 @@
 
   function pushBlend(patch) {
     mouthBlend = { ...mouthBlend, ...patch };
-    const engine = window.Face3DPreview?.engine;
-    if (engine?.setBlend) engine.setBlend(mouthBlend);
     window.dispatchEvent(new CustomEvent("face:mouth-blend", { detail: { ...mouthBlend } }));
   }
 
