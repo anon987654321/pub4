@@ -570,12 +570,6 @@ face_enhancements:
     status: implemented
     handler: ruby
     summary: voice_locked param preserves user voice choice
-  - id: enh_face3d_auto
-    area: face
-    tier: p1
-    status: implemented
-    handler: js
-    summary: Auto-enable face3d preview on desktop via visual_bridge
   - id: enh_pre_speech_inhale
     area: tts
     tier: p0
