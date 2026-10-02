@@ -20,6 +20,13 @@ module Deploy
 
     def line(unit, parent, detail) = "#{unit} at #{parent}: #{detail}"
 
+    # Same two events MASTER/lib/trace/dmesg.rb carries; check_runner calls
+    # both. No verbosity machinery here — the copy prints straight to the io.
+    def attach(unit, parent, detail = nil, io: $stdout) =
+      io.puts(detail.to_s.empty? ? "#{unit} at #{parent}" : line(unit, parent, detail))
+
+    def status(unit, msg, io: $stdout) = io.puts("#{unit}: #{msg}")
+
     # Escapes are for a person at a terminal who has not asked for none.
     def escapes?(io = $stdout, env = ENV) = io.tty? && env["NO_COLOR"].to_s.empty?
 

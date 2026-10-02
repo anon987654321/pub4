@@ -10,7 +10,8 @@ module Deploy
     OPENBSD_RUBY_PATTERN = /\\A3\\.(?:3|4)\\.\\d+\\z/
 
     def repo_root(from: __dir__)
-      File.expand_path("../../..", from)
+      # OPENBSD/lib -> OPENBSD -> the tree root, where .ruby-version is pinned.
+      File.expand_path("../..", from)
     end
 
     def on_vps?
