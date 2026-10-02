@@ -18,48 +18,17 @@
     "master:tooling"
   ];
 
-  const EVENT_CLASSIFIER = [
-    [/phantom:(?:detected|occurrence|recovery|halt)/i,          { topology: "ecology", entropy: 0.88, confidence: 0.18, mode: "phantom" }],
-    [/llm:escalation|fallback|retry/i,         { topology: "ecology",  entropy: 0.62, confidence: 0.46, mode: "escalation" }],
-    [/llm:request|agent:start|pipeline:stage/i, { topology: "face",    entropy: 0.32, confidence: 0.72, mode: "thinking" }],
-    [/memory|retriev|context|compact/i,         { topology: "ecology", entropy: 0.28, confidence: 0.76, mode: "memory" }],
-    [/tool|scan|sweep|audit/i,                  { topology: "ecology", entropy: 0.38, confidence: 0.70, mode: "tool" }],
-    [/error|rollback|failed|failure/i,          { topology: "ecology", entropy: 0.78, confidence: 0.24, mode: "error" }],
-    [/done|complete|success|response/i,         { topology: "face",    entropy: 0.14, confidence: 0.92, mode: "complete" }],
-    [/codebase:topology|fix_loop:pass/i,        { topology: "codebase", entropy: 0.28, confidence: 0.78, mode: "codebase" }],
-    [/rule_loop:cycle|rule_loop:clean/i,        { topology: "codebase", entropy: 0.45, confidence: 0.62, mode: "fixing" }],
-    [/fix_loop:idle/i,                          { topology: "codebase", entropy: 0.10, confidence: 0.95, mode: "settled" }],
-    [/rule_loop:converged/i,                    { topology: "codebase", entropy: 0.20, confidence: 0.82, mode: "converged" }]
-  ];
+  const EVENT_CLASSIFIER = [];
 
-  const PROVIDER_DETECT = /claude|deepseek|gemini|gpt|openai|openrouter|mistral/i;
-
-  const TOPOLOGIES = {
-    face: {
-      id: "face",
-      label: "Cognition Mask",
-      renderer: "face_world.js",
-      palette: "operator",
-      zones: ["eyes", "mouth", "brows", "jaw", "crown", "attention_vector"],
-      events: ["llm:request", "agent:start", "pipeline:stage_start", "chat:append", "speech:start"]
-    },
-    codebase: {
-      id: "codebase",
-      label: "Repository Body",
-      renderer: "face_world.js",
-      palette: "operator",
-      zones: ["districts", "vectors", "bridges", "fractures", "field_density"],
-      events: ["codebase:topology", "rule_loop:cycle", "rule_loop:clean", "rule_loop:converged", "fix_loop:idle", "fix_loop:pass"]
-    },
-    ecology: {
-      id: "ecology",
-      label: "Runtime Ecosystem",
-      renderer: "face_world.js",
-      palette: "review",
-      zones: ["habitats", "flows", "clusters", "storms", "dead_zones", "growth"],
-      events: ["memory:retriev", "tool", "scan", "sweep", "audit", "pressure:high"]
-    }
-  };
+  const TOPOLOGIES = Object.create(null);
+  const FALLBACK_FACE = Object.freeze({
+    id: "face",
+    label: "Cognition Mask",
+    purpose: "Unified semantic face projection",
+    renderer: "face_world.js",
+    palette: "operator",
+    zones: ["eyes", "mouth", "brows", "jaw", "crown", "attention_vector"]
+  });
 
   const PALETTES = {
     operator: { bg: "#000000", fg: "#ffffff", accent: "#ff3344" },
@@ -93,7 +62,7 @@
   }
 
   function topology(id) {
-    return TOPOLOGIES[id] || TOPOLOGIES.face;
+    return TOPOLOGIES[id] || TOPOLOGIES.face || FALLBACK_FACE;
   }
 
   function palette(name) {
@@ -126,18 +95,24 @@
 
   function mergeRemoteTopologies(remote) {
     if (!remote || typeof remote !== "object") return;
-    Object.entries(remote).forEach(([id, spec]) => {
-      TOPOLOGIES[id] = { ...(TOPOLOGIES[id] || {}), ...spec, id };
+    const rows = Array.isArray(remote) ? remote : Object.entries(remote).map(([id, spec]) => ({ ...spec, id }));
+    rows.forEach((spec) => {
+      const id = String(spec?.id || "").trim();
+      if (!id) return;
+      TOPOLOGIES[id] = { ...(TOPOLOGIES[id] || {}), ...spec, id, renderer: "face_world.js" };
     });
   }
 
+  function mergeCanonicalCatalog(catalog) {
+    if (!catalog || typeof catalog !== "object") return;
+    mergeRemoteClassifier(catalog.event_classifier || []);
+    mergeRemoteTopologies(catalog.topologies || []);
+    if (!TOPOLOGIES.face) TOPOLOGIES.face = { ...FALLBACK_FACE };
+  }
+
   function mergeBootTopologies() {
-    const boot = window.MASTER_RUNTIME?.topologies;
-    if (!boot || typeof boot !== "object") return;
-    if (boot.event_classifier) {
-      boot.event_classifier.forEach((row) => mergeRemoteClassifier([{ pattern: row.pattern, meta: row }]));
-    }
-    if (boot.topologies) mergeRemoteTopologies(boot.topologies);
+    mergeCanonicalCatalog(window.MASTER_RUNTIME?.topology_catalog);
+    if (!TOPOLOGIES.face) TOPOLOGIES.face = { ...FALLBACK_FACE };
   }
 
   // /runtime/topologies is data/topologies.yml rendered verbatim —
