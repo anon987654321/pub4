@@ -51,7 +51,7 @@ module Master
             # data.fetch below, which reads as a crash in the loader rather than
             # as a damaged file.
             raise JSON::ParserError, "session root is not an object" unless data.is_a?(Hash)
-          rescue JSON::ParserError, Errno::ENOENT => e
+          rescue JSON::ParserError, EncodingError, ArgumentError, Errno::ENOENT => e
             quarantine_corrupt_session!(e)
             data = {}
           end
@@ -89,7 +89,7 @@ module Master
         def json_safe(value)
           case value
           when String
-            value.encode("UTF-8", invalid: :replace, undef: :replace, replace: "\uFFFD")
+            value.dup.force_encoding(Encoding::UTF_8).scrub("\uFFFD")
           when Hash
             value.to_h { |key, item| [json_safe(key), json_safe(item)] }
           when Array
@@ -118,7 +118,7 @@ module Master
               @persistent_keys << key
             end
           end
-        rescue JSON::ParserError, Errno::ENOENT => e
+        rescue JSON::ParserError, EncodingError, ArgumentError, Errno::ENOENT => e
           quarantine_forks!(e)
         end
 
@@ -340,7 +340,7 @@ module Master
           entry[:approximate] = true if approximate
         end
         rotate_costs! if File.exist?(@costs_path) && File.size(@costs_path) > COSTS_MAX_BYTES
-        File.open(@costs_path, "a") { |f| f.puts(JSON.generate(entry)) }
+        File.open(@costs_path, "a") { |f| f.puts(JSON.generate(json_safe(entry))) }
         entry
       end
 
