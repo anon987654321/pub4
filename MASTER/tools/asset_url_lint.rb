@@ -30,7 +30,7 @@ module Operator
   #     PP Neue Montreal weights the SCSS already answers it (licensed font,
   #     files deliberately absent, `local()` + fallback carries the surface).
   module AssetUrlLint
-    RAILS_ROOT = File.expand_path("../../..", __dir__)
+    RAILS_ROOT = File.expand_path("../../RAILS", __dir__)
     APPS = %w[amber brgen bsdports].freeze
     TREES = (APPS + %w[shared]).freeze
 

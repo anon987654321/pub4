@@ -29,7 +29,7 @@ module Operator
   #     costume (CQS). Pins the regression that shipped once: .city-today
   #     dressed as the compose pill. The strip is a card; the pill is compose's.
   module VisualContractLint
-    RAILS_ROOT = File.expand_path("../../..", __dir__)
+    RAILS_ROOT = File.expand_path("../../RAILS", __dir__)
 
     BUNDLES = {
       "brgen" => "brgen/app/assets/builds/application.css",

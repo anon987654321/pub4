@@ -306,7 +306,7 @@ module Operator
     end
 
     def rails_root
-      File.expand_path("../../..", __dir__)
+      File.expand_path("../../RAILS", __dir__)
     end
 
     # brgen's verticals moved to engines/<name>/app/views, which the single-level

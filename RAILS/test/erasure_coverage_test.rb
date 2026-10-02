@@ -141,7 +141,7 @@ class ErasureCoverageTest < Minitest::Test
   end
 
   def test_private_relations_are_destroyed_by_the_job
-    expected = PRIVATE_RELATIONS.keys.index_with { :destroy }
+    expected = PRIVATE_RELATIONS.keys.each_with_object({}) { |table, map| map[table] = :destroy }
     actual = expected.to_h do |table, _|
       [ table, CLASSIFIED.fetch(table).first ]
     end

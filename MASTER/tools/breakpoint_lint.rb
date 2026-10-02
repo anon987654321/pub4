@@ -30,7 +30,7 @@ module Operator
   # never raised to silence a new finding. Opt out one line with
   # `// breakpoint: ok` on it or the line above.
   module BreakpointLint
-    RAILS_ROOT = File.expand_path("../../..", __dir__)
+    RAILS_ROOT = File.expand_path("../../RAILS", __dir__)
     OPT_OUT = "breakpoint: ok"
 
     # (min-width: 768px) / (max-width: 47.9375rem) / (min-device-width: 480px)

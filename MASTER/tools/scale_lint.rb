@@ -42,7 +42,7 @@ module Operator
   # never raised to silence a new finding. Opt out one line with `// scale: ok`
   # on it or the line above.
   module ScaleLint
-    RAILS_ROOT = File.expand_path("../../..", __dir__)
+    RAILS_ROOT = File.expand_path("../../RAILS", __dir__)
     OPT_OUT = "scale: ok"
 
     SKIP = %r{/(node_modules|vendor|builds|public/assets|tmp)/}

@@ -36,7 +36,7 @@ module Operator
   # they monopolise a machine for an hour. This runs in milliseconds on every
   # check and catches the cause rather than the symptom.
   module LayoutStabilityLint
-    RAILS_ROOT = File.expand_path("../../..", __dir__)
+    RAILS_ROOT = File.expand_path("../../RAILS", __dir__)
     OPT_OUT = "layout: ok"
 
     # What the four dressing-room overlays and the affiliate tile already say

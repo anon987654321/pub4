@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 require "yaml"
-require_relative "design/master_design"
+require_relative "master_design"
 require_relative "../lib/trace/dmesg"
 
 module DesignTokens

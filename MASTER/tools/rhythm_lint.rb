@@ -54,7 +54,7 @@ module Operator
 
     # The directory holding shared: RAILS/ in a checkout, /home/<app>/ in the
     # copy-tree deploy, where the app and its copy of shared are siblings too.
-    def stylesheet_root = File.expand_path("../../..", __dir__)
+    def stylesheet_root = File.expand_path("../../RAILS", __dir__)
 
     def scss_paths
       Dir.glob(File.join(stylesheet_root, "*", "{app,engines/*/app}", "assets", "stylesheets", "**", "*.{scss,css}")).sort

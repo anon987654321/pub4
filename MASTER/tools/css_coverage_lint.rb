@@ -27,7 +27,7 @@ module Operator
   #     (`"card card--#{kind}"`), so a literal search cannot prove death, which is
   #     exactly the caveat the register entry records.
   module CssCoverageLint
-    RAILS_ROOT = File.expand_path("../../..", __dir__)
+    RAILS_ROOT = File.expand_path("../../RAILS", __dir__)
     APPS = %w[amber brgen bsdports].freeze
     TREES = (APPS + %w[shared]).freeze
     OPT_OUT = "css_coverage: ok"

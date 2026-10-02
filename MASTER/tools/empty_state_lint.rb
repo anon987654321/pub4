@@ -56,7 +56,7 @@ module Operator
     end
 
     def rails_root
-      File.expand_path("../../..", __dir__) # RAILS/
+      File.expand_path("../../RAILS", __dir__) # RAILS/
     end
 
     def relative(path)
