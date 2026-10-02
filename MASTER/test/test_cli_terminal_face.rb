@@ -88,7 +88,7 @@ class TestCliTerminalFace < Minitest::Test
     assert_includes text, "talk0: empty response"
   end
 
-  def test_successful_turn_can_start_picture_work
+  def test_ordinary_face_reply_does_not_start_media_work
     face = Master::CLI::Face::Window.new(
       turn: ->(_) { Master::Result.ok("Reply") },
       ear: Quiet.new(false),
@@ -97,9 +97,11 @@ class TestCliTerminalFace < Minitest::Test
       output: StringIO.new,
       size: -> { [24, 80] }
     )
-    pictured = nil
-    face.stub(:picture, ->(text) { pictured = text }) { face.send(:answer, "Bug and ember lay out.") }
-    assert_equal "Bug and ember lay out.", pictured
+    face.define_singleton_method(:picture) { flunk("ordinary Face replies must not launch media work") } if face.respond_to?(:picture)
+
+    face.send(:answer, "Bug and ember lay out.")
+    text = rows_of(face.screen(24, 80, 1.0)).values.join("\n")
+    assert_includes text, "Reply"
   end
 
   def test_face_falls_back_to_native_speech_when_synthesis_is_missing
@@ -230,12 +232,14 @@ class TestCliTerminalFace < Minitest::Test
       size: -> { [24, 80] },
       event_bus: bus
     )
-    assert_equal %w[council:** llm:** phantom:** pipeline:**], bus.patterns.keys.sort
+    assert_equal %w[council:** core:** llm:** phantom:** pipeline:**], bus.patterns.keys.sort
     bus.publish("pipeline:stage_start")
     assert_equal [:thinking], face.instance_variable_get(:@events)
+    bus.publish(event: "core:turn", ok: true)
+    assert_equal [:thinking, :nod], face.instance_variable_get(:@events)
     face.send(:unsubscribe_from_bus)
     bus.publish("council:deliberation")
-    assert_equal [:thinking], face.instance_variable_get(:@events)
+    assert_equal [:thinking, :nod], face.instance_variable_get(:@events)
   end
 
   def test_face_turn_keeps_the_structured_result
