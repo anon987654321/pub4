@@ -709,6 +709,25 @@ Two lanes of the model pool are built and unproven: Replicate has no valid key
 on this Mac or on vm23, and the local OpenAI-compatible lane was proved against
 a running `mistralrs serve` only to the point of a 500 from mistral.rs itself.
 
+### test_fix_convergence contract drift — measured 2026-10-03, not chased
+
+Baseline before the silent-failure hardening was 11 failures + 4 errors; after
+it, the same suite reports 11 failures + 6 errors — no defect got worse, two
+error classes became visible now that the suite stops crashing at the mission.
+These are contract-drift findings sitting in a red suite, not regressions of
+this work; each needs its own decision rather than a chase:
+
+- Mission lifecycle: `:wishlist` vs `:terminal` (line ~603) and the
+  `ADONE:` vs `DONE:` prefix mismatch (line ~765).
+- Council briefing text asserts `HARD REVIEW` the briefing no longer carries
+  (line ~537).
+- GateChain target routing refuses `lib/io` as "target outside pub4 trees"
+  (line ~128 surface, the ArgumentError surfaces inside dispatch_fix) — likely
+  the tree-root rewrite and the router disagree.
+- `CLI_ANALYZE_TARGET_ROUTING` flags its good fixture (law self-test through
+  rules.rb).
+- Scan target resolution (lines ~190, ~213) — may be the same routing root.
+
 ## Found by the backlog pass — opened 2026-09-14
 
 The agents that worked this file on 2026-09-14 and noticed these outside their
