@@ -1,13 +1,6 @@
-// MASTER visual governor: state-aware animation pressure control before face.js loads.
-//
-// These numbers are the source. The header used to say "Limits sourced from
-// data/ops/visual.yml (SINGULARITY / ONE_SOURCE). Do not duplicate." and nothing
-// here read that file: 930a35ca5, a revert to fix tap-to-start, removed the
-// `window.MASTER_RUNTIME.visual_limits` read as collateral and the comment
-// survived it. The file then drifted on all five values, including
-// freeze_on_fail: true against the freezeOnFail: false below -- so honouring
-// that comment would have restored the black deployed face it was fixed for.
-// The file is deleted; this is the one place the limits live.
+// MASTER visual governor: one frame gate for the same face budget consumed by
+// face_state.js and FaceWorld. Limits live in data/rules.yml; this module only
+// applies them to requestAnimationFrame and the process-wide particle guard.
 (() => {
   // Restored with the read, from the same revert. Every other visual module
   // checks this media query for itself, so the governor's cap is the floor
