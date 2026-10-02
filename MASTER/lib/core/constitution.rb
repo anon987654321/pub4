@@ -42,7 +42,10 @@ module Master::Core
     # through World. So the hardened gate was live for the tool path and absent
     # from the constitutional one, which is the path that actually runs unattended.
     def self.load(data_dir:, verify: nil, sandbox: nil)
-      rules = default_rules(YAML.safe_load_file(File.join(data_dir, "rules.yml"), aliases: true))
+      rules_data = YAML.safe_load_file(File.join(data_dir, "rules.yml"), aliases: true)
+      soul_data = YAML.safe_load_file(File.join(data_dir, "soul.yml"), aliases: true) || {}
+      sacred_paths = Array(soul_data.dig("absolute", "sacred_paths")).map(&:to_s).freeze
+      rules = default_rules(rules_data, sacred_paths:)
       rules += [scan_clean_rule(verify)] if verify
       rules += [sandboxed_exec_rule(sandbox)] if sandbox
       new(rules:)
@@ -71,9 +74,9 @@ module Master::Core
 
     # The rules. Each is a few lines because the dangerous thing is expressed as
     # a predicate, not prose. Safety rules Block; hygiene rules Revise.
-    def self.default_rules(data)
+    def self.default_rules(data, sacred_paths: [])
       veto = (data["veto_patterns"] || {}).filter_map { |n, s| [n, safe_rx(s["detect"])] }.to_h
-      immutable = Array(data.dig("paths", "immutable")).map(&:to_s).freeze
+      immutable = Array(sacred_paths).map(&:to_s).freeze
 
       [
         no_secret_rule(veto),
@@ -94,6 +97,8 @@ module Master::Core
       ]
     end
 
+    # Sacred paths are declared by soul.yml, the constitutional source. The rule
+    # catalogue remains descriptive and must not become a second write-protection list.
     # The agent may not rewrite the constitution it is judged by or the spine
     # that folds its effects. A write, or a git stage of such a path, is blocked.
     def self.immutable_paths_rule(immutable)
