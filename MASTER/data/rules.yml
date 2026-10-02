@@ -575,6 +575,17 @@ design_system:
       focus: 0.86
       activity: 0.14
       risk: 0.0
+    mode_aliases:
+      phantom: error
+      escalation: warning
+      tool: thinking
+      memory: thinking
+      event: thinking
+      codebase: working
+      fixing: working
+      complete: ready
+      converged: ready
+      settled: idle
     spatial:
       shell:
         radius: 1.58
