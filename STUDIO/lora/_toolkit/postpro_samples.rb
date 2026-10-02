@@ -100,7 +100,7 @@ end
 def main
   options = parse_options
   root = repo_root
-  abort "warn: MASTER/tools/postpro/postpro.rb not found" unless root
+  abort "warn: STUDIO/postpro/postpro.rb not found" unless root
 
   postpro = options[:postpro] || root.join("MASTER", "tools", "postpro", "postpro.rb")
   postpro = root.join("STUDIO", "postpro", "postpro.rb") unless postpro.file?

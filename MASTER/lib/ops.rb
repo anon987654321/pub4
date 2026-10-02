@@ -48,7 +48,7 @@ module Master
         raise
       end
 
-      MEDIA_PLAYER_COMMAND = %r{(?:/|\\)(?:STUDIO/dilla|MASTER/tools/dilla)/(?:liveset|royksopp)\.rb(?:\s|$)}.freeze
+      MEDIA_PLAYER_COMMAND = %r{(?:/|\\)(?:STUDIO\/dilla)/(?:liveset|royksopp)\.rb(?:\s|$)}.freeze
 
       def reclaimable?(path)
         probe = File.open(path, File::RDWR | File::CREAT, 0o600)

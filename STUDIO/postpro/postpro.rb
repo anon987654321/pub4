@@ -12,7 +12,7 @@ require "digest"
 # postpro lives two levels below MASTER/, so ../../lib/io resolves to
 # MASTER/lib/io. Keep this anchored path rather than depending on the operator's
 # working directory.
-require_relative "../../MASTER/lib/io/analog_capabilities"
+require_relative "analog_capabilities"
 
 require "open3"
 require "rbconfig"
@@ -4268,7 +4268,7 @@ def write_grade_sidecar(input_path, output_path, presets, original, processed)
     output_sha256: Digest::SHA256.file(output_path).hexdigest,
     quality: report,
     uncanny: uncanny_readings(original, processed),
-    capabilities: Master::Io::AnalogCapabilities.for(:postpro).map { |entry| entry[:id] },
+    capabilities: Studio::AnalogCapabilities.for(:postpro).map { |entry| entry[:id] },
   }
   write_sidecar(output_path, data)
 end
@@ -4642,7 +4642,7 @@ def run_introspect
   if ARGV.include?("--vocab-check")
     exit(vocab_check.zero? ? 0 : 1)
   elsif ARGV.include?("--capabilities")
-    puts Master::Io::AnalogCapabilities.report(:postpro)
+    puts Studio::AnalogCapabilities.report(:postpro)
   elsif ARGV.include?("--list-presets")
     puts list_presets
   elsif ARGV.include?("--list-stocks")

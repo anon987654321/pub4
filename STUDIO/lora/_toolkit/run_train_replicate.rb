@@ -46,7 +46,7 @@ WEIGHTS_DIR = SUBJECT_DIR.join("weights", MODEL)
 EXPORTS_DIR = SUBJECT_DIR.join(".cache")
 LOG_PATH = WEIGHTS_DIR.join("replicate_train.log")
 
-MASTER_CLIENT = REPO_ROOT.join("MASTER/lib/io/replicate_client.rb")
+MASTER_CLIENT = REPO_ROOT.join("STUDIO/replicate/client.rb")
 abort "warn: missing #{MASTER_CLIENT}" unless MASTER_CLIENT.file?
 
 require MASTER_CLIENT.to_s
@@ -132,7 +132,7 @@ puts "ok: zip #{zip_path} (#{images.length} images, #{File.size(zip_path)} bytes
 client = nil
 unless options[:dry_run]
   begin
-    client = Master::Io::ReplicateClient.new
+    client = Studio::ReplicateClient.new
   rescue ArgumentError => e
     abort "warn: #{e.message} (set REPLICATE_API_TOKEN)"
   end
@@ -201,7 +201,7 @@ WEIGHTS_DIR.mkpath
 sidecar = {
   trained_at: Time.now.utc.iso8601,
   base_model: "black-forest-labs/FLUX.1-dev",
-  trainer: Master::Io::ReplicateClient::LORA_TRAINER,
+  trainer: Studio::ReplicateClient::LORA_TRAINER,
   destination: destination,
   training_id: training_id,
   trigger_word: options[:trigger],

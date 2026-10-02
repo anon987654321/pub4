@@ -37,34 +37,15 @@ module Master
         Result.err("#{tool}: #{e.class}: #{e.message}", category: :infrastructure)
       end
 
-      # Launch MASTER from its own directory, the pub4 workspace root,
-      # or another repository it operates on. Media entrypoints stay
-      # discoverable in every case.
+      # Resolve only the canonical Studio entrypoint. A compatibility link under
+      # MASTER/tools would hide a boundary violation, so there is deliberately no fallback.
       def script_path(requested_root, tool)
-        # Canonical media entrypoints live in STUDIO. MASTER/tools paths remain
-        # compatibility links for existing callers.
         roots = [requested_root, MasterPaths.repo, MasterPaths.root].uniq
-        canonical = roots.map { |candidate| File.join(candidate, "STUDIO", tool, "#{tool}.rb") }
-        compatibility = roots.flat_map do |candidate|
-          [
-            File.join(candidate, "tools", tool, "#{tool}.rb"),
-            File.join(candidate, "tools", "#{tool}.rb")
-          ]
-        end
-        (canonical + compatibility).find { |candidate| File.file?(candidate) } ||
-          (canonical + compatibility).first
+        candidates = roots.map { |candidate| File.join(candidate, "STUDIO", tool, "#{tool}.rb") }
+        candidates.find { |candidate| File.file?(candidate) } || candidates.first
       end
-      def working_directory(requested_root, script)
-        # A flat tools/<tool>.rb entry keeps the workspace-root convention. A
-        # nested tools/<tool>/<tool>.rb entry owns its directory because that is
-        # where media assets, scratch, samples and project state live.
-        tools_root = File.join(requested_root, "tools")
-        if script.start_with?(tools_root + File::SEPARATOR)
-          relative = script.delete_prefix(tools_root + File::SEPARATOR)
-          return File.dirname(script) if relative.include?(File::SEPARATOR)
-          return File.expand_path("..", requested_root)
-        end
 
+      def working_directory(requested_root, script)
         [requested_root, MasterPaths.repo, MasterPaths.root].uniq.each do |candidate|
           studio_root = File.join(candidate, "STUDIO")
           next unless script.start_with?(studio_root + File::SEPARATOR)
@@ -72,12 +53,6 @@ module Master
           relative = script.delete_prefix(studio_root + File::SEPARATOR)
           return File.dirname(script) if relative.include?(File::SEPARATOR)
           return candidate
-        end
-
-        master_tools = File.join(MasterPaths.repo, "MASTER", "tools")
-        if script.start_with?(master_tools + File::SEPARATOR)
-          relative = script.delete_prefix(master_tools + File::SEPARATOR)
-          return File.dirname(script) if relative.include?(File::SEPARATOR)
         end
 
         return requested_root if File.directory?(requested_root)

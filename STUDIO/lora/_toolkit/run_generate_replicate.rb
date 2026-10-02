@@ -93,7 +93,7 @@ def render(client, model, input, attempts: 4)
   end
 end
 
-POSTPRO = REPO_ROOT.join("MASTER/tools/postpro/postpro.rb")
+POSTPRO = REPO_ROOT.join("STUDIO/postpro/postpro.rb")
 
 # A different real chain per frame rather than one house look over the set.
 #
@@ -139,8 +139,8 @@ if options[:dry_run]
   exit 0
 end
 
-require REPO_ROOT.join("MASTER/lib/io/replicate_client").to_s
-client = Master::Io::ReplicateClient.new
+require REPO_ROOT.join("STUDIO/replicate/client").to_s
+client = Studio::ReplicateClient.new
 FileUtils.mkdir_p(out_dir)
 failed = 0
 

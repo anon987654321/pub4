@@ -11,10 +11,10 @@ require "securerandom"
 # Paths into MASTER are spelled from this file up to the repo root. A relative
 # ../lib/ would resolve to MASTER/tools/lib/, which does not exist, and abort the
 # whole file on its first require.
-require_relative "../../MASTER/lib/io/replicate_client"
-require_relative "../../MASTER/lib/io/script_dispatch"
-require_relative "../../MASTER/lib/io/analog_capabilities"
-require_relative "../../MASTER/lib/boot/paths"
+require_relative "client"
+require_relative "script_dispatch"
+require_relative "../postpro/analog_capabilities"
+
 # Shellwords.escape is called in maybe_handoff_postpro; without this require
 # --postpro reaches a NameError instead of a handoff.
 require "shellwords"
@@ -410,7 +410,7 @@ end
 # Content-addressed so repeated downloads of the same output collapse to one
 # blob; the sidecar records everything needed to reproduce or audit the call.
 def cache_blob(path, cache_dir)
-  digest = Master::Io::ReplicateClient.checksum(path)
+  digest = Studio::ReplicateClient.checksum(path)
   FileUtils.mkdir_p(cache_dir)
   blob_path = File.join(cache_dir, "#{digest}#{File.extname(path)}")
   FileUtils.cp(path, blob_path) unless File.exist?(blob_path)
@@ -441,7 +441,7 @@ def write_provenance(output, prompt, compiled_prompt, negative_prompt, options, 
 end
 
 def append_gallery_manifest(sidecar, alt_text)
-  manifest = File.join(MasterPaths.repo, ".master", "media", "gallery.jsonl")
+  manifest = File.join(Studio::Paths.repo, ".master", "media", "gallery.jsonl")
   FileUtils.mkdir_p(File.dirname(manifest))
   File.open(manifest, "a") { |f| f.puts(sidecar.merge(alt_text:).to_json) }
 end
@@ -452,7 +452,7 @@ end
 # same model refusing the same input, the same stage timing out. The gallery
 # holds what worked; this holds the stage, the recipe's hash, the error and the
 # frames that were kept, so a failure is looked up before it is repeated.
-def record_failed_chain(chain, error, produced, manifest: File.join(MasterPaths.repo, ".master", "media", "failed_chains.jsonl"))
+def record_failed_chain(chain, error, produced, manifest: File.join(Studio::Paths.repo, ".master", "media", "failed_chains.jsonl"))
   FileUtils.mkdir_p(File.dirname(manifest))
   row = { chain: chain[:name], sha256: chain[:sha256], failed_at: Time.now.utc.iso8601,
           error: error.class.name, message: error.message, kept: produced }
@@ -482,8 +482,8 @@ HOUSE_POSTPRO = ENV.fetch("REPLICATE_POSTPRO", "portrait")
 def maybe_handoff_postpro(output, preset)
   return output unless preset
 
-  result = Master::Io::ScriptDispatch.run(
-    root: MasterPaths.root,
+  result = Studio::ScriptDispatch.run(
+    root: Studio::Paths.root,
     tool: "postpro",
     arg: ["--input", output, "--output", output, "--preset", preset].map { |v| Shellwords.escape(v) }.join(" "),
   )
@@ -679,7 +679,7 @@ end
 
 case command
 when "capabilities"
-  puts Master::Io::AnalogCapabilities.report(:replicate)
+  puts Studio::AnalogCapabilities.report(:replicate)
 when "chains"
   # The chains this tree ships, from the directory rather than a maintained
   # list, so adding one is adding a file.
@@ -731,13 +731,13 @@ when "chain"
   # right and the one thing that fails silently: a model handed no image
   # generates from the prompt and returns something plausible.
   abort "replicate: chain #{name} needs REPLICATE_API_TOKEN to run; --dry-run validates without it" if
-    Master::Io::ReplicateClient.load_token.to_s.strip.empty?
+    Studio::ReplicateClient.load_token.to_s.strip.empty?
 
   base = options[:output] || "chain-#{name}.jpg"
   ext = File.extname(base)
   ext = ".jpg" if ext.empty?
   stem = base.sub(/#{Regexp.escape(File.extname(base))}\z/, "")
-  client = Master::Io::ReplicateClient.new
+  client = Studio::ReplicateClient.new
 
   target_for = ->(stage, index) { "#{stem}-#{format('%02d', index + 1)}-#{stage.name}#{ext}" }
   # --from reads back what an earlier run wrote: the frame, and the seed its
@@ -803,7 +803,7 @@ when "vocab-check"
   vocab_check
 when "generate"
   abort parser.to_s if options[:prompt].to_s.strip.empty?
-  if !options[:dry_run] && Master::Io::ReplicateClient.load_token.to_s.strip.empty?
+  if !options[:dry_run] && Studio::ReplicateClient.load_token.to_s.strip.empty?
     abort "replicate: generate needs a token (REPLICATE_API_TOKEN, REPLICATE_API_KEY, or api_token in " \
           "~/.config/replicate/config.json); --dry-run compiles the prompt without one"
   end
@@ -820,7 +820,7 @@ when "generate"
     abort "warn: #{options[:model]} is an editor; pass --image PATH"
   end
   options[:aspect_ratio] = infer_aspect_ratio(options[:prompt], options[:aspect_ratio], options[:distance])
-  client = options[:dry_run] ? nil : Master::Io::ReplicateClient.new
+  client = options[:dry_run] ? nil : Studio::ReplicateClient.new
 
   options[:postpro] = HOUSE_POSTPRO if options[:postpro].nil?
   warn_vocab_conflicts(options)
@@ -880,10 +880,10 @@ when "generate"
 when "search"
   query = ARGV.join(" ").strip
   abort "usage: replicate.rb search QUERY [--limit N]" if query.empty?
-  rows = Master::Io::ReplicateClient.new.models(limit: options[:limit], query:)
+  rows = Studio::ReplicateClient.new.models(limit: options[:limit], query:)
   puts rows.map { |row| "#{row['owner']}/#{row['name']}\t#{row['description'].to_s.gsub(/\s+/, ' ')[0, 120]}" }
 when "sync"
-  rows = Master::Io::ReplicateClient.new.models(limit: options[:limit])
+  rows = Studio::ReplicateClient.new.models(limit: options[:limit])
   FileUtils.mkdir_p(File.dirname(cache))
   File.write(cache, JSON.pretty_generate({ synced_at: Time.now.utc.iso8601, models: rows }))
   puts "ok: replicate synced #{rows.length} models to #{cache}"
