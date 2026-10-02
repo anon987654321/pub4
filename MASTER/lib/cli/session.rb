@@ -65,9 +65,9 @@ module Master
         puts @refs.renderer.session_line(@refs.session.name, @refs.session.messages.size) if @refs.session.name
         print_repo_tree unless booted_before?
         puts
-        run_input(initial_message) if initial_message
         @running = true
-        repl_loop
+        run_input(initial_message) if initial_message
+        repl_loop if @running
       end
 
       def pipe(input)

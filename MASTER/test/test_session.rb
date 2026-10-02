@@ -3,6 +3,42 @@
 require_relative "test_helper"
 
 class TestSession < Minitest::Test
+  def test_initial_exit_does_not_reopen_the_repl
+    session = Master::CLI::Session.allocate
+    session.instance_variable_set(:@running, false)
+    session.define_singleton_method(:setup_signals) {}
+    session.define_singleton_method(:start_background_loop) {}
+    session.define_singleton_method(:start_boot_scan) {}
+    session.define_singleton_method(:stop_thinking_indicator) {}
+    session.define_singleton_method(:stop_background_loop) {}
+    session.define_singleton_method(:close_unit_console) {}
+    session.define_singleton_method(:save_cli_history) {}
+    session.instance_variable_set(:@refs, Object.new)
+    refs = session.instance_variable_get(:@refs)
+    renderer = Object.new
+    renderer.define_singleton_method(:splash) { |_| "" }
+    renderer.define_singleton_method(:session_line) { |*| nil }
+    refs.define_singleton_method(:renderer) { renderer }
+    agent = Object.new
+    agent.define_singleton_method(:model) { "test" }
+    agent.define_singleton_method(:pin_boot_model!) {}
+    refs.define_singleton_method(:agent) { agent }
+    trace_session = Object.new
+    trace_session.define_singleton_method(:exists?) { false }
+    refs.define_singleton_method(:session) { trace_session }
+
+    ran = false
+    session.define_singleton_method(:run_input) do |_input|
+      ran = true
+      @running = false
+    end
+    session.define_singleton_method(:repl_loop) { flunk("initial /exit reopened the REPL") }
+
+    session.send(:run, "/exit")
+    assert ran
+    refute session.instance_variable_get(:@running)
+  end
+
   def test_streamed_output_is_accumulated_even_when_units_console_is_active
     session = Master::CLI::Session.allocate
     state = { streamed: false }
