@@ -238,6 +238,30 @@ class TestCliTerminalFace < Minitest::Test
     assert_equal [:thinking], face.instance_variable_get(:@events)
   end
 
+  def test_face_turn_keeps_the_structured_result
+    container = Object.new
+    calls = []
+    turn = Master::CLI::Face::Window.turn { container }
+
+    Master::CLI::TurnRouter.stub(
+      :call,
+      ->(message:, container:) { calls << [message, container]; Master::Result.ok(rendered: "trace", core: { summary: "final answer" }) },
+    ) do
+      result = turn.call("check this")
+      assert_predicate result, :ok?
+    end
+
+    assert_equal [["check this", container]], calls
+  end
+
+  def test_face_speaks_a_fold_summary_not_its_execution_trace
+    result = Master::Result.ok(
+      rendered: "fold0: complete, 4 turns\n0: read -> ok\nfinal answer",
+      core: { summary: "final answer" },
+    )
+    assert_equal "final answer", Master::CLI::Face::Window.allocate.send(:reply_text, result)
+  end
+
   def test_face_command_arguments_are_recognised
     assert Master::CLI::Face::Window.asked?(["/face"])
     assert Master::CLI::Face::Window.asked?(["face"])
