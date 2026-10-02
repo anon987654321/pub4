@@ -34,8 +34,18 @@ module Master
             return File.expand_path(text.delete_prefix("../"), Master::REPO_ROOT)
           end
           path = File.expand_path(text, @root)
-          return path if File.exist?(path)
-          File.expand_path(text, Master::REPO_ROOT)
+          return path if governed_path?(path)
+
+          raise ArgumentError, "target outside pub4 trees: #{raw.inspect}"
+        end
+
+        def governed_path?(path)
+          repo = File.expand_path(Master::REPO_ROOT)
+          return true if path == repo
+          ALL_TREE_NAMES.any? do |tree|
+            root = File.join(repo, tree)
+            path == root || path.start_with?("#{root}/")
+          end
         end
 
         def all_tree_target?(text)
