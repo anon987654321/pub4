@@ -31,7 +31,7 @@ module Master
         "phrase_language_switching" => true,
         "mlx_model" => "mlx-community/chatterbox-fp16",
         "mlx_voice" => "default",
-        "exaggeration" => 0.62,
+        "exaggeration" => 0.45,
         "cfg_weight" => 0.42,
         "chatterbox_device" => "mps",
         "reference_clip" => "",
