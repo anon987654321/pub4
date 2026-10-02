@@ -4,7 +4,7 @@ require "digest"
 require "fileutils"
 require "json"
 require "open-uri"
-require_relative "../../../contracts/studio"
+require_relative "../../../../contracts/studio"
 require "tmpdir"
 require "time"
 

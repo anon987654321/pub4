@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require_relative "../../../contracts/studio"
+require_relative "../../../../contracts/studio"
 require "rbconfig"
 require "fileutils"
 
 module Shared
-  # Runs MASTER/tools/postpro/postpro.rb on Active Storage blobs (seeds, jobs, newsletters).
+  # Runs STUDIO/postpro/postpro.rb on Active Storage blobs (seeds, jobs, newsletters).
   module PostproProcessor
     VALID_PRESETS = %w[portrait landscape street blockbuster cinematic magic_hour indie polaroid].freeze
 

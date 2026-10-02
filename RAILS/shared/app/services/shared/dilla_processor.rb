@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
-require_relative "../../../contracts/studio"
+require_relative "../../../../contracts/studio"
 require "rbconfig"
 require "fileutils"
 require "open3"
 
 module Shared
-  # Runs MASTER/tools/dilla/dilla.rb and attaches audio to a record.
+  # Runs STUDIO/dilla/dilla.rb and attaches audio to a record.
   module DillaProcessor
     STYLES = %w[dilla flylo baroque bach neo-soul neo_soul jazz].freeze
     DEFAULT_BARS = 12

@@ -103,7 +103,7 @@ module Brgen
           # 41b20306d; the manifest moved into this app and the learnings into
           # the dilla engine.
           "manifest: RAILS/brgen/config/radio_bergen/tracks.yml",
-          "learnings: MASTER/tools/dilla/data/reference_sonic.yml",
+          "learnings: STUDIO/dilla/data/reference_sonic.yml",
           "lesson: do_not_restore monolithic index.html — manifest + Rails vertical instead",
           "catalogue: #{youtube_count} external references · no local source files",
           "policy: #{manifest.dig('external_reference', 'policy') || 'reference_only_until_rights_review'}",

@@ -3,7 +3,7 @@
 require "date"
 require "json"
 require "net/http"
-require_relative "../../../contracts/studio"
+require_relative "../../../../contracts/studio"
 require "rbconfig"
 require "tmpdir"
 require "fileutils"

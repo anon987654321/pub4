@@ -25,8 +25,8 @@ app/jobs app/reflexes].each do |dir|
     # files by RAILS/test/engine_migration_convention_test.rb, because a file added
     # there would silently do nothing.
     initializer "shared.contracts" do
-      require root.join("../../contracts/master_client").to_s
-      require root.join("../../contracts/studio").to_s
+      require root.join("../contracts/master_client").to_s
+      require root.join("../contracts/studio").to_s
     end
 
     config.active_record.schema_format = :ruby if config.respond_to?(:active_record)

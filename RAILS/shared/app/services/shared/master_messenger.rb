@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "../../../../contracts/master_client"
+
 module Shared
   # One messenger adapter for every mounted app. It talks to MASTER through authenticated
   # ingress, so brgen and Amber invite the same runtime rather than
