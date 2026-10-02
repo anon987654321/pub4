@@ -141,9 +141,9 @@ module Master
         room = MAX_OUTPUT_BYTES - OUTPUT_TRUNCATION_MARKER.bytesize
         head_bytes = (room / 2.0).ceil
         tail_bytes = room - head_bytes
-        head = text.byteslice(0, head_bytes).to_s
-        tail = text.byteslice(-tail_bytes, tail_bytes).to_s
-        "#{head}#{OUTPUT_TRUNCATION_MARKER}#{tail}"
+        head = text.byteslice(0, head_bytes).to_s.encode("UTF-8", invalid: :replace, undef: :replace, replace: "?")
+        tail = text.byteslice(-tail_bytes, tail_bytes).to_s.encode("UTF-8", invalid: :replace, undef: :replace, replace: "?")
+        "#{head}#{OUTPUT_TRUNCATION_MARKER}#{tail}".encode("UTF-8", invalid: :replace, undef: :replace, replace: "?")
       end
 
       def cap_timings(value)
