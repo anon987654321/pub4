@@ -11,6 +11,9 @@
   let splatProxy = null;
   let nodes = [];
   let edges = null;
+  let pulses = [];
+  let layers = {};
+  let camera = null;
   let ready = false;
   let updating = false;
 
@@ -29,6 +32,11 @@
   ];
 
   const TOPOLOGY_PROFILES = Object.freeze(SPATIAL.topology_profiles || {});
+  const CAMERA = SPATIAL.camera || {};
+  const BUDGET = SPATIAL.budget || {};
+  const LAYER_NAMES = Array.isArray(SPATIAL.layers)
+    ? SPATIAL.layers.map((name) => String(name))
+    : ["identity", "eyes", "mouth", "cognition", "repository", "event_field", "camera", "hud"];
 
   function finite(value, fallback) {
     const number = Number(value);
@@ -123,7 +131,7 @@
       node.position.set(x, y, z);
       node.userData.phase = seeded(index, 19) * Math.PI * 2;
       node.userData.index = index;
-      world.add(node);
+      (layers.repository || world).add(node);
       return node;
     });
 
@@ -149,7 +157,7 @@
     );
     edges.name = "master-semantic-edges";
     edges.renderOrder = -1;
-    world.add(edges);
+    (layers.repository || world).add(edges);
   }
 
   function makeSplatProxy() {
@@ -183,7 +191,7 @@
     );
     splatProxy.name = "master-splat-field";
     splatProxy.renderOrder = -1;
-    world.add(splatProxy);
+    (layers.cognition || world).add(splatProxy);
 
     document.documentElement.dataset.faceSplatMode =
       typeof THREE.GaussianSplat === "function" ? "native-capable-proxy" : "deterministic-points";
@@ -195,6 +203,14 @@
     const scene = window.MASTER_FACE.scene;
     world = new THREE.Group();
     world.name = "master-face-world";
+    camera = window.MASTER_FACE.camera || null;
+
+    for (const name of LAYER_NAMES) {
+      const group = new THREE.Group();
+      group.name = `master-face-layer-${name}`;
+      layers[name] = group;
+      world.add(group);
+    }
 
     const host = window.MASTER_FACE.head || scene;
     host.add(world);
@@ -202,6 +218,14 @@
     makeShell();
     makeNodes();
     makeSplatProxy();
+
+    const budget = window.MASTER_FACE_STATE?.renderBudget?.() || {};
+    const initialDpr = Math.min(Number(budget.dpr || 1), Number(BUDGET.max_device_pixel_ratio || 2));
+    document.documentElement.style.setProperty("--master-face-points", String(Math.min(
+      Number(budget.points || 420),
+      Number(BUDGET.desktop_points || 1200)
+    )));
+    if (window.MASTER_FACE?.renderer?.setPixelRatio) window.MASTER_FACE.renderer.setPixelRatio(initialDpr);
 
     ready = true;
     document.documentElement.dataset.faceWorld = "ready";
@@ -226,6 +250,49 @@
     }
   }
 
+  function spawnPulse(fromName, toName, energy = 0.5) {
+    if (!world || !THREE || pulses.length >= 24) return;
+    const from = nodes.find((node) => node.name === `master-node-${fromName}`);
+    const to = nodes.find((node) => node.name === `master-node-${toName}`);
+    if (!from || !to) return;
+
+    const geometry = new THREE.SphereGeometry(0.014, 6, 4);
+    const material = new THREE.MeshBasicMaterial({
+      color: colorFromCss(),
+      transparent: true,
+      opacity: Math.min(0.9, 0.25 + energy * 0.65),
+      depthWrite: false
+    });
+    const pulse = new THREE.Mesh(geometry, material);
+    pulse.name = "master-event-pulse";
+    pulse.userData = { from, to, started: nowMs(), life: 900, energy };
+    (layers.event_field || world).add(pulse);
+    pulses.push(pulse);
+  }
+
+  function nowMs() {
+    return typeof performance !== "undefined" ? performance.now() : Date.now();
+  }
+
+  function updatePulses(now) {
+    pulses = pulses.filter((pulse) => {
+      const age = now - pulse.userData.started;
+      const t = age / pulse.userData.life;
+      if (t >= 1) {
+        pulse.parent?.remove(pulse);
+        pulse.geometry?.dispose?.();
+        pulse.material?.dispose?.();
+        return false;
+      }
+      const a = pulse.userData.from.position;
+      const b = pulse.userData.to.position;
+      pulse.position.lerpVectors(a, b, t);
+      pulse.scale.setScalar(0.7 + pulse.userData.energy * Math.sin(Math.PI * t));
+      pulse.material.opacity = (1 - t) * Math.min(0.9, 0.25 + pulse.userData.energy * 0.65);
+      return true;
+    });
+  }
+
   function update(now = performance.now()) {
     if (!ready || !world || !shellMaterial) return;
 
@@ -236,6 +303,7 @@
     const geometry = window.MASTER_FACE_STATE?.geometryProfile?.(state);
     if (!geometry) return;
 
+    const budget = window.MASTER_FACE_STATE?.renderBudget?.() || {};
     const topology = String(state.topology || "papua-mask");
     const topologyProfile = TOPOLOGY_PROFILES[topology] || TOPOLOGY_PROFILES["papua-mask"] || {};
     const kernel = window.ParticleKernel;
@@ -264,6 +332,10 @@
     const tiltY = finite(topologyProfile.tilt_y, 0);
     const pointerX = finite(window.MASTER_FACE?.State?.mouseX, 0);
     const pointerY = finite(window.MASTER_FACE?.State?.mouseY, 0);
+    const cameraLimit = finite(CAMERA.orbit_limit, 0.16);
+    const cameraParallax = finite(CAMERA.parallax, geometry.camera_parallax);
+    const targetX = Math.max(-cameraLimit, Math.min(cameraLimit, pointerY * cameraParallax));
+    const targetY = Math.max(-cameraLimit, Math.min(cameraLimit, pointerX * cameraParallax));
 
     world.rotation.y += ((pointerX * 0.045) + tiltY * (geometry.fracture + fracture) - world.rotation.y) * 0.035;
     world.rotation.x += ((pointerY * 0.028) + tiltX * (geometry.fracture + fracture) - world.rotation.x) * 0.035;
@@ -293,7 +365,25 @@
       splatProxy.material.opacity =
         Math.min(0.18, 0.03 + geometry.neural_density * 0.09 * density + (geometry.fracture + fracture) * 0.04);
       splatProxy.material.color.copy(shellMaterial.uniforms.uColor.value);
-      splatProxy.rotation.z = now * 0.000018 * (0.5 + geometry.depth);
+        splatProxy.rotation.z += (now * 0.000018 * (0.5 + geometry.depth) - splatProxy.rotation.z) * 0.008;
+    }
+
+    if (camera) {
+      const baseDistance = finite(CAMERA.distance, geometry.camera_distance);
+      const targetDistance = finite(geometry.camera_distance, baseDistance);
+      camera.position.z += (targetDistance - camera.position.z) * 0.035;
+      camera.position.x += (targetX - camera.position.x) * 0.035;
+      camera.position.y += (targetY - camera.position.y) * 0.035;
+      camera.updateProjectionMatrix?.();
+    }
+
+    updatePulses(now);
+
+    const activePoints = Math.min(Number(budget.points || 420), Number(BUDGET.desktop_points || 1200));
+    if (splatProxy) {
+      const visible = Math.min(1, activePoints / Math.max(1, Number(BUDGET.desktop_points || 1200)));
+      splatProxy.visible = visible > 0.02;
+      splatProxy.material.opacity *= visible;
     }
 
     // All legacy visual projections consume this same frame; none schedules time.
@@ -304,7 +394,16 @@
     document.documentElement.style.setProperty("--master-face-tension", geometry.shell_tension.toFixed(3));
   }
 
-  window.MASTER_FACE_WORLD = Object.freeze({ load, update });
+  window.MASTER_FACE_WORLD = Object.freeze({ load, update, spawnPulse });
+  window.addEventListener("master:visual", (event) => {
+    const detail = event.detail || {};
+    const name = String(detail.name || detail.mode || "");
+    if (/llm:|route:resolved|tool:call|pipeline:stage_start|fix_loop:pass_start/.test(name)) {
+      const from = /tool|fetch|write|read/.test(name) ? "tools" : /fix|pipeline/.test(name) ? "lib" : "law";
+      const to = from === "tools" ? "web" : from === "lib" ? "tools" : "lib";
+      spawnPulse(from, to, Number(detail.activity || detail.confidence || 0.5));
+    }
+  }, { passive: true });
   window.addEventListener("master:face-ready", () => load(), { once: true });
   if (window._primerFired) load();
 })();
