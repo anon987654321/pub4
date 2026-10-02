@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "tty-screen"
+require_relative "../../face/contract"
 
 module Master
   module Voice
@@ -17,7 +18,8 @@ module Master
         TOKEN_KILO_THRESHOLD = 1000
         PROMPT_PATH_MAX = 44
         PROMPT_GIT_CACHE_S = 0.25
-        PROMPT_MAX_CHARS = 72
+        PROMPT_MAX_CHARS = Master::Face::Contract.prompt_max
+        PROMPT_MEASURE_CH = Master::Face::Contract.prompt_measure
         ANSI_ESCAPE = /\e\[[0-9;?]*[ -\/]*[@-~]/
         BOOT_FG = "\e[37m"
         BOOT_RESET = "\e[0m"
