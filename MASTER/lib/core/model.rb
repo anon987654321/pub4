@@ -59,12 +59,13 @@ module Master::Core
 
     # The verbs and git operations whose preconditions hold, read off
     # Proof#scope. No scope is no knowledge of the turn, so everything is offered.
-    def self.offer(verbs, scope)
-      return schema(verbs:) unless scope
+    def self.offer(verbs, scope, operations: GIT_OPERATIONS)
+      return schema(verbs:, operations:) unless scope
 
       answered = (scope[:proved] || scope[:answerable]) && scope[:cleared]
       closed = [(:done unless answered), (:write unless scope[:writable])].compact
-      operations = scope[:proved] ? GIT_OPERATIONS : GIT_OPERATIONS - %w[commit]
+      operations = Array(operations).map(&:to_s)
+      operations -= %w[stage commit] unless scope[:proved]
       schema(verbs: verbs - closed, operations:)
     end
 
@@ -127,8 +128,8 @@ module Master::Core
     end
 
     # The one method the Core calls. Returns an Effect.
-    def propose(context, verbs:, scope: nil)
-      reply = ask(transcript(context), Model.offer(verbs, scope))
+    def propose(context, verbs:, scope: nil, operations: GIT_OPERATIONS)
+      reply = ask(transcript(context), Model.offer(verbs, scope, operations:))
       Model.parse(reply, verbs:)
     end
 
