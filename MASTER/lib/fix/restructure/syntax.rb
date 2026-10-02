@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "erb"
 require "json"
 require "prism"
 require "psych"
@@ -21,6 +22,7 @@ module Master
           when :javascript then command_ok?("node", "--check", path)
           when :yaml then parses? { Psych.parse(File.read(path)) }
           when :json then parses? { JSON.parse(File.read(path)) }
+          when :erb then erb_valid?(path)
           else true
           end
         end
@@ -29,7 +31,7 @@ module Master
           ext = File.extname(path)
           return :ruby if %w[.rb .rake .ru].include?(ext) || %w[Rakefile Gemfile].include?(File.basename(path))
           return { ".sh" => :shell, ".js" => :javascript, ".mjs" => :javascript, ".yml" => :yaml,
-                   ".yaml" => :yaml, ".json" => :json }[ext] unless ext.empty?
+                   ".yaml" => :yaml, ".json" => :json, ".erb" => :erb }[ext] unless ext.empty?
 
           interpreter = File.open(path, &:gets).to_s[%r{\A#!.*?/(?:env\s+)?(\w+)}, 1]
           return :ruby if interpreter == "ruby"
@@ -47,6 +49,13 @@ module Master
         def self.command_ok?(*command)
           _, status = Master::Io::Exec.capture2e(*command)
           status.success?
+        end
+
+        def self.erb_valid?(path)
+          generated = ERB.new(File.read(path, encoding: "UTF-8")).src
+          Prism.parse(generated).success?
+        rescue SyntaxError, StandardError
+          false
         end
 
         def self.parses?
