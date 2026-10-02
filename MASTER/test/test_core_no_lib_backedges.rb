@@ -29,7 +29,12 @@ class NoLibBackedgesTest < Minitest::Test
 
       text.each_line.with_index(1) do |line, lineno|
         next unless line.match?(/^\s*(require|require_relative)\s+["']/)
-        # Its own namespace and the stdlib are fine; a sibling under lib/ is not.
+        # Its own core namespace and the stdlib are fine; a sibling under the
+        # rest of lib/ is not.
+        if line.match?(/^\s*require_relative\s+["']([^"']+)["']/)
+          target = path.dirname.join(Regexp.last_match(1)).expand_path
+          next if target == LIB.join("core") || target.to_s.start_with?("#{LIB.join("core")}#{File::SEPARATOR}")
+        end
         next if line.match?(/["'](open3|yaml|json|ruby_llm|tmpdir|fileutils|timeout|securerandom|rbconfig|pathname|shellwords|set|time|digest|open-uri|uri|net\/http|etc|io\/console)["']/)
 
         offenders << "#{path.relative_path_from(ROOT)}:#{lineno}: #{line.strip}"
