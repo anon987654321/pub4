@@ -2034,6 +2034,7 @@ function frame(t) {
   if (window.MASTER_PHOSPHOR_TRAIL?.capture && renderer?.domElement && phosphorOn) {
     window.MASTER_PHOSPHOR_TRAIL.capture(renderer.domElement);
   }
+  window.MASTER_FACE_WORLD?.update?.(performance.now());
   renderer.render(scene, camera);
   markFaceReady();
 
@@ -5017,6 +5018,9 @@ window.MASTER_FACE = {
   get mouthPool() { return mouthPool; },
   get eyePool() { return eyePool; },
   get renderer() { return renderer; },
+  get scene() { return scene; },
+  get camera() { return camera; },
+  get head() { return head; },
   // The face's material, so a recorder can pin a uniform. Every uniform is
   // rewritten each frame from State, so anything reading this to change the look
   // has to hold its value against that — see tools/face_record.rb, which defines
