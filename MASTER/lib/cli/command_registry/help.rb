@@ -53,9 +53,11 @@ module Master
           ],
         },
         "status" => {
-          summary: "one-frame health, the mission and the known-good runtime",
+          summary: "one-frame health, services and the known-good runtime",
           detail: ["/status — mode, git, fix loop, last pipeline stage, recent events.",
                    "/status mission — the current mission contract, stage, model, effort and goal.",
+                   "/status services [name] — named cognitive subsystems and their state.",
+                   "/status security — constitution, capability and self-change state.",
                    "The mission persists across interruption; artifacts and checkpoints remain separate evidence.",
                    "/status runtime — the recorded known-good commit.",
                    "/status runtime promote — record the current committed HEAD as known-good.",
@@ -138,14 +140,6 @@ module Master
           summary: "write the current MASTER tree and source to one Markdown artifact",
           detail: ["/snapshot — write pub4/.master/snapshots/snapshot_MASTER.md.",
                    "/snapshot <output> — write the snapshot to a chosen path inside pub4."],
-        },
-          "status" => {
-          summary: "one frame of runtime state",
-          detail: [
-            "/status — health, git, bundle, service and recent failure state.",
-            "/status services [name] — named cognitive subsystems and their state.",
-            "/status security — constitution, capability and self-change state.",
-          ],
         },
         "rules" => {
           summary: "the declared rules, one line each",

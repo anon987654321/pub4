@@ -51,9 +51,9 @@ module Master::Core
       private
 
       def normalize(path)
-        value = path.to_s.sub(%r{A./}, "")
+        value = path.to_s.delete_prefix("./")
         value = File.expand_path(value, "/")
-        value.sub(%r{A/}, "")
+        value.delete_prefix("/")
       end
     end
   end

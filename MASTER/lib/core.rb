@@ -49,7 +49,7 @@ module Master::Core
       verb = verb.to_sym
       raise ArgumentError, "unknown effect verb: #{verb}" unless VERBS.include?(verb)
 
-      expected = if verb == :git && %i[diff status log show branch].include?(args[:operation].to_sym)
+      expected = if verb == :git && %i[diff status log show branch].include?(args[:operation].to_s.to_sym)
                    :read
                  else
                    CAPABILITIES.fetch(verb)
