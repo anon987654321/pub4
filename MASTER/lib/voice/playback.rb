@@ -48,6 +48,8 @@ module Master
 
       module_function
 
+      def last_error = @last_error
+
       def player
         return @player if defined?(@player) && !@player.nil?
 
