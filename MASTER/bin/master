@@ -78,7 +78,8 @@ if ARGV.first == "--help" || ARGV.first == "-h"
 
     Repo operator surface (unchanged): bin/operator status | vps | post-pull
     Gate chain over the whole tree:    bin/operator gate
-  HELP)
+  HELP
+  )
   exit 0
 end
 
