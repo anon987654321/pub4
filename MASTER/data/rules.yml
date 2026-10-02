@@ -588,6 +588,11 @@ design_system:
       converged: ready
       settled: idle
     spatial:
+      topology_profiles:
+        papua-mask: { tilt_x: 0.00, tilt_y: 0.00, density: 1.00, fracture: 0.00 }
+        face:        { tilt_x: 0.00, tilt_y: 0.00, density: 1.00, fracture: 0.00 }
+        codebase:    { tilt_x: -0.08, tilt_y: 0.10, density: 1.18, fracture: 0.08 }
+        ecology:     { tilt_x: 0.12, tilt_y: -0.06, density: 1.32, fracture: 0.12 }
       shell:
         radius: 1.58
         width_segments: 28
