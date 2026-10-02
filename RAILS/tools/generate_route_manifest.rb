@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Writes gates/data/route_manifest.yml: controller#action -> GET paths, per app.
+# Writes MASTER/gates/data/route_manifest.yml: controller#action -> GET paths, per app.
 #
 # PageInventory used to derive a URL from a view's filename through a ladder of
 # special cases (dating's singular :profile, TV nested under channels, partner
@@ -31,7 +31,7 @@ module Deploy
     ROOT = File.expand_path("../..", __dir__)
     require File.join(ROOT, "MASTER", "lib", "operator", "ruby_runner")
     RAILS_ROOT = File.join(ROOT, "RAILS")
-    PATH = File.join(RAILS_ROOT, "gates", "data", "route_manifest.yml")
+    PATH = File.join(ROOT, "MASTER", "gates", "data", "route_manifest.yml")
     # Prefix and defaults are both optional and the prefix may be blank, so anchor
     # on the verb rather than counting columns.
     ROUTE_LINE = /^\s*(?<prefix>\S*)\s+(?<verb>[A-Z]+(?:\|[A-Z]+)*)\s+(?<pattern>\/\S*)\s+(?<endpoint>.+?)\s*$/

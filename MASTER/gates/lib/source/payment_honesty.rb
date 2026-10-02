@@ -2,7 +2,7 @@
 
 require_relative "../../support/deploy_inventory"
 require_relative "../../support/gate_result"
-require_relative "../../../tools/crawl_support"
+require_relative "../../support/crawl_support"
 require_relative "../../support/source_contract"
 
 module Deploy

@@ -4,7 +4,7 @@ require "json"
 require "yaml"
 require_relative "../../support/deploy_inventory"
 require_relative "../../support/gate_result"
-require_relative "../../../tools/crawl_support"
+require_relative "../../support/crawl_support"
 require_relative "../../support/page_inventory"
 require_relative "../../support/live_record_ids"
 
@@ -23,8 +23,8 @@ module Deploy
   # Scope: focus triangle — brgen · amber · MASTER web.
   class PageSimulationGate
     ROOT = File.expand_path("../../../..", __dir__)
-    REPORT_PATH = File.join(ROOT, "RAILS", "gates", "data", "page_sim_report.yml")
-    SNAPSHOT_PATH = File.join(ROOT, "RAILS", "gates", "data", "page_sim_inventory.yml")
+    REPORT_PATH = File.join(ROOT, "MASTER", "gates", "data", "page_sim_report.yml")
+    SNAPSHOT_PATH = File.join(ROOT, "MASTER", "gates", "data", "page_sim_inventory.yml")
 
     # Auth surfaces where the wall is the product (sign-in / register).
     AUTH_WALL_OK = %r{/session/new|/registration/new|/passwords}

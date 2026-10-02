@@ -1,6 +1,15 @@
 # frozen_string_literal: true
 
-require "sqlite3"
+# The bare runner ruby does not always carry the sqlite3 gem. A LoadError here
+# would crash the gate mid-walk, so the require is guarded and SQLITE3 records
+# the outcome: when false, every resolver no-ops and unresolved_reason names
+# the missing gem as an inconclusive note instead.
+SQLITE3 = begin
+  require "sqlite3"
+  true
+rescue LoadError
+  false
+end
 
 module Deploy
   # Resolves a real seeded record's id, slug or token out of the app's own
@@ -67,7 +76,15 @@ module Deploy
 
     # Explains an unresolved guest page without pretending that an absent seed is
     # a routing success. The message is part of the gate's evidence report.
+    #
+    # A module function, like resolve below it: page_simulation calls both as
+    # LiveRecordIds.<name>, and this def used to sit above the module_function
+    # line, so the live walk's first unresolved page raised NoMethodError.
+    module_function
+
     def unresolved_reason(page)
+      return "the sqlite3 gem is unavailable under the gate's ruby, so seeded record ids could not be read" unless SQLITE3
+
       id = page[:id].to_s
       UNRESOLVED_REASONS.each { |pattern, reason| return reason if id.match?(pattern) }
       return "no resolver is registered for this parameterised guest route" unless RESOLVERS.key?(id)
@@ -287,7 +304,7 @@ module Deploy
 
     def db(app)
       path = DB_PATH[app]
-      return nil unless path && File.file?(path)
+      return nil unless SQLITE3 && path && File.file?(path)
 
       @conn ||= {}
       @conn[app] ||= SQLite3::Database.new(path, readonly: true)

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "../gate_result"
+require_relative "../../support/gate_result"
 
 module Deploy
   class SharedWiringGate

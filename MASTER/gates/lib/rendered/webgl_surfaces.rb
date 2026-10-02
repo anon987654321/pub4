@@ -3,7 +3,7 @@
 require_relative "../../support/gate_result"
 require_relative "../../support/cdp_session"
 require_relative "../../support/geometry_probe"
-require_relative "../../../tools/crawl_support"
+require_relative "../../support/crawl_support"
 
 module Deploy
   # Whether a surface made of WebGL drew anything.

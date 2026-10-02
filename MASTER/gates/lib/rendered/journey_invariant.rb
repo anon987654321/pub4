@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../../support/gate_result"
-require_relative "../../../tools/crawl_support"
+require_relative "../../support/crawl_support"
 require_relative "../../support/geometry_probe"
 require_relative "../../support/turbo_journeys"
 

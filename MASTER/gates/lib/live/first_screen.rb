@@ -2,7 +2,7 @@
 
 require_relative "../../support/deploy_inventory"
 require_relative "../../support/gate_result"
-require_relative "../../../tools/crawl_support"
+require_relative "../../support/crawl_support"
 require_relative "../../support/brgen_vertical_surfaces"
 require_relative "../../support/dom_surface_schema"
 require_relative "../../../tools/scss_rules"

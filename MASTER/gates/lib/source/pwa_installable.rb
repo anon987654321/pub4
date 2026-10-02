@@ -20,8 +20,12 @@ module Deploy
   # neither. That is the claim worth holding, and it is one nobody can make by
   # listing a directory.
   class PwaInstallable
-    # gates/lib/source -> gates/lib -> gates -> MASTER -> repository root.
+    # gates/lib/source -> gates/lib -> gates -> MASTER -> repository root; the
+    # apps themselves live under RAILS/, so every lookup joins RAILS_ROOT.
+    # Before the 11b0633bd move this constant sat at RAILS/gates and three
+    # levels sufficed; from MASTER it is four plus the RAILS_ROOT join.
     ROOT = File.expand_path("../../../..", __dir__)
+    RAILS_ROOT = File.join(ROOT, "RAILS")
     APPS = Fleet.app_names.freeze
 
     # Chrome installs on one 192 and one 512 with purpose "any". Maskable and
@@ -55,7 +59,7 @@ module Deploy
 
     def manifest_path(app)
       candidates = %w[app/views/pwa/manifest.json app/views/pwa/manifest.json.erb]
-      candidates.map { |path| File.join(ROOT, app, path) }.find { |path| File.file?(path) }
+      candidates.map { |path| File.join(RAILS_ROOT, app, path) }.find { |path| File.file?(path) }
     end
 
     def check_keys(app, source)
@@ -121,7 +125,7 @@ module Deploy
 
     def check_service_worker(app)
       @result.checked!
-      worker = File.join(ROOT, app, "app/views/pwa/service-worker.js")
+      worker = File.join(RAILS_ROOT, app, "app/views/pwa/service-worker.js")
       return if File.file?(worker)
 
       @result.fail("pwa_installable: #{app} has no service worker at #{rel(worker)}")
@@ -155,8 +159,8 @@ module Deploy
 
     def resolves?(app, src)
       path = src.sub(%r{\A/}, "")
-      File.file?(File.join(ROOT, app, "public", path)) ||
-        File.file?(File.join(ROOT, "shared", "public", path))
+      File.file?(File.join(RAILS_ROOT, app, "public", path)) ||
+        File.file?(File.join(RAILS_ROOT, "shared", "public", path))
     end
 
     def rel(path) = path.sub("#{ROOT}/", "")
