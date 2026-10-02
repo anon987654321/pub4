@@ -553,6 +553,41 @@ design_system:
       z-modal: "1000"
       z-toast: "1100"
       z-skip: "2000"
+  # One semantic face contract. CLI, browser HUD, 2D fallback and 3D FaceWorld
+  # consume this vocabulary; renderers may project it, but may not redefine it.
+  face_interface:
+    schema: 1
+    prompt:
+      font: font_code
+      measure_ch: 66
+      line_height: 1.5
+      user_token: "$"
+      master_token: "master$"
+    state:
+      modes: [idle, listening, thinking, working, speaking, warning, error, sleeping, ready]
+      default_mode: idle
+      default_topology: papua-mask
+      entropy: 0.18
+      confidence: 0.86
+      attention: 1.0
+      arousal: 0.22
+      valence: 0.18
+      focus: 0.86
+      activity: 0.14
+      risk: 0.0
+    spatial:
+      shell:
+        radius: 1.58
+        width_segments: 28
+        height_segments: 20
+      nodes:
+        lib: [-1.38, 0.10, -0.28]
+        law: [-0.70, 1.18, -0.10]
+        tools: [1.40, 0.05, -0.20]
+        web: [0.70, -1.10, -0.12]
+        openbsd: [-0.82, -1.05, -0.16]
+      links: [[lib, law], [law, tools], [tools, web], [web, openbsd], [openbsd, lib],
+              [lib, tools], [law, web], [tools, openbsd], [web, lib], [openbsd, law]]
   # BRGEN_OLD dark — dark-inverted port of the real 2014 desktop.css/mobile.css
   # from pub/__OLD_BACKUPS/BRGEN_OLD. True neutral grayscale, no accent hue,
   # Arial. chrome_bg is the utility-bar tone (darker than bg), mirroring
