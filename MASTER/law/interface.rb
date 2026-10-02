@@ -54,7 +54,10 @@ Law.define(:CLI_PROMPT_COMPOSITION) do
   path "MASTER/lib/voice/renderer/"
   ask "Does this prompt renderer keep one compact, single-line grammar of location, repository state, meaningful transient phase/error state, and the shell prompt token? Look for decorative chrome, embedded newlines, duplicated state, expensive work on every redraw, or information that belongs behind /status, /doctor or /help. Return CLEAN when the prompt is already compact, single-line and bounded."
   fix "Keep one physical interactive line: location + repository state + meaningful transient phase/error + prompt token; cache or bound external probes; move detail to explicit status/help surfaces."
-  bad <<~X
+  # Quoted heredocs: the examples quote instance and local variables, and an
+  # interpolating heredoc evaluates them against the Builder at load time —
+  # one #{e.class} here once made every law definition crash the registry.
+  bad <<~'X'
     def prompt
       system("git status")
       "◉ #{@path} [model=#{@model} tokens=#{@tokens} memory=#{@memory}]"
@@ -75,13 +78,13 @@ Law.define(:VOICE_FAILURES_ARE_ACTIONABLE) do
   path "MASTER/lib/voice/"
   ask "When synthesis, transport, or playback fails, does the runtime produce one bounded actionable state, preserve a useful last_error, and use the declared fallback chain without replaying or spawning uncontrolled work? Return CLEAN when the failure path is already explicit and bounded."
   fix "Return an explicit failure/result, retain the reason for /status or /doctor, rate-limit repeated diagnostics, and fall through only to declared voice/audio fallbacks."
-  bad <<~X
+  bad <<~'X'
     rescue StandardError
       warn e
       nil
     end
   X
-  good <<~X
+  good <<~'X'
     rescue StandardError => e
       @last_error = "#{e.class}: #{e.message}"
       warn_once("voice0: unavailable — #{@last_error}")

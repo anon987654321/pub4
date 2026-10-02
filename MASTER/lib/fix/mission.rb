@@ -88,6 +88,9 @@ module Master
       # is deliberately a new objective on the next wake; a blocked mission may
       # be replaced only by an explicit/manual /fix request.
       def start_or_resume!(goal:, scope: @root, model: nil, effort: "medium", plan: nil, origin: "unknown", auto_continue: false)
+        # resumed is read after with_lock returns; assignment inside the block
+        # would be block-local and the emit below would see an unset local.
+        resumed = false
         with_lock do
           current = load_record
           if reusable_for?(current, scope, goal)
@@ -216,6 +219,9 @@ module Master
       end
 
       def defer!(reason:, seconds: nil)
+        # delay/retries are read after with_lock returns; block locals die with it.
+        delay = 0
+        retries = 0
         with_lock do
           load_current_unlocked!
           return self unless @record

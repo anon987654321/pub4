@@ -60,10 +60,17 @@ module Master
         # OpenBSD dmesg grammar. An explicit quiet/normal/verbose flag still wins.
         rendered = with_dmesg_verbosity(raw, default: "trace") do
           unless ENV["MASTER_FIX_DEEP_TRACE"] == "0"
-            trace = Master::Fix::ExecutionTrace.new(
-              root: Master.repo_root,
-              dependencies: { scanner:, fix_loop:, deliberation:, bus: }
-            ).run
+            trace = begin
+              Master::Fix::ExecutionTrace.new(
+                root: Master.repo_root,
+                dependencies: { scanner:, fix_loop:, deliberation:, bus: }
+              ).run
+            rescue SyntaxError, StandardError => e
+              Master::Fix::ExecutionTrace::Result.new(
+                ok: false, files: 0, bytes: 0, ruby_files: 0, phases: {},
+                failures: ["execution trace uncaught: #{e.class}: #{e.message}"]
+              )
+            end
             Master::Trace::Dmesg.status("trace0", trace.summary)
             unless trace.clean?
               details = trace.failures.first(12).join(" | ")

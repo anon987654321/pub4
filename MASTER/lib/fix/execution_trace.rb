@@ -95,7 +95,7 @@ module Master
           phases: phases,
           failures: failures
         )
-      rescue StandardError => e
+      rescue SyntaxError, StandardError => e
         Result.new(ok: false, files: 0, bytes: 0, ruby_files: 0,
                    phases:, failures: ["execution trace crashed: #{e.class}: #{e.message}"])
       end
@@ -137,7 +137,10 @@ module Master
               @ruby_checker.call(tmp.path)
             end
           end
-        rescue StandardError => e
+        # SyntaxError descends from ScriptError, not StandardError — without
+        # naming it here the unparseable file kills the whole check instead of
+        # becoming the finding this preflight exists to report.
+        rescue SyntaxError, StandardError => e
           failures << "#{relative(path)}: syntax failed: #{e.class}: #{e.message}"
         end
       end
@@ -156,7 +159,7 @@ module Master
           candidate.delete_prefix!("<sub>")
           changed = true
         end
-        if candidate.sub!(%r{</sub>s*z}, "")
+        if candidate.sub!(%r{</sub>\s*\z}, "")
           changed = true
         end
 
