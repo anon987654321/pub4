@@ -36,7 +36,6 @@ face_eager:
   - face_blendshape_bridge.js
   - face_council_multi.js
   - face_phosphor_trail.js
-  - face_offscreen_ecology.js
   - face_micro_interactions.js
   - face_perf_guards.js
   - face_brutalist.js
