@@ -15,6 +15,19 @@ module Contracts
       File.expand_path("../../STUDIO", __dir__)
     end
 
+    def photograph_script = first_file("photograph.rb")
+
+    def photograph(prompt:, film: false, duration: 5)
+      script = photograph_script or raise "STUDIO photograph entrypoint is unavailable"
+      argv = [RbConfig.ruby, script]
+      argv << "--film" if film
+      argv.concat(["--duration", duration.to_i.to_s, prompt.to_s])
+      stdout, status = Open3.capture2e(*argv, chdir: root)
+      raise "STUDIO photograph failed: #{stdout.lines.last.to_s.strip}" unless status.success?
+
+      JSON.parse(stdout)
+    end
+
     def dilla_script = first_file("dilla/dilla.rb")
     def postpro_script = first_file("postpro/postpro.rb")
     def replicate_script = first_file("replicate/replicate.rb")

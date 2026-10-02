@@ -53,8 +53,12 @@ Operator::CiGuard.run! do
     else
       step "css_build", "echo 'tools/build_all_css.rb not found in any known location' >&2; exit 1"
     end
-    pub4_lib = ENV["PUB4_RAILS_ROOT"] && File.join(ENV["PUB4_RAILS_ROOT"], "shared/lib/operator")
-    pub4_lib ||= File.expand_path("../lib/operator", __dir__)
+    tool_roots = [
+      ENV["PUB4_RAILS_ROOT"] && File.join(ENV["PUB4_RAILS_ROOT"], "tools", "operator"),
+      File.expand_path("../../tools/operator", __dir__),
+      File.expand_path("../../MASTER/tools", __dir__),
+    ].compact.uniq
+
     %w[
       rhythm_lint
       fallback_drift_lint
@@ -63,11 +67,11 @@ Operator::CiGuard.run! do
       chrome_i18n_lint
       dialect_token_drift_check
     ].each do |lint|
-      script = File.join(pub4_lib, "#{lint}.rb")
-      if File.readable?(script)
+      script = tool_roots.map { |root| File.join(root, "#{lint}.rb") }.find { |candidate| File.readable?(candidate) }
+      if script
         step lint, "#{RbConfig.ruby} #{script}"
       else
-        step lint, "echo '#{lint}.rb not found at #{script}' >&2; exit 1"
+        step lint, "echo '#{lint}.rb not found in RAILS/tools/operator or MASTER/tools' >&2; exit 1"
       end
     end
     importmap_audit = %(bundle exec #{RbConfig.ruby} -e 'require "./config/environment"; require "importmap/commands"; Importmap::Commands.start(%w[audit])')

@@ -49,7 +49,7 @@ class AiController < ApplicationController
 
     return unless @studio_photo
 
-        @suggestions.select { |s| s.is_a?(Hash) }.first(MASTER_PHOTOGRAPHS_PER_REQUEST).each do |s|
+        @suggestions.select { |s| s.is_a?(Hash) }.first(STUDIO_PHOTOGRAPHS_PER_REQUEST).each do |s|
       combo = "professional fashion photography of outfit '#{s['name']}' with #{Array(s['items']).join(', ')}. #{s['description']}. model, kodak portra, cinematic"
       begin
         out = Contracts::Studio.photograph(prompt: combo)
