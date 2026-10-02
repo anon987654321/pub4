@@ -66,7 +66,7 @@ module Deploy
         return path unless path.empty?
       end
 
-      ""
+      nil
     end
 
     def command_path(name)
