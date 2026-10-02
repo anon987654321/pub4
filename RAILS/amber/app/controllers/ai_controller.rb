@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "../../../contracts/studio"
+
 
 class AiController < ApplicationController
   before_action :require_real_user
