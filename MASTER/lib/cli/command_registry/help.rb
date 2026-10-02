@@ -139,6 +139,14 @@ module Master
           detail: ["/snapshot — write pub4/.master/snapshots/snapshot_MASTER.md.",
                    "/snapshot <output> — write the snapshot to a chosen path inside pub4."],
         },
+          "status" => {
+          summary: "one frame of runtime state",
+          detail: [
+            "/status — health, git, bundle, service and recent failure state.",
+            "/status services [name] — named cognitive subsystems and their state.",
+            "/status security — constitution, capability and self-change state.",
+          ],
+        },
         "rules" => {
           summary: "the declared rules, one line each",
           detail: ["/rules [filter] — id, tier, severity and kind from data/rules.yml.",

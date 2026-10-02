@@ -2058,3 +2058,15 @@ Law.define(:GRICE_COOPERATIVE) do
     The test passed locally; CI has not run yet.
   X
 end
+
+
+# Capability reduction follows pledge(2): a context may shed authority, never regain it.
+Law.define(:CAPABILITY_REDUCTION_MONOTONIC) do
+  source "OpenBSD pledge(2) design grammar, extended to cognitive authority"
+  severity :error
+  ask "Can a runtime regain a capability it previously removed, instead of creating a new trusted context?"
+  detect { |line| line.match?(/\.acquire\s*\(/) }
+  fix "Remove capability acquisition. Start a new trusted context if greater authority is required."
+  bad "capabilities.drop(:network); capabilities.acquire(:network)"
+  good "capabilities.drop(:network) # remains unavailable in this context"
+end

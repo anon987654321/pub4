@@ -20,22 +20,44 @@ module Master::Core
   # set is closed and small; that closure is what makes the agent auditable.
   VERBS = %i[read write exec git ask note critique done].freeze
 
-  Effect = Data.define(:verb, :args) do
+  Effect = Data.define(:verb, :args, :capability) do
     def self.read(path) = new(verb: :read, args: { path: })
     def self.write(path, content) = new(verb: :write, args: { path:, content: })
     def self.exec(argv, timeout: 60, evidence: nil, env: {}) =
       new(verb: :exec, args: { argv:, timeout:, evidence:, env: })
-    def self.git(operation, **args) = new(verb: :git, args: { operation:, **args })
+    def self.git(operation, **args)
+      capability = %i[diff status log show branch].include?(operation.to_sym) ? :read : :write
+      new(verb: :git, args: { operation:, **args }, capability:)
+    end
     def self.ask(prompt, options: nil) = new(verb: :ask, args: { prompt:, options: })
     def self.note(kind, text) = new(verb: :note, args: { kind:, text: })
     def self.critique(scope: "diff") = new(verb: :critique, args: { scope: })
     def self.done(summary = nil) = new(verb: :done, args: { summary: })
 
-    def initialize(verb:, args:)
+    CAPABILITIES = {
+      read: :read,
+      write: :write,
+      exec: :execute,
+      git: :write,
+      ask: :stdio,
+      note: :stdio,
+      critique: :stdio,
+      done: :stdio,
+    }.freeze
+
+    def initialize(verb:, args:, capability: nil)
       verb = verb.to_sym
       raise ArgumentError, "unknown effect verb: #{verb}" unless VERBS.include?(verb)
 
-      super(verb:, args:)
+      expected = if verb == :git && %i[diff status log show branch].include?(args[:operation].to_sym)
+                   :read
+                 else
+                   CAPABILITIES.fetch(verb)
+                 end
+      supplied = capability&.to_sym
+      raise ArgumentError, "effect capability mismatch: #{verb} requires #{expected}, got #{supplied}" if supplied && supplied != expected
+
+      super(verb:, args:, capability: expected)
     end
 
     def done? = verb == :done

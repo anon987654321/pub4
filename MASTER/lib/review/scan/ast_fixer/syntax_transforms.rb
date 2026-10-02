@@ -53,6 +53,26 @@ module Master
           # a shebang -- start_with?(FROZEN_HEADER) alone misses that second case
           # and re-inserted a duplicate on every fix cycle for every shebang'd
           # script (confirmed: several tools/*.rb accreted 2, then 3 copies).
+          # Repair accidental UI/source wrappers only when they enclose the entire
+          # Ruby file and the unwrapped result parses. Partial wrappers are left
+          # untouched because their intent cannot be inferred safely.
+          def strip_accidental_sub_wrapper(src)
+            return src unless ruby?
+            lines = src.lines
+            return src if lines.empty?
+
+            first = lines.first.to_s
+            last = lines.last.to_s.strip
+            return src unless first.start_with?("<sub>") && last == "</sub>"
+
+            first = first.delete_prefix("<sub>")
+            inner = [first, *lines[1...-1]].join
+            return src unless Prism.parse(inner).success?
+
+            @transforms << :strip_accidental_sub_wrapper
+            inner
+          end
+
           def add_frozen_header(src)
             lines = src.lines
             return src if lines.first(2).any? { |l| l.strip == FROZEN_HEADER.strip }

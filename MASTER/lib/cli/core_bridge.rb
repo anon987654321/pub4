@@ -21,9 +21,10 @@ module Master
         seed_continuation(memory, mission.record)
         begin
           mission.transition!(:plan, plan: Master::Ground::ActivePlan.read(root) || "fold plan: constitutional turn loop")
-          world = build_world(root:, container:)
+          capabilities = Master::Core::Capabilities.for(:fix)
+          world = build_world(root:, container:, capabilities:)
           mission.transition!(:execute)
-          done = build_fold(root:, model:, memory:, world:, max_turns:, observer:).run(goal)
+          done = build_fold(root:, model:, memory:, world:, max_turns:, observer:, capabilities:).run(goal)
           mission.transition!(:verify, summary: continuation_summary(done))
           settle_mission(mission, done)
 
@@ -36,10 +37,10 @@ module Master
       end
 
       # Only the interactive session sets an asker; see Session#terminal_ask.
-      def build_world(root:, container:)
+      def build_world(root:, container:, capabilities: Master::Core::Capabilities.for(:fix))
         critique_runner = container ? CouncilCrit.runner_for(container) : nil
         Master::Core::World.new(root:, ask: Fiber[:master_terminal_ask], critique_runner:,
-                                undo: container&.fetch(:undo, nil))
+                                undo: container&.fetch(:undo, nil), capabilities:)
       end
 
       # A mission checkpoints the files it touches before the fold writes them.
@@ -220,11 +221,13 @@ module Master
         end
       end
 
-      def build_fold(root:, model:, memory:, world:, max_turns:, observer:)
+      def build_fold(root:, model:, memory:, world:, max_turns:, observer:,
+                     capabilities: Master::Core::Capabilities.for(:fix))
         Master::Core::Fold.new(
           model:,
           constitution: Master::Core::Constitution.load(data_dir: Master.data_path, verify: scan_verifier,
-                                                        sandbox: shell_sandbox(root: root)),
+                                                        sandbox: shell_sandbox(root: root),
+                                                        capabilities:),
           world:,
           memory:,
           max_turns:,

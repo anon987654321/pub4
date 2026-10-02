@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "capabilities"
+
 require "fileutils"
 require "open3"
 require "securerandom"
@@ -37,16 +39,18 @@ module Master::Core
     # pops that journal's newest entry, so a fold write that records nothing
     # leaves /undo reverting an older write instead. Injected, because core
     # reaches nothing in lib/.
-    def initialize(root:, ask: nil, critique_runner: nil, undo: nil)
+    def initialize(root:, ask: nil, critique_runner: nil, undo: nil, capabilities: Capabilities.for(:fix))
       @root = File.expand_path(root)
       @ask = ask
       @critique_runner = critique_runner
       @undo = undo
+      @capabilities = capabilities
     end
 
     def verbs = Master::Core::VERBS
 
     def perform(effect)
+      @capabilities.require!(effect.capability)
       send("do_#{effect.verb}", **effect.args)
     rescue StandardError => e
       Observation.no("#{e.class}: #{e.message}")

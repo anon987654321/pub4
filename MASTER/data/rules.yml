@@ -144,12 +144,11 @@ architecture:
         - rails
       check: OPENBSD/bin/check
     studio:
-      path: MASTER/tools
-      entry: MASTER/tools/runs.rb
-      owner: master
-      depends_on:
-        - master
-      check: MASTER/tools/runs.rb
+      path: STUDIO
+      entry: STUDIO/gate.rb
+      owner: studio
+      depends_on: []
+      check: STUDIO/gate.rb
 
 preserve_user_intent:
   forbidden_changes_during_refactor:

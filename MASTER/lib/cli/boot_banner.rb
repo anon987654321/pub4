@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "../ground/pledge"
+require_relative "../core/capabilities"
 require_relative "../voice/aesthetic"
 require_relative "../trace/dmesg"
 
@@ -26,20 +28,33 @@ module Master
         budget = Master::Ops::ProcessBudget.status
         brutalist = ENV["MASTER_BRUTALIST"] == "1"
         aesthetic = Master::Voice::Aesthetic.mode
-        lines = [
+        [
           "boot0 at mainbus0: safe #{ENV.fetch("MASTER_SAFE_MODE", "1")}, web #{ENV.fetch("MASTER_WEB", "0")}",
+          *security_lines,
           "loop0 at master0: #{status.fetch(:selected, "none")}, owner #{status.fetch(:owner, "none")}",
           "budget0 at master0: valid #{budget[:valid]}, slot #{budget.fetch(:slot, "unknown")}",
           "style0 at master0: #{aesthetic}",
           "motd0 at master0: #{motd_spotlight}",
           "master0: ready",
-        ]
-        if brutalist || aesthetic == "wscons"
-          profile = aesthetic == "wscons" ? "wscons" : "brutalist"
-          lines << "style0 at master0: profile #{profile}, motion steps, typography mono"
-          lines << "style0: entropy and confidence inspectable"
+        ].tap do |lines|
+          if brutalist || aesthetic == "wscons"
+            profile = aesthetic == "wscons" ? "wscons" : "brutalist"
+            lines << "style0 at master0: profile #{profile}, motion steps, typography mono"
+            lines << "style0: entropy and confidence inspectable"
+          end
         end
-        lines
+      end
+
+      def security_lines
+        profile = Master::Core::Capabilities.for(:fix)
+        [
+          "security0 at master0: secure defaults, constitutional admission",
+          "cap0 at security0: profile #{profile.name}, #{profile.capabilities.join(" ")}",
+          "pledge0 at security0: openbsd=#{Master::Ground::Pledge.openbsd?}, staged reduction",
+          "memory0 at security0: unveil-style restricted views available",
+          "patch0 at security0: transaction-backed self-change with rollback",
+          "model0 at security0: proposal-only; effects need capability admission",
+        ]
       end
 
       def motd_spotlight

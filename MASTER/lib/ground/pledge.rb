@@ -42,6 +42,30 @@ module Master
       STAGE1_PROMISES = "stdio rpath wpath cpath proc exec inet dns tty unveil prot_exec error"
       STAGE2_PROMISES = "stdio rpath wpath cpath proc exec inet dns tty prot_exec error"
 
+      Profile = Data.define(:name, :capabilities, :promises) do
+        def initialize(name:, capabilities:, promises:)
+          super(name.to_sym, capabilities.map(&:to_sym).freeze, promises.to_s.freeze)
+        end
+
+        def allows?(capability) = capabilities.include?(capability.to_sym)
+      end
+
+      PROFILES = {
+        boot: Profile.new(name: :boot, capabilities: %i[stdio read execute], promises: STAGE1_PROMISES),
+        model: Profile.new(name: :model, capabilities: %i[stdio read model], promises: "stdio rpath inet dns"),
+        fix: Profile.new(name: :fix, capabilities: %i[stdio read write create execute], promises: STAGE2_PROMISES),
+        device: Profile.new(name: :device, capabilities: %i[stdio read device], promises: "stdio rpath"),
+        world: Profile.new(name: :world, capabilities: %i[stdio read world], promises: "stdio rpath"),
+      }.freeze
+
+      def profile(name) = PROFILES.fetch(name.to_sym)
+
+      def apply_profile!(name)
+        selected = profile(name)
+        pledge(selected.promises)
+        selected
+      end
+
       def stage1_boot!(root)
         pledge(STAGE1_PROMISES)
         unveil("/", "")

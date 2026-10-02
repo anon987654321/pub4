@@ -2,6 +2,7 @@
 
 require "open3"
 require "yaml"
+require_relative "capabilities"
 
 module Master::Core
   # Constitution — the single gate. Every Effect the agent proposes folds
@@ -41,21 +42,31 @@ module Master::Core
     # gate was wired in, but the Fold does not exec through Io::Shell. It execs
     # through World. So the hardened gate was live for the tool path and absent
     # from the constitutional one, which is the path that actually runs unattended.
-    def self.load(data_dir:, verify: nil, sandbox: nil)
+    def self.load(data_dir:, verify: nil, sandbox: nil, capabilities: Capabilities.for(:fix))
       rules_data = YAML.safe_load_file(File.join(data_dir, "rules.yml"), aliases: true)
       sacred_paths = Paths.sacred_paths(root: File.dirname(data_dir))
       rules = default_rules(rules_data, sacred_paths:)
       rules += [scan_clean_rule(verify)] if verify
       rules += [sandboxed_exec_rule(sandbox)] if sandbox
-      new(rules:)
+      new(rules:, capabilities:)
     end
 
-    def initialize(rules:)
+    def initialize(rules:, capabilities: Capabilities.for(:fix))
       @rules = rules
+      @capabilities = capabilities
     end
+
+    attr_reader :capabilities
 
     # Fold the effect through every applicable rule. Total: returns Allow or Block.
     def admit(effect, memory)
+      unless @capabilities.allow?(effect.capability)
+        return Verdict::Block.new(
+          reason: "capability refused: #{effect.capability}",
+          by: :capability,
+        )
+      end
+
       @rules.each do |rule|
         next unless rule.watches?(effect.verb)
 

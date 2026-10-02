@@ -2,6 +2,7 @@
 
 require "time"
 require_relative "../../trace/log"
+require_relative "../../operator/services"
 require_relative "../presentation_contract"
 
 module Master
@@ -20,12 +21,31 @@ module Master
         word, rest = subcommand(ctx)
         return dispatch_mission(root, ctx: rest) if word == "mission"
         return dispatch_runtime(root, ctx: rest) if word == "runtime"
+        return dispatch_services(ctx: rest) if word == "services"
+        return dispatch_security if word == "security"
 
         gather_status_data(root:, fix_loop:, git:)
           .merge(rsi: rsi_opportunities(learnings))
           .then { |data| render_status_lines(data) }.join("\n")
       rescue StandardError => e
         "status0: #{e.message}"
+      end
+
+      def dispatch_services(ctx: nil)
+        name, = subcommand(ctx)
+        Master::Operator.status(name).map { |service, state| "service0: #{service} #{state}" }.join("\n")
+      end
+
+      def dispatch_security
+        data = Master::Operator.security
+        [
+          "security0: constitution=#{data[:constitution]}",
+          "cap0: profile=#{data[:capability_profile]} #{data[:capabilities].join(" ")}",
+          "pledge0: openbsd=#{data[:openbsd_pledge]}",
+          "patch0: transactional_fix=#{data[:transactional_fix]}",
+          "model0: authority=#{data[:model_authority]}",
+          "security0: monotonic_reduction=#{data[:monotonic_reduction]}",
+        ].join("\n")
       end
 
       def gather_status_data(root:, fix_loop:, git:)

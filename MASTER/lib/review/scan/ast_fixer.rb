@@ -47,7 +47,7 @@ module Master
         # remove_immediate_dead_code deleted live sibling if-branches in chat.js
         # that only *looked* unreachable without real block-scope analysis.
         # Now Ruby-only, via the ruby? strategy above.
-        UNIVERSAL_TRANSFORMS = %i[expand_tabs collapse_blank_lines strip_trailing_whitespace ensure_final_newline].freeze
+        UNIVERSAL_TRANSFORMS = %i[strip_accidental_sub_wrapper expand_tabs collapse_blank_lines strip_trailing_whitespace ensure_final_newline].freeze
 
         include SyntaxTransforms
         include WebTransforms

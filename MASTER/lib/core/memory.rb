@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "digest"
+require_relative "memory/view"
 
 module Master::Core
   # Memory — the unified cognitive architecture.
@@ -115,6 +116,22 @@ module Master::Core
     def context
       compact if size > @budget
       [*@entries, Entry.new(role: :note, text: state_text)]
+    end
+
+    def view = (@view ||= View.new)
+
+    def unveil(paths, mode = :read)
+      view.unveil(paths, mode)
+      self
+    end
+
+    def lock!
+      view.lock!
+      self
+    end
+
+    def memory_allowed?(path, mode = :read)
+      view.allowed?(path, mode)
     end
 
     private

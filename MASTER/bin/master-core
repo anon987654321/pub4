@@ -61,7 +61,8 @@ end
 
 root = File.expand_path(options.fetch(:root))
 data_dir = File.join(File.expand_path("..", __dir__), "data")
-constitution = Master::Core::Constitution.load(data_dir:)
+capabilities = Master::Core::Capabilities.for(:fix)
+constitution = Master::Core::Constitution.load(data_dir:, capabilities:)
 world = Master::Core::World.new(root:)
 memory = Master::Core::Memory.new
 model = options[:real] ? Master::Core::Model.new(**{ model_id: options[:model] }.compact) : NullModel.new(goal)

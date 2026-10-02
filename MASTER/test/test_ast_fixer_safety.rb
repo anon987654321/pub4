@@ -201,4 +201,20 @@ class TestAstFixerSafety < Minitest::Test
     fixer
   end
 
+  def test_whole_sub_wrapper_is_removed_only_when_unwrapped_ruby_parses
+    source = "<sub># frozen_string_literal: true\nVALUE = 1\n</sub>\n"
+    result = Master::Review::Scan::AstFixer.propose("broken.rb", source)
+
+    assert result.changed
+    assert_includes result.transforms, :strip_accidental_sub_wrapper
+    assert_equal "# frozen_string_literal: true\nVALUE = 1\n", result.content
+  end
+
+  def test_partial_sub_wrapper_is_not_guessed_at
+    source = "VALUE = \"<sub>literal</sub>\"\n</sub>\n"
+    result = Master::Review::Scan::AstFixer.propose("broken.rb", source)
+
+    refute_includes result.transforms, :strip_accidental_sub_wrapper
+  end
+
 end
