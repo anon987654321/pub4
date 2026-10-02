@@ -17,7 +17,7 @@ module Master
         "neural" => "en-US-JennyNeural",
         "persona_affects_text_only" => true,
         "stream_live_default" => true,
-        "default_rate" => "-7%",
+        "default_rate" => "-5%",
         "default_pitch" => "+0Hz",
         "rotation" => %w[jenny],
         "language_voices" => { "en" => "jenny", "nb" => "pernille", "ms" => "yasmin" },
@@ -27,6 +27,13 @@ module Master
           "ms" => { "female" => "yasmin", "male" => "osman" }
         },
         "post_chain" => nil,
+        "prosody" => {
+          "melody" => {
+            "rate" => ["-1%", "+2%", "+1%", "+3%", "0%", "-2%", "-1%", "+1%", "0%", "+2%"],
+            "pitch_hz" => [0, 6, 10, 6, 0, -6, -10, -6, 3, 0]
+          },
+          "pitch_reference_hz" => 180
+        },
         "bed" => nil,
       }.freeze
 
@@ -126,6 +133,13 @@ module Master
       #
       # Nil rather than an empty string, so a caller writes `if chain` and a
       # missing declaration cannot be confused with a chain that does nothing.
+      # Prosody knobs live beside the rest of the TTS policy so melody and
+      # engine adapters do not grow a second configuration source.
+      def prosody
+        value = data["prosody"]
+        value.is_a?(Hash) ? value : FALLBACK["prosody"]
+      end
+
       def post_chain
         value = data["post_chain"].to_s.strip
         value.empty? ? nil : value
@@ -174,6 +188,7 @@ module Master
           language_voice_families: language_voice_families.transform_values { |family| family.transform_values(&:to_s) },
           voices: voice_aliases,
           post_chain:,
+          prosody:,
           bed:,
           persona_affects_text_only: persona_affects_text_only?,
           stream_live_default: stream_live_default?,
