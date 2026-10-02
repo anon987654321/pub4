@@ -2840,3 +2840,12 @@ Reference starting points: Browser Use — https://github.com/browser-use/browse
 - [ ] UI-498: Make retry behaviour observable through dmesg-style events.
 - [ ] UI-499: Measure end-to-send latency for every voice turn.
 - [ ] UI-500: Record speech-start, speech-end and send timestamps separately.
+
+
+## Travel agent
+
+- [ ] TRAVEL-001: add provider-specific adapters where a stable authenticated API is stronger than DOM automation.
+- [ ] TRAVEL-002: add booking receipt extraction and email confirmation verification.
+- [ ] TRAVEL-003: add itinerary normalization across flights, hotels, restaurants, tours and transfers.
+- [ ] TRAVEL-004: add explicit cancellation/change flows with the same confirmation gate.
+- [ ] TRAVEL-005: add a pre-departure immigration/document checklist driven by current official sources.
