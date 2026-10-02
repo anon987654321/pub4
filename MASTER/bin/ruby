@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# Resolve the exact pinned Ruby without changing host package state.
+# Resolve the project preferred Ruby on development hosts and a supported package Ruby on OpenBSD.
 set -eu
 
 ROOT=${0:A:h:h}
@@ -47,9 +47,18 @@ RBENV=
 find_rbenv
 RBENV=$REPLY
 
-if [[ -n $RBENV ]]; then
+if [[ -n $RBENV && ${OSTYPE:-} != openbsd* ]]; then
   pinned_ruby "$RBENV"
   RUBY=$REPLY
+fi
+
+if [[ -z $RUBY && ${OSTYPE:-} == openbsd* ]]; then
+  for ruby_command in ruby34 ruby33; do
+    if (( $+commands[$ruby_command] )); then
+      RUBY=${commands[$ruby_command]}
+      break
+    fi
+  done
 fi
 
 if [[ -z $RUBY && -n $PINNED_VERSION ]]; then
