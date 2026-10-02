@@ -12,6 +12,7 @@ module Master
     # constitutional self-test remain the sources of rule findings.
     class Preflight
       RUBY_EXTENSIONS = %w[.rb .rake .ru .gemspec].freeze
+      RUBY_BASENAMES = %w[Gemfile Rakefile Guardfile Capfile Brewfile Podfile Vagrantfile config.ru].freeze
       YAML_EXTENSIONS = %w[.yml .yaml].freeze
 
       def initialize(root:, bus: nil)
@@ -23,6 +24,9 @@ module Master
         Array(paths).filter_map do |path|
           next unless File.file?(path)
           next if Review::Scan::PathFilter.skip_path?(path, root: @root)
+
+          basename = File.basename(path)
+          return ruby_finding(path) if RUBY_BASENAMES.include?(basename)
 
           case File.extname(path).downcase
           when *RUBY_EXTENSIONS
