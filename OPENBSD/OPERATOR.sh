@@ -38,6 +38,11 @@ log() {
 log_info()  { log INFO "$@" }
 log_error() { log ERROR "$@" }
 
+# Production db:seed is never part of a default deploy. The one-off escape hatch
+# is gated here, in the entrypoint the deploy smoke gate reads, so
+# dev/operator_stage_2.zsh inherits the contract instead of carrying its own copy.
+production_seeds_gated() { [[ ${RUN_PRODUCTION_SEEDS:-0} == 1 ]] }
+
 transaction_log() {
   typeset operation=$1 target=$2 op_status=$3 metadata=${4:-}
   print -r -- "[$(date +'%Y-%m-%d %H:%M:%S')] [$operation] $target | Status: $op_status | $metadata" \

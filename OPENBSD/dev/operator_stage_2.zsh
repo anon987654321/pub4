@@ -101,7 +101,7 @@ bootstrap_rails_app() {
   su -l dev -c "cd $app_dir && RAILS_ENV=production bin/rails db:prepare" \
     || log WARN "db:prepare non-zero for $app (idempotent skip likely)"
   if [[ -f $app_dir/db/seeds.rb ]]; then
-    if [[ ${RUN_PRODUCTION_SEEDS:-0} == 1 ]]; then
+    if production_seeds_gated; then
       log WARN "$app: RUN_PRODUCTION_SEEDS=1 set; running production db:seed"
       su -l dev -c "cd $app_dir && RAILS_ENV=production bin/rails db:seed"
     else
