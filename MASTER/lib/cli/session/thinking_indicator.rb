@@ -5,7 +5,8 @@ require_relative "../stream_accumulator"
 module Master
   module CLI
     class Session
-      TICK_SECONDS = 0.25
+      TICK_SECONDS = 0.20
+      SPINNER_FRAMES = ["*", "+", "x", "+"].freeze
       STAGE_EVENTS = {
         "infer:resolved" => "infer",
         "infer:confidence" => "infer",
@@ -22,7 +23,23 @@ module Master
       # one /review publishes about 28,700 of them.
       def print_thinking_indicator
         init_thinking_state!
-        # Event lines are the progress indicator; no repainting spinner.
+        return unless $stdout.tty?
+
+        @spin_thread = Thread.new do
+          frame = 0
+
+          until @think_paused
+            stage = @think_stage.to_s
+            stage = "working" if stage.empty?
+            line = one_row("#{SPINNER_FRAMES.fetch(frame % SPINNER_FRAMES.length)} #{stage} #{elapsed_seconds}s")
+            $stdout.print("\r\e[K#{line}")
+            $stdout.flush
+            frame += 1
+            sleep TICK_SECONDS
+          end
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "cli.spinner", event_bus: @refs.bus)
+        end
       end
 
       def init_thinking_state!
@@ -72,7 +89,8 @@ module Master
       # The spinner stops when a reply starts streaming; the units keep printing
       # until the turn ends, because a tool call can follow the first words.
       def stop_thinking_indicator
-        @spin_thread&.kill
+        @think_paused = true
+        @spin_thread&.join(0.3)
         @spin_thread = nil
         @think_sub&.call
         @think_sub = nil
@@ -94,13 +112,16 @@ module Master
       end
 
       def update_think_stage(payload)
-        ev = payload[:event].to_s
-        @activity&.record(ev, payload)
-        stage = if ev.start_with?("stage:") then ev.delete_prefix("stage:")
-                elsif ev == "pipeline:stage_start" then payload[:stage]&.to_s&.downcase
-                else STAGE_EVENTS[ev]
-                end
-        @think_stage = stage if stage
+        event = payload[:event].to_s
+        @activity&.record(event, payload)
+        @think_stage = stage_for(event, payload) || @think_stage
+      end
+
+      def stage_for(event, payload)
+        return event.delete_prefix("stage:") if event.start_with?("stage:")
+        return payload[:stage].to_s.downcase if event == "pipeline:stage_start"
+
+        STAGE_EVENTS[event]
       end
 
       # What is worth saying out loud while a pass runs. A pass prints hundreds
