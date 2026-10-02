@@ -348,26 +348,26 @@ face_root:
 # One semantic face contract. CLI, browser HUD, 2D fallback and 3D FaceWorld
 # consume this vocabulary; renderers may project it, but may not redefine it.
 face_interface:
-  schema: 1
-  prompt:
-    font: font_code
-    measure_ch: 66
-    max_ch: 72
-    line_height: 1.5
-    user_token: "$"
-    master_token: "master$"
-  state:
-    modes: [idle, listening, thinking, working, speaking, warning, error, sleeping, ready]
-    default_mode: idle
-    default_topology: papua-mask
-    entropy: 0.18
-    confidence: 0.86
-    attention: 1.0
-    arousal: 0.22
-    valence: 0.18
-    focus: 0.86
-    activity: 0.14
-    risk: 0.0
+    schema: 1
+    prompt:
+      font: font_code
+      measure_ch: 66
+      max_ch: 72
+      line_height: 1.5
+      user_token: "$"
+      master_token: "master$"
+    state:
+      modes: [idle, listening, thinking, working, speaking, warning, error, sleeping, ready]
+      default_mode: idle
+      default_topology: papua-mask
+      entropy: 0.18
+      confidence: 0.86
+      attention: 1.0
+      arousal: 0.22
+      valence: 0.18
+      focus: 0.86
+      activity: 0.14
+      risk: 0.0
     mode_aliases:
       phantom: error
       escalation: warning
@@ -379,36 +379,43 @@ face_interface:
       complete: ready
       converged: ready
       settled: idle
-  spatial:
-    topology_profiles:
-      papua-mask: { tilt_x: 0.00, tilt_y: 0.00, density: 1.00, fracture: 0.00 }
-      face:        { tilt_x: 0.00, tilt_y: 0.00, density: 1.00, fracture: 0.00 }
-      codebase:    { tilt_x: -0.08, tilt_y: 0.10, density: 1.18, fracture: 0.08 }
-      ecology:     { tilt_x: 0.12, tilt_y: -0.06, density: 1.32, fracture: 0.12 }
-    shell:
-      radius: 1.58
-      width_segments: 28
-      height_segments: 20
-    nodes:
-      lib: [-1.38, 0.10, -0.28]
-      law: [-0.70, 1.18, -0.10]
-      tools: [1.40, 0.05, -0.20]
-      web: [0.70, -1.10, -0.12]
-      openbsd: [-0.82, -1.05, -0.16]
-    links: [[lib, law], [law, tools], [tools, web], [web, openbsd], [openbsd, lib],
-            [lib, tools], [law, web], [tools, openbsd], [web, lib], [openbsd, law]]
-    layers: [identity, eyes, mouth, cognition, repository, event_field, camera, hud]
-    camera:
-      distance: 5.20
-      parallax: 0.06
-      orbit_limit: 0.16
-    budget:
-      desktop_points: 1200
-      mobile_points: 420
-      max_device_pixel_ratio: 2.0
-      active_fps: 60
-      idle_fps: 12
-      hidden_fps: 0
+    spatial:
+      topology_profiles:
+        papua-mask: { tilt_x: 0.00, tilt_y: 0.00, density: 1.00, fracture: 0.00 }
+        face:        { tilt_x: 0.00, tilt_y: 0.00, density: 1.00, fracture: 0.00 }
+        codebase:    { tilt_x: -0.08, tilt_y: 0.10, density: 1.18, fracture: 0.08 }
+        ecology:     { tilt_x: 0.12, tilt_y: -0.06, density: 1.32, fracture: 0.12 }
+      shell:
+        radius: 1.58
+        width_segments: 28
+        height_segments: 20
+      nodes:
+        lib: [-1.38, 0.10, -0.28]
+        law: [-0.70, 1.18, -0.10]
+        tools: [1.40, 0.05, -0.20]
+        web: [0.70, -1.10, -0.12]
+        openbsd: [-0.82, -1.05, -0.16]
+      links: [[lib, law], [law, tools], [tools, web], [web, openbsd], [openbsd, lib],
+              [lib, tools], [law, web], [tools, openbsd], [web, lib], [openbsd, law]]
+      layers: [identity, eyes, mouth, cognition, repository, event_field, camera, hud]
+      camera:
+        distance: 5.20
+        parallax: 0.06
+        orbit_limit: 0.16
+      budget:
+        desktop_points: 1200
+        mobile_points: 420
+        desktop_particles: 200
+        mobile_particles: 120
+        reduced_motion_particles: 64
+        max_device_pixel_ratio: 2.0
+        active_fps: 24
+        idle_fps: 12
+        hidden_fps: 0
+        reduced_motion_fps: 8
+        battery_fps: 12
+        pulse_limit: 24
+        hud_labels: 5
 brgen_old_dark:
   bg: "#000000"
   surface: "#111111"
