@@ -275,4 +275,33 @@ end
     assert_raises(KeyError) { DNA.chords_for(:j_dilla, :not_an_album) }
     assert_kind_of Hash, DNA.preset(:dilla_drum_bus)
   end
+  def test_background_playback_falls_back_to_policy_native_voice_when_player_fails
+    spoken = []
+    job = ["hello", "hello", true, :jenny, :warm]
+    delivered = false
+    queue = Object.new
+    queue.define_singleton_method(:pop) do
+      next nil if delivered
+
+      delivered = true
+      job
+    end
+
+    PB.instance_variable_set(:@queue, queue)
+    PB.instance_variable_set(:@generation, 0)
+    PB.instance_variable_set(:@job_generations, { job.object_id => 0 })
+
+    PB.stub(:play, false) do
+      PB.stub(:native_say, ->(text) { spoken << text; true }) do
+        PB.send(:drain)
+      end
+    end
+
+    assert_equal ["hello"], spoken
+  ensure
+    PB.instance_variable_set(:@queue, nil)
+    PB.instance_variable_set(:@job_generations, {})
+    PB.instance_variable_set(:@generation, 0)
+  end
+
 end

@@ -237,11 +237,10 @@ module Master
               next
             end
 
-            played = play(path, generation:)
-            played = fallback_after_playback_failure(part, generation:) unless played
-              warn_once("audio playback failed — #{player&.first || "no player or native speech"}") unless played
+            unless play_or_fallback(path, text, generation:)
+              warn_once("audio playback failed — #{player&.first || "no player or native speech"}")
             end
-            spoken(text) if played && last && generation_active?(generation)
+            spoken(text) if last && generation_active?(generation)
           rescue StandardError => e
             warn_once("playback worker failed — #{e.class}: #{e.message}")
           ensure
@@ -279,6 +278,15 @@ module Master
         nil
       end
 
+      # A failed player is recoverable when the policy-mapped native voice exists.
+      # Never bypass synthesis failure itself; fallback begins only after a player error.
+      def play_or_fallback(path, text, generation:)
+        return true if play(path, generation:)
+        return false unless generation_active?(generation)
+
+        native_say(text)
+      end
+
       def android_speak(text)
         return false unless android_audio_available?
 
@@ -288,40 +296,17 @@ module Master
         false
       end
 
-      def fallback_after_playback_failure(text, generation:)
-        generation_active?(generation) && native_say(text, generation:)
-      end
-
-      def native_say(text, generation: current_generation)
+      def native_say(text)
         return false unless native_say_available?
-        return false unless generation_active?(generation)
 
         voice = Speech.voice_for_text(text).to_sym
         mac_voice = Engines::MACOS_VOICE_FALLBACKS[voice]
         return false unless mac_voice
 
-        pid = Process.spawn(
-          "say", "-v", mac_voice, text.to_s,
-          **Master::Ops::ProcessSpawn.options(out: File::NULL, err: File::NULL)
-        )
-        @lock.synchronize { @playing_pid = pid if generation_active?(generation) }
-        loop do
-          unless generation_active?(generation)
-            Process.kill("TERM", pid) rescue nil
-            Process.kill("KILL", pid) rescue nil
-            Process.wait(pid) rescue nil
-            return false
-          end
-
-          waited = Process.waitpid(pid, Process::WNOHANG)
-          return $?.success? if waited
-          sleep 0.05
-        end
+        system("say", "-v", mac_voice, text.to_s, out: File::NULL, err: File::NULL)
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "Voice::Playback.native_say")
         false
-      ensure
-        @lock.synchronize { @playing_pid = nil if defined?(pid) && @playing_pid == pid }
       end
 
       def play(path, generation: current_generation)

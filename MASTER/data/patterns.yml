@@ -57,6 +57,10 @@ infer:
       patterns:
       - "\\b(?:which\\s+model|current\\s+model|what\\s+model\\s+are\\s+you|what\\s+(?:llm|ai|model)\\s+(?:are\\s+you\\s+using|is\\s+this))\\b"
       capture: none
+    analyze:
+      patterns:
+      - "\\b(?:analyze|analyse|inspect)\\s+([\\w./-]+(?:\\s+[\\w./-]+)?)"
+      capture: path
     scan:
       patterns:
       - "\\b(?:scan|lint|check\\s+(?:code|violations?)|run\\s+scan)(?:\\s+(cosmetic|style|hygiene|perfection|core|axioms|solid|critical|full|aesthetic|pixel|ui|ux|design))?\\b"

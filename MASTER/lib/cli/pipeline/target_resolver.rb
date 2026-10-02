@@ -30,6 +30,9 @@ module Master
           if text.match?(%r{\A(?:\.\./)?OPENBSD(?:/|\z)}i)
             return File.expand_path(text.delete_prefix("../"), Master::REPO_ROOT)
           end
+          if text.match?(%r{\A(?:\.\./)?STUDIO(?:/|\z)}i)
+            return File.expand_path(text.delete_prefix("../"), Master::REPO_ROOT)
+          end
           path = File.expand_path(text, @root)
           return path if File.exist?(path)
           File.expand_path(text, Master::REPO_ROOT)

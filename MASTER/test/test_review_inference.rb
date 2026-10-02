@@ -237,4 +237,16 @@ end
       assert_includes text, "SKIPPED semantic rules"
     end
   end
+  def test_analyze_explicit_tree_path_uses_the_review_route
+    inferred = Master::CLI::TurnRouter.infer_operator_command(
+      "analyze STUDIO/lora",
+      container: { bus: nil, session: nil },
+    )
+
+    assert_equal "review", inferred[:command]
+    assert_equal "STUDIO/lora", inferred[:args]
+    assert_equal "/review STUDIO/lora",
+                 Master::CLI::TurnRouter.rewrite_slash("/#{inferred[:command]} #{inferred[:args]}")
+  end
+
 end

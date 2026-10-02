@@ -89,3 +89,52 @@ Law.define(:VOICE_FAILURES_ARE_ACTIONABLE) do
     end
   X
 end
+
+
+Law.define(:CLI_ANALYZE_TARGET_ROUTING) do
+  source "MASTER CLI — deterministic repository analysis targets"
+  severity :error
+  languages %i[yaml]
+  path "MASTER/data/patterns.yml"
+  scope :file
+  ask "Does natural-language analysis of an explicit repository path enter the deterministic operator route instead of falling through to the model and guessing about file existence?"
+  fix "Register analyze/analyse/inspect with a path capture and map it to the canonical review route."
+  bad <<~'X'
+    commands:
+      review:
+        patterns:
+        - "\\b(?:review)\\s+(.+)"
+  X
+  good <<~'X'
+    analyze:
+      patterns:
+      - "\\b(?:analyze|analyse|inspect)\\s+([\\w./-]+)"
+      capture: path
+  X
+  detect do |text|
+    section = text[/^    analyze:\s*\n(.*?)(?=^    [a-z][a-z0-9_-]*:\s*$|\z)/m, 1].to_s
+    section.empty? || !section.match?(/analyze|analyse|inspect/) || !section.match?(/capture:\s*path/)
+  end
+end
+
+
+Law.define(:CLI_FACE_DEDICATED_TTY) do
+  source "Terminal discipline — full-screen face must not share line-editor input"
+  severity :error
+  languages %i[ruby]
+  path "MASTER/lib/cli/command_registry.rb"
+  scope :file
+  ask "Does the /face command obtain an independent terminal stream instead of sharing Reline/session stdin with the full-screen face?"
+  fix "Open /dev/tty and pass that handle as both the face input and output; close it after the face exits."
+  bad <<~'X'
+    Face::Window.new(turn:, event_bus: container[:bus]).run
+  X
+  good <<~'X'
+    terminal = File.open("/dev/tty", "r+")
+    Face::Window.new(turn:, event_bus: container[:bus], input: terminal, output: terminal).run
+  X
+  detect do |text|
+    text.include?("Face::Window.new") &&
+      !text.match?(/File\.open\(["']\/dev\/tty["'],\s*["']r\+["']\)/)
+  end
+end

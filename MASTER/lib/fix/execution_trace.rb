@@ -5,6 +5,7 @@ require_relative "../io/exec"
 require "digest"
 require "yaml"
 require "tempfile"
+require "prism"
 require_relative "../review/scan/ast_fixer"
 
 module Master
@@ -124,19 +125,36 @@ module Master
 
       def syntax_check(files, failures)
         files.each do |path|
-          candidate = Master::Review::Scan::AstFixer.propose(path, File.read(path, encoding: "UTF-8"))
-          if candidate.changed
+          source = File.read(path, encoding: "UTF-8")
+          candidate = Master::Review::Scan::AstFixer.propose(path, source)
+          content = candidate.changed ? candidate.content : safe_transport_unwrap(source)
+
+          if content == source
+            @ruby_checker.call(path)
+          else
             Tempfile.create(["execution-trace-", ".rb"], binmode: true) do |tmp|
-              tmp.write(candidate.content)
+              tmp.write(content)
               tmp.flush
               @ruby_checker.call(tmp.path)
             end
-          else
-            @ruby_checker.call(path)
           end
         rescue StandardError => e
           failures << "#{relative(path)}: syntax failed: #{e.class}: #{e.message}"
         end
+      end
+
+      # Never compile a whole-file presentation wrapper as Ruby. This remains
+      # independent of AstFixer so a broken fixer cannot blind /fix preflight.
+      def safe_transport_unwrap(source)
+        lines = source.lines
+        return source if lines.empty?
+
+        first = lines.first.to_s
+        last = lines.last.to_s.strip
+        return source unless first.start_with?("<sub>") && last == "</sub>"
+
+        inner = [first.delete_prefix("<sub>"), *lines[1...-1]].join
+        Prism.parse(inner).success? ? inner : source
       end
 
       def verify_boot_surface(failures)

@@ -196,6 +196,10 @@ The CLI refinement draws restraint from OpenBSD ksh and ash, line-buffer/history
 
 The prompt budget is deliberately hard: one Git status query with a 150 ms subprocess limit and a short-lived 250 ms cache; long branch names are truncated before they can push the working line around.
 
+#### Source closures from the 2026-10-02 runtime trace
+
+The source-level failures from the Mac trace are now closed: /fix preflight has an independent safe unwrap for whole-file transport tags; natural-language analyze STUDIO/lora is a deterministic review route; /face takes a dedicated /dev/tty; failed audio playback falls through to the policy-mapped native Mac voice; and monotonic capability reduction is executable law with a regression test. Remaining proof is hardware/deploy evidence only where the checklist below explicitly names Mac or vm23.
+
 #### Remaining proof
 
 - Run `/fix MASTER RAILS OPENBSD STUDIO` after these changes and verify the clean Ruby preflight plus no transport-wrapper findings.

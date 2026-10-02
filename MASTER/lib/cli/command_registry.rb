@@ -201,9 +201,17 @@ module Master
 
           streamed
         end
-        Face::Window.new(turn:, event_bus: container[:bus]).run
+        terminal = File.open("/dev/tty", "r+")
+        Face::Window.new(
+          turn:,
+          event_bus: container[:bus],
+          input: terminal,
+          output: terminal,
+        ).run
       rescue StandardError => e
         "face0: failed — #{e.class}: #{e.message}"
+      ensure
+        terminal&.close
       end
 
       def dispatch_device(_root, ctx: nil)

@@ -68,4 +68,27 @@ class TestExecutionTrace < Minitest::Test
     end
   end
 
+  def test_wrapped_ruby_has_a_preflight_fallback_even_if_ast_fixer_declines_it
+    Dir.mktmpdir("execution_trace_wrapper_fallback") do |root|
+      path = File.join(root, "broken.rb")
+      File.write(path, "<sub># frozen_string_literal: true\nVALUE = 1\n</sub>\n")
+      unchanged = Master::Review::Scan::AstFixer::Result.new(
+        path:,
+        changed: false,
+        transforms: [],
+        content: File.read(path),
+      )
+
+      Master::Review::Scan::AstFixer.stub(:propose, unchanged) do
+        result = Master::Fix::ExecutionTrace.new(
+          root:,
+          files: [path],
+          ruby_checker: ->(candidate) { RubyVM::InstructionSequence.compile_file(candidate) },
+        ).run
+
+        refute result.failures.any? { |failure| failure.include?("syntax failed") }, result.failures.inspect
+      end
+    end
+  end
+
 end

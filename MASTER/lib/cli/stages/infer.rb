@@ -33,6 +33,7 @@ module Master
 
         INFER_ALIASES = {
           "restart" => "rebuild",
+          "analyze" => "review",
           "principles" => "axioms",
         }.freeze
 
