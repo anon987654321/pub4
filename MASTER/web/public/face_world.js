@@ -276,6 +276,10 @@
       splatProxy.rotation.z = now * 0.000018 * (0.5 + geometry.depth);
     }
 
+    // All legacy visual projections consume this same frame; none schedules time.
+    window.MASTEREcologyRender?.update?.(now);
+    window.MASTER_GRAVITY_FIELD?.update?.(now);
+
     document.documentElement.style.setProperty("--master-face-depth", geometry.depth.toFixed(3));
     document.documentElement.style.setProperty("--master-face-tension", geometry.shell_tension.toFixed(3));
   }
