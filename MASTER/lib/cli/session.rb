@@ -174,7 +174,11 @@ module Master
       # StandardError and a killed thread raises nothing, so the nil is the
       # only sign of a cancel. A turn that raised is a failure, named as one.
       def fetch_pipeline_result
-        @pipeline_thread.value || Result.err("interrupted", category: :abort)
+        value = @pipeline_thread.value
+        return Result.err("turn returned no result", category: :handler_exception) if value.nil?
+        return value if value.is_a?(Result)
+
+        Result.err("turn returned invalid result: #{value.class}", category: :handler_exception)
       rescue NoMemoryError
         Result.err(host_oom_message, category: :infrastructure)
       rescue StandardError => e
