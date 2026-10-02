@@ -77,6 +77,9 @@ test("FaceWorld owns camera impulses and actual point draw range", () => {
   assert.match(world, /CanvasTexture/);
   assert.match(part1, /FACE_CAMERA_DISTANCE/);
   assert.match(part1, /faceRenderDpr/);
+  assert.match(part1, /budgetScale/);
+  assert.match(part2, /particleBudget/);
+  assert.match(part2, /mouthCapacity/);
   assert.match(part2, /State\.cameraZoomAt/);
   assert.doesNotMatch(part2, /requestAnimationFrame\(forward\)/);
   assert.doesNotMatch(part3, /camera\.position\.z \+=/);
