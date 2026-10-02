@@ -128,6 +128,21 @@ class TestModelOffer < Minitest::Test
   def test_no_scope_offers_everything
     assert_equal Master::Core::Model::SCHEMA, Master::Core::Model.offer(Master::Core::VERBS, nil)
   end
+
+  def test_read_only_fold_does_not_offer_write_or_mutating_git
+    proof = Master::Core::Proof.new
+    schema = Master::Core::Model.offer(
+      %i[read exec git ask note critique done],
+      proof.scope,
+      operations: %w[diff],
+    )
+
+    refute_includes verbs(schema), "write"
+    refute_includes operations(schema), "stage"
+    refute_includes operations(schema), "commit"
+    assert_includes verbs(schema), "read"
+    assert_includes operations(schema), "diff"
+  end
 end
 
 # llama.cpp turns a JSON schema into a grammar and reads an object that names
