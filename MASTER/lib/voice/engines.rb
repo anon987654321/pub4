@@ -305,7 +305,7 @@ module Master
         end
         return path if filters.empty?
 
-        out = path.sub(/\.mp3\\z/, "_prosody.mp3")
+        out = path.sub(/\.mp3\z/, "_prosody.mp3")
         ok = system(
           "ffmpeg", "-y", "-i", path, "-af", filters.join(","),
           "-codec:a", "libmp3lame", "-q:a", "2", out,
@@ -324,7 +324,7 @@ module Master
         return path if pitch_delta_hz(pitch).zero?
         return path unless path && File.size?(path) && ffmpeg? && rubberband?
 
-        out = path.sub(/\.mp3\\z/, "_pitch.mp3")
+        out = path.sub(/\.mp3\z/, "_pitch.mp3")
         ok = system(
           "ffmpeg", "-y", "-i", path,
           "-af", "rubberband=pitch=#{format("%.6f", pitch_ratio(pitch))}",
