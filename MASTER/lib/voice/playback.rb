@@ -20,6 +20,11 @@ module Master
       # afplay is macOS. The deploy host has no audio hardware, so the others
       # are for a workstation that is not a Mac, not for vm23 — see the note in
       # Engines.synth_edge_melodic, which relies on the same absence.
+      #
+      # Performance never changes the synthesised signal. Prefetch only overlaps
+      # an already-declared TTS synthesis with playback of the preceding file.
+      # Transcendent stays one utterance so its existing melody/phrase plan is
+      # never split into independently generated musical fragments.
       PLAYERS = {
         "afplay" => [],
         "sox" => %w[-q],
@@ -105,27 +110,35 @@ module Master
           return
         end
 
-        queue = ensure_worker
         return if echo?(str)
 
-        # Sentence by sentence, so the first complete thought is heard while
-        # the rest is still being synthesised. The reply's voice and style are
-        # selected once here and carried through every chunk.
-        parts = Speech.chunks(str)
+        # Classic Edge benefits from sentence-sized jobs because the next file
+        # can be synthesised while the current one is playing. Transcendent is
+        # intentionally kept whole: its own engine chain owns phrase rhythm,
+        # melody, emotion and prosody, and splitting it here can create audible
+        # discontinuities or alter a musical contour.
+        parts = transcendent_mode? ? [str] : Speech.chunks(str)
         parts = [str] if parts.empty?
         reply_voice = Speech.voice_for_text(str)
         reply_style = transcendent_mode? ? :auto : Speech.infer_style(str, fallback: Speech.default_style)
         generation = current_generation
-        parts.each_with_index do |part, index|
-          job = [str, part, index == parts.size - 1, reply_voice, reply_style, nil, nil, generation]
-          @lock.synchronize do
-            next unless generation == @generation
+        queue = ensure_queue
+        jobs = parts.each_with_index.map do |part, index|
+          [str, part, index == parts.size - 1, reply_voice, reply_style, nil, nil, generation]
+        end
+
+        @lock.synchronize do
+          jobs.each do |job|
+            break unless generation == @generation
+
             @job_generations[job.object_id] = generation
             queue << job
           end
         end
+        start_worker!
         nil
       end
+
 
 
       # Session-owned enqueue path. Callers can provide a generation so
@@ -135,10 +148,10 @@ module Master
         str = text.to_s.strip
         return false if str.empty?
 
-        queue = ensure_worker
-        @lock.synchronize do
+        queue = ensure_queue
+        accepted = @lock.synchronize do
           current = generation || @generation
-          return false unless current == @generation
+          next false unless current == @generation
 
           queue << {
             text: str,
@@ -149,8 +162,10 @@ module Master
             last:,
             generation: current,
           }
+          true
         end
-        true
+        start_worker!
+        accepted
       end
 
       # Synchronous path for an operator-facing hardware test. Normal replies
@@ -236,61 +251,214 @@ module Master
         end
       end
 
-      def ensure_worker
+      def ensure_queue
         @lock.synchronize do
           @queue ||= Queue.new
           @pending ||= Set.new
-          @worker ||= Thread.new { drain }
-          @worker[:name] = "voice-playback"
           @queue
         end
       end
 
-      def drain
-        while (job = @queue.pop)
-          path = nil
-          begin
-            text, part, last, voice, style, rate, pitch, explicit_generation = if job.is_a?(Hash)
-              [
-                job[:text],
-                job[:text],
-                job[:last],
-                job[:voice] || Speech.voice_for_text(job[:text]),
-                job[:style] || Speech.infer_style(job[:text], fallback: Speech.default_style),
-                job[:rate],
-                job[:pitch],
-                job[:generation],
-              ]
-            elsif job.is_a?(Array)
-              [job[0], job[1], job[2], job[3], job[4], job[5], job[6], job[7]]
-            else
-              [job, job, true, Speech.voice_for_text(job), Speech.infer_style(job, fallback: Speech.default_style), nil, nil, nil]
-            end
-            generation = explicit_generation || @lock.synchronize { @job_generations.delete(job.object_id) || @generation }
-            next unless generation_active?(generation)
+      def start_worker!
+        @lock.synchronize do
+          return @worker if @worker&.alive?
 
-            path = synthesize(part, voice:, style:, rate:, pitch:)
-            next unless generation_active?(generation)
-
-            unless path
-              # Speech already owns its engine fallback. Calling macOS say here
-              # with the full reply was a second, unscoped fallback that could
-              # switch speaker and replay everything after one failed chunk.
-              warn_once("synthesis failed#{Speech.last_error ? ": #{Speech.last_error}" : ""}")
-              next
-            end
-
-            unless play_or_fallback(path, text, generation:, voice:)
-              warn_once("audio playback failed — #{player&.first || "no player or native speech"}")
-            end
-            spoken(text) if last && generation_active?(generation)
-          rescue StandardError => e
-            warn_once("playback worker failed — #{e.class}: #{e.message}")
-          ensure
-            File.delete(path) if path&.start_with?("/tmp/m_tts_") && File.exist?(path)
-          end
+          @worker = Thread.new { drain }
+          @worker[:name] = "voice-playback"
         end
       end
+
+      def ensure_worker
+        ensure_queue
+        start_worker!
+      end
+
+      def drain
+        while (job = @queue.pop)
+          process_job_sequence(job)
+        end
+      end
+
+      def process_job_sequence(current)
+        prepared_current = nil
+
+        loop do
+          following = dequeue_nowait
+          prepared_following = start_prefetch(following)
+
+          prepared_current ||= prepare_job(current)
+          consume_prepared(prepared_current)
+          cleanup_prepared(prepared_current)
+
+          current = following
+          prepared_current = await_prefetch(prepared_following)
+          break unless current
+        end
+      end
+
+      def dequeue_nowait
+        @queue.pop(true)
+      rescue ThreadError
+        nil
+      end
+
+      def start_prefetch(job)
+        return unless job
+        return unless prefetch_enabled?
+
+        result_queue = Queue.new
+        thread = Thread.new do
+          Thread.current[:name] = "voice-prefetch"
+          result_queue << prepare_job(job)
+        rescue StandardError => e
+          result_queue << prepare_job_failure(job, e)
+        end
+        PrefetchedAudio.new(thread:, result_queue:)
+      rescue StandardError => e
+        warn_once("voice prefetch failed to start — #{e.class}: #{e.message}")
+        nil
+      end
+
+      def await_prefetch(prefetched)
+        return nil unless prefetched
+
+        prepared = prefetched.result_queue.pop
+        prefetched.thread.join
+        prepared
+      rescue StandardError => e
+        warn_once("voice prefetch failed — #{e.class}: #{e.message}")
+        nil
+      end
+
+      def prepare_job_failure(job, error)
+        warn_once("voice prefetch synthesis failed — #{error.class}: #{error.message}")
+        values = decode_job(job)
+        PreparedAudio.new(**values, path: nil)
+      end
+
+      def prefetch_enabled?
+        return false unless ENV.fetch("MASTER_TTS_PREFETCH", "1") != "0"
+        return false unless Speech.synthesis_mode.to_s == "classic"
+
+        TtsSupervisor.pool_size > 1
+      rescue StandardError
+        false
+      end
+
+      def prepare_job(job)
+        @lock.synchronize { @job_generations.delete(job.object_id) }
+        values = decode_job(job)
+        return PreparedAudio.new(**values, path: nil) unless generation_active?(values[:generation])
+
+        path = synthesize(
+          values[:part],
+          voice: values[:voice],
+          style: values[:style],
+          rate: values[:rate],
+          pitch: values[:pitch],
+        )
+        return PreparedAudio.new(**values, path: nil) unless path
+        unless generation_active?(values[:generation])
+          delete_temp_audio(path)
+          return PreparedAudio.new(**values, path: nil)
+        end
+
+        PreparedAudio.new(**values, path:)
+      rescue StandardError => e
+        warn_once("playback synthesis failed — #{e.class}: #{e.message}")
+        PreparedAudio.new(**(values || decode_job(job)), path: nil)
+      end
+
+      def decode_job(job)
+        if job.is_a?(Hash)
+          {
+            job:,
+            text: job[:text],
+            part: job[:text],
+            last: job[:last],
+            voice: job[:voice] || Speech.voice_for_text(job[:text]),
+            style: job[:style] || Speech.infer_style(job[:text], fallback: Speech.default_style),
+            rate: job[:rate],
+            pitch: job[:pitch],
+            generation: job[:generation] || current_generation,
+          }
+        elsif job.is_a?(Array)
+          {
+            job:,
+            text: job[0],
+            part: job[1],
+            last: job[2],
+            voice: job[3],
+            style: job[4],
+            rate: job[5],
+            pitch: job[6],
+            generation: job[7] || current_generation,
+          }
+        else
+          {
+            job:,
+            text: job,
+            part: job,
+            last: true,
+            voice: Speech.voice_for_text(job),
+            style: Speech.infer_style(job, fallback: Speech.default_style),
+            rate: nil,
+            pitch: nil,
+            generation: current_generation,
+          }
+        end
+      end
+
+      def consume_prepared(prepared)
+        return false unless prepared
+        return false unless prepared.path
+        return false unless generation_active?(prepared.generation)
+
+        unless play_or_fallback(prepared.path, prepared.text, generation: prepared.generation, voice: prepared.voice)
+          warn_once("audio playback failed — #{player&.first || "no player or native speech"}")
+          return false
+        end
+        spoken(prepared.text) if prepared.last && generation_active?(prepared.generation)
+        true
+      end
+
+      def delete_temp_audio(path)
+        return unless path.to_s.start_with?("/tmp/m_tts_")
+        return unless File.exist?(path)
+
+        File.delete(path)
+      rescue StandardError
+        nil
+      end
+
+      def cleanup_prepared(prepared)
+        path = prepared&.path
+        return unless path
+        return unless path.start_with?("/tmp/m_tts_")
+        return unless File.exist?(path)
+
+        File.delete(path)
+      rescue StandardError
+        nil
+      end
+
+      PrefetchedAudio = Data.define(
+        :thread,
+        :result_queue,
+      )
+
+      PreparedAudio = Data.define(
+        :job,
+        :text,
+        :part,
+        :last,
+        :voice,
+        :style,
+        :rate,
+        :pitch,
+        :generation,
+        :path,
+      )
 
       # Speech already defaults to the policy voice, because DEFAULT_VOICE is
       # Policy.single_voice_key. The tempo is the part that does not come for

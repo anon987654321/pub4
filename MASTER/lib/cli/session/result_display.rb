@@ -153,8 +153,12 @@ module Master
 
       def success_text(ok)
         value = ok.value
-        rendered = value.respond_to?(:[]) ? value[:rendered] : nil
-        rendered || (value.respond_to?(:[]) ? value[:output].to_s : value.to_s)
+        return value.to_s unless value.respond_to?(:[])
+
+        rendered = value[:rendered].to_s
+        return rendered unless rendered.empty?
+
+        value[:output].to_s
       end
 
       def routine_success?(text)
