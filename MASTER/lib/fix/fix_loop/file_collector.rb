@@ -121,9 +121,17 @@ module Master
         # them as ordinary violations because changing history does not repair
         # the deployed database.
         def rails_history?(path)
-          root = File.expand_path(@root)
-          relative = File.expand_path(path).delete_prefix("#{root}#{File::SEPARATOR}")
-          relative.match?(%r{ARAILS/(?:[^/]+/)*(?:db/migrate)(?:/|$)})
+          absolute = File.expand_path(path)
+          if (root = git_root)
+            relative = absolute.delete_prefix("#{root}#{File::SEPARATOR}")
+            return true if relative.match?(%r{\ARAILS/(?:[^/]+/)*db/migrate(?:/|$)})
+          end
+
+          local_root = File.expand_path(@root)
+          return false unless File.basename(local_root) == "RAILS"
+
+          relative = absolute.delete_prefix("#{local_root}#{File::SEPARATOR}")
+          relative.match?(%r{\A(?:[^/]+/)*db/migrate(?:/|$)})
         end
 
         def relative(path)
