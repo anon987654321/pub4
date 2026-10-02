@@ -92,17 +92,18 @@ module Master
           Master::Review::Scan::Scanner.skip_path?(path, root: @root) || binary?(path) || immutable?(path)
         end
 
-        # rules.yml paths.immutable names what an effect never writes: the rule
-        # catalogue, the soul and the core spine. /fix is an effect. It asked the
-        # model to repair data/rules.yml four times in one run, and its rubocop
-        # pass rewrote a file under lib/core, before this list was read here.
+        # soul.yml is the constitutional source for sacred paths. The catalogue in
+        # rules.yml describes laws; it does not own write protection.
         def immutable?(path)
           rel = File.expand_path(path).delete_prefix("#{Master::ROOT}#{File::SEPARATOR}")
-          immutable_paths.any? { |entry| entry.end_with?("/") ? rel.start_with?(entry) : rel == entry }
+          immutable_paths.any? do |entry|
+            entry = entry.delete_prefix("./")
+            entry.end_with?("/") ? rel.start_with?(entry.delete_suffix("/")) : rel == entry
+          end
         end
 
         def immutable_paths
-          @immutable_paths ||= Array((Master.load_rules || {}).dig("paths", "immutable")).map(&:to_s)
+          @immutable_paths ||= Array(Master.soul_config.dig("absolute", "sacred_paths")).map(&:to_s)
         end
 
         def relative(path)
