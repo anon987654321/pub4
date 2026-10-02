@@ -332,29 +332,10 @@ const bloomCtx = null;
 const bloomCv = null;
 
 function dollyZoom(intensity) {
-  if (!camera) return;
-  const startFOV = camera.fov, startZ = camera.position.z;
-  const targetFOV = Math.max(20, startFOV - intensity * 10);
-  const targetZ   = startZ + intensity * 0.55;
-  const t0 = performance.now();
-  function forward(now) {
-    const p = Math.min(1, (now - t0) / 1200);
-    const e = p < 0.5 ? 2*p*p : -1+(4-2*p)*p;
-    camera.fov = startFOV + (targetFOV - startFOV) * e;
-    camera.position.z = startZ + (targetZ - startZ) * e;
-    camera.updateProjectionMatrix();
-    if (p < 1) { requestAnimationFrame(forward); return; }
-    const t1 = performance.now();
-    function back(now2) {
-      const p2 = Math.min(1, (now2 - t1) / 2000);
-      camera.fov = targetFOV + (38 - targetFOV) * p2;
-      camera.position.z = targetZ + (4.6 - targetZ) * p2;
-      camera.updateProjectionMatrix();
-      if (p2 < 1) requestAnimationFrame(back);
-    }
-    requestAnimationFrame(back);
-  }
-  requestAnimationFrame(forward);
+  const value = Math.max(0, Math.min(1, Number(intensity) || 0));
+  if (!camera || value <= 0) return;
+  State.cameraZoom = Math.max(State.cameraZoom || 0, value);
+  State.cameraZoomAt = performance.now();
 }
 
 const _photoEl = document.getElementById('photo');
