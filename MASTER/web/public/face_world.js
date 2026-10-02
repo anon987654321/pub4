@@ -114,7 +114,7 @@
     shell = new THREE.Mesh(geometry, shellMaterial);
     shell.name = "master-sdf-shell";
     shell.renderOrder = -2;
-    world.add(shell);
+    (layers.identity || world).add(shell);
   }
 
   function makeNodes() {
@@ -365,7 +365,7 @@
       splatProxy.material.opacity =
         Math.min(0.18, 0.03 + geometry.neural_density * 0.09 * density + (geometry.fracture + fracture) * 0.04);
       splatProxy.material.color.copy(shellMaterial.uniforms.uColor.value);
-        splatProxy.rotation.z += (now * 0.000018 * (0.5 + geometry.depth) - splatProxy.rotation.z) * 0.008;
+      splatProxy.rotation.z = (now * 0.000018 * (0.5 + geometry.depth)) % (Math.PI * 2);
     }
 
     if (camera) {
@@ -379,9 +379,10 @@
 
     updatePulses(now);
 
-    const activePoints = Math.min(Number(budget.points || 420), Number(BUDGET.desktop_points || 1200));
+    const activePoints = Number(budget.points || 420);
     if (splatProxy) {
-      const visible = Math.min(1, activePoints / Math.max(1, Number(BUDGET.desktop_points || 1200)));
+      const ceiling = Math.max(1, Number(BUDGET.desktop_points || 1200));
+      const visible = Math.min(1, activePoints / ceiling);
       splatProxy.visible = visible > 0.02;
       splatProxy.material.opacity *= visible;
     }
