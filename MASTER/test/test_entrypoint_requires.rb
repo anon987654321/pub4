@@ -98,6 +98,15 @@ class TestEntrypointRequires < Minitest::Test
     assert_empty broken, "A bin/ script that cannot be run directly:\n#{broken.join("\n")}"
   end
 
+  def test_ruby_entrypoints_parse
+    broken = ruby_entrypoints.filter_map do |script, _source|
+      _out, status = Open3.capture2e(RbConfig.ruby, "-c", script)
+      "#{relative(script)}: #{status.exitstatus}" unless status.success?
+    end
+
+    assert_empty broken, "A Ruby entry point does not parse:\\n#{broken.join("\\n")}"
+  end
+
   def test_internal_requires_resolve
     missing = ruby_entrypoints.flat_map do |script, source|
       source.scan(/^\s*require\s+["']([^"']+)["']/).filter_map do |(feature)|
