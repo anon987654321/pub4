@@ -35,7 +35,7 @@ module Master
             cost: @cost,
             ts: Time.now.to_i,
           }
-          write_atomic(@path, JSON.generate(data))
+          write_atomic(@path, JSON.generate(json_safe(data)))
           save_forks!
         end
 
@@ -83,7 +83,20 @@ module Master
               [key.to_s, { messages: conversation[:messages], token_est: conversation[:token_est], name: conversation[:name], input_tokens: conversation[:input_tokens] }]
             end.to_h
           end
-          write_atomic(forks_path, JSON.generate(data))
+          write_atomic(forks_path, JSON.generate(json_safe(data)))
+        end
+
+        def json_safe(value)
+          case value
+          when String
+            value.encode("UTF-8", invalid: :replace, undef: :replace, replace: "�")
+          when Hash
+            value.to_h { |key, item| [json_safe(key.to_s), json_safe(item)] }
+          when Array
+            value.map { |item| json_safe(item) }
+          else
+            value
+          end
         end
 
         def load_forks!
@@ -325,7 +338,7 @@ module Master
           entry[:approximate] = true if approximate
         end
         rotate_costs! if File.exist?(@costs_path) && File.size(@costs_path) > COSTS_MAX_BYTES
-        File.open(@costs_path, "a") { |f| f.puts(JSON.generate(entry)) }
+        File.open(@costs_path, "a") { |f| f.puts(JSON.generate(json_safe(entry))) }
         entry
       end
 
@@ -364,7 +377,7 @@ module Master
 
       def summarize_message(msg)
         content = msg[:content].to_s.gsub(/\s+/, " ").strip
-        summary = content.bytesize > SUMMARY_MAX_CHARS ? "#{content.byteslice(0, SUMMARY_MAX_CHARS)}..." : content
+        summary = content.length > SUMMARY_MAX_CHARS ? "#{content[0, SUMMARY_MAX_CHARS]}..." : content
         msg.merge(content: "[summary] #{summary}", summarized: true)
       end
 

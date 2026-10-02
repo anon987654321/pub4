@@ -51,6 +51,31 @@ class TestSession < Minitest::Test
 
   # A save that dies before it finishes must leave the last good transcript,
   # because load! quarantines one it cannot parse and starts empty.
+  def test_summary_truncation_never_splits_utf8
+    Dir.mktmpdir("session_utf8_summary") do |dir|
+      session = Master::Trace::Session.new(root: dir)
+      content = ("x" * 239) + "ø" + ("y" * 120)
+      session.add_message(role: :user, content:)
+      session.instance_variable_set(:@conversations, {
+        Master::Trace::Session::LOCAL => {
+          messages: session.messages(Master::Trace::Session::LOCAL),
+          token_est: session.token_est(Master::Trace::Session::LOCAL),
+          name: "utf8"
+        }
+      })
+
+      session.add_message(role: :user, content: "another")
+      session.instance_variable_get(:@conversations)[Master::Trace::Session::LOCAL][:messages] = Array.new(
+        41, session.messages(Master::Trace::Session::LOCAL).first
+      )
+      session.save!
+
+      data = JSON.parse(File.read(File.join(dir, ".master", "session.json")))
+      assert data["messages"].all? { |message| message["content"].valid_encoding? }
+      assert_includes data["messages"].first["content"], "ø"
+    end
+  end
+
   def test_a_save_cut_short_leaves_the_previous_transcript
     Dir.mktmpdir("session_atomic") do |dir|
       session = Master::Trace::Session.new(root: dir)
