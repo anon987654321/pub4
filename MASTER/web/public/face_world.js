@@ -96,6 +96,7 @@
         "}"
       ].join("\n"),
       fragmentShader: [
+        "uniform float uTime;",
         "uniform float uPulse;",
         "uniform float uFracture;",
         "uniform float uOpacity;",
