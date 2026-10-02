@@ -36,7 +36,7 @@ module Master
       # "open the patch" and "turn the lead into a test" stay chat.
       LIVE_SYNTH_PLAY_RE = /\b(?:play|morph\w*|fade|switch|jam)\b.*\b(?:(?:mini)?moog|model\s*d|prophet|rhodes|juno|synth\w*|pads?|lead|bass(?:line)?|brass|strings|flute|pluck|lo-?fi|chords?|progressions?|something)\b/i.freeze
       LIVE_SYNTH_KNOB_RE = /\b(?:open|close|sweep|raise|lower|turn)\b.*\b(?:filter|cutoff|resonance|emphasis|detune|contour)\b/i.freeze
-      LIVE_MUSIC_RE = /\b(?:play|start|resume|put on|queue)\b.*\b(?:liveset|default\s+music)\b/i.freeze
+      LIVE_MUSIC_RE = /\b(?:play|start|resume|put on|queue)\b.*\b(?:liveset|default\s+music|dilla(?:\.rb)?|royksopp(?:\.rb)?|sound\s*card|speakers?)\b/i.freeze
       LIVE_AUDIO_STOP_RE = /\b(?:stop|kill|silence|mute|shut\s+off)\b.*\b(?:music|playing|sound|audio|synth\w*|liveset|jam)\b|\b(?:music|playing|sound|audio|synth\w*|liveset)\b.*\b(?:stop|kill|silence|mute|shut\s+off)\b/i.freeze
       LIVE_AUDIO_DIAGNOSTIC_RE = /\b(?:i\s+)?(?:can't|cannot|can\s*not|don't|do\s+not)\s+(?:hear|listen\s+to)\b|\b(?:no|nothing|zero)\s+(?:sound|audio|music)\b|\b(?:it's|it\s+is)\s+silent\b/i.freeze
       LIVE_STYLE_RE = /\b(?:röyksopp|royksopp|melody\s+a\.m\.)\b/i.freeze
