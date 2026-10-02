@@ -87,6 +87,16 @@ class TestRenderer < Minitest::Test
     assert_equal Master::Face::Contract.prompt_measure, Master::Voice::Renderer::PromptComponents::PROMPT_MEASURE_CH
   end
 
+  def test_face_contract_exposes_one_state_and_spatial_budget
+    budget = Master::Face::Contract.budget
+    aliases = Master::Face::Contract.mode_aliases
+
+    assert_equal 24, budget.fetch("active_fps")
+    assert_equal 12, budget.fetch("mobile_particles")
+    assert_equal "error", aliases.fetch("phantom")
+    assert_equal 38, Master::Face::Contract.camera.fetch("fov")
+  end
+
   def test_prompt_line_handles_missing_model
     renderer = FakeRenderer.new(config: {})
     state, prompt = renderer.prompt_line(nil, "idle", tokens: 0)
