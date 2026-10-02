@@ -82,6 +82,11 @@ class TestRenderer < Minitest::Test
     assert_equal "session0 at master0: main, 3 messages kept", strip_ansi(renderer.session_line("Main", 3))
   end
 
+  def test_cli_prompt_bounds_are_the_face_contract
+    assert_equal Master::Face::Contract.prompt_max, Master::Voice::Renderer::PromptComponents::PROMPT_MAX_CHARS
+    assert_equal Master::Face::Contract.prompt_measure, Master::Voice::Renderer::PromptComponents::PROMPT_MEASURE_CH
+  end
+
   def test_prompt_line_handles_missing_model
     renderer = FakeRenderer.new(config: {})
     state, prompt = renderer.prompt_line(nil, "idle", tokens: 0)
