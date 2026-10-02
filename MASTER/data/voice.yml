@@ -99,7 +99,18 @@ tts:
   # restores speech presence, removes sub-bass rumble and catches peaks.
   # Chorus/phaser were deliberately removed because modulation makes a neural
   # voice sound processed rather than alive.
-  post_chain: "equalizer=f=520:t=q:w=1.1:g=2.0,equalizer=f=1480:t=q:w=1.3:g=1.5,equalizer=f=2520:t=q:w=1.5:g=1.2,highpass=f=70,lowpass=f=12000,acompressor=threshold=-20dB:ratio=1.7:attack=12:release=140:makeup=1,volume=17dB,alimiter=limit=0.98"
+  # Expressive timing/pitch is bounded here so melody can move without
+  # turning phrase accents into accidental transposition.
+  prosody:
+    melody:
+      rate: ["-1%", "+2%", "+1%", "+3%", "0%", "-2%", "-1%", "+1%", "0%", "+2%"]
+      pitch_hz: [0, 6, 10, 6, 0, -6, -10, -6, 3, 0]
+    pitch_reference_hz: 180
+
+  # Gentle presence shaping. The voice already contains its own formants; post
+  # processing should reveal articulation, control peaks, and leave the melody
+  # alone rather than imposing a synthetic character.
+  post_chain: "highpass=f=65,equalizer=f=700:t=q:w=1.0:g=0.8,equalizer=f=2800:t=q:w=1.1:g=1.4,lowpass=f=13500,acompressor=threshold=-19dB:ratio=1.5:attack=10:release=120:makeup=1,volume=12dB,alimiter=limit=0.98"
 
   # The bed under the speech, so a pause is not silence.
   #
