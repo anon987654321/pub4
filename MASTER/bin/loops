@@ -34,7 +34,7 @@ require_relative "../lib/trace/dmesg"
 
 ROOT = File.expand_path("../..", __dir__)
 MASTER = File.join(ROOT, "MASTER")
-DEMO = File.join(ROOT, "MASTER", "tools", "studio", "dilla", "demo.wav")
+DEMO = File.join(ROOT, "STUDIO", "dilla", "demo.wav")
 SOURCE = File.join(MASTER, "loop.mp4")
 
 def sh(*args)

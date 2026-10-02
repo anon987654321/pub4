@@ -45,10 +45,9 @@ SSRF-safe boundary.
 Use vocabulary, measurement, and preset checks before trusting a result.
 Failures in media decoding, processing, or output replacement remain explicit.
 
-### MASTER integration
+### Integration
 
-Postpro is a canonical STUDIO tool and the standard image-processing boundary
-for MASTER and the RAILS applications.
+Postpro is a canonical STUDIO tool. MASTER and the RAILS applications reach it through explicit adapters; neither tree owns a second implementation.
 
 
 **Film is a physical process, and postpro models the process rather than

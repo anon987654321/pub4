@@ -56,7 +56,7 @@ Operator::CiGuard.run! do
     tool_roots = [
       ENV["PUB4_RAILS_ROOT"] && File.join(ENV["PUB4_RAILS_ROOT"], "tools", "operator"),
       File.expand_path("../../tools/operator", __dir__),
-      File.expand_path("../../MASTER/tools", __dir__),
+      File.expand_path("../../../MASTER/tools", __dir__),
     ].compact.uniq
 
     %w[

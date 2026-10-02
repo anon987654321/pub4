@@ -162,8 +162,8 @@ end
 # lands. Scoped to MASTER/tools/dilla deliberately: that is the measured incident,
 # and no broader parse gate has been proved against the rest of the repo.
 engine_staged = staged.select do |path|
-  path == "MASTER/tools/dilla/dilla.rb" ||
-    (path.start_with?("MASTER/tools/dilla/lib/") && path.end_with?(".rb"))
+  path == "STUDIO/dilla/dilla.rb" ||
+    (path.start_with?("STUDIO/dilla/lib/") && path.end_with?(".rb"))
 end
 unless engine_staged.empty? || ENV["PUB4_PARSE_SKIP"] == "1"
   require "open3"

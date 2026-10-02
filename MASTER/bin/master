@@ -84,7 +84,7 @@ if ARGV.first == "--help" || ARGV.first == "-h"
 end
 
 # Let MASTER's own tooling find the checkout without recomputing it from a
-# Rails root, which Operator::DeployPaths exists to stop callers doing.
+# Rails root. RAILS media callers use the explicit Studio contract instead.
 ENV["PUB4_ROOT"] ||= ROOT
 
 # The vm23 control plane is the one long-lived MASTER process. The lock file is

@@ -17,7 +17,7 @@ class ImagePresenter
     "image/heic" => ".heic",
     "image/heif" => ".heif",
   }.freeze
-  DEFAULT_POSTPRO_PRESET = ENV.fetch("MASTER_POSTPRO_PRESET", "portrait")
+  DEFAULT_POSTPRO_PRESET = ENV.fetch("STUDIO_POSTPRO_PRESET", "portrait")
 
   def initialize(logger: Rails.logger)
     @logger = logger
@@ -136,7 +136,7 @@ class ImagePresenter
   end
 
   def postpro_photo(input_path, output_path)
-    script = File.join(Master::REPO_ROOT, "MASTER", "tools", "postpro", "postpro.rb")
+    script = File.join(Master::REPO_ROOT, "STUDIO", "postpro", "postpro.rb")
     return false unless File.file?(script)
 
     out, status = Open3.capture2e(

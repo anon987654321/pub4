@@ -50,9 +50,7 @@ assuming a fix is local.
 **Shared deploys as a sibling, not a subdirectory.** The copy-tree deploy puts
 the tracked app at `/home/<app>/app` and its own copy of the engine at
 `/home/<app>/shared`. Every app vendors a separate copy; syncing to the wrong
-one makes precompile a silent no-op. `Operator::DeployPaths` resolves OPENBSD tools
-across both source-checkout and copy-tree shapes — never compute paths from
-`Rails.root`.
+one makes precompile a silent no-op. `RAILS/contracts/studio.rb` resolves the canonical STUDIO media entrypoints from the source or deployed tree; callers do not reach into sibling implementation directories.
 
 **brgen's verticals are mountable engines**, not namespaced controllers:
 `brgen/engines/{marketplace,dating,playlist,takeaway,tv}`. Subdomain constraints

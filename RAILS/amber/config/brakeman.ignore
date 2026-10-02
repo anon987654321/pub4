@@ -1,8 +1,0 @@
-{
-  "ignored_warnings": [
-    {
-      "fingerprint": "aa0759e97d882aa50d704f0e1cccfdc764ce443b6b13d739b8906a9f6325bb78",
-      "note": "STUDIO photograph uses argv array; skipped when CI=1 or test"
-    }
-  ]
-}

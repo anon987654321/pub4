@@ -195,7 +195,7 @@ class TestGitHooks < Minitest::Test
   # parses staged engine files, so the same incident cannot land again unseen.
 
   def test_a_staged_engine_file_that_does_not_parse_is_refused
-    write("MASTER/tools/dilla/dilla.rb", "def broken\nend\nend\n")
+    write("STUDIO/dilla/dilla.rb", "def broken\nend\nend\n")
     git!("add", "STUDIO/dilla/dilla.rb")
     out, status = commit("break the engine")
 
@@ -204,7 +204,7 @@ class TestGitHooks < Minitest::Test
   end
 
   def test_a_staged_engine_file_that_parses_commits
-    write("MASTER/tools/dilla/lib/knob.rb", "# frozen_string_literal: true\n\n# a knob\n")
+    write("STUDIO/dilla/lib/knob.rb", "# frozen_string_literal: true\n\n# a knob\n")
     git!("add", "STUDIO/dilla/lib/knob.rb")
     out, status = commit("a knob that parses")
 
@@ -220,7 +220,7 @@ class TestGitHooks < Minitest::Test
   end
 
   def test_the_parse_override_is_honoured
-    write("MASTER/tools/dilla/dilla.rb", "end\n")
+    write("STUDIO/dilla/dilla.rb", "end\n")
     git!("add", "STUDIO/dilla/dilla.rb")
     out, status = commit("broken, deliberately", env: { "PUB4_PARSE_SKIP" => "1" })
 

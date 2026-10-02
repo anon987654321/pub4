@@ -62,8 +62,8 @@ and shaped through `ffmpeg`; the records it samples and the rap takes it fits ar
 material, not instruments. Nothing is uploaded, and nothing is fetched at render
 time.
 
-The suite is `MASTER/tools/test/test_dilla_*.rb`, which is the glob `rake test:dilla`
-expands in `MASTER/tools/Rakefile`; bare `rake` runs the gate and every suite. Check
+The suite is `STUDIO/test/test_dilla_*.rb`, which is the glob `rake test:dilla`
+expands in `STUDIO/Rakefile`; bare `rake` runs the gate and every suite. Check
 the path you are given before you trust a green run. This line has been wrong
 twice — once naming a file that had not existed for months, once naming a
 directory that has never existed — and both times it sent an operator to

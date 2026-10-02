@@ -35,7 +35,7 @@ spine:
   namespace_ceilings:
     MASTER/lib: 0
     RAILS/shared/lib: 2
-    MASTER/tools/dilla/lib: 0
+    STUDIO/dilla/lib: 0
 
   # Non-blank, non-comment lines across lib/**/*.rb, minus the Zeitwerk wrappers.
   # Present sponsors, all the same shape — a rule that could only be judged by a

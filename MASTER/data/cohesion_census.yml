@@ -29,4 +29,4 @@ family_members:
 - RAILS/shared/lib/shared#examples
 - STUDIO/dilla/lib#engine
 - STUDIO/dilla/lib#harmony
-- MASTER/tools/dilla/lib#score
+- STUDIO/dilla/lib#score

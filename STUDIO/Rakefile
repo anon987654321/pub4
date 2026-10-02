@@ -1,0 +1,85 @@
+# frozen_string_literal: true
+
+require "rake/testtask"
+
+DILLA_SUITES = FileList["test/test_dilla_*.rb"].map { |path| File.basename(path, ".rb").sub(/\Atest_dilla_/, "") }
+
+DILLA_SUITES.each do |suite|
+  Rake::TestTask.new("test:dilla:#{suite}") do |t|
+    t.libs << "test"
+    t.test_files = ["test/test_dilla_#{suite}.rb"]
+    t.warning = false
+  end
+end
+
+task "test:dilla" => DILLA_SUITES.map { |suite| "test:dilla:#{suite}" }
+
+TOOL_SUITES = FileList["test/test_tools_*.rb"].map { |path| File.basename(path, ".rb").sub(/\Atest_tools_/, "") }
+TOOL_SUITES.delete("gate")
+
+TOOL_SUITES.each do |tool|
+  Rake::TestTask.new("test:#{tool}") do |t|
+    t.libs << "test"
+    t.test_files = ["test/test_tools_#{tool}.rb"]
+    t.warning = false
+  end
+end
+
+Rake::TestTask.new("test:gate") do |t|
+  t.libs << "test"
+  t.test_files = ["test/test_studio_gate.rb"]
+  t.warning = false
+end
+
+desc "Studio suite — Dilla, postpro, Replicate and LoRA"
+task test: ["test:gate", "test:dilla", *TOOL_SUITES.map { |tool| "test:#{tool}" }]
+
+namespace :postpro do
+  desc "Check the canonical postpro entrypoint"
+  task :bootstrap do
+    script = File.expand_path("postpro/postpro.rb", __dir__)
+    abort "postpro: missing canonical entrypoint #{script}" unless File.file?(script)
+    ruby script, "--vocab-check"
+  end
+end
+
+namespace :replicate do
+  require_relative "replicate/schema_snapshot"
+  require_relative "replicate/client"
+
+  desc "Compare MODEL_CAPABILITIES against the last recorded provider schema"
+  task :schema_audit_offline do
+    snapshot = Replicate::SchemaSnapshot.read
+    if snapshot.nil?
+      warn "replicate: schema audit offline inconclusive, no recorded provider schema snapshot"
+      exit 2
+    end
+
+    engine = File.read(File.expand_path("replicate/replicate.rb", __dir__))
+    table = engine[/^MODEL_CAPABILITIES = \{.*?^\}\.freeze/m]
+    abort "replicate: MODEL_CAPABILITIES not found" unless table
+    ours = table.scan(/"([^"]+\/[^"]+)" => \{.*?input_keys: %w\[([^\]]*)\]/m)
+                 .to_h { |model, keys| [model, keys.split.sort] }
+
+    recorded = Replicate::SchemaSnapshot.by_model
+    missing = recorded.keys - ours.keys
+    added = ours.keys - recorded.keys
+    drifted = (ours.keys & recorded.keys).select do |model|
+      (ours.fetch(model) - recorded.fetch(model)).any? || (recorded.fetch(model) - ours.fetch(model)).any?
+    end
+
+    drifted.each { |model| warn "replicate: #{model} differs from recorded schema" }
+    warn "replicate: snapshot-only models=#{missing.join(",")}" if missing.any?
+    warn "replicate: table-only models=#{added.join(",")}" if added.any?
+    exit 1 unless drifted.empty? && missing.empty? && added.empty?
+  end
+end
+
+desc "Find media tests that only pass in company, or only alone"
+task :isolation do
+  require_relative "isolation"
+  failures = StudioIsolation.run(pattern: ENV["TEST"])
+  exit(1) unless failures.zero?
+end
+
+task default: %i[gate test]
