@@ -86,9 +86,9 @@ class TestFixLoopFileCollector < Minitest::Test
     end
   end
 
-  # rules.yml paths.immutable binds every effect, and /fix is one: it asked
-  # the model to repair data/rules.yml and rubocop rewrote a lib/core file.
-  def test_the_law_s_immutable_paths_are_never_collected
+  # soul.yml owns sacred paths; rules.yml is the law catalogue. /fix must never
+  # collect the constitutional data or core spine for repair.
+  def test_sacred_paths_are_never_collected
     files = collector(Master::ROOT).collect(Master::ROOT).map { |f| f.delete_prefix("#{Master::ROOT}/") }
 
     refute_includes files, "data/rules.yml"
