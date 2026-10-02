@@ -160,10 +160,12 @@ class TestVoiceSupport < Minitest::Test
     PB.instance_variable_set(:@pending, nil)
     PB.stub(:enabled?, true) do
       PB.stub(:available?, true) do
-        PB.stub(:ensure_worker, queued) do
-          PB.speak("   ")
-          PB.speak(long)
-          PB.speak(" hello ")
+        PB.stub(:ensure_queue, queued) do
+          PB.stub(:start_worker!, nil) do
+            PB.speak("   ")
+            PB.speak(long)
+            PB.speak(" hello ")
+          end
         end
       end
     end
@@ -187,14 +189,16 @@ class TestVoiceSupport < Minitest::Test
 
     PB.stub(:enabled?, true) do
       PB.stub(:available?, true) do
-        PB.stub(:ensure_worker, queued) do
-          PB.speak("the same sentence")
-          PB.speak("the same sentence")
-          PB.send(:spoken, "the same sentence")
-          PB.speak("the same sentence")
-          PB.speak("a different sentence")
-          PB.instance_variable_set(:@last_at, Process.clock_gettime(Process::CLOCK_MONOTONIC) - PB::ECHO_WINDOW_S - 1)
-          PB.speak("the same sentence")
+        PB.stub(:ensure_queue, queued) do
+          PB.stub(:start_worker!, nil) do
+            PB.speak("the same sentence")
+            PB.speak("the same sentence")
+            PB.send(:spoken, "the same sentence")
+            PB.speak("the same sentence")
+            PB.speak("a different sentence")
+            PB.instance_variable_set(:@last_at, Process.clock_gettime(Process::CLOCK_MONOTONIC) - PB::ECHO_WINDOW_S - 1)
+            PB.speak("the same sentence")
+          end
         end
       end
     end
