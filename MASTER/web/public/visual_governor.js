@@ -12,20 +12,29 @@
   // Restored with the read, from the same revert. Every other visual module
   // checks this media query for itself, so the governor's cap is the floor
   // under all of them rather than the only guard.
+  const CONTRACT = window.MASTER_FACE_CONTRACT || {};
+  const BUDGET = CONTRACT.spatial?.budget || {};
   const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
-  // documentElement, not body: face_brutalist.js and face_vision_d.js both write
-  // runtimeProfile there. The pre-revert version read body.dataset and so never
-  // saw a profile at all.
+  const mobile = window.matchMedia?.("(max-width: 767px)")?.matches
+    || Number(navigator.hardwareConcurrency || 8) <= 4;
   const profile = document.documentElement?.dataset?.runtimeProfile
     || document.querySelector('meta[name="master-visual-profile"]')?.content
     || "auto";
-
-  let maxFps = 24;
-  let maxParticles = 200;
-  const reducedMotionParticles = 64;
-  if (reducedMotion) maxFps = Math.min(maxFps, 8);
-  else if (profile === "battery") maxFps = Math.min(maxFps, 12);
-  if (reducedMotion) maxParticles = reducedMotionParticles;
+  const mode = document.body?.dataset?.mode || "idle";
+  const idle = mode === "idle" || mode === "sleeping";
+  const activeFps = Number(BUDGET.active_fps) || 24;
+  const idleFps = Number(BUDGET.idle_fps) || 12;
+  const reducedMotionFps = Number(BUDGET.reduced_motion_fps) || 8;
+  const batteryFps = Number(BUDGET.battery_fps) || 12;
+  let maxFps = idle ? idleFps : activeFps;
+  let maxParticles = Number(BUDGET[mobile ? "mobile_particles" : "desktop_particles"]) || (mobile ? 120 : 200);
+  const reducedMotionParticles = Number(BUDGET.reduced_motion_particles) || 64;
+  if (reducedMotion) {
+    maxFps = Math.min(maxFps, reducedMotionFps);
+    maxParticles = Math.min(maxParticles, reducedMotionParticles);
+  } else if (profile === "battery") {
+    maxFps = Math.min(maxFps, batteryFps);
+  }
   const minFrameMs = 1000 / maxFps;
   const nativeRaf = window.requestAnimationFrame.bind(window);
   const nativePush = Array.prototype.push;
