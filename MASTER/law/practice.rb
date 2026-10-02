@@ -25,7 +25,10 @@ Law.define(:COLLAPSE_BEFORE_ADDING) do
     one). rename (the name states what it is, not what it was). reflow (order
     by importance, most-read first). repurpose (an existing seam over a new
     one). outsource (a maintained gem over a hand-rolled equivalent). adding
-    is the last resort and the reason goes in the commit.
+    is the last resort and the reason goes in the commit. Tree-level /fix runs
+    these structural checks automatically before ordinary repair and again
+    between converged passes. A kept move refreshes the corpus before repair
+    resumes.
   TEXT
   fix "before writing a new file, class, or dependency, try nine moves first and in this order."
   bad  "adds a second gate script"
@@ -337,7 +340,8 @@ Law.define(:NO_NEW_FILES) do
   severity :warn
   practice <<~TEXT
     edit the original path. No _fixed.rb, no staging copy, no new file without
-    approval — try merge or rename first on every touch.
+    approval — try merge or rename first on every touch. Tree-level /fix checks
+    the name and ownership surface before it creates a new path.
   TEXT
   fix "edit the original path."
   bad  "writes thing_fixed.rb"
