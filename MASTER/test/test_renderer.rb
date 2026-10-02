@@ -87,7 +87,8 @@ class TestRenderer < Minitest::Test
     state, prompt = renderer.prompt_line(nil, "idle", tokens: 0)
 
     assert_includes strip_ansi(state), "model: "
-    assert_equal "* ", strip_ansi(prompt).lines.last.chomp
+    assert_no_match(/\n|\r/, strip_ansi(prompt))
+    assert_match(/[%$] \z/, strip_ansi(prompt))
   end
 
   def test_prompt_line_state_shows_context_usage
@@ -113,19 +114,18 @@ class TestRenderer < Minitest::Test
     refute_empty truncated
   end
 
-  def test_shell_prompt_is_small_and_two_line
+  def test_shell_prompt_is_small_and_single_line
     renderer = FakeRenderer.new(config: {})
     _state, prompt = renderer.prompt_line("model", "discover", tokens: 45_000)
 
     clean = strip_ansi(prompt)
     lines = clean.lines.map(&:chomp)
 
+    assert_equal 1, lines.size
     assert_match(/\A(?:~|…|\/|[A-Za-z0-9_])/, lines.first)
     refute_includes lines.first, "(discover)"
     refute_includes clean, "  "
-    assert_equal 2, lines.size
-    assert_match(/discover [%$]\z/, lines.first)
-    assert_equal "* ", lines.last
+    assert_match(/discover [%$] \z/, lines.first)
     assert_operator lines.first.length, :<=, Master::Voice::Renderer::PromptComponents::PROMPT_MAX_CHARS
   end
 
@@ -156,7 +156,9 @@ class TestRenderer < Minitest::Test
     renderer = FakeRenderer.new(config: {})
     renderer.stub(:git_prompt_state, branch: "feature/with/a/very/long/operator/branch/name", ahead: 0, behind: 0, dirty: false) do
       _state, prompt = renderer.prompt_line("model", "discover", tokens: 10)
-      assert_operator strip_ansi(prompt).lines.first.length, :<=, Master::Voice::Renderer::PromptComponents::PROMPT_MAX_CHARS
+      clean = strip_ansi(prompt)
+      assert_no_match(/\n|\r/, clean)
+      assert_operator clean.length, :<=, Master::Voice::Renderer::PromptComponents::PROMPT_MAX_CHARS
       assert_includes strip_ansi(prompt), "feature/with/a/very/long/o…"
     end
   end
