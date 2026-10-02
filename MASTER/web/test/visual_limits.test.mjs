@@ -11,16 +11,29 @@ import { createContext, runInContext, runInNewContext } from "node:vm";
 const publicDir = join(dirname(fileURLToPath(import.meta.url)), "..", "public");
 const governorSource = readFileSync(join(publicDir, "visual_governor.js"), "utf8");
 
-function loadGovernor({ reducedMotion = false, profile = "auto" } = {}) {
+function loadGovernor({ reducedMotion = false, profile = "auto", mode = "" } = {}) {
   const sandbox = {
     window: {
       matchMedia: (q) => ({ matches: q.includes("reduced-motion") ? reducedMotion : false }),
+      MASTER_FACE_CONTRACT: {
+        spatial: {
+          budget: {
+            desktop_particles: 200,
+            mobile_particles: 120,
+            reduced_motion_particles: 64,
+            active_fps: 24,
+            idle_fps: 12,
+            reduced_motion_fps: 8,
+            battery_fps: 12,
+          }
+        }
+      },
       requestAnimationFrame: () => 1,
       cancelAnimationFrame: () => {},
     },
     document: {
       hidden: false,
-      body: { dataset: {} },
+      body: { dataset: mode ? { mode } : {} },
       documentElement: { dataset: profile === "auto" ? {} : { runtimeProfile: profile } },
       addEventListener: () => {},
       querySelector: () => null,
@@ -33,12 +46,13 @@ function loadGovernor({ reducedMotion = false, profile = "auto" } = {}) {
   return sandbox.window.MASTER_VISUAL_LIMITS;
 }
 
-test("the governor publishes its limits", () => {
+test("the governor publishes the shared contract budget", () => {
   const limits = loadGovernor();
 
   assert.equal(limits.maxFps, 24);
   assert.equal(limits.maxParticles, 200);
   assert.equal(limits.reducedMotionParticles, 64);
+  assert.match(governorSource, /MASTER_FACE_CONTRACT/);
 });
 
 // data/ops/visual.yml said freeze_on_fail: true while this said false, and the
