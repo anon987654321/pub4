@@ -1,0 +1,6 @@
+---
+id: travel_browser
+version: 1.0.0
+description: Governed browser automation for airline, hotel, restaurant and tour bookings.
+entrypoint: travel_browser.rb
+observe_actions: [status, inspect]
