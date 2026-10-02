@@ -606,6 +606,7 @@ function frame(t) {
   if (window.MASTER_PHOSPHOR_TRAIL?.capture && renderer?.domElement && phosphorOn) {
     window.MASTER_PHOSPHOR_TRAIL.capture(renderer.domElement);
   }
+  window.MASTER_FACE_WORLD?.update?.(performance.now());
   renderer.render(scene, camera);
   markFaceReady();
 
