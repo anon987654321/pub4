@@ -299,7 +299,7 @@ The Markdown infrastructure is landed, including `Master::MD`, `Master::PDF`, th
 
 **Documents.** Markdown is the canonical document source. `Master::MD` applies the house normalization without touching fenced code, while `Master::PDF` is a thin derived-output adapter for an operator-supplied PDF engine. No document is authored twice: HTML and PDF are renderings of the same Markdown source.
 
-**Snapshots.** Run `/snapshot` to write one source snapshot per governed tree at the repository root: `../snapshot_MASTER.md`, `../snapshot_RAILS.md`, `../snapshot_OPENBSD.md`, and `../snapshot_STUDIO.md` (MASTER/tools). Snapshots include meaningful text source only: dot files and directories, temporary/generated/dependency trees, and binary/media files are excluded. The command is deterministic apart from files that change while it runs. Generated snapshots are artifacts, not a second source of truth.
+**Snapshots.** Run `/snapshot` to write one source snapshot per governed tree under `.master/snapshots/`. Snapshots include meaningful text source only: dot files and directories, temporary/generated/dependency trees, and binary/media files are excluded. The command is deterministic apart from files that change while it runs. Generated snapshots are evidence artifacts, not source architecture, and are ignored by Git.
 
 **Aegis and cognition.** Aegis remains a design horizon, not a scaffold. The buildable part today is the drift model: a pure function from entry position, sea state, current and elapsed time to a probable-position ellipse, testable against published search-and-rescue drift data. Marine sensing stays deferred until there is real hardware and a reader for every proposed sensor; placeholder sensing would violate anti-simulation.
 

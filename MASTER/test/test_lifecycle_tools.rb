@@ -21,10 +21,7 @@ class LifecycleToolsSpec < Minitest::Test
     # right.
     present = root_entries
     files, dirs = present.partition { |name| File.file?(File.join(repo, name)) }
-    generated = Object.const_get(:GENERATED_ROOT_FILES)
-    canonical_files = files.reject { |name| generated.include?(name) }
-
-    assert_equal canonical_files.sort, Object.const_get(:ALLOWED_ROOT_FILES).sort,
+    assert_equal files.sort, Object.const_get(:ALLOWED_ROOT_FILES).sort,
                  "repo_inventory's ALLOWED_ROOT_FILES and the repo root have drifted"
     assert_equal dirs.sort, Object.const_get(:ALLOWED_ROOT_DIRS).sort,
                  "repo_inventory's ALLOWED_ROOT_DIRS and the repo root have drifted"

@@ -136,7 +136,7 @@ module Master
         },
         "snapshot" => {
           summary: "write the current MASTER tree and source to one Markdown artifact",
-          detail: ["/snapshot — write pub4/snapshot_MASTER.md.",
+          detail: ["/snapshot — write pub4/.master/snapshots/snapshot_MASTER.md.",
                    "/snapshot <output> — write the snapshot to a chosen path inside pub4."],
         },
         "rules" => {

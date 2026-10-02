@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Regenerates the verbatim codebase mirrors at pub4/snapshot_<TREE>.md.
+# Regenerates the verbatim codebase mirrors at pub4/.master/snapshots/snapshot_<TREE>.md.
 #
 # These are the packs handed to another model when it needs the whole tree
 # rather than a summary: every git-tracked text file inlined in full, no size
@@ -169,13 +169,12 @@ module Operator
       end
 
       binaries, texts = paths.partition { |p| binary?(File.join(REPO, p)) }
-      # The repo root, which is where an operator hands these to another model
-      # from. CLAUDE.md's "nothing else sits at the repo root" is about the
-      # tracked shape of the tree, and `.gitignore` already carries
-      # `/snapshot_*.md` — so these snapshot files never enter it, and no ratchet counts
-      # them. Writing them to MASTER/output instead meant the operator had to
-      # know a second location and every pack was two copies of 21 MB.
-      out = File.join(REPO, "snapshot_#{tree}.md")
+      # Snapshots are evidence artifacts, not source. Keep them under .master so
+      # the source root contains only authored architecture. The directory is
+      # already ignored as runtime state, so a snapshot cannot become tracked source.
+      output_dir = File.join(REPO, ".master", "snapshots")
+      FileUtils.mkdir_p(output_dir)
+      out = File.join(output_dir, "snapshot_#{tree}.md")
 
       File.open(out, "w") do |f|
         f.puts "# #{tree} — source snapshot"
