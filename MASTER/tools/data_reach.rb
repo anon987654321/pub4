@@ -71,7 +71,7 @@ module Operator
       @documents ||= {}
       return @documents[path] if @documents.key?(path)
 
-      @documents[path] = YAML.safe_load_file(path, aliases: true)
+      @documents[path] = YAML.safe_load_file(path, aliases: true, permitted_classes: [Date, Time])
     rescue StandardError => e
       @document_errors ||= {}
       @document_errors[path] = e
@@ -192,7 +192,7 @@ module Operator
     def recorded
       return {} unless File.exist?(CEILING)
 
-      YAML.safe_load_file(CEILING) || {}
+      YAML.safe_load_file(CEILING, aliases: true, permitted_classes: [Date, Time]) || {}
     end
 
     def ceiling = recorded.fetch("unnamed", 0)
