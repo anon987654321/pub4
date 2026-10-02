@@ -76,6 +76,18 @@ module Master
       end
     end
 
+    # Canonical browser/CLI face contract. This lives beside design thresholds because
+    # both terminal and web projections consume it; callers never parse the YAML shape.
+    def self.face_interface(root: Master::ROOT)
+      path = File.join(root, "data", "rules.yml")
+      data = Master.load_yaml(path, default: {}) || {}
+      interface = data.dig("design_system", "face_interface")
+      interface.is_a?(Hash) ? interface : {}
+    rescue StandardError => e
+      Master::Ground::Swallow.log(e, context: "Design.face_interface")
+      {}
+    end
+
     # The design-tier rules of data/rules.yml, for scanners and UI critique.
     class Thresholds
       def self.load(root: Master::ROOT)
