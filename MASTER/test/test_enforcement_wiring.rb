@@ -8,6 +8,16 @@ class TestEnforcementWiring < Minitest::Test
     def output_context(_mode) = :routine
   end
 
+  def test_render_preserves_non_empty_output_when_renderer_returns_empty
+    renderer = Object.new
+    renderer.define_singleton_method(:render) { |_text, mode:| "" }
+    stage = Master::CLI::Stages::Render.new(renderer:)
+    ctx = Master::CLI::PipelineContext.build(user_message: "/doctor", output: "doctor0: healthy")
+    result = stage.call(ctx)
+
+    assert_equal "doctor0: healthy", result.value!.rendered
+  end
+
   def test_render_reports_blocking_findings
     checker = Master::Review::OutputCheck.new("hallucination" => ["created phantom"])
     renderer = FakeRenderer.new([])
