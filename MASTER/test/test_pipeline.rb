@@ -1,4 +1,4 @@
-<sub># frozen_string_literal: true
+# frozen_string_literal: true
 
 require_relative "test_helper"
 
@@ -313,4 +313,4 @@ class TestPipeline < Minitest::Test
     system("git", "-C", root, "config", "user.email", "test@example.invalid")
     system("git", "-C", root, "config", "user.name", "Test")
   end
-end</sub>
+end

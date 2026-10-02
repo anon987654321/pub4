@@ -111,11 +111,17 @@ module Master
       end
 
       def exit_cli
-        @refs.session&.save!
+        save_session_on_exit
         save_cli_history
         line = @refs.renderer.closing
         puts line if line
         @running = false
+      end
+
+      def save_session_on_exit
+        @refs.session&.save!
+      rescue StandardError => e
+        Master::Trace::Dmesg.status("session0", "save failed, #{e.class}: #{e.message}")
       end
 
       def read_multiline

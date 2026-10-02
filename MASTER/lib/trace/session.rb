@@ -89,7 +89,7 @@ module Master
         def json_safe(value)
           case value
           when String
-            value.encode("UTF-8", invalid: :replace, undef: :replace, replace: "�")
+            utf8_safe(value)
           when Hash
             value.to_h { |key, item| [json_safe(key.to_s), json_safe(item)] }
           when Array
@@ -97,6 +97,10 @@ module Master
           else
             value
           end
+        end
+
+        def utf8_safe(value)
+          value.to_s.dup.force_encoding(Encoding::UTF_8).scrub("�")
         end
 
         def load_forks!
@@ -296,11 +300,12 @@ module Master
       def messages(key = nil) = @mutex.synchronize { conversation(key || current_key)[:messages] }
 
       def add_message(role:, content:, layer: :conversation)
-        msg = { role:, content:, layer: Master::CLI::ContextLayers.normalize(layer), ts: Time.now.to_i }
+        safe_content = utf8_safe(content)
+        msg = { role:, content: safe_content, layer: Master::CLI::ContextLayers.normalize(layer), ts: Time.now.to_i }
         @mutex.synchronize do
           conversation(current_key)[:messages] << msg
-          conversation(current_key)[:token_est] += Session.estimate_tokens(content)
-          conversation(current_key)[:name] ||= auto_name(content) if role == :user
+          conversation(current_key)[:token_est] += Session.estimate_tokens(safe_content)
+          conversation(current_key)[:name] ||= auto_name(safe_content) if role == :user
         end
         msg
       end

@@ -1,4 +1,4 @@
-<sub># frozen_string_literal: true
+# frozen_string_literal: true
 
 require "test_helper"
 require "cli/core_bridge"
@@ -266,4 +266,3 @@ class CoreBridgeSandboxTest < Minitest::Test
     refute_kind_of Master::Core::Verdict::Block, verdict
   end
 end
-</sub>

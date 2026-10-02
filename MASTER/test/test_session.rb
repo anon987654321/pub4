@@ -76,6 +76,22 @@ class TestSession < Minitest::Test
     end
   end
 
+  def test_save_scrubs_malformed_utf8_before_json_generation
+    Dir.mktmpdir("session_utf8_invalid") do |dir|
+      session = Master::Trace::Session.new(root: dir)
+      content = ("good " + [0xE2, 0x80].pack("C*")).force_encoding(Encoding::UTF_8)
+
+      session.add_message(role: :user, content:)
+      session.save!
+
+      data = JSON.parse(File.read(File.join(dir, ".master", "session.json")))
+      saved = data.fetch("messages").last.fetch("content")
+      assert saved.valid_encoding?
+      refute_includes saved, [0xE2, 0x80].pack("C*").force_encoding(Encoding::UTF_8)
+      assert_includes saved, "�"
+    end
+  end
+
   def test_a_save_cut_short_leaves_the_previous_transcript
     Dir.mktmpdir("session_atomic") do |dir|
       session = Master::Trace::Session.new(root: dir)
@@ -102,6 +118,27 @@ class TestSession < Minitest::Test
       assert_equal "what should we improve next?",
                    session.last_user_question(before: "/fix MASTER")
     end
+  end
+
+  def test_exit_survives_a_session_persistence_failure
+    session = Master::CLI::Session.allocate
+    refs = Object.new
+    failing = Object.new
+    failing.define_singleton_method(:save!) { raise Errno::ENOSPC, "full disk" }
+    renderer = Object.new
+    renderer.define_singleton_method(:closing) { nil }
+    refs.define_singleton_method(:session) { failing }
+    refs.define_singleton_method(:renderer) { renderer }
+    session.instance_variable_set(:@refs, refs)
+    session.instance_variable_set(:@running, true)
+
+    Master::Trace::Dmesg.stub(:status, nil) do
+      session.stub(:save_cli_history, nil) do
+        session.send(:exit_cli)
+      end
+    end
+
+    refute session.instance_variable_get(:@running)
   end
 
   def test_record_cost_bills_the_same_tokens_the_meter_shows
