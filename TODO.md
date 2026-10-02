@@ -1873,16 +1873,16 @@ The explicit non-goals remain streaks and dark-pattern retention, behavioral ad 
 
 ---
 
-## pub5 rewrite — from scratch, using pub4 as the source — 2026-10-02
+## pub4 clean rewrite — single-repo architecture reset — 2026-10-02
 
-This is the architectural reset plan for `pub5`. `pub4` remains the source repository and is never rewritten by the migration. The first objective is a clean four-tree system; the second is to repair namespaces, dependencies, tests and runtime behavior against that simpler architecture.
+This is the architectural reset plan for `pub4`. `pub4` remains the source repository and is never rewritten by the migration. The first objective is a clean four-tree system; the second is to repair namespaces, dependencies, tests and runtime behavior against that simpler architecture.
 
 ### Target architecture
 
 Keep exactly four root systems:
 
 ```
-pub5/
+pub4/
   MASTER/
   RAILS/
   OPENBSD/
@@ -2231,20 +2231,20 @@ MASTER may request a composition or transformation. STUDIO owns synthesis, seque
 
 ### Mechanical reset
 
-The first pub5 pass may be performed as a clean orphan-history rewrite:
+The first pub4 pass may be performed as a clean orphan-history rewrite:
 
 ```
-old pub5 tip
+old pub4 tip
     -> preserve as a pre-rewrite tag
     -> create orphan main
     -> clear tree
     -> migrate selected pub4 source
     -> establish the four-tree target
     -> commit
-    -> force-push pub5/main
+    -> force-push pub4/main
 ```
 
-The previous pub5 history should remain recoverable by tag, but must not determine the new architecture.
+The previous pub4 history should remain recoverable by tag, but must not determine the new architecture.
 
 ### Migration order
 
@@ -2274,7 +2274,7 @@ Run syntax, unit tests, application tests, browser/rendered gates, OpenBSD/vm23 
 
 ### First convergence gates
 
-The new pub5 is not considered structurally converged until all of these are true:
+The new pub4 is not considered structurally converged until all of these are true:
 
 - exactly four product/system roots: MASTER, RAILS, OPENBSD, STUDIO;
 - no sibling imports of another tree's internal implementation;
@@ -2294,6 +2294,6 @@ The new pub5 is not considered structurally converged until all of these are tru
 
 The reset itself is mechanical. The difficult part is the second pass: repairing require paths and namespaces, resolving dependency direction, collapsing duplicate abstractions, restoring application boots, and running the new architecture through its own tests.
 
-Do not recreate pub4's current architecture inside pub5 merely to achieve a quick green build. A temporary compatibility seam is acceptable only when it is explicit, isolated and scheduled for removal.
+Do not recreate pub4's current architecture inside pub4 merely to achieve a quick green build. A temporary compatibility seam is acceptable only when it is explicit, isolated and scheduled for removal.
 
 The desired outcome is not “pub4 moved to another repository”. It is a smaller system that retains the valuable behavior of pub4 without retaining its accumulated architecture.
