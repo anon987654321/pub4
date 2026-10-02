@@ -28,7 +28,7 @@ module Master
 
       # Retrying reproduces it. Either the request is wrong, the answer is no, or
       # the operation is over.
-      PERMANENT = %i[validation model_missing axiom_violation budget no_api_key policy shutdown abort
+      PERMANENT = %i[validation model_missing invalid_request axiom_violation budget no_api_key policy shutdown abort
                      handler_exception].freeze
 
       def retriable? = RETRIABLE.include?(@category)
@@ -62,6 +62,7 @@ module Master
       llm_failure: "LLM returned unusable output",
       llm_call_failure: "LLM dispatch exception (network / SDK)",
       no_api_key: "no LLM API key configured in env",
+      invalid_request: "LLM request was malformed or rejected by the provider",
       infrastructure: "system / disk / git error",
       handler_exception: "unexpected error during handler execution",
       timeout: "operation exceeded deadline",

@@ -160,6 +160,14 @@ module Master
             "Type a line, press enter, or speak while idle. Ctrl-C interrupts; Ctrl-D leaves.",
           ],
         },
+        "wake" => {
+          summary: "explicit microphone wake-word control on Android/Termux",
+          detail: [
+            "/wake — show wake-word state.",
+            "/wake on|enable — arm the configured wake phrases.",
+            "/wake off|disable — stop the wake-word listener.",
+          ],
+        },
       }.freeze
 
       def help_text(command = nil)

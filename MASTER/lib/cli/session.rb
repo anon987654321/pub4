@@ -145,12 +145,11 @@ module Master
 
       def build_on_turn_handler(accumulated, state)
         lambda do |line|
-          # The units console printed this turn as it ran; the transcript line
-          # would say it twice.
-          next state[:streamed] = true if @unit_sub
-
+          state[:streamed] = true
           accumulated << line << "\n"
-          handle_stream_text(line + "\n", state) if $stdout.isatty
+          # The units console already paints this line; keep the stream in the
+          # transcript accumulator, but do not paint it a second time.
+          handle_stream_text(line + "\n", state) if $stdout.isatty && !@unit_sub
         end
       end
 

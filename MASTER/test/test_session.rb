@@ -3,6 +3,20 @@
 require_relative "test_helper"
 
 class TestSession < Minitest::Test
+  def test_streamed_output_is_accumulated_even_when_units_console_is_active
+    session = Master::CLI::Session.allocate
+    state = { streamed: false }
+
+    session.instance_variable_set(:@unit_sub, -> {})
+    accumulated = +""
+    handler = session.send(:build_on_turn_handler, accumulated, state)
+
+    handler.call("hello from the stream")
+
+    assert_equal true, state[:streamed]
+    assert_equal "hello from the stream\n", accumulated
+  end
+
   def test_save_prunes_old_messages_to_summaries
     Dir.mktmpdir("session_test") do |dir|
       session = Master::Trace::Session.new(root: dir)

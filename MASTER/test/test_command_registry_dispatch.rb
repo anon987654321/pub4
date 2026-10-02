@@ -44,10 +44,18 @@ class TestCommandRegistryDispatch < Minitest::Test
     assert Registry.respond_to?(:dispatch_device_agent)
   end
 
-  def test_face_is_not_a_command_surface
-    refute built.key?("face")
-    refute_includes Registry::HELP_TOPICS.keys, "face"
-    refute_includes Registry.slash_commands, "/face"
+  def test_face_is_a_documented_command_surface
+    assert built.key?("face")
+    assert_includes Registry::HELP_TOPICS.keys, "face"
+    assert_includes Registry.slash_commands, "/face"
+    assert_equal :face, built.fetch("face").method_name
+  end
+
+  def test_wake_is_a_documented_command_surface
+    assert built.key?("wake")
+    assert_includes Registry::HELP_TOPICS.keys, "wake"
+    assert_includes Registry.slash_commands, "/wake"
+    assert_equal :dispatch_wake, built.fetch("wake").method_name
   end
 
   def test_critique_is_a_documented_discoverable_command
