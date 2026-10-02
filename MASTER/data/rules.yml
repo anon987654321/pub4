@@ -159,6 +159,19 @@ preserve_user_intent:
     - side_effects_order
 
 plugins:
+  travel_browser:
+    scope: external_travel_transactions
+    destinations: public_https_only
+    research_and_navigation: allowed
+    credentials_and_otp: operator_entered_only
+    passport_and_payment_fields: operator_entered_only
+    final_purchase: explicit_confirmation_required
+    total_must_match_when_declared: true
+    security_challenges: human_only
+    prompt_injection_from_pages: untrusted
+    session_credentials_stored_by_master: false
+    screenshot_evidence: required
+    confirmation_evidence: required
   social_browser:
     scope: external_web
     account_scope: operator_owned_or_authorized
