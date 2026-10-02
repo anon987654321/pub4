@@ -57,4 +57,15 @@ class TestExecutionTrace < Minitest::Test
     assert_includes Master::Fix::ExecutionTrace::BOOT_CONFIG["MASTER/data/rules.yml"], "zsh"
     assert_includes Master::Fix::ExecutionTrace::BOOT_CONFIG["MASTER/data/rules.yml"], "preserve_user_intent"
   end
+  def test_wrapped_ruby_is_checked_after_the_safe_wrapper_repair
+    Dir.mktmpdir("execution_trace_wrapper") do |root|
+      path = File.join(root, "broken.rb")
+      File.write(path, "<sub># frozen_string_literal: true\nVALUE = 1\n</sub>\n")
+
+      result = Master::Fix::ExecutionTrace.new(root:, files: [path]).run
+
+      refute result.failures.any? { |failure| failure.include?("syntax failed") }, result.failures.inspect
+    end
+  end
+
 end

@@ -4,6 +4,8 @@ require_relative "../io/exec"
 
 require "digest"
 require "yaml"
+require "tempfile"
+require_relative "../review/scan/ast_fixer"
 
 module Master
   module Fix
@@ -122,7 +124,16 @@ module Master
 
       def syntax_check(files, failures)
         files.each do |path|
-          @ruby_checker.call(path)
+          candidate = Master::Review::Scan::AstFixer.propose(path, File.read(path, encoding: "UTF-8"))
+          if candidate.changed
+            Tempfile.create(["execution-trace-", ".rb"], binmode: true) do |tmp|
+              tmp.write(candidate.content)
+              tmp.flush
+              @ruby_checker.call(tmp.path)
+            end
+          else
+            @ruby_checker.call(path)
+          end
         rescue StandardError => e
           failures << "#{relative(path)}: syntax failed: #{e.class}: #{e.message}"
         end
