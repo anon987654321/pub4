@@ -7,13 +7,11 @@ require_relative "restructure_sweep/contracts"
 
 module Master
   module Fix
-    # After /fix's repair passes, looks back over the tree for the structural
-    # findings the per-file loop hands to a person (a file or class to split,
-    # a tiny file to merge, a one-file directory to flatten) and restructures a
-    # few of them: the model proposes the files to write and delete, a second
-    # and hostile turn attacks the applied diff, and Restructure keeps the
-    # change only if the proof holds. Smallest moves first, so a run spends its
-    # budget where a restructure is likeliest to be sound.
+    # /fix treats structural consolidation as a normal repair stage. At the start
+    # of a tree-level run it takes one bounded first pass; after content repair it
+    # keeps sweeping until structural convergence. The model proposes the files
+    # to write and delete, a second hostile turn attacks the applied diff, and
+    # Restructure keeps the change only if the proof holds.
     #
     # MASTER_FIX_RESTRUCTURES=0 switches it off; MASTER_FIX_RESTRUCTURE_ATTEMPTS
     # caps the findings tried per run, each costing two model calls.
@@ -21,6 +19,9 @@ module Master
       ATTEMPTS = Integer(ENV.fetch("MASTER_FIX_RESTRUCTURE_ATTEMPTS", 4))
       ROUNDS = Integer(ENV.fetch("MASTER_FIX_RESTRUCTURE_ROUNDS", 4))
       KEEPS = 3
+      FIRST_ATTEMPTS = 1
+      FIRST_ROUNDS = 1
+      FIRST_KEEPS = 1
       ORDER = %w[DEAD_SUBTREE PARALLEL_HIERARCHY CYCLIC_DEPENDENCY FILE_SPRAWL NO_GOD_CLASS SMALL_FILES JS_MODULE_SIZE].freeze
       TREES = Contracts::BY_TREE.keys.freeze
 
@@ -78,14 +79,26 @@ module Master
         @restructures = Hash.new { |cache, tree| cache[tree] = restructure || Restructure.new(repo_root:, tree:) }
       end
 
-      def run(target:, run_id:)
-        return [] if ENV["MASTER_FIX_RESTRUCTURES"] == "0" || !TREES.include?(File.basename(target.to_s))
+      def run(target:, run_id:, phase: :normal)
+        return [] if ENV["MASTER_FIX_RESTRUCTURES"] == "0"
 
+        sweep_targets(target).flat_map do |tree_target|
+          run_tree(
+            tree_target,
+            "#{run_id}-#{File.basename(tree_target)}",
+            attempts: phase == :structure_first ? FIRST_ATTEMPTS : ATTEMPTS,
+            rounds: phase == :structure_first ? FIRST_ROUNDS : ROUNDS,
+            keeps: phase == :structure_first ? FIRST_KEEPS : KEEPS,
+          )
+        end
+      end
+
+      def run_tree(target, run_id, attempts:, rounds:, keeps:)
         kept = []
-        ROUNDS.times do |round|
+        rounds.times do |round|
           round_kept = []
-          candidates(target, "#{run_id}-#{round}").first(ATTEMPTS).each do |finding|
-            break if kept.size + round_kept.size >= KEEPS * ROUNDS
+          candidates(target, "#{run_id}-#{round}").first(attempts).each do |finding|
+            break if kept.size + round_kept.size >= keeps
 
             result = attempt(finding)
             round_kept << result.value! if result&.ok?
@@ -96,6 +109,19 @@ module Master
           Master::Trace::Dmesg.status("restructure0", "round #{round + 1}, kept #{round_kept.size}, total #{kept.size}")
         end
         kept
+      end
+
+      def sweep_targets(target)
+        expanded = File.expand_path(target.to_s, @root)
+        return TREES.filter_map do |tree|
+          path = File.join(@root, tree)
+          path if File.directory?(path)
+        end if expanded == File.expand_path(@root)
+
+        return [] unless TREES.include?(File.basename(expanded))
+        return [] unless File.dirname(expanded) == File.expand_path(@root)
+
+        [expanded]
       end
 
       # [path, rule, message, related_paths] for each structural finding, smallest moves first;
