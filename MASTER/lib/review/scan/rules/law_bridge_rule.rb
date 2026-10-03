@@ -27,6 +27,7 @@ module Master
             # bridge and the registry classes alike — sees fixtures and
             # detectors as declarations, not conduct.
             Law.rules.each_value.flat_map do |rule|
+              next [] unless rule.enforceable?
               next [] unless rule.applies?(path, lang)
 
               rule.scan(code, file: path).map do |hit|
