@@ -2,7 +2,7 @@
 
 # Whether a rule's autofix promise reaches any code.
 #
-# `autofix:` in data/rules.yml carries three kinds of value and only one of them
+# `autofix:` in data/laws.yml carries three kinds of value and only one of them
 # says anything a machine can act on: `false` is honest, a transform name is the
 # useful form because it names the edit, and bare `true` claims a fix without
 # saying how. Read the live split from `--json` rather than from a count here;
@@ -21,7 +21,7 @@
 #
 # Whether a rule can be FOUND is a separate question from whether its fix can be
 # applied, and this tool got it wrong for as long as it asked it. It counted the
-# three detect_* columns in rules.yml and reported twelve autofix claims as
+# three detect_* columns in laws.yml and reported twelve autofix claims as
 # undetectable — every one of the twelve wrong. Ten have a live detector in law/
 # or the RuleDSL registry, and the other two (WHITESPACE_PUNCTUATION,
 # MESSAGE_CHAIN) carry `folded_into:` naming the rule that reports for them. It
@@ -59,7 +59,7 @@ module Operator
 
     module_function
 
-    # Through the accessor, not a second load of rules.yml: the file this tool
+    # Through the accessor, not a second load of laws.yml: the file this tool
     # audits has to be the file the runtime reads, and reader_singularity is
     # the ratchet that keeps those two from drifting apart.
     def master_rules
@@ -154,7 +154,7 @@ module Operator
       return if undetectable.empty?
 
       warn "autofix_reach: #{undetectable.size} rule(s) claim autofix and nothing reports them — " \
-           "no detector in rules.yml, law/ or the registry, or a semantic-only detector the info " \
+           "no detector in laws.yml, law/ or the registry, or a semantic-only detector the info " \
            "filter drops: #{undetectable.map { |b| b[:rule] }.join(', ')}"
     end
 
