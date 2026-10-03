@@ -44377,20 +44377,22 @@ module DillaTakes
     end
   end
   TOC = {
-    "Liveset161326bb356a" => Liveset161326bb356a,
-    "Liveset4abbb73e" => Liveset4abbb73e,
-    "Liveset5613fe64b642" => Liveset5613fe64b642,
-    "Liveset5aa16356c296" => Liveset5aa16356c296,
-    "Liveset68eccd04098e" => Liveset68eccd04098e,
-    "Liveset7b5069a1bf3b" => Liveset7b5069a1bf3b,
-    "Liveset864969335d0f" => Liveset864969335d0f,
-    "LivesetDb4ddf1a" => LivesetDb4ddf1a,
-    "LovedMoogLoop" => LovedMoogLoop,
-    "MoogDfamLoop" => MoogDfamLoop,
+    "liveset_161326bb356a" => Liveset161326bb356a,
+    "liveset_4abbb73e" => Liveset4abbb73e,
+    "liveset_5613fe64b642" => Liveset5613fe64b642,
+    "liveset_5aa16356c296" => Liveset5aa16356c296,
+    "liveset_68eccd04098e" => Liveset68eccd04098e,
+    "liveset_7b5069a1bf3b" => Liveset7b5069a1bf3b,
+    "liveset_864969335d0f" => Liveset864969335d0f,
+    "liveset_db4ddf1a" => LivesetDb4ddf1a,
+    "loved_moog_loop" => LovedMoogLoop,
+    "moog_dfam_loop" => MoogDfamLoop,
   }.freeze
 
   def self.play(name)
-    take = TOC.fetch(name) { abort "usage: ruby dilla.rb live take <#{TOC.keys.sort.join('|')}>" }
+    take = TOC.fetch(name) do
+      abort "usage: ruby dilla.rb live take <#{TOC.keys.sort.join('|')}>"
+    end
     warn "take #{name}, as it was heard -- ctrl-c to end"
     take.run([])
   end
