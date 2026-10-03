@@ -2,7 +2,7 @@
 
 module Master
   module Ground
-    # Enforces rules.yml ground_truth_check — fresh reads before claims/commits.
+    # Enforces laws.yml ground_truth_check — fresh reads before claims/commits.
     class GroundTruth
       Entry = Data.define(:path, :sha256, :read_at)
 
@@ -67,7 +67,7 @@ module Master
       private
 
       def load_max_age
-        data = Master.load_yaml(Master::RULES_PATH) || {}
+        data = Master.load_yaml(Master::LAWS_PATH) || {}
         data.dig("ground_truth_check", "cache_max_age_seconds").to_i
       rescue StandardError
         5
