@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with
 code in this repository.
 
 Scope: `RAILS/`. Repo-wide rules are in `../CLAUDE.md`; authority order is
-`MASTER/data/soul.yml` > `MASTER/data/rules.yml` >
+`MASTER/data/soul.yml` > `MASTER/data/laws.yml` >
 executable law (`MASTER/law/*.rb` and `MASTER/lib/review/scan/rules/*.rb`) >
 `../CLAUDE.md` > this file.
 
@@ -124,4 +124,4 @@ one, and leave `PROTECTED` sections alone unless the task names them.
 Scanners hold the parts of this that one file can show: `NO_JQUERY`,
 `NO_INLINE_ASSETS_IN_SHELL`, `NO_MULTIPLE_LANGUAGES`, `NO_INLINE_STYLES`,
 `MAGIC_COLOR`. The rest are properties of a diff, so they are checked by reading
-one. Design values come from `MASTER/data/rules.yml`, section `design_system`, never from a second token authority.
+one. Design values come from `MASTER/data/laws.yml`, section `design_system`, never from a second token authority.
