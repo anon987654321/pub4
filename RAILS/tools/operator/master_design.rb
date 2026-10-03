@@ -10,7 +10,7 @@ module Operator
 
     def rules_path
       root = File.expand_path("../../..", __dir__)
-      path = File.join(root, "MASTER", "data", "rules.yml")
+      path = File.join(root, "MASTER", "data", "laws.yml")
       File.readable?(path) ? path : nil
     end
 
