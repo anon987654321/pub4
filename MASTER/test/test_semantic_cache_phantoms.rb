@@ -15,7 +15,7 @@ require "io/semantic_cache"
 # miss, then halted on the second and third ask.
 class TestSemanticCachePhantoms < Minitest::Test
   # 60 characters, four times over — comfortably past "same 60-char span repeats
-  # >= 3 times" in data/rules.yml.
+  # >= 3 times" in data/laws.yml.
   SPAN = ("the quick brown fox jumps over the lazy dog and keeps going ")
   LOOPING = SPAN * 4
   CLEAN = "Done. The queue drained 22 jobs and none failed."
