@@ -180,11 +180,13 @@ person. Allow applies the effect against a checkpoint it undoes the moment the
 effect errs. A fourth verdict, Revise, rewrites the effect inside admit and
 never reaches the loop. Everything past that is detail.
 
-**Executable constitution.** `data/rules.yml` is the declarative catalogue: names, provenance, scope, severity, and compatibility metadata. `law/` is the executable constitutional layer: detectors, semantic questions, practice guidance, remedies, and worked examples that can be proved offline.
+**Executable constitution.** `data/rules.yml` is the declarative policy catalogue: rule-system policy, architecture, runtime constraints, design tokens, and compatibility adapters. `law/` is the executable constitutional layer: detectors, semantic questions, practice guidance, remedies, and worked examples.
 
-Migration is being done in batches so each rule remains reversible and auditable. Batches 1–7 have migrated the catalogue’s semantic layer into executable Law definitions covering foundational architecture, design, security, refactoring, user experience, LLM operations, and prose. Domain-specific lexical and structural detectors remain in their existing `law/ruby.rb`, `law/javascript.rb`, `law/shell.rb`, `law/css.rb`, and `law/html.rb` homes until those consumers are migrated without losing deterministic coverage.
+Universal principles stay universal even when their detectors are domain-specific. The transformation algebra is declared once in `data/rules.yml`: inventory and classify first, then defragment, decouple, flatten, merge, split, relocate, rename, reorder, remove, reflow and simplify; recommend instead of guessing when proof is insufficient, then prove preservation. Existing structural and rename sweeps are adapters to that order rather than separate transformation systems.
 
-The executable Law layer now contains 140 universal definitions plus four Rails-specific semantic definitions in `law/rails.rb`, with no duplicate `Law.define` IDs across the current law sources. The semantic implementation has been retired from YAML; the remaining catalogue fields describe rules but no longer contain their executable semantic prompts or remedies. The next stage is consolidation of the remaining deterministic and structural registry detectors under Law without losing coverage.
+Every law carries its lifecycle and proof surface in the executable Law object. Proposed/proven/observed states cannot silently become enforcement; active and trusted rules may enforce, while advisory rules remain doctrine. Deterministic rules prove bad/good polarity offline; semantic rules carry worked examples into model evaluation. The derived `Law::Index` is generated from the executable objects, and self-test validates both the law index and the transformation policy. Before-and-after SHA-256 evidence accompanies successful multi-file restructures; the existing tree-specific proof remains the authority for semantic, loader, reference, test, and rendered-output preservation.
+
+Domain-specific lexical and structural detectors remain in their existing `law/ruby.rb`, `law/javascript.rb`, `law/shell.rb`, `law/css.rb`, and `law/html.rb` homes until those consumers are migrated without losing deterministic coverage.
 
 **Reliability kernel.** MASTER treats completion and survivability as separate claims.
 
