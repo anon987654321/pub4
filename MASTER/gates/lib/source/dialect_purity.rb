@@ -34,18 +34,18 @@ module Deploy
     private
 
     def check_tokens
-      data = Operator::MasterDesign.design_system(@master_rules)
+      data = Operator::MasterDesign.tokens(@master_rules)
       if data.empty?
-        @result.fail("dialect_purity: missing MASTER/data/laws.yml design_system")
+        @result.fail("dialect_purity: missing MASTER/data/laws.yml tokens")
         return
       end
       @result.checked!(7)
       %w[social luxury openbsd_wscons face_root vertical_accents].each do |key|
-        @result.fail("dialect_purity: MASTER design_system missing #{key}") unless data.key?(key)
+        @result.fail("dialect_purity: MASTER tokens missing #{key}") unless data.key?(key)
       end
       accents = data["vertical_accents"] || {}
       %w[marketplace dating].each do |v|
-        @result.fail("dialect_purity: MASTER design_system vertical_accents.#{v} missing") unless accents[v].is_a?(Hash) && accents[v]["accent"]
+        @result.fail("dialect_purity: MASTER tokens vertical_accents.#{v} missing") unless accents[v].is_a?(Hash) && accents[v]["accent"]
       end
     end
 
