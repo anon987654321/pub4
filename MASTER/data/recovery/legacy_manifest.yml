@@ -1219,3 +1219,15 @@ pub2_reasoning_analysis_v225:
   disposition: "absorbed-semantic"
   caution: "The old analysis proposes metrics and mechanisms; only the semantics that have concrete current mappings should be retained."
 
+deferred_semantic_gaps:
+  - capability: "encrypted session persistence"
+    source: "pub2 master.json.before_universal; session_manager described LRU eviction + AES-256 encryption"
+    current_state: "MASTER Trace::Session persists operator transcripts as atomic JSON and quarantines corruption, but does not encrypt the file at rest."
+    disposition: "deferred-security-design"
+    reason: "Encryption needs an explicit key-management and recovery contract; adding a cipher without that contract would create unrecoverable secrets or a false sense of protection."
+  - capability: "mixed-language heredoc parser"
+    source: "pub4 commit 97a761812e9b814188f702528cd47d09dddb6cdc"
+    current_state: "The archived MASTER2 parser handled shell files containing Ruby/Python heredocs; no current MASTER equivalent was found."
+    disposition: "deferred-gap"
+    reason: "Recover only when a current workflow genuinely needs structured mutation of embedded languages."
+
