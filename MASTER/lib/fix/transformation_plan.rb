@@ -40,7 +40,7 @@ module Master
       end
 
       def lifecycle_states
-        Array(Master.load_rules(root: Master::ROOT).dig("rule_system", "lifecycle", "states")).map(&:to_s).freeze
+        Array(@policy.dig("rule_system", "lifecycle", "states")).map(&:to_s).freeze
       end
 
       def operation(name)
