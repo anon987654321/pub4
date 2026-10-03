@@ -7,12 +7,12 @@ pub4 is governed by MASTER, and MASTER's law is data, not prose. Read it before
 you write:
 
 1. `MASTER/data/soul.yml` — the kernel. Absolutes, work rules, anti-simulation.
-2. `MASTER/data/rules.yml` — the declared rule catalogue, in four scopes.
+2. `MASTER/data/laws.yml` — the declared rule catalogue, in four scopes.
 3. `MASTER/law/*.rb` — the domain law, each rule carrying the example it must
    flag and the one it must not. Those two examples are the rule.
 4. `MASTER/lib/review/scan/rules/*.rb` — the registry, the rest of the detectors.
 
-The authority order is one stack: `soul.yml` > `rules.yml` >
+The authority order is one stack: `soul.yml` > `laws.yml` >
 executable law (`law/*.rb` and `lib/review/scan/rules/*.rb`) > repo harnesses
 (`CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, `.cursorrules`,
 `.github/copilot-instructions.md`) > per-tree contracts. Executable law outranks
@@ -98,7 +98,7 @@ available everywhere here and the repo is Ruby; a ten-line script that parses
 what it edits beats a regex that cannot see structure.
 
 **Modern zsh**, for shell work — and the forms are already in the law, at
-`zsh.native_patterns` in `MASTER/data/rules.yml`. They replace exactly what the
+`zsh.native_patterns` in `MASTER/data/laws.yml`. They replace exactly what the
 ban takes away:
 
     ${var//find/replace}     instead of sed s///g
