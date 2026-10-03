@@ -884,11 +884,3 @@ negative_fossils:
     commit: "01746ec9542fc80e0740db1ef09177a18376fbfc"
     value: "389 lines were removed from prompts.json in a documented consolidation."
     disposition: "do-not-reinflate"
-
-archive_duplicate_summary:
-  pub:
-    tracked_paths: 157
-    unique_blobs: 122
-    duplicate_groups: 20
-    duplicate_paths: 35
-    extraction_identity: git_blob_sha
