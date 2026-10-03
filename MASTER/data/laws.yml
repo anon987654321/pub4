@@ -921,31 +921,6 @@ conduct:
     principle: anti_simulation
     mandate: "Conversational filler ('Got it', 'Sure', 'I will now...') is simulation noise. Lead immediately with the action or the result."
     trigger: "every_reply"
-beauty:
-  typography_bringhurst:
-  - choose_appropriate_typeface_for_function
-  - set_text_in_sizes_that_suit_its_nature
-  - use_vertical_motion_that_suits_typeface
-  - rhythm_proportion_modulation_harmony
-  architecture_ando:
-  - simplicity_silence_emptiness
-  - light_shadow_materiality
-  - geometry_nature_coexistence
-  - space_between_as_important_as_form
-  design_rams:
-  - innovative_useful_aesthetic
-  - unobtrusive_honest_long_lasting
-  - thorough_environmentally_friendly
-  - as_little_design_as_possible
-  code_martin:
-    meaningful_names_intention_revealing: MEANINGFUL_NAMES
-    functions_do_one_thing_small: SMALL_FUNCTIONS
-    comments_explain_why_not_what: WHY_NOT_WHAT
-    error_handling_separate_from_logic: FAIL_VISIBLY
-  zen_japanese:
-    wabi_sabi: imperfect_authentic
-    ma: emptiness_pause
-    kanso: eliminate_essence
 self_test:
     ROBUSTNESS: scan lib/ for bare_rescue + missing timeouts
     SINGULARITY: laws.yml and deploy entries unique by id; data registries have their own lint
