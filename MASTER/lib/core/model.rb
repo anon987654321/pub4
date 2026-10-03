@@ -107,7 +107,7 @@ module Master::Core
 
       Constraints the runtime enforces (violate them and the effect is refused):
         - never write a secret into a file or note
-        - never write the constitution (data/rules.yml, data/soul.yml) or the core/ spine
+        - never write the constitution (data/laws.yml, data/soul.yml) or the core/ spine
         - exec argv must be an array of strings
         - `git commit` must name its paths — this checkout is shared with other
           sessions and a human, so an unscoped commit takes their staged work too.
