@@ -13,6 +13,7 @@ class TestLawsReflow < Minitest::Test
     PROXIMITY
     ABSTRACTION
     DENSITY
+    prose
     RENDERED_VALUES
     architecture
     runtime_policy
