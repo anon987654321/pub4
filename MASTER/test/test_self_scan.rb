@@ -104,7 +104,7 @@ class TestSelfScan < Minitest::Test
       FileUtils.mkdir_p(File.join(root, "lib"))
       File.write(File.join(root, "data", "laws.yml"), <<~YAML)
         self_test:
-                      SINGULARITY: "laws.yml entries unique by id"
+          SINGULARITY: "laws.yml entries unique by id"
         rules:
           - id: DUPLICATE_RULE
           - id: DUPLICATE_RULE
