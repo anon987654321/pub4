@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "fileutils"
+require "digest"
 require "tmpdir"
 require_relative "restructure/plan"
 require_relative "restructure/syntax"
@@ -64,7 +65,7 @@ module Master
         failure = review.call(diff(plan, originals)) || @proof.failure(plan, before)
         return undo(originals, failure) if failure
 
-        commit(plan, message)
+        commit(plan, message, evidence: preservation_evidence(plan, originals))
       rescue StandardError => e
         originals ? undo(originals, "#{e.class}: #{e.message}") : Result.err("restructure: #{e.message}")
       end
@@ -155,11 +156,22 @@ module Master
         Result.err("restructure undone: #{failure}", category: :validation)
       end
 
-      def commit(plan, message)
+      def preservation_evidence(plan, originals)
+        after = plan.paths.to_h { |path| [path, read(path)] }
+        {
+          before: originals.to_h { |path, body| [path, Digest::SHA256.hexdigest(body.to_s)] },
+          after: after.to_h { |path, body| [path, Digest::SHA256.hexdigest(body.to_s)] },
+          written: plan.writes.keys,
+          deleted: plan.deletes,
+          proof: "review_and_tree_proof_held",
+        }
+      end
+
+      def commit(plan, message, evidence:)
         @git.git!("add", "-A", "--", *plan.paths)
         @git.git!("commit", "-m", message, "-m", Master::Core::World::COMMIT_TRAILER, "--", *plan.paths)
         @git.push
-        Result.ok(summary: plan.summary, files: plan.paths.size, head: @git.head)
+        Result.ok(summary: plan.summary, files: plan.paths.size, head: @git.head, evidence:)
       end
 
       # The whole change as one unified diff, new and deleted files included.
