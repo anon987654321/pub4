@@ -4,7 +4,7 @@
 # OPENBSD/bin/tree
 #
 # Constitution-aware project tree for pub4.
-# Respects skip_dirs from MASTER/data/rules.yml + aggressive pruning for overview.
+# Respects skip_dirs from MASTER/data/laws.yml + aggressive pruning for overview.
 # Usage: ruby tree.rb [root] [--max-depth=3] [--summary]
 
 require "yaml"
@@ -126,7 +126,7 @@ class ProjectTree
     end
 
     scopes = rule_scopes(master)
-    line(:ok, "data/soul.yml + rules.yml{#{scopes.join(',')}} — law tier, one file since the 2026-08-12 fold") if scopes.any?
+    line(:ok, "data/soul.yml + laws.yml{#{scopes.join(',')}} — law tier, one file since the 2026-08-12 fold") if scopes.any?
 
     data_yml = Dir.glob(File.join(master, "data", "*.yml")).size
     runtime = Dir.glob(File.join(master, "data", "runtime", "*.yml")).size
@@ -158,11 +158,11 @@ class ProjectTree
     Dir.children(path).select { |e| !e.start_with?(".") && File.directory?(File.join(path, e)) }.sort
   end
 
-  # Reads the scopes out of rules.yml rather than counting shard files. Counting
+  # Reads the scopes out of laws.yml rather than counting shard files. Counting
   # files reported "0 rule shards" the moment they were folded in, which reads as
   # loss when it is a move.
   def rule_scopes(master)
-    path = File.join(master, "data", "rules.yml")
+    path = File.join(master, "data", "laws.yml")
     return [] unless File.exist?(path)
 
     (YAML.safe_load_file(path, aliases: true)["rules"] || {}).keys.sort
@@ -255,8 +255,8 @@ class ProjectTree
 
   def load_skip_dirs
     rules_path = [
-      File.join(@root, "data/rules.yml"),
-      File.join(@root, "MASTER/data/rules.yml")
+      File.join(@root, "data/laws.yml"),
+      File.join(@root, "MASTER/data/laws.yml")
     ].find { |p| File.exist?(p) }
     return DEFAULT_SKIP unless rules_path
 
@@ -275,7 +275,7 @@ class ProjectTree
     @skip.any? { |s| rel.start_with?(s) || rel == s }
   end
 
-  LAW_YML = %w[soul.yml rules.yml limits.yml voice.yml style.yml].freeze
+  LAW_YML = %w[soul.yml laws.yml limits.yml voice.yml style.yml].freeze
 
   def collapse_data_files(files)
     law = files.select { |f| LAW_YML.include?(f) }.sort
