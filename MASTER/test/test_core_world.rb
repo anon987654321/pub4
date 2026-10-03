@@ -151,6 +151,37 @@ class WorldTest < Minitest::Test
     end
   end
 
+  def test_http_requires_network_capability_and_uses_the_injected_client
+    seen = []
+    network = ->(url:) { seen << url; Master::Core::Observation.ok("body from #{url}") }
+    world = Master::Core::World.new(
+      root: Dir.mktmpdir("world_http"),
+      capabilities: Master::Core::Capabilities.for(:fix),
+      network:,
+    )
+
+    result = world.perform(Master::Core::Effect.http("https://example.com/source.rb"))
+
+    assert result.ok?
+    assert_equal "body from https://example.com/source.rb", result.value!
+    assert_equal ["https://example.com/source.rb"], seen
+  ensure
+    FileUtils.remove_entry(world.instance_variable_get(:@root)) if world
+  end
+
+  def test_http_is_refused_when_network_has_been_dropped
+    root = Dir.mktmpdir("world_http_blocked")
+    capabilities = Master::Core::Capabilities.for(:fix).drop(:network)
+    world = Master::Core::World.new(root:, capabilities:, network: ->(**) { flunk "network reached" })
+
+    result = world.perform(Master::Core::Effect.http("https://example.com"))
+
+    refute result.ok?
+    assert_match(/capability refused: network/, result.message)
+  ensure
+    FileUtils.remove_entry(root) if root
+  end
+
   # A timed-out subprocess has no Process::Status. bounded_capture2e used to
   # return nil in its place, so the moment git actually wedged, every caller
   # (git_repo?, git_has_head?, git_capture, apply_patch) raised NoMethodError
