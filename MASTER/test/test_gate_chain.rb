@@ -170,6 +170,12 @@ class TestGateChain < Minitest::Test
     refute_match G::GENERATED, "MASTER/lib/operator/gate_chain.rb"
   end
 
+  def test_dirty_parser_keeps_both_sides_of_a_rename
+    status = "R  old.rb\\0new.rb\\0 M changed.rb\\0?? new.txt\\0"
+
+    assert_equal ["old.rb", "new.rb", "changed.rb", "new.txt"], G.send(:parse_dirty_paths, status)
+  end
+
   def test_only_selects_a_subset_and_list_reports_it
     out, = capture_io { G.run(scan_only: true, only: %w[sprawl], list: true) }
 

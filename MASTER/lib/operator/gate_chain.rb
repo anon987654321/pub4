@@ -410,10 +410,34 @@ module Operator
     # Untracked files count: a stage that drops a new file in is a stage that
     # changed the tree, and much of the damage this chain attributes arrives so.
     def dirty
-      out, status = Open3.capture2e("git", "status", "--porcelain", "-z", chdir: ROOT)
+      out, status = Open3.capture2e("git", "status", "--porcelain=v1", "-z", chdir: ROOT)
       raise "gate: git status failed: #{out.to_s.strip}" unless status.success?
 
-      out.split("\0").filter_map { |entry| entry[3..] }.reject(&:empty?)
+      parse_dirty_paths(out)
+    end
+
+    def parse_dirty_paths(output)
+      entries = output.to_s.split("\0")
+      paths = []
+      index = 0
+
+      while index < entries.size
+        entry = entries[index]
+        break if entry.empty?
+
+        status = entry[0, 2].to_s
+        path = entry[3..].to_s
+        paths << path unless path.empty?
+
+        if status.match?(/[RC]/)
+          index += 1
+          renamed_path = entries[index].to_s
+          paths << renamed_path unless renamed_path.empty?
+        end
+        index += 1
+      end
+
+      paths
     end
 
     # The instrument's own summary line, not the last line printed — the rule

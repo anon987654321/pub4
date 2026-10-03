@@ -2924,3 +2924,12 @@ Reference starting points: Browser Use — https://github.com/browser-use/browse
 - [ ] UI-498: Make retry behaviour observable through dmesg-style events.
 - [ ] UI-499: Measure end-to-send latency for every voice turn.
 - [ ] UI-500: Record speech-start, speech-end and send timestamps separately.
+
+## Historical recovery archaeology — 2026-10-03
+
+- The recent `a98d45c8070ae2566fa51a34fdebffd3b196e0fb` mass-collapse is preserved by `archaeology/pre-main-collapse-20261003` and `main` has been reconstructed from its parent; do not flatten or re-collapse the governed trees.
+- Legacy archive inventory for `pub`, `pub2` and `pub3` now lives in `MASTER/data/recovery/legacy_manifest.yml`, including archive paths, Git blob identities, sizes, extraction policy and historical recovery fossils. Do not create another archive catalogue.
+- `pub3/my-work` remains a separate historical line with 156 commits ahead of `pub3/main`; inspect it for unique master/audio/Rails work before any retirement decision.
+- Highest-value archaeological seams found so far include MASTER self-corruption recovery, cognitive runtime/event architecture, interrupted-Git recovery, deleted-directory citation guarding, postpro effect provenance, seven recovered visualisers, Dilla vocal/grid/remix work, and older AI3/master.json/Rails restoration lines. Treat the cited commits in `legacy_manifest.yml` as evidence, not automatic restore orders.
+- Legacy archives stay outside the active tree during extraction. Use `MASTER/tools/archaeology/extract_legacy_archives.zsh`; promote extracted material only after comparison, singularity review and executable proof.
+- Existing source-of-truth rule applies: retrofit archaeology into `MASTER/data/recovery/legacy_manifest.yml` and this backlog; do not add standalone archaeology Markdown files.

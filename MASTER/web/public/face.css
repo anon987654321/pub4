@@ -1430,9 +1430,11 @@ body.wscons-mode #face-phosphor-trail {
   display: none !important;
 }
 
-/* UI_REFINEMENTS pass — face chrome only; does not touch WebGL boot path */
-#primer {
-  display: grid;
+/* UI_REFINEMENTS pass — face chrome only; does not touch WebGL boot path.
+   The pass's #primer stub is not reproduced here: it carried only
+   display: grid, which #primer already declares at its main rule above,
+   and it shipped unbalanced — its unclosed #primer nested every rule
+   below it until #chat-log's 66ch centering went dead (2026-10-03). */
 
 /* MASTER presentation contract: browser chat is terminal scrollback, not a bubble UI.
    The face remains spatial; readable interaction remains one monospaced stream. */

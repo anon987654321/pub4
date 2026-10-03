@@ -3,6 +3,7 @@
 require_relative "../support/gate_result"
 require_relative "../support/gate_autofix"
 require_relative "source/css_constitution"
+require_relative "source/css_brace_balance"
 require_relative "source/css_minify_integrity"
 require_relative "live/first_screen"
 require_relative "source/dialect_purity"
@@ -26,6 +27,7 @@ module Deploy
   # the suite then re-runs the full leaf list once more after any patches.
   class LayoutSuiteGate
     LEAVES = [
+      CssBraceBalanceGate,
       CssConstitutionGate,
       CssMinifyIntegrityGate,
       DialectPurityGate,
