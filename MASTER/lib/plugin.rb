@@ -69,7 +69,7 @@ module Master
 
     def policy(id)
       Master.law("plugins").fetch(id.to_s) do
-        raise PolicyError, "data/rules.yml has no plugin policy for #{id}"
+        raise PolicyError, "data/laws.yml has no plugin policy for #{id}"
       end
     end
 
