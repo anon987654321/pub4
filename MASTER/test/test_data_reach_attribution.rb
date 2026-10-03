@@ -9,7 +9,7 @@ require_relative "../tools/data_reach"
 # two. data_reach was over by exactly that on 2026-08-31 and the number had no
 # thread to pull: identifying the pair meant checking out the commit that set
 # the ceiling and diffing two member lists by hand. They turned out to be
-# rules.yml#business_plan and rules.yml#markdown_style — the two sections
+# laws.yml#business_plan and laws.yml#markdown_style — the two sections
 # WISHLIST 67 records as clobbered by a read-modify-write and restored without
 # a reader.
 #
@@ -112,14 +112,14 @@ class TestDataReachAttribution < Minitest::Test
   def test_attributed_requires_the_yaml_basename_in_the_same_file
     Tool.instance_variable_set(:@code_files, {
       "phase.rb" => "state['success_criteria']",
-      "loader.rb" => "load_yaml('rules.yml')",
+      "loader.rb" => "load_yaml('laws.yml')",
     })
-    refute Tool.attributed?("success_criteria", "rules.yml")
+    refute Tool.attributed?("success_criteria", "laws.yml")
 
     Tool.instance_variable_set(:@code_files, {
-      "rules.rb" => "Master.load_yaml('rules.yml'); data['success_criteria']",
+      "rules.rb" => "Master.load_yaml('laws.yml'); data['success_criteria']",
     })
-    assert Tool.attributed?("success_criteria", "rules.yml")
+    assert Tool.attributed?("success_criteria", "laws.yml")
   ensure
     Tool.instance_variable_set(:@code_files, nil)
     Tool.instance_variable_set(:@code, nil)
@@ -135,7 +135,7 @@ class TestDataReachAttribution < Minitest::Test
       "builder.rb" => "soul = @rules.data(:soul); Array(soul['prompt_ordering'])",
     })
 
-    assert Tool.attributed?("llm_output_rules", "rules.yml")
+    assert Tool.attributed?("llm_output_rules", "laws.yml")
     assert Tool.attributed?("prompt_ordering", "soul.yml")
 
     # The other direction: an accessor for one file does not vouch for another's
