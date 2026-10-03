@@ -2070,3 +2070,67 @@ Law.define(:CAPABILITY_REDUCTION_MONOTONIC) do
   bad "capabilities.drop(:network); capabilities.acquire(:network)"
   good "capabilities.drop(:network) # remains unavailable in this context"
 end
+
+
+# Rule-system laws. These govern the instrument itself, so they are universal
+# practice/semantic laws rather than language-specific regexes.
+
+Law.define(:INSTRUMENT_MUST_PROVE_ITSELF) do
+  source "MASTER constitutional self-test policy"
+  severity :error
+  lifecycle :trusted
+  autofix :never
+  ask "Does every detector or gate that can influence a decision have a known-positive and known-negative proof, or an explicit semantic evaluation path?"
+  practice "A measuring instrument must demonstrate what it catches and what it spares before its findings can drive automatic action."
+  fix "Add polarity fixtures or a semantic evaluation contract before trusting the instrument."
+  bad "A new veto regex is enabled with no false-positive fixture."
+  good "The detector has a failing fixture, a clean fixture, and its evaluation surface is covered by a gate."
+end
+
+Law.define(:VERIFICATION_REQUIRED_FOR_COMPLETION) do
+  source "MASTER constitutional completion policy"
+  severity :error
+  lifecycle :trusted
+  autofix :never
+  ask "Does this claim of completion have direct evidence from the actual resulting artifact or executed check, rather than intention, absence of an error, or an unrun test?"
+  practice "Completion is an observed state, not a promise."
+  fix "Run the relevant proof and report the observed result; otherwise report the work as unresolved."
+  bad "Done because the patch was written."
+  good "Done after the changed code, relevant tests and final state were actually inspected."
+end
+
+Law.define(:INCONCLUSIVE_IS_NOT_PASS) do
+  source "MASTER constitutional capability-status policy"
+  severity :error
+  lifecycle :trusted
+  autofix :never
+  ask "Did an unavailable dependency, skipped probe, timeout, missing permission, or unmeasured gate get treated as success?"
+  practice "Unknown, skipped and unavailable are distinct from pass."
+  fix "Return an explicit inconclusive/degraded result and preserve the unresolved evidence."
+  bad "Browser unavailable, therefore visual gate passed."
+  good "Browser unavailable, visual gate inconclusive, no completion claim."
+end
+
+Law.define(:RATCHET_INTEGRITY) do
+  source "MASTER ratchet policy"
+  severity :error
+  lifecycle :trusted
+  autofix :never
+  ask "Does a ratchet or threshold change preserve its meaning, or was the threshold moved merely to absorb new debt or make the current tree pass?"
+  practice "A ratchet may make progress harder to lose, never easier to redefine."
+  fix "Keep the existing threshold or justify a measured structural improvement before changing it."
+  bad "Increase the allowed violation count because the scan found more violations."
+  good "Remove violations first, then tighten or preserve the threshold against the improved baseline."
+end
+
+Law.define(:AUTOFIX_REQUIRES_CONFIDENCE) do
+  source "MASTER autofix safety policy"
+  severity :error
+  lifecycle :trusted
+  autofix :never
+  ask "Is this finding sufficiently deterministic that an automatic edit can be applied without guessing at user intent or hidden semantics?"
+  practice "LLM-generated text is not evidence that an automatic transformation is safe."
+  fix "Downgrade to review-only or add deterministic evidence and preservation tests before automatic repair."
+  bad "A semantic smell triggers an automatic rewrite because the model produced plausible code."
+  good "Only a deterministic, fixture-proven transformation is eligible for automatic repair."
+end
