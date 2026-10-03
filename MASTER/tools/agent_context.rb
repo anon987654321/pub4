@@ -10,7 +10,7 @@
 #   ruby MASTER/tools/agent_context.rb                 # the standing context
 #   ruby MASTER/tools/agent_context.rb "<prompt>"      # plus what matches it
 #
-# Designed for a UserPromptSubmit hook, so it has to be small: data/rules.yml is
+# Designed for a UserPromptSubmit hook, so it has to be small: data/laws.yml is
 # 4,609 lines and injecting it every turn would drown the turn. Six kilobytes
 # go out — the binding half: the conduct rules that govern how to work, what the
 # gate can actually block on, and how much of the law is unmeasured right now.
@@ -53,7 +53,7 @@ module Operator
     # list of what actually blocks is an instruction.
     def blocking_rules
       load_master
-      Master.flatten_rules(Master.load_rules(root: MASTER_DIR).fetch("rules", {}))
+      Master.law_entries(root: MASTER_DIR)
             .select { |rule| BLOCKING.include?(rule["severity"].to_s.to_sym) }
             .filter_map { |rule| rule["id"] }.sort
     end
