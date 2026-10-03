@@ -49,9 +49,6 @@ Law.define(:BARE_DIV_WRAPPER) do
   good "<section>"
 end
 
-# Migrated from data/laws.yml BEM_IN_VIEWS. The registry twin scoped to
-# app/views — a doc snippet or a vendored template is not a view — and the
-# scope moved here with the retirement.
 Law.define(:BEM_IN_VIEWS) do
   source "style.yml bare_tag_targeting — no BEM in ERB"
   severity :warn
@@ -91,7 +88,6 @@ Law.define(:BLANK_LINE_RUN) do
   good "<p>first</p>\n\n<p>second</p>\n"
 end
 
-# Migrated from data/laws.yml BUTTON_OVER_ANCHOR.
 Law.define(:BUTTON_OVER_ANCHOR) do
   source "WAI-ARIA Authoring Practices — button vs link (W3C)"
   severity :warn
@@ -140,7 +136,6 @@ end
 # filter — the tag_source family is why ARIA_LABELS and IMG_ALT retired the
 # same way.
 
-# Migrated from data/laws.yml I18N_COVERAGE.
 Law.define(:I18N_COVERAGE) do
   source "Rails i18n best practice (no hardcoded strings)"
   severity :warn
@@ -237,7 +232,6 @@ Law.define(:NO_INLINE_SCRIPT_BLOCK) do
   good "<div></div>"
 end
 
-# Migrated from data/laws.yml NO_INLINE_STYLES.
 Law.define(:NO_INLINE_STYLES) do
   source "CSP / separation of concerns — no inline styles"
   severity :warn
@@ -257,7 +251,6 @@ Law.define(:NO_INLINE_STYLES) do
   good "<p class=\"warn\" style=\"--share: 40%\">"
 end
 
-# Migrated from data/laws.yml NO_JQUERY.
 Law.define(:NO_JQUERY) do
   source "RAILS/shared frontend convention"
   severity :warn
@@ -298,7 +291,6 @@ Law.define(:PRESENTATIONAL_CLASS_NAME) do
   good "<small>posted just now</small>"
 end
 
-# Migrated from data/laws.yml SEMANTIC_ELEMENTS. Folds ANTI_DIVITIS (identical detector).
 Law.define(:SEMANTIC_ELEMENTS) do
   source "HTML5 semantics / WCAG 1.3.1 (W3C)"
   severity :warn
@@ -348,9 +340,6 @@ end
 # leave unclosed, escaping its attributes by construction rather than by the
 # author remembering to.
 
-# Migrated from data/laws.yml UTILITY_CLASS_SOUP. The registry twin knew
-# more utility vocabularies (ml/mr/px/py/flex/grid/w-/h-, case-insensitive)
-# and scoped to app/views; both moved here with the retirement.
 Law.define(:UTILITY_CLASS_SOUP) do
   source "style.yml html.forbidden.framework_class_explosion"
   severity :warn
