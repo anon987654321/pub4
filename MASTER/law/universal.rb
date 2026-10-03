@@ -1,9 +1,6 @@
 # frozen_string_literal: true
 
 # law/universal.rb — every universal law, one Law.define per rule.
-# Was 15 one-rule files; Law.load_all and every fixture proof are
-# unchanged by the grouping (2026-08-19 file-sprawl consolidation).
-
 # DEAD_CODE lives once, in the registry (ruby_rules.rb): it anchors the
 # terminator to the line start, walks indentation to tell a dedent (block
 # over, next line reachable) from a continuation, and knows else/elsif/when/
@@ -24,7 +21,6 @@ Law.define(:FAIL_VISIBLY) do
   good "rescue IOError => e"
 end
 
-# Migrated from data/rules.yml FULL_BY_DEFAULT.
 Law.define(:FULL_BY_DEFAULT) do
   source "MASTER-native (no shallow/lite tiers by default)"
   severity :warn
