@@ -68,7 +68,7 @@ class BreakpointLintTest < Minitest::Test
   def test_the_canonical_viewport_scale_is_not_empty
     viewport = Operator::MasterDesign.design_system.fetch("viewport")
 
-    refute_empty viewport, "MASTER/data/rules.yml#design_system lost its viewport scale"
+    refute_empty viewport, "MASTER/data/laws.yml#design_system lost its viewport scale"
     assert_equal viewport.values.map { |v| Integer(v) }.sort, L.edges,
                  "the lint must read the canonical design system, not carry its own copy"
   end
