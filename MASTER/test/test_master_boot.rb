@@ -13,11 +13,11 @@ class MasterBootTest < Minitest::Test
 
   def test_master_paths_shim_matches_boot_paths
     assert_equal MasterPaths::ROOT, File.expand_path("..", File.expand_path("../lib", __dir__))
-    assert MasterPaths.data("rules.yml").end_with?("/data/rules.yml")
+    assert MasterPaths.data("laws.yml").end_with?("/data/laws.yml")
   end
 
   def test_master_data_load_yaml_reads_rules
-    path = Master.data_path("rules.yml")
+    path = Master.data_path("laws.yml")
 
     body = Master.load_yaml(path)
     assert body.is_a?(Hash)
@@ -75,7 +75,7 @@ class MasterBootTest < Minitest::Test
     end
   end
 
-  # rules.yml needs aliases, which is why load_yaml allows them. Aliases are
+  # laws.yml needs aliases, which is why load_yaml allows them. Aliases are
   # references inside the document; a Ruby object tag is still refused.
   def test_load_yaml_follows_aliases_and_refuses_ruby_objects
     Dir.mktmpdir do |dir|
