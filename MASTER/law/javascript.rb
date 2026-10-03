@@ -1,10 +1,6 @@
 # frozen_string_literal: true
 
 # law/javascript.rb — every javascript law, one Law.define per rule.
-# Was 7 one-rule files; Law.load_all and every fixture proof are
-# unchanged by the grouping (2026-08-19 file-sprawl consolidation).
-
-# Migrated from data/rules.yml ASYNC_AWAIT.
 Law.define(:ASYNC_AWAIT) do
   source "ECMAScript 2017 — async/await over raw promises"
   severity :warn
