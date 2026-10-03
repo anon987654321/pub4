@@ -38,7 +38,7 @@ module Master
       ].freeze
 
       BOOT_CONFIG = {
-        "MASTER/data/rules.yml" => %w[zsh preserve_user_intent],
+        "MASTER/data/laws.yml" => %w[zsh preserve_user_intent],
         "MASTER/data/soul.yml" => [],
         "MASTER/data/providers.yml" => [],
         "MASTER/data/patterns.yml" => [],
