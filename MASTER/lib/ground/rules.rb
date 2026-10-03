@@ -117,7 +117,7 @@ module Master
 
       def kernel
         @kernel ||= begin
-          all_rules = Master.flatten_rules(@data["rules"])
+          all_rules = Master.law_entries(root: @root)
           all_rules
             .select { |r| r["tier"] == "kernel" }
             .each_with_object({}) { |r, h| h[r["id"]] = r["name"] }
@@ -148,7 +148,7 @@ module Master
 
       private
 
-      # A section of rules.yml answers to its own stem, so a call site may ask
+      # A section of laws.yml answers to its own stem, so a call site may ask
       # for :style or :design_rules without knowing they share a file. A stem
       # with no section returns {}, the same as an absent optional file.
       def folded(key)
