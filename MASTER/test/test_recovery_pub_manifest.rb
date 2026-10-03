@@ -216,6 +216,17 @@ class TestRecoveryPubManifest < Minitest::Test
     assert_includes ai3.fetch("excluded_as_runtime"), "external Weaviate/Ferrum-backed autonomous assistant trees"
   end
 
+  def test_pub_backup_plan_is_reconciled_to_current_rails_tree
+    manifest = YAML.safe_load(ROOT.join("MASTER/data/recovery/legacy_manifest.yml").read, permitted_classes: [Date])
+    review = manifest.fetch("pub_backup_restoration_plan_review")
+
+    assert_equal "18d9bbbc63121aedfedd2366f540b8ee56006674", review.fetch("source_commit")
+    assert_equal 9, review.fetch("archive_set").size
+    assert_equal 8, review.fetch("reconciled_surfaces").size
+    assert review.fetch("reconciled_surfaces").all? { |surface| surface.fetch("disposition") == "absorbed" }
+    assert_includes review.fetch("unresolved_archival_apps"), "baibl: preserved in historical archive inventory; not an active app decision in current pub4."
+  end
+
   def test_pub2_reasoning_lineage_is_absorbed_without_a_second_authority
     manifest = YAML.safe_load(ROOT.join("MASTER/data/recovery/legacy_manifest.yml").read, permitted_classes: [Date])
     lineage = manifest.fetch("pub2_semantic_lineage")
