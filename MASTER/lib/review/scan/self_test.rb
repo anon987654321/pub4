@@ -3,6 +3,7 @@
 require "date"
 require "yaml"
 require_relative "rule_dsl"
+require_relative "../../fix/transformation_plan"
 
 module Master
   module Review
@@ -271,6 +272,7 @@ module Master
           require File.join(@root, "law", "law") unless defined?(::Law)
           ::Law.load_all(File.join(@root, "law")) if ::Law.rules.empty?
           ::Law::Index.validate!
+          Master::Fix::TransformationPlan.new(root: @root).validate!
           []
         rescue StandardError => e
           [finding(path: File.join(@root, "data", "rules.yml"), line: 1,
