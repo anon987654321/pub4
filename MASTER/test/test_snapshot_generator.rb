@@ -98,3 +98,20 @@ class TestSnapshotGenerator < Minitest::Test
     assert_equal fake_output, out
   end
 end
+
+
+  def test_snapshot_preserves_large_files_without_truncation
+    Dir.mktmpdir do |dir|
+      large = "0123456789abcdef" * 4_000
+      File.write(File.join(dir, "large.txt"), large)
+      output = File.join(dir, "snapshot.md")
+
+      Master::Snapshot.new(root: dir, output:).write!
+
+      text = File.read(output)
+      assert_includes text, large
+      assert_match(/## Snapshot complete|## Source/, text)
+    end
+  end
+
+end
