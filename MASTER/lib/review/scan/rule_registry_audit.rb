@@ -3,7 +3,7 @@
 module Master
   module Review
     module Scan
-      # Audits rules.yml declarative corpus vs Ruby scanner registry.
+      # Audits laws.yml declarative corpus vs Ruby scanner registry.
       class RuleRegistryAudit
         Report = Data.define(:yaml_rules, :registry_ids, :kernel_ids, :lexical_wired, :lexical_unwired,
                              :semantic_only, :structural_unwired, :dep_graph_gaps, :mechanical, :source_drift) do
@@ -18,7 +18,7 @@ module Master
                               "(see rake lint:rule_reach for what the rest need)"
 
           # The share of declared law that something can run. self_test.rb fails
-          # below 35 and rules.yml self_test names the threshold.
+          # below 35 and laws.yml self_test names the threshold.
           #
           # The weighted average that stood here averaged registry coverage against
           # a term reading `(wired + unwired) * 100 / (wired + unwired)` — 100.0 for
@@ -144,7 +144,7 @@ module Master
         end
 
         # Asked of the loaded registry, not of the source text: law/prose.rb
-        # generates its four rules from data/rules.yml, so a grep for a literal
+        # generates its four rules from data/laws.yml, so a grep for a literal
         # `Law.define(:ID)` reads none of them.
         def law_ids
           require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
@@ -155,7 +155,7 @@ module Master
         end
 
         def load_yaml_rules
-          Master.flatten_rules(Master.load_rules(root: @root).fetch("rules", {}))
+          Master.law_entries(root: @root)
         end
 
         # The reference loads the rule files, and a class in a multi-class file is
