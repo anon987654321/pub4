@@ -3,8 +3,8 @@
 module Master
   module Fix
     # The fallback error patterns for Ground::FailureTaxonomy's four categories,
-    # used when rules.yml#failure_taxonomy gives a category no examples, and read
-    # directly by Io::QuotaGate for exhaustion. rules.yml names this constant.
+    # used when laws.yml#failure_taxonomy gives a category no examples, and read
+    # directly by Io::QuotaGate for exhaustion. laws.yml names this constant.
     module Constants
       # Exhausted credit is not a rate limit. A 429 clears on its own and
       # deserves backoff; an empty account clears only when a human spends
