@@ -68,6 +68,15 @@ module Operator
     def verify_fix(target:)
       trees = trees_for_target(target)
       selected = stages(scan_only: false, trees:).reject { |stage| %w[lexical council].include?(stage.name) }
+      # The scanner is the rule book the repair just tried to satisfy, so the
+      # verification tail proves against it — as measurement only: a scan-only
+      # lexical stage, leading. The ladder's lexical stage autofixes, and here
+      # that would be a second repair pass running under the name of
+      # verification, one the trace could not attribute to the loop that made
+      # it. Council stays excluded: a provider out of credit answers nothing
+      # and the stage reports skipped, which is not a verdict but an outage.
+      lexical = stages(scan_only: true, trees:).find { |stage| stage.name == "lexical" }
+      selected = [lexical] + selected if lexical
       return [0, []] if selected.empty?
 
       report(selected, scan_only: false, trees:, return_results: true)
