@@ -105,16 +105,17 @@ module Master
           "Do not invent defects. Mark each result observed, plausible, or requiring validation.",
           "Prefer deletion, existing primitives, and executable fixtures over new machinery.",
           "",
-          rows,
-          evidence.to_s.empty? ? nil : "CURRENT EVIDENCE\n#{evidence}",
-          "",
           "SOLUTION RED-TEAM",
           "Which proposals share the same hidden assumption?",
           "What useful behavior could regress or accidentally disappear?",
           "What is the smallest deletion or existing primitive being overlooked?",
           "What counterexample state, viewport, input, dependency, or user path could invalidate the direction?",
           "When the field optimizes the same dimension, introduce candidates that invert that assumption.",
-          "Do not invent failures. Mark each concern as observed, plausible, or requiring validation."
+          "Do not invent failures. Mark each concern as observed, plausible, or requiring validation.",
+          "",
+          evidence.to_s.empty? ? nil : "CURRENT EVIDENCE\n#{evidence}",
+          "",
+          rows
         ].compact.join("\n")
       end
     end
