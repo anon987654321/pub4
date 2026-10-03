@@ -7,14 +7,14 @@ require "yaml"
 module Operator
   # Derived intelligence over the existing law sources. It owns no rule data.
   #
-  # data/rules.yml remains the catalogue; law/ remains executable law; the scan
+  # data/laws.yml remains the catalogue; law/ remains executable law; the scan
   # registry, council and PATH_OWNERSHIP remain their own authorities. This reader
   # joins them for operator questions that otherwise require several greps.
   module LawInventory
     ROOT = File.expand_path("../../..", __dir__)
     MASTER = File.join(ROOT, "MASTER")
     LAW_ROOT = File.join(MASTER, "law")
-    RULES_PATH = File.join(MASTER, "data", "rules.yml")
+    LAWS_PATH = File.join(MASTER, "data", "laws.yml")
     COUNCIL_PATH = File.join(MASTER, "data", "council.yml")
 
     module_function
@@ -291,7 +291,7 @@ module Operator
     end
 
     def history(id)
-      output, status = Open3.capture2("git", "-C", ROOT, "log", "-n", "5", "--format=%h %cs %s", "--", "MASTER/law", "MASTER/data/rules.yml", "MASTER/lib/review/scan/rules")
+      output, status = Open3.capture2("git", "-C", ROOT, "log", "-n", "5", "--format=%h %cs %s", "--", "MASTER/law", "MASTER/data/laws.yml", "MASTER/lib/review/scan/rules")
       return "history unavailable" unless status.success?
 
       matches = output.lines.grep(/#{Regexp.escape(id.to_s)}/i)
