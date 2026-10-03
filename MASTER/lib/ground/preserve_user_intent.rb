@@ -2,7 +2,7 @@
 
 module Master
   module Ground
-    # rules.yml preserve_user_intent — block silent behavior changes during refactors.
+    # laws.yml preserve_user_intent — block silent behavior changes during refactors.
     class PreserveUserIntent
       REFACTOR_RE = /\b(?:refactor|restructure|reorganize|extract|inline)\b/i.freeze
       APPROVAL_RE = /\b(?:behavior[_-]?change[_-]?approved|approved[_-]?behavior)\b/i.freeze
@@ -44,7 +44,7 @@ module Master
       private
 
       def load_config
-        config = Master.load_yaml(Master::RULES_PATH)
+        config = Master.load_yaml(Master::LAWS_PATH)
         section = config.fetch("preserve_user_intent")
         raise "preserve_user_intent configuration must be a hash" unless section.is_a?(Hash)
 
