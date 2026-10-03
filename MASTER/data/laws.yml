@@ -1,4 +1,8 @@
 ---
+# Physical order is intentional: governing principles first, then how /fix applies them, proves them, and reaches the world.
+# The first eight entries are priority-ranked laws. The remaining sections are their execution policy, adapters, topology, runtime, and
+# operator-owned configuration. Historical change belongs in git; comments here state present constraints only.
+
 CAPABILITY_STATUS_MUST_BE_TRUTHFUL:
   priority: 1
   principle: Unavailable capabilities must never be reported as ready.
@@ -102,139 +106,6 @@ RENDERED_VALUES:
     - name: "Operator Sovereignty over Aesthetics"
       url: "internal:operator_decision_log"
 
-transformation_policy:
-  version: 1
-  preflight:
-    - inventory
-    - classify
-  order:
-    - defragment
-    - decouple
-    - flatten
-    - merge
-    - split
-    - relocate
-    - rename
-    - reorder
-    - remove
-    - reflow
-    - simplify
-    - recommend
-  postflight:
-    - prove
-  principles:
-    defragment: "Bring one concept or source of truth back together when it is unnecessarily scattered."
-    decouple: "Remove unnecessary dependencies and references between independent concerns."
-    flatten: "Remove needless wrappers, nesting, delegation layers, directories, and abstractions."
-    merge: "Join equivalent or near-equivalent logic, prose, configuration, or structure."
-    split: "Separate unlike concerns that have been fused into one unit."
-    relocate: "Put code, data, prose, and configuration beside the thing that owns or consumes it."
-    rename: "Names state present meaning; rename files, constants, methods, variables, rules, and sections when the existing name misleads."
-    reorder: "Put primary facts and load-bearing logic before secondary detail and exceptions."
-    remove: "Delete dead, redundant, historical, transitional, or otherwise unnecessary material."
-    reflow: "Change physical line and paragraph boundaries to follow semantic structure and reading rhythm."
-    simplify: "Pull incidental complexity out after structural changes and prefer the smallest coherent form."
-    recommend: "When evidence is insufficient for a safe automatic transformation, recommend the smallest useful change instead of guessing."
-  preservation:
-    semantic_meaning: required
-    public_contracts: required
-    reference_graph: required
-    side_effect_order: required
-    rendered_output: required_when_applicable
-  evidence:
-    before: "Record hashes and measured facts from the observed state before mutation."
-    after: "Re-observe the changed artifact and compare the same facts after mutation."
-    no_content_copy: true
-    automatic_change: "Requires deterministic proof or an existing transformation with a proven preservation contract."
-  comments:
-    redundant: remove
-    changelog_history: "Use git commit history, not source comments, for historical change records."
-    rationale: "Keep a comment when it explains a non-obvious present constraint, invariant, or reason."
-  rename:
-    scopes: [files, constants, methods, variables, rules, sections]
-    require_reference_rewrite: true
-    preserve_public_signatures: true
-  modes:
-    deterministic: "May transform automatically when its proof contract is satisfied."
-    review: "May propose and apply only after hostile review and preservation proof."
-    recommendation: "Propose only; never mutate."
-
-architecture:
-  # Phoenix preserves these boundaries while allowing their implementations to be
-  # regenerated. This is architecture, not a second command or dependency registry.
-  provenance_required:
-    - goal
-    - constraints
-    - alternatives
-    - evidence
-    - decision
-  boundaries:
-    master:
-      path: MASTER
-      entry: MASTER/bin/master
-      owner: master
-      depends_on: []
-      check: MASTER/bin/check
-    rails:
-      path: RAILS
-      entry: RAILS/bin/triangle
-      owner: rails
-      depends_on:
-        - master
-      check: MASTER/gates/runner.rb --all
-    openbsd:
-      path: OPENBSD
-      entry: OPENBSD/bin/vps-deploy
-      owner: openbsd
-      depends_on:
-        - master
-        - rails
-      check: OPENBSD/bin/check
-    studio:
-      path: STUDIO
-      entry: STUDIO/gate.rb
-      owner: studio
-      depends_on: []
-      check: STUDIO/gate.rb
-
-runtime_policy:
-  concurrency:
-    io_backend: thread
-    cpu_backend: ractor_when_explicitly_safe
-    unknown_backend: serial
-    worker_limit: 8
-    timeout_seconds: 30
-  jit:
-    env: MASTER_JIT
-    modes: [auto, off, yjit]
-    constrained_host: off
-    android: off
-  native:
-    ractor_safety_unknown: deny
-  performance:
-    require_output_digest: true
-    benchmark_clock: monotonic
-  dependencies:
-    artifact_store: sha256
-    bundler_remains_authoritative: true
-
-self_test:
-  ROBUSTNESS: scan lib/ for bare_rescue + missing timeouts
-  SINGULARITY: laws.yml and deploy entries unique by id; data registries have their own lint
-  LINEARITY: no nesting_depth > 4 in lib/
-  PROXIMITY: test files within 1 directory of source
-  ABSTRACTION: no class > god_class threshold in lib/
-  DENSITY: no method > long_method threshold in lib/
-  KERNEL_ADHERENCE: infra_helpers.rb wiring layer present; rule adherence >= 35%
-  PRINCIPLE_MAP: every rule id named by data/principle_map.yml resolves to a registered
-      rule, and every covered principle names at least one. The reverse direction —
-      every registered rule traced by some principle — is `rake lint:principle_trace`,
-      a ratcheting ceiling, because it has never been zero.
-  LAW_INTEGRITY: executable law lifecycle, proof metadata, universal-principle scope,
-      and the derived law index remain internally consistent.
-  fail_action: publish self_violation event; refuse autoloop fixes that don't restore
-    the law
-
 prose:
   en:
     spoken_in: '.'
@@ -307,6 +178,81 @@ prose:
       agent: 'av'
 
 # Folded from data/design_rules.yml — one file for all rules.
+
+transformation_policy:
+  version: 1
+  preflight:
+    - inventory
+    - classify
+  order:
+    - defragment
+    - decouple
+    - flatten
+    - merge
+    - split
+    - relocate
+    - rename
+    - reorder
+    - remove
+    - reflow
+    - simplify
+    - recommend
+  postflight:
+    - prove
+  principles:
+    defragment: "Bring one concept or source of truth back together when it is unnecessarily scattered."
+    decouple: "Remove unnecessary dependencies and references between independent concerns."
+    flatten: "Remove needless wrappers, nesting, delegation layers, directories, and abstractions."
+    merge: "Join equivalent or near-equivalent logic, prose, configuration, or structure."
+    split: "Separate unlike concerns that have been fused into one unit."
+    relocate: "Put code, data, prose, and configuration beside the thing that owns or consumes it."
+    rename: "Names state present meaning; rename files, constants, methods, variables, rules, and sections when the existing name misleads."
+    reorder: "Put primary facts and load-bearing logic before secondary detail and exceptions."
+    remove: "Delete dead, redundant, historical, transitional, or otherwise unnecessary material."
+    reflow: "Change physical line and paragraph boundaries to follow semantic structure and reading rhythm."
+    simplify: "Pull incidental complexity out after structural changes and prefer the smallest coherent form."
+    recommend: "When evidence is insufficient for a safe automatic transformation, recommend the smallest useful change instead of guessing."
+  preservation:
+    semantic_meaning: required
+    public_contracts: required
+    reference_graph: required
+    side_effect_order: required
+    rendered_output: required_when_applicable
+  evidence:
+    before: "Record hashes and measured facts from the observed state before mutation."
+    after: "Re-observe the changed artifact and compare the same facts after mutation."
+    no_content_copy: true
+    automatic_change: "Requires deterministic proof or an existing transformation with a proven preservation contract."
+  comments:
+    redundant: remove
+    changelog_history: "Use git commit history, not source comments, for historical change records."
+    rationale: "Keep a comment when it explains a non-obvious present constraint, invariant, or reason."
+  rename:
+    scopes: [files, constants, methods, variables, rules, sections]
+    require_reference_rewrite: true
+    preserve_public_signatures: true
+  modes:
+    deterministic: "May transform automatically when its proof contract is satisfied."
+    review: "May propose and apply only after hostile review and preservation proof."
+    recommendation: "Propose only; never mutate."
+
+self_test:
+  ROBUSTNESS: scan lib/ for bare_rescue + missing timeouts
+  SINGULARITY: laws.yml and deploy entries unique by id; data registries have their own lint
+  LINEARITY: no nesting_depth > 4 in lib/
+  PROXIMITY: test files within 1 directory of source
+  ABSTRACTION: no class > god_class threshold in lib/
+  DENSITY: no method > long_method threshold in lib/
+  KERNEL_ADHERENCE: infra_helpers.rb wiring layer present; rule adherence >= 35%
+  PRINCIPLE_MAP: every rule id named by data/principle_map.yml resolves to a registered
+      rule, and every covered principle names at least one. The reverse direction —
+      every registered rule traced by some principle — is `rake lint:principle_trace`,
+      a ratcheting ceiling, because it has never been zero.
+  LAW_INTEGRITY: executable law lifecycle, proof metadata, universal-principle scope,
+      and the derived law index remain internally consistent.
+  fail_action: publish self_violation event; refuse autoloop fixes that don't restore
+    the law
+
 veto_patterns:
   secrets:
     detect: sk-[A-Za-z0-9]{20,}|ghp_[A-Za-z0-9]{20,}|-----BEGIN.*KEY-----
@@ -444,6 +390,65 @@ anti_patterns:
     reason: violates_solid_srp
   - pattern: premature_optimization
     reason: violates_yagni
+
+architecture:
+  # Phoenix preserves these boundaries while allowing their implementations to be
+  # regenerated. This is architecture, not a second command or dependency registry.
+  provenance_required:
+    - goal
+    - constraints
+    - alternatives
+    - evidence
+    - decision
+  boundaries:
+    master:
+      path: MASTER
+      entry: MASTER/bin/master
+      owner: master
+      depends_on: []
+      check: MASTER/bin/check
+    rails:
+      path: RAILS
+      entry: RAILS/bin/triangle
+      owner: rails
+      depends_on:
+        - master
+      check: MASTER/gates/runner.rb --all
+    openbsd:
+      path: OPENBSD
+      entry: OPENBSD/bin/vps-deploy
+      owner: openbsd
+      depends_on:
+        - master
+        - rails
+      check: OPENBSD/bin/check
+    studio:
+      path: STUDIO
+      entry: STUDIO/gate.rb
+      owner: studio
+      depends_on: []
+      check: STUDIO/gate.rb
+
+runtime_policy:
+  concurrency:
+    io_backend: thread
+    cpu_backend: ractor_when_explicitly_safe
+    unknown_backend: serial
+    worker_limit: 8
+    timeout_seconds: 30
+  jit:
+    env: MASTER_JIT
+    modes: [auto, off, yjit]
+    constrained_host: off
+    android: off
+  native:
+    ractor_safety_unknown: deny
+  performance:
+    require_output_digest: true
+    benchmark_clock: monotonic
+  dependencies:
+    artifact_store: sha256
+    bundler_remains_authoritative: true
 
 rule_deps:
 
