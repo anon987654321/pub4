@@ -212,7 +212,7 @@ module Master
           end
 
           def rules_mtime
-            paths = [Master::RULES_PATH, *Dir.glob(File.join(Master::ROOT, "law", "*.rb"))]
+            paths = [Master::LAWS_PATH, *Dir.glob(File.join(Master::ROOT, "law", "*.rb"))]
             paths.filter_map { |path| File.mtime(path).to_i if File.exist?(path) }.max
           end
 
