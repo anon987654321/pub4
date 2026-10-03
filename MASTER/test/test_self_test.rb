@@ -25,7 +25,7 @@ class TestSelfTest < Minitest::Test
 
       assert result.ok?
       laws = result.value!.checks.map(&:law)
-      assert_equal %w[RULE_SYSTEM ROBUSTNESS SINGULARITY LINEARITY PROXIMITY ABSTRACTION DENSITY KERNEL_ADHERENCE PRINCIPLE_MAP], laws
+      assert_equal %w[LAW_INTEGRITY ROBUSTNESS SINGULARITY LINEARITY PROXIMITY ABSTRACTION DENSITY KERNEL_ADHERENCE PRINCIPLE_MAP], laws
       assert result.value!.violation_count.positive?
       assert_includes bus.events.map(&:first), "self_test:complete"
       assert_includes bus.events.map(&:first), "self_violation"
@@ -166,7 +166,7 @@ class TestSelfTest < Minitest::Test
     FileUtils.mkdir_p(File.join(root, "data"))
     FileUtils.mkdir_p(File.join(root, "lib", "judge", "scan", "rules"))
     FileUtils.mkdir_p(File.join(root, "test"))
-    File.write(File.join(root, "data", "rules.yml"), rules_yml)
+    File.write(File.join(root, "data", "laws.yml"), laws_yml)
     File.write(File.join(root, "lib", "example.rb"), <<~RUBY)
       class Example
         def risky
