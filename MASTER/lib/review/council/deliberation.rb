@@ -304,11 +304,10 @@ module Master
                     else
                       :fit
                     end
-          config = Master.load_yaml(Master::LAWS_PATH).fetch("engineering_fit", {})
           {
             verdict:,
             load: "artifact ~#{bytes} bytes across ~#{code.to_s.lines.size} lines",
-            why: config["why_required"] || "load drives the verdict",
+            why: "classify from observed load and failure modes; the size threshold is a prompt aid, not a verdict about quality",
           }
         end
 
