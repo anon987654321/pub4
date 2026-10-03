@@ -23,12 +23,13 @@ module Master
         @cache.clear
       end
 
-      def call(path:, offset: 0, limit: MAX_LINES, hashline: false)
-        # The model chooses limit, so it is clamped: an uncapped limit turns a
-        # 200k-line file into prompt.
+      def call(path:, offset: 0, limit: MAX_LINES, hashline: false, full: false)
+        # Normal reads stay bounded so an accidental giant file cannot consume
+        # the turn. `full: true` is the explicit escape hatch for audits,
+        # snapshots and files whose complete contents are required.
         offset = [offset.to_i, 0].max
-        limit = limit.to_i.clamp(1, MAX_LINES)
-        key = [path, offset, limit, hashline]
+        limit = full ? nil : limit.to_i.clamp(1, MAX_LINES)
+        key = [path, offset, limit, hashline, full]
         resolved = resolve(path, write: false)
         return resolved if resolved.err?
 
@@ -38,18 +39,18 @@ module Master
         return @cache[key] if @cache.key?(key) && !@ground_truth&.changed_since_read?(full_path)
         return Result.err("not found: #{path}", category: :validation) unless File.exist?(full_path)
 
-        result = Result.ok(format_file_slice(full_path, offset:, limit:, hashline:))
+        result = Result.ok(format_file_slice(full_path, offset:, limit:, hashline:, full:))
         @cache[key] = result
         result
       end
 
       private
 
-      def format_file_slice(full_path, offset:, limit:, hashline:)
+      def format_file_slice(full_path, offset:, limit:, hashline:, full:)
         lines = File.readlines(full_path)
         @ground_truth&.record_read!(full_path, content: lines.join)
         total = lines.size
-        slice = lines[offset, limit] || []
+        slice = limit ? (lines[offset, limit] || []) : (lines[offset..] || [])
 
         numbered =
           if hashline
