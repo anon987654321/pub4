@@ -152,6 +152,21 @@ class TestRecoveryPubManifest < Minitest::Test
     assert_equal 6, recovery.fetch("recovery_changes_vs_pre_collapse")
     assert_equal "recovery-authoritative", recovery.fetch("disposition")
   end
+  def test_legacy_capability_reviews_are_explicit
+    manifest = YAML.safe_load(ROOT.join("MASTER/data/recovery/legacy_manifest.yml").read, permitted_classes: [Date])
+
+    aight = manifest.fetch("legacy_capability_reviews").fetch("pub3_aight")
+    assert_includes aight.fetch("absorbed").map { |item| item.fetch("capability") }, "memory, context and session lifecycle"
+    assert_equal "partial; recover individual useful commands only when demanded by current MASTER workflow", aight.fetch("partial").first.fetch("disposition")
+    assert_equal "retired-by-architecture", aight.fetch("retired").first.fetch("disposition")
+
+    face = manifest.fetch("legacy_capability_reviews").fetch("pub4_face_legacy")
+    assert_equal "retired-by-consolidation; do-not-restore-duplicate-renderers", face.fetch("disposition")
+    assert_equal "behavioral-reference-only; candidate for selective migration only if the canonical renderer needs kinetic-depth evidence", face.fetch("notable_fossil").fetch("disposition")
+
+    assert_equal "absorbed; do-not-restore-pub3-multimedia-dilla-tree", manifest.fetch("legacy_capability_reviews").fetch("pub4_dilla_lineage").fetch("disposition")
+  end
+
   def test_pub2_reasoning_lineage_is_absorbed_without_a_second_authority
     manifest = YAML.safe_load(ROOT.join("MASTER/data/recovery/legacy_manifest.yml").read, permitted_classes: [Date])
     lineage = manifest.fetch("pub2_semantic_lineage")
