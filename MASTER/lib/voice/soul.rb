@@ -106,9 +106,10 @@ module Master
       end
 
       def system_prompt
-        voice = @soul[/## Voice\n+(.*?)(?=\n## |\z)/m, 1].to_s.strip
-        values = @soul[/## Values\n+(.*?)(?=\n## |\z)/m, 1].to_s.strip
-        "#{voice}\n\n#{values}"
+        %w[Identity Values Voice Judgment Boundaries].filter_map do |heading|
+          section = @soul[/## #{heading}\n+(.*?)(?=\n## |\z)/m, 1].to_s.strip
+          section unless section.empty?
+        end.join("\n\n")
       end
 
       private
