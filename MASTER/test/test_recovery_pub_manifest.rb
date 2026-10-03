@@ -171,7 +171,7 @@ class TestRecoveryPubManifest < Minitest::Test
     manifest = YAML.safe_load(ROOT.join("MASTER/data/recovery/legacy_manifest.yml").read, permitted_classes: [Date])
     reviews = manifest.fetch("recovered_regression_reviews")
 
-    assert_equal 8, reviews.size
+    assert_equal 13, reviews.size
     reviews.each do |review|
       assert review["commit"]
       assert review["area"]
