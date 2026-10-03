@@ -76,7 +76,6 @@ Law.define(:NEVER_BATCH_DELETE) do
   RUBY
 end
 
-# Migrated from data/laws.yml NO_INLINE_ASSETS_IN_SHELL.
 Law.define(:NO_INLINE_ASSETS_IN_SHELL) do
   source "RAILS/shared frontend convention"
   severity :warn
@@ -117,11 +116,6 @@ Law.define(:ZSH_SHEBANG) do
   X
 end
 
-# Migrated from data/laws.yml STRICT_MODE_ZSH. The old detector demanded
-# `set -` on the line immediately after the shebang, so a comment between
-# them — the normal shape — made a strict script a finding. The registry
-# twin accepted `set -e` anywhere in the file; its reading moved here with
-# the retirement, and the good fixture pins the comment-between shape.
 Law.define(:STRICT_MODE_ZSH) do
   source "Shell strict mode set -euo pipefail (Google Shell Style Guide)"
   severity :error
