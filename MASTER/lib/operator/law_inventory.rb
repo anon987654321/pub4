@@ -184,8 +184,7 @@ module Operator
 
     def catalogue_rows
       require "master"
-      raw = Master.load_rules(root: MASTER)
-      entries = Master.flatten_rules(raw.fetch("rules", {}))
+      entries = Master.law_entries(root: MASTER)
       entries.each_with_object({}) do |entry, rows|
         next unless entry.is_a?(Hash) && entry["id"]
 
