@@ -173,17 +173,16 @@ module Master
   # The design blocks are rules like any other now: `tier: design` with the old
   # nested section under `config`. This rebuilds the map they used to form, so
   # everything that dug design_rules by block name still reaches its key.
-  def self.design_rules(root: ROOT)
-    law_entries(root:)
-      .select { |rule| rule.is_a?(Hash) && rule["tier"] == "design" && rule["config"].is_a?(Hash) }
-      .to_h { |rule| [ rule["id"].to_s.downcase, rule["config"] ] }
+  def self.tokens(root: ROOT)
+    (load_rules(root: {}) || {})["tokens"] || {}
   end
+
 
   # One path into it, so a key that moves breaks in one place rather than in the
   # nineteen files that each dug the section themselves:
   # `Master.design("layout_rules", "touch", "target_min_px")`.
   def self.design(*path, root: ROOT)
-    config = design_rules(root:)
+    config = tokens(root:)
     path.empty? ? config : config.dig(*path.map(&:to_s))
   end
 
