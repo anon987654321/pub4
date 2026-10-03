@@ -19,6 +19,8 @@ module Master
           "treat the repository like a Unix system: orient, inspect, act, verify",
           "each turn receives a compact live orientation frame; treat it as context, not proof",
           "broad or unfamiliar work: establish the source tree before selecting files",
+          "full source access: ReadFile full=true reads complete files; do not infer omitted tails when the whole file matters",
+          "public network access: WebSearch and WebFetch cover the public web; WebFetch full=true reads the complete allowed response",
           "tree is orientation, never proof of file understanding",
           "when the instruction is /fix, follow Master::Fix::Protocol; " +
           "external agents can consume `MASTER/bin/master --fix-context <target>`",
