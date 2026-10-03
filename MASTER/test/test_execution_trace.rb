@@ -33,7 +33,7 @@ class TestExecutionTrace < Minitest::Test
 
       refute result.clean?
       assert result.failures.any? { |failure| failure.include?("MASTER/bin/cli: missing") }
-      assert result.failures.any? { |failure| failure.include?("MASTER/data/rules.yml: missing") }
+      assert result.failures.any? { |failure| failure.include?("MASTER/data/laws.yml: missing") }
     end
   end
 
@@ -54,8 +54,8 @@ class TestExecutionTrace < Minitest::Test
   def test_canonical_boot_configuration_does_not_depend_on_workflow_yml
     refute_includes Master::Fix::ExecutionTrace::BOOT_CONFIG.keys, "MASTER/data/workflow.yml"
     assert_includes Master::Fix::ExecutionTrace::BOOT_CONFIG.keys, "MASTER/data/limits.yml"
-    assert_includes Master::Fix::ExecutionTrace::BOOT_CONFIG["MASTER/data/rules.yml"], "zsh"
-    assert_includes Master::Fix::ExecutionTrace::BOOT_CONFIG["MASTER/data/rules.yml"], "preserve_user_intent"
+    assert_includes Master::Fix::ExecutionTrace::BOOT_CONFIG["MASTER/data/laws.yml"], "zsh"
+    assert_includes Master::Fix::ExecutionTrace::BOOT_CONFIG["MASTER/data/laws.yml"], "preserve_user_intent"
   end
   def test_wrapped_ruby_is_checked_after_the_safe_wrapper_repair
     Dir.mktmpdir("execution_trace_wrapper") do |root|
