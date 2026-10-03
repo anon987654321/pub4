@@ -79,7 +79,7 @@ module Master
     # Canonical browser/CLI face contract. This lives beside design thresholds because
     # both terminal and web projections consume it; callers never parse the YAML shape.
     def self.face_interface(root: Master::ROOT)
-      path = File.join(root, "data", "rules.yml")
+      path = File.join(root, "data", "laws.yml")
       data = Master.load_yaml(path, default: {}) || {}
       interface = data.dig("design_system", "face_interface")
       interface.is_a?(Hash) ? interface : {}
@@ -95,7 +95,7 @@ module Master
       Thresholds.measure_ideal_ch(root:)
     end
 
-    # The design-tier rules of data/rules.yml, for scanners and UI critique.
+    # The design-tier rules of data/laws.yml, for scanners and UI critique.
     class Thresholds
       def self.load(root: Master::ROOT)
         Master.design_rules(root:)
@@ -143,7 +143,7 @@ module Master
         raw = dig("typography", "line_height", "allowed", root:)
         return raw.map(&:to_f) if raw.is_a?(Array) && !raw.empty?
 
-        # Same steps as rules.yml#design_system.scale.line_height / ScaleLint
+        # Same steps as laws.yml#design_system.scale.line_height / ScaleLint
         [1.0, 1.25, 1.4, 1.5, 1.6]
       end
 
