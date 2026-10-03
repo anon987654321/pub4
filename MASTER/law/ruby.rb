@@ -18,7 +18,7 @@ end
 # ids counted the same parameter list, one at :warn and one at :info, so the
 # same def carried two findings that differed only in name.
 
-# Migrated from data/rules.yml FROZEN_STRING_LITERAL.
+# Migrated from data/laws.yml FROZEN_STRING_LITERAL.
 Law.define(:FROZEN_STRING_LITERAL) do
   source "Ruby Style Guide / RuboCop Style/FrozenStringLiteralComment"
   severity :warn
@@ -46,7 +46,7 @@ Law.define(:FROZEN_STRING_LITERAL) do
   X
 end
 
-# Migrated from data/rules.yml GUARD_CLAUSE.
+# Migrated from data/laws.yml GUARD_CLAUSE.
 Law.define(:GUARD_CLAUSE) do
   source "Ruby Style Guide / RuboCop Style/GuardClause"
   severity :info
@@ -102,7 +102,7 @@ end
 # order, and comparison chains that merely contain a bracket access — none
 # of which are fetch candidates, all of which this bare regex flagged.
 
-# Migrated from data/rules.yml IMMUTABLE.
+# Migrated from data/laws.yml IMMUTABLE.
 Law.define(:IMMUTABLE) do
   source "Effective Java — minimize mutability (Joshua Bloch); FP"
   severity :info
@@ -114,7 +114,7 @@ Law.define(:IMMUTABLE) do
   good "COLORS = [:red, :blue].freeze"
 end
 
-# Migrated from data/rules.yml KERNEL_COERCION. The registry twin learned
+# Migrated from data/laws.yml KERNEL_COERCION. The registry twin learned
 # that `(h[k] || []) << x` is append-to-default, not a coercion candidate —
 # the `(?!\s*<<)` guard moved here with the retirement.
 Law.define(:KERNEL_COERCION) do
@@ -148,7 +148,7 @@ end
 # /app/, were the only live implementations all along — the inert-config
 # defect, in the constitution itself. They live once, in the registry.
 
-# Migrated from data/rules.yml MIGRATION_ADD_REFERENCE_NO_FK.
+# Migrated from data/laws.yml MIGRATION_ADD_REFERENCE_NO_FK.
 Law.define(:MIGRATION_ADD_REFERENCE_NO_FK) do
   source "Rails migrations — foreign_key: true (Strong Migrations)"
   severity :error
@@ -162,7 +162,7 @@ Law.define(:MIGRATION_ADD_REFERENCE_NO_FK) do
   good "add_reference :posts, :user, foreign_key: true\nadd_reference :reactions, :reactable, polymorphic: true\n"
 end
 
-# Migrated from data/rules.yml MIGRATION_FIND_OR_CREATE_BY.
+# Migrated from data/laws.yml MIGRATION_FIND_OR_CREATE_BY.
 Law.define(:MIGRATION_FIND_OR_CREATE_BY) do
   source "Rails best practice — find_or_create_by races"
   severity :warn
@@ -174,7 +174,7 @@ Law.define(:MIGRATION_FIND_OR_CREATE_BY) do
   good "Role.create!(name: 'admin')"
 end
 
-# Migrated from data/rules.yml MIGRATION_REMOVE_COLUMN.
+# Migrated from data/laws.yml MIGRATION_REMOVE_COLUMN.
 Law.define(:MIGRATION_REMOVE_COLUMN) do
   source "Strong Migrations — safe column removal (Andrew Kane)"
   severity :error
@@ -205,7 +205,7 @@ Law.define(:MIGRATION_REMOVE_COLUMN) do
   X
 end
 
-# Migrated from data/rules.yml PERCENT_LITERAL.
+# Migrated from data/laws.yml PERCENT_LITERAL.
 Law.define(:PERCENT_LITERAL) do
   source "Ruby Style Guide — %w/%i array literals"
   severity :info
@@ -216,7 +216,7 @@ Law.define(:PERCENT_LITERAL) do
   good "%i[a b c]"
 end
 
-# Migrated from data/rules.yml RATE_LIMITING_MISSING.
+# Migrated from data/laws.yml RATE_LIMITING_MISSING.
 Law.define(:RATE_LIMITING_MISSING) do
   principle_scope :universal
   source "OWASP API Security — rate limiting"
@@ -251,7 +251,7 @@ Law.define(:RATE_LIMITING_MISSING) do
   X
 end
 
-# Migrated from data/rules.yml RESCUE_ON_DEF.
+# Migrated from data/laws.yml RESCUE_ON_DEF.
 Law.define(:RESCUE_ON_DEF) do
   source "Ruby Style Guide — rescue in method definitions"
   severity :info
@@ -292,7 +292,7 @@ Law.define(:RESCUE_ON_DEF) do
   X
 end
 
-# Migrated from data/rules.yml RUBY_BLOCK_DELIMITER.
+# Migrated from data/laws.yml RUBY_BLOCK_DELIMITER.
 Law.define(:RUBY_BLOCK_DELIMITER) do
   source "Ruby Style Guide / RuboCop Style/BlockDelimiters"
   severity :info
@@ -304,7 +304,7 @@ Law.define(:RUBY_BLOCK_DELIMITER) do
   good "list.each { |x| puts x }"
 end
 
-# Migrated from data/rules.yml RUBY_CAMEL_CLASS.
+# Migrated from data/laws.yml RUBY_CAMEL_CLASS.
 Law.define(:RUBY_CAMEL_CLASS) do
   source "Ruby Style Guide / RuboCop Naming/ClassAndModuleCamelCase"
   severity :warn
@@ -321,7 +321,7 @@ Law.define(:RUBY_CAMEL_CLASS) do
   good "class AlbumStore"
 end
 
-# Migrated from data/rules.yml RUBY_NUMERIC_UNDERSCORE.
+# Migrated from data/laws.yml RUBY_NUMERIC_UNDERSCORE.
 Law.define(:RUBY_NUMERIC_UNDERSCORE) do
   source "Ruby Style Guide / RuboCop Style/NumericLiterals"
   severity :info
@@ -354,7 +354,7 @@ Law.define(:RUBY_NUMERIC_UNDERSCORE) do
   good "max = 1_000_000"
 end
 
-# Migrated from data/rules.yml RUBY_SNAKE_METHODS.
+# Migrated from data/laws.yml RUBY_SNAKE_METHODS.
 Law.define(:RUBY_SNAKE_METHODS) do
   source "Ruby Style Guide / RuboCop Naming/MethodName"
   severity :warn
@@ -366,7 +366,7 @@ Law.define(:RUBY_SNAKE_METHODS) do
   good "def fetch_album"
 end
 
-# Migrated from data/rules.yml RUBY_SYMBOL_TO_PROC.
+# Migrated from data/laws.yml RUBY_SYMBOL_TO_PROC.
 Law.define(:RUBY_SYMBOL_TO_PROC) do
   source "Ruby Style Guide / RuboCop Style/SymbolProc"
   severity :info
@@ -378,7 +378,7 @@ Law.define(:RUBY_SYMBOL_TO_PROC) do
   good "names = users.map(&:name)"
 end
 
-# Migrated from data/rules.yml RUBY_SCREAMING_CONST, which declared only a
+# Migrated from data/laws.yml RUBY_SCREAMING_CONST, which declared only a
 # detect_semantic and was therefore the one RUBY_* naming rule that could not
 # fire: the semantic prompt drops info severity, so it sat in rule_reach's
 # unreachable set while its six siblings ran lexically.
@@ -411,7 +411,7 @@ end
 # ternary. This regex counted `?` and `:` characters, so a string literal
 # containing a question mark or a hash colon made any ternary "nested".
 
-# Migrated from data/rules.yml SAFE_NAVIGATION. The registry twin learned
+# Migrated from data/laws.yml SAFE_NAVIGATION. The registry twin learned
 # that `a && a.count > b` is a comparison, not a nil-guard to collapse —
 # `a&.count > b` raises on nil where the original short-circuits. The
 # comparison/ternary guard moved here with the retirement.
@@ -429,7 +429,7 @@ Law.define(:SAFE_NAVIGATION) do
   X
 end
 
-# Migrated from data/rules.yml SINGLE_PRIVATE_SECTION.
+# Migrated from data/laws.yml SINGLE_PRIVATE_SECTION.
 Law.define(:SINGLE_PRIVATE_SECTION) do
   source "Ruby Style Guide / RuboCop Style/AccessModifierDeclarations"
   severity :info
@@ -444,7 +444,7 @@ Law.define(:SINGLE_PRIVATE_SECTION) do
   X
 end
 
-# Migrated from data/rules.yml STRICT_LOADING_MISSING.
+# Migrated from data/laws.yml STRICT_LOADING_MISSING.
 Law.define(:STRICT_LOADING_MISSING) do
   source "Rails strict_loading — N+1 prevention (Rails Guides)"
   severity :info
@@ -470,7 +470,7 @@ Law.define(:STRICT_LOADING_MISSING) do
   X
 end
 
-# Migrated from data/rules.yml TRANSFORM_KEYS.
+# Migrated from data/laws.yml TRANSFORM_KEYS.
 Law.define(:TRANSFORM_KEYS) do
   source "Ruby idiom — Hash#transform_keys/values"
   severity :info
@@ -481,7 +481,7 @@ Law.define(:TRANSFORM_KEYS) do
   good "h.transform_values { |v| v * 2 }"
 end
 
-# Migrated from data/rules.yml USE_THEN.
+# Migrated from data/laws.yml USE_THEN.
 Law.define(:USE_THEN) do
   source "Ruby idiom — Object#then (yield_self) for pipelines"
   severity :info
