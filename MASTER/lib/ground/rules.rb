@@ -127,7 +127,7 @@ module Master
 
       def philosophy(limit: nil)
         @philosophy ||= begin
-          all_rules = Master.flatten_rules(@data["rules"])
+          all_rules = Master.law_entries(root: @root)
           all_rules
             .reject { |r| r["tier"] == "kernel" }
             .map { |h| h.transform_keys(&:to_s) }
