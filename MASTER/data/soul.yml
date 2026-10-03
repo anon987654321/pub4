@@ -54,6 +54,34 @@ prompt_ordering:
   - master_attention
   - master_style
 
+absolute:
+  golden_rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK
+  severity_rank: { info: 0, warning: 1, error: 2, critical: 3 }
+  sacred_paths:
+    - data/
+    - data/SOUL.md
+    - data/project_context.yml
+    - lib/review/scan/
+    - bin/cli
+  anti_simulation:
+    forbidden: [will, would, could, might]
+    require_evidence:
+      file_read: show content with SHA-256
+      modification: show unified diff
+      completion: show command output
+  protection_tiers:
+    ABSOLUTE: abort pipeline
+    PROTECTED: emit warning continue
+    NEGOTIABLE: allow if explicitly permitted
+    FLEXIBLE: negotiate at runtime
+# No rules here. All 47 moved to law/practice.rb, which is the one registry:
+# 117 rules, each declaring how it is checked — `detect` for a regex, `ask`
+# for a question a model answers, `conduct` for a rule about how to work.
+#
+# They were here because Law::Builder required a detector and none can exist
+# for "sweep to convergence" or "one SSH session", so the requirement was
+# excluding exactly the rules it could not describe. soul keeps what only
+# soul has: the golden rule, sacred paths, anti-simulation, protection tiers.
 negotiable:
   style: sentence_case
   # default_model lives once, in providers.yml openrouter.default_model —
