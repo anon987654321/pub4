@@ -116,6 +116,8 @@ module Master
 
         def coverage_delta(before, after)
           before.each_with_object([]) do |(path, lines), lost|
+            next if path.to_s.include?("/test/")
+
             after_lines = Array(after[path])
             Array(lines).each_with_index do |count, index|
               next unless count.to_i.positive? && after_lines[index].to_i.zero?
