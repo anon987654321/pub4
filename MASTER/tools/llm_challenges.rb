@@ -203,7 +203,7 @@ if $PROGRAM_NAME == __FILE__
     abort "--test PATH is required for --mode delete" unless options[:test]
     report = Master::Review::ChallengeTools.deletion_probe(options[:test])
     puts JSON.pretty_generate(report)
-    exit 1 if report[:survivors].any?
+    exit 1 if report[:unprotected].any? || !report[:baseline_ok]
   when "history"
     rows = Master::Review::ChallengeTools.history(limit: options[:limit])
     rows.each do |row|
