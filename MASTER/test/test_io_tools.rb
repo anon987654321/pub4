@@ -48,6 +48,36 @@ class TestIoTools < Minitest::Test
     path
   end
 
+  # Full reads are explicit. The normal path remains bounded, but an audit or
+  # external-agent handoff must be able to inspect every line without a silent
+  # truncation marker.
+  def test_read_file_supports_an_explicit_full_read
+    with_root do |root|
+      path = write(root, "large.txt", (1..2_005).map { |n| "line #{n}\n" }.join)
+      tool = Master::Io::ReadFile.new(root:, undo: nil)
+
+      normal = tool.call(path: "large.txt")
+      full = tool.call(path: "large.txt", full: true)
+
+      assert_includes normal.value!, "[...truncated, 2005 total lines]"
+      assert_includes full.value!, "2005\tline 2005"
+      refute_includes full.value!, "[...truncated"
+    end
+  end
+
+  def test_read_file_full_read_honours_offset
+    with_root do |root|
+      write(root, "lines.txt", (1..10).map { |n| "line #{n}\n" }.join)
+      tool = Master::Io::ReadFile.new(root:, undo: nil)
+
+      result = tool.call(path: "lines.txt", offset: 4, full: true)
+
+      assert_includes result.value!, "5\tline 5"
+      refute_includes result.value!, "4\tline 4"
+      refute_includes result.value!, "[...truncated"
+    end
+  end
+
   # --- BatchReplace -----------------------------------------------------------
 
   def test_batch_replace_rewrites_every_matching_file_under_the_root
