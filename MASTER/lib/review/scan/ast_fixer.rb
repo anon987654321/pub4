@@ -63,7 +63,7 @@ module Master
         # blast_radius. Only the semantic and meta rules fill those fields, and
         # their findings carry fix: nil, so they never reach lib/fix. A transform
         # whose risk the add-or-delete split cannot state gets its rule classified
-        # in rules.yml by hand.
+        # in laws.yml by hand.
         DELETING_TRANSFORMS = %w[remove_immediate_dead_code].freeze
 
         # What a person asking looks like from here, and the same signal
@@ -172,7 +172,7 @@ module Master
         #
         # It has been written as `reduce(src)` and rewritten to
         # `each_with_object(src)` twice, by the LLM fix sweep applying rule
-        # EACH_WITH_OBJECT (data/rules.yml line). That rule's lexical detector
+        # EACH_WITH_OBJECT (data/laws.yml line). That rule's lexical detector
         # requires `reduce({})` — a fresh empty hash — and never matched this
         # line; the sweep applied it from the rule's *name* instead. Fixed once
         # in 5d8d49401, reintroduced by 8962ce5f7, and again after 4e964ce12.
