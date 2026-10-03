@@ -5,7 +5,7 @@ require "json"
 module Master
   module Fix
     # The universal transformation algebra is policy, not another detector
-    # registry. This object reads its order from data/rules.yml and exposes one
+    # registry. This object reads its order from data/laws.yml and exposes one
     # validated sequence to fixers, prompts, and tests.
     class TransformationPlan
       Operation = Data.define(:name, :position, :purpose)
