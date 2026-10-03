@@ -282,6 +282,16 @@ STUDIO/lora/*/out/
 STUDIO/lora/*/weights/
 STUDIO/lora/*/contact_sheet.jpg
 
+# Postpro's fetched model weights and the depth maps cached under them are
+# generated assets — the fetch command and sizes live in STUDIO/postpro/README.md.
+STUDIO/postpro/models/
+
+# Postpro's random-chain renders and their sidecars. When the source is a
+# subject photograph the render carries the face too, so the lora privacy rule
+# above applies at this path as well: deliberate publication takes `git add -f`.
+STUDIO/postpro/postpro_*.jpg
+STUDIO/postpro/postpro_*.jpg.json
+
 # Claude Code per-machine permission allowlist. settings.json is the shared
 # one; this file names local paths and belongs to the repo, not the checkout.
 .claude/settings.local.json
