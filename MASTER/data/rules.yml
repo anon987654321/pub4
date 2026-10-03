@@ -34,6 +34,62 @@ rule_system:
     deterministic: "bad and good fixtures must prove detector polarity."
     semantic: "bad and good examples accompany the question; model evaluation is required."
     practice: "the law is conduct guidance and has no source detector."
+transformation_policy:
+  version: 1
+  preflight:
+    - inventory
+    - classify
+  order:
+    - defragment
+    - decouple
+    - flatten
+    - merge
+    - split
+    - relocate
+    - rename
+    - reorder
+    - remove
+    - reflow
+    - simplify
+    - recommend
+  postflight:
+    - prove
+  principles:
+    defragment: "Bring one concept or source of truth back together when it is unnecessarily scattered."
+    decouple: "Remove unnecessary dependencies and references between independent concerns."
+    flatten: "Remove needless wrappers, nesting, delegation layers, directories, and abstractions."
+    merge: "Join equivalent or near-equivalent logic, prose, configuration, or structure."
+    split: "Separate unlike concerns that have been fused into one unit."
+    relocate: "Put code, data, prose, and configuration beside the thing that owns or consumes it."
+    rename: "Names state present meaning; rename files, constants, methods, variables, rules, and sections when the existing name misleads."
+    reorder: "Put primary facts and load-bearing logic before secondary detail and exceptions."
+    remove: "Delete dead, redundant, historical, transitional, or otherwise unnecessary material."
+    reflow: "Change physical line and paragraph boundaries to follow semantic structure and reading rhythm."
+    simplify: "Pull incidental complexity out after structural changes and prefer the smallest coherent form."
+    recommend: "When evidence is insufficient for a safe automatic transformation, recommend the smallest useful change instead of guessing."
+  preservation:
+    semantic_meaning: required
+    public_contracts: required
+    reference_graph: required
+    side_effect_order: required
+    rendered_output: required_when_applicable
+  evidence:
+    before: "Record hashes and measured facts from the observed state before mutation."
+    after: "Re-observe the changed artifact and compare the same facts after mutation."
+    no_content_copy: true
+    automatic_change: "Requires deterministic proof or an existing transformation with a proven preservation contract."
+  comments:
+    redundant: remove
+    changelog_history: "Use git commit history, not source comments, for historical change records."
+    rationale: "Keep a comment when it explains a non-obvious present constraint, invariant, or reason."
+  rename:
+    scopes: [files, constants, methods, variables, rules, sections]
+    require_reference_rewrite: true
+    preserve_public_signatures: true
+  modes:
+    deterministic: "May transform automatically when its proof contract is satisfied."
+    review: "May propose and apply only after hostile review and preservation proof."
+    recommendation: "Propose only; never mutate."
 laws:
   CAPABILITY_STATUS_MUST_BE_TRUTHFUL:
     priority: 1
