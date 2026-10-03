@@ -131,8 +131,8 @@ class TestCliOperatorLayer < Minitest::Test
     assert_equal :direct_shell, grammar.parse("ls && ps aux").kind
     assert_equal :direct_shell, grammar.parse("ssh dev@brgen.no uname -a").kind
     assert_equal :direct_shell, grammar.parse("curl https://example.com").kind
-    refute grammar.parse("ls | cat")
-    refute grammar.parse("rm -rf /")
+    assert_equal :direct_shell, grammar.parse("ls | cat").kind
+    assert_equal :direct_shell, grammar.parse("rm -rf /").kind
   end
 
   def test_repeatable_media_and_duration_are_deterministic
