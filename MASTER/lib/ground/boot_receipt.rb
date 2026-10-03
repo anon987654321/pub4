@@ -9,7 +9,7 @@ module Master
     # boot_checks.rb proves the files parse, bin/doctor probes the host, and
     # boot_phases.rb names the order — three readings, none of them a single
     # answer to "what is in force right now". So a report could quote a rule
-    # count from data/rules.yml while the scanner held a different registry, and
+    # count from data/laws.yml while the scanner held a different registry, and
     # nothing compared them. This is the comparison: commit, constitution, the
     # three rule populations, providers and capabilities in one hash, over a
     # digest of the files that decide behaviour.
@@ -24,7 +24,7 @@ module Master
       # makes "the same constitution" checkable, rather than a version string
       # somebody remembered to bump.
       GOVERNING_FILES = %w[
-        data/soul.yml data/rules.yml data/providers.yml data/models.yml data/limits.yml
+        data/soul.yml data/laws.yml data/providers.yml data/models.yml data/limits.yml
       ].freeze
 
       module_function
@@ -84,7 +84,7 @@ module Master
       end
 
       # Through the existing readers, not around them. Opening soul.yml,
-      # rules.yml and providers.yml here put each of the three one over its
+      # laws.yml and providers.yml here put each of the three one over its
       # reader ceiling, and lint:reader_singularity said so on the first run —
       # correctly. A receipt that reports what is in force must read it the way
       # the runtime does, or it reports a second parse of the same file.
@@ -107,7 +107,7 @@ module Master
       # the reading that matches the data.
       def law(root: MasterPaths::ROOT)
         {
-          declared: Array(Master.law("rules", root:)).size,
+          declared: Master.law_entries(root:).size,
           registry: Review::Scan::Rule.registry.size,
           domain: domain_rule_count(root),
         }
