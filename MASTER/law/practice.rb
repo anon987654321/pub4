@@ -18,17 +18,12 @@ Law.define(:COLLAPSE_BEFORE_ADDING) do
   source "MASTER constitution (soul.yml absolute.rules)"
   severity :warn
   practice <<~TEXT
-    before writing a new file, class, or dependency, try nine moves first and
-    in this order. defrag (one source, not several). decouple (a tree requires
-    nothing from a sibling). hoist (shared logic up, never copied across).
-    flatten (fewer levels, no doubled path segment). merge (thin siblings into
-    one). rename (the name states what it is, not what it was). reflow (order
-    by importance, most-read first). repurpose (an existing seam over a new
-    one). outsource (a maintained gem over a hand-rolled equivalent). adding
-    is the last resort and the reason goes in the commit. Tree-level /fix runs
-    these structural checks automatically before ordinary repair and again
-    between converged passes. A kept move refreshes the corpus before repair
-    resumes.
+    before adding machinery, run the universal transformation plan from
+    data/rules.yml. inventory and classify first; then defragment, decouple,
+    flatten, merge, split, relocate, rename, reorder, remove, reflow and
+    simplify. recommend instead of guessing when proof is insufficient.
+    adding is the last resort and its reason belongs in git history. Every
+    kept transformation refreshes the corpus before repair resumes.
   TEXT
   fix "before writing a new file, class, or dependency, try nine moves first and in this order."
   bad  "adds a second gate script"
