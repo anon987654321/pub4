@@ -1,21 +1,18 @@
 ---
-# law/ is the executable constitution; data/rules.yml is the catalogue. Semantic implementation fields have been retired from the catalogue.
-# Batch 1: ONE_SOURCE, DECOUPLE, DEGRADE_GRACEFULLY, GALLS_LAW, CHESTERTONS_FENCE, UNIX_PHILOSOPHY, DRY, KISS, LEAST_ASTONISHMENT.
-# Batch 2: FUNCTIONAL_CORE, CONVENTION_OVER_CONFIG, PROGRAMMER_HAPPINESS, OMAKASE, NO_ONE_PARADIGM, BEAUTIFUL_CODE, SHARP_KNIVES, INTEGRATED_SYSTEMS, PROGRESS_OVER_STABILITY, BIG_TENT, MONOLITH_FIRST, CONSISTENT_ERROR_STRATEGY, DUAL_DETECTION, MASS_GENERATE_CURATE, NO_SHOTGUN_SURGERY, NO_HIDDEN_GLOBAL_STATE, TRACER_BULLETS, ORTHOGONALITY, TRANSFORMATIONS, DEEP_MODULES.
-# Batch 3: foundational kernel principles migrated into law/universal.rb.
-# Batch 4: architecture/security principles migrated into law/universal.rb.
-# Batch 5: MAKE_ILLEGAL_STATES_UNREPRESENTABLE, PARSE_DONT_VALIDATE, POKA_YOKE, COMPLEX_SYSTEMS_FAIL, STRONG_CENTERS, LEVELS_OF_SCALE, GUARD_EXPENSIVE, ARTIFICIAL_COUPLING, SELF_EXPLAINING, TRAILING_COMMAS, SILENCE_ON_SUCCESS, PRECOMPUTE_MATH, AUDIO_SMOOTHING, GRACEFUL_LOAD, ANALOG_WARMTH, DOMAIN_LANGUAGE, LOAD_BEARING_NAMES, ERROR_CONTEXT, COMMENTS_AS_DEODORANT, POSTEL, HYRUM, LEAKY_ABSTRACTION, TEMPORAL_COUPLING, HUMBLE_OBJECT, PATTERN_EXTRACTION.
-# Batch 6: SRP, OPEN_CLOSED, LISKOV, INTERFACE_SEGREGATION, DEPENDENCY_INVERSION, ONE_JOB, COMPOSABLE, LAW_OF_DEMETER, COMPOSITION_OVER_INHERITANCE, ONE_ABSTRACTION_LEVEL, STEPDOWN, BOUNDARY_ISOLATION, NO_MAGIC, FAIL_FAST, IDEMPOTENT, DEFENSIVE_INPUT, GRACEFUL_DEGRADATION, NO_SIDE_EFFECTS, PURE_FUNCTIONS, PRIMITIVE_OBSESSION, FEATURE_ENVY, MIDDLE_MAN, LAZY_CLASS, DIVERGENT_CHANGE, SPECULATIVE_GENERALITY, INAPPROPRIATE_INTIMACY.
-# Batch 7: SYSTEM_STATUS, USER_CONTROL, ERROR_RECOVERY, AESTHETIC_MINIMALISM, MATCH_REAL_WORLD, RECOGNITION_OVER_RECALL, FLEXIBILITY_EFFICIENCY, HELP_AND_DOCUMENTATION, CONSISTENCY, COST_TRANSPARENCY, CACHE_LLM, NO_FLAG_ARGUMENTS, NO_OUTPUT_ARGUMENTS, NO_SELECTOR_ARGUMENTS, DESIGN_BY_CONTRACT, CRASH_EARLY, DEFINE_ERRORS_OUT, SURFACE_AREA, PROGRESSIVE_DISCLOSURE, FEEDBACK_LOOPS, DATA_CLASS, PARALLEL_INHERITANCE, REFUSED_BEQUEST, PROSE_ACTIVE_VOICE, PROSE_POSITIVE_FORM, PROSE_PARALLEL_FORM, PROSE_RELATED_WORDS, PROSE_ONE_TOPIC_PARAGRAPH, GRICE_COOPERATIVE.
-# Batch 8: Rails-specific semantic laws moved to law/rails.rb.
+# law/ is the executable constitution. data/rules.yml is its policy catalogue and
+# compatibility surface. Historical migration batches belong in git history, not
+# in the live constitution.
+# Remaining policy adapters are explicit: veto_patterns and rule_deps are consumed
+# by runtime gates and are therefore not silently treated as executable Law IDs.
 schema: 1
 
 # Rule-system policy is itself governed here. The executable rule objects in
 # MASTER/law/ are the sole rule definitions; this section describes their
 # lifecycle and indexing contract without duplicating individual rules.
 rule_system:
-  source_of_truth: MASTER/law/*.rb
+  source_of_truth: executable_law_plus_declared_policy_adapters
   catalogue_role: policy_and_metadata
+  policy_adapters: [veto_patterns, rule_deps, architecture, preserve_user_intent, runtime_policy, design_system]
   index: derived_from_executable_law
   lifecycle:
     states: [proposed, proven, active, trusted, advisory, retired]
@@ -906,6 +903,8 @@ self_test:
       rule, and every covered principle names at least one. The reverse direction —
       every registered rule traced by some principle — is `rake lint:principle_trace`,
       a ratcheting ceiling, because it has never been zero.
+    RULE_SYSTEM: executable law lifecycle, proof metadata, universal-principle scope,
+      and the derived rule index remain internally consistent.
   fail_action: publish self_violation event; refuse autoloop fixes that don't restore
     the law
 veto_patterns:
