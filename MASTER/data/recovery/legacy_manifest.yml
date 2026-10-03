@@ -837,3 +837,58 @@ archaeology_commands:
   archives:
     command: "MASTER/tools/archaeology/extract_legacy_archives.zsh"
     scope: "tracked .tgz/.tar.gz/.zip from pub3/pub2/pub, deduplicated by Git blob"
+deep_lineage_candidates:
+  pub3_my_work:
+    - commit: "d4d3dee1d200b581f26803d60532bc5300b1ddca"
+      value: "Split aight.rb from 42KB into a 1.4KB entrypoint plus five focused modules."
+      disposition: "architecture-fossil; compare against current MASTER boundaries rather than restoring aight"
+    - commit: "449cff87fb83492777a3dfe9846efb18760b4d82"
+      value: "Added aight config, prompts, tools, assistant and CLI module structure."
+      disposition: "candidate-for-concept-mapping"
+    - commit: "8f7b04cf02a4a7309633e6237b2f10c0336787b2"
+      value: "Built an aight REPL with LLM integration and Starship support."
+      disposition: "candidate-for-concept-mapping"
+    - commit: "87f2275bf4958104184b1e54e221885b77a826e1"
+      value: "Added audio synthesis with per-note swing and FM synthesis."
+      disposition: "compare-with-current-dilla-before-any-restore"
+    - commit: "1d8ebe2cae60d3680311cf67c91c790a8a9c5ffb"
+      value: "Completed analog-style effects with tests."
+      disposition: "compare-with-current-studio-postpro"
+    - commit: "00d112cf8960f9751c6fdfacf56b9bbb14974396"
+      value: "PixelTunnel performance optimization using precomputed trigonometric tables."
+      disposition: "compare-with-current-brgen-dilla-tunnel"
+    - commit: "d936adefc0b47a886644887c8e6b80d174676ce8"
+      value: "MP3 audio-reactive Web Audio engine."
+      disposition: "compare-with-current-radio-visualisation"
+    - commit: "6b66019cd12b15eb2c6d851efac6e2741258d79f"
+      value: "Shared design tokens and bplans README under master.json governance."
+      disposition: "compare-with-current-design_tokens-and-governance"
+    - commit: "08ce8802f9374ed62e9d1be61c664d2bf6b53bb8"
+      value: "Bootstrap modules for repligen.rb and postpro.rb with dmesg-style startup."
+      disposition: "compare-with-current-studio-entrypoints"
+
+negative_fossils:
+  - repo: pub3
+    commit: "2fb612c13af1f4c8447bf614da52078295f60978"
+    value: "aight/lib was deleted while logic was folded into aight.rb; the deletion is not proof of loss."
+    disposition: "do-not-restore-without-behavior-diff"
+  - repo: pub3
+    commit: "896d2a2594a9396553baf7fbb71beb3663f00c24"
+    value: "Backup and draft configuration artifacts were deleted during sprawl cleanup."
+    disposition: "retired-by-cleanup-unless-unique-behavior-proven"
+  - repo: pub
+    commit: "6ecbd7b92b957b17cbe118645c0d4f28997e5c16"
+    value: "Large master.json was split into modular configuration files."
+    disposition: "retain-the-modularization; inspect old monolith only for missing semantics"
+  - repo: pub
+    commit: "01746ec9542fc80e0740db1ef09177a18376fbfc"
+    value: "389 lines were removed from prompts.json in a documented consolidation."
+    disposition: "do-not-reinflate"
+
+archive_duplicate_summary:
+  pub:
+    tracked_paths: 157
+    unique_blobs: 122
+    duplicate_groups: 20
+    duplicate_paths: 35
+    extraction_identity: git_blob_sha
