@@ -50,8 +50,8 @@ class TestDependencyManager < Minitest::Test
     gemfile = File.read(File.join(Master::ROOT, "Gemfile"))
     lock = File.read(File.join(Master::ROOT, "Gemfile.lock"))
 
-    assert_match(/^ruby "4\.0\.5"$/, gemfile)
-    assert_match(/^RUBY VERSION\n  ruby 4\.0\.5$/m, lock)
+    assert_match(/^ruby ">= 3\.3", "< 4\.1"$/, gemfile)
+    assert_match(/^RUBY VERSION\n  ruby >= 3\.3, < 4\.1$/m, lock)
   end
 
   def test_watcher_gems_are_locked_with_ffi_in_both_bundles
@@ -70,6 +70,7 @@ class TestDependencyManager < Minitest::Test
     platforms = source[/^PLATFORMS\n(.*?)\n\nDEPENDENCIES/m, 1].to_s
 
     assert_includes platforms, "x86_64-openbsd"
+    assert_includes platforms, "aarch64-linux"
     assert_match(/^    sqlite3 \(2\.9\.4\)$/m, source)
     assert_match(/^    mini_portile2 \(2\.8\.9\)$/m, source)
     assert_match(/^  sqlite3 \(2\.9\.4\) sha256=[0-9a-f]+$/m, source)
