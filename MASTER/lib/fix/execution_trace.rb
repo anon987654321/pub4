@@ -38,8 +38,8 @@ module Master
       ].freeze
 
       BOOT_CONFIG = {
-        "MASTER/data/laws.yml" => %w[zsh preserve_user_intent],
-        "MASTER/data/soul.yml" => [],
+        "MASTER/data/laws.yml" => %w[transformation_policy CAPABILITY_STATUS_MUST_BE_TRUTHFUL ROBUSTNESS],
+        "MASTER/data/soul.yml" => %w[absolute],
         "MASTER/data/providers.yml" => [],
         "MASTER/data/patterns.yml" => [],
         "MASTER/data/limits.yml" => [],
