@@ -381,6 +381,7 @@ module Law
         "principle_is_universal" => true,
         "detectors_may_be_domain_specific" => true,
       },
+      "vocabulary" => Master::LawVocabulary::TERMS,
       "proof" => {
         "deterministic" => "bad and good fixtures prove detector polarity.",
         "semantic" => "bad and good examples accompany the question; model evaluation is required.",
