@@ -4,7 +4,7 @@ require_relative "../lib/operator/baseline_ratchet"
 require_relative "master_design"
 
 module Operator
-  # Ratchet: every media-query width must be one of MASTER's canonical `design_system.viewport`
+  # Ratchet: every media-query width must be one of MASTER's canonical `tokens.viewport`
   # edges, or that edge minus 1px for a max-width bound.
   #
   # Colour, space, motion, elevation and the dialect maps are all single-sourced;
@@ -97,7 +97,7 @@ module Operator
       return true if exceeded.empty?
 
       warn "breakpoint_lint: exceeds baseline — #{exceeded.join("; ")}"
-      warn "breakpoint_lint: use a MASTER design_system.viewport edge (max-width bounds are edge - 1px)"
+      warn "breakpoint_lint: use a MASTER tokens.viewport edge (max-width bounds are edge - 1px)"
       false
     end
 
@@ -183,7 +183,7 @@ module Operator
 
     def edges
       @edges ||= begin
-        viewport = MasterDesign.design_system.fetch("viewport")
+        viewport = MasterDesign.tokens.fetch("viewport")
         viewport.values.map { |value| Integer(value) }.sort
       end
     end
