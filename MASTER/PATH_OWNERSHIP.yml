@@ -116,7 +116,7 @@ ownership:
     purpose: constitutional identity
     risk: critical
     check: bin/check --profile=agent
-  data/rules.yml:
+  data/laws.yml:
     purpose: constitutional rule registry and all scanner law (folded 2026-08-12)
     risk: critical
     check: bin/check --profile=agent
