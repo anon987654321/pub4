@@ -35,7 +35,7 @@ module Master
         Master::Core::World.secret?(path)
       end
 
-      # Sacred paths are read-yes, write-never: soul.yml and rules.yml are the
+      # Sacred paths are read-yes, write-never: soul.yml and laws.yml are the
       # law MASTER must read before it acts. Only a caller that writes asks.
       def resolve(path, write: true)
         full = File.expand_path(path, @root)
