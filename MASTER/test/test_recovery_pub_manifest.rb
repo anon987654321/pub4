@@ -152,4 +152,14 @@ class TestRecoveryPubManifest < Minitest::Test
     assert_equal 6, recovery.fetch("recovery_changes_vs_pre_collapse")
     assert_equal "recovery-authoritative", recovery.fetch("disposition")
   end
+  def test_pub2_reasoning_lineage_is_absorbed_without_a_second_authority
+    manifest = YAML.safe_load(ROOT.join("MASTER/data/recovery/legacy_manifest.yml").read, permitted_classes: [Date])
+    lineage = manifest.fetch("pub2_semantic_lineage")
+
+    assert_equal "absorbed-semantic", lineage.dig("reasoning_framework_v135", "disposition")
+    assert_equal "absorbed-semantic", lineage.dig("canonical_v20_2", "disposition")
+    assert_includes lineage.dig("reasoning_framework_v135", "value"), "questions before solutions"
+    assert_includes lineage.dig("canonical_v20_2", "value"), "ask before destructive action"
+    assert_includes lineage.fetch("caution"), "The old JSON versions are historical reasoning evidence, not runtime configuration."
+  end
 end

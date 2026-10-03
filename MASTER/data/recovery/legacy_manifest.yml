@@ -867,6 +867,31 @@ deep_lineage_candidates:
       value: "Bootstrap modules for repligen.rb and postpro.rb with dmesg-style startup."
       disposition: "compare-with-current-studio-entrypoints"
 
+pub2_semantic_lineage:
+  reasoning_framework_v135:
+    commit: "14ff4b624a9c546913612a5c2362a160f1e59dc6"
+    value:
+      - "questions before solutions"
+      - "evidence required"
+      - "multi-perspective validation"
+      - "fail-safe return to core principles"
+      - "preserve working behavior"
+      - "operator perspective asks whether the system can run for years without constant attention"
+    current_mapping: "Current soul/rules, operator runtime, review council and failure handling already carry these semantics."
+    disposition: "absorbed-semantic"
+  canonical_v20_2:
+    commit: "8953b9f9ebc394a4901448fb20369f1c00d1b895"
+    value:
+      - "discover/analyze/ideate/synthesize/select/execute/validate/converge lifecycle"
+      - "ask before destructive action"
+      - "zero-trust, fail-fast, reversible and explicit guardrails"
+      - "simplicity, modularity, single-responsibility and accessibility checks"
+    current_mapping: "Current Pipeline/Pass, gate chain, preserve-user-intent policy and design contracts retain these ideas without the old numeric thresholds or autonomous selection machinery."
+    disposition: "absorbed-semantic"
+  caution:
+    - "The old JSON versions are historical reasoning evidence, not runtime configuration."
+    - "Do not recreate master.json or a second workflow registry to recover these semantics."
+
 negative_fossils:
   - repo: pub3
     commit: "2fb612c13af1f4c8447bf614da52078295f60978"
