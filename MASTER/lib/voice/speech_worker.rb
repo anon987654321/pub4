@@ -138,17 +138,18 @@ module Master
       end
 
       # Live playback facade: one utterance into io, framed and chunk-clocked.
-      # Returns true when the stream ran clean.
+      # Returns StreamResult so playback can distinguish a clean stream from a
+      # failed stream that already emitted audio.
       def stream_edge_to_io(text:, voice_name:, style_config:, io:, stale_test: nil)
         sock_path = resolve_socket_path
-        return false unless sock_path
+        return StreamResult.new(ok: false, bytes: 0) unless sock_path
 
         req = build_socket_request(voice_name, style_config, text)
         target = StreamTarget.build(io:, stale_test:)
         stream_socket_to_io(sock_path, req, worker_timeout(text.to_s.length), target)
       rescue Timeout::Error, StandardError => e
         warn_tts("edge stream error: #{e.class}: #{e.message}")
-        false
+        StreamResult.new(ok: false, bytes: 0)
       end
 
       # Wire v2 ("stream":true) is the default; MASTER_TTS_WIRE=raw restores
