@@ -159,17 +159,26 @@ class ChallengeToolBalanceTest < Minitest::Test
   end
 \n  def test_test_deletion_probe_reports_unique_coverage
     Dir.mktmpdir("master-deletion") do |root|
+      lib = File.join(root, "lib")
+      FileUtils.mkdir_p(lib)
+      File.write(File.join(lib, "tiny.rb"), <<~RUBY)
+        module Tiny
+          def self.alpha = "alpha"
+          def self.beta = "beta"
+        end
+      RUBY
       path = File.join(root, "tiny_test.rb")
       File.write(path, <<~RUBY)
         require "minitest/autorun"
+        require_relative "lib/tiny"
+
         class TinyTest < Minitest::Test
-          def test_constant_contract
-            value = "protected"
-            assert_equal "protected", value
+          def test_alpha_contract
+            assert_equal "alpha", Tiny.alpha
           end
 
-          def test_other_contract
-            assert_equal 2, 1 + 1
+          def test_beta_contract
+            assert_equal "beta", Tiny.beta
           end
         end
       RUBY
@@ -180,6 +189,7 @@ class ChallengeToolBalanceTest < Minitest::Test
       assert_kind_of Hash, report[:protected]
       assert_kind_of Array, report[:unprotected]
       assert_empty report[:unprotected]
+      assert report[:protected].values.all? { |lines| !lines.empty? }
     end
   end
 
