@@ -75,6 +75,20 @@ class WorkflowInferenceTest < Minitest::Test
     ENV["MASTER_DMESG"] = previous
   end
 
+
+  def test_mode_line_distinguishes_mechanical_full_from_sampled_semantic_scan
+    posture = Master::Ground::ModePosture.new(root: File.expand_path("..", __dir__))
+
+    with_env("MASTER_SCAN_SEMANTIC_SAMPLE", nil) do
+      assert_includes posture.line, "full mechanical scan"
+      assert_includes posture.line, "semantic sampled"
+    end
+
+    with_env("MASTER_SCAN_SEMANTIC_SAMPLE", "1") do
+      assert_includes posture.line, "semantic full"
+    end
+  end
+
   # --dry-run reads and says what it would take on, then stops.
   def test_dry_run_says_what_it_would_repair_instead_of_repairing
     out = dispatch(critique: false)
@@ -135,6 +149,15 @@ class WorkflowInferenceTest < Minitest::Test
     assert_includes out, "fix failed: Errno::ENOENT"
     assert_match(/review\d+: incomplete, failed fix/, out)
     refute_includes out, "complete\n"
+  end
+
+
+  def with_env(key, value)
+    previous = ENV[key]
+    value.nil? ? ENV.delete(key) : ENV[key] = value
+    yield
+  ensure
+    previous.nil? ? ENV.delete(key) : ENV[key] = previous
   end
 
   def dispatch(critique:, deliberation: FakeDeliberation.new([]), fix_loop: FakeFixLoop.new, apply: false)
