@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "tribunal"
+require_relative "../challenges"
 
 module Master
   module Review
@@ -124,16 +125,7 @@ module Master
         # in what they change, not in how they are worded.
         IDEAS_PER_ISSUE = (5..20).freeze
 
-        SOLUTION_ATTACK_PROMPT = <<~TEXT.freeze
-          SOLUTION RED-TEAM
-          Before selecting a repair field, attack the solution space:
-          - Which proposals share the same hidden assumption?
-          - What useful behavior could each proposal regress or accidentally remove?
-          - What is the smallest deletion, existing primitive, or local repair the field is overlooking?
-          - What counterexample state, viewport, input, dependency, or user path could invalidate the direction?
-          - When the whole field optimizes the same dimension, introduce at least three candidates that invert that assumption rather than adding machinery.
-          Do not invent failures. Mark each concern as observed, plausible, or requiring validation.
-        TEXT
+        SOLUTION_ATTACK_PROMPT = Challenges.prompt(scope: :solution).freeze
 
         def ideation_prompt(feedback)
           issues = panel_issues(feedback)
