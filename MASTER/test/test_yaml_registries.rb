@@ -565,3 +565,18 @@ def test_the_bed_carries_surface_noise
 end
 
 end
+
+
+class TestLawsPhysicalOrder < Minitest::Test
+  ORDER = %w[
+    CAPABILITY_STATUS_MUST_BE_TRUTHFUL ROBUSTNESS SINGULARITY LINEARITY
+    PROXIMITY ABSTRACTION DENSITY RENDERED_VALUES prose transformation_policy
+    self_test veto_patterns anti_patterns architecture runtime_policy rule_deps
+    plugins tokens
+  ].freeze
+
+  def test_laws_follow_constitutional_reading_order
+    data = Master.load_yaml(File.join(DATA, "laws.yml"))
+    assert_equal ORDER, data.keys.reject { |key| key == "schema" }
+  end
+end
