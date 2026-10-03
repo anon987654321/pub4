@@ -988,3 +988,84 @@ mass_recovery_reviews:
         disposition: "retain-current-recovery-test"
     disposition: "recovery-authoritative"
     reason: "The active line after b4 restores the full governed tree while retaining the specific rename-path repair that triggered the preceding collapse sequence."
+
+legacy_capability_reviews:
+  pub3_aight:
+    source_ref: "d1f2770fc43fd0e85e9d640d71e9b0748fd9712e"
+    deletion_commit: "2fb612c13af1f4c8447bf614da52078295f60978"
+    rule: "compare behavior; never restore the deleted module tree by name"
+    absorbed:
+      - capability: "configuration, optional dependency loading, CLI, LLM provider and fallback"
+        current_mapping: "Current MASTER bootstrap, provider routing and CLI/session surfaces."
+        disposition: "absorbed"
+      - capability: "memory, context and session lifecycle"
+        current_mapping: "MASTER/lib/core/memory.rb, MASTER/lib/ground/memory/* and MASTER/lib/cli/session/*."
+        disposition: "absorbed"
+      - capability: "rate limits, provider cooldowns and spend protection"
+        current_mapping: "MASTER/lib/io/quota_gate.rb, MASTER/lib/io/circuit_breaker.rb and MASTER/lib/io/model_skip_cache.rb."
+        disposition: "absorbed-and-strengthened"
+      - capability: "filesystem operations and tool dispatch"
+        current_mapping: "Current bounded IO/tool layer and operator permissions."
+        disposition: "absorbed"
+      - capability: "retrieval/context ranking"
+        current_mapping: "MASTER/lib/ground/memory/search.rb and MASTER/lib/review/graph_retriever.rb."
+        disposition: "absorbed-and-evolved"
+      - capability: "autonomous task queue and cognitive load accounting"
+        current_mapping: "Current bounded operator/fix/runtime workflow rather than an independent autonomous task engine."
+        disposition: "absorbed-or-superseded"
+    partial:
+      - capability: "Aight REPL"
+        historical_behavior: "Interactive Ruby evaluation plus .explain, .refactor, .test, .doc, .security, .performance, .history, .context and .model commands."
+        current_mapping: "MASTER/lib/cli/session/repl_flow.rb and repl_io.rb provide the canonical REPL, but not every old Aight convenience command."
+        disposition: "partial; recover individual useful commands only when demanded by current MASTER workflow"
+      - capability: "UniversalScraper"
+        historical_behavior: "Ferrum navigation, screenshots, deep same-domain crawl, page-structure analysis and link extraction."
+        current_mapping: "MASTER/lib/io/web_fetch.rb plus RAILS/tools/crawl_browser.rb and MASTER/web/script/browser_probe_support.rb provide bounded fetch/browser verification, not a general scraper service."
+        disposition: "partial; no class-level restore"
+    retired:
+      - capability: "WeaviateIntegration"
+        reason: "External vector-store dependency is absent from the current architecture; memory search and GraphRetriever are the governed retrieval path."
+        disposition: "retired-by-architecture"
+      - capability: "EnhancedModelArchitecture"
+        reason: "Training-loop scaffold is generic ML plumbing rather than a demonstrated MASTER capability."
+        disposition: "yagni-unless-new-evidence"
+      - capability: "StarshipModule"
+        reason: "Shell prompt integration belongs to the operator environment, not a duplicated Aight runtime."
+        disposition: "absorbed-by-environment"
+    negative_fossil:
+      commit: "2fb612c13af1f4c8447bf614da52078295f60978"
+      finding: "The deletion removed 27 library files and a backup; later aight.rb remained a consolidated implementation. The file deletion therefore cannot be treated as a loss list."
+
+  pub4_face_legacy:
+    source_ref: "fix/master-face-hands-free"
+    source_tip: "ba42c9560ea931932ee476083deb6ef81c47377f"
+    deleted_sequence:
+      - commit: "6f18679721a5e2359b0f066ae001555d18328d08"
+        finding: "face3d engine/geometry/support/preview were removed while homo_futura point geometry was ported into the 2D fallback."
+      - commit: "26525c2fcd37626befd97df3b2315a6d019ff13d"
+        finding: "face_semantics stopped calling the old Face3D API and routed emotion into MASTER_FACE_STATE/blend state."
+      - commit: "93ebb23d33900df9790be5d5a9b16b03e60bc9f4"
+        finding: "legacy face/renderer.js was explicitly removed as dead."
+      - commit: "cbba7074f89f8ad88a7b6f46c97a8c1ed4dcb141"
+        finding: "legacy pixel_diff.js was explicitly removed as dead."
+      - commit: "e97e42750f2fb2c960b28f5ddba0fe43d7203777"
+        finding: "offscreen ecology bundle was explicitly removed as obsolete."
+    preserved_behavior:
+      - "question, fracture, ear pulse, ripple, bloom and model-switch face signals remain in current face.part2/face.part3/face.runtime."
+      - "pixel comparison remains in current visual gates and snapshot drift tooling."
+      - "offscreen canvas support remains in current face runtime bundles."
+    disposition: "retired-by-consolidation; do-not-restore-duplicate-renderers"
+    notable_fossil:
+      path: "MASTER/web/public/face_points_gl.js"
+      finding: "The old branch also contains a raw WebGL one-pixel point renderer with explicit parallax/depth semantics and a 700 skull + 400 tunnel budget. No current main file has the same implementation, but the current FaceWorld contract deliberately forbids a second renderer."
+      disposition: "behavioral-reference-only; candidate for selective migration only if the canonical renderer needs kinetic-depth evidence"
+
+  pub4_dilla_lineage:
+    current_mapping: "STUDIO/dilla/lib/groove.rb, harmony.rb, sound.rb and sampling.rb now contain substantially richer versions of the old synthesis, swing, harmony and sample-processing concepts."
+    evidence:
+      - "FM voice implementation exists in the current sound stack."
+      - "swing/humanization and Dilla timing are explicit in the current groove stack."
+      - "harmonic progression/voicing and improvisation are explicit in the current harmony stack."
+      - "sample analysis, licensing/provenance and drum/vocal-safe instrumental extraction are explicit in the current sampling stack."
+    disposition: "absorbed; do-not-restore-pub3-multimedia-dilla-tree"
+
