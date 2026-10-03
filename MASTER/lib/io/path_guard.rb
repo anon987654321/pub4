@@ -55,8 +55,12 @@ module Master
       private
 
       def sacred?(rel_path)
-        Master::Ground::Immutability.blocked?(rel_path, root: @root) ||
-          SACRED_PATHS.any? { |path| rel_path.start_with?(path) || rel_path == path.chomp("/") }
+        master_relative = @root == Master::REPO_ROOT ? rel_path.delete_prefix("MASTER/") : rel_path
+        Master::Ground::Immutability.blocked?(master_relative, root: Master::ROOT) ||
+          SACRED_PATHS.any? do |path|
+            sacred = path.chomp("/")
+            master_relative == sacred || master_relative.start_with?("#{sacred}/")
+          end
       end
     end
   end
