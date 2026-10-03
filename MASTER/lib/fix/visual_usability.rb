@@ -52,7 +52,7 @@ module Master
       end
 
       # law/ keys its registry by symbol. DENSITY, PROXIMITY, LINEARITY,
-      # ABSTRACTION and SINGULARITY are the axioms under rules.yml `laws:`, not
+      # ABSTRACTION and SINGULARITY are the axioms under laws.yml `laws:`, not
       # law/ files, so they are read from there.
       def load_laws!
         require File.expand_path("../../law/law", __dir__)
@@ -62,7 +62,7 @@ module Master
       end
 
       def axioms
-        @axioms ||= Master.load_yaml(Master::RULES_PATH).fetch("laws", {})
+        @axioms ||= Master.load_yaml(Master::LAWS_PATH).fetch("laws", {})
       end
 
       def line(id)
