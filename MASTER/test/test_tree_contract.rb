@@ -13,7 +13,7 @@ class TreeContractTest < Minitest::Test
     lib/boot/dependency_manager.rb
     lib/master.rb
     data/soul.yml
-    data/rules.yml
+    data/laws.yml
   ].freeze
 
   ZEITWERK_DIRECTORIES = %w[
