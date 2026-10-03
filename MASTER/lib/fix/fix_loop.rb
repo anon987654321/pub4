@@ -230,9 +230,9 @@ module Master
       end
 
       def mission_plan
-        [Ground::ActivePlan.read(@root), Wishlist.pending_context(@root)].compact.then do |parts|
-          parts.empty? ? "fix plan: observe, critique, repair, verify" : parts.join("\n\n")
-        end
+        parts = [Ground::ActivePlan.read(@root), Wishlist.pending_context(@root)].compact
+        parts << @transformation_plan.prompt
+        parts.empty? ? "fix plan: observe, critique, repair, verify" : parts.join("\n\n")
       end
 
       def relative_target(path)
