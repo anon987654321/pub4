@@ -9,7 +9,7 @@ AllCops:
     - "tmp/**"
     - "node_modules/**"
 
-# Cops aligned with rubocop/ruby-style-guide and data/rules.yml style:
+# Cops aligned with rubocop/ruby-style-guide and data/laws.yml style:
 Metrics/MethodLength:
   Enabled: true
   Max: 20
