@@ -65,6 +65,7 @@ transformation_policy:
     deterministic: "May transform automatically when its proof contract is satisfied."
     review: "May propose and apply only after hostile review and preservation proof."
     recommendation: "Propose only; never mutate."
+
 CAPABILITY_STATUS_MUST_BE_TRUTHFUL:
   priority: 1
   principle: Unavailable capabilities must never be reported as ready.
@@ -73,6 +74,7 @@ CAPABILITY_STATUS_MUST_BE_TRUTHFUL:
   - observability
   - service_status
   provenance: openbsd_status
+
 ROBUSTNESS:
   priority: 1
   principle: Errors fail safely; security first; handle edge cases.
@@ -88,6 +90,7 @@ ROBUSTNESS:
       url: "https://owasp.org/Top10"
     - name: "Defensive Programming"
       url: "https://github.com/google/styleguide"
+
 SINGULARITY:
   priority: 2
   principle: One source of truth; no duplication; data integrity.
@@ -100,6 +103,7 @@ SINGULARITY:
       url: "https://pragprog.com/titles/pragddd/the-pragmatic-programmer"
     - name: "Database Normalization Theory"
       url: "https://en.wikipedia.org/wiki/Database_normalization"
+
 LINEARITY:
   priority: 3
   principle: Sequential flow; minimal branches; clear path.
@@ -112,6 +116,7 @@ LINEARITY:
       url: "https://en.wikipedia.org/wiki/Cyclomatic_complexity"
     - name: "Cognitive Load in Code"
       url: "https://ar5iv.labs.arxiv.org/html/2107.03127"
+
 PROXIMITY:
   priority: 4
   principle: Related code together; cohesive modules.
@@ -124,6 +129,7 @@ PROXIMITY:
       url: "https://en.wikipedia.org/wiki/Cohesion_(computer_science)"
     - name: "SOLID Principles"
       url: "https://en.wikipedia.org/wiki/SOLID"
+
 ABSTRACTION:
   priority: 5
   principle: Right level; no leaky abstractions; appropriate hiding.
@@ -136,6 +142,7 @@ ABSTRACTION:
       url: "https://www.joelonsoftware.com/2002/11/11/the-law-of-leaky-abstractions"
     - name: "Interface Design Patterns"
       url: "https://en.wikipedia.org/wiki/Interface_segregation_principle"
+
 DENSITY:
   priority: 6
   principle: Information dense; no noise; signal not noise.
@@ -148,6 +155,7 @@ DENSITY:
       url: "https://www.gutenberg.org/ebooks/37134"
     - name: "Signal-to-Noise Ratio in Code"
       url: "https://ar5iv.labs.arxiv.org/html/2310.19102"
+
 RENDERED_VALUES:
   priority: 7
   principle: Rendered values are operator-owned.
@@ -198,6 +206,44 @@ architecture:
       owner: studio
       depends_on: []
       check: STUDIO/gate.rb
+
+runtime_policy:
+  concurrency:
+    io_backend: thread
+    cpu_backend: ractor_when_explicitly_safe
+    unknown_backend: serial
+    worker_limit: 8
+    timeout_seconds: 30
+  jit:
+    env: MASTER_JIT
+    modes: [auto, off, yjit]
+    constrained_host: off
+    android: off
+  native:
+    ractor_safety_unknown: deny
+  performance:
+    require_output_digest: true
+    benchmark_clock: monotonic
+  dependencies:
+    artifact_store: sha256
+    bundler_remains_authoritative: true
+
+self_test:
+    ROBUSTNESS: scan lib/ for bare_rescue + missing timeouts
+    SINGULARITY: laws.yml and deploy entries unique by id; data registries have their own lint
+    LINEARITY: no nesting_depth > 4 in lib/
+    PROXIMITY: test files within 1 directory of source
+    ABSTRACTION: no class > god_class threshold in lib/
+    DENSITY: no method > long_method threshold in lib/
+    KERNEL_ADHERENCE: infra_helpers.rb wiring layer present; rule adherence >= 35%
+    PRINCIPLE_MAP: every rule id named by data/principle_map.yml resolves to a registered
+      rule, and every covered principle names at least one. The reverse direction —
+      every registered rule traced by some principle — is `rake lint:principle_trace`,
+      a ratcheting ceiling, because it has never been zero.
+    RULE_SYSTEM: executable law lifecycle, proof metadata, universal-principle scope,
+      and the derived rule index remain internally consistent.
+  fail_action: publish self_violation event; refuse autoloop fixes that don't restore
+    the law
 
 plugins:
   travel_browser:
@@ -830,43 +876,6 @@ tokens:
         off_scale_opacity: 29
         off_scale_duration: 30
 
-runtime_policy:
-  concurrency:
-    io_backend: thread
-    cpu_backend: ractor_when_explicitly_safe
-    unknown_backend: serial
-    worker_limit: 8
-    timeout_seconds: 30
-  jit:
-    env: MASTER_JIT
-    modes: [auto, off, yjit]
-    constrained_host: off
-    android: off
-  native:
-    ractor_safety_unknown: deny
-  performance:
-    require_output_digest: true
-    benchmark_clock: monotonic
-  dependencies:
-    artifact_store: sha256
-    bundler_remains_authoritative: true
-
-self_test:
-    ROBUSTNESS: scan lib/ for bare_rescue + missing timeouts
-    SINGULARITY: laws.yml and deploy entries unique by id; data registries have their own lint
-    LINEARITY: no nesting_depth > 4 in lib/
-    PROXIMITY: test files within 1 directory of source
-    ABSTRACTION: no class > god_class threshold in lib/
-    DENSITY: no method > long_method threshold in lib/
-    KERNEL_ADHERENCE: infra_helpers.rb wiring layer present; rule adherence >= 35%
-    PRINCIPLE_MAP: every rule id named by data/principle_map.yml resolves to a registered
-      rule, and every covered principle names at least one. The reverse direction —
-      every registered rule traced by some principle — is `rake lint:principle_trace`,
-      a ratcheting ceiling, because it has never been zero.
-    RULE_SYSTEM: executable law lifecycle, proof metadata, universal-principle scope,
-      and the derived rule index remain internally consistent.
-  fail_action: publish self_violation event; refuse autoloop fixes that don't restore
-    the law
 veto_patterns:
   secrets:
     detect: sk-[A-Za-z0-9]{20,}|ghp_[A-Za-z0-9]{20,}|-----BEGIN.*KEY-----
@@ -984,6 +993,7 @@ veto_patterns:
     detect: (?:system|exec)\s*\(\s*(["'])(?:(?!\1).)*#\{|%x[\{(\[<][^)}\]>]*#\{|(?<!`)`(?!`)(?![^`\n]*Shellwords\.escape)(?=[^`\n]*#\{)[^`\n]*\s[^`\n]*`|Open3\.\w+\s*\(\s*(["'])(?:(?!\2).)*\s(?:(?!\2).)*#\{
     apply: add_safe_nav
     violates_law: ROBUSTNESS
+
 anti_patterns:
   forbidden:
   - pattern: eval\(.*user.*\)
@@ -1113,3 +1123,4 @@ rule_deps:
     after: [meta_charset]
   no_inline_styles:
     after: [magic_color]
+
