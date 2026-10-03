@@ -43,7 +43,7 @@ entries:
 
     The public runtime surfaces are `MASTER/bin/master` for the agent session and `MASTER/bin/operator` for repository-wide operations. `/review` is read-only; `/critique` invokes council; `/fix` is the write/convergence operation. `MASTER/bin/operator gate` runs the repository ladder with autofix enabled, while `--scan-only` is the measurement-only variant.
 
-    Production is vm23. OpenBSD deploy behavior belongs under `OPENBSD/`; Rails product truth belongs under `RAILS/apps.yml`. `MASTER/data/soul.yml` and `MASTER/data/rules.yml` are the law. Current runtime structure is the code under `MASTER/lib/`, the media implementations under `STUDIO/`, and the MASTER-owned utilities under `MASTER/tools/`; do not substitute an abandoned module target or a historical shell workflow for the present tree.
+    Production is vm23. OpenBSD deploy behavior belongs under `OPENBSD/`; Rails product truth belongs under `RAILS/apps.yml`. `MASTER/data/soul.yml` and `MASTER/data/laws.yml` are the law. Current runtime structure is the code under `MASTER/lib/`, the media implementations under `STUDIO/`, and the MASTER-owned utilities under `MASTER/tools/`; do not substitute an abandoned module target or a historical shell workflow for the present tree.
 - key: project_master_dual_gemfile
   name: MASTER has two Gemfiles
   description: MASTER/Gemfile (CLI) and MASTER/web/Gemfile (Falcon web) are independent
@@ -64,16 +64,16 @@ entries:
 
     Treat this entry as historical context only. Do not create, restore, or route code toward the seven-module layout unless a new architectural decision explicitly establishes it. Git history holds the old implementation and branch work.
 - key: project_master_yml_json_authority
-  name: master.yml/master.json migration is complete — soul.yml/rules.yml are sole
+  name: master.yml/master.json migration is complete — soul.yml/laws.yml are sole
     authority
   description: The predecessor master.yml/master.json drift-closing effort (started
     2026-05-05) is finished; both predecessor files are deleted. Authority chain is
-    CLAUDE.md's "Authority order" — soul.yml, then rules.yml.
+    CLAUDE.md's "Authority order" — soul.yml, then laws.yml.
   type: project
   body: |-
-    Historical: on 2026-05-05, the directive was that MASTER should implement what predecessor `master.json` (v43.0.1, November–December 2025, 130 commits) and `master.yml` (v31–v49.75, December 2025–February 2026, 668 commits) described, mined from their deleted history. That drift-closing work is done — the priority gaps listed at the time (Universal Laws ladder, Strunk & White safeguards, biases section, structural_ops taxonomy, council personas, evidence logging, beauty section, per-language templates, and the rest) now live in `soul.yml` and `rules.yml`.
+    Historical: on 2026-05-05, the directive was that MASTER should implement what predecessor `master.json` (v43.0.1, November–December 2025, 130 commits) and `master.yml` (v31–v49.75, December 2025–February 2026, 668 commits) described, mined from their deleted history. That drift-closing work is done — the priority gaps listed at the time (Universal Laws ladder, Strunk & White safeguards, biases section, structural_ops taxonomy, council personas, evidence logging, beauty section, per-language templates, and the rest) now live in `soul.yml` and `laws.yml`.
 
-    Neither predecessor file exists in the repo anymore. `soul.yml` (constitution) and `rules.yml` (scan rules + `principle_priorities`) are the sole authoritative sources — see the "Authority order" line in `CLAUDE.md`. Do not look for law in `master.yml`/`master.json`; they are gone.
+    Neither predecessor file exists in the repo anymore. `soul.yml` (constitution) and `laws.yml` (scan rules + `principle_priorities`) are the sole authoritative sources — see the "Authority order" line in `CLAUDE.md`. Do not look for law in `master.yml`/`master.json`; they are gone.
 - key: reference_grok_ui_cli_patterns
   name: Grok-inspired UI/CLI patterns (chatlog dump 2026-05-07)
   description: Reference dump from a sister chat — StyleCoach UI prompt, htmx+SSE
