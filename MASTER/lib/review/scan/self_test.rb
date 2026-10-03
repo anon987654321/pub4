@@ -156,7 +156,7 @@ module Master
           @root = root
           @bus = event_bus
           rules = Master.load_rules(root:) || {}
-          @checks = rules.dig("self_test", "laws_apply_to_self") || {}
+          @checks = rules["self_test"] || {}
         end
 
         def call(laws: nil)
