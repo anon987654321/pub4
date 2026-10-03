@@ -29,7 +29,7 @@ module Operator
 
     module_function
 
-    # Through the accessor, not a second load of rules.yml: the file this tool
+    # Through the accessor, not a second load of laws.yml: the file this tool
     # audits has to be the file the runtime reads, and reader_singularity is
     # the ratchet that keeps those two from drifting apart.
     def master_rules
@@ -39,7 +39,7 @@ module Operator
       Master.load_rules(root: MASTER)
     end
 
-    # The two populations rules.yml declares, and no third. A hand-rolled walk
+    # The two populations laws.yml declares, and no third. A hand-rolled walk
     # over every hash carrying an "id" was the first version, and it read the
     # eight check names inside AUTOMATED_CSS_ANALYSIS's `config:` as eight rules
     # — so missing_metadata counted config keys that were never going to carry a
@@ -47,7 +47,7 @@ module Operator
     # EIGHT_PX_RHYTHM. A rule's config is its own; only the populations are rules.
     def yaml_rules
       body = master_rules
-      Master.flatten_rules(body.fetch("rules", {})).select { |r| r.is_a?(Hash) && r["id"] } +
+      Master.law_entries(root: MASTER).select { |r| r.is_a?(Hash) && r["id"] } +
         Array(body["learned_smells"]).select { |r| r.is_a?(Hash) && r["id"] }
     end
 
@@ -90,7 +90,7 @@ module Operator
 
     # One id, two definitions, two wordings, and no way for a reader to tell
     # which governs. FAIL_VISIBLY had three — soul said "never rescue Exception",
-    # law/ said "catch specific errors, log context, re-raise", rules.yml said
+    # law/ said "catch specific errors, log context, re-raise", laws.yml said
     # "surface errors immediately" — and each had its own detector or none.
     #
     # The rule for resolving one: whichever population holds the detector owns
@@ -100,10 +100,10 @@ module Operator
     # moved into law/practice.rb, so `absolute.rules` reads nil and the branch
     # contributed an empty list to every comparison — a reader of a key that no
     # longer exists, which reader_singularity counts and nothing else would.
-    # A home is a population that DETECTS, and rules.yml mostly does not.
+    # A home is a population that DETECTS, and laws.yml mostly does not.
     #
     # This counted twenty on 2026-09-06 and one of them was a duplicate. The
-    # other nineteen were the architecture: rules.yml is the catalogue, law/ and
+    # other nineteen were the architecture: laws.yml is the catalogue, law/ and
     # the registry are the implementations, and an id necessarily appears in
     # both. Of the nineteen, thirteen carried `detect_semantic` — a question a
     # model answers about the same rule, which is that rule's model tier and not
@@ -130,7 +130,7 @@ module Operator
       yaml_rules.each do |r|
         next unless %w[detect_lexical].any? { |k| r[k].to_s.strip != "" }
 
-        homes[r["id"].to_s.upcase] << "rules.yml"
+        homes[r["id"].to_s.upcase] << "laws.yml"
       end
       homes
     end
@@ -243,7 +243,7 @@ module Operator
         Master::Trace::Dmesg.status("rule0", "#{r[:missing_metadata].size} rules declare neither tier nor severity")
       end
       r[:statement_conflicts].each do |c|
-        Master::Trace::Dmesg.status("rule0", "#{c[:rule]} differs between rules.yml and #{c[:home]}, #{c[:reasons].join("; ")}", io: $stderr)
+        Master::Trace::Dmesg.status("rule0", "#{c[:rule]} differs between laws.yml and #{c[:home]}, #{c[:reasons].join("; ")}", io: $stderr)
       end
 
       c = ceilings
