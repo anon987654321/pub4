@@ -549,7 +549,7 @@ module Master
           end
         end
 
-      # SOLID literal proxies — data/rules.yml unit OPEN_CLOSED/LISKOV/
+      # SOLID literal proxies — data/laws.yml unit OPEN_CLOSED/LISKOV/
       # INTERFACE_SEGREGATION/DEPENDENCY_INVERSION previously had detect_semantic
       # only. These give each a same-file AST proxy; the semantic prompt still
       # carries the cases these heuristics miss.
