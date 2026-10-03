@@ -36,14 +36,9 @@ module Operator
       YAML.safe_load_file(path, aliases: true) || {}
     end
 
-    def blocks(path = rules_path)
-      rules = document(path)["rules"]
-      Array(rules.is_a?(Hash) ? rules.values.flatten : rules)
-        .select { |rule| rule.is_a?(Hash) && rule["tier"] == "design" && rule["config"].is_a?(Hash) }
-        .to_h { |rule| [ rule["id"].to_s.downcase, rule["config"] ] }
-    end
+    def blocks(path = rules_path) = document(path)["tokens"] || {}
 
-    def design_system(path = rules_path) = document(path)["design_system"] || {}
+    def tokens(path = rules_path) = document(path)["tokens"] || {}
 
     def dig(*keys, path: rules_path) = blocks(path).dig(*keys.map(&:to_s))
   end
