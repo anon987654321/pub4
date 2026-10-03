@@ -6,7 +6,7 @@
 # worth doing", and the gap is most of what a refinement pass finds: a rake task
 # nothing calls, a backoff that never sleeps, a mailer aimed at a route that does
 # not exist, a gate asserting on the word "rubocop" rather than on whether it
-# ran. No rule in data/rules.yml names any of those, because they are not
+# ran. No rule in data/laws.yml names any of those, because they are not
 # properties of a file — they are properties of a claim and its reader.
 #
 # What already existed: eight instruments that each answer one such question for
