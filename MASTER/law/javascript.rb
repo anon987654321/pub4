@@ -16,7 +16,6 @@ end
 # calls a `let` wrong. This line detector flagged every `let` in the tree,
 # including the ones whose reassignment is the reason they are `let`.
 
-# Migrated from data/laws.yml FOR_OF.
 Law.define(:FOR_OF) do
   source "Airbnb JS Style Guide — for...of over for...in"
   severity :error
@@ -28,7 +27,6 @@ Law.define(:FOR_OF) do
   good "for (const k of list) {"
 end
 
-# Migrated from data/laws.yml NO_VAR.
 Law.define(:NO_VAR) do
   source "Airbnb JS Style Guide — no var (ES6 let/const)"
   severity :error
@@ -47,7 +45,6 @@ Law.define(:NO_VAR) do
   good %(const x = 1;\nconst said = "det var veldig hyggelig";\n)
 end
 
-# Migrated from data/laws.yml NULLISH_COALESCING.
 Law.define(:NULLISH_COALESCING) do
   source "ECMAScript 2020 — nullish coalescing (??)"
   severity :info
@@ -75,7 +72,6 @@ Law.define(:NULLISH_COALESCING) do
   good "const n = count ?? 0"
 end
 
-# Migrated from data/laws.yml OPTIONAL_CHAINING.
 Law.define(:OPTIONAL_CHAINING) do
   source "ECMAScript 2020 — optional chaining (?.)"
   severity :warn
@@ -87,7 +83,6 @@ Law.define(:OPTIONAL_CHAINING) do
   good "user?.name"
 end
 
-# Migrated from data/laws.yml TEMPLATE_LITERALS.
 Law.define(:TEMPLATE_LITERALS) do
   source "Airbnb JS Style Guide — template literals (ES6)"
   severity :warn
