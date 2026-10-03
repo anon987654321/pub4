@@ -656,4 +656,23 @@ Law.define(:SINGLE_MASTER_PROCESS) do
   bad  "starts another MASTER process while one already owns the checkout"
   good "the second invocation reports the existing owner and exits"
 end
+Law.define(:AESTHETIC_DISCIPLINE) do
+  source "MASTER constitution: universal visual and typographic principles"
+  severity :info
+  lifecycle :advisory
+  autofix :never
+  practice <<~TEXT
+    Treat appearance as a consequence of function, proportion, material, use,
+    and restraint rather than decoration. Choose typefaces for their function;
+    set type to suit its nature; use rhythm, proportion, modulation, and
+    harmony. Prefer simplicity, silence, emptiness, useful and unobtrusive
+    form, honest materials, durability, and as little intervention as the work
+    allows. In code, use meaningful names, small single-purpose functions,
+    comments that explain why, and separate error handling from ordinary logic.
+    Leave room for pause and imperfection; remove the inessential.
+  TEXT
+  fix "Choose for function; reduce until only the necessary remains."
+  bad  "decorative form, arbitrary typography, or needless visual machinery"
+  good "clear hierarchy, proportion, restraint, and visible purpose"
+end
 
