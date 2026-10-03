@@ -115,12 +115,12 @@ module Operator
     # collapsing them would let a rule go blind while another stops being
     # silent and the total holds still.
     def rule_reach_and_blind_rows
-      [master_row("rule_reach", "data/rules.yml", "rules no configuration can run") do
+      [master_row("rule_reach", "data/laws.yml", "rules no configuration can run") do
          require File.join(MASTER, "lib/operator/rule_reach")
          unreachable = Operator::RuleReach.unreachable
          [unreachable.size, Operator::RuleReach.ceiling, unreachable]
        end,
-       master_row("rule_audit.blind", "data/rules.yml", "rules proved on input their subjects never get") do
+       master_row("rule_audit.blind", "data/laws.yml", "rules proved on input their subjects never get") do
          require File.join(MASTER, "lib/operator/rule_audit")
          blind = Operator::RuleAudit.audit[:fixture_blindness]
          [blind.size, Operator::RuleAudit.ceilings.fetch("blind"), blind.map { |row| "#{row[:rule]}: #{row[:detail]}" }]
@@ -128,13 +128,13 @@ module Operator
     end
 
     def rule_saturation_and_silent_rows
-      [master_row("rule_audit.saturated", "data/rules.yml", "rules flagging most of what they read") do
+      [master_row("rule_audit.saturated", "data/laws.yml", "rules flagging most of what they read") do
          require File.join(MASTER, "lib/operator/rule_audit")
          saturated = Operator::RuleAudit.audit[:saturation]
          [saturated.size, Operator::RuleAudit.ceilings.fetch("saturated"),
           saturated.map { |row| format("%s: %d/%d files", row[:rule], row[:hits], row[:applicable]) }]
        end,
-       master_row("rule_audit.silent", "data/rules.yml", "rules firing on nothing in the corpus") do
+       master_row("rule_audit.silent", "data/laws.yml", "rules firing on nothing in the corpus") do
          require File.join(MASTER, "lib/operator/rule_audit")
          silent = Operator::RuleAudit.audit[:silent]
          [silent.size, Operator::RuleAudit.ceilings.fetch("silent"), silent]
@@ -156,12 +156,12 @@ module Operator
     end
 
     def rule_hygiene_rows_a
-      [master_row("rule_hygiene.id_case_collisions", "data/rules.yml", "ids differing only by case") do
+      [master_row("rule_hygiene.id_case_collisions", "data/laws.yml", "ids differing only by case") do
          require File.join(MASTER, "tools/rule_hygiene")
          collisions = Operator::RuleHygiene.report[:id_case_collisions]
          [collisions.size, Operator::RuleHygiene.ceilings.fetch("id_case_collisions"), collisions.map(&:to_s)]
        end,
-       master_row("rule_hygiene.alias_shadows_live_rule", "data/rules.yml", "aliases naming a rule that still exists") do
+       master_row("rule_hygiene.alias_shadows_live_rule", "data/laws.yml", "aliases naming a rule that still exists") do
          require File.join(MASTER, "tools/rule_hygiene")
          shadows = Operator::RuleHygiene.report[:alias_shadows_live_rule]
          [shadows.size, Operator::RuleHygiene.ceilings.fetch("alias_shadows_live_rule"), shadows.map(&:to_s)]
@@ -169,17 +169,17 @@ module Operator
     end
 
     def rule_hygiene_rows_b
-      [master_row("rule_hygiene.missing_metadata", "data/rules.yml", "rules with neither tier nor severity") do
+      [master_row("rule_hygiene.missing_metadata", "data/laws.yml", "rules with neither tier nor severity") do
          require File.join(MASTER, "tools/rule_hygiene")
          missing = Operator::RuleHygiene.report[:missing_metadata]
          [missing.size, Operator::RuleHygiene.ceilings.fetch("missing_metadata"), missing.map(&:to_s)]
        end,
-       master_row("rule_hygiene.cross_population_duplicates", "data/rules.yml", "one id with two detectors") do
+       master_row("rule_hygiene.cross_population_duplicates", "data/laws.yml", "one id with two detectors") do
          require File.join(MASTER, "tools/rule_hygiene")
          duplicates = Operator::RuleHygiene.report[:cross_population_duplicates]
          [duplicates.size, Operator::RuleHygiene.ceilings.fetch("cross_population_duplicates"), duplicates.map(&:to_s)]
        end,
-       master_row("rule_hygiene.statement_conflicts", "data/rules.yml", "one id, two statements") do
+       master_row("rule_hygiene.statement_conflicts", "data/laws.yml", "one id, two statements") do
          require File.join(MASTER, "tools/rule_hygiene")
          conflicts = Operator::RuleHygiene.report[:statement_conflicts]
          [conflicts.size, Operator::RuleHygiene.ceilings.fetch("statement_conflicts"), conflicts.map(&:to_s)]
@@ -191,7 +191,7 @@ module Operator
     # never carried the row; RuleRegistryAudit reported dep_graph_gaps and no
     # ceiling anywhere read it.
     def fixture_and_dep_rows
-      [master_row("rule_fixture_debt", "data/rules.yml", "registry rules with no worked example") do
+      [master_row("rule_fixture_debt", "data/laws.yml", "registry rules with no worked example") do
          $LOAD_PATH.unshift(File.join(MASTER, "lib")) unless $LOAD_PATH.include?(File.join(MASTER, "lib"))
          require "master"
          require "review/scan/rule_dsl"
@@ -202,7 +202,7 @@ module Operator
          [unfixtured.size, Master.law("rule_ratchets", root: MASTER).dig("fixture_debt", "without_fixtures"),
           unfixtured.map(&:name)]
        end,
-       master_row("rule_deps.ungraphed", "data/rules.yml", "registry rules absent from rule_deps") do
+       master_row("rule_deps.ungraphed", "data/laws.yml", "registry rules absent from rule_deps") do
          $LOAD_PATH.unshift(File.join(MASTER, "lib")) unless $LOAD_PATH.include?(File.join(MASTER, "lib"))
          require "master"
          audit = Master::Review::Scan::RuleRegistryAudit.new(root: MASTER)
@@ -832,7 +832,7 @@ def deep_rows
     # the reader itself having failed (a missing file, a KeyError on a section
     # that does not exist), and skipping it is how eleven dead rows reported
     # green for weeks. Seen 2026-10-03: `rule_ratchets` keys removed from
-    # rules.yml left every rule-hygiene row raising KeyError, excluded here, and
+    # laws.yml left every rule-hygiene row raising KeyError, excluded here, and
     # `measure` came back clean.
     def ok?(rows)
       rows.none? do |row|
