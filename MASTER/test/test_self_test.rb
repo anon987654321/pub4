@@ -32,7 +32,7 @@ class TestSelfTest < Minitest::Test
     end
   end
 
-  def test_only_rules_yml_ids_are_checked_under_singularity
+  def test_only_law_ids_are_checked_under_singularity
     Dir.mktmpdir do |root|
       write_fixture_tree(root)
       File.write(File.join(root, "data", "patterns.yml"), <<~YAML)
