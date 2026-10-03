@@ -101,6 +101,34 @@ module Law
     # rather than raise on a nil detect.
     def semantic? = !ask.nil?
 
+    # Universal describes the invariant, not the detector syntax. A universal
+    # principle may have Ruby, zsh, Rails or another domain adapter.
+    def universal? = principle_scope == :universal
+
+    # Lifecycle controls whether a rule may affect enforcement. Existing rules
+    # default to active for compatibility; candidates can enter proposed/proven
+    # without silently becoming merge blockers.
+    def enforceable? = %i[active trusted].include?(lifecycle)
+
+    LIFECYCLE_TRANSITIONS = {
+      proposed: %i[proven retired],
+      proven: %i[active advisory retired],
+      active: %i[trusted advisory retired],
+      trusted: %i[active advisory retired],
+      advisory: %i[active retired],
+      retired: [],
+    }.freeze
+
+    def can_transition_to?(state)
+      LIFECYCLE_TRANSITIONS.fetch(lifecycle).include?(state.to_sym)
+    end
+
+    def proof_kind
+      return :deterministic if detect
+      return :semantic if ask
+      :practice
+    end
+
     # Neither kind scans source: one is answered by a model, one binds behaviour.
     def scannable? = detect ? true : false
 
@@ -119,6 +147,10 @@ module Law
         "severity" => severity.to_s,
         "mode" => mode.to_s,
         "languages" => languages.map(&:to_s),
+        "principle_scope" => principle_scope.to_s,
+        "lifecycle" => lifecycle.to_s,
+        "autofix" => autofix.to_s,
+        "proof" => proof_kind.to_s,
         "question" => ask.to_s,
         "practice" => practice.to_s,
         "fix" => fix.to_s,
@@ -146,6 +178,16 @@ module Law
         raise ArgumentError, "#{id}: good fixture flagged" unless scan(good).empty?
 
         prove_as_real_file!
+      end
+
+      unless Rule::LIFECYCLE_TRANSITIONS.key?(lifecycle)
+        raise ArgumentError, "#{id}: unknown lifecycle #{lifecycle.inspect}"
+      end
+      unless %i[never review automatic].include?(autofix)
+        raise ArgumentError, "#{id}: unknown autofix policy #{autofix.inspect}"
+      end
+      if autofix == :automatic && !scannable?
+        raise ArgumentError, "#{id}: automatic autofix requires a deterministic detector"
       end
 
       unreachable = languages.map(&:to_s) - Master::FILE_LANGUAGE_MAP.values.uniq
