@@ -58,7 +58,7 @@ module Master
           else
             slice.each_with_index.map { |l, i| "#{offset + i + 1}\t#{l}" }.join
           end
-        suffix = total > offset + limit ? "\n[...truncated, #{total} total lines]" : ""
+        suffix = limit && total > offset + limit ? "\n[...truncated, #{total} total lines]" : ""
         numbered + suffix
       end
     end
