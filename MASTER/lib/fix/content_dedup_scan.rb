@@ -18,7 +18,7 @@ module Master
       MIN_DUPLICATE_COUNT = 2
 
       DEFAULT_FILES = %w[
-        data/soul.yml data/rules.yml data/principle_map.yml
+        data/soul.yml data/laws.yml data/principle_map.yml
         data/patterns.yml
       ].freeze
 
