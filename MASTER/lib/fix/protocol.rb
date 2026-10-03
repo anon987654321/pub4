@@ -42,11 +42,14 @@ module Master
 
           4. STRUCTURE
           On a tree-level target, run the bounded structural preflight before the
-          ordinary repair pass. Review names, nesting, tiny or duplicated seams,
-          and parallel structure. Before adding a file or class, look for an
-          existing owner to merge, flatten, hoist, rename, reflow, repurpose, or
-          outsource into. Kept surgery is proofed immediately and the eligible
-          corpus is refreshed. This stage may legitimately keep nothing.
+          ordinary repair pass. Turn correlated findings into bounded problem
+          clusters so one underlying defect is not repaired several times. For
+          each problem, generate a small set of plausible transformations in
+          constitutional order and let evidence choose among them. Before adding
+          a file or class, look for an existing owner to merge, flatten, hoist,
+          rename, reflow, repurpose, or outsource into. Kept surgery is proofed
+          immediately and the eligible corpus is refreshed. This stage may
+          legitimately keep nothing.
 
           5. SCAN
           For every active rule and every applicable file, inspect source
