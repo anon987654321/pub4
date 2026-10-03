@@ -11,7 +11,7 @@ typeset -r PUB4_ROOT=${SCRIPT_ROOT}/../../..
 typeset PUB_ROOT=${1:-${PUB4_ROOT}/../pub}
 typeset PUB2_ROOT=${2:-${PUB4_ROOT}/../pub2}
 typeset PUB3_ROOT=${3:-${PUB4_ROOT}/../pub3}
-typeset OUT=${4:-${PUB4_ROOT}/ARCHAEOLOGY/extracted}
+typeset OUT=${4:-${PUB4_ROOT}/../pub4-archaeology-extracted}
 
 mkdir -p ${OUT}/by-blob ${OUT}/by-archive
 
