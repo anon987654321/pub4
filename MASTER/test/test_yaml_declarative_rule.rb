@@ -5,7 +5,7 @@ require "review/scan/rule_dsl"
 require "tmpdir"
 require "fileutils"
 
-# The escape hatch for declaring a lexical rule in data/rules.yml without
+# The escape hatch for declaring a lexical rule in data/laws.yml without
 # writing a Ruby class for it. **It compiles nothing today**: no rule in the
 # corpus carries `detect_lexical`, so the bridge holds zero entries and cannot
 # fire on anything.
@@ -22,7 +22,7 @@ class TestYamlDeclarativeRule < Minitest::Test
   def in_corpus(rules)
     Dir.mktmpdir do |root|
       FileUtils.mkdir_p(File.join(root, "data"))
-      File.write(File.join(root, "data", "rules.yml"), { "rules" => { "line" => rules } }.to_yaml)
+      File.write(File.join(root, "data", "laws.yml"), { "rules" => { "line" => rules } }.to_yaml)
       yield Rules::YamlDeclarativeRule.new(root:), root
     end
   end
@@ -84,7 +84,7 @@ class TestYamlDeclarativeRule < Minitest::Test
   # whether the bridge is still wanted — rather than the rule quietly staying a
   # path nothing takes. See TODO.md, "The YAML lexical bridge compiles nothing".
   def test_the_live_corpus_still_declares_no_lexical_rules
-    live = Master.flatten_rules(Master.load_rules(root: Master::ROOT).fetch("rules", {}))
+    live = Master.law_entries(root: Master::ROOT)
 
     assert_equal 0, live.count { |r| r["detect_lexical"] },
                  "a lexical rule is declared again — the bridge is live, and TODO.md's record of it is stale"
