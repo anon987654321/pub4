@@ -89,7 +89,7 @@ end
 
 class TestRulesYamlRegistry < Minitest::Test
   include BedDeclaration
-  REQUIRED_RULE_FIELDS = %w[id name tier severity autofix].freeze
+  REQUIRED_LAW_FIELDS = %w[id priority principle].freeze
 
   def test_laws_yml_has_no_duplicate_rule_ids
     ids = rules.map { |rule| rule["id"] }.compact
@@ -98,9 +98,9 @@ class TestRulesYamlRegistry < Minitest::Test
     assert duplicates.empty?, "laws.yml has duplicate rule ids: #{duplicates.join(', ')}"
   end
 
-  def test_rules_yml_entries_have_required_fields
+  def test_laws_yml_entries_have_required_fields
     missing = rules.filter_map do |rule|
-      absent = REQUIRED_RULE_FIELDS.reject { |field| rule.key?(field) }
+      absent = REQUIRED_LAW_FIELDS.reject { |field| rule.key?(field) }
       "#{rule['id'] || '<missing id>'}: #{absent.join(', ')}" if absent.any?
     end
 
