@@ -1,7 +1,7 @@
 ---
 source_repo: anon987654321/pub
 target_repo: anon987654321/pub4
-audit_date: 2026-10-01
+audit_date: 2026-10-03
 purpose: >
   Machine-readable restore ledger for legacy pub material that pub4 has not
   fully restored as source, behavior, or explicit retirement decision.
