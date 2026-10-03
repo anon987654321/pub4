@@ -11,10 +11,17 @@ module Master
       RETURN_RE = /^[+-].*\breturn\b/.freeze
       LOG_RE = /^[+-].*\b(?:log|logger|puts|warn|error)\b/i.freeze
 
+      FORBIDDEN_CHANGES = %w[
+        public_method_signature
+        error_class_raised
+        return_type_shape
+        log_format_consumed_by_others
+        side_effects_order
+      ].freeze
+
       def initialize(root: Master::ROOT, config: nil)
         @root = root
-        @config = config || load_config
-        @forbidden = Array(@config["forbidden_changes_during_refactor"]).freeze
+        @forbidden = Array(config && config["forbidden_changes_during_refactor"] || FORBIDDEN_CHANGES).freeze
       end
 
       def refactor_message?(message) = REFACTOR_RE.match?(message.to_s)
@@ -43,16 +50,6 @@ module Master
 
       private
 
-      def load_config
-        config = Master.load_yaml(Master::LAWS_PATH)
-        section = config.fetch("preserve_user_intent")
-        raise "preserve_user_intent configuration must be a hash" unless section.is_a?(Hash)
-
-        section
-      rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "PreserveUserIntent.load_config")
-        raise "preserve_user_intent configuration unreadable: #{e.class}: #{e.message}"
-      end
 
       def signature_change?(lines)
         added = lines.grep(DEF_LINE_RE) { Regexp.last_match(1) }
