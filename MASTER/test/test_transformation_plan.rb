@@ -10,6 +10,7 @@ class TestTransformationPlan < Minitest::Test
 
   def test_pipeline_has_inventory_and_classification_before_transformations
     assert_equal %w[inventory classify], @plan.preflight
+    assert_includes @plan.lifecycle_states, "observed"
     assert_equal ["prove"], @plan.postflight
     assert_equal %w[
       defragment decouple flatten merge split relocate rename reorder remove
