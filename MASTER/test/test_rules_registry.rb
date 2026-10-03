@@ -3,7 +3,7 @@
 require_relative "test_helper"
 
 # Was test_split_rules.rb, which asserted the four data/rules/*.yml shards were
-# on disk; they folded into data/rules.yml on 2026-08-12 and the scope grouping
+# on disk; they folded into data/laws.yml on 2026-08-12 and the scope grouping
 # that survived the fold went on 2026-09-05. Nothing read it: every consumer
 # called flatten_rules, which discarded it immediately, and rules_for_scope had
 # no callers at all. What these assert is what the grouping was standing in for
