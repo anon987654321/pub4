@@ -617,7 +617,9 @@ end
 Law.define(:TRANSFORMATIONS) do
   source "Transformation Priority Premise (Robert C. Martin)"
   severity :info
+  lifecycle :trusted
   ask "Is the design modeling work as scattered mutable state when it can be expressed as a clear sequence of transformations?"
+  practice "On a structural or prose cleanup, inventory and classify first; defragment, decouple, flatten, merge, split, relocate, rename, reorder, remove, reflow and simplify in that order, then prove preservation."
   fix "Express the flow as input-to-output transformations with explicit stages."
   bad <<~'X'
     state[:x] = normalize(state[:x]); state[:x] = validate(state[:x])
