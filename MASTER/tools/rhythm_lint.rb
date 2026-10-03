@@ -6,7 +6,7 @@ require "set"
 require_relative "../lib/trace/dmesg"
 
 module Operator
-  # Validates every spacing-tagged value in MASTER's design_system and every --space
+  # Validates every spacing-tagged value in MASTER's tokens and every --space
   # custom property a stylesheet defines, in shared, each app and each engine
   # (a token defined beside the view it serves is still a token), against MASTER's own
   # laws.yml design_rules.pixel_perfection.eight_px_rhythm allowlist. Reads that
@@ -65,7 +65,7 @@ module Operator
     end
 
     def scan_tokens_yml(allowed)
-      data = MasterDesign.design_system
+      data = MasterDesign.tokens
       violations = []
       data.each do |dialect, entries|
         next unless entries.is_a?(Hash)
@@ -75,7 +75,7 @@ module Operator
           next unless value.is_a?(String) && value =~ /\A([\d.]+)(rem|px)\z/
 
           px = to_px(Regexp.last_match(1), Regexp.last_match(2))
-          violations << Violation.new("MASTER/data/laws.yml:design_system.#{dialect}", key, px) unless allowed.include?(px)
+          violations << Violation.new("MASTER/data/laws.yml:tokens.#{dialect}", key, px) unless allowed.include?(px)
         end
       end
       violations
