@@ -167,6 +167,29 @@ class TestRecoveryPubManifest < Minitest::Test
     assert_equal "absorbed; do-not-restore-pub3-multimedia-dilla-tree", manifest.fetch("legacy_capability_reviews").fetch("pub4_dilla_lineage").fetch("disposition")
   end
 
+  def test_recovered_regressions_have_a_current_disposition
+    manifest = YAML.safe_load(ROOT.join("MASTER/data/recovery/legacy_manifest.yml").read, permitted_classes: [Date])
+    reviews = manifest.fetch("recovered_regression_reviews")
+
+    assert_equal 8, reviews.size
+    reviews.each do |review|
+      assert review["commit"]
+      assert review["area"]
+      assert review["finding"]
+      assert review["current_mapping"]
+      assert review["disposition"]
+    end
+
+    assert_equal(
+      "preserved-fix",
+      reviews.find { |review| review["commit"] == "d1f6a31af0c82d8f6127b60eabbc76eef0cdef81" }.fetch("disposition")
+    )
+    assert_equal(
+      "deferred-gap; recover only if mixed-language parsing becomes an actual current requirement",
+      reviews.find { |review| review["commit"] == "97a761812e9b814188f702528cd47d09dddb6cdc" }.fetch("disposition")
+    )
+  end
+
   def test_pub2_reasoning_lineage_is_absorbed_without_a_second_authority
     manifest = YAML.safe_load(ROOT.join("MASTER/data/recovery/legacy_manifest.yml").read, permitted_classes: [Date])
     lineage = manifest.fetch("pub2_semantic_lineage")
