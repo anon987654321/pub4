@@ -2,7 +2,7 @@
 
 # Files that are one concept wearing several names.
 #
-# Every structural rule in data/rules.yml points one way: SMALL_FILES,
+# Every structural rule in data/laws.yml points one way: SMALL_FILES,
 # NO_GOD_CLASS and INTEGRATED_SYSTEMS all say "split further". None says "these
 # three are one thing", so no scan proposes a merge, and one concept spread over
 # three files that reference each other in both directions stays that way.
