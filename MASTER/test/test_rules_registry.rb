@@ -2,15 +2,11 @@
 
 require_relative "test_helper"
 
-# Was test_split_rules.rb, which asserted the four data/rules/*.yml shards were
-# on disk; they folded into data/laws.yml on 2026-08-12 and the scope grouping
-# that survived the fold went on 2026-09-05. Nothing read it: every consumer
-# called flatten_rules, which discarded it immediately, and rules_for_scope had
-# no callers at all. What these assert is what the grouping was standing in for
-# -- one loader, a registry that is never quietly empty, and ids that collide
-# nowhere rather than only within a scope.
+# The law catalogue is flat at the top level; executable law remains in law/.
+# This test holds the one loader, a non-empty catalogue, and ids that collide
+# nowhere.
 class TestRulesRegistry < Minitest::Test
-  def rules = Master.load_rules(root: Master::ROOT).fetch("rules", [])
+  def rules = Master.law_entries(root: Master::ROOT)
 
   def test_the_registry_is_one_flat_list
     assert_kind_of Array, rules
