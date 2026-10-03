@@ -222,6 +222,7 @@ end
 
 # Migrated from data/rules.yml RATE_LIMITING_MISSING.
 Law.define(:RATE_LIMITING_MISSING) do
+  principle_scope :universal
   source "OWASP API Security — rate limiting"
   severity :error
   languages %i[ruby]
