@@ -19,7 +19,7 @@
 
 ---
 - { name: AskLlm, elevated: false, visitor: true, default: true, description: Sub-LLM call for nested reasoning, required_context: "A specific sub-question and optional context.", usage_rules: ["Use for isolated reasoning that should not pollute current context."], error_recovery: "If too broad, rewrite as one concrete question." }
-- { name: ReadFile, elevated: false, visitor: false, default: true, description: Read a file from disk, required_context: "Specific file path.", usage_rules: ["Never guess path names.", "Read before modifying related files."], error_recovery: "If missing, ask for exact path or run directory listing first." }
+- { name: ReadFile, elevated: false, visitor: false, default: true, description: Read a file from disk; full=true reads the complete file without the normal line cap, required_context: "Specific file path.", usage_rules: ["Never guess path names.", "Read before modifying related files."], error_recovery: "If missing, ask for exact path or run directory listing first." }
 - { name: WriteFile, elevated: true, visitor: false, default: true, description: Write a new file, required_context: "Target path and complete content.", usage_rules: ["Prefer patch-like edits when file exists.", "Keep writes minimal and reversible."], error_recovery: "If uncertain, read the file first and propose a diff." }
 - { name: StrReplace, elevated: true, visitor: false, default: true, description: Replace exact string in a file, required_context: "Exact unique old string and replacement.", usage_rules: ["Fail if old string is ambiguous."], error_recovery: "If multiple matches, refine old_string with more context." }
 - { name: BatchReplace, elevated: true, visitor: false, default: true, description: Replace many files in one call }
@@ -31,7 +31,7 @@
 - { name: SymbolLookup, elevated: false, visitor: false, default: true, description: Look up symbol via code_index }
 - { name: Shell, elevated: true, visitor: false, default: true, description: Execute zsh command, required_context: "Concrete command and expected effect.", usage_rules: ["Prefer read-only commands first.", "Never use destructive commands without explicit confirmation."], error_recovery: "If blocked or risky, suggest safer equivalent command." }
 - { name: GitContext, elevated: false, visitor: false, default: true, description: git status/log summary }
-- { name: WebFetch, elevated: false, visitor: false, default: true, description: Fetch URL content; full=true returns the complete allowed response }
+- { name: WebFetch, elevated: false, visitor: false, default: true, description: Fetch public http(s) URL content; full=true returns the complete response within the guarded full-response limit; SSRF and governor checks remain active }
 - { name: WebSearch, elevated: false, visitor: true, default: true, description: Web search (visitor allowed) }
 - { name: Clean, elevated: true, visitor: false, default: true, description: Remove tmp/build artifacts }
 - { name: FeedbackRecord, elevated: false, visitor: false, default: true, description: Record a tool, provider or correction outcome in the feedback ledger }
