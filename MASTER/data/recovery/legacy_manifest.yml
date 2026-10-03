@@ -1105,6 +1105,32 @@ recovered_regression_reviews:
     finding: "A restoration from f95b2ad re-established single-instance enforcement, unconditional dependency setup, grounded self-run phases and web-session intelligence parity."
     current_mapping: "Useful behavior is represented by current MASTER single-process/session/runtime contracts; MASTER2 itself is not the active runtime."
     disposition: "semantic-reference"
+
+  - commit: "ca92b7d2be36c5877d570fc5abbb60f5572d261a"
+    area: council_principles
+    finding: "A prior merge dropped 137 visual/design/clean-code/architecture principles and the council had no principled briefing for those domains."
+    current_mapping: "data/principle_map.yml retains the restored clusters; council critique context samples bounded principle briefs from that map."
+    disposition: "preserved-recovery"
+  - commit: "2c8b7ab11e6882636065ec8399d383ad7a12dad7"
+    area: trace_session
+    finding: "Session persistence was changed from atomic replacement to direct File.write, so a crash could destroy the last good transcript."
+    current_mapping: "MASTER/lib/trace/session.rb uses the shared atomic-write primitive and pins crash-safe transcript persistence."
+    disposition: "preserved-fix"
+  - commit: "e0a6be27cbe763e5a91345c4603674544ed4eaa3"
+    area: face_voice
+    finding: "The browser carried its own voice alias table and drifted from the server, including a missing davis-era name."
+    current_mapping: "Voice::Policy builds browser payload aliases directly from Speech::VOICES; the face consumes that server table."
+    disposition: "preserved-fix"
+  - commit: "c2a43f2ab7d40d1c37b83fca804291611b84b572"
+    area: gate_workflow
+    finding: "The gate briefly used a writing scan path by default and had fragmented census/ownership handling."
+    current_mapping: "Current gate/operator flags distinguish measurement from mutation, while source ceilings and ownership live in canonical data registries."
+    disposition: "preserved-fix"
+  - commit: "cfe396535b9bcf3e46aff6a630937489e205c4d1"
+    area: visual_topology
+    finding: "A dedicated codebase.js renderer was removed so repository topology would not become a second visual layer over the canonical face."
+    current_mapping: "Current topology_registry maps codebase topology into the canonical face bridge."
+    disposition: "absorbed-by-canonical-renderer"
   - commit: "97a761812e9b814188f702528cd47d09dddb6cdc"
     area: MASTER2
     finding: "Restored MultiLanguage parsing for shell files containing Ruby/Python heredocs."
