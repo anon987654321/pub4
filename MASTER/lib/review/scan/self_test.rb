@@ -188,6 +188,7 @@ module Master
 
         def law_checks
           [
+            ["RULE_SYSTEM", lambda { rule_system_findings }],
             ["ROBUSTNESS", lambda {
               bare_rescue_findings + deploy_bare_rescue_findings + timeout_findings +
                 js_silent_catch_findings + library_verify_findings
@@ -251,6 +252,29 @@ module Master
                 finding(path:, line: index + 1, message: "silent catch {} in web JS — fail visibly")
               end
             end
+        end
+
+        def rule_system_findings
+          config = Master.load_rules(root: @root) || {}
+          policy = config["rule_system"]
+          return [finding(path: File.join(@root, "data", "rules.yml"), line: 1,
+                          message: "missing rule_system policy")] unless policy.is_a?(Hash)
+
+          lifecycle = policy["lifecycle"] || {}
+          required_states = %w[proposed proven active trusted advisory retired]
+          actual_states = Array(lifecycle["states"]).map(&:to_s)
+          return [finding(path: File.join(@root, "data", "rules.yml"), line: 1,
+                          message: "rule_system lifecycle states drift")] unless actual_states == required_states
+
+          return [] unless @root == Master::ROOT
+
+          require File.join(@root, "law", "law") unless defined?(::Law)
+          ::Law.load_all(File.join(@root, "law")) if ::Law.rules.empty?
+          ::Law::Index.validate!
+          []
+        rescue StandardError => e
+          [finding(path: File.join(@root, "data", "rules.yml"), line: 1,
+                   message: "rule-system integrity failed: #{e.class}: #{e.message}")]
         end
 
         def duplicate_rule_id_findings
