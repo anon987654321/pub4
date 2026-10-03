@@ -19,8 +19,14 @@ module Master
         <<~TEXT.strip
           /fix is an execution operation, not a review request.
 
-          Load the current MASTER constitution and executable law first. This
-          protocol adds procedure; it never overrides soul.yml, executable law,
+          TERMINOLOGY
+          #{Master::LawVocabulary.prompt}
+
+          Load the current MASTER constitution and executable law first. MASTER's
+          canonical normative term is "law": rule, principle, convention,
+          standard, guideline, heuristic and similar disciplinary terms resolve
+          to the same Law concept. Related terms such as policy or constraint
+          retain their technical meaning. This protocol adds procedure; it never overrides soul.yml, executable law,
           protected paths, operator-owned rendered values, or external
           authority boundaries.
 
