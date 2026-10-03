@@ -38,7 +38,7 @@ class TestHeartbeat < Minitest::Test
     Dir.mktmpdir do |root|
       write_heartbeat_root(root, <<~YAML)
         self_test:
-          laws_apply_to_self: {}
+          ROBUSTNESS: "scan lib/ for bare_rescue + missing timeouts"
       YAML
       bus = FakeBus.new
       heartbeat = Master::Fix::Heartbeat.new(root:, scanner: Object.new, event_bus: bus)
@@ -72,7 +72,7 @@ class TestHeartbeat < Minitest::Test
     Dir.mktmpdir do |root|
       write_heartbeat_root(root, <<~YAML)
         self_test:
-          laws_apply_to_self: {}
+          ROBUSTNESS: "scan lib/ for bare_rescue + missing timeouts"
         rules:
           - id: DUPLICATE
             name: one
@@ -108,7 +108,7 @@ class TestHeartbeat < Minitest::Test
         interval_seconds: 0
         enabled: true
     YAML
-    File.write(File.join(root, "data", "rules.yml"), rules_yaml)
+    File.write(File.join(root, "data", "laws.yml"), rules_yaml)
     # SelfTest's PRINCIPLE_MAP check reports "missing data/principle_map.yml"
     # against a bare fixture root, which made the "clean scan" case impossible
     # to reach — it always published heartbeat:violations instead. An empty map
