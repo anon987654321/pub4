@@ -12,8 +12,9 @@ module Master
 
       def run(goal, root:, bus: nil, model: nil, model_id: nil, max_turns: 40, on_turn: nil, memory: nil,
               container: nil, risk: :low)
+        workspace_root = workspace_root_for(root)
         transcript = []
-        observer = build_turn_observer(transcript, root:, bus:, on_turn:)
+        observer = build_turn_observer(transcript, root: workspace_root, bus:, on_turn:)
 
         memory ||= Master::Core::Memory.new(risk:)
         model ||= Master::Core::Model.new(**{ model_id:, chat: agent_chat(container, bus:) }.compact)
@@ -22,7 +23,7 @@ module Master
         begin
           mission.transition!(:plan, plan: Master::Ground::ActivePlan.read(root) || "fold plan: constitutional turn loop")
           capabilities = Master::Core::Capabilities.for(:fix)
-          world = build_world(root:, container:, capabilities:)
+          world = build_world(root: workspace_root, container:, capabilities:, network: network_client(container))
           mission.transition!(:execute)
           done = build_fold(root:, model:, memory:, world:, max_turns:, observer:, capabilities:).run(goal)
           mission.transition!(:verify, summary: continuation_summary(done))
@@ -37,13 +38,26 @@ module Master
       end
 
       # Only the interactive session sets an asker; see Session#terminal_ask.
-      def build_world(root:, container:, capabilities: Master::Core::Capabilities.for(:fix))
+      def build_world(root:, container:, capabilities: Master::Core::Capabilities.for(:fix), network: nil)
         critique_runner = container ? CouncilCrit.runner_for(container) : nil
         Master::Core::World.new(root:, ask: Fiber[:master_terminal_ask], critique_runner:,
-                                undo: container&.fetch(:undo, nil), capabilities:)
+                                undo: container&.fetch(:undo, nil), capabilities:, network:)
       end
 
       # A mission checkpoints the files it touches before the fold writes them.
+      def workspace_root_for(root)
+        path = File.expand_path(root)
+        path == Master::ROOT ? Master::REPO_ROOT : path
+      end
+
+      def network_client(container)
+        governor = container&.fetch(:governor, nil)
+        return unless governor
+
+        fetcher = Master::Io::WebFetch.new(governor:, event_bus: container[:bus])
+        ->(url:) { fetcher.call(url:) }
+      end
+
       def start_mission(goal, root:, bus:, model:)
         checkpoint = lambda do |id:, root:, files:|
           Master::Fix::Checkpoint.new(root:, dir: File.join(root, ".master", "checkpoints")).create(
