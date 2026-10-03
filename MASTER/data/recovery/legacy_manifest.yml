@@ -1,7 +1,7 @@
 ---
 source_repo: anon987654321/pub
 target_repo: anon987654321/pub4
-audit_date: 2026-10-01
+audit_date: 2026-10-03
 purpose: >
   Machine-readable restore ledger for legacy pub material that pub4 has not
   fully restored as source, behavior, or explicit retirement decision.
@@ -725,4 +725,560 @@ tooling:
   note: >-
     Binary archive extraction is an operator/runtime task. The GitHub connector
     can inventory these blobs but cannot materialize repository binary blobs here.
+repository_refs:
+  audit_date: "2026-10-03"
+  pub4:
+    main_at_audit: "e73b4d2d476ba4e32e870b1cb7f2dfc7321e592c"
+    pre_collapse: "f131ff002293f93da47755e27e3a2b38b9828687"
+    branches:
+      anon-work-2026-10-03: "a98d45c8070ae2566fa51a34fdebffd3b196e0fb"
+      archaeology/pre-main-collapse-20261003: "f131ff002293f93da47755e27e3a2b38b9828687"
+      fix/master-face-hands-free: "ba42c9560ea931932ee476083deb6ef81c47377f"
+    recovery_tags:
+      recover/bsdports-search-home: "ef95c3bbe091b9a4ef8636e66a714d385af4be49"
+      recover/x-modal-sheet: "74661cf4dfbed1eba9799e9dd89c5b75a69bb172"
+      recover/x-parity-stack: "325e3edaca334a7a572cf79bf3aa57cbce0cd5d6"
+  pub3:
+    main: "835f9199d605b6a6ae1f32cd207919c115a06b47"
+    branches:
+      my-work: "d1f2770fc43fd0e85e9d640d71e9b0748fd9712e"
+      feature/master-json-v44-final-convergence: "b2862e3d13725942e90b699c689233106cafa902"
+      feature/amber-shared-refactor: "b2862e3d13725942e90b699c689233106cafa902"
+      fix/safety-seed-and-common: "dbc4d0fa122b6dde4e9a4c253fa06a3b700f7719"
+      refactor/zsh-conversion: "eab75f0d5a8b0f617fec44f39b732a5eb01dd7a6"
+  pub2:
+    main: "ad05242c97fff1b01450434974aad628d7de8628"
+    branches:
+      copilot/canonicalize-configuration-files: "8953b9f9ebc394a4901448fb20369f1c00d1b895"
+      copilot/fix-958c1a07-b89d-403c-b912-4b0d500fabac: "5194e3f5961328ddd95d2d95b9b1f46f31108855"
+      copilot/fix-d46b8daa-f90e-45e9-ab79-1f4535ae08af: "a6196ecd5990d10ddeb05ac49fe3d51c7fcb193b"
+  pub:
+    main: "a3185f4ec6e6a27e35eeee6718ae3afa11bf49da"
+    branches:
+      autoprompts/restore-3_4_0_optimized: "b9aec06cbd1474ebf69b74dbc720aa0d7864a5cd"
+      openbsd-script-optimization: "31f13d78b7999670d2fa8abc2fc494886838364b"
+      prompts.json: "a6e5c2e655d89a74d867d977cab54aa42722ceb7"
+      restructure-consolidation: "468b313046236cd0898c5758edc019ef87923a5c"
+
+mass_change_reviews:
+  - repo: pub4
+    commit: "a98d45c8070ae2566fa51a34fdebffd3b196e0fb"
+    finding: "Mass deletion event: prior tree roughly 5,477 entries, resulting tree 6 entries; message only says gate-path attribution."
+    disposition: "preserve-parent-and-archaeologize"
+    evidence_branch: "archaeology/pre-main-collapse-20261003"
+  - repo: pub3
+    commit: "2fb612c13af1f4c8447bf614da52078295f60978"
+    finding: "7,740 deletions removed aight/lib modules while folding substantial logic into aight/aight.rb."
+    disposition: "compare-consolidated-behavior-before-any-restore"
+  - repo: pub3
+    commit: "896d2a2594a9396553baf7fbb71beb3663f00c24"
+    finding: "3,365 deletions removed backup/config artifacts, including old master.json copies and a large shared shell draft."
+    disposition: "treat-as-sprawl-unless-unique-behavior-is-proven"
+  - repo: pub2
+    commit: "8953b9f9ebc394a4901448fb20369f1c00d1b895"
+    finding: "Configuration canonicalization deleted backup copies and pre-refactor Rails scripts."
+    disposition: "historical-evidence-only"
+
+reversion_reviews:
+  - repo: pub4
+    commit: "82c269a27d54a65ec0bc04fda45437b2ff0dfa11"
+    finding: "OpenBSD operator split was reverted into OPERATOR.sh; six helper files were removed."
+    disposition: "prefer-current-consolidated-boundary; inspect helper history for unique behavior only"
+  - repo: pub4
+    commit: "6c694e5de1b845e49add3570efd8f76b3ddd99fd"
+    finding: "Per-fix commits, a collapse guard, Boy Scout behavior and gates were added together."
+    disposition: "high-value-safety-fossil"
+  - repo: pub4
+    commit: "7d4b5b1fc0e9022affc2075fdb6fb740869417be"
+    finding: "Fold writes journal the exact file so /undo cannot target an older fold."
+    disposition: "high-value-recovery-fossil"
+  - repo: pub4
+    commit: "fefdcc3cdc354ed21e94be3262c85eb670f4f817"
+    finding: "Durable mission target corruption was prevented and pinned by a dedicated supervisor test."
+    disposition: "high-value-recovery-fossil"
+  - repo: pub4
+    commit: "c332f7418c7cb824e52f721ac464e1a1a1db24ce"
+    finding: "Three test files had been wrapped in <sub> and therefore never ran."
+    disposition: "high-value-self_corruption-regression"
+
+master_json_lineage:
+  pub3_my_work:
+    tip: "d1f2770fc43fd0e85e9d640d71e9b0748fd9712e"
+    version: "50.0.0"
+    preserve:
+      - "ask-before-act / drift / hardcoded-paths / unhandled-edge"
+      - "fragmentation / sectionitis / divitis / DRY / complexity / SRP"
+      - "self-apply with snapshot-detect-generate-veto-rank-apply-verify-critique loop"
+      - "plateau/stagnation handling and atomic git safety"
+      - "pattern-learning using success rates and co-occurring issues"
+      - "explicit zsh-native replacement guidance"
+    caution:
+      - "The v50 file predates current pub4 law migration and is evidence, not a second constitution."
+      - "Do not restore its versioned JSON as a new source of truth; map any surviving law into existing law/data structures."
+
+archive_duplicate_summary:
+  pub:
+    tracked_paths: 157
+    unique_blobs: 122
+    duplicate_groups: 20
+    duplicate_paths: 35
+  policy: "Extract once per blob SHA; expose original paths as provenance links, not duplicate extracted trees."
+
+archaeology_commands:
+  recent_pub4:
+    command: "ruby MASTER/tools/history_valuables.rb"
+    scope: "pub4, default recent window"
+  full_pub4:
+    command: "ruby MASTER/tools/history_valuables.rb --all-history"
+    scope: "pub4, all refs"
+  all_generations:
+    command: "ruby MASTER/tools/history_valuables.rb --legacy --all-history"
+    scope: "pub4 + sibling pub3 + pub2 + pub when their .git directories are present"
+  archives:
+    command: "MASTER/tools/archaeology/extract_legacy_archives.zsh"
+    scope: "tracked .tgz/.tar.gz/.zip from pub3/pub2/pub, deduplicated by Git blob"
+deep_lineage_candidates:
+  pub3_my_work:
+    - commit: "d4d3dee1d200b581f26803d60532bc5300b1ddca"
+      value: "Split aight.rb from 42KB into a 1.4KB entrypoint plus five focused modules."
+      disposition: "architecture-fossil; compare against current MASTER boundaries rather than restoring aight"
+    - commit: "449cff87fb83492777a3dfe9846efb18760b4d82"
+      value: "Added aight config, prompts, tools, assistant and CLI module structure."
+      disposition: "candidate-for-concept-mapping"
+    - commit: "8f7b04cf02a4a7309633e6237b2f10c0336787b2"
+      value: "Built an aight REPL with LLM integration and Starship support."
+      disposition: "candidate-for-concept-mapping"
+    - commit: "87f2275bf4958104184b1e54e221885b77a826e1"
+      value: "Added audio synthesis with per-note swing and FM synthesis."
+      disposition: "compare-with-current-dilla-before-any-restore"
+    - commit: "1d8ebe2cae60d3680311cf67c91c790a8a9c5ffb"
+      value: "Completed analog-style effects with tests."
+      disposition: "compare-with-current-studio-postpro"
+    - commit: "00d112cf8960f9751c6fdfacf56b9bbb14974396"
+      value: "PixelTunnel performance optimization using precomputed trigonometric tables."
+      disposition: "compare-with-current-brgen-dilla-tunnel"
+    - commit: "d936adefc0b47a886644887c8e6b80d174676ce8"
+      value: "MP3 audio-reactive Web Audio engine."
+      disposition: "compare-with-current-radio-visualisation"
+    - commit: "6b66019cd12b15eb2c6d851efac6e2741258d79f"
+      value: "Shared design tokens and bplans README under master.json governance."
+      disposition: "compare-with-current-design_tokens-and-governance"
+    - commit: "08ce8802f9374ed62e9d1be61c664d2bf6b53bb8"
+      value: "Bootstrap modules for repligen.rb and postpro.rb with dmesg-style startup."
+      disposition: "compare-with-current-studio-entrypoints"
+
+pub2_semantic_lineage:
+  reasoning_framework_v135:
+    commit: "14ff4b624a9c546913612a5c2362a160f1e59dc6"
+    value:
+      - "questions before solutions"
+      - "evidence required"
+      - "multi-perspective validation"
+      - "fail-safe return to core principles"
+      - "preserve working behavior"
+      - "operator perspective asks whether the system can run for years without constant attention"
+    current_mapping: "Current soul/rules, operator runtime, review council and failure handling already carry these semantics."
+    disposition: "absorbed-semantic"
+  canonical_v20_2:
+    commit: "8953b9f9ebc394a4901448fb20369f1c00d1b895"
+    value:
+      - "discover/analyze/ideate/synthesize/select/execute/validate/converge lifecycle"
+      - "ask before destructive action"
+      - "zero-trust, fail-fast, reversible and explicit guardrails"
+      - "simplicity, modularity, single-responsibility and accessibility checks"
+    current_mapping: "Current Pipeline/Pass, gate chain, preserve-user-intent policy and design contracts retain these ideas without the old numeric thresholds or autonomous selection machinery."
+    disposition: "absorbed-semantic"
+  caution:
+    - "The old JSON versions are historical reasoning evidence, not runtime configuration."
+    - "Do not recreate master.json or a second workflow registry to recover these semantics."
+
+negative_fossils:
+  - repo: pub3
+    commit: "2fb612c13af1f4c8447bf614da52078295f60978"
+    value: "aight/lib was deleted while logic was folded into aight.rb; the deletion is not proof of loss."
+    disposition: "do-not-restore-without-behavior-diff"
+  - repo: pub3
+    commit: "896d2a2594a9396553baf7fbb71beb3663f00c24"
+    value: "Backup and draft configuration artifacts were deleted during sprawl cleanup."
+    disposition: "retired-by-cleanup-unless-unique-behavior-proven"
+  - repo: pub
+    commit: "6ecbd7b92b957b17cbe118645c0d4f28997e5c16"
+    value: "Large master.json was split into modular configuration files."
+    disposition: "retain-the-modularization; inspect old monolith only for missing semantics"
+  - repo: pub
+    commit: "01746ec9542fc80e0740db1ef09177a18376fbfc"
+    value: "389 lines were removed from prompts.json in a documented consolidation."
+    disposition: "do-not-reinflate"
+
+master2_lineage:
+  source_commits:
+    - commit: "f608163f20a001b40914ea22a39d9939b705e91b"
+      value: "MASTER2 workflow_engine, hooks_manager, circuit_breaker, session_template, smells and consolidated UI structure."
+      current_mapping: "Current Pipeline/Pass, event hooks, runtime policy and review stages cover the durable intent; the old eight-phase engine is not a canonical runtime."
+      disposition: "absorbed-or-superseded"
+    - commit: "f0677762f11204e17f87b79a3b84f942dfecc291"
+      value: "MASTER2 self-awareness cache, unified speech engines, TTS styles, audio streaming and orb web projections."
+      current_mapping: "SelfModel, operator/sprawl/self-scan, Voice::Speech, tts-worker, tts.yml and FaceWorld now carry the corresponding concerns with stronger contracts."
+      disposition: "absorbed-or-superseded"
+    - commit: "60d3fb34a1cdfe0ad6c01d9a3df29aab5e6259e1"
+      value: "MASTER2 Executor default, auto_fixer, quality gates, speech and web integration."
+      current_mapping: "Current /fix, gate chain, Result pipeline, voice supervisor and FaceWorld provide evolved replacements."
+      disposition: "absorbed-or-superseded"
+    - commit: "628f1223c4abd4304b57484dee4b94c99ec4ea26"
+      value: "Preservation rules, persona system, language detection, HTML generation and simulated execution."
+      current_mapping: "Preservation is constitutional; personas live in data/personas.yml; language and web generation have newer bounded implementations."
+      disposition: "partially-absorbed"
+  retained_semantics:
+    - "Keep structural self-knowledge measurable, but do not revive the one-hour stale cache; use current self-scan, sprawl census and capability map as sources."
+    - "Keep workflow lifecycle explicit and observable, but do not reinflate the retired eight-phase MASTER2 state machine."
+    - "Keep useful TTS fallback/style ideas only through the current voice policy and worker contracts."
+  caution:
+    - "MASTER2 used several now-retired layouts and modules. Restore behaviour, not directory names."
+    - "The old constitution backup and split module tree are historical evidence, not additional sources of truth."
+
+legacy_cli_reviews:
+  openbsd_commands:
+    commit: "562195009d1f7a2b34e36fe6af4637e425121cba"
+    value: "One-file OpenBSD CLI for services, firewall, pkg, zap, sysinfo and ports."
+    disposition: "retired-unsafe"
+    reason: "The historical module interpolated shell strings, used backticks instead of the current argv-safe Exec layer, depended on /proc/loadavg on OpenBSD, and exposed unrestricted package/firewall arguments."
+    current_mapping: "MASTER/lib/operator/services.rb, MASTER/lib/ground/openbsd_config.rb and MASTER/lib/ground/pledge.rb."
+  face_branch:
+    ref: "fix/master-face-hands-free"
+    tip: "ba42c9560ea931932ee476083deb6ef81c47377f"
+    removed_commits:
+      - "93ebb23d3390"
+      - "a2e74bbd23d8"
+      - "cbba7074f89f"
+      - "e107502782aa"
+      - "f03ce1a48326"
+      - "8c6f9be76341"
+    value: "Legacy three.js face modules: state, renderer, shaders, pixel diff, point renderer and offscreen ecology."
+    disposition: "retired-by-consolidation"
+    current_mapping: "MASTER/web/public/face_world.js and MASTER/FACE_WORLD.md preserve the canonical face state, repository geometry, semantic camera and renderer contract."
+    reason: "Git history explicitly records each legacy module as dead or obsolete; the current FaceWorld is the consolidated successor."
+
+master_json_v43_review:
+  source_commit: "5eed78fa18c6c3a67c4abb984ec363ff06b685d8"
+  value: "Radical v43 consolidation kept PRESERVE_THEN_IMPROVE_NEVER_BREAK, ultra-minimalism, operational convergence, adversarial review, incremental scanning and explicit thresholds."
+  absorbed:
+    - "PRESERVE_THEN_IMPROVE_NEVER_BREAK is current soul.yml golden_rule."
+    - "Ultra-minimalism is represented by current law/practice and design/system contracts."
+    - "Adversarial review is current HOSTILE_AUDIT and /fix critique; structural surgery has a second hostile attack."
+    - "Incremental structural repair is represented by the bounded RestructureSweep, while full tree gates remain explicit."
+  not_restored:
+    - "The old prediction_engine confidence-based autonomous mutation policy."
+    - "The old permissions auto_accept/bypass_confirmation block."
+    - "The old deployment_config secrets/host-specific paths."
+  disposition: "semantic-recovery-only"
+
+mass_recovery_reviews:
+  pub4_accidental_collapse:
+    collapse_commit: "a98d45c8070ae2566fa51a34fdebffd3b196e0fb"
+    recovery_commit: "b4c510ef96eac87cfa6ca946fd30f530f8c5c8a0"
+    pre_collapse_commit: "f131ff002293f93da47755e27e3a2b38b9828687"
+    restored_tree_entries: 5507
+    recovery_changes_vs_pre_collapse: 6
+    meaningful_change:
+      - path: "MASTER/lib/operator/gate_chain.rb"
+        finding: "Recovery preserved the renamed-path attribution parser rather than merely replaying the pre-collapse blob."
+        disposition: "retain-current-recovery-improvement"
+      - path: "MASTER/test/test_gate_chain.rb"
+        finding: "Recovery kept the regression test proving both sides of a Git rename remain attributable."
+        disposition: "retain-current-recovery-test"
+    disposition: "recovery-authoritative"
+    reason: "The active line after b4 restores the full governed tree while retaining the specific rename-path repair that triggered the preceding collapse sequence."
+
+legacy_capability_reviews:
+  pub3_aight:
+    source_ref: "d1f2770fc43fd0e85e9d640d71e9b0748fd9712e"
+    deletion_commit: "2fb612c13af1f4c8447bf614da52078295f60978"
+    rule: "compare behavior; never restore the deleted module tree by name"
+    absorbed:
+      - capability: "configuration, optional dependency loading, CLI, LLM provider and fallback"
+        current_mapping: "Current MASTER bootstrap, provider routing and CLI/session surfaces."
+        disposition: "absorbed"
+      - capability: "memory, context and session lifecycle"
+        current_mapping: "MASTER/lib/core/memory.rb, MASTER/lib/ground/memory/* and MASTER/lib/cli/session/*."
+        disposition: "absorbed"
+      - capability: "rate limits, provider cooldowns and spend protection"
+        current_mapping: "MASTER/lib/io/quota_gate.rb, MASTER/lib/io/circuit_breaker.rb and MASTER/lib/io/model_skip_cache.rb."
+        disposition: "absorbed-and-strengthened"
+      - capability: "filesystem operations and tool dispatch"
+        current_mapping: "Current bounded IO/tool layer and operator permissions."
+        disposition: "absorbed"
+      - capability: "retrieval/context ranking"
+        current_mapping: "MASTER/lib/ground/memory/search.rb and MASTER/lib/review/graph_retriever.rb."
+        disposition: "absorbed-and-evolved"
+      - capability: "autonomous task queue and cognitive load accounting"
+        current_mapping: "Current bounded operator/fix/runtime workflow rather than an independent autonomous task engine."
+        disposition: "absorbed-or-superseded"
+    partial:
+      - capability: "Aight REPL"
+        historical_behavior: "Interactive Ruby evaluation plus .explain, .refactor, .test, .doc, .security, .performance, .history, .context and .model commands."
+        current_mapping: "MASTER/lib/cli/session/repl_flow.rb and repl_io.rb provide the canonical REPL, but not every old Aight convenience command."
+        disposition: "partial; recover individual useful commands only when demanded by current MASTER workflow"
+      - capability: "UniversalScraper"
+        historical_behavior: "Ferrum navigation, screenshots, deep same-domain crawl, page-structure analysis and link extraction."
+        current_mapping: "MASTER/lib/io/web_fetch.rb plus RAILS/tools/crawl_browser.rb and MASTER/web/script/browser_probe_support.rb provide bounded fetch/browser verification, not a general scraper service."
+        disposition: "partial; no class-level restore"
+    retired:
+      - capability: "WeaviateIntegration"
+        reason: "External vector-store dependency is absent from the current architecture; memory search and GraphRetriever are the governed retrieval path."
+        disposition: "retired-by-architecture"
+      - capability: "EnhancedModelArchitecture"
+        reason: "Training-loop scaffold is generic ML plumbing rather than a demonstrated MASTER capability."
+        disposition: "yagni-unless-new-evidence"
+      - capability: "StarshipModule"
+        reason: "Shell prompt integration belongs to the operator environment, not a duplicated Aight runtime."
+        disposition: "absorbed-by-environment"
+    negative_fossil:
+      commit: "2fb612c13af1f4c8447bf614da52078295f60978"
+      finding: "The deletion removed 27 library files and a backup; later aight.rb remained a consolidated implementation. The file deletion therefore cannot be treated as a loss list."
+
+  pub4_face_legacy:
+    source_ref: "fix/master-face-hands-free"
+    source_tip: "ba42c9560ea931932ee476083deb6ef81c47377f"
+    deleted_sequence:
+      - commit: "6f18679721a5e2359b0f066ae001555d18328d08"
+        finding: "face3d engine/geometry/support/preview were removed while homo_futura point geometry was ported into the 2D fallback."
+      - commit: "26525c2fcd37626befd97df3b2315a6d019ff13d"
+        finding: "face_semantics stopped calling the old Face3D API and routed emotion into MASTER_FACE_STATE/blend state."
+      - commit: "93ebb23d33900df9790be5d5a9b16b03e60bc9f4"
+        finding: "legacy face/renderer.js was explicitly removed as dead."
+      - commit: "cbba7074f89f8ad88a7b6f46c97a8c1ed4dcb141"
+        finding: "legacy pixel_diff.js was explicitly removed as dead."
+      - commit: "e97e42750f2fb2c960b28f5ddba0fe43d7203777"
+        finding: "offscreen ecology bundle was explicitly removed as obsolete."
+    preserved_behavior:
+      - "question, fracture, ear pulse, ripple, bloom and model-switch face signals remain in current face.part2/face.part3/face.runtime."
+      - "pixel comparison remains in current visual gates and snapshot drift tooling."
+      - "offscreen canvas support remains in current face runtime bundles."
+    disposition: "retired-by-consolidation; do-not-restore-duplicate-renderers"
+    notable_fossil:
+      path: "MASTER/web/public/face_points_gl.js"
+      finding: "The old branch also contains a raw WebGL one-pixel point renderer with explicit parallax/depth semantics and a 700 skull + 400 tunnel budget. No current main file has the same implementation, but the current FaceWorld contract deliberately forbids a second renderer."
+      disposition: "behavioral-reference-only; candidate for selective migration only if the canonical renderer needs kinetic-depth evidence"
+
+  pub4_dilla_lineage:
+    current_mapping: "STUDIO/dilla/lib/groove.rb, harmony.rb, sound.rb and sampling.rb now contain substantially richer versions of the old synthesis, swing, harmony and sample-processing concepts."
+    evidence:
+      - "FM voice implementation exists in the current sound stack."
+      - "swing/humanization and Dilla timing are explicit in the current groove stack."
+      - "harmonic progression/voicing and improvisation are explicit in the current harmony stack."
+      - "sample analysis, licensing/provenance and drum/vocal-safe instrumental extraction are explicit in the current sampling stack."
+    disposition: "absorbed; do-not-restore-pub3-multimedia-dilla-tree"
+
+recovered_regression_reviews:
+  - commit: "d1f6a31af0c82d8f6127b60eabbc76eef0cdef81"
+    area: dilla
+    finding: "A merge inlined Hash#dig compatibility into test_helper and broke dilla's absolute reader, silently disabling coltrane and changing rendered theory."
+    current_mapping: "MASTER/lib/boot/hash_dig_compat.rb is restored as the shared compatibility source and is required by both test boot and Dilla."
+    disposition: "preserved-fix"
+  - commit: "fa897d465d8ce7a7f7465028164d0460888a907f"
+    area: fix_loop
+    finding: "God-class splits dropped reload-after-AST-fix state, added unbounded generated-tree scanning, and changed the rule/reader loading shape."
+    current_mapping: "Current pass runner refreshes source after AST mutation and rule-order skips generated/dependency trees."
+    disposition: "preserved-fix"
+  - commit: "28a43514aa523e11e8f6539d9d5491aae96cf5fd"
+    area: namespace_ratchet
+    finding: "The fold lost namespace ceilings when namespace_ceilings.yml was removed."
+    current_mapping: "Ceilings live in data/spine.yml and are read by the namespace ratchet."
+    disposition: "preserved-fix"
+  - commit: "04be436060136d741b0a6c7d721199c2b6d31f1d"
+    area: gate_census
+    finding: "A merge silently lost eight DENSITY-related gate behaviors, including scan count reporting, ceiling warnings, list output and separated census rows."
+    current_mapping: "Current operator gates and ratchets contain the split helpers and explicit reporting."
+    disposition: "preserved-fix"
+  - commit: "d7440d24c961121284ff0c9cf0b384c196f2ef22"
+    area: scanner
+    finding: "A tree-loss episode removed scanner rules, reader/data/self censuses, glossary definitions and their tests."
+    current_mapping: "These surfaces are present in the current MASTER tree and remain part of gate evidence."
+    disposition: "preserved-recovery"
+  - commit: "32f1b7dd186571c1881da21bcb3abc474756b8a8"
+    area: fix_loop
+    finding: "The documented failure was an oscillation rollback after streamed repairs had already changed the tree; the stagnation snapshot was taken before those changes."
+    current_mapping: "Keep the pre-repair/post-repair distinction explicit; do not let a changed pass be classified as a repeated finding set."
+    disposition: "historical-regression-to-guard"
+  - commit: "92d948661785ff945be9fd02533a75cab5734332"
+    area: MASTER2
+    finding: "A restoration from f95b2ad re-established single-instance enforcement, unconditional dependency setup, grounded self-run phases and web-session intelligence parity."
+    current_mapping: "Useful behavior is represented by current MASTER single-process/session/runtime contracts; MASTER2 itself is not the active runtime."
+    disposition: "semantic-reference"
+
+  - commit: "ca92b7d2be36c5877d570fc5abbb60f5572d261a"
+    area: council_principles
+    finding: "A prior merge dropped 137 visual/design/clean-code/architecture principles and the council had no principled briefing for those domains."
+    current_mapping: "data/principle_map.yml retains the restored clusters; council critique context samples bounded principle briefs from that map."
+    disposition: "preserved-recovery"
+  - commit: "2c8b7ab11e6882636065ec8399d383ad7a12dad7"
+    area: trace_session
+    finding: "Session persistence was changed from atomic replacement to direct File.write, so a crash could destroy the last good transcript."
+    current_mapping: "MASTER/lib/trace/session.rb uses the shared atomic-write primitive and pins crash-safe transcript persistence."
+    disposition: "preserved-fix"
+  - commit: "e0a6be27cbe763e5a91345c4603674544ed4eaa3"
+    area: face_voice
+    finding: "The browser carried its own voice alias table and drifted from the server, including a missing davis-era name."
+    current_mapping: "Voice::Policy builds browser payload aliases directly from Speech::VOICES; the face consumes that server table."
+    disposition: "preserved-fix"
+  - commit: "c2a43f2ab7d40d1c37b83fca804291611b84b572"
+    area: gate_workflow
+    finding: "The gate briefly used a writing scan path by default and had fragmented census/ownership handling."
+    current_mapping: "Current gate/operator flags distinguish measurement from mutation, while source ceilings and ownership live in canonical data registries."
+    disposition: "preserved-fix"
+  - commit: "cfe396535b9bcf3e46aff6a630937489e205c4d1"
+    area: visual_topology
+    finding: "A dedicated codebase.js renderer was removed so repository topology would not become a second visual layer over the canonical face."
+    current_mapping: "Current topology_registry maps codebase topology into the canonical face bridge."
+    disposition: "absorbed-by-canonical-renderer"
+  - commit: "97a761812e9b814188f702528cd47d09dddb6cdc"
+    area: MASTER2
+    finding: "Restored MultiLanguage parsing for shell files containing Ruby/Python heredocs."
+    current_mapping: "No equivalent current pub4 MASTER parser was found."
+    disposition: "deferred-gap; recover only if mixed-language parsing becomes an actual current requirement"
+
+
+legacy_deploy_bundle_review:
+  restoration_commit: "41dcb7c8a88ada5ab948d0fd65e222ed3683d037"
+  pruning_commit: "246160caaaf7d96930395d5a8e8bd19c8096ce0c"
+  finding: "The 2024-08 @*.sh bundle was restored from archives, then intentionally moved/pruned as legacy reference material during DEPLOY/rails defragmentation."
+  retained_patterns:
+    - pattern: "Active Storage/image processing"
+      current_mapping: "Tracked Rails app migrations and shared media-processing tests."
+      disposition: "absorbed"
+    - pattern: "Devise/OmniAuth"
+      current_mapping: "Current app auth decisions and tracked application trees; no restored generator script."
+      disposition: "absorbed-or-product-specific"
+    - pattern: "Falcon/ActionCable"
+      current_mapping: "Current OpenBSD service files and Rails runtime/gates."
+      disposition: "absorbed"
+    - pattern: "posts/comments/private visibility"
+      current_mapping: "Current Brgen post/comment models, moderation and shared social services."
+      disposition: "absorbed-or-reimplemented"
+    - pattern: "Tiptap rich text"
+      current_mapping: "RAILS/shared/frontend/tiptap_editor_controller.js and shared Tiptap build/assets."
+      disposition: "absorbed"
+    - pattern: "PWA installation"
+      current_mapping: "Current shared PWA serving and app-specific manifests/controllers."
+      disposition: "absorbed"
+  retirement_reason: "The scripts mixed generation, dependency installation and production mutation, duplicated helpers, used obsolete stack assumptions, and were explicitly declared unsafe to run blindly against tracked production trees."
+  archive_rule: "Keep the Git commits as provenance; do not resurrect the script forest. Rebuild any missing behavior inside current app/shared boundaries."
+
+
+legacy_ai3_role_review:
+  source_repo: pub
+  consolidation_commit: "534d719c7532df9f2e9ba4e39f5d46e673668e18"
+  restoration_commit: "21598560b57a78059df4dcd1751946914f91e179"
+  roles_with_nontrivial_surface:
+    - role: architect
+      evidence: "Enhanced role grew from a small inspiration/design helper into source-guided case studies, precedents, materials, technical specifications, sustainability and cost/timeline analysis."
+      current_mapping: "MASTER persona architect plus bounded research/council/tooling."
+      disposition: "semantic-reference"
+    - role: medical
+      evidence: "Enhanced role added specialty classification, symptom categories, differential diagnosis, urgency/red flags, treatment/prognosis placeholders and drug-interaction analysis."
+      current_mapping: "MASTER medic persona plus general research tooling; no dedicated autonomous diagnostic engine."
+      disposition: "semantic-reference; no autonomous diagnostic restoration"
+    - role: legal
+      evidence: "Consolidated legal specialist exposed research, case analysis, document review, compliance, contract analysis and subspecialty consultation."
+      current_mapping: "MASTER lawyer persona, evidence/research pipeline and bounded web tooling."
+      disposition: "semantic-reference; no separate legal agent tree"
+    - role: sound
+      evidence: "AI3 included a sound-mastering specialty that later lineage evolved into the much richer STUDIO/dilla stack."
+      current_mapping: "STUDIO/dilla and STUDIO/postpro."
+      disposition: "absorbed"
+    - role: sysadmin
+      evidence: "AI3 carried a systems-administration specialty."
+      current_mapping: "MASTER operator/OpenBSD services and ground security."
+      disposition: "absorbed"
+    - role: web_and_real_estate
+      evidence: "AI3 included web-development and real-estate specialties."
+      current_mapping: "Current RAILS tooling and product-specific apps; no generic agent class."
+      disposition: "semantic-reference"
+  excluded_as_runtime:
+    - "offensive_operations and psychological-warfare style code"
+    - "external Weaviate/Ferrum-backed autonomous assistant trees"
+  reason: "Several archived role implementations were generic demos, placeholders, or depended on retired infrastructure. Preserve capability provenance without recreating obsolete or unsafe execution surfaces."
+
+pub2_reasoning_analysis_v225:
+  source_files:
+    analysis: "pub2:master.json.ANALYSIS.md at blob d23a8b731a583b26d553fe71c881897b43ab74d6"
+    changelog: "pub2:master.json.CHANGELOG.md at blob b4daaed5f6d37bb10f8c1215ce0d9101a26d775a"
+  value:
+    - "evidence-based decisions and reversibility"
+    - "session recovery with persisted state/context"
+    - "failure taxonomy and phase-aware quality"
+    - "human checkpoints and pattern learning"
+    - "structured observability"
+  current_mapping:
+    evidence: "current council, law, review and recovery ledgers"
+    reversibility: "atomic writes, Git delivery/recovery and preserve-before-mutate workflow"
+    session_recovery: "current trace/session and recovery tooling"
+    failure_taxonomy: "MASTER/lib/ground/failure_taxonomy.rb"
+    pattern_learning: "MASTER/data/patterns.yml and review/self-findings"
+    observability: "MASTER/data/runtime.yml, event registry and dmesg/trace layers"
+  disposition: "absorbed-semantic"
+  caution: "The old analysis proposes metrics and mechanisms; only the semantics that have concrete current mappings should be retained."
+
+deferred_semantic_gaps:
+  - capability: "encrypted session persistence"
+    source: "pub2 master.json.before_universal; session_manager described LRU eviction + AES-256 encryption"
+    current_state: "MASTER Trace::Session persists operator transcripts as atomic JSON and quarantines corruption, but does not encrypt the file at rest."
+    disposition: "deferred-security-design"
+    reason: "Encryption needs an explicit key-management and recovery contract; adding a cipher without that contract would create unrecoverable secrets or a false sense of protection."
+  - capability: "mixed-language heredoc parser"
+    source: "pub4 commit 97a761812e9b814188f702528cd47d09dddb6cdc"
+    current_state: "The archived MASTER2 parser handled shell files containing Ruby/Python heredocs; no current MASTER equivalent was found."
+    disposition: "deferred-gap"
+    reason: "Recover only when a current workflow genuinely needs structured mutation of embedded languages."
+
+pub2_dilla_carousel_review:
+  source_ref: "pub2 restoration commit 818ea0d03770843a09e871c8a458f0cf5edc7985"
+  artifact: "misc/j-dilla-minimal-carousel.html"
+  finding: "The artifact bundled a mobile-first visualizer carousel, persistent starfield/warp-tunnel visuals, touch navigation, audio playback and a curated Dilla playlist."
+  current_mapping: "RAILS/brgen/app/javascript/radio_brgen_tunnel.js provides the canonical Radio Bergen tunnel, deliberate audio-reactive bands, media-session controls, persistent track progression and the preserved Dilla/J-88 set."
+  disposition: "absorbed; do-not-restore-html-monolith"
+  caution: "The old artifact also depended on hidden YouTube playback and duplicated visualizer/audio state; current code deliberately separates the tunnel from playback and labels proxy motion as proxy."
+
+pub_backup_restoration_plan_review:
+  source_commit: "18d9bbbc63121aedfedd2366f540b8ee56006674"
+  source_repo: "pub/__OLD_BACKUPS"
+  archive_set:
+    - rails_amber_20240804.tgz
+    - rails_baibl_20240804.tgz
+    - rails_brgen_20240804.tgz
+    - rails_brgen_dating_20240804.tgz
+    - rails_brgen_marketplace_20240804.tgz
+    - rails_brgen_playlist_20240804.tgz
+    - rails_brgen_takeaway_20240804.tgz
+    - rails_brgen_tv_20240804.tgz
+    - rails_bsdports_20240804.tgz
+  reconciled_surfaces:
+    - legacy_feature: "marketplace"
+      current_mapping: "RAILS/brgen/engines/marketplace"
+      disposition: "absorbed"
+    - legacy_feature: "takeaway"
+      current_mapping: "RAILS/brgen/engines/takeaway"
+      disposition: "absorbed"
+    - legacy_feature: "playlist"
+      current_mapping: "RAILS/brgen/engines/playlist"
+      disposition: "absorbed"
+    - legacy_feature: "tv"
+      current_mapping: "RAILS/brgen/engines/tv"
+      disposition: "absorbed"
+    - legacy_feature: "dating"
+      current_mapping: "RAILS/brgen/engines/dating"
+      disposition: "absorbed"
+    - legacy_feature: "live search"
+      current_mapping: "RAILS/shared/app/services/shared/live_search.rb and shared/frontend/live_search_controller.js"
+      disposition: "absorbed"
+    - legacy_feature: "PWA"
+      current_mapping: "RAILS/shared frontend/PWA serving and app-specific manifests/controllers"
+      disposition: "absorbed"
+    - legacy_feature: "SEO/meta/schema"
+      current_mapping: "RAILS/shared/app/helpers/shared/seo_kit.rb, schema_helper.rb and tracked structured-data views"
+      disposition: "absorbed"
+  remaining_rule: "The archive set remains historical evidence. The 2025 plan proposed generator-script restoration; current pub4 correctly absorbed the application behavior into tracked trees instead of reviving generator sprawl."
+  unresolved_archival_apps:
+    - "baibl: preserved in historical archive inventory; not an active app decision in current pub4."
+  disposition: "reconciled-with-current-tree"
 

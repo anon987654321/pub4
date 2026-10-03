@@ -27,11 +27,48 @@ class TestHistoryValuables < Minitest::Test
 
     refute_nil hit
     assert_equal "aaaa1111", hit[:commit]
+    assert_equal :deleted_line, hit[:kind]
     assert_includes hit[:line], "def restart"
   end
 
   def test_file_headers_and_blank_deletions_are_not_lines
     assert_nil HistoryValuables.deleted_text("--- a/MASTER/lib/io/relayd.rb")
     assert_nil HistoryValuables.deleted_text("-   ")
+  end
+
+  def test_diff_header_preserves_spaces_in_the_path
+    line = "diff --git a/__OLD_BACKUPS/ai3 with assistants.zip b/__OLD_BACKUPS/ai3 with assistants.zip"
+
+    assert_equal "__OLD_BACKUPS/ai3 with assistants.zip", HistoryValuables.diff_file(line)
+  end
+
+  def test_deleted_archives_are_reported_even_without_text
+    log = <<~LOG
+      commit bbbb2222
+      diff --git a/__OLD_BACKUPS/BRGEN_OLD.zip b/__OLD_BACKUPS/BRGEN_OLD.zip
+      deleted file mode 100644
+      Binary files a/__OLD_BACKUPS/BRGEN_OLD.zip and /dev/null differ
+    LOG
+
+    hit = HistoryValuables.hits(log).first
+
+    refute_nil hit
+    assert_equal :deleted_archive, hit[:kind]
+    assert_equal "__OLD_BACKUPS/BRGEN_OLD.zip", hit[:file]
+  end
+
+  def test_history_command_can_walk_all_refs
+    args = HistoryValuables.history_command(
+      "/tmp/pub3",
+      window: nil,
+      all_refs: true,
+      paths: ["aight"]
+    )
+
+    assert_equal(
+      ["git", "-C", "/tmp/pub3", "log", "--all", "--find-renames", "--find-copies",
+       "--diff-filter=DMR", "--patch", "--", "aight"],
+      args
+    )
   end
 end
