@@ -26,13 +26,13 @@ module Operator
     MASTER_DIR = File.expand_path("..", __dir__)
     ROOT = File.expand_path("..", MASTER_DIR)
 
-    # The scanner's own vocabulary. rules.yml declares the patterns, patterns.yml
+    # The scanner's own vocabulary. laws.yml declares the patterns, patterns.yml
     # carries the corpus behind them, and the false-positive fixture is a file of
     # deliberate violations a test asserts are NOT flagged. Scanning them reads
-    # the dictionary as prose: 478 findings in rules.yml alone, none of them a
+    # the dictionary as prose: 478 findings in laws.yml alone, none of them a
     # defect in anything.
     SELF_DESCRIBING = [
-      "MASTER/data/rules.yml",
+      "MASTER/data/laws.yml",
       "MASTER/data/patterns.yml",
       "MASTER/test/test_scan_rule_false_positives.rb",
     ].freeze
@@ -83,7 +83,7 @@ module Operator
       "ABC_SIZE" => "the method decides too much — split at the branch",
       "PATTERN_EXTRACTION" => "the shape repeats — give it a name",
       "NULL_BLINDNESS" => "use .nil? in Ruby and IS NULL in SQL",
-      "STALE_NAMESPACE" => "use the replacement in data/rules.yml#stale_namespaces",
+      "STALE_NAMESPACE" => "use the replacement in data/laws.yml#stale_namespaces",
       "CONTROL_CHARS" => "delete the control character",
       "SQL_INJECTION" => "parameterize the query",
       "veto_patterns" => "a veto is not a refinement — read it before touching the file",
