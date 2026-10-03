@@ -32,7 +32,7 @@ module Master
             last = result
             break if done
 
-            # data/rules.yml's empty_tool_response: two rounds in which every tool
+            # data/laws.yml's empty_tool_response: two rounds in which every tool
             # answered nothing is a model calling into a void, not progress.
             empty_rounds = empty_tool_round?(history.last[:content]) ? empty_rounds + 1 : 0
             return empty_tool_failure(selected_model) if empty_rounds >= 2
