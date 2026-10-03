@@ -261,12 +261,12 @@ module Master
             @rules_mtime = nil
           end
 
-          def rules_path
+          def laws_path
             File.join(@root, "data", "laws.yml")
           end
 
           def rules_mtime
-            File.exist?(rules_path) ? File.mtime(rules_path).to_i : nil
+            File.exist?(laws_path) ? File.mtime(laws_path).to_i : nil
           end
 
           def smell_pattern(smell)
