@@ -31,7 +31,7 @@
 - { name: SymbolLookup, elevated: false, visitor: false, default: true, description: Look up symbol via code_index }
 - { name: Shell, elevated: true, visitor: false, default: true, description: Execute zsh command, required_context: "Concrete command and expected effect.", usage_rules: ["Prefer read-only commands first.", "Never use destructive commands without explicit confirmation."], error_recovery: "If blocked or risky, suggest safer equivalent command." }
 - { name: GitContext, elevated: false, visitor: false, default: true, description: git status/log summary }
-- { name: WebFetch, elevated: false, visitor: false, default: true, description: Fetch URL content }
+- { name: WebFetch, elevated: false, visitor: false, default: true, description: Fetch URL content; full=true returns the complete allowed response }
 - { name: WebSearch, elevated: false, visitor: true, default: true, description: Web search (visitor allowed) }
 - { name: Clean, elevated: true, visitor: false, default: true, description: Remove tmp/build artifacts }
 - { name: FeedbackRecord, elevated: false, visitor: false, default: true, description: Record a tool, provider or correction outcome in the feedback ledger }
