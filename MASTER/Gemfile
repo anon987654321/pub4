@@ -2,7 +2,7 @@
 
 source "https://rubygems.org"
 # Development stays pinned by .ruby-version at 4.0.5; OpenBSD 7.8 packages provide Ruby 3.3.9 and 3.4.9p0, both accepted by MASTER.
-ruby "4.0.5"
+ruby ">= 3.3", "< 4.1"
 
 gem "fiddle"
 gem "psych"
