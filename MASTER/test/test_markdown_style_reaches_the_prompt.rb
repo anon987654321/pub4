@@ -2,7 +2,7 @@
 
 require_relative "test_helper"
 
-# data/rules.yml's markdown_style section had no reader. Its applies_to names
+# data/laws.yml's markdown_style section had no reader. Its applies_to names
 # MASTER, claude, grok and codex — every agent that writes markdown here — and
 # nothing in the tree named the key, so the aesthetic it declares reached no
 # prompt and each agent invented its own house style. data_reach had counted it
@@ -65,7 +65,7 @@ class TestMarkdownStyleReachesThePrompt < Minitest::Test
   def test_the_real_section_is_present_and_reaches_a_real_prompt
     section = Master::Ground::Rules.new.data(:markdown_style)
 
-    assert_kind_of Hash, section, "data/rules.yml lost its markdown_style section"
+    assert_kind_of Hash, section, "data/laws.yml lost its markdown_style section"
     refute_empty Array(section["rules"]), "markdown_style declares no rules"
 
     prompt = Master::Voice::Personality.new.send(:build_system_prompt)
