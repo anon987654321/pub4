@@ -28,7 +28,7 @@ class TestConstitutionTriage < Minitest::Test
   # stops existing; this is that check.
   #
   # Three registries, because a rule id can come from any of them: the scanner's
-  # own registry, data/rules.yml (where the lowercase ids live, as `- id:` rows
+  # own registry, data/laws.yml (where the lowercase ids live, as `- id:` rows
   # rather than keys), and law/.
   def test_every_retune_id_still_names_a_live_rule
     dead = Master::Review::Scan::ConstitutionTriage::RULE_RETUNE_IDS - live_rule_ids.to_a
@@ -43,12 +43,12 @@ class TestConstitutionTriage < Minitest::Test
   def live_rule_ids
     ids = Set.new
     Master::Review::Scan::InfraHelpers.build_scanner(root: Master::ROOT).rules.each { |rule| ids << rule.id.to_s }
-    collect_yaml_ids(YAML.unsafe_load_file(File.join(Master::ROOT, "data/rules.yml")), ids)
+    collect_yaml_ids(YAML.unsafe_load_file(File.join(Master::ROOT, "data/laws.yml")), ids)
     Law.rules.each_key { |id| ids << id.to_s } if defined?(Law)
     ids
   end
 
-  # rules.yml carries ids two ways: a `- id: name` row in a list, and a mapping
+  # laws.yml carries ids two ways: a `- id: name` row in a list, and a mapping
   # whose key is the id and whose body holds a `detect`.
   def collect_yaml_ids(node, ids)
     case node
