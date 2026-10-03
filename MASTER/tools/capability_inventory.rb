@@ -22,12 +22,12 @@ module Operator
       slashes: "lib/cli/command_registry.rb",
       help: "lib/cli/command_registry/help.rb",
       personas: "data/council.yml",
-      biases: "data/rules.yml",
+      biases: "data/laws.yml",
       constitution: "lib/core/constitution.rb",
       law_files: nil,
     }.freeze
 
-    LAW_FILES = %w[soul.yml rules.yml limits.yml voice.yml].freeze
+    LAW_FILES = %w[soul.yml laws.yml limits.yml voice.yml].freeze
 
     def self.report
       new.report
@@ -71,7 +71,7 @@ module Operator
         slashes: slashes(read("lib/cli/command_registry.rb", ref)),
         help: slashes(read("lib/cli/command_registry/help.rb", ref)),
         personas: personas(read("data/council.yml", ref)),
-        biases: biases(read("data/rules.yml", ref)),
+        biases: biases(read("data/laws.yml", ref)),
         constitution: rule_ids(read("lib/core/constitution.rb", ref)),
         law_files: law_files(ref),
       }
