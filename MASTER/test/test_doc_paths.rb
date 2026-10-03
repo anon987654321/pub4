@@ -49,11 +49,11 @@ class TestDocPaths < Minitest::Test
 
   def test_authority_order_puts_executable_law_above_harnesses
     docs = %w[CLAUDE.md MASTER/AGENTS.md RAILS/CLAUDE.md OPENBSD/CLAUDE.md]
-    required = "MASTER/data/soul.yml > `MASTER/data/rules.yml`"
+    required = "MASTER/data/soul.yml > `MASTER/data/laws.yml`"
     docs.each do |doc|
       body = File.read(File.join(REPO, doc))
       assert_includes body, "MASTER/data/soul.yml"
-      assert_includes body, "MASTER/data/rules.yml"
+      assert_includes body, "MASTER/data/laws.yml"
       assert_match(/executable law.*law\/\*\.rb/m, body)
     end
 
@@ -97,7 +97,7 @@ class TestDocPaths < Minitest::Test
       body = File.read(File.join(REPO, relative))
 
       assert_includes body, "MASTER/data/soul.yml", "#{relative} does not name the kernel" # source-assertion: ok — a document has no behaviour but its text
-      assert_includes body, "MASTER/data/rules.yml", "#{relative} does not name the rule catalogue" # source-assertion: ok — a document has no behaviour but its text
+      assert_includes body, "MASTER/data/laws.yml", "#{relative} does not name the rule catalogue" # source-assertion: ok — a document has no behaviour but its text
       assert_includes body, "docs:agent_contracts", # source-assertion: ok — a document has no behaviour but its text
                       "#{relative} does not say where it came from"
     end
@@ -136,7 +136,7 @@ class TestDocPaths < Minitest::Test
     return true if TREES.include?(head) || File.exist?(File.join(REPO, head))
 
     # A head that exists beside the document. MASTER/README.md writes
-    # `data/rules.yml` and means MASTER's, which resolves against the repo root
+    # `data/laws.yml` and means MASTER's, which resolves against the repo root
     # as a `data` tree that does not exist — so without this every citation a
     # MASTER or OPENBSD document makes of its own subdirectory is dropped before
     # it is checked.
@@ -169,7 +169,7 @@ class TestDocPaths < Minitest::Test
   # as a key no code names and was right: this test carried its own list and
   # three careful paragraphs governed nothing. The rows are still correct — a
   # public key .gitignore explicitly un-ignores and has not been added yet, and
-  # a worked example naming the design_rules.yml whose folding it teaches.
+  # a worked example naming the design_laws.yml whose folding it teaches.
   BASELINE = File.expand_path("../data/doc_baselines.yml", __dir__)
 
   def exempt_for(doc)
