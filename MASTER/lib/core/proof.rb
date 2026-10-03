@@ -17,7 +17,7 @@ module Master::Core
   class Proof
     # What counts as proof, and how much of it ends the turn. This is the one
     # Ruby source for the core's evidence policy; the Model's prompt is built
-    # from it (no restated numbers) and a test pins it to data/rules.yml, whose
+    # from it (no restated numbers) and a test pins it to data/laws.yml, whose
     # evidence_scoring the lib spine still reads until that spine is severed.
     SCORING = { test_pass: 35, scan_clean: 25, code_review: 20, log_analysis: 10, profiling_data: 10 }.freeze
     PASS_THRESHOLD = 80
