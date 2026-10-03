@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "stringio"
+
 require_relative "command_registry/command"
 require_relative "command_registry/help"
 require_relative "command_registry/review"
@@ -180,7 +182,9 @@ module Master
         return "usage: /snapshot [no arguments]" unless arg.empty?
 
         require File.join(Master::ROOT, "tools", "snapshot")
-        Operator::Snapshot.run.to_s
+        io = StringIO.new
+        Operator::Snapshot.run(io:)
+        io.string.strip
       rescue StandardError => e
         "snapshot0: failed — #{e.class}: #{e.message}"
       end
