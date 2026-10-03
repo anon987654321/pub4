@@ -1,8 +1,11 @@
 # frozen_string_literal: true
 
 require_relative "dilla_helper"
-require_relative "../dilla/royksopp"
+require_relative "../dilla/lib/livesets"
 
+# The Röyksopp chord source rides inside the engine now: module Royksopp in
+# dilla.rb, reached as the `royksopp_live` progression. These pin the verified
+# Melody A.M. cells it keeps as harmonic data.
 class TestDillaRoyksopp < Minitest::Test
   def test_remind_me_progression_is_the_documented_four_chord_cell
     assert_equal %w[Dm7 Am7 Ebmaj7 Bb], Royksopp::SOURCES.fetch(:remind_me).fetch(:chords)
@@ -23,8 +26,6 @@ class TestDillaRoyksopp < Minitest::Test
     assert_equal({ symbol: "Ebmaj7", root_pc: 3, tones: [7, 10, 2, 3] }, Royksopp.chord("Ebmaj7"))
     assert_equal({ symbol: "Bb", root_pc: 10, tones: [2, 5, 10, 2] }, Royksopp.chord("Bb"))
   end
-end
-
 
   def test_style_routing_uses_the_shared_steerable_progression
     assert_equal %w[progression royksopp_live], LiveSynth::Say.style_args("röyksopp")
@@ -33,6 +34,7 @@ end
   def test_royksopp_live_progression_uses_the_verified_suite
     score = LiveSynth::Progression.new("royksopp_live", rng: Random.new(1), loops: 1)
     chords = score.instance_variable_get(:@chords).map { |chord| chord["name"] }
-    assert_equal Royksopp::SUITE.first(8), chords
+    assert_equal Royksopp::SUITE, chords
     refute score.instance_variable_get(:@p).fetch("master").empty?
   end
+end

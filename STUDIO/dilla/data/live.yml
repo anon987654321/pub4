@@ -11,7 +11,7 @@
 #
 # MASTER's generic "play" is the steerable moog_improv showcase:
 # walking harmony, rotating pads and basses, DFAM, arp and its full analogue
-# rack. Explicit `live default` still runs liveset.rb, the take the operator
+# rack. Explicit `live default` still plays the frozen set, the take the operator
 # froze on 2026-09-24, unchanged.
 # The approved takes remain in takes/: soul_jazz_six is
 # takes/loved_moog_loop.rb, moog_dfam takes/moog_dfam_loop.rb, and
@@ -162,7 +162,7 @@ progressions:
   dilla_love:
     names: [Cm9, Fm9, Bb13, Abmaj9]
 
-  # Verified Melody A.M.-era chord cells from royksopp.rb, rendered through the
+  # Verified Melody A.M.-era chord cells, the Royksopp module in dilla.rb, rendered through the
   # same steerable DFAM/progression/session path as every other live set.
   royksopp_live:
     from: moog_dfam

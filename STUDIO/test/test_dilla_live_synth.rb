@@ -21,9 +21,11 @@ class TestDillaLiveSynth < Minitest::Test
     end
   end
 
-  def test_orphan_stop_reaps_legacy_player_descendants_without_hitting_the_terminal
+  # Unclaimed players are reaped together with their audio children, their
+  # terminal spared; a process that merely runs ffmpeg on its own is not.
+  def test_orphan_stop_reaps_unclaimed_players_and_their_audio_children
     ps = <<~PS
-      4602 999 3001 /Users/mac/Documents/GitHub/pub4/STUDIO/dilla/liveset.rb
+      4602 999 3001 /Users/mac/Documents/GitHub/pub4/STUDIO/dilla/dilla.rb live standard
       4647 4602 91 /bin/bash -c ffmpeg
       4648 4647 91 /opt/homebrew/bin/ffmpeg -f s16le
       4649 4647 91 /opt/homebrew/bin/sox -t raw
@@ -33,13 +35,27 @@ class TestDillaLiveSynth < Minitest::Test
     status = Struct.new(:success?).new(true)
 
     Open3.stub(:capture2, [ps, status]) do
-      Livesets::Session.stub(:terminate_processes, ->(pids) { terminated = pids }) do
-        result = Livesets::Session.stop_orphans
+      LiveSynth::Session.stub(:terminate_processes, ->(pids) { terminated = pids }) do
+        result = LiveSynth::Session.stop_orphans
         assert_equal "stopped 1 orphaned Dilla player", result
       end
     end
 
     assert_equal [4649, 4648, 4647, 4602], terminated
+  end
+
+  # The set the fold retired no longer names a target: an old liveset.rb
+  # process, if one lingers, is nobody the orphan scan claims.
+  def test_orphan_scan_spares_the_retired_liveset_process
+    ps = <<~PS
+      4602 999 3001 /Users/mac/Documents/GitHub/pub4/STUDIO/dilla/liveset.rb
+      4649 4602 91 /opt/homebrew/bin/sox -t raw
+    PS
+    status = Struct.new(:success?).new(true)
+
+    Open3.stub(:capture2, [ps, status]) do
+      assert_equal "nothing is playing", LiveSynth::Session.stop_orphans
+    end
   end
 
   # Played quietly into a StringIO: the samples a sink would have received.
@@ -207,17 +223,34 @@ class TestDillaLiveSynth < Minitest::Test
     with_live_dir do |dir|
       player = Process.spawn(RbConfig.ruby, "-e", "sleep 30", pgroup: true)
       File.write(File.join(dir, "player.json"),
-                 JSON.generate("pid" => player, "what" => "the standard default (liveset.rb)", "steerable" => false))
+                 JSON.generate("pid" => player, "what" => "the standard default (liveset)", "steerable" => false))
       assert_match(/plays as frozen/, LiveSynth::Say.call("slowly open the filter"))
       assert_match(/stopped the standard default/, LiveSynth::Say.call("stop"))
       Process.wait(player)
     end
   end
 
-  # MASTER's main sound is MASTER/tools/dilla/liveset.rb as the operator last made it
-  # the default, and every take before it is kept as it was heard.
+  # The frozen set and the Röyksopp set play from inside the engine now:
+  # `live standard` is what `live default` re-execs into, `live royksopp` is
+  # the pads that were the default before it.
+  def test_standard_and_royksopp_verbs_dispatch_to_their_players
+    with_live_dir do
+      standard_ran = royksopp_ran = false
+      LivesetStandard.stub(:run, -> { standard_ran = true }) do
+        RoyksoppLive.stub(:call, -> { royksopp_ran = true }) do
+          LiveSynth.main(["standard"])
+          LiveSynth.main(["royksopp"])
+        end
+      end
+      assert standard_ran, "live standard runs the folded liveset"
+      assert royksopp_ran, "live royksopp runs the folded Röyksopp player"
+    end
+  end
+
+  # MASTER's main sound is the frozen liveset the operator last made the
+  # default -- folded into the engine now -- and every take before it is kept
+  # as it was heard.
   FROZEN = {
-    "liveset.rb" => "23c0aa7e298f",
     "takes/liveset_161326bb356a.rb" => "683a88ef3edc",
     "takes/liveset_4abbb73e.rb" => "6b4d7f5cba19",
     "takes/liveset_5613fe64b642.rb" => "9499edf5943c",
@@ -237,16 +270,19 @@ class TestDillaLiveSynth < Minitest::Test
   end
 
   # The numbers the operator froze, read off the file, so a change to any of
-  # them is a change somebody has to make here too, on purpose.
+  # them is a change somebody has to make here too, on purpose. The set plays
+  # from inside the engine now, indented under its module, so the anchors allow
+  # the two leading spaces.
   def test_the_main_sound_keeps_its_numbers
-    src = File.read(dilla("liveset.rb"))
+    src = File.read(dilla("dilla.rb")).partition("module LivesetStandard").last
+    src = src.partition("\nend\n").first
     pins = {
-      /^RATE = 32_000$/ => "32 kHz", /^BLOCK = 1_024$/ => "1024-frame blocks", /^BPM = 118$/ => "118 BPM",
-      %r{^BAR = 8 \* 60\.0 / BPM$} => "two bars to a chord", %r{^DFAM_STEP = BAR / 32} => "the DFAM in sixteenths",
-      /^DFAM_LEVEL = 0\.16$/ => "the DFAM at 0.16", /^KICKS_ON = false$/ => "the kicks off", /^CUTS_ON = false$/ => "the crossfader off",
-      /^LEADS_ON = true$/ => "the leads on", /step \* 0\.7, 0\.08, bass: :arp/ => "the arp at 0.08",
-      /^MORPH_CHORDS = 4$/ => "a new pad every four chords", /^LEAD_GLIDE_S = 6\.0$/ => "a lead glide every six seconds",
-      /^BREATH_DEPTH = 0\.3$/ => "the chords breathing 30%", /aexciter=amount=1\.2:drive=5:freq=3500:ceil=16000/ => "the air",
+      /^\s*RATE = 32_000$/ => "32 kHz", /^\s*BLOCK = 1_024$/ => "1024-frame blocks", /^\s*BPM = 118$/ => "118 BPM",
+      %r{^\s*BAR = 8 \* 60\.0 / BPM$} => "two bars to a chord", %r{^\s*DFAM_STEP = BAR / 32} => "the DFAM in sixteenths",
+      /^\s*DFAM_LEVEL = 0\.16$/ => "the DFAM at 0.16", /^\s*KICKS_ON = false$/ => "the kicks off", /^\s*CUTS_ON = false$/ => "the crossfader off",
+      /^\s*LEADS_ON = true$/ => "the leads on", /step \* 0\.7, 0\.08, bass: :arp/ => "the arp at 0.08",
+      /^\s*MORPH_CHORDS = 4$/ => "a new pad every four chords", /^\s*LEAD_GLIDE_S = 6\.0$/ => "a lead glide every six seconds",
+      /^\s*BREATH_DEPTH = 0\.3$/ => "the chords breathing 30%", /aexciter=amount=1\.2:drive=5:freq=3500:ceil=16000/ => "the air",
       /def vcs\(depth:, smear:, db: 0\.0\)/ => "level-neutral VCS",
       /opus3_strings:/ => "the Opus strings", /matriarch_stabs:/ => "the Matriarch stabs", /memorymoog_organ:/ => "the Memorymoog organ",
       /grandmother_sweep:/ => "the Grandmother sweep", /vox_humana:/ => "the vox humana",

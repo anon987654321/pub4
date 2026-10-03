@@ -43,7 +43,6 @@ require "shellwords"
 require "time"
 require "yaml"
 require_relative "process_spawn"
-require_relative "../royksopp"
 
 module Livesets
   D = File.expand_path("..", __dir__)
@@ -2039,7 +2038,7 @@ end
 # The synthesiser, played live: AnalogSynth's patches and the Model D panels,
 # generated a block at a time and piped to the sound card as they are made.
 #
-#   ruby dilla.rb live default                    MASTER's main sound: liveset.rb, until stopped
+#   ruby dilla.rb live default                    re-exec this engine as the frozen set
 #   ruby dilla.rb live improvise [family=moog] [pad=<patch>] [seconds]
 #   ruby dilla.rb live progression [name] [pads=a,b] [family=moog] [loops=N] [seconds]
 #   ruby dilla.rb live patch <name>               the patch's own phrase
@@ -2062,8 +2061,8 @@ end
 module LiveSynth
   DATA_FILE = File.join(Livesets::D, "data", "live.yml")
   ENGINE = File.join(Livesets::D, "dilla.rb")
-  USAGE = "usage: ruby dilla.rb live improvise|progression [name]|patch <name>|knob <name> <amount> [seconds]|" \
-          "morph <patch> [seconds]|stop|status|say \"<sentence>\""
+  USAGE = "usage: ruby dilla.rb live default|standard|royksopp|improvise|progression [name]|patch <name>|" \
+          "knob <name> <amount> [seconds]|morph <patch> [seconds]|stop|status|say \"<sentence>\""
 
   module_function
 
@@ -2083,6 +2082,8 @@ module LiveSynth
     words.delete_if { |word| word.match?(/\A\d+(\.\d+)?\z/) }
     case verb
     when "default" then standard_default!
+    when "standard" then LivesetStandard.run
+    when "royksopp" then RoyksoppLive.call
     when "improvise" then perform!(Improviser.new(rng: rng!, family: options["family"], pad: options["pad"]), seconds:)
     when "progression"
       perform!(Progression.new(words.first || "soul_jazz_six", rng: rng!, pads: options["pads"]&.split(","),
@@ -2104,19 +2105,16 @@ module LiveSynth
     log(Session.post!("knob" => name, "amount" => amount, "seconds" => seconds&.to_f))
   end
 
-  # MASTER's main sound is liveset.rb beside dilla.rb, the live set the
-  # operator froze, and it plays as that file and nothing else: it is
-  # recorded as the player and then becomes it, keeping the pid `stop` needs.
-  # Its knobs move by themselves; a sentence cannot turn them.
-  LIVESET = File.join(Livesets::D, "liveset.rb")
-  ROYKSOPP = File.join(Livesets::D, "royksopp.rb")
-
+  # MASTER's main sound is the frozen liveset the operator approved, which used
+  # to be liveset.rb beside dilla.rb and now runs from inside the engine. The
+  # default records the player and then re-execs this engine with --yjit and
+  # argv `live standard`, so the pid `stop` holds never changes; the re-exec
+  # keeps the yjit the per-sample render loop needs. Its knobs move by
+  # themselves; a sentence cannot turn them.
   def standard_default!
-    abort "live0: #{LIVESET} is missing" unless File.file?(LIVESET)
-
-    Session.claim!("the standard default (liveset.rb)", steerable: false)
+    Session.claim!("the standard default (liveset)", steerable: false)
     log("the standard default -- `ruby dilla.rb live stop` to end")
-    exec(RbConfig.ruby, "--yjit", LIVESET)
+    exec(RbConfig.ruby, "--yjit", ENGINE, "live", "standard")
   end
 
   # Drawn and printed, so a take somebody liked can be played again with
@@ -3246,7 +3244,9 @@ module LiveSynth
       out, status = Open3.capture2("ps", "-ax", "-o", "pid=,ppid=,pgid=,command=")
       return [] unless status.success?
 
-      targets = [File.expand_path("../liveset.rb", __dir__), File.expand_path("../royksopp.rb", __dir__)]
+      # A player that runs the frozen set or the Röyksopp set without claiming
+      # its record — both play from inside the engine now.
+      targets = ["dilla.rb live standard", "dilla.rb live royksopp"]
       rows = out.lines.filter_map do |line|
         match = line.strip.match(/\A(\d+)\s+(\d+)\s+(\d+)\s+(.+)\z/)
         next unless match
