@@ -16,7 +16,7 @@ module Master
       #
       # The objection that commit raised was right, and is answered below rather
       # than restored with the class: RULE_RETUNE_IDS was fifty rule ids copied
-      # by hand out of data/rules.yml with nothing asserting the two still agree.
+      # by hand out of data/laws.yml with nothing asserting the two still agree.
       # Eight named no live rule in any of the three registries — five of them
       # the lowercase spelling of a rule since renamed (debug_output, long_line,
       # god_class, prose_active_voice, prose_omit_qualifiers) — and message_chain
@@ -30,7 +30,7 @@ module Master
 
         # Rules under active retune: noisy enough that gating on them would gate
         # on the detector rather than on the code. Every id here must name a rule
-        # the scanner, data/rules.yml or law/ still defines.
+        # the scanner, data/laws.yml or law/ still defines.
         #
         # FILE_LAYOUT and DOUBLE_QUOTES_RUBY came off on 2026-09-08, when both
         # detectors were rewritten onto the parse tree. They were not noisy
