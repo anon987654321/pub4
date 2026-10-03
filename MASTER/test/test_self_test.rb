@@ -182,24 +182,23 @@ class TestSelfTest < Minitest::Test
     RUBY
   end
 
-  def rules_yml
+  def laws_yml
     <<~YAML
-      rule_system:
-        lifecycle:
-          states: [proposed, proven, active, observed, trusted, advisory, retired]
       self_test:
         laws_apply_to_self:
+          LAW_INTEGRITY: "executable law lifecycle and index remain valid"
           ROBUSTNESS: "scan lib/ for bare_rescue + missing timeouts"
-          SINGULARITY: "rules.yml entries unique by id"
+          SINGULARITY: "laws.yml entries unique by id"
           LINEARITY: "no nesting_depth > 4 in lib/"
           PROXIMITY: "test files within 1 directory of source"
           ABSTRACTION: "no class > god_class threshold in lib/"
           DENSITY: "no method > long_method threshold in lib/"
-      rules:
-        - id: DUPLICATE_RULE
-          name: one
-        - id: DUPLICATE_RULE
-          name: two
+      DUPLICATE_LAW:
+        id: DUPLICATE_LAW
+        name: one
+      OTHER:
+        id: DUPLICATE_LAW
+        name: two
     YAML
   end
 end
