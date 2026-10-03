@@ -106,7 +106,7 @@ module Master
           dir = File.join(root, "data")
           return fail("data_dir", "missing data/ directory") unless File.directory?(dir)
 
-          required = %w[soul.yml rules.yml limits.yml]
+          required = %w[soul.yml laws.yml limits.yml]
           missing = required.reject { |f| File.exist?(File.join(dir, f)) }
           return fail("data_dir", "missing required: #{missing.join(", ")}") unless missing.empty?
 
@@ -118,7 +118,7 @@ module Master
         end
 
         def check_rules_yaml(root)
-          check_yaml_file(root, "data/rules.yml", "rules_yaml")
+          check_yaml_file(root, "data/laws.yml", "rules_yaml")
         end
 
         def check_providers_yaml(root)
