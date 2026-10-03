@@ -186,7 +186,7 @@ class TestSelfTest < Minitest::Test
     <<~YAML
       rule_system:
         lifecycle:
-          states: [proposed, proven, active, trusted, advisory, retired]
+          states: [proposed, proven, active, observed, trusted, advisory, retired]
       self_test:
         laws_apply_to_self:
           ROBUSTNESS: "scan lib/ for bare_rescue + missing timeouts"
