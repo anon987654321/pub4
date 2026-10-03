@@ -12,7 +12,7 @@
 # adds emphasis and no information, a passive that hides its actor. Any language
 # with those has its own words for them. Holding the words in the detector made
 # these two English-only by accident, so the vocabulary, the senses to keep, the
-# passive's shape and the fixtures all live in data/rules.yml under `prose:`,
+# passive's shape and the fixtures all live in data/laws.yml under `prose:`,
 # and this file turns each entry into a pair of laws. A second language is a
 # data edit.
 #
@@ -32,7 +32,7 @@
 
 module Law
   module Prose
-    # Through the accessor, not a second YAML.load_file of rules.yml. A data
+    # Through the accessor, not a second YAML.load_file of laws.yml. A data
     # file with two loading paths is how the two drift, which is what
     # test_reader_singularity ratchets against.
     CONFIG = Master.law("prose").freeze
