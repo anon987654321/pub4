@@ -7,7 +7,7 @@ require "master"
 # that folds its effects. These pin that block — and that ordinary paths still
 # pass, so the guard is a scalpel, not a wall.
 class ImmutablePathsTest < Minitest::Test
-  IMMUTABLE = %w[data/rules.yml data/soul.yml lib/core.rb lib/core/].freeze
+  IMMUTABLE = %w[data/laws.yml data/soul.yml lib/core.rb lib/core/].freeze
 
   def constitution
     rules = [Master::Core::Constitution.immutable_paths_rule(IMMUTABLE)]
@@ -27,7 +27,7 @@ class ImmutablePathsTest < Minitest::Test
   end
 
   def test_write_to_constitution_is_blocked
-    assert_blocked Master::Core::Effect.write("data/rules.yml", "laws: []\n"), by: :immutable_paths
+    assert_blocked Master::Core::Effect.write("data/laws.yml", "laws: []\n"), by: :immutable_paths
   end
 
   def test_write_anywhere_under_the_spine_is_blocked
