@@ -7,7 +7,7 @@ module Master
         # Surface law: pixel/UI aesthetic + Rails HTML/JS/ERB conventions.
         # One file — views, CSS, Stimulus, touch targets, flat design.
 
-        # Pixel-perfect UI/UX rules restored from master.yml aesthetics + design_rules.yml.
+        # Pixel-perfect UI/UX rules restored from master.yml aesthetics + design_laws.yml.
         # Applies to MASTER/web face, ERB views, and pub4/RAILS SCSS/HTML.
 
         UI_PATH = %r{(?:/app/views/|/app/assets/|/web/public/|/web/app/|face\.|/RAILS/)}i.freeze
@@ -31,15 +31,15 @@ module Master
         end
 
         # STIMULUS_CONTROLLER_SIZE's numbers are declared, not invented here:
-        # data/rules.yml carries `detect_structural: {max_lines: 200,
+        # data/laws.yml carries `detect_structural: {max_lines: 200,
         # path_pattern: "_controller\.js$"}` and this rule held both as literals,
         # which is a declaration with no reader — the defect this repo hunts most
         # often, sitting inside the file that declares the hunt. Read once per
-        # process: rules.yml is four thousand lines and load_rules memoizes
+        # process: laws.yml is four thousand lines and load_rules memoizes
         # nothing.
         def stimulus_limits
           @stimulus_limits ||= begin
-            entry = Master.flatten_rules(Master.load_rules(root: Master::ROOT).fetch("rules", {}))
+            entry = Master.law_entries(root: Master::ROOT)
                           .find { |r| r["id"].to_s.upcase == "STIMULUS_CONTROLLER_SIZE" }
             config = entry && entry["detect_structural"]
             config.is_a?(Hash) ? config : {}
@@ -678,7 +678,7 @@ module Master
 
           lines = src.lines.size
           next [] if lines <= max
-          [finding(line: 1, message: "Stimulus controller #{lines} lines — split at #{max} (data/rules.yml); move targets/actions out (progressive enhancement)")]
+          [finding(line: 1, message: "Stimulus controller #{lines} lines — split at #{max} (data/laws.yml); move targets/actions out (progressive enhancement)")]
         end
 
         RuleDSL.rule :STIMULUS_PROGRESSIVE,
