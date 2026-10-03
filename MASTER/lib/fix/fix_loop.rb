@@ -186,8 +186,8 @@ module Master
 
       private
 
-      # The look back over the tree after the repair passes: renames, then
-      # restructures. Both work from the repository root.
+      # The look back over the tree after the repair passes: structural consolidation,
+      # then naming cleanup. Both work from the repository root.
       def build_sweeps(agent:, root:, bus:)
         repo_root = File.basename(root) == "MASTER" ? File.expand_path("..", root) : root
         restructure = RestructureSweep.new(agent:, repo_root:, bus:, transformation_plan: @transformation_plan)
@@ -306,8 +306,9 @@ module Master
         terminal(:plateau, "pass limit (#{max_passes}) reached")
       end
 
-      # The first structural pass is deliberately bounded: it gets one rename and
-      # one restructure candidate per tree, then the ordinary convergence sweep can
+      # The first structural pass is deliberately bounded: it gets one restructure
+      # candidate per tree, then the naming sweep can review one name before the
+      # ordinary convergence sweep can
       # keep working after repair. This makes collapse a default habit without
       # spending an unbounded repair budget before the first source pass.
       def structure_first(target:, files:, run_id:)
