@@ -42,7 +42,7 @@ class TestPrincipleMapRuntime < Minitest::Test
   end
 
   def test_layout_rules_and_pixel_perfection_share_one_spacing_list
-    design = Master.design_rules(root: @root)
+    design = Master.tokens(root: @root)
     grid = design.dig("layout_rules", "grid", "allowed_spacing_px")
     rhythm = design.dig("pixel_perfection", "eight_px_rhythm")
     fitts = design.dig("ux_laws", "fitts", "target_min_px")
