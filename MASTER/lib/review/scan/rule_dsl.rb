@@ -3,7 +3,7 @@
 module Master
   module Review
     module Scan
-    # Inline Ruby rule definition — JE-style alternative to rules.yml entries.
+    # Inline Ruby rule definition — JE-style alternative to laws.yml entries.
     # Defined rules auto-register via Rule.inherited; no YAML required.
     # Rule subclasses inherit Rule.auto_build? == true; specialized rules that
     # need constructor arguments override self.auto_build? = false explicitly.
