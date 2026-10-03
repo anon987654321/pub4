@@ -947,7 +947,6 @@ beauty:
     ma: emptiness_pause
     kanso: eliminate_essence
 self_test:
-  laws_apply_to_self:
     ROBUSTNESS: scan lib/ for bare_rescue + missing timeouts
     SINGULARITY: laws.yml and deploy entries unique by id; data registries have their own lint
     LINEARITY: no nesting_depth > 4 in lib/
