@@ -70,7 +70,7 @@ class TestPhantomRecovery < Minitest::Test
 
     assert_equal :discard, Master::PhantomRecovery.handle(phantom, bus:, scope: :ladder)[:action],
                  "a clean response did not reset the ladder — the next phantom escalated instead of discarding, " \
-                 "so the graduated recovery in data/rules.yml can only ever run once per process"
+                 "so the graduated recovery in data/laws.yml can only ever run once per process"
   end
 
   # Resetting one conversation must not clear another's progress toward escalation.
@@ -119,7 +119,7 @@ class TestPhantomRecovery < Minitest::Test
                  "a real malfunction stopped counting because a style pattern appeared beside it"
   end
 
-  # The list is law, so it lives in data/rules.yml rather than in this module.
+  # The list is law, so it lives in data/laws.yml rather than in this module.
   def test_the_style_only_list_comes_from_the_rules_file
     assert_includes Master::PhantomRecovery.style_only_detectors, "gaslighting_preamble"
     refute_includes Master::PhantomRecovery.style_only_detectors, "text_repetition_loop"
@@ -140,7 +140,7 @@ class TestPhantomRecovery < Minitest::Test
   end
 
   # The prose detectors used to compile into regexes matching only their own
-  # sentence, which a reply quoting data/rules.yml would trip.
+  # sentence, which a reply quoting data/laws.yml would trip.
   def test_a_prose_detector_is_not_compiled_into_a_pattern
     assert_nil Master::PhantomRecovery.detect("tool returned nil twice in a row")
   end
