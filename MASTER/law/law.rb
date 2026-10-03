@@ -368,15 +368,34 @@ module Law
       "REPORT: state what happened, what was verified, and what remains unresolved.",
     ].freeze
 
+    POLICY = {
+      "lifecycle" => {
+        "states" => Rule::LIFECYCLE_TRANSITIONS.keys.map(&:to_s),
+        "transitions" => Rule::LIFECYCLE_TRANSITIONS.transform_keys(&:to_s).transform_values { |states| states.map(&:to_s) },
+      },
+      "autofix" => {
+        "policies" => %w[never review automatic],
+        "automatic_requires_deterministic_detector" => true,
+      },
+      "universality" => {
+        "principle_is_universal" => true,
+        "detectors_may_be_domain_specific" => true,
+      },
+      "proof" => {
+        "deterministic" => "bad and good fixtures prove detector polarity.",
+        "semantic" => "bad and good examples accompany the question; model evaluation is required.",
+        "practice" => "the law is conduct guidance and has no source detector.",
+      },
+    }.freeze
+
     def render(full: false)
       entries = Law.rules.values.sort_by { |rule| rule.id.to_s }.map(&:contract_entry)
       laws = full ? entries : entries.map { |entry| entry.slice("id", "severity", "mode", "languages", "question") }
-      policy = Master.load_rules(root: Master::ROOT)
       JSON.pretty_generate(
         "contract_version" => 1,
         "law_digest" => Digest::SHA256.hexdigest(JSON.generate(entries)),
         "protocol" => PROTOCOL,
-        "rule_system" => policy.fetch("rule_system"),
+        "law_policy" => POLICY,
         "transformation_policy" => policy.fetch("transformation_policy"),
         "laws" => laws,
       )
