@@ -31,8 +31,14 @@ module Master
         #
         # Comments stay above the %w literal: inside it, every word of one is an
         # entry, and a directory named "schema" or "module" would vanish.
+        #
+        # .claude/ (2026-10-03): the worktrees under it are full second trees of
+        # the same repo, git-tracked content included, and no scan root names
+        # them — today. One scan widened to the repo root walks 160 MB of
+        # duplicate findings that nothing can attribute, so the whole segment is
+        # off the walk for the same reason `reports` is.
         SKIP_PATH_SEGMENTS = %w[
-          .git vendor node_modules tmp log coverage .bundle storage cache dist build
+          .git .claude vendor node_modules tmp log coverage .bundle storage cache dist build
           knowledge fixtures var .cache scratch
           site-packages venv .venv venv-demucs __pycache__
           reports

@@ -540,7 +540,7 @@ end
     # walk 94 stylesheets), so the ceiling is read here and the current value is
     # deep-only.
     def css_budget_rows
-      path = File.join(RAILS, "gates/data/css_budget.yml")
+      path = File.join(MASTER, "gates/data/css_budget.yml")
       unless File.file?(path)
         return [Row.new(name: "css_budget", current: nil, ceiling: nil, direction: :down,
                         source: "MASTER/gates/data/css_budget.yml",
@@ -664,7 +664,7 @@ end
     # Empty when the file is missing, so --deep reports the unreadable row
     # instead of raising out of the whole register.
     def css_budget_ceilings
-      path = File.join(RAILS, "gates/data/css_budget.yml")
+      path = File.join(MASTER, "gates/data/css_budget.yml")
       File.file?(path) ? YAML.safe_load_file(path).fetch("rules") : {}
     end
 
@@ -714,7 +714,11 @@ def deep_rows
         suffix = "" if row.state == "at"
         row.note ? "#{line} #{suffix} #{row.note}".squeeze(" ") : "#{line}#{suffix}"
       end
-      broken = rows.reject(&:ok?).reject { |row| row.current.nil? || row.ceiling.nil? }
+      # "Off" covers both a measured row off its ceiling and a dead row — one
+      # that could not be read at all (see ok? for why the dead row counts).
+      broken = rows.select do |row|
+        (row.readable? && !row.ok?) || row.note.to_s.start_with?("unreadable")
+      end
       summary = if broken.empty?
                   "measure: #{rows.count(&:ok?)} ratchet(s) at their recorded value"
                 else
@@ -821,8 +825,20 @@ def deep_rows
 
     # Non-zero when any readable ratchet is over OR slack. Slack counts because a
     # ceiling above the real number is room the next change grows into silently.
+    #
+    # A row that reports note "unreadable" is instrument death, not a deferral,
+    # and it fails the run too. Deferrals — the deep-only current values — carry
+    # a different note and stay out of this verdict; an "unreadable:" note is
+    # the reader itself having failed (a missing file, a KeyError on a section
+    # that does not exist), and skipping it is how eleven dead rows reported
+    # green for weeks. Seen 2026-10-03: `rule_ratchets` keys removed from
+    # rules.yml left every rule-hygiene row raising KeyError, excluded here, and
+    # `measure` came back clean.
     def ok?(rows)
-      rows.none? { |row| !row.current.nil? && !row.ceiling.nil? && !row.ok? }
+      rows.none? do |row|
+        (!row.current.nil? && !row.ceiling.nil? && !row.ok?) ||
+          row.note.to_s.start_with?("unreadable")
+      end
     end
   end
 end

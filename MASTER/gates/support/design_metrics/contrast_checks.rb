@@ -136,14 +136,16 @@ module Deploy
         end
       end
 
-      # Anchored on the gates root, not on __dir__, because this file has now
-      # moved twice and a __dir__ path broke on both. It fails the way this kind
-      # of thing does — not an exception, a rescue that logs "rules unreadable"
-      # and runs the gate unbudgeted, so the contrast ceiling stops being
-      # enforced while the gate still reports ok. RAILS comes from the gate this
-      # module is included into, so the path holds wherever the file sits.
+      # Anchored off this file's own directory, two levels up, because the
+      # budget lives in the gates root's data/ — wherever the gates tree sits.
+      # It fails the way this kind of thing does — not an exception, a rescue
+      # that logs "rules unreadable" and runs the gate unbudgeted, so the
+      # contrast ceiling stops being enforced while the gate still reports ok.
+      # One RAILS-prefixed join here once read into a tree without gates/data
+      # at all (2026-10-03); the expand-path cannot, its anchor moves with the
+      # file.
       def contrast_budget
-        path = File.join(RAILS, "gates", "data", "css_budget.yml")
+        path = File.expand_path("../../data/css_budget.yml", __dir__)
         data = YAML.safe_load_file(path)
         rules = data&.dig("rules")
         raise "contrast budget has no rules: #{path}" unless rules.is_a?(Hash)
