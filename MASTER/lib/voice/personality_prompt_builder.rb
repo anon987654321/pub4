@@ -59,7 +59,7 @@ module Master
         add_design_rules(sections)
       end
 
-      # The markdown_style section of data/rules.yml, which had no reader.
+      # The markdown_style section of data/laws.yml, which had no reader.
       #
       # Same shape as add_attention above: a section that names its own audience
       # and was never consulted. Its applies_to lists MASTER, claude, grok and
@@ -263,7 +263,7 @@ module Master
       # errors first, verify the instrument. law/ holds the rules a detector does
       # check, and its `fix` line is that rule's one wording. Emitting law/ here
       # is what lets soul stop restating it: FAIL_VISIBLY was written out in
-      # soul, in law/ and in rules.yml, three files and three wordings for one
+      # soul, in law/ and in laws.yml, three files and three wordings for one
       # rule, with no way for a reader to tell which governed.
       #
       # Not two labelled blocks. Whether a detector happens to exist is a fact
