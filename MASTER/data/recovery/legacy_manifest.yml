@@ -725,4 +725,115 @@ tooling:
   note: >-
     Binary archive extraction is an operator/runtime task. The GitHub connector
     can inventory these blobs but cannot materialize repository binary blobs here.
+repository_refs:
+  audit_date: "2026-10-03"
+  pub4:
+    main_at_audit: "e73b4d2d476ba4e32e870b1cb7f2dfc7321e592c"
+    pre_collapse: "f131ff002293f93da47755e27e3a2b38b9828687"
+    branches:
+      anon-work-2026-10-03: "a98d45c8070ae2566fa51a34fdebffd3b196e0fb"
+      archaeology/pre-main-collapse-20261003: "f131ff002293f93da47755e27e3a2b38b9828687"
+      fix/master-face-hands-free: "ba42c9560ea931932ee476083deb6ef81c47377f"
+    recovery_tags:
+      recover/bsdports-search-home: "ef95c3bbe091b9a4ef8636e66a714d385af4be49"
+      recover/x-modal-sheet: "74661cf4dfbed1eba9799e9dd89c5b75a69bb172"
+      recover/x-parity-stack: "325e3edaca334a7a572cf79bf3aa57cbce0cd5d6"
+  pub3:
+    main: "835f9199d605b6a6ae1f32cd207919c115a06b47"
+    branches:
+      my-work: "d1f2770fc43fd0e85e9d640d71e9b0748fd9712e"
+      feature/master-json-v44-final-convergence: "b2862e3d13725942e90b699c689233106cafa902"
+      feature/amber-shared-refactor: "b2862e3d13725942e90b699c689233106cafa902"
+      fix/safety-seed-and-common: "dbc4d0fa122b6dde4e9a4c253fa06a3b700f7719"
+      refactor/zsh-conversion: "eab75f0d5a8b0f617fec44f39b732a5eb01dd7a6"
+  pub2:
+    main: "ad05242c97fff1b01450434974aad628d7de8628"
+    branches:
+      copilot/canonicalize-configuration-files: "8953b9f9ebc394a4901448fb20369f1c00d1b895"
+      copilot/fix-958c1a07-b89d-403c-b912-4b0d500fabac: "5194e3f5961328ddd95d2d95b9b1f46f31108855"
+      copilot/fix-d46b8daa-f90e-45e9-ab79-1f4535ae08af: "a6196ecd5990d10ddeb05ac49fe3d51c7fcb193b"
+  pub:
+    main: "a3185f4ec6e6a27e35eeee6718ae3afa11bf49da"
+    branches:
+      autoprompts/restore-3_4_0_optimized: "b9aec06cbd1474ebf69b74dbc720aa0d7864a5cd"
+      openbsd-script-optimization: "31f13d78b7999670d2fa8abc2fc494886838364b"
+      prompts.json: "a6e5c2e655d89a74d867d977cab54aa42722ceb7"
+      restructure-consolidation: "468b313046236cd0898c5758edc019ef87923a5c"
 
+mass_change_reviews:
+  - repo: pub4
+    commit: "a98d45c8070ae2566fa51a34fdebffd3b196e0fb"
+    finding: "Mass deletion event: prior tree roughly 5,477 entries, resulting tree 6 entries; message only says gate-path attribution."
+    disposition: "preserve-parent-and-archaeologize"
+    evidence_branch: "archaeology/pre-main-collapse-20261003"
+  - repo: pub3
+    commit: "2fb612c13af1f4c8447bf614da52078295f60978"
+    finding: "7,740 deletions removed aight/lib modules while folding substantial logic into aight/aight.rb."
+    disposition: "compare-consolidated-behavior-before-any-restore"
+  - repo: pub3
+    commit: "896d2a2594a9396553baf7fbb71beb3663f00c24"
+    finding: "3,365 deletions removed backup/config artifacts, including old master.json copies and a large shared shell draft."
+    disposition: "treat-as-sprawl-unless-unique-behavior-is-proven"
+  - repo: pub2
+    commit: "8953b9f9ebc394a4901448fb20369f1c00d1b895"
+    finding: "Configuration canonicalization deleted backup copies and pre-refactor Rails scripts."
+    disposition: "historical-evidence-only"
+
+reversion_reviews:
+  - repo: pub4
+    commit: "82c269a27d54a65ec0bc04fda45437b2ff0dfa11"
+    finding: "OpenBSD operator split was reverted into OPERATOR.sh; six helper files were removed."
+    disposition: "prefer-current-consolidated-boundary; inspect helper history for unique behavior only"
+  - repo: pub4
+    commit: "6c694e5de1b845e49add3570efd8f76b3ddd99fd"
+    finding: "Per-fix commits, a collapse guard, Boy Scout behavior and gates were added together."
+    disposition: "high-value-safety-fossil"
+  - repo: pub4
+    commit: "7d4b5b1fc0e9022affc2075fdb6fb740869417be"
+    finding: "Fold writes journal the exact file so /undo cannot target an older fold."
+    disposition: "high-value-recovery-fossil"
+  - repo: pub4
+    commit: "fefdcc3cdc354ed21e94be3262c85eb670f4f817"
+    finding: "Durable mission target corruption was prevented and pinned by a dedicated supervisor test."
+    disposition: "high-value-recovery-fossil"
+  - repo: pub4
+    commit: "c332f7418c7cb824e52f721ac464e1a1a1db24ce"
+    finding: "Three test files had been wrapped in <sub> and therefore never ran."
+    disposition: "high-value-self_corruption-regression"
+
+master_json_lineage:
+  pub3_my_work:
+    tip: "d1f2770fc43fd0e85e9d640d71e9b0748fd9712e"
+    version: "50.0.0"
+    preserve:
+      - "ask-before-act / drift / hardcoded-paths / unhandled-edge"
+      - "fragmentation / sectionitis / divitis / DRY / complexity / SRP"
+      - "self-apply with snapshot-detect-generate-veto-rank-apply-verify-critique loop"
+      - "plateau/stagnation handling and atomic git safety"
+      - "pattern-learning using success rates and co-occurring issues"
+      - "explicit zsh-native replacement guidance"
+    caution:
+      - "The v50 file predates current pub4 law migration and is evidence, not a second constitution."
+      - "Do not restore its versioned JSON as a new source of truth; map any surviving law into existing law/data structures."
+
+archive_duplicate_summary:
+  pub:
+    tracked_paths: 157
+    unique_blobs: 122
+    duplicate_groups: 20
+    duplicate_paths: 35
+  policy: "Extract once per blob SHA; expose original paths as provenance links, not duplicate extracted trees."
+
+archaeology_commands:
+  recent_pub4:
+    command: "ruby MASTER/tools/history_valuables.rb"
+    scope: "pub4, default recent window"
+  full_pub4:
+    command: "ruby MASTER/tools/history_valuables.rb --all-history"
+    scope: "pub4, all refs"
+  all_generations:
+    command: "ruby MASTER/tools/history_valuables.rb --legacy --all-history"
+    scope: "pub4 + sibling pub3 + pub2 + pub when their .git directories are present"
+  archives:
+    command: "MASTER/tools/archaeology/extract_legacy_archives.zsh"
+    scope: "tracked .tgz/.tar.gz/.zip from pub3/pub2/pub, deduplicated by Git blob"
