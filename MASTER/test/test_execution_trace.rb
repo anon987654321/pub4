@@ -54,8 +54,10 @@ class TestExecutionTrace < Minitest::Test
   def test_canonical_boot_configuration_does_not_depend_on_workflow_yml
     refute_includes Master::Fix::ExecutionTrace::BOOT_CONFIG.keys, "MASTER/data/workflow.yml"
     assert_includes Master::Fix::ExecutionTrace::BOOT_CONFIG.keys, "MASTER/data/limits.yml"
-    assert_includes Master::Fix::ExecutionTrace::BOOT_CONFIG["MASTER/data/laws.yml"], "zsh"
-    assert_includes Master::Fix::ExecutionTrace::BOOT_CONFIG["MASTER/data/laws.yml"], "preserve_user_intent"
+    assert_includes Master::Fix::ExecutionTrace::BOOT_CONFIG["MASTER/data/laws.yml"], "transformation_policy"
+    assert_includes Master::Fix::ExecutionTrace::BOOT_CONFIG["MASTER/data/laws.yml"], "ROBUSTNESS"
+    refute_includes Master::Fix::ExecutionTrace::BOOT_CONFIG["MASTER/data/laws.yml"], "zsh"
+    refute_includes Master::Fix::ExecutionTrace::BOOT_CONFIG["MASTER/data/laws.yml"], "preserve_user_intent"
   end
   def test_wrapped_ruby_is_checked_after_the_safe_wrapper_repair
     Dir.mktmpdir("execution_trace_wrapper") do |root|
