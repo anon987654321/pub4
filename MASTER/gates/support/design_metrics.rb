@@ -4,7 +4,7 @@ require "set"
 require_relative "design_metrics/contrast"
 
 module Deploy
-  # Pure-Ruby design measurements against MASTER/data/rules.yml design_rules.
+  # Pure-Ruby design measurements against MASTER/data/laws.yml design_rules.
   # No browser required. Used by DesignMetricsGate + unit tests.
   module DesignMetrics
     extend Contrast
