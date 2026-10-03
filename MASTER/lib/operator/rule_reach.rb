@@ -2,7 +2,7 @@
 
 # How many rules can fire, and under what conditions.
 #
-# A rule in data/rules.yml reaches code three ways: a lexical detector, a
+# A rule in data/laws.yml reaches code three ways: a lexical detector, a
 # structural one, or a semantic prompt folded into SemanticRule's single call
 # per file. A rule with none of those is law that no configuration can enforce,
 # and it counts toward "225 rules" in every report that quotes the total.
@@ -21,14 +21,14 @@ require "json"
 module Operator
   module RuleReach
     MASTER_DIR = File.expand_path("../..", __dir__)
-    CEILING = File.join(MASTER_DIR, "data", "rules.yml")
+    CEILING = File.join(MASTER_DIR, "data", "laws.yml")
 
     module_function
 
     def rules
       $LOAD_PATH.unshift(File.join(MASTER_DIR, "lib")) unless $LOAD_PATH.include?(File.join(MASTER_DIR, "lib"))
       require "master"
-      Master.flatten_rules(Master.load_rules(root: MASTER_DIR).fetch("rules", {}))
+      Master.law_entries(root: MASTER_DIR)
     end
 
     # A rule is mechanical if something can run it: a lexical or structural
@@ -95,11 +95,11 @@ puts "rule_reach: raise its severity so the prompt keeps it, give it a detect_le
     end
 
     def record(count)
-      # A line rewrite, not a YAML dump: rules.yml is mostly the argument for
+      # A line rewrite, not a YAML dump: laws.yml is mostly the argument for
       # its numbers, and to_yaml would write the numbers and drop the argument.
       lines = File.readlines(CEILING)
       i = lines.index { |line| line.match?(/^\s+unreachable: \d+\s*$/) }
-      raise "rules.yml: no rule_ratchets.reach.unreachable line" unless i
+      raise "laws.yml: no rule_ratchets.reach.unreachable line" unless i
 
       lines[i] = lines[i].sub(/\d+/) { count.to_s }
       File.write(CEILING, lines.join)
