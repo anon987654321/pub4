@@ -20,7 +20,7 @@ module Operator
     # Prefer an explicit monorepo root when a deployed app provides one.
     # Otherwise derive the source checkout from this file; never assume a
     # developer's home directory.
-    def rules_path
+    def laws_path
       source = File.expand_path("../data/laws.yml", __dir__)
       configured = ENV["PUB4_RAILS_ROOT"].to_s.strip
       candidates = [
@@ -30,16 +30,16 @@ module Operator
       candidates.find { |candidate| File.readable?(candidate) }
     end
 
-    def document(path = rules_path)
+    def document(path = laws_path)
       return {} unless path && File.file?(path)
 
       YAML.safe_load_file(path, aliases: true) || {}
     end
 
-    def blocks(path = rules_path) = document(path)["tokens"] || {}
+    def blocks(path = laws_path) = document(path)["tokens"] || {}
 
-    def tokens(path = rules_path) = document(path)["tokens"] || {}
+    def tokens(path = laws_path) = document(path)["tokens"] || {}
 
-    def dig(*keys, path: rules_path) = blocks(path).dig(*keys.map(&:to_s))
+    def dig(*keys, path: laws_path) = blocks(path).dig(*keys.map(&:to_s))
   end
 end
