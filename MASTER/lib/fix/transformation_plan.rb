@@ -39,6 +39,10 @@ module Master
         Array(@policy.fetch("postflight")).map(&:to_s).freeze
       end
 
+      def lifecycle_states
+        Array(Master.load_rules(root: Master::ROOT).dig("rule_system", "lifecycle", "states")).map(&:to_s).freeze
+      end
+
       def operation(name)
         operations.fetch(index_of(name.to_s))
       rescue IndexError
