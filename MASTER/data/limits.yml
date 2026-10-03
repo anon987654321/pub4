@@ -448,7 +448,7 @@ guidance:
     - reek
     notes:
       nielsen: puts is NOT debug output in a CLI. Only p, pp, binding.pry, debugger are.
-      prune: Loads patterns from data/voice.yml (voice.strunk); legacy fallback in rules.yml.
+      prune: Loads patterns from data/voice.yml (voice.strunk); legacy fallback in laws.yml.
       semantic: Loads semantic questions from executable Law definitions.
       deep_caution: deep adds 2 LLM calls per file. With 90 files at 8 req/min free tier = 22+ minutes.
   frontend_protection:
@@ -458,7 +458,7 @@ guidance:
     - application.scss
     on_view_or_css_edit:
     - flatten divitis and use semantic landmarks
-    - bare tag targeting per rules.yml style — no BEM or utility soup in ERB
+    - bare tag targeting per laws.yml style — no BEM or utility soup in ERB
     - run Shared::FrontendAuditor on touched paths
     mailer_exempt:
     - inline styles in mailer views (email clients require them)
@@ -504,7 +504,7 @@ guidance:
     - todo.md
     - notes.md
     - changelog.md
-    slug_naming: Rails-parameterized density — snake_case, concrete tokens only, Strunk-clean; see rules.yml
+    slug_naming: Rails-parameterized density — snake_case, concrete tokens only, Strunk-clean; see laws.yml
       style.naming.paths
     rule: Flat Hierarchy — merge thin siblings and rename misfit paths before creating files. OpenBSD-flat
       paths, Zeitwerk-true dense slugs, Roda-tight trees.
@@ -608,7 +608,7 @@ guidance:
       structural_edit:
         required:
         - data/soul.yml
-        - data/rules.yml
+        - data/laws.yml
         - data/limits.yml
         optional:
         - data/voice.yml
@@ -835,7 +835,7 @@ guidance:
 # the same unresolved tension with [DENSITY], which deliberately counts code
 # lines only. Whoever settles that for lint:spine settles it for both.
 #
-# data/rules.yml is a file budget, not a directory. The Ruby loc_budget reader
+# data/laws.yml is a file budget, not a directory. The Ruby loc_budget reader
 # counts a file path as that file's lines so this key cannot regrow unseen.
 # Reader: `rake loc_budget`, which is now in `rake audit` rather than defined
 # and called by nothing. It was the latter for its whole life, and the numbers
@@ -966,7 +966,7 @@ guidance:
 #
 # Four keys fall in the same pass, because slack is the same defect as debt:
 # lib/ground 4896 -> 4812 (unified_diff_editor.rb deleted as a second source for
-# three live mechanisms), lib/io 4176 -> 4175, and data/rules.yml 3755 -> 3728.
+# three live mechanisms), lib/io 4176 -> 4175, and data/laws.yml 3755 -> 3728.
 # lib/cli holds at 5892 with six lines of room and is left rather than tightened
 # onto another session's in-flight number.
 loc_body_budgets:
@@ -1039,12 +1039,12 @@ loc_body_budgets:
   # the comment closes.
   law: 1637
   # The one entry in this table that goes up, and only ever by consolidation.
-  # Three folds have moved deleted files and top-level keys into rules.yml --
+  # Three folds have moved deleted files and top-level keys into laws.yml --
   # 86eaff4cf, ff7e93a82, and the 2026-09-05 merge that made design_rules
   # fourteen rules in the catalogue rather than a second top-level section.
   # Those lines crossed a boundary, they were not written. Down only from 3728,
   # and a raise needs the commit that folded something in.
-  data/rules.yml: 3728
+  data/laws.yml: 3728
 
 # Loop/process budgets — moved from data/ops/process.yml; reader is Ops::ProcessBudget.
 process:
