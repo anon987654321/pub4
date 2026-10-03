@@ -102,10 +102,9 @@ class TestSelfScan < Minitest::Test
     Dir.mktmpdir do |root|
       FileUtils.mkdir_p(File.join(root, "data"))
       FileUtils.mkdir_p(File.join(root, "lib"))
-      File.write(File.join(root, "data", "rules.yml"), <<~YAML)
+      File.write(File.join(root, "data", "laws.yml"), <<~YAML)
         self_test:
-          laws_apply_to_self:
-            SINGULARITY: "rules.yml entries unique by id"
+                      SINGULARITY: "laws.yml entries unique by id"
         rules:
           - id: DUPLICATE_RULE
           - id: DUPLICATE_RULE
