@@ -20,7 +20,7 @@ critical_items:
   - id: mega_all_apps
     source: __OLD_BACKUPS/MEGA_ALL_APPS.md
     expected_target: RECOVERY/pub/__OLD_BACKUPS/MEGA_ALL_APPS.md
-    current_state: missing
+    current_state: restored
     gate: file_exists
 
   - id: ai3_standalone
