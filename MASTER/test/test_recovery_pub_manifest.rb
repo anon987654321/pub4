@@ -1,4 +1,4 @@
-<sub><sub># frozen_string_literal: true
+# frozen_string_literal: true
 
 require "minitest/autorun"
 require "date"
@@ -57,7 +57,7 @@ class TestRecoveryPubManifest < Minitest::Test
     assert_empty invalid, "undeclared recovery states: #{invalid.join(", ")}"
   end
 end
-</sub>
+
   def test_archive_inventory_has_one_record_per_generation
     manifest = YAML.safe_load(ROOT.join("MASTER/data/recovery/legacy_manifest.yml").read, permitted_classes: [Date])
     inventory = manifest.fetch("archive_inventory").fetch("repositories")
@@ -120,4 +120,3 @@ end
     assert_includes lineage.fetch("caution"), "The v50 file predates current pub4 law migration and is evidence, not a second constitution."
   end
 end
-</sub>
