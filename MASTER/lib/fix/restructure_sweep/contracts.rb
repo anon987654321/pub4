@@ -40,6 +40,14 @@ module Master
               and never move. An rc.d script's name is its service's name.
             - Scripts are zsh or POSIX sh with OpenBSD base tools; no GNU-only flags.
           TEXT
+          "STUDIO" => <<~TEXT,
+            STUDIO, the canonical media and production source tree.
+            - MASTER/tools compatibility paths may point here; do not create a second
+              canonical copy under MASTER.
+            - Media source, model assets, generators and production data keep their
+              documented provenance and deterministic entrypoints.
+            - Generated renders and caches are evidence/output, not alternate source.
+          TEXT
         }.freeze
 
         def self.for(tree) = "#{BY_TREE.fetch(tree)}#{COMMON}"
