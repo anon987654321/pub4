@@ -88,7 +88,7 @@ module Master
           lines << "  ownership: UNDECLARED"
           lines << "  proof: add this path to PATH_OWNERSHIP.yml"
         end
-        lines << "  constitution: data/rules.yml"
+        lines << "  constitution: data/laws.yml"
         lines << "  laws: #{node.laws.map(&:id).join(", ")}"
         lines << "  executable_law: law/"
         lines.join("\n")
@@ -99,7 +99,7 @@ module Master
           "lineage: #{path}",
           "  status: INCONCLUSIVE",
           "  reason: #{error.class}: #{error.message}",
-          "  constitution: data/rules.yml",
+          "  constitution: data/laws.yml",
           "  executable_law: law/"
         ].join("\n")
       end
