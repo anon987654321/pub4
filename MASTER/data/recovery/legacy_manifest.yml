@@ -1069,3 +1069,45 @@ legacy_capability_reviews:
       - "sample analysis, licensing/provenance and drum/vocal-safe instrumental extraction are explicit in the current sampling stack."
     disposition: "absorbed; do-not-restore-pub3-multimedia-dilla-tree"
 
+recovered_regression_reviews:
+  - commit: "d1f6a31af0c82d8f6127b60eabbc76eef0cdef81"
+    area: dilla
+    finding: "A merge inlined Hash#dig compatibility into test_helper and broke dilla's absolute reader, silently disabling coltrane and changing rendered theory."
+    current_mapping: "MASTER/lib/boot/hash_dig_compat.rb is restored as the shared compatibility source and is required by both test boot and Dilla."
+    disposition: "preserved-fix"
+  - commit: "fa897d465d8ce7a7f7465028164d0460888a907f"
+    area: fix_loop
+    finding: "God-class splits dropped reload-after-AST-fix state, added unbounded generated-tree scanning, and changed the rule/reader loading shape."
+    current_mapping: "Current pass runner refreshes source after AST mutation and rule-order skips generated/dependency trees."
+    disposition: "preserved-fix"
+  - commit: "28a43514aa523e11e8f6539d9d5491aae96cf5fd"
+    area: namespace_ratchet
+    finding: "The fold lost namespace ceilings when namespace_ceilings.yml was removed."
+    current_mapping: "Ceilings live in data/spine.yml and are read by the namespace ratchet."
+    disposition: "preserved-fix"
+  - commit: "04be436060136d741b0a6c7d721199c2b6d31f1d"
+    area: gate_census
+    finding: "A merge silently lost eight DENSITY-related gate behaviors, including scan count reporting, ceiling warnings, list output and separated census rows."
+    current_mapping: "Current operator gates and ratchets contain the split helpers and explicit reporting."
+    disposition: "preserved-fix"
+  - commit: "d7440d24c961121284ff0c9cf0b384c196f2ef22"
+    area: scanner
+    finding: "A tree-loss episode removed scanner rules, reader/data/self censuses, glossary definitions and their tests."
+    current_mapping: "These surfaces are present in the current MASTER tree and remain part of gate evidence."
+    disposition: "preserved-recovery"
+  - commit: "32f1b7dd186571c1881da21bcb3abc474756b8a8"
+    area: fix_loop
+    finding: "The documented failure was an oscillation rollback after streamed repairs had already changed the tree; the stagnation snapshot was taken before those changes."
+    current_mapping: "Keep the pre-repair/post-repair distinction explicit; do not let a changed pass be classified as a repeated finding set."
+    disposition: "historical-regression-to-guard"
+  - commit: "92d948661785ff945be9fd02533a75cab5734332"
+    area: MASTER2
+    finding: "A restoration from f95b2ad re-established single-instance enforcement, unconditional dependency setup, grounded self-run phases and web-session intelligence parity."
+    current_mapping: "Useful behavior is represented by current MASTER single-process/session/runtime contracts; MASTER2 itself is not the active runtime."
+    disposition: "semantic-reference"
+  - commit: "97a761812e9b814188f702528cd47d09dddb6cdc"
+    area: MASTER2
+    finding: "Restored MultiLanguage parsing for shell files containing Ruby/Python heredocs."
+    current_mapping: "No equivalent current pub4 MASTER parser was found."
+    disposition: "deferred-gap; recover only if mixed-language parsing becomes an actual current requirement"
+
