@@ -42,7 +42,7 @@ class WhyExplainerTest < Minitest::Test
     assert_includes out, "boundary: master"
     assert_includes out, "purpose: evidence, events, telemetry, replay, snapshots"
     assert_includes out, "status: RESOLVED"
-    assert_includes out, "constitution: data/rules.yml"
+    assert_includes out, "constitution: data/laws.yml"
     assert_includes out, "laws: ROBUSTNESS, SINGULARITY, LINEARITY, PROXIMITY, ABSTRACTION, DENSITY, RENDERED_VALUES"
     assert_includes out, "executable_law: law/"
   end
