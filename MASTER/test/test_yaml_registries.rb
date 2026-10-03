@@ -9,9 +9,9 @@ DATA = File.expand_path("../data", __dir__)
 YAML_SPECS = {
   "attention_context.yml"        => { required_keys: %w[protocol fields rendering when_to_emit], arrays: [] },
   "patterns.yml"                 => { required_keys: %w[infer prompt_archaeology repo_topics], arrays: [] },
-  # zsh, injection and refusal_templates moved to rules.yml: they are law, and
+  # zsh, injection and refusal_templates moved to laws.yml: they are law, and
   # patterns.yml is the register for what is not. The guarantee moved with them.
-  "rules.yml"                    => { required_keys: %w[zsh injection refusal_templates laws rules rule_system transformation_policy], arrays: [] },
+  "laws.yml"                    => { required_keys: %w[zsh injection refusal_templates laws rules rule_system transformation_policy], arrays: [] },
 }.freeze
 
 PATTERNS_NAMESPACES = {
@@ -91,11 +91,11 @@ class TestRulesYamlRegistry < Minitest::Test
   include BedDeclaration
   REQUIRED_RULE_FIELDS = %w[id name tier severity autofix].freeze
 
-  def test_rules_yml_has_no_duplicate_rule_ids
+  def test_laws_yml_has_no_duplicate_rule_ids
     ids = rules.map { |rule| rule["id"] }.compact
     duplicates = ids.tally.select { |_, count| count > 1 }.keys
 
-    assert duplicates.empty?, "rules.yml has duplicate rule ids: #{duplicates.join(', ')}"
+    assert duplicates.empty?, "laws.yml has duplicate rule ids: #{duplicates.join(', ')}"
   end
 
   def test_rules_yml_entries_have_required_fields
@@ -104,7 +104,7 @@ class TestRulesYamlRegistry < Minitest::Test
       "#{rule['id'] || '<missing id>'}: #{absent.join(', ')}" if absent.any?
     end
 
-    assert missing.empty?, "rules.yml entries missing required fields: #{missing.join('; ')}"
+    assert missing.empty?, "laws.yml entries missing required fields: #{missing.join('; ')}"
   end
 
   def test_failure_taxonomy_retry_contract
@@ -130,7 +130,7 @@ class TestRulesYamlRegistry < Minitest::Test
 
     assert_equal "PRESERVE_THEN_IMPROVE_NEVER_BREAK", soul.dig("absolute", "golden_rule")
     assert_equal "kernel", preserve_rule.fetch("tier")
-    # The wording lives in law/, not in soul or rules.yml. This asserted soul.absolute.rules
+    # The wording lives in law/, not in soul or laws.yml. This asserted soul.absolute.rules
     # still carried it, which test_soul.rb asserts soul must not — one of the
     # two had to be reading the tree as it is.
     refute soul.dig("absolute", "rules"), "soul must not hold rules; law/ is the registry"
@@ -146,7 +146,7 @@ class TestRulesYamlRegistry < Minitest::Test
     referenced = rule_reference_values(patterns).flat_map { |value| value.scan(/\b[A-Z][A-Z0-9]+(?:_[A-Z0-9]+)+\b/) }.uniq
     unknown = referenced.reject { |id| rule_ids.include?(id) }
 
-    assert unknown.empty?, "patterns.yml references unknown rules.yml ids: #{unknown.join(', ')}"
+    assert unknown.empty?, "patterns.yml references unknown laws.yml ids: #{unknown.join(', ')}"
   end
 
   def test_voice_yml_declares_language_specific_voices
@@ -445,11 +445,11 @@ end
   private
 
   def rules
-    Master.flatten_rules(merged_rules.fetch("rules", {}))
+    Master.law_entries(root: File.expand_path("..", __dir__))
   end
 
   def data
-    @data ||= Master.load_yaml(File.join(DATA, "rules.yml"))
+    @data ||= Master.load_yaml(File.join(DATA, "laws.yml"))
   end
 
   def merged_rules
