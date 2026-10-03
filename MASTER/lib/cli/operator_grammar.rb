@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "shellwords"
+
 module Master
   module CLI
     # The deterministic operator grammar handles actions whose meaning is
@@ -24,8 +26,34 @@ module Master
         nil
       end
 
+      # The local operator is a shell user. Any command whose first executable
+      # is actually available goes straight to the same governed zsh path as
+      # other direct shell entrypoints; ordinary English still falls through to
+      # the agent.
       def direct_shell?(command)
-        command.to_s.split(/\s+(?:&&|;)\s+/).all? { |part| DIRECT_SHELL_ATOM.match?(part) }
+        parts = command.to_s.split(/\s+(?:&&|\|\||;|\|)\s+/)
+        return false if parts.empty?
+
+        parts.all? do |part|
+          DIRECT_SHELL_ATOM.match?(part) || shell_command_name?(part)
+        end
+      end
+
+      def shell_command_name?(part)
+        argv = Shellwords.split(part)
+        name = argv.first.to_s
+        return false if name.empty?
+
+        basename = File.basename(name)
+        return true if SHELL_BUILTINS.include?(basename)
+        return true if name.start_with?("/")
+
+        ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).any? do |dir|
+          candidate = File.join(dir, name)
+          File.executable?(candidate) && !File.directory?(candidate)
+        end
+      rescue ArgumentError
+        false
       end
     end
   end
