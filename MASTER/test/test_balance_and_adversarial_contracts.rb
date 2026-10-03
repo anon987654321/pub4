@@ -120,7 +120,7 @@ class GateOutcomeContractTest < Minitest::Test
 
     assert_equal :errored, result.outcome
     assert result.errored?
-    refute result.ok?
+    assert_predicate result, :ok?, "errored is fail-open unless strict gate mode is enabled"
   end
 
   def test_strict_inconclusive_blocks
@@ -157,4 +157,30 @@ class ChallengeToolBalanceTest < Minitest::Test
       assert_kind_of Array, row[:tests]
     end
   end
+\n  def test_test_deletion_probe_reports_unique_coverage
+    Dir.mktmpdir("master-deletion") do |root|
+      path = File.join(root, "tiny_test.rb")
+      File.write(path, <<~RUBY)
+        require "minitest/autorun"
+        class TinyTest < Minitest::Test
+          def test_constant_contract
+            value = "protected"
+            assert_equal "protected", value
+          end
+
+          def test_other_contract
+            assert_equal 2, 1 + 1
+          end
+        end
+      RUBY
+
+      report = Master::Review::ChallengeTools.deletion_probe(path)
+      assert report[:baseline_ok], report[:errors].join("\n")
+      assert_equal 2, report[:methods].size
+      assert_kind_of Hash, report[:protected]
+      assert_kind_of Array, report[:unprotected]
+      assert_empty report[:unprotected]
+    end
+  end
+
 end
