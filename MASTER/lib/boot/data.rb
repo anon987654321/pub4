@@ -14,7 +14,7 @@ module Master
     # this method, and a new keyword here raises ArgumentError inside the stub.
     #
     # Parses are remembered by path, size, inode and mtime, and every call gets
-    # its own copy. rules.yml is 205KB and fifteen constructors read it: one
+    # its own copy. laws.yml is 205KB and fifteen constructors read it: one
     # boot and a /scan of lib/io parsed it 40 times for 724ms. A deep copy of
     # the parsed tree costs a fraction of a parse and cannot leak one caller's
     # mutation into another's, and an edit changes the stat, so the next read
@@ -69,17 +69,17 @@ module Master
 
     # Scanners call this with whatever directory they are scanning
     # (RuleRegistryAudit, SelfTest, YamlBridgeRules, Fix::Priority all pass
-    # root: @root). For any root but our own, "this project has no rules.yml" is
+    # root: @root). For any root but our own, "this project has no laws.yml" is
     # the answer, not a fault — so absence is quiet there and stays loud for
     # ROOT, where a missing constitution is a real failure. Before this, every
     # scanner test against a Dir.mktmpdir root printed
-    # "load_yaml: No such file or directory ... /T/d2026…/data/rules.yml", which
+    # "load_yaml: No such file or directory ... /T/d2026…/data/laws.yml", which
     # trained readers to scroll past the one warning that has already caught a
     # genuine path bug.
     def load_rules(root: ROOT)
       own_root = root == ROOT
       data_dir = own_root ? DATA : File.join(root, "data")
-      rules_path = File.join(data_dir, "rules.yml")
+      rules_path = File.join(data_dir, "laws.yml")
       # Skip the read entirely rather than let load_yaml warn — see above.
       return {} unless own_root || File.exist?(rules_path)
 
