@@ -219,7 +219,7 @@ module Master
 
         def prediction_thresholds
           @prediction_thresholds ||= begin
-            rules = Master.load_yaml(Master::RULES_PATH)
+            rules = Master.load_yaml(Master::LAWS_PATH)
             prediction = rules["prediction_engine"]
             raise "prediction_engine configuration missing" unless prediction.is_a?(Hash)
 
@@ -250,7 +250,7 @@ module Master
 
         def rule_transforms
           @rule_transforms ||= begin
-            rules = Master.load_yaml(Master::RULES_PATH)
+            rules = Master.load_yaml(Master::LAWS_PATH)
             declared = rules["rules"]
             raise "rules configuration missing" unless declared.is_a?(Array)
 
