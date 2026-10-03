@@ -1,10 +1,6 @@
 # frozen_string_literal: true
 
 # law/shell.rb — every shell law, one Law.define per rule.
-# Was 6 one-rule files; Law.load_all and every fixture proof are
-# unchanged by the grouping (2026-08-19 file-sprawl consolidation).
-
-# Migrated from data/rules.yml DOLLAR_PAREN.
 Law.define(:DOLLAR_PAREN) do
   source "ShellCheck SC2006 — $() over backticks"
   severity :warn
