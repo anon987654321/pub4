@@ -167,3 +167,562 @@ active_app_decisions:
     legacy_state: archived_or_external
     pub4_state: archived_port
     decision_needed: restore_or_retire
+
+archive_inventory:
+  audited: "2026-10-03"
+  extraction_policy: >-
+    Extract legacy archives outside pub4. Deduplicate identical Git blobs. Reject
+    path traversal. Promote recovered material only after comparison and proof.
+  repositories:
+    pub:
+      tracked_archives: 157
+      unique_blobs: 122
+      compressed_bytes: 311059494
+      paths:
+        - path: "__OLD_BACKUPS/BRGEN_OLD.zip"
+          sha: "4a68ac5d4313fe1de00067b665f13b29b31f5082"
+          bytes: 34903820
+        - path: "__OLD_BACKUPS/__docs_20240804.tgz"
+          sha: "e7aa575de0eb0f02634100965b597f10315ac312"
+          bytes: 5102262
+        - path: "__OLD_BACKUPS/ai33/ai3_20250227.tgz"
+          sha: "ca3d8999fad493961e1f61ce3ba7997760877c90"
+          bytes: 160817
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_20240930_correct_structure_ready.tgz"
+          sha: "2319b80d767db3e2a236ed0613ed25cc9edd3609"
+          bytes: 92910
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_20240930_final_fleshed_out.tgz"
+          sha: "f3e9985020f2bdd7c923487355c52d4c5cd113d8"
+          bytes: 94221
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_20240930_final_fully_inclusive.tgz"
+          sha: "51cc01376658eed3f7914f37cf2e14039e22db33"
+          bytes: 93681
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_20240930_final_production_ready.tgz"
+          sha: "841de329f69a9b31658a54a21bf74f4727bd55ed"
+          bytes: 92969
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_20240930_final_updated (1).tgz"
+          sha: "5417a52c95fd286b6cf095840be9644c315751ac"
+          bytes: 94134
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_20240930_final_updated.tgz"
+          sha: "77711eb15b9c20bee13f58391dbac2e788da66ed"
+          bytes: 91454
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_20240930_fleshed_out_full (1).tgz"
+          sha: "fde302cba5cb556c32013c5e233f53371adb068a"
+          bytes: 94275
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_20240930_fleshed_out_full.tgz"
+          sha: "fde302cba5cb556c32013c5e233f53371adb068a"
+          bytes: 94275
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_20240930_full_improved_ready.tgz"
+          sha: "abb542aa5a23c2e374141cf9be82e7897d84e9ba"
+          bytes: 92361
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_20240930_fully_complete_and_embellished.tgz"
+          sha: "f1d04b47f418b3cade79bff0ef7a3a0d96e5eac0"
+          bytes: 93612
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_20240930_fully_embellished_ready.tgz"
+          sha: "41764ae5e4a09d6b027c0802243b6c6d293b30f5"
+          bytes: 92746
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_20240930_fully_fleshed_and_final.tgz"
+          sha: "4dbc68434f9ecabfaa29dffc6f916da45c59dbc3"
+          bytes: 93426
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_20240930_fully_fleshed_out_ready.tgz"
+          sha: "3e69f582548474ea0d160459b3c0d58d292da778"
+          bytes: 93298
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_20240930_production_ready.tgz"
+          sha: "79f44f566ddfcda7a6a365135758997385cc9041"
+          bytes: 92079
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_20240930_viz_production_ready.tgz"
+          sha: "688ee07e0a7ad81c8b01d0f5da1213a70b492c90"
+          bytes: 90474
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_20241002_further_refined.tgz"
+          sha: "fdd34d8990e58f47aa26457cd501dcdcb89bc0e4"
+          bytes: 3135374
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_20241002_updated.tgz"
+          sha: "4305248f5af9ae05bdc4d6baf36c2a067912ab00"
+          bytes: 3135348
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_20241019.tgz"
+          sha: "13d2d9ad894209c88fd3749b1fc9815eddda6e02"
+          bytes: 7356559
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_CONSOLIDATED_FINAL.tgz"
+          sha: "3e095273f6236adef5102d9aa71d00be032799ce"
+          bytes: 7347782
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_FINAL_COMPLETE.tgz"
+          sha: "282deb3a58c24e699a039148f0fb3e0768df8af9"
+          bytes: 14671137
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_FINAL_COMPLETE_V2.tgz"
+          sha: "d09e61012b88686d9c31e74de5ba958f5147a984"
+          bytes: 1657
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_FINAL_CORRECTED_V2.tgz"
+          sha: "cb9061d8c59f112d681a9925c9f66ed2e1d5b28d"
+          bytes: 7348467
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_FINAL_REFINED.tgz"
+          sha: "b54045896394fb0da126c7224c801f3e86a6ac0c"
+          bytes: 7346254
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_FINAL_WITH_ASSISTANTS.tgz"
+          sha: "865e082d31d2ffd6e5993a3981e0ff2c40848d83"
+          bytes: 7346262
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_FINAL_WITH_UPDATED_README.tgz"
+          sha: "c21a371ee219ff036985af64e5a0ce39e253cc26"
+          bytes: 7346266
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_FINAL_v2.tgz"
+          sha: "5623485d88d793a74d45a28649929e03b51b7a9b"
+          bytes: 7347499
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_Improved_FINAL.tgz"
+          sha: "f7261ce3a0687836c401f8054b3aa2411d968f0a"
+          bytes: 7345975
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_LANGCHAIN_INTEGRATED.tgz"
+          sha: "08193d44933d443e29ac28cf732145d024e10149"
+          bytes: 7346261
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_LIB_UPDATED_FINAL.tgz"
+          sha: "eaf252f14d30fba8ac49edf98347e1aa1464bcdd"
+          bytes: 7346258
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_NEW.tgz"
+          sha: "e6143a0f544e87b24d20b002aa5f89d403f3c56e"
+          bytes: 7348357
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_PERSONAL_ASSISTANT_UPDATED.tgz"
+          sha: "20eb0b4752e7dad74b199646040292796d360453"
+          bytes: 7346267
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_PRODUCTION_READY_V1.tgz"
+          sha: "38ba5e729222046f7188072c154a0b24830992a5"
+          bytes: 7348468
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_RESTORED_FINAL.tgz"
+          sha: "f28ca32b56059d230bc1c80e8d8c3f35ab215088"
+          bytes: 7346255
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_assistants_progress.tgz"
+          sha: "798c8fbbe8db25a34744ae0b9aa3e55618385506"
+          bytes: 533
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_cli_files.tgz"
+          sha: "61522e9c34a9ae29f3b24f17415c9fdc4e0214a0"
+          bytes: 2186
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_cli_project_complete.tgz"
+          sha: "b229c775c453f45220e063ca9f113f76af57ea87"
+          bytes: 1721
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_cli_project_latest.tgz"
+          sha: "652fcce5cb3b43e32744586090d642cff4463bb4"
+          bytes: 1652
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_cli_project_with_structure.tgz"
+          sha: "332aad157ed060b87f0b691ccaa6a24853f0dd8d"
+          bytes: 2301
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_code_v1.tgz"
+          sha: "2dbe0d90b176988585af3a76976539f93ef90a5b"
+          bytes: 3044
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_consolidated_code_cleaned.tgz"
+          sha: "28b6a2976aa58f5c4f9e1de56ba503e3524499e2"
+          bytes: 168655
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_consolidated_code_cleaned_v2.tgz"
+          sha: "f5f197a61d309feda17605d96241b2dff6fc711b"
+          bytes: 168532
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_consolidated_code_merged.tgz"
+          sha: "5b0e789de486fcb6f672fd3197469c90dac90a38"
+          bytes: 192729
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_consolidated_code_v2.tgz"
+          sha: "e80e0f12004e0b81698c3f70a92d488a26836e95"
+          bytes: 194831
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_corrected_full_project_with_lib.tgz"
+          sha: "541376ba7568d73ea0b1f7303d2e896e93ba0ffa"
+          bytes: 4365
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_files.tgz"
+          sha: "235b5f8872acac3403eb325f8db69835e2f1f493"
+          bytes: 1463
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_files_corrected.tgz"
+          sha: "8839da3aaa66838e1e6b2f5242bc285311a2eefe"
+          bytes: 2201
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_final_complete_project_files.tgz"
+          sha: "ca35cef075df876d588b2c05a8f9aea10192600b"
+          bytes: 2141
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_final_consolidated.tgz"
+          sha: "00c260f2e6bd03275378acdd3f3ad29cff35d848"
+          bytes: 971
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_final_consolidated_project_files.tgz"
+          sha: "8d872f86c0f6ed50e90103da51eeb963f3d3b9b8"
+          bytes: 2797
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_final_corrected_project_files.tgz"
+          sha: "1f7bb2aa0890554bedbafc5ad136862855a20b16"
+          bytes: 2477
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_final_deployment.tgz"
+          sha: "a8c775e95900674952e77dcd9618dc58592628a2"
+          bytes: 143566
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_final_fleshed_package.tgz"
+          sha: "34745868cf05dfbb964c9733f0500da19d669d09"
+          bytes: 4660
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_final_fully_traced.tgz"
+          sha: "23d33913630df0a931462bf62560b163438d045b"
+          bytes: 2532
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_final_fully_updated.tgz"
+          sha: "933540eb5a5d19609ca1a06281617d609529aeac"
+          bytes: 2528
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_final_latest_corrected_project_files.tgz"
+          sha: "3ac01705ec0b566c5a20a8660971873a9da64c3f"
+          bytes: 4692
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_final_no_lib_assistants_deployment.tgz"
+          sha: "829f25d0e8285ae1378582532aacbfc166ce5ec9"
+          bytes: 96949
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_final_output.tgz"
+          sha: "61f178d75b25edf9fbe4d4c27530d3dcd3f1d9db"
+          bytes: 1464
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_final_update_no_git_deployment.tgz"
+          sha: "aa276949c919d3aaadb57ad8a734227198abf1d2"
+          bytes: 20410
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_final_updated.tgz"
+          sha: "8d5d06cd501b4eddb9e7c40f99232589fed84525"
+          bytes: 175881
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_final_verified_deployment.tgz"
+          sha: "62fb23346c823843b5b92485fa0c429d0096b7ce"
+          bytes: 144233
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_full_project.tgz"
+          sha: "7c497d1d3703d884b48c05c76b7d71fd67fdb450"
+          bytes: 43083
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_fully_consolidated_deployment.tgz"
+          sha: "d6ba4119c64a234007c7d67c3a4433aaa5d1aa99"
+          bytes: 143609
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_fully_fleshed_out.tgz"
+          sha: "c3bb111008ac4e815815ac78aaa232848dcca29c"
+          bytes: 176671
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_improvements.tgz"
+          sha: "6193690cd22e4fc1a6aa63ed4e30913eea96a945"
+          bytes: 3148196
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_langchainrb_integration.tgz"
+          sha: "a2dfb4bf6e82ec3b227d907be22e2d68a6cea7d1"
+          bytes: 3151238
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_modified_files.tgz"
+          sha: "d18cfa1cf1a33f209d697ff60bc410359aaafbb0"
+          bytes: 3323856
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_refined_final_deployment.tgz"
+          sha: "7e688aa231e0983dc40343619f92b8e0ff93faa1"
+          bytes: 144189
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_refined_final_no_lib_assistants_deployment (1).tgz"
+          sha: "bf5206120d03a35eb19be48b0bac463c2e8f0ccf"
+          bytes: 96918
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_refined_final_no_lib_assistants_deployment.tgz"
+          sha: "bf5206120d03a35eb19be48b0bac463c2e8f0ccf"
+          bytes: 96918
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_refined_final_with_consistent_assistants.tgz"
+          sha: "ef3c47f545b3e42e8932c4571e8993b3139ab10c"
+          bytes: 100486
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_refined_no_git_20241010.tgz"
+          sha: "21cd37cf60134486c74d3abca8318196838ad96f"
+          bytes: 7306667
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_refined_with_reintroduced_assistants_deployment.tgz"
+          sha: "fd6d60b7f6fa1343bdba60f70fd3bf1846e11319"
+          bytes: 100328
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_refined_with_shared_assistants.tgz"
+          sha: "dab6c5baa6f9f52c02ea742ad7beac1700794717"
+          bytes: 105732
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_updated_improvements.tgz"
+          sha: "237477e0e082408f057af113c3461573c1110631"
+          bytes: 94887
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_with_agents_and_prompts (1).tgz"
+          sha: "53668b72e656221a7a594c659cc3d692f4a4620a"
+          bytes: 3151818
+        - path: "__OLD_BACKUPS/ai33/ai3_old/__backups/ai3_with_agents_and_prompts.tgz"
+          sha: "53668b72e656221a7a594c659cc3d692f4a4620a"
+          bytes: 3151818
+        - path: "__OLD_BACKUPS/ai33/ai3_old/assistants/OUTPUT_assistants_2024-11-18.md_20241119.tgz"
+          sha: "89cda30d1e485f8eac1392397c5d1f3eb5865168"
+          bytes: 16615
+        - path: "__OLD_BACKUPS/ai33/ai3_old/assistants/ai3_assistants_progress.tgz"
+          sha: "798c8fbbe8db25a34744ae0b9aa3e55618385506"
+          bytes: 533
+        - path: "__OLD_BACKUPS/ai33/ai3_old/assistants/ai3_final_no_lib_assistants_deployment.tgz"
+          sha: "829f25d0e8285ae1378582532aacbfc166ce5ec9"
+          bytes: 96949
+        - path: "__OLD_BACKUPS/ai33/ai3_old/assistants/ai3_final_package_with_expanded_assistants.tgz"
+          sha: "3a9be525285abfed81e2da8762facb7e2923c05c"
+          bytes: 4492
+        - path: "__OLD_BACKUPS/ai33/ai3_old/assistants/ai3_final_package_with_restored_assistants.tgz"
+          sha: "c952f41d9d2c446d5c978e7ee6bf4f92355592dc"
+          bytes: 4107
+        - path: "__OLD_BACKUPS/ai33/ai3_old/assistants/ai3_refined_final_no_lib_assistants_deployment (1).tgz"
+          sha: "bf5206120d03a35eb19be48b0bac463c2e8f0ccf"
+          bytes: 96918
+        - path: "__OLD_BACKUPS/ai33/ai3_old/assistants/ai3_refined_final_no_lib_assistants_deployment.tgz"
+          sha: "bf5206120d03a35eb19be48b0bac463c2e8f0ccf"
+          bytes: 96918
+        - path: "__OLD_BACKUPS/ai33/ai3_old/assistants/ai3_refined_final_with_consistent_assistants.tgz"
+          sha: "ef3c47f545b3e42e8932c4571e8993b3139ab10c"
+          bytes: 100486
+        - path: "__OLD_BACKUPS/ai33/ai3_old/assistants/ai3_refined_with_reintroduced_assistants_deployment.tgz"
+          sha: "fd6d60b7f6fa1343bdba60f70fd3bf1846e11319"
+          bytes: 100328
+        - path: "__OLD_BACKUPS/ai33/ai3_old/assistants/ai3_refined_with_shared_assistants.tgz"
+          sha: "dab6c5baa6f9f52c02ea742ad7beac1700794717"
+          bytes: 105732
+        - path: "__OLD_BACKUPS/ai33/ai3_old/assistants/assistants.zip"
+          sha: "497e9711e791e64d7ea749e8e0a1dceee2010b0f"
+          bytes: 8196
+        - path: "__OLD_BACKUPS/ai33/consolidated_ai3_refactored.tgz"
+          sha: "4051367666a56c8d3b61b093ceded2727cccaeba"
+          bytes: 1396
+        - path: "__OLD_BACKUPS/ai33/consolidated_final_ai3.tgz"
+          sha: "cce4ee7b9cbd6147f107b2bff143ce7de7479329"
+          bytes: 132020
+        - path: "__OLD_BACKUPS/ai33/egpt_20240601.tgz"
+          sha: "bbcaf82669b5d6c0d52ee8ac19227efa3189036f"
+          bytes: 145833
+        - path: "__OLD_BACKUPS/ai33/egpt_20240603.tgz"
+          sha: "d6ddc48cf0ff7fe234999703d82619a40ce07079"
+          bytes: 214416
+        - path: "__OLD_BACKUPS/ai33/egpt_20240604.tgz"
+          sha: "8381f857149d3d348c593d1811ddde45e6eb46f3"
+          bytes: 214634
+        - path: "__OLD_BACKUPS/ai33/egpt_20240607.tgz"
+          sha: "69e2be34ee6fa882d336dbea4046fed751d53920"
+          bytes: 239128
+        - path: "__OLD_BACKUPS/ai33/egpt_20240609.tgz"
+          sha: "6414bc53a279dd97d32a0f3d13fbcb9fe65cb6e4"
+          bytes: 270478
+        - path: "__OLD_BACKUPS/ai33/egpt_20240610.tgz"
+          sha: "8ab9d77accce9da18cc061c07cd5a2ca6eaccd58"
+          bytes: 269637
+        - path: "__OLD_BACKUPS/ai33/egpt_20240612.tgz"
+          sha: "adbc5523c8bd241e576c6799f482cb6315d491e5"
+          bytes: 1080564
+        - path: "__OLD_BACKUPS/ai33/egpt_20240613.tgz"
+          sha: "adbc5523c8bd241e576c6799f482cb6315d491e5"
+          bytes: 1080564
+        - path: "__OLD_BACKUPS/ai33/egpt_20240615.tgz"
+          sha: "3e4e5562fd45670832e614e560f18a145e699b10"
+          bytes: 1080610
+        - path: "__OLD_BACKUPS/ai33/egpt_20240617.tgz"
+          sha: "ecc294d98348b5fa96d75500de177d32e9d29583"
+          bytes: 2167962
+        - path: "__OLD_BACKUPS/ai33/egpt_20240618.tgz"
+          sha: "7b54509543738d2fbdb40e55170e078fec04cc9b"
+          bytes: 2167893
+        - path: "__OLD_BACKUPS/ai33/egpt_20240621.tgz"
+          sha: "2e5f7014fdd70f1952605f197ca51fcef7ab8fb1"
+          bytes: 2148900
+        - path: "__OLD_BACKUPS/ai33/egpt_20240622.tgz"
+          sha: "944cde7ecc3b977723368d7874f171d2fd56afd5"
+          bytes: 2148901
+        - path: "__OLD_BACKUPS/ai33/egpt_20240804.tgz"
+          sha: "7fa5b80aba256810064bd387fcd56dae1126d02b"
+          bytes: 2183873
+        - path: "__OLD_BACKUPS/ai33/egpt_20240806.tgz"
+          sha: "7fa5b80aba256810064bd387fcd56dae1126d02b"
+          bytes: 2183873
+        - path: "__OLD_BACKUPS/ai33/egpt_OLD_20240601.tgz"
+          sha: "a74c46d0b5ecc3f5ee21487ad2a250730518d1f1"
+          bytes: 16560
+        - path: "__OLD_BACKUPS/ai33/egpt_OLD_20240603.tgz"
+          sha: "a74c46d0b5ecc3f5ee21487ad2a250730518d1f1"
+          bytes: 16560
+        - path: "__OLD_BACKUPS/ai33/egpt_OLD_20240604.tgz"
+          sha: "a74c46d0b5ecc3f5ee21487ad2a250730518d1f1"
+          bytes: 16560
+        - path: "__OLD_BACKUPS/ai33/egpt_OLD_20240607.tgz"
+          sha: "a74c46d0b5ecc3f5ee21487ad2a250730518d1f1"
+          bytes: 16560
+        - path: "__OLD_BACKUPS/ai33/egpt_OLD_20240609.tgz"
+          sha: "a74c46d0b5ecc3f5ee21487ad2a250730518d1f1"
+          bytes: 16560
+        - path: "__OLD_BACKUPS/ai33/egpt_OLD_20240610.tgz"
+          sha: "a74c46d0b5ecc3f5ee21487ad2a250730518d1f1"
+          bytes: 16560
+        - path: "__OLD_BACKUPS/ai33/egpt_OLD_20240612.tgz"
+          sha: "a74c46d0b5ecc3f5ee21487ad2a250730518d1f1"
+          bytes: 16560
+        - path: "__OLD_BACKUPS/ai33/egpt_OLD_20240613.tgz"
+          sha: "a74c46d0b5ecc3f5ee21487ad2a250730518d1f1"
+          bytes: 16560
+        - path: "__OLD_BACKUPS/ai33/egpt_OLD_20240615.tgz"
+          sha: "a74c46d0b5ecc3f5ee21487ad2a250730518d1f1"
+          bytes: 16560
+        - path: "__OLD_BACKUPS/ai33/egpt_OLD_20240617.tgz"
+          sha: "a74c46d0b5ecc3f5ee21487ad2a250730518d1f1"
+          bytes: 16560
+        - path: "__OLD_BACKUPS/ai33/egpt_OLD_20240618.tgz"
+          sha: "a74c46d0b5ecc3f5ee21487ad2a250730518d1f1"
+          bytes: 16560
+        - path: "__OLD_BACKUPS/ai33/egpt_OLD_20240621.tgz"
+          sha: "a74c46d0b5ecc3f5ee21487ad2a250730518d1f1"
+          bytes: 16560
+        - path: "__OLD_BACKUPS/ai33/egpt_OLD_20240622.tgz"
+          sha: "a74c46d0b5ecc3f5ee21487ad2a250730518d1f1"
+          bytes: 16560
+        - path: "__OLD_BACKUPS/ai33/ex1.zip"
+          sha: "eebefe5ba2b9a76ee775e2db92e0601c0ae12b34"
+          bytes: 18664
+        - path: "__OLD_BACKUPS/ai33/final_refined_ai3_package.tgz"
+          sha: "7fdab505e3606c407ba1c4dc904cc88a22b5bc97"
+          bytes: 36156
+        - path: "__OLD_BACKUPS/ai33/final_streamlined_ai3_production_ready.tgz"
+          sha: "9dbff154d7380a16e5ea83d54a3162e67b32ebfe"
+          bytes: 33341
+        - path: "__OLD_BACKUPS/arch_20240622.tgz"
+          sha: "fbd6846ad7e03276c5be7a775ef3819a7a6bd2f6"
+          bytes: 39948703
+        - path: "__OLD_BACKUPS/brgen_ANCIENT_20240622.tgz"
+          sha: "a5528c58d7a0248d54f5fcdf056a5c8dcbbaa7fb"
+          bytes: 34453827
+        - path: "__OLD_BACKUPS/dev_20240804.tgz"
+          sha: "ae356fcdc734451bd2c08067a4334977689c925a"
+          bytes: 123
+        - path: "__OLD_BACKUPS/egpt_20240804.tgz"
+          sha: "7fa5b80aba256810064bd387fcd56dae1126d02b"
+          bytes: 2183873
+        - path: "__OLD_BACKUPS/egpt_20240806.tgz"
+          sha: "7fa5b80aba256810064bd387fcd56dae1126d02b"
+          bytes: 2183873
+        - path: "__OLD_BACKUPS/loose_files_20240804.tgz"
+          sha: "a66390b56d0253eb0c50021334b1cb74de7ea0d5"
+          bytes: 4193
+        - path: "__OLD_BACKUPS/loose_files_20240806.tgz"
+          sha: "38ac7ffc028eba6cf8fd8b183b520f2136c44834"
+          bytes: 4027
+        - path: "__OLD_BACKUPS/openbsd_20240726.tgz"
+          sha: "baeaeabc39001534fd1623f00741b64b4232e762"
+          bytes: 90548
+        - path: "__OLD_BACKUPS/openbsd_20240804.tgz"
+          sha: "78929a86f01500338aa7cd0a06e6008b466d47cd"
+          bytes: 90859
+        - path: "__OLD_BACKUPS/openbsd_20240806.tgz"
+          sha: "2edeb82f1fcd60833ea1476b49ce135877573e87"
+          bytes: 96600
+        - path: "__OLD_BACKUPS/rails___shared_20240804.tgz"
+          sha: "01cd239f7e0a4dc336351ee46335e431100c0b14"
+          bytes: 6452
+        - path: "__OLD_BACKUPS/rails___shared_20240806.tgz"
+          sha: "7d9d45bcc5a944ead466cd211bc5c351270f3db7"
+          bytes: 6167
+        - path: "__OLD_BACKUPS/rails_amber_20240803.tgz"
+          sha: "cb0c17997362ce120a62884f6c253930840b8763"
+          bytes: 156283
+        - path: "__OLD_BACKUPS/rails_amber_20240804.tgz"
+          sha: "2aa00c7f81c70fb3d2318117972585d8b4f31209"
+          bytes: 156216
+        - path: "__OLD_BACKUPS/rails_amber_20240806.tgz"
+          sha: "cc9dab524f31099221b192802a829acd519c6975"
+          bytes: 165353
+        - path: "__OLD_BACKUPS/rails_blognet_20240804.tgz"
+          sha: "00f67dad310ec67a95cfb2a1d49331fbc3d084fd"
+          bytes: 925
+        - path: "__OLD_BACKUPS/rails_blognet_20240806.tgz"
+          sha: "00f67dad310ec67a95cfb2a1d49331fbc3d084fd"
+          bytes: 925
+        - path: "__OLD_BACKUPS/rails_brgen_20240804.tgz"
+          sha: "0c5ffd3be31d58281eff0d3ef31c1469a3cb73bc"
+          bytes: 73567
+        - path: "__OLD_BACKUPS/rails_brgen_20240806.tgz"
+          sha: "0c5ffd3be31d58281eff0d3ef31c1469a3cb73bc"
+          bytes: 73567
+        - path: "__OLD_BACKUPS/rails_brgen_dating_20240804.tgz"
+          sha: "37184f06b63caf30373eeac8f26214fcf15eee94"
+          bytes: 1563
+        - path: "__OLD_BACKUPS/rails_brgen_dating_20240806.tgz"
+          sha: "37184f06b63caf30373eeac8f26214fcf15eee94"
+          bytes: 1563
+        - path: "__OLD_BACKUPS/rails_brgen_marketplace_20240804.tgz"
+          sha: "203979185ab17e9d061c7707a325cb32f61decff"
+          bytes: 1181
+        - path: "__OLD_BACKUPS/rails_brgen_marketplace_20240806.tgz"
+          sha: "203979185ab17e9d061c7707a325cb32f61decff"
+          bytes: 1181
+        - path: "__OLD_BACKUPS/rails_brgen_playlist_20240804.tgz"
+          sha: "a2e328f0f81fbfae7ba9b487551a6f618b9b825d"
+          bytes: 5559
+        - path: "__OLD_BACKUPS/rails_brgen_playlist_20240806.tgz"
+          sha: "a2e328f0f81fbfae7ba9b487551a6f618b9b825d"
+          bytes: 5559
+        - path: "__OLD_BACKUPS/rails_brgen_takeaway_20240804.tgz"
+          sha: "0a44ad158d7ab8f102bca8a40bc9b4cb597f13e0"
+          bytes: 739
+        - path: "__OLD_BACKUPS/rails_brgen_takeaway_20240806.tgz"
+          sha: "0a44ad158d7ab8f102bca8a40bc9b4cb597f13e0"
+          bytes: 739
+        - path: "__OLD_BACKUPS/rails_brgen_tv_20240804.tgz"
+          sha: "98ffb2a7265fd8d0b0ac05b56c68976823821e0e"
+          bytes: 158
+        - path: "__OLD_BACKUPS/rails_brgen_tv_20240806.tgz"
+          sha: "98ffb2a7265fd8d0b0ac05b56c68976823821e0e"
+          bytes: 158
+        - path: "__OLD_BACKUPS/rails_bsdports_20240804.tgz"
+          sha: "d1e09e19a156c595139f9bb3d3207df12c245138"
+          bytes: 4917
+        - path: "__OLD_BACKUPS/rails_bsdports_20240806.tgz"
+          sha: "d1e09e19a156c595139f9bb3d3207df12c245138"
+          bytes: 4917
+        - path: "__OLD_BACKUPS/sh_20240804.tgz"
+          sha: "2e938b842231d01e69d1a60f2c959e6d7a9353af"
+          bytes: 29387
+        - path: "__OLD_BACKUPS/sh_20240806.tgz"
+          sha: "2e938b842231d01e69d1a60f2c959e6d7a9353af"
+          bytes: 29387
+        - path: "postpro/cameras_lightroom_vsco.tgz"
+          sha: "947ccb3afc09b8bc46a179eb0ed9f611f37e651e"
+          bytes: 21551820
+    pub2:
+      tracked_archives: 0
+      unique_blobs: 0
+      compressed_bytes: 0
+      paths: []
+    pub3:
+      tracked_archives: 1
+      unique_blobs: 1
+      compressed_bytes: 22560768
+      paths:
+        - path: "multimedia/dilla/tools/ffmpeg.zip"
+          sha: "3b5c878fe2b957ccf4a84b9c291da6ce68c89b1c"
+          bytes: 22560768
+    pub4:
+      tracked_archives: 0
+      unique_blobs: 0
+      compressed_bytes: 0
+      paths: []
+
+historical_fossils:
+  - repo: pub4
+    commit: "9cfe80114ec558369ced9aa5178804f907953e83"
+    value: "MASTER self-corruption recovery, source-attributed rules, safer autofix, CLI/Rails repair"
+  - repo: pub4
+    commit: "5a5db63e559cdf492893ec88472e61ede36b75d5"
+    value: "cognitive runtime architecture, provider routing, runtime events and self-audit/history mining"
+  - repo: pub4
+    commit: "b95364de8a0b5b68947064544b2d95e990d36128"
+    value: "persistent interrupted Git delivery/recovery transaction semantics"
+  - repo: pub4
+    commit: "830ec870fef43e087a6caee57c33a9f484432d70"
+    value: "gate blind spot involving citations into deleted directories"
+  - repo: pub4
+    commit: "d3b5107911818b7c51e06e540b68a73d56f36784"
+    value: "2019 postpro house-grade/effect archaeology; explicit limits of DCP film emulation"
+  - repo: pub4
+    commit: "0455c8ee9bf8d80476bdb1315900a28041cbe03e"
+    value: "seven deleted visualisers recovered from dead host code"
+  - repo: pub4
+    commit: "ee181e4ab1b6284f55caddb74e6f1d311de9fe56"
+    value: "discarded Dilla vocal stems recovered and synthesiser work retained"
+  - repo: pub4
+    commit: "63277c129b36996c74f65eb306dd3b8686524cef"
+    value: "historical 62-grid Dilla MIDI library made canonical for drummer generation"
+  - repo: pub4
+    commit: "3c9e69456b249fb3a34021eb80a87697fb9be993"
+    value: "Dilla remix command and per-stem grade racks folded into engine"
+  - repo: pub3
+    commit: "d1f2770fc43fd0e85e9d640d71e9b0748fd9712e"
+    value: "my-work branch master.json v50/audio lineage; branch remains 156 commits ahead of pub3 main"
+  - repo: pub3
+    commit: "32c1fdf0044d"
+    value: "master.json5 v6.0.0 plus Rails applications"
+  - repo: pub3
+    commit: "92d9b7abdb12"
+    value: "consolidated Dilla audio-generation logic"
+  - repo: pub2
+    commit: "818ea0d03770843a09e871c8a458f0cf5edc7985"
+    value: "restored unique old-backup material including AI3 framework/validation, shared Rails utilities and J-Dilla carousel"
+  - repo: pub
+    commit: "21598560b57a78059df4dcd1751946914f91e179"
+    value: "restored 2,878 lines of AI3 code from backup lineage"
+  - repo: pub
+    commit: "512715ac6edd"
+    value: "postpro v13.3.14 with 29 effects and advanced features"
+  - repo: pub
+    commit: "6ecbd7b92b95"
+    value: "split master.json into modular files for maintainability"
+
+tooling:
+  archive_extractor: MASTER/tools/archaeology/extract_legacy_archives.zsh
+  output_default: ../pub4-archaeology-extracted
+  note: >-
+    Binary archive extraction is an operator/runtime task. The GitHub connector
+    can inventory these blobs but cannot materialize repository binary blobs here.
+
