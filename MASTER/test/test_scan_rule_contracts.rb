@@ -162,6 +162,23 @@ class TestScanRuleContracts < Minitest::Test
   # is gone and law/ is the one implementation, so the
   # contract asserts through the bridge — the id must reach the scanner's
   # findings, unchanged, not just prove itself inside Law.
+  def test_advisory_laws_do_not_enter_enforcement_bridge
+    bridge = Rules::LawBridgeRule.new
+    law = Law.rules.fetch(:BEAUTIFUL_CODE)
+
+    assert_equal :advisory, law.lifecycle
+    assert_empty bridge.check("if a; b; else; c; end\n", path: "example.rb"),
+                 "advisory doctrine must not become an enforcement finding"
+  end
+
+  def test_trusted_transformation_law_remains_in_semantic_population
+    law = Law.rules.fetch(:TRANSFORMATIONS)
+
+    assert_equal :trusted, law.lifecycle
+    assert law.semantic?
+    assert law.enforceable?
+  end
+
   def test_unbounded_retry_reaches_findings_through_the_bridge
     bridge = Rules::LawBridgeRule.new
     hits = bridge.check("begin\n  call\nrescue\n  retry\nend\n", path: "retry.rb")
