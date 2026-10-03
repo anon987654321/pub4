@@ -304,7 +304,7 @@ module Master
                     else
                       :fit
                     end
-          config = Master.load_yaml(Master::RULES_PATH).fetch("engineering_fit", {})
+          config = Master.load_yaml(Master::LAWS_PATH).fetch("engineering_fit", {})
           {
             verdict:,
             load: "artifact ~#{bytes} bytes across ~#{code.to_s.lines.size} lines",
