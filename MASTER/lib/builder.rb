@@ -13,34 +13,42 @@ module Master
     # Default tool factories. data/tools.yml overrides them.
     DEFAULT_TOOL_MAP = {
       "ReadFile" => ->(r, i) {
-        Io::ReadFile.new(root: r, undo: i[:undo], event_bus: i[:bus], ground_truth: i[:ground_truth])
+        root = i.fetch(:workspace_root, r)
+        Io::ReadFile.new(root:, undo: i[:undo], event_bus: i[:bus], ground_truth: i[:ground_truth])
       },
       "WriteFile" => ->(r, i) {
-        Io::WriteFile.new(root: r, undo: i[:undo], governor: i[:governor],
+        root = i.fetch(:workspace_root, r)
+        Io::WriteFile.new(root:, undo: i[:undo], governor: i[:governor],
           event_bus: i[:bus], diff_stager: i[:diff_stager], ground_truth: i[:ground_truth])
       },
       "StrReplace" => ->(r, i) {
-        Io::StrReplace.new(root: r, undo: i[:undo], governor: i[:governor],
+        root = i.fetch(:workspace_root, r)
+        Io::StrReplace.new(root:, undo: i[:undo], governor: i[:governor],
           event_bus: i[:bus], diff_stager: i[:diff_stager], ground_truth: i[:ground_truth])
       },
-      "BatchReplace" => ->(r, i) { Io::BatchReplace.new(root: r, governor: i[:governor], event_bus: i[:bus]) },
+      "BatchReplace" => ->(r, i) {
+        root = i.fetch(:workspace_root, r)
+        Io::BatchReplace.new(root:, governor: i[:governor], event_bus: i[:bus])
+      },
       "AstEdit" => ->(r, i) {
-        Io::AstEdit.new(root: r, undo: i[:undo], governor: i[:governor], event_bus: i[:bus])
+        root = i.fetch(:workspace_root, r)
+        Io::AstEdit.new(root:, undo: i[:undo], governor: i[:governor], event_bus: i[:bus])
       },
       "MemoryRecord" => ->(r, i) { Io::MemoryRecord.new(memory: i[:memory], root: r, event_bus: i[:bus]) },
-      "Tree" => ->(r, i) { Io::Tree.new(root: r, event_bus: i[:bus]) },
-      "ListDir" => ->(r, i) { Io::ListDir.new(root: r, event_bus: i[:bus]) },
-      "SearchFiles" => ->(r, i) { Io::SearchFiles.new(root: r, event_bus: i[:bus]) },
+      "Tree" => ->(r, i) { Io::Tree.new(root: i.fetch(:workspace_root, r), event_bus: i[:bus]) },
+      "ListDir" => ->(r, i) { Io::ListDir.new(root: i.fetch(:workspace_root, r), event_bus: i[:bus]) },
+      "SearchFiles" => ->(r, i) { Io::SearchFiles.new(root: i.fetch(:workspace_root, r), event_bus: i[:bus]) },
       "SearchKnowledge" => ->(r, i) { Io::SearchKnowledge.new(root: r, event_bus: i[:bus]) },
       "SymbolLookup" => ->(r, i) { Io::SymbolLookup.new(code_index: i[:code_index], event_bus: i[:bus]) },
       "Shell" => ->(r, i) {
-        Io::Shell.new(root: r, governor: i[:governor], event_bus: i[:bus], library_verify: i[:library_verify])
+        Io::Shell.new(root: i.fetch(:workspace_root, r), governor: i[:governor], event_bus: i[:bus],
+          library_verify: i[:library_verify])
       },
-      "GitContext" => ->(r, i) { Io::GitContext.new(root: r, event_bus: i[:bus]) },
+      "GitContext" => ->(r, i) { Io::GitContext.new(root: i.fetch(:workspace_root, r), event_bus: i[:bus]) },
       "WebFetch" => ->(r, i) { Io::WebFetch.new(governor: i[:governor], event_bus: i[:bus]) },
       "WebSearch" => ->(r, i) { Io::WebSearch.new(governor: i[:governor], event_bus: i[:bus]) },
       "PluginObserve" => ->(_r, i) { Io::PluginObserve.new(governor: i[:governor], event_bus: i[:bus]) },
-      "Clean" => ->(r, i) { Io::Clean.new(root: r, governor: i[:governor], event_bus: i[:bus]) },
+      "Clean" => ->(r, i) { Io::Clean.new(root: i.fetch(:workspace_root, r), governor: i[:governor], event_bus: i[:bus]) },
       "FeedbackRecord" => ->(r, i) { Io::FeedbackRecord.new(learnings: i[:learnings]) },
       "SubdomainOrchestrator" => ->(r, i) {
         Io::SubdomainOrchestrator.new(root: r, event_bus: i[:bus],
@@ -52,6 +60,11 @@ module Master
     }.freeze
 
     module_function
+
+    def workspace_root(root)
+      path = File.expand_path(root)
+      path == Master::ROOT ? Master::REPO_ROOT : path
+    end
 
     def build(root: Dir.pwd)
       Ground::BootChecks.run(root:)
@@ -85,19 +98,20 @@ module Master
 
     def build_analysis_services(root:, config:, trace:, loop_c:, reach:)
       bus = trace[:bus]
+      workspace = workspace_root(root)
       renderer = Voice::Renderer.new(config:)
       output_check = Review::OutputCheck.load(root:)
       # The evidence contract on MASTER's own reply. Built here beside the other
       # output gate rather than reached off the renderer, because a test that
       # hands the pipeline a stub renderer must still get a container it can run.
       output_guard = Voice::OutputGuard.new
-      code_index = Review::CodeIndex.new(root:, event_bus: bus)
+      code_index = Review::CodeIndex.new(root: workspace, event_bus: bus)
       code_index.build_async
-      reference_graph = Review::ReferenceGraph.new(root:, event_bus: bus)
-      ecology = Review::RepoEcology.new(root:, event_bus: bus, code_index:)
+      reference_graph = Review::ReferenceGraph.new(root: workspace, event_bus: bus)
+      ecology = Review::RepoEcology.new(root: workspace, event_bus: bus, code_index:)
       subscribe_ecology_reindex(bus:, ecology:)
       diag = Trace::Diag.new(homeostat: loop_c[:homeostat], breaker: reach[:breaker], logging: trace[:logging], event_bus: bus)
-      { renderer:, output_check:, output_guard:, code_index:, reference_graph:, ecology:, diag: }
+      { renderer:, output_check:, output_guard:, code_index:, reference_graph:, ecology:, diag:, workspace_root: workspace }
     end
 
     def subscribe_ecology_reindex(bus:, ecology:)
