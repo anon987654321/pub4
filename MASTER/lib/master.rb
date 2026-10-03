@@ -174,7 +174,7 @@ module Master
   # nested section under `config`. This rebuilds the map they used to form, so
   # everything that dug design_rules by block name still reaches its key.
   def self.tokens(root: ROOT)
-    (load_rules(root: {}) || {})["tokens"] || {}
+    (load_rules(root:) || {})["tokens"] || {}
   end
 
 
