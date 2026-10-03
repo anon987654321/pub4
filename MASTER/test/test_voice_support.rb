@@ -334,6 +334,23 @@ end
     assert_raises(KeyError) { DNA.chords_for(:j_dilla, :not_an_album) }
     assert_kind_of Hash, DNA.preset(:dilla_drum_bus)
   end
+  def test_stream_failure_after_audio_never_resynthesizes_the_utterance
+    fallback = false
+    outcome = PB::StreamOutcome.new(ok: false, played_bytes: 1024)
+
+    PB.stub(:stream_player, ["ffplay", []]) do
+      PB.stub(:pump_stream_pipe, outcome) do
+        PB.stub(:stream_fallback, ->(_values) { fallback = true; true }) do
+          PB.stub(:generation_active?, true) do
+            refute PB.send(:stream_utterance, { generation: 0, part: "hello" }, "jenny", {})
+          end
+        end
+      end
+    end
+
+    refute fallback, "partially heard speech must never be replayed from the beginning"
+  end
+
   def test_background_playback_falls_back_to_policy_native_voice_when_player_fails
     spoken = []
     job = ["hello", "hello", true, :jenny, :warm]
