@@ -51,7 +51,7 @@ module Law
   # `ask` is the semantic half: a rule whose subject cannot be matched by a
   # regex states the question instead, and the model answers it. It sits beside
   # `detect` rather than in a second file because a rule is one thing and its
-  # detector kind is a property of it — the split across law/ and data/rules.yml
+  # detector kind is a property of it — the split between executable law and the policy catalogue in data/laws.yml
   # put 52 rules' detector in one file and their severity and fix text in
   # another, which is a shape no rename can make legible.
   #
