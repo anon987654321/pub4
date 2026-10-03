@@ -131,6 +131,15 @@ module Master::Core
       Observation.no("http: #{e.class}: #{e.message}")
     end
 
+    def do_http(url:, **)
+      return Observation.no("network unavailable") unless @network
+
+      result = @network.call(url:)
+      result.ok? ? Observation.ok(result.value!.to_s) : Observation.no(result.message.to_s)
+    rescue StandardError => e
+      Observation.no("http: #{e.class}: #{e.message}")
+    end
+
     def do_exec(argv:, timeout: 60, env: {}, **)
       raise ArgumentError, "argv must be an array" unless argv.is_a?(Array)
       raise ArgumentError, "argv cannot be empty" if argv.empty?
