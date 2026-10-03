@@ -555,53 +555,6 @@ rule_deps:
   no_inline_styles:
     after: [magic_color]
 
-                               # "rather than" wrapped mid-phrase
-      - 'just (?:as|because|before|after|when)'    # a comparison
-      - '(?:not|never)\s+(?:just|simply|only)'     # a negation
-      - 'n''t\s+(?:just|simply|only)'
-      - 'just\s+(?:\w+ed|found|said|ran|saw|built)' # moments ago, a tense marker
-      - '(?:the|this|that|its) very'               # a determiner picking a thing out
-    passive:
-      auxiliary: '(?:was|were|been)'
-      participle: '(?:\w+ly\s+)?\w+ed'
-      agent: 'by'
-  nb:
-    # Bokmål reaches the tree through the Rails locale files and nowhere else;
-    # every comment in the repo is English. Scoped there, `bare` is Norwegian.
-    spoken_in: '(?:\A|[/.])nb\.yml\z'
-    file_languages: [yaml]
-    reads: values
-    ids:
-      qualifiers: PROSE_OMIT_QUALIFIERS_NB
-      passive: PROSE_ACTIVE_VOICE_NB
-    fixtures:
-      qualifiers:
-        bad: 'tittel: Dette er veldig raskt'
-        good: 'tittel: Dette er raskt'
-      passive:
-        bad: 'notis: Feilen ble rettet av vedlikeholderen'
-        good: 'notis: Vedlikeholderen rettet feilen'
-    # `egentlig` and `faktisk` are held out for the same reason `actually` is:
-    # both mark a contrast with what was assumed rather than grading anything.
-    #
-    # `bare` is held out on measured evidence. It reads as English `just` and
-    # carries the same split, but in this tree the restrictive sense is the only
-    # one present: all 11 hits were "du kan bare slette dine egne kommentarer",
-    # "bare medlemmer poster", "Dating er bare for voksne". Bokmål has no other
-    # word for that "only", so deleting it inverts the sentence — the copy stops
-    # saying what a reader may not do. English `just` keeps its place because
-    # the merely sense does appear there; here it does not.
-    leeches: [veldig, svært, ganske, nokså, temmelig, virkelig, simpelthen]
-    keep:
-      - 'heller enn'          # rather than
-      - 'ikke bare'           # not only
-    # Bokmål builds the periphrastic passive with bli/ble/blitt and marks the
-    # agent with `av`, which is the same shape the English rule judges.
-    passive:
-      auxiliary: '(?:ble|blitt)'
-      participle: '\w+(?:et|dd|tt|t)'
-      agent: 'av'
-
 plugins:
   travel_browser:
     scope: external_travel_transactions
