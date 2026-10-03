@@ -7,7 +7,7 @@ module Operator
     ROOT = File.expand_path("../../..", __dir__)
     REQUIRED = %w[
       MASTER/data/soul.yml
-      MASTER/data/rules.yml
+      MASTER/data/laws.yml
       MASTER/data/SOUL.md
       MASTER/data/project_context.yml
       MASTER/bin/cli
@@ -31,7 +31,7 @@ module Operator
     def check
       issues = required_paths
       soul = load_yaml("MASTER/data/soul.yml")
-      rules = load_yaml("MASTER/data/rules.yml")
+      laws = load_yaml("MASTER/data/laws.yml")
       issues << "soul: golden rule missing or changed" unless soul.dig("absolute", "golden_rule") == "PRESERVE_THEN_IMPROVE_NEVER_BREAK"
       issues << "soul: no sacred paths declared" unless Array(soul.dig("absolute", "sacred_paths")).any?
       issues << "rules: missing design system" unless rules["design_system"].is_a?(Hash)
@@ -69,7 +69,7 @@ module Operator
       rails_tokens = File.join(@root, "RAILS/shared/design_tokens.yml")
       if File.file?(rails_tokens)
         header = File.read(rails_tokens).lines.first(2).join
-        issues << "rails: generated design tokens lost MASTER source marker" unless header.include?("MASTER/data/rules.yml")
+        issues << "rails: generated design tokens lost MASTER source marker" unless header.include?("MASTER/data/laws.yml")
       end
       issues << "openbsd: missing operator recipe authority" unless File.file?(File.join(@root, "OPENBSD/data/operator.yml"))
       issues
