@@ -4,7 +4,7 @@ module Master
   module Voice
     # The code and design style sections of Personality's system prompt: zsh,
     # Ruby, web, typography, heuristics, accessibility and the design rules, each
-    # read from rules.yml sections through @rules. PersonalityPromptBuilder
+    # read from laws.yml sections through @rules. PersonalityPromptBuilder
     # includes this and decides which sections a prompt carries.
     module PersonalityStyleSections
       private
@@ -185,13 +185,13 @@ module Master
         sections["master_priority"] += "\n#{label}: #{directives.join(' / ')}" unless directives.empty?
       end
 
-      # design_rules.yml's numeric thresholds and rules.yml's beauty
+      # design_laws.yml's numeric thresholds and laws.yml's beauty
       # touchstones previously only reached anything via an explicit /scan
       # -- this is the same mechanism style.yml already uses to reach every
       # session automatically, extended to cover the rest of the design
       # constitution rather than leaving it scan-only. Kept to one line per
       # concern, matching the terse style of the sections above; the full
-      # detail stays in design_rules.yml/rules.yml for /scan to read.
+      # detail stays in design_laws.yml/laws.yml for /scan to read.
       def add_design_rules(sections)
         design = Master::Design::Thresholds.load
         lines = [
@@ -229,7 +229,7 @@ module Master
         "Peer choices: group or progressively disclose past #{max} (Hick, design_rules.ux_laws)."
       end
 
-      # rules.yml names Design::Thresholds.micro_typography as the enforcer of
+      # laws.yml names Design::Thresholds.micro_typography as the enforcer of
       # typography.micro, so the prose CSS a model writes is told its values.
       def micro_typography_line
         micro = Master::Design::Thresholds.micro_typography
@@ -248,7 +248,7 @@ module Master
         "Forbidden CSS: #{Array(forbidden).join(', ')} -- flat UI only; exceptions need a documented, scoped reason (design_rules.pixel_perfection.exception_policy)."
       end
 
-      # rules.yml markdown_style was codified for MASTER and the three coding
+      # laws.yml markdown_style was codified for MASTER and the three coding
       # agents it names, and then read by nothing — data_reach counted it as one
       # of the two unnamed keys that put that census over its ceiling. Every
       # session writes markdown; the aesthetic that governs it belongs in the
@@ -267,7 +267,7 @@ module Master
         beauty = @rules.data(:rules)["beauty"]
         return unless beauty.is_a?(Hash) && !beauty.empty?
 
-        "Aesthetic touchstones: #{beauty.keys.join(', ')} (rules.beauty) -- cite these for conceptual design judgment design_rules.yml can't measure lexically."
+        "Aesthetic touchstones: #{beauty.keys.join(', ')} (rules.beauty) -- cite these for conceptual design judgment design_laws.yml can't measure lexically."
       end
     end
   end
