@@ -58,7 +58,7 @@ module Operator
     # These names do not replace any tree's authority; they catch accidental deletion
     # of the front door while leaving Rails and OpenBSD free to keep their own shape.
     BASE_TREE_ANCHORS = {
-      "MASTER" => %w[AGENTS.md data/soul.yml data/rules.yml bin/operator bin/check],
+      "MASTER" => %w[AGENTS.md data/soul.yml data/laws.yml bin/operator bin/check],
       "RAILS" => %w[CLAUDE.md shared/README.md shared/design_tokens.yml apps.yml],
       "OPENBSD" => %w[CLAUDE.md PATH_OWNERSHIP.yml data/operator.yml bin/check],
       "STUDIO" => %w[README.md postpro/postpro.rb replicate/replicate.rb lora/lora.rb dilla/dilla.rb],
