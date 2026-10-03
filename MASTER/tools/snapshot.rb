@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
-# Regenerates the verbatim codebase mirrors at pub4/.master/snapshots/snapshot_<TREE>.md.
+# Regenerates the verbatim codebase mirrors at the pub4 root: snapshot_MASTER.md,
+# snapshot_RAILS.md, snapshot_OPENBSD.sh and snapshot_STUDIO.md.
 #
 # These are the packs handed to another model when it needs the whole tree
 # rather than a summary: every git-tracked text file inlined in full, no size
@@ -27,6 +28,12 @@ module Operator
       "RAILS" => "RAILS",
       "OPENBSD" => "OPENBSD",
       "STUDIO" => "STUDIO"
+    }.freeze
+    OUTPUT_NAMES = {
+      "MASTER" => "snapshot_MASTER.md",
+      "RAILS" => "snapshot_RAILS.md",
+      "OPENBSD" => "snapshot_OPENBSD.sh",
+      "STUDIO" => "snapshot_STUDIO.md"
     }.freeze
     TREES = TREE_PATHS.keys.freeze
 
@@ -169,12 +176,10 @@ module Operator
       end
 
       binaries, texts = paths.partition { |p| binary?(File.join(REPO, p)) }
-      # Snapshots are evidence artifacts, not source. Keep them under .master so
-      # the source root contains only authored architecture. The directory is
-      # already ignored as runtime state, so a snapshot cannot become tracked source.
-      output_dir = File.join(REPO, ".master", "snapshots")
-      FileUtils.mkdir_p(output_dir)
-      out = File.join(output_dir, "snapshot_#{tree}.md")
+      # Snapshots are committed share-packs. Keep them at the repo root so an
+      # external LLM can fetch one path and receive the complete tree without
+      # needing access to ignored runtime state.
+      out = File.join(REPO, OUTPUT_NAMES.fetch(tree))
 
       File.open(out, "w") do |f|
         f.puts "# #{tree} — source snapshot"
