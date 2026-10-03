@@ -122,7 +122,7 @@ class TestRecoveryPubManifest < Minitest::Test
   def test_legacy_manifest_has_no_duplicate_top_level_keys
     lines = ROOT.join("MASTER/data/recovery/legacy_manifest.yml").read.each_line
     keys = lines.filter_map do |line|
-      match = line.match(/A([A-Za-z_][A-Za-z0-9_-]*):(?:s|$)/)
+      match = line.match(/\A([A-Za-z_][A-Za-z0-9_-]*):(?:\s|$)/)
       match && match[1]
     end
 
