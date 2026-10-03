@@ -8,7 +8,7 @@ module Master
       TIER = :safe
       MAX_LINES = 2000
       NAME = "read_file".freeze
-      DESCRIPTION = "Read a file with line numbers. Guarded to project root.".freeze
+      DESCRIPTION = "Read a file with line numbers. Guarded to project root; full=true reads every line.".freeze
 
       def initialize(root:, undo:, event_bus: nil, ground_truth: nil)
         @root = File.realpath(root)
