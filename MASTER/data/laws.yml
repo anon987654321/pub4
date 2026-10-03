@@ -12,7 +12,7 @@ schema: 1
 rule_system:
   source_of_truth: executable_law_plus_declared_policy_adapters
   catalogue_role: policy_and_metadata
-  policy_adapters: [veto_patterns, rule_deps, architecture, preserve_user_intent, runtime_policy, design_system]
+  policy_adapters: [veto_patterns, rule_deps, architecture, preserve_user_intent, runtime_policy, tokens]
   index: derived_from_executable_law
   lifecycle:
     states: [proposed, proven, active, observed, trusted, advisory, retired]
@@ -287,7 +287,7 @@ plugins:
     exploitation: false
     remote_control: false
 
-design_system:
+tokens:
   # Canonical material design values. This block is the only machine-readable
   # design-token authority; RAILS/shared/design_tokens.yml is a generated view.
   # Canonical design token anchors — keep in sync with _dialect_tokens.scss defaults and face.css :root.
