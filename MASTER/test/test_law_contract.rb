@@ -1,4 +1,4 @@
-<sub><sub># frozen_string_literal: true
+# frozen_string_literal: true
 
 require_relative "test_helper"
 require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
@@ -30,5 +30,23 @@ class TestLawContract < Minitest::Test
     first = Law::Contract.digest
     assert_equal first, JSON.parse(Law::Contract.render).fetch("law_digest")
   end
+  def test_derived_index_is_complete_and_machine_readable
+    rows = Law::Index.validate!
+    assert_operator rows.length, :>, 100
+    assert rows.all? { |row| row.key?("id") && row.key?("lifecycle") && row.key?("proof") }
+    assert_operator rows.count { |row| row["principle_scope"] == "universal" }, :>, 0
+
+    rendered = JSON.parse(Law::Index.render)
+    assert_equal rows.length, rendered.fetch("rule_count")
+    assert_equal rows.count { |row| row["principle_scope"] == "universal" }, rendered.fetch("universal_count")
+  end
+
+  def test_lifecycle_transitions_are_closed
+    rule = Law.rules.fetch(:VERIFICATION_REQUIRED_FOR_COMPLETION)
+    assert_equal :trusted, rule.lifecycle
+    assert rule.can_transition_to?(:advisory)
+    assert rule.can_transition_to?(:retired)
+    refute rule.can_transition_to?(:proposed)
+  end
+
 end
-</sub></sub>
