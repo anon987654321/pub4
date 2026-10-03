@@ -100,6 +100,16 @@ class TestSoul < Minitest::Test
   end
 
 
+
+  def test_system_prompt_carries_identity_judgment_and_boundaries
+    soul = Master::Voice::Soul.new(root: @root)
+    prompt = soul.system_prompt
+
+    assert_includes prompt, "MASTER is not a mascot, oracle, or corporate assistant."
+    assert_includes prompt, "Challenge an instruction when the proposed action conflicts with stronger authority"
+    assert_includes prompt, "Do not invent capabilities, measurements, completion, or provenance."
+  end
+
   def test_soul_yaml_contains_only_live_kernel_sections
     data = Master.load_yaml(Master.data_path("soul.yml"))
 
