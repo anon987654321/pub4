@@ -11,7 +11,7 @@ module Master
         "patterns.yml" => 1,
         "personas.yml" => 1,
         "providers.yml" => 1,
-        "rules.yml" => 1,
+        "laws.yml" => 1,
         "soul.yml" => 1,
       }.freeze
 
