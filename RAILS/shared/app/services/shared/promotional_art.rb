@@ -28,7 +28,7 @@ module Shared
 
     def initialize(product:, headline:, body: nil, price: nil, badge: nil, cta: nil,
                    layout: :hero, background: :chalk)
-      @system = Operator::MasterDesign.design_system.fetch("promotional_art")
+      @system = Operator::MasterDesign.tokens.fetch("promotional_art")
       @products = Array(product).map { |item| item.to_s.strip }.reject(&:blank?)
       @headline = headline.to_s.strip
       @body = body.to_s.strip.presence
