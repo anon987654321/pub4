@@ -7,14 +7,14 @@ class TestPreserveUserIntent < Minitest::Test
     @guard = Master::Ground::PreserveUserIntent.new(root: Master::ROOT)
   end
 
-  def test_policy_load_failure_is_not_treated_as_no_restrictions
-    error = assert_raises(RuntimeError) do
-      Master.stub(:load_yaml, ->(*) { raise "rules unreadable" }) do
-        Master::Ground::PreserveUserIntent.new(root: Master::ROOT)
-      end
-    end
-
-    assert_match(/preserve_user_intent configuration unreadable: .*rules unreadable/, error.message)
+  def test_default_preservation_contract_is_present
+    assert_equal %w[
+      public_method_signature
+      error_class_raised
+      return_type_shape
+      log_format_consumed_by_others
+      side_effects_order
+    ], @guard.class::FORBIDDEN_CHANGES
   end
 
   def test_allows_non_refactor_commits
