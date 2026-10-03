@@ -1,0 +1,50 @@
+{
+  "name": "BSDports",
+  "short_name": "BSDports",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/icon.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    },
+    {
+      "src": "/icon.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-mono-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "monochrome"
+    },
+    {
+      "src": "/icon-mono-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "monochrome"
+    }
+  ],
+  "start_url": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "launch_handler": { "client_mode": ["navigate-existing", "auto"] },
+  "scope": "/",
+  "description": <%= raw t("pwa.description").to_json %>,
+  "theme_color": "#0ea5e9",
+  "background_color": "#0ea5e9",
+  "lang": <%= raw I18n.locale.to_s.to_json %>,
+  "shortcuts": [
+    {
+      "name": <%= raw t("pwa.search_ports").to_json %>,
+      "short_name": <%= raw t("pwa.search").to_json %>,
+      "url": "/ports?q="
+    }
+  ]
+}

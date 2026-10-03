@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<%# data-theme="light" is the default, and it is written rather than left to
+    the OS — operator, 2026-08-29.
+
+    Without it this app has no theme attribute at all, so the shared token
+    sheet's `@media (prefers-color-scheme: dark)` block decides, and a reader
+    whose machine prefers dark gets a dark app. "Light by default" has to mean
+    light on a dark-mode Mac too, or it means nothing.
+
+    It is an attribute rather than a media query so there is exactly one
+    mechanism: _theme_bootstrap overwrites this from localStorage before paint
+    if the reader has chosen, so a saved preference still wins and nothing
+    flashes. %>
+<html lang="<%= I18n.locale %>" data-theme="light" class="chrome-hidden">
+<head>
+  <meta charset="utf-8">
+  <meta name="view-transition" content="same-origin">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#ffffff" data-light-color="#ffffff" data-dark-color="#000000">
+  <title><%= content_for?(:title) ? "#{yield :title} — Amber" : "Amber" %></title>
+  <meta name="description" content="<%= content_for?(:description) ? yield(:description) : "Amber — social fashion. Share outfits, keep a wardrobe, and dress with people you follow." %>">
+  <link rel="canonical" href="<%= seo_canonical_url %>">
+  <%# The card's description is the blurb without the "Amber — " prefix the
+      <title> and meta description carry: a card already shows the site name on
+      its own line. %>
+  <%= render "shared/social_card_meta", site_name: "Amber",
+                                        page_title: content_for(:title).presence,
+                                        page_description: content_for(:description).presence ||
+                                          "Social fashion. Share outfits, keep a wardrobe, and dress with people you follow." %>
+  <%= csrf_meta_tags %>
+  <%= csp_meta_tag %>
+  <%# turbo_refreshes_with in Shared::ApplicationSetup provides its meta tags here. %>
+  <%= yield :head %>
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" href="/icon-192.png" type="image/png" sizes="192x192">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180">
+  <link rel="preload" href="/icon-192.png" as="image">
+  <%= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
+  <%# The wordmark sits in the nav bar at first paint, so its face is fetched
+      before the stylesheet asks for it. %>
+  <link rel="preload" as="font" type="font/woff2" href="/fonts/caprasimo-latin-400-normal.woff2" crossorigin>
+  <link rel="stylesheet" href="/swiper-bundle.min.css">
+  <link rel="stylesheet" href="/lightgallery.css">
+  <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+  <%= yield :json_ld %>
+  <%= json_ld_script(organization_json_ld(site_name: "Amber", url: root_url)) %>
+  <%= javascript_importmap_tags %>
+</head>
+<body class="<%= "auth-surface" if controller_path.in?(%w[sessions passwords registrations]) %>"
+      data-layout="document"
+      data-layout-pass="micro-320"
+      data-surface="luxury"
+      data-pwa-key="amber"
+      data-controller="pwa-standalone browser-fingerprint feed-hotkey battery-aware network-aware media-exclusive viewport-aware visual-field cookie-consent" data-cookie-consent-required="true"
+      data-feed-hotkey-help-value="<%= t("hotkeys.help") %>"
+      data-feed-hotkey-coach-value="<%= t("hotkeys.coach") %>"
+      data-feed-hotkey-coach-dismiss-value="<%= t("hotkeys.coach_dismiss") %>"
+      data-browser-fingerprint-url-value="<%= fingerprint_path %>">
+<a class="skip-link" href="#main-content"><%= t("skip_to_content") %></a>
+    <%# The shared icon sprite: every icon(...) <use> resolves against it. The
+        shared theme toggle's sun icon was referencing symbols this app never
+        included. %>
+    <%= render "shared/icon_sprite" if icon_sprite? %>
+<%# The header is two icons in the top corner, as brgen's is: the account (or
+    sign-in) link and the light/dark toggle. The toggle's input stays a
+    sibling of .theme-root, because the dark palette is written as
+    #dark-toggle:checked ~ .theme-root; the account link sits beside its label.
+
+    Below it, amber's own Caprasimo mark, centred: large on the home page, where
+    it is the first screen, and at a bar's size everywhere else. The viewBox is
+    the word's ink, measured in Chrome, so the word fills its box. %>
+<%= render "shared/theme_toggle", storage_key: "amber-theme" %>
+<% home = current_page?(root_path) %>
+
+<div class="theme-root">
+<div class="amber-corner" role="region" aria-label="<%= t("nav.account") %>">
+  <% if authenticated? %>
+    <%= link_to user_path(Current.user), class: "amber-corner-link", title: t("nav.account"), aria: { label: t("nav.account") } do %><%= icon :profile, size: 20 %><% end %>
+  <% else %>
+    <%= link_to new_session_path, class: "amber-corner-link", title: t("nav.sign_in"), aria: { label: t("nav.sign_in") } do %><%= icon :sign_in, size: 20 %><% end %>
+  <% end %>
+</div>
+
+<header class="amber-masthead<%= " amber-masthead--home" if home %>">
+  <%= link_to root_path, class: "amber-logo-home", aria: { label: t("nav.brand_home") } do %>
+    <%= render "shared/logo", id_prefix: "amber-nav", view_box: "58 105 410 108" %>
+  <% end %>
+</header>
+
+<% if home %>
+  <nav class="amber-editorial-nav" aria-label="<%= t("nav.primary_nav", default: "Amber") %>">
+    <%= link_to t("home.new_in", default: "New in"), items_path %>
+    <%= link_to t("nav.outfits", default: "Looks"), outfits_path %>
+    <%= link_to t("nav.feed", default: "Stories"), posts_path %>
+    <%= link_to t("nav.connections", default: "Creators"), connections_path %>
+    <%= link_to t("nav.messages", default: "Messages"), messages_path if authenticated? %>
+  </nav>
+<% end %>
+
+<div class="app-shell" data-controller="scroll-chrome" data-scroll-chrome-storage-key-value="pub4:tab-bar:open">
+  <div class="layout">
+    <%# The home page is the logo, the four looks and the footer: no rails. %>
+    <% unless home %>
+    <div class="sidebar-swiper" data-controller="edge-swiper" data-edge-swiper-edge-value="left" data-turbo-permanent>
+    <aside class="sidebar" data-edge-swiper-target="root">
+      <nav role="navigation" aria-label="<%= t("nav.primary_nav") %>">
+        <%= render "shared/sidebar_nav" %>
+      </nav>
+    </aside>
+    <button type="button" class="edge-grip edge-grip-start" data-edge-swiper-target="grip"
+            data-action="click->edge-swiper#toggle" aria-label="<%= t("nav.show_sidebar") %>" aria-expanded="false"></button>
+    </div>
+    <% end %>
+
+    <main id="main-content" role="main" aria-label="<%= t("nav.main") %>">
+      <%= render "shared/flash" %>
+      <%= yield %>
+    </main>
+
+    <% unless home %>
+    <div class="widgets-swiper" data-controller="edge-swiper" data-edge-swiper-edge-value="right">
+    <button type="button" class="edge-grip edge-grip-end" data-edge-swiper-target="grip"
+            data-action="click->edge-swiper#toggle" aria-label="<%= t("nav.show_widgets") %>" aria-expanded="false"></button>
+    <aside class="widgets" aria-label="<%= t("nav.show_widgets") %>" data-edge-swiper-target="root">
+      <%= render "shared/widgets" %>
+    </aside>
+    </div>
+    <% end %>
+  </div>
+
+  <%= render "shared/footer" %>
+  <%= render "shared/flash_toasts" %>
+  <%= render "shared/nearby_chat_widget", title: t("nav.messages", default: "Messages") if authenticated? %>
+
+  <div class="tab-bar-coach"
+       data-scroll-chrome-target="coach"
+       hidden
+       role="status"
+       aria-live="polite">
+    <p class="tab-bar-coach-text"><%= t("nav.menu_coach") %></p>
+    <div class="tab-bar-coach-actions">
+      <button type="button" class="tab-bar-coach-dismiss" data-action="scroll-chrome#dismissCoach"><%= t("nav.menu_coach_dismiss") %></button>
+      <button type="button" class="tab-bar-coach-show" data-action="scroll-chrome#reveal"><%= t("nav.show_menu") %></button>
+    </div>
+  </div>
+  <button type="button"
+          class="tab-bar-peel"
+          data-scroll-chrome-target="peel"
+          data-action="scroll-chrome#reveal"
+          aria-controls="app-tab-bar"
+          aria-expanded="false"
+          aria-label="<%= t("nav.show_menu") %>"></button>
+  <nav id="app-tab-bar"
+       role="navigation"
+       class="tab-bar"
+       aria-label="<%= t("nav.mobile_nav") %>"
+       data-scroll-chrome-target="bar"
+       data-turbo-permanent
+       aria-hidden="true"
+       inert>
+    <%= link_to root_path, class: "tab-item", aria: { label: t("nav.home"), current: current_page?(root_path) ? "page" : nil } do %>
+      <%= icon :home, size: 26 %>
+    <% end %>
+    <% if authenticated? %>
+      <%= link_to feed_posts_path, class: "tab-item", aria: { label: t("nav.feed"), current: current_page?(feed_posts_path) ? "page" : nil } do %>
+        <%= icon :explore, size: 26 %>
+      <% end %>
+      <%= link_to items_path, class: "tab-item", aria: { label: t("nav.wardrobe"), current: current_page?(items_path) ? "page" : nil } do %>
+        <%= icon :shirt, size: 26 %>
+      <% end %>
+      <%= link_to outfits_path, class: "tab-item", aria: { label: t("nav.outfits"), current: current_page?(outfits_path) ? "page" : nil } do %>
+        <%= icon :layers, size: 26 %>
+      <% end %>
+    <% else %>
+      <%= link_to posts_path, class: "tab-item", aria: { label: t("nav.feed"), current: current_page?(posts_path) ? "page" : nil } do %>
+        <%= icon :explore, size: 26 %>
+      <% end %>
+      <%= link_to demo_wardrobe_path, class: "tab-item", aria: { label: t("nav.demo"), current: current_page?(demo_wardrobe_path) ? "page" : nil } do %>
+        <%= icon :play, size: 26 %>
+      <% end %>
+      <%= link_to new_session_path, class: "tab-item", aria: { label: t("nav.sign_in"), current: current_page?(new_session_path) ? "page" : nil } do %>
+        <%= icon :sign_in, size: 26 %>
+      <% end %>
+    <% end %>
+  </nav>
+</div>
+</div>
+
+<% if home %>
+  <%= render "shared/welcome_onboarding", surface: "amber",
+        city: (defined?(Current) && Current.respond_to?(:city_record) && Current.city_record&.name) || "Bergen" %>
+<% end %>
+<%= render "shared/cookie_banner" />
+<%= render "shared/install_prompt",
+      title: t("install.title"),
+      body: t("install.body"),
+      after_engagement: home %>
+<%# Shared::Affiliate attribution. Renders nothing without TRADEDOUBLER_WEBSITE_ID; amber
+    showed affiliate links for months with no website id anywhere in its process,
+    so every click was unattributed. See Shared::LinkConverter. %>
+<%= render "shared/link_converter" %>
+</body>
+</html>

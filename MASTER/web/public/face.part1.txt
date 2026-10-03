@@ -1,0 +1,1046 @@
+"use strict";
+
+// Check WebGL before paying THREE's 1.3MB parse cost
+const _wglCv = document.createElement('canvas');
+const _hasCanvas = typeof _wglCv.getContext === 'function';
+const _hasWebGL = _hasCanvas && !!(_wglCv.getContext('webgl2') || _wglCv.getContext('webgl') || _wglCv.getContext('experimental-webgl'));
+
+const _dbgEl = document.getElementById('_dbg');
+if (_dbgEl) _dbgEl.textContent = _hasWebGL ? 'loading three...' : '2d mode';
+
+// Only import THREE on WebGL-capable devices — saves 10-20s parse on low-end hardware
+// Absolutize the specifier: this module runs from a blob: URL, where a
+// root-relative path (MASTER_ASSET_PATHS.threeModule = /assets/three…js) fails
+// "Failed to resolve module specifier" — the real root cause of the black face.
+const THREE = _hasWebGL ? await import(new URL(window.MASTER_ASSET_PATHS?.threeModule || '/three.face.module.js?v=1', document.baseURI).href) : null;
+
+// Minimal Color stub for no-WebGL path
+class _Color {
+  constructor(r=0,g=0,b=0){this.r=r;this.g=g;this.b=b;}
+  clone(){return new _Color(this.r,this.g,this.b);}
+  copy(c){this.r=c.r;this.g=c.g;this.b=c.b;return this;}
+  lerp(c,t){this.r+=(c.r-this.r)*t;this.g+=(c.g-this.g)*t;this.b+=(c.b-this.b)*t;return this;}
+}
+const Color = _hasWebGL ? THREE.Color : _Color;
+
+let cv = document.getElementById('face');
+const primer = document.getElementById('primer');
+const zshBar = document.getElementById('zsh');
+const zshIn = document.getElementById('zin');
+const ttsLive = document.getElementById('tts-live');
+const uiStatus = document.getElementById('ui-status');
+const rootBody = document.body;
+const FACE_CONTRACT = window.MASTER_FACE_CONTRACT || {};
+const FACE_SPATIAL = FACE_CONTRACT.spatial || {};
+const FACE_CAMERA = FACE_SPATIAL.camera || {};
+const FACE_BUDGET = FACE_SPATIAL.budget || {};
+const FACE_CAMERA_FOV = Number(FACE_CAMERA.fov) || 38;
+const FACE_CAMERA_DISTANCE = Number(FACE_CAMERA.distance) || 4.6;
+
+function faceRenderBudget() {
+  return window.MASTER_FACE_STATE?.renderBudget?.() || {};
+}
+
+function faceRenderDpr() {
+  const budget = faceRenderBudget();
+  return Number.isFinite(Number(budget.dpr))
+    ? Number(budget.dpr)
+    : Math.min(
+      Number(FACE_BUDGET.max_device_pixel_ratio) || 2,
+      Number(globalThis.devicePixelRatio || 1)
+    );
+}
+
+let FACE_PHOSPHOR_DECAY = 0.88;
+let FACE_RENDER_SCALE = 0.72;
+// The pixel grid is absolute, not a fraction of the display. Capping the render
+// buffer is what makes one drawn pixel mean the same thing on a phone, a CRT and
+// a 4K television — the big screen simply upscales the same grid further. Left
+// uncapped, the buffer grew with the display while particleScale() stayed
+// clamped at 1.35, so a face that reads solid on a laptop thinned to a sparse
+// dust of single pixels on a television, and cost four times as much to draw
+// while doing it.
+const FACE_BUFFER_MAX_W = 960;
+const FACE_BUFFER_MAX_H = 640;
+const soulDrift = Math.max(0, Math.min(1, Number(window.MASTER_SOUL_DRIFT || 0)));
+rootBody.dataset.soulDrift = soulDrift.toFixed(3);
+const modelBadge = (() => {
+  let el = document.getElementById('model-badge');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'model-badge';
+    el.className = 'model-badge';
+    document.body.appendChild(el);
+  }
+  return el;
+})();
+let modelBadgeTimer = null;
+const moodHistory = [];
+function showModelBadge(text) {
+  if (!modelBadge) return;
+  modelBadge.textContent = text || '';
+  if (!text) {
+    modelBadge.dataset.visible = '0';
+    return;
+  }
+  modelBadge.dataset.visible = '1';
+  if (modelBadgeTimer) clearTimeout(modelBadgeTimer);
+  modelBadgeTimer = setTimeout(() => {
+    modelBadge.dataset.visible = '0';
+    modelBadgeTimer = null;
+  }, 3000);
+}
+function updateMoodHistory(mood) {
+  if (!mood) return;
+  moodHistory.push(mood);
+  while (moodHistory.length > 20) moodHistory.shift();
+}
+
+function renderNoCanvasFallback() {
+  if (!cv || typeof cv.getContext === 'function') return false;
+  const ns = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(ns, "svg");
+  svg.setAttribute("viewBox", "0 0 320 220");
+  svg.setAttribute("role", "img");
+  svg.setAttribute("aria-label", "Face fallback");
+  svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+  svg.style.width = "100%";
+  svg.style.height = "100%";
+  svg.style.display = "block";
+  svg.innerHTML = `
+    <defs>
+      <linearGradient id="fallbackGlow" x1="0" x2="1">
+        <stop offset="0%" stop-color="#fff" stop-opacity="0.9"/>
+        <stop offset="100%" stop-color="#888" stop-opacity="0.25"/>
+      </linearGradient>
+    </defs>
+    <rect width="320" height="220" fill="#000"/>
+    <ellipse cx="160" cy="118" rx="72" ry="112" fill="url(#fallbackGlow)" opacity="0.88"/>
+    <circle cx="126" cy="98" r="14" fill="#000"/>
+    <circle cx="194" cy="98" r="14" fill="#000"/>
+    <path d="M128 152 Q160 160 192 152" fill="none" stroke="#000" stroke-width="5" stroke-linecap="round"/>
+    <text x="160" y="198" text-anchor="middle" font-family="monospace" font-size="16" fill="#fff">no canvas fallback</text>
+  `;
+  cv.replaceWith(svg);
+  cv = svg;
+  rootBody.dataset.faceFallback = "svg";
+  if (_dbgEl) _dbgEl.textContent = 'svg fallback';
+  return true;
+}
+
+renderNoCanvasFallback();
+
+const FONT_KEY = 'master:font';
+const THEME_KEY = 'master:theme';
+const FOCUS_KEY = 'master:focus';
+const SCALE_KEY = 'master:ui-scale';
+(function initTheme() {
+  if (localStorage.getItem(THEME_KEY) === 'light') localStorage.removeItem(THEME_KEY);
+  rootBody.dataset.theme = 'dark';
+  const themeBtn = document.getElementById('theme-btn');
+  if (themeBtn) themeBtn.setAttribute('aria-pressed', 'false');
+})();
+(function initFont() {
+  const root = rootBody || document.documentElement;
+  if (localStorage.getItem(FONT_KEY) === 'mono') root.classList.add('font-mono');
+})();
+function applyUiScale(scale, persist = true) {
+  const value = Math.max(0.85, Math.min(1.4, Number(scale) || 1));
+  document.documentElement.style.fontSize = `${(value * 100).toFixed(0)}%`;
+  if (persist) localStorage.setItem(SCALE_KEY, String(value));
+  const slider = document.getElementById('font-scale');
+  if (slider && slider.value !== String(value)) slider.value = String(value);
+}
+function initUiScale() {
+  const stored = parseFloat(localStorage.getItem(SCALE_KEY));
+  applyUiScale(Number.isFinite(stored) ? stored : 1, false);
+}
+function applyTheme(_theme, persist = true) {
+  rootBody.dataset.theme = 'dark';
+  if (persist) localStorage.setItem(THEME_KEY, 'dark');
+  const themeBtn = document.getElementById('theme-btn');
+  if (themeBtn) themeBtn.setAttribute('aria-pressed', 'false');
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', '#000000');
+}
+const RUNTIME_PROFILES = ['calm', 'full', 'crt', 'battery'];
+function runtimeProfile() {
+  return rootBody.dataset.runtimeProfile || 'calm';
+}
+function isRichMotionProfile() {
+  const p = runtimeProfile();
+  return p === 'full' || p === 'crt';
+}
+function applyShake(intensity) {
+  const cap = isRichMotionProfile() ? intensity : Math.min(intensity, 0.22);
+  State.shake = Math.max(State.shake || 0, cap);
+}
+function cycleRuntimeProfile() {
+  const current = runtimeProfile();
+  const idx = RUNTIME_PROFILES.indexOf(current);
+  const next = RUNTIME_PROFILES[(idx + 1) % RUNTIME_PROFILES.length];
+  State.profileOverride = next;
+  rootBody.dataset.runtimeProfile = next;
+  localStorage.setItem('master:runtime_profile', next);
+  const tintMap = {
+    calm: TINT.idle,
+    full: TINT.idle,
+    crt: TINT.idle,
+    battery: TINT.idle,
+  };
+  if (typeof fadeColorTo === 'function' && tintMap[next]) fadeColorTo(tintMap[next]);
+  window.MASTERVisual?.event?.('theme:profile', { topology: 'papua-mask', entropy: next === 'battery' ? 0.12 : 0.2, confidence: 0.88, mode: next });
+  resize?.();
+}
+function toggleTheme() {
+  applyTheme('dark');
+  cycleRuntimeProfile();
+}
+try {
+  const savedProfile = localStorage.getItem('master:runtime_profile');
+  if (savedProfile && RUNTIME_PROFILES.includes(savedProfile)) {
+    State.profileOverride = savedProfile;
+    rootBody.dataset.runtimeProfile = savedProfile;
+  }
+} catch (err) { window.MASTER_LOG?.warn?.("face_runtime:restore_profile", err); }
+function applyFocusMode(enabled, persist = true) {
+  const value = !!enabled;
+  rootBody.dataset.focusMode = value ? '1' : '0';
+  if (persist) localStorage.setItem(FOCUS_KEY, value ? '1' : '0');
+  const btn = document.getElementById('focus-btn');
+  if (btn) btn.setAttribute('aria-pressed', value ? 'true' : 'false');
+  const input = document.getElementById('zin');
+  if (value && input) input.focus();
+}
+function toggleFocusMode() {
+  applyFocusMode(rootBody.dataset.focusMode !== '1');
+}
+function initFocusMode() {
+  applyFocusMode(localStorage.getItem(FOCUS_KEY) === '1', false);
+}
+initUiScale();
+initFocusMode();
+
+const RATE_KEY = 'master:tts-rate';
+const RATES = [0.75, 1.0, 1.1, 1.25, 1.5, 2.0];
+function getTtsRate() {
+  const v = parseFloat(localStorage.getItem(RATE_KEY));
+  return Number.isFinite(v) && v > 0 ? v : 1.0;
+}
+function setTtsRate(r) {
+  const rate = Number.isFinite(r) && r > 0 ? r : 1.0;
+  localStorage.setItem(RATE_KEY, rate);
+  if (window.MASTER_FACE?.tts?.audio) window.MASTER_FACE.tts.audio.playbackRate = rate;
+  const el = document.getElementById('tts-rate');
+  if (el) el.textContent = rate.toFixed(2) + 'x';
+}
+// The server's own name table (Voice::Policy.voice_aliases). Empty when the page
+// carries no policy; an unresolved name then goes to /tts as typed, and the
+// server resolves it there.
+const VOICE_ALIASES = window.MASTER_VOICE_POLICY?.voices || {};
+const VOICE_IDLE_SIGNATURES = {
+  'ms-MY-OsmanNeural': { breath: 1.08, saccade: 0.24, pulse_floor: 0.14, blink_ms: 3200 },
+  'en-GB-RyanNeural': { breath: 0.96, saccade: 0.18, pulse_floor: 0.08, blink_ms: 2800 },
+  'nb-NO-FinnNeural': { breath: 1.02, saccade: 0.20, pulse_floor: 0.10, blink_ms: 3000 },
+  'en-US-AndrewNeural': { breath: 0.94, saccade: 0.16, pulse_floor: 0.07, blink_ms: 2600 },
+  'en-US-JennyNeural': { breath: 0.98, saccade: 0.14, pulse_floor: 0.07, blink_ms: 3400 },
+  'nb-NO-PernilleNeural': { breath: 0.90, saccade: 0.10, pulse_floor: 0.05, blink_ms: 4200 },
+  'nb-NO-FinnNeural': { breath: 1.02, saccade: 0.18, pulse_floor: 0.08, blink_ms: 3000 },
+  'ms-MY-YasminNeural': { breath: 0.97, saccade: 0.13, pulse_floor: 0.07, blink_ms: 3600 },
+  'ms-MY-OsmanNeural': { breath: 1.01, saccade: 0.18, pulse_floor: 0.08, blink_ms: 3100 }, // future-human: composed, steady gaze, still baseline, slow deliberate blink
+  'en-NG-EzinneNeural': { breath: 1.10, saccade: 0.26, pulse_floor: 0.12, blink_ms: 3400 },
+  'en-SG-WayneNeural': { breath: 0.92, saccade: 0.15, pulse_floor: 0.06, blink_ms: 2500 }
+};
+function applyIdleSignature(voice) {
+  State.idleSignature = VOICE_IDLE_SIGNATURES[voice] || { breath: 1, saccade: 0.2, pulse_floor: 0.1, blink_ms: 3000 };
+}
+function setVoiceName(voice, opts = {}) {
+  const locked = TTS_DEFAULT_VOICE;
+  if (window.MASTER_VOICE_POLICY?.persona_affects_text_only !== false) {
+    const prev = State.voiceName || '';
+    if (prev !== locked) {
+      State.voiceName = locked;
+      applyIdleSignature(locked);
+      if (window.MASTER_FACE?.tts) window.MASTER_FACE.tts.voice = locked;
+    }
+    return;
+  }
+  let raw = String(voice || '').trim();
+  // The davis -> pernille rewrite that used to sit here forced an en-US request
+  // back onto the Norwegian voice, which is the opposite of the policy whatever
+  // the policy voice happens to be: a voice asked for is the voice used. The
+  // single-voice lock lives in guardVoice, which reads MASTER_VOICE_POLICY, not
+  // in a hardcoded rewrite here. (Policy voice is en-US-JennyNeural as of
+  // 2026-09-12; nothing in this function should need to know that.)
+  const next = VOICE_ALIASES[raw.toLowerCase()] || raw;
+  const prev = State.voiceName || '';
+  if (prev === next && window.MASTER_FACE?.tts?.voice === next) return;
+  State.voiceName = next;
+  applyIdleSignature(next);
+  if (opts.lockVoice !== false) State.voiceLocked = true;
+  if (window.MASTER_FACE?.tts) window.MASTER_FACE.tts.voice = next;
+  const picker = document.getElementById('voice-picker');
+  if (picker) {
+    const alias = Object.entries(VOICE_ALIASES).find(([, v]) => v === next)?.[0] || raw.toLowerCase();
+    if (picker.value !== alias) picker.value = alias;
+  }
+  syncShareStateUrl();
+  void opts.speakBlurb;
+}
+function nearestRateIndex(rate) {
+  const value = Number.isFinite(rate) && rate > 0 ? rate : 1.25;
+  let best = 0;
+  let bestDelta = Infinity;
+  for (let i = 0; i < RATES.length; i++) {
+    const delta = Math.abs(RATES[i] - value);
+    if (delta < bestDelta) { best = i; bestDelta = delta; }
+  }
+  return best;
+}
+
+const GOLD = new Color(1, 1, 1);
+const TINT = {
+  idle: GOLD, claude: GOLD, deepseek: GOLD, gemini: GOLD, gpt: GOLD,
+  tense: GOLD, curious: GOLD, focused: GOLD, weary: GOLD,
+  pass: GOLD, veto: GOLD, unclear: GOLD
+};
+
+function dayNightTint() {
+  return new Color(1, 1, 1);
+}
+
+const SENT_BREAK = /([.!?…]+["'\u201D]?\s+|[\n]{2,})/;
+const TTS_MIN_CHUNK = 48;
+function pullStreamingTtsChunk(pending) {
+  if (!pending) return { chunk: '', rest: '' };
+  const sentBreak = pending.match(SENT_BREAK);
+  if (!sentBreak) return { chunk: '', rest: pending };
+  const cut = sentBreak.index + sentBreak[0].length;
+  return { chunk: pending.slice(0, cut).trim(), rest: pending.slice(cut) };
+}
+function shouldEnqueueTtsChunk(text, opts = {}) {
+  const t = String(text || '').trim();
+  if (!t) return false;
+  if (opts.flush) return true;
+  if (t.length >= TTS_MIN_CHUNK) return true;
+  if (/[.!?…]["'\u201D]?$/.test(t)) return true;
+  return false;
+}
+function looksLikeListingStream(text) {
+  const t = String(text || '');
+  if (looksLikeProse(t)) return false;
+  const lines = t.split('\n').map((l) => l.trim()).filter(Boolean);
+  const tokens = t.split(/\s+/).filter(Boolean);
+  if (tokens.length >= 8) {
+    const short = tokens.filter((tok) => tok.length <= 28 && !/[.!?…]/.test(tok)).length;
+    const times = tokens.filter((tok) => /^\d{1,2}:\d{2}$/.test(tok)).length;
+    const paths = tokens.filter((tok) => /[./\\]/.test(tok)).length;
+    const nums = tokens.filter((tok) => /^\d+$/.test(tok)).length;
+    if (short / tokens.length >= 0.85 && times >= 3 && (paths >= 3 || nums / tokens.length >= 0.4)) return true;
+  }
+  if (lines.length < 3) return false;
+  const tabular = lines.filter((l) => /^\d+\s+\d+\s+/.test(l) || /^[\d.:+\-]+\s+[\w./-]+$/.test(l)).length;
+  return tabular / lines.length >= 0.6;
+}
+function looksLikeProse(text) {
+  const t = String(text || '').trim();
+  if (t.length < 64) return false;
+  const sentences = (t.match(/[^.!?…]+[.!?…]+/g) || []).length;
+  return sentences >= 2 || /\b(the|this|that|you|we|I|here|there|because|however)\b/i.test(t);
+}
+function shouldSpeakStreamReply(text, ttsSuppressed) {
+  const t = String(text || '').trim();
+  if (!t) return false;
+  if (!ttsSuppressed) return true;
+  return looksLikeProse(t);
+}
+// A reasoning model appends its working as <think>...</think> after the answer
+// (ruby_llm_sender.rb does this for Nemotron 3). Read aloud, it turned a
+// one-line reply into a paragraph of "We need to answer..." spoken after it.
+// Cutting a closed block and an unclosed tail keeps the text prefix-stable
+// while the stream grows, so the spoken-length cursor below stays valid.
+function withoutThinking(text) {
+  return String(text || '').replace(/<think>[\s\S]*?(?:<\/think>|$)/gi, '');
+}
+function pushLiveStreamTts(pending, spokenLen) {
+  if (!ttsStreamLiveEnabled?.()) return spokenLen;
+  const slice = withoutThinking(pending).slice(spokenLen);
+  if (!slice || looksLikeListingStream(pending)) return spokenLen;
+  const m = slice.match(/^[\s\S]*?[.!?…]["'\u201D]?\s+/);
+  if (!m) return spokenLen;
+  const chunk = m[0].trim();
+  if (chunk.length < TTS_MIN_CHUNK) return spokenLen;
+  enqueueSpeech(chunk, { flush: true });
+  return spokenLen + m[0].length;
+}
+function flushStreamTts(pending, opts = {}) {
+  const text = withoutThinking(pending).trim();
+  if (!text || looksLikeListingStream(text)) return;
+  let rest = text;
+  let first = true;
+  let pulled;
+  const tsPrefix = opts.prependTimestamp
+    ? `As of ${new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}. `
+    : '';
+  const speakOpts = { flush: true };
+  while ((pulled = pullStreamingTtsChunk(rest)).chunk) {
+    rest = pulled.rest;
+    const prefix = first ? tsPrefix : '';
+    first = false;
+    enqueueSpeech(prefix + pulled.chunk, speakOpts);
+  }
+  if (rest.trim()) enqueueSpeech((first ? tsPrefix : '') + rest.trim(), speakOpts);
+}
+function detectLang(text) {
+  if (/[æøåÆØÅ]/.test(text) || /\b(og|ikke|jeg|deg|seg|eller|dette|disse|skal|vil|kan|må|har|er|fordi|hvis|når|noen|veldig|riktig|ferdig)\b/i.test(text)) return 'nb';
+  return 'en';
+}
+function speechVoiceForText(text) {
+  const language = detectLang(text);
+  const configured = window.MASTER_VOICE_POLICY?.language_voices?.[language];
+  if (configured) {
+    const alias = String(configured).toLowerCase();
+    return VOICE_ALIASES[alias] || String(configured);
+  }
+  return window.MASTER_VOICE_POLICY?.neural || 'en-US-JennyNeural';
+}
+
+const State = {
+  mode: 'idle', mood: 'idle', model: '', modelName: '',
+  voiceName: '',
+  voiceLocked: false,
+  lastTouch: performance.now(), confidence: 1.0,
+  tiltX: 0, tiltY: 0, mouseX: 0, mouseY: 0,
+  parX: 0, parY: 0,
+  viseme: 'neutral', visemeAmp: 0,
+  flash: 0, shake: 0, pulse: 0, sttActive: false, sttDuck: 0, profileOverride: null,
+  moodArc: null, emotionalGhosts: [],
+  calmStareUntil: 0, nervousUntil: 0, breath: 1.0,
+  surpriseY: 0, ripplePhase: -1, rain: 0,
+  pinchScale: 1.0, idleAlphaDrift: 0,
+  modelSwitch: 0,
+  questionPulse: 0,
+  sleeping: false, sleepMuted: false,
+  voiceMode: false, wakeArmed: false,
+  cameraZoom: 0, cameraZoomAt: 0,
+  hidden: document.hidden, reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches,
+  coarsePointer: matchMedia('(pointer: coarse)').matches,
+  highContrast: new URLSearchParams(window.location.search).get('hc') === '1',
+  contrastMore: matchMedia("(prefers-contrast: more)").matches
+};
+State.expressionCurrent = {};
+State.expressionTarget = {};
+
+const _shareParams = new URLSearchParams(window.location.search);
+State.mood = _shareParams.get('mood') || State.mood;
+State.mode = _shareParams.get('mode') || State.mode;
+try {
+  if (!_shareParams.get('mood')) State.mood = localStorage.getItem('master:mood') || State.mood;
+  if (!_shareParams.get('mode')) State.mode = localStorage.getItem('master:mode') || State.mode;
+} catch (err) { window.MASTER_LOG?.warn?.("face_runtime:restore_share_state", err); }
+const _faceMode = (_shareParams.get('face_mode') || 'auto').toLowerCase();
+rootBody.dataset.faceRenderMode = _faceMode;
+State.idleSignature = { breath: 1, saccade: 0.2, pulse_floor: 0.1, blink_ms: 3000 };
+State.model = _shareParams.get('model') || State.model;
+State.modelName = State.model ? State.model.split('/').pop() : State.modelName;
+State.voiceName = _shareParams.get('voice') || State.voiceName;
+if (State.voiceName) applyIdleSignature(State.voiceName);
+
+function syncShareStateUrl() {
+  try {
+    const url = new URL(window.location.href);
+    url.searchParams.set('mood', State.mood || 'idle');
+    url.searchParams.set('mode', State.mode || 'idle');
+    if (State.model) url.searchParams.set('model', State.model); else url.searchParams.delete('model');
+    if (State.voiceName) url.searchParams.set('voice', State.voiceName); else url.searchParams.delete('voice');
+    history.replaceState(null, '', `${url.pathname}?${url.searchParams.toString()}${url.hash}`);
+  } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sync_share_url", err); }
+}
+
+rootBody.dataset.highContrast = (State.highContrast || State.contrastMore) ? '1' : '';
+
+function enterDegradedTextUI(reason) {
+  if (rootBody.dataset.errorBoundary === '1') return;
+  rootBody.dataset.errorBoundary = '1';
+  rootBody.dataset.runtimeProfile = 'text';
+  rootBody.dataset.runtimeVisible = 'true';
+  try { if (renderer && renderer.dispose) renderer.dispose(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:degraded_dispose", err); }
+  if (cv && cv.style) cv.style.display = 'none';
+  let banner = document.getElementById('face-error-banner');
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.id = 'face-error-banner';
+    banner.className = 'face-error-banner';
+    document.body.appendChild(banner);
+  }
+  banner.textContent = reason || 'Degraded text mode';
+}
+
+function isFaceRuntimeError(source) {
+  const text = String(source || '');
+  return /face|three\.face|particle_kernel|cognition_ecology|visual_bridge/i.test(text);
+}
+
+window.addEventListener('error', event => {
+  if (!isFaceRuntimeError(event?.filename)) return;
+  enterDegradedTextUI(event?.message ? `Degraded text mode: ${event.message}` : 'Degraded text mode');
+});
+window.addEventListener('unhandledrejection', event => {
+  const reason = event?.reason;
+  const source = reason?.stack || reason?.message || '';
+  if (!isFaceRuntimeError(source)) return;
+  enterDegradedTextUI(reason?.message ? `Degraded text mode: ${reason.message}` : 'Degraded text mode');
+});
+
+// Read the phosphor profile from CSS vars for theming/CRT profiles.
+// --face-particle-size and --face-glow-scale are gone: particle size is fixed at
+// one pixel by law, and there is no glow layer left to scale. A knob whose only
+// legal value is its default is not a knob.
+(function applyFaceCssVars() {
+  try {
+    const cs = getComputedStyle(rootBody);
+    const pd = parseFloat(cs.getPropertyValue('--face-phosphor-decay'));
+    if (pd >= 0 && pd < 1) FACE_PHOSPHOR_DECAY = pd;
+  } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:apply_css_vars", err); }
+})();
+
+const STAR_FRAMES = ['\u2736', '\u2738', '\u2737', '\u273B', '\u2722', '\u2724', '\u2733', '\u2735'];
+const STAR_COLORS = ['#ffffff', '#f5f0e8', '#e8dcc8', '#d4c4a8', '#c9b896', '#bdb0a0', '#a89888'];
+let _starTimer = null;
+let _starIdx = 0;
+let _starColorIdx = 0;
+const spinBtn = document.getElementById('spin-btn');
+const themeBtn = document.getElementById('theme-btn');
+const focusBtn = document.getElementById('focus-btn');
+const fontScaleInput = document.getElementById('font-scale');
+const voicePicker = document.getElementById('voice-picker');
+const voicePreviewBtn = document.getElementById('voice-preview-btn');
+const asciiStarEl = document.getElementById('ascii-star');
+function _scheduleStar() {
+  const speed = 40 + Math.random() * 220;
+  _starTimer = setTimeout(() => {
+    _starIdx = (_starIdx + 1) % STAR_FRAMES.length;
+    if (Math.random() < 0.25) _starColorIdx = (_starColorIdx + 1) % STAR_COLORS.length;
+    const ch = STAR_FRAMES[_starIdx];
+    const co = STAR_COLORS[_starColorIdx];
+    if (asciiStarEl) { asciiStarEl.textContent = ch; asciiStarEl.style.color = co; }
+    _scheduleStar();
+  }, speed);
+}
+function startStar() {
+  if (_starTimer) return;
+  _starIdx = 0; _starColorIdx = 0;
+  _scheduleStar();
+}
+function stopStar() {
+  if (_starTimer) { clearTimeout(_starTimer); _starTimer = null; }
+  if (asciiStarEl) asciiStarEl.textContent = '';
+}
+
+voicePicker?.addEventListener('change', () => {
+  const voice = voicePicker.value.trim();
+  if (voice) {
+    State.voiceLocked = true;
+    setVoiceName(voice);
+  }
+});
+voicePreviewBtn?.addEventListener('click', () => window.MASTER_FACE?.previewVoice?.());
+
+let _stateMode = 'idle';
+Object.defineProperty(State, 'mode', {
+  get() { return _stateMode; },
+  set(v) {
+    _stateMode = v;
+    rootBody.dataset.mode = v;
+    // Mic state in words, for the screen reader. The glyph carries it
+    // visually (grey idle, live while listening); this is the same fact
+    // for someone who cannot see the colour change.
+    const micText = document.querySelector('[data-mic-state-text]');
+    if (micText) micText.textContent = v === 'listening' ? 'Microphone on' : 'Microphone off';
+    const s = document.getElementById('zsh-status');
+    if (s) s.textContent = '';
+    if (v === 'thinking' && isRichMotionProfile()) startStar(); else stopStar();
+  },
+  configurable: true
+});
+
+function updateRuntimeProfile() {
+  State.hidden = document.hidden;
+  rootBody.dataset.runtimeVisible = State.hidden ? 'false' : 'true';
+  rootBody.dataset.hiddenTab = State.hidden ? '1' : '';
+  if (!State.profileOverride) {
+    rootBody.dataset.runtimeProfile = (State.hidden || State.reducedMotion || State.coarsePointer) ? 'battery' : 'calm';
+  }
+  rootBody.dataset.highContrast = (State.highContrast || State.contrastMore) ? '1' : '';
+}
+
+updateRuntimeProfile();
+
+window.addEventListener('master:emotion', (ev) => {
+  const em = ev.detail || {};
+  if (Number.isFinite(em.confidence)) State.confidence = em.confidence;
+  if (Number.isFinite(em.arousal)) State.pulse = Math.max(State.pulse || 0, em.arousal * 0.42);
+  if (Number.isFinite(em.fatigue) && em.fatigue > 0.35) State.mood = 'weary';
+});
+
+window.addEventListener('master:clusters', (ev) => {
+  const em = ev.detail?.emotion;
+  if (!em) return;
+  if (Number.isFinite(em.confidence)) State.confidence = em.confidence;
+  if (Number.isFinite(em.arousal)) State.pulse = Math.max(State.pulse || 0, em.arousal * 0.38);
+  State.entropy = Math.max(0.08, Math.min(0.92, 1 - (em.confidence || 0.75) * 0.55 + (em.fatigue || 0) * 0.2));
+});
+
+matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', event => {
+  State.reducedMotion = event.matches;
+  updateRuntimeProfile();
+});
+matchMedia('(pointer: coarse)').addEventListener('change', event => {
+  State.coarsePointer = event.matches;
+  updateRuntimeProfile();
+});
+matchMedia("(prefers-contrast: more)").addEventListener('change', event => {
+  State.contrastMore = event.matches;
+  updateRuntimeProfile();
+});
+document.addEventListener('visibilitychange', () => {
+  updateRuntimeProfile();
+  if (!document.hidden) ensureFrameLoop?.();
+  if (!document.hidden && window.MASTER_FACE?.tts && !window.MASTER_FACE.tts.muted && window.MASTER_FACE.tts.queue && window.MASTER_FACE.tts.queue.length && !window.MASTER_FACE.tts.playing) window.MASTER_FACE.ttsTick?.();
+  if (!document.hidden && window.MASTER_FACE?.actx && window.MASTER_FACE.actx.state === 'suspended') window.MASTER_FACE.actx.resume().catch(() => {});
+}, { passive: true });
+
+let faceReadyMarked = false;
+function markFaceReady() {
+  if (faceReadyMarked) return;
+  faceReadyMarked = true;
+  rootBody.classList.add('face-ready');
+  rootBody.classList.remove('face-loading');
+  window.MASTER?.boot?.signal?.('face_ready', { source: 'markFaceReady' });
+  window.dispatchEvent(new CustomEvent('master:face-ready'));
+}
+
+let renderer, scene, camera, phosphorFadeMesh, phosphorFadeScene, phosphorFadeCam;
+if (_hasWebGL && THREE) {
+  try {
+    // antialias: false, deliberately. Nothing here has an edge to smooth — the
+    // scene is 1px points and one full-screen quad. Worse, MSAA is what stopped
+    // a 1px point being one pixel: a point whose centre lands between pixels
+    // resolves as partial coverage across up to four of them, so every particle
+    // came out dim and smeared rather than crisp. Multisampling a pixel-art
+    // buffer costs bandwidth to destroy the thing being drawn.
+    renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: false, alpha: false, depth: true, stencil: false, preserveDrawingBuffer: false, powerPreference: 'high-performance' });
+    renderer.setClearColor(0x000000, 1);
+    renderer.autoClear = true;
+  } catch (e) {
+    // A silently-swallowed failure here left `renderer` undefined forever:
+    // frame() keeps rescheduling itself via requestAnimationFrame but bails
+    // out at its own `if (!renderer)` guard every tick, so the canvas stays
+    // permanently black with no console output and no user-visible signal.
+    // Surface it so the boot watchdog (index.html.erb) can tell a genuine
+    // WebGL failure apart from a successful boot instead of trusting
+    // primerFired alone.
+    console.error('MASTER face: WebGLRenderer construction failed', e);
+    window.__MASTER_RENDERER_FAILED__ = true;
+    window.MASTER?.boot?.signal?.('renderer_failed', { source: 'WebGLRenderer' });
+  }
+  scene = new THREE.Scene();
+  camera = new THREE.PerspectiveCamera(FACE_CAMERA_FOV, 1, 0.1, 100);
+  camera.position.set(0, 0, FACE_CAMERA_DISTANCE);
+  phosphorFadeScene = new THREE.Scene();
+  phosphorFadeCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+  const fadeGeom = new THREE.PlaneGeometry(2, 2);
+  // Phosphor fade via a transparent BLACK quad at opacity (1 - decay) under
+  // default NormalBlending: dst*(1-a) + 0*a == dst*decay — the same math the
+  // old MultiplyBlending gray quad intended. In the custom three.face.module
+  // build that quad rendered opaque/additive instead (proved by GL draw-call
+  // bisection: skipping only this quad turned a saturated-white screen back
+  // to black), painting the whole framebuffer to white in two frames — THE
+  // long-standing "background lit up white, no face" bug. Normal alpha
+  // blending is the one mode every build and driver agrees on.
+  const fadeMat = new THREE.MeshBasicMaterial({
+    color: 0x000000,
+    transparent: true,
+    opacity: 1 - FACE_PHOSPHOR_DECAY,
+    depthTest: false,
+    depthWrite: false
+  });
+  phosphorFadeMesh = new THREE.Mesh(fadeGeom, fadeMat);
+  phosphorFadeScene.add(phosphorFadeMesh);
+}
+if (_dbgEl) _dbgEl.textContent = renderer ? 'webgl ok' : (_hasWebGL ? 'webgl FAIL' : '2d mode');
+
+let W = 0, H = 0, DPR = 1;
+function resize() {
+  if (!renderer) return;
+  W = window.innerWidth; H = window.innerHeight;
+  if (window.MASTER_FACE_PERF?.shouldResize && !window.MASTER_FACE_PERF.shouldResize(W, H)) return;
+  DPR = faceRenderDpr();
+
+  const profile = rootBody.dataset.runtimeProfile || 'full';
+  const scaleMax = typeof FACE_RENDER_SCALE_MAX !== 'undefined' ? FACE_RENDER_SCALE_MAX : 0.72;
+  const scaleMin = typeof FACE_RENDER_SCALE_MIN !== 'undefined' ? FACE_RENDER_SCALE_MIN : 0.48;
+  if (FACE_RENDER_SCALE > scaleMax || FACE_RENDER_SCALE < scaleMin) {
+    FACE_RENDER_SCALE = State.coarsePointer ? 0.55 : (State.reducedMotion || profile === 'battery' ? 0.62 : scaleMax);
+  }
+  let internalW = Math.max(280, Math.floor(W * FACE_RENDER_SCALE));
+  let internalH = Math.max(200, Math.floor(H * FACE_RENDER_SCALE));
+  // Cap both axes by one shared factor, never independently: the canvas element
+  // is stretched to the full viewport, so clamping width and height separately
+  // would change the buffer's aspect against the element's and squash the face.
+  const cap = Math.min(1, FACE_BUFFER_MAX_W / internalW, FACE_BUFFER_MAX_H / internalH);
+  if (cap < 1) {
+    internalW = Math.max(280, Math.floor(internalW * cap));
+    internalH = Math.max(200, Math.floor(internalH * cap));
+  }
+
+  renderer.setPixelRatio(DPR);
+  renderer.setSize(internalW, internalH, false);
+  camera.aspect = internalW / internalH;
+  camera.updateProjectionMatrix();
+
+  // Ensure the canvas element itself is styled for crisp upscale (already in CSS)
+  const cv = renderer.domElement;
+  if (cv) cv.style.imageRendering = "pixelated";
+}
+window.addEventListener('resize', resize, { passive: true });
+if ('ResizeObserver' in window && cv) {
+  new ResizeObserver(() => resize()).observe(cv.parentElement || cv);
+}
+
+// Grayscale depth map: white = near (high Z), black = background (filtered)
+// Phantom.land technique: sample pixel luminance directly as Z, no edge detection
+// Homo futura phenotype (~10k+ yr): gracile domesticated morphology — enlarged cranial
+// vault, reduced brow/jaw, larger eyes, finer nose/mouth (processed diet, low mortality,
+// sexual selection, global admixture; brains smaller but skulls taller per recent trends).
+function generateFaceDepthMap(size) {
+  const cv = new OffscreenCanvas(size, size);
+  const ctx = cv.getContext('2d');
+  const W = size, H = size, cx = W * 0.493, cy = H * 0.46;
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, W, H);
+  let g;
+  // Base face — tall narrow oval (gracile, elongated stature trend)
+  g = ctx.createRadialGradient(cx, cy - H*0.10, 0, cx, cy, W * 0.36);
+  g.addColorStop(0,    'rgba(228,228,228,1)');
+  g.addColorStop(0.34, 'rgba(182,182,182,1)');
+  g.addColorStop(0.70, 'rgba(72, 72, 72, 1)');
+  g.addColorStop(1,    'rgba(0,  0,  0,  1)');
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.ellipse(cx, cy, W * 0.255, H * 0.48, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // Jaw taper — pronounced reduction (smaller mandible, processed food)
+  for (const ex of [-0.215, 0.215]) {
+    g = ctx.createRadialGradient(cx + ex*W, cy + H*0.28, 0, cx + ex*W, cy + H*0.28, W*0.16);
+    g.addColorStop(0,    'rgba(0,0,0,0.98)');
+    g.addColorStop(0.50, 'rgba(0,0,0,0.72)');
+    g.addColorStop(1,    'rgba(0,0,0,0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  }
+  // Cranial vault — enlarged high forehead
+  g = ctx.createRadialGradient(cx, cy - H*0.36, 0, cx, cy - H*0.36, W*0.30);
+  g.addColorStop(0,    'rgba(210,210,210,0.78)');
+  g.addColorStop(0.55, 'rgba(150,150,150,0.36)');
+  g.addColorStop(1,    'rgba(0,  0,  0,  0)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  // Crown extension — tall skull cap above brows
+  g = ctx.createRadialGradient(cx, cy - H*0.44, 0, cx, cy - H*0.44, W*0.18);
+  g.addColorStop(0,    'rgba(198,198,198,0.55)');
+  g.addColorStop(0.62, 'rgba(118,118,118,0.18)');
+  g.addColorStop(1,    'rgba(0,  0,  0,  0)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  // Temple recession — soft lateral concavity
+  for (const ex of [-0.20, 0.20]) {
+    g = ctx.createRadialGradient(cx + ex*W, cy - H*0.28, 0, cx + ex*W, cy - H*0.28, W*0.09);
+    g.addColorStop(0,   'rgba(0,0,0,0.28)');
+    g.addColorStop(1,   'rgba(0,0,0,0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  }
+  // Supraorbital ridge — nearly flat (reduced aggression selection)
+  for (const ex of [-0.112, 0.112]) {
+    g = ctx.createLinearGradient(cx + ex*W - W*0.08, cy - H*0.198, cx + ex*W + W*0.08, cy - H*0.186);
+    g.addColorStop(0,   'rgba(0,0,0,0)');
+    g.addColorStop(0.5, 'rgba(0,0,0,0.08)');
+    g.addColorStop(1,   'rgba(0,0,0,0)');
+    ctx.fillStyle = g; ctx.fillRect(cx + ex*W - W*0.08, cy - H*0.206, W*0.16, H*0.014);
+  }
+  // Brow shelf — minimal neotenic arch
+  for (const ex of [-0.112, 0.112]) {
+    g = ctx.createRadialGradient(cx + ex*W, cy - H*0.168, 0, cx + ex*W, cy - H*0.168, W*0.078);
+    g.addColorStop(0,    'rgba(205,205,205,0.38)');
+    g.addColorStop(0.50, 'rgba(150,150,150,0.16)');
+    g.addColorStop(1,    'rgba(0,  0,  0,  0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  }
+  // Glabella — shallow, open expression
+  g = ctx.createRadialGradient(cx, cy - H*0.160, 0, cx, cy - H*0.160, W*0.022);
+  g.addColorStop(0,   'rgba(0,0,0,0.22)');
+  g.addColorStop(1,   'rgba(0,0,0,0)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  // Eye sockets — larger, rounder (screen/light-environment selection)
+  const eyeAlphas = [0.66, 0.62];
+  for (let ei = 0; ei < 2; ei++) {
+    const ex = ei === 0 ? -0.118 : 0.118;
+    ctx.save();
+    ctx.translate(cx + ex*W, cy - H*0.088);
+    ctx.scale(1.42, 1.08);
+    g = ctx.createRadialGradient(0, 0, 0, 0, 0, W*0.106);
+    g.addColorStop(0,    `rgba(0,0,0,${eyeAlphas[ei]})`);
+    g.addColorStop(0.45, 'rgba(0,0,0,0.70)');
+    g.addColorStop(0.80, 'rgba(0,0,0,0.24)');
+    g.addColorStop(1,    'rgba(0,0,0,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(0, 0, W*0.106, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+  // Corneal specular + iris ring — enlarged pupils
+  for (const ex of [-0.118, 0.118]) {
+    g = ctx.createRadialGradient(cx + ex*W, cy - H*0.088, 0, cx + ex*W, cy - H*0.088, W*0.044);
+    g.addColorStop(0,   'rgba(185,185,185,0.42)');
+    g.addColorStop(0.55,'rgba(95,95,95,0.18)');
+    g.addColorStop(1,   'rgba(0,0,0,0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    g = ctx.createRadialGradient(cx + ex*W + W*0.012, cy - H*0.102, 0, cx + ex*W + W*0.012, cy - H*0.102, W*0.028);
+    g.addColorStop(0,   'rgba(240,240,240,0.78)');
+    g.addColorStop(0.45,'rgba(190,190,190,0.30)');
+    g.addColorStop(1,   'rgba(0,0,0,0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  }
+  // Nose bridge — fine, low projection
+  g = ctx.createLinearGradient(cx - W*0.012, 0, cx + W*0.012, 0);
+  g.addColorStop(0,   'rgba(0,0,0,0)');
+  g.addColorStop(0.5, 'rgba(205,205,205,0.52)');
+  g.addColorStop(1,   'rgba(0,0,0,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(cx - W*0.012, cy - H*0.02, W*0.024, H*0.12);
+  // Nose tip — small, soft
+  g = ctx.createRadialGradient(cx, cy + H*0.082, 0, cx, cy + H*0.082, W*0.058);
+  g.addColorStop(0,    'rgba(245,245,245,0.92)');
+  g.addColorStop(0.30, 'rgba(220,220,220,0.68)');
+  g.addColorStop(0.62, 'rgba(150,150,150,0.30)');
+  g.addColorStop(1,    'rgba(0,  0,  0,  0)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  // Nose ala — subtle wings
+  for (const ex of [-0.048, 0.048]) {
+    g = ctx.createRadialGradient(cx + ex*W, cy + H*0.100, 0, cx + ex*W, cy + H*0.100, W*0.022);
+    g.addColorStop(0,   'rgba(0,0,0,0.32)');
+    g.addColorStop(1,   'rgba(0,0,0,0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  }
+  // Cheekbones — soft, low relief (gracile skeleton)
+  for (const ex of [-0.188, 0.188]) {
+    g = ctx.createRadialGradient(cx + ex*W, cy + H*0.012, 0, cx + ex*W, cy + H*0.012, W*0.098);
+    g.addColorStop(0,   'rgba(190,190,190,0.38)');
+    g.addColorStop(0.60,'rgba(100,100,100, 0.14)');
+    g.addColorStop(1,   'rgba(0,  0,  0,  0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  }
+  // Nasolabial folds — faint (youthful neoteny)
+  for (const ex of [-0.068, 0.068]) {
+    g = ctx.createRadialGradient(cx + ex*W, cy + H*0.142, 0, cx + ex*W, cy + H*0.142, W*0.042);
+    g.addColorStop(0,   'rgba(0,0,0,0.22)');
+    g.addColorStop(0.6, 'rgba(0,0,0,0.08)');
+    g.addColorStop(1,   'rgba(0,0,0,0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  }
+  // Philtrum — shallow groove
+  g = ctx.createRadialGradient(cx, cy + H*0.158, 0, cx, cy + H*0.158, W*0.018);
+  g.addColorStop(0,   'rgba(0,0,0,0.26)');
+  g.addColorStop(1,   'rgba(0,0,0,0)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  // Upper lip — narrow mouth (smaller jaw/teeth)
+  ctx.save();
+  ctx.translate(cx, cy + H*0.198);
+  ctx.scale(1.85, 1.0);
+  g = ctx.createRadialGradient(0, 0, 0, 0, 0, W*0.050);
+  g.addColorStop(0,    'rgba(215,215,215,0.78)');
+  g.addColorStop(0.38, 'rgba(168,168,168,0.42)');
+  g.addColorStop(1,    'rgba(0,0,0,0)');
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.arc(0, 0, W*0.050, 0, Math.PI*2); ctx.fill();
+  ctx.restore();
+  // Lower lip — compact
+  ctx.save();
+  ctx.translate(cx, cy + H*0.212);
+  ctx.scale(1.95, 1.0);
+  g = ctx.createRadialGradient(0, 0, 0, 0, 0, W*0.056);
+  g.addColorStop(0,    'rgba(205,205,205,0.72)');
+  g.addColorStop(0.38, 'rgba(158,158,158,0.38)');
+  g.addColorStop(1,    'rgba(0,0,0,0)');
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.arc(0, 0, W*0.056, 0, Math.PI*2); ctx.fill();
+  ctx.restore();
+  // Lip gap — narrow mouth slit
+  g = ctx.createLinearGradient(cx - W*0.062, 0, cx + W*0.062, 0);
+  g.addColorStop(0,    'rgba(0,0,0,0)');
+  g.addColorStop(0.10, 'rgba(0,0,0,0.34)');
+  g.addColorStop(0.5,  'rgba(0,0,0,0.42)');
+  g.addColorStop(0.90, 'rgba(0,0,0,0.34)');
+  g.addColorStop(1,    'rgba(0,0,0,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(cx - W*0.062, cy + H*0.206, W*0.124, H*0.007);
+  // Labiomental crease — soft chin-lip junction
+  g = ctx.createRadialGradient(cx, cy + H*0.238, 0, cx, cy + H*0.238, W*0.022);
+  g.addColorStop(0,   'rgba(0,0,0,0.30)');
+  g.addColorStop(1,   'rgba(0,0,0,0)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  // Chin — small, receding point
+  g = ctx.createRadialGradient(cx, cy + H*0.318, 0, cx, cy + H*0.318, W*0.068);
+  g.addColorStop(0,   'rgba(155,155,155,0.52)');
+  g.addColorStop(0.58,'rgba(82, 82, 82, 0.20)');
+  g.addColorStop(1,   'rgba(0,  0,  0,  0)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  // Ear outlines — faint lateral indicators
+  for (const ex of [-0.36, 0.36]) {
+    g = ctx.createRadialGradient(cx + ex*W, cy - H*0.04, 0, cx + ex*W, cy + H*0.04, W*0.048);
+    g.addColorStop(0,   'rgba(90,90,90,0.10)');
+    g.addColorStop(1,   'rgba(0,0,0,0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  }
+  // Neck column — slender, elongated
+  const neckGrad = ctx.createLinearGradient(0, cy + H*0.44, 0, H);
+  neckGrad.addColorStop(0,   'rgba(58,58,58,0.30)');
+  neckGrad.addColorStop(1,   'rgba(0,0,0,0)');
+  ctx.fillStyle = neckGrad;
+  ctx.fillRect(cx - W*0.032, cy + H*0.44, W*0.064, H - (cy + H*0.44));
+  return cv;
+}
+
+// Hex-grid topology: particles sit at lattice vertices projected onto face surface.
+// Edge list connects adjacent occupied cells — the wire mesh substrate.
+function sampleDepthMapGrid(canvas, cols, rows) {
+  const size = canvas.width;
+  const ctx = canvas.getContext('2d');
+  const px = ctx.getImageData(0, 0, size, size).data;
+  const positions = [], scatters = [], seeds = [], edgeIdx = [];
+  const cell = new Int32Array(rows * cols).fill(-1);
+
+  for (let row = 0; row < rows; row++) {
+    const hexShift = (row & 1) ? 0.5 : 0.0;
+    for (let col = 0; col < cols; col++) {
+      const u = (col + hexShift + 0.5) / cols;
+      const v = (row + 0.5) / rows;
+      const sx = Math.min(size - 1, (u * size) | 0);
+      const sy = Math.min(size - 1, (v * size) | 0);
+      const lum = px[(sy * size + sx) * 4] / 255;
+      if (lum < 0.08) continue;
+      const idx = (positions.length / 3) | 0;
+      cell[row * cols + col] = idx;
+      // Antigravity-inspired breathing room: keep the face topology, but
+      // break the rigid lattice with a bounded, coordinate-derived jitter.
+      // The field is repeatable, so reloads do not silently reshuffle the face.
+      const hash = Math.sin((row + 1) * 127.1 + (col + 1) * 311.7) * 43758.5453;
+      const seed = (hash - Math.floor(hash)) * 6.28318;
+      const jitter = 0.32;
+      const ju = Math.sin(seed * 1.7 + row * 0.31 + col * 0.17) * jitter / cols;
+      const jv = Math.cos(seed * 1.3 + row * 0.19 + col * 0.23) * jitter / rows;
+      const pxu = u + ju;
+      const pxv = v + jv;
+      const nx = (pxu * 2 - 1) * 0.62;
+      const ny = -((pxv * 2 - 1)) * 0.62;
+      const nz = lum * 0.78;
+      positions.push(nx, ny, nz);
+      scatters.push(nx, ny, 0);
+      seeds.push(seed);
+    }
+  }
+
+  for (let row = 0; row < rows; row++) {
+    for (let col = 0; col < cols; col++) {
+      const a = cell[row * cols + col]; if (a < 0) continue;
+      if (col + 1 < cols)       { const b = cell[row * cols + col + 1];              if (b >= 0) { edgeIdx.push(a, b); } }
+      if (row + 1 < rows)       { const b = cell[(row + 1) * cols + col];            if (b >= 0) { edgeIdx.push(a, b); } }
+      const dc = (row & 1) ? -1 : 1;
+      const nc = col + dc;
+      if (row + 1 < rows && nc >= 0 && nc < cols) { const b = cell[(row + 1) * cols + nc]; if (b >= 0) { edgeIdx.push(a, b); } }
+    }
+  }
+
+  const home = new Float32Array(positions);
+  const n = (home.length / 3) | 0;
+
+  // Per-vertex neighbor Z accumulator for curvature
+  const neighborZSum = new Float32Array(n);
+  const neighborCount = new Int32Array(n);
+  const edgeLengthArr = new Float32Array(edgeIdx.length / 2);
+  const edgeDepthDiffArr = new Float32Array(edgeIdx.length / 2);
+
+  for (let ei = 0; ei < edgeIdx.length; ei += 2) {
+    const a = edgeIdx[ei], b = edgeIdx[ei + 1];
+    const ai = a * 3, bi = b * 3;
+    const dx = home[ai] - home[bi], dy = home[ai+1] - home[bi+1], dz = home[ai+2] - home[bi+2];
+    const len = Math.sqrt(dx*dx + dy*dy + dz*dz);
+    const dd = Math.abs(home[ai+2] - home[bi+2]);
+    edgeLengthArr[ei >> 1] = len;
+    edgeDepthDiffArr[ei >> 1] = dd;
+    neighborZSum[a] += home[bi+2]; neighborCount[a]++;
+    neighborZSum[b] += home[ai+2]; neighborCount[b]++;
+  }
+
+  const curvature = new Float32Array(n);
+  const boundary = new Float32Array(n);
+  let maxCurv = 0;
+  for (let i = 0; i < n; i++) {
+    const nc = neighborCount[i];
+    if (nc > 0) {
+      const avgNZ = neighborZSum[i] / nc;
+      curvature[i] = Math.abs(home[i*3+2] - avgNZ);
+    }
+    if (curvature[i] > maxCurv) maxCurv = curvature[i];
+    boundary[i] = nc < 4 ? 1.0 : 0.0;
+  }
+  if (maxCurv > 0) { for (let i = 0; i < n; i++) curvature[i] /= maxCurv; }
+
+  const zone = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    const nx = home[i*3], ny = home[i*3+1];
+    const anx = Math.abs(nx);
+    // The depth map is painted in canvas space, where y grows downward, and
+    // the sampler above flips it. These bands were written as though it had
+    // not, so every feature landed on the wrong one: the painted lips sit at
+    // ny -0.196 and the chin at -0.345, all of which fell in zone 0.0, while
+    // the crown and cranial vault at +0.595 and +0.496 fell in zone 0.8 --
+    // the band the fragment shader reads as mouthRgn and the band
+    // initSemanticPools seeds the mouth pool from. Speech was driving the
+    // forehead. It survived because the result is a symmetric brightness
+    // modulation on a monochrome field, which looks plausible anywhere.
+    //
+    // Set from the painted centres rather than mirrored, because mirroring
+    // alone moves the mouth onto the lips but leaves eyeRgn peaking on the
+    // nose bridge. Measured, in this space: crown +0.60, vault +0.50, brows
+    // +0.26 at |nx| 0.13-0.15, eyes +0.16 at |nx| 0.14-0.16, nose bridge
+    // +0.07, cheeks +0.04 at |nx| 0.22-0.24, lips -0.20, chin -0.35. Only two
+    // consumers read zone: eyeRgn, which peaks at 0.5, and mouthRgn with
+    // initSemanticPools, which take >= 0.68. 0.25 is the inert bucket -- both
+    // regions evaluate to zero there.
+    if (ny < -0.14) zone[i] = 0.8;                                                   // lips, chin
+    else if (anx >= 0.09 && anx <= 0.20 && ny >= 0.10 && ny <= 0.21) zone[i] = 0.5;  // eyes
+    else if (anx >= 0.09 && anx <= 0.20 && ny > 0.21 && ny <= 0.34) zone[i] = 0.6;   // brows
+    else if (ny > 0.40) zone[i] = 0.0;                                               // crown, vault
+    else if (anx > 0.20) zone[i] = 0.2;                                              // cheeks
+    else if (anx < 0.09) zone[i] = 0.4;                                              // nose column
+    else zone[i] = 0.25;
+  }
+
+  // The edge list stays — curvature and boundary above are derived from it, and
+  // both feed the point shader's size. What is gone is the line geometry it used
+  // to also produce: the face draws no wires.
+  return { home, scatter: new Float32Array(scatters), seeds: new Float32Array(seeds), curvature, boundary, zone };
+}
+
+function particleScale() {
+  const area = Math.max(320 * 480, window.innerWidth * window.innerHeight);
+  const dpr = Math.min(window.devicePixelRatio || 1, 1.25);
+  const areaScale = Math.sqrt((area * dpr) / (1280 * 720));
+  const budget = Number(faceRenderBudget().particles || 200);
+  const budgetScale = Math.sqrt(Math.max(0.25, budget / 200));
+  return Math.max(0.7, Math.min(1.35, areaScale, budgetScale));
+}
+const FACE_GRID_COLS = Math.round((State.coarsePointer ? 26 : 40) * particleScale());
+const FACE_GRID_ROWS = Math.round((State.coarsePointer ? 32 : 52) * particleScale());
+const FACE_N_2D = Math.round(480 * particleScale());
+let faceHome, faceScatter, faceSeeds, faceCurvature, faceBoundary, faceZone;
+({ home: faceHome, scatter: faceScatter, seeds: faceSeeds,
+   curvature: faceCurvature, boundary: faceBoundary, zone: faceZone } =
+  sampleDepthMapGrid(generateFaceDepthMap(512), FACE_GRID_COLS, FACE_GRID_ROWS));

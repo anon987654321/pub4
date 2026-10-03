@@ -1,0 +1,63 @@
+# Transcendent TTS — emotion-aware multi-engine orchestration (MLX / Replicate).
+#
+# THIS FILE DECIDES HOW MASTER SOUNDS ON THE COMMAND LINE. Transcendent.load_config
+# reads it, `enabled` and `default_mode` are what Speech.synthesis_mode consults,
+# and Speech.synthesize hands the text to Transcendent.synthesize whenever that
+# mode comes back "transcendent" -- which is what `default_mode: transcendent`
+# below asks for. The path is Cli::Session::ResultDisplay -> Voice::Playback.speak
+# -> Playback.synthesize -> Speech.synthesize, so it runs on every spoken reply.
+# bin/tts-speak takes the same door directly, exporting MASTER_TTS_MODE=transcendent.
+#
+# The web path now enters the same Transcendent door through
+# Speech.synthesize_streaming_to_file. It keeps the TtsJob contract and falls
+# back to the proven Edge/espeak path when Transcendent cannot produce audio.
+# On OpenBSD, enabled alone forces transcendent mode and engine_chain here is
+# overridden by MASTER_TTS_ENGINE_CHAIN or Engines::OPENBSD_CHAIN, so the chain
+# below is the Mac's. MASTER_TTS_MODE remains the explicit operator override.
+transcendent:
+  enabled: true
+  # Transcendent is the normal conversational path. MASTER_TTS_MODE=classic is the explicit fast override.
+  fast_mode: false
+  default_mode: transcendent
+  personality: warm_erratic
+  # mlx needs Python 3.10+ (brew install python@3.11). Until then: fast Edge voices.
+  # English quality chain: expressive local engines first, then the stable Edge
+  # route. Native-language routes are filtered in Engines.build_engine_chain.
+  engine_chain: mlx, chatterbox, edge_melodic, edge, say
+  emotion_enabled: true
+  # Chatterbox/MLX already receive the measured emotional controls. Random
+  # [laugh]/[chuckle]/[sigh] insertion is an effect, not an emotion measurement,
+  # so it stays off unless the operator explicitly enables it.
+  paralinguistic_tags: false
+  # The pentatonic contour: a stylistic mode, for lyrical text only.
+  melodic_enabled: true
+  melodic_threshold: 0.28
+  # Phrase segmentation and the rests between phrases, without the contour.
+  # Separate from melodic_* because it is rhythm rather than style. Costs one
+  # Edge round trip per phrase, capped at Melody::MAX_PHRASES. Set fast_mode true only
+  # when latency matters more than expressive phrase rendering.
+  phrase_rhythm_enabled: true
+  # A Norwegian clause is always rendered with Pernille; English uses Jenny.
+  # Language routing is a speech rule, not an optional stylistic switch.
+  phrase_language_switching: true
+  phrase_language_voices:
+    nb: pernille
+    ms: yasmin
+    en: jenny
+  # Local MLX (Apple Silicon)
+  # The local Apple-Silicon path uses the expressive Chatterbox MLX model first;
+  # Kokoro remains a provider fallback rather than the conversational default.
+  mlx_model: mlx-community/chatterbox-fp16
+  mlx_voice: default
+  mlx_speed: 1.0
+  exaggeration: 0.45
+  cfg_weight: 0.42
+  chatterbox_device: mps
+  reference_clip: ""
+  # Replicate cloud (VPS / OpenBSD primary)
+  replicate_model: jaaari/kokoro-82m
+  replicate_voice: af_bella
+  replicate_speed: 1.05
+  replicate_exaggeration: 0.45
+  replicate_cfg_weight: 0.42
+  # Cost/speed note: ~$0.008-0.015 per 1K chars; superior consistency on server vs local MLX

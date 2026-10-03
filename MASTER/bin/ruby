@@ -1,0 +1,102 @@
+#!/usr/bin/env zsh
+# Resolve the project preferred Ruby on development hosts and a supported package Ruby on OpenBSD.
+set -eu
+
+ROOT=${0:A:h:h}
+RBENV_ROOT=${RBENV_ROOT:-$HOME/.rbenv}
+PINNED_VERSION=
+
+if [[ -f $ROOT/.ruby-version ]]; then
+  PINNED_VERSION=$(< "$ROOT/.ruby-version")
+  PINNED_VERSION=${PINNED_VERSION//$'\n'/}
+fi
+
+find_rbenv() {
+  REPLY=
+  if [[ -n ${RBENV:-} && -x $RBENV ]]; then
+    REPLY=$RBENV
+    return
+  fi
+  if (( $+commands[rbenv] )); then
+    REPLY=${commands[rbenv]}
+    return
+  fi
+  if [[ -x $RBENV_ROOT/bin/rbenv ]]; then
+    REPLY=$RBENV_ROOT/bin/rbenv
+  fi
+}
+
+pinned_ruby() {
+  local rbenv=$1
+  local direct="$RBENV_ROOT/versions/$PINNED_VERSION/bin/ruby"
+  REPLY=
+  if [[ -x $direct ]]; then
+    REPLY=$direct
+    return
+  fi
+  [[ -n $PINNED_VERSION ]] || return
+  local resolved
+  resolved=$(RBENV_VERSION=$PINNED_VERSION "$rbenv" which ruby 2>/dev/null || true)
+  if [[ -x $resolved ]]; then
+    REPLY=$resolved
+  fi
+}
+
+RUBY=
+RBENV=
+find_rbenv
+RBENV=$REPLY
+
+if [[ -n $RBENV && ${OSTYPE:-} != openbsd* ]]; then
+  pinned_ruby "$RBENV"
+  RUBY=$REPLY
+fi
+
+if [[ -z $RUBY && ${OSTYPE:-} == openbsd* ]]; then
+  for ruby_command in ruby34 ruby33; do
+    if (( $+commands[$ruby_command] )); then
+      RUBY=${commands[$ruby_command]}
+      break
+    fi
+  done
+fi
+
+if [[ -z $RUBY && -n $PINNED_VERSION ]]; then
+  ruby_major=${PINNED_VERSION%%.*}
+  ruby_rest=${PINNED_VERSION#*.}
+  ruby_minor=${ruby_rest%%.*}
+  for ruby_command in "ruby${ruby_major}${ruby_minor}" "ruby${ruby_major}.${ruby_minor}"; do
+    if (( $+commands[$ruby_command] )); then
+      RUBY=${commands[$ruby_command]}
+      break
+    fi
+  done
+fi
+
+if [[ -z $RUBY ]] && (( $+commands[ruby] )); then
+  RUBY=${commands[ruby]}
+fi
+
+if [[ -z $RUBY ]]; then
+  print -u2 -- "ruby0: no Ruby executable found; .ruby-version requires $PINNED_VERSION"
+  print -u2 -- "ruby0: install the pinned Ruby through the host package system or rbenv"
+  exit 1
+fi
+
+if [[ -n $PINNED_VERSION ]]; then
+  ACTUAL=$("$RUBY" -e "print RUBY_VERSION")
+  if [[ $ACTUAL != $PINNED_VERSION && ! (${OSTYPE:-} == openbsd* && ($ACTUAL == 3.3.* || $ACTUAL == 3.4.*)) ]]; then
+    print -u2 -- "ruby0: $ACTUAL detected; $PINNED_VERSION required"
+    if [[ ${OSTYPE:-} == openbsd* ]] && (( $+commands[pkg_add] )); then
+      print -u2 -- "ruby0: OpenBSD MASTER accepts ruby33/ruby34"
+      print -u2 -- "ruby0: install one with doas pkg_add -U ruby%3.4 or ruby%3.3"
+    elif [[ -n $RBENV ]]; then
+      print -u2 -- "ruby0: run RBENV_VERSION=$PINNED_VERSION $RBENV install -s $PINNED_VERSION"
+    else
+      print -u2 -- "ruby0: install rbenv + ruby-build, then rbenv install -s $PINNED_VERSION"
+    fi
+    exit 1
+  fi
+fi
+
+exec "$RUBY" "$@"

@@ -1,0 +1,176 @@
+// Modal + mobile bottom sheet — extracted from brgen/_mobile.scss + _components.scss.
+
+.dialog {
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  max-width: min(560px, 90vw);
+  max-height: 90dvh;
+  overflow: auto;
+}
+
+.dialog::backdrop {
+  background: var(--scrim-50);
+}
+
+.mobile-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  background: var(--scrim-45);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-fast) var(--ease-out);
+  z-index: calc(var(--z-nav) + 1);
+}
+
+.mobile-sheet-backdrop[data-open="1"] {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.mobile-sheet {
+  position: fixed;
+  inset-inline-start: 0;
+  inset-inline-end: 0;
+  bottom: 0;
+  min-height: 220px;
+  max-height: 72vh;
+  padding: var(--space-2) var(--space-4) calc(20px + var(--safe-bottom));
+  background: var(--bg);
+  border-radius: 0;
+  border-top: 0;
+  transform: translateY(100%);
+  /* Off-screen is not hidden. Parked at translateY(100%) the sheet still sat in
+     the tab order and the accessibility tree, so tabbing the front page walked
+     through an invisible menu -- AI assistant, Live, Channels, New post, New
+     community, Profile, Sign out -- none of which was on screen. visibility
+     takes it out of both; the delayed transition lets the slide finish before it
+     goes, so closing still animates. */
+  visibility: hidden;
+  transition:
+    transform 220ms cubic-bezier(0.32, 0.72, 0, 1),
+    visibility 0s linear 220ms;
+  z-index: calc(var(--z-nav) + 2);
+  display: grid;
+  gap: var(--space-4);
+}
+.mobile-sheet[data-level="1"],
+.mobile-sheet[data-level="2"] {
+  visibility: visible;
+  transition:
+    transform 220ms cubic-bezier(0.32, 0.72, 0, 1),
+    visibility 0s;
+}
+
+.mobile-sheet-handle {
+  width: 42px;
+  height: 4px;
+  border-radius: var(--radius-pill);
+  background: var(--border);
+  justify-self: center;
+}
+
+.mobile-sheet-links {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.mobile-sheet-links a {
+  display: block;
+  padding: var(--space-3) var(--space-3);
+  border-radius: 0.75rem;
+  background: var(--surface-elevated);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.mobile-sheet-links a:hover { background: var(--hover); }
+
+
+/* Small auth interruption: borrow X's focused follow/login popup without turning a read action into a full page detour. */
+.post-auth-prompt-host {
+  display: inline;
+}
+
+.post-auth-prompt {
+  inline-size: min(22rem, calc(100vw - (var(--space-4) * 2)));
+  margin: auto;
+  padding: var(--space-4);
+  border: 0;
+  border-radius: 0;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.post-auth-prompt[popover] {
+  max-inline-size: min(22rem, calc(100vw - (var(--space-4) * 2)));
+  padding: var(--space-4);
+}
+
+.post-auth-prompt > :is(h2, p) {
+  margin: 0;
+}
+
+.post-auth-prompt h2 {
+  font-size: var(--text-base);
+  line-height: var(--leading-snug);
+}
+
+.post-auth-prompt p {
+  margin-block-start: var(--space-2);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+}
+
+.post-auth-prompt-actions {
+  display: grid;
+  gap: var(--space-2);
+  margin-block-start: var(--space-4);
+}
+
+.post-auth-prompt-actions .btn {
+  inline-size: 100%;
+}
+
+.post-auth-prompt-trigger {
+  min-block-size: var(--tap-min);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  font: inherit;
+  font-weight: var(--weight-bold);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+  cursor: pointer;
+}
+
+.post-auth-prompt-trigger:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 3px;
+}
+
+.post-auth-prompt-note {
+  margin-block-start: var(--space-3);
+  padding-block-start: var(--space-3);
+  border-block-start: 0;
+  font-size: var(--text-xs);
+}
+
+.cookie-purpose--necessary {
+  color: var(--text-secondary);
+}
+
+.cookie-purpose-state {
+  display: grid;
+  place-items: center;
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  margin: var(--space-1);
+  border: 0;
+  border-radius: 0;
+  color: var(--text);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+}

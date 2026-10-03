@@ -1,0 +1,48 @@
+<% content_for :title, t("pages.capsule") %>
+
+<header role="banner" aria-label="<%= t("ai.capsule_header_label") %>">
+  <hgroup>
+    <p><%= t("ai.capsule_builder") %></p>
+    <%= tag.h1 t("pages.capsule_title") %>
+  </hgroup>
+  <nav role="navigation" aria-label="<%= t("ai.capsule_actions_label") %>">
+    <%= link_to t("actions.wardrobe"), items_path, class: "btn" %>
+    <%= link_to t("nav.outfits"), outfits_path, class: "btn" %>
+  </nav>
+</header>
+
+<% if @result["source"] == "capsule_builder" || !@ai_available %>
+  <p><%= t("ai.local_rules_html", note: (@ai_available ? "" : t("ai.openrouter_missing"))) %></p>
+<% elsif @result["source"] %>
+  <p><%= t("ai.source", source: @result["source"]) %></p>
+<% end %>
+
+<% if @result["items"].present? %>
+  <div class="tag-row">
+    <span class="tag"><%= t("ai.items_reviewed", count: @result["items"].size) %></span>
+    <span class="tag"><%= t("ai.gap_count", count: Array(@result["gap_items"]).size) %></span>
+  </div>
+
+  <div class="capsule-list">
+    <% @result["items"].each do |item| %>
+      <div class="capsule-row capsule-row--<%= item["decision"] %>">
+        <span class="capsule-decision"><%= item["decision"].to_s.humanize %></span>
+        <%= tag.strong item["title"] %>
+        <%= item["reason"] %>
+      </div>
+    <% end %>
+  </div>
+
+  <% if @result["gap_items"]&.any? %>
+    <section>
+      <%= tag.h2 t("ai.gap_items", default: "Gap items to consider") %>
+      <p><%= t("ai.gap_items_hint") %></p>
+      <ul><% @result["gap_items"].each do |gap_item| %><li><%= gap_item %></li><% end %></ul>
+    </section>
+  <% end %>
+<% else %>
+  <%= render "shared/empty_state",
+        title: t("wardrobe.too_thin"),
+        body: t("wardrobe.add_more_first"),
+        action: { label: t("pages.add_item"), path: new_item_path } %>
+<% end %>

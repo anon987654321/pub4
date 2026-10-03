@@ -1,0 +1,448 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require_relative "../lib/boot/entrypoint"
+Master::Boot::Entrypoint.prepare!(root: File.expand_path("..", __dir__))
+#
+# TTS worker — runs EventMachine in isolation from Falcon Async fibers.
+# Three modes:
+#   one-shot: tts-worker VOICE RATE PITCH OUT_PATH < text
+#   daemon:   tts-worker --daemon SOCKET_PATH
+#   selftest: tts-worker --selftest — exit 0 and print versions if it could speak
+#
+# Daemon protocol: one JSON request per connection — {voice,rate,pitch,text}\n
+# — followed by raw MP3 bytes back, then EOF. Single-threaded; serialised by
+# EM reactor lifecycle.
+
+ROOT = File.expand_path("..", __dir__)
+# RUBYLIB and BUNDLE_LOCKFILE confirmed live on vm23 (Falcon's own process has both,
+# pointing at MASTER/web's vendored bundler-4.0.7/lib and web/Gemfile.lock) -- neither
+# was covered here, so any spawn path that skips full unsetenv_others isolation (see
+# ENV.delete below) still resolves the wrong Gemfile.lock against MASTER's Gemfile.
+BUNDLE_ISOLATION_KEYS = %w[
+  BUNDLE_PATH BUNDLE_BIN_PATH BUNDLE_WITHOUT BUNDLE_DEPLOYMENT
+  BUNDLE_DISABLE_SHARED_GEMS BUNDLE_APP_CONFIG BUNDLE_LOCKFILE
+  GEM_HOME GEM_PATH RUBYOPT RUBYLIB
+].freeze
+
+# ENV.delete below can't undo damage already done: if the launching process
+# (Falcon's `bundle exec falcon serve`, or any parent shell that ran `bundle
+# exec`) had RUBYOPT=-rbundler/setup in its environment, Ruby's OWN startup
+# already required "bundler/setup" against THAT Gemfile (MASTER/web/Gemfile)
+# before this file's first line ever ran -- deleting RUBYOPT here is too
+# late, and the later `require "bundler/setup"` below is a silent no-op
+# against the wrong, already-resolved Definition. Re-exec into a genuinely
+# clean process image so Ruby's native boot never sees the inherited vars
+# at all, regardless of how this script was launched (rc.d, tts_supervisor's
+# Process.spawn, or a raw shell). One-time guard via TTS_WORKER_REEXEC_DONE
+# avoids re-execing forever.
+if ENV["TTS_WORKER_REEXEC_DONE"] != "1"
+  clean_env = {
+    "HOME" => ENV.fetch("HOME", ""),
+    "USER" => ENV.fetch("USER", ""),
+    "PATH" => ENV.fetch("PATH", "/usr/local/bin:/usr/bin:/bin"),
+    "LANG" => ENV.fetch("LANG", "C.UTF-8"),
+    "LC_ALL" => ENV.fetch("LC_ALL", "C.UTF-8"),
+    "BUNDLE_GEMFILE" => File.join(ROOT, "Gemfile"),
+    "TTS_WORKER_REEXEC_DONE" => "1",
+    # The idle limit has to survive the re-exec. unsetenv_others drops every
+    # variable not named here, which is the point for the bundler keys and a
+    # trap for anything else: the knob read fine in the parent and the daemon
+    # that actually runs the loop never saw it.
+    "TTS_WORKER_IDLE_S" => ENV.fetch("TTS_WORKER_IDLE_S", "1800"),
+  }
+  exec(clean_env, RbConfig.ruby, __FILE__, *ARGV, unsetenv_others: true)
+end
+
+# Entrypoint.prepare! has already sanitized and activated MASTER's private
+# bundle. Keep that context intact: deleting BUNDLE_PATH here made Bundler fall
+# back to the machine-global gem set, which is exactly what the isolated worker
+# must never do. The re-exec above is the isolation boundary for inherited web
+# Bundler state; this point is the activation boundary for MASTER's own bundle.
+ENV["BUNDLE_GEMFILE"] = File.join(ROOT, "Gemfile")
+
+require "bundler/setup"
+require "eventmachine"
+require "rb_edge_tts"
+require "faye/websocket"
+require "json"
+require "socket"
+require "fileutils"
+require "open3"
+require "securerandom"
+require "openssl"
+require "uri"
+require "digest"
+require_relative "../lib/trace/dmesg"
+
+WORKER_VERSION = Digest::SHA256.file(__FILE__).hexdigest[0, 16]
+
+# The daemon's JSON request and the one-shot argv-plus-stdin contract carry the
+# same four values; out_path stays apart because it names the destination.
+SynthRequest = Data.define(:voice, :rate, :pitch, :text)
+
+# Connect over IPv4 when the host has an IPv4 address.
+#
+# EventMachine connects to the first address the resolver returns and never
+# tries another, and the resolver returns IPv6 first. On a network that
+# publishes AAAA records and an IPv6 default route but does not carry IPv6
+# traffic, that single attempt fails with ENETUNREACH, the websocket closes
+# before any audio arrives, and synthesis writes an empty file without
+# raising — MASTER goes silent while --selftest stays green. curl and
+# Net::HTTP survive the same network because they fall back to IPv4.
+#
+# Only the socket address changes. Faye takes SNI and certificate
+# verification from the URL's hostname, so TLS is checked exactly as before,
+# and a host with no IPv4 address connects the way it always did.
+module Ipv4First
+  def connect(server, *rest, &block)
+    super(ipv4_for(server), *rest, &block)
+  end
+
+  private
+
+  def ipv4_for(server)
+    return server unless server.is_a?(String) && !server.match?(/\A[\d.]+\z/) && !server.include?(":")
+
+    Addrinfo.getaddrinfo(server, nil, Socket::AF_INET).first&.ip_address || server
+  rescue SocketError
+    server
+  end
+end
+EventMachine.singleton_class.prepend(Ipv4First)
+
+# OpenBSD verify failed because worker_env wiped SSL_CERT_FILE. Keep
+# verification on and point at the system bundle.
+Faye::WebSocket::Client.singleton_class.prepend(Module.new do
+  def new(url, protocols = [], options = {})
+    cert = ENV["SSL_CERT_FILE"].to_s
+    cert = %w[/etc/ssl/cert.pem /etc/ssl/certs/ca-certificates.crt].find { |p| File.file?(p) }.to_s if cert.empty?
+    tls = { verify_peer: true }
+    tls[:root_cert_file] = cert unless cert.empty?
+    super(url, protocols, options.merge(tls: options.fetch(:tls, {}).merge(tls)))
+  end
+end)
+
+# Verify the Edge certificate against the chain the server actually sends.
+#
+# Faye checks each certificate EventMachine hands its verify callback and trusts
+# an intermediate only once it has verified it. EventMachine built against
+# LibreSSL hands over the leaf alone, so the leaf never meets its issuer and
+# every handshake fails with "unable to get local issuer certificate". The
+# failure surfaces as an empty file, and MASTER speaks through espeak.
+#
+# The intermediates come from a handshake Ruby's own OpenSSL verifies against
+# the system roots and the hostname, and each is verified again before it joins
+# Faye's store, so the leaf must still chain to a trusted root and match.
+module EdgeIntermediates
+  @chains = {}
+
+  def self.for(host) = @chains[host] ||= fetch(host)
+
+  def self.refresh(host) = @chains[host] = fetch(host)
+
+  def self.fetch(host)
+    ctx = OpenSSL::SSL::SSLContext.new
+    ctx.set_params(verify_mode: OpenSSL::SSL::VERIFY_PEER)
+    tcp = Socket.tcp(host, 443, connect_timeout: 5)
+    ssl = OpenSSL::SSL::SSLSocket.new(tcp, ctx)
+    ssl.hostname = host
+    ssl.connect
+    ssl.post_connection_check(host)
+    Array(ssl.peer_cert_chain).drop(1).reverse
+  rescue StandardError => e
+    Master::Trace::Dmesg.status("tts0", "intermediates for #{host} unavailable, #{e.class}: #{e.message}", io: $stderr)
+    []
+  ensure
+    ssl&.close rescue nil
+    tcp&.close rescue nil
+  end
+end
+
+Faye::WebSocket::SslVerifier.prepend(Module.new do
+  def ssl_verify_peer(cert_text)
+    result = super
+    return result if @last_cert_verified || @last_cert.nil?
+
+    %i[for refresh].each do |source|
+      EdgeIntermediates.public_send(source, @hostname).each { |cert| store_cert(cert) if @cert_store.verify(cert) }
+      @last_cert_verified = @cert_store.verify(@last_cert)
+      break if @last_cert_verified
+    end
+    result
+  end
+end)
+
+def synth(request, out_path)
+  RbEdgeTTS::Communicate.new(request.text, request.voice, rate: request.rate, pitch: request.pitch).save_sync(out_path)
+  File.exist?(out_path) && File.size(out_path) > 0
+end
+
+STREAM_FRAME_BYTES = 8
+ZERO_FRAME = "\x00".b * STREAM_FRAME_BYTES
+
+# Wire v2, on request "stream":true — each audio chunk rb_edge_tts delivers is
+# written to the client the moment it arrives, 8-byte length-prefixed, and a
+# zero-length frame closes the stream clean. The client can start playing
+# before synthesis finishes instead of waiting for save_sync to collect the
+# whole mp3. The response still comes from a fork: the EM reactor cannot be
+# reused across requests (4b9da6d2d).
+def synth_streamed(request, client)
+  pid = Process.fork { stream_child(request, client) }
+  _pid, status = Process.wait2(pid)
+  status.success?
+rescue NotImplementedError, StandardError => e
+  Master::Trace::Dmesg.status("tts0", "stream fork unavailable, using subprocess, #{e.class}: #{e.message}", io: $stderr)
+  out = "/tmp/m_tts_#{SecureRandom.hex(8)}.mp3"
+  ok = synth_subprocess(request, out)
+  if ok
+    File.open(out, "rb") { |f| IO.copy_stream(f, client) }
+  end
+  ok
+ensure
+  File.unlink(out) if defined?(out) && out && File.exist?(out)
+end
+
+def stream_child(request, client)
+  begin
+    Process.setproctitle("tts-worker: stream")
+  rescue StandardError
+    nil
+  end
+  sent = stream_audio_frames(request, client)
+  client.write(ZERO_FRAME)
+  exit!(sent ? 0 : 1)
+rescue Errno::ENOTCONN, Errno::EPIPE, Errno::ECONNRESET
+  exit!(1)
+rescue StandardError => e
+  Master::Trace::Dmesg.status("tts0", "stream fork child error, #{e.class}: #{e.message}", io: $stderr)
+  exit!(1)
+end
+
+def stream_audio_frames(request, client)
+  sent = false
+  RbEdgeTTS::Communicate.new(request.text, request.voice, rate: request.rate, pitch: request.pitch).stream_sync.each do |chunk|
+    next unless chunk.type == "audio"
+
+    client.write([chunk.data.bytesize].pack("Q>"))
+    client.write(chunk.data)
+    sent = true
+  end
+  sent
+end
+
+def worker_env
+  wipe = ENV.keys.to_h { |key| [key, nil] }
+  wipe.merge(
+    "HOME" => ENV.fetch("HOME", ""),
+    "USER" => ENV.fetch("USER", ""),
+    "PATH" => ENV.fetch("PATH", "/usr/local/bin:/usr/bin:/bin"),
+    "LANG" => ENV.fetch("LANG", "C.UTF-8"),
+    "LC_ALL" => ENV.fetch("LC_ALL", "C.UTF-8"),
+    "BUNDLE_GEMFILE" => File.join(ROOT, "Gemfile"),
+    "SSL_CERT_FILE" => ENV["SSL_CERT_FILE"].to_s.empty? ? "/etc/ssl/cert.pem" : ENV["SSL_CERT_FILE"],
+    "SSL_CERT_DIR" => ENV.fetch("SSL_CERT_DIR", "/etc/ssl")
+  )
+end
+
+# The argv order VOICE RATE PITCH OUT_PATH is the one-shot wire contract.
+def synth_subprocess(request, out_path)
+  script = File.expand_path(__FILE__)
+  _out, err, status = Open3.capture3(
+    worker_env, Gem.ruby, script, request.voice, request.rate, request.pitch, out_path,
+    stdin_data: request.text.to_s
+  )
+  unless status.success?
+    Master::Trace::Dmesg.status("tts0", "one-shot failed, #{err.to_s.strip}", io: $stderr) unless err.to_s.strip.empty?
+    return false
+  end
+  File.exist?(out_path) && File.size(out_path) > 0
+end
+
+# EventMachine's reactor cannot be safely reused within one process across
+# requests (see 4b9da6d2d: a second `save_sync` in the same daemon process
+# silently returned empty audio) -- so each request needs its own fresh
+# process. A full Open3.capture3 re-exec (synth_subprocess above) pays for
+# that isolation with a complete Ruby+Bundler+EventMachine+rb_edge_tts cold
+# boot on *every* request, which is why the "warm daemon" was slower than
+# the plain one-shot path it was meant to replace. fork() gives the same
+# per-request isolation via a copy-on-write child that skips bundler/require
+# entirely, so it inherits the already-loaded interpreter instead of
+# re-booting one.
+def synth_forked(request, out_path)
+  if ENV["SSL_CERT_FILE"].to_s.empty?
+    cert = %w[/etc/ssl/cert.pem /etc/ssl/certs/ca-certificates.crt].find { |p| File.file?(p) }
+    ENV["SSL_CERT_FILE"] = cert if cert
+  end
+  pid = Process.fork do
+    begin
+      Process.setproctitle("tts-worker: synth")
+    rescue StandardError => e
+      Master::Trace::Dmesg.status("tts0", "setproctitle failed, #{e.class}: #{e.message}", io: $stderr)
+    end
+    begin
+      ok = synth(request, out_path)
+      exit!(ok ? 0 : 1)
+    rescue StandardError => e
+      Master::Trace::Dmesg.status("tts0", "fork child error, #{e.class}: #{e.message}", io: $stderr)
+      exit!(1)
+    end
+  end
+  _pid, status = Process.wait2(pid)
+  status.success? && File.exist?(out_path) && File.size(out_path) > 0
+rescue NotImplementedError, StandardError => e
+  Master::Trace::Dmesg.status("tts0", "fork unavailable, using subprocess, #{e.class}: #{e.message}", io: $stderr)
+  synth_subprocess(request, out_path)
+end
+
+def require_eventmachine_ssl!
+  return unless EventMachine.respond_to?(:ssl?) && !EventMachine.ssl?
+
+  Master::Trace::Dmesg.status("tts0", "EventMachine SSL support unavailable; reinstall eventmachine with OpenSSL support or install espeak", io: $stderr)
+  exit 69
+end
+
+# Answers "could this worker speak" by being the worker. Reaching this line
+# means bundler resolved against MASTER's Gemfile and every require above
+# succeeded, so the preconditions are proved by execution rather than restated
+# in a caller that drifts from them. Speech.edge_tts_ready? spawns this.
+if ARGV[0] == "--selftest"
+  require_eventmachine_ssl!
+  versions = {
+    "ruby" => RUBY_VERSION,
+    "eventmachine" => (EventMachine::VERSION rescue "?"),
+    "rb_edge_tts" => (RbEdgeTTS::VERSION rescue "?"),
+  }
+  Master::Trace::Dmesg.status("tts0", "selftest ok, #{versions.map { |k, v| "#{k} #{v}" }.join(", ")}")
+  exit 0
+end
+
+if ARGV[0] == "--daemon"
+  require_eventmachine_ssl!
+  sock_path = ARGV[1]
+  unless sock_path
+    Master::Trace::Dmesg.status("tts0", "usage, tts-worker --daemon SOCKET_PATH", io: $stderr)
+    exit 64
+  end
+  FileUtils.mkdir_p(File.dirname(sock_path))
+  # Refuse to steal a live daemon's socket: if something answers the health
+  # probe at this path, a healthy daemon owns it and a second spawn (racing
+  # supervisor calls, manual runs) must not unlink it. Only clear dead paths.
+  if File.socket?(sock_path)
+    begin
+      UNIXSocket.open(sock_path) do |probe|
+        probe.write(%({"health":true}\n))
+        if IO.select([probe], nil, nil, 1) && probe.gets.to_s.strip == "ok"
+          Master::Trace::Dmesg.status("tts0", "healthy daemon already bound to #{sock_path}, exiting")
+          exit 0
+        end
+      end
+    rescue SystemCallError, EOFError, IOError
+      # dead socket file — safe to replace
+    end
+  end
+  File.unlink(sock_path) rescue nil
+  server = UNIXServer.new(sock_path)
+  begin
+    File.chmod(0o660, sock_path)
+  rescue Errno::ENOSYS, Errno::EOPNOTSUPP
+    Master::Trace::Dmesg.status("tts0", "chmod unsupported for #{sock_path}, continuing with filesystem permissions", io: $stderr)
+  end
+  Master::Trace::Dmesg.status("tts0", "daemon ready on #{sock_path}")
+  # Unlink on exit ONLY if the path still refers to the socket this process
+  # bound. An older daemon dying after a newer one has already re-bound the
+  # same path would otherwise unlink the newer daemon's socket out from under
+  # it — the pool then has a live process nobody can reach until the next
+  # respawn, and every synthesis in between burns its full connect timeout.
+  bound_ino = (File.stat(sock_path).ino rescue nil)
+  cleanup = proc do
+    begin
+      File.unlink(sock_path) if bound_ino && File.stat(sock_path).ino == bound_ino
+    rescue StandardError => e
+      Master::Trace::Dmesg.status("tts0", "could not remove #{sock_path}, #{e.class}: #{e.message}", io: $stderr)
+    end
+    exit 0
+  end
+  trap("INT", &cleanup)
+  trap("TERM", &cleanup)
+
+  # Idle daemons exit. Nothing reaps them otherwise, and nothing ever did: every
+  # boot of bin/cli spawns a pool of two, none of them stops when the session
+  # ends, and they outlive the checkout they were spawned from. Twenty-one were
+  # found alive on 2026-09-11 across nine trees, six of which had been deleted
+  # hours earlier — a laptop that had run the suite a few times was carrying a
+  # worker pool for every worktree it had ever opened.
+  #
+  # Thirty minutes, because the socket is the contract: a caller that finds no
+  # daemon spawns one, and the cost of that is a boot rather than a failure.
+  idle_limit = Integer(ENV.fetch("TTS_WORKER_IDLE_S", "1800"))
+  # Fetched once here so every forked synthesis inherits the chain instead of
+  # paying a second handshake per sentence.
+  EdgeIntermediates.for(URI(RbEdgeTTS::WSS_URL).host)
+
+  loop do
+    ready = IO.select([server], nil, nil, idle_limit)
+    unless ready
+      Master::Trace::Dmesg.status("tts0", "idle #{idle_limit}s on #{sock_path}, exiting")
+      cleanup.call
+    end
+    client = server.accept
+    begin
+      line = client.gets&.chomp
+      next unless line && !line.empty?
+      req = JSON.parse(line)
+      if req["health"]
+        client.write("ok #{WORKER_VERSION}\n")
+        next
+      end
+      request = SynthRequest.new(
+        voice: req["voice"].to_s,
+        rate: req["rate"].to_s,
+        pitch: req["pitch"].to_s,
+        text: req["text"].to_s,
+      )
+      next if request.voice.empty? || request.text.empty?
+      if req["stream"]
+        synth_streamed(request, client)
+        next
+      end
+      out = "/tmp/m_tts_#{SecureRandom.hex(8)}.mp3"
+      ok = synth_forked(request, out)
+      if ok
+        begin
+          File.open(out, "rb") { |f| IO.copy_stream(f, client) }
+        rescue Errno::ENOTCONN, Errno::EPIPE, Errno::ECONNRESET
+          # client hung up before the stream finished — routine with the async job model, not a fault
+        end
+      end
+      File.unlink(out) rescue nil
+    rescue StandardError => e
+      Master::Trace::Dmesg.status("tts0", "#{e.class}: #{e.message}", io: $stderr)
+    ensure
+      client.close rescue nil
+    end
+  end
+end
+
+voice, rate, pitch, out_path = ARGV
+if [voice, rate, pitch, out_path].any?(&:nil?)
+  warn "tts-worker: usage: tts-worker VOICE RATE PITCH OUT_PATH < text"
+  warn "                   tts-worker --daemon SOCKET_PATH"
+  warn "                   tts-worker --selftest"
+  exit 64
+end
+$stdin.set_encoding(Encoding::UTF_8)
+text = $stdin.read.force_encoding(Encoding::UTF_8)
+if text.to_s.strip.empty?
+  Master::Trace::Dmesg.status("tts0", "empty stdin", io: $stderr)
+  exit 65
+end
+require_eventmachine_ssl!
+
+begin
+  ok = synth_forked(SynthRequest.new(voice:, rate:, pitch:, text:), out_path)
+  exit(ok ? 0 : 1)
+rescue StandardError => e
+  Master::Trace::Dmesg.status("tts0", "#{e.class}: #{e.message}", io: $stderr)
+  exit 1
+end

@@ -1,0 +1,85 @@
+#!/bin/sh
+# Interpreters by absolute path, and PATH set anyway.
+#
+# /etc/daily inherits cron's environment, which does not include /usr/local/bin —
+# where every interpreter on this box lives. `ruby` on line 2 and `ruby40` on the
+# config_drift_gate line both failed to exec on every run, and the second one was
+# invisible because its `2>&1` sent the shell's own "not found" into the output
+# file it was writing. See etc/crontab.vm23 for the full accounting; the PATH line
+# there is the real fix, and this is the belt to its braces — daily.local is also
+# run by hand, from shells that have their own ideas about PATH.
+PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin
+export PATH
+
+/usr/local/bin/ruby40 /usr/local/bin/nsd-resign
+# Two different questions. config-drift-check: do relayd routes, acme SANs and
+# nsd zones agree with each other on this box? config_drift_gate.rb: does every
+# tracked /etc and /usr/local/bin file match its repo mirror byte for byte?
+/usr/local/bin/config-drift-check || logger -t daily.local "config-drift-check failed"
+# Installed copy only. Root must not execute the writable checkout.
+if [ -x /usr/local/bin/config_drift_gate.rb ]; then
+  /usr/local/bin/ruby40 /usr/local/bin/config_drift_gate.rb >/var/log/config-drift.out 2>&1 || \
+    logger -t daily.local "repo/live config drift — see /var/log/config-drift.out"
+fi
+# su without -l, and its failure is now audible. `su -l` runs dev's login profile,
+# which boots MASTER's sqlite store and prints "disk I/O error" and "Must be
+# connected to a terminal" before the backup even starts — noise that made the
+# real error below it look like more of the same. And the `||` matters: this
+# failed every night for months (wrong port, wrong host alias, no remote
+# directory, and openssl prompting for a passphrase with no terminal to type it
+# on) and daily(8) carried straight on to report the rest of the run.
+su dev -c 'cd /home/dev/pub4 && zsh OPENBSD/backup_priv.sh' ||
+  logger -t daily.local "backup_priv failed - ~/priv was not backed up (see OPENBSD/backup_priv.sh header)"
+
+# The guest prune moved out of here on 2026-08-14, the morning after its one run.
+#
+# It removed nothing. /etc/daily starts at 01:30 and has the box at load 4.12 by
+# the time it reaches daily.local, which is over PruneGuestUsersJob's own ceiling
+# of 3.0 — so the job's safety guard refused, correctly, every time this file was
+# going to call it. The schedule and the guard were fighting each other, and the
+# schedule was the part that was chosen here.
+#
+# It is now /usr/local/bin/prune-guests.sh at 04:20 from the root crontab, which
+# waits for the load to fall instead of skipping the night, sets HOME (cron has
+# it at /var/log and `su -m` preserves it), and prints its result rather than
+# trusting Rails.logger — brgen's production logger does not write to stdout, so
+# the one run that did happen left no line about brgen at all.
+
+if command -v drill >/dev/null 2>&1; then
+  drill @127.0.0.1 brgen.no SOA >/var/log/nsd-check.out 2>&1 || \
+    logger -t daily.local "NSD smoke check failed for brgen.no"
+elif command -v dig >/dev/null 2>&1; then
+  dig @127.0.0.1 brgen.no SOA +short >/var/log/nsd-check.out 2>&1 || \
+    logger -t daily.local "NSD smoke check failed for brgen.no"
+else
+  logger -t daily.local "NSD smoke check skipped — no drill or dig"
+fi
+
+# vm23 runs a locally built libvips with -Drsvg=enabled. The OpenBSD port turns
+# rsvg off, so `pkg_add -u` replaces it with a build that has no svgload at all
+# and librsvg sits installed beside it, never reached.
+#
+# Nothing about that is loud. Amber::GarmentSilhouette#png returns nil and logs
+# one line when vips cannot read the SVG it generates, the seeder carries on, and
+# the garment cut-outs are simply absent — a feature that stops existing rather
+# than an error anyone is paged for. This is the detection TODO.md asks for
+# under libvips_local_build; the recovery is `make reinstall` in
+# /usr/ports/graphics/libvips, whose package is kept at
+# /usr/ports/packages/amd64/all/libvips-8.14.5.tgz.
+#
+# ruby40 rather than `vips -l | grep svgload`: grep is banned in committed
+# scripts here (rules.yml, BSD/GNU idiom drift), and the exit status is the
+# whole signal anyway.
+if command -v vips >/dev/null 2>&1; then
+  /usr/local/bin/ruby40 -e '
+    require "rubygems"
+    raw = ARGV.fetch(0).to_s
+    match = raw.match(/(\\d+\\.\\d+\\.\\d+)/)
+    exit 1 unless match && Gem::Version.new(match[1]) >= Gem::Version.new("8.18.2")
+  ' "$(vips --version 2>/dev/null)" || \
+    logger -t daily.local "libvips below 8.18.2 — update /usr/ports/graphics/libvips before image processing"
+  /usr/local/bin/ruby40 -e 'exit(`vips -l 2>/dev/null`.include?("svgload") ? 0 : 1)' || \
+    logger -t daily.local "libvips lost svgload — amber garment cut-outs degrade silently; make reinstall in /usr/ports/graphics/libvips"
+else
+  logger -t daily.local "libvips absent — amber garment cut-outs cannot render"
+fi

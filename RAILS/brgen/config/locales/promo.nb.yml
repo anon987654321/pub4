@@ -1,0 +1,43 @@
+nb:
+  promo:
+    aria_label: Brgen-reklame
+    radio:
+      kicker: Snurr for seieren!
+      title: Radio
+      body: Lokale lyder, røffe mikser, sett og nye utgivelser.
+      action: Hør nå
+    marketplace:
+      kicker: Finn det her.
+      title: Markedsplass
+      body: Kjøp, selg og oppdag det folk i byen legger ut.
+      action: Åpne markedsplassen
+    takeaway:
+      kicker: Middagen er nær.
+      title: Takeaway
+      body: Finn restauranter, menyer og levering uten å forlate Brgen.
+      action: Se hva som finnes
+    messenger:
+      kicker: Hold tråden.
+      title: Messenger
+      body: Private og lokale samtaler, med byen like i nærheten.
+      action: Åpne Messenger
+    maps:
+      kicker: Se deg rundt.
+      title: Kart
+      body: Steder, innsjekkinger og det som skjer rundt deg.
+      action: Åpne Kart
+    tv:
+      kicker: Se hva som skjer.
+      title: TV
+      body: Lokale kanaler, programmer, lyder og direktescener.
+      action: Se TV
+    dating:
+      kicker: Møt noen i nærheten.
+      title: Dating
+      body: Oppdag folk som bor i samme by som deg.
+      action: Åpne Dating
+    ai:
+      kicker: Spør MASTER.
+      title: AI
+      body: En lokal AI-flate for research, skriving, planlegging og mer.
+      action: Åpne AI

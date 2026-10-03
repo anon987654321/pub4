@@ -1,0 +1,43 @@
+<% content_for :title, t("tv.upload_video") %>
+
+<div class="page-header"><%= tag.h1 t("tv.upload_video") %></div>
+
+<div class="form-wrap">
+  <%# videos_path does not exist -- upload is only routed under a channel
+      (the one link in, new_channel_video_path), so the channel comes from
+      the URL rather than from a picker the create action never read. %>
+  <%= form_with model: @video, url: channel_videos_path(@channel), multipart: true do |f| %>
+    <%= render "shared/errors", object: @video %>
+    <p><%= t("tv.uploading_to_html", channel: tag.strong(@channel.name)) %></p>
+    <div class="field"><%= f.label :title %><%= f.text_field :title, required: true %></div>
+    <div class="field"><%= f.label :description %><div data-controller="character-counter" data-character-counter-countdown-value="true">
+  <%= f.text_area :description, rows: 4 , data: { character_counter_target: "input" } %>
+  <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
+</div></div>
+    <div class="field"><%= f.label :video_file %><%= f.file_field :video_file, accept: "video/*", required: true, direct_upload: true, data: { controller: "direct-upload" } %></div>
+<%# What this clip is built on. Answering another clip carries its sound
+    across, which is what makes a duet a duet rather than a second video
+    that mentions the first — so the two fields are one choice, and the duet
+    wins when both are given. %>
+<% if @duet_of %>
+  <p><%= t("tv.duet_of") %> <%= @duet_of.title %></p>
+  <%= f.hidden_field :duet_of_id, value: @duet_of.id %>
+<% elsif @sounds.present? %>
+  <div class="field">
+    <%= f.label :sound_id, t("tv.use_a_sound") %>
+    <%= f.select :sound_id, @sounds.map { |sound| [ sound.title, sound.id ] }, include_blank: t("tv.own_sound") %>
+  </div>
+<% end %>
+<div class="field">
+  <%= f.label :allow_duets, t("tv.allow_duets") %>
+  <%= f.check_box :allow_duets, checked: true %>
+</div>
+    <div class="field">
+      <%= f.label :thumbnail %>
+      <%= f.file_field :thumbnail, accept: "image/*", direct_upload: true, data: { controller: "direct-upload" } %>
+      <%= render "shared/preset_strip", f: f, checked: "blockbuster" %>
+      <p><%= t("tv.thumbnail_hint") %></p>
+    </div>
+    <div class="field"><%= f.submit t("tv.upload"), class: "btn btn-primary" %></div>
+  <% end %>
+</div>

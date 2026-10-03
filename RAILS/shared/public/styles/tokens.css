@@ -1,0 +1,56 @@
+/* Auto-synced by build_all_css.rb — social palette from design_tokens.yml */
+:root {
+  color-scheme: dark;
+  --bg: #000000;
+  --surface: #111111;
+  --surface-elevated: #111111;
+  --search-bg: #111111;
+  --text: #efefef;
+  --text-secondary: #a3a3a3;
+  --border: #666666;
+  --hover: color-mix(in srgb, var(--text) 10%, transparent);
+  --hover-subtle: color-mix(in srgb, var(--text) 3%, transparent);
+  --accent: #efefef;
+  --danger: #e46151;
+  --font: "Helvetica Neue Pro", "Helvetica Neue", Arial, sans-serif;
+  --weight-normal: 400;
+  --weight-medium: 500;
+  --weight-bold: 700;
+  --weight-heavy: 800;
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-card: 16px;
+  --radius-lg: 16px;
+  --radius-pill: 9999px;
+  --transition-fast: 180ms;
+  --transition-normal: 300ms;
+  --z-chrome: 10;
+  --z-ui: 90;
+  --z-overlay: 100;
+  --z-modal: 1000;
+  --z-toast: 1100;
+  --z-skip: 2000;
+  --color-background: var(--bg);
+  --color-midtone: var(--text-secondary);
+  --color-highlight: var(--surface);
+  --color-accent: var(--accent);
+  --color-border: var(--border);
+  --text-primary: var(--text);
+  --text-secondary: var(--text-secondary);
+}
+@media (prefers-color-scheme: light) {
+  :root {
+    color-scheme: light;
+    --bg: #ffffff;
+    --text: #0f1419;
+    --text-secondary: #536471;
+    --border: #eff3f4;
+    --hover: color-mix(in srgb, var(--text) 10%, transparent);
+    --hover-subtle: color-mix(in srgb, var(--text) 3%, transparent);
+    --color-background: var(--bg);
+    --color-highlight: var(--bg);
+    --text-primary: var(--text);
+    --text-secondary: var(--text-secondary);
+  }
+}

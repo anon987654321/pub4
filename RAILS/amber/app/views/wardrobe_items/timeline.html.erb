@@ -1,0 +1,82 @@
+<% content_for :title, "Style evolution" %>
+
+<header role="banner" aria-label="<%= t("wardrobe.evolution_header") %>">
+  <hgroup>
+    <p><%= t("wardrobe.phases_over_time") %></p>
+    <%= tag.h1 t("pages.timeline") %>
+  </hgroup>
+  <nav role="navigation" aria-label="<%= t("wardrobe.evolution_actions") %>">
+    <%= link_to t("pages.analytics"), analytics_wardrobe_items_path, class: "btn" %>
+    <%= link_to t("actions.wardrobe"), items_path, class: "btn" %>
+  </nav>
+</header>
+
+<section class="chips" aria-label="<%= t("wardrobe.phase_summary") %>">
+  <span class="chip"><%= t("wardrobe.total_items", count: @timeline[:summary][:total_items]) %></span>
+  <span class="chip"><%= t("wardrobe.with_phase", count: @timeline[:summary][:phased_items]) %></span>
+  <% if @timeline[:summary][:dominant_phase].present? %>
+    <span class="chip"><%= t("wardrobe.dominant") %> <%= @timeline[:summary][:dominant_phase].humanize %></span>
+  <% end %>
+</section>
+
+<section aria-label="<%= t("wardrobe.life_phase_groups") %>">
+  <%= tag.h2 t("wardrobe.life_phases") %>
+  <div class="style-phase-grid">
+    <% @timeline[:phases].each do |group| %>
+      <article class="style-phase-card" aria-labelledby="phase-<%= group[:phase] %>">
+        <header>
+          <h3 id="phase-<%= group[:phase] %>"><%= group[:label] %></h3>
+          <p><%= t("wardrobe.chip_items", count: group[:count]) %></p>
+        </header>
+        <% if group[:items].any? %>
+          <ol class="style-phase-list" role="list" data-controller="scroll-reveal">
+            <% group[:items].each do |item| %>
+              <li role="listitem" class="timeline-item">
+                <%= link_to item[:title], item_path(item[:id]) %>
+                <%= item[:category] %>
+                <% if item[:mood_effect].present? %>
+                  <span class="tag"><%= item[:mood_effect] %></span>
+                <% end %>
+              </li>
+            <% end %>
+          </ol>
+        <% else %>
+          <%= render "shared/empty_state",
+                title: t("empty.no_phase_items"),
+                body: t("empty.no_phase_items_body"),
+                action: { label: t("actions.wardrobe"), path: items_path } %>
+        <% end %>
+      </article>
+    <% end %>
+  </div>
+</section>
+
+<section aria-label="<%= t("wardrobe.wear_history_label") %>">
+  <%= tag.h2 t("wardrobe.wear_history") %>
+  <% if @timeline[:wear_events].any? %>
+    <ol class="style-timeline" role="list">
+      <% @timeline[:wear_events].each do |event| %>
+        <li role="listitem">
+          <time datetime="<%= event[:worn_on] %>"><%= event[:worn_on] %></time>
+          <p>
+            <%= link_to event[:item_title], item_path(event[:item_id]) %>
+            <% if event[:outfit_title].present? %>
+              in <%= event[:outfit_title] %>
+            <% end %>
+          </p>
+          <% if event[:life_phase].present? %>
+            <span class="tag tag--phase"><%= event[:life_phase] %></span>
+          <% end %>
+          <% if event[:context].present? %>
+            <p><%= event[:context] %></p>
+          <% end %>
+        </li>
+      <% end %>
+    </ol>
+  <% else %>
+    <%= render "shared/empty_state",
+          title: t("empty.no_wear_history"),
+          body: t("empty.no_wear_history_body"),
+          action: { label: t("actions.wardrobe"), path: items_path } %>
+  <% end %>
+</section>

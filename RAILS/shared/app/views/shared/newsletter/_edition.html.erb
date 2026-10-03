@@ -1,0 +1,52 @@
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="mail-shell">
+  <tr>
+    <td class="mail-brand"><%= edition.app_name %></td>
+  </tr>
+
+  <%= render "shared/newsletter/hero", edition: edition %>
+
+  <tr>
+    <td class="mail-lede-wrap">
+      <p class="mail-lede"><%= edition.lede %></p>
+    </td>
+  </tr>
+
+  <% if edition.stories.any? %>
+    <tr><td><hr class="mail-divider"></td></tr>
+    <tr><td><p class="mail-section-title"><%= t("newsletter.today_in", city: edition.city_name) %></p></td></tr>
+    <% edition.stories.each_with_index do |story, index| %>
+      <%= render "shared/newsletter/story", story: story %>
+      <% if edition.artworks[index].present? %>
+        <%= render "shared/newsletter/artwork", artwork: edition.artworks[index] %>
+      <% end %>
+    <% end %>
+  <% elsif edition.artworks.any? %>
+    <tr><td><hr class="mail-divider"></td></tr>
+    <% edition.artworks.each do |artwork| %>
+      <%= render "shared/newsletter/artwork", artwork: artwork %>
+    <% end %>
+  <% end %>
+
+  <% if edition.deals.any? %>
+    <tr><td><hr class="mail-divider"></td></tr>
+    <tr><td><p class="mail-section-title"><%= t("newsletter.curated_offers") %></p></td></tr>
+    <% edition.deals.each_with_index do |deal, index| %>
+      <%= render "shared/newsletter/deal", deal: deal %>
+      <% if edition.artworks[index].present? %>
+        <%= render "shared/newsletter/artwork", artwork: edition.artworks[index] %>
+      <% end %>
+    <% end %>
+  <% end %>
+
+  <% if edition.cta_url.present? %>
+    <tr>
+      <td class="mail-cta-wrap">
+        <a href="<%= edition.cta_url %>" class="mail-cta"><%= edition.cta_label %></a>
+      </td>
+    </tr>
+  <% end %>
+
+  <tr><td class="mail-signoff"><%= edition.sign_off %></td></tr>
+  <tr><td class="mail-permission"><%= edition.permission_line %></td></tr>
+  <%= render "shared/newsletter/footer", edition: edition, preferences_url: preferences_url %>
+</table>

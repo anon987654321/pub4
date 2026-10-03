@@ -1,0 +1,290 @@
+# frozen_string_literal: true
+
+class Marketplace::Listing < ApplicationRecord
+  include CityTenantable
+  include Shared::Sluggable # /listings/<title-slug>; from :title, unique per city
+  include Shared::MediaProcessable
+  include Shared::GeoLocatable
+  tracks_activity created: "ListingCreated", source_vertical: "marketplace", actor: :user
+
+  include Shared::Reactable
+  include Shared::Notifiable
+  belongs_to :user
+  belongs_to :store, class_name: "Marketplace::Store", optional: true
+  belongs_to :category, class_name: "Marketplace::Category",
+             foreign_key: :category_id, optional: true, inverse_of: :listings
+  # :restrict_with_error, not :destroy -- an order is a financial record and a
+  # buyer's receipt, and the seller who withdraws a listing does not own the
+  # buyer's half of it. Operator decision 2026-08-09.
+  #
+  # The listings controller withdraws rather than destroys (status: "removed",
+  # which ListingPolicy::Scope filters out of every index and show? hides from
+  # non-owners), so this does not fire on the normal path. What it guards is the
+  # cascade: User has_many :marketplace_listings, dependent: :destroy, so
+  # destroying a seller previously destroyed every order placed against them,
+  # including the buyers' side.
+  #
+  # That cascade is now refused, which leaves an open question rather than a
+  # closed door: account deletion has no controller path today, and when one is
+  # built it has to reconcile the buyer's right to a receipt with the seller's
+  # right to erasure. Anonymising the seller and keeping the order is the usual
+  # answer; that is a product decision, not this file's.
+  has_many :orders, class_name: "Marketplace::Order",
+           foreign_key: :listing_id, dependent: :restrict_with_error, inverse_of: :listing
+  has_many :favorites, class_name: "Marketplace::ListingFavorite",
+           foreign_key: :listing_id, dependent: :destroy, inverse_of: :listing
+  has_many :deals, class_name: "Marketplace::Deal", dependent: :destroy
+  has_many :reviews, class_name: "Marketplace::Review", dependent: :destroy
+  # Public questions and the seller's answers — see Marketplace::Question for
+  # why they are on the listing rather than in an offer thread.
+  has_many :questions, class_name: "Marketplace::Question", dependent: :destroy
+  # Size and colour as rows. A listing with variants is bought by the variant,
+  # not by the listing — see Marketplace::Variant.
+  has_many :variants, class_name: "Marketplace::Variant", dependent: :destroy
+  has_many :events, class_name: "Marketplace::ListingEvent",
+           foreign_key: :listing_id, dependent: :delete_all, inverse_of: :listing
+  has_one :job_detail, class_name: "Marketplace::JobDetail", dependent: :destroy
+  has_one :housing_detail, class_name: "Marketplace::HousingDetail", dependent: :destroy
+  has_one :gig_detail, class_name: "Marketplace::GigDetail", dependent: :destroy
+  accepts_nested_attributes_for :job_detail, :housing_detail, :gig_detail, allow_destroy: true
+  has_many :favorited_by_users, through: :favorites, source: :user
+  has_many_attached :photos
+  has_one_attached :video
+  attr_accessor :source
+  process_media_variants :photos, variants: {
+    thumb: { resize_to_limit: [ 360, 360 ], format: :webp },
+    card: { resize_to_limit: [ 800, 800 ], format: :webp }
+  }
+
+  CONDITIONS = %w[new_with_tags new_without_tags very_good good satisfactory].freeze
+  # What is being listed. goods is a thing with a price; the other three are the
+  # Craigslist half — same city scoping, search, expiry and messaging, different
+  # facts about them, which live in a table each rather than in columns that are
+  # null for every bicycle.
+  KINDS = %w[goods job housing gig].freeze
+  STATUSES = %w[active sold reserved removed].freeze
+
+  DELIVERY_PROMISES = {
+    same_day_bergen: 0,
+    next_day_bergen: 1,
+    next_day_west: 2,
+    one_to_two_days: 3,
+    three_to_five_days: 4,
+    pickup_only: 5
+  }.freeze
+
+  FULFILMENT_METHODS = {
+    self_ship: 0,
+    local_hub: 1,
+    locker: 2,
+    third_party: 3
+  }.freeze
+  # Set only when the create action enqueues PostproJob (photos attached and a
+  # preset chosen); nil means postpro was never requested, which stays the
+  # common case since a preset is optional. skipped covers PostproProcessor
+  # finding no postpro script on this box -- the vm23 caveat -- as well as an
+  # attachment that vanished before the job ran; failed is the script running
+  # and erroring.
+  PHOTO_STATUSES = %w[pending done skipped failed].freeze
+  DEFAULT_RADIUS_KM = 5.0
+  MAX_RADIUS_KM = 50.0
+
+  validates :title, presence: true, length: { maximum: 200 }
+  validates :kind, inclusion: { in: KINDS }
+  # A job advert has no price and a room's number is its rent, so price is only
+  # required of goods. Left required for everything, the form would have made
+  # people type a nought and the index would have sorted jobs by it.
+  validates :price_cents, numericality: { greater_than_or_equal_to: 0 }, if: :goods?
+  validates :price_cents, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true, unless: :goods?
+  validates :condition, inclusion: { in: CONDITIONS }, allow_nil: true
+  validates :status, inclusion: { in: STATUSES }
+  validates :photo_status, inclusion: { in: PHOTO_STATUSES }, allow_nil: true
+  validates :latitude, :longitude, numericality: true, allow_nil: true
+  validates :delivery_promise, inclusion: { in: DELIVERY_PROMISES.values }
+  validates :fulfilment_method, inclusion: { in: FULFILMENT_METHODS.values }
+  validates :ranking_score, :seller_score, numericality: true
+
+  before_validation do
+    self.status ||= "active"
+    self.currency ||= Current.currency.presence || "NOK"
+    self.latitude ||= Current.user&.latitude if defined?(Current) && Current.respond_to?(:user)
+    self.longitude ||= Current.user&.longitude if defined?(Current) && Current.respond_to?(:user)
+  end
+
+  # Immediate, not later: the queue has no worker. Only searches that already
+  # match this row, and only if they are due — a filtered index is not a
+  # stream we can append into.
+  after_create :alert_matching_saved_searches
+  after_create_commit :queue_ranking_recalculation
+
+  # A classifieds listing has a life. Without one the marketplace fills with
+  # things sold two years ago that nobody took down, and the honest listings
+  # drown in them.
+  LIFETIME = 45.days
+  # Told a week before, so renewing is a choice rather than a surprise.
+  RENEWAL_NOTICE = 7.days
+
+  before_validation :set_expiry, on: :create
+
+  # `live` is what every public surface should read: active AND not expired.
+  # `active` stays as it was, because seller-facing pages legitimately want
+  # their own expired listings back.
+  scope :active,   -> { where(status: "active") }
+  scope :live,     -> { active.where("expires_at IS NULL OR expires_at > ?", Time.current) }
+  scope :publicly_visible, -> { live.joins(:user).where(users: { deleted_at: nil, deletion_scheduled_at: nil }) }
+  scope :expired,  -> { active.where("expires_at IS NOT NULL AND expires_at <= ?", Time.current) }
+  scope :expiring_soon, lambda {
+    live.where(renewal_notice_sent_at: nil).where("expires_at <= ?", Time.current + RENEWAL_NOTICE)
+  }
+  scope :recent,   -> { order(created_at: :desc) }
+  # The three orders a browsing buyer asks for. Anything else in the param is
+  # newest first, which is the page as it arrives.
+  SORTS = %w[rank recent price_low price_high].freeze
+  scope :sorted_by, lambda { |sort|
+    case sort
+    when "rank" then order(ranking_score: :desc, created_at: :desc)
+    when "price_low" then order(price_cents: :asc)
+    when "price_high" then order(price_cents: :desc)
+    else recent
+    end
+  }
+  scope :popular,  -> { order(views_count: :desc) }
+  scope :from_store, ->(store) { where(store: store) }
+  # No store = a person selling a chair. The storefront already stores that;
+  # these scopes are the chrome the index was missing.
+  scope :casual, -> { where(store_id: nil) }
+  scope :ranked, -> { order(ranking_score: :desc) }
+  scope :with_fast_delivery, -> { where(delivery_promise: [0, 1, 2]) }
+  scope :from_shops, -> { where.not(store_id: nil) }
+  scope :near, ->(lat, lng, radius_km = 5) { nearby(lat, lng, radius_km) }
+  scope :rated, -> { where("rating > 0") }
+
+  def self.radius_from(value)
+    value.to_f.clamp(1.0, MAX_RADIUS_KM)
+  end
+
+  # Goods unless a request names another kind: a bicycle search should not turn
+  # up a job. The index, the new-listing form and page two of a list all ask here.
+  def self.kind_from(value) = KINDS.include?(value) ? value : "goods"
+
+  # nil stock means one of a kind, which is what a classifieds listing is; a
+  # number means a shop with inventory. Defaulting to 1 would have made every
+  # private sale read as a shop with one left.
+  def goods? = kind.to_s == "goods" || kind.blank?
+  def job? = kind == "job"
+  def housing? = kind == "housing"
+  def gig? = kind == "gig"
+
+  # The detail row for whatever this is, or nil for goods. One reader, so a
+  # view does not have to know which of the three tables to ask.
+  def details
+  case kind
+  when "job" then job_detail
+  when "housing" then housing_detail
+  when "gig" then gig_detail
+  end
+  end
+
+  # What a card shows instead of a price. Goods keep price_display.
+  def headline_amount
+    case kind
+    when "job" then job_detail&.salary_display
+    when "housing" then housing_detail&.rent_display
+    when "gig" then gig_detail&.pay_display
+    else price_display
+    end
+  end
+
+  def one_of_a_kind? = stock.nil?
+  def varied? = variants.exists?
+  def in_stock? = one_of_a_kind? ? !sold? : stock.to_i.positive?
+
+  def available_quantity = one_of_a_kind? ? (sold? ? 0 : 1) : stock.to_i
+
+  # Called when an order is paid. update_column-style so a legacy listing with a
+  # since-tightened validation cannot block a sale that has already been paid
+  # for, and updated_at goes with it because the card is cached on [listing].
+  def consume_stock!(quantity = 1)
+    raise "listing is not in stock" unless in_stock?
+
+    return mark_sold! if one_of_a_kind?
+
+    remaining = [ stock.to_i - quantity.to_i, 0 ].max
+    update_columns(stock: remaining, status: remaining.zero? ? "sold" : status, updated_at: Time.current)
+  end
+
+  def mark_sold! = update_columns(status: "sold", updated_at: Time.current)
+
+  # updated_at with it, same as mark_sold! -- the [listing] fragment cache
+  # would otherwise keep serving whichever photo_status it had at render time.
+  def mark_photo_status!(status) = update_columns(photo_status: status, updated_at: Time.current)
+  def photo_processing? = photo_status == "pending"
+
+  def expired? = expires_at.present? && expires_at <= Time.current
+  def expires_in_days = expires_at.nil? ? nil : ((expires_at - Time.current) / 1.day).ceil
+  def buyable? = status == "active" && !expired? && in_stock?
+
+  # Renewing restarts the window from now rather than extending the old one, so
+  # a listing renewed a week late does not immediately expire again.
+  def renew!
+    update!(expires_at: Time.current + LIFETIME, renewal_notice_sent_at: nil)
+  end
+
+  def price_display = Shared::MoneyDisplay.format(price_cents, currency)
+  def casual? = store_id.nil?
+  def source_kind = store_id.present? ? :shop : :person
+  def condition_label = condition.present? ? I18n.t("marketplace.conditions.#{condition}", default: condition.to_s.tr("_", " ")) : nil
+  def sold? = status == "sold"
+
+  def delivery_badge
+    key = DELIVERY_PROMISES.key(delivery_promise)
+    key ? I18n.t("marketplace.delivery_promise.#{key}") : nil
+  end
+
+  def record_event!(type, user: nil, metadata: {})
+    events.create!(
+      event_type: type.to_s,
+      user: user,
+      metadata: metadata,
+      occurred_at: Time.current
+    )
+  end
+  def queue_ranking_recalculation
+    Marketplace::RecalculateRankingJob.perform_later(id)
+  rescue StandardError => e
+    Rails.logger.warn("Listing ranking enqueue skipped: #{e.class}: #{e.message}")
+  end
+
+  def favorite_for(user) = favorites.find_by(user: user)
+  def store_name = store&.name
+
+  def reviewable_by?(account)
+    return false if account.blank? || account == user
+    return false if reviews.exists?(user: account)
+
+    orders.where(buyer: account, status: %w[accepted completed]).exists?
+  end
+
+  def update_rating!
+    # updated_at with it -- the rating is on every listing card, and skipping the
+    # timestamp leaves [listing] fragment caches serving the pre-review score.
+    update_columns(rating: reviews.average(:rating)&.round(2) || 0, updated_at: Time.current)
+  end
+
+  private
+
+  def set_expiry
+    self.expires_at ||= Time.current + LIFETIME
+  end
+
+  def alert_matching_saved_searches
+    Marketplace::SavedSearch.alerting.includes(:user, :category).find_each do |search|
+      next unless search.due_for_alert?
+      next unless search.matches_listing?(self)
+
+      search.deliver_alert!([ self ], kind: :new)
+    rescue StandardError => error
+      Rails.logger.error("Listing##{id} saved-search alert: #{error.class}: #{error.message}")
+    end
+  end
+end

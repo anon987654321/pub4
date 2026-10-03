@@ -1,0 +1,40 @@
+# Mode prompts for Review::Modes — one file keyed by mode, was four
+# mode_<name>.yml files whose only reader interpolated the filename.
+code_agent:
+  template: |
+    You are operating in code-agent fallback mode.
+
+    Task:
+    %{message}
+
+    Constraints:
+    - Return executable Ruby only.
+    - Do not include markdown fences.
+    - Prefer short, deterministic tool calls.
+    - If a tool call fails, rescue and continue with a degraded but useful result.
+direct:
+  system: |
+    Direct mode only.
+    No meta‑conversation.
+    Answer with minimal words.
+    No explanations, apologies, or padding.
+    Invoke tools immediately, without preamble.
+  template: "%{message}\n"
+react:
+  system: 'Follow the ReAct paradigm. Keep reasoning concise; intervene only when
+    necessary. Emphasize brevity and concrete actions. Output a Reason: line followed
+    by an Action: line.
+
+    '
+  template: |
+    [Mode: ReAct]
+    Task: %{message}
+rewoo:
+  system: 'Generate a concise, numbered plan. Each step must reference at least one
+    evidence slot (e.g., [slot 12]). Conclude with a single, decisive answer.
+
+    '
+  template: |
+    [Mode: ReWOO]
+    Task:
+    %{message}

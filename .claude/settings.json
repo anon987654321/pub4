@@ -1,0 +1,50 @@
+{
+  "permissions": {
+    "allow": [
+      "Zsh(*)",
+      "Bash(git:*)",
+      "Bash(ruby:*)",
+      "Bash(bundle:*)",
+      "Bash(rbenv:*)"
+    ],
+    "deny": [],
+    "ask": []
+  },
+  "comment": "Per MASTER2 LLM.md — bash permitted for git/ruby/bundle invocations only. All other shell ops use zsh. rbenv is allowed so Rails/MASTER commands can honor the repository's .ruby-version. vm23 ssh/curl deliberately NOT here: settings.local.json already grants Bash(ssh *) personally, and this file is committed — production access belongs in a per-operator file, not one that ships to whoever clones.",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_response.filePath // .tool_input.file_path' | { read -r f; case \"$f\" in */RAILS/*.scss) ROOT=\"$(git rev-parse --show-toplevel)\" && ruby \"$ROOT/RAILS/tools/build_all_css.rb\";; esac; } 2>/dev/null || true",
+            "statusMessage": "Rebuilding app CSS",
+            "timeout": 900
+          },
+          {
+            "type": "command",
+            "command": "jq -r '.tool_response.filePath // .tool_input.file_path' | { read -r f; case \"$f\" in */MASTER/web/public/face.part*.txt|*/MASTER/web/public/face_speech_*.js) ROOT=\"$(git rev-parse --show-toplevel)\" && cd \"$ROOT/MASTER/web\" && rbenv exec bundle exec rails assets:build_face_runtime;; esac; } 2>/dev/null || true",
+            "statusMessage": "Rebuilding face.runtime.js",
+            "timeout": 600
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "test -f \"$HOME/.claude/hooks/speak_reply.rb\" && ruby \"$HOME/.claude/hooks/speak_reply.rb\" || true",
+            "statusMessage": "Speaking the reply",
+            "timeout": 120
+          }
+        ]
+      }
+    ]
+  },
+  "enabledPlugins": {
+    "frontend-design@claude-plugins-official": true
+  }
+}

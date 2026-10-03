@@ -1,0 +1,91 @@
+<% rail_conversations = @rail_conversations || [] %>
+<% rail_unread = @rail_unread || {} %>
+<% rail_last_messages = @rail_last_messages || {} %>
+<% current_room = defined?(@conversation) ? @conversation : nil %>
+
+<nav class="messenger-rail" aria-label="<%= t("messages.rooms_label") %>">
+  <h2 class="visually-hidden"><%= t("messages.rooms_label") %></h2>
+  <ul class="messenger-rail-list" role="list">
+    <% Conversation::CHANNELS.each do |slug, spec| %>
+      <li role="listitem">
+        <%= link_to channel_path(slug), class: "messenger-rail-room",
+                    data: { turbo_frame: "messenger-pane" },
+                    aria: { current: current_room&.slug == slug ? "page" : nil, label: spec[:name] },
+                    title: spec[:name] do %>
+          <span aria-hidden="true"><%= spec[:name].to_s.first&.upcase || "#" %></span>
+          <span class="visually-hidden"><%= spec[:name] %></span>
+        <% end %>
+      </li>
+    <% end %>
+  </ul>
+</nav>
+
+<section class="messenger-inbox" aria-label="<%= t("messages.title") %>">
+  <% if Current.user&.persisted? %>
+    <div class="messenger-inbox-head">
+      <%= link_to new_conversation_path, class: "btn btn-primary messenger-inbox-new",
+                  data: { turbo_frame: "messenger-pane" } do %>
+        <%= icon :compose, size: 18 %>
+        <span><%= t("messages.new_message") %></span>
+      <% end %>
+      <%= link_to search_conversations_path, class: "messenger-inbox-search",
+                  data: { turbo_frame: "messenger-pane" } do %>
+        <%= icon :search, size: 17 %>
+        <span><%= t("messages.search") %></span>
+      <% end %>
+    </div>
+  <% end %>
+
+  <h2 class="messenger-inbox-heading"><%= t("messages.title") %></h2>
+  <ul class="messenger-inbox-list" role="list">
+    <% if Current.user %>
+      <% rail_conversations.each do |room| %>
+        <% unread = rail_unread.fetch(room.id, 0) %>
+        <% last = rail_last_messages[room.id] %>
+        <li role="listitem">
+          <%= link_to conversation_path(room), class: "messenger-inbox-room",
+                      data: { turbo_frame: "messenger-pane" },
+                      aria: { current: current_room&.id == room.id ? "page" : nil } do %>
+            <span class="messenger-room-avatar" aria-hidden="true">
+              <%= room.display_name_for(Current.user).to_s.first&.upcase || "?" %>
+            </span>
+            <span class="messenger-room-copy">
+              <span class="messenger-inbox-name"><%= room.display_name_for(Current.user) %></span>
+              <% if last %>
+                <span class="messenger-room-preview"><%= truncate(last.content.to_s, length: 56) %></span>
+              <% end %>
+            </span>
+            <span class="messenger-room-meta">
+              <% if unread.positive? %>
+                <span class="messenger-rail-unread"><%= unread %></span>
+              <% elsif last %>
+                <time datetime="<%= last.created_at.iso8601 %>"><%= time_ago(last.created_at) %></time>
+              <% end %>
+            </span>
+          <% end %>
+        </li>
+      <% end %>
+      <% if rail_conversations.empty? %>
+        <li role="listitem" class="messenger-inbox-empty"><%= t("messages.empty_title") %></li>
+      <% end %>
+    <% else %>
+      <li role="listitem" class="messenger-inbox-empty"><%= t("messages.empty_title") %></li>
+    <% end %>
+  </ul>
+
+  <% if Current.user&.persisted? %>
+    <div class="messenger-rail-invite"
+         data-controller="clipboard"
+         data-clipboard-success-content-value="<%= t("actions.copied") %>">
+      <input type="hidden" data-clipboard-target="source"
+             value="<%= invite_url(token: Current.user.message_invite_token) %>"
+             aria-hidden="true" tabindex="-1">
+      <button type="button" class="messenger-rail-invite-copy"
+              data-clipboard-target="button"
+              data-action="click->clipboard#copy">
+        <%= icon :user_plus, size: 16 %>
+        <span><%= t("invite.copy_link") %></span>
+      </button>
+    </div>
+  <% end %>
+</section>

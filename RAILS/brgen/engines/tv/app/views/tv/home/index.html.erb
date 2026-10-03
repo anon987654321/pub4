@@ -1,0 +1,45 @@
+<% content_for :title, t("tv.home_title") %>
+
+<div class="page-header" data-visitor-orientation>
+  <hgroup>
+    <%= tag.h1 t("tv.home_title") %>
+    <p><%= t("tv.home_blurb") %></p>
+  </hgroup>
+  <div> <%# scan: intentional — an anonymous text block; the flex row is the layout and a name here would have no reader %>
+    <%# The other shape of this page: no choosing, just the next thing. %>
+    <%= link_to t("tv.feed.title"), feed_path, class: "btn" %>
+    <%= link_to t("tv.channels_title"), channels_path, class: "btn btn-ghost" %>
+    <% if authenticated? %><%= link_to t("tv.create_channel"), new_channel_path, class: "btn btn-ghost" %><% end %>
+  </div>
+</div>
+
+<% if @live.any? %>
+  <section role="region" aria-label="<%= t("tv.live_streams_label") %>">
+    <%= tag.h2 t("tv.live_now") %>
+    <% @live.each do |b| %>
+      <%= render "shared/feed_card",
+        name: b.title,
+        handle: b.channel.name,
+        content: tag.span(t("tv.live_badge"), class: "live-badge"),
+        url: channel_path(b.channel),
+        class: "tv" %>
+    <% end %>
+  </section>
+<% end %>
+
+<section role="region" aria-label="<%= t("aria.trending_content") %>">
+  <h2><%= t("aria.trending_videos") %></h2>
+  <% if @trending.any? %>
+    <%= render "tv/home/trending_videos" %>
+  <% else %>
+    <%= render "shared/empty_state",
+          title: t("empty.no_trending"),
+          body: t("tv.feed.empty_body"),
+          action: { label: t("tv.channels_title"), path: channels_path } %>
+  <% end %>
+</section>
+
+<section role="region" aria-label="<%= t("aria.recent_content") %>">
+  <h2><%= t("tv.recent") %></h2>
+  <%= render partial: "tv/videos/tv_video", collection: @recent, as: :tv_video %>
+</section>

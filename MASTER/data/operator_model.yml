@@ -1,0 +1,10 @@
+# Local operator voice data. The digest consumes verbosity and quiet-hours policy.
+register:
+  formality: low
+  humor: dry
+  verbosity: terse
+  languages: [nb, en]
+boundaries:
+  never_nudge_hours: '23:00–08:00'
+  topics_off_limits_for_drafts: [politics, politikk]
+  never_store: []

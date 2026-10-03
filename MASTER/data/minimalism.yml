@@ -1,0 +1,27 @@
+version: 1
+law:
+  grouping:
+    bordered_nesting_max: 2
+  accent:
+    max_zones: 3
+  touch_target_px: 44
+  icon_policy: "words before icons"
+  motion_policy: "state-change or information only"
+  empty_state: "one truth sentence and one verb"
+  large_spacing_px:
+    - 64
+    - 96
+  microcopy:
+    label_max_words: 3
+  contrast:
+    minimum_ratio: 4.5
+kill:
+  - mystery_navigation
+  - decorative_gradients
+  - glow_without_state
+  - default_form_controls
+  - href_hash
+ratchet:
+  console_errors: 0
+  core_route_cls: 0
+  dead_links: 0

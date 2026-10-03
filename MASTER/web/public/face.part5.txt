@@ -1,0 +1,1445 @@
+// Viseme playback moved to face_speech_playback.js — concatenated by assets:build_face_runtime.
+
+function fadeTtsAudio(ms = 80) {
+  return new Promise((resolve) => {
+    const audio = tts.audio;
+    if (!audio || audio.paused) { resolve(); return; }
+    const gain = tts.outputGain;
+    const start = gain?.gain?.value ?? audio.volume ?? 1;
+    const steps = 4;
+    const stepMs = Math.max(12, ms / steps);
+    let step = 0;
+    const tick = () => {
+      step += 1;
+      const v = start * (1 - step / steps);
+      if (gain && actx) gain.gain.setValueAtTime(Math.max(0, v), actx.currentTime);
+      else audio.volume = Math.max(0, v);
+      if (step >= steps) resolve();
+      else setTimeout(tick, stepMs);
+    };
+    tick();
+  });
+}
+function ttsSkipHard() {
+  tts.cancelToken++;
+  setTTSLoading(false);
+  if (tts.audio) { try { tts.audio.pause(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:tts_skip_pause", err); } tts.audio = null; }
+  // Voice Mode defaults to browser speechSynthesis (tts.audio stays null for
+  // that path, see speakWithBrowserTTS), so pausing tts.audio above never
+  // silences it -- cancel() is the only way to actually stop the utterance.
+  // Must happen before resumeSttAfterSpeech() below, or the mic reopens onto
+  // a still-speaking browser voice (the exact echo bug this file's TTS/STT
+  // duck fix targeted).
+  if ('speechSynthesis' in window) { try { speechSynthesis.cancel(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:tts_skip_synth_cancel", err); } }
+  tts.outputGain = null;
+  stopVisemeAnim();
+  tts.visemePlan = null;
+  // The lanes are the queue that dequeueTtsLane() actually reads; tts.queue is
+  // the flat mirror. Clearing only the mirror left every pending utterance
+  // sitting in tts.lanes.*, so the next tick pulled it straight back out and
+  // Escape/mute/cancel did not cancel anything — it paused the current chunk
+  // and then carried on through the backlog.
+  tts.lanes.error.length = 0; tts.lanes.nudge.length = 0; tts.lanes.response.length = 0;
+  tts.queue.length = 0; tts.prefetch.clear(); tts.attempts.clear(); tts.playing = false; tts.current = null;
+  tts.resumeTime = null; tts.resumeWordIndex = null;
+  if (tts.retryTimer) { clearTimeout(tts.retryTimer); tts.retryTimer = null; }
+  if (tts.watchdog) { clearTimeout(tts.watchdog); tts.watchdog = null; }
+  clearViseme();
+  if (ttsLive) ttsLive.textContent = '';
+  if (State.mode === 'speaking') State.mode = 'idle';
+  emitTtsEvent('tts:playback:end', { interrupted: true, backend: 'edge', decay_rate: 0.55 });
+  // ttsTick() is the usual place resumeSttAfterSpeech() gets called from (its
+  // `!text` branch once the queue drains), but this hard-skip path clears the
+  // queue and flips tts.playing=false directly without ever calling ttsTick(),
+  // so the mic would otherwise stay ducked forever after Escape/mute/cancel.
+  resumeSttAfterSpeech();
+}
+function ttsSkip() {
+  if (tts.audio && !tts.audio.paused) {
+    fadeTtsAudio(80).then(() => ttsSkipHard());
+    return;
+  }
+  ttsSkipHard();
+}
+function ttsToggleMute() {
+  tts.muted = !tts.muted;
+  if (tts.muted) ttsSkip();
+  beep(tts.muted ? 220 : 880, 0.05);
+}
+
+function ttsToggleMic() {
+  if (State.sttActive) stopSTT();
+  else startSTT();
+}
+
+function wakeFromSleep() {
+  if (!State.sleeping) return;
+  State.sleeping = false;
+  if (State.sleepMuted) {
+    State.sleepMuted = false;
+    ttsToggleMute();
+  }
+  rootBody.style.opacity = '';
+  delete rootBody.dataset.sleeping;
+}
+
+function enterSleep() {
+  if (State.sleeping) return;
+  State.sleepMuted = !tts.muted;
+  if (!tts.muted) ttsToggleMute();
+  State.sleeping = true;
+  rootBody.dataset.sleeping = '1';
+  rootBody.style.opacity = '0.05';
+}
+
+function flashViolation() {
+  State.flash = 1;
+  applyShake(0.8);
+  State.mode = 'error';
+  rootBody.dataset.violationFlash = '1';
+  setTimeout(() => { delete rootBody.dataset.violationFlash; }, 700);
+}
+
+function cancelStream() {
+  window._chatCancel?.();
+  ttsSkip();
+  State.mode = 'idle';
+  State.flash = 0.2;
+}
+
+// Voice Mode: continuous hands-free conversation loop (one tap in, spoken
+// phrase or tap out). Wake-word is a foreground-only, opt-in convenience —
+// no backgrounded/locked-screen detection is possible from a browser tab.
+const WAKE_PHRASE_RE = /\bhey,?\s*master\b/i;
+const EXIT_PHRASE_RE = /^\s*(stop listening|exit voice mode|voice mode off|stop voice mode)\.?\s*$/i;
+function wakeWordEnabled() {
+  if (new URLSearchParams(window.location.search).get('wake_word') === '1') return true;
+  try { return localStorage.getItem('master:wake-word') === '1'; } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:wake_word_enabled_read", err); }
+  return false;
+}
+// Guards the re-arm loop against a tight onend/onstart cycle (seen on iOS
+// Safari, which frequently drops `continuous` recognition after one
+// utterance) draining battery/CPU forever with no speech ever detected.
+let _voiceModeRearmFails = 0;
+let _voiceModeArmedAt = 0;
+
+// The mic opens when the page loads, on the operator's ask (2026-09-15): the
+// face is spoken to, and it should be listening before anyone looks for a
+// control. It used to wait for a stored opt-in that only the wake word could
+// write, and the mic button that once wrote it is gone, so it never opened.
+//
+// Permission is the browser's to remember, not this file's. Once granted, every
+// later load listens without a prompt; once denied, the Permissions API says so
+// and the page does not ask again. A deliberate exit ("stop listening",
+// Escape) holds for the rest of the page's life and no longer outlives a reload,
+// because a stored "off" was how one Escape kept the mic shut for good.
+let _micOptedOut = false;
+function voiceAutoEnabled() {
+  return !_micOptedOut;
+}
+function setVoiceAuto(on) {
+  _micOptedOut = !on;
+}
+async function micPermissionDenied() {
+  try {
+    const status = await navigator.permissions?.query?.({ name: 'microphone' });
+    return status?.state === 'denied';
+  } catch (_) {
+    return false;
+  }
+}
+// Safari refuses recognition.start() without a gesture even when permission is
+// granted, and reports it as not-allowed. Unless the permission itself is
+// denied, the first interaction of any kind opens the mic instead.
+function listenOnFirstGesture() {
+  const events = ['pointerdown', 'keydown', 'touchend'];
+  const open = () => {
+    events.forEach((ev) => removeEventListener(ev, open, { capture: true }));
+    if (!State.voiceMode && voiceAutoEnabled()) enterVoiceMode({ fromAuto: true });
+  };
+  events.forEach((ev) => addEventListener(ev, open, { capture: true, passive: true }));
+}
+
+let recognition = null;
+if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SR();
+  recognition.continuous = true; recognition.interimResults = true;
+  // How long to wait after speech stops before treating an utterance as
+  // done. Deliberately generous: continuous recognition marks a segment
+  // `isFinal` on any short pause (a breath, a mid-sentence beat), which is
+  // NOT the same as the user being done talking. Sending on the first final
+  // segment cut people off mid-sentence, so final and interim text are both
+  // banked and only committed after this much real quiet.
+  const STT_QUIET_MS = 1600;
+  // But silence alone cannot tell thinking from finishing, so one fixed window
+  // has to be long enough for the slowest hesitation mid-sentence — which makes
+  // every finished sentence wait that long too. The words already say which is
+  // happening: someone who has just said "og" or "fordi" still holds the floor,
+  // and someone who ended on a question mark has handed it over.
+  //
+  // The two directions carry different costs, so they get different evidence.
+  // Waiting too long is a pause; cutting someone off loses what they said and
+  // makes them repeat it. So the floor-holding cues only ever LENGTHEN the
+  // wait, and shortening needs a strong signal — real terminal punctuation, or
+  // an utterance short enough to be a whole answer.
+  const STT_QUIET_MS_MIN = 700;
+  const STT_QUIET_MS_MAX = 2600;
+  // Norwegian first: nb is the default locale, and these are the words a
+  // sentence cannot end on. Conjunctions, prepositions, articles, the copula,
+  // and the hesitation sounds recognisers do transcribe.
+  const HOLDING_FLOOR_RE =
+    /(?:^|\s)(og|eller|men|så|fordi|som|at|hvis|når|enn|er|var|har|hadde|skal|vil|kan|må|på|til|av|med|for|om|fra|den|det|en|et|eh+|øh+|hmm+|altså|liksom|bare|litt|and|or|but|so|because|that|which|if|when|than|is|was|has|had|will|would|can|could|should|might|must|do|does|did|are|were|been|being|to|of|with|for|from|at|in|on|by|about|into|the|a|an|um+|uh+|er+|like|well)\s*$/i;
+  const HANDED_OVER_RE = /[?!.]["'”»)]?\s*$/;
+  function quietMsFor(text) {
+    const t = String(text || '').trim();
+    if (!t) return STT_QUIET_MS;
+    // Checked first: "er det fordi?" ends on a question mark AND a floor word,
+    // and the question mark is the one the speaker chose to put there.
+    if (HANDED_OVER_RE.test(t)) return STT_QUIET_MS_MIN;
+    if (HOLDING_FLOOR_RE.test(t)) return STT_QUIET_MS_MAX;
+    // "ja", "nei takk", "det stemmer" — a whole turn, and holding it open
+    // after two words is the wait people notice most.
+    if (t.split(/\s+/).length <= 3) return STT_QUIET_MS_MIN;
+    return STT_QUIET_MS;
+  }
+  let sttSilenceTimer = null, sttPartial = '', sttFinalSoFar = '';
+  // Barge-in. Someone who starts talking has taken the turn, so stop rather
+  // than duck: applySttDuck only lowers the voice to 0.12 and State.sttDuck
+  // decays 0.06 a tick, so the duck expired and MASTER came back up over a
+  // person still mid-sentence. Ducking is what you do for a notification; a
+  // human stops.
+  //
+  // The guard is the whole difficulty. The mic hears MASTER's own voice, so an
+  // unguarded barge-in cancels itself on every utterance — the echo this
+  // file's TTS/STT duck was written for. Two conditions before yielding: enough
+  // heard to be a real attempt rather than a syllable of bleed, and the text
+  // not already contained in what is being spoken right now.
+  const BARGE_IN_MIN_CHARS = 8;
+  const normaliseHeard = (s) => String(s || '')
+    .toLowerCase()
+    .replace(/[^\p{Letter}\p{Number}]+/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  function speechIsEchoOfSelf(heard) {
+    const spoken = normaliseHeard(tts.current);
+    if (!spoken) return false;
+    const said = normaliseHeard(heard);
+    return said.length > 0 && spoken.includes(said);
+  }
+  // Length alone had the turn backwards in both directions. A refusal is short
+  // -- "no wait" is seven characters, under the floor, so the one thing a person
+  // says when they need the sentence to stop was the one thing that did not stop
+  // it. An agreement is long -- "yeah yeah okay" is fourteen, over the floor, so
+  // signalling attention cut the sentence off. Both are the same mistake: the
+  // floor measures effort, and what matters is what was meant.
+  //
+  // So the two ends are named and the floor keeps only the middle, where it is
+  // a fair proxy: a fragment too short to be a real attempt is bleed.
+  const BARGE_IN_STOP_RE = /^(?:no|nope|nei|wait|vent|hold|stop|stopp|hey|hei|sorry|unnskyld|shut)\b/;
+  const BACKCHANNEL_WORDS = new Set([
+    'm', 'mm', 'mmm', 'hm', 'hmm', 'mhm', 'uh', 'huh', 'ah', 'oh',
+    'yeah', 'yea', 'yep', 'yes', 'ja', 'jo', 'ok', 'okay', 'okey', 'greit',
+    'right', 'sure', 'true', 'cool', 'nice', 'exactly', 'absolutely',
+    'got', 'it', 'i', 'see', 'akkurat', 'nettopp', 'skjonner',
+  ]);
+  function isBackchannelOnly(said) {
+    const words = said.split(' ').filter(Boolean);
+    return words.length > 0 && words.every((w) => BACKCHANNEL_WORDS.has(w));
+  }
+  // 'stop' yields immediately at any length; 'backchannel' never yields at any
+  // length; 'turn' is the floor as before.
+  function bargeIntent(said) {
+    if (!said) return 'none';
+    if (BARGE_IN_STOP_RE.test(said)) return 'stop';
+    if (isBackchannelOnly(said)) return 'backchannel';
+    return said.length >= BARGE_IN_MIN_CHARS ? 'turn' : 'none';
+  }
+  // A backchannel is the "mm" a listener gives while the other person is still
+  // talking: it signals attention without taking the turn. MASTER gave none —
+  // the face held still until the whole utterance was committed, so the
+  // difference between listening and not being there was nothing at all.
+  //
+  // Visual only, and deliberately so. A spoken backchannel would arrive over a
+  // person mid-sentence, and the mic would then hear MASTER talking during
+  // their turn — the same echo the duck and speechIsEchoOfSelf above exist to
+  // handle. A pulse costs no audio, no turn and no latency.
+  //
+  // Rate-limited because an acknowledgement on every clause of a long sentence
+  // stops reading as attention and starts reading as a twitch.
+  const BACKCHANNEL_MIN_GAP_MS = 900;
+  let _lastBackchannelAt = 0;
+  function backchannel() {
+    if (!State.sttActive || tts.playing || tts.loading) return;
+    const now = performance.now();
+    if (now - _lastBackchannelAt < BACKCHANNEL_MIN_GAP_MS) return;
+    _lastBackchannelAt = now;
+    State.pulse = Math.max(State.pulse || 0, 0.3);
+    emitTtsEvent('stt:backchannel', {});
+  }
+  function bargeInIfSpeaking(heard) {
+    if (!tts.playing && !tts.loading) return;
+    const said = normaliseHeard(heard);
+    // Before intent, not after: a stop word yields at any length now, and "no"
+    // is exactly what the mic picks up out of MASTER saying "no, that path is
+    // closed". Echo has to be excluded first or the sentence interrupts itself.
+    if (speechIsEchoOfSelf(said)) return;
+    const intent = bargeIntent(said);
+    if (intent === 'none' || intent === 'backchannel') return;
+
+    emitTtsEvent('tts:barge_in', { heard: said.slice(0, 40), intent });
+    ttsSkip();
+  }
+
+  recognition.onresult = (e) => {
+    let interim = '', final = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) final += e.results[i][0].transcript;
+      else interim += e.results[i][0].transcript;
+    }
+    if (State.wakeArmed && !State.voiceMode) {
+      const heard = (final || interim).trim();
+      if (heard && WAKE_PHRASE_RE.test(heard)) {
+        sttPartial = ''; sttFinalSoFar = '';
+        if (sttSilenceTimer) { clearTimeout(sttSilenceTimer); sttSilenceTimer = null; }
+        State.sttActive = false;
+        try { recognition.stop(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:wake_stop", err); }
+        enterVoiceMode({ fromWake: true });
+      }
+      return;
+    }
+    if (!final.trim() && !interim.trim()) return;
+    // Before the transcript is accumulated: yielding the turn should happen on
+    // the first interim words, not after the silence timer has run.
+    bargeInIfSpeaking(`${final} ${interim}`);
+    if (final.trim()) sttFinalSoFar = sttFinalSoFar ? `${sttFinalSoFar} ${final.trim()}` : final.trim();
+    sttPartial = `${sttFinalSoFar} ${interim.trim()}`.trim();
+    // A completed segment is a clause boundary — the place a listener says
+    // "mm". Acknowledge it.
+    if (final.trim()) backchannel();
+    // Bumped on every result, so a decision that awaited Smart Turn can tell
+    // whether the person carried on talking while it was thinking.
+    _sttGeneration += 1;
+    if (sttSilenceTimer) clearTimeout(sttSilenceTimer);
+    sttSilenceTimer = setTimeout(commitOrExtend, quietMsFor(sttPartial));
+  };
+
+  let _sttGeneration = 0;
+  async function commitOrExtend() {
+    if (!sttPartial) return;
+    const generation = _sttGeneration;
+
+    if (await smartTurnSaysContinue()) {
+      // Speech during the await already restarted the timer; leave it alone.
+      if (generation !== _sttGeneration) return;
+      _smartTurnExtensions += 1;
+      if (sttSilenceTimer) clearTimeout(sttSilenceTimer);
+      sttSilenceTimer = setTimeout(commitOrExtend, SMART_TURN_EXTRA_MS);
+      return;
+    }
+    if (generation !== _sttGeneration || !sttPartial) return;
+
+    const t2 = sttPartial;
+    sttPartial = ''; sttFinalSoFar = ''; State.sttActive = false;
+    _smartTurnExtensions = 0;
+    try { recognition.stop(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:stt_silence_stop", err); }
+    if (State.voiceMode && EXIT_PHRASE_RE.test(t2)) { exitVoiceMode(); return; }
+    _voiceModeRearmFails = 0;
+    sendMessage(t2);
+  }
+
+  // Smart Turn refines the wait rather than replacing it. The words and the
+  // sound answer different halves of the same question, and the words are the
+  // half that always works — this one needs a second microphone stream, an
+  // AudioWorklet and 21MB of model, any of which can be missing.
+  //
+  // It runs when the linguistic timer has already elapsed, so it costs ~15ms on
+  // top of a decision that was about to be made anyway, and never delays the
+  // common case. A confident "still going" buys one more window; anything else
+  // commits, because the timer had already decided to.
+  const SMART_TURN_EXTRA_MS = 900;
+  const SMART_TURN_MAX_EXTENSIONS = 2;
+  let _smartTurnExtensions = 0;
+  async function smartTurnSaysContinue() {
+    if (!window.MASTER_SMART_TURN?.smartTurnEnabled?.()) return false;
+    if (_smartTurnExtensions >= SMART_TURN_MAX_EXTENSIONS) return false;
+    try {
+      const p = await window.MASTER_SMART_TURN.predictEndpoint();
+      if (p === null || p === undefined) return false;
+      emitTtsEvent('stt:smart_turn', { p: Number(p.toFixed(3)) });
+      return p < window.MASTER_SMART_TURN.COMPLETE_THRESHOLD;
+    } catch (err) {
+      window.MASTER_LOG?.warn?.("face_runtime:smart_turn", err);
+      return false;
+    }
+  }
+  recognition.onend = () => {
+    State.sttActive = false; State.sttDuck = 0;
+    if (sttSilenceTimer) { clearTimeout(sttSilenceTimer); sttSilenceTimer = null; }
+    if (State.voiceMode) {
+      const heldMs = performance.now() - _voiceModeArmedAt;
+      if (heldMs < 800) _voiceModeRearmFails += 1; else _voiceModeRearmFails = 0;
+      if (_voiceModeRearmFails >= 5) {
+        exitVoiceMode({ reason: 'unreliable' });
+        return;
+      }
+      setTimeout(() => { if (State.voiceMode && !tts.playing) startSTT(); }, 50);
+      return;
+    }
+    if (State.wakeArmed) {
+      setTimeout(() => { if (State.wakeArmed && !State.voiceMode && !tts.playing) startWakeListening(); }, 50);
+    }
+  };
+  recognition.onerror = (e) => {
+    State.sttActive = false; State.sttDuck = 0;
+    if (sttSilenceTimer) { clearTimeout(sttSilenceTimer); sttSilenceTimer = null; }
+    if (e && (e.error === 'not-allowed' || e.error === 'service-not-allowed')) {
+      // A denied permission stops the retries; a refusal for want of a gesture
+      // waits for one.
+      if (State.voiceMode) exitVoiceMode({ reason: 'denied' });
+      micPermissionDenied().then((denied) => {
+        if (denied) {
+          if (uiStatus) uiStatus.textContent = 'mic blocked — allow it in the browser, then reload';
+          return;
+        }
+        setVoiceAuto(true);
+        listenOnFirstGesture();
+      });
+    }
+  };
+}
+
+function startWakeListening() {
+  if (!recognition || State.sttActive || State.voiceMode) return;
+  State.wakeArmed = true;
+  // Record the intent to listen but don't open the mic yet if TTS is still
+  // speaking (e.g. exitVoiceMode() calling this synchronously right after an
+  // Escape-triggered ttsSkip()) -- resumeSttAfterSpeech() re-checks
+  // State.wakeArmed and finishes arming once playback genuinely ends.
+  if (tts.playing) return;
+  try { recognition.start(); State.sttActive = true; } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:wake_start", err); }
+}
+function armWakeWord() {
+  if (!recognition || !wakeWordEnabled() || State.voiceMode) return;
+  startWakeListening();
+}
+function disarmWakeWord() {
+  State.wakeArmed = false;
+  if (recognition && State.sttActive) { try { recognition.stop(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:wake_disarm", err); } }
+}
+
+function enterVoiceMode(opts = {}) {
+  if (!recognition || State.voiceMode) return;
+  State.wakeArmed = false;
+  State.voiceMode = true;
+  _voiceModeRearmFails = 0;
+  // A deliberate entry lifts an earlier exit for the rest of the page; an auto
+  // entry only reads it.
+  if (!opts.fromAuto) setVoiceAuto(true);
+  rootBody.dataset.voiceMode = '1';
+  if (uiStatus) uiStatus.textContent = 'listening — say "stop listening" to exit';
+  if (!opts.fromWake) beep(1100, 0.05);
+  // Fetch the model and open the second mic stream now rather than on the
+  // first pause, so the download is not paid inside a decision.
+  window.MASTER_SMART_TURN?.warmUp?.().catch((err) => window.MASTER_LOG?.warn?.("face_runtime:smart_turn_warm", err));
+  startSTT();
+}
+function exitVoiceMode(opts = {}) {
+  if (!State.voiceMode) return;
+  State.voiceMode = false;
+  delete rootBody.dataset.voiceMode;
+  stopSTT();
+  // Close the capture stream too. Leaving it open holds the recording
+  // indicator on after the person said stop listening, which is the one
+  // thing a second microphone stream must never do.
+  window.MASTER_SMART_TURN?.releaseMic?.();
+  // Any exit that isn't the device-unreliable safety bail is a user choice, and
+  // it holds until the page reloads or the visitor asks again.
+  if (opts.reason !== 'unreliable') setVoiceAuto(false);
+  if (uiStatus) uiStatus.textContent = opts.reason === 'unreliable' ? 'voice mode: mic unreliable here' : '';
+  beep(660, 0.05);
+  armWakeWord();
+}
+function toggleVoiceMode() {
+  if (State.voiceMode) exitVoiceMode(); else enterVoiceMode();
+}
+// Implicit mic: at load, and once anything already speaking has finished, slide
+// straight into hands-free Voice Mode so a conversation needs no button press.
+async function maybeAutoVoice() {
+  if (!recognition || State.voiceMode || !voiceAutoEnabled()) return;
+  if (await micPermissionDenied()) return;
+  let waited = 0;
+  const enterWhenQuiet = () => {
+    if (State.voiceMode || !voiceAutoEnabled()) return;
+    // Hold off while the greeting is still speaking so we don't hear ourselves.
+    if (tts.playing || State.mode === 'speaking') {
+      // The bound used to be `waited < 12000`, and when it expired this fell
+      // through to enterVoiceMode() WHILE the greeting was still speaking. That
+      // is the one thing the wait exists to prevent, and it is reachable by the
+      // ordinary route of a greeting longer than twelve seconds:
+      //
+      //   enterVoiceMode -> startSTT -> `if (tts.playing) ttsSkip()` cuts the
+      //   greeting off mid-sentence -> ttsSkipHard clears the queue and calls
+      //   resumeSttAfterSpeech -> which calls startSTT again, re-entrantly.
+      //
+      // recognition.start() on an already-starting recogniser throws
+      // InvalidStateError, onend fires almost immediately, and onend's own guard
+      // counts anything held under 800ms as a failed re-arm. Five of those and
+      // exitVoiceMode({ reason: 'unreliable' }) turns the mic off and leaves it
+      // off. Reported from an Android TV as: the mic goes on, MASTER rambles its
+      // introduction, the mic icon goes grey.
+      //
+      // So the timeout no longer performs the unsafe action. It stops polling and
+      // hands the intent to resumeSttAfterSpeech(), which already runs when
+      // playback genuinely drains and is the one place that knows it has.
+      waited += 400;
+      if (waited < 12000) { setTimeout(enterWhenQuiet, 400); return; }
+      State.autoVoicePending = true;
+      return;
+    }
+    enterVoiceMode({ fromAuto: true });
+  };
+  setTimeout(enterWhenQuiet, 1200);
+}
+function boostEyeAttention(delta = 0.25) {
+  const K = window.ParticleKernel;
+  if (!eyePool || !K) return;
+  for (let i = 0; i < eyePool.count; i++) if (eyePool.alive[i]) {
+    const b = i * K.FIELDS_PER_CELL;
+    eyePool.cells[b + K.FIELD.attention] = Math.min(1, (eyePool.cells[b + K.FIELD.attention] || 0.5) + delta);
+  }
+}
+
+function startSTT() {
+  if (!recognition || State.sttActive) return;
+  _voiceModeArmedAt = performance.now();
+  wakeFromSleep();
+  if (tts.playing) ttsSkip();
+  boostEyeAttention(0.25);
+  State.sttDuck = 1.0;
+  State.viseme = 'M';
+  State.visemeAmp = 0.35;
+  const K = window.ParticleKernel;
+  if (mouthPool && K) {
+    for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
+      const b = i * K.FIELDS_PER_CELL;
+      mouthPool.cells[b + K.FIELD.arousal] = Math.max(0.1, (mouthPool.cells[b + K.FIELD.arousal] || 0.5) * 0.35);
+      mouthPool.cells[b + K.FIELD.pressure] = Math.max(0.05, (mouthPool.cells[b + K.FIELD.pressure] || 0) * 0.4);
+    }
+  }
+  window.MASTERVisual?.event?.('stt:start', { topology: 'papua-mask', entropy: 0.18, confidence: 0.86, mode: 'listening' });
+  window.MASTEREcology?.terrain?.('stt:listening', { confidence: 0.82, entropy: 0.16 });
+  try { recognition.start(); State.sttActive = true; State.mode = 'listening'; } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:stt_start", err); }
+}
+function stopSTT() {
+  if (!recognition || !State.sttActive) return;
+  try { recognition.stop(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:stt_stop", err); }
+}
+
+// Re-open the mic once the TTS queue actually empties -- called from
+// ttsTick()'s !text branch (face_speech_runtime.js) after it ducks the mic
+// for the duration of playback. recognition.onend's own re-arm below is
+// deliberately skipped while tts.playing so this is the one place that
+// resumes listening after a reply finishes, instead of racing the duck and
+// reopening the mic mid-speech (which fed the assistant's own TTS back into
+// itself as if the user had spoken it).
+function resumeSttAfterSpeech() {
+  if (State.voiceMode) { if (!State.sttActive) startSTT(); return; }
+  // A greeting that outlasted maybeAutoVoice()'s wait parks its intent here
+  // rather than opening the mic over its own voice. This is the moment playback
+  // has actually drained, which is what that function was waiting for.
+  if (State.autoVoicePending && voiceAutoEnabled()) {
+    State.autoVoicePending = false;
+    enterVoiceMode({ fromAuto: true });
+    return;
+  }
+  if (State.wakeArmed && !State.sttActive) startWakeListening();
+}
+
+// The mic must not be able to stay grey.
+//
+// Re-arming after speech depends on a chain: audio.onended -> finishTTSPlayback
+// -> ttsTick -> the queue drains -> resumeSttAfterSpeech. Every link has broken
+// at least once, and each break was fixed where it broke: the duck with no undo
+// on the element path, the hard-skip that bypassed ttsTick, browser TTS that
+// never fired onend because no voice matched the language, the auto-voice
+// timeout above. Four fixes, one symptom — a mic that goes grey and stays grey.
+//
+// So this does not add a fifth link. It states the invariant and repairs it:
+// voice mode on, nothing playing, recogniser idle is a state that should not
+// persist, whatever broke upstream. Two consecutive ticks before acting, so a
+// legitimate gap between utterances is not mistaken for the fault.
+//
+// It matters most where nobody can reach the mic button. This was reported from
+// an Android TV, where the recovery for a grey mic is a remote control and a
+// pointer that does not exist.
+// Two states are covered, because the parking above created the second one.
+// resumeSttAfterSpeech() is reached from ttsTick()'s empty-queue branch, so a
+// greeting that finishes without passing through ttsTick -- the browser
+// speechSynthesis fallback has done exactly that -- would leave
+// autoVoicePending set and never honoured, and the invariant tick would not see
+// it either, because voice mode was never entered. Handing the timeout's intent
+// to one call site made that call site load-bearing; this is the backstop for it.
+let _micIdleTicks = 0;
+let _autoVoiceIdleTicks = 0;
+setInterval(() => {
+  if (document.hidden) { _micIdleTicks = 0; _autoVoiceIdleTicks = 0; return; }
+  const quiet = !tts.playing && !tts.paused;
+
+  const stuck = State.voiceMode && !State.sttActive && quiet;
+  _micIdleTicks = stuck ? _micIdleTicks + 1 : 0;
+  if (_micIdleTicks >= 2) {
+    _micIdleTicks = 0;
+    // Named at warn, not repaired silently. A self-healing loop that says nothing
+    // hides the break it is healing, and the break is the thing worth fixing.
+    window.MASTER_LOG?.warn?.("face_runtime:mic_rearm", "voice mode on with an idle recogniser — reopening");
+    _voiceModeRearmFails = 0;
+    startSTT();
+    return;
+  }
+
+  const parked = State.autoVoicePending && !State.voiceMode && quiet && voiceAutoEnabled();
+  _autoVoiceIdleTicks = parked ? _autoVoiceIdleTicks + 1 : 0;
+  if (_autoVoiceIdleTicks >= 2) {
+    _autoVoiceIdleTicks = 0;
+    State.autoVoicePending = false;
+    window.MASTER_LOG?.warn?.("face_runtime:auto_voice_late", "speech drained without resuming — entering voice mode");
+    enterVoiceMode({ fromAuto: true });
+  }
+}, 3000);
+
+let stageTimer = null;
+let stageSlowTimer = null;
+let thinkingAloudTimer = null;
+// ms = 0 holds the label until something clears it, which is what a stage that
+// means "waiting for the model" needs: "routing…" expired after a second while
+// the request was still in flight, so anyone listening to this region heard the
+// question acknowledged and then nothing for as long as the model took. The
+// reply path already calls showStage("") when the first token lands, so the
+// hold has a real end rather than a guessed duration.
+//
+// Two bounds on the hold. At STAGE_SLOW_MS the label says so, because silence
+// and slowness are indistinguishable otherwise. At STAGE_MAX_MS it clears
+// regardless — a request that dies without reaching any clear path should not
+// leave a stale "routing…" sitting in a live region forever.
+const STAGE_SLOW_MS = 4000;
+const STAGE_MAX_MS = 90000;
+function showStage(label, ms = 1200) {
+  if (!uiStatus) return;
+  uiStatus.textContent = label;
+  uiStatus.style.opacity = "1";
+  if (stageTimer) { clearTimeout(stageTimer); stageTimer = null; }
+  if (stageSlowTimer) { clearTimeout(stageSlowTimer); stageSlowTimer = null; }
+  if (!label) return;
+
+  if (ms > 0) {
+    stageTimer = setTimeout(() => {
+      if (uiStatus.textContent === label) uiStatus.textContent = "";
+    }, ms);
+    return;
+  }
+
+  stageSlowTimer = setTimeout(() => {
+    if (uiStatus.textContent === label) uiStatus.textContent = `${label} still working`;
+  }, STAGE_SLOW_MS);
+  stageTimer = setTimeout(() => {
+    if (uiStatus.textContent === label || uiStatus.textContent === `${label} still working`) {
+      uiStatus.textContent = "";
+    }
+  }, STAGE_MAX_MS);
+}
+
+function clearThinkingAloud() {
+  if (!thinkingAloudTimer) return;
+  clearTimeout(thinkingAloudTimer);
+  thinkingAloudTimer = null;
+}
+
+function scheduleThinkingAloud(stage = "thinking") {
+  clearThinkingAloud();
+  // Spoken "scanning"/"routing"/"still thinking" filler removed on request:
+  // it competed with real replies in the serial TTS queue and, on slow
+  // turns, was the most-heard utterance ("it only says scanning"). The
+  // visual status (showStage) still shows progress silently. The timer
+  // machinery stays so clearThinkingAloud callers remain valid.
+}
+
+function speakFailure(reason = "Sorry, I hit a snag.") {
+  announceTTS(reason);
+  if (!tts.muted) enqueueSpeech(reason, { priority: 'error' });
+}
+
+function handleFaceNamedEvent(event, data) {
+  const raw = String(data || '');
+  if (event === 'content_kind') {
+    const kind = raw.trim() || (data && typeof data === 'object' ? data.kind : '');
+    if (kind === 'listing') window._streamContentKind = 'listing';
+    return true;
+  }
+  if (event === 'mood') {
+    const m = raw.trim();
+    if (!m) return true;
+    State.mood = m;
+    updateMoodHistory(m);
+    if (m === 'curious') State.surpriseY = 0.7;
+    if (TINT[m]) fadeColorTo(TINT[m]);
+    const live = document.getElementById('mood-live');
+    if (live) live.textContent = 'mood: ' + m;
+    syncShareStateUrl();
+    return true;
+  }
+  if (event === 'model') {
+    const m = raw.trim();
+    if (!m) return true;
+    State.model = m; State.modelName = m.split('/').pop();
+    const key = Object.keys(TINT).find(k => m.toLowerCase().includes(k));
+    if (key) fadeColorTo(TINT[key]);
+    if (mouthPool && window.ParticleKernel) {
+      const K = window.ParticleKernel;
+      for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
+        const b = i * K.FIELDS_PER_CELL;
+        mouthPool.cells[b + K.FIELD.valence] = Math.min(1, (mouthPool.cells[b + K.FIELD.valence] || 0.5) + 0.25);
+      }
+      setTimeout(() => {
+        if (!mouthPool) return;
+        for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
+          const b = i * K.FIELDS_PER_CELL;
+          mouthPool.cells[b + K.FIELD.valence] = Math.max(0.3, (mouthPool.cells[b + K.FIELD.valence] || 0.5) - 0.15);
+        }
+      }, 1000);
+    }
+    showModelBadge(State.modelName || m);
+    State.modelSwitch = 1.0;
+    syncShareStateUrl();
+    const tier = document.querySelector('meta[name="master-tier"]')?.content || '';
+    const live = document.getElementById('mood-live');
+    if (live) live.textContent = `model ${State.modelName || m}${tier ? ` tier ${tier}` : ''}`;
+    return true;
+  }
+  if (event === 'verdict') {
+    const v = raw.trim();
+    if (TINT[v]) fadeColorTo(TINT[v]);
+    State.pulse = 0.6;
+    State.jitter = (State.confidence < 0.45 ? 0.75 : 0.15);
+    if (State.confidence > 0.75) State.pulse = 0.9;
+    if (v === 'pass') {
+      beep(880, 0.06);
+      morphTarget = 1.0; morphCurrent = Math.min(1, morphCurrent + 0.3);
+      State.bloom = 1.0;
+    }
+    if (v === 'veto') {
+      beep(220, 0.10); applyShake(0.6); if (isRichMotionProfile()) dollyZoom(0.8);
+      morphCurrent = Math.max(0, morphCurrent - 0.8); morphTarget = 1.0;
+      State.fracture = 1.0;
+      const prevPh = zshIn?.placeholder;
+      const tighter = window.MASTER_T?.('tighter_question', 'try a tighter question') || 'try a tighter question';
+      if (zshIn) { zshIn.placeholder = tighter; setTimeout(() => { if (zshIn.placeholder === tighter) zshIn.placeholder = prevPh; }, 9000); }
+    }
+    const tally = (window.MASTER_VOTE_TALLY ||= { pass: 0, veto: 0 });
+    if (v === 'pass') tally.pass += 1;
+    if (v === 'veto') tally.veto += 1;
+    if (uiStatus) uiStatus.textContent = `votes ${tally.pass} / ${tally.veto}`;
+    return true;
+  }
+  if (event === 'council:speech') {
+    try {
+      const payload = JSON.parse(raw || '{}');
+      const { voice, text, persona, label, viseme_lane: lane, viseme_plan: plan, expression: ex, blendshapes } = payload;
+      if (persona) {
+        rootBody.dataset.councilPersona = persona;
+        applyPersonaVisual(persona);
+        if (uiStatus) uiStatus.textContent = `council: ${label || persona}${voice ? ` / ${voice}` : ''}`;
+      }
+      if (lane) offsetCouncilMouthPool?.(lane, 0.22);
+      if (plan?.length) tts.visemePlan = plan;
+      if (ex || blendshapes) window.MASTER_FACE_BLEND?.pushBlend?.(blendshapes || ex?.blendshapes || {});
+      if (voice && text && !tts.playing) {
+        playDuo([[guardVoice(voice), text]], null, _nextTtsStyle(voice), { persona: label || persona, lane });
+      }
+      setTimeout(() => {
+        if (rootBody.dataset.councilPersona === persona) delete rootBody.dataset.councilPersona;
+        if (uiStatus && uiStatus.textContent && uiStatus.textContent.startsWith('council: ')) uiStatus.textContent = '';
+      }, 8000);
+    } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:council_speech_event", err); }
+    return true;
+  }
+  if (event === 'confidence') {
+    const c = parseFloat(raw);
+    if (!isNaN(c)) {
+      State.confidence = c;
+      // chat.js reads the turn's confidence off the body when the reply ends;
+      // the felt event is not written here because it echoes the browser's own post.
+      rootBody.dataset.confidence = String(c);
+    }
+    return true;
+  }
+  if (event === 'felt') {
+    try {
+      const payload = JSON.parse(raw || '{}');
+      if (payload.mood) State.mood = payload.mood;
+      if (typeof payload.entropy === 'number') State.entropy = payload.entropy;
+      if (typeof payload.confidence === 'number') State.confidence = payload.confidence;
+    } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:felt_event", err); }
+    return true;
+  }
+  return false;
+}
+
+// No welcome greeting. MASTER speaks when spoken to.
+//
+// What used to be here: startEverything() fired sendWelcomeGreeting() 700ms
+// after boot, sending WELCOME_GREETING_PROMPT -- "Introduce yourself to a new
+// visitor in 4-5 warm, confident sentences... you are the world's first AI
+// built entirely in pure Ruby..." -- as an ordinary chat turn.
+//
+// Three things made that worse than a greeting. It ran on every page load
+// rather than after a human tap, because autostart moved startEverything to
+// load time. The web session is process-global, so the instruction and its
+// reply landed in the conversation everyone else was already having. And it
+// is a real chat turn, so the model saw "introduce yourself" sitting in recent
+// history and went on doing it unprompted -- measured on the live face, where
+// "my name is Johann, remember it" was answered with that pitch nearly
+// verbatim.
+//
+// The mic path never needed it. maybeAutoVoice() waits only while TTS is
+// playing and enters voice mode straight away when nothing is. The greeting is
+// also what the auto-voice bug report was describing: "the mic goes on, MASTER
+// rambles its introduction, the mic icon goes grey".
+let _firstChatSent = false;
+async function sendMessage(text) {
+  const trimmed = text.trim();
+  // A conversation IS interaction: without this, the 60s idle drift in
+  // frame() starts dissolving the face mid-chat because only pointer/focus
+  // events used to reset lastTouch.
+  State.lastTouch = performance.now();
+  wakeFromSleep();
+  State.pulse = Math.max(State.pulse || 0, 0.35);
+  window.MASTERVisual?.event?.('chat:submit', { topology: 'papua-mask', entropy: 0.2, confidence: State.confidence || 0.86, mode: 'submit' });
+  if (navigator.vibrate) navigator.vibrate(30);
+  if (/^(repeat that|say that again|repeat|again)\.?$/i.test(trimmed)) {
+      if (window.MASTER_FACE?.tts?.lastText) { window.MASTER_FACE.tts.queue = [window.MASTER_FACE.tts.lastText]; window.MASTER_FACE.ttsTick?.(); } return;
+  }
+  if (/^wow!?$/i.test(trimmed)) {
+    State.mode = 'pass';
+    State.bloom = 1.0;
+    State.fracture = 0.85;
+    applyShake(0.45);
+    State.pulse = Math.max(State.pulse || 0, 0.85);
+    return;
+  }
+  if (/^\/sleep$/i.test(trimmed)) { enterSleep(); faceMat.uniforms.uIdleDrift.value = 0.02; return; }
+  if (/^\/wake$/i.test(trimmed)) { wakeFromSleep(); return; }
+  const maskMatch = trimmed.match(/^\/mask\s+(\S+)$/i);
+  if (maskMatch) { swapMask(maskMatch[1]); return; }
+  if (/^\/leader$/i.test(trimmed)) { swapMask('/dario.jpg'); return; }
+  if (/^\/dario$/i.test(trimmed)) { swapMask('/dario.jpg'); return; }
+  if (/^\/puffy$/i.test(trimmed)) { swapMask('/puffy.jpg'); return; }
+  if (/^\/trump$/i.test(trimmed)) { swapMask('/trump.jpg'); return; }
+  const rateMatch = trimmed.match(/^\/rate\s+([\d.]+)$/i);
+  if (rateMatch) { setTtsRate(parseFloat(rateMatch[1])); return; }
+  const pitchMatch = trimmed.match(/^\/pitch\s+([+-]?[\d.]+)$/i);
+  if (pitchMatch) { tts.pitchOffset = Math.max(-20, Math.min(20, parseFloat(pitchMatch[1]))); if (uiStatus) uiStatus.textContent = `pitch ${tts.pitchOffset >= 0 ? '+' : ''}${tts.pitchOffset}Hz`; return; }
+  const streamToggle = trimmed.match(/^\/voice\s+stream\s+(on|off)$/i);
+  if (streamToggle) {
+    setTtsStreamLive(streamToggle[1].toLowerCase() === 'on');
+    return;
+  }
+  const voiceMatch = trimmed.match(/^\/voice(?:\s+last)?\s+(\S+)(?:\s+(\S+))?$/i);
+  if (voiceMatch) {
+    if (window.MASTER_VOICE_POLICY?.persona_affects_text_only && voiceMatch[1].toLowerCase() !== 'last') {
+      if (voiceMatch[2]) setTtsStyle(voiceMatch[2]);
+      if (uiStatus) {
+        const style = _nextTtsStyle();
+        // Read the policy rather than naming a voice. This string said
+        // "Pernille only" while data/voice.yml said ryan, which is how the two
+        // halves of the stack came to disagree about what was being synthesized.
+        const only = window.MASTER_VOICE_POLICY?.single_voice || TTS_DEFAULT_VOICE;
+        uiStatus.textContent = `tts: ${only} only${style ? ` · ${style}` : ''}`;
+      }
+      return;
+    }
+    setVoiceName(voiceMatch[1]);
+    if (voiceMatch[2]) setTtsStyle(voiceMatch[2]);
+    if (uiStatus) {
+      const style = _nextTtsStyle();
+      uiStatus.textContent = `voice ${State.voiceName || voiceMatch[1]}${style ? ` · ${style}` : ''}`;
+    }
+    return;
+  }
+  if (/^\/whoami$/i.test(trimmed)) {
+    const summary = window.MASTER_SOUL_SUMMARY ||
+      `persona anchor; voice ${TTS_DEFAULT_VOICE}; constitutional face`;
+    if (uiStatus) uiStatus.textContent = "whoami…";
+    enqueueSpeech(summary);
+    window._chatOnChunk?.(summary);
+    window._chatOnDone?.();
+    return;
+  }
+  window.MASTER_FACE?.ttsSkip?.();
+  window._chatOnUser?.(text);
+  showStage("routing…", 0);
+
+  tts.lang = detectLang(text);
+  const isTimeSensitive = /\b(today|now|current|latest|recent|this (week|month|year)|right now|at the moment|as of)\b/i.test(text);
+  tts.prependTimestamp = isTimeSensitive;
+  State.mode = 'thinking'; State.pulse = 0.4; window.MASTER_FACE?.setAmbientHum?.(true);
+  showStage("scanning…", 0);
+  scheduleThinkingAloud("scanning");
+  syncShareStateUrl();
+  if (input.length > 180) State.lean = 0.14;
+  const feltFallback = `${State.mood}|${State.mode}|${(State.entropy ?? 0.2).toFixed(2)}|${(State.confidence ?? 0.86).toFixed(2)}`;
+  if (!_firstChatSent) {
+    _firstChatSent = true;
+    window.MASTERVisual?.event?.('chat:first', { topology: 'papua-mask', entropy: 0.14, confidence: 0.9, provider: State.modelName || State.model, mode: 'first' });
+  }
+  const imageToken = window._imageToken || null;
+  window._imageToken = null;
+  let pending = '', ttsSuppressed = false, ttsFirst = true, ttsStreamSpokenLen = 0;
+  window._streamContentKind = '';
+  const stallTimer = setTimeout(() => {
+    rootBody.dataset.networkStall = '1';
+    window._chatOnDmesg?.('link thinking');
+    State.breath = Math.max(0.5, (State.breath || 1) * 0.7);
+  }, 4000);
+  const onMessage = (rawData) => {
+    const raw = rawData || '';
+    clearTimeout(stallTimer);
+    delete rootBody.dataset.networkStall;
+    if (raw.length < 200 && raw.startsWith('{')) {
+      try {
+        const parsed = JSON.parse(raw);
+        if (parsed && parsed.type === 'trace') return;
+      } catch (_) { /* not JSON, fall through to normal content handling */ }
+    }
+    if (raw === '[DONE]') {
+      if (shouldSpeakStreamReply(pending, ttsSuppressed)) {
+        tts.lastText = pending.trim();
+        flushStreamTts(pending, { prependTimestamp: ttsFirst && tts.prependTimestamp });
+      }
+      pending = '';
+      State.mode = 'idle';
+      clearThinkingAloud();
+      showStage("");
+      if (navigator.vibrate) navigator.vibrate([60]);
+      window._chatOnDone?.();
+      return;
+    }
+    if (raw.startsWith('ERROR:')) {
+      window._chatOnChunk?.(`\n${raw}\n`);
+      State.mode = 'error'; State.flash = 1; applyShake(0.8);
+      fadeColorTo(TINT.veto);
+      morphCurrent = Math.max(0, morphCurrent - 0.7); morphTarget = 1.0;
+      clearThinkingAloud();
+      speakFailure("Sorry, I hit a snag.");
+      window._chatOnError?.();
+      return;
+    }
+    const chunk = raw.replace(/\\n/g, '\n').replace(/\\\\/g, '\\');
+    clearThinkingAloud();
+    if (uiStatus && uiStatus.textContent !== "speaking…") showStage("speaking…", 900);
+    window._chatOnChunk?.(chunk);
+    pending += chunk;
+    State.pulse = Math.min(0.6, State.pulse + 0.05);
+    if (window._streamContentKind === 'listing') ttsSuppressed = true;
+    if (!ttsSuppressed && looksLikeListingStream(pending)) ttsSuppressed = true;
+    if (!ttsSuppressed) ttsStreamSpokenLen = pushLiveStreamTts(pending, ttsStreamSpokenLen);
+  };
+  const onError = () => {
+    clearTimeout(stallTimer);
+    State.flash = 1; applyShake(0.8); State.mode = 'error';
+    window.MASTERVisual?.event?.('chat:error', { topology: 'serpent', entropy: 0.72, confidence: 0.28, mode: 'error' });
+    clearThinkingAloud();
+    window._chatOnDmesg?.('link quiet');
+    window._chatOnError?.('stream interrupted');
+    speakFailure("Sorry, I hit a snag.");
+  };
+  // chat_actions.js owns the one chat transport, POST /chat/message. When it
+  // did not load, the turn fails the way a dropped stream does, so a broken
+  // transport shows on the first message instead of hiding behind a second one.
+  if (!window.MASTERChat?.startChatStream) {
+    window.MASTER_LOG?.error?.("face_runtime:chat_transport_missing", new Error("MASTERChat.startChatStream is not defined"));
+    onError();
+    return;
+  }
+  window.MASTERChat.startChatStream({
+    message: text,
+    state: window.collectFeltState?.() || feltFallback,
+    imageToken
+  }, {
+    onMessage,
+    onNamed: (event, data) => handleFaceNamedEvent(event, data) || window.MASTER_SSE?.dispatchNamed?.(event, data) || window.MASTERVisual?.event?.(`sse:${event}`, { raw: data, mode: event }),
+    onError
+  }).catch(() => {});
+}
+
+setInterval(() => {
+  if (document.hidden) return;
+  const idleS = ((performance.now() - State.lastTouch) / 1000) | 0;
+  if (idleS < 10 && rootBody.dataset.longSilence === '1') delete rootBody.dataset.longSilence;
+  // Deliberately silent: this used to speak "still here" as an unprompted
+  // idle nudge. It fired mid-conversation with no relation to anything the
+  // user said, which read as the assistant blurting random sentences. The
+  // dataset flag stays -- other visual layers (ecology alpha, face3 idle
+  // dim) key off it -- only the speech was removed.
+  if (idleS > 90 && rootBody.dataset.longSilence !== '1' && !State.sleeping) {
+    rootBody.dataset.longSilence = '1';
+  }
+  const body = new URLSearchParams({
+    mood: State.mood, mode: State.mode, idle: String(idleS),
+    palette: '0', confidence: State.confidence.toFixed(2),
+    tilt_x: State.tiltX.toFixed(2), tilt_y: State.tiltY.toFixed(2)
+  });
+  syncShareStateUrl();
+  try { fetch('/canvas/state', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body, keepalive: true }); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:post_canvas_state", err); }
+}, 8000);
+
+let wakeLock = null;
+async function acquireWakeLock() {
+  if (!('wakeLock' in navigator)) return;
+  async function req() { try { wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => { wakeLock = null; }); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:wake_lock_request", err); } }
+  await req();
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && !wakeLock) req(); });
+}
+
+function guardVoice(v, opts = {}) {
+  const text = String(opts.text || '').trim();
+  if (text && typeof speechVoiceForText === 'function') return speechVoiceForText(text);
+  return TTS_DEFAULT_VOICE;
+}
+
+function previewVoice(voice) {
+  const chosen = guardVoice(voice || State.voiceName, { explicit: true }) || TTS_DEFAULT_VOICE;
+  if (!chosen) return;
+  const style = _nextTtsStyle(chosen);
+  window.MASTER_FACE?.initAudio?.();
+  if (tts.playing) ttsSkip();
+  loadTTSBlob("Let's work now.", chosen, style)
+    .then(async (blob) => {
+      const src = URL.createObjectURL(blob);
+      if (tts.audio) { try { tts.audio.pause(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:preview_voice_pause", err); } }
+      const audio = new Audio(src);
+      tts.audio = audio;
+      audio.playbackRate = getTtsRate();
+      preSpeechInhale(style);
+      try { await connectTTSAudio(audio, 1.15); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:preview_voice_connect", err); }
+      startVisemeAnim("Let's work now.");
+      audio.onended = audio.onerror = () => {
+        stopVisemeAnim();
+        tts.analyser = null; tts.analyserBuf = null; tts.analyserFreqBuf = null;
+        tts.outputGain = null;
+        URL.revokeObjectURL(src);
+        clearViseme();
+      };
+      audio.play().catch(() => { URL.revokeObjectURL(src); clearViseme(); });
+    })
+    .catch(() => playDuo([[chosen, "Let's work now."]], null, style));
+}
+
+function wireTtsStyleChips() {
+  document.querySelectorAll('.style-chip').forEach((chip) => {
+    if (chip.dataset.wired === '1') return;
+    chip.dataset.wired = '1';
+    chip.addEventListener('click', () => setTtsStyle(chip.dataset.style));
+    chip.addEventListener('mouseenter', () => {
+      if (State.mode === 'speaking' || tts.playing) return;
+      const style = chip.dataset.style;
+      emitTtsEvent('tts:style:active', { style, preview: true });
+      window.MASTERVisual?.event?.('tts:style:active', { topology: 'papua-mask', entropy: 0.18, confidence: 0.82, mode: style, style });
+    });
+    chip.addEventListener('mouseleave', () => {
+      if (State.mode === 'speaking' || tts.playing) return;
+      State.pulse = Math.max(0, (State.pulse || 0) * 0.6);
+    });
+  });
+  syncTtsStyleUi();
+}
+function playDuo(lines, onDone, style, councilOpts = {}) {
+  if (!lines.length) { onDone?.(); return; }
+  const [voiceRaw, text] = lines[0]; const voice = guardVoice(voiceRaw, { text });
+  const rest = lines.slice(1);
+  const useStyle = style || _nextTtsStyle(voice);
+  if (councilOpts.persona && uiStatus) uiStatus.textContent = `council: ${councilOpts.persona}`;
+  if (councilOpts.lane) offsetCouncilMouthPool?.(councilOpts.lane, 0.18);
+  if (councilOpts.persona) window.MASTERCouncilMulti?.setLaneActive?.(councilOpts.lane || 'center', councilOpts.persona);
+  let personaBadge = document.getElementById('council-persona-badge');
+  if (councilOpts.persona) {
+    if (!personaBadge) {
+      personaBadge = document.createElement('div');
+      personaBadge.id = 'council-persona-badge';
+      personaBadge.className = 'council-persona-badge';
+      document.body.appendChild(personaBadge);
+    }
+    personaBadge.textContent = councilOpts.persona;
+    personaBadge.dataset.lane = councilOpts.lane || 'center';
+    personaBadge.dataset.visible = '1';
+    setTimeout(() => { if (personaBadge) personaBadge.dataset.visible = '0'; }, 4200);
+  }
+  loadTTSBlob(text, voice, useStyle)
+    .then(async blob => {
+      const src = URL.createObjectURL(blob);
+      if (tts.audio) { try { tts.audio.pause(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:play_duo_pause", err); } }
+      const audio = new Audio(src);
+      tts.audio = audio;
+      audio.playbackRate = getTtsRate();
+      try { await connectTTSAudio(audio, 1.15); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:play_duo_connect", err); }
+      startVisemeAnim(text);
+      preSpeechInhale(useStyle);
+      audio.onended = audio.onerror = () => {
+        stopVisemeAnim();
+        tts.analyser = null; tts.analyserBuf = null; tts.analyserFreqBuf = null;
+        tts.outputGain = null;
+        URL.revokeObjectURL(src);
+        clearViseme();
+        playDuo(rest, onDone, useStyle);
+      };
+      audio.play().catch(() => { URL.revokeObjectURL(src); playDuo(rest, onDone, useStyle); });
+    })
+    .catch(() => playDuo(rest, onDone, useStyle));
+}
+
+function meanPoolField(pool, field) {
+  const K = window.ParticleKernel;
+  if (!pool || !K) return 0;
+  let sum = 0, n = 0;
+  for (let i = 0; i < pool.count; i++) {
+    if (!pool.alive[i]) continue;
+    sum += pool.cells[i * K.FIELDS_PER_CELL + field];
+    n++;
+  }
+  return n ? sum / n : 0;
+}
+// The mouth pool is the only real arousal/valence in the page and State is the
+// authoritative mood/mode/entropy/confidence, so this publishes them and lets
+// felt_state.js format the string. It used to build a second one itself and
+// reassign window.collectFeltState on top of felt_state's — so the string this
+// runtime sent and the string chat_actions and face_vision read through
+// MASTERFeltState could describe the same instant differently, and the server
+// splits whichever arrived into felt_sense.
+function collectFeltState() {
+  window.MASTERFeltState?.publish?.({
+    mood: State.mood,
+    mode: State.mode,
+    entropy: State.entropy,
+    confidence: State.confidence,
+    arousal: meanPoolField(mouthPool, window.ParticleKernel?.FIELD?.arousal ?? 9),
+    valence: meanPoolField(mouthPool, window.ParticleKernel?.FIELD?.valence ?? 8),
+  });
+  return window.MASTERFeltState?.collectFeltState?.() || null;
+}
+// Still the global, but as the publisher wrapper rather than a second formatter:
+// the send paths below call it, so the pool fields are refreshed at the moment
+// the state is read. MASTERFeltState.collectFeltState stays the one formatter.
+window.collectFeltState = collectFeltState;
+
+function startEverything() {
+  primerFired = true;
+  document.body?.classList.remove('face-loading');
+  morphCurrent = 0.72; morphTarget = 1.08;
+  // ensureFrameLoop() kicks off the one requestAnimationFrame(frame) call that
+  // starts the render loop (renderer.render(scene, camera), then it reschedules
+  // itself). Nothing called it: the face's scene/mesh/particle state all built
+  // and updated correctly on every tts/canvas event, but frame() was never
+  // invoked even once, so nothing was ever painted to the canvas — the face
+  // was fully "alive" internally and invisible on screen. This is the actual
+  // fix for the long-standing "no 3D face visible" report.
+  window.MASTER?.boot?.transition?.('FACE', { source: 'startEverything' });
+  ensureFrameLoop();
+  initAudio();
+  window.MASTER?.boot?.transition?.('VOICE', { source: 'initAudio' });
+  window.MASTER?.boot?.signal?.('voice_ready', { source: 'initAudio' });
+  prefetchTtsPhraseBank?.();
+  if (window.MASTER_FACE?.actx && window.MASTER_FACE.actx.state === 'suspended') window.MASTER_FACE.actx.resume();
+  if (primer) { primer.style.transition = 'opacity 160ms ease, transform 160ms ease'; primer.style.opacity = '0'; primer.style.transform = 'scale(0.93)'; setTimeout(() => primer?.remove(), 200); }
+  zshBar.classList.add('live');
+  const logo = document.querySelector('.top-left-logo');
+  if (logo) {
+    logo.style.transition = 'none';
+    logo.style.transform = 'translateX(3px)';
+    setTimeout(() => { logo.style.transition = 'transform 80ms ease'; logo.style.transform = ''; }, 80);
+  }
+  let _logoDimTimer = null;
+  function _schedLogoDim() {
+    clearTimeout(_logoDimTimer);
+    _logoDimTimer = setTimeout(() => { if (logo) logo.classList.add('dim'); }, 4000);
+  }
+  _schedLogoDim();
+  document.addEventListener('pointerdown', () => { if (logo) logo.classList.remove('dim'); _schedLogoDim(); }, { passive: true });
+  requestMotionPermission(); acquireWakeLock();
+  wireTtsStyleChips();
+  armWakeWord();
+  maybeAutoVoice();
+  setTimeout(() => { morphTarget = 1.0; }, 600);
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js?v=' + encodeURIComponent(window.MASTER_CACHE_VERSION || 'v2')).catch(() => {});
+    navigator.serviceWorker.addEventListener('message', (ev) => {
+      if (ev.data?.type !== 'sw:updated') return;
+      if (uiStatus) uiStatus.textContent = 'new version — reload';
+      window._chatOnDmesg?.('sw updated');
+    });
+  }
+  window.addEventListener('beforeinstallprompt', (ev) => {
+    ev.preventDefault();
+    if (uiStatus) uiStatus.textContent = 'install available';
+  });
+}
+window.addEventListener('master:self_violation', () => flashViolation());
+let primerFired = false;
+function firePrimer() { if (primerFired) return; primerFired = true; startEverything(); }
+primer?.addEventListener('pointerdown', firePrimer);
+primer?.addEventListener('touchend', firePrimer, { passive: true });
+primer?.addEventListener('click', firePrimer);
+primer?.addEventListener('keydown', event => {
+  if (event.key !== 'Enter' && event.key !== ' ') return;
+  event.preventDefault();
+  firePrimer();
+});
+
+zshBar.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const v = zshIn.value.trim();
+  if (!v) return;
+  zshIn.value = '';
+  State.pulse = 0.4;
+  State.ripplePhase = 0;
+  beep(1320, 0.018);
+  navigator.vibrate?.(30);
+  window.MASTER_FACE?.sendMessage?.(v);
+});
+zshIn.addEventListener('focus', () => {
+  State.lastTouch = performance.now();
+  boostEyeAttention(0.07);
+  window.MASTERVisual?.event?.('input:focus', { topology: 'papua-mask', entropy: 0.14, confidence: 0.88, mode: 'attending' });
+});
+
+const _charCount = document.getElementById('char-count');
+const _cmdHistKey = 'master:cmd_hist';
+let _cmdHist = [];
+let _cmdHistIdx = -1;
+try { _cmdHist = JSON.parse(localStorage.getItem(_cmdHistKey) || '[]'); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:cmd_hist_read", err); }
+function _resizeZin() {
+  if (!zshIn || zshIn.tagName !== 'TEXTAREA') return;
+  zshIn.style.height = 'auto';
+  zshIn.style.height = Math.min(120, zshIn.scrollHeight) + 'px';
+}
+zshIn.addEventListener('input', () => {
+  const len = zshIn.value.length;
+  if (_charCount) { _charCount.textContent = len > 120 ? len : ''; _charCount.style.opacity = len > 120 ? '0.5' : '0'; }
+  if (len > 180) document.documentElement.dataset.inputDense = '1';
+  else delete document.documentElement.dataset.inputDense;
+  _resizeZin();
+});
+zshIn.addEventListener('paste', () => {
+  setTimeout(() => {
+    if ((zshIn.value || '').length > 180) document.documentElement.dataset.inputDense = '1';
+    _resizeZin();
+  }, 0);
+});
+zshIn.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && e.shiftKey) { e.preventDefault(); const s = zshIn.selectionStart; const v = zshIn.value; zshIn.value = v.slice(0, s) + '\n' + v.slice(zshIn.selectionEnd); zshIn.selectionStart = zshIn.selectionEnd = s + 1; _resizeZin(); return; }
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); zshBar.requestSubmit(); return; }
+  if (e.key === 'ArrowUp' && !e.shiftKey && _cmdHist.length) {
+    e.preventDefault();
+    _cmdHistIdx = Math.max(0, (_cmdHistIdx < 0 ? _cmdHist.length : _cmdHistIdx) - 1);
+    zshIn.value = _cmdHist[_cmdHistIdx] || '';
+    _resizeZin();
+  }
+  if (e.key === 'ArrowDown' && !e.shiftKey && _cmdHist.length && _cmdHistIdx >= 0) {
+    e.preventDefault();
+    _cmdHistIdx = Math.min(_cmdHist.length, _cmdHistIdx + 1);
+    zshIn.value = _cmdHistIdx >= _cmdHist.length ? '' : (_cmdHist[_cmdHistIdx] || '');
+    _resizeZin();
+  }
+});
+
+let _swipeStartX = 0, _swipeStartY = 0;
+const chatShell = document.getElementById('chat-shell');
+if (chatShell) {
+  let shellPress = null;
+  chatShell.addEventListener('pointerdown', (e) => {
+    if (e.target.closest('#zsh, #zin, #photo-button, input, button, a')) return;
+    shellPress = setTimeout(() => {
+      cancelStream();
+      window.MASTER_FACE?.ttsSkip?.();
+      window.MASTEREcology?.burst?.(8, 0.3);
+      window.MASTERVisual?.event?.('user:interrupt', { topology: 'serpent', entropy: 0.38, confidence: 0.5, mode: 'interrupt' });
+    }, 420);
+  }, { passive: true });
+  const clearShellPress = () => { if (shellPress) { clearTimeout(shellPress); shellPress = null; } };
+  chatShell.addEventListener('pointerup', clearShellPress, { passive: true });
+  chatShell.addEventListener('pointercancel', clearShellPress, { passive: true });
+}
+
+const chatLog = document.getElementById('chat-log');
+if (chatLog) {
+  chatLog.addEventListener('touchstart', e => { _swipeStartX = e.touches[0].clientX; _swipeStartY = e.touches[0].clientY; }, { passive: true });
+  chatLog.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - _swipeStartX;
+    const dy = Math.abs(e.changedTouches[0].clientY - _swipeStartY);
+    if (dx > 72 && dy < 40) cancelStream();
+  }, { passive: true });
+}
+
+const _origHaptic = enqueueSpeech;
+window.MASTERVoice && (window.MASTERVoice._hapticPatch = true);
+
+spinBtn?.addEventListener('click', () => window.MASTER_FACE?.ttsTogglePause?.());
+focusBtn?.addEventListener('click', () => toggleFocusMode());
+
+// Mic button removed: Voice Mode is hands-free by default (maybeAutoVoice),
+// so a dedicated mic control was redundant chrome. Manual mic control is
+// still available via spacebar push-to-talk and the 'm' keyboard shortcut
+// (ttsToggleMic), and via the "hey master" wake phrase when opted in.
+
+fontScaleInput?.addEventListener('input', () => applyUiScale(parseFloat(fontScaleInput.value)));
+
+if (fontScaleInput) {
+  const storedScale = parseFloat(localStorage.getItem(SCALE_KEY));
+  if (Number.isFinite(storedScale)) fontScaleInput.value = String(storedScale);
+}
+
+// FA62 push-to-talk: hold space = record, release = submit (unless input focused)
+let pttActive = false;
+document.addEventListener('keydown', (e) => {
+  if (e.key === ' ' && !e.repeat && document.activeElement !== zshIn && primerFired) {
+    e.preventDefault(); pttActive = true; window.MASTER_FACE?.startSTT?.();
+  }
+});
+document.addEventListener('keyup', (e) => {
+  if (e.key === ' ' && pttActive) { pttActive = false; window.MASTER_FACE?.stopSTT?.(); }
+});
+
+document.addEventListener('keydown', (e) => {
+  wakeFromSleep();
+  if (e.key === 'Escape') {
+    e.preventDefault();
+    cancelStream();
+    window.MASTER_FACE?.ttsSkip?.();
+    if (State.voiceMode) exitVoiceMode();
+    window.MASTERVisual?.event?.('user:interrupt', { topology: 'serpent', entropy: 0.42, confidence: 0.55, mode: 'interrupt' });
+  }
+  if (e.ctrlKey && e.key === 'm') { e.preventDefault(); window.MASTER_FACE?.ttsToggleMute?.(); }
+  if (e.key === 't' && document.activeElement !== zshIn && !e.ctrlKey) { e.preventDefault(); window.MASTER_FACE?.ttsToggleMute?.(); }
+  if (e.key === 'm' && document.activeElement !== zshIn && !e.ctrlKey) { e.preventDefault(); window.MASTER_FACE?.ttsToggleMic?.(); }
+  if (e.ctrlKey && (e.key === '[' || e.key === ',')) {
+    e.preventDefault();
+    const cur = getTtsRate();
+    const i = nearestRateIndex(cur);
+    setTtsRate(RATES[(i - 1 + RATES.length) % RATES.length]);
+  }
+  if (e.ctrlKey && (e.key === ']' || e.key === '.')) {
+    e.preventDefault();
+    const cur = getTtsRate();
+    const i = nearestRateIndex(cur);
+    setTtsRate(RATES[(i + 1) % RATES.length]);
+  }
+});
+
+document.addEventListener('pointerdown', wakeFromSleep, { passive: true });
+document.addEventListener('touchstart', wakeFromSleep, { passive: true });
+document.addEventListener('mousedown', wakeFromSleep, { passive: true });
+
+window.sendMessage = sendMessage;
+window.MASTERVoice = {
+  enqueue: enqueueSpeech,
+  initAudio: () => window.MASTER_FACE?.initAudio?.(),
+  skip: () => window.MASTER_FACE?.ttsSkip?.(),
+  togglePause: () => window.MASTER_FACE?.ttsTogglePause?.(),
+  toggleMute: () => window.MASTER_FACE?.ttsToggleMute?.(),
+  toggleMic: () => window.MASTER_FACE?.ttsToggleMic?.(),
+  toggleTheme,
+  toggleFocusMode,
+  setUiScale: applyUiScale,
+  speak: (t) => enqueueSpeech(t),
+  get muted() { return window.MASTER_FACE?.tts?.muted; },
+  get playing() { return window.MASTER_FACE?.tts?.playing; },
+  get voice() { return window.MASTER_FACE?.tts?.voice; },
+  setVoice: (voice) => setVoiceName(voice),
+  previewVoice: () => previewVoice(State.voiceName),
+  setLastText(text) { if (window.MASTER_FACE?.tts) window.MASTER_FACE.tts.lastText = String(text || ""); },
+  get lastText() { return window.MASTER_FACE?.tts?.lastText || ""; },
+  get ttsRate() { return getTtsRate(); },
+  setTtsRate,
+};
+window._chatSpeakLast = () => {
+  const text = window.MASTER_FACE?.tts?.lastText || "";
+  if (text) enqueueSpeech(text);
+};
+
+window.MASTER_FACE = {
+  State,
+  tts,
+  get actx() { return actx; },
+  set actx(value) { actx = value; },
+  get primerFired() { return primerFired; },
+  get mouthPool() { return mouthPool; },
+  get eyePool() { return eyePool; },
+  get renderer() { return renderer; },
+  get scene() { return scene; },
+  get camera() { return camera; },
+  get head() { return head; },
+  // The face's material, so a recorder can pin a uniform. Every uniform is
+  // rewritten each frame from State, so anything reading this to change the look
+  // has to hold its value against that — see tools/face_record.rb, which defines
+  // uExposure's `value` as a getter the per-frame write cannot move.
+  get faceMat() { return faceMat; },
+  get cv() { return cv; },
+  get faceHome() { return faceHome; },
+  get faceScatter() { return faceScatter; },
+  get faceSeeds() { return faceSeeds; },
+  get FACE_N_2D() { return FACE_N_2D; },
+  get dbgFrames() { return _dbgFrames; },
+  get morphCurrent() { return morphCurrent; },
+  setMorphCurrent(value) { morphCurrent = value; },
+  incrementDbgFrames() { _dbgFrames += 1; },
+  markFaceReady,
+  resize,
+  frame,
+  ensureFrameLoop,
+  startEverything,
+  ttsTick,
+  ttsSkip,
+  ttsTogglePause,
+  ttsToggleMute,
+  ttsToggleMic,
+  toggleTheme,
+  toggleFocusMode,
+  previewVoice,
+  setTtsStyle,
+  syncTtsStyleUi,
+  setUiScale: applyUiScale,
+  wakeFromSleep,
+  enterSleep,
+  startSTT,
+  stopSTT,
+  enterVoiceMode,
+  exitVoiceMode,
+  toggleVoiceMode,
+  armWakeWord,
+  disarmWakeWord,
+  sendMessage,
+  initAudio,
+  setAmbientHum,
+  collectFeltState,
+  offsetCouncilMouthPool,
+  updateMoodHistory,
+  spawnEmotionalGhost
+};
+window.announceTTS = announceTTS;
+window.enqueueSpeech = enqueueSpeech;
+window.mouthPool = mouthPool;
+window.eyePool = eyePool;
+function _deferFaceMod(name) {
+  // Absolutize: this runs inside a blob: module where a root-relative specifier
+  // ("/assets/…") can't resolve — same class of bug that blocked the THREE import.
+  return new URL(window.MASTER_ASSET_PATHS?.faceModules?.[name] || `/${name}`, document.baseURI).href;
+}
+// Smart Turn is opt-in and its assets are 21MB, so the module is imported
+// for its enable check only — nothing is fetched until warmUp() or a
+// prediction actually asks for it.
+import(_deferFaceMod('smart_turn.js'))
+  .then((m) => { window.MASTER_SMART_TURN = m; })
+  .catch((err) => window.MASTER_LOG?.warn?.("face_runtime:smart_turn_import", err));
+await import(_deferFaceMod('face_semantics.js'));
+await import(_deferFaceMod('face_minimal_ui.js'));
+await import(_deferFaceMod('face_loops_music.js'));
+await import(_deferFaceMod('face_loops_nudge.js'));

@@ -1,0 +1,272 @@
+{
+  "title": "Direktesendinger — Bergen",
+  "viewport": [
+    1440,
+    900
+  ],
+  "scroll_width": 1440,
+  "h1_count": 1,
+  "landmarks": {
+    "main": true,
+    "nav": true,
+    "skip": true
+  },
+  "elements": [
+    {
+      "key": "#main-content",
+      "tag": "main",
+      "rect": {
+        "x": 420,
+        "y": 62,
+        "w": 600,
+        "h": 900
+      },
+      "color": "#333333",
+      "bg": "#efefef",
+      "font_size": 18,
+      "line_height": 20,
+      "display": "block",
+      "position": "static"
+    },
+    {
+      "key": "#main-content>section.tv-live-streams",
+      "tag": "section",
+      "rect": {
+        "x": 420,
+        "y": 121,
+        "w": 600,
+        "h": 333
+      },
+      "color": "#333333",
+      "bg": "#efefef",
+      "font_size": 18,
+      "line_height": 20,
+      "display": "block",
+      "position": "static"
+    },
+    {
+      "key": "#main-content>section.tv-live-streams>header",
+      "tag": "header",
+      "rect": {
+        "x": 438,
+        "y": 121,
+        "w": 564,
+        "h": 20
+      },
+      "color": "#333333",
+      "bg": "#efefef",
+      "font_size": 18,
+      "line_height": 20,
+      "display": "block",
+      "position": "static"
+    },
+    {
+      "key": "#main-content>section.tv-live-streams>header>h1",
+      "tag": "h1",
+      "rect": {
+        "x": 438,
+        "y": 121,
+        "w": 564,
+        "h": 20
+      },
+      "color": "#333333",
+      "bg": "#efefef",
+      "font_size": 36,
+      "line_height": 20,
+      "display": "block",
+      "position": "static"
+    },
+    {
+      "key": "#nav_sections",
+      "tag": "nav",
+      "rect": {
+        "x": 125,
+        "y": 0,
+        "w": 1191,
+        "h": 65
+      },
+      "color": "#333333",
+      "bg": "#efefef",
+      "font_size": 18,
+      "line_height": 20,
+      "display": "flex",
+      "position": "static"
+    },
+    {
+      "key": "#nav_sections>div.nav_swiper_group.nav_swiper_group--verticals>a.nav_link",
+      "tag": "a",
+      "rect": {
+        "x": 326,
+        "y": 9,
+        "w": 108,
+        "h": 47
+      },
+      "color": "#666666",
+      "bg": "#efefef",
+      "font_size": 20.3,
+      "line_height": 20.3,
+      "display": "flex",
+      "position": "relative"
+    },
+    {
+      "key": "#tv-live-streams>div.live-stream-grid>section.empty.empty-state",
+      "tag": "section",
+      "rect": {
+        "x": 591,
+        "y": 141,
+        "w": 259,
+        "h": 286
+      },
+      "color": "#666666",
+      "bg": "#efefef",
+      "font_size": 18,
+      "line_height": 27,
+      "display": "grid",
+      "position": "static"
+    },
+    {
+      "key": "#tv-live-streams>div.live-stream-grid>section.empty.empty-state>a.btn.btn-primary.empty-state-action",
+      "tag": "a",
+      "rect": {
+        "x": 672,
+        "y": 343,
+        "w": 96,
+        "h": 44
+      },
+      "color": "#110f19",
+      "bg": "#dc635c",
+      "font_size": 15.8,
+      "line_height": 23.6,
+      "display": "flex",
+      "position": "static"
+    },
+    {
+      "key": "#tv-live-streams>div.live-stream-grid>section.empty.empty-state>h2.empty-state-title",
+      "tag": "h2",
+      "rect": {
+        "x": 622,
+        "y": 253,
+        "w": 195,
+        "h": 27
+      },
+      "color": "#333333",
+      "bg": "#efefef",
+      "font_size": 18,
+      "line_height": 27,
+      "display": "block",
+      "position": "static"
+    },
+    {
+      "key": "body.vertical-tv>div.theme-root>div.app-shell>button.tab-bar-peel",
+      "tag": "button",
+      "rect": {
+        "x": 696,
+        "y": 856,
+        "w": 48,
+        "h": 44
+      },
+      "color": "#666666",
+      "bg": "#efefef",
+      "font_size": 18,
+      "line_height": 20,
+      "display": "flex",
+      "position": "fixed"
+    },
+    {
+      "key": "body.vertical-tv>footer.site-legal>nav>a",
+      "tag": "a",
+      "rect": {
+        "x": 184,
+        "y": 945,
+        "w": 80,
+        "h": 48
+      },
+      "color": "#666666",
+      "bg": "#efefef",
+      "font_size": 13,
+      "line_height": 20,
+      "display": "block",
+      "position": "static"
+    },
+    {
+      "key": "html>body.vertical-tv>div.search_palette>button.search_palette_trigger",
+      "tag": "button",
+      "rect": {
+        "x": 1336,
+        "y": 12,
+        "w": 44,
+        "h": 44
+      },
+      "color": "#333333",
+      "bg": "#efefef",
+      "font_size": 18,
+      "line_height": 20,
+      "display": "grid",
+      "position": "fixed"
+    },
+    {
+      "key": "html>body.vertical-tv>footer.site-legal",
+      "tag": "footer",
+      "rect": {
+        "x": 170,
+        "y": 940,
+        "w": 1100,
+        "h": 67
+      },
+      "color": "#333333",
+      "bg": "#efefef",
+      "font_size": 13,
+      "line_height": 20,
+      "display": "flex",
+      "position": "static"
+    },
+    {
+      "key": "html>body.vertical-tv>footer.site-legal>nav",
+      "tag": "nav",
+      "rect": {
+        "x": 190,
+        "y": 959,
+        "w": 252,
+        "h": 20
+      },
+      "color": "#333333",
+      "bg": "#efefef",
+      "font_size": 13,
+      "line_height": 20,
+      "display": "flex",
+      "position": "static"
+    },
+    {
+      "key": "html>body.vertical-tv>footer.site-legal>p.affiliate-fine",
+      "tag": "p",
+      "rect": {
+        "x": 460,
+        "y": 961,
+        "w": 790,
+        "h": 18
+      },
+      "color": "#666666",
+      "bg": "#efefef",
+      "font_size": 12,
+      "line_height": 18,
+      "display": "block",
+      "position": "static"
+    },
+    {
+      "key": "html>body.vertical-tv>header>a.brand-mark.brgen-logo-mark",
+      "tag": "a",
+      "rect": {
+        "x": 12,
+        "y": 11,
+        "w": 91,
+        "h": 44
+      },
+      "color": "#333333",
+      "bg": "#efefef",
+      "font_size": 20.3,
+      "line_height": 20.3,
+      "display": "flex",
+      "position": "fixed"
+    }
+  ]
+}

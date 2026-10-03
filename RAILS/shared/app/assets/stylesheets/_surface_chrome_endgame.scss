@@ -1,0 +1,278 @@
+// Final cascade endpoint for the flat-surface contract.
+//
+// Shared refinement sheets load before each app's dialect code. These mixins are
+// intentionally included at the bottom of the app entrypoints so later dialect
+// rules cannot accidentally resurrect decorative borders, pills or card chrome.
+// Functional focus, error and drag/drop signals remain outside these selectors.
+
+@mixin brgen {
+  .feed-post,
+  .newsletter-cta,
+  .subscribe-box,
+  .post-media-choice,
+  .post-progressive-nav,
+  .home-feed-views,
+  .search_palette_cities,
+  .mobile-sheet-cities,
+  .brgen-media-add-link {
+    border: 0;
+    border-radius: 0;
+  }
+
+  .home-feed-view,
+  .city-network-item {
+    border: 0;
+    border-radius: 0;
+  }
+
+  .home-feed-view + .home-feed-view {
+    border-inline-start: 0;
+  }
+
+  .home-feed-view.is-active,
+  .post-progressive-indicator.is-active {
+    border-block-end: 0;
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.18em;
+  }
+
+  .post-photo-camera {
+    border: 0;
+    border-radius: 0;
+  }
+
+  .comment_item .comment_item {
+    border-inline-start: 0;
+  }
+
+  .radio-home-header,
+  .radio-featured > .playlist-app,
+  .radio-track-list,
+  .radio-playlist-list,
+  .playlist-queue,
+  .playlist-comments {
+    border: 0;
+  }
+
+  .radio-home-link,
+  .radio-section-link,
+  .radio-nav a,
+  .radio-nav-btn,
+  .playlist-top-action,
+  .playlist-add-comment,
+  .playlist-transport-play,
+  .playlist-transport-bar {
+    border: 0;
+    border-radius: 0;
+  }
+
+  .radio-track-list,
+  .radio-playlist-list {
+    border-block-start: 0;
+    background: transparent;
+    gap: 0;
+  }
+
+  .radio-track-card-art {
+    border: 0;
+    border-radius: 0;
+  }
+
+  .radio-archaeology {
+    border: 0;
+  }
+
+  .playlist-comment-form input,
+  .playlist-transport-bar {
+    border: 0;
+    border-radius: 0;
+  }
+
+  .playlist-queue-item {
+    border-block-end: 0;
+  }
+
+  .channel-composer textarea,
+  .live-stream-chat input[type="text"] {
+    border: 0;
+    border-radius: 0;
+  }
+
+  body.vertical-messenger {
+    #messages article,
+    #new_message,
+    #new_message textarea,
+    .disappearing-settings select,
+    .link-preview {
+      border: 0;
+      border-radius: 0;
+    }
+
+    #messages article[data-expiry="later"],
+    #messages article[data-expiry="soon"] {
+      border-style: none;
+      border-color: transparent;
+    }
+  }
+
+  body.vertical-marketplace {
+    #navBar.storefront-nav--bol,
+    .storefront-utility--bol,
+    #bottomHalf,
+    .bol-market-hero,
+    .store-buybox,
+    .deal-card-img,
+    .listing-review-card,
+    .listing-published-notice,
+    .listing-source-option,
+    .listing-step,
+    .listing-video-field,
+    .listing-photo-gallery,
+    .listing-filter-controls select,
+    .listing-filter-controls input,
+    .media-thumb-move,
+    .media-thumb-rm,
+    .store-order input,
+    .store-order textarea,
+    .deal-card .qty-field,
+    .store-seller-center,
+    .store-terms,
+    .seller-summary dt,
+    .seller-summary dd,
+    .order-row,
+    .marketplace-deal,
+    .deal-listing,
+    .store-pdp-media,
+    .listing-questions,
+    .listing-question,
+    .cart-item {
+      border: 0;
+      border-radius: 0;
+    }
+
+    #navBar .section {
+      border-radius: 0;
+    }
+
+    #navBar .nav-search-input,
+    .search-form input[type="search"] {
+      border: 0;
+      border-radius: 0;
+    }
+
+    .store-panel,
+    .store-shortcut-well {
+      border: 0;
+      border-radius: 0;
+    }
+
+    .store-buybox > p {
+      border-block-end: 0;
+    }
+
+    .bol-kind-tabs {
+      border-color: transparent;
+    }
+
+    .bol-kind-tabs a,
+    .listing-step-link.is-active {
+      border-bottom-width: 0;
+      border-bottom-color: transparent;
+    }
+
+    .store-buybox .btn,
+    .deal-card-buy,
+    .listing-buy-bar-cta,
+    .bol-primary {
+      border: 0;
+      border-radius: 0;
+    }
+
+    .store-results-body > .deal-card {
+      border-bottom: 0;
+    }
+  }
+}
+
+@mixin amber {
+  .form input,
+  .form select,
+  .form textarea,
+  .input {
+    border: 0;
+    border-radius: 0;
+  }
+
+  .color-swatch,
+  .style-phase-card,
+  .occasion-card,
+  .zone-row,
+  .carousel-btn,
+  .today-look,
+  .today-look-pick,
+  .feed-post,
+  .newsletter-cta,
+  .subscribe-box,
+  .wardrobe-card {
+    border: 0;
+    border-radius: 0;
+  }
+
+  // Timelines and charts retain their axes/rules: here a line carries
+  // information, not surface decoration.
+
+  .occasion-card--sparse {
+    border: 0;
+    background: color-mix(in srgb, var(--color-warning) 15%, var(--surface-elevated));
+  }
+
+  .occasion-card--covered {
+    border: 0;
+    background: color-mix(in srgb, var(--color-success) 10%, var(--surface-elevated));
+  }
+
+  .amber-editorial-nav,
+  .amber-messenger-composer,
+  .post-show-actions,
+  .post-show-comments {
+    border-block-start: 0;
+    border-block-end: 0;
+  }
+
+  .amber-look {
+    border: 0;
+    border-radius: 0;
+  }
+
+  .amber-messenger-composer textarea,
+  .amber-messenger-composer select {
+    border: 0;
+    border-radius: 0;
+  }
+
+  body[data-surface="luxury"] {
+    .amber-editorial-nav {
+      border: 0;
+    }
+
+    .amber-look,
+    .item-card--luxury,
+    .luxury-section {
+      border: 0;
+      border-radius: 0;
+    }
+
+    .btn,
+    .btn-sm,
+    input,
+    select,
+    textarea {
+      border-radius: 0;
+    }
+  }
+
+  .nested-field {
+    border-block-end: 0;
+  }
+}

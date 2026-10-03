@@ -1,0 +1,9 @@
+<% content_for :title, t("connections.title") %>
+
+<header role="banner" aria-label="<%= t("connections.title") %>">
+  <%= tag.h1 t("pages.connections") %>
+</header>
+
+<%= render "connections/list" %>
+
+<%= render "shared/pager", pagy: @pagy %>

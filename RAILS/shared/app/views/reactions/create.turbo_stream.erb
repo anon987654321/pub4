@@ -1,0 +1,3 @@
+<%= turbo_stream.replace "reactions_#{dom_id(@target)}" do %>
+  <%= render "shared/reaction_bar", target: @target, kind: @kind, active: @active %>
+<% end %>

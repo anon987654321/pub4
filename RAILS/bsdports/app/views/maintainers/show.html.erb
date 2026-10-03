@@ -1,0 +1,17 @@
+<% content_for :title, @maintainer.name %>
+<header>
+  <%= tag.h1 @maintainer.name %>
+  <% if @maintainer.email.present? %>
+    <p><%= link_to @maintainer.email, "mailto:#{@maintainer.email}" %></p>
+  <% end %>
+</header>
+<ul id="ports" class="port-list">
+  <% @ports.each do |port| %>
+    <%= render "ports/row", port: %>
+  <% end %>
+</ul>
+<%= render "shared/infinite_scroll_sentinel",
+           pagy: @pagy,
+           reflex: "MaintainerPortsInfiniteScrollReflex#load_more",
+           sentinel_id: "maintainer-ports-sentinel",
+           maintainer_id: @maintainer.id %>

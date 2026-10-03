@@ -1,0 +1,513 @@
+{
+  "slug": "gunnhild",
+  "artist": "Gunnhild",
+  "source": "https://www.youtube.com/watch?v=95xXFe3Q2WY",
+  "vocal_path": "/Users/mac/Documents/GitHub/pub4/studio/dilla/project/learnings/vocals/gunnhild/vocals.wav",
+  "stem_dir": "/Users/mac/Documents/GitHub/pub4/studio/dilla/samples/demux/htdemucs_ft/yt_20260729_001607",
+  "bpm_estimate": 86.2,
+  "phrases": [
+    {
+      "start": 2.972,
+      "end": 2.972,
+      "strength": 0.3267
+    },
+    {
+      "start": 4.18,
+      "end": 4.18,
+      "strength": 0.3502
+    },
+    {
+      "start": 5.433,
+      "end": 5.433,
+      "strength": 0.2692
+    },
+    {
+      "start": 6.687,
+      "end": 6.687,
+      "strength": 0.1676
+    },
+    {
+      "start": 7.941,
+      "end": 7.941,
+      "strength": 0.3293
+    },
+    {
+      "start": 9.195,
+      "end": 11.238,
+      "strength": 0.2932
+    },
+    {
+      "start": 11.61,
+      "end": 13.142,
+      "strength": 0.2177
+    },
+    {
+      "start": 13.746,
+      "end": 14.489,
+      "strength": 0.1929
+    },
+    {
+      "start": 14.907,
+      "end": 14.907,
+      "strength": 0.2208
+    },
+    {
+      "start": 15.418,
+      "end": 16.068,
+      "strength": 0.2492
+    },
+    {
+      "start": 16.486,
+      "end": 16.486,
+      "strength": 0.1773
+    },
+    {
+      "start": 16.997,
+      "end": 17.322,
+      "strength": 0.1887
+    },
+    {
+      "start": 17.926,
+      "end": 17.926,
+      "strength": 0.1755
+    },
+    {
+      "start": 18.297,
+      "end": 18.297,
+      "strength": 0.2422
+    },
+    {
+      "start": 18.901,
+      "end": 18.901,
+      "strength": 0.1671
+    },
+    {
+      "start": 19.923,
+      "end": 20.434,
+      "strength": 0.208
+    },
+    {
+      "start": 20.805,
+      "end": 20.898,
+      "strength": 0.1866
+    },
+    {
+      "start": 21.455,
+      "end": 21.455,
+      "strength": 0.1983
+    },
+    {
+      "start": 22.663,
+      "end": 22.663,
+      "strength": 0.1712
+    },
+    {
+      "start": 24.52,
+      "end": 24.52,
+      "strength": 0.2227
+    },
+    {
+      "start": 25.078,
+      "end": 25.078,
+      "strength": 0.1983
+    },
+    {
+      "start": 25.449,
+      "end": 25.913,
+      "strength": 0.2087
+    },
+    {
+      "start": 26.424,
+      "end": 26.424,
+      "strength": 0.2001
+    },
+    {
+      "start": 27.307,
+      "end": 27.307,
+      "strength": 0.1926
+    },
+    {
+      "start": 27.678,
+      "end": 27.678,
+      "strength": 0.1675
+    },
+    {
+      "start": 28.468,
+      "end": 29.814,
+      "strength": 0.2572
+    },
+    {
+      "start": 30.325,
+      "end": 30.325,
+      "strength": 0.1783
+    },
+    {
+      "start": 31.161,
+      "end": 31.347,
+      "strength": 0.2128
+    },
+    {
+      "start": 31.858,
+      "end": 31.997,
+      "strength": 0.1945
+    },
+    {
+      "start": 32.508,
+      "end": 32.508,
+      "strength": 0.2047
+    },
+    {
+      "start": 33.205,
+      "end": 33.205,
+      "strength": 0.1676
+    },
+    {
+      "start": 34.04,
+      "end": 34.18,
+      "strength": 0.1887
+    },
+    {
+      "start": 34.551,
+      "end": 34.969,
+      "strength": 0.1946
+    },
+    {
+      "start": 35.991,
+      "end": 36.316,
+      "strength": 0.1821
+    },
+    {
+      "start": 37.059,
+      "end": 37.384,
+      "strength": 0.1875
+    },
+    {
+      "start": 39.52,
+      "end": 39.52,
+      "strength": 0.1993
+    },
+    {
+      "start": 41.471,
+      "end": 41.657,
+      "strength": 0.1769
+    },
+    {
+      "start": 42.028,
+      "end": 42.028,
+      "strength": 0.1749
+    },
+    {
+      "start": 42.632,
+      "end": 43.236,
+      "strength": 0.2104
+    },
+    {
+      "start": 43.839,
+      "end": 43.839,
+      "strength": 0.1852
+    },
+    {
+      "start": 44.536,
+      "end": 44.536,
+      "strength": 0.2019
+    },
+    {
+      "start": 45.418,
+      "end": 45.418,
+      "strength": 0.2037
+    },
+    {
+      "start": 45.836,
+      "end": 46.068,
+      "strength": 0.1756
+    },
+    {
+      "start": 46.672,
+      "end": 46.811,
+      "strength": 0.1789
+    },
+    {
+      "start": 47.322,
+      "end": 47.647,
+      "strength": 0.2116
+    },
+    {
+      "start": 48.344,
+      "end": 48.901,
+      "strength": 0.2632
+    },
+    {
+      "start": 49.505,
+      "end": 50.434,
+      "strength": 0.2383
+    },
+    {
+      "start": 50.805,
+      "end": 50.805,
+      "strength": 0.22
+    },
+    {
+      "start": 51.27,
+      "end": 51.688,
+      "strength": 0.2007
+    },
+    {
+      "start": 52.152,
+      "end": 52.709,
+      "strength": 0.2105
+    },
+    {
+      "start": 53.127,
+      "end": 53.127,
+      "strength": 0.1767
+    },
+    {
+      "start": 53.824,
+      "end": 54.52,
+      "strength": 0.1828
+    },
+    {
+      "start": 54.892,
+      "end": 54.892,
+      "strength": 0.1916
+    },
+    {
+      "start": 55.449,
+      "end": 56.099,
+      "strength": 0.2314
+    },
+    {
+      "start": 57.028,
+      "end": 57.353,
+      "strength": 0.1791
+    },
+    {
+      "start": 57.911,
+      "end": 57.911,
+      "strength": 0.1698
+    },
+    {
+      "start": 58.282,
+      "end": 58.282,
+      "strength": 0.2333
+    },
+    {
+      "start": 58.979,
+      "end": 58.979,
+      "strength": 0.1675
+    },
+    {
+      "start": 59.861,
+      "end": 60.883,
+      "strength": 0.2034
+    },
+    {
+      "start": 61.347,
+      "end": 61.44,
+      "strength": 0.1902
+    },
+    {
+      "start": 62.694,
+      "end": 62.694,
+      "strength": 0.1687
+    },
+    {
+      "start": 64.505,
+      "end": 64.505,
+      "strength": 0.2213
+    },
+    {
+      "start": 65.109,
+      "end": 65.898,
+      "strength": 0.2013
+    },
+    {
+      "start": 66.409,
+      "end": 66.409,
+      "strength": 0.1849
+    },
+    {
+      "start": 67.291,
+      "end": 67.617,
+      "strength": 0.1938
+    },
+    {
+      "start": 68.452,
+      "end": 69.335,
+      "strength": 0.2523
+    },
+    {
+      "start": 71.703,
+      "end": 71.703,
+      "strength": 0.2015
+    },
+    {
+      "start": 72.911,
+      "end": 72.911,
+      "strength": 0.2428
+    },
+    {
+      "start": 74.165,
+      "end": 74.165,
+      "strength": 0.1691
+    },
+    {
+      "start": 74.536,
+      "end": 74.536,
+      "strength": 0.2128
+    },
+    {
+      "start": 74.908,
+      "end": 74.908,
+      "strength": 0.1959
+    },
+    {
+      "start": 75.604,
+      "end": 75.604,
+      "strength": 0.1771
+    },
+    {
+      "start": 76.069,
+      "end": 76.069,
+      "strength": 0.1706
+    },
+    {
+      "start": 77.322,
+      "end": 77.787,
+      "strength": 0.2068
+    },
+    {
+      "start": 79.83,
+      "end": 80.202,
+      "strength": 0.2065
+    },
+    {
+      "start": 80.666,
+      "end": 81.223,
+      "strength": 0.2087
+    },
+    {
+      "start": 81.688,
+      "end": 81.688,
+      "strength": 0.1799
+    },
+    {
+      "start": 84.799,
+      "end": 85.124,
+      "strength": 0.1992
+    },
+    {
+      "start": 85.589,
+      "end": 85.589,
+      "strength": 0.172
+    },
+    {
+      "start": 88.375,
+      "end": 89.025,
+      "strength": 0.2915
+    },
+    {
+      "start": 89.49,
+      "end": 89.954,
+      "strength": 0.2178
+    },
+    {
+      "start": 90.419,
+      "end": 90.419,
+      "strength": 0.2027
+    },
+    {
+      "start": 90.79,
+      "end": 90.79,
+      "strength": 0.2225
+    },
+    {
+      "start": 91.254,
+      "end": 91.254,
+      "strength": 0.2116
+    },
+    {
+      "start": 91.765,
+      "end": 91.765,
+      "strength": 0.1837
+    },
+    {
+      "start": 92.137,
+      "end": 92.694,
+      "strength": 0.194
+    },
+    {
+      "start": 93.158,
+      "end": 93.158,
+      "strength": 0.1904
+    },
+    {
+      "start": 93.762,
+      "end": 94.505,
+      "strength": 0.1866
+    },
+    {
+      "start": 94.923,
+      "end": 94.923,
+      "strength": 0.2079
+    },
+    {
+      "start": 95.434,
+      "end": 96.084,
+      "strength": 0.2502
+    },
+    {
+      "start": 97.013,
+      "end": 97.338,
+      "strength": 0.1885
+    },
+    {
+      "start": 98.267,
+      "end": 98.267,
+      "strength": 0.2303
+    },
+    {
+      "start": 99.846,
+      "end": 100.124,
+      "strength": 0.2103
+    },
+    {
+      "start": 100.496,
+      "end": 100.867,
+      "strength": 0.1972
+    },
+    {
+      "start": 101.425,
+      "end": 101.425,
+      "strength": 0.1871
+    },
+    {
+      "start": 104.49,
+      "end": 104.49,
+      "strength": 0.2126
+    },
+    {
+      "start": 105.094,
+      "end": 105.883,
+      "strength": 0.1996
+    },
+    {
+      "start": 106.44,
+      "end": 106.44,
+      "strength": 0.1775
+    },
+    {
+      "start": 107.276,
+      "end": 107.276,
+      "strength": 0.1835
+    },
+    {
+      "start": 107.648,
+      "end": 107.648,
+      "strength": 0.176
+    }
+  ],
+  "ingested_at": "2026-07-28T22:19:28Z",
+  "isolated": true,
+  "voice_only": true
+}

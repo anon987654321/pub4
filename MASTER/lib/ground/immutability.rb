@@ -1,0 +1,180 @@
+# frozen_string_literal: true
+
+require "digest"
+require "fileutils"
+require "yaml"
+
+module Master
+  module Ground
+    # Verifies checksums for the sacred paths declared in data/soul.yml.
+    class Immutability
+    include Master::Io::AtomicWrite
+
+      STORE_REL = "data/checksums.yml"
+      MANIFEST_REL = "data/soul.yml"
+      SHA256 = /\A[0-9a-f]{64}\z/.freeze
+      Violation = Class.new(StandardError)
+
+      def self.verify!(root: Master::ROOT) = new(root:).verify!
+      def self.regen!(root: Master::ROOT) = new(root:).regen!
+      def self.blocked?(path, root: Master::ROOT) = new(root:).blocked?(path)
+
+      def initialize(root:)
+        @root = File.expand_path(root)
+      end
+
+      # Verification is of this root's own manifest, so a root without one
+      # cannot read as clean.
+      def verify!
+        declarations_in(absolute(MANIFEST_REL))
+        store = load_store
+        return Result.ok(:no_checksums) if store.empty?
+
+        drift = checksum_drift(store)
+        return Result.ok(:clean) if drift.empty?
+
+        raise Violation, format_drift(drift)
+      end
+
+      def regen!
+        files = sacred_files
+        return Result.err("immutability: no sacred files found", category: :validation) if files.empty?
+
+        digests = build_digests(files)
+        return digests if digests.is_a?(Result::Err)
+
+        path = absolute(STORE_REL)
+        write_store(path, digests)
+        Result.ok(path)
+      end
+
+      def blocked?(relative_or_absolute)
+        relative = normalize_relative(relative_or_absolute)
+        return true if relative == STORE_REL
+
+        sacred_declarations.any? do |declaration|
+          prefix = declaration.delete_suffix("/")
+          relative == prefix || relative.start_with?(prefix + File::SEPARATOR)
+        end
+      rescue ArgumentError
+        true
+      end
+
+      private
+
+      def checksum_drift(store)
+        current = sacred_files
+        paths = (store.keys + current).uniq.sort
+        paths.filter_map do |relative|
+          expected = store[relative]
+          actual = current.include?(relative) ? sha256(absolute(relative)) : nil
+          next if expected == actual && expected&.match?(SHA256)
+
+          [relative, expected, actual]
+        end
+      end
+
+      def load_store
+        path = absolute(STORE_REL)
+        return {} unless File.exist?(path)
+        raise Violation, "immutability: checksum store unreadable: #{path}" unless File.readable?(path)
+
+        data = Master.load_yaml(path)
+        raise Violation, "immutability: malformed checksum store" unless data.is_a?(Hash)
+
+        data.transform_keys(&:to_s)
+      end
+
+      def sacred_declarations = declarations_in(manifest_path)
+
+      # A root with no manifest of its own (a scratch tree, a test's tmpdir) is
+      # held to MASTER's, so a missing file never makes a sacred path writable
+      # and never refuses every write either. A manifest that exists and cannot
+      # be read, or declares nothing, still fails closed.
+      def manifest_path
+        own = absolute(MANIFEST_REL)
+        File.exist?(own) ? own : Master.data_path("soul.yml")
+      end
+
+      def declarations_in(path)
+        raise Violation, "immutability: sacred manifest missing or unreadable: #{path}" unless File.readable?(path)
+
+        soul = Master.load_yaml(path)
+        paths = Array(soul&.dig("absolute", "sacred_paths"))
+        raise Violation, "immutability: sacred manifest has no sacred_paths: #{path}" if paths.empty?
+
+        paths.map { |path| normalize_relative(path) }.uniq
+      end
+
+      def sacred_files
+        files = sacred_declarations.flat_map do |declaration|
+          full = absolute(declaration)
+          File.directory?(full) ? files_under(full) : [declaration].select { File.file?(full) }
+        end
+        files.uniq.sort.reject { |relative| relative == STORE_REL }
+      end
+
+      def files_under(directory)
+        Dir.glob(File.join(directory, "**", "*"), File::FNM_DOTMATCH)
+           .select { |path| File.file?(path) }
+           .map { |path| normalize_relative(path) }
+           .reject { |relative| relative.split(File::SEPARATOR).any? { |part| part.start_with?(".") } }
+      end
+
+      def normalize_relative(path)
+        full = File.expand_path(path.to_s, @root)
+        unless full == @root || full.start_with?(@root + File::SEPARATOR)
+          raise ArgumentError, "path escapes root: #{path}"
+        end
+
+        full.delete_prefix(@root + File::SEPARATOR)
+      end
+
+      def absolute(relative)
+        File.expand_path(relative, @root)
+      end
+
+      def sha256(path)
+        return unless File.readable?(path)
+
+        Digest::SHA256.file(path).hexdigest
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "immutability.sha256", path:)
+        nil
+      end
+
+      def build_digests(files)
+        digests = files.to_h { |relative| [relative, sha256(absolute(relative))] }
+        unreadable = digests.select { |_relative, digest| digest.nil? }.keys
+        return digests if unreadable.empty?
+
+        Result.err(
+          "immutability: unreadable sacred files: #{unreadable.join(', ')}",
+          category: :infrastructure,
+        )
+      end
+
+      # Through Io::AtomicWrite rather than its own tmp+rename.
+      #
+      # atomic and durable are different promises. Rename guarantees a reader
+      # sees the old file or the new one and never half of one; it guarantees
+      # nothing about the bytes having reached the disk. On a power loss the
+      # rename can survive while the data does not, leaving an intact filename
+      # over an empty file — worse than a truncated one, because it looks fine.
+      # The helper fsyncs the file and the directory, and cleans up on error.
+      def write_store(path, digests)
+        write_atomic(path, YAML.dump(digests), mode: 0o600)
+      end
+
+      def format_drift(drift)
+        details = drift.map do |relative, expected, actual|
+          "  #{relative}: expected #{short(expected)}, got #{short(actual)}"
+        end
+        ["immutability: #{drift.size} sacred file(s) drifted from checksums.yml:", *details,
+         "Amend via: soul propose -> soul approve -> Immutability.regen!"].join("\n")
+      end
+
+      def short(value) = value&.slice(0, 12) || "(missing)"
+    end
+  end
+end

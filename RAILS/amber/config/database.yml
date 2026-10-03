@@ -1,0 +1,82 @@
+# SQLite. Versions 3.8.0 and up are supported.
+#   gem install sqlite3
+#
+#   Ensure the SQLite 3 gem is defined in your Gemfile
+#   gem "sqlite3"
+#
+default: &default
+  adapter: sqlite3
+  journal_mode: WAL
+  pool: <%= ENV.fetch("FALCON_WORKERS", ENV.fetch("RAILS_MAX_THREADS") { 5 }) %>
+  timeout: 5000
+
+# Four databases in every environment, matching production. amber and
+# bsdports declared one here and four under production:, so Solid Cache,
+# Solid Queue and Action Cable first ran against their own database on vm23
+# and nowhere else — a Solid Queue bug in either app could only appear in
+# production. brgen has always declared all four everywhere; this is that
+# shape.
+development:
+  primary:
+    <<: *default
+    database: storage/development.sqlite3
+  cache:
+    <<: *default
+    database: storage/development_cache.sqlite3
+    migrations_paths: db/cache_migrate
+  queue:
+    <<: *default
+    database: storage/development_queue.sqlite3
+    migrations_paths: db/queue_migrate
+  cable:
+    <<: *default
+    database: storage/development_cable.sqlite3
+    migrations_paths: db/cable_migrate
+
+# Warning: The database defined as "test" will be erased and
+# re-generated from your development database when you run "rake".
+# Do not set this db to the same as development or production.
+# TEST_DB_ID gives a test run its own database file. Same switch brgen (b7069c736)
+# and bsdports (5b50837df) carry; amber was the one left, because a third session
+# was working the app when those landed.
+#
+# Rails suffixes per parallel *worker*, not per *session*, and this repo is worked
+# by several agents in one checkout — two `rails test` runs open the same file,
+# and with journal_mode WAL and a 5s timeout the loser gets SQLite3::BusyException
+# on every test. Unset it and nothing changes.
+test:
+  primary:
+    <<: *default
+    database: storage/test<%= ENV["TEST_DB_ID"] %>.sqlite3
+  cache:
+    <<: *default
+    database: storage/test_cache<%= ENV["TEST_DB_ID"] %>.sqlite3
+    migrations_paths: db/cache_migrate
+  queue:
+    <<: *default
+    database: storage/test_queue<%= ENV["TEST_DB_ID"] %>.sqlite3
+    migrations_paths: db/queue_migrate
+  cable:
+    <<: *default
+    database: storage/test_cable<%= ENV["TEST_DB_ID"] %>.sqlite3
+    migrations_paths: db/cable_migrate
+
+# Production databases live in storage/, which the copy-tree deploy syncs to
+# /home/<app>/app/storage on vm23. (There is no container and no deploy.yml —
+# this tree deploys with openrsync and rc.d on OpenBSD.)
+production:
+  primary:
+    <<: *default
+    database: storage/production.sqlite3
+  cache:
+    <<: *default
+    database: storage/production_cache.sqlite3
+    migrations_paths: db/cache_migrate
+  queue:
+    <<: *default
+    database: storage/production_queue.sqlite3
+    migrations_paths: db/queue_migrate
+  cable:
+    <<: *default
+    database: storage/production_cable.sqlite3
+    migrations_paths: db/cable_migrate

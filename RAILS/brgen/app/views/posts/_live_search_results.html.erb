@@ -1,0 +1,40 @@
+<% if live_search_query.present? %>
+ <p><%= t("search.results_for", count: @posts.size, query: live_search_query) %></p>
+<% end %>
+
+<% if @posts.any? %>
+  <div class="post-feed" id="posts-feed">
+    <% @posts.each do |post| %>
+      <div data-controller="offline-feed"
+           data-offline-feed-key-value="brgen-posts"
+           data-offline-feed-title-value="<%= post.title %>"
+           data-offline-feed-url-value="<%= post_url(post) %>"
+           data-offline-feed-meta-value="<%= [post.author_name, l(post.created_at, format: :short)].join(" · ") %>">
+        <%= render "posts/post", post: post %>
+      </div>
+    <% end %>
+  </div>
+
+  <%= render "shared/infinite_scroll_sentinel",
+             pagy: @pagy,
+             reflex: "PostsInfiniteScrollReflex#load_more",
+             sentinel_id: "posts-sentinel",
+             sort: params[:sort],
+             q: params[:q] %>
+<% else %>
+  <% if params[:sort] == "following" && live_search_query.blank? %>
+    <%# An empty following lane is a different fact from an empty city: the
+        feed exists, the reader just has not picked anyone yet. %>
+    <%= render "shared/empty_state",
+          title: t("empty.following_none"),
+          body: t("empty.following_none_body"),
+          action: { label: t("empty.find_people"), path: posts_path } %>
+  <% else %>
+    <%= render "shared/empty_state",
+          title: t("empty.no_posts"),
+          body: live_search_query.present? ? t("empty.no_posts_search") : t("empty.nothing_yet"),
+          action: live_search_query.present? ?
+            { label: t("empty.clear_search"), path: posts_path } :
+            { label: t("empty.post_to_city", city: city_name), path: new_post_path } %>
+  <% end %>
+<% end %>

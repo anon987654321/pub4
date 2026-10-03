@@ -1,0 +1,133 @@
+{
+  "schema": "postpro.grade.v2",
+  "generated_at": "2026-09-25T04:26:17Z",
+  "input": "/Users/mac/.grok/sessions/%2FUsers%2Fmac%2FDocuments%2FGitHub%2Fpub4/01a0d678-6779-7ed0-a76b-3a06b4422341/images/5.jpg",
+  "output": "/tmp/ideas-graded/05-profile.jpg",
+  "preset": "process_e6",
+  "recipe": [
+    {
+      "fx": [
+        "optical_blur",
+        "spectral_temp",
+        "push_pull",
+        "film_curve",
+        "color_separate",
+        "halation",
+        "highlight_roll",
+        "grain"
+      ],
+      "stock": "ektachrome_100",
+      "temp": 5600,
+      "intensity": 0.9,
+      "stops": 2.0
+    }
+  ],
+  "grade_version": "f23a38996d55",
+  "seed": 0,
+  "output_sha256": "2f92f048cb1def4287dc966c276d9c2472e697645042ab5e603e1e565935ba1e",
+  "quality": {
+    "dimensions": [
+      832,
+      1248
+    ],
+    "mean_rgb_before": [
+      90.052,
+      73.496,
+      55.289
+    ],
+    "mean_rgb_after": [
+      159.183,
+      140.376,
+      119.938
+    ],
+    "clipped_highlights_percent": 0.0,
+    "crushed_blacks_percent": 0.0,
+    "warnings": []
+  },
+  "uncanny": {
+    "before": {
+      "texture": 0.027224594193428667,
+      "specular_spread": 0.0871414922694987,
+      "clipping": 0.0029855461045364892,
+      "tonal_range": 0.1719155001062684
+    },
+    "after": {
+      "texture": 0.03641645919880715,
+      "specular_spread": 0.3004353424234708,
+      "clipping": 0.0,
+      "tonal_range": 0.1650821137424525
+    }
+  },
+  "capabilities": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+    33,
+    34,
+    35,
+    36,
+    37,
+    38,
+    39,
+    40,
+    41,
+    42,
+    43,
+    44,
+    45,
+    46,
+    47,
+    48,
+    49,
+    50,
+    51,
+    52,
+    53,
+    54,
+    55,
+    56,
+    57,
+    58,
+    59,
+    60,
+    61,
+    62,
+    63,
+    64,
+    65,
+    66,
+    67,
+    68,
+    69,
+    70
+  ]
+}

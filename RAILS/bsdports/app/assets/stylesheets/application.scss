@@ -1,0 +1,601 @@
+// bsdports: the one stylesheet this app owns.
+//
+// It reads top to bottom in order of importance as far as the cascade lets
+// it: the element base, the components no shared module touches, the shared
+// modules each with the app rules that must sit right after them, then the
+// ports shell (tokens, layout, pages, then states), which overrides every
+// shared module and so compiles last. A rule only moves where no rule it
+// passes sets the same property on an element both could match.
+
+@use "stack" as *;
+@use "sass:meta";
+@use "dialect_tokens" as x;
+
+// ============================================================ base
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  // Phone first: the primary nav wraps onto two rows with the brand alone on
+  // the first, so body clears 104px; from 640px it clears 64px.
+  padding-block-start: 104px;
+}
+
+kbd { padding: var(--space-0-5) 4px; border: 1px solid var(--border); border-bottom-width: 2px; border-radius: var(--radius-xs); font-family: var(--font-mono); }
+
+// ============================================================ components
+
+// The dependency graph is an inline SVG on the port page.
+.dep-graph {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-block-start: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.dep-graph line {
+  stroke: var(--border);
+}
+
+.dep-graph circle {
+  fill: var(--surface-elevated);
+  stroke: var(--text-secondary);
+}
+
+.dep-graph text {
+  fill: var(--text);
+  font-family: var(--font);
+}
+
+.logo {
+  text-indent: -9999px;
+  overflow: hidden;
+  margin: 0 0 var(--space-8);
+  width: 182px;
+  height: 44px;
+  background-image: url("bsdports_182x44.svg");
+  background-repeat: no-repeat;
+  background-size: contain;
+}
+
+// ============================================================ shared chrome
+
+@include meta.load-css("site_legal");
+
+// The shared brand mark sits fixed at the top inline-start, where the primary
+// nav also starts. --z-brand keeps the mark above the nav; this padding keeps
+// the nav's first link out from under the mark, so a tap there reaches the link.
+nav[data-pwa-primary-nav] {
+  padding-inline-start: calc(var(--brand-mark-inline) + var(--space-2, 0.5rem));
+}
+
+@include meta.load-css("shell_widgets");
+
+// The jOx logo and the yep search are product pens: their geometry is the
+// pen's own, and only the palette is this dialect's.
+.jox-logo {
+  display: flex;
+  position: relative;
+  min-height: 56px;
+  margin: 8px 0 16px;
+}
+
+.jox-logo .frames div {
+  height: 50px;
+  width: 20px;
+  position: absolute;
+  opacity: 0;
+}
+
+.jox-logo .frames div:nth-of-type(1) {
+  top: 8px;
+  left: 4px;
+}
+
+.jox-logo .frames div:nth-of-type(2) {
+  top: 0px;
+  left: 16px;
+}
+
+.jox-logo .frames div:nth-of-type(3) {
+  top: -0px;
+  left: 24px;
+}
+
+.jox-logo .type {
+  height: 19px;
+  width: 116px;
+  position: relative;
+  top: 16px;
+  left: 84px;
+  transform: scale(1.4);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-wide);
+}
+
+body .search {
+  background-color: var(--search-bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+body .search input {
+  color: var(--text);
+}
+
+body .search input::placeholder {
+  color: var(--text-secondary);
+}
+
+body .search.focus,
+body .search.active {
+  background-color: var(--surface-elevated);
+  border-color: var(--accent);
+}
+
+@include meta.load-css("auth_form");
+
+@include meta.load-css("focus_ring");
+
+// Classes the markup uses that no component defines. They load before the
+// ports shell so the shell's own rules win wherever both apply.
+@include meta.load-css("shared_coverage_fills");
+
+// ============================================================ ports shell
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+// A light ground like the other two apps. The palette comes from
+// app-root-tokens and the shared light semantics; this dialect keeps its zero
+// radii and dense type scale. The family face is the shared chrome font, and
+// only code, kbd and the install command use --font-mono, because a reader
+// copies them.
+:root {
+  @include x.app-root-tokens;
+  // The status ambers are picked for a light ground: each clears WCAG AA
+  // against --bg #ffffff at the small sizes this app sets.
+  --status-stale-border: #a1660a;
+  --status-stale-text: #6b4405;
+  color-scheme: light;
+  // rem, not px, so the dense listing keeps the auditor's body_font_px floor.
+  --font-size: var(--text-xs);
+  --line-height: 1rem;
+  --radius-pill: 0;
+  --radius-card: 0;
+  --radius-sm: 0;
+  --radius-md: 0;
+  --focus-ring: 2px solid var(--accent);
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: var(--font-size);
+  line-height: var(--line-height);
+}
+
+// Meta text on <time> and .meta is text a reader needs, so it holds 4.5:1
+// (4.62 to 5.43 across the surfaces it sits on).
+.meta, time {
+  color: var(--text-secondary);
+}
+
+// ============================================================ ports shell: layout
+
+.port-row {
+  font-family: var(--font);
+  font-size: var(--font-size);
+}
+
+main#main-content :is(button, input, select, textarea, a):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+body > nav[aria-label="Primary navigation"] {
+  transform: translateY(0);
+  min-height: 52px;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+}
+
+body > nav[aria-label="Primary navigation"] a[aria-current="page"] {
+  color: var(--text);
+  font-weight: var(--weight-bold);
+  text-decoration: underline;
+  text-decoration-color: var(--accent);
+  text-underline-offset: 6px;
+  text-decoration-thickness: 2px;
+}
+
+main#main-content {
+  justify-content: flex-start;
+  width: min(100%, 760px);
+  margin-inline: auto;
+  padding: clamp(2rem, 6vw, 4.5rem) clamp(1rem, 4vw, 2rem) 4rem;
+}
+
+main#main-content :is(button, input[type="submit"], .btn) {
+  min-height: var(--tap-min);
+}
+
+// The sign-in link and the search submit sit outside main#main-content, so the
+// tap floor above misses them. The sign-in anchor carries btn-ghost alone,
+// which is why `.nav-actions .btn` would not match it.
+div.nav-actions > a.btn-ghost,
+div.search-form > input.btn.btn-sm {
+  min-height: var(--tap-min);
+  min-width: var(--tap-min);
+}
+
+// ============================================================ ports shell: pages
+
+article,
+#comments {
+  width: 100%;
+}
+
+// The port page's meta strip stays in view under the nav.
+article > header {
+  display: block;
+  max-width: none;
+  margin-block-end: var(--space-4);
+  position: sticky;
+  top: 52px;
+  z-index: 5;
+  padding-block: 0.5rem;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+
+article > header h1 {
+  overflow-wrap: anywhere;
+  line-height: 1.5;
+}
+
+article dl {
+  display: grid;
+  margin-block: var(--space-6);
+  grid-template-columns: 1fr;
+  gap: var(--space-1);
+}
+
+article dt {
+  color: var(--text-secondary);
+  font-weight: var(--weight-bold);
+}
+
+article dd,
+article code {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+article pre {
+  max-width: 100%;
+  overflow-x: auto;
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-elevated);
+}
+
+article > h2,
+article > section,
+#comments {
+  margin-block-start: var(--space-8);
+}
+
+// shell_widgets' .page-header is a slim sticky section bar; this page's header
+// is an intro block (h1, description, search), so it takes the height of its
+// content instead of the bar's and never spills up into the logo.
+header.page-header {
+  height: auto;
+  position: static;
+  top: auto;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: var(--space-4);
+  max-width: none;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+header.page-header h1 {
+  margin: 0;
+  font-size: clamp(1.75rem, 5vw, 2.5rem);
+  line-height: 1.5;
+  letter-spacing: var(--tracking-tightest);
+}
+
+header.page-header > p {
+  max-width: 62ch;
+  line-height: 1.6;
+}
+
+header.page-header > nav {
+  position: static;
+  transform: none;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+header {
+  width: 100%;
+  max-width: 660px;
+  display: flex;
+  justify-content: flex-end;
+
+  .tabs {
+    display: flex;
+    margin-top: var(--space-4);
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border);
+    font-family: var(--font);
+    font-size: var(--text-sm);
+
+    p {
+      padding: 0 var(--space-1) var(--space-2);
+      margin-inline-end: var(--space-6);
+
+      &.active {
+        color: var(--text);
+        border-bottom: 1px solid var(--accent);
+        font-weight: var(--weight-bold);
+
+        &::before {
+          content: "* ";
+        }
+      }
+    }
+  }
+}
+
+[role="search"] {
+  width: 100%;
+}
+
+.search-form {
+  display: grid;
+  gap: var(--space-2);
+  width: 100%;
+  grid-template-columns: 1fr;
+}
+
+.search-form input[type="search"] {
+  min-width: 0;
+  width: 100%;
+  min-height: 48px;
+  // 16px absolute: iOS Safari zooms on any text field under 16px, and this
+  // dialect's root font-size is --text-xs, so every rem token lands below it.
+  font-size: 16px;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--search-bg);
+  color: var(--text);
+}
+
+.search-form input[type="search"]:focus-visible {
+  border-color: var(--accent);
+  outline: 2px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  outline-offset: 2px;
+}
+
+#live_search_results,
+turbo-frame {
+  display: block;
+  width: 100%;
+}
+
+#search {
+  width: 90%;
+  max-width: 584px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  font-size: var(--text-base);
+  display: flex;
+  align-items: center;
+  padding: 0 var(--space-5);
+  font-family: var(--font);
+
+  &::before {
+    content: "$";
+    color: var(--text-secondary);
+    margin-inline-end: var(--space-2);
+  }
+
+  &:focus-within {
+    border-color: var(--accent);
+  }
+
+  input {
+    background: transparent;
+    outline: none;
+    border: none;
+    width: 100%;
+    padding: var(--space-4) 0;
+    font-size: var(--text-base);
+    font-family: inherit;
+    color: var(--text);
+
+    &::placeholder {
+      color: var(--text-secondary);
+    }
+  }
+}
+
+.port-list {
+  width: 100%;
+  max-width: none;
+  margin-top: var(--space-8);
+}
+
+// Rows part with a 1px hairline, never a shadow.
+.port-row {
+  display: grid;
+  align-items: start;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--border);
+  transition: background var(--transition-fast) var(--ease-out);
+}
+
+.port-row > div { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-3); }
+.port-row > div code, .install-panel input, article dd code { font-family: var(--font-mono); }
+.data-state { display: inline-flex; width: fit-content; padding: var(--space-0-5) var(--space-1); border: 1px solid var(--border); border-radius: var(--radius-xs); color: var(--text-secondary); font-size: var(--text-xs); }
+.data-state--stale { border-color: var(--status-stale-border); color: var(--status-stale-text); }
+.ports-purpose { max-width: 58ch; font-size: var(--text-lg); line-height: 1.5; color: var(--text); }
+.install-panel { margin-block: var(--space-6); padding: var(--space-4); border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface-elevated); }
+.install-panel [data-controller="clipboard"] { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-2); }
+.install-panel input { min-width: 0; background: var(--bg); color: var(--text); border: 1px solid var(--border); padding: var(--space-3); }
+
+.port-row:hover {
+  background: var(--hover-subtle);
+}
+
+.port-name {
+  font-family: var(--font);
+  font-weight: var(--weight-bold);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.port-name:hover {
+  text-decoration: underline;
+}
+
+.categories {
+  width: 100%;
+  max-width: none;
+  margin-top: var(--space-6);
+}
+
+.empty {
+  width: 100%;
+  margin-block-start: var(--space-6);
+  padding: var(--space-8) var(--space-4);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+body > nav[aria-label="Primary navigation"] .brand {
+  flex-basis: 100%;
+}
+
+article dd + dt {
+  margin-block-start: var(--space-3);
+}
+
+// From 640px the nav fits one row, the search puts its button beside the
+// field, and a port's terms sit beside their definitions.
+@media (min-width: 640px) {
+  body {
+    padding-block-start: 64px;
+  }
+
+  body > nav[aria-label="Primary navigation"] {
+    flex-wrap: nowrap;
+    gap: var(--space-4);
+  }
+
+  body > nav[aria-label="Primary navigation"] .brand {
+    flex-basis: auto;
+  }
+
+  .search-form {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  article dl {
+    grid-template-columns: minmax(7rem, max-content) minmax(0, 1fr);
+    gap: var(--space-2) var(--space-4);
+  }
+
+  article dd + dt {
+    margin-block-start: 0;
+  }
+}
+
+.category-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.category-list .chip {
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  text-decoration: none;
+}
+
+.category-list .chip:hover {
+  background: var(--hover);
+  color: var(--text);
+  text-decoration: none;
+}
+
+// ============================================================ states and overrides
+
+// Empty states and search misses keep the terminal's square, flat tone.
+.empty-state {
+  border-radius: 0;
+  background: transparent;
+  font-family: var(--font);
+  max-width: 36rem;
+}
+
+.empty-state-icon {
+  border-radius: 0;
+  font-family: var(--font);
+}
+
+.empty-state-title {
+  font-family: var(--font);
+  font-size: var(--text-sm);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+}
+
+.skeleton {
+  border-radius: 0;
+  min-height: 0.75rem;
+  background: rgb(from var(--accent) r g b / var(--opacity-soft));
+  border: 1px solid var(--border);
+}
+
+// Version numbers line up down the listing.
+.port-row {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --border: var(--text-secondary);
+    --text-secondary: var(--text);
+  }
+
+  a { text-decoration: underline; }
+}

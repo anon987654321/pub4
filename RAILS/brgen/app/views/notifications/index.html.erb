@@ -1,0 +1,11 @@
+<% content_for :title, t("notifications.title") %>
+
+<%= turbo_frame_tag "notifications" do %>
+  <div id="notification_header">
+    <%= render "notifications/header" %>
+  </div>
+
+  <div id="notification_list">
+    <%= render "notifications/grouped_list" %>
+  </div>
+<% end %>

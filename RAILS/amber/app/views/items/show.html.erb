@@ -1,0 +1,143 @@
+<% content_for :title, @item.title %>
+<% content_for :description, meta_description_for(@item) if respond_to?(:meta_description_for) %>
+<% content_for :json_ld, json_ld_for(@item, type: :product) %>
+
+<article class="item-detail item-detail--luxury">
+  <div class="luxury-detail-grid">
+  <% if @item.photos.attached? %>
+    <div class="luxury-photos" data-controller="lightbox">
+      <% @item.photos.each do |photo| %>
+        <a href="<%= url_for(photo) %>" data-turbo="false">
+          <%= responsive_image_tag photo, alt: @item.title, preset: :detail, sizes: "(max-width: 768px) 100vw, 520px", class: "item-photo luxury-photo" %>
+        </a>
+      <% end %>
+    </div>
+  <% end %>
+
+  <div class="luxury-meta">
+    <header role="banner" aria-label="<%= t("items.header_label") %>">
+      <hgroup>
+        <p><%= @item.category %><%= " · #{@item.brand}" if @item.brand.present? %></p>
+        <h1 class="luxury-title"><%= @item.title %></h1>
+      </hgroup>
+      <% if @item.spark_joy? %><span class="badge"><%= t("items.sparks_joy") %></span><% end %>
+      <% if @item.color.present? %>
+        <span class="color-swatch" style="--swatch: <%= wardrobe_color_swatch(@item.color) %>" title="<%= t("items.color_named", color: @item.color) %>" aria-label="<%= t("items.color_named", color: @item.color) %>"></span>
+      <% end %>
+    </header>
+
+  <%= turbo_frame_tag dom_id(@item, :stats), class: "tag-row luxury-tags" do %>
+    <span class="tag"><%= t("items.wear_count", count: @item.times_worn.to_i) %></span>
+    <% if @item.price? && @item.times_worn.to_i.positive? %>
+      <span class="tag"><%= t("items.per_wear", amount: number_to_currency(@item.cost_per_wear || (@item.price / @item.times_worn.to_i))) %></span>
+    <% end %>
+    <% if @item.lifecycle_state.present? %><span class="tag"><%= @item.lifecycle_state.humanize %></span><% end %>
+    <% if @item.analysis_status.present? %><span class="tag"><%= analysis_status_label(@item.analysis_status) %></span><% end %>
+  <% end %>
+
+  <dl class="meta luxury-meta-list">
+    <%= tag.dt t("items.category") %><%= tag.dd @item.category %>
+    <% if @item.color.present? %><%= tag.dt t("items.color") %><%= tag.dd @item.color %><% end %>
+    <% if @item.size.present? %><%= tag.dt t("items.size") %><%= tag.dd @item.size %><% end %>
+    <% if @item.material.present? %><%= tag.dt t("items.material") %><%= tag.dd @item.material %><% end %>
+    <% if @item.brand.present? %><%= tag.dt t("items.brand") %><%= tag.dd @item.brand %><% end %>
+    <% if @item.price? %><%= tag.dt t("items.price") %><%= tag.dd number_to_currency(@item.price) %><% end %>
+    <%= tag.dt t("items.worn") %><dd id="<%= dom_id(@item, :worn) %>"><%= t("items.worn_times", count: @item.times_worn.to_i) %></dd>
+    <% if @item.purchase_date? %><%= tag.dt t("items.purchased") %><dd><%= l(@item.purchase_date, format: :month) %></dd><% end %>
+  </dl>
+
+  <% if @item.mood_effect.present? || @item.life_phase.present? %>
+    <div class="tag-row luxury-tags">
+      <% if @item.mood_effect.present? %><span class="tag"><%= t("items.mood") %> <%= @item.mood_effect %></span><% end %>
+      <% if @item.life_phase.present? %><span class="tag tag--phase"><%= @item.life_phase %></span><% end %>
+    </div>
+  <% end %>
+
+  <section class="luxury-section">
+    <%= tag.h2 t("items.wardrobe_intelligence") %>
+    <% if amber_ai_available? %>
+      <p><%= t("items.openrouter_set") %></p>
+    <% else %>
+      <p><%= t("items.openrouter_unset_html") %></p>
+    <% end %>
+    <div id="item_<%= @item.id %>_analysis"></div>
+    <div id="item_<%= @item.id %>_tags"></div>
+  </section>
+
+  <nav role="navigation" aria-label="<%= t("items.actions_label") %>" class="luxury-actions">
+    <%= button_to t("items.worn_today"), wear_item_path(@item), method: :post, class: "btn" %>
+    <% if @item.spark_joy? %>
+      <%= button_to t("items.no_joy"), clear_joy_item_path(@item), method: :post, class: "btn" %>
+    <% else %>
+      <%= button_to t("items.sparks_joy"), spark_joy_item_path(@item), method: :post, class: "btn" %>
+    <% end %>
+    <%= button_to amber_ai_available? ? t("items.analyze_ai") : t("items.analyze_heuristic"), ai_analyze_item_path(@item), method: :post, class: "btn" %>
+    <%= button_to amber_ai_available? ? t("items.tag_ai") : t("items.tag_heuristic"), ai_tag_item_path(@item), method: :post, class: "btn" %>
+    <%= link_to t("items.declutter_review"), review_declutter_path(@item), class: "btn" %>
+    <%= link_to t("actions.edit"), edit_item_path(@item), class: "btn" %>
+    <% if @item.lifecycle_state == "sentimental_archive" %>
+      <%= button_to t("items.restore"), restore_item_path(@item), method: :post, class: "btn" %>
+    <% else %>
+      <%= button_to t("items.archive"), archive_item_path(@item), method: :post, class: "btn" %>
+    <% end %>
+  </nav>
+
+  <section class="luxury-section" aria-label="<%= t("items.affiliate_label") %>">
+    <%= tag.h2 t("items.affiliate_link") %>
+    <%# Was a hardcoded English sentence that also stood in for a disclosure. The
+        real disclosure is the engine partial: it names the partner programmes that
+        are actually configured, and says nothing when none are. %>
+    <p><%= t("items.affiliate_help") %></p>
+    <%= render "shared/affiliate_disclosure" %>
+    <% if @item.affiliate_links.any? %>
+      <ul>
+        <% @item.affiliate_links.each do |link| %>
+          <li>
+            <%# data-controller here rather than on the list: one controller per
+                anchor is what carries that anchor's merchant to the beacon. The
+                href stays the merchant URL so the Link Converter script can still
+                rewrite it — see outbound_click_controller.js. %>
+            <%= link_to link.merchant, link.url, rel: "sponsored noopener", target: "_blank",
+                  data: { controller: "outbound-click", action: "click->outbound-click#record",
+                          outbound_click_merchant_value: link.merchant, outbound_click_surface_value: "item_affiliate" } %>
+            <%= button_to t("actions.remove"), item_affiliate_link_path(@item, link), method: :delete, class: "btn-sm",
+                  data: { turbo_confirm: t("items.confirm_remove_affiliate_link") } %>
+          </li>
+        <% end %>
+      </ul>
+    <% end %>
+    <% if @shop_the_look.present? && @shop_the_look.any? %>
+      <%= tag.h3 t("items.shop_the_look") %>
+      <ul class="stack commerce-fit-list">
+        <% @shop_the_look.each do |suggestion| %>
+          <li class="commerce-fit-suggestion">
+            <%= link_to "#{suggestion.merchant}: #{suggestion.title}", suggestion.url,
+                  rel: "sponsored noopener", target: "_blank",
+                  data: { controller: "outbound-click", action: "click->outbound-click#record",
+                          outbound_click_merchant_value: suggestion.merchant,
+                          outbound_click_surface_value: "shop_the_look" } %>
+            <span class="tag commerce-fit-source"><%= suggestion.source %></span>
+            <% if suggestion.reasons.present? %>
+              <span class="commerce-fit-reasons"><%= suggestion.reasons.to_sentence %></span>
+            <% end %>
+            <% if suggestion.commerce_key.present? %>
+              <span class="tag commerce-fit-source commerce-fit-local"><%= t("commerce_fit.local", default: "BRGEN marketplace") %></span>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    <% end %>
+    <%= form_with model: [@item, @affiliate_link], url: item_affiliate_links_path(@item), class: "form-wrap" do |f| %>
+      <div class="field"><%= f.label :merchant %><%= f.text_field :merchant, required: true, placeholder: t("items.merchant_placeholder") %></div>
+      <div class="field"><%= f.label :url %><%= f.url_field :url, required: true, placeholder: t("items.url_placeholder"), inputmode: "url" %></div>
+      <div class="field"><%= f.submit t("items.save_link"), class: "btn" %></div>
+    <% end %>
+  </section>
+
+  <details class="danger-zone">
+    <summary><%= t("items.permanent_removal") %></summary>
+    <p><%= t("items.archiving_safer") %></p>
+    <%= button_to t("items.delete_permanent"), @item, method: :delete, data: { turbo_confirm: t("items.confirm_delete") }, class: "btn btn-danger" %>
+  </details>
+</div>
+</article>

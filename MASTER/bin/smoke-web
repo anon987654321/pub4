@@ -1,0 +1,211 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require_relative "../lib/boot/entrypoint"
+Master::Boot::Entrypoint.prepare!(root: File.expand_path("..", __dir__))
+
+# smoke-web — HTTP smoke for the MASTER web face with bootstrap-aware retries.
+# Use after deploy/restart; waits for the async container boot (~90–130s on VPS).
+#
+#   bin/smoke-web
+#   MASTER_WEB_URL=https://ai.brgen.no bin/smoke-web
+#   bin/smoke-web --no-wait          # fail fast if still warming
+#
+# Exit 0 clean, 1 on any failure.
+
+require "json"
+require "net/http"
+require "uri"
+require "yaml"
+require_relative "../lib/trace/dmesg"
+
+BASE = ENV.fetch("MASTER_WEB_URL", "http://127.0.0.1:53187").chomp("/")
+WARM_TIMEOUT_S = Integer(ENV.fetch("MASTER_SMOKE_WEB_WARM_S", "130"))
+POLL_INTERVAL_S = Integer(ENV.fetch("MASTER_SMOKE_WEB_POLL_S", "5"))
+READ_TIMEOUT_S = Integer(ENV.fetch("MASTER_SMOKE_WEB_READ_S", "20"))
+SKIP_WAIT = ARGV.include?("--no-wait")
+CONFIG_PATH = File.expand_path("../.master/config.yml", __dir__)
+
+JSON_ACCEPT = { "Accept" => "application/json" }.freeze
+WARMING_RE = /Starting up|warming up/i
+
+Check = Struct.new(:name, :ok, :detail, :ms, keyword_init: true)
+
+def step(name)
+  t0 = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+  # A raised check (e.g. the server dies mid-run) becomes a clean "fail" line rather
+  # than a backtrace that aborts the remaining checks.
+  ok, detail =
+    begin
+      yield
+    rescue StandardError => e
+      [false, "#{e.class}: #{e.message}"]
+    end
+  ms = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - t0) * 1000).round
+  state = ok ? "ok" : "failed"
+  detail_text = detail ? ", #{detail}" : ""
+  Master::Trace::Dmesg.status("web0", "#{name}, #{state}, #{ms}ms#{detail_text}")
+  Check.new(name:, ok:, detail:, ms:)
+end
+
+def web_token
+  return ENV["PROBE_TOKEN"].to_s if ENV["PROBE_TOKEN"].to_s.length >= 43
+  return "" unless File.file?(CONFIG_PATH)
+
+  config_token
+end
+
+# A config that exists but cannot be parsed or read is named here, so the authed
+# check's "no web_token" line is not mistaken for a missing key.
+def config_token
+  cfg = YAML.safe_load_file(CONFIG_PATH)
+  candidate = cfg.is_a?(Hash) ? cfg["web_token"].to_s : ""
+  candidate.length >= 43 ? candidate : ""
+rescue Psych::Exception, SystemCallError => e
+  Master::Trace::Dmesg.status("web0", "config, unreadable, #{e.class}: #{e.message}")
+  ""
+end
+
+def auth_headers
+  tok = web_token
+  tok.empty? ? {} : { "X-Token" => tok }
+end
+
+def fetch(path, headers: {}, read_timeout: READ_TIMEOUT_S, open_timeout: 8)
+  uri = URI("#{BASE}#{path}")
+  Net::HTTP.start(uri.host, uri.port,
+                  use_ssl: uri.scheme == "https",
+                  open_timeout: open_timeout,
+                  read_timeout: read_timeout) do |http|
+    http.request(Net::HTTP::Get.new(uri.request_uri, headers))
+  end
+end
+
+def warm_deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + WARM_TIMEOUT_S
+
+def bootstrap_ready?
+  res = fetch("/chat/message?message=ping", read_timeout: 12)
+  res.code.to_i == 200 && res.body.to_s.include?("pong")
+rescue StandardError
+  false
+end
+
+def face_ready?(body)
+  body.to_s.include?('id="face"') && !WARMING_RE.match?(body.to_s)
+end
+
+# Bootstrap-aware: with nothing listening at BASE this is a dev/local run without a
+# MASTER web face up. Skip cleanly (like crawl_probe on a closed port) instead of
+# aborting the deploy gate — the smoke only has meaning against a live server.
+def server_listening?
+  fetch("/up", read_timeout: 4, open_timeout: 4)
+  true
+rescue Errno::ECONNREFUSED, Errno::EHOSTUNREACH, Errno::ENETUNREACH, SocketError
+  false
+rescue StandardError
+  true # reachable but erroring — let the real checks report it
+end
+
+# On the VPS (relayd present) a not-yet-listening server means Falcon is still binding
+# post-restart — fall through to the bootstrap wait/fail below rather than skip. Only a
+# local dev machine with no server up gets the clean skip.
+ON_VPS = File.file?("/etc/relayd.conf")
+if !ON_VPS && !server_listening?
+  Master::Trace::Dmesg.status("web0", "smoke state=skipped reason=not_listening url=#{BASE}")
+  exit 0
+end
+
+checks = []
+
+checks << step("GET /up") do
+  res = fetch("/up", read_timeout: 8)
+  code = res.code.to_i
+  [code.between?(200, 399), "HTTP #{code}"]
+end
+
+unless SKIP_WAIT
+  checks << step("wait for bootstrap") do
+    deadline = warm_deadline
+    polls = 0
+    until bootstrap_ready? || Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
+      polls += 1
+      sleep POLL_INTERVAL_S
+    end
+    waited = polls * POLL_INTERVAL_S
+    ready = bootstrap_ready?
+    detail = ready ? "ready after ~#{waited}s" : "still warming after #{WARM_TIMEOUT_S}s"
+    [ready, detail]
+  end
+end
+
+checks << step("GET / (face)") do
+  res = fetch("/", read_timeout: READ_TIMEOUT_S)
+  body = res.body.to_s
+  code = res.code.to_i
+  ok = code == 200 && face_ready?(body)
+  detail = if code != 200
+             "HTTP #{code}"
+           elsif WARMING_RE.match?(body)
+             "warming page — rerun after boot or increase MASTER_SMOKE_WEB_WARM_S"
+           elsif !body.include?('id="face"')
+             "missing face canvas"
+           elsif !body.include?("ensurePrimer")
+             "missing boot retry overlay"
+           end
+  [ok, detail]
+end
+
+%w[/master_events.js /shortcut_sheet.js].each do |path|
+  checks << step("GET #{path}") do
+    res = fetch(path, read_timeout: 12)
+    code = res.code.to_i
+    [code == 200, "HTTP #{code}"]
+  end
+end
+
+checks << step("GET /chat/metrics (visitor)") do
+  res = fetch("/chat/metrics", headers: JSON_ACCEPT, read_timeout: 12)
+  [res.code.to_i == 401, "HTTP #{res.code} — expected 401 without token"]
+end
+
+checks << step("GET /chat/metrics (authed)") do
+  tok = web_token
+  return [false, "no web_token in #{CONFIG_PATH} or PROBE_TOKEN"] if tok.empty?
+
+  res = fetch("/chat/metrics", headers: JSON_ACCEPT.merge(auth_headers), read_timeout: 12)
+  code = res.code.to_i
+  return [false, "HTTP #{code}"] unless code == 200
+
+  data = JSON.parse(res.body.to_s)
+  required = %w[model tokens uptime open_breakers cache_efficiency model_quota]
+  missing = required.reject { |key| data.key?(key) }
+  [missing.empty?, missing.empty? ? nil : "missing keys: #{missing.join(", ")}"]
+rescue JSON::ParserError => e
+  [false, "invalid JSON: #{e.message}"]
+end
+
+checks << step("GET /chat/message ping") do
+  res = fetch("/chat/message?message=ping", read_timeout: 12)
+  code = res.code.to_i
+  ok = code == 200 && res.body.to_s.include?("pong")
+  [ok, ok ? nil : "HTTP #{code}"]
+end
+
+checks << step("GET /events/stream") do
+  res = fetch("/events/stream", read_timeout: 4, open_timeout: 4)
+  code = res.code.to_i
+  ctype = res["Content-Type"].to_s
+  ok = code == 200 && (ctype.include?("text/event-stream") || res.body.to_s.include?("data:"))
+  [ok, ok ? nil : "HTTP #{code} type=#{ctype.empty? ? "?" : ctype}"]
+rescue Net::ReadTimeout, Net::OpenTimeout
+  [true, nil]
+end
+
+failed = checks.reject(&:ok)
+if failed.empty?
+  Master::Trace::Dmesg.status("web0", "smoke state=clean checks=#{checks.size} url=#{BASE}")
+  exit 0
+end
+
+Master::Trace::Dmesg.status("web0", "smoke state=failed failures=#{failed.map(&:name).join(",")} url=#{BASE}")
+exit 1

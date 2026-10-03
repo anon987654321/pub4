@@ -1,0 +1,21 @@
+{
+  "ignored_warnings": [
+    {
+      "warning_type": "SQL Injection",
+      "warning_code": 0,
+      "fingerprint": "a4a9feb5f58905bc37b215b44bb6f06507650fa9319aa8345df27ba6cc2b99ad",
+      "check_name": "SQL",
+      "message": "Possible SQL injection",
+      "file": "engines/dating/app/models/dating/profile.rb",
+      "line": 89,
+      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
+      "code": "Dating::Profile.ranked_for deck ordering",
+      "render_path": null,
+      "location": { "type": "method", "class": "Dating::Profile", "method": "ranked_for" },
+      "user_input": "multiplier / modulus",
+      "confidence": "Medium",
+      "note": "Both interpolated values are integers by construction and neither is reachable from user input. multiplier is Integer(md5_hex.to_i(16) % 996 + 1), so 1..996; modulus is Integer(SHUFFLE_MODULUS), the literal 997. Integer() raises rather than coerces, so a non-integer would fail loudly here rather than reach the query. The third interpolation is RECENCY_SQL, a frozen constant with no input in it. ORDER BY cannot take a bind parameter, so interpolation is the only shape available; Brakeman flags any dynamic argument to Arel.sql and cannot follow the digest chain that proves the range. Reviewed 2026-08-13 while unblocking brgen CI, which this one warning was failing."
+    }
+  ],
+  "brakeman_version": "7.1.0"
+}

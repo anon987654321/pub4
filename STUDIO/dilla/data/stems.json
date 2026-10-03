@@ -1,0 +1,121 @@
+{
+  "version": 5,
+  "active": "yt_20260727_151404",
+  "sets": {
+    "yt_20260727_151404": {
+      "dir": "samples/demux/htdemucs_6s/yt_20260727_151404",
+      "bpm": null,
+      "files": [
+        "bass.wav",
+        "drums.wav",
+        "guitar.wav",
+        "other.wav",
+        "piano.wav",
+        "vocals.wav"
+      ],
+      "stems": {
+        "bass": "samples/demux/htdemucs_6s/yt_20260727_151404/bass.wav",
+        "drums": "samples/demux/htdemucs_6s/yt_20260727_151404/drums.wav",
+        "guitar": "samples/demux/htdemucs_6s/yt_20260727_151404/guitar.wav",
+        "other": "samples/demux/htdemucs_6s/yt_20260727_151404/other.wav",
+        "piano": "samples/demux/htdemucs_6s/yt_20260727_151404/piano.wav",
+        "vocals": "samples/demux/htdemucs_6s/yt_20260727_151404/vocals.wav"
+      },
+      "prime_swell": 97
+    },
+    "Untitled": {
+      "dir": "samples/demux/htdemucs_ft/Untitled",
+      "bpm": null,
+      "files": [
+        "bass.wav",
+        "drums.wav",
+        "other.wav",
+        "vocals.wav"
+      ],
+      "stems": {
+        "bass": "samples/demux/htdemucs_ft/Untitled/bass.wav",
+        "drums": "samples/demux/htdemucs_ft/Untitled/drums.wav",
+        "other": "samples/demux/htdemucs_ft/Untitled/other.wav",
+        "vocals": "samples/demux/htdemucs_ft/Untitled/vocals.wav"
+      },
+      "prime_swell": 109
+    },
+    "angelo_reira_and_johann-sandviken_hotell_b": {
+      "dir": "samples/demux/htdemucs_ft/angelo_reira_and_johann-sandviken_hotell_b",
+      "bpm": null,
+      "files": [
+        "no_vocals.wav",
+        "vocals.wav"
+      ],
+      "stems": {
+        "no_vocals": "samples/demux/htdemucs_ft/angelo_reira_and_johann-sandviken_hotell_b/no_vocals.wav",
+        "vocals": "samples/demux/htdemucs_ft/angelo_reira_and_johann-sandviken_hotell_b/vocals.wav"
+      },
+      "prime_swell": 127
+    },
+    "haisam_and_johann-pb1": {
+      "dir": "samples/demux/htdemucs_ft/haisam_and_johann-pb1",
+      "bpm": null,
+      "files": [
+        "no_vocals.wav",
+        "vocals.wav"
+      ],
+      "stems": {
+        "no_vocals": "samples/demux/htdemucs_ft/haisam_and_johann-pb1/no_vocals.wav",
+        "vocals": "samples/demux/htdemucs_ft/haisam_and_johann-pb1/vocals.wav"
+      },
+      "prime_swell": 149
+    },
+    "yt_20260727_164211": {
+      "dir": "samples/demux/htdemucs_ft/yt_20260727_164211",
+      "bpm": null,
+      "files": [
+        "bass.wav",
+        "drums.wav",
+        "other.wav",
+        "vocals.wav"
+      ],
+      "stems": {
+        "bass": "samples/demux/htdemucs_ft/yt_20260727_164211/bass.wav",
+        "drums": "samples/demux/htdemucs_ft/yt_20260727_164211/drums.wav",
+        "other": "samples/demux/htdemucs_ft/yt_20260727_164211/other.wav",
+        "vocals": "samples/demux/htdemucs_ft/yt_20260727_164211/vocals.wav"
+      },
+      "prime_swell": 167
+    },
+    "yt_20260728_231400": {
+      "dir": "samples/demux/htdemucs_ft/yt_20260728_231400",
+      "bpm": null,
+      "files": [
+        "bass.wav",
+        "drums.wav",
+        "other.wav",
+        "vocals.wav"
+      ],
+      "stems": {
+        "bass": "samples/demux/htdemucs_ft/yt_20260728_231400/bass.wav",
+        "drums": "samples/demux/htdemucs_ft/yt_20260728_231400/drums.wav",
+        "other": "samples/demux/htdemucs_ft/yt_20260728_231400/other.wav",
+        "vocals": "samples/demux/htdemucs_ft/yt_20260728_231400/vocals.wav"
+      },
+      "prime_swell": 191
+    },
+    "yt_20260729_001607": {
+      "dir": "samples/demux/htdemucs_ft/yt_20260729_001607",
+      "bpm": null,
+      "files": [
+        "bass.wav",
+        "drums.wav",
+        "other.wav",
+        "vocals.wav"
+      ],
+      "stems": {
+        "bass": "samples/demux/htdemucs_ft/yt_20260729_001607/bass.wav",
+        "drums": "samples/demux/htdemucs_ft/yt_20260729_001607/drums.wav",
+        "other": "samples/demux/htdemucs_ft/yt_20260729_001607/other.wav",
+        "vocals": "samples/demux/htdemucs_ft/yt_20260729_001607/vocals.wav"
+      },
+      "prime_swell": 223
+    }
+  }
+}

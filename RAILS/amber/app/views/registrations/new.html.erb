@@ -1,0 +1,38 @@
+<div class="auth-form">
+  <%= tag.h1 t("auth.create_account") %>
+  <p class="auth-form-lead"><%= t("auth.create_lead") %></p>
+  <%= form_with model: @user || User.new, url: registration_path do |f| %>
+    <%= render "shared/errors", object: @user if @user %>
+    <div class="field">
+      <%= f.label :email_address, t("auth.email") %>
+      <%= f.email_field :email_address, autofocus: true, autocomplete: "email", inputmode: "email" %>
+    </div>
+    <div class="field">
+      <%= f.label :password, t("auth.password") %>
+      <%= password_visibility_field f, :password, autocomplete: "new-password" %>
+    </div>
+    <div class="field">
+      <%= f.label :password_confirmation, t("auth.confirm_password") %>
+      <%= password_visibility_field f, :password_confirmation, autocomplete: "new-password" %>
+    </div>
+    <div class="field">
+      <label>
+        <%= check_box_tag :accept_age, "1", params[:accept_age] == "1", required: true %>
+        <%= t("legal.accept_age") %>
+      </label>
+    </div>
+    <div class="field">
+      <label>
+        <%= check_box_tag :accept_terms, "1", params[:accept_terms] == "1", required: true %>
+        <%= t("legal.accept_terms") %>
+        (<%= link_to t("legal.terms"), terms_path %> · <%= link_to t("legal.privacy"), privacy_path %>)
+      </label>
+    </div>
+    <div class="actions">
+      <%= f.submit t("auth.create_account"), class: "btn btn-primary" %>
+    </div>
+    <p class="auth-form-footer">
+      <%= link_to t("auth.already_have_account"), new_session_path %>
+    </p>
+  <% end %>
+</div>

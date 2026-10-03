@@ -1,0 +1,375 @@
+# dilla_reference.yml — sourced material and quality gates for the Dilla
+# engine, pulled from documented interviews, track analysis, and producer
+# consensus (Dan Charnas "Dilla Time"; Ethan Hein analyses; forum/tutorial
+# consensus on MPC-era mixing). Read by lib/, not by dilla.rb — two loaders,
+# each taking one section:
+#   - documented_progressions merge into HARMONY_PROFILES, loaded by
+#     lib/groove.rb (see the load near CHORD_VOICINGS) as additive
+#     entries — existing named profiles (e.g. slum_players,
+#     chromatic_mediant_drift) are NOT overwritten, since some are original
+#     Dilla/FlyLo-inspired compositions rather than direct transcriptions.
+#   - loss_gates are hard reject thresholds checked before a take is promoted
+#     into project/promoted_profiles.json, loaded by lib/listen.rb
+#     as REFERENCE_PATH and applied via DillaMaster.passes_loss_gates?, which
+#     dilla.rb calls at the stream and promotion sites.
+#   - principles is the research the two above were written from: what
+#     the groove, harmony, sampling and mix are for, with the evidence level
+#     of each claim. No code reads it; it is the argument a change to the
+#     sound answers to.
+#
+# Chord symbols are limited to what DillaLofiMachine.chord_from_symbol can
+# parse (see CHORD_SUFFIXES / CHORD_VOICINGS in lib/groove.rb) — a few
+# symbols here were simplified from the original documented voicing (13th ->
+# 7th, alt tensions spelled as "alt") either because that exact extension
+# isn't in the parser's vocabulary, or because DillaMusicGems (the major_third_cycle_full
+# gem adapter) hangs on the literal symbol. See the "source_note" per entry.
+
+documented_progressions:
+  slum_village_players_documented:
+    producer: dilla
+    key: "C minor"
+    bpm: 91
+    swing: 56
+    chord_bars: 2
+    phrase_bars: 16
+    voicing: rootless
+    chords: [Cm9, Fm9, Bb13, Ebmaj7, Abmaj7, Dm7b5, G7alt, Cm9]
+    source: "Slum Village - Fantastic Vol. 2, 'Players' (documented track analysis)"
+    source_note: "Bb13 restored — the parser gained 13 since this was simplified to Bb7, and the 13th is the soul colour the simplification removed. G7#5#9 stays spelled G7alt, which already covers both tensions."
+
+  slum_village_intro_documented:
+    producer: dilla
+    key: "C minor"
+    bpm: 91
+    swing: 56
+    chord_bars: 2
+    phrase_bars: 8
+    voicing: rootless
+    chords: [Cm9, Fm9, Bb13, Ebmaj7]
+    source: "Slum Village - Fantastic Vol. 2, 'Intro'"
+    source_note: "Bb13 restored, same as Players above."
+
+  flylo_beginners_falafel_documented:
+    producer: flylo
+    key: "C major"
+    bpm: 86
+    swing: 54
+    chord_bars: 2
+    phrase_bars: 8
+    voicing: rootless
+    chords: [Dm9, G13, Cmaj9, Fmaj7]
+    source: "Flying Lotus - Los Angeles, 'Beginners Falafel'"
+    source_note: "G13 restored — parseable now."
+
+  flylo_camel_documented:
+    producer: flylo
+    key: "C major"
+    bpm: 86
+    swing: 54
+    chord_bars: 2
+    phrase_bars: 8
+    voicing: rootless
+    chords: [Dm9, G13, Cmaj9, Fmaj7#11]
+    source: "Flying Lotus - Los Angeles, 'Camel'"
+    source_note: "Fmaj7#11 and G13 restored — both parse now. The #11 is the lydian shimmer that distinguishes this from Beginners Falafel; with both simplified the two entries were byte-identical in harmony. Still distinct from the chromatic_mediant_drift/quartal_west_coast profiles used by RENDER_MODE=camel, which are original compositions rather than transcriptions."
+
+  # Verified external transcriptions folded from the 2026-10-02 chord digest
+  # (Hooktheory TheoryTab pages; Reddit posts pulled from the Arctic Shift
+  # archive). Additive only — no default rotation pool changes. The face's
+  # browser voicing table (MASTER/web/public/face_music_packs.json) carries
+  # the same cells with their sources.
+  dilla_flowers_documented:
+    producer: dilla
+    key: "D minor"
+    bpm: 84
+    swing: 54
+    chord_bars: 2
+    phrase_bars: 4
+    voicing: rootless
+    chords: [Dm9, Am7]
+    source: "J Dilla - The Shining, 'Flowers'"
+    source_note: "Hooktheory: i9–v7 — minor-v instead of a dominant, the Dorian-ish softness."
+  dilla_so_far_to_go_documented:
+    producer: dilla
+    key: "Bb major"
+    bpm: 90
+    swing: 52
+    chord_bars: 2
+    phrase_bars: 8
+    voicing: rootless
+    chords: [Gm7, Cm, Bb, Cm7]
+    source: "J Dilla - The Shining, 'So Far To Go'"
+    source_note: "Hooktheory instrumental: Gm7 Cm Bb/D Gm7 Cm7. The Bb/D bass inversion does not parse, so the third in the bass is flattened to root Bb."
+  dilla_stakes_is_high_documented:
+    producer: dilla
+    key: "F minor"
+    bpm: 88
+    swing: 56
+    chord_bars: 1
+    phrase_bars: 8
+    voicing: rootless
+    chords: [Fm, Dbmaj7, Csus4, Bb9, Abmaj7, G7, C, Fm9]
+    source: "De La Soul - Stakes Is High (prod. Jay Dee)"
+    source_note: "r/WeAreTheMusicMakers/comments/ewgdi single-voice chart, uncorroborated — kept out of default rotation pools for that reason. Bb7add9 spelled Bb9; add9 and 7 are both in the 9."
+  madlib_accordion_loop_documented:
+    producer: madlib
+    key: "D minor"
+    bpm: 98
+    swing: 12
+    chord_bars: 2
+    phrase_bars: 8
+    voicing: rootless
+    chords: [Gm11, Cmaj7, Dm9, C]
+    source: "Madvillain - Madvillainy, 'Accordion' (Daedelus 'Experience' chord organ loop)"
+    source_note: "Hooktheory: Gm11 Cmaj7/B Dm(add9) C(no3). Cmaj7/B flattened to Cmaj7; C(no3) — a third-less spine — loses the bareness in the close voicing here."
+  madlib_figaro_documented:
+    producer: madlib
+    key: "G# minor"
+    bpm: 118
+    swing: 12
+    chord_bars: 2
+    phrase_bars: 6
+    voicing: rootless
+    chords: [G#m9, F#9, Ebm9]
+    source: "Madvillain - Madvillainy, 'Figaro'"
+    source_note: "Hooktheory: i9–vii9–vi9, a descending-third minor-9 cascade."
+  flylo_computer_face_documented:
+    producer: flylo
+    key: "E minor"
+    bpm: 155
+    swing: 10
+    chord_bars: 2
+    phrase_bars: 6
+    voicing: rootless
+    chords: [Bm7, Em7, Gm7]
+    source: "Flying Lotus - Cosmogramma, 'Computer Face//Pure Being'"
+    source_note: "Hooktheory: v7–i7–iii7, all-minor diatonic, no dominant — the FlyLo vamp signature."
+  flylo_massage_situation_documented:
+    producer: flylo
+    key: "Bb minor"
+    bpm: 93
+    swing: 10
+    chord_bars: 2
+    phrase_bars: 4
+    voicing: rootless
+    chords: [Bbm11, A7]
+    source: "Flying Lotus - 'Massage Situation'"
+    source_note: "Hooktheory: i7sus2 → vii7. m7sus2 does not parse, so the voicing reads Bbm11; the suspended Eb stays in the browser pack's row."
+  flylo_king_of_the_hill_documented:
+    producer: flylo
+    key: "C# Dorian"
+    bpm: 74
+    swing: 10
+    chord_bars: 4
+    phrase_bars: 8
+    voicing: rootless
+    chords: [C#m9, Bbm11]
+    source: "Thundercat ft. Flying Lotus, BADBADNOTGOOD - 'King of the Hill'"
+    source_note: "r/musictheory/comments/l1prjh, Arctic Shift archive pull — two-bar modal vamp, melody switching C# Dorian for Bb Dorian."
+  royksopp_what_else_is_there_documented:
+    producer: royksopp
+    key: "C# minor"
+    bpm: 114
+    swing: 0
+    chord_bars: 4
+    phrase_bars: 8
+    voicing: rootless
+    chords: [A, C#m]
+    source: "Röyksopp - The Understanding, 'What Else Is There?'"
+    source_note: "Hooktheory: VI–i, only two functions carried the whole chorus."
+  royksopp_happy_up_here_documented:
+    producer: royksopp
+    key: "F major"
+    bpm: 104
+    swing: 0
+    chord_bars: 2
+    phrase_bars: 10
+    voicing: rootless
+    chords: [Gm, F, Ab, Eb, Bb]
+    source: "Röyksopp - Junior, 'Happy Up Here'"
+    source_note: "Hooktheory: ii–I–bIII–bVII–IV, the borrowed Fm tonic doing the colouring."
+
+# Hard pre-flight rejects, not just advisory scores — a take failing any of
+# these should not be promoted even if beauty/groove scored well.
+loss_gates:
+  crest_factor_min_db: 6.0
+  source: "peak-to-RMS below 6dB reads as over-compressed/lacking punch"
+  mud_max_db_200_400hz: -12.0
+  mud_source: "sustained energy above -12dBFS in the 200-400Hz 'mud zone' masks snare body"
+  kick_bass_correlation_max: 0.95
+  correlation_source: "kick/bass micro-timing correlation above 0.95 reads as quantized/robotic"
+  stereo_phase_correlation_min: 0.30
+  phase_source: "L/R phase correlation below 0.30 anywhere risks cancellation when summed to mono (phone/laptop speakers, club mono sends)"
+  # Same window dilla_quality already warns on: ±1.5 dB around MASTER_LUFS_BY_STYLE
+  # (currently -19..-14). Written here so promotion and `quality` share one
+  # source; test_loss_gates_share_the_quality_lufs_window fails if they drift.
+  true_peak_max_dbtp: -1.0
+  true_peak_source: "EBU R128 / streaming delivery; above -1 dBTP intersamples clip on lossy codecs"
+  integrated_lufs_min: -20.5
+  integrated_lufs_max: -12.5
+  lufs_source: "DILLA_QUALITY_LUFS_TARGET: style spread -19..-14 plus 1.5 dB tolerance"
+
+principles:
+  version: 0.1.0
+  status: draft
+  purpose: >
+    Research-backed knowledge specification describing the aesthetic,
+    workflow, and musical principles associated with J Dilla. This file
+    distinguishes documented evidence from inference and is intended to
+    guide AI systems toward creating original music inspired by these
+    principles rather than imitation.
+
+  metadata:
+    evidence_levels:
+      documented: "Supported by interviews, Dilla Time, collaborators, or primary sources."
+      consensus: "Broad producer consensus."
+      analysis: "Derived from careful musical analysis."
+      hypothesis: "Reasonable inference requiring validation."
+
+  identity:
+    artist: J Dilla
+    legal_name: James Dewitt Yancey
+    birthplace: Detroit, Michigan
+    core_values:
+      - groove_over_precision
+      - emotion_over_complexity
+      - transformation_over_reproduction
+      - restraint_over_density
+
+  philosophy:
+    principles:
+      - Every instrument owns its own sense of time.
+      - Groove emerges from relationships between events.
+      - Silence is musical material.
+      - Sampling transforms memory into something new.
+      - Remove notes before adding notes.
+      - Preserve humanity over perfection.
+
+  historical_context:
+    influences:
+      detroit:
+        - Motown
+        - James Jamerson
+        - Amp Fiddler
+        - Slum Village
+      jazz:
+        - Ahmad Jamal
+        - Herbie Hancock
+        - Roy Ayers
+        - Donald Byrd
+        - Weldon Irvine
+      funk:
+        - Bernard Purdie
+        - Clyde Stubblefield
+        - Zigaboo Modeliste
+
+  groove_engine:
+    objective: >
+      Produce independent rhythmic layers that repeatedly converge and diverge
+      while remaining danceable.
+    rules:
+      - Avoid identical timing offsets on every hit.
+      - Favor phrase-level drift over random jitter.
+      - Model kick, snare, hats, bass, and samples as independent clocks.
+      - Preserve intentional asymmetry.
+      - Do not rely on a fixed swing percentage.
+
+  sampling_engine:
+    philosophy:
+      - Choose emotionally compelling material.
+      - Transform more than copy.
+      - Preserve texture when possible.
+    operations:
+      - chop
+      - resample
+      - pitch
+      - filter
+      - reverse_tail
+      - truncate
+      - layer
+
+  harmony:
+    goals:
+      - ambiguity
+      - color
+      - warmth
+      - incomplete_resolution
+    preferences:
+      - extended_chords
+      - rootless_voicings
+      - suspended_motion
+      - modal_borrowing
+
+  drums:
+    priorities:
+      - head_nod
+      - conversational_kick_snare
+      - dynamic_velocity
+      - ghost_notes
+
+  bass:
+    relationship:
+      follows:
+        - groove
+        - harmony
+      not:
+        - rigid_grid
+
+  arrangement:
+    patterns:
+      - introduce_small_changes
+      - remove_elements
+      - filter_transitions
+      - surprise_without_breaking_flow
+
+  mixing:
+    goals:
+      - warmth
+      - depth
+      - punch
+      - clarity
+    avoid:
+      - over_limiting
+      - excessive_brightness
+      - sterile_perfection
+
+  critic:
+    scorecard:
+      groove: 0.0
+      humanity: 0.0
+      emotional_depth: 0.0
+      originality: 0.0
+      restraint: 0.0
+    acceptance:
+      groove: ">=0.95"
+      humanity: ">=0.90"
+      emotional_depth: ">=0.90"
+
+  anti_patterns:
+    - quantize_everything
+    - maximize_loudness
+    - overcompress
+    - copy_reference_track
+    - endless_layering
+    - predictable_arrangement
+
+  generation_pipeline:
+    - collect_influences
+    - establish_groove
+    - add_harmony
+    - transform_samples
+    - simplify
+    - critique
+    - humanize
+    - simplify_again
+    - final_review
+
+  bibliography:
+    primary:
+      - "Dan Charnas: Dilla Time"
+      - "Interviews with Questlove"
+      - "Interviews with Karriem Riggins"
+      - "Interviews with Amp Fiddler"
+    note: >
+      This specification intentionally separates documented facts from
+      analytical inference and should evolve as new research appears.

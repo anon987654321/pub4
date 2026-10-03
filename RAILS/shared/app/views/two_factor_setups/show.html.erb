@@ -1,0 +1,21 @@
+<div class="auth-form">
+  <%= tag.h1 t("pages.two_factor", default: "Two-factor authentication") %>
+  <p class="auth-form-lead"><%= t("auth.two_factor_lead") %></p>
+  <%# scan: intentional — @qr is SVG this app generated with RQRCode from the
+      provisioning URI, so there is no untrusted markup in it, and sanitize
+      (which ERB_HTML_SAFE names as the fix) strips svg and path by default and
+      would render an empty box where the QR code goes. %>
+  <% if @qr.present? %>
+    <div class="auth-form-qr"><%= @qr.html_safe %></div>
+  <% end %>
+
+  <%= form_with url: two_factor_setup_path, method: :post do |f| %>
+    <div class="field">
+      <%= f.label :code, t("auth.verification_code") %>
+      <%= f.text_field :code, autocomplete: "one-time-code", required: true %>
+    </div>
+    <div class="actions">
+      <%= f.submit t("auth.enable_2fa"), class: "btn btn-primary" %>
+    </div>
+  <% end %>
+</div>

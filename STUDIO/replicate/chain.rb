@@ -1,0 +1,295 @@
+# frozen_string_literal: true
+
+require "yaml"
+require "digest"
+
+# A chain is several models in a row, where each stage's output is the next
+# stage's input.
+#
+# replicate was single-shot: one model, one prompt, optionally one --postpro
+# handoff at the end. That is enough to make a picture and not enough to make
+# one nobody has seen, because a single model produces the look it was trained
+# to produce. What produces an unfamiliar image is passing a frame through
+# several models that disagree about what an image is.
+#
+# The FLUX 2 family is unusually suited to it, and the reason is worth stating
+# because it decides how a chain should be written: those models are decomposed
+# by what they PRESERVE. flux-depth-pro holds 3D spatial relationships while the
+# surface changes completely; flux-canny-pro holds edges; flux-fill-pro holds
+# the surroundings; flux-2-max holds a character across a batch from up to eight
+# reference images. They are not five ways to make a picture. They are five ways
+# to change one thing while holding a different invariant — which is exactly
+# what a chain needs, because a chain of stages that each preserve nothing
+# converges on mush by stage four.
+#
+# The validation here matters more than the execution. replicate's whole design
+# is to refuse an option a model does not accept rather than let the API ignore
+# it, because a request that "works" while silently dropping a setting is far
+# harder to notice than a 422. A chain multiplies that: stage 6 failing because
+# stage 2 could not produce what stage 3 assumed is a bad afternoon and a real
+# bill. So a chain is validated whole, before anything is spent.
+module Replicate
+  module Chain
+    Stage = Struct.new(:name, :model, :prompt, :inherits, :options, :timeout, keyword_init: true)
+
+    # Seconds a stage may take before its prediction is cancelled, when the YAML
+    # names none. The client's own default, stated here so a chain can see it. A
+    # sub-second klein-4b call and a four-minute relight do not share a bound, so
+    # a stage that knows its model is slow says so with `timeout:`.
+    DEFAULT_TIMEOUT = 600
+
+    # What a stage can take from the one before it. `image` is the common case —
+    # the previous output becomes this stage's input_image — and `references`
+    # is the multi-reference consistency spine that stops long chains drifting.
+    INHERITABLE = %w[image references seed prompt].freeze
+
+    # Every spelling a model uses for "here is a picture to work from".
+    #
+    # This was `input_image` and `input_images` — the two FLUX spellings — and
+    # that was fine while every model here was a FLUX. It stops being fine the
+    # moment a chain reaches outside that family, which is the entire point of
+    # chaining: Depth Anything takes `image`, IC-Light takes `subject_image`,
+    # and the FLUX control models take `control_image`. Against the old list all
+    # three read as "declares nowhere to put an image", so the validator refused
+    # exactly the chains worth building and did it with a message blaming the
+    # model.
+    #
+    # A list rather than a per-model key, because the failure being prevented is
+    # a stage generating from the prompt alone with its input silently dropped,
+    # and any of these names being present is enough to rule that out.
+    IMAGE_INPUT_KEYS = %w[input_image input_images image subject_image control_image].freeze
+
+    # Models that take no prompt at all.
+    #
+    # A depth estimator has nothing to say to a text encoder — it reads geometry
+    # out of pixels. Requiring a prompt from one produces a chain carrying an
+    # empty string to satisfy a validator, which is worse than no check.
+    def self.promptless?(keys) = !Array(keys).map(&:to_s).include?("prompt")
+
+    DEFAULT_DIR = File.expand_path("../chains", __dir__)
+
+    class Invalid < StandardError; end
+
+    # A stage the provider answered with nothing. Raised rather than aborted, so
+    # the run can record the failure before it stops.
+    class StageFailed < StandardError; end
+
+    def self.load(name, dir: DEFAULT_DIR)
+      path = File.join(dir, "#{name}.yml")
+      raise Invalid, "no chain named #{name} in #{dir}" unless File.file?(path)
+
+      # The file's hash travels with the chain, so a frame's sidecar names the
+      # exact recipe that made it and a later edit to the YAML is visible.
+      parse(YAML.safe_load_file(path), name: name).merge(sha256: Digest::SHA256.file(path).hexdigest)
+    end
+
+    def self.available(dir: DEFAULT_DIR)
+      Dir.glob(File.join(dir, "*.yml")).map { |p| File.basename(p, ".yml") }.sort
+    end
+
+    def self.parse(doc, name:)
+      raise Invalid, "chain #{name} has no stages" unless doc.is_a?(Hash) && doc["stages"].is_a?(Array)
+      raise Invalid, "chain #{name} has an empty stage list" if doc["stages"].empty?
+
+      stages = doc["stages"].each_with_index.map do |row, index|
+        raise Invalid, "chain #{name} stage #{index + 1} is not a mapping" unless row.is_a?(Hash)
+
+        Stage.new(
+          name: row.fetch("name") { "stage_#{index + 1}" },
+          model: row["model"],
+          prompt: row["prompt"],
+          inherits: Array(row["inherits"]),
+          options: (row["options"] || {}).transform_keys(&:to_sym),
+          timeout: row["timeout"]
+        )
+      end
+      { name: name, description: doc["description"], stages: stages }
+    end
+
+    # Everything wrong with the chain, as a list, before a single request is
+    # made. A list rather than the first problem, because fixing them one
+    # provider round-trip at a time is the thing this exists to prevent.
+    #
+    # `capability_for` is passed in rather than reached for: this file is loaded
+    # by the tests without loading the CLI, and a hard reference to a top-level
+    # method defined in replicate.rb would make that impossible.
+    def self.problems(chain, capability_for:)
+      found = []
+      stages = chain.fetch(:stages)
+
+      stages.each_with_index do |stage, index|
+        position = "stage #{index + 1} (#{stage.name})"
+        found << "#{position} names no model" if stage.model.to_s.strip.empty?
+        next if stage.model.to_s.strip.empty?
+
+        cap = capability_for.call(stage.model)
+        keys = Array(cap[:input_keys])
+
+        # A declaration nobody has checked against the provider.
+        #
+        # Every other refusal in this method compares a chain against
+        # MODEL_CAPABILITIES. That is only worth doing while the capabilities
+        # are true, and some of them were written from a model's marketing page
+        # because Replicate's schema endpoint needs a token this machine has
+        # never had — and its web pages render their schemas in JavaScript, so
+        # they cannot be read either.
+        #
+        # An unverified entry is worse than a missing one. Missing, the chain
+        # refuses and says why. Wrong, the chain validates cleanly, the request
+        # goes out with a key the model does not take, the API ignores it, and
+        # something plausible comes back with a stage silently skipped. That is
+        # the failure this whole file exists to prevent, so it may not be
+        # introduced by the file's own reference data.
+        #
+        # `rake replicate:schema_audit` clears the flag by asking the provider.
+        if cap[:unverified]
+          found << "#{position} uses #{stage.model}, whose input_keys are declared from " \
+                   "documentation and have never been confirmed against the provider. " \
+                   "Run `rake replicate:schema_audit` with REPLICATE_API_TOKEN set, then " \
+                   "remove `unverified: true` from its entry."
+        end
+
+        stage.inherits.each do |what|
+          unless INHERITABLE.include?(what)
+            found << "#{position} inherits #{what.inspect}, which is not one of #{INHERITABLE.join(', ')}"
+            next
+          end
+          if index.zero?
+            found << "#{position} is first and inherits #{what.inspect}, but nothing has run yet"
+            next
+          end
+          # The refusal that matters: a stage that expects an image from the one
+          # before it, handed to a model with nowhere to put an image.
+          # Either spelling. FLUX 1 editors take a single `input_image`; FLUX 2
+          # takes `input_images`, a list of up to eight it holds a character
+          # across. Checking only the singular would have refused every FLUX 2
+          # chain — correctly by its own rule, and wrongly in fact.
+          if what == "image" && (keys & IMAGE_INPUT_KEYS).empty?
+            found << "#{position} inherits the previous image, but #{stage.model} declares none of " \
+                     "#{IMAGE_INPUT_KEYS.join(', ')} — it would silently generate from the prompt alone"
+          end
+        end
+
+        stage.options.each_key do |opt|
+          next if keys.include?(opt.to_s)
+          next if %i[negative postpro].include?(opt)
+
+          found << "#{position} sets #{opt}, which #{stage.model} does not accept"
+        end
+
+        # The grade runs once, on the frame the chain ends with. A stage before
+        # the last that asks for one would have its grade regraded by every model
+        # after it, and nothing reads the request there anyway.
+        #
+        # This is also why there is no lint for two adjacent global-colour stages.
+        # postpro is the only stage in this tree that does nothing but colour, and
+        # it may stand once, at the end; every model in MODEL_CAPABILITIES
+        # generates or edits a picture, so two colour passes in a row cannot be
+        # written.
+        if stage.options.key?(:postpro) && index < stages.length - 1
+          found << "#{position} sets postpro, but only the last stage's frame is graded"
+        end
+
+        found << "#{position} has timeout #{stage.timeout.inspect}, which is not a positive number of seconds" if
+          stage.timeout && !(stage.timeout.is_a?(Numeric) && stage.timeout.positive?)
+
+        found << "#{position} has neither a prompt nor an inherited one" if
+          stage.prompt.to_s.strip.empty? && !stage.inherits.include?("prompt") &&
+          !promptless?(keys)
+      end
+
+      found << "chain #{chain[:name]} never preserves structure — every stage generates from " \
+               "scratch, which drifts. Consider a depth, canny or fill stage, or inherit " \
+               "references." if stages.length > 2 && stages.none? { |s| s.inherits.any? }
+
+      found
+    end
+
+    # Run the stages, carrying forward what each one declares it inherits.
+    #
+    # `perform` is injected rather than called directly, for the same reason
+    # capability_for is: this is the path that spends money, and a loop that can
+    # only be exercised by spending it is a loop nobody checks. The tests hand in
+    # a recorder and assert the carry-forward — that stage N+1 is actually given
+    # stage N's file, which is the one thing a chain has to get right and the one
+    # thing that fails silently, because a model handed no image generates
+    # from the prompt and returns something plausible.
+    #
+    # Returns the files produced, in order. Every intermediate is kept: a chain
+    # is worth running because of what happens between stages, and a run that
+    # discards stage 2 cannot tell you that stage 2 was where the look was won.
+    # FLUX 2 takes at most eight references, the most recent outputs being the
+    # ones a character should hold to.
+    REFERENCE_LIMIT = 8
+
+    # Resumed, not rerun. A stage before `from_stage` has already been paid for,
+    # so `resume` hands back the file it wrote (and its seed) instead of `perform`
+    # making it again. A chain has no other memory, so a stage with nothing on disk
+    # stops the run rather than being regenerated without anyone deciding to.
+    class NothingToResume < StandardError; end
+
+    def self.run(chain, perform:, until_stage: nil, image: nil, seed: nil, from_stage: nil, resume: nil)
+      names = chain.fetch(:stages).map(&:name)
+      raise Invalid, "chain #{chain[:name]} has no stage #{from_stage}" if from_stage && !names.include?(from_stage)
+
+      carried_image = image
+      carried_seed = seed
+      produced = []
+
+      chain.fetch(:stages).each_with_index do |stage, index|
+        inherited_image = stage.inherits.include?("image") ? carried_image : nil
+        inherited_seed = stage.inherits.include?("seed") ? carried_seed : nil
+        references = stage.inherits.include?("references") ? produced.last(REFERENCE_LIMIT) : []
+
+        result =
+          if from_stage && index < names.index(from_stage)
+            resumed(resume, stage, index)
+          else
+            perform.call(stage: stage, index: index, total: names.length,
+                         image: inherited_image, seed: inherited_seed, references: references)
+          end
+        break if result.nil?
+
+        produced << result[:path]
+        carried_image = result[:path]
+        carried_seed = result[:seed] if result[:seed]
+        break if until_stage && until_stage == stage.name
+      end
+
+      produced
+    end
+
+    def self.resumed(resume, stage, index)
+      found = resume&.call(stage: stage, index: index)
+      raise NothingToResume, "stage #{stage.name} has no output to resume from" unless found && File.file?(found[:path].to_s)
+
+      found
+    end
+
+    # Which preset grades the chain's last frame, or nil for none.
+    #
+    # --postpro on the command line wins, and --no-postpro (false) turns the
+    # grade off. Otherwise the last stage's own `postpro:` option decides — and
+    # only when the last stage actually ran, since a chain stopped by --until
+    # ends on an intermediate the author never asked to have graded.
+    def self.grade_for(chain, produced:, requested:)
+      return requested unless requested.nil?
+
+      stages = chain.fetch(:stages)
+      return nil unless produced.length == stages.length
+
+      stages.last.options[:postpro]
+    end
+
+    # What will happen, in order, without doing it.
+
+    def self.plan(chain)
+      chain.fetch(:stages).each_with_index.map do |stage, index|
+        carried = stage.inherits.empty? ? "nothing" : stage.inherits.join(" + ")
+        opts = stage.options.empty? ? "" : "  [#{stage.options.map { |k, v| "#{k}=#{v}" }.join(' ')}]"
+        format("  %2d. %-22s %-38s carries: %s%s",
+               index + 1, stage.name.to_s, stage.model.to_s, carried, opts)
+      end
+    end
+  end
+end

@@ -1,0 +1,19 @@
+en:
+  marketplace:
+    seller_performance_window: Seller activity — last 60 days
+    seller_purchases:
+      one: "%{count} purchase"
+      other: "%{count} purchases"
+    seller_shipped:
+      one: "%{count} shipped"
+      other: "%{count} shipped"
+    seller_delivered:
+      one: "%{count} delivered"
+      other: "%{count} delivered"
+    seller_returns:
+      one: "%{count} return"
+      other: "%{count} returns"
+    seller_delivery_completion: "%{rate} delivered after shipping"
+    seller_return_rate: "%{rate} of purchases returned"
+    seller_average_rating: "%{rating}/5 from %{count} reviews"
+    seller_paid_sales: "Paid sales: %{amount}"

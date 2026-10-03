@@ -1,0 +1,77 @@
+<% content_for :title, t("community.mod_queue") %>
+
+<div class="page-header">
+  <hgroup>
+    <p><%= link_to @community.name, community_path(@community) %></p>
+    <%= tag.h1 t("community.mod_queue") %>
+  </hgroup>
+  <p class="chips">
+    <span class="chip"><%= t("community.open_count", count: @open_count) %></span>
+    <span class="chip"><%= t("community.reviewing_count", count: @reviewing_count) %></span>
+  </p>
+</div>
+
+<% if @reports.any? %>
+  <table class="mod-queue">
+    <thead>
+      <tr>
+        <th scope="col"><%= t("community.reported") %></th>
+        <th scope="col"><%= t("community.reason") %></th>
+        <th scope="col"><%= t("community.status") %></th>
+        <th scope="col"><%= t("community.action") %></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @reports.each do |report| %>
+        <tr>
+          <td>
+            <%# The report is polymorphic; a removed subject leaves the row
+                readable rather than raising on a nil. %>
+            <% if report.reportable.is_a?(Post) %>
+              <%= link_to report.reportable.title, post_path(report.reportable) %>
+            <% elsif report.reportable.present? %>
+              <%= truncate(report.reportable.try(:content).to_s, length: 80) %>
+            <% else %>
+              <%= t("community.subject_gone") %>
+            <% end %>
+          </td>
+          <td><%= report.reason %></td>
+          <td><%= report.status %></td>
+          <td class="cluster">
+            <% %w[reviewing resolved dismissed].each do |status| %>
+              <% next if report.status == status %>
+              <%= button_to t("community.mark_#{status}"),
+                    community_moderation_path(@community, report, status: status),
+                    method: :patch, class: "btn btn-ghost btn-sm" %>
+            <% end %>
+            <%# Resolving a report takes the content down; without this the same
+                account posts the same thing a minute later. The author id comes
+                off the reported record rather than the report, which carries
+                the reporter. %>
+            <% author_id = report.reportable.try(:user_id) %>
+            <% if author_id && !@community.banned_user_ids.include?(author_id) %>
+              <%= button_to t("community.ban_author"),
+                    community_bans_path(@community, user_id: author_id),
+                    method: :post, class: "btn btn-ghost btn-sm",
+                    data: { turbo_confirm: t("community.confirm_ban") } %>
+            <% end %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+
+  <%# A queue with pagy and no control: a community with more than a page of
+      open reports could only ever work the first one, and the two counts in
+      the header said how much was out of reach without offering a way to it. %>
+  <%= render "shared/pager", pagy: @pagy, label: t("community.mod_queue") %>
+<% else %>
+  <%# NO_DEAD_ENDS: an empty moderation queue is the good state, and it still
+      needs somewhere to go. Back to the community the moderator came from — the
+      one route that is certainly theirs. %>
+  <%= render "shared/empty_state",
+        title: t("community.queue_empty"),
+        body: t("community.queue_empty_body"),
+        action: { label: t("community.back_to_community", community: @community.name),
+                  path: community_path(@community) } %>
+<% end %>

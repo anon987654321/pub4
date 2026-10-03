@@ -1,0 +1,21 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require_relative "../lib/boot/entrypoint"
+Master::Boot::Entrypoint.prepare!(root: File.expand_path("..", __dir__))
+
+# The local preflight and vm23 runbook invoke this stable entrypoint; the step list
+# itself lives in bin/check.
+#
+# The steps used to live here as a second copy — the same rake tasks bin/check's
+# profiles name, maintained separately and free to drift, with bin/check
+# shelling out to this file and so paying for selftest and core_smoke twice.
+# One registry now: this resolves to bin/check --profile=ci, and
+# MASTER_CI_FULL, MASTER_CI_WEB and MASTER_CI_BROWSER still widen it exactly as before.
+#
+# Kept as a script rather than folded away because those callers are outside the
+# runtime's reach: the zsh preflight, vm23 runbook and operator muscle memory.
+
+require "rbconfig"
+
+exec(RbConfig.ruby, File.join(__dir__, "check"), "--profile=ci", *ARGV)

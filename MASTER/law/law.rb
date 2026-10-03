@@ -1,0 +1,392 @@
+# frozen_string_literal: true
+
+require "digest"
+
+# law/ — the constitution as code.
+#
+# A law exists only as a triple: detector + a fixture it MUST flag + a fixture
+# it MUST NOT flag. A law with no detector is documentation. A law with no bad
+# fixture is unfalsifiable. A law with no good fixture has an unmeasured
+# false-positive rate — the decorator-massacre failure mode. All three or it
+# does not load. `rake dogfood` proves every law against its own fixtures and
+# then runs every law over law/ itself; both must stay clean.
+#
+# Contract: `rake dogfood` is the archaeological audit. A capability that goes
+# missing is a fixture that stops passing — nothing to compare by hand.
+module Law
+  Finding = Data.define(:id, :file, :line, :text)
+
+  # A line-scoped detector reads code, and a comment naming a forbidden
+  # construct is prose about it, not an instance of it — "# a bare rescue"
+  # became an error-severity finding when FAIL_VISIBLY moved here from the
+  # yaml bridge, which had learned this once already. Comment-leading lines
+  # are skipped for the file's own comment syntax; a rule whose subject IS
+  # comments (WHY_NOT_WHAT, TYPOGRAPHY_DISCIPLINE) declares `reads_comments
+  # true`. Fixtures prove with file "-", which has no extension and so no
+  # comment syntax — a fixture is always read whole.
+  # Keyed by language rather than by extension, because an extension table here
+  # is a second copy of FILE_LANGUAGE_MAP that has to agree with it and does
+  # not. Adding .ksh, .ru and .mjs to that map made three more file types
+  # readable and left their comments unblanked, so DOLLAR_PAREN read the prose
+  # backticks in a ksh comment — `keepenv`, `sysctl | awk` — as command
+  # substitution. One table, and a new extension inherits its language's
+  # comment syntax for free.
+  LANGUAGE_COMMENT_LEADERS = {
+    "ruby" => ["#"], "yaml" => ["#"], "zsh" => ["#"],
+    "javascript" => ["//", "/*"],
+    "css" => ["/*"], "scss" => ["//", "/*"],
+    "html" => ["<!--"]
+  }.freeze
+
+  # ERB is html by language and carries Ruby's comment tag as well, which is the
+  # one case the language alone does not answer.
+  EXTENSION_COMMENT_LEADERS = { ".erb" => ["<%#"] }.freeze
+
+  def self.comment_leaders(file)
+    language = Master.language_for(file)
+    LANGUAGE_COMMENT_LEADERS.fetch(language, []) +
+      EXTENSION_COMMENT_LEADERS.fetch(File.extname(file).downcase, [])
+  end
+
+  # `ask` is the semantic half: a rule whose subject cannot be matched by a
+  # regex states the question instead, and the model answers it. It sits beside
+  # `detect` rather than in a second file because a rule is one thing and its
+  # detector kind is a property of it — the split across law/ and data/rules.yml
+  # put 52 rules' detector in one file and their severity and fix text in
+  # another, which is a shape no rename can make legible.
+  #
+  # bad/good stay required for both kinds. For `detect` they are proved by
+  # running the regex at load. For `ask` they cannot be — no model call at boot —
+  # so they are the prompt's own worked examples, carried into the question and
+  # checkable offline by a task that has a model. A semantic rule with no
+  # example of what it is looking for is the unfalsifiable shape this file
+  # already refuses in the lexical case.
+  # One real extension per language a law can declare, for proving a fixture the
+  # way a subject is actually read. Ordered so the first match is the ordinary
+  # case for that language rather than an alias of it.
+  REALISTIC_EXTENSION = {
+    ".rb" => "ruby", ".js" => "javascript", ".scss" => "scss", ".css" => "css",
+    ".html" => "html", ".yml" => "yaml", ".sh" => "zsh", ".md" => "markdown", ".json" => "json"
+  }.freeze
+
+  MEMBERS = %i[id source severity mode languages scope path path_exclude absent detect ask practice fix bad good reads_comments].freeze
+  Rule = Data.define(*MEMBERS) do
+    # `path` takes a Regexp or a substring; `path_exclude` was already a Regexp,
+    # and one member of a pair reading its argument the other way is a trap for
+    # whoever writes the next law.
+    # A law that names no language applies everywhere. A law that names one
+    # applies to a file resolved to that language, and to nothing else.
+    #
+    # This read `language.nil? || languages.empty? || ...`, so an unresolved
+    # file satisfied every language-scoped law — the opposite of what the
+    # registry's Rule#applies_to? has always answered for the same question.
+    # 396 tracked files resolve to nil, and 302 of them are not source in any
+    # language: .gitignore, .svg, .toml, .env, Gemfile.lock. Each was measured
+    # against all 65 language-scoped laws, which is how FROZEN_STRING_LITERAL
+    # came to ask 172 non-Ruby files for a Ruby magic comment against 4 real
+    # ones.
+    #
+    # The clause was protecting the other 94 — Gemfile, Rakefile, and the
+    # executables under bin/ whose language is in their shebang. Those are
+    # resolved now rather than excused, by Master.language_for.
+    def applies?(file, language)
+      return false if path && !(path.is_a?(Regexp) ? file.match?(path) : file.include?(path))
+      return false if path_exclude && file.match?(path_exclude)
+
+      languages.empty? || (language && languages.include?(language))
+    end
+
+    # A semantic rule has no detector to run here. It is carried to the model by
+    # the semantic pass instead, so scanning it lexically must find nothing
+    # rather than raise on a nil detect.
+    def semantic? = !ask.nil?
+
+    # Neither kind scans source: one is answered by a model, one binds behaviour.
+    def scannable? = detect ? true : false
+
+    def scan(text, file: "-")
+      return [] unless scannable?
+
+      scope == :file ? scan_file(text, file) : scan_lines(text, file)
+    end
+
+    # The rule's published shape for Contract. Key order and the empty filter
+    # feed law_digest, so any change here changes the digest every external
+    # model hands back at the handshake.
+    def contract_entry
+      {
+        "id" => id.to_s,
+        "severity" => severity.to_s,
+        "mode" => mode.to_s,
+        "languages" => languages.map(&:to_s),
+        "question" => ask.to_s,
+        "practice" => practice.to_s,
+        "fix" => fix.to_s,
+        "bad" => bad.to_s,
+        "good" => good.to_s,
+      }.reject { |_, value| value.respond_to?(:empty?) && value.empty? }
+    end
+
+    # A rule proves itself before it may judge anything else.
+    #
+    # The reach half is proved too, because it was the half that broke:
+    # NEVER_BATCH_DELETE declared `languages %i[ruby shell]` and no file can
+    # carry the language "shell" — FILE_LANGUAGE_MAP emits "zsh" — so a law
+    # written after a batch-delete incident could not read a single shell
+    # script, and passed prove! every boot because prove! called scan directly
+    # and never asked applies?. A declared language that nothing produces is a
+    # rule aimed at nothing.
+    def prove!
+      # The reach check below applies to both kinds; only the detector half is
+      # skipped for a semantic rule, because proving it needs a model and this
+      # runs at boot. The fixtures are still required — Builder#build refuses
+      # without them — they are simply proved by rake rather than by require.
+      if scannable?
+        raise ArgumentError, "#{id}: bad fixture not flagged" if scan(bad).empty?
+        raise ArgumentError, "#{id}: good fixture flagged" unless scan(good).empty?
+
+        prove_as_real_file!
+      end
+
+      unreachable = languages.map(&:to_s) - Master::FILE_LANGUAGE_MAP.values.uniq
+      unless unreachable.empty?
+        raise ArgumentError,
+              "#{id}: declares language(s) #{unreachable.join(', ')} that FILE_LANGUAGE_MAP never produces"
+      end
+      self
+    end
+
+    private
+
+    # The same two fixtures, read the way a real file is read.
+    #
+    # Above, they prove through file "-": no extension, so no comment syntax, so
+    # the text is read whole. A real subject has an extension and its comment
+    # lines are blanked before the detector sees them. Those are different
+    # inputs, and a rule can be right about one and wrong about the other.
+    #
+    # FROZEN_STRING_LITERAL asks whether a file opens with the magic comment. It
+    # proved clean on "-" at every boot and fired on 423 of 423 files under
+    # MASTER/lib that carry the comment, because blanking line 1 leaves a file
+    # that starts with a newline. SQUINT_TEST counts four consecutive newlines,
+    # and four blanked comment lines are four newlines. Both were found by
+    # measuring rather than by any proof, which is why the proof now measures.
+    #
+    # Costs nothing at boot and makes the whole defect class unreachable: a rule
+    # that cannot see its own subject no longer loads.
+    def prove_as_real_file!
+      extension = REALISTIC_EXTENSION.find { |ext, lang| languages.empty? || languages.map(&:to_s).include?(lang) }&.first
+      return self unless extension
+
+      as_file = "fixture#{extension}"
+      raise ArgumentError, "#{id}: bad fixture flagged on \"-\" but not on #{extension} — " \
+                           "considered_text blanks its subject first (set reads_comments?)" if scan(bad, file: as_file).empty?
+      raise ArgumentError, "#{id}: good fixture clean on \"-\" but flagged on #{extension}" unless scan(good, file: as_file).empty?
+
+      self
+    end
+
+    # File-scope laws get the same two exemptions the line-scope ones have. All
+    # eleven had neither, so they were blind to comment leaders and to the
+    # `scan: intentional` opt-out this framework advertises — which is how
+    # RATE_LIMITING_MISSING fired at :error on a sixteen-line controller with no
+    # actions, on the word "login" inside a comment. At :error that also gates
+    # the file out of the semantic pass entirely.
+    def scan_file(text, file)
+      return [] if absent && text.match?(absent)
+      return [] unless detect.call(considered_text(text, file))
+
+      [Finding.new(id, file, 1, text[/.*/])]
+    end
+
+    # Comments and intentional-marked lines blanked, newlines kept, so a
+    # multi-line detector still sees the file's shape.
+    def considered_text(text, file)
+      leaders = reads_comments ? [] : Law.comment_leaders(file)
+      continued = reads_comments ? [] : continued_comment_lines(text, file)
+      return text if leaders.empty? && continued.empty? && !text.include?("scan:")
+
+      text.each_line.with_index.map do |line, index|
+        next "\n" if continued.include?(index)
+
+        # A shebang is not a comment here: STRICT_MODE_ZSH asks whether a script
+        # that declares an interpreter also sets strict mode, so blanking line 1
+        # made it unable to see the script at all.
+        next line if index.zero? && line.start_with?("#!")
+
+        skip = leaders.any? { |leader| line.lstrip.start_with?(leader) } ||
+               line.match?(/scan:\s*intentional\b/)
+        skip ? "\n" : line
+      end.join
+    end
+
+    # Line indices, zero-based, that sit inside a comment which opened on an
+    # earlier line.
+    #
+    # A leader test reads one line, so it sees where a comment starts and never
+    # where it continues. An ERB comment is routinely six lines of prose about
+    # the markup below it, and every line after the first was being read as
+    # markup: I18N_COVERAGE fired on a comment explaining that a page carried no
+    # <h1>, because "<h1> at all — two <h2>s" is a `>`, English, and a `<`. The
+    # rule already refused the opening line; there was no way for it to refuse
+    # the rest.
+    #
+    # ERB, and a stylesheet's /* */, whose prose names declarations as often as
+    # an ERB comment names tags: _composer.scss explains a fix "(measured at
+    # left: 0)" on a comment's second line, and _shell.scss quotes `left: 50%`
+    # on another. JavaScript and <!-- --> stay on the leader test, because a
+    # glob or a regex in a script can spell /* without opening anything, and a
+    # span reader that is wrong is worse than a leader test that is narrow.
+    COMMENT_SPANS = {
+      ".erb" => ["<%#", "%" + ">"],
+      ".css" => ["/*", "*/"],
+      ".scss" => ["/*", "*/"],
+    }.freeze
+
+    def continued_comment_lines(text, file)
+      opener, closer = COMMENT_SPANS[File.extname(file)]
+      return [] unless opener && text.include?(opener)
+
+      inside = false
+      text.each_line.with_index.filter_map do |line, index|
+        opened = inside
+        unless inside
+          open_at = line.rindex(opener)
+          inside = true if open_at && !line[open_at..].include?(closer)
+        end
+        if inside && line.include?(closer)
+          inside = false
+          next opened ? index : nil
+        end
+        index if inside && opened
+      end
+    end
+
+    def scan_lines(text, file)
+      leaders = reads_comments ? [] : Law.comment_leaders(file)
+      continued = reads_comments ? [] : continued_comment_lines(text, file)
+      text.each_line.with_index(1).filter_map do |line, n|
+        next if continued.include?(n - 1)
+        next if leaders.any? { |leader| line.lstrip.start_with?(leader) }
+        # The registry's one-line opt-out, honoured here too: a line that
+        # declares itself intentional carries a reviewer's reason beside it.
+        next if line.match?(/scan:\s*intentional\b/)
+        Finding.new(id, file, n, line.chomp) if detect.call(line)
+      end
+    end
+  end
+
+  class Builder
+    %i[source severity mode languages scope path path_exclude absent ask practice fix bad good reads_comments].each { |a| define_method(a) { |v| @h[a] = v } }
+
+    def initialize(id) = @h = { id:, severity: :warn, mode: :violation, languages: [], scope: :line, path: nil, path_exclude: nil, absent: nil, detect: nil, ask: nil, practice: nil, reads_comments: false }
+    def detect(&block) = @h[:detect] = block
+
+    # A law can carry more than one enforcement surface without becoming more
+    # than one rule. detect is deterministic evidence, ask is semantic evidence,
+    # and practice is conduct guidance. Their combination is useful: one law may
+    # be cheap to detect mechanically, expensive to understand semantically, and
+    # still impose a working discipline on the operator.
+    def build
+      kinds = %i[detect ask practice].select { |k| @h[k] }
+      raise ArgumentError, "#{@h[:id]}: needs detect, ask or practice" if kinds.empty?
+
+      # `fix` is in this list because Data requires it and Builder does not
+      # default it, so a rule that omitted it died with "missing keyword: :fix"
+      # from Data#initialize — a message about the implementation rather than
+      # about the rule. Every existing law sets it; only the error changes.
+      missing = %i[bad good fix].reject { |k| @h.key?(k) }
+      raise ArgumentError, "#{@h[:id]}: missing #{missing.join(', ')}" unless missing.empty?
+
+      Rule.new(**@h.slice(*MEMBERS)).prove!
+    end
+  end
+
+  # Generated projection of the executable constitution. The laws remain
+  # ONE_SOURCE; this contract gives external models the same procedure and a
+  # portable law identity without maintaining a second rule catalogue.
+  module Contract
+    module_function
+
+    PROTOCOL = [
+      "IDENTIFY: state the task and intended effects before acting.",
+      "READ: load the applicable constitution/rules before deciding.",
+      "EVIDENCE: distinguish observed facts, inference, and proposal.",
+      "CHECK: apply every applicable law; do not stop at the first convenient rule.",
+      "PREFER: resolve conflicts by declared priority and safety constraints.",
+      "SIMULATE: inspect edge cases, security, scope, reversibility, and side effects.",
+      "ADMIT: only execute effects that pass the constitutional gate.",
+      "VERIFY: inspect the actual result; never claim completion without evidence.",
+      "REPAIR: if a law is violated, correct the artifact and re-check from the start.",
+      "REPORT: state what happened, what was verified, and what remains unresolved.",
+    ].freeze
+
+    def render(full: false)
+      entries = Law.rules.values.sort_by { |rule| rule.id.to_s }.map(&:contract_entry)
+      laws = full ? entries : entries.map { |entry| entry.slice("id", "severity", "mode", "languages", "question") }
+      JSON.pretty_generate(
+        "contract_version" => 1,
+        "law_digest" => Digest::SHA256.hexdigest(JSON.generate(entries)),
+        "protocol" => PROTOCOL,
+        "laws" => laws,
+      )
+    end
+
+    def digest
+      JSON.parse(render)["law_digest"]
+    end
+  end
+
+  @rules = {}
+  class << self
+    attr_reader :rules
+
+    def define(id, &block)
+      b = Builder.new(id)
+      b.instance_eval(&block)
+      raise ArgumentError, "duplicate law #{id}" if @rules.key?(id)
+      @rules[id] = b.build
+    end
+
+    def load_all(dir = __dir__)
+      Dir.glob(File.join(dir, "*.rb")).sort.each { |f| require f unless f == __FILE__ }
+      @rules
+    end
+
+    def scan(file, language: nil)
+      text = File.read(file, encoding: "UTF-8")
+      text = conduct(text) if file.start_with?(__dir__)
+      @rules.values.select { |r| r.applies?(file, language) }.flat_map { |r| r.scan(text, file:) }
+    end
+
+    # A law file necessarily contains the pattern it forbids: in its detector,
+    # its fix text, and its bad fixture. Those lines declare evidence; they are
+    # not conduct. Neutralize them (keeping line numbers) before a law judges law/.
+    def conduct(text)
+      fence = nil
+      block_end = nil
+      text.each_line.map do |line|
+        if fence
+          fence = nil if line.strip == fence
+          next "#\n"
+        end
+        # A `detect do ... end` spanning lines declares evidence on every one of
+        # them, not just the line that opens it. NULL_BLINDNESS carries `= NULL`
+        # inside its own regex on a continuation line, and this method only ever
+        # blanked the opening line, so the law read its own detector as a
+        # violation of itself and dogfood could not go green.
+        if block_end
+          block_end = nil if line == block_end
+          next "#\n"
+        end
+        if (indent = line[/^(\s*)(?:detect|scan_lines)\s+do\b/, 1])
+          block_end = "#{indent}end\n"
+          next "#\n"
+        end
+
+        fence = line[/^\s*(?:bad|good|ask|practice)\s+<<~["']?(\w+)["']?/, 1]
+        line.match?(/^\s*(?:source|detect|ask|practice|fix|bad|good)\b/) ? "#\n" : line
+      end.join
+    end
+  end
+end

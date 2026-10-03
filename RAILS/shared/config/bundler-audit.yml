@@ -1,0 +1,13 @@
+# Audit all gems listed in the Gemfile for known security problems by running bin/bundler-audit.
+# CVEs that are not relevant to the application can be enumerated on the ignore list below.
+#
+# bundler-audit reads .bundler-audit.yml from the directory it runs in, so this
+# file only has a reader because _sync.sh copies it to each app root, the way it
+# already copies .rubocop.yml. It sat here with one placeholder id and no copy
+# step until 2026-09-17, which made it a declaration nothing read — an entry
+# added to it would have changed nothing and looked like it had.
+#
+# An entry here is an argument, not a silence. Write why the advisory cannot
+# reach this tree, and delete the entry the moment that stops being true.
+
+ignore: []

@@ -1,0 +1,60 @@
+<% if live_search_query.present? %>
+ <p><%= t("search.results_for", count: @posts.size, query: live_search_query) %></p>
+<% end %>
+
+<% if @posts.any? %>
+ <%= turbo_frame_tag "home-feed-frame", target: "_top" do %>
+ <ul class="post-feed feed_list<%= " brgen-media-wall" if params[:view].to_s == "media" %>" id="home-feed" data-feed-updates-target="feed">
+ <% if params[:view].to_s == "media" %>
+   <%= render "home/media_add_card" %>
+ <% end %>
+ <% @posts.each_with_index do |post, index| %>
+   <% if params[:view].to_s == "media" %>
+     <%= render "home/media_card", post: post, media_index: index %>
+   <% else %>
+     <% position = index + 1 %>
+     <li>
+       <%= render "posts/post", post: post %>
+       <% if live_search_query.blank? && Brgen::HomeFeed.promotion_slot?(position) && position < @posts.size %>
+         <%= render "home/vertical_promo_unit", promotion: Brgen::HomeFeed.promotion_for(position) %>
+       <% elsif ((position % Brgen::HomeFeed::AFFILIATE_EVERY).zero? && position < @posts.size) %>
+         <%= render "shared/affiliate_feed_unit", surface: "brgen" %>
+       <% end %>
+     </li>
+   <% end %>
+ <% end %>
+ </ul>
+
+ <%= render "shared/pager", pagy: @pagy, label: t("home.pagination", default: "Home feed pagination") if params[:view].to_s == "media" %>
+ <% if params[:view].to_s != "media" %>
+   <%= render "shared/infinite_scroll_sentinel",
+              pagy: @pagy,
+              reflex: "HomeInfiniteScrollReflex#load_more",
+              sentinel_id: "home-feed-sentinel",
+              q: params[:q],
+              feed: params[:feed],
+              sort: params[:sort] %>
+ <% end %>
+ <% end %>
+<% else %>
+ <% if params[:view].to_s == "media" %>
+   <ul class="post-feed feed_list brgen-media-wall" id="home-feed" aria-label="<%= t("home.media_wall_view", default: "Media wall") %>">
+     <%= render "home/media_add_card" %>
+   </ul>
+ <% elsif live_search_query.present? %>
+   <%= render "shared/empty_state",
+         title: t("empty.no_posts"),
+         body: t("empty.no_posts_search"),
+         action: { label: t("empty.clear_search"), path: root_path } %>
+ <% elsif authenticated? %>
+   <%= render "shared/empty_state",
+         title: t("empty.no_posts_yet"),
+         body: t("empty.start_city"),
+         action: { label: t("empty.create_one"), path: new_post_path } %>
+ <% else %>
+   <%= render "shared/empty_state",
+         title: t("empty.no_posts_yet"),
+         body: t("empty.be_first"),
+         action: { label: t("empty.post_to_city", city: city_name), path: new_post_path } %>
+ <% end %>
+<% end %>

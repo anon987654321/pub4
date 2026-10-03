@@ -1,0 +1,268 @@
+# frozen_string_literal: true
+
+require "fileutils"
+require "json"
+require "securerandom"
+require "yaml"
+require_relative "performance"
+
+module Master
+  module Voice
+    # Transcendent orchestrator — emotion, melody, multi-engine chain.
+    module Transcendent
+      DEFAULTS = {
+        "personality" => "warm_erratic",
+        "engine_chain" => "mlx,chatterbox,edge_melodic,edge,say",
+        "emotion_enabled" => true,
+        "melodic_enabled" => true,
+        "melodic_threshold" => 0.45,
+        # Phrase segmentation and inter-phrase rests, without the pentatonic
+        # contour. Separate from melodic_* because it is rhythm rather than
+        # style: melodic_threshold kept the whole phrase plan for lyrical text
+        # only, so every ordinary reply was one Edge call at one rate and one
+        # pitch. The cost is one Edge round trip per phrase, bounded by
+        # Melody::MAX_PHRASES; set false to go back to a single call.
+        "phrase_rhythm_enabled" => true,
+        # Read a Norwegian clause with a Norwegian voice instead of putting it
+        # through en-US-JennyNeural. Off, because data/voice.yml sets
+        # single_voice: jenny and persona_affects_text_only: true — one voice is
+        # a recorded decision, and this is the one thing that would break it.
+        # The machinery is here so the choice is a flag rather than a rewrite.
+        "phrase_language_switching" => true,
+        "mlx_model" => "mlx-community/chatterbox-fp16",
+        "mlx_voice" => "default",
+        "exaggeration" => 0.45,
+        "cfg_weight" => 0.42,
+        "chatterbox_device" => "mps",
+        "reference_clip" => "",
+      }.freeze
+
+      module_function
+
+      def enabled?
+        cfg = load_config
+        cfg.fetch("enabled", false)
+      end
+
+      def load_config
+        path = Master.data_path("tts.yml")
+        raw = File.exist?(path) ? YAML.safe_load(File.read(path), permitted_classes: [Symbol]) : {}
+        section = raw.is_a?(Hash) ? (raw["transcendent"] || raw[:transcendent] || {}) : {}
+        cfg = DEFAULTS.merge(stringify_keys(section))
+        default_chain = Engines.openbsd? ? Engines::OPENBSD_CHAIN.join(",") : cfg["engine_chain"]
+        cfg["engine_chain"] = ENV.fetch("MASTER_TTS_ENGINE_CHAIN", default_chain)
+        cfg
+      rescue StandardError
+        DEFAULTS.dup
+      end
+
+      def stringify_keys(hash)
+        hash.each_with_object({}) { |(k, v), acc| acc[k.to_s] = v }
+      end
+
+      def synthesize(text, voice: nil, style: :auto, rate: nil, pitch: nil, voice_locked: false, style_locked: false)
+        cfg = load_config
+        clean = Speech.clean_text(text)
+        return if clean.empty?
+
+        emotion = Emotion.analyze(clean)
+        melody = Melody.plan(clean, emotion, melodic: melodic_contour?(cfg, emotion), languages: phrase_languages(cfg))
+        resolved_voice, resolved_rate, resolved_pitch = resolve_voice_and_prosody(
+          clean, cfg, voice:, style:, rate:, pitch:, voice_locked:, style_locked:
+        )
+        melody = apply_spoken_performance(
+          melody, clean, emotion, style, base_rate: resolved_rate, base_pitch: resolved_pitch
+        )
+
+        out_path = "/tmp/m_tts_#{SecureRandom.hex(8)}.mp3"
+        played = synthesize_via_chain(clean, cfg, emotion, melody, resolved_voice, resolved_rate, resolved_pitch, out_path)
+        return unless played && File.size?(out_path)
+
+        out_path
+      end
+
+      def apply_spoken_performance(melody, clean, emotion, style, base_rate:, base_pitch:)
+        performance = Performance.apply(
+          base_rate:,
+          base_pitch:,
+          text: clean,
+          emotion:,
+          style:,
+        )
+        phrases = melody[:phrases].each_with_index.map do |phrase, index|
+          variation = performance[index] || {}
+          rate = if melody[:melodic]
+                   blend_melodic_rate(phrase[:rate], variation[:rate], base_rate)
+                 else
+                   variation[:rate] || phrase[:rate]
+                 end
+          pitch = melody[:melodic] ? phrase[:pitch] : (variation[:pitch] || phrase[:pitch])
+
+          phrase.merge(
+            rate:,
+            pitch:,
+            pause_ms: variation[:pause_ms] || phrase[:pause_ms],
+            performance_role: variation[:role],
+            emphasis: variation[:emphasis],
+          )
+        end
+        melody.merge(phrases:)
+      end
+
+      def blend_melodic_rate(melodic_rate, performance_rate, base_rate)
+        return melodic_rate || performance_rate if melodic_rate.to_s.empty?
+        return melodic_rate if performance_rate.to_s.empty?
+
+        melodic = melodic_rate.to_s.delete("%").to_i
+        performance = performance_rate.to_s.delete("%").to_i
+        base = base_rate.to_s.delete("%").to_i
+        delta = performance - base
+        format("%+d%%", (melodic + delta).clamp(-12, 12))
+      end
+
+      def synthesize_via_chain(clean, cfg, emotion, melody, resolved_voice, resolved_rate, resolved_pitch, out_path)
+        chain = build_engine_chain(cfg, emotion, clean)
+        played, used_engine = try_engine_chain(
+          chain, clean, cfg, emotion, melody, resolved_voice, resolved_rate, resolved_pitch, out_path
+        )
+        log_pick(used_engine, resolved_voice, resolved_rate, resolved_pitch, emotion)
+        played || Engines.synth_say(clean, out_path, voice: resolved_voice, rate: resolved_rate)
+      end
+
+      def resolve_voice_and_prosody(clean, cfg, voice:, style:, rate:, pitch:, voice_locked:, style_locked:)
+        resolved_voice = if Language.detect(clean) != :en
+                             Speech.voice_for_text(clean)
+                           else
+                             voice || Speech.default_voice
+                           end
+        resolved_rate = rate
+        resolved_pitch = pitch
+        personality = cfg["personality"].to_s
+
+        if personality == "warm_erratic" && style != :fixed
+          resolved_voice, wr_rate, wr_pitch = warm_erratic_prosody(voice, clean, style, voice_locked, style_locked, resolved_voice)
+          resolved_rate ||= wr_rate
+          resolved_pitch ||= wr_pitch
+        elsif style != :auto && Speech::STYLES.key?(style.to_sym)
+          sc = Speech.style_config_for(resolved_voice, style)
+          resolved_rate ||= sc[:rate]
+          resolved_pitch ||= sc[:pitch]
+        end
+
+        resolved_rate ||= "-5%"
+        resolved_pitch ||= "-18Hz"
+        [resolved_voice, resolved_rate, resolved_pitch]
+      end
+
+      def warm_erratic_prosody(voice, clean, style, voice_locked, style_locked, resolved_voice)
+        locked_style = style_locked ? style : nil
+        if voice
+          pick = WarmErratic.pick_for_voice(voice, clean, style: locked_style)
+        else
+          pick = WarmErratic.pick(clean)
+          resolved_voice = pick[:voice]
+        end
+        [resolved_voice, pick[:rate], pick[:pitch]]
+      end
+
+      # The pentatonic contour. Lyrical text only — this is the stylistic mode.
+      def melodic_contour?(cfg, emotion)
+        return false unless cfg["emotion_enabled"] && cfg["melodic_enabled"]
+
+        emotion.dig(:scores, :lyrical).to_f >= cfg["melodic_threshold"].to_f
+      end
+
+      # Whether to render phrase by phrase at all. Either the contour wants it or
+      # phrase rhythm does; the engine is the same, the plan differs.
+      def phrase_rendered?(cfg, emotion)
+        melodic_contour?(cfg, emotion) || cfg["phrase_rhythm_enabled"] == true
+      end
+
+      # nil when switching is off, so Melody attaches no :voice at all and every
+      # phrase inherits the single locked voice.
+      def phrase_languages(cfg)
+        return unless cfg["phrase_language_switching"] == true
+
+        Policy.language_voice_families.each_key.each_with_object({}) do |language, voices|
+          voices[language.to_sym] = Policy.voice_for_language(language)
+        end
+      end
+
+      def build_engine_chain(cfg, emotion, clean)
+        chain = cfg["engine_chain"].to_s.split(",").map(&:strip).reject(&:empty?)
+        chain = chain.reject { |e| e == "edge_melodic" } unless phrase_rendered?(cfg, emotion)
+        chain = chain.reject { |e| %w[mlx chatterbox].include?(e) } unless cfg["emotion_enabled"]
+        # The current adapters are wired for English output. Native Norwegian
+        # and Malay utterances must stay on their declared language families.
+        language = Language.detect(clean)
+        chain.reject { |e| %w[mlx chatterbox].include?(e) && language != :en }
+      end
+
+      def try_engine_chain(chain, clean, cfg, emotion, melody, resolved_voice, resolved_rate, resolved_pitch, out_path)
+        played = false
+        used_engine = nil
+        chain.each do |engine|
+          next unless Engines.attempt?(engine, cfg)
+
+          played = attempt_engine(engine, clean, cfg, emotion, melody, resolved_voice, resolved_rate, resolved_pitch, out_path)
+          if played
+            used_engine = engine
+            break
+          end
+        end
+        [played, used_engine]
+      end
+
+      def attempt_engine(engine, clean, cfg, emotion, melody, resolved_voice, resolved_rate, resolved_pitch, out_path)
+        Engines.synth(
+          engine,
+          text: clean,
+          out_path:,
+          cfg:,
+          emotion:,
+          melody:,
+          voice: Speech.resolve_voice(resolved_voice),
+          rate: resolved_rate.to_s,
+          pitch: resolved_pitch.to_s,
+        )
+      end
+
+      def last_pick
+        path = File.join(Master::ROOT, ".master", "tts_last.json")
+        return unless File.file?(path)
+
+        JSON.parse(File.read(path), symbolize_names: true)
+      rescue JSON::ParserError, SystemCallError
+        nil
+      end
+
+      def log_pick(engine, voice, rate, pitch, emotion)
+        path = File.join(Master::ROOT, ".master", "tts_last.json")
+        FileUtils.mkdir_p(File.dirname(path))
+        File.write(
+          path,
+          JSON.generate(
+            engine:,
+            voice:,
+            rate:,
+            pitch:,
+            primary: emotion[:primary],
+            at: Time.now.to_i,
+          ),
+        )
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "Transcendent.log_pick")
+        nil
+      end
+
+      def synthesize_bytes(text, **opts)
+        path = synthesize(text, **opts)
+        return unless path
+
+        File.binread(path)
+      ensure
+        File.unlink(path) if path && File.exist?(path)
+      end
+    end
+  end
+end

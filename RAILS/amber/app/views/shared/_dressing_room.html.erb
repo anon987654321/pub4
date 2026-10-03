@@ -1,0 +1,88 @@
+<%# locals: zones, taste_reasons, savable: %>
+<%# scan: intentional-colors — the mannequin is an illustration: its greys are drawn values, not theme surfaces %>
+<%#
+  The mannequin and its four zone carousels. Adjacent zones counter-rotate —
+  wardrobe_carousel_controller holds the directions and the pause rules — so
+  the combination on the figure keeps changing without the same two garments
+  staying paired.
+
+  A partial because this is the landing surface as well as a signed-in tool.
+  The guest home page renders it with the demo wardrobe; /dressing_room renders
+  it with your own and can save what it is showing, which a guest cannot.
+%>
+<% savable = local_assigns.fetch(:savable, true) %>
+<% taste_reasons = local_assigns.fetch(:taste_reasons, {}) %>
+<%
+  zones_json = zones.transform_values { |items|
+    items.map { |item|
+      { id: item.id, name: item.title, color: item.color.to_s,
+        why: Array(taste_reasons[item.id]).first(2).join(" · "),
+        url: item.photos.attached? ? responsive_image_url(item.photos.first, widths: [480]) : nil }
+    }
+  }.to_json
+%>
+<div class="dressing-room"
+     data-controller="wardrobe-carousel"
+     data-wardrobe-carousel-zones-value="<%= zones_json %>"
+     data-wardrobe-carousel-interval-value="4200">
+
+  <div class="mannequin-stage"
+       data-controller="mannequin-3d"
+       data-mannequin-3d-zones-value="<%= zones_json %>">
+    <div class="mannequin-3d-caption">
+      <span class="eyebrow"><%= t("dressing_room.mannequin_label", default: "3D wardrobe") %></span>
+      <span><%= t("dressing_room.mannequin_hint", default: "Move across the figure to inspect the drape") %></span>
+    </div>
+  </div>
+
+  <div class="zone-carousels">
+    <% {
+         head: t("dressing_room.zone_head"),
+         top: t("dressing_room.zone_top"),
+         bottom: t("dressing_room.zone_bottom"),
+         shoes: t("dressing_room.zone_shoes"),
+       }.each do |zone, label| %>
+      <div class="zone-row">
+        <span class="zone-tag"><%= label %></span>
+        <button class="carousel-btn" data-action="wardrobe-carousel#prev" data-wardrobe-carousel-zone-param="<%= zone %>" aria-label="<%= t("dressing_room.previous", zone: label) %>">‹</button>
+        <span class="zone-info">
+          <span data-zone-label="<%= zone %>">—</span>
+          <span class="zone-count" data-zone-count="<%= zone %>"></span>
+          <span class="zone-why" data-zone-why="<%= zone %>"></span>
+        </span>
+        <button class="carousel-btn" data-action="wardrobe-carousel#next" data-wardrobe-carousel-zone-param="<%= zone %>" aria-label="<%= t("dressing_room.next", zone: label) %>">›</button>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="dressing-room-actions">
+    <button type="button"
+            class="btn"
+            data-action="wardrobe-carousel#toggle"
+            data-wardrobe-carousel-target="playToggle"
+            aria-pressed="false"><%= t("dressing_room.pause") %></button>
+    <button type="button" class="btn" data-action="wardrobe-carousel#shuffle"><%= t("dressing_room.shuffle") %></button>
+
+    <%# Saving used to be a bare link to the empty outfit form, which discarded
+        whatever combination the carousels were showing. The hidden inputs are
+        written by the Stimulus controller on every rotation.
+
+        A guest has no account to save into, so the landing surface gets the
+        rotation and the controls and not this. %>
+    <% if savable %>
+      <%= form_with url: save_look_outfits_path, method: :post, class: "dressing-room-save" do |f| %>
+        <% %i[head top bottom shoes].each do |zone| %>
+          <input type="hidden" name="item_ids[]" value="" data-wardrobe-carousel-target="pick" data-zone-pick="<%= zone %>">
+        <% end %>
+        <%= f.submit t("dressing_room.save"), class: "btn" %>
+      <% end %>
+    <% end %>
+  </div>
+
+  <% if savable && zones.values.all?(&:empty?) %>
+    <%= render "shared/empty_state",
+          title: t("empty.no_items"),
+          body: t("dressing_room.empty_body"),
+          action: { label: t("nav.add_item"), path: new_item_path } %>
+  <% end %>
+</div>

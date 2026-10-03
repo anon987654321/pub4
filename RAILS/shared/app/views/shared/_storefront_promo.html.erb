@@ -1,0 +1,36 @@
+<% vertical = local_assigns.fetch(:vertical).to_s %>
+<% subject = local_assigns.fetch(:subject).to_s %>
+<% headline = local_assigns.fetch(:headline).to_s %>
+<% copy = local_assigns.fetch(:copy).to_s %>
+<% href = local_assigns[:href] %>
+<% cta = local_assigns[:cta] %>
+<% image = local_assigns[:image] %>
+<% image_alt = local_assigns[:image_alt].to_s %>
+<% badge = local_assigns[:badge] %>
+<% offer = local_assigns[:offer] %>
+
+<article class="store-promo store-promo--<%= vertical %>"
+         data-art-subject="<%= subject %>"
+         data-art-prompt="<%= storefront_art_prompt(vertical:, subject:) %>">
+  <div class="store-promo-copy">
+    <% if badge.present? %>
+      <span class="store-promo-badge"><%= badge %></span>
+    <% end %>
+    <h2><%= headline %></h2>
+    <p><%= copy %></p>
+    <% if offer.present? %>
+      <strong class="store-promo-offer"><%= offer %></strong>
+    <% end %>
+    <% if href.present? && cta.present? %>
+      <%= link_to cta, href, class: "store-promo-cta" %>
+    <% end %>
+  </div>
+
+  <div class="store-promo-art" aria-hidden="true">
+    <% if image.present? %>
+      <%= responsive_image_tag(image, alt: image_alt, widths: [320, 640], sizes: "(max-width: 768px) 44vw, 360px", loading: "eager", class: "store-promo-product") %>
+    <% else %>
+      <span class="store-promo-product store-promo-product--generated"><%= subject.to_s.first&.upcase %></span>
+    <% end %>
+  </div>
+</article>

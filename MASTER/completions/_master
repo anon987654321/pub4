@@ -1,0 +1,35 @@
+#compdef master cli
+
+# The slash surface CommandRegistry.build returns, one line per help topic. test/test_completions.rb fails when this list and the registry differ.
+_master() {
+  local -a commands
+  commands=(
+    'fix:observe, critique, repair, observe again until it converges'
+    'review:read-only — the council and the principle map'
+    'status:one-frame health, the mission and the known-good runtime'
+    'plugin:list and invoke governed plugins'
+    'undo:revert the last recorded change'
+    'commit:commit the named paths'
+    'model:show or switch the active model, and connect its subscriptions'
+    'pair:issue or redeem a pairing code'
+    'doctor:host, provider, exposure and hardware health'
+    'rules:the declared rules, one line each'
+    'why:what a rule says, and where it comes from'
+    'orders:standing orders'
+    'soul:read and amend the constitution, and its portable contract'
+    'snapshot:write the MASTER tree and source to one Markdown file'
+    'session:list, continue or branch a conversation'
+    'help:list commands'
+    'clear:clear the session transcript'
+    'exit:leave MASTER'
+    'quit:leave MASTER'
+  )
+
+  _arguments -C '1: :->command' '*:: :->args'
+
+  case $state in
+    command) _describe 'master commands' commands ;;
+  esac
+}
+
+_master "$@"

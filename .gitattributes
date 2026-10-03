@@ -1,0 +1,8 @@
+# Force LF line endings for scripts (fixes shebang \r warning on Unix)
+*.rb text eol=lf
+*.sh text eol=lf
+*.yml text eol=lf
+*.py text eol=lf
+bin/* text eol=lf
+# Source snapshots are verbatim mirrors; their payload may intentionally retain source trailing whitespace or CRLF.
+snapshot_*.md whitespace=-trailing-space

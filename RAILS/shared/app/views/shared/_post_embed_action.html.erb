@@ -1,0 +1,14 @@
+<% post_url = local_assigns.fetch(:url) %>
+<% post = local_assigns.fetch(:post) %>
+<% title = strip_tags(post.try(:title).presence || post.try(:body).to_s).squish.truncate(120) %>
+<% code = "<blockquote class=\"pub4-post-embed\"><p><a href=\"#{post_url}\">#{ERB::Util.html_escape(title)}</a></p></blockquote>" %>
+<span data-controller="clipboard" data-clipboard-success-content-value="<%= t("actions.copied", default: "Copied") %>">
+  <input type="hidden" data-clipboard-target="source" value="<%= code %>" aria-hidden="true" tabindex="-1">
+  <button type="button" class="feed-action post-embed-action"
+          aria-label="<%= t("post.embed", default: "Copy embed code") %>"
+          title="<%= t("post.embed", default: "Copy embed code") %>"
+          data-action="click->clipboard#copy"
+          data-clipboard-target="button">
+    <%= icon :code, size: 18 %>
+  </button>
+</span>

@@ -1,0 +1,217 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require_relative "../lib/boot/entrypoint"
+Master::Boot::Entrypoint.prepare!(root: File.expand_path("..", __dir__))
+
+# master-probe — one entrypoint for local and VPS readiness checks.
+# Usage:
+#   bin/probe              # quick local signal
+#   bin/probe all          # smoke + namespace + selftest + core + dogfood + ci + audit + rails gate
+#   bin/probe smoke rails  # selected checks
+
+Encoding.default_external = Encoding::UTF_8
+
+require "open3"
+require "rbconfig"
+require_relative "../lib/trace/dmesg"
+
+MASTER_ROOT = File.expand_path("..", __dir__)
+REPO_ROOT = File.expand_path("..", MASTER_ROOT)
+RUBY = RbConfig.ruby
+
+# Inlined from bin/probe_selfscan (2026-08-19 sprawl collapse): deep-scan
+# lib/master.rb and fail on error/critical findings.
+SELFSCAN_SRC = <<~SCRIPT.freeze
+  $LOAD_PATH.unshift File.join(%q{#{MASTER_ROOT}}, "lib")
+  require "master"
+  container = Master.bootstrap_container(root: %q{#{MASTER_ROOT}})
+  result = container[:scanner].scan(File.join(%q{#{MASTER_ROOT}}, "lib", "master.rb"), depth: :deep)
+  findings = result.ok? ? result.value! : []
+  bad = findings.select { |f| %i[error critical].include?(f[:severity].to_sym) }
+  Master::Trace::Dmesg.status("scan0", "#{findings.size} finding(s), #{bad.size} critical")
+  bad.first(10).each { |f| Master::Trace::Dmesg.status("scan0", "#{f[:file]}:#{f[:line]}, #{f[:severity]}, #{f[:rule]}, #{f[:message]}") }
+  exit(bad.empty? ? 0 : 1)
+SCRIPT
+
+CHECKS = {
+  "smoke" => {
+    desc: "MASTER boot/wiring smoke",
+    cmd: [RUBY, File.join(MASTER_ROOT, "bin", "smoke")],
+    cwd: MASTER_ROOT,
+  },
+  "smoke-web" => {
+    desc: "MASTER web face HTTP smoke (bootstrap-aware)",
+    cmd: [RUBY, File.join(MASTER_ROOT, "bin", "smoke-web")],
+    cwd: MASTER_ROOT,
+  },
+  # nsaudit and dogfood each have one caller in the repo — this table — and the
+  # entry-point count keeps proposing that they fold into `check` as steps. They
+  # stay separate processes. `bin/nsaudit:16` defines a bare top-level `ROOT`,
+  # one of the 43 the tree carries, and every one of them is harmless only while
+  # it owns its process: loading two together lets the second assignment win and
+  # sends the loser reading the wrong tree in silence. A subprocess is what makes
+  # the entry safe, so folding it in trades a number for that hazard.
+  "nsaudit" => {
+    desc: "MASTER namespace reference audit",
+    cmd: [RUBY, File.join(MASTER_ROOT, "bin", "nsaudit")],
+    cwd: MASTER_ROOT,
+  },
+  "selftest" => {
+    desc: "rules.yml self_test laws against MASTER itself",
+    cmd: [RUBY, "-S", "rake", "selftest"],
+    cwd: MASTER_ROOT,
+  },
+  "data_singularity" => {
+    desc: "top-level data YAML key singularity lint",
+    cmd: [RUBY, "-S", "rake", "lint:data_singularity"],
+    cwd: MASTER_ROOT,
+  },
+  "models" => {
+    desc: "every declared model id still served by the provider (network)",
+    cmd: [RUBY, "-S", "rake", "lint:models"],
+    cwd: MASTER_ROOT,
+  },
+  # bin/preflight used to sit here, and `all` ran it. It checked ruby, bundler
+  # and `bundle check`, warned about three API keys, syntax-checked
+  # lib/master.rb and a kernel/ directory the tree has not had for some time,
+  # and then ran bin/ci — which is the entry two rows down. Its only caller
+  # anywhere in the repo was this table.
+  #
+  # Folded into "ci" rather than into "doctor", though doctor is the strict
+  # superset of its host checks. doctor fails on a laptop with no TTS socket and
+  # no web token, which are true statements about the machine and not about the
+  # tree, and a probe that is red on every developer's box is a line people
+  # learn to skip. bin/ci is what preflight actually contributed to `all`.
+  "audit" => {
+    desc: "Staged lines judged by the law (bin/operator lint)",
+    cmd: [RUBY, File.join(MASTER_ROOT, "bin", "operator"), "lint", "--staged", "--changed-lines"],
+    cwd: REPO_ROOT,
+    skip: lambda {
+      out, = Open3.capture2e("git", "diff", "--cached", "--name-only", chdir: REPO_ROOT)
+      out.lines.none? { |line| !line.strip.empty? }
+    },
+    skip_reason: "no staged files",
+  },
+  "rails" => {
+    desc: "RAILS production gate",
+    cmd: [RUBY, File.join(MASTER_ROOT, "gates", "runner.rb"), "production"],
+    cwd: REPO_ROOT,
+  },
+  "phantom_fk" => {
+    desc: "Rails schema phantom foreign-key targets",
+    cmd: [RUBY, File.join(MASTER_ROOT, "gates", "runner.rb"), "phantom_foreign_keys"],
+    cwd: REPO_ROOT,
+  },
+  "playbook" => {
+    desc: "Print operator playbook lessons",
+    cmd: [RUBY, "-I", File.join(MASTER_ROOT, "lib"), "-e", "require 'master'; puts Master::Ground::OperatorPlaybook.render"],
+    cwd: MASTER_ROOT,
+  },
+  "ci" => {
+    desc: "MASTER unit tests + constitution scan",
+    cmd: [RUBY, File.join(MASTER_ROOT, "bin", "ci")],
+    cwd: MASTER_ROOT,
+  },
+  "health" => {
+    desc: "OpenBSD VPS stack health",
+    cmd: [RUBY, File.join(REPO_ROOT, "OPENBSD", "gates", "health_check.rb")],
+    cwd: REPO_ROOT,
+    skip: -> { !File.file?("/etc/relayd.conf") },
+    skip_reason: "not on OpenBSD VPS (/etc/relayd.conf missing)",
+  },
+  "core" => {
+    desc: "Core integration smoke (Effect → Constitution → World)",
+    # -I lib because core_smoke requires "master"; nothing else puts it on the path.
+    cmd: [RUBY, "-I", File.join(MASTER_ROOT, "lib"), File.join(MASTER_ROOT, "test", "test_core_smoke.rb")],
+    cwd: MASTER_ROOT,
+  },
+  "dogfood" => {
+    desc: "MASTER CLI dogfood (bundle exec ruby bin/cli + chitchat)",
+    cmd: [RUBY, File.join(MASTER_ROOT, "bin", "dogfood")],
+    cwd: MASTER_ROOT,
+  },
+  "crawl" => {
+    desc: "HTTP crawl manifest + inventory sync (apps.yml ↔ deploy_inventory.json)",
+    cmd: [RUBY, File.join(REPO_ROOT, "RAILS", "tools", "crawl_probe.rb")],
+    cwd: REPO_ROOT,
+  },
+  "crawl-browser" => {
+    desc: "Ferrum element crawl (MASTER face session + Rails landmarks)",
+    cmd: ["sh", "-c",
+          "BUNDLE_WITH=test bundle exec ruby #{File.join(REPO_ROOT, 'RAILS', 'crawl_browser.rb')}"],
+    cwd: MASTER_ROOT,
+    skip: lambda {
+      return true if ENV["MASTER_CRAWL_BROWSER"] == "0"
+      return false if ENV["MASTER_CRAWL_BROWSER"] == "1" || ENV["PROBE_FORCE_BROWSER"] == "1"
+      RUBY_PLATFORM.include?("darwin")
+    },
+    skip_reason: "set MASTER_CRAWL_BROWSER=1 or PROBE_FORCE_BROWSER=1 (skipped on macOS by default)",
+  },
+  "integrity" => {
+    desc: "Full RAILS + OPENBSD/OpenBSD gate chain",
+    cmd: [RUBY, File.join(REPO_ROOT, "OPENBSD", "gates", "integrity_gate.rb")],
+    cwd: REPO_ROOT,
+  },
+  "selfscan" => {
+    desc: "Deep-scan lib/master.rb (set MASTER_PROBE_SELF=1)",
+    cmd: [RUBY, "-e", SELFSCAN_SRC],
+    cwd: MASTER_ROOT,
+    skip: -> { ENV["MASTER_PROBE_SELF"] != "1" },
+    skip_reason: "set MASTER_PROBE_SELF=1",
+  },
+}.freeze
+
+ALIASES = {
+  "quick" => %w[smoke nsaudit selftest data_singularity rails ci],
+  "all" => %w[smoke nsaudit selftest data_singularity core dogfood models ci audit rails phantom_fk],
+  "deploy" => %w[rails phantom_fk crawl crawl-browser integrity health smoke-web playbook],
+  "integrity" => %w[integrity crawl crawl-browser rails phantom_fk smoke-web],
+  "security" => %w[audit nsaudit selftest data_singularity rails],
+}.freeze
+
+def expand_args(args)
+  selected = args.empty? ? %w[quick] : args
+  selected.flat_map { |arg| ALIASES.fetch(arg, [arg]) }.uniq
+end
+
+def print_usage
+  Master::Trace::Dmesg.attach("probe0", "master0", "checks")
+  CHECKS.each { |name, meta| Master::Trace::Dmesg.status("probe0", "#{name}, #{meta[:desc]}") }
+  Master::Trace::Dmesg.status("probe0", "aliases")
+  ALIASES.each { |name, checks| Master::Trace::Dmesg.status("probe0", "#{name}, #{checks.join(", ")}") }
+end
+
+checks = expand_args(ARGV)
+unknown = checks - CHECKS.keys
+unless unknown.empty?
+  print_usage
+  warn "\nunknown probe check(s): #{unknown.join(", ")}"
+  exit 64
+end
+
+failures = []
+checks.each do |name|
+  meta = CHECKS.fetch(name)
+
+  if meta[:skip]&.call
+    Master::Trace::Dmesg.status("probe0", "#{name}, skipped, #{meta.fetch(:skip_reason)}")
+    next
+  end
+
+  unit = "probe#{checks.index(name) || 0}"
+  Master::Trace::Dmesg.attach(unit, "probe0", "#{name}, #{meta[:desc]}")
+  out, status = Open3.capture2e(*meta[:cmd], chdir: meta[:cwd])
+  unit = "probe#{checks.index(name) || 0}"
+  Master::Trace::Dmesg::Report.print(unit, out, parent: "probe0") unless out.empty?
+  Master::Trace::Dmesg.status(unit, status.success? ? "clean" : "failed, exit #{status.exitstatus}")
+  failures << name unless status.success?
+end
+
+if failures.empty?
+  Master::Trace::Dmesg.status("probe0", "clean")
+  exit 0
+end
+
+Master::Trace::Dmesg.status("probe0", "#{failures.size} failure(s), #{failures.join(", ")}")
+exit 1

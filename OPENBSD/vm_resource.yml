@@ -1,0 +1,37 @@
+# vm23 resource budget — 1 vCPU, ~1 GiB RAM (OpenBSD Amsterdam).
+# Keep aggregate steady-state under ~60% CPU and ~85% RAM to avoid host complaints.
+# vm23 is the only environment; OPENBSD/CLAUDE.md, "Refused, and why", says why
+# there is no staging copy.
+
+profile: vm23_small
+cpus: 1
+ram_mb: 1024
+
+# Always on: public face + flagship app.
+core_services:
+  - master
+  - brgen
+
+# Start manually: doas ksh OPENBSD/bin/start_all_apps.sh
+# Pins all apps (creates /var/db/pub4_all_apps; resource_guard skips shedding).
+# Mirrors resource_guard.sh's OPTIONAL, which is the live authority.
+optional_services:
+  - amber
+  - bsdports
+
+limits:
+  # These mirror resource_guard.sh, which is the live authority and compares
+  # the 5-minute load average (the second field of vm.loadavg). Change the
+  # script first, then this.
+  load_avg_5m_warn: 2.5
+  load_avg_5m_crit: 5.00
+  # 12 sat above the observed p50 of 13 and would have alarmed at rest; the
+  # guard runs 8 after three recalibrations that never reached this file.
+  mem_free_pct_warn: 8
+  mem_free_pct_crit: 6
+  # Restore floor, read by the guard as MEM_RESTORE.
+  mem_free_pct_restore: 10
+  relayd_check_interval: 120
+  # etc/rc.d/master runs ${FALCON_WORKERS:-1}: one worker on 1 GB so amber and
+  # bsdports can boot alongside master and brgen.
+  master_falcon_workers: 1

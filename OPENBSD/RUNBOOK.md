@@ -1,0 +1,551 @@
+# Operator
+
+Production runbook for pub4. Read this file before live work. Read `MASTER/README.md` for the agent runtime; this file covers the
+VPS and deploy surface, the agent contract, and live-operation safety in one
+place.
+
+## Repo layout
+
+`MASTER/`, `RAILS/`, `OPENBSD/`, `STUDIO/` at the repo root, plus dotfolders. `MASTER/tools/` is inside MASTER and keeps compatibility entrypoints.
+Canonical inventories: `RAILS/apps.yml`, `OPENBSD/deploy_inventory.json`. The
+JSON is generated from `apps.yml` by `ruby OPENBSD/bin/sync_deploy_inventory.rb`,
+and the `domain_alignment` gate fails when the two disagree. Deploy
+gates (`integrity_gate.rb`, `verify_deploy_identity.rb`,
+`deploy_inventory.json`) live at `OPENBSD/` top level, and so does
+Old quarantine samples were deliberately removed from the tracked tree. It is not a recovery path:
+`bin/dr-pull` recovers the databases and `manual_master_deploy.ksh` a stalled
+master deploy. There is no `archive/`; git history holds the old installers.
+
+## Deployment map
+
+```text
+Internet
+  -> pf
+  -> relayd TLS/SNI
+  -> loopback app ports
+      -> MASTER Falcon on ai.brgen.no
+      -> brgen Rails app and vertical subdomains
+      -> amber Rails app
+      -> bsdports Rails app
+  -> NSD/acme/httpd for DNS and certificate plumbing
+```
+
+Runtime contract: TLS terminates at relayd; apps listen on loopback-only ports;
+Rails uses SQLite plus Solid Queue/Cache; secrets live in `/etc/*.env`; source
+of truth on the VPS is `/home/dev/pub4`; long deploys run under tmux.
+
+Gate flow — local: `OPENBSD/bin/check` → `verify_deploy_identity` → Rails
+production/domain/ phantom/frontend gates → OpenBSD deploy smoke. Operator: `git
+pull --ff-only` on vm23 → `vps_ci.sh <app>` → `OPERATOR.sh` or per-app deploy →
+`rcctl restart` affected services → `health_check --public --all-ready-apps`.
+
+## SSH
+
+One session at a time. Rapid reconnects trip pf bruteforce.
+
+| Target | Command |
+|--------|---------|
+| VM (apps) | `ssh -i ~/.ssh/id_ed25519_brgen dev@brgen.no` or `ssh brgen` |
+| VMM host | `ssh -p 31415 -i ~/.ssh/id_ed25519_brgen dev@server4.openbsd.amsterdam` |
+| Console | `vmctl console vm23` then `doas pfctl -t bruteforce -T flush` |
+
+SSH aliases, host topology and provider access are kept in this runbook so live-operation guidance has one source.
+
+## Domains
+
+| Service | URL |
+|---------|-----|
+| MASTER | `https://ai.brgen.no` |
+| brgen | `https://brgen.no` |
+| brgen · marketplace | `https://markedsplass.brgen.no` |
+| brgen · dating | `https://dating.brgen.no` |
+| brgen · playlist | `https://radio.brgen.no` |
+| brgen · takeaway | `https://takeaway.brgen.no` |
+| brgen · tv | `https://tv.brgen.no` |
+| brgen · messenger | `https://messenger.brgen.no` |
+| amber | `https://amberapp.art` |
+| bsdports | `https://bsdports.org` |
+
+The brgen verticals (marketplace/dating/playlist/takeaway/tv/messenger + `maps`)
+are one Rails app served under subdomains via `<brgen>`; relayd already routes
+them all (`etc/relayd.conf`).
+
+### Bringing a domain up
+
+Seven city domains serve brgen, each scoped to its own city: `brgen.no`,
+`oshlo.no`, `trndheim.no`, `stvanger.no`, `cardff.uk`, `edinbrgh.uk`,
+`frankfrt.de`. Six more are registered, in `ALL_DOMAINS`, hold a zone that nsd
+serves and an `acme-client.conf` block, and are waiting on one thing each:
+`brmingham.uk`, `brssels.be`, `dnver.us`, `glasgw.uk`, `lverpool.uk`,
+`mnchester.uk`. None of them has an NS record at its registrar, so nothing asks
+our nameserver for them.
+
+The order below is not a preference. Each step needs the one above it, and the
+last step is the one that bites: relayd refuses to start when a `tls keypair`
+names a certificate that is not on disk, so adding the keypair early takes down
+every site relayd serves, not just the new one.
+
+1. **Delegate at the registrar** — NS to `ns.hyp.net` and `ns.brgen.no`,
+   matching `oshlo.no`. This is the only step that is not on this box.
+2. **Confirm it resolves to us**, or acme cannot answer its own challenge: `ruby
+   -rresolv -e 'puts Resolv.getaddress("glasgw.uk")'` → `46.23.89.226`.
+3. **Issue the certificate.** The `domain` block already exists in
+   `/etc/acme-client.conf`; `doas /usr/local/bin/renew-certs.sh` picks it up, or
+   `doas acme-client -v glasgw.uk` for one.
+4. **Check the certificate is on disk** before touching relayd: `doas ls -l
+   /etc/ssl/glasgw.uk.fullchain.pem`.
+5. **Add `tls keypair "glasgw.uk"`** to `etc/relayd.conf` beside the other city
+   keypairs, then `doas relayd -n` and only then `doas rcctl reload relayd`.
+6. **Verify**: `curl -sS -o /dev/null -w '%{http_code}' https://glasgw.uk/` is
+   200, and the page title names the city.
+
+The stack serves three Rails apps (brgen, amber, bsdports) plus MASTER. `baibl`,
+`blognet` and `hjerterom` are retired; on 2026-08-12 their users, home
+directories (1.6 GB between them), rc.d scripts, `/etc/*.env` files, login
+classes, certificate symlinks and DNS zones were removed from vm23, and their
+own domains (`baibl.no`, `blognet.no`, `hjerterom.no`) with them. Databases are
+kept at `/var/backups/pub4/{hjerterom,deleted-apps}-20260812`. `foodielicio.us`
+and the `anti{casino,gambling,betting}blog.com` trio were not removed: they stay
+in `data/dns.yml`'s `extra_zones`, and nsd still serves them.
+
+The repo recorded baibl and blognet as removed two months before the box lost
+them, which is why `port_inventory` scans the config files where that kind of
+residue lives, so the next removal cannot be half-done quietly.
+
+Seven city apexes serve as of 2026-08-12
+(`Brgen::DomainRegistry::LIVE_DOMAINS`); the rest of `ENTRIES` is either
+NXDOMAIN at the registrar or parked at Domeneshop.
+
+TLS terminates at relayd. Rails sets `config.assume_ssl = true`; do not enable
+`force_ssl`.
+
+## Agent contract
+
+Modes: local contributor (edit repo files, run local gates, do not SSH), VPS
+operator (one SSH session, one CI/deploy operation at a time, tmux for long
+work), recovery (human-directed console or resource guard only to restore access
+or health, then document the fix).
+
+**Hard stops — AI agents must not autonomously:**
+
+| Action | Why |
+|--------|-----|
+| `vmctl console/stop/start/reboot` on server4 | Serial console sessions have caused VM reboots and site outages |
+| `pkill`/`kill` of `cu`, `vmctl`, or other VMM console sessions on server4 | Disrupts other operators and can wedge vm23 |
+| `vps_console.exp` without human approval | Gated by `I_UNDERSTAND_CONSOLE_RISK=1`; recovery-only |
+| Deploy, install, or `pkill` deploy workers from the serial console | Bypasses SSH safety, tmux, and load gates |
+| Target vm27 or any non-vm23 VM | Wrong tenant; production is vm23 (`dev`) |
+| `OPERATOR.sh --stage-1` without `I_UNDERSTAND_DNS_WIPE=1` | Destructive DNS wipe |
+| Parallel SSH deploys, parallel `bin/ci`, or broad `rcctl restart` without a named target | 1 GiB VPS; contention causes outages |
+
+When SSH to vm23 is required, use normal paths — but note which of them takes
+`doas` and which must not:
+
+| | |
+|---|---|
+| `doas zsh OPERATOR.sh` | root, it installs `/etc` |
+| `zsh OPENBSD/bin/vps-deploy <app>` | **dev**; it escalates per step |
+| `zsh OPENBSD/bin/vps_ci.sh <app>` | **dev** |
+
+Under `doas`, `vps-deploy` fails at its first step with `Host key verification
+failed` — root has no github host key, and giving it one would hand root a way
+to fetch and run code from the network. It now refuses that invocation and says
+so; this line used to name all three after the word `doas`.
+
+**Rules:**
+
+- Run `MASTER/bin/operator status` before starting work; the copy-paste paths
+  are in `OPENBSD/data/operator.yml`.
+- Treat `RAILS/apps.yml` and `OPENBSD/deploy_inventory.json` as inventories, not
+  suggestions.
+- Any `/etc` change made on vm23 must be copied back to `OPENBSD/etc/`.
+- Use `ruby40` and `bundle40` on OpenBSD; `zsh OPENBSD/bin/vps_ci.sh <app>` for
+  per-app CI.
+- Keep secrets in `/etc/*.env`; never commit them.
+- Keep Rails `config.assume_ssl = true`; do not enable `force_ssl` behind
+  relayd.
+- Prefer local gates first (`OPENBSD/bin/check`) before any SSH.
+
+**Agent dmesg (verbose file operations):** external agents (Grok CLI, Claude
+Code, Cursor) and MASTER should log mutations in OpenBSD dmesg style — terse,
+lowercase, one fact per line, path-first, e.g.:
+
+```
+write OPENBSD/etc/rc.d/brgen 412B +12/-3
+read MASTER/lib/reach/base.rb sha256=a1b2c3… 2048B
+run zsh OPENBSD/bin/check-openbsd exit=0
+```
+
+Name the path on every read/write/delete; show evidence on writes (diff stat or
+byte size); show command + exit code for shell, not "deployed successfully."
+Silence on success is fine for bulk gates; speak up for each mutated file.
+MASTER: `/dmesg` or `toggle dmesg` streams bus events.
+
+**Reporting** — good deploy closeout: exact host/environment, commands run,
+gates passed/skipped/ failed, services restarted, remaining manual verification.
+Bad: "deployed" without host/command, public health not checked, asset
+precompile skipped after web changes, route/cert changes without relayd/acme/NSD
+context.
+
+## Console automation gate
+
+Recovery-only expect scripts refuse to run unless a human operator exports
+`I_UNDERSTAND_CONSOLE_RISK=1` (same pattern as `I_UNDERSTAND_DNS_WIPE=1` for
+`OPERATOR.sh --stage-1`).
+
+## doas.conf
+
+OpenBSD rejects `/etc/doas.conf` without a trailing newline — `doas` breaks for
+everyone. `OPERATOR.sh` fixes the repo copy before install, validates `su dev -c
+'doas id'`, and rolls back on failure. No cron job installs it: the only other
+path is a deliberate `doas ksh OPENBSD/bin/validate_doas.ksh install <file> <reason>`,
+which validates the same way. The comment atop `etc/doas.conf` says what dev's
+passwordless rule exposes and why neither command scoping nor a password can
+narrow it.
+
+## Backups
+
+`OPENBSD/bin/dr-pull` is the backup. It runs nightly on the operator Mac under
+launchd, writes a `VACUUM INTO` snapshot of every production database on vm23,
+streams them back in one tar, checks `PRAGMA integrity_check` on arrival and
+rotates the last fourteen. `ruby OPENBSD/bin/dr-pull --check` reports the newest
+pull and its age, and fails when the newest is stale — read that rather than the
+launchd exit status, because a snapshot that has stopped working exits 0.
+
+**Litestream replicates nothing and never has.** It is not in OpenBSD ports, so
+`pkg_add litestream` cannot install it, `/usr/local/bin/litestream` does not
+exist, and `/var/backups/litestream/` has been empty since the day it was
+created. It is out of `pkg_scripts` and has no `rc.d` script, so it no longer
+keeps `rcctl ls failed` permanently non-empty. `OPENBSD/etc/litestream.yml` is
+kept because the config is correct for the day someone builds the binary from Go
+and adds an off-host bucket; its header says why the service stays off the boot
+list.
+
+Nothing on the box is a disaster-recovery replica: dr-pull's copies live on the
+Mac, which is one other disk, not a bucket. An off-host object store is the
+remaining gap and it needs an account.
+
+## OpenBSD deploy
+
+Always use tmux. `OPERATOR.sh` runs under `doas` because it installs `/etc`;
+`bin/vps-deploy` must not, because it runs as dev and escalates per step (see
+the table under *Agent contract*).
+
+```zsh
+cd ~/pub4
+tmux new-session -d -s deploy "doas zsh OPENBSD/OPERATOR.sh 2>&1 | tee /tmp/deploy.log"
+tmux attach -t deploy
+```
+
+Default installs `OPENBSD/{etc,usr,var}`, validates pf/relayd, and restarts
+services. Rare: `--first-install`, `--stage-1`, `--stage-2`. `--stage-1`
+installs `etc/pf.stage1.conf`, which passes only 22, 53 and 80: HTTPS and SMTP
+stay blocked until the full `pf.conf` goes in.
+
+`etc/acme-client.conf` is generated by `bin/render_dns.rb` and compared by the
+`dns_zones` gate's `--check`, so do not byte-compare it by hand.
+
+After `MASTER/web/` edits: `doas rcctl restart master`. Falcon does not
+hot-reload.
+
+**`OPENBSD/etc/` is canonical in intent, not in verified-deployability.** Diff
+before you install, every time:
+
+```zsh
+diff -u /etc/relayd.conf OPENBSD/etc/relayd.conf   # read every hunk
+doas cp -p /etc/relayd.conf /etc/relayd.conf.bak-$(date +%Y%m%d-%H%M%S)
+doas install -o root -g wheel -m 644 OPENBSD/etc/relayd.conf /etc/relayd.conf
+doas relayd -n -f /etc/relayd.conf                 # must print "configuration OK"
+doas rcctl restart relayd
+```
+
+On 2026-08-02 the repo copy carried `tls keypair "bplan.pub.healthcare"` for a
+cert that does not exist. relayd refuses to load an absent keypair, so a
+straight repo→live copy would have taken **every** site on the box down. The two
+files had quietly diverged since July precisely because nobody could sync them.
+`OPENBSD/sync.rb` (see *Occasional operator tools*) is the return leg that keeps
+this from building up.
+
+Note also that relayd's `match response header set` **overwrites** whatever the
+backend sent, so the edge value is the only `Permissions-Policy` any browser
+sees, for every app. It has to be the union of what all backends need — a
+`geolocation=()` there silently killed brgen's `#nearby` while the Rails
+initializer said `(self)`.
+
+## Deploy-all disambiguation
+
+Four scripts read as “do everything”, and they do four different things. Pick
+deliberately:
+
+| Script | CI | Scope | When |
+|--------|----|-------|------|
+| `zsh OPENBSD/bin/vps_ci_all.sh` | **Yes** — serial `vps_ci.sh` per app | brgen, amber, bsdports | Normal code change; tests must pass |
+| `I_UNDERSTAND_FAST_DEPLOY=1 zsh OPENBSD/bin/vps_production_push.sh` | **No** — `SKIP_CI=1 SKIP_RUNTIME_GATE=1 bin/vps-deploy all`; only the post-restart gates run, and the runtime skip requires that exact acknowledgement. | master + every app, in vps-deploy's order; `DEMO_SEED_ON_DEPLOY=1` adds brgen's demo seed | Fast hotfix; skips test gate |
+| `zsh OPENBSD/bin/deploy_all.sh` | **No** | Runs from a workstation: syncs pub4 to vm23 and runs `OPERATOR.sh`, so it reapplies `/etc`, relayd and the services, not just app code. `--per-app` also runs each `RAILS/<app>/<app>.sh` | The box's config has drifted or a fresh install needs redoing — not for shipping a code change |
+| `doas ksh OPENBSD/bin/start_all_apps.sh` | **No** — not a deploy at all | Enables and starts master, brgen, amber, bsdports, restarts relayd, then `health_check.rb --all-ready-apps` | Recovery. It writes `/var/db/pub4_all_apps`, which pins the four against `resource_guard.sh` shedding |
+
+`vps_production_push.sh` is the footgun under pressure: it restarts production
+without running CI. Use `vps_ci_all.sh` unless you explicitly need the fast path
+and accept the risk. `deploy_all.sh` is the wider footgun — it rewrites box
+config on the way past, so reach for it only when that is the thing you want.
+
+## Occasional operator tools
+
+Nothing in the repo calls these — they are run by hand, which is exactly why
+they need to be listed somewhere. An orphan script is indistinguishable from a
+dead one until it is written down.
+
+| Script | Run from | What it is for |
+|--------|----------|----------------|
+| `ruby OPENBSD/sync.rb` (as `doas ruby40`) | vm23 | Mirror live `/etc` config **back into** `OPENBSD/`, with secret redaction. The repo→live direction is well travelled; this is the return leg, and skipping it is how `relayd.conf` drifted for weeks (see the warning under *OpenBSD deploy*). |
+| `ruby OPENBSD/ptr_openbsd_amsterdam.rb --ipv4 … --hostname …` | anywhere | Set the PTR record via openbsd.amsterdam's `ptr4`/`ptr6` endpoints; `--ipv6` sets the v6 record. Needed only if the VM's IP changes. It prints the request as a dry run unless `APPLY_PTR=1` is set. |
+| `zsh OPENBSD/bin/vps_run_remote.sh` | workstation | Bootstrap a *fresh* VM: copies `vps_install_all.sh` up through the server4 hypervisor jump and runs it. Not for routine deploys — use `vps-deploy`. |
+| `ksh OPENBSD/bin/manual_master_deploy.ksh` | vm23, under tmux | Fallback when `vps_deploy_master.sh` stalls. It pkills the stuck deploy and its precompile, then precompiles MASTER web, runs the `master_web_assets` gate, restarts master and relayd, and probes `/up`. Output goes to `/tmp/master_manual.log`, not the terminal — `tail -f` it. |
+| `zsh OPENBSD/bin/deploy-diff.sh` | workstation | Read-only: runs `config_drift_gate.rb --remote`, then diffs `relayd.conf` (which the gate excludes) and prints `rcctl check`. It changes nothing in either direction; `sync.rb` above is what pulls the live side back into the repo. |
+
+## Self-healing cron (vm23)
+
+Tracked mirror: `OPENBSD/etc/crontab.vm23` (installed idempotently by
+`OPERATOR.sh`). Hand-edits on vm23 should be copied back to that file.
+
+| Job | Schedule | Log / signal |
+|-----|----------|--------------|
+| `relayd-watchdog` | `*/5 * * * *` | syslog tag `relayd-watchdog` — restarts relayd when unhealthy or backend table stale. It does **not** heal `doas.conf`: that step ran `validate_doas.ksh` from a dev-owned checkout as root every five minutes and was removed, with the reason in the script's own header |
+| `config-drift-check` | `*/15 * * * *` | `/var/log/config_drift.log` — relayd Host routes vs acme SANs vs NSD zones vs DNSSEC paths |
+| `resource_guard.sh` | `*/5 * * * *` | sheds bsdports then amber under sustained pressure; `/var/log/resource_guard_history.log` |
+| `uptime-check.sh` | `*/5 * * * *` | `/var/log/uptime-check.log`, with `ALLOW_BSDPORTS_DOWN=1` |
+| `drain-jobs.sh` | `5 * * * *` | `/var/log/drain-jobs.log` |
+| `core-reclaim.sh` | `40 * * * *` | `/var/log/core-reclaim.log` — returns a core app's grown resident set |
+| `keep-warm.sh` | `*/10 * * * *` | `/var/log/keep-warm.log` — brgen and amber only |
+| `prune-guests.sh` | `20 4 * * *` | `/var/log/prune-guests.log` |
+| `renew-certs.sh` | `0 2 * * 1` | `/var/log/cert-renewal.log` |
+| `vps_weekly_integrity.sh` | `30 3 * * 0` | **tracked and never installed** — absent from root's live crontab and from `/usr/local/bin`, measured 2026-09-12. See TODO 1060. |
+
+Ten rows because `etc/crontab.vm23` schedules ten jobs. This table listed four
+for long enough that six self-healing jobs existed only in the file nobody
+reads next to the one they do.
+
+`nsd-resign` is **not** in root crontab — it runs from `etc/daily.local` (daily
+DNSSEC re-sign + backup pass). Failures surface in syslog (`daily.local` tag)
+and `/var/log/nsd-resign` if present.
+
+## External uptime check
+
+Off-box detection (no alerting pipeline yet):
+
+```sh
+sh OPENBSD/bin/uptime-check.sh
+```
+
+A wrapper with no URL list of its own: it execs `health_check.rb --public-only
+--all-ready-apps`, which derives the fleet from `RAILS/apps.yml` and the deploy
+inventory. A second list here is how the paragraph came to name four hosts after
+the wrapper had stopped naming any. Runs from a laptop or vm23, and `--public-only`
+means it asks the internet and checks nothing on the box — the service, certificate
+and relayd checks are the same script without that flag.
+
+## Post-deploy smoke (one page)
+
+After `vps-deploy` / rcctl restarts, run:
+
+```sh
+# on vm23 — local ports + public + brgen HTML checks (no splash, nav tablist)
+sh OPENBSD/bin/deploy-smoke.sh
+
+# laptop / public only
+sh OPENBSD/bin/deploy-smoke.sh --public
+
+# policy: amber optional on 1GB hosts
+ALLOW_AMBER_DOWN=1 sh OPENBSD/bin/deploy-smoke.sh
+```
+
+Checks `rcctl` (when present), localhost `/up` ports (master 53187, brgen 38182,
+amber 61352), public HTTPS, free-RAM warning, and brgen homepage regressions.
+See `TODO.md` (OPENBSD operator debt) → `multi_app_ram` for the three-app memory
+ceiling. Restart order when recovering: **master → brgen → amber → relayd**.
+
+## vps_console.exp modes
+
+Recovery-only — requires `I_UNDERSTAND_CONSOLE_RISK=1`. One script, the mode
+as its first argument: `expect -f OPENBSD/bin/vps_console.exp <mode>`.
+
+| Mode | Purpose |
+|------|---------|
+| `short [cmd]` | One console command (default `uptime`); 15s timeout |
+| `status` | Tail install log + `rcctl check` master/brgen/amber/bsdports |
+| `probe` | Raw console banner/login probe (debug connectivity) |
+| `fix_key` | Install vm23 `authorized_keys` + flush pf `bruteforce` |
+| `start_install` | `nohup /tmp/vps_on_vm_install.sh` from console |
+| `poll_install` | Tail on-vm install log + process/rcctl snapshot |
+| `install` | Full MASTER bundle + per-app deploy from console (long) |
+| `sync_and_install` | Base64 tarball sync to `/home/dev/pub4` then on-vm install |
+| `drop_install` | Base64-embed `vps_on_vm_install.sh` only; it execs `vps_install_all.sh`, so the tree must already be at `/home/dev/pub4` |
+
+Laptop SSH to vm23: `source OPENBSD/lib/ssh_vm23.sh` or `zsh
+OPENBSD/lib/ssh_vm23.sh <cmd>`. Long deploys: `vm23_tmux deploy 'doas zsh
+OPENBSD/OPERATOR.sh …'`.
+
+## Rails deploy
+
+```zsh
+cd /home/dev/pub4 && git pull --ff-only
+cd RAILS && doas zsh deploy.sh          # brgen (default)
+doas zsh deploy.sh amber                     # or: all
+ruby40 OPENBSD/gates/health_check.rb --public --all-ready-apps
+```
+
+Per-app: `doas zsh RAILS/<app>/<app>.sh`. New Propshaft assets need `rails
+assets:precompile` before restart.
+
+Ruby on VPS: `ruby40`, `bundle40`. Never parallel `bin/ci` across SSH sessions.
+
+**`gc.auto` is 0 in `/home/dev/pub4`, and that is load-bearing.** git runs `gc
+--auto` after a pull and detaches it, so on 2026-08-23 the pull that set up a
+deploy spawned a `pack-objects` holding 266 MB, and on a 1 GB box the Rails
+suite took SIGTERM after 18 tests and the seed step after that. The deploy log
+said only `bin/rails aborted!` — the killer leaves nothing in it, so read
+`vmstat` and `ps auxww | sort -k5 -rn` before believing any theory about the
+app. Setting it to 0 means nothing packs the repo automatically;
+`/etc/weekly.local` does it instead, as dev, and if that line is ever removed
+the checkout grows loose objects forever.
+
+Run it by hand before a deploy if a pull has just landed a lot:
+
+```zsh
+cd /home/dev/pub4 && git gc --quiet && git count-objects -v
+```
+
+## Gates
+
+```zsh
+OPENBSD/bin/check                         # local static deploy gates
+OPENBSD/bin/check-vps                     # vm23/live health gates; skips off-VPS
+ruby OPENBSD/gates/integrity_gate.rb              # full chain: production, phantom_fk, frontend, relayd, domain_align, crawl
+ruby RAILS/tools/crawl_probe.rb           # HTTP manifest + apps.yml ↔ deploy_inventory.json sync
+MASTER_CRAWL_BROWSER=1 ruby RAILS/tools/crawl_browser.rb   # Ferrum element crawl (VPS)
+cd MASTER && bundle exec ruby bin/probe integrity deploy crawl crawl-browser
+```
+
+`bin/probe deploy` and `bin/probe integrity` alias the integrity gate. On macOS,
+`crawl-browser` skips unless `MASTER_CRAWL_BROWSER=1` or
+`PROBE_FORCE_BROWSER=1`. Matrix and blockers: `RAILS/README.md` ("Production
+readiness" section).
+
+## Secrets
+
+`/etc/master.env`, `/etc/<app>.env`. Never commit. Operator keys stay in the
+workstation environment.
+
+## Recovery
+
+Load shedding: `doas ksh OPENBSD/bin/resource_guard.sh`. Full stack: `doas ksh
+OPENBSD/bin/start_all_apps.sh`. Core health: `doas rcctl check master brgen relayd
+pf`.
+
+SSH lockout only: `ssh server4`, then `vmctl console vm23` (manual — not
+agent-automated). pf lockout from console: `doas pfctl -t bruteforce -T flush`.
+
+Any file changed on the VPS under `OPENBSD/` must be copied back to git and
+committed.
+
+## A daemon that answers ok and does nothing
+
+`rcctl check` asks whether a process exists. Three things on vm23 were dead
+behind a green answer, found 2026-09-11, and they are one class rather than
+three incidents: the evidence of work and the evidence of life were the same
+signal, so silence meant both.
+
+**pflogd, suspended for 34 days.** `rcctl check pflogd` said ok; the process
+title said `pflogd: [suspended]`. It had been handed a `/var/log/pflog` written
+with a different snaplen than its own `-s 160`, and `pflogd(8)` is explicit
+about what happens next: an invalid or incompatible file suspends logging until
+a SIGHUP or SIGALRM. It retried on every 60-second flush and wrote
+"Invalid/incompatible log file, move it away" into `/var/log/messages` each
+time, which nothing reads. Packet filter logging was off from 8 August.
+
+    doas pflogd -x -f /var/log/pflog        # integrity, without touching it
+    doas mv /var/log/pflog /var/log/pflog.incompatible-$(date +%Y%m%d)
+    doas rcctl restart pflogd
+    ps -axo command | grep pflogd           # must read [running], not [suspended]
+
+**brgen_jobs, failed.** The Solid Queue worker is not in `apps.yml`, so
+`health_check.rb` — which walks the apps and the core services — could not see
+it. `rcctl ls failed` names it. Nothing ran a background job for as long as it
+was down.
+
+**core-reclaim, inert since 30 August.** Its trigger was `rss_mb >= 320`, and
+brgen resident reads 199M while its address space is 877M and swap sits at 76%.
+The script's own header says RSS understates a swapped process; it then used
+RSS as its only signal. So the reclaim never fired under exactly the pressure
+it exists for, and the kernel did the work instead — `UVM: killed: out of swap`
+21 times for brgen in one dmesg buffer, plus relayd once and three root shells.
+It reads swap pressure as well as RSS now, and writes `/var/db/core_reclaim_seen`
+on every run so "nothing to do" and "never ran" stop being the same silence.
+
+`health_check.rb` asserts all three: the suspended title, `rcctl ls failed`, and
+the heartbeat's age.
+
+## Repair playbooks
+
+- Integrity failure: run `ruby OPENBSD/gates/integrity_gate.rb` and fix the first
+  failing gate.
+- App CI failure: run `zsh OPENBSD/bin/vps_ci.sh <app>` serially. If caches are
+  root-owned, export the app `HOME` and `NPM_CONFIG_CACHE`.
+- MASTER dead tap: precompile `MASTER/web` production assets, restart `master`,
+  then verify `https://ai.brgen.no` after the primer tap.
+- relayd/domain drift: run `MASTER/gates/runner.rb domain_alignment` and
+  `OPENBSD/gates/deploy_smoke_gate.rb` before restarting relayd.
+- pf lockout: use the server4 console and flush the `bruteforce` table; do not
+  keep reconnecting.
+- Silent TTS: `checks.tts` on `https://ai.brgen.no/health` is the authority, and
+  it already gates the deploy — `health_check.rb` fails on `checks.tts false`,
+  `MASTER/web`'s health controller 503s the whole endpoint on it, and
+  `bin/check-vps` runs both. On the source side `MASTER/gates/runner.rb
+  production` runs `MasterTtsGate`, which pins the worker, the supervisor's
+  bundle isolation and `rc.d/master`'s `ensure_daemon!`, and probes for a host
+  backend when `MASTER_TTS_REQUIRE_HOST_BACKEND=1`. It is a capability check
+  (`MASTER/bin/tts-worker` executable *and* EventMachine built with SSL, or
+  espeak at `/usr/bin/espeak` or `/usr/local/bin/espeak`), not socket liveness —
+  the daemon socket is spun up per synthesis. So `checks.tts true` with a silent
+  tap is a web-route or audio-graph problem, not a missing binary. Do not go
+  hunting for an `edge-tts` CLI: `Speech.edge_tts_available?` never consults one
+  — edge TTS is the `rb-edge-tts` gem, reached only through the worker.
+  `OPERATOR.sh` `pkg_add`s espeak, which is the fallback path.
+
+## Patch examples
+
+A good operator patch updates every authority affected by a domain or port
+change, lists exact checks, and reports host, commands, result, and intentional
+skips. A bad patch changes one app script, says only "restarted stuff", or runs
+the full installer from macOS.
+
+## Post-change
+
+- Run `ruby40 OPENBSD/gates/health_check.rb --public --all-ready-apps`.
+- Copy any live `/etc` changes back into `OPENBSD/etc/`.
+- Put a lasting reason in a comment beside the config or script it explains, a
+  standing refusal in `OPENBSD/CLAUDE.md`, and open work in the repo-root
+  `TODO.md`.
+
+## Launch wipe (demo data -> cold start)
+
+Written 2026-08-22 as the cherry-picked answer to the demo-content launch
+blocker; a runbook on purpose, not a script — GUARD_EXPENSIVE_OPS exists
+precisely so no bin/ file carries a fleet-wide delete. Run it BY HAND, per app,
+on launch day:
+
+1. `ruby OPENBSD/bin/dr-pull` from the Mac — a verified pre-wipe snapshot.
+2. On vm23, stop the app: `doas rcctl stop <app> <app>_jobs`.
+3. Move the primary aside (never delete): `mv
+   /home/<app>/app/storage/production.sqlite3{,.pre-launch}`.
+4. As the app user: `bundle40 exec bin/rails db:prepare` — schema, no seeds.
+   brgen demo seeds are the DEMO; a launch database starts empty. If a curated
+   skeleton is wanted (cities, categories, admin), seed ONLY
+   `db/seeds/launch.rb` — write it that week, review it that week.
+5. `doas rcctl start <app> <app>_jobs`, then the route-manifest probe.
+6. The .pre-launch file stays until the first week survives; dr-pull keeps
+   pulling nightly either way.
+
+Not before the operator decides: which cities open, whether demo mode
+(clearly-badged fictive content) is wanted instead of a wipe, and the
+announcement noindex question. Those are product calls, not runbook steps.

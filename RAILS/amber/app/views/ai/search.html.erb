@@ -1,0 +1,19 @@
+<% content_for :title, t("pages.search_wardrobe_title") %>
+<%= tag.h1 t("pages.search_wardrobe") %>
+<%= form_with url: ai_search_path, method: :get do |f| %>
+  <div class="field-row">
+    <%= f.search_field :q, value: @query, placeholder: t("ai_forms.search_placeholder"), aria: { label: t("ai_forms.search_placeholder") }, autofocus: true, class: "input input--wide" %>
+    <%= f.submit t("search.submit"), class: "btn" %>
+  </div>
+<% end %>
+<% if @explanation.present? %>
+  <p><%= @explanation %></p>
+<% end %>
+<% if @items&.any? %>
+  <div class="item-grid"><%= render @items %></div>
+<% elsif @query.present? %>
+  <%= render "shared/empty_state",
+        title: t("empty.no_matches"),
+        body: t("empty.no_matches_body"),
+        action: { label: t("pages.add_item"), path: new_item_path } %>
+<% end %>

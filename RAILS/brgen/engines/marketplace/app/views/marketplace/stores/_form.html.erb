@@ -1,0 +1,34 @@
+<%= form_with model: [:marketplace, store], url: store.persisted? ? shop_path(store.slug) : shops_path do |form| %>
+  <%= render "shared/errors", object: store %>
+
+  <%= tag.fieldset do %>
+    <%= form.label :name %>
+    <%= form.text_field :name, required: true %>
+  <% end %>
+
+  <%= tag.fieldset do %>
+    <%= form.label :vertical %>
+    <%= form.select :vertical, Marketplace::Store::VERTICALS.map { |vertical| [t("marketplace.verticals.#{vertical}"), vertical] }, include_blank: true %>
+  <% end %>
+
+  <%= tag.fieldset do %>
+    <%= form.label :place_id, t("maps.on_the_map") %>
+    <%= form.collection_select :place_id, @places, :id, :name, { include_blank: t("maps.no_place") } %>
+  <% end %>
+
+  <%= tag.fieldset do %>
+    <%= form.label :stripe_connect_id, t("marketplace.stripe_connect_id") %>
+    <%= form.text_field :stripe_connect_id, maxlength: 128, autocomplete: "off" %>
+    <%= tag.p t("marketplace.stripe_connect_hint"), class: "hint" %>
+  <% end %>
+
+  <%= tag.fieldset do %>
+    <%= form.label :description %>
+    <div data-controller="character-counter" data-character-counter-countdown-value="true">
+  <%= form.text_area :description, rows: 5 , maxlength: 2000, data: { character_counter_target: "input" } %>
+  <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
+</div>
+  <% end %>
+
+  <%= form.submit %>
+<% end %>

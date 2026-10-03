@@ -1,0 +1,10 @@
+<article class="item-card item-card--demo" id="<%= dom_id(item) %>">
+  <% if item.photos.attached? %>
+    <%= responsive_image_tag item.photos.first, alt: item.title, preset: :card, sizes: "(max-width: 768px) 50vw, 240px", class: "item-photo" %>
+  <% else %>
+    <div class="item-photo item-photo--placeholder" aria-hidden="true"><%= item.category.first %></div>
+  <% end %>
+  <%= link_to item.title, demo_wardrobe_item_path(item), class: "item-title" %>
+  <%= item.category %><%= " · #{item.color}" if item.color.present? %>
+  <%= [item.brand, t("items.worn_times_short", count: item.times_worn.to_i), cost_per_wear_label(item)].compact_blank.join(" · ") %>
+</article>

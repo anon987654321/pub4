@@ -1,0 +1,85 @@
+<%# auto_start still defaults true for embeds, but the playlist home passes
+    false: a page that begins playing on load is music nobody asked for, coming
+    from a tab that may not be in front of you, and the transport bar is not on
+    that surface so there is nothing to press.
+    hide_overlay follows auto_start, so turning autoplay off reveals the start
+    overlay rather than leaving a silent page with no way in. %>
+<% auto_start = local_assigns.fetch(:auto_start, true) %>
+<% hide_overlay = local_assigns.fetch(:hide_overlay, auto_start) %>
+<%= tag.div(
+      class: "radio-tunnel#{' radio-tunnel--autostart' if auto_start}",
+      data: {
+        controller: "radio-tunnel",
+        radio_tunnel_tracks_value: radio_tunnel_catalog,
+        radio_tunnel_auto_start_value: auto_start
+      }
+    ) do %>
+
+  <canvas
+    id="radio-canvas"
+    data-radio-tunnel-target="canvas"
+    role="img"
+    aria-label="<%= t("playlist.tunnel_visualizer_aria") %>"
+  ></canvas>
+
+  <header class="radio-header">
+    <h1 data-radio-tunnel-target="heading"><%= t("radio.name") %></h1>
+  </header>
+
+  <% unless local_assigns.fetch(:minimal, false) %>
+  <nav class="radio-nav" aria-label="<%= t("radio.navigation") %>">
+    <% if authenticated? %>
+      <%= link_to t("playlist.new_playlist"), new_playlist_path %>
+      <%= link_to t("radio.upload"), new_hosted_track_path %>
+    <% end %>
+    <% if local_assigns.fetch(:show_library, false) %>
+      <button type="button" class="radio-nav-btn" data-action="click->radio-tunnel#openLibrary"><%= t("playlist.library") %></button>
+    <% end %>
+  </nav>
+
+  <aside class="radio-archaeology" data-radio-tunnel-target="archaeology" hidden aria-label="<%= t("aria.git_archaeology_log") %>">
+    <% radio_archaeology_lines.each do |line| %>
+      <div class="radio-archaeology-line"><%= line %></div>
+    <% end %>
+  </aside>
+  <% end %>
+
+  <%# Now-playing stays on for minimal home too — auto-start is useless if you
+      cannot see the track. %>
+  <div class="radio-now-playing<%= " radio-now-playing--minimal" if local_assigns.fetch(:minimal, false) %>" aria-live="polite">
+    <span class="radio-note-icon" aria-hidden="true">♪</span>
+    <span class="radio-track-display" data-radio-tunnel-target="trackDisplay">…</span>
+  </div>
+
+  <div
+    class="radio-overlay"
+    data-radio-tunnel-target="overlay"
+    <%= "hidden" if hide_overlay %>
+    aria-labelledby="radio-overlay-title"
+  >
+    <h2 id="radio-overlay-title" class="visually-hidden"><%= t("radio.name") %></h2>
+    <p class="radio-start-hint"><%= t("playlist.tap_to_start") %></p>
+  </div>
+
+  <div class="radio-youtube-container" aria-hidden="true">
+    <iframe
+      data-radio-tunnel-target="youtubePlayer"
+      width="1"
+      height="1"
+      frameborder="0"
+      allow="autoplay; encrypted-media"
+      title="<%= t("playlist.youtube_player_aria") %>"
+    ></iframe>
+  </div>
+
+  <% if local_assigns.fetch(:show_library, false) %>
+    <%= render "playlist/playlists/library", playlists: playlists, pagy: local_assigns[:pagy] %>
+  <% end %>
+
+  <%# play/stop/next only: this surface is driven by RadioBrgen, whose AudioEngine
+      exposes start/stop/nextTrack over a YouTube iframe and has no pause and no
+      previous. Rendering those two would be buttons that discard the click. %>
+  <%= render "playlist/shared/transport_bar",
+        scope: "radio-tunnel",
+        controls: %w[play stop next] %>
+<% end %>

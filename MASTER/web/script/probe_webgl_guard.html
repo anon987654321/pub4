@@ -1,0 +1,23 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>MASTER WebGL guard probe</title>
+<script>
+  (function () {
+    var proto = window.HTMLCanvasElement && HTMLCanvasElement.prototype;
+    if (!proto || proto.__masterWebglGuard) return;
+    proto.__masterWebglGuard = true;
+    var original = proto.getContext;
+    proto.getContext = function (type) {
+      if (!window._primerFired && /webgl/i.test(String(type))) return null;
+      return original.apply(this, arguments);
+    };
+  })();
+</script>
+<button id="primer">tap to start</button>
+<canvas id="face" width="64" height="64"></canvas>
+<script>
+  document.getElementById("primer").addEventListener("click", function () {
+    window._primerFired = true;
+    document.body.classList.add("face-session");
+  });
+</script>

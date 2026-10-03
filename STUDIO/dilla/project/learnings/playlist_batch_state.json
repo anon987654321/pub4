@@ -1,0 +1,33 @@
+{
+  "completed_ids": [],
+  "failed": {
+    "akmd_mike_t_alt_kan_skje": {
+      "error": "No such file or directory @ rb_sysopen - /Users/mac/Documents/GitHub/pub4/MASTER/tools/dilla/stems/manifest.json",
+      "at": "2026-07-16T11:45:55Z"
+    },
+    "angelo_reira_johann_sandviken_hotell_a": {
+      "error": "No such file or directory @ rb_sysopen - /Users/mac/Documents/GitHub/pub4/MASTER/tools/dilla/stems/manifest.json",
+      "at": "2026-07-16T11:46:25Z"
+    },
+    "angelo_reira_johann_sandviken_hotell_b": {
+      "error": "No such file or directory @ rb_sysopen - /Users/mac/Documents/GitHub/pub4/MASTER/tools/dilla/stems/manifest.json",
+      "at": "2026-07-16T11:46:59Z"
+    },
+    "chase_swayze_traffic": {
+      "error": "No such file or directory @ rb_sysopen - /Users/mac/Documents/GitHub/pub4/MASTER/tools/dilla/stems/manifest.json",
+      "at": "2026-07-16T11:48:42Z"
+    },
+    "haisam_johann_pb1": {
+      "error": "No such file or directory @ rb_sysopen - /Users/mac/Documents/GitHub/pub4/MASTER/tools/dilla/stems/manifest.json",
+      "at": "2026-07-16T11:49:45Z"
+    },
+    "jan_hakim_johann_stailings_a": {
+      "error": "No such file or directory @ rb_sysopen - /Users/mac/Documents/GitHub/pub4/MASTER/tools/dilla/stems/manifest.json",
+      "at": "2026-07-16T11:50:10Z"
+    },
+    "mike_t_jr_rauingar": {
+      "error": "No such file or directory @ rb_sysopen - /Users/mac/Documents/GitHub/pub4/MASTER/tools/dilla/stems/manifest.json",
+      "at": "2026-07-16T11:50:33Z"
+    }
+  }
+}

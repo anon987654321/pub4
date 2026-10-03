@@ -1,0 +1,12 @@
+{
+  "name": "pub4-tiptap-build",
+  "private": true,
+  "description": "Pins the Tiptap version vendored into shared/vendor/javascript/tiptap.js. Bump here and re-run ../build_tiptap.sh; do not patch the output.",
+  "dependencies": {
+    "@tiptap/core": "2.27.2",
+    "@tiptap/starter-kit": "2.27.2"
+  },
+  "devDependencies": {
+    "esbuild": "0.24.2"
+  }
+}

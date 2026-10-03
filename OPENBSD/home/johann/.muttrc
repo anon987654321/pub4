@@ -1,0 +1,44 @@
+# johann@brgen.no — reads the Maildir smtpd delivers into, sends via the local
+# OpenSMTPD socket. No passwords anywhere: there is no remote submission server
+# to authenticate to, because mutt runs on the machine that IS the mail server.
+
+set folder        = ~/Maildir
+set spoolfile     = ~/Maildir
+set mbox_type     = Maildir
+set record        = +.Sent
+set postponed     = +.Drafts
+set trash         = +.Trash
+set mbox          = +.Archive
+
+set from          = "johann@brgen.no"
+set realname      = "Johann"
+set use_from      = yes
+set envelope_from = yes
+# /usr/sbin/sendmail is OpenSMTPD's compatibility binary; it hands straight to
+# the local socket, which smtpd.conf matches with "from local for any" -> outbound.
+set sendmail      = "/usr/sbin/sendmail -oem -oi"
+
+set sort          = threads
+set sort_aux      = reverse-last-date-received
+set edit_headers  = yes
+set fast_reply    = yes
+set include       = yes
+set markers       = no
+set mark_old      = no
+set wait_key      = no
+set delete        = ask-yes
+
+# --- rendering ---------------------------------------------------------
+# Marketing mail is multipart/alternative: the same message twice, as
+# text/plain and text/html. Prefer the plain part, fall back to the HTML one
+# when the sender only bothered to send HTML (increasingly, everyone).
+set mailcap_path  = ~/.mailcap
+alternative_order text/plain text/enriched text/html
+
+# Rendered inline in the pager, via the copiousoutput entries in ~/.mailcap.
+# Listed explicitly rather than with implicit_autoview, so that adding an
+# image/* mailcap entry does not turn every tracking pixel into inline art.
+auto_view         text/html application/pdf text/calendar
+
+set charset       = utf-8
+set assumed_charset = utf-8

@@ -1,0 +1,166 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "optparse"
+require_relative "../lib/check_runner"
+require_relative "../lib/ruby_runner"
+require_relative "../lib/environment"
+
+ROOT = File.expand_path("../..", __dir__)
+RUBY = Deploy::RubyRunner.gate_ruby
+STEP_TIMEOUT = Integer(ENV.fetch("DEPLOY_CHECK_TIMEOUT", "240"))
+profile = "operator"
+OptionParser.new do |parser|
+  parser.on("--profile=PROFILE",
+            "contributor (source gates), operator (default), or full (+ release/rendered/visual/scan)") do |value|
+    profile = value
+  end
+end.parse!
+
+runner = Deploy::CheckRunner.new(prefix: "deploy-rails", root: ROOT, timeout: STEP_TIMEOUT)
+failures = []
+
+# On the deploy host every app is listening, so a live check that declines to
+# run has found something rather than been unlucky. GateResult#skipped_live
+# turns into a failure under this flag instead of a warning.
+#
+# It was decided per-loop and applied to one of the two, so the source tier —
+# which holds page_simulation and flow_journey, both skipped_live callers —
+# ran soft on the VPS as well as off it. And the host test was a second,
+# narrower one: File.exist?("/etc/rc.d/brgen") beside Environment.on_vps?'s
+# /etc/relayd.conf. Two predicates for one fact disagree the moment brgen's
+# rc.d script is renamed, and the hand-rolled one cannot be rehearsed —
+# on_vps? honours DEPLOY_ASSUME_VPS=1, which is how this gets exercised from a
+# laptop before it is trusted on the box.
+LIVE_ENV = Deploy::Environment.on_vps? ? { "GATE_REQUIRE_LIVE" => "1" } : {}
+
+GATES_RUNNER = "MASTER/gates/runner.rb"
+
+# Label -> gate name in MASTER/gates/gates.yml. These used to be paths to
+# per-gate scripts at the RAILS root; the scripts were shims over the classes
+# the runner already loads, so a name is both shorter and one fewer thing that
+# can point at a file that no longer exists.
+source_gates = [
+  ["ports", "port_inventory"],
+  ["production", "production"],
+  ["walkthrough", "human_walkthrough"],
+  ["phantom fk", "phantom_foreign_keys"],
+  ["engine boundaries", "engine_boundaries"],
+  ["domain align", "domain_alignment"],
+  ["frontend", "frontend_production"],
+  ["schema", "schema_migration"],
+  ["asset freshness", "generated_asset"],
+  # Previously invoked by no runner, deploy script or CI entrypoint at all
+  # (TODO.md: rails_gates_not_wired) — they only ever ran when
+  # someone remembered to call them by hand, which meant in practice they did
+  # not run. All four are static source checks, same shape as the gates above,
+  # and all four pass as of 2026-07-27.
+  ["shared wiring", "shared_wiring"],
+  ["stimulus adoption", "stimulus_components"],
+  ["css constitution", "css_constitution"],
+  ["payment honesty", "payment_honesty"],
+  # Design craft stack (P0–P5); GATE_AUTOFIX off in CI-like checks
+  ["layout suite", "layout_suite"],
+  # Second wave of the same debt entry. These four were still invoked by nothing
+  # after the 2026-07-27 pass, and the reason given for leaving them out — cost —
+  # did not survive measurement: all four together run in 1.4s off the deploy
+  # host, because each degrades to its source half when no app is listening.
+  # deploy_drift reports INCONCLUSIVE rather than green, which is the point.
+  ["page sim", "page_simulation"],
+  ["flow journey", "flow_journey"],
+  ["gate mutation", "gate_mutation"],
+  ["deploy drift", "deploy_drift"],
+  # Same shape as the four above: a source half that always runs — hotwire.js
+  # still observes all three vitals entry types — and a live half that reports
+  # INCONCLUSIVE off the deploy host rather than green.
+  ["web vitals budget", "web_vitals_budget"],
+  # Source-only and instant: three manifests read as text. It belongs with
+  # these rather than the deep set because it opens no browser and needs no
+  # app listening.
+  ["pwa installable", "pwa_installable"],
+]
+
+source_gates.each do |name, gate|
+  env = LIVE_ENV.dup
+  env["GATE_AUTOFIX"] = "0" if name == "layout suite"
+  failures << name.tr(" ", "_") unless runner.run(name, RUBY, GATES_RUNNER, gate, env: env)
+end
+
+# Rails 8.2's HTML+ERB compiler is part of the framework baseline, so every
+# active Rails Gemfile gets the same direct check. The app list comes from
+# apps.yml; MASTER/web is the additional Rails surface outside that matrix.
+rails_apps = YAML.safe_load_file(File.join(ROOT, "RAILS", "apps.yml")).fetch("apps").keys.map do |app|
+  File.join("RAILS", app)
+end + ["MASTER/web"]
+
+rails_apps.each do |app|
+  env = LIVE_ENV.merge(
+    "BUNDLE_GEMFILE" => File.join(ROOT, app, "Gemfile"),
+    "BUNDLE_IGNORE_CONFIG" => "1",
+  )
+  label = "herb #{app.tr("/", "_")}"
+  failures << label unless runner.run(label, RUBY, File.join(app, "bin", "rails"), "herb:check", env: env)
+end
+
+# Gates that are real but too slow for every run, or need a browser and warm
+# apps. constitutional_scan alone is four full MASTER scans (~21 min measured
+# 2026-08-01), which is why it sat unwired instead of being wired badly.
+# --profile=full is where the cost is acceptable; CHECK_RAILS_DEEP=1 opts in
+# from anywhere.
+deep_gates = [
+  ["release", "release"],
+  ["rendered suite", "rendered_suite"],
+  ["visual contract", "visual_contract"],
+  ["constitutional scan", "constitutional_scan"],
+]
+
+deep = profile == "full" || %w[1 true yes on].include?(ENV["CHECK_RAILS_DEEP"].to_s.strip.downcase)
+if deep
+  # CheckRunner's timeout is per-runner, and the default 240s would kill
+  # constitutional_scan a fifth of the way in — a timeout kill reads as a gate
+  # failure, which is worse than not running it.
+  deep_runner = Deploy::CheckRunner.new(
+    prefix: "deploy-rails", root: ROOT,
+    timeout: Integer(ENV.fetch("DEPLOY_DEEP_CHECK_TIMEOUT", "2400"))
+  )
+  deep_gates.each do |name, gate|
+    # These three are live by definition and require the live half wherever
+    # they run; LIVE_ENV supplies it for everything else on the deploy host.
+    env = LIVE_ENV.merge("GATE_AUTOFIX" => "0")
+    env["GATE_REQUIRE_LIVE"] = "1" if %w[rendered\ suite release constitutional\ scan].include?(name)
+    failures << name.tr(" ", "_") unless deep_runner.run(name, RUBY, GATES_RUNNER, gate, env: env)
+  end
+else
+  deep_gates.each { |name, _| puts "deploy-rails: #{name.ljust(18)} skip — --profile=full or CHECK_RAILS_DEEP=1" }
+end
+
+# Static family contracts (no app boot / Ruby 3.4 required).
+#
+# Through run_all.rb, which gives each file its own process. Loading all 82
+# into one interpreter worked, and worked by luck twice over: nearly every
+# file declares ROOT at class scope and several declare APPS, GATES, LINT and
+# SKIP, colliding only because they sit inside differently-named classes; and
+# several shell out to gates that call exit, so one exit anywhere ends the run
+# with Minitest reporting on whatever it had collected by then. Both failure
+# modes are silent — a wrong constant surfaces as an assertion about the wrong
+# tree, and an early exit as a green line over a short run.
+#
+# Measured at the swap rather than assumed: 559 runs either way, the same two
+# files red. The isolation is what is bought here, not coverage.
+failures << "rails_contracts" unless runner.run("rails contracts", RUBY, "RAILS/test/run_all.rb")
+
+if profile == "contributor"
+  puts "deploy-rails: auditor            skip — contributor profile"
+  puts "deploy-rails: runtime              skip — contributor profile"
+else
+  failures << "auditor" unless runner.run("auditor", RUBY, GATES_RUNNER, "frontend_auditor")
+  if Deploy::RubyRunner.runtime_gate_skipped?
+    puts "deploy-rails: runtime              skip — #{Deploy::RubyRunner.runtime_skip_reason}"
+  else
+    # Called directly, not through the runner: --runtime is its own flag, and
+    # the runner only forwards arguments to visual_contract.
+    failures << "runtime" unless runner.run("runtime", RUBY, "MASTER/gates/rails_runtime.rb", "--runtime")
+  end
+end
+
+exit(failures.empty? ? 0 : 1)

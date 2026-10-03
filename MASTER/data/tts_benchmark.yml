@@ -1,0 +1,17 @@
+version: 1
+
+# Conservative regression guards. These are guardrails, not a definition of
+# human naturalness. Automatic TTS metrics are useful for regressions but must
+# not replace listening tests.
+benchmark:
+  min_score: 75
+  speech_rate_wpm:
+    min: 105
+    max: 220
+  dynamic_range_db:
+    min: 6
+  clipping_peak_db:
+    max: -0.1
+  pause_ms:
+    min: 70
+    max: 700

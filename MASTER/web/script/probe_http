@@ -1,0 +1,125 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# HTTP smoke probe for MASTER web UI (no Chrome). Safe on OpenBSD VPS post-restart.
+require "net/http"
+require "json"
+require "socket"
+require "uri"
+require "yaml"
+
+HOST = ENV.fetch("PROBE_HOST", "127.0.0.1")
+PORT = Integer(ENV.fetch("MASTER_WEB_PORT", ENV.fetch("PROBE_PORT", "53187")))
+
+def probe_base
+  url = ENV["WEB_URL"].to_s.strip
+  url.empty? ? "http://#{HOST}:#{PORT}" : url
+end
+
+def get(path, headers: {})
+  base = probe_base
+  uri = URI.join(base.end_with?("/") ? base : "#{base}/", path.sub(%r{\A/}, ""))
+  Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https", read_timeout: 15, open_timeout: 8) do |http|
+    req = Net::HTTP::Get.new(uri.request_uri)
+    headers.each { |key, value| req[key] = value }
+    http.request(req)
+  end
+end
+
+failures = []
+
+begin
+  home = get("/")
+  failures << "homepage #{home.code}" unless home.code == "200"
+  body = home.body.to_s
+  # Markers for the b357 WebGL face + deferred-boot shell (kept in sync with
+  # test/controllers/chat_controller_test.rb, the authoritative homepage contract).
+  %w[id="face" id="primer" tap\ to\ start MASTER_ASSET_PATHS function\ loadFace
+     window.__MASTER_FACE_IMPORT__ window._primerFired error-live 35000 clearWatch
+     chat_actions faceRuntime faceModules boot_fsm MASTER?.boot].each do |needle|
+    failures << "homepage missing #{needle}" unless body.include?(needle)
+  end
+  failures << "legacy 15s boot timeout still present" if body.include?("15000")
+  failures << "legacy 60s boot timeout still present" if body.include?("60000")
+  failures << "primer dismiss missing (gone class)" unless body.include?("classList.add('gone')")
+  cache = home["cache-control"].to_s.downcase
+  failures << "homepage Cache-Control missing no-store (got #{cache})" unless cache.include?("no-store")
+  failures << "primer wire script missing" unless body.include?("getElementById('primer')")
+
+  urls = body.scan(%r{/assets/[^"'\s<>]+}).uniq
+  failures << "no digested assets in homepage" if urls.empty?
+  face_css = urls.find { |path| path.include?("face-") && path.end_with?(".css") }
+  urls.first(42).each do |path|
+    res = get(path)
+    failures << "#{res.code} #{path}" unless res.code == "200"
+  end
+  if face_css
+    css_body = get(face_css).body.to_s
+    failures << "face.css missing .gone dismiss rule" unless css_body.include?(".gone")
+  else
+    failures << "face.css digest missing from homepage"
+  end
+
+  metrics = get("/chat/metrics")
+  failures << "metrics should reject visitors (got #{metrics.code})" unless metrics.code == "401"
+
+  ping = get("/chat/message?message=ping")
+  failures << "smoke ping should return 200 (got #{ping.code})" unless ping.code == "200"
+  failures << "smoke ping missing pong" unless ping.body.to_s.include?("pong")
+
+  status = get("/runtime/status")
+  failures << "runtime status should return 200 (got #{status.code})" unless status.code == "200"
+  if status.code == "200"
+    payload = JSON.parse(status.body) rescue {}
+    failures << "runtime status missing ready flag" unless payload.key?("ready")
+    failures << "runtime status missing model" unless payload.key?("model")
+    failures << "runtime status missing build" unless payload.key?("build")
+    failures << "runtime status missing face_boot_ms key" unless payload.key?("face_boot_ms")
+    failures << "runtime status missing particle_worker_alive key" unless payload.key?("particle_worker_alive")
+  end
+
+  token = ENV["PROBE_TOKEN"].to_s
+  if token.empty?
+    cfg_path = File.expand_path("../../.master/config.yml", __dir__)
+    if File.file?(cfg_path)
+      cfg = YAML.safe_load_file(cfg_path) rescue {}
+      candidate = cfg.is_a?(Hash) ? cfg["web_token"].to_s : ""
+      token = candidate if candidate.length >= 43
+    end
+  end
+  if !token.empty?
+    # /chat/metrics 503s with "warming up" until the background agent
+    # container finishes booting (~90s on the VPS, per ChatController#metrics)
+    # -- running right after a fresh restart (as vps_deploy_master.sh's smoke
+    # step does) hit this every single deploy, a false failure rather than a
+    # real regression. Poll the same readiness signal metrics itself depends
+    # on (/runtime/status's "ready" flag) before treating a non-200 as fatal.
+    deadline = Time.now + 100
+    loop do
+      authed_metrics = get("/chat/metrics", headers: { "X-Token" => token })
+      if authed_metrics.code == "200"
+        data = JSON.parse(authed_metrics.body)
+        failures << "metrics missing model" unless data.key?("model")
+        break
+      elsif authed_metrics.code == "503" && Time.now < deadline
+        sleep 2
+      else
+        failures << "authed metrics #{authed_metrics.code}"
+        break
+      end
+    end
+  end
+rescue Errno::ECONNREFUSED, SocketError => e
+  failures << "connection refused: #{e.message}"
+rescue StandardError => e
+  failures << "#{e.class}: #{e.message}"
+end
+
+if failures.empty?
+  puts "probe_http: PASS #{probe_base}"
+  exit 0
+else
+  puts "probe_http: FAIL #{probe_base}"
+  failures.each { |f| puts "  - #{f}" }
+  exit 1
+end
