@@ -49,7 +49,7 @@ class DesignContractTest < Minitest::Test
   }.freeze
 
   def test_social_tokens_match_dialect_tokens_defaults
-    social = Operator::MasterDesign.design_system.fetch("social")
+    social = Operator::MasterDesign.tokens.fetch("social")
     scss = File.read(DIALECT_TOKENS_SCSS)
     dark_block = mixin_block(scss, "dark-tokens")
 
