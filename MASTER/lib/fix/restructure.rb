@@ -24,7 +24,7 @@ module Master
       MAX_FILES = 48
       MAX_DELETES = 32
       MAX_WRITES = 24
-      # What rules.yml paths.immutable names (the catalogue, the soul, the core
+      # What laws.yml paths.immutable names (the catalogue, the soul, the core
       # spine), from the repository root. An effect reads them and never writes.
       def self.immutable
         @immutable ||= Array((Master.load_rules || {}).dig("paths", "immutable")).map { |entry| "MASTER/#{entry}" }
