@@ -12,7 +12,7 @@ require_relative "../../../tools/master_design"
 require_relative "../../../tools/scss_rules"
 
 module Deploy
-  # P2: measure design_rules.yml (type, contrast, touch, spacing, measure)
+  # P2: measure design_laws.yml (type, contrast, touch, spacing, measure)
   # against tokens + SCSS source. Optional live browser hit-targets when
   # DESIGN_METRICS_BROWSER=1 and Chrome/Selenium are available.
   class DesignMetricsGate
@@ -21,7 +21,7 @@ module Deploy
 
     ROOT = File.expand_path("../../../..", __dir__)
     RAILS = File.join(ROOT, "RAILS")
-    MASTER_RULES = File.join(ROOT, "MASTER", "data", "rules.yml")
+    MASTER_RULES = File.join(ROOT, "MASTER", "data", "laws.yml")
     APPS = %w[brgen amber bsdports shared].freeze
 
     # The component families the sampled checks read, named by the class a
@@ -65,7 +65,7 @@ module Deploy
     def run
       @result = GateResult.new
       unless File.file?(MASTER_RULES)
-        @result.fail("design_metrics: missing MASTER/data/rules.yml")
+        @result.fail("design_metrics: missing MASTER/data/laws.yml")
         return @result
       end
       @rules = Operator::MasterDesign.blocks(MASTER_RULES)
@@ -283,7 +283,7 @@ module Deploy
       end
     end
 
-    # design_rules.yml declares the spacing scale twice and the two disagree:
+    # design_laws.yml declares the spacing scale twice and the two disagree:
     #
     #   pixel_perfection.eight_px_rhythm     0 4 8 12 16 20 24 32 40 48 64 96
     #   layout_rules.grid.allowed_spacing_px   4 8    16    24 32    48 64
