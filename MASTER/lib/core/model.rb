@@ -83,6 +83,7 @@ module Master::Core
       Verbs and their args:
         read   {"path"}                          inspect a file before changing it
         write  {"path","content"}                create or replace a file (full contents)
+        http   {"url"}                           fetch a public HTTP(S) URL through MASTER's guarded network
         exec   {"argv":["prog","arg"...],"evidence":"#{EVIDENCE_KINDS}"}
         git    {"operation":"diff|stage|commit","paths":[...],"message":"..."}
         ask      {"prompt","options":[...]}      a question for the operator when blocked; never to answer
