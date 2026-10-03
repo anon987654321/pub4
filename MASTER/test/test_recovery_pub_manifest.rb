@@ -1,4 +1,4 @@
-<sub># frozen_string_literal: true
+<sub><sub># frozen_string_literal: true
 
 require "minitest/autorun"
 require "date"
@@ -120,3 +120,4 @@ end
     assert_includes lineage.fetch("caution"), "The v50 file predates current pub4 law migration and is evidence, not a second constitution."
   end
 end
+</sub>
