@@ -256,7 +256,7 @@ sync_openbsd_apply() {
     ruby /usr/local/bin/nsd-resign || log WARN "nsd-resign failed after zone sync"
   fi
 
-  # STRICT rules.yml adherence (per success_criteria: "system_applies_to_itself_without_exception", self_test, ground_truth_check, evidence_scoring, veto_patterns, anti_patterns, tier1 principle_priorities).
+  # STRICT laws.yml adherence (per success_criteria: "system_applies_to_itself_without_exception", self_test, ground_truth_check, evidence_scoring, veto_patterns, anti_patterns, tier1 principle_priorities).
   # Run MASTER deep scan on OPERATOR tree before any service restart. Block on violations (tier1 critical + veto).
   # Uses ground_truth_check (fresh read), self_test (laws on OPERATOR), evidence_scoring (scan_clean).
   # Also covers lexical/structural for sh, yml, conf, erb; no bypasses.
@@ -267,9 +267,9 @@ sync_openbsd_apply() {
     typeset scan_log=$scan_log_dir/master_deploy_scan.log
     mkdir -p "$scan_log_dir" || { log ERROR "cannot create $scan_log_dir"; return 1 }
     chmod 700 "$scan_log_dir"
-    log INFO "MASTER rules scan (OPERATOR) — strict pre-apply per rules.yml (ROBUSTNESS/SINGULARITY/LINEARITY/PROXIMITY/ABSTRACTION/DENSITY + veto)"
+    log INFO "MASTER rules scan (OPERATOR) — strict pre-apply per laws.yml (ROBUSTNESS/SINGULARITY/LINEARITY/PROXIMITY/ABSTRACTION/DENSITY + veto)"
     if ! su dev -c 'cd /home/dev/pub4/MASTER && MASTER_SCAN_DETERMINISTIC=1 MASTER_SAFE_MODE=1 bundle40 exec ruby bin/gate --scan-only --tree=OPENBSD' 2>&1 | tee "$scan_log"; then
-      log ERROR "MASTER scan found violations — refusing sync/apply (self_violation would occur per rules.yml)"
+      log ERROR "MASTER scan found violations — refusing sync/apply (self_violation would occur per laws.yml)"
       return 1
     fi
     log INFO "MASTER scan clean — proceeding (scan_clean + self_apply satisfied)"
@@ -278,7 +278,7 @@ sync_openbsd_apply() {
     return 1
   fi
 
-  # Enforce ground_truth_check/ + evidence before writes (rules.yml): fresh read, diff, output shown.
+  # Enforce ground_truth_check/ + evidence before writes (laws.yml): fresh read, diff, output shown.
   # library_verify pre-flight before bundle/shell (per rules).
   for f in /etc/pf.conf /etc/relayd.conf; do
     [[ -s $f ]] || { log ERROR "ground_truth fail on $f"; return 1; }
