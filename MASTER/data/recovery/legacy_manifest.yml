@@ -1231,3 +1231,12 @@ deferred_semantic_gaps:
     disposition: "deferred-gap"
     reason: "Recover only when a current workflow genuinely needs structured mutation of embedded languages."
 
+pub2_dilla_carousel_review:
+  source_ref: "pub2 restoration commit 818ea0d03770843a09e871c8a458f0cf5edc7985"
+  artifact: "misc/j-dilla-minimal-carousel.html"
+  finding: "The artifact bundled a mobile-first visualizer carousel, persistent starfield/warp-tunnel visuals, touch navigation, audio playback and a curated Dilla playlist."
+  current_mapping: "RAILS/brgen/app/javascript/radio_brgen_tunnel.js provides the canonical Radio Bergen tunnel, deliberate audio-reactive bands, media-session controls, persistent track progression and the preserved Dilla/J-88 set."
+  disposition: "absorbed; do-not-restore-html-monolith"
+  caution: "The old artifact also depended on hidden YouTube playback and duplicated visualizer/audio state; current code deliberately separates the tunnel from playback and labels proxy motion as proxy."
+
+
