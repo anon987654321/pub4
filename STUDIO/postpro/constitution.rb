@@ -1,13 +1,13 @@
 # frozen_string_literal: true
 
-# The creative boundary between Postpro and MASTER law. MASTER/data/rules.yml is
+# The creative boundary between Postpro and MASTER law. MASTER/data/laws.yml is
 # the catalogue; law/universal.rb carries the executable semantic laws after
 # their migration out of the catalogue. This adapter turns the applicable laws
 # into image-generation invariants rather than trying to lint aesthetics with regex.
 module Postpro
   module Constitution
     OUTPUT_DIR = File.expand_path(ENV.fetch("POSTPRO_OUTPUT_DIR", __dir__)).freeze
-    RULES_PATH = File.expand_path("../../MASTER/data/rules.yml", __dir__).freeze
+    LAWS_PATH = File.expand_path("../../MASTER/data/laws.yml", __dir__).freeze
     LAW_PATHS = [
       File.expand_path("../../MASTER/law/universal.rb", __dir__),
       File.expand_path("../../MASTER/law/law.rb", __dir__),
@@ -49,7 +49,7 @@ module Postpro
     end
 
     def rules_catalog
-      @rules_catalog ||= File.read(RULES_PATH, encoding: "UTF-8").freeze
+      @rules_catalog ||= File.read(LAWS_PATH, encoding: "UTF-8").freeze
     end
 
     def verify_law_catalog!
