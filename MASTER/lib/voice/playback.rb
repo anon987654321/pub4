@@ -417,14 +417,14 @@ module Master
           @lock.synchronize { @playing_pid = wait_thr.pid if active }
           begin
             stale = -> { !generation_active?(generation) }
-            outcome = Speech.stream_edge_to_io(
+            stream = Speech.stream_edge_to_io(
               text: values[:part],
               voice_name:,
               style_config:,
               io: stdin,
               stale_test: stale,
             )
-            outcome = StreamOutcome.new(ok: !!outcome, played_bytes: 0) if outcome == true || outcome == false
+            outcome = StreamOutcome.new(ok: stream.ok, played_bytes: stream.bytes)
           ensure
             stdin.close
             outcome = StreamOutcome.new(
