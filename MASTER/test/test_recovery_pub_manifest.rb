@@ -190,6 +190,17 @@ class TestRecoveryPubManifest < Minitest::Test
     )
   end
 
+  def test_legacy_deploy_bundle_is_reconciled
+    manifest = YAML.safe_load(ROOT.join("MASTER/data/recovery/legacy_manifest.yml").read, permitted_classes: [Date])
+    review = manifest.fetch("legacy_deploy_bundle_review")
+
+    assert_equal "41dcb7c8a88ada5ab948d0fd65e222ed3683d037", review.fetch("restoration_commit")
+    assert_equal "246160caaaf7d96930395d5a8e8bd19c8096ce0c", review.fetch("pruning_commit")
+    assert_equal 6, review.fetch("retained_patterns").size
+    assert_equal "Keep the Git commits as provenance; do not resurrect the script forest. Rebuild any missing behavior inside current app/shared boundaries.",
+                 review.fetch("archive_rule")
+  end
+
   def test_pub2_reasoning_lineage_is_absorbed_without_a_second_authority
     manifest = YAML.safe_load(ROOT.join("MASTER/data/recovery/legacy_manifest.yml").read, permitted_classes: [Date])
     lineage = manifest.fetch("pub2_semantic_lineage")
