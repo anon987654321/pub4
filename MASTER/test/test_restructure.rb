@@ -204,10 +204,12 @@ class TestRestructure < Minitest::Test
   end
 
   def test_each_tree_is_proved_its_own_way
+    assert_equal %w[MASTER RAILS OPENBSD STUDIO], RestructureSweep::Contracts::BY_TREE.keys
     assert_instance_of Restructure::MasterProof, Restructure::Proof.for("MASTER", @repo)
     assert_instance_of Restructure::RailsProof, Restructure::Proof.for("RAILS", @repo)
     assert_instance_of Restructure::ScriptProof, Restructure::Proof.for("OPENBSD", @repo)
     assert_instance_of Restructure::ScriptProof, Restructure::Proof.for("STUDIO", @repo)
+    assert_includes RestructureSweep::Contracts.for("STUDIO"), "canonical media and production source tree"
   end
 
   def test_rails_proof_includes_mounted_engine_tests
