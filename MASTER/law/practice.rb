@@ -19,7 +19,7 @@ Law.define(:COLLAPSE_BEFORE_ADDING) do
   severity :warn
   practice <<~TEXT
     before adding machinery, run the universal transformation plan from
-    data/rules.yml. inventory and classify first; then defragment, decouple,
+    data/laws.yml. inventory and classify first; then defragment, decouple,
     flatten, merge, split, relocate, rename, reorder, remove, reflow and
     simplify. recommend instead of guessing when proof is insufficient.
     adding is the last resort and its reason belongs in git history. Every
@@ -30,7 +30,7 @@ Law.define(:COLLAPSE_BEFORE_ADDING) do
   good "extends the gate that exists"
 end
 
-# Three of the rules here share an id with a catalogue rule in data/rules.yml,
+# Three of the rules here share an id with a catalogue rule in data/laws.yml,
 # and for those three the catalogue owns the wording. The usual resolution is
 # the other way round -- whichever population holds the detector states the rule
 # -- but a `practice` cannot fire on a line, so the detector is the catalogue's
@@ -436,7 +436,7 @@ Law.define(:IMPORTANCE_ORDER) do
   severity :warn
   practice <<~TEXT
     Inverted Pyramid (files) — public API first, primary logic next, helpers
-    and constants last; see rules.yml style.line_order.
+    and constants last; see laws.yml style.line_order.
   TEXT
   fix "Inverted Pyramid (files) — public API first, primary logic next, helpers and constants last;"
   bad  "private helpers above the public API"
