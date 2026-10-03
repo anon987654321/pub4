@@ -36,7 +36,7 @@ class TestProblemGraph < Minitest::Test
     problem = problems.first
     assert problem.multi_signal?
     assert_equal 2, problem.size
-    assert_equal %w[flatten merge remove simplify], problem.candidate_operations
+    assert_equal %w[decouple flatten merge split relocate remove simplify], problem.candidate_operations
     assert_equal %w[MASTER/lib/a.rb MASTER/lib/b.rb], problem.files
   end
 
@@ -61,7 +61,7 @@ class TestProblemGraph < Minitest::Test
 
     problem = @graph.call(rows).first
 
-    assert_equal %w[defragment decouple merge split relocate flatten simplify], problem.candidate_operations
+    assert_equal %w[defragment decouple flatten merge split relocate simplify], problem.candidate_operations
     assert_equal %w[merge decouple], problem.primary_operations
   end
 
