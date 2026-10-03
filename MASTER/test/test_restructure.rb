@@ -85,6 +85,19 @@ class TestRestructure < Minitest::Test
     assert_empty sh("git", "status", "--porcelain", chdir: @repo)
   end
 
+  def test_an_approved_restructure_returns_before_and_after_hash_evidence
+    result = restructure.call(split_plan, message: "refactor: split Big", review: ->(_diff) {})
+
+    assert result.ok?, -> { result.message }
+    evidence = result.value!.fetch(:evidence)
+    assert_equal ["MASTER/lib/big.rb", "MASTER/lib/big/second.rb", "MASTER/lib/tiny.rb"].sort, evidence.fetch(:before).keys.sort
+    assert_equal evidence.fetch(:before).keys.sort, evidence.fetch(:after).keys.sort
+    refute_equal evidence.fetch(:before).fetch("MASTER/lib/big.rb"), evidence.fetch(:after).fetch("MASTER/lib/big.rb")
+    assert_equal ["MASTER/lib/big/second.rb"], evidence.fetch(:written).reject { |path| path == "MASTER/lib/big.rb" }
+    assert_equal ["MASTER/lib/tiny.rb"], evidence.fetch(:deleted)
+    assert_equal "review_and_tree_proof_held", evidence.fetch(:proof)
+  end
+
   def test_a_rejected_restructure_puts_every_file_back
     seen = nil
     reject = lambda do |diff|
