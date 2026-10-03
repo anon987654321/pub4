@@ -38,7 +38,7 @@ module Master
         RuleLineage.new(root: @root).explain(key)
       end
 
-      # The design law. It sits at rules.yml#beauty, line 92 of 4,215, and an
+      # The design law. It sits at laws.yml#beauty, line 92 of 4,215, and an
       # agent finds it only if a human points -- which is how it was found on
       # 2026-08-31. Ando, Rams and Zen govern every visual decision in this tree
       # and nothing surfaced them.
@@ -48,7 +48,7 @@ module Master
         b = rules["beauty"] || {}
         return if b.empty?
 
-        lines = ["design law (data/rules.yml#beauty) — governs every visual decision:"]
+        lines = ["design law (data/laws.yml#beauty) — governs every visual decision:"]
         b.each do |group, values|
           lines << "  #{group}:"
           case values
@@ -60,9 +60,9 @@ module Master
       end
 
       # Master.load_rules, not a private re-read. This method used to load
-      # rules.yml and then overwrite base["rules"] with its own copy of the
+      # laws.yml and then overwrite base["rules"] with its own copy of the
       # shard-merge loop — a second implementation of Master.load_rules living
-      # two directories away. When the shards were folded into rules.yml on
+      # two directories away. When the shards were folded into laws.yml on
       # 2026-08-12 that copy started returning {} and assigning it over the real
       # rules, so /why went silent for every registry and scan rule while
       # reporting nothing wrong.
@@ -101,7 +101,7 @@ module Master
 
       def registry_rule(key)
         slug = key.upcase.tr("-", "_")
-        hit = Master.flatten_rules(rules.fetch("rules", {})).find { |r| r["id"].to_s.upcase == slug }
+        hit = Master.law_entries(root: @root).find { |r| r["id"].to_s.upcase == slug }
         return unless hit
 
         [
@@ -125,8 +125,7 @@ module Master
       end
 
       def law(key)
-        laws = rules["laws"] || {}
-        hit = laws[key.upcase] or return
+        hit = Master.law_entries(root: @root).find { |law| law["id"].to_s.upcase == key.upcase } or return
         [
           "law: #{key.upcase}",
           "  priority: #{hit["priority"]}",
