@@ -26,7 +26,7 @@ module Master
           "external agents can consume `MASTER/bin/master --fix-context <target>`",
           "read relevant source systematically; complete where practical, contiguous ranges for large files",
           "cross-tree reasoning: RAILS = feature truth, shared engine, app runtime and rendered graph; " +
-          "OPENBSD = deploy identity, operator recipes, service/config lifecycle and live health",
+          "OPENBSD = deploy identity, operator recipes, service/config lifecycle and live health; "           "canonical remote deploy = www.openbsd.amsterdam / vm23 via bin/operator vps deploy --remote",
           "reason through authority, topology, runtime, privilege, network edge, lifecycle, " +
           "resources and recovery before acting",
           "RAILS behavior comes from its pinned source and lockfile; " \
