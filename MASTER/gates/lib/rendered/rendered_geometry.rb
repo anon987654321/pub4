@@ -32,7 +32,7 @@ module Deploy
 
     ROOT = File.expand_path("../../../..", __dir__)
     RAILS_ROOT = File.join(ROOT, "RAILS")
-    MASTER_RULES = File.join(ROOT, "MASTER", "data", "rules.yml")
+    MASTER_RULES = File.join(ROOT, "MASTER", "data", "laws.yml")
 
     # Controls whose failure costs the user the interaction outright. Everything
     # else reports soft so one noisy surface cannot wall off the merge.
@@ -99,7 +99,7 @@ module Deploy
 
     def load_design_rules
       @rules = Operator::MasterDesign.blocks(MASTER_RULES)
-      @tokens = Operator::MasterDesign.design_system
+      @tokens = Operator::MasterDesign.tokens
       @min_touch = (@rules.dig("layout_rules", "touch", "target_min_px") || 44).to_f
       @aaa = (@rules.dig("typography", "accessibility", "normal_text_contrast") || 7.0).to_f
       # design_rules states the spacing grid twice and the two disagree:
