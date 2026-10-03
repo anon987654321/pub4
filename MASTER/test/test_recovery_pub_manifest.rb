@@ -201,6 +201,21 @@ class TestRecoveryPubManifest < Minitest::Test
                  review.fetch("archive_rule")
   end
 
+  def test_late_archaeology_records_are_pinned
+    manifest = YAML.safe_load(ROOT.join("MASTER/data/recovery/legacy_manifest.yml").read, permitted_classes: [Date])
+
+    dilla = manifest.fetch("pub2_dilla_carousel_review")
+    assert_equal "absorbed; do-not-restore-html-monolith", dilla.fetch("disposition")
+
+    gaps = manifest.fetch("deferred_semantic_gaps")
+    assert gaps.any? { |gap| gap["capability"] == "encrypted session persistence" }
+    assert gaps.any? { |gap| gap["capability"] == "mixed-language heredoc parser" }
+
+    ai3 = manifest.fetch("legacy_ai3_role_review")
+    assert_includes ai3.fetch("roles_with_nontrivial_surface").map { |role| role.fetch("role") }, "legal"
+    assert_includes ai3.fetch("excluded_as_runtime"), "external Weaviate/Ferrum-backed autonomous assistant trees"
+  end
+
   def test_pub2_reasoning_lineage_is_absorbed_without_a_second_authority
     manifest = YAML.safe_load(ROOT.join("MASTER/data/recovery/legacy_manifest.yml").read, permitted_classes: [Date])
     lineage = manifest.fetch("pub2_semantic_lineage")
