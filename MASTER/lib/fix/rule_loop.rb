@@ -406,9 +406,9 @@ module Master
 
       def convergence_cfg
         @convergence_cfg ||= begin
-          rules = Master.load_yaml(Master::RULES_PATH)
+          rules = Master.load_yaml(Master::LAWS_PATH)
           convergence = rules&.dig("thresholds", "convergence")
-          raise "convergence thresholds missing: #{Master::RULES_PATH}" unless convergence.is_a?(Hash)
+          raise "convergence thresholds missing: #{Master::LAWS_PATH}" unless convergence.is_a?(Hash)
           convergence
         end
       rescue StandardError => e
