@@ -9,7 +9,7 @@ module Master
       # is given is to read the law before writing, and the only way to do that
       # was a YAML one-liner in CLAUDE.md that iterated the wrong shape for months.
       #
-      # A list, not a copy: it reads data/rules.yml at call time, the same file
+      # A list, not a copy: it reads data/laws.yml at call time, the same file
       # `bin/operator rules <ID>` prints a card from. An argument filters by id or
       # name, so `/rules guard` narrows to the rules that govern guard clauses.
       #
@@ -21,7 +21,7 @@ module Master
         return dispatch_rule_sources(root) if filter == "sources"
         return dispatch_rule_index if filter == "index"
 
-        rules = Master.law("rules") || []
+        rules = Master.law_entries(root:)
         rows = rules.select do |rule|
           next true if filter.empty?
 
@@ -86,7 +86,7 @@ module Master
         kind.empty? ? "declared" : kind
       end
 
-      # /why — one rule explained from law/ and data/rules.yml, and from the
+      # /why — one rule explained from law/ and data/laws.yml, and from the
       # model only when nothing local matches.
       def dispatch_why(agent:, root:, ctx: nil)
         rule = arg_for(ctx)
