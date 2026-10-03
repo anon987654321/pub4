@@ -218,10 +218,11 @@ module Master
 
       class WebFetch < RubyLLM::Tool
         include ToolForwarding
-        description "Fetch a URL as plain text. Rewrites github/gist/arxiv/codepen URLs."
+        description "Fetch a URL as plain text. Use full=true when the complete response is required; SSRF and governor guards still apply."
         parameter :url, description: "http(s) URL to fetch", required: true
+        parameter :full, description: "Return the complete response up to the WebFetch full-response limit", type: "boolean", required: false
 
-        def execute(url:) = forward(url: url.to_s)
+        def execute(url:, full: false) = forward(url: url.to_s, full: full == true)
       end
 
       class AskLlm < RubyLLM::Tool
