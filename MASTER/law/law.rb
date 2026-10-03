@@ -4,8 +4,6 @@ require "digest"
 require_relative "../lib/law/vocabulary"
 
 # law/ — the constitution as code.
-
-# law/ — the constitution as code.
 #
 # A law exists only as a triple: detector + a fixture it MUST flag + a fixture
 # it MUST NOT flag. A law with no detector is documentation. A law with no bad
