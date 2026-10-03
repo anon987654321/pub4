@@ -3,7 +3,7 @@
 require "yaml"
 
 module Operator
-  # The design-tier rules of MASTER/data/rules.yml, as the block map that gates
+  # The design-tier rules of MASTER/data/laws.yml, as the block map that gates
   # and lints read.
   #
   # Five gates and one lint each opened that file and dug `["design_rules"]`
@@ -21,10 +21,10 @@ module Operator
     # Otherwise derive the source checkout from this file; never assume a
     # developer's home directory.
     def rules_path
-      source = File.expand_path("../data/rules.yml", __dir__)
+      source = File.expand_path("../data/laws.yml", __dir__)
       configured = ENV["PUB4_RAILS_ROOT"].to_s.strip
       candidates = [
-        (File.join(File.dirname(configured), "MASTER/data/rules.yml") unless configured.empty?),
+        (File.join(File.dirname(configured), "MASTER/data/laws.yml") unless configured.empty?),
         source,
       ].compact
       candidates.find { |candidate| File.readable?(candidate) }
