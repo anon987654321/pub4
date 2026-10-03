@@ -12,7 +12,7 @@ module Master
 
       def data(root: Master::ROOT)
         Master.load_yaml(File.join(root, "data", "laws.yml"), default: {})
-          .fetch("design_system", {})
+          .fetch("tokens", {})
           .fetch("face_interface", {})
       end
 
