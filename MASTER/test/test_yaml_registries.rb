@@ -11,7 +11,7 @@ YAML_SPECS = {
   "patterns.yml"                 => { required_keys: %w[infer prompt_archaeology repo_topics], arrays: [] },
   # zsh, injection and refusal_templates moved to rules.yml: they are law, and
   # patterns.yml is the register for what is not. The guarantee moved with them.
-  "rules.yml"                    => { required_keys: %w[zsh injection refusal_templates laws rules], arrays: [] },
+  "rules.yml"                    => { required_keys: %w[zsh injection refusal_templates laws rules rule_system], arrays: [] },
 }.freeze
 
 PATTERNS_NAMESPACES = {
