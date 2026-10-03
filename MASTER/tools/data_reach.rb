@@ -84,9 +84,9 @@ module Operator
     # opened, and `lint:reader_singularity` enforces it — so a basename-only test
     # reports the discipline as the defect. Measured 2026-09-10: eight of the
     # forty-five misattributions were readers doing exactly what they are told
-    # to, `Master.load_rules`, `Master::RULES_PATH` and `@rules.data(:soul)`.
+    # to, `Master.load_rules`, `Master::LAWS_PATH` and `@rules.data(:soul)`.
     ACCESSORS = {
-      "rules.yml" => %w[RULES_PATH load_rules Master.law flatten_rules],
+      "laws.yml" => %w[LAWS_PATH load_rules Master.law flatten_rules],
       "soul.yml" => ["soul_data", 'data("soul")', "data(:soul)"],
       "runtime.yml" => %w[RuntimeCatalog],
       "limits.yml" => ["limits_path", "data(:workflow)"],
@@ -129,7 +129,7 @@ module Operator
 
     # A key whose name appears in code that never mentions the yaml file is
     # counted as named by the census and still unread: success_criteria lived
-    # in rules.yml while a session-state reader used the same word for its own key.
+    # in laws.yml while a session-state reader used the same word for its own key.
     def attributed?(key, yaml_basename)
       handles = [yaml_basename, *ACCESSORS.fetch(yaml_basename, [])]
       code_files.any? do |_path, src|
