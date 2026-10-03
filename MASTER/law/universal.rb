@@ -383,6 +383,7 @@ Law.define(:CONVENTION_OVER_CONFIG) do
 end
 
 Law.define(:PROGRAMMER_HAPPINESS) do
+  lifecycle :advisory
   source "Optimize for Programmer Happiness (Rails Doctrine, DHH)"
   severity :info
   languages %i[ruby]
@@ -397,6 +398,7 @@ Law.define(:PROGRAMMER_HAPPINESS) do
 end
 
 Law.define(:OMAKASE) do
+  lifecycle :advisory
   source "The Menu Is Omakase (Rails Doctrine, DHH)"
   severity :info
   languages %i[ruby]
@@ -425,6 +427,7 @@ Law.define(:NO_ONE_PARADIGM) do
 end
 
 Law.define(:BEAUTIFUL_CODE) do
+  lifecycle :advisory
   source "Exalt Beautiful Code (Rails Doctrine, DHH)"
   severity :info
   languages %i[ruby]
@@ -439,6 +442,7 @@ Law.define(:BEAUTIFUL_CODE) do
 end
 
 Law.define(:SHARP_KNIVES) do
+  lifecycle :advisory
   source "Provide Sharp Knives (Rails Doctrine, DHH)"
   severity :info
   languages %i[ruby]
@@ -467,6 +471,7 @@ Law.define(:INTEGRATED_SYSTEMS) do
 end
 
 Law.define(:PROGRESS_OVER_STABILITY) do
+  lifecycle :advisory
   source "Progress Over Stability (Rails Doctrine, DHH)"
   severity :info
   languages %i[ruby]
@@ -481,6 +486,7 @@ Law.define(:PROGRESS_OVER_STABILITY) do
 end
 
 Law.define(:BIG_TENT) do
+  lifecycle :advisory
   source "Push Up a Big Tent (Rails Doctrine, DHH)"
   severity :info
   languages %i[ruby]
@@ -1270,6 +1276,7 @@ Law.define(:COMMENTS_AS_DEODORANT) do
 end
 
 Law.define(:POSTEL) do
+  lifecycle :advisory
   source "Postel's Law / Robustness Principle"
   severity :info
   ask "Does this boundary reject safely normalizable valid variation or emit unnecessarily strict structure that callers do not need?"
