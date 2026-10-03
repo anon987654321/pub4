@@ -8,9 +8,11 @@ config:
     device: mps
     trigger_word: johann
     network:
+      # Rank 16 is the researched sweet spot for a subject LoRA; a set this small
+      # overfits a wider rank, and the fix for overfit is narrowing to 8-12.
       type: lora
-      linear: 32
-      linear_alpha: 32
+      linear: 16
+      linear_alpha: 16
     save:
       dtype: float16
       save_every: 250
@@ -20,7 +22,7 @@ config:
     - folder_path:
       caption_ext: txt
       caption_dropout_rate: 0.08
-      shuffle_tokens: false
+      shuffle_tokens: true
       cache_latents_to_disk: true
       resolution:
       - 512

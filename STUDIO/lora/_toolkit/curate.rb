@@ -353,6 +353,15 @@ module Lora
     # it, and unedited_captions() recognises it to report which captions nobody
     # has touched. Written out twice, an edit to the wording in one place would
     # have made the other silently report zero unedited captions.
+    #
+    # The editing rule, settled by the caption guides and the disentanglement
+    # literature: caption what varies, and let what never varies ride on the
+    # token. An image trait the caption omits is learned INTO the trigger word,
+    # so the face, the natural hair colour and the body type bind to the token
+    # cleanly; name them in every file and identity spreads across generic
+    # attribute words that no longer separate the subject from anyone described
+    # the same way. Pose, expression, clothing, framing, light and setting
+    # belong in the caption; face shape, eye colour and age belong to the token.
     def self.caption_stub(token) = "#{token}, "
 
     def self.dataset_dir(subject_dir) = File.join(subject_dir, DATASET_DIRNAME)

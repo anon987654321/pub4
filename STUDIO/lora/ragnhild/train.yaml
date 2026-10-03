@@ -11,8 +11,10 @@ config:
       # ostris/flux-dev-lora-trainer builds LoRA. OFT and DoRA are not a
       # network.type it accepts; linear timestep_type below is the identity spend.
       type: lora
-      linear: 32
-      linear_alpha: 32
+      # Rank 16 is the researched sweet spot for a subject LoRA; a set this small
+      # overfits a wider rank, and the fix for overfit is narrowing to 8-12.
+      linear: 16
+      linear_alpha: 16
     save:
       dtype: float16
       save_every: 250
@@ -22,7 +24,9 @@ config:
     - folder_path:
       caption_ext: txt
       caption_dropout_rate: 0.08
-      shuffle_tokens: false
+      # Token order inside a natural-sentence caption carries no meaning the
+      # trainer can use, and shuffling makes the trigger harder to hijack by word position.
+      shuffle_tokens: true
       cache_latents_to_disk: true
       resolution:
       - 512
