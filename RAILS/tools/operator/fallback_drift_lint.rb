@@ -176,7 +176,7 @@ module Operator
     end
 
     def collect_from_yaml(known)
-      MasterDesign.design_system.each_value do |entries|
+      MasterDesign.tokens.each_value do |entries|
         next unless entries.is_a?(Hash)
 
         entries.each do |key, value|
