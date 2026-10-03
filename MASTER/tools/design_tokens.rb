@@ -63,7 +63,7 @@ module DesignTokens
   end
 
   def load
-    Operator::MasterDesign.design_system(SOURCE)
+    Operator::MasterDesign.tokens(SOURCE)
   end
 
   def face_root_css
@@ -104,7 +104,7 @@ module DesignTokens
     return false if actual == canonical
 
     body = YAML.dump(canonical).sub(/\A---\n/, "")
-    File.write(path, "# GENERATED from MASTER/data/rules.yml#design_system. Do not edit by hand.\n#{body}")
+    File.write(path, "# GENERATED from MASTER/data/rules.yml#tokens. Do not edit by hand.\n#{body}")
     true
   end
 
@@ -174,7 +174,7 @@ module DesignTokens
 
     return nil if drifted.empty?
 
-    "_dialect_tokens.scss defaults drifted from MASTER design_system anchors: #{drifted.join(', ')}"
+    "_dialect_tokens.scss defaults drifted from MASTER tokens anchors: #{drifted.join(', ')}"
   end
 
   def face_root_drift?(path)
@@ -223,7 +223,7 @@ module DesignTokens
     return nil unless m
     return nil if normalize(m[2]) == normalize(expected_value)
 
-    "#{path.sub("#{ROOT}/", '')}: --#{css_var} is #{m[2].strip}, MASTER/data/rules.yml#design_system says #{expected_value}"
+    "#{path.sub("#{ROOT}/", '')}: --#{css_var} is #{m[2].strip}, MASTER/data/rules.yml#tokens says #{expected_value}"
   end
 
   # sync: true writes corrections and returns changed paths; sync: false
