@@ -108,12 +108,12 @@ class TestFixLoopFileCollector < Minitest::Test
     end
   end
 
-  # soul.yml owns sacred paths; rules.yml is the law catalogue. /fix must never
+  # soul.yml owns sacred paths; laws.yml is the law catalogue. /fix must never
   # collect the constitutional data or core spine for repair.
   def test_sacred_paths_are_never_collected
     files = collector(Master::ROOT).collect(Master::ROOT).map { |f| f.delete_prefix("#{Master::ROOT}/") }
 
-    refute_includes files, "data/rules.yml"
+    refute_includes files, "data/laws.yml"
     refute_includes files, "data/soul.yml"
     refute(files.any? { |f| f.start_with?("lib/core/") })
     assert_includes files, "lib/fix/fix_loop.rb"
