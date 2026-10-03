@@ -42,7 +42,7 @@ observe  fix      io    model
 
 Core does not depend upward. Observation never mutates. Planning never mutates. Repair mutates. Verification does not mutate.
 
-`soul.yml` is the source for identity, sacred paths and absolute protection. `rules.yml` is the rule catalogue. Executable law remains under `law/`. The catalogue must never grow a second sacred-path authority.
+`soul.yml` is the source for identity, sacred paths and absolute protection. `laws.yml` is the rule catalogue. Executable law remains under `law/`. The catalogue must never grow a second sacred-path authority.
 
 ## RAILS
 
