@@ -10,7 +10,7 @@ class VisualContractLintTest < Minitest::Test
 
   def test_text_contrast_min_reads_large_text_contrast
     law = Operator::MasterDesign.dig("typography", "accessibility", "large_text_contrast")
-    refute_nil law, "typography.accessibility.large_text_contrast is gone from rules.yml"
+    refute_nil law, "typography.accessibility.large_text_contrast is gone from laws.yml"
     assert_in_delta law.to_f, L.text_contrast_min, 0.01
   end
 
