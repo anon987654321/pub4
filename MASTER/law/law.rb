@@ -371,10 +371,13 @@ module Law
     def render(full: false)
       entries = Law.rules.values.sort_by { |rule| rule.id.to_s }.map(&:contract_entry)
       laws = full ? entries : entries.map { |entry| entry.slice("id", "severity", "mode", "languages", "question") }
+      policy = Master.load_rules(root: Master::ROOT)
       JSON.pretty_generate(
         "contract_version" => 1,
         "law_digest" => Digest::SHA256.hexdigest(JSON.generate(entries)),
         "protocol" => PROTOCOL,
+        "rule_system" => policy.fetch("rule_system"),
+        "transformation_policy" => policy.fetch("transformation_policy"),
         "laws" => laws,
       )
     end
