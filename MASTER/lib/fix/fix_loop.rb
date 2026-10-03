@@ -19,6 +19,7 @@ require_relative "severity"
 require_relative "violation"
 require_relative "wishlist"
 require_relative "protocol"
+require_relative "transformation_plan"
 
 module Master
   module Fix
@@ -69,6 +70,7 @@ module Master
         @run_mutex = Mutex.new
         @git = git || Io::GitOperations.new(root)
         @run_journal = RunJournal.new(root:, bus:)
+        @transformation_plan = TransformationPlan.new(root: Master::ROOT)
         @wishlist = Wishlist.new(root: @root, agent: @agent, event_bus: @bus)
 
         @file_collector = FileCollector.new(root:, bus:)
@@ -188,7 +190,8 @@ module Master
       # restructures. Both work from the repository root.
       def build_sweeps(agent:, root:, bus:)
         repo_root = File.basename(root) == "MASTER" ? File.expand_path("..", root) : root
-        [RenameSweep.new(agent:, repo_root:, bus:), RestructureSweep.new(agent:, repo_root:, bus:)]
+        restructure = RestructureSweep.new(agent:, repo_root:, bus:, transformation_plan: @transformation_plan)
+        [restructure, RenameSweep.new(agent:, repo_root:, bus:)]
       end
 
       # The run once its journal is open and a mission records it: resume what
