@@ -367,12 +367,12 @@ pub4_source_ceilings:
   # load-bearing one. It folds into no existing test: nothing else here tests a
   # scan the runtime is not allowed to spend money on.
   # 1045 -> 1046 is test/test_markdown_style_reaches_the_prompt.rb, which holds
-  # that data/rules.yml's markdown_style section reaches the built system
+  # that data/laws.yml's markdown_style section reaches the built system
   # prompt AND that it is read rather than restated. The second half is the one
   # worth a file: a restatement in the builder would satisfy every "the words
   # appear" assertion and defeat the reason the section exists. Verified by
   # mutation — hardcoding the four rules in the builder turns three of its eight
-  # red. It folds into no existing test; nothing else here reads a rules.yml
+  # red. It folds into no existing test; nothing else here reads a laws.yml
   # section into a prompt and checks the file is the source.
   # 1046 -> 1047 is test/test_self_findings_drift.rb. Third census in this tree
   # to record a bare integer, after data_reach and rule_audit, and the one where
