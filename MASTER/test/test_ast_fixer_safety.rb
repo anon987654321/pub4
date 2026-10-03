@@ -32,7 +32,7 @@ class TestAstFixerSafety < Minitest::Test
     FileUtils.remove_entry(File.dirname(file)) if file
   end
 
-  # HASH_FETCH is `autofix: false` in data/rules.yml, and no rewrite of
+  # HASH_FETCH is `autofix: false` in data/laws.yml, and no rewrite of
   # `x[:k] || d` to `x.fetch(:k, d)` is value-preserving from the text alone:
   # a Struct has [] and no #fetch (Fix::Violation raised on it), a present
   # nil or false takes the || default but not fetch's, and a default that
