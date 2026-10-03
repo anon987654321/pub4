@@ -36,7 +36,9 @@ module Master
       # day the law failed to load would have warned about a different set of
       # tools and said nothing about the swap. This list drives a warning rather
       # than a refusal, so an empty one loses a warning, not a gate.
-      BANNED_IN_ZSH = Array(Master.law("zsh")&.[]("banned_commands")).freeze
+      BANNED_IN_ZSH = %w[
+        sed awk tr cut find head tail wc perl python bash
+      ].freeze
 
       INTERACTIVE_RE = /\b(
         vim?|nano|less|more|pager|git\s+add\s+-[ip]|
