@@ -340,7 +340,7 @@ html, body {
  *
  * Set with the `font` shorthand, which is invisible to the obvious search: grep
  * for `font-size:` on html and brgen appears to set no root size at all. This
- * line is the 18px that comments across the tree, MASTER/data/rules.yml#design_system and
+ * line is the 18px that comments across the tree, MASTER/data/laws.yml#design_system and
  * ScaleLint all refer to. */
 html {
   font: var(--font-size)/var(--line-height) var(--font);
@@ -2721,7 +2721,7 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
      Shadow kept intentionally: the card and page share the same background,
      so the shadow is the arrow's only depth cue. The author's explicit call
      overrides the flat default for this one component only
-     (design_rules.yml pixel_perfection.exception_policy). */
+     (design_laws.yml pixel_perfection.exception_policy). */
   position: relative;
 }
 
@@ -2858,7 +2858,7 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
 
 /* Six categorical avatar backgrounds, each carrying white ink. A palette, not
    a usage: there is no prior token for these to cite. Local to brgen — unlike
-   x.$vertical-accents they are not in MASTER/data/rules.yml#design_system. */
+   x.$vertical-accents they are not in MASTER/data/laws.yml#design_system. */
 .monogram--0 { background: #4b2e83; color: #fff; } // scan: intentional — categorical avatar palette; the colour is the definition
 .monogram--1 { background: #7a3e12; color: #fff; } // scan: intentional — categorical avatar palette; the colour is the definition
 .monogram--2 { background: #075e54; color: #fff; } // scan: intentional — categorical avatar palette; the colour is the definition
@@ -5430,7 +5430,7 @@ body[class*="vertical-"] main > section {
 
 /* The layers besides places. Both read status tokens rather than introducing
    new hex values: --color-success and --color-info are declared on :root in
-   shared/_tokens.scss and pinned to MASTER/data/rules.yml#design_system shared_chrome, so a
+   shared/_tokens.scss and pinned to MASTER/data/laws.yml#design_system shared_chrome, so a
    literal fallback here would be a second copy of each. Inventing a third and
    fourth palette entry is a design decision, not a wiring one.
 
@@ -8570,7 +8570,7 @@ body.vertical-tv .live-badge::before {
   content: "● ";
 /* No hex fallback: --danger is set by the dialect mixin at :root for every
    dialect, with a different value in each (#e46151, #b24c3f, #a9483c, …).
-   #d1594a is MASTER/data/rules.yml#design_system's color_danger, a different token, so a
+   #d1594a is MASTER/data/laws.yml#design_system's color_danger, a different token, so a
    literal here would drift from the dialect it sits in. */
 color: var(--danger);
 }
