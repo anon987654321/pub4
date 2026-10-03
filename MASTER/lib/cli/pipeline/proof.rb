@@ -258,7 +258,7 @@ module Master
         end
 
         def baseline_line(reading)
-          return "unmeasured, a suite crashed before it named its failures" unless reading.measured?
+          return "INCONCLUSIVE, baseline suite did not finish" unless reading.measured?
 
           failing = reading.failing
           line = "#{reading.passed} of #{reading.total}"
