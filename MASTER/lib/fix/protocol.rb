@@ -234,6 +234,12 @@ module Master
           proof, then the live evidence. If those disagree, surface drift and
           verify the relevant boundary before repairing it.
 
+          DEPLOYMENT
+          OPENBSD/bin/vps-deploy is the canonical serial deploy path for MASTER
+          and the RAILS apps. Its production endpoint is www.openbsd.amsterdam
+          (vm23, /home/dev/pub4). From a workstation, use bin/operator vps deploy
+          <app> --remote; do not invent a second deploy path.
+
           LIVE TARGET
           #{render(root:, target:, files:, skipped:, full:)}
 
