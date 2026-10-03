@@ -11,7 +11,7 @@ require_relative "test_helper"
 # non-comment — CodeMetrics.namespace_lines finds nothing to exempt because
 # Prism cannot parse YAML and says so rather than guessing.
 class TestYamlLocBudget < Minitest::Test
-  def test_rules_yml_is_under_its_file_budget
+  def test_laws_yml_is_under_its_file_budget
     limits = YAML.safe_load_file(Master.limits_path, aliases: true)
     budget = limits.dig("loc_body_budgets", "data/laws.yml")
     actual = Master::Review::Scan::CodeMetrics.body_lines(File.read(Master.data_path("laws.yml")))
