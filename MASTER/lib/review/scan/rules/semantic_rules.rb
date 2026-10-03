@@ -238,7 +238,7 @@ module Master
             require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
             ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.rules.empty?
 
-            ::Law.rules.values.select(&:semantic?).each_with_object({}) do |rule, h|
+            ::Law.rules.values.select { |rule| rule.semantic? && rule.enforceable? }.each_with_object({}) do |rule, h|
               h[rule.id.to_s] = {
                 prompt: "#{rule.ask}\nViolates: #{rule.bad.strip}\nSatisfies: #{rule.good.strip}",
                 severity: rule.severity,
