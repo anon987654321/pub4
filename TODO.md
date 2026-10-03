@@ -688,6 +688,49 @@ call, and the operator's. The pass's doctrine lives in `WIRING_NOTES.md`.
 
 ---
 
+## The detection audit's remains — opened 2026-10-03
+
+What the 2026-10-03 violation-detection audit found beyond what was fixed the
+same day. Fixed first: the two RAILS-prefixed css_budget joins, the
+unreadable-ratchet verdict, the css brace-balance gate (first finding was
+face.css's unclosed `#primer`), the /fix verification tail proving against a
+scan-only lexical stage, and the view-surface writer's dead `RAILS/gates` path.
+
+- **The `rules:` key is a void six readers read.** `data/rules.yml` has sections
+  (`laws:`, `design_system:`, ...), no top-level `rules:` — but
+  `lib/master.rb:188`, `lib/ground/rules.rb:139`, `tools/rule_reach.rb`,
+  `lib/review/scan/self_test.rb:394`, `rule_registry_audit.rb:158` and
+  `yaml_bridge_rules.rb:109` all `fetch("rules", {})`. Verified live:
+  `Master.rule_count` → 0, `rule_reach --json` → all zeros, and the design_system
+  thresholds arrive as `{}` with silent hardcoded fallbacks (`lib/design.rb:100-167`).
+  Fixing this alone revives the eleven KeyError-dead rule-hygiene ratchet rows and
+  makes `rule_reach` the census it was built to be.
+- **The rendered ladder fails open by default.** Chrome absent → `inconclusive` →
+  exit 0 (`gates/support/gate_result.rb:46-63`; `Operator::StrictMode` defaults to
+  contribute). The ladder can report clean over zero measured pixels. Close: print
+  inconclusive/errored counts in the final summary and refuse "clean" when a
+  `needs: [browser]` gate measured nothing.
+- **Three CDP probes are registered in no ladder** — `gates/tap_target_probe.rb`,
+  `face_capture_probe.rb`, `focus_walk_probe.rb` are manual-only instruments. Register
+  them as gates.yml rows or fold their assertions into reflow.
+- **Generated-bundle staleness is proved for one of four face bundles**
+  (`test_web_ui.rb:733-770` covers only face.runtime.js). Byte-compare the other three
+  the same way, or add a digest row.
+- **Face markup hooks CSS never styles** (probe against the face corpus: 19 used
+  class names, 3 undefined): `.brand-mark` / `.brand-text` render at
+  `chat/index.html.erb:105-108` with no rule anywhere (face.css styles
+  `.top-left-logo`, which the ERB does not write) — giving the wordmark styling is a
+  rendered-value decision and stays with the operator; and `.mic-indicator` carries no
+  rule and no reader, a naming hook with nothing hooked to it.
+- **css_coverage_lint has no MASTER/web surface**; the face corpus is small (the
+  probe above), so the lint's ratcheted baselines may absorb it — measure before
+  wiring, or keep the probe tool.
+- **No substitute adversarial reader for the dead council.** The council stage has
+  answered "Insufficient credits" and reported skipped, exit 3, since its provider
+  dried up; `bin/gate` refuses DeterministicFloor as a substitute by recorded
+  decision. If no council is coming back, decide who reads a fix adversarially after
+  the mechanical measurements.
+
 # Forward work
 
 Wishes and measured proposals not yet shipped; each section is dated.
