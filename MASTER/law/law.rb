@@ -113,10 +113,11 @@ module Law
     LIFECYCLE_TRANSITIONS = {
       proposed: %i[proven retired],
       proven: %i[active advisory retired],
-      active: %i[trusted advisory retired],
-      trusted: %i[active advisory retired],
-      advisory: %i[active retired],
-      retired: [],
+      active: %i[observed advisory retired],
+      observed: %i[trusted active advisory retired],
+      trusted: %i[active observed advisory retired],
+      advisory: %i[proven active retired],
+      retired: %i[proposed],
     }.freeze
 
     def can_transition_to?(state)
