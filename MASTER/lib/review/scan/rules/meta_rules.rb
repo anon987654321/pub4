@@ -141,7 +141,7 @@ module Master
           # Ground::Constitution globs exactly that pattern and parses each file
           # into an operator-declared principle. This rule told the operator to
           # delete it, at error severity, and to move it to
-          # rules.yml#operator_principles — a section that no longer exists, its
+          # laws.yml#operator_principles — a section that no longer exists, its
           # 47 entries having gone to law/practice.rb. A rule forbidding what a
           # live loader requires is armed and invisible for as long as the
           # directory stays empty, which it is.
@@ -169,7 +169,7 @@ module Master
 
         class LearnedSmellsRule < Rule
           declare id: "LEARNED_SMELLS", severity: :warning, tags: %i[LEARNED_SMELLS SESSION],
-                  description: "session-learned smell patterns from rules.yml"
+                  description: "session-learned smell patterns from laws.yml"
 
           def initialize(root: Master::ROOT)
             super()
@@ -262,7 +262,7 @@ module Master
           end
 
           def rules_path
-            File.join(@root, "data", "rules.yml")
+            File.join(@root, "data", "laws.yml")
           end
 
           def rules_mtime
