@@ -113,7 +113,8 @@ module Master
         # soul.yml is the constitutional source for sacred paths. The catalogue in
         # rules.yml describes laws; it does not own write protection.
         def immutable?(path)
-          Master::Core::Paths.sacred?(path, root: @root)
+          policy_root = git_root || @root
+          Master::Core::Paths.sacred?(path, root: policy_root)
         end
 
         # Rails migrations are historical record, not repairable source. They
