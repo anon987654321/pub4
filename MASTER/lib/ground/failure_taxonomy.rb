@@ -2,7 +2,7 @@
 
 module Master
   module Ground
-    # rules.yml failure_taxonomy — classify errors and return retry strategy.
+    # laws.yml failure_taxonomy — classify errors and return retry strategy.
     class FailureTaxonomy
       DEFAULTS = {
         # A paid provider spend limit. Distinct from transient because an
@@ -19,7 +19,7 @@ module Master
       SHARED_LOCK = Mutex.new
 
       def initialize(rules_data: nil)
-        raw = (rules_data || Master.load_yaml(Master::RULES_PATH).fetch("failure_taxonomy", {}))
+        raw = (rules_data || Master.load_yaml(Master::LAWS_PATH).fetch("failure_taxonomy", {}))
         @categories = raw.transform_keys(&:to_s)
         @patterns = build_patterns
       end
@@ -52,14 +52,14 @@ module Master
 
       # Class-level so callers that want only the capped exponential formula
       # (e.g. Io::ReplicateClient's HTTP retry loop) don't need to instantiate
-      # a full FailureTaxonomy (which loads rules.yml) for this.
+      # a full FailureTaxonomy (which loads laws.yml) for this.
       def self.backoff_seconds(attempt)
         [2**attempt, 60].min
       end
 
       # One classifier for the whole process. Io::QuotaGate asks the same
       # yes/no question once per failed provider call — hundreds of times in a
-      # council run — against the same rules.yml, so it reuses this taxonomy
+      # council run — against the same laws.yml, so it reuses this taxonomy
       # rather than carrying a second copy of the patterns.
       def self.shared = SHARED_LOCK.synchronize { @shared ||= new }
 
@@ -71,11 +71,11 @@ module Master
       # carries a 429 is an empty account, not a throttle, and reading it as
       # transient is what makes a run spend N calls learning one fact.
       #
-      # It alone keeps its pattern in code rather than in rules.yml examples.
+      # It alone keeps its pattern in code rather than in laws.yml examples.
       # build_category_re only reaches a fallback when a category declares no
       # examples, and the examples grammar (word_word -> word[ ._-]?word) cannot
       # express \b402\b — the HTTP status that carries this failure with no
-      # prose at all. rules.yml still owns the exhausted *policy*; the code owns
+      # prose at all. laws.yml still owns the exhausted *policy*; the code owns
       # the pattern.
       def build_patterns
         {
