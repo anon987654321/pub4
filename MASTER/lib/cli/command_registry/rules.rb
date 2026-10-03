@@ -19,6 +19,7 @@ module Master
       def dispatch_rules(root, ctx: nil)
         filter = arg_for(ctx).downcase
         return dispatch_rule_sources(root) if filter == "sources"
+        return dispatch_rule_index if filter == "index"
 
         rules = Master.law("rules") || []
         rows = rules.select do |rule|
@@ -36,6 +37,26 @@ module Master
           format("%-28s %-10s %-8s %s", rule["id"], rule["tier"], rule["severity"], kind)
         end
         ["#{rows.size} of #{rules.size} rules — bin/operator rules <ID> for one in full", *lines].join("\n")
+      end
+
+      def dispatch_rule_index
+        require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
+        ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.rules.empty?
+        rows = ::Law::Index.validate!
+        lifecycle = rows.group_by { |row| row["lifecycle"] }.transform_values(&:size)
+        proof = rows.group_by { |row| row["proof"] }.transform_values(&:size)
+        universal = rows.count { |row| row["principle_scope"] == "universal" }
+
+        [
+          "rules: executable index",
+          "  laws: #{rows.size}",
+          "  universal_principles: #{universal}",
+          "  lifecycle: #{lifecycle.sort.map { |state, count| "#{state}=#{count}" }.join(", ")}",
+          "  proof: #{proof.sort.map { |kind, count| "#{kind}=#{count}" }.join(", ")}",
+          "  index: valid",
+        ].join("\n")
+      rescue StandardError => e
+        "rules0: executable index failed — #{e.class}: #{e.message}"
       end
 
       def dispatch_rule_sources(root)
