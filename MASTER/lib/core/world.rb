@@ -39,12 +39,13 @@ module Master::Core
     # pops that journal's newest entry, so a fold write that records nothing
     # leaves /undo reverting an older write instead. Injected, because core
     # reaches nothing in lib/.
-    def initialize(root:, ask: nil, critique_runner: nil, undo: nil, capabilities: Capabilities.for(:fix))
+    def initialize(root:, ask: nil, critique_runner: nil, undo: nil, capabilities: Capabilities.for(:fix), network: nil)
       @root = File.expand_path(root)
       @ask = ask
       @critique_runner = critique_runner
       @undo = undo
       @capabilities = capabilities
+      @network = network
     end
 
     def verbs = Master::Core::VERBS
@@ -119,6 +120,15 @@ module Master::Core
       @undo&.snapshot(abs)
       write_atomic(abs, content)
       Observation.ok("wrote #{path} (#{content.bytesize}b)")
+    end
+
+    def do_http(url:, **)
+      return Observation.no("network unavailable") unless @network
+
+      result = @network.call(url:)
+      result.ok? ? Observation.ok(result.value!.to_s) : Observation.no(result.message.to_s)
+    rescue StandardError => e
+      Observation.no("http: #{e.class}: #{e.message}")
     end
 
     def do_exec(argv:, timeout: 60, env: {}, **)
