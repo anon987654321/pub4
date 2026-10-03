@@ -2,33 +2,39 @@
 
 require_relative "test_helper"
 
-# The law catalogue is flat at the top level; executable law remains in law/.
-# This test holds the one loader, a non-empty catalogue, and ids that collide
-# nowhere.
+# The law catalogue contains the governing principles and execution policy;
+# executable law lives in MASTER/law/*.rb. These tests assert each authority
+# without creating a second rule catalogue in YAML.
 class TestRulesRegistry < Minitest::Test
-  def rules = Master.law_entries(root: Master::ROOT)
-
-  def test_the_registry_is_one_flat_list
-    assert_kind_of Array, rules
-    assert(rules.all?(Hash), "every entry is a rule object")
+  def laws
+    require File.expand_path("../law/law", __dir__)
+    ::Law.load_all(File.expand_path("../law", __dir__)) if ::Law.rules.empty?
+    ::Law.rules.values
   end
 
-  def test_registry_is_not_quietly_empty
-    assert_operator rules.size, :>=, 200, "expected 200+ rules, got #{rules.size}"
+  def test_executable_law_registry_is_not_quietly_empty
+    assert_operator laws.size, :>=, 100, "expected a substantial executable law registry"
   end
 
-  def test_every_rule_has_an_id
-    missing = rules.each_with_index.filter_map { |rule, i| "rules[#{i}]" if rule["id"].to_s.strip.empty? }
+  def test_every_executable_law_has_an_id
+    missing = laws.each_with_index.filter_map do |law, i|
+      "laws[#{i}]" if law.id.to_s.strip.empty?
+    end
 
-    assert_empty missing, "rules without an id: #{missing.join(', ')}"
+    assert_empty missing, "executable laws without an id: #{missing.join(', ')}"
   end
 
-  # Uniqueness is now across the whole catalogue rather than within a scope,
-  # which is strictly stronger: two rules sharing an id in different scopes used
-  # to pass, and their findings were indistinguishable in any report.
-  def test_ids_are_unique
-    dupes = rules.map { |rule| rule["id"] }.tally.select { |_, n| n > 1 }.keys
+  def test_executable_law_ids_are_unique
+    duplicates = laws.map { |law| law.id.to_s }.tally.select { |_, n| n > 1 }.keys
 
-    assert_empty dupes, "duplicate rule ids: #{dupes.join(', ')}"
+    assert_empty duplicates, "duplicate executable law ids: #{duplicates.join(', ')}"
+  end
+
+  def test_every_executable_law_carries_proof_metadata
+    invalid = laws.reject do |law|
+      law.respond_to?(:bad) && law.respond_to?(:good) && law.respond_to?(:fix)
+    end
+
+    assert_empty invalid.map(&:id), "laws missing proof metadata: #{invalid.map(&:id).join(', ')}"
   end
 end
