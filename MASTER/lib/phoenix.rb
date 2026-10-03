@@ -8,7 +8,7 @@ require "time"
 module Master
   # Compact architecture contract: preserve the boundaries, regenerate the code.
   #
-  # The boundary graph lives in data/rules.yml because that file is already the
+  # The boundary graph lives in data/laws.yml because that file is already the
   # constitutional registry. This class supplies the executable checks and the
   # durable provenance/evidence journal; it does not become a second registry.
   class Phoenix
@@ -21,7 +21,7 @@ module Master
 
     class << self
       def boundaries(root: Master::ROOT)
-        law_root = File.file?(File.join(root, "data", "rules.yml")) ? root : Master::ROOT
+        law_root = File.file?(File.join(root, "data", "laws.yml")) ? root : Master::ROOT
         config = Master.law(ARCHITECTURE_KEY, root: law_root)
         config.fetch("boundaries").map do |name, value|
           Boundary.new(
