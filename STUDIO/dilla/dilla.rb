@@ -11139,6 +11139,86 @@ ARTIST_VERIFIED_PROGRESSIONS = {
     chords: %w[Dm11 Gm11 Dm11 Gm11],
     sources: ["motifkit.com/neo-soul-chord-progressions/ — free MIDI pack"],
   },
+  # --- Archive dig, 2026-10-03 ----------------------------------------
+  # The pub/pub2/pub3 GitHub histories carry this engine's chord research as
+  # it was before the fold: pub3 multimedia/dilla/chord_theory.json v3.0.0
+  # (2025-10-16, read back from git), pub2 dilla/RECORDED.md. Each row below
+  # came in with its archive source intact and says where it was found.
+  #
+  # Dilla "Life": the played voicings the archive stored as Hz, one octave,
+  # root position, mid-C to A4 register:
+  #   Bbm9 [116.54, 174.61, 220.0, 261.63, 329.63]
+  #   C7   [130.81, 164.81, 196.0, 233.08, 293.66]
+  #   Fm9  [174.61, 207.65, 261.63, 311.13, 392.0]
+  dilla_life: {
+    artist: "Slum Village", producer: "J Dilla", title: "Life", album: "Fantastic Vol. 2",
+    bpm_held: 90,
+    chords: %w[Bbm9 C7 Fm9 Bbm9],
+    sources: [
+      "pub3 multimedia/dilla/chord_theory.json v3.0.0 — 'Fantastic Vol. 2 (2000)', Dorian ii-V movement",
+      "archived 2026-05, dug 2026-10-03",
+    ],
+  },
+  # The Soulquarians row keeps the archive's own artist line: the jam credited
+  # across Voodoo and Like Water for Chocolate.
+  soulquarians_butter: {
+    artist: "D'Angelo / Questlove / Dilla", title: "Butter",
+    bpm_held: 96,
+    chords: %w[Fmaj9 Dm11 Bbmaj13 C13],
+    sources: [
+      "pub3 chord_theory.json — soulquarians_butter: 13th chords with sus voicings, Rhodes staple",
+      "pub3 multimedia/dilla/dilla_data.json v4.0.0 (still at archive HEAD)",
+    ],
+  },
+  # The funk/soul canon from the same table, album-cited.
+  funky_drummer_vamp: {
+    artist: "James Brown", title: "Funky Drummer",
+    bpm_held: 120,
+    chords: %w[E7#9],
+    sources: ["pub3 chord_theory.json funk_soul_progressions — dominant-sharp-nine static vamp (1970)"],
+  },
+  superfly: {
+    artist: "Curtis Mayfield", title: "Superfly", album: "Superfly",
+    bpm_held: 95,
+    chords: %w[Fm7 Bb7 Ebmaj7 Abmaj7],
+    sources: ["pub3 chord_theory.json funk_soul_progressions (1972)"],
+  },
+  inner_city_blues: {
+    artist: "Marvin Gaye", title: "Inner City Blues", album: "What's Going On",
+    bpm_held: 78,
+    chords: %w[Em9 Am9],
+    sources: ["pub3 chord_theory.json funk_soul_progressions (1971)"],
+  },
+  chameleon: {
+    artist: "Herbie Hancock", title: "Chameleon", album: "Head Hunters",
+    bpm_held: 104,
+    chords: %w[Bbm7 Eb7],
+    sources: ["pub3 chord_theory.json funk_soul_progressions (1973)"],
+  },
+  superstition: {
+    artist: "Stevie Wonder", title: "Superstition", album: "Talking Book",
+    bpm_held: 100,
+    chords: %w[Ebm7 Bb7#9],
+    sources: ["pub3 chord_theory.json funk_soul_progressions (1972)"],
+  },
+  erykah_badu_on_and_on: {
+    artist: "Erykah Badu", title: "On & On", album: "Baduizm",
+    bpm_held: 92,
+    chords: %w[Bm7 Gmaj7],
+    sources: ["pub3 chord_theory.json — 'Badu / D'Angelo style, extended voicings and suspensions' (1997)"],
+  },
+  yesterdays_universe: {
+    artist: "Yesterday's New Quintet", producer: "Madlib", title: "progression from Yesterday's Universe",
+    bpm_held: 110,
+    chords: %w[Gm9 C13 Fmaj9 Bb13],
+    sources: ["pub3 chord_theory.json madlib_yesterday_new_quintet row (2000)"],
+  },
+  jamal_awakening: {
+    artist: "Ahmad Jamal", title: "Awakening",
+    bpm_held: 88,
+    chords: %w[Emaj7 G#m7 C#m7 F#9],
+    sources: ["pub3 chord_theory.json — 'modal jazz with E major tonality'; a different Jamal record than the Pavanne row"],
+  },
 }.freeze
 
 # The twelve entries above were seven recordings; the 2026-10-03 research adds
