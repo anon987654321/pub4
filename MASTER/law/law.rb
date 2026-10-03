@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "digest"
-require_relative "../lib/law/vocabulary"
+require_relative "../lib/law_vocabulary"
 
 # law/ — the constitution as code.
 #
