@@ -7,7 +7,6 @@
 # rescue/ensure open new reachability. This file regex called `x = return_val`
 # a terminator and every method's last line unreachable.
 
-# Migrated from data/rules.yml FAIL_VISIBLY. Folds BARE_RESCUE (identical detector).
 Law.define(:FAIL_VISIBLY) do
   source "Fail Fast (Jim Shore, IEEE Software 2004)"
   severity :error
@@ -36,14 +35,6 @@ Law.define(:FULL_BY_DEFAULT) do
   good "modes = [deep]"
 end
 
-# Migrated from data/rules.yml GUARD_EXPENSIVE_OPS. Narrowed 2026-08-21 after
-# the fleet-wide deep scan: of twenty production hits sampled, thirteen were
-# Rails' String#truncate (the word was meant for SQL TRUNCATE) and seven were
-# association- or where-scoped deletes bounded by a parent record — zero were
-# the table-wide sweep this law exists to stop. It now fires on a delete with
-# a bare constant receiver (Model.delete_all — the whole table), on
-# drop_table, SQL TRUNCATE, and rm -rf; a scoped chain is proportionate by
-# construction. Seeds, tests and migrations reset data as their job.
 Law.define(:GUARD_EXPENSIVE_OPS) do
   source "MASTER-native (guard expensive operations); Nielsen heuristic 5, error prevention"
   severity :error
@@ -75,7 +66,6 @@ end
 # idiomatic), and re-tests after blanking strings and parens. This bare
 # regex flagged every version number and gem constraint in the tree.
 
-# Migrated from data/rules.yml MEANINGFUL_NAMES.
 Law.define(:MEANINGFUL_NAMES) do
   source "Clean Code — meaningful names (Robert C. Martin)"
   severity :info
@@ -111,9 +101,6 @@ Law.define(:MEANINGFUL_NAMES) do
   good "user_profile = load"
 end
 
-# Migrated from data/rules.yml NO_COLUMN_ALIGN. The registry twin skipped
-# block-comment continuations (`* …`) and ruler lines; both guards moved
-# here with the retirement.
 Law.define(:NO_COLUMN_ALIGN) do
   source "Ruby Style Guide / RuboCop Layout — no token alignment"
   severity :info
@@ -141,11 +128,6 @@ end
 # a positional boolean default is a flag argument; a keyword default
 # (stream: false) is fine API design, and this bare regex flagged every one.
 
-# Migrated from data/rules.yml NULL_BLINDNESS. The second retired twin: the
-# registry version's regex flagged IS NULL — the correct form its own message
-# prescribes — and survived on a path exemption; this detector flags the
-# defect, and the good fixture below is the line the registry version would
-# have failed on. A comment only talks about the pattern.
 Law.define(:NULL_BLINDNESS) do
   source "SQL/Ruby — explicit NULL/nil handling"
   severity :error
@@ -170,7 +152,6 @@ Law.define(:NULL_BLINDNESS) do
   X
 end
 
-# Migrated from data/rules.yml SECRET_PROXIMITY.
 Law.define(:SECRET_PROXIMITY) do
   source "OWASP — no hardcoded secrets/credentials"
   severity :error
@@ -199,7 +180,6 @@ Law.define(:SECRET_PROXIMITY) do
   good "api_key = ENV.fetch('API_KEY')"
 end
 
-# Migrated from data/rules.yml SQUINT_TEST. Folds WHITESPACE_PUNCTUATION (identical detector).
 Law.define(:SQUINT_TEST) do
   source "Squint Test readability heuristic (Sandi Metz)"
   severity :info
@@ -236,18 +216,6 @@ end
 # this per-line twin flagged every section comment, diff header and
 # frontmatter delimiter in the tree.
 
-# Migrated from data/rules.yml UNBOUNDED_RETRY. The migration regressed the
-# detector to the bare word — 24 findings on lib/, every one a comment, a
-# :retry symbol, a retry? method, a retry: kwarg or a regex literal, while
-# the registry twin in universal_rules.rb already carries the narrowed
-# keyword. The keyword never follows `:` or a word character, never
-# precedes `?`, `:` or a word character, never sits beside `|`; a comment
-# only talks about it.
-#
-# String literals blank before matching (2026-08-21): the queue's final four
-# findings were all the WORD inside quotes — a scanner's own finding message,
-# an SSE body saying "retry in 30s", the SOA retry field name. The keyword
-# can never be inside a string; prose about retrying is not a retry.
 Law.define(:UNBOUNDED_RETRY) do
   source "Release It! — retry budgets / bounded retries (Nygard)"
   severity :error
@@ -291,18 +259,6 @@ Law.define(:UNBOUNDED_RETRY) do
   X
 end
 
-# Migrated from data/rules.yml WHY_NOT_WHAT.
-# Distinct from WHY_NOT_WHAT, which is about a comment restating the code beside
-# it. This one is about a comment that records the edit history of the line.
-# Git already holds that, per line, with an author and a message, and never
-# drifts from it; a comment holding the same thing is a second copy that decays
-# the first time someone edits the code and not the paragraph above it. A reason
-# worth re-reading is a present-tense comment; unfinished work goes in TODO.md.
-#
-# Narrow on purpose. "Measured 2026-08-11: /home is at 89%" is evidence for a
-# present claim and stays. What this catches is a dated change verb and the
-# past-tense framing of a line's earlier content, which carry no reason at all.
-# Counted across the tree before landing: 47 lines, none of them in law/.
 Law.define(:NO_CHANGELOG_COMMENT) do
   source "MASTER-native — git holds history; comments hold reasons"
   severity :warn
