@@ -9,7 +9,7 @@ module Operator
   # Validates every spacing-tagged value in MASTER's design_system and every --space
   # custom property a stylesheet defines, in shared, each app and each engine
   # (a token defined beside the view it serves is still a token), against MASTER's own
-  # rules.yml design_rules.pixel_perfection.eight_px_rhythm allowlist. Reads that
+  # laws.yml design_rules.pixel_perfection.eight_px_rhythm allowlist. Reads that
   # allowlist from MASTER directly rather than duplicating it, so the two
   # can never drift apart through a second machine-readable authority
   # (the --color-warning bug found 2026-07-21).
@@ -24,7 +24,7 @@ module Operator
     def run
       rules = load_design_rules
       unless rules
-        Master::Trace::Dmesg.status("rhythm0", "could not find MASTER/data/rules.yml, skipped", io: $stderr)
+        Master::Trace::Dmesg.status("rhythm0", "could not find MASTER/data/laws.yml, skipped", io: $stderr)
         return true
       end
 
@@ -75,7 +75,7 @@ module Operator
           next unless value.is_a?(String) && value =~ /\A([\d.]+)(rem|px)\z/
 
           px = to_px(Regexp.last_match(1), Regexp.last_match(2))
-          violations << Violation.new("MASTER/data/rules.yml:design_system.#{dialect}", key, px) unless allowed.include?(px)
+          violations << Violation.new("MASTER/data/laws.yml:design_system.#{dialect}", key, px) unless allowed.include?(px)
         end
       end
       violations
