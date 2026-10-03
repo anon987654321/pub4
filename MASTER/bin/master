@@ -20,7 +20,7 @@ require_relative "../lib/trace/dmesg"
 # was missing: chdir into MASTER so the constitution and the sibling trees both
 # resolve, then hand the instruction over unchanged.
 #
-# Everything past this point is MASTER's: data/soul.yml and data/rules.yml
+# Everything past this point is MASTER's: data/soul.yml and data/laws.yml
 # govern the session, and every durable write is validated against them. This
 # wrapper parses --help, --fix-context and --daemon; all other arguments belong
 # to MASTER/bin/cli.
