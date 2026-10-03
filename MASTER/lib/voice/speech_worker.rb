@@ -107,6 +107,8 @@ module Master
       # whole-file path, a player's stdin for live playback. on_chunk fires
       # per frame with the bytes written so far; stale_test is checked between
       # frames so an interrupted reply stops pulling audio off the wire.
+      StreamResult = Data.define(:ok, :bytes)
+
       StreamTarget = Data.define(:io, :on_chunk, :stale_test) do
         # Data fields init as keywords, so the sinks that only observe or only
         # test staleness pass nil for the rest through here instead.
