@@ -383,6 +383,62 @@ module Law
     end
   end
 
+  # Derived rule index. Identity, enforcement surface, lifecycle, proof and
+  # universality stay on Law::Rule; this index is generated and never authoritative.
+  module Index
+    module_function
+
+    VERSION = 1
+
+    def rows(rules = Law.rules.values)
+      rules.sort_by { |rule| rule.id.to_s }.map do |rule|
+        {
+          "id" => rule.id.to_s,
+          "scope" => rule.scope.to_s,
+          "principle_scope" => rule.principle_scope.to_s,
+          "languages" => rule.languages.map(&:to_s),
+          "lifecycle" => rule.lifecycle.to_s,
+          "autofix" => rule.autofix.to_s,
+          "proof" => rule.proof_kind.to_s,
+          "deterministic" => rule.scannable?,
+          "semantic" => rule.semantic?,
+          "practice" => !rule.practice.nil?,
+        }
+      end
+    end
+
+    def validate!(rules = Law.rules.values)
+      raise ArgumentError, "rule index is empty" if rules.empty?
+
+      ids = rules.map { |rule| rule.id.to_s }
+      duplicate = ids.tally.select { |_, count| count > 1 }.keys
+      raise ArgumentError, "duplicate executable law ids: #{duplicate.join(', ')}" unless duplicate.empty?
+
+      invalid = rules.reject { |rule| Rule::LIFECYCLE_TRANSITIONS.key?(rule.lifecycle) }
+      raise ArgumentError, "invalid rule lifecycle: #{invalid.map(&:id).join(', ')}" unless invalid.empty?
+
+      invalid = rules.reject { |rule| %i[never review automatic].include?(rule.autofix) }
+      raise ArgumentError, "invalid rule autofix policy: #{invalid.map(&:id).join(', ')}" unless invalid.empty?
+
+      automatic = rules.select { |rule| rule.autofix == :automatic && !rule.scannable? }
+      unless automatic.empty?
+        raise ArgumentError, "automatic autofix without deterministic detector: #{automatic.map(&:id).join(', ')}"
+      end
+
+      rows(rules)
+    end
+
+    def render(rules = Law.rules.values)
+      entries = validate!(rules)
+      JSON.pretty_generate(
+        "index_version" => VERSION,
+        "rule_count" => entries.length,
+        "universal_count" => entries.count { |entry| entry["principle_scope"] == "universal" },
+        "rules" => entries,
+      )
+    end
+  end
+
   @rules = {}
   class << self
     attr_reader :rules
