@@ -19,7 +19,7 @@ module Master
           ENV["MASTER_AUTOFIX"] == "1"
         end
 
-        # A finding may say what undoing its fix costs (rules.yml
+        # A finding may say what undoing its fix costs (laws.yml
         # schema_metadata: reversibility, blast_radius). A fix nobody can undo, or
         # one that reaches past the file it was found in, waits for a person the
         # same way a deletion does.
