@@ -4,7 +4,7 @@ set -euo pipefail
 # + bin/ci) that must pass before a deploy is allowed to restart the service.
 # Source this file; do not execute directly. Requires _core.sh sourced first.
 
-# master_scan_dep APP_NAME — rules.yml gate via MASTER CLI (requires bundle exec in MASTER/).
+# master_scan_dep APP_NAME — laws.yml gate via MASTER CLI (requires bundle exec in MASTER/).
 master_scan_dep() {
   local app_name=$1
   local master=${MASTER_ROOT:-/home/dev/pub4/MASTER}
