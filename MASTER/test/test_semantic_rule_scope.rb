@@ -58,12 +58,12 @@ class TestSemanticRuleScope < Minitest::Test
 
   # The invariant Law::Rule#prove! already enforces on the law population, asked
   # of the other one. NEVER_BATCH_DELETE declared `shell` and could read no file
-  # for it; rules.yml carried `rails`, `prose` and `erb` across 13 rows for the
+  # for it; laws.yml carried `rails`, `prose` and `erb` across 13 rows for the
   # same reason — nothing emits them, and while the key was unread nothing said
   # so. Now that it is read, a phantom language aims a rule at no file at all.
   def test_no_declared_language_is_one_no_file_can_carry
     known = Master::FILE_LANGUAGE_MAP.values.uniq
-    declared = Master.flatten_rules(Master.load_rules(root: Master::ROOT).fetch("rules", {}))
+    declared = Master.law_entries(root: Master::ROOT)
                      .flat_map { |r| Array(r["languages"]).map { |l| [r["id"], l.to_s] } }
     phantom = declared.reject { |(_, language)| known.include?(language) }
 
