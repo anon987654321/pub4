@@ -33,14 +33,6 @@ absolute:
     PROTECTED: emit warning continue
     NEGOTIABLE: allow if explicitly permitted
     FLEXIBLE: negotiate at runtime
-# No rules here. All 47 moved to law/practice.rb, which is the one registry:
-# 117 rules, each declaring how it is checked — `detect` for a regex, `ask`
-# for a question a model answers, `conduct` for a rule about how to work.
-#
-# They were here because Law::Builder required a detector and none can exist
-# for "sweep to convergence" or "one SSH session", so the requirement was
-# excluding exactly the rules it could not describe. soul keeps what only
-# soul has: the golden rule, sacred paths, anti-simulation, protection tiers.
 
 prompt_ordering:
   - master_identity
