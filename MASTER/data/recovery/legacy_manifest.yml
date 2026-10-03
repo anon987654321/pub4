@@ -1137,6 +1137,34 @@ recovered_regression_reviews:
     current_mapping: "No equivalent current pub4 MASTER parser was found."
     disposition: "deferred-gap; recover only if mixed-language parsing becomes an actual current requirement"
 
+
+legacy_deploy_bundle_review:
+  restoration_commit: "41dcb7c8a88ada5ab948d0fd65e222ed3683d037"
+  pruning_commit: "246160caaaf7d96930395d5a8e8bd19c8096ce0c"
+  finding: "The 2024-08 @*.sh bundle was restored from archives, then intentionally moved/pruned as legacy reference material during DEPLOY/rails defragmentation."
+  retained_patterns:
+    - pattern: "Active Storage/image processing"
+      current_mapping: "Tracked Rails app migrations and shared media-processing tests."
+      disposition: "absorbed"
+    - pattern: "Devise/OmniAuth"
+      current_mapping: "Current app auth decisions and tracked application trees; no restored generator script."
+      disposition: "absorbed-or-product-specific"
+    - pattern: "Falcon/ActionCable"
+      current_mapping: "Current OpenBSD service files and Rails runtime/gates."
+      disposition: "absorbed"
+    - pattern: "posts/comments/private visibility"
+      current_mapping: "Current Brgen post/comment models, moderation and shared social services."
+      disposition: "absorbed-or-reimplemented"
+    - pattern: "Tiptap rich text"
+      current_mapping: "RAILS/shared/frontend/tiptap_editor_controller.js and shared Tiptap build/assets."
+      disposition: "absorbed"
+    - pattern: "PWA installation"
+      current_mapping: "Current shared PWA serving and app-specific manifests/controllers."
+      disposition: "absorbed"
+  retirement_reason: "The scripts mixed generation, dependency installation and production mutation, duplicated helpers, used obsolete stack assumptions, and were explicitly declared unsafe to run blindly against tracked production trees."
+  archive_rule: "Keep the Git commits as provenance; do not resurrect the script forest. Rebuild any missing behavior inside current app/shared boundaries."
+
+
 legacy_ai3_role_review:
   source_repo: pub
   consolidation_commit: "534d719c7532df9f2e9ba4e39f5d46e673668e18"
