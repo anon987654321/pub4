@@ -946,3 +946,20 @@ master_json_v43_review:
     - "The old permissions auto_accept/bypass_confirmation block."
     - "The old deployment_config secrets/host-specific paths."
   disposition: "semantic-recovery-only"
+
+mass_recovery_reviews:
+  pub4_accidental_collapse:
+    collapse_commit: "a98d45c8070ae2566fa51a34fdebffd3b196e0fb"
+    recovery_commit: "b4c510ef96eac87cfa6ca946fd30f530f8c5c8a0"
+    pre_collapse_commit: "f131ff002293f93da47755e27e3a2b38b9828687"
+    restored_tree_entries: 5507
+    recovery_changes_vs_pre_collapse: 6
+    meaningful_change:
+      - path: "MASTER/lib/operator/gate_chain.rb"
+        finding: "Recovery preserved the renamed-path attribution parser rather than merely replaying the pre-collapse blob."
+        disposition: "retain-current-recovery-improvement"
+      - path: "MASTER/test/test_gate_chain.rb"
+        finding: "Recovery kept the regression test proving both sides of a Git rename remain attributable."
+        disposition: "retain-current-recovery-test"
+    disposition: "recovery-authoritative"
+    reason: "The active line after b4 restores the full governed tree while retaining the specific rename-path repair that triggered the preceding collapse sequence."

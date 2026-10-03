@@ -144,4 +144,12 @@ class TestRecoveryPubManifest < Minitest::Test
     assert_equal "semantic-recovery-only", v43.fetch("disposition")
     assert_includes v43.fetch("not_restored"), "The old prediction_engine confidence-based autonomous mutation policy."
   end
+  def test_accidental_collapse_recovery_is_pinned
+    manifest = YAML.safe_load(ROOT.join("MASTER/data/recovery/legacy_manifest.yml").read, permitted_classes: [Date])
+    recovery = manifest.fetch("mass_recovery_reviews").fetch("pub4_accidental_collapse")
+    assert_equal "b4c510ef96eac87cfa6ca946fd30f530f8c5c8a0", recovery.fetch("recovery_commit")
+    assert_equal 5507, recovery.fetch("restored_tree_entries")
+    assert_equal 6, recovery.fetch("recovery_changes_vs_pre_collapse")
+    assert_equal "recovery-authoritative", recovery.fetch("disposition")
+  end
 end
