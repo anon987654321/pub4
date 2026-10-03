@@ -138,7 +138,7 @@ end
   # --- STALE_NAMESPACE ----------------------------------------------------
 
   def stale_pairs
-    config = (Master.load_yaml(Master.data_path("rules.yml")) || {})["stale_namespaces"] || {}
+    config = (Master.load_yaml(Master.data_path("laws.yml")) || {})["stale_namespaces"] || {}
     Array(config["stale_constants"]).select { |row| row.is_a?(Hash) }
   end
 
@@ -382,7 +382,7 @@ end
   end
 
   # --- learned_smells must not restate a registered rule ------------------
-  # data/rules.yml's learned_smells layer re-applies raw regexes on top of the
+  # data/laws.yml's learned_smells layer re-applies raw regexes on top of the
   # registered rules. Two of the ten were copies: `long_line` produced 334
   # findings across lib/ of which THREE were at a line no other rule reports —
   # and all three were in lib/io/llm.rb, which LONG_LINE deliberately exempts, so
@@ -419,7 +419,7 @@ end
   end
 
   def learned_smell_ids
-    YAML.safe_load_file(File.expand_path("../data/rules.yml", __dir__), aliases: true)
+    YAML.safe_load_file(File.expand_path("../data/laws.yml", __dir__), aliases: true)
         .fetch("learned_smells", []).map { |smell| smell["id"].to_s }
   end
 
@@ -835,7 +835,7 @@ end
   # --- learned smells read code, not comments ----------------------------
   # meta_rules.rb#findings_for_smell matched the smell regex against raw lines,
   # so magic_number scored every number in a comment (6,318 findings, sampled
-  # 100% comment prose). skip_comments in rules.yml blanks comment-only lines for
+  # 100% comment prose). skip_comments in laws.yml blanks comment-only lines for
   # a content smell that asks for it. It is opt-in, because a smell can read a
   # comment — this was written against trailing_ws, which had to see raw
   # whitespace or every comment would read as trailing space, and trailing_ws was
