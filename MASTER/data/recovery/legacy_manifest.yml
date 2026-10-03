@@ -17,7 +17,7 @@ states:
 
 legacy_roots:
   - path: __OLD_BACKUPS/MEGA_ALL_APPS.md
-    state: missing
+    state: restored
     priority: critical
     target_path: RECOVERY/pub/__OLD_BACKUPS/MEGA_ALL_APPS.md
     sha_seen: 1649c9d03e5b6981cf5d76e843f2296810807d4a
