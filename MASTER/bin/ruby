@@ -85,11 +85,22 @@ fi
 
 if [[ -n $PINNED_VERSION ]]; then
   ACTUAL=$("$RUBY" -e "print RUBY_VERSION")
-  if [[ $ACTUAL != $PINNED_VERSION && ! (${OSTYPE:-} == openbsd* && ($ACTUAL == 3.3.* || $ACTUAL == 3.4.*)) ]]; then
+  COMPATIBLE=false
+  if [[ $ACTUAL == $PINNED_VERSION ]]; then
+    COMPATIBLE=true
+  elif [[ ${OSTYPE:-} == openbsd* && ($ACTUAL == 3.3.* || $ACTUAL == 3.4.*) ]]; then
+    COMPATIBLE=true
+  elif [[ ${OSTYPE:-} == linux-android* && $ACTUAL == 4.0.* ]]; then
+    COMPATIBLE=true
+  fi
+  if [[ $COMPATIBLE != true ]]; then
     print -u2 -- "ruby0: $ACTUAL detected; $PINNED_VERSION required"
     if [[ ${OSTYPE:-} == openbsd* ]] && (( $+commands[pkg_add] )); then
       print -u2 -- "ruby0: OpenBSD MASTER accepts ruby33/ruby34"
       print -u2 -- "ruby0: install one with doas pkg_add -U ruby%3.4 or ruby%3.3"
+    elif [[ ${OSTYPE:-} == linux-android* ]]; then
+      print -u2 -- "ruby0: Android/Termux MASTER accepts Ruby 4.0.x"
+      print -u2 -- "ruby0: install or update with pkg install ruby"
     elif [[ -n $RBENV ]]; then
       print -u2 -- "ruby0: run RBENV_VERSION=$PINNED_VERSION $RBENV install -s $PINNED_VERSION"
     else
