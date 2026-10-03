@@ -23,7 +23,7 @@ module Deploy
     ROOT = File.expand_path("../../../..", __dir__)
     RAILS_ROOT = File.join(ROOT, "RAILS")
     MASTER = File.join(ROOT, "MASTER")
-    DESIGN_RULES = File.join(MASTER, "data", "rules.yml")
+    DESIGN_RULES = File.join(MASTER, "data", "laws.yml")
     PRINCIPLE_MAP = File.join(MASTER, "data", "principle_map.yml")
     DESIGN_DOC = File.join(RAILS_ROOT, "shared", "README.md")
 
@@ -125,7 +125,7 @@ module Deploy
       @design_rules = Operator::MasterDesign.blocks(DESIGN_RULES)
       @principle_map = File.file?(PRINCIPLE_MAP) ? YAML.safe_load_file(PRINCIPLE_MAP) : {}
       unless File.file?(DESIGN_RULES)
-        @result.fail("user_flow: missing MASTER/data/rules.yml")
+        @result.fail("user_flow: missing MASTER/data/laws.yml")
       end
       unless File.file?(PRINCIPLE_MAP)
         @result.fail("user_flow: missing MASTER/data/principle_map.yml")
