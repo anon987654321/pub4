@@ -76,6 +76,18 @@ class TestFixConvergence < Minitest::Test
   # /scan is a retired public command. The router may still recognize the old
   # spelling only long enough to rewrite it to /fix, so no separate scan
   # dispatcher, help topic, or pipeline stage can survive.
+
+  def test_unmeasured_proof_baseline_is_inconclusive_not_green
+    pass = Master::CLI::Pipeline::Pass.allocate
+    after = Master::CLI::Pipeline::Proof::Reading.new(passed: 1, total: 1, failing: [], finished: 1)
+    baseline = Master::CLI::Pipeline::Proof::Reading.new(passed: 0, total: 0, failing: [], finished: 0)
+
+    held, verdict = Master::CLI::Pipeline::Proof.judge(after, baseline)
+
+    refute held
+    assert_match(/INCONCLUSIVE.*baseline/, verdict)
+  end
+
   def test_scan_is_not_a_public_command
     assert_includes Master::CLI::TurnRouter::PIPELINE_SLASH, "scan"
     refute_includes Master::CLI::TurnRouter::PIPELINE_COMMANDS, "scan"
