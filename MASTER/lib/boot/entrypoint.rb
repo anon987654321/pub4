@@ -11,6 +11,7 @@ module Master
       module_function
 
       OPENBSD_RUBY_PATTERN = /\\A3\\.(?:3|4)\\.\\d+\\z/
+      ANDROID_RUBY_PATTERN = /\\A4\\.0\\.\\d+\\z/
 
       def prepare!(root:, env: ENV, out: $stderr, argv: ARGV, program: $PROGRAM_NAME)
         root = File.expand_path(root)
@@ -103,6 +104,7 @@ module Master
 
         return if current == pinned
         return if OPENBSD_RUBY_PATTERN.match?(RUBY_VERSION) && RUBY_PLATFORM.include?("openbsd")
+        return if ANDROID_RUBY_PATTERN.match?(RUBY_VERSION) && RUBY_PLATFORM.include?("android")
 
         wrapper = File.join(root, "bin", "ruby")
         unless File.executable?(wrapper)
