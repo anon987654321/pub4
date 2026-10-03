@@ -17,6 +17,7 @@ module Master
       DESCRIPTION = "Fetch a URL → plain text. Rewrites github/gist/arxiv/codepen URLs.".freeze
       TIMEOUT = 15
       MAX_BYTES = 16_000
+      MAX_FULL_BYTES = 4 * 1024 * 1024
       HTTP_OK = "200".freeze
       TAG_RE = /<[^>]+>/.freeze
       WS_RE = /[ \t]+/.freeze
@@ -38,12 +39,12 @@ module Master
         @bus = event_bus
       end
 
-      def call(url:)
+      def call(url:, full: false)
         if (m = url.match(CODEPEN_RE))
-          return fetch_codepen(m[1], m[2])
+          return fetch_codepen(m[1], m[2], full:)
         end
 
-        rewrite(url).then { |rewritten| fetch_one(rewritten) }
+        rewrite(url).then { |rewritten| fetch_one(rewritten, full:) }
       end
 
       private
@@ -53,16 +54,16 @@ module Master
         url
       end
 
-      def fetch_codepen(user, slug)
+      def fetch_codepen(user, slug, full: false)
         base = "https://codepen.io/#{user}/pen/#{slug}"
         parts = %w[html css js].map do |ext|
-          result = fetch_one("#{base}.#{ext}")
+          result = fetch_one("#{base}.#{ext}", full:)
           result.is_a?(Master::Result) && result.ok? ? "// #{ext}\n#{result.value!}" : nil
         end
         Result.ok(parts.compact.join("\n\n"))
       end
 
-      def fetch_one(url)
+      def fetch_one(url, full: false)
         uri = URI(url)
         return Result.err("web_fetch: only http(s)", category: :validation) unless %w[http https].include?(uri.scheme)
         address = SsrfGuard.pinned_address(uri)
@@ -72,17 +73,20 @@ module Master
         return perm if perm.err?
 
         response = http_get(uri, address)
-        deliver(url, response)
+        deliver(url, response, full:)
       rescue StandardError => e
         Result.err("web_fetch: #{e.message}", category: :infrastructure)
       end
 
-      def deliver(url, response)
+      def deliver(url, response, full: false)
         return Result.err("web_fetch: HTTP #{response.code}", category: :infrastructure) unless response.code == HTTP_OK
 
         raw_body = response.body.to_s
-        body = raw_body.byteslice(0, MAX_BYTES * 4)
-        stripped = strip_html(body)[0, MAX_BYTES]
+        limit = full ? MAX_FULL_BYTES : MAX_BYTES
+        return Result.err("web_fetch: response exceeds #{limit} bytes; narrow the request", category: :validation) if raw_body.bytesize > limit
+
+        stripped = strip_html(raw_body)
+        stripped = stripped.byteslice(0, MAX_BYTES) unless full
         @bus&.publish("tool:after", tool: NAME, url:)
         @bus&.publish("tool:untrusted_output", tool: NAME, source: url)
         Result.ok(guarded(stripped, url))
