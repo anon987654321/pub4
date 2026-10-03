@@ -5,7 +5,7 @@
 # lib/trace/why_explainer.rb held its own copy of the rule-shard merge loop,
 # two directories from the real one in lib/boot/data.rb. The two agreed
 # perfectly for as long as the shards existed. On 2026-08-12 the shards were
-# folded into rules.yml, the copy's glob matched nothing, and it assigned {} over
+# folded into laws.yml, the copy's glob matched nothing, and it assigned {} over
 # the real rules — silently emptying /why for all 225 rules. Nothing failed. The
 # tests that caught it were testing /why, not the loader.
 #
@@ -94,7 +94,7 @@ module Operator
     # Only ever down, per file: the minimum of what is recorded and what is
     # measured. A writer that took today's counts whatever they were made a
     # --ratchet run aimed at one file's slack raise another's ceiling and
-    # launder new debt into the baseline — rules.yml 10 to 11, 2026-08-31.
+    # launder new debt into the baseline — laws.yml 10 to 11, 2026-08-31.
     # Per file, the minimum of what is recorded and what is measured.
     def self.ratchet!
       current = readers.transform_values(&:size).select { |_, count| count > 1 }.sort.to_h
