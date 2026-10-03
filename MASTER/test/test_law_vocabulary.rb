@@ -5,7 +5,8 @@ require_relative "test_helper"
 class TestLawVocabulary < Minitest::Test
   def test_normative_terms_normalize_to_law
     %w[
-      law rule principle convention standard guideline heuristic
+      law laws rule rules principle principles convention conventions
+      standard standards guideline guidelines heuristic heuristics
       precept tenet canon norm doctrine
     ].each do |term|
       assert_equal "law", Master::LawVocabulary.normalize(term)
