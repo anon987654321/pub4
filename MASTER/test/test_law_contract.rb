@@ -1,4 +1,4 @@
-# frozen_string_literal: true
+<sub># frozen_string_literal: true
 
 require_relative "test_helper"
 require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
@@ -31,3 +31,4 @@ class TestLawContract < Minitest::Test
     assert_equal first, JSON.parse(Law::Contract.render).fetch("law_digest")
   end
 end
+</sub>
