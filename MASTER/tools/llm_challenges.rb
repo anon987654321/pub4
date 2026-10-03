@@ -145,7 +145,7 @@ module Master
         pattern = "fix|bug|regress|regression|restore|broken|repair|incident"
         out, status = Open3.capture2e(
           "git", "-C", ROOT, "log", "--all",
-          "--regexp-ignore-case", "--grep=#{pattern}",
+          "--regexp-ignore-case", "--extended-regexp", "--grep=#{pattern}",
           "--format=%H%x09%s", "-n", limit.to_i.to_s
         )
         raise "git history query failed: #{out.lines.first.to_s.strip}" unless status.success?
