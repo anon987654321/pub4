@@ -143,7 +143,7 @@ module Master
         },
         "rules" => {
           summary: "the declared rules, one line each",
-          detail: ["/rules [filter] — id, tier, severity and kind from data/rules.yml.",
+          detail: ["/rules [filter] — id, tier, severity and kind from data/laws.yml.",
                    "bin/operator rules <ID> prints one in full."],
         },
         "why" => {
