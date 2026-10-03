@@ -3,6 +3,21 @@
 require_relative "test_helper"
 
 class TestOpenCrabsFeatures < Minitest::Test
+  def test_read_file_full_mode_has_no_truncation_suffix_or_limit_error
+    Dir.mktmpdir do |root|
+      FileUtils.mkdir_p(File.join(root, "lib"))
+      path = File.join(root, "lib", "example.rb")
+      File.write(path, "alpha\n" * 3)
+      tool = Master::Io::ReadFile.new(root:, undo: nil)
+
+      result = tool.call(path: "lib/example.rb", full: true)
+
+      assert result.ok?, result.to_s
+      assert_equal "1\talpha\n2\talpha\n3\talpha\n", result.value!
+      refute_includes result.value!, "truncated"
+    end
+  end
+
   def test_hashline_format_and_validate
     lines = %W[foo\n bar\n]
     formatted = Master::Io::Hashline.format_lines(lines)
