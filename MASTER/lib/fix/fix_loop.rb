@@ -61,7 +61,8 @@ module Master
         @rules = rules
         @axioms = axioms
         @agent = agent
-        @root = root
+        path_root = File.expand_path(root)
+        @root = path_root == Master::ROOT ? Master::REPO_ROOT : path_root
         @bus = bus
         @homeostat = homeostat
         @incremental = incremental
