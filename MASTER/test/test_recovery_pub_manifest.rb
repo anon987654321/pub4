@@ -56,7 +56,6 @@ class TestRecoveryPubManifest < Minitest::Test
     invalid = used.uniq.reject { |state| declared.include?(state) }
     assert_empty invalid, "undeclared recovery states: #{invalid.join(", ")}"
   end
-end
 
   def test_archive_inventory_has_one_record_per_generation
     manifest = YAML.safe_load(ROOT.join("MASTER/data/recovery/legacy_manifest.yml").read, permitted_classes: [Date])
@@ -118,5 +117,16 @@ end
     assert_equal "50.0.0", lineage.fetch("version")
     assert_includes lineage.fetch("preserve"), "ask-before-act / drift / hardcoded-paths / unhandled-edge"
     assert_includes lineage.fetch("caution"), "The v50 file predates current pub4 law migration and is evidence, not a second constitution."
+  end
+
+  def test_legacy_manifest_has_no_duplicate_top_level_keys
+    lines = ROOT.join("MASTER/data/recovery/legacy_manifest.yml").read.each_line
+    keys = lines.filter_map do |line|
+      match = line.match(/A([A-Za-z_][A-Za-z0-9_-]*):(?:s|$)/)
+      match && match[1]
+    end
+
+    duplicates = keys.tally.select { |_key, count| count > 1 }.keys
+    assert_empty duplicates, "duplicate top-level recovery keys: #{duplicates.join(", ")}"
   end
 end
