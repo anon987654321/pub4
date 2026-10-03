@@ -13,10 +13,11 @@
 # walking harmony, rotating pads and basses, DFAM, arp and its full analogue
 # rack. Explicit `live default` still plays the frozen set, the take the operator
 # froze on 2026-09-24, unchanged.
-# The approved takes remain in takes/: soul_jazz_six is
-# takes/loved_moog_loop.rb, moog_dfam takes/moog_dfam_loop.rb, and
-# moog_improv takes/liveset_db4ddf1a.rb, each before any ffmpeg console.
-# Those frozen numbers change only on the operator's word.
+# The approved takes are frozen inside the engine (module DillaTakes in
+# dilla.rb): soul_jazz_six is LovedMoogLoop, moog_dfam MoogDfamLoop, and
+# moog_improv LivesetDb4ddf1a, each as it was heard, before any ffmpeg console.
+# `ruby dilla.rb live take <name>` plays one. Those frozen numbers change
+# only on the operator's word.
 stream:
   rate: 32000
   block_frames: 1024
@@ -72,8 +73,8 @@ progressions:
       pad: { cutoff: [0.35, 1.6], resonance: [0.45, 0.85] }
       bass: { cutoff: [0.7, 0.8], resonance: [0.0, null] }
   # The first sound the operator froze on 2026-09-24 ("FREEZE THAT SOUND"):
-  # soul_jazz_six with a DFAM under it, twice round, as takes/moog_dfam_loop.rb
-  # plays it. test_dilla_live_synth pins these numbers to that file.
+  # soul_jazz_six with a DFAM under it, twice round, as DillaTakes::MoogDfamLoop
+  # in dilla.rb plays it. test_dilla_live_synth pins these numbers to that take.
   moog_dfam:
     from: soul_jazz_six
     loops: 2
@@ -105,8 +106,9 @@ progressions:
         cutoff: { floor: 900.0, span: 2600.0, sine_seconds: 43.0, phase: 2.1 }
       # A hit leaves once this many VCA decays have passed.
       life_decays: 8
-  # The standard default before liveset.rb, as takes/liveset_db4ddf1a.rb
-  # plays it (the operator froze it on 2026-09-24). moog_dfam improvising:
+  # The standard default before liveset.rb, as DillaTakes::LivesetDb4ddf1a
+  # in dilla.rb plays it (the operator froze it on 2026-09-24). moog_dfam
+  # improvising:
   # the loved six chords open it, then the chords are walked
   # (improvise.moves) with four-tone rootless voicings nearest the last, and
   # it goes round until stopped. The pad changes every chord, the bass every

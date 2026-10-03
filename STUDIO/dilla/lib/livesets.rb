@@ -2061,7 +2061,7 @@ end
 module LiveSynth
   DATA_FILE = File.join(Livesets::D, "data", "live.yml")
   ENGINE = File.join(Livesets::D, "dilla.rb")
-  USAGE = "usage: ruby dilla.rb live default|standard|royksopp|improvise|progression [name]|patch <name>|" \
+  USAGE = "usage: ruby dilla.rb live default|standard|royksopp|improvise|progression [name]|take <name>|patch <name>|" \
           "knob <name> <amount> [seconds]|morph <patch> [seconds]|stop|status|say \"<sentence>\""
 
   module_function
@@ -2084,6 +2084,7 @@ module LiveSynth
     when "default" then standard_default!
     when "standard" then LivesetStandard.run
     when "royksopp" then RoyksoppLive.call
+    when "take" then DillaTakes.play(words.first || abort(USAGE))
     when "improvise" then perform!(Improviser.new(rng: rng!, family: options["family"], pad: options["pad"]), seconds:)
     when "progression"
       perform!(Progression.new(words.first || "soul_jazz_six", rng: rng!, pads: options["pads"]&.split(","),

@@ -156,7 +156,9 @@ in `lib/livesets.rb`, and `ruby dilla.rb sines`, which runs the sine stream.
 For local soundcard playback, `ruby STUDIO/dilla/dilla.rb live default`
 starts the detached live player and `ruby STUDIO/dilla/dilla.rb live standard` runs
 the frozen endless liveset directly (the set that used to be liveset.rb, playing
-from inside the engine now). The live path needs ffmpeg and either SoX
+from inside the engine now), and `live take <name>` plays one of the frozen
+takes, also kept inside the engine in module `DillaTakes`. The live path needs
+ffmpeg and either SoX
 or ffplay. Player discovery checks Homebrew's standard locations before PATH, so
 a GUI-launched terminal does not need a separately configured shell PATH just to
 hear the instrument.

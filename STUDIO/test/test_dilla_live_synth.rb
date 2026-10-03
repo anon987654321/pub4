@@ -247,26 +247,58 @@ class TestDillaLiveSynth < Minitest::Test
     end
   end
 
+  # `live take <name>` plays a frozen take out of the engine's TOC.
+  def test_the_take_verb_plays_the_named_take
+    with_live_dir do
+      played = nil
+      DillaTakes.stub(:play, ->(name) { played = name }) do
+        LiveSynth.main(["take", "loved_moog_loop"])
+      end
+      assert_equal "loved_moog_loop", played
+    end
+  end
+
   # MASTER's main sound is the frozen liveset the operator last made the
-  # default -- folded into the engine now -- and every take before it is kept
-  # as it was heard.
+  # default, and every take before it: all frozen inside the engine, as they
+  # were heard. A pin is sha256[0, 12] of the take's unwrapped script --
+  # path-independent, so the fold's renames live outside it.
   FROZEN = {
-    "takes/liveset_161326bb356a.rb" => "683a88ef3edc",
-    "takes/liveset_4abbb73e.rb" => "6b4d7f5cba19",
-    "takes/liveset_5613fe64b642.rb" => "9499edf5943c",
-    "takes/liveset_5aa16356c296.rb" => "13eb699bf265",
-    "takes/liveset_68eccd04098e.rb" => "fe8e97125f8e",
-    "takes/liveset_7b5069a1bf3b.rb" => "b61cf8202ffe",
-    "takes/liveset_864969335d0f.rb" => "e616cc3bdd53",
-    "takes/liveset_db4ddf1a.rb" => "eefa23e337dd",
-    "takes/loved_moog_loop.rb" => "08c384cd563a",
-    "takes/moog_dfam_loop.rb" => "542c589044c4",
+    "liveset_161326bb356a" => "56faac0fcfaa",
+    "liveset_4abbb73e" => "a17c1cf6afb2",
+    "liveset_5613fe64b642" => "5094f13aa2ea",
+    "liveset_5aa16356c296" => "ae88a4ff0963",
+    "liveset_68eccd04098e" => "37c30667fd55",
+    "liveset_7b5069a1bf3b" => "330916114a3b",
+    "liveset_864969335d0f" => "853306a49dbd",
+    "liveset_db4ddf1a" => "eeea14de09e2",
+    "loved_moog_loop" => "2a9a6d210594",
+    "moog_dfam_loop" => "a84cc8cc7169",
   }.freeze
 
   def dilla(path) = File.join(__dir__, "..", "dilla", path)
 
-  def test_the_frozen_files_are_as_frozen
-    FROZEN.each { |path, sha| assert_equal sha, Digest::SHA256.file(dilla(path)).hexdigest[0, 12], path }
+  # The unwrapped script a frozen take's module holds: the module scaffolding
+  # comes off, `def self.run` unfolds to the body the take ran, and the
+  # run def's argv returns to the ARGV the original file read.
+  def take_script(stem)
+    name = stem.split("_").map(&:capitalize).join
+    src = File.read(dilla("dilla.rb"))
+    from = src.index("\n  module #{name}\n") or abort "no module #{name}"
+    region = src[(from + 1)..].lines
+    to = region.index("  end\n") or abort "no end for #{name}"
+    body = region[0..to].map { |line| line.sub(/\A  /, "") }[1..-2]
+    body.shift if body.first.start_with?("# takes/") # the provenance line
+    body.shift if body.first == "\n"
+    idx = body.index { |line| line.start_with?("  def self.run(") } or abort "no run def for #{name}"
+    last_end = body.rindex { |line| line == "  end\n" } or abort "no run end for #{name}"
+    (body[0...idx] + body[(idx + 1)...last_end]).map do |line|
+      line = line.sub(/^(\s*)def self\./) { "#{Regexp.last_match(1)}def " }
+      line.gsub(/\bargv\b/, "ARGV")
+    end.join
+  end
+
+  def test_the_frozen_takes_are_as_frozen
+    FROZEN.each { |stem, sha| assert_equal sha, Digest::SHA256.hexdigest(take_script(stem))[0, 12], stem }
   end
 
   # The numbers the operator froze, read off the file, so a change to any of
@@ -291,20 +323,23 @@ class TestDillaLiveSynth < Minitest::Test
   end
 
   # A take, seeded and captured before its ffmpeg console, against the
-  # engine's progression of the same name: equal sample for sample.
+  # engine's progression of the same name: equal sample for sample. The take
+  # runs from the module now folded into dilla.rb -- the script its TOC entry
+  # unwraps to. Kernels the take shares with its old file are seeded alike:
+  # the per-stream rewrites are anchored to whole lines, because the module
+  # sections carry knob_rng and dfam_rng relatives a bare substring would hit.
   def reference_samples(take, seconds, seed)
-    src = File.read(dilla("takes/#{take}"))
-    lib = File.expand_path(dilla("lib"))
-    # Whatever load path the take carries, it runs from a scratch copy, so its
-    # own relative path would point nowhere: the engine library stands in.
-    src = src.sub(/^\$LOAD_PATH\.unshift .*$/) { "$LOAD_PATH.unshift #{lib.inspect}" }
-    src = src.sub("dfam_rng = Random.new\n", "dfam_rng = Random.new(#{seed})\nDFAM_NOISE = Random.new(#{seed} ^ 0xdfa)\n")
-    src = src.sub("rng = Random.new\n", "rng = Random.new(#{seed})\n").sub("(0.18 * (rand * 2.0 - 1.0))", "(0.18 * (DFAM_NOISE.rand * 2.0 - 1.0))")
-    src = src.sub(/^LOG = .*$/, "LOG = File.open(File::NULL, \"w\")")
+    src = "$LOAD_PATH.unshift #{File.expand_path(dilla("lib")).inspect}\nrequire \"sound\"\n\nsrand(#{seed})\n\n#{take_script(take)}"
+    src = src.gsub(/^( *)dfam_rng = Random\.new$/) { "#{Regexp.last_match(1)}dfam_rng = Random.new(#{seed})" }
+             .gsub(/^( *)rng = Random\.new$/) { "#{Regexp.last_match(1)}rng = Random.new(#{seed})" }
+             .gsub(/^( *)knob_rng = Random\.new$/) { "#{Regexp.last_match(1)}knob_rng = Random.new(#{seed} ^ 0x0dd)" }
+    src = src.sub(/^( *)dfam_rng = Random\.new\(#{seed}\)$/, "\\0\nDFAM_NOISE = Random.new(#{seed} ^ 0xdfa)")
+             .sub("(0.18 * (rand * 2.0 - 1.0))", "(0.18 * (DFAM_NOISE.rand * 2.0 - 1.0))")
+    src = src.sub(/^\s*log = File\.open\(.*$/, "log = File.open(File::NULL, \"w\")")
     Dir.mktmpdir do |dir|
       raw = File.join(dir, "take.raw")
-      src = src.sub(/^sox = IO\.popen\(.*$/, "sox = File.open(#{raw.inspect}, \"wb\")")
-      src = src.sub(/^frames = .*$/) { |line| "#{line}\nframes = [frames, (#{seconds} * RATE).to_i].min" }
+      src = src.sub(/^\s*sox = IO\.popen\(.*$/, "sox = File.open(#{raw.inspect}, \"wb\")")
+      src = src.sub(/^\s*frames = .*$/) { |line| "#{line}\nframes = [frames, (#{seconds} * RATE).to_i].min" }
       File.write(File.join(dir, "take.rb"), src)
       assert system(RbConfig.ruby, "--yjit", File.join(dir, "take.rb"), err: File::NULL), "#{take} ran"
       File.binread(raw).unpack("s<*")
@@ -328,11 +363,11 @@ class TestDillaLiveSynth < Minitest::Test
     assert_equal take_samples, ours.first(take_samples.size), "#{progression} is #{take}"
   end
 
-  def test_soul_jazz_six_is_the_loved_loop = assert_plays_the_take("loved_moog_loop.rb", "soul_jazz_six")
+  def test_soul_jazz_six_is_the_loved_loop = assert_plays_the_take("loved_moog_loop", "soul_jazz_six")
 
-  def test_moog_dfam_is_the_dfam_loop = assert_plays_the_take("moog_dfam_loop.rb", "moog_dfam")
+  def test_moog_dfam_is_the_dfam_loop = assert_plays_the_take("moog_dfam_loop", "moog_dfam")
 
-  def test_moog_improv_is_the_standard_before_liveset = assert_plays_the_take("liveset_db4ddf1a.rb", "moog_improv")
+  def test_moog_improv_is_the_standard_before_liveset = assert_plays_the_take("liveset_db4ddf1a", "moog_improv")
 
   # Seeded on pitch and start, the written progression is the same take
   # twice, and it is sound, not silence or a fault.
