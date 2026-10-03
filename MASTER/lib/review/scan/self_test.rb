@@ -262,7 +262,7 @@ module Master
                           message: "missing rule_system policy")] unless policy.is_a?(Hash)
 
           lifecycle = policy["lifecycle"] || {}
-          required_states = %w[proposed proven active trusted advisory retired]
+          required_states = %w[proposed proven active observed trusted advisory retired]
           actual_states = Array(lifecycle["states"]).map(&:to_s)
           return [finding(path: File.join(@root, "data", "rules.yml"), line: 1,
                           message: "rule_system lifecycle states drift")] unless actual_states == required_states
