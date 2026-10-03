@@ -1,10 +1,6 @@
 # frozen_string_literal: true
 
 # law/css.rb — every css law, one Law.define per rule.
-# Was 10 one-rule files; Law.load_all and every fixture proof are
-# unchanged by the grouping (2026-08-19 file-sprawl consolidation).
-
-# Migrated from data/rules.yml CLAMP_TYPOGRAPHY.
 # REDUCED_MOTION and NO_IMPORTANT live once, in the registry (web_rules.rb).
 # Both judge a FILE's posture — whether the reset block exists, whether an
 # !important erases or paints, whether it sits inside an override media —
