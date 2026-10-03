@@ -5,6 +5,7 @@ require_relative "restructure"
 require_relative "restructure_sweep/context"
 require_relative "restructure_sweep/contracts"
 require_relative "transformation_plan"
+require_relative "problem_graph"
 
 module Master
   module Fix
@@ -23,19 +24,10 @@ module Master
       FIRST_ATTEMPTS = 1
       FIRST_ROUNDS = 1
       FIRST_KEEPS = 1
-      RULE_OPERATIONS = {
-        "DEAD_SUBTREE" => "defragment",
-        "PARALLEL_HIERARCHY" => "merge",
-        "CYCLIC_DEPENDENCY" => "decouple",
-        "FILE_SPRAWL" => "flatten",
-        "NO_GOD_CLASS" => "split",
-        "SMALL_FILES" => "split",
-        "JS_MODULE_SIZE" => "split",
-      }.freeze
       TREES = Contracts::BY_TREE.keys.freeze
 
       PROPOSE = <<~TEXT
-        Restructure part of this tree to remove one structural finding.
+        Restructure one underlying problem in this tree rather than fixing its findings independently.
 
         Autonomous surgery rules:
         - Read the archaeology below before deciding that a file is dead or should move.
@@ -44,7 +36,15 @@ module Master
         - Recalculate the recursive tree census after every kept restructure; hidden nested growth is not free.
         - Reconcile the structural ratchet when the measured core gets smaller. Keep the recorded ceiling honest.
 
-        Finding: %<rule>s at %<path>s: %<message>s
+        Problem: %<problem_id>s
+        Signals: %<rule>s
+        Why these findings were grouped: %<message>s
+
+        Findings:
+        %<findings>s
+
+        Candidate transformations:
+        %<candidate_operations>s
 
         Any combination of these is allowed: defragment scattered concepts; decouple
         independent concerns; flatten wrappers, nesting and needless directories;
@@ -74,7 +74,7 @@ module Master
       TEXT
 
       ATTACK = <<~TEXT
-        A restructure, proposed to remove %<rule>s at %<path>s:
+        A restructure, proposed for problem %<problem_id>s (%<rule>s) at %<path>s:
         %<summary>s
 
         Attack it. Does it change behaviour, break a caller, a require, load order,
@@ -114,10 +114,10 @@ module Master
         kept = []
         rounds.times do |round|
           round_kept = []
-          candidates(target, "#{run_id}-#{round}").first(attempts).each do |finding|
+          candidates(target, "#{run_id}-#{round}").first(attempts).each do |problem|
             break if kept.size + round_kept.size >= keeps
 
-            result = attempt(finding)
+            result = attempt(problem)
             round_kept << result.value! if result&.ok?
           end
           kept.concat(round_kept)
@@ -147,63 +147,120 @@ module Master
       # into the proposal rather than collapsing to one filename.
       def candidates(target, run_id)
         found = Context.structural_findings(target)
+        problems = ProblemGraph.new(plan: @transformation_plan).call(found)
+        return [] if problems.empty?
+
         seed = Digest::SHA256.hexdigest(run_id.to_s)[0, 8].to_i(16)
-        grouped = found.group_by { |_path, rule, _message| RULE_OPERATIONS.fetch(rule, "recommend") }
-        ordered = grouped.keys.sort_by { |operation| @transformation_plan.operation(operation).position rescue 999 }
-        ordered.flat_map do |operation|
-          group = grouped.fetch(operation)
-          group.rotate(seed % group.size)
-        end
+        rotated = problems.rotate(seed % problems.size)
+        multifinding = rotated.count { |problem| problem.size > 1 }
+        multisignal = rotated.count(&:multi_signal?)
+        candidate_count = rotated.sum { |problem| problem.candidate_operations.size }
+
+        Master::Trace::Dmesg.status(
+          "restructure0",
+          "#{found.size} finding(s) -> #{rotated.size} problem(s), "           "#{multifinding} multi-finding, #{multisignal} multi-signal, "           "#{candidate_count} candidate transformation(s)"
+        )
+        @bus&.publish(
+          "fix_loop:restructure_problems",
+          target: relative(target),
+          findings: found.size,
+          problems: rotated.size,
+          multi_finding: multifinding,
+          multi_signal: multisignal,
+          candidates: candidate_count
+        )
+        rotated
       end
 
       private
 
-      def attempt(finding)
-        path, rule, message, related = finding
+      def attempt(problem)
+        path, = problem.findings.first
         tree = relative(path).split("/").first
-        operation = RULE_OPERATIONS.fetch(rule, "recommend")
-        answer = ask(proposal(tree, rule, path, message, related:))
+        answer = ask(proposal(tree, problem))
         return if answer.strip == "KEEP"
 
         plan = Restructure::Plan.parse(answer)
-        return report(finding, nil, "the answer held no plan") if plan.empty?
+        return report(problem, nil, "the answer held no plan") if plan.empty?
 
-        review = ->(diff) { verdict(rule, path, plan, diff) }
-        result = @restructures[tree].call(plan, message: commit_message(rule, path, plan), review:)
-        report(finding, plan, result, operation:)
+        review = ->(diff) { verdict(problem, plan, diff) }
+        result = @restructures[tree].call(
+          plan,
+          message: commit_message(problem, plan),
+          review:
+        )
+        report(problem, plan, result)
       end
 
-      def proposal(tree, rule, path, message, related: [])
-        format(PROPOSE, transformations: @transformation_plan.prompt,
-                        preservation: @transformation_plan.preservation_contract.map { |key, value| "  #{key}: #{value}" }.join("\n"),
-                        contracts: Contracts.for(tree).strip, rule:, path: relative(path), message:,
-                        context: Context.new(@root, path, related:).to_s)
+      def proposal(tree, problem)
+        findings = problem.findings.map do |path, rule, message, related|
+          related = Array(related).map { |item| relative(item) }.reject { |item| item == relative(path) }
+          [
+            "#{relative(path)}: #{rule}: #{message}",
+            (related.empty? ? nil : "  related: #{related.first(8).join(", ")}")
+          ].compact.join("\n")
+        end.join("\n")
+
+        format(
+          PROPOSE,
+          transformations: @transformation_plan.prompt,
+          preservation: @transformation_plan.preservation_contract.map { |key, value| "  #{key}: #{value}" }.join("\n"),
+          contracts: Contracts.for(tree).strip,
+          rule: problem.rules.join(", "),
+          path: relative(problem.files.first),
+          message: "#{problem.reason}; confidence=#{problem.confidence}; problem=#{problem.id}",
+          problem_id: problem.id,
+          findings: findings,
+          candidate_operations: problem.candidate_operations.join(", "),
+          context: Context.new(@root, problem.files.first, related: problem.files.drop(1)).to_s
+        )
       end
 
-      def verdict(rule, path, plan, diff)
-        answer = ask(format(ATTACK, rule:, path: relative(path), summary: plan.summary, diff:)).strip
+      def verdict(problem, plan, diff)
+        answer = ask(
+          format(
+            ATTACK,
+            problem_id: problem.id,
+            rule: problem.rules.join(", "),
+            path: relative(problem.files.first),
+            summary: plan.summary,
+            diff:
+          )
+        ).strip
         answer.start_with?("APPROVE") ? nil : "review: #{answer.lines.first.to_s.strip[0, 200]}"
       end
 
-      def commit_message(rule, path, plan)
-        "refactor: #{plan.summary.empty? ? "restructure #{relative(path)}" : plan.summary}\n\n" \
-          "Removes #{rule} at #{relative(path)}. Restructured by /fix after the repair passes: " \
-          "a hostile review approved the diff, and parse, eager load, the boot self-test and " \
-          "the related tests held."
+      def commit_message(problem, plan)
+        "refactor: #{plan.summary.empty? ? "restructure #{relative(problem.files.first)}" : plan.summary}\n\n"           "Addresses #{problem.rules.join(", ")} for problem #{problem.id}. Restructured by /fix after the repair passes: "           "a hostile review approved the diff, and parse, eager load, the boot self-test and the related tests held."
       end
 
-      def report(finding, plan, result, operation: nil)
-        path, rule, = finding
+      def report(problem, plan, result)
         ok = result.is_a?(Result) && result.ok?
         text = if ok then "kept: #{plan.summary}"
                elsif result.is_a?(Result) then result.message
                else result.to_s
                end
         evidence = ok ? result.value!.fetch(:evidence, nil) : nil
-        Master::Trace::Dmesg.status("restructure0", "#{operation || RULE_OPERATIONS.fetch(rule, "recommend")} #{rule} #{relative(path)}: #{text[0, 140]}")
-        @bus&.publish("fix_loop:restructure",
-          path: relative(path), rule:, operation: operation || RULE_OPERATIONS.fetch(rule, "recommend"),
-          ok:, message: text[0, 300], evidence:)
+        operation = plan && problem.candidate_operations.find { |candidate| plan.summary.downcase.include?(candidate) }
+        operation ||= problem.primary_operation
+        Master::Trace::Dmesg.status(
+          "restructure0",
+          "#{operation} problem=#{problem.id} signals=#{problem.size} #{problem.rules.join(",")} #{relative(problem.files.first)}: #{text[0, 140]}"
+        )
+        @bus&.publish(
+          "fix_loop:restructure",
+          path: relative(problem.files.first),
+          rule: problem.rules.join(","),
+          rules: problem.rules,
+          problem_id: problem.id,
+          operation:,
+          candidate_operations: problem.candidate_operations,
+          confidence: problem.confidence,
+          findings: problem.size,
+          ok:,
+          message: text[0, 300],
+          evidence:
+        )
         result.is_a?(Result) ? result : nil
       end
 
