@@ -9,7 +9,7 @@ require "master"
 require "review/scan/rules/meta_rules"
 
 class LearnedSmellsRuleSpec < Minitest::Test
-  def test_learned_smell_rules_are_loaded_from_rules_yml
+  def test_learned_smell_rules_are_loaded_from_laws_yml
     Dir.mktmpdir do |dir|
       FileUtils.mkdir_p(File.join(dir, "data"))
       File.write(
