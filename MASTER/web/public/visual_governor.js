@@ -1,5 +1,5 @@
 // MASTER visual governor: one frame gate for the same face budget consumed by
-// face_state.js and FaceWorld. Limits live in data/rules.yml; this module only
+// face_state.js and FaceWorld. Limits live in data/laws.yml; this module only
 // applies them to requestAnimationFrame and the process-wide particle guard.
 (() => {
   // Restored with the read, from the same revert. Every other visual module
