@@ -46,7 +46,7 @@ deploy_tracked_app() {
 
   deploy_status "$app_name" "master scan"
   if ! master_scan_dep "$app_name"; then
-    log "MASTER scan violations — aborting per rules.yml"
+    log "MASTER scan violations — aborting per laws.yml"
     deploy_status "$app_name" "master scan" "failed"
     exit 1
   fi
