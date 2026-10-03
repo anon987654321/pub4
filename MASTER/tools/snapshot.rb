@@ -131,10 +131,10 @@ module Operator
         you judge anything, in this order — all four governed trees are represented by their own snapshots:
 
         1. `MASTER/data/soul.yml` — the kernel: absolutes, work rules, anti-simulation.
-        2. `MASTER/data/laws.yml` — 242 declared rules, each with tier, severity and fix.
-        3. `MASTER/law/*.rb` — 122 domain rules, each carrying the example it must flag and the one
-           it must not. Those two examples **are** the rule; a fix that breaks either is wrong.
-        4. `MASTER/lib/review/scan/rules/*.rb` — 148 registry detectors.
+        2. `MASTER/data/laws.yml` — the live policy catalogue; do not assume a remembered count is current.
+        3. `MASTER/law/*.rb` — executable domain laws, each carrying the example it must flag and the one
+           it must not. Those two examples **are** the law; a fix that breaks either is wrong.
+        4. `MASTER/lib/review/scan/rules/*.rb` — the executable scan registry; inspect its live registry rather than a remembered count.
 
         The house rules that reject otherwise-correct patches:
 
