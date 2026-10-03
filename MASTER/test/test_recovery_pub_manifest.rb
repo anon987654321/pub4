@@ -129,4 +129,19 @@ class TestRecoveryPubManifest < Minitest::Test
     duplicates = keys.tally.select { |_key, count| count > 1 }.keys
     assert_empty duplicates, "duplicate top-level recovery keys: #{duplicates.join(", ")}"
   end
+  def test_master2_and_face_reviews_are_explicitly_dispositioned
+    manifest = YAML.safe_load(ROOT.join("MASTER/data/recovery/legacy_manifest.yml").read, permitted_classes: [Date])
+    master2 = manifest.fetch("master2_lineage")
+    assert_includes master2.fetch("retained_semantics"), "Keep workflow lifecycle explicit and observable, but do not reinflate the retired eight-phase MASTER2 state machine."
+
+    openbsd = manifest.fetch("legacy_cli_reviews").fetch("openbsd_commands")
+    assert_equal "retired-unsafe", openbsd.fetch("disposition")
+
+    face = manifest.fetch("legacy_cli_reviews").fetch("face_branch")
+    assert_equal "retired-by-consolidation", face.fetch("disposition")
+
+    v43 = manifest.fetch("master_json_v43_review")
+    assert_equal "semantic-recovery-only", v43.fetch("disposition")
+    assert_includes v43.fetch("not_restored"), "The old prediction_engine confidence-based autonomous mutation policy."
+  end
 end

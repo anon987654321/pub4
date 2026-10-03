@@ -884,3 +884,65 @@ negative_fossils:
     commit: "01746ec9542fc80e0740db1ef09177a18376fbfc"
     value: "389 lines were removed from prompts.json in a documented consolidation."
     disposition: "do-not-reinflate"
+
+master2_lineage:
+  source_commits:
+    - commit: "f608163f20a001b40914ea22a39d9939b705e91b"
+      value: "MASTER2 workflow_engine, hooks_manager, circuit_breaker, session_template, smells and consolidated UI structure."
+      current_mapping: "Current Pipeline/Pass, event hooks, runtime policy and review stages cover the durable intent; the old eight-phase engine is not a canonical runtime."
+      disposition: "absorbed-or-superseded"
+    - commit: "f0677762f11204e17f87b79a3b84f942dfecc291"
+      value: "MASTER2 self-awareness cache, unified speech engines, TTS styles, audio streaming and orb web projections."
+      current_mapping: "SelfModel, operator/sprawl/self-scan, Voice::Speech, tts-worker, tts.yml and FaceWorld now carry the corresponding concerns with stronger contracts."
+      disposition: "absorbed-or-superseded"
+    - commit: "60d3fb34a1cdfe0ad6c01d9a3df29aab5e6259e1"
+      value: "MASTER2 Executor default, auto_fixer, quality gates, speech and web integration."
+      current_mapping: "Current /fix, gate chain, Result pipeline, voice supervisor and FaceWorld provide evolved replacements."
+      disposition: "absorbed-or-superseded"
+    - commit: "628f1223c4abd4304b57484dee4b94c99ec4ea26"
+      value: "Preservation rules, persona system, language detection, HTML generation and simulated execution."
+      current_mapping: "Preservation is constitutional; personas live in data/personas.yml; language and web generation have newer bounded implementations."
+      disposition: "partially-absorbed"
+  retained_semantics:
+    - "Keep structural self-knowledge measurable, but do not revive the one-hour stale cache; use current self-scan, sprawl census and capability map as sources."
+    - "Keep workflow lifecycle explicit and observable, but do not reinflate the retired eight-phase MASTER2 state machine."
+    - "Keep useful TTS fallback/style ideas only through the current voice policy and worker contracts."
+  caution:
+    - "MASTER2 used several now-retired layouts and modules. Restore behaviour, not directory names."
+    - "The old constitution backup and split module tree are historical evidence, not additional sources of truth."
+
+legacy_cli_reviews:
+  openbsd_commands:
+    commit: "562195009d1f7a2b34e36fe6af4637e425121cba"
+    value: "One-file OpenBSD CLI for services, firewall, pkg, zap, sysinfo and ports."
+    disposition: "retired-unsafe"
+    reason: "The historical module interpolated shell strings, used backticks instead of the current argv-safe Exec layer, depended on /proc/loadavg on OpenBSD, and exposed unrestricted package/firewall arguments."
+    current_mapping: "MASTER/lib/operator/services.rb, MASTER/lib/ground/openbsd_config.rb and MASTER/lib/ground/pledge.rb."
+  face_branch:
+    ref: "fix/master-face-hands-free"
+    tip: "ba42c9560ea931932ee476083deb6ef81c47377f"
+    removed_commits:
+      - "93ebb23d3390"
+      - "a2e74bbd23d8"
+      - "cbba7074f89f"
+      - "e107502782aa"
+      - "f03ce1a48326"
+      - "8c6f9be76341"
+    value: "Legacy three.js face modules: state, renderer, shaders, pixel diff, point renderer and offscreen ecology."
+    disposition: "retired-by-consolidation"
+    current_mapping: "MASTER/web/public/face_world.js and MASTER/FACE_WORLD.md preserve the canonical face state, repository geometry, semantic camera and renderer contract."
+    reason: "Git history explicitly records each legacy module as dead or obsolete; the current FaceWorld is the consolidated successor."
+
+master_json_v43_review:
+  source_commit: "5eed78fa18c6c3a67c4abb984ec363ff06b685d8"
+  value: "Radical v43 consolidation kept PRESERVE_THEN_IMPROVE_NEVER_BREAK, ultra-minimalism, operational convergence, adversarial review, incremental scanning and explicit thresholds."
+  absorbed:
+    - "PRESERVE_THEN_IMPROVE_NEVER_BREAK is current soul.yml golden_rule."
+    - "Ultra-minimalism is represented by current law/practice and design/system contracts."
+    - "Adversarial review is current HOSTILE_AUDIT and /fix critique; structural surgery has a second hostile attack."
+    - "Incremental structural repair is represented by the bounded RestructureSweep, while full tree gates remain explicit."
+  not_restored:
+    - "The old prediction_engine confidence-based autonomous mutation policy."
+    - "The old permissions auto_accept/bypass_confirmation block."
+    - "The old deployment_config secrets/host-specific paths."
+  disposition: "semantic-recovery-only"
