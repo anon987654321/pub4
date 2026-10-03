@@ -336,14 +336,14 @@ class ScaleLintTest < Minitest::Test
                  "_tokens.scss and design_tokens.yml scale.opacity disagree"
   end
 
-  # 44 is law -- layout_rules.touch.target_min_px in rules.yml -- and --tap-min
+  # 44 is law -- layout_rules.touch.target_min_px in laws.yml -- and --tap-min
   # is how the stylesheets spend it. It was hand-written in five places, three of
   # them app :root blocks restating what shared already gave them, and nothing
   # compared any of them to the rule. The same shape as the opacity ladder: a
   # constant copied out of its source and left to drift.
   def test_tap_min_matches_the_law
     law = Operator::MasterDesign.dig("layout_rules", "touch", "target_min_px")
-    refute_nil law, "layout_rules.touch.target_min_px is gone from rules.yml"
+    refute_nil law, "layout_rules.touch.target_min_px is gone from laws.yml"
 
     declared = LINT.stylesheets.flat_map do |path|
       File.readlines(path, encoding: "UTF-8").filter_map do |line|
