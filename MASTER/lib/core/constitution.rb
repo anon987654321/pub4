@@ -43,7 +43,7 @@ module Master::Core
     # through World. So the hardened gate was live for the tool path and absent
     # from the constitutional one, which is the path that actually runs unattended.
     def self.load(data_dir:, verify: nil, sandbox: nil, capabilities: Capabilities.for(:fix))
-      rules_data = YAML.safe_load_file(File.join(data_dir, "rules.yml"), aliases: true)
+      rules_data = YAML.safe_load_file(File.join(data_dir, "laws.yml"), aliases: true)
       sacred_paths = Paths.sacred_paths(root: File.dirname(data_dir))
       rules = default_rules(rules_data, sacred_paths:)
       rules += [scan_clean_rule(verify)] if verify
