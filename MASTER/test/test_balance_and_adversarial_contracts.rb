@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "fileutils"
 require "open3"
 
 require_relative "test_helper"
@@ -89,6 +90,29 @@ class WorldExternalContractTest < Minitest::Test
 
       assert_predicate result, :err?
       assert_includes result.message, "TIMEOUT after"
+    end
+  end
+\n  def test_scoped_rollback_preserves_an_unrelated_concurrent_file
+    Dir.mktmpdir("master-world") do |root|
+      Open3.capture2e("git", "-C", root, "init", "-q")
+      Open3.capture2e("git", "-C", root, "config", "user.email", "master@example.invalid")
+      Open3.capture2e("git", "-C", root, "config", "user.name", "MASTER")
+      File.write(File.join(root, "tracked.txt"), "before\n")
+      Open3.capture2e("git", "-C", root, "add", "tracked.txt")
+      Open3.capture2e("git", "-C", root, "commit", "-qm", "seed")
+
+      instance = world(root)
+      checkpoint = instance.checkpoint
+      effect = Master::Core::Effect.write("tracked.txt", "after\n")
+      result = instance.perform(effect)
+      assert_predicate result, :ok?
+
+      File.write(File.join(root, "concurrent.txt"), "keep\n")
+      rollback = instance.rollback(checkpoint, effect)
+
+      assert_predicate rollback, :ok?
+      assert_equal "before\n", File.read(File.join(root, "tracked.txt"))
+      assert_equal "keep\n", File.read(File.join(root, "concurrent.txt"))
     end
   end
 end
