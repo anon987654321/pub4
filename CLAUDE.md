@@ -2,7 +2,7 @@
 
 One screen. Everything else is reference, reached from here.
 
-Authority order: `MASTER/data/soul.yml` > `MASTER/data/rules.yml` >
+Authority order: `MASTER/data/soul.yml` > `MASTER/data/laws.yml` >
 executable law (`MASTER/law/*.rb` and `MASTER/lib/review/scan/rules/*.rb`) >
 this file > the per-tree contract. Feature truth is `RAILS/apps.yml`.
 
@@ -13,7 +13,7 @@ reads `.github/copilot-instructions.md` — and all four of those are generated
 from one marked block in `MASTER/AGENTS.md` by `cd MASTER && rake
 docs:agent_contracts`, with `rake lint:agent_contracts` failing when one drifts.
 Whichever door an agent comes through, it is pointed at `MASTER/data/soul.yml`
-and `MASTER/data/rules.yml` before it writes. Change the law there, never in a
+and `MASTER/data/laws.yml` before it writes. Change the law there, never in a
 harness file.
 
 This file points; it does not copy. Every subsystem keeps its own contract and
@@ -147,7 +147,7 @@ The order is the authority order, and it is not long:
 
 1. `MASTER/data/soul.yml` — the kernel. Absolutes, work rules, anti-simulation.
    It outranks everything below, including this file.
-2. `MASTER/data/rules.yml` — 242 declared rules under `rules:`, a flat array
+2. `MASTER/data/laws.yml` — 242 declared rules under `rules:`, a flat array
    keyed by `tier` rather than by scope. Read `laws` first, the six in priority
    order, then the corpus.
 3. `MASTER/law/*.rb` — the domain law, about 118 rules, each with a worked
@@ -158,7 +158,7 @@ Enumerate them rather than trusting a memory of them. The file uses YAML
 aliases, so `safe_load_file` raises on it:
 
 ```zsh
-ruby -ryaml -e 'YAML.unsafe_load_file("MASTER/data/rules.yml")["rules"].each { |r| puts "#{r["tier"]} #{r["id"]}: #{r["name"]}" }'
+ruby -ryaml -e 'YAML.unsafe_load_file("MASTER/data/laws.yml")["rules"].each { |r| puts "#{r["tier"]} #{r["id"]}: #{r["name"]}" }'
 ruby MASTER/tools/agent_context.rb   # the 47 conduct rules, and what can refuse a write
 ```
 
@@ -169,7 +169,7 @@ write without opening the file. Until then, open the file.
 usually the exemption rather than the rule — every scan noise entry in
 `TODO.md` is somebody who knew the rule and not what it spares.
 
-Two cautions from the tree itself. `data/rules.yml` and `data/soul.yml` are
+Two cautions from the tree itself. `data/laws.yml` and `data/soul.yml` are
 `paths.immutable`: read them, never let an effect write them. And a rule
 declared there may have no detector — 92 of the 242 carry none and resolve
 through `law/` or a fold — so the file is the law, not the scanner's coverage
