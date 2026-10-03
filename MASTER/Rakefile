@@ -129,7 +129,7 @@ task :constitution do
   end
 end
 
-desc "Run rules.yml self_test laws against MASTER itself"
+desc "Run laws.yml self_test laws against MASTER itself"
 # A loud gate: it fails while known debt remains, so the debt stays visible and
 # triageable. Read the count from this task's output, never from prose.
 task :selftest do
@@ -663,7 +663,7 @@ end
     end
   end
 
-  # rules.yml's PRINCIPLE_MAP law names the rule -> principle direction; SelfTest
+  # laws.yml's PRINCIPLE_MAP law names the rule -> principle direction; SelfTest
   # only ever checked principle -> rule and so reported 0 against 101 untraced
   # rules. A ceiling makes the real number visible and monotone without turning a
   # standing backlog into a red gate on unrelated work.
