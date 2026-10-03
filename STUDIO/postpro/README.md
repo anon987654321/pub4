@@ -205,6 +205,36 @@ sits at 0.32 and lives where the detail is not. Over the sharpest fifth of a
 portrait it reads zero either way, so the face was never at risk — what the
 curve buys is the middle distance.
 
+The proxy loses to the instrument whenever the instrument is present. When the
+onnxruntime gem and the weights below are installed, `STUDIO/postpro/depth.rb`
+runs Depth Anything V2 (small) locally — 25M parameters, about twelve seconds
+of CPU per fresh frame — and both `relight` and `aerial_depth` take its map
+instead:
+the key lands on what the measuring eye says is near, and haze follows the
+measured distance rather than the sharpness. Inverse depth comes out of the
+model (a high reading means close), so `depth.rb` hands its callers a `near`
+map where 1.0 is the viewer's side of the plane, and no caller has to remember
+which way the tensor points. Without the gem or the weights everything falls
+back to the proxies above, one quiet log line, and nothing else changes.
+
+The weights are fetched out of band and never committed — `models/` is ignored,
+the generated planes cached under it with it. The export is
+`onnx-community/depth-anything-v2-small-ONNX`, fp16: an 180 kB graph and a
+50.4 MB external-data blob, fetched into `STUDIO/postpro/models/depth/`:
+
+```sh
+mkdir -p STUDIO/postpro/models/depth && cd STUDIO/postpro/models/depth
+curl -L -O https://huggingface.co/onnx-community/depth-anything-v2-small-ONNX/resolve/main/onnx/model_fp16.onnx
+curl -L -O https://huggingface.co/onnx-community/depth-anything-v2-small-ONNX/resolve/main/onnx/model_fp16.onnx_data
+```
+
+It processes square at 518 px with ImageNet normalisation, and writes each
+frame's plane to `models/depth/cache/` keyed on a 64-px fingerprint, so a
+re-run of the same picture pays eleven seconds once. The gems are
+`onnxruntime` plus `numo-narray`, install-time dependencies rather than
+`Gemfile` ones — the degradation contract says every other machine runs postpro
+untouched without them.
+
 ### The tone scale
 
 `tonemap` carries five curves. The ACES one is the 2016 fit to the Academy's

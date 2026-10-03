@@ -18,6 +18,8 @@ require "open3"
 require "rbconfig"
 require_relative "legacy_effects"
 require_relative "dilla_analog"
+require_relative "constitution"
+require_relative "depth"
 include Postpro::LegacyEffects
 include Postpro::DillaAnalog
 
@@ -340,6 +342,9 @@ POSTPRO_USAGE = <<~TXT
     --reference FILE                  add a quality report against a reference
     --compare                         side-by-side after a one-shot grade
     --random [--count N] [--rough]    five to ten analog variations per image
+    --heavy                           five variations: lane deal subtle→bleeding edge,
+                                      12–24-step chains, bands lifted (default on,
+                                      POSTPRO_HEAVY=0 off, this flag outvotes it)
     --watch [DIR] [--preset NAME]     grade every new photo that lands in DIR
     --auto                            grade the default globs without prompting
     --from-replicate                   grade what replicate just wrote
@@ -358,6 +363,10 @@ if (ARGV & %w[-h --help]).any?
   puts POSTPRO_USAGE
   exit 0
 end
+
+# Heavy is the standing default; the flag stands so POSTPRO_HEAVY=0 can be
+# outvoted for one run, the way --rough outvotes the wear shelf.
+ENV["POSTPRO_HEAVY"] = "1" if ARGV.include?("--heavy")
 
 # What is wrong with this photograph, and which half a grade can reach.
 #
@@ -1860,7 +1869,7 @@ RELIGHT_FLOOR = 0.004
 RELIGHT_RATIO_CEILING = 3.0
 RELIGHT_KEY_MIX = 0.65
 
-def relight(image, intensity = 0.5, azimuth: 135.0, shape: 1.25, throw: 0.8)
+def relight(image, intensity = 0.5, azimuth: 135.0, shape: 1.25, throw: 0.8, depth: nil)
   linear = image.colourspace("scrgb")
   r, g, b = linear.bandsplit
   light = low_frequency_field(r * 0.2126 + g * 0.7152 + b * 0.0722,
@@ -1870,7 +1879,12 @@ def relight(image, intensity = 0.5, azimuth: 135.0, shape: 1.25, throw: 0.8)
   # The light it already had, with its own falloff deepened.
   deepened = (held.linear([1.0 / mean], [0])**shape).linear([mean], [0])
   # And that light swung toward a new key, renormalised so the exposure holds.
-  keyed = deepened * relight_key(held, azimuth, throw)
+  # With a measured depth map, the key also lands the way a real key does:
+  # nearer the viewer collects more of it, far loses its share — the geometric
+  # ramp alone would throw light across a wall the map knows is metres back.
+  ramp = relight_key(held, azimuth, throw)
+  ramp = ramp * proximity_bias(depth) if depth
+  keyed = deepened * ramp
   keyed = keyed.linear([mean / [keyed.avg, RELIGHT_FLOOR].max], [0])
   mix = intensity * RELIGHT_KEY_MIX
   ratio = ((held.linear([1.0 - mix], [0]) + keyed.linear([mix], [0])) / held)
@@ -1879,6 +1893,13 @@ def relight(image, intensity = 0.5, azimuth: 135.0, shape: 1.25, throw: 0.8)
 rescue StandardError => e
   $logger.error "relight: #{e.message}"
   image
+end
+
+# The near map rides as a multiplier on the key: a 1.0 keeps the full throw,
+# the far wall holds 0.4 of it, and the curve is a straight blend because the
+# physical falloff it stands in for is already in `throw`.
+def proximity_bias(near)
+  (near * 0.6).clamp01.linear(1.0, 0.4)
 end
 
 # A heavy blur, done where it is cheap.
@@ -1926,13 +1947,22 @@ AERIAL_DEPTH_CAP = 0.45
 # was never at risk — what the curve buys is the middle distance.
 AERIAL_FALLOFF = 3.0
 
-def aerial_depth(image, intensity = 0.5)
+# Aerial depth, and with a depth map, the same without the proxy.
+#
+# The acutance stand-in is only used when the neural map is absent: Postpro::Depth
+# returns a measured `near` map for the frame, 1.0 at the viewer's side of the
+# plane, and far is simply the rest of its span.
+def aerial_depth(image, intensity = 0.5, depth: nil)
   linear = image.colourspace("scrgb")
   r, g, b = linear.bandsplit
-  luma = r * 0.2126 + g * 0.7152 + b * 0.0722
-  acutance = low_frequency_field((luma - luma.gaussblur(2.0)).abs, [image.width / 40.0, 3.0].max)
-  scale = [acutance.avg * 2.0, 1e-5].max
-  far = clamp01(acutance.linear([-1.0 / scale], [1.0]))**AERIAL_FALLOFF
+  if depth
+    far = clamp01(depth.linear([-1.0], [1.0]))**AERIAL_FALLOFF
+  else
+    luma = r * 0.2126 + g * 0.7152 + b * 0.0722
+    acutance = low_frequency_field((luma - luma.gaussblur(2.0)).abs, [image.width / 40.0, 3.0].max)
+    scale = [acutance.avg * 2.0, 1e-5].max
+    far = clamp01(acutance.linear([-1.0 / scale], [1.0]))**AERIAL_FALLOFF
+  end
   fade = far.linear([intensity * AERIAL_DEPTH_CAP], [0])
   level = [luma.avg, 0.02].max
   haze = Vips::Image.bandjoin(AERIAL_HAZE.map { |channel| fade.linear([0], [channel * level]) })
@@ -3436,8 +3466,11 @@ def preset(image, name, stock: nil)
              when "vintage_lens"        then vintage_lens(processed, p.fetch(:lens, "zeiss"), p[:intensity] * 0.70)
              when "teal_orange"         then teal_orange(processed, p[:intensity] * 0.80)
              when "bloom_pro"           then bloom_pro(processed, p[:intensity] * 0.25)
-             when "relight"             then relight(processed, p[:intensity] * 0.55, azimuth: p.fetch(:azimuth, 135.0), shape: p.fetch(:shape, 1.25))
-             when "aerial_depth"        then aerial_depth(processed, p[:intensity] * 0.45)
+             # The measured depth map rides along on both shape stages; a cache
+             # miss costs about twelve seconds, which the chain spends in
+             # glows anyway. nil degrades both to their own cues.
+             when "relight"             then relight(processed, p[:intensity] * 0.55, azimuth: p.fetch(:azimuth, 135.0), shape: p.fetch(:shape, 1.25), depth: Postpro::Depth.near(processed))
+             when "aerial_depth"        then aerial_depth(processed, p[:intensity] * 0.45, depth: Postpro::Depth.near(processed))
              when "desaturate"          then desaturate(processed, p[:intensity] * 0.45)
              when "warmth"              then warmth(processed, p[:intensity] * 0.25)
              when "green_push"          then green_push(processed, p[:intensity] * 0.15)
@@ -3568,30 +3601,35 @@ RANDOM_VARIATIONS = (5..10)
 RANDOM_VARIATION_RANGE = RANDOM_VARIATIONS.freeze
 
 RANDOM_ANALOG_CORE = %w[
-  film_curve grain halation stock_matrix dir_coupler adjacency_effects film_base_density
+  film_curve halation stock_matrix dir_coupler adjacency_effects film_base_density
   orange_mask print_film paper_texture dilla_head_bump dilla_tape_saturation
   dilla_vinyl_bandlimit dilla_phasy dilla_console_sum
 ].freeze
+
+# Grain is removed from every lane pool: `random_finish` appends the
+# always-grain once at the end, and a lane draw putting another grain earlier
+# in the chain made "grainx2" — two passes of what compositors forbid stacking
+# ("don't mix grain on top of grain in the plate"). One grain pass, last.
 
 RANDOM_LANES = {
   subtle_analog: {
     effects: %w[
       spectral_temp film_curve stock_matrix dir_coupler adjacency_effects halation
       film_base_density orange_mask print_film shadow_lift highlight_roll micro_contrast
-      warmth grain
+      warmth
     ].freeze,
     strength: (0.16..0.42)
   },
   cinematic_color: {
     effects: %w[
       spectral_temp color_temp film_curve stock_matrix halation orange_mask print_film
-      tonemap split_toning teal_orange warmth shadow_lift highlight_roll micro_contrast grain
+      tonemap split_toning teal_orange warmth shadow_lift highlight_roll micro_contrast
     ].freeze,
     strength: (0.24..0.58)
   },
   artistic_analog: {
     effects: %w[
-      film_curve grain halation stock_matrix dir_coupler adjacency_effects bloom_pro
+      film_curve halation stock_matrix dir_coupler adjacency_effects bloom_pro
       double_exposure lith_print cyanotype technicolor faded_print polaroid_frame
       soft_focus golden_hour_glow cross_process lens_flare film_scratches
       dilla_head_bump dilla_tape_saturation dilla_vinyl_bandlimit dilla_phasy
@@ -3600,7 +3638,7 @@ RANDOM_LANES = {
   },
   bleeding_edge_analog: {
     effects: %w[
-      film_curve grain halation stock_matrix dilla_head_bump dilla_tape_saturation
+      film_curve halation stock_matrix dilla_head_bump dilla_tape_saturation
       dilla_vinyl_bandlimit dilla_phasy dilla_console_sum vhs_luma_bleed
       vhs_chroma_delay vhs_head_switch_band vhs_tracking_noise vhs_interlace_comb
       crt_phosphor_bloom crt_scanlines minidv_block_dropout hi8_chroma_noise
@@ -3650,6 +3688,46 @@ RANDOM_SUPPORT_STRENGTH = (0.05..0.16)
 # be there, at a strength that makes it a suggestion rather than a joke.
 RANDOM_WILDCARD_CHANCE = 0.5
 RANDOM_WILDCARD_STRENGTH = (0.06..0.16)
+# The operator's standing directive (2026-10-03): every random run is five
+# radically different results, from subtle analog to experimental, through
+# heavy filters arranged at random, and the chain may get quite long. Heavy
+# mode deals the four lanes round-robin so one run spans the whole range,
+# widens the chain to nine to sixteen steps, lifts every strength band by half
+# and admits the wear shelf. POSTPRO_HEAVY=0 returns to the default taste.
+HEAVY_CHAIN_LENGTH = (12..24).freeze
+HEAVY_STRENGTH = 1.35
+# Amplitude-class effects are exempt from the widening: grain and the wear
+# shelf are loud by construction, so a doubled strength reads as a destroyed
+# scan rather than an emulation, and the picture never survives two of them.
+# Long chains and wide look-bands carry the radical variety (the standing
+# directive); amplitude does not, or the emulsion stops being believable.
+HEAVY_AMPLITUDE_STRENGTH = 1.1
+AMPLITUDE_CAPPED = (RANDOM_WEAR + %w[grain]).freeze
+# Glow-class steps barely widen either, and only halation is singled out of
+# the leads for it: research 2026-10-03 says halation bolted on everything is
+# the most-singled-out "cheugy" effect, and a glowed grain pass is the industry
+# example of the destroyed look. On film halation lives on wide-open
+# speculars; doubling its band in a 24-step chain makes every frame bloom.
+HEAVY_GLOW_STRENGTH = 1.15
+GLOW_CAPPED = %w[halation bloom_pro golden_hour_glow].freeze
+HEAVY_LANE_DEAL = %i[
+  subtle_analog cinematic_color artistic_analog bleeding_edge_analog bleeding_edge_analog
+].freeze
+
+def heavy_mode? = ENV.fetch("POSTPRO_HEAVY", "1") == "1"
+
+# Heavy widens a band for the look steps and barely for the amplitude ones.
+# The effect's own name decides its class, so the caller only has to pass it.
+def random_band(band, fx = nil)
+  return band unless heavy_mode?
+
+  wide = if AMPLITUDE_CAPPED.include?(fx) then HEAVY_AMPLITUDE_STRENGTH
+         elsif GLOW_CAPPED.include?(fx) then HEAVY_GLOW_STRENGTH
+         else HEAVY_STRENGTH
+         end
+  high = band.first + (band.last - band.first) * wide
+  [(band.first * wide).round(2), [high, 1.0].min.round(2)]
+end
 # Two marks of wear is a print that has been handled. Five is a prop.
 RANDOM_WEAR_CEILING = 2
 # A repeat is a second pass, not a second effect: halation twice at different
@@ -3675,7 +3753,7 @@ def random_pool(lane = nil)
   allowed = lane ? RANDOM_LANES.fetch(lane).fetch(:effects) : RECIPE_ALLOWED - [RANDOM_ALWAYS] - RANDOM_SHAPES
   allowed &= RECIPE_ALLOWED
   allowed -= RANDOM_SHAPES
-  allowed -= RANDOM_WEAR unless rough || lane == :bleeding_edge_analog
+  allowed -= RANDOM_WEAR unless rough || lane == :bleeding_edge_analog || heavy_mode?
   allowed
 end
 
@@ -3716,9 +3794,9 @@ end
 # of them too far is thrown back, up to a bounded number of attempts, after
 # which the least similar of them is used — a run of five pictures that are five
 # versions of one picture is the other way to waste somebody's afternoon.
-def random_chain(rng = Random.new(postpro_seed), avoid: [])
+def random_chain(rng = Random.new(postpro_seed), avoid: [], lane: nil)
   closest = nil
-  lane = random_lane(rng)
+  lane = random_lane(rng) if lane.nil?
   RANDOM_DRAW_ATTEMPTS.times do
     picked, wildcard = random_draw(rng, lane:)
     overlap = avoid.map { |other| random_similarity(picked, other.map(&:first)) }.max || 0.0
@@ -3753,10 +3831,12 @@ def random_common_spine
   end
 end
 
+def random_chain_length = heavy_mode? ? HEAVY_CHAIN_LENGTH : RANDOM_CHAIN_LENGTH
+
 # Grow from one effect, admitting only what some preset puts beside all of it.
 def random_draw(rng, lane:)
   pool = random_pool(lane)
-  target = rng.rand(RANDOM_CHAIN_LENGTH)
+  target = rng.rand(random_chain_length)
   # Seeded on something that could be the subject, and that can grow. Starting
   # from an artefact grows a chain of nothing but damage — reticulation into
   # fixing-bath fog into gate weave — and then something has to lead it, and dust
@@ -3810,13 +3890,13 @@ def random_finish(picked, wildcard, rng, avoid = [], lane: random_lane(rng))
   seen = Hash.new(0)
   chain = ordered.map do |fx|
     repeat = (seen[fx] += 1) > 1
-    band = if repeat || fx == wildcard then wildcard_or_repeat_strength(fx, wildcard)
-           elsif leads.include?(fx) then RANDOM_LEAD_STRENGTH
-           else RANDOM_SUPPORT_STRENGTH
+    band = if repeat || fx == wildcard then random_band(wildcard_or_repeat_strength(fx, wildcard), fx)
+           elsif leads.include?(fx) then random_band(RANDOM_LEAD_STRENGTH, fx)
+           else random_band(RANDOM_SUPPORT_STRENGTH, fx)
            end
     [fx, (band.first + rng.rand * (band.last - band.first)).round(2)]
   end
-  band = RANDOM_LANES.fetch(lane).fetch(:strength)
+  band = random_band(RANDOM_LANES.fetch(lane).fetch(:strength), RANDOM_ALWAYS)
   chain << [RANDOM_ALWAYS, { "intensity" => (band.first + rng.rand * (band.last - band.first)).round(2),
                              "stock" => random_stock(rng, avoid).to_s }]
 end
@@ -4579,6 +4659,16 @@ def vocab_check
   notes << "#{own.length} of #{PRESETS.length} presets grain in their own chain; " \
            "the rest take the finishing pass"
 
+  # One grain pass, at the end. A lane pool that also draws grain made
+  # "grainx2" chains whose passes compounded with the halation drawn before
+  # them — the destroyed rather than emulated complaint this tree had to grow
+  # out of — so the pools are checked the way every other table is.
+  grained_lanes = RANDOM_LANES.select { |_, spec| spec.fetch(:effects).include?(RANDOM_ALWAYS) }
+  unless grained_lanes.empty?
+    problems << "random lanes draw grain from their pools while the always-grain is appended: " \
+                "#{grained_lanes.keys.join(", ")}"
+  end
+
   # The grain model has its own vocabulary now, and the same rule applies to it:
   # a table nothing reads and a name nothing implements both fail quietly.
   problems << "GRAIN_CRYSTAL_FIELD is #{GRAIN_CRYSTAL_FIELD}, which grain_crystals does not build" \
@@ -4819,12 +4909,16 @@ def run_random(subject = nil)
   # Generate a curated family for each source. The default deliberately makes
   # five to ten materially different attempts per image; --count remains an
   # explicit escape hatch for small probes and operator-directed runs.
+  # Heavy mode fixes the count at five and deals the four lanes round-robin, so
+  # one run always spans subtle analog to bleeding edge; the fifth pick lands
+  # on the bleeding edge again, the experimental end having the last word.
   files.each_with_index do |file, file_index|
-    count = (override || rng.rand(RANDOM_VARIATIONS)).clamp(1, 24)
+    count = (override || (heavy_mode? ? 5 : rng.rand(RANDOM_VARIATIONS))).clamp(1, 24)
     Postpro::Constitution.verify_batch!(variation_count: count, explicit_count: !override.nil?)
     drawn = []
     count.times do |index|
-      chain = random_chain(rng, avoid: drawn)
+      lane = heavy_mode? ? HEAVY_LANE_DEAL[index % HEAVY_LANE_DEAL.size] : nil
+      chain = random_chain(rng, avoid: drawn, lane:)
       Postpro::Constitution.verify_chain!(chain: chain, stage_rank: random_stage_rank)
       drawn << chain
       $cli_logger.info "#{file_index + 1}/#{files.count} #{index + 1}/#{count}: #{File.basename(file)} — #{random_chain_name(chain)}"
