@@ -5,6 +5,7 @@ require "open3"
 require "optparse"
 require "prism"
 require "timeout"
+require "tempfile"
 
 require_relative "../lib/review/challenges"
 
@@ -14,7 +15,7 @@ module Master
       ROOT = File.expand_path("../..", __dir__)
 
       class DeletionProbe
-        Result = Data.define(:baseline_ok, :methods, :survivors, :errors)
+        Result = Data.define(:baseline_ok, :methods, :protected, :unprotected, :errors)
 
         def initialize(test_path, root: ROOT)
           @test_path = File.expand_path(test_path, root)
@@ -24,10 +25,19 @@ module Master
         def call
           original = File.read(@test_path)
           methods = method_ranges(original)
-          baseline_ok, = run_test
-          return Result.new(baseline_ok: false, methods: methods.map(&:first), survivors: [], errors: ["baseline test failed"]) unless baseline_ok
+          baseline = coverage_run(original)
+          unless baseline[:ok]
+            return Result.new(
+              baseline_ok: false,
+              methods: methods.map(&:first),
+              protected: [],
+              unprotected: [],
+              errors: [baseline[:output].to_s]
+            )
+          end
 
-          survivors = []
+          protected = {}
+          unprotected = []
           errors = []
 
           methods.each do |name, range|
@@ -35,9 +45,14 @@ module Master
             mutated[range] = ""
             begin
               File.write(@test_path, mutated)
-              ok, output = run_test
-              survivors << name if ok
-              errors << "#{name}: #{output.lines.last.to_s.strip}" unless ok || output.empty?
+              run = coverage_run(mutated)
+              lost = coverage_delta(baseline[:coverage], run[:coverage])
+              if lost.empty?
+                unprotected << name
+              else
+                protected[name] = lost
+              end
+              errors << "#{name}: #{run[:output]}" unless run[:ok]
             rescue StandardError => e
               errors << "#{name}: #{e.class}: #{e.message}"
             ensure
@@ -45,7 +60,13 @@ module Master
             end
           end
 
-          Result.new(baseline_ok: true, methods: methods.map(&:first), survivors:, errors:)
+          Result.new(
+            baseline_ok: true,
+            methods: methods.map(&:first),
+            protected: protected,
+            unprotected: unprotected,
+            errors: errors
+          )
         ensure
           File.write(@test_path, original) if original
         end
@@ -67,18 +88,41 @@ module Master
           raise "could not parse #{@test_path}: #{e.class}: #{e.message}"
         end
 
-        def run_test
-          stdout = +""
-          status = nil
-          Timeout.timeout(Integer(ENV.fetch("MASTER_TEST_DELETION_TIMEOUT", "90"))) do
-            stdout, status = Open3.capture2e(
-              RbConfig.ruby, "-Ilib", "-Itest", @test_path,
-              chdir: @root
-            )
+        def coverage_run(source)
+          Tempfile.create(["master-test-coverage", ".json"]) do |report|
+            report_path = report.path
+            runner = Tempfile.create(["master-test-runner", ".rb"]) do |file|
+              file.write(<<~RUBY)
+                require "coverage"
+                require "json"
+                Coverage.start(lines: true)
+                at_exit { File.write(ENV.fetch("MASTER_COVERAGE_OUT"), JSON.generate(Coverage.result)) }
+                load ARGV.fetch(0)
+              RUBY
+              file.close
+              env = { "MASTER_COVERAGE_OUT" => report_path }
+              output, status = Open3.capture2e(
+                env,
+                RbConfig.ruby, file.path, @test_path,
+                chdir: @root
+              )
+              coverage = JSON.parse(File.read(report_path))
+              { ok: status.success?, coverage:, output: output.lines.last.to_s.strip }
+            end
           end
-          [status.success?, stdout]
-        rescue Timeout::Error
-          [false, "test process timed out"]
+        rescue JSON::ParserError, Errno::ENOENT => e
+          { ok: false, coverage: {}, output: "#{e.class}: #{e.message}" }
+        end
+
+        def coverage_delta(before, after)
+          before.each_with_object([]) do |(path, lines), lost|
+            after_lines = Array(after[path])
+            Array(lines).each_with_index do |count, index|
+              next unless count.to_i.positive? && after_lines[index].to_i.zero?
+
+              lost << "#{path.delete_prefix(@root + "/")}:#{index + 1}"
+            end
+          end
         end
       end
 
@@ -89,7 +133,8 @@ module Master
         {
           baseline_ok: result.baseline_ok,
           methods: result.methods,
-          survivors: result.survivors,
+          protected: result.protected,
+          unprotected: result.unprotected,
           errors: result.errors
         }
       end
