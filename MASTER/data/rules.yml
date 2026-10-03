@@ -15,14 +15,15 @@ rule_system:
   policy_adapters: [veto_patterns, rule_deps, architecture, preserve_user_intent, runtime_policy, design_system]
   index: derived_from_executable_law
   lifecycle:
-    states: [proposed, proven, active, trusted, advisory, retired]
+    states: [proposed, proven, active, observed, trusted, advisory, retired]
     transitions:
       proposed: [proven, retired]
       proven: [active, advisory, retired]
-      active: [trusted, advisory, retired]
-      trusted: [active, advisory, retired]
-      advisory: [active, retired]
-      retired: []
+      active: [observed, advisory, retired]
+      observed: [trusted, active, advisory, retired]
+      trusted: [active, observed, advisory, retired]
+      advisory: [proven, active, retired]
+      retired: [proposed]
   autofix:
     policies: [never, review, automatic]
     automatic_requires_deterministic_detector: true
