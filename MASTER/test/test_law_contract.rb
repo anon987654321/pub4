@@ -46,7 +46,15 @@ class TestLawContract < Minitest::Test
     assert_equal :trusted, rule.lifecycle
     assert rule.can_transition_to?(:advisory)
     assert rule.can_transition_to?(:retired)
+    assert rule.can_transition_to?(:active)
     refute rule.can_transition_to?(:proposed)
+
+    candidate = rule.with(lifecycle: :active)
+    assert candidate.can_transition_to?(:observed)
+    refute candidate.can_transition_to?(:trusted)
+
+    observed = candidate.with(lifecycle: :observed)
+    assert observed.can_transition_to?(:trusted)
   end
 
 end
