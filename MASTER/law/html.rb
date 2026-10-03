@@ -1,15 +1,12 @@
 # frozen_string_literal: true
 
 # law/html.rb — every html law, one Law.define per rule.
-# Was 20 one-rule files; Law.load_all and every fixture proof are
-# unchanged by the grouping (2026-08-19 file-sprawl consolidation).
 #
 # IMG_ALT and LAZY_IMAGES live once, in the registry (web_rules.rb): both
 # judge attributes of a tag, and a tag is not a line — the attribute-per-line
 # spelling put alt= and loading= one line below the detector, so every
 # multi-line <img> was a finding. The registry versions flatten tags first.
 
-# Migrated from data/rules.yml ARIA_INTERACTIVE.
 Law.define(:ARIA_INTERACTIVE) do
   source "WAI-ARIA (W3C) — roles for interactive elements"
   severity :warn
