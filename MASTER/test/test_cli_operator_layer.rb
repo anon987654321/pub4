@@ -127,6 +127,10 @@ class TestCliOperatorLayer < Minitest::Test
     assert_equal :direct_shell, grammar.parse("ls ~/MASTER").kind
     assert_equal :direct_shell, grammar.parse("ls ./MASTER/lib").kind
     assert_equal :direct_shell, grammar.parse("git diff --stat").kind
+    assert_equal :direct_shell, grammar.parse("ps aux").kind
+    assert_equal :direct_shell, grammar.parse("ls && ps aux").kind
+    assert_equal :direct_shell, grammar.parse("ssh dev@brgen.no uname -a").kind
+    assert_equal :direct_shell, grammar.parse("curl https://example.com").kind
     refute grammar.parse("ls | cat")
     refute grammar.parse("rm -rf /")
   end
