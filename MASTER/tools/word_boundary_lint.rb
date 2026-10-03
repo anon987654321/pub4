@@ -23,7 +23,7 @@ scan = lambda do |path, text|
   end
 end
 
-rules = File.join(root, "data", "rules.yml")
+rules = File.join(root, "data", "laws.yml")
 scan.call(rules, File.read(rules)) if File.file?(rules)
 
 Dir.glob(File.join(root, "law", "*.rb")).each { |path| scan.call(path, File.read(path)) }
