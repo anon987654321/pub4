@@ -68,7 +68,7 @@ module Master
           "disagreement means drift to diagnose, not permission to guess",
           "bridge: RAILS/apps.yml → OPENBSD/deploy_inventory.json → vps-deploy → rcctl → public health",
           "inventory_alignment: #{inventory_alignment(repo_root)}",
-          "bridge: MASTER/data/soul.yml + MASTER/data/rules.yml are law; " +
+          "bridge: MASTER/data/soul.yml + MASTER/data/laws.yml are law; " +
           "MASTER/gates/ is the cross-tree verification plane",
           "research pointers: Rails=RAILS/CLAUDE.md + RAILS/apps.yml; " +
           "OpenBSD=OPENBSD/CLAUDE.md + OPENBSD/RUNBOOK.md + OPENBSD/data/operator.yml",
@@ -103,7 +103,7 @@ module Master
         return if rows.empty? && !File.file?(File.join(repo_root, "RAILS", "CLAUDE.md"))
 
         "rails: feature_truth=RAILS/apps.yml; architecture=RAILS/CLAUDE.md; " +
-        "shared=RAILS/shared; tools=RAILS/tools; design=MASTER/data/rules.yml; entry=RAILS/bin/triangle; " +
+        "shared=RAILS/shared; tools=RAILS/tools; design=MASTER/data/laws.yml; entry=RAILS/bin/triangle; " +
         "coupling=shared engine + sibling copy-tree affects every Rails app; " +
         "deployed_copy=/home/<app>/app + /home/<app>/shared; " +
         "proof=RAILS/gates/gates.yml+RAILS/bin/triangle+<app>/bin/ci; " +
