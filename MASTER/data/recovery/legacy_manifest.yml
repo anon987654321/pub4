@@ -1239,4 +1239,46 @@ pub2_dilla_carousel_review:
   disposition: "absorbed; do-not-restore-html-monolith"
   caution: "The old artifact also depended on hidden YouTube playback and duplicated visualizer/audio state; current code deliberately separates the tunnel from playback and labels proxy motion as proxy."
 
+pub_backup_restoration_plan_review:
+  source_commit: "18d9bbbc63121aedfedd2366f540b8ee56006674"
+  source_repo: "pub/__OLD_BACKUPS"
+  archive_set:
+    - rails_amber_20240804.tgz
+    - rails_baibl_20240804.tgz
+    - rails_brgen_20240804.tgz
+    - rails_brgen_dating_20240804.tgz
+    - rails_brgen_marketplace_20240804.tgz
+    - rails_brgen_playlist_20240804.tgz
+    - rails_brgen_takeaway_20240804.tgz
+    - rails_brgen_tv_20240804.tgz
+    - rails_bsdports_20240804.tgz
+  reconciled_surfaces:
+    - legacy_feature: "marketplace"
+      current_mapping: "RAILS/brgen/engines/marketplace"
+      disposition: "absorbed"
+    - legacy_feature: "takeaway"
+      current_mapping: "RAILS/brgen/engines/takeaway"
+      disposition: "absorbed"
+    - legacy_feature: "playlist"
+      current_mapping: "RAILS/brgen/engines/playlist"
+      disposition: "absorbed"
+    - legacy_feature: "tv"
+      current_mapping: "RAILS/brgen/engines/tv"
+      disposition: "absorbed"
+    - legacy_feature: "dating"
+      current_mapping: "RAILS/brgen/engines/dating"
+      disposition: "absorbed"
+    - legacy_feature: "live search"
+      current_mapping: "RAILS/shared/app/services/shared/live_search.rb and shared/frontend/live_search_controller.js"
+      disposition: "absorbed"
+    - legacy_feature: "PWA"
+      current_mapping: "RAILS/shared frontend/PWA serving and app-specific manifests/controllers"
+      disposition: "absorbed"
+    - legacy_feature: "SEO/meta/schema"
+      current_mapping: "RAILS/shared/app/helpers/shared/seo_kit.rb, schema_helper.rb and tracked structured-data views"
+      disposition: "absorbed"
+  remaining_rule: "The archive set remains historical evidence. The 2025 plan proposed generator-script restoration; current pub4 correctly absorbed the application behavior into tracked trees instead of reviving generator sprawl."
+  unresolved_archival_apps:
+    - "baibl: preserved in historical archive inventory; not an active app decision in current pub4."
+  disposition: "reconciled-with-current-tree"
 
