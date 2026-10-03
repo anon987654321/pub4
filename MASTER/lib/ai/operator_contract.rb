@@ -49,7 +49,7 @@ module Master
       end
 
       def zsh_banned_commands
-        Array(Master.law("zsh").fetch("banned_commands", [])).map(&:to_s).sort
+        Master::Io::Shell::BANNED_IN_ZSH.map(&:to_s).sort
       rescue StandardError
         []
       end
