@@ -3,7 +3,7 @@
 Task-scoped entry for coding agents (Cursor, Codex, Grok, Claude Code). This file is the contract; `README.md` is the tour.
 
 **Read the repo-root `CLAUDE.md` first.** It is the authority above this file —
-the order is executable law first: `MASTER/data/soul.yml` > `MASTER/data/rules.yml` >
+the order is executable law first: `MASTER/data/soul.yml` > `MASTER/data/laws.yml` >
 `MASTER/law/*.rb` + `MASTER/lib/review/scan/rules/*.rb` > repo harnesses >
 the per-tree contract — and this file carries the five traps that cost the most time
 here. This file routes; it does not restate, because a second copy drifts and
@@ -23,12 +23,12 @@ pub4 is governed by MASTER, and MASTER's law is data, not prose. Read it before
 you write:
 
 1. `MASTER/data/soul.yml` — the kernel. Absolutes, work rules, anti-simulation.
-2. `MASTER/data/rules.yml` — the declared rule catalogue, in four scopes.
+2. `MASTER/data/laws.yml` — the declared rule catalogue, in four scopes.
 3. `MASTER/law/*.rb` — the domain law, each rule carrying the example it must
    flag and the one it must not. Those two examples are the rule.
 4. `MASTER/lib/review/scan/rules/*.rb` — the registry, the rest of the detectors.
 
-The authority order is one stack: `soul.yml` > `rules.yml` >
+The authority order is one stack: `soul.yml` > `laws.yml` >
 executable law (`law/*.rb` and `lib/review/scan/rules/*.rb`) > repo harnesses
 (`CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, `.cursorrules`,
 `.github/copilot-instructions.md`) > per-tree contracts. Executable law outranks
@@ -114,7 +114,7 @@ available everywhere here and the repo is Ruby; a ten-line script that parses
 what it edits beats a regex that cannot see structure.
 
 **Modern zsh**, for shell work — and the forms are already in the law, at
-`zsh.native_patterns` in `MASTER/data/rules.yml`. They replace exactly what the
+`zsh.native_patterns` in `MASTER/data/laws.yml`. They replace exactly what the
 ban takes away:
 
     ${var//find/replace}     instead of sed s///g
@@ -390,7 +390,7 @@ checked rather than believed.
 **Law** and **rule** are not synonyms. A *law* is an executable detector in
 `law/*.rb` that carries a `bad` and a `good` fixture and proves itself against
 both before it is allowed to judge anything — 122 of them, reaching the scanner
-through `LawBridgeRule`. A *rule* is a row in `data/rules.yml` or a class in
+through `LawBridgeRule`. A *rule* is a row in `data/laws.yml` or a class in
 `lib/review/scan/rules/`, and neither has to prove anything to load. Where an id
 exists in both, the law wins: `YamlDeclarativeRule` rejects the row before
 reading it.
@@ -439,7 +439,7 @@ touches disk on any other path.
 scan registry, deterministic, no model) and a *semantic* tier (the critique
 stage, `/review --only critique`, which reaches a provider); the semantic one is
 currently unreachable
-and reports as skipped rather than clean. On a `rules.yml` row, `tier:` is the
+and reports as skipped rather than clean. On a `laws.yml` row, `tier:` is the
 rule's category — `clean_code`, `style`, `safety` — and is what resolves a
 conflict between two rules firing on one line.
 
@@ -465,12 +465,12 @@ to edit it by hand. Editing the build is a fix that survives until the next
 | TTS / speech / visemes | `topics.tts` |
 | Deploy / VPS / rc.d | `topics.deploy` |
 | Persona / voice policy | `topics.persona` |
-| Law / scanners / loop | all scanner law is `data/rules.yml`; the executable law is `law/` |
+| Law / scanners / loop | all scanner law is `data/laws.yml`; the executable law is `law/` |
 | Extend runtime behavior | `data/spine.yml` header and `test/test_core_no_lib_backedges.rb`. New ability in the fold = one Effect verb in `lib/core/world.rb`; new constraint = one rule in `lib/core/constitution.rb`; anything else is ordinary `lib/` and must not grow it (`rake lint:spine`) |
-| Worn type / layout gates | `data/rules.yml` `design_rules.worn_type` + `MASTER/gates/support/geometry_type.rb`. Feed is a short measure; legal/prose is 66ch. |
+| Worn type / layout gates | `data/laws.yml` `design_rules.worn_type` + `MASTER/gates/support/geometry_type.rb`. Feed is a short measure; legal/prose is 66ch. |
 | brgen city network / verticals | `RAILS/brgen/AGENTS.md` — one process, city apex + subdomain engines |
 
-Touch-map: `data/agent_map.yml`. Law sections live in `data/rules.yml`. Work is a sentence, or `/review [path]`. Slash set: `/review` `/status` `/undo` `/commit` `/model` `/pair` `/device` `/doctor` `/help` `/clear`.
+Touch-map: `data/agent_map.yml`. Law sections live in `data/laws.yml`. Work is a sentence, or `/review [path]`. Slash set: `/review` `/status` `/undo` `/commit` `/model` `/pair` `/device` `/doctor` `/help` `/clear`.
 
 ## Checks
 
@@ -588,7 +588,7 @@ in `OPENBSD/CLAUDE.md`.
   2026-09-16 `codify-master-gaps` patch added `analysis_depth` (practical /
   analytical / extreme, with depth limits and time budgets) and
   `version_control` (`message_format: "v{version}: {change_summary}
-  [violations={before}→{after}]"`) to `data/rules.yml` from
+  [violations={before}→{after}]"`) to `data/laws.yml` from
   `master.yml@30dad7ead`. Nothing in the tree names a depth of analysis, so the
   first block is a declaration with no reader in a file that is `paths.immutable`;
   the second contradicts the convention every commit here follows, which is a
@@ -619,7 +619,7 @@ in `OPENBSD/CLAUDE.md`.
   untrusted text; `InjectionGuard` and the Governor are the defences that run.
   `/forget` has no tombstone to write, because no index keys a memory by
   session.
-- **No anchors inside `rules:`.** Every rule in `data/rules.yml` reads whole
+- **No anchors inside `rules:`.** Every rule in `data/laws.yml` reads whole
   where it sits, because agents read the law one rule at a time and the
   exemption is the half a jump skips. Reopen with a duplicate body, not a line
   count.
