@@ -25,7 +25,7 @@ class TestSelfTest < Minitest::Test
 
       assert result.ok?
       laws = result.value!.checks.map(&:law)
-      assert_equal %w[ROBUSTNESS SINGULARITY LINEARITY PROXIMITY ABSTRACTION DENSITY KERNEL_ADHERENCE PRINCIPLE_MAP], laws
+      assert_equal %w[RULE_SYSTEM ROBUSTNESS SINGULARITY LINEARITY PROXIMITY ABSTRACTION DENSITY KERNEL_ADHERENCE PRINCIPLE_MAP], laws
       assert result.value!.violation_count.positive?
       assert_includes bus.events.map(&:first), "self_test:complete"
       assert_includes bus.events.map(&:first), "self_violation"
@@ -184,6 +184,9 @@ class TestSelfTest < Minitest::Test
 
   def rules_yml
     <<~YAML
+      rule_system:
+        lifecycle:
+          states: [proposed, proven, active, trusted, advisory, retired]
       self_test:
         laws_apply_to_self:
           ROBUSTNESS: "scan lib/ for bare_rescue + missing timeouts"
