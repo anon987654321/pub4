@@ -1,10 +1,6 @@
 # frozen_string_literal: true
 
 # law/ruby.rb — every ruby law, one Law.define per rule.
-# Was 25 one-rule files; Law.load_all and every fixture proof are
-# unchanged by the grouping (2026-08-19 file-sprawl consolidation).
-
-# Migrated from data/rules.yml EACH_WITH_OBJECT.
 Law.define(:EACH_WITH_OBJECT) do
   source "Ruby Style Guide / RuboCop Style/EachWithObject"
   severity :warn
