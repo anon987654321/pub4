@@ -1137,3 +1137,57 @@ recovered_regression_reviews:
     current_mapping: "No equivalent current pub4 MASTER parser was found."
     disposition: "deferred-gap; recover only if mixed-language parsing becomes an actual current requirement"
 
+legacy_ai3_role_review:
+  source_repo: pub
+  consolidation_commit: "534d719c7532df9f2e9ba4e39f5d46e673668e18"
+  restoration_commit: "21598560b57a78059df4dcd1751946914f91e179"
+  roles_with_nontrivial_surface:
+    - role: architect
+      evidence: "Enhanced role grew from a small inspiration/design helper into source-guided case studies, precedents, materials, technical specifications, sustainability and cost/timeline analysis."
+      current_mapping: "MASTER persona architect plus bounded research/council/tooling."
+      disposition: "semantic-reference"
+    - role: medical
+      evidence: "Enhanced role added specialty classification, symptom categories, differential diagnosis, urgency/red flags, treatment/prognosis placeholders and drug-interaction analysis."
+      current_mapping: "MASTER medic persona plus general research tooling; no dedicated autonomous diagnostic engine."
+      disposition: "semantic-reference; no autonomous diagnostic restoration"
+    - role: legal
+      evidence: "Consolidated legal specialist exposed research, case analysis, document review, compliance, contract analysis and subspecialty consultation."
+      current_mapping: "MASTER lawyer persona, evidence/research pipeline and bounded web tooling."
+      disposition: "semantic-reference; no separate legal agent tree"
+    - role: sound
+      evidence: "AI3 included a sound-mastering specialty that later lineage evolved into the much richer STUDIO/dilla stack."
+      current_mapping: "STUDIO/dilla and STUDIO/postpro."
+      disposition: "absorbed"
+    - role: sysadmin
+      evidence: "AI3 carried a systems-administration specialty."
+      current_mapping: "MASTER operator/OpenBSD services and ground security."
+      disposition: "absorbed"
+    - role: web_and_real_estate
+      evidence: "AI3 included web-development and real-estate specialties."
+      current_mapping: "Current RAILS tooling and product-specific apps; no generic agent class."
+      disposition: "semantic-reference"
+  excluded_as_runtime:
+    - "offensive_operations and psychological-warfare style code"
+    - "external Weaviate/Ferrum-backed autonomous assistant trees"
+  reason: "Several archived role implementations were generic demos, placeholders, or depended on retired infrastructure. Preserve capability provenance without recreating obsolete or unsafe execution surfaces."
+
+pub2_reasoning_analysis_v225:
+  source_files:
+    analysis: "pub2:master.json.ANALYSIS.md at blob d23a8b731a583b26d553fe71c881897b43ab74d6"
+    changelog: "pub2:master.json.CHANGELOG.md at blob b4daaed5f6d37bb10f8c1215ce0d9101a26d775a"
+  value:
+    - "evidence-based decisions and reversibility"
+    - "session recovery with persisted state/context"
+    - "failure taxonomy and phase-aware quality"
+    - "human checkpoints and pattern learning"
+    - "structured observability"
+  current_mapping:
+    evidence: "current council, law, review and recovery ledgers"
+    reversibility: "atomic writes, Git delivery/recovery and preserve-before-mutate workflow"
+    session_recovery: "current trace/session and recovery tooling"
+    failure_taxonomy: "MASTER/lib/ground/failure_taxonomy.rb"
+    pattern_learning: "MASTER/data/patterns.yml and review/self-findings"
+    observability: "MASTER/data/runtime.yml, event registry and dmesg/trace layers"
+  disposition: "absorbed-semantic"
+  caution: "The old analysis proposes metrics and mechanisms; only the semantics that have concrete current mappings should be retained."
+
