@@ -357,7 +357,7 @@ when "rules"
     found
   end
 
-  declared = declarations_in(YAML.safe_load_file(File.join(master_root, "data/rules.yml"), aliases: true))
+  declared = declarations_in(YAML.safe_load_file(File.join(master_root, "data/laws.yml"), aliases: true))
              .find { |row| row["id"].to_s.casecmp?(id) }
 
   require File.join(master_root, "law", "law")
@@ -412,7 +412,7 @@ when "rules"
   scanner = Master::Review::Scan::InfraHelpers.build_scanner(root: master_root, agent: nil)
   rule = scanner.rules.find { |item| item.id.to_s.casecmp?(id) }
   if rule.nil? && declared.nil?
-    abort("rule: nothing named #{id.inspect} — neither a declaration in data/rules.yml " \
+    abort("rule: nothing named #{id.inspect} — neither a declaration in data/laws.yml " \
           "nor one of the #{scanner.rules.size} rules the scanner loaded")
   end
 
