@@ -258,13 +258,13 @@ module Master
         def rule_system_findings
           config = Master.load_rules(root: @root) || {}
           policy = config["rule_system"]
-          return [finding(path: File.join(@root, "data", "rules.yml"), line: 1,
+          return [finding(path: File.join(@root, "data", "laws.yml"), line: 1,
                           message: "missing rule_system policy")] unless policy.is_a?(Hash)
 
           lifecycle = policy["lifecycle"] || {}
           required_states = %w[proposed proven active observed trusted advisory retired]
           actual_states = Array(lifecycle["states"]).map(&:to_s)
-          return [finding(path: File.join(@root, "data", "rules.yml"), line: 1,
+          return [finding(path: File.join(@root, "data", "laws.yml"), line: 1,
                           message: "rule_system lifecycle states drift")] unless actual_states == required_states
 
           return [] unless @root == Master::ROOT
@@ -275,12 +275,12 @@ module Master
           Master::Fix::TransformationPlan.new(root: @root).validate!
           []
         rescue StandardError => e
-          [finding(path: File.join(@root, "data", "rules.yml"), line: 1,
+          [finding(path: File.join(@root, "data", "laws.yml"), line: 1,
                    message: "rule-system integrity failed: #{e.class}: #{e.message}")]
         end
 
         def duplicate_rule_id_findings
-          path = File.join(@root, "data", "rules.yml")
+          path = File.join(@root, "data", "laws.yml")
           ids = rule_ids(Master.load_rules(root: @root))
           ids.group_by(&:itself).filter_map do |id, values|
             finding(path:, line: 1, message: "duplicate rule id #{id}") if values.size > 1
@@ -399,7 +399,7 @@ module Master
           audit = RuleRegistryAudit.new(root: @root).call
           if audit.adherence_pct < 35.0
             findings << finding(
-              path: File.join(@root, "data", "rules.yml"), line: 1,
+              path: File.join(@root, "data", "laws.yml"), line: 1,
               message: "rule adherence #{audit.adherence_pct}% below 35% — wire lexical/structural adapters"
             )
           end
@@ -414,10 +414,10 @@ module Master
           registered = Master::Review::Scan::Rule.registry.filter_map do |klass|
             Master::Review::Scan::RuleFactory.registry_id(klass, root: @root)&.upcase
           end
-          # A rule declared in rules.yml with no Ruby class is still a rule — 126
+          # A rule declared in laws.yml with no Ruby class is still a rule — 126
           # of the 227 are semantic-only. Checking a principle's rule_ids against
           # the registry alone calls those unknown and reads as a broken map.
-          declared = Master.flatten_rules(Master.load_rules(root: @root).fetch("rules", {}))
+          declared = Master.law_entries(root: @root)
                            .map { |rule| rule["id"].to_s.upcase }
           map.integrity(registered_rule_ids: registered | declared).map do |msg|
             finding(path:, line: 1, message: msg)
