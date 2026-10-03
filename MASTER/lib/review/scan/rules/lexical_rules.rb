@@ -128,7 +128,7 @@ module Master
     description: "unresolved work markers" do |src, path:|
     next [] if path.to_s.include?("/review/scan/rules/")
     # The lookahead keeps TODO.md, the repo-wide backlog, from reading as a
-    # marker — see data/rules.yml `unfinished`, which learned this at :veto.
+    # marker — see data/laws.yml `unfinished`, which learned this at :veto.
     #
     # A marker inside a regex literal is a detector, which is the reason this
     # rule already skips the directory it lives in — and detectors live outside
