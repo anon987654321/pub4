@@ -52,7 +52,7 @@ cognitive_spine:
     role: canonical runtime catalog reader
   - path: data/runtime.yml
     role: canonical runtime catalog source
-  - path: data/rules.yml
+  - path: data/laws.yml
     role: executable constitutional rule registry
   - path: data/soul.yml
     role: identity and absolute execution policy
@@ -2378,7 +2378,7 @@ routing_architecture:
   tier: core
   area: routing
   status: applied
-  authority: analysis and applied fixes; data/soul.yml and data/rules.yml remain law
+  authority: analysis and applied fixes; data/soul.yml and data/laws.yml remain law
   current_path:
   - Master.default_model
   - Ground::Config stored default
@@ -2609,7 +2609,7 @@ style_guides:
     rubocop: true
     enforce_via:
     - ".rubocop.yml"
-    - data/rules.yml#style.ruby
+    - data/laws.yml#style.ruby
   - id: rails
     repo: https://github.com/rubocop/rails-style-guide
     local: rails-style-guide
@@ -2622,12 +2622,12 @@ style_guides:
     eslint: true
     enforce_via:
     - web/eslint.config.mjs
-    - data/rules.yml#style.html
+    - data/laws.yml#style.html
   - id: css
     repo: https://github.com/airbnb/css
     local: css
     enforce_via:
-    - data/rules.yml#style.css
+    - data/laws.yml#style.css
     - RAILS/shared/frontend
   - id: thoughtbot
     repo: https://github.com/thoughtbot/guides
