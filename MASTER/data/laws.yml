@@ -1,61 +1,4 @@
 ---
-transformation_policy:
-  version: 1
-  preflight:
-    - inventory
-    - classify
-  order:
-    - defragment
-    - decouple
-    - flatten
-    - merge
-    - split
-    - relocate
-    - rename
-    - reorder
-    - remove
-    - reflow
-    - simplify
-    - recommend
-  postflight:
-    - prove
-  principles:
-    defragment: "Bring one concept or source of truth back together when it is unnecessarily scattered."
-    decouple: "Remove unnecessary dependencies and references between independent concerns."
-    flatten: "Remove needless wrappers, nesting, delegation layers, directories, and abstractions."
-    merge: "Join equivalent or near-equivalent logic, prose, configuration, or structure."
-    split: "Separate unlike concerns that have been fused into one unit."
-    relocate: "Put code, data, prose, and configuration beside the thing that owns or consumes it."
-    rename: "Names state present meaning; rename files, constants, methods, variables, rules, and sections when the existing name misleads."
-    reorder: "Put primary facts and load-bearing logic before secondary detail and exceptions."
-    remove: "Delete dead, redundant, historical, transitional, or otherwise unnecessary material."
-    reflow: "Change physical line and paragraph boundaries to follow semantic structure and reading rhythm."
-    simplify: "Pull incidental complexity out after structural changes and prefer the smallest coherent form."
-    recommend: "When evidence is insufficient for a safe automatic transformation, recommend the smallest useful change instead of guessing."
-  preservation:
-    semantic_meaning: required
-    public_contracts: required
-    reference_graph: required
-    side_effect_order: required
-    rendered_output: required_when_applicable
-  evidence:
-    before: "Record hashes and measured facts from the observed state before mutation."
-    after: "Re-observe the changed artifact and compare the same facts after mutation."
-    no_content_copy: true
-    automatic_change: "Requires deterministic proof or an existing transformation with a proven preservation contract."
-  comments:
-    redundant: remove
-    changelog_history: "Use git commit history, not source comments, for historical change records."
-    rationale: "Keep a comment when it explains a non-obvious present constraint, invariant, or reason."
-  rename:
-    scopes: [files, constants, methods, variables, rules, sections]
-    require_reference_rewrite: true
-    preserve_public_signatures: true
-  modes:
-    deterministic: "May transform automatically when its proof contract is satisfied."
-    review: "May propose and apply only after hostile review and preservation proof."
-    recommendation: "Propose only; never mutate."
-
 CAPABILITY_STATUS_MUST_BE_TRUTHFUL:
   priority: 1
   principle: Unavailable capabilities must never be reported as ready.
@@ -146,67 +89,6 @@ DENSITY:
     - name: "Signal-to-Noise Ratio in Code"
       url: "https://ar5iv.labs.arxiv.org/html/2310.19102"
 
-prose:
-  en:
-    spoken_in: '.'
-    file_languages: [markdown, ruby]
-    # Where the language is written inside those files. English here is the
-    # prose in comments, so the detector has to skip the code around them;
-    # `values` reads a locale file, where the strings are the prose and the keys
-    # are not.
-    reads: comments
-    ids:
-      qualifiers: PROSE_OMIT_QUALIFIERS
-      passive: PROSE_ACTIVE_VOICE
-    fixtures:
-      qualifiers: { bad: '# This is very fast.', good: '# This is fast.' }
-      passive:
-        bad: '# The bug was fixed by the maintainer.'
-        good: '# The maintainer fixed the bug.'
-    # `actually` and `literally` are absent on purpose. Both read as leeches
-    # and neither is one here: they are contrastive, setting what is against
-    # what was claimed, which is this repo's recurring subject. 85 and 4 hits
-    # respectively, every one of them that use.
-    leeches: [very, rather, really, quite, pretty, somewhat, just, basically, simply]
-    keep:
-      - 'rather than'                              # a contrast, not a degree
-      - 'rather\s*  # Phoenix preserves these boundaries while allowing their implementations to be
-  # regenerated. This is architecture, not a second command or dependency registry.
-  provenance_required:
-    - goal
-    - constraints
-    - alternatives
-    - evidence
-    - decision
-  boundaries:
-    master:
-      path: MASTER
-      entry: MASTER/bin/master
-      owner: master
-      depends_on: []
-      check: MASTER/bin/check
-    rails:
-      path: RAILS
-      entry: RAILS/bin/triangle
-      owner: rails
-      depends_on:
-        - master
-      check: MASTER/gates/runner.rb --all
-    openbsd:
-      path: OPENBSD
-      entry: OPENBSD/bin/vps-deploy
-      owner: openbsd
-      depends_on:
-        - master
-        - rails
-      check: OPENBSD/bin/check
-    studio:
-      path: STUDIO
-      entry: STUDIO/gate.rb
-      owner: studio
-      depends_on: []
-      check: STUDIO/gate.rb
-
 RENDERED_VALUES:
   priority: 7
   principle: Rendered values are operator-owned.
@@ -219,6 +101,63 @@ RENDERED_VALUES:
   research:
     - name: "Operator Sovereignty over Aesthetics"
       url: "internal:operator_decision_log"
+
+transformation_policy:
+  version: 1
+  preflight:
+    - inventory
+    - classify
+  order:
+    - defragment
+    - decouple
+    - flatten
+    - merge
+    - split
+    - relocate
+    - rename
+    - reorder
+    - remove
+    - reflow
+    - simplify
+    - recommend
+  postflight:
+    - prove
+  principles:
+    defragment: "Bring one concept or source of truth back together when it is unnecessarily scattered."
+    decouple: "Remove unnecessary dependencies and references between independent concerns."
+    flatten: "Remove needless wrappers, nesting, delegation layers, directories, and abstractions."
+    merge: "Join equivalent or near-equivalent logic, prose, configuration, or structure."
+    split: "Separate unlike concerns that have been fused into one unit."
+    relocate: "Put code, data, prose, and configuration beside the thing that owns or consumes it."
+    rename: "Names state present meaning; rename files, constants, methods, variables, rules, and sections when the existing name misleads."
+    reorder: "Put primary facts and load-bearing logic before secondary detail and exceptions."
+    remove: "Delete dead, redundant, historical, transitional, or otherwise unnecessary material."
+    reflow: "Change physical line and paragraph boundaries to follow semantic structure and reading rhythm."
+    simplify: "Pull incidental complexity out after structural changes and prefer the smallest coherent form."
+    recommend: "When evidence is insufficient for a safe automatic transformation, recommend the smallest useful change instead of guessing."
+  preservation:
+    semantic_meaning: required
+    public_contracts: required
+    reference_graph: required
+    side_effect_order: required
+    rendered_output: required_when_applicable
+  evidence:
+    before: "Record hashes and measured facts from the observed state before mutation."
+    after: "Re-observe the changed artifact and compare the same facts after mutation."
+    no_content_copy: true
+    automatic_change: "Requires deterministic proof or an existing transformation with a proven preservation contract."
+  comments:
+    redundant: remove
+    changelog_history: "Use git commit history, not source comments, for historical change records."
+    rationale: "Keep a comment when it explains a non-obvious present constraint, invariant, or reason."
+  rename:
+    scopes: [files, constants, methods, variables, rules, sections]
+    require_reference_rewrite: true
+    preserve_public_signatures: true
+  modes:
+    deterministic: "May transform automatically when its proof contract is satisfied."
+    review: "May propose and apply only after hostile review and preservation proof."
+    recommendation: "Propose only; never mutate."
 
 architecture:
   # Phoenix preserves these boundaries while allowing their implementations to be
@@ -280,21 +219,377 @@ runtime_policy:
     bundler_remains_authoritative: true
 
 self_test:
-    ROBUSTNESS: scan lib/ for bare_rescue + missing timeouts
-    SINGULARITY: laws.yml and deploy entries unique by id; data registries have their own lint
-    LINEARITY: no nesting_depth > 4 in lib/
-    PROXIMITY: test files within 1 directory of source
-    ABSTRACTION: no class > god_class threshold in lib/
-    DENSITY: no method > long_method threshold in lib/
-    KERNEL_ADHERENCE: infra_helpers.rb wiring layer present; rule adherence >= 35%
-    PRINCIPLE_MAP: every rule id named by data/principle_map.yml resolves to a registered
+  ROBUSTNESS: scan lib/ for bare_rescue + missing timeouts
+  SINGULARITY: laws.yml and deploy entries unique by id; data registries have their own lint
+  LINEARITY: no nesting_depth > 4 in lib/
+  PROXIMITY: test files within 1 directory of source
+  ABSTRACTION: no class > god_class threshold in lib/
+  DENSITY: no method > long_method threshold in lib/
+  KERNEL_ADHERENCE: infra_helpers.rb wiring layer present; rule adherence >= 35%
+  PRINCIPLE_MAP: every rule id named by data/principle_map.yml resolves to a registered
       rule, and every covered principle names at least one. The reverse direction —
       every registered rule traced by some principle — is `rake lint:principle_trace`,
       a ratcheting ceiling, because it has never been zero.
-    LAW_INTEGRITY: executable law lifecycle, proof metadata, universal-principle scope,
+  LAW_INTEGRITY: executable law lifecycle, proof metadata, universal-principle scope,
       and the derived law index remain internally consistent.
   fail_action: publish self_violation event; refuse autoloop fixes that don't restore
     the law
+
+prose:
+  en:
+    spoken_in: '.'
+    file_languages: [markdown, ruby]
+    # Where the language is written inside those files. English here is the
+    # prose in comments, so the detector has to skip the code around them;
+    # `values` reads a locale file, where the strings are the prose and the keys
+    # are not.
+    reads: comments
+    ids:
+      qualifiers: PROSE_OMIT_QUALIFIERS
+      passive: PROSE_ACTIVE_VOICE
+    fixtures:
+      qualifiers: { bad: '# This is very fast.', good: '# This is fast.' }
+      passive:
+        bad: '# The bug was fixed by the maintainer.'
+        good: '# The maintainer fixed the bug.'
+    # `actually` and `literally` are absent on purpose. Both read as leeches
+    # and neither is one here: they are contrastive, setting what is against
+    # what was claimed, which is this repo's recurring subject. 85 and 4 hits
+    # respectively, every one of them that use.
+    leeches: [very, rather, really, quite, pretty, somewhat, just, basically, simply]
+    keep:
+      - 'rather than'                              # a contrast, not a degree
+      - 'rather\s*  # Phoenix preserves these boundaries while allowing their implementations to be
+  # regenerated. This is architecture, not a second command or dependency registry.
+  provenance_required:
+    - goal
+    - constraints
+    - alternatives
+    - evidence
+    - decision
+  boundaries:
+    master:
+      path: MASTER
+      entry: MASTER/bin/master
+      owner: master
+      depends_on: []
+      check: MASTER/bin/check
+    rails:
+      path: RAILS
+      entry: RAILS/bin/triangle
+      owner: rails
+      depends_on:
+        - master
+      check: MASTER/gates/runner.rb --all
+    openbsd:
+      path: OPENBSD
+      entry: OPENBSD/bin/vps-deploy
+      owner: openbsd
+      depends_on:
+        - master
+        - rails
+      check: OPENBSD/bin/check
+    studio:
+      path: STUDIO
+      entry: STUDIO/gate.rb
+      owner: studio
+      depends_on: []
+      check: STUDIO/gate.rb
+
+veto_patterns:
+  secrets:
+    detect: sk-[A-Za-z0-9]{20,}|ghp_[A-Za-z0-9]{20,}|-----BEGIN.*KEY-----
+    apply: move_to_env
+    violates_law: ROBUSTNESS
+  sql_injection:
+    # Was `execute|query.*#\{`. The alternation binds as `(execute)|(query.*#\{)`,
+    # so the bare word `execute` anywhere on a line was an unconditional merge
+    # blocker. 87 findings in lib/, every one read and classified, 0 real:
+    #
+    #   `def execute_resync`, `execute_job`, `pre_execute?`, `phase: "post_execute"`
+    #   `@db.execute(sql, [args])` — the parameterized form this rule prescribes
+    #   `@db.execute(<<~SQL, args)` — likewise, via heredoc
+    #   `"context: gathering for query=#{query[0, 60]}"` — a log line
+    #   `# Unsafe shell never executes.` — a comment
+    #
+    # The one candidate that looked real was `WHERE #{where.join(" AND ")}` in
+    # ground/knowledge_store/feedback_events.rb. Checked: provider_errors_query
+    # builds `where` from the literals "event_type = ?" and "dimension = ?" and
+    # puts every value in `args`. Parameterized. Also a false positive.
+    #
+    # Now: execute/query called with a quoted string that carries an
+    # interpolation. Backreferenced quoting, `(["'])(?:(?!\1).)*`, so that
+    # `query("... name='#{name}'")` — a single quote inside a double-quoted SQL
+    # string, which is the classic injection shape — is not skipped.
+    #
+    # KNOWN GAP, and it is the important one: this cannot see interpolation
+    # inside a heredoc, because scan_lines is per line and the `<<~SQL` line
+    # carries no `#{`. Catching SQL built across lines needs an AST rule, not a
+    # lexical veto. Tracked in TODO.md rather than pretended away here.
+    detect: (?:execute|query)\w*\s*\(\s*(["'])(?:(?!\1).)*#\{
+    apply: parameterize
+    violates_law: ROBUSTNESS
+  unfinished:
+    # Was "\\.\\.\\.|TODO|FIXME|pending", which fired 119 times in lib/ and was
+    # wrong 119 times. Measured 2026-08-12, every finding read and classified:
+    #
+    #   49  the word "pending" — @pending, the "pending" order state in
+    #       VALID_STATES, and the substring inside depending / spending
+    #   41  an ellipsis in prose or in documented syntax — "\n... [truncated]",
+    #       %i[...], for...of, require(...).permit(...)
+    #   26  Ruby's exclusive range operator — lines[0...-1], (1...lines.length)
+    #    3  the source of the rules that detect TODO/FIXME, quoting it
+    #
+    # Zero real unfinished work, at :veto — the strongest severity there is.
+    # 119 false vetoes do not gate anything; they teach the reader that a veto is
+    # noise, which costs more than the rule was ever worth.
+    #
+    # Narrowed rather than deleted — the intent is right, only the reach was
+    # wrong. Three clauses, each doing one thing:
+    #
+    #   #[^\n]*\b(TODO|FIXME)\b   a marker in a comment, which is what a marker
+    #                             is. The last three false vetoes were TODO
+    #                             inside the regex literals of the rules that
+    #                             detect TODO; none has a `#` before it.
+    #   ^\s*\.\.\.\s*$            a stubbed body — `...` alone on its line. This
+    #                             is the shape lexical TODO_FIXME does not have,
+    #                             and the reason to keep a veto here at all.
+    #   (pending removed)         a legitimate order state in this codebase
+    #                             (VALID_STATES) and a substring of depending
+    #                             and spending. No narrowing rescues a word.
+    #
+    # The comment clause deliberately does not carry TODO_FIXME's hardcoded
+    # `path.include?("/review/scan/rules/")` exemption. Copying an exemption into
+    # a second file is how the two drift; being precise about what a marker looks
+    # like needs no exemption at all.
+    #
+    # Pinned in both directions in test/test_scan_rule_false_positives.rb, per
+    # that file's own rule: a narrowing has to prove what it still catches.
+
+    # Narrowed a third time, by the same measurement. `\b` holds between the O and
+    # the dot, so `TODO.md` — the backlog CLAUDE.md tells every agent to cite — read
+    # as a work marker. Every veto it raised across lib/ and law/ was that filename,
+    # none was unfinished work, so the rule punished the house rule that sends a
+    # reader there. The lookahead sits on the marker rather than on the line, so
+    # `# TODO: fix, and see TODO.md` still vetoes on the marker.
+    detect: "#[^\\n]*\\b(TODO|FIXME)\\b(?!\\.md)|^\\s*\\.\\.\\.\\s*$"
+    # The only veto pattern that means to read comments — a marker lives in one.
+    # Every other pattern is about code, and a comment describing shell safety or
+    # SQL injection is documentation, not the thing. See VetoPatternRule.
+    reads_comments: true
+    apply: complete_or_track
+    violates_law: ROBUSTNESS
+  unsafe_calls:
+    # Interpolation is the arbitrary-code-execution risk. `system("cmd", arg, arg)`
+    # is the safe arg-array form style.yml prescribes as the FIX for this, so
+    # vetoing it too was a contradiction and the source's biggest false positive.
+    # Every clause requires a `#{...}` reaching a shell.
+    #
+    # Narrowed again 2026-08-12, 23 findings in lib/ -> 3, all 20 removed ones
+    # read and classified first:
+    #
+    #    9  a markdown fence inside a Ruby string — "```#{lang}", "```\n#{code}"
+    #    6  a markdown code span in prose — "task `#{topic}`", "- `#{path}` (…)"
+    #    2  backticks whose content is Shellwords.escape'd, which is the fix
+    #    2  Open3 in the arg-array form, which is also the fix
+    #    1  "`#{body}`", a string being wrapped in backticks for display
+    #
+    # Three changes. The backtick clause now needs a SINGLE backtick — `(?<!`)`(?!`)`
+    # — which drops every triple-fence; it needs a space inside the backticks, so a
+    # bare `#{path}` code span is not a command; and it refuses Shellwords.escape.
+    # Open3 now only fires when the FIRST argument is one quoted string holding both
+    # a space and an interpolation, which is the shape that reaches a shell — the
+    # old `\([^)]*#\{` matched interpolation in any argument of the safe form.
+    #
+    # The quoted-string clauses use a backreference, `(["'])(?:(?!\1).)*`, instead
+    # of `["'][^"']*`. The old class stopped at the first quote of EITHER kind, so
+    # `system("rm -rf '#{dir}'")` — a shell string quoting an interpolated path,
+    # which is exactly the dangerous case — did not match at all.
+    #
+    # What survives in lib/, and should: ps with an interpolated $USER
+    # (ground/host_budget.rb), a wholly interpolated command
+    # (trace/snapshot_collector.rb), and an interpolated interpreter path
+    # (voice/engines.rb). Two take their value from ENV.
+    detect: (?:system|exec)\s*\(\s*(["'])(?:(?!\1).)*#\{|%x[\{(\[<][^)}\]>]*#\{|(?<!`)`(?!`)(?![^`\n]*Shellwords\.escape)(?=[^`\n]*#\{)[^`\n]*\s[^`\n]*`|Open3\.\w+\s*\(\s*(["'])(?:(?!\2).)*\s(?:(?!\2).)*#\{
+    apply: add_safe_nav
+    violates_law: ROBUSTNESS
+
+anti_patterns:
+  forbidden:
+  - pattern: eval\(.*user.*\)
+    reason: arbitrary_code_execution
+  - pattern: rm -rf /
+    reason: data_loss
+  - pattern: while true.*no sleep
+    reason: resource_exhaustion
+  - pattern: system\(.*\$\{
+    reason: command_injection
+  - pattern: Marshal\.load
+    reason: deserialization_rce
+  - pattern: open\(.*\$\{
+    reason: shell_through_open
+  discouraged:
+  - pattern: god_object
+    reason: violates_solid_srp
+  - pattern: premature_optimization
+    reason: violates_yagni
+
+rule_deps:
+
+  # Fix-ordering policy, declared 2026-07-12 in the five-file fold and
+  # collateral-deleted by a later laws.yml rewrite. Restored 2026-10-03: the
+  # fail-closed reader at lib/fix/fix_loop/rule_order.rb requires this section,
+  # and the topological sort ignores ids absent from the live rule catalogue.
+
+  # Structural operations: flatten nesting before decoupling (flattening
+  # exposes the hidden coupling that DECOUPLE then targets).
+  DECOUPLE:
+    after: [FLATTEN, LINEARITY]
+
+  # Hoist constants before merge — merged code references the hoisted constant.
+  MERGE:
+    after: [HOIST_CONSTANTS, HOIST]
+
+  # Kill dead code before defrag — defragging dead code wastes effort.
+  DEFRAG:
+    after: [DEAD_CODE, SPECULATIVE_GENERALITY]
+
+  # Fix small-files violations before feature_envy — moving a method to
+  # its right class only makes sense when both files are well-sized.
+  FEATURE_ENVY:
+    after: [SMALL_FILES, SMALL_FUNCTIONS]
+
+  # Remove data clumps before primitive obsession — bundling into objects
+  # subsumes the primitive check.
+  PRIMITIVE_OBSESSION:
+    after: [DATA_CLUMPS]
+
+  # Fix switch statements (type dispatch) after removing middle men —
+  # middle men often hide the type dispatch.
+  SWITCH_STATEMENTS:
+    after: [MIDDLE_MAN]
+
+  # Comment drift after all structural changes — restructured code needs
+  # comment review, not before.
+  COMMENTS_AS_DEODORANT:
+    after: [DEFRAG, MERGE, FLATTEN, EXTRACT]
+
+  # Strunk rules after all structural operations — prose quality is a
+  # final-pass concern.
+  OMIT_NEEDLESS:
+    after: [DEFRAG, REFLOW]
+  ACTIVE_VOICE:
+    after: [OMIT_NEEDLESS]
+  PARALLEL_STRUCTURE:
+    after: [ACTIVE_VOICE]
+
+  # Reflow after all density changes.
+  REFLOW:
+    after: [MERGE, FLATTEN, DEFRAG]
+
+  # Bayesian/RL priors updated last — they need the post-fix violation
+  # counts from all other rules.
+  PATTERN_EXTRACTION:
+    after: [DEFRAG, MERGE, DECOUPLE, FLATTEN]
+
+  # Scanner rule ordering — structural before style, security before polish.
+  bare_rescue:
+    after: [fail_visibly]
+  silent_rescue:
+    after: [bare_rescue]
+  god_class:
+    after: [small_functions, nesting_depth]
+  long_method:
+    after: [nesting_depth]
+  n_plus_one:
+    after: [find_each]
+  yaml_declarative:
+    after: [semantic]
+  veto_patterns:
+    after: [yaml_declarative]
+  semantic:
+    after: [rubocop, reek]
+  adversarial:
+    after: [semantic, comment_drift]
+  comment_drift:
+    after: [ast_omission]
+  ast_omission:
+    after: [co_change_coupling]
+  co_change_coupling:
+    after: [interconnect]
+  interconnect:
+    after: [rule_coverage]
+  DRY:
+    after: [MERGE, DEFRAG]
+  KISS:
+    after: [FLATTEN, long_method]
+  SRP:
+    after: [FEATURE_ENVY, god_class]
+  CQS:
+    after: [SRP]
+
+  # SOLID literal proxies (OPEN_CLOSED/LISKOV/INTERFACE_SEGREGATION/
+  # DEPENDENCY_INVERSION): all judge class/method boundaries, so they must
+  # not run before SRP settles what "one class" even means here.
+  OPEN_CLOSED:
+    after: [SRP]
+  LISKOV:
+    after: [SRP, god_class]
+  INTERFACE_SEGREGATION:
+    after: [SRP]
+  DEPENDENCY_INVERSION:
+    after: [FEATURE_ENVY, SRP]
+  html_lang:
+    after: [meta_charset]
+  no_inline_styles:
+    after: [magic_color]
+
+                               # "rather than" wrapped mid-phrase
+      - 'just (?:as|because|before|after|when)'    # a comparison
+      - '(?:not|never)\s+(?:just|simply|only)'     # a negation
+      - 'n''t\s+(?:just|simply|only)'
+      - 'just\s+(?:\w+ed|found|said|ran|saw|built)' # moments ago, a tense marker
+      - '(?:the|this|that|its) very'               # a determiner picking a thing out
+    passive:
+      auxiliary: '(?:was|were|been)'
+      participle: '(?:\w+ly\s+)?\w+ed'
+      agent: 'by'
+  nb:
+    # Bokmål reaches the tree through the Rails locale files and nowhere else;
+    # every comment in the repo is English. Scoped there, `bare` is Norwegian.
+    spoken_in: '(?:\A|[/.])nb\.yml\z'
+    file_languages: [yaml]
+    reads: values
+    ids:
+      qualifiers: PROSE_OMIT_QUALIFIERS_NB
+      passive: PROSE_ACTIVE_VOICE_NB
+    fixtures:
+      qualifiers:
+        bad: 'tittel: Dette er veldig raskt'
+        good: 'tittel: Dette er raskt'
+      passive:
+        bad: 'notis: Feilen ble rettet av vedlikeholderen'
+        good: 'notis: Vedlikeholderen rettet feilen'
+    # `egentlig` and `faktisk` are held out for the same reason `actually` is:
+    # both mark a contrast with what was assumed rather than grading anything.
+    #
+    # `bare` is held out on measured evidence. It reads as English `just` and
+    # carries the same split, but in this tree the restrictive sense is the only
+    # one present: all 11 hits were "du kan bare slette dine egne kommentarer",
+    # "bare medlemmer poster", "Dating er bare for voksne". Bokmål has no other
+    # word for that "only", so deleting it inverts the sentence — the copy stops
+    # saying what a reader may not do. English `just` keeps its place because
+    # the merely sense does appear there; here it does not.
+    leeches: [veldig, svært, ganske, nokså, temmelig, virkelig, simpelthen]
+    keep:
+      - 'heller enn'          # rather than
+      - 'ikke bare'           # not only
+    # Bokmål builds the periphrastic passive with bli/ble/blitt and marks the
+    # agent with `av`, which is the same shape the English rule judges.
+    passive:
+      auxiliary: '(?:ble|blitt)'
+      participle: '\w+(?:et|dd|tt|t)'
+      agent: 'av'
 
 plugins:
   travel_browser:
@@ -926,299 +1221,3 @@ tokens:
         off_scale_tracking: 10
         off_scale_opacity: 29
         off_scale_duration: 30
-
-veto_patterns:
-  secrets:
-    detect: sk-[A-Za-z0-9]{20,}|ghp_[A-Za-z0-9]{20,}|-----BEGIN.*KEY-----
-    apply: move_to_env
-    violates_law: ROBUSTNESS
-  sql_injection:
-    # Was `execute|query.*#\{`. The alternation binds as `(execute)|(query.*#\{)`,
-    # so the bare word `execute` anywhere on a line was an unconditional merge
-    # blocker. 87 findings in lib/, every one read and classified, 0 real:
-    #
-    #   `def execute_resync`, `execute_job`, `pre_execute?`, `phase: "post_execute"`
-    #   `@db.execute(sql, [args])` — the parameterized form this rule prescribes
-    #   `@db.execute(<<~SQL, args)` — likewise, via heredoc
-    #   `"context: gathering for query=#{query[0, 60]}"` — a log line
-    #   `# Unsafe shell never executes.` — a comment
-    #
-    # The one candidate that looked real was `WHERE #{where.join(" AND ")}` in
-    # ground/knowledge_store/feedback_events.rb. Checked: provider_errors_query
-    # builds `where` from the literals "event_type = ?" and "dimension = ?" and
-    # puts every value in `args`. Parameterized. Also a false positive.
-    #
-    # Now: execute/query called with a quoted string that carries an
-    # interpolation. Backreferenced quoting, `(["'])(?:(?!\1).)*`, so that
-    # `query("... name='#{name}'")` — a single quote inside a double-quoted SQL
-    # string, which is the classic injection shape — is not skipped.
-    #
-    # KNOWN GAP, and it is the important one: this cannot see interpolation
-    # inside a heredoc, because scan_lines is per line and the `<<~SQL` line
-    # carries no `#{`. Catching SQL built across lines needs an AST rule, not a
-    # lexical veto. Tracked in TODO.md rather than pretended away here.
-    detect: (?:execute|query)\w*\s*\(\s*(["'])(?:(?!\1).)*#\{
-    apply: parameterize
-    violates_law: ROBUSTNESS
-  unfinished:
-    # Was "\\.\\.\\.|TODO|FIXME|pending", which fired 119 times in lib/ and was
-    # wrong 119 times. Measured 2026-08-12, every finding read and classified:
-    #
-    #   49  the word "pending" — @pending, the "pending" order state in
-    #       VALID_STATES, and the substring inside depending / spending
-    #   41  an ellipsis in prose or in documented syntax — "\n... [truncated]",
-    #       %i[...], for...of, require(...).permit(...)
-    #   26  Ruby's exclusive range operator — lines[0...-1], (1...lines.length)
-    #    3  the source of the rules that detect TODO/FIXME, quoting it
-    #
-    # Zero real unfinished work, at :veto — the strongest severity there is.
-    # 119 false vetoes do not gate anything; they teach the reader that a veto is
-    # noise, which costs more than the rule was ever worth.
-    #
-    # Narrowed rather than deleted — the intent is right, only the reach was
-    # wrong. Three clauses, each doing one thing:
-    #
-    #   #[^\n]*\b(TODO|FIXME)\b   a marker in a comment, which is what a marker
-    #                             is. The last three false vetoes were TODO
-    #                             inside the regex literals of the rules that
-    #                             detect TODO; none has a `#` before it.
-    #   ^\s*\.\.\.\s*$            a stubbed body — `...` alone on its line. This
-    #                             is the shape lexical TODO_FIXME does not have,
-    #                             and the reason to keep a veto here at all.
-    #   (pending removed)         a legitimate order state in this codebase
-    #                             (VALID_STATES) and a substring of depending
-    #                             and spending. No narrowing rescues a word.
-    #
-    # The comment clause deliberately does not carry TODO_FIXME's hardcoded
-    # `path.include?("/review/scan/rules/")` exemption. Copying an exemption into
-    # a second file is how the two drift; being precise about what a marker looks
-    # like needs no exemption at all.
-    #
-    # Pinned in both directions in test/test_scan_rule_false_positives.rb, per
-    # that file's own rule: a narrowing has to prove what it still catches.
-
-    # Narrowed a third time, by the same measurement. `\b` holds between the O and
-    # the dot, so `TODO.md` — the backlog CLAUDE.md tells every agent to cite — read
-    # as a work marker. Every veto it raised across lib/ and law/ was that filename,
-    # none was unfinished work, so the rule punished the house rule that sends a
-    # reader there. The lookahead sits on the marker rather than on the line, so
-    # `# TODO: fix, and see TODO.md` still vetoes on the marker.
-    detect: "#[^\\n]*\\b(TODO|FIXME)\\b(?!\\.md)|^\\s*\\.\\.\\.\\s*$"
-    # The only veto pattern that means to read comments — a marker lives in one.
-    # Every other pattern is about code, and a comment describing shell safety or
-    # SQL injection is documentation, not the thing. See VetoPatternRule.
-    reads_comments: true
-    apply: complete_or_track
-    violates_law: ROBUSTNESS
-  unsafe_calls:
-    # Interpolation is the arbitrary-code-execution risk. `system("cmd", arg, arg)`
-    # is the safe arg-array form style.yml prescribes as the FIX for this, so
-    # vetoing it too was a contradiction and the source's biggest false positive.
-    # Every clause requires a `#{...}` reaching a shell.
-    #
-    # Narrowed again 2026-08-12, 23 findings in lib/ -> 3, all 20 removed ones
-    # read and classified first:
-    #
-    #    9  a markdown fence inside a Ruby string — "```#{lang}", "```\n#{code}"
-    #    6  a markdown code span in prose — "task `#{topic}`", "- `#{path}` (…)"
-    #    2  backticks whose content is Shellwords.escape'd, which is the fix
-    #    2  Open3 in the arg-array form, which is also the fix
-    #    1  "`#{body}`", a string being wrapped in backticks for display
-    #
-    # Three changes. The backtick clause now needs a SINGLE backtick — `(?<!`)`(?!`)`
-    # — which drops every triple-fence; it needs a space inside the backticks, so a
-    # bare `#{path}` code span is not a command; and it refuses Shellwords.escape.
-    # Open3 now only fires when the FIRST argument is one quoted string holding both
-    # a space and an interpolation, which is the shape that reaches a shell — the
-    # old `\([^)]*#\{` matched interpolation in any argument of the safe form.
-    #
-    # The quoted-string clauses use a backreference, `(["'])(?:(?!\1).)*`, instead
-    # of `["'][^"']*`. The old class stopped at the first quote of EITHER kind, so
-    # `system("rm -rf '#{dir}'")` — a shell string quoting an interpolated path,
-    # which is exactly the dangerous case — did not match at all.
-    #
-    # What survives in lib/, and should: ps with an interpolated $USER
-    # (ground/host_budget.rb), a wholly interpolated command
-    # (trace/snapshot_collector.rb), and an interpolated interpreter path
-    # (voice/engines.rb). Two take their value from ENV.
-    detect: (?:system|exec)\s*\(\s*(["'])(?:(?!\1).)*#\{|%x[\{(\[<][^)}\]>]*#\{|(?<!`)`(?!`)(?![^`\n]*Shellwords\.escape)(?=[^`\n]*#\{)[^`\n]*\s[^`\n]*`|Open3\.\w+\s*\(\s*(["'])(?:(?!\2).)*\s(?:(?!\2).)*#\{
-    apply: add_safe_nav
-    violates_law: ROBUSTNESS
-
-anti_patterns:
-  forbidden:
-  - pattern: eval\(.*user.*\)
-    reason: arbitrary_code_execution
-  - pattern: rm -rf /
-    reason: data_loss
-  - pattern: while true.*no sleep
-    reason: resource_exhaustion
-  - pattern: system\(.*\$\{
-    reason: command_injection
-  - pattern: Marshal\.load
-    reason: deserialization_rce
-  - pattern: open\(.*\$\{
-    reason: shell_through_open
-  discouraged:
-  - pattern: god_object
-    reason: violates_solid_srp
-  - pattern: premature_optimization
-    reason: violates_yagni
-
-rule_deps:
-
-  # Fix-ordering policy, declared 2026-07-12 in the five-file fold and
-  # collateral-deleted by a later laws.yml rewrite. Restored 2026-10-03: the
-  # fail-closed reader at lib/fix/fix_loop/rule_order.rb requires this section,
-  # and the topological sort ignores ids absent from the live rule catalogue.
-
-  # Structural operations: flatten nesting before decoupling (flattening
-  # exposes the hidden coupling that DECOUPLE then targets).
-  DECOUPLE:
-    after: [FLATTEN, LINEARITY]
-
-  # Hoist constants before merge — merged code references the hoisted constant.
-  MERGE:
-    after: [HOIST_CONSTANTS, HOIST]
-
-  # Kill dead code before defrag — defragging dead code wastes effort.
-  DEFRAG:
-    after: [DEAD_CODE, SPECULATIVE_GENERALITY]
-
-  # Fix small-files violations before feature_envy — moving a method to
-  # its right class only makes sense when both files are well-sized.
-  FEATURE_ENVY:
-    after: [SMALL_FILES, SMALL_FUNCTIONS]
-
-  # Remove data clumps before primitive obsession — bundling into objects
-  # subsumes the primitive check.
-  PRIMITIVE_OBSESSION:
-    after: [DATA_CLUMPS]
-
-  # Fix switch statements (type dispatch) after removing middle men —
-  # middle men often hide the type dispatch.
-  SWITCH_STATEMENTS:
-    after: [MIDDLE_MAN]
-
-  # Comment drift after all structural changes — restructured code needs
-  # comment review, not before.
-  COMMENTS_AS_DEODORANT:
-    after: [DEFRAG, MERGE, FLATTEN, EXTRACT]
-
-  # Strunk rules after all structural operations — prose quality is a
-  # final-pass concern.
-  OMIT_NEEDLESS:
-    after: [DEFRAG, REFLOW]
-  ACTIVE_VOICE:
-    after: [OMIT_NEEDLESS]
-  PARALLEL_STRUCTURE:
-    after: [ACTIVE_VOICE]
-
-  # Reflow after all density changes.
-  REFLOW:
-    after: [MERGE, FLATTEN, DEFRAG]
-
-  # Bayesian/RL priors updated last — they need the post-fix violation
-  # counts from all other rules.
-  PATTERN_EXTRACTION:
-    after: [DEFRAG, MERGE, DECOUPLE, FLATTEN]
-
-  # Scanner rule ordering — structural before style, security before polish.
-  bare_rescue:
-    after: [fail_visibly]
-  silent_rescue:
-    after: [bare_rescue]
-  god_class:
-    after: [small_functions, nesting_depth]
-  long_method:
-    after: [nesting_depth]
-  n_plus_one:
-    after: [find_each]
-  yaml_declarative:
-    after: [semantic]
-  veto_patterns:
-    after: [yaml_declarative]
-  semantic:
-    after: [rubocop, reek]
-  adversarial:
-    after: [semantic, comment_drift]
-  comment_drift:
-    after: [ast_omission]
-  ast_omission:
-    after: [co_change_coupling]
-  co_change_coupling:
-    after: [interconnect]
-  interconnect:
-    after: [rule_coverage]
-  DRY:
-    after: [MERGE, DEFRAG]
-  KISS:
-    after: [FLATTEN, long_method]
-  SRP:
-    after: [FEATURE_ENVY, god_class]
-  CQS:
-    after: [SRP]
-
-  # SOLID literal proxies (OPEN_CLOSED/LISKOV/INTERFACE_SEGREGATION/
-  # DEPENDENCY_INVERSION): all judge class/method boundaries, so they must
-  # not run before SRP settles what "one class" even means here.
-  OPEN_CLOSED:
-    after: [SRP]
-  LISKOV:
-    after: [SRP, god_class]
-  INTERFACE_SEGREGATION:
-    after: [SRP]
-  DEPENDENCY_INVERSION:
-    after: [FEATURE_ENVY, SRP]
-  html_lang:
-    after: [meta_charset]
-  no_inline_styles:
-    after: [magic_color]
-
-                               # "rather than" wrapped mid-phrase
-      - 'just (?:as|because|before|after|when)'    # a comparison
-      - '(?:not|never)\s+(?:just|simply|only)'     # a negation
-      - 'n''t\s+(?:just|simply|only)'
-      - 'just\s+(?:\w+ed|found|said|ran|saw|built)' # moments ago, a tense marker
-      - '(?:the|this|that|its) very'               # a determiner picking a thing out
-    passive:
-      auxiliary: '(?:was|were|been)'
-      participle: '(?:\w+ly\s+)?\w+ed'
-      agent: 'by'
-  nb:
-    # Bokmål reaches the tree through the Rails locale files and nowhere else;
-    # every comment in the repo is English. Scoped there, `bare` is Norwegian.
-    spoken_in: '(?:\A|[/.])nb\.yml\z'
-    file_languages: [yaml]
-    reads: values
-    ids:
-      qualifiers: PROSE_OMIT_QUALIFIERS_NB
-      passive: PROSE_ACTIVE_VOICE_NB
-    fixtures:
-      qualifiers:
-        bad: 'tittel: Dette er veldig raskt'
-        good: 'tittel: Dette er raskt'
-      passive:
-        bad: 'notis: Feilen ble rettet av vedlikeholderen'
-        good: 'notis: Vedlikeholderen rettet feilen'
-    # `egentlig` and `faktisk` are held out for the same reason `actually` is:
-    # both mark a contrast with what was assumed rather than grading anything.
-    #
-    # `bare` is held out on measured evidence. It reads as English `just` and
-    # carries the same split, but in this tree the restrictive sense is the only
-    # one present: all 11 hits were "du kan bare slette dine egne kommentarer",
-    # "bare medlemmer poster", "Dating er bare for voksne". Bokmål has no other
-    # word for that "only", so deleting it inverts the sentence — the copy stops
-    # saying what a reader may not do. English `just` keeps its place because
-    # the merely sense does appear there; here it does not.
-    leeches: [veldig, svært, ganske, nokså, temmelig, virkelig, simpelthen]
-    keep:
-      - 'heller enn'          # rather than
-      - 'ikke bare'           # not only
-    # Bokmål builds the periphrastic passive with bli/ble/blitt and marks the
-    # agent with `av`, which is the same shape the English rule judges.
-    passive:
-      auxiliary: '(?:ble|blitt)'
-      participle: '\w+(?:et|dd|tt|t)'
-      agent: 'av'
-
