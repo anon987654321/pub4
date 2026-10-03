@@ -4,6 +4,7 @@ require "digest"
 require_relative "restructure"
 require_relative "restructure_sweep/context"
 require_relative "restructure_sweep/contracts"
+require_relative "transformation_plan"
 
 module Master
   module Fix
@@ -22,7 +23,15 @@ module Master
       FIRST_ATTEMPTS = 1
       FIRST_ROUNDS = 1
       FIRST_KEEPS = 1
-      ORDER = %w[DEAD_SUBTREE PARALLEL_HIERARCHY CYCLIC_DEPENDENCY FILE_SPRAWL NO_GOD_CLASS SMALL_FILES JS_MODULE_SIZE].freeze
+      RULE_OPERATIONS = {
+        "DEAD_SUBTREE" => "defragment",
+        "PARALLEL_HIERARCHY" => "merge",
+        "CYCLIC_DEPENDENCY" => "decouple",
+        "FILE_SPRAWL" => "flatten",
+        "NO_GOD_CLASS" => "split",
+        "SMALL_FILES" => "split",
+        "JS_MODULE_SIZE" => "split",
+      }.freeze
       TREES = Contracts::BY_TREE.keys.freeze
 
       PROPOSE = <<~TEXT
@@ -37,10 +46,17 @@ module Master
 
         Finding: %<rule>s at %<path>s: %<message>s
 
-        Any combination of these is allowed: split a file or class into cohesive
-        parts; merge a tiny file into its owner; flatten a one-file directory;
-        gather related code that has scattered across files; decouple a class from
-        another's internals. Behaviour must not change.
+        Any combination of these is allowed: defragment scattered concepts; decouple
+        independent concerns; flatten wrappers, nesting and needless directories;
+        merge equivalent logic; split unlike responsibilities; relocate code beside
+        its owner; rename misleading names; reorder for importance; remove redundant
+        material; reflow prose and lines; simplify accidental complexity. Behaviour,
+        meaning and public contracts must not change.
+
+        %<transformations>s
+
+        The preservation contract is mandatory:
+        %<preservation>s
 
         The tree, and the contracts to keep:
         %<contracts>s
@@ -72,10 +88,11 @@ module Master
         ```
       TEXT
 
-      def initialize(agent:, repo_root:, bus: nil, restructure: nil)
+      def initialize(agent:, repo_root:, bus: nil, restructure: nil, transformation_plan: nil)
         @agent = agent
         @root = repo_root
         @bus = bus
+        @transformation_plan = transformation_plan || TransformationPlan.new(root: Master::ROOT)
         @restructures = Hash.new { |cache, tree| cache[tree] = restructure || Restructure.new(repo_root:, tree:) }
       end
 
@@ -131,9 +148,11 @@ module Master
       def candidates(target, run_id)
         found = Context.structural_findings(target)
         seed = Digest::SHA256.hexdigest(run_id.to_s)[0, 8].to_i(16)
-        ORDER.flat_map do |rule|
-          group = found.select { |_path, id, _message| id == rule }
-          group.empty? ? [] : group.rotate(seed % group.size)
+        grouped = found.group_by { |_path, rule, _message| RULE_OPERATIONS.fetch(rule, "recommend") }
+        ordered = grouped.keys.sort_by { |operation| @transformation_plan.operation(operation).position rescue 999 }
+        ordered.flat_map do |operation|
+          group = grouped.fetch(operation)
+          group.rotate(seed % group.size)
         end
       end
 
@@ -153,7 +172,9 @@ module Master
       end
 
       def proposal(tree, rule, path, message, related: [])
-        format(PROPOSE, contracts: Contracts.for(tree).strip, rule:, path: relative(path), message:,
+        format(PROPOSE, transformations: @transformation_plan.prompt,
+                        preservation: @transformation_plan.preservation_contract.map { |key, value| "  #{key}: #{value}" }.join("\n"),
+                        contracts: Contracts.for(tree).strip, rule:, path: relative(path), message:,
                         context: Context.new(@root, path, related:).to_s)
       end
 
