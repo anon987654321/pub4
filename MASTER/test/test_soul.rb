@@ -99,13 +99,25 @@ class TestSoul < Minitest::Test
     assert_equal DOCUMENT, File.read(File.join(@root, "data", "SOUL.md"))
   end
 
+
+  def test_soul_yaml_contains_only_live_kernel_sections
+    data = Master.load_yaml(Master.data_path("soul.yml"))
+
+    refute data.key?("evolution_log"), "Git is the history of soul.yml"
+    refute data.key?("research"), "research belongs outside the live soul kernel"
+    refute data.fetch("negotiable").key?("tts_voice"), "voice has one authority at the top level"
+    assert_equal %w[schema version persona voice language absolute prompt_ordering negotiable hooks], data.keys
+  end
+
   # /soul printed "SOUL.md v1.0.0 | persona:" while the boot said rev 2.8.0.
   def test_summary_names_the_booted_revision_and_persona
     summary = Master::Voice::Soul.new.summary
     law = Master.load_yaml(Master.data_path("soul.yml"))
 
     assert summary.start_with?("soul0: rev #{law['version']}, persona #{law['persona']}\n"), summary
-    assert_match(/\ASOUL is the absolute tier/, summary.lines.last)
+    assert_match(/\A# SOUL\z/, File.readlines(File.join(Master::ROOT, "data", "SOUL.md"), encoding: "UTF-8").first&.chomp)
+    assert_includes File.read(File.join(Master::ROOT, "data", "SOUL.md"), encoding: "UTF-8"), "Be the assistant you'd actually want to talk to at 2am"
+
   end
 
   # SOUL.md carries no Version line, so approval must not invent one: the

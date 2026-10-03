@@ -87,15 +87,14 @@ class TestSnapshotGenerator < Minitest::Test
 
   # The README promises one snapshot per governed tree from a bare /snapshot;
   # Snapshot#write! gives that only when rooted at the repository.
-  def test_bare_snapshot_command_roots_at_the_repository
-    roots = []
-    fake = Object.new
-    def fake.write! = %w[.master/snapshots/snapshot_MASTER.md .master/snapshots/snapshot_RAILS.md .master/snapshots/snapshot_OPENBSD.md .master/snapshots/snapshot_STUDIO.md]
-    capture = ->(root:, **) { roots << root; fake }
+  def test_bare_snapshot_command_uses_the_canonical_full_tree_generator
+    require_relative "../tools/snapshot"
+    fake_output = "snapshot0: complete tree=MASTER\nsnapshot0: complete tree=RAILS"
 
-    out = Master::Snapshot.stub(:new, capture) { Master::CLI::CommandRegistry.dispatch_snapshot(nil, ctx: { args: "" }) }
+    out = Operator::Snapshot.stub(:run, ->(io: $stdout) { io.puts fake_output; 0 }) do
+      Master::CLI::CommandRegistry.dispatch_snapshot(nil, ctx: { args: "" })
+    end
 
-    assert_equal [Master.repo_root], roots
-    assert_equal ".master/snapshots/snapshot_MASTER.md\n.master/snapshots/snapshot_RAILS.md", out
+    assert_equal fake_output, out
   end
 end

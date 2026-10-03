@@ -61,6 +61,28 @@ module Master
           @visual_pass = visual_pass
           @opportunity_pass = opportunity_pass
           @ground_truth_failures = 0
+          emit_coverage = lambda do |target, pass|
+            semantic = ENV["MASTER_SCAN_SEMANTIC_SAMPLE"].to_f >= 1.0 ? "full" : "sampled clean-files"
+            abstract = @council ? "bounded clean-streak review" : "unavailable"
+            visual = @visual_pass&.applicable?(target) ? "rendered" : "not-applicable"
+            opportunity = @opportunity_pass&.applicable?(target) ? "bounded" : "not-applicable"
+            @bus&.publish(
+              "fix_loop:coverage",
+              pass:,
+              lexical: "full",
+              structural: "full",
+              semantic:,
+              abstract:,
+              opportunity:,
+              visual:,
+            )
+            Master::Trace::Dmesg.status(
+              "fix0",
+              "pass #{pass}, coverage lexical=full structural=full semantic=#{semantic} abstract=#{abstract} opportunity=#{opportunity} visual=#{visual}",
+            )
+          end
+          @coverage_reporter = emit_coverage
+
           @pass_progress = false
         end
 
@@ -95,6 +117,7 @@ module Master
                      recurring_violations:, consecutive_clean:)
           pass_mtimes = mtimes(files)
           @pass_progress = false
+          @coverage_reporter&.call(target, pass)
           start_pass_transaction(files:, target:, pass:, transaction_id:)
           found, streamed = observe_pass(files, target, pass, deadline)
 

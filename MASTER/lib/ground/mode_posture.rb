@@ -65,7 +65,8 @@ module Master
                   else "council #{spec[:council]}"
                   end
         profile = spec[:scan_profile].to_s.tr("_", " ")
-        "#{spec[:name]}, #{profile} scan, #{council}, #{spec[:max_fix_passes]} fix passes"
+        semantic = ENV["MASTER_SCAN_SEMANTIC_SAMPLE"].to_f >= 1.0 ? "semantic full" : "semantic sampled"
+        "#{spec[:name]}, #{profile} mechanical scan, #{semantic}, #{council}, #{spec[:max_fix_passes]} fix passes"
       end
 
       private

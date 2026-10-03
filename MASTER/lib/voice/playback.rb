@@ -407,22 +407,34 @@ module Master
       # One stream through one player process: register the player pid so
       # interrupt can kill it, copy the wire into its stdin, keep the stream
       # result so the caller can resynthesise anything truncated.
+      StreamOutcome = Data.define(:ok, :played_bytes)
+
       def pump_stream_pipe(cmd, spawn_opts, values, voice_name, style_config)
         generation = values[:generation]
-        ok = false
+        outcome = StreamOutcome.new(ok: false, played_bytes: 0)
         Open3.popen3(*cmd, **spawn_opts) do |stdin, _o, _e, wait_thr|
           active = generation_active?(generation)
           @lock.synchronize { @playing_pid = wait_thr.pid if active }
           begin
             stale = -> { !generation_active?(generation) }
-            ok = Speech.stream_edge_to_io(text: values[:part], voice_name:, style_config:, io: stdin, stale_test: stale)
+            stream = Speech.stream_edge_to_io(
+              text: values[:part],
+              voice_name:,
+              style_config:,
+              io: stdin,
+              stale_test: stale,
+            )
+            outcome = StreamOutcome.new(ok: stream.ok, played_bytes: stream.bytes)
           ensure
             stdin.close
-            ok = ok && wait_thr.value.success?
+            outcome = StreamOutcome.new(
+              ok: outcome.ok && wait_thr.value.success?,
+              played_bytes: outcome.played_bytes,
+            )
             @lock.synchronize { @playing_pid = nil if @playing_pid == wait_thr.pid }
           end
         end
-        ok
+        outcome
       end
 
       def stream_utterance(values, voice_name, style_config)
@@ -431,10 +443,17 @@ module Master
 
         spawn_opts = Master::Ops::ProcessSpawn.options(out: File::NULL, err: File::NULL)
         cmd = stream_cmd(player_path, player_args)
-        ok = pump_stream_pipe(cmd, spawn_opts, values, voice_name, style_config)
-        return stream_fallback(values) if !ok && generation_active?(values[:generation])
+        outcome = pump_stream_pipe(cmd, spawn_opts, values, voice_name, style_config)
+        return true if outcome.ok
 
-        ok
+        # Never replay an utterance after bytes have reached the speaker. A
+        # truncated stream used to resynthesize the entire sentence after the
+        # partial stream had already been heard, producing the delayed second
+        # voice/overlap reported at the terminal. A stream with no emitted audio
+        # is safe to replace; a partially heard stream is a failed utterance.
+        return stream_fallback(values) if outcome.played_bytes.zero? && generation_active?(values[:generation])
+
+        false
       end
 
       # A stream truncated mid-sentence is dropped before playback, so the

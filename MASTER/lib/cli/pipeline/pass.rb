@@ -130,7 +130,8 @@ module Master
             baseline = proof_baseline(resolved)
             @start_dirty = repo_git.changed_paths
           end
-          sections = [observe_section(title: "observe", unit: "obs0", shell:, aesthetic:)]
+          run_aesthetic = aesthetic && posture[:scan_profile].to_s != "full"
+          sections = [observe_section(title: "observe", unit: "obs0", shell:, aesthetic: run_aesthetic)]
           if critique && !(@only && !@only.include?("critique"))
             sections << critique_section(resolved, shell)
           end
@@ -143,7 +144,7 @@ module Master
             run_fix(resolved)
           end]
           sections << ["changes", changes_section(before)]
-          sections << observe_section(title: "re-observe", unit: "obs1", shell:, aesthetic:)
+          sections << observe_section(title: "re-observe", unit: "obs1", shell:, aesthetic: run_aesthetic)
           sections << proof_section(resolved, baseline)
         end
 

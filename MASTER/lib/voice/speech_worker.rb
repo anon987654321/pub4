@@ -107,6 +107,8 @@ module Master
       # whole-file path, a player's stdin for live playback. on_chunk fires
       # per frame with the bytes written so far; stale_test is checked between
       # frames so an interrupted reply stops pulling audio off the wire.
+      StreamResult = Data.define(:ok, :bytes)
+
       StreamTarget = Data.define(:io, :on_chunk, :stale_test) do
         # Data fields init as keywords, so the sinks that only observe or only
         # test staleness pass nil for the rest through here instead.
@@ -138,17 +140,18 @@ module Master
       end
 
       # Live playback facade: one utterance into io, framed and chunk-clocked.
-      # Returns true when the stream ran clean.
+      # Returns StreamResult so playback can distinguish a clean stream from a
+      # failed stream that already emitted audio.
       def stream_edge_to_io(text:, voice_name:, style_config:, io:, stale_test: nil)
         sock_path = resolve_socket_path
-        return false unless sock_path
+        return StreamResult.new(ok: false, bytes: 0) unless sock_path
 
         req = build_socket_request(voice_name, style_config, text)
         target = StreamTarget.build(io:, stale_test:)
         stream_socket_to_io(sock_path, req, worker_timeout(text.to_s.length), target)
       rescue Timeout::Error, StandardError => e
         warn_tts("edge stream error: #{e.class}: #{e.message}")
-        false
+        StreamResult.new(ok: false, bytes: 0)
       end
 
       # Wire v2 ("stream":true) is the default; MASTER_TTS_WIRE=raw restores
