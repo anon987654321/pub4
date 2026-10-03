@@ -21,7 +21,7 @@ class TestMD < Minitest::Test
     refute Master::MD::HEADING.match?(" text # not a heading")
   end
 
-  def test_style_reads_rules_yml
+  def test_style_reads_laws_yml
     assert_equal "tadao_ando", Master::MD.style.fetch("aesthetic")
   end
   def test_pdf_engine_failure_is_explicit
