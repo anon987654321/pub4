@@ -13,7 +13,8 @@ module Master
       REPEAT = /\A(?:again|repeat)(?:\s+(?:that|it))?[.!?]*\z/i
       REPEAT_AGAIN = /\b(?:do|run)\s+(?:that|it)\s+again\b/i
       FOCUS = /\bfocus\s+(?:mode|on|off)\b|\btoggle\s+focus\b/i
-      DIRECT_SHELL_ATOM = %r{\A(?:pwd|whoami|date(?:\s+-u)?|uname(?:\s+-[[:alnum:]-]+)?|ls(?:\s+(?:-[[:alnum:]-]+|[[:alnum:]_./~*-]+))*|git\s+(?:status(?:\s+--short)?|branch(?:\s+--show-current)?|rev-parse\s+--show-toplevel|diff\s+--stat|log\s+(?:-n\s+\d+\s+)?--oneline))\z}i
+      DIRECT_SHELL_ATOM = %r{\A(?:pwd|whoami|date(?:\s+-u)?|uname(?:\s+-[[:alnum:]-]+)?|ls(?:\s+(?:-[[:alnum:]-]+|[[:alnum:]_./~*-]+))*|git\s+(?:status(?:\s+--short)?|branch(?:\s+--show-current)?|rev-parse\s+--show-toplevel|diff\s+--stat|log\s+(?:-n\s+\d+\s+)?--oneline))\z}i.freeze
+      SHELL_BUILTINS = %w[cd echo eval exec export false print printf pwd source type true unset whoami].freeze
 
       module_function
 
