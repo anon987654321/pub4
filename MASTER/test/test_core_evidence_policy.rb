@@ -5,12 +5,12 @@ require "yaml"
 require "master"
 
 # The evidence weights live in exactly one Ruby place — Proof::SCORING — and the
-# lib spine still reads data/rules.yml's evidence_scoring. Until that spine is
+# lib spine still reads data/laws.yml's evidence_scoring. Until that spine is
 # severed the two must agree, or the agent is told one threshold and judged by
 # another. This test is the seam that keeps them honest.
 class EvidencePolicyTest < Minitest::Test
   DATA = YAML.safe_load_file(
-    File.expand_path("../data/rules.yml", __dir__), aliases: true
+    File.expand_path("../data/laws.yml", __dir__), aliases: true
   ).fetch("evidence_scoring")
 
   def test_weights_match_rules_yaml
