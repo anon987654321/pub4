@@ -58,7 +58,7 @@ CHECKS = {
     cwd: MASTER_ROOT,
   },
   "selftest" => {
-    desc: "rules.yml self_test laws against MASTER itself",
+    desc: "laws.yml self_test laws against MASTER itself",
     cmd: [RUBY, "-S", "rake", "selftest"],
     cwd: MASTER_ROOT,
   },
