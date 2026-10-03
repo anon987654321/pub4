@@ -28,7 +28,7 @@
 
 # pub4 backlog
 
-The single backlog for the repo. Authority: `MASTER/data/soul.yml` > `MASTER/data/rules.yml` > executable law (`MASTER/law/*.rb` and `MASTER/lib/review/scan/rules/*.rb`) > repo harnesses (`CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, `.cursorrules`, `.github/copilot-instructions.md`) > per-tree contracts. Feature truth is `RAILS/apps.yml`; aspiration is `RAILS/apps.horizon.yml`; executable behavior and git history outrank prose.
+The single backlog for the repo. Authority: `MASTER/data/soul.yml` > `MASTER/data/laws.yml` > executable law (`MASTER/law/*.rb` and `MASTER/lib/review/scan/rules/*.rb`) > repo harnesses (`CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, `.cursorrules`, `.github/copilot-instructions.md`) > per-tree contracts. Feature truth is `RAILS/apps.yml`; aspiration is `RAILS/apps.horizon.yml`; executable behavior and git history outrank prose.
 
 A finding is a hypothesis. Historical dated sections below are evidence records, not automatically-open work. An item is current only when it appears in the current plan or has been re-measured on the current `main` tree. Close an item by deleting it after the code and its proof land; keep historical evidence in git.
 
@@ -145,7 +145,7 @@ Reference order: GitHub upstream implementation/release history → official Rai
    vs 0 and unused_selector 116 vs 89, breakpoint unknown_edge 8 vs 0,
    layout_stability unreserved_media 18 vs 13, chrome_i18n translate_default 153
    vs 77, i18n_resolution 198 translation_missing, coverage_ratchet floor 23 vs
-   25 tested; visual_contract and scale name rules.yml keys
+   25 tested; visual_contract and scale name laws.yml keys
    (typography.accessibility.large_text_contrast, layout_rules.touch.target_min_px)
    that are gone. Raising baselines is the operator's call under the lint contract.
 
@@ -180,8 +180,8 @@ and 6 need the registrar or money.
 ### The operator's queue
 
 Only he can close these, and each is small once he sits down to it:
-the rules.yml trim draft (MASTER); the CSS budget ceilings (RAILS);
-`spine.lib_body_ceiling` and the rules.yml ratchet rows (MASTER); the two
+the laws.yml trim draft (MASTER); the CSS budget ceilings (RAILS);
+`spine.lib_body_ceiling` and the laws.yml ratchet rows (MASTER); the two
 `soul.yml` edits (refinement 8); the vm23 session above; the bsdports.org
 delegation; the Replicate key or retiring replicate; and the rendered values
 the "One chrome", ad system and layout sections bring back for a decision.
@@ -236,21 +236,21 @@ The source-level failures from the Mac trace are now closed: /fix preflight has 
   <row>`, fold what folds, then one sponsored raise naming what the rest buy.
   `spine.lib_body_ceiling` has no raise left (`consecutive_raises_allowed: 2`
   is spent), so a deletion pays for it first, and that is the operator's; so
-  are the two slack locks, which sit in `data/rules.yml`. Read the numbers
+  are the two slack locks, which sit in `data/laws.yml`. Read the numbers
   from `measure`, not from here — they move every few hours. Done when
   `measure` exits clean or each off row names its decision. A second seam
   from the 2026-09-23 pass belongs with it: `measure` could print the entry
   that owns each ceiling, so a red row points at a record instead of at
   nobody. Closed 2026-09-26: non-clean measure rows now print the source record
   that owns each ceiling.
-- **The rules.yml trim draft was lost, and it can be rebuilt.** A draft that
+- **The laws.yml trim draft was lost, and it can be rebuilt.** A draft that
   retired rules which fire on nothing, reach no configuration or misread
   their subject never reached a commit. Rebuild it as a diff from
   `bin/operator measure --why rule_reach` and `--why rule_audit.silent`, plus
   `duplicate_code` (0 of 25 samples were duplicated code) and the unread
   `biases` and `principle_priorities` blocks. Done when the diff sits in the
   operator's hands with one line of evidence per removed rule. Operator:
-  `data/rules.yml` is immutable to agents, so he applies it.
+  `data/laws.yml` is immutable to agents, so he applies it.
 - **/fix's own weaknesses.** Two surfaced on 2026-09-25. Detectors with high
   false-positive rates cost every pass: `CQS`
   (`lib/review/scan/rules/structural_rules.rb`) flags any method that writes
@@ -696,7 +696,7 @@ unreadable-ratchet verdict, the css brace-balance gate (first finding was
 face.css's unclosed `#primer`), the /fix verification tail proving against a
 scan-only lexical stage, and the view-surface writer's dead `RAILS/gates` path.
 
-- **The `rules:` key is a void six readers read.** `data/rules.yml` has sections
+- **The `rules:` key is a void six readers read.** `data/laws.yml` has sections
   (`laws:`, `design_system:`, ...), no top-level `rules:` — but
   `lib/master.rb:188`, `lib/ground/rules.rb:139`, `tools/rule_reach.rb`,
   `lib/review/scan/self_test.rb:394`, `rule_registry_audit.rb:158` and
@@ -781,7 +781,7 @@ slices. Each is a hypothesis with its seam.
 - **The CLI's last seams.** Rotate the web token printed at boot on 2026-09-13;
   it sits in two saved terminal transcripts in `~/Downloads` (operator). With
   `CLI::Propose` gone, `Ground::BiasGuard` has no runtime caller and the
-  `biases` and `principle_priorities` blocks in `data/rules.yml` are unread;
+  `biases` and `principle_priorities` blocks in `data/laws.yml` are unread;
   wiring or deleting them edits an immutable file, so it is the operator's.
 - Closed: `solid_queue` and `solid_cache` are active web/runtime dependencies; `production.rb` enforces their adapters and the Rails apps carry their queue/cache schemas.
 
@@ -816,7 +816,7 @@ three apps' RuboCop forbids the comma the rule asked for. Re-run before quoting
 a count. What is left:
 
 - **`duplicate_code` matches the words copy, duplicate and "same as",** and 0 of
-  25 samples were duplicated code. Retiring it edits `data/rules.yml`, which is
+  25 samples were duplicated code. Retiring it edits `data/laws.yml`, which is
   immutable: the operator's.
 - **Lint reach that surfaces rendered values.** ScaleLint reading the `font:`
   shorthand and `clamp()` finds 22 off-scale line-heights and 1 tracking against
@@ -833,7 +833,7 @@ a count. What is left:
   `DOLLAR_PAREN` and `STRICT_MODE_ZSH` read 0.
 - **Geometry.** wiki and post show want geometry surfaces with seeded ids, which
   needs triangle; `void_target` and the `list_marker_hang` note live in
-  `data/rules.yml`.
+  `data/laws.yml`.
 - **`layout_snapshot --explain`** needs a map from computed values to tokens and
   is checkable only in a rendered run; centred body text inside `main` is a
   rendered question.
@@ -1024,7 +1024,7 @@ operator's.
 ## Operator-owned, recorded not opened — from the 2026-09-11 reassessment
 
 Two refusals from that pass stay closed, argued beside the code they concern:
-`Core::Constitution` keeps its own read of `rules.yml`, and cognition phases 3
+`Core::Constitution` keeps its own read of `laws.yml`, and cognition phases 3
 to 8 wait for weeks of real event history. What needs the box, money or a
 rendered decision, and is not already listed above:
 
@@ -1904,7 +1904,7 @@ The 2026-09-17 pass over Clean Code, Refactoring, The Pragmatic Programmer,
 Ousterhout, DDD, Kleppmann and the type/design canon found the 242-rule corpus
 already covers nearly all of it — all 22 Fowler smells, the Pragmatic
 orthodoxy, and typography as measured thresholds rather than prose
-(`design` config in `data/rules.yml`). Three line-detector survivors landed in
+(`design` config in `data/laws.yml`). Three line-detector survivors landed in
 `MASTER/law/ruby.rb` (FILTER_MAP, EXPLICIT_HTTP_TIMEOUT,
 MIGRATION_NOT_NULL_NO_DEFAULT). What remains needs an instrument the scanner
 does not have; each is opened at the seam it needs, not as a grep.
@@ -1953,7 +1953,7 @@ entry below is the shape, the evidence, and the seam it wants.
 - **A restated value drifts; a derived one cannot.** `voice.yml` vs
   `Policy::FALLBACK`, replicate's `MODEL_CAPABILITIES` vs live provider
   schemas, and brgen's inline social routes vs `shared/config/routes/social.rb`
-  remain. The rules.yml/law/registry subclaim is now covered by the existing
+  remain. The laws.yml/law/registry subclaim is now covered by the existing
   `RuleRegistryAudit` plus `/rules sources`, which names YAML-only, Law-only
   and shipped-registry-only IDs while respecting `folded_into`. The relayd
   keypair list versus `apps.yml` remains. The seam: one generator from the
@@ -2090,7 +2090,7 @@ MASTER/
   law/
   data/
     soul.yml
-    rules.yml
+    laws.yml
     limits.yml
     models.yml
     principle_map.yml
