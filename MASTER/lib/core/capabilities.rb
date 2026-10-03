@@ -10,7 +10,7 @@ module Master::Core
     PROFILES = {
       boot: %i[stdio read execute],
       model: %i[stdio read model],
-      fix: %i[stdio read write create execute],
+      fix: %i[stdio read write create execute network],
       device: %i[stdio read device],
       world: %i[stdio read world]
     }.freeze
