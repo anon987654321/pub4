@@ -22,7 +22,7 @@ module Master
         )
       end
 
-      # The patterns live in rules.yml under `biases`, beside the countermeasure
+      # The patterns live in laws.yml under `biases`, beside the countermeasure
       # they earn. Ruby here would mean adding a bias took two edits and the data
       # drifting from what actually fires -- the spec-versus-enforcement split this
       # guard exists to notice in other people’s work.
