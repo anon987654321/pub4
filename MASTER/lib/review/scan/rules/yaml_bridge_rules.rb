@@ -4,7 +4,7 @@ module Master
   module Review
     module Scan
       module Rules
-        # Bridges rules.yml veto_patterns into the scanner (constitution.rb also checks writes).
+        # Bridges laws.yml veto_patterns into the scanner (constitution.rb also checks writes).
         #
         # A veto is the severity above error, and this was the one rule in the
         # population with no exemption of any kind — so it read the scanner's own
@@ -19,7 +19,7 @@ module Master
           def self.auto_build? = false
 
           declare id: "veto_patterns", severity: :veto,
-                  description: "Unconditional merge blockers from rules.yml veto_patterns"
+                  description: "Unconditional merge blockers from laws.yml veto_patterns"
 
           def initialize(root: Master::ROOT)
             super()
@@ -48,7 +48,7 @@ module Master
 
           # #check returns [] for every file when the pattern set is empty,
           # which reads as a tree with no veto violations. An unreadable
-          # rules.yml retires every veto at once, so say so.
+          # laws.yml retires every veto at once, so say so.
           def load_patterns(root)
             (Master.load_rules(root:) || {}).fetch("veto_patterns", {})
           rescue StandardError => e
@@ -57,7 +57,7 @@ module Master
           end
         end
 
-        # Wires rules.yml detect_lexical entries not already covered by RuleDSL classes.
+        # Wires laws.yml detect_lexical entries not already covered by RuleDSL classes.
         class YamlDeclarativeRule < Rule
           def self.auto_build? = false
 
@@ -106,7 +106,7 @@ module Master
 
             self.class.reloading = true
             registry_ids = build_registry_ids
-            yaml_rules = Master.flatten_rules(Master.load_rules(root: @root).fetch("rules", {}))
+            yaml_rules = Master.law_entries(root: @root)
             @entries = build_lexical_entries(yaml_rules, registry_ids)
             @mtime = rules_mtime
           ensure
@@ -136,7 +136,7 @@ module Master
                   path_match: r["path_match"],
                 }
               rescue RegexpError => e
-                # A rule declared in rules.yml with an uncompilable regex is
+                # A rule declared in laws.yml with an uncompilable regex is
                 # inert law: listed, counted, never run. Drop it, but say which.
                 Master::Ground::Swallow.log(e, context: "YamlDeclarativeRule #{r["id"]}", severity: :load_bearing)
                 nil
@@ -148,7 +148,7 @@ module Master
           end
 
           def rules_mtime
-            path = File.join(@root, "data", "rules.yml")
+            path = File.join(@root, "data", "laws.yml")
             File.exist?(path) ? File.mtime(path).to_i : nil
           end
 
