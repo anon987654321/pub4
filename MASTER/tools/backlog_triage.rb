@@ -101,7 +101,7 @@ module Operator
       end
 
       # Most items are written from inside the tree they are about — `law/ruby.rb`
-      # and `data/rules.yml` mean MASTER's, and `shared/_tokens.scss` means
+      # and `data/laws.yml` mean MASTER's, and `shared/_tokens.scss` means
       # RAILS'. Resolving only from the repo root called 198 live items stale on
       # the first run, which is the shape this repo keeps relearning: check what
       # the instrument measured before believing the finding.
