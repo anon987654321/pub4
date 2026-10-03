@@ -1483,6 +1483,31 @@ leverage:
   transforms (strum, ornament, recombine, chop, note chance), weighted-next-section
   follow actions.
 ## dilla — a hundred livesets
+### The archive dig remainder — 2026-10-03
+
+The pub/pub2/pub3 GitHub histories were dug for the pre-fold chord research
+(pub3 multimedia/dilla/chord_theory.json v3.0.0, pub2 dilla/RECORDED.md).
+The best progressions came back as ARTIST_VERIFIED rows the same day. Still
+worth having:
+
+- **Per-hit velocity contours** for the 16-step drum grids (dilla_classic:
+  kick slightly ahead of beat; hat velocities 0.4-0.7; open hat [7,15]) —
+  DRUM_PATTERN_SETS carry step lists only.
+- **The swing citation**: arXiv 1904.03442 — consistent swing ratio beats
+  microtiming jitter; ratios straight 50 / dilla 58 / classic 62 / hard 66 /
+  dotted 67 / septuplet 57 as "Dilla alternate". The archive contradicts
+  itself on Dilla swing (pub2 SOSDilla: 54.2 golden ratio vs pub3: 58),
+  both unsourced — resolve against Dilla Time when touching the bed.
+- **Pad-synthesis recipes** (15, SoX-approximated: CS-80, VCS3, Solina) and
+  the dilla_magic_organic randomisation idea (overdrive 5-15, reverb room
+  25-35 redrawn per render).
+- **The vintage-hardware table** (SP-1200 rate 26040/12-bit, MPC60 40000,
+  MPC3000 44100, Studer A80 wow 0.12, Neve 8048, U47, Fairchild 670,
+  Pultec EQP-1A, LA-2A).
+- **The preserved 14-track Dilla YouTube playlist** (pub
+  __OLD_BACKUPS/j-dilla-minimal-carousel.html, "PRESERVED EXACTLY") as
+  crate source IDs.
+
 
 Written after the three sets in `lib/livesets.rb` landed, and after the
 operator said what the lost Ableton sets were made of: Goldbaby drums, a master
