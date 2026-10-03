@@ -102,7 +102,7 @@ class GateLiveAndCssBudgetTest < Minitest::Test
   end
 
   def design_tokens
-    Operator::MasterDesign.design_system
+    Operator::MasterDesign.tokens
   end
 
   def budget
