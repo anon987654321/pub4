@@ -6,7 +6,7 @@ module Master
   # Calling #value! on an Err result raises this.
   class UnwrapError < RuntimeError; end
 
-  # Pure Ruby reader + detector for phantom_recovery (data/rules.yml).
+  # Pure Ruby reader + detector for phantom_recovery (data/laws.yml).
   module PhantomRecovery
     REPETITION_SPAN = 60
     REPETITION_MIN = 3
@@ -14,7 +14,7 @@ module Master
     TOOL_CALL_BODY = %r{<tool_call>(.*?)</tool_call>}m
     CODE_FENCE = /```.*?```/m
 
-    # data/rules.yml writes these detectors as sentences, not /regexes/, because
+    # data/laws.yml writes these detectors as sentences, not /regexes/, because
     # no regex can say them. Compiled as patterns they matched only a reply that
     # quoted the sentence back, so Ruby answers them instead.
     PREDICATES = {
@@ -29,7 +29,7 @@ module Master
 
     def detectors
       @detectors ||= begin
-        data = Master.load_yaml(Master::RULES_PATH)
+        data = Master.load_yaml(Master::LAWS_PATH)
         (data.dig("phantom_recovery", "detectors") || {}).transform_values { |v| compile_detector(v) }
       end
     rescue StandardError => e
@@ -47,7 +47,7 @@ module Master
 
       return if hits.empty?
 
-      recovery = Master.load_yaml(Master::RULES_PATH).dig("phantom_recovery", "recovery") || []
+      recovery = Master.load_yaml(Master::LAWS_PATH).dig("phantom_recovery", "recovery") || []
       bus&.publish("phantom:detected", patterns: hits, recovery:)
       { patterns: hits, recovery: }
     end
@@ -57,7 +57,7 @@ module Master
       unless finding
         # A clean response closes the episode, so the count below is consecutive
         # phantoms rather than every phantom this process has ever seen. That is
-        # what the ladder needs to mean: data/rules.yml describes discard first,
+        # what the ladder needs to mean: data/laws.yml describes discard first,
         # escalate "on second occurrence", halt "on third", and a counter that
         # only rises reaches three once and then halts every phantom for the
         # life of the process — with gaslighting_preamble matching any reply
@@ -82,7 +82,7 @@ module Master
 
     def style_only_detectors
       @style_only_detectors ||= begin
-        data = Master.load_yaml(Master::RULES_PATH)
+        data = Master.load_yaml(Master::LAWS_PATH)
         Array(data.dig("phantom_recovery", "style_only")).map(&:to_s)
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "PhantomRecovery.style_only_detectors")
