@@ -16,6 +16,7 @@ module Master
       "guideline" => :synonym,
       "heuristic" => :synonym,
       "usability heuristic" => :synonym,
+      "usability guideline" => :synonym,
       "design heuristic" => :synonym,
       "design principle" => :synonym,
       "style rule" => :synonym,
@@ -34,19 +35,23 @@ module Master
       "practice" => :related
     }.freeze
 
-    NORMALIZED = TERMS.transform_keys { |term| normalize_key(term) }.freeze
+    NORMALIZE_KEY = lambda do |term|
+      term.to_s.unicode_normalize(:nfkc).downcase.strip.gsub(/[_\s]+/, " ")
+    end.freeze
+
+    NORMALIZED = TERMS.transform_keys { |term| NORMALIZE_KEY.call(term) }.freeze
 
     module_function
 
     def normalize(term)
-      key = normalize_key(term)
+      key = NORMALIZE_KEY.call(term)
       return CANONICAL if NORMALIZED[key] == :synonym
 
       term.to_s.strip
     end
 
     def known?(term)
-      NORMALIZED.key?(normalize_key(term))
+      NORMALIZED.key?(NORMALIZE_KEY.call(term))
     end
 
     def synonymous?(left, right)
@@ -56,7 +61,7 @@ module Master
     end
 
     def relation(term)
-      NORMALIZED[normalize_key(term)]
+      NORMALIZED[NORMALIZE_KEY.call(term)]
     end
 
     def aliases
@@ -68,10 +73,6 @@ module Master
       "#{CANONICAL} is MASTER's canonical term for normative guidance; "         "synonyms include #{synonymous}. Policy, constraint, invariant, criterion "         "and practice are related concepts and may need their native technical meaning."
     end
 
-    def normalize_key(term)
-      term.to_s.unicode_normalize(:nfkc).downcase.strip.gsub(/[\\_]+/, " ").gsub(/\\s+/, " ")
-    end
-
-    private_class_method :normalize_key
+    private_class_method :normalize
   end
 end
