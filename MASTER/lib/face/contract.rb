@@ -11,7 +11,7 @@ module Master
       module_function
 
       def data(root: Master::ROOT)
-        Master.load_yaml(File.join(root, "data", "rules.yml"), default: {})
+        Master.load_yaml(File.join(root, "data", "laws.yml"), default: {})
           .fetch("design_system", {})
           .fetch("face_interface", {})
       end
