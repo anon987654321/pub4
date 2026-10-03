@@ -28,7 +28,7 @@ class TraceDmesgTest < Minitest::Test
   end
 
   def test_zsh_law_is_available_before_shell_class_loads
-    banned = Master.law("zsh").fetch("banned_commands")
+    banned = Master::Io::Shell::BANNED_IN_ZSH
 
     assert_equal %w[sed awk tr cut find head tail wc perl python bash], banned
   end
