@@ -35,6 +35,12 @@ class TestBootEntrypoint < Minitest::Test
     end
   end
 
+
+  def test_android_accepts_supported_ruby_four_patch_release
+    assert_match(/ANDROID_RUBY_PATTERN/, SOURCE)
+    assert_includes SOURCE, 'RUBY_PLATFORM.include?("android")'
+  end
+
   def test_preloaded_wrong_bundler_reexecs_into_a_clean_process
     Dir.mktmpdir("master-entrypoint") do |root|
       File.write(File.join(root, "Gemfile"), "source \"https://rubygems.org\"\n")
