@@ -21,7 +21,7 @@ module Master
         tags: %i[ONE_SOURCE],
         applies_to: %i[ruby],
         # One retired name and its replacement, both out of
-        # data/rules.yml#stale_namespaces. The examples live in this file, which
+        # data/laws.yml#stale_namespaces. The examples live in this file, which
         # the block below exempts for exactly this reason.
         fires: "value = Master::Pipeline.new\n",
         does_not_fire: "value = Master::CLI::Pipeline.new\n",
@@ -37,7 +37,7 @@ module Master
           # where it was one of exactly two findings. A comment cannot resolve a
           # constant, so it cannot resolve a retired one.
           code = source.each_line.map { |line| line.lstrip.start_with?("#") ? "\n" : line }.join
-          scan_lines(code, stale_pattern, message: "retired constant — use data/rules.yml#stale_namespaces replacement")
+          scan_lines(code, stale_pattern, message: "retired constant — use data/laws.yml#stale_namespaces replacement")
         end
 
       module Rules
@@ -193,7 +193,7 @@ module Master
 # about the file's own name rather than anything inside it, so neither needs an
 # AST; they read `path` and ignore `source`.
 #
-# rules.yml#beauty already asks for `meaningful_names_intention_revealing` and
+# laws.yml#beauty already asks for `meaningful_names_intention_revealing` and
 # `kanso: eliminate_essence`. Nothing enforced either on a filename, and the
 # 2026-08-31 session produced capture_final2.rb, capture_final3.rb and
 # frames_final2/ in one sitting — names that record the order they were made in
