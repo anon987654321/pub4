@@ -2,7 +2,7 @@
 
 require_relative "test_helper"
 
-# The Ruby loc ratchet never watched YAML, which is how rules.yml burned down
+# The Ruby loc ratchet never watched YAML, which is how laws.yml burned down
 # twice and grew back. This is that file's budget, read from the same key
 # rake loc_budget counts as a file path.
 #
@@ -13,12 +13,12 @@ require_relative "test_helper"
 class TestYamlLocBudget < Minitest::Test
   def test_rules_yml_is_under_its_file_budget
     limits = YAML.safe_load_file(Master.limits_path, aliases: true)
-    budget = limits.dig("loc_body_budgets", "data/rules.yml")
-    actual = Master::Review::Scan::CodeMetrics.body_lines(File.read(Master.data_path("rules.yml")))
+    budget = limits.dig("loc_body_budgets", "data/laws.yml")
+    actual = Master::Review::Scan::CodeMetrics.body_lines(File.read(Master.data_path("laws.yml")))
 
-    refute_nil budget, "loc_body_budgets.data/rules.yml must exist"
+    refute_nil budget, "loc_body_budgets.data/laws.yml must exist"
     assert_operator actual, :<=, budget,
-                    "data/rules.yml is #{actual} lines, budget #{budget} — shrink, do not raise"
+                    "data/laws.yml is #{actual} lines, budget #{budget} — shrink, do not raise"
   end
 
   def test_forbidden_basenames_match_the_guidance_list
