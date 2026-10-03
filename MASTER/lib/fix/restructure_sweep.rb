@@ -161,6 +161,7 @@ module Master
       def attempt(finding)
         path, rule, message, related = finding
         tree = relative(path).split("/").first
+        operation = RULE_OPERATIONS.fetch(rule, "recommend")
         answer = ask(proposal(tree, rule, path, message, related:))
         return if answer.strip == "KEEP"
 
@@ -168,7 +169,8 @@ module Master
         return report(finding, nil, "the answer held no plan") if plan.empty?
 
         review = ->(diff) { verdict(rule, path, plan, diff) }
-        report(finding, plan, @restructures[tree].call(plan, message: commit_message(rule, path, plan), review:))
+        result = @restructures[tree].call(plan, message: commit_message(rule, path, plan), review:)
+        report(finding, plan, result, operation:)
       end
 
       def proposal(tree, rule, path, message, related: [])
@@ -190,15 +192,18 @@ module Master
           "the related tests held."
       end
 
-      def report(finding, plan, result)
+      def report(finding, plan, result, operation: nil)
         path, rule, = finding
         ok = result.is_a?(Result) && result.ok?
         text = if ok then "kept: #{plan.summary}"
                elsif result.is_a?(Result) then result.message
                else result.to_s
                end
-        Master::Trace::Dmesg.status("restructure0", "#{rule} #{relative(path)}: #{text[0, 160]}")
-        @bus&.publish("fix_loop:restructure", path: relative(path), rule:, ok:, message: text[0, 300])
+        evidence = ok ? result.value!.fetch(:evidence, nil) : nil
+        Master::Trace::Dmesg.status("restructure0", "#{operation || RULE_OPERATIONS.fetch(rule, "recommend")} #{rule} #{relative(path)}: #{text[0, 140]}")
+        @bus&.publish("fix_loop:restructure",
+          path: relative(path), rule:, operation: operation || RULE_OPERATIONS.fetch(rule, "recommend"),
+          ok:, message: text[0, 300], evidence:)
         result.is_a?(Result) ? result : nil
       end
 
