@@ -152,7 +152,7 @@ module Master
       def operation_exists?(operation)
         @plan.operation(operation)
         true
-      rescue KeyError
+      rescue ArgumentError, KeyError
         false
       end
 
