@@ -655,7 +655,7 @@ class TestAstFixerTransforms < Minitest::Test
     assert_includes result[:transforms], :skip_to_main
   end
 
-  # LOGICAL_PROPERTIES is autofix: false in data/rules.yml: physical-to-logical
+  # LOGICAL_PROPERTIES is autofix: false in data/laws.yml: physical-to-logical
   # rewrites wait on values the operator decides, so the finding is reported
   # and the stylesheet is left as written.
   def test_logical_properties_are_reported_not_rewritten
