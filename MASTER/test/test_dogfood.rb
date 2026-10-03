@@ -47,7 +47,7 @@ class DogfoodSpec < Minitest::Test
     assert_match(/missing bad, good/, err.message)
   end
 
-  def test_every_lexical_rule_in_rules_yml_has_moved_here
+  def test_every_lexical_rule_in_laws_yml_has_moved_here
     require "yaml"
     left = []
     walk = lambda do |o|
