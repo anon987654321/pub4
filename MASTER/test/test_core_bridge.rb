@@ -14,9 +14,12 @@ class CoreBridgeTest < Minitest::Test
   end
 
   class FakeBus
+    # Positional like the real Trace::EventBus. A kwargs-only publish rejects
+    # Mission#emit's positional hash, and its rescue swallows the refusal
+    # silently — every mission:* event would vanish from the test bus.
     attr_reader :events
     def initialize = @events = []
-    def publish(name, **payload) = @events << [name, payload]
+    def publish(name, payload = {}) = @events << [name, payload]
   end
 
   # The real Constitution blocks `done` before an evidence threshold, so a
@@ -50,6 +53,30 @@ class CoreBridgeTest < Minitest::Test
       assert_equal "wrote the note", result[:summary]
       assert_equal "hello\n", File.read(File.join(root, "note.txt"))
       assert(bus.events.any? { |name, _| name == "core:turn" }, "expected a core:turn event")
+    end
+  end
+
+  # defer! reads delay and retry_count after with_lock returns; defined inside
+  # the block they died with it and the emit below named an unset local.
+  # CoreBridge.settle_mission routes any fold end that is neither complete nor
+  # needs-user here.
+  def test_defer_reaches_the_emit_with_retry_and_delay
+    Dir.mktmpdir do |root|
+      bus = FakeBus.new
+      mission = Master::Fix::Mission.new(root:, bus:).start_or_resume!(
+        goal: "fix the pool",
+        scope: root,
+        model: "agy:auto",
+        effort: "low",
+        origin: "fold",
+      )
+      mission.defer!(reason: "attempt exhausted", seconds: 60)
+
+      event = bus.events.find { |name, _| name == "mission:deferred" }
+      assert event, "expected a mission:deferred event"
+      assert_equal 60, event.last[:delay_seconds]
+      assert_equal 1, event.last[:retry_count]
+      assert_equal "waiting", Master::Fix::Mission.current(root:)["state"]
     end
   end
 

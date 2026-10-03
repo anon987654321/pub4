@@ -15,8 +15,16 @@ module Master
 
       module_function
 
+      # The e2e boot tests point the lock at their own tmpdir through this
+      # override, because any live process holding the real file (a tts-worker
+      # inherits the lock fd) flakes a boot that would otherwise succeed.
+      # Unset, every path stays the checkout's own file.
+      def lock_path(root = Master::ROOT)
+        ENV["MASTER_PROCESS_LOCK_PATH"] || File.join(root, ".master", "process.lock")
+      end
+
       def acquire!(path: nil, root: Master::ROOT, mode: "master", inherit_fd: false)
-        path ||= File.join(root, ".master", "process.lock")
+        path ||= lock_path(root)
         FileUtils.mkdir_p(File.dirname(path))
         attempts = 0
 
@@ -169,7 +177,7 @@ module Master
         Master::Ground::Swallow.log(e, context: "ProcessLock.release")
       end
 
-      def owner(path: PATH)
+      def owner(path: lock_path)
         return {} unless File.exist?(path)
 
         io = File.open(path, File::RDWR)

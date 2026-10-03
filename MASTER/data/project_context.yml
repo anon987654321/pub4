@@ -1,7 +1,7 @@
 ---
 meta:
   source: runtime authority — edit this file or use MemoryRecord; do not add data/claude/*.md
-  count: 15
+  count: 21
 entries:
 - key: personality_rb_comment_audit
   name: personality rb comment audit
@@ -168,3 +168,127 @@ entries:
     Index 0: Comment accurately describes the symlink handling logic in inside_real_root?.
     Index 1: Comment accurately describes that credential files are refused for both reads and writes via Core::World.secret? delegation.
     All comments are accurate.
+- key: operator_directive_memory_lands_in_master
+  name: operator directive — memory, rules, logic land in MASTER first
+  description: Durable session knowledge is written to MASTER/data/project_context.yml,
+    not left in sidecar memory
+  type: feedback
+  body: 'Operator directive, 2026-10-03: ALWAYS write memory, rules, logic and harvested
+    findings directly into MASTER — it is the primary surface for external LLMs (Claude,
+    Grok, Codex et al.), so a lesson that exists only in one harness''s private memory
+    is invisible to the other sessions and to the runtime. Session memory files remain
+    a per-agent convenience; MASTER is the shared source of truth. Concretely: research
+    harvests, learned constraints and standing directives get an entries: row here
+    (or an edit to the owning data file), with the date in the key.'
+- key: reference_agent_evolution_harvest_2026_10
+  name: agent-evolution harvest (EvoMap + kyrolabs lists)
+  description: 12 adoptable council/memory ideas from the agent-evolution awesome-lists,
+    2026-10-03
+  type: reference
+  body: 'Ideas, never frameworks (all Python). (1) SWE-Milestone: instruments must
+    measure LONGITUDINAL decay — isolated task rate can hold while sustained behavior
+    collapses (80%→38%); run past gates across evolution cycles and record the curve.
+    (2) Agent0: derive curriculum from the failure ledger — unresolved scan debts/flaky
+    gates become synthesized gate cases, difficulty escalating. (3) Competition: candidate
+    diffs in parallel worktrees, gate ladder scores them, verifier merges only the
+    survivor. (4) Agent Workflow Memory: distill successful repair sequences keyed
+    by failure class; consult before improvising. (5) A-MEM: memory notes auto-linked;
+    a new note may rewrite an older one it contradicts. (6) MemoryBank: forgetting
+    curve — reinforcement on access, aging on silence, deletion as governed policy.
+    (7) MemSkill: a declared policy (voice.yml-shaped) decides durable vs session-local
+    memory. (8) TextGrad/OPRO/EvoPrompt: evolve the council''s critique prompts, scored
+    against measured scanner false-positive rate. (9) Darwin Gödel Machine: evolution
+    triggers archive variant+score (orders ledger), never single rewrites; rollback
+    stays possible. (10) TMLR survey taxonomy: triggers declare their target (prompt/memory/rule)
+    and timing (intra/between session) as YAML. (11) Latitude: cluster past failures
+    by rule id, auto-generate regression cases per cluster. (12) ReflAct: state the
+    intended terminal gate-ladder state BEFORE a repair pass, diff actual against
+    it. Already stronger than the lists: adversarial critique council, governance
+    corpus, worktree isolation, self-consistency. Known gap: no runtime benchmark
+    loop like SWE-bench.'
+- key: reference_openbsd_awesome_harvest_2026_10
+  name: OpenBSD harvest (ligurio/awesome-openbsd)
+  description: What the OpenBSD awesome-list offers vm23; thin on memory-pressured
+    services
+  type: reference
+  body: '2026-10-03. The list curates hosting/community/virtualization; relayd appears
+    once and nothing touches httpd/rc.d/swap — man pages stay the law. Adoptables:
+    OpenBSD CI runners (Sourcehut builds or GitHub vmactions/openbsd-vm) take OPENBSD/
+    suites off vm23''s 1GB; bupstash — encrypted client-separated backups off the
+    box; eradman''s autoinstall site-tarball — scripted full reprovision, the pipeline''s
+    missing bottom rung; qbit/snap — sysmerge+package upgrades in one pass, lighter
+    on 1 vCPU; M:Tier binpatches/LTS — base+package security fixes without rebuild
+    cycles; snmpd (in base) with SNMP v3 for external load/swap watching (cold-TTFB
+    evidence before symptoms); dmesgd.nycbug.org for peer comparison; dank-selfhosted
+    and vedetta as relayd/pf reference boilerplate; upobsd for bsd.rd ritual. Anti-recommendation:
+    K3s-over-vmm would eat the whole box. Nothing addresses relayd''s 8KB header limit,
+    swap thrash, boot storms or per-app shared engine copies.'
+- key: reference_face_restoration_harvest_2026_10
+  name: face-restoration harvest (sczhou + polarisZhao lists)
+  description: CPU-qualified face instruments for postpro; relight path is parse +
+    3DMM normals over the DA-V2 near-map
+  type: reference
+  body: '2026-10-03. postpro has no face detection/parsing/3D fit — skin_protect (postpro.rb:1518)
+    is an HSV hue+saturation mask that also catches wood, brick and rust. CPU-qualified
+    adoptables: YuNet/libfacedetection (pure-C ms-class detector, most Ruby-friendly
+    via FFI/ONNX); RetinaFace-MobileNet0.25 (~1.7MB ONNX) for true face detection;
+    CelebAMask-HQ/BiSeNet parsing (19 classes) — grade skin only, leave eye whites/irises,
+    give relight region masks (highest value); 3DDFA_V2 (few hundred ms CPU) — the
+    one thing monocular depth cannot give: per-pixel face normals on the convex face
+    plane where the DA-V2 near-map is least reliable; PRNet/2D-3D FAN — standardized
+    head crops across both lora subjects before curate; ArcFace ONNX — identity-drift
+    guard (refuse on similarity drop) plus dataset dedupe; CodeFormer/GFPGAN ONNX
+    — pre-restore pass for degraded sources entering datasets; PSFRGAN''s pipeline
+    order (parse → per-region transform) as pure design; PPR10K corpus to fit the
+    skin_protect band against real portrait pairs. Adoptable path: parse regions;
+    3DMM normals light face pixels; DA-V2 near-map demoted to scene. Too heavy: DR2,
+    DifFace, PULSE, MyStyle (MyStyle ≈ what the lora tree already is), GPEN/VQFR training.
+    No relighting models in either list.'
+- key: reference_tts_voice_harvest_2026_10
+  name: TTS/voice harvest (TouchSky + isaacgounton + wildminder lists)
+  description: 12 adoptables and 5 gaps for the voice stack; edge-tts is cloud-reliant
+    and that is the top gap
+  type: reference
+  body: '2026-10-03. Top: rb-edge-tts is NOT local — it calls Microsoft''s endpoint;
+    a network cut silences MASTER. Adoptables: Kokoro-82M (ONNX, ~edge quality, Mac-sized)
+    for genuinely offline en-US; KittenTTS (15M, <25MB) as vm23-grade rescue voice;
+    eSpeak-NG as the final offline rung; KokoClone (3-10s reference) puts Johann''s
+    own voice in the rotation; Scylla''s six continuous affect axes → voice.yml entries
+    as affect coordinates Voice::Policy interpolates, not named-voice picks; inline
+    delivery tags (<laugh>, [pause 3.2s], <|emotion|>) as a markup convention in the
+    utterance stream, mapped by post_chain today and engine-agnostic tomorrow; NovaSR
+    (~52kB) upsamples 16k→48k to close the speech/bed spectral gap; ZipEnhancer/PASE
+    denoise before Speech#shaped for the mic path (the echo/"random facts" bugs came
+    from there); UTMOS/DNSMOS + ECAPA2 speaker-similarity + WER round-trip through
+    a tiny ASR — the quality ratchet MASTER ships without. Gap decisions to make explicitly:
+    open-weight local models have NO nb-NO coverage (keep edge for nb, go local for
+    en?); no cloning path; no closed audio loop (ASR+VAD around the mic). Do-not-chase:
+    gTTS/pyttsx3, gateway+Redis+React duplicates, hand-rolled vocoders, latent-diffusion
+    foley (dilla''s bespoke bed outranks one), dataset fine-tuning (no budget).'
+- key: reference_grain_emulation_harvest_2026_10
+  name: film-grain + grading harvest (Dehancer/Nuke/Ansel/agx/Oxio sources)
+  description: Sourced grain-calibration numbers, pipeline order and destroyed-vs-emulated
+    criticism — basis for postpro heavy-mode tuning
+  type: reference
+  body: '2026-10-03, prompted by postpro renders reading destroyed rather than enhanced.
+    Ground truth: silver crystals are 2-8um (~5-6um fast colour neg), smaller than
+    a 4K pixel on a 35mm frame — visible grain is CLUMPS, never pixel-locked (video.stackexchange
+    q19394). Calibration: Dehancer auto-scales grain to format with its Film Resolution
+    rule (smallest film detail can''t be smaller than grain size — grain amount must
+    COST detail); Nuke Grain node = Proportional + Base Resolution reference width
+    (postpro''s GRAIN_REFERENCE_WIDTH already matches); Ansel photographic-grain =
+    4px crystals at 100% zoom, log-normal, ~30 layers; agx-emulsion fits per-stock
+    Gaussian local-SD tables from real HP5/Delta/Tri-X scans. Print grain coarser
+    than negative grain. PIPELINE ORDER: NR -> curves -> sharpen -> halation/glow
+    -> grain LAST, exactly once; grain added over halation gets glowed (blackmagicforum
+    t175096); stacking passes forbidden (r/NukeVFX). Chroma: one correlated mono signal
+    split ~0.25R/0.6G/0.15B in linear light (Oxio); independent per-channel noise
+    reads CG. Destroyed-look criticism: uniform exaggerated strength, static pattern,
+    halation on everything (Fstoppers'' "cheugy" essay — halation belongs to wide-open
+    speculars on specific stocks like 800T on digital). Yedlin: model quality beats
+    scan plates. Repos: andre-gfx/agx-emulsion, EaryChow/AgX, darktable dtgrainjulia,
+    JanLohse/spectral_film_lut, spektrafilm-rs (spectral neg->print with DIR couplers,
+    postpro''s twin), ComfyUI-Darkroom, imazen/zenfilters, IPOL Newson 2017 + ChickenDream
+    (the Boolean-disk reference). Applied same day: HEAVY_STRENGTH 2.0->1.35, HEAVY_AMPLITUDE_STRENGTH
+    1.1 exempting grain+wear from widening, grain removed from all four lane pools
+    (the always-grain is the only pass), vocab-check pin added.'

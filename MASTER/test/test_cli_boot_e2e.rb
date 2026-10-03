@@ -2,6 +2,9 @@
 
 require_relative "test_helper"
 require "tempfile"
+require "tmpdir"
+require "fileutils"
+require "pty"
 
 class TestCliBootE2e < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
@@ -21,6 +24,18 @@ class TestCliBootE2e < Minitest::Test
 
   def setup
     skip "set MASTER_CLI_E2E=1 to run subprocess boot tests" unless ENV["MASTER_CLI_E2E"] == "1"
+    @lock_dir = Dir.mktmpdir("master-e2e-lock-")
+  end
+
+  def teardown
+    FileUtils.remove_entry(@lock_dir) if @lock_dir
+  end
+
+  # A live daemon's inherited lock fd owns MASTER/.master/process.lock, and the
+  # booted child sees a busy flock it did nothing to earn — so each test boots
+  # against its own tmpdir lock through MASTER_PROCESS_LOCK_PATH.
+  def boot_env(extra = {})
+    BOOT_ENV.merge("MASTER_PROCESS_LOCK_PATH" => File.join(@lock_dir, "process.lock")).merge(extra)
   end
 
   def run(*args)
@@ -43,7 +58,7 @@ class TestCliBootE2e < Minitest::Test
 
   def test_bin_ruby_wrapper_reaches_master_boot
     output = +""
-    env = BOOT_ENV.merge("MASTER_FAST" => "1")
+    env = boot_env
     PTY.spawn(env, File.join(ROOT, "bin", "ruby"), CLI, "--fast", chdir: ROOT) do |reader, writer, pid|
       writer.close
       deadline = Time.now + COMMAND_TIMEOUT
@@ -77,7 +92,7 @@ class TestCliBootE2e < Minitest::Test
 
   def test_tty_fast_boot_reaches_master_boot
     output = +""
-    env = BOOT_ENV.merge("MASTER_FAST" => "1")
+    env = boot_env
     PTY.spawn(env, Master::BUNDLE_BIN, "exec", "ruby", CLI, chdir: ROOT) do |reader, writer, pid|
       writer.close
       deadline = Time.now + COMMAND_TIMEOUT
@@ -116,7 +131,7 @@ class TestCliBootE2e < Minitest::Test
     err = Tempfile.new("master-cli-err")
     read_io, write_io = IO.pipe
     pid = Process.spawn(
-      BOOT_ENV,
+      boot_env,
       Master::BUNDLE_BIN, "exec", "ruby", CLI,
       chdir: ROOT,
       in: read_io,
@@ -175,6 +190,21 @@ class TestCliReplExit < Minitest::Test
   # headroom without loosening the two fast ^C/^D tests.
   def test_timeout = 150
 
+  def setup
+    @lock_dir = Dir.mktmpdir("master-e2e-lock-")
+  end
+
+  def teardown
+    FileUtils.remove_entry(@lock_dir) if @lock_dir
+  end
+
+  # Same reason as TestCliBootE2e: the live lock on the checkout can flake a
+  # boot that would otherwise succeed, so the PTY boots take their own tmpdir
+  # lock through MASTER_PROCESS_LOCK_PATH.
+  def boot_env
+    ENV_FOR_PTY.merge("MASTER_PROCESS_LOCK_PATH" => File.join(@lock_dir, "process.lock"))
+  end
+
   # One ^C clears the line, as zsh does; the second inside the window closes.
   # The pause is for the prompt to re-arm: a ^C written while Reline is between
   # two readline calls is read as input rather than raising.
@@ -216,7 +246,7 @@ class TestCliReplExit < Minitest::Test
   def drive_conversation(message)
     require "pty"
     output = +""
-    PTY.spawn(ENV_FOR_PTY, Master::BUNDLE_BIN, "exec", "ruby", "bin/cli", chdir: ROOT) do |reader, writer, pid|
+    PTY.spawn(boot_env, Master::BUNDLE_BIN, "exec", "ruby", "bin/cli", chdir: ROOT) do |reader, writer, pid|
       read_until(reader, output, READY, 30)
       sleep 0.5
       writer.write("#{message}\n")
@@ -231,7 +261,7 @@ class TestCliReplExit < Minitest::Test
   def drive
     require "pty"
     output = +""
-    PTY.spawn(ENV_FOR_PTY, Master::BUNDLE_BIN, "exec", "ruby", "bin/cli", chdir: ROOT) do |reader, writer, pid|
+    PTY.spawn(boot_env, Master::BUNDLE_BIN, "exec", "ruby", "bin/cli", chdir: ROOT) do |reader, writer, pid|
       read_until(reader, output, READY, 30)
       sleep 0.5
       yield writer

@@ -4,7 +4,10 @@ require_relative "test_helper"
 require "tmpdir"
 require "cli/turn_router"
 require "cli/session"
-require "cli/routing/model_router/pool"
+# The parent first: pool.rb sits under the ModelRouter class namespace, so
+# loading it before the class exists walks back into model_router.rb while
+# pool.rb is still executing and `include Pool` finds no constant.
+require "cli/routing/model_router"
 require "review/llm_dispatcher"
 require "cli/operator_grammar"
 

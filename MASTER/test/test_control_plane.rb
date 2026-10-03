@@ -186,4 +186,24 @@ class ControlPlaneSpec < Minitest::Test
       FileUtils.remove_entry(dir)
     end
   end
+
+  # The boot e2e tests set MASTER_PROCESS_LOCK_PATH so a live process's
+  # inherited lock fd on the checkout's own lock cannot flake a boot that
+  # would otherwise succeed; unset, the checkout path stays the default.
+  def test_process_lock_env_override_redirects_the_lock_and_defaults_back
+    dir = Dir.mktmpdir("master-lock-e2e")
+    ENV["MASTER_PROCESS_LOCK_PATH"] = File.join(dir, "boot.lock")
+    lock = Master::Ops::ProcessLock.acquire!(mode: "test")
+    refute_nil lock
+    assert File.file?(File.join(dir, "boot.lock"))
+
+    Master::Ops::ProcessLock.release(lock)
+
+    ENV.delete("MASTER_PROCESS_LOCK_PATH")
+    assert_equal File.join(Master::ROOT, ".master", "process.lock"),
+                 Master::Ops::ProcessLock.lock_path
+  ensure
+    ENV.delete("MASTER_PROCESS_LOCK_PATH")
+    FileUtils.remove_entry(dir) if dir && Dir.exist?(dir)
+  end
 end

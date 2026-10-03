@@ -64,6 +64,11 @@ module Operator
       "STUDIO" => %w[README.md postpro/postpro.rb replicate/replicate.rb lora/lora.rb dilla/dilla.rb],
     }.freeze
 
+    # Defined below module_function: a def above it is a private instance
+    # method, and the module object that counts/run call it through is not its
+    # own instance — run raised NameError on every measurement.
+    module_function
+
     def base_tree_findings
       BASE_TREE_ANCHORS.flat_map do |tree, paths|
         paths.filter_map do |path|
@@ -71,9 +76,6 @@ module Operator
         end
       end
     end
-
-
-    module_function
 
     def tracked
       @tracked ||= `git -C #{ROOT} ls-files -z`.split("\0")
