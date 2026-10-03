@@ -139,13 +139,14 @@ module Master
         include ToolForwarding
         DEFAULT_LIMIT = 2000
 
-        description "Read a file with line numbers. On unfamiliar work, map the tree first; then read relevant source systematically. Path is relative to project root."
+        description "Read a file with line numbers. Use full=true when the complete file is required; otherwise reads are bounded."
         parameter :path, description: "File path relative to project root", required: true
         parameter :offset, description: "First line to read (0-indexed)", type: "integer", required: false
-        parameter :limit, description: "Maximum number of lines to return", type: "integer", required: false
+        parameter :limit, description: "Maximum number of lines to return unless full=true", type: "integer", required: false
+        parameter :full, description: "Read the complete file without the normal line cap", type: "boolean", required: false
 
-        def execute(path:, offset: 0, limit: DEFAULT_LIMIT)
-          forward(path: path.to_s, offset: offset.to_i, limit: limit.to_i)
+        def execute(path:, offset: 0, limit: DEFAULT_LIMIT, full: false)
+          forward(path: path.to_s, offset: offset.to_i, limit: limit.to_i, full: full == true)
         end
       end
 
