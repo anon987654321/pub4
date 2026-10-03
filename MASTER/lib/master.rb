@@ -22,7 +22,7 @@ module Master
   RAILS_ROOT = File.join(REPO_ROOT, "RAILS").freeze
   DATA = File.join(ROOT, "data").freeze
   COUNCIL_PATH = File.join(DATA, "council.yml").freeze
-  RULES_PATH = File.join(DATA, "rules.yml").freeze
+  LAWS_PATH = File.join(DATA, "laws.yml").freeze
 
   BUNDLE_BIN = RUBY_PLATFORM.include?("openbsd") ? "bundle40" : "bundle"
   MIN_API_KEY_LENGTH_HEURISTIC = 20
@@ -137,14 +137,27 @@ module Master
   end
 
 
-  # The one reader of data/rules.yml. A missing section raises rather than
+  # The one reader of data/laws.yml. A missing section raises rather than
   # returning {}, because every caller reads the empty result as a law with nothing in it.
+  def self.law_entries(root: ROOT)
+    data = load_rules(root:) || {}
+    legacy = data["laws"]
+    if legacy.is_a?(Hash)
+      return legacy.filter_map { |id, value| value.merge("id" => id.to_s) if value.is_a?(Hash) }
+    end
+
+    data.filter_map do |id, value|
+      next unless value.is_a?(Hash) && value["priority"] && value["principle"]
+      value.merge("id" => id.to_s)
+    end
+  end
+
   def self.law(section, root: ROOT)
-    path = File.join(root, "data", "rules.yml")
+    path = File.join(root, "data", "laws.yml")
     mtime = File.mtime(path)
     @law = nil unless @law_stamp == [path, mtime]
     @law ||= (load_rules(root:) || {}).tap { @law_stamp = [path, mtime] }
-    @law.fetch(section.to_s) { raise KeyError, "data/rules.yml has no #{section}: section" }
+    @law.fetch(section.to_s) { raise KeyError, "data/laws.yml has no #{section}: section" }
   end
 
   # The one reader of data/agent_taxonomy.yml. It had three, each building the
@@ -161,7 +174,7 @@ module Master
   # nested section under `config`. This rebuilds the map they used to form, so
   # everything that dug design_rules by block name still reaches its key.
   def self.design_rules(root: ROOT)
-    flatten_rules(law("rules", root:))
+    law_entries(root:)
       .select { |rule| rule.is_a?(Hash) && rule["tier"] == "design" && rule["config"].is_a?(Hash) }
       .to_h { |rule| [ rule["id"].to_s.downcase, rule["config"] ] }
   end
@@ -185,7 +198,7 @@ module Master
   end
 
   def self.rule_count(root: ROOT)
-    flatten_rules(load_rules(root:).fetch("rules", {})).count do |rule|
+    law_entries(root:).count do |rule|
       rule.is_a?(Hash) && !rule["id"].to_s.strip.empty?
     end
   rescue StandardError => e
