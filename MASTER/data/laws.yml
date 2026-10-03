@@ -291,8 +291,8 @@ self_test:
       rule, and every covered principle names at least one. The reverse direction —
       every registered rule traced by some principle — is `rake lint:principle_trace`,
       a ratcheting ceiling, because it has never been zero.
-    RULE_SYSTEM: executable law lifecycle, proof metadata, universal-principle scope,
-      and the derived rule index remain internally consistent.
+    LAW_INTEGRITY: executable law lifecycle, proof metadata, universal-principle scope,
+      and the derived law index remain internally consistent.
   fail_action: publish self_violation event; refuse autoloop fixes that don't restore
     the law
 
