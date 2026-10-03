@@ -17,7 +17,6 @@ Law.define(:CLAMP_TYPOGRAPHY) do
   good "h1 { font-size: clamp(1.5rem, 2.5vw, 2.5rem); }"
 end
 
-# Migrated from data/laws.yml LOGICAL_PROPERTIES.
 Law.define(:LOGICAL_PROPERTIES) do
   source "CSS Logical Properties and Values (W3C)"
   severity :info
@@ -36,7 +35,6 @@ end
 # is behavioural, measured across 596 retired findings, and a bare hex detector
 # beside it double-counted every one it got wrong.
 
-# Migrated from data/laws.yml MEASURE_OPTIMUM.
 Law.define(:MEASURE_OPTIMUM) do
   source "Bringhurst, Elements of Typographic Style — the measure (45–75 chars)"
   severity :info
@@ -48,7 +46,6 @@ Law.define(:MEASURE_OPTIMUM) do
   good "article { max-width: 66ch; }"
 end
 
-# Migrated from data/laws.yml MOBILE_FIRST.
 Law.define(:MOBILE_FIRST) do
   source "Mobile First (Luke Wroblewski, 2011)"
   severity :warn
@@ -59,7 +56,6 @@ Law.define(:MOBILE_FIRST) do
   good "@media (min-width: 600px) {"
 end
 
-# Migrated from data/laws.yml NO_IMPORT_SCSS.
 Law.define(:NO_IMPORT_SCSS) do
   source "Sass best practice — @use over @import (Sass team)"
   severity :warn
@@ -70,11 +66,6 @@ Law.define(:NO_IMPORT_SCSS) do
   good "@use \"base\";"
 end
 
-# Migrated from data/laws.yml NO_LONG_TRANSITION. The registry twin found
-# with its own fixture (2026-08-07) that the duration is rarely the first
-# token — `transition: opacity 500ms var(--ease-out)` is the normal
-# shorthand, and anchoring to the colon missed every one. Its detector and
-# that fixture moved here with the retirement.
 Law.define(:NO_LONG_TRANSITION) do
   source "style.yml motion budget / FrontendRuleSet MOTION"
   severity :warn
