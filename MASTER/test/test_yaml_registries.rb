@@ -126,10 +126,7 @@ class TestLawsYamlRegistry < Minitest::Test
 
   def test_soul_golden_rule_maps_to_kernel_preserve_rule
     soul = Master.load_yaml(File.join(DATA, "soul.yml"))
-    preserve_rule = rules.find { |rule| rule["id"] == "PRESERVE_FIRST" }
-
     assert_equal "PRESERVE_THEN_IMPROVE_NEVER_BREAK", soul.dig("absolute", "golden_rule")
-    assert_equal "kernel", preserve_rule.fetch("tier")
     # The wording lives in law/, not in soul or laws.yml. This asserted soul.absolute.rules
     # still carried it, which test_soul.rb asserts soul must not — one of the
     # two had to be reading the tree as it is.
@@ -137,12 +134,14 @@ class TestLawsYamlRegistry < Minitest::Test
     law_dir = File.expand_path("../law", __dir__)
     require File.join(law_dir, "law")
     ::Law.load_all(law_dir) if ::Law.rules.empty?
-    assert_match(/never rewrite working code/i, ::Law.rules.fetch(:PRESERVE_FIRST).practice)
-    assert_match(/Preserve behavior and intent/, ::Law.rules.fetch(:PRESERVE_FIRST).fix)
+    preserve_rule = ::Law.rules.fetch(:PRESERVE_FIRST)
+    assert_equal :error, preserve_rule.severity
+    assert_match(/never rewrite working code/i, preserve_rule.practice)
+    assert_match(/Preserve behavior and intent/, preserve_rule.fix)
   end
 
   def test_patterns_do_not_reference_unknown_rules_yml_ids
-    rule_ids = rules.map { |rule| rule.fetch("id") }.to_set
+    rule_ids = executable_law_ids.to_set
     referenced = rule_reference_values(patterns).flat_map { |value| value.scan(/\b[A-Z][A-Z0-9]+(?:_[A-Z0-9]+)+\b/) }.uniq
     unknown = referenced.reject { |id| rule_ids.include?(id) }
 
@@ -446,6 +445,13 @@ end
 
   def rules
     Master.law_entries(root: File.expand_path("..", __dir__))
+  end
+
+  def executable_law_ids
+    law_dir = File.expand_path("../law", __dir__)
+    require File.join(law_dir, "law")
+    ::Law.load_all(law_dir) if ::Law.rules.empty?
+    ::Law.rules.keys.map(&:to_s)
   end
 
   def data
