@@ -177,12 +177,10 @@ module Master
 
       def dispatch_snapshot(_root, ctx: nil)
         arg = arg_for(ctx)
-        return "usage: /snapshot [output]" if arg.split.size > 1
-        # Bare, it is one snapshot per governed tree, which Snapshot#write! does
-        # only when rooted at the repository; an output path is MASTER alone.
-        return Array(Master::Snapshot.new(root: Master.repo_root).write!).join("\n") if arg.empty?
+        return "usage: /snapshot [no arguments]" unless arg.empty?
 
-        Master::Snapshot.new(root: Master::ROOT, output: File.expand_path(arg, Master.repo_root)).write!
+        require File.join(Master::ROOT, "tools", "snapshot")
+        Operator::Snapshot.run.to_s
       rescue StandardError => e
         "snapshot0: failed — #{e.class}: #{e.message}"
       end
