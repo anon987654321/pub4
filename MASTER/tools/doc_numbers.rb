@@ -21,12 +21,12 @@ require_relative "../lib/trace/dmesg"
 module Operator
   class DocNumbers
     ROOT = File.expand_path("../..", __dir__)
-    RULES = File.join(ROOT, "MASTER/data/rules.yml")
+    RULES = File.join(ROOT, "MASTER/data/laws.yml")
     TREES = %w[MASTER RAILS OPENBSD STUDIO].freeze
     SKIP = %r{/(node_modules|vendor|knowledge|output|tmp|\.master)/}
 
     # Naming any of these makes the number traceable.
-    SOURCES = %w[MASTER/data/rules.yml _dialect_tokens.scss tokens.css design_system].freeze
+    SOURCES = %w[MASTER/data/laws.yml _dialect_tokens.scss tokens.css design_system].freeze
 
     # Values so generic that a match says nothing about design tokens. 8px and
     # 4px are the rhythm itself and appear in prose about the rhythm; 1rem is the
