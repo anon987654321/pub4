@@ -136,14 +136,12 @@ module Master
         limit ? @philosophy.first(limit) : @philosophy
       end
 
-      def all_rules = @all_rules ||= Master.flatten_rules(@data["rules"]).freeze
 
       def lookup(id)
         id_str = id.to_s
         kernel[id_str] || philosophy.find { |a| a["id"] == id_str }&.dig("name")
       end
 
-      def all_ids = @all_ids ||= all_rules.map { |r| r["id"] }.compact.to_set.freeze
       def empty? = @data.empty?
 
       private
