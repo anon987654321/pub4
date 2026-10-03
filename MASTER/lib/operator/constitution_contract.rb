@@ -34,9 +34,11 @@ module Operator
       laws = load_yaml("MASTER/data/laws.yml")
       issues << "soul: golden rule missing or changed" unless soul.dig("absolute", "golden_rule") == "PRESERVE_THEN_IMPROVE_NEVER_BREAK"
       issues << "soul: no sacred paths declared" unless Array(soul.dig("absolute", "sacred_paths")).any?
-      issues << "rules: missing design system" unless rules["design_system"].is_a?(Hash)
-      issues << "rules: missing law catalogue" unless rules["laws"].is_a?(Hash)
-      issues << "rules: no Bringhurst reference" unless rules.to_s.include?("Bringhurst")
+      issues << "rules: missing design tokens" unless laws["tokens"].is_a?(Hash)
+      declared = laws.any? { |_id, value| value.is_a?(Hash) && value["priority"] && value["principle"] }
+      issues << "rules: no declared policy laws" unless declared
+      prose = File.join(@root, "MASTER", "law", "prose.rb")
+      issues << "rules: no Bringhurst reference" unless File.file?(prose) && File.read(prose).include?("Bringhurst")
       issues.concat(law_issues)
       issues.concat(tree_authority_issues)
       Result.new(issues.uniq.freeze)
