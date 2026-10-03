@@ -176,7 +176,7 @@ module Master
       # law/ text arrives conducted, and rule sources that spell the pattern in
       # strings are counted and triaged rather than excused by path.
 
-        # :error because data/rules.yml declares ONE_SOURCE a kernel rule at
+        # :error because data/laws.yml declares ONE_SOURCE a kernel rule at
         # error, and the catalogue outranks the implementation (CLAUDE.md's
         # authority order). Measured before the change: this rule finds nothing
         # in any of the four trees today, so the severity is a promise about the
@@ -190,7 +190,7 @@ module Master
           next [] if path.to_s.include?("master.rb")
           patterns = [
             [/COUNCIL_PATH\s*=/, "define COUNCIL_PATH once in master.rb; reference Master::COUNCIL_PATH"],
-            [/RULES_PATH\s*=/, "define RULES_PATH once in master.rb; reference Master::RULES_PATH"],
+            [/LAWS_PATH\s*=/, "define LAWS_PATH once in master.rb; reference Master::LAWS_PATH"],
             [/DATA_DIR\s*=\s*File\.join.*\bdata\b/, "use Master::DATA constant"],
           ]
           src.each_line.with_index(1).flat_map do |line, n|
