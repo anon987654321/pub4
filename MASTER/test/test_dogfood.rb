@@ -60,8 +60,8 @@ class DogfoodSpec < Minitest::Test
     end
     # Master.load_yaml, not YAML directly: test_yaml_registries asserts that
     # every runtime read of a constitutional file goes through the one loader,
-    # so a second reader here is a second implementation of what rules.yml means.
-    walk.call(Master.load_yaml(Master::RULES_PATH))
+    # so a second reader here is a second implementation of what laws.yml means.
+    walk.call(Master.load_yaml(Master::LAWS_PATH))
     assert_empty left, "detect_lexical belongs in law/ now: #{left.join(', ')}"
   end
 end
