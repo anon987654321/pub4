@@ -11,48 +11,7 @@ language:
   primary: english
   secondary: norwegian
   # English spoken with an American accent. Operator decision 2026-09-12.
-  #
-  # primary stays english — the words are English; what changed is the mouth.
-  # en-US-JennyNeural is an English (United States) neural voice, so `dialect`
-  # names the accent it speaks in rather than a variety of English with its own
-  # spelling and idiom.
-  #
-  # This block used to say primary: english while the voice was nb-NO and the
-  # dialect was bokmal, so the law described a Norwegian speaker and an English
-  # one at once. The three have been kept in step since; they still are.
   dialect: american
-
-
-prompt_ordering:
-  - master_identity
-  - master_output_format
-  - master_meta_instruction
-  - master_constitution_absolute
-  - master_priority
-  - master_constitution_kernel
-  # add_disclaimer builds one of these two per persona, and neither was ordered,
-  # so ordered_sections dropped both: a medic's standing medical disclaimer and
-  # any persona's own. The builder logged it as load-bearing on every boot and
-  # nothing read the log. They sit with the refusal policy because all three
-  # constrain what the reply may say.
-  - master_medical_disclaimer
-  - master_special_disclaimer
-  - master_refusal_policy
-  - master_attention
-  - master_style
-
-prompt_ordering:
-  - master_identity
-  - master_output_format
-  - master_meta_instruction
-  - master_constitution_absolute
-  - master_priority
-  - master_constitution_kernel
-  - master_medical_disclaimer
-  - master_special_disclaimer
-  - master_refusal_policy
-  - master_attention
-  - master_style
 
 absolute:
   golden_rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK
@@ -82,6 +41,20 @@ absolute:
 # for "sweep to convergence" or "one SSH session", so the requirement was
 # excluding exactly the rules it could not describe. soul keeps what only
 # soul has: the golden rule, sacred paths, anti-simulation, protection tiers.
+
+prompt_ordering:
+  - master_identity
+  - master_output_format
+  - master_meta_instruction
+  - master_constitution_absolute
+  - master_priority
+  - master_constitution_kernel
+  - master_medical_disclaimer
+  - master_special_disclaimer
+  - master_refusal_policy
+  - master_attention
+  - master_style
+
 negotiable:
   style: sentence_case
   # default_model lives once, in providers.yml openrouter.default_model —
