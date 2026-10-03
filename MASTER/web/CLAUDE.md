@@ -241,7 +241,7 @@ and loads a *second*, independent "vision" layer (`face_vision.bundle.js`,
 `master:face-ready` from `markFaceReady()`; the vision modules use that event
 for boot metrics and deferred hooks. `/canvas/topology` is a Rails route, and
 the viseme-pack loader must keep using `MASTER_ASSET_PATHS.visemePacks` rather
-than hardcoded asset URLs. Do not expose `MASTER/data/rules.yml` directly to
+than hardcoded asset URLs. Do not expose `MASTER/data/laws.yml` directly to
 visitors unless there is an explicit product/security decision to make those
 rules public.
 
