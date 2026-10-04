@@ -216,7 +216,6 @@
   });
   window.addEventListener("stt:partial", (event) => {
     handleLegacy({ type: "stt:partial", ...event.detail });
-    emit("speech:partial", event.detail || {});
   });
   window.addEventListener("stt:backchannel", (event) => handleLegacy({ type: "stt:backchannel", ...event.detail }));
   window.addEventListener("tts:playback:start", (event) => handleLegacy({ type: "tts:playback:start", ...event.detail }));
