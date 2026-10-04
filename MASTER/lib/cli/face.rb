@@ -15,7 +15,7 @@ module Master
     # mutable Motion carried from frame to frame. Nothing here touches the
     # terminal, which is what lets a test draw it at any size.
     module Face
-      STATES = %i[idle listening thinking speaking].freeze
+      STATES = %i[idle listening thinking working speaking warning error sleeping ready].freeze
       FPS = 20
       # Below this there is not room for a face worth the name, and the frame
       # names the state instead.
