@@ -3,13 +3,17 @@
 (() => {
   "use strict";
 
+  const CONTRACT = window.MASTER_FACE_CONTRACT || {};
+  const CONTRACT_INTERACTION = CONTRACT.interaction || {};
   const STATES = Object.freeze({
-    interaction: ["idle", "waking", "listening", "holding", "yielded", "processing", "speaking", "sleeping", "error"],
-    turn: ["draft", "listening", "committed", "interrupted", "discarded", "failed"],
-    task: ["queued", "active", "waiting-human", "waiting-network", "waiting-model", "complete", "failed", "cancelled"],
-    tool: ["queued", "active", "retry", "complete", "failed"],
+    interaction: CONTRACT_INTERACTION.states || ["idle", "waking", "listening", "holding", "yielded", "processing", "speaking", "sleeping", "error"],
+    turn: CONTRACT_INTERACTION.turn_states || ["draft", "listening", "committed", "interrupted", "discarded", "failed"],
+    task: CONTRACT_INTERACTION.task_states || ["queued", "active", "waiting-human", "waiting-network", "waiting-model", "complete", "failed", "cancelled"],
+    tool: CONTRACT_INTERACTION.tool_states || ["queued", "active", "retry", "complete", "failed"],
     visual: ["idle", "attention", "working", "success", "warning", "error"],
   });
+
+  const CANONICAL_EVENTS = new Set(CONTRACT_INTERACTION.events || []);
 
   const LEGACY = Object.freeze({
     "stt:start": ["speech:start", { interaction: "listening" }],
@@ -77,7 +81,9 @@
   }
 
   function emit(type, payload = {}) {
-    const detail = { type: String(type), ts: now(), ...payload };
+    const name = String(type);
+    const detail = { type: name, ts: now(), ...payload };
+    if (CANONICAL_EVENTS.size && !CANONICAL_EVENTS.has(name) && !name.startsWith("interaction:")) return detail;
     window.dispatchEvent(new CustomEvent(detail.type, { detail }));
     window.dispatchEvent(new CustomEvent("master:interaction", { detail }));
     if (window.MASTEREvents?.normalize && window.MASTEREvents?.dispatch) {
