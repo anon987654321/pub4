@@ -10,7 +10,7 @@
     latencyMs: null, playbackBufferMs: null, underruns: 0,
     updatedAt: 0, version: 0
   };
-  const previous = { rms: 0, bass: 0, mid: 0, high: 0 };
+  const previous = { rms: 0, speechActivity: 0, bass: 0, mid: 0, high: 0, bandAverage: 0 };
   const alpha = 0.22;
   const transientDecay = 0.12;
 
@@ -49,11 +49,11 @@
     state.high = smooth("high", nextHigh);
     state.centroid = number(centroid);
     state.onset = clamp(
-      Math.max(0, state.bass - previous.rms) * 0.8 +
-      Math.max(0, state.mid - previous.rms) * 0.4 +
-      Math.max(0, state.high - previous.rms) * 0.2
+      Math.max(0, state.bass - previous.bandAverage) * 0.8 +
+      Math.max(0, state.mid - previous.bandAverage) * 0.4 +
+      Math.max(0, state.high - previous.bandAverage) * 0.2
     );
-    previous.rms = (state.bass + state.mid + state.high) / 3;
+    previous.bandAverage = (state.bass + state.mid + state.high) / 3;
     state.updatedAt = performance.now ? performance.now() : Date.now();
     state.version += 1;
     publish();
@@ -79,7 +79,7 @@
   function ingestMicrophone({ rms, peak, speechActivity, sampleRate, channels, latencyMs } = {}) {
     state.rms = smooth("rms", clamp(rms));
     state.peak = Math.max(state.peak * (1 - transientDecay), clamp(peak));
-    state.speechActivity = smooth("rms", clamp(speechActivity));
+    state.speechActivity = smooth("speechActivity", clamp(speechActivity));
     if (sampleRate) state.sampleRate = number(sampleRate);
     if (channels) state.channels = number(channels);
     if (latencyMs != null) state.latencyMs = number(latencyMs);
