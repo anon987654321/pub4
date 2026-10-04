@@ -265,6 +265,7 @@ async function sendMessage(text) {
   if (message.startsWith("/")) return runSlashCommand(message);
 
   window._chatOnUser?.(message);
+  window.MasterInteraction?.commitTurn?.(message, "typed", { transport: "chat" });
   const imageToken = window._imageToken || null;
   window._imageToken = null;
   let assistantBuffer = "";
