@@ -68,7 +68,7 @@
 
   function add(kind, data = {}, provenance = {}) {
     const node = {
-      id: crypto?.randomUUID?.() || "node-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8),
+      id: globalThis.crypto?.randomUUID?.() || "node-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8),
       kind: String(kind || "object"),
       label: String(data.label || kind || "object"),
       x: Number(data.x || 24), y: Number(data.y || 24),
@@ -133,7 +133,7 @@
     return true;
   }
 
-  function toggle(on = !ensureRoot().hidden) {
+  function toggle(on = ensureRoot().hidden) {
     if (!on) {
       try { localStorage.setItem("master:workspace", "0"); } catch (_) {}
     } else {
