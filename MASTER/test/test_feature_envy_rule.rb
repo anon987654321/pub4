@@ -3,7 +3,7 @@
 require_relative "test_helper"
 require "review/scan/rule_dsl"
 
-# `rules.yml` describes this detector as a "single-method heuristic, same-file
+# `laws.yml` describes this detector as a "single-method heuristic, same-file
 # only" with a "genuine false-positive risk on generic-but-unrelated
 # primitives", so the thresholds are the rule and each one is pinned from both
 # sides. It fires when a method names one receiver at least four times, that

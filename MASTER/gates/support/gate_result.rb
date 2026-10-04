@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# The deploy tree owns the gate kernel. Every gate in the repo returns this
+# MASTER/gates/support owns the gate kernel. OPENBSD/lib/gate_result.rb is a compatibility path. Every gate in the repo returns this
 # type: RAILS/gates, MASTER/gates, OPENBSD/gates and MASTER/tools/gate.rb require it
 # across the tree boundary and add nothing to it, so adding an outcome is a
 # change with four consumers. A repo-level lib/ means a fifth top-level tree

@@ -14,7 +14,15 @@ module Deploy
       autosave draft-store media-picker feed-compose scroll-reveal offline-feed pwa-standalone post-progressive
     ].freeze
     REQUIRED_SHARED_INITIALIZERS = %w[omniauth.rb auth_extensions.rb].freeze
-    REQUIRED_SHARED_CONTROLLERS = %w[shared/reactions_controller.rb].freeze
+    REQUIRED_SHARED_CONTROLLERS = %w[
+      shared/reactions_controller.rb
+      shared/outbound_clicks_controller.rb
+    ].freeze
+
+    SHARED_CONTROLLER_SHIMS = {
+      "reactions_controller.rb" => "ReactionsController < Shared::ReactionsController",
+      "outbound_clicks_controller.rb" => "OutboundClicksController < Shared::OutboundClicksController",
+    }.freeze
     REQUIRED_ENV_BASELINES = {
       "development.rb" => "shared/config/environments/development.rb",
       "test.rb" => "shared/config/environments/test.rb",
@@ -74,7 +82,7 @@ module Deploy
         result.checked!
         routes_path = File.join(RAILS_ROOT, app, "config/routes.rb")
         importmap_path = File.join(RAILS_ROOT, app, "config/importmap.rb")
-        reactions_path = File.join(RAILS_ROOT, app, "app/controllers/reactions_controller.rb")
+        controller_root = File.join(RAILS_ROOT, app, "app/controllers")
         result.fail("#{app}: missing config/routes.rb") unless File.file?(routes_path)
         result.fail("#{app}: missing config/importmap.rb") unless File.file?(importmap_path)
 
@@ -96,9 +104,13 @@ module Deploy
           result.fail("#{app}: #{file} must require #{needle}") unless env_source.include?(needle)
         end
 
-        if File.file?(reactions_path)
-          reactions = File.read(reactions_path)
-          result.fail("#{app}: ReactionsController must subclass Shared::ReactionsController") unless reactions.include?("Shared::ReactionsController")
+        SHARED_CONTROLLER_SHIMS.each do |file, signature|
+          path = File.join(controller_root, file)
+          expected = "# frozen_string_literal: true\n\nclass #{signature}\nend\n"
+          result.fail("#{app}: missing #{file} compatibility shim") unless File.file?(path)
+          next unless File.file?(path)
+
+          result.fail("#{app}: #{file} must remain a thin compatibility shim") unless File.read(path) == expected
         end
 
         # Present in the app, or present in shared for overlay_shared_public to

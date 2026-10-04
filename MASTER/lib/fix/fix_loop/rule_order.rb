@@ -12,7 +12,7 @@ module Master
         # key was constant. NO_GOD_CLASS is SIMPLEST_WORKS, FEATURE_ENVY is
         # the SRP detector, FEW_ARGUMENTS is the conciseness one.
         TIER2_QUALITY_RULE_IDS = %w[NO_GOD_CLASS FEATURE_ENVY FEW_ARGUMENTS].freeze
-        PRIORS_PATH = File.join(Master::ROOT, "data", "rules.yml").freeze
+        PRIORS_PATH = File.join(Master::ROOT, "data", "laws.yml").freeze
         AGE_PATH = File.join("data", "violation_age.yml").freeze
         SKIP_DIRS_RE = %r{/(\.git|vendor|tmp|var|node_modules|\.bundle|coverage|log|dist|knowledge)/}.freeze
 

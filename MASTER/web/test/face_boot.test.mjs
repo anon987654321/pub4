@@ -37,7 +37,7 @@ test("face surface owns the full viewport", () => {
 
 test("MASTER web face uses the same monospaced presentation contract as the CLI", () => {
   const css = readFileSync(join(publicDir, "face.css"), "utf8");
-  const rules = readFileSync(join(root, "..", "data", "rules.yml"), "utf8");
+  const rules = readFileSync(join(root, "..", "data", "laws.yml"), "utf8");
   assert.match(css, /html, body \{[\s\S]*?font:\s*16px\/1\.5 var\(--font-mono\)/);
   assert.match(css, /--font-label:\s*"JetBrainsMono Nerd Font"/);
   assert.match(rules, /face_interface:/);
@@ -57,7 +57,7 @@ test("FaceWorld consumes the semantic layers and bounded render budget", () => {
 
 test("Face state derives modes and aliases from the shared contract", () => {
   const state = readFileSync(join(publicDir, "face_state.js"), "utf8");
-  const rules = readFileSync(join(root, "..", "data", "rules.yml"), "utf8");
+  const rules = readFileSync(join(root, "..", "data", "laws.yml"), "utf8");
   assert.match(state, /CONTRACT_STATE\.modes/);
   assert.match(state, /Object\.entries\(CONTRACT\.mode_aliases/);
   assert.match(state, /mobile_particles/);
@@ -387,7 +387,7 @@ test("nothing takes a 2D context on the shared #face canvas", () => {
 });
 
 test("face runtime consumes the constitutional state contract", () => {
-  const contract = readFileSync(join(root, "..", "data", "rules.yml"), "utf8");
+  const contract = readFileSync(join(root, "..", "data", "laws.yml"), "utf8");
   const state = readFileSync(join(publicDir, "face_state.js"), "utf8");
   const index = readFileSync(join(root, "app", "views", "chat", "index.html.erb"), "utf8");
   assert.match(contract, /face_interface:[\\s\\S]*schema: 1/);
@@ -438,7 +438,7 @@ test("face.css keeps primer and prompt layering stable", () => {
 
 test("MASTER web and CLI share one monospaced face contract", () => {
   const css = readFileSync(join(publicDir, "face.css"), "utf8");
-  const rules = readFileSync(join(root, "..", "data", "rules.yml"), "utf8");
+  const rules = readFileSync(join(root, "..", "data", "laws.yml"), "utf8");
   assert.match(rules, /face_root:[\s\S]*font_label:.*JetBrainsMono/);
   assert.match(css, /--font-label:\s*"JetBrainsMono/);
   assert.match(css, /html, body[\\s\\S]*font:\s*16px\\/1\\.5 var\\(--font-mono\\)/);

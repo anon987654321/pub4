@@ -264,7 +264,7 @@ V.register(119, "build version on the root, not on the screen", () => {
     return json;
   });
 
-  V.register(143, "on-device rules.yml flash", (ctx) => {
+  V.register(143, "on-device laws.yml flash", (ctx) => {
     const text = ctx.detail.text || "";
     if (!text) {
       root.dataset.rulesFlash = "stub";

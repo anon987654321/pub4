@@ -18,7 +18,7 @@ module Deploy
     RAILS_ROOT = File.join(ROOT, "RAILS")
     APPS_YML = File.join(RAILS_ROOT, "apps.yml")
     SHARED_DEPLOY = File.join(RAILS_ROOT, "_deploy.sh")
-    RAILS_STACK = YAML.safe_load_file(File.join(ROOT, "MASTER", "data", "rules.yml")).fetch("rails_stack").freeze
+    RAILS_STACK = YAML.safe_load_file(File.join(ROOT, "MASTER", "data", "laws.yml")).fetch("rails_stack").freeze
     RAILS_VERSION = Gem::Version.new(RAILS_STACK.fetch("rails"))
 
     def self.run(skip_nested: false)

@@ -705,11 +705,6 @@ scan-only lexical stage, and the view-surface writer's dead `RAILS/gates` path.
   thresholds arrive as `{}` with silent hardcoded fallbacks (`lib/design.rb:100-167`).
   Fixing this alone revives the eleven KeyError-dead rule-hygiene ratchet rows and
   makes `rule_reach` the census it was built to be.
-- **The rendered ladder fails open by default.** Chrome absent → `inconclusive` →
-  exit 0 (`gates/support/gate_result.rb:46-63`; `Operator::StrictMode` defaults to
-  contribute). The ladder can report clean over zero measured pixels. Close: print
-  inconclusive/errored counts in the final summary and refuse "clean" when a
-  `needs: [browser]` gate measured nothing.
 - **Three CDP probes are registered in no ladder** — `gates/tap_target_probe.rb`,
   `face_capture_probe.rb`, `focus_walk_probe.rb` are manual-only instruments. Register
   them as gates.yml rows or fold their assertions into reflow.

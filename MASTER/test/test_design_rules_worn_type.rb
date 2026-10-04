@@ -3,7 +3,7 @@
 require_relative "test_helper"
 
 # worn_type is law only if something reads it. A profile that exists only in
-# rules.yml design_rules is the inert-config hole this tree keeps cutting.
+# laws.yml design_rules is the inert-config hole this tree keeps cutting.
 class TestDesignRulesWornType < Minitest::Test
   PROFILES = %w[feed catalog chat immersive map legal auth].freeze
 
@@ -46,7 +46,7 @@ class TestDesignRulesWornType < Minitest::Test
   # A profile with a reader can still carry a key nothing reads, and that is the
   # same inert-config hole one level down. worn_type.profiles.map.label_min_px
   # declares that map labels are at least 12px and no code has ever asked: it
-  # appears in rules.yml and in nothing else, so the floor it states is not a
+  # appears in laws.yml and in nothing else, so the floor it states is not a
   # floor, it is a sentence.
   #
   # Named rather than deleted, because the intent is worth keeping and removing
@@ -104,7 +104,7 @@ class TestDesignRulesWornType < Minitest::Test
     assert_includes micro.fetch("default_features"), "kern"
     assert_in_delta 0.7, micro.fetch("void_target"), 0.001
     # The six assertions above call the reader and check what it returns, which is
-    # what "has a reader" means. A seventh used to assert that rules.yml mentions
+    # what "has a reader" means. A seventh used to assert that laws.yml mentions
     # `Design::Thresholds.micro_typography` in its text — that passes when the
     # method is deleted and the comment stays, and fails on a rename that broke
     # nothing. It measured a spelling.

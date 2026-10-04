@@ -18,7 +18,7 @@ class TestDependencyContracts < Minitest::Test
   def test_prism_dependency_matches_ruby_language_support
     require "prism"
 
-    rules = Master.load_yaml(File.join(ROOT, "data", "rules.yml"))
+    rules = Master.load_yaml(File.join(ROOT, "data", "laws.yml"))
     ruby_version = rules.dig("languages", "ruby", "version")
 
     assert_equal "3.3+", ruby_version

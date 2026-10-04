@@ -48,7 +48,7 @@ module Master
               hedges: []
               endings: []
         YML
-        "rules.yml" => <<~YML,
+        "laws.yml" => <<~YML,
           rules: {}
           voice:
             strunk: { preambles: [], endings: [] }

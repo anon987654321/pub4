@@ -159,7 +159,7 @@ quality:
       max_h1: 1
       min_h1: 0  # warn soft if 0
     cta_budget:
-      # The peer-choice limit is MASTER's: rules.yml UX_LAWS.hick
+      # The peer-choice limit is MASTER's: laws.yml UX_LAWS.hick
       # max_visible_choices. It is not restated here, because it was, as 4
       # against the law's 7, and the private copy won for months.
       max_btn_primary: 3

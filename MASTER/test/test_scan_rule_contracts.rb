@@ -402,7 +402,7 @@ class TestScanRuleContracts < Minitest::Test
 
     # data/principles/*.md is what Ground::Constitution globs and parses. This
     # rule used to call each of those files a delete-me at error severity, and
-    # send the operator to rules.yml#operator_principles, a section whose 47
+    # send the operator to laws.yml#operator_principles, a section whose 47
     # entries went to law/practice.rb. Invisible only because the directory is
     # empty. A file one level deeper is not that location and still fires.
     assert_empty rule("RUNTIME_DOCS_YAML").check("# a principle\n",

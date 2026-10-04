@@ -58,7 +58,7 @@ def test_core_context_keeps_constitution_and_output_contract
     assert_includes core_prompt, "master_output_format"
   end
 
-  # rules.yml style.typography puts the scale at typography.scale.ratio; this
+  # laws.yml style.typography puts the scale at typography.scale.ratio; this
   # line read typography["ratio"], one level too shallow, so the hardcoded 1.25
   # fallback was the only value the prompt ever carried and editing the section
   # did nothing. `measure` and `leading` were literals beside it for the same reason.

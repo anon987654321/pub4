@@ -10,8 +10,8 @@ unnamed_members:
 - radio_bergen_track_dossiers.yml#tracks
 - recovery_pub.yml#agent_prompt
 - recovery_pub.yml#layout_note
-- rules.yml#principle_priorities
-- rules.yml#schema_metadata
+- laws.yml#principle_priorities
+- laws.yml#schema_metadata
 - runtime.yml#cognitive_spine
 - runtime.yml#collaboration
 - runtime.yml#platform_topology

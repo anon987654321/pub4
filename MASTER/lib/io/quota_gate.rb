@@ -80,7 +80,7 @@ module Master
         Master::Ground::FailureTaxonomy.exhausted?(message)
       rescue StandardError
         # MASTER/tools/replicate and MASTER/tools/lora load Io::ReplicateClient standalone,
-        # without the runtime that gives Master::Ground::FailureTaxonomy its rules.yml. The
+        # without the runtime that gives Master::Ground::FailureTaxonomy its laws.yml. The
         # gate still has to answer there, so it falls back to the pattern the
         # taxonomy would have reached for anyway.
         Master::Fix::Constants::EXHAUSTED_RE.match?(message.to_s)

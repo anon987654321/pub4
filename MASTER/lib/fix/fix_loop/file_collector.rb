@@ -111,7 +111,7 @@ module Master
         end
 
         # soul.yml is the constitutional source for sacred paths. The catalogue in
-        # rules.yml describes laws; it does not own write protection.
+        # laws.yml describes laws; it does not own write protection.
         def immutable?(path)
           policy_root = git_root || @root
           Master::Core::Paths.sacred?(path, root: policy_root)

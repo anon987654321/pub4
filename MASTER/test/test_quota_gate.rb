@@ -155,9 +155,9 @@ class TestQuotaGate < Minitest::Test
   end
 
   # STUDIO loads Io::ReplicateClient without the runtime that gives
-  # FailureTaxonomy its rules.yml, and the gate still has to answer there.
+  # FailureTaxonomy its laws.yml, and the gate still has to answer there.
   def test_classification_survives_a_taxonomy_that_cannot_load
-    Master::Ground::FailureTaxonomy.stub(:exhausted?, ->(_m) { raise "no rules.yml" }) do
+    Master::Ground::FailureTaxonomy.stub(:exhausted?, ->(_m) { raise "no laws.yml" }) do
       assert Gate.exhaustion?(CREDITS)
       refute Gate.exhaustion?("connection reset by peer")
     end

@@ -131,7 +131,7 @@ module Deploy
 
     # Hick's law, and the law is MASTER's.
     #
-    # rules.yml UX_LAWS.hick says "more than 7 peer choices without progressive
+    # laws.yml UX_LAWS.hick says "more than 7 peer choices without progressive
     # disclosure". This file said 4, in its own copy, and counted every <button>
     # in the document — so on markedsplass it counted 20: three tiptap toolbar
     # buttons inside a composer that is closed, a composer open and a composer

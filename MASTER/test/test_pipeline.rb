@@ -294,7 +294,7 @@ class TestPipeline < Minitest::Test
 
   def write_rules(root)
     FileUtils.mkdir_p(File.join(root, "data"))
-    File.write(File.join(root, "data", "rules.yml"), <<~YAML)
+    File.write(File.join(root, "data", "laws.yml"), <<~YAML)
       evidence_scoring:
         weights:
           test_pass: 35

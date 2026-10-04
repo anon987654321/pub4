@@ -1,4 +1,4 @@
-# Voice output rules — extracted from rules.yml (scan corpus stays in rules.yml).
+# Voice output rules — extracted from laws.yml (scan corpus stays in laws.yml).
 # TTS synthesis policy: Ruby (speech.rb, tts_controller) and JS (face_speech_runtime.js) read `tts`.
 # Persona registries (personas.yml, soul.yml) affect LLM text/style only when persona_affects_text_only is true.
 # Engine chain / transcendent mode: data/tts.yml (not used by web TtsJob). VPS env: OPENBSD/etc/rc.d/master.

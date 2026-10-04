@@ -14,7 +14,7 @@ require "review/scan/rule_dsl"
 # nothing to report. Every test below therefore starts from a source the rule
 # MUST flag, which settles it: all four can fire, so the silence is the sample.
 #
-# `rules.yml` calls each of these detectors a heuristic in its own words, so the
+# `laws.yml` calls each of these detectors a heuristic in its own words, so the
 # exemptions matter as much as the detections and each is pinned beside its
 # violation. A detector tested only for firing proves nothing about what it
 # spares.

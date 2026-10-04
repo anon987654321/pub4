@@ -78,7 +78,7 @@ class TestCoChangeCouplingRule < Minitest::Test
                           path: "/elsewhere/MASTER/lib/voice/speech.rb")
   end
 
-  # The scanner registry and rules.yml both key on the id, and rule_deps orders
+  # The scanner registry and laws.yml both key on the id, and rule_deps orders
   # by it, so a rename that misses one of them is a rule that silently stops
   # being weighted. Cheap to pin, and it is the string those tables carry.
   def test_it_registers_under_the_id_the_dependency_graph_names

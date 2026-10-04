@@ -10,7 +10,7 @@ require_relative "../lib/operator/rule_reach"
 # promise reaches code. One file because they read one subject, and because
 # each was measuring itself rather than the catalogue in the same way: hygiene
 # counted the check names inside a rule config as rules, and autofix_reach
-# asked whether a rule can be FOUND by reading three columns in rules.yml when
+# asked whether a rule can be FOUND by reading three columns in laws.yml when
 # ten of the twelve it named have a detector in law/ or the registry.
 #
 # Both directions are pinned throughout: the false positives are gone AND every
@@ -56,7 +56,7 @@ class TestRuleCatalogue < Minitest::Test
   end
 
   # The other direction, and the reason the walk cannot simply be narrowed to
-  # rules.yml's `rules:` key: a learned smell reports under its own id, so it
+  # laws.yml's `rules:` key: a learned smell reports under its own id, so it
   # collides with a registered rule exactly as another rule would.
   def test_a_learned_smell_still_counts_as_a_population
     body = { "rules" => [{ "id" => "BARE_RESCUE", "tier" => "safety", "severity" => "error" }],
@@ -107,7 +107,7 @@ class TestRuleCatalogue < Minitest::Test
     laws = { BARE_RESCUE: Law.new(id: :BARE_RESCUE, detect: ->(_) { true }, fix: "x", severity: :error) }
     with_body(body) do
       with_populations(laws:) do
-        assert_equal [{ rule: "BARE_RESCUE", homes: ["law/", "rules.yml"] }],
+        assert_equal [{ rule: "BARE_RESCUE", homes: ["law/", "laws.yml"] }],
                      Operator::RuleHygiene.cross_population_duplicates
       end
     end
@@ -173,7 +173,7 @@ class TestRuleCatalogue < Minitest::Test
 
   def ids(rules) = Operator::RuleReach.mechanical(rules).map { |r| r["id"] }
 
-  # FAIL_VISIBLY's detector lives in law/universal.rb and its rules.yml row
+  # FAIL_VISIBLY's detector lives in law/universal.rb and its laws.yml row
   # carries no detect_lexical — the shape the old count called undetectable.
   def test_a_detector_in_law_is_a_detector
     assert_equal ["FAIL_VISIBLY"], ids([{ "id" => "FAIL_VISIBLY", "autofix" => true }])

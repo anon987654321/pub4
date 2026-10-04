@@ -2,7 +2,7 @@
 
 require_relative "test_helper"
 
-# `rules.yml` declares the shape of the pitch; `MASTER/README.md` is the pitch.
+# `laws.yml` declares the shape of the pitch; `MASTER/README.md` is the pitch.
 # Nothing held the two together, so the declaration was one of the two keys
 # data_reach counted as read by no code at all — and a structure nobody checks
 # is a structure the next edit silently breaks.
@@ -39,7 +39,7 @@ class TestBusinessPlanStructure < Minitest::Test
     end
 
     assert_equal positions.sort, positions,
-                 "README movements are out of the order rules.yml declares: #{named.join(' -> ')}"
+                 "README movements are out of the order laws.yml declares: #{named.join(' -> ')}"
   end
 
   def test_the_ask_names_innovasjon_norge

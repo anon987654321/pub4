@@ -1,6 +1,6 @@
 # Council personas — deliberation panel for code review decisions.
 # Each persona carries a temperature (precise 0.1 … loose 0.5), a sharp question, and the laws it
-# emphasizes from rules.yml. can_veto: true blocks merge unconditionally.
+# emphasizes from laws.yml. can_veto: true blocks merge unconditionally.
 
 schema: 1
 personas:

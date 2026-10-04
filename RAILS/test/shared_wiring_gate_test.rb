@@ -27,8 +27,32 @@ class SharedWiringGateTest < Minitest::Test
 
   def test_shared_wiring_gate_checks_extended_shared_artifacts
     source = File.read(File.join(ROOT, "gates/lib/source/shared_wiring.rb"))
-    %w[omniauth.rb auth_extensions.rb Shared::ReactionsController production_baseline.rb REQUIRED_SHARED_CONTROLLERS].each do |needle|
+    %w[
+      omniauth.rb
+      auth_extensions.rb
+      Shared::ReactionsController
+      Shared::OutboundClicksController
+      production_baseline.rb
+      REQUIRED_SHARED_CONTROLLERS
+      SHARED_CONTROLLER_SHIMS
+    ].each do |needle|
       assert_includes source, needle
+    end
+  end
+
+  def test_shared_controller_shims_remain_thin_adapters
+    expected = {
+      "reactions_controller.rb" => "ReactionsController < Shared::ReactionsController",
+      "outbound_clicks_controller.rb" => "OutboundClicksController < Shared::OutboundClicksController",
+    }
+
+    expected.each do |name, signature|
+      %w[amber brgen bsdports].each do |app|
+        source = File.read(File.join(ROOT, app, "app/controllers", name))
+        assert_equal "# frozen_string_literal: true\n\nclass #{signature}\nend\n",
+                     source,
+                     "#{app}/#{name} drifted from its shared implementation adapter"
+      end
     end
   end
 

@@ -4,7 +4,7 @@
 # two directories from the real one in lib/boot/data.rb. Both used the shared
 # Master.load_yaml helper — what made the copy a second implementation was
 # building the path and composing the result itself. They agreed perfectly until
-# the shards were folded into rules.yml on 2026-08-12, at which point the copy's
+# the shards were folded into laws.yml on 2026-08-12, at which point the copy's
 # glob matched nothing and it assigned {} over the real rules, silently emptying
 # /why for all 225 rules.
 #
@@ -24,7 +24,7 @@ reader_singularity:
   ceiling:
     models.yml: 9
     patterns.yml: 6
-    rules.yml: 3
+    laws.yml: 3
     soul.yml: 8
     tools.yml: 2
     tts.yml: 2

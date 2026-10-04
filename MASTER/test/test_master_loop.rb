@@ -191,7 +191,7 @@ class TestMasterLoop < Minitest::Test
 
   # The operator's standing orders live in soul.yml, not in the catalogue the
   # file scanner reads. They govern how to work rather than what source text may
-  # look like, so no detector can match one, and rules.yml offered them a shape
+  # look like, so no detector can match one, and laws.yml offered them a shape
   # with a severity and a tier they could never use. soul reaches the prompt
   # whole through PersonalityPromptBuilder#add_rules; Ground::Constitution cut
   # them to 480 characters, which took 358 off FLAT_HIERARCHY alone.
@@ -204,7 +204,7 @@ class TestMasterLoop < Minitest::Test
     end
 
     refute Master.load_rules.key?("operator_principles"),
-           "conduct in rules.yml is a rule no detector can ever match"
+           "conduct in laws.yml is a rule no detector can ever match"
     refute Master.load_yaml(Master.data_path("soul.yml")).fetch("absolute").key?("rules"),
            "one registry: law/, not soul"
   end

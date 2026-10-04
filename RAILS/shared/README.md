@@ -810,6 +810,11 @@ Deliberately left duplicated:
 - **Framework-required host constants**: `SessionsController`,
   `PasswordsController`, `ReactionsController`, `DraftsController`,
   `Authentication`, the four reflexes, `ApplicationCable::Channel`, `Current`,
+- **Compatibility shims**: app-local `ReactionsController` and
+  `OutboundClicksController` remain thin wrappers so Rails keeps the
+  controller paths and view lookup stable. Their implementations live in the
+  corresponding `Shared::...` controllers.
+
   `Session`, `controllers/{index,application,application_controller}.js`. These
   are already one-line delegations to the engine; routing, Zeitwerk and
   StimulusReflex resolve them by bare constant, so the file has to exist.

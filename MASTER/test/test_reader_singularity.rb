@@ -48,8 +48,8 @@ class TestReaderSingularity < Minitest::Test
   def test_the_detector_finds_the_shape_it_exists_to_find
     assert_operator @report["loaded"], :>, 15,
                     "only #{@report['loaded']} data files detected as loaded — the detector stopped reading"
-    assert_includes Operator::ReaderSingularity.readers.fetch("rules.yml"), "MASTER/lib/boot/data.rb",
-                    "the detector does not see the canonical rules.yml loader"
+    assert_includes Operator::ReaderSingularity.readers.fetch("laws.yml"), "MASTER/lib/boot/data.rb",
+                    "the detector does not see the canonical laws.yml loader"
   end
 
   # The why_explainer shape specifically: the shared helper, a path built by
@@ -59,7 +59,7 @@ class TestReaderSingularity < Minitest::Test
       path = File.join(dir, "impostor.rb")
       File.write(path, <<~RUBY)
         def rules
-          base = Master.load_yaml(File.join(@root, "data", "rules.yml"))
+          base = Master.load_yaml(File.join(@root, "data", "laws.yml"))
           base["rules"] = something_else
           base
         end
@@ -68,7 +68,7 @@ class TestReaderSingularity < Minitest::Test
       found = Hash.new { |hash, key| hash[key] = [] }
       Operator::ReaderSingularity.scan(path, found)
 
-      assert_includes found.keys, "rules.yml",
+      assert_includes found.keys, "laws.yml",
                       "the detector misses a hand-built path into data/ through the shared helper — " \
                       "which is exactly how the original defect was written"
     end

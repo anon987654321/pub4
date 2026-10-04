@@ -32,7 +32,7 @@ class TestBootChecks < Minitest::Test
       data = File.join(root, "data")
       FileUtils.mkdir_p(data)
       File.write(File.join(data, "soul.yml"), "---\n")
-      File.write(File.join(data, "rules.yml"), "---\n")
+      File.write(File.join(data, "laws.yml"), "---\n")
       result = CHECKS.send(:check_data_dir, root)
 
       refute result.ok
