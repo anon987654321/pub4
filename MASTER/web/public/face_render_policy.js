@@ -3,11 +3,13 @@
 (() => {
   "use strict";
 
-  const TARGET_FPS = 60;
-  const TARGET_FRAME_MS = 1000 / TARGET_FPS;
-  const MAIN_THREAD_BUDGET_MS = 8;
-  const GPU_BUDGET_MB = 128;
-  const MEMORY_BUDGET_MB = 192;
+  const CONTRACT = window.MASTER_FACE_CONTRACT || {};
+  const PERFORMANCE = CONTRACT.performance || {};
+  const TARGET_FPS = Number(PERFORMANCE.target_fps) || 60;
+  const TARGET_FRAME_MS = Number(PERFORMANCE.target_frame_ms) || (1000 / TARGET_FPS);
+  const MAIN_THREAD_BUDGET_MS = Number(PERFORMANCE.main_thread_budget_ms) || 8;
+  const GPU_BUDGET_MB = Number(PERFORMANCE.gpu_budget_mb) || 128;
+  const MEMORY_BUDGET_MB = Number(PERFORMANCE.memory_budget_mb) || 192;
   const HYSTERESIS = Object.freeze({ down: 0.82, up: 1.28 });
 
   const capabilities = Object.freeze({
