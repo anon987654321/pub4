@@ -116,7 +116,7 @@
   }
 
   window.addEventListener("stt:start", () => {
-    activeVoiceTurn = window.MasterInteraction?.beginTurn?.("voice") || activeVoiceTurn;
+    activeVoiceTurn = window.MasterInteraction?.snapshot?.().turn?.id || activeVoiceTurn;
     draftKind = "voice";
     setMicState("listening");
   });
