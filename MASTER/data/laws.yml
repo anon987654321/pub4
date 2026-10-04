@@ -974,6 +974,60 @@ tokens:
       focus: 0.86
       activity: 0.14
       risk: 0.0
+    interaction:
+      states: [idle, waking, listening, holding, yielded, processing, speaking, sleeping, error]
+      turn_states: [draft, listening, committed, interrupted, discarded, failed]
+      task_states: [queued, active, waiting-human, waiting-network, waiting-model, complete, failed, cancelled]
+      tool_states: [queued, active, retry, complete, failed]
+      events:
+        - speech:start
+        - speech:partial
+        - speech:end
+        - speech:abort
+        - speech:attention
+        - tts:start
+        - tts:end
+        - tts:interrupt
+        - turn:started
+        - turn:committed
+        - turn:discarded
+        - turn:interrupted
+        - audio:update
+        - render:frame
+        - render:quality
+        - performance:receipt
+        - workspace:node:created
+        - workspace:node:updated
+        - workspace:node:removed
+        - workspace:relation:created
+        - workspace:focus
+        - task:queued
+        - task:active
+        - task:waiting-human
+        - task:waiting-network
+        - task:waiting-model
+        - task:complete
+        - task:failed
+        - task:cancelled
+        - tool:queued
+        - tool:active
+        - tool:retry
+        - tool:complete
+        - tool:failed
+    audio:
+      fields: [rms, peak, bass, mid, high, centroid, onset, speechActivity, speaker, playback,
+               sentencePosition, sampleRate, channels, analyserWindow, latencyMs, playbackBufferMs, underruns]
+    performance:
+      target_fps: 60
+      target_frame_ms: 16.667
+      main_thread_budget_ms: 8
+      gpu_budget_mb: 128
+      memory_budget_mb: 192
+    workspace:
+      persistence: explicit_opt_in
+      stable_ids: true
+      provenance: required
+      relationships: true
     mode_aliases:
       phantom: error
       escalation: warning
