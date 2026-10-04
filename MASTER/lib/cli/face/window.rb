@@ -195,7 +195,7 @@ module Master
             return
           end
 
-          set(:listening, ["listening — enter to stop"])
+          set(:listening, ["listening — say stop or type to interrupt"])
           nudge(:listen)
           heard = @ear.listen(stop: -> { @halt_ear || @closing }, on_partial: ->(text) { show(["heard: #{text}"]) })
           set(:idle, ["heard nothing"]) unless heard
