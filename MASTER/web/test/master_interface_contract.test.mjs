@@ -7,6 +7,7 @@ import { fileURLToPath } from "node:url";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const publicDir = join(root, "public");
 const manifest = readFileSync(join(root, "config", "face_assets.yml"), "utf8");
+const laws = readFileSync(join(root, "..", "data", "laws.yml"), "utf8");
 const interaction = readFileSync(join(publicDir, "master_interaction_state.js"), "utf8");
 const audio = readFileSync(join(publicDir, "face_audio_field.js"), "utf8");
 const render = readFileSync(join(publicDir, "face_render_policy.js"), "utf8");
@@ -24,6 +25,15 @@ test("canonical interface modules are declared in the shell manifest", () => {
   ]) {
     assert.ok(manifest.split("\n").includes("  - " + name));
   }
+});
+
+test("laws publish the canonical interaction, audio and performance contract", () => {
+  assert.match(laws, /interaction:/);
+  assert.match(laws, /audio:/);
+  assert.match(laws, /target_fps: 60/);
+  assert.match(laws, /main_thread_budget_ms: 8/);
+  assert.match(laws, /speech:start/);
+  assert.match(laws, /task:waiting-human/);
 });
 
 test("interaction state defines the canonical turn task tool visual and memory stores", () => {
