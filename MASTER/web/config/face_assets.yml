@@ -112,6 +112,9 @@ shell_early:
 # and face_vision felt_state rule read an empty string forever.
 shell_manifest:
   - felt_state
+  - master_interaction_state
+  - face_audio_field
+  - face_render_policy
   - ui_presence
   - face_state
   - visual_governor
@@ -119,6 +122,10 @@ shell_manifest:
   - particle_worker
   - sse_contract
   - chat_actions
+  - voice_surface
+  - master_task_ui
+  - master_workspace
+  - master_accessibility
   - visual_bridge
   - chat
   - master_namespace
