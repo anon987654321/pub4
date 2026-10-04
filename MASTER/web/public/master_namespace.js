@@ -21,6 +21,13 @@
     ["sse", () => window.MASTER_SSE],
     ["attention", () => window.MASTER_ATTENTION || root.attention],
     ["felt", () => window.MASTERFeltState],
+    ["interaction", () => window.MasterInteraction || window.MASTER_INTERACTION],
+    ["audio", () => window.MasterAudioField || window.MASTER_AUDIO_FIELD],
+    ["render", () => window.MasterRenderPolicy || window.MASTER_RENDER_POLICY],
+    ["tasks", () => window.MasterTaskUI || window.MASTER_TASK_UI],
+    ["workspace", () => window.MasterWorkspace || window.MASTER_WORKSPACE],
+    ["accessibility", () => window.MASTER_ACCESSIBILITY],
+    ["voiceSurface", () => window.MASTER_VOICE_SURFACE],
     ["vision", () => window.MASTER_FACE_VISION],
     ["shortcuts", () => window.MASTERShortcuts],
   ];
