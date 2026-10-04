@@ -479,6 +479,7 @@
 
     document.documentElement.style.setProperty("--master-face-depth", geometry.depth.toFixed(3));
     document.documentElement.style.setProperty("--master-face-tension", geometry.shell_tension.toFixed(3));
+    window.MasterRenderPolicy?.recordFrame?.(now);
   }
 
   window.MASTER_FACE_WORLD = Object.freeze({ load, update, spawnPulse });
