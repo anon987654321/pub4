@@ -70,10 +70,11 @@
       state.fps = state.frameCount * 1000 / elapsed;
       state.frameCount = 0;
       state.sampleStart = t;
-      state.degraded = state.fps > 0 && state.fps < 48;
+      state.runtimeFps = Number(window.MASTER_VISUAL_LIMITS?.maxFps || 0) || TARGET_FPS;
+      state.degraded = state.fps > 0 && state.fps < state.runtimeFps * HYSTERESIS.down;
       document.documentElement.dataset.faceFps = state.fps.toFixed(1);
       const next = state.degraded ? "reduced" : "auto";
-      if (next !== state.quality && (next === "reduced" || state.fps > TARGET_FPS * HYSTERESIS.up)) {
+      if (next !== state.quality && (next === "reduced" || state.fps > state.runtimeFps * HYSTERESIS.up)) {
         state.quality = next;
         state.transitions += 1;
         window.MasterInteraction?.emit?.("render:quality", { quality: next, fps: state.fps });
