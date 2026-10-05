@@ -24,7 +24,7 @@ module MobileTool
       registry_app!(argv.shift) if argv.first
       generate_ios_project
     else
-      warn "usage: ruby tools/mobile.rb list | android APP | ios APP | all"
+      warn "usage: ruby MASTER/tools/rails/mobile.rb list | android APP | ios APP | all"
       exit 64
     end
   end

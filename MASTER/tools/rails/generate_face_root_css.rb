@@ -3,8 +3,8 @@
 
 require_relative "../design_tokens"
 
-# __dir__ is <repo>/MASTER/tools/rails, so the repo root is two levels up, not
-# three — "../../.." escaped the checkout entirely and crashed on a
+# __dir__ is <repo>/MASTER/tools/rails, so the repo root is three levels up —
+# "../../.." reaches the checkout root where MASTER/web/public/face.css lives. This is a
 # nonexistent <parent>/MASTER/web/public/face.css.
 ROOT = File.expand_path("../../../", __dir__)
 FACE_CSS = File.join(ROOT, "MASTER", "web", "public", "face.css")

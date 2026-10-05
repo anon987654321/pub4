@@ -151,7 +151,7 @@ class RepoHygieneContractTest < Minitest::Test
   def test_rails_has_no_tools_surface
     refute_path_exists File.join(ROOT, "tools"),
                        "RAILS is an app/shared tree; executable Rails tooling belongs under MASTER/tools/rails"
-    tracked = git_files("RAILS/tools")
+    tracked = git_files(File.join("RAILS", "tools"))
     assert_empty tracked, "retired RAILS/tools paths remain tracked:\n  #{tracked.join("\n  ")}"
     assert_path_exists File.join(REPO_ROOT, "MASTER", "tools", "rails")
   end
