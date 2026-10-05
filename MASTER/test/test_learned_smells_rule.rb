@@ -35,6 +35,17 @@ class LearnedSmellsRuleSpec < Minitest::Test
     end
   end
 
+  def test_invalid_laws_yaml_fails_the_scan
+    Dir.mktmpdir do |dir|
+      FileUtils.mkdir_p(File.join(dir, "data"))
+      File.write(File.join(dir, "data", "laws.yml"), "learned_smells: [\n")
+
+      assert_raises(Psych::SyntaxError) do
+        Master::Review::Scan::Rules::LearnedSmellsRule.new(root: dir)
+      end
+    end
+  end
+
   def test_learned_smell_rules_ignore_other_languages
     Dir.mktmpdir do |dir|
       FileUtils.mkdir_p(File.join(dir, "data"))
