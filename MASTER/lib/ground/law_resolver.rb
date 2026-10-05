@@ -5,6 +5,7 @@ module Master
     # Resolves rule conflicts using laws.yml laws: priority (lower wins).
     class LawResolver
       def initialize(rules_data: nil, root: Master::ROOT)
+        root = Master.master_root(root:)
         declared = rules_data && rules_data["laws"]
         rows = if declared.is_a?(Hash)
                  declared.filter_map { |id, row| row.merge("id" => id.to_s) if row.is_a?(Hash) }
