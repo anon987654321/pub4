@@ -104,7 +104,10 @@ module Master
       def data(name)
         key = name.to_sym
         path = resolve_data_path(key)
-        return @cache[key]&.first || folded(key) unless path && File.exist?(path)
+        unless path && File.exist?(path)
+          @cache.delete(key)
+          return folded(key)
+        end
 
         mtime = File.mtime(path)
         cached = @cache[key]
