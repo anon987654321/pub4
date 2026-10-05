@@ -192,6 +192,27 @@ class TestMasterLoop < Minitest::Test
     assert_equal from_yaml, Master::MasterRuntime::LOOP_FLAGS
   end
 
+  def test_master_root_maps_repository_root_to_master_and_keeps_foreign_master_root
+    Dir.mktmpdir do |repo|
+      master = File.join(repo, "MASTER")
+      FileUtils.mkdir_p(File.join(master, "law"))
+      FileUtils.mkdir_p(File.join(master, "data"))
+      File.write(File.join(master, "data", "laws.yml"), "{}
+")
+
+      assert_equal master, Master.master_root(root: repo)
+      assert_equal master, Master.master_root(root: master)
+
+      standalone = File.join(repo, "standalone")
+      FileUtils.mkdir_p(File.join(standalone, "law"))
+      FileUtils.mkdir_p(File.join(standalone, "data"))
+      File.write(File.join(standalone, "data", "laws.yml"), "{}
+")
+
+      assert_equal standalone, Master.master_root(root: standalone)
+    end
+  end
+
   def test_model_accessors_do_not_cache_across_roots
     Dir.mktmpdir do |workspace|
       one = File.join(workspace, "one", "data")
