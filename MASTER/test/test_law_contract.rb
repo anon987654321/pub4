@@ -43,6 +43,12 @@ class TestLawContract < Minitest::Test
     assert_equal rows.count { |row| row["principle_scope"] == "universal" }, rendered.fetch("universal_count")
   end
 
+  def test_lifecycle_transitions_are_published_on_rule
+    assert Law::Rule.const_defined?(:LIFECYCLE_TRANSITIONS, false)
+    assert_equal %i[proposed proven active observed trusted advisory retired],
+                 Law::Rule::LIFECYCLE_TRANSITIONS.keys
+  end
+
   def test_lifecycle_transitions_are_closed
     rule = Law.rules.fetch(:VERIFICATION_REQUIRED_FOR_COMPLETION)
     assert_equal :trusted, rule.lifecycle
