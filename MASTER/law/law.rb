@@ -394,19 +394,31 @@ module Law
 
     def render(full: false)
       entries = Law.rules.values.sort_by { |rule| rule.id.to_s }.map(&:contract_entry)
+      transformation_policy = Master.law("transformation_policy")
       laws = full ? entries : entries.map { |entry| entry.slice("id", "severity", "mode", "languages", "question") }
       JSON.pretty_generate(
         "contract_version" => 1,
-        "law_digest" => Digest::SHA256.hexdigest(JSON.generate(entries)),
+        "law_digest" => contract_digest(entries, transformation_policy),
         "protocol" => PROTOCOL,
         "law_policy" => POLICY,
-        "transformation_policy" => Master.law("transformation_policy"),
+        "transformation_policy" => transformation_policy,
         "laws" => laws,
       )
     end
 
     def digest
-      JSON.parse(render)["law_digest"]
+      entries = Law.rules.values.sort_by { |rule| rule.id.to_s }.map(&:contract_entry)
+      contract_digest(entries, Master.law("transformation_policy"))
+    end
+
+    def contract_digest(entries, transformation_policy)
+      Digest::SHA256.hexdigest(
+        JSON.generate(
+          "law_policy" => POLICY,
+          "transformation_policy" => transformation_policy,
+          "laws" => entries,
+        ),
+      )
     end
   end
 
