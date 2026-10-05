@@ -26,7 +26,7 @@ module Master
         @root = root
         @bus = bus
         @config = config || load_config
-        @law_resolver = law_resolver || Ground::LawResolver.new
+        @law_resolver = law_resolver || Ground::LawResolver.new(root: @root)
         @rules_index = Priority.rules_index(root: @root)
       end
 
@@ -162,7 +162,7 @@ module Master
       end
 
       def load_config
-        soul = Master.soul_config
+        soul = Master.soul_config(root: @root)
         soul.dig("negotiable", "conflict_resolution") || {}
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "ConflictResolver.load_config")
