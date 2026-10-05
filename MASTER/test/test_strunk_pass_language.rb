@@ -18,17 +18,18 @@ class TestStrunkPassLanguage < Minitest::Test
   def test_cached_rules_follow_same_second_voice_changes
     Dir.mktmpdir do |dir|
       path = File.join(dir, "voice.yml")
-      original = Master.data_path("voice.yml")
-      source = File.read(original, encoding: "UTF-8")
-      replacement = source.sub(/(strunk:.*\n(?:.*\n){0,8}?preambles:\n)(\s*-\s*["'][^"']*["']\n)/, "\\1          - \"ONLY_THIS_TEST\"\n")
+      File.write(path, "voice:\n  strunk:\n    preambles:\n      - first\n")
 
-      File.write(path, replacement)
       pass = Master::Voice::StrunkPass.new
-      pass.define_singleton_method(:rules) do
-        data = Master.load_yaml(path) || {}
-        data.dig("voice", "strunk") || {}
+      Master.stub(:data_path, path) do
+        assert_includes pass.send(:rules).fetch("preambles"), "first"
+
+        stat = File.stat(path)
+        File.write(path, "voice:\n  strunk:\n    preambles:\n      - second\n")
+        File.utime(stat.atime, stat.mtime, path)
+
+        assert_equal ["second"], pass.send(:rules).fetch("preambles")
       end
-      assert_equal true, pass.brevity("ONLY_THIS_TEST hello").include?("ONLY_THIS_TEST")
     end
   end
 
