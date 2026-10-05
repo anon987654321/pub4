@@ -13,6 +13,7 @@ require_relative "pass_runner/stream_stage"
 require_relative "structural_stage"
 require_relative "../transaction"
 require_relative "../resource_budget"
+require_relative "../../review/scan/rule_health"
 
 module Master
   module Fix
