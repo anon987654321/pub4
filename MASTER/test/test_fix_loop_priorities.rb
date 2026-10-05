@@ -36,9 +36,34 @@ class TestFixLoopPriorities < Minitest::Test
     assert_empty missing, "tier2 names rules the scanner does not build: #{missing.join(", ")}"
   end
 
+  def test_rule_order_reads_dependencies_and_priors_from_active_root
+    Dir.mktmpdir do |dir|
+      FileUtils.mkdir_p(File.join(dir, "data"))
+      File.write(File.join(dir, "data", "laws.yml"), {
+        "violation_priors" => {
+          "NEW_WARNING" => { "prior_p" => 20.0 }
+        },
+        "rule_deps" => {}
+      }.to_yaml)
+
+      order = Master::Fix::FixLoop::RuleOrder.new(
+        rules: [Rule.new("NEW_WARNING", :warning), Rule.new("OLD_ERROR", :error)],
+        learnings: nil, bus: nil, root: dir
+      )
+
+      ordered = order.ordered(violation_counts: { "NEW_WARNING" => 0, "OLD_ERROR" => 0 }).map(&:id)
+
+      assert_equal "NEW_WARNING", ordered.first
+    end
+  end
+
   def test_age_and_severity_can_outrank_fresh_low_severity_findings
     Dir.mktmpdir do |dir|
       FileUtils.mkdir_p(File.join(dir, "data"))
+      File.write(File.join(dir, "data", "laws.yml"), {
+        "violation_priors" => {},
+        "rule_deps" => {}
+      }.to_yaml)
       File.write(File.join(dir, "data", "violation_age.yml"), { "OLD_ERROR" => 60, "NEW_WARNING" => 0 }.to_yaml)
       rules = [Rule.new("NEW_WARNING", :warning), Rule.new("OLD_ERROR", :error)]
       order = Master::Fix::FixLoop::RuleOrder.new(rules:, learnings: nil, bus: nil, root: dir)
