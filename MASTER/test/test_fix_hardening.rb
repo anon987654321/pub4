@@ -35,6 +35,17 @@ class FixHardeningTest < Minitest::Test
     assert_includes annotated[:tags], :MEASUREMENT_ONLY
   end
 
+  def test_detector_matrix_serializes_path_exclusion_regexes
+    rule = Data.define(:id, :severity, :path_exclude).new(
+      "REGEX_RULE", :warning, %r{/generated/\\.rb\\z}
+    )
+
+    matrix = Master::Fix::ProtocolDetectorMatrix.matrix([rule])
+
+    assert_equal ["/generated/\\\\.rb\\\\z"], matrix.fetch("REGEX_RULE").fetch("path_exclude")
+    assert JSON.parse(JSON.generate(matrix)).fetch("REGEX_RULE")
+  end
+
   def test_detector_matrix_reports_enforcement_and_summary
     rules = [
       RuleStub.new(id: "MAGIC_COLOR", severity: :warning),
