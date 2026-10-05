@@ -92,10 +92,14 @@ module Master
       end
 
       def rules
-        @rules ||= begin
-          data = Master.load_yaml(Master.data_path("voice.yml")) || {}
-          data.dig("voice", "strunk") || {}
-        end
+        path = Master.data_path("voice.yml")
+        stat = File.stat(path)
+        signature = [stat.size, stat.ino, stat.mtime.to_r]
+        return @rules if @rules_signature == signature && @rules
+
+        data = Master.load_yaml(path) || {}
+        @rules_signature = signature
+        @rules = (data.dig("voice", "strunk") || {}).freeze
       end
 
       def hedges_for(text)
