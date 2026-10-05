@@ -197,7 +197,8 @@ module Law
         raise ArgumentError,
               "#{id}: declares language(s) #{unreachable.join(', ')} that FILE_LANGUAGE_MAP never produces"
       end
-      self    end
+      self
+    end
 
     private
 
