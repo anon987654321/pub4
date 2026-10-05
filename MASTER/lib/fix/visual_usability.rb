@@ -62,7 +62,7 @@ module Master
       end
 
       def axioms
-        @axioms ||= Master.load_yaml(Master::LAWS_PATH).fetch("laws", {})
+        @axioms ||= Master.law_entries.to_h { |row| [row["id"].to_s, row] }
       end
 
       def line(id)
