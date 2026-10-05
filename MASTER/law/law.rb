@@ -465,6 +465,8 @@ module Law
   end
 
   @rules = {}
+  @law_sources = {}
+  @law_stamps = {}
   class << self
     attr_reader :rules
 
@@ -476,8 +478,36 @@ module Law
     end
 
     def load_all(dir = __dir__)
-      Dir.glob(File.join(dir, "*.rb")).sort.each { |f| require f unless f == __FILE__ }
+      files = Dir.glob(File.join(dir, "*.rb")).sort.map { |file| File.expand_path(file) }
+      files.reject! { |file| file == File.expand_path(__FILE__) }
+
+      rules_before = @rules.dup
+      sources_before = @law_sources.dup
+      stamps_before = @law_stamps.dup
+
+      removed_sources = @law_sources.keys - files
+      removed_sources.each { |source| @law_sources[source].each { |id| @rules.delete(id) } }
+      removed_sources.each do |source|
+        @law_sources.delete(source)
+        @law_stamps.delete(source)
+      end
+
+      files.each do |source|
+        stamp = [File.stat(source).size, File.stat(source).ino, File.mtime(source).to_r]
+        next if @law_stamps[source] == stamp
+
+        @law_sources[source].to_a.each { |id| @rules.delete(id) }
+        @law_sources[source] = []
+        load source
+        @law_sources[source] = @rules.keys - (rules_before.keys - @law_sources.values.flatten)
+        @law_stamps[source] = stamp
+      end
       @rules
+    rescue StandardError
+      @rules = rules_before if defined?(rules_before)
+      @law_sources = sources_before if defined?(sources_before)
+      @law_stamps = stamps_before if defined?(stamps_before)
+      raise
     end
 
     def scan(file, language: nil)
