@@ -115,34 +115,25 @@ module Master
       end
 
       def kernel
-        signature = law_data_signature
-        return @kernel if @kernel_signature == signature && @kernel
-
-        @kernel_signature = signature
-        all_rules = Master.law_entries(root: @root)
-        @kernel = all_rules
-                   .select { |r| r["tier"] == "kernel" }
-                   .each_with_object({}) { |r, h| h[r["id"]] = r["name"] }
-                   .freeze
+        law_dir = File.join(@root, "law")
+        require File.join(law_dir, "law") unless defined?(::Law)
+        loaded = ::Law.load_all(law_dir)
+        loaded.values.select(&:kernel?).to_h do |rule|
+          [rule.id.to_s, (rule.practice || rule.fix).to_s.gsub(/\s+/, " ").strip]
+        end.freeze
       end
 
       def philosophy(limit: nil)
-        signature = law_data_signature
-        if @philosophy_signature != signature || !@philosophy
-          @philosophy_signature = signature
-          all_rules = Master.law_entries(root: @root)
-          @philosophy = all_rules
-                        .reject { |r| r["tier"] == "kernel" }
-                        .map { |h| h.transform_keys(&:to_s) }
-                        .freeze
-        end
-        limit ? @philosophy.first(limit) : @philosophy
+        items = Master.law_entries(root: @root)
+                     .map { |entry| entry.transform_keys(&:to_s) }
+                     .sort_by { |entry| [entry["priority"].to_i, entry["id"].to_s] }
+        limit ? items.first(limit) : items
       end
 
 
       def lookup(id)
         id_str = id.to_s
-        kernel[id_str] || philosophy.find { |a| a["id"] == id_str }&.dig("name")
+        kernel[id_str] || philosophy.find { |a| a["id"] == id_str }&.dig("principle")
       end
 
       def empty? = @data.empty?
