@@ -205,6 +205,21 @@ class TestMasterLoop < Minitest::Test
     end
   end
 
+  def test_language_for_rechecks_an_extensionless_script_after_shebang_changes
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "run")
+      File.write(path, "#!/usr/bin/env ruby\nputs 1\n")
+
+      assert_equal "ruby", Master.language_for(path)
+
+      stat = File.stat(path)
+      File.write(path, "#!/bin/zsh\necho 1\n")
+      File.utime(stat.atime, stat.mtime, path)
+
+      assert_equal "zsh", Master.language_for(path)
+    end
+  end
+
   def test_common_data_readers_resolve_the_declared_registries
     assert_kind_of Hash, Master.models_config
     assert_kind_of Hash, Master.patterns_config
