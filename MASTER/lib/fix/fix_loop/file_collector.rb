@@ -117,11 +117,15 @@ module Master
           kept.sort
         end
 
-        def skipped?(path)
-          Master::Review::Scan::Scanner.skip_path?(path, root: @root) ||
-            binary?(path) ||
-            immutable?(path) ||
-            rails_history?(path)
+        def skipped?(path) = !skip_reason(path).nil?
+
+        def skip_reason(path)
+          return :scanner_path_filter if Master::Review::Scan::Scanner.skip_path?(path, root: @root)
+          return :binary if binary?(path)
+          return :immutable if immutable?(path)
+          return :rails_history if rails_history?(path)
+
+          nil
         end
 
         # soul.yml is the constitutional source for sacred paths. The catalogue in
