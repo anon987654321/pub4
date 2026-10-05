@@ -73,6 +73,24 @@ class TestRuleLoopPolicy < Minitest::Test
   # apply passed `encoding:` to write_atomic, which takes no such keyword, so
   # every model fix raised at the write, was logged as a write error, and
   # nothing a model proposed was ever applied.
+  def test_measurement_only_finding_is_not_sent_to_the_model
+    Dir.mktmpdir do |root|
+      path = File.join(root, "sample.rb")
+      File.write(path, "puts :x\\n")
+      scanner = Object.new
+      scanner.define_singleton_method(:scan) do |_path, rules: nil|
+        Master::Result.ok([{ rule: "CQS", severity: :warning, line: 1, message: "measured" }])
+      end
+      agent = Agent.new
+      loop = build_loop(root:, bus: FakeBus.new, scanner:, agent:)
+
+      result = loop.run_once([path])
+
+      assert_equal :clean, result[:status]
+      assert_equal 0, agent.calls
+    end
+  end
+
   def test_visual_custody_is_limited_to_frontend_rails_sources
     loop = Master::Fix::RuleLoop.allocate
 
