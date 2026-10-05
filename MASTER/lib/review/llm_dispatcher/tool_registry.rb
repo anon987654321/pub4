@@ -11,14 +11,18 @@ module Master
           return [] unless tool_capable?(selected_model)
 
           profile = Ground::Tool::Profile.current
-          @llm_tools_by_tier ||= {}
-          @llm_tools_by_tier[profile] ||= build_llm_tools(profile:)
+          tier = @model_router&.tier_for_model(selected_model).to_s
+          file_types = active_file_types.sort.freeze
+          @llm_tools_by_context ||= {}
+          key = [profile, tier, file_types]
+          @llm_tools_by_context[key] ||= build_llm_tools(profile:, tier:, file_types:)
         end
 
-        def build_llm_tools(visitor: false, profile: nil)
+        def build_llm_tools(visitor: false, profile: nil, tier: nil, file_types: nil)
           profile ||= visitor ? :public : Ground::Tool::Profile.current
           allowed = Ground::Tool::Profile.allowlist(profile)
-          tier = @model_router&.tier_for_model(@config.model).to_s
+          tier ||= @model_router&.tier_for_model(@config.model).to_s
+          file_types ||= active_file_types
           @tools.filter_map do |tool|
             next mcp_tool(tool, allowed:, tier:) if tool.is_a?(::RubyLLM::Tool)
 
@@ -29,7 +33,7 @@ module Master
             # A tool data/tools.yml never classified is withheld until elevation:
             # what nobody has judged is not safe by omission.
             elevated = meta.fetch("elevated", true) != false
-            next unless tool_available_for_context?(meta)
+            next unless tool_available_for_context?(meta, active_file_types: file_types)
             next if allowed && !allowed.include?(name)
             next if allowed.nil? && !Fiber[:master_elevated] && elevated
             next if tier == "cheap" && elevated
@@ -56,14 +60,12 @@ module Master
           base.to_h { |row| [row["name"].to_s, row] }
         end
 
-        def tool_available_for_context?(meta)
+        def tool_available_for_context?(meta, active_file_types:)
           required = Array(meta["file_types"]).filter_map { |ext| normalize_file_type(ext) }
           return true if required.empty?
+          return true if active_file_types.empty?
 
-          active = active_file_types
-          return true if active.empty?
-
-          (required & active).any?
+          (required & active_file_types).any?
         end
 
         def active_file_types
