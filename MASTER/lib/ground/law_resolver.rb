@@ -5,7 +5,7 @@ module Master
     # Resolves rule conflicts using laws.yml laws: priority (lower wins).
     class LawResolver
       def initialize(rules_data: nil, root: Master::ROOT)
-        @laws = (rules_data || Master.load_yaml(Master::LAWS_PATH)).fetch("laws", {})
+        @laws = (rules_data || Master.law_entries(root:)).to_h { |row| [row["id"].to_s, row["priority"]] }
                   .transform_values { |v| v["priority"].to_i }
                   .sort_by { |_, priority| priority }
                   .to_h
