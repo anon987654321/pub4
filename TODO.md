@@ -2458,3 +2458,32 @@ The following are not disguised as green: reaction-diffusion/cellular-automata/m
 
 `MASTER/data/laws.yml` now carries the interaction event vocabulary, task/tool/turn states, AudioField schema, performance budgets and workspace provenance/persistence policy. `master_interaction_state.js`, `face_audio_field.js`, `face_render_policy.js`, `voice_surface.js`, `master_task_ui.js`, `master_workspace.js` and `master_accessibility.js` are projections of that contract, not parallel authorities.
 
+
+
+## Copilot /fix hardening review — manual disposition 2026-10-05
+
+The Copilot suggestions were reviewed against the live implementation rather than applied verbatim.
+
+Implemented:
+
+- repaired the two malformed Ruby test sources that blocked ExecutionTrace syntax verification;
+- moved detector-health policy into MASTER/data/laws.yml and made CQS, MAGIC_COLOR and DOUBLE_QUOTES_RUBY measurement-only until stronger detector evidence exists;
+- exposed measurement/enforcement state in findings and the external /fix detector matrix;
+- required the detector matrix from the canonical /fix protocol context;
+- blocked operator-owned rendered-value repair at the RuleLoop boundary and propagated it as HUMAN_DECISION;
+- added regression coverage for the above and for the existing stream refresh path.
+
+Already present and therefore not duplicated:
+
+- streamed repairs already re-scan worker-touched files before convergence/stagnation;
+- tree-level STRUCTURE already runs through the bounded structure-first and restructure sweeps;
+- VisualCustody already verifies rendered RAILS changes against committed snapshots.
+
+Not adopted from Copilot because the proposed code was stale or unsafe:
+
+- a second stream-refresh API using nonexistent Scanner#scan_files;
+- a hardcoded fake SOME_LEGACY_NOISY_RULE and unsupported empirical false-positive rates;
+- a second STRUCTURE framework beside the existing transformation/restructure machinery;
+- a second visual-usability authority instead of the existing law and VisualCustody boundary.
+
+The remaining Copilot roadmap items such as anti-simulation output enforcement, a generalized exemption catalogue, and broader cross-tree UX are separate changes requiring their own current-code review; they are not represented as completed merely because the proposal described them.
