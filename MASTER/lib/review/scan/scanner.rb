@@ -210,7 +210,7 @@ module Master
         def skippable_validation_error?(result)
           return false unless result.category == :validation
 
-          result.message.to_s.match?(/A(?:file not found:|symlink not allowed:|binary file skipped:|file too large:)/)
+          result.message.to_s.match?(/\A(?:file not found:|symlink not allowed:|binary file skipped:|file too large:)/)
         end
 
         def prune_violation_objects(pairs)
@@ -234,13 +234,17 @@ module Master
         end
 
         def prediction_thresholds
-          @prediction_thresholds ||= begin
-            rules = Master.load_yaml(Master::LAWS_PATH)
-            prediction = rules["prediction_engine"]
-            raise "prediction_engine configuration missing" unless prediction.is_a?(Hash)
+          path = Master::LAWS_PATH
+          stat = File.stat(path)
+          stamp = [stat.size, stat.ino, stat.mtime.to_r]
+          return @prediction_thresholds if @prediction_thresholds_stamp == stamp
 
-            prediction
-          end
+          rules = Master.load_yaml(path)
+          prediction = rules["prediction_engine"]
+          raise "prediction_engine configuration missing" unless prediction.is_a?(Hash)
+
+          @prediction_thresholds_stamp = stamp
+          @prediction_thresholds = prediction
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "Scanner.prediction_thresholds")
           raise "scanner: prediction policy unreadable: #{e.class}: #{e.message}"
@@ -265,10 +269,14 @@ module Master
         end
 
         def rule_transforms
-          @rule_transforms ||= begin
-            laws = Master.law_entries(root: Master::ROOT)
-            laws.to_h { |law| [law["id"].to_s, law["autofix"]] if law["autofix"] }.compact
-          end
+          path = Master::LAWS_PATH
+          stat = File.stat(path)
+          stamp = [stat.size, stat.ino, stat.mtime.to_r]
+          return @rule_transforms if @rule_transforms_stamp == stamp
+
+          laws = Master.law_entries(root: Master::ROOT)
+          @rule_transforms_stamp = stamp
+          @rule_transforms = laws.to_h { |law| [law["id"].to_s, law["autofix"]] if law["autofix"] }.compact
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "Scanner.rule_transforms")
           raise "scanner: autofix transform policy unreadable: #{e.class}: #{e.message}"
