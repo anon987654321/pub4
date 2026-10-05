@@ -80,8 +80,9 @@ module Master
 
       def executable_law(key)
         slug = key.upcase.tr("-", "_")
-        require File.join(@root, "law", "law") unless defined?(::Law)
-        ::Law.load_all(File.join(@root, "law")) if ::Law.rules.empty?
+        law_root = executable_law_root
+        require File.join(law_root, "law")
+        ::Law.load_all(File.join(law_root, "law")) if ::Law.rules.empty?
         hit = ::Law.rules[slug.to_sym]
         return unless hit
 
@@ -97,6 +98,15 @@ module Master
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "WhyExplainer.executable_law", severity: :cosmetic)
         nil
+      end
+
+      def executable_law_root
+        candidates = [
+          @root,
+          File.join(@root, "MASTER"),
+          Master::ROOT
+        ]
+        candidates.find { |root| File.file?(File.join(root, "law", "law.rb")) } || Master::ROOT
       end
 
       def registry_rule(key)
