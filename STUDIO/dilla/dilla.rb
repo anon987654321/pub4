@@ -37499,14 +37499,18 @@ pads = chop(played, bars, scratch("pads"))
             "[1:a]asplit=5[key1][key2][key3][key4][kitmix];" \
             "#{ducker('pads', '[key1]', '[0:a]', '[duckraw]')};" \
             "#{stem_console('pads', '[duckraw]', '[duck]')};" \
+            "[duck]atrim=0:#{seconds.round(4)},apad=whole_dur=#{seconds.round(4)}[duckfit];" \
             "#{ducker('lead', '[key2]', '[2:a]', '[leadraw]')};" \
             "#{stem_console('lead', '[leadraw]', '[leadduck]')};" \
+            "[leadduck]volume=#{LEAD['gain_db']}dB,atrim=0:#{seconds.round(4)},apad=whole_dur=#{seconds.round(4)}[leadfit];" \
             "#{ducker('dust', '[key3]', '[3:a]', '[dustduck]')};" \
+            "[dustduck]atrim=0:#{seconds.round(4)},apad=whole_dur=#{seconds.round(4)}[dustfit];" \
             "#{ducker('bass', '[key4]', '[4:a]', '[bassraw]')};" \
             "#{stem_console('bass', '[bassraw]', '[bassduck]')};" \
+            "[bassduck]atrim=0:#{seconds.round(4)},apad=whole_dur=#{seconds.round(4)}[bassfit];" \
             "#{stem_console('kit', '[kitmix]', '[kitc]')};" \
-            "[leadduck]volume=#{LEAD['gain_db']}dB[l];" \
-            "[duck][kitc][l][dustduck][bassduck]amix=inputs=5:duration=shortest:normalize=0[bus];" \
+            "[kitc]atrim=0:#{seconds.round(4)},apad=whole_dur=#{seconds.round(4)}[kitfit];" \
+            "[duckfit][kitfit][leadfit][dustfit][bassfit]amix=inputs=5:duration=shortest:normalize=0[bus];" \
             "#{master_graph('[bus]', '[out]')}",
             "-map", "[out]", "-ac", "2", mixed, what: "mix")
     finish!(mixed, path)
