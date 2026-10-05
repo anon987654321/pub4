@@ -190,6 +190,24 @@ detection_calibration:
     DOUBLE_QUOTES_RUBY:
       reason: "Quote style is advisory and must not block convergence."
 
+phantom_recovery:
+  detectors:
+    gaslighting_preamble: "/^(I('ll| will| can| would)|Let me|Sure,)/i"
+    text_repetition_loop: same 60-char span repeats >= 3 times
+    xml_tool_call_failure: "<tool> open without close OR malformed JSON in args"
+    empty_tool_response: tool returned nil twice in a row
+  # Detected and reported, but never counted toward the halt ladder below.
+  #
+  # The malfunction detectors name a real failure: repeated output, an invalid
+  # tool call, or an empty tool response twice. A style complaint does not.
+  # It is reported to the trace and critique but cannot spend the recovery ladder.
+  style_only:
+  - gaslighting_preamble
+  recovery:
+  - discard last response, reset context to last successful checkpoint
+  - switch model tier (escalate or fall back) on second occurrence
+  - publish phantom:detected event, halt loop on third
+
 transformation_policy:
   version: 1
   preflight:
