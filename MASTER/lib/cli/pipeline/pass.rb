@@ -62,6 +62,7 @@ module Master
           critique = @only.include?("critique") if @only
           shell = shell_target(resolved)
           @apply = apply
+          @critique_enabled = critique
 
           dmesg_boot(resolved, posture, apply, critique, aesthetic)
           @bus&.publish("review:start", target: resolved, mode: posture[:name], apply:)
