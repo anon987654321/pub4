@@ -41,6 +41,23 @@ class TestAxioms < Minitest::Test
   # voice.yml carried a shadow copy of soul absolute.anti_simulation that the
   # accessor read only if soul lost the key — and it had drifted a word. The
   # shadow is deleted (2026-08-21); soul is the one source, and this holds it.
+  def test_removed_standalone_data_file_falls_back_to_consolidated_laws
+    Dir.mktmpdir do |dir|
+      data = File.join(dir, "data")
+      Dir.mkdir(data)
+      File.write(File.join(data, "laws.yml"), "style:\n  source: consolidated\n")
+      standalone = File.join(data, "style.yml")
+      File.write(standalone, "source: standalone\n")
+
+      rules = Master::Ground::Rules.new(root: dir)
+      assert_equal "standalone", rules.data(:style).fetch("source")
+
+      File.delete(standalone)
+
+      assert_equal "consolidated", rules.data(:style).fetch("source")
+    end
+  end
+
   def test_foreign_root_uses_that_tree_voice_configuration
     Dir.mktmpdir do |dir|
       Dir.mkdir(File.join(dir, "data"))
