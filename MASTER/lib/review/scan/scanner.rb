@@ -190,11 +190,20 @@ module Master
         def raise_batch_errors!(pairs, label)
           failures = pairs.filter_map do |path, result|
             wrapped = Master::Result.wrap(result)
-            wrapped.err? ? "#{path}: #{wrapped.message}" : nil
+            next unless wrapped.err?
+            next if skippable_validation_error?(wrapped)
+
+            "#{path}: #{wrapped.message}"
           end
           return if failures.empty?
 
           raise "#{label}: #{failures.size} file(s) failed measurement — #{failures.first(5).join("; ")}"
+        end
+
+        def skippable_validation_error?(result)
+          return false unless result.category == :validation
+
+          result.message.to_s.match?(/A(?:file not found:|symlink not allowed:|binary file skipped:|file too large:)/)
         end
 
         def prune_violation_objects(pairs)
