@@ -94,6 +94,8 @@ module Master
         # do want it (scan/request, fix_loop, mode_posture) each read it themselves,
         # mtime-cached. `data(:workflow)` still resolves it through DATA_ALIASES.
         @cache = {}
+        @law_data_signature = nil
+        @law_data = nil
       end
 
       # mtime-aware cache. Reloads automatically when data/<name>.yml changes on disk.
@@ -105,12 +107,13 @@ module Master
           return folded(key)
         end
 
-        mtime = File.mtime(path)
+        stat = File.stat(path)
+        signature = [stat.size, stat.ino, stat.mtime.to_r]
         cached = @cache[key]
-        return cached.first if cached && cached.last >= mtime
+        return cached.first if cached && cached.last == signature
 
         payload = without_schema(Master.load_yaml(path) || {})
-        @cache[key] = [payload, mtime]
+        @cache[key] = [payload, signature]
         payload
       end
 
@@ -154,8 +157,11 @@ module Master
       end
 
       def law_data
-        @law_data_stamp = law_data_signature
-        @law_data ||= Master.load_laws(root: @root) || {}
+        signature = law_data_signature
+        return @law_data if @law_data_signature == signature
+
+        @law_data_signature = signature
+        @law_data = Master.load_laws(root: @root) || {}
       end
 
       def law_data_signature
