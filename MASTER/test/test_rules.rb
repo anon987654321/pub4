@@ -95,6 +95,24 @@ class TestAxioms < Minitest::Test
     end
   end
 
+  def test_long_lived_rules_refresh_soul_data_after_edit
+    Dir.mktmpdir("rules_soul_refresh") do |root|
+      data = File.join(root, "data")
+      FileUtils.mkdir_p(data)
+      File.write(File.join(data, "laws.yml"), "{}\n")
+      soul = File.join(data, "soul.yml")
+      File.write(soul, "absolute:\n  golden_rule: first\n")
+
+      rules = Master::Ground::Rules.new(root:)
+      assert_equal "first", rules.soul_data.fetch("absolute").fetch("golden_rule")
+
+      File.write(soul, "absolute:\n  golden_rule: second\n")
+
+      assert_equal "second", rules.soul_data.fetch("absolute").fetch("golden_rule")
+      assert_equal "second", rules.constitution.fetch("golden_rule")
+    end
+  end
+
   def test_constitution_carries_anti_simulation_from_soul
     anti = @rules.constitution["anti_simulation"]
     refute_nil anti, "soul absolute.anti_simulation must reach the constitution accessor"
