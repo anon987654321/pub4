@@ -30,7 +30,7 @@ module Master
       # Shared with ConflictResolver's prior private #build_rules_index --
       # both need the same rule_id => rule_entry map to resolve law_for.
       def rules_index(root:)
-        Master.law_entries(root:)
+        Master.law_entries(root: Master.master_root(root: root))
           .each_with_object({}) do |entry, index|
             next unless entry.is_a?(Hash) && entry["id"]
 
