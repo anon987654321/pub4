@@ -26,21 +26,19 @@ module Master
         # to ask for `rules` was opening soul.yml to back an accessor it never
         # touched. RuleLoop#build_soul_preamble does exactly that, so a preamble
         # read the file twice and its cache could only ever halve the cost.
-        def soul_data = @soul_data ||= Master.soul_config(root: @root)
+        def soul_data = Master.soul_config(root: @root)
 
         def constitution
-          @constitution ||= begin
-            absolute = soul_data["absolute"] || {}
-            {
-              "golden_rule" => absolute["golden_rule"] || laws_data["golden_rule"],
-              "protection" => absolute["protection_tiers"] || laws_data["protection"],
-              "banned_output" => voice["banned_output"],
-              # soul is the one source; the voice.yml shadow copy is deleted, so
-              # a fallback arm here would read a key that no longer exists.
-              "anti_simulation" => absolute["anti_simulation"],
-              "communication_style" => voice["style"],
-            }.freeze
-          end
+          absolute = soul_data["absolute"] || {}
+          {
+            "golden_rule" => absolute["golden_rule"] || laws_data["golden_rule"],
+            "protection" => absolute["protection_tiers"] || laws_data["protection"],
+            "banned_output" => voice["banned_output"],
+            # soul is the one source; the voice.yml shadow copy is deleted, so
+            # a fallback arm here would read a key that no longer exists.
+            "anti_simulation" => absolute["anti_simulation"],
+            "communication_style" => voice["style"],
+          }.freeze
         end
 
         # From law/, the one registry. soul carried absolute.rules until the
