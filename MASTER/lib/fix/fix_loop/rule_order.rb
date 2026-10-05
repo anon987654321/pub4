@@ -118,37 +118,31 @@ module Master
         end
 
         def load_deps
-          @deps_cache ||= begin
-            raw = Master.law("rule_deps", root: Master.master_root(root: @root))
-            raise "rule_deps registry unreadable" unless raw.is_a?(Hash)
+          raw = Master.law("rule_deps", root: Master.master_root(root: @root))
+          raise "rule_deps registry unreadable" unless raw.is_a?(Hash)
 
-            raw.transform_values { |v| Array(v["after"] || []) }
-          end
+          raw.transform_values { |v| Array(v["after"] || []) }
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "fix_loop.load_deps", event_bus: @bus)
           raise "fix_loop: rule dependencies unreadable: #{e.class}: #{e.message}"
         end
 
         def load_priors
-          @priors_cache ||= begin
-            priors = Master.law("violation_priors", root: Master.master_root(root: @root))
-            raise "violation_priors configuration missing" unless priors.is_a?(Hash)
+          priors = Master.law("violation_priors", root: Master.master_root(root: @root))
+          raise "violation_priors configuration missing" unless priors.is_a?(Hash)
 
-            priors
-          end
+          priors
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "fix_loop.load_priors", event_bus: @bus)
           raise "fix_loop: violation priors unreadable: #{e.class}: #{e.message}"
         end
 
         def load_age
-          @age_cache ||= begin
-            path = File.join(@root, AGE_PATH)
-            File.file?(path) ? (Master.load_yaml(path) || {}) : {}
-          rescue StandardError => e
-            Master::Ground::Swallow.log(e, context: "fix_loop.load_age", event_bus: @bus)
-            raise "fix_loop: violation age unreadable: #{e.class}: #{e.message}"
-          end
+          path = File.join(@root, AGE_PATH)
+          File.file?(path) ? (Master.load_yaml(path) || {}) : {}
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "fix_loop.load_age", event_bus: @bus)
+          raise "fix_loop: violation age unreadable: #{e.class}: #{e.message}"
         end
       end
     end
