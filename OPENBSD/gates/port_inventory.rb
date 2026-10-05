@@ -12,7 +12,7 @@ module Deploy
     OPENBSD_DEPLOY = File.join(ROOT, "OPENBSD", "OPERATOR.sh")
     APPS_YML = File.join(ROOT, "RAILS", "apps.yml")
     RAILS_README = File.join(ROOT, "RAILS", "README.md")
-    PWA_BUILDER = File.join(ROOT, "RAILS", "tools", "build_workbox.mjs")
+    PWA_BUILDER = File.join(ROOT, "MASTER", "tools", "rails", "build_workbox.mjs")
     RELAYD_CONF = File.join(ROOT, "OPENBSD", "etc", "relayd.conf")
     CRAWL_MANIFEST = File.join(ROOT, "RAILS", "crawl_manifest.yml")
     # Health probes that name a loopback port. They must never probe a port no
