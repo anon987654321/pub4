@@ -7,6 +7,13 @@ class WhyExplainerTest < Minitest::Test
     Master::Trace::WhyExplainer.new(root: Master::ROOT)
   end
 
+  def test_executable_law_resolves_from_repository_root
+    out = Master::Trace::WhyExplainer.new(root: Master::REPO_ROOT)
+      .send(:executable_law, "NO_VAR")
+
+    assert_includes out, "executable law: NO_VAR"
+  end
+
   def test_explain_law
     out = explainer.explain("ROBUSTNESS")
     assert_includes out, "law: ROBUSTNESS"
