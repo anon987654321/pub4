@@ -13,46 +13,43 @@ module Master
       # split — see data/limits.yml. A generic accessor over a data file is how a
       # file stops having readers one can name.
       module RuleAccessors
-        def voice = @voice ||= (@voice_data["voice"] || @data["voice"] || {}).freeze
-        def strunk = @strunk ||= (voice["strunk"] || {}).freeze
-        def preserve = @preserve ||= (voice["preserve"] || {}).freeze
+        def voice = (voice_data["voice"] || law_data["voice"] || {}).freeze
+        def strunk = (voice["strunk"] || {}).freeze
+        def preserve = (voice["preserve"] || {}).freeze
 
         # Lazy, for the same reason limits.yml stopped being parsed in the
         # constructor: `constitution` is the only reader, and every Rules built
         # to ask for `rules` was opening soul.yml to back an accessor it never
         # touched. RuleLoop#build_soul_preamble does exactly that, so a preamble
         # read the file twice and its cache could only ever halve the cost.
-        def soul_data = @soul_data ||= Master.soul_config(root: @root)
+        def soul_data = Master.soul_config(root: @root)
 
         def constitution
-          @constitution ||= begin
-            absolute = soul_data["absolute"] || {}
-            {
-              "golden_rule" => absolute["golden_rule"] || @data["golden_rule"],
-              "protection" => absolute["protection_tiers"] || @data["protection"],
-              "banned_output" => voice["banned_output"],
-              # soul is the one source; the voice.yml shadow copy is deleted, so
-              # a fallback arm here would read a key that no longer exists.
-              "anti_simulation" => absolute["anti_simulation"],
-              "communication_style" => voice["style"],
-            }.freeze
-          end
+          absolute = soul_data["absolute"] || {}
+          {
+            "golden_rule" => absolute["golden_rule"] || law_data["golden_rule"],
+            "protection" => absolute["protection_tiers"] || law_data["protection"],
+            "banned_output" => voice["banned_output"],
+            # soul is the one source; the voice.yml shadow copy is deleted, so
+            # a fallback arm here would read a key that no longer exists.
+            "anti_simulation" => absolute["anti_simulation"],
+            "communication_style" => voice["style"],
+          }.freeze
         end
 
         # From law/, the one registry. soul carried absolute.rules until the
         # `conduct` kind let a rule about how to work be a Law like any other.
         def rules
-          @rules ||= begin
-            require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
-            ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.rules.empty?
-            ::Law.rules.values.to_h { |r| [r.id.to_s, (r.practice || r.fix).to_s.gsub(/\s+/, " ").strip] }.freeze
-          rescue StandardError => e
-            Master::Ground::Swallow.log(e, context: "rules.rules", path: File.join(Master::ROOT, "law"))
-            raise "rules registry unreadable: #{e.class}: #{e.message}"
-          end
+          law_dir = File.join(@root, "law")
+          require File.join(law_dir, "law") unless defined?(::Law)
+          ::Law.load_all(law_dir)
+          ::Law.rules.values.to_h { |r| [r.id.to_s, (r.practice || r.fix).to_s.gsub(/\s+/, " ").strip] }.freeze
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "rules.rules", path: law_dir)
+          raise "rules registry unreadable: #{e.class}: #{e.message}"
         end
-        def thresholds = @thresholds ||= (@data["thresholds"] || {}).freeze
-        def languages_config = @languages_config ||= (@data["languages"] || {}).freeze
+        def thresholds = (law_data["thresholds"] || {}).freeze
+        def languages_config = (law_data["languages"] || {}).freeze
       end
       # Markdown block rendering for system-prompt injection — a rendering
       # concern separate from Rules' own lookup/parsing responsibility.
@@ -91,8 +88,7 @@ module Master
         @root = root || Master::ROOT
         @data_dir = File.join(@root, "data")
         @voice_path = File.join(@root, "data", "voice.yml")
-        @data = Master.load_laws(root: @root) || {}
-        @voice_data = load_yaml(@voice_path) || {}
+
         # limits.yml is no longer parsed here. It was loaded on every Rules
         # construction purely to back two accessors nobody called; the callers that
         # do want it (scan/request, fix_loop, mode_posture) each read it themselves,
@@ -145,7 +141,7 @@ module Master
         kernel[id_str] || philosophy.find { |a| a["id"] == id_str }&.dig("name")
       end
 
-      def empty? = @data.empty?
+      def empty? = law_data.empty?
 
       private
 
@@ -154,7 +150,26 @@ module Master
       # with no section returns {}, the same as an absent optional file.
       def folded(key)
         stems = DATA_ALIASES.fetch(key, [key.to_s])
-        stems.filter_map { |stem| @data[stem] }.first || {}
+        stems.filter_map { |stem| law_data[stem] }.first || {}
+      end
+
+      def law_data
+        @law_data_stamp = law_data_signature
+        @law_data ||= Master.load_laws(root: @root) || {}
+      end
+
+      def law_data_signature
+        path = File.join(@data_dir, "laws.yml")
+        return nil unless File.file?(path)
+
+        stat = File.stat(path)
+        [stat.size, stat.ino, stat.mtime.to_r]
+      end
+
+      def voice_data
+        return {} unless File.file?(@voice_path)
+
+        Master.load_yaml(@voice_path) || {}
       end
 
       def resolve_data_path(key)
