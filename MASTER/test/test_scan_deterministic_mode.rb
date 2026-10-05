@@ -38,8 +38,8 @@ class TestScanDeterministicMode < Minitest::Test
   # is present, so anything non-nil exercises the branch.
   def fake_agent = Object.new
 
-  # default_critique? reads only the environment, so the collaborators can be
-  # nil — constructing a real scanner and fix loop here would test them, not it.
+  # default_critique? is environment-controlled for normal passes and also
+  # honours read-only apply=false, so the collaborators can be nil in these tests.
   def pipeline
     Master::CLI::Pipeline::Pass.new(scanner: nil, fix_loop: nil, root: Master::ROOT)
   end
@@ -84,6 +84,10 @@ class TestScanDeterministicMode < Minitest::Test
   def test_the_through_pipeline_critiques_by_default
     assert pipeline.send(:default_critique?),
            "critique stopped defaulting on — /scan would silently lose the council"
+  end
+
+  def test_read_only_pass_suppresses_implicit_council
+    refute pipeline.send(:default_critique?, {}, apply: false)
   end
 
   def test_deterministic_mode_suppresses_the_council
