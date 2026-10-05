@@ -55,7 +55,7 @@ class TestGateChain < Minitest::Test
     jobs = G.suite_jobs(G::TREES)
     assert_includes jobs.map(&:first), "tools"
     assert_includes jobs.map(&:first), "STUDIO media"
-    assert_equal 7, jobs.size
+    assert_equal 8, jobs.size
   end
 
   def test_suite_stage_has_a_human_readable_purpose
