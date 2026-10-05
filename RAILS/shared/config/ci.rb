@@ -4,8 +4,6 @@
 # of what a passing step prints: `ci0 at brgen: 14 of 14 steps passed in 6m 12s`,
 # with each step's output in log/ci.log (Operator::Dmesg::CiRun says why).
 require "rbconfig"
-require_relative "../../tools/operator/ci_guard"
-require_relative "../../tools/operator/dmesg"
 
 ENV["GIT_CEILING_DIRECTORIES"] ||= "/"
 # Refresh by default. This was "0", and the step below only passes --update
