@@ -18,7 +18,7 @@ module Master
       # already follows.
       def self.ensure_law!
         require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
-        ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.rules.empty?
+        ::Law.load_all(File.join(Master::ROOT, "law"))
       end
 
       module Admission
