@@ -118,7 +118,7 @@ module Master
       # "0 in law/" while 122 rules were defined and waiting.
       def domain_rule_count(root)
         require File.join(root, "law", "law.rb")
-        ::Law.load_all(File.join(root, "law")) if ::Law.rules.empty?
+        ::Law.load_all(File.join(root, "law"))
         ::Law.rules.size
       rescue StandardError => e
         Swallow.log(e, context: "BootReceipt.domain_rule_count")
