@@ -3,7 +3,7 @@
 # A "Do Not Touch" entry states a conclusion. Conclusions do not rot loudly.
 #
 # The entry defending the rule shards said they sat near their consumers. The
-# four shards had one consumer between them — `load_rules`, which concatenated
+# four shards had one consumer between them — `load_laws`, which concatenated
 # them back into a single hash before any scanner saw them — so the reason was
 # false from the day the shards were created, and stayed on the list until an
 # operator overrode it by hand in 2026-08. Had the entry named the test its own

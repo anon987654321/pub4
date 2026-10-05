@@ -15,7 +15,7 @@ class NoLibBackedgesTest < Minitest::Test
   #
   # It reads `require` lines, so an autoloaded constant slips past it. That is
   # why Core::Constitution.load calls YAML.safe_load_file on data/laws.yml
-  # itself instead of Master.load_rules: the loader lives in lib/boot/data.rb,
+  # itself instead of Master.load_laws: the loader lives in lib/boot/data.rb,
   # needs no require to reach, and calling it makes the fold's first backedge. The two
   # reads return the same object; the loader adds a size limit, a timeout and
   # permitted classes, and laws.yml holds no Date, which keeps them equal.

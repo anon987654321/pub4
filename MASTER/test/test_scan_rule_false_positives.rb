@@ -553,7 +553,7 @@ end
   end
 
   def test_no_veto_pattern_needs_more_than_one_line
-    multiline = Master.load_rules.fetch("veto_patterns", {}).filter_map do |name, spec|
+    multiline = Master.load_laws.fetch("veto_patterns", {}).filter_map do |name, spec|
       name if self.class.requires_a_newline?(spec["detect"])
     end
 

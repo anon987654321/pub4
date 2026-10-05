@@ -126,12 +126,12 @@ class TestDataReachAttribution < Minitest::Test
   end
 
   # A reader following the house rule never writes the basename: it asks
-  # Master.load_rules or @rules.data(:soul), because lint:reader_singularity
+  # Master.load_laws or @rules.data(:soul), because lint:reader_singularity
   # refuses a second loader. Judged on the basename alone, obeying that rule
   # made a live reader invisible and the census called nine of them unread.
   def test_an_accessor_names_the_file_it_resolves_to
     Tool.instance_variable_set(:@code_files, {
-      "output_check.rb" => "Master.load_rules(root:).fetch('llm_output_rules', {})",
+      "output_check.rb" => "Master.load_laws(root:).fetch('llm_output_rules', {})",
       "builder.rb" => "soul = @rules.data(:soul); Array(soul['prompt_ordering'])",
     })
 

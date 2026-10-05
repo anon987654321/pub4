@@ -20,8 +20,8 @@ class TestChitchatAgentRouting < Minitest::Test
 
   def test_routed_models_classifies_greeting_as_chitchat
     models = @agent.send(:routed_models, "hey, how are you?")
-    free_ids = Array(@router.send(:load_rules).dig("models", "free")).filter_map { |row| row["id"] }
-    keyless_ids = Array(@router.send(:load_rules).dig("ferrum_web_chat", "free_latest"))
+    free_ids = Array(@router.send(:load_laws).dig("models", "free")).filter_map { |row| row["id"] }
+    keyless_ids = Array(@router.send(:load_laws).dig("ferrum_web_chat", "free_latest"))
     assert_includes free_ids + keyless_ids, models.first
   end
 

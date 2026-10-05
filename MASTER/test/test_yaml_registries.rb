@@ -459,7 +459,7 @@ end
   end
 
   def merged_rules
-    @merged_rules ||= Master.load_rules(root: File.expand_path("..", __dir__))
+    @merged_rules ||= Master.load_laws(root: File.expand_path("..", __dir__))
   end
 
   def patterns

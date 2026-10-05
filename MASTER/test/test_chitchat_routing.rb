@@ -14,7 +14,7 @@ class TestChitchatRouting < Minitest::Test
   def test_preferred_chitchat_selects_free_tier_model
     router = Master::CLI::Routing::ModelRouter.new(config: FakeConfig.new, root: Master::ROOT)
     chosen = router.preferred(task_type: :chitchat)
-    free_ids = Array(router.send(:load_rules).dig("models", "free")).filter_map { |row| row["id"] }
+    free_ids = Array(router.send(:load_laws).dig("models", "free")).filter_map { |row| row["id"] }
     assert_includes free_ids, chosen, "chitchat should route to a free-tier model, got #{chosen}"
   end
 
@@ -50,15 +50,15 @@ class TestChitchatRouting < Minitest::Test
   def test_chitchat_intent_routes_to_free_tier
     router = Master::CLI::Routing::ModelRouter.new(config: FakeConfig.new, root: Master::ROOT)
     model = router.preferred_for("hello there")
-    free_ids = Array(router.send(:load_rules).dig("models", "free")).filter_map { |row| row["id"] }
-    keyless_ids = Array(router.send(:load_rules).dig("ferrum_web_chat", "free_latest"))
+    free_ids = Array(router.send(:load_laws).dig("models", "free")).filter_map { |row| row["id"] }
+    keyless_ids = Array(router.send(:load_laws).dig("ferrum_web_chat", "free_latest"))
     assert_includes(free_ids + keyless_ids, model)
   end
 
   def test_chitchat_fallback_chain_prefers_free_or_keyless_head
     router = Master::CLI::Routing::ModelRouter.new(config: FakeConfig.new, root: Master::ROOT)
-    free_ids = Array(router.send(:load_rules).dig("models", "free")).filter_map { |row| row["id"] }
-    keyless_ids = Array(router.send(:load_rules).dig("ferrum_web_chat", "free_latest"))
+    free_ids = Array(router.send(:load_laws).dig("models", "free")).filter_map { |row| row["id"] }
+    keyless_ids = Array(router.send(:load_laws).dig("ferrum_web_chat", "free_latest"))
     allowed = free_ids + keyless_ids
     chain = router.fallback_chain(task_type: :chitchat)
     assert chain.any?, "expected non-empty fallback chain"

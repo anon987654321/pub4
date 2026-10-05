@@ -10,7 +10,7 @@ module Master
     # was found only because every load printed "No such file or directory"
     # before quietly defaulting. Callers for whom absence is a legitimate answer
     # should check existence themselves rather than ask this method to go quiet
-    # (see load_rules); the signature stays fixed because several tests stub
+    # (see load_laws); the signature stays fixed because several tests stub
     # this method, and a new keyword here raises ArgumentError inside the stub.
     #
     # Parses are remembered by path, size, inode and mtime, and every call gets
@@ -76,7 +76,7 @@ module Master
     # "load_yaml: No such file or directory ... /T/d2026…/data/laws.yml", which
     # trained readers to scroll past the one warning that has already caught a
     # genuine path bug.
-    def load_rules(root: ROOT)
+    def load_laws(root: ROOT)
       own_root = root == ROOT
       data_dir = own_root ? DATA : File.join(root, "data")
       rules_path = File.join(data_dir, "laws.yml")

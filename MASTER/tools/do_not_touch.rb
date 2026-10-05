@@ -7,7 +7,7 @@ require "open3"
 #
 # The list's item 2 once said the rule shards stayed split because they sat near
 # their consumers. That was false, and had been false for as long as the shards
-# existed: the four of them had one consumer between them, `load_rules`, which
+# existed: the four of them had one consumer between them, `load_laws`, which
 # concatenated them back into a single hash before any scanner saw them. Nobody
 # was careless. The entry stated a conclusion, and conclusions do not rot loudly
 # — it took an operator override in 2026-08 to find out the reason had never

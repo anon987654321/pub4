@@ -44,7 +44,7 @@ module Master
       # The tree the session prints on first boot.
       def dispatch_tree(root, ctx: nil)
         arg = arg_for(ctx)
-        cfg = (Master.load_rules(root:) || {}).dig("paths", "tree") || {}
+        cfg = (Master.load_laws(root:) || {}).dig("paths", "tree") || {}
         depth = arg.to_i.positive? ? arg.to_i : (cfg["max_depth"] || 2)
         cap = cfg["max_lines"] || 200
         tree_lines = []

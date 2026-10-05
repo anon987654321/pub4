@@ -35,7 +35,7 @@ module Master
         # path_pattern: "_controller\.js$"}` and this rule held both as literals,
         # which is a declaration with no reader — the defect this repo hunts most
         # often, sitting inside the file that declares the hunt. Read once per
-        # process: laws.yml is four thousand lines and load_rules memoizes
+        # process: laws.yml is four thousand lines and load_laws memoizes
         # nothing.
         def stimulus_limits
           @stimulus_limits ||= begin

@@ -91,7 +91,7 @@ module Master
         @root = root || Master::ROOT
         @data_dir = File.join(@root, "data")
         @voice_path = Master.data_path("voice.yml")
-        @data = Master.load_rules(root: @root) || {}
+        @data = Master.load_laws(root: @root) || {}
         @voice_data = load_yaml(@voice_path) || {}
         # limits.yml is no longer parsed here. It was loaded on every Rules
         # construction purely to back two accessors nobody called; the callers that

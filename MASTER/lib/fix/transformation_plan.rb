@@ -133,7 +133,7 @@ module Master
 
       def load_policy
         return {} unless @root == Master::ROOT
-        Master.load_rules(root: @root).fetch("transformation_policy")
+        Master.load_laws(root: @root).fetch("transformation_policy")
       end
     end
   end

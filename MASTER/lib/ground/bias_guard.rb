@@ -64,7 +64,7 @@ module Master
       end
 
       def load_biases
-        Master.load_rules(root: @root).fetch("biases", {})
+        Master.load_laws(root: @root).fetch("biases", {})
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "BiasGuard.load_biases")
         {}

@@ -205,7 +205,7 @@ module Master
       end
 
       def evidence_config
-        @evidence_config ||= (Master.load_rules(root: @root || Master::ROOT) || {}).fetch("evidence_scoring", {})
+        @evidence_config ||= (Master.load_laws(root: @root || Master::ROOT) || {}).fetch("evidence_scoring", {})
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "Pipeline.evidence_config")
         {}

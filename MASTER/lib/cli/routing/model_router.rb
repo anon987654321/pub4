@@ -41,7 +41,7 @@ module Master
           @provider_health = provider_health || ProviderHealth.new(
             path: File.join(@root, "runtime", "telemetry", "provider_health.ndjson")
           )
-          @rules = load_rules
+          @rules = load_laws
           @capability_map = Master::CLI::Routing::CapabilityMap.new(path: File.join(@root, "runtime", "telemetry", "model_capabilities.json"),
                                                                     write: Object.new.extend(Io::AtomicWrite).method(:write_atomic))
           @compute_pool = ComputePool.new(router: self, root: @root)
@@ -283,11 +283,11 @@ module Master
           @config.model.to_s if @config.model.to_s.match?(/\A(?:ollama:|ollama\/|local:)/)
         end
 
-        def load_rules
+        def load_laws
           path = File.join(@root, "data", "models.yml")
           Master.load_yaml(path) || {}
         rescue StandardError => e
-          Master::Ground::Swallow.log(e, context: "model_router.load_rules", path:)
+          Master::Ground::Swallow.log(e, context: "model_router.load_laws", path:)
           {}
         end
       end

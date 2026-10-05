@@ -59,15 +59,15 @@ module Master
         lines.join("\n")
       end
 
-      # Master.load_rules, not a private re-read. This method used to load
+      # Master.load_laws, not a private re-read. This method used to load
       # laws.yml and then overwrite base["rules"] with its own copy of the
-      # shard-merge loop — a second implementation of Master.load_rules living
+      # shard-merge loop — a second implementation of Master.load_laws living
       # two directories away. When the shards were folded into laws.yml on
       # 2026-08-12 that copy started returning {} and assigning it over the real
       # rules, so /why went silent for every registry and scan rule while
       # reporting nothing wrong.
       def rules
-        @rules ||= Master.load_rules(root: @root)
+        @rules ||= Master.load_laws(root: @root)
       end
 
       def soul

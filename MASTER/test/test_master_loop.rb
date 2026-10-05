@@ -203,7 +203,7 @@ class TestMasterLoop < Minitest::Test
       assert rules.key?(id), "#{id} binds conduct and must still be a rule"
     end
 
-    refute Master.load_rules.key?("operator_principles"),
+    refute Master.load_laws.key?("operator_principles"),
            "conduct in laws.yml is a rule no detector can ever match"
     refute Master.load_yaml(Master.data_path("soul.yml")).fetch("absolute").key?("rules"),
            "one registry: law/, not soul"

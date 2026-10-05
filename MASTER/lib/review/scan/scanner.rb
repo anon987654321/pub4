@@ -250,11 +250,8 @@ module Master
 
         def rule_transforms
           @rule_transforms ||= begin
-            rules = Master.load_yaml(Master::LAWS_PATH)
-            declared = rules["rules"]
-            raise "rules configuration missing" unless declared.is_a?(Array)
-
-            declared.to_h { |rule| [rule["id"].to_s, rule["autofix"]] }
+            laws = Master.law_entries(root: Master::ROOT)
+            laws.to_h { |law| [law["id"].to_s, law["autofix"]] if law["autofix"] }.compact
           end
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "Scanner.rule_transforms")

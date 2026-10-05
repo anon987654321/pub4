@@ -27,7 +27,7 @@ module Master
       # What laws.yml paths.immutable names (the catalogue, the soul, the core
       # spine), from the repository root. An effect reads them and never writes.
       def self.immutable
-        @immutable ||= Array((Master.load_rules || {}).dig("paths", "immutable")).map { |entry| "MASTER/#{entry}" }
+        @immutable ||= Array((Master.load_laws || {}).dig("paths", "immutable")).map { |entry| "MASTER/#{entry}" }
       end
       REVIEW_DIFF_LINES = 800
       # Paths that mean something outside the tree. OPENBSD/etc, var, usr, home

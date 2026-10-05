@@ -27,7 +27,7 @@ class TestReaderSingularity < Minitest::Test
 
     assert_empty over,
                  "a data file gained a reader. Route the new call through an accessor on Master.* " \
-                 "(the way load_rules works) rather than loading the file a second way:\n  #{over.join("\n  ")}"
+                 "(the way load_laws works) rather than loading the file a second way:\n  #{over.join("\n  ")}"
   end
 
   # A ceiling above the real count is slack, and slack is how a ratchet stops

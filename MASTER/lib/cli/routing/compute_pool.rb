@@ -33,7 +33,7 @@ module Master
         def initialize(router:, root: Master::ROOT)
           @router = router
           @root = root
-          @rules = load_rules
+          @rules = load_laws
           @stats = load_stats
           @catalog = nil
           @mutex = Mutex.new
@@ -350,7 +350,7 @@ module Master
           previous + ((value - previous) / count)
         end
 
-        def load_rules
+        def load_laws
           path = File.join(@root, "data", "models.yml")
           return {} unless File.file?(path) && File.expand_path(@root) != File.expand_path(Master::ROOT)
 
@@ -359,7 +359,7 @@ module Master
 
           rules
         rescue StandardError => e
-          Master::Ground::Swallow.log(e, context: "compute_pool.load_rules")
+          Master::Ground::Swallow.log(e, context: "compute_pool.load_laws")
           raise "compute pool routing policy unreadable: #{e.class}: #{e.message}"
         end
       end

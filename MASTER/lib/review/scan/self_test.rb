@@ -155,7 +155,7 @@ module Master
         def initialize(root:, event_bus: nil)
           @root = root
           @bus = event_bus
-          rules = Master.load_rules(root:) || {}
+          rules = Master.load_laws(root:) || {}
           @checks = rules["self_test"] || {}
         end
 
@@ -275,7 +275,7 @@ module Master
 
         def duplicate_rule_id_findings
           path = File.join(@root, "data", "laws.yml")
-          ids = rule_ids(Master.load_rules(root: @root))
+          ids = rule_ids(Master.load_laws(root: @root))
           ids.group_by(&:itself).filter_map do |id, values|
             finding(path:, line: 1, message: "duplicate rule id #{id}") if values.size > 1
           end

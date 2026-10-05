@@ -84,9 +84,9 @@ module Operator
     # opened, and `lint:reader_singularity` enforces it — so a basename-only test
     # reports the discipline as the defect. Measured 2026-09-10: eight of the
     # forty-five misattributions were readers doing exactly what they are told
-    # to, `Master.load_rules`, `Master::LAWS_PATH` and `@rules.data(:soul)`.
+    # to, `Master.load_laws`, `Master::LAWS_PATH` and `@rules.data(:soul)`.
     ACCESSORS = {
-      "laws.yml" => %w[LAWS_PATH load_rules Master.law flatten_rules],
+      "laws.yml" => %w[LAWS_PATH load_laws Master.law flatten_rules],
       "soul.yml" => ["soul_data", 'data("soul")', "data(:soul)"],
       "runtime.yml" => %w[RuntimeCatalog],
       "limits.yml" => ["limits_path", "data(:workflow)"],

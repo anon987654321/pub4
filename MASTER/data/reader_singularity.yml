@@ -19,7 +19,7 @@
 # Recorded 2026-08-12. This is the measurement, not an endorsement: nine data
 # files being read from nine places each is how the why_explainer defect got
 # written in the first place, and every one of these is a candidate for an
-# accessor on Master.* the way load_rules already is.
+# accessor on Master.* the way load_laws already is.
 reader_singularity:
   ceiling:
     models.yml: 9

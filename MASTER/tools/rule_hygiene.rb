@@ -36,7 +36,7 @@ module Operator
       lib = File.join(MASTER, "lib")
       $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
       require "master"
-      Master.load_rules(root: MASTER)
+      Master.load_laws(root: MASTER)
     end
 
     # The two populations laws.yml declares, and no third. A hand-rolled walk

@@ -140,7 +140,7 @@ module Master
   # The one reader of data/laws.yml. A missing section raises rather than
   # returning {}, because every caller reads the empty result as a law with nothing in it.
   def self.law_entries(root: ROOT)
-    data = load_rules(root:) || {}
+    data = load_laws(root:) || {}
     legacy = data["laws"]
     if legacy.is_a?(Hash)
       return legacy.filter_map { |id, value| value.merge("id" => id.to_s) if value.is_a?(Hash) }
@@ -156,7 +156,7 @@ module Master
     path = File.join(root, "data", "laws.yml")
     mtime = File.mtime(path)
     @law = nil unless @law_stamp == [path, mtime]
-    @law ||= (load_rules(root:) || {}).tap { @law_stamp = [path, mtime] }
+    @law ||= (load_laws(root:) || {}).tap { @law_stamp = [path, mtime] }
     @law.fetch(section.to_s) { raise KeyError, "data/laws.yml has no #{section}: section" }
   end
 
@@ -174,7 +174,7 @@ module Master
   # nested section under `config`. This rebuilds the map they used to form, so
   # everything that dug design_rules by block name still reaches its key.
   def self.tokens(root: ROOT)
-    (load_rules(root:) || {})["tokens"] || {}
+    (load_laws(root:) || {})["tokens"] || {}
   end
 
 
