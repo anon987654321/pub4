@@ -40,6 +40,16 @@ class TestFixProtocol < Minitest::Test
     end
   end
 
+  def test_render_uses_the_canonical_law_contract_digest
+    Dir.mktmpdir("fix-protocol-digest") do |root|
+      File.write(File.join(root, "thing.rb"), "puts :ok\n")
+
+      payload = JSON.parse(Master::Fix::Protocol.render(root:, target: root))
+
+      assert_equal Law::Contract.digest, payload.fetch("law_digest")
+    end
+  end
+
   def test_rule_metadata_exposes_machine_readable_repair_and_verification
     law = Master::Fix::Protocol.rules.find(&:semantic?)
 
