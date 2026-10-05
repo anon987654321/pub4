@@ -4,7 +4,7 @@ module Master
   module Ground
     # Resolves rule conflicts using laws.yml laws: priority (lower wins).
     class LawResolver
-      def initialize(rules_data: nil)
+      def initialize(rules_data: nil, root: Master::ROOT)
         @laws = (rules_data || Master.load_yaml(Master::LAWS_PATH)).fetch("laws", {})
                   .transform_values { |v| v["priority"].to_i }
                   .sort_by { |_, priority| priority }
