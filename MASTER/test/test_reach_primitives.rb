@@ -68,6 +68,23 @@ class ReachPrimitivesTest < Minitest::Test
     assert_includes result.value!, "needle.txt"
   end
 
+  def test_search_files_never_returns_cached_results
+    path = File.join(@dir, "mutable.txt")
+    tool = Master::Io::SearchFiles.new(root: @dir)
+
+    File.write(path, "first\n")
+    assert_equal "(no matches)", tool.call(pattern: "second").value!
+
+    File.write(path, "second\n")
+    assert_includes tool.call(pattern: "second").value!, "mutable.txt"
+
+    File.delete(path)
+    File.write(File.join(@dir, "new.txt"), "second\n")
+    out = tool.call(pattern: "second").value!
+    assert_includes out, "new.txt"
+    refute_includes out, "mutable.txt"
+  end
+
   def test_str_replace_replaces_unique_match
     path = File.join(@dir, "edit.txt")
     File.write(path, "hello world\n")
