@@ -24,7 +24,7 @@ module Master
         Scan::Live.ensure_sync!
         _arg, dry_run, no_autofix, clean_arg, do_autofix = parse_scan_args(ctx)
 
-        Scan::Live.with_interrupt_dump(root:) do |holder|
+        Scan::Live.with_interrupt_dump(root:, snapshot: !dry_run) do |holder|
           scan_pass(scanner:, root:, clean_arg:, dry_run:, no_autofix:, do_autofix:, holder:, on_total:)
         end
       end
@@ -57,7 +57,7 @@ module Master
           pairs:, profile:, rule_filter:, severity_filter:, dry_run:, autofixes:, do_autofix:, pass1_total:, on_total:,
         )
         holder[:text] = text
-        Scan::Live.snapshot!(text, root:, note: "final")
+        Scan::Live.snapshot!(text, root:, note: "final") unless dry_run
         text
       end
 
@@ -73,7 +73,7 @@ module Master
         )
         Scan::Live.emit("pass 1, #{pass1.brief}") if do_autofix
         holder[:text] = pass1.render
-        Scan::Live.snapshot!(holder[:text], root:, note: "pass1 before autofix", announce: false)
+        Scan::Live.snapshot!(holder[:text], root:, note: "pass1 before autofix", announce: false) unless dry_run
         pass1.total_count
       end
 

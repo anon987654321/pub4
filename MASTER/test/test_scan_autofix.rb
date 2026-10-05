@@ -132,6 +132,9 @@ class TestScanAutofix < Minitest::Test
         rules: [FakeRule.new("FROZEN_LITERAL", true)],
       )
 
+      snapshot = File.join(root, ".master", "scan_last.txt")
+      refute File.exist?(snapshot)
+
       out = Master::CLI::CommandRegistry.observe(
         scanner:,
         root:,
@@ -139,6 +142,7 @@ class TestScanAutofix < Minitest::Test
       )
 
       assert_equal original, File.read(path)
+      refute File.exist?(snapshot), "dry-run created a working-tree snapshot"
       assert_includes out, "dry-run:"
       refute_includes out, "autofixed:"
     end
