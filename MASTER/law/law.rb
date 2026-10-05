@@ -111,18 +111,8 @@ module Law
     # without silently becoming merge blockers.
     def enforceable? = %i[active trusted].include?(lifecycle)
 
-    LIFECYCLE_TRANSITIONS = {
-      proposed: %i[proven retired],
-      proven: %i[active advisory retired],
-      active: %i[observed advisory retired],
-      observed: %i[trusted active advisory retired],
-      trusted: %i[active observed advisory retired],
-      advisory: %i[proven active retired],
-      retired: %i[proposed],
-    }.freeze
-
     def can_transition_to?(state)
-      LIFECYCLE_TRANSITIONS.fetch(lifecycle).include?(state.to_sym)
+      ::Law::Rule::LIFECYCLE_TRANSITIONS.fetch(lifecycle).include?(state.to_sym)
     end
 
     def proof_kind
@@ -182,7 +172,7 @@ module Law
         prove_as_real_file!
       end
 
-      unless Rule::LIFECYCLE_TRANSITIONS.key?(lifecycle)
+      unless ::Law::Rule::LIFECYCLE_TRANSITIONS.key?(lifecycle)
         raise ArgumentError, "#{id}: unknown lifecycle #{lifecycle.inspect}"
       end
       unless %i[never review automatic].include?(autofix)
@@ -319,6 +309,18 @@ module Law
       end
     end
   end
+
+  # Data.define's block keeps lexical constants on Law, not on Rule. Publish
+  # the lifecycle graph on Rule explicitly because callers treat it as Rule API.
+  Rule.const_set(:LIFECYCLE_TRANSITIONS, {
+    proposed: %i[proven retired],
+    proven: %i[active advisory retired],
+    active: %i[observed advisory retired],
+    observed: %i[trusted active advisory retired],
+    trusted: %i[active observed advisory retired],
+    advisory: %i[proven active retired],
+    retired: %i[proposed],
+  }.freeze)
 
   class Builder
     %i[source severity mode languages scope principle_scope lifecycle autofix path path_exclude absent ask practice fix bad good reads_comments].each { |a| define_method(a) { |v| @h[a] = v } }
