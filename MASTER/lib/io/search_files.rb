@@ -12,18 +12,14 @@ module Master
       def initialize(root:, event_bus: nil)
         @root = File.realpath(root)
         @bus = event_bus
-        @cache = {}
       end
 
-      def reset! = @cache.clear
+      def reset! = self
 
       def call(pattern:, glob: "**/*", context_lines: 2)
-        key = [pattern, glob, context_lines]
-        return @cache[key] if @cache.key?(key)
-
         regexp = Regexp.new(pattern)
-        results = collect_results(cached_paths(glob), regexp, context_lines)
-        @cache[key] = Result.ok(format_results(results))
+        results = collect_results(current_paths(glob), regexp, context_lines)
+        Result.ok(format_results(results))
       rescue RegexpError
         Result.err("invalid pattern: #{pattern}", category: :validation)
       rescue StandardError => e
@@ -68,9 +64,8 @@ module Master
         results.join("\n---\n") + suffix
       end
 
-      def cached_paths(glob)
-        key = [:glob, glob]
-        @cache[key] ||= Dir.glob(File.join(@root, glob)).select { |path| searchable?(path) }
+      def current_paths(glob)
+        Dir.glob(File.join(@root, glob)).select { |path| searchable?(path) }
       end
 
       # A glob can climb with `..` and a hit can be a symlink out of the root,
