@@ -26,7 +26,12 @@ module Master
         end
 
         def self.default
-          @default ||= new(rules: InfraHelpers.build_scanner(root: Master::ROOT).rules)
+          digest = ::Law::Contract.digest
+          return @default if @default && @default_digest == digest
+
+          @default = new(rules: InfraHelpers.build_scanner(root: Master::ROOT).rules)
+          @default_digest = digest
+          @default
         end
 
         # A rule that takes an agent is a semantic rule whatever it is called.
