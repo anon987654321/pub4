@@ -33,6 +33,7 @@ module Master
         review_verbs(d).merge(session_verbs(infra[:session], infra[:undo])).merge(
           "status" => command(:dispatch_status, d[:root], d[:fix_loop], d[:bus], d[:git], d[:trace], d[:learnings]),
           "commit" => command(:dispatch_commit, ai[:agent], root, review_gate: true),
+          "deploy" => command(:dispatch_deploy, root, review_gate: true),
           "model" => command(:dispatch_model, d[:agent], d[:config], d[:metrics], d[:root]),
           "plugin" => command(:dispatch_plugin),
           "pair" => command(:dispatch_pair, root),
