@@ -747,6 +747,26 @@ class TestFixConvergence < Minitest::Test
   end
 
   # 7. Running out of passes is not finishing.
+  def test_structural_sweeps_normalise_tree_roots_to_the_repository
+    loop = Master::Fix::FixLoop.allocate
+    loop.instance_variable_set(:@root, Master::RAILS_ROOT)
+
+    sweeps = loop.send(:build_sweeps, agent: nil, root: Master::RAILS_ROOT, bus: nil)
+
+    restructure = sweeps.find { |sweep| sweep.is_a?(Master::Fix::RestructureSweep) }
+    rename = sweeps.find { |sweep| sweep.is_a?(Master::Fix::RenameSweep) }
+
+    assert_equal Master::REPO_ROOT, restructure.instance_variable_get(:@root)
+    assert_equal Master::REPO_ROOT, rename.instance_variable_get(:@repo_root)
+  end
+
+  def test_fix_loop_does_not_downgrade_programming_defects_to_target_failures
+    source = File.read(File.join(Master::ROOT, "lib/fix/fix_loop.rb"), encoding: "UTF-8")
+
+    assert_includes source, "rescue NameError, NoMethodError, TypeError => e"
+    assert_includes source, "raise"
+  end
+
   def test_structure_preflight_runs_before_the_first_repair_pass
     target = File.join(@root, "RAILS")
     FileUtils.mkdir_p(target)

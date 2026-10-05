@@ -16,6 +16,41 @@ class TestFixProtocol < Minitest::Test
     assert_includes text, "No deterministic fixer exists"
   end
 
+  def test_structural_delivery_paths_share_fix_safety_and_delivery_contracts
+    restructure = File.read(File.join(Master::ROOT, "lib/fix/restructure.rb"), encoding: "UTF-8")
+    rename = File.read(File.join(Master::ROOT, "lib/fix/file_rename.rb"), encoding: "UTF-8")
+
+    assert_includes restructure, "Operator::RatchetSponsor.validate!"
+    assert_includes restructure, "Ground::PreserveUserIntent"
+    assert_includes restructure, "@ground_truth"
+    assert_includes restructure, "@git.push"
+    assert_includes restructure, "@known_good.promote!"
+
+    assert_includes rename, "Operator::RatchetSponsor.validate!"
+    assert_includes rename, "Ground::PreserveUserIntent"
+    assert_includes rename, "@ground_truth"
+    assert_includes rename, "@git.push"
+    assert_includes rename, "@known_good.promote!"
+  end
+
+  def test_fix_committer_finds_the_nearest_bundle_for_each_rails_app
+    Dir.mktmpdir("fix-committer") do |root|
+      FileUtils.mkdir_p(File.join(root, "MASTER"))
+      FileUtils.mkdir_p(File.join(root, "RAILS", "brgen", "app", "models"))
+      FileUtils.mkdir_p(File.join(root, "RAILS", "amber", "app", "models"))
+      File.write(File.join(root, "MASTER", "Gemfile"), "source \"https://rubygems.org\"\n")
+      File.write(File.join(root, "RAILS", "brgen", "Gemfile"), "source \"https://rubygems.org\"\n")
+      File.write(File.join(root, "RAILS", "amber", "Gemfile"), "source \"https://rubygems.org\"\n")
+
+      committer = Master::Fix::FixLoop::Committer.new(root:)
+      assert_equal File.join(root, "RAILS", "brgen"),
+                   committer.send(:gemfile_root, File.join(root, "RAILS", "brgen", "app", "models", "post.rb"))
+      assert_equal File.join(root, "RAILS", "amber"),
+                   committer.send(:gemfile_root, File.join(root, "RAILS", "amber", "app", "models", "item.rb"))
+      assert_nil committer.send(:gemfile_root, File.join(root, "OPENBSD", "bin", "check.rb"))
+    end
+  end
+
   def test_external_context_carries_the_cross_tree_operating_model
     Dir.mktmpdir("fix-context") do |root|
       FileUtils.mkdir_p(File.join(root, "RAILS"))

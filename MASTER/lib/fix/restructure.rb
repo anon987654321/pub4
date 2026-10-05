@@ -46,11 +46,15 @@ module Master
         end].uniq
       end
 
-      def initialize(repo_root:, tree: "MASTER", git: nil, proof: nil)
+      def initialize(repo_root:, tree: "MASTER", git: nil, proof: nil,
+                     ground_truth: nil, preserve_user_intent: nil)
         @root = repo_root
         @tree = tree
         @git = git || Io::GitOperations.new(repo_root)
         @proof = proof || Proof.for(tree, repo_root)
+        @ground_truth = ground_truth
+        @preserve_user_intent = preserve_user_intent || Ground::PreserveUserIntent.new(root: repo_root)
+        @known_good = Ground::KnownGood.new(root: repo_root)
       end
 
       # review takes the applied diff and answers nil to approve, or a reason.
@@ -62,7 +66,8 @@ module Master
         before = @proof.baseline(plan)
         originals = snapshot(plan)
         apply(plan)
-        failure = review.call(diff(plan, originals)) || @proof.failure(plan, before)
+        diff_text = diff(plan, originals)
+        failure = review.call(diff_text) || @proof.failure(plan, before) || delivery_safety_failure(plan, message, diff_text)
         return undo(originals, failure) if failure
 
         commit(plan, message, evidence: preservation_evidence(plan, originals))
@@ -167,10 +172,27 @@ module Master
         }
       end
 
+      def delivery_safety_failure(plan, message, diff_text)
+        Operator::RatchetSponsor.validate!(root: @root, changed_paths: plan.paths)
+        preserved = @preserve_user_intent&.assert_preserved!(diff_text, message:)
+        return preserved.message if preserved&.err?
+
+        stale = if @ground_truth
+                  plan.paths.select { |path| path.end_with?(".rb") }
+                      .reject { |path| @ground_truth.fresh?(File.join(@root, path)) }
+                else
+                  []
+                end
+        stale.empty? ? nil : "ground_truth: stale read required for #{stale.join(", ")} before restructure commit"
+      rescue StandardError => e
+        "delivery safety: #{e.class}: #{e.message}"
+      end
+
       def commit(plan, message, evidence:)
         @git.git!("add", "-A", "--", *plan.paths)
         @git.git!("commit", "-m", message, "-m", Master::Core::World::COMMIT_TRAILER, "--", *plan.paths)
         @git.push
+        @known_good.promote!(commit: @git.head, paths: plan.paths)
         Result.ok(summary: plan.summary, files: plan.paths.size, head: @git.head, evidence:)
       end
 

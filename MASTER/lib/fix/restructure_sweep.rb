@@ -88,12 +88,22 @@ module Master
         ```
       TEXT
 
-      def initialize(agent:, repo_root:, bus: nil, restructure: nil, transformation_plan: nil)
+      def initialize(agent:, repo_root:, bus: nil, restructure: nil, transformation_plan: nil,
+                     ground_truth: nil, preserve_user_intent: nil)
         @agent = agent
         @root = repo_root
         @bus = bus
         @transformation_plan = transformation_plan || TransformationPlan.new(root: Master::ROOT)
-        @restructures = Hash.new { |cache, tree| cache[tree] = restructure || Restructure.new(repo_root:, tree:) }
+        @ground_truth = ground_truth
+        @preserve_user_intent = preserve_user_intent
+        @restructures = Hash.new do |cache, tree|
+          cache[tree] = restructure || Restructure.new(
+            repo_root:,
+            tree:,
+            ground_truth: @ground_truth,
+            preserve_user_intent: @preserve_user_intent,
+          )
+        end
       end
 
       def run(target:, run_id:, phase: :normal)

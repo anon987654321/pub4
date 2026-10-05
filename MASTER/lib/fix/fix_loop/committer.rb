@@ -342,18 +342,21 @@ module Master
         def lint_changed_ruby(paths)
           files = ruby_files(paths)
           return true if files.empty?
-          return skip_lint("missing Gemfile") unless bundle_context?
 
-          cmd = [Master::BUNDLE_BIN, "exec", "rubocop", "--fail-level", "E", "--force-exclusion", *files]
-          # Io::Exec's own timeout kills rubocop and answers a failed status, so a
-          # lint that did not finish blocks the commit. Timeout.timeout around it
-          # waited for rubocop anyway, then counted the timeout as a pass, and
-          # the commit went in unlinted.
-          _out, _err, status = Master::Io::Exec.capture3(*cmd, chdir: @root, timeout: LINT_TIMEOUT_SECONDS)
-          if status.success?
-            true
-          else
-            @bus&.publish("fix_loop:commit_blocked", reason: "rubocop", files:)
+          groups = files.group_by { |path| gemfile_root(path) }
+          missing = groups.delete(nil)
+          skip_lint("no Gemfile for #{missing.size} changed Ruby file(s)") if missing&.any?
+          groups.all? do |bundle_root, group|
+            cmd = [Master::BUNDLE_BIN, "exec", "rubocop", "--fail-level", "E", "--force-exclusion", *group]
+            # Io::Exec's own timeout kills rubocop and answers a failed status, so a
+            # lint that did not finish blocks the commit. Each bundle root gets its
+            # own process: pub4/ has no Gemfile, RAILS contains one per app, and
+            # MASTER has its own. Running from the repository root silently skipped
+            # all of them on an all-tree /fix.
+            _out, _err, status = Master::Io::Exec.capture3(*cmd, chdir: bundle_root, timeout: LINT_TIMEOUT_SECONDS)
+            next true if status.success?
+
+            @bus&.publish("fix_loop:commit_blocked", reason: "rubocop", files: group)
             false
           end
         rescue Errno::ENOENT, StandardError => e
@@ -361,13 +364,21 @@ module Master
           false
         end
 
+        def gemfile_root(path)
+          @gemfile_root_cache ||= {}
+          dir = File.dirname(File.expand_path(path))
+          root = File.expand_path(@root)
+          until dir == File.dirname(dir)
+            return dir if File.file?(File.join(dir, "Gemfile"))
+            break unless dir == root || dir.start_with?("#{root}#{File::SEPARATOR}")
+            dir = File.dirname(dir)
+          end
+          File.file?(File.join(root, "Gemfile")) ? root : nil
+        end
+
         def skip_lint(error)
           @bus&.publish("fix_loop:commit_lint_skipped", error:)
           true
-        end
-
-        def bundle_context?
-          @root && File.file?(File.join(@root, "Gemfile"))
         end
 
         # Absolute paths of the Ruby files among the pass's own changes.
