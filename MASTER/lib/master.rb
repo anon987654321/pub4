@@ -139,6 +139,9 @@ module Master
 
   # The one reader of data/laws.yml. A missing section raises rather than
   # returning {}, because every caller reads the empty result as a law with nothing in it.
+  LAW_CACHE_MUTEX = Mutex.new
+  private_constant :LAW_CACHE_MUTEX
+
   def self.law_entries(root: ROOT)
     data = load_laws(root:) || {}
     legacy = data["laws"]
@@ -155,9 +158,17 @@ module Master
   def self.law(section, root: ROOT)
     path = File.join(root, "data", "laws.yml")
     mtime = File.mtime(path)
-    @law = nil unless @law_stamp == [path, mtime]
-    @law ||= (load_laws(root:) || {}).tap { @law_stamp = [path, mtime] }
-    @law.fetch(section.to_s) { raise KeyError, "data/laws.yml has no #{section}: section" }
+    LAW_CACHE_MUTEX.synchronize do
+      @law_cache ||= {}
+      cached = @law_cache[path]
+      data = if cached && cached[:mtime] == mtime
+               cached[:data]
+             else
+               @law_cache[path] = { mtime:, data: (load_laws(root:) || {}) }
+               @law_cache[path][:data]
+             end
+      data.fetch(section.to_s) { raise KeyError, "data/laws.yml has no #{section}: section" }
+    end
   end
 
   # The one reader of data/agent_taxonomy.yml. It had three, each building the
