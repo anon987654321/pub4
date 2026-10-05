@@ -106,6 +106,9 @@ module Law
     # principle may have Ruby, zsh, Rails or another domain adapter.
     def universal? = principle_scope == :universal
 
+    # Kernel conduct laws are the executable projection of soul's absolute rules.
+    def kernel? = source.to_s == "MASTER constitution (soul.yml absolute.rules)"
+
     # Lifecycle controls whether a rule may affect enforcement. Existing rules
     # default to active for compatibility; candidates can enter proposed/proven
     # without silently becoming merge blockers.
