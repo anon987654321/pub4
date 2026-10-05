@@ -493,13 +493,15 @@ module Law
       end
 
       files.each do |source|
-        stamp = [File.stat(source).size, File.stat(source).ino, File.mtime(source).to_r]
+        stat = File.stat(source)
+        stamp = [stat.size, stat.ino, stat.mtime.to_r]
         next if @law_stamps[source] == stamp
 
         @law_sources[source].to_a.each { |id| @rules.delete(id) }
         @law_sources[source] = []
+        before_ids = @rules.keys
         load source
-        @law_sources[source] = @rules.keys - (rules_before.keys - @law_sources.values.flatten)
+        @law_sources[source] = @rules.keys - before_ids
         @law_stamps[source] = stamp
       end
       @rules
