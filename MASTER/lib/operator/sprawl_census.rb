@@ -1,11 +1,4 @@
-    def all_tracked
-      @all_tracked ||= `git -C #{ROOT} ls-files -z`.split("\0")
-                       .select { |f| File.file?(File.join(ROOT, f)) }
-    end
-
-    def tracked
-      @tracked ||= all_tracked.reject { |f| MANDATED.any? { |re| "/#{f}".match?(re) } }
-    end# frozen_string_literal: true
+# frozen_string_literal: true
 
 # Shape census over every tracked file in all four governed trees. The tree's shape is
 # conduct: a directory bought for one file, a name that repeats its parent, a
@@ -84,10 +77,13 @@ module Operator
       end
     end
 
+    def all_tracked
+      @all_tracked ||= `git -C #{ROOT} ls-files -z`.split("\0")
+                       .select { |f| File.file?(File.join(ROOT, f)) }
+    end
+
     def tracked
-      @tracked ||= `git -C #{ROOT} ls-files -z`.split("\0")
-                   .reject { |f| MANDATED.any? { |re| "/#{f}".match?(re) } }
-                   .select { |f| File.file?(File.join(ROOT, f)) }
+      @tracked ||= all_tracked.reject { |f| MANDATED.any? { |re| "/#{f}".match?(re) } }
     end
 
     # A directory holding one file and no subdirectories is a namespace bought
