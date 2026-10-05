@@ -57,7 +57,10 @@ module Master
 
     def validate_data!(root: ROOT, bus: nil)
       paths = Dir.glob(File.join(root, "data", "**/*.yml")).sort
-      signature = paths.to_h { |path| [path, File.mtime(path).to_i] }
+      signature = paths.to_h do |path|
+        stat = File.stat(path)
+        [path, [stat.size, stat.ino, stat.mtime.to_r]]
+      end
       cached = data_validation_cache[root]
       return cached[:errors] if cached && cached[:signature] == signature
 
