@@ -119,6 +119,14 @@ class TestLawContract < Minitest::Test
     assert_equal rows.count { |row| row["principle_scope"] == "universal" }, rendered.fetch("universal_count")
   end
 
+  def test_symbol_language_declarations_match_string_file_languages
+    rule = Law.rules.fetch(:EACH_WITH_OBJECT)
+
+    assert_equal ["ruby"], rule.languages
+    assert rule.applies?("fixture.rb", "ruby")
+    refute rule.applies?("fixture.js", "javascript")
+  end
+
   def test_lifecycle_transitions_are_published_on_rule
     assert Law::Rule.const_defined?(:LIFECYCLE_TRANSITIONS, false)
     assert_equal %i[proposed proven active observed trusted advisory retired],
