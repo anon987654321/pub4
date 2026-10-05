@@ -197,8 +197,7 @@ module Law
         raise ArgumentError,
               "#{id}: declares language(s) #{unreachable.join(', ')} that FILE_LANGUAGE_MAP never produces"
       end
-      self
-    end
+      self    end
 
     private
 
@@ -371,8 +370,8 @@ module Law
 
     POLICY = {
       "lifecycle" => {
-        "states" => Rule::LIFECYCLE_TRANSITIONS.keys.map(&:to_s),
-        "transitions" => Rule::LIFECYCLE_TRANSITIONS.transform_keys(&:to_s).transform_values { |states| states.map(&:to_s) },
+        "states" => ::Law::Rule::LIFECYCLE_TRANSITIONS.keys.map(&:to_s),
+        "transitions" => ::Law::Rule::LIFECYCLE_TRANSITIONS.transform_keys(&:to_s).transform_values { |states| states.map(&:to_s) },
       },
       "autofix" => {
         "policies" => %w[never review automatic],
@@ -397,8 +396,7 @@ module Law
         "contract_version" => 1,
         "law_digest" => Digest::SHA256.hexdigest(JSON.generate(entries)),
         "protocol" => PROTOCOL,
-        "law_policy" => POLICY,
-        "transformation_policy" => policy.fetch("transformation_policy"),
+        "law_policy" => POLICY,        "transformation_policy" => policy.fetch("transformation_policy"),
         "laws" => laws,
       )
     end
@@ -439,7 +437,7 @@ module Law
       duplicate = ids.tally.select { |_, count| count > 1 }.keys
       raise ArgumentError, "duplicate executable law ids: #{duplicate.join(', ')}" unless duplicate.empty?
 
-      invalid = rules.reject { |rule| Rule::LIFECYCLE_TRANSITIONS.key?(rule.lifecycle) }
+      invalid = rules.reject { |rule| ::Law::Rule::LIFECYCLE_TRANSITIONS.key?(rule.lifecycle) }
       raise ArgumentError, "invalid rule lifecycle: #{invalid.map(&:id).join(', ')}" unless invalid.empty?
 
       invalid = rules.reject { |rule| %i[never review automatic].include?(rule.autofix) }
