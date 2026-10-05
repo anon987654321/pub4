@@ -51,6 +51,13 @@ class TestCommandRegistryDispatch < Minitest::Test
     assert_match(%r{/face}, Registry.help_text("face"))
   end
 
+  def test_deploy_is_documented_and_review_gated
+    command = built.fetch("deploy")
+    assert_equal :dispatch_deploy, command.method_name
+    assert_includes Registry.help_text("deploy"), "/deploy all --confirm"
+    assert_match(/needs explicit confirmation/, command.call(Master::CLI::PipelineContext.new(user_message: "/deploy all")))
+  end
+
   def test_critique_is_a_documented_discoverable_command
     assert built.key?("critique")
     assert_includes Registry::HELP_TOPICS.keys, "critique"
