@@ -78,6 +78,19 @@ class TestLawContract < Minitest::Test
     assert rule.key?("good")
   end
 
+  def test_digest_covers_governing_transformation_policy
+    original = Master.method(:law)
+    before = Law::Contract.digest
+    Master.define_singleton_method(:law) do |section, root: Master::ROOT|
+      value = original.call(section, root:)
+      section.to_s == "transformation_policy" ? value.merge("_probe" => "changed") : value
+    end
+
+    refute_equal before, Law::Contract.digest
+  ensure
+    Master.define_singleton_method(:law, original) if original
+  end
+
   def test_digest_changes_with_the_executable_law_set
     first = Law::Contract.digest
     assert_equal first, JSON.parse(Law::Contract.render).fetch("law_digest")
