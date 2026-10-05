@@ -14,6 +14,7 @@ require_relative "rule_loop/fix_strategies"
 require_relative "rule_loop/fix_verification"
 require_relative "rule_loop/outcome_tracking"
 require_relative "visual_custody_blocking"
+require_relative "rule_health"
 require_relative "rule_loop/autofix_policy"
 
 module Master
