@@ -79,6 +79,32 @@ class MediaIntentTest < Minitest::Test
     end
   end
 
+  def test_plain_live_music_language_routes_to_dilla
+    assert Master::Io::MediaIntent.handles?("play some music in real time")
+    assert Master::Io::MediaIntent.handles?("play some music locally")
+    calls = []
+
+    Master::Io::ScriptDispatch.stub(
+      :run,
+      lambda do |root:, tool:, arg:, env: {}|
+        calls << { root:, tool:, arg:, env: }
+        Master::Result.ok("playing Dilla")
+      end
+    ) do
+      result = Master::Io::MediaIntent.dispatch("play some music locally", root: MasterPaths.root)
+      assert result.ok?, -> { result.message.to_s }
+    end
+
+    assert_equal "dilla", calls.fetch(0).fetch(:tool)
+  end
+
+  def test_postpro_capability_question_does_not_require_source_path
+    result = Master::Io::MediaIntent.dispatch("can you use postpro.rb?", root: MasterPaths.root)
+
+    assert result.ok?, -> { result.message.to_s }
+    assert_match(/provide an existing image file or directory path/, result.value!.fetch(:rendered))
+  end
+
   def test_background_music_is_a_media_intent
     assert Master::Io::MediaIntent.handles?("play your music in the background")
     calls = []
