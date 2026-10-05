@@ -12,7 +12,6 @@ module Master
         # key was constant. NO_GOD_CLASS is SIMPLEST_WORKS, FEATURE_ENVY is
         # the SRP detector, FEW_ARGUMENTS is the conciseness one.
         TIER2_QUALITY_RULE_IDS = %w[NO_GOD_CLASS FEATURE_ENVY FEW_ARGUMENTS].freeze
-        PRIORS_PATH = File.join(Master::ROOT, "data", "laws.yml").freeze
         AGE_PATH = File.join("data", "violation_age.yml").freeze
         SKIP_DIRS_RE = %r{/(\.git|vendor|tmp|var|node_modules|\.bundle|coverage|log|dist|knowledge)/}.freeze
 
@@ -27,7 +26,7 @@ module Master
           deps = load_deps
           priors = load_priors
           ext_wts = extension_weights
-          law_resolver = Master::Ground::LawResolver.new
+          law_resolver = Master::Ground::LawResolver.new(root: @root)
           rules_index = Priority.rules_index(root: @root)
           sorted = @rules.each_with_index.sort_by do |r, i|
             base_prior = priors.dig(r.id, "prior_p").to_f
@@ -120,7 +119,7 @@ module Master
 
         def load_deps
           @deps_cache ||= begin
-            raw = Master.law("rule_deps")
+            raw = Master.law("rule_deps", root: @root)
             raise "rule_deps registry unreadable" unless raw.is_a?(Hash)
 
             raw.transform_values { |v| Array(v["after"] || []) }
@@ -132,8 +131,7 @@ module Master
 
         def load_priors
           @priors_cache ||= begin
-            data = Master.load_yaml(PRIORS_PATH)
-            priors = data["violation_priors"]
+            priors = Master.law("violation_priors", root: @root)
             raise "violation_priors configuration missing" unless priors.is_a?(Hash)
 
             priors
