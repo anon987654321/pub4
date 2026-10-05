@@ -384,7 +384,7 @@ end) if source.to_s.strip.empty?
       end
 
       def preamble
-        @injected_preamble || self.class.soul_preamble
+        @injected_preamble || self.class.soul_preamble(root: @root)
       end
 
       def extract_code(text, ext = nil)
