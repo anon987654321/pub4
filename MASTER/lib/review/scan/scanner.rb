@@ -31,6 +31,13 @@ module Master
           PathFilter.skip_path?(path, root:)
         end
 
+        def self.scan_candidate?(path, root: nil)
+          return false unless File.file?(path)
+          return false if skip_path?(path, root:)
+
+          Master.language_for(path) || File.basename(path).match?(/\Aface\.part\d+\.txt\z/)
+        end
+
         def initialize(rules: [], event_bus: nil, file_sleep_s: 0)
           @rules = Array(rules)
           @bus = event_bus
@@ -137,11 +144,7 @@ module Master
         end
 
         def scannable_path?(path, root)
-          return false unless File.file?(path)
-          return false if self.class.skip_path?(path, root:)
-
-          language = Master.language_for(path)
-          language || File.basename(path).match?(/\Aface\.part\d+\.txt\z/)
+          self.class.scan_candidate?(path, root:)
         end
 
         def validate_depth!(depth)
