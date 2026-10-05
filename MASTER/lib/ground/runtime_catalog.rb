@@ -91,12 +91,20 @@ module Master
         def clear_cache!
           @cache = {}
           @catalog = nil
+          @catalog_stamp = nil
         end
 
         private
 
         def catalog
-          @catalog ||= Master.load_yaml(CATALOG_PATH, default: {})
+          stat = File.stat(CATALOG_PATH)
+          stamp = [stat.size, stat.ino, stat.mtime.to_r]
+          return @catalog if @catalog && @catalog_stamp == stamp
+
+          @catalog = Master.load_yaml(CATALOG_PATH, default: {})
+          @catalog_stamp = stamp
+          @cache = {}
+          @catalog
         end
 
         # The three files the browser payload is assembled from. Private because
