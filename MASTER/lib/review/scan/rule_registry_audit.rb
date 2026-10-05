@@ -34,6 +34,7 @@ module Master
 
         def initialize(root: Master::ROOT)
           @root = root
+          @master_root = Master.master_root(root: root)
         end
 
         def call
@@ -118,7 +119,7 @@ module Master
             .map { |klass| RuleFactory.build(klass, root: @root).id.to_s }
             .to_set
           registry = registry.map { |id| id.to_s.downcase }.to_set
-          deps = Master.law("rule_deps", root: @root)
+          deps = Master.law("rule_deps", root: @master_root)
           graphed = deps.keys.map { |k| k.to_s.downcase }.to_set
           registry.reject { |id| graphed.include?(id) }.sort
         end
@@ -126,14 +127,16 @@ module Master
         private
 
         def executable_semantic_ids
-          require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
-          ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.rules.empty?
+          law_dir = File.join(@master_root, "law")
+          require File.join(law_dir, "law") unless defined?(::Law)
+          ::Law.load_all(law_dir)
           ::Law.rules.values.select(&:semantic?).map { |law| law.id.to_s.downcase }.to_set
         end
 
         def law_detector?(id)
-          require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
-          ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.rules.empty?
+          law_dir = File.join(@master_root, "law")
+          require File.join(law_dir, "law") unless defined?(::Law)
+          ::Law.load_all(law_dir)
           law = ::Law.rules[id.to_sym]
           law&.detect
         end
@@ -147,15 +150,16 @@ module Master
         # generates its four rules from data/laws.yml, so a grep for a literal
         # `Law.define(:ID)` reads none of them.
         def law_ids
-          require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
-          ::Law.load_all(File.join(@root, "law")) if ::Law.rules.empty?
+          law_dir = File.join(@master_root, "law")
+          require File.join(law_dir, "law") unless defined?(::Law)
+          ::Law.load_all(law_dir)
           ::Law.rules.keys.map { |id| id.to_s.downcase }.to_set
         rescue StandardError => e
           raise "rule registry law census failed: #{e.class}: #{e.message}"
         end
 
         def load_yaml_rules
-          Master.law_entries(root: @root)
+          Master.law_entries(root: @master_root)
         end
 
         # The reference loads the rule files, and a class in a multi-class file is
@@ -168,6 +172,13 @@ module Master
             .reject { |klass| RuleFactory.bridge_class?(klass) }
             .map { |klass| RuleFactory.build(klass, root: @root).id.to_s.downcase }
             .to_set
+        end
+
+        def kernel_ids
+          law_dir = File.join(@master_root, "law")
+          require File.join(law_dir, "law") unless defined?(::Law)
+          ::Law.load_all(law_dir)
+          ::Law.rules.values.select(&:kernel?).map { |law| law.id.to_s.downcase }.to_set
         end
 
         def classify_yaml_entries(yaml_entries, registry)
@@ -185,7 +196,7 @@ module Master
 
           {
             yaml_ids: yaml_entries.map { |r| key_of(r) },
-            kernel: yaml_entries.select { |r| r["tier"] == "kernel" }.map { |r| key_of(r) },
+            kernel: kernel_ids,
             lexical_wired: ids_of(lexical_wired), lexical_unwired: ids_of(lexical_unwired),
             semantic_only: ids_of(semantic_only), structural_unwired: ids_of(structural_unwired)
           }
