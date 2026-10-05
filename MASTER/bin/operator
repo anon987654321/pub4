@@ -537,7 +537,7 @@ when "test"
   #   MASTER/**        -> MASTER rake test (+ dogfood when law/ moved)
   #   RAILS/shared/**  -> all three app suites (shared lands in three apps)
   #   RAILS/<app>/**   -> that app suite
-  #   RAILS/gates|test -> the standalone contract suite
+  #   RAILS/test       -> the standalone contract suite
   #   OPENBSD/**       -> its local minitests (box-side proof stays on vm23)
   #   MASTER/tools/**        -> MASTER tool suite
   paths = ARGV.dup
