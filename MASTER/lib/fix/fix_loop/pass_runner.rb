@@ -233,10 +233,13 @@ module Master
           opportunity_found = found.select { |v| v[:rule].to_s == OpportunityPass::RULE_ID }
           council = @council&.run(files: files_with_violations(source_found, files), pass:, deadline:) if source_found.any?
           run_llm_stage(source_found, files, pass, deadline, council:) if source_found.any?
-          run_improvement_stage(improvement_found, pass:, files:, deadline:) if improvement_found.any?
-          run_opportunity_stage(opportunity_found, files, pass, deadline, council:) if opportunity_found.any?
-          run_visual_stage(visual_found, pass:, image: visual&.value!&.fetch(:image, nil), files:, deadline:) if visual_found.any?
-        end
+          run_llm_stage(source_found, files, pass, deadline, council:) if source_found.any?
+          improvement_fixed = run_improvement_stage(improvement_found, pass:, files:, deadline:) if improvement_found.any?
+          opportunity_fixed = run_opportunity_stage(opportunity_found, files, pass, deadline, council:) if opportunity_found.any?
+          visual_fixed = run_visual_stage(visual_found, pass:, image: visual&.value!&.fetch(:image, nil), files:, deadline:) if visual_found.any?
+          @pass_progress ||= Array(improvement_fixed).first.to_i > 0
+          @pass_progress ||= Array(opportunity_fixed).first.to_i > 0
+          @pass_progress ||= Array(visual_fixed).first.to_i > 0
 
         def run_fast_stage(files, pass)
           fixed = fast_pass(files)

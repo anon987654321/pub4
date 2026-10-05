@@ -297,6 +297,14 @@ module Master
 
         remaining_passes.times do |offset|
           i = first_index + offset
+          if offset.positive?
+            refreshed = @file_collector.collect(target)
+            files.replace(refreshed)
+            Master::Trace::Dmesg.status(
+              "fix0",
+              "pass #{i + 1}, scope refreshed, #{Master::Trace::Dmesg.counted(files.size, "file")}",
+            )
+          end
           outcome = run_one_pass(i, files:, target:, deadline:, budget_seconds:, state:, run_id:)
           return terminal(:plateau, "no further improvement after #{i + 1} pass(es)") if outcome == :break
           return outcome if outcome

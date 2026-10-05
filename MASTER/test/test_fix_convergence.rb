@@ -779,6 +779,43 @@ class TestFixConvergence < Minitest::Test
     assert_equal [:pass, 0], order.last
   end
 
+  def test_each_inner_pass_refreshes_the_fix_scope
+    loop = build_loop([])
+    first = File.join(@root, "first.rb")
+    second = File.join(@root, "second.rb")
+    File.write(first, "x = 1\n")
+    File.write(second, "y = 1\n")
+
+    collector = Object.new
+    calls = 0
+    collector.define_singleton_method(:collect) do |_target|
+      calls += 1
+      calls == 1 ? [first] : [second]
+    end
+    loop.instance_variable_set(:@file_collector, collector)
+
+    seen = []
+    loop.define_singleton_method(:run_one_pass) do |_index, files:, **|
+      seen << files.dup
+      nil
+    end
+
+    result = loop.send(
+      :run_passes,
+      files: [first],
+      target: @root,
+      max_passes: 2,
+      deadline: Time.now + 60,
+      budget_seconds: 60,
+      start_pass: 1,
+      run_id: "scope-refresh",
+    )
+
+    assert_match(/PLATEAU/, result.value!)
+    assert_equal [[first], [second]], seen
+    assert_equal 1, calls
+  end
+
   def test_a_pass_limit_is_a_plateau_not_a_done
     violations = [{ rule: "TEST_RULE", file: File.join(@root, "dummy.yml"), line: 1, message: "stays" }]
     result = build_loop(violations).run(@root, max_passes: 2)
