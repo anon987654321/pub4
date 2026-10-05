@@ -25,6 +25,21 @@ class TestSemanticRuleScope < Minitest::Test
     assert_raises(RuntimeError) { rule.check("def foo; end", path: "foo.rb") }
   end
 
+  def test_virtual_files_with_equal_lengths_do_not_share_semantic_cache_entries
+    calls = 0
+    agent = Object.new
+    agent.define_singleton_method(:ask) do |_prompt, operation:|
+      calls += 1
+      "CLEAN"
+    end
+    rule = Master::Review::Scan::Rules::SemanticRule.new(agent:)
+
+    rule.check("x = 1\n", path: "virtual.rb")
+    rule.check("y = 2\n", path: "virtual.rb")
+
+    assert_equal 2, calls
+  end
+
   def test_a_ruby_rule_is_not_asked_about_a_stylesheet
     assert_includes scoped("ruby"), "RAILS_THIN_CONTROLLER_SEMANTIC"
     refute_includes scoped("css"), "RAILS_THIN_CONTROLLER_SEMANTIC"
