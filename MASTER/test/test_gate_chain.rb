@@ -37,6 +37,26 @@ class TestGateChain < Minitest::Test
     assert_equal %w[lexical source sprawl council], writers
   end
 
+def test_fix_verification_is_read_only
+    calls = []
+    stage = G::Stage.new(name: "suites", purpose: "proof", mutates: false, run: -> { [true, ["suites: ok"], 0] })
+
+    G.stub(:trees_for_target, %w[MASTER]) do
+      G.stub(:stages, ->(scan_only:, trees:) { calls << scan_only; [stage] }) do
+        G.stub(:report, ->(selected, scan_only:, trees:, return_results:) {
+          assert_equal true, scan_only
+          assert_equal true, return_results
+          [0, []]
+        }) do
+          assert_equal [0, []], G.verify_fix(target: "MASTER")
+        end
+      end
+    end
+
+    assert_equal [true], calls
+  end
+
+
   # --tree exists to run less. Its whole risk is running less than the caller
   # thinks: a narrowed ladder that still calls itself a gate, or a typo that
   # narrows it to nothing and exits clean.
