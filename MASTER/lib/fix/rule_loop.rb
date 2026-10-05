@@ -58,10 +58,12 @@ module Master
         def soul_preamble(root: Master::ROOT)
           root = Master.master_root(root:)
           path = File.join(root, "data", "soul.yml")
-          signature = begin
-            stat = File.stat(path)
-            [File.expand_path(path), stat.size, stat.ino, stat.mtime.to_r]
-          end
+          signature = if File.file?(path)
+                       stat = File.stat(path)
+                       [File.expand_path(path), stat.size, stat.ino, stat.mtime.to_r]
+                     else
+                       [File.expand_path(path), nil]
+                     end
 
           @soul_preamble_mutex.synchronize do
             @soul_preamble_cache ||= {}
