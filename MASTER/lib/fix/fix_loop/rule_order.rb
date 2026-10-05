@@ -27,7 +27,7 @@ module Master
           deps = load_deps
           priors = load_priors
           ext_wts = extension_weights
-          law_resolver = Master::Ground::LawResolver.new
+          law_resolver = Master::Ground::LawResolver.new(root: @root)
           rules_index = Priority.rules_index(root: @root)
           sorted = @rules.each_with_index.sort_by do |r, i|
             base_prior = priors.dig(r.id, "prior_p").to_f
