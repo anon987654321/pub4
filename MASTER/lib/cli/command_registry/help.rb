@@ -23,6 +23,15 @@ module Master
             "There is no /scan: observation is where a fix starts, not a command.",
           ],
         },
+        "deploy" => {
+          summary: "deploy MASTER or the Rails fleet to vm23 through the canonical VPS path",
+          detail: [
+            "/deploy all --confirm — deploy MASTER, brgen, amber and bsdports to vm23.",
+            "/deploy master --confirm — deploy MASTER to vm23.",
+            "Deployment is always remote and review-gated. The command delegates to bin/operator",
+            "and OPENBSD/bin/vps-deploy; it does not create a second deploy implementation.",
+          ],
+        },
         "review" => {
           summary: "read-only compatibility view over the /fix pipeline",
           detail: [
