@@ -367,7 +367,7 @@ module Master
       end
 
       def preamble
-        @injected_preamble || self.class.soul_preamble
+        @injected_preamble || self.class.soul_preamble(root: @root)
       end
 
       def extract_code(text, ext = nil)
