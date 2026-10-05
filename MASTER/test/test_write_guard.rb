@@ -20,6 +20,30 @@ class WriteGuardTest < Minitest::Test
 
   def path(name = "example.rb") = File.join(@tmp, name)
 
+  def test_default_rebuilds_after_law_digest_changes
+    guard_class = Master::Review::Scan::WriteGuard
+    built = 0
+
+    Master::Review::Scan::InfraHelpers.stub(:build_scanner, ->(**) {
+      built += 1
+      Struct.new(:rules).new([])
+    }) do
+      guard_class.reset_default!
+
+      ::Law::Contract.stub(:digest, "digest-one") do
+        first = guard_class.default
+        ::Law::Contract.stub(:digest, "digest-two") do
+          second = guard_class.default
+          refute_same first, second
+        end
+      end
+    end
+
+    assert_equal 2, built
+  ensure
+    Master::Review::Scan::WriteGuard.reset_default!
+  end
+
   def test_a_write_that_introduces_an_error_is_blocked
     verdict = @guard.verdict(path:, content: DIRTY)
 
