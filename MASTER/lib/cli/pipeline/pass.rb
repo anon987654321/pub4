@@ -58,7 +58,7 @@ module Master
           posture = Master::Ground::ModePosture.current(root: @root)
           @only = normalize_stages(only)
           apply = default_apply?(posture) if apply.nil?
-          critique = default_critique?(posture, resolved) if critique.nil?
+          critique = default_critique?(posture, resolved, apply:) if critique.nil?
           critique = @only.include?("critique") if @only
           shell = shell_target(resolved)
           @apply = apply
@@ -250,7 +250,7 @@ def default_apply?(*) = false
   # runs /critique again as its own separate stage, which is the tier that
   # is supposed to own it.
 
-  def default_critique?(*) = ENV["MASTER_SCAN_DETERMINISTIC"] != "1"
+  def default_critique?(*, apply: nil) = apply != false && ENV["MASTER_SCAN_DETERMINISTIC"] != "1"
 
         def run_observation(arg, unit:)
           # Stash unit so Scanner progress lines attach to this observation.
