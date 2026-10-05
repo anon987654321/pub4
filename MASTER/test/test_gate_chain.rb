@@ -134,6 +134,19 @@ class TestGateChain < Minitest::Test
     assert_raises(ArgumentError) { G.normalise_trees("NOPE") }
   end
 
+  def test_malformed_council_harvest_has_no_executable_picks
+    Dir.mktmpdir do |root|
+      dir = File.join(root, ".master", "critiques")
+      FileUtils.mkdir_p(dir)
+      File.write(
+        File.join(dir, "general_latest.md"),
+        "# council critique — general\n\n- a proposal\n- another proposal\n",
+      )
+
+      assert_empty G.picks_in(dir)
+    end
+  end
+
   # The panel argues for free or it does not argue; either way the tree stays as
   # it was when nobody asked for a fixing run.
   def test_the_council_acts_on_its_picks_only_in_full_fix
