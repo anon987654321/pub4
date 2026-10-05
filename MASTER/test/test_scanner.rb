@@ -140,6 +140,23 @@ class TestScanner < Minitest::Test
     end
   end
 
+  def test_scan_dir_includes_recognized_extensionless_shebang_scripts
+    Dir.mktmpdir do |dir|
+      bin = File.join(dir, "bin")
+      FileUtils.mkdir_p(bin)
+      path = File.join(bin, "doctor")
+      File.write(path, "#!/usr/bin/env ruby\nputs :ok\n")
+      File.write(File.join(dir, "notes.toml"), "key = \"value\"\n")
+      scanner = PathScanner.new(rules: [])
+
+      result = scanner.scan_dir(dir)
+
+      assert result.ok?
+      assert_includes scanner.seen, path
+      refute_includes scanner.seen, File.join(dir, "notes.toml")
+    end
+  end
+
   def test_scan_dir_skips_runtime_generated_and_vendor_segments
     Dir.mktmpdir do |dir|
       FileUtils.mkdir_p(File.join(dir, "vendor", "bundle", "gems"))
