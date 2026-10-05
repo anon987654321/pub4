@@ -26,7 +26,7 @@ module Master
         @root = root
         @bus = bus
         @config = config || load_config
-        @law_resolver = law_resolver || Ground::LawResolver.new
+        @law_resolver = law_resolver || Ground::LawResolver.new(root: @root)
         @rules_index = Priority.rules_index(root: @root)
       end
 
