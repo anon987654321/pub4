@@ -92,6 +92,22 @@ class TestScanner < Minitest::Test
     end
   end
 
+  def test_scan_dir_skips_refused_files_without_failing_the_batch
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "binary.rb")
+      File.binwrite(path, "\x00binary")
+
+      scanner = Master::Review::Scan::Scanner.new(rules: [])
+      result = scanner.scan_dir(dir)
+
+      assert result.ok?
+      pair = result.value!.find { |item| item.first == path }
+      assert pair
+      assert pair.last.err?
+      assert_equal :validation, pair.last.category
+    end
+  end
+
   def test_scan_dir_surfaces_thread_errors_via_bus
     Dir.mktmpdir do |dir|
       path = File.join(dir, "sample.rb")
