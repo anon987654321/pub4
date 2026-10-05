@@ -1,8 +1,43 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
+require "fileutils"
 
 class TestConflictResolverPriority < Minitest::Test
+  def test_priority_resolution_uses_the_active_root
+    Dir.mktmpdir do |dir|
+      FileUtils.mkdir_p(File.join(dir, "data"))
+      File.write(File.join(dir, "data", "laws.yml"), {
+        "HIGH_RULE" => { "priority" => 1, "principle" => "high", "violates_law" => "HIGH_RULE" },
+        "LOW_RULE" => { "priority" => 3, "principle" => "low", "violates_law" => "LOW_RULE" }
+      }.to_yaml)
+
+      resolver = Master::Fix::ConflictResolver.new(root: dir, config: {})
+
+      assert resolver.reject_higher_priority?(
+        original_violation: { rule: "LOW_RULE", severity: "warning" },
+        before: [],
+        after: [{ "rule" => "HIGH_RULE", "severity" => "warning", "line" => 5 }],
+        path: "f.rb"
+      )
+    end
+  end
+
+  def test_conflict_policy_uses_the_active_root_when_not_injected
+    Dir.mktmpdir do |dir|
+      FileUtils.mkdir_p(File.join(dir, "data"))
+      File.write(File.join(dir, "data", "soul.yml"), "negotiable:
+  conflict_resolution:
+    strategy: root_local
+")
+
+      resolver = Master::Fix::ConflictResolver.new(root: dir)
+      config = resolver.instance_variable_get(:@config)
+
+      assert_equal "root_local", config.fetch("strategy")
+    end
+  end
+
   # reject_higher_priority? had no test coverage before it was switched from
   # a plain Severity.rank comparison to the blended Priority.score (severity
   # + law priority + quality) -- these pin down the behavior that switch was
