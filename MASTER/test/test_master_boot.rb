@@ -66,6 +66,24 @@ class MasterBootTest < Minitest::Test
   def test_the_suite_runs_on_mris_dig
     refute_includes Hash.ancestors.map(&:to_s), "Master::HashDigCompat"
   end
+  def test_validate_data_invalidates_when_yaml_changes_without_mtime_second_change
+    Dir.mktmpdir do |dir|
+      data = File.join(dir, "data")
+      Dir.mkdir(data)
+      path = File.join(data, "config.yml")
+      File.write(path, "value: 1\n")
+
+      assert_empty Master.validate_data!(root: dir)
+      before = File.mtime(path)
+
+      File.write(path, ":\n")
+      File.utime(before, before, path)
+
+      errors = Master.validate_data!(root: dir)
+      assert errors.key?("data/config.yml"), errors.inspect
+    end
+  end
+
   def test_a_missing_yaml_file_warns_once
     Dir.mktmpdir do |dir|
       missing = File.join(dir, "PATH_OWNERSHIP.yml")
