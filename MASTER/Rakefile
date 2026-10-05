@@ -82,7 +82,7 @@ task :constitution do
   # how core/ stayed outside its own law for three weeks. rake lint:scan_coverage
   # audits the manifest; this reads it.
   paths = Master.scan_roots(root:).flat_map { |dir| Dir.glob(File.join(root, dir, Master::Review::Scan::Scanner::SCAN_GLOB)) }
-                .select { |path| File.file?(path) && !Master::Review::Scan::Scanner.skip_path?(path, root:) }
+                .select { |path| Master::Review::Scan::Scanner.scan_candidate?(path, root:) }
   puts "constitution: #{paths.size} file(s) across #{Master.scan_roots(root:).join(', ')}"
   # Which half of the law is running. Rules needing a model return [] without
   # one, and no local gate attaches one, so "clean" over 99 rules and "clean"
