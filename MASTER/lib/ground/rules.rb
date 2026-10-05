@@ -43,11 +43,12 @@ module Master
         # `conduct` kind let a rule about how to work be a Law like any other.
         def rules
           @rules ||= begin
-            require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
-            ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.rules.empty?
+            law_dir = File.join(@root, "law")
+            require File.join(law_dir, "law") unless defined?(::Law)
+            ::Law.load_all(law_dir) if ::Law.rules.empty?
             ::Law.rules.values.to_h { |r| [r.id.to_s, (r.practice || r.fix).to_s.gsub(/\s+/, " ").strip] }.freeze
           rescue StandardError => e
-            Master::Ground::Swallow.log(e, context: "rules.rules", path: File.join(Master::ROOT, "law"))
+            Master::Ground::Swallow.log(e, context: "rules.rules", path: File.join(@root, "law"))
             raise "rules registry unreadable: #{e.class}: #{e.message}"
           end
         end
@@ -90,7 +91,7 @@ module Master
       def initialize(root: nil)
         @root = root || Master::ROOT
         @data_dir = File.join(@root, "data")
-        @voice_path = Master.data_path("voice.yml")
+        @voice_path = File.join(@root, "data", "voice.yml")
         @data = Master.load_laws(root: @root) || {}
         @voice_data = load_yaml(@voice_path) || {}
         # limits.yml is no longer parsed here. It was loaded on every Rules
