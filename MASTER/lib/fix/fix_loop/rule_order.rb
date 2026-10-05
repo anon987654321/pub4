@@ -120,7 +120,7 @@ module Master
 
         def load_deps
           @deps_cache ||= begin
-            raw = Master.law("rule_deps")
+            raw = Master.law("rule_deps", root: @root)
             raise "rule_deps registry unreadable" unless raw.is_a?(Hash)
 
             raw.transform_values { |v| Array(v["after"] || []) }
