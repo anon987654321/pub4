@@ -122,6 +122,17 @@ class TestFixLoopFileCollector < Minitest::Test
 
   # soul.yml owns sacred paths; laws.yml is the law catalogue. /fix must never
   # collect the constitutional data or core spine for repair.
+  def test_symlinks_are_never_fix_inputs
+    Dir.mktmpdir do |dir|
+      target = write(dir, "lib/real.rb")
+      link = File.join(dir, "lib", "alias.rb")
+      File.symlink(target, link)
+
+      assert collector(dir).__send__(:skipped?, link)
+      assert_equal :symlink, collector(dir).__send__(:skip_reason, link)
+    end
+  end
+
   def test_sacred_paths_are_never_collected
     files = collector(Master::ROOT).collect(Master::ROOT).map { |f| f.delete_prefix("#{Master::ROOT}/") }
 
