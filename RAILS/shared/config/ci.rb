@@ -4,8 +4,6 @@
 # of what a passing step prints: `ci0 at brgen: 14 of 14 steps passed in 6m 12s`,
 # with each step's output in log/ci.log (Operator::Dmesg::CiRun says why).
 require "rbconfig"
-require_relative "../../tools/operator/ci_guard"
-require_relative "../../tools/operator/dmesg"
 
 ENV["GIT_CEILING_DIRECTORIES"] ||= "/"
 # Refresh by default. This was "0", and the step below only passes --update
@@ -18,6 +16,10 @@ ENV["NPM_CONFIG_CACHE"] ||= File.expand_path("~/.npm")
 monorepo_rails = ENV["PUB4_RAILS_ROOT"].to_s.strip
 monorepo_rails = File.expand_path("../..", __dir__) if monorepo_rails.empty?
 ENV["PUB4_RAILS_ROOT"] ||= monorepo_rails if File.directory?(File.join(monorepo_rails, "shared"))
+master_rails_tools = File.expand_path("../MASTER/tools/rails", monorepo_rails)
+master_rails_tools = "/home/dev/pub4/MASTER/tools/rails" unless File.directory?(master_rails_tools)
+require File.join(master_rails_tools, "operator", "ci_guard")
+require File.join(master_rails_tools, "operator", "dmesg")
 
 vps_host = ENV["PUB4_CI_GUARD"] == "1" || File.exist?("/var/db/pub4_vps") || File.exist?("/etc/relayd.conf")
 
@@ -38,11 +40,8 @@ Operator::CiGuard.run! do
       step "setup", "bin/setup --skip-server"
     end
     css_builder = [
-      ENV["PUB4_RAILS_ROOT"] && File.join(ENV["PUB4_RAILS_ROOT"], "tools", "build_all_css.rb"),
-      "/home/dev/pub4/MASTER/tools/rails/build_all_css.rb",
-      File.expand_path("../..", __dir__) + "/tools/build_all_css.rb",
-      File.expand_path("pub4-rails/MASTER/tools/rails/build_all_css.rb", ENV["HOME"].to_s),
-    ].compact.find { |candidate| File.readable?(candidate) }
+      File.join(master_rails_tools, "build_all_css.rb"),
+    ].find { |candidate| File.readable?(candidate) }
     # A step that could not run is not a step that passed. These else branches
     # used to `echo ... skipping`, which exits 0, so a checkout missing the CSS
     # builder or a design lint reported a full green CI having measured none of
@@ -53,11 +52,7 @@ Operator::CiGuard.run! do
     else
       step "css_build", "echo 'tools/build_all_css.rb not found in any known location' >&2; exit 1"
     end
-    tool_roots = [
-      ENV["PUB4_RAILS_ROOT"] && File.join(ENV["PUB4_RAILS_ROOT"], "tools", "operator"),
-      File.expand_path("../../tools/operator", __dir__),
-      File.expand_path("../../../MASTER/tools", __dir__),
-    ].compact.uniq
+    tool_roots = [File.join(master_rails_tools, "operator")].select { |root| File.directory?(root) }
 
     %w[
       rhythm_lint
@@ -71,7 +66,7 @@ Operator::CiGuard.run! do
       if script
         step lint, "#{RbConfig.ruby} #{script}"
       else
-        step lint, "echo '#{lint}.rb not found in MASTER/tools/rails/operator or MASTER/tools' >&2; exit 1"
+        step lint, "echo '#{lint}.rb not found in MASTER/tools/rails/operator' >&2; exit 1"
       end
     end
     importmap_audit = %(bundle exec #{RbConfig.ruby} -e 'require "./config/environment"; require "importmap/commands"; Importmap::Commands.start(%w[audit])')
