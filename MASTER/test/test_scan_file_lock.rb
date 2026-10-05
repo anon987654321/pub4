@@ -14,6 +14,16 @@ class ScanFileLockTest < Minitest::Test
 
   def lock(&) = @processor.send(:with_file_lock, @target, &)
 
+  def test_syntax_failure_never_repairs_the_file
+    original = "def broken(  \n  value = 1   \n"
+    File.write(@target, original)
+
+    result = @processor.call(path: @target, depth: :deep, rules: [])
+
+    assert result.ok?
+    assert_equal original, File.read(@target)
+  end
+
   def test_a_crashed_holder_frees_the_lock_at_once
     reader, writer = IO.pipe
     pid = fork do
