@@ -204,8 +204,8 @@ module Deploy
         fail_app!(app_failures, "bin/ci must run Rails tests") unless ci_text.include?("rails") && ci_text.include?("test")
         fail_app!(app_failures, "bin/ci must pin BUNDLER_AUDIT_UPDATE (offline VPS)") unless ci_text.include?("BUNDLER_AUDIT_UPDATE")
         fail_app!(app_failures, "bin/ci must set NPM_CONFIG_CACHE (copy-tree npm)") unless ci_text.include?("NPM_CONFIG_CACHE")
-        guard = File.join(RAILS_ROOT, "tools", "operator", "ci_guard.rb")
-        fail_app!(app_failures, "missing tools/operator/ci_guard.rb") unless File.file?(guard)
+        guard = File.join(ROOT, "MASTER", "tools", "rails", "operator", "ci_guard.rb")
+        fail_app!(app_failures, "missing MASTER/tools/rails/operator/ci_guard.rb") unless File.file?(guard)
         fail_app!(app_failures, "shared CI must use Operator::CiGuard") unless ci_text.include?("Operator::CiGuard")
         fail_app!(app_failures, "shared CI must skip importmap on VPS") unless ci_text.include?("unless vps_host")
         # RuboCop no longer skips on the VPS, so this asserts the opposite of what it
