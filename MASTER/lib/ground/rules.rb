@@ -67,7 +67,7 @@ module Master
           items = philosophy(limit:)
           return if items.empty?
 
-          top = items.map { |a| "  #{a["id"]}: #{a["name"]}" }.join("\n")
+          top = items.map { |a| "  #{a["id"]}: #{a["principle"] || a["name"] || a["id"]}" }.join("\n")
           "## Rules (top #{items.size})\n#{top}"
         end
       end
