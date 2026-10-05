@@ -153,6 +153,14 @@ module Deploy
       @result.inconclusive!("self-check could not run (#{e.class}: #{e.message})")
     end
 
+    def tree_matches?(tree, path)
+      relative_path = relative(path)
+      glob = tree.fetch(:glob).to_s
+      return true if glob == "**/*"
+
+      File.fnmatch?(glob, relative_path, File::FNM_PATHNAME)
+    end
+
     def run_without_self_check
       files = source_files
       check_parse(files)
