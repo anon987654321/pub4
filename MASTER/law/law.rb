@@ -393,6 +393,7 @@ module Law
     }.freeze
 
     def render(full: false)
+      Law.load_all(File.join(Master::ROOT, "law"))
       entries = Law.rules.values.sort_by { |rule| rule.id.to_s }.map(&:contract_entry)
       laws = full ? entries : entries.map { |entry| entry.slice("id", "severity", "mode", "languages", "question") }
       JSON.pretty_generate(
