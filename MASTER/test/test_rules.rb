@@ -1,8 +1,65 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
+require "fileutils"
 
 class TestAxioms < Minitest::Test
+  def test_foreign_root_uses_its_law_registry_and_voice
+    Dir.mktmpdir do |dir|
+      FileUtils.mkdir_p(File.join(dir, "law"))
+      FileUtils.mkdir_p(File.join(dir, "data"))
+      File.write(File.join(dir, "data", "voice.yml"), "voice:
+  style: local-root-style
+")
+      File.write(File.join(dir, "data", "laws.yml"), "foreign:
+  priority: 1
+  principle: foreign
+")
+      File.write(File.join(dir, "law", "probe.rb"), <<~RUBY)
+        Law.define(:FOREIGN_ROOT_RULE) do
+          source "test"
+          severity :info
+          practice "foreign root"
+          fix "keep it"
+          bad "bad"
+          good "good"
+        end
+      RUBY
+
+      rules = Master::Ground::Rules.new(root: dir)
+
+      assert_equal "local-root-style", rules.voice.fetch("style")
+      assert_equal "foreign root", rules.rules.fetch("FOREIGN_ROOT_RULE")
+    ensure
+      Law.load_all(File.join(Master::ROOT, "law"))
+    end
+  end
+
+  def test_rules_refresh_derived_views_when_laws_change
+    Dir.mktmpdir do |dir|
+      FileUtils.mkdir_p(File.join(dir, "data"))
+      path = File.join(dir, "data", "laws.yml")
+      write = ->(name, tier) do
+        File.write(path, "#{name}:
+  priority: 1
+  principle: #{name}
+  tier: #{tier}
+")
+      end
+
+      write.call("FIRST", "kernel")
+      rules = Master::Ground::Rules.new(root: dir)
+
+      assert rules.kernel.key?("FIRST")
+      refute rules.philosophy.any? { |row| row["id"] == "FIRST" }
+
+      write.call("SECOND", "design")
+
+      refute rules.kernel.key?("FIRST")
+      assert rules.philosophy.any? { |row| row["id"] == "SECOND" }
+    end
+  end
+
   def setup
     @rules = Master::Ground::Rules.new
   end
