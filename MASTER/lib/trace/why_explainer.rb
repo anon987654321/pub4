@@ -81,7 +81,7 @@ module Master
       def executable_law(key)
         slug = key.upcase.tr("-", "_")
         require File.join(@root, "law", "law") unless defined?(::Law)
-        ::Law.load_all(File.join(@root, "law")) if ::Law.rules.empty?
+        ::Law.load_all(File.join(@root, "law"))
         hit = ::Law.rules[slug.to_sym]
         return unless hit
 
