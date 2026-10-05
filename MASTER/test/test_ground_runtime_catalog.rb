@@ -23,6 +23,25 @@ class TestRuntimeCatalog < Minitest::Test
     end
   end
 
+  def test_catalog_refreshes_after_same_process_edit
+    Dir.mktmpdir("runtime_catalog_refresh") do |root|
+      path = File.join(root, "runtime.yml")
+      File.write(path, "probe:\n  marker: first\n")
+
+      Master::Ground::RuntimeCatalog.stub_const(:CATALOG_PATH, path) do
+        Master::Ground::RuntimeCatalog.clear_cache!
+
+        assert_equal "first", Master::Ground::RuntimeCatalog.load("probe").fetch("marker")
+
+        File.write(path, "probe:\n  marker: second\n")
+
+        assert_equal "second", Master::Ground::RuntimeCatalog.load("probe").fetch("marker")
+      end
+    end
+  ensure
+    Master::Ground::RuntimeCatalog.clear_cache!
+  end
+
   def test_enhancements_filter_by_area_and_tier
     all = Master::Ground::RuntimeCatalog.enhancements
     assert all.size > 100
