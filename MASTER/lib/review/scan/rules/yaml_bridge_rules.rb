@@ -149,7 +149,7 @@ module Master
 
           def rules_mtime
             path = File.join(@root, "data", "laws.yml")
-            File.exist?(path) ? File.mtime(path).to_i : nil
+            File.exist?(path) ? File.mtime(path).to_r : nil
           end
 
           def declarative_hits(code, entry)
