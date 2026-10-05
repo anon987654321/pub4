@@ -161,13 +161,14 @@ class ProjectTree
   # Reads the scopes out of laws.yml rather than counting shard files. Counting
   # files reported "0 rule shards" the moment they were folded in, which reads as
   # loss when it is a move.
-  def rule_scopes(master)
+  def canonical_law_count(master)
     path = File.join(master, "data", "laws.yml")
-    return [] unless File.exist?(path)
+    return 0 unless File.exist?(path)
 
-    (YAML.safe_load_file(path, aliases: true)["rules"] || {}).keys.sort
+    data = YAML.safe_load_file(path, aliases: true) || {}
+    data.count { |_id, value| value.is_a?(Hash) && value["priority"] && value["principle"] }
   rescue Psych::Exception
-    []
+    0
   end
 
   def rails_apps(repo)
