@@ -37,6 +37,17 @@
     end
   end
 
+  def test_missing_yaml_defaults_are_not_shared_between_calls
+    Dir.mktmpdir do |dir|
+      first = Master.load_yaml(File.join(dir, "first.yml"))
+      first["polluted"] = true
+
+      second = Master.load_yaml(File.join(dir, "second.yml"))
+
+      assert_equal({}, second)
+    end
+  end
+
   # laws.yml needs aliases, which is why load_yaml allows them. Aliases are
   # references inside the document; a Ruby object tag is still refused.
   def test_load_yaml_preserves_false_root_values
