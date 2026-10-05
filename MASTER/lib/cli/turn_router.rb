@@ -32,7 +32,7 @@ module Master
         if text.match?(%r{\A(?:fix|review|critique)\b}i)
           return dispatch_slash("/#{text}", container:, felt_sense:, on_turn:)
         end
-        if text.match?(%r{\A(?:please\s+)?deploy\b}i)
+        if text.match?(%r{\A(?:(?:i\s+(?:need|want)\s+you\s+to|(?:can|could|would)\s+you|please)\s+)?deploy\b}i)
           return dispatch_slash("/deploy #{deployment_args(text)}".strip, container:, felt_sense:, on_turn:)
         end
 
