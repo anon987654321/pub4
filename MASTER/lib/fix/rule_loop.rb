@@ -59,7 +59,7 @@ module Master
         def soul_preamble
           @soul_preamble_mutex.synchronize do
             path = Master.data_path("soul.yml")
-            mtime = File.mtime(path).to_i
+            mtime = File.mtime(path).to_r
             return @soul_preamble_cache if @soul_preamble_cache && @soul_preamble_mtime == mtime
 
             @soul_preamble_mtime = mtime
