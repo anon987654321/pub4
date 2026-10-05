@@ -30,7 +30,7 @@ module Master
           "measurement_mode" => Master::Review::Scan::RuleHealth.measurement_mode?(rule),
           "severity" => rule.respond_to?(:severity) ? rule.severity.to_s : "unknown",
           "applies_to" => Array(rule.respond_to?(:applies_to) ? rule.applies_to : []),
-          "path_exclude" => Array(rule.respond_to?(:path_exclude) ? rule.path_exclude : []),
+          "path_exclude" => detector_paths(rule),
           "calibration" => Master::Review::Scan::RuleHealth.calibration(rule)
         }
       end
@@ -42,6 +42,12 @@ module Master
         return "deterministic" if rule.respond_to?(:scannable?) && rule.scannable?
 
         "unknown"
+      end
+
+      def detector_paths(rule)
+        Array(rule.respond_to?(:path_exclude) ? rule.path_exclude : []).map do |path|
+          path.is_a?(Regexp) ? path.source : path.to_s
+        end
       end
 
       # Summary statistics for the matrix.
