@@ -28,10 +28,13 @@ module Master
         KINDS.find { |_, pattern| path.match?(pattern) }&.first
       end
 
-      def initialize(repo_root:, git: nil, css_rules: ->(root) { CssBuild.rules(root) })
+      def initialize(repo_root:, git: nil, css_rules: ->(root) { CssBuild.rules(root) },
+                     preserve_user_intent: nil)
         @root = repo_root
         @git = git || Io::GitOperations.new(repo_root)
         @css_rules = css_rules
+        @preserve_user_intent = preserve_user_intent || Ground::PreserveUserIntent.new(root: repo_root)
+        @known_good = Ground::KnownGood.new(root: repo_root)
       end
 
       # from is repository-relative; to_basename is the new file name alone.
@@ -43,7 +46,8 @@ module Master
 
         before = kind == :stylesheet ? @css_rules.call(@root) : nil
         edited = move_and_rewrite(from, to)
-        failure = proof_failure(kind:, from:, to:, before:, edited:)
+        failure = proof_failure(kind:, from:, to:, before:, edited:) ||
+                  delivery_safety_failure(from, to, edited, reason)
         return undo(from, to, edited, failure) if failure
 
         commit(from, to, edited, reason)
@@ -93,6 +97,23 @@ module Master
         Result.err("rename #{from} -> #{File.basename(to)} undone: #{failure}", category: :validation)
       end
 
+      def delivery_safety_failure(from, to, edited, _reason)
+        paths = [from, to, *edited].uniq
+        Operator::RatchetSponsor.validate!(root: @root, changed_paths: paths)
+        diff, status = Master::Io::Exec.capture2e("git", "-C", @root, "diff", "HEAD", "--", *paths)
+        raise "git diff failed while checking rename delivery safety" unless status.success?
+
+        preserved = @preserve_user_intent&.assert_preserved!(
+          diff,
+          message: "refactor: #{from} is #{File.basename(to)}",
+        )
+        return preserved.message if preserved&.err?
+
+        nil
+      rescue StandardError => e
+        "delivery safety: #{e.class}: #{e.message}"
+      end
+
       def commit(from, to, edited, reason)
         message = "refactor: #{from} is #{File.basename(to)}\n\n#{reason}\n\n" \
                   "Renamed by /fix; #{edited.size} reference(s) rewritten, proof held."
@@ -100,6 +121,7 @@ module Master
         # no longer exists; git mv has already staged its removal.
         @git.git!("add", "--", to, *edited)
         @git.git!("commit", "-m", message, "-m", Master::Core::World::COMMIT_TRAILER, "--", from, to, *edited)
+        @known_good.promote!(commit: @git.head, paths: [from, to, *edited])
         Result.ok(from:, to:, references: edited.size)
       end
 

@@ -107,6 +107,11 @@ module Master
         end
 
         run_journaled(journal, files:, target:, max_passes:, budget_seconds:, mission:, requested:)
+      rescue NameError, NoMethodError, TypeError => e
+        @bus&.publish("fix_loop:defect", error: e.message, backtrace: e.backtrace&.first(8))
+        @run_journal&.crash(run_id, e.message) if defined?(run_id) && run_id
+        mission&.defer!(reason: "defect: #{e.class}: #{e.message}", seconds: 60)
+        raise
       rescue StandardError => e
         @bus&.publish("fix_loop:crash", error: e.message, backtrace: e.backtrace&.first(8))
         @run_journal&.crash(run_id, e.message) if defined?(run_id) && run_id
@@ -190,9 +195,22 @@ module Master
       # The look back over the tree after the repair passes: structural consolidation,
       # then naming cleanup. Both work from the repository root.
       def build_sweeps(agent:, root:, bus:)
-        repo_root = File.basename(root) == "MASTER" ? File.expand_path("..", root) : root
-        restructure = RestructureSweep.new(agent:, repo_root:, bus:, transformation_plan: @transformation_plan)
-        [restructure, RenameSweep.new(agent:, repo_root:, bus:)]
+        repo_root = repository_root_for_sweeps(root)
+        restructure = RestructureSweep.new(
+          agent:, repo_root:, bus:, transformation_plan: @transformation_plan,
+          ground_truth: @ground_truth, preserve_user_intent: @preserve_user_intent
+        )
+        rename = RenameSweep.new(agent:, repo_root:, bus:, preserve_user_intent: @preserve_user_intent)
+        [restructure, rename]
+      end
+
+      def repository_root_for_sweeps(root)
+        expanded = File.expand_path(root)
+        tree = File.basename(expanded)
+        return Master::REPO_ROOT if %w[MASTER RAILS OPENBSD STUDIO].include?(tree) &&
+                                     File.dirname(expanded) == Master::REPO_ROOT
+
+        expanded
       end
 
       # The run once its journal is open and a mission records it: resume what

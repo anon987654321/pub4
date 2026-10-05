@@ -20,11 +20,11 @@ module Master
       FIRST_RENAMES = 1
       SUSPECT = /(?:\A_?(?:zen|x|my|new|old|tmp|temp|misc)_|(?:_|\A_?)(?:util|utils|misc|stuff|things|manager|handler|helper2|copy|final|latest|bak|v\d+)(?:_|\z)|\d+\z)/
 
-      def initialize(agent:, repo_root:, bus: nil, review: nil, rename: nil)
+      def initialize(agent:, repo_root:, bus: nil, review: nil, rename: nil, preserve_user_intent: nil)
         @repo_root = repo_root
         @bus = bus
         @review = review || NameReview.new(agent:)
-        @rename = rename || FileRename.new(repo_root:)
+        @rename = rename || FileRename.new(repo_root:, preserve_user_intent:)
       end
 
       def run(target:, run_id:, phase: :normal)
