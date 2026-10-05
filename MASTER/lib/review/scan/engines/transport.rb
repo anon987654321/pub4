@@ -11,7 +11,6 @@ module Master
         # a local repo, and a scan that waits half a minute on a wedged index
         # has already cost more than the answer is worth.
         GIT_TIMEOUT_SECONDS = 5
-        SCAN_SINCE_EXT = /\.(rb|rake|gemspec|erb|yml|yaml|js|css|sh|zsh)\z/.freeze
         GC_EVERY_N_ITERATIONS = 5
 
         private
@@ -38,9 +37,8 @@ module Master
           master_lib = File.join(repo_root, "MASTER", "lib")
           paths = changed.filter_map do |rel|
             path = File.expand_path(rel, repo_root)
-            next unless File.exist?(path) && File.extname(path).match?(SCAN_SINCE_EXT)
             next unless under_path?(path, scan_root) || under_path?(path, master_lib)
-            next if self.class.skip_path?(path, root: repo_root)
+            next unless self.class.scan_candidate?(path, root: repo_root)
 
             path
           end
