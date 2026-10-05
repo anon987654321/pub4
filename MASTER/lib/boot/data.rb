@@ -77,11 +77,10 @@ module Master
     # trained readers to scroll past the one warning that has already caught a
     # genuine path bug.
     def load_laws(root: ROOT)
-      own_root = root == ROOT
-      data_dir = own_root ? DATA : File.join(root, "data")
-      rules_path = File.join(data_dir, "laws.yml")
+      root = Master.master_root(root:)
+      rules_path = File.join(root, "data", "laws.yml")
       # Skip the read entirely rather than let load_yaml warn — see above.
-      return {} unless own_root || File.exist?(rules_path)
+      return {} unless root == ROOT || File.exist?(rules_path)
 
       load_yaml(rules_path)
     end
