@@ -90,7 +90,7 @@ module Master
       def initialize(root: nil)
         @root = root || Master::ROOT
         @data_dir = File.join(@root, "data")
-        @voice_path = Master.data_path("voice.yml")
+        @voice_path = File.join(@root, "data", "voice.yml")
         @data = Master.load_laws(root: @root) || {}
         @voice_data = load_yaml(@voice_path) || {}
         # limits.yml is no longer parsed here. It was loaded on every Rules
@@ -106,12 +106,13 @@ module Master
         path = resolve_data_path(key)
         return @cache[key]&.first || folded(key) unless path && File.exist?(path)
 
-        mtime = File.mtime(path)
+        stat = File.stat(path)
+        stamp = [stat.size, stat.ino, stat.mtime.to_r]
         cached = @cache[key]
-        return cached.first if cached && cached.last >= mtime
+        return cached.first if cached && cached.last == stamp
 
         payload = without_schema(Master.load_yaml(path) || {})
-        @cache[key] = [payload, mtime]
+        @cache[key] = [payload, stamp]
         payload
       end
 
