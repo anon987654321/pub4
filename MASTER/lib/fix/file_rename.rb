@@ -100,6 +100,13 @@ module Master
         # no longer exists; git mv has already staged its removal.
         @git.git!("add", "--", to, *edited)
         @git.git!("commit", "-m", message, "-m", Master::Core::World::COMMIT_TRAILER, "--", from, to, *edited)
+        @git.push
+        ahead, = @git.ahead_behind
+        return Result.err(
+          "rename #{from} -> #{File.basename(to)} committed but not delivered (#{ahead} commit(s) remain ahead)",
+          category: :infrastructure,
+        ) unless ahead.zero?
+
         Result.ok(from:, to:, references: edited.size)
       end
 

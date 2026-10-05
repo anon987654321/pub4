@@ -20,15 +20,22 @@ class TestFileRename < Minitest::Test
 
   def setup
     @root = Dir.mktmpdir("file-rename")
+    @remote = Dir.mktmpdir("file-rename-remote")
     write(PARTIAL, ".thing { color: red; }\n")
     write(APP, %(@use "zen_thing";\n.app { margin: 0; }\n))
     write(DOC, "The thing lives in _zen_thing.scss, loaded by amber.\n")
-    git("init", "-q")
+    git("init", "-q", "--initial-branch=main")
     git("add", ".")
     git("-c", "user.email=t@t", "-c", "user.name=t", "commit", "-q", "-m", "seed")
+    system("git", "-C", @remote, "init", "--bare", "-q", "--initial-branch=main")
+    git("remote", "add", "origin", @remote)
+    git("push", "-q", "-u", "origin", "main")
   end
 
-  def teardown = FileUtils.remove_entry(@root)
+  def teardown
+    FileUtils.remove_entry(@root)
+    FileUtils.remove_entry(@remote) if @remote && Dir.exist?(@remote)
+  end
 
   def rename(css_rules: SAME_RULES)
     Master::Fix::FileRename.new(repo_root: @root, css_rules:)
@@ -45,6 +52,7 @@ class TestFileRename < Minitest::Test
     assert_includes read(DOC), "_thing.scss" # source-assertion: ok — as above
     assert_empty git("status", "--porcelain").strip
     assert_match(/_zen_thing\.scss is _thing\.scss/, git("log", "-1", "--format=%B"))
+    assert_equal git("rev-parse", "HEAD").strip, git("rev-parse", "origin/main").strip
   end
 
   def test_a_failed_proof_puts_everything_back
