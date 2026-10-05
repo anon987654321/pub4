@@ -87,6 +87,12 @@ class TestBootReceipt < Minitest::Test
   # The receipt's own use of it, end to end. `commit` read <root>/../.git/HEAD
   # by hand, which does not resolve when .git is a file, so this suite has only
   # ever run where the answer was "unknown".
+  def test_domain_rule_count_resolves_laws_from_repository_root
+    count = Receipt.domain_rule_count(Master::REPO_ROOT)
+
+    assert_operator count, :>, 100
+  end
+
   def test_the_receipt_names_the_commit_it_booted_from
     assert_match(/\A[0-9a-f]{12}\z/, Receipt.commit(Master::ROOT))
     assert Receipt.capabilities["git"], "the receipt is running inside a checkout"
