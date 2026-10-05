@@ -15,12 +15,6 @@ module Master
         text = message.to_s.strip
         return Master::Result.err("empty message", category: :validation) if text.empty?
         return dispatch_slash(rewrite_slash(text), container:, felt_sense:, on_turn:) if text.start_with?("/")
-        if text.match?(%r{\A(?:fix|review|critique)\b}i)
-          return dispatch_slash("/#{text}", container:, felt_sense:, on_turn:)
-        end
-        if text.match?(%r{\A(?:please\s+)?deploy\b}i)
-          return dispatch_slash("/deploy #{deployment_args(text)}".strip, container:, felt_sense:, on_turn:)
-        end
 
         # Visitors (no web token — i.e. the open internet on ai.brgen.no) get the
         # conversational path only. Everything below this line can reach real
@@ -35,6 +29,13 @@ module Master
         # a beat" / a VHS look on a path then ran replicate/dilla/postpro as the
         # Falcon user and wrote under ~.
         return casual_reply(text, container:, felt_sense:, on_chunk:, image:) if visitor?
+        if text.match?(%r{\A(?:fix|review|critique)\b}i)
+          return dispatch_slash("/#{text}", container:, felt_sense:, on_turn:)
+        end
+        if text.match?(%r{\A(?:please\s+)?deploy\b}i)
+          return dispatch_slash("/deploy #{deployment_args(text)}".strip, container:, felt_sense:, on_turn:)
+        end
+
         return Master::Io::MediaIntent.dispatch(text, root: container.fetch(:root, Dir.pwd)) if Master::Io::MediaIntent.handles?(text)
 
         intercepted = deterministic_intercept(text, container:)
