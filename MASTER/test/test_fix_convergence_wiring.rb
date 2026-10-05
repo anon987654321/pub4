@@ -24,6 +24,8 @@ class FixConvergenceWiringTest < Minitest::Test
     assert_includes rule_source, "external_violations:"
     assert_includes rule_source, "image:"
     assert_includes rule_source, "@stage_commit"
+    assert_includes rule_source, 'require_relative "../review/scan/rule_health"'
+    refute_includes rule_source, 'require_relative "rule_health"'
   end
 
   def test_rendered_geometry_consumes_the_visual_measurement_payload
