@@ -108,7 +108,7 @@ module Master
         end
 
         def parse_ruby(code, path)
-          return unless RUBY_EXT.include?(File.extname(path))
+          return unless Master.language_for(path) == "ruby"
 
           result = Prism.parse(code)
           return result.value if result.success?
