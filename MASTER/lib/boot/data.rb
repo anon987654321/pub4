@@ -28,7 +28,7 @@ module Master
       parsed = yaml_parse_cache[key] ||= Timeout.timeout(YAML_LOAD_TIMEOUT_S) do
         yaml_deep_freeze(YAML.safe_load_file(path, aliases: true, symbolize_names:, permitted_classes: [Date, Time]))
       end
-      yaml_copy(parsed) || default
+      parsed.nil? ? default : yaml_copy(parsed)
     rescue Errno::ENOENT, Errno::EACCES => e
       warn_unreadable_once(path, e)
       default
