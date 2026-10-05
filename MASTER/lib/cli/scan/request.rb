@@ -171,7 +171,7 @@ module Master
 
         def self.workflow_profiles(path)
           @workflow_profiles_cache ||= {}
-          mtime = File.mtime(path).to_i
+          mtime = File.mtime(path).to_r
           cached = @workflow_profiles_cache[path]
           return cached[:value] if cached && cached[:mtime] == mtime
 
