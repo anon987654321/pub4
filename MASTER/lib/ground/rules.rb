@@ -90,7 +90,7 @@ module Master
       def initialize(root: nil)
         @root = root || Master::ROOT
         @data_dir = File.join(@root, "data")
-        @voice_path = Master.data_path("voice.yml")
+        @voice_path = File.join(@root, "data", "voice.yml")
         @data = Master.load_laws(root: @root) || {}
         @voice_data = load_yaml(@voice_path) || {}
         # limits.yml is no longer parsed here. It was loaded on every Rules
