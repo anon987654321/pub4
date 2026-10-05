@@ -14,6 +14,15 @@ class ScanFileLockTest < Minitest::Test
 
   def lock(&) = @processor.send(:with_file_lock, @target, &)
 
+  def test_extensionless_ruby_shebang_gets_an_ast
+    path = File.join(File.dirname(@target), "doctor")
+    File.write(path, "#!/usr/bin/env ruby\nclass Doctor; end\n")
+
+    ast = @processor.send(:parse_ruby, File.read(path), path)
+
+    refute_nil ast
+  end
+
   def test_syntax_failure_never_repairs_the_file
     original = "def broken(  \n  value = 1   \n"
     File.write(@target, original)
