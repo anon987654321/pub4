@@ -33,6 +33,7 @@ module Master
 
         def self.scan_candidate?(path, root: nil)
           return false unless File.file?(path)
+          return false if File.symlink?(path)
           return false if skip_path?(path, root:)
 
           Master.language_for(path) || File.basename(path).match?(/\Aface\.part\d+\.txt\z/)
