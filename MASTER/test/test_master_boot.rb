@@ -29,6 +29,28 @@ class MasterBootTest < Minitest::Test
     assert_equal "1", Master::MasterRuntime::PROCESS_DEFAULTS["MASTER_SAFE_MODE"]
   end
 
+  def test_data_validation_not_stale_within_same_second
+    Dir.mktmpdir do |root|
+      data_dir = File.join(root, "data")
+      FileUtils.mkdir_p(data_dir)
+      path = File.join(data_dir, "probe.yml")
+
+      File.write(path, "x: 1 
+")
+      now = Time.at(1_800_000_000, 100_000)
+      File.utime(now, now, path)
+      assert_empty Master.validate_data!(root:)
+
+      File.write(path, "x: [
+")
+      changed = Time.at(1_800_000_000, 200_000)
+      File.utime(changed, changed, path)
+
+      errors = Master.validate_data!(root:)
+      assert errors.key?("probe.yml"), "same-second YAML changes must invalidate validation cache"
+    end
+  end
+
   def test_master_boot_module_exposes_boot_entrypoints
     assert Master.respond_to?(:boot)
     assert Master.respond_to?(:prepare_runtime!)
