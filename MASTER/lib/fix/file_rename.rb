@@ -29,11 +29,12 @@ module Master
       end
 
       def initialize(repo_root:, git: nil, css_rules: ->(root) { CssBuild.rules(root) },
-                     preserve_user_intent: nil)
+                     preserve_user_intent: nil, ground_truth: nil)
         @root = repo_root
         @git = git || Io::GitOperations.new(repo_root)
         @css_rules = css_rules
         @preserve_user_intent = preserve_user_intent || Ground::PreserveUserIntent.new(root: repo_root)
+        @ground_truth = ground_truth
         @known_good = Ground::KnownGood.new(root: repo_root)
       end
 
@@ -109,7 +110,13 @@ module Master
         )
         return preserved.message if preserved&.err?
 
-        nil
+        stale = if @ground_truth
+                  paths.select { |path| path.end_with?(".rb") }
+                       .reject { |path| @ground_truth.fresh?(File.join(@root, path)) }
+                else
+                  []
+                end
+        stale.empty? ? nil : "ground_truth: stale read required for #{stale.join(", ")} before rename commit"
       rescue StandardError => e
         "delivery safety: #{e.class}: #{e.message}"
       end
@@ -121,8 +128,14 @@ module Master
         # no longer exists; git mv has already staged its removal.
         @git.git!("add", "--", to, *edited)
         @git.git!("commit", "-m", message, "-m", Master::Core::World::COMMIT_TRAILER, "--", from, to, *edited)
-        @known_good.promote!(commit: @git.head, paths: [from, to, *edited])
-        Result.ok(from:, to:, references: edited.size)
+        head = @git.head
+        begin
+          @git.push
+        rescue StandardError => e
+          return Result.err("rename delivery pending: #{e.message} (commit #{head})", category: :infrastructure)
+        end
+        @known_good.promote!(commit: head, paths: [from, to, *edited])
+        Result.ok(from:, to:, references: edited.size, head:)
       end
 
       def read(path) = File.read(path, encoding: "UTF-8").then { |text| text.valid_encoding? ? text : "" }

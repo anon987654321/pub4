@@ -200,7 +200,8 @@ module Master
           agent:, repo_root:, bus:, transformation_plan: @transformation_plan,
           ground_truth: @ground_truth, preserve_user_intent: @preserve_user_intent
         )
-        rename = RenameSweep.new(agent:, repo_root:, bus:, preserve_user_intent: @preserve_user_intent)
+        rename = RenameSweep.new(agent:, repo_root:, bus:, preserve_user_intent: @preserve_user_intent,
+                                 ground_truth: @ground_truth)
         [restructure, rename]
       end
 

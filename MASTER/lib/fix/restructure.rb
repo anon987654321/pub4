@@ -177,11 +177,12 @@ module Master
         preserved = @preserve_user_intent&.assert_preserved!(diff_text, message:)
         return preserved.message if preserved&.err?
 
-        stale = Array(plan.writes.keys).filter_map do |path|
-          next unless path.end_with?(".rb")
-          next unless @ground_truth
-          File.join(@root, path) unless @ground_truth.fresh?(File.join(@root, path))
-        end
+        stale = if @ground_truth
+                  plan.paths.select { |path| path.end_with?(".rb") }
+                      .reject { |path| @ground_truth.fresh?(File.join(@root, path)) }
+                else
+                  []
+                end
         stale.empty? ? nil : "ground_truth: stale read required for #{stale.join(", ")} before restructure commit"
       rescue StandardError => e
         "delivery safety: #{e.class}: #{e.message}"
