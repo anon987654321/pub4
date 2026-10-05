@@ -121,6 +121,7 @@ module Master
 
         def skip_reason(path)
           return :scanner_path_filter if Master::Review::Scan::Scanner.skip_path?(path, root: @root)
+          return :symlink if File.symlink?(path)
           return :binary if binary?(path)
           return :immutable if immutable?(path)
           return :rails_history if rails_history?(path)
