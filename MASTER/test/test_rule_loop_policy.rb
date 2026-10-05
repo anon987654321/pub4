@@ -222,6 +222,20 @@ class TestRuleLoopPolicy < Minitest::Test
     end
   end
 
+  def test_preamble_uses_the_active_master_root
+    Dir.mktmpdir do |root|
+      FileUtils.mkdir_p(File.join(root, "data"))
+      File.write(File.join(root, "data", "soul.yml"), <<~YAML)
+        absolute:
+          golden_rule: FOREIGN_ROOT_RULE
+      YAML
+
+      loop = build_loop(root:, bus: FakeBus.new, scanner: Scanner.new, agent: Agent.new)
+
+      assert_includes loop.send(:preamble), "Golden rule: FOREIGN_ROOT_RULE"
+    end
+  end
+
   def test_preamble_loads_soul_once_across_rule_loops
     original = Master.method(:load_yaml)
     count = 0
