@@ -26,6 +26,20 @@ class TestLawContract < Minitest::Test
         Law.define(:LOAD_ROLLBACK_PROBE) do
           source "test"
           severity :info
+          practice "updated"
+          fix "keep it"
+          bad "bad"
+          good "good"
+        end
+      RUBY
+
+      Law.load_all(dir)
+      assert_equal "updated", Law.rules.fetch(:LOAD_ROLLBACK_PROBE).practice
+
+      File.write(path, <<~RUBY)
+        Law.define(:LOAD_ROLLBACK_PROBE) do
+          source "test"
+          severity :info
           practice "broken"
           fix "keep it"
           bad "bad"
