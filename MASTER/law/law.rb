@@ -344,6 +344,7 @@ module Law
       missing = %i[bad good fix].reject { |k| @h.key?(k) }
       raise ArgumentError, "#{@h[:id]}: missing #{missing.join(', ')}" unless missing.empty?
 
+      @h[:languages] = Array(@h[:languages]).map(&:to_s).freeze
       @h[:principle_scope] ||= @h[:languages].empty? ? :universal : :domain
       @h[:lifecycle] ||= :active
       @h[:autofix] ||= :review
