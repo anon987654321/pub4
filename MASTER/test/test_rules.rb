@@ -58,6 +58,59 @@ class TestAxioms < Minitest::Test
     end
   end
 
+  def test_rules_uses_the_foreign_root_law_registry
+    Dir.mktmpdir do |dir|
+      law_dir = File.join(dir, "law")
+      data_dir = File.join(dir, "data")
+      FileUtils.mkdir_p(law_dir)
+      FileUtils.mkdir_p(data_dir)
+      File.write(File.join(data_dir, "laws.yml"), "foreign: \n  priority: 1\n  principle: foreign\n")
+      File.write(File.join(law_dir, "probe.rb"), <<~RUBY)
+        Law.define(:FOREIGN_ROOT_RULE) do
+          source "test"
+          severity :info
+          practice "foreign root"
+          fix "keep it"
+          bad "bad"
+          good "good"
+        end
+      RUBY
+
+      rules = Master::Ground::Rules.new(root: dir)
+
+      assert_equal "foreign root", rules.rules.fetch("FOREIGN_ROOT_RULE")
+    ensure
+      Law.load_all(File.join(Master::ROOT, "law"))
+    end
+  end
+
+  def test_rules_refresh_folded_law_data_and_derived_views
+    Dir.mktmpdir do |dir|
+      data_dir = File.join(dir, "data")
+      FileUtils.mkdir_p(data_dir)
+      path = File.join(data_dir, "laws.yml")
+      write_law_data = lambda do |name, tier|
+        File.write(path, <<~YAML)
+          #{name}:
+            priority: 1
+            principle: "#{name}"
+            tier: #{tier}
+        YAML
+      end
+
+      write_law_data.call("FIRST", "kernel")
+      rules = Master::Ground::Rules.new(root: dir)
+
+      assert rules.kernel.key?("FIRST")
+      assert_equal "FIRST", rules.philosophy.find { |row| row["id"] == "FIRST" }&.fetch("id")
+
+      write_law_data.call("SECOND", "design")
+
+      refute rules.kernel.key?("FIRST")
+      assert rules.philosophy.any? { |row| row["id"] == "SECOND" }
+    end
+  end
+
   def test_foreign_root_uses_that_tree_voice_configuration
     Dir.mktmpdir do |dir|
       Dir.mkdir(File.join(dir, "data"))
