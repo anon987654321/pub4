@@ -117,8 +117,9 @@ module Master
       # something has required it, so a receipt printed from bin/doctor said
       # "0 in law/" while 122 rules were defined and waiting.
       def domain_rule_count(root)
-        require File.join(root, "law", "law.rb")
-        ::Law.load_all(File.join(root, "law")) if ::Law.rules.empty?
+        law_root = executable_law_root(root)
+        require File.join(law_root, "law", "law.rb")
+        ::Law.load_all(File.join(law_root, "law")) if ::Law.rules.empty?
         ::Law.rules.size
       rescue StandardError => e
         Swallow.log(e, context: "BootReceipt.domain_rule_count")
@@ -128,6 +129,15 @@ module Master
       # `schema:` is a version pin, not a provider, and it has no `env` — so it
       # printed as a permanently unavailable provider and put the receipt one
       # short of honest.
+      def executable_law_root(root)
+        candidates = [
+          root,
+          File.join(root, "MASTER"),
+          MasterPaths::ROOT
+        ]
+        candidates.find { |candidate| File.file?(File.join(candidate, "law", "law.rb")) } || MasterPaths::ROOT
+      end
+
       def providers(root: MasterPaths::ROOT)
         rows = Master.provider_config(root:)
         keyed = rows.filter_map do |name, row|
