@@ -129,6 +129,8 @@ class TestCliOperatorLayer < Minitest::Test
     assert_equal :direct_shell, grammar.parse("git diff --stat").kind
     assert_equal :direct_shell, grammar.parse("ps aux").kind
     assert_equal :direct_shell, grammar.parse("ls && ps aux").kind
+    assert_nil grammar.parse("/fix")
+    assert_nil grammar.parse("/fix --dry-run MASTER")
     assert_equal :direct_shell, grammar.parse("ssh dev@brgen.no uname -a").kind
     assert_equal :direct_shell, grammar.parse("curl https://example.com").kind
     assert_equal :direct_shell, grammar.parse("ls | cat").kind
