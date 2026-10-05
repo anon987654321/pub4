@@ -17,6 +17,14 @@ class TestSemanticRuleScope < Minitest::Test
 
   def scoped(language) = rule.send(:rules_for, language).keys
 
+  def test_an_unexpected_model_failure_is_not_reported_as_clean
+    agent = Object.new
+    agent.define_singleton_method(:ask) { |_prompt, operation:| raise "upstream exploded" }
+    rule = Master::Review::Scan::Rules::SemanticRule.new(agent:)
+    
+    assert_raises(RuntimeError) { rule.check("def foo; end", path: "foo.rb") }
+  end
+
   def test_a_ruby_rule_is_not_asked_about_a_stylesheet
     assert_includes scoped("ruby"), "RAILS_THIN_CONTROLLER_SEMANTIC"
     refute_includes scoped("css"), "RAILS_THIN_CONTROLLER_SEMANTIC"
