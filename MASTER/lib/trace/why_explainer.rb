@@ -120,7 +120,7 @@ module Master
         slug = key.upcase.tr("-", "_")
         # law/ holds every rule now, so /why answers for conduct rules too —
         # it dug soul and returned nothing for NO_COLUMN_ALIGN and FLAT_UI.
-        hit = Master::Ground::Rules.new.rules[slug] or return
+        hit = Master::Ground::Rules.new(root: @root).rules[slug] or return
         ["constitutional rule: #{slug}", "  #{hit}"].join("\n")
       end
 
