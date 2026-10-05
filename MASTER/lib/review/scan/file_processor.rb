@@ -113,21 +113,10 @@ module Master
           result = Prism.parse(code)
           return result.value if result.success?
 
-          attempt_syntax_repair(path, code, result.errors)
+          @bus&.publish("scan:syntax_fault", path:, error_count: result.errors.size)
+          nil
         rescue StandardError => e
           @bus&.publish("scan:parse_error", path:, error: e.message)
-          nil
-        end
-
-        def attempt_syntax_repair(path, code, errors)
-          @bus&.publish("scan:syntax_fault", path:, error_count: errors.size)
-          repair = AutonomousRepairer.heal(path:, source: code, event_bus: @bus)
-          return if repair.err?
-
-          re_parse = Prism.parse(repair.value!)
-          return re_parse.value if re_parse.success?
-
-          @bus&.publish("scan:syntax_repair_failed", path:)
           nil
         end
 
