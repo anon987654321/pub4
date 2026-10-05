@@ -106,6 +106,34 @@ class TestLawContract < Minitest::Test
     assert_equal rows.count { |row| row["principle_scope"] == "universal" }, rendered.fetch("universal_count")
   end
 
+  def test_deterministic_law_proof_checks_each_declared_language
+    rule = Law::Rule.new(
+      id: :MULTI_LANGUAGE_PROOF,
+      source: "test",
+      severity: :warn,
+      mode: :violation,
+      languages: %i[ruby scss],
+      scope: :file,
+      principle_scope: :domain,
+      lifecycle: :active,
+      autofix: :review,
+      path: nil,
+      path_exclude: nil,
+      absent: nil,
+      detect: ->(text) { text.include?("FORBIDDEN") },
+      ask: nil,
+      practice: nil,
+      fix: "remove it",
+      bad: "/* FORBIDDEN */\n",
+      good: "clean\n",
+      reads_comments: false,
+    )
+
+    error = assert_raises(ArgumentError) { rule.prove! }
+
+    assert_match(/fixture\.scss/, error.message)
+  end
+
   def test_lifecycle_transitions_are_published_on_rule
     assert Law::Rule.const_defined?(:LIFECYCLE_TRANSITIONS, false)
     assert_equal %i[proposed proven active observed trusted advisory retired],
