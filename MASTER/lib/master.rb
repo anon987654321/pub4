@@ -152,12 +152,25 @@ module Master
     end
   end
 
+  LAW_CACHE_MUTEX = Mutex.new
+  private_constant :LAW_CACHE_MUTEX
+
   def self.law(section, root: ROOT)
-    path = File.join(root, "data", "laws.yml")
-    mtime = File.mtime(path)
-    @law = nil unless @law_stamp == [path, mtime]
-    @law ||= (load_laws(root:) || {}).tap { @law_stamp = [path, mtime] }
-    @law.fetch(section.to_s) { raise KeyError, "data/laws.yml has no #{section}: section" }
+    path = File.expand_path(File.join(root, "data", "laws.yml"))
+    stat = File.stat(path)
+    signature = [stat.size, stat.ino, stat.mtime.to_r]
+
+    LAW_CACHE_MUTEX.synchronize do
+      @law_cache ||= {}
+      cached = @law_cache[path]
+      data = if cached && cached[:signature] == signature
+               cached[:data]
+             else
+               @law_cache[path] = { signature:, data: (load_laws(root:) || {}) }
+               @law_cache[path][:data]
+             end
+      data.fetch(section.to_s) { raise KeyError, "data/laws.yml has no #{section}: section" }
+    end
   end
 
   # The one reader of data/agent_taxonomy.yml. It had three, each building the
