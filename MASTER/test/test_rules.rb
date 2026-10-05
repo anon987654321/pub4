@@ -35,28 +35,24 @@ class TestAxioms < Minitest::Test
     end
   end
 
-  def test_rules_refresh_derived_views_when_laws_change
+  def test_philosophy_refreshes_when_laws_change
     Dir.mktmpdir do |dir|
       FileUtils.mkdir_p(File.join(dir, "data"))
       path = File.join(dir, "data", "laws.yml")
-      write = ->(name, tier) do
-        File.write(path, "#{name}:
-  priority: 1
-  principle: #{name}
-  tier: #{tier}
-")
+      write = ->(id, priority) do
+        File.write(path, "#{id}:\n  priority: #{priority}\n  principle: #{id} principle\n")
       end
 
-      write.call("FIRST", "kernel")
+      write.call("FIRST", 2)
       rules = Master::Ground::Rules.new(root: dir)
 
-      assert rules.kernel.key?("FIRST")
-      refute rules.philosophy.any? { |row| row["id"] == "FIRST" }
+      assert_equal "FIRST", rules.philosophy.first.fetch("id")
+      assert_equal "FIRST principle", rules.lookup("FIRST")
 
-      write.call("SECOND", "design")
+      write.call("SECOND", 1)
 
-      refute rules.kernel.key?("FIRST")
-      assert rules.philosophy.any? { |row| row["id"] == "SECOND" }
+      assert_equal "SECOND", rules.philosophy.first.fetch("id")
+      assert_equal "SECOND principle", rules.lookup("SECOND")
     end
   end
 
