@@ -266,7 +266,7 @@ module Master
           end
 
           def rules_mtime
-            File.exist?(laws_path) ? File.mtime(laws_path).to_i : nil
+            File.exist?(laws_path) ? File.mtime(laws_path).to_r : nil
           end
 
           def smell_pattern(smell)
