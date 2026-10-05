@@ -109,10 +109,12 @@ Law.define(:CLI_ANALYZE_TARGET_ROUTING) do
         - "\\b(?:review)\\s+(.+)"
   X
   good <<~'X'
-    analyze:
-      patterns:
-      - "\\b(?:analyze|analyse|inspect)\\s+([\\w./-]+)"
-      capture: path
+    infer:
+      commands:
+        analyze:
+          patterns:
+          - "\\\\b(?:analyze|analyse|inspect)\\\\s+([\\\\w./-]+)"
+          capture: path
   X
   detect do |text|
     section = text[/^    analyze:\s*\n(.*?)(?=^    [a-z][a-z0-9_-]*:\s*$|\z)/m, 1].to_s
