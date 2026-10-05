@@ -55,7 +55,7 @@ module Master
 
       def dispatch_fix(scanner:, fix_loop:, deliberation:, root:, bus:, ctx: nil, swarm: nil, **_legacy)
         raw = arg_for(ctx).to_s.strip
-        apply, _critique, aesthetic, _only, target = parse_pass_flags(raw)
+        apply, critique, aesthetic, only, target = parse_pass_flags(raw)
         # /fix is the operator trace: every event is visible in the same append-only
         # OpenBSD dmesg grammar. An explicit quiet/normal/verbose flag still wins.
         rendered = with_dmesg_verbosity(raw, default: "trace") do
@@ -63,6 +63,7 @@ module Master
             trace = begin
               Master::Fix::ExecutionTrace.new(
                 root: Master.repo_root,
+                target: target,
                 dependencies: { scanner:, fix_loop:, deliberation:, bus: }
               ).run
             rescue SyntaxError, StandardError => e
@@ -79,10 +80,12 @@ module Master
               next Master::Result.err(message, category: :validation)
             end
           end
+          writes_requested = apply != false && fix_stage_selected?(only)
+          effective_critique = critique.nil? ? writes_requested : critique
           value = run_pass({ scanner:, fix_loop:, root:, deliberation:, bus:, swarm: },
-                           target:, apply: apply.nil? || apply, critique: _critique.nil? ? true : _critique,
-                           aesthetic:, only: nil)
-          next value unless apply.nil? || apply
+                           target:, apply: writes_requested, critique: effective_critique,
+                           aesthetic:, only:)
+          next value unless writes_requested
 
           gate_rounds = 0
           gate_status = 0
@@ -97,7 +100,7 @@ module Master
               "gate0", "verification changed #{gate_changed.size} file(s), re-entering /fix"
             )
             value = run_pass({ scanner:, fix_loop:, root:, deliberation:, bus:, swarm: },
-                             target:, apply: true, critique: _critique.nil? ? true : _critique,
+                             target:, apply: true, critique: critique.nil? ? true : critique,
                              aesthetic:, only: "fix")
           end
 
@@ -124,6 +127,14 @@ module Master
 
       def run_pass(deps, **call_args)
         Master::CLI::Pipeline::Pass.new(**deps).call(**call_args).render
+      end
+
+      # /fix may select a read-only stage with --only. Apply permission never
+      # turns critique/map into a write path; only the fix stage can mutate.
+      def fix_stage_selected?(only)
+        return true if only.nil?
+
+        Array(only.to_s.split(",")).map(&:strip).any? { |stage| %w[fix converge].include?(stage.downcase) }
       end
 
       # `--only critique` and `--only map` select read-only review stages.

@@ -203,6 +203,74 @@ class TestFixConvergence < Minitest::Test
     end
   end
 
+  def test_gate_verification_is_read_only
+    seen = []
+    result = Operator::GateChain.stub(
+      :report,
+      ->(_selected, scan_only:, trees:, return_results:) { seen << { scan_only:, trees:, return_results: }; [0, []] },
+    ) do
+      Operator::GateChain.verify_fix(target: "RAILS")
+    end
+
+    assert_equal [true], seen.map { |row| row[:scan_only] }
+    assert_equal [true], seen.map { |row| row[:return_results] }
+    assert_equal ["RAILS"], seen.map { |row| row[:trees] }.first
+    assert_equal [0, []], result
+  end
+
+  def test_dry_run_does_not_run_mutating_gate_verification
+    fix_loop = Object.new
+    fix_loop.define_singleton_method(:run) { |target, **| flunk("dry-run started the repair") }
+    fix_loop.define_singleton_method(:preview) { |_| Master::Result.ok(total: 1, rules: { "RULE" => 1 }, files: {}) }
+    scanner = Object.new
+    def scanner.scan(*) = Master::Result.ok([])
+    def scanner.scan_dir(*) = Master::Result.ok([])
+
+    Operator::GateChain.stub(:verify_fix, ->(**) { flunk("dry-run reached GateChain.verify_fix") }) do
+      Master::CLI::CommandRegistry.stub(:observe, ->(*) { "clean" }) do
+        result = Master::CLI::CommandRegistry.dispatch_fix(
+          scanner:, fix_loop:, deliberation: nil, root: Master::ROOT, bus: nil,
+          ctx: { args: "RAILS --dry-run --no-aesthetic" }
+        )
+
+        assert_includes result, "preview:"
+      end
+    end
+  end
+
+  def test_fix_only_flag_reaches_the_selected_stage_without_widening
+    captured = nil
+    Master::CLI::CommandRegistry.stub(
+      :run_pass,
+      ->(_deps, **kwargs) { captured = kwargs; "selected" },
+    ) do
+      Master::CLI::CommandRegistry.dispatch_fix(
+        scanner: nil, fix_loop: nil, deliberation: nil, root: Master::ROOT, bus: nil,
+        ctx: { args: "RAILS --dry-run --only critique" }
+      )
+    end
+
+    assert_equal "critique", captured[:only]
+    assert_equal false, captured[:apply]
+  end
+
+  def test_only_critique_is_read_only_even_with_apply_permission
+    captured = nil
+    Master::CLI::CommandRegistry.stub(
+      :run_pass,
+      ->(_deps, **kwargs) { captured = kwargs; "selected" },
+    ) do
+      Master::CLI::CommandRegistry.dispatch_fix(
+        scanner: nil, fix_loop: nil, deliberation: nil, root: Master::ROOT, bus: nil,
+        ctx: { args: "RAILS --apply --only critique" }
+      )
+    end
+
+    assert_equal "critique", captured[:only]
+    assert_equal false, captured[:apply]
+  end
+
+
   def test_exact_all_tree_fix_command_targets_the_repo_and_preserves_gate_scope
     repaired = []
     verified = []
