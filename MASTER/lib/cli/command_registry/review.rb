@@ -63,7 +63,6 @@ module Master
             trace = begin
               Master::Fix::ExecutionTrace.new(
                 root: Master.repo_root,
-                target: target,
                 dependencies: { scanner:, fix_loop:, deliberation:, bus: }
               ).run
             rescue SyntaxError, StandardError => e
