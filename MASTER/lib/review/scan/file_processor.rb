@@ -5,6 +5,7 @@ require "fileutils"
 require "prism"
 require "timeout"
 require_relative "semantic_fingerprint"
+require_relative "rule_health"
 
 module Master
   module Review
@@ -211,7 +212,9 @@ module Master
         end
 
         def annotate_findings(findings, fingerprint:)
-          Array(findings).map { |finding| add_fingerprint(finding, fingerprint:) }
+          Array(findings).map do |finding|
+            RuleHealth.annotate(add_fingerprint(finding, fingerprint:))
+          end
         end
 
         def add_fingerprint(finding, fingerprint:)

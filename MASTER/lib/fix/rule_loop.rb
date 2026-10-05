@@ -13,6 +13,7 @@ require_relative "rule_loop/collapse_guard"
 require_relative "rule_loop/fix_strategies"
 require_relative "rule_loop/fix_verification"
 require_relative "rule_loop/outcome_tracking"
+require_relative "visual_custody_blocking"
 require_relative "rule_loop/autofix_policy"
 
 module Master
@@ -153,6 +154,13 @@ module Master
       # were rejected on re-scan — every non-apply collapsed to `false` before
       # the one line anyone reads. The tally of these symbols is that line.
       def fix_violation(violation)
+        if VisualCustodyBlocking.fix_blocking_rule?(violation[:rule])
+          @person_required = true
+          review = VisualCustodyBlocking.prepare_operator_review(violation)
+          @bus&.publish("fix:requires_operator_decision", finding: review)
+          Master::Trace::Dmesg.status("fix0", "#{violation[:rule]} blocked, operator-owned rendered value: #{violation[:file]}")
+          return :needs_person
+        end
         if needs_a_person?(violation) && !deletions_allowed?
           @person_required = true
           @bus&.publish("rule_loop:human_decision_required", rule: violation[:rule], file: violation[:file])

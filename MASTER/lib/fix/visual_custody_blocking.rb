@@ -37,13 +37,16 @@ module Master
 
       # Prepare a finding for operator review when it's blocked.
       def prepare_operator_review(finding)
+        rule_id = finding.respond_to?(:rule_id) ? finding.rule_id : finding[:rule]
+        path = finding.respond_to?(:path) ? finding.path : finding[:file]
+        severity = finding.respond_to?(:severity) ? finding.severity : finding[:severity]
         {
-          "rule_id" => finding.rule_id.to_s,
-          "path" => finding.path,
-          "severity" => finding.severity.to_s,
+          "rule_id" => rule_id.to_s,
+          "path" => path,
+          "severity" => severity.to_s,
           "reason" => "This rule modifies rendered values owned by the operator",
           "decision_needed" => "operator_approval",
-          "guidance" => "Run '/why #{finding.rule_id}' to review the rule; then decide whether to approve or defer"
+          "guidance" => "Run '/why #{rule_id}' to review the rule; then decide whether to approve or defer"
         }
       end
     end

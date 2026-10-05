@@ -49,6 +49,7 @@ module Master
         end
 
         def pass_outcome(fixed)
+          return :human_decision if @person_required
           return :fixed if fixed.positive?
           return :skipped if @all_skipped
 

@@ -179,6 +179,17 @@ prose:
 
 # Folded from data/design_rules.yml — one file for all rules.
 
+# Detector-health policy. Measurement-only findings stay visible to observation but
+# do not become automatic repair targets until their detectors have stronger evidence.
+detection_calibration:
+  measurement_only:
+    CQS:
+      reason: "AST detector still has valid command/query boundary cases."
+    MAGIC_COLOR:
+      reason: "Raw colour literals can be intentional rendered values owned by the operator."
+    DOUBLE_QUOTES_RUBY:
+      reason: "Quote style is advisory and must not block convergence."
+
 transformation_policy:
   version: 1
   preflight:

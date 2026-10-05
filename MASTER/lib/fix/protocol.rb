@@ -3,6 +3,7 @@
 require "json"
 require "digest"
 require_relative "../ai/orientation"
+require_relative "protocol_detector_matrix"
 
 module Master
   module Fix
@@ -204,6 +205,7 @@ module Master
         corpus["eligible_sample"] = Array(files).first(24).map { |path| relative(path, root) } if files
         corpus["skipped_by_caller"] = skipped.to_i if skipped
         entries = rules.sort_by { |rule| rule.id.to_s }.map(&:contract_entry)
+        detector_matrix = ProtocolDetectorMatrix.matrix(rules)
         payload = {
           "fix_protocol_version" => VERSION,
           "law_digest" => Digest::SHA256.hexdigest(JSON.generate(entries)),
@@ -216,7 +218,9 @@ module Master
             "law" => rule_rows.size,
             "registry" => registry_count
           },
-          "rules" => full ? rule_rows : rule_rows.map { |entry| entry.slice("id", "severity", "mode", "languages", "question", "fix", "enforcement", "fix_strategy", "verify_strategy") }
+          "rules" => full ? rule_rows : rule_rows.map { |entry| entry.slice("id", "severity", "mode", "languages", "question", "fix", "enforcement", "fix_strategy", "verify_strategy") },
+          "detector_matrix" => detector_matrix,
+          "detector_summary" => ProtocolDetectorMatrix.summary(detector_matrix)
         }
         JSON.pretty_generate(payload)
       end

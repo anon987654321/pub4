@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "json"
+require_relative "../review/scan/rule_health"
 
 module Master
   module Fix
