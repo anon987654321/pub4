@@ -87,7 +87,7 @@ module Master
       }.freeze
 
       def initialize(root: nil)
-        @root = root || Master::ROOT
+        @root = Master.master_root(root: root || Master::ROOT)
         @data_dir = File.join(@root, "data")
         @voice_path = File.join(@data_dir, "voice.yml")
         @data = Master.load_laws(root: @root) || {}
