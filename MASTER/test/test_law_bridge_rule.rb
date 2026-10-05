@@ -5,6 +5,17 @@ require_relative "test_helper"
 class TestLawBridgeRule < Minitest::Test
   def rule = Master::Review::Scan::Rules::LawBridgeRule.new(root: Master::ROOT)
 
+  def test_repository_root_still_loads_executable_laws
+    original = Law.rules.dup
+    Law.rules.clear
+    Master::Review::Scan::Rules::LawBridgeRule.new(root: Master::REPO_ROOT)
+
+    assert_includes Law.rules.keys, :NO_VAR
+  ensure
+    Law.rules.clear
+    Law.rules.merge!(original) if original
+  end
+
   def test_a_law_reaches_the_scanner
     findings = rule.check("var x = 1;\n", path: "app/thing.js")
     assert findings.any?, "NO_VAR did not reach the scanner through law/"
