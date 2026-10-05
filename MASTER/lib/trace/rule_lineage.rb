@@ -68,9 +68,10 @@ module Master
       end
 
       def constitutional_laws
-        laws = (Master.load_laws(root: @root) || {})["laws"] || {}
-        laws.map do |id, value|
-          Law.new(id.to_s, value.fetch("priority"), value.fetch("principle").to_s)
+        Master.law_entries(root: @root).filter_map do |entry|
+          next unless entry["priority"]
+
+          Law.new(entry.fetch("id").to_s, entry.fetch("priority"), entry.fetch("principle").to_s)
         end.sort_by(&:priority)
       end
 
