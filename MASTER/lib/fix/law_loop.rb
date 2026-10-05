@@ -145,7 +145,7 @@ module Master
 
           ext = File.extname(path).downcase
           result.value!
-                .map { |f| RuleHealth.annotate(f) }
+                .map { |f| Master::Review::Scan::RuleHealth.annotate(f) }
                 .select { |f| Severity.at_least?(f[:severity], MIN_SEVERITY) }
                 .map { |f| Violation.from_finding(f, file: path, ext:) }
         end
