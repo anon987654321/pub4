@@ -478,8 +478,9 @@ module Law
     def define(id, &block)
       b = Builder.new(id)
       b.instance_eval(&block)
-      raise ArgumentError, "duplicate law #{id}" if @rules.key?(id)
-      @rules[id] = b.build
+      registry = @loading_rules || @rules
+      raise ArgumentError, "duplicate law #{id}" if registry.key?(id)
+      registry[id] = b.build
     end
 
     def load_all(dir = __dir__)
@@ -493,21 +494,23 @@ module Law
       LOAD_MUTEX.synchronize do
         return @rules if @loaded_directory == directory && @loaded_signature == signature
 
-        previous_rules = @rules.dup
         previous_directory = @loaded_directory
         previous_signature = @loaded_signature
+        registry = {}
+        @loading_rules = registry
 
         begin
-          @rules.clear
           files.each { |file| load file }
+          @rules.replace(registry)
           @loaded_directory = directory
           @loaded_signature = signature
           @rules
         rescue StandardError
-          @rules.replace(previous_rules)
           @loaded_directory = previous_directory
           @loaded_signature = previous_signature
           raise
+        ensure
+          @loading_rules = nil
         end
       end
     end
