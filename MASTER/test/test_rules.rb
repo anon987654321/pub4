@@ -56,6 +56,45 @@ class TestAxioms < Minitest::Test
     end
   end
 
+  def test_rules_refresh_laws_after_live_edit
+    Dir.mktmpdir("rules_live_laws") do |root|
+      data = File.join(root, "data")
+      FileUtils.mkdir_p(data)
+      write_laws = lambda do |name|
+        File.write(File.join(data, "laws.yml"), {
+          "TEMP_RULE" => {
+            "priority" => 1,
+            "principle" => "temporary",
+            "tier" => "kernel",
+            "name" => name,
+          },
+        }.to_yaml)
+      end
+
+      write_laws.call("first")
+      rules = Master::Ground::Rules.new(root:)
+      assert_equal "first", rules.lookup("TEMP_RULE")
+
+      write_laws.call("second")
+      assert_equal "second", rules.lookup("TEMP_RULE")
+    end
+  end
+
+  def test_rules_refresh_voice_after_live_edit
+    Dir.mktmpdir("rules_live_voice") do |root|
+      data = File.join(root, "data")
+      FileUtils.mkdir_p(data)
+      path = File.join(data, "voice.yml")
+      File.write(path, "voice:\n  custom_marker: first\n")
+
+      rules = Master::Ground::Rules.new(root:)
+      assert_equal "first", rules.voice.fetch("custom_marker")
+
+      File.write(path, "voice:\n  custom_marker: second\n")
+      assert_equal "second", rules.voice.fetch("custom_marker")
+    end
+  end
+
   def test_constitution_carries_anti_simulation_from_soul
     anti = @rules.constitution["anti_simulation"]
     refute_nil anti, "soul absolute.anti_simulation must reach the constitution accessor"
