@@ -1,8 +1,51 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
+require "fileutils"
 
 class TestMasterLoop < Minitest::Test
+  def test_law_reader_keeps_roots_isolated_when_loads_overlap
+    Dir.mktmpdir do |workspace|
+      one = File.join(workspace, "one")
+      two = File.join(workspace, "two")
+      FileUtils.mkdir_p(File.join(one, "data"))
+      FileUtils.mkdir_p(File.join(two, "data"))
+      File.write(File.join(one, "data", "laws.yml"), "one: true
+")
+      File.write(File.join(two, "data", "laws.yml"), "two: true
+")
+
+      original = Master.method(:load_laws)
+      first_call = Queue.new
+      release_first = Queue.new
+      state_lock = Mutex.new
+      blocked = false
+
+      Master.define_singleton_method(:load_laws) do |root:|
+        should_block = state_lock.synchronize do
+          next false if blocked
+
+          blocked = true
+          true
+        end
+        first_call << root
+        release_first.pop if should_block
+        { File.basename(root) => true }
+      end
+
+      first = Thread.new { Master.law("one", root: one) }
+      assert_equal one, first_call.pop
+
+      second = Thread.new { Master.law("two", root: two) }
+      release_first << true
+
+      assert_equal true, first.value
+      assert_equal true, second.value
+    ensure
+      Master.define_singleton_method(:load_laws, original) if original
+    end
+  end
+
   LOOP_ENVS = %w[MASTER_AUTOFIX MASTER_WATCH MASTER_WATCHER MASTER_HEARTBEAT MASTER_BACKGROUND MASTER_LOOP].freeze
 
   def with_clean_env
