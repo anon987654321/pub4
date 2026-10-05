@@ -123,6 +123,7 @@ module Master
           return :scanner_path_filter if Master::Review::Scan::Scanner.skip_path?(path, root: @root)
           return :symlink if File.symlink?(path)
           return :binary if binary?(path)
+          return :too_large if File.size(path) > Master::Review::Scan::FileProcessor::MAX_FILE_BYTES
           return :immutable if immutable?(path)
           return :rails_history if rails_history?(path)
 
