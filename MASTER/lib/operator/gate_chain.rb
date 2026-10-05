@@ -300,7 +300,9 @@ module Operator
       latest = Dir.glob(File.join(dir, "*_latest.md")).max_by { |file| File.mtime(file) }
       return [] unless latest
 
-      section = File.read(latest).split("## cherry-picked").last.to_s
+      section = File.read(latest).split("## cherry-picked", 2)[1].to_s
+      return [] if section.empty?
+
       section.lines.filter_map { |line| line.strip[/\A-\s+(.+)\z/, 1] }.reject(&:empty?)
     rescue StandardError => e
       raise "council: harvest under #{dir} unreadable: #{e.class}: #{e.message}"
