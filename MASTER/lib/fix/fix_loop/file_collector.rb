@@ -32,7 +32,7 @@ module Master
 
         def collect(target)
           candidates = repository_files(target)
-          candidates = Dir.glob(File.join(target, "**", "*")).select { |file| File.file?(file) } if candidates.empty?
+          candidates = Dir.glob(File.join(target, "**", "*")).select { |file| File.file?(file) } if candidates.nil?
           retain(candidates)
         end
 
@@ -54,7 +54,7 @@ module Master
         # back to a full directory sweep.
         def repository_files(target)
           root = git_root
-          return [] unless root
+          return nil unless root
 
           out, _, status = Master::Io::Exec.capture3(
             "git", "-C", root, "ls-files", "-z", "--cached", "--others", "--exclude-standard"
@@ -65,7 +65,7 @@ module Master
              .select { |file| File.file?(file) && under_path?(file, target) }
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "FileCollector.repository_files")
-          []
+          raise "git inventory unavailable: #{e.class}: #{e.message}"
         end
 
         def changed_since_last_commit(target)
@@ -88,10 +88,24 @@ module Master
         end
 
         def git_root
-          out, _, status = Master::Io::Exec.capture3("git", "-C", @root, "rev-parse", "--show-toplevel")
-          return unless status.success?
+          out, err, status = Master::Io::Exec.capture3("git", "-C", @root, "rev-parse", "--show-toplevel")
+          return out.to_s.strip.then { |path| path.empty? ? nil : File.expand_path(path) } if status.success?
+          return nil unless checkout_present?
 
-          out.to_s.strip.then { |path| path.empty? ? nil : File.expand_path(path) }
+          detail = err.to_s.strip
+          raise "git root lookup failed: #{detail.empty? ? "exit #{status.exitstatus}" : detail}"
+        end
+
+        def checkout_present?
+          current = File.expand_path(@root)
+          loop do
+            return true if File.exist?(File.join(current, ".git"))
+
+            parent = File.dirname(current)
+            return false if parent == current
+
+            current = parent
+          end
         end
 
         # Counted and published rather than quietly dropped — a fix pass that
