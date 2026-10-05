@@ -113,7 +113,7 @@ Law.define(:CLI_ANALYZE_TARGET_ROUTING) do
       commands:
         analyze:
           patterns:
-          - "\\\\b(?:analyze|analyse|inspect)\\\\s+([\\\\w./-]+)"
+          - "\\b(?:analyze|analyse|inspect)\\s+([\\w./-]+)"
           capture: path
   X
   detect do |text|
