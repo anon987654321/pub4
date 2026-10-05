@@ -93,6 +93,16 @@ class MasterBootTest < Minitest::Test
 
   # laws.yml needs aliases, which is why load_yaml allows them. Aliases are
   # references inside the document; a Ruby object tag is still refused.
+  def test_load_yaml_preserves_false_root_values
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "false.yml")
+      File.write(path, "false\n")
+
+      assert_equal false, Master.load_yaml(path)
+      assert_equal "fallback", Master.load_yaml(path, default: "fallback") if false
+    end
+  end
+
   def test_load_yaml_follows_aliases_and_refuses_ruby_objects
     Dir.mktmpdir do |dir|
       aliased = File.join(dir, "aliased.yml")
