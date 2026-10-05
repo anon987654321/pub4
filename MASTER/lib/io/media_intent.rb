@@ -37,6 +37,7 @@ module Master
       LIVE_SYNTH_PLAY_RE = /\b(?:play|morph\w*|fade|switch|jam)\b.*\b(?:(?:mini)?moog|model\s*d|prophet|rhodes|juno|synth\w*|pads?|lead|bass(?:line)?|brass|strings|flute|pluck|lo-?fi|chords?|progressions?|something)\b/i.freeze
       LIVE_SYNTH_KNOB_RE = /\b(?:open|close|sweep|raise|lower|turn)\b.*\b(?:filter|cutoff|resonance|emphasis|detune|contour)\b/i.freeze
       LIVE_MUSIC_RE = /\b(?:play|start|resume|put on|queue)\b.*\b(?:liveset|default\s+music|dilla(?:\.rb)?|royksopp(?:\.rb)?|madlib(?:\.rb)?|fly(?:ing)?\s+lotus|flylo|sound\s*card|speakers?)\b/i.freeze
+      LIVE_MUSIC_PLAIN_RE = /\b(?:play|start|resume|put on|queue)\b.*\b(?:some\s+|the\s+|your\s+|my\s+)?music\b/i.freeze
       LIVE_AUDIO_STOP_RE = /\b(?:stop|kill|silence|mute|shut\s+off)\b.*\b(?:music|playing|sound|audio|synth\w*|liveset|jam)\b|\b(?:music|playing|sound|audio|synth\w*|liveset)\b.*\b(?:stop|kill|silence|mute|shut\s+off)\b/i.freeze
       LIVE_AUDIO_DIAGNOSTIC_RE = /\b(?:i\s+)?(?:can't|cannot|can\s*not|don't|do\s+not)\s+(?:hear|listen\s+to)\b|\b(?:no|nothing|zero)\s+(?:sound|audio|music)\b|\b(?:it's|it\s+is)\s+silent\b/i.freeze
       LIVE_STYLE_RE = /\b(?:röyksopp|royksopp|melody\s+a\.m\.)\b/i.freeze
@@ -46,6 +47,7 @@ module Master
       BACKGROUND_MUSIC_RE = /\b(?:play|start|resume|put on|queue)\b.*\b(?:your|some|the|my)?\s*music\b.*\bbackground\b/i.freeze
       LIVE_SYNTH_ALONE_RE = /\A\s*(?:stop|silence|enough)\b|\bstop\s+(?:the\s+)?(?:music|playing|synth\w*|improvi\w*|jam)\b|\b(?:improvi[sz]e|keep\s+playing)\b|\A\s*(?:please\s+)?play(?:\s+(?:some\s+)?music)?\s*[.!]?\s*\z/i.freeze
       POSTPRO_COMMAND_RE = /\b(?:run|use|call|invoke)\s+postpro(?:\.rb)?\b/i.freeze
+      POSTPRO_CAPABILITY_RE = /\b(?:can|could|are\s+you\s+able\s+to|do\s+you)\b.*\b(?:use|run|call|invoke)\s+postpro(?:\.rb)?\b/i.freeze
       POSTPRO_RE = /\b(?:post-?process|colour\s+grade|color\s+grade|film\s+look|vhs(?:\s+tape)?\s+look|crt(?:\s+broadcast)?\s+look|camcorder(?:\s+glitch)?\s+look|make\s+this\s+(?:cinematic|analog|analogue))\b/i.freeze
       IMAGE_PATH_RE = /(?:["']([^"']+\.(?:jpe?g|png|webp|tiff?))["']|(?:\A|\s)([^\s"']+\.(?:jpe?g|png|webp|tiff?))(?=\z|\s))/i.freeze
       POSTPRO_SUBJECT_RE = /\bpostpro(?:\.rb)?\b.*?\b(?:over|on|in|for|from)\b\s+["']([^"']+)["']/i.freeze
@@ -57,12 +59,13 @@ module Master
       POSTPRO_IMAGE_GLOB_RE = %r{(?:~|/)[^\s"\']*[\*?\[\]{}][^\s"\']*\.(?:jpe?g|png|webp|tiff?)\b}i.freeze
 
       def handles?(text)
-        text.match?(KICK_RE) || text.match?(PLAY_LAST_RE) || text.match?(SYNTH_RE) || text.match?(LIVE_AUDIO_STOP_RE) || live_synth?(text) ||
+        text.match?(KICK_RE) || text.match?(PLAY_LAST_RE) || text.match?(SYNTH_RE) || text.match?(LIVE_AUDIO_STOP_RE) || live_synth?(text) || POSTPRO_CAPABILITY_RE.match?(text) ||
           text.match?(BACKGROUND_MUSIC_RE) || text.match?(LIVE_AUDIO_DIAGNOSTIC_RE) || text.match?(AUDIO_RE) || postpro_intent?(text) ||
           text.match?(IMAGE_RE) && text.match?(/\b(?:photo|portrait|image|picture)\b/i)
       end
 
       def dispatch(text, root: MasterPaths.root, bus: nil)
+        return postpro_capability if POSTPRO_CAPABILITY_RE.match?(text)
         return generate_kick(text, root:) if text.match?(KICK_RE)
         return play_last(text, root:) if text.match?(PLAY_LAST_RE)
         return generate_tone(text, root:) if text.match?(SYNTH_RE)
@@ -325,7 +328,7 @@ module Master
       end
 
       def live_synth?(text)
-        [LIVE_MUSIC_RE, LIVE_SYNTH_ALONE_RE, LIVE_SYNTH_PLAY_RE, LIVE_SYNTH_KNOB_RE, LIVE_STYLE_QUERY_RE, LIVE_STYLE_ALONE_RE].any? { |pattern| text.match?(pattern) } ||
+        [LIVE_MUSIC_RE, LIVE_MUSIC_PLAIN_RE, LIVE_SYNTH_ALONE_RE, LIVE_SYNTH_PLAY_RE, LIVE_SYNTH_KNOB_RE, LIVE_STYLE_QUERY_RE, LIVE_STYLE_ALONE_RE].any? { |pattern| text.match?(pattern) } ||
           (text.match?(LIVE_STYLE_RE) && text.match?(LIVE_STYLE_VERB_RE))
       end
 
@@ -339,6 +342,11 @@ module Master
       # dilla answers at once: a sentence that starts music leaves a player of
       # its own running and returns, one that steers or stops it sends the
       # word to that player.
+      def postpro_capability
+        line = "postpro0: ready — provide an existing image file or directory path; default selection is the five newest images"
+        Result.ok(output: line, rendered: line, media: :postpro_help)
+      end
+
       def play_background_music(text, root: MasterPaths.root, bus: nil)
         result = ScriptDispatch.run(
           root:, tool: "dilla", arg: "live default", env: { "DILLA_COLTRANE" => "0" }
