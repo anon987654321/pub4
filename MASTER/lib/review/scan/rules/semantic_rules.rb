@@ -104,15 +104,16 @@ module Master
             response = ask_without_tools(prompt, operation: :scan_adversarial)
             parse_findings(response)
           rescue StandardError => e
-            # A missing key is the offline case and stays quiet; any other error
-            # is a real fault that must surface rather than read as "no findings".
-            # Either way the answer is [], never the nil the bare `if` returned.
-            # A spend limit is neither: it is a tier-wide pause, recorded once
-            # on the gate so the run says the tier did not run.
-            unless note_model_failure(e) || e.message.to_s =~ OFFLINE_ERRORS_PATTERN
-              Master::Ground::Swallow.log(e, context: "#{self.class}#check", severity: :load_bearing, path:)
-            end
-            []
+            # Missing credentials/capability and an exhausted provider are explicit
+            # non-results. Unexpected model/parser faults are measurement failures:
+            # log them and raise so FileProcessor returns a failed scan rather than
+            # silently turning an unevaluated semantic tier into CLEAN.
+            offline = e.message.to_s =~ OFFLINE_ERRORS_PATTERN
+            limited = note_model_failure(e)
+            return [] if offline || limited
+
+            Master::Ground::Swallow.log(e, context: "#{self.class}#check", severity: :load_bearing, path:)
+            raise
           end
 
           private
@@ -256,7 +257,7 @@ module Master
             end
           rescue StandardError => e
             Master::Ground::Swallow.log(e, context: "SemanticRule.from_law", severity: :load_bearing)
-            {}
+            raise
           end
 
           def build_prompt(code, path, scoped)
