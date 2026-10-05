@@ -41,6 +41,45 @@ class TestLawContract < Minitest::Test
     end
   end
 
+  def test_law_reload_never_exposes_a_partial_registry
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "probe.rb")
+      File.write(path, <<~RUBY)
+        sleep 0.2
+        Law.define(:ATOMIC_RELOAD_PROBE) do
+          source "test"
+          severity :info
+          practice "new"
+          fix "keep it"
+          bad "bad"
+          good "good"
+        end
+      RUBY
+
+      original = Law.rules.dup
+      original[:ATOMIC_RELOAD_PROBE] = Law::Rule.new(
+        id: :ATOMIC_RELOAD_PROBE, source: "test", severity: :info, mode: :violation,
+        languages: [], scope: :line, principle_scope: :universal, lifecycle: :active,
+        autofix: :review, path: nil, path_exclude: nil, absent: nil, detect: nil,
+        ask: nil, practice: "old", fix: "keep it", bad: "bad", good: "good",
+        reads_comments: false
+      )
+      Law.load_all(File.join(Master::ROOT, "law"))
+
+      loaded = Thread.new { Law.load_all(dir) }
+      sleep 0.05
+
+      assert_equal :trusted, Law.rules.fetch(:VERIFICATION_REQUIRED_FOR_COMPLETION).lifecycle
+      refute Law.rules.key?(:ATOMIC_RELOAD_PROBE)
+
+      loaded.join
+      assert_equal "new", Law.rules.fetch(:ATOMIC_RELOAD_PROBE).practice
+    ensure
+      loaded&.join
+      Law.load_all(File.join(Master::ROOT, "law"))
+    end
+  end
+
   def test_contract_has_stable_machine_readable_shape
     data = JSON.parse(Law::Contract.render)
 
