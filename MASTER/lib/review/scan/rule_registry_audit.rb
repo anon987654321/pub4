@@ -178,7 +178,7 @@ module Master
           law_dir = File.join(@master_root, "law")
           require File.join(law_dir, "law") unless defined?(::Law)
           ::Law.load_all(law_dir)
-          ::Law.rules.values.select(&:kernel?).map { |law| law.id.to_s.downcase }.to_set
+          ::Law.rules.values.select(&:kernel?).map { |law| law.id.to_s.downcase }.sort
         end
 
         def classify_yaml_entries(yaml_entries, registry)
