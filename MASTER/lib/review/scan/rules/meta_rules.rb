@@ -266,7 +266,10 @@ module Master
           end
 
           def rules_mtime
-            File.exist?(laws_path) ? File.mtime(laws_path).to_i : nil
+            return nil unless File.exist?(laws_path)
+
+            stat = File.stat(laws_path)
+            [stat.size, stat.ino, stat.mtime.to_r]
           end
 
           def smell_pattern(smell)
