@@ -97,8 +97,6 @@ class TestSnapshotGenerator < Minitest::Test
 
     assert_equal fake_output, out
   end
-end
-
 
   def test_snapshot_preserves_large_files_without_truncation
     Dir.mktmpdir do |dir|

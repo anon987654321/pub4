@@ -92,7 +92,9 @@ class WorldExternalContractTest < Minitest::Test
       assert_includes result.message, "TIMEOUT after"
     end
   end
-\n  def test_scoped_rollback_preserves_an_unrelated_concurrent_file
+
+
+  def test_scoped_rollback_preserves_an_unrelated_concurrent_file
     Dir.mktmpdir("master-world") do |root|
       Open3.capture2e("git", "-C", root, "init", "-q")
       Open3.capture2e("git", "-C", root, "config", "user.email", "master@example.invalid")
@@ -181,7 +183,9 @@ class ChallengeToolBalanceTest < Minitest::Test
       assert_kind_of Array, row[:tests]
     end
   end
-\n  def test_test_deletion_probe_reports_unique_coverage
+
+
+  def test_test_deletion_probe_reports_unique_coverage
     Dir.mktmpdir("master-deletion") do |root|
       lib = File.join(root, "lib")
       FileUtils.mkdir_p(lib)
