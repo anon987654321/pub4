@@ -34,6 +34,11 @@ module Master
           @default
         end
 
+        def self.reset_default!
+          @default = nil
+          @default_digest = nil
+        end
+
         # A rule that takes an agent is a semantic rule whatever it is called.
         def initialize(rules:)
           @rules = rules.reject { |rule| rule.respond_to?(:set_agent) }
