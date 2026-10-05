@@ -192,7 +192,9 @@ module Law
 
     private
 
-    # The same two fixtures, read the way a real file is read.
+    # The same two fixtures, read the way each declared language is read.
+    # Multi-language deterministic laws need one representative file per language;
+    # proving only the first extension left the other adapters unmeasured.
     #
     # Above, they prove through file "-": no extension, so no comment syntax, so
     # the text is read whole. A real subject has an extension and its comment
@@ -209,13 +211,20 @@ module Law
     # Costs nothing at boot and makes the whole defect class unreachable: a rule
     # that cannot see its own subject no longer loads.
     def prove_as_real_file!
-      extension = REALISTIC_EXTENSION.find { |ext, lang| languages.empty? || languages.map(&:to_s).include?(lang) }&.first
-      return self unless extension
+      declared = languages.map(&:to_s)
+      extensions = if declared.empty?
+        [REALISTIC_EXTENSION.keys.first]
+      else
+        REALISTIC_EXTENSION.filter_map { |ext, lang| ext if declared.include?(lang) }
+      end
+      return self if extensions.empty?
 
-      as_file = "fixture#{extension}"
-      raise ArgumentError, "#{id}: bad fixture flagged on \"-\" but not on #{extension} — " \
-                           "considered_text blanks its subject first (set reads_comments?)" if scan(bad, file: as_file).empty?
-      raise ArgumentError, "#{id}: good fixture clean on \"-\" but flagged on #{extension}" unless scan(good, file: as_file).empty?
+      extensions.each do |extension|
+        as_file = "fixture#{extension}"
+        raise ArgumentError, "#{id}: bad fixture flagged on \"-\" but not on #{extension} — " \
+                             "considered_text blanks its subject first (set reads_comments?)" if scan(bad, file: as_file).empty?
+        raise ArgumentError, "#{id}: good fixture clean on \"-\" but flagged on #{extension}" unless scan(good, file: as_file).empty?
+      end
 
       self
     end
