@@ -168,16 +168,8 @@ module Master
       end
 
       def excluded_reason(path, root:)
-        return "immutable" if immutable?(path, root:)
-        return "binary" if Master.binary_file?(path)
-        scanner = if defined?(Master::Review::Scan::Scanner)
-          Master::Review::Scan::Scanner
-        else
-          require File.join(Master::ROOT, "lib", "review", "scan", "scanner")
-          Master::Review::Scan::Scanner
-        end
-        return "scanner_path_filter" if scanner.skip_path?(path, root:)
-        nil
+        collector = Master::Fix::FixLoop::FileCollector.new(root:)
+        collector.send(:skip_reason, path).to_s unless collector.send(:skip_reason, path).nil?
       rescue StandardError
         "unreadable_or_unclassifiable"
       end
