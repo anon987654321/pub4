@@ -92,9 +92,23 @@ class TestScanEngines < Minitest::Test
     include Master::Review::Scan::Transport
 
     def self.skip_path?(path, root:) = Master::Review::Scan::PathFilter.skip_path?(path, root:)
+    def self.scan_candidate?(path, root:) = Master::Review::Scan::Scanner.scan_candidate?(path, root:)
 
     def initialize(bus = nil) = @bus = bus
     public :scan_since_paths, :parallel_map, :under_path?, :git_capture
+  end
+
+  def test_scan_since_includes_extensionless_shebang_source
+    repo = File.realpath(Dir.mktmpdir("transport_"))
+    path = File.join(repo, "app", "doctor")
+    FileUtils.mkdir_p(File.dirname(path))
+    File.write(path, "#!/usr/bin/env ruby\nputs :ok\n")
+
+    paths = Host.new.scan_since_paths(["app/doctor"], dir: File.join(repo, "app"), repo_root: repo)
+
+    assert_equal [path], paths
+  ensure
+    FileUtils.rm_rf(repo)
   end
 
   def test_scan_since_keeps_existing_scannable_files_under_the_scan_root
