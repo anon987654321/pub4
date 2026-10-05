@@ -13,9 +13,13 @@ module Master
       # split — see data/limits.yml. A generic accessor over a data file is how a
       # file stops having readers one can name.
       module RuleAccessors
-        def voice = @voice ||= (@voice_data["voice"] || @data["voice"] || {}).freeze
-        def strunk = @strunk ||= (voice["strunk"] || {}).freeze
-        def preserve = @preserve ||= (voice["preserve"] || {}).freeze
+        def voice
+          payload = data(:voice)
+          payload["voice"] || {}
+        end
+
+        def strunk = voice["strunk"] || {}
+        def preserve = voice["preserve"] || {}
 
         # Lazy, for the same reason limits.yml stopped being parsed in the
         # constructor: `constitution` is the only reader, and every Rules built
@@ -28,8 +32,8 @@ module Master
           @constitution ||= begin
             absolute = soul_data["absolute"] || {}
             {
-              "golden_rule" => absolute["golden_rule"] || @data["golden_rule"],
-              "protection" => absolute["protection_tiers"] || @data["protection"],
+              "golden_rule" => absolute["golden_rule"] || laws_data["golden_rule"],
+              "protection" => absolute["protection_tiers"] || laws_data["protection"],
               "banned_output" => voice["banned_output"],
               # soul is the one source; the voice.yml shadow copy is deleted, so
               # a fallback arm here would read a key that no longer exists.
@@ -51,8 +55,8 @@ module Master
             raise "rules registry unreadable: #{e.class}: #{e.message}"
           end
         end
-        def thresholds = @thresholds ||= (@data["thresholds"] || {}).freeze
-        def languages_config = @languages_config ||= (@data["languages"] || {}).freeze
+        def thresholds = laws_data["thresholds"] || {}
+        def languages_config = laws_data["languages"] || {}
       end
       # Markdown block rendering for system-prompt injection — a rendering
       # concern separate from Rules' own lookup/parsing responsibility.
@@ -90,9 +94,6 @@ module Master
       def initialize(root: nil)
         @root = root || Master::ROOT
         @data_dir = File.join(@root, "data")
-        @voice_path = File.join(@root, "data", "voice.yml")
-        @data = Master.load_laws(root: @root) || {}
-        @voice_data = load_yaml(@voice_path) || {}
         # limits.yml is no longer parsed here. It was loaded on every Rules
         # construction purely to back two accessors nobody called; the callers that
         # do want it (scan/request, fix_loop, mode_posture) each read it themselves,
@@ -117,24 +118,20 @@ module Master
       end
 
       def kernel
-        @kernel ||= begin
-          all_rules = Master.law_entries(root: @root)
-          all_rules
-            .select { |r| r["tier"] == "kernel" }
-            .each_with_object({}) { |r, h| h[r["id"]] = r["name"] }
-            .freeze
-        end
+        all_rules = Master.law_entries(root: @root)
+        all_rules
+          .select { |r| r["tier"] == "kernel" }
+          .each_with_object({}) { |r, h| h[r["id"]] = r["name"] }
+          .freeze
       end
 
       def philosophy(limit: nil)
-        @philosophy ||= begin
-          all_rules = Master.law_entries(root: @root)
-          all_rules
-            .reject { |r| r["tier"] == "kernel" }
-            .map { |h| h.transform_keys(&:to_s) }
-            .freeze
-        end
-        limit ? @philosophy.first(limit) : @philosophy
+        all_rules = Master.law_entries(root: @root)
+        items = all_rules
+          .reject { |r| r["tier"] == "kernel" }
+          .map { |h| h.transform_keys(&:to_s) }
+          .freeze
+        limit ? items.first(limit) : items
       end
 
 
@@ -143,29 +140,25 @@ module Master
         kernel[id_str] || philosophy.find { |a| a["id"] == id_str }&.dig("name")
       end
 
-      def empty? = @data.empty?
+      def empty? = laws_data.empty?
 
       private
 
       # A section of laws.yml answers to its own stem, so a call site may ask
       # for :style or :design_rules without knowing they share a file. A stem
       # with no section returns {}, the same as an absent optional file.
+      def laws_data
+        Master.load_laws(root: @root) || {}
+      end
+
       def folded(key)
         stems = DATA_ALIASES.fetch(key, [key.to_s])
-        stems.filter_map { |stem| @data[stem] }.first || {}
+        stems.filter_map { |stem| laws_data[stem] }.first || {}
       end
 
       def resolve_data_path(key)
         stems = DATA_ALIASES.fetch(key, [key.to_s])
         stems.map { |stem| File.join(@data_dir, "#{stem}.yml") }.find { |candidate| File.exist?(candidate) }
-      end
-
-      def load_yaml(path)
-        return unless File.exist?(path)
-        Master.load_yaml(path)
-      rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "rules.load_yaml", path:)
-        nil
       end
 
       def without_schema(payload)
