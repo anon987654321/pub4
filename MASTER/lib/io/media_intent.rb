@@ -47,7 +47,7 @@ module Master
       BACKGROUND_MUSIC_RE = /\b(?:play|start|resume|put on|queue)\b.*\b(?:your|some|the|my)?\s*music\b.*\bbackground\b/i.freeze
       LIVE_SYNTH_ALONE_RE = /\A\s*(?:stop|silence|enough)\b|\bstop\s+(?:the\s+)?(?:music|playing|synth\w*|improvi\w*|jam)\b|\b(?:improvi[sz]e|keep\s+playing)\b|\A\s*(?:please\s+)?play(?:\s+(?:some\s+)?music)?\s*[.!]?\s*\z/i.freeze
       POSTPRO_COMMAND_RE = /\b(?:run|use|call|invoke)\s+postpro(?:\.rb)?\b/i.freeze
-      POSTPRO_CAPABILITY_RE = /\b(?:can|could|are\s+you\s+able\s+to|do\s+you)\b.*\b(?:use|run|call|invoke)\s+postpro(?:\.rb)?\b/i.freeze
+      POSTPRO_CAPABILITY_RE = /\A\s*(?:can|could|are\s+you\s+able\s+to|do\s+you)\b.*\b(?:use|run|call|invoke)\s+postpro(?:\.rb)?\s*\??\s*\z/i.freeze
       POSTPRO_RE = /\b(?:post-?process|colour\s+grade|color\s+grade|film\s+look|vhs(?:\s+tape)?\s+look|crt(?:\s+broadcast)?\s+look|camcorder(?:\s+glitch)?\s+look|make\s+this\s+(?:cinematic|analog|analogue))\b/i.freeze
       IMAGE_PATH_RE = /(?:["']([^"']+\.(?:jpe?g|png|webp|tiff?))["']|(?:\A|\s)([^\s"']+\.(?:jpe?g|png|webp|tiff?))(?=\z|\s))/i.freeze
       POSTPRO_SUBJECT_RE = /\bpostpro(?:\.rb)?\b.*?\b(?:over|on|in|for|from)\b\s+["']([^"']+)["']/i.freeze
