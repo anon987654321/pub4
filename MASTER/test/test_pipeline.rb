@@ -142,7 +142,7 @@ class TestPipeline < Minitest::Test
   def test_fix_claims_the_vm23_control_plane_slot
     probe = Object.new
     seen = nil
-    probe.define_singleton_method(:run) do |_target, requested: false|
+    probe.define_singleton_method(:run) do |_target, requested: false, critique: true|
       seen = Master::Ops::LoopOwner.active
       Master::Result.ok(:done)
     end

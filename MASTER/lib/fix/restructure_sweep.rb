@@ -106,6 +106,16 @@ module Master
         end
       end
 
+      # Read-only preview: structural candidates are deterministic findings and
+      # problem-graph groupings. It never asks the model and never applies a plan.
+      def preview(target:)
+        return [] if ENV["MASTER_FIX_RESTRUCTURES"] == "0"
+
+        sweep_targets(target).flat_map do |tree_target|
+          candidates(tree_target, "preview-#{File.basename(tree_target)}")
+        end
+      end
+
       def run(target:, run_id:, phase: :normal)
         return [] if ENV["MASTER_FIX_RESTRUCTURES"] == "0"
 

@@ -114,7 +114,7 @@ module Master
         end
 
         def run_pass(files:, target:, pass:, deadline:, transaction_id:, history:, seen_snapshots:,
-                     recurring_violations:, consecutive_clean:)
+                     recurring_violations:, consecutive_clean:, critique: true)
           pass_mtimes = mtimes(files)
           @pass_progress = false
           @coverage_reporter&.call(target, pass)
@@ -124,14 +124,14 @@ module Master
           visual, opportunities, found = merge_evidence_findings(target:, files:, pass:, found:)
           return evidence_abort_result(visual, opportunities) if found.empty? && (visual&.err? || opportunities&.err?)
 
-          found, shed = supplement_with_improvements(found, pass:, files:, deadline:, consecutive_clean:)
+          found, shed = supplement_with_improvements(found, pass:, files:, deadline:, consecutive_clean:, critique:)
           return shed if shed
           return clean_pass_result(files, pass_mtimes, pass, consecutive_clean) if found.empty?
           return plateau_result if stagnant?(history, seen_snapshots, recurring_violations, found, pass, progressed: @pass_progress)
 
           # A reload skips the rule stage: it would ask the model about the whole
           # scan on code that is already out of date.
-          dispatch_llm_stages(unstreamed(found, streamed), files, pass, deadline, visual) unless CodeWatch.requested?
+          dispatch_llm_stages(unstreamed(found, streamed), files, pass, deadline, visual, critique:) unless CodeWatch.requested?
           delivered = deliver_pass(found, files, pass)
           return delivered unless CodeWatch.requested? && delivered.status == :continue
 
@@ -196,7 +196,7 @@ module Master
         # again. Returns [found, early] -- early is the shed-resources
         # PassResult to return immediately, or nil to keep going with the
         # (possibly still empty) found.
-        def supplement_with_improvements(found, pass:, files:, deadline:, consecutive_clean:)
+        def supplement_with_improvements(found, pass:, files:, deadline:, consecutive_clean:, critique:)
           return [found, nil] unless found.empty? && consecutive_clean.zero?
 
           resources = @resource_budget.measure
@@ -208,7 +208,7 @@ module Master
             return [found, shed]
           end
 
-          [found + Array(@council&.improve(files:, pass:, deadline:)), nil]
+          [found + (critique ? Array(@council&.improve(files:, pass:, deadline:)) : []), nil]
         end
 
         # found may now hold three kinds of finding -- ordinary rule
@@ -217,7 +217,7 @@ module Master
         # shed here (unlike supplement_with_improvements above) does not
         # abort: found is non-empty, so the transaction still delivers
         # whatever the fast/observation stages already produced.
-        def dispatch_llm_stages(found, files, pass, deadline, visual)
+        def dispatch_llm_stages(found, files, pass, deadline, visual, critique: true)
           resources = @resource_budget.measure
           if @resource_budget.critical?(resources)
             @bus&.publish("fix_loop:model_work_shed", pass:, reasons: resources[:reasons], values: resources[:values])
@@ -231,7 +231,7 @@ module Master
           improvement_found = found.select { |v| v[:rule].to_s == CouncilRound::IMPROVEMENT_RULE_ID }
           visual_found = found.select { |v| v[:rule].to_s == VisualPass::RULE_ID }
           opportunity_found = found.select { |v| v[:rule].to_s == OpportunityPass::RULE_ID }
-          council = @council&.run(files: files_with_violations(source_found, files), pass:, deadline:) if source_found.any?
+          council = @council&.run(files: files_with_violations(source_found, files), pass:, deadline:) if critique && source_found.any?
           run_llm_stage(source_found, files, pass, deadline, council:) if source_found.any?
           run_improvement_stage(improvement_found, pass:, files:, deadline:) if improvement_found.any?
           run_opportunity_stage(opportunity_found, files, pass, deadline, council:) if opportunity_found.any?

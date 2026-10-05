@@ -62,23 +62,24 @@ module Master
         @axioms = axioms
         @agent = agent
         path_root = File.expand_path(root)
-        @root = path_root == Master::ROOT ? Master::REPO_ROOT : path_root
+        @root = repository_root_for_runtime(path_root)
         @bus = bus
         @homeostat = homeostat
         @incremental = incremental
         @halted = false
         @halt_reason = nil
         @run_mutex = Mutex.new
-        @git = git || Io::GitOperations.new(root)
-        @run_journal = RunJournal.new(root:, bus:)
+        @git = git || Io::GitOperations.new(@root)
+        @run_journal = RunJournal.new(root: @root, bus:)
         @transformation_plan = TransformationPlan.new(root: Master::ROOT)
+        @critique_enabled = true
         @wishlist = Wishlist.new(root: @root, agent: @agent, event_bus: @bus)
 
-        @file_collector = FileCollector.new(root:, bus:)
-        @rule_order = RuleOrder.new(rules:, learnings:, bus:, root:)
-        @pass_runner = build_pass_runner(rules:, agent:, scanner:, root:, bus:, learnings:,
+        @file_collector = FileCollector.new(root: @root, bus:)
+        @rule_order = RuleOrder.new(rules:, learnings:, bus:, root: @root)
+        @pass_runner = build_pass_runner(rules:, agent:, scanner:, root: @root, bus:, learnings:,
           ground_truth:, preserve_user_intent:, law_resolver:, homeostat: @homeostat)
-        @sweeps = build_sweeps(agent:, root:, bus:)
+        @sweeps = build_sweeps(agent:, root: @root, bus:)
       end
 
       # A halt stops the runs nobody asked for, the background runner and the
@@ -86,9 +87,13 @@ module Master
       # request to repair exactly that tree; halting it too refused every fix
       # while a single violation stood, so "fix and commit" scanned and stopped.
       def run(target = @root, max_passes: max_passes_default, budget_seconds: RUN_BUDGET_SECONDS,
-              incremental: @incremental, requested: false)
+              incremental: @incremental, requested: false, critique: true)
         @run_mutex.synchronize do
+          previous_critique = @critique_enabled
+          @critique_enabled = critique
           run_unlocked(target, max_passes:, budget_seconds:, incremental:, requested:)
+        ensure
+          @critique_enabled = previous_critique
         end
       end
 
@@ -133,8 +138,12 @@ module Master
           mission&.defer!(reason: "attempt #{state}: #{result.to_s}")
         end
 
-        wishlist_message = @wishlist.call(state: state.to_s, target:, run_id:) if requested
-        @bus&.publish("fix_loop:wishlist", state:, target:, message: wishlist_message) if requested
+        if requested && whole_repository_target?(target)
+          wishlist_message = @wishlist.call(state: state.to_s, target:, run_id:)
+          @bus&.publish("fix_loop:wishlist", state:, target:, message: wishlist_message)
+        elsif requested
+          @bus&.publish("fix_loop:wishlist", state:, target:, message: "wishlist: skipped — target is narrower than the repository")
+        end
         @bus&.publish("fix_loop:terminal", state:, message: result.to_s)
 
         result
@@ -147,8 +156,9 @@ module Master
         @sweeps.flat_map do |sweep|
           sweep.run(target:, run_id:, phase:)
         rescue StandardError => e
-          Master::Ground::Swallow.log(e, context: "fix_loop.#{sweep.class.name.split("::").last}", event_bus: @bus)
-          []
+          @bus&.publish("fix_loop:structural_error", sweep: sweep.class.name, target:, error: e.message)
+          Master::Trace::Dmesg.status("fix0", "structural sweep failed: #{sweep.class.name}: #{e.message}")
+          raise
         end
       end
 
@@ -174,11 +184,19 @@ module Master
         violations = @pass_runner.violations(files)
         by_rule = violations.group_by { |v| v[:rule].to_s }.transform_values(&:size)
         by_file = violations.group_by { |v| v[:file].to_s }.transform_values(&:size)
+        structural = @sweeps.find { |sweep| sweep.respond_to?(:preview) && sweep.is_a?(RestructureSweep) }&.preview(target:)
+        renames = @sweeps.find { |sweep| sweep.respond_to?(:preview) && sweep.is_a?(RenameSweep) }&.preview(target:)
         Result.ok(
           total: violations.size,
           rules: by_rule.sort_by { |_, n| -n }.first(10).to_h,
           files: by_file.sort_by { |_, n| -n }.first(10).to_h,
           skipped: @file_collector.skipped,
+          structural_candidates: Array(structural).size,
+          structural_examples: Array(structural).first(5).map { |problem|
+            { id: problem.id, rules: problem.rules, files: problem.files.first(3) }
+          },
+          rename_candidates: Array(renames).size,
+          rename_examples: Array(renames).first(5).map { |path, reason| { path:, reason: } }
         )
       end
 
@@ -205,6 +223,18 @@ module Master
         [restructure, rename]
       end
 
+      def repository_root_for_runtime(path)
+        return Master::REPO_ROOT if path == Master::REPO_ROOT
+        return Master::REPO_ROOT if %w[MASTER RAILS OPENBSD STUDIO].include?(File.basename(path)) &&
+                                     File.dirname(path) == Master::REPO_ROOT
+
+        path
+      end
+
+      def whole_repository_target?(target)
+        File.expand_path(target.to_s, @root) == @root
+      end
+
       def repository_root_for_sweeps(root)
         expanded = File.expand_path(root)
         tree = File.basename(expanded)
@@ -226,7 +256,8 @@ module Master
         resumed = resume_active_transaction(journal:, run_id:, start_pass:)
         return resumed.tap { mission.fail!(resumed.message) } if resumed.err?
 
-        result = run_passes(files:, target:, max_passes:, deadline:, budget_seconds:, start_pass: resumed.value!, run_id:)
+        result = run_passes(files:, target:, max_passes:, deadline:, budget_seconds:, start_pass: resumed.value!,
+                             run_id:, critique: @critique_enabled)
         finish_run(result, target, run_id, mission:, requested:)
       end
 
@@ -307,7 +338,7 @@ module Master
 
       # start_pass is the number of the first pass to run, 1-based like the
       # journal's next_pass; run_one_pass takes the 0-based index.
-      def run_passes(files:, target:, max_passes:, deadline:, budget_seconds:, start_pass: 1, run_id:)
+      def run_passes(files:, target:, max_passes:, deadline:, budget_seconds:, start_pass: 1, run_id:, critique: true)
         state = { history: [], seen_snapshots: Set.new, recurring_violations: Hash.new(0), consecutive_clean: 0 }
 
         first_index = start_pass - 1
@@ -316,7 +347,7 @@ module Master
 
         remaining_passes.times do |offset|
           i = first_index + offset
-          outcome = run_one_pass(i, files:, target:, deadline:, budget_seconds:, state:, run_id:)
+          outcome = run_one_pass(i, files:, target:, deadline:, budget_seconds:, state:, run_id:, critique:)
           return terminal(:plateau, "no further improvement after #{i + 1} pass(es)") if outcome == :break
           return outcome if outcome
         end
@@ -361,7 +392,7 @@ module Master
         Result.ok("#{state.to_s.upcase}: #{message}")
       end
 
-      def run_one_pass(i, files:, target:, deadline:, budget_seconds:, state:, run_id:)
+      def run_one_pass(i, files:, target:, deadline:, budget_seconds:, state:, run_id:, critique: true)
         pass = i + 1
         transaction_id = "#{run_id}-pass-#{pass}"
         @run_journal.pass_start(run_id, pass, transaction_id:)

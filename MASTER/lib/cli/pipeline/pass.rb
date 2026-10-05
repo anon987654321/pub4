@@ -132,7 +132,7 @@ module Master
           end
           run_aesthetic = aesthetic && posture[:scan_profile].to_s != "full"
           sections = [observe_section(title: "observe", unit: "obs0", shell:, aesthetic: run_aesthetic)]
-          if critique && !(@only && !@only.include?("critique"))
+          if critique && !@apply && !(@only && !@only.include?("critique"))
             sections << critique_section(resolved, shell)
           end
           unless @apply
@@ -271,8 +271,12 @@ def default_apply?(*) = false
         end
 
         def pass_ok?(sections)
-          @failed_stages.empty? && sections.none? do |title, body|
-            title.include?("observe") && body.to_s.match?(/\berror\b|\bcritical\b/i) && body.to_s.match?(/\d{2,}\s+finding/i)
+          return false unless @failed_stages.empty?
+
+          sections.none? do |title, body|
+            next false unless title.to_s.match?(/\A(?:observe|re-observe)\z/)
+            body.to_s.match?(/\A\s*(?:scan|observe) failed:/i) ||
+              body.to_s.match?(/\binconclusive\b/i)
           end
         end
 
@@ -288,7 +292,7 @@ def default_apply?(*) = false
           # Claim the same execution slot around an interactive /fix so the control
           # plane cannot fetch, rebase or deploy while the fix loop is mutating main.
           Master::Ops::LoopOwner.with_claim("fix") do
-            result = @fix_loop.run(abs, requested: true)
+            result = @fix_loop.run(abs, requested: true, critique: @critique_enabled)
             unless result.ok?
               @failed_stages << "fix" unless @failed_stages.include?("fix")
               Master::Trace::Dmesg.status("fix0", "failed, #{result.message}")
@@ -338,11 +342,30 @@ def default_apply?(*) = false
         def preview_lines(value)
           total = value[:total].to_i
           files = value[:files].to_h.transform_keys { |path| File.basename(path.to_s) }
-          [
+          structural = value[:structural_candidates].to_i
+          renames = value[:rename_candidates].to_i
+          rows = [
             "preview: #{total} #{total == 1 ? 'repair' : 'repairs'}",
             preview_row("rules", value[:rules]),
             preview_row("files", files),
-          ].compact.join("\n")
+          ]
+          rows << preview_candidates("structural", structural, value[:structural_examples]) if value.key?(:structural_candidates)
+          rows << preview_candidates("renames", renames, value[:rename_examples]) if value.key?(:rename_candidates)
+          rows.compact.join("\n")
+        end
+
+        def preview_candidates(label, count, examples)
+          return "preview #{label}: none" if count.zero?
+
+          shown = Array(examples).first(3).map do |example|
+            if example.is_a?(Hash)
+              example[:id] || example[:path]
+            else
+              example.to_s
+            end
+          end.compact.map(&:to_s)
+          detail = shown.empty? ? "" : " — #{shown.join(", ")}"
+          "preview #{label}: #{count} candidate(s)#{detail}"
         end
 
         def preview_row(label, counts)

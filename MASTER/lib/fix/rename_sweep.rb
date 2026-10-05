@@ -27,6 +27,16 @@ module Master
         @rename = rename || FileRename.new(repo_root:, preserve_user_intent:, ground_truth:)
       end
 
+      # Read-only preview: naming candidates are deterministic; the model is
+      # consulted only when a real /fix is authorised to rename something.
+      def preview(target:)
+        return [] if ENV["MASTER_FIX_RENAMES"] == "0"
+
+        sweep_targets(target).flat_map do |tree_target|
+          candidates(tree_target, "preview-#{File.basename(tree_target)}")
+        end
+      end
+
       def run(target:, run_id:, phase: :normal)
         return [] if ENV["MASTER_FIX_RENAMES"] == "0"
 

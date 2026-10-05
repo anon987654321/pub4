@@ -77,6 +77,127 @@ class TestFixConvergence < Minitest::Test
   # spelling only long enough to rewrite it to /fix, so no separate scan
   # dispatcher, help topic, or pipeline stage can survive.
 
+
+  def test_fix_loop_normalises_all_tree_roots_to_the_repository
+    loop = Master::Fix::FixLoop.new(
+      rules: [StubRule.new("TEST_RULE", :warning)],
+      agent: OpenCircuitAgent.new,
+      scanner: ConstantScanner.new([]),
+      root: Master::RAILS_ROOT,
+      bus: @bus,
+      git: StubGit.new,
+    )
+
+    assert_equal Master::REPO_ROOT, loop.instance_variable_get(:@root)
+    assert_equal Master::REPO_ROOT, loop.instance_variable_get(:@file_collector).instance_variable_get(:@root)
+    assert_equal Master::REPO_ROOT, loop.instance_variable_get(:@rule_order).instance_variable_get(:@root)
+    assert_equal Master::REPO_ROOT, loop.instance_variable_get(:@pass_runner).instance_variable_get(:@root)
+    assert_equal Master::REPO_ROOT, loop.instance_variable_get(:@pass_runner).instance_variable_get(:@committer).instance_variable_get(:@root)
+  end
+
+  def test_no_critique_disables_the_internal_council
+    called = false
+    council = Object.new
+    council.define_singleton_method(:run) { |**| called = true; {} }
+    council.define_singleton_method(:improve) { |**| called = true; [] }
+
+    result = build_loop(
+      [{ rule: "TEST_RULE", file: File.join(@root, "dummy.yml"), line: 1, message: "x" }],
+      council:,
+    ).run(@root, max_passes: 1, critique: false)
+
+    refute called, "the internal council ran despite --no-critique"
+    assert_predicate result, :ok?
+  end
+
+  def test_structural_sweep_failures_are_not_swallowed
+    loop = Master::Fix::FixLoop.allocate
+    loop.instance_variable_set(:@bus, @bus)
+    loop.instance_variable_set(:@sweeps, [
+      Object.new.tap { |sweep| sweep.define_singleton_method(:run) { |**| raise "broken sweep" } },
+    ])
+
+    error = assert_raises(RuntimeError) do
+      loop.sweep_tree(@root, "run1")
+    end
+
+    assert_equal "broken sweep", error.message
+    assert_includes @bus.names, "fix_loop:structural_error"
+  end
+
+  def test_tree_scoped_fix_does_not_write_the_repository_wishlist
+    calls = 0
+    wishlist = Object.new
+    wishlist.define_singleton_method(:call) { |**| calls += 1; "unexpected" }
+
+    journal = Object.new
+    journal.define_singleton_method(:terminal) { |*| nil }
+
+    loop = build_loop([])
+    loop.instance_variable_set(:@wishlist, wishlist)
+    loop.instance_variable_set(:@run_journal, journal)
+
+    loop.send(:finish_run, Master::Result.ok("DONE: clean"), File.join(@root, "RAILS"), "r1", requested: true)
+
+    assert_equal 0, calls
+    skipped = @bus.events.find { |row| row[:event] == "fix_loop:wishlist" }
+    assert_equal "wishlist: skipped — target is narrower than the repository", skipped[:payload][:message]
+  end
+
+  def test_fix_preview_includes_structural_and_rename_candidates
+    problem_class = Struct.new(:id, :rules, :files, keyword_init: true)
+    structural_problem = problem_class.new(id: "p1", rules: ["SMALL_FILES"], files: ["RAILS/brgen/app/models/post.rb"])
+    rename_candidate = ["/tmp/example_old.rb", "vague name"]
+
+    structural = Master::Fix::RestructureSweep.allocate
+    structural.define_singleton_method(:preview) { |target| [structural_problem] }
+    rename = Master::Fix::RenameSweep.allocate
+    rename.define_singleton_method(:preview) { |target| [rename_candidate] }
+
+    loop = build_loop([])
+    pass_runner = Object.new
+    pass_runner.define_singleton_method(:violations) { |files| [] }
+    loop.instance_variable_set(:@pass_runner, pass_runner)
+    loop.instance_variable_set(:@sweeps, [structural, rename])
+
+    result = loop.preview(@root)
+    value = result.value!
+
+    assert_equal 1, value[:structural_candidates]
+    assert_equal "p1", value[:structural_examples].first[:id]
+    assert_equal 1, value[:rename_candidates]
+    assert_equal "/tmp/example_old.rb", value[:rename_examples].first[:path]
+  end
+
+  def test_dry_run_defaults_to_no_council
+    saved = ENV["MASTER_FIX_DEEP_TRACE"]
+    ENV["MASTER_FIX_DEEP_TRACE"] = "0"
+    seen = nil
+
+    result = Master::CLI::CommandRegistry.stub(
+      :run_pass,
+      ->(_deps, **args) {
+        seen = args
+        "preview"
+      },
+    ) do
+      Master::CLI::CommandRegistry.dispatch_fix(
+        scanner: Object.new,
+        fix_loop: Object.new,
+        deliberation: nil,
+        root: Master::ROOT,
+        bus: @bus,
+        ctx: { args: "RAILS --dry-run" },
+      )
+    end
+
+    assert_equal false, seen[:apply]
+    assert_equal false, seen[:critique]
+    assert_equal "preview", result
+  ensure
+    saved.nil? ? ENV.delete("MASTER_FIX_DEEP_TRACE") : ENV["MASTER_FIX_DEEP_TRACE"] = saved
+  end
+
   def test_unmeasured_proof_baseline_is_inconclusive_not_green
     pass = Master::CLI::Pipeline::Pass.allocate
     after = Master::CLI::Pipeline::Proof::Reading.new(passed: 1, total: 1, failing: [], finished: 1)
