@@ -218,13 +218,15 @@ module Master
         end
 
         def prediction_thresholds
-          @prediction_thresholds ||= begin
-            rules = Master.load_yaml(Master::LAWS_PATH)
-            prediction = rules["prediction_engine"]
-            raise "prediction_engine configuration missing" unless prediction.is_a?(Hash)
+          stamp = Master.load_yaml_stamp(Master::LAWS_PATH)
+          return @prediction_thresholds if @prediction_thresholds_stamp == stamp && @prediction_thresholds
 
-            prediction
-          end
+          rules = Master.load_laws(root: Master::ROOT)
+          prediction = rules["prediction_engine"]
+          raise "prediction_engine configuration missing" unless prediction.is_a?(Hash)
+
+          @prediction_thresholds_stamp = stamp
+          @prediction_thresholds = prediction
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "Scanner.prediction_thresholds")
           raise "scanner: prediction policy unreadable: #{e.class}: #{e.message}"
