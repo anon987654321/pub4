@@ -37,7 +37,7 @@ class TestGateChain < Minitest::Test
     assert_equal %w[lexical source sprawl council], writers
   end
 
-def test_fix_verification_is_read_only
+  def test_fix_verification_is_read_only
     calls = []
     stage = G::Stage.new(name: "suites", purpose: "proof", mutates: false, run: -> { [true, ["suites: ok"], 0] })
 
@@ -55,7 +55,6 @@ def test_fix_verification_is_read_only
 
     assert_equal [true], calls
   end
-
 
   # --tree exists to run less. Its whole risk is running less than the caller
   # thinks: a narrowed ladder that still calls itself a gate, or a typo that
