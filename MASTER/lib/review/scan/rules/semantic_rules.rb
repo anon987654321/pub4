@@ -221,10 +221,9 @@ module Master
 
           def semantic_cache_key(path, code)
             require "digest"
-            stat = File.stat(path)
-            [path, stat.size, stat.ino, stat.mtime.to_r, Digest::SHA256.hexdigest(code)[0, 16], @rules_mtime].join(":")
-          rescue StandardError
-            [path, code.bytesize, @rules_mtime].join(":")
+            stat = File.stat(path) if File.file?(path)
+            file_stamp = stat && [stat.size, stat.ino, stat.mtime.to_r]
+            [path, file_stamp, Digest::SHA256.hexdigest(code), @rules_mtime].join(":")
           end
 
           # One source: semantic review is populated from executable Law definitions.
