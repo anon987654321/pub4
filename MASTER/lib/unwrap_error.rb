@@ -28,13 +28,16 @@ module Master
     module_function
 
     def detectors
-      @detectors ||= begin
-        data = Master.load_yaml(Master::LAWS_PATH)
-        (data.dig("phantom_recovery", "detectors") || {}).transform_values { |v| compile_detector(v) }
-      end
+      policy = phantom_policy
+      stamp = phantom_policy_stamp
+      return @detectors if @detectors && @detectors_stamp == stamp
+
+      @detectors = policy.fetch("detectors", {}).transform_values { |value| compile_detector(value) }
+      @detectors_stamp = stamp
+      @detectors
     rescue StandardError => e
-      Master::Ground::Swallow.log(e, context: "PhantomRecovery.detectors")
-      {}
+      Master::Ground::Swallow.log(e, context: "PhantomRecovery.detectors", severity: :load_bearing)
+      raise "phantom recovery policy unreadable: #{e.class}: #{e.message}"
     end
 
     def detect(text, bus: nil)
@@ -47,7 +50,7 @@ module Master
 
       return if hits.empty?
 
-      recovery = Master.load_yaml(Master::LAWS_PATH).dig("phantom_recovery", "recovery") || []
+      recovery = Array(phantom_policy.fetch("recovery", []))
       bus&.publish("phantom:detected", patterns: hits, recovery:)
       { patterns: hits, recovery: }
     end
@@ -81,13 +84,16 @@ module Master
     end
 
     def style_only_detectors
-      @style_only_detectors ||= begin
-        data = Master.load_yaml(Master::LAWS_PATH)
-        Array(data.dig("phantom_recovery", "style_only")).map(&:to_s)
-      rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "PhantomRecovery.style_only_detectors")
-        []
-      end
+      policy = phantom_policy
+      stamp = phantom_policy_stamp
+      return @style_only_detectors if @style_only_detectors && @style_only_detectors_stamp == stamp
+
+      @style_only_detectors = Array(policy.fetch("style_only", [])).map(&:to_s).freeze
+      @style_only_detectors_stamp = stamp
+      @style_only_detectors
+    rescue StandardError => e
+      Master::Ground::Swallow.log(e, context: "PhantomRecovery.style_only_detectors", severity: :load_bearing)
+      raise "phantom recovery style policy unreadable: #{e.class}: #{e.message}"
     end
 
     def style_only?(patterns)
@@ -150,11 +156,31 @@ module Master
       end
     end
 
+    def phantom_policy
+      path = Master::LAWS_PATH
+      stat = File.stat(path)
+      stamp = [stat.size, stat.ino, stat.mtime.to_r]
+      return @phantom_policy if @phantom_policy && @phantom_policy_stamp == stamp
+
+      data = Master.load_yaml(path)
+      policy = data.fetch("phantom_recovery")
+      raise ArgumentError, "phantom_recovery must be a Hash" unless policy.is_a?(Hash)
+
+      @phantom_policy_stamp = stamp
+      @phantom_policy = policy
+    end
+
+    def phantom_policy_stamp
+      path = Master::LAWS_PATH
+      stat = File.stat(path)
+      [stat.size, stat.ino, stat.mtime.to_r]
+    end
+
     def compile_detector(value)
       return value unless value.is_a?(String)
 
       literal = value.match(%r{\A/(.*)/([imx]*)\z})
-      return unless literal
+      return value unless literal
 
       flags = literal[2].chars.reduce(0) do |opts, flag|
         opts | { "i" => Regexp::IGNORECASE, "m" => Regexp::MULTILINE, "x" => Regexp::EXTENDED }.fetch(flag, 0)
