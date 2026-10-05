@@ -72,9 +72,14 @@ module Master
   def self.language_for(path)
     @language_for ||= {}
     key = path.to_s
-    return @language_for[key] if @language_for.key?(key)
+    stat = File.stat(key) if File.file?(key)
+    stamp = stat && [stat.size, stat.ino, stat.mtime.to_r]
+    cached = @language_for[key]
+    return cached[:language] if cached && cached[:stamp] == stamp
 
-    @language_for[key] = resolve_language(key)
+    language = resolve_language(key)
+    @language_for[key] = { stamp:, language: }
+    language
   end
 
   def self.resolve_language(path)
