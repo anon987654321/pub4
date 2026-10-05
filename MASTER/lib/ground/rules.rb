@@ -136,6 +136,7 @@ module Master
           all_rules = Master.law_entries(root: @root)
           @philosophy = all_rules
                         .reject { |r| r["tier"] == "kernel" }
+                        .sort_by { |r| r["priority"].to_i }
                         .map { |h| h.transform_keys(&:to_s) }
                         .freeze
         end
