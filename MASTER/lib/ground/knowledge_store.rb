@@ -148,7 +148,7 @@ module Master
       # A violation the rule never actually attempted (confidence gate,
       # stale fingerprint) is recorded as 'skipped' and excluded here --
       # only genuine attempt outcomes ('fixed'/'stuck') count toward
-      # quality. See fix_batch's comment in rule_loop.rb for why: counting
+      # quality. See fix_batch's comment in law_loop.rb for why: counting
       # policy skips as failures deprioritizes a rule further every time
       # it's skipped, without it ever having actually failed a fix.
       def fix_quality(rule:, file_type: nil)

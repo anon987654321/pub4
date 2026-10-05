@@ -3,13 +3,13 @@
 module Master
   module Fix
     # One repair per file: every finding the stream may repair in the file, in
-    # one prompt, one candidate and one verdict. RuleLoop asks per rule, after
+    # one prompt, one candidate and one verdict. LawLoop asks per rule, after
     # an architecture plan for any file over 200 lines, with three candidates,
     # and repairs one finding per file and rule a pass, each prompt carrying the
     # whole 30 KB constitution. Measured on /fix MASTER: about four calls a
-    # finding, thirty-odd files an hour. This keeps RuleLoop's extraction,
+    # finding, thirty-odd files an hour. This keeps LawLoop's extraction,
     # verifier, apply guard, tests and commit, and changes only what it asks.
-    class FileRepair < RuleLoop
+    class FileRepair < LawLoop
       Scope = Data.define(:id, :description)
 
       GOLDEN = "Golden rule: preserve, then improve, never break. Make the smallest change " \

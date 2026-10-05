@@ -15,9 +15,9 @@ event_classifier:
   - { pattern: "error|rollback|failed|failure",          topology: ecology, entropy: 0.78, confidence: 0.24, mode: error }
   - { pattern: "done|complete|success|response",         topology: face,    entropy: 0.14, confidence: 0.92, mode: complete }
   - { pattern: "codebase:topology|fix_loop:pass",        topology: codebase, entropy: 0.28, confidence: 0.78, mode: codebase }
-  - { pattern: "rule_loop:cycle|rule_loop:clean",        topology: codebase, entropy: 0.45, confidence: 0.62, mode: fixing }
+  - { pattern: "law_loop:cycle|law_loop:clean",        topology: codebase, entropy: 0.45, confidence: 0.62, mode: fixing }
   - { pattern: "fix_loop:idle",                          topology: codebase, entropy: 0.10, confidence: 0.95, mode: settled }
-  - { pattern: "rule_loop:converged",                    topology: codebase, entropy: 0.20, confidence: 0.82, mode: converged }
+  - { pattern: "law_loop:converged",                    topology: codebase, entropy: 0.20, confidence: 0.82, mode: converged }
 
 provider_detect: "claude|deepseek|gemini|gpt|openai|openrouter|mistral"
 

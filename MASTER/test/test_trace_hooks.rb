@@ -4,7 +4,7 @@ require_relative "test_helper"
 
 # soul.yml declares seven hooks. Trace::Hooks is what fires them, and until
 # 2026-09-06 nothing called `attach`, so every one was dead on a bus already
-# carrying its trigger — scan:complete, rule_loop:fix_applied, llm:cost,
+# carrying its trigger — scan:complete, law_loop:fix_applied, llm:cost,
 # phase:advanced and fix_loop:clean are all published by live code.
 #
 # Two directions throughout. A hook that fires on the wrong event is as wrong as
@@ -131,7 +131,7 @@ class TestTraceHooks < Minitest::Test
     subject.send(:subscribe_fix_applied)
     subject.send(:subscribe_convergence)
 
-    @bus.publish("rule_loop:fix_applied", rule: "NO_PUTS")
+    @bus.publish("law_loop:fix_applied", rule: "NO_PUTS")
     @bus.publish("fix_loop:clean", passes: 2)
 
     assert_includes events, "hooks:fix_applied"

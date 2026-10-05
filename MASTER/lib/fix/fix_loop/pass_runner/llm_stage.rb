@@ -77,14 +77,14 @@ module Master
           def run_rule_group(group:, files:, pass:, rule_violations:, council: nil)
             unless disjoint_rule_files?(group, rule_violations)
               return group.map do |rule|
-                [rule, run_rule_once(rule, files, pass, council:,
+                [rule, run_law_once(rule, files, pass, council:,
                                      external_violations: rule_violations[rule.id.to_s])]
               end
             end
 
             group.map do |rule|
               Thread.new do
-                [rule, run_rule_once(rule, files, pass, council:,
+                [rule, run_law_once(rule, files, pass, council:,
                                      external_violations: rule_violations[rule.id.to_s])]
               end
             end.map(&:value)
@@ -125,8 +125,8 @@ module Master
             raise "semantic rule adapter load failed: #{e.class}: #{e.message}"
           end
 
-          def run_rule_once(rule, files, pass, council: nil, external_violations: nil)
-            rl = RuleLoop.new(rule:, agent: @agent, scanner: @scanner, root: @root, bus: @bus,
+          def run_law_once(rule, files, pass, council: nil, external_violations: nil)
+            rl = LawLoop.new(rule:, agent: @agent, scanner: @scanner, root: @root, bus: @bus,
                               learnings: @learnings, committer: @committer,
                               visual_custody: @visual_pass&.custody)
             rl.injected_preamble = [@preamble, council_preamble(council)].compact.join("\n\n")

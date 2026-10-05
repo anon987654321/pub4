@@ -26,7 +26,7 @@ class TestLibRootDisciplineRule < Minitest::Test
   end
 
   def test_ignores_files_in_subdirectories
-    path = File.join(Master::ROOT, "lib", "fix", "rule_loop.rb")
+    path = File.join(Master::ROOT, "lib", "fix", "law_loop.rb")
 
     assert_empty @rule.check("", path:)
   end

@@ -81,7 +81,7 @@ subsystems:
     status: verified
     meaning: the LLM-driven fix stage actually attempts and applies fixes, not just deterministic
       rubocop/AST passes -- the single biggest fix of this session
-    evidence: 'commit 858080be9 -- FileProcessor and RuleLoop::FixVerification each maintained
+    evidence: 'commit 858080be9 -- FileProcessor and LawLoop::FixVerification each maintained
       their own copy of the "has this file changed since the violation was found" fingerprint
       formula; the two had quietly drifted (one included an extra field the other didn''t), so
       every comparison failed permanently regardless of whether the file had actually changed.

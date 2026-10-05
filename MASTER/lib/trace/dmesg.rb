@@ -398,11 +398,11 @@ module Master
             @ledger[:passes] = [@ledger[:passes].to_i, payload[:pass].to_i].max
             @ledger[:files] = [@ledger[:files].to_i, payload[:file_count].to_i].max
           when "fix_loop:scan_progress" then @ledger[:finding_files] += 1
-          when "fix_loop:rule_result", "rule_loop:pass"
+          when "fix_loop:rule_result", "law_loop:pass"
             @ledger[:rules] += 1
             @ledger[:violations] += payload[:violations].to_i
             @ledger[:fixed] += payload[:fixed].to_i
-          when "rule_loop:fix_applied", "fix_loop:ast_fixed" then @ledger[:changes] += 1
+          when "law_loop:fix_applied", "fix_loop:ast_fixed" then @ledger[:changes] += 1
           when "fix_loop:improvement_fix", "fix_loop:opportunity_fix", "fix_loop:visual_fix"
             @ledger[:model_fixes] += payload[:fixed].to_i
           when "fix_loop:improvement_council" then @ledger[:council] += 1

@@ -9,24 +9,24 @@ require_relative "fix_attempt"
 require_relative "patch_applier"
 require_relative "severity"
 require_relative "violation"
-require_relative "rule_loop/collapse_guard"
-require_relative "rule_loop/fix_strategies"
-require_relative "rule_loop/fix_verification"
-require_relative "rule_loop/outcome_tracking"
+require_relative "law_loop/collapse_guard"
+require_relative "law_loop/fix_strategies"
+require_relative "law_loop/fix_verification"
+require_relative "law_loop/outcome_tracking"
 require_relative "visual_custody_blocking"
 require_relative "../review/scan/rule_health"
-require_relative "rule_loop/autofix_policy"
+require_relative "law_loop/autofix_policy"
 
 module Master
   module Fix
   # Single-pass fixer for one rule across a set of files.
-  # FixLoop owns the outer convergence loop; RuleLoop fixes one batch per call.
+  # FixLoop owns the outer convergence loop; LawLoop fixes one batch per call.
   #
   # Fix routing (per violation severity + file size):
   #   error tier  → council_fix   (3-reviewer veto before apply)
   #   large file  → diff_fix      (unified diff patch; arch #5)
   #   small file  → genetic_fix   (N candidates, rescan, best wins; arch #9)
-    class RuleLoop
+    class LawLoop
       RATE_LIMIT_SLEEP = 10
       MAX_FIX_RETRIES = 2
       RETRY_WAIT_SLICE = 0.25
@@ -81,8 +81,8 @@ module Master
           Master::Ground::Rules.new.rules.each { |key, value| lines << "- #{key}: #{value}" }
           lines.join("\n")
         rescue StandardError => e
-          Master::Ground::Swallow.log(e, context: "rule_loop.golden_rule")
-          raise "rule_loop: constitutional preamble unreadable: #{e.class}: #{e.message}"
+          Master::Ground::Swallow.log(e, context: "law_loop.golden_rule")
+          raise "law_loop: constitutional preamble unreadable: #{e.class}: #{e.message}"
         end
       end
 
@@ -122,10 +122,10 @@ module Master
         fixed = fix_batch(violations)
         status = pass_outcome(fixed)
         record_outcomes(files, status)
-        @bus&.publish("rule_loop:pass", rule: @rule.id, violations: violations.size, fixed:, status:)
+        @bus&.publish("law_loop:pass", rule: @rule.id, violations: violations.size, fixed:, status:)
         { fixed:, status:, breakdown: @batch_breakdown }
       rescue StandardError => e
-        @bus&.publish("rule_loop:error", rule: @rule.id, error: e.message)
+        @bus&.publish("law_loop:error", rule: @rule.id, error: e.message)
         # Bus-only meant a crashed rule pass was indistinguishable from a
         # quiet one in the dmesg stream the operator actually reads.
         Master::Trace::Dmesg.status("fix0", "#{@rule.id}: #{e.class}: #{e.message[0, 90]}")
@@ -166,7 +166,7 @@ module Master
         end
         if needs_a_person?(violation) && !deletions_allowed?
           @person_required = true
-          @bus&.publish("rule_loop:human_decision_required", rule: violation[:rule], file: violation[:file])
+          @bus&.publish("law_loop:human_decision_required", rule: violation[:rule], file: violation[:file])
           return :needs_person
         end
         return :skip_confidence unless autofix_allowed?(violation)
@@ -201,8 +201,8 @@ module Master
         )
         :applied
       rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "RuleLoop.commit_applied_fix", event_bus: @bus, rule: @rule.id)
-        @bus&.publish("rule_loop:commit_refused", rule: @rule.id, file: violation[:file], error: e.message[0, 160])
+        Master::Ground::Swallow.log(e, context: "LawLoop.commit_applied_fix", event_bus: @bus, rule: @rule.id)
+        @bus&.publish("law_loop:commit_refused", rule: @rule.id, file: violation[:file], error: e.message[0, 160])
         :commit_refused
       end
 
@@ -229,7 +229,7 @@ module Master
         )
       rescue StandardError => e
         # A broken quorum must not silently approve. Refuse and say why.
-        Master::Ground::Swallow.log(e, context: "RuleLoop#consensus_approves?") if defined?(Master::Ground::Swallow)
+        Master::Ground::Swallow.log(e, context: "LawLoop#consensus_approves?") if defined?(Master::Ground::Swallow)
         false
       end
 
@@ -255,10 +255,10 @@ module Master
           return reject_fix(path, old_src, "visual_regression", evidence: custody.message) unless custody.ok?
         end
 
-        @bus&.publish("rule_loop:fix_applied", rule: @rule.id, file: path)
+        @bus&.publish("law_loop:fix_applied", rule: @rule.id, file: path)
         true
       rescue StandardError => e
-        @bus&.publish("rule_loop:write_error", rule: @rule.id, file: path, error: e.message)
+        @bus&.publish("law_loop:write_error", rule: @rule.id, file: path, error: e.message)
         false
       end
 
@@ -305,7 +305,7 @@ module Master
 
       def reject_fix(path, original, reason, **details)
         write_atomic(path, original)
-        @bus&.publish("rule_loop:fix_rejected", rule: @rule.id, file: path, reason:, **details)
+        @bus&.publish("law_loop:fix_rejected", rule: @rule.id, file: path, reason:, **details)
         Master::Trace::Dmesg.status("fix0", "#{@rule.id} fix rejected, #{File.basename(path)}: #{reason}")
         false
       end
@@ -423,12 +423,12 @@ module Master
           convergence
         end
       rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "rule_loop.convergence_cfg", event_bus: @bus)
-        raise "rule_loop: convergence configuration unreadable: #{e.class}: #{e.message}"
+        Master::Ground::Swallow.log(e, context: "law_loop.convergence_cfg", event_bus: @bus)
+        raise "law_loop: convergence configuration unreadable: #{e.class}: #{e.message}"
       end
 
       def genetic_autofix_candidates
-        convergence_cfg["genetic_autofix_candidates"] || RuleLoop::GENETIC_AUTOFIX_CANDIDATES
+        convergence_cfg["genetic_autofix_candidates"] || LawLoop::GENETIC_AUTOFIX_CANDIDATES
       end
 
       def scan_all(path)
@@ -437,7 +437,7 @@ module Master
 
         result.value!
       rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "rule_loop.scan_all", event_bus: @bus, path:)
+        Master::Ground::Swallow.log(e, context: "law_loop.scan_all", event_bus: @bus, path:)
         raise
       end
 
@@ -456,8 +456,8 @@ module Master
 
       def publish_fix_failure(category, event, violation, message)
         name = {
-          permanent: "rule_loop:fail_fast",
-          ambiguous: "rule_loop:human_intervention",
+          permanent: "law_loop:fail_fast",
+          ambiguous: "law_loop:human_intervention",
         }.fetch(category, event)
         @bus&.publish(name, rule: violation[:rule], file: violation[:file], error: message[0, 120])
       end

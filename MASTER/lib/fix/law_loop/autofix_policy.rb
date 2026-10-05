@@ -2,7 +2,7 @@
 
 module Master
   module Fix
-    class RuleLoop
+    class LawLoop
       # Whether a violation may be fixed without a person: deletions and fixes
       # nobody can undo wait for one, and the scanner's confidence gate decides
       # the rest -- separate from attempting a fix (fix_strategies.rb) or
@@ -31,7 +31,7 @@ module Master
 
         def autofix_allowed?(violation)
           if needs_a_person?(violation) && !deletions_allowed?
-            @bus&.publish("rule_loop:autofix_skipped", rule: violation[:rule], reason: :needs_a_person)
+            @bus&.publish("law_loop:autofix_skipped", rule: violation[:rule], reason: :needs_a_person)
             return false
           end
           return true unless @scanner.respond_to?(:should_autofix?, true)
@@ -40,7 +40,7 @@ module Master
           allowed = @scanner.__send__(:should_autofix?, violation[:rule], confidence,
                                       allow_deletions: deletions_allowed?)
           unless allowed
-            @bus&.publish("rule_loop:autofix_skipped", rule: violation[:rule], confidence:)
+            @bus&.publish("law_loop:autofix_skipped", rule: violation[:rule], confidence:)
             Master::Trace::Dmesg.status("fix0", "#{violation[:rule]} autofix skipped, confidence #{confidence}")
           end
           allowed

@@ -7,7 +7,7 @@ module Master
         # Rendered-visual and convergence-opportunity evidence: gathering it,
         # merging it into a pass's findings, and routing it (plus the
         # council-selected improvement stage it runs alongside) to the
-        # RuleLoop fix protocol -- separate concern from the deterministic
+        # LawLoop fix protocol -- separate concern from the deterministic
         # FastStage pipeline and the plain source-violation LlmStage.
         module EvidenceStage
           private
@@ -55,7 +55,7 @@ module Master
           def run_opportunity_stage(findings, files, pass, deadline, council: nil)
             return 0 if Time.now >= deadline || findings.empty?
 
-            loop = RuleLoop.new(
+            loop = LawLoop.new(
               rule: OpportunityPass::Rule.new(OpportunityPass::RULE_ID),
               agent: @agent, scanner: @scanner, root: @root, bus: @bus,
               learnings: @learnings, committer: @committer,
@@ -74,7 +74,7 @@ module Master
             return 0 if findings.empty? || Time.now >= deadline
 
             rule = CouncilRound::IMPROVEMENT_RULE.new(CouncilRound::IMPROVEMENT_RULE_ID)
-            loop = RuleLoop.new(
+            loop = LawLoop.new(
               rule:, agent: @agent, scanner: @scanner, root: @root, bus: @bus,
               learnings: @learnings, committer: @committer
             )
@@ -99,7 +99,7 @@ module Master
           def run_visual_stage(findings, pass:, image:, files:, deadline:)
             return 0 if Time.now >= deadline || findings.empty? || image.nil?
 
-            loop = RuleLoop.new(
+            loop = LawLoop.new(
               rule: VisualPass::Rule.new(VisualPass::RULE_ID),
               agent: @agent, scanner: @scanner, root: @root, bus: @bus,
               learnings: @learnings, committer: @committer

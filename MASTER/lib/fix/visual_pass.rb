@@ -21,7 +21,7 @@ require_relative "../../gates/support/web_platform_probe"
 module Master
   module Fix
     # Rendered UI is evidence, not a second scanner. GeometryProbe owns the
-    # browser; Council owns visual judgement; RuleLoop owns the edit.
+    # browser; Council owns visual judgement; LawLoop owns the edit.
     # Asked of every visual conclusion before it becomes a finding.
     HOSTILE_VISUAL_AUDIT = <<~TEXT.freeze
       HOSTILE VISUAL AUDIT

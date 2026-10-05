@@ -6,7 +6,7 @@ module Master
   module Fix
   # Architecture #7: file-watcher reactive trigger — no polling.
   # Linux: inotify via rb-inotify. OpenBSD: kqueue via rb-kqueue.
-  # A changed file triggers a targeted RuleLoop pass on that file only.
+  # A changed file triggers a targeted LawLoop pass on that file only.
   # The system quiesces naturally — no STARTUP_DELAY, no idle sleep waste.
   #
   # Usage (VPS, after `gem install rb-kqueue` or `rb-inotify`):
@@ -76,17 +76,17 @@ module Master
           elsif @fix_loop
             @fix_loop.run(path, max_passes: 3, budget_seconds: 120, incremental: true)
           else
-            run_rule_loop_on(path)
+            run_law_loop_on(path)
           end
         end
       rescue StandardError => e
         @bus&.publish("watch_loop:error", file: path, error: e.message)
       end
 
-      def run_rule_loop_on(path)
+      def run_law_loop_on(path)
         applicable = @rules.select { |r| r.respond_to?(:applies_to?) ? r.applies_to?(path) : true }
         applicable.each do |rule|
-          rl = RuleLoop.new(rule:, agent: @agent, scanner: @scanner, root: @root, bus: @bus, learnings: @learnings)
+          rl = LawLoop.new(rule:, agent: @agent, scanner: @scanner, root: @root, bus: @bus, learnings: @learnings)
           result = rl.run_once([path])
           @bus&.publish("watch_loop:file_pass", file: path, rule: rule.id, **result)
         end

@@ -326,7 +326,7 @@ class TestAstFixerTransforms < Minitest::Test
   # transform anyway — the tier covered the rule-driven path and MechanicalAutofix
   # went the other way, so an unattended `bin/operator gate` deleted code no rule
   # had asked it to. MASTER_AUTOFIX=1 is what a person asking looks like, the same
-  # signal Fix::RuleLoop reads.
+  # signal Fix::LawLoop reads.
   BOTH_HALVES = <<~RUBY
     ITEMS = [
       "one"

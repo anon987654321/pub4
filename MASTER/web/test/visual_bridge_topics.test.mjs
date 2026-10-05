@@ -41,7 +41,7 @@ function publishedTopics() {
 // first, because a comment naming a removed topic is prose about it. Names the
 // bridge mints itself go next: a CustomEvent it dispatches or listens to on the
 // window, a visual it emits and a log context are page events, not topics it
-// waits for. A regex alternation such as rule_loop:(pass|error) stands for one
+// waits for. A regex alternation such as law_loop:(pass|error) stands for one
 // name per branch.
 function bridgeListenerNames() {
   const code = bridgeSource
@@ -127,9 +127,9 @@ test("every topic the bridge listens for is one the bus publishes", () => {
   // means anything. phantom:retry and council:deliberation survive only in
   // comments, and events:connected and master:visual are page events the bridge
   // emits and hears.
-  assert.ok(published.size > 200 && published.has("phantom:detected") && published.has("rule_loop:fix_rejected"),
+  assert.ok(published.size > 200 && published.has("phantom:detected") && published.has("law_loop:fix_rejected"),
     `publish census is blind: ${published.size} topics`);
-  for (const name of ["phantom:halt", "council:start", "rule_loop:autofix_skipped", "tts:job_cancelled"]) {
+  for (const name of ["phantom:halt", "council:start", "law_loop:autofix_skipped", "tts:job_cancelled"]) {
     assert.ok(listened.has(name), `bridge census missed ${name}`);
   }
   for (const name of ["phantom:retry", "council:deliberation", "events:connected", "master:visual", "visual_bridge:sse_frame"]) {

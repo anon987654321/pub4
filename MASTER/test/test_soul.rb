@@ -13,7 +13,7 @@ class TestSoul < Minitest::Test
   # they come from.
   #
   # soul carried absolute.rules and absolute.aesthetic_rules. The second reached
-  # nothing but fix/rule_loop, so NO_ASCII_DECORATION, FLAT_UI and DEEP_SCAN_ONLY
+  # nothing but fix/law_loop, so NO_ASCII_DECORATION, FLAT_UI and DEEP_SCAN_ONLY
   # governed the fixer's rewrites while the model writing the code was never told
   # them. Then both moved to law/, once the `conduct` kind let a rule about how
   # to work be a Law like any other — a rule the author cannot see is a rule the

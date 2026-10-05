@@ -113,7 +113,7 @@ class StreamStageTest < Minitest::Test
 
   private
 
-  def run_rule_once(rule, files, _pass)
+  def run_law_once(rule, files, _pass)
     @log.concat(files) if rule.id == "LONG_METHOD"
     @repair_state[files.first] = true if @repair_state
     @events << :repaired

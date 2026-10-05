@@ -2,7 +2,7 @@
 
 module Master
   module Fix
-    class RuleLoop
+    class LawLoop
       # Aggregates one batch's per-violation fix_violation results into a
       # pass-level outcome and records it to @learnings -- separate concern
       # from actually attempting a fix (fix_strategies.rb) or verifying one
@@ -66,7 +66,7 @@ module Master
           ext = extensions.tally.max_by { |_, count| count }&.first || "unknown"
           @learnings.record(rule: @rule.id, file_type: ext, outcome:)
         rescue StandardError => e
-          Master::Ground::Swallow.log(e, context: "rule_loop.record_outcomes", event_bus: @bus, rule: @rule.id)
+          Master::Ground::Swallow.log(e, context: "law_loop.record_outcomes", event_bus: @bus, rule: @rule.id)
         end
       end
     end

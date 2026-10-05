@@ -166,7 +166,7 @@ module Master
           def run_streamed_rules(runnable, path, rel, stream)
             results = runnable.map do |rule|
               stream.streamed << [rel, rule.id.to_s]
-              [rule, run_rule_once(rule, [path], stream.pass)]
+              [rule, run_law_once(rule, [path], stream.pass)]
             end
             @human_decision_required ||= results.any? { |_rule, result| result[:status] == :human_decision }
             tally_rule_results(results, breakdown: stream.breakdown, pass: stream.pass)

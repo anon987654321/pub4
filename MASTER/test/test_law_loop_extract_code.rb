@@ -2,13 +2,13 @@
 
 require_relative "test_helper"
 
-# What RuleLoop takes from a model's reply as the new file. Every streamed
+# What LawLoop takes from a model's reply as the new file. Every streamed
 # repair of a bin/ script in the first /fix MASTER run ended no_proposal or
 # rejected, and the extractor was half of it: a script has no extension, so
 # only a ```text or bare fence counted, and a ```ruby answer passed through
 # whole, prose and fences included.
-class TestRuleLoopExtractCode < Minitest::Test
-  def extract(text, ext) = Master::Fix::RuleLoop.allocate.send(:extract_code, text, ext)
+class TestLawLoopExtractCode < Minitest::Test
+  def extract(text, ext) = Master::Fix::LawLoop.allocate.send(:extract_code, text, ext)
 
   def test_an_extensionless_script_takes_a_ruby_fence
     assert_equal "puts 1\n", extract("Here is the fix:\n```ruby\nputs 1\n```\nDone.", "")

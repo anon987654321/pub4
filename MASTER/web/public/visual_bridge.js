@@ -29,9 +29,9 @@
     [/error|rollback|failed|failure/i, { topology: "serpent", entropy: 0.78, confidence: 0.24, mode: "error" }],
     [/done|complete|success|response/i, { topology: "papua-mask", entropy: 0.14, confidence: 0.92, mode: "complete" }],
     [/codebase:topology|fix_loop:pass/i, { topology: "codebase", entropy: 0.28, confidence: 0.78, mode: "codebase" }],
-    [/rule_loop:(?:fix_applied|fix_rejected|write_error)/i, { topology: "codebase", entropy: 0.45, confidence: 0.62, mode: "fixing" }],
+    [/law_loop:(?:fix_applied|fix_rejected|write_error)/i, { topology: "codebase", entropy: 0.45, confidence: 0.62, mode: "fixing" }],
     [/fix_loop:idle/i, { topology: "codebase", entropy: 0.10, confidence: 0.95, mode: "settled" }],
-    [/rule_loop:pass/i, { topology: "codebase", entropy: 0.20, confidence: 0.82, mode: "converged" }]
+    [/law_loop:pass/i, { topology: "codebase", entropy: 0.20, confidence: 0.82, mode: "converged" }]
   ];
 
   function classifyDevice(type, payload = {}) {
@@ -203,11 +203,11 @@
     if (/codebase:topology/i.test(type) && payload.modules) {
       window.dispatchEvent(new CustomEvent("master:codebase", { detail: payload }));
     }
-    // The topics rule_loop.rb publishes, which are not the ones this tested for:
+    // The topics law_loop.rb publishes, which are not the ones this tested for:
     // it read cycle|clean|converged and the bus sends pass, error, fix_applied,
     // write_error, fix_rejected and autofix_skipped. Zero overlap, so
     // master:rule_event had never once fired.
-    if (/rule_loop:(pass|error|fix_applied|write_error|fix_rejected|autofix_skipped)/i.test(type)) {
+    if (/law_loop:(pass|error|fix_applied|write_error|fix_rejected|autofix_skipped)/i.test(type)) {
       window.dispatchEvent(new CustomEvent("master:rule_event", { detail: payload }));
     }
     if (type === "self_violation") {

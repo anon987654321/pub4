@@ -240,7 +240,7 @@ convergence, not a final human-afterthought.
 A source-clean non-web target is treated the same way conceptually: MASTER makes
 one anchored Council improvement pass looking for real simplification, naming,
 duplication, complexity, prose, accessibility and layout-adjacent micro-smells,
-then feeds selected repairs through the ordinary RuleLoop. Unanchored taste,
+then feeds selected repairs through the ordinary LawLoop. Unanchored taste,
 speculative redesign and hallucinated defects never become automatic fixes.
 
 The browser is evidence, not decoration: when the capture or visual council

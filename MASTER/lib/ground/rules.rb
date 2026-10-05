@@ -24,7 +24,7 @@ module Master
         # Lazy, for the same reason limits.yml stopped being parsed in the
         # constructor: `constitution` is the only reader, and every Rules built
         # to ask for `rules` was opening soul.yml to back an accessor it never
-        # touched. RuleLoop#build_soul_preamble does exactly that, so a preamble
+        # touched. LawLoop#build_soul_preamble does exactly that, so a preamble
         # read the file twice and its cache could only ever halve the cost.
         def soul_data = Master.soul_config(root: @root)
 

@@ -14,14 +14,14 @@ class TestSemanticFingerprintAgreement < Minitest::Test
   RUBY
 
   # The actual bug, not a hypothetical: FileProcessor (stamps a fingerprint
-  # onto every finding when it's first scanned) and RuleLoop::FixVerification
+  # onto every finding when it's first scanned) and LawLoop::FixVerification
   # (recomputes one just before applying a fix, to detect whether the file
   # changed in between) used to be two independently-maintained copies of
   # the same formula. They quietly drifted -- FileProcessor's included an
   # extra `ast_present` key fix_verification's didn't -- so Marshal.dump
-  # produced different bytes for the same code, and RuleLoop#fingerprint_matches?
+  # produced different bytes for the same code, and LawLoop#fingerprint_matches?
   # returned false for every file, every time, forever, regardless of
-  # whether anything had actually changed. Found live via rule_loop.rb's
+  # whether anything had actually changed. Found live via law_loop.rb's
   # skip_breakdown trace: 100% of skipped violations attributed to
   # fingerprint across every rule in a full-repo /fix pass, 0% to confidence.
   def test_file_processor_and_fix_verification_compute_identical_fingerprints

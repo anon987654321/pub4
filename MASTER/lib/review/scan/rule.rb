@@ -93,7 +93,7 @@ module Master
 
         protected
 
-        # A repair that creates or merges files. RuleLoop returns one file per
+        # A repair that creates or merges files. LawLoop returns one file per
         # answer, so such a finding goes to a person (needs_a_person?) instead
         # of costing model calls that can only come back UNCHANGED.
         SPANS_FILES = { files_touched: 2 }.freeze

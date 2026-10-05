@@ -8,7 +8,7 @@ class FixConvergenceWiringTest < Minitest::Test
     builder_source = File.read(File.expand_path("../lib/fix/fix_loop/pass_runner_builder.rb", __dir__))
     runner_source = File.read(File.expand_path("../lib/fix/fix_loop/pass_runner.rb", __dir__))
     evidence_source = File.read(File.expand_path("../lib/fix/fix_loop/pass_runner/evidence_stage.rb", __dir__))
-    rule_source = File.read(File.expand_path("../lib/fix/rule_loop.rb", __dir__))
+    rule_source = File.read(File.expand_path("../lib/fix/law_loop.rb", __dir__))
 
     assert_includes loop_source, 'require_relative "visual_pass"'
     assert_includes loop_source, 'require_relative "opportunity_pass"'

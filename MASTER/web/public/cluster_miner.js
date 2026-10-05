@@ -34,7 +34,7 @@
       emotion: { arousal: 0.22, focus: 0.18 }
     },
     codebase_topology: {
-      match: /codebase|rule_loop|fix_loop|violation|clean|converged|topology/i,
+      match: /codebase|law_loop|fix_loop|violation|clean|converged|topology/i,
       layer: "repository_body",
       emotion: { arousal: 0.32, focus: 0.45 }
     },
@@ -183,7 +183,7 @@
 
   window.addEventListener("master:visual", event => ingest(event.detail || {}));
   window.addEventListener("master:codebase", event => ingest({ ...(event.detail || {}), name: "codebase:topology", topology: "codebase" }));
-  window.addEventListener("master:rule_event", event => ingest({ ...(event.detail || {}), name: event.detail?.status ? `rule_loop:${event.detail.status}` : "rule_loop:event", topology: "codebase" }));
+  window.addEventListener("master:rule_event", event => ingest({ ...(event.detail || {}), name: event.detail?.status ? `law_loop:${event.detail.status}` : "law_loop:event", topology: "codebase" }));
 
   window.MASTERClusterMiner = Object.freeze({
     state,

@@ -31,7 +31,7 @@ class TestAutofixSafetyTier < Minitest::Test
   end
 
   # Confidence answers whether the rule found the thing, never whether fixing it
-  # is safe, and Fix::RuleLoop reads an absent score as 1.0 — so a threshold
+  # is safe, and Fix::LawLoop reads an absent score as 1.0 — so a threshold
   # waves through exactly the deterministic findings nobody scored. The tier has
   # to read the transform.
   def test_perfect_confidence_does_not_buy_a_deletion

@@ -68,7 +68,7 @@ module Master
         when "fix_loop:scan_progress"
           @stage = "scan"
           @violations = payload[:count] if payload.key?(:count)
-        when "fix_loop:ast_fixed", "rule_loop:fix_applied"
+        when "fix_loop:ast_fixed", "law_loop:fix_applied"
           @stage = "repair"
           @changes += 1
         end

@@ -4,7 +4,7 @@
 
 module Master
   module Fix
-    class RuleLoop
+    class LawLoop
       # A lane answers "UNCHANGED" to decline a fix; a proposal that collapses
       # a file to a fragment is the same refusal wearing a file's clothes. The
       # 2026-09-17 RAILS run proved the escape: a fenced "UNCHANGED" passed

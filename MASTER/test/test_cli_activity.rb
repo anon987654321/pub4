@@ -11,7 +11,7 @@ class TestCliActivity < Minitest::Test
   def test_fix_progress_becomes_semantic
     @activity.record("fix_loop:pass_start", pass: 2, file_count: 184)
     @activity.record("fix_loop:scan_progress", count: 7)
-    @activity.record("rule_loop:fix_applied", rule: "NO_PUTS")
+    @activity.record("law_loop:fix_applied", rule: "NO_PUTS")
 
     # The last event was an applied fix, so the loop is repairing.
     assert_equal "fix0: repair pass=2 files=184 violations=7 changes=1",
@@ -27,7 +27,7 @@ class TestCliActivity < Minitest::Test
   def test_clean_summary_is_compact
     @activity.record("fix_loop:pass_start", pass: 2, file_count: 10)
     @activity.record("fix_loop:scan_progress", count: 0)
-    @activity.record("rule_loop:fix_applied", rule: "NO_PUTS")
+    @activity.record("law_loop:fix_applied", rule: "NO_PUTS")
     @activity.record("fix_loop:clean", pass: 2, consecutive_clean: 2)
 
     assert_equal "fix0: pass=2 files=10 violations=0 changes=1 state=clean",

@@ -4,7 +4,7 @@ module Master
   module Trace
     module DmesgUnit
       ATTACHED = %w[
-        llm route infer tool scan rule_loop council git test validation runtime pipeline fix_loop
+        llm route infer tool scan law_loop council git test validation runtime pipeline fix_loop
       ].freeze
 
       MAP = {
@@ -13,7 +13,7 @@ module Master
         "infer" => "model0",
         "tool" => "tool0",
         "scan" => "scan0",
-        "rule_loop" => "scan0",
+        "law_loop" => "scan0",
         "council" => "council0",
         "git" => "git0",
         "test" => "test0",

@@ -67,7 +67,7 @@ module Master
         DELETING_TRANSFORMS = %w[remove_immediate_dead_code].freeze
 
         # What a person asking looks like from here, and the same signal
-        # Fix::RuleLoop reads: the background convergence loop and the unattended
+        # Fix::LawLoop reads: the background convergence loop and the unattended
         # ladder both leave MASTER_AUTOFIX off.
         def self.deletions_allowed? = ENV["MASTER_AUTOFIX"] == "1"
 

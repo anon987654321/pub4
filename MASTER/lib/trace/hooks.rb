@@ -43,7 +43,7 @@ module Master
       end
 
       def subscribe_fix_applied
-        bus.subscribe("rule_loop:fix_applied") { |payload| publish_hook("on_fix_applied", payload) }
+        bus.subscribe("law_loop:fix_applied") { |payload| publish_hook("on_fix_applied", payload) }
       end
 
       def subscribe_cost

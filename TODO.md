@@ -2470,7 +2470,7 @@ Implemented:
 - moved detector-health policy into MASTER/data/laws.yml and made CQS, MAGIC_COLOR and DOUBLE_QUOTES_RUBY measurement-only until stronger detector evidence exists;
 - exposed measurement/enforcement state in findings and the external /fix detector matrix;
 - required the detector matrix from the canonical /fix protocol context;
-- blocked operator-owned rendered-value repair at the RuleLoop boundary and propagated it as HUMAN_DECISION;
+- blocked operator-owned rendered-value repair at the LawLoop boundary and propagated it as HUMAN_DECISION;
 - added regression coverage for the above and for the existing stream refresh path.
 
 Already present and therefore not duplicated:

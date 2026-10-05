@@ -50,7 +50,7 @@ module Master
         # A clean deterministic scan is not a proof of design quality or code quality.
         # One exploratory council pass gives /fix the same opportunity we use when
         # reviewing a change by hand: find a real micro-smell, simplify it, and then
-        # let RuleLoop apply the repair under the normal verification gates.
+        # let LawLoop apply the repair under the normal verification gates.
         # Only the first clean streak pass asks, so the next pass can confirm the
         # result without paying for the same exploratory review twice.
         def improve(files:, pass:, deadline:)
