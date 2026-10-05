@@ -359,24 +359,21 @@ module Master
             response = @agent.ask(build_prompt(pairs, path), operation: :scan_comment_drift).to_s
             parse_findings(response, pairs)
           rescue StandardError => e
-            # An unreachable or misbehaving agent must not read as "no drift" —
-            # still true, and why this logs at all rather than returning quietly.
-            #
-            # But a missing CLI is not a misbehaving agent, it is a capability
-            # this machine does not have, and it is the same fact on every file.
-            # Logged per file at :load_bearing it produced 4,663 identical
-            # entries, which is what a genuinely load-bearing failure has to
-            # compete with when someone finally reads the log. Absence is
-            # cosmetic and recorded once; misbehaviour stays load-bearing and
-            # recorded every time.
+            # An absent CLI and an exhausted provider are explicit non-results.
+            # A present but broken model is a measurement failure and must not
+            # become a false clean scan.
             return [] if note_model_failure(e)
 
-            severity = absent_capability?(e) ? :cosmetic : :load_bearing
-            return [] if severity == :cosmetic && @capability_absent
+            if absent_capability?(e)
+              return [] if @capability_absent
 
-            @capability_absent = true if severity == :cosmetic
-            Master::Ground::Swallow.log(e, context: "CommentDriftRule", severity:, path:)
-            []
+              @capability_absent = true
+              Master::Ground::Swallow.log(e, context: "CommentDriftRule", severity: :cosmetic, path:)
+              return []
+            end
+
+            Master::Ground::Swallow.log(e, context: "CommentDriftRule", severity: :load_bearing, path:)
+            raise
           end
 
           # ENOENT on the CLI itself, however the runner wraps it. Not a guess at
