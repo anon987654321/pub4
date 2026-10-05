@@ -149,6 +149,46 @@ class TestMasterLoop < Minitest::Test
     assert_equal from_yaml, Master::MasterRuntime::LOOP_FLAGS
   end
 
+  def test_law_reader_keeps_roots_isolated_when_loads_overlap
+    Dir.mktmpdir do |workspace|
+      one = File.join(workspace, "one", "data")
+      two = File.join(workspace, "two", "data")
+      FileUtils.mkdir_p(one)
+      FileUtils.mkdir_p(two)
+      File.write(File.join(one, "laws.yml"), "one: true\n")
+      File.write(File.join(two, "laws.yml"), "two: true\n")
+
+      original = Master.method(:load_laws)
+      first_call = Queue.new
+      release_first = Queue.new
+      state_lock = Mutex.new
+      blocked = false
+
+      Master.define_singleton_method(:load_laws) do |root:|
+        should_block = state_lock.synchronize do
+          next false if blocked
+
+          blocked = true
+          true
+        end
+        first_call << root
+        release_first.pop if should_block
+        { File.basename(root) => true }
+      end
+
+      first = Thread.new { Master.law("one", root: workspace + "/one") }
+      assert_equal workspace + "/one", first_call.pop
+
+      second = Thread.new { Master.law("two", root: workspace + "/two") }
+      release_first << true
+
+      assert_equal true, first.value
+      assert_equal true, second.value
+    ensure
+      Master.define_singleton_method(:load_laws, original) if original
+    end
+  end
+
   def test_model_accessors_do_not_cache_across_roots
     Dir.mktmpdir do |workspace|
       one = File.join(workspace, "one", "data")
