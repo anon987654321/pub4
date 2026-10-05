@@ -58,9 +58,9 @@ class TestRepoEcology < Minitest::Test
 
   def test_co_change_graph_persists_between_instances
     Dir.mktmpdir("repo_ecology_cache") do |dir|
-      # A real repository: the cache key is HEAD's mtime, found through
-      # `git rev-parse --git-path`, and a hand-made .git/HEAD is not a repository
-      # git will answer for, so no key and no cache.
+      # A real repository: the cache key is the commit SHA returned by
+      # `git rev-parse HEAD`, not .git/HEAD's mtime. A branch can advance while
+      # .git/HEAD itself remains unchanged.
       _, status = Open3.capture2e("git", "init", "-q", dir)
       assert status.success?, "git init failed in the fixture"
 
@@ -71,5 +71,37 @@ class TestRepoEcology < Minitest::Test
       assert_equal({ "a.rb" => { "b.rb" => 3 }, "b.rb" => { "a.rb" => 3 } }, second.co_change_graph)
       assert_nil second.build_count
     end
+  def test_co_change_cache_rebuilds_after_head_advances
+    Dir.mktmpdir("repo_ecology_cache_refresh") do |dir|
+      File.write(File.join(dir, "sample.rb"), "puts :one\n")
+      _, status = Open3.capture2e("git", "init", "-q", dir)
+      assert status.success?
+      _, status = Open3.capture2e("git", "-C", dir, "add", "sample.rb")
+      assert status.success?
+      _, status = Open3.capture2e(
+        "git", "-C", dir, "-c", "user.name=Test", "-c", "user.email=test@example.com",
+        "commit", "-qm", "one"
+      )
+      assert status.success?
+
+      first = CountingEcology.new(root: dir)
+      first.snapshot
+      cached = CountingEcology.new(root: dir)
+      assert_equal 0, cached.instance_variable_get(:@build_count).to_i
+
+      File.write(File.join(dir, "sample.rb"), "puts :two\n")
+      _, status = Open3.capture2e("git", "-C", dir, "add", "sample.rb")
+      assert status.success?
+      _, status = Open3.capture2e(
+        "git", "-C", dir, "-c", "user.name=Test", "-c", "user.email=test@example.com",
+        "commit", "-qm", "two"
+      )
+      assert status.success?
+
+      refreshed = CountingEcology.new(root: dir)
+      refreshed.co_change_graph
+      assert_equal 1, refreshed.build_count
+    end
   end
+
 end
