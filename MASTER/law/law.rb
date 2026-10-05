@@ -396,7 +396,8 @@ module Law
         "contract_version" => 1,
         "law_digest" => Digest::SHA256.hexdigest(JSON.generate(entries)),
         "protocol" => PROTOCOL,
-        "law_policy" => POLICY,        "transformation_policy" => policy.fetch("transformation_policy"),
+        "law_policy" => POLICY,
+        "transformation_policy" => policy.fetch("transformation_policy"),
         "laws" => laws,
       )
     end
