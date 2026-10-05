@@ -5,7 +5,7 @@ require_relative "../../../RAILS/shared/lib/shared/mobile_app_registry"
 require_relative "../../../RAILS/shared/lib/shared/mobile_ios_project"
 
 module MobileTool
-  ROOT = File.expand_path("../..", __dir__)
+  ROOT = File.expand_path("../../../", __dir__)
   ANDROID_ROOT = ENV.fetch("MOBILE_ANDROID_BUILD_ROOT", File.join(ROOT, "RAILS", "mobile", "android", ".build"))
   IOS_ROOT = ENV.fetch("MOBILE_IOS_BUILD_ROOT", File.join(ROOT, "RAILS", "mobile", "ios", ".build"))
 

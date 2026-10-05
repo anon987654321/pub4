@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "../../../MASTER/lib/operator/baseline_ratchet"
+require_relative "../../../lib/operator/baseline_ratchet"
 
 module Operator
   # A destructive control that asks nothing before it fires.

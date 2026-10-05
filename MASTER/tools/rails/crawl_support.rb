@@ -4,7 +4,7 @@ require "json"
 require "net/http"
 require "socket"
 require "yaml"
-require_relative "../../MASTER/gates/support/utf8"
+require_relative "../../gates/support/utf8"
 
 module CrawlSupport
   ROOT = File.expand_path("../../..", __dir__)

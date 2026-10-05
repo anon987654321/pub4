@@ -16,12 +16,12 @@ require_relative "../design_tokens"
 # The deployed copy on vm23 (/home/<app>/pub4-rails) is RAILS without MASTER, so
 # the shared runner is optional: vps_ci's css_build step died on this require.
 begin
-  require_relative "../../MASTER/lib/operator/ruby_runner"
+  require_relative "../../lib/operator/ruby_runner"
 rescue LoadError
   nil
 end
 
-RAILS_ROOT = File.expand_path("..", __dir__)
+RAILS_ROOT = File.expand_path("../../../RAILS", __dir__)
 ROOT = File.expand_path("../../..", __dir__)
 SHARED_STYLES = File.join(RAILS_ROOT, "shared", "app", "assets", "stylesheets")
 def shared_public_dir
