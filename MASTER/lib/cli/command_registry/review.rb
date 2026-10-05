@@ -80,7 +80,7 @@ module Master
             end
           end
           value = run_pass({ scanner:, fix_loop:, root:, deliberation:, bus:, swarm: },
-                           target:, apply: apply.nil? || apply, critique: _critique.nil? ? true : _critique,
+                           target:, apply: apply.nil? || apply, critique: _critique.nil? ? apply != false : _critique,
                            aesthetic:, only: nil)
           next value unless apply.nil? || apply
 
