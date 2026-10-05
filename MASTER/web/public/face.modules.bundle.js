@@ -1,3 +1,4 @@
+// SOURCE-SET-SHA256: 23f2f68ff00010b86d33e632c436a174c15fdbc7e2a837d196d87dc2aa12927e
 // public/face_blendshape_bridge.js
 (() => {
   "use strict";

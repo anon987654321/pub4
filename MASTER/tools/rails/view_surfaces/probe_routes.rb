@@ -8,7 +8,7 @@ require "net/http"
 require "yaml"
 
 # apps.yml owns the ports; a literal map here would be a second inventory.
-APPS_YML = File.expand_path("../../apps.yml", __dir__)
+APPS_YML = File.expand_path("../../../../RAILS/apps.yml", __dir__)
 PORTS = YAML.safe_load_file(APPS_YML).fetch("apps").transform_values { |row| row.fetch("port") }.freeze
 SIGN_IN = %r{/(session|sessions|sign_in|login|users/sign_in|auth)\b}
 

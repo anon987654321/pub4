@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "../../../MASTER/lib/operator/baseline_ratchet"
+require_relative "../../../lib/operator/baseline_ratchet"
 
 module Operator
   # What a model promises, measured instead of counted by hand.
@@ -32,7 +32,7 @@ module Operator
   # grow without someone noticing, which is the property the register row asked
   # for and never had.
   module ModelContractLint
-    RAILS_ROOT = File.expand_path("../../..", __dir__)
+    RAILS_ROOT = File.expand_path("../../../../RAILS", __dir__)
 
     MODEL_GLOBS = [
       "{amber,brgen,bsdports,shared}/app/models/**/*.rb",

@@ -4,7 +4,7 @@
 # HTML GET route of amber, bsdports and brgen that renders for a guest.
 #
 #   RAILS/bin/triangle up
-#   ruby RAILS/tools/view_surfaces/generate.rb
+#   ruby MASTER/tools/rails/view_surfaces/generate.rb
 #
 # Per app it lists the GET routes (list_get_routes.rb, under rails runner),
 # fills each parameter from the first local record of the model it names
@@ -16,7 +16,7 @@ require "open3"
 require "tmpdir"
 
 HERE = __dir__
-RAILS = File.expand_path("../..", HERE)
+RAILS = File.expand_path("../../../../RAILS", HERE)
 APPS = %w[amber bsdports brgen].freeze
 
 def run!(*cmd, chdir:, out: nil)
@@ -26,7 +26,7 @@ def run!(*cmd, chdir:, out: nil)
   stdout
 end
 
-REPO = File.expand_path("../../..", HERE)
+REPO = File.expand_path("../../../..", HERE)
 MASTER = File.join(REPO, "MASTER")
 # The gates tree now lives under MASTER, and the rendered gates read this
 # sheet from there — a RAILS-prefixed join here pointed at a tree without a

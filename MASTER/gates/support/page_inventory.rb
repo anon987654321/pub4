@@ -3,7 +3,7 @@
 require "json"
 require "yaml"
 require_relative "fleet"
-require_relative "../../../RAILS/tools/generate_route_manifest"
+require_relative "../../../MASTER/tools/rails/generate_route_manifest"
 require_relative "brgen_vertical_surfaces"
 
 module Deploy
@@ -108,7 +108,7 @@ module Deploy
         next if live == row["digest"]
 
         "route_manifest: #{app} digest #{row['digest']} != #{live} — " \
-          "run `ruby RAILS/tools/generate_route_manifest.rb #{app}`"
+          "run `ruby MASTER/tools/rails/generate_route_manifest.rb #{app}`"
       end
     rescue StandardError => e
       ["route_manifest: digest check failed (#{e.class}: #{e.message})"]

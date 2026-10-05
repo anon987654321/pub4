@@ -421,8 +421,8 @@ cd /home/dev/pub4 && git gc --quiet && git count-objects -v
 OPENBSD/bin/check                         # local static deploy gates
 OPENBSD/bin/check-vps                     # vm23/live health gates; skips off-VPS
 ruby OPENBSD/gates/integrity_gate.rb              # full chain: production, phantom_fk, frontend, relayd, domain_align, crawl
-ruby RAILS/tools/crawl_probe.rb           # HTTP manifest + apps.yml ↔ deploy_inventory.json sync
-MASTER_CRAWL_BROWSER=1 ruby RAILS/tools/crawl_browser.rb   # Ferrum element crawl (VPS)
+ruby MASTER/tools/rails/crawl_probe.rb           # HTTP manifest + apps.yml ↔ deploy_inventory.json sync
+MASTER_CRAWL_BROWSER=1 ruby MASTER/tools/rails/crawl_browser.rb   # Ferrum element crawl (VPS)
 cd MASTER && bundle exec ruby bin/probe integrity deploy crawl crawl-browser
 ```
 

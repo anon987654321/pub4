@@ -230,7 +230,7 @@ patch_briefs:
     topic: face_boot
     tests: [web/test/face_boot.test.mjs]
     deploy: vps-deploy master
-    post: ruby RAILS/tools/generate_face_root_css.rb
+    post: ruby MASTER/tools/rails/generate_face_root_css.rb
   OPENBSD/etc/rc.d/master:
     check: MASTER/bin/operator status
     topic: deploy

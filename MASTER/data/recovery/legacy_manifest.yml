@@ -1020,7 +1020,7 @@ legacy_capability_reviews:
         disposition: "partial; recover individual useful commands only when demanded by current MASTER workflow"
       - capability: "UniversalScraper"
         historical_behavior: "Ferrum navigation, screenshots, deep same-domain crawl, page-structure analysis and link extraction."
-        current_mapping: "MASTER/lib/io/web_fetch.rb plus RAILS/tools/crawl_browser.rb and MASTER/web/script/browser_probe_support.rb provide bounded fetch/browser verification, not a general scraper service."
+        current_mapping: "MASTER/lib/io/web_fetch.rb plus MASTER/tools/rails/crawl_browser.rb and MASTER/web/script/browser_probe_support.rb provide bounded fetch/browser verification, not a general scraper service."
         disposition: "partial; no class-level restore"
     retired:
       - capability: "WeaviateIntegration"

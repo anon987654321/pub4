@@ -18,7 +18,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "jq -r '.tool_response.filePath // .tool_input.file_path' | { read -r f; case \"$f\" in */RAILS/*.scss) ROOT=\"$(git rev-parse --show-toplevel)\" && ruby \"$ROOT/RAILS/tools/build_all_css.rb\";; esac; } 2>/dev/null || true",
+            "command": "jq -r '.tool_response.filePath // .tool_input.file_path' | { read -r f; case \"$f\" in */RAILS/*.scss) ROOT=\"$(git rev-parse --show-toplevel)\" && ruby \"$ROOT/MASTER/tools/rails/build_all_css.rb\";; esac; } 2>/dev/null || true",
             "statusMessage": "Rebuilding app CSS",
             "timeout": 900
           },

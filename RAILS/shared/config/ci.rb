@@ -39,9 +39,9 @@ Operator::CiGuard.run! do
     end
     css_builder = [
       ENV["PUB4_RAILS_ROOT"] && File.join(ENV["PUB4_RAILS_ROOT"], "tools", "build_all_css.rb"),
-      "/home/dev/pub4/RAILS/tools/build_all_css.rb",
+      "/home/dev/pub4/MASTER/tools/rails/build_all_css.rb",
       File.expand_path("../..", __dir__) + "/tools/build_all_css.rb",
-      File.expand_path("pub4-rails/RAILS/tools/build_all_css.rb", ENV["HOME"].to_s),
+      File.expand_path("pub4-rails/MASTER/tools/rails/build_all_css.rb", ENV["HOME"].to_s),
     ].compact.find { |candidate| File.readable?(candidate) }
     # A step that could not run is not a step that passed. These else branches
     # used to `echo ... skipping`, which exits 0, so a checkout missing the CSS
@@ -71,7 +71,7 @@ Operator::CiGuard.run! do
       if script
         step lint, "#{RbConfig.ruby} #{script}"
       else
-        step lint, "echo '#{lint}.rb not found in RAILS/tools/operator or MASTER/tools' >&2; exit 1"
+        step lint, "echo '#{lint}.rb not found in MASTER/tools/rails/operator or MASTER/tools' >&2; exit 1"
       end
     end
     importmap_audit = %(bundle exec #{RbConfig.ruby} -e 'require "./config/environment"; require "importmap/commands"; Importmap::Commands.start(%w[audit])')

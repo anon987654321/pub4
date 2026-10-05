@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 require "fileutils"
-require_relative "../shared/lib/shared/mobile_app_registry"
-require_relative "../shared/lib/shared/mobile_ios_project"
+require_relative "../../../RAILS/shared/lib/shared/mobile_app_registry"
+require_relative "../../../RAILS/shared/lib/shared/mobile_ios_project"
 
 module MobileTool
   ROOT = File.expand_path("../..", __dir__)

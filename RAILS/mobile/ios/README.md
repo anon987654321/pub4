@@ -41,7 +41,7 @@ Share API supplied by the browser.
 ## Project generation
 
 The native source is deliberately not accompanied by a checked-in `.xcodeproj` or
-project spec. `RAILS/tools/mobile.rb ios` generates the XcodeGen project spec from
+project spec. `MASTER/tools/rails/mobile.rb ios` generates the XcodeGen project spec from
 `RAILS/mobile/apps.yml`, then XcodeGen generates the project on demand. XcodeGen supports YAML project specifications, per-target
 build settings, configurations, entitlements, and generated schemes.
 
@@ -49,7 +49,7 @@ build settings, configurations, entitlements, and generated schemes.
 Generate it with:
 
     brew install xcodegen
-    ruby RAILS/tools/mobile.rb ios
+    ruby MASTER/tools/rails/mobile.rb ios
     open RAILS/mobile/ios/.build/Pub4Mobile.xcodeproj
 
 The project has one native target and separate configurations/schemes for

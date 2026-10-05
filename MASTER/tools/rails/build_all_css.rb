@@ -5,14 +5,14 @@
 # Syncs shared static tokens + ensures nerd fonts are present.
 #
 # Usage:
-#   ruby RAILS/tools/build_all_css.rb           # all apps with application.scss
-#   ruby RAILS/tools/build_all_css.rb --app brgen
-#   ruby RAILS/tools/build_all_css.rb --check   # verify x tokens without building
+#   ruby MASTER/tools/rails/build_all_css.rb           # all apps with application.scss
+#   ruby MASTER/tools/rails/build_all_css.rb --app brgen
+#   ruby MASTER/tools/rails/build_all_css.rb --check   # verify x tokens without building
 
 require "open3"
 require "yaml"
 require "fileutils"
-require_relative "design_tokens"
+require_relative "../design_tokens"
 # The deployed copy on vm23 (/home/<app>/pub4-rails) is RAILS without MASTER, so
 # the shared runner is optional: vps_ci's css_build step died on this require.
 begin
@@ -22,7 +22,7 @@ rescue LoadError
 end
 
 RAILS_ROOT = File.expand_path("..", __dir__)
-ROOT = File.expand_path("../..", __dir__)
+ROOT = File.expand_path("../../..", __dir__)
 SHARED_STYLES = File.join(RAILS_ROOT, "shared", "app", "assets", "stylesheets")
 def shared_public_dir
   home = ENV["HOME"].to_s

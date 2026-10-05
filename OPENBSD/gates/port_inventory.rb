@@ -80,7 +80,7 @@ module Deploy
       "OPENBSD/bin/vps_console.exp",
       "OPENBSD/usr/local/bin/relayd-watchdog",
       "RAILS/env.sample",
-      "RAILS/tools/build_workbox.mjs",
+      "MASTER/tools/rails/build_workbox.mjs",
       "OPENBSD/etc/rc.conf.local",
       "OPENBSD/etc/login.conf",
       "OPENBSD/etc/litestream.yml",
@@ -349,7 +349,7 @@ module Deploy
       body = File.read(PWA_BUILDER)
       match = body.match(/const APPS = \[(?<apps>.*?)\]/)
       unless match
-        result.fail("RAILS/tools/build_workbox.mjs must expose const APPS")
+        result.fail("MASTER/tools/rails/build_workbox.mjs must expose const APPS")
         return
       end
 

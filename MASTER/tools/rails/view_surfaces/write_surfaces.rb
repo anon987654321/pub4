@@ -41,7 +41,7 @@ end
 
 block = [BEGIN_MARK,
          "  # Every HTML GET route that rendered for a guest on the local fleet, from",
-         "  # RAILS/tools/view_surfaces/generate.rb. Hand-declared surfaces above win;",
+         "  # MASTER/tools/rails/view_surfaces/generate.rb. Hand-declared surfaces above win;",
          "  # routes behind sign-in and routes whose parameters no local record fills",
          "  # are not here (the probe browses as a guest). Regenerate, do not edit.",
          *entries.map { |e| "  - { app: #{e["app"]}, label: #{e["label"]}, #{e["host"] ? "host: #{e["host"]}, " : ""}path: #{e["path"].to_json}, viewports: [mobile, desktop] }" },

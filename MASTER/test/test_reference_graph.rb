@@ -19,7 +19,7 @@ class TestReferenceGraph < Minitest::Test
       result = graph.build
       edges = result[:edges].select { |edge| edge[:from] == "RAILS/brgen/config/boot.rb" && edge[:type] == :require }
 
-      assert_includes edges.map { |edge| edge[:to] }, "RAILS/tools/operator/deploy_paths.rb"
+      assert_includes edges.map { |edge| edge[:to] }, "MASTER/tools/rails/operator/deploy_paths.rb"
       refute_includes edges.map { |edge| edge[:to] }, "tools/operator/deploy_paths.rb"
     end
   end

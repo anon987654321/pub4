@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-require_relative "design_tokens"
+require_relative "../design_tokens"
 
 changes = []
 changes << "design_tokens: generated from MASTER/data/laws.yml#tokens" if DesignTokens.sync_design_artifact!

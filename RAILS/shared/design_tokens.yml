@@ -3,7 +3,7 @@
 # Canonical material design values. This block is the only machine-readable
 # design-token authority; RAILS/shared/design_tokens.yml is a generated view.
 # Canonical design token anchors — keep in sync with _dialect_tokens.scss defaults and face.css :root.
-# Regenerate face :root: ruby RAILS/tools/generate_face_root_css.rb
+# Regenerate face :root: ruby MASTER/tools/rails/generate_face_root_css.rb
 #
 # Dialect → consumer map (do not merge casually):
 #   social       → brgen + shared shell (IRIX flat dark/light)

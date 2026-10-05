@@ -4,6 +4,7 @@ import { existsSync, readdirSync, readFileSync, writeFileSync, rmSync } from "no
 import { join, dirname } from "node:path";
 import { tmpdir } from "node:os";
 import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -13,6 +14,17 @@ const viewsDir = join(root, "app", "views");
 // the view no longer spells their names. Read the manifest as text — Node has
 // no YAML parser and these are presence checks, not structural ones.
 const faceManifest = readFileSync(join(root, "config", "face_assets.yml"), "utf8");
+
+
+
+function sourceSetDigest(relativePaths) {
+  const hash = createHash("sha256");
+  for (const relativePath of [...relativePaths].sort()) {
+    hash.update(readFileSync(join(root, relativePath)));
+    hash.update("\0");
+  }
+  return hash.digest("hex");
+}
 
 function partSources() {
   return [
@@ -696,4 +708,45 @@ test("Android wake reaches the existing face event pipe", () => {
   assert.match(events, /WakeSignal/);
   assert.match(events, /stream_started_at/);
   assert.match(wake, /File\.rename/);
+});
+
+
+test("generated face bundles publish the source-set digest they were built from", () => {
+  const visionSources = [
+    "public/face_vision_core.js",
+    "public/face_vision_a.js",
+    "public/face_vision_b.js",
+    "public/face_vision_c.js",
+    "public/face_vision_d.js",
+  ];
+  const moduleSources = [
+    "script/face_modules_entry.js",
+    "public/face_blendshape_bridge.js",
+    "public/face_particles.js",
+    "public/face_audio_bridge.js",
+    "public/face_tts_bridge.js",
+    "public/face_expression_bridge.js",
+    "public/face_council_multi.js",
+    "public/face_phosphor_trail.js",
+    "public/face_micro_interactions.js",
+    "public/face_perf_guards.js",
+    "public/face_brutalist.js",
+  ];
+  const visionDigest = sourceSetDigest(visionSources);
+  const moduleDigest = sourceSetDigest(moduleSources);
+  const vision = readFileSync(join(publicDir, "face_vision.bundle.js"), "utf8");
+  const modules = readFileSync(join(publicDir, "face.modules.bundle.js"), "utf8");
+
+  assert.match(vision, new RegExp("SOURCE-SET-SHA256:\\s*" + visionDigest));
+  assert.match(modules, new RegExp("SOURCE-SET-SHA256:\\s*" + moduleDigest));
+});
+
+test("MASTER face markup hooks have owned styling", () => {
+  const css = readFileSync(join(publicDir, "face.css"), "utf8");
+  const view = readFileSync(join(viewsDir, "chat", "index.html.erb"), "utf8");
+  for (const hook of [".brand-mark", ".brand-text", ".mic-indicator"]) {
+    assert.match(view, new RegExp(hook.replace(".", "\\.")));
+    assert.match(css, new RegExp(hook.replace(".", "\\.") + "\\s*\\{"));
+  }
+  assert.match(css, /body\[data-mode="listening"\] \.mic-indicator/);
 });

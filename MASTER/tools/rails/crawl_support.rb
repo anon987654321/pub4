@@ -7,9 +7,9 @@ require "yaml"
 require_relative "../../MASTER/gates/support/utf8"
 
 module CrawlSupport
-  ROOT = File.expand_path("../..", __dir__)
-  MANIFEST = File.expand_path("../crawl_manifest.yml", __dir__)
-  APPS_YML = File.expand_path("../apps.yml", __dir__)
+  ROOT = File.expand_path("../../..", __dir__)
+  MANIFEST = File.join(ROOT, "RAILS", "crawl_manifest.yml")
+  APPS_YML = File.join(ROOT, "RAILS", "apps.yml")
   DEPLOY_INVENTORY = File.join(ROOT, "OPENBSD", "deploy_inventory.json")
 
   module_function

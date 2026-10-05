@@ -87,8 +87,8 @@ Marketplace and Takeaway share one campaign-art system. The canonical grammar li
 
 ```zsh
 ruby RAILS/test/layout_contract_test.rb
-ruby RAILS/tools/generate_face_root_css.rb   # face :root sync
-ruby RAILS/tools/build_all_css.rb --check
+ruby MASTER/tools/rails/generate_face_root_css.rb   # face :root sync
+ruby MASTER/tools/rails/build_all_css.rb --check
 ```
 
 ---
@@ -528,7 +528,7 @@ adopts them.
 ```bash
 ruby RAILS/test/design_contract_test.rb
 ruby RAILS/shared/test/lib/design_tokens_test.rb
-ruby RAILS/tools/build_all_css.rb --check
+ruby MASTER/tools/rails/build_all_css.rb --check
 ruby MASTER/gates/runner.rb frontend_auditor
 ```
 
@@ -840,7 +840,7 @@ The rule that came out of it, so the next file lands on the right side:
   is a shadowing hazard with no framework paying for it. `Shared::Scrape` is the
   only one there was.
 
-## `RAILS/tools/operator/` keeps a flat drawer (2026-09-10)
+## `MASTER/tools/rails/operator/` keeps a flat drawer (2026-09-10)
 
 Thirteen of the twenty file names there end in `_lint` and the cohesion census
 proposes a `pub4/lint/` shelf. Decided against. The shelf is already spelled in

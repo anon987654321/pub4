@@ -1571,3 +1571,60 @@ body.wscons-mode #face-phosphor-trail {
     max-height: 32dvh;
   }
 }
+
+
+/* Semantic face chrome hooks. These selectors are structural only: the shared
+   wordmark and microphone markup stay readable without inventing a second
+   visual dialect. */
+.brand-mark {
+  position: fixed;
+  inset-block-start: var(--inset-t);
+  inset-inline-start: var(--inset-l);
+  z-index: var(--z-ui);
+  min-inline-size: var(--tap-min);
+  min-block-size: var(--tap-min);
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  color: var(--face-fg);
+  font: 600 clamp(0.9375rem, 2.8vw, 1.125rem) / 1 var(--font-brand);
+  letter-spacing: 0.02em;
+}
+.brand-text {
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+}
+.brand-mark:focus-visible {
+  outline: 1px solid var(--c-accent);
+  outline-offset: 2px;
+}
+.mic-indicator {
+  position: fixed;
+  inset-block-start: calc(var(--inset-t) + var(--tap-min));
+  inset-inline-end: var(--inset-r);
+  z-index: var(--z-ui);
+  min-inline-size: var(--tap-min);
+  min-block-size: var(--tap-min);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--face-muted);
+}
+.mic-indicator svg {
+  inline-size: 18px;
+  block-size: 18px;
+  fill: currentColor;
+}
+body[data-mode="listening"] .mic-indicator {
+  color: var(--c-accent);
+}
+@media (forced-colors: active) {
+  .brand-mark,
+  .mic-indicator { color: CanvasText; }
+  .brand-mark:focus-visible { outline-color: CanvasText; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .brand-mark,
+  .mic-indicator { transition: none; }
+}

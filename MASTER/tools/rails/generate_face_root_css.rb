@@ -1,9 +1,9 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-require_relative "design_tokens"
+require_relative "../design_tokens"
 
-# __dir__ is <repo>/RAILS/tools, so the repo root is two levels up, not
+# __dir__ is <repo>/MASTER/tools/rails, so the repo root is two levels up, not
 # three — "../../.." escaped the checkout entirely and crashed on a
 # nonexistent <parent>/MASTER/web/public/face.css.
 ROOT = File.expand_path("../..", __dir__)

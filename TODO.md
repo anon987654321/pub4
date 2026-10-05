@@ -132,9 +132,9 @@ Reference order: GitHub upstream implementation/release history → official Rai
    guest probe is still meaningful; password-reset tokens and requester-scoped
    conversation/listening-party pages remain structurally unprobeable.
 4. **Marketplace money.** Entry: "Seller payouts need money". Operator: money.
-5. **RAILS/tools/operator lints are blind the way MASTER's were** (found
+5. **MASTER/tools/rails/operator lints are blind the way MASTER's were** (found
    2026-10-03, after 30800dd02 fixed the MASTER side): `destructive_action_lint.rb:30`
-   and `model_contract_lint.rb:35` resolve three levels up from RAILS/tools/operator,
+   and `model_contract_lint.rb:35` resolve three levels up from MASTER/tools/rails/operator,
    landing at the pub4 root, so their model/view globs find 0 files — 0 hits from the
    root vs 147 from RAILS; `fallback_drift_lint.rb:154` carries the same root with a
    "# RAILS/" comment stating the intent. Same silent-exit-0 family the MASTER

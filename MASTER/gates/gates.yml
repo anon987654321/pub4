@@ -308,6 +308,24 @@ rendered_suite:
   class: Deploy::RenderedSuiteGate
   pass: "ok: rendered browser suite clean"
 
+# Browser probes kept as first-class gates so a probe cannot exist as an
+# unmeasured side script. Each uses the shared CDP transport and is inconclusive
+# when Chromium is absent; GATE_STRICT_INCONCLUSIVE=1 makes that blocking.
+tap_target_probe:
+  needs: [browser]
+  script: tap_target_probe.rb
+  pass: "ok: tap targets meet the 44px floor"
+
+face_capture_probe:
+  needs: [browser]
+  script: face_capture_probe.rb
+  pass: "ok: face capture drew after primer"
+
+focus_walk_probe:
+  needs: [browser]
+  script: focus_walk_probe.rb
+  pass: "ok: every focus stop shows a ring"
+
 rendered_geometry:
   needs: [browser]
   require: lib/rendered/rendered_geometry

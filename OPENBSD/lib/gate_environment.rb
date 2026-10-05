@@ -28,7 +28,7 @@ module Deploy
       Gate.new(name: "frontend", path: RAILS_GATES, args: %w[frontend_production]),
       Gate.new(name: "relayd_smoke", path: "OPENBSD/gates/deploy_smoke_gate.rb"),
       Gate.new(name: "domain_align", path: RAILS_GATES, args: %w[domain_alignment]),
-      Gate.new(name: "crawl_inventory", path: "RAILS/tools/crawl_probe.rb"),
+      Gate.new(name: "crawl_inventory", path: "MASTER/tools/rails/crawl_probe.rb"),
       Gate.new(name: "schema_migration", path: RAILS_GATES, args: %w[schema_migration]),
       Gate.new(name: "asset_freshness", path: RAILS_GATES, args: %w[generated_asset]),
       Gate.new(name: "human_walkthrough", path: RAILS_GATES, args: %w[human_walkthrough]),

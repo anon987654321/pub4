@@ -73,7 +73,7 @@ class RepoHygieneContractTest < Minitest::Test
   # /var/db/pub4/ci.lock and called itself the single source.
   def test_the_ruby_and_shell_ci_locks_are_the_same_file
     shell = File.read(File.expand_path("../OPENBSD/lib/ci_lock.sh", ROOT), encoding: "UTF-8")
-    ruby = File.read(File.join(ROOT, "tools/operator/ci_guard.rb"), encoding: "UTF-8")
+    ruby = File.read(File.join(REPO_ROOT, "MASTER/tools/rails/operator/ci_guard.rb"), encoding: "UTF-8")
 
     assert_includes shell, "PUB4_CI_LOCK_DIR=/var/db/pub4"
     assert_includes shell, "PUB4_CI_LOCK_NAME=ci.lock"
@@ -145,6 +145,15 @@ class RepoHygieneContractTest < Minitest::Test
     ].each do |rel|
       assert File.exist?(File.join(REPO_ROOT, rel)), "missing #{rel}"
     end
+  end
+
+
+  def test_rails_has_no_tools_surface
+    refute_path_exists File.join(ROOT, "tools"),
+                       "RAILS is an app/shared tree; executable Rails tooling belongs under MASTER/tools/rails"
+    tracked = git_files("RAILS/tools")
+    assert_empty tracked, "retired RAILS/tools paths remain tracked:\n  #{tracked.join("\n  ")}"
+    assert_path_exists File.join(REPO_ROOT, "MASTER", "tools", "rails")
   end
 
   def test_shared_search_partials_are_not_duplicated_per_app
