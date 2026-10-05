@@ -56,21 +56,27 @@ module Master
           end
         end
 
-        def soul_preamble
-          @soul_preamble_mutex.synchronize do
-            path = Master.data_path("soul.yml")
-            mtime = File.mtime(path).to_i
-            return @soul_preamble_cache if @soul_preamble_cache && @soul_preamble_mtime == mtime
+        def soul_preamble(root: Master::ROOT)
+          root = Master.master_root(root:)
+          path = File.join(root, "data", "soul.yml")
+          signature = begin
+            stat = File.stat(path)
+            [File.expand_path(path), stat.size, stat.ino, stat.mtime.to_r]
+          end
 
-            @soul_preamble_mtime = mtime
-            @soul_preamble_cache = build_soul_preamble
+          @soul_preamble_mutex.synchronize do
+            @soul_preamble_cache ||= {}
+            return @soul_preamble_cache[signature] if @soul_preamble_cache.key?(signature)
+
+            @soul_preamble_cache = @soul_preamble_cache.slice(*@soul_preamble_cache.keys.last(3))
+            @soul_preamble_cache[signature] = build_soul_preamble(root:)
           end
         end
 
         private
 
-        def build_soul_preamble
-          soul = Master.soul_config
+        def build_soul_preamble(root:)
+          soul = Master.soul_config(root:)
           abs = soul.fetch("absolute", {})
           golden = abs["golden_rule"] || "PRESERVE_THEN_IMPROVE_NEVER_BREAK"
           lines = ["Golden rule: #{golden}",
