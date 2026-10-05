@@ -72,8 +72,6 @@ module Operator
       # a verification tail must never become a second repair pass under
       # another name. Council stays excluded because provider availability is
       # not a source-tree proof and can be separately reported by /critique.
-      lexical = stages(scan_only: true, trees:).find { |stage| stage.name == "lexical" }
-      selected = [lexical] + selected if lexical
       return [0, []] if selected.empty?
 
       report(selected, scan_only: true, trees:, return_results: true)
@@ -365,7 +363,7 @@ module Operator
         ["OPENBSD", [RUBY, "-e", OPENBSD_SUITE], File.join(ROOT, "OPENBSD"), {}, "OPENBSD"],
         ["tools", [RUBY, "-S", "rake"], File.join(MASTER, "tools"), {}, "MASTER", true],
         ["STUDIO media", [RUBY, "-S", "rake", "test:dilla", "test:postpro", "test:replicate", "test:lora"], File.join(ROOT, "STUDIO"), {}, "STUDIO", true],
-      ].select { |job| trees.include?(job.last) }
+      ].select { |job| trees.include?(job[-2]) }
     end
 
     def suites(trees = TREES)
