@@ -52,7 +52,6 @@ module Master
         def clear_preamble_cache!
           @soul_preamble_mutex.synchronize do
             @soul_preamble_cache = nil
-            @soul_preamble_mtime = nil
           end
         end
 
