@@ -32,6 +32,17 @@ class TestYamlDeclarativeRule < Minitest::Test
        "detect_lexical" => pattern, "fix" => "stop it" }.merge(extra)]
   end
 
+  def test_each_instance_owns_its_reload_state
+    in_corpus(lexical(id: "NO_FROBNICATE", pattern: "frobnicate")) do |first, root|
+      second = Rules::YamlDeclarativeRule.new(root:)
+
+      refute Rules::YamlDeclarativeRule.respond_to?(:reloading?)
+      assert_kind_of Array, first.instance_variable_get(:@entries)
+      assert_kind_of Array, second.instance_variable_get(:@entries)
+      refute_same first.instance_variable_get(:@entries), second.instance_variable_get(:@entries)
+    end
+  end
+
   def test_a_declared_lexical_rule_compiles_and_fires
     in_corpus(lexical(id: "NO_FROBNICATE", pattern: "frobnicate")) do |rule, root|
       found = rule.check("value = frobnicate(x)\n", path: File.join(root, "lib/thing.rb"))
