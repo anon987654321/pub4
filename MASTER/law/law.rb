@@ -483,7 +483,7 @@ module Law
     def scan(file, language: nil)
       text = File.read(file, encoding: "UTF-8")
       text = conduct(text) if file.start_with?(__dir__)
-      @rules.values.select { |r| r.applies?(file, language) }.flat_map { |r| r.scan(text, file:) }
+      @rules.values.select { |r| r.enforceable? && r.applies?(file, language) }.flat_map { |r| r.scan(text, file:) }
     end
 
     # A law file necessarily contains the pattern it forbids: in its detector,

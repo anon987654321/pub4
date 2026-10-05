@@ -32,6 +32,22 @@ class TestLawContract < Minitest::Test
     first = Law::Contract.digest
     assert_equal first, JSON.parse(Law::Contract.render).fetch("law_digest")
   end
+  def test_law_scan_does_not_enforce_retired_rules
+    original = Law.rules.dup
+    rule = Law.rules.fetch(:FAIL_VISIBLY)
+    Law.rules.clear
+    Law.rules[rule.id] = rule.with(lifecycle: :retired)
+
+    Dir.mktmpdir do |root|
+      path = File.join(root, "fixture.rb")
+      File.write(path, rule.bad)
+      assert_empty Law.scan(path, language: :ruby)
+    end
+  ensure
+    Law.rules.clear
+    Law.rules.merge!(original)
+  end
+
   def test_derived_index_is_complete_and_machine_readable
     rows = Law::Index.validate!
     assert_operator rows.length, :>, 100
