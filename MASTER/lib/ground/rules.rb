@@ -107,12 +107,13 @@ module Master
         path = resolve_data_path(key)
         return @cache[key]&.first || folded(key) unless path && File.exist?(path)
 
-        mtime = File.mtime(path)
+        stat = File.stat(path)
+        signature = [stat.size, stat.ino, stat.mtime.to_r]
         cached = @cache[key]
-        return cached.first if cached && cached.last >= mtime
+        return cached.first if cached && cached.last == signature
 
         payload = without_schema(Master.load_yaml(path) || {})
-        @cache[key] = [payload, mtime]
+        @cache[key] = [payload, signature]
         payload
       end
 
