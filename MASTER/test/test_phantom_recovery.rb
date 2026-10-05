@@ -141,6 +141,10 @@ class TestPhantomRecovery < Minitest::Test
 
   # The prose detectors used to compile into regexes matching only their own
   # sentence, which a reply quoting data/laws.yml would trip.
+  def test_malformed_detector_declaration_fails_closed
+    assert_raises(ArgumentError) { Master::PhantomRecovery.compile_detector("not-a-regex") }
+  end
+
   def test_a_prose_detector_is_not_compiled_into_a_pattern
     assert_nil Master::PhantomRecovery.detect("tool returned nil twice in a row")
   end
