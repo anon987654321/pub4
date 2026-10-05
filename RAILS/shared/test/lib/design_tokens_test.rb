@@ -34,7 +34,7 @@ class DesignTokensTest < Minitest::Test
     Dir.mktmpdir do |dir|
       path = File.join(dir, "face.css")
       File.write(path, <<~CSS)
-        /* BEGIN:generated-face-root — ruby RAILS/tools/generate_face_root_css.rb */
+        /* BEGIN:generated-face-root — ruby MASTER/tools/rails/generate_face_root_css.rb */
         :root {
           --#{key.to_s.tr('_', '-')}: #{stale};
         }
@@ -63,7 +63,7 @@ DesignTokens.face_root_css.lines.grep(/--#{key.to_s.tr('_', '-')}/).first.to_s.s
     Dir.mktmpdir do |dir|
       path = File.join(dir, "face.css")
       File.write(path, <<~CSS)
-        /* BEGIN:generated-face-root — ruby RAILS/tools/generate_face_root_css.rb */
+        /* BEGIN:generated-face-root — ruby MASTER/tools/rails/generate_face_root_css.rb */
         :root { --c-text: #000000; }
         /* END:generated-face-root */
       CSS
@@ -87,14 +87,14 @@ DesignTokens.face_root_css.lines.grep(/--#{key.to_s.tr('_', '-')}/).first.to_s.s
 
     assert_nil drift, "MASTER/web/public/face.css :root has drifted from " \
                       "generated design projection (#{drift}) — run " \
-                      "`ruby RAILS/tools/generate_face_root_css.rb`"
+                      "`ruby MASTER/tools/rails/generate_face_root_css.rb`"
   end
 
   def test_committed_dialect_scss_anchors_match_design_tokens
     drift = DesignTokens.scss_anchor_drift?
 
     assert_nil drift, "_dialect_tokens.scss has drifted from MASTER tokens (#{drift}) — " \
-                      "run `ruby RAILS/tools/sync_dialect_tokens.rb` or the documented sync"
+                      "run `ruby MASTER/tools/rails/sync_dialect_tokens.rb` or the documented sync"
   end
 
   def test_committed_dialect_maps_match_design_tokens
