@@ -153,11 +153,8 @@ module Master
   end
 
   def self.law(section, root: ROOT)
-    path = File.join(root, "data", "laws.yml")
-    mtime = File.mtime(path)
-    @law = nil unless @law_stamp == [path, mtime]
-    @law ||= (load_laws(root:) || {}).tap { @law_stamp = [path, mtime] }
-    @law.fetch(section.to_s) { raise KeyError, "data/laws.yml has no #{section}: section" }
+    data = load_laws(root:)
+    data.fetch(section.to_s) { raise KeyError, "data/laws.yml has no #{section}: section" }
   end
 
   # The one reader of data/agent_taxonomy.yml. It had three, each building the
