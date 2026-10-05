@@ -148,8 +148,11 @@ module Master
           end
 
           def rules_mtime
-            path = File.join(@root, "data", "laws.yml")
-            File.exist?(path) ? File.mtime(path).to_i : nil
+            path = File.join(Master.master_root(root: @root), "data", "laws.yml")
+            return nil unless File.exist?(path)
+
+            stat = File.stat(path)
+            [stat.size, stat.ino, stat.mtime.to_r]
           end
 
           def declarative_hits(code, entry)
