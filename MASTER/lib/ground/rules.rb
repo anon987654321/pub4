@@ -103,7 +103,10 @@ module Master
       def data(name)
         key = name.to_sym
         path = resolve_data_path(key)
-        return @cache[key]&.first || folded(key) unless path && File.exist?(path)
+        unless path && File.exist?(path)
+          @cache.delete(key)
+          return folded(key)
+        end
 
         stat = File.stat(path)
         stamp = [stat.size, stat.ino, stat.mtime.to_r]
