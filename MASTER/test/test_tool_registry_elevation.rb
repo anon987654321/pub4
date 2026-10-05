@@ -45,6 +45,42 @@ class ToolRegistryElevationTest < Minitest::Test
     Fiber[:master_paired] = nil
   end
 
+  def test_llm_tools_cache_is_partitioned_by_model_tier
+    harness = RegistryHarness.new
+    Fiber[:master_visitor] = false
+    Fiber[:master_elevated] = true
+
+    harness.model_router.define_singleton_method(:tier_for_model) { |_| "standard" }
+    standard = harness.send(:llm_tools, "standard-model").map(&:class)
+    assert_includes standard, Master::Io::LLM::Shell
+
+    harness.model_router.define_singleton_method(:tier_for_model) { |_| "cheap" }
+    cheap = harness.send(:llm_tools, "cheap-model").map(&:class)
+    refute_includes cheap, Master::Io::LLM::Shell
+  ensure
+    Fiber[:master_visitor] = nil
+    Fiber[:master_elevated] = nil
+    Fiber[:master_paired] = nil
+  end
+
+  def test_llm_tools_cache_is_partitioned_by_active_file_types
+    harness = RegistryHarness.new
+    harness.tool_registry["ReadFile"] = { "elevated" => false, "file_types" => [".rb"] }
+    Fiber[:master_visitor] = false
+
+    harness.session = Data.define(:topic, :messages).new("edit thing.rb", [])
+    ruby = harness.send(:llm_tools, "test/model").map(&:class)
+    assert_includes ruby, Master::Io::LLM::ReadFile
+
+    harness.session = Data.define(:topic, :messages).new("edit thing.css", [])
+    css = harness.send(:llm_tools, "test/model").map(&:class)
+    refute_includes css, Master::Io::LLM::ReadFile
+  ensure
+    Fiber[:master_visitor] = nil
+    Fiber[:master_elevated] = nil
+    Fiber[:master_paired] = nil
+  end
+
   def test_no_tools_are_offered_under_master_no_tools
     harness = RegistryHarness.new
     Fiber[:master_no_tools] = true
