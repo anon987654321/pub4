@@ -116,22 +116,26 @@ module Master
       end
 
       def kernel
-        @kernel ||= begin
-          all_rules = Master.law_entries(root: @root)
-          all_rules
-            .select { |r| r["tier"] == "kernel" }
-            .each_with_object({}) { |r, h| h[r["id"]] = r["name"] }
-            .freeze
-        end
+        signature = law_data_signature
+        return @kernel if @kernel_signature == signature && @kernel
+
+        @kernel_signature = signature
+        all_rules = Master.law_entries(root: @root)
+        @kernel = all_rules
+                   .select { |r| r["tier"] == "kernel" }
+                   .each_with_object({}) { |r, h| h[r["id"]] = r["name"] }
+                   .freeze
       end
 
       def philosophy(limit: nil)
-        @philosophy ||= begin
+        signature = law_data_signature
+        if @philosophy_signature != signature || !@philosophy
+          @philosophy_signature = signature
           all_rules = Master.law_entries(root: @root)
-          all_rules
-            .reject { |r| r["tier"] == "kernel" }
-            .map { |h| h.transform_keys(&:to_s) }
-            .freeze
+          @philosophy = all_rules
+                        .reject { |r| r["tier"] == "kernel" }
+                        .map { |h| h.transform_keys(&:to_s) }
+                        .freeze
         end
         limit ? @philosophy.first(limit) : @philosophy
       end
