@@ -94,7 +94,7 @@ module Master
     # and rake lint:scan_coverage audits this one. Foreign roots (scanner tests
     # against a mktmpdir) have no manifest and get the old default.
     def scan_roots(root: ROOT)
-      data_dir = root == ROOT ? DATA : File.join(root, "data")
+      data_dir = File.join(Master.master_root(root:), "data")
       path = File.join(data_dir, "scan_coverage.yml")
       return ["lib"] unless File.exist?(path)
 
