@@ -5,6 +5,68 @@ require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
 ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.rules.empty?
 
 class TestLawContract < Minitest::Test
+  def test_law_loader_reloads_a_changed_shard
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "probe.rb")
+      File.write(path, <<~RUBY)
+        Law.define(:LOAD_RELOAD_PROBE) do
+          source "test"
+          severity :info
+          practice "first version"
+          fix "keep it"
+          bad "bad"
+          good "good"
+        end
+      RUBY
+
+      Law.load_all(dir)
+      assert_equal "first version", Law.rules.fetch(:LOAD_RELOAD_PROBE).practice
+
+      File.write(path, File.read(path).sub("first version", "second version"))
+      Law.load_all(dir)
+
+      assert_equal "second version", Law.rules.fetch(:LOAD_RELOAD_PROBE).practice
+    ensure
+      Law.load_all(File.join(Master::ROOT, "law"))
+    end
+  end
+
+  def test_law_loader_restores_previous_registry_when_reload_fails
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "probe.rb")
+      File.write(path, <<~RUBY)
+        Law.define(:LOAD_ROLLBACK_PROBE) do
+          source "test"
+          severity :info
+          practice "stable"
+          fix "keep it"
+          bad "bad"
+          good "good"
+        end
+      RUBY
+
+      Law.load_all(dir)
+      assert_equal "stable", Law.rules.fetch(:LOAD_ROLLBACK_PROBE).practice
+
+      File.write(path, <<~RUBY)
+        Law.define(:LOAD_ROLLBACK_PROBE) do
+          source "test"
+          severity :info
+          practice "broken"
+          fix "keep it"
+          bad "bad"
+          good "good"
+        end
+        raise "broken law shard"
+      RUBY
+
+      assert_raises RuntimeError { Law.load_all(dir) }
+      assert_equal "stable", Law.rules.fetch(:LOAD_ROLLBACK_PROBE).practice
+    ensure
+      Law.load_all(File.join(Master::ROOT, "law"))
+    end
+  end
+
   def test_contract_has_stable_machine_readable_shape
     data = JSON.parse(Law::Contract.render)
 
