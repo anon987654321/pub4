@@ -51,6 +51,13 @@ class TestGateChain < Minitest::Test
                  G.suite_jobs(%w[RAILS]).map(&:first)
   end
 
+  def test_all_four_tree_suite_jobs_are_reachable
+    jobs = G.suite_jobs(G::TREES)
+    assert_includes jobs.map(&:first), "tools"
+    assert_includes jobs.map(&:first), "STUDIO media"
+    assert_equal 7, jobs.size
+  end
+
   def test_suite_stage_has_a_human_readable_purpose
     assert_equal "complete test suites over all four trees", G.suite_purpose(G::TREES)
     assert_equal "complete test suites over MASTER, RAILS, OPENBSD", G.suite_purpose(%w[MASTER RAILS OPENBSD])
@@ -62,6 +69,20 @@ class TestGateChain < Minitest::Test
     assert_includes scoped, "openbsd"
     refute_includes scoped, "source"
     assert_equal ["openbsd", "suites", "ratchets", "sprawl", "council"], scoped
+  end
+
+  def test_fix_verification_does_not_duplicate_the_lexical_stage
+    lexical = G::Stage.new(name: "lexical", purpose: "lexical", mutates: false, run: -> {})
+    suites = G::Stage.new(name: "suites", purpose: "suites", mutates: false, run: -> {})
+    captured = nil
+
+    G.stub(:stages, [lexical, suites]) do
+      G.stub(:report, ->(selected, **_kwargs) { captured = selected; [0, []] }) do
+        G.verify_fix(target: "MASTER")
+      end
+    end
+
+    assert_equal %w[lexical suites], captured.map(&:name)
   end
 
   def test_master_fix_verification_reaches_the_constitutional_self_test
@@ -110,7 +131,7 @@ class TestGateChain < Minitest::Test
   def test_an_unknown_tree_is_refused_rather_than_narrowing_to_nothing
     assert_equal G::TREES, G.normalise_trees(nil)
     assert_equal %w[RAILS], G.normalise_trees("rails")
-    assert_raises(SystemExit) { G.normalise_trees("NOPE") }
+    assert_raises(ArgumentError) { G.normalise_trees("NOPE") }
   end
 
   # The panel argues for free or it does not argue; either way the tree stays as
