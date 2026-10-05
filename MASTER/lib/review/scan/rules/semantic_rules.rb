@@ -212,13 +212,20 @@ module Master
           end
 
           def rules_mtime
-            paths = [Master::LAWS_PATH, *Dir.glob(File.join(Master::ROOT, "law", "*.rb"))]
-            paths.filter_map { |path| File.mtime(path).to_i if File.exist?(path) }.max
+            root = Master.master_root(root: @root)
+            paths = [File.join(root, "data", "laws.yml"), *Dir.glob(File.join(root, "law", "*.rb"))]
+            paths.filter_map do |path|
+              next unless File.exist?(path)
+
+              stat = File.stat(path)
+              [path, stat.size, stat.ino, stat.mtime.to_r]
+            end.max_by { |_, size, ino, mtime| mtime }
           end
 
           def semantic_cache_key(path, code)
             require "digest"
-            [path, File.mtime(path).to_i, Digest::SHA256.hexdigest(code)[0, 16], @rules_mtime].join(":")
+            stat = File.stat(path)
+            [path, stat.size, stat.ino, stat.mtime.to_r, Digest::SHA256.hexdigest(code)[0, 16], @rules_mtime].join(":")
           rescue StandardError
             [path, code.bytesize, @rules_mtime].join(":")
           end
