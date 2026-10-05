@@ -168,18 +168,10 @@ module Master
       end
 
       def excluded_reason(path, root:)
-        collector = Master::Fix::FixLoop::FileCollector.new(root:)
-        collector.send(:skip_reason, path).to_s unless collector.send(:skip_reason, path).nil?
+        reason = Master::Fix::FixLoop::FileCollector.new(root:).send(:skip_reason, path)
+        reason&.to_s
       rescue StandardError
         "unreadable_or_unclassifiable"
-      end
-
-      def immutable?(path, root:)
-        relative_path = relative(path, root)
-        immutable = Array((Master.load_laws || {}).dig("paths", "immutable")).map(&:to_s)
-        immutable.any? { |entry| entry.end_with?("/") ? relative_path.start_with?(entry) : relative_path == entry }
-      rescue StandardError
-        false
       end
 
       def relative(path, root)
