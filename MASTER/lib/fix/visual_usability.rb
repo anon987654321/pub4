@@ -51,9 +51,9 @@ module Master
         IDS.map { |id| line(id) }.join("\n")
       end
 
-      # law/ keys its registry by symbol. DENSITY, PROXIMITY, LINEARITY,
-      # ABSTRACTION and SINGULARITY are the axioms under laws.yml `laws:`, not
-      # law/ files, so they are read from there.
+      # law/ keys its registry by symbol; declarative law entries in
+      # laws.yml are keyed by id. Both populations are derived from their
+      # canonical readers and may be combined without a second catalogue.
       def load_laws!
         require File.expand_path("../../law/law", __dir__)
         Law.load_all(File.expand_path("../../law", __dir__)) unless Law.rules.key?(IDS.first.to_sym)
@@ -62,7 +62,7 @@ module Master
       end
 
       def axioms
-        @axioms ||= Master.load_yaml(Master::LAWS_PATH).fetch("laws", {})
+        Master.law_entries.to_h { |row| [row["id"].to_s, row] }
       end
 
       def line(id)
