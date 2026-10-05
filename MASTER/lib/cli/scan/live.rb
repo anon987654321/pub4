@@ -51,9 +51,9 @@ module Master
           nil
         end
 
-        def with_interrupt_dump(root:)
+        def with_interrupt_dump(root:, snapshot: true)
           ensure_sync!
-          holder = { text: nil, root: }
+          holder = { text: nil, root:, snapshot: }
           prev_int = trap_soft("INT", holder)
           prev_term = trap_soft("TERM", holder)
           yield holder
@@ -68,8 +68,12 @@ module Master
             if dump.empty?
               emit("interrupted, no partial report yet")
             else
-              emit("interrupted, writing partial snapshot")
-              snapshot!(dump, root: holder[:root], note: "partial after #{sig}")
+              if holder[:snapshot]
+                emit("interrupted, writing partial snapshot")
+                snapshot!(dump, root: holder[:root], note: "partial after #{sig}")
+              else
+                emit("interrupted, no snapshot, dry run")
+              end
               $stdout.puts dump
               $stdout.flush
             end

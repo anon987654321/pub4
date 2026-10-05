@@ -132,6 +132,7 @@ end
       assert_equal Master::RAILS_ROOT, pipe.send(:resolve_target, "../RAILS")
       assert_equal File.join(Master::RAILS_ROOT, "brgen"), pipe.send(:resolve_target, "../RAILS/brgen")
       assert File.exist?(pipe.send(:resolve_target, "../RAILS")), "resolved RAILS target must exist"
+      assert_equal "all four trees", pipe.send(:shell_target, Master::REPO_ROOT)
     end
   end
 

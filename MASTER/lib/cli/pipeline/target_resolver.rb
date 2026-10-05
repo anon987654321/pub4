@@ -55,6 +55,7 @@ module Master
 
         def shell_target(abs)
           return "self" if abs == File.join(@root, "lib")
+          return "all four trees" if abs == Master::REPO_ROOT
           return "master" if abs == @root
           return "rails" if abs == Master::RAILS_ROOT
           return "face" if abs == File.join(@root, "web", "public")
