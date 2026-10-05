@@ -132,8 +132,7 @@ module Master
 
         def load_priors
           @priors_cache ||= begin
-            data = Master.load_yaml(PRIORS_PATH)
-            priors = data["violation_priors"]
+            priors = Master.law("violation_priors", root: @root)
             raise "violation_priors configuration missing" unless priors.is_a?(Hash)
 
             priors
