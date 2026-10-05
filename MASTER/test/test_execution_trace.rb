@@ -4,6 +4,17 @@ require_relative "test_helper"
 require_relative "../lib/fix/execution_trace"
 
 class TestExecutionTrace < Minitest::Test
+
+  def test_git_scope_is_repo_wide_for_all_trees_and_narrow_for_one_tree
+    repo_trace = Master::Fix::ExecutionTrace.new(root: "/srv/pub4", target: "MASTER RAILS OPENBSD STUDIO")
+    rails_trace = Master::Fix::ExecutionTrace.new(root: "/srv/pub4", target: "RAILS")
+    nested_trace = Master::Fix::ExecutionTrace.new(root: "/srv/pub4", target: "RAILS/amber")
+
+    assert_equal [], repo_trace.send(:git_scope)
+    assert_equal ["RAILS"], rails_trace.send(:git_scope)
+    assert_equal ["RAILS/amber"], nested_trace.send(:git_scope)
+  end
+
   def test_reread_hashes_every_supplied_file
     Dir.mktmpdir("execution_trace") do |root|
       paths = %w[a.rb b.yml c.txt].map do |name|

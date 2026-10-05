@@ -57,8 +57,9 @@ module Master
         end
       end
 
-      def initialize(root:, files: nil, digestor: nil, ruby_checker: nil, dependencies: {})
+      def initialize(root:, target: nil, files: nil, digestor: nil, ruby_checker: nil, dependencies: {})
         @root = File.expand_path(root)
+        @target = target
         @files = files
         @dependencies = dependencies
         @digestor = digestor || ->(path) { Digest::SHA256.file(path) }
@@ -105,12 +106,29 @@ module Master
       def file_list
         return Array(@files).map { |path| File.expand_path(path, @root) } if @files
 
+        scope = git_scope
         output, status = Master::Io::Exec.capture2e(
-          "git", "-C", @root, "ls-files", "-z", "--cached", "--others", "--exclude-standard"
+          "git", "-C", @root, "ls-files", "-z", "--cached", "--others", "--exclude-standard", "--", *scope
         )
-        raise "cannot inventory repository: #{output.to_s.lines.last.to_s.strip}" unless status.success?
+        label = scope.empty? ? "repository" : "scope #{scope.join(", ")}"
+        raise "cannot inventory #{label}: #{output.to_s.lines.last.to_s.strip}" unless status.success?
 
         output.split("\x00").reject(&:empty?).map { |path| File.join(@root, path) }.select { |path| File.file?(path) }
+      end
+
+      def git_scope
+        text = @target.to_s.strip
+        return [] if text.empty? || text.casecmp("all").zero? || text.casecmp("everything").zero?
+
+        names = text.split(/[,\s]+/).map(&:upcase)
+        return [] if (%w[MASTER RAILS OPENBSD STUDIO] - names).empty?
+
+        full = File.expand_path(text, @root)
+        root = File.expand_path(@root)
+        return [] unless full == root || full.start_with?("#{root}#{File::SEPARATOR}")
+
+        relative = full.delete_prefix("#{root}#{File::SEPARATOR}")
+        relative.empty? ? [] : [relative]
       end
 
       def reread(files, failures)

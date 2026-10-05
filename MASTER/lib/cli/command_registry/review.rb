@@ -63,6 +63,7 @@ module Master
             trace = begin
               Master::Fix::ExecutionTrace.new(
                 root: Master.repo_root,
+                target: target,
                 dependencies: { scanner:, fix_loop:, deliberation:, bus: }
               ).run
             rescue SyntaxError, StandardError => e
@@ -79,8 +80,9 @@ module Master
               next Master::Result.err(message, category: :validation)
             end
           end
+          effective_critique = _critique.nil? ? apply != false : _critique
           value = run_pass({ scanner:, fix_loop:, root:, deliberation:, bus:, swarm: },
-                           target:, apply: apply.nil? || apply, critique: _critique.nil? ? true : _critique,
+                           target:, apply: apply.nil? || apply, critique: effective_critique,
                            aesthetic:, only: nil)
           next value unless apply.nil? || apply
 
