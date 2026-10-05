@@ -42,14 +42,13 @@ module Master
         # From law/, the one registry. soul carried absolute.rules until the
         # `conduct` kind let a rule about how to work be a Law like any other.
         def rules
-          @rules ||= begin
-            require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
-            ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.rules.empty?
-            ::Law.rules.values.to_h { |r| [r.id.to_s, (r.practice || r.fix).to_s.gsub(/\s+/, " ").strip] }.freeze
-          rescue StandardError => e
-            Master::Ground::Swallow.log(e, context: "rules.rules", path: File.join(Master::ROOT, "law"))
-            raise "rules registry unreadable: #{e.class}: #{e.message}"
-          end
+          law_dir = File.join(@root, "law")
+          require File.join(law_dir, "law") unless defined?(::Law)
+          ::Law.load_all(law_dir)
+          ::Law.rules.values.to_h { |r| [r.id.to_s, (r.practice || r.fix).to_s.gsub(/\s+/, " ").strip] }.freeze
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "rules.rules", path: law_dir)
+          raise "rules registry unreadable: #{e.class}: #{e.message}"
         end
         def thresholds = @thresholds ||= (@data["thresholds"] || {}).freeze
         def languages_config = @languages_config ||= (@data["languages"] || {}).freeze
@@ -90,7 +89,7 @@ module Master
       def initialize(root: nil)
         @root = root || Master::ROOT
         @data_dir = File.join(@root, "data")
-        @voice_path = Master.data_path("voice.yml")
+        @voice_path = File.join(@data_dir, "voice.yml")
         @data = Master.load_laws(root: @root) || {}
         @voice_data = load_yaml(@voice_path) || {}
         # limits.yml is no longer parsed here. It was loaded on every Rules
@@ -116,22 +115,26 @@ module Master
       end
 
       def kernel
-        @kernel ||= begin
-          all_rules = Master.law_entries(root: @root)
-          all_rules
-            .select { |r| r["tier"] == "kernel" }
-            .each_with_object({}) { |r, h| h[r["id"]] = r["name"] }
-            .freeze
-        end
+        signature = law_data_signature
+        return @kernel if @kernel_signature == signature && @kernel
+
+        @kernel_signature = signature
+        all_rules = Master.law_entries(root: @root)
+        @kernel = all_rules
+                   .select { |r| r["tier"] == "kernel" }
+                   .each_with_object({}) { |r, h| h[r["id"]] = r["name"] }
+                   .freeze
       end
 
       def philosophy(limit: nil)
-        @philosophy ||= begin
+        signature = law_data_signature
+        if @philosophy_signature != signature || !@philosophy
+          @philosophy_signature = signature
           all_rules = Master.law_entries(root: @root)
-          all_rules
-            .reject { |r| r["tier"] == "kernel" }
-            .map { |h| h.transform_keys(&:to_s) }
-            .freeze
+          @philosophy = all_rules
+                        .reject { |r| r["tier"] == "kernel" }
+                        .map { |h| h.transform_keys(&:to_s) }
+                        .freeze
         end
         limit ? @philosophy.first(limit) : @philosophy
       end
