@@ -32,7 +32,9 @@ module Master
 
         def collect(target)
           candidates = repository_files(target)
-          candidates = Dir.glob(File.join(target, "**", "*")).select { |file| File.file?(file) } if candidates.empty?
+          if candidates.empty? && !git_checkout?
+            candidates = Dir.glob(File.join(target, "**", "*")).select { |file| File.file?(file) }
+          end
           retain(candidates)
         end
 
@@ -64,6 +66,8 @@ module Master
           out.split("\0").map { |rel| File.join(root, rel) }
              .select { |file| File.file?(file) && under_path?(file, target) }
         rescue StandardError => e
+          raise if git_checkout?
+
           Master::Ground::Swallow.log(e, context: "FileCollector.repository_files")
           []
         end
@@ -89,9 +93,14 @@ module Master
 
         def git_root
           out, _, status = Master::Io::Exec.capture3("git", "-C", @root, "rev-parse", "--show-toplevel")
-          return unless status.success?
+          return out.to_s.strip.then { |path| path.empty? ? nil : File.expand_path(path) } if status.success?
 
-          out.to_s.strip.then { |path| path.empty? ? nil : File.expand_path(path) }
+          raise "git root unavailable while collecting #{@root}" if git_checkout?
+          nil
+        end
+
+        def git_checkout?
+          Master.git_checkout?(@root)
         end
 
         # Counted and published rather than quietly dropped — a fix pass that
