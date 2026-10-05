@@ -69,7 +69,7 @@ module Master
             @soul_preamble_cache ||= {}
             return @soul_preamble_cache[signature] if @soul_preamble_cache.key?(signature)
 
-            @soul_preamble_cache = @soul_preamble_cache.slice(*@soul_preamble_cache.keys.last(3))
+            @soul_preamble_cache = @soul_preamble_cache.slice(*@soul_preamble_cache.keys.last(2))
             @soul_preamble_cache[signature] = build_soul_preamble(root:)
           end
         end
