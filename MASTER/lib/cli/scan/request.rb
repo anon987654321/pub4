@@ -171,13 +171,14 @@ module Master
 
         def self.workflow_profiles(path)
           @workflow_profiles_cache ||= {}
-          mtime = File.mtime(path).to_i
+          stat = File.stat(path)
+          stamp = [stat.size, stat.ino, stat.mtime.to_r]
           cached = @workflow_profiles_cache[path]
-          return cached[:value] if cached && cached[:mtime] == mtime
+          return cached[:value] if cached && cached[:stamp] == stamp
 
           data = Master.load_yaml(path)
           value = [data["principle_groups"] || {}, data["scan_profiles"] || {}]
-          @workflow_profiles_cache[path] = { mtime:, value: }
+          @workflow_profiles_cache[path] = { stamp:, value: }
           value
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "Scan::Request.workflow_profiles")
