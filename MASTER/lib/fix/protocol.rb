@@ -208,7 +208,7 @@ module Master
         detector_matrix = ProtocolDetectorMatrix.matrix(rules)
         payload = {
           "fix_protocol_version" => VERSION,
-          "law_digest" => Digest::SHA256.hexdigest(JSON.generate(entries)),
+          "law_digest" => Law::Contract.digest,
           "operation" => "/fix",
           "target" => relative(target_path, root),
           "stages" => STAGES,
