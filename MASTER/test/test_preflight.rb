@@ -67,6 +67,19 @@ class TestPreflight < Minitest::Test
     end
   end
 
+  def test_shebang_language_cache_refreshes_after_edit
+    Dir.mktmpdir do |root|
+      path = File.join(root, "tool")
+      File.write(path, "#!/usr/bin/env ruby\nputs :ok\n")
+
+      assert_equal "ruby", Master.language_for(path)
+
+      File.write(path, "#!/usr/bin/env zsh\necho ok\n")
+
+      assert_equal "zsh", Master.language_for(path)
+    end
+  end
+
   def test_preflight_uses_shebang_language_resolution
     Dir.mktmpdir do |root|
       path = File.join(root, "tool")
