@@ -39,6 +39,14 @@ class CiContractTest < Minitest::Test
     end
   end
 
+  test "shared ci resolves tooling from MASTER, never RAILS/tools" do
+    shared = read(SHARED_CI)
+
+    refute_includes shared, 'File.join(ENV["PUB4_RAILS_ROOT"], "tools"'
+    refute_includes shared, 'require_relative "../../tools/operator'
+    assert_includes shared, 'MASTER/tools/rails'
+  end
+
   test "eritel carries the same security and test floor" do
     source = read(File.join(ROOT, "eritel", "bin", "ci"))
 
