@@ -15,6 +15,12 @@ module Master
         text = message.to_s.strip
         return Master::Result.err("empty message", category: :validation) if text.empty?
         return dispatch_slash(rewrite_slash(text), container:, felt_sense:, on_turn:) if text.start_with?("/")
+        if text.match?(%r{\A(?:fix|review|critique)\b}i)
+          return dispatch_slash("/#{text}", container:, felt_sense:, on_turn:)
+        end
+        if text.match?(%r{\A(?:please\s+)?deploy\b}i)
+          return dispatch_slash("/deploy #{deployment_args(text)}".strip, container:, felt_sense:, on_turn:)
+        end
 
         # Visitors (no web token — i.e. the open internet on ai.brgen.no) get the
         # conversational path only. Everything below this line can reach real
@@ -43,6 +49,14 @@ module Master
       end
 
       def visitor? = Fiber[:master_visitor] == true
+
+      def deployment_args(text)
+        value = text.to_s
+        return "all" if value.match?(/\bmaster\b/i) && value.match?(/\brails?\b/i)
+        return "all" if value.match?(/\b(?:all|everything|fleet|whole)\b/i)
+        return "master" if value.match?(/\bmaster\b/i)
+        value[/\b(?:brgen|amber|bsdports)\b/i]&.downcase || "all"
+      end
 
       # A sentence that is exactly a registry word, "status" or "help", runs that
       # command without a model's inference. Below the visitor gate, as every route
