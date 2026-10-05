@@ -266,7 +266,7 @@ module Master
       end
 
       def visual_rubric_context
-        rubric = Master.load_yaml(File.join(Master::ROOT, "data", "visual_rubric.yml"), default: {}) || {}
+        rubric = Master.load_yaml(File.join(Master.master_root(root: @root), "data", "visual_rubric.yml"), default: {}) || {}
         dimensions = rubric.fetch("dimensions", {})
         judgment = rubric.fetch("judgment", {})
         constraints = rubric.fetch("constraints", {})
