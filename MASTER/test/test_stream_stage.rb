@@ -41,7 +41,7 @@ class StreamStageTest < Minitest::Test
     def commit_if_dirty(message, **) = @commits << message
   end
 
-  RuleOrder = Struct.new(:rules) do
+  LawOrder = Struct.new(:rules) do
     def ordered(violation_counts:) = rules
   end
 
@@ -56,7 +56,7 @@ class StreamStageTest < Minitest::Test
     @repair_state = nil
     @scan_index = 0
     @committer = NullCommitter.new
-    @rule_order = RuleOrder.new([Rule.new("LONG_METHOD"), Rule.new("DRY")])
+    @rule_order = LawOrder.new([Rule.new("LONG_METHOD"), Rule.new("DRY")])
     @violation_counts = Hash.new(0)
   end
 

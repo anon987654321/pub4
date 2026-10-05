@@ -13,7 +13,7 @@ module Deploy
     ROOT = File.expand_path(__dir__)
     VENDORED = %r{/(?:scratch|tmp|node_modules|venv|\.venv|site-packages|vendor|storage|\.cache|coverage)/}
     TREES = [
-      { name: "tools", glob: "**/*.rb", entry: "gate.rb", owner: "MASTER governance utilities" },
+      { name: "tools", glob: "**/*", entry: nil, owner: "MASTER governance utilities" },
     ].freeze
     PROBE_TIMEOUT = Integer(ENV.fetch("MASTER_TOOLS_PROBE_TIMEOUT", "60"))
     PREDICTED_FINDINGS = {

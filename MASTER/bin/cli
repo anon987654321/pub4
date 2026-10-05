@@ -130,7 +130,14 @@ def acquire_master_process_lock
   exit 75
 end
 
-$MASTER_PROCESS_LOCK = acquire_master_process_lock
+internal_master_child = ENV["MASTER_INTERNAL_CHILD"] == "1"
+ENV.delete("MASTER_CONTROL_PLANE") if internal_master_child
+$MASTER_PROCESS_LOCK = if internal_master_child
+                          Master::Trace::Dmesg.status("master0", "internal child, parent owns control plane", io: $stderr)
+                          nil
+                        else
+                          acquire_master_process_lock
+                        end
 
 cli = nil
 control_plane = nil

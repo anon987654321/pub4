@@ -91,18 +91,26 @@ ENV["PUB4_ROOT"] ||= ROOT
 # deliberately never deleted; flock(2) releases it on normal exit, crash, or
 # SSH loss, and the next process can acquire it without stale-pid cleanup.
 daemon = ARGV.delete("--daemon")
-ENV["MASTER_CONTROL_PLANE"] = "1" if daemon
+if daemon
+  ENV["MASTER_CONTROL_PLANE"] = "1"
+elsif ENV["MASTER_INTERNAL_CHILD"] == "1"
+  ENV.delete("MASTER_CONTROL_PLANE")
+end
 require_relative "../lib/master"
-$MASTER_PROCESS_LOCK = Master::Ops::ProcessLock.acquire!(
-  root: MASTER, mode: daemon ? "control_plane" : "interactive", inherit_fd: true
-)
-unless $MASTER_PROCESS_LOCK
+$MASTER_PROCESS_LOCK = if ENV["MASTER_INTERNAL_CHILD"] == "1"
+                          nil
+                        else
+                          Master::Ops::ProcessLock.acquire!(
+                            root: MASTER, mode: daemon ? "control_plane" : "interactive", inherit_fd: true
+                          )
+                        end
+unless ENV["MASTER_INTERNAL_CHILD"] == "1" || $MASTER_PROCESS_LOCK
   owner = Master::Ops::ProcessLock.owner(path: File.join(MASTER, ".master", "process.lock"))
   detail = owner.empty? ? "" : " pid=#{owner["pid"]} host=#{owner["host"]} mode=#{owner["mode"]}"
   Master::Trace::Dmesg.status("master0", "another process owns the control plane#{detail}", io: $stderr)
   exit 75
 end
-ENV["MASTER_PROCESS_LOCK_FD"] = $MASTER_PROCESS_LOCK.fileno.to_s
+ENV["MASTER_PROCESS_LOCK_FD"] = $MASTER_PROCESS_LOCK.fileno.to_s if $MASTER_PROCESS_LOCK
 
 # A bare instruction is what a person types; -m is what bin/cli parses. Passing
 # it through as -m keeps quoting behaviour identical whether the instruction has

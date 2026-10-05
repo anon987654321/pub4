@@ -6,7 +6,7 @@ require_relative "../../ground/law_resolver"
 module Master
   module Fix
     class FixLoop
-      class RuleOrder
+      class LawOrder
         # These are scanner ids, not law names. DRY/KISS/SRP never shipped as
         # Rule#id values, so tier2? was false for every rule and the primary
         # key was constant. NO_GOD_CLASS is SIMPLEST_WORKS, FEATURE_ENVY is
@@ -133,8 +133,8 @@ module Master
         def load_priors
           @priors_cache ||= begin
             data = Master.load_yaml(PRIORS_PATH)
-            priors = data["violation_priors"]
-            raise "violation_priors configuration missing" unless priors.is_a?(Hash)
+            priors = data.fetch("violation_priors", {})
+            raise "violation_priors must be a hash" unless priors.is_a?(Hash)
 
             priors
           end

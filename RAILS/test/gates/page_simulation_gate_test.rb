@@ -5,7 +5,7 @@ require "minitest/autorun"
 require "tmpdir"
 require "yaml"
 require_relative "gate_probe_harness"
-require_relative "../../gates/lib/live/page_simulation"
+require_relative "../../../MASTER/gates/lib/live/page_simulation"
 
 # page_simulation walks every full-page view twice: once as source text, always,
 # and once over HTTP when the app's port is open.
@@ -215,8 +215,8 @@ class PageSimulationGateTest < Minitest::Test
 
   # The row that was wrong. Nothing in this gate opens a browser.
   def test_it_declares_no_browser_precondition_because_it_opens_none
-    row = YAML.safe_load_file(File.join(GATE::ROOT, "RAILS", "gates", "gates.yml")).fetch("page_simulation")
-    source = File.read(File.join(GATE::ROOT, "RAILS", "gates", "lib", "live", "page_simulation.rb"))
+    row = YAML.safe_load_file(File.join(GATE::ROOT, "MASTER", "gates", "gates.yml")).fetch("page_simulation")
+    source = File.read(File.join(GATE::ROOT, "MASTER", "gates", "lib", "live", "page_simulation.rb"))
 
     refute row.key?("needs"), "the runner reads `needs` as the reason a gate measured nothing"
     refute_match(/CdpSession|GeometryProbe|with_browser/, source)

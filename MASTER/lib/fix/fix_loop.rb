@@ -7,7 +7,7 @@ require_relative "fix_loop/committer"
 require_relative "fix_loop/council_round"
 require_relative "fix_loop/llm_router"
 require_relative "fix_loop/file_collector"
-require_relative "fix_loop/rule_order"
+require_relative "fix_loop/law_order"
 require_relative "fix_loop/pass_runner"
 require_relative "fix_loop/convergence_config"
 require_relative "fix_loop/background_runner"
@@ -75,7 +75,7 @@ module Master
         @wishlist = Wishlist.new(root: @root, agent: @agent, event_bus: @bus)
 
         @file_collector = FileCollector.new(root:, bus:)
-        @rule_order = RuleOrder.new(rules:, learnings:, bus:, root:)
+        @rule_order = LawOrder.new(rules:, learnings:, bus:, root:)
         @pass_runner = build_pass_runner(rules:, agent:, scanner:, root:, bus:, learnings:,
           ground_truth:, preserve_user_intent:, law_resolver:, homeostat: @homeostat)
         @sweeps = build_sweeps(agent:, root:, bus:)

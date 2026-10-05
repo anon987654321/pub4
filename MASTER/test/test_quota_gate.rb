@@ -27,6 +27,28 @@ class TestQuotaGate < Minitest::Test
     assert_equal 0, info[:max_retries].to_i, "an in-place retry cannot make an account solvent"
   end
 
+  def test_lane_silence_is_a_semantic_skip_not_a_scan_failure
+    agent = Class.new do
+      define_method(:ask) do |_prompt, **|
+        raise StandardError, "no lane answered 12 calls in a row; model work is skipped for 5 minutes. /model list says what each lane needs."
+      end
+    end.new
+
+    rule = Master::Review::Scan::Rules::AdversarialRule.new.set_agent(agent)
+
+    assert_empty rule.check("def a = 1\n", path: "x.rb")
+    assert_equal ["semantic rules"], Gate.skipped_tiers
+  end
+
+  def test_individual_quota_reached_is_exhaustion
+    taxonomy = Master::Ground::FailureTaxonomy.new
+
+    assert_equal :exhausted, taxonomy.classify("Individual quota reached. Please upgrade your subscription")
+    assert Gate.trip_if_limited(source: "agy", message: "Individual quota reached")
+    assert Gate.blocked?
+    assert_equal :exhausted, Gate.state
+  end
+
   # Trip once, say so once. Four personas hitting the same empty balance is
   # one fact about the account, not four about the personas.
   def test_trips_once_and_only_the_first_caller_is_told_to_announce

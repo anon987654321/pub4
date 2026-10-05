@@ -20,6 +20,7 @@ module Master
           # unscanned files read as a clean bill of health, so the skip is
           # named on the gate before it is taken.
           OFFLINE_ERRORS_PATTERN = /missing configuration|api.?key|unauthorized|no.*provider|no.*claude.*path|no.*on.*path/i.freeze
+          LANE_SILENCE_PATTERN = /\Ano lane answered \d+ calls in a row; model work is skipped for \d+ minutes\./i.freeze
 
           def quota_paused?
             return false unless Master::Io::QuotaGate.blocked?
@@ -33,7 +34,13 @@ module Master
           # log entries is what this rule population produced the last time a
           # per-file failure was recorded per file.
           def note_model_failure(error)
-            Master::Io::QuotaGate.trip_if_limited(source: "semantic rule #{@id}", message: error.message)
+            message = error.message.to_s
+            if message.match?(LANE_SILENCE_PATTERN)
+              Master::Io::QuotaGate.skipped("semantic rules")
+              return true
+            end
+
+            Master::Io::QuotaGate.trip_if_limited(source: "semantic rule #{@id}", message:)
           end
 
           # The file is already in the prompt and the reply is a list of lines,

@@ -50,6 +50,10 @@ SAFE_ENV = {
   "MASTER_WATCH" => "0",
   "MASTER_WATCHER" => "0",
   "MASTER_HEARTBEAT" => "0",
+  # The caller already owns the checkout's process lock; internal gate children
+  # must not attempt to become a second MASTER owner.
+  "MASTER_INTERNAL_CHILD" => "1",
+  "MASTER_CONTROL_PLANE" => "0",
 }.freeze
 
 # An unknown argument is refused, because ignoring it means "run everything and

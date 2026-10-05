@@ -45,7 +45,7 @@ module Master
           @preflight = preflight || Preflight.new(root:, bus:)
           @learnings = learnings
           @preamble = preamble
-          @rule_order = RuleOrder.new(rules:, learnings:, bus:, root:)
+          @rule_order = LawOrder.new(rules:, learnings:, bus:, root:)
           take_limits(clean_runs_required:, plateau_window:, ground_truth:, homeostat:, council:, visual_pass:, opportunity_pass:)
         end
 

@@ -31,6 +31,29 @@ class TestBinLifecycle < Minitest::Test
   # The scripted run must be refused its `done`: three commands that only label
   # themselves as evidence prove nothing, and a fold that accepts them grades its
   # own paper.
+  def test_nested_master_child_does_not_contest_the_parent_lock
+    Dir.mktmpdir("master-nested-lock") do |scratch|
+      path = File.join(scratch, "master.lock")
+      holder = File.open(path, File::RDWR | File::CREAT, 0o600)
+      assert holder.flock(File::LOCK_EX | File::LOCK_NB)
+
+      out, status = run_script(
+        File.join(BIN, "master"),
+        "--fast", "/status",
+        env: {
+          "MASTER_INTERNAL_CHILD" => "1",
+          "MASTER_PROCESS_LOCK_PATH" => path,
+        }
+      )
+
+      assert status.success?, out
+      refute_includes out, "another process owns the control plane"
+    ensure
+      holder&.flock(File::LOCK_UN)
+      holder&.close
+    end
+  end
+
   def test_master_core_holds_done_without_evidence
     Dir.mktmpdir do |scratch|
       out, status = run_script(File.join(BIN, "master-core"), "--root", scratch, "noop")

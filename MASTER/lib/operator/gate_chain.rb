@@ -402,7 +402,8 @@ module Operator
     # for attributing changed files; running stages in-process saves boot time
     # and loses all three.
     def capture(*cmd, chdir: MASTER, env: {}, unbundled: false)
-      runner = -> { Open3.capture2e(ENV.to_h.merge(env), *cmd, chdir:) }
+      child_env = { "MASTER_INTERNAL_CHILD" => "1", "MASTER_CONTROL_PLANE" => "0" }.merge(env)
+      runner = -> { Open3.capture2e(ENV.to_h.merge(child_env), *cmd, chdir:) }
       out, status = if unbundled && defined?(Bundler)
                       Bundler.with_unbundled_env { runner.call }
                     else

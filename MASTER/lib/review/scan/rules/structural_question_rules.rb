@@ -255,13 +255,11 @@ module Master
           end
         end
 
-        # DATA_CLUMPS, plural, because that spelling was already in the tree:
-        # data/laws.yml carries a `violation_priors` row under it and
-        # data/laws.yml rule_deps orders PRIMITIVE_OBSESSION `after: [DATA_CLUMPS]`.
-        # Neither could do anything, because RuleOrder#topo_sort skips a
-        # dependency whose id names no loaded rule and the prior is only read for
-        # a rule that exists. Naming this one DATA_CLUMP, singular, would have
-        # left both pointing at nothing for a second time.
+        # DATA_CLUMPS, plural, because that spelling is the live scanner id:
+        # data/laws.yml rule_deps orders PRIMITIVE_OBSESSION
+        # `after: [DATA_CLUMPS]`. LawOrder#topo_sort ignores an ordering edge
+        # whose dependency names no loaded rule. Keep the scanner id aligned with
+        # the dependency graph.
         #
         # Two exclusions, both measured against this tree rather than guessed.
         # Identical signatures are one interface implemented many times —

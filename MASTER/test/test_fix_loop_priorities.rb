@@ -16,7 +16,7 @@ class TestFixLoopPriorities < Minitest::Test
 
   def test_tier2_quality_rules_are_ordered_before_generic_rules
     Dir.mktmpdir do |dir|
-      ids = Master::Fix::FixLoop::RuleOrder::TIER2_QUALITY_RULE_IDS
+      ids = Master::Fix::FixLoop::LawOrder::TIER2_QUALITY_RULE_IDS
       rules = [Rule.new("GENERIC", :warning), *ids.map { |id| Rule.new(id, :warning) }]
       loop = Master::Fix::FixLoop.new(rules:, agent: Agent.new, scanner: Scanner.new, root: dir)
 
@@ -31,9 +31,18 @@ class TestFixLoopPriorities < Minitest::Test
     require "review/scan/infra_helpers"
     scanner = Master::Review::Scan::InfraHelpers.build_scanner(root: Master::ROOT)
     ids = scanner.rules.map { |rule| rule.id.to_s }
-    missing = Master::Fix::FixLoop::RuleOrder::TIER2_QUALITY_RULE_IDS - ids
+    missing = Master::Fix::FixLoop::LawOrder::TIER2_QUALITY_RULE_IDS - ids
 
     assert_empty missing, "tier2 names rules the scanner does not build: #{missing.join(", ")}"
+  end
+
+  def test_absent_violation_priors_do_not_break_ordering
+    Dir.mktmpdir do |dir|
+      rules = [Rule.new("A", :warning), Rule.new("B", :error)]
+      order = Master::Fix::FixLoop::LawOrder.new(rules:, learnings: nil, bus: nil, root: dir)
+
+      assert_equal ["B", "A"], order.ordered(violation_counts: {}).map(&:id)
+    end
   end
 
   def test_age_and_severity_can_outrank_fresh_low_severity_findings
@@ -41,7 +50,7 @@ class TestFixLoopPriorities < Minitest::Test
       FileUtils.mkdir_p(File.join(dir, "data"))
       File.write(File.join(dir, "data", "violation_age.yml"), { "OLD_ERROR" => 60, "NEW_WARNING" => 0 }.to_yaml)
       rules = [Rule.new("NEW_WARNING", :warning), Rule.new("OLD_ERROR", :error)]
-      order = Master::Fix::FixLoop::RuleOrder.new(rules:, learnings: nil, bus: nil, root: dir)
+      order = Master::Fix::FixLoop::LawOrder.new(rules:, learnings: nil, bus: nil, root: dir)
 
       ordered = order.ordered(violation_counts: { "NEW_WARNING" => 3, "OLD_ERROR" => 2 }).map(&:id)
 

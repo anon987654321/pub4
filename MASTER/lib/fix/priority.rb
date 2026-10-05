@@ -2,9 +2,9 @@
 
 module Master
   module Fix
-    # Single ranking primitive shared by RuleOrder (which rule to fix next)
+    # Single ranking primitive shared by LawOrder (which rule to fix next)
     # and ConflictResolver (whether a fix's side effect is bad enough to
-    # reject). Replaces BiasGuard#priority_score (RuleOrder's prior use) and
+    # reject). Replaces BiasGuard#priority_score (LawOrder's prior use) and
     # a plain Severity.rank comparison (ConflictResolver's prior use) with
     # one formula that also weighs constitutional law priority and learned
     # fix quality, so both call sites agree on what "more important" means.

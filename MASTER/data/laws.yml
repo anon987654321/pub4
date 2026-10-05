@@ -468,9 +468,10 @@ runtime_policy:
 rule_deps:
 
   # Fix-ordering policy, declared 2026-07-12 in the five-file fold and
-  # collateral-deleted by a later laws.yml rewrite. Restored 2026-10-03: the
-  # fail-closed reader at lib/fix/fix_loop/rule_order.rb requires this section,
-  # and the topological sort ignores ids absent from the live rule catalogue.
+  # collateral-deleted by a later laws.yml rewrite. The LawOrder reader consumes
+  # this dependency graph and tolerates optional cold-start priors when no priors
+  # section is present; the topological sort ignores ids absent from the live
+  # rule catalogue.
 
   # Structural operations: flatten nesting before decoupling (flattening
   # exposes the hidden coupling that DECOUPLE then targets).
