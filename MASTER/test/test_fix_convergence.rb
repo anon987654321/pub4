@@ -779,6 +779,29 @@ class TestFixConvergence < Minitest::Test
     assert_equal [:pass, 0], order.last
   end
 
+  def test_model_repair_progress_prevents_false_stagnation
+    loop = build_loop([])
+    runner = loop.instance_variable_get(:@pass_runner)
+    finding = {
+      rule: Master::Fix::CouncilRound::IMPROVEMENT_RULE_ID,
+      file: File.join(@root, "dummy.yml"),
+      line: 1,
+      message: "small anchored improvement",
+    }
+    runner.define_singleton_method(:run_improvement_stage) { |_findings, pass:, files:, deadline:| 1 }
+
+    runner.send(
+      :dispatch_llm_stages,
+      [finding],
+      [finding[:file]],
+      1,
+      Time.now + 60,
+      nil,
+    )
+
+    assert runner.instance_variable_get(:@pass_progress)
+  end
+
   def test_each_inner_pass_refreshes_the_fix_scope
     loop = build_loop([])
     first = File.join(@root, "first.rb")
