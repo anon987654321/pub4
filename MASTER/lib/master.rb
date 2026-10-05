@@ -138,15 +138,15 @@ module Master
   def self.git_checkout?(root = REPO_ROOT) = File.exist?(File.join(root, ".git"))
   def self.data_path(*parts) = File.join(DATA, *parts)
   def self.models_config(root: ROOT)
-    load_yaml(File.join(root, "data", "models.yml")) || {}
+    load_yaml(File.join(master_root(root:), "data", "models.yml")) || {}
   end
 
   def self.patterns_config(root: ROOT)
-    load_yaml(File.join(root, "data", "patterns.yml")) || {}
+    load_yaml(File.join(master_root(root:), "data", "patterns.yml")) || {}
   end
 
   def self.soul_config(root: ROOT)
-    load_yaml(File.join(root, "data", "soul.yml")) || {}
+    load_yaml(File.join(master_root(root:), "data", "soul.yml")) || {}
   end
 
 
@@ -169,6 +169,7 @@ module Master
   private_constant :LAW_CACHE_MUTEX
 
   def self.law(section, root: ROOT)
+    root = master_root(root:)
     path = File.expand_path(File.join(root, "data", "laws.yml"))
     stat = File.stat(path)
     signature = [stat.size, stat.ino, stat.mtime.to_r]
