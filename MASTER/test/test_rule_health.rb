@@ -2,6 +2,7 @@
 
 require_relative "test_helper"
 require_relative "../lib/review/scan/rule_health"
+require_relative "../lib/fix/protocol_detector_matrix"
 
 class TestRuleHealth < Minitest::Test
   Rule = Struct.new(:id, :severity)
