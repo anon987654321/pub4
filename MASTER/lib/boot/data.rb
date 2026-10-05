@@ -5,6 +5,8 @@ require "date"
 module Master
   # YAML loading, validation, and rule-shard composition for Master.*.
   module DataLoading
+    DEFAULT_YAML_VALUE = Object.new.freeze
+
     # This ENOENT warning is load-bearing — keep it. A doubled path segment in
     # RuntimeCatalog#web_boot_payload_minimal ("OPENBSD/openbsd/vm_resource.yml")
     # was found only because every load printed "No such file or directory"
@@ -20,7 +22,8 @@ module Master
     # mutation into another's, and an edit changes the stat, so the next read
     # parses again. The copy is walked by hand, because this tree forbids
     # deserialising with Marshal anywhere in lib/.
-    def load_yaml(path, symbolize_names: false, default: {})
+    def load_yaml(path, symbolize_names: false, default: DEFAULT_YAML_VALUE)
+      fallback = default.equal?(DEFAULT_YAML_VALUE) ? {} : default
       stat = File.stat(path)
       raise "yaml too large: #{path}" if stat.size > MAX_CONSTITUTION_BYTES
 
@@ -28,10 +31,10 @@ module Master
       parsed = yaml_parse_cache[key] ||= Timeout.timeout(YAML_LOAD_TIMEOUT_S) do
         yaml_deep_freeze(YAML.safe_load_file(path, aliases: true, symbolize_names:, permitted_classes: [Date, Time]))
       end
-      parsed.nil? ? default : yaml_copy(parsed)
+      parsed.nil? ? fallback : yaml_copy(parsed)
     rescue Errno::ENOENT, Errno::EACCES => e
       warn_unreadable_once(path, e)
-      default
+      fallback
     rescue Psych::Exception, Timeout::Error => e
       warn("boot0: yaml #{path}: #{e.message}")
       raise
