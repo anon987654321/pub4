@@ -16,12 +16,13 @@ class MasterBootTest < Minitest::Test
     assert MasterPaths.data("laws.yml").end_with?("/data/laws.yml")
   end
 
-  def test_master_data_load_yaml_reads_rules
+  def test_master_data_load_yaml_reads_canonical_laws
     path = Master.data_path("laws.yml")
 
     body = Master.load_yaml(path)
     assert body.is_a?(Hash)
-    assert body.key?("rules")
+    assert body.key?("CAPABILITY_STATUS_MUST_BE_TRUTHFUL")
+    assert body.key?("transformation_policy")
   end
 
   def test_master_runtime_process_defaults_constant
@@ -66,6 +67,21 @@ class MasterBootTest < Minitest::Test
   def test_the_suite_runs_on_mris_dig
     refute_includes Hash.ancestors.map(&:to_s), "Master::HashDigCompat"
   end
+  def test_data_validation_detects_rapid_file_edits
+    Dir.mktmpdir do |dir|
+      data = File.join(dir, "data")
+      FileUtils.mkdir_p(data)
+      path = File.join(data, "sample.yml")
+      File.write(path, "ok: true\n")
+      Master.validate_data!(root: dir)
+
+      File.write(path, "broken: [\n")
+      errors = Master.validate_data!(root: dir)
+
+      assert errors.key?("sample.yml"), errors.inspect
+    end
+  end
+
   def test_a_missing_yaml_file_warns_once
     Dir.mktmpdir do |dir|
       missing = File.join(dir, "PATH_OWNERSHIP.yml")
