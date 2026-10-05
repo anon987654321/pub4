@@ -17,7 +17,7 @@ class TestGateChain < Minitest::Test
   def test_every_stage_runs_a_script_that_exists
     missing = %w[bin/gate bin/operator bin/check bin/master lib/operator/sprawl_census.rb tools/dup_census.rb]
               .reject { |path| File.file?(File.join(G::MASTER, path)) }
-    missing << "MASTER/gates/runner.rb" unless File.file?(File.join(G::ROOT, "RAILS", "gates", "runner.rb"))
+    missing << "MASTER/gates/runner.rb" unless File.file?(File.join(G::ROOT, "MASTER", "gates", "runner.rb"))
     missing << "OPENBSD/bin/check-openbsd" unless File.file?(File.join(G::ROOT, "OPENBSD", "bin", "check-openbsd"))
 
     assert_empty missing, "the chain invokes these and they are not on disk"
@@ -194,6 +194,18 @@ class TestGateChain < Minitest::Test
     body = ["sprawl_census: lone_dirs 53 (ceiling 53)", "  MASTER/foo.rb"]
 
     assert_equal "sprawl_census: lone_dirs 53 (ceiling 53)", G.verdict(body)
+    assert_equal "openbsd: failed — reach", G.verdict(["deploy-openbsd10: clean", "openbsd: failed — reach"])
+  end
+
+  def test_internal_stage_children_do_not_receive_the_parent_lock_fd
+    previous = ENV["MASTER_PROCESS_LOCK_FD"]
+    ENV["MASTER_PROCESS_LOCK_FD"] = "91"
+    _ok, body, status = G.send(:capture, G::RUBY, "-e", 'abort "lock fd leaked" if ENV["MASTER_PROCESS_LOCK_FD"]')
+
+    assert_equal 0, status
+    assert_empty body
+  ensure
+    previous.nil? ? ENV.delete("MASTER_PROCESS_LOCK_FD") : ENV["MASTER_PROCESS_LOCK_FD"] = previous
   end
 
   def test_generated_paths_are_recognised_in_every_tree_that_has_them

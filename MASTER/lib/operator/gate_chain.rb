@@ -402,7 +402,14 @@ module Operator
     # for attributing changed files; running stages in-process saves boot time
     # and loses all three.
     def capture(*cmd, chdir: MASTER, env: {}, unbundled: false)
-      child_env = { "MASTER_INTERNAL_CHILD" => "1", "MASTER_CONTROL_PLANE" => "0" }.merge(env)
+      child_env = {
+        "MASTER_INTERNAL_CHILD" => "1",
+        "MASTER_CONTROL_PLANE" => "0",
+        "MASTER_PROCESS_LOCK_FD" => nil,
+      }.merge(env)
+      # Gate stages are internal children and never need the parent's lock. A
+      # descriptor number without the descriptor is a poisoned inheritance path.
+      child_env["MASTER_PROCESS_LOCK_FD"] = nil
       runner = -> { Open3.capture2e(ENV.to_h.merge(child_env), *cmd, chdir:) }
       out, status = if unbundled && defined?(Bundler)
                       Bundler.with_unbundled_env { runner.call }

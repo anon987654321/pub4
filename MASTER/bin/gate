@@ -54,6 +54,7 @@ SAFE_ENV = {
   # must not attempt to become a second MASTER owner.
   "MASTER_INTERNAL_CHILD" => "1",
   "MASTER_CONTROL_PLANE" => "0",
+  "MASTER_PROCESS_LOCK_FD" => nil,
 }.freeze
 
 # An unknown argument is refused, because ignoring it means "run everything and

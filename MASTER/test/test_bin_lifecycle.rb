@@ -43,11 +43,13 @@ class TestBinLifecycle < Minitest::Test
         env: {
           "MASTER_INTERNAL_CHILD" => "1",
           "MASTER_PROCESS_LOCK_PATH" => path,
+          "MASTER_PROCESS_LOCK_FD" => "91",
         }
       )
 
       assert status.success?, out
-      refute_includes out, "another process owns the control plane"
+       refute_includes out, "another process owns the control plane"
+       refute_includes out, "inherited process lock invalid"
     ensure
       holder&.flock(File::LOCK_UN)
       holder&.close

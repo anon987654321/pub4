@@ -1,4 +1,11 @@
-# frozen_string_literal: true
+    def all_tracked
+      @all_tracked ||= `git -C #{ROOT} ls-files -z`.split("\0")
+                       .select { |f| File.file?(File.join(ROOT, f)) }
+    end
+
+    def tracked
+      @tracked ||= all_tracked.reject { |f| MANDATED.any? { |re| "/#{f}".match?(re) } }
+    end# frozen_string_literal: true
 
 # Shape census over every tracked file in all four governed trees. The tree's shape is
 # conduct: a directory bought for one file, a name that repeats its parent, a
@@ -92,8 +99,15 @@ module Operator
     # sprawl. The shape comes from splitting a god class, and no lone directory
     # that predates it is forgiven by the exemption.
     def lone_dirs
+      # The population is git's tracked tree; consulting Dir.glob here let a
+      # foreign untracked directory hide a tracked singleton. That made the same
+      # checkout report different sprawl depending on somebody else's worktree.
+      dirs = all_tracked.map { |path| File.dirname(path) }.reject { |dir| dir == "." }.uniq
       tracked.group_by { |f| File.dirname(f) }
-             .select { |dir, files| files.size == 1 && dir != "." && Dir.glob(File.join(ROOT, dir, "*/")).empty? }
+             .select do |dir, files|
+               files.size == 1 && dir != "." &&
+                 !dirs.any? { |child| child.start_with?("#{dir}/") }
+             end
              .reject { |dir, _| File.file?(File.join(ROOT, "#{dir}.rb")) }
              .values.flatten.sort
     end
