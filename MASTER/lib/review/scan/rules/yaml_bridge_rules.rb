@@ -61,20 +61,13 @@ module Master
         class YamlDeclarativeRule < Rule
           def self.auto_build? = false
 
-          def self.reloading?
-            @reloading
-          end
-
-          def self.reloading=(value)
-            @reloading = value
-          end
-
           declare id: "yaml_declarative", severity: :warning,
                   description: "YAML detect_lexical bridge for unwired declarative rules"
 
           def initialize(root: Master::ROOT)
             super()
             @root = root
+            @reload_mutex = Mutex.new
             reload!
           end
 
@@ -102,15 +95,15 @@ module Master
           private
 
           def reload!
-            return if self.class.reloading?
+            @reload_mutex.synchronize do
+              stamp = rules_mtime
+              return if @entries && @mtime == stamp
 
-            self.class.reloading = true
-            registry_ids = build_registry_ids
-            yaml_rules = Master.law_entries(root: @root)
-            @entries = build_lexical_entries(yaml_rules, registry_ids)
-            @mtime = rules_mtime
-          ensure
-            self.class.reloading = false
+              registry_ids = build_registry_ids
+              yaml_rules = Master.law_entries(root: @root)
+              @entries = build_lexical_entries(yaml_rules, registry_ids)
+              @mtime = stamp
+            end
           end
 
           def build_registry_ids
@@ -144,7 +137,7 @@ module Master
           end
 
           def reload_if_stale
-            reload! if @mtime != rules_mtime
+            reload!
           end
 
           def rules_mtime
