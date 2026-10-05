@@ -16,12 +16,13 @@ class MasterBootTest < Minitest::Test
     assert MasterPaths.data("laws.yml").end_with?("/data/laws.yml")
   end
 
-  def test_master_data_load_yaml_reads_rules
+  def test_master_data_load_yaml_reads_canonical_laws
     path = Master.data_path("laws.yml")
 
     body = Master.load_yaml(path)
     assert body.is_a?(Hash)
-    assert body.key?("rules")
+    refute body.key?("rules"), "laws.yml is flattened; no nested rules registry may return"
+    assert body.any? { |_id, value| value.is_a?(Hash) && value["priority"] && value["principle"] }
   end
 
   def test_master_runtime_process_defaults_constant
