@@ -20,6 +20,7 @@ module Master
 
       def parse(input)
         text = input.to_s.strip
+        return nil if text.start_with?("/")
         return Interpretation.new(:chitchat, nil) if text.match?(GREETING)
         return Interpretation.new(:repeat, nil) if text.match?(REPEAT) || text.match?(REPEAT_AGAIN)
         return Interpretation.new(:toggle_focus, nil) if text.match?(FOCUS)
