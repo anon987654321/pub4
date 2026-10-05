@@ -184,8 +184,8 @@ module Master
             language = self.language(path)&.to_s
             @learned_smells.flat_map { |smell| findings_for_smell(smell, code, language) }
           rescue StandardError => e
-            [Finding.build(rule: @id, message: "learned smell scan error — #{e.message}", line: 1,
-              severity: :warning, tags: %i[LEARNED_SMELLS])]
+            Master::Ground::Swallow.log(e, context: "LearnedSmellsRule.check", severity: :load_bearing, path:)
+            raise "learned smell scan failed: #{e.class}: #{e.message}"
           end
 
           def findings_for_smell(smell, code, language)
@@ -256,9 +256,9 @@ module Master
           def reload_learned_smells!
             @learned_smells = Array((Master.load_laws(root: @root) || {}).fetch("learned_smells", [])).select { |item| item.is_a?(Hash) }
             @rules_mtime = rules_mtime
-          rescue StandardError
-            @learned_smells = []
-            @rules_mtime = nil
+          rescue StandardError => e
+            Master::Ground::Swallow.log(e, context: "LearnedSmellsRule.reload", severity: :load_bearing, path: laws_path)
+            raise
           end
 
           def laws_path
