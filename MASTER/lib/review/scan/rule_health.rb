@@ -11,9 +11,13 @@ module Master
 
         def measurement_only_ids
           config = Master.law("detection_calibration")
-          Array(config["measurement_only"]).flat_map do |row|
-            row.is_a?(Hash) ? row.keys : row
-          end.map(&:to_s).freeze
+          rows = config.fetch("measurement_only", {})
+          ids = case rows
+               when Hash then rows.keys
+               when Array then rows.flat_map { |row| row.is_a?(Hash) ? row.keys : Array(row) }
+               else []
+               end
+          ids.map(&:to_s).uniq.freeze
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "rule_health.measurement_only_ids")
           raise "rule health policy unreadable: #{e.class}: #{e.message}"
