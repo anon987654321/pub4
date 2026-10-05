@@ -213,12 +213,12 @@ module Master
 
           def rules_mtime
             paths = [Master::LAWS_PATH, *Dir.glob(File.join(Master::ROOT, "law", "*.rb"))]
-            paths.filter_map { |path| File.mtime(path).to_i if File.exist?(path) }.max
+            paths.filter_map { |path| File.mtime(path).to_r if File.exist?(path) }.max
           end
 
           def semantic_cache_key(path, code)
             require "digest"
-            [path, File.mtime(path).to_i, Digest::SHA256.hexdigest(code)[0, 16], @rules_mtime].join(":")
+            [path, File.mtime(path).to_r, Digest::SHA256.hexdigest(code)[0, 16], @rules_mtime].join(":")
           rescue StandardError
             [path, code.bytesize, @rules_mtime].join(":")
           end
