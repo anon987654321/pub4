@@ -41,6 +41,17 @@ class TestAxioms < Minitest::Test
   # voice.yml carried a shadow copy of soul absolute.anti_simulation that the
   # accessor read only if soul lost the key — and it had drifted a word. The
   # shadow is deleted (2026-08-21); soul is the one source, and this holds it.
+  def test_foreign_root_uses_that_tree_voice_configuration
+    Dir.mktmpdir do |dir|
+      Dir.mkdir(File.join(dir, "data"))
+      File.write(File.join(dir, "data", "voice.yml"), "voice:\n  style: local-root-style\n")
+
+      rules = Master::Ground::Rules.new(root: dir)
+
+      assert_equal "local-root-style", rules.voice.fetch("style")
+    end
+  end
+
   def test_constitution_carries_anti_simulation_from_soul
     anti = @rules.constitution["anti_simulation"]
     refute_nil anti, "soul absolute.anti_simulation must reach the constitution accessor"
