@@ -80,6 +80,24 @@ module Master
         end
       end
 
+      # /deploy — canonical remote vm23 deployment. Command#review_gate requires
+      # --confirm before this handler can mutate production.
+      def dispatch_deploy(root, ctx: nil)
+        target = arg_for(ctx).split(/\s+/).reject { |token| token.start_with?("--") }.first.to_s.downcase
+        target = "all" if target.empty?
+        allowed = %w[all master brgen amber bsdports]
+        return "deploy: usage /deploy all|master|brgen|amber|bsdports --confirm" unless allowed.include?(target)
+
+        operator = File.join(MasterPaths.repo, "MASTER", "bin", "operator")
+        output, status = Master::Io::Exec.capture2e(
+          RbConfig.ruby, operator, "vps", "deploy", target, "--remote",
+          chdir: MasterPaths.repo,
+        )
+        return Result.ok(output.strip) if status.success?
+
+        Result.err("deploy: #{output.to_s.strip}", category: :infrastructure)
+      end
+
       # /wake — explicit microphone wake-word consent and status.
       def dispatch_wake(root, ctx: nil)
         return "wake: local-only" if Fiber[:master_visitor] == true
