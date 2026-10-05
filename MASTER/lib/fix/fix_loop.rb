@@ -53,7 +53,6 @@ module Master
       # subscription CLI (MASTER_MODEL=claude-cli:...) spends that on one
       # council, so the run can be given more.
       RUN_BUDGET_SECONDS = Integer(ENV.fetch("MASTER_FIX_RUN_BUDGET_S", 30 * 60))
-      WORKFLOW_PATH = Master.limits_path.freeze
 
       def initialize(rules:, agent:, scanner:, root:, axioms: nil, bus: nil, git: nil, learnings: nil,
                      incremental: false, ground_truth: nil, preserve_user_intent: nil,
