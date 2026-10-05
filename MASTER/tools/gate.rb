@@ -75,11 +75,7 @@ module Deploy
     end
 
     def check_inventory(files)
-      orphans = files.reject do |path|
-        @trees.any? do |tree|
-          File.fnmatch?(File.join(@root, tree[:glob]), path, File::FNM_PATHNAME)
-        end
-      end
+      orphans = files.reject { |path| @trees.any? { |tree| tree_matches?(tree, path) } }
       @result.checked!
       return if orphans.empty?
 
