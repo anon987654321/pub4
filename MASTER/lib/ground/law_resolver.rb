@@ -5,7 +5,14 @@ module Master
     # Resolves rule conflicts using laws.yml laws: priority (lower wins).
     class LawResolver
       def initialize(rules_data: nil)
-        rows = rules_data ? Array(rules_data["laws"]) : Master.law_entries
+        declared = rules_data && rules_data["laws"]
+        rows = if declared.is_a?(Hash)
+                 declared.map { |id, row| row.merge("id" => id.to_s) if row.is_a?(Hash) }.compact
+               elsif declared.is_a?(Array)
+                 declared
+               else
+                 Master.law_entries
+               end
         @laws = rows.each_with_object({}) do |row, laws|
           id = row["id"].to_s
           priority = row["priority"]
