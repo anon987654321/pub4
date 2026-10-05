@@ -71,6 +71,8 @@ class TestRepoEcology < Minitest::Test
       assert_equal({ "a.rb" => { "b.rb" => 3 }, "b.rb" => { "a.rb" => 3 } }, second.co_change_graph)
       assert_nil second.build_count
     end
+  end
+
   def test_co_change_cache_rebuilds_after_head_advances
     Dir.mktmpdir("repo_ecology_cache_refresh") do |dir|
       File.write(File.join(dir, "sample.rb"), "puts :one\n")
