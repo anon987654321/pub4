@@ -95,6 +95,24 @@ class TestAxioms < Minitest::Test
     end
   end
 
+  def test_deleted_data_file_drops_cached_payload
+    Dir.mktmpdir("rules_data_delete") do |root|
+      data = File.join(root, "data")
+      FileUtils.mkdir_p(data)
+      laws = File.join(data, "laws.yml")
+      File.write(laws, "voice:\n  marker: folded\n")
+      voice = File.join(data, "voice.yml")
+      File.write(voice, "voice:\n  marker: file\n")
+
+      rules = Master::Ground::Rules.new(root:)
+      assert_equal "file", rules.data(:voice).fetch("voice").fetch("marker")
+
+      File.delete(voice)
+
+      assert_equal "folded", rules.data(:voice).fetch("marker")
+    end
+  end
+
   def test_long_lived_rules_refresh_soul_data_after_edit
     Dir.mktmpdir("rules_soul_refresh") do |root|
       data = File.join(root, "data")
