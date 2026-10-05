@@ -169,15 +169,12 @@ module Master
             @cache[cache_key] = findings
             findings
           rescue StandardError => e
-            # A missing key is the offline case and stays quiet; any other error
-            # is a real fault that must surface rather than read as "no findings".
-            # Either way the answer is [], never the nil the bare `if` returned.
-            # A spend limit is neither: it is a tier-wide pause, recorded once
-            # on the gate so the run says the tier did not run.
-            unless note_model_failure(e) || e.message.to_s =~ OFFLINE_ERRORS_PATTERN
-              Master::Ground::Swallow.log(e, context: "#{self.class}#check", severity: :load_bearing, path:)
-            end
-            []
+            offline = e.message.to_s =~ OFFLINE_ERRORS_PATTERN
+            limited = note_model_failure(e)
+            return [] if offline || limited
+
+            Master::Ground::Swallow.log(e, context: "#{self.class}#check", severity: :load_bearing, path:)
+            raise
           end
 
           private
