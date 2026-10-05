@@ -21,7 +21,7 @@ module Master
         # is PathFilter's decision, how it walks is Transport's, and what it
         # says while walking is ProgressReporter's; rule application is its own.
 
-        SCAN_GLOB = "**/*.{rb,rake,erb,html,htm,css,scss,js,ts,jsx,tsx,zsh,sh,yml,yaml,json,md}".freeze
+        SCAN_GLOB = "**/*".freeze
         REQUIRED_DEPTH = :deep
         MAX_VIOLATION_OBJECTS = 100_000
 
@@ -137,7 +137,11 @@ module Master
         end
 
         def scannable_path?(path, root)
-          File.file?(path) && !self.class.skip_path?(path, root:)
+          return false unless File.file?(path)
+          return false if self.class.skip_path?(path, root:)
+
+          language = Master.language_for(path)
+          language || File.basename(path).match?(/\Aface\.part\d+\.txt\z/)
         end
 
         def validate_depth!(depth)
