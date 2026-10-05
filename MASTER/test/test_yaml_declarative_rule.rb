@@ -32,6 +32,37 @@ class TestYamlDeclarativeRule < Minitest::Test
        "detect_lexical" => pattern, "fix" => "stop it" }.merge(extra)]
   end
 
+  def test_two_instances_can_reload_concurrently
+    rules = lexical(id: "NO_FROBNICATE", pattern: "frobnicate")
+    Dir.mktmpdir do |root|
+      FileUtils.mkdir_p(File.join(root, "data"))
+      File.write(File.join(root, "data", "laws.yml"), { "rules" => { "line" => rules } }.to_yaml)
+
+      first = Rules::YamlDeclarativeRule.new(root:)
+      second = Rules::YamlDeclarativeRule.new(root:)
+      second.check("ordinary\n", path: File.join(root, "lib/thing.rb"))
+
+      barrier = Queue.new
+      release = Queue.new
+      first.define_singleton_method(:build_registry_ids) do
+        barrier << true
+        release.pop
+        super()
+      end
+
+      worker = Thread.new do
+        first.instance_variable_set(:@mtime, nil)
+        first.check("ordinary\n", path: File.join(root, "lib/thing.rb"))
+      end
+
+      barrier.pop
+      assert_empty second.check("ordinary\n", path: File.join(root, "lib/thing.rb"))
+      release << true
+      worker.join
+      assert worker.value
+    end
+  end
+
   def test_a_declared_lexical_rule_compiles_and_fires
     in_corpus(lexical(id: "NO_FROBNICATE", pattern: "frobnicate")) do |rule, root|
       found = rule.check("value = frobnicate(x)\n", path: File.join(root, "lib/thing.rb"))
