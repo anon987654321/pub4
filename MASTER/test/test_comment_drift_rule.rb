@@ -119,7 +119,9 @@ class TestCommentDriftRule < Minitest::Test
 
   # A model that is present and misbehaving is a different case and also must
   # not read as clean.
-  def test_a_misbehaving_model_yields_no_findings
-    assert_empty flags(FakeAgent.new(raises: RuntimeError.new("upstream exploded")))
+  def test_a_misbehaving_model_fails_the_measurement
+    assert_raises(RuntimeError) do
+      flags(FakeAgent.new(raises: RuntimeError.new("upstream exploded")))
+    end
   end
 end
