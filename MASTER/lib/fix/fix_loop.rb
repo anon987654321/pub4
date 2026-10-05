@@ -71,7 +71,7 @@ module Master
         @run_mutex = Mutex.new
         @git = git || Io::GitOperations.new(root)
         @run_journal = RunJournal.new(root:, bus:)
-        @transformation_plan = TransformationPlan.new(root: Master::ROOT)
+        @transformation_plan = TransformationPlan.new(root: Master.master_root(root: @root))
         @wishlist = Wishlist.new(root: @root, agent: @agent, event_bus: @bus)
 
         @file_collector = FileCollector.new(root:, bus:)
@@ -403,8 +403,9 @@ module Master
 
       def workflow_cfg
         @workflow_cfg ||= begin
-          config = Master.load_yaml(WORKFLOW_PATH)
-          raise "workflow config missing or unreadable: #{WORKFLOW_PATH}" unless config.is_a?(Hash)
+          path = File.join(Master.master_root(root: @root), "data", "limits.yml")
+          config = Master.load_yaml(path)
+          raise "workflow config missing or unreadable: #{path}" unless config.is_a?(Hash)
           config
         end
       rescue StandardError => e
