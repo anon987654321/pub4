@@ -183,7 +183,7 @@ module Master
         @rule_order.ordered(violation_counts:)
       end
 
-      def self.preamble_from_soul = [RuleLoop.soul_preamble, Protocol.instruction].join("\n\n")
+      def self.preamble_from_soul(root: Master::ROOT) = [RuleLoop.soul_preamble(root:), Protocol.instruction].join("\n\n")
 
       private
 
