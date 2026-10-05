@@ -26,7 +26,7 @@ module Master
           deps = load_deps
           priors = load_priors
           ext_wts = extension_weights
-          law_resolver = Master::Ground::LawResolver.new(root: @root)
+          law_resolver = Master::Ground::LawResolver.new(root: Master.master_root(root: @root))
           rules_index = Priority.rules_index(root: @root)
           sorted = @rules.each_with_index.sort_by do |r, i|
             base_prior = priors.dig(r.id, "prior_p").to_f
@@ -119,7 +119,7 @@ module Master
 
         def load_deps
           @deps_cache ||= begin
-            raw = Master.law("rule_deps", root: @root)
+            raw = Master.law("rule_deps", root: Master.master_root(root: @root))
             raise "rule_deps registry unreadable" unless raw.is_a?(Hash)
 
             raw.transform_values { |v| Array(v["after"] || []) }
@@ -131,7 +131,7 @@ module Master
 
         def load_priors
           @priors_cache ||= begin
-            priors = Master.law("violation_priors", root: @root)
+            priors = Master.law("violation_priors", root: Master.master_root(root: @root))
             raise "violation_priors configuration missing" unless priors.is_a?(Hash)
 
             priors
