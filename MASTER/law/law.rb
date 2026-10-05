@@ -467,8 +467,16 @@ module Law
   end
 
   @rules = {}
+  @loaded_directory = nil
+  @loaded_signature = nil
+  LOAD_MUTEX = Mutex.new
+  private_constant :LOAD_MUTEX
+
   class << self
-    attr_reader :rules
+    def rules
+      load_all if @loaded_directory == File.expand_path(__dir__)
+      @rules
+    end
 
     def define(id, &block)
       b = Builder.new(id)
@@ -478,8 +486,22 @@ module Law
     end
 
     def load_all(dir = __dir__)
-      Dir.glob(File.join(dir, "*.rb")).sort.each { |f| require f unless f == __FILE__ }
-      @rules
+      directory = File.expand_path(dir)
+      files = Dir.glob(File.join(directory, "*.rb")).sort.reject { |f| File.expand_path(f) == File.expand_path(__FILE__) }
+      signature = files.to_h do |file|
+        stat = File.stat(file)
+        [file, [stat.size, stat.ino, stat.mtime.to_r]]
+      end
+
+      LOAD_MUTEX.synchronize do
+        return @rules if @loaded_directory == directory && @loaded_signature == signature
+
+        @rules.clear
+        files.each { |file| load file }
+        @loaded_directory = directory
+        @loaded_signature = signature
+        @rules
+      end
     end
 
     def scan(file, language: nil)
