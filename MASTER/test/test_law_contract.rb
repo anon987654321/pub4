@@ -11,6 +11,7 @@ class TestLawContract < Minitest::Test
     assert_equal 1, data.fetch("contract_version")
     assert_match(/\A[0-9a-f]{64}\z/, data.fetch("law_digest"))
     assert_equal Law::Contract::PROTOCOL, data.fetch("protocol")
+    assert_equal Master.law("transformation_policy"), data.fetch("transformation_policy")
     assert data.fetch("law_policy").fetch("lifecycle").key?("states")
     assert_equal %w[inventory classify], data.fetch("transformation_policy").fetch("preflight")
     assert_operator data.fetch("laws").length, :>, 100
