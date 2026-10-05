@@ -26,6 +26,18 @@ class TestFixLoopFileCollector < Minitest::Test
     path
   end
 
+  def test_git_inventory_failure_does_not_fall_back_to_unrestricted_walk
+    Dir.mktmpdir do |dir|
+      FileUtils.mkdir_p(File.join(dir, ".git"))
+      source = write(dir, "lib/thing.rb")
+
+      error = assert_raises(RuntimeError) { collector(dir).collect(dir) }
+
+      assert_match(/git root lookup failed|git inventory unavailable/, error.message)
+      refute_nil source
+    end
+  end
+
   def test_generated_and_vendored_paths_are_not_collected_for_fixing
     Dir.mktmpdir do |dir|
       authored = write(dir, "lib/thing.rb")
