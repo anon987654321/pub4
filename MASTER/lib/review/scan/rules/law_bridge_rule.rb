@@ -17,7 +17,7 @@ module Master
           def initialize(root: Master::ROOT)
             super()
             @root = root
-            Law.load_all(File.join(root, "law")) if Law.rules.empty?
+            Law.load_all(File.join(root, "law"))
           end
 
           def check(code, path:)
