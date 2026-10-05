@@ -115,6 +115,19 @@ module Master
     true
   end
 
+  # Callers may operate on MASTER/ itself or on the repository containing MASTER/.
+  # Keep that distinction in one place so constitutional readers never guess paths.
+  def self.master_root(root: ROOT)
+    root = File.expand_path(root)
+    return ROOT if root == ROOT || root == REPO_ROOT
+    return root if File.directory?(File.join(root, "law")) && File.file?(File.join(root, "data", "laws.yml"))
+
+    candidate = File.join(root, "MASTER")
+    return candidate if File.directory?(File.join(candidate, "law")) || File.file?(File.join(candidate, "data", "laws.yml"))
+
+    root
+  end
+
   def self.repo_root = REPO_ROOT
   # File.exist?, never File.directory?. A `git worktree` checkout carries .git as
   # a file holding a gitdir line, and CLAUDE.md tells every agent here to take
