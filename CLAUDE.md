@@ -147,20 +147,17 @@ The order is the authority order, and it is not long:
 
 1. `MASTER/data/soul.yml` — the kernel. Absolutes, work rules, anti-simulation.
    It outranks everything below, including this file.
-2. `MASTER/data/laws.yml` — 242 declared rules under `rules:`, a flat array
-   keyed by `tier` rather than by scope. Read `laws` first, the six in priority
-   order, then the corpus.
-3. `MASTER/law/*.rb` — the domain law, about 118 rules, each with a worked
-   example it must flag and one it must not. Those two examples are the rule.
-4. `MASTER/lib/review/scan/rules/*.rb` — the registry, which builds 147.
+2. `MASTER/data/laws.yml` — the canonical declarative law catalogue plus
+its execution policy, adapters, topology and runtime data. Priority-ranked law
+entries are flat at the top level; there is no canonical `rules:` subtree.
+3. `MASTER/law/*.rb` — the executable constitutional layer, with worked
+examples and enforcement metadata.
+4. `MASTER/lib/review/scan/rules/*.rb` — scanner adapters built around that
+constitution.
 
-Enumerate them rather than trusting a memory of them. The file uses YAML
-aliases, so `safe_load_file` raises on it:
-
-```zsh
-ruby -ryaml -e 'YAML.unsafe_load_file("MASTER/data/laws.yml")["rules"].each { |r| puts "#{r["tier"]} #{r["id"]}: #{r["name"]}" }'
-ruby MASTER/tools/agent_context.rb   # the 47 conduct rules, and what can refuse a write
-```
+Do not hand-parse the catalogue with an assumed YAML shape. Run
+`ruby MASTER/tools/agent_context.rb --tree`; it is the bounded operator-facing
+view of the live law contract and its enforcement surfaces.
 
 You have it when you can name the rule that governs a line you are about to
 write without opening the file. Until then, open the file.
