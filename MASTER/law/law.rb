@@ -358,6 +358,7 @@ module Law
   module Contract
     module_function
 
+    VERSION = 1
     PROTOCOL = [
       "IDENTIFY: state the task and intended effects before acting.",
       "READ: load the applicable constitution/rules before deciding.",
@@ -397,7 +398,7 @@ module Law
       transformation_policy = Master.law("transformation_policy")
       laws = full ? entries : entries.map { |entry| entry.slice("id", "severity", "mode", "languages", "question") }
       JSON.pretty_generate(
-        "contract_version" => 1,
+        "contract_version" => VERSION,
         "law_digest" => contract_digest(entries, transformation_policy),
         "protocol" => PROTOCOL,
         "law_policy" => POLICY,
@@ -414,6 +415,8 @@ module Law
     def contract_digest(entries, transformation_policy)
       Digest::SHA256.hexdigest(
         JSON.generate(
+          "contract_version" => VERSION,
+          "protocol" => PROTOCOL,
           "law_policy" => POLICY,
           "transformation_policy" => transformation_policy,
           "laws" => entries,
