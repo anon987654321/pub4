@@ -11,8 +11,8 @@ class TestToolsGate < Minitest::Test
 
   def test_declared_tree_matches_real_files
     GATE::TREES.each do |tree|
-      matches = Dir[File.join(GATE::ROOT, tree[:glob])].reject { |p| GATE.vendored?(p) }
-      refute_empty matches, "#{tree[:name]} matches nothing"
+      matches = gate.source_files.select { |path| gate.send(:tree_matches?, tree, path) }
+      refute_empty matches, "#{tree[:name]} owns no source files"
     end
   end
 
