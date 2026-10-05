@@ -125,8 +125,8 @@ class ProjectTree
       line(:ok, "#{note} — two spines, permanent, not pending a cutover")
     end
 
-    scopes = rule_scopes(master)
-    line(:ok, "data/soul.yml + laws.yml{#{scopes.join(',')}} — law tier, one file since the 2026-08-12 fold") if scopes.any?
+    law_count = canonical_law_count(master)
+    line(:ok, "data/soul.yml + laws.yml{#{law_count} canonical laws} — law tier, one file since the 2026-08-12 fold") if law_count.positive?
 
     data_yml = Dir.glob(File.join(master, "data", "*.yml")).size
     runtime = Dir.glob(File.join(master, "data", "runtime", "*.yml")).size
