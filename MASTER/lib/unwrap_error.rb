@@ -177,10 +177,11 @@ module Master
     end
 
     def compile_detector(value)
-      return value unless value.is_a?(String)
+      return value if value.is_a?(Regexp)
+      raise ArgumentError, "phantom detector must be a regex literal" unless value.is_a?(String)
 
       literal = value.match(%r{\A/(.*)/([imx]*)\z})
-      return value unless literal
+      raise ArgumentError, "phantom detector must be a regex literal: #{value.inspect}" unless literal
 
       flags = literal[2].chars.reduce(0) do |opts, flag|
         opts | { "i" => Regexp::IGNORECASE, "m" => Regexp::MULTILINE, "x" => Regexp::EXTENDED }.fetch(flag, 0)
