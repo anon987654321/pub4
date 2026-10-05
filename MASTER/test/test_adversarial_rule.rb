@@ -25,6 +25,14 @@ class TestAdversarialRule < Minitest::Test
 
   # The file is in the prompt, so the call is made with tools withheld, and
   # the withholding ends with the call.
+  def test_an_unexpected_model_failure_is_not_reported_as_clean
+    agent = Object.new
+    agent.define_singleton_method(:ask) { |_prompt, operation:| raise "upstream exploded" }
+    rule = Master::Review::Scan::Rules::AdversarialRule.new(agent:)
+
+    assert_raises(RuntimeError) { rule.check("def foo; end", path: "foo.rb") }
+  end
+
   def test_the_model_call_is_made_without_tools
     seen = nil
     agent = Object.new
