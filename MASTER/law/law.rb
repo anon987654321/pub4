@@ -400,7 +400,7 @@ module Law
         "law_digest" => Digest::SHA256.hexdigest(JSON.generate(entries)),
         "protocol" => PROTOCOL,
         "law_policy" => POLICY,
-        "transformation_policy" => policy.fetch("transformation_policy"),
+        "transformation_policy" => ::Master.law("transformation_policy"),
         "laws" => laws,
       )
     end
