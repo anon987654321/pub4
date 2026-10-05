@@ -149,6 +149,17 @@ module Master
 
       private
 
+      def law_data_signature
+        path = File.join(@data_dir, "laws.yml")
+        return nil unless File.exist?(path)
+
+        stat = File.stat(path)
+        [stat.size, stat.ino, stat.mtime.to_r]
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "rules.law_data_signature", path:)
+        nil
+      end
+
       # A section of laws.yml answers to its own stem, so a call site may ask
       # for :style or :design_rules without knowing they share a file. A stem
       # with no section returns {}, the same as an absent optional file.
