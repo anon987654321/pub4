@@ -119,6 +119,17 @@ class TestFixLoopFileCollector < Minitest::Test
     assert_includes files, "lib/fix/fix_loop.rb"
   end
 
+  def test_git_inventory_failure_does_not_fall_back_to_filesystem
+    Dir.mktmpdir do |dir|
+      FileUtils.mkdir_p(File.join(dir, ".git"))
+      write(dir, "ignored-secret.txt", "should never be collected\n")
+
+      error = assert_raises(RuntimeError) { collector(dir).collect(dir) }
+
+      assert_match(/git root unavailable/, error.message)
+    end
+  end
+
   def test_repository_root_git_paths_are_resolved_for_master_and_rails_targets
     Dir.mktmpdir do |dir|
       FileUtils.mkdir_p(File.join(dir, "MASTER/lib"))
