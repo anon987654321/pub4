@@ -121,8 +121,8 @@ module Master
               SemanticFixRule.new(id: id.to_s, severity: law.severity, law:)
             end
           rescue StandardError => e
-            Master::Ground::Swallow.log(e, context: "fix_loop.semantic_rule_adapters", event_bus: @bus)
-            []
+            Master::Ground::Swallow.log(e, context: "fix_loop.semantic_rule_adapters", event_bus: @bus, severity: :load_bearing)
+            raise "semantic rule adapter load failed: #{e.class}: #{e.message}"
           end
 
           def run_rule_once(rule, files, pass, council: nil, external_violations: nil)
