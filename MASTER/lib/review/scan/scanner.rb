@@ -218,7 +218,9 @@ module Master
         end
 
         def prediction_thresholds
-          stamp = Master.load_yaml_stamp(Master::LAWS_PATH)
+          path = Master::LAWS_PATH
+          stat = File.stat(path)
+          stamp = [stat.size, stat.ino, stat.mtime.to_r]
           return @prediction_thresholds if @prediction_thresholds_stamp == stamp && @prediction_thresholds
 
           rules = Master.load_laws(root: Master::ROOT)
