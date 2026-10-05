@@ -61,10 +61,11 @@ module Master
         def soul_preamble
           @soul_preamble_mutex.synchronize do
             path = Master.data_path("soul.yml")
-            mtime = File.mtime(path).to_i
-            return @soul_preamble_cache if @soul_preamble_cache && @soul_preamble_mtime == mtime
+            stat = File.stat(path)
+            stamp = [stat.size, stat.ino, stat.mtime.to_r]
+            return @soul_preamble_cache if @soul_preamble_cache && @soul_preamble_mtime == stamp
 
-            @soul_preamble_mtime = mtime
+            @soul_preamble_mtime = stamp
             @soul_preamble_cache = build_soul_preamble
           end
         end
