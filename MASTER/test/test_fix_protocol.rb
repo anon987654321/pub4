@@ -58,10 +58,14 @@ class TestFixProtocol < Minitest::Test
 
       payload = JSON.parse(Master::Fix::Protocol.render(root:, target: root))
 
-      assert_equal 2, payload.fetch("fix_protocol_version")
+      assert_equal Master::Fix::Protocol::VERSION, payload.fetch("fix_protocol_version")
       assert_includes payload.fetch("stages"), "semantic"
       assert_includes payload.fetch("terminal_states"), "PLATEAU"
       assert_equal 1, payload.dig("corpus", "total_regular_files")
+      assert_kind_of Hash, payload.fetch("detector_matrix")
+      assert_kind_of Hash, payload.fetch("detector_summary")
+      assert_equal payload.fetch("detector_matrix").size,
+                   payload.dig("detector_summary", "total_rules")
     end
   end
 end

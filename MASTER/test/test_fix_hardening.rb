@@ -49,6 +49,30 @@ class FixHardeningTest < Minitest::Test
     assert_equal 2, Master::Fix::ProtocolDetectorMatrix.summary(matrix).fetch("total_rules")
   end
 
+  def test_measurement_only_finding_is_not_repaired_in_rule_loop
+    Dir.mktmpdir do |root|
+      path = File.join(root, "sample.rb")
+      File.write(path, "puts :x\\n")
+      scanner = Object.new
+      scanner.define_singleton_method(:scan) do |_path, rules: nil|
+        Master::Result.ok([{ rule: "CQS", severity: :warning, line: 1, message: "measured" }])
+      end
+      agent = Object.new
+      agent.define_singleton_method(:ask) { |_prompt| raise "measurement-only finding reached the model" }
+      loop = Master::Fix::RuleLoop.new(
+        rule: RuleStub.new(id: "CQS", severity: :warning),
+        agent:,
+        scanner:,
+        root:,
+      )
+
+      result = loop.run_once([path])
+
+      assert_equal :clean, result[:status]
+      assert_equal "puts :x\\n", File.read(path)
+    end
+  end
+
   def test_rendered_value_block_is_a_human_decision
     loop = Master::Fix::RuleLoop.allocate
     finding = {

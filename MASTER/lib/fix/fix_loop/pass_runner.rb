@@ -13,6 +13,7 @@ require_relative "pass_runner/stream_stage"
 require_relative "structural_stage"
 require_relative "../transaction"
 require_relative "../resource_budget"
+require_relative "../../review/scan/rule_health"
 
 module Master
   module Fix
@@ -98,8 +99,8 @@ module Master
           return skip_unreadable(path, result) if !result.ok? && result.category == :validation
           raise "fix scan failed for #{path}: #{result.message}" unless result.ok?
 
-          findings = result.value!
-          @bus&.publish("fix_loop:scan_progress", file: path.delete_prefix("#{@root}/"), count: findings.size) if findings.any?
+          findings = result.value!.map { |finding| RuleHealth.annotate(finding) }
+          @bus&.publish("fix_loop:scan_progress", file: path.delete_prefix("#{ @root }/"), count: findings.size) if findings.any?
           findings.select { |finding| Severity.at_least?(finding.fetch(:severity, :warning), :warning) }
                   .map { |finding| Violation.from_finding(finding, file: path.delete_prefix("#{@root}/")) }
         end

@@ -14,6 +14,7 @@ require_relative "rule_loop/fix_strategies"
 require_relative "rule_loop/fix_verification"
 require_relative "rule_loop/outcome_tracking"
 require_relative "visual_custody_blocking"
+require_relative "rule_health"
 require_relative "rule_loop/autofix_policy"
 
 module Master
@@ -143,6 +144,7 @@ module Master
 
           ext = File.extname(path).downcase
           result.value!
+                .map { |f| RuleHealth.annotate(f) }
                 .select { |f| Severity.at_least?(f[:severity], MIN_SEVERITY) }
                 .map { |f| Violation.from_finding(f, file: path, ext:) }
         end
