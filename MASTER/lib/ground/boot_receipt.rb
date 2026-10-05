@@ -122,8 +122,8 @@ module Master
         ::Law.load_all(File.join(law_root, "law")) if ::Law.rules.empty?
         ::Law.rules.size
       rescue StandardError => e
-        Swallow.log(e, context: "BootReceipt.domain_rule_count")
-        0
+        Swallow.log(e, context: "BootReceipt.domain_rule_count", severity: :load_bearing)
+        raise "boot receipt: executable law population unavailable: #{e.class}: #{e.message}"
       end
 
       # `schema:` is a version pin, not a provider, and it has no `env` — so it
