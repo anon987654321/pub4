@@ -27,11 +27,7 @@ class TestToolsGate < Minitest::Test
   end
 
   def test_every_source_file_belongs_to_a_declared_tree
-    unowned = gate.source_files.reject do |path|
-      GATE::TREES.any? do |tree|
-        File.fnmatch?(File.join(GATE::ROOT, tree[:glob]), path, File::FNM_PATHNAME)
-      end
-    end
+    unowned = gate.source_files.reject { |path| GATE::TREES.any? { |tree| gate.send(:tree_matches?, tree, path) } }
     assert_empty unowned, "unowned MASTER/tools sources: #{unowned.inspect}"
   end
 
