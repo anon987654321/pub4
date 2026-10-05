@@ -51,7 +51,7 @@ module Master
           return unless File.exist?(path)
 
           data = YAML.safe_load_file(path, aliases: true)
-          return unless data.is_a?(Hash) && data["head_mtime"].to_i == git_head_mtime
+          return unless data.is_a?(Hash) && data["head"] == git_head
 
           thaw_graph(data["graph"] || {})
         rescue StandardError => e
@@ -62,7 +62,7 @@ module Master
         def write_co_change_cache(graph)
           path = co_change_cache_path
           FileUtils.mkdir_p(File.dirname(path))
-          File.write(path, { "head_mtime" => git_head_mtime, "graph" => graph }.to_yaml)
+          File.write(path, { "head" => git_head, "graph" => graph }.to_yaml)
         rescue StandardError => e
           @bus&.publish("repo_ecology:co_change_cache_error", error: e.message)
         end
@@ -78,19 +78,19 @@ module Master
         end
 
         # git resolves HEAD's path, because a worktree keeps its own under the
-        # common git dir and <root>/.git is a file naming it. Read directly, the
-        # path did not resolve, the rescue answered 0, and one constant key means
-        # a cache that never invalidates.
-        def git_head_mtime
-          out, status = Master::Io::Exec.capture2e("git", "-C", @root, "rev-parse", "--git-path", "HEAD")
-          raise "co-change graph git path unavailable: #{out}" unless status.success?
+        # Key the cache by the commit itself. .git/HEAD is only the current
+        # symbolic ref and normally does not change when a branch advances, so
+        # its mtime cannot tell us that git log has new history.
+        def git_head
+          out, status = Master::Io::Exec.capture2e("git", "-C", @root, "rev-parse", "HEAD")
+          raise "co-change graph git HEAD unavailable: #{out}" unless status.success?
 
-          path = File.expand_path(out.strip, @root)
-          raise "co-change graph HEAD unreadable: #{path}" unless File.file?(path)
+          head = out.to_s.strip
+          raise "co-change graph git HEAD empty" if head.empty?
 
-          File.mtime(path).to_i
+          head
         rescue StandardError => e
-          raise "co-change graph HEAD timestamp unreadable: #{e.class}: #{e.message}"
+          raise "co-change graph git HEAD unreadable: #{e.class}: #{e.message}"
         end
       end
     end
