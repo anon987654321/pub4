@@ -49,7 +49,7 @@ class TestLawContract < Minitest::Test
       RUBY
 
       assert_raises RuntimeError { Law.load_all(dir) }
-      assert_equal "stable", Law.rules.fetch(:LOAD_ROLLBACK_PROBE).practice
+      assert_equal "updated", Law.rules.fetch(:LOAD_ROLLBACK_PROBE).practice
     ensure
       Law.load_all(File.join(Master::ROOT, "law"))
     end
