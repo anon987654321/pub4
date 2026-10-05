@@ -72,9 +72,20 @@ module Master
   def self.language_for(path)
     @language_for ||= {}
     key = path.to_s
-    return @language_for[key] if @language_for.key?(key)
+    stat_key = if File.file?(key)
+                 stat = File.stat(key)
+                 [key, stat.size, stat.ino, stat.mtime.to_r]
+               else
+                 [key, nil]
+               end
+    return @language_for[stat_key] if @language_for.key?(stat_key)
 
-    @language_for[key] = resolve_language(key)
+    @language_for.delete_if { |cached_key, _| cached_key.first == key && cached_key != stat_key }
+    @language_for[stat_key] = resolve_language(key)
+  rescue SystemCallError, IOError
+    @language_for ||= {}
+    fallback_key = [key, nil]
+    @language_for[fallback_key] ||= resolve_language(key)
   end
 
   def self.resolve_language(path)
