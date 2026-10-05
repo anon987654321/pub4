@@ -23,14 +23,16 @@ class TestDillaBed < Minitest::Test
   # engine probes' PROBE_TIMEOUT.
   TIMEOUT = Integer(ENV.fetch("DILLA_BED_TIMEOUT", "300"))
 
-  # The catalogue is seven recordings and twelve improvisations, and a bare
-  # invoke plays exactly that. A cut to four was made once and reversed.
-  def test_the_catalogue_is_seven_verified_and_twelve_improvised
+  # The catalogue is the union of the verified progression slots and the twelve
+  # generated improvisations. The counts derive from their registries so adding
+  # a researched recording cannot make this test lie about what the engine plays.
+  def test_the_catalogue_is_registry_derived
     sizes = demo_catalog_sizes
 
-    assert_equal 7, sizes[:verified]
-    assert_equal 12, sizes[:improvised]
-    assert_equal VERIFIED_PROGRESSION_SLOTS.map(&:to_sym), demo_curated_order.first(7), "the recordings come first"
+    assert_equal VERIFIED_PROGRESSION_SLOTS.length, sizes[:verified]
+    assert_equal DillaImprovisation.names.length, sizes[:improvised]
+    assert_equal sizes[:verified] + sizes[:improvised], sizes[:all]
+    assert_equal VERIFIED_PROGRESSION_SLOTS.map(&:to_sym), demo_curated_order.first(sizes[:verified]), "the recordings come first"
   end
 
   # Every chord of every piece voices. The verified rows spell chords the bed's
