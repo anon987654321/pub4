@@ -240,12 +240,14 @@ module Master
           stamp = [stat.size, stat.ino, stat.mtime.to_r]
           return @prediction_thresholds if @prediction_thresholds_stamp == stamp
 
-          rules = Master.load_yaml(path)
+          rules = Master.load_yaml(path) || {}
           prediction = rules["prediction_engine"]
-          raise "prediction_engine configuration missing" unless prediction.is_a?(Hash)
+          prediction = {} unless prediction.is_a?(Hash)
 
+          # prediction_engine was retired; an absent policy means no additional
+          # confidence threshold. The law/autofix policy remains authoritative.
           @prediction_thresholds_stamp = stamp
-          @prediction_thresholds = prediction
+          @prediction_thresholds = prediction.freeze
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "Scanner.prediction_thresholds")
           raise "scanner: prediction policy unreadable: #{e.class}: #{e.message}"
