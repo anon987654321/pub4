@@ -188,6 +188,7 @@ module BachMidi
   URL = URI("https://www.mutopiaproject.org/ftp/BachJS/BWV565/ToccataFugue/ToccataFugue.mid")
   CACHE = File.join(Dir.home, ".cache", "master", "dilla", "bach_bwv565.mid")
   DEFAULT_PATCH = "memorymoog_organ"
+  DEFAULT_SECTION = "fugue"
 
   class Score
     attr_reader :rng
@@ -453,7 +454,7 @@ module BachMidi
 
   def play!
     path = source
-    section = ENV.fetch("DILLA_BACH_SECTION", "fugue").to_sym
+    section = ENV.fetch("DILLA_BACH_SECTION", DEFAULT_SECTION).to_sym
     abort "play: unsupported Bach section #{section.inspect}" unless %i[all fugue].include?(section)
     events, length, format = parse(path, section:)
     abort "play: Bach BWV 565 MIDI contains no playable notes" if events.empty?
