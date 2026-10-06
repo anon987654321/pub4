@@ -369,7 +369,8 @@ function pushLiveStreamTts(pending, spokenLen) {
   const m = slice.match(/^[\s\S]*?[.!?…]["'\u201D]?\s+/);
   if (!m) return spokenLen;
   const chunk = m[0].trim();
-  if (chunk.length < TTS_MIN_CHUNK) return spokenLen;
+  // Sentence completion is the safety boundary; short answers should not wait
+  // for the whole model response merely to clear an arbitrary character count.
   enqueueSpeech(chunk, { flush: true });
   return spokenLen + m[0].length;
 }
