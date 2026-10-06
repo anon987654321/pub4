@@ -2085,7 +2085,7 @@ module LiveSynth
   # Four Nasty VCS stages provide the nonlinear glue; three Sonitex STX-1260
   # passes progressively narrow and roughen the top. Loudness is maximised only
   # at the end with a true-peak ceiling rather than clipping the bus.
-  SHOWCASE_PITCH_RATIO = 2.0**(-24.0 / 1200.0)
+  SHOWCASE_PITCH_RATIO = 2.0**(-34.0 / 1200.0)
 
   # The bare showcase is the dark room: low, slow, saturated and tape-forward.
   # The low end is carved before the character stages so kick and snare retain
@@ -2094,23 +2094,25 @@ module LiveSynth
     [
       "asetrate=#{(stream.fetch("rate").to_f * SHOWCASE_PITCH_RATIO).round(3)}",
       "aresample=#{stream.fetch("rate")}",
-      "atempo=#{(1.0 / SHOWCASE_PITCH_RATIO).round(6)}",
-      "highpass=f=42",
-      Outboard.tape_machine(speed: :ips7, wow: 0.22, flutter: 0.075),
-      "acompressor=threshold=-24dB:ratio=1.25:attack=45:release=280:makeup=1.0",
-      "equalizer=f=75:t=q:w=0.9:g=-1.6",
-      "equalizer=f=220:t=o:w=1.1:g=-4.2",
-      "equalizer=f=92:t=q:w=0.9:g=-2.4",
-      "equalizer=f=1700:t=o:w=1.0:g=-1.5",
-      "lowpass=f=5400",
-      Livesets.sonitex(bits: 11, lo: 38, hi: 8600, drive: 1.05, mix: 0.55),
-      Outboard.tape_machine(speed: :ips7, wow: 0.15, flutter: 0.045),
-      Outboard.console_stack(instances: 2, offset: 0.08, param: 1.1, speed: 0.1),
-      Livesets.sonitex(bits: 10, lo: 42, hi: 7600, drive: 1.07, mix: 0.58, samples: 2),
-      Outboard.tape_machine(speed: :ips7, wow: 0.08, flutter: 0.025),
-      "acompressor=threshold=-20dB:ratio=1.18:attack=55:release=320:makeup=1.0",
+      "atempo=#{SHOWCASE_TEMPO_SCALE}",
+      "highpass=f=48",
+      Outboard.tape_machine(speed: :ips7, wow: 0.28, flutter: 0.09),
+      "acompressor=threshold=-25dB:ratio=1.22:attack=55:release=300:makeup=1.0",
+      "equalizer=f=70:t=q:w=0.9:g=-2.2",
+      "equalizer=f=110:t=q:w=1.0:g=-1.8",
+      "equalizer=f=220:t=o:w=1.1:g=-5.0",
+      "equalizer=f=320:t=q:w=1.0:g=-1.4",
+      "equalizer=f=1700:t=o:w=1.0:g=-1.1",
       "lowpass=f=4700",
-      "alimiter=limit=0.94",
+      Livesets.sonitex(bits: 11, lo: 42, hi: 7200, drive: 1.08, mix: 0.62),
+      Outboard.tape_machine(speed: :ips7, wow: 0.19, flutter: 0.055),
+      Outboard.console_stack(instances: 2, offset: 0.08, param: 1.1, speed: 0.1),
+      Livesets.sonitex(bits: 10, lo: 46, hi: 6200, drive: 1.09, mix: 0.64, samples: 2),
+      Outboard.tape_machine(speed: :ips7, wow: 0.13, flutter: 0.04),
+      Outboard.tape_machine(speed: :ips7, wow: 0.07, flutter: 0.025),
+      "acompressor=threshold=-21dB:ratio=1.18:attack=65:release=340:makeup=1.0",
+      "lowpass=f=4100",
+      "alimiter=limit=0.93",
     ].freeze
   end
   def log(message) = $stdout.puts("live0: #{message}")
@@ -2167,41 +2169,28 @@ module LiveSynth
   }.freeze
 
   SHOWCASE_SCENES = [
-    ["flylo", 24.0],
-    ["flylo_haze_01", 24.0],
-    ["flylo_haze_02", 24.0],
-    ["flylo_haze_03", 24.0],
-    ["flylo_beginners_falafel", 24.0],
-    ["flylo_haze_04", 26.0],
-    ["flylo_haze_05", 26.0],
-    ["flylo_massage_situation", 26.0],
-    ["flylo_haze_06", 26.0],
-    ["flylo_king_of_the_hill", 28.0],
-    ["flylo_haze_07", 26.0],
-    ["flylo_computer_face", 24.0],
-    ["flylo_haze_08", 28.0],
-    ["dilla_life", 30.0],
-    ["soulquarians", 28.0],
-    ["dangelo_spanish_joint", 34.0],
-    ["moog_dark", 28.0],
-    ["flylo_computer_face", 24.0],
-    ["dangelo_root", 32.0],
-    ["dilla_players", 30.0],
-    ["flylo_king_of_the_hill", 28.0],
-    ["dangelo_another_life", 36.0],
+    ["dilla_players", 22.0],
+    ["dangelo_spanish_joint", 24.0],
+    ["flylo", 22.0],
+    ["moog_dark", 22.0],
+    ["dilla_life", 22.0],
+    ["dangelo_another_life", 26.0],
+    ["flylo_haze_03", 22.0],
+    ["madlib_figaro", 22.0],
+    ["soulquarians", 22.0],
+    ["dangelo_root", 26.0],
+    ["moog_dfam", 24.0],
+    ["dilla_so_far_to_go", 22.0],
+    ["flylo_computer_face", 22.0],
+    ["dangelo_untitled", 24.0],
+    ["madlib", 20.0],
+    ["dangelo_brown_sugar", 24.0],
     ["moog_strings", 10.0],
-    ["dangelo_untitled", 34.0],
-    ["moog_dfam", 30.0],
-    ["dangelo_brown_sugar", 32.0],
-    ["madlib", 24.0],
-    ["dilla_so_far_to_go", 28.0],
-    ["dangelo_really_love", 34.0],
-    ["dangelo_sugah_daddy", 30.0],
-    ["moog_brass", 10.0],
-    ["dangelo_ballad", 30.0],
-    ["prophet_five", 10.0],
-    ["madlib_figaro", 24.0],
+    ["flylo_king_of_the_hill", 24.0],
+    ["dangelo_really_love", 24.0],
+    ["dangelo_sugah_daddy", 24.0],
     ["royksopp", 20.0],
+    ["dangelo_ballad", 20.0],
     ["memorymoog_organ", 10.0],
     ["minimoog_lead", 10.0],
     ["moog_flute", 10.0],
@@ -2277,12 +2266,14 @@ module LiveSynth
 
   def showcase_scenes(mode = nil)
     key = mode.to_s.strip.downcase
-    return SHOWCASE_MODES.fetch("flylo") if key.empty?
+    return SHOWCASE_MODES.fetch("all") if key.empty?
 
     SHOWCASE_MODES.fetch(key) { abort "live0: no showcase mode #{mode.inspect} — have #{SHOWCASE_MODES.keys.join(', ')}" }
   end
 
   def append_showcase_wav!(paths, destination, append: false)
+    list = nil
+    partial = nil
     inputs = paths.select { |path| File.file?(path) && File.size?(path) }
     inputs.unshift(destination) if append && File.file?(destination) && File.size?(destination)
     return if inputs.empty? || (inputs.length == 1 && append)
@@ -2312,7 +2303,7 @@ module LiveSynth
       [
         Improviser.new(rng:, reference: "dilla_life", family: "moog"),
         [[5.0, { "toggle" => "lead", "on" => true }],
-         [9.0, { "patch" => "e_piano" }],
+         [9.0, { "patch" => "dangelo_velvet" }],
          [14.0, { "lead" => "fm", "preset" => "bell" }],
          [17.0, { "knob" => "cutoff", "amount" => 0.18, "seconds" => 3.0 }]],
       ]
@@ -2326,7 +2317,7 @@ module LiveSynth
     when "dilla_so_far_to_go"
       [
         Improviser.new(rng:, reference: "dilla_so_far_to_go_documented", family: "prophet"),
-        [[5.0, { "patch" => "e_piano" }],
+        [[5.0, { "patch" => "dangelo_velvet" }],
          [10.0, { "lead" => "fm", "preset" => "bell" }],
          [15.0, { "knob" => "cutoff", "amount" => 0.16, "seconds" => 3.0 }]],
       ]
@@ -2341,7 +2332,7 @@ module LiveSynth
       [
         Improviser.new(rng:, reference: "the_root_modal_vamp", family: "prophet"),
         [[7.0, { "toggle" => "lead", "on" => true }],
-         [13.0, { "patch" => "e_piano" }],
+         [13.0, { "patch" => "dangelo_velvet" }],
          [20.0, { "knob" => "resonance", "amount" => 0.12, "seconds" => 4.0 }]],
       ]
     when "dangelo_spanish_joint"
@@ -2355,14 +2346,14 @@ module LiveSynth
       [
         Improviser.new(rng:, reference: "another_life_pedal_descent", family: "prophet"),
         [[8.0, { "toggle" => "drums", "on" => false }],
-         [15.0, { "patch" => "e_piano" }],
+         [15.0, { "patch" => "dangelo_velvet" }],
          [20.0, { "toggle" => "drums", "on" => true }],
          [25.0, { "lead" => "fm", "preset" => "bell" }]],
       ]
     when "dangelo_ballad"
       [
         Improviser.new(rng:, reference: "gospel_69_ballad_walk", family: "moog"),
-        [[8.0, { "patch" => "e_piano" }],
+        [[8.0, { "patch" => "dangelo_velvet" }],
          [15.0, { "knob" => "cutoff", "amount" => 0.1, "seconds" => 5.0 }],
          [19.0, { "lead" => "fm", "preset" => "drone" }]],
       ]
@@ -2376,7 +2367,7 @@ module LiveSynth
     when "dangelo_brown_sugar"
       [
         Improviser.new(rng:, reference: "brown_sugar_funk_vamp", family: "moog"),
-        [[6.0, { "patch" => "e_piano" }],
+        [[6.0, { "patch" => "dangelo_velvet" }],
          [12.0, { "lead" => "fm", "preset" => "bell" }],
          [20.0, { "knob" => "resonance", "amount" => 0.1, "seconds" => 5.0 }]],
       ]
@@ -2391,7 +2382,7 @@ module LiveSynth
     when "dangelo_sugah_daddy"
       [
         Improviser.new(rng:, reference: "sugah_daddy_planing", family: "moog"),
-        [[5.0, { "patch" => "e_piano" }],
+        [[5.0, { "patch" => "dangelo_velvet" }],
          [11.0, { "lead" => "fm", "preset" => "bell" }],
          [19.0, { "knob" => "cutoff", "amount" => -0.12, "seconds" => 5.0 }]],
       ]
@@ -2400,7 +2391,7 @@ module LiveSynth
         Improviser.new(rng:, reference: "flylo_camel_documented", family: "prophet"),
         [[5.0, { "toggle" => "lead", "on" => true }],
          [9.0, { "lead" => "fm", "preset" => "drone" }],
-         [15.0, { "patch" => "prophet_pad" }],
+         [15.0, { "patch" => "velvet_prophet" }],
          [22.0, { "knob" => "detune", "amount" => 0.08, "seconds" => 4.0 }]],
       ]
     when "flylo_haze_01", "flylo_haze_02", "flylo_haze_03", "flylo_haze_04", "flylo_haze_05", "flylo_haze_06", "flylo_haze_07", "flylo_haze_08"
@@ -2420,7 +2411,7 @@ module LiveSynth
       [
         Improviser.new(rng:, reference: "flylo_beginners_falafel_documented", family: "prophet"),
         [[6.0, { "lead" => "fm", "preset" => "bell" }],
-         [12.0, { "patch" => "e_piano" }],
+         [12.0, { "patch" => "dangelo_velvet" }],
          [18.0, { "knob" => "cutoff", "amount" => 0.12, "seconds" => 4.0 }],
          [23.0, { "lead" => "fm", "preset" => "drone" }]],
       ]
@@ -2429,7 +2420,7 @@ module LiveSynth
         Improviser.new(rng:, reference: "flylo_massage_situation_documented", family: "moog"),
         [[7.0, { "toggle" => "drums", "on" => false }],
          [11.0, { "lead" => "fm", "preset" => "glass" }],
-         [16.0, { "patch" => "moog_strings" }],
+         [16.0, { "patch" => "tape_choir" }],
          [20.0, { "toggle" => "drums", "on" => true }],
          [23.0, { "knob" => "resonance", "amount" => -0.1, "seconds" => 3.0 }]],
       ]
@@ -2445,7 +2436,7 @@ module LiveSynth
       [
         Improviser.new(rng:, reference: "flylo_computer_face_documented", family: "prophet"),
         [[4.0, { "lead" => "fm", "preset" => "chaos" }],
-         [9.0, { "patch" => "prophet_pad" }],
+         [9.0, { "patch" => "velvet_prophet" }],
          [15.0, { "knob" => "detune", "amount" => 0.12, "seconds" => 3.0 }],
          [20.0, { "toggle" => "lead", "on" => false }]],
       ]
@@ -2453,7 +2444,7 @@ module LiveSynth
       [
         Improviser.new(rng:, reference: "madlib_accordion_loop_documented", family: "moog"),
         [[5.0, { "lead" => "fm", "preset" => "bell" }],
-         [10.0, { "patch" => "e_piano" }],
+         [10.0, { "patch" => "dangelo_velvet" }],
          [14.0, { "knob" => "resonance", "amount" => 0.12, "seconds" => 3.0 }]],
       ]
     when "madlib_figaro"
@@ -2482,7 +2473,7 @@ module LiveSynth
       [
         Progression.new("moog_improv", rng:, family: "moog"),
         [[6.0, { "knob" => "cutoff", "amount" => -0.12, "seconds" => 4.0 }],
-         [12.0, { "patch" => "moog_strings" }],
+         [12.0, { "patch" => "tape_choir" }],
          [18.0, { "patch" => "moog_brass" }]],
       ]
     when "moog_strings", "moog_brass", "prophet_five", "memorymoog_organ", "minimoog_lead", "moog_flute", "prophet_pad", "poly_lead", "vapor_lead"
@@ -2710,7 +2701,7 @@ module LiveSynth
       player = (DillaLive.player_command(rate) || Livesets.player_command(rate)) or return nil
       FileUtils.mkdir_p(File.dirname(dest))
       tee_outputs = "[f=wav]#{Shellwords.escape(dest)}|[f=s16le]pipe:1"
-      command = input + output_map + ["-vn", "-sn", "-dn", "-c:a", "pcm_s16le", "-f", "tee", "-use_fifo", "1", tee_outputs]
+      command = input + output_map + ["-vn", "-sn", "-dn", "-ac", "2", "-ar", rate.to_s, "-c:a", "pcm_s16le", "-f", "tee", "-use_fifo", "1", tee_outputs]
       return ["sh", "-c", "#{Shellwords.join(command)} | #{Shellwords.join(player)}"]
     end
 
@@ -3051,13 +3042,21 @@ module LiveSynth
 
     NAMES = DillaImprovisation::PITCH_NAMES
 
-    def initialize(rng:, family: nil, pad: nil, reference: nil)
+    def initialize(rng:, family: nil, pad: nil, reference: nil, bass_patch: nil, bass_gain: nil, drums: nil)
       @c = LiveSynth.config.fetch("improvise")
       @rng = rng
       fam = family ? @c.fetch("families").fetch(family) { abort "live0: no family #{family}" } : {}
-      @pads = fam.fetch("pads", @c["pads"])
+      showcase_pads = if LiveSynth.showcase?
+        {
+          "moog" => %w[showcase_noir_pad tape_choir rhodes_tine dangelo_velvet],
+          "prophet" => %w[velvet_prophet dangelo_velvet tape_choir vp330_ensemble],
+          "rhodes" => %w[dangelo_velvet rhodes_tine showcase_noir_pad tape_choir]
+        }.fetch(family, %w[showcase_noir_pad dangelo_velvet tape_choir rhodes_tine])
+      end
+      @pads = showcase_pads || fam.fetch("pads", @c["pads"])
       @leads = fam.fetch("leads", @c["leads"])
-      @bass = fam.fetch("bass_patch", @c["bass_patch"])
+      @bass = bass_patch || (LiveSynth.showcase? ? "pocket_bass" : fam.fetch("bass_patch", @c["bass_patch"]))
+      @bass_gain = bass_gain
       @moves = @c.fetch("moves").to_h { |row| [row["from"], row["to"]] }
       @reference_name = reference || LiveSynth.authentic_progression_key(rng)
       @reference = @reference_name && LiveSynth.documented_progression(@reference_name)
@@ -3080,7 +3079,7 @@ module LiveSynth
       @next_at = @c["first_chord_at"]
       @lead_on = false
       @lead_enabled = @c["lead_enabled"]
-      @drums = @c["drums"]
+      @drums = drums.nil? ? @c["drums"] : drums
       @fade = nil
       @kit = Kit.new(@c, beat: @beat, rng:)
     end
@@ -3212,14 +3211,11 @@ module LiveSynth
       late = @c["bass_late_seconds"]
       at = @next_at
       if LiveSynth.showcase?
-        gain = 0.006
-        stage.note(root, spec, at + 0.018, 0.18 * @beat, gain, :bass)
-        if @rng.rand < 0.05
-          stage.note(root + 7, spec, at + (2.5 * @beat) + late, 0.10 * @beat, gain * 0.12, :bass)
-        end
-        return unless bars == 2 && @rng.rand < 0.12
+        gain = @bass_gain || 0.0035
+        stage.note(root, spec, at + 0.022, 0.13 * @beat, gain, :bass)
+        return unless bars == 2 && @rng.rand < 0.08
 
-        stage.note(root, spec, at + (4 * @beat) + 0.018, 0.14 * @beat, gain * 0.35, :bass)
+        stage.note(root, spec, at + (4 * @beat) + 0.024, 0.10 * @beat, gain * 0.28, :bass)
         return
       end
 

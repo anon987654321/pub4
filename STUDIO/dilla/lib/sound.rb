@@ -368,6 +368,45 @@ module AnalogSynth
       amp: Envelope.new(attack: 0.05, decay: 1.4, sustain: 0.72, release: 1.0),
       filter_env: Envelope.new(attack: 0.20, decay: 1.8, sustain: 0.35, release: 1.0),
     },
+    # Showcase pads: deliberately no sub oscillator. The low end belongs to one
+    # short bass voice, while these stay in the low-mid and upper-mid field so
+    # the kick and snare remain legible under heavy tape.
+    showcase_noir_pad: {
+      waves: %i[sine triangle triangle], detune: [-1.0, 3.0, 7.0], octaves: [0, 0, 1],
+      cutoff: 430.0, env_amount: 520.0, resonance: 0.05, drive: 0.72,
+      amp: Envelope.new(attack: 0.62, decay: 1.3, sustain: 0.58, release: 2.0),
+      filter_env: Envelope.new(attack: 1.0, decay: 1.6, sustain: 0.28, release: 1.4),
+    },
+    dangelo_velvet: {
+      waves: %i[sine triangle sine], detune: [0.0, -2.0, 1.5], octaves: [0, 0, 1],
+      cutoff: 620.0, env_amount: 760.0, resonance: 0.045, drive: 0.76,
+      amp: Envelope.new(attack: 0.018, decay: 1.8, sustain: 0.44, release: 1.5),
+      filter_env: Envelope.new(attack: 0.008, decay: 0.65, sustain: 0.18, release: 0.55),
+    },
+    tape_choir: {
+      waves: %i[triangle sine triangle], detune: [-7.0, 3.0, 8.0], octaves: [0, 0, 1],
+      cutoff: 480.0, env_amount: 540.0, resonance: 0.04, drive: 0.70,
+      amp: Envelope.new(attack: 0.46, decay: 1.5, sustain: 0.62, release: 2.4),
+      filter_env: Envelope.new(attack: 0.8, decay: 1.5, sustain: 0.25, release: 1.8),
+    },
+    velvet_prophet: {
+      waves: %i[saw triangle sine], detune: [-4.0, 4.0, 0.0], octaves: [0, 0, 1],
+      cutoff: 520.0, env_amount: 760.0, resonance: 0.06, drive: 0.78,
+      amp: Envelope.new(attack: 0.20, decay: 1.0, sustain: 0.62, release: 1.6),
+      filter_env: Envelope.new(attack: 0.18, decay: 1.1, sustain: 0.22, release: 1.2),
+    },
+    pocket_bass: {
+      waves: %i[sine triangle], detune: [0.0, 1.0], octaves: [0, -1],
+      cutoff: 145.0, env_amount: 220.0, resonance: 0.04, drive: 0.82,
+      amp: Envelope.new(attack: 0.010, decay: 0.28, sustain: 0.18, release: 0.22),
+      filter_env: Envelope.new(attack: 0.008, decay: 0.18, sustain: 0.04, release: 0.14),
+    },
+    shadow_lead: {
+      waves: %i[triangle sine triangle], detune: [-3.0, 0.0, 5.0], octaves: [0, 0, 1],
+      cutoff: 760.0, env_amount: 900.0, resonance: 0.055, drive: 0.74,
+      amp: Envelope.new(attack: 0.012, decay: 0.55, sustain: 0.32, release: 0.48),
+      filter_env: Envelope.new(attack: 0.006, decay: 0.34, sustain: 0.10, release: 0.28),
+    },
     # The string machine: a divide-down stack that does not articulate at all, held
     # wide by three layers a few cents apart rather than by a filter doing
     # anything. Nearly no envelope on purpose — these machines had one speed, and

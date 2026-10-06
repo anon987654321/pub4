@@ -2,6 +2,11 @@
 (() => {
   "use strict";
 
+  let audio = { bass: 0, mid: 0, high: 0, onset: 0, rms: 0 };
+  window.addEventListener("audio:update", (event) => {
+    audio = { ...audio, ...(event.detail || {}) };
+  }, { passive: true });
+
   function kernelStepContext(State) {
     const pr = State.pressureFields || {};
     const moodArc = State.moodArc || {};
@@ -9,7 +14,12 @@
       entropy: Number.isFinite(pr.entropy) ? pr.entropy : (State.entropy || 0),
       pressure: Math.min(1, (Number(pr.pct) || 0) / 100),
       confidence: State.confidence ?? 0.75,
-      decayScale: Number.isFinite(moodArc.decay_rate) ? moodArc.decay_rate : 1
+      decayScale: Number.isFinite(moodArc.decay_rate) ? moodArc.decay_rate : 1,
+      audioBass: audio.bass,
+      audioMid: audio.mid,
+      audioHigh: audio.high,
+      audioOnset: audio.onset,
+      audioRms: audio.rms
     };
   }
 
@@ -26,6 +36,7 @@
 
   window.MASTER_FACE_PARTICLES = Object.freeze({
     kernelStepContext,
-    spawnEmotionalGhost
+    spawnEmotionalGhost,
+    audio: () => ({ ...audio })
   });
 })();
