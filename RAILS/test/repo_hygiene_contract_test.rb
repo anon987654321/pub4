@@ -148,6 +148,18 @@ class RepoHygieneContractTest < Minitest::Test
   end
 
 
+  def test_rails_has_no_retired_tools_requires
+    offenders = Dir.glob("#{ROOT}/**/*.rb").flat_map do |path|
+      File.readlines(path, encoding: "UTF-8").each_with_index.filter_map do |line, index|
+        next unless line.match?(/\A\s*require_relative\s+["'][^"']*(?:\.\.\/)+tools\/operator\b/)
+
+        "#{path.sub("#{REPO_ROOT}/", "")}:#{index + 1}"
+      end
+    end
+
+    assert_empty offenders, "RAILS still requires the retired RAILS/tools/operator surface:\n  #{offenders.join("\n  ")}"
+  end
+
   def test_rails_has_no_tools_surface
     refute_path_exists File.join(ROOT, "tools"),
                        "RAILS is an app/shared tree; executable Rails tooling belongs under MASTER/tools/rails"
