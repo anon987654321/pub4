@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require_relative "../snapshot"
+require "shellwords"
+require_relative "../io/media_intent"
 
 require_relative "command_registry/command"
 require_relative "command_registry/help"
@@ -36,6 +38,7 @@ module Master
           "deploy" => command(:dispatch_deploy, root, review_gate: true),
           "model" => command(:dispatch_model, d[:agent], d[:config], d[:metrics], d[:root]),
           "plugin" => command(:dispatch_plugin),
+          "play" => command(:dispatch_play, d[:root]),
           "android" => command(:dispatch_android, root),
           "ios" => command(:dispatch_ios, root),
           "wake" => command(:dispatch_wake, root),
@@ -136,6 +139,16 @@ module Master
         "plugin0: invalid JSON — #{e.message}"
       rescue Master::Plugin::Error, ArgumentError => e
         "plugin0: #{e.message}"
+      end
+
+      # /play is explicit local music. Artist names are resolved by STUDIO/dilla;
+      # they never fall through to the shell or a web-search guess.
+      def dispatch_play(root, ctx: nil)
+        arg = arg_for(ctx).to_s.strip
+        return "play0: usage /play bach|j dilla|flying lotus|madlib|royksopp" if arg.empty?
+
+        result = Master::Io::MediaIntent.play_live_music(arg, root:)
+        result.ok? ? result.value![:rendered].to_s : result.message.to_s
       end
 
       def dispatch_auth(ctx: nil)
