@@ -16,6 +16,8 @@ if [ "${1:-}" = "--from-laptop" ]; then
 fi
 
 set -eo pipefail
+# SSH and direct invocation use a non-login shell; pin the OpenBSD package path.
+export PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin
 ROOT="${ROOT:-/home/dev/pub4}"
 WEB="$ROOT/MASTER/web"
 
