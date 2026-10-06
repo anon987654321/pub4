@@ -2131,10 +2131,41 @@ module LiveSynth
       abort "play: unknown lane #{lane.inspect}"
     end
   end
+  def self.authentic_progression_keys
+    return [] unless defined?(VERIFIED_PROGRESSION_SLOTS)
+
+    VERIFIED_PROGRESSION_SLOTS.filter_map do |name, entry|
+      artist = entry[:artist].to_s
+      producer = entry[:producer].to_s
+      next unless artist == "J Dilla" || producer == "J Dilla" || artist.include?("D'Angelo")
+
+      chords = Array(entry[:chords])
+      next unless chords.length >= 2
+      next unless chords.all? { |symbol| resolve_pad_chord_symbol(symbol) }
+
+      name.to_s
+    end.uniq.freeze
+  end
+
+  def self.authentic_progression_key(rng)
+    forced = ENV["LIVE_REFERENCE"].to_s.strip
+    return forced unless forced.empty?
+    return nil if ENV["LIVE_HARMONY"] == "free"
+
+    keys = authentic_progression_keys
+    return nil if keys.empty?
+
+    keys.sample(random: rng)
+  end
+
   def self.documented_progression(name)
+    if defined?(ARTIST_VERIFIED_PROGRESSIONS)
+      entry = ARTIST_VERIFIED_PROGRESSIONS[name.to_sym]
+      return entry.to_h { |key, value| [key.to_s, value] } if entry
+    end
+
     @documented_progressions ||= YAML.safe_load_file(File.expand_path("../data/dilla_reference.yml", __dir__)).fetch("documented_progressions")
-    source = @documented_progressions.fetch(name.to_s) { abort "play: no documented progression #{name}" }
-    source
+    @documented_progressions.fetch(name.to_s) { abort "play: no documented progression #{name}" }
   rescue Psych::Exception => e
     abort "play: documented progression data invalid (#{e.message})"
   end
@@ -2478,7 +2509,8 @@ module LiveSynth
       @leads = fam.fetch("leads", @c["leads"])
       @bass = fam.fetch("bass_patch", @c["bass_patch"])
       @moves = @c.fetch("moves").to_h { |row| [row["from"], row["to"]] }
-      @reference = reference && LiveSynth.documented_progression(reference)
+      @reference_name = reference || LiveSynth.authentic_progression_key(rng)
+      @reference = @reference_name && LiveSynth.documented_progression(@reference_name)
       bpm = @reference ? @reference.fetch("bpm").to_f : @c["bpm"].to_f
       bpm += rng.rand(-@c["bpm_spread"].to_f..@c["bpm_spread"].to_f) unless @reference
       @beat = 60.0 / bpm
@@ -2487,7 +2519,8 @@ module LiveSynth
       @key = @c.fetch("keys").sample(random: rng)
       @state = @c.fetch("start")
       @voicing = []
-      @pad = pad ? Patches.name!(pad) : @pads.sample(random: rng)
+      preferred_pads = @reference ? (@pads & %w[rhodes_tine e_piano]) : @pads
+      @pad = pad ? Patches.name!(pad) : (preferred_pads.empty? ? @pads : preferred_pads).sample(random: rng)
       @lead = @leads.sample(random: rng)
       @family = family
       @reference_index = 0
@@ -2501,7 +2534,12 @@ module LiveSynth
       @kit = Kit.new(@c, beat: @beat, rng:)
     end
 
-    def describe = "improvising, #{(60.0 / @beat).round} bpm in #{NAMES[@key]} minor#{" on #{@family}" if @family}"
+    def describe
+      source = if @reference
+                 "#{@reference.fetch("artist", @reference.fetch("producer", "reference"))}: #{@reference.fetch("title", @reference_name)}"
+               end
+      "improvising, #{(60.0 / @beat).round} bpm in #{NAMES[@key]} minor#{" on #{@family}" if @family}#{" — #{source}" if source}"
+    end
 
     def finished?(_clock) = false
 
@@ -2560,20 +2598,46 @@ module LiveSynth
     def chord!(stage)
       bars = @reference ? 1 : (@rng.rand < @c["two_bar_odds"] ? 2 : 1)
       length = bars * 4 * @beat
-      degree, quality, name = next_chord
-      @voicing = DillaImprovisation.nearest_voicing(DillaImprovisation.pitch_classes(@key, degree, quality), @voicing,
-                                                    range: Range.new(*@c["voicing_range"]), first: @c["first_voicing"])
+
+      if @reference
+        name, @voicing, root, bass = reference_chord!
+        @key = root
+        degree = 0
+        quality = nil
+      else
+        degree, quality, name = next_chord
+        @voicing = DillaImprovisation.nearest_voicing(DillaImprovisation.pitch_classes(@key, degree, quality), @voicing,
+                                                      range: Range.new(*@c["voicing_range"]), first: @c["first_voicing"])
+        bass = 36 + ((@key + degree) % 12)
+        bass += 12 if bass < 38
+      end
+
       pad = pad_spec
       @voicing.each { |midi| stage.note(midi, pad, @next_at, length - 0.05, @c["pad_gain"], :pad) }
-      bass!(stage, (36 + ((@key + degree) % 12)).then { |root| root < 38 ? root + 12 : root }, bars)
+      bass!(stage, bass, bars)
       @kit.write!(@next_at, length) if @drums
       lead!(stage, length) if @lead_on
       @chords += 1
       @chords_on_pad += 1
-      LiveSynth.log("#{name || "#{NAMES[(@key + degree) % 12]}#{quality}"} (#{bars} bar#{'s' if bars > 1}) on #{@pad}" \
-                    "#{" + #{@lead}" if @lead_on}")
+      LiveSynth.log("#{name || "#{NAMES[(@key + degree) % 12]}#{quality}"} (#{bars} bar#{'s' if bars > 1}) on #{@pad}"                     "#{" + #{@lead}" if @lead_on}")
       @next_at += length
       move! unless @reference
+    end
+
+    def reference_chord!
+      symbols = @reference.fetch("chords")
+      symbol = symbols.fetch(@reference_index % symbols.length).to_s
+      chord = resolve_pad_chord_symbol(symbol)
+      abort "live0: reference chord #{symbol.inspect} has no registered voicing" unless chord
+
+      midis = Array(chord.fetch(:hz)).map { |hz| (69 + (12 * Math.log2(hz.to_f / 440.0))).round }.uniq
+      root, _quality, bass_pc = Livesets.parse_chord(symbol)
+      root ||= midis.first % 12
+      bass_pc ||= root
+      @reference_index += 1
+      bass = 36 + bass_pc
+      bass += 12 if bass < 38
+      [symbol, midis, root, bass]
     end
 
     def next_chord
