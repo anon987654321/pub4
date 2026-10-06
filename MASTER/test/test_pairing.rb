@@ -114,7 +114,7 @@ class TestPairing < Minitest::Test
     refute_match(/bodyguard/i, notice)
   end
 
-  def test_redeem_budget_reads_the_file
+  def test_release_command_clears_the_local_owner\n    released = nil\n    Master::Device::Agent.stub(:owner_subject, "subject123") do\n      Master::Device::Agent.stub(:release_owner!, ->(root:) { released = root; "subject123" }) do\n        output = Master::CLI::CommandRegistry.dispatch_pair(@root, ctx: { args: "release" })\n\n        assert_equal "pair: released subject123", output\n        assert_equal @root, released\n      end\n    end\n  end\n  def test_redeem_budget_reads_the_file
     assert_equal 8, Master::Ground::Pairing.redeem_per_minute
     assert_equal 60, Master::Ground::Pairing.redeem_window_seconds
   end
