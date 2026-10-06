@@ -169,6 +169,7 @@ module Master
         {
           before: originals.to_h { |path, body| [path, Digest::SHA256.hexdigest(body.to_s)] },
           after: after.to_h { |path, body| [path, Digest::SHA256.hexdigest(body.to_s)] },
+          operations: plan.operations,
           written: plan.writes.keys,
           deleted: plan.deletes,
           proof: "review_and_tree_proof_held",
