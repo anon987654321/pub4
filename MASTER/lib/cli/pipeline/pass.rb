@@ -343,9 +343,21 @@ def default_apply?(*) = false
             "preview: #{total} #{total == 1 ? 'repair' : 'repairs'}",
             preview_row("rules", value[:rules]),
             preview_row("files", files),
-            "preview structure: #{structure.size} problem(s)",
+            preview_structure_row(structure),
             preview_row("transformations", { "order" => Array(value[:transformation_order]).join(" > ") }),
           ].compact.join("\n")
+        end
+
+        def preview_structure_row(structure)
+          return "preview structure: 0 problem(s)" if structure.empty?
+
+          shown = structure.first(PREVIEW_SHOWN).map do |problem|
+            operations = Array(problem[:candidate_operations]).join("/")
+            "#{problem[:problem_id]} #{operations}"
+          end
+          rest = structure.size - shown.size
+          line = "preview structure: #{shown.join(', ')}"
+          rest.positive? ? "#{line}, and #{rest} more problem(s)" : line
         end
 
         def preview_row(label, counts)
