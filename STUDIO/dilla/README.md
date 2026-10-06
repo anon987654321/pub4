@@ -709,10 +709,12 @@ drums more 909, the chords more Dilla or the textures more FlyLo.
 
 Run everything from `STUDIO/dilla`. `ruby dilla.rb out.wav 18` renders one
 track of eighteen bars, and `TRACK=kembara_rindu` in front of it picks the
-track. Bare `ruby dilla.rb` renders the ten-piece showcase into `demo.wav`,
+track. Bare `ruby dilla.rb` enters the live improviser: Dilla's own synth engine,
+drums, bass and lead around source-backed J Dilla and D'Angelo harmony. Set
+`LIVE_REFERENCE=<name>` to pin a verified progression, or `LIVE_HARMONY=free`
+to use the older freely wandering harmony. `pieces` renders the showcase,
 `piece <name>` renders one row, `compose` the six-minute piece, `stream` plays
-without end, and `help` prints every command from the table the dispatcher
-reads.
+without end, and `help` prints every command from the table the dispatcher reads.
 
 The crate has its own verbs. `chop` cuts a long recording into beds, reading
 `samples/ubrukte_samples.mp3` when given no path, and `chop list` shows the
