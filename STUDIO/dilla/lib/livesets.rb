@@ -2115,11 +2115,22 @@ module LiveSynth
   # themselves; a sentence cannot turn them.
   def play_artist!(words)
     key = words.join(" ").strip.downcase.delete_suffix(".rb").gsub(/\s+/, " ")
-    name = LiveSynth.config.fetch("play").fetch(key) { abort "play: unknown artist #{key.inspect}" }
-    master = LiveSynth.config.fetch("play_master")
-    perform!(Progression.new(name, rng: rng!, loops: 0, master: master), seconds: nil)
+    rng = rng!
+    case key
+    when "bach", "baroque"
+      perform!(BachToccata.new(rng:), seconds: nil)
+    when "j dilla", "dilla"
+      perform!(Improviser.new(rng:, family: "moog"), seconds: nil)
+    when "flying lotus", "flylo"
+      perform!(Improviser.new(rng:, family: "prophet"), seconds: nil)
+    when "madlib"
+      perform!(Improviser.new(rng:, family: "rhodes"), seconds: nil)
+    when "royksopp", "melody a.m."
+      perform!(Progression.new("royksopp_live", rng:, loops: 0), seconds: nil)
+    else
+      abort "play: unknown artist #{key.inspect}"
+    end
   end
-
   def standard_default!
     Session.claim!("the standard default (liveset)", steerable: false)
     log("the standard default -- `ruby dilla.rb live stop` to end")
@@ -2945,6 +2956,86 @@ module LiveSynth
         previous = tones
         root = midis.first % 12
         { "name" => name, "bass" => 36 + root, "tones" => tones }
+      end
+    end
+  end
+
+  # Bach BWV 565 lane: the actual live engine, with a church-organ voice.
+  # The public-domain D-minor incipit is followed by fugue-style entries.
+  class BachToccata
+    attr_reader :rng
+
+    SUBJECT = [81, 79, 77, 76, 74, 73, 74, 69, 76, 77, 73, 74].freeze
+    FUGUE = [81, 79, 81, 77, 81, 76, 81, 74, 81, 76, 73, 81, 74, 81, 76, 81, 77, 81, 78, 81, 80, 81].freeze
+    TRANSPOSES = [0, -5, 2, -7].freeze
+
+    def initialize(rng:)
+      @rng = rng
+      @organ = Patches.name!("church_organ")
+      @next_at = 0.0
+      @step = 0.16
+      @index = 0
+      @phase = :toccata
+      @pedal_at = 0.0
+    end
+
+    def describe = "Bach Toccata und Fuge BWV 565, church organ"
+    def finished?(_clock) = false
+
+    def player_command(rate, dest)
+      LiveSynth.through_ffmpeg(channels: 2, filter: ["-af", "aecho=0.8:0.88:1100|1700:0.28|0.20,alimiter=limit=0.94"], rate:, dest:) ||
+        abort("live0: Bach leaves through ffmpeg -- install ffmpeg and sox")
+    end
+
+    def schedule(stage, clock)
+      while @next_at < clock + 1.0
+        if @phase == :toccata
+          toccata_note(stage)
+          if @index >= SUBJECT.length * 3
+            @phase = :fugue
+            @index = 0
+            @step = 0.21
+          end
+        else
+          fugue_note(stage)
+        end
+        @next_at += @step
+      end
+      pedal(stage, clock)
+    end
+
+    def command(command, _clock)
+      return unless command["patch"]
+      @organ = Patches.name!(command["patch"])
+      LiveSynth.log("Bach organ -> " + @organ.to_s)
+    end
+
+    def overdub!(_left, _right, _clock, _rate) = nil
+
+    private
+
+    def toccata_note(stage)
+      note = SUBJECT[@index % SUBJECT.length]
+      octave = (@index / SUBJECT.length) % 2
+      midi = note + (octave * 12)
+      stage.note(midi, Patches.spec(@organ), @next_at, @step * 0.82, 0.48, :lead)
+      stage.note(midi - 12, Patches.spec(@organ), @next_at, @step * 1.7, 0.24, :pad) if (@index % 6).zero?
+      @index += 1
+    end
+
+    def fugue_note(stage)
+      entry = (@index / FUGUE.length) % TRANSPOSES.length
+      note = FUGUE[@index % FUGUE.length] + TRANSPOSES[entry]
+      stage.note(note, Patches.spec(@organ), @next_at, @step * 0.88, 0.42, :lead)
+      stage.note(note - 12, Patches.spec(@organ), @next_at, @step * 2.0, 0.22, :pad) if (@index % 8).zero?
+      @index += 1
+    end
+
+    def pedal(stage, clock)
+      while @pedal_at < clock + 1.0
+        stage.note(38, Patches.spec(@organ), @pedal_at, 1.7, 0.18, :bass)
+        stage.note(45, Patches.spec(@organ), @pedal_at + 0.85, 1.1, 0.13, :bass) if (@pedal_at / @step).round.even?
+        @pedal_at += 1.7
       end
     end
   end
