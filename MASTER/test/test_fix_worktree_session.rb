@@ -1,0 +1,68 @@
+# frozen_string_literal: true
+
+require_relative "test_helper"
+require "fileutils"
+require "open3"
+
+class TestFixWorktreeSession < Minitest::Test
+  def test_successful_worker_is_published_and_worktree_is_removed
+    Dir.mktmpdir("master-worktree-test-") do |dir|
+      remote = File.join(dir, "remote.git")
+      root = File.join(dir, "pub4")
+      system("git", "init", "--bare", remote)
+      system("git", "clone", remote, root)
+      git(root, "config", "user.name", "MASTER test")
+      git(root, "config", "user.email", "master-test@example.invalid")
+
+      FileUtils.mkdir_p(File.join(root, "MASTER", "bin"))
+      File.write(File.join(root, "README"), "before
+")
+      File.write(File.join(root, "MASTER", "bin", "master"), <<~RUBY)
+        #!/usr/bin/env ruby
+        path = File.join(Dir.pwd, "README")
+        File.write(path, "after
+")
+        system("git", "add", "README")
+        exit(system("git", "commit", "-m", "worker fix"))
+      RUBY
+      File.write(File.join(root, "MASTER", "bin", "operator"), "#!/usr/bin/env ruby\nexit 0\n")
+      FileUtils.chmod(0o755, File.join(root, "MASTER", "bin", "master"))
+      FileUtils.chmod(0o755, File.join(root, "MASTER", "bin", "operator"))
+
+      git(root, "add", ".")
+      git(root, "commit", "-m", "initial")
+      git(root, "branch", "-M", "main")
+      git(root, "push", "-u", "origin", "main")
+
+      File.write(File.join(root, "foreign.txt"), "keep me
+")
+
+      session = Master::Fix::WorktreeSession.new(root:)
+      result = session.run(
+        command: "/fix test",
+        foreign_paths: ["foreign.txt"],
+        proof_trees: ["MASTER"]
+      )
+
+      assert result.ok
+      assert_match(/published/, result.summary)
+      assert_equal "before
+", File.read(File.join(root, "README"))
+      assert_equal "", git_output(root, "show", "origin/main:README") == "after
+" ? "" : "wrong remote content"
+      refute File.exist?(result.worktree)
+      assert_empty git_output(root, "ls-remote", "--heads", "origin", result.branch)
+      assert_equal ["foreign.txt"], git_output(root, "status", "--porcelain=v1").lines.map { |line| line[3..].to_s.strip }
+    end
+  end
+
+  private
+
+  def git(root, *args)
+    system("git", "-C", root, *args)
+  end
+
+  def git_output(root, *args)
+    Open3.capture2e("git", "-C", root, *args).first
+  end
+end
