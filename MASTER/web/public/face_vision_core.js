@@ -5,7 +5,7 @@
   const MAX_FEATURES = 150;
   const features = new Map();
   const ROUTES = [
-    [/pipeline:stage|pipeline:start|skills:|master:face-stage/i, [1]],
+    [/pipeline:stage|pipeline:start|pipeline:stage|skills:|master:face-stage/i, [1]],
     [/council:/i, [2, 18]],
     [/pressure:|master:pressure|ctx:footer/i, [3]],
     [/valence|mood|expression/i, [4], (d) => d.valence != null],
