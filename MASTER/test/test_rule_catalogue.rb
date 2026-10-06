@@ -211,4 +211,13 @@ class TestRuleCatalogue < Minitest::Test
   def test_no_named_transform_is_dangling
     assert_empty Operator::AutofixReach.dangling.map { |d| "#{d[:rule]} -> #{d[:transform]}" }
   end
+
+  def test_rule_reach_counts_executable_laws_not_the_eight_policy_principles
+    rows = Operator::RuleReach.rules
+
+    assert_operator rows.size, :>, 100
+    assert_includes rows.map { |row| row["id"] }, "FAIL_VISIBLY"
+    assert_includes rows.map { |row| row["id"] }, "TRAILING_WHITESPACE"
+    assert_equal [], Operator::RuleReach.unreachable(rows)
+  end
 end
