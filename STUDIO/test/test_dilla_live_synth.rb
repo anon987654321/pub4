@@ -267,12 +267,14 @@ class TestDillaLiveSynth < Minitest::Test
       body = "MTrk".b + [track.bytesize].pack("N") + track
       File.binwrite(path, header + body)
 
-      parsed = Livesets::BachMidi.parse(path)
-      assert_equal 1, parsed.fetch(:notes).length
-      note = parsed.fetch(:notes).first
-      assert_equal 58, note.fetch(:note)
-      assert_in_delta 0.0, note.fetch(:start), 0.0001
-      assert_in_delta 0.5, note.fetch(:duration), 0.0001
+      events, length, format = BachMidi.parse(path)
+      assert_equal 1, events.length
+      note = events.first
+      assert_equal 58, note.fetch(:pitch)
+      assert_in_delta 0.0, note.fetch(:at), 0.0001
+      assert_in_delta 0.5, note.fetch(:held), 0.0001
+      assert_in_delta 0.5, length, 0.0001
+      assert_equal 1, format
     end
   end
 
