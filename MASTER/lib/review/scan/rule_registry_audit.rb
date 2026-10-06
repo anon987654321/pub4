@@ -87,10 +87,9 @@ module Master
         end
 
         def mechanical(entries, registry: build_registry_ids)
-          laws = law_ids
           entries.select do |rule|
             rule["detect_lexical"] || rule["detect_structural"] ||
-              detected?(laws, registry, rule["id"]) || detected?(laws, registry, rule["folded_into"])
+              detected?(registry, rule["id"]) || detected?(registry, rule["folded_into"])
           end
         end
 
@@ -130,8 +129,8 @@ module Master
         private
 
         def executable_semantic_ids
-          require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
-          ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.rules.empty?
+          require File.join(@root, "law", "law") unless defined?(::Law)
+          ::Law.load_all(File.join(@root, "law")) if ::Law.rules.empty?
           ::Law.rules.values.select(&:semantic?).map { |law| law.id.to_s.downcase }.to_set
         end
 
@@ -142,7 +141,7 @@ module Master
           law&.detect
         end
 
-        def detected?(laws, registry, id)
+        def detected?(registry, id)
           key = id.to_s.downcase
           return false if key.empty?
 
