@@ -269,13 +269,12 @@ class TestDillaLiveSynth < Minitest::Test
   def test_showcase_covers_the_live_feature_tour
     scenes = LiveSynth::SHOWCASE_SCENES.map(&:first)
     assert_equal %w[
-      dilla_life dangelo_spanish_joint moog_dark dangelo_root flylo
-      dilla_players dangelo_another_life opus3_strings dangelo_untitled
-      moog_dfam dangelo_brown_sugar madlib dilla_so_far_to_go
-      dangelo_really_love flylo_king_of_the_hill dangelo_sugah_daddy
-      matriarch_stabs dangelo_ballad grandmother_sweep madlib_figaro
-      royksopp memorymoog_organ vox_humana soft_reed glass_bell
-      flylo_computer_face bach
+      dilla_life flylo dangelo_spanish_joint moog_dark flylo_computer_face
+      dangelo_root dilla_players flylo_king_of_the_hill dangelo_another_life
+      opus3_strings dangelo_untitled moog_dfam dangelo_brown_sugar madlib
+      dilla_so_far_to_go dangelo_really_love dangelo_sugah_daddy matriarch_stabs
+      dangelo_ballad grandmother_sweep madlib_figaro royksopp memorymoog_organ
+      vox_humana soft_reed glass_bell bach
     ], scenes
     source = File.read(dilla("lib/livesets.rb"))
     assert_includes source, 'reference: "dilla_life"'
@@ -294,6 +293,14 @@ class TestDillaLiveSynth < Minitest::Test
     assert_includes source, 'DILLA_SHOWCASE'
     assert_includes source, 'speed: :ips7'
     assert_includes source, 'SHOWCASE_TEMPO_SCALE = 0.90'
+  end
+
+  def test_showcase_includes_a_real_tape_floor
+    source = File.read(dilla("lib/livesets.rb"))
+    assert_includes source, "class ShowcaseTapeTexture"
+    assert_includes source, "hiss_gain ="
+    assert_includes source, "@crackle_left"
+    assert_includes source, '@showcase_texture = LiveSynth.showcase?'
   end
 
   def test_showcase_tape_chain_calls_existing_livesets_audio_builders
