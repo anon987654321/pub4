@@ -187,6 +187,51 @@ module BachMidi
 
   URL = URI("https://www.mutopiaproject.org/ftp/BachJS/BWV565/ToccataFugue/ToccataFugue.mid")
   CACHE = File.join(Dir.home, ".cache", "master", "dilla", "bach_bwv565.mid")
+  DEFAULT_PATCH = "church_organ"
+
+  class Score
+    attr_reader :rng
+
+    def initialize(events:, length:, rng:, patch:)
+      @events = events
+      @length = length
+      @rng = rng
+      @patch = LiveSynth::Patches.name!(patch)
+      @knobs = LiveSynth::Knobs.new({}, response: LiveSynth::Demo::RESPONSE, rng:)
+      @scheduled = false
+    end
+
+    def knobs = @knobs
+
+    def describe = "Bach Toccata and Fugue BWV 565 MIDI, Dilla #{@patch}"
+
+    def finished?(clock) = @scheduled && clock >= @length
+
+    def schedule(stage, _clock)
+      return if @scheduled
+
+      spec = LiveSynth::Patches.spec(@patch)
+      @events.each do |event|
+        stage.note(event[:pitch], spec, event[:at], event[:held], event[:gain], :pad)
+      end
+      @scheduled = true
+    end
+
+    def command(command, clock)
+      return unless command["knob"]
+
+      LiveSynth::Say.turn!(@knobs, command, clock)
+    end
+
+    def overdub!(_left, _right, _clock, _rate) = nil
+
+    def player_command(rate, dest)
+      LiveSynth.through_ffmpeg(channels: 2,
+                               filter: ["-af", "aecho=0.8:0.88:1100|1700:0.28|0.20,alimiter=limit=0.94"],
+                               rate:, dest:) ||
+        abort("live0: Bach leaves through ffmpeg -- install ffmpeg and sox")
+    end
+  end
 
   def source
     return CACHE if File.file?(CACHE) && File.size?(CACHE).positive?
@@ -217,9 +262,177 @@ module BachMidi
     end
   end
 
+  # Read Standard MIDI directly. No resampling, quantising or invented notes:
+  # note-on/off pairs become the same pitch, duration and relative timing in
+  # seconds, with the file's tempo map applied before Dilla renders them.
+  def parse(path)
+    bytes = File.binread(path)
+    raise ArgumentError, "not a Standard MIDI file" unless bytes.byteslice(0, 4) == "MThd"
+
+    header_size = bytes.byteslice(4, 4).unpack1("N")
+    raise ArgumentError, "invalid MIDI header" if header_size < 6
+
+    format, track_count, division = bytes.byteslice(8, 6).unpack("n3")
+    raise ArgumentError, "unsupported MIDI division" if division.zero? || (division & 0x8000).positive?
+
+    cursor = 8 + header_size
+    tracks = []
+    tempo_events = []
+
+    track_count.times do
+      raise ArgumentError, "truncated MIDI track" unless bytes.byteslice(cursor, 4) == "MTrk"
+
+      length = bytes.byteslice(cursor + 4, 4).unpack1("N")
+      track = bytes.byteslice(cursor + 8, length)
+      raise ArgumentError, "truncated MIDI track data" unless track&.bytesize == length
+
+      parsed = parse_track(track)
+      tracks << parsed
+      tempo_events.concat(parsed[:tempos])
+      cursor += 8 + length
+    end
+
+    tempos = [[0, 500_000], *tempo_events].sort_by(&:first)
+    tempos = tempos.chunk_while { |a, b| a[0] == b[0] }.map(&:last)
+    notes = tracks.flat_map { |track| track[:notes] }.filter_map do |note|
+      at = tick_seconds(note[:start], division, tempos)
+      finish = tick_seconds(note[:finish], division, tempos)
+      held = finish - at
+      next if held <= 0.0
+
+      {
+        at:,
+        held:,
+        pitch: note[:pitch],
+        gain: (note[:velocity].to_f / 127.0 * 0.56).clamp(0.08, 0.56),
+      }
+    end.sort_by { |note| [note[:at], note[:pitch]] }
+
+    last_tick = tracks.map { |track| track[:end_tick] }.max || 0
+    [notes, tick_seconds(last_tick, division, tempos), format]
+  end
+
+  def parse_track(bytes)
+    cursor = 0
+    tick = 0
+    running = nil
+    active = Hash.new { |hash, key| hash[key] = [] }
+    notes = []
+    tempos = []
+
+    while cursor < bytes.bytesize
+      delta, cursor = read_vlq(bytes, cursor)
+      tick += delta
+      status = bytes.getbyte(cursor)
+
+      if status && status >= 0x80
+        cursor += 1
+        running = status
+      elsif running
+        status = running
+      else
+        raise ArgumentError, "MIDI running status without a prior status"
+      end
+
+      case status & 0xF0
+      when 0x80, 0x90
+        raise ArgumentError, "truncated MIDI note event" if cursor + 2 > bytes.bytesize
+
+        channel = status & 0x0F
+        pitch = bytes.getbyte(cursor)
+        velocity = bytes.getbyte(cursor + 1)
+        cursor += 2
+        key = [channel, pitch]
+
+        if (status & 0xF0) == 0x90 && velocity.positive?
+          active[key] << [tick, velocity]
+        elsif active[key].any?
+          start_tick, start_velocity = active[key].pop
+          notes << { start: start_tick, finish: tick, pitch:, velocity: start_velocity }
+        end
+      when 0xA0, 0xB0, 0xE0
+        cursor += 2
+      when 0xC0, 0xD0
+        cursor += 1
+      when 0xF0
+        case status
+        when 0xF0, 0xF7
+          length, cursor = read_vlq(bytes, cursor)
+          cursor += length
+          running = nil
+        when 0xFF
+          raise ArgumentError, "truncated MIDI meta event" if cursor >= bytes.bytesize
+
+          type = bytes.getbyte(cursor)
+          cursor += 1
+          length, cursor = read_vlq(bytes, cursor)
+          payload = bytes.byteslice(cursor, length)
+          raise ArgumentError, "truncated MIDI meta payload" unless payload&.bytesize == length
+
+          cursor += length
+          tempos << [tick, payload.unpack1("N")] if type == 0x51 && length == 3
+          running = nil
+        else
+          cursor += case status
+                     when 0xF1, 0xF3 then 1
+                     when 0xF2 then 2
+                     else 0
+                     end
+          running = nil
+        end
+      end
+    end
+
+    active.each_value do |stack|
+      stack.each do |start_tick, velocity|
+        next if start_tick >= tick
+
+        notes << { start: start_tick, finish: tick, pitch: nil, velocity: }
+      end
+    end
+
+    notes.select! { |note| note[:pitch] }
+    { notes:, tempos:, end_tick: tick }
+  end
+
+  def read_vlq(bytes, cursor)
+    value = 0
+    loop do
+      raise ArgumentError, "truncated MIDI variable-length value" if cursor >= bytes.bytesize
+
+      byte = bytes.getbyte(cursor)
+      cursor += 1
+      value = (value << 7) | (byte & 0x7F)
+      return [value, cursor] if (byte & 0x80).zero?
+    end
+  end
+
+  def tick_seconds(tick, division, tempos)
+    seconds = 0.0
+    previous_tick = 0
+    tempo = tempos.first[1]
+
+    tempos.drop(1).each do |tempo_tick, next_tempo|
+      break if tempo_tick > tick
+
+      seconds += (tempo_tick - previous_tick) * tempo / (division * 1_000_000.0)
+      previous_tick = tempo_tick
+      tempo = next_tempo
+    end
+
+    seconds + ((tick - previous_tick) * tempo / (division * 1_000_000.0))
+  end
+
   def play!
     path = source
-    puts "bach0: Bach Toccata and Fugue BWV 565 — original MIDI"
-    MIDIPlayback.play!(path)
+    events, length, format = parse(path)
+    abort "play: Bach BWV 565 MIDI contains no playable notes" if events.empty?
+
+    patch = ENV.fetch("DILLA_BACH_PATCH", DEFAULT_PATCH)
+    puts "bach0: Bach Toccata and Fugue BWV 565 — original MIDI, format #{format}, #{events.length} notes"
+    puts "bach0: Dilla synth #{patch}"
+    LiveSynth.perform!(Score.new(events:, length:, rng: LiveSynth.rng!, patch:), seconds: length)
+  rescue ArgumentError => e
+    abort "play: invalid Bach MIDI — #{e.message}"
   end
 end
