@@ -53,7 +53,7 @@ module Master
         "play" => {
           summary: "play a named Dilla music lane on the local sound card",
           detail: [
-            "/play bach — Bach Toccata und Fuge BWV 565 on the live church-organ engine.",
+            "/play bach — the complete BWV 565 MIDI score through Dilla's Memorymoog organ.",
             "/play j dilla — J Dilla source harmony (Flowers), rendered through the good live improviser.",
             "/play flying lotus — Flying Lotus source harmony (Camel), rendered through the good live improviser.",
             "/play madlib — Madlib source harmony (Accordion), rendered through the good live improviser.",
