@@ -501,6 +501,17 @@ class TestDillaLiveSynth < Minitest::Test
     assert_operator scenes.each_cons(2).count { |a, b| a.first.split("_").first != b.first.split("_").first }, :>=, 8
   end
 
+  def test_showcase_progressions_use_the_pocket_bass
+    with_live_dir do
+      previous = ENV["DILLA_SHOWCASE"]
+      ENV["DILLA_SHOWCASE"] = "1"
+      progression = LiveSynth::Progression.new("soul_jazz_six", rng: Random.new(1))
+      assert_equal "pocket_bass", progression.send(:bass_name)
+    ensure
+      previous.nil? ? ENV.delete("DILLA_SHOWCASE") : ENV["DILLA_SHOWCASE"] = previous
+    end
+  end
+
   def test_showcase_pads_and_bass_are_musically_separated
     with_live_dir do
       previous = ENV["DILLA_SHOWCASE"]

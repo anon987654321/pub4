@@ -3562,6 +3562,8 @@ module LiveSynth
     def pad_name = @override ? @override[1] : @pads[(@count / @p["pad_every"]) % @pads.size]
 
     def bass_name
+      return "pocket_bass" if LiveSynth.showcase?
+
       basses = @p["basses"] or return @p["bass_patch"]
 
       basses[(@count / @p["bass_every"]) % basses.size]
@@ -3570,6 +3572,7 @@ module LiveSynth
     # Each note seeded on its pitch and its start, so a progression played
     # twice is the same take.
     def note(stage, midi, spec, start, held, gain, role)
+      gain *= 0.10 if LiveSynth.showcase? && role == :bass
       stage.note(midi, spec, start, held, gain, role, rng: Random.new((midi * 7) + (start * 10).to_i))
     end
 
