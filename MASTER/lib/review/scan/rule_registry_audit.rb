@@ -36,8 +36,12 @@ module Master
           @root = root
         end
 
+        def population
+          @population ||= load_yaml_rules
+        end
+
         def call
-          yaml_entries = load_yaml_rules
+          yaml_entries = population
           registry = build_registry_ids
           c = classify_yaml_entries(yaml_entries, registry)
 
@@ -179,9 +183,11 @@ module Master
         end
 
         def registry_rule_rows
+          return @registry_rule_rows if defined?(@registry_rule_rows)
+
           require File.join(Master::ROOT, "lib", "master") unless defined?(::Master::ROOT)
           Review::Scan::RuleDSL
-          Review::Scan::Rule.registry
+          @registry_rule_rows = Review::Scan::Rule.registry
             .select { |klass| shipped?(klass) }
             .reject { |klass| RuleFactory.bridge_class?(klass) }
             .map { |klass| RuleFactory.build(klass, root: @root) }
@@ -197,7 +203,6 @@ module Master
                 "practice" => false
               }
             end
-        end
 
         # The reference loads the rule files, and a class in a multi-class file is
         # invisible to Zeitwerk until it does: asked cold, the registry answered
