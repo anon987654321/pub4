@@ -272,6 +272,11 @@ class TestDillaLiveSynth < Minitest::Test
     assert_equal 84, source.fetch("bpm")
   end
 
+  def test_bach_midi_defaults_to_the_fugue_section
+    assert_equal "fugue", BachMidi::DEFAULT_SECTION
+    assert_equal :fugue, BachMidi::DEFAULT_SECTION.to_sym
+  end
+
   def test_bach_midi_parser_reads_note_events_and_tempo
     Dir.mktmpdir do |dir|
       path = File.join(dir, "bach.mid")
