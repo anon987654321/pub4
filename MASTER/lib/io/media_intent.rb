@@ -360,13 +360,15 @@ module Master
       end
 
       def play_live_music(arg, root: MasterPaths.root, bus: nil)
+        name = arg.to_s.strip
+        command = name.empty? ? "live showcase" : "live play #{Shellwords.escape(name)}"
         result = ScriptDispatch.run(
-          root:, tool: "dilla", arg: "live play #{Shellwords.escape(arg.to_s.strip)}",
+          root:, tool: "dilla", arg: command,
           env: { "DILLA_COLTRANE" => "0" }
         )
         return result unless result.ok?
 
-        Result.ok(output: result.value!, rendered: result.value!, media: :dilla_live, style: arg.to_s.strip)
+        Result.ok(output: result.value!, rendered: result.value!, media: :dilla_live, style: name)
       end
 
       def live_synth(text, root: MasterPaths.root, bus: nil)

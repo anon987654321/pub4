@@ -2077,16 +2077,33 @@ module LiveSynth
 
   def showcase? = ENV["DILLA_SHOWCASE"] == "1"
 
-  # The showcase is the dark room: one slow tape pass, gentle glue, a little
-  # upper-mid removal and a short tape-like echo after every live score.
+  # The showcase is the dark room: slower, slightly below concert pitch, and
+  # finished by a real summing stack rather than a clean digital output.
+  # Four Nasty VCS stages provide the nonlinear glue; three Sonitex STX-1260
+  # passes progressively narrow and roughen the top. Loudness is maximised only
+  # at the end with a true-peak ceiling rather than clipping the bus.
+  SHOWCASE_PITCH_RATIO = 2.0**(-15.0 / 1200.0)
+
   def showcase_tape_chain
     [
-      Outboard.tape_machine(speed: :ips7, wow: 0.12, flutter: 0.05),
-      "acompressor=threshold=-24dB:ratio=1.5:attack=28:release=240:makeup=1.0",
-      "equalizer=f=2600:t=o:w=1.6:g=-2.2",
-      "lowpass=f=4200",
-      "aecho=0.82:0.72:82|164:0.18|0.10",
-      "volume=0.88",
+      "asetrate=#{(stream.fetch("rate").to_f * SHOWCASE_PITCH_RATIO).round(3)}",
+      "aresample=#{stream.fetch("rate")}",
+      "atempo=#{(1.0 / SHOWCASE_PITCH_RATIO).round(6)}",
+      Outboard.tape_machine(speed: :ips7, wow: 0.18, flutter: 0.07),
+      "acompressor=threshold=-24dB:ratio=1.45:attack=30:release=260:makeup=0.8",
+      "equalizer=f=2600:t=o:w=1.6:g=-2.6",
+      "lowpass=f=6800",
+      vcs(depth: 0.42, smear: 2.1),
+      sonitex(bits: 12, lo: 36, hi: 9800, drive: 1.08, mix: 0.68),
+      vcs(depth: 0.34, smear: 2.8),
+      sonitex(bits: 11, lo: 40, hi: 8600, drive: 1.11, mix: 0.78, samples: 2),
+      vcs(depth: 0.38, smear: 2.2),
+      Outboard.console_stack(instances: 3, offset: 0.10, param: 1.2, speed: 0.1),
+      sonitex(bits: 10, lo: 44, hi: 7600, drive: 1.15, mix: 0.88, samples: 2),
+      vcs(depth: 0.30, smear: 3.4),
+      sonitex(bits: 10, lo: 48, hi: 6800, drive: 1.18, mix: 0.92, samples: 2),
+      "aecho=0.82:0.72:82|164:0.16|0.09",
+      "loudnorm=I=-14:LRA=9:TP=-1.0:linear=false",
     ].freeze
   end
 
@@ -2125,7 +2142,14 @@ module LiveSynth
   # inventing a second renderer: source harmony, rotating instrument families,
   # drums, bass, arpeggios, DFAM, FM leads, knob movement, patch morphing and the
   # exact Bach score all take their turns.
+  # FlyLo leads the tour: the first five scenes are source-backed cells with
+  # deliberately different harmony, register and instrument families.
   SHOWCASE_SCENES = [
+    ["flylo", 30.0],
+    ["flylo_beginners_falafel", 28.0],
+    ["flylo_massage_situation", 26.0],
+    ["flylo_king_of_the_hill", 34.0],
+    ["flylo_computer_face", 24.0],
     ["dilla_life", 20.0],
     ["dilla_players", 24.0],
     ["dilla_so_far_to_go", 20.0],
@@ -2134,8 +2158,6 @@ module LiveSynth
     ["dangelo_spanish_joint", 26.0],
     ["dangelo_another_life", 30.0],
     ["dangelo_ballad", 24.0],
-    ["flylo", 18.0],
-    ["flylo_computer_face", 18.0],
     ["madlib", 18.0],
     ["madlib_figaro", 18.0],
     ["royksopp", 16.0],
@@ -2227,16 +2249,43 @@ module LiveSynth
     when "flylo"
       [
         Improviser.new(rng:, reference: "flylo_camel_documented", family: "prophet"),
-        [[4.0, { "toggle" => "lead", "on" => true }],
-         [8.0, { "lead" => "fm", "preset" => "glass" }],
-         [11.0, { "knob" => "detune", "amount" => 0.08, "seconds" => 3.0 }]],
+        [[5.0, { "toggle" => "lead", "on" => true }],
+         [9.0, { "lead" => "fm", "preset" => "glass" }],
+         [15.0, { "patch" => "prophet_pad" }],
+         [22.0, { "knob" => "detune", "amount" => 0.08, "seconds" => 4.0 }]],
+      ]
+    when "flylo_beginners_falafel"
+      [
+        Improviser.new(rng:, reference: "flylo_beginners_falafel_documented", family: "rhodes"),
+        [[6.0, { "lead" => "fm", "preset" => "bell" }],
+         [12.0, { "patch" => "e_piano" }],
+         [18.0, { "knob" => "cutoff", "amount" => 0.12, "seconds" => 4.0 }],
+         [23.0, { "lead" => "fm", "preset" => "drone" }]],
+      ]
+    when "flylo_massage_situation"
+      [
+        Improviser.new(rng:, reference: "flylo_massage_situation_documented", family: "moog"),
+        [[7.0, { "toggle" => "drums", "on" => false }],
+         [11.0, { "lead" => "fm", "preset" => "glass" }],
+         [16.0, { "patch" => "moog_strings" }],
+         [20.0, { "toggle" => "drums", "on" => true }],
+         [23.0, { "knob" => "resonance", "amount" => -0.1, "seconds" => 3.0 }]],
+      ]
+    when "flylo_king_of_the_hill"
+      [
+        Improviser.new(rng:, reference: "flylo_king_of_the_hill_documented", family: "rhodes"),
+        [[8.0, { "lead" => "fm", "preset" => "drone" }],
+         [16.0, { "patch" => "rhodes_tine" }],
+         [23.0, { "knob" => "detune", "amount" => 0.1, "seconds" => 5.0 }],
+         [29.0, { "toggle" => "lead", "on" => false }]],
       ]
     when "flylo_computer_face"
       [
         Improviser.new(rng:, reference: "flylo_computer_face_documented", family: "prophet"),
-        [[5.0, { "lead" => "fm", "preset" => "glass" }],
-         [11.0, { "patch" => "prophet_pad" }],
-         [15.0, { "knob" => "detune", "amount" => 0.06, "seconds" => 3.0 }]],
+        [[4.0, { "lead" => "fm", "preset" => "chaos" }],
+         [9.0, { "patch" => "prophet_pad" }],
+         [15.0, { "knob" => "detune", "amount" => 0.12, "seconds" => 3.0 }],
+         [20.0, { "toggle" => "lead", "on" => false }]],
       ]
     when "madlib"
       [

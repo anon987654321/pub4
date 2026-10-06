@@ -141,12 +141,11 @@ module Master
         "plugin0: #{e.message}"
       end
 
-      # /play is explicit local music. Artist names are resolved by STUDIO/dilla;
-      # they never fall through to the shell or a web-search guess.
+      # /play is the MASTER front door to Dilla. With no argument it is exactly
+      # the same showcase as bare `ruby dilla.rb`; an artist argument keeps the
+      # named source lane. Nothing falls through to the shell or a web-search guess.
       def dispatch_play(root, ctx: nil)
         arg = arg_for(ctx).to_s.strip
-        return "play0: usage /play bach|j dilla|flying lotus|madlib|royksopp" if arg.empty?
-
         result = Master::Io::MediaIntent.play_live_music(arg, root:)
         result.ok? ? result.value![:rendered].to_s : result.message.to_s
       end
