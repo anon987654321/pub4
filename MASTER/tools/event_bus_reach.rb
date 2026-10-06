@@ -109,7 +109,7 @@ module Operator
         rows << { topic:, role: :listener } if event_topic?(topic)
       end
 
-      code.to_enum(:scan, /\b(?:emitTtsEvent|dispatchEvent)\s*\(\s*(?:new\s+CustomEvent\s*\(\s*)?(['"])([^'"]+)\2/).each do
+      code.to_enum(:scan, /\b(?:emitTtsEvent|dispatchEvent)\s*\(\s*(?:new\s+CustomEvent\s*\(\s*)?(['"])([^'"]+)\1/).each do
         match = Regexp.last_match
         topic = match[2]
         rows << { topic:, role: :publisher } if event_topic?(topic)
