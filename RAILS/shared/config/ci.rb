@@ -74,7 +74,7 @@ Operator::CiGuard.run! do
       if script
         step lint, "#{RbConfig.ruby} #{script}"
       else
-        step lint, "echo '#{lint}.rb not found in MASTER/tools/rails/operator' >&2; exit 1"
+        step lint, "echo '#{lint}.rb not found in canonical MASTER/tools roots' >&2; exit 1"
       end
     end
     importmap_audit = %(bundle exec #{RbConfig.ruby} -e 'require "./config/environment"; require "importmap/commands"; Importmap::Commands.start(%w[audit])')
