@@ -578,7 +578,7 @@ class TestLawsPhysicalOrder < Minitest::Test
     CAPABILITY_STATUS_MUST_BE_TRUTHFUL ROBUSTNESS SINGULARITY LINEARITY
     PROXIMITY ABSTRACTION DENSITY RENDERED_VALUES prose transformation_policy
     self_test veto_patterns anti_patterns architecture runtime_policy rule_deps
-    plugins tokens
+    plugins tokens rule_ratchets
   ].freeze
 
   def test_laws_follow_constitutional_reading_order
