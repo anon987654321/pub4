@@ -111,6 +111,13 @@ module Master
           detail: ["/ios — begin onboarding on an iPhone or iPad through the browser/PWA.",
                    "MASTER does not claim native iOS hardware access; browser capabilities remain explicit."],
         },
+        "wake" => {
+          summary: "control the Android/Termux wake-word listener",
+          detail: ["/wake — report whether the local wake-word listener is enabled and which phrases it recognizes.",
+                   "/wake on — enable the listener after explicit local owner access.",
+                   "/wake off — disable the listener.",
+                   "The listener is Android/Termux-only; web visitors cannot enable it."],
+        },
         "doctor" => {
           summary: "host, provider, exposure and hardware health",
           detail: ["/doctor — keys, disk, git, pairing/gateway exposure.",
