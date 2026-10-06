@@ -20,7 +20,7 @@ module Master
         target = File.expand_path(target)
         raise "target #{target} is outside MASTER repository" unless inside_repo?(target)
 
-        expected = FileCollector.new(root: @root, bus: @bus).collect(target)
+        expected = Master::Fix::FixLoop::FileCollector.new(root: @root, bus: @bus).collect(target)
         actual = Array(files).map { |file| File.expand_path(file) }
         missing = expected - actual
         extra = actual - expected
