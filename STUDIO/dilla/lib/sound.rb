@@ -344,8 +344,10 @@ module AnalogSynth
       def retune!(sympathetic_hz)
         targets = sympathetic_hz.flat_map do |hz|
           f = hz.to_f
+          next [] if f < 120.0
+
           [f, f * 1.5, f * 2.0, f * 2.5]
-        end.select { |hz| hz.between?(60.0, 5_000.0) }.uniq.last(3)
+        end.select { |hz| hz.between?(120.0, 5_000.0) }.uniq.last(3)
 
         previous = @resonance_hz
         @resonance_targets = targets

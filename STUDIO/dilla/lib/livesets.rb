@@ -2074,7 +2074,9 @@ module LiveSynth
 
   def stream = config.fetch("stream")
 
-  SHOWCASE_TEMPO_SCALE = 0.84
+  SHOWCASE_TEMPO_SCALE = 0.80
+  SHOWCASE_BASS_GAIN = 0.00018
+  SHOWCASE_BASS_EVERY = 2
 
   # Effects are the instrument's normal room now: tape, console, saturation,
   # pitch wear, echo, hiss and crackle are on unless explicitly disabled.
@@ -2085,7 +2087,7 @@ module LiveSynth
   # Four Nasty VCS stages provide the nonlinear glue; three Sonitex STX-1260
   # passes progressively narrow and roughen the top. Loudness is maximised only
   # at the end with a true-peak ceiling rather than clipping the bus.
-  SHOWCASE_PITCH_RATIO = 2.0**(-42.0 / 1200.0)
+  SHOWCASE_PITCH_RATIO = 2.0**(-48.0 / 1200.0)
 
   # The bare showcase is the dark room: low, slow, saturated and tape-forward.
   # The low end is carved before the character stages so kick and snare retain
@@ -2095,23 +2097,24 @@ module LiveSynth
       "asetrate=#{(stream.fetch("rate").to_f * SHOWCASE_PITCH_RATIO).round(3)}",
       "aresample=#{stream.fetch("rate")}",
       "atempo=#{SHOWCASE_TEMPO_SCALE}",
-      "highpass=f=52",
-      Outboard.tape_machine(speed: :ips7, wow: 0.34, flutter: 0.11),
+      "highpass=f=66",
+      Outboard.tape_machine(speed: :ips7, wow: 0.38, flutter: 0.12),
       "acompressor=threshold=-25dB:ratio=1.18:attack=60:release=340:makeup=1.0",
-      "equalizer=f=82:t=q:w=0.9:g=-4.2",
-      "equalizer=f=125:t=q:w=1.0:g=-4.6",
-      "equalizer=f=220:t=o:w=1.1:g=-6.8",
-      "equalizer=f=320:t=q:w=1.0:g=-2.4",
+      "equalizer=f=82:t=q:w=0.9:g=-5.0",
+      "equalizer=f=125:t=q:w=1.0:g=-5.2",
+      "equalizer=f=220:t=o:w=1.1:g=-7.4",
+      "equalizer=f=320:t=q:w=1.0:g=-3.0",
       "equalizer=f=1700:t=o:w=1.0:g=-1.8",
-      "lowpass=f=3900",
+      "lowpass=f=3600",
       Livesets.sonitex(bits: 11, lo: 46, hi: 6200, drive: 1.06, mix: 0.70),
       Outboard.tape_machine(speed: :ips7, wow: 0.25, flutter: 0.075),
       Outboard.console_stack(instances: 2, offset: 0.08, param: 1.0, speed: 0.1),
       Livesets.sonitex(bits: 10, lo: 50, hi: 5600, drive: 1.07, mix: 0.72, samples: 2),
       Outboard.tape_machine(speed: :ips7, wow: 0.17, flutter: 0.05),
       Outboard.tape_machine(speed: :ips7, wow: 0.10, flutter: 0.03),
+      Outboard.tape_machine(speed: :ips7, wow: 0.075, flutter: 0.022),
       "acompressor=threshold=-21dB:ratio=1.16:attack=70:release=380:makeup=1.0",
-      "lowpass=f=3400",
+      "lowpass=f=3200",
       "alimiter=limit=0.93",
     ].freeze
   end
@@ -2168,56 +2171,60 @@ module LiveSynth
     flylo_haze_08: { artist: "FlyLo-inspired", title: "Weightless minor", bpm: 72, chords: %w[Dm11 Gm11 Ebmaj9 Cmaj7] },
   }.freeze
 
-  SHOWCASE_SCENES = [
-    ["dilla_players", 22.0],
-    ["dangelo_spanish_joint", 24.0],
-    ["flylo", 22.0],
-    ["flylo_haze_01", 24.0],
-    ["flylo_haze_05", 24.0],
-    ["moog_dark", 22.0],
-    ["dilla_life", 22.0],
-    ["dangelo_another_life", 26.0],
-    ["flylo_haze_03", 22.0],
-    ["madlib_figaro", 22.0],
-    ["soulquarians", 22.0],
-    ["dangelo_root", 26.0],
-    ["moog_dfam", 24.0],
-    ["dilla_so_far_to_go", 22.0],
-    ["dilla_intro", 22.0],
-    ["dilla_stakes", 22.0],
-    ["flylo_computer_face", 22.0],
-    ["flylo_beginners_falafel", 22.0],
-    ["flylo_massage_situation", 22.0],
-    ["flylo_haze_08", 24.0],
-    ["dangelo_untitled", 24.0],
-    ["dangelo_send_it_on", 24.0],
-    ["dangelo_left_right", 22.0],
-    ["madlib", 20.0],
-    ["dangelo_brown_sugar", 24.0],
-    ["moog_strings", 10.0],
-    ["flylo_king_of_the_hill", 24.0],
-    ["dangelo_really_love", 24.0],
-    ["dangelo_sugah_daddy", 24.0],
-    ["royksopp", 20.0],
-    ["rhodes_tine", 10.0],
-    ["tape_choir", 10.0],
-    ["dangelo_velvet", 10.0],
-    ["showcase_noir_pad", 10.0],
-    ["shadow_lead", 10.0],
-    ["vp330_ensemble", 10.0],
-    ["soft_reed", 10.0],
-    ["poly_lead", 10.0],
-    ["vapor_lead", 10.0],
-    ["surreal_wash", 10.0],
-    ["ringtone_lead", 10.0],
-    ["memorymoog_organ", 10.0],
-    ["minimoog_lead", 10.0],
-    ["moog_flute", 10.0],
-    ["prophet_pad", 10.0],
-    ["bach", 30.0],
+    SHOWCASE_SCENES = [
+    ["dilla_players", 24.0], ["dangelo_spanish_joint", 28.0], ["flylo", 24.0],
+    ["moog_dark", 22.0], ["madlib_figaro", 22.0], ["rhodes_tine", 12.0],
+    ["dilla_life", 24.0], ["dangelo_another_life", 30.0], ["flylo_haze_01", 24.0],
+    ["moog_dfam", 24.0], ["dangelo_root", 30.0], ["tape_choir", 12.0],
+    ["dilla_so_far_to_go", 24.0], ["flylo_computer_face", 24.0], ["dangelo_untitled", 30.0],
+    ["madlib", 22.0], ["dilla_intro", 24.0], ["dangelo_send_it_on", 28.0],
+    ["flylo_massage_situation", 24.0], ["soulquarians", 22.0], ["dangelo_left_right", 28.0],
+    ["showcase_noir_pad", 12.0], ["dilla_stakes", 24.0], ["flylo_beginners_falafel", 24.0],
+    ["dangelo_brown_sugar", 28.0], ["vp330_ensemble", 12.0], ["royksopp", 22.0],
+    ["dangelo_really_love", 30.0], ["flylo_haze_05", 24.0], ["dangelo_sugah_daddy", 28.0],
+    ["shadow_lead", 12.0], ["flylo_haze_03", 24.0], ["dangelo_velvet", 12.0],
+    ["moog_strings", 12.0], ["flylo_haze_08", 24.0], ["soft_reed", 12.0],
+    ["memorymoog_organ", 12.0], ["poly_lead", 12.0], ["vapor_lead", 12.0],
+    ["surreal_wash", 12.0], ["ringtone_lead", 12.0], ["minimoog_lead", 12.0],
+    ["moog_flute", 12.0], ["prophet_pad", 12.0], ["bach", 30.0],
   ].freeze
 
-  SHOWCASE_MODES = {
+  # D'Angelo source rows use richer gospel/neo-soul grips than the generic
+  # catalogue. Rootless upper structures stay in the Rhodes/piano register;
+  # slash-bass notation remains separate so the left hand supplies the motion.
+  DANGELO_VOICING_OFFSETS = {
+    "m7" => [3, 7, 10, 14], "m9" => [3, 7, 10, 14, 17],
+    "m11" => [3, 7, 10, 14, 17], "m7b5" => [3, 6, 10, 14],
+    "maj7" => [4, 7, 11, 14], "maj9" => [4, 7, 11, 14, 17],
+    "maj7#11" => [4, 11, 14, 18, 21], "add9" => [4, 7, 14, 17],
+    "7" => [4, 10, 14, 17], "7b9" => [4, 10, 13, 17],
+    "7#9" => [4, 10, 15, 17], "13" => [4, 10, 14, 18],
+    "sus4" => [5, 7, 10, 14], "7sus4" => [5, 7, 10, 14],
+    "sus9" => [5, 7, 10, 14, 17], "13sus" => [5, 10, 14, 17, 21],
+    "6/9" => [4, 7, 9, 14, 16], "dim7" => [3, 6, 9, 12],
+    "maj" => [4, 7, 11, 14],
+  }.freeze
+
+  def self.dangelo_reference?(reference)
+    reference && reference.fetch("artist", "").to_s.include?("D'Angelo")
+  end
+
+  def self.dangelo_voicing(symbol)
+    root, quality, = Livesets.parse_chord(symbol)
+    offsets = root && quality && DANGELO_VOICING_OFFSETS[quality]
+    return unless offsets
+
+    notes = offsets.map { |interval| root + 48 + interval }
+    while notes.max > 76
+      notes.map! { |note| note - 12 }
+    end
+    while notes.min < 50
+      notes.map! { |note| note + 12 }
+    end
+    notes
+  end
+
+SHOWCASE_MODES = {
     "all" => SHOWCASE_SCENES,
     "dilla" => SHOWCASE_SCENES.select { |name, _| name.start_with?("dilla_") || name == "dilla_players" },
     "flylo" => SHOWCASE_SCENES.select { |name, _| name.start_with?("flylo") },
@@ -2607,6 +2614,8 @@ module LiveSynth
   end
 
   def finalize_showcase_record!(output, rate)
+    return true if File.file?(output) && File.size?(output).positive?
+
     raw = "#{output}.s16le"
     return false unless File.file?(raw) && File.size?(raw).positive?
 
@@ -2772,9 +2781,9 @@ module LiveSynth
     if dest && ENV["DILLA_SHOWCASE_LIVE_RECORD"] == "1"
       player = (DillaLive.player_command(rate) || Livesets.player_command(rate)) or return nil
       FileUtils.mkdir_p(File.dirname(dest))
-      raw = "#{dest}.s16le"
-      command = input + output_map + ["-vn", "-sn", "-dn", "-f", "s16le", "-ac", "2", "-ar", rate.to_s, "-"]
-      return ["sh", "-c", "#{Shellwords.join(command)} | tee #{Shellwords.escape(raw)} | #{Shellwords.join(player)}"]
+      record = input + output_map + ["-y", "-vn", "-sn", "-dn", "-c:a", "pcm_s16le", "-f", "wav", dest,
+                                     *output_map, "-vn", "-sn", "-dn", "-f", "s16le", "-ac", "2", "-ar", rate.to_s, "-"]
+      return ["sh", "-c", "#{Shellwords.join(record)} | #{Shellwords.join(player)}"]
     end
 
     return input + output_map + ["-y", "-vn", "-sn", "-dn", "-c:a", "pcm_s16le", dest] if dest
@@ -3269,7 +3278,12 @@ module LiveSynth
       chord = resolve_pad_chord_symbol(symbol)
       abort "live0: reference chord #{symbol.inspect} has no registered voicing" unless chord
 
-      midis = Array(chord.fetch(:hz)).map { |hz| (69 + (12 * Math.log2(hz.to_f / 440.0))).round }.uniq
+      registered = Array(chord.fetch(:hz)).map { |hz| (69 + (12 * Math.log2(hz.to_f / 440.0))).round }.uniq
+      midis = if LiveSynth.dangelo_reference?(@reference)
+                LiveSynth.dangelo_voicing(symbol) || registered
+              else
+                registered
+              end
       root, _quality, bass_pc = Livesets.parse_chord(symbol)
       root ||= midis.first % 12
       bass_pc ||= root
@@ -3300,11 +3314,14 @@ module LiveSynth
       late = @c["bass_late_seconds"]
       at = @next_at
       if LiveSynth.showcase?
-        gain = @bass_gain || 0.00055
-        stage.note(root, spec, at + 0.024, 0.10 * @beat, gain, :bass)
-        return unless bars == 2 && @rng.rand < 0.06
+        return unless (@chords % LiveSynth::SHOWCASE_BASS_EVERY).zero?
 
-        stage.note(root, spec, at + (4 * @beat) + 0.028, 0.08 * @beat, gain * 0.22, :bass)
+        gain = @bass_gain || LiveSynth::SHOWCASE_BASS_GAIN
+        showcase_root = root + 12
+        stage.note(showcase_root, spec, at + 0.028, 0.10 * @beat, gain, :bass)
+        return unless bars == 2 && @rng.rand < 0.05
+
+        stage.note(showcase_root, spec, at + (4 * @beat) + 0.032, 0.08 * @beat, gain * 0.20, :bass)
         return
       end
 
@@ -3601,7 +3618,7 @@ module LiveSynth
         post.fetch("dub").gsub(/<(\d+)>/) { (beat * Regexp.last_match(1).to_i).round.to_s }
       end
       showcase_tail = LiveSynth.showcase? ? ",#{LiveSynth.showcase_tape_chain.join(",")}" : ""
-      weights = LiveSynth.showcase? ? "1 0.10 0.60" : "1 1 1"
+      weights = LiveSynth.showcase? ? "1 0.07 0.44" : "1 1 1"
       "[0:a]pan=stereo|c0=c0|c1=c1[dry];[0:a]pan=stereo|c0=c2|c1=c3[wet];[0:a]pan=stereo|c0=c4|c1=c5[k];"         "[dry]highpass=f=58,equalizer=f=105:t=q:w=1.0:g=-3.0,equalizer=f=180:t=q:w=1.0:g=-2.5,#{chain}[d];[wet]#{send}[w];[d][k]sidechaincompress=threshold=0.06:ratio=4.8:attack=2:release=150:makeup=1[ducked];"         "[ducked][w][k]amix=inputs=3:weights=#{weights}:normalize=0,alimiter=limit=#{post['limit']}#{showcase_tail}[dilla_showcase_mix]"
     end
     def command(post, rate:, beat:, dest: nil)
@@ -3667,8 +3684,8 @@ module LiveSynth
       dfam_right = Array.new(right.length, 0.0)
       @dfam.render!(dfam_left, dfam_right, clock, rate)
       left.each_index do |i|
-        left[i] += dfam_left[i] * 0.35
-        right[i] += dfam_right[i] * 0.35
+        left[i] += dfam_left[i] * 0.22
+        right[i] += dfam_right[i] * 0.22
       end
       nil
     end
