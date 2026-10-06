@@ -420,11 +420,33 @@ module Master
         return false unless record
         return false unless RESUMABLE_STATES.include?(record["state"].to_s)
 
-        # A dead owner is not an active mission. Treating an expired lease as
-        # globally live strands every different target behind an abandoned run.
-        return false if record["state"].to_s == "running" && lease_expired?(record)
+        return false unless mission_live?(record)
+        return false if record["goal"].to_s == goal.to_s && record["scope"].to_s == relative(scope).to_s
 
-        record["goal"].to_s != goal.to_s || record["scope"].to_s != relative(scope).to_s
+        true
+      end
+
+      def mission_live?(record)
+        return false unless record["state"].to_s == "running"
+        return false if lease_expired?(record)
+
+        owner = record["lease_owner"].to_s
+        return true if owner.empty?
+        return true unless owner.start_with?("#{Socket.gethostname}:")
+
+        pid = owner.split(":", 3)[1].to_i
+        return false if pid <= 0 || pid == Process.pid && record["lease_owner"] == self.class.instance_id
+
+        process_alive?(pid)
+      end
+
+      def process_alive?(pid)
+        Process.kill(0, pid.to_i)
+        true
+      rescue Errno::ESRCH
+        false
+      rescue Errno::EPERM
+        true
       end
 
       def active_mission_conflict(record, goal:, scope:)
