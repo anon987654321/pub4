@@ -120,7 +120,10 @@ module Master
       # Explicit capability boundary for external agents. These are facts
       # about the live executable law population, not permissions to ignore it.
       def capability_report(rules = self.rules)
-        matrix = ProtocolDetectorMatrix.matrix(Array(rules).select { |rule| !rule.respond_to?(:enforceable?) || rule.enforceable? })
+        eligible = Array(rules).select do |rule|
+          !rule.respond_to?(:enforceable?) || rule.enforceable?
+        end
+        matrix = ProtocolDetectorMatrix.matrix(eligible)
         values = matrix.values
         {
           "measurement_only_detectors" => values.select { |entry| entry["measurement_mode"] }.map { |entry| entry["id"] },
