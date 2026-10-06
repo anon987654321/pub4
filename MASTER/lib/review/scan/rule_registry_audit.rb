@@ -3,7 +3,7 @@
 module Master
   module Review
     module Scan
-      # Audits laws.yml declarative corpus vs Ruby scanner registry.
+      # Audits executable law population vs Ruby scanner registry.
       class RuleRegistryAudit
         Report = Data.define(:yaml_rules, :registry_ids, :kernel_ids, :lexical_wired, :lexical_unwired,
                              :semantic_only, :structural_unwired, :dep_graph_gaps, :mechanical, :source_drift) do
@@ -78,7 +78,7 @@ module Master
           {
             yaml_only: yaml_only.sort.freeze,
             law_only: (laws - yaml_ids).sort.freeze,
-            registry_only: (registry_ids - yaml_ids).sort.freeze,
+            registry_only: (registry_ids - laws).sort.freeze,
           }.freeze
         end
 
@@ -140,7 +140,10 @@ module Master
 
         def detected?(laws, registry, id)
           key = id.to_s.downcase
-          !key.empty? && (laws.include?(key) || registry.include?(key))
+          return false if key.empty?
+
+          detector = law_detector?(key)
+          detector || registry.include?(key)
         end
 
         # Asked of the loaded registry, not of the source text: law/prose.rb
@@ -155,7 +158,43 @@ module Master
         end
 
         def load_yaml_rules
-          Master.law_entries(root: @root)
+          law_rows = executable_law_rows
+          registry_rows = registry_rule_rows
+          law_ids = law_rows.map { |row| row["id"].to_s.downcase }.to_set
+
+          law_rows + registry_rows.reject { |row| law_ids.include?(row["id"].to_s.downcase) }
+        end
+
+        def executable_law_rows
+          require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
+          ::Law.load_all(File.join(@root, "law")) if ::Law.rules.empty?
+          ::Law.rules.values.map do |law|
+            law.contract_entry.merge(
+              "detect" => !law.detect.nil?,
+              "semantic" => !law.ask.nil?,
+              "practice" => !law.practice.nil?
+            )
+          end
+        end
+
+        def registry_rule_rows
+          Review::Scan::RuleDSL
+          Review::Scan::Rule.registry
+            .select { |klass| shipped?(klass) }
+            .reject { |klass| RuleFactory.bridge_class?(klass) }
+            .map { |klass| RuleFactory.build(klass, root: @root) }
+            .map do |rule|
+              {
+                "id" => rule.id.to_s,
+                "severity" => rule.severity.to_s,
+                "mode" => rule.mode.to_s,
+                "languages" => Array(rule.languages).map(&:to_s),
+                "autofix" => rule.autofix.to_s,
+                "detect" => true,
+                "semantic" => false,
+                "practice" => false
+              }
+            end
         end
 
         # The reference loads the rule files, and a class in a multi-class file is
