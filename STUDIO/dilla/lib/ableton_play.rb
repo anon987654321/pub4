@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require "digest"
+require "fileutils"
+
 # Recover the operator's old Ableton beats without requiring Ableton Live itself.
 # .als files are gzip-compressed XML; the Ableton reader already understands that
 # document, so /play should use the real notes and their clip positions rather
@@ -8,7 +11,6 @@ module AbletonPlay
   module_function
 
   DILLA_ROOT = File.expand_path("..", __dir__)
-  CACHE_DIR = File.join(DILLA_ROOT, "livesets_midi", "downloaded_als")
   PPQ = 480
   DRUM_CHANNEL = 9
 
@@ -29,14 +31,21 @@ module AbletonPlay
     value.to_s.downcase
         .delete_suffix(".als")
         .gsub(/[^a-z0-9]+/, "_")
-        .gsub(/A_+|_+z/, "")
+        .gsub(/\A_+|_+\z/, "")
+  end
+
+  def set_slug(path)
+    folder = File.basename(File.dirname(path))
+    raw = folder.match?(/ Project\z/i) ? folder.sub(/ Project\z/i, "") : File.basename(path, ".als")
+    key = normalize(raw)
+    key.empty? ? "ableton_set" : key
   end
 
   def candidates
     sets.map do |path|
       {
         path:,
-        slug: Ableton.slug(path),
+        slug: set_slug(path),
         file: normalize(File.basename(path))
       }
     end
