@@ -847,6 +847,22 @@ class TestFixConvergence < Minitest::Test
     assert_equal [:pass, 0], order.last
   end
 
+  def test_structural_sweep_failure_is_not_swallowed
+    sweep = Object.new
+    def sweep.run(**) = raise "boom"
+
+    loop = build_loop([])
+    loop.instance_variable_set(:@sweeps, [sweep])
+
+    error = assert_raises(RuntimeError) do
+      loop.send(:sweep_tree, @root, "r1")
+    end
+
+    assert_match(/structural sweep failed/, error.message)
+    assert_match(/boom/, error.message)
+  end
+
+
   def test_a_pass_limit_is_a_plateau_not_a_done
     violations = [{ rule: "TEST_RULE", file: File.join(@root, "dummy.yml"), line: 1, message: "stays" }]
     result = build_loop(violations).run(@root, max_passes: 2)
