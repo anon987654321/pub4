@@ -565,8 +565,7 @@ function resumeSttAfterSpeech() {
 // Re-arming after speech depends on a chain: audio.onended -> finishTTSPlayback
 // -> ttsTick -> the queue drains -> resumeSttAfterSpeech. Every link has broken
 // at least once, and each break was fixed where it broke: the duck with no undo
-// on the element path, the hard-skip that bypassed ttsTick, browser TTS that
-// never fired onend because no voice matched the language, the auto-voice
+// on the element path, the hard-skip that bypassed ttsTick, and the auto-voice
 // timeout above. Four fixes, one symptom — a mic that goes grey and stays grey.
 //
 // So this does not add a fifth link. It states the invariant and repairs it:
@@ -579,8 +578,7 @@ function resumeSttAfterSpeech() {
 // pointer that does not exist.
 // Two states are covered, because the parking above created the second one.
 // resumeSttAfterSpeech() is reached from ttsTick()'s empty-queue branch, so a
-// greeting that finishes without passing through ttsTick -- the browser
-// speechSynthesis fallback has done exactly that -- would leave
+// greeting that finishes without passing through ttsTick would leave
 // autoVoicePending set and never honoured, and the invariant tick would not see
 // it either, because voice mode was never entered. Handing the timeout's intent
 // to one call site made that call site load-bearing; this is the backstop for it.
