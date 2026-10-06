@@ -3105,6 +3105,7 @@ module Outboard
   end
 
   def console_sum(drive: 5, offset: 0.10, param: 1.2, makeup: -1.0, speed: 0.1)
+    speed = [speed.to_f, 0.1].max
     "allpass=f=90:width_type=q:w=0.6:order=2," \
       "allpass=f=1800:width_type=q:w=0.5:order=2," \
       "aphaser=in_gain=0.5:out_gain=1.9:delay=3.2:decay=0.15:speed=#{speed}:type=t," \
