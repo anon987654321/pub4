@@ -32,7 +32,10 @@ module Master
       stamp = phantom_policy_stamp
       return @detectors if @detectors && @detectors_stamp == stamp
 
-      @detectors = policy.fetch("detectors", {}).transform_values { |value| compile_detector(value) }
+      descriptions = PREDICATES.keys + ["empty_tool_response"]
+      @detectors = policy.fetch("detectors", {}).each_with_object({}) do |(name, value), out|
+        out[name] = compile_detector(value, allow_description: descriptions.include?(name))
+      end
       @detectors_stamp = stamp
       @detectors
     rescue StandardError => e
@@ -176,11 +179,12 @@ module Master
       [stat.size, stat.ino, stat.mtime.to_r]
     end
 
-    def compile_detector(value)
+    def compile_detector(value, allow_description: false)
       return value if value.is_a?(Regexp)
       raise ArgumentError, "phantom detector must be a regex literal" unless value.is_a?(String)
 
       literal = value.match(%r{\A/(.*)/([imx]*)\z})
+      return nil if allow_description && !literal
       raise ArgumentError, "phantom detector must be a regex literal: #{value.inspect}" unless literal
 
       flags = literal[2].chars.reduce(0) do |opts, flag|

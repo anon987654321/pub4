@@ -141,6 +141,15 @@ class TestPhantomRecovery < Minitest::Test
 
   # The prose detectors used to compile into regexes matching only their own
   # sentence, which a reply quoting data/laws.yml would trip.
+  def test_semantic_detector_descriptions_are_not_compiled_as_regexes
+    detectors = Master::PhantomRecovery.detectors
+
+    assert_nil detectors.fetch("text_repetition_loop")
+    assert_nil detectors.fetch("xml_tool_call_failure")
+    assert_nil detectors.fetch("empty_tool_response")
+    assert_instance_of Regexp, detectors.fetch("gaslighting_preamble")
+  end
+
   def test_malformed_detector_declaration_fails_closed
     assert_raises(ArgumentError) { Master::PhantomRecovery.compile_detector("not-a-regex") }
   end
