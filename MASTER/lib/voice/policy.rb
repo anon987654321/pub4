@@ -19,6 +19,7 @@ module Master
         "stream_live_default" => true,
         "default_rate" => "-5%",
         "default_pitch" => "+0Hz",
+        "operator_log" => { "voice" => "christopher", "rate" => "-10%", "pitch" => "+0Hz" },
         "rotation" => %w[jenny],
         "language_voices" => { "en" => "jenny", "nb" => "pernille", "ms" => "yasmin" },
         "language_voice_families" => {
@@ -167,6 +168,24 @@ module Master
 
       def default_pitch
         data["default_pitch"].to_s
+      end
+
+      def operator_log
+        value = data["operator_log"]
+        value.is_a?(Hash) ? value : FALLBACK["operator_log"]
+      end
+
+      def operator_log_voice
+        key = operator_log["voice"].to_s.strip.downcase.to_sym
+        Speech::VOICES.key?(key) ? key : FALLBACK["operator_log"]["voice"].to_sym
+      end
+
+      def operator_log_rate
+        operator_log["rate"].to_s.strip.empty? ? FALLBACK["operator_log"]["rate"] : operator_log["rate"].to_s
+      end
+
+      def operator_log_pitch
+        operator_log["pitch"].to_s.strip.empty? ? FALLBACK["operator_log"]["pitch"] : operator_log["pitch"].to_s
       end
 
       # Short name to Edge voice, from Speech::VOICES. The face resolved the

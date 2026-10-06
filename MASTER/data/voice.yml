@@ -63,6 +63,10 @@ tts:
   # roles add only a few hertz where useful.
   default_rate: "-5%"
   default_pitch: "+0Hz"
+  operator_log:
+    voice: christopher
+    rate: "-10%"
+    pitch: "+0Hz"
 
   # What the voice is put through after synthesis, chosen by the operator by ear.
   # Policy.post_chain reads it, Speech#shaped applies it, and browser_payload

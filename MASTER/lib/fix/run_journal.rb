@@ -24,6 +24,13 @@ module Master
       MAX_RUNS = 24
       RESUMABLE_STATES = %w[active crashed delivery_failed].freeze
 
+      def self.instance_id
+        return @instance_id if @instance_pid == Process.pid
+
+        @instance_pid = Process.pid
+        @instance_id = "#{Process.pid}:#{SecureRandom.hex(8)}"
+      end
+
       def initialize(root:, bus: nil)
         @root = root
         @bus = bus
@@ -107,6 +114,7 @@ module Master
       # True when the run was released.
       def release_elsewhere(run, target)
         return false if run["target"] == relative(target)
+        return true if run["process_token"].to_s == self.class.instance_id
         return false if process_alive?(run["pid"])
 
         previous = run["state"]
@@ -149,6 +157,7 @@ module Master
           "deadline_at" => (now + Integer(budget_seconds)).iso8601,
           "last_seen_at" => now.iso8601,
           "pid" => Process.pid,
+          "process_token" => self.class.instance_id,
           "passes" => [],
         }
         data["runs"] << run

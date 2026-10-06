@@ -193,6 +193,7 @@ names.each do |name|
   results[name] = result
   outcome = result.outcome
   if outcome == :passed
+    result.render if %w[css_constitution design_metrics].include?(name)
     log_retired("#{GATE_UNIT} at #{GATE_PARENT}: #{name} passed")
   else
     result.render

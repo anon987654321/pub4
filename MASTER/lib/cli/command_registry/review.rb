@@ -62,7 +62,8 @@ module Master
         Master::Trace::Dmesg.status("fix0", "target queue: #{targets.join(", ")}") if targets.size > 1
         trace_scope = execution_trace_scopes(target)
 
-        rendered = with_dmesg_verbosity(raw, default: "trace") do
+        rendered = Master::Trace::Dmesg.with_log_voice do
+          with_dmesg_verbosity(raw, default: "trace") do
           unless ENV["MASTER_FIX_DEEP_TRACE"] == "0"
             trace = begin
               Master::Fix::ExecutionTrace.new(
@@ -98,6 +99,7 @@ module Master
           next failure if failure
 
           results.join("\n")
+          end
         end
         return rendered unless Master::Fix::CodeWatch.requested?
 
@@ -152,7 +154,9 @@ module Master
 
         trees = %w[MASTER RAILS OPENBSD STUDIO]
         tokens = raw.split(/\s+/)
-        tokens.size > 1 && tokens.all? { |token| trees.include?(token) } ? tokens : [raw]
+        return tokens if tokens.size > 1 && tokens.all? { |token| trees.include?(token) }
+
+        tokens.map { |token| token.sub(%r{\A\.\./(?=[A-Z]+(?:/|\z))}, "") }
       end
 
       def fix_targets(target, root:)
