@@ -241,11 +241,9 @@ class TestDillaLiveSynth < Minitest::Test
       )
 
       assert_equal "sh", command.first
-      assert_includes command.last, "-f wav"
-      assert_includes command.last, Shellwords.escape(destination)
-      assert_includes command.last, "-f s16le"
-      assert_includes command.last, "pipe:1"
-      assert_includes command.last, "-map 0:a:0"
+      assert_includes command.last, "-f tee"
+      assert_includes command.last, "[f=wav]#{Shellwords.escape(destination)}|[f=s16le]pipe:1"
+      assert_equal 1, command.last.scan("-map").length
       assert_includes command.last, "/opt/homebrew/bin/play"
     end
   ensure
@@ -259,7 +257,7 @@ class TestDillaLiveSynth < Minitest::Test
     score.schedule(stage, 0.0)
     bass = stage.instance_variable_get(:@voices).find { |voice| voice.role == :bass }
     refute_nil bass
-    assert_operator bass.instance_variable_get(:@gain), :<, 0.02
+    assert_operator bass.instance_variable_get(:@gain), :<, 0.01
   ensure
     ENV.delete("DILLA_SHOWCASE")
   end
@@ -349,11 +347,17 @@ class TestDillaLiveSynth < Minitest::Test
     refute_includes source, 'aecho=0.8:0.85:<375>:0.5'
   end
 
+  def test_showcase_music_ducks_for_the_kick
+    graph = LiveSynth::Dub.graph(LiveSynth.config.fetch("improvise").fetch("post"), 0.5)
+    assert_includes graph, "sidechaincompress=threshold=0.08:ratio=2.2:attack=5:release=140:makeup=1"
+    assert_includes graph, "[ducked][w][k]amix"
+  end
+
   def test_showcase_bass_is_quiet_and_sparse
     source = File.read(dilla("lib/livesets.rb"))
-    assert_includes source, "gain = 0.018"
+    assert_includes source, "gain = 0.012"
     assert_includes source, "if @rng.rand < 0.08"
-    assert_includes source, "0.30 * @beat"
+    assert_includes source, "0.24 * @beat"
   end
 
 
