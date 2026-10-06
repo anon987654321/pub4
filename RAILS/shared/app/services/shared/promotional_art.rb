@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "../../../../tools/operator/master_design"
+require File.join(ENV.fetch("PUB4_ROOT", File.expand_path("../../../../../", __dir__)), "MASTER", "tools", "master_design")
 
 module Shared
   class PromotionalArt
