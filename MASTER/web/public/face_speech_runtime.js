@@ -467,13 +467,12 @@ async function pollTTSJob(job, signal) {
   // picked up at 3.12s, and at 4s it was picked up at 4.81s. Up to 810ms of the
   // wait was the client not looking, not the server not finishing.
   //
-  // A flat 90ms for the first ~1.6s costs at most 18 extra requests against a
-  // local endpoint, and holds worst-case discovery lag under a tenth of a
-  // second across the whole range where a reply still feels immediate. After
-  // that the old curve resumes, because a job that has taken two seconds is
-  // queued behind something and hammering it helps nobody.
+  // Keep the first ~2s responsive without turning a queued job into a busy
+  // loop. 50ms bounds discovery lag to roughly one network round-trip slice;
+  // after the fast window, back off because a genuinely queued job gains
+  // nothing from being polled dozens of times a second.
   for (let attempt = 0; attempt < 110; attempt++) {
-    const delay = attempt === 0 ? 30 : (attempt <= 18 ? 90 : Math.min(120 + (attempt - 18) * 90, 1200));
+    const delay = attempt === 0 ? 25 : (attempt <= 40 ? 50 : Math.min(120 + (attempt - 40) * 90, 1200));
     await new Promise((resolve) => setTimeout(resolve, delay));
     const res = await fetch(`/chat/tts/status?job=${encodeURIComponent(job)}`, { signal });
     if (res.status === 202) {
