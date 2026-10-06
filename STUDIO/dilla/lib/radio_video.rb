@@ -68,7 +68,7 @@ module RadioVideo
   end
 
   def video_seconds
-    raw = ENV.fetch("DILLA_VIDEO_SECONDS", "90")
+    raw = ENV.fetch("DILLA_VIDEO_SECONDS", "0")
     value = Float(raw, exception: false)
     abort "video: DILLA_VIDEO_SECONDS must be 0 or a positive number" unless value && value >= 0
     value

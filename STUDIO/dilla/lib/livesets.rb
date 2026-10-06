@@ -2074,7 +2074,7 @@ module LiveSynth
 
   def stream = config.fetch("stream")
 
-  SHOWCASE_TEMPO_SCALE = 0.90
+  SHOWCASE_TEMPO_SCALE = 0.86
 
   # Effects are the instrument's normal room now: tape, console, saturation,
   # pitch wear, echo, hiss and crackle are on unless explicitly disabled.
@@ -2095,23 +2095,23 @@ module LiveSynth
       "asetrate=#{(stream.fetch("rate").to_f * SHOWCASE_PITCH_RATIO).round(3)}",
       "aresample=#{stream.fetch("rate")}",
       "atempo=#{SHOWCASE_TEMPO_SCALE}",
-      "highpass=f=55",
-      Outboard.tape_machine(speed: :ips7, wow: 0.28, flutter: 0.09),
-      "acompressor=threshold=-25dB:ratio=1.22:attack=55:release=300:makeup=1.0",
-      "equalizer=f=82:t=q:w=0.9:g=-2.8",
-      "equalizer=f=125:t=q:w=1.0:g=-3.2",
-      "equalizer=f=220:t=o:w=1.1:g=-5.6",
-      "equalizer=f=320:t=q:w=1.0:g=-1.8",
-      "equalizer=f=1700:t=o:w=1.0:g=-1.1",
-      "lowpass=f=4700",
-      Livesets.sonitex(bits: 11, lo: 42, hi: 7200, drive: 1.08, mix: 0.62),
-      Outboard.tape_machine(speed: :ips7, wow: 0.19, flutter: 0.055),
-      Outboard.console_stack(instances: 2, offset: 0.08, param: 1.1, speed: 0.1),
-      Livesets.sonitex(bits: 10, lo: 46, hi: 6200, drive: 1.09, mix: 0.64, samples: 2),
-      Outboard.tape_machine(speed: :ips7, wow: 0.13, flutter: 0.04),
-      Outboard.tape_machine(speed: :ips7, wow: 0.07, flutter: 0.025),
-      "acompressor=threshold=-21dB:ratio=1.18:attack=65:release=340:makeup=1.0",
+      "highpass=f=52",
+      Outboard.tape_machine(speed: :ips7, wow: 0.34, flutter: 0.11),
+      "acompressor=threshold=-25dB:ratio=1.18:attack=60:release=340:makeup=1.0",
+      "equalizer=f=82:t=q:w=0.9:g=-4.2",
+      "equalizer=f=125:t=q:w=1.0:g=-4.6",
+      "equalizer=f=220:t=o:w=1.1:g=-6.8",
+      "equalizer=f=320:t=q:w=1.0:g=-2.4",
+      "equalizer=f=1700:t=o:w=1.0:g=-1.8",
       "lowpass=f=4100",
+      Livesets.sonitex(bits: 11, lo: 46, hi: 6200, drive: 1.06, mix: 0.70),
+      Outboard.tape_machine(speed: :ips7, wow: 0.25, flutter: 0.075),
+      Outboard.console_stack(instances: 2, offset: 0.08, param: 1.0, speed: 0.09),
+      Livesets.sonitex(bits: 10, lo: 50, hi: 5600, drive: 1.07, mix: 0.72, samples: 2),
+      Outboard.tape_machine(speed: :ips7, wow: 0.17, flutter: 0.05),
+      Outboard.tape_machine(speed: :ips7, wow: 0.10, flutter: 0.03),
+      "acompressor=threshold=-21dB:ratio=1.16:attack=70:release=380:makeup=1.0",
+      "lowpass=f=3600",
       "alimiter=limit=0.93",
     ].freeze
   end
@@ -2172,6 +2172,8 @@ module LiveSynth
     ["dilla_players", 22.0],
     ["dangelo_spanish_joint", 24.0],
     ["flylo", 22.0],
+    ["flylo_haze_01", 24.0],
+    ["flylo_haze_05", 24.0],
     ["moog_dark", 22.0],
     ["dilla_life", 22.0],
     ["dangelo_another_life", 26.0],
@@ -2182,6 +2184,7 @@ module LiveSynth
     ["moog_dfam", 24.0],
     ["dilla_so_far_to_go", 22.0],
     ["flylo_computer_face", 22.0],
+    ["flylo_haze_08", 24.0],
     ["dangelo_untitled", 24.0],
     ["madlib", 20.0],
     ["dangelo_brown_sugar", 24.0],
@@ -2293,8 +2296,8 @@ module LiveSynth
 
     FileUtils.mv(partial, destination)
   ensure
-    FileUtils.rm_f(list) if list && File.file?(list)
-    FileUtils.rm_f(partial) if partial && File.file?(partial)
+    FileUtils.rm_f(list) if list
+    FileUtils.rm_f(partial) if partial
   end
 
   def showcase_score(name, rng)
@@ -2670,7 +2673,10 @@ module LiveSynth
     Session.claim!(score.describe)
     DillaLive.accelerate!
     stage = Stage.new(rate:, rng: score.rng)
-    %w[TERM INT].each { |signal| Signal.trap(signal) { stage.stop! } }
+    traps = {}
+    %w[TERM INT].each do |signal|
+      traps[signal] = Signal.trap(signal) { stage.stop! }
+    end
     log("#{score.describe} at #{rate} Hz -- `ruby dilla.rb live stop` to end")
     IO.popen(command, "wb", **Dilla::ProcessSpawn.options(pgroup: true)) { |sink| stage.run(score, sink, seconds:) }
     log("stopped, #{stage.meter}")
@@ -2678,6 +2684,7 @@ module LiveSynth
   rescue Errno::EPIPE
     log("the player closed")
   ensure
+    traps&.each { |signal, handler| Signal.trap(signal, handler) }
     Session.release!
   end
 
@@ -2700,8 +2707,19 @@ module LiveSynth
     if dest && ENV["DILLA_SHOWCASE_LIVE_RECORD"] == "1"
       player = (DillaLive.player_command(rate) || Livesets.player_command(rate)) or return nil
       FileUtils.mkdir_p(File.dirname(dest))
-      tee_outputs = "[f=wav]#{Shellwords.escape(dest)}|[f=s16le]pipe:1"
-      command = input + output_map + ["-vn", "-sn", "-dn", "-ac", "2", "-ar", rate.to_s, "-c:a", "pcm_s16le", "-f", "tee", "-use_fifo", "1", tee_outputs]
+      graph_index = args.index("-filter_complex")
+      graph = graph_index && args.fetch(graph_index + 1)
+      return nil unless map && graph
+
+      graph = "#{graph};#{map}asplit=2[showcase_record][showcase_play]"
+      command = [
+        ffmpeg, "-loglevel", "error", "-f", "s16le", "-ar", rate.to_s, "-ac", channels.to_s, "-i", "-",
+        "-filter_complex", graph,
+        "-map", "[showcase_record]", "-vn", "-sn", "-dn", "-ac", "2", "-ar", rate.to_s,
+        "-c:a", "pcm_s16le", "-f", "wav", "-y", dest,
+        "-map", "[showcase_play]", "-vn", "-sn", "-dn", "-ac", "2", "-ar", rate.to_s,
+        "-c:a", "pcm_s16le", "-f", "s16le", "-"
+      ]
       return ["sh", "-c", "#{Shellwords.join(command)} | #{Shellwords.join(player)}"]
     end
 
@@ -2959,7 +2977,7 @@ module LiveSynth
 
     # One note. `rng` is the stage's own unless a mode seeds its notes itself.
     def note(midi, spec, start, held, gain, role, rng: @rng, **line)
-      gain *= 0.40 if LiveSynth.showcase? && role == :bass
+      gain *= 0.18 if LiveSynth.showcase? && role == :bass
       @voices << AnalogSynth::LiveVoice.new(midi:, spec:, start:, held:, gain:, role:, rng:, rate: @rate,
                                             drift_cents: @drift, **line)
     end
@@ -3069,6 +3087,8 @@ module LiveSynth
       @key = @c.fetch("keys").sample(random: rng)
       @state = @c.fetch("start")
       @voicing = []
+      @lead_chord_pcs = []
+      @lead_scale_pcs = []
       preferred_pads = @reference ? (@pads & %w[rhodes_tine e_piano]) : @pads
       @pad = pad ? Patches.name!(pad) : (preferred_pads.empty? ? @pads : preferred_pads).sample(random: rng)
       @lead = @leads.sample(random: rng)
@@ -3162,6 +3182,10 @@ module LiveSynth
         bass += 12 if bass < 38
       end
 
+      @lead_chord_pcs = @voicing.map { |midi| midi % 12 }.uniq
+      @lead_scale_pcs = lead_scale_pitch_classes(name, @lead_chord_pcs)
+      @lead_chord_tones = @voicing.flat_map { |midi| [midi + 12, midi + 24] }.uniq
+
       pad = pad_spec
       @voicing.each { |midi| stage.note(midi, pad, @next_at, length - 0.05, @c["pad_gain"], :pad) }
       bass!(stage, bass, bars)
@@ -3211,11 +3235,11 @@ module LiveSynth
       late = @c["bass_late_seconds"]
       at = @next_at
       if LiveSynth.showcase?
-        gain = @bass_gain || 0.0025
-        stage.note(root, spec, at + 0.022, 0.13 * @beat, gain, :bass)
-        return unless bars == 2 && @rng.rand < 0.08
+        gain = @bass_gain || 0.0009
+        stage.note(root, spec, at + 0.024, 0.10 * @beat, gain, :bass)
+        return unless bars == 2 && @rng.rand < 0.06
 
-        stage.note(root, spec, at + (4 * @beat) + 0.024, 0.10 * @beat, gain * 0.28, :bass)
+        stage.note(root, spec, at + (4 * @beat) + 0.028, 0.08 * @beat, gain * 0.22, :bass)
         return
       end
 
@@ -3234,42 +3258,97 @@ module LiveSynth
       @c.fetch("fm").key?(@lead) ? fm_phrase!(stage, length) : patch_phrase!(stage, length)
     end
 
-    # FM: wider leaps over three octaves of chord tones, uneven lengths, and
-    # each note its own bent spectrum.
+    SCALE_INTERVALS = {
+      "min" => [0, 2, 3, 5, 7, 8, 10],
+      "m7" => [0, 2, 3, 5, 7, 9, 10],
+      "m9" => [0, 2, 3, 5, 7, 9, 10],
+      "m11" => [0, 2, 3, 5, 7, 9, 10],
+      "m6/9" => [0, 2, 3, 5, 7, 9, 11],
+      "mmaj9" => [0, 2, 3, 5, 7, 9, 11],
+      "maj" => [0, 2, 4, 5, 7, 9, 11],
+      "maj7" => [0, 2, 4, 5, 7, 9, 11],
+      "maj9" => [0, 2, 4, 5, 7, 9, 11],
+      "maj7#11" => [0, 2, 4, 6, 7, 9, 11],
+      "add9" => [0, 2, 4, 5, 7, 9, 11],
+      "7" => [0, 2, 4, 5, 7, 9, 10],
+      "13" => [0, 2, 4, 5, 7, 9, 10],
+      "7alt" => [0, 1, 3, 4, 6, 8, 10],
+      "13sus" => [0, 2, 4, 5, 7, 9, 10],
+      "sus2" => [0, 2, 4, 5, 7, 9, 10],
+      "sus4" => [0, 2, 4, 5, 7, 9, 10],
+      "sus9" => [0, 2, 4, 5, 7, 9, 10],
+      "q4" => [0, 2, 3, 5, 7, 9, 10],
+      "q4b" => [0, 2, 3, 5, 7, 9, 10],
+      "6/9" => [0, 2, 4, 5, 7, 9, 11]
+    }.freeze
+
+    def lead_scale_pitch_classes(symbol, chord_pcs)
+      parsed = Livesets.parse_chord(symbol)
+      return chord_pcs unless parsed
+
+      root, quality, = parsed
+      intervals = SCALE_INTERVALS[quality]
+      return chord_pcs unless root && intervals
+
+      intervals.map { |interval| (root + interval) % 12 }.uniq
+    end
+
+    def lead_tones(range)
+      low, high = range
+      scale = (low..high).select { |m| @lead_scale_pcs.include?(m % 12) }
+      return @lead_chord_tones if scale.empty?
+
+      chord = scale.select { |m| @lead_chord_pcs.include?(m % 12) }
+      chord.empty? ? scale : chord + chord + scale
+    end
+
+    def lead_choice(range, previous, reach)
+      scale = lead_tones(range)
+      return previous if scale.empty?
+
+      chord = scale.select { |m| @lead_chord_pcs.include?(m % 12) }
+      pool = chord.any? && @rng.rand < 0.68 ? chord : scale
+      pool.min_by { |m| (m - previous - @rng.rand(-reach..reach)).abs }
+    end
+
+    # FM: scale-aware and chord-tone weighted, in the current harmony.
     def fm_phrase!(stage, length)
       phrase = @c.fetch("fm_phrase")
       preset = @c.fetch("fm").fetch(@lead).transform_keys(&:to_sym)
-      tones = @voicing + @voicing.map { |m| m + 12 } + @voicing.map { |m| m + 24 }
+      tones = lead_tones(phrase.fetch("range").map(&:to_i))
       spot = @next_at + ((@rng.rand < 0.5 ? 0.5 : 1.0) * @beat)
       last = tones.sample(random: @rng)
       reach = phrase["reach"]
       while spot < @next_at + length - 0.4
-        last = tones.min_by { |m| (m - last - @rng.rand(-reach..reach)).abs }
+        last = lead_choice(phrase.fetch("range").map(&:to_i), last, reach)
         duration = phrase["steps"].sample(random: @rng) * @beat
-        if @rng.rand < phrase["odds"]
-          stage.fm(last.clamp(*phrase["range"]), preset, spot, duration * phrase["held"], phrase["gain"])
+        duration = [duration, length - (spot - @next_at) - 0.18 * @beat].min
+        if duration > 0.08 * @beat && @rng.rand < phrase["odds"]
+          stage.fm(last, preset, spot, duration * phrase["held"], phrase["gain"])
         end
-        spot += duration
+        spot += [duration, 0.08 * @beat].max
       end
     end
 
-    # A patch lead: stepwise toward chord tones an octave or two up, swung,
-    # with rests. A Model D lead glides in from its last note.
+    # A patch lead uses the same chord-scale rules and never carries a long
+    # note into the next harmony.
     def patch_phrase!(stage, length)
-      tones = @voicing.map { |m| m + 12 } + @voicing.map { |m| m + 24 }
+      range = @c["lead_range"].map(&:to_i)
+      tones = lead_tones(range)
       spot = @next_at + ((@rng.rand < 0.5 ? 0.5 : 1.0) * @beat)
       last = tones.sample(random: @rng)
       spec = Patches.spec(@lead)
       while spot < @next_at + length - 0.4
-        last = tones.min_by { |m| (m - last - @rng.rand(-5..5)).abs }
+        last = lead_choice(range, last, 5)
         duration = [0.5, 0.5, 1.0, 1.5].sample(random: @rng) * @beat
+        duration = [duration, length - (spot - @next_at) - 0.14 * @beat].min
         swing = ((spot - @next_at) / (@beat / 2)).round.odd? ? @c["lead_swing_seconds"] : 0.0
-        if @rng.rand < @c["lead_odds"]
+        if duration > 0.08 * @beat && @rng.rand < @c["lead_odds"]
           note = last.clamp(*@c["lead_range"])
-          stage.note(note, spec, spot + swing, duration * 0.9, @c["lead_gain"], :lead, from_midi: @last_lead)
+          stage.note(note, spec, spot + swing, duration * 0.82, @c["lead_gain"], :lead, from_midi: @last_lead)
           @last_lead = note
         end
-        spot += duration
+        spot += [duration, 0.08 * @beat].max
       end
     end
 
@@ -3572,7 +3651,7 @@ module LiveSynth
     # Each note seeded on its pitch and its start, so a progression played
     # twice is the same take.
     def note(stage, midi, spec, start, held, gain, role)
-      gain *= 0.10 if LiveSynth.showcase? && role == :bass
+      gain *= 0.04 if LiveSynth.showcase? && role == :bass
       stage.note(midi, spec, start, held, gain, role, rng: Random.new((midi * 7) + (start * 10).to_i))
     end
 
