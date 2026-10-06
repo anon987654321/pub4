@@ -76,6 +76,7 @@ module Master
 
       ATTACK = <<~TEXT
         A restructure, proposed for problem %<problem_id>s (%<rule>s) at %<path>s:
+        operations: %<operations>s
         %<summary>s
 
         Attack it. Does it change behaviour, break a caller, a require, load order,
@@ -242,6 +243,7 @@ module Master
             problem_id: problem.id,
             rule: problem.rules.join(", "),
             path: relative(problem.files.first),
+            operations: plan.operations.join(", "),
             summary: plan.summary,
             diff:
           )
