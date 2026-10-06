@@ -2124,8 +2124,6 @@ module LiveSynth
 
     rng = rng!
     case lane
-    when "bach_toccata"
-      perform!(BachToccata.new(rng:), seconds: nil)
     when /^reference:(.+)$/
       source, pad = LiveSynth.play_reference(Regexp.last_match(1))
       perform!(Improviser.new(rng:, pad:, reference: source), seconds: nil)
