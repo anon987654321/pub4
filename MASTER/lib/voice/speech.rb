@@ -368,6 +368,8 @@ module Master
           return path if path
         end
 
+        return if voice_locked
+
         path = synthesize_espeak(text_str) if espeak_path
         return path if path
 
