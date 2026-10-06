@@ -161,6 +161,7 @@ module Master
         return [target] unless tokens.size > 1 && tokens.all? { |token| trees.include?(token) }
 
         repo_root = File.expand_path(root)
+        repo_root = Master::REPO_ROOT if repo_root == Master::ROOT
         tokens.uniq.map { |tree| File.join(repo_root, tree) }
       end
 
