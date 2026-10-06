@@ -2524,10 +2524,10 @@ module LiveSynth
     end
     tty_state = nil
     if tty
-      state = Open3.capture2("stty", "-g", stdin: tty).first.to_s.strip
+      state = Open3.capture2("stty", "-g", in: tty).first.to_s.strip
       unless state.empty?
         tty_state = state
-        system("stty", "-icanon", "min", "1", "time", "0", "-echo", stdin: tty)
+        system("stty", "-icanon", "min", "1", "time", "0", "-echo", in: tty)
         keyboard = Thread.new do
           begin
             loop do
@@ -2548,11 +2548,12 @@ module LiveSynth
     end
 
     perform!(score, seconds:)
+    finalize_showcase_record!(output, stream.fetch("rate")) if output
     next_requested ? :next : nil
   ensure
     keyboard&.kill
     keyboard&.join
-    system("stty", tty_state, stdin: tty, err: File::NULL) if tty_state && tty
+    system("stty", tty_state, in: tty, err: File::NULL) if tty_state && tty
     worker&.kill
     worker&.join
     tty&.close
@@ -2560,6 +2561,19 @@ module LiveSynth
     previous_live_record.nil? ? ENV.delete("DILLA_SHOWCASE_LIVE_RECORD") : ENV["DILLA_SHOWCASE_LIVE_RECORD"] = previous_live_record
   end
 
+  def finalize_showcase_record!(output, rate)
+    raw = "#{output}.s16le"
+    return false unless File.file?(raw) && File.size?(raw).positive?
+
+    ffmpeg = Livesets.tool("ffmpeg")
+    ok = system(ffmpeg, "-y", "-loglevel", "error",
+                "-f", "s16le", "-ar", rate.to_s, "-ac", "2", "-i", raw,
+                "-vn", "-sn", "-dn", "-c:a", "pcm_s16le", "-f", "wav", output)
+    abort "live0: showcase could not finalize #{output}" unless ok && File.file?(output) && File.size?(output).positive?
+    true
+  ensure
+    FileUtils.rm_f(raw) if defined?(raw) && raw && File.file?(raw)
+  end
   # `knob cutoff +0.3 20` moves by, `knob cutoff 0.8 20` moves to; the last
   # number is how many seconds the knob takes to get there.
   def knob!(name = nil, amount = nil, seconds = nil)
@@ -2713,20 +2727,9 @@ module LiveSynth
     if dest && ENV["DILLA_SHOWCASE_LIVE_RECORD"] == "1"
       player = (DillaLive.player_command(rate) || Livesets.player_command(rate)) or return nil
       FileUtils.mkdir_p(File.dirname(dest))
-      graph_index = args.index("-filter_complex")
-      graph = graph_index && args.fetch(graph_index + 1)
-      return nil unless map && graph
-
-      graph = "#{graph};#{map}asplit=2[showcase_record][showcase_play]"
-      command = [
-        ffmpeg, "-loglevel", "error", "-f", "s16le", "-ar", rate.to_s, "-ac", channels.to_s, "-i", "-",
-        "-filter_complex", graph,
-        "-map", "[showcase_record]", "-vn", "-sn", "-dn", "-ac", "2", "-ar", rate.to_s,
-        "-c:a", "pcm_s16le", "-f", "wav", "-y", dest,
-        "-map", "[showcase_play]", "-vn", "-sn", "-dn", "-ac", "2", "-ar", rate.to_s,
-        "-c:a", "pcm_s16le", "-f", "s16le", "-"
-      ]
-      return ["sh", "-c", "#{Shellwords.join(command)} | #{Shellwords.join(player)}"]
+      raw = "#{dest}.s16le"
+      command = input + output_map + ["-vn", "-sn", "-dn", "-f", "s16le", "-ac", "2", "-ar", rate.to_s, "-"]
+      return ["sh", "-c", "#{Shellwords.join(command)} | tee #{Shellwords.escape(raw)} | #{Shellwords.join(player)}"]
     end
 
     return input + output_map + ["-y", "-vn", "-sn", "-dn", "-c:a", "pcm_s16le", dest] if dest
@@ -3241,7 +3244,7 @@ module LiveSynth
       late = @c["bass_late_seconds"]
       at = @next_at
       if LiveSynth.showcase?
-        gain = @bass_gain || 0.0009
+        gain = @bass_gain || 0.00055
         stage.note(root, spec, at + 0.024, 0.10 * @beat, gain, :bass)
         return unless bars == 2 && @rng.rand < 0.06
 

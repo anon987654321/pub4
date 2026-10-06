@@ -257,7 +257,7 @@ class TestDillaLiveSynth < Minitest::Test
     score.schedule(stage, 0.0)
     bass = stage.instance_variable_get(:@voices).find { |voice| voice.role == :bass }
     refute_nil bass
-    assert_operator bass.instance_variable_get(:@gain), :<, 0.01
+    assert_operator bass.instance_variable_get(:@gain), :<, 0.001
   ensure
     ENV.delete("DILLA_SHOWCASE")
   end
@@ -623,11 +623,13 @@ class TestDillaLiveSynth < Minitest::Test
     assert_equal [1, 3, 4, 6, 8, 10, 11], pcs.sort
   end
 
-  def test_showcase_recording_uses_split_outputs_not_a_tee_muxer
+  def test_showcase_recording_uses_one_pcm_stream_and_finalizes_wav
     source = File.read(dilla("lib/livesets.rb"))
-    assert_includes source, "asplit=2[showcase_record][showcase_play]"
-    refute_includes source, '"-f", "tee"'
-    assert_includes source, 'traps&.each { |signal, handler| Signal.trap(signal, handler) }'
+    assert_includes source, 'raw = "#{dest}.s16le"'
+    assert_includes source, '| tee #{Shellwords.escape(raw)} |'
+    assert_includes source, 'def finalize_showcase_record!(output, rate)'
+    assert_includes source, '"-f", "wav", output'
+    refute_includes source, "asplit=2[showcase_record][showcase_play]"
   end
 
   def test_showcase_contains_a_broader_flylo_rotation
@@ -846,7 +848,7 @@ class TestDillaLiveSynth < Minitest::Test
   def test_showcase_terminal_controls_use_the_real_tty
     source = File.read(dilla("lib/livesets.rb"))
     assert_includes source, 'File.open("/dev/tty", "r+")'
-    assert_includes source, 'stdin: tty'
+    assert_includes source, 'in: tty'
     refute_includes source, 'if STDIN.tty?'
   end
 end
