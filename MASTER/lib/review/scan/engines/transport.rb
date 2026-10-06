@@ -11,7 +11,11 @@ module Master
         # a local repo, and a scan that waits half a minute on a wedged index
         # has already cost more than the answer is worth.
         GIT_TIMEOUT_SECONDS = 5
-        GC_EVERY_N_ITERATIONS = 5
+        # Ruby's collector already adapts to allocation pressure. Forcing a
+        # full collection every five files made large scans spend time collecting
+        # rather than measuring. Keep manual collection opt-in for memory-heavy
+        # diagnostics instead of making every normal scan pay for it.
+        GC_EVERY_N_ITERATIONS = Integer(ENV.fetch("MASTER_SCAN_GC_EVERY", "0"))
 
         private
 
@@ -66,7 +70,10 @@ module Master
         end
 
         def maybe_gc(index)
-          GC.start if index.positive? && (index % GC_EVERY_N_ITERATIONS).zero?
+          return if GC_EVERY_N_ITERATIONS <= 0
+          return unless index.positive? && (index % GC_EVERY_N_ITERATIONS).zero?
+
+          GC.start
         end
       end
     end
