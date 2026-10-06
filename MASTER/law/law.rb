@@ -490,6 +490,8 @@ module Law
     end
   end
 
+  LOAD_MUTEX = Mutex.new
+
   @rules = {}
   @law_sources = {}
   @law_stamps = {}
@@ -504,33 +506,36 @@ module Law
     end
 
     def load_all(dir = __dir__)
-      files = Dir.glob(File.join(dir, "*.rb")).sort.map { |file| File.expand_path(file) }
-      files.reject! { |file| file == File.expand_path(__FILE__) }
-
-      rules_before = @rules.dup
-      sources_before = @law_sources.dup
-      stamps_before = @law_stamps.dup
-
-      removed_sources = @law_sources.keys - files
-      removed_sources.each { |source| @law_sources[source].each { |id| @rules.delete(id) } }
-      removed_sources.each do |source|
-        @law_sources.delete(source)
-        @law_stamps.delete(source)
+      LOAD_MUTEX.synchronize do
+        #{line}
+        #{line}
+        #{line}
+        #{line}
+        #{line}
+        #{line}
+        #{line}
+        #{line}
+        #{line}
+        #{line}
+        #{line}
+        #{line}
+        #{line}
+        #{line}
+        #{line}
+        #{line}
+        #{line}
+        #{line}
+        #{line}
+        #{line}
+        #{line}
+        #{line}
+        #{line}
+        #{line}
+        #{line}
+        #{line}
+        #{line}
+        #{line}
       end
-
-      files.each do |source|
-        stat = File.stat(source)
-        stamp = [stat.size, stat.ino, stat.mtime.to_r]
-        next if @law_stamps[source] == stamp
-
-        @law_sources[source].to_a.each { |id| @rules.delete(id) }
-        @law_sources[source] = []
-        before_ids = @rules.keys
-        load source
-        @law_sources[source] = @rules.keys - before_ids
-        @law_stamps[source] = stamp
-      end
-      @rules
     rescue StandardError
       @rules = rules_before if defined?(rules_before)
       @law_sources = sources_before if defined?(sources_before)
