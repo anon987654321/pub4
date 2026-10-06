@@ -2120,18 +2120,36 @@ module LiveSynth
     case lane
     when "bach_toccata"
       perform!(BachToccata.new(rng:), seconds: nil)
-    when "live_improvise_moog"
-      perform!(Improviser.new(rng:, family: "moog"), seconds: nil)
-    when "live_improvise_prophet"
-      perform!(Improviser.new(rng:, family: "prophet"), seconds: nil)
-    when "live_improvise_rhodes"
-      perform!(Improviser.new(rng:, family: "rhodes"), seconds: nil)
-    when "royksopp_live"
-      perform!(Progression.new("royksopp_live", rng:, loops: 0), seconds: nil)
+    when /^reference:(.+)$/
+      source, pad = LiveSynth.play_reference(Regexp.last_match(1))
+      perform!(Improviser.new(rng:, pad:, reference: source), seconds: nil)
     else
       abort "play: unknown lane #{lane.inspect}"
     end
   end
+  def self.documented_progression(name)
+    @documented_progressions ||= YAML.safe_load_file(File.expand_path("../data/dilla_reference.yml", __dir__)).fetch("documented_progressions")
+    source = @documented_progressions.fetch(name.to_s) { abort "play: no documented progression #{name}" }
+    source
+  rescue Psych::Exception => e
+    abort "play: documented progression data invalid (#{e.message})"
+  end
+
+  def self.play_reference(name)
+    presets = {
+      "dilla_flowers_documented" => ["dilla_flowers_documented", "rhodes_tine"],
+      "dilla_so_far_to_go_documented" => ["dilla_so_far_to_go_documented", "e_piano"],
+      "slum_village_players_documented" => ["slum_village_players_documented", "rhodes_tine"],
+      "flylo_beginners_falafel_documented" => ["flylo_beginners_falafel_documented", "prophet_pad"],
+      "flylo_camel_documented" => ["flylo_camel_documented", "prophet_pad"],
+      "madlib_accordion_loop_documented" => ["madlib_accordion_loop_documented", "e_piano"],
+      "madlib_figaro_documented" => ["madlib_figaro_documented", "rhodes_tine"],
+      "royksopp_what_else_is_there_documented" => ["royksopp_what_else_is_there_documented", "juno_pad"],
+    }
+    preset = presets.fetch(name.to_s) { abort "play: no sound preset for #{name}" }
+    [preset.first, preset.last]
+  end
+
   def standard_default!
     Session.claim!("the standard default (liveset)", steerable: false)
     log("the standard default -- `ruby dilla.rb live stop` to end")
@@ -2448,7 +2466,7 @@ module LiveSynth
 
     NAMES = DillaImprovisation::PITCH_NAMES
 
-    def initialize(rng:, family: nil, pad: nil)
+    def initialize(rng:, family: nil, pad: nil, reference: nil)
       @c = LiveSynth.config.fetch("improvise")
       @rng = rng
       fam = family ? @c.fetch("families").fetch(family) { abort "live0: no family #{family}" } : {}
@@ -2456,7 +2474,9 @@ module LiveSynth
       @leads = fam.fetch("leads", @c["leads"])
       @bass = fam.fetch("bass_patch", @c["bass_patch"])
       @moves = @c.fetch("moves").to_h { |row| [row["from"], row["to"]] }
-      @beat = 60.0 / (@c["bpm"] + rng.rand(-@c["bpm_spread"].to_f..@c["bpm_spread"].to_f))
+      @reference = reference && LiveSynth.documented_progression(reference)
+      bpm = @reference&.fetch("bpm", @c["bpm"]).to_f || @c["bpm"]
+      @beat = 60.0 / (@reference ? bpm : (bpm + rng.rand(-@c["bpm_spread"].to_f..@c["bpm_spread"].to_f)))
       @knobs = Knobs.new(@c.fetch("knobs"), response: @c.fetch("response"), rng:,
                          damping: @c["walk_damping"], pull: @c["walk_pull"])
       @key = @c.fetch("keys").sample(random: rng)
@@ -2465,6 +2485,7 @@ module LiveSynth
       @pad = pad ? Patches.name!(pad) : @pads.sample(random: rng)
       @lead = @leads.sample(random: rng)
       @family = family
+      @reference_index = 0
       @chords_on_pad = 0
       @chords = 0
       @next_at = @c["first_chord_at"]
@@ -2532,9 +2553,9 @@ module LiveSynth
     end
 
     def chord!(stage)
-      bars = @rng.rand < @c["two_bar_odds"] ? 2 : 1
+      bars = @reference ? 1 : (@rng.rand < @c["two_bar_odds"] ? 2 : 1)
       length = bars * 4 * @beat
-      degree, quality = @state
+      degree, quality, name = next_chord
       @voicing = DillaImprovisation.nearest_voicing(DillaImprovisation.pitch_classes(@key, degree, quality), @voicing,
                                                     range: Range.new(*@c["voicing_range"]), first: @c["first_voicing"])
       pad = pad_spec
@@ -2544,10 +2565,23 @@ module LiveSynth
       lead!(stage, length) if @lead_on
       @chords += 1
       @chords_on_pad += 1
-      LiveSynth.log("#{NAMES[(@key + degree) % 12]}#{quality} (#{bars} bar#{'s' if bars > 1}) on #{@pad}" \
+      LiveSynth.log("#{name || "#{NAMES[(@key + degree) % 12]}#{quality}"} (#{bars} bar#{'s' if bars > 1}) on #{@pad}" \
                     "#{" + #{@lead}" if @lead_on}")
       @next_at += length
-      move!
+      move! unless @reference
+    end
+
+    def next_chord
+      return @state unless @reference
+
+      source = @reference.fetch("chords")
+      symbol = source[@reference_index % source.length].to_s
+      root, quality, = Livesets.parse_chord(symbol)
+      abort "live0: unsupported reference chord #{symbol.inspect}" unless root && DillaImprovisation::QUALITIES.key?(quality)
+      @key = root
+      @state = [0, quality]
+      @reference_index += 1
+      [0, quality, symbol]
     end
 
     # Dilla: the root on the one, then late pushes and a fifth or an octave.
