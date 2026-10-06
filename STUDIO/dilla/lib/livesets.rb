@@ -3195,7 +3195,7 @@ module LiveSynth
           length, index = read_varlen(bytes, index)
           payload = bytes.slice(index, length) || []
           index += length
-          tempos << [tick, payload.pack("C*").unpack1("N") >> 8] if type == 0x51 && length == 3
+          tempos << [tick, (payload[0] << 16) | (payload[1] << 8) | payload[2]] if type == 0x51 && length == 3
           break if type == 0x2f
         when 0xf0, 0xf7
           length, index = read_varlen(bytes, index)
