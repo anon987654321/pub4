@@ -185,6 +185,34 @@ class TestDillaLiveSynth < Minitest::Test
     assert_raises(ArgumentError) { knobs.turn("volume", clock: 0.0, seconds: 1.0, by: 0.1) }
   end
 
+  def test_showcase_uses_only_moog_or_prophet_instruments
+    source = File.read(dilla("lib/livesets.rb"))
+    start = source.index("SHOWCASE_SCENES")
+    finish = source.index("def showcase_score", start)
+    showcase = source[start...finish]
+    refute_includes showcase, "glass_bell"
+    refute_includes showcase, '"preset" => "bell"'
+    refute_includes showcase, '"preset" => "glass"'
+    refute_includes showcase, 'family: "rhodes"'
+    assert_includes showcase, '"patch" => "moog_flute"'
+    assert_includes showcase, '"patch" => "vapor_lead"'
+  end
+
+  def test_showcase_generates_dilla_mp4_from_the_finished_wav
+    source = File.read(dilla("lib/livesets.rb"))
+    assert_includes source, 'require_relative "radio_video"'
+    assert_includes source, 'File.join(File.dirname(audio), "dilla.mp4")'
+    assert_includes source, 'showcase_video!(output)'
+    assert_includes source, 'DILLA_SHOWCASE_VIDEO'
+  end
+
+  def test_live_moog_and_prophet_family_pools_are_restricted
+    families = LiveSynth.config.fetch("improvise").fetch("families")
+    assert_equal %w[moog_strings moog_brass], families.fetch("moog").fetch("pads")
+    assert_equal %w[prophet_five prophet_pad], families.fetch("prophet").fetch("pads")
+    assert_equal %w[moog_bass fat_bass], LiveSynth.config.fetch("progressions").fetch("moog_improv").fetch("basses")
+  end
+
   def test_showcase_complex_graph_maps_only_the_mixed_stereo_output
     captured = nil
     LiveSynth.stub(:through_ffmpeg, ->(**kwargs) { captured = kwargs; :command }) do
@@ -311,9 +339,9 @@ class TestDillaLiveSynth < Minitest::Test
 
   def test_showcase_bass_is_quiet_and_sparse
     source = File.read(dilla("lib/livesets.rb"))
-    assert_includes source, "gain = 0.065"
-    assert_includes source, "if @rng.rand < 0.12"
-    assert_includes source, "0.46 * @beat"
+    assert_includes source, "gain = 0.035"
+    assert_includes source, "if @rng.rand < 0.08"
+    assert_includes source, "0.38 * @beat"
   end
 
 

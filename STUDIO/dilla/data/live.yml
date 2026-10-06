@@ -150,12 +150,12 @@ progressions:
       voicing_range: [53, 74]
       modulate_every: 24
       modulate_by: [5, 3, 8, 10]
-    pads: [warm_pad, poly_strings, prophet_five, juno_pad, prophet_pad, vp330_ensemble, soft_reed, e_piano, rhodes_tine, glass_bell]
+    pads: [moog_strings, moog_brass, prophet_five, prophet_pad]
     pad_every: 1
-    basses: [moog_bass, acid, sub, dub_bass]
+    basses: [moog_bass, fat_bass]
     bass_every: 4
     # Sixteenths an octave above the voicing, up, down, up-down or shuffled.
-    arp: { odds: 0.3, patches: [glass_bell, e_piano, poly_lead, vapor_lead], steps: 16, octave: 12, held: 0.7, gain: 0.1 }
+    arp: { odds: 0.28, patches: [minimoog_lead, moog_flute, poly_lead, vapor_lead], steps: 16, octave: 12, held: 0.7, gain: 0.08 }
     # moog_dfam's DFAM, in 24ths of the bar where it ran in 16ths -- the
     # groove at one and a half times, the chords where they were -- with
     # these added.
@@ -322,8 +322,8 @@ improvise:
   # moog is the Model D panels in model_d.yml; prophet and rhodes are the
   # AnalogSynth patches bed.yml plays those families on.
   families:
-    moog: { pads: [moog_strings, moog_brass, lofi_pad], leads: [minimoog_lead, lucky_man, moog_flute, moog_pluck], bass_patch: fat_bass }
-    prophet: { pads: [prophet_five, prophet_pad, juno_pad, vp330_ensemble], leads: [poly_lead, vapor_lead], bass_patch: moog_bass }
+    moog: { pads: [moog_strings, moog_brass], leads: [minimoog_lead, lucky_man, moog_flute, moog_pluck], bass_patch: fat_bass }
+    prophet: { pads: [prophet_five, prophet_pad], leads: [poly_lead, vapor_lead], bass_patch: moog_bass }
     rhodes: { pads: [rhodes_tine, e_piano], leads: [glass_bell, soft_reed], bass_patch: dub_bass }
   pad_gain: 0.2
   pad_chords: [3, 6]
