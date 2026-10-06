@@ -59,8 +59,9 @@ code read.
   `handleFaceNamedEvent()`.
 - Web TTS style is unlocked by default (`auto`) so the server can infer style.
   Only send `style` with `style_locked=1` after an explicit user style choice.
-- Browser `speechSynthesis` fallback must be recoverable; do not make one
-  failed server-TTS request permanently downgrade the session.
+- Server TTS is the only speech backend. Keep playback, visemes, cancellation,
+  and microphone ducking on that one audio path; a server failure is visible as
+  unavailable rather than silently switching to an OS/browser narrator.
 
 **Files:**
 - `config/face_assets.yml`: **the** manifest — every face asset the shell loads,
