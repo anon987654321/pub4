@@ -139,12 +139,20 @@ module Master
       # moves files the pass transaction tracks by path, so each kept change is
       # isolated and returns to fresh observation.
       def sweep_tree(target, run_id, phase: :normal)
-        @sweeps.flat_map do |sweep|
-          sweep.run(target:, run_id:, phase:)
+        changes = []
+        errors = []
+
+        @sweeps.each do |sweep|
+          changes.concat(Array(sweep.run(target:, run_id:, phase:)))
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "fix_loop.#{sweep.class.name.split("::").last}", event_bus: @bus)
-          []
+          errors << e
         end
+
+        return changes if errors.empty?
+
+        details = errors.map { |error| "#{error.class}: #{error.message}" }.join(" | ")
+        raise "structural sweep failed: #{details}"
       end
 
       def retry_delivery(transaction_id:, expected_head:)
@@ -321,8 +329,6 @@ module Master
         files.replace(@file_collector.collect(target))
         Master::Trace::Dmesg.status("fix0", "structure-first kept #{changes.size}; corpus refreshed")
         @bus&.publish("fix_loop:structure_first", target:, changes: changes.size)
-      rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "fix_loop.structure_first", event_bus: @bus)
       end
 
       def structural_target?(target)
