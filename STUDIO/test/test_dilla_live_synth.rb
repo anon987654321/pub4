@@ -269,7 +269,7 @@ class TestDillaLiveSynth < Minitest::Test
   def test_showcase_covers_the_live_feature_tour
     scenes = LiveSynth::SHOWCASE_SCENES.map(&:first)
     assert_equal %w[
-      dilla_life flylo dangelo_spanish_joint moog_dark flylo_computer_face
+      flylo dilla_life dangelo_spanish_joint moog_dark flylo_computer_face
       dangelo_root dilla_players flylo_king_of_the_hill dangelo_another_life
       opus3_strings dangelo_untitled moog_dfam dangelo_brown_sugar madlib
       dilla_so_far_to_go dangelo_really_love dangelo_sugah_daddy matriarch_stabs
@@ -301,6 +301,25 @@ class TestDillaLiveSynth < Minitest::Test
     assert_includes source, "hiss_gain ="
     assert_includes source, "@crackle_left"
     assert_includes source, '@showcase_texture = LiveSynth.showcase?'
+  end
+
+  def test_effects_are_on_by_default_and_can_be_disabled
+    source = File.read(dilla("lib/livesets.rb"))
+    assert_includes source, 'ENV.fetch("DILLA_EFFECTS", ENV.fetch("DILLA_SHOWCASE", "1")) == "1"'
+    assert_equal "0", begin
+      saved = ENV["DILLA_EFFECTS"]
+      ENV["DILLA_EFFECTS"] = "0"
+      LiveSynth.showcase? ? "1" : "0"
+    ensure
+      saved.nil? ? ENV.delete("DILLA_EFFECTS") : ENV["DILLA_EFFECTS"] = saved
+    end
+    assert_equal "1", begin
+      saved = ENV["DILLA_EFFECTS"]
+      ENV["DILLA_EFFECTS"] = "1"
+      LiveSynth.showcase? ? "1" : "0"
+    ensure
+      saved.nil? ? ENV.delete("DILLA_EFFECTS") : ENV["DILLA_EFFECTS"] = saved
+    end
   end
 
   def test_showcase_tape_chain_calls_existing_livesets_audio_builders

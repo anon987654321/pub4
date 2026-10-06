@@ -2075,7 +2075,9 @@ module LiveSynth
 
   SHOWCASE_TEMPO_SCALE = 0.84
 
-  def showcase? = ENV["DILLA_SHOWCASE"] == "1"
+  # Effects are the instrument's normal room now: tape, console, saturation,
+  # pitch wear, echo, hiss and crackle are on unless explicitly disabled.
+  def showcase? = ENV.fetch("DILLA_EFFECTS", ENV.fetch("DILLA_SHOWCASE", "1")) == "1"
 
   # The showcase is the dark room: slower, slightly below concert pitch, and
   # finished by a real summing stack rather than a clean digital output.
@@ -2139,15 +2141,16 @@ module LiveSynth
   end
 
   # Bare Dilla is the showcase: one continuous tour through the engine's
-  # strongest live features. It reuses the real score classes below rather than
+  # strongest live features. FlyLo opens the room; every LiveSynth voice also
+  # receives the dark showcase effects unless DILLA_EFFECTS=0. It reuses the real score classes below rather than
   # inventing a second renderer: source harmony, rotating instrument families,
   # drums, bass, arpeggios, DFAM, FM leads, knob movement, patch morphing and the
   # exact Bach score all take their turns.
   # FlyLo leads the tour: the first five scenes are source-backed cells with
   # deliberately different harmony, register and instrument families.
   SHOWCASE_SCENES = [
-    ["dilla_life", 30.0],
     ["flylo", 24.0],
+    ["dilla_life", 30.0],
     ["dangelo_spanish_joint", 34.0],
     ["moog_dark", 28.0],
     ["flylo_computer_face", 24.0],
