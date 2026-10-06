@@ -238,13 +238,16 @@ class TestDillaLiveSynth < Minitest::Test
     assert_match(/LIVE_SYNTH_VERBS = %w\[[^\]]*\bshowcase\b[^\]]*\]\.freeze/, source)
   end
 
-  def test_showcase_cycles_existing_live_scores
+  def test_showcase_covers_the_live_feature_tour
+    scenes = LiveSynth::SHOWCASE_SCENES.map(&:first)
+    assert_equal %w[dilla_life soulquarians dangelo flylo madlib royksopp moog_dfam memorymoog_organ glass_bell bach], scenes
     source = File.read(dilla("lib/livesets.rb"))
-    assert_includes source, '["dilla", 18.0]'
-    assert_includes source, '["verified", 18.0]'
-    assert_includes source, '["moog_dfam", 24.0]'
-    assert_includes source, '["bach", 20.0]'
-    assert_includes source, 'Improviser.new'
+    assert_includes source, 'reference: "dilla_life"'
+    assert_includes source, 'reference: "soulquarians_butter"'
+    assert_includes source, 'reference: "really_love_bossa_broken"'
+    assert_includes source, 'reference: "flylo_camel_documented"'
+    assert_includes source, 'reference: "madlib_accordion_loop_documented"'
+    assert_includes source, 'Progression.new("royksopp_live"'
     assert_includes source, 'Progression.new("moog_improv"'
     assert_includes source, 'BachMidi::Score.new'
   end
