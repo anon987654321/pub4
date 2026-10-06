@@ -2095,13 +2095,13 @@ module LiveSynth
       "asetrate=#{(stream.fetch("rate").to_f * SHOWCASE_PITCH_RATIO).round(3)}",
       "aresample=#{stream.fetch("rate")}",
       "atempo=#{SHOWCASE_TEMPO_SCALE}",
-      "highpass=f=48",
+      "highpass=f=55",
       Outboard.tape_machine(speed: :ips7, wow: 0.28, flutter: 0.09),
       "acompressor=threshold=-25dB:ratio=1.22:attack=55:release=300:makeup=1.0",
-      "equalizer=f=70:t=q:w=0.9:g=-2.2",
-      "equalizer=f=110:t=q:w=1.0:g=-1.8",
-      "equalizer=f=220:t=o:w=1.1:g=-5.0",
-      "equalizer=f=320:t=q:w=1.0:g=-1.4",
+      "equalizer=f=82:t=q:w=0.9:g=-2.8",
+      "equalizer=f=125:t=q:w=1.0:g=-3.2",
+      "equalizer=f=220:t=o:w=1.1:g=-5.6",
+      "equalizer=f=320:t=q:w=1.0:g=-1.8",
       "equalizer=f=1700:t=o:w=1.0:g=-1.1",
       "lowpass=f=4700",
       Livesets.sonitex(bits: 11, lo: 42, hi: 7200, drive: 1.08, mix: 0.62),
@@ -2959,7 +2959,7 @@ module LiveSynth
 
     # One note. `rng` is the stage's own unless a mode seeds its notes itself.
     def note(midi, spec, start, held, gain, role, rng: @rng, **line)
-      gain *= 0.55 if LiveSynth.showcase? && role == :bass
+      gain *= 0.40 if LiveSynth.showcase? && role == :bass
       @voices << AnalogSynth::LiveVoice.new(midi:, spec:, start:, held:, gain:, role:, rng:, rate: @rate,
                                             drift_cents: @drift, **line)
     end
@@ -3211,7 +3211,7 @@ module LiveSynth
       late = @c["bass_late_seconds"]
       at = @next_at
       if LiveSynth.showcase?
-        gain = @bass_gain || 0.0035
+        gain = @bass_gain || 0.0025
         stage.note(root, spec, at + 0.022, 0.13 * @beat, gain, :bass)
         return unless bars == 2 && @rng.rand < 0.08
 
@@ -3457,8 +3457,8 @@ module LiveSynth
         post.fetch("dub").gsub(/<(\d+)>/) { (beat * Regexp.last_match(1).to_i).round.to_s }
       end
       showcase_tail = LiveSynth.showcase? ? ",#{LiveSynth.showcase_tape_chain.join(",")}" : ""
-      weights = LiveSynth.showcase? ? "1 0.18 0.50" : "1 1 1"
-      "[0:a]pan=stereo|c0=c0|c1=c1[dry];[0:a]pan=stereo|c0=c2|c1=c3[wet];[0:a]pan=stereo|c0=c4|c1=c5[k];"         "[dry]#{chain}[d];[wet]#{send}[w];[d][k]sidechaincompress=threshold=0.08:ratio=2.2:attack=5:release=140:makeup=1[ducked];"         "[ducked][w][k]amix=inputs=3:weights=#{weights}:normalize=0,alimiter=limit=#{post['limit']}#{showcase_tail}[dilla_showcase_mix]"
+      weights = LiveSynth.showcase? ? "1 0.14 0.46" : "1 1 1"
+      "[0:a]pan=stereo|c0=c0|c1=c1[dry];[0:a]pan=stereo|c0=c2|c1=c3[wet];[0:a]pan=stereo|c0=c4|c1=c5[k];"         "[dry]#{chain}[d];[wet]#{send}[w];[d][k]sidechaincompress=threshold=0.06:ratio=3.2:attack=3:release=170:makeup=1[ducked];"         "[ducked][w][k]amix=inputs=3:weights=#{weights}:normalize=0,alimiter=limit=#{post['limit']}#{showcase_tail}[dilla_showcase_mix]"
     end
     def command(post, rate:, beat:, dest: nil)
       LiveSynth.through_ffmpeg(channels: 6, filter: ["-filter_complex", graph(post, beat), "-map", "[dilla_showcase_mix]"], rate:, dest:)
