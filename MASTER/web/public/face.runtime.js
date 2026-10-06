@@ -4404,8 +4404,10 @@ function handleFaceNamedEvent(event, data) {
       if (lane) offsetCouncilMouthPool?.(lane, 0.22);
       if (plan?.length) tts.visemePlan = plan;
       if (ex || blendshapes) window.MASTER_FACE_BLEND?.pushBlend?.(blendshapes || ex?.blendshapes || {});
-      if (voice && text && !tts.playing) {
-        playDuo([[guardVoice(voice), text]], null, _nextTtsStyle(voice), { persona: label || persona, lane });
+      if (voice && text) {
+        // Council speech shares the ordinary narrator channel. A direct player
+        // here bypassed ttsTick's serialization and could overlap the reply.
+        enqueueSpeech(text, { quirky: false });
       }
       setTimeout(() => {
         if (rootBody.dataset.councilPersona === persona) delete rootBody.dataset.councilPersona;
@@ -4704,48 +4706,13 @@ function wireTtsStyleChips() {
   });
   syncTtsStyleUi();
 }
-function playDuo(lines, onDone, style, councilOpts = {}) {
+function playDuo(lines, onDone, _style, _councilOpts = {}) {
   if (!lines.length) { onDone?.(); return; }
-  const [voiceRaw, text] = lines[0]; const voice = guardVoice(voiceRaw, { text });
-  const rest = lines.slice(1);
-  const useStyle = style || _nextTtsStyle(voice);
-  if (councilOpts.persona && uiStatus) uiStatus.textContent = `council: ${councilOpts.persona}`;
-  if (councilOpts.lane) offsetCouncilMouthPool?.(councilOpts.lane, 0.18);
-  if (councilOpts.persona) window.MASTERCouncilMulti?.setLaneActive?.(councilOpts.lane || 'center', councilOpts.persona);
-  let personaBadge = document.getElementById('council-persona-badge');
-  if (councilOpts.persona) {
-    if (!personaBadge) {
-      personaBadge = document.createElement('div');
-      personaBadge.id = 'council-persona-badge';
-      personaBadge.className = 'council-persona-badge';
-      document.body.appendChild(personaBadge);
-    }
-    personaBadge.textContent = councilOpts.persona;
-    personaBadge.dataset.lane = councilOpts.lane || 'center';
-    personaBadge.dataset.visible = '1';
-    setTimeout(() => { if (personaBadge) personaBadge.dataset.visible = '0'; }, 4200);
-  }
-  loadTTSBlob(text, voice, useStyle)
-    .then(async blob => {
-      const src = URL.createObjectURL(blob);
-      if (tts.audio) { try { tts.audio.pause(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:play_duo_pause", err); } }
-      const audio = new Audio(src);
-      tts.audio = audio;
-      audio.playbackRate = getTtsRate();
-      try { await connectTTSAudio(audio, 1.15); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:play_duo_connect", err); }
-      startVisemeAnim(text);
-      preSpeechInhale(useStyle);
-      audio.onended = audio.onerror = () => {
-        stopVisemeAnim();
-        tts.analyser = null; tts.analyserBuf = null; tts.analyserFreqBuf = null;
-        tts.outputGain = null;
-        URL.revokeObjectURL(src);
-        clearViseme();
-        playDuo(rest, onDone, useStyle);
-      };
-      audio.play().catch(() => { URL.revokeObjectURL(src); playDuo(rest, onDone, useStyle); });
-    })
-    .catch(() => playDuo(rest, onDone, useStyle));
+
+  // Retained as a compatibility facade for callers outside the main TTS path.
+  // Never create a second player here: queue every utterance through ttsTick.
+  lines.forEach(([, text]) => enqueueSpeech(text, { quirky: false }));
+  onDone?.();
 }
 
 function meanPoolField(pool, field) {
