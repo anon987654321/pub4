@@ -866,33 +866,19 @@ function scheduleTtsTick(delay) {
   tts.retryTimer = setTimeout(() => { tts.retryTimer = null; ttsTick(); }, delay || 600);
 }
 
-// The server voice is the default now, and the browser voice is the escape.
+// One speaker, one queue. Server TTS owns normal playback on every surface.
 //
-// It was the other way round on the grounds that speechSynthesis starts
-// immediately and the server has a latency floor a reply waits on. Operator,
-// 2026-08-28: that floor is not large enough to be worth the voice, and what
-// people actually hear is whatever face their browser shipped.
-//
-// Both switches still work and both now mean "give me the browser one":
-// ?hq_voice=0, or master:voice-mode-hq set to "0".
-function highQualityVoiceEnabled() {
-  if (new URLSearchParams(window.location.search).get('hq_voice') === '0') return false;
-  try { return localStorage.getItem('master:voice-mode-hq') !== '0'; } catch (err) { window.MASTER_LOG?.warn?.("face_speech_runtime:hq_voice_storage", err); }
-  return true;
-}
-function browserTtsFallbackAllowed() {
-  // A face must never be silent merely because the server TTS lane is absent
-  // from a local or freshly booted environment. Server synthesis remains the
-  // quality path; browser speech is the immediate safety net when synthesis
-  // does not start promptly.
-  if (!highQualityVoiceEnabled()) return true;
-  if (new URLSearchParams(window.location.search).get('tts_fallback') === '1') return true;
+// Browser speech is retained only as an explicit emergency escape hatch. It is
+// never selected because the server is merely slow, so one reply cannot start
+// in Edge and then suddenly reappear in the browser with a second voice.
+function browserTtsEmergencyAllowed() {
+  if (new URLSearchParams(window.location.search).get('browser_tts') === '1') return true;
   try {
-    const stored = localStorage.getItem('master:tts-fallback');
-    if (stored === '0') return false;
-    if (stored === '1') return true;
-  } catch (err) { window.MASTER_LOG?.warn?.("face_speech_runtime:fallback_allowed_read", err); }
-  return true;
+    return localStorage.getItem('master:tts-browser-emergency') === '1';
+  } catch (err) {
+    window.MASTER_LOG?.warn?.("face_speech_runtime:browser_tts_emergency_read", err);
+    return false;
+  }
 }
 // speechSynthesis.getVoices() is populated asynchronously in Chrome: it
 // returns [] on first call and fills in on the 'voiceschanged' event. Touch it
@@ -1117,22 +1103,17 @@ function ttsTick() {
   const wdMs = 200000 + Math.min(120000, Math.max(20000, text.length * 180));
   tts.watchdog = setTimeout(() => { if (tts.playing && token === tts.cancelToken) { console.warn('tts watchdog: requeue'); requeueChunk(text); finishTTSPlayback(null, true); } }, wdMs);
   State.mode = 'speaking'; setAmbientHum(false);
-  // Voice Mode default: speak instantly via the browser, skip the Edge
-  // round-trip entirely. Opt into server TTS quality via the "high-quality
-  // voice" toggle if the latency is acceptable for this conversation.
-  // Say which voice this is, once per session. MASTER speaks through the
-  // browser rather than the server by default — see browserTtsFallbackAllowed —
-  // so the voice here is the operating system's, not the one data/voice.yml
-  // names. That is a reasonable trade and an unreasonable surprise: someone who
-  // has just changed the configured voice hears an unrelated one and concludes
-  // the change did not take. The toggle is hq_voice=1 or master:voice-mode-hq.
-  if (!highQualityVoiceEnabled() && !tts.browserVoiceNoticeShown) {
-    tts.browserVoiceNoticeShown = true;
-    setTtsHealthStatus('browser voice (hq off)');
+  // Server TTS is the only normal speaker. The queue owns the utterance,
+  // synthesis, playback, visemes, and STT ducking as one transaction. A slow
+  // server must not trigger a second voice; the explicit browser emergency
+  // path below is reached only after a real server failure.
+  if (tts.serverUnavailable && Date.now() < (tts.serverUnavailableUntil || 0)) {
+    tts.playing = false;
+    tts.current = null;
+    setTTSLoading(false);
+    ttsTick();
+    return;
   }
-  if (!highQualityVoiceEnabled() && speakWithBrowserTTS(text, token)) return;
-  if (tts.serverUnavailable && Date.now() < (tts.serverUnavailableUntil || 0) && speakWithBrowserTTS(text, token)) return;
-  if (tts.serverUnavailable && Date.now() < (tts.serverUnavailableUntil || 0)) { tts.playing = false; tts.current = null; setTTSLoading(false); ttsTick(); return; }
   if (tts.serverUnavailable) tts.serverUnavailable = false;
   const meta = tts.meta.get(text) || {};
   const voice = meta.voice || _activeTtsVoice();
@@ -1189,7 +1170,7 @@ function ttsTick() {
       tts.serverFailureCount = (tts.serverFailureCount || 0) + 1;
       tts.serverUnavailable = true;
       tts.serverUnavailableUntil = Date.now() + Math.min(30000, 5000 * tts.serverFailureCount);
-      if (speakWithBrowserTTS(text, token)) return;
+      if (browserTtsEmergencyAllowed() && speakWithBrowserTTS(text, token)) return;
       setTtsHealthStatus('tts: unavailable', 12000);
       tts.audio = null; tts.playing = false; tts.current = null; setTTSLoading(false);
       requeueChunk(text);
