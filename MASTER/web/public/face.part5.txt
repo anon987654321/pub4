@@ -24,13 +24,9 @@ function ttsSkipHard() {
   tts.cancelToken++;
   setTTSLoading(false);
   if (tts.audio) { try { tts.audio.pause(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:tts_skip_pause", err); } tts.audio = null; }
-  // Voice Mode defaults to browser speechSynthesis (tts.audio stays null for
-  // that path, see speakWithBrowserTTS), so pausing tts.audio above never
-  // silences it -- cancel() is the only way to actually stop the utterance.
-  // Must happen before resumeSttAfterSpeech() below, or the mic reopens onto
-  // a still-speaking browser voice (the exact echo bug this file's TTS/STT
-  // duck fix targeted).
-  if ('speechSynthesis' in window) { try { speechSynthesis.cancel(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:tts_skip_synth_cancel", err); } }
+  // The single server TTS playback element is also the cancellation boundary.
+  // Must happen before resumeSttAfterSpeech() below, or the mic can reopen while
+  // a stale audio element is still speaking.
   tts.outputGain = null;
   stopVisemeAnim();
   tts.visemePlan = null;
