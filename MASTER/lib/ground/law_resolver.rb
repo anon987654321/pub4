@@ -44,7 +44,7 @@ module Master
         return wrapped if wrapped.is_a?(Hash)
 
         data.select do |name, value|
-          name.to_s.match?(/A[A-Z][A-Z0-9_]*z/) &&
+          name.to_s.match?(/\A[A-Z][A-Z0-9_]*\z/) &&
             value.is_a?(Hash) &&
             value["priority"] &&
             value["principle"]
