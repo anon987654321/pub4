@@ -3125,187 +3125,6 @@ function scheduleTtsTick(delay) {
   tts.retryTimer = setTimeout(() => { tts.retryTimer = null; ttsTick(); }, delay || 600);
 }
 
-// One speaker, one queue. Server TTS owns normal playback on every surface.
-//
-// Browser speech is retained only as an explicit emergency escape hatch. It is
-// never selected because the server is merely slow, so one reply cannot start
-// in Edge and then suddenly reappear in the browser with a second voice.
-function browserTtsEmergencyAllowed() {
-  if (new URLSearchParams(window.location.search).get('browser_tts') === '1') return true;
-  try {
-    return localStorage.getItem('master:tts-browser-emergency') === '1';
-  } catch (err) {
-    window.MASTER_LOG?.warn?.("face_speech_runtime:browser_tts_emergency_read", err);
-    return false;
-  }
-}
-// speechSynthesis.getVoices() is populated asynchronously in Chrome: it
-// returns [] on first call and fills in on the 'voiceschanged' event. Touch it
-// early so a real voice list exists by the time Voice Mode wants to speak.
-let _browserVoicesPrimed = false;
-function primeBrowserVoices() {
-  if (_browserVoicesPrimed || !('speechSynthesis' in window)) return;
-  _browserVoicesPrimed = true;
-  try {
-    speechSynthesis.getVoices();
-    speechSynthesis.addEventListener('voiceschanged', () => {}, { once: true });
-  } catch (err) { window.MASTER_LOG?.warn?.("face_speech_runtime:voices_prime", err); }
-}
-// macOS ships novelty voices — Albert, Bad News, Bubbles, Zarvox, and one
-// actually called Whisper — and Chrome puts them in getVoices() beside the real
-// ones, tagged with the same en-US. Taking the first match by language is
-// therefore a coin flip that lands on a joke voice often enough to be the first
-// thing a visitor hears. It did: ai.brgen.no was answering in a whisper.
-const NOVELTY_VOICE_RE = /\b(albert|bad news|bahh|bells|boing|bubbles|cellos|good news|jester|organ|superstar|trinoids|whisper|wobble|zarvox|junior|ralph|fred|kathy|princess|deranged|hysterical|bruce|agnes|victoria)\b/i;
-
-// Two tiers, not one list, because they are not the same kind of thing and the
-// difference is audible.
-//
-// NEURAL names the actually-neural synthesisers. DECENT names concatenative
-// voices that are good for their generation — Daniel and Samantha are 2009-era
-// diphone voices, fine as a floor and nobody's idea of good.
-//
-// They were one regex, and selection is `find()` over getVoices() in whatever
-// order the platform returns. So "Ava (Premium)" and "Daniel" matched equally
-// and array position decided, which means installing a premium voice could
-// leave the old one still speaking. Tiering makes the better voice win by being
-// better rather than by being earlier.
-//
-// On macOS this matters more than it looks: the system ships only compact
-// voices, and Enhanced/Premium are a separate download under Spoken Content.
-// A machine without them has no tier-1 voice at all and correctly falls to
-// tier 2.
-const NEURAL_VOICE_RE = /(neural|natural|enhanced|premium|siri|google\s|microsoft\s)/i;
-const FEMALE_BROWSER_VOICE_RE = /(jenny|samantha|ava|serena|karen|moira|tessa|fiona|nora|siri\b)/i;
-
-function pickBrowserVoice(lang) {
-  let voices = [];
-  try { voices = speechSynthesis.getVoices() || []; } catch (_) { return null; }
-  if (!voices.length) return null;
-  const want = String(lang).toLowerCase();
-  const base = want.split('-')[0];
-  const named = (v) => `${v.name || ''} ${v.voiceURI || ''}`;
-  const sane = voices.filter((v) => !NOVELTY_VOICE_RE.test(named(v)));
-  const pool = sane.length ? sane : voices;
-  const exact = pool.filter((v) => (v.lang || '').toLowerCase() === want);
-  const loose = pool.filter((v) => (v.lang || '').toLowerCase().startsWith(base));
-
-  // Norwegian is a hard identity rule. Never substitute Christopher, Jenny,
-  // Daniel, Samantha, or another nb-NO voice for Pernille. The server remains
-  // the fallback when the exact browser voice is not installed.
-  if (base === 'nb') {
-    return pool.find((v) => /\bpernille\b/i.test(named(v)) && (v.lang || '').toLowerCase().startsWith('nb'))
-      || null;
-  }
-
-  // Browser fallback is a safety net, not a new narrator. Only a
-  // known female voice is eligible here, so a server failure cannot turn a
-  // female MASTER reply into an unrelated male system voice.
-  return exact.find((v) => FEMALE_BROWSER_VOICE_RE.test(named(v)) && NEURAL_VOICE_RE.test(named(v)))
-      || exact.find((v) => FEMALE_BROWSER_VOICE_RE.test(named(v)))
-      || loose.find((v) => FEMALE_BROWSER_VOICE_RE.test(named(v)))
-      || null;
-}
-// Warm the voice list as soon as this segment loads, so the first thing said
-// in Voice Mode is not the one utterance that finds getVoices() still empty.
-primeBrowserVoices();
-
-// Time-boxed, per the boot contract: browser speech must never permanently
-// downgrade the session, so a failure parks it for five minutes and then lets
-// it try again.
-const BROWSER_TTS_COOLDOWN_MS = 300000;
-function browserTtsParked() {
-  return tts.browserTtsBrokenUntil ? Date.now() < tts.browserTtsBrokenUntil : false;
-}
-function parkBrowserTts(reason) {
-  tts.browserTtsBrokenUntil = Date.now() + BROWSER_TTS_COOLDOWN_MS;
-  window.MASTER_LOG?.warn?.("face_speech_runtime:browser_tts_parked", reason);
-}
-function speakWithBrowserTTS(text, token) {
-  if (!browserTtsFallbackAllowed()) return false;
-  if (!('speechSynthesis' in window) || !window.SpeechSynthesisUtterance) return false;
-  if (browserTtsParked()) return false;
-
-  // Returning false here is the whole point: the caller then falls through to
-  // server TTS. Previously this function returned true the moment speak() did
-  // not throw, whether or not anything could ever be spoken. When no voice
-  // matched the utterance language — or the voice list had not loaded yet —
-  // speak() silently did nothing, onstart/onend never fired, tts.playing stayed
-  // true and setTTSLoading(false) never ran. That one bug produced all three
-  // reported symptoms at once: no audio, a mic that never re-armed because
-  // resumeSttAfterSpeech() is only reached from onend, and the same sentence
-  // spoken again each time the watchdog requeued it.
-  // en-US, not en-GB. This is the browser-speech fallback used when the neural
-  // endpoint is unavailable, and it picked a British voice for every non-nb
-  // utterance — so the fallback contradicted the policy voice precisely when it
-  // was the only thing speaking.
-  //
-  // en-US because that is the policy locale: en-US-JennyNeural. This path used
-  // to ask for a locale the policy voice did not speak, and asking for a locale
-  // the platform lacks gets an arbitrary substitute rather than a refusal. The
-  // two agree now, so the fallback loses the neural voice and not the accent.
-  const lang = tts.lang === 'nb' ? 'nb-NO' : 'en-US';
-  const voice = pickBrowserVoice(lang);
-  if (!voice) { primeBrowserVoices(); return false; }
-
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.voice = voice;
-  utterance.lang = voice.lang || lang;
-  utterance.rate = getTtsRate();
-
-  let started = false;
-  let startGuard = null;
-  const clearGuard = () => { if (startGuard) { clearTimeout(startGuard); startGuard = null; } };
-
-  utterance.onstart = () => {
-    started = true;
-    clearGuard();
-    emitTtsEvent('tts:playback:start', { text, backend: 'browser', duration: null });
-    // No media element on this path, and onstart is real playback start.
-    startVisemeAnim(text, { clock: 'wall' });
-    setTTSLoading(false);
-  };
-  utterance.onend = utterance.onerror = () => {
-    clearGuard();
-    if (token !== tts.cancelToken) return;
-    emitTtsEvent('tts:playback:end', { text, interrupted: false, backend: 'browser' });
-    stopVisemeAnim();
-    clearViseme();
-    tts.playing = false;
-    tts.audio = null;
-    tts.current = null;
-    if (tts.watchdog) { clearTimeout(tts.watchdog); tts.watchdog = null; }
-    if (State.mode === 'speaking') State.mode = 'idle';
-    ttsTick();
-  };
-
-  try {
-    speechSynthesis.cancel();
-    speechSynthesis.speak(utterance);
-  } catch (_) {
-    return false;
-  }
-
-  // speak() accepted it, but acceptance is not utterance. If nothing has begun
-  // shortly after, treat browser speech as unavailable and hand this same text
-  // back to the queue so the server voice says it — rather than stalling the
-  // queue and the mic behind an utterance that will never start or end.
-  startGuard = setTimeout(() => {
-    startGuard = null;
-    if (started || token !== tts.cancelToken) return;
-    try { speechSynthesis.cancel(); } catch (_) { /* already gone */ }
-    parkBrowserTts('speech never started');
-    tts.playing = false;
-    tts.current = null;
-    if (tts.watchdog) { clearTimeout(tts.watchdog); tts.watchdog = null; }
-    if (State.mode === 'speaking') State.mode = 'idle';
-    requeueChunk(text);
-    scheduleTtsTick(50);
-  }, 1500);
-
-  return true;
-}
-
 // The browser refuses sound until the page has had a gesture, and the face now
 // starts without one: no primer tap, and a visitor who only talks never
 // touches the page. A refused play() used to requeue the sentence and finish,
@@ -3429,7 +3248,6 @@ function ttsTick() {
       tts.serverFailureCount = (tts.serverFailureCount || 0) + 1;
       tts.serverUnavailable = true;
       tts.serverUnavailableUntil = Date.now() + Math.min(30000, 5000 * tts.serverFailureCount);
-      if (browserTtsEmergencyAllowed() && speakWithBrowserTTS(text, token)) return;
       setTtsHealthStatus('tts: unavailable', 12000);
       tts.audio = null; tts.playing = false; tts.current = null; setTTSLoading(false);
       requeueChunk(text);
@@ -3503,6 +3321,7 @@ window.MASTER_SPEECH_RUNTIME = Object.freeze({
 });
 window.MASTER = window.MASTER || {};
 window.MASTER.speechRuntime = window.MASTER_SPEECH_RUNTIME;
+
 // Viseme playback — mouth animation driven by TTS audio and server viseme plans.
 // Concatenated into face.runtime.js by assets:build_face_runtime (after face_speech_runtime.js).
 
@@ -3549,29 +3368,19 @@ function planFrames() {
 // driving the mouth through the next one because their only guard is
 // `tts.playing || tts.audio`, which the next utterance satisfies.
 //
-// One interval on tts.visemeTimer, cursored over the frames: a second call
-// replaces the first rather than stacking on it, stopVisemeAnim ends it, and
-// before playback begins the cursor simply holds at frame 0 instead of running
-// the plan out against wall-clock. clock:'wall' is the browser speechSynthesis
-// path, which has no media element to read currentTime from and calls this from
-// utterance.onstart — real playback start, so elapsed-since-call is the clock.
-function startVisemeAnim(text, { clock = 'audio' } = {}) {
+// One interval on tts.visemeTimer, cursored over the audio frames: a second call
+// replaces the first rather than stacking on it. Before playback begins the
+// cursor simply holds at frame 0.
+function startVisemeAnim(text) {
   stopVisemeAnim();
   const frames = planFrames();
   if (frames) {
     let cursor = 0;
-    let wallOrigin = null;
     tts.visemeTimer = setInterval(() => {
       if (!tts.playing && !tts.audio) { stopVisemeAnim(); return; }
-      let elapsed;
-      if (clock === 'wall') {
-        if (wallOrigin === null) wallOrigin = performance.now();
-        elapsed = performance.now() - wallOrigin;
-      } else {
-        const audio = tts.audio;
-        if (!audio || audio.paused) return;
-        elapsed = audio.currentTime * 1000;
-      }
+      const audio = tts.audio;
+      if (!audio || audio.paused) return;
+      const elapsed = audio.currentTime * 1000;
       let applied = null;
       while (cursor < frames.length && frames[cursor].at <= elapsed) {
         applied = frames[cursor];
@@ -3648,13 +3457,9 @@ function ttsSkipHard() {
   tts.cancelToken++;
   setTTSLoading(false);
   if (tts.audio) { try { tts.audio.pause(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:tts_skip_pause", err); } tts.audio = null; }
-  // Voice Mode defaults to browser speechSynthesis (tts.audio stays null for
-  // that path, see speakWithBrowserTTS), so pausing tts.audio above never
-  // silences it -- cancel() is the only way to actually stop the utterance.
-  // Must happen before resumeSttAfterSpeech() below, or the mic reopens onto
-  // a still-speaking browser voice (the exact echo bug this file's TTS/STT
-  // duck fix targeted).
-  if ('speechSynthesis' in window) { try { speechSynthesis.cancel(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:tts_skip_synth_cancel", err); } }
+  // The single server TTS playback element is also the cancellation boundary.
+  // Must happen before resumeSttAfterSpeech() below, or the mic can reopen while
+  // a stale audio element is still speaking.
   tts.outputGain = null;
   stopVisemeAnim();
   tts.visemePlan = null;
@@ -5045,4 +4850,3 @@ await import(_deferFaceMod('face_semantics.js'));
 await import(_deferFaceMod('face_minimal_ui.js'));
 await import(_deferFaceMod('face_loops_music.js'));
 await import(_deferFaceMod('face_loops_nudge.js'));
-
