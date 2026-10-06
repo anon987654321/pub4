@@ -53,10 +53,10 @@ module Master
         "play" => {
           summary: "play a named Dilla music lane on the local sound card",
           detail: [
-            "/play bach — Bach/circle-of-fifths material through the heavy Dilla rack.",
-            "/play j dilla — Dilla material through the heavy Dilla rack.",
-            "/play flying lotus — FlyLo/quartal material through the heavy Dilla rack.",
-            "/play madlib — Madlib material through the heavy Dilla rack.",
+            "/play bach — Bach Toccata und Fuge BWV 565 on the live church-organ engine.",
+            "/play j dilla — live Dilla improviser on the Moog family.",
+            "/play flying lotus — live improviser on the Prophet family.",
+            "/play madlib — live improviser on the Rhodes family.",
             "/play royksopp — Röyksopp material through the heavy Dilla rack.",
             "Aliases accept Röyksopp and .rb; unknown names are refused locally.",
           ],
