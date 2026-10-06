@@ -232,11 +232,14 @@ class TestDillaLiveSynth < Minitest::Test
     assert_equal expected, actual
   end
 
-  def test_dangelo_showcase_uses_the_richer_reference_and_soft_lead
+  def test_dangelo_showcase_uses_rich_artist_references
     source = File.read(dilla("lib/livesets.rb"))
-    block = source[source.index('when "dangelo"')...source.index('when "flylo"')]
-    assert_includes block, 'reference: "untitled_d_mixolydian_vamp"'
-    assert_includes block, '"preset" => "bell"'
+    block = source[source.index('when "dangelo_root"')...source.index('when "flylo"')]
+    assert_includes block, 'reference: "the_root_modal_vamp"'
+    assert_includes block, '"patch" => "e_piano"'
+    assert_includes block, '"knob" => "resonance"'
+    assert_includes block, 'when "dangelo_another_life"'
+    assert_includes block, 'reference: "another_life_pedal_descent"'
     refute_includes block, '"preset" => "metal"'
   end
 
@@ -246,18 +249,39 @@ class TestDillaLiveSynth < Minitest::Test
     assert_match(/LIVE_SYNTH_VERBS = %w\[[^\]]*\bshowcase\b[^\]]*\]\.freeze/, source)
   end
 
+  def test_showcase_audio_room_is_dark_and_taped
+    source = File.read(dilla("lib/livesets.rb"))
+    assert_includes source, 'speed: :ips7, wow: 0.12, flutter: 0.05'
+    assert_includes source, 'lowpass=f=4200'
+    assert_includes source, 'aecho=0.82:0.72:82|164:0.18|0.10'
+    assert_includes source, 'SHOWCASE_TEMPO_SCALE = 0.90'
+  end
+
   def test_showcase_covers_the_live_feature_tour
     scenes = LiveSynth::SHOWCASE_SCENES.map(&:first)
-    assert_equal %w[dilla_life soulquarians dangelo flylo madlib royksopp moog_dfam memorymoog_organ glass_bell bach], scenes
+    assert_equal %w[
+      dilla_life dilla_players dilla_so_far_to_go soulquarians
+      dangelo_root dangelo_spanish_joint dangelo_another_life dangelo_ballad
+      flylo flylo_computer_face madlib madlib_figaro royksopp
+      moog_dfam moog_dark memorymoog_organ vox_humana soft_reed glass_bell bach
+    ], scenes
     source = File.read(dilla("lib/livesets.rb"))
     assert_includes source, 'reference: "dilla_life"'
-    assert_includes source, 'reference: "soulquarians_butter"'
-    assert_includes source, 'reference: "really_love_bossa_broken"'
-    assert_includes source, 'reference: "flylo_camel_documented"'
-    assert_includes source, 'reference: "madlib_accordion_loop_documented"'
+    assert_includes source, 'reference: "slum_village_players_documented"'
+    assert_includes source, 'reference: "dilla_so_far_to_go_documented"'
+    assert_includes source, 'reference: "the_root_modal_vamp"'
+    assert_includes source, 'reference: "spanish_joint_swing_16ths"'
+    assert_includes source, 'reference: "another_life_pedal_descent"'
+    assert_includes source, 'reference: "gospel_69_ballad_walk"'
+    assert_includes source, 'reference: "flylo_computer_face_documented"'
+    assert_includes source, 'reference: "madlib_figaro_documented"'
     assert_includes source, 'Progression.new("royksopp_live"'
     assert_includes source, 'Progression.new("moog_improv"'
+    assert_includes source, 'Progression.new("moog_improv", rng:, family: "moog")'
     assert_includes source, 'BachMidi::Score.new'
+    assert_includes source, 'DILLA_SHOWCASE'
+    assert_includes source, 'speed: :ips7'
+    assert_includes source, 'SHOWCASE_TEMPO_SCALE = 0.90'
   end
 
   def test_bare_dilla_entrypoint_routes_to_showcase_before_render_setup
