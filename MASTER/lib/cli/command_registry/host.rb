@@ -97,9 +97,22 @@ module Master
           RbConfig.ruby, operator, "vps", "deploy", target, "--remote",
           chdir: MasterPaths.repo,
         )
-        return Result.ok(output.strip) if status.success?
+        summary = deploy_summary(output, status)
+        return Result.ok(summary) if status.success?
 
-        Result.err("deploy: #{output.to_s.strip}", category: :infrastructure)
+        Result.err("deploy: #{summary}", category: :infrastructure)
+      end
+
+      def deploy_summary(output, status)
+        lines = output.to_s.lines.map(&:strip).reject(&:empty?)
+        success_line = lines.reverse.find { |line| line.match?(/\bvps-deploy:\s+.+\b(?:ok|complete|ready)\b/i) }
+        return "remote: #{success_line}" if status.success? && success_line
+
+        decisive = lines.reverse.find { |line| line.match?(/\b(?:fatal|failed|refused|error|aborted|conflict|not ready|did not|could not)\b/i) }
+        detail = decisive || lines.last || "no remote output"
+        detail = lines.last(2).join(" | ") if decisive && lines.last != decisive && lines.last.length < 90
+        detail = detail[0, 150]
+        status.success? ? "remote: #{detail}" : "remote exit #{status.exitstatus || "signal"}: #{detail}"
       end
 
       # /android and /ios are the public mobile onboarding entrypoints. The

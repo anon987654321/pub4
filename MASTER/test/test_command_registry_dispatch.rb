@@ -59,6 +59,28 @@ class TestCommandRegistryDispatch < Minitest::Test
     assert_match(/needs explicit confirmation/, command.call(Master::CLI::PipelineContext.new(user_message: "/deploy all")))
   end
 
+  def test_deploy_summary_reports_remote_success_without_the_full_log
+    status = Struct.new(:exitstatus) do
+      def success? = true
+    end.new(0)
+
+    assert_equal(
+      "remote: vps-deploy: all ok (master brgen amber bsdports)",
+      Registry.send(:deploy_summary, "vps-deploy: all -> master\nvps-deploy: master ok\nvps-deploy: all ok (master brgen amber bsdports)\n", status),
+    )
+  end
+
+  def test_deploy_summary_keeps_the_decisive_remote_failure
+    status = Struct.new(:exitstatus) do
+      def success? = false
+    end.new(1)
+
+    result = Registry.send(:deploy_summary, "vps-deploy: master web\nfatal: git pull --ff-only failed\nvps-deploy: all halted at master\n", status)
+
+    assert_match(/remote exit 1: .*fatal: git pull --ff-only failed/, result)
+    assert_operator result.length, :<=, 170
+  end
+
   def test_critique_is_a_documented_discoverable_command
     assert built.key?("critique")
     assert_includes Registry::HELP_TOPICS.keys, "critique"

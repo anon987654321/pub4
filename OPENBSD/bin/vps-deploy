@@ -46,6 +46,21 @@ case $app in
   *) print -u2 "vps-deploy: unknown app \"$app\" — allowed: all, master, brgen, amber, bsdports"; exit 2 ;;
 esac
 
+# One host, one deploy. The parent all process keeps this lock while its
+# re-entrant child processes deploy each app in order; a second top-level deploy
+# is refused rather than running two pulls, precompiles and restarts together.
+lock_dir=${VPS_DEPLOY_LOCK_DIR:-$HOME/.pub4-vps-deploy.lock}
+lock_owner=0
+if [[ -z ${VPS_DEPLOY_LOCK_HELD:-} ]]; then
+  if mkdir "$lock_dir" 2>/dev/null; then
+    export VPS_DEPLOY_LOCK_HELD=1
+    lock_owner=1
+  else
+    print -u2 "vps-deploy: refused — another deploy owns $lock_dir (remove only after confirming no deploy)"
+    exit 75
+  fi
+fi
+
 # A full deploy outlives the ssh session that starts it. When that session is
 # cut — a timeout, a dropped link — the pipe carrying its output dies with it and
 # the only record of what happened is gone, while the deploy itself carries on to
@@ -168,9 +183,18 @@ fi
 # breaching ticks after this deploy ends before it sheds anything. The name is
 # not .deploying-<app>, because rc.d removes that one mid-deploy; it is touched
 # again at each long stage because the guard ignores a flag older than 30 minutes.
+release_deploy_lock() {
+  (( lock_owner )) || return 0
+  rmdir "$lock_dir" 2>/dev/null || true
+}
+
 deploy_flag="$repo/.deploying-vps-deploy-${app}"
 hold_deploy_flag() { touch "$deploy_flag" 2>/dev/null || true }
-trap 'rm -f -- "$deploy_flag"' EXIT
+cleanup() {
+  rm -f -- "$deploy_flag"
+  release_deploy_lock
+}
+trap cleanup EXIT
 hold_deploy_flag
 
 # What is about to be deployed, against what is actually running.
