@@ -62,7 +62,12 @@ module Master
         targets = fix_targets(target, root:)
         writes_requested = apply != false && fix_stage_selected?(only)
         if writes_requested && worktree_fix_requested?
-          return dispatch_fix_in_worktree(raw:, root:, target:)
+          Master::Trace::Dmesg.status("fix0", "target queue: #{targets.join(", ")}") if targets.size > 1
+          return Master::Trace::Dmesg.with_log_voice do
+            with_dmesg_verbosity(raw, default: "trace") do
+              dispatch_fix_in_worktree(raw:, root:, target:)
+            end
+          end
         end
         Master::Trace::Dmesg.status("fix0", "target queue: #{targets.join(", ")}") if targets.size > 1
         trace_scope = execution_trace_scopes(target)
@@ -130,7 +135,7 @@ module Master
       end
 
       def worktree_proof_trees(target, root:)
-        tokens = target.to_s.split(/\\s+/)
+        tokens = target.to_s.split(/\s+/)
         trees = %w[MASTER RAILS OPENBSD STUDIO]
         return tokens.uniq if tokens.size > 1 && tokens.all? { |token| trees.include?(token) }
         return trees if target.to_s.strip.empty?
