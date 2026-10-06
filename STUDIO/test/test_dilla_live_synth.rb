@@ -617,7 +617,24 @@ class TestDillaLiveSynth < Minitest::Test
     assert_includes source, 'next_requested ? :next : nil'
   end
 
-  def test_documented_artist_lane_uses_the_good_improviser_renderer
+  def test_live_leads_use_the_current_chord_scale
+    score = LiveSynth::Improviser.new(rng: Random.new(4), reference: "flylo_haze_03", family: "prophet")
+    pcs = score.send(:lead_scale_pitch_classes, "C#m9", [1, 4, 8, 11, 2])
+    assert_equal [1, 3, 4, 6, 8, 10, 11], pcs.sort
+  end
+
+  def test_showcase_recording_uses_split_outputs_not_a_tee_muxer
+    source = File.read(dilla("lib/livesets.rb"))
+    assert_includes source, "asplit=2[showcase_record][showcase_play]"
+    refute_includes source, '"-f", "tee"'
+    assert_includes source, 'traps&.each { |signal, handler| Signal.trap(signal, handler) }'
+  end
+
+  def test_showcase_contains_a_broader_flylo_rotation
+    scenes = LiveSynth::SHOWCASE_SCENES.map(&:first)
+    assert_operator scenes.count { |name| name.start_with?("flylo") }, :>=, 8
+  end
+
     score = LiveSynth::Improviser.new(
       rng: Random.new(9),
       reference: "dilla_flowers_documented",
