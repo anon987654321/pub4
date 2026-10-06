@@ -14,11 +14,13 @@ defaults: &defaults
 servers:
   filesystem:
     <<: *defaults
+    enabled: true
+    tier: guarded
     args:
       - -y
       - "@modelcontextprotocol/server-filesystem"
-      - "/home/dev/pub4"
-    description: Expose read/write/search over a local directory
+      - "${MASTER_REPO_ROOT}"
+    description: Expose bounded read/write/list/move/search access over the pub4 repository root
 
   git:
     <<: *defaults
