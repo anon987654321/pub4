@@ -19,7 +19,7 @@ module Deploy
     # from this checkout's engine; only the subject moves.
     def self.run(root: ROOT, apps: APPS)
       result = GateResult.new
-      load SHARED.join("app/services/shared/frontend_auditor.rb")
+      require SHARED.join("app/services/shared/frontend_auditor.rb")
 
       by_app = {}
       errors = 0
