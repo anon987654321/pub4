@@ -185,6 +185,30 @@ class TestDillaLiveSynth < Minitest::Test
     assert_raises(ArgumentError) { knobs.turn("volume", clock: 0.0, seconds: 1.0, by: 0.1) }
   end
 
+  def test_showcase_ffmpeg_tees_the_same_post_fx_stream_to_file_and_player
+    destination = "/tmp/dilla-showcase-test.wav"
+    old = ENV["DILLA_SHOWCASE_LIVE_RECORD"]
+    ENV["DILLA_SHOWCASE_LIVE_RECORD"] = "1"
+
+    DillaLive.stub(:which, ->(name) { { "ffmpeg" => "/opt/homebrew/bin/ffmpeg", "play" => "/opt/homebrew/bin/play" }[name] }) do
+      command = LiveSynth.through_ffmpeg(
+        channels: 2,
+        filter: ["-af", "anull"],
+        rate: 32_000,
+        dest: destination
+      )
+
+      assert_equal "sh", command.first
+      assert_includes command.last, "-f tee"
+      assert_includes command.last, "[f=wav]"
+      assert_includes command.last, Shellwords.escape(destination)
+      assert_includes command.last, "[f=s16le]pipe:1"
+      assert_includes command.last, "/opt/homebrew/bin/play"
+    end
+  ensure
+    old.nil? ? ENV.delete("DILLA_SHOWCASE_LIVE_RECORD") : ENV["DILLA_SHOWCASE_LIVE_RECORD"] = old
+  end
+
   # Generic play is the steerable showcase. Explicit improvisation remains
   # the improviser, while named progressions and patches keep their names.
   def test_sentences_become_live_commands
