@@ -295,6 +295,15 @@ module AnalogSynth
       amp: Envelope.new(attack: 0.035, decay: 0.5, sustain: 0.92, release: 2.4),
       filter_env: Envelope.new(attack: 0.08, decay: 0.8, sustain: 0.9, release: 1.8),
     },
+    # The old liveset's Memorymoog organ: flat, immediate, square-heavy and
+    # round in the middle. Bach's MIDI keeps the composition exact; this patch
+    # supplies the instrument the folded liveset already used for organ.
+    memorymoog_organ: {
+      waves: %i[square square saw], detune: [-6.0, 6.0, 0.0], octaves: [0, 0, -1],
+      cutoff: 900.0, env_amount: 0.0, resonance: 0.3, drive: 1.2,
+      amp: Envelope.new(attack: 0.01, decay: 0.1, sustain: 1.0, release: 0.12),
+      filter_env: Envelope.new(attack: 0.01, decay: 0.1, sustain: 1.0, release: 0.1),
+    },
     warm_pad: {
       waves: %i[saw saw square], detune: [-8.0, 9.0, 0.0], octaves: [0, 0, -1],
       cutoff: 520.0, env_amount: 900.0, resonance: 0.18, drive: 0.88,
