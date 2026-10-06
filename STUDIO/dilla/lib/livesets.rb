@@ -2208,6 +2208,10 @@ module LiveSynth
           scene_path = File.join(scratch, format("%02d-%s.wav", index + 1, name))
           state = showcase_segment!(score, seconds, actions:, output: scene_path)
           paths << scene_path if File.file?(scene_path) && File.size?(scene_path)
+          if state == :next
+            log("showcase -> next (space)")
+            next
+          end
           if state == :stopped
             stopped = true
             break
@@ -2451,6 +2455,7 @@ module LiveSynth
     previous_live_record = ENV["DILLA_SHOWCASE_LIVE_RECORD"]
     ENV["LIVE_OUT"] = output if output
     ENV["DILLA_SHOWCASE_LIVE_RECORD"] = "1" if output
+    next_requested = false
 
     worker = Thread.new do
       started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
@@ -2465,8 +2470,38 @@ module LiveSynth
       LiveSynth.log("showcase control: #{e.class}: #{e.message}")
     end
 
+    keyboard = nil
+    tty_state = nil
+    if STDIN.tty?
+      state = Open3.capture2("stty", "-g").first.to_s.strip
+      unless state.empty?
+        tty_state = state
+        system("stty", "-icanon", "min", "1", "time", "0", "-echo")
+        keyboard = Thread.new do
+          begin
+            loop do
+              char = STDIN.getc
+              break if char.nil?
+              next unless char == " "
+
+              next_requested = true
+              Session.post!("stop" => true)
+              break
+            end
+          rescue StandardError => e
+            LiveSynth.log("showcase keyboard: #{e.class}: #{e.message}")
+          end
+        end
+        log("space = next showcase")
+      end
+    end
+
     perform!(score, seconds:)
+    next_requested ? :next : nil
   ensure
+    keyboard&.kill
+    keyboard&.join
+    system("stty", tty_state) if tty_state
     worker&.kill
     worker&.join
     previous.nil? ? ENV.delete("LIVE_OUT") : ENV["LIVE_OUT"] = previous
@@ -3103,11 +3138,25 @@ module LiveSynth
       [0, quality, symbol]
     end
 
-    # Dilla: the root on the one, then late pushes and a fifth or an octave.
+    # Dilla bass is a conversation with the drums, not a second floor. In the
+    # showcase keep the dark weight but leave the kick its transient and the
+    # chord its lower shell: one restrained root, then the occasional answer.
     def bass!(stage, root, bars)
       spec = Patches.spec(@bass)
       late = @c["bass_late_seconds"]
       at = @next_at
+      if LiveSynth.showcase?
+        gain = 0.24
+        stage.note(root, spec, at + 0.018, 0.82 * @beat, gain, :bass)
+        if @rng.rand < 0.32
+          stage.note(root + 7, spec, at + (2.5 * @beat) + late, 0.28 * @beat, gain * 0.62, :bass)
+        end
+        return unless bars == 2 && @rng.rand < 0.55
+
+        stage.note(root, spec, at + (4 * @beat) + 0.018, 0.68 * @beat, gain * 0.82, :bass)
+        return
+      end
+
       stage.note(root, spec, at + 0.01, 1.3 * @beat, 0.5, :bass)
       stage.note(root, spec, at + (1.5 * @beat) + late, 0.45 * @beat, 0.38, :bass) if @rng.rand < 0.7
       if @rng.rand < 0.5
