@@ -59,6 +59,18 @@ module Master
         @verbosity_override = previous
       end
 
+      def with_log_voice
+        previous = @log_voice_active
+        @log_voice_active = true
+        yield
+      ensure
+        @log_voice_active = previous
+      end
+
+      def log_voice_active?
+        @log_voice_active == true
+      end
+
       def cfg
         @cfg ||= begin
           data = Master.load_yaml(Master.limits_path, default: {}) || {}
@@ -201,10 +213,37 @@ module Master
         io.print "\r\e[K" if io.respond_to?(:tty?) && io.tty?
         io.puts(io.respond_to?(:tty?) && io.tty? ? style(text, io:) : text)
         io.flush if io.respond_to?(:flush)
+        speak_log_line(text) if log_voice_active?
         text
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "Trace::Dmesg.emit")
         nil
+      end
+
+      def speak_log_line(text)
+        return if Thread.current[:master_dmesg_tts]
+
+        require_relative "../voice/playback"
+        return unless Master::Voice::Playback.enabled?
+        return unless Master::Voice::Playback.available?
+
+        speech = Master::Voice::Speech
+        clean = speech.clean_text(text)
+        return if clean.empty?
+
+        Thread.current[:master_dmesg_tts] = true
+        Master::Voice::Playback.enqueue(
+          clean,
+          voice: Master::Voice::Policy.operator_log_voice,
+          style: :neutral,
+          rate: Master::Voice::Policy.operator_log_rate,
+          pitch: Master::Voice::Policy.operator_log_pitch,
+          last: true,
+        )
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "Trace::Dmesg.log_voice")
+      ensure
+        Thread.current[:master_dmesg_tts] = false
       end
 
       def style(text, io: $stdout)
