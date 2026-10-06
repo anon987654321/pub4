@@ -254,7 +254,7 @@ class TestRestructure < Minitest::Test
     FileUtils.mkdir_p(File.join(@repo, "RAILS/brgen/engines/takeaway/test/models/takeaway"))
     engine_test = File.join(@repo, "RAILS/brgen/engines/takeaway/test/models/takeaway/order_test.rb")
     File.write(engine_test, "class OrderTest < Minitest::Test; end\n")
-    plan = Restructure::Plan.parse("=== WRITE RAILS/brgen/engines/takeaway/app/models/takeaway/order.rb\nmodule Takeaway\nend\n=== END\n")
+    plan = Restructure::Plan.parse("OPERATIONS: split\n=== WRITE RAILS/brgen/engines/takeaway/app/models/takeaway/order.rb\nmodule Takeaway\nend\n=== END\n")
     proof = Restructure::RailsProof.new(repo_root: @repo, tree: "RAILS")
     assert_includes proof.send(:test_files, plan), engine_test
   end
@@ -306,7 +306,7 @@ class TestRestructure < Minitest::Test
     spine = Restructure::Plan.parse("OPERATIONS: split\n=== WRITE MASTER/lib/core/mission.rb\nx\n=== END\n")
 
     assert_includes restructure.call(spine, message: "x", review: ->(_d) {}).message, "immutable"
-    outside = Restructure::Plan.parse("=== WRITE RAILS/app.rb\nx\n=== END\n")
+    outside = Restructure::Plan.parse("OPERATIONS: relocate\n=== WRITE RAILS/app.rb\nx\n=== END\n")
 
     assert_includes restructure.call(kernel, message: "x", review: ->(_d) {}).message, "immutable"
     assert_includes restructure.call(outside, message: "x", review: ->(_d) {}).message, "outside MASTER/"
