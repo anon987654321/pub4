@@ -263,7 +263,7 @@ class TestDillaLiveSynth < Minitest::Test
         0x60, 0x80, 0x3A, 0x40,
         0x00, 0xFF, 0x2F, 0x00
       ].pack("C*")
-      header = "MThd".b + [6, 0, 1, 1, 96].pack("Nnnn")
+      header = "MThd".b + [6, 1, 1, 96].pack("Nnnn")
       body = "MTrk".b + [track.bytesize].pack("N") + track
       File.binwrite(path, header + body)
 
@@ -271,8 +271,8 @@ class TestDillaLiveSynth < Minitest::Test
       assert_equal 1, parsed.fetch(:notes).length
       note = parsed.fetch(:notes).first
       assert_equal 58, note.fetch(:note)
-      assert_in_delta 0.3125, note.fetch(:start), 0.0001
-      assert_in_delta 0.3125, note.fetch(:duration), 0.0001
+      assert_in_delta 0.0, note.fetch(:start), 0.0001
+      assert_in_delta 0.5, note.fetch(:duration), 0.0001
     end
   end
 
