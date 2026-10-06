@@ -25,15 +25,10 @@ module Master
 
         def ordered(violation_counts:)
           deps = load_deps
-          priors = load_priors
-          ext_wts = extension_weights
           law_resolver = Master::Ground::LawResolver.new
           rules_index = Priority.rules_index(root: @root)
           sorted = @rules.each_with_index.sort_by do |r, i|
-            base_prior = priors.dig(r.id, "prior_p").to_f
-            modifiers = priors.dig(r.id, "language_modifiers") || {}
-            adjusted = ext_wts.sum { |ext, w| base_prior * (modifiers[ext] || 1.0) * w }
-            frequency = violation_counts[r.id].to_f + adjusted
+            frequency = violation_counts[r.id].to_f
             quality = @learnings&.fix_quality(rule: r.id) || 0.5
             # tier2 stays a strict lexicographic primary key, not folded into
             # score()'s additive bonus: a high-frequency generic rule's score
@@ -102,22 +97,6 @@ module Master
           sorted + (rules - sorted)
         end
 
-        def extension_weights
-          counts = Hash.new(0)
-          Dir.glob(File.join(@root, "**", "*"))
-            .select { |f| File.file?(f) && !f.match?(SKIP_DIRS_RE) }
-            .each do |f|
-              ext = File.extname(f).delete(".").downcase
-              counts[ext] += 1 unless ext.empty?
-            end
-          total = counts.values.sum.to_f
-          return {} if total.zero?
-          counts.transform_values { |n| n / total }
-        rescue StandardError => e
-          Master::Ground::Swallow.log(e, context: "fix_loop.extension_weights", event_bus: @bus)
-          {}
-        end
-
         def load_deps
           @deps_cache ||= begin
             raw = Master.law("rule_deps")
@@ -128,19 +107,6 @@ module Master
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "fix_loop.load_deps", event_bus: @bus)
           raise "fix_loop: rule dependencies unreadable: #{e.class}: #{e.message}"
-        end
-
-        def load_priors
-          @priors_cache ||= begin
-            data = Master.load_yaml(PRIORS_PATH)
-            priors = data.fetch("violation_priors", {})
-            raise "violation_priors must be a hash" unless priors.is_a?(Hash)
-
-            priors
-          end
-        rescue StandardError => e
-          Master::Ground::Swallow.log(e, context: "fix_loop.load_priors", event_bus: @bus)
-          raise "fix_loop: violation priors unreadable: #{e.class}: #{e.message}"
         end
 
         def load_age
