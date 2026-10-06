@@ -43,6 +43,7 @@ require "shellwords"
 require "time"
 require "yaml"
 require_relative "process_spawn"
+require_relative "ableton_play"
 
 module Livesets
   D = File.expand_path("..", __dir__)
@@ -2115,7 +2116,9 @@ module LiveSynth
   # themselves; a sentence cannot turn them.
   def play_artist!(words)
     key = words.join(" ").strip.downcase.delete_suffix(".rb").gsub(/\s+/, " ")
-    lane = LiveSynth.config.fetch("play").fetch(key) { abort "play: unknown artist #{key.inspect}" }
+    lane = LiveSynth.config.fetch("play").fetch(key, nil)
+    return AbletonPlay.play!(key) unless lane
+
     rng = rng!
     case lane
     when "bach_toccata"
