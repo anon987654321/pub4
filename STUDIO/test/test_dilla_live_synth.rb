@@ -337,10 +337,10 @@ class TestDillaLiveSynth < Minitest::Test
 
   def test_showcase_audio_room_is_dark_pitch_shifted_and_heavily_summed
     source = File.read(dilla("lib/livesets.rb"))
-    assert_includes source, 'speed: :ips7, wow: 0.13, flutter: 0.035'
+    assert_includes source, 'speed: :ips7, wow: 0.34, flutter: 0.11'
     assert_includes source, 'SHOWCASE_PITCH_RATIO'
-    assert_includes source, 'SHOWCASE_TEMPO_SCALE = 0.90'
-    assert_includes source, 'lowpass=f=5200'
+    assert_includes source, 'SHOWCASE_TEMPO_SCALE = 0.84'
+    assert_includes source, 'lowpass=f=3900'
     refute_includes source, 'loudnorm=I=-14:LRA=9:TP=-1.0:linear=false'
     assert_operator LiveSynth.showcase_tape_chain.count { |stage| stage.include?("vibrato=") }, :>=, 2
     assert_operator LiveSynth.showcase_tape_chain.count { |stage| stage.start_with?("acompressor=") }, :>=, 2
@@ -351,22 +351,22 @@ class TestDillaLiveSynth < Minitest::Test
     source = File.read(dilla("lib/livesets.rb"))
     assert_includes source, 'aecho=0.85:0.18:375:0.06,volume=0.20'
     refute_includes source, '/<(d+)>/'
-    assert_includes source, 'weights = LiveSynth.showcase? ? "1 0.18 0.50" : "1 1 1"'
+    assert_includes source, 'weights = LiveSynth.showcase? ? "1 0.10 0.60" : "1 1 1"'
     refute_includes source, 'aecho=0.85:0.9:<750>|<1000>|<1500>:0.55|0.45|0.35'
     refute_includes source, 'aecho=0.8:0.85:<375>:0.5'
   end
 
   def test_showcase_music_ducks_for_the_kick
     graph = LiveSynth::Dub.graph(LiveSynth.config.fetch("improvise").fetch("post"), 0.5)
-    assert_includes graph, "sidechaincompress=threshold=0.08:ratio=2.2:attack=5:release=140:makeup=1"
+    assert_includes graph, "sidechaincompress=threshold=0.06:ratio=4.8:attack=2:release=150:makeup=1"
     assert_includes graph, "[ducked][w][k]amix"
   end
 
   def test_showcase_bass_is_quiet_and_sparse
     source = File.read(dilla("lib/livesets.rb"))
-    assert_includes source, "gain = 0.006"
-    assert_includes source, "if @rng.rand < 0.05"
-    assert_includes source, "0.18 * @beat"
+    assert_includes source, "gain = @bass_gain || 0.0009"
+    assert_includes source, "if @rng.rand < 0.06"
+    assert_includes source, "0.10 * @beat"
   end
 
 
@@ -389,6 +389,55 @@ class TestDillaLiveSynth < Minitest::Test
     saved.nil? ? ENV.delete("DILLA_SHOWCASE") : ENV["DILLA_SHOWCASE"] = saved
   end
 
+  def test_every_live_patch_has_shared_physicality
+    saved = ENV["DILLA_PHYSICS"]
+    ENV.delete("DILLA_PHYSICS")
+    stage = LiveSynth::Stage.new(rate: RATE, rng: Random.new(17))
+
+    AnalogSynth::PATCHES.each_value do |spec|
+      stage.note(60, spec, 0.0, 0.1, 0.1, :pad)
+    end
+
+    stage.instance_variable_get(:@voices).each do |voice|
+      physics = voice.instance_variable_get(:@physics)
+      assert_instance_of AnalogSynth::InstrumentPhysics::Voice, physics
+      assert physics.enabled?
+    end
+  ensure
+    saved.nil? ? ENV.delete("DILLA_PHYSICS") : ENV["DILLA_PHYSICS"] = saved
+  end
+
+  def test_physics_voice_scan_ignores_fm_voice_entries
+    stage = LiveSynth::Stage.new(rate: RATE, rng: Random.new(23))
+    preset = LiveSynth.config.fetch("improvise").fetch("fm").fetch("bell").transform_keys(&:to_sym)
+    stage.fm(72, preset, 0.0, 0.4, 0.05)
+    stage.note(60, AnalogSynth::PATCHES.fetch(:rhodes_tine), 0.0, 0.4, 0.2, :pad)
+    assert_equal 2, stage.instance_variable_get(:@voices).length
+  end
+
+  def test_note_physics_inherits_memory_and_sympathetic_material
+    stage = LiveSynth::Stage.new(rate: RATE, rng: Random.new(19))
+    spec = AnalogSynth::PATCHES.fetch(:rhodes_tine)
+
+    stage.note(60, spec, 0.0, 0.5, 0.2, :pad)
+    stage.note(64, spec, 0.5, 0.5, 0.2, :pad)
+
+    voices = stage.instance_variable_get(:@voices)
+    physics = voices.last.instance_variable_get(:@physics)
+    assert_in_delta AnalogSynth::LiveVoice.midi_hz(60), physics.previous_hz, 1e-9
+    assert_operator physics.instance_variable_get(:@resonance_hz).length, :>, 0
+  end
+
+  def test_showcase_tour_prefers_recorded_dangelo_and_expands_the_instrument_walk
+    scenes = LiveSynth::SHOWCASE_SCENES.map(&:first)
+    assert_includes scenes, "dangelo_send_it_on"
+    assert_includes scenes, "dangelo_left_right"
+    assert_includes scenes, "dilla_stakes"
+    assert_includes scenes, "rhodes_tine"
+    assert_includes scenes, "tape_choir"
+    refute_includes scenes, "dangelo_ballad"
+  end
+
   def test_showcase_patch_scenes_resolve_to_real_patches
     patch_scenes = %w[opus3_strings matriarch_stabs grandmother_sweep memorymoog_organ vox_humana soft_reed e_piano]
     patch_scenes.each { |name| assert LiveSynth::Patches.name!(name), name }
@@ -400,6 +449,7 @@ class TestDillaLiveSynth < Minitest::Test
     assert_includes LiveSynth.showcase_scenes("flylo").map(&:first), "flylo_haze_01"
     assert_includes LiveSynth.showcase_scenes("flylo").map(&:first), "flylo_haze_08"
     assert_equal %w[bach], LiveSynth.showcase_scenes("bach").map(&:first)
+    assert_operator LiveSynth.showcase_scenes("dangelo").length, :>=, 8
   end
 
   def test_showcase_default_output_is_dilla_wav
@@ -412,14 +462,19 @@ class TestDillaLiveSynth < Minitest::Test
 
   def test_showcase_covers_the_live_feature_tour
     scenes = LiveSynth::SHOWCASE_SCENES.map(&:first)
-    assert_equal %w[
-      flylo dilla_life dangelo_spanish_joint moog_dark flylo_computer_face
-      dangelo_root dilla_players flylo_king_of_the_hill dangelo_another_life
-      opus3_strings dangelo_untitled moog_dfam dangelo_brown_sugar madlib
-      dilla_so_far_to_go dangelo_really_love dangelo_sugah_daddy matriarch_stabs
-      dangelo_ballad grandmother_sweep madlib_figaro royksopp memorymoog_organ
-      vox_humana soft_reed e_piano bach
-    ], scenes
+    %w[
+      dilla_players dilla_life dilla_intro dilla_stakes
+      dangelo_spanish_joint dangelo_another_life dangelo_root dangelo_untitled
+      dangelo_send_it_on dangelo_left_right dangelo_brown_sugar dangelo_really_love
+      dangelo_sugah_daddy
+      flylo flylo_haze_01 flylo_haze_05 flylo_haze_08 flylo_beginners_falafel
+      flylo_massage_situation flylo_computer_face
+      madlib madlib_figaro soulquarians royksopp moog_dfam moog_dark bach
+      rhodes_tine tape_choir dangelo_velvet showcase_noir_pad shadow_lead
+      vp330_ensemble soft_reed poly_lead vapor_lead surreal_wash ringtone_lead
+      memorymoog_organ minimoog_lead moog_flute prophet_pad
+    ].each { |name| assert_includes scenes, name }
+    refute_includes scenes, "dangelo_ballad"
     source = File.read(dilla("lib/livesets.rb"))
     assert_includes source, 'reference: "dilla_life"'
     assert_includes source, 'reference: "slum_village_players_documented"'
@@ -436,7 +491,7 @@ class TestDillaLiveSynth < Minitest::Test
     assert_includes source, 'BachMidi::Score.new'
     assert_includes source, 'DILLA_SHOWCASE'
     assert_includes source, 'speed: :ips7'
-    assert_includes source, 'SHOWCASE_TEMPO_SCALE = 0.96'
+    assert_includes source, 'SHOWCASE_TEMPO_SCALE = 0.84'
   end
 
   def test_showcase_includes_a_real_tape_floor

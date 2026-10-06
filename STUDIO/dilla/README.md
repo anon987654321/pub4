@@ -69,6 +69,8 @@ twice — once naming a file that had not existed for months, once naming a
 directory that has never existed — and both times it sent an operator to
 validate nothing and read the result as passing.
 
+Every live voice also passes through the shared physicality layer by default: per-note tape wear, phase memory, sampler smear, sympathetic resonance, transient carry, gentle feedback, velocity-driven articulation, and deterministic drift. Set `DILLA_PHYSICS=0` for a clean A/B without those behaviours.
+
 Bare `ruby dilla.rb` is the live Dilla showcase: it stays on the sound card and
 cycles through source-backed J Dilla, D'Angelo, Flying Lotus and Madlib harmony,
 the darker Moog/DFAM rack, analogue patch demonstrations, FM leads, filter
