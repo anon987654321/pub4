@@ -558,8 +558,26 @@ module Master
           @home,
           ".master",
           "bundler",
-          Digest::SHA256.hexdigest([@root, ruby_identity].join("\0"))[0, 16],
+          Digest::SHA256.hexdigest([dependency_store_root, ruby_identity].join("\0"))[0, 16],
         )
+      end
+
+      # Worktrees of one Git checkout share the immutable dependency store. The
+      # checkout path itself must not create another copy of every gem.
+      def dependency_store_root
+        common_dir = git_common_dir
+        return common_dir if common_dir
+
+        @root
+      end
+
+      def git_common_dir
+        output, status = Open3.capture2e("git", "-C", @root, "rev-parse", "--git-common-dir")
+        return nil unless status.success?
+
+        File.expand_path(output.strip, @root)
+      rescue StandardError
+        nil
       end
 
       # Native gems are ABI-bound to the Ruby installation that built them.
