@@ -45195,12 +45195,10 @@ if __FILE__ == $PROGRAM_NAME
 
   cmd = ARGV.shift
   if cmd.nil?
-    # Bare invoke renders the catalogue: sixteen short pieces that are not each
-    # other, which is what the operator asked demo.wav to be on 2026-09-16.
-    # `compose` is the six-minute piece that held this spot before, `catalogue`
-    # the nineteen progressions through one unchanged bed, and `live` plays
-    # instead of writing.
-    Bed.pieces!
+    # Bare invoke is the instrument now: the live improviser, using the
+    # source-backed J Dilla and D'Angelo harmony pool and Dilla's own synths.
+    live!(["improvise"])
+    exit
   elsif render_output_path?(cmd) && !DISPATCH.key?(cmd)
     ARGV.unshift(cmd)
     default_render!
