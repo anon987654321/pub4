@@ -187,7 +187,7 @@ module BachMidi
 
   URL = URI("https://www.mutopiaproject.org/ftp/BachJS/BWV565/ToccataFugue/ToccataFugue.mid")
   CACHE = File.join(Dir.home, ".cache", "master", "dilla", "bach_bwv565.mid")
-  DEFAULT_PATCH = "church_organ"
+  DEFAULT_PATCH = "memorymoog_organ"
 
   class Score
     attr_reader :rng
