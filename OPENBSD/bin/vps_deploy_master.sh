@@ -16,6 +16,9 @@ if [ "${1:-}" = "--from-laptop" ]; then
 fi
 
 set -eo pipefail
+# Direct and SSH invocation both use a non-login shell on vm23; pin the OpenBSD
+# package path here so bundle40/ruby40 resolve independently of the caller's PATH.
+export PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin
 ROOT="${ROOT:-/home/dev/pub4}"
 WEB="$ROOT/MASTER/web"
 
