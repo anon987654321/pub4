@@ -53,10 +53,17 @@ module Master
 
       def deployment_args(text)
         value = text.to_s
-        return "all" if value.match?(/\bmaster\b/i) && value.match?(/\brails?\b/i)
-        return "all" if value.match?(/\b(?:all|everything|fleet|whole)\b/i)
-        return "master" if value.match?(/\bmaster\b/i)
-        value[/\b(?:brgen|amber|bsdports)\b/i]&.downcase || "all"
+        target = if value.match?(/\bmaster\b/i) && value.match?(/\brails?\b/i)
+          "all"
+        elsif value.match?(/\b(?:all|everything|fleet|whole)\b/i)
+          "all"
+        elsif value.match?(/\bmaster\b/i)
+          "master"
+        else
+          value[/\b(?:brgen|amber|bsdports)\b/i]&.downcase || "all"
+        end
+        target += " --confirm" if value.match?(/(?:^|\s)--confirm(?:\s|$)/i)
+        target
       end
 
       # A sentence that is exactly a registry word, "status" or "help", runs that
