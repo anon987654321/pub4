@@ -10,8 +10,8 @@ module Master
     module Entrypoint
       module_function
 
-      OPENBSD_RUBY_PATTERN = /\\A3\\.(?:3|4)\\.\\d+\\z/
-      ANDROID_RUBY_PATTERN = /\\A4\\.0\\.\\d+\\z/
+      OPENBSD_RUBY_PATTERN = /\A3\.(?:3|4)\.\d+\z/
+      ANDROID_RUBY_PATTERN = /\A4\.0\.\d+\z/
 
       def prepare!(root:, env: ENV, out: $stderr, argv: ARGV, program: $PROGRAM_NAME)
         root = File.expand_path(root)
