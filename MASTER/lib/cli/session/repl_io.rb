@@ -42,7 +42,9 @@ module Master
       def setup_completion
         Reline.completion_proc = proc do |target|
           line = Reline.line_buffer.to_s
-          if line.match?(%r{\A/(?:fix|review|critique|status|undo|commit|model|pair|doctor|rules|why|orders|soul|clear|session|help)\s+})
+          command = line.split.first.to_s.downcase
+
+          if line.match?(%r{\A/\S+\s+}) && SLASH_COMMANDS.include?(command)
             complete_command_argument(line, target)
           elsif line.match?(%r{\A/\S*\z})
             SLASH_COMMANDS.select { |cmd| cmd.start_with?(target.to_s) }
