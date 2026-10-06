@@ -45147,6 +45147,14 @@ if __FILE__ == $PROGRAM_NAME
     exit
   end
 
+  # Bare invocation belongs to the live instrument too: no render defaults,
+  # provenance sidecars or named-asset checks are relevant to a sound that is
+  # generated directly to the sound card.
+  if ARGV.empty?
+    live!(["improvise"])
+    exit
+  end
+
   # Before anything reads a seed. Draws and records RENDER_SEED when it is unset,
   # so every file this run produces gets a recipe beside it and can be
   # made again. DILLA_NO_PROVENANCE=1 restores the old unrecorded behaviour.
