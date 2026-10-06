@@ -89,10 +89,10 @@ class TestSnapshotGenerator < Minitest::Test
   # Snapshot#write! gives that only when rooted at the repository.
   def test_bare_snapshot_command_uses_the_canonical_full_tree_generator
     snapshot = Minitest::Mock.new
-    snapshot.expect(:write!, [".master/snapshots/snapshot_MASTER.md", ".master/snapshots/snapshot_RAILS.md"])
+    snapshot.expect(:write!, ["snapshot_MASTER.md", "snapshot_RAILS.md"])
     Master::Snapshot.stub(:new, ->(root:) { snapshot }) do
       out = Master::CLI::CommandRegistry.dispatch_snapshot(nil, ctx: { args: "" })
-      assert_equal "snapshot0: wrote .master/snapshots/snapshot_MASTER.md\nsnapshot0: wrote .master/snapshots/snapshot_RAILS.md", out
+      assert_equal "snapshot0: wrote snapshot_MASTER.md\nsnapshot0: wrote snapshot_RAILS.md", out
     end
     snapshot.verify
   end
