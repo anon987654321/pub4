@@ -896,6 +896,11 @@ function holdForGesture(audio, token) {
 
 function ttsTick() {
   if (tts.muted || tts.playing || tts.paused) return;
+  const unavailableUntil = Number(tts.serverUnavailableUntil || 0);
+  if (tts.serverUnavailable && Date.now() < unavailableUntil) {
+    scheduleTtsTick(Math.max(250, unavailableUntil - Date.now()));
+    return;
+  }
   const text = dequeueTtsLane();
   if (!text) { resumeSttAfterSpeech(); return; }
   tts.current = text;
@@ -977,10 +982,17 @@ function ttsTick() {
     };
     audio.onended = audio.onerror = () => finishTTSPlayback(src);
     connectTTSAudio(audio).catch(() => {});
-    audio.play().catch((err) => {
+    const play = (retried = false) => audio.play().catch((err) => {
       if (err?.name === 'NotAllowedError') { holdForGesture(audio, token); return; }
+      if (!retried && ['AbortError', 'NotSupportedError', 'NetworkError'].includes(err?.name)) {
+        window.MASTER_LOG?.warn?.('face_speech_runtime:audio_retry', err);
+        try { audio.load(); } catch (_) {}
+        setTimeout(() => { if (token === tts.cancelToken && tts.audio === audio) play(true); }, 120);
+        return;
+      }
       requeueChunk(text); finishTTSPlayback(src);
     });
+    play();
   }
 
   edgeBlob
@@ -991,6 +1003,8 @@ function ttsTick() {
       tts.serverUnavailableUntil = Date.now() + Math.min(30000, 5000 * tts.serverFailureCount);
       setTtsHealthStatus('tts: unavailable', 12000);
       tts.audio = null; tts.playing = false; tts.current = null; setTTSLoading(false);
+      if (State.mode === 'speaking') State.mode = 'idle';
+      resumeSttAfterSpeech();
       requeueChunk(text);
       const s = document.getElementById('zsh-status');
       if (s && (tts.attempts.get(text) || 0) >= 3) {

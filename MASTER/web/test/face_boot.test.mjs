@@ -56,6 +56,18 @@ test("MASTER web face uses the same monospaced presentation contract as the CLI"
   assert.match(rules, /prompt:\s*\n\s+font: font_code/);
 });
 
+test("FaceWorld keeps portrait rendering separate from repository overlays", () => {
+  const world = readFileSync(join(publicDir, "face_world.js"), "utf8");
+  assert.match(world, /const portrait = topology === "face" \|\| topology === "papua-mask";/);
+  assert.match(world, /node\.visible = !portrait/);
+  assert.match(world, /edges\.visible = !portrait/);
+  assert.match(world, /splatProxy\.visible = !portrait/);
+  assert.match(world, /sprite\.visible = !portrait/);
+  assert.match(world, /jawTaper/);
+  assert.match(world, /cheekFull/);
+  assert.match(world, /const breath = Math\.sin/);
+});
+
 test("FaceWorld consumes the semantic layers and bounded render budget", () => {
   const world = readFileSync(join(publicDir, "face_world.js"), "utf8");
   const state = readFileSync(join(publicDir, "face_state.js"), "utf8");
@@ -644,6 +656,26 @@ test("no welcome greeting: MASTER speaks when spoken to", () => {
   assert.doesNotMatch(runtime, /setTimeout\(sendWelcomeGreeting,/);
 });
 
+test("voice mode arms from a real gesture and reports microphone startup truthfully", () => {
+  const runtime = readFileSync(join(publicDir, "face.runtime.js"), "utf8");
+  const part5 = readFileSync(join(publicDir, "face.part5.txt"), "utf8");
+  assert.match(part5, /function listenOnFirstGesture/);
+  assert.match(part5, /enterVoiceMode\(\{ fromAuto: true, fromGesture: true \}\)/);
+  assert.match(part5, /listenOnFirstGesture\(\);/);
+  assert.match(runtime, /recognition\.onstart = \(\) => \{/);
+  assert.match(runtime, /stt_start_timeout/);
+  assert.match(runtime, /mic did not start — tap again/);
+});
+
+test("TTS does not dequeue speech while the server cooldown is active", () => {
+  const speech = readFileSync(join(publicDir, "face_speech_runtime.js"), "utf8");
+  const runtime = readFileSync(join(publicDir, "face.runtime.js"), "utf8");
+  assert.match(speech, /const unavailableUntil = Number\(tts\.serverUnavailableUntil \|\| 0\)/);
+  assert.match(speech, /scheduleTtsTick\(Math\.max\(250, unavailableUntil - Date\.now\(\)\)\)/);
+  assert.match(runtime, /const unavailableUntil = Number\(tts\.serverUnavailableUntil \|\| 0\)/);
+  assert.match(runtime, /if \(tts\.serverUnavailable && Date\.now\(\) < unavailableUntil\)/);
+});
+
 test("voice mode: re-arm loop, exit phrase, wake word, and single-speaker TTS routing", () => {
   const runtime = readFileSync(join(publicDir, "face.runtime.js"), "utf8");
   const index = readFileSync(join(viewsDir, "chat", "index.html.erb"), "utf8");
@@ -688,6 +720,26 @@ test("voice mode: re-arm loop, exit phrase, wake word, and single-speaker TTS ro
   assert.match(runtime, /tts_tick_stt_duck/);
   assert.match(runtime, /State\.voiceMode && !tts\.playing/);
   assert.match(runtime, /State\.wakeArmed && !State\.voiceMode && !tts\.playing/);
+});
+
+test("web face keeps filesystem access at the user-upload boundary only", () => {
+  const sources = [
+    readFileSync(join(publicDir, "face.js"), "utf8"),
+    readFileSync(join(publicDir, "face.runtime.js"), "utf8"),
+    readFileSync(join(publicDir, "face_world.js"), "utf8"),
+    readFileSync(join(viewsDir, "chat", "index.html.erb"), "utf8"),
+  ].join("\n");
+  for (const api of [
+    "showOpenFilePicker",
+    "showSaveFilePicker",
+    "showDirectoryPicker",
+    "FileSystemHandle",
+    "FileSystemFileHandle",
+    "FileSystemDirectoryHandle",
+  ]) {
+    assert.doesNotMatch(sources, new RegExp(api), api + " must not become a MASTER web capability");
+  }
+  assert.match(sources, /id="photo"/, "explicit user-selected photo upload remains the only file boundary");
 });
 
 test("service worker avoids stale undigested precache", () => {

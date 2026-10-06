@@ -3155,6 +3155,11 @@ function holdForGesture(audio, token) {
 
 function ttsTick() {
   if (tts.muted || tts.playing || tts.paused) return;
+  const unavailableUntil = Number(tts.serverUnavailableUntil || 0);
+  if (tts.serverUnavailable && Date.now() < unavailableUntil) {
+    scheduleTtsTick(Math.max(250, unavailableUntil - Date.now()));
+    return;
+  }
   const text = dequeueTtsLane();
   if (!text) { resumeSttAfterSpeech(); return; }
   tts.current = text;
@@ -3236,10 +3241,17 @@ function ttsTick() {
     };
     audio.onended = audio.onerror = () => finishTTSPlayback(src);
     connectTTSAudio(audio).catch(() => {});
-    audio.play().catch((err) => {
+    const play = (retried = false) => audio.play().catch((err) => {
       if (err?.name === 'NotAllowedError') { holdForGesture(audio, token); return; }
+      if (!retried && ['AbortError', 'NotSupportedError', 'NetworkError'].includes(err?.name)) {
+        window.MASTER_LOG?.warn?.('face_speech_runtime:audio_retry', err);
+        try { audio.load(); } catch (_) {}
+        setTimeout(() => { if (token === tts.cancelToken && tts.audio === audio) play(true); }, 120);
+        return;
+      }
       requeueChunk(text); finishTTSPlayback(src);
     });
+    play();
   }
 
   edgeBlob
@@ -3250,6 +3262,8 @@ function ttsTick() {
       tts.serverUnavailableUntil = Date.now() + Math.min(30000, 5000 * tts.serverFailureCount);
       setTtsHealthStatus('tts: unavailable', 12000);
       tts.audio = null; tts.playing = false; tts.current = null; setTTSLoading(false);
+      if (State.mode === 'speaking') State.mode = 'idle';
+      resumeSttAfterSpeech();
       requeueChunk(text);
       const s = document.getElementById('zsh-status');
       if (s && (tts.attempts.get(text) || 0) >= 3) {
@@ -3579,10 +3593,19 @@ async function micPermissionDenied() {
 // granted, and reports it as not-allowed. Unless the permission itself is
 // denied, the first interaction of any kind opens the mic instead.
 function listenOnFirstGesture() {
+  if (!recognition || !voiceAutoEnabled()) return;
   const events = ['pointerdown', 'keydown', 'touchend'];
   const open = () => {
     events.forEach((ev) => removeEventListener(ev, open, { capture: true }));
-    if (!State.voiceMode && voiceAutoEnabled()) enterVoiceMode({ fromAuto: true });
+    if (State.voiceMode || !voiceAutoEnabled() || document.hidden) return;
+    // A real gesture is precious on Safari/iOS: do not spend it merely
+    // scheduling recognition. Enter now, from this event, so the browser can
+    // grant microphone activation and the next state is genuinely listening.
+    if (tts.playing || tts.loading) {
+      State.autoVoicePending = true;
+      return;
+    }
+    enterVoiceMode({ fromAuto: true, fromGesture: true });
   };
   events.forEach((ev) => addEventListener(ev, open, { capture: true, passive: true }));
 }
@@ -3718,6 +3741,14 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
     ttsSkip();
   }
 
+  recognition.onstart = () => {
+    if (_sttStartTimer) { clearTimeout(_sttStartTimer); _sttStartTimer = null; }
+    State.sttActive = true;
+    State.mode = 'listening';
+    window.dispatchEvent(new CustomEvent('stt:start', { detail: { source: 'speech-recognition' } }));
+    window.MASTERVisual?.event?.('stt:start', { topology: 'papua-mask', entropy: 0.18, confidence: 0.86, mode: 'listening' });
+    window.MASTEREcology?.terrain?.('stt:listening', { confidence: 0.82, entropy: 0.16 });
+  };
   recognition.onresult = (e) => {
     let interim = '', final = '';
     for (let i = e.resultIndex; i < e.results.length; i++) {
@@ -3903,6 +3934,10 @@ function toggleVoiceMode() {
 async function maybeAutoVoice() {
   if (!recognition || State.voiceMode || !voiceAutoEnabled()) return;
   if (await micPermissionDenied()) return;
+  // Arm immediately; the first pointer/key event will enter Voice Mode inside
+  // the browser's user-activation window. This replaces the old 1.2s delayed
+  // start, which Safari/Chrome could reject as an unsolicited microphone start.
+  listenOnFirstGesture();
   let waited = 0;
   const enterWhenQuiet = () => {
     if (State.voiceMode || !voiceAutoEnabled()) return;
@@ -3945,11 +3980,12 @@ function boostEyeAttention(delta = 0.25) {
   }
 }
 
+let _sttStartTimer = null;
 function startSTT() {
-  if (!recognition || State.sttActive) return;
+  if (!recognition || State.sttActive) return false;
   _voiceModeArmedAt = performance.now();
   wakeFromSleep();
-  if (tts.playing) ttsSkip();
+  if (tts.playing && !State.voiceMode) ttsSkip();
   boostEyeAttention(0.25);
   State.sttDuck = 1.0;
   State.viseme = 'M';
@@ -3962,12 +3998,33 @@ function startSTT() {
       mouthPool.cells[b + K.FIELD.pressure] = Math.max(0.05, (mouthPool.cells[b + K.FIELD.pressure] || 0) * 0.4);
     }
   }
-  window.MASTERVisual?.event?.('stt:start', { topology: 'papua-mask', entropy: 0.18, confidence: 0.86, mode: 'listening' });
-  window.MASTEREcology?.terrain?.('stt:listening', { confidence: 0.82, entropy: 0.16 });
-  try { recognition.start(); State.sttActive = true; State.mode = 'listening'; window.dispatchEvent(new CustomEvent('stt:start', { detail: { source: 'speech-recognition' } })); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:stt_start", err); }
+  window.MASTERVisual?.event?.('stt:arming', { topology: 'papua-mask', entropy: 0.16, confidence: 0.88, mode: 'arming' });
+  window.MASTEREcology?.terrain?.('stt:arming', { confidence: 0.84, entropy: 0.14 });
+  try {
+    recognition.start();
+    if (_sttStartTimer) clearTimeout(_sttStartTimer);
+    _sttStartTimer = setTimeout(() => {
+      _sttStartTimer = null;
+      if (State.sttActive || !State.voiceMode) return;
+      State.sttDuck = 0;
+      State.mode = 'idle';
+      if (uiStatus) uiStatus.textContent = 'mic did not start — tap again';
+      window.MASTER_LOG?.warn?.('face_runtime:stt_start_timeout', 'recognition.start() returned without onstart');
+    }, 2600);
+    return true;
+  } catch (err) {
+    State.sttDuck = 0;
+    State.mode = 'idle';
+    window.MASTER_LOG?.warn?.('face_runtime:stt_start', err);
+    if (uiStatus) uiStatus.textContent = 'mic unavailable — tap again';
+    return false;
+  }
 }
 function stopSTT() {
-  if (!recognition || !State.sttActive) return;
+  if (!recognition) return;
+  if (_sttStartTimer) { clearTimeout(_sttStartTimer); _sttStartTimer = null; }
+  if (!State.sttActive) return;
+  State.sttActive = false;
   try { recognition.stop(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:stt_stop", err); }
 }
 
@@ -4846,3 +4903,4 @@ await import(_deferFaceMod('face_semantics.js'));
 await import(_deferFaceMod('face_minimal_ui.js'));
 await import(_deferFaceMod('face_loops_music.js'));
 await import(_deferFaceMod('face_loops_nudge.js'));
+
