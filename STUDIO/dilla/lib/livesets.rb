@@ -2074,7 +2074,7 @@ module LiveSynth
 
   def stream = config.fetch("stream")
 
-  SHOWCASE_TEMPO_SCALE = 0.84
+  SHOWCASE_TEMPO_SCALE = 0.80
 
   # Effects are the instrument's normal room now: tape, console, saturation,
   # pitch wear, echo, hiss and crackle are on unless explicitly disabled.
@@ -2085,17 +2085,17 @@ module LiveSynth
   # Four Nasty VCS stages provide the nonlinear glue; three Sonitex STX-1260
   # passes progressively narrow and roughen the top. Loudness is maximised only
   # at the end with a true-peak ceiling rather than clipping the bus.
-  SHOWCASE_PITCH_RATIO = 2.0**(-15.0 / 1200.0)
+  SHOWCASE_PITCH_RATIO = 2.0**(-24.0 / 1200.0)
 
   def showcase_tape_chain
     [
       "asetrate=#{(stream.fetch("rate").to_f * SHOWCASE_PITCH_RATIO).round(3)}",
       "aresample=#{stream.fetch("rate")}",
       "atempo=#{(1.0 / SHOWCASE_PITCH_RATIO).round(6)}",
-      Outboard.tape_machine(speed: :ips7, wow: 0.18, flutter: 0.07),
+      Outboard.tape_machine(speed: :ips7, wow: 0.23, flutter: 0.09),
       "acompressor=threshold=-24dB:ratio=1.45:attack=30:release=260:makeup=1.0",
-      "equalizer=f=2600:t=o:w=1.6:g=-2.6",
-      "lowpass=f=6000",
+      "equalizer=f=2600:t=o:w=1.8:g=-3.4",
+      "lowpass=f=5400",
       Livesets.vcs(depth: 0.42, smear: 2.1),
       Livesets.sonitex(bits: 12, lo: 36, hi: 9800, drive: 1.08, mix: 0.68),
       Livesets.vcs(depth: 0.34, smear: 2.8),
@@ -2105,8 +2105,8 @@ module LiveSynth
       Livesets.sonitex(bits: 10, lo: 44, hi: 7600, drive: 1.15, mix: 0.88, samples: 2),
       Livesets.vcs(depth: 0.30, smear: 3.4),
       Livesets.sonitex(bits: 10, lo: 48, hi: 6800, drive: 1.18, mix: 0.92, samples: 2),
-      Outboard.tape_machine(speed: :ips7, wow: 0.11, flutter: 0.04),
-      "aecho=0.82:0.72:82|164:0.16|0.09",
+      Outboard.tape_machine(speed: :ips7, wow: 0.14, flutter: 0.05),
+      "aecho=0.84:0.76:92|184:0.18|0.11",
       "loudnorm=I=-14:LRA=9:TP=-1.0:linear=false",
     ].freeze
   end
@@ -2152,6 +2152,7 @@ module LiveSynth
   SHOWCASE_SCENES = [
     ["flylo", 24.0],
     ["dilla_life", 30.0],
+    ["soulquarians", 28.0],
     ["dangelo_spanish_joint", 34.0],
     ["moog_dark", 28.0],
     ["flylo_computer_face", 24.0],
@@ -2258,8 +2259,8 @@ module LiveSynth
 
     FileUtils.mv(partial, destination)
   ensure
-    FileUtils.rm_f(list) if defined?(list)
-    FileUtils.rm_f(partial) if defined?(partial) && File.file?(partial)
+    FileUtils.rm_f(list) if list && File.file?(list)
+    FileUtils.rm_f(partial) if partial && File.file?(partial)
   end
 
   def showcase_score(name, rng)
@@ -2609,7 +2610,7 @@ module LiveSynth
       player = (DillaLive.player_command(rate) || Livesets.player_command(rate)) or return nil
       FileUtils.mkdir_p(File.dirname(dest))
       tee_outputs = "[f=wav]#{Shellwords.escape(dest)}|[f=s16le]pipe:1"
-      command = input + ["-map", "0:a", "-c:a", "pcm_s16le", "-f", "tee", "-use_fifo", "1", tee_outputs]
+      command = input + ["-c:a", "pcm_s16le", "-f", "tee", "-use_fifo", "1", tee_outputs]
       return ["sh", "-c", "#{Shellwords.join(command)} | #{Shellwords.join(player)}"]
     end
 
@@ -3342,11 +3343,11 @@ module LiveSynth
       send = post.fetch("dub").gsub(/<(\d+)>/) { (beat * Regexp.last_match(1).to_i).round.to_s }
       showcase_tail = LiveSynth.showcase? ? ",#{LiveSynth.showcase_tape_chain.join(",")}" : ""
       "[0:a]pan=stereo|c0=c0|c1=c1[dry];[0:a]pan=stereo|c0=c2|c1=c3[wet];[0:a]pan=stereo|c0=c4|c1=c5[k];" \
-        "[dry]#{chain}[d];[wet]#{send}[w];[d][w][k]amix=inputs=3:weights=1 1 1:normalize=0,alimiter=limit=#{post['limit']}#{showcase_tail}"
+        "[dry]#{chain}[d];[wet]#{send}[w];[d][w][k]amix=inputs=3:weights=1 1 1:normalize=0,alimiter=limit=#{post['limit']}#{showcase_tail}[dilla_showcase_mix]"
     end
 
     def command(post, rate:, beat:, dest: nil)
-      LiveSynth.through_ffmpeg(channels: 6, filter: ["-filter_complex", graph(post, beat)], rate:, dest:)
+      LiveSynth.through_ffmpeg(channels: 6, filter: ["-filter_complex", graph(post, beat), "-map", "[dilla_showcase_mix]"], rate:, dest:)
     end
 
     # The music through the tanh master, the same again scaled for the send,

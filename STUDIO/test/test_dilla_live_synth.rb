@@ -185,6 +185,20 @@ class TestDillaLiveSynth < Minitest::Test
     assert_raises(ArgumentError) { knobs.turn("volume", clock: 0.0, seconds: 1.0, by: 0.1) }
   end
 
+  def test_showcase_complex_graph_maps_only_the_mixed_stereo_output
+    captured = nil
+    LiveSynth.stub(:through_ffmpeg, ->(**kwargs) { captured = kwargs; :command }) do
+      LiveSynth::Dub.command(LiveSynth.config.fetch("improvise").fetch("post"), rate: 32_000, beat: 0.5,
+                             dest: "/tmp/showcase.wav")
+    end
+
+    filter = captured.fetch(:filter)
+    assert_equal "-filter_complex", filter.first
+    assert_equal "-map", filter[-2]
+    assert_equal "[dilla_showcase_mix]", filter[-1]
+    refute_match(/-map 0:a/, filter.join(" "))
+  end
+
   def test_showcase_ffmpeg_tees_the_same_post_fx_stream_to_file_and_player
     destination = "/tmp/dilla-showcase-test.wav"
     old = ENV["DILLA_SHOWCASE_LIVE_RECORD"]
