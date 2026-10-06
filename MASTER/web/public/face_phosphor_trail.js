@@ -42,7 +42,7 @@
     ctx.drawImage(sourceCanvas, 0, 0);
     ctx.globalAlpha = 1;
     ctx.globalCompositeOperation = "lighter";
-    ctx.fillStyle = `rgba(0,0,0,NaN)`;
+    ctx.fillStyle = `rgba(0,0,0,${(0.08 + audio.onset * 0.10).toFixed(3)})`;
     ctx.fillRect(0, 0, w, h);
   }
 

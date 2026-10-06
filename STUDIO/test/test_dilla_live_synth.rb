@@ -502,9 +502,15 @@ class TestDillaLiveSynth < Minitest::Test
   end
 
   def test_showcase_pads_and_bass_are_musically_separated
-    score = LiveSynth::Improviser.new(rng: Random.new(1), family: "prophet", reference: "the_root_modal_vamp")
-    assert_equal "pocket_bass", score.instance_variable_get(:@bass)
-    assert_equal %w[velvet_prophet dangelo_velvet tape_choir vp330_ensemble], score.instance_variable_get(:@pads)
+    with_live_dir do
+      previous = ENV["DILLA_SHOWCASE"]
+      ENV["DILLA_SHOWCASE"] = "1"
+      score = LiveSynth::Improviser.new(rng: Random.new(1), family: "prophet", reference: "the_root_modal_vamp")
+      assert_equal "pocket_bass", score.instance_variable_get(:@bass)
+      assert_equal %w[velvet_prophet dangelo_velvet tape_choir vp330_ensemble], score.instance_variable_get(:@pads)
+    ensure
+      previous.nil? ? ENV.delete("DILLA_SHOWCASE") : ENV["DILLA_SHOWCASE"] = previous
+    end
   end
 
   def test_play_artist_uses_documented_source_lanes
