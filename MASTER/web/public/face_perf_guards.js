@@ -65,7 +65,7 @@
     }
   });
   window.addEventListener("master:visual", (ev) => {
-    if (/llm:request|pipeline:start|thinking/.test(String(ev.detail?.name || ""))) streamStartAt = performance.now();
+    if (/llm:request|pipeline:start|llm:request|thinking/.test(String(ev.detail?.name || ""))) streamStartAt = performance.now();
     if (/complete|done|error/.test(String(ev.detail?.name || ""))) streamStartAt = 0;
   });
 
