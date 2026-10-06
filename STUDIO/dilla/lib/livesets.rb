@@ -2084,6 +2084,7 @@ module LiveSynth
     when "default" then standard_default!
     when "standard" then LivesetStandard.run
     when "royksopp" then RoyksoppLive.call
+    when "play" then play_artist!(words)
     when "take" then DillaTakes.play(words.first || abort(USAGE))
     when "improvise" then perform!(Improviser.new(rng: rng!, family: options["family"], pad: options["pad"]), seconds:)
     when "progression"
@@ -2112,6 +2113,13 @@ module LiveSynth
   # argv `live standard`, so the pid `stop` holds never changes; the re-exec
   # keeps the yjit the per-sample render loop needs. Its knobs move by
   # themselves; a sentence cannot turn them.
+  def play_artist!(words)
+    key = words.join(" ").strip.downcase.delete_suffix(".rb").gsub(/\s+/, " ")
+    name = LiveSynth.config.fetch("play").fetch(key) { abort "play: unknown artist #{key.inspect}" }
+    master = LiveSynth.config.fetch("play_master")
+    perform!(Progression.new(name, rng: rng!, loops: 0, master: master), seconds: nil)
+  end
+
   def standard_default!
     Session.claim!("the standard default (liveset)", steerable: false)
     log("the standard default -- `ruby dilla.rb live stop` to end")
@@ -2802,10 +2810,11 @@ module LiveSynth
 
     # loops: how many times round; nil takes the entry's own, 0 goes round
     # until stopped.
-    def initialize(name, rng:, pads: nil, family: nil, loops: nil)
+    def initialize(name, rng:, pads: nil, family: nil, loops: nil, master: nil)
       table = LiveSynth.config.fetch("progressions")
       defaults = table.fetch("soul_jazz_six").except("chords")
       @name = name
+      @master_override = master
       @p = defaults.merge(resolve(table, table.fetch(name) { { "names" => catalogue(name) } }))
       @chords = name.to_s == "royksopp_live" ? voiced(catalogue(name)) : (@p["chords"] || voiced(@p.fetch("names")))
       @pads = pads&.map { |pad| Patches.name!(pad) } ||
@@ -2832,9 +2841,10 @@ module LiveSynth
 
     # The console the entry names, or nil for the plain tanh master.
     def player_command(rate, dest)
-      return nil unless @p["master"]
+      master = @master_override || @p["master"]
+      return nil unless master
 
-      chain = @p["master"].map { |stage| LiveSynth.console_stage(stage) }.join(",")
+      chain = master.map { |stage| LiveSynth.console_stage(stage) }.join(",")
       LiveSynth.through_ffmpeg(channels: 2, filter: ["-af", chain], rate:, dest:) ||
         abort("live0: #{@name} leaves through ffmpeg -- install ffmpeg and sox (brew install ffmpeg sox)")
     end
