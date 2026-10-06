@@ -74,6 +74,23 @@ class TestCommandRegistryDispatch < Minitest::Test
                  "a new command table has to be merged by build, or it is a verb with no route"
   end
 
+  def test_play_command_passes_the_requested_artist_to_media_intent
+    captured = nil
+    media = Master::Io::MediaIntent
+    original = media.method(:play_live_music)
+    media.define_singleton_method(:play_live_music) do |arg, root: MasterPaths.root, **_kwargs|
+      captured = [arg, root]
+      "play0: test"
+    end
+
+    result = built.fetch("play").call(Master::CLI::PipelineContext.new(user_message: "/play Bach", args: "Bach"))
+
+    assert_equal "play0: test", result
+    assert_equal "Bach", captured.first
+  ensure
+    media.define_singleton_method(:play_live_music, original) if original
+  end
+
   def test_session_commands_are_one_verb
     assert_equal :dispatch_session, built.fetch("session").method_name
     %w[sessions continue resume fork].each { |gone| refute built.key?(gone), "/#{gone} is /session #{gone}" }
