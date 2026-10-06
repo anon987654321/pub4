@@ -255,14 +255,6 @@
     document.documentElement.dataset.ttsQueueBand = depth > 0 ? "1" : "";
   });
 
-  V.register(28, "browser TTS viseme synth", (ctx) => {
-    const synth = window.speechSynthesis;
-    if (!synth) return;
-    const shape = ctx.detail.shape || "neutral";
-    document.documentElement.dataset.browserTts = synth.speaking ? "active" : "idle";
-    window.dispatchEvent(new CustomEvent("tts:viseme", { detail: { shape, amp: 0.6, source: "browser" } }));
-  });
-
   V.register(29, "synthesizing shimmer", (ctx) => {
     document.documentElement.dataset.ttsSynth = "1";
     V.css("--face-tts-shimmer", "0.42");
