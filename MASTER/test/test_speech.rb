@@ -316,6 +316,29 @@ class TestSpeech < Minitest::Test
     end
   end
 
+  def test_voice_locked_never_falls_back_to_a_different_voice
+    saved_voice = ENV["MASTER_TTS_VOICE"]
+    ENV["MASTER_TTS_VOICE"] = "christopher"
+
+    Master::Voice::Speech.stub(:available?, true) do
+      Master::Voice::Speech.stub(:edge_tts_available?, false) do
+        Master::Voice::Speech.stub(:espeak_path, "/usr/local/bin/espeak") do
+          Master::Voice::Speech.stub(:synthesize_espeak, "/tmp/wrong-voice.wav") do
+            Master::Voice::Speech.stub(:synthesize_say, "/tmp/wrong-voice.aiff") do
+              refute Master::Voice::Speech.synthesize(
+                "hello",
+                voice: :christopher,
+                voice_locked: true,
+              )
+            end
+          end
+        end
+      end
+    end
+  ensure
+    saved_voice.nil? ? ENV.delete("MASTER_TTS_VOICE") : ENV["MASTER_TTS_VOICE"] = saved_voice
+  end
+
   def test_streaming_espeak_fallback_keeps_wav_instead_of_encoding_mp3
     output = File.join(Dir.tmpdir, "m3_native_tts_test.mp3")
     wav = File.join(Dir.tmpdir, "m3_native_tts_source.wav")

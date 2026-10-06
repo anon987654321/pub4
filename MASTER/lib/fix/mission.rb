@@ -102,6 +102,8 @@ module Master
           else
             if manually_supersedable?(current, origin:)
               supersede_waiting_unlocked!(current, goal:, scope:)
+            elsif same_process_mission?(current) && active_for_other_target?(current, goal:, scope:)
+              interrupt_for_next_target_unlocked!(current, goal:, scope:)
             elsif active_for_other_target?(current, goal:, scope:)
               raise active_mission_conflict(current, goal:, scope:)
             end
@@ -420,7 +422,53 @@ module Master
         return false unless record
         return false unless RESUMABLE_STATES.include?(record["state"].to_s)
 
-        record["goal"].to_s != goal.to_s || record["scope"].to_s != relative(scope).to_s
+        return false unless mission_live?(record)
+        return false if record["goal"].to_s == goal.to_s && record["scope"].to_s == relative(scope).to_s
+
+        true
+      end
+
+      def same_process_mission?(record)
+        record && record["lease_owner"].to_s == self.class.instance_id
+      end
+
+      def interrupt_for_next_target_unlocked!(record, goal:, scope:)
+        @record = record
+        @id = record["id"]
+        @record["state"] = "interrupted"
+        @record["stage"] = "deliver"
+        @record["summary"] = "superseded by sequential /fix target #{relative(scope)}".byteslice(0, MAX_GOAL_BYTES)
+        @record["lease_owner"] = nil
+        @record["lease_until"] = nil
+        @record["next_wake_at"] = nil
+        @record["finished_at"] = now
+        @record["last_seen_at"] = now
+        persist!
+        emit("mission:interrupt", id: @id, previous_scope: @record["scope"], next_scope: relative(scope))
+      end
+
+      def mission_live?(record)
+        return false unless record["state"].to_s == "running"
+        return false if lease_expired?(record)
+
+        owner = record["lease_owner"].to_s
+        return true if owner.empty?
+        return true unless owner.start_with?("#{Socket.gethostname}:")
+
+        pid = owner.split(":", 3)[1].to_i
+        return true if record["lease_owner"].to_s == self.class.instance_id
+        return false if pid <= 0
+
+        process_alive?(pid)
+      end
+
+      def process_alive?(pid)
+        Process.kill(0, pid.to_i)
+        true
+      rescue Errno::ESRCH
+        false
+      rescue Errno::EPERM
+        true
       end
 
       def active_mission_conflict(record, goal:, scope:)

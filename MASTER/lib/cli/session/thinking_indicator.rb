@@ -151,7 +151,7 @@ module Master
       def print_unit_line(line)
         return unless Master::Trace::Dmesg.enabled?
 
-        Master::Voice::Playback.speak(line) if line.match?(MILESTONE)
+        Master::Voice::Playback.speak(line) if line.match?(MILESTONE) && !Master::Trace::Dmesg.log_voice_active?
         return unless verbose_output?
 
         io = $stdout.isatty ? $stdout : $stderr

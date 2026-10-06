@@ -132,6 +132,8 @@ module Deploy
                          "raise the contrast, or record a new ceiling with a reason")
           elsif count < ceiling
             @result.warn("design_metrics #{key}: #{count}, under its #{ceiling} ceiling (-#{ceiling - count})")
+          else
+            @result.warn("design_metrics #{key}: at its #{ceiling} ceiling")
           end
         end
       end

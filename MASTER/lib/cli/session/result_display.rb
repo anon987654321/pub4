@@ -58,7 +58,7 @@ module Master
           puts @refs.renderer.measure(text.chomp, width: reply_measure) unless routine
         end
 
-        Master::Voice::Playback.speak(spoken_form(text))
+        Master::Voice::Playback.speak(spoken_form(text)) unless Master::Trace::Dmesg.log_voice_active?
         print_fix_activity_footer
         print_previous_question_footer
         print_parallel_errors_footer(ok)
@@ -115,7 +115,7 @@ module Master
 
         line = "next0: your previous question — #{question}"
         Master::Trace::Dmesg.status("next0", question)
-        Master::Voice::Playback.speak(question)
+        Master::Voice::Playback.speak(question) unless Master::Trace::Dmesg.log_voice_active?
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "cli.previous_question_footer", event_bus: @refs.bus)
       end

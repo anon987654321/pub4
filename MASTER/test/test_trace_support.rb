@@ -35,6 +35,50 @@ class TestTraceSupport < Minitest::Test
     assert_equal 3, traced.size
   end
 
+  def test_log_voice_uses_policy_voice_and_rate_for_each_dmesg_line
+    spoken = []
+    Master::Voice::Playback.stub(:enabled?, true) do
+      Master::Voice::Playback.stub(:available?, true) do
+        Master::Voice::Playback.stub(
+          :enqueue,
+          ->(text, **options) { spoken << [text, options] }
+        ) do
+          Master::Trace::Dmesg.with_verbosity("trace") do
+            Master::Trace::Dmesg.with_log_voice do
+              out = StringIO.new
+              Master::Trace::Dmesg.status("fix0", "all four trees", io: out)
+            end
+          end
+        end
+      end
+    end
+
+    assert_equal [["fix0: all four trees", {
+      voice: :christopher,
+      style: :neutral,
+      rate: "-10%",
+      pitch: "+0Hz",
+      last: true,
+    }]], spoken
+  end
+
+  def test_log_voice_ignores_its_own_voice_and_tts_diagnostics
+    spoken = []
+    Master::Voice::Playback.stub(:enabled?, true) do
+      Master::Voice::Playback.stub(:available?, true) do
+        Master::Voice::Playback.stub(:enqueue, ->(*args, **options) { spoken << [args, options] }) do
+          Master::Trace::Dmesg.with_log_voice do
+            Master::Trace::Dmesg.status("voice0", "edge unavailable", io: StringIO.new)
+            Master::Trace::Dmesg.status("fix0", "repairing", io: StringIO.new)
+          end
+        end
+      end
+    end
+
+    assert_equal 1, spoken.size
+    assert_equal "fix0: repairing", spoken.first.first
+  end
+
   def test_trace_includes_redacted_payload_context
     console = Master::Trace::Dmesg::Console.new
     lines = Master::Trace::Dmesg.with_verbosity("trace") do

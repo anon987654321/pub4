@@ -109,7 +109,7 @@ module Operator
         rows << { topic:, role: :listener } if event_topic?(topic)
       end
 
-      code.to_enum(:scan, /\b(?:emitTtsEvent|dispatchEvent)\s*\(\s*(?:new\s+CustomEvent\s*\(\s*)?(['"])([^'"]+)\2/).each do
+      code.to_enum(:scan, /\b(?:emitTtsEvent|dispatchEvent)\s*\(\s*(?:new\s+CustomEvent\s*\(\s*)?(['"])([^'"]+)\1/).each do
         match = Regexp.last_match
         topic = match[2]
         rows << { topic:, role: :publisher } if event_topic?(topic)
@@ -120,18 +120,11 @@ module Operator
     end
 
     def js_references(source)
-      quoted = source.scan(/(['"])([^'"]+)\1/).filter_map do |_quote, value|
-        topic = value.strip
-        { topic:, role: :reference } if event_topic?(topic)
-      end
-
-      regex = source.scan(%r{/((?:\\.|[^/\\\n])*)/[a-z]*}i).flat_map do |body|
+      source.scan(%r{/((?:\\.|[^/\\\n])*)/[a-z]*}i).flat_map do |body|
         body.to_s.scan(/[a-z][a-z0-9_]*:[a-z][a-z0-9_:-]*/).filter_map do |topic|
           { topic:, role: :reference } if event_topic?(topic)
         end
       end
-
-      quoted + regex
     end
 
     def strip_comments(source)

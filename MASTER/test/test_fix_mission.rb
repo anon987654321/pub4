@@ -37,6 +37,44 @@ class FixMissionTest < Minitest::Test
     end
   end
 
+  def test_dead_same_host_mission_owner_does_not_block_another_target
+    Dir.mktmpdir do |root|
+      first = File.join(root, "RAILS")
+      second = File.join(root, "MASTER")
+      FileUtils.mkdir_p([first, second])
+
+      mission = Master::Fix::Mission.new(root:).start!(goal: "fix RAILS", scope: first)
+      record = Master::Fix::Mission.current(root:)
+      record["lease_owner"] = "#{Socket.gethostname}:99999999:deadbeefdeadbeef"
+      File.write(File.join(root, ".master", "mission.json"), JSON.pretty_generate(record) + "\n")
+
+      replacement = Master::Fix::Mission.new(root:).start_or_resume!(goal: "fix MASTER", scope: second)
+      saved = Master::Fix::Mission.current(root:)
+
+      refute_equal mission.id, replacement.id
+      assert_equal "MASTER", saved["scope"]
+      assert_equal "running", saved["state"]
+    end
+  end
+
+  def test_same_process_can_advance_to_another_target
+    Dir.mktmpdir do |root|
+      first = File.join(root, "RAILS")
+      second = File.join(root, "MASTER")
+      FileUtils.mkdir_p([first, second])
+
+      mission = Master::Fix::Mission.new(root:).start!(goal: "fix RAILS", scope: first)
+      replacement = Master::Fix::Mission.new(root:).start_or_resume!(
+        goal: "fix MASTER", scope: second
+      )
+
+      saved = Master::Fix::Mission.current(root:)
+      refute_equal mission.id, replacement.id
+      assert_equal "MASTER", saved["scope"]
+      assert_equal "running", saved["state"]
+    end
+  end
+
   def test_mission_lifecycle_persists_one_contract
     Dir.mktmpdir do |root|
       bus = Bus.new
