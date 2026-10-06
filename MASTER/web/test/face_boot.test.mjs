@@ -644,7 +644,7 @@ test("no welcome greeting: MASTER speaks when spoken to", () => {
   assert.doesNotMatch(runtime, /setTimeout\(sendWelcomeGreeting,/);
 });
 
-test("voice mode: re-arm loop, exit phrase, wake word, and browser-first TTS routing", () => {
+test("voice mode: re-arm loop, exit phrase, wake word, and single-speaker TTS routing", () => {
   const runtime = readFileSync(join(publicDir, "face.runtime.js"), "utf8");
   const index = readFileSync(join(viewsDir, "chat", "index.html.erb"), "utf8");
   // Continuous re-arm loop keyed off recognition.onend, not a fixed interval —
@@ -660,16 +660,18 @@ test("voice mode: re-arm loop, exit phrase, wake word, and browser-first TTS rou
   // iOS Safari degradation guard: bail out of the loop rather than spinning
   // forever if recognition keeps ending near-instantly with no speech.
   assert.match(runtime, /_voiceModeRearmFails/);
-  // Browser TTS is the default on every surface, not only in Voice Mode: typed
-  // chat waits on the same server latency floor for the same sentence, with the
-  // person who typed it watching. Osman/Pernille are the opt-in.
-  assert.match(runtime, /function highQualityVoiceEnabled/);
-  assert.match(runtime, /master:voice-mode-hq/);
-  // Both the policy and the speak path have to be free of the Voice Mode
-  // condition. When only the policy changed, behaviour did not.
-  assert.doesNotMatch(runtime, /State\.voiceMode && !highQualityVoiceEnabled\(\)/);
-  assert.match(runtime, /if \(!highQualityVoiceEnabled\(\)\) return true;/);
-  assert.match(runtime, /if \(!highQualityVoiceEnabled\(\) && speakWithBrowserTTS/);
+  // Server TTS is the one normal speaker. Browser speech remains an explicit
+  // emergency path only, and it can never start merely because server synthesis
+  // is slow.
+  assert.match(runtime, /function browserTtsEmergencyAllowed/);
+  assert.match(runtime, /browser_tts/);
+  assert.match(runtime, /loadTTSBlob\(text, voice, style\)/);
+  assert.match(runtime, /browserTtsEmergencyAllowed\(\) && speakWithBrowserTTS/);
+  assert.doesNotMatch(runtime, /function highQualityVoiceEnabled/);
+  assert.doesNotMatch(runtime, /master:voice-mode-hq/);
+  assert.doesNotMatch(runtime, /!highQualityVoiceEnabled/);
+  // speechSynthesis has exactly one speaker call, owned by the emergency adapter.
+  assert.equal((runtime.match(/speechSynthesis\.speak\(/g) || []).length, 1);
   // Mic button was removed: Voice Mode is hands-free by default, so the
   // dedicated control was redundant chrome. Confirm it's actually gone.
   assert.doesNotMatch(index, /data-act="mic"/);
