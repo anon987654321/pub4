@@ -78,4 +78,19 @@ class TestFixProtocol < Minitest::Test
                    payload.dig("detector_summary", "total_rules")
     end
   end
+
+  def test_render_exposes_truthful_capability_boundaries
+    Dir.mktmpdir("fix-protocol-capabilities") do |root|
+      File.write(File.join(root, "thing.rb"), "puts :ok\n")
+
+      payload = JSON.parse(Master::Fix::Protocol.render(root:, target: root))
+      report = payload.fetch("capability_report")
+
+      assert_kind_of Array, report.fetch("measurement_only_detectors")
+      assert_kind_of Array, report.fetch("advisory_rules")
+      assert_kind_of Array, report.fetch("semantic_rules_without_deterministic_detector")
+      assert_equal "not_measured", report.fetch("verification_runtime")
+    end
+  end
+
 end
