@@ -210,18 +210,28 @@ class TestDillaLiveSynth < Minitest::Test
     assert_equal({ "lead" => "fm", "preset" => "glass" }, say.steering("fm lead glass"))
   end
 
-  def test_play_artist_reads_the_live_lanes_and_shared_rack
+  def test_play_artist_uses_documented_source_lanes
     table = LiveSynth.config.fetch("play")
     assert_equal "bach_toccata", table.fetch("bach")
-    assert_equal "live_improvise_moog", table.fetch("j_dilla")
-    assert_equal "live_improvise_prophet", table.fetch("flying_lotus")
-    assert_equal "live_improvise_rhodes", table.fetch("madlib")
-    assert_equal "royksopp_live", table.fetch("royksopp")
+    assert_equal "reference:dilla_flowers_documented", table.fetch("j_dilla")
+    assert_equal "reference:flylo_camel_documented", table.fetch("flying_lotus")
+    assert_equal "reference:madlib_accordion_loop_documented", table.fetch("madlib")
+    assert_equal "reference:royksopp_what_else_is_there_documented", table.fetch("royksopp")
 
-    master = LiveSynth.config.fetch("play_master")
-    assert_equal 4, master.count { |stage| stage.key?("vcs") }
-    assert_equal 3, master.count { |stage| stage.key?("sonitex") }
-    assert_equal 1, master.count { |stage| stage.key?("console_stack") }
+    source = LiveSynth.documented_progression("dilla_flowers_documented")
+    assert_equal %w[Dm9 Am7], source.fetch("chords")
+    assert_equal 84, source.fetch("bpm")
+  end
+
+  def test_documented_artist_lane_uses_the_good_improviser_renderer
+    score = LiveSynth::Improviser.new(
+      rng: Random.new(9),
+      reference: "dilla_flowers_documented",
+      pad: "rhodes_tine"
+    )
+    samples = with_live_dir { perform(score, seconds: 3.0) }
+    assert_operator samples.size, :>=, 3 * RATE * 2
+    assert_operator samples.map(&:abs).max, :>, 1_000
   end
 
   def test_steering_with_nothing_playing_says_so
