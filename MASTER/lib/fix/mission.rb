@@ -435,7 +435,8 @@ module Master
         return true unless owner.start_with?("#{Socket.gethostname}:")
 
         pid = owner.split(":", 3)[1].to_i
-        return false if pid <= 0 || pid == Process.pid && record["lease_owner"] == self.class.instance_id
+        return true if record["lease_owner"].to_s == self.class.instance_id
+        return false if pid <= 0
 
         process_alive?(pid)
       end
