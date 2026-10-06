@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "yaml"
+require_relative "fix_loop/file_collector"
 
 module Master
   module Fix
@@ -14,6 +15,7 @@ module Master
         @root = File.expand_path(root)
         @repo_root = repository_root(@root)
         @bus = bus
+        @fleet_verified = false
       end
 
       def verify!(target, files:)
@@ -29,7 +31,7 @@ module Master
         raise "fix reachability mismatch: #{extra.size} file(s) outside collector scope" if extra.any?
 
         publish_reachability(target, expected)
-        verify_fleet! if top_level_target?(target)
+        verify_fleet! if top_level_target?(target) && !@fleet_verified
         true
       rescue StandardError => e
         @bus&.publish("fix_loop:reachability_failed", target:, error: e.message)
@@ -87,6 +89,7 @@ module Master
         raise "frontend auditor misses Rails app(s): #{missing_apps.join(", ")}" if missing_apps.any?
 
         observe_layout_suite!
+        @fleet_verified = true
       end
 
       def observe_layout_suite!
