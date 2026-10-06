@@ -286,6 +286,15 @@ module AnalogSynth
     },
     # Slow, wide, and dark: the pad. Two saws and a square, all detuned, filter
     # opening over a second and a half so the chord arrives rather than starts.
+    # A church-organ registration: sine fundamentals with fifths and upper
+    # partials, held almost flat with a slow swell and long release.
+    church_organ: {
+      waves: %i[sine sine sine sine], detune: [0.0, 0.0, 0.0, 0.0],
+      octaves: [0, 1, 2, 3],
+      cutoff: 5200.0, env_amount: 900.0, resonance: 0.08, drive: 0.92,
+      amp: Envelope.new(attack: 0.035, decay: 0.5, sustain: 0.92, release: 2.4),
+      filter_env: Envelope.new(attack: 0.08, decay: 0.8, sustain: 0.9, release: 1.8),
+    },
     warm_pad: {
       waves: %i[saw saw square], detune: [-8.0, 9.0, 0.0], octaves: [0, 0, -1],
       cutoff: 520.0, env_amount: 900.0, resonance: 0.18, drive: 0.88,
