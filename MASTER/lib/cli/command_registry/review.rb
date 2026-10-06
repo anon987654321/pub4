@@ -4,6 +4,7 @@ require_relative "../tribunal_feedback"
 require_relative "../../review/council/critique"
 require_relative "../../fix/execution_trace"
 require_relative "../../operator/gate_chain"
+require_relative "../../fix/worktree_session"
 
 module Master
   module CLI
@@ -59,6 +60,15 @@ module Master
         # /fix is the operator trace: every event is visible in the same append-only
         # OpenBSD dmesg grammar. An explicit quiet/normal/verbose flag still wins.
         targets = fix_targets(target, root:)
+        writes_requested = apply != false && fix_stage_selected?(only)
+        if writes_requested && worktree_fix_requested?
+          Master::Trace::Dmesg.status("fix0", "target queue: #{targets.join(", ")}") if targets.size > 1
+          return Master::Trace::Dmesg.with_log_voice do
+            with_dmesg_verbosity(raw, default: "trace") do
+              dispatch_fix_in_worktree(raw:, root:, target:)
+            end
+          end
+        end
         Master::Trace::Dmesg.status("fix0", "target queue: #{targets.join(", ")}") if targets.size > 1
         trace_scope = execution_trace_scopes(target)
 
@@ -107,6 +117,38 @@ module Master
         puts rendered
         Master::Fix::CodeWatch.reexec!(root, "/fix #{raw}")
         rendered
+      end
+
+      def worktree_fix_requested?
+        ENV.fetch("MASTER_FIX_WORKTREE", "1") != "0" && ENV["MASTER_FIX_WORKTREE_CHILD"] != "1"
+      end
+
+      def dispatch_fix_in_worktree(raw:, root:, target:)
+        result = Master::Fix::WorktreeSession.new(root:).run(
+          command: ["/fix", raw].reject(&:empty?).join(" "),
+          foreign_paths: Master::Fix::WorktreeSession.foreign_paths(root:),
+          proof_trees: worktree_proof_trees(target, root:)
+        )
+        return result.summary if result.ok
+
+        Master::Result.err(result.summary, category: :validation)
+      end
+
+      def worktree_proof_trees(target, root:)
+        tokens = target.to_s.split(/\s+/)
+        trees = %w[MASTER RAILS OPENBSD STUDIO]
+        return tokens.uniq if tokens.size > 1 && tokens.all? { |token| trees.include?(token) }
+        return trees if target.to_s.strip.empty?
+
+        repo_root = File.expand_path(root)
+        repo_root = Master::REPO_ROOT if repo_root == Master::ROOT
+        [target].filter_map do |value|
+          path = File.expand_path(value.to_s, root)
+          trees.find do |tree|
+            base = File.join(repo_root, tree)
+            path == base || path.start_with?("#{base}#{File::SEPARATOR}")
+          end
+        end.uniq
       end
 
       def run_fix_target(scanner:, fix_loop:, root:, deliberation:, bus:, swarm:, target:,
