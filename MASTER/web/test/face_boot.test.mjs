@@ -644,6 +644,17 @@ test("no welcome greeting: MASTER speaks when spoken to", () => {
   assert.doesNotMatch(runtime, /setTimeout\(sendWelcomeGreeting,/);
 });
 
+test("voice mode arms from a real gesture and reports microphone startup truthfully", () => {
+  const runtime = readFileSync(join(publicDir, "face.runtime.js"), "utf8");
+  const part5 = readFileSync(join(publicDir, "face.part5.txt"), "utf8");
+  assert.match(part5, /function listenOnFirstGesture/);
+  assert.match(part5, /enterVoiceMode\(\{ fromAuto: true, fromGesture: true \}\)/);
+  assert.match(part5, /listenOnFirstGesture\(\);/);
+  assert.match(runtime, /recognition\.onstart = \(\) => \{/);
+  assert.match(runtime, /stt_start_timeout/);
+  assert.match(runtime, /mic did not start — tap again/);
+});
+
 test("voice mode: re-arm loop, exit phrase, wake word, and single-speaker TTS routing", () => {
   const runtime = readFileSync(join(publicDir, "face.runtime.js"), "utf8");
   const index = readFileSync(join(viewsDir, "chat", "index.html.erb"), "utf8");
@@ -688,6 +699,26 @@ test("voice mode: re-arm loop, exit phrase, wake word, and single-speaker TTS ro
   assert.match(runtime, /tts_tick_stt_duck/);
   assert.match(runtime, /State\.voiceMode && !tts\.playing/);
   assert.match(runtime, /State\.wakeArmed && !State\.voiceMode && !tts\.playing/);
+});
+
+test("web face keeps filesystem access at the user-upload boundary only", () => {
+  const sources = [
+    readFileSync(join(publicDir, "face.js"), "utf8"),
+    readFileSync(join(publicDir, "face.runtime.js"), "utf8"),
+    readFileSync(join(publicDir, "face_world.js"), "utf8"),
+    readFileSync(join(viewsDir, "chat", "index.html.erb"), "utf8"),
+  ].join("\n");
+  for (const api of [
+    "showOpenFilePicker",
+    "showSaveFilePicker",
+    "showDirectoryPicker",
+    "FileSystemHandle",
+    "FileSystemFileHandle",
+    "FileSystemDirectoryHandle",
+  ]) {
+    assert.doesNotMatch(sources, new RegExp(api), api + " must not become a MASTER web capability");
+  }
+  assert.match(sources, /id="photo"/, "explicit user-selected photo upload remains the only file boundary");
 });
 
 test("service worker avoids stale undigested precache", () => {
