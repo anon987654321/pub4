@@ -114,8 +114,16 @@
   }
   function publish() {
     state.speechActivity = clamp(state.speechActivity);
+    const detail = snapshot();
+    const root = document.documentElement;
+    root.style.setProperty("--master-audio-bass", detail.bass.toFixed(3));
+    root.style.setProperty("--master-audio-mid", detail.mid.toFixed(3));
+    root.style.setProperty("--master-audio-high", detail.high.toFixed(3));
+    root.style.setProperty("--master-audio-rms", detail.rms.toFixed(3));
+    root.style.setProperty("--master-audio-onset", detail.onset.toFixed(3));
+    root.dataset.masterAudio = detail.playback === "closed" ? "" : "active";
     window.MasterInteraction?.setAudio?.({ ...state });
-    window.dispatchEvent(new CustomEvent("audio:update", { detail: snapshot() }));
+    window.dispatchEvent(new CustomEvent("audio:update", { detail }));
   }
   function snapshot() {
     return Object.freeze({ ...state });

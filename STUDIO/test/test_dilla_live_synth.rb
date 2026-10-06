@@ -491,6 +491,39 @@ class TestDillaLiveSynth < Minitest::Test
     refute_match(/if cmd\.nil\?.*?Bed\.pieces!/m, source)
   end
 
+  def test_bare_showcase_is_the_full_interleaved_tour
+    scenes = LiveSynth.showcase_scenes
+    names = scenes.map(&:first)
+    assert_equal "dilla_players", names.first
+    %w[dilla_life dangelo_spanish_joint flylo moog_dark madlib bach].each do |name|
+      assert_includes names, name
+    end
+    assert_operator scenes.each_cons(2).count { |a, b| a.first.split("_").first != b.first.split("_").first }, :>=, 8
+  end
+
+  def test_showcase_progressions_use_the_pocket_bass
+    with_live_dir do
+      previous = ENV["DILLA_SHOWCASE"]
+      ENV["DILLA_SHOWCASE"] = "1"
+      progression = LiveSynth::Progression.new("soul_jazz_six", rng: Random.new(1))
+      assert_equal "pocket_bass", progression.send(:bass_name)
+    ensure
+      previous.nil? ? ENV.delete("DILLA_SHOWCASE") : ENV["DILLA_SHOWCASE"] = previous
+    end
+  end
+
+  def test_showcase_pads_and_bass_are_musically_separated
+    with_live_dir do
+      previous = ENV["DILLA_SHOWCASE"]
+      ENV["DILLA_SHOWCASE"] = "1"
+      score = LiveSynth::Improviser.new(rng: Random.new(1), family: "prophet", reference: "the_root_modal_vamp")
+      assert_equal "pocket_bass", score.instance_variable_get(:@bass)
+      assert_equal %w[velvet_prophet dangelo_velvet tape_choir vp330_ensemble], score.instance_variable_get(:@pads)
+    ensure
+      previous.nil? ? ENV.delete("DILLA_SHOWCASE") : ENV["DILLA_SHOWCASE"] = previous
+    end
+  end
+
   def test_play_artist_uses_documented_source_lanes
     table = LiveSynth.config.fetch("play")
     assert_equal "bach_midi", table.fetch("bach")

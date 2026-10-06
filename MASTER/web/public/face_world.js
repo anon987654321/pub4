@@ -12,6 +12,10 @@
   let nodes = [];
   let edges = null;
   let pulses = [];
+  let audio = { bass: 0, mid: 0, high: 0, onset: 0, rms: 0 };
+  window.addEventListener("audio:update", (event) => {
+    audio = { ...audio, ...(event.detail || {}) };
+  }, { passive: true });
   let hudSprites = [];
   let splatCount = 0;
   let layers = {};
@@ -371,6 +375,7 @@
     const eyePool = window.MASTER_FACE?.eyePool;
     const mouthPool = window.MASTER_FACE?.mouthPool;
     if (kernel && eyePool && mouthPool) {
+      window.MASTER_FACE_PARTICLES?.reactAudio?.(state, mouthPool);
       for (let i = 0; i < eyePool.count; i += 1) if (eyePool.alive[i]) {
         const base = i * kernel.FIELDS_PER_CELL;
         eyePool.cells[base + kernel.FIELD.attention] = Math.max(
@@ -388,6 +393,8 @@
       }
     }
     const density = finite(topologyProfile.density, 1);
+    const audioEnergy = Math.max(0, Math.min(1, (audio.rms * 0.45) + (audio.mid * 0.35) + (audio.high * 0.20)));
+    const audioPulse = Math.max(audio.onset, audio.bass * 0.65);
     const fracture = finite(topologyProfile.fracture, 0);
     const tiltX = finite(topologyProfile.tilt_x, 0);
     const tiltY = finite(topologyProfile.tilt_y, 0);
@@ -401,19 +408,19 @@
     world.rotation.y += ((pointerX * 0.045) + tiltY * (geometry.fracture + fracture) - world.rotation.y) * 0.035;
     world.rotation.x += ((pointerY * 0.028) + tiltX * (geometry.fracture + fracture) - world.rotation.x) * 0.035;
 
-    shell.scale.setScalar(geometry.shell_scale);
+    shell.scale.setScalar(geometry.shell_scale * (1 + audioPulse * 0.018));
     shellMaterial.uniforms.uTime.value = now;
     shellMaterial.uniforms.uTension.value = geometry.shell_tension;
     shellMaterial.uniforms.uPulse.value = geometry.shell_pulse;
     shellMaterial.uniforms.uFracture.value = geometry.shell_fracture;
-    shellMaterial.uniforms.uOpacity.value = geometry.shell_opacity * (state.mode === "sleeping" ? 0.35 : 1);
+    shellMaterial.uniforms.uOpacity.value = geometry.shell_opacity * (state.mode === "sleeping" ? 0.35 : 1) * (0.88 + audioEnergy * 0.12);
     shellMaterial.uniforms.uEntropy.value = state.entropy;
     shellMaterial.uniforms.uColor.value.copy(colorFromCss());
 
     nodes.forEach((node) => {
       node.visible = !portrait;
       const phase = node.userData.phase;
-      const pulse = 1 + Math.sin(now * 0.0012 + phase) * 0.14 * geometry.neural_density;
+      const pulse = 1 + Math.sin(now * 0.0012 + phase) * 0.14 * geometry.neural_density + audioEnergy * 0.08;
       node.scale.setScalar(pulse);
       node.position.z = NODE_LAYOUT[node.userData.index][3] + Math.sin(now * 0.00065 + phase) * 0.05 * geometry.depth;
       node.material.opacity = Math.min(0.85, 0.20 + geometry.neural_density * 0.55 * density);
@@ -499,6 +506,7 @@
 
     document.documentElement.style.setProperty("--master-face-depth", geometry.depth.toFixed(3));
     document.documentElement.style.setProperty("--master-face-tension", geometry.shell_tension.toFixed(3));
+    document.documentElement.style.setProperty("--master-audio-energy", audioEnergy.toFixed(3));
     window.MasterRenderPolicy?.recordFrame?.(now);
   }
 

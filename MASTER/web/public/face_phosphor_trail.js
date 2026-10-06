@@ -6,6 +6,10 @@
   if (aesthetic === "wscons") return;
 
   const TRAIL_DECAY = 0.86;
+  let audio = { bass: 0, mid: 0, high: 0, onset: 0 };
+  window.addEventListener("audio:update", (event) => {
+    audio = { ...audio, ...(event.detail || {}) };
+  }, { passive: true });
   let trailCanvas = null;
   let trailCtx = null;
 
@@ -33,13 +37,17 @@
     const ctx = ensureTrail(w, h);
     if (!ctx) return;
     ctx.globalCompositeOperation = "source-over";
-    ctx.globalAlpha = TRAIL_DECAY;
+    const persistence = Math.max(0.72, Math.min(0.92, TRAIL_DECAY - audio.high * 0.05 + audio.mid * 0.03));
+    ctx.globalAlpha = persistence;
     ctx.drawImage(sourceCanvas, 0, 0);
     ctx.globalAlpha = 1;
     ctx.globalCompositeOperation = "lighter";
-    ctx.fillStyle = "rgba(0,0,0,0.08)";
+    ctx.fillStyle = `rgba(0,0,0,${(0.08 + audio.onset * 0.10).toFixed(3)})`;
     ctx.fillRect(0, 0, w, h);
   }
 
-  window.MASTER_PHOSPHOR_TRAIL = Object.freeze({ capture: capturePhosphorTrail });
+  window.MASTER_PHOSPHOR_TRAIL = Object.freeze({
+    capture: capturePhosphorTrail,
+    audio: () => ({ ...audio })
+  });
 })();
