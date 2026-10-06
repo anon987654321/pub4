@@ -666,15 +666,15 @@ end
     end
 
 def deep_rows
+  # This ceiling belongs to the principle map, not this presentation layer.
+  principle_trace_ceiling = YAML.safe_load_file(File.join(MASTER, "data", "principle_map.yml")).fetch("rule_trace_ceiling", nil)
+
   [
     # Deep because it parses every tracked Ruby file in four top-level trees with Prism.
     # Fast means "reads files" in this register and name_candidates reads 2,500
     # of them through a parser, which is the line the header draws.
     *name_rows,
         shell_row("selftest", "MASTER", "bundle exec rake selftest", /self-test: (\d+) violation/, 0),
-        # This ceiling belongs to the principle map, not this presentation layer.
-        principle_trace_ceiling = YAML.safe_load_file(File.join(MASTER, "data", "principle_map.yml")).fetch("rule_trace_ceiling", nil)
-
         shell_row("selfcheck", "MASTER", "bundle exec rake selfcheck", /selfcheck: (\d+) violation/, nil),
         # Deep because the rule registry is global and a suite run has test-defined
         # rules in it: measured in-process it reads high and fails a green tree.
@@ -687,7 +687,6 @@ def deep_rows
                   YAML.safe_load_file(File.join(MASTER, "data/design_baseline.yml")).fetch("total", nil)),
       ].compact
     end
-
     def shell_row(name, dir, command, pattern, ceiling)
       # The commands in deep_rows are fixed literals with no quoting, so the
       # split is faithful; the arg-array form keeps the shell out entirely.
