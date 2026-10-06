@@ -52,8 +52,16 @@ Operator::CiGuard.run! do
     else
       step "css_build", "echo 'tools/build_all_css.rb not found in any known location' >&2; exit 1"
     end
-    tool_roots = [File.join(master_rails_tools, "operator")].select { |root| File.directory?(root) }
+    master_tools_root = File.expand_path("..", master_rails_tools)
+    tool_roots = [
+      master_tools_root,
+      File.join(master_rails_tools, "operator"),
+    ].select { |root| File.directory?(root) }
 
+    # Rails-facing lints have two deliberate homes: broadly shared source
+    # instruments under MASTER/tools, and operator-only Rails audits under
+    # MASTER/tools/rails/operator. Keep both roots in one resolver so a move
+    # between those surfaces cannot turn a real lint into a false "not found".
     %w[
       rhythm_lint
       fallback_drift_lint
