@@ -266,7 +266,11 @@ module BachMidi
   # Read Standard MIDI directly. No resampling, quantising or invented notes:
   # note-on/off pairs become the same pitch, duration and relative timing in
   # seconds, with the file's tempo map applied before Dilla renders them.
-  def parse(path)
+  FUGUE_START_MEASURES = 29
+  FUGUE_MEASURES = 97
+  BEATS_PER_MEASURE = 4
+
+  def parse(path, section: :all)
     bytes = File.binread(path)
     raise ArgumentError, "not a Standard MIDI file" unless bytes.byteslice(0, 4) == "MThd"
 
@@ -279,6 +283,7 @@ module BachMidi
     cursor = 8 + header_size
     tracks = []
     tempo_events = []
+    markers = []
 
     track_count.times do
       raise ArgumentError, "truncated MIDI track" unless bytes.byteslice(cursor, 4) == "MTrk"
@@ -290,14 +295,23 @@ module BachMidi
       parsed = parse_track(track)
       tracks << parsed
       tempo_events.concat(parsed[:tempos])
+      markers.concat(parsed[:markers])
       cursor += 8 + length
     end
 
     tempos = [[0, 500_000], *tempo_events].sort_by(&:first)
     tempos = tempos.chunk_while { |a, b| a[0] == b[0] }.map(&:last)
+    section_start_tick, section_end_tick = section_ticks(section, division, markers, tracks)
+    section_start = tick_seconds(section_start_tick, division, tempos)
+    section_end = section_end_tick && tick_seconds(section_end_tick, division, tempos)
     notes = tracks.flat_map { |track| track[:notes] }.filter_map do |note|
-      at = tick_seconds(note[:start], division, tempos)
-      finish = tick_seconds(note[:finish], division, tempos)
+      next if note[:finish] <= section_start_tick
+      next if section_end_tick && note[:start] >= section_end_tick
+
+      start_tick = [note[:start], section_start_tick].max
+      finish_tick = section_end_tick ? [note[:finish], section_end_tick].min : note[:finish]
+      at = tick_seconds(start_tick, division, tempos) - section_start
+      finish = tick_seconds(finish_tick, division, tempos) - section_start
       held = finish - at
       next if held <= 0.0
 
@@ -309,8 +323,9 @@ module BachMidi
       }
     end.sort_by { |note| [note[:at], note[:pitch]] }
 
-    last_tick = tracks.map { |track| track[:end_tick] }.max || 0
-    [notes, tick_seconds(last_tick, division, tempos), format]
+    last_tick = section_end_tick || tracks.map { |track| track[:end_tick] }.max || 0
+    length = tick_seconds(last_tick, division, tempos) - section_start
+    [notes, length, format]
   end
 
   def parse_track(bytes)
@@ -320,6 +335,7 @@ module BachMidi
     active = Hash.new { |hash, key| hash[key] = [] }
     notes = []
     tempos = []
+    markers = []
 
     while cursor < bytes.bytesize
       delta, cursor = read_vlq(bytes, cursor)
@@ -372,6 +388,7 @@ module BachMidi
 
           cursor += length
           tempos << [tick, (payload.getbyte(0) << 16) | (payload.getbyte(1) << 8) | payload.getbyte(2)] if type == 0x51 && length == 3
+          markers << [tick, payload.to_s] if [0x01, 0x06, 0x07].include?(type) && payload && !payload.empty?
           running = nil
         else
           cursor += case status
@@ -393,7 +410,17 @@ module BachMidi
     end
 
     notes.select! { |note| note[:pitch] }
-    { notes:, tempos:, end_tick: tick }
+    { notes:, tempos:, markers:, end_tick: tick }
+  end
+
+  def section_ticks(section, division, markers, tracks)
+    return [0, tracks.map { |track| track[:end_tick] }.max || 0] unless section.to_sym == :fugue
+
+    fugue = markers.find { |tick, text| text.match?(/\bfugue\b|\bfuga\b/i) }
+    coda = markers.find { |tick, text| text.match?(/\brecitativo\b|\bcoda\b/i) && (!fugue || tick > fugue[0]) }
+    start_tick = fugue&.first || (FUGUE_START_MEASURES * BEATS_PER_MEASURE * division)
+    end_tick = coda&.first || ((FUGUE_START_MEASURES + FUGUE_MEASURES) * BEATS_PER_MEASURE * division)
+    [start_tick, end_tick]
   end
 
   def read_vlq(bytes, cursor)
@@ -426,11 +453,14 @@ module BachMidi
 
   def play!
     path = source
-    events, length, format = parse(path)
+    section = ENV.fetch("DILLA_BACH_SECTION", "fugue").to_sym
+    abort "play: unsupported Bach section #{section.inspect}" unless %i[all fugue].include?(section)
+    events, length, format = parse(path, section:)
     abort "play: Bach BWV 565 MIDI contains no playable notes" if events.empty?
 
     patch = ENV.fetch("DILLA_BACH_PATCH", DEFAULT_PATCH)
-    puts "bach0: Bach Toccata and Fugue BWV 565 — original MIDI, format #{format}, #{events.length} notes"
+    title = section == :fugue ? "Bach Fugue BWV 565" : "Bach Toccata and Fugue BWV 565"
+    puts "bach0: #{title} — original Mutopia MIDI section, format #{format}, #{events.length} notes"
     puts "bach0: Dilla synth #{patch}"
     LiveSynth.perform!(Score.new(events:, length:, rng: LiveSynth.rng!, patch:), seconds: length)
   rescue ArgumentError => e
