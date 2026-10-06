@@ -98,6 +98,12 @@ class TestFixConvergence < Minitest::Test
     refute_includes Master::CLI::Pipeline::Pass::STAGES, "scan"
   end
 
+  def test_scoped_fix_does_not_preflight_unrelated_trees
+    assert_equal ["RAILS"], Master::CLI::CommandRegistry.execution_trace_scopes("RAILS")
+    assert_equal %w[MASTER RAILS], Master::CLI::CommandRegistry.execution_trace_scopes("MASTER RAILS")
+    assert_nil Master::CLI::CommandRegistry.execution_trace_scopes("")
+  end
+
   def test_bare_fix_resolves_to_the_current_master_checkout
     resolver = Class.new do
       include Master::CLI::Pipeline::TargetResolver

@@ -58,11 +58,16 @@ module Master
         apply, critique, aesthetic, only, target = parse_pass_flags(raw)
         # /fix is the operator trace: every event is visible in the same append-only
         # OpenBSD dmesg grammar. An explicit quiet/normal/verbose flag still wins.
+        targets = fix_targets(target, root:)
+        Master::Trace::Dmesg.status("fix0", "target queue: #{targets.join(", ")}") if targets.size > 1
+        trace_scope = execution_trace_scopes(target)
+
         rendered = with_dmesg_verbosity(raw, default: "trace") do
           unless ENV["MASTER_FIX_DEEP_TRACE"] == "0"
             trace = begin
               Master::Fix::ExecutionTrace.new(
                 root: Master.repo_root,
+                scope: trace_scope,
                 dependencies: { scanner:, fix_loop:, deliberation:, bus: }
               ).run
             rescue SyntaxError, StandardError => e
@@ -82,8 +87,6 @@ module Master
 
           writes_requested = apply != false && fix_stage_selected?(only)
           effective_critique = critique.nil? ? writes_requested : critique
-          targets = fix_targets(target, root:)
-          Master::Trace::Dmesg.status("fix0", "target queue: #{targets.join(", ")}") if targets.size > 1
 
           results = targets.map do |fix_target|
             run_fix_target(
@@ -141,6 +144,15 @@ module Master
 
         Master::Trace::Dmesg.status("gate0", "#{target}: delivery verified")
         value
+      end
+
+      def execution_trace_scopes(target)
+        raw = target.to_s.strip
+        return nil if raw.empty?
+
+        trees = %w[MASTER RAILS OPENBSD STUDIO]
+        tokens = raw.split(/\s+/)
+        tokens.size > 1 && tokens.all? { |token| trees.include?(token) } ? tokens : [raw]
       end
 
       def fix_targets(target, root:)

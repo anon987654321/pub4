@@ -57,9 +57,10 @@ module Master
         end
       end
 
-      def initialize(root:, files: nil, digestor: nil, ruby_checker: nil, dependencies: {})
+      def initialize(root:, files: nil, scope: nil, digestor: nil, ruby_checker: nil, dependencies: {})
         @root = File.expand_path(root)
         @files = files
+        @scope = scope
         @dependencies = dependencies
         @digestor = digestor || ->(path) { Digest::SHA256.file(path) }
         @ruby_checker = ruby_checker || ->(path) { RubyVM::InstructionSequence.compile_file(path) }
@@ -105,9 +106,10 @@ module Master
       def file_list
         return Array(@files).map { |path| File.expand_path(path, @root) } if @files
 
-        output, status = Master::Io::Exec.capture2e(
-          "git", "-C", @root, "ls-files", "-z", "--cached", "--others", "--exclude-standard"
-        )
+        args = ["git", "-C", @root, "ls-files", "-z", "--cached", "--others", "--exclude-standard"]
+        scopes = scope_paths
+        args.concat(["--", *scopes]) unless scopes.empty?
+        output, status = Master::Io::Exec.capture2e(*args)
         raise "cannot inventory repository: #{output.to_s.lines.last.to_s.strip}" unless status.success?
 
         output.split("\x00").reject(&:empty?).map { |path| File.join(@root, path) }.select { |path| File.file?(path) }
