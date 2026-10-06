@@ -2151,10 +2151,12 @@ module LiveSynth
       ]
     when "dangelo"
       [
-        Improviser.new(rng:, reference: "really_love_bossa_broken", family: "rhodes"),
-        [[4.0, { "lead" => "fm", "preset" => "metal" }],
+        # D'Angelo's richer showcase cell: Mixolydian colour, extended/slash
+        # voicings and a soft electronic accent instead of the metallic FM lead.
+        Improviser.new(rng:, reference: "untitled_d_mixolydian_vamp", family: "rhodes"),
+        [[4.0, { "lead" => "fm", "preset" => "bell" }],
          [9.0, { "patch" => "e_piano" }],
-         [13.0, { "knob" => "cutoff", "amount" => 0.16, "seconds" => 3.0 }]],
+         [13.0, { "knob" => "cutoff", "amount" => 0.12, "seconds" => 3.0 }]],
       ]
     when "flylo"
       [

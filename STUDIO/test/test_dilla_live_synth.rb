@@ -232,6 +232,14 @@ class TestDillaLiveSynth < Minitest::Test
     assert_equal expected, actual
   end
 
+  def test_dangelo_showcase_uses_the_richer_reference_and_soft_lead
+    source = File.read(dilla("lib/livesets.rb"))
+    block = source[source.index('when "dangelo"')...source.index('when "flylo"')]
+    assert_includes block, 'reference: "untitled_d_mixolydian_vamp"'
+    assert_includes block, '"preset" => "bell"'
+    refute_includes block, '"preset" => "metal"'
+  end
+
   def test_bare_dilla_entrypoint_routes_to_showcase
     source = File.read(dilla("dilla.rb"))
     assert_match(/if ARGV\.empty\?.*?live!\(\[["']showcase["']\]\)/m, source)
