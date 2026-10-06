@@ -103,6 +103,24 @@ module Master
 
       private
 
+      # ExecutionTrace always inventories from the pub4 repository root. Scope
+      # names are git pathspecs, while an empty scope means the whole checkout.
+      def scope_paths
+        scopes = Array(@scope).compact.flat_map { |scope| scope.to_s.split(/[\\s,]+/) }.reject(&:empty?)
+        return [] if scopes.empty?
+        return [] if (%w[MASTER RAILS OPENBSD STUDIO] - scopes.map(&:upcase)).empty?
+
+        repo = File.expand_path(@root)
+        scopes.map do |scope|
+          full = File.expand_path(scope, repo)
+          next if full == repo
+          unless full.start_with?("#{repo}#{File::SEPARATOR}")
+            raise ArgumentError, "execution trace scope outside repository: #{scope.inspect}"
+          end
+          full.delete_prefix("#{repo}#{File::SEPARATOR}")
+        end.compact.uniq
+      end
+
       def file_list
         return Array(@files).map { |path| File.expand_path(path, @root) } if @files
 
