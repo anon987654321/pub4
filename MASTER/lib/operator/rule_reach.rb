@@ -94,7 +94,7 @@ module Operator
       require File.join(MASTER_DIR, "law", "law") unless defined?(::Law)
       ::Law.load_all(File.join(MASTER_DIR, "law")) if ::Law.rules.empty?
       ::Law.rules.values
-    end    end
+    end
   end
 end
 
