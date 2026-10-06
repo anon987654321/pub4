@@ -32,7 +32,7 @@ module Operator
     end
 
     def rules
-      @rules ||= audit.send(:load_yaml_rules)
+      @rules ||= audit.population
     end
 
     def mechanical(all)
