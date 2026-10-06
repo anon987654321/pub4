@@ -3,6 +3,7 @@
 require "minitest/autorun"
 require "tmpdir"
 require "fileutils"
+require "yaml"
 require_relative "../lib/operator/ratchets"
 
 # Wish-list items 1 and 2, made executable.
@@ -28,6 +29,14 @@ class TestRatchets < Minitest::Test
   def rows = self.class.rows
 
   def readable = rows.reject { |row| row.current.nil? || row.ceiling.nil? }
+
+  def test_principle_trace_reads_the_recorded_ceiling
+    row = rows.find { |candidate| candidate.name == "principle_trace" }
+    recorded = YAML.safe_load_file(File.join(Operator::Ratchets::MASTER, "data", "principle_map.yml")).fetch("rule_trace_ceiling")
+
+    assert_equal recorded, row.ceiling,
+                 "principle_trace must use principle_map.yml rather than a stale presentation-layer baseline"
+  end
 
   def test_no_ratchet_is_over_its_ceiling
     over = readable.select(&:over?)
