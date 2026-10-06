@@ -78,6 +78,8 @@ module Operator
         node[3].is_a?(Array) ? node[3][1].to_s : nil
       when :fcall
         node[1].is_a?(Array) ? node[1][1].to_s : nil
+      when :command
+        node[1].is_a?(Array) ? node[1][1].to_s : nil
       end
     end
 
