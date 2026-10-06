@@ -2174,7 +2174,7 @@ module LiveSynth
     ["memorymoog_organ", 10.0],
     ["vox_humana", 10.0],
     ["soft_reed", 10.0],
-    ["glass_bell", 10.0],
+    ["e_piano", 10.0],
     ["bach", 30.0],
   ].freeze
 
@@ -2360,7 +2360,7 @@ module LiveSynth
          [12.0, { "patch" => "moog_strings" }],
          [18.0, { "patch" => "moog_brass" }]],
       ]
-    when "memorymoog_organ", "glass_bell", "vox_humana", "soft_reed"
+    when "memorymoog_organ", "vox_humana", "soft_reed", "e_piano"
       [Demo.new(name, rng:), [[2.5, { "knob" => "cutoff", "amount" => -0.1, "seconds" => 2.5 }]]]
     when "bach"
       path = BachMidi.source

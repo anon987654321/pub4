@@ -261,7 +261,7 @@ class TestDillaLiveSynth < Minitest::Test
   end
 
   def test_showcase_patch_scenes_resolve_to_real_patches
-    patch_scenes = %w[opus3_strings matriarch_stabs grandmother_sweep memorymoog_organ vox_humana soft_reed glass_bell]
+    patch_scenes = %w[opus3_strings matriarch_stabs grandmother_sweep memorymoog_organ vox_humana soft_reed e_piano]
     patch_scenes.each { |name| assert LiveSynth::Patches.name!(name), name }
     patch_scenes.each { |name| assert LiveSynth::Patches.spec(name), name }
   end
@@ -274,7 +274,7 @@ class TestDillaLiveSynth < Minitest::Test
       opus3_strings dangelo_untitled moog_dfam dangelo_brown_sugar madlib
       dilla_so_far_to_go dangelo_really_love dangelo_sugah_daddy matriarch_stabs
       dangelo_ballad grandmother_sweep madlib_figaro royksopp memorymoog_organ
-      vox_humana soft_reed glass_bell bach
+      vox_humana soft_reed e_piano bach
     ], scenes
     source = File.read(dilla("lib/livesets.rb"))
     assert_includes source, 'reference: "dilla_life"'
