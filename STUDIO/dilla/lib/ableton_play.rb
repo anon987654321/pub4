@@ -388,7 +388,7 @@ module BachMidi
 
           cursor += length
           tempos << [tick, (payload.getbyte(0) << 16) | (payload.getbyte(1) << 8) | payload.getbyte(2)] if type == 0x51 && length == 3
-          markers << [tick, payload.to_s] if [0x01, 0x06, 0x07].include?(type) && payload && !payload.empty?
+          markers << [tick, payload.to_s] if [0x06, 0x07].include?(type) && payload && !payload.empty?
           running = nil
         else
           cursor += case status
