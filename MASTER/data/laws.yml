@@ -1278,3 +1278,23 @@ tokens:
         off_scale_tracking: 10
         off_scale_opacity: 29
         off_scale_duration: 30
+
+rule_ratchets:
+  # Reach is a structural invariant: every executable Law must expose at least
+  # one enforcement surface (detector, semantic question, or practice).
+  reach:
+    unreachable: 0
+  audit:
+    blind: 0
+    saturated: 0
+  hygiene:
+    id_case_collisions: 0
+    alias_shadows_live_rule: 0
+    missing_metadata: 0
+    cross_population_duplicates: 0
+    statement_conflicts: 0
+  fixture_debt:
+    without_fixtures: 0
+  deps:
+    # Existing debt is held as a measured ceiling and may only fall.
+    ungraphed: 133
