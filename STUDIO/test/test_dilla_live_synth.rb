@@ -284,6 +284,12 @@ class TestDillaLiveSynth < Minitest::Test
     assert_includes source, 'SHOWCASE_TEMPO_SCALE = 0.90'
   end
 
+  def test_dub_showcase_tail_assignment_is_outside_string_continuation
+    source = File.read(dilla("lib/livesets.rb"))
+    assert_match(/send = post\.fetch\("dub"\).*\n\s+showcase_tail = LiveSynth\.showcase\?/, source)
+    refute_match(/\] \\\n\s+showcase_tail =/, source)
+  end
+
   def test_bare_dilla_entrypoint_routes_to_showcase_before_render_setup
     source = File.read(dilla("dilla.rb"))
     early = source.index("if ARGV.empty?")
