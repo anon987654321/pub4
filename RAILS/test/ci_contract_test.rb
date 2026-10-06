@@ -47,12 +47,16 @@ class CiContractTest < Minitest::Test
     assert_includes shared, 'MASTER/tools/rails'
   end
 
-  test "shared ci resolves every named Rails lint from its canonical MASTER root" do
+  test "shared ci resolves every named Rails lint from canonical MASTER roots" do
     shared = read(SHARED_CI)
 
+    assert_includes shared, 'master_tools_root = File.expand_path("..", master_rails_tools)'
+    assert_includes shared, 'File.join(master_rails_tools, "operator")'
+
+    repo_root = File.expand_path("../..", __dir__)
     roots = [
-      "MASTER/tools/",
-      "MASTER/tools/rails/operator/",
+      File.join(repo_root, "MASTER", "tools"),
+      File.join(repo_root, "MASTER", "tools", "rails", "operator"),
     ]
 
     %w[
@@ -63,13 +67,8 @@ class CiContractTest < Minitest::Test
       chrome_i18n_lint
       dialect_token_drift_check
     ].each do |lint|
-      roots.each do |root|
-        next unless shared.include?("#{root}#{lint}.rb")
-
-        found = true
-        break
-      end
-      assert found, "shared CI has no canonical MASTER path for #{lint}"
+      assert roots.any? { |root| File.file?(File.join(root, "#{lint}.rb")) },
+             "shared CI has no canonical MASTER file for #{lint}"
     end
   end
 
