@@ -260,8 +260,7 @@ module Master
                else result.to_s
                end
         evidence = ok ? result.value!.fetch(:evidence, nil) : nil
-        operation = plan && problem.candidate_operations.find { |candidate| plan.summary.downcase.include?(candidate) }
-        operation ||= problem.primary_operation
+        operation = plan&.operations&.last || problem.primary_operation
         Master::Trace::Dmesg.status(
           "restructure0",
           "#{operation} problem=#{problem.id} signals=#{problem.size} #{problem.rules.join(",")} #{relative(problem.files.first)}: #{text[0, 140]}"
@@ -274,6 +273,7 @@ module Master
           problem_id: problem.id,
           operation:,
           candidate_operations: problem.candidate_operations,
+          operations: plan&.operations || [],
           confidence: problem.confidence,
           findings: problem.size,
           ok:,
