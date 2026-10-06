@@ -45,15 +45,19 @@ module Master
         parent = Dir.mktmpdir("pub4-master-fix-")
         worktree = File.join(parent, "checkout")
         branch_name = git!("rev-parse", "--abbrev-ref", "HEAD")
-        base = git!("rev-parse", "HEAD")
+        local_head = git!("rev-parse", "HEAD")
 
         fetch_main!
         upstream = git!("rev-parse", "origin/main")
-        unless %w[main master].include?(branch_name) && base == upstream
+        unless %w[main master].include?(branch_name)
+          return refused("auto-merge requires checked-out main")
+        end
+        unless ancestor?(local_head, upstream)
           return refused(
-            "auto-merge requires checked-out main at origin/main; update or publish local commits first"
+            "local main has unpushed or divergent commits; publish them before auto-merge"
           )
         end
+        base = upstream
 
         announce("isolating #{id} from #{foreign_paths.size} foreign change(s)")
         git!("worktree", "add", "-b", branch, worktree, base)
@@ -110,7 +114,7 @@ module Master
           )
         end
 
-        publish!(worktree:, branch:, head:)
+        publish!(worktree:, branch:, head:, base:)
         cleanup_success(worktree:, branch:)
         announce("published #{head[0, 12]} to origin/main, worktree removed")
 
@@ -185,10 +189,10 @@ module Master
         [status.success?, lines]
       end
 
-      def publish!(worktree:, branch:, head:)
+      def publish!(worktree:, branch:, head:, base:)
         fetch_main!
         upstream = git!("rev-parse", "origin/main")
-        raise "origin/main moved during fix; publication refused" unless ancestor?(upstream, head)
+        raise "origin/main moved during fix; publication refused" unless upstream == base
 
         git!("push", "origin", "refs/heads/#{branch}:refs/heads/main", chdir: worktree)
       end
