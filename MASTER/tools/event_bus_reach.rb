@@ -4,7 +4,6 @@ require "ripper"
 require "set"
 require "json"
 require_relative "../lib/trace/dmesg"
-require_relative "../lib/trace/dmesg"
 
 module Operator
   module EventBusReach
@@ -111,7 +110,7 @@ module Operator
 
       code.to_enum(:scan, /\b(?:emitTtsEvent|dispatchEvent)\s*\(\s*(?:new\s+CustomEvent\s*\(\s*)?(['"])([^'"]+)\2/).each do
         match = Regexp.last_match
-        topic = match[3]
+        topic = match[2]
         rows << { topic:, role: :publisher } if event_topic?(topic)
       end
 
