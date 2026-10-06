@@ -1,29 +1,36 @@
 #compdef master cli
 
-# The slash surface CommandRegistry.build returns, one line per help topic. test/test_completions.rb fails when this list and the registry differ.
+# The slash surface is generated from CommandRegistry's public help contract.
+# test/test_completions.rb keeps this list equal to the live command registry.
 _master() {
   local -a commands
   commands=(
-    'fix:observe, critique, repair, observe again until it converges'
-    'review:read-only — the council and the principle map'
-    'status:one-frame health, the mission and the known-good runtime'
-    'plugin:list and invoke governed plugins'
-    'undo:revert the last recorded change'
-    'commit:commit the named paths'
-    'model:show or switch the active model, and connect its subscriptions'
-    'doctor:host, provider, exposure and hardware health'
-    'rules:the declared rules, one line each'
-    'why:what a rule says, and where it comes from'
-    'orders:standing orders'
-    'soul:read and amend the constitution, and its portable contract'
-    'snapshot:write source snapshots for all four governed trees at the pub4 root'
     'android:start Android/Termux onboarding and pair the local owner'
-    'ios:start iOS/PWA onboarding'
-    'session:list, continue or branch a conversation'
-    'help:list commands'
     'clear:clear the session transcript'
-    'exit:leave MASTER'
+    'commit:commit the named paths'
+    'critique:read-only council review'
+    'deploy:deploy MASTER or the Rails fleet to vm23 through the canonical VPS path'
+    'doctor:host, provider, exposure and hardware health'
+    'face:open the full-screen 3D terminal face'
+    'fix:observe, critique, repair, observe again until it converges'
+    'help:list commands'
+    'ios:start iOS/PWA onboarding'
+    'model:show or switch the active model, and connect its subscriptions'
+    'orders:the objective ledger'
+    'play:play a named Dilla music lane on the local sound card'
+    'plugin:list and invoke governed plugins'
     'quit:leave MASTER'
+    'review:read-only compatibility view over the /fix pipeline'
+    'rules:the declared rules, one line each'
+    'session:list, continue or branch a conversation'
+    'snapshot:write source snapshots for all four governed trees at the pub4 root'
+    'soul:read and amend the constitution, and its portable contract'
+    'status:one-frame health, services and the known-good runtime'
+    'undo:revert the last recorded change'
+    'voice:CLI voice status and an explicit speaker test'
+    'wake:control the Android/Termux wake-word listener'
+    'why:what a rule says, and where it comes from'
+    'exit:leave MASTER'
   )
 
   _arguments -C '1: :->command' '*:: :->args'
