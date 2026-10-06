@@ -152,7 +152,9 @@ module Master
 
         trees = %w[MASTER RAILS OPENBSD STUDIO]
         tokens = raw.split(/\s+/)
-        tokens.size > 1 && tokens.all? { |token| trees.include?(token) } ? tokens : [raw]
+        return tokens if tokens.size > 1 && tokens.all? { |token| trees.include?(token) }
+
+        tokens.map { |token| token.sub(%r{\A\.\./(?=[A-Z]+(?:/|\z))}, "") }
       end
 
       def fix_targets(target, root:)
