@@ -111,6 +111,13 @@ module Master
           detail: ["/ios — begin onboarding on an iPhone or iPad through the browser/PWA.",
                    "MASTER does not claim native iOS hardware access; browser capabilities remain explicit."],
         },
+        "wake" => {
+          summary: "control the Android/Termux wake-word listener",
+          detail: ["/wake — report whether the local wake-word listener is enabled and which phrases it recognizes.",
+                   "/wake on — enable the listener after explicit local owner access.",
+                   "/wake off — disable the listener.",
+                   "The listener is Android/Termux-only; web visitors cannot enable it."],
+        },
         "doctor" => {
           summary: "host, provider, exposure and hardware health",
           detail: ["/doctor — keys, disk, git, pairing/gateway exposure.",
@@ -216,11 +223,11 @@ module Master
 
       def help_summary
         [
-          "commands: /status /doctor /voice /model",
-          "          /review /critique /fix /face",
+          "commands: /status /doctor /voice /model /deploy /play",
+          "          /wake /review /critique /fix /face",
           "          /session /clear /undo /snapshot",
           "          /android /ios /orders",
-          "          /soul /rules /why /plugin /help /exit",
+          "          /soul /rules /why /plugin /help /exit /quit",
           "input:    !cmd governed shell, << multiline, /help X details",
           "write:    /fix is the write path; everything else is read, route or chat",
         ].join("\n")
