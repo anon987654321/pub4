@@ -338,10 +338,13 @@ def default_apply?(*) = false
         def preview_lines(value)
           total = value[:total].to_i
           files = value[:files].to_h.transform_keys { |path| File.basename(path.to_s) }
+          structure = Array(value[:structure])
           [
             "preview: #{total} #{total == 1 ? 'repair' : 'repairs'}",
             preview_row("rules", value[:rules]),
             preview_row("files", files),
+            "preview structure: #{structure.size} problem(s)",
+            preview_row("transformations", { "order" => Array(value[:transformation_order]).join(" > ") }),
           ].compact.join("\n")
         end
 
