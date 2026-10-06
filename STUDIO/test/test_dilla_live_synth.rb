@@ -210,6 +210,20 @@ class TestDillaLiveSynth < Minitest::Test
     assert_equal({ "lead" => "fm", "preset" => "glass" }, say.steering("fm lead glass"))
   end
 
+  def test_play_artist_reads_the_shared_rack_and_artist_progression_table
+    table = LiveSynth.config.fetch("play")
+    assert_equal "circle_fifths_descent", table.fetch("bach")
+    assert_equal "db_major_minor_fall", table.fetch("j_dilla")
+    assert_equal "quartal_west_coast", table.fetch("flying_lotus")
+    assert_equal "minor_triad_walk", table.fetch("madlib")
+    assert_equal "royksopp_live", table.fetch("royksopp")
+
+    master = LiveSynth.config.fetch("play_master")
+    assert_equal 4, master.count { |stage| stage.key?("vcs") }
+    assert_equal 3, master.count { |stage| stage.key?("sonitex") }
+    assert_equal 1, master.count { |stage| stage.key?("console_stack") }
+  end
+
   def test_steering_with_nothing_playing_says_so
     with_live_dir do
       assert_equal "nothing is playing", LiveSynth::Say.call("slowly open the filter")
