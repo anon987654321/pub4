@@ -289,6 +289,13 @@ class TestDillaLiveSynth < Minitest::Test
     assert_includes source, 'SHOWCASE_TEMPO_SCALE = 0.90'
   end
 
+  def test_showcase_tape_chain_calls_existing_livesets_audio_builders
+    chain = LiveSynth.showcase_tape_chain
+    assert_operator chain.count { |row| row.include?("aphaser=") }, :>, 0
+    assert_operator chain.count { |row| row.include?("acrusher=") }, :>, 0
+    assert_operator chain.grep(/^(volume=|.*alimiter)/).length, :>, 0
+  end
+
   def test_dub_showcase_tail_assignment_is_outside_string_continuation
     source = File.read(dilla("lib/livesets.rb"))
     assert_match(/send = post\.fetch\("dub"\).*\n\s+showcase_tail = LiveSynth\.showcase\?/, source)
