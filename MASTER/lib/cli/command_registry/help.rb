@@ -146,9 +146,9 @@ module Master
                    "/soul law protocol — the mandatory enforcement sequence."],
         },
         "snapshot" => {
-          summary: "write source snapshots for all four governed trees",
-          detail: ["/snapshot — regenerate .master/snapshots/snapshot_MASTER.md, snapshot_RAILS.md, snapshot_OPENBSD.md and snapshot_STUDIO.md.",
-                   "Snapshots are ignored evidence artifacts; they are not source files and are never part of the fix commit."],
+          summary: "write source snapshots for all four governed trees at the pub4 root",
+          detail: ["/snapshot — write snapshot_MASTER.md, snapshot_RAILS.md, snapshot_OPENBSD.md and snapshot_STUDIO.md at the pub4 root.",
+                   "Snapshots are source packs, not runtime state; they are deliberately visible beside the trees they describe."],
         },
         "rules" => {
           summary: "the declared rules, one line each",
