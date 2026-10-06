@@ -44,29 +44,19 @@ function planFrames() {
 // driving the mouth through the next one because their only guard is
 // `tts.playing || tts.audio`, which the next utterance satisfies.
 //
-// One interval on tts.visemeTimer, cursored over the frames: a second call
-// replaces the first rather than stacking on it, stopVisemeAnim ends it, and
-// before playback begins the cursor simply holds at frame 0 instead of running
-// the plan out against wall-clock. clock:'wall' is the browser speechSynthesis
-// path, which has no media element to read currentTime from and calls this from
-// utterance.onstart — real playback start, so elapsed-since-call is the clock.
-function startVisemeAnim(text, { clock = 'audio' } = {}) {
+// One interval on tts.visemeTimer, cursored over the audio frames: a second call
+// replaces the first rather than stacking on it. Before playback begins the
+// cursor simply holds at frame 0.
+function startVisemeAnim(text) {
   stopVisemeAnim();
   const frames = planFrames();
   if (frames) {
     let cursor = 0;
-    let wallOrigin = null;
     tts.visemeTimer = setInterval(() => {
       if (!tts.playing && !tts.audio) { stopVisemeAnim(); return; }
-      let elapsed;
-      if (clock === 'wall') {
-        if (wallOrigin === null) wallOrigin = performance.now();
-        elapsed = performance.now() - wallOrigin;
-      } else {
-        const audio = tts.audio;
-        if (!audio || audio.paused) return;
-        elapsed = audio.currentTime * 1000;
-      }
+      const audio = tts.audio;
+      if (!audio || audio.paused) return;
+      const elapsed = audio.currentTime * 1000;
       let applied = null;
       while (cursor < frames.length && frames[cursor].at <= elapsed) {
         applied = frames[cursor];
