@@ -5,6 +5,7 @@ require "open3"
 require "securerandom"
 require "stringio"
 require "tmpdir"
+require_relative "../trace/dmesg"
 
 module Master
   module Fix
@@ -21,8 +22,11 @@ module Master
       Result = Data.define(:ok, :summary, :base, :head, :branch, :worktree)
 
       def self.foreign_paths(root:)
-        session = new(root:, io: StringIO.new)
-        session.status_paths(root: session.repo_root)
+        new(root:, io: StringIO.new).foreign_paths
+      end
+
+      def foreign_paths
+        send(:status_paths, root: @repo_root)
       end
 
       attr_reader :repo_root
@@ -40,13 +44,14 @@ module Master
         branch = "master/fix-#{id}"
         parent = Dir.mktmpdir("pub4-master-fix-")
         worktree = File.join(parent, "checkout")
+        branch_name = git!("rev-parse", "--abbrev-ref", "HEAD")
         base = git!("rev-parse", "HEAD")
 
         fetch_main!
         upstream = git!("rev-parse", "origin/main")
-        unless ancestor?(upstream, base)
+        unless %w[main master].include?(branch_name) && base == upstream
           return refused(
-            "local HEAD is behind origin/main; update the main checkout before /fix"
+            "auto-merge requires checked-out main at origin/main; update or publish local commits first"
           )
         end
 
