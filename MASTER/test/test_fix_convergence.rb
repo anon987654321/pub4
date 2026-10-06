@@ -218,6 +218,21 @@ class TestFixConvergence < Minitest::Test
     assert_equal [0, []], result
   end
 
+  def test_fix_preview_includes_structural_plan_and_order
+    loop = build_loop([])
+    sweep = Object.new
+    sweep.define_singleton_method(:preview) do |target:, run_id:|
+      [{ problem_id: "p1", candidate_operations: %w[split simplify], target:, run_id: }]
+    end
+    loop.instance_variable_set(:@sweeps, [sweep])
+
+    result = loop.preview(@root)
+
+    assert_equal [%w[split simplify]], result.value!.fetch(:structure).map { |row| row.fetch(:candidate_operations) }
+    assert_equal %w[defragment decouple flatten merge split relocate rename reorder remove reflow simplify recommend],
+                 result.value!.fetch(:transformation_order)
+  end
+
   def test_dry_run_does_not_run_mutating_gate_verification
     fix_loop = Object.new
     fix_loop.define_singleton_method(:run) { |target, **| flunk("dry-run started the repair") }
