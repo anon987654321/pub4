@@ -3,6 +3,9 @@
 # Usage: zsh OPENBSD/bin/vps-deploy all|brgen|amber|bsdports|master
 set -euo pipefail
 
+# SSH executes this as a non-login shell on vm23; pin the OpenBSD package path.
+export PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin
+
 usage() {
   print -r -- "usage: zsh OPENBSD/bin/vps-deploy all|APP|master   (run as dev, never under doas)
 
