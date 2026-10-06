@@ -65,6 +65,7 @@ module Master
         The context below numbers each line for reference; never copy the numbers.
         Otherwise answer in exactly this format, whole file contents, no code fences:
         SUMMARY: <one line: what moved where, and why>
+        OPERATIONS: <one or more candidate transformation names, comma-separated, in constitutional order>
         === WRITE <path from the repository root, e.g. MASTER/lib/fix/x.rb>
         <complete file content>
         === DELETE <path from the repository root>
@@ -107,6 +108,23 @@ module Master
             rounds: phase == :structure_first ? FIRST_ROUNDS : ROUNDS,
             keeps: phase == :structure_first ? FIRST_KEEPS : KEEPS,
           )
+        end
+      end
+
+      # Read-only structural planning used by --dry-run. It performs the same
+      # deterministic finding clustering and candidate ordering as the live restructure
+      # stage, but never asks the model, writes files, commits, or pushes.
+      def preview(target:, run_id: "preview")
+        candidates(target, run_id).map do |problem|
+          {
+            problem_id: problem.id,
+            files: problem.files.map { |path| relative(path) },
+            rules: problem.rules,
+            candidate_operations: problem.candidate_operations,
+            primary_operation: problem.primary_operation,
+            confidence: problem.confidence.to_s,
+            reason: problem.reason
+          }
         end
       end
 
@@ -187,7 +205,8 @@ module Master
         result = @restructures[tree].call(
           plan,
           message: commit_message(problem, plan),
-          review:
+          review:,
+          allowed_operations: problem.candidate_operations
         )
         report(problem, plan, result)
       end
