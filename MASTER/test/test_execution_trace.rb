@@ -26,6 +26,18 @@ class TestExecutionTrace < Minitest::Test
     end
   end
 
+  def test_scope_names_become_repository_relative_git_paths
+    trace = Master::Fix::ExecutionTrace.new(root: "/tmp/pub4", scope: %w[MASTER RAILS OPENBSD STUDIO], ruby_checker: ->(_path) {})
+
+    assert_equal [], trace.send(:scope_paths)
+  end
+
+  def test_single_absolute_scope_becomes_a_repository_relative_git_path
+    trace = Master::Fix::ExecutionTrace.new(root: "/tmp/pub4", scope: ["/tmp/pub4/RAILS"], ruby_checker: ->(_path) {})
+
+    assert_equal ["RAILS"], trace.send(:scope_paths)
+  end
+
   def test_missing_boot_surface_and_configuration_is_a_failure
     Dir.mktmpdir("execution_trace") do |root|
       trace = Master::Fix::ExecutionTrace.new(root:, files: [], ruby_checker: ->(_path) {})
