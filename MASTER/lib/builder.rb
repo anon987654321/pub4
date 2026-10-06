@@ -21,6 +21,9 @@ module Master
         Io::WriteFile.new(root:, undo: i[:undo], governor: i[:governor],
           event_bus: i[:bus], diff_stager: i[:diff_stager], ground_truth: i[:ground_truth])
       },
+      "DeletePath" => ->(r, i) {
+        Io::DeletePath.new(root: i.fetch(:workspace_root, r), undo: i[:undo], governor: i[:governor], event_bus: i[:bus])
+      },
       "StrReplace" => ->(r, i) {
         root = i.fetch(:workspace_root, r)
         Io::StrReplace.new(root:, undo: i[:undo], governor: i[:governor],
