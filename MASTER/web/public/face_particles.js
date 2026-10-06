@@ -3,6 +3,7 @@
   "use strict";
 
   let audio = { bass: 0, mid: 0, high: 0, onset: 0, rms: 0 };
+  let lastAudioPulseAt = 0;
   window.addEventListener("audio:update", (event) => {
     audio = { ...audio, ...(event.detail || {}) };
   }, { passive: true });
@@ -23,6 +24,29 @@
     };
   }
 
+  function reactAudio(State, mouthPool) {
+    const K = window.ParticleKernel;
+    if (!mouthPool || !K || State.reducedMotion) return;
+    const now = performance.now();
+    const onset = Number(audio.onset) || 0;
+    if (onset < 0.14 || now - lastAudioPulseAt < 100) return;
+    lastAudioPulseAt = now;
+    const count = Math.min(4, 1 + Math.round(onset * 3));
+    for (let i = 0; i < count; i += 1) {
+      const lane = ((State.audioPulses || 0) + i) % 5;
+      K.spawn(mouthPool, (lane - 2) * 0.12, 0.40 + audio.mid * 0.04, {
+        kind: 24,
+        zone: 1,
+        valence: audio.high * 0.25,
+        arousal: Math.max(0.28, onset + audio.mid * 0.35),
+        confidence: 0.62,
+        decay: 0.012,
+        attention: 0.45 + audio.bass * 0.25
+      });
+    }
+    State.audioPulses = (State.audioPulses || 0) + count;
+  }
+
   function spawnEmotionalGhost(State, mouthPool, mood) {
     const K = window.ParticleKernel;
     if (!mouthPool || !K || State.reducedMotion) return;
@@ -37,6 +61,7 @@
   window.MASTER_FACE_PARTICLES = Object.freeze({
     kernelStepContext,
     spawnEmotionalGhost,
+    reactAudio,
     audio: () => ({ ...audio })
   });
 })();

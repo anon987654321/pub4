@@ -375,6 +375,7 @@
     const eyePool = window.MASTER_FACE?.eyePool;
     const mouthPool = window.MASTER_FACE?.mouthPool;
     if (kernel && eyePool && mouthPool) {
+      window.MASTER_FACE_PARTICLES?.reactAudio?.(state, mouthPool);
       for (let i = 0; i < eyePool.count; i += 1) if (eyePool.alive[i]) {
         const base = i * kernel.FIELDS_PER_CELL;
         eyePool.cells[base + kernel.FIELD.attention] = Math.max(
