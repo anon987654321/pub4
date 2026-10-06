@@ -2074,9 +2074,10 @@ module LiveSynth
 
   def stream = config.fetch("stream")
 
-  SHOWCASE_TEMPO_SCALE = Float(ENV.fetch("DILLA_SHOWCASE_TEMPO_SCALE", "0.76"))
-  SHOWCASE_BASS_GAIN = Float(ENV.fetch("DILLA_SHOWCASE_BASS_GAIN", "0.00009"))
-  SHOWCASE_BASS_EVERY = Integer(ENV.fetch("DILLA_SHOWCASE_BASS_EVERY", "3"))
+  SHOWCASE_TEMPO_SCALE = Float(ENV.fetch("DILLA_SHOWCASE_TEMPO_SCALE", "0.74"))
+  SHOWCASE_BASS_GAIN = Float(ENV.fetch("DILLA_SHOWCASE_BASS_GAIN", "0.00003"))
+  SHOWCASE_BASS_EVERY = Integer(ENV.fetch("DILLA_SHOWCASE_BASS_EVERY", "5"))
+  SHOWCASE_PAD_FLOOR = 53
 
   # Effects are the instrument's normal room now: tape, console, saturation,
   # pitch wear, echo, hiss and crackle are on unless explicitly disabled.
@@ -2601,7 +2602,6 @@ SHOWCASE_MODES = {
     end
 
     perform!(score, seconds:)
-    finalize_showcase_record!(output, stream.fetch("rate")) if output
     next_requested ? :next : nil
   ensure
     keyboard&.kill
@@ -2614,21 +2614,6 @@ SHOWCASE_MODES = {
     previous_live_record.nil? ? ENV.delete("DILLA_SHOWCASE_LIVE_RECORD") : ENV["DILLA_SHOWCASE_LIVE_RECORD"] = previous_live_record
   end
 
-  def finalize_showcase_record!(output, rate)
-    return true if File.file?(output) && File.size?(output).positive?
-
-    raw = "#{output}.s16le"
-    return false unless File.file?(raw) && File.size?(raw).positive?
-
-    ffmpeg = Livesets.tool("ffmpeg")
-    ok = system(ffmpeg, "-y", "-loglevel", "error",
-                "-f", "s16le", "-ar", rate.to_s, "-ac", "2", "-i", raw,
-                "-vn", "-sn", "-dn", "-c:a", "pcm_s16le", "-f", "wav", output)
-    abort "live0: showcase could not finalize #{output}" unless ok && File.file?(output) && File.size?(output).positive?
-    true
-  ensure
-    FileUtils.rm_f(raw) if defined?(raw) && raw && File.file?(raw)
-  end
   # `knob cutoff +0.3 20` moves by, `knob cutoff 0.8 20` moves to; the last
   # number is how many seconds the knob takes to get there.
   def knob!(name = nil, amount = nil, seconds = nil)
@@ -2782,9 +2767,9 @@ SHOWCASE_MODES = {
     if dest && ENV["DILLA_SHOWCASE_LIVE_RECORD"] == "1"
       player = (DillaLive.player_command(rate) || Livesets.player_command(rate)) or return nil
       FileUtils.mkdir_p(File.dirname(dest))
-      raw = "#{dest}.s16le"
-      record = input + output_map + ["-vn", "-sn", "-dn", "-f", "s16le", "-ac", "2", "-ar", rate.to_s, "-"]
-      return ["sh", "-c", "#{Shellwords.join(record)} | tee #{Shellwords.escape(raw)} | #{Shellwords.join(player)}"]
+      tee = "[f=wav]#{dest}|[f=s16le]pipe:1"
+      record = input + output_map + ["-y", "-vn", "-sn", "-dn", "-c:a", "pcm_s16le", "-ar", rate.to_s, "-ac", "2", "-f", "tee", tee]
+      return ["sh", "-c", "#{Shellwords.join(record)} | #{Shellwords.join(player)}"]
     end
 
     return input + output_map + ["-y", "-vn", "-sn", "-dn", "-c:a", "pcm_s16le", dest] if dest
@@ -3042,7 +3027,7 @@ SHOWCASE_MODES = {
 
     # One note. `rng` is the stage's own unless a mode seeds its notes itself.
     def note(midi, spec, start, held, gain, role, rng: @rng, **line)
-      gain *= 0.10 if LiveSynth.showcase? && role == :bass
+      gain *= 0.06 if LiveSynth.showcase? && role == :bass
       memory_key = spec.object_id
       previous_hz = @physics_memory[memory_key]
       @physics_memory[memory_key] = AnalogSynth::LiveVoice.midi_hz(midi)
@@ -3262,7 +3247,7 @@ SHOWCASE_MODES = {
       @lead_chord_tones = @voicing.flat_map { |midi| [midi + 12, midi + 24] }.uniq
 
       pad = pad_spec
-      @voicing.each { |midi| stage.note(midi, pad, @next_at, length - 0.05, @c["pad_gain"], :pad) }
+      showcase_voicing.each { |midi| stage.note(midi, pad, @next_at, length - 0.05, @c["pad_gain"], :pad) }
       bass!(stage, bass, bars)
       @kit.write!(@next_at, length) if @drums
       lead!(stage, length) if @lead_on
@@ -3271,6 +3256,15 @@ SHOWCASE_MODES = {
       LiveSynth.log("#{name || "#{NAMES[(@key + degree) % 12]}#{quality}"} (#{bars} bar#{'s' if bars > 1}) on #{@pad}"                     "#{" + #{@lead}" if @lead_on}")
       @next_at += length
       move! unless @reference
+    end
+
+    def showcase_voicing
+      return @voicing unless LiveSynth.showcase?
+
+      lowest = @voicing.each_index.min_by { |index| @voicing[index] }
+      @voicing.each_with_index.map do |midi, index|
+        index == lowest && midi < LiveSynth::SHOWCASE_PAD_FLOOR ? midi + 12 : midi
+      end
     end
 
     def reference_chord!
@@ -3619,8 +3613,18 @@ SHOWCASE_MODES = {
         post.fetch("dub").gsub(/<(\d+)>/) { (beat * Regexp.last_match(1).to_i).round.to_s }
       end
       showcase_tail = LiveSynth.showcase? ? ",#{LiveSynth.showcase_tape_chain.join(",")}" : ""
-      weights = LiveSynth.showcase? ? "1 0.07 0.44" : "1 1 1"
-      "[0:a]pan=stereo|c0=c0|c1=c1[dry];[0:a]pan=stereo|c0=c2|c1=c3[wet];[0:a]pan=stereo|c0=c4|c1=c5[k];"         "[dry]highpass=f=66,equalizer=f=105:t=q:w=1.0:g=-4.5,equalizer=f=180:t=q:w=1.0:g=-3.5,#{chain}[d];[wet]#{send}[w];[d][k]sidechaincompress=threshold=0.06:ratio=4.8:attack=2:release=150:makeup=1[ducked];"         "[ducked][w][k]amix=inputs=3:weights=#{weights}:normalize=0,highpass=f=42,alimiter=limit=#{post['limit']}#{showcase_tail}[dilla_showcase_mix]"
+      weights = LiveSynth.showcase? ? "1 0.07 0.50" : "1 1 1"
+      music_colour = if LiveSynth.showcase?
+                       "highpass=f=82,equalizer=f=105:t=q:w=1.0:g=-4.0,equalizer=f=180:t=q:w=1.0:g=-3.0"
+                     else
+                       "highpass=f=66,equalizer=f=105:t=q:w=1.0:g=-4.5,equalizer=f=180:t=q:w=1.0:g=-3.5"
+                     end
+      duck = if LiveSynth.showcase?
+               "sidechaincompress=threshold=0.055:ratio=6.0:attack=2:release=175:makeup=1"
+             else
+               "sidechaincompress=threshold=0.06:ratio=4.8:attack=2:release=150:makeup=1"
+             end
+      "[0:a]pan=stereo|c0=c0|c1=c1[dry];[0:a]pan=stereo|c0=c2|c1=c3[wet];[0:a]pan=stereo|c0=c4|c1=c5[k];"         "[dry]#{music_colour},#{chain}[d];[wet]#{send}[w];[d][k]#{duck}[ducked];"         "[ducked][w][k]amix=inputs=3:weights=#{weights}:normalize=0,highpass=f=42,alimiter=limit=#{post['limit']}#{showcase_tail}[dilla_showcase_mix]"
     end
     def command(post, rate:, beat:, dest: nil)
       LiveSynth.through_ffmpeg(channels: 6, filter: ["-filter_complex", graph(post, beat), "-map", "[dilla_showcase_mix]"], rate:, dest:)
