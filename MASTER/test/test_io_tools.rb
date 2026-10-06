@@ -65,6 +65,57 @@ class TestIoTools < Minitest::Test
     end
   end
 
+  def test_delete_path_removes_files_and_requires_governor
+    with_root do |root|
+      path = write(root, "remove.txt", "gone\n")
+      governor = allow
+      tool = Master::Io::DeletePath.new(root:, undo: nil, governor:)
+
+      result = tool.call(path: "remove.txt")
+
+      assert result.ok?, result.to_s
+      refute File.exist?(path)
+      assert_equal "delete_path", governor.asked.first[0]
+      assert_equal :dangerous, governor.asked.first[1]
+    end
+  end
+
+  def test_delete_path_requires_explicit_recursive_for_non_empty_directories
+    with_root do |root|
+      write(root, "nested/remove.txt", "gone\n")
+      tool = Master::Io::DeletePath.new(root:, undo: nil, governor: allow)
+
+      result = tool.call(path: "nested")
+
+      refute result.ok?
+      assert_match(/recursive=true/, result.message)
+      assert File.file?(File.join(root, "nested", "remove.txt"))
+    end
+  end
+
+  def test_delete_path_recursively_removes_a_directory_inside_root
+    with_root do |root|
+      write(root, "nested/remove.txt", "gone\n")
+      tool = Master::Io::DeletePath.new(root:, undo: nil, governor: allow)
+
+      result = tool.call(path: "nested", recursive: true)
+
+      assert result.ok?, result.to_s
+      refute Dir.exist?(File.join(root, "nested"))
+    end
+  end
+
+  def test_delete_path_refuses_paths_outside_root
+    with_root do |root|
+      tool = Master::Io::DeletePath.new(root:, undo: nil, governor: allow)
+
+      result = tool.call(path: "../outside")
+
+      refute result.ok?
+      assert_match(/escapes project root/, result.message)
+    end
+  end
+
   def test_read_file_full_read_honours_offset
     with_root do |root|
       write(root, "lines.txt", (1..10).map { |n| "line #{n}\n" }.join)
