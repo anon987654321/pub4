@@ -140,8 +140,13 @@ module Master
 
         path = File.join(@root, "data", "laws.yml")
         sections = laws.is_a?(Hash) ? laws.keys.map(&:to_s).sort : []
+        hint = if sections == ["evidence_scoring"]
+          "; this looks like the test fixture, not the canonical laws.yml"
+        else
+          ""
+        end
         raise ArgumentError,
-          "transformation policy missing from #{path}; available sections: #{sections.join(", ")}"
+          "transformation policy missing from #{path}; available sections: #{sections.join(", ")}#{hint}"
       end
     end
   end
