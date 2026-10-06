@@ -223,6 +223,8 @@ module Master
       def speak_log_line(text)
         return if Thread.current[:master_dmesg_tts]
 
+        return if text.match?(/\A(?:voice|tts)\d+(?: at [^:]+)?:/i)
+
         require_relative "../voice/playback"
         return unless Master::Voice::Playback.enabled?
         return unless Master::Voice::Playback.available?
