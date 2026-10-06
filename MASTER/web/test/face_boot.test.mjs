@@ -172,6 +172,15 @@ test("face_speech_playback.js holds viseme mouth animation", () => {
   assert.doesNotMatch(part5, /function startVisemeAnim/);
 });
 
+test("live TTS does not delay short completed sentences", () => {
+  const part1 = readFileSync(join(publicDir, "face.part1.txt"), "utf8");
+  const runtime = readFileSync(join(publicDir, "face.runtime.js"), "utf8");
+  assert.match(part1, /function pushLiveStreamTts/);
+  assert.match(part1, /const chunk = m\[0\]\.trim\(\);/);
+  assert.doesNotMatch(part1, /chunk\.length < TTS_MIN_CHUNK/);
+  assert.doesNotMatch(runtime, /chunk\.length < TTS_MIN_CHUNK/);
+});
+
 test("face_speech_runtime.js holds the TTS implementation", () => {
   const speech = readFileSync(join(publicDir, "face_speech_runtime.js"), "utf8");
   assert.match(speech, /function enqueueSpeech/);
