@@ -460,6 +460,29 @@ class TestDillaLiveSynth < Minitest::Test
     assert score.finished?(2.2)
   end
 
+  def test_showcase_uses_a_quieter_conversational_bass
+    score = LiveSynth::Improviser.new(rng: Random.new(4), family: "rhodes", reference: "dilla_flowers_documented")
+    stage = LiveSynth::Stage.new(rate: RATE, rng: score.rng)
+    ENV["DILLA_SHOWCASE"] = "1"
+    score.schedule(stage, 0.0)
+    voices = stage.instance_variable_get(:@voices)
+    bass = voices.select { |voice| voice.role == :bass }
+    pads = voices.select { |voice| voice.role == :pad }
+
+    assert_equal 1, bass.length
+    assert_operator bass.first.instance_variable_get(:@gain), :<, pads.first.instance_variable_get(:@gain)
+  ensure
+    ENV.delete("DILLA_SHOWCASE")
+  end
+
+  def test_showcase_segment_admits_space_as_next_scene_control
+    source = File.read(dilla("lib/livesets.rb"))
+    assert_includes source, 'system("stty", "-icanon", "min", "1", "time", "0", "-echo")'
+    assert_includes source, 'next_requested = true'
+    assert_includes source, 'Session.post!("stop" => true)'
+    assert_includes source, 'next_requested ? :next : nil'
+  end
+
   def test_documented_artist_lane_uses_the_good_improviser_renderer
     score = LiveSynth::Improviser.new(
       rng: Random.new(9),
