@@ -2074,11 +2074,11 @@ module LiveSynth
 
   def stream = config.fetch("stream")
 
-  SHOWCASE_TEMPO_SCALE = 0.80
+  SHOWCASE_TEMPO_SCALE = 0.96
 
   # Effects are the instrument's normal room now: tape, console, saturation,
   # pitch wear, echo, hiss and crackle are on unless explicitly disabled.
-  def showcase? = ENV.fetch("DILLA_EFFECTS", ENV.fetch("DILLA_SHOWCASE", "1")) == "1"
+  def showcase? = ENV.fetch("DILLA_EFFECTS", ENV.fetch("DILLA_SHOWCASE", "0")) == "1"
 
   # The showcase is the dark room: slower, slightly below concert pitch, and
   # finished by a real summing stack rather than a clean digital output.
@@ -2092,25 +2092,18 @@ module LiveSynth
       "asetrate=#{(stream.fetch("rate").to_f * SHOWCASE_PITCH_RATIO).round(3)}",
       "aresample=#{stream.fetch("rate")}",
       "atempo=#{(1.0 / SHOWCASE_PITCH_RATIO).round(6)}",
-      Outboard.tape_machine(speed: :ips7, wow: 0.23, flutter: 0.09),
-      "acompressor=threshold=-24dB:ratio=1.45:attack=30:release=260:makeup=1.0",
-      "equalizer=f=2600:t=o:w=1.8:g=-3.4",
-      "lowpass=f=5400",
-      Livesets.vcs(depth: 0.42, smear: 2.1),
-      Livesets.sonitex(bits: 12, lo: 36, hi: 9800, drive: 1.08, mix: 0.68),
-      Livesets.vcs(depth: 0.34, smear: 2.8),
-      Livesets.sonitex(bits: 11, lo: 40, hi: 8600, drive: 1.11, mix: 0.78, samples: 2),
-      Livesets.vcs(depth: 0.38, smear: 2.2),
-      Outboard.console_stack(instances: 3, offset: 0.10, param: 1.2, speed: 0.1),
-      Livesets.sonitex(bits: 10, lo: 44, hi: 7600, drive: 1.15, mix: 0.88, samples: 2),
-      Livesets.vcs(depth: 0.30, smear: 3.4),
-      Livesets.sonitex(bits: 10, lo: 48, hi: 6800, drive: 1.18, mix: 0.92, samples: 2),
-      Outboard.tape_machine(speed: :ips7, wow: 0.14, flutter: 0.05),
-      "aecho=0.84:0.76:92|184:0.18|0.11",
-      "loudnorm=I=-14:LRA=9:TP=-1.0:linear=false",
+      Outboard.tape_machine(speed: :ips7, wow: 0.13, flutter: 0.035),
+      "acompressor=threshold=-20dB:ratio=1.18:attack=35:release=240:makeup=1.0",
+      "equalizer=f=70:t=q:w=0.9:g=1.0",
+      "equalizer=f=250:t=o:w=1.1:g=-1.3",
+      "lowpass=f=7200",
+      Livesets.sonitex(bits: 12, lo: 34, hi: 10500, drive: 1.02, mix: 0.34),
+      Outboard.tape_machine(speed: :ips7, wow: 0.08, flutter: 0.02),
+      "acompressor=threshold=-18dB:ratio=1.12:attack=45:release=280:makeup=1.0",
+      "lowpass=f=6800",
+      "alimiter=limit=0.96",
     ].freeze
   end
-
   def log(message) = $stdout.puts("live0: #{message}")
 
   def main(argv)
@@ -3146,14 +3139,14 @@ module LiveSynth
       late = @c["bass_late_seconds"]
       at = @next_at
       if LiveSynth.showcase?
-        gain = 0.24
-        stage.note(root, spec, at + 0.018, 0.82 * @beat, gain, :bass)
-        if @rng.rand < 0.32
-          stage.note(root + 7, spec, at + (2.5 * @beat) + late, 0.28 * @beat, gain * 0.62, :bass)
+        gain = 0.14
+        stage.note(root, spec, at + 0.018, 0.68 * @beat, gain, :bass)
+        if @rng.rand < 0.18
+          stage.note(root + 7, spec, at + (2.5 * @beat) + late, 0.22 * @beat, gain * 0.45, :bass)
         end
-        return unless bars == 2 && @rng.rand < 0.55
+        return unless bars == 2 && @rng.rand < 0.4
 
-        stage.note(root, spec, at + (4 * @beat) + 0.018, 0.68 * @beat, gain * 0.82, :bass)
+        stage.note(root, spec, at + (4 * @beat) + 0.018, 0.52 * @beat, gain * 0.78, :bass)
         return
       end
 
@@ -3389,12 +3382,15 @@ module LiveSynth
 
     def graph(post, beat)
       chain = warm_dilla_pad_synth_filters(**post.fetch("chain").transform_keys(&:to_sym)).compact.join(",")
-      send = post.fetch("dub").gsub(/<(\d+)>/) { (beat * Regexp.last_match(1).to_i).round.to_s }
+      send = if LiveSynth.showcase?
+        "highpass=f=180,lowpass=f=2600,aecho=0.85:0.18:<375>:0.06,volume=0.22"
+      else
+        post.fetch("dub").gsub(/<(d+)>/) { (beat * Regexp.last_match(1).to_i).round.to_s }
+      end
       showcase_tail = LiveSynth.showcase? ? ",#{LiveSynth.showcase_tape_chain.join(",")}" : ""
-      "[0:a]pan=stereo|c0=c0|c1=c1[dry];[0:a]pan=stereo|c0=c2|c1=c3[wet];[0:a]pan=stereo|c0=c4|c1=c5[k];" \
-        "[dry]#{chain}[d];[wet]#{send}[w];[d][w][k]amix=inputs=3:weights=1 1 1:normalize=0,alimiter=limit=#{post['limit']}#{showcase_tail}[dilla_showcase_mix]"
+      weights = LiveSynth.showcase? ? "1 0.32 0.72" : "1 1 1"
+      "[0:a]pan=stereo|c0=c0|c1=c1[dry];[0:a]pan=stereo|c0=c2|c1=c3[wet];[0:a]pan=stereo|c0=c4|c1=c5[k];"         "[dry]#{chain}[d];[wet]#{send}[w];[d][w][k]amix=inputs=3:weights=#{weights}:normalize=0,alimiter=limit=#{post['limit']}#{showcase_tail}[dilla_showcase_mix]"
     end
-
     def command(post, rate:, beat:, dest: nil)
       LiveSynth.through_ffmpeg(channels: 6, filter: ["-filter_complex", graph(post, beat), "-map", "[dilla_showcase_mix]"], rate:, dest:)
     end

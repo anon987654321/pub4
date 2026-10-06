@@ -289,13 +289,29 @@ class TestDillaLiveSynth < Minitest::Test
 
   def test_showcase_audio_room_is_dark_pitch_shifted_and_heavily_summed
     source = File.read(dilla("lib/livesets.rb"))
-    assert_includes source, 'speed: :ips7, wow: 0.18, flutter: 0.07'
+    assert_includes source, 'speed: :ips7, wow: 0.13, flutter: 0.035'
     assert_includes source, 'SHOWCASE_PITCH_RATIO'
     assert_includes source, 'lowpass=f=6800'
     assert_includes source, 'loudnorm=I=-14:LRA=9:TP=-1.0:linear=false'
-    assert_operator LiveSynth.showcase_tape_chain.count { |stage| stage.start_with?("aphaser=") }, :>=, 4
-    assert_operator LiveSynth.showcase_tape_chain.count { |stage| stage.start_with?("volume=") && stage.include?("acrusher") }, :>=, 3
-    assert_includes LiveSynth.showcase_tape_chain, Outboard.console_stack(instances: 3, offset: 0.10, param: 1.2, speed: 0.1)
+    assert_equal 0, LiveSynth.showcase_tape_chain.count { |stage| stage.start_with?("aphaser=") }
+    assert_equal 0, LiveSynth.showcase_tape_chain.count { |stage| stage.start_with?("aecho=") }
+    assert_operator LiveSynth.showcase_tape_chain.count { |stage| stage.start_with?("acompressor=") }, :>=, 2
+    assert_operator LiveSynth.showcase_tape_chain.count { |stage| stage.include?("equalizer=") || stage.include?("lowpass=") }, :>=, 3
+  end
+
+  def test_showcase_dub_removes_the_full_feedback_send
+    source = File.read(dilla("lib/livesets.rb"))
+    assert_includes source, 'aecho=0.85:0.18:<375>:0.06,volume=0.22'
+    assert_includes source, 'weights = LiveSynth.showcase? ? "1 0.32 0.72" : "1 1 1"'
+    refute_includes source, 'aecho=0.85:0.9:<750>|<1000>|<1500>:0.55|0.45|0.35'
+    refute_includes source, 'aecho=0.8:0.85:<375>:0.5'
+  end
+
+  def test_showcase_bass_is_quiet_and_sparse
+    source = File.read(dilla("lib/livesets.rb"))
+    assert_includes source, "gain = 0.14"
+    assert_includes source, "if @rng.rand < 0.18"
+    assert_includes source, "0.68 * @beat"
   end
 
   def test_showcase_patch_scenes_resolve_to_real_patches
@@ -343,7 +359,7 @@ class TestDillaLiveSynth < Minitest::Test
     assert_includes source, 'BachMidi::Score.new'
     assert_includes source, 'DILLA_SHOWCASE'
     assert_includes source, 'speed: :ips7'
-    assert_includes source, 'SHOWCASE_TEMPO_SCALE = 0.90'
+    assert_includes source, 'SHOWCASE_TEMPO_SCALE = 0.96'
   end
 
   def test_showcase_includes_a_real_tape_floor
@@ -356,7 +372,7 @@ class TestDillaLiveSynth < Minitest::Test
 
   def test_effects_are_on_by_default_and_can_be_disabled
     source = File.read(dilla("lib/livesets.rb"))
-    assert_includes source, 'ENV.fetch("DILLA_EFFECTS", ENV.fetch("DILLA_SHOWCASE", "1")) == "1"'
+    assert_includes source, 'ENV.fetch("DILLA_EFFECTS", ENV.fetch("DILLA_SHOWCASE", "0")) == "1"'
     assert_equal "0", begin
       saved = ENV["DILLA_EFFECTS"]
       ENV["DILLA_EFFECTS"] = "0"
