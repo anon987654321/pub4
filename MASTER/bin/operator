@@ -54,7 +54,7 @@ def usage
       bin/operator hooks                  install the shared-tree commit guard
       bin/operator readers <path>         who reaches this file, across all four governed trees
       bin/operator pushed? <path>...      is this content on origin/main, or only here
-      bin/operator snapshot [MASTER|RAILS|OPENBSD|STUDIO]  regenerate source snapshots under .master/snapshots/
+      bin/operator snapshot [MASTER|RAILS|OPENBSD|STUDIO]  regenerate source snapshots at the pub4 root
       bin/operator event-bus [--strict] [--json]  census Ruby publishers/subscribers and browser event references
       bin/operator wishlist [--all]     show the current bounded next-work queue
 
