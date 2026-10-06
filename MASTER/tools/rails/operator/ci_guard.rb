@@ -2,7 +2,7 @@
 
 require "fileutils"
 require "timeout"
-require_relative "../../../../OPENBSD/lib/load_average"
+require File.join(ENV.fetch("PUB4_ROOT", File.expand_path("../../../../", __dir__)), "OPENBSD", "lib", "load_average")
 
 module Operator
   # VPS-only mutex + load gate for Rails bin/ci (prevents parallel CI pile-ups on vm23).
