@@ -94,7 +94,8 @@ class TestRatchets < Minitest::Test
     assert_includes names, "command_surface"
     assert_includes names, "name_candidates"
   end
-\n  def test_silent_rule_audit_is_observational
+
+  def test_silent_rule_audit_is_observational
     names = rows.map(&:name)
 
     refute_includes names, "rule_audit.silent",
