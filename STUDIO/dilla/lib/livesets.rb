@@ -2147,11 +2147,13 @@ module LiveSynth
   # deliberately different harmony, register and instrument families.
   SHOWCASE_SCENES = [
     ["dilla_life", 30.0],
+    ["flylo", 24.0],
     ["dangelo_spanish_joint", 34.0],
     ["moog_dark", 28.0],
+    ["flylo_computer_face", 24.0],
     ["dangelo_root", 32.0],
-    ["flylo", 24.0],
     ["dilla_players", 30.0],
+    ["flylo_king_of_the_hill", 28.0],
     ["dangelo_another_life", 36.0],
     ["opus3_strings", 10.0],
     ["dangelo_untitled", 34.0],
@@ -2160,7 +2162,6 @@ module LiveSynth
     ["madlib", 24.0],
     ["dilla_so_far_to_go", 28.0],
     ["dangelo_really_love", 34.0],
-    ["flylo_king_of_the_hill", 28.0],
     ["dangelo_sugah_daddy", 30.0],
     ["matriarch_stabs", 10.0],
     ["dangelo_ballad", 30.0],
@@ -2171,7 +2172,6 @@ module LiveSynth
     ["vox_humana", 10.0],
     ["soft_reed", 10.0],
     ["glass_bell", 10.0],
-    ["flylo_computer_face", 24.0],
     ["bach", 30.0],
   ].freeze
 
@@ -2697,6 +2697,64 @@ module LiveSynth
     end
   end
 
+  # Real tape-floor texture for the bare showcase. The ffmpeg tape chain
+  # supplies wow, filtering and nonlinear colour; this layer supplies what the
+  # machine also has between notes: continuous hiss and sparse oxide crackle.
+  # It is deterministic per LIVE_SEED and is never enabled on ordinary live mode.
+  class ShowcaseTapeTexture
+    TWO_PI = 2.0 * Math::PI
+    UINT32 = 0xffff_ffff
+
+    def initialize(seed:)
+      @state = (seed.to_i | 1) & UINT32
+      @lp_left = 0.0
+      @lp_right = 0.0
+      @crackle_left = 0.0
+      @crackle_right = 0.0
+    end
+
+    def process!(left, right, clock)
+      hiss_gain = 0.0028 + (0.0006 * Math.sin(TWO_PI * clock / 17.0))
+      drive = 1.18 + (0.14 * Math.sin(TWO_PI * clock / 13.0))
+      i = 0
+      while i < left.length
+        n1 = next_noise
+        n2 = next_noise
+
+        @lp_left += 0.15 * (n1 - @lp_left)
+        @lp_right += 0.15 * (n2 - @lp_right)
+        hiss_left = (n1 - @lp_left) * hiss_gain
+        hiss_right = (n2 - @lp_right) * hiss_gain
+
+        @state = next_state
+        @crackle_left += signed_noise * 0.075 if (@state & 0x3f_ffff) < 9
+        @state = next_state
+        @crackle_right += signed_noise * 0.075 if (@state & 0x3f_ffff) < 9
+
+        left[i] = (Math.tanh(left[i] * drive) * 0.98) + hiss_left + @crackle_left
+        right[i] = (Math.tanh(right[i] * drive) * 0.98) + hiss_right + @crackle_right
+        @crackle_left *= 0.69
+        @crackle_right *= 0.69
+        i += 1
+      end
+    end
+
+    private
+
+    def next_state
+      @state = ((@state * 1_664_525) + 1_013_904_223) & UINT32
+    end
+
+    def next_noise
+      next_state
+      (((@state >> 8) & 0x00ff_ffff) / 8_388_607.5) - 1.0
+    end
+
+    def signed_noise
+      (((@state >> 16) & 0x7f) / 63.5) - 1.0
+    end
+  end
+
   # Where the notes come from, the knobs and the clock go through here. It
   # holds the sounding voices, renders each block and hands it to the pipe.
   class Stage
@@ -2716,6 +2774,7 @@ module LiveSynth
       @inbox = Session::Inbox.new
       @spent = 0.0
       @played = 0.0
+      @showcase_texture = LiveSynth.showcase? ? ShowcaseTapeTexture.new(seed: @rng.rand(1 << 30)) : nil
     end
 
     # One note. `rng` is the stage's own unless a mode seeds its notes itself.
@@ -2758,6 +2817,7 @@ module LiveSynth
       extra = score.respond_to?(:overdub!) ? score.overdub!(left, right, clock, @rate) : nil
       [left, right, extra].compact.each { |channel| fade!(channel, clock) } if @stopped_at
       @voices.reject! { |voice| voice.done?(clock) }
+      @showcase_texture&.process!(left, right, clock)
       pcm = if score.respond_to?(:pcm) then score.pcm(left, right, extra, knobs)
             else AnalogSynth.live_pcm(left, right, drive: @drive, scale: @scale)
             end
