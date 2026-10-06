@@ -56,6 +56,33 @@ class TestFixWorktreeSession < Minitest::Test
     end
   end
 
+  def test_auto_merge_uses_fetched_main_when_local_main_is_behind
+    Dir.mktmpdir("master-worktree-test-") do |dir|
+      remote = File.join(dir, "remote.git")
+      root = File.join(dir, "pub4")
+      system("git", "init", "--bare", remote)
+      system("git", "clone", remote, root)
+      git(root, "config", "user.name", "MASTER test")
+      git(root, "config", "user.email", "master-test@example.invalid")
+      File.write(File.join(root, "README"), "base\n")
+      git(root, "add", "README")
+      git(root, "commit", "-m", "initial")
+      git(root, "branch", "-M", "main")
+      git(root, "push", "-u", "origin", "main")
+      git(root, "commit", "--allow-empty", "-m", "remote update")
+      git(root, "push", "origin", "main")
+      File.write(File.join(root, "foreign.txt"), "keep me\n")
+
+      result = Master::Fix::WorktreeSession.new(root:).run(command: "/fix test")
+
+      refute result.ok
+      assert_match(/worker failed/, result.summary)
+      refute File.exist?(result.worktree)
+      assert_equal "base\n", File.read(File.join(root, "README"))
+      assert_equal "keep me\n", File.read(File.join(root, "foreign.txt"))
+    end
+  end
+
   def test_auto_merge_refuses_preexisting_local_commits
     Dir.mktmpdir("master-worktree-test-") do |dir|
       remote = File.join(dir, "remote.git")
