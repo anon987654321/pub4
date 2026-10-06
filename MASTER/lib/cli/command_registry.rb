@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "stringio"
+require_relative "../snapshot"
 
 require_relative "command_registry/command"
 require_relative "command_registry/help"
@@ -182,10 +183,10 @@ module Master
         arg = arg_for(ctx)
         return "usage: /snapshot [no arguments]" unless arg.empty?
 
-        require File.join(Master::ROOT, "tools", "snapshot")
-        io = StringIO.new
-        Operator::Snapshot.run(io:)
-        io.string.strip
+        paths = Master::Snapshot.new(root: Master::REPO_ROOT).write!
+        Array(paths).map do |path|
+          "snapshot0: wrote #{path.delete_prefix("#{Master::REPO_ROOT}/")}"
+        end.join("\n")
       rescue StandardError => e
         "snapshot0: failed — #{e.class}: #{e.message}"
       end

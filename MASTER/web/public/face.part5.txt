@@ -924,7 +924,10 @@ async function sendMessage(text) {
     if (raw === '[DONE]') {
       if (shouldSpeakStreamReply(pending, ttsSuppressed)) {
         tts.lastText = pending.trim();
-        flushStreamTts(pending, { prependTimestamp: ttsFirst && tts.prependTimestamp });
+        flushStreamTts(pending, {
+          prependTimestamp: ttsFirst && tts.prependTimestamp,
+          spokenLen: ttsStreamSpokenLen,
+        });
       }
       pending = '';
       State.mode = 'idle';

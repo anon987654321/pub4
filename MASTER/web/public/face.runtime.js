@@ -376,9 +376,10 @@ function pushLiveStreamTts(pending, spokenLen) {
   return spokenLen + m[0].length;
 }
 function flushStreamTts(pending, opts = {}) {
-  const text = withoutThinking(pending).trim();
-  if (!text || looksLikeListingStream(text)) return;
-  let rest = text;
+  const text = withoutThinking(pending);
+  if (!text.trim() || looksLikeListingStream(text)) return;
+  const alreadySpoken = Math.max(0, Math.min(text.length, Number(opts.spokenLen) || 0));
+  let rest = text.slice(alreadySpoken).trimStart();
   let first = true;
   let pulled;
   const tsPrefix = opts.prependTimestamp
@@ -387,7 +388,7 @@ function flushStreamTts(pending, opts = {}) {
   const speakOpts = { flush: true };
   while ((pulled = pullStreamingTtsChunk(rest)).chunk) {
     rest = pulled.rest;
-    const prefix = first ? tsPrefix : '';
+    const prefix = first && alreadySpoken === 0 ? tsPrefix : '';
     first = false;
     enqueueSpeech(prefix + pulled.chunk, speakOpts);
   }
@@ -4567,7 +4568,10 @@ async function sendMessage(text) {
     if (raw === '[DONE]') {
       if (shouldSpeakStreamReply(pending, ttsSuppressed)) {
         tts.lastText = pending.trim();
-        flushStreamTts(pending, { prependTimestamp: ttsFirst && tts.prependTimestamp });
+        flushStreamTts(pending, {
+          prependTimestamp: ttsFirst && tts.prependTimestamp,
+          spokenLen: ttsStreamSpokenLen,
+        });
       }
       pending = '';
       State.mode = 'idle';

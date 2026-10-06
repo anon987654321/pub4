@@ -74,4 +74,14 @@ class FaceSpeechRuntimeSpec < Minitest::Test
     assert_equal built, on_disk,
                  "face.part*.txt on disk and the assets:build_face_runtime segment list disagree"
   end
+  def test_live_stream_tts_does_not_replay_already_spoken_text
+    source = read("web/public/face.part1.txt")
+    consumer = read("web/public/face.part5.txt")
+    bundle = read("web/public/face.runtime.js")
+
+    assert_includes source, "const alreadySpoken = Math.max(0, Math.min(text.length, Number(opts.spokenLen) || 0));"
+    assert_includes source, "let rest = text.slice(alreadySpoken).trimStart();"
+    assert_includes consumer, "spokenLen: ttsStreamSpokenLen"
+    assert_includes bundle, "spokenLen: ttsStreamSpokenLen"
+  end
 end

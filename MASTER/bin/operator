@@ -54,7 +54,7 @@ def usage
       bin/operator hooks                  install the shared-tree commit guard
       bin/operator readers <path>         who reaches this file, across all four governed trees
       bin/operator pushed? <path>...      is this content on origin/main, or only here
-      bin/operator snapshot [...]         regenerate the snapshot packs (MASTER/tools/snapshot.rb)
+      bin/operator snapshot [MASTER|RAILS|OPENBSD|STUDIO]  regenerate source snapshots under .master/snapshots/
       bin/operator event-bus [--strict] [--json]  census Ruby publishers/subscribers and browser event references
       bin/operator wishlist [--all]     show the current bounded next-work queue
 
@@ -669,6 +669,18 @@ when "vps"
     Master::Trace::Dmesg::Report.print("/help", usage, io: $stderr)
     exit 2
   end
+when "snapshot"
+  require "snapshot"
+  trees = ARGV.empty? ? Master::Snapshot::DEFAULT_TREES : ARGV.map(&:upcase)
+  invalid = trees - Master::Snapshot::TREE_PATHS.keys
+  die("snapshot", "unknown tree(s): #{invalid.join(", ")}", 64) unless invalid.empty?
+  outputs = trees.uniq.map do |tree|
+    tree_root = File.join(ROOT, Master::Snapshot::TREE_PATHS.fetch(tree))
+    output = File.join(ROOT, ".master", "snapshots", "snapshot_#{tree}.md")
+    Master::Snapshot.new(root: tree_root, output:).write_tree!
+  end
+  outputs.each { |path| Master::Trace::Dmesg.status("snapshot0", "wrote #{path.delete_prefix("#{ROOT}/")}") }
+  exit 0
 when "pushed?"
   # Cherry-picking onto a moving origin/main rewrites SHAs, so "is my work
   # pushed?" cannot be answered by commit id. Content vs origin/main can.
