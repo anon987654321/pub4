@@ -254,6 +254,28 @@ class TestDillaLiveSynth < Minitest::Test
     assert_equal 84, source.fetch("bpm")
   end
 
+  def test_bach_midi_parser_reads_note_events_and_tempo
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "bach.mid")
+      track = [
+        0x00, 0xFF, 0x51, 0x03, 0x07, 0xA1, 0x20,
+        0x00, 0x90, 0x3A, 0x5A,
+        0x60, 0x80, 0x3A, 0x40,
+        0x00, 0xFF, 0x2F, 0x00
+      ].pack("C*")
+      header = "MThd".b + [6, 0, 1, 1, 96].pack("Nnnn")
+      body = "MTrk".b + [track.bytesize].pack("N") + track
+      File.binwrite(path, header + body)
+
+      parsed = Livesets::BachMidi.parse(path)
+      assert_equal 1, parsed.fetch(:notes).length
+      note = parsed.fetch(:notes).first
+      assert_equal 58, note.fetch(:note)
+      assert_in_delta 0.3125, note.fetch(:start), 0.0001
+      assert_in_delta 0.3125, note.fetch(:duration), 0.0001
+    end
+  end
+
   def test_documented_artist_lane_uses_the_good_improviser_renderer
     score = LiveSynth::Improviser.new(
       rng: Random.new(9),
