@@ -70,7 +70,7 @@ module Master
                           when :stdio
                             MCP::Client::Stdio.new(
                               command: cfg["command"],
-                              args: cfg["args"] || [],
+                              args: expand_args(cfg["args"] || []),
                               read_timeout: timeout_for(cfg)
                             )
                           when :sse
@@ -83,6 +83,18 @@ module Master
 
       def timeout_for(cfg)
         cfg.fetch("timeout_seconds", DEFAULT_TIMEOUT).to_i.clamp(1, 600)
+      end
+
+      # Configuration names the repo root, not one developer's absolute home
+      # path. This keeps the same mcp_servers.yml valid on macOS and vm23.
+      def expand_args(args)
+        repo_root = File.expand_path("..", @root)
+        Array(args).map do |arg|
+          arg.to_s
+            .gsub("${MASTER_ROOT}", @root)
+            .gsub("${MASTER_REPO_ROOT}", repo_root)
+            .gsub("${HOME}", ENV.fetch("HOME", ""))
+        end
       end
 
       def load_servers
