@@ -1,7 +1,8 @@
 ---
 # What MASTER's own rules find in MASTER's own tree, and the four sibling trees.
 #
-# 172 across 2873 files, from the rules that carry a lexical detector.
+# Current snapshot. Historical measurements remain in the notes below; the
+# authoritative counts are the findings and registry_findings keys.
 #
 # The corpus is the whole fleet now. It was MASTER plus the shared libs and the
 # gates; the three Rails apps were never measured at all, so amber's 345 source
@@ -39,10 +40,9 @@
 # alignment spaces in MASTER/tools/dilla.
 #
 # The registry_ keys are the second population, added 2026-09-06. Everything
-# above this line is the law: 122 rules in law/, applied file by file. The
-# RuleDSL registry is 145 more rules, and nothing in this repo counted what they
-# find — the row was labelled "what our own rules find in our own trees" and was
-# the law's number alone.
+# above this line is the law population, applied file by file. The RuleDSL
+# registry is a separate population; its count is kept in the live inventory,
+# not duplicated in this snapshot's commentary.
 #
 # The registry number comes through the scanner rather than through a harness,
 # and the difference is large: calling each rule directly on every tracked file
