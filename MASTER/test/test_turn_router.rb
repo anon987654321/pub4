@@ -65,6 +65,14 @@ def test_a_read_only_fix_keeps_the_flag_the_rails_gate_passes
   assert_equal "/fix --dry-run ../RAILS/amber", rewritten
 end
 
+  def test_deploy_confirmation_survives_natural_language_routing
+    args = Master::CLI::TurnRouter.deployment_args(
+      "please deploy MASTER and RAILS and OPENBSD to vm23 --confirm"
+    )
+
+    assert_equal "all --confirm", args
+  end
+
   def test_a_file_read_is_not_casual_for_an_operator
     refute Master::CLI::TurnRouter.casual?("read CLAUDE.md")
   end
