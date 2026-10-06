@@ -2103,17 +2103,22 @@ module LiveSynth
     end
   end
 
-  # Bare Dilla is the showcase: a short tour through the engine's strongest
-  # live instruments, then back around. Every scene is an existing score -- the
-  # showcase only directs them, so the individual modes keep their own sound,
-  # timing, harmony and controls.
+  # Bare Dilla is the showcase: one continuous tour through the engine's
+  # strongest live features. It reuses the real score classes below rather than
+  # inventing a second renderer: source harmony, rotating instrument families,
+  # drums, bass, arpeggios, DFAM, FM leads, knob movement, patch morphing and the
+  # exact Bach score all take their turns.
   SHOWCASE_SCENES = [
-    ["dilla", 18.0],
-    ["verified", 18.0],
-    ["moog_dfam", 24.0],
-    ["memorymoog_organ", 8.0],
-    ["glass_bell", 8.0],
-    ["bach", 20.0],
+    ["dilla_life", 15.0],
+    ["soulquarians", 15.0],
+    ["dangelo", 16.0],
+    ["flylo", 14.0],
+    ["madlib", 14.0],
+    ["royksopp", 14.0],
+    ["moog_dfam", 22.0],
+    ["memorymoog_organ", 6.0],
+    ["glass_bell", 6.0],
+    ["bach", 26.0],
   ].freeze
 
   def showcase!(rng: rng!)
@@ -2130,45 +2135,72 @@ module LiveSynth
 
   def showcase_score(name, rng)
     case name
-    when "dilla"
+    when "dilla_life"
       [
-        Improviser.new(rng:, reference: "dilla_so_far_to_go_documented", family: "rhodes"),
-        [[5.0, { "toggle" => "lead", "on" => true }],
-         [10.0, { "patch" => "e_piano" }],
-         [14.0, { "knob" => "cutoff", "amount" => 0.2, "seconds" => 3.0 }]],
+        Improviser.new(rng:, reference: "dilla_life", family: "rhodes"),
+        [[4.0, { "toggle" => "lead", "on" => true }],
+         [8.0, { "patch" => "e_piano" }],
+         [12.0, { "knob" => "cutoff", "amount" => 0.2, "seconds" => 3.0 }]],
       ]
-    when "verified"
-      reference = authentic_progression_key(rng) || "dilla_flowers_documented"
+    when "soulquarians"
       [
-        Improviser.new(rng:, reference:, family: "rhodes"),
-        [[5.0, { "lead" => "fm", "preset" => "bell" }],
-         [11.0, { "knob" => "resonance", "amount" => 0.15, "seconds" => 3.0 }],
-         [15.0, { "patch" => "rhodes_tine" }]],
+        Improviser.new(rng:, reference: "soulquarians_butter", family: "rhodes"),
+        [[4.0, { "lead" => "fm", "preset" => "bell" }],
+         [9.0, { "patch" => "rhodes_tine" }],
+         [12.0, { "knob" => "resonance", "amount" => 0.14, "seconds" => 3.0 }]],
+      ]
+    when "dangelo"
+      [
+        Improviser.new(rng:, reference: "really_love_bossa_broken", family: "rhodes"),
+        [[4.0, { "lead" => "fm", "preset" => "metal" }],
+         [9.0, { "patch" => "e_piano" }],
+         [13.0, { "knob" => "cutoff", "amount" => 0.16, "seconds" => 3.0 }]],
+      ]
+    when "flylo"
+      [
+        Improviser.new(rng:, reference: "flylo_camel_documented", family: "prophet"),
+        [[4.0, { "toggle" => "lead", "on" => true }],
+         [8.0, { "lead" => "fm", "preset" => "glass" }],
+         [11.0, { "knob" => "detune", "amount" => 0.08, "seconds" => 3.0 }]],
+      ]
+    when "madlib"
+      [
+        Improviser.new(rng:, reference: "madlib_accordion_loop_documented", family: "rhodes"),
+        [[4.0, { "lead" => "fm", "preset" => "bell" }],
+         [8.0, { "patch" => "e_piano" }],
+         [11.0, { "knob" => "resonance", "amount" => 0.12, "seconds" => 3.0 }]],
+      ]
+    when "royksopp"
+      [
+        Progression.new("royksopp_live", rng:),
+        [[5.0, { "patch" => "juno_pad" }],
+         [9.0, { "knob" => "cutoff", "amount" => 0.18, "seconds" => 3.0 }],
+         [11.0, { "knob" => "resonance", "amount" => 0.1, "seconds" => 2.0 }]],
       ]
     when "moog_dfam"
       [
         Progression.new("moog_improv", rng:),
-        [[7.0, { "patch" => "rhodes_tine" }],
-         [13.0, { "knob" => "cutoff", "amount" => 0.18, "seconds" => 3.0 }],
-         [19.0, { "patch" => "prophet_five" }]],
+        [[5.0, { "patch" => "rhodes_tine" }],
+         [11.0, { "knob" => "cutoff", "amount" => 0.18, "seconds" => 3.0 }],
+         [17.0, { "patch" => "prophet_five" }]],
       ]
     when "memorymoog_organ", "glass_bell"
-      [Demo.new(name, rng:), [[3.0, { "knob" => "cutoff", "amount" => 0.15, "seconds" => 2.0 }]]]
+      [Demo.new(name, rng:), [[2.5, { "knob" => "cutoff", "amount" => 0.15, "seconds" => 2.0 }]]]
     when "bach"
       path = BachMidi.source
       events, length, = BachMidi.parse(path)
       [
         BachMidi::Score.new(events:, length:, rng:, patch: ENV.fetch("DILLA_BACH_PATCH", "memorymoog_organ")),
-        [[12.0, { "knob" => "cutoff", "amount" => 0.1, "seconds" => 3.0 }]],
+        [[13.0, { "knob" => "cutoff", "amount" => 0.1, "seconds" => 3.0 }]],
       ]
     else
       abort "live0: no showcase scene #{name}"
     end
   end
 
-  # The scene keeps the same player alive while its own existing control surface
-  # is used. Actions are sparse and musical: they turn leads, patches and knobs,
-  # then leave the score alone to breathe.
+  # The scene keeps the same player alive while its existing control surface is
+  # used. Actions are sparse and musical: they turn leads, patches and knobs,
+  # then let the score breathe until the scene changes.
   def showcase_segment!(score, seconds, actions:)
     worker = Thread.new do
       started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
