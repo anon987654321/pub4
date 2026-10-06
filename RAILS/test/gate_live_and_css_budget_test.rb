@@ -204,7 +204,8 @@ class GateLiveAndCssBudgetTest < Minitest::Test
 
       gate.send(:judge_contrast_budget, 0, 38)
 
-      assert_includes gate.result.warnings, "design_metrics contrast_below_aaa: at its 38 ceiling"
+      result = gate.instance_variable_get(:@result)
+      assert_includes result.warnings, "design_metrics contrast_below_aaa: at its 38 ceiling"
     end
   end
 
