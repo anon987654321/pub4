@@ -232,11 +232,14 @@ class TestDillaLiveSynth < Minitest::Test
     assert_equal expected, actual
   end
 
-  def test_dangelo_showcase_uses_the_richer_reference_and_soft_lead
+  def test_dangelo_showcase_uses_rich_artist_references
     source = File.read(dilla("lib/livesets.rb"))
-    block = source[source.index('when "dangelo"')...source.index('when "flylo"')]
-    assert_includes block, 'reference: "untitled_d_mixolydian_vamp"'
-    assert_includes block, '"preset" => "bell"'
+    block = source[source.index('when "dangelo_root"')...source.index('when "flylo"')]
+    assert_includes block, 'reference: "the_root_modal_vamp"'
+    assert_includes block, '"patch" => "e_piano"'
+    assert_includes block, '"knob" => "resonance"'
+    assert_includes block, 'when "dangelo_another_life"'
+    assert_includes block, 'reference: "another_life_pedal_descent"'
     refute_includes block, '"preset" => "metal"'
   end
 
@@ -246,18 +249,106 @@ class TestDillaLiveSynth < Minitest::Test
     assert_match(/LIVE_SYNTH_VERBS = %w\[[^\]]*\bshowcase\b[^\]]*\]\.freeze/, source)
   end
 
+  def test_showcase_audio_room_is_dark_pitch_shifted_and_heavily_summed
+    source = File.read(dilla("lib/livesets.rb"))
+    assert_includes source, 'speed: :ips7, wow: 0.18, flutter: 0.07'
+    assert_includes source, 'SHOWCASE_PITCH_RATIO'
+    assert_includes source, 'lowpass=f=6800'
+    assert_includes source, 'loudnorm=I=-14:LRA=9:TP=-1.0:linear=false'
+    assert_operator LiveSynth.showcase_tape_chain.count { |stage| stage.start_with?("aphaser=") }, :>=, 4
+    assert_operator LiveSynth.showcase_tape_chain.count { |stage| stage.start_with?("volume=") && stage.include?("acrusher") }, :>=, 3
+    assert_includes LiveSynth.showcase_tape_chain, Outboard.console_stack(instances: 3, offset: 0.10, param: 1.2, speed: 0.1)
+  end
+
+  def test_showcase_patch_scenes_resolve_to_real_patches
+    patch_scenes = %w[opus3_strings matriarch_stabs grandmother_sweep memorymoog_organ vox_humana soft_reed e_piano]
+    patch_scenes.each { |name| assert LiveSynth::Patches.name!(name), name }
+    patch_scenes.each { |name| assert LiveSynth::Patches.spec(name), name }
+  end
+
+  def test_showcase_modes_select_existing_feature_scenes
+    assert_equal %w[flylo flylo_computer_face flylo_king_of_the_hill], LiveSynth.showcase_scenes("flylo").map(&:first)
+    assert_equal %w[bach], LiveSynth.showcase_scenes("bach").map(&:first)
+  end
+
+  def test_showcase_default_output_is_dilla_wav
+    saved = ENV["DILLA_SHOWCASE_OUT"]
+    ENV.delete("DILLA_SHOWCASE_OUT")
+    assert_equal File.expand_path(File.join(Livesets::D, "dilla.wav")), LiveSynth.showcase_output
+    assert_includes File.read(dilla("lib/livesets.rb")), 'Dir.mktmpdir("dilla-showcase-", Livesets::D)'
+  ensure
+    saved.nil? ? ENV.delete("DILLA_SHOWCASE_OUT") : ENV["DILLA_SHOWCASE_OUT"] = saved
+  end
+
   def test_showcase_covers_the_live_feature_tour
     scenes = LiveSynth::SHOWCASE_SCENES.map(&:first)
-    assert_equal %w[dilla_life soulquarians dangelo flylo madlib royksopp moog_dfam memorymoog_organ glass_bell bach], scenes
+    assert_equal %w[
+      flylo dilla_life dangelo_spanish_joint moog_dark flylo_computer_face
+      dangelo_root dilla_players flylo_king_of_the_hill dangelo_another_life
+      opus3_strings dangelo_untitled moog_dfam dangelo_brown_sugar madlib
+      dilla_so_far_to_go dangelo_really_love dangelo_sugah_daddy matriarch_stabs
+      dangelo_ballad grandmother_sweep madlib_figaro royksopp memorymoog_organ
+      vox_humana soft_reed e_piano bach
+    ], scenes
     source = File.read(dilla("lib/livesets.rb"))
     assert_includes source, 'reference: "dilla_life"'
-    assert_includes source, 'reference: "soulquarians_butter"'
-    assert_includes source, 'reference: "really_love_bossa_broken"'
-    assert_includes source, 'reference: "flylo_camel_documented"'
-    assert_includes source, 'reference: "madlib_accordion_loop_documented"'
+    assert_includes source, 'reference: "slum_village_players_documented"'
+    assert_includes source, 'reference: "dilla_so_far_to_go_documented"'
+    assert_includes source, 'reference: "the_root_modal_vamp"'
+    assert_includes source, 'reference: "spanish_joint_swing_16ths"'
+    assert_includes source, 'reference: "another_life_pedal_descent"'
+    assert_includes source, 'reference: "gospel_69_ballad_walk"'
+    assert_includes source, 'reference: "flylo_computer_face_documented"'
+    assert_includes source, 'reference: "madlib_figaro_documented"'
     assert_includes source, 'Progression.new("royksopp_live"'
     assert_includes source, 'Progression.new("moog_improv"'
+    assert_includes source, 'Progression.new("moog_improv", rng:, family: "moog")'
     assert_includes source, 'BachMidi::Score.new'
+    assert_includes source, 'DILLA_SHOWCASE'
+    assert_includes source, 'speed: :ips7'
+    assert_includes source, 'SHOWCASE_TEMPO_SCALE = 0.90'
+  end
+
+  def test_showcase_includes_a_real_tape_floor
+    source = File.read(dilla("lib/livesets.rb"))
+    assert_includes source, "class ShowcaseTapeTexture"
+    assert_includes source, "hiss_gain ="
+    assert_includes source, "@crackle_left"
+    assert_includes source, '@showcase_texture = LiveSynth.showcase?'
+  end
+
+  def test_effects_are_on_by_default_and_can_be_disabled
+    source = File.read(dilla("lib/livesets.rb"))
+    assert_includes source, 'ENV.fetch("DILLA_EFFECTS", ENV.fetch("DILLA_SHOWCASE", "1")) == "1"'
+    assert_equal "0", begin
+      saved = ENV["DILLA_EFFECTS"]
+      ENV["DILLA_EFFECTS"] = "0"
+      LiveSynth.showcase? ? "1" : "0"
+    ensure
+      saved.nil? ? ENV.delete("DILLA_EFFECTS") : ENV["DILLA_EFFECTS"] = saved
+    end
+    assert_equal "1", begin
+      saved = ENV["DILLA_EFFECTS"]
+      ENV["DILLA_EFFECTS"] = "1"
+      LiveSynth.showcase? ? "1" : "0"
+    ensure
+      saved.nil? ? ENV.delete("DILLA_EFFECTS") : ENV["DILLA_EFFECTS"] = saved
+    end
+  end
+
+  def test_showcase_tape_chain_calls_existing_livesets_audio_builders
+    chain = LiveSynth.showcase_tape_chain
+    assert_operator chain.count { |row| row.include?("aphaser=") }, :>, 0
+    refute_includes chain.join(","), "makeup=0.8"
+    assert_includes chain.join(","), "makeup=1.0"
+    assert_operator chain.count { |row| row.include?("acrusher=") }, :>, 0
+    assert_operator chain.grep(/^(volume=|.*alimiter)/).length, :>, 0
+  end
+
+  def test_dub_showcase_tail_assignment_is_outside_string_continuation
+    source = File.read(dilla("lib/livesets.rb"))
+    assert_match(/send = post\.fetch\("dub"\).*\n\s+showcase_tail = LiveSynth\.showcase\?/, source)
+    refute_match(/\] \\\n\s+showcase_tail =/, source)
   end
 
   def test_bare_dilla_entrypoint_routes_to_showcase_before_render_setup

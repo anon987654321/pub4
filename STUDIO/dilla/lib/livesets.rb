@@ -44,6 +44,7 @@ require "rbconfig"
 require "shellwords"
 require "time"
 require "yaml"
+require "tmpdir"
 require_relative "process_spawn"
 require_relative "ableton_play"
 
@@ -2073,6 +2074,43 @@ module LiveSynth
 
   def stream = config.fetch("stream")
 
+  SHOWCASE_TEMPO_SCALE = 0.84
+
+  # Effects are the instrument's normal room now: tape, console, saturation,
+  # pitch wear, echo, hiss and crackle are on unless explicitly disabled.
+  def showcase? = ENV.fetch("DILLA_EFFECTS", ENV.fetch("DILLA_SHOWCASE", "1")) == "1"
+
+  # The showcase is the dark room: slower, slightly below concert pitch, and
+  # finished by a real summing stack rather than a clean digital output.
+  # Four Nasty VCS stages provide the nonlinear glue; three Sonitex STX-1260
+  # passes progressively narrow and roughen the top. Loudness is maximised only
+  # at the end with a true-peak ceiling rather than clipping the bus.
+  SHOWCASE_PITCH_RATIO = 2.0**(-15.0 / 1200.0)
+
+  def showcase_tape_chain
+    [
+      "asetrate=#{(stream.fetch("rate").to_f * SHOWCASE_PITCH_RATIO).round(3)}",
+      "aresample=#{stream.fetch("rate")}",
+      "atempo=#{(1.0 / SHOWCASE_PITCH_RATIO).round(6)}",
+      Outboard.tape_machine(speed: :ips7, wow: 0.18, flutter: 0.07),
+      "acompressor=threshold=-24dB:ratio=1.45:attack=30:release=260:makeup=1.0",
+      "equalizer=f=2600:t=o:w=1.6:g=-2.6",
+      "lowpass=f=6000",
+      Livesets.vcs(depth: 0.42, smear: 2.1),
+      Livesets.sonitex(bits: 12, lo: 36, hi: 9800, drive: 1.08, mix: 0.68),
+      Livesets.vcs(depth: 0.34, smear: 2.8),
+      Livesets.sonitex(bits: 11, lo: 40, hi: 8600, drive: 1.11, mix: 0.78, samples: 2),
+      Livesets.vcs(depth: 0.38, smear: 2.2),
+      Outboard.console_stack(instances: 3, offset: 0.10, param: 1.2, speed: 0.1),
+      Livesets.sonitex(bits: 10, lo: 44, hi: 7600, drive: 1.15, mix: 0.88, samples: 2),
+      Livesets.vcs(depth: 0.30, smear: 3.4),
+      Livesets.sonitex(bits: 10, lo: 48, hi: 6800, drive: 1.18, mix: 0.92, samples: 2),
+      Outboard.tape_machine(speed: :ips7, wow: 0.11, flutter: 0.04),
+      "aecho=0.82:0.72:82|164:0.16|0.09",
+      "loudnorm=I=-14:LRA=9:TP=-1.0:linear=false",
+    ].freeze
+  end
+
   def log(message) = $stdout.puts("live0: #{message}")
 
   def main(argv)
@@ -2088,7 +2126,7 @@ module LiveSynth
     when "standard" then LivesetStandard.run
     when "royksopp" then RoyksoppLive.call
     when "play" then play_artist!(words)
-    when "showcase" then showcase!(rng: rng!)
+    when "showcase" then showcase!(rng: rng!, mode: options["mode"])
     when "take" then DillaTakes.play(words.first || abort(USAGE))
     when "improvise" then perform!(Improviser.new(rng: rng!, family: options["family"], pad: options["pad"]), seconds:)
     when "progression"
@@ -2104,33 +2142,124 @@ module LiveSynth
   end
 
   # Bare Dilla is the showcase: one continuous tour through the engine's
-  # strongest live features. It reuses the real score classes below rather than
+  # strongest live features. FlyLo opens the room; every LiveSynth voice also
+  # receives the dark showcase effects unless DILLA_EFFECTS=0. It reuses the real score classes below rather than
   # inventing a second renderer: source harmony, rotating instrument families,
   # drums, bass, arpeggios, DFAM, FM leads, knob movement, patch morphing and the
   # exact Bach score all take their turns.
+  # FlyLo leads the tour: the first five scenes are source-backed cells with
+  # deliberately different harmony, register and instrument families.
   SHOWCASE_SCENES = [
-    ["dilla_life", 15.0],
-    ["soulquarians", 15.0],
-    ["dangelo", 16.0],
-    ["flylo", 14.0],
-    ["madlib", 14.0],
-    ["royksopp", 14.0],
-    ["moog_dfam", 22.0],
-    ["memorymoog_organ", 6.0],
-    ["glass_bell", 6.0],
-    ["bach", 26.0],
+    ["flylo", 24.0],
+    ["dilla_life", 30.0],
+    ["dangelo_spanish_joint", 34.0],
+    ["moog_dark", 28.0],
+    ["flylo_computer_face", 24.0],
+    ["dangelo_root", 32.0],
+    ["dilla_players", 30.0],
+    ["flylo_king_of_the_hill", 28.0],
+    ["dangelo_another_life", 36.0],
+    ["opus3_strings", 10.0],
+    ["dangelo_untitled", 34.0],
+    ["moog_dfam", 30.0],
+    ["dangelo_brown_sugar", 32.0],
+    ["madlib", 24.0],
+    ["dilla_so_far_to_go", 28.0],
+    ["dangelo_really_love", 34.0],
+    ["dangelo_sugah_daddy", 30.0],
+    ["matriarch_stabs", 10.0],
+    ["dangelo_ballad", 30.0],
+    ["grandmother_sweep", 10.0],
+    ["madlib_figaro", 24.0],
+    ["royksopp", 20.0],
+    ["memorymoog_organ", 10.0],
+    ["vox_humana", 10.0],
+    ["soft_reed", 10.0],
+    ["e_piano", 10.0],
+    ["bach", 30.0],
   ].freeze
 
-  def showcase!(rng: rng!)
+  SHOWCASE_MODES = {
+    "all" => SHOWCASE_SCENES,
+    "dilla" => SHOWCASE_SCENES.select { |name, _| name.start_with?("dilla_") || name == "dilla_players" },
+    "flylo" => SHOWCASE_SCENES.select { |name, _| name.start_with?("flylo") },
+    "dangelo" => SHOWCASE_SCENES.select { |name, _| name.start_with?("dangelo") },
+    "madlib" => SHOWCASE_SCENES.select { |name, _| name.start_with?("madlib") },
+    "moog" => SHOWCASE_SCENES.select { |name, _| name.include?("moog") || name.start_with?("matriarch") || name.start_with?("grandmother") },
+    "bach" => SHOWCASE_SCENES.select { |name, _| name == "bach" },
+  }.freeze
+
+  def showcase!(rng: rng!, mode: nil)
+    previous = ENV["DILLA_SHOWCASE"]
+    ENV["DILLA_SHOWCASE"] = "1"
+    output = showcase_output
+    cycle = 0
+
     loop do
-      SHOWCASE_SCENES.each do |name, seconds|
-        log("showcase -> #{name}")
-        score, actions = showcase_score(name, rng)
-        state = showcase_segment!(score, seconds, actions:)
-        return if state == :stopped
+      scratch = Dir.mktmpdir("dilla-showcase-", Livesets::D)
+      paths = []
+      stopped = false
+
+      begin
+        showcase_scenes(mode).each_with_index do |(name, seconds), index|
+          log("showcase -> #{name}")
+          score, actions = showcase_score(name, rng)
+          scene_path = File.join(scratch, format("%02d-%s.wav", index + 1, name))
+          state = showcase_segment!(score, seconds, actions:, output: scene_path)
+          paths << scene_path if File.file?(scene_path) && File.size?(scene_path)
+          if state == :stopped
+            stopped = true
+            break
+          end
+        end
+
+        append = cycle.positive? || ENV["DILLA_SHOWCASE_APPEND"] == "1"
+        append_showcase_wav!(paths, output, append:)
+      ensure
+        FileUtils.remove_entry(scratch) if scratch && File.exist?(scratch)
       end
-      return if ENV["DILLA_SHOWCASE_ONCE"] == "1"
+
+      return if stopped || ENV["DILLA_SHOWCASE_ONCE"] == "1" || ENV["DILLA_SHOWCASE_LOOP"] != "1"
+
+      cycle += 1
     end
+  ensure
+    previous.nil? ? ENV.delete("DILLA_SHOWCASE") : ENV["DILLA_SHOWCASE"] = previous
+  end
+
+  def showcase_output
+    File.expand_path(ENV.fetch("DILLA_SHOWCASE_OUT", File.join(Livesets::D, "dilla.wav")))
+  end
+
+  def showcase_scenes(mode = nil)
+    key = mode.to_s.strip.downcase
+    return SHOWCASE_SCENES if key.empty?
+
+    SHOWCASE_MODES.fetch(key) { abort "live0: no showcase mode #{mode.inspect} — have #{SHOWCASE_MODES.keys.join(', ')}" }
+  end
+
+  def append_showcase_wav!(paths, destination, append: false)
+    inputs = paths.select { |path| File.file?(path) && File.size?(path) }
+    inputs.unshift(destination) if append && File.file?(destination) && File.size?(destination)
+    return if inputs.empty? || (inputs.length == 1 && append)
+
+    FileUtils.mkdir_p(File.dirname(destination))
+    return FileUtils.mv(inputs.first, destination) if inputs.one?
+
+    partial = "#{destination}.partial.#{Process.pid}"
+    list = "#{destination}.concat.#{Process.pid}.txt"
+    File.open(list, "w") { |io| inputs.each { |path| io.puts "file #{path}" } }
+
+    ffmpeg = Livesets.tool("ffmpeg")
+    ok = system(ffmpeg, "-y", "-loglevel", "error", "-f", "concat", "-safe", "0",
+                "-i", list, "-c:a", "pcm_s16le", partial)
+    FileUtils.rm_f(list)
+    abort "live0: showcase could not write #{destination}" unless ok
+
+    FileUtils.mv(partial, destination)
+  ensure
+    FileUtils.rm_f(list) if defined?(list)
+    FileUtils.rm_f(partial) if defined?(partial) && File.file?(partial)
   end
 
   def showcase_score(name, rng)
@@ -2138,9 +2267,24 @@ module LiveSynth
     when "dilla_life"
       [
         Improviser.new(rng:, reference: "dilla_life", family: "rhodes"),
-        [[4.0, { "toggle" => "lead", "on" => true }],
-         [8.0, { "patch" => "e_piano" }],
-         [12.0, { "knob" => "cutoff", "amount" => 0.2, "seconds" => 3.0 }]],
+        [[5.0, { "toggle" => "lead", "on" => true }],
+         [9.0, { "patch" => "e_piano" }],
+         [14.0, { "lead" => "fm", "preset" => "bell" }],
+         [17.0, { "knob" => "cutoff", "amount" => 0.18, "seconds" => 3.0 }]],
+      ]
+    when "dilla_players"
+      [
+        Improviser.new(rng:, reference: "slum_village_players_documented", family: "rhodes"),
+        [[5.0, { "toggle" => "lead", "on" => true }],
+         [10.0, { "patch" => "soft_reed" }],
+         [16.0, { "knob" => "resonance", "amount" => 0.12, "seconds" => 4.0 }]],
+      ]
+    when "dilla_so_far_to_go"
+      [
+        Improviser.new(rng:, reference: "dilla_so_far_to_go_documented", family: "rhodes"),
+        [[5.0, { "patch" => "e_piano" }],
+         [10.0, { "lead" => "fm", "preset" => "bell" }],
+         [15.0, { "knob" => "cutoff", "amount" => 0.16, "seconds" => 3.0 }]],
       ]
     when "soulquarians"
       [
@@ -2149,28 +2293,118 @@ module LiveSynth
          [9.0, { "patch" => "rhodes_tine" }],
          [12.0, { "knob" => "resonance", "amount" => 0.14, "seconds" => 3.0 }]],
       ]
-    when "dangelo"
+    when "dangelo_root"
       [
-        # D'Angelo's richer showcase cell: Mixolydian colour, extended/slash
-        # voicings and a soft electronic accent instead of the metallic FM lead.
+        Improviser.new(rng:, reference: "the_root_modal_vamp", family: "rhodes"),
+        [[7.0, { "toggle" => "lead", "on" => true }],
+         [13.0, { "patch" => "e_piano" }],
+         [20.0, { "knob" => "resonance", "amount" => 0.12, "seconds" => 4.0 }]],
+      ]
+    when "dangelo_spanish_joint"
+      [
+        Improviser.new(rng:, reference: "spanish_joint_swing_16ths", family: "rhodes"),
+        [[6.0, { "lead" => "fm", "preset" => "bell" }],
+         [13.0, { "patch" => "soft_reed" }],
+         [20.0, { "knob" => "cutoff", "amount" => 0.14, "seconds" => 4.0 }]],
+      ]
+    when "dangelo_another_life"
+      [
+        Improviser.new(rng:, reference: "another_life_pedal_descent", family: "rhodes"),
+        [[8.0, { "toggle" => "drums", "on" => false }],
+         [15.0, { "patch" => "e_piano" }],
+         [20.0, { "toggle" => "drums", "on" => true }],
+         [25.0, { "lead" => "fm", "preset" => "bell" }]],
+      ]
+    when "dangelo_ballad"
+      [
+        Improviser.new(rng:, reference: "gospel_69_ballad_walk", family: "rhodes"),
+        [[8.0, { "patch" => "e_piano" }],
+         [15.0, { "knob" => "cutoff", "amount" => 0.1, "seconds" => 5.0 }],
+         [19.0, { "lead" => "fm", "preset" => "drone" }]],
+      ]
+    when "dangelo_untitled"
+      [
         Improviser.new(rng:, reference: "untitled_d_mixolydian_vamp", family: "rhodes"),
-        [[4.0, { "lead" => "fm", "preset" => "bell" }],
-         [9.0, { "patch" => "e_piano" }],
-         [13.0, { "knob" => "cutoff", "amount" => 0.12, "seconds" => 3.0 }]],
+        [[7.0, { "patch" => "rhodes_tine" }],
+         [14.0, { "lead" => "fm", "preset" => "drone" }],
+         [22.0, { "knob" => "cutoff", "amount" => -0.1, "seconds" => 6.0 }]],
+      ]
+    when "dangelo_brown_sugar"
+      [
+        Improviser.new(rng:, reference: "brown_sugar_funk_vamp", family: "rhodes"),
+        [[6.0, { "patch" => "e_piano" }],
+         [12.0, { "lead" => "fm", "preset" => "bell" }],
+         [20.0, { "knob" => "resonance", "amount" => 0.1, "seconds" => 5.0 }]],
+      ]
+    when "dangelo_really_love"
+      [
+        Improviser.new(rng:, reference: "really_love_bossa_broken", family: "rhodes"),
+        [[8.0, { "toggle" => "drums", "on" => false }],
+         [15.0, { "patch" => "soft_reed" }],
+         [23.0, { "toggle" => "drums", "on" => true }],
+         [28.0, { "lead" => "fm", "preset" => "drone" }]],
+      ]
+    when "dangelo_sugah_daddy"
+      [
+        Improviser.new(rng:, reference: "sugah_daddy_planing", family: "rhodes"),
+        [[5.0, { "patch" => "e_piano" }],
+         [11.0, { "lead" => "fm", "preset" => "bell" }],
+         [19.0, { "knob" => "cutoff", "amount" => -0.12, "seconds" => 5.0 }]],
       ]
     when "flylo"
       [
         Improviser.new(rng:, reference: "flylo_camel_documented", family: "prophet"),
-        [[4.0, { "toggle" => "lead", "on" => true }],
-         [8.0, { "lead" => "fm", "preset" => "glass" }],
-         [11.0, { "knob" => "detune", "amount" => 0.08, "seconds" => 3.0 }]],
+        [[5.0, { "toggle" => "lead", "on" => true }],
+         [9.0, { "lead" => "fm", "preset" => "glass" }],
+         [15.0, { "patch" => "prophet_pad" }],
+         [22.0, { "knob" => "detune", "amount" => 0.08, "seconds" => 4.0 }]],
+      ]
+    when "flylo_beginners_falafel"
+      [
+        Improviser.new(rng:, reference: "flylo_beginners_falafel_documented", family: "rhodes"),
+        [[6.0, { "lead" => "fm", "preset" => "bell" }],
+         [12.0, { "patch" => "e_piano" }],
+         [18.0, { "knob" => "cutoff", "amount" => 0.12, "seconds" => 4.0 }],
+         [23.0, { "lead" => "fm", "preset" => "drone" }]],
+      ]
+    when "flylo_massage_situation"
+      [
+        Improviser.new(rng:, reference: "flylo_massage_situation_documented", family: "moog"),
+        [[7.0, { "toggle" => "drums", "on" => false }],
+         [11.0, { "lead" => "fm", "preset" => "glass" }],
+         [16.0, { "patch" => "moog_strings" }],
+         [20.0, { "toggle" => "drums", "on" => true }],
+         [23.0, { "knob" => "resonance", "amount" => -0.1, "seconds" => 3.0 }]],
+      ]
+    when "flylo_king_of_the_hill"
+      [
+        Improviser.new(rng:, reference: "flylo_king_of_the_hill_documented", family: "rhodes"),
+        [[8.0, { "lead" => "fm", "preset" => "drone" }],
+         [16.0, { "patch" => "rhodes_tine" }],
+         [23.0, { "knob" => "detune", "amount" => 0.1, "seconds" => 5.0 }],
+         [29.0, { "toggle" => "lead", "on" => false }]],
+      ]
+    when "flylo_computer_face"
+      [
+        Improviser.new(rng:, reference: "flylo_computer_face_documented", family: "prophet"),
+        [[4.0, { "lead" => "fm", "preset" => "chaos" }],
+         [9.0, { "patch" => "prophet_pad" }],
+         [15.0, { "knob" => "detune", "amount" => 0.12, "seconds" => 3.0 }],
+         [20.0, { "toggle" => "lead", "on" => false }]],
       ]
     when "madlib"
       [
         Improviser.new(rng:, reference: "madlib_accordion_loop_documented", family: "rhodes"),
-        [[4.0, { "lead" => "fm", "preset" => "bell" }],
-         [8.0, { "patch" => "e_piano" }],
-         [11.0, { "knob" => "resonance", "amount" => 0.12, "seconds" => 3.0 }]],
+        [[5.0, { "lead" => "fm", "preset" => "bell" }],
+         [10.0, { "patch" => "e_piano" }],
+         [14.0, { "knob" => "resonance", "amount" => 0.12, "seconds" => 3.0 }]],
+      ]
+    when "madlib_figaro"
+      [
+        Improviser.new(rng:, reference: "madlib_figaro_documented", family: "rhodes"),
+        [[6.0, { "lead" => "fm", "preset" => "drone" }],
+         [12.0, { "patch" => "soft_reed" }],
+         [15.0, { "knob" => "cutoff", "amount" => 0.14, "seconds" => 3.0 }]],
       ]
     when "royksopp"
       [
@@ -2184,10 +2418,18 @@ module LiveSynth
         Progression.new("moog_improv", rng:),
         [[5.0, { "patch" => "rhodes_tine" }],
          [11.0, { "knob" => "cutoff", "amount" => 0.18, "seconds" => 3.0 }],
-         [17.0, { "patch" => "prophet_five" }]],
+         [17.0, { "patch" => "prophet_five" }],
+         [23.0, { "patch" => "soft_reed" }]],
       ]
-    when "memorymoog_organ", "glass_bell"
-      [Demo.new(name, rng:), [[2.5, { "knob" => "cutoff", "amount" => 0.15, "seconds" => 2.0 }]]]
+    when "moog_dark"
+      [
+        Progression.new("moog_improv", rng:, family: "moog"),
+        [[6.0, { "knob" => "cutoff", "amount" => -0.12, "seconds" => 4.0 }],
+         [12.0, { "patch" => "moog_strings" }],
+         [18.0, { "patch" => "moog_brass" }]],
+      ]
+    when "memorymoog_organ", "vox_humana", "soft_reed", "e_piano"
+      [Demo.new(name, rng:), [[2.5, { "knob" => "cutoff", "amount" => -0.1, "seconds" => 2.5 }]]]
     when "bach"
       path = BachMidi.source
       events, length, = BachMidi.parse(path)
@@ -2203,7 +2445,10 @@ module LiveSynth
   # The scene keeps the same player alive while its existing control surface is
   # used. Actions are sparse and musical: they turn leads, patches and knobs,
   # then let the score breathe until the scene changes.
-  def showcase_segment!(score, seconds, actions:)
+  def showcase_segment!(score, seconds, actions:, output: nil)
+    previous = ENV["LIVE_OUT"]
+    ENV["LIVE_OUT"] = output if output
+
     worker = Thread.new do
       started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
       actions.each do |delay, command|
@@ -2221,6 +2466,7 @@ module LiveSynth
   ensure
     worker&.kill
     worker&.join
+    previous.nil? ? ENV.delete("LIVE_OUT") : ENV["LIVE_OUT"] = previous
   end
 
   # `knob cutoff +0.3 20` moves by, `knob cutoff 0.8 20` moves to; the last
@@ -2526,6 +2772,64 @@ module LiveSynth
     end
   end
 
+  # Real tape-floor texture for the bare showcase. The ffmpeg tape chain
+  # supplies wow, filtering and nonlinear colour; this layer supplies what the
+  # machine also has between notes: continuous hiss and sparse oxide crackle.
+  # It is deterministic per LIVE_SEED and is never enabled on ordinary live mode.
+  class ShowcaseTapeTexture
+    TWO_PI = 2.0 * Math::PI
+    UINT32 = 0xffff_ffff
+
+    def initialize(seed:)
+      @state = (seed.to_i | 1) & UINT32
+      @lp_left = 0.0
+      @lp_right = 0.0
+      @crackle_left = 0.0
+      @crackle_right = 0.0
+    end
+
+    def process!(left, right, clock)
+      hiss_gain = 0.0028 + (0.0006 * Math.sin(TWO_PI * clock / 17.0))
+      drive = 1.18 + (0.14 * Math.sin(TWO_PI * clock / 13.0))
+      i = 0
+      while i < left.length
+        n1 = next_noise
+        n2 = next_noise
+
+        @lp_left += 0.15 * (n1 - @lp_left)
+        @lp_right += 0.15 * (n2 - @lp_right)
+        hiss_left = (n1 - @lp_left) * hiss_gain
+        hiss_right = (n2 - @lp_right) * hiss_gain
+
+        @state = next_state
+        @crackle_left += signed_noise * 0.075 if (@state & 0x3f_ffff) < 9
+        @state = next_state
+        @crackle_right += signed_noise * 0.075 if (@state & 0x3f_ffff) < 9
+
+        left[i] = (Math.tanh(left[i] * drive) * 0.98) + hiss_left + @crackle_left
+        right[i] = (Math.tanh(right[i] * drive) * 0.98) + hiss_right + @crackle_right
+        @crackle_left *= 0.69
+        @crackle_right *= 0.69
+        i += 1
+      end
+    end
+
+    private
+
+    def next_state
+      @state = ((@state * 1_664_525) + 1_013_904_223) & UINT32
+    end
+
+    def next_noise
+      next_state
+      (((@state >> 8) & 0x00ff_ffff) / 8_388_607.5) - 1.0
+    end
+
+    def signed_noise
+      (((@state >> 16) & 0x7f) / 63.5) - 1.0
+    end
+  end
+
   # Where the notes come from, the knobs and the clock go through here. It
   # holds the sounding voices, renders each block and hands it to the pipe.
   class Stage
@@ -2545,6 +2849,7 @@ module LiveSynth
       @inbox = Session::Inbox.new
       @spent = 0.0
       @played = 0.0
+      @showcase_texture = LiveSynth.showcase? ? ShowcaseTapeTexture.new(seed: @rng.rand(1 << 30)) : nil
     end
 
     # One note. `rng` is the stage's own unless a mode seeds its notes itself.
@@ -2587,6 +2892,7 @@ module LiveSynth
       extra = score.respond_to?(:overdub!) ? score.overdub!(left, right, clock, @rate) : nil
       [left, right, extra].compact.each { |channel| fade!(channel, clock) } if @stopped_at
       @voices.reject! { |voice| voice.done?(clock) }
+      @showcase_texture&.process!(left, right, clock)
       pcm = if score.respond_to?(:pcm) then score.pcm(left, right, extra, knobs)
             else AnalogSynth.live_pcm(left, right, drive: @drive, scale: @scale)
             end
@@ -2642,6 +2948,7 @@ module LiveSynth
       @reference = @reference_name && LiveSynth.documented_progression(@reference_name)
       bpm = @reference ? @reference.fetch("bpm").to_f : @c["bpm"].to_f
       bpm += rng.rand(-@c["bpm_spread"].to_f..@c["bpm_spread"].to_f) unless @reference
+      bpm *= LiveSynth::SHOWCASE_TEMPO_SCALE if LiveSynth.showcase?
       @beat = 60.0 / bpm
       @knobs = Knobs.new(@c.fetch("knobs"), response: @c.fetch("response"), rng:,
                          damping: @c["walk_damping"], pull: @c["walk_pull"])
@@ -3020,8 +3327,9 @@ module LiveSynth
     def graph(post, beat)
       chain = warm_dilla_pad_synth_filters(**post.fetch("chain").transform_keys(&:to_sym)).compact.join(",")
       send = post.fetch("dub").gsub(/<(\d+)>/) { (beat * Regexp.last_match(1).to_i).round.to_s }
+      showcase_tail = LiveSynth.showcase? ? ",#{LiveSynth.showcase_tape_chain.join(",")}" : ""
       "[0:a]pan=stereo|c0=c0|c1=c1[dry];[0:a]pan=stereo|c0=c2|c1=c3[wet];[0:a]pan=stereo|c0=c4|c1=c5[k];" \
-        "[dry]#{chain}[d];[wet]#{send}[w];[d][w][k]amix=inputs=3:weights=1 1 1:normalize=0,alimiter=limit=#{post['limit']}"
+        "[dry]#{chain}[d];[wet]#{send}[w];[d][w][k]amix=inputs=3:weights=1 1 1:normalize=0,alimiter=limit=#{post['limit']}#{showcase_tail}"
     end
 
     def command(post, rate:, beat:, dest: nil)
@@ -3089,6 +3397,7 @@ module LiveSynth
       return nil unless master
 
       chain = master.map { |stage| LiveSynth.console_stage(stage) }.join(",")
+      chain = [chain, *LiveSynth.showcase_tape_chain].reject(&:empty?).join(",") if LiveSynth.showcase?
       LiveSynth.through_ffmpeg(channels: 2, filter: ["-af", chain], rate:, dest:) ||
         abort("live0: #{@name} leaves through ffmpeg -- install ffmpeg and sox (brew install ffmpeg sox)")
     end
@@ -3381,6 +3690,13 @@ module LiveSynth
     def describe = "#{@name}, #{@demo['notes'].size} steps"
 
     def length = @demo["notes"].size * @demo["step"]
+
+    def player_command(rate, dest)
+      return nil unless LiveSynth.showcase?
+
+      LiveSynth.through_ffmpeg(channels: 2, filter: ["-af", LiveSynth.showcase_tape_chain.join(",")], rate:, dest:) ||
+        abort("live0: #{@name} leaves through ffmpeg -- install ffmpeg and sox")
+    end
 
     def finished?(clock) = clock >= length
 
