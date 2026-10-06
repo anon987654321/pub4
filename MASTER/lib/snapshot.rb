@@ -11,7 +11,7 @@ module Master
       "STUDIO" => "STUDIO",
     }.freeze
     DEFAULT_TREES = TREE_PATHS.keys.freeze
-    DEFAULT_OUTPUT = File.join(REPO_ROOT, ".master", "snapshots", "snapshot_MASTER.md")
+    DEFAULT_OUTPUT = File.join(REPO_ROOT, "snapshot_MASTER.md")
     SKIP = %w[.git .bundle node_modules vendor tmp temp log logs coverage storage cache dist build output generated].freeze
     BINARY_EXTENSIONS = %w[
       .7z .aac .avi .bin .bmp .class .db .db3 .dll .dmg .doc .docx .eot .exe .flac
@@ -33,7 +33,7 @@ module Master
         tree_root = File.join(@root, TREE_PATHS.fetch(name))
         next unless File.directory?(tree_root)
 
-        output = File.join(@root, ".master", "snapshots", "snapshot_#{name}.md")
+        output = File.join(@root, "snapshot_#{name}.md")
         Snapshot.new(root: tree_root, output:).write_tree!
         output
       end.compact
