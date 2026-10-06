@@ -210,12 +210,12 @@ class TestDillaLiveSynth < Minitest::Test
     assert_equal({ "lead" => "fm", "preset" => "glass" }, say.steering("fm lead glass"))
   end
 
-  def test_play_artist_reads_the_shared_rack_and_artist_progression_table
+  def test_play_artist_reads_the_live_lanes_and_shared_rack
     table = LiveSynth.config.fetch("play")
-    assert_equal "circle_fifths_descent", table.fetch("bach")
-    assert_equal "db_major_minor_fall", table.fetch("j_dilla")
-    assert_equal "quartal_west_coast", table.fetch("flying_lotus")
-    assert_equal "minor_triad_walk", table.fetch("madlib")
+    assert_equal "bach_toccata", table.fetch("bach")
+    assert_equal "live_improvise_moog", table.fetch("j_dilla")
+    assert_equal "live_improvise_prophet", table.fetch("flying_lotus")
+    assert_equal "live_improvise_rhodes", table.fetch("madlib")
     assert_equal "royksopp_live", table.fetch("royksopp")
 
     master = LiveSynth.config.fetch("play_master")
