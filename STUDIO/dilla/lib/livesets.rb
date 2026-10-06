@@ -2140,7 +2140,9 @@ module LiveSynth
       next unless artist == "J Dilla" || producer == "J Dilla" || artist.include?("D'Angelo")
 
       chords = Array(entry[:chords])
+      tempo = entry[:bpm] || entry[:bpm_held]
       next unless chords.length >= 2
+      next unless tempo.to_f.between?(40, 200)
       next unless chords.all? { |symbol| resolve_pad_chord_symbol(symbol) }
 
       name.to_s
@@ -2161,7 +2163,11 @@ module LiveSynth
   def self.documented_progression(name)
     if defined?(ARTIST_VERIFIED_PROGRESSIONS)
       entry = ARTIST_VERIFIED_PROGRESSIONS[name.to_sym]
-      return entry.to_h { |key, value| [key.to_s, value] } if entry
+      if entry
+        data = entry.to_h { |key, value| [key.to_s, value] }
+        data["bpm"] ||= data["bpm_held"]
+        return data
+      end
     end
 
     @documented_progressions ||= YAML.safe_load_file(File.expand_path("../data/dilla_reference.yml", __dir__)).fetch("documented_progressions")
