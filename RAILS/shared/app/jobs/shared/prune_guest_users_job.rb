@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "../../../../tools/operator/load_average"
+require File.join(ENV.fetch("PUB4_ROOT", File.expand_path("../../../../../", __dir__)), "OPENBSD", "lib", "load_average")
 
 module Shared
   # Delete guest rows nobody is behind any more.
