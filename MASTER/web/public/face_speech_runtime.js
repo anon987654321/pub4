@@ -1056,9 +1056,7 @@ window.MASTER_SPEECH_RUNTIME = Object.freeze({
   ttsTick,
   loadTTSBlob,
   emitTtsEvent,
-  browserTtsFallbackAllowed,
-  highQualityVoiceEnabled,
-  speakWithBrowserTTS,
+
 });
 window.MASTER = window.MASTER || {};
 window.MASTER.speechRuntime = window.MASTER_SPEECH_RUNTIME;
