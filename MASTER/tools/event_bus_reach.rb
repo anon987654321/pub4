@@ -38,6 +38,7 @@ module Operator
     def files(globs)
       Dir.glob(globs.flat_map { |glob| File.join(MASTER, glob) })
          .select { |path| File.file?(path) }
+         .reject { |path| File.basename(path).end_with?(".bundle.js") }
          .sort
     end
 
