@@ -530,6 +530,17 @@ class TestSpeech < Minitest::Test
     assert_includes result, "Here is the answer"
   end
 
+  def test_infer_style_tracks_conversational_moments_without_changing_voice
+    speech = Master::Voice::Speech
+    assert_equal :question, speech.infer_style("Are you ready?")
+    assert_equal :calm, speech.infer_style("No rush, we can take it one step at a time.")
+    assert_equal :warm, speech.infer_style("Glad that makes sense — thanks.")
+    assert_equal :energetic, speech.infer_style("Great! We got it!")
+    assert_equal :storyteller, speech.infer_style("Imagine this: a long night, a quiet street, and the whole city slowly waking up around us.")
+    assert_equal :brief, speech.infer_style("Done now.")
+    assert_equal :fail, speech.infer_style("The deploy failed.")
+  end
+
   def test_clean_text_strips_hedge_words
     result = Master::Voice::Speech.clean_text("This will improve performance.")
     refute_includes result, "will"
