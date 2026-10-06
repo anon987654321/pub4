@@ -2099,7 +2099,8 @@ module LiveSynth
       Outboard.tape_machine(speed: :ips7, wow: 0.22, flutter: 0.075),
       "acompressor=threshold=-24dB:ratio=1.25:attack=45:release=280:makeup=1.0",
       "equalizer=f=75:t=q:w=0.9:g=-1.6",
-      "equalizer=f=220:t=o:w=1.1:g=-3.0",
+      "equalizer=f=220:t=o:w=1.1:g=-4.2",
+      "equalizer=f=92:t=q:w=0.9:g=-2.4",
       "equalizer=f=1700:t=o:w=1.0:g=-1.5",
       "lowpass=f=5400",
       Livesets.sonitex(bits: 11, lo: 38, hi: 8600, drive: 1.05, mix: 0.55),
@@ -2262,13 +2263,13 @@ module LiveSynth
     FileUtils.mkdir_p(File.dirname(destination))
     return FileUtils.mv(inputs.first, destination) if inputs.one?
 
-    partial = "#{destination}.partial.#{Process.pid}"
+    partial = File.join(File.dirname(destination), ".dilla-showcase-#{Process.pid}.wav")
     list = "#{destination}.concat.#{Process.pid}.txt"
     File.open(list, "w") { |io| inputs.each { |path| io.puts "file #{path}" } }
 
     ffmpeg = Livesets.tool("ffmpeg")
     ok = system(ffmpeg, "-y", "-loglevel", "error", "-f", "concat", "-safe", "0",
-                "-i", list, "-c:a", "pcm_s16le", partial)
+                "-i", list, "-f", "wav", "-c:a", "pcm_s16le", partial)
     FileUtils.rm_f(list)
     abort "live0: showcase could not write #{destination}" unless ok
 
@@ -2663,8 +2664,9 @@ module LiveSynth
     if dest && ENV["DILLA_SHOWCASE_LIVE_RECORD"] == "1"
       player = (DillaLive.player_command(rate) || Livesets.player_command(rate)) or return nil
       FileUtils.mkdir_p(File.dirname(dest))
-      tee_outputs = "[f=wav]#{Shellwords.escape(dest)}|[f=s16le]pipe:1"
-      command = input + output_map + ["-vn", "-sn", "-dn", "-c:a", "pcm_s16le", "-f", "tee", "-use_fifo", "1", tee_outputs]
+      shared = input + ["-vn", "-sn", "-dn"]
+      command = shared + output_map + ["-y", "-c:a", "pcm_s16le", "-f", "wav", dest] +
+                output_map + ["-c:a", "pcm_s16le", "-f", "s16le", "pipe:1"]
       return ["sh", "-c", "#{Shellwords.join(command)} | #{Shellwords.join(player)}"]
     end
 
@@ -2922,6 +2924,7 @@ module LiveSynth
 
     # One note. `rng` is the stage's own unless a mode seeds its notes itself.
     def note(midi, spec, start, held, gain, role, rng: @rng, **line)
+      gain *= 0.55 if LiveSynth.showcase? && role == :bass
       @voices << AnalogSynth::LiveVoice.new(midi:, spec:, start:, held:, gain:, role:, rng:, rate: @rate,
                                             drift_cents: @drift, **line)
     end
@@ -3165,14 +3168,14 @@ module LiveSynth
       late = @c["bass_late_seconds"]
       at = @next_at
       if LiveSynth.showcase?
-        gain = 0.035
-        stage.note(root, spec, at + 0.018, 0.38 * @beat, gain, :bass)
+        gain = 0.018
+        stage.note(root, spec, at + 0.018, 0.30 * @beat, gain, :bass)
         if @rng.rand < 0.08
-          stage.note(root + 7, spec, at + (2.5 * @beat) + late, 0.16 * @beat, gain * 0.24, :bass)
+          stage.note(root + 7, spec, at + (2.5 * @beat) + late, 0.14 * @beat, gain * 0.20, :bass)
         end
-        return unless bars == 2 && @rng.rand < 0.18
+        return unless bars == 2 && @rng.rand < 0.16
 
-        stage.note(root, spec, at + (4 * @beat) + 0.018, 0.30 * @beat, gain * 0.60, :bass)
+        stage.note(root, spec, at + (4 * @beat) + 0.018, 0.24 * @beat, gain * 0.55, :bass)
         return
       end
 
@@ -3414,7 +3417,7 @@ module LiveSynth
         post.fetch("dub").gsub(/<(\d+)>/) { (beat * Regexp.last_match(1).to_i).round.to_s }
       end
       showcase_tail = LiveSynth.showcase? ? ",#{LiveSynth.showcase_tape_chain.join(",")}" : ""
-      weights = LiveSynth.showcase? ? "1 0.32 0.72" : "1 1 1"
+      weights = LiveSynth.showcase? ? "1 0.24 1.05" : "1 1 1"
       "[0:a]pan=stereo|c0=c0|c1=c1[dry];[0:a]pan=stereo|c0=c2|c1=c3[wet];[0:a]pan=stereo|c0=c4|c1=c5[k];"         "[dry]#{chain}[d];[wet]#{send}[w];[d][w][k]amix=inputs=3:weights=#{weights}:normalize=0,alimiter=limit=#{post['limit']}#{showcase_tail}[dilla_showcase_mix]"
     end
     def command(post, rate:, beat:, dest: nil)

@@ -227,7 +227,7 @@ class TestDillaLiveSynth < Minitest::Test
     refute_match(/-map 0:a/, filter.join(" "))
   end
 
-  def test_showcase_ffmpeg_tees_the_same_post_fx_stream_to_file_and_player
+  def test_showcase_ffmpeg_writes_and_plays_the_same_post_fx_stream
     destination = "/tmp/dilla-showcase-test.wav"
     old = ENV["DILLA_SHOWCASE_LIVE_RECORD"]
     ENV["DILLA_SHOWCASE_LIVE_RECORD"] = "1"
@@ -241,15 +241,27 @@ class TestDillaLiveSynth < Minitest::Test
       )
 
       assert_equal "sh", command.first
-      assert_includes command.last, "-f tee"
-      assert_includes command.last, "[f=wav]"
+      assert_includes command.last, "-f wav"
       assert_includes command.last, Shellwords.escape(destination)
-      assert_includes command.last, "[f=s16le]pipe:1"
-      assert_includes command.last, "-map 0:a"
+      assert_includes command.last, "-f s16le"
+      assert_includes command.last, "pipe:1"
+      assert_includes command.last, "-map 0:a:0"
       assert_includes command.last, "/opt/homebrew/bin/play"
     end
   ensure
     old.nil? ? ENV.delete("DILLA_SHOWCASE_LIVE_RECORD") : ENV["DILLA_SHOWCASE_LIVE_RECORD"] = old
+  end
+
+  def test_showcase_bass_has_half_scale_stage_gain
+    score = LiveSynth::Improviser.new(rng: Random.new(12), family: "prophet", reference: "flylo_camel_documented")
+    stage = LiveSynth::Stage.new(rate: RATE, rng: score.rng)
+    ENV["DILLA_SHOWCASE"] = "1"
+    score.schedule(stage, 0.0)
+    bass = stage.instance_variable_get(:@voices).find { |voice| voice.role == :bass }
+    refute_nil bass
+    assert_operator bass.instance_variable_get(:@gain), :<, 0.02
+  ensure
+    ENV.delete("DILLA_SHOWCASE")
   end
 
   # Generic play is the steerable showcase. Explicit improvisation remains
@@ -339,9 +351,9 @@ class TestDillaLiveSynth < Minitest::Test
 
   def test_showcase_bass_is_quiet_and_sparse
     source = File.read(dilla("lib/livesets.rb"))
-    assert_includes source, "gain = 0.035"
+    assert_includes source, "gain = 0.018"
     assert_includes source, "if @rng.rand < 0.08"
-    assert_includes source, "0.38 * @beat"
+    assert_includes source, "0.30 * @beat"
   end
 
 
