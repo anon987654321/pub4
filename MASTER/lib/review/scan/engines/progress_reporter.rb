@@ -29,11 +29,10 @@ module Master
           $stdout.sync = true
           Master::Trace::Dmesg.attach(name, "master0", Master::Trace::Dmesg.counted(total, "file"))
           selected = Array(rules)
-          Master::Trace::Dmesg.attach(rule_unit, name, "selected #{selected.size} rules")
-          selected.each_with_index do |rule, index|
-            id = rule.respond_to?(:id) ? rule.id.to_s : rule.class.name.to_s
-            Master::Trace::Dmesg.attach("rule#{index + 1}", rule_unit, "checking #{id}")
-          end
+          summary = rule_scope_summary(selected)
+          detail = "selected #{selected.size} rules"
+          detail += ", #{summary}" unless summary.empty?
+          Master::Trace::Dmesg.attach(rule_unit, name, detail)
         end
 
         def emit_scan_progress(dir:, path:, file_result:)
@@ -129,6 +128,20 @@ module Master
           Master::Trace::Dmesg.status(unit, parts.join(", "))
         end
 
+
+        def rule_scope_summary(rules)
+          counts = Hash.new(0)
+          Array(rules).each do |rule|
+            languages = if rule.class.respond_to?(:dsl_langs)
+              Array(rule.class.dsl_langs).filter_map { |lang| lang.to_s unless lang.to_s.empty? }
+            else
+              []
+            end
+            scope = languages.empty? ? "all" : languages.join("/")
+            counts[scope] += 1
+          end
+          counts.sort_by { |scope, _| scope }.map { |scope, count| "#{scope} #{count}" }.join(", ")
+        end
 
         def log_rule_completion
           return unless @scan_progress
