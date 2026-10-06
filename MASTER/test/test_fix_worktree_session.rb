@@ -106,7 +106,7 @@ class TestFixWorktreeSession < Minitest::Test
       result = Master::Fix::WorktreeSession.new(root:).run(command: "/fix test")
 
       refute result.ok
-      assert_match(/requires checked-out main at origin\\/main/, result.summary)
+      assert_match(%r{requires checked-out main at origin/main}, result.summary)
       assert_equal "base\\n", git_output(root, "show", "origin/main:README")
       assert_equal "local\\n", File.read(File.join(root, "README"))
     end

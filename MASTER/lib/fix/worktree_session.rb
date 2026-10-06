@@ -180,9 +180,11 @@ module Master
         Open3.popen2e(env, command, *args, chdir:) do |stdin, io, wait_thr|
           stdin.close
           io.each_line do |line|
-            @io.write(line)
-            @io.flush
-            lines << line.rstrip
+            clean = line.to_s.scrub.gsub(Master::Trace::Dmesg::ANSI, "").delete("\r")
+            next if clean.empty?
+
+            Master::Trace::Dmesg.forward(clean, io: @io)
+            lines << clean.chomp
           end
           status = wait_thr.value
         end

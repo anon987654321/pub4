@@ -210,13 +210,37 @@ module Master
         end
 
         text = line.to_s.gsub(/\s+/, " ").strip
-        io.print "\r\e[K" if io.respond_to?(:tty?) && io.tty?
-        io.puts(io.respond_to?(:tty?) && io.tty? ? style(text, io:) : text)
-        io.flush if io.respond_to?(:flush)
+        tty = io.respond_to?(:tty?) && io.tty?
+        emit_mutex.synchronize do
+          io.print "\r\e[K" if tty
+          io.puts(tty ? style(text, io:) : text)
+          io.flush if io.respond_to?(:flush)
+        end
         speak_log_line(text) if log_voice_active?
         text
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "Trace::Dmesg.emit")
+        nil
+      end
+
+      def emit_mutex
+        @emit_mutex ||= Mutex.new
+      end
+
+      # Child processes may inherit terminal redraws even though their output
+      # is captured by a pipe. Forward them as completed lines, never as cursor
+      # control sequences interleaved with the parent's dmesg.
+      def forward(line, io: $stdout)
+        text = line.to_s.scrub.gsub(ANSI, "").delete("\r").chomp
+        return if text.strip.empty?
+
+        emit_mutex.synchronize do
+          io.puts(text)
+          io.flush if io.respond_to?(:flush)
+        end
+        text
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "Trace::Dmesg.forward")
         nil
       end
 
