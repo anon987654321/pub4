@@ -40,10 +40,10 @@ module Master
       LIVE_MUSIC_PLAIN_RE = /\b(?:play|start|resume|put on|queue)\b.*\b(?:some\s+|the\s+|your\s+|my\s+)?music\b/i.freeze
       LIVE_AUDIO_STOP_RE = /\b(?:stop|kill|silence|mute|shut\s+off)\b.*\b(?:music|playing|sound|audio|synth\w*|liveset|jam)\b|\b(?:music|playing|sound|audio|synth\w*|liveset)\b.*\b(?:stop|kill|silence|mute|shut\s+off)\b/i.freeze
       LIVE_AUDIO_DIAGNOSTIC_RE = /\b(?:i\s+)?(?:can't|cannot|can\s*not|don't|do\s+not)\s+(?:hear|listen\s+to)\b|\b(?:no|nothing|zero)\s+(?:sound|audio|music)\b|\b(?:it's|it\s+is)\s+silent\b/i.freeze
-      LIVE_STYLE_RE = /\b(?:röyksopp|royksopp|melody\s+a\.m\.)\b/i.freeze
+      LIVE_STYLE_RE = /\b(?:j\s*dilla|dilla|bach|baroque|madlib|flying\s+lotus|flylo|r[öo]yksopp|melody\s+a\.m\.)\b/i.freeze
       LIVE_STYLE_VERB_RE = /\b(?:play|start|resume|switch|change|move|go|use|put\s+on|queue)\b|\b(?:sound\s*card|speakers?)\b/i.freeze
       LIVE_STYLE_QUERY_RE = /\b(?:switch|change|move|go)\b.*\bstyle\b/i.freeze
-      LIVE_STYLE_ALONE_RE = /\A\s*(?:röyksopp|royksopp|melody\s+a\.m\.)\s*[.!]?\s*\z/i.freeze
+      LIVE_STYLE_ALONE_RE = /\A\s*(?:j\s*dilla|dilla|bach|baroque|madlib|flying\s+lotus|flylo|r[öo]yksopp|melody\s+a\.m\.)\s*[.!]?\s*\z/i.freeze
       BACKGROUND_MUSIC_RE = /\b(?:play|start|resume|put on|queue)\b.*\b(?:your|some|the|my)?\s*music\b.*\bbackground\b/i.freeze
       LIVE_SYNTH_ALONE_RE = /\A\s*(?:stop|silence|enough)\b|\bstop\s+(?:the\s+)?(?:music|playing|synth\w*|improvi\w*|jam)\b|\b(?:improvi[sz]e|keep\s+playing)\b|\A\s*(?:please\s+)?play(?:\s+(?:some\s+)?music)?\s*[.!]?\s*\z/i.freeze
       POSTPRO_COMMAND_RE = /\b(?:run|use|call|invoke)\s+postpro(?:\.rb)?\b/i.freeze
@@ -358,7 +358,21 @@ module Master
         Result.ok({ output: result.value!, rendered: result.value!, media: :dilla_background })
       end
 
+      def play_live_music(arg, root: MasterPaths.root, bus: nil)
+        result = ScriptDispatch.run(
+          root:, tool: "dilla", arg: "live play #{Shellwords.escape(arg.to_s.strip)}",
+          env: { "DILLA_COLTRANE" => "0" }
+        )
+        return result unless result.ok?
+
+        Result.ok(output: result.value!, rendered: result.value!, media: :dilla_live, style: arg.to_s.strip)
+      end
+
       def live_synth(text, root: MasterPaths.root, bus: nil)
+        if (artist = face_music_artist(text)) && text.match?(/\A\s*(?:play|start|resume|put on|queue)\b/i)
+          return play_live_music(artist, root:, bus:)
+        end
+
         result = ScriptDispatch.run(
           root:, tool: "dilla", arg: "live say #{Shellwords.escape(text)}",
           env: { "DILLA_COLTRANE" => "0" }
