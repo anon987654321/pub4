@@ -277,7 +277,10 @@ module Master
 
           laws = Master.law_entries(root: Master::ROOT)
           @rule_transforms_stamp = stamp
-          @rule_transforms = laws.to_h { |law| [law["id"].to_s, law["autofix"]] if law["autofix"] }.compact
+          @rule_transforms = laws.each_with_object({}) do |law, index|
+            transform = law["autofix"]
+            index[law["id"].to_s] = transform if transform
+          end.freeze
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "Scanner.rule_transforms")
           raise "scanner: autofix transform policy unreadable: #{e.class}: #{e.message}"
