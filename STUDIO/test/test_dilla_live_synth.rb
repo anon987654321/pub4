@@ -829,4 +829,24 @@ class TestDillaLiveSynth < Minitest::Test
       assert_equal 1, stage.instance_variable_get(:@voices).size
     end
   end
+
+  def test_console_phaser_speed_respects_ffmpeg_floor
+    chain = Outboard.console_sum(speed: 0.09)
+    assert_includes chain, "aphaser=in_gain=0.5:out_gain=1.9:delay=3.2:decay=0.15:speed=0.1"
+    refute_includes chain, "speed=0.09"
+  end
+
+  def test_showcase_carves_music_low_end_without_carving_the_kick_bus
+    source = File.read(dilla("lib/livesets.rb"))
+    assert_includes source, "[dry]highpass=f=58,equalizer=f=105:t=q:w=1.0:g=-3.0,equalizer=f=180:t=q:w=1.0:g=-2.5"
+    assert_includes source, 'weights = LiveSynth.showcase? ? "1 0.10 0.60" : "1 1 1"'
+    assert_includes source, "ratio=4.8:attack=2:release=150"
+  end
+
+  def test_showcase_terminal_controls_use_the_real_tty
+    source = File.read(dilla("lib/livesets.rb"))
+    assert_includes source, 'File.open("/dev/tty", "r+")'
+    assert_includes source, 'stdin: tty'
+    refute_includes source, 'if STDIN.tty?'
+  end
 end

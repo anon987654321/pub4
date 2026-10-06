@@ -2106,7 +2106,7 @@ module LiveSynth
       "lowpass=f=4100",
       Livesets.sonitex(bits: 11, lo: 46, hi: 6200, drive: 1.06, mix: 0.70),
       Outboard.tape_machine(speed: :ips7, wow: 0.25, flutter: 0.075),
-      Outboard.console_stack(instances: 2, offset: 0.08, param: 1.0, speed: 0.09),
+      Outboard.console_stack(instances: 2, offset: 0.08, param: 1.0, speed: 0.1),
       Livesets.sonitex(bits: 10, lo: 50, hi: 5600, drive: 1.07, mix: 0.72, samples: 2),
       Outboard.tape_machine(speed: :ips7, wow: 0.17, flutter: 0.05),
       Outboard.tape_machine(speed: :ips7, wow: 0.10, flutter: 0.03),
@@ -2517,16 +2517,21 @@ module LiveSynth
     end
 
     keyboard = nil
+    tty = begin
+      File.open("/dev/tty", "r+")
+    rescue SystemCallError
+      nil
+    end
     tty_state = nil
-    if STDIN.tty?
-      state = Open3.capture2("stty", "-g").first.to_s.strip
+    if tty
+      state = Open3.capture2("stty", "-g", stdin: tty).first.to_s.strip
       unless state.empty?
         tty_state = state
-        system("stty", "-icanon", "min", "1", "time", "0", "-echo")
+        system("stty", "-icanon", "min", "1", "time", "0", "-echo", stdin: tty)
         keyboard = Thread.new do
           begin
             loop do
-              char = STDIN.getc
+              char = tty.getc
               break if char.nil?
               next unless char == " "
 
@@ -2547,9 +2552,10 @@ module LiveSynth
   ensure
     keyboard&.kill
     keyboard&.join
-    system("stty", tty_state, err: File::NULL) if tty_state && STDIN.tty?
+    system("stty", tty_state, stdin: tty, err: File::NULL) if tty_state && tty
     worker&.kill
     worker&.join
+    tty&.close
     previous.nil? ? ENV.delete("LIVE_OUT") : ENV["LIVE_OUT"] = previous
     previous_live_record.nil? ? ENV.delete("DILLA_SHOWCASE_LIVE_RECORD") : ENV["DILLA_SHOWCASE_LIVE_RECORD"] = previous_live_record
   end
@@ -3536,8 +3542,8 @@ module LiveSynth
         post.fetch("dub").gsub(/<(\d+)>/) { (beat * Regexp.last_match(1).to_i).round.to_s }
       end
       showcase_tail = LiveSynth.showcase? ? ",#{LiveSynth.showcase_tape_chain.join(",")}" : ""
-      weights = LiveSynth.showcase? ? "1 0.14 0.46" : "1 1 1"
-      "[0:a]pan=stereo|c0=c0|c1=c1[dry];[0:a]pan=stereo|c0=c2|c1=c3[wet];[0:a]pan=stereo|c0=c4|c1=c5[k];"         "[dry]#{chain}[d];[wet]#{send}[w];[d][k]sidechaincompress=threshold=0.06:ratio=3.2:attack=3:release=170:makeup=1[ducked];"         "[ducked][w][k]amix=inputs=3:weights=#{weights}:normalize=0,alimiter=limit=#{post['limit']}#{showcase_tail}[dilla_showcase_mix]"
+      weights = LiveSynth.showcase? ? "1 0.10 0.60" : "1 1 1"
+      "[0:a]pan=stereo|c0=c0|c1=c1[dry];[0:a]pan=stereo|c0=c2|c1=c3[wet];[0:a]pan=stereo|c0=c4|c1=c5[k];"         "[dry]highpass=f=58,equalizer=f=105:t=q:w=1.0:g=-3.0,equalizer=f=180:t=q:w=1.0:g=-2.5,#{chain}[d];[wet]#{send}[w];[d][k]sidechaincompress=threshold=0.06:ratio=4.8:attack=2:release=150:makeup=1[ducked];"         "[ducked][w][k]amix=inputs=3:weights=#{weights}:normalize=0,alimiter=limit=#{post['limit']}#{showcase_tail}[dilla_showcase_mix]"
     end
     def command(post, rate:, beat:, dest: nil)
       LiveSynth.through_ffmpeg(channels: 6, filter: ["-filter_complex", graph(post, beat), "-map", "[dilla_showcase_mix]"], rate:, dest:)
@@ -3602,8 +3608,8 @@ module LiveSynth
       dfam_right = Array.new(right.length, 0.0)
       @dfam.render!(dfam_left, dfam_right, clock, rate)
       left.each_index do |i|
-        left[i] += dfam_left[i] * 0.55
-        right[i] += dfam_right[i] * 0.55
+        left[i] += dfam_left[i] * 0.35
+        right[i] += dfam_right[i] * 0.35
       end
       nil
     end
