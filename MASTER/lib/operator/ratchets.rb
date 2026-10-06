@@ -672,11 +672,14 @@ def deep_rows
     # of them through a parser, which is the line the header draws.
     *name_rows,
         shell_row("selftest", "MASTER", "bundle exec rake selftest", /self-test: (\d+) violation/, 0),
+        # This ceiling belongs to the principle map, not this presentation layer.
+        principle_trace_ceiling = YAML.safe_load_file(File.join(MASTER, "data", "principle_map.yml")).fetch("rule_trace_ceiling", nil)
+
         shell_row("selfcheck", "MASTER", "bundle exec rake selfcheck", /selfcheck: (\d+) violation/, nil),
         # Deep because the rule registry is global and a suite run has test-defined
         # rules in it: measured in-process it reads high and fails a green tree.
         shell_row("principle_trace", "MASTER", "bundle exec rake lint:principle_trace",
-                  /principle_trace: (\d+)[\/ ]/, 101),
+                  /principle_trace: (\d+)[\/ ]/, principle_trace_ceiling),
         # Deep because it scans every RAILS view and stylesheet with the full
         # design rule set — the layout campaign's ratchet (2026-08-21).
         shell_row("design_baseline", "MASTER", "bundle exec ruby tools/design_baseline.rb",
