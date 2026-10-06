@@ -2151,8 +2151,35 @@ module LiveSynth
   # exact Bach score all take their turns.
   # FlyLo leads the tour: the first five scenes are source-backed cells with
   # deliberately different harmony, register and instrument families.
+  # Original FlyLo-inspired harmonic cells for the showcase. These are not
+  # transcriptions: they borrow the documented grammar (extended harmony,
+  # modal colour, chromatic side-steps and unresolved motion) and give the live
+  # improviser more material to move between.
+  FLYLO_INSPIRED_PROGRESSIONS = {
+    flylo_haze_01: { artist: "FlyLo-inspired", title: "Los Angeles haze I", bpm: 82, chords: %w[Dm9 G13 Cmaj9 Fmaj7#11] },
+    flylo_haze_02: { artist: "FlyLo-inspired", title: "Los Angeles haze II", bpm: 84, chords: %w[Bm7 Em7 Gm7 A13] },
+    flylo_haze_03: { artist: "FlyLo-inspired", title: "Los Angeles haze III", bpm: 78, chords: %w[C#m9 Bm11 Amaj9 G13] },
+    flylo_haze_04: { artist: "FlyLo-inspired", title: "Cosmogramma haze I", bpm: 76, chords: %w[Am9 D13 Gmaj9 Cmaj7#11] },
+    flylo_haze_05: { artist: "FlyLo-inspired", title: "Cosmogramma haze II", bpm: 80, chords: %w[Fm9 Bbm11 Ebmaj9 Abmaj7#11 G7alt] },
+    flylo_haze_06: { artist: "FlyLo-inspired", title: "Cosmogramma haze III", bpm: 88, chords: %w[Em9 A13 Dmaj9 Gmaj7#11] },
+    flylo_haze_07: { artist: "FlyLo-inspired", title: "Midnight chroma", bpm: 74, chords: %w[Bbm11 Dbmaj9 Fm9 A7] },
+    flylo_haze_08: { artist: "FlyLo-inspired", title: "Weightless minor", bpm: 72, chords: %w[Dm11 Gm11 Ebmaj9 Cmaj7] },
+  }.freeze
+
   SHOWCASE_SCENES = [
     ["flylo", 24.0],
+    ["flylo_haze_01", 24.0],
+    ["flylo_haze_02", 24.0],
+    ["flylo_haze_03", 24.0],
+    ["flylo_beginners_falafel", 24.0],
+    ["flylo_haze_04", 26.0],
+    ["flylo_haze_05", 26.0],
+    ["flylo_massage_situation", 26.0],
+    ["flylo_haze_06", 26.0],
+    ["flylo_king_of_the_hill", 28.0],
+    ["flylo_haze_07", 26.0],
+    ["flylo_computer_face", 24.0],
+    ["flylo_haze_08", 28.0],
     ["dilla_life", 30.0],
     ["soulquarians", 28.0],
     ["dangelo_spanish_joint", 34.0],
@@ -2250,7 +2277,7 @@ module LiveSynth
 
   def showcase_scenes(mode = nil)
     key = mode.to_s.strip.downcase
-    return SHOWCASE_SCENES if key.empty?
+    return SHOWCASE_MODES.fetch("flylo") if key.empty?
 
     SHOWCASE_MODES.fetch(key) { abort "live0: no showcase mode #{mode.inspect} — have #{SHOWCASE_MODES.keys.join(', ')}" }
   end
@@ -2372,9 +2399,22 @@ module LiveSynth
       [
         Improviser.new(rng:, reference: "flylo_camel_documented", family: "prophet"),
         [[5.0, { "toggle" => "lead", "on" => true }],
-         [9.0, { "lead" => "fm", "preset" => "glass" }],
+         [9.0, { "lead" => "fm", "preset" => "drone" }],
          [15.0, { "patch" => "prophet_pad" }],
          [22.0, { "knob" => "detune", "amount" => 0.08, "seconds" => 4.0 }]],
+      ]
+    when "flylo_haze_01", "flylo_haze_02", "flylo_haze_03", "flylo_haze_04", "flylo_haze_05", "flylo_haze_06", "flylo_haze_07", "flylo_haze_08"
+      [
+        Improviser.new(
+          rng:,
+          reference: name,
+          family: %w[flylo_haze_02 flylo_haze_06].include?(name) ? "moog" : "prophet"
+        ),
+        [[6.0, { "lead" => "fm", "preset" => (rng.rand < 0.5 ? "drone" : "chaos") }],
+         [11.0, { "patch" => (rng.rand < 0.5 ? "prophet_pad" : "moog_strings") }],
+         [16.0, { "knob" => "cutoff", "amount" => -0.10, "seconds" => 4.0 }],
+         [21.0, { "toggle" => "lead", "on" => false }],
+         [24.0, { "toggle" => "lead", "on" => true }]],
       ]
     when "flylo_beginners_falafel"
       [
@@ -2513,7 +2553,7 @@ module LiveSynth
   ensure
     keyboard&.kill
     keyboard&.join
-    system("stty", tty_state) if tty_state
+    system("stty", tty_state, err: File::NULL) if tty_state && STDIN.tty?
     worker&.kill
     worker&.join
     previous.nil? ? ENV.delete("LIVE_OUT") : ENV["LIVE_OUT"] = previous
@@ -2586,6 +2626,11 @@ module LiveSynth
         data["bpm"] ||= data["bpm_held"]
         return data
       end
+    end
+
+    if defined?(FLYLO_INSPIRED_PROGRESSIONS)
+      entry = FLYLO_INSPIRED_PROGRESSIONS[name.to_sym]
+      return entry.to_h { |key, value| [key.to_s, value] } if entry
     end
 
     @documented_progressions ||= YAML.safe_load_file(File.expand_path("../data/dilla_reference.yml", __dir__)).fetch("documented_progressions")
@@ -3167,14 +3212,14 @@ module LiveSynth
       late = @c["bass_late_seconds"]
       at = @next_at
       if LiveSynth.showcase?
-        gain = 0.012
-        stage.note(root, spec, at + 0.018, 0.24 * @beat, gain, :bass)
-        if @rng.rand < 0.06
-          stage.note(root + 7, spec, at + (2.5 * @beat) + late, 0.12 * @beat, gain * 0.18, :bass)
+        gain = 0.006
+        stage.note(root, spec, at + 0.018, 0.18 * @beat, gain, :bass)
+        if @rng.rand < 0.05
+          stage.note(root + 7, spec, at + (2.5 * @beat) + late, 0.10 * @beat, gain * 0.12, :bass)
         end
         return unless bars == 2 && @rng.rand < 0.12
 
-        stage.note(root, spec, at + (4 * @beat) + 0.018, 0.18 * @beat, gain * 0.50, :bass)
+        stage.note(root, spec, at + (4 * @beat) + 0.018, 0.14 * @beat, gain * 0.35, :bass)
         return
       end
 
@@ -3416,7 +3461,7 @@ module LiveSynth
         post.fetch("dub").gsub(/<(\d+)>/) { (beat * Regexp.last_match(1).to_i).round.to_s }
       end
       showcase_tail = LiveSynth.showcase? ? ",#{LiveSynth.showcase_tape_chain.join(",")}" : ""
-      weights = LiveSynth.showcase? ? "1 0.24 1.05" : "1 1 1"
+      weights = LiveSynth.showcase? ? "1 0.18 0.50" : "1 1 1"
       "[0:a]pan=stereo|c0=c0|c1=c1[dry];[0:a]pan=stereo|c0=c2|c1=c3[wet];[0:a]pan=stereo|c0=c4|c1=c5[k];"         "[dry]#{chain}[d];[wet]#{send}[w];[d][k]sidechaincompress=threshold=0.08:ratio=2.2:attack=5:release=140:makeup=1[ducked];"         "[ducked][w][k]amix=inputs=3:weights=#{weights}:normalize=0,alimiter=limit=#{post['limit']}#{showcase_tail}[dilla_showcase_mix]"
     end
     def command(post, rate:, beat:, dest: nil)

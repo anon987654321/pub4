@@ -309,6 +309,15 @@ class TestDillaLiveSynth < Minitest::Test
     assert_equal expected, actual
   end
 
+  def test_flylo_inspired_progressions_are_multi_chord_and_voiced
+    %w[flylo_haze_01 flylo_haze_02 flylo_haze_03 flylo_haze_04 flylo_haze_05 flylo_haze_06 flylo_haze_07 flylo_haze_08].each do |name|
+      source = LiveSynth.documented_progression(name)
+      assert_equal "FlyLo-inspired", source.fetch("artist")
+      assert_operator source.fetch("chords").length, :>=, 4
+      assert source.fetch("chords").all? { |symbol| resolve_pad_chord_symbol(symbol) }, name
+    end
+  end
+
   def test_dangelo_showcase_uses_rich_artist_references
     source = File.read(dilla("lib/livesets.rb"))
     block = source[source.index('when "dangelo_root"')...source.index('when "flylo"')]
@@ -342,7 +351,7 @@ class TestDillaLiveSynth < Minitest::Test
     source = File.read(dilla("lib/livesets.rb"))
     assert_includes source, 'aecho=0.85:0.18:375:0.06,volume=0.20'
     refute_includes source, '/<(d+)>/'
-    assert_includes source, 'weights = LiveSynth.showcase? ? "1 0.32 0.72" : "1 1 1"'
+    assert_includes source, 'weights = LiveSynth.showcase? ? "1 0.18 0.50" : "1 1 1"'
     refute_includes source, 'aecho=0.85:0.9:<750>|<1000>|<1500>:0.55|0.45|0.35'
     refute_includes source, 'aecho=0.8:0.85:<375>:0.5'
   end
@@ -355,9 +364,9 @@ class TestDillaLiveSynth < Minitest::Test
 
   def test_showcase_bass_is_quiet_and_sparse
     source = File.read(dilla("lib/livesets.rb"))
-    assert_includes source, "gain = 0.012"
-    assert_includes source, "if @rng.rand < 0.08"
-    assert_includes source, "0.24 * @beat"
+    assert_includes source, "gain = 0.006"
+    assert_includes source, "if @rng.rand < 0.05"
+    assert_includes source, "0.18 * @beat"
   end
 
 
@@ -387,7 +396,9 @@ class TestDillaLiveSynth < Minitest::Test
   end
 
   def test_showcase_modes_select_existing_feature_scenes
-    assert_equal %w[flylo flylo_computer_face flylo_king_of_the_hill], LiveSynth.showcase_scenes("flylo").map(&:first)
+    assert_operator LiveSynth.showcase_scenes("flylo").length, :>=, 11
+    assert_includes LiveSynth.showcase_scenes("flylo").map(&:first), "flylo_haze_01"
+    assert_includes LiveSynth.showcase_scenes("flylo").map(&:first), "flylo_haze_08"
     assert_equal %w[bach], LiveSynth.showcase_scenes("bach").map(&:first)
   end
 

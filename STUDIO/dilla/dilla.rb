@@ -45156,7 +45156,7 @@ if __FILE__ == $PROGRAM_NAME
   if ARGV.empty?
     ENV["DILLA_SHOWCASE_OUT"] ||= File.join(__dir__, "dilla.wav")
     ENV["DILLA_SHOWCASE_ONCE"] ||= "1"
-    live!(["showcase"])
+    live!(["showcase", "mode=flylo"])
     exit
   end
 
