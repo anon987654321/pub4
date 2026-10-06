@@ -62,6 +62,40 @@ class TestFixProtocol < Minitest::Test
     assert_equal "semantic_model_repair", entry.fetch("fix_strategy")
   end
 
+  def test_strategy_decision_tree_covers_all_four_paths
+    strategy = Class.new do
+      attr_reader :practice
+
+      def initialize(semantic:, practice:, detector:)
+        @semantic = semantic
+        @practice = practice
+        @detector = detector
+      end
+
+      def semantic? = @semantic
+      def scannable? = @detector
+    end
+
+    semantic = strategy.new(semantic: true, practice: "work guidance", detector: true)
+    practice = strategy.new(semantic: false, practice: "work guidance", detector: false)
+    detector = strategy.new(semantic: false, practice: "", detector: true)
+    residual = strategy.new(semantic: false, practice: "", detector: false)
+
+    protocol = Master::Fix::Protocol
+
+    assert_equal "semantic_model_repair", protocol.strategy_for(semantic)
+    assert_equal "semantic_rescan_plus_behavior_or_test", protocol.verification_for(semantic)
+
+    assert_equal "conduct_only", protocol.strategy_for(practice)
+    assert_equal "manual_conduct_evidence", protocol.verification_for(practice)
+
+    assert_equal "deterministic_or_ast_or_model_repair", protocol.strategy_for(detector)
+    assert_equal "rule_rescan_plus_behavior_or_test", protocol.verification_for(detector)
+
+    assert_equal "model_or_human_analysis", protocol.strategy_for(residual)
+    assert_equal "rule_rescan_plus_behavior_or_test", protocol.verification_for(residual)
+  end
+
   def test_render_has_live_corpus_and_terminal_states
     Dir.mktmpdir("fix-protocol") do |root|
       File.write(File.join(root, "thing.rb"), "puts :ok\n")
