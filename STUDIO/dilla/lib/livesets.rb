@@ -2073,7 +2073,7 @@ module LiveSynth
 
   def stream = config.fetch("stream")
 
-  SHOWCASE_TEMPO_SCALE = 0.90
+  SHOWCASE_TEMPO_SCALE = 0.84
 
   def showcase? = ENV["DILLA_SHOWCASE"] == "1"
 
@@ -2090,9 +2090,9 @@ module LiveSynth
       "aresample=#{stream.fetch("rate")}",
       "atempo=#{(1.0 / SHOWCASE_PITCH_RATIO).round(6)}",
       Outboard.tape_machine(speed: :ips7, wow: 0.18, flutter: 0.07),
-      "acompressor=threshold=-24dB:ratio=1.45:attack=30:release=260:makeup=0.8",
+      "acompressor=threshold=-24dB:ratio=1.45:attack=30:release=260:makeup=1.0",
       "equalizer=f=2600:t=o:w=1.6:g=-2.6",
-      "lowpass=f=6800",
+      "lowpass=f=6000",
       Livesets.vcs(depth: 0.42, smear: 2.1),
       Livesets.sonitex(bits: 12, lo: 36, hi: 9800, drive: 1.08, mix: 0.68),
       Livesets.vcs(depth: 0.34, smear: 2.8),
@@ -2102,6 +2102,7 @@ module LiveSynth
       Livesets.sonitex(bits: 10, lo: 44, hi: 7600, drive: 1.15, mix: 0.88, samples: 2),
       Livesets.vcs(depth: 0.30, smear: 3.4),
       Livesets.sonitex(bits: 10, lo: 48, hi: 6800, drive: 1.18, mix: 0.92, samples: 2),
+      Outboard.tape_machine(speed: :ips7, wow: 0.11, flutter: 0.04),
       "aecho=0.82:0.72:82|164:0.16|0.09",
       "loudnorm=I=-14:LRA=9:TP=-1.0:linear=false",
     ].freeze
@@ -2145,28 +2146,32 @@ module LiveSynth
   # FlyLo leads the tour: the first five scenes are source-backed cells with
   # deliberately different harmony, register and instrument families.
   SHOWCASE_SCENES = [
-    ["flylo", 30.0],
-    ["flylo_beginners_falafel", 28.0],
-    ["flylo_massage_situation", 26.0],
-    ["flylo_king_of_the_hill", 34.0],
+    ["dilla_life", 30.0],
+    ["dangelo_spanish_joint", 34.0],
+    ["moog_dark", 28.0],
+    ["dangelo_root", 32.0],
+    ["flylo", 24.0],
+    ["dilla_players", 30.0],
+    ["dangelo_another_life", 36.0],
+    ["opus3_strings", 10.0],
+    ["dangelo_untitled", 34.0],
+    ["moog_dfam", 30.0],
+    ["dangelo_brown_sugar", 32.0],
+    ["madlib", 24.0],
+    ["dilla_so_far_to_go", 28.0],
+    ["dangelo_really_love", 34.0],
+    ["flylo_king_of_the_hill", 28.0],
+    ["dangelo_sugah_daddy", 30.0],
+    ["matriarch_stabs", 10.0],
+    ["dangelo_ballad", 30.0],
+    ["grandmother_sweep", 10.0],
+    ["madlib_figaro", 24.0],
+    ["royksopp", 20.0],
+    ["memorymoog_organ", 10.0],
+    ["vox_humana", 10.0],
+    ["soft_reed", 10.0],
+    ["glass_bell", 10.0],
     ["flylo_computer_face", 24.0],
-    ["dilla_life", 20.0],
-    ["dilla_players", 24.0],
-    ["dilla_so_far_to_go", 20.0],
-    ["soulquarians", 18.0],
-    ["dangelo_root", 26.0],
-    ["dangelo_spanish_joint", 26.0],
-    ["dangelo_another_life", 30.0],
-    ["dangelo_ballad", 24.0],
-    ["madlib", 18.0],
-    ["madlib_figaro", 18.0],
-    ["royksopp", 16.0],
-    ["moog_dfam", 28.0],
-    ["moog_dark", 24.0],
-    ["memorymoog_organ", 8.0],
-    ["vox_humana", 8.0],
-    ["soft_reed", 8.0],
-    ["glass_bell", 8.0],
     ["bach", 30.0],
   ].freeze
 
@@ -2245,6 +2250,35 @@ module LiveSynth
         [[8.0, { "patch" => "e_piano" }],
          [15.0, { "knob" => "cutoff", "amount" => 0.1, "seconds" => 5.0 }],
          [19.0, { "lead" => "fm", "preset" => "drone" }]],
+      ]
+    when "dangelo_untitled"
+      [
+        Improviser.new(rng:, reference: "untitled_d_mixolydian_vamp", family: "rhodes"),
+        [[7.0, { "patch" => "rhodes_tine" }],
+         [14.0, { "lead" => "fm", "preset" => "drone" }],
+         [22.0, { "knob" => "cutoff", "amount" => -0.1, "seconds" => 6.0 }]],
+      ]
+    when "dangelo_brown_sugar"
+      [
+        Improviser.new(rng:, reference: "brown_sugar_funk_vamp", family: "rhodes"),
+        [[6.0, { "patch" => "e_piano" }],
+         [12.0, { "lead" => "fm", "preset" => "bell" }],
+         [20.0, { "knob" => "resonance", "amount" => 0.1, "seconds" => 5.0 }]],
+      ]
+    when "dangelo_really_love"
+      [
+        Improviser.new(rng:, reference: "really_love_bossa_broken", family: "rhodes"),
+        [[8.0, { "toggle" => "drums", "on" => false }],
+         [15.0, { "patch" => "soft_reed" }],
+         [23.0, { "toggle" => "drums", "on" => true }],
+         [28.0, { "lead" => "fm", "preset" => "drone" }]],
+      ]
+    when "dangelo_sugah_daddy"
+      [
+        Improviser.new(rng:, reference: "sugah_daddy_planing", family: "rhodes"),
+        [[5.0, { "patch" => "e_piano" }],
+         [11.0, { "lead" => "fm", "preset" => "bell" }],
+         [19.0, { "knob" => "cutoff", "amount" => -0.12, "seconds" => 5.0 }]],
       ]
     when "flylo"
       [

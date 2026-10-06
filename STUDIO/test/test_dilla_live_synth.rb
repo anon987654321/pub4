@@ -260,15 +260,22 @@ class TestDillaLiveSynth < Minitest::Test
     assert_includes LiveSynth.showcase_tape_chain, Outboard.console_stack(instances: 3, offset: 0.10, param: 1.2, speed: 0.1)
   end
 
+  def test_showcase_patch_scenes_resolve_to_real_patches
+    patch_scenes = %w[opus3_strings matriarch_stabs grandmother_sweep memorymoog_organ vox_humana soft_reed glass_bell]
+    patch_scenes.each { |name| assert LiveSynth::Patches.name!(name), name }
+    patch_scenes.each { |name| assert LiveSynth::Patches.spec(name), name }
+  end
+
   def test_showcase_covers_the_live_feature_tour
     scenes = LiveSynth::SHOWCASE_SCENES.map(&:first)
     assert_equal %w[
-      flylo flylo_beginners_falafel flylo_massage_situation
-      flylo_king_of_the_hill flylo_computer_face
-      dilla_life dilla_players dilla_so_far_to_go soulquarians
-      dangelo_root dangelo_spanish_joint dangelo_another_life dangelo_ballad
-      madlib madlib_figaro royksopp
-      moog_dfam moog_dark memorymoog_organ vox_humana soft_reed glass_bell bach
+      dilla_life dangelo_spanish_joint moog_dark dangelo_root flylo
+      dilla_players dangelo_another_life opus3_strings dangelo_untitled
+      moog_dfam dangelo_brown_sugar madlib dilla_so_far_to_go
+      dangelo_really_love flylo_king_of_the_hill dangelo_sugah_daddy
+      matriarch_stabs dangelo_ballad grandmother_sweep madlib_figaro
+      royksopp memorymoog_organ vox_humana soft_reed glass_bell
+      flylo_computer_face bach
     ], scenes
     source = File.read(dilla("lib/livesets.rb"))
     assert_includes source, 'reference: "dilla_life"'
@@ -292,6 +299,8 @@ class TestDillaLiveSynth < Minitest::Test
   def test_showcase_tape_chain_calls_existing_livesets_audio_builders
     chain = LiveSynth.showcase_tape_chain
     assert_operator chain.count { |row| row.include?("aphaser=") }, :>, 0
+    refute_includes chain.join(","), "makeup=0.8"
+    assert_includes chain.join(","), "makeup=1.0"
     assert_operator chain.count { |row| row.include?("acrusher=") }, :>, 0
     assert_operator chain.grep(/^(volume=|.*alimiter)/).length, :>, 0
   end
