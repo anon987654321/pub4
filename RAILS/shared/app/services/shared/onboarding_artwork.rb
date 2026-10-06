@@ -15,12 +15,12 @@ module Shared
       "oslo" => "Oslo harbor, trams, restrained Nordic architecture, waterfront winter light and ordinary city streets",
       "stavanger" => "white wooden houses, harbor warehouses, North Sea weather and compact pedestrian streets",
       "trondheim" => "Nidelva river, wooden wharves, bicycle culture, low Nordic buildings and cool coastal light",
-      "tromso" => "harbor, compact wooden buildings, Arctic weather, mountain silhouettes and long blue-hour light"
+      "tromso" => "harbor, compact wooden buildings, Arctic weather, mountain silhouettes and long blue-hour light",
     }.freeze
 
     SURFACE_DIRECTIONS = {
       "brgen" => "observational civic magazine illustration about everyday city life",
-      "amber" => "refined fashion editorial illustration about clothes worn in ordinary city life"
+      "amber" => "refined fashion editorial illustration about clothes worn in ordinary city life",
     }.freeze
 
     class << self

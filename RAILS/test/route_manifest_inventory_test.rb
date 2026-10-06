@@ -42,7 +42,6 @@ class RouteManifestInventoryTest < Minitest::Test
     end
   end
 
-
   def test_manifest_covers_every_app_the_inventory_probes
     assert_equal %w[amber brgen bsdports], manifest.fetch("apps").keys.sort
     manifest["apps"].each_value do |row|

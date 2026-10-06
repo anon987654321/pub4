@@ -33,7 +33,7 @@ class HealthChecksTest < Minitest::Test
 
   def test_queue_failure_summary_names_each_failing_job
     rows = [
-      { class_name: "ExampleJob", queue_name: "bulk", failures: 3, last_failed_at: "2026-01-01 04:00:00" }
+      { class_name: "ExampleJob", queue_name: "bulk", failures: 3, last_failed_at: "2026-01-01 04:00:00" },
     ]
     summary = Shared::QueueFailureSummary.call(rows, app: "brgen")
 

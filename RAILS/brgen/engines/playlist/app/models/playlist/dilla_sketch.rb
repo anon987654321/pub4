@@ -38,7 +38,6 @@ class Playlist::DillaSketch < ApplicationRecord
     )
   end
 
-
   def enqueue_render!(publish: true)
     update!(render_status: "queued", render_error: nil)
     DillaRenderJob.perform_later(id, publish: publish)

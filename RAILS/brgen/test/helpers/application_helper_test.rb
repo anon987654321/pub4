@@ -327,12 +327,12 @@ class ApplicationHelperTest < ActionView::TestCase
     Brgen::DomainRegistry::ENTRIES.each do |entry|
       Current.domain = entry.domain
       label = brand_mark_fragments[:label]
-  
+
       assert_equal entry.domain.split(".").first, label, "the mark on #{entry.domain} should be its name alone"
       refute_includes label, ".", "the mark on #{entry.domain} shows a dot-TLD"
     end
   end
-  
+
   # Every city is a peer — the mark leaves for whichever city the request
   # resolved to, never a hardcoded brgen.no. dating renders no primary nav, so
   # on that vertical this link is the only way off the page.

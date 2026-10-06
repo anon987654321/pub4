@@ -35,7 +35,6 @@ class MarketplacePayoutTest < ActiveSupport::TestCase
     end
   end
 
-
   test "delivering a Dintero order does not create a legacy payout" do
     order = @listing.orders.create!(
       buyer: @buyer,

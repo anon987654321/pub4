@@ -66,7 +66,7 @@ module Shared
           "target" => {
             "namespace" => "android_app",
             "package_name" => app.android_package,
-            "sha256_cert_fingerprints" => fingerprints
+            "sha256_cert_fingerprints" => fingerprints,
           }
         }
       ]) + "\n"
@@ -86,7 +86,7 @@ module Shared
           "details" => [
             {
               "appID" => "#{team_id}.#{app.ios_bundle_id}",
-              "paths" => ["*"]
+              "paths" => ["*"],
             }
           ]
         }

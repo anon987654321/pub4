@@ -119,8 +119,6 @@ class Marketplace::CheckoutsControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
-
-
   test "basket checkout reaches the PSP with a recalculated total" do
     sign_in(@buyer)
     @buyer.marketplace_addresses.create!(

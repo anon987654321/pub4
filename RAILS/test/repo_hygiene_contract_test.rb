@@ -147,7 +147,6 @@ class RepoHygieneContractTest < Minitest::Test
     end
   end
 
-
   def test_rails_has_no_retired_tools_requires
     offenders = Dir.glob("#{ROOT}/**/*.rb").flat_map do |path|
       File.readlines(path, encoding: "UTF-8").each_with_index.filter_map do |line, index|

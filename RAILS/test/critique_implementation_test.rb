@@ -85,7 +85,6 @@ class CritiqueImplementationTest < Minitest::Test
     assert_includes home_feed, 'surface: "brgen"'
   end
 
-
   def test_brgen_post_detail_uses_the_shared_vote_rail_beside_the_title
     show = read("brgen/app/views/posts/show.html.erb")
     partial = read("shared/app/views/shared/_post_vote_rail.html.erb")
@@ -210,7 +209,6 @@ class CritiqueImplementationTest < Minitest::Test
     assert_includes item, 'class="commerce-fit-source"'
     assert_includes item, 'class="commerce-fit-reasons"'
   end
-
 
   def test_brgen_new_post_is_progressive_and_photo_first
     form = read("brgen/app/views/posts/new.html.erb")

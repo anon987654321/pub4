@@ -149,8 +149,6 @@ class Marketplace::WebhooksControllerTest < ActionDispatch::IntegrationTest
     ENV["DINTERO_ACCOUNT_ID"] = prior_account
   end
 
-
-
   test "dintero rejects mismatched unsigned identity headers" do
     secret = "dintero_hook"
     prior = ENV["DINTERO_HOOK_SECRET"]

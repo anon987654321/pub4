@@ -15,7 +15,7 @@ module Shared
           "deploymentTarget" => { "iOS" => "16.0" },
           "developmentLanguage" => "en",
           "xcodeVersion" => "26.0",
-          "minimumXcodeGenVersion" => "2.46.0"
+          "minimumXcodeGenVersion" => "2.46.0",
         },
         "configs" => apps.to_h { |app| [ config_name(app), "release" ] },
         "targets" => { "Pub4Mobile" => target(apps) },
@@ -37,7 +37,7 @@ module Shared
             "CODE_SIGN_ENTITLEMENTS" => "../Pub4Mobile.entitlements",
             "CODE_SIGN_STYLE" => "Automatic",
             "MARKETING_VERSION" => "1.0.0",
-            "CURRENT_PROJECT_VERSION" => "1"
+            "CURRENT_PROJECT_VERSION" => "1",
           },
           "configs" => apps.to_h { |app| [ config_name(app), app_settings(app) ] }
         }
@@ -49,7 +49,7 @@ module Shared
         "PRODUCT_BUNDLE_IDENTIFIER" => app.ios_bundle_id,
         "MOBILE_APP_URL" => app.url,
         "MOBILE_APP_HOST" => app.host,
-        "MOBILE_APP_NAME" => app.name
+        "MOBILE_APP_NAME" => app.name,
       }
     end
 
@@ -57,7 +57,7 @@ module Shared
       {
         "build" => { "targets" => { "Pub4Mobile" => "all" } },
         "run" => { "config" => name },
-        "archive" => { "config" => name }
+        "archive" => { "config" => name },
       }
     end
 

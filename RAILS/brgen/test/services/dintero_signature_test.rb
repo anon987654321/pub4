@@ -52,7 +52,6 @@ class DinteroSignatureTest < ActiveSupport::TestCase
     assert_not Marketplace::Payments::DinteroSignature.valid_callback?(header:, request:)
   end
 
-
   test "callback canonicalization sorts duplicate query keys by value" do
     request = Struct.new(:request_method, :url).new(
       "GET",
@@ -73,7 +72,6 @@ class DinteroSignatureTest < ActiveSupport::TestCase
       request: request
     )
   end
-
 
   test "missing webhook secret rejects even with a validly shaped digest" do
     ENV.delete("DINTERO_HOOK_SECRET")

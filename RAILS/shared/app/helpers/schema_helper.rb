@@ -240,7 +240,6 @@ module SchemaHelper
     data.compact
   end
 
-
   def event_schema(event)
     starts_at = event.try(:starts_at)
     ends_at = event.try(:ends_at)

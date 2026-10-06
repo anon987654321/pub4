@@ -146,7 +146,6 @@ class DinteroCheckoutTest < ActiveSupport::TestCase
     end
   end
 
-
   test "refund reuses the persisted split contract" do
     seller = Store.new(
       dintero_payout_destination_id: "seller-1",
@@ -215,7 +214,6 @@ class DinteroCheckoutTest < ActiveSupport::TestCase
     )
     assert_equal "paid", payable.payment_status
   end
-
 
   test "capture refuses when seller payout destination changes after authorization" do
     seller = Store.new(

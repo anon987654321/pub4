@@ -38,7 +38,6 @@ class DraftsControllerTest < ActionDispatch::IntegrationTest
   end
 end
 
-
   def test_update_redacts_credential_shaped_fields
     patch draft_path("post_new"), params: {
       title: "Half-written",

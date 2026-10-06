@@ -3,6 +3,7 @@
 require "set"
 require "time"
 require_relative "run_journal"
+require_relative "reachability"
 require_relative "fix_loop/committer"
 require_relative "fix_loop/council_round"
 require_relative "fix_loop/llm_router"
@@ -71,6 +72,7 @@ module Master
         @run_mutex = Mutex.new
         @git = git || Io::GitOperations.new(root)
         @run_journal = RunJournal.new(root:, bus:)
+        @reachability = Reachability.new(root: @root, bus:)
         @transformation_plan = TransformationPlan.new(root: Master::ROOT)
         @wishlist = Wishlist.new(root: @root, agent: @agent, event_bus: @bus)
 
@@ -216,6 +218,8 @@ module Master
         deadline = Ground::Reliability::Deadline.new(journal["remaining_seconds"].to_f)
         start_pass = @run_journal.next_pass(journal)
         @bus&.publish("fix_loop:recovered", run_id:, start_pass:, target:) if journal["resumed"]
+
+        @reachability.verify!(target, files:)
 
         resumed = resume_active_transaction(journal:, run_id:, start_pass:)
         return resumed.tap { mission.fail!(resumed.message) } if resumed.err?

@@ -34,7 +34,7 @@ module Shared
       actor = Current.user&.id || "anonymous"
       digest = Digest::SHA256.hexdigest(
         [Rails.application.class.module_parent_name, actor, request.request_method, request.path,
-         request.headers[KEY_HEADER]].join("\0")
+         request.headers[KEY_HEADER]].join("\0"),
       )
       "pub4:idempotency:v1:#{digest}"
     end

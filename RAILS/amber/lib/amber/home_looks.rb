@@ -11,7 +11,7 @@ module Amber
   # reason, and so a look costs no image request.
   module HomeLooks
     COUNT = 4
-    
+
     # A look with no outfit name of its own takes the name for its place, so
     # the page never shows a numbered placeholder.
     NAME_KEYS = %i[weekend studio dinner morning].freeze

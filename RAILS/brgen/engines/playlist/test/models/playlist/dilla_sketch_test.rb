@@ -39,7 +39,6 @@ class Playlist::DillaSketchTest < ActiveSupport::TestCase
     assert_equal [ "jazz", 4 ], mixed.to_lab_hash.values_at(:style, :bars)
   end
 
-
   test "queueing a render clears the last error and enqueues the job" do
     sketch = Playlist::DillaSketch.create!(user: @user, name: "Render", state: { "swing" => 0.5 },
                                            render_status: "failed", render_error: "timeout")

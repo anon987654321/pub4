@@ -238,5 +238,4 @@ class WardrobeAi
     fallback_response(prompt)
   end
 
-
 end
