@@ -12,6 +12,7 @@ class TestDillaEntrypoint < Minitest::Test
     assert_operator source.bytesize, :>, 100_000
     assert_includes source, "def live!(argv)"
     assert_includes source, "LIVE_SYNTH_VERBS"
+    assert_match(/DILLA_PHYSICS/, source) if source.include?("SHOWCASE_DEFAULTS")
     assert_match(/LIVE_SYNTH_VERBS = %w\[.*\bplay\b.*\]\.freeze/, source)
     assert_includes source, 'mode=flylo'
     assert_includes source, 'dilla.wav'

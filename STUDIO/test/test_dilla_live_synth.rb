@@ -245,7 +245,9 @@ class TestDillaLiveSynth < Minitest::Test
       assert_includes command.last, Shellwords.escape(destination)
       assert_includes command.last, "-f wav"
       assert_includes command.last, "-f s16le"
-      assert_equal 2, command.last.scan("-map").length
+      assert_includes command.last, "tee"
+      assert_equal 1, command.last.scan("-map").length
+      assert_includes command.last, Shellwords.escape("#{destination}.s16le")
       assert_includes command.last, "/opt/homebrew/bin/play"
     end
   ensure
@@ -450,7 +452,7 @@ class TestDillaLiveSynth < Minitest::Test
 
   def test_showcase_low_end_is_sparse_and_pushed_into_the_kick
     source = File.read(dilla("lib/livesets.rb"))
-    assert_includes source, "SHOWCASE_BASS_GAIN = 0.00018"
+    assert_includes source, "SHOWCASE_BASS_GAIN = Float(ENV.fetch(\"DILLA_SHOWCASE_BASS_GAIN\", \"0.00009\"))"
     assert_includes source, "SHOWCASE_BASS_EVERY = 2"
     assert_includes source, 'highpass=f=66'
     assert_includes source, 'highpass=f=68,equalizer=f=105'
@@ -596,6 +598,16 @@ class TestDillaLiveSynth < Minitest::Test
       assert_includes names, name
     end
     assert_operator scenes.each_cons(2).count { |a, b| a.first.split("_").first != b.first.split("_").first }, :>=, 8
+  end
+
+  def test_bare_dilla_showcase_defaults_are_explicit
+    source = File.read(dilla("dilla.rb"))
+    assert_includes source, "DILLA_PHYSICS\" => \"1\""
+    assert_includes source, "DILLA_EFFECTS\" => \"1\""
+    assert_includes source, "DILLA_SHOWCASE_DARK\" => \"1\""
+    assert_includes source, "DILLA_SHOWCASE_TAPE\" => \"1\""
+    assert_match(/DILLA_SHOWCASE_TEMPO_SCALE.*0\.76/, source)
+    assert_match(/live!\(\[\"showcase\", \"mode=all\"\]\)/, source)
   end
 
   def test_showcase_progressions_use_the_pocket_bass
