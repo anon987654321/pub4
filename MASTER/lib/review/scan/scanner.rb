@@ -46,13 +46,16 @@ module Master
           @file_sleep_s = file_sleep_s.to_f
           @file_processor = FileProcessor.new(event_bus: @bus)
           @stream_autofixes = []
+          @rule_dispatch = build_rule_dispatch(@rules)
         end
 
         attr_reader :stream_autofixes
 
         def scan(path, depth: :deep, rules: nil)
           validate_depth!(depth)
-          @file_processor.call(path:, depth:, rules: rules || active_rules(depth))
+          rule_set = rules || active_rules(depth)
+          rule_set = dispatched_rules(path, rule_set) if rules.nil?
+          @file_processor.call(path:, depth:, rules: rule_set)
         end
 
         def scan_dir(dir, depth: :deep, glob: SCAN_GLOB, stream: false, autofix: false, autofix_root: nil, rules: nil)
@@ -91,6 +94,7 @@ module Master
 
         def add_rule(rule)
           @rules << rule
+          @rule_dispatch = build_rule_dispatch(@rules)
           self
         end
 
@@ -232,6 +236,40 @@ module Master
 
         def active_rules(_depth)
           @rules
+        end
+
+        # RuleDSL's applies_to scope is already authoritative inside the rule.
+        # Use the same declaration one level earlier so a JavaScript file does
+        # not traverse every Ruby-only rule, and a Ruby file does not traverse
+        # the CSS/HTML population. Rules without an explicit scope remain in every
+        # bucket. Explicit rule arrays passed by callers keep the old full set.
+        def dispatched_rules(path, rule_set)
+          return rule_set unless rule_set.equal?(@rules)
+          language = Master.language_for(path)
+          return rule_set if language.to_s.empty?
+
+          @rule_dispatch.fetch(language.to_s, rule_set)
+        end
+
+        def build_rule_dispatch(rules)
+          entries = []
+          languages = Master::FILE_LANGUAGE_MAP.values.compact.map(&:to_s).uniq
+          languages << "javascript"
+          Array(rules).each do |rule|
+            declared = if rule.class.respond_to?(:dsl_langs)
+              Array(rule.class.dsl_langs).filter_map { |lang| lang.to_s unless lang.to_s.empty? }
+            else
+              []
+            end
+            entries << [rule, declared]
+            languages.concat(declared)
+          end
+
+          languages.uniq.each_with_object({}) do |language, buckets|
+            buckets[language] = entries.filter_map do |rule, declared|
+              rule if declared.empty? || declared.include?(language)
+            end.freeze
+          end.freeze
         end
 
         def prediction_thresholds
