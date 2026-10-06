@@ -47,6 +47,18 @@ class FaceSpeechRuntimeSpec < Minitest::Test
     refute_includes runtime, "enh_tts_audio_stream"
   end
 
+  def test_council_speech_never_bypasses_the_serial_tts_queue
+    source = read("web/public/face.part5.txt")
+    bundle = read("web/public/face.runtime.js")
+
+    expected = "enqueueSpeech(text, { quirky: false });"
+    assert_includes source, expected
+    assert_includes bundle, expected
+    refute_includes source, "playDuo([[guardVoice(voice), text]]"
+    refute_includes bundle, "playDuo([[guardVoice(voice), text]]"
+  end
+
+
   def test_no_face_part_exists_outside_the_build_manifest
     rake = read("web/lib/tasks/face_runtime.rake")
     # The task names parts two ways: a range it maps over, and explicit
