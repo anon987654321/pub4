@@ -44618,6 +44618,10 @@ DISPATCH = {
   "livestream" => -> { livestream(ARGV.shift, ARGV.shift) },
   "separate" => -> { separate(ARGV.shift) },
   "render" => -> { render(ARGV.shift || File.join(OUTPUT_DIR, "full_track.mp3")) },
+  "video" => lambda {
+    require_relative "lib/radio_video"
+    RadioVideo.run(ARGV)
+  },
   "verify" => -> { verify(ARGV.shift || File.join(OUTPUT_DIR, "full_track.mp3")) },
 # `timing <file> [bpm]` -- where the drums actually land, per voice, against
 # the sixteenth grid. Writes <file>.timing.json and, if that file already
