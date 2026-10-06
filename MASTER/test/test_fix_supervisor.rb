@@ -114,6 +114,24 @@ class FixSupervisorTest < Minitest::Test
     end
   end
 
+  def test_same_process_can_advance_a_sequential_target_queue
+    Dir.mktmpdir do |root|
+      first = File.join(root, "MASTER")
+      second = File.join(root, "RAILS")
+      FileUtils.mkdir_p([first, second])
+
+      journal = Master::Fix::RunJournal.new(root:)
+      journal.start_or_resume(target: first, files: [first], max_passes: 1, budget_seconds: 60)
+
+      replacement = journal.start_or_resume(target: second, files: [second], max_passes: 1, budget_seconds: 60)
+      history = journal.history
+
+      assert_equal "RAILS", replacement["target"]
+      assert_equal "interrupted", history.find { |row| row["target"] == "MASTER" }["state"]
+      assert_equal replacement["id"], history.last["id"]
+    end
+  end
+
   def test_supervisor_runs_only_when_the_persisted_mission_is_due
     Dir.mktmpdir do |root|
       queue_mission(root)
