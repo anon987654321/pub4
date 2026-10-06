@@ -104,6 +104,9 @@ module Master
           Result.err("denied by user", category: :validation)
         when :quit then Result.err("quit", category: :shutdown)
         end
+      rescue TTY::Reader::InputInterrupt
+        @bus&.publish("tool:prompt_interrupted", tool: tool_name, tier:)
+        Result.err("input interrupted", category: :shutdown)
       end
 
       def tier_icon(tier)
