@@ -7,8 +7,7 @@ module Master
       class RuleRegistryAudit
         Report = Data.define(:yaml_rules, :registry_ids, :kernel_ids, :lexical_wired, :lexical_unwired,
                              :semantic_only, :structural_unwired, :dep_graph_gaps, :mechanical, :source_drift) do
-          # "clean" over 99 rules and "clean" over 225 are different claims, and
-          # until now they printed identically everywhere except rake constitution.
+          # A clean report is only meaningful when its population is explicit.
           #
           # Counted, never subtracted. A rule may be semantic-only, mechanical-only,
           # or layered and therefore belong to both populations. The audit reports
@@ -135,7 +134,7 @@ module Master
         end
 
         def law_detector?(id)
-          require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
+          require File.join(@root, "law", "law") unless defined?(::Law)
           ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.rules.empty?
           law = ::Law.rules[id.to_sym]
           law&.detect
@@ -153,7 +152,7 @@ module Master
         # generates its four rules from data/laws.yml, so a grep for a literal
         # `Law.define(:ID)` reads none of them.
         def law_ids
-          require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
+          require File.join(@root, "law", "law") unless defined?(::Law)
           ::Law.load_all(File.join(@root, "law")) if ::Law.rules.empty?
           ::Law.rules.keys.map { |id| id.to_s.downcase }.to_set
         rescue StandardError => e
@@ -170,7 +169,7 @@ module Master
 
         def executable_law_rows
           require File.join(Master::ROOT, "lib", "master") unless defined?(::Master::ROOT)
-          require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
+          require File.join(@root, "law", "law") unless defined?(::Law)
           ::Law.load_all(File.join(@root, "law")) if ::Law.rules.empty?
           ::Law.rules.values.map do |law|
             law.contract_entry.merge(
