@@ -966,3 +966,26 @@ class TestFixConvergence < Minitest::Test
   end
 
 end
+
+  def test_structural_context_uses_real_file_predicates
+    source = File.read(File.join(Master::ROOT, "lib", "fix", "restructure_sweep", "context.rb"))
+    refute_includes source, "select(&:file?)"
+    refute_includes source, "select(&:directory?)"
+    assert_includes source, "File.file?(path)"
+    assert_includes source, "File.directory?(path)"
+  end
+
+  def test_explicit_governed_trees_are_queued_in_operator_order
+    root = "/tmp/pub4"
+    targets = Master::CLI::CommandRegistry.send(
+      :fix_targets, "MASTER RAILS OPENBSD STUDIO", root:
+    )
+
+    assert_equal %w[MASTER RAILS OPENBSD STUDIO].map { |tree| File.join(root, tree) }, targets
+  end
+
+  def test_single_target_and_mixed_arguments_are_not_reinterpreted
+    root = "/tmp/pub4"
+    assert_equal ["MASTER"], Master::CLI::CommandRegistry.send(:fix_targets, "MASTER", root:)
+    assert_equal ["MASTER RAILS --apply"], Master::CLI::CommandRegistry.send(:fix_targets, "MASTER RAILS --apply", root:)
+  end

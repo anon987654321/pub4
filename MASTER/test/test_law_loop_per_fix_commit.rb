@@ -283,3 +283,26 @@ class TestLawLoopPerFixCommit < Minitest::Test
     end
   end
 end
+
+
+  def test_immediate_delivery_stops_the_batch_after_one_delivered_fix
+    Dir.mktmpdir do |root|
+      calls = []
+      loop = build_loop(root:, bus: FakeBus.new, scanner: RecordingScanner.new,
+                        agent: FixingAgent.new, committer: FakeCommitter.new)
+      loop.define_singleton_method(:fix_violation) do |violation|
+        calls << violation[:file]
+        :applied
+      end
+
+      violations = [
+        { file: File.join(root, "one.rb"), line: 1, rule: "TEST_RULE" },
+        { file: File.join(root, "two.rb"), line: 1, rule: "TEST_RULE" }
+      ]
+
+      result = loop.send(:fix_batch, violations)
+
+      assert_equal 1, result
+      assert_equal [violations.first[:file]], calls
+    end
+  end

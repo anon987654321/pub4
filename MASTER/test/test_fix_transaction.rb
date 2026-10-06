@@ -59,3 +59,24 @@ class TestFixTransaction < Minitest::Test
     end
   end
 end
+
+
+  def test_checkpoint_advances_the_rollback_floor
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "note.txt")
+      File.write(path, "before")
+      tx = Master::Fix::Transaction.new(root: dir, paths: ["note.txt"], id: "checkpoint")
+      tx.begin!
+
+      File.write(path, "delivered")
+      result = tx.checkpoint!(["note.txt"])
+
+      assert result.ok?
+      File.write(path, "later")
+      tx.observe!
+      rollback = tx.rollback!
+
+      assert rollback.ok?
+      assert_equal "delivered", File.read(path)
+    end
+  end

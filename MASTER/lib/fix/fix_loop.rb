@@ -306,13 +306,16 @@ module Master
 
         first_index = start_pass - 1
         remaining_passes = [max_passes - first_index, 0].max
-        structure_first(target:, files:, run_id:) if first_index.zero? && structural_target?(target)
 
         remaining_passes.times do |offset|
           i = first_index + offset
           outcome = run_one_pass(i, files:, target:, deadline:, budget_seconds:, state:, run_id:)
           return terminal(:plateau, "no further improvement after #{i + 1} pass(es)") if outcome == :break
           return outcome if outcome
+
+          if i == 0 && structural_target?(target)
+            structure_checkpoint(target:, files:, run_id:)
+          end
         end
 
         # Reaching the bound is not finishing. The pass limit is a circuit
@@ -320,20 +323,19 @@ module Master
         terminal(:plateau, "pass limit (#{max_passes}) reached")
       end
 
-      # The first structural pass is deliberately bounded: it gets one restructure
-      # candidate per tree, then the naming sweep can review one name before the
-      # ordinary convergence sweep can
-      # keep working after repair. This makes collapse a default habit without
-      # spending an unbounded repair budget before the first source pass.
-      def structure_first(target:, files:, run_id:)
+      # Structural surgery is a post-delivery checkpoint, not the first thing
+      # a full-tree run spends its budget on. The first ordinary pass gets to
+      # deliver a verified repair; only then does the bounded structural sweep
+      # run against freshly observed files.
+      def structure_checkpoint(target:, files:, run_id:)
         return if ENV["MASTER_FIX_STRUCTURE_FIRST"] == "0"
 
-        changes = sweep_tree(target, "#{run_id}-structure-first", phase: :structure_first)
+        changes = sweep_tree(target, "#{run_id}-structure-checkpoint", phase: :structure_first)
         return if changes.empty?
 
         files.replace(@file_collector.collect(target))
-        Master::Trace::Dmesg.status("fix0", "structure-first kept #{changes.size}; corpus refreshed")
-        @bus&.publish("fix_loop:structure_first", target:, changes: changes.size)
+        Master::Trace::Dmesg.status("fix0", "structure checkpoint kept #{changes.size}; corpus refreshed")
+        @bus&.publish("fix_loop:structure_checkpoint", target:, changes: changes.size)
       end
 
       def structural_target?(target)

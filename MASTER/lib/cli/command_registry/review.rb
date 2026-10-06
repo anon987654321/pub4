@@ -79,42 +79,22 @@ module Master
               next Master::Result.err(message, category: :validation)
             end
           end
+
           writes_requested = apply != false && fix_stage_selected?(only)
           effective_critique = critique.nil? ? writes_requested : critique
-          value = run_pass({ scanner:, fix_loop:, root:, deliberation:, bus:, swarm: },
-                           target:, apply: writes_requested, critique: effective_critique,
-                           aesthetic:, only:)
-          next value unless writes_requested
+          targets = fix_targets(target, root:)
+          Master::Trace::Dmesg.status("fix0", "target queue: #{targets.join(", ")}") if targets.size > 1
 
-          gate_rounds = 0
-          gate_status = 0
-          gate_changed = []
-          loop do
-            gate_status, gate_changed = ::Operator::GateChain.verify_fix(target:)
-            gate_rounds += 1
-            break if gate_status == 0 && gate_changed.empty?
-            break if gate_changed.empty? || gate_rounds >= MAX_FIX_GATE_ROUNDS
-
-            Master::Trace::Dmesg.status(
-              "gate0", "verification changed #{gate_changed.size} file(s), re-entering /fix"
+          results = targets.map do |fix_target|
+            run_fix_target(
+              scanner:, fix_loop:, root:, deliberation:, bus:, swarm:,
+              target: fix_target, writes_requested:, effective_critique:, critique:, aesthetic:, only:
             )
-            value = run_pass({ scanner:, fix_loop:, root:, deliberation:, bus:, swarm: },
-                             target:, apply: true, critique: critique.nil? ? true : critique,
-                             aesthetic:, only: "fix")
           end
+          failure = results.find { |result| result.is_a?(Master::Result::Err) }
+          next failure if failure
 
-          if gate_status != 0
-            message = "gate verification did not pass (status #{gate_status})"
-            Master::Trace::Dmesg.status("gate0", message)
-            next Master::Result.err(message, category: :validation)
-          end
-          if gate_rounds >= MAX_FIX_GATE_ROUNDS && gate_changed.any?
-            message = "gate verification reached #{MAX_FIX_GATE_ROUNDS} rounds without a stable tree"
-            Master::Trace::Dmesg.status("gate0", message)
-            next Master::Result.err(message, category: :validation)
-          end
-
-          value
+          results.join("\n")
         end
         return rendered unless Master::Fix::CodeWatch.requested?
 
@@ -122,6 +102,54 @@ module Master
         puts rendered
         Master::Fix::CodeWatch.reexec!(root, "/fix #{raw}")
         rendered
+      end
+
+      def run_fix_target(scanner:, fix_loop:, root:, deliberation:, bus:, swarm:, target:,
+                         writes_requested:, effective_critique:, critique:, aesthetic:, only:)
+        value = run_pass({ scanner:, fix_loop:, root:, deliberation:, bus:, swarm: },
+                         target:, apply: writes_requested, critique: effective_critique,
+                         aesthetic:, only:)
+        return value unless writes_requested
+
+        gate_rounds = 0
+        gate_status = 0
+        gate_changed = []
+        loop do
+          gate_status, gate_changed = ::Operator::GateChain.verify_fix(target:)
+          gate_rounds += 1
+          break if gate_status == 0 && gate_changed.empty?
+          break if gate_changed.empty? || gate_rounds >= MAX_FIX_GATE_ROUNDS
+
+          Master::Trace::Dmesg.status(
+            "gate0", "verification changed #{gate_changed.size} file(s), re-entering /fix"
+          )
+          value = run_pass({ scanner:, fix_loop:, root:, deliberation:, bus:, swarm: },
+                           target:, apply: true, critique: critique.nil? ? true : critique,
+                           aesthetic:, only: "fix")
+        end
+
+        if gate_status != 0
+          message = "gate verification did not pass (status #{gate_status})"
+          Master::Trace::Dmesg.status("gate0", "#{target}: #{message}")
+          return Master::Result.err(message, category: :validation)
+        end
+        if gate_rounds >= MAX_FIX_GATE_ROUNDS && gate_changed.any?
+          message = "gate verification reached #{MAX_FIX_GATE_ROUNDS} rounds without a stable tree"
+          Master::Trace::Dmesg.status("gate0", "#{target}: #{message}")
+          return Master::Result.err(message, category: :validation)
+        end
+
+        Master::Trace::Dmesg.status("gate0", "#{target}: delivery verified")
+        value
+      end
+
+      def fix_targets(target, root:)
+        tokens = target.to_s.split(/\s+/)
+        trees = %w[MASTER RAILS OPENBSD STUDIO]
+        return [target] unless tokens.size > 1 && tokens.all? { |token| trees.include?(token) }
+
+        repo_root = File.expand_path(root)
+        tokens.uniq.map { |tree| File.join(repo_root, tree) }
       end
 
       def run_pass(deps, **call_args)
