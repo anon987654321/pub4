@@ -2073,6 +2073,23 @@ module LiveSynth
 
   def stream = config.fetch("stream")
 
+  SHOWCASE_TEMPO_SCALE = 0.90
+
+  def showcase? = ENV["DILLA_SHOWCASE"] == "1"
+
+  # The showcase is the dark room: one slow tape pass, gentle glue, a little
+  # upper-mid removal and a short tape-like echo after every live score.
+  def showcase_tape_chain
+    [
+      Outboard.tape_machine(speed: :ips7, wow: 0.12, flutter: 0.05),
+      "acompressor=threshold=-24dB:ratio=1.5:attack=28:release=240:makeup=1.0",
+      "equalizer=f=2600:t=o:w=1.6:g=-2.2",
+      "lowpass=f=4200",
+      "aecho=0.82:0.72:82|164:0.18|0.10",
+      "volume=0.88",
+    ].freeze
+  end
+
   def log(message) = $stdout.puts("live0: #{message}")
 
   def main(argv)
@@ -2109,19 +2126,31 @@ module LiveSynth
   # drums, bass, arpeggios, DFAM, FM leads, knob movement, patch morphing and the
   # exact Bach score all take their turns.
   SHOWCASE_SCENES = [
-    ["dilla_life", 15.0],
-    ["soulquarians", 15.0],
-    ["dangelo", 16.0],
-    ["flylo", 14.0],
-    ["madlib", 14.0],
-    ["royksopp", 14.0],
-    ["moog_dfam", 22.0],
-    ["memorymoog_organ", 6.0],
-    ["glass_bell", 6.0],
-    ["bach", 26.0],
+    ["dilla_life", 20.0],
+    ["dilla_players", 24.0],
+    ["dilla_so_far_to_go", 20.0],
+    ["soulquarians", 18.0],
+    ["dangelo_root", 26.0],
+    ["dangelo_spanish_joint", 26.0],
+    ["dangelo_another_life", 30.0],
+    ["dangelo_ballad", 24.0],
+    ["flylo", 18.0],
+    ["flylo_computer_face", 18.0],
+    ["madlib", 18.0],
+    ["madlib_figaro", 18.0],
+    ["royksopp", 16.0],
+    ["moog_dfam", 28.0],
+    ["moog_dark", 24.0],
+    ["memorymoog_organ", 8.0],
+    ["vox_humana", 8.0],
+    ["soft_reed", 8.0],
+    ["glass_bell", 8.0],
+    ["bach", 30.0],
   ].freeze
 
   def showcase!(rng: rng!)
+    previous = ENV["DILLA_SHOWCASE"]
+    ENV["DILLA_SHOWCASE"] = "1"
     loop do
       SHOWCASE_SCENES.each do |name, seconds|
         log("showcase -> #{name}")
@@ -2131,6 +2160,8 @@ module LiveSynth
       end
       return if ENV["DILLA_SHOWCASE_ONCE"] == "1"
     end
+  ensure
+    previous.nil? ? ENV.delete("DILLA_SHOWCASE") : ENV["DILLA_SHOWCASE"] = previous
   end
 
   def showcase_score(name, rng)
@@ -2138,9 +2169,24 @@ module LiveSynth
     when "dilla_life"
       [
         Improviser.new(rng:, reference: "dilla_life", family: "rhodes"),
-        [[4.0, { "toggle" => "lead", "on" => true }],
-         [8.0, { "patch" => "e_piano" }],
-         [12.0, { "knob" => "cutoff", "amount" => 0.2, "seconds" => 3.0 }]],
+        [[5.0, { "toggle" => "lead", "on" => true }],
+         [9.0, { "patch" => "e_piano" }],
+         [14.0, { "lead" => "fm", "preset" => "bell" }],
+         [17.0, { "knob" => "cutoff", "amount" => 0.18, "seconds" => 3.0 }]],
+      ]
+    when "dilla_players"
+      [
+        Improviser.new(rng:, reference: "slum_village_players_documented", family: "rhodes"),
+        [[5.0, { "toggle" => "lead", "on" => true }],
+         [10.0, { "patch" => "soft_reed" }],
+         [16.0, { "knob" => "resonance", "amount" => 0.12, "seconds" => 4.0 }]],
+      ]
+    when "dilla_so_far_to_go"
+      [
+        Improviser.new(rng:, reference: "dilla_so_far_to_go_documented", family: "rhodes"),
+        [[5.0, { "patch" => "e_piano" }],
+         [10.0, { "lead" => "fm", "preset" => "bell" }],
+         [15.0, { "knob" => "cutoff", "amount" => 0.16, "seconds" => 3.0 }]],
       ]
     when "soulquarians"
       [
@@ -2149,14 +2195,34 @@ module LiveSynth
          [9.0, { "patch" => "rhodes_tine" }],
          [12.0, { "knob" => "resonance", "amount" => 0.14, "seconds" => 3.0 }]],
       ]
-    when "dangelo"
+    when "dangelo_root"
       [
-        # D'Angelo's richer showcase cell: Mixolydian colour, extended/slash
-        # voicings and a soft electronic accent instead of the metallic FM lead.
-        Improviser.new(rng:, reference: "untitled_d_mixolydian_vamp", family: "rhodes"),
-        [[4.0, { "lead" => "fm", "preset" => "bell" }],
-         [9.0, { "patch" => "e_piano" }],
-         [13.0, { "knob" => "cutoff", "amount" => 0.12, "seconds" => 3.0 }]],
+        Improviser.new(rng:, reference: "the_root_modal_vamp", family: "rhodes"),
+        [[7.0, { "toggle" => "lead", "on" => true }],
+         [13.0, { "patch" => "e_piano" }],
+         [20.0, { "knob" => "resonance", "amount" => 0.12, "seconds" => 4.0 }]],
+      ]
+    when "dangelo_spanish_joint"
+      [
+        Improviser.new(rng:, reference: "spanish_joint_swing_16ths", family: "rhodes"),
+        [[6.0, { "lead" => "fm", "preset" => "bell" }],
+         [13.0, { "patch" => "soft_reed" }],
+         [20.0, { "knob" => "cutoff", "amount" => 0.14, "seconds" => 4.0 }]],
+      ]
+    when "dangelo_another_life"
+      [
+        Improviser.new(rng:, reference: "another_life_pedal_descent", family: "rhodes"),
+        [[8.0, { "toggle" => "drums", "on" => false }],
+         [15.0, { "patch" => "e_piano" }],
+         [20.0, { "toggle" => "drums", "on" => true }],
+         [25.0, { "lead" => "fm", "preset" => "bell" }]],
+      ]
+    when "dangelo_ballad"
+      [
+        Improviser.new(rng:, reference: "gospel_69_ballad_walk", family: "rhodes"),
+        [[8.0, { "patch" => "e_piano" }],
+         [15.0, { "knob" => "cutoff", "amount" => 0.1, "seconds" => 5.0 }],
+         [19.0, { "lead" => "fm", "preset" => "drone" }]],
       ]
     when "flylo"
       [
@@ -2165,12 +2231,26 @@ module LiveSynth
          [8.0, { "lead" => "fm", "preset" => "glass" }],
          [11.0, { "knob" => "detune", "amount" => 0.08, "seconds" => 3.0 }]],
       ]
+    when "flylo_computer_face"
+      [
+        Improviser.new(rng:, reference: "flylo_computer_face_documented", family: "prophet"),
+        [[5.0, { "lead" => "fm", "preset" => "glass" }],
+         [11.0, { "patch" => "prophet_pad" }],
+         [15.0, { "knob" => "detune", "amount" => 0.06, "seconds" => 3.0 }]],
+      ]
     when "madlib"
       [
         Improviser.new(rng:, reference: "madlib_accordion_loop_documented", family: "rhodes"),
-        [[4.0, { "lead" => "fm", "preset" => "bell" }],
-         [8.0, { "patch" => "e_piano" }],
-         [11.0, { "knob" => "resonance", "amount" => 0.12, "seconds" => 3.0 }]],
+        [[5.0, { "lead" => "fm", "preset" => "bell" }],
+         [10.0, { "patch" => "e_piano" }],
+         [14.0, { "knob" => "resonance", "amount" => 0.12, "seconds" => 3.0 }]],
+      ]
+    when "madlib_figaro"
+      [
+        Improviser.new(rng:, reference: "madlib_figaro_documented", family: "rhodes"),
+        [[6.0, { "lead" => "fm", "preset" => "drone" }],
+         [12.0, { "patch" => "soft_reed" }],
+         [15.0, { "knob" => "cutoff", "amount" => 0.14, "seconds" => 3.0 }]],
       ]
     when "royksopp"
       [
@@ -2184,10 +2264,18 @@ module LiveSynth
         Progression.new("moog_improv", rng:),
         [[5.0, { "patch" => "rhodes_tine" }],
          [11.0, { "knob" => "cutoff", "amount" => 0.18, "seconds" => 3.0 }],
-         [17.0, { "patch" => "prophet_five" }]],
+         [17.0, { "patch" => "prophet_five" }],
+         [23.0, { "patch" => "soft_reed" }]],
       ]
-    when "memorymoog_organ", "glass_bell"
-      [Demo.new(name, rng:), [[2.5, { "knob" => "cutoff", "amount" => 0.15, "seconds" => 2.0 }]]]
+    when "moog_dark"
+      [
+        Progression.new("moog_improv", rng:, family: "moog"),
+        [[6.0, { "knob" => "cutoff", "amount" => -0.12, "seconds" => 4.0 }],
+         [12.0, { "patch" => "moog_strings" }],
+         [18.0, { "patch" => "moog_brass" }]],
+      ]
+    when "memorymoog_organ", "glass_bell", "vox_humana", "soft_reed"
+      [Demo.new(name, rng:), [[2.5, { "knob" => "cutoff", "amount" => -0.1, "seconds" => 2.5 }]]]
     when "bach"
       path = BachMidi.source
       events, length, = BachMidi.parse(path)
@@ -2642,6 +2730,7 @@ module LiveSynth
       @reference = @reference_name && LiveSynth.documented_progression(@reference_name)
       bpm = @reference ? @reference.fetch("bpm").to_f : @c["bpm"].to_f
       bpm += rng.rand(-@c["bpm_spread"].to_f..@c["bpm_spread"].to_f) unless @reference
+      bpm *= LiveSynth::SHOWCASE_TEMPO_SCALE if LiveSynth.showcase?
       @beat = 60.0 / bpm
       @knobs = Knobs.new(@c.fetch("knobs"), response: @c.fetch("response"), rng:,
                          damping: @c["walk_damping"], pull: @c["walk_pull"])
@@ -3021,7 +3110,8 @@ module LiveSynth
       chain = warm_dilla_pad_synth_filters(**post.fetch("chain").transform_keys(&:to_sym)).compact.join(",")
       send = post.fetch("dub").gsub(/<(\d+)>/) { (beat * Regexp.last_match(1).to_i).round.to_s }
       "[0:a]pan=stereo|c0=c0|c1=c1[dry];[0:a]pan=stereo|c0=c2|c1=c3[wet];[0:a]pan=stereo|c0=c4|c1=c5[k];" \
-        "[dry]#{chain}[d];[wet]#{send}[w];[d][w][k]amix=inputs=3:weights=1 1 1:normalize=0,alimiter=limit=#{post['limit']}"
+        showcase_tail = LiveSynth.showcase? ? ",#{LiveSynth.showcase_tape_chain.join(",")}" : ""
+      "[dry]#{chain}[d];[wet]#{send}[w];[d][w][k]amix=inputs=3:weights=1 1 1:normalize=0,alimiter=limit=#{post['limit']}#{showcase_tail}"
     end
 
     def command(post, rate:, beat:, dest: nil)
@@ -3089,6 +3179,7 @@ module LiveSynth
       return nil unless master
 
       chain = master.map { |stage| LiveSynth.console_stage(stage) }.join(",")
+      chain = [chain, *LiveSynth.showcase_tape_chain].reject(&:empty?).join(",") if LiveSynth.showcase?
       LiveSynth.through_ffmpeg(channels: 2, filter: ["-af", chain], rate:, dest:) ||
         abort("live0: #{@name} leaves through ffmpeg -- install ffmpeg and sox (brew install ffmpeg sox)")
     end
@@ -3381,6 +3472,13 @@ module LiveSynth
     def describe = "#{@name}, #{@demo['notes'].size} steps"
 
     def length = @demo["notes"].size * @demo["step"]
+
+    def player_command(rate, dest)
+      return nil unless LiveSynth.showcase?
+
+      LiveSynth.through_ffmpeg(channels: 2, filter: ["-af", LiveSynth.showcase_tape_chain.join(",")], rate:, dest:) ||
+        abort("live0: #{@name} leaves through ffmpeg -- install ffmpeg and sox")
+    end
 
     def finished?(clock) = clock >= length
 

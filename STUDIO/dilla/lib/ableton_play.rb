@@ -228,9 +228,9 @@ module BachMidi
     def overdub!(_left, _right, _clock, _rate) = nil
 
     def player_command(rate, dest)
-      LiveSynth.through_ffmpeg(channels: 2,
-                               filter: ["-af", "aecho=0.8:0.88:1100|1700:0.28|0.20,alimiter=limit=0.94"],
-                               rate:, dest:) ||
+      chain = "aecho=0.8:0.88:1100|1700:0.28|0.20,alimiter=limit=0.94"
+      chain = [*LiveSynth.showcase_tape_chain, chain].join(",") if LiveSynth.showcase?
+      LiveSynth.through_ffmpeg(channels: 2, filter: ["-af", chain], rate:, dest:) ||
         abort("live0: Bach leaves through ffmpeg -- install ffmpeg and sox")
     end
   end

@@ -69,21 +69,12 @@ twice — once naming a file that had not existed for months, once naming a
 directory that has never existed — and both times it sent an operator to
 validate nothing and read the result as passing.
 
-Bare `ruby dilla.rb` writes `demo.wav` beside it: ten short pieces that are not
-each other, about ninety seconds in all, hip hop through techno into ambient.
-Each one is a row of `data/pieces.yml`, and a row names everything the bed knows
-how to be — its tempo, which oscillator family plays the chords, which drum
-grids and which crate the kit comes from, how loud and how treated the lead is,
-and which console the master bus leaves through. The row is laid over
-`data/bed.yml` before the bed reads a single number, so a piece renders in a
-process of its own and keeps its own clock. The showcase is ninety seconds
-because thirty-one pieces at length is eighteen minutes and nobody listens to
-a demo that long; `ruby dilla.rb catalogue-full` is the whole table. An existing
-`demo.wav` is a named take. The engine refuses to overwrite it unless
-`DILLA_OVERWRITE=1`. Under every held chord
-runs its own harmonic series, whole multiples of its lowest note, which is in
-tune by construction and is what makes a sustained chord lush rather than merely
-long.
+Bare `ruby dilla.rb` is the live Dilla showcase: it stays on the sound card and
+cycles through source-backed J Dilla, D'Angelo, Flying Lotus and Madlib harmony,
+the darker Moog/DFAM rack, analogue patch demonstrations, FM leads, filter
+moves, tape-heavy mastering and the complete BWV 565 MIDI score. The tour is
+deliberately slow and dark, with richer chord cells and changing instruments,
+then returns to the beginning. Set `DILLA_SHOWCASE_ONCE=1` for one pass.
 
 `ruby dilla.rb compose` writes the other demo: one piece of about six minutes in
 which every part of the engine plays and answers the others. The bass states the
