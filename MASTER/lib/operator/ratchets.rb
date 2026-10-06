@@ -111,9 +111,8 @@ module Operator
        *self_findings_rows, *reach_rows, *namespace_rows, *sprawl_rows].compact
     end
 
-    # Three rows rather than one, because they are three different facts and
-    # collapsing them would let a rule go blind while another stops being
-    # silent and the total holds still.
+    # Reach and fixture blindness are ratcheted; silent is observational because
+    # zero findings can mean either a healthy corpus or an applicability gap.
     def rule_reach_and_blind_rows
       [master_row("rule_reach", "data/laws.yml", "rules no configuration can run") do
          require File.join(MASTER, "lib/operator/rule_reach")
