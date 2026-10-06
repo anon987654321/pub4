@@ -217,7 +217,8 @@ module Master
         /\bmadlib\w*\b/i => "madlib",
         /\bfly(?:ing)?\s+lotus\b|\bflylo\b/i => "flying_lotus",
         /\br[öo]yksopp\b|\bmelody\s+a\.m\.\b/i => "royksopp",
-        /\bdilla\b|\bjslur\b/i => "j_dilla",
+        /\b(?:j\s*dilla|dilla)\b/i => "j_dilla",
+        /\bbach\b|\bbaroque\b/i => "bach",
       }.freeze
 
       def face_music_artist(text)
