@@ -57,6 +57,8 @@ module Master
 
         if File.file?(full)
           File.delete(full)
+        elsif recursive
+          FileUtils.remove_entry(full)
         else
           Dir.delete(full)
         end
