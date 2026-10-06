@@ -1,9 +1,11 @@
 # frozen_string_literal: true
 
 # GENERATED PROJECTION — source: MASTER/tools/frontend_rule_set.rb. Keep behavior identical.
+unless defined?(Shared::FrontendRuleSet)
+# frozen_string_literal: true
+
 module Shared
-  unless const_defined?(:FrontendRuleSet, false)
-    class FrontendRuleSet
+  class FrontendRuleSet
     TYPOGRAPHY = {
       line_length: { min: 45, max: 75, ideal: 66, unit: "ch" },
       mobile_line_length: { min: 35, max: 50, unit: "ch" },
@@ -89,4 +91,6 @@ module Shared
       }
     end
   end
+end
+
 end
