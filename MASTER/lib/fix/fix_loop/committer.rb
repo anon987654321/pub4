@@ -100,10 +100,9 @@ module Master
         def commit_if_dirty(message, findings: [], owned_paths: nil)
           @commit_mutex.synchronize do
             if @transaction
-              paths = own_changes(owned_paths)
-              @transaction.observe!
-              @bus&.publish("fix_loop:transaction_changes", paths:) unless paths.empty?
-              return :staged
+              return stage_only(owned_paths:, findings:) if stage_commit_mode?
+
+              return checkpoint_transaction(message, findings:, owned_paths:)
             end
 
             commit_if_dirty!(message, findings:, owned_paths:)
@@ -111,6 +110,52 @@ module Master
         end
 
         private
+
+        def stage_commit_mode?
+          ENV["MASTER_FIX_COMMIT_STAGE"] == "1"
+        end
+
+        def stage_only(owned_paths:, findings:)
+          paths = own_changes(owned_paths)
+          @transaction.observe!
+          @bus&.publish("fix_loop:transaction_changes", paths:) unless paths.empty?
+          :staged
+        end
+
+        # A validated fix is a delivery checkpoint. The transaction remains
+        # open so the pass is recoverable, but the pushed commit becomes the
+        # rollback floor for its own paths.
+        def checkpoint_transaction(message, findings:, owned_paths:)
+          transaction = @transaction
+          paths = own_changes(owned_paths)
+          return :noop if paths.empty?
+
+          prepared = validate_paths(message, paths)
+          return :blocked unless prepared
+
+          head_before = @git.head
+          transaction.delivery.begin!(head_before:)
+          begin
+            result = commit_paths(message, findings, prepared, transaction:)
+            checkpoint = transaction.checkpoint!(paths)
+            raise checkpoint.message if checkpoint.err?
+
+            Master::Trace::Dmesg.status(
+              "deliver0", "commit=#{@git.head} push=ok paths=#{paths.join(", ")}"
+            )
+            result
+          rescue StandardError
+            committed = head_changed?(head_before)
+            if committed
+              @transaction = nil
+              transaction.delivery.preserve! if transaction.active?
+            else
+              rollback = transaction.rollback!
+              raise rollback.message if rollback.err?
+            end
+            raise
+          end
+        end
 
         # Runs the two checks that can block delivery -- concurrent changes,
         # then the same validate_paths finish_transaction always ran here --
@@ -164,6 +209,9 @@ module Master
           @git.push
           verify_push!(paths)
           promote_known_good(@git.head, paths)
+          Master::Trace::Dmesg.status(
+            "deliver0", "commit=#{@git.head} push=ok paths=#{paths.join(", ")}"
+          )
           @bus&.publish("ops:commit", message: message.to_s[0, 120], head: @git.head, paths:, findings:)
           Result.ok(:committed)
         rescue StandardError => e

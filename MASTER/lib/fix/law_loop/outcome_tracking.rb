@@ -22,7 +22,12 @@ module Master
         OUTCOMES = %i[applied commit_refused no_proposal model_failed reflexion_rejected consensus_rejected rejected skip_confidence skip_fingerprint needs_person].freeze
 
         def fix_batch(violations)
-          results = violations.uniq { |violation| violation[:file] }.map { |violation| fix_violation(violation) }
+          results = []
+          violations.uniq { |violation| violation[:file] }.each do |violation|
+            result = fix_violation(violation)
+            results << result
+            break if immediate_delivery_boundary?(result)
+          end
           @all_skipped = results.any? && results.all? { |r| r.to_s.start_with?("skip_") }
           log_outcome_breakdown(results)
           # A commit_refused fix is on disk but not delivered, so it counts as
@@ -38,6 +43,13 @@ module Master
         # outcome appears, not just the skips: a pass that proposes nothing and
         # a pass whose proposals all die in review are different problems, and
         # "0 fixed" says neither.
+        def immediate_delivery_boundary?(result)
+          return false unless @committer
+          return false if stage_commit_mode?
+
+          %i[applied commit_refused].include?(result)
+        end
+
         def log_outcome_breakdown(results)
           @batch_breakdown = {}
           return if results.empty?

@@ -181,7 +181,9 @@ module Master
         return :reflexion_rejected unless verified
         return :consensus_rejected unless consensus_approves?(violation, verified)
 
-        return :rejected unless apply(violation[:file], verified, violation)
+        applied = apply(violation[:file], verified, violation)
+        return :skip_fingerprint if applied == :stale
+        return :rejected unless applied
 
         commit_applied_fix(violation)
       end
@@ -194,11 +196,13 @@ module Master
       def commit_applied_fix(violation)
         return :applied if @committer.nil? || stage_commit_mode?
 
-        @committer.commit_if_dirty(
+        result = @committer.commit_if_dirty(
           "fix: #{@rule.id} in #{File.basename(violation[:file])}",
           findings: [violation],
           owned_paths: [violation[:file]],
         )
+        return :commit_refused if result == :blocked || (result.respond_to?(:err?) && result.err?)
+
         :applied
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "LawLoop.commit_applied_fix", event_bus: @bus, rule: @rule.id)
@@ -233,8 +237,12 @@ module Master
         false
       end
 
+      # The scan can be minutes older than the model answer. Check the same
+      # semantic fingerprint again at the mutation boundary so a human edit made
+      # while the model was thinking is never overwritten by stale work.
       def apply(path, new_src, violation)
         old_src = File.read(path, encoding: "UTF-8")
+        return :stale unless fingerprint_matches?(violation)
         return reject_fix(path, old_src, "collapsed_content") if CollapseGuard.collapse?(@rule.id, old_src, new_src)
         before = scan_all(path)
         write_atomic(path, new_src)

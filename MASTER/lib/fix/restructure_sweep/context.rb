@@ -30,7 +30,7 @@ module Master
           return [] unless File.basename(target.to_s) == "MASTER"
 
           source = production_files(target)
-          subtrees = Dir.glob(File.join(target.to_s, "lib", "**", "*")).select(&:directory?).filter_map do |dir|
+          subtrees = Dir.glob(File.join(target.to_s, "lib", "**", "*")).select { |path| File.directory?(path) }.filter_map do |dir|
             dead_subtree(dir, target, source)
           end
           subtrees.sort_by { |_path, _rule, message, _files| [message[/\d+/].to_i, message] }
@@ -44,7 +44,7 @@ module Master
           return if dir == File.join(target.to_s, "lib")
           return if dir.split("/").any? { |part| %w[test spec fixtures vendor].include?(part) }
 
-          all = Dir.glob(File.join(dir, "**", "*.{rb,rake,js,mjs}")).select(&:file?)
+          all = Dir.glob(File.join(dir, "**", "*.{rb,rake,js,mjs}")).select { |path| File.file?(path) }
           return if all.size < 3
 
           needles = all.flat_map { |path| names_in_file(path) }.uniq
@@ -108,7 +108,7 @@ module Master
           out, status = Master::Io::Exec.capture2e("git", "-C", root.to_s, "ls-files")
           return [] unless status.success?
 
-          out.lines.map { |line| File.join(root.to_s, line.strip) }.select(&:file?)
+          out.lines.map { |line| File.join(root.to_s, line.strip) }.select { |path| File.file?(path) }
         end
 
         def self.production_files(root)

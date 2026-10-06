@@ -84,6 +84,28 @@ module Master
         @delivery ||= Delivery.new(self)
       end
 
+      # Move the rollback floor after a commit has been pushed. The logical
+      # pass transaction stays alive, but an interruption can no longer roll a
+      # previously delivered checkpoint back to the pass-start snapshot.
+      def checkpoint!(paths)
+        raise "transaction not active" unless @active
+
+        selected = Array(paths).map { |path| normalize(path) }.compact.uniq
+        selected.each do |path|
+          @snapshots[path] = snapshot(path)
+          @seen[path] = [fingerprint(absolute(path))]
+        end
+        @state = "open"
+        @delivery_head_before = nil
+        @delivery_head_after = nil
+        persist!
+        emit("fix:transaction_checkpoint", id: @id, paths: selected)
+        Result.ok(selected)
+      rescue StandardError => e
+        emit("fix:transaction_checkpoint_failed", id: @id, error: e.message)
+        Result.err("transaction checkpoint: #{e.message}", category: :infrastructure)
+      end
+
       def finalize!
         raise "transaction not active" unless @active
         @state = "committed"
