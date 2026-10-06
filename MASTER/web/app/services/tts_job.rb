@@ -57,9 +57,9 @@ class TtsJob
     # thread dequeues this job, which can be seconds after enqueue if other
     # jobs are ahead of it. In that window, GET /chat/tts/status found no token
     # file, returned a real 404 (not 202 pending), and the client's pollTTSJob
-    # treats any non-202 as fatal and throws immediately — silently falling
-    # back to the browser's native speechSynthesis (a different, robotic voice
-    # per OS/browser). Writing the token at enqueue time closes that race.
+    # treats any non-202 as fatal and throws immediately. Writing the token at
+    # enqueue time closes that race, so the single server TTS path can report
+    # the job accurately instead of manufacturing a second narrator.
     job.write_token
     rank = PRIORITIES.fetch(lane.to_s, DEFAULT_PRIORITY)
     @queue_mutex.synchronize do
