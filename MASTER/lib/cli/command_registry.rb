@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require "stringio"
 require_relative "../snapshot"
 
 require_relative "command_registry/command"
