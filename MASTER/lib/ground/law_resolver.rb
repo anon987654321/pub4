@@ -2,13 +2,18 @@
 
 module Master
   module Ground
-    # Resolves rule conflicts using laws.yml laws: priority (lower wins).
+    # Resolves rule conflicts using the constitutional priority entries in
+    # laws.yml (lower priority number wins).
+    #
+    # The current schema stores the eight governing principles at top level;
+    # older callers/tests may still hand us a { "laws" => ... } wrapper.
     class LawResolver
       def initialize(rules_data: nil)
-        @laws = (rules_data || Master.load_yaml(Master::LAWS_PATH)).fetch("laws", {})
-                  .transform_values { |v| v["priority"].to_i }
-                  .sort_by { |_, priority| priority }
-                  .to_h
+        data = rules_data || Master.load_yaml(Master::LAWS_PATH)
+        @laws = principle_entries(data)
+          .transform_values { |value| value["priority"].to_i }
+          .sort_by { |_, priority| priority }
+          .to_h
       end
 
       def law_for(rule_id, rules_index: nil)
@@ -33,6 +38,18 @@ module Master
       end
 
       private
+
+      def principle_entries(data)
+        wrapped = data["laws"]
+        return wrapped if wrapped.is_a?(Hash)
+
+        data.select do |name, value|
+          name.to_s.match?(/A[A-Z][A-Z0-9_]*z/) &&
+            value.is_a?(Hash) &&
+            value["priority"] &&
+            value["principle"]
+        end
+      end
 
       def infer_law(entry)
         tier = entry["tier"].to_s
