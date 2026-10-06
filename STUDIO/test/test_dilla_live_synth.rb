@@ -606,7 +606,12 @@ class TestDillaLiveSynth < Minitest::Test
     assert_includes source, "DILLA_EFFECTS\" => \"1\""
     assert_includes source, "DILLA_SHOWCASE_DARK\" => \"1\""
     assert_includes source, "DILLA_SHOWCASE_TAPE\" => \"1\""
-    assert_match(/DILLA_SHOWCASE_TEMPO_SCALE.*0\.76/, source)
+    assert_match(/DILLA_SHOWCASE_TEMPO_SCALE.*0\.74/, source)
+    assert_includes source, 'DILLA_SHOWCASE_BASS_GAIN\" => \"0.00005\"'
+    assert_includes source, 'DILLA_SHOWCASE_BASS_EVERY\" => \"4\"'
+    %w[LIVE_GROOVE LIVE_VOICING LIVE_COPY_MACHINE LIVE_VOICE_STACK LIVE_HOCKET].each do |key|
+      assert_match(/#{key}\" =>/, source, key)
+    end
     assert_match(/live!\(\[\"showcase\", \"mode=all\"\]\)/, source)
   end
 
