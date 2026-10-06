@@ -94,6 +94,15 @@ class TestRatchets < Minitest::Test
     assert_includes names, "command_surface"
     assert_includes names, "name_candidates"
   end
+\n  def test_silent_rule_audit_is_observational
+    names = rows.map(&:name)
+
+    refute_includes names, "rule_audit.silent",
+                    "silence needs review, not a monotonic ceiling"
+    assert_equal ["rule_audit.saturated"],
+                 Operator::Ratchets.rule_saturation_and_silent_rows.map(&:name)
+  end
+
 
   # The half that had one owner and now has all of them.
   #
