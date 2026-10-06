@@ -24,6 +24,9 @@ module Operator
 
     def tokens(path = laws_path) = document(path)["tokens"] || {}
 
+    # Compatibility name retained at the canonical reader: design_system is the token map.
+    def design_system(path = laws_path) = tokens(path)
+
     def dig(*keys, path: laws_path) = blocks(path).dig(*keys.map(&:to_s))
   end
 end
