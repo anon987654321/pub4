@@ -5,6 +5,16 @@ require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
 ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.rules.empty?
 
 class TestLawContract < Minitest::Test
+  def test_concurrent_law_loads_share_one_registry
+    dir = File.expand_path("../law", __dir__)
+    threads = 8.times.map { Thread.new { Law.load_all(dir) } }
+    results = threads.map(&:value)
+
+    assert_equal 1, results.map(&:object_id).uniq.size
+    assert_operator results.first.size, :>, 100
+    assert_equal results.first.keys.sort, Law.rules.keys.sort
+  end
+
   def test_law_loader_restores_previous_registry_when_reload_fails
     Dir.mktmpdir do |dir|
       path = File.join(dir, "probe.rb")
