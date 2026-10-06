@@ -151,6 +151,7 @@ module Master
           "list_dir" => :safe,
           "search_files" => :safe,
           "write_file" => :guarded,
+          "delete_path" => :dangerous,
           "str_replace" => :guarded,
           "apply_diff" => :guarded,
           "ask_llm" => :guarded,
