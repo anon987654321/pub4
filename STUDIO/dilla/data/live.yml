@@ -62,14 +62,14 @@ play_master:
 play:
   bach: bach_toccata
   baroque: bach_toccata
-  j_dilla: live_improvise_moog
-  dilla: live_improvise_moog
-  flying_lotus: live_improvise_prophet
-  flylo: live_improvise_prophet
-  madlib: live_improvise_rhodes
-  royksopp: royksopp_live
-  röyksopp: royksopp_live
-  melody_a_m: royksopp_live
+  j_dilla: reference:dilla_flowers_documented
+  dilla: reference:dilla_flowers_documented
+  flying_lotus: reference:flylo_camel_documented
+  flylo: reference:flylo_camel_documented
+  madlib: reference:madlib_accordion_loop_documented
+  royksopp: reference:royksopp_what_else_is_there_documented
+  röyksopp: reference:royksopp_what_else_is_there_documented
+  melody_a_m: reference:royksopp_what_else_is_there_documented
 
 progressions:
   # The first progression the operator heard live: soul-jazz in F minor, the
