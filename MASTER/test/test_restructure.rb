@@ -51,6 +51,7 @@ class TestRestructure < Minitest::Test
   def split_plan
     Restructure::Plan.parse(<<~TEXT)
       SUMMARY: split Big and absorb tiny.rb
+      OPERATIONS: split
       === WRITE MASTER/lib/big.rb
       class Big
         def a = 1
@@ -65,6 +66,41 @@ class TestRestructure < Minitest::Test
   end
 
   def restructure(proof = Proof.new) = Restructure.new(repo_root: @repo, proof:)
+
+  def test_a_plan_reads_its_explicit_operations
+    plan = split_plan
+
+    assert_equal ["split"], plan.operations
+  end
+
+  def test_a_plan_rejects_missing_operations
+    plan = Restructure::Plan.parse(<<~TEXT)
+      SUMMARY: missing operation
+      === WRITE MASTER/lib/big.rb
+      class Big; end
+      === END
+    TEXT
+
+    reason = plan.validate_operations!(transformation_plan: Master::Fix::TransformationPlan.new(root: Master::ROOT))
+    assert_equal "restructure plan names no operations", reason
+  end
+
+  def test_a_plan_rejects_out_of_order_operations
+    plan = Restructure::Plan.parse("OPERATIONS: rename, merge\n=== DELETE MASTER/lib/tiny.rb\n=== END\n")
+    reason = plan.validate_operations!(transformation_plan: Master::Fix::TransformationPlan.new(root: Master::ROOT))
+
+    assert_includes reason, "out of constitutional order"
+  end
+
+  def test_a_plan_rejects_an_operation_outside_the_problem_candidates
+    plan = Restructure::Plan.parse("OPERATIONS: split\n=== DELETE MASTER/lib/tiny.rb\n=== END\n")
+    reason = plan.validate_operations!(
+      transformation_plan: Master::Fix::TransformationPlan.new(root: Master::ROOT),
+      allowed_operations: ["remove"]
+    )
+
+    assert_includes reason, "outside the problem's candidate set"
+  end
 
   def test_a_plan_reads_its_writes_deletes_and_summary
     plan = split_plan
@@ -129,6 +165,7 @@ class TestRestructure < Minitest::Test
 
     plan = Restructure::Plan.parse(<<~TEXT)
       SUMMARY: remove producer
+      OPERATIONS: remove
       === DELETE MASTER/lib/producer.rb
       === END
     TEXT
@@ -149,6 +186,7 @@ class TestRestructure < Minitest::Test
 
     plan = Restructure::Plan.parse(<<~TEXT)
       SUMMARY: remove dead core file
+      OPERATIONS: remove
       === DELETE MASTER/lib/core/two.rb
       === END
     TEXT
@@ -237,7 +275,7 @@ class TestRestructure < Minitest::Test
     caller = "RAILS/brgen/app/views/posts/index.html.erb"
     write(view, "<%# card %>\n")
     write(caller, '<%= render "posts/card" %>\n')
-    plan = Restructure::Plan.parse("=== DELETE #{view}\n=== END\n")
+    plan = Restructure::Plan.parse("OPERATIONS: remove\n=== DELETE #{view}\n=== END\n")
     proof = Restructure::RailsProof.new(repo_root: @repo, tree: "RAILS")
     before = proof.baseline(plan)
     File.delete(File.join(@repo, view))
@@ -254,8 +292,8 @@ class TestRestructure < Minitest::Test
   # The box's mirrored paths and the database's history mean something outside
   # the tree, so no restructure moves them.
   def test_paths_that_mirror_the_box_or_the_database_are_refused
-    box = Restructure::Plan.parse("=== WRITE OPENBSD/etc/relayd.conf\nx\n=== END\n")
-    migration = Restructure::Plan.parse("=== DELETE RAILS/brgen/db/migrate/1_x.rb\n=== END\n")
+    box = Restructure::Plan.parse("OPERATIONS: relocate\n=== WRITE OPENBSD/etc/relayd.conf\nx\n=== END\n")
+    migration = Restructure::Plan.parse("OPERATIONS: remove\n=== DELETE RAILS/brgen/db/migrate/1_x.rb\n=== END\n")
 
     assert_includes Restructure.new(repo_root: @repo, tree: "OPENBSD", proof: Proof.new)
                                .call(box, message: "x", review: ->(_d) {}).message, "off limits"
@@ -264,8 +302,8 @@ class TestRestructure < Minitest::Test
   end
 
   def test_the_kernel_and_other_trees_are_refused
-    kernel = Restructure::Plan.parse("=== WRITE MASTER/data/soul.yml\nx\n=== END\n")
-    spine = Restructure::Plan.parse("=== WRITE MASTER/lib/core/mission.rb\nx\n=== END\n")
+    kernel = Restructure::Plan.parse("OPERATIONS: relocate\n=== WRITE MASTER/data/soul.yml\nx\n=== END\n")
+    spine = Restructure::Plan.parse("OPERATIONS: split\n=== WRITE MASTER/lib/core/mission.rb\nx\n=== END\n")
 
     assert_includes restructure.call(spine, message: "x", review: ->(_d) {}).message, "immutable"
     outside = Restructure::Plan.parse("=== WRITE RAILS/app.rb\nx\n=== END\n")
