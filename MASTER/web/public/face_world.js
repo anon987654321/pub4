@@ -88,8 +88,16 @@
         "  vNormal = normalize(normalMatrix * normal);",
         "  vPosition = position;",
         "  vec3 p = position;",
+        "  float ny = clamp(p.y / 1.58, -1.0, 1.0);",
+        "  float jawTaper = smoothstep(-0.98, -0.16, ny);",
+        "  float cheekFull = 1.0 - smoothstep(0.02, 0.78, abs(ny));",
+        "  p.x *= mix(0.72, 0.95, jawTaper);",
+        "  p.x *= 1.0 + cheekFull * 0.08;",
+        "  p.y *= 1.04;",
+        "  p.z *= 0.72;",
+        "  p.z += cheekFull * 0.045;",
         "  float ripple = sin(p.y * 7.0 + uTime * 0.00055) * sin(p.x * 5.0 - uTime * 0.00031);",
-        "  float pressure = 0.018 + uPulse * 0.010 + uFracture * 0.022;",
+        "  float pressure = 0.014 + uPulse * 0.008 + uFracture * 0.020;",
         "  p += normal * ripple * pressure * (0.25 + uTension);",
         "  p += normal * sin(p.x * 23.0 + p.y * 17.0 + uTime * 0.0011) * uFracture * 0.012;",
         "  gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);",
@@ -105,11 +113,13 @@
         "varying vec3 vNormal;",
         "varying vec3 vPosition;",
         "void main() {",
-        "  float shell = abs(sin(vPosition.y * 11.0 + vPosition.x * 5.0));",
-        "  float contour = smoothstep(0.92, 0.985, shell);",
         "  float latitude = smoothstep(0.985, 1.0, abs(vNormal.z));",
+        "  float contour = smoothstep(0.95, 0.995, abs(sin(vPosition.y * 10.0 + vPosition.x * 4.0)));",
+        "  float brow = smoothstep(0.965, 0.995, abs(sin(vPosition.y * 8.0 + 0.9)) * (0.78 + 0.22 * abs(vPosition.x)));",
+        "  float jaw = smoothstep(0.972, 0.997, abs(sin(vPosition.y * 15.0 - vPosition.x * 3.0)));",
         "  float crack = smoothstep(0.80, 0.98, abs(sin(vPosition.z * 31.0 + vPosition.y * 17.0 + uTime * 0.0013))) * uFracture;",
-        "  float alpha = max(contour * uOpacity + latitude * uOpacity * 0.35, crack * uOpacity * 0.9);",
+        "  contour = max(contour, max(brow * 0.72, jaw * 0.54));",
+        "  float alpha = max(contour * uOpacity + latitude * uOpacity * 0.30, crack * uOpacity * 0.86);",
         "  alpha *= 0.65 + uEntropy * 0.35 + uPulse * 0.12;",
         "  if (alpha < 0.012) discard;",
         "  gl_FragColor = vec4(uColor, alpha);",
@@ -355,6 +365,7 @@
 
     const budget = window.MASTER_FACE_STATE?.renderBudget?.() || {};
     const topology = String(state.topology || "papua-mask");
+    const portrait = topology === "face" || topology === "papua-mask";
     const topologyProfile = TOPOLOGY_PROFILES[topology] || TOPOLOGY_PROFILES["papua-mask"] || {};
     const kernel = window.ParticleKernel;
     const eyePool = window.MASTER_FACE?.eyePool;
@@ -400,6 +411,7 @@
     shellMaterial.uniforms.uColor.value.copy(colorFromCss());
 
     nodes.forEach((node) => {
+      node.visible = !portrait;
       const phase = node.userData.phase;
       const pulse = 1 + Math.sin(now * 0.0012 + phase) * 0.14 * geometry.neural_density;
       node.scale.setScalar(pulse);
@@ -409,11 +421,13 @@
     });
 
     if (edges) {
+      edges.visible = !portrait;
       edges.material.opacity = Math.min(0.28, (0.035 + geometry.neural_density * 0.10) * density);
       edges.material.color.copy(shellMaterial.uniforms.uColor.value);
     }
 
     if (splatProxy) {
+      splatProxy.visible = !portrait;
       splatProxy.material.opacity =
         Math.min(0.18, 0.03 + geometry.neural_density * 0.09 * density + (geometry.fracture + fracture) * 0.04);
       splatProxy.material.color.copy(shellMaterial.uniforms.uColor.value);
@@ -451,6 +465,7 @@
     }
 
     hudSprites.forEach(({ nodeName, sprite }) => {
+      sprite.visible = !portrait;
       const node = nodes.find((item) => item.name === nodeName);
       if (!node) return;
       sprite.position.copy(node.position);
@@ -462,6 +477,11 @@
     });
 
     updatePulses(now);
+
+    // The portrait should feel alive without looking busy: a barely perceptible
+    // breath keeps the head from freezing while leaving operator attention on the eyes.
+    const breath = Math.sin(now * 0.00072) * (state.mode === "idle" ? 0.008 : 0.004);
+    world.position.y += (breath - world.position.y) * 0.08;
 
     const activePoints = Math.max(0, Math.min(splatCount, Number(budget.points || 420)));
     if (splatProxy) {
