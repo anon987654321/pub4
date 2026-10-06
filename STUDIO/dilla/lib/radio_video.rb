@@ -17,7 +17,10 @@ module RadioVideo
 
   def run(argv)
     input = File.expand_path(argv.shift || ENV.fetch("DILLA_VIDEO_AUDIO", DEFAULT_AUDIO))
-    output = File.expand_path(argv.shift || ENV.fetch("DILLA_VIDEO_OUT", DEFAULT_OUTPUT))
+    format = ENV.fetch("DILLA_SHOWCASE_VIDEO_FORMAT", "mp4").to_s.downcase
+    abort "video: DILLA_SHOWCASE_VIDEO_FORMAT must be mp4 or mov" unless %w[mp4 mov].include?(format)
+    default_output = File.join(DILLA_ROOT, "dilla.#{format}")
+    output = File.expand_path(argv.shift || ENV.fetch("DILLA_VIDEO_OUT", default_output))
     seconds = video_seconds
 
     abort "video: missing #{input} — run dilla showcase first" unless File.file?(input) && File.size?(input)
@@ -150,6 +153,18 @@ module RadioVideo
         <style>
           html, body { margin: 0; padding: 0; width: #{WIDTH}px; height: #{HEIGHT}px; background: #000; overflow: hidden; }
           canvas { display: block; width: #{WIDTH}px; height: #{HEIGHT}px; }
+          .brand {
+            position: fixed;
+            top: 24px;
+            left: 26px;
+            z-index: 10;
+            color: rgba(220,220,220,.84);
+            font: 600 20px/1 system-ui,-apple-system,"Segoe UI",sans-serif;
+            letter-spacing: .02em;
+            text-shadow: 0 1px 8px rgba(0,0,0,.55);
+            pointer-events: none;
+            user-select: none;
+          }
         </style>
         <script type="importmap">
         {
