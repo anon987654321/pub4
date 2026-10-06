@@ -112,6 +112,22 @@ class MediaIntentSpec < Minitest::Test
     [bus, events]
   end
 
+  def test_play_live_music_defaults_to_the_dilla_showcase
+    captured = nil
+    runner = lambda do |**kwargs|
+      captured = kwargs
+      Master::Result.ok("live showcase started")
+    end
+
+    with_dispatch_stub(runner) do
+      result = MediaIntent.play_live_music("")
+      assert result.ok?
+    end
+
+    assert_equal "dilla", captured[:tool]
+    assert_equal "live showcase", captured[:arg]
+  end
+
   def test_play_live_music_normalizes_the_five_named_artist_lanes
     calls = []
     runner = lambda do |**kwargs|

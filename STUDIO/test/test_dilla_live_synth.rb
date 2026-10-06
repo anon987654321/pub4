@@ -249,20 +249,25 @@ class TestDillaLiveSynth < Minitest::Test
     assert_match(/LIVE_SYNTH_VERBS = %w\[[^\]]*\bshowcase\b[^\]]*\]\.freeze/, source)
   end
 
-  def test_showcase_audio_room_is_dark_and_taped
+  def test_showcase_audio_room_is_dark_pitch_shifted_and_heavily_summed
     source = File.read(dilla("lib/livesets.rb"))
-    assert_includes source, 'speed: :ips7, wow: 0.12, flutter: 0.05'
-    assert_includes source, 'lowpass=f=4200'
-    assert_includes source, 'aecho=0.82:0.72:82|164:0.18|0.10'
-    assert_includes source, 'SHOWCASE_TEMPO_SCALE = 0.90'
+    assert_includes source, 'speed: :ips7, wow: 0.18, flutter: 0.07'
+    assert_includes source, 'SHOWCASE_PITCH_RATIO'
+    assert_includes source, 'lowpass=f=6800'
+    assert_includes source, 'loudnorm=I=-14:LRA=9:TP=-1.0:linear=false'
+    assert_operator LiveSynth.showcase_tape_chain.count { |stage| stage.start_with?("aphaser=") }, :>=, 4
+    assert_operator LiveSynth.showcase_tape_chain.count { |stage| stage.start_with?("volume=") && stage.include?("acrusher") }, :>=, 3
+    assert_includes LiveSynth.showcase_tape_chain, Outboard.console_stack(instances: 3, offset: 0.10, param: 1.2, speed: 0.1)
   end
 
   def test_showcase_covers_the_live_feature_tour
     scenes = LiveSynth::SHOWCASE_SCENES.map(&:first)
     assert_equal %w[
+      flylo flylo_beginners_falafel flylo_massage_situation
+      flylo_king_of_the_hill flylo_computer_face
       dilla_life dilla_players dilla_so_far_to_go soulquarians
       dangelo_root dangelo_spanish_joint dangelo_another_life dangelo_ballad
-      flylo flylo_computer_face madlib madlib_figaro royksopp
+      madlib madlib_figaro royksopp
       moog_dfam moog_dark memorymoog_organ vox_humana soft_reed glass_bell bach
     ], scenes
     source = File.read(dilla("lib/livesets.rb"))
