@@ -2196,7 +2196,7 @@ module LiveSynth
     cycle = 0
 
     loop do
-      scratch = Dir.mktmpdir("dilla-showcase-", D)
+      scratch = Dir.mktmpdir("dilla-showcase-", Livesets::D)
       paths = []
       stopped = false
 
@@ -2228,7 +2228,7 @@ module LiveSynth
   end
 
   def showcase_output
-    File.expand_path(ENV.fetch("DILLA_SHOWCASE_OUT", File.join(D, "dilla.wav")))
+    File.expand_path(ENV.fetch("DILLA_SHOWCASE_OUT", File.join(Livesets::D, "dilla.wav")))
   end
 
   def showcase_scenes(mode = nil)
