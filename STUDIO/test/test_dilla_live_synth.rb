@@ -210,6 +210,34 @@ class TestDillaLiveSynth < Minitest::Test
     assert_equal({ "lead" => "fm", "preset" => "glass" }, say.steering("fm lead glass"))
   end
 
+  def test_default_improviser_draws_only_source_backed_dilla_or_dangelo_harmony
+    keys = LiveSynth.authentic_progression_keys
+    refute_empty keys
+    assert_includes keys, "dilla_life"
+    assert(keys.any? { |key| ARTIST_VERIFIED_PROGRESSIONS.fetch(key.to_sym).fetch(:artist).to_s.include?("D'Angelo") })
+    keys.each do |key|
+      source = LiveSynth.documented_progression(key)
+      assert_operator source.fetch("chords").length, :>=, 2
+      assert source.fetch("chords").all? { |symbol| resolve_pad_chord_symbol(symbol) }, key
+    end
+  end
+
+  def test_reference_improviser_uses_the_registered_dilla_voicing
+    score = LiveSynth::Improviser.new(rng: Random.new(7), reference: "dilla_life", pad: "rhodes_tine")
+    stage = LiveSynth::Stage.new(rate: RATE, rng: score.rng)
+    score.schedule(stage, 0.0)
+
+    expected = resolve_pad_chord_symbol("Bbm9").fetch(:hz).map { |hz| (69 + (12 * Math.log2(hz / 440.0))).round }.uniq
+    actual = stage.instance_variable_get(:@voices).first(5).map(&:midi)
+    assert_equal expected, actual
+  end
+
+  def test_bare_dilla_entrypoint_routes_to_live_improviser
+    source = File.read(dilla("dilla.rb"))
+    assert_match(/cmd = ARGV\.shift.*?if cmd\.nil\?.*?live!\(\[["']improvise["']\]\)/m, source)
+    refute_match(/if cmd\.nil\?.*?Bed\.pieces!/m, source)
+  end
+
   def test_play_artist_uses_documented_source_lanes
     table = LiveSynth.config.fetch("play")
     assert_equal "bach_toccata", table.fetch("bach")
