@@ -22,7 +22,7 @@ module Master
           label = $1.to_s.strip
           result = Master::Device::Agent.claim_owner!(root:, label:)
           [Master::Ground::Pairing.redeem_notice(result), result[:onboarding]].compact.join("\n")
-        when /\Aissue(?:\s+(.*))?\z/
+        when "release"\n          subject = Master::Device::Agent.owner_subject(root:)\n          return "pair: not paired" if subject.empty?\n\n          Master::Device::Agent.release_owner!(root:)\n          "pair: released #{subject}"\n        when /\Aissue(?:\s+(.*))?\z/
           issued = Master::Ground::Pairing.issue(root:, label: $1.to_s.strip)
           "pair code #{issued[:code]} expires in #{issued[:expires_in]}s — redeem via /pair #{issued[:code]} or the face field"
         when "release"
