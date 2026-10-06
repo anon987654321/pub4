@@ -56,6 +56,31 @@ class TestFixWorktreeSession < Minitest::Test
     end
   end
 
+  def test_auto_merge_refuses_preexisting_local_commits
+    Dir.mktmpdir("master-worktree-test-") do |dir|
+      remote = File.join(dir, "remote.git")
+      root = File.join(dir, "pub4")
+      system("git", "init", "--bare", remote)
+      system("git", "clone", remote, root)
+      git(root, "config", "user.name", "MASTER test")
+      git(root, "config", "user.email", "master-test@example.invalid")
+      File.write(File.join(root, "README"), "base\\n")
+      git(root, "add", "README")
+      git(root, "commit", "-m", "initial")
+      git(root, "branch", "-M", "main")
+      git(root, "push", "-u", "origin", "main")
+      File.write(File.join(root, "README"), "local\\n")
+      git(root, "commit", "-am", "local work")
+
+      result = Master::Fix::WorktreeSession.new(root:).run(command: "/fix test")
+
+      refute result.ok
+      assert_match(/requires checked-out main at origin\\/main/, result.summary)
+      assert_equal "base\\n", git_output(root, "show", "origin/main:README")
+      assert_equal "local\\n", File.read(File.join(root, "README"))
+    end
+  end
+
   private
 
   def git(root, *args)
