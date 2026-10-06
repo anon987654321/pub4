@@ -44407,6 +44407,23 @@ LIVE_SYNTH_VERBS = %w[default improvise progression patch play showcase knob mor
 # The live entry. It runs before the defaults tables, the provenance recipe and
 # the asset check, all of which belong to a render that writes a file: the live
 # side reads the caller's environment exactly as it was typed.
+SHOWCASE_DEFAULTS = {
+  "DILLA_SHOWCASE" => "1",
+  "DILLA_EFFECTS" => "1",
+  "DILLA_PHYSICS" => "1",
+  "DILLA_SHOWCASE_DARK" => "1",
+  "DILLA_SHOWCASE_TAPE" => "1",
+  "DILLA_SHOWCASE_TEMPO_SCALE" => "0.76",
+  "DILLA_SHOWCASE_BASS_GAIN" => "0.00009",
+  "DILLA_SHOWCASE_BASS_EVERY" => "3",
+}.freeze
+
+def prepare_showcase_defaults!
+  SHOWCASE_DEFAULTS.each { |key, value| ENV[key] ||= value }
+  ENV["DILLA_SHOWCASE_OUT"] ||= File.join(__dir__, "dilla.wav")
+  ENV["DILLA_SHOWCASE_ONCE"] ||= "1"
+end
+
 def live!(argv)
   # Ruby buffers stdout when it is not a terminal, so a redirected run shows
   # nothing for the first several progressions and looks stalled while it is
@@ -45154,17 +45171,15 @@ if __FILE__ == $PROGRAM_NAME
   # Bare invocation is the finished showcase: render the whole feature tour
   # once and leave the resulting mix beside dilla.rb as dilla.wav.
   if ARGV.empty?
-    ENV["DILLA_SHOWCASE_OUT"] ||= File.join(__dir__, "dilla.wav")
-    ENV["DILLA_SHOWCASE_ONCE"] ||= "1"
-    live!(["showcase"])
+    prepare_showcase_defaults!
+    live!(["showcase", "mode=all"])
     exit
   end
 
   # mode=flylo and its sibling showcase modes are top-level shortcuts. They
   # must be admitted before render defaults read the token as a command.
   if (mode = ARGV.find { |arg| arg.match?(/\Amode=/i) })
-    ENV["DILLA_SHOWCASE_OUT"] ||= File.join(__dir__, "dilla.wav")
-    ENV["DILLA_SHOWCASE_ONCE"] ||= "1"
+    prepare_showcase_defaults!
     live!(["showcase", mode])
     exit
   end
