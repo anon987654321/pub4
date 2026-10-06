@@ -50,7 +50,7 @@ test("face surface owns the full viewport", () => {
 test("MASTER web face uses the same monospaced presentation contract as the CLI", () => {
   const css = readFileSync(join(publicDir, "face.css"), "utf8");
   const rules = readFileSync(join(root, "..", "data", "laws.yml"), "utf8");
-  assert.match(css, /html, body[\s\S]*font:\s*16px\/1\.5 var\(--font-mono\)/);
+  assert.match(css, /html, body \{[\s\S]*?font:\s*16px\/1\.5 var\(--font-mono\)/);
   assert.match(css, /--font-label:\s*"JetBrainsMono Nerd Font"/);
   assert.match(rules, /face_interface:/);
   assert.match(rules, /prompt:\s*\n\s+font: font_code/);
@@ -474,7 +474,7 @@ test("MASTER web and CLI share one monospaced face contract", () => {
   const rules = readFileSync(join(root, "..", "data", "laws.yml"), "utf8");
   assert.match(rules, /face_root:[\s\S]*font_label:.*JetBrainsMono/);
   assert.match(css, /--font-label:\s*"JetBrainsMono/);
-  assert.match(css, /html, body[\\s\\S]*font:\s*16px\\/1\\.5 var\\(--font-mono\\)/);
+  assert.match(css, /html, body[\s\S]*font:\s*16px\/1\.5 var\(--font-mono\)/);
   assert.doesNotMatch(css, /var\(--font-label\)/, "MASTER face may not fall back to a second typography contract");
   assert.match(css, /message\\.user,\\s*\\nmessage\\.assistant[\\s\\S]*border:\s*0;[\\s\\S]*background:\s*transparent/);
   assert.match(css, /#chat-log[\\s\\S]*max-inline-size:\s*66ch/);
