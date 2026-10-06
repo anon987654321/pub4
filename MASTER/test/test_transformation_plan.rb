@@ -46,6 +46,20 @@ class TestTransformationPlan < Minitest::Test
     assert_equal true, @plan.rename_policy.fetch("preserve_public_signatures")
   end
 
+  def test_missing_policy_reports_source_and_available_sections
+    original = Master.method(:load_laws)
+    Master.define_singleton_method(:load_laws) { |_root:| { "prose" => {} } }
+
+    error = assert_raises(ArgumentError) do
+      Master::Fix::TransformationPlan.new(root: Master::ROOT)
+    end
+
+    assert_includes error.message, "transformation policy missing from #{File.join(Master::ROOT, "data", "laws.yml")}"
+    assert_includes error.message, "available sections: prose"
+  ensure
+    Master.singleton_class.send(:define_method, :load_laws, original)
+  end
+
   def test_unknown_operation_is_refused
     assert_raises(ArgumentError) { @plan.operation("invent") }
   end
