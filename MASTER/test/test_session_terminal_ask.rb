@@ -38,6 +38,22 @@ class SessionTerminalAskTest < Minitest::Test
     end
   end
 
+  def test_the_turn_thread_can_choose_a_multi_option_approval
+    with_terminal("1\n") do |out|
+      asker = session.send(:terminal_ask, Thread.current)
+      answer = asker.call(
+        prompt: "web_fetch: https://example.com",
+        options: [
+          { name: "approve once", value: "approve" },
+          { name: "deny this request", value: "deny" },
+        ],
+      )
+      assert_equal "approve", answer
+      assert_match(/1\) approve once/, out.string)
+      assert_match(/2\) deny this request/, out.string)
+    end
+  end
+
   def test_a_thread_the_turn_spawned_is_not_answered
     with_terminal("y\n") do
       asker = session.send(:terminal_ask, Thread.current)

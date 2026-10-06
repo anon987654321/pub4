@@ -67,25 +67,38 @@ module Master
       def terminal_ask(owner)
         return unless $stdin.tty? && $stdout.tty?
 
-        lambda do |prompt:, **|
+        lambda do |prompt:, options: nil, **|
           next "no: asked off the terminal turn" unless Thread.current == owner
 
-          answer_at_terminal(prompt)
+          answer_at_terminal(prompt, options:)
         end
       end
 
       # y/N, with the spinner held still so the question is not painted over.
       # Anything but a yes is a no, which Core::Fold decides.
-      def answer_at_terminal(prompt)
+      def answer_at_terminal(prompt, options: nil)
         @think_mutex&.synchronize do
           @think_paused = true
           print "\r\e[K"
         end
+        return answer_choice_at_terminal(prompt, options) if options&.any?
+
         print "#{@refs.renderer.render("ask0 at fold0: #{prompt} [y/N]", mode: :dmesg)} "
         $stdout.flush
         $stdin.gets.to_s.strip
       ensure
         @think_paused = false
+      end
+
+      def answer_choice_at_terminal(prompt, options)
+        choices = options.each_with_index.map { |option, index| "#{index + 1}) #{option[:name] || option["name"]}" }
+        print @refs.renderer.render("ask0 at fold0: #{prompt}", mode: :dmesg)
+        print "\n  #{choices.join("\n  ")}\n> "
+        $stdout.flush
+        selected = $stdin.gets.to_s.strip
+        index = Integer(selected, exception: false)
+        option = index && options[index - 1]
+        option ? (option[:value] || option["value"]).to_s : ""
       end
 
       # The spinner stops when a reply starts streaming; the units keep printing

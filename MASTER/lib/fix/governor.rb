@@ -82,10 +82,19 @@ module Master
         nil
       end
 
-      def ask_user(tool_name:, tier:, description:)
-        return Result.err("non-TTY: cannot prompt for approval", category: :validation) unless @prompt
+      APPROVAL_OPTIONS = [
+        { name: "approve once", value: "approve" },
+        { name: "always allow this request", value: "allow" },
+        { name: "deny this request", value: "deny" },
+        { name: "quit", value: "quit" },
+      ].freeze
 
+      def ask_user(tool_name:, tier:, description:)
         label = description ? "#{tool_name}: #{description}" : tool_name
+        if (asker = Fiber[:master_terminal_ask])
+          return ask_via_terminal(asker, tool_name:, tier:, description:, label:)
+        end
+        return Result.err("non-TTY: cannot prompt for approval", category: :validation) unless @prompt
         choice = @prompt.select("#{tier_icon(tier)} #{label}", [
           { name: "approve once", value: :approve },
           { name: "always allow this request", value: :allow },
@@ -107,6 +116,25 @@ module Master
       rescue TTY::Reader::InputInterrupt
         @bus&.publish("tool:prompt_interrupted", tool: tool_name, tier:)
         Result.err("input interrupted", category: :shutdown)
+      end
+
+      def ask_via_terminal(asker, tool_name:, tier:, description:, label:)
+        choice = asker.call(prompt: "#{tier_icon(tier)} #{label}", options: APPROVAL_OPTIONS)
+        case choice.to_s
+        when "approve" then Result.ok(true)
+        when "allow"
+          allow!(tool_name, description)
+          Result.ok(true)
+        when "deny"
+          deny!(tool_name, description)
+          @bus&.publish("tool:denied", tool: tool_name)
+          Result.err("denied by user", category: :validation)
+        when "quit" then Result.err("quit", category: :shutdown)
+        else Result.err("invalid approval choice", category: :validation)
+        end
+      rescue StandardError => e
+        @bus&.publish("tool:prompt_error", tool: tool_name, tier:, error: e.message)
+        Result.err("approval prompt failed: #{e.class}: #{e.message}", category: :validation)
       end
 
       def tier_icon(tier)
