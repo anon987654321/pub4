@@ -8,8 +8,11 @@ module Master
     # It proves the collector's complete writable corpus reaches the pass,
     # and that a RAILS run reaches every declared app and the canonical layout suite.
     class Reachability
+      TOP_LEVEL_TREES = %w[MASTER RAILS OPENBSD STUDIO].freeze
+
       def initialize(root:, bus: nil)
         @root = File.expand_path(root)
+        @repo_root = repository_root(@root)
         @bus = bus
       end
 
@@ -26,7 +29,7 @@ module Master
         raise "fix reachability mismatch: #{extra.size} file(s) outside collector scope" if extra.any?
 
         publish_reachability(target, expected)
-        verify_rails_family! if rails_target?(target)
+        verify_fleet! if top_level_target?(target)
         true
       rescue StandardError => e
         @bus&.publish("fix_loop:reachability_failed", target:, error: e.message)
@@ -41,8 +44,8 @@ module Master
         Master::Trace::Dmesg.status("reach0", "#{relative(target)}: #{expected.size} writable files reached")
       end
 
-      def verify_rails_family!
-        rails = File.join(@root, "..", "RAILS")
+      def verify_fleet!
+        rails = File.join(@repo_root, "RAILS")
         apps = YAML.safe_load_file(File.join(rails, "apps.yml"), aliases: false).fetch("apps")
         names = apps.keys.map(&:to_s)
         raise "RAILS apps.yml declares no apps" if names.empty?
@@ -67,8 +70,8 @@ module Master
         shared = File.join(rails, "shared")
         raise "RAILS shared engine missing from filesystem" unless File.directory?(shared)
 
-        layout_path = File.join(@root, "gates", "lib", "layout_suite.rb")
-        auditor_path = File.join(@root, "gates", "lib", "source", "frontend_auditor.rb")
+        layout_path = File.join(@repo_root, "MASTER", "gates", "lib", "layout_suite.rb")
+        auditor_path = File.join(@repo_root, "MASTER", "gates", "lib", "source", "frontend_auditor.rb")
         raise "layout suite missing: #{layout_path}" unless File.file?(layout_path)
         raise "frontend auditor missing: #{auditor_path}" unless File.file?(auditor_path)
 
@@ -112,14 +115,27 @@ module Master
         saved.nil? ? ENV.delete("GATE_AUTOFIX") : ENV["GATE_AUTOFIX"] = saved
       end
 
+      def top_level_target?(target)
+        TOP_LEVEL_TREES.any? do |name|
+          root = File.join(@repo_root, name)
+          target == root || target.start_with?(root + File::SEPARATOR)
+        end
+      end
+
       def rails_target?(target)
-        rails = File.expand_path(File.join(@root, "..", "RAILS"))
+        rails = File.join(@repo_root, "RAILS")
         target == rails || target.start_with?(rails + File::SEPARATOR)
       end
 
       def inside_repo?(path)
-        repo = File.expand_path(File.join(@root, ".."))
-        path == repo || path.start_with?(repo + File::SEPARATOR)
+        path == @repo_root || path.start_with?(@repo_root + File::SEPARATOR)
+      end
+
+      def repository_root(root)
+        return Master::REPO_ROOT if defined?(Master::REPO_ROOT) && root == Master::ROOT
+        return root if File.directory?(File.join(root, "MASTER"))
+
+        File.expand_path("..", root)
       end
 
       def relative(path)
