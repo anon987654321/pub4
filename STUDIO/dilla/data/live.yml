@@ -60,13 +60,13 @@ play_master:
   - { filter: "alimiter=limit=0.95" }
 
 play:
-  bach: circle_fifths_descent
-  baroque: circle_fifths_descent
-  j_dilla: db_major_minor_fall
-  dilla: db_major_minor_fall
-  flying_lotus: quartal_west_coast
-  flylo: quartal_west_coast
-  madlib: minor_triad_walk
+  bach: bach_toccata
+  baroque: bach_toccata
+  j_dilla: live_improvise_moog
+  dilla: live_improvise_moog
+  flying_lotus: live_improvise_prophet
+  flylo: live_improvise_prophet
+  madlib: live_improvise_rhodes
   royksopp: royksopp_live
   röyksopp: royksopp_live
   melody_a_m: royksopp_live
