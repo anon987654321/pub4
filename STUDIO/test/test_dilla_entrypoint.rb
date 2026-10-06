@@ -12,6 +12,7 @@ class TestDillaEntrypoint < Minitest::Test
     assert_operator source.bytesize, :>, 100_000
     assert_includes source, "def live!(argv)"
     assert_includes source, "LIVE_SYNTH_VERBS"
+    assert_match(/LIVE_SYNTH_VERBS = %w\[.*\bplay\b.*\]\.freeze/, source)
     assert_includes source, 'require_relative "lib/sound"'
   end
 end
