@@ -475,6 +475,14 @@ class TestDillaLiveSynth < Minitest::Test
     assert_operator chain.grep(/^(volume=|.*alimiter)/).length, :>, 0
   end
 
+  def test_showcase_tape_curve_leaves_room_for_the_drums
+    chain = LiveSynth.showcase_tape_chain.join(",")
+    assert_includes chain, "highpass=f=55"
+    assert_includes chain, "equalizer=f=82:t=q:w=0.9:g=-2.8"
+    assert_includes chain, "equalizer=f=125:t=q:w=1.0:g=-3.2"
+    assert_includes chain, "equalizer=f=220:t=o:w=1.1:g=-5.6"
+  end
+
   def test_dub_showcase_tail_assignment_is_outside_string_continuation
     source = File.read(dilla("lib/livesets.rb"))
     assert_match(/send = post\.fetch\("dub"\).*\n\s+showcase_tail = LiveSynth\.showcase\?/, source)
