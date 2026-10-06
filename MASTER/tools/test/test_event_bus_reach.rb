@@ -46,6 +46,16 @@ class TestEventBusReach < Minitest::Test
     refute_includes refs, "comment:fake"
   end
 
+  def test_javascript_expands_grouped_event_regexes
+    rows = Operator::EventBusReach.js_events('const match = /phantom:(?:detected|halt|recovery)/i;')
+
+    refs = rows.select { |row| row[:role] == :reference }.map { |row| row[:topic] }
+
+    assert_includes refs, "phantom:detected"
+    assert_includes refs, "phantom:halt"
+    assert_includes refs, "phantom:recovery"
+  end
+
   def test_current_tree_exposes_real_face_topics_without_stale_aliases
     result = Operator::EventBusReach.report
 
