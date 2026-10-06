@@ -38,9 +38,12 @@ class TestGroundLawResolver < Minitest::Test
     assert_equal "LAYERED", resolver.winner("NOPE", "LAYERED", rules_index: INDEX)
   end
 
+
   def test_reads_the_real_laws_from_laws_yml
     real = Master::Ground::LawResolver.new
 
-    assert_operator real.priority("ROBUSTNESS"), :<, 99, "the constitution declares ROBUSTNESS a law"
+    assert_equal 1, real.priority("ROBUSTNESS")
+    assert_equal 2, real.priority("ABSTRACTION")
+    assert_equal 6, real.priority("DENSITY")
   end
 end
