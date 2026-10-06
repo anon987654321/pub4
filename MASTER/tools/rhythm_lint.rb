@@ -24,14 +24,22 @@ module Operator
     def run
       rules = load_design_rules
       unless rules
-        Master::Trace::Dmesg.status("rhythm0", "could not find MASTER/data/laws.yml, skipped", io: $stderr)
-        return true
+        Master::Trace::Dmesg.status(
+          "rhythm0",
+          "cannot load MASTER/data/laws.yml — constitutional measurement unavailable",
+          io: $stderr
+        )
+        return false
       end
 
       allowed = rules.dig("pixel_perfection", "eight_px_rhythm")
       unless allowed
-        Master::Trace::Dmesg.status("rhythm0", "design rules have no pixel_perfection.eight_px_rhythm, skipped", io: $stderr)
-        return true
+        Master::Trace::Dmesg.status(
+          "rhythm0",
+          "MASTER/data/laws.yml has no pixel_perfection.eight_px_rhythm — constitutional measurement unavailable",
+          io: $stderr
+        )
+        return false
       end
       allowed = allowed.map(&:to_i).to_set
 
