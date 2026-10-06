@@ -268,12 +268,20 @@ module Master
         STYLES.fetch(style.to_sym, STYLES[default_style]).dup
       end
 
+      # Keep one voice, but let the delivery follow the moment. The style is
+      # inferred per utterance, so sentence-level streaming can move naturally
+      # between concise, warm, careful, playful, and narrative delivery without
+      # changing speaker.
       def infer_style(text, fallback: default_style)
         t = text.to_s.strip
         return fallback if t.empty?
-        return :fail if t.match?(/\b(fail|failed|broken|blocked|error|abort)\b/i)
-        return :warn if t.match?(/\b(warn|warning|careful|risk|unsafe)\b/i)
+        return :fail if t.match?(/\b(fail|failed|broken|blocked|error|abort|cannot|can't)\b/i)
+        return :warn if t.match?(/\b(warn|warning|careful|risk|unsafe|danger)\b/i)
         return :question if t.end_with?("?")
+        return :calm if t.match?(/\b(no rush|take your time|steady|let's take it|one step at a time|we can slow down)\b/i)
+        return :warm if t.match?(/\b(glad|happy|welcome|thanks|thank you|got it|makes sense|nice|great|sorry|understand)\b/i)
+        return :energetic if t.match?(/[!]{1,2}/) && t.split.size.between?(4, 40)
+        return :storyteller if t.split.size > 35 || t.match?(/\b(imagine|picture this|once upon|story|scene|remember when|beautiful|wonderful)\b/i)
         return :brief if t.split.size <= BRIEF_STYLE_WORD_COUNT
         fallback
       end
