@@ -3746,7 +3746,6 @@ module LiveSynth
     def play_args(words)
       style = STYLE_ALIASES.keys.sort_by { |name| -name.length }.find { |name| words.include?(name) }
       return STYLE_ALIASES.fetch(style) if style
-      return %w[showcase] if words.match?(/\Aplay\s+(?:j\s+)?dilla\s*\z/)
       return %w[improvise] if words.match?(/\bimprovise\b/)
 
       patches = Patches.find(words)

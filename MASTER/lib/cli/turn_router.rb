@@ -32,7 +32,7 @@ module Master
         if text.match?(%r{\A(?:fix|review|critique)\b}i)
           return dispatch_slash("/#{text}", container:, felt_sense:, on_turn:)
         end
-        if text.match?(%r{\A(?:(?:i\s+(?:need|want)\s+you\s+to|(?:can|could|would)\s+you|please)\s+)?deploy\b}i)
+        if deployment_intent?(text)
           return dispatch_slash("/deploy #{deployment_args(text)}".strip, container:, felt_sense:, on_turn:)
         end
 
@@ -51,16 +51,34 @@ module Master
 
       def visitor? = Fiber[:master_visitor] == true
 
+      DEPLOY_ACTION_WORDS = %w[deploy release ship publish launch push promote rollout].freeze
+      DEPLOY_DESTINATION_WORDS = %w[vm23 production prod live].freeze
+      DEPLOY_NEGATIVE_WORDS = %w[why when what how status check inspect logs log failed failing failure worked work working].freeze
+
+      def deployment_intent?(text)
+        value = text.to_s.strip
+        return false if value.empty?
+        return false if value.match?(/\?\s*\z/) && value.match?(/\b(?:#{DEPLOY_NEGATIVE_WORDS.join("|")})\b/i)
+        return false if value.match?(/\b(?:#{DEPLOY_NEGATIVE_WORDS.join("|")})\b.*\bdeploy(?:ment)?\b|\bdeploy(?:ment)?\b.*\b(?:#{DEPLOY_NEGATIVE_WORDS.join("|")})\b/i)
+        action = value.match?(/\b(?:#{DEPLOY_ACTION_WORDS.join("|")})\b/i)
+        return false unless action
+        return true if value.match?(/\bdeploy\b/i)
+        value.match?(/\b(?:#{DEPLOY_DESTINATION_WORDS.join("|")})\b/i) ||
+          value.match?(/\b(?:master|rails?|brgen|amber|bsdports)\b/i)
+      end
+
       def deployment_args(text)
         value = text.to_s
-        target = if value.match?(/\bmaster\b/i) && value.match?(/\brails?\b/i)
-          "all"
-        elsif value.match?(/\b(?:all|everything|fleet|whole)\b/i)
+        components = value.scan(/\b(?:master|rails?|openbsd|brgen|amber|bsdports)\b/i).map(&:downcase).uniq
+        target = if components.length >= 2 ||
+                   value.match?(/\b(?:all|everything|fleet|whole|stack)\b/i)
           "all"
         elsif value.match?(/\bmaster\b/i)
           "master"
+        elsif (app = value[/\b(?:brgen|amber|bsdports)\b/i])
+          app.downcase
         else
-          value[/\b(?:brgen|amber|bsdports)\b/i]&.downcase || "all"
+          "all"
         end
         target += " --confirm" if value.match?(/(?:^|\s)--confirm(?:\s|$)/i)
         target

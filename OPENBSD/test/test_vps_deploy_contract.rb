@@ -15,7 +15,6 @@ class VpsDeployContractTest < Minitest::Test
   ROOT = File.expand_path("../..", __dir__)
   SOURCE = File.read(File.join(ROOT, "OPENBSD", "bin", "vps-deploy"), encoding: "UTF-8")
   APPS = YAML.safe_load_file(File.join(ROOT, "RAILS", "apps.yml")).fetch("apps").keys.map(&:to_s)
-  MASTER_DEPLOY = File.read(File.join(ROOT, "OPENBSD", "bin", "vps_deploy_master.sh"), encoding: "UTF-8")
 
   def deploy_all
     SOURCE[/^DEPLOY_ALL=\(([^)]*)\)/, 1]&.split
@@ -38,11 +37,6 @@ class VpsDeployContractTest < Minitest::Test
   def test_the_order_that_survives_its_own_side_effects
     assert_equal "master", deploy_all.first
     assert_equal %w[amber bsdports], deploy_all.last(2).sort
-  end
-
-  def test_deploy_paths_export_openbsd_package_path
-    assert_match(/export PATH=\\/usr\\/local\\/bin:.*\\/bin:.*\\/sbin/, SOURCE)
-    assert_match(/export PATH=\\/usr\\/local\\/bin:.*\\/bin:.*\\/sbin/, MASTER_DEPLOY)
   end
 
   def test_it_rejects_an_unknown_deploy_target

@@ -240,11 +240,6 @@ class TestDillaLiveSynth < Minitest::Test
     refute_includes block, '"preset" => "metal"'
   end
 
-  def test_master_play_dilla_routes_to_the_same_showcase
-    assert_equal %w[showcase], LiveSynth::Say.play_args("play dilla")
-    assert_equal %w[showcase], LiveSynth::Say.play_args("play j dilla")
-  end
-
   def test_bare_dilla_entrypoint_routes_to_showcase
     source = File.read(dilla("dilla.rb"))
     assert_match(/if ARGV\.empty\?.*?live!\(\[["']showcase["']\]\)/m, source)

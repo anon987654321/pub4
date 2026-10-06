@@ -65,6 +65,32 @@ def test_a_read_only_fix_keeps_the_flag_the_rails_gate_passes
   assert_equal "/fix --dry-run ../RAILS/amber", rewritten
 end
 
+  def test_deployment_intent_understands_natural_variants
+    router = Master::CLI::TurnRouter
+
+    assert router.deployment_intent?("please deploy MASTER and RAILS and OPENBSD to vm23 --confirm")
+    assert router.deployment_intent?("ship MASTER to production")
+    assert router.deployment_intent?("put the Rails fleet live on vm23")
+    assert router.deployment_intent?("release brgen to vm23 --confirm")
+  end
+
+  def test_deployment_intent_does_not_turn_status_questions_into_mutations
+    router = Master::CLI::TurnRouter
+
+    refute router.deployment_intent?("did the deploy work?")
+    refute router.deployment_intent?("why did deploy fail?")
+    refute router.deployment_intent?("check deploy status on vm23")
+    refute router.deployment_intent?("deploy status on vm23")
+  end
+
+  def test_deployment_args_maps_fleet_language_to_all
+    router = Master::CLI::TurnRouter
+
+    assert_equal "all --confirm", router.deployment_args("ship MASTER and RAILS to vm23 --confirm")
+    assert_equal "all", router.deployment_args("put the whole stack live on vm23")
+    assert_equal "brgen --confirm", router.deployment_args("release brgen to production --confirm")
+  end
+
   def test_deploy_confirmation_survives_natural_language_routing
     args = Master::CLI::TurnRouter.deployment_args(
       "please deploy MASTER and RAILS and OPENBSD to vm23 --confirm"
