@@ -4,6 +4,7 @@ require "fileutils"
 require "digest"
 require "tmpdir"
 require_relative "restructure/plan"
+require_relative "transformation_plan"
 require_relative "restructure/syntax"
 require_relative "restructure/proof"
 require_relative "restructure/master_proof"
@@ -46,15 +47,22 @@ module Master
         end].uniq
       end
 
-      def initialize(repo_root:, tree: "MASTER", git: nil, proof: nil)
+      def initialize(repo_root:, tree: "MASTER", git: nil, proof: nil, transformation_plan: nil)
         @root = repo_root
         @tree = tree
         @git = git || Io::GitOperations.new(repo_root)
         @proof = proof || Proof.for(tree, repo_root)
+        @transformation_plan = transformation_plan || TransformationPlan.new(root: Master::ROOT)
       end
 
       # review takes the applied diff and answers nil to approve, or a reason.
-      def call(plan, message:, review:)
+      def call(plan, message:, review:, allowed_operations: nil)
+        refusal = plan.validate_operations!(
+          transformation_plan: @transformation_plan,
+          allowed_operations:
+        )
+        return Result.err("restructure refused: #{refusal}", category: :policy) if refusal
+
         plan = ratcheted_plan(plan)
         refusal = refusal_for(plan)
         return Result.err("restructure refused: #{refusal}", category: :policy) if refusal
@@ -97,7 +105,7 @@ module Master
 
         writes = plan.writes.dup
         writes[path] = body.sub(/^  core_recursive_files: \d+$/, "  core_recursive_files: #{predicted}")
-        Restructure::Plan.new(summary: plan.summary, writes:, deletes: plan.deletes)
+        Restructure::Plan.new(summary: plan.summary, operations: plan.operations, writes:, deletes: plan.deletes)
       end
 
       def core_recursive_files
