@@ -370,7 +370,7 @@ module BachMidi
           raise ArgumentError, "truncated MIDI meta payload" unless payload&.bytesize == length
 
           cursor += length
-          tempos << [tick, payload.unpack1("N")] if type == 0x51 && length == 3
+          tempos << [tick, (payload.getbyte(0) << 16) | (payload.getbyte(1) << 8) | payload.getbyte(2)] if type == 0x51 && length == 3
           running = nil
         else
           cursor += case status
