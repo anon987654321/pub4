@@ -133,7 +133,15 @@ module Master
 
       def load_policy
         return {} unless @root == Master::ROOT
-        Master.load_laws(root: @root).fetch("transformation_policy")
+
+        laws = Master.load_laws(root: @root)
+        policy = laws["transformation_policy"]
+        return policy if policy.is_a?(Hash)
+
+        path = File.join(@root, "data", "laws.yml")
+        sections = laws.is_a?(Hash) ? laws.keys.map(&:to_s).sort : []
+        raise ArgumentError,
+          "transformation policy missing from #{path}; available sections: #{sections.join(", ")}"
       end
     end
   end
