@@ -166,6 +166,7 @@ module Master
         end
 
         def executable_law_rows
+          require File.join(Master::ROOT, "lib", "master") unless defined?(::Master::ROOT)
           require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
           ::Law.load_all(File.join(@root, "law")) if ::Law.rules.empty?
           ::Law.rules.values.map do |law|
@@ -178,6 +179,7 @@ module Master
         end
 
         def registry_rule_rows
+          require File.join(Master::ROOT, "lib", "master") unless defined?(::Master::ROOT)
           Review::Scan::RuleDSL
           Review::Scan::Rule.registry
             .select { |klass| shipped?(klass) }
