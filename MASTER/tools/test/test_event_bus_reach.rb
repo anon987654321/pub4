@@ -19,6 +19,12 @@ class TestEventBusReach < Minitest::Test
     ], Operator::EventBusReach.ruby_events(source)
   end
 
+  def test_ruby_extracts_safe_navigation_publishers
+    rows = Operator::EventBusReach.ruby_events('bus&.publish("phantom:recovery", step: 1)')
+
+    assert_equal [{ topic: "phantom:recovery", role: :publisher }], rows
+  end
+
   def test_javascript_ignores_comments_and_finds_regex_references
     source = <<~JS
       // window.addEventListener("comment:fake", handler)
