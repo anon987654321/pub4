@@ -11,6 +11,16 @@ require_relative "../lib/operator/ruby_runner"
 class TestBinRuby < Minitest::Test
   BIN = File.expand_path("../bin/ruby", __dir__)
 
+  def test_boot_accepts_packaged_openbsd_and_android_ruby_versions
+    require_relative "../lib/boot/entrypoint"
+
+    assert Master::Boot::Entrypoint::OPENBSD_RUBY_PATTERN.match?("3.3.9")
+    assert Master::Boot::Entrypoint::OPENBSD_RUBY_PATTERN.match?("3.4.9")
+    refute Master::Boot::Entrypoint::OPENBSD_RUBY_PATTERN.match?("3.2.9")
+    assert Master::Boot::Entrypoint::ANDROID_RUBY_PATTERN.match?("4.0.5")
+    refute Master::Boot::Entrypoint::ANDROID_RUBY_PATTERN.match?("3.4.9")
+  end
+
   def test_openbsd_lane_is_allowed_by_the_wrapper
     source = File.read(BIN)
 
