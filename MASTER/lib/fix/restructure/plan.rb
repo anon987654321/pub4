@@ -8,14 +8,45 @@ module Master
       # A model's restructure, parsed: files written in full and files deleted,
       # each named from the repository root. A move is a write and a delete,
       # and git sees the rename.
-      Plan = Data.define(:summary, :writes, :deletes) do
+      Plan = Data.define(:summary, :operations, :writes, :deletes) do
         def self.parse(text)
           writes = {}
           deletes = []
           sections(text.to_s).each do |verb, path, body|
             verb == "WRITE" ? writes[path] = body : deletes << path
           end
-          new(summary: text.to_s[/^SUMMARY:[ \t]*(.+)$/, 1].to_s.strip, writes:, deletes:)
+          operations = text.to_s[/^OPERATIONS:[ \t]*(.+)$/, 1].to_s
+                         .split(",")
+                         .map { |operation| operation.strip }
+                         .reject(&:empty?)
+          new(
+            summary: text.to_s[/^SUMMARY:[ \t]*(.+)$/, 1].to_s.strip,
+            operations:,
+            writes:,
+            deletes:
+          )
+        end
+
+        def validate_operations!(transformation_plan:, allowed_operations: nil)
+          return "restructure plan names no operations" if operations.empty?
+
+          unknown = operations.reject do |name|
+            transformation_plan.operation(name)
+            true
+          rescue ArgumentError
+            false
+          end
+          return "unknown transformation(s): #{unknown.join(", ")}" if unknown.any?
+
+          return "transformations are out of constitutional order: #{operations.join(", ")}" unless transformation_plan.ordered?(operations)
+
+          return if allowed_operations.nil?
+
+          allowed = Array(allowed_operations).map(&:to_s)
+          outside = operations.reject { |name| allowed.include?(name) }
+          return if outside.empty?
+
+          "transformation(s) outside the problem's candidate set: #{outside.join(", ")}"
         end
 
         # The text from the first header up to === END, cut at each header.
