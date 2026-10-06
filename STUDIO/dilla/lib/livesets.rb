@@ -2117,6 +2117,7 @@ module LiveSynth
   def play_artist!(words)
     key = words.join(" ").strip.downcase.delete_suffix(".rb").gsub(/\s+/, " ")
     lane = LiveSynth.config.fetch("play").fetch(key, nil)
+    return BachMidi.play! if lane == "bach_midi"
     return AbletonPlay.play!(key) unless lane
 
     rng = rng!

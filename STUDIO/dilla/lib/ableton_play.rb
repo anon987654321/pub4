@@ -2,6 +2,10 @@
 
 require "digest"
 require "fileutils"
+require "net/http"
+require "tmpdir"
+require "uri"
+
 
 # Recover the operator's old Ableton beats without requiring Ableton Live itself.
 # .als files are gzip-compressed XML; the Ableton reader already understands that
@@ -11,6 +15,7 @@ module AbletonPlay
   module_function
 
   DILLA_ROOT = File.expand_path("..", __dir__)
+  CACHE_ROOT = File.join(Dir.home, ".cache", "master", "dilla")
   PPQ = 480
   DRUM_CHANNEL = 9
 
@@ -81,8 +86,8 @@ module AbletonPlay
     note_count = set.tracks.sum { |track| track.clips.sum { |clip| clip.notes.size } }
     abort "play: #{row[:slug]} contains no MIDI notes" if note_count.zero?
 
-    relative = File.join("downloaded_als", "#{row[:slug]}-#{Digest::SHA256.hexdigest(File.expand_path(row[:path]))[0, 8]}.mid")
-    destination = File.join(DILLA_ROOT, "livesets_midi", "#{row[:slug]}-#{Digest::SHA256.hexdigest(File.expand_path(row[:path]))[0, 8]}.mid")
+    digest = Digest::SHA256.hexdigest(File.expand_path(row[:path]))[0, 8]
+    destination = File.join(CACHE_ROOT, "ableton", "#{row[:slug]}-#{digest}.mid")
     FileUtils.mkdir_p(File.dirname(destination))
     File.binwrite(destination, midi_file(set))
 
@@ -90,7 +95,7 @@ module AbletonPlay
     puts "als0: recovered #{row[:path]} -> #{destination}"
     puts "als0: playing the recovered MIDI, not an approximation"
 
-    Object.send(:play_liveset_midi!, File.basename(relative).sub(%r{\Adownloaded_als/}, "downloaded_als/"))
+    MIDIPlayback.play!(destination)
   end
 
   def midi_file(set)
@@ -143,3 +148,78 @@ module AbletonPlay
 end
 
 require "digest"
+
+module MIDIPlayback
+  module_function
+
+  def soundfont
+    candidates = []
+    candidates << LIVESET_SF if defined?(LIVESET_SF)
+    candidates.concat(Dir.glob("/opt/homebrew/Cellar/fluid-synth/*/share/fluid-synth/sf2/*.sf2"))
+    candidates.concat(Dir.glob("/opt/homebrew/share/sounds/sf2/*.sf2"))
+    candidates.concat(Dir.glob("/usr/local/share/sounds/sf2/*.sf2"))
+    candidates.find { |path| File.file?(path) && File.size?(path) }
+  end
+
+  def player
+    defined?(Livesets) ? Livesets.tool("fluidsynth") : "fluidsynth"
+  end
+
+  def play!(midi)
+    abort "play: missing MIDI #{midi}" unless File.file?(midi) && File.size?(midi).positive?
+
+    sf = soundfont
+    abort "play: no FluidSynth soundfont found" unless sf
+
+    dir = Dir.mktmpdir("master-midi-")
+    wav = File.join(dir, "render.wav")
+    ok = system(player, "-ni", sf, midi, "-F", wav, "-r", "44100", "-g", "0.75")
+    abort "play: fluidsynth failed for #{midi}" unless ok && File.file?(wav) && File.size?(wav).positive?
+
+    system("afplay", wav)
+  ensure
+    FileUtils.remove_entry(dir) if dir && File.directory?(dir)
+  end
+end
+
+module BachMidi
+  module_function
+
+  URL = URI("https://www.mutopiaproject.org/ftp/BachJS/BWV565/ToccataFugue/ToccataFugue.mid")
+  CACHE = File.join(Dir.home, ".cache", "master", "dilla", "bach_bwv565.mid")
+
+  def source
+    return CACHE if File.file?(CACHE) && File.size?(CACHE).positive?
+
+    FileUtils.mkdir_p(File.dirname(CACHE))
+    body = fetch(URL)
+    tmp = "#{CACHE}.#{Process.pid}.tmp"
+    File.binwrite(tmp, body)
+    File.rename(tmp, CACHE)
+    CACHE
+  rescue StandardError => e
+    FileUtils.rm_f(tmp) if defined?(tmp) && tmp
+    abort "play: could not fetch Bach BWV 565 MIDI — #{e.message}"
+  end
+
+  def fetch(uri, redirects: 0)
+    abort "play: Bach MIDI redirect loop" if redirects > 5
+
+    response = Net::HTTP.get_response(uri)
+    case response
+    when Net::HTTPSuccess
+      response.body
+    when Net::HTTPRedirection
+      location = URI.join(uri.to_s, response["location"])
+      fetch(location, redirects: redirects + 1)
+    else
+      abort "HTTP #{response.code}"
+    end
+  end
+
+  def play!
+    path = source
+    puts "bach0: Bach Toccata and Fugue BWV 565 — original MIDI"
+    MIDIPlayback.play!(path)
+  end
+end

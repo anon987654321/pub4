@@ -60,8 +60,8 @@ play_master:
   - { filter: "alimiter=limit=0.95" }
 
 play:
-  bach: bach_toccata
-  baroque: bach_toccata
+  bach: bach_midi
+  baroque: bach_midi
   j_dilla: reference:dilla_flowers_documented
   dilla: reference:dilla_flowers_documented
   flying_lotus: reference:flylo_camel_documented
