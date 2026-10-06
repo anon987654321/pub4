@@ -192,29 +192,30 @@ module BachMidi
   class Score
     attr_reader :rng
 
+    LOOKAHEAD_SECONDS = 1.0
+
     def initialize(events:, length:, rng:, patch:)
       @events = events
       @length = length
       @rng = rng
       @patch = LiveSynth::Patches.name!(patch)
       @knobs = LiveSynth::Knobs.new({}, response: LiveSynth::Demo::RESPONSE, rng:)
-      @scheduled = false
+      @index = 0
     end
 
     def knobs = @knobs
 
     def describe = "Bach Toccata and Fugue BWV 565 MIDI, Dilla #{@patch}"
 
-    def finished?(clock) = @scheduled && clock >= @length
+    def finished?(clock) = @index >= @events.length && clock >= @length
 
-    def schedule(stage, _clock)
-      return if @scheduled
-
+    def schedule(stage, clock)
       spec = LiveSynth::Patches.spec(@patch)
-      @events.each do |event|
+      while @index < @events.length && @events[@index][:at] < clock + LOOKAHEAD_SECONDS
+        event = @events[@index]
         stage.note(event[:pitch], spec, event[:at], event[:held], event[:gain], :pad)
+        @index += 1
       end
-      @scheduled = true
     end
 
     def command(command, clock)

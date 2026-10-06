@@ -278,6 +278,26 @@ class TestDillaLiveSynth < Minitest::Test
     end
   end
 
+  def test_bach_score_schedules_notes_with_a_rolling_lookahead
+    events = [
+      { at: 0.0, held: 0.2, pitch: 50, gain: 0.3 },
+      { at: 0.9, held: 0.2, pitch: 57, gain: 0.3 },
+      { at: 2.0, held: 0.2, pitch: 62, gain: 0.3 },
+    ]
+    score = BachMidi::Score.new(events:, length: 2.2, rng: Random.new(1), patch: "memorymoog_organ")
+    stage = LiveSynth::Stage.new(rate: RATE, rng: score.rng)
+
+    score.schedule(stage, 0.0)
+    assert_equal 2, stage.instance_variable_get(:@voices).length
+    refute score.finished?(0.0)
+
+    score.schedule(stage, 1.1)
+    assert_equal 3, stage.instance_variable_get(:@voices).length
+    refute score.finished?(2.0)
+
+    assert score.finished?(2.2)
+  end
+
   def test_documented_artist_lane_uses_the_good_improviser_renderer
     score = LiveSynth::Improviser.new(
       rng: Random.new(9),
