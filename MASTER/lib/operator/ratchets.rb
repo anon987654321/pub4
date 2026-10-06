@@ -128,16 +128,14 @@ module Operator
     end
 
     def rule_saturation_and_silent_rows
+      # Silent rules are observation-only: zero findings can mean a healthy
+      # corpus or an applicability gap, so they belong in RuleAudit output rather
+      # than a monotonic ceiling.
       [master_row("rule_audit.saturated", "data/laws.yml", "rules flagging most of what they read") do
          require File.join(MASTER, "lib/operator/rule_audit")
          saturated = Operator::RuleAudit.audit[:saturation]
          [saturated.size, Operator::RuleAudit.ceilings.fetch("saturated"),
           saturated.map { |row| format("%s: %d/%d files", row[:rule], row[:hits], row[:applicable]) }]
-       end,
-       master_row("rule_audit.silent", "data/laws.yml", "rules firing on nothing in the corpus") do
-         require File.join(MASTER, "lib/operator/rule_audit")
-         silent = Operator::RuleAudit.audit[:silent]
-         [silent.size, Operator::RuleAudit.ceilings.fetch("silent"), silent]
        end]
     end
 
