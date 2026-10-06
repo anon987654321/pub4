@@ -203,6 +203,7 @@ module Master
                 "practice" => false
               }
             end
+        end
 
         # The reference loads the rule files, and a class in a multi-class file is
         # invisible to Zeitwerk until it does: asked cold, the registry answered
