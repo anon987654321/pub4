@@ -236,6 +236,159 @@ module AnalogSynth
     def total(held) = held + release
   end
 
+
+  # ---------------------------------------------------------------- physicality
+  #
+  # A shared, deterministic physicality layer. It is intentionally small: the
+  # voice still owns the oscillator/filter/envelope, while this layer supplies
+  # the behaviours a tape machine and a played instrument have that a static
+  # patch does not. It is enabled by default and can be set to DILLA_PHYSICS=0
+  # for an exact arithmetic A/B.
+  module InstrumentPhysics
+    TWO_PI = 2.0 * Math::PI
+    UPDATE = 32
+
+    class Voice
+      attr_reader :previous_hz
+
+      def initialize(hz:, role:, gain:, rng:, rate:, previous_hz: nil, sympathetic_hz: [])
+        @enabled = ENV.fetch("DILLA_PHYSICS", "1") != "0"
+        @hz = hz.to_f
+        @role = role
+        @rate = rate.to_f
+        @previous_hz = previous_hz
+        @gesture = (gain.to_f.abs / 0.2).clamp(0.15, 1.0)
+        @phase_inherit = previous_hz ? ((previous_hz.to_f / [@hz, 1.0].max) - 1.0).clamp(-1.0, 1.0) : 0.0
+        @wow_hz = rng.rand(0.07..0.19)
+        @wow_phase = rng.rand
+        @wow_cents = role == :bass ? 0.9 : 2.3
+        @flutter_hz = rng.rand(3.1..6.4)
+        @flutter_phase = rng.rand
+        @flutter_cents = role == :bass ? 0.05 : 0.18
+        @sampler_mix = role == :lead ? 0.055 : 0.040
+        @sampler_mix *= 0.6 if role == :bass
+        @feedback_mix = role == :bass ? 0.008 : 0.018
+        @memory_gain = role == :bass ? 0.0 : 0.012 + (0.009 * @gesture)
+        @memory_phase = rng.rand
+        @sample_memory = 0.0
+        @body_memory = 0.0
+        @resonance_hz = []
+        @resonance_targets = []
+        @resonance_phase = []
+        @resonance_level = []
+        @resonance_decay = rng.rand(0.99972..0.99990)
+        retune!(sympathetic_hz)
+        @cached_pitch = 1.0
+        @cached_drive = 1.0
+      end
+
+      def enabled? = @enabled
+
+      # Note-aware tape movement: each voice gets its own slow motor drift and
+      # a tiny head flutter. The amount follows the role so bass stays stable.
+      def pitch_factor(t)
+        return 1.0 unless @enabled
+
+        cents = (@wow_cents * Math.sin(TWO_PI * @wow_hz * t + @wow_phase)) +
+                (@flutter_cents * Math.sin(TWO_PI * @flutter_hz * t + @flutter_phase))
+        2.0**(cents / 1200.0)
+      end
+
+      # Harder gestures push the virtual tape a little harder, but the change is
+      # bounded so this remains colour rather than clipping.
+      def drive_factor(t)
+        return 1.0 unless @enabled
+
+        1.0 + ((0.025 + (0.025 * @gesture)) *
+               Math.sin(TWO_PI * (@wow_hz * 0.7) * t + @wow_phase))
+      end
+
+      # Phase memory: a new note does not have to begin from an unrelated phase.
+      # It inherits a tiny part of the previous note's cycle relationship.
+      def phase_start(base, index)
+        return base unless @enabled
+
+        (base + (@phase_inherit * 0.035 * (index + 1))) % 1.0
+      end
+
+      # Bad-sampler physics: a tiny amount of the last sample remains under the
+      # new one, with the amount biased by gesture. This smears the leading edge
+      # instead of applying a generic bitcrusher to the finished mix.
+      def excite(raw, t, envelope, index)
+        return raw unless @enabled
+
+        @sample_memory += 0.10 * (raw - @sample_memory)
+        mix = @sampler_mix * (0.55 + (0.45 * envelope))
+        held = (raw * (1.0 - mix)) + (@sample_memory * mix)
+
+        if @previous_hz && @memory_gain.positive? && t < 0.18
+          residue = Math.sin((TWO_PI * @previous_hz * t) + @memory_phase)
+          held += residue * @memory_gain * Math.exp(-t / 0.06)
+        end
+
+        if (index % UPDATE).zero?
+          @cached_pitch = pitch_factor(t)
+          @cached_drive = drive_factor(t)
+        end
+
+        held
+      end
+
+      def cached_pitch = @cached_pitch
+      def cached_drive = @cached_drive
+
+      # The current harmony retunes the little resonator bank. Direct nearby
+      # notes are the body; fifths, octaves and compound fifths are the harmonic
+      # gravity around it. Existing resonators move toward the new targets rather
+      # than jumping, so a chord change changes the virtual room over time.
+      def retune!(sympathetic_hz)
+        targets = sympathetic_hz.flat_map do |hz|
+          f = hz.to_f
+          [f, f * 1.5, f * 2.0, f * 2.5]
+        end.select { |hz| hz.between?(60.0, 5_000.0) }.uniq.last(3)
+
+        previous = @resonance_hz
+        @resonance_targets = targets
+        @resonance_hz = targets.each_with_index.map { |hz, k| previous[k] || hz }
+        @resonance_phase = targets.each_with_index.map { |_hz, k| @resonance_phase[k] || 0.0 }
+        @resonance_level = targets.each_with_index.map { |_hz, k| @resonance_level[k] || (0.002 + (0.003 * @gesture)) }
+      end
+
+      # Per-note feedback, sympathetic resonance and negative-space residue.
+      # Resonance is updated every 32 samples; the oscillator itself remains
+      # sample accurate, keeping the expensive work below the audible threshold.
+      def post(filtered, t, envelope, index, held:)
+        return filtered unless @enabled
+
+        @body_memory += 0.015 * (filtered - @body_memory)
+        out = filtered + (@body_memory * @feedback_mix * (0.35 + (0.65 * envelope)))
+
+        if (index % UPDATE).zero? && @resonance_hz.any?
+          @resonance_hz.each_index do |k|
+            target = @resonance_targets[k] || @resonance_hz[k]
+            @resonance_hz[k] += (target - @resonance_hz[k]) * 0.04
+            @resonance_level[k] *= @resonance_decay
+          end
+        end
+
+        @resonance_hz.each_index do |k|
+          @resonance_phase[k] = (@resonance_phase[k] + (@resonance_hz[k] / @rate)) % 1.0
+          gain = @resonance_level[k]
+          next unless gain.positive?
+
+          out += Math.sin(TWO_PI * @resonance_phase[k]) * gain * (0.4 + (0.6 * envelope))
+        end
+
+        if @previous_hz && t > held && @role != :bass
+          residue = Math.sin(TWO_PI * @previous_hz * t + @memory_phase)
+          out += residue * @memory_gain * Math.exp(-(t - held) / 0.10)
+        end
+
+        out
+      end
+    end
+  end
+
   # ------------------------------------------------------------------ patches
   #
   # Each is one instrument. The comments say what the settings are FOR, because
@@ -975,7 +1128,7 @@ module AnalogSynth
     REFERENCE_HZ = 261.63
     TWO_PI = 2.0 * Math::PI
 
-    attr_reader :spec, :start, :held, :role, :hz
+    attr_reader :spec, :start, :held, :role, :hz, :physics
 
     def self.midi_hz(midi) = 440.0 * (2.0**((midi - 69) / 12.0))
 
@@ -986,7 +1139,7 @@ module AnalogSynth
     # as [seconds into the voice, midi], and the voice glides to each without
     # retriggering its contours, which is the Minimoog's single trigger.
     # from_midi is where the first note glides in from.
-    def initialize(midi:, spec:, start:, held:, gain:, role:, rng:, rate:, drift_cents: 0.7, from_midi: nil, path: [])
+    def initialize(midi:, spec:, start:, held:, gain:, role:, rng:, rate:, drift_cents: 0.7, from_midi: nil, path: [], previous_hz: nil, sympathetic_hz: [])
       # A PATCHES entry's own drift_cents belongs to render_note!'s lines; live,
       # every note takes the stream's, as the approved takes did. A Model D
       # panel's condition is its own and wins.
@@ -999,7 +1152,10 @@ module AnalogSynth
       @role = role
       @rate = rate.to_f
       @freqs = spec[:waves].each_index.map { |k| (spec[:fixed_hz]&.[](k)) || osc_hz(k) }
-      @phases = spec[:waves].map { rng.rand }
+      @physics = InstrumentPhysics::Voice.new(
+        hz: @hz, role:, gain: @gain, rng:, rate:, previous_hz:, sympathetic_hz:
+      )
+      @phases = spec[:waves].each_index.map { |k| @physics.phase_start(rng.rand, k) }
       @ladder = Ladder.new(rate:)
       return unless spec[:model_d]
 
@@ -1051,21 +1207,35 @@ module AnalogSynth
       waves = spec[:waves]
       level = 1.0 / waves.size
       env_amount = spec[:env_amount] * contour
-      drive = spec[:drive]
       n = left.length
+      pitch = 1.0
+      physical_drive = 1.0
       j = 0
       while j < n
         t = block_start + (j.to_f / @rate) - @start
         if t >= 0
+          pitch = @physics.pitch_factor(t) if (j % InstrumentPhysics::UPDATE).zero?
+          physical_drive = @physics.drive_factor(t) if (j % InstrumentPhysics::UPDATE).zero?
+
           raw = 0.0
           k = 0
           while k < freqs.size
-            @phases[k] = (@phases[k] + (freqs[k] / @rate)) % 1.0
+            @phases[k] = (@phases[k] + (freqs[k] * pitch / @rate)) % 1.0
             raw += AnalogSynth.wave(waves[k], @phases[k]) * level
             k += 1
           end
-          cut = cutoff + (env_amount * spec[:filter_env].at(t, @held))
-          out = @ladder.process(raw * drive, cut.clamp(30.0, 12_000.0), resonance) * spec[:amp].at(t, @held) * @gain
+
+          amp_env = spec[:amp].at(t, @held)
+          shape_env = if spec[:lpg].to_f.positive?
+                        (spec[:filter_env].at(t, @held) * (1.0 - spec[:lpg].to_f)) +
+                          (amp_env * spec[:lpg].to_f)
+                      else
+                        spec[:filter_env].at(t, @held)
+                      end
+          raw = @physics.excite(raw, t, shape_env, j)
+          cut = cutoff + (env_amount * shape_env)
+          filtered = @ladder.process(raw * spec[:drive] * physical_drive, cut.clamp(30.0, 12_000.0), resonance)
+          out = @physics.post(filtered, t, amp_env, j, held: @held) * amp_env * @gain
           left[j] += out * pan
           right[j] += out * (1.0 - pan)
         end
@@ -1088,9 +1258,18 @@ module AnalogSynth
           substep = (j % SUBSTEP).zero?
           bend, lift = controls(t, block_start + (j.to_f / @rate)) if substep
           raw = oscillators(freqs, bend) + noise + (spec[:feedback] * @last)
-          cut = ((cutoff + (env_amount * spec[:filter_env].at(t, @held))) * key * lift).clamp(30.0, 12_000.0)
+          amp_env = spec[:amp].at(t, @held)
+          shape_env = if spec[:lpg].to_f.positive?
+                        (spec[:filter_env].at(t, @held) * (1.0 - spec[:lpg].to_f)) +
+                          (amp_env * spec[:lpg].to_f)
+                      else
+                        spec[:filter_env].at(t, @held)
+                      end
+          raw = @physics.excite(raw, t, shape_env, j)
+          cut = ((cutoff + (env_amount * shape_env)) * key * lift).clamp(30.0, 12_000.0)
           emphasis = resonance * ModelD.self_oscillation(cut, @rate) if substep
-          @last = @ladder.process(raw, cut, emphasis) * spec[:amp].at(t, @held) * @gain
+          filtered = @ladder.process(raw * @physics.drive_factor(t), cut, emphasis)
+          @last = @physics.post(filtered, t, amp_env, j, held: @held) * amp_env * @gain
           left[j] += @last * pan
           right[j] += @last * (1.0 - pan)
         end
@@ -1163,6 +1342,7 @@ module AnalogSynth
       @start = start
       @held = held + @fm[:decay]
       @gain = gain
+      @physics = InstrumentPhysics::Voice.new(hz: @hz, role: :lead, gain:, rng:, rate:)
       @phases = [rng.rand, rng.rand, 0.0]
       @pan = rng.rand(0.2..0.8)
       @rate = rate
@@ -1184,11 +1364,13 @@ module AnalogSynth
           env = (t < fm[:attack] ? t / fm[:attack] : Math.exp(-(t - fm[:attack]) / (fm[:decay] * 0.5)))
           env *= t > @held ? Math.exp(-(t - @held) / RELEASE_SECONDS) : 1.0
           index = (fm[:index] * Math.exp(-t / fm[:index_decay])) + (fm[:index] * 0.25 * open)
-          @phases[1] = (@phases[1] + (@hz * fm[:ratio] / @rate)) % 1.0
+          pitch = @physics.pitch_factor(t) if (j % InstrumentPhysics::UPDATE).zero?
+          @phases[1] = (@phases[1] + (@hz * fm[:ratio] * pitch / @rate)) % 1.0
           mod = Math.sin((TWO_PI * @phases[1]) + (feed * @phases[2]))
           @phases[2] = mod
-          @phases[0] = (@phases[0] + (@hz / @rate)) % 1.0
+          @phases[0] = (@phases[0] + (@hz * pitch / @rate)) % 1.0
           out = Math.sin((TWO_PI * @phases[0]) + (index * mod)) * env * @gain
+          out = @physics.post(out, t, env, j, held: @held)
           left[j] += out * @pan
           right[j] += out * (1.0 - @pan)
         end

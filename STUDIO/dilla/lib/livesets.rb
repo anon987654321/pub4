@@ -2074,7 +2074,7 @@ module LiveSynth
 
   def stream = config.fetch("stream")
 
-  SHOWCASE_TEMPO_SCALE = 0.86
+  SHOWCASE_TEMPO_SCALE = 0.84
 
   # Effects are the instrument's normal room now: tape, console, saturation,
   # pitch wear, echo, hiss and crackle are on unless explicitly disabled.
@@ -2085,7 +2085,7 @@ module LiveSynth
   # Four Nasty VCS stages provide the nonlinear glue; three Sonitex STX-1260
   # passes progressively narrow and roughen the top. Loudness is maximised only
   # at the end with a true-peak ceiling rather than clipping the bus.
-  SHOWCASE_PITCH_RATIO = 2.0**(-34.0 / 1200.0)
+  SHOWCASE_PITCH_RATIO = 2.0**(-42.0 / 1200.0)
 
   # The bare showcase is the dark room: low, slow, saturated and tape-forward.
   # The low end is carved before the character stages so kick and snare retain
@@ -2103,7 +2103,7 @@ module LiveSynth
       "equalizer=f=220:t=o:w=1.1:g=-6.8",
       "equalizer=f=320:t=q:w=1.0:g=-2.4",
       "equalizer=f=1700:t=o:w=1.0:g=-1.8",
-      "lowpass=f=4100",
+      "lowpass=f=3900",
       Livesets.sonitex(bits: 11, lo: 46, hi: 6200, drive: 1.06, mix: 0.70),
       Outboard.tape_machine(speed: :ips7, wow: 0.25, flutter: 0.075),
       Outboard.console_stack(instances: 2, offset: 0.08, param: 1.0, speed: 0.1),
@@ -2111,7 +2111,7 @@ module LiveSynth
       Outboard.tape_machine(speed: :ips7, wow: 0.17, flutter: 0.05),
       Outboard.tape_machine(speed: :ips7, wow: 0.10, flutter: 0.03),
       "acompressor=threshold=-21dB:ratio=1.16:attack=70:release=380:makeup=1.0",
-      "lowpass=f=3600",
+      "lowpass=f=3400",
       "alimiter=limit=0.93",
     ].freeze
   end
@@ -2183,9 +2183,15 @@ module LiveSynth
     ["dangelo_root", 26.0],
     ["moog_dfam", 24.0],
     ["dilla_so_far_to_go", 22.0],
+    ["dilla_intro", 22.0],
+    ["dilla_stakes", 22.0],
     ["flylo_computer_face", 22.0],
+    ["flylo_beginners_falafel", 22.0],
+    ["flylo_massage_situation", 22.0],
     ["flylo_haze_08", 24.0],
     ["dangelo_untitled", 24.0],
+    ["dangelo_send_it_on", 24.0],
+    ["dangelo_left_right", 22.0],
     ["madlib", 20.0],
     ["dangelo_brown_sugar", 24.0],
     ["moog_strings", 10.0],
@@ -2193,7 +2199,17 @@ module LiveSynth
     ["dangelo_really_love", 24.0],
     ["dangelo_sugah_daddy", 24.0],
     ["royksopp", 20.0],
-    ["dangelo_ballad", 20.0],
+    ["rhodes_tine", 10.0],
+    ["tape_choir", 10.0],
+    ["dangelo_velvet", 10.0],
+    ["showcase_noir_pad", 10.0],
+    ["shadow_lead", 10.0],
+    ["vp330_ensemble", 10.0],
+    ["soft_reed", 10.0],
+    ["poly_lead", 10.0],
+    ["vapor_lead", 10.0],
+    ["surreal_wash", 10.0],
+    ["ringtone_lead", 10.0],
     ["memorymoog_organ", 10.0],
     ["minimoog_lead", 10.0],
     ["moog_flute", 10.0],
@@ -2324,6 +2340,20 @@ module LiveSynth
          [10.0, { "lead" => "fm", "preset" => "bell" }],
          [15.0, { "knob" => "cutoff", "amount" => 0.16, "seconds" => 3.0 }]],
       ]
+    when "dilla_intro"
+      [
+        Improviser.new(rng:, reference: "slum_village_intro_documented", family: "moog"),
+        [[6.0, { "patch" => "rhodes_tine" }],
+         [13.0, { "lead" => "fm", "preset" => "drone" }],
+         [19.0, { "knob" => "resonance", "amount" => -0.08, "seconds" => 4.0 }]],
+      ]
+    when "dilla_stakes"
+      [
+        Improviser.new(rng:, reference: "dilla_stakes_is_high_documented", family: "prophet"),
+        [[7.0, { "toggle" => "lead", "on" => true }],
+         [13.0, { "patch" => "tape_choir" }],
+         [18.0, { "knob" => "cutoff", "amount" => -0.12, "seconds" => 4.0 }]],
+      ]
     when "soulquarians"
       [
         Improviser.new(rng:, reference: "soulquarians_butter", family: "moog"),
@@ -2362,10 +2392,25 @@ module LiveSynth
       ]
     when "dangelo_untitled"
       [
-        Improviser.new(rng:, reference: "untitled_d_mixolydian_vamp", family: "prophet"),
+        Improviser.new(rng:, reference: "untitled_d_mixolydian_vamp", family: "rhodes"),
         [[7.0, { "patch" => "rhodes_tine" }],
          [14.0, { "lead" => "fm", "preset" => "drone" }],
          [22.0, { "knob" => "cutoff", "amount" => -0.1, "seconds" => 6.0 }]],
+      ]
+    when "dangelo_send_it_on"
+      [
+        Improviser.new(rng:, reference: "send_it_on_gospel_turnaround", family: "rhodes"),
+        [[6.0, { "patch" => "e_piano" }],
+         [12.0, { "toggle" => "drums", "on" => false }],
+         [18.0, { "patch" => "dangelo_velvet" }],
+         [22.0, { "toggle" => "drums", "on" => true }]],
+      ]
+    when "dangelo_left_right"
+      [
+        Improviser.new(rng:, reference: "left_and_right_chromatic_bass", family: "rhodes"),
+        [[6.0, { "patch" => "rhodes_tine" }],
+         [12.0, { "lead" => "fm", "preset" => "drone" }],
+         [18.0, { "knob" => "resonance", "amount" => 0.08, "seconds" => 4.0 }]],
       ]
     when "dangelo_brown_sugar"
       [
@@ -2479,7 +2524,7 @@ module LiveSynth
          [12.0, { "patch" => "tape_choir" }],
          [18.0, { "patch" => "moog_brass" }]],
       ]
-    when "moog_strings", "moog_brass", "prophet_five", "memorymoog_organ", "minimoog_lead", "moog_flute", "prophet_pad", "poly_lead", "vapor_lead"
+    when "moog_strings", "moog_brass", "prophet_five", "memorymoog_organ", "minimoog_lead", "moog_flute", "prophet_pad", "poly_lead", "vapor_lead", "rhodes_tine", "tape_choir", "dangelo_velvet", "showcase_noir_pad", "shadow_lead", "vp330_ensemble", "soft_reed", "surreal_wash", "ringtone_lead"
       [Demo.new(name, rng:), [[2.5, { "knob" => "cutoff", "amount" => -0.1, "seconds" => 2.5 }]]]
     when "bach"
       path = BachMidi.source
@@ -2981,14 +3026,25 @@ module LiveSynth
       @inbox = Session::Inbox.new
       @spent = 0.0
       @played = 0.0
+      @physics_memory = {}
       @showcase_texture = LiveSynth.showcase? ? ShowcaseTapeTexture.new(seed: @rng.rand(1 << 30)) : nil
     end
 
     # One note. `rng` is the stage's own unless a mode seeds its notes itself.
     def note(midi, spec, start, held, gain, role, rng: @rng, **line)
       gain *= 0.18 if LiveSynth.showcase? && role == :bass
-      @voices << AnalogSynth::LiveVoice.new(midi:, spec:, start:, held:, gain:, role:, rng:, rate: @rate,
-                                            drift_cents: @drift, **line)
+      memory_key = spec.object_id
+      previous_hz = @physics_memory[memory_key]
+      @physics_memory[memory_key] = AnalogSynth::LiveVoice.midi_hz(midi)
+      sympathetic_hz = @voices.last(6).filter_map { |voice| voice.hz if voice.respond_to?(:hz) }
+      voice = AnalogSynth::LiveVoice.new(
+        midi:, spec:, start:, held:, gain:, role:, rng:, rate: @rate,
+        drift_cents: @drift, previous_hz:, sympathetic_hz:, **line
+      )
+      @voices.each do |existing|
+        existing.physics.retune!(sympathetic_hz + [voice.hz]) if existing.respond_to?(:physics)
+      end
+      @voices << voice
     end
 
     # One FM note (AnalogSynth::FmVoice) from a preset.
