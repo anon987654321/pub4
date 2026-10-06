@@ -117,6 +117,21 @@ module Master
         "rule_rescan_plus_behavior_or_test"
       end
 
+      # Explicit capability boundary for external agents. These are facts
+      # about the live executable law population, not permissions to ignore it.
+      def capability_report(rules = self.rules)
+        matrix = ProtocolDetectorMatrix.matrix(Array(rules).select { |rule| !rule.respond_to?(:enforceable?) || rule.enforceable? })
+        values = matrix.values
+        {
+          "measurement_only_detectors" => values.select { |entry| entry["measurement_mode"] }.map { |entry| entry["id"] },
+          "advisory_rules" => values.select { |entry| entry["enforcement"] == "advisory" }.map { |entry| entry["id"] },
+          "semantic_rules_without_deterministic_detector" => values.select { |entry|
+            entry["semantic"] && !entry["scannable"]
+          }.map { |entry| entry["id"] },
+          "verification_runtime" => "not_measured",
+        }
+      end
+
       def rule_entry(rule)
         base = rule.respond_to?(:contract_entry) ? rule.contract_entry : {
           "id" => rule.id.to_s,
@@ -197,6 +212,7 @@ module Master
           "target" => relative(target_path, root),
           "stages" => STAGES,
           "terminal_states" => TERMINAL_STATES,
+          "capability_report" => capability_report,
           "corpus" => corpus,
           "rule_counts" => {
             "law" => rule_rows.size,
