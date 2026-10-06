@@ -126,13 +126,15 @@ module Master
         # Reachability includes subscription CLIs and local models, not just API
         # keys. Keep this gate aligned with LLMDispatcher's own refusal check.
         def self.reachable_for?(agent)
-          model = agent.respond_to?(:model) ? agent.model : nil
-          return true if Master.llm_reachable?(model)
-
           router = agent.respond_to?(:model_router) ? agent.model_router : nil
-          return false unless router.respond_to?(:pool)
+          return Master.llm_reachable?(agent.respond_to?(:model) ? agent.model : nil) unless router.respond_to?(:pool)
 
-          Array(router.pool(wait: false)).any?
+          model = agent.respond_to?(:model) ? agent.model : nil
+          if model && router.respond_to?(:unreachable_reason)
+            return true if router.unreachable_reason(model, wait: true).nil?
+          end
+
+          Array(router.pool(wait: true)).any?
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "deliberation.reachable_for")
           false
