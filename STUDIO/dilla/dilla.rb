@@ -44402,7 +44402,7 @@ module DillaTakes
   end
 end
 
-LIVE_SYNTH_VERBS = %w[default improvise progression patch play knob morph take stop status say].freeze
+LIVE_SYNTH_VERBS = %w[default improvise progression patch play showcase knob morph take stop status say].freeze
 
 # The live entry. It runs before the defaults tables, the provenance recipe and
 # the asset check, all of which belong to a render that writes a file: the live
@@ -45151,7 +45151,7 @@ if __FILE__ == $PROGRAM_NAME
   # provenance sidecars or named-asset checks are relevant to a sound that is
   # generated directly to the sound card.
   if ARGV.empty?
-    live!(["improvise"])
+    live!(["showcase"])
     exit
   end
 
@@ -45203,9 +45203,9 @@ if __FILE__ == $PROGRAM_NAME
 
   cmd = ARGV.shift
   if cmd.nil?
-    # Bare invoke is the instrument now: the live improviser, using the
-    # source-backed J Dilla and D'Angelo harmony pool and Dilla's own synths.
-    live!(["improvise"])
+    # Bare invoke is the instrument now: the live showcase, cycling Dilla's
+    # source-backed harmony, the Moog/DFAM rack, synth demos and exact Bach MIDI.
+    live!(["showcase"])
     exit
   elsif render_output_path?(cmd) && !DISPATCH.key?(cmd)
     ARGV.unshift(cmd)

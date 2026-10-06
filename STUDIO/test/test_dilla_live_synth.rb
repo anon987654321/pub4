@@ -232,12 +232,30 @@ class TestDillaLiveSynth < Minitest::Test
     assert_equal expected, actual
   end
 
-  def test_bare_dilla_entrypoint_routes_to_live_improviser
+  def test_bare_dilla_entrypoint_routes_to_showcase
+    source = File.read(dilla("dilla.rb"))
+    assert_match(/if ARGV\.empty\?.*?live!\(\[["']showcase["']\]\)/m, source)
+    assert_match(/LIVE_SYNTH_VERBS = %w\[[^\]]*\bshowcase\b[^\]]*\]\.freeze/, source)
+  end
+
+  def test_showcase_cycles_existing_live_scores
+    source = File.read(dilla("lib/livesets.rb"))
+    assert_includes source, '["dilla", 18.0]'
+    assert_includes source, '["verified", 18.0]'
+    assert_includes source, '["moog_dfam", 24.0]'
+    assert_includes source, '["bach", 20.0]'
+    assert_includes source, 'Improviser.new'
+    assert_includes source, 'Progression.new("moog_improv"'
+    assert_includes source, 'BachMidi::Score.new'
+  end
+
+  def test_bare_dilla_entrypoint_routes_to_showcase_before_render_setup
     source = File.read(dilla("dilla.rb"))
     early = source.index("if ARGV.empty?")
     provenance = source.index("DillaProvenance.begin!")
-    assert_operator early, :<, provenance, "bare live starts before render setup"
-    assert_match(/if ARGV\.empty\?.*?live!\(\[["']improvise["']\]\)/m, source)
+    assert_operator early, :<, provenance, "bare showcase starts before render setup"
+    assert_match(/if ARGV\.empty\?.*?live!\(\[["']showcase["']\]\)/m, source)
+    assert_match(/if cmd\.nil\?.*?live!\(\[["']showcase["']\]\)/m, source)
     refute_match(/if cmd\.nil\?.*?Bed\.pieces!/m, source)
   end
 

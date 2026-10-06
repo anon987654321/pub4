@@ -2064,7 +2064,7 @@ end
 module LiveSynth
   DATA_FILE = File.join(Livesets::D, "data", "live.yml")
   ENGINE = File.join(Livesets::D, "dilla.rb")
-  USAGE = "usage: ruby dilla.rb live default|standard|royksopp|improvise|progression [name]|take <name>|patch <name>|" \
+  USAGE = "usage: ruby dilla.rb live default|standard|royksopp|showcase|improvise|progression [name]|take <name>|patch <name>|" \
           "knob <name> <amount> [seconds]|morph <patch> [seconds]|stop|status|say \"<sentence>\""
 
   module_function
@@ -2088,6 +2088,7 @@ module LiveSynth
     when "standard" then LivesetStandard.run
     when "royksopp" then RoyksoppLive.call
     when "play" then play_artist!(words)
+    when "showcase" then showcase!(rng: rng!)
     when "take" then DillaTakes.play(words.first || abort(USAGE))
     when "improvise" then perform!(Improviser.new(rng: rng!, family: options["family"], pad: options["pad"]), seconds:)
     when "progression"
@@ -2100,6 +2101,92 @@ module LiveSynth
     when "say" then log(Say.call(words.join(" ")))
     else abort USAGE
     end
+  end
+
+  # Bare Dilla is the showcase: a short tour through the engine's strongest
+  # live instruments, then back around. Every scene is an existing score -- the
+  # showcase only directs them, so the individual modes keep their own sound,
+  # timing, harmony and controls.
+  SHOWCASE_SCENES = [
+    ["dilla", 18.0],
+    ["verified", 18.0],
+    ["moog_dfam", 24.0],
+    ["memorymoog_organ", 8.0],
+    ["glass_bell", 8.0],
+    ["bach", 20.0],
+  ].freeze
+
+  def showcase!(rng: rng!)
+    loop do
+      SHOWCASE_SCENES.each do |name, seconds|
+        log("showcase -> #{name}")
+        score, actions = showcase_score(name, rng)
+        state = showcase_segment!(score, seconds, actions:)
+        return if state == :stopped
+      end
+      return if ENV["DILLA_SHOWCASE_ONCE"] == "1"
+    end
+  end
+
+  def showcase_score(name, rng)
+    case name
+    when "dilla"
+      [
+        Improviser.new(rng:, reference: "dilla_so_far_to_go_documented", family: "rhodes"),
+        [[5.0, { "toggle" => "lead", "on" => true }],
+         [10.0, { "patch" => "e_piano" }],
+         [14.0, { "knob" => "cutoff", "amount" => 0.2, "seconds" => 3.0 }]],
+      ]
+    when "verified"
+      reference = authentic_progression_key(rng) || "dilla_flowers_documented"
+      [
+        Improviser.new(rng:, reference:, family: "rhodes"),
+        [[5.0, { "lead" => "fm", "preset" => "bell" }],
+         [11.0, { "knob" => "resonance", "amount" => 0.15, "seconds" => 3.0 }],
+         [15.0, { "patch" => "rhodes_tine" }]],
+      ]
+    when "moog_dfam"
+      [
+        Progression.new("moog_improv", rng:),
+        [[7.0, { "patch" => "rhodes_tine" }],
+         [13.0, { "knob" => "cutoff", "amount" => 0.18, "seconds" => 3.0 }],
+         [19.0, { "patch" => "prophet_five" }]],
+      ]
+    when "memorymoog_organ", "glass_bell"
+      [Demo.new(name, rng:), [[3.0, { "knob" => "cutoff", "amount" => 0.15, "seconds" => 2.0 }]]]
+    when "bach"
+      path = BachMidi.source
+      events, length, = BachMidi.parse(path)
+      [
+        BachMidi::Score.new(events:, length:, rng:, patch: ENV.fetch("DILLA_BACH_PATCH", "memorymoog_organ")),
+        [[12.0, { "knob" => "cutoff", "amount" => 0.1, "seconds" => 3.0 }]],
+      ]
+    else
+      abort "live0: no showcase scene #{name}"
+    end
+  end
+
+  # The scene keeps the same player alive while its own existing control surface
+  # is used. Actions are sparse and musical: they turn leads, patches and knobs,
+  # then leave the score alone to breathe.
+  def showcase_segment!(score, seconds, actions:)
+    worker = Thread.new do
+      started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      actions.each do |delay, command|
+        target = started + delay
+        remaining = target - Process.clock_gettime(Process::CLOCK_MONOTONIC)
+        sleep(remaining) if remaining.positive?
+        break unless Session.playing
+        Session.post!(command)
+      end
+    rescue StandardError => e
+      LiveSynth.log("showcase control: #{e.class}: #{e.message}")
+    end
+
+    perform!(score, seconds:)
+  ensure
+    worker&.kill
+    worker&.join
   end
 
   # `knob cutoff +0.3 20` moves by, `knob cutoff 0.8 20` moves to; the last
@@ -2220,6 +2307,7 @@ module LiveSynth
     log("#{score.describe} at #{rate} Hz -- `ruby dilla.rb live stop` to end")
     IO.popen(command, "wb", **Dilla::ProcessSpawn.options(pgroup: true)) { |sink| stage.run(score, sink, seconds:) }
     log("stopped, #{stage.meter}")
+    stage.stopping? ? :stopped : :finished
   rescue Errno::EPIPE
     log("the player closed")
   ensure
@@ -2437,6 +2525,7 @@ module LiveSynth
     end
 
     def stop! = @stopping = true
+    def stopping? = @stopping == true
 
     def run(score, sink, seconds: nil)
       frame = 0
