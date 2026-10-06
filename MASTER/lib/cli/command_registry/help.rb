@@ -50,6 +50,17 @@ module Master
             "/review runs the critique plus the principle map; /fix is the operation that writes.",
           ],
         },
+        "play" => {
+          summary: "play a named Dilla music lane on the local sound card",
+          detail: [
+            "/play bach — Bach/circle-of-fifths material through the heavy Dilla rack.",
+            "/play j dilla — Dilla material through the heavy Dilla rack.",
+            "/play flying lotus — FlyLo/quartal material through the heavy Dilla rack.",
+            "/play madlib — Madlib material through the heavy Dilla rack.",
+            "/play royksopp — Röyksopp material through the heavy Dilla rack.",
+            "Aliases accept Röyksopp and .rb; unknown names are refused locally.",
+          ],
+        },
         "plugin" => {
           summary: "list and invoke governed plugins",
           detail: [
