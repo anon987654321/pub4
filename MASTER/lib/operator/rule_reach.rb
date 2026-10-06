@@ -40,12 +40,18 @@ module Operator
     end
 
     def prompted(all)
-      semantic_ids = executable_law_rules.filter_map { |law| law.id.to_s if law.semantic? }.map(&:downcase).to_set
+      semantic_ids = executable_law_rules
+        .select(&:enforceable?)
+        .filter_map { |law| law.id.to_s if law.semantic? }
+        .map(&:downcase).to_set
       Array(all).select { |row| semantic_ids.include?(row["id"].to_s.downcase) }
     end
 
     def practice(all)
-      practice_ids = executable_law_rules.filter_map { |law| law.id.to_s if law.practice }.map(&:downcase).to_set
+      practice_ids = executable_law_rules
+        .select(&:enforceable?)
+        .filter_map { |law| law.id.to_s if law.practice }
+        .map(&:downcase).to_set
       Array(all).select { |row| practice_ids.include?(row["id"].to_s.downcase) }
     end
 
@@ -95,9 +101,13 @@ module Operator
     end
 
     def executable_law_rules
-      require File.join(MASTER_DIR, "law", "law") unless defined?(::Law)
+      return @executable_law_rules if defined?(@executable_law_rules)
+
+      $LOAD_PATH.unshift(File.join(MASTER_DIR, "lib")) unless $LOAD_PATH.include?(File.join(MASTER_DIR, "lib"))
+      require "master"
+      require File.join(MASTER_DIR, "law", "law")
       ::Law.load_all(File.join(MASTER_DIR, "law")) if ::Law.rules.empty?
-      ::Law.rules.values
+      @executable_law_rules = ::Law.rules.values
     end
   end
 end
