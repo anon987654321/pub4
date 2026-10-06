@@ -2475,8 +2475,9 @@ module LiveSynth
       @bass = fam.fetch("bass_patch", @c["bass_patch"])
       @moves = @c.fetch("moves").to_h { |row| [row["from"], row["to"]] }
       @reference = reference && LiveSynth.documented_progression(reference)
-      bpm = @reference&.fetch("bpm", @c["bpm"]).to_f || @c["bpm"]
-      @beat = 60.0 / (@reference ? bpm : (bpm + rng.rand(-@c["bpm_spread"].to_f..@c["bpm_spread"].to_f)))
+      bpm = @reference ? @reference.fetch("bpm").to_f : @c["bpm"].to_f
+      bpm += rng.rand(-@c["bpm_spread"].to_f..@c["bpm_spread"].to_f) unless @reference
+      @beat = 60.0 / bpm
       @knobs = Knobs.new(@c.fetch("knobs"), response: @c.fetch("response"), rng:,
                          damping: @c["walk_damping"], pull: @c["walk_pull"])
       @key = @c.fetch("keys").sample(random: rng)
