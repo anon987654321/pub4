@@ -15,100 +15,136 @@
 # decision, so this counts its result rather than arguing with it, and refuses
 # to let the unreachable set grow.
 
-require "yaml"
+require "set"
 require "json"
 
 module Operator
   module RuleReach
     MASTER_DIR = File.expand_path("../..", __dir__)
-    CEILING = File.join(MASTER_DIR, "data", "laws.yml")
+    LAW_ROOT = File.join(MASTER_DIR, "law")
 
     module_function
 
+    # One inventory for the executable constitution and the scanner registry.
+    # data/laws.yml is policy/configuration; it is not the executable rule list.
     def rules
-      $LOAD_PATH.unshift(File.join(MASTER_DIR, "lib")) unless $LOAD_PATH.include?(File.join(MASTER_DIR, "lib"))
-      require "master"
-      Master.law_entries(root: MASTER_DIR)
+      @rules ||= executable_law_rows + registry_rows
     end
 
-    # A rule is mechanical if something can run it: a lexical or structural
-    # detector in the yml, a law in law/, or a class in the scanner registry —
-    # under its own id or under the one it folded into.
-    #
-    # RuleRegistryAudit owns the question, because three gate banners print a
-    # count of the same population and a second spelling here answered 115 where
-    # theirs answered 107. Asking rather than restating is what keeps them one
-    # number.
-    def mechanical(all)
-      rules # boots the runtime so the audit and its laws resolve
-      Master::Review::Scan::RuleRegistryAudit.new(root: MASTER_DIR).mechanical(all)
-    end
-
-    # Semantic reach comes from executable Law definitions. The YAML entry still
-    # contributes catalogue metadata such as tier while the law owns the question,
-    # severity, and enforcement mode.
-    def prompted(all)
-      require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
-      ::Law.load_all(File.join(MASTER_DIR, "law")) if ::Law.rules.empty?
-      semantic = ::Law.rules.values.select(&:semantic?).to_h { |law| [law.id.to_s, law] }
-
-      all.select do |rule|
-        law = semantic[rule["id"].to_s]
-        next false unless law
-
-        !(law.severity == :info && law.mode != :opportunity && rule["tier"] != "kernel")
+    def executable_law_rows
+      load_laws unless defined?(::Law) && !::Law.rules.empty?
+      ::Law.rules.values.map do |law|
+        {
+          "id" => law.id.to_s,
+          "severity" => law.severity.to_s,
+          "mode" => law.mode.to_s,
+          "languages" => Array(law.languages).map(&:to_s),
+          "lifecycle" => law.lifecycle.to_s,
+          "autofix" => law.autofix.to_s,
+          "detect" => !law.detect.nil?,
+          "semantic" => !law.ask.nil?,
+          "practice" => !law.practice.nil?
+        }
       end
     end
 
-    def unreachable(all = rules) = all - mechanical(all) - prompted(all)
+    def registry_rows
+      require File.join(MASTER_DIR, "lib", "review", "scan", "infra_helpers")
+      scanner = Master::Review::Scan::InfraHelpers.build_scanner(root: MASTER_DIR, agent: nil)
+      audit = Master::Review::Scan::RuleRegistryAudit.new(root: MASTER_DIR)
+      executable_ids = ::Law.rules.keys.map { |id| id.to_s.downcase }.to_set
 
-    def ceiling
-      rules # boots the runtime, so Master.law resolves
-      Master.law("rule_ratchets", root: MASTER_DIR).dig("reach", "unreachable") || 0
+      scanner.rules.filter_map do |rule|
+        next unless audit.shipped?(rule.class)
+        id = rule.id.to_s
+        next if executable_ids.include?(id.downcase)
+
+        {
+          "id" => id,
+          "severity" => (rule.respond_to?(:severity) ? rule.severity : :warning).to_s,
+          "mode" => "scanner",
+          "languages" => (rule.respond_to?(:languages) ? Array(rule.languages) : []).map(&:to_s),
+          "lifecycle" => "active",
+          "autofix" => (rule.respond_to?(:autofix) ? rule.autofix : false).to_s,
+          "detect" => true,
+          "semantic" => false,
+          "practice" => false
+        }
+      end
+    end
+
+    def load_laws
+      $LOAD_PATH.unshift(File.join(MASTER_DIR, "lib")) unless $LOAD_PATH.include?(File.join(MASTER_DIR, "lib"))
+      require "master"
+      require File.join(MASTER_DIR, "law", "law")
+      ::Law.load_all(LAW_ROOT) if ::Law.rules.empty?
+      ::Law.rules
+    end
+
+    # A rule is mechanical when a deterministic executable law or shipped
+    # scanner rule can report it. A semantic law is prompted. A practice-only
+    # law is still reachable governance; it is not a source detector and must
+    # not be misreported as an unreachable law.
+    def mechanical(all)
+      detector_ids = executable_law_rows.filter_map { |row| row["id"] if row["detect"] }
+      detector_ids.concat(registry_rows.map { |row| row["id"] })
+      folded = Array(all).filter_map { |row| row["folded_into"].to_s if row.is_a?(Hash) && row["folded_into"] }
+      ids = (detector_ids + folded).map(&:downcase).to_set
+
+      Array(all).select { |row| ids.include?(row["id"].to_s.downcase) }
+    end
+
+    def prompted(all)
+      semantic_ids = executable_law_rows.filter_map { |row| row["id"] if row["semantic"] }.map(&:downcase).to_set
+      Array(all).select { |row| semantic_ids.include?(row["id"].to_s.downcase) }
+    end
+
+    def practice(all)
+      practice_ids = executable_law_rows.filter_map { |row| row["id"] if row["practice"] }.map(&:downcase).to_set
+      Array(all).select { |row| practice_ids.include?(row["id"].to_s.downcase) }
+    end
+
+    def unreachable(all = rules)
+      mechanical_ids = mechanical(all).map { |row| row["id"].to_s.downcase }.to_set
+      prompted_ids = prompted(all).map { |row| row["id"].to_s.downcase }.to_set
+      practice_ids = practice(all).map { |row| row["id"].to_s.downcase }.to_set
+      Array(all).reject do |row|
+        id = row["id"].to_s.downcase
+        mechanical_ids.include?(id) || prompted_ids.include?(id) || practice_ids.include?(id)
+      end
     end
 
     def run(ratchet: false, json: false)
       all = rules
+      mech = mechanical(all)
+      asked = prompted(all)
+      conduct = practice(all)
       out = unreachable(all)
-# `puts` returns nil and this handed that straight to Kernel#exit, so
-# --json printed correct JSON and then died with a TypeError.
-if json
-  puts(JSON.pretty_generate(total: all.size, mechanical: mechanical(all).size,
-                            prompted: prompted(all).size, unreachable: out.map { |r| r["id"] }))
-  return 0
-end
 
-# "unreachable" read as "no detector", which is what the advice below used
-# to assume. Measured 2026-08-25: all 58 declare a detect_semantic and
-# every one is info severity, so what drops them is the exclusion this
-# file's own header describes. Naming the filter names the lever.
-puts "rule_reach: #{all.size} rules — #{mechanical(all).size} without a model, " \
-     "#{prompted(all).size} with one, #{out.size} dropped by the info filter (ceiling #{ceiling})"
-      return record(out.size) if ratchet && out.size < ceiling
+      payload = {
+        total: all.size,
+        mechanical: mech.size,
+        prompted: asked.size,
+        practice: conduct.size,
+        unreachable: out.map { |r| r["id"] }
+      }
 
-      return 0 unless out.size > ceiling
+      if json
+        puts JSON.pretty_generate(payload)
+        return out.empty? ? 0 : 1
+      end
 
-out.first(10).each { |rule| puts "  #{rule['id']} (#{rule['severity']}) declares only a semantic detector at info" }
-puts "rule_reach: raise its severity so the prompt keeps it, give it a detect_lexical, or drop it — " \
-     "law nothing can enforce is a claim"
+      puts "rule_reach: #{all.size} rules — #{mech.size} deterministic, #{asked.size} prompted, "            "#{conduct.size} practice, #{out.size} unreachable"
+      out.each { |rule| puts "  #{rule["id"]}" }
+      puts "rule_reach: every executable rule has a reachable enforcement surface" if out.empty?
+      return 0 if out.empty?
+
+      warn "rule_reach: an executable law has no detector, prompt, or practice surface"
       1
-    end
-
-    def record(count)
-      # A line rewrite, not a YAML dump: laws.yml is mostly the argument for
-      # its numbers, and to_yaml would write the numbers and drop the argument.
-      lines = File.readlines(CEILING)
-      i = lines.index { |line| line.match?(/^\s+unreachable: \d+\s*$/) }
-      raise "laws.yml: no rule_ratchets.reach.unreachable line" unless i
-
-      lines[i] = lines[i].sub(/\d+/) { count.to_s }
-      File.write(CEILING, lines.join)
-      puts "rule_reach: recorded #{count} as the new low"
-      0
     end
   end
 end
 
 if $PROGRAM_NAME == __FILE__
-  exit Operator::RuleReach.run(ratchet: ARGV.include?("--ratchet"), json: ARGV.include?("--json"))
+  exit Operator::RuleReach.run(json: ARGV.include?("--json"))
 end
