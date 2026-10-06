@@ -67,6 +67,33 @@ class FixSupervisorTest < Minitest::Test
     end
   end
 
+  def test_expired_running_mission_does_not_block_another_target
+    Dir.mktmpdir do |root|
+      first = File.join(root, "RAILS")
+      second = File.join(root, "MASTER")
+      FileUtils.mkdir_p([first, second])
+
+      Master::Fix::Mission.new(root:).start!(
+        goal: "fix RAILS",
+        scope: first,
+      )
+      record = Master::Fix::Mission.current(root:)
+      record["lease_until"] = (Time.now.utc - 1).iso8601
+      File.write(File.join(root, ".master", "mission.json"), JSON.pretty_generate(record) + "\n")
+
+      replacement = Master::Fix::Mission.new(root:).start_or_resume!(
+        goal: "fix MASTER",
+        scope: second,
+      )
+      saved = Master::Fix::Mission.current(root:)
+
+      refute_equal record["id"], replacement.id
+      assert_equal "MASTER", saved["scope"]
+      assert_equal "running", saved["state"]
+      assert_equal replacement.id, saved["id"]
+    end
+  end
+
   def test_lease_owner_is_unique_to_the_current_master_instance
     owner = Master::Fix::Mission.instance_id
     assert_match(/:\d+:[0-9a-f]{16}\z/, owner)
