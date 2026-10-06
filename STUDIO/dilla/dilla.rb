@@ -44402,7 +44402,7 @@ module DillaTakes
   end
 end
 
-LIVE_SYNTH_VERBS = %w[default improvise progression patch knob morph take stop status say].freeze
+LIVE_SYNTH_VERBS = %w[default improvise progression patch knob morph take play stop status say].freeze
 
 # The live entry. It runs before the defaults tables, the provenance recipe and
 # the asset check, all of which belong to a render that writes a file: the live
