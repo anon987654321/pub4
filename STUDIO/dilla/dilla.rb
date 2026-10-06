@@ -45147,11 +45147,21 @@ if __FILE__ == $PROGRAM_NAME
     exit
   end
 
-  # Bare invocation belongs to the live instrument too: no render defaults,
-  # provenance sidecars or named-asset checks are relevant to a sound that is
-  # generated directly to the sound card.
+  # Bare invocation is the finished showcase: render the whole feature tour
+  # once and leave the resulting mix beside dilla.rb as dilla.wav.
   if ARGV.empty?
+    ENV["DILLA_SHOWCASE_OUT"] ||= File.join(__dir__, "dilla.wav")
+    ENV["DILLA_SHOWCASE_ONCE"] ||= "1"
     live!(["showcase"])
+    exit
+  end
+
+  # mode=flylo and its sibling showcase modes are top-level shortcuts. They
+  # must be admitted before render defaults read the token as a command.
+  if (mode = ARGV.find { |arg| arg.match?(/\Amode=/i) })
+    ENV["DILLA_SHOWCASE_OUT"] ||= File.join(__dir__, "dilla.wav")
+    ENV["DILLA_SHOWCASE_ONCE"] ||= "1"
+    live!(["showcase", mode])
     exit
   end
 

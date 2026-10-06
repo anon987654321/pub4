@@ -44,6 +44,7 @@ require "rbconfig"
 require "shellwords"
 require "time"
 require "yaml"
+require "tmpdir"
 require_relative "process_spawn"
 require_relative "ableton_play"
 
@@ -2125,7 +2126,7 @@ module LiveSynth
     when "standard" then LivesetStandard.run
     when "royksopp" then RoyksoppLive.call
     when "play" then play_artist!(words)
-    when "showcase" then showcase!(rng: rng!)
+    when "showcase" then showcase!(rng: rng!, mode: options["mode"])
     when "take" then DillaTakes.play(words.first || abort(USAGE))
     when "improvise" then perform!(Improviser.new(rng: rng!, family: options["family"], pad: options["pad"]), seconds:)
     when "progression"
@@ -2178,20 +2179,87 @@ module LiveSynth
     ["bach", 30.0],
   ].freeze
 
-  def showcase!(rng: rng!)
+  SHOWCASE_MODES = {
+    "all" => SHOWCASE_SCENES,
+    "dilla" => SHOWCASE_SCENES.select { |name, _| name.start_with?("dilla_") || name == "dilla_players" },
+    "flylo" => SHOWCASE_SCENES.select { |name, _| name.start_with?("flylo") },
+    "dangelo" => SHOWCASE_SCENES.select { |name, _| name.start_with?("dangelo") },
+    "madlib" => SHOWCASE_SCENES.select { |name, _| name.start_with?("madlib") },
+    "moog" => SHOWCASE_SCENES.select { |name, _| name.include?("moog") || name.start_with?("matriarch") || name.start_with?("grandmother") },
+    "bach" => SHOWCASE_SCENES.select { |name, _| name == "bach" },
+  }.freeze
+
+  def showcase!(rng: rng!, mode: nil)
     previous = ENV["DILLA_SHOWCASE"]
     ENV["DILLA_SHOWCASE"] = "1"
+    output = showcase_output
+    cycle = 0
+
     loop do
-      SHOWCASE_SCENES.each do |name, seconds|
-        log("showcase -> #{name}")
-        score, actions = showcase_score(name, rng)
-        state = showcase_segment!(score, seconds, actions:)
-        return if state == :stopped
+      scratch = Dir.mktmpdir("dilla-showcase-", D)
+      paths = []
+      stopped = false
+
+      begin
+        showcase_scenes(mode).each_with_index do |(name, seconds), index|
+          log("showcase -> #{name}")
+          score, actions = showcase_score(name, rng)
+          scene_path = File.join(scratch, format("%02d-%s.wav", index + 1, name))
+          state = showcase_segment!(score, seconds, actions:, output: scene_path)
+          paths << scene_path if File.file?(scene_path) && File.size?(scene_path)
+          if state == :stopped
+            stopped = true
+            break
+          end
+        end
+
+        append = cycle.positive? || ENV["DILLA_SHOWCASE_APPEND"] == "1"
+        append_showcase_wav!(paths, output, append:)
+      ensure
+        FileUtils.remove_entry(scratch) if scratch && File.exist?(scratch)
       end
-      return if ENV["DILLA_SHOWCASE_ONCE"] == "1"
+
+      return if stopped || ENV["DILLA_SHOWCASE_ONCE"] == "1" || ENV["DILLA_SHOWCASE_LOOP"] != "1"
+
+      cycle += 1
     end
   ensure
     previous.nil? ? ENV.delete("DILLA_SHOWCASE") : ENV["DILLA_SHOWCASE"] = previous
+  end
+
+  def showcase_output
+    File.expand_path(ENV.fetch("DILLA_SHOWCASE_OUT", File.join(D, "dilla.wav")))
+  end
+
+  def showcase_scenes(mode = nil)
+    key = mode.to_s.strip.downcase
+    return SHOWCASE_SCENES if key.empty?
+
+    SHOWCASE_MODES.fetch(key) { abort "live0: no showcase mode #{mode.inspect} — have #{SHOWCASE_MODES.keys.join(', ')}" }
+  end
+
+  def append_showcase_wav!(paths, destination, append: false)
+    inputs = paths.select { |path| File.file?(path) && File.size?(path) }
+    inputs.unshift(destination) if append && File.file?(destination) && File.size?(destination)
+    return if inputs.empty? || (inputs.length == 1 && append)
+
+    FileUtils.mkdir_p(File.dirname(destination))
+    return FileUtils.mv(inputs.first, destination) if inputs.one?
+
+    partial = "#{destination}.partial.#{Process.pid}"
+    list = "#{destination}.concat.#{Process.pid}.txt"
+    File.open(list, "w") { |io| inputs.each { |path| io.puts "file #{path}" } }
+
+    ffmpeg = Livesets.tool("ffmpeg")
+    ok = system(ffmpeg, "-y", "-loglevel", "error", "-f", "concat", "-safe", "0",
+                "-i", list, "-c:a", "pcm_s16le", partial)
+    FileUtils.rm_f(list)
+    abort "live0: showcase could not write #{destination}" unless ok
+
+    FileUtils.mv(partial, destination)
+  ensure
+    FileUtils.rm_f(list) if defined?(list)
+    FileUtils.rm_f(partial) if defined?(partial) && File.file?(partial)
   end
 
   def showcase_score(name, rng)
@@ -2377,7 +2445,10 @@ module LiveSynth
   # The scene keeps the same player alive while its existing control surface is
   # used. Actions are sparse and musical: they turn leads, patches and knobs,
   # then let the score breathe until the scene changes.
-  def showcase_segment!(score, seconds, actions:)
+  def showcase_segment!(score, seconds, actions:, output: nil)
+    previous = ENV["LIVE_OUT"]
+    ENV["LIVE_OUT"] = output if output
+
     worker = Thread.new do
       started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
       actions.each do |delay, command|
@@ -2395,6 +2466,7 @@ module LiveSynth
   ensure
     worker&.kill
     worker&.join
+    previous.nil? ? ENV.delete("LIVE_OUT") : ENV["LIVE_OUT"] = previous
   end
 
   # `knob cutoff +0.3 20` moves by, `knob cutoff 0.8 20` moves to; the last
