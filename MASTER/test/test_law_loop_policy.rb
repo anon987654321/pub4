@@ -157,6 +157,20 @@ class TestLawLoopPolicy < Minitest::Test
     end
   end
 
+  def test_missing_model_is_a_named_outcome
+    Dir.mktmpdir do |root|
+      path = File.join(root, "sample.rb")
+      File.write(path, "puts :x
+")
+      loop = build_loop(root:, bus: FakeBus.new, scanner: Scanner.new, agent: nil)
+
+      result = loop.run_once([path])
+
+      assert_equal :model_unavailable, result[:breakdown].keys.find { |key| key.to_s == "model_unavailable" }
+      assert_equal 0, result[:fixed]
+    end
+  end
+
   def test_prediction_engine_can_skip_autofix
     Dir.mktmpdir do |root|
       path = File.join(root, "sample.rb")
