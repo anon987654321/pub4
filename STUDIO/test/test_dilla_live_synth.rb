@@ -241,17 +241,29 @@ class TestDillaLiveSynth < Minitest::Test
       )
 
       assert_equal "sh", command.first
-      refute_includes command.last, "-f tee"
+      assert_includes command.last, "-f tee"
       assert_includes command.last, Shellwords.escape(destination)
-      assert_includes command.last, "-f wav"
-      assert_includes command.last, "-f s16le"
-      assert_includes command.last, "tee"
+      assert_includes command.last, "[f=wav]"
+      assert_includes command.last, "[f=s16le]pipe:1"
       assert_equal 1, command.last.scan("-map").length
-      assert_includes command.last, Shellwords.escape("#{destination}.s16le")
+      refute_includes command.last, ".s16le"
       assert_includes command.last, "/opt/homebrew/bin/play"
     end
   ensure
     old.nil? ? ENV.delete("DILLA_SHOWCASE_LIVE_RECORD") : ENV["DILLA_SHOWCASE_LIVE_RECORD"] = old
+  end
+
+  def test_showcase_pad_voicing_lifts_only_the_lowest_tone
+    score = LiveSynth::Improviser.new(rng: Random.new(41), reference: "dilla_life", family: "moog")
+    original = ENV["DILLA_SHOWCASE"]
+    ENV["DILLA_SHOWCASE"] = "1"
+    stage = LiveSynth::Stage.new(rate: RATE, rng: score.rng)
+    score.schedule(stage, 0.0)
+    pads = stage.instance_variable_get(:@voices).reject { |voice| voice.role == :bass }
+    assert_operator pads.length, :>=, 5
+    assert pads.all? { |voice| voice.hz >= AnalogSynth::LiveVoice.midi_hz(53) * 0.998 }
+  ensure
+    original.nil? ? ENV.delete("DILLA_SHOWCASE") : ENV["DILLA_SHOWCASE"] = original
   end
 
   def test_showcase_bass_has_half_scale_stage_gain
@@ -341,10 +353,10 @@ class TestDillaLiveSynth < Minitest::Test
 
   def test_showcase_audio_room_is_dark_pitch_shifted_and_heavily_summed
     source = File.read(dilla("lib/livesets.rb"))
-    assert_includes source, 'speed: :ips7, wow: 0.38, flutter: 0.12'
+    assert_includes source, 'speed: :ips7, wow: 0.44, flutter: 0.14'
     assert_includes source, 'SHOWCASE_PITCH_RATIO'
-    assert_includes source, 'SHOWCASE_TEMPO_SCALE = 0.80'
-    assert_includes source, 'lowpass=f=3600'
+    assert_includes source, 'SHOWCASE_TEMPO_SCALE = Float(ENV.fetch("DILLA_SHOWCASE_TEMPO_SCALE", "0.74"))'
+    assert_includes source, 'lowpass=f=3200'
     refute_includes source, 'loudnorm=I=-14:LRA=9:TP=-1.0:linear=false'
     assert_operator LiveSynth.showcase_tape_chain.count { |stage| stage.include?("vibrato=") }, :>=, 2
     assert_operator LiveSynth.showcase_tape_chain.count { |stage| stage.start_with?("acompressor=") }, :>=, 2
@@ -452,11 +464,11 @@ class TestDillaLiveSynth < Minitest::Test
 
   def test_showcase_low_end_is_sparse_and_pushed_into_the_kick
     source = File.read(dilla("lib/livesets.rb"))
-    assert_includes source, "SHOWCASE_BASS_GAIN = Float(ENV.fetch(\"DILLA_SHOWCASE_BASS_GAIN\", \"0.00009\"))"
-    assert_includes source, "SHOWCASE_BASS_EVERY = 2"
-    assert_includes source, 'highpass=f=66'
-    assert_includes source, 'highpass=f=68,equalizer=f=105'
-    assert_includes source, 'weights = LiveSynth.showcase? ? "1 0.07 0.44" : "1 1 1"'
+    assert_includes source, "SHOWCASE_BASS_GAIN = Float(ENV.fetch(\"DILLA_SHOWCASE_BASS_GAIN\", \"0.00003\"))"
+    assert_includes source, "SHOWCASE_BASS_EVERY = 5"
+    assert_includes source, "SHOWCASE_PAD_FLOOR = 53"
+    assert_includes source, '"highpass=f=82,equalizer=f=105:t=q:w=1.0:g=-4.0,equalizer=f=180:t=q:w=1.0:g=-3.0"'
+    assert_includes source, 'weights = LiveSynth.showcase? ? "1 0.07 0.50" : "1 1 1"'
   end
 
   def test_showcase_tour_prefers_recorded_dangelo_and_expands_the_instrument_walk
