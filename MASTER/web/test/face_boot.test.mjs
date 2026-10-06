@@ -660,18 +660,17 @@ test("voice mode: re-arm loop, exit phrase, wake word, and single-speaker TTS ro
   // iOS Safari degradation guard: bail out of the loop rather than spinning
   // forever if recognition keeps ending near-instantly with no speech.
   assert.match(runtime, /_voiceModeRearmFails/);
-  // Server TTS is the one normal speaker. Browser speech remains an explicit
-  // emergency path only, and it can never start merely because server synthesis
-  // is slow.
-  assert.match(runtime, /function browserTtsEmergencyAllowed/);
-  assert.match(runtime, /browser_tts/);
+  // Server TTS is the sole speech backend. A reply waits on the same queue for
+  // synthesis and playback instead of racing a second OS/browser narrator.
+  assert.match(runtime, /function ttsTick/);
   assert.match(runtime, /loadTTSBlob\(text, voice, style\)/);
-  assert.match(runtime, /browserTtsEmergencyAllowed\(\) && speakWithBrowserTTS/);
+  assert.match(runtime, /tts\.serverUnavailable/);
   assert.doesNotMatch(runtime, /function highQualityVoiceEnabled/);
   assert.doesNotMatch(runtime, /master:voice-mode-hq/);
-  assert.doesNotMatch(runtime, /!highQualityVoiceEnabled/);
-  // speechSynthesis has exactly one speaker call, owned by the emergency adapter.
-  assert.equal((runtime.match(/speechSynthesis\.speak\(/g) || []).length, 1);
+  assert.doesNotMatch(runtime, /browserTtsEmergencyAllowed/);
+  assert.doesNotMatch(runtime, /speakWithBrowserTTS/);
+  assert.doesNotMatch(runtime, /speechSynthesis\.speak\(/);
+  assert.doesNotMatch(runtime, /new SpeechSynthesisUtterance/);
   // Mic button was removed: Voice Mode is hands-free by default, so the
   // dedicated control was redundant chrome. Confirm it's actually gone.
   assert.doesNotMatch(index, /data-act="mic"/);
