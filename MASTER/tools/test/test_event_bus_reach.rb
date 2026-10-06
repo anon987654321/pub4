@@ -50,7 +50,7 @@ class TestEventBusReach < Minitest::Test
     assert_includes result[:publishers], "phantom:occurrence"
     assert_includes result[:publishers], "phantom:recovery"
     assert_includes result[:publishers], "pipeline:stage_start"
-    assert_includes result[:references].fetch("phantom:recovery"), "web/public/topology_registry.js"
+    assert_includes result[:references].fetch("phantom:recovery"), "web/public/visual_bridge.js"
     assert_includes result[:references].fetch("pipeline:stage_start"), "web/public/face_semantics.js"
   end
 
