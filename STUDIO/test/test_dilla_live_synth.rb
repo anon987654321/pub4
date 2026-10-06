@@ -266,6 +266,19 @@ class TestDillaLiveSynth < Minitest::Test
     patch_scenes.each { |name| assert LiveSynth::Patches.spec(name), name }
   end
 
+  def test_showcase_modes_select_existing_feature_scenes
+    assert_equal %w[flylo flylo_computer_face flylo_king_of_the_hill], LiveSynth.showcase_scenes("flylo").map(&:first)
+    assert_equal %w[bach], LiveSynth.showcase_scenes("bach").map(&:first)
+  end
+
+  def test_showcase_default_output_is_dilla_wav
+    saved = ENV["DILLA_SHOWCASE_OUT"]
+    ENV.delete("DILLA_SHOWCASE_OUT")
+    assert_equal File.expand_path(File.join(Livesets::D, "dilla.wav")), LiveSynth.showcase_output
+  ensure
+    saved.nil? ? ENV.delete("DILLA_SHOWCASE_OUT") : ENV["DILLA_SHOWCASE_OUT"] = saved
+  end
+
   def test_showcase_covers_the_live_feature_tour
     scenes = LiveSynth::SHOWCASE_SCENES.map(&:first)
     assert_equal %w[
