@@ -2115,20 +2115,21 @@ module LiveSynth
   # themselves; a sentence cannot turn them.
   def play_artist!(words)
     key = words.join(" ").strip.downcase.delete_suffix(".rb").gsub(/\s+/, " ")
+    lane = LiveSynth.config.fetch("play").fetch(key) { abort "play: unknown artist #{key.inspect}" }
     rng = rng!
-    case key
-    when "bach", "baroque"
+    case lane
+    when "bach_toccata"
       perform!(BachToccata.new(rng:), seconds: nil)
-    when "j dilla", "dilla"
+    when "live_improvise_moog"
       perform!(Improviser.new(rng:, family: "moog"), seconds: nil)
-    when "flying lotus", "flylo"
+    when "live_improvise_prophet"
       perform!(Improviser.new(rng:, family: "prophet"), seconds: nil)
-    when "madlib"
+    when "live_improvise_rhodes"
       perform!(Improviser.new(rng:, family: "rhodes"), seconds: nil)
-    when "royksopp", "melody a.m."
+    when "royksopp_live"
       perform!(Progression.new("royksopp_live", rng:, loops: 0), seconds: nil)
     else
-      abort "play: unknown artist #{key.inspect}"
+      abort "play: unknown lane #{lane.inspect}"
     end
   end
   def standard_default!
