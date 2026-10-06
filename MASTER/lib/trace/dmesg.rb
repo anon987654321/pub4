@@ -95,7 +95,8 @@ module Master
         COMMAND_UNITS = {
           "fix" => "fix0", "review" => "review0", "critique" => "crit0",
           "status" => "status0", "help" => "help0", "model" => "model0",
-          "plugin" => "plugin0", "device" => "device0", "voice" => "voice0",
+          "plugin" => "plugin0", "android" => "android0", "ios" => "ios0",
+          "device" => "device0", "voice" => "voice0",
           "pair" => "pair0", "owner" => "owner0", "wake" => "wake0",
           "doctor" => "doctor0", "rules" => "rules0", "snapshot" => "snapshot0",
           "why" => "why0", "session" => "session0", "undo" => "undo0",

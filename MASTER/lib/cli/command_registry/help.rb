@@ -90,17 +90,15 @@ module Master
                    "/model auth login claude|chatgpt|grok — run the provider's official browser sign-in flow.",
                    "MASTER never receives or stores your password, OAuth code, cookies or session credentials."],
         },
-        "pair" => {
-          summary: "issue or redeem a pairing code",
-          detail: ["/pair owner [label]", "/pair release", "/pair issue [label]", "/pair <code>", "/pair status"],
+        "android" => {
+          summary: "start Android/Termux onboarding and pair the local owner",
+          detail: ["/android [name] — begin personal onboarding on an Android/Termux host.",
+                   "The command claims the local device owner on first use and starts the owner conversation."],
         },
-        "device" => {
-          summary: "show local phone agent and owner state",
-          detail: ["/device"],
-        },
-        "owner" => {
-          summary: "show and edit the paired owner's explicit profile",
-          detail: ["/owner", "/owner intro", "/owner set name=... pet_name=... language=... locale=... timezone=... communication_style=... interests=...", "/owner forget <key>"],
+        "ios" => {
+          summary: "start iOS/PWA onboarding",
+          detail: ["/ios — begin onboarding on an iPhone or iPad through the browser/PWA.",
+                   "MASTER does not claim native iOS hardware access; browser capabilities remain explicit."],
         },
         "doctor" => {
           summary: "host, provider, exposure and hardware health",
@@ -210,7 +208,7 @@ module Master
           "commands: /status /doctor /voice /model",
           "          /review /critique /fix /face",
           "          /session /clear /undo /snapshot",
-          "          /pair /device /owner /orders",
+          "          /android /ios /orders",
           "          /soul /rules /why /plugin /help /exit",
           "input:    !cmd governed shell, << multiline, /help X details",
           "write:    /fix is the write path; everything else is read, route or chat",

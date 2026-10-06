@@ -87,9 +87,57 @@ module Master
         created = ensure_env_file
         Master::Trace::Dmesg.status("onboard0", "first run on this #{@android ? "phone" : "host"}", io: @out) if first
         Master::Trace::Dmesg.status("env0", "created #{home(@env_file)}, comments only; uncomment one key there", io: @out) if created
-        Master::Trace::Dmesg.status("pair0", "this phone is not personal yet, say /pair owner [name] to pair it to yourself", io: @out) if @android && !Device::Agent.paired?(root: @root)
+        Master::Trace::Dmesg.status("android0", "this phone is not personal yet, say /android [name] to start owner onboarding", io: @out) if @android && !Device::Agent.paired?(root: @root)
         checks.each { |check| Master::Trace::Dmesg.status("#{check.name}0", check.says, io: @out) if first || !check.ok }
         mark! if first
+      end
+
+      # One explicit platform command starts the relationship. Android may
+      # claim the local device owner; iOS stays honest about being a PWA/browser lane.
+      def mobile_start!(platform:, label: nil)
+        name = platform.to_s.downcase
+        raise ArgumentError, "unsupported mobile platform: #{platform}" unless %w[android ios].include?(name)
+
+        case name
+        when "android"
+          raise ArgumentError, "Android/Termux is not this host" unless @android
+
+          subject = Device::Agent.owner_subject(root: @root)
+          if subject.empty?
+            result = Device::Agent.claim_owner!(
+              root: @root,
+              label: label.to_s.strip.empty? ? "local-owner" : label.to_s.strip,
+            )
+            Master::Trace::Dmesg.status("android0", "owner paired; onboarding started", io: @out)
+            return [
+              "android0: Android onboarding started",
+              "android0: device identity is local and owner-scoped",
+              result[:onboarding],
+            ].compact.join("\n")
+          end
+
+          Master::Trace::Dmesg.status("android0", "already paired; continuing owner onboarding", io: @out)
+          [
+            "android0: onboarding continues",
+            Device::OwnerProfile.onboarding_prompt(root: @root, subject:),
+          ].join("\n")
+        when "ios"
+          Master::Trace::Dmesg.status(
+            "ios0", "iOS/PWA onboarding started; native device access is not claimed", io: @out
+          )
+          subject = Fiber[:master_pair_subject].to_s
+          if subject.empty?
+            labels = Device::OwnerProfile::KEYS.first(3).map do |key|
+              Device::OwnerProfile::LABELS.fetch(key)
+            end
+            "ios0: onboarding started — tell me #{labels.join(", ").downcase}. You can answer naturally or skip anything."
+          else
+            [
+              "ios0: onboarding continues",
+              Device::OwnerProfile.onboarding_prompt(root: @root, subject:),
+            ].join("\n")
+          end
+        end
       end
 
       def checks

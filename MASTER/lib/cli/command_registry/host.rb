@@ -22,7 +22,7 @@ module Master
           label = $1.to_s.strip
           result = Master::Device::Agent.claim_owner!(root:, label:)
           [Master::Ground::Pairing.redeem_notice(result), result[:onboarding]].compact.join("\n")
-        when "release"\n          subject = Master::Device::Agent.owner_subject(root:)\n          return "pair: not paired" if subject.empty?\n\n          Master::Device::Agent.release_owner!(root:)\n          "pair: released #{subject}"\n        when /\Aissue(?:\s+(.*))?\z/
+        when /\Aissue(?:\s+(.*))?\z/
           issued = Master::Ground::Pairing.issue(root:, label: $1.to_s.strip)
           "pair code #{issued[:code]} expires in #{issued[:expires_in]}s — redeem via /pair #{issued[:code]} or the face field"
         when "release"
@@ -100,6 +100,29 @@ module Master
         return Result.ok(output.strip) if status.success?
 
         Result.err("deploy: #{output.to_s.strip}", category: :infrastructure)
+      end
+
+      # /android and /ios are the public mobile onboarding entrypoints. The
+      # platform selects the starting lane; capability ownership stays below
+      # the command surface.
+      def dispatch_android(root, ctx: nil)
+        dispatch_mobile_onboarding(:android, root, ctx:)
+      end
+
+      def dispatch_ios(root, ctx: nil)
+        dispatch_mobile_onboarding(:ios, root, ctx:)
+      end
+
+      def dispatch_mobile_onboarding(platform, root, ctx: nil)
+        label = arg_for(ctx)
+        Master::Device::Onboarding.new(
+          android: platform == :android,
+          root:,
+        ).mobile_start!(platform:, label:)
+      rescue ArgumentError => e
+        "#{platform}0: #{e.message}"
+      rescue StandardError => e
+        "#{platform}0: unavailable — #{e.class}: #{e.message}"
       end
 
       # /wake — explicit microphone wake-word consent and status.
