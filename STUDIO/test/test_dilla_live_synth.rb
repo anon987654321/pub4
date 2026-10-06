@@ -234,7 +234,10 @@ class TestDillaLiveSynth < Minitest::Test
 
   def test_bare_dilla_entrypoint_routes_to_live_improviser
     source = File.read(dilla("dilla.rb"))
-    assert_match(/cmd = ARGV\.shift.*?if cmd\.nil\?.*?live!\(\[["']improvise["']\]\)/m, source)
+    early = source.index("if ARGV.empty?")
+    provenance = source.index("DillaProvenance.begin!")
+    assert_operator early, :<, provenance, "bare live starts before render setup"
+    assert_match(/if ARGV\.empty\?.*?live!\(\[["']improvise["']\]\)/m, source)
     refute_match(/if cmd\.nil\?.*?Bed\.pieces!/m, source)
   end
 
