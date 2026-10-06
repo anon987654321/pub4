@@ -9,6 +9,8 @@ ENV["MASTER_NO_POOL_PROBES"] = "1"
 # The suite is the proof: a test that drives a writing /fix pass must not start
 # the whole suite again from inside it.
 ENV["MASTER_IN_PROOF"] = "1"
+# Unit tests use the real checkout as their fixture; do not recursively create fix worktrees.
+ENV["MASTER_FIX_WORKTREE"] = "0"
 
 # Direct test entrypoints must use the same pinned, private bundle as bin/cli.
 # Otherwise RubyGems can select a host-installed Minitest (or a native gem
