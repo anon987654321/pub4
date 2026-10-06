@@ -2447,7 +2447,9 @@ module LiveSynth
   # then let the score breathe until the scene changes.
   def showcase_segment!(score, seconds, actions:, output: nil)
     previous = ENV["LIVE_OUT"]
+    previous_live_record = ENV["DILLA_SHOWCASE_LIVE_RECORD"]
     ENV["LIVE_OUT"] = output if output
+    ENV["DILLA_SHOWCASE_LIVE_RECORD"] = "1" if output
 
     worker = Thread.new do
       started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
@@ -2467,6 +2469,7 @@ module LiveSynth
     worker&.kill
     worker&.join
     previous.nil? ? ENV.delete("LIVE_OUT") : ENV["LIVE_OUT"] = previous
+    previous_live_record.nil? ? ENV.delete("DILLA_SHOWCASE_LIVE_RECORD") : ENV["DILLA_SHOWCASE_LIVE_RECORD"] = previous_live_record
   end
 
   # `knob cutoff +0.3 20` moves by, `knob cutoff 0.8 20` moves to; the last
@@ -2595,11 +2598,21 @@ module LiveSynth
   end
 
   # The stream through ffmpeg on its way out: `filter` is ["-af", chain] or
-  # ["-filter_complex", graph], and what leaves is stereo, to the player or,
-  # with dest, to a file. Nil when ffmpeg or a player is missing.
+  # ["-filter_complex", graph]. Normally it goes to the speakers or, with dest,
+  # to a file. The showcase uses one FFmpeg filter pass and the tee muxer so the
+  # exact post-FX stream is heard now and recorded at the same time.
   def through_ffmpeg(channels:, filter:, rate:, dest: nil)
     ffmpeg = DillaLive.which("ffmpeg") or return nil
     input = [ffmpeg, "-loglevel", "error", "-f", "s16le", "-ar", rate.to_s, "-ac", channels.to_s, "-i", "-", *filter]
+
+    if dest && ENV["DILLA_SHOWCASE_LIVE_RECORD"] == "1"
+      player = (DillaLive.player_command(rate) || Livesets.player_command(rate)) or return nil
+      FileUtils.mkdir_p(File.dirname(dest))
+      tee_outputs = "[f=wav]#{Shellwords.escape(dest)}|[f=s16le]pipe:1"
+      command = input + ["-map", "0:a", "-c:a", "pcm_s16le", "-f", "tee", "-use_fifo", "1", tee_outputs]
+      return ["sh", "-c", "#{Shellwords.join(command)} | #{Shellwords.join(player)}"]
+    end
+
     return input + ["-y", "-c:a", "pcm_s16le", dest] if dest
 
     player = (DillaLive.player_command(rate) || Livesets.player_command(rate)) or return nil
