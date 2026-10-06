@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# CI-facing wrapper around DesignTokens.dialect_token_drift (MASTER/tools/rails/design_tokens.rb)
+# CI-facing wrapper around DesignTokens.dialect_token_drift (MASTER/tools/design_tokens.rb)
 # -- reports any shared_chrome/luxury value that's drifted from
 # design_tokens.yml across the per-app copies it gets hand-duplicated into.
 # Fails CI on drift; fix with `ruby MASTER/tools/rails/sync_dialect_tokens.rb`.
