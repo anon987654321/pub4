@@ -304,6 +304,28 @@ module AnalogSynth
       amp: Envelope.new(attack: 0.01, decay: 0.1, sustain: 1.0, release: 0.12),
       filter_env: Envelope.new(attack: 0.01, decay: 0.1, sustain: 1.0, release: 0.1),
     },
+    # Folded from the old live Dilla RB: each character patch has its own envelope,
+    # so the showcase can morph instruments without merely changing oscillator names.
+    opus3_strings: {
+      waves: %i[saw saw saw], detune: [-18.0, 0.0, 17.0], octaves: [0, 1, 0], cutoff: 2200.0, env_amount: 400.0, resonance: 0.12, drive: 0.85,
+      amp: Envelope.new(attack: 0.9, decay: 1.2, sustain: 0.85, release: 1.6),
+      filter_env: Envelope.new(attack: 1.2, decay: 1.5, sustain: 0.6, release: 1.5),
+    },
+    matriarch_stabs: {
+      waves: %i[triangle square triangle], detune: [0.0, 5.0, 0.0], octaves: [0, 1, 0], cutoff: 300.0, env_amount: 4200.0, resonance: 0.7, drive: 1.1,
+      amp: Envelope.new(attack: 0.004, decay: 0.55, sustain: 0.15, release: 0.35),
+      filter_env: Envelope.new(attack: 0.002, decay: 0.3, sustain: 0.05, release: 0.3),
+    },
+    grandmother_sweep: {
+      waves: %i[saw square saw], detune: [0.0, 702.0, -6.0], octaves: [0, 0, -1], cutoff: 180.0, env_amount: 5200.0, resonance: 0.5, drive: 1.3,
+      amp: Envelope.new(attack: 0.2, decay: 0.5, sustain: 0.9, release: 0.8),
+      filter_env: Envelope.new(attack: 2.2, decay: 1.0, sustain: 0.8, release: 0.8),
+    },
+    vox_humana: {
+      waves: %i[sine sine triangle], detune: [0.0, -9.0, 10.0], octaves: [0, 1, 0], cutoff: 4000.0, env_amount: 0.0, resonance: 0.1, drive: 0.8,
+      amp: Envelope.new(attack: 0.35, decay: 0.8, sustain: 0.8, release: 1.0),
+      filter_env: Envelope.new(attack: 0.3, decay: 0.5, sustain: 1.0, release: 0.5),
+    },
     warm_pad: {
       waves: %i[saw saw square], detune: [-8.0, 9.0, 0.0], octaves: [0, 0, -1],
       cutoff: 520.0, env_amount: 900.0, resonance: 0.18, drive: 0.88,
