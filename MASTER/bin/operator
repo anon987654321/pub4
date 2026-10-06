@@ -669,18 +669,6 @@ when "vps"
     Master::Trace::Dmesg::Report.print("/help", usage, io: $stderr)
     exit 2
   end
-when "snapshot"
-  require "snapshot"
-  trees = ARGV.empty? ? Master::Snapshot::DEFAULT_TREES : ARGV.map(&:upcase)
-  invalid = trees - Master::Snapshot::TREE_PATHS.keys
-  die("snapshot", "unknown tree(s): #{invalid.join(", ")}", 64) unless invalid.empty?
-  outputs = trees.uniq.map do |tree|
-    tree_root = File.join(ROOT, Master::Snapshot::TREE_PATHS.fetch(tree))
-    output = File.join(ROOT, ".master", "snapshots", "snapshot_#{tree}.md")
-    Master::Snapshot.new(root: tree_root, output:).write_tree!
-  end
-  outputs.each { |path| Master::Trace::Dmesg.status("snapshot0", "wrote #{path.delete_prefix("#{ROOT}/")}") }
-  exit 0
 when "pushed?"
   # Cherry-picking onto a moving origin/main rewrites SHAs, so "is my work
   # pushed?" cannot be answered by commit id. Content vs origin/main can.
