@@ -50,7 +50,7 @@ test("face surface owns the full viewport", () => {
 test("MASTER web face uses the same monospaced presentation contract as the CLI", () => {
   const css = readFileSync(join(publicDir, "face.css"), "utf8");
   const rules = readFileSync(join(root, "..", "data", "laws.yml"), "utf8");
-  assert.match(css, /html, body \{[\s\S]*?font:\s*16px\/1\.5 var\(--font-mono\)/);
+  assert.match(css, /html, body[\s\S]*font:\s*16px\/1\.5 var\(--font-mono\)/);
   assert.match(css, /--font-label:\s*"JetBrainsMono Nerd Font"/);
   assert.match(rules, /face_interface:/);
   assert.match(rules, /prompt:\s*\n\s+font: font_code/);
