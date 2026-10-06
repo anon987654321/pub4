@@ -111,6 +111,23 @@ class TestRestructure < Minitest::Test
     assert_equal "class Big\n  def a = 1\nend\n", plan.writes["MASTER/lib/big.rb"]
   end
 
+  def test_mutation_boundary_rejects_out_of_order_operations_before_writing
+    original = read("MASTER/lib/tiny.rb")
+    plan = Restructure::Plan.parse("OPERATIONS: rename, merge\n=== DELETE MASTER/lib/tiny.rb\n=== END\n")
+    reviewed = false
+
+    result = restructure.call(
+      plan,
+      message: "x",
+      review: ->(_diff) { reviewed = true }
+    )
+
+    refute result.ok?
+    assert_includes result.message, "out of constitutional order"
+    refute reviewed
+    assert_equal original, read("MASTER/lib/tiny.rb")
+  end
+
   def test_an_approved_restructure_is_committed_and_pushed
     result = restructure.call(split_plan, message: "refactor: split Big", review: ->(_diff) {})
 
@@ -131,6 +148,7 @@ class TestRestructure < Minitest::Test
     refute_equal evidence.fetch(:before).fetch("MASTER/lib/big.rb"), evidence.fetch(:after).fetch("MASTER/lib/big.rb")
     assert_equal ["MASTER/lib/big/second.rb"], evidence.fetch(:written).reject { |path| path == "MASTER/lib/big.rb" }
     assert_equal ["MASTER/lib/tiny.rb"], evidence.fetch(:deleted)
+    assert_equal ["split"], evidence.fetch(:operations)
     assert_equal "review_and_tree_proof_held", evidence.fetch(:proof)
   end
 
