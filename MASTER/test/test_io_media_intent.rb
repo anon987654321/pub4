@@ -112,6 +112,24 @@ class MediaIntentSpec < Minitest::Test
     [bus, events]
   end
 
+  def test_play_live_music_normalizes_the_five_named_artist_lanes
+    calls = []
+    runner = lambda do |**kwargs|
+      calls << kwargs
+      Master::Result.ok("live artist started")
+    end
+
+    with_dispatch_stub(runner) do
+      %w[bach dilla madlib flylo royksopp].each do |artist|
+        assert MediaIntent.play_live_music(artist).ok?, artist
+      end
+    end
+
+    assert_equal 5, calls.size
+    assert_equal %w[live play bach live play dilla live play madlib live play flylo live play royksopp],
+                 calls.map { |call| call[:arg].split(" ") }.flatten
+  end
+
   def test_background_music_publishes_the_named_artist_to_the_bus
     bus, events = with_fake_bus
     runner = ->(**_kwargs) { Master::Result.ok("live default started") }
