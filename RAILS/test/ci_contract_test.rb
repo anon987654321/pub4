@@ -47,6 +47,32 @@ class CiContractTest < Minitest::Test
     assert_includes shared, 'MASTER/tools/rails'
   end
 
+  test "shared ci resolves every named Rails lint from its canonical MASTER root" do
+    shared = read(SHARED_CI)
+
+    roots = [
+      "MASTER/tools/",
+      "MASTER/tools/rails/operator/",
+    ]
+
+    %w[
+      rhythm_lint
+      fallback_drift_lint
+      empty_state_lint
+      adhoc_empty_lint
+      chrome_i18n_lint
+      dialect_token_drift_check
+    ].each do |lint|
+      roots.each do |root|
+        next unless shared.include?("#{root}#{lint}.rb")
+
+        found = true
+        break
+      end
+      assert found, "shared CI has no canonical MASTER path for #{lint}"
+    end
+  end
+
   test "eritel carries the same security and test floor" do
     source = read(File.join(ROOT, "eritel", "bin", "ci"))
 
