@@ -2074,7 +2074,7 @@ module LiveSynth
 
   def stream = config.fetch("stream")
 
-  SHOWCASE_TEMPO_SCALE = 0.96
+  SHOWCASE_TEMPO_SCALE = 0.90
 
   # Effects are the instrument's normal room now: tape, console, saturation,
   # pitch wear, echo, hiss and crackle are on unless explicitly disabled.
@@ -2092,16 +2092,18 @@ module LiveSynth
       "asetrate=#{(stream.fetch("rate").to_f * SHOWCASE_PITCH_RATIO).round(3)}",
       "aresample=#{stream.fetch("rate")}",
       "atempo=#{(1.0 / SHOWCASE_PITCH_RATIO).round(6)}",
-      Outboard.tape_machine(speed: :ips7, wow: 0.13, flutter: 0.035),
-      "acompressor=threshold=-20dB:ratio=1.18:attack=35:release=240:makeup=1.0",
-      "equalizer=f=70:t=q:w=0.9:g=1.0",
-      "equalizer=f=250:t=o:w=1.1:g=-1.3",
-      "lowpass=f=7200",
-      Livesets.sonitex(bits: 12, lo: 34, hi: 10500, drive: 1.02, mix: 0.34),
-      Outboard.tape_machine(speed: :ips7, wow: 0.08, flutter: 0.02),
-      "acompressor=threshold=-18dB:ratio=1.12:attack=45:release=280:makeup=1.0",
-      "lowpass=f=6800",
-      "alimiter=limit=0.96",
+      "highpass=f=38",
+      Outboard.tape_machine(speed: :ips7, wow: 0.18, flutter: 0.06),
+      "acompressor=threshold=-22dB:ratio=1.28:attack=40:release=260:makeup=1.0",
+      "equalizer=f=72:t=q:w=0.9:g=-1.2",
+      "equalizer=f=240:t=o:w=1.1:g=-2.4",
+      "equalizer=f=1800:t=o:w=1.0:g=-1.1",
+      "lowpass=f=6100",
+      Livesets.sonitex(bits: 11, lo: 36, hi: 9200, drive: 1.04, mix: 0.50),
+      Outboard.tape_machine(speed: :ips7, wow: 0.11, flutter: 0.03),
+      "acompressor=threshold=-20dB:ratio=1.22:attack=50:release=300:makeup=1.0",
+      "lowpass=f=5200",
+      "alimiter=limit=0.94",
     ].freeze
   end
   def log(message) = $stdout.puts("live0: #{message}")
@@ -2426,7 +2428,7 @@ module LiveSynth
          [12.0, { "patch" => "moog_strings" }],
          [18.0, { "patch" => "moog_brass" }]],
       ]
-    when "memorymoog_organ", "vox_humana", "soft_reed", "e_piano"
+    when "opus3_strings", "matriarch_stabs", "grandmother_sweep", "memorymoog_organ", "vox_humana", "soft_reed", "e_piano"
       [Demo.new(name, rng:), [[2.5, { "knob" => "cutoff", "amount" => -0.1, "seconds" => 2.5 }]]]
     when "bach"
       path = BachMidi.source
@@ -2638,7 +2640,8 @@ module LiveSynth
       player = (DillaLive.player_command(rate) || Livesets.player_command(rate)) or return nil
       FileUtils.mkdir_p(File.dirname(dest))
       tee_outputs = "[f=wav]#{Shellwords.escape(dest)}|[f=s16le]pipe:1"
-      command = input + ["-c:a", "pcm_s16le", "-f", "tee", "-use_fifo", "1", tee_outputs]
+      mapping = filter.include?("-filter_complex") ? [] : ["-map", "0:a"]
+      command = input + mapping + ["-c:a", "pcm_s16le", "-f", "tee", "-use_fifo", "1", tee_outputs]
       return ["sh", "-c", "#{Shellwords.join(command)} | #{Shellwords.join(player)}"]
     end
 
@@ -3139,14 +3142,14 @@ module LiveSynth
       late = @c["bass_late_seconds"]
       at = @next_at
       if LiveSynth.showcase?
-        gain = 0.14
-        stage.note(root, spec, at + 0.018, 0.68 * @beat, gain, :bass)
-        if @rng.rand < 0.18
-          stage.note(root + 7, spec, at + (2.5 * @beat) + late, 0.22 * @beat, gain * 0.45, :bass)
+        gain = 0.065
+        stage.note(root, spec, at + 0.018, 0.46 * @beat, gain, :bass)
+        if @rng.rand < 0.12
+          stage.note(root + 7, spec, at + (2.5 * @beat) + late, 0.18 * @beat, gain * 0.30, :bass)
         end
-        return unless bars == 2 && @rng.rand < 0.4
+        return unless bars == 2 && @rng.rand < 0.28
 
-        stage.note(root, spec, at + (4 * @beat) + 0.018, 0.52 * @beat, gain * 0.78, :bass)
+        stage.note(root, spec, at + (4 * @beat) + 0.018, 0.36 * @beat, gain * 0.70, :bass)
         return
       end
 
@@ -3383,9 +3386,9 @@ module LiveSynth
     def graph(post, beat)
       chain = warm_dilla_pad_synth_filters(**post.fetch("chain").transform_keys(&:to_sym)).compact.join(",")
       send = if LiveSynth.showcase?
-        "highpass=f=180,lowpass=f=2600,aecho=0.85:0.18:<375>:0.06,volume=0.22"
+        "highpass=f=220,lowpass=f=2400,aecho=0.85:0.18:375:0.06,volume=0.20"
       else
-        post.fetch("dub").gsub(/<(d+)>/) { (beat * Regexp.last_match(1).to_i).round.to_s }
+        post.fetch("dub").gsub(/<(\d+)>/) { (beat * Regexp.last_match(1).to_i).round.to_s }
       end
       showcase_tail = LiveSynth.showcase? ? ",#{LiveSynth.showcase_tape_chain.join(",")}" : ""
       weights = LiveSynth.showcase? ? "1 0.32 0.72" : "1 1 1"
@@ -3446,7 +3449,17 @@ module LiveSynth
     end
 
     def overdub!(left, right, clock, rate)
-      @dfam&.render!(left, right, clock, rate)
+      return unless @dfam
+
+      return @dfam.render!(left, right, clock, rate) unless LiveSynth.showcase?
+
+      dfam_left = Array.new(left.length, 0.0)
+      dfam_right = Array.new(right.length, 0.0)
+      @dfam.render!(dfam_left, dfam_right, clock, rate)
+      left.each_index do |i|
+        left[i] += dfam_left[i] * 0.55
+        right[i] += dfam_right[i] * 0.55
+      end
       nil
     end
 
@@ -3455,8 +3468,10 @@ module LiveSynth
       master = @master_override || @p["master"]
       return nil unless master
 
-      chain = master.map { |stage| LiveSynth.console_stage(stage) }.join(",")
+      chain = master ? master.map { |stage| LiveSynth.console_stage(stage) }.join(",") : ""
       chain = [chain, *LiveSynth.showcase_tape_chain].reject(&:empty?).join(",") if LiveSynth.showcase?
+      return nil if chain.empty?
+
       LiveSynth.through_ffmpeg(channels: 2, filter: ["-af", chain], rate:, dest:) ||
         abort("live0: #{@name} leaves through ffmpeg -- install ffmpeg and sox (brew install ffmpeg sox)")
     end

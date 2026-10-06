@@ -217,6 +217,7 @@ class TestDillaLiveSynth < Minitest::Test
       assert_includes command.last, "[f=wav]"
       assert_includes command.last, Shellwords.escape(destination)
       assert_includes command.last, "[f=s16le]pipe:1"
+      assert_includes command.last, "-map 0:a"
       assert_includes command.last, "/opt/homebrew/bin/play"
     end
   ensure
@@ -291,17 +292,18 @@ class TestDillaLiveSynth < Minitest::Test
     source = File.read(dilla("lib/livesets.rb"))
     assert_includes source, 'speed: :ips7, wow: 0.13, flutter: 0.035'
     assert_includes source, 'SHOWCASE_PITCH_RATIO'
-    assert_includes source, 'lowpass=f=6800'
-    assert_includes source, 'loudnorm=I=-14:LRA=9:TP=-1.0:linear=false'
-    assert_equal 0, LiveSynth.showcase_tape_chain.count { |stage| stage.start_with?("aphaser=") }
-    assert_equal 0, LiveSynth.showcase_tape_chain.count { |stage| stage.start_with?("aecho=") }
+    assert_includes source, 'SHOWCASE_TEMPO_SCALE = 0.90'
+    assert_includes source, 'lowpass=f=5200'
+    refute_includes source, 'loudnorm=I=-14:LRA=9:TP=-1.0:linear=false'
+    assert_operator LiveSynth.showcase_tape_chain.count { |stage| stage.include?("vibrato=") }, :>=, 2
     assert_operator LiveSynth.showcase_tape_chain.count { |stage| stage.start_with?("acompressor=") }, :>=, 2
-    assert_operator LiveSynth.showcase_tape_chain.count { |stage| stage.include?("equalizer=") || stage.include?("lowpass=") }, :>=, 3
+    assert_operator LiveSynth.showcase_tape_chain.count { |stage| stage.include?("equalizer=") || stage.include?("lowpass=") }, :>=, 5
   end
 
   def test_showcase_dub_removes_the_full_feedback_send
     source = File.read(dilla("lib/livesets.rb"))
-    assert_includes source, 'aecho=0.85:0.18:<375>:0.06,volume=0.22'
+    assert_includes source, 'aecho=0.85:0.18:375:0.06,volume=0.20'
+    refute_includes source, '/<(d+)>/'
     assert_includes source, 'weights = LiveSynth.showcase? ? "1 0.32 0.72" : "1 1 1"'
     refute_includes source, 'aecho=0.85:0.9:<750>|<1000>|<1500>:0.55|0.45|0.35'
     refute_includes source, 'aecho=0.8:0.85:<375>:0.5'
@@ -309,9 +311,29 @@ class TestDillaLiveSynth < Minitest::Test
 
   def test_showcase_bass_is_quiet_and_sparse
     source = File.read(dilla("lib/livesets.rb"))
-    assert_includes source, "gain = 0.14"
-    assert_includes source, "if @rng.rand < 0.18"
-    assert_includes source, "0.68 * @beat"
+    assert_includes source, "gain = 0.065"
+    assert_includes source, "if @rng.rand < 0.12"
+    assert_includes source, "0.46 * @beat"
+  end
+
+
+  def test_showcase_patch_only_scenes_all_have_score_handlers
+    %w[opus3_strings matriarch_stabs grandmother_sweep memorymoog_organ vox_humana soft_reed e_piano].each do |name|
+      score, actions = LiveSynth.showcase_score(name, Random.new(1))
+      assert_instance_of LiveSynth::Demo, score
+      assert_equal 1, actions.length
+    end
+  end
+
+  def test_showcase_dub_uses_real_numeric_echo_delay
+    saved = ENV["DILLA_SHOWCASE"]
+    ENV["DILLA_SHOWCASE"] = "1"
+    graph = LiveSynth::Dub.graph(LiveSynth.config.fetch("improvise").fetch("post"), 0.5)
+    refute_includes graph, "<375>"
+    refute_includes graph, "<d+>"
+    assert_includes graph, "aecho=0.85:0.18:375:0.06"
+  ensure
+    saved.nil? ? ENV.delete("DILLA_SHOWCASE") : ENV["DILLA_SHOWCASE"] = saved
   end
 
   def test_showcase_patch_scenes_resolve_to_real_patches
