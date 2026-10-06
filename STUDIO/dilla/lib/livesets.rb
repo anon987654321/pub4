@@ -2664,9 +2664,8 @@ module LiveSynth
     if dest && ENV["DILLA_SHOWCASE_LIVE_RECORD"] == "1"
       player = (DillaLive.player_command(rate) || Livesets.player_command(rate)) or return nil
       FileUtils.mkdir_p(File.dirname(dest))
-      shared = input + ["-vn", "-sn", "-dn"]
-      command = shared + output_map + ["-y", "-c:a", "pcm_s16le", "-f", "wav", dest] +
-                output_map + ["-c:a", "pcm_s16le", "-f", "s16le", "pipe:1"]
+      tee_outputs = "[f=wav]#{Shellwords.escape(dest)}|[f=s16le]pipe:1"
+      command = input + output_map + ["-vn", "-sn", "-dn", "-c:a", "pcm_s16le", "-f", "tee", "-use_fifo", "1", tee_outputs]
       return ["sh", "-c", "#{Shellwords.join(command)} | #{Shellwords.join(player)}"]
     end
 
@@ -3168,14 +3167,14 @@ module LiveSynth
       late = @c["bass_late_seconds"]
       at = @next_at
       if LiveSynth.showcase?
-        gain = 0.018
-        stage.note(root, spec, at + 0.018, 0.30 * @beat, gain, :bass)
-        if @rng.rand < 0.08
-          stage.note(root + 7, spec, at + (2.5 * @beat) + late, 0.14 * @beat, gain * 0.20, :bass)
+        gain = 0.012
+        stage.note(root, spec, at + 0.018, 0.24 * @beat, gain, :bass)
+        if @rng.rand < 0.06
+          stage.note(root + 7, spec, at + (2.5 * @beat) + late, 0.12 * @beat, gain * 0.18, :bass)
         end
-        return unless bars == 2 && @rng.rand < 0.16
+        return unless bars == 2 && @rng.rand < 0.12
 
-        stage.note(root, spec, at + (4 * @beat) + 0.018, 0.24 * @beat, gain * 0.55, :bass)
+        stage.note(root, spec, at + (4 * @beat) + 0.018, 0.18 * @beat, gain * 0.50, :bass)
         return
       end
 
@@ -3418,7 +3417,7 @@ module LiveSynth
       end
       showcase_tail = LiveSynth.showcase? ? ",#{LiveSynth.showcase_tape_chain.join(",")}" : ""
       weights = LiveSynth.showcase? ? "1 0.24 1.05" : "1 1 1"
-      "[0:a]pan=stereo|c0=c0|c1=c1[dry];[0:a]pan=stereo|c0=c2|c1=c3[wet];[0:a]pan=stereo|c0=c4|c1=c5[k];"         "[dry]#{chain}[d];[wet]#{send}[w];[d][w][k]amix=inputs=3:weights=#{weights}:normalize=0,alimiter=limit=#{post['limit']}#{showcase_tail}[dilla_showcase_mix]"
+      "[0:a]pan=stereo|c0=c0|c1=c1[dry];[0:a]pan=stereo|c0=c2|c1=c3[wet];[0:a]pan=stereo|c0=c4|c1=c5[k];"         "[dry]#{chain}[d];[wet]#{send}[w];[d][k]sidechaincompress=threshold=0.08:ratio=2.2:attack=5:release=140:makeup=1[ducked];"         "[ducked][w][k]amix=inputs=3:weights=#{weights}:normalize=0,alimiter=limit=#{post['limit']}#{showcase_tail}[dilla_showcase_mix]"
     end
     def command(post, rate:, beat:, dest: nil)
       LiveSynth.through_ffmpeg(channels: 6, filter: ["-filter_complex", graph(post, beat), "-map", "[dilla_showcase_mix]"], rate:, dest:)
