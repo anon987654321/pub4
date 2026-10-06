@@ -44407,15 +44407,25 @@ LIVE_SYNTH_VERBS = %w[default improvise progression patch play showcase knob mor
 # The live entry. It runs before the defaults tables, the provenance recipe and
 # the asset check, all of which belong to a render that writes a file: the live
 # side reads the caller's environment exactly as it was typed.
+# The bare command is the complete instrument, not a single preset. Keep the
+# useful live devices armed so every score that the showcase visits can use them:
+# physicality, tape/console colour, Dilla groove, stacked voices, hocketing and
+# harmonic copy motion. Individual scenes still decide when a device is musical;
+# these are the safe room defaults, not a permanent wall of effects.
 SHOWCASE_DEFAULTS = {
   "DILLA_SHOWCASE" => "1",
   "DILLA_EFFECTS" => "1",
   "DILLA_PHYSICS" => "1",
   "DILLA_SHOWCASE_DARK" => "1",
   "DILLA_SHOWCASE_TAPE" => "1",
-  "DILLA_SHOWCASE_TEMPO_SCALE" => "0.76",
-  "DILLA_SHOWCASE_BASS_GAIN" => "0.00009",
-  "DILLA_SHOWCASE_BASS_EVERY" => "3",
+  "DILLA_SHOWCASE_TEMPO_SCALE" => "0.74",
+  "DILLA_SHOWCASE_BASS_GAIN" => "0.00005",
+  "DILLA_SHOWCASE_BASS_EVERY" => "4",
+  "LIVE_GROOVE" => "donuts",
+  "LIVE_VOICING" => "down",
+  "LIVE_COPY_MACHINE" => "4",
+  "LIVE_VOICE_STACK" => "3",
+  "LIVE_HOCKET" => "3",
 }.freeze
 
 def prepare_showcase_defaults!
