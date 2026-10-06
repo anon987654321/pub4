@@ -193,6 +193,21 @@ class GateLiveAndCssBudgetTest < Minitest::Test
     gate
   end
 
+  def test_design_metrics_equal_contrast_ceiling_is_reported
+    with_env("GATE_AUTOFIX" => "0") do
+      gate = Deploy::DesignMetricsGate.new
+      gate.instance_variable_set(:@rules, { "typography" => { "accessibility" => { "normal_text_contrast" => 7.0 } } })
+      budget = { "contrast_below_aa" => 0, "contrast_below_aaa" => 38 }
+      gate.define_singleton_method(:contrast_budget) { budget }
+      gate.instance_variable_set(:@tokens, {})
+      gate.instance_variable_set(:@result, Deploy::GateResult.new)
+
+      gate.send(:judge_contrast_budget, 0, 38)
+
+      assert_includes gate.result.warnings, "design_metrics contrast_below_aaa: at its 38 ceiling"
+    end
+  end
+
   def test_contrast_ceilings_exist_for_both_bands
     assert_kind_of Integer, budget["contrast_below_aa"]
     assert_kind_of Integer, budget["contrast_below_aaa"]
