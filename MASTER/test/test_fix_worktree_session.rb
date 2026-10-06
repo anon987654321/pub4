@@ -69,17 +69,21 @@ class TestFixWorktreeSession < Minitest::Test
       git(root, "commit", "-m", "initial")
       git(root, "branch", "-M", "main")
       git(root, "push", "-u", "origin", "main")
-      git(root, "commit", "--allow-empty", "-m", "remote update")
-      git(root, "push", "origin", "main")
+      remote_root = File.join(dir, "remote-update")
+      system("git", "clone", remote, remote_root)
+      git(remote_root, "config", "user.name", "MASTER test")
+      git(remote_root, "config", "user.email", "master-test@example.invalid")
+      git(remote_root, "commit", "--allow-empty", "-m", "remote update")
+      git(remote_root, "push", "origin", "main")
       File.write(File.join(root, "foreign.txt"), "keep me\n")
 
       result = Master::Fix::WorktreeSession.new(root:).run(command: "/fix test")
 
-      refute result.ok
-      assert_match(/worker failed/, result.summary)
-      refute File.exist?(result.worktree)
+      assert result.ok
+      assert_match(/published/, result.summary)
       assert_equal "base\n", File.read(File.join(root, "README"))
       assert_equal "keep me\n", File.read(File.join(root, "foreign.txt"))
+      assert_equal "after\n", git_output(root, "show", "origin/main:README")
     end
   end
 
