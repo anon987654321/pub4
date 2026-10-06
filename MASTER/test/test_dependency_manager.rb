@@ -208,6 +208,19 @@ class TestDependencyManager < Minitest::Test
     assert_operator bundle_index, :<, minitest_index
   end
 
+  def test_bundle_store_is_shared_by_worktrees_of_one_checkout
+    main = MANAGER.new(root: File.join(@root, "repo", "MASTER"), env: { "PATH" => "/bin" }, out: StringIO.new, home: @root)
+    worktree = MANAGER.new(root: File.join(@root, "tmp", "checkout", "MASTER"), env: { "PATH" => "/bin" }, out: StringIO.new, home: @root)
+    clone = MANAGER.new(root: File.join(@root, "other", "repo", "MASTER"), env: { "PATH" => "/bin" }, out: StringIO.new, home: @root)
+    common = File.join(@root, "repo", ".git")
+
+    [main, worktree].each { |manager| manager.define_singleton_method(:git_common_dir) { common } }
+    clone.define_singleton_method(:git_common_dir) { File.join(@root, "other", ".git") }
+
+    assert_equal main.send(:bundle_config_root), worktree.send(:bundle_config_root)
+    refute_equal main.send(:bundle_config_root), clone.send(:bundle_config_root)
+  end
+
   def test_bundle_store_isolated_by_ruby_installation
     rbenv = MANAGER.new(root: @root, env: { "PATH" => "/bin" }, out: StringIO.new, home: @root)
     homebrew = MANAGER.new(root: @root, env: { "PATH" => "/bin" }, out: StringIO.new, home: @root)
