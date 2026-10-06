@@ -223,11 +223,11 @@ module Master
 
       def help_summary
         [
-          "commands: /status /doctor /voice /model",
-          "          /review /critique /fix /face",
+          "commands: /status /doctor /voice /model /deploy /play",
+          "          /wake /review /critique /fix /face",
           "          /session /clear /undo /snapshot",
           "          /android /ios /orders",
-          "          /soul /rules /why /plugin /help /exit",
+          "          /soul /rules /why /plugin /help /exit /quit",
           "input:    !cmd governed shell, << multiline, /help X details",
           "write:    /fix is the write path; everything else is read, route or chat",
         ].join("\n")
