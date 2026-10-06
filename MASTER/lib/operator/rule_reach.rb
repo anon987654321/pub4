@@ -1,19 +1,17 @@
 # frozen_string_literal: true
 
-# How many rules can fire, and under what conditions.
+# How many executable laws can fire, and under what conditions.
 #
-# A rule in data/laws.yml reaches code three ways: a lexical detector, a
-# structural one, or a semantic prompt folded into SemanticRule's single call
-# per file. A rule with none of those is law that no configuration can enforce,
-# and it counts toward "225 rules" in every report that quotes the total.
+# The population is the live Law registry plus scanner-only RuleDSL entries.
+# Each executable law must expose at least one enforcement surface: a detector,
+# a semantic question, or a practice hook. Policy data in data/laws.yml governs
+# those laws but is not the executable population.
 #
 #   ruby MASTER/tools/rule_reach.rb
-#   ruby MASTER/tools/rule_reach.rb --ratchet
 #
 # The semantic prompt drops info-severity violations deliberately — they double
-# the token cost of every file for findings nobody acts on. That exclusion is a
-# decision, so this counts its result rather than arguing with it, and refuses
-# to let the unreachable set grow.
+# the token cost of every file for findings nobody acts on. Reach therefore
+# measures the enforcement surface, not the severity policy.
 
 require "set"
 require "json"
@@ -21,8 +19,6 @@ require "json"
 module Operator
   module RuleReach
     MASTER_DIR = File.expand_path("../..", __dir__)
-    LAW_ROOT = File.join(MASTER_DIR, "law")
-
     module_function
 
     # One inventory for the executable constitution and the scanner registry.
@@ -69,7 +65,7 @@ module Operator
       Master.law("rule_ratchets", root: MASTER_DIR).dig("reach", "unreachable")
     end
 
-    def run(ratchet: false, json: false)
+    def run(json: false)
       all = rules
       mech = mechanical(all)
       asked = prompted(all)
