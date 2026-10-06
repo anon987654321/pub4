@@ -88,20 +88,19 @@ class TestSnapshotGenerator < Minitest::Test
   # The README promises one snapshot per governed tree from a bare /snapshot;
   # Snapshot#write! gives that only when rooted at the repository.
   def test_bare_snapshot_command_uses_the_canonical_full_tree_generator
-    snapshot = Minitest::Mock.new
-    snapshot.expect(:write!, ["snapshot_MASTER.md", "snapshot_RAILS.md"])
-    Master::Snapshot.stub(:new, ->(root:) { snapshot }) do
+    paths = %w[snapshot_MASTER.md snapshot_RAILS.md]
+    snapshot = Object.new
+    snapshot.define_singleton_method(:write!) { paths }
+    Master::Snapshot.stub(:new, ->(root:) { raise "wrong snapshot root" unless root == Master::REPO_ROOT; snapshot }) do
       out = Master::CLI::CommandRegistry.dispatch_snapshot(nil, ctx: { args: "" })
       assert_equal "snapshot0: wrote snapshot_MASTER.md\nsnapshot0: wrote snapshot_RAILS.md", out
     end
-    snapshot.verify
   end
 
-  def test_operator_snapshot_is_backed_by_the_canonical_snapshot_class
+  def test_operator_snapshot_runs_the_full_root_snapshot_pack
     source = File.read(File.expand_path("../bin/operator", __dir__))
-    assert_includes source, 'when "snapshot"'
-    assert_includes source, 'require "snapshot"'
-    assert_includes source, 'Master::Snapshot.new(root: tree_root, output:).write_tree!'
+    assert_equal 1, source.scan('when "snapshot"').size
+    assert_includes source, 'MASTER/tools/snapshot.rb'
   end
 
   def test_snapshot_preserves_large_files_without_truncation
