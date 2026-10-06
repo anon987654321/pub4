@@ -123,9 +123,20 @@ module Operator
 
     def js_references(source)
       source.scan(%r{/((?:\\.|[^/\\\n])*)/[a-z]*}i).flat_map do |body|
-        body.to_s.scan(/[a-z][a-z0-9_]*:[a-z][a-z0-9_:-]*/).filter_map do |topic|
+        body = body.to_s
+        topics = body.scan(/[a-z][a-z0-9_]*:[a-z][a-z0-9_:-]*/)
+        topics.concat(expanded_regex_topics(body))
+        topics.uniq.filter_map do |topic|
           { topic:, role: :reference } if event_topic?(topic)
         end
+      end
+    end
+
+    def expanded_regex_topics(body)
+      body.to_s.scan(
+        /([a-z][a-z0-9_]*):\\(\\?:([a-z][a-z0-9_:-]*(?:\\|[a-z][a-z0-9_:-]*)+)\\)/
+      ).flat_map do |prefix, alternatives|
+        alternatives.split("|").map { |suffix| "#{prefix}:#{suffix}" }
       end
     end
 
