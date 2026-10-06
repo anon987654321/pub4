@@ -420,6 +420,10 @@ module Master
         return false unless record
         return false unless RESUMABLE_STATES.include?(record["state"].to_s)
 
+        # A dead owner is not an active mission. Treating an expired lease as
+        # globally live strands every different target behind an abandoned run.
+        return false if record["state"].to_s == "running" && lease_expired?(record)
+
         record["goal"].to_s != goal.to_s || record["scope"].to_s != relative(scope).to_s
       end
 
