@@ -41,8 +41,8 @@ class VpsDeployContractTest < Minitest::Test
   end
 
   def test_deploy_paths_export_openbsd_package_path
-    assert_match(/export PATH=\\/usr\\/local\\/bin:.*\\/bin:.*\\/sbin/, SOURCE)
-    assert_match(/export PATH=\\/usr\\/local\\/bin:.*\\/bin:.*\\/sbin/, MASTER_DEPLOY)
+    assert_includes SOURCE, "export PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin"
+    assert_includes MASTER_DEPLOY, "export PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin"
   end
 
   def test_it_rejects_an_unknown_deploy_target
