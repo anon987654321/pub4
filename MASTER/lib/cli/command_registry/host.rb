@@ -25,6 +25,10 @@ module Master
         when /\Aissue(?:\s+(.*))?\z/
           issued = Master::Ground::Pairing.issue(root:, label: $1.to_s.strip)
           "pair code #{issued[:code]} expires in #{issued[:expires_in]}s — redeem via /pair #{issued[:code]} or the face field"
+        when "release"
+          return "pair: local-only" unless Fiber[:master_visitor] != true
+          subject = Master::Device::Agent.release_owner!(root:)
+          "pair: released #{subject}"
         when "list"
           rows = Master::Ground::Pairing.list(root:)
           return "pair: no allowlist entries" if rows.empty?
