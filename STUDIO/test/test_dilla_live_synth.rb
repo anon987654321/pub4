@@ -243,7 +243,7 @@ class TestDillaLiveSynth < Minitest::Test
 
   def test_play_artist_uses_documented_source_lanes
     table = LiveSynth.config.fetch("play")
-    assert_equal "bach_toccata", table.fetch("bach")
+    assert_equal "bach_midi", table.fetch("bach")
     assert_equal "reference:dilla_flowers_documented", table.fetch("j_dilla")
     assert_equal "reference:flylo_camel_documented", table.fetch("flying_lotus")
     assert_equal "reference:madlib_accordion_loop_documented", table.fetch("madlib")
