@@ -742,26 +742,6 @@ test("web face keeps filesystem access at the user-upload boundary only", () => 
   assert.match(sources, /id="photo"/, "explicit user-selected photo upload remains the only file boundary");
 });
 
-test("web face keeps filesystem access at the user-upload boundary only", () => {
-  const sources = [
-    readFileSync(join(publicDir, "face.js"), "utf8"),
-    readFileSync(join(publicDir, "face.runtime.js"), "utf8"),
-    readFileSync(join(publicDir, "face_world.js"), "utf8"),
-    readFileSync(join(viewsDir, "chat", "index.html.erb"), "utf8"),
-  ].join("\n");
-  for (const api of [
-    "showOpenFilePicker",
-    "showSaveFilePicker",
-    "showDirectoryPicker",
-    "FileSystemHandle",
-    "FileSystemFileHandle",
-    "FileSystemDirectoryHandle",
-  ]) {
-    assert.doesNotMatch(sources, new RegExp(api), api + " must not become a MASTER web capability");
-  }
-  assert.match(sources, /id="photo"/, "explicit user-selected photo upload remains the only file boundary");
-});
-
 test("service worker avoids stale undigested precache", () => {
   const sw = readFileSync(join(publicDir, "sw.js"), "utf8");
   assert.doesNotMatch(sw, /\/face\.js'/);
