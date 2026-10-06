@@ -45,6 +45,32 @@ automation:
   # knobs of the old patch turn into the new one's.
   crossfade_chords: 2
 
+# Shared master for explicit /play artist lanes: four Nasty VCS stages,
+# three heavy Sonitex STX-1260 stages, plus the measured console summing stack.
+play_master:
+  - { vcs: { depth: 0.34, smear: 2.4, db: 0.0 } }
+  - { sonitex: { bits: 12, lo: 40, hi: 13000, drive: 1.12, mix: 0.72 } }
+  - { vcs: { depth: 0.28, smear: 2.8, db: 0.0 } }
+  - { sonitex: { bits: 11, lo: 42, hi: 12000, drive: 1.16, mix: 0.82, samples: 2 } }
+  - { vcs: { depth: 0.4, smear: 1.9, db: 0.0 } }
+  - { console_stack: { instances: 3, offset: 0.10, param: 1.2, speed: 0.1 } }
+  - { sonitex: { bits: 10, lo: 48, hi: 11000, drive: 1.22, mix: 0.95, samples: 2 } }
+  - { vcs: { depth: 0.3, smear: 3.6, db: 0.0 } }
+  - { program_memory: { threshold: -18, ratio: 1.2, attack: 12, release: 420 } }
+  - { filter: "alimiter=limit=0.95" }
+
+play:
+  bach: circle_fifths_descent
+  baroque: circle_fifths_descent
+  j_dilla: db_major_minor_fall
+  dilla: db_major_minor_fall
+  flying_lotus: quartal_west_coast
+  flylo: quartal_west_coast
+  madlib: minor_triad_walk
+  royksopp: royksopp_live
+  röyksopp: royksopp_live
+  melody_a_m: royksopp_live
+
 progressions:
   # The first progression the operator heard live: soul-jazz in F minor, the
   # bass on the root and each voicing written out, played on a pad that
