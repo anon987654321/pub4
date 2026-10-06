@@ -206,7 +206,7 @@ module BachMidi
 
     def knobs = @knobs
 
-    def describe = "Bach Toccata and Fugue BWV 565 MIDI, Dilla #{@patch}"
+    def describe = "Bach Fugue BWV 565 MIDI, Dilla #{@patch}"
 
     def finished?(clock) = @index >= @events.length && clock >= @length
 
@@ -304,7 +304,6 @@ module BachMidi
     tempos = tempos.chunk_while { |a, b| a[0] == b[0] }.map(&:last)
     section_start_tick, section_end_tick = section_ticks(section, division, markers, tracks)
     section_start = tick_seconds(section_start_tick, division, tempos)
-    section_end = section_end_tick && tick_seconds(section_end_tick, division, tempos)
     notes = tracks.flat_map { |track| track[:notes] }.filter_map do |note|
       next if note[:finish] <= section_start_tick
       next if section_end_tick && note[:start] >= section_end_tick
