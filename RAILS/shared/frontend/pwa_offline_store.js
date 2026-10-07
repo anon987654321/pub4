@@ -4,6 +4,7 @@
 // and dropped from the queue whether it succeeds or fails (avoids an
 // infinite retry loop wedging the queue on a permanently-failing request).
 const STORAGE_KEY = "pub4:offline-sync-queue"
+const MAX_QUEUE_SIZE = 100
 
 function readQueue() {
   try {
@@ -24,7 +25,7 @@ function writeQueue(queue) {
 export async function enqueueSync(entry) {
   const queue = readQueue()
   queue.push({ ...entry, queuedAt: Date.now() })
-  writeQueue(queue)
+  writeQueue(queue.slice(-MAX_QUEUE_SIZE))
 }
 
 async function flushQueue() {
