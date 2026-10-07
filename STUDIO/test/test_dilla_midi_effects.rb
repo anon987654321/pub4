@@ -3,6 +3,7 @@
 require "minitest/autorun"
 require_relative "../dilla/lib/midi_effects"
 require_relative "../dilla/lib/scene"
+require_relative "../dilla/lib/musical_film"
 
 class TestDillaMidiEffects < Minitest::Test
   def events
