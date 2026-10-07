@@ -320,6 +320,7 @@ let ttsPrefetchInFlight = 0;
 function setTTSLoading(loading) {
   tts.loading = !!loading;
   rootBody.dataset.ttsLoading = tts.loading ? 'true' : 'false';
+  setAmbientHum(tts.loading && !tts.playing);
 }
 
 function parsePersonaRate(rate) {
