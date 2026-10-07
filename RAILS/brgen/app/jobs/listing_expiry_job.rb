@@ -6,7 +6,7 @@
 # Nothing here deletes or hides anything: `live` already excludes an expired
 # listing from every public surface, so the listing lapsing is a scope, not a
 # state change. That keeps a seller's own expired listings visible to them,
-# which is what makes renewal possible at all.
+# That keeps expired listings available to their sellers while public scopes exclude them.
 class ListingExpiryJob < ApplicationJob
   queue_as :bulk
   limits_concurrency to: 1, key: "listing-expiry", duration: 1.hour, on_conflict: :discard
