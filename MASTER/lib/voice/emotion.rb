@@ -135,8 +135,14 @@ module Master
       ].freeze
 
       def primary_emotion(scores)
-        _key, _threshold, label = PRIMARY_THRESHOLDS.find { |key, threshold, _label| scores[key] > threshold }
-        label || :warm
+        ranked = scores.each_with_object([]) do |(key, value), result|
+          row = PRIMARY_THRESHOLDS.find { |candidate, _, _label| candidate == key }
+          next unless row
+          _candidate, threshold, label = row
+          result << [value.to_f, threshold, label]
+        end
+        winner = ranked.max_by { |value, threshold, label| [value >= threshold ? 1 : 0, value, -threshold, label.to_s] }
+        winner ? winner[2] : :warm
       end
 
       def emotion_blend(scores)
