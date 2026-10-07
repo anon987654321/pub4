@@ -206,13 +206,15 @@ module Master
       end
 
       def pending_wishes(root)
-        path = File.join(root, "runtime", "wishlist.md")
-        return [] unless File.file?(path)
+        if defined?(Master::Fix::Wishlist)
+          return Master::Fix::Wishlist.pending_titles(root, target: root, limit: 5)
+        end
 
-        File.readlines(path, encoding: "UTF-8", chomp: true)
-            .grep(/\A###? \d+\./)
-            .first(5)
-            .map { |line| line.sub(/\A###? /, "").strip }
+        require_relative "../fix/wishlist"
+        Master::Fix::Wishlist.pending_titles(root, target: root, limit: 5)
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "AI::Orientation.pending_wishes")
+        []
       end
 
       def key_docs(repo_root)
