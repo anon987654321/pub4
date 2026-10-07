@@ -7,6 +7,6 @@
 report_bundle_size() {
   _bundle_path=$1
   _bundle_raw=$(ruby -e 'puts File.size(ARGV.fetch(0))' "$_bundle_path")
-  _bundle_gz=$(gzip -c "$_bundle_path" | wc -c | tr -d ' ')
+  _bundle_gz=$(ruby -rzlib -e 'puts Zlib.gzip(File.binread(ARGV.fetch(0))).bytesize' "$_bundle_path")
   echo "$(basename "$_bundle_path") raw=${_bundle_raw} gzip=${_bundle_gz}"
 }
