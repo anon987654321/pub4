@@ -449,8 +449,15 @@ module Master
           files:, target:, pass:, deadline: deadline.at, transaction_id:,
           history: state[:history], seen_snapshots: state[:seen_snapshots],
           recurring_violations: state[:recurring_violations],
-          consecutive_clean: state[:consecutive_clean]
+          consecutive_clean: state[:consecutive_clean],
+          wishlist_proposals:, run_id:
         )
+        if %i[continue reloading].include?(result.status) && wishlist_proposals.any?
+          @wishlist.mark_delivered(
+            proposal_ids: wishlist_proposals.map { |proposal| proposal["uid"] },
+            run_id:,
+          )
+        end
         state[:consecutive_clean] = result.consecutive_clean
         return nil if structural_repair?(result, files:, target:, state:, run_id:, pass:)
 
