@@ -91,15 +91,18 @@ class TestSnapshotGenerator < Minitest::Test
 
   def test_snapshot_extractor_reassembles_fragments_and_rejects_mixed_packs
     Dir.mktmpdir do |dir|
+      fence = "`" * 3
+      heading1 = "## `MASTER/example.rb [fragment 1/2 bytes=6 newline=1]`"
+      heading2 = "## `MASTER/example.rb [fragment 2/2 bytes=7 newline=1]`"
       part1 = File.join(dir, "snapshot_MASTER.md")
       part2 = File.join(dir, "snapshot_MASTER.part002.md")
-      File.write(part1, "# MASTER\\n\\nPack: tree=MASTER git=abc123 part=1/2 text_total=1 fragments_total=2 binary=0 omitted=0\\n\\n## `MASTER/example.rb [fragment 1/2 bytes=6 newline=1]`\\n\\n```ruby\\nfirst\\n```\\n\\n## Snapshot part complete\\n")
-      File.write(part2, "# MASTER\\n\\nPack: tree=MASTER git=abc123 part=2/2 text_total=1 fragments_total=2 binary=0 omitted=0\\n\\n## `MASTER/example.rb [fragment 2/2 bytes=7 newline=1]`\\n\\n```ruby\\nsecond\\n```\\n\\n## Snapshot part complete\\n")
+      File.write(part1, ["# MASTER", "", "Pack: tree=MASTER git=abc123 part=1/2 text_total=1 fragments_total=2 binary=0 omitted=0", "", heading1, "", "#{fence}ruby", "first", fence, "", "## Snapshot part complete", ""].join("\n"))
+      File.write(part2, ["# MASTER", "", "Pack: tree=MASTER git=abc123 part=2/2 text_total=1 fragments_total=2 binary=0 omitted=0", "", heading2, "", "#{fence}ruby", "second", fence, "", "## Snapshot part complete", ""].join("\n"))
 
       target = File.join(dir, "rehydrated")
       packs = [part1, part2].map { |path| Operator::SnapshotExtract.parse(path) }
       assert_equal 1, Operator::SnapshotExtract.write(packs, target)
-      assert_equal "first\\nsecond\\n", File.read(File.join(target, "MASTER", "example.rb"))
+      assert_equal "first\nsecond\n", File.read(File.join(target, "MASTER", "example.rb"))
 
       mismatched = Operator::SnapshotExtract.parse(part2).merge(git: "different")
       error = assert_raises(RuntimeError) do
