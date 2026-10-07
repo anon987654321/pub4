@@ -46,6 +46,15 @@ class RadioWhypImportTest < ActiveSupport::TestCase
       assert_equal 1, error.status
 
       child = Integer(File.read(pidfile))
+      deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 2
+      while Process.clock_gettime(Process::CLOCK_MONOTONIC) < deadline
+        begin
+          Process.kill(0, child)
+          sleep 0.05
+        rescue Errno::ESRCH
+          break
+        end
+      end
       assert_raises(Errno::ESRCH) { Process.kill(0, child) }
     ensure
       previous_path.nil? ? ENV.delete("PATH") : ENV["PATH"] = previous_path
