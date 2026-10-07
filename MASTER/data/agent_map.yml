@@ -54,7 +54,7 @@ topics:
       - data/laws.yml
       - data/limits.yml
       - lib/review/scan/
-      - lib/ground/rules.rb
+      - lib/ground/laws.rb
     tests:
       - bin/check --profile=agent
       - rake lint:data_singularity
@@ -68,7 +68,7 @@ topics:
       - MASTER/gates/support/geometry_type_walk.js
       - MASTER/gates/support/geometry_probe.rb
     tests:
-      - test/test_design_rules_worn_type.rb
+      - test/test_design_laws_worn_type.rb
       - RAILS/test/gates/rendered_gates_test.rb
     note: >
       Judge rendered type, not stylesheet tokens. Feed is a short measure
