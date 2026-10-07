@@ -13,6 +13,19 @@ class TestFixHygiene < Minitest::Test
     assert_includes source, "def score_value(score)"
   end
 
+  def test_non_finite_baseline_never_reaches_integer_coercion
+    Dir.mktmpdir("fix-hygiene") do |root|
+      path = File.join(root, "dummy.yml")
+      File.write(path, "x: 1\n")
+      discipline = Master::Fix::ConvergenceDiscipline.new(root:)
+      discipline.begin_run([path])
+
+      assert_equal 1_000_000_000, discipline.best_state.fetch(:score)
+      refute discipline.improving?
+      assert_equal 0.0, discipline.quality_delta
+    end
+  end
+
   def test_convergence_reasoning_contract_loads_the_canonical_hygiene_prompt
     config = Master.load_yaml(File.join(Master::ROOT, "data", "fix_hygiene.yml"))
     prompt = config.fetch("llm_prompt")
