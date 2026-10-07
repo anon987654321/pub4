@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "../../cognition/intelligence"
+
 module Master
   module Review
     module Council
