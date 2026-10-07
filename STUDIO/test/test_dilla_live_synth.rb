@@ -304,7 +304,7 @@ class TestDillaLiveSynth < Minitest::Test
   end
 
   def test_live_dilla_references_use_a_historical_grid
-    with_live_env("DILLA_LIVE_KIT" => "dilla_fantastic") do
+    with_env("DILLA_LIVE_KIT" => "dilla_fantastic") do
       score = LiveSynth::Improviser.new(
         rng: Random.new(7),
         reference: "slum_village_players_documented",
@@ -374,7 +374,7 @@ class TestDillaLiveSynth < Minitest::Test
 
   def test_bare_dilla_entrypoint_routes_to_showcase
     source = File.read(dilla("dilla.rb"))
-    assert_match(/if ARGV\.empty\?.*?live!\(\[["']showcase["']\]\)/m, source)
+    assert_match(/if ARGV\.empty\?.*?live!\(\[["']showcase["'],\s*["']mode=all["']\]\)/m, source)
     assert_match(/LIVE_SYNTH_VERBS = %w\[[^\]]*\bshowcase\b[^\]]*\]\.freeze/, source)
   end
 
