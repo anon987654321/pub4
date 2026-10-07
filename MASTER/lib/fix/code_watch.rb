@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "open3"
+require_relative "../io/exec"
 require "rbconfig"
 
 module Master
@@ -69,7 +69,7 @@ module Master
       end
 
       def git(dir, *args)
-        out, status = Open3.capture2e("git", "-C", dir.to_s, *args)
+        out, status = Master::Io::Exec.capture2e("git", "-C", dir.to_s, *args)
         status.success? ? out.strip : nil
       end
     end
