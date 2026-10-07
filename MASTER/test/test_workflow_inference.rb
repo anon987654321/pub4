@@ -152,6 +152,20 @@ class WorkflowInferenceTest < Minitest::Test
   end
 
 
+  def test_a_council_error_marks_the_review_incomplete
+    pass = Master::CLI::Pipeline::Pass.allocate
+    pass.instance_variable_set(:@failed_stages, [])
+
+    failure = Master::Result.err("council: provider unavailable", category: :infrastructure)
+    output = Master::CLI::CouncilCrit.stub(:run, failure) do
+      pass.send(:deliberation_critique, Master::ROOT)
+    end
+
+    assert_equal "critique failed: council: provider unavailable", output
+    assert_includes pass.instance_variable_get(:@failed_stages), "critique"
+    refute pass.send(:pass_ok?, [["critique", output]])
+  end
+
   def with_env(key, value)
     previous = ENV[key]
     value.nil? ? ENV.delete(key) : ENV[key] = value
