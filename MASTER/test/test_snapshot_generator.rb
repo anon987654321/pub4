@@ -70,11 +70,12 @@ class TestSnapshotGenerator < Minitest::Test
     assert_includes source, '".sh" => "zsh"'
     assert_includes source, '".zsh" => "zsh"'
     assert_includes source, '"## Snapshot part complete"'
-    assert_includes source, "part=#{part_index}/#{part_count}"
+    assert_includes source, 'part=#{part_index}/#{part_count}'
     assert_includes source, 'snapshot0: complete tree='
     assert_includes source, '"STUDIO" => "STUDIO"'
     assert_includes source, '"OPENBSD" => "snapshot_OPENBSD.md"'
     assert_includes source, '" — git "'
+    assert_includes source, "git=#{sha}"
   end
 
   def test_snapshot_generator_declares_hard_share_size_ceiling
@@ -84,6 +85,7 @@ class TestSnapshotGenerator < Minitest::Test
     assert_includes source, "Rehydrate all parts into a fresh temporary repository-shaped directory"
     assert_includes source, "snapshot_extract.rb"
     assert_includes source, "omitted=0"
+    assert_includes source, "SOURCE_FRAGMENT_BYTES = 600_000"
   end
 
   def test_snapshot_does_not_include_its_own_output
