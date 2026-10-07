@@ -93,8 +93,8 @@ class TestSnapshotGenerator < Minitest::Test
     Dir.mktmpdir do |dir|
       part1 = File.join(dir, "snapshot_MASTER.md")
       part2 = File.join(dir, "snapshot_MASTER.part002.md")
-      File.write(part1, "# MASTER\\n\\nPack: tree=MASTER git=abc123 part=1/2 text_total=1 fragments_total=2 binary=0 omitted=0\\n\\n## `MASTER/example.rb [fragment 1/2]`\\n\\n```ruby\\nfirst\\n```\\n\\n## Snapshot part complete\\n")
-      File.write(part2, "# MASTER\\n\\nPack: tree=MASTER git=abc123 part=2/2 text_total=1 fragments_total=2 binary=0 omitted=0\\n\\n## `MASTER/example.rb [fragment 2/2]`\\n\\n```ruby\\nsecond\\n```\\n\\n## Snapshot part complete\\n")
+      File.write(part1, "# MASTER\\n\\nPack: tree=MASTER git=abc123 part=1/2 text_total=1 fragments_total=2 binary=0 omitted=0\\n\\n## `MASTER/example.rb [fragment 1/2 bytes=6 newline=1]`\\n\\n```ruby\\nfirst\\n```\\n\\n## Snapshot part complete\\n")
+      File.write(part2, "# MASTER\\n\\nPack: tree=MASTER git=abc123 part=2/2 text_total=1 fragments_total=2 binary=0 omitted=0\\n\\n## `MASTER/example.rb [fragment 2/2 bytes=7 newline=1]`\\n\\n```ruby\\nsecond\\n```\\n\\n## Snapshot part complete\\n")
 
       target = File.join(dir, "rehydrated")
       packs = [part1, part2].map { |path| Operator::SnapshotExtract.parse(path) }
