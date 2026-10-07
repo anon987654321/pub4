@@ -43,7 +43,7 @@ class TestRenderer < Minitest::Test
     old = ENV.delete("MASTER_BOOT_STATUS")
     $stdout.stub(:tty?, false) do
       text = FakeRenderer.new(config: {}).splash("model")
-      assert_includes strip_ansi(text), "master0 at mainbus0: MASTER 1.0.0"
+      assert_includes strip_ansi(text), "master0 at mainbus0: MASTER 1.0.3"
     end
   ensure
     ENV["MASTER_BOOT_STATUS"] = old if old
