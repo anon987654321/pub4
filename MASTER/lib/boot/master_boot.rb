@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative "../io/atomic_write"
 require_relative "../ground/service_supervisor"
 
 module Master
