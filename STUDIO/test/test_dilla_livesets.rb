@@ -387,6 +387,9 @@ class TestDillaLivesets < Minitest::Test
       skip "ffmpeg is not installed" unless File.file?(bed)
       # 5.2 seconds is 46, 92 or 185 bpm at one, two or four bars.
       assert_equal 2, with_env("LIVE_BPM" => nil) { Livesets.grid(bed, 1.0) }[:bars_in_loop]
+      source = File.read(File.expand_path("../dilla/lib/livesets.rb", __dir__))
+      assert_includes source, "FfmpegProbe.duration(bed).to_f"
+      refute_match(/`#\{FFPROBE\}/, source)
       assert_equal 1, with_env("LIVE_BPM" => "46") { Livesets.grid(bed, 1.0) }[:bars_in_loop]
       assert_equal 4, with_env("LIVE_BPM" => "180") { Livesets.grid(bed, 1.0) }[:bars_in_loop]
     end
