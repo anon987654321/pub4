@@ -224,8 +224,8 @@ $vertical-accent-ink: #110f19;
   --motion-quick: 140ms;
   --motion-settle: 320ms;
   --motion-rest: 560ms;
-  --signal-success: #2f8f63;
-  --signal-warning: #a06b24;
+  --signal-success: var(--color-success);
+  --signal-warning: var(--color-warning);
   --signal-error: var(--danger);
-  --signal-info: var(--accent);
+  --signal-info: var(--color-info);
 }
