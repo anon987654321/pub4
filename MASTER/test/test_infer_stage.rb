@@ -72,7 +72,7 @@ class InferStageTest < Minitest::Test
 
     Master.stub(:patterns_config, config) do
       infer = Master::CLI::Stages::Infer.new(bus: events)
-      patterns, negatives, = infer.send(:load_patterns)
+      patterns, negatives, _destructive = infer.send(:load_patterns)
 
       assert patterns.key?("scan")
       refute patterns.key?("broken")
