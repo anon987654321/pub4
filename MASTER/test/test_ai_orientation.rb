@@ -2,8 +2,11 @@
 
 require_relative "test_helper"
 require_relative "../lib/ai/orientation"
+require_relative "../lib/fix/wishlist"
 require "tmpdir"
 require "fileutils"
+require "json"
+require "digest"
 
 class TestAiOrientation < Minitest::Test
   def setup
@@ -18,7 +21,28 @@ class TestAiOrientation < Minitest::Test
     File.write(File.join(@root, "TODO.md"), "TODO\n")
     File.write(File.join(@master, "lib", "master.rb"), "module Master\nend\n")
     File.write(File.join(@master, "runtime", "active_plan.md"), "repair boot\nverify again\n")
-    File.write(File.join(@master, "runtime", "wishlist.md"), "# MASTER wishlist\n\n### 1. Better boot receipt\n\n")
+    FileUtils.mkdir_p(File.join(@master, ".master"))
+    File.write(
+      File.join(@master, ".master", "fix_wishlist.json"),
+      JSON.generate(
+        schema: 1,
+        proposals: [
+          {
+            "uid" => "better_boot_receipt-test",
+            "title" => "Better boot receipt",
+            "anchor" => "lib/master.rb:1",
+            "change" => "record a deterministic startup receipt",
+            "evidence" => "master.rb exists",
+            "proof" => ["ruby syntax"],
+            "implementation" => "next_fix",
+            "status" => "queued",
+            "attempts" => 0,
+            "anchor_sha256" => Digest::SHA256.file(File.join(@master, "lib", "master.rb")).hexdigest,
+            "basis_head" => "",
+          }
+        ]
+      )
+    )
     File.write(File.join(@root, "RAILS", "CLAUDE.md"), "rails contract\n")
     File.write(File.join(@root, "RAILS", "apps.yml"), <<~YAML)
       apps:
