@@ -129,6 +129,25 @@ class CritiqueImplementationTest < Minitest::Test
     assert_includes css, ".item-detail--luxury .luxury-detail-grid"
     assert_includes css, ".item-detail--luxury .luxury-meta"
   end
+  def test_shared_yep_search_and_affiliate_pens_are_restored
+    search = read("shared/app/assets/stylesheets/_search_yep.scss")
+    affiliate = read("shared/app/views/shared/_affiliate_feed_unit.html.erb")
+    affiliate_css = read("shared/app/assets/stylesheets/_affiliate_feed_unit.scss")
+    brgen_css = read("brgen/app/assets/stylesheets/application.scss")
+
+    assert_includes search, "width: 480px;"
+    assert_includes search, "box-shadow: rgba(0, 0, 0, 0.25) 0 1px 8px 0;"
+    assert_includes search, "border-radius: 16px;"
+    assert_includes affiliate, 'data-controller="parallax-tilt"'
+    assert_includes affiliate, 'data-parallax-tilt-target="tile"'
+    assert_includes affiliate_css, "font-size: 9px;"
+    assert_includes affiliate_css, "letter-spacing: 2px;"
+    assert_includes affiliate_css, "transition: transform 180ms var(--ease-out)"
+    assert_includes brgen_css, ".store-promo-art-cta"
+    assert_includes brgen_css, "background: var(--bol-blue);"
+    assert_includes brgen_css, "font-size: 14px;"
+  end
+
   def test_brgen_radio_restores_the_original_eight_track_warp_tunnel
     source = read("brgen/app/javascript/radio_brgen_tunnel.js")
     importmap = read("brgen/config/importmap.rb")
