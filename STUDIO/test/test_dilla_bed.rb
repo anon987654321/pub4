@@ -162,8 +162,8 @@ class TestDillaBed < Minitest::Test
   end
 end
 
-# The six-minute piece, which is `dilla.rb compose` since 2026-09-16 and was the
-# bare invoke before it. These pin what the operator asked of it on 2026-09-15:
+# The six-minute piece is `dilla.rb compose`; bare invoke is the finished live
+# showcase. These pin what the operator asked of the bed and catalogue:
 # about six minutes, the drums every bar with a kick dropout of a bar or two at
 # most, the parts answering each other, and every move an event transform the
 # data names.
