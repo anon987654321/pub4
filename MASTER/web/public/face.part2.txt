@@ -1,6 +1,9 @@
 const FACE_FUTURE_CRANIAL_HEIGHT = futureFeatureScale('cranial_height', 1.04);
 const FACE_FUTURE_CRANIAL_WIDTH = futureFeatureScale('cranial_width', 1.02);
+const FACE_FUTURE_UPPER_FACE = futureFeatureScale('upper_face_scale', 0.96);
 const FACE_FUTURE_LOWER_FACE = futureFeatureScale('lower_face_scale', 0.92);
+const FACE_FUTURE_VERTICALIZATION = futureFeatureScale('facial_verticalization', 1.02);
+const FACE_FUTURE_MASTICATORY = futureFeatureScale('masticatory_scale', 0.90);
 const FACE_FUTURE_FACIAL_PROJECTION = futureFeatureScale('facial_projection', 0.90);
 const FACE_FUTURE_JAW_SOFTENING = futureFeatureScale('jaw_softening', 0.96);
 const FACE_FUTURE_BROW = futureFeatureScale('brow_scale', 0.90);
@@ -94,9 +97,12 @@ void main(){
   float cheekRgn=smoothstep(0.10,0.56,abs(position.y)) * smoothstep(0.52,0.16,abs(position.x));
   float browRgn=smoothstep(0.26,0.48,abs(position.y)) * smoothstep(0.48,0.16,abs(position.x));
   vec3 p=mix(scatter,position,lm)+noise+vec3(0.,-uJaw*0.05*jawRgn,0.);
-  p.y *= FACE_FUTURE_CRANIAL_HEIGHT;
-  p.x *= mix(FACE_FUTURE_LOWER_FACE, FACE_FUTURE_CRANIAL_WIDTH, smoothstep(-0.72, 0.18, position.y));
-  p.z *= FACE_FUTURE_FACIAL_PROJECTION;
+  p.y *= FACE_FUTURE_CRANIAL_HEIGHT * FACE_FUTURE_VERTICALIZATION;
+  float faceBand = smoothstep(-0.72, 0.18, position.y);
+  p.x *= mix(FACE_FUTURE_LOWER_FACE, FACE_FUTURE_UPPER_FACE * FACE_FUTURE_CRANIAL_WIDTH, faceBand);
+  float jawBand = smoothstep(-0.80, -0.08, -position.y);
+  p.z *= mix(FACE_FUTURE_FACIAL_PROJECTION, FACE_FUTURE_FACIAL_PROJECTION * FACE_FUTURE_MASTICATORY, jawBand);
+  p.x += futureSideBias(position.x < 0.0 ? -1.0 : 1.0) * 0.25;
   p.z += cheekRgn * (FACE_FUTURE_NOSE - 1.0) * 0.018;
   p.y -= jawRgn * (1.0 - FACE_FUTURE_JAW_SOFTENING) * 0.018;
   p.y += browRgn * (1.0 - FACE_FUTURE_BROW) * 0.012;
