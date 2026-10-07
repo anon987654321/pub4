@@ -20,14 +20,25 @@ module DillaMaster
     ENV["MASTER_HEURISTICS"] == "1"
   end
 
-  def loss_gates
-    return {} unless File.file?(REFERENCE_PATH)
+  REQUIRED_LOSS_GATES = %w[
+    crest_factor_min_db
+    mud_max_db_200_400hz
+    kick_bass_correlation_max
+    stereo_phase_correlation_min
+    true_peak_max_dbtp
+    integrated_lufs_min
+    integrated_lufs_max
+  ].freeze
 
-    YAML.safe_load_file(REFERENCE_PATH)["loss_gates"] || {}
-  # Psych::Exception descends from RuntimeError, so StandardError already
-  # covers a malformed reference file; naming both said the opposite.
-  rescue StandardError
-    {}
+  def loss_gates
+    raise "loss-gate reference missing: #{REFERENCE_PATH}" unless File.file?(REFERENCE_PATH)
+
+    gates = YAML.safe_load_file(REFERENCE_PATH).fetch("loss_gates")
+    missing = REQUIRED_LOSS_GATES.reject { |name| gates.key?(name) }
+    raise "loss-gate reference incomplete: missing #{missing.join(", ")}" unless missing.empty?
+    raise "loss-gate reference must be a mapping" unless gates.is_a?(Hash)
+
+    gates
   end
 
   # Hard pre-flight reject, not an advisory score — a take failing this
@@ -102,6 +113,14 @@ module DillaMaster
 
     { pass: failures.empty?, failures:, skipped: }
   end
+  rescue StandardError => e
+    {
+      pass: false,
+      failures: ["loss-gate configuration unavailable: #{e.message}"],
+      skipped: [],
+    }
+  end
+
 
   # Minimum L/R phase correlation across the whole file — 1.0 is mono-identical
   # (perfectly safe), 0.0 is fully decorrelated, negative cancels when summed
