@@ -1082,21 +1082,28 @@ tokens:
       # more visually mediated communication. Skin tone is deliberately not
       # inferred: future human diversity is not a single phenotype.
       morphology:
-        model: speculative_distant_human_2026
-        generation: 8
+        model: speculative_distant_human_2026_r2
+        generation: 9
         cranium_scale: 1.18
         cranial_width: 1.06
+        cranial_height: 1.04
+        upper_face_scale: 0.96
         lower_face_scale: 0.80
+        facial_verticalization: 1.04
+        masticatory_scale: 0.78
         orbital_scale: 1.10
         orbital_vertical_scale: 1.06
         brow_scale: 0.66
         nose_scale: 0.86
+        nasal_projection: 0.86
         mouth_scale: 0.84
         facial_projection: 0.82
         jaw_projection: 0.80
         pupil_scale: 0.88
         asymmetry: 0.010
         asymmetry_seed: 73421
+        variation_band: 0.025
+        climate_variant: neutral
       shell:
         radius: 1.58
         width_segments: 28
