@@ -1,10 +1,14 @@
 # frozen_string_literal: true
 
+require "yaml"
+
 module Master
   module Music
     # Small music-theory core: scales, chords, progressions.
     module Theory
       NOTE_NAMES = %w[C C# D D# E F F# G G# A A# B].freeze
+      CATALOG_PATH = File.expand_path("../../data/music_theory/chords.yml", __dir__).freeze
+      CATALOG = YAML.safe_load_file(CATALOG_PATH, aliases: false).freeze
       SCALES = {
         major: [0, 2, 4, 5, 7, 9, 11],
         minor: [0, 2, 3, 5, 7, 8, 10],
@@ -18,22 +22,21 @@ module Master
       }.freeze
 
       QUALITIES = {
-        major: [0, 4, 7],
-        minor: [0, 3, 7],
-        dominant7: [0, 4, 7, 10],
-        minor7: [0, 3, 7, 10],
-        major7: [0, 4, 7, 11],
-        half_diminished: [0, 3, 6, 10],
-        diminished: [0, 3, 6],
+        major: CATALOG.fetch("basic_qualities").fetch("major"),
+        minor: CATALOG.fetch("basic_qualities").fetch("minor"),
+        dominant7: CATALOG.fetch("basic_qualities").fetch("dominant7"),
+        minor7: CATALOG.fetch("basic_qualities").fetch("minor7"),
+        major7: CATALOG.fetch("basic_qualities").fetch("major7"),
+        half_diminished: CATALOG.fetch("basic_qualities").fetch("half_diminished"),
+        diminished: CATALOG.fetch("basic_qualities").fetch("diminished"),
       }.freeze
 
       PROGRESSIONS = {
-        dilla_love: %w[i7 iv7 bVII7 bVI7],
-        neo_soul_loop: %w[i7 iv7 bVII7 bVI7],
         techno_pulse: %w[i i bVI bVII],
         jazz_loop: %w[ii7 V7 I7 vi7],
-        modal_drift: %w[i7 III7 bVII7 iv7],
-      }.freeze
+      }.freeze.merge(
+        CATALOG.fetch("progressions").transform_keys(&:to_sym).transform_values { |v| Array(v).map(&:to_s) }
+      ).freeze
 
       module_function
 
@@ -51,6 +54,22 @@ module Master
         SCALES.fetch(name.to_sym).map do |offset|
           NOTE_NAMES[(base + offset) % 12]
         end
+      end
+
+      def catalog
+        CATALOG
+      end
+
+      def chord_symbol(root: "C", symbol: "m7")
+        base = note_index(root) || 0
+        suffix = symbol.to_s.sub(/\A[A-G][#b]?/i, "")
+        suffix = "maj" if suffix.empty?
+        intervals = CATALOG.fetch("templates").fetch(suffix)
+        intervals.map { |offset| NOTE_NAMES[(base + offset) % 12] }
+      end
+
+      def chord_quality(symbol)
+        CATALOG.fetch("templates").fetch(symbol.to_s)
       end
 
       def chord(root: "C", quality: :minor7)
