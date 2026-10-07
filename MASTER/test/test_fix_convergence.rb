@@ -686,26 +686,18 @@ class TestFixConvergence < Minitest::Test
     assert_same council, received, "council findings must reach the repair stage as repair context"
   end
 
-  def test_requested_fix_ends_with_one_wishlist_generation
+  def test_finish_run_only_closes_the_journal
     calls = []
     journal = Object.new
     journal.define_singleton_method(:terminal) { |*args, **kwargs| calls << [:terminal, args, kwargs] }
-    wishlist = Object.new
-    wishlist.define_singleton_method(:call) do |state:, target:, run_id:|
-      calls << [:wishlist, state, target, run_id]
-      "wishlist: drafted 24 item(s)"
-    end
 
     loop = build_loop([])
     loop.instance_variable_set(:@run_journal, journal)
-    loop.instance_variable_set(:@wishlist, wishlist)
 
     loop.send(:finish_run, Master::Result.ok("DONE: clean"), @root, "r1", requested: true)
 
-    assert_equal 2, calls.size
-    assert_equal :terminal, calls.last.first
-    assert_equal :wishlist, calls.first.first
-    assert_equal "done", calls.first[1]
+    assert_equal 1, calls.size
+    assert_equal :terminal, calls.first.first
   end
 
   # 6. A clean tree the ground truth agrees with is the one state that says DONE.
@@ -816,18 +808,26 @@ class TestFixConvergence < Minitest::Test
   end
 
   def test_pending_wishlist_becomes_part_of_the_next_fix_mission
-    FileUtils.mkdir_p(File.join(@root, "runtime"))
-    File.write(File.join(@root, "runtime", "wishlist.md"), <<~WISH)
-      # MASTER wishlist
-      ### 1. Measure the boot boundary
-      ### 2. Add a runtime receipt
-    WISH
+    wishlist = Master::Fix::Wishlist.new(root: @root, agent: RecordingAgent.new(<<~YAML))
+      - id: boot_boundary
+        title: Measure the boot boundary
+        rationale: measure the startup seam
+        anchor: lib/sample.rb:1
+        change: record one deterministic startup receipt
+        effort: cheap
+        reversibility: reversible
+        implementation: next_fix
+        evidence: sample.rb exists
+        proof:
+          - ruby syntax
+    YAML
+    wishlist.call(state: "done", target: @root, run_id: "r1")
 
     plan = build_loop([]).send(:mission_plan)
 
-    assert_includes plan, "Pending wishlist proposals:"
-    assert_includes plan, "### 1. Measure the boot boundary"
-    assert_includes plan, "### 2. Add a runtime receipt"
+    assert_includes plan, "Pending automatic convergence proposals from the durable /fix ledger."
+    assert_includes plan, "Measure the boot boundary"
+    refute_includes plan, "### 1."
   end
 
   def test_a_converged_run_is_done
@@ -865,7 +865,7 @@ class TestFixConvergence < Minitest::Test
       run_id: "r1",
     )
 
-    assert_match(/ADONE: /, result.value!)
+    assert_match(/\ADONE: /, result.value!)
     assert_equal [:structure, target, "r1-structure-first", :structure_first], order.first
     assert_equal [:pass, 0], order.last
   end
