@@ -69,7 +69,8 @@ class TestSnapshotGenerator < Minitest::Test
 
     assert_includes source, '".sh" => "zsh"'
     assert_includes source, '".zsh" => "zsh"'
-    assert_includes source, '"## Snapshot complete"'
+    assert_includes source, '"## Snapshot part complete"'
+    assert_includes source, "part=#{part_index}/#{part_count}"
     assert_includes source, 'snapshot0: complete tree='
     assert_includes source, '"STUDIO" => "STUDIO"'
     assert_includes source, '"OPENBSD" => "snapshot_OPENBSD.md"'
@@ -78,9 +79,11 @@ class TestSnapshotGenerator < Minitest::Test
 
   def test_snapshot_generator_declares_hard_share_size_ceiling
     source = File.read(File.expand_path("../tools/snapshot.rb", __dir__))
-    assert_includes source, "MAX_BYTES = 8_000_000"
-    assert_includes source, "Omitted text files"
-    assert_operator 8_000_000, :<, 10_000_000
+    assert_includes source, "MAX_BYTES = 750_000"
+    assert_includes source, "snapshot_#{tree}.partNNN.md"
+    assert_includes source, "Rehydrate all parts into a fresh temporary repository-shaped directory"
+    assert_includes source, "snapshot_extract.rb"
+    assert_includes source, "omitted=0"
   end
 
   def test_snapshot_does_not_include_its_own_output
@@ -98,10 +101,17 @@ class TestSnapshotGenerator < Minitest::Test
     source = File.read(File.expand_path("../lib/cli/command_registry.rb", __dir__))
     assert_includes source, "::Operator::Snapshot::TREES"
     assert_includes source, "::Operator::Snapshot.write(tree)"
+    assert_includes source, "Array(::Operator::Snapshot.write(tree))"
     assert_includes source, "snapshot0: wrote root/"
     refute_includes source, "Master::Snapshot.new(root: Master::REPO_ROOT).write!"
     refute_includes source, "paths = Operator::Snapshot::TREES"
     refute_includes source, "Operator::Snapshot::MAX_BYTES)"
+    refute_includes source, "paths = ::Operator::Snapshot::TREES.map"
+  end
+
+  def test_generated_snapshot_parts_are_ignored
+    ignore = File.read(File.expand_path("../../.gitignore", __dir__))
+    assert_includes ignore, "snapshot_*.md"
   end
 
   def test_operator_snapshot_runs_the_full_root_snapshot_pack
