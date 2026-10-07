@@ -26,10 +26,11 @@ module Master
         LINE_RE = /\b(?:line|ln)\s*#?\s*(\d+)\b/i.freeze
         SYMBOL_RE = /\b(class|module|def)\s+([A-Za-z_]\w*[!?=]?)/i.freeze
 
-        def initialize(agent:, root:, bus: nil)
+        def initialize(agent:, root:, bus: nil, discipline: nil)
           @agent = agent
           @root = root
           @bus = bus
+          @discipline = discipline || Master::Fix::ConvergenceDiscipline.new(root:, bus:)
         end
 
         # nil when there is nothing to argue about or nobody to argue with, so
@@ -158,6 +159,7 @@ module Master
             boundary.empty? ? nil : "write/runtime boundaries: #{boundary.join(", ")}",
             runners.empty? ? nil : "known test entrypoints reaching target: #{runners.join(", ")}",
             "hard critique is scoped to the files above; inspect adjacent files only when they are required to prove a dependency, authority, or runtime edge",
+            @discipline.reasoning_contract(strategy: @discipline.strategy_for(files:, findings: []), files:, findings: []),
           ].compact
           [HARD_REVIEW, deterministic.join("\n")].join("\n\n")
         rescue StandardError => e
