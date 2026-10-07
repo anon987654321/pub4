@@ -96,7 +96,7 @@ Law.define(:CONFIGURATION_SHAPE) do
       end
     end
 
-    max_depth.call(value, 0) > 4 || value.size > 18
+    max_depth.call(value, 1) > 4 || value.size > 18
   rescue Psych::Exception
     false
   end
