@@ -99,6 +99,10 @@ module Master
           - scales: inspect local code first, then subsystem, tree, repository, production and human consequences when the evidence crosses those boundaries
           - unfinished work: distinguish fertile uncertainty from proven deadness; preserve a promising primitive until consumer/value evidence says it should go
           - creative identity: preserve operator-owned identity and invariants while changing one declared axis at a time
+          - leverage: rank concerns by proven causal reach across consumers, boundaries and contracts, not by finding count
+          - scales: inspect local code first, then subsystem, tree, repository, production and human consequences when the evidence crosses those boundaries
+          - unfinished work: distinguish fertile uncertainty from proven deadness; preserve a promising primitive until consumer/value evidence says it should go
+          - creative identity: preserve operator-owned identity and invariants while changing one declared axis at a time
           - failure modes: identify catastrophic, silent, partial, retry, concurrency, stale-state, and rollback failures
           - verification: name the smallest deterministic test or measurement that would actually falsify each concern
           - inversion: assume the proposed repair is wrong and state what breaks, where, and when
