@@ -76,6 +76,21 @@ class PwaDesignContractTest < Minitest::Test
     end
   end
 
+  def test_offline_snapshot_navigation_is_same_origin_only
+    source = read(SHARED_ROOT, "frontend/offline_page_controller.js")
+    assert_includes source, "safeUrl(value)"
+    assert_includes source, "url.origin === window.location.origin"
+    assert_includes source, 'if (!raw) return "#"'
+  end
+
+  def test_offline_replay_queue_is_bounded_and_same_origin
+    source = read(SHARED_ROOT, "frontend/pwa_offline_store.js")
+    assert_includes source, "MAX_QUEUE_SIZE = 100"
+    assert_includes source, "queue.slice(-MAX_QUEUE_SIZE)"
+    assert_includes source, "sameOriginUrl(entry.url)"
+    assert_includes source, "return null"
+  end
+
   def test_all_apps_register_service_worker_via_pub4_hotwire
     hotwire = read(SHARED_ROOT, "frontend/hotwire.js")
     assert_match(/serviceWorker\.register/, hotwire)
