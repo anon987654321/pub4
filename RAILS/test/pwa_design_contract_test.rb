@@ -145,6 +145,8 @@ class PwaDesignContractTest < Minitest::Test
       layout = read(root, "app/views/layouts/application.html.erb")
       assert_includes layout, "viewport-fit=cover"
       assert_includes layout, 'rel: "manifest"'
+      assert_equal 1, layout.scan(/stylesheet_link_tag/).length,
+                   "#{app}: layout must expose exactly one app stylesheet entrypoint"
       assert_match(/stylesheet_link_tag (?:["'](?:application|app)["']|:app)/, layout)
       assert_match(/<main(?:\s|>)/, layout)
       assert_primary_nav_labelled(app, root, layout)
