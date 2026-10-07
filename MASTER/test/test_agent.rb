@@ -214,6 +214,17 @@ class TestAgent < Minitest::Test
 
   # The scan's model rules each ask model_for; a pinned model that just failed
   # must not be asked by every one of them in turn.
+  def test_master_model_respects_local_only_boundary
+    agent = agent_routed_by(LocalRouter.new(%w[ollama:phi4:mini]))
+    with_env = ->(key, value) { old = ENV[key]; ENV[key] = value; yield ensure ENV[key] = old }
+
+    with_env.call("MASTER_MODEL", "grok-cli:auto") do
+      with_env.call("MASTER_LOCAL_ONLY", "1") do
+        assert_equal "deepseek-reasoner", agent.model_for(operation: :file_write)
+      end
+    end
+  end
+
   def test_a_pinned_model_that_just_failed_is_routed_around
     agent = agent_routed_by(LocalRouter.new(%w[ollama:gemma3:4b]))
     agent.model = "ollama:llama3.2:3b"
