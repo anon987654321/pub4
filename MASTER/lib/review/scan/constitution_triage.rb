@@ -26,7 +26,7 @@ module Master
       # All eight are gone, and test_constitution_triage.rb fails when an id here
       # stops naming a rule, which is what EXEMPTIONS_EXPIRE asks of an allowlist.
       class ConstitutionTriage
-        SCANNER_SELF_PATHS = %r{\Alib/review/scan/(?:rules/|rule|rule_dsl|rule_factory|scanner|file_processor|self_scan|self_test|infra_helpers|rule_registry_audit)}.freeze
+        SCANNER_SELF_PATHS = %r{\Alib/review/scan/(?:rules/|rule|law_dsl|law_factory|scanner|file_processor|self_scan|self_test|infra_helpers|law_registry_audit)}.freeze
 
         # Rules under active retune: noisy enough that gating on them would gate
         # on the detector rather than on the code. Every id here must name a rule
