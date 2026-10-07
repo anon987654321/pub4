@@ -2174,7 +2174,7 @@ module LiveSynth
   }.freeze
 
     SHOWCASE_SCENES = [
-    ["dilla_players", 24.0], ["dangelo_spanish_joint", 28.0], ["flylo", 24.0],
+    ["dilla_players", 24.0], ["dangelo_spanish_joint", 28.0], ["esen_flow", 30.0], ["flylo", 24.0],
     ["moog_dark", 22.0], ["madlib_figaro", 22.0], ["rhodes_tine", 12.0],
     ["dilla_life", 24.0], ["dangelo_another_life", 30.0], ["flylo_haze_01", 24.0],
     ["moog_dfam", 24.0], ["dangelo_root", 30.0], ["tape_choir", 12.0],
@@ -2234,6 +2234,7 @@ SHOWCASE_MODES = {
     "madlib" => SHOWCASE_SCENES.select { |name, _| name.start_with?("madlib") },
     "moog" => SHOWCASE_SCENES.select { |name, _| name.include?("moog") || name.start_with?("matriarch") || name.start_with?("grandmother") },
     "bach" => SHOWCASE_SCENES.select { |name, _| name == "bach" },
+  "esen" => SHOWCASE_SCENES.select { |name, _| name == "esen_flow" },
   }.freeze
 
   def showcase!(rng: rng!, mode: nil)
@@ -2270,7 +2271,7 @@ SHOWCASE_MODES = {
         FileUtils.remove_entry(scratch) if scratch && File.exist?(scratch)
       end
 
-      showcase_video!(output) if cycle.zero? && !stopped && ENV["DILLA_SHOWCASE_VIDEO"] != "0"
+      showcase_video!(output) if cycle.zero? && File.file?(output) && File.size?(output) && ENV["DILLA_SHOWCASE_VIDEO"] != "0"
       return if stopped || ENV["DILLA_SHOWCASE_ONCE"] == "1" || ENV["DILLA_SHOWCASE_LOOP"] != "1"
 
       cycle += 1
@@ -2369,6 +2370,14 @@ SHOWCASE_MODES = {
         [[4.0, { "lead" => "fm", "preset" => "bell" }],
          [9.0, { "patch" => "rhodes_tine" }],
          [12.0, { "knob" => "resonance", "amount" => 0.14, "seconds" => 3.0 }]],
+      ]
+    when "esen_flow"
+      [
+        Progression.new("esen_flow", rng:, pads: %w[prophet_pad rhodes_tine vp330_ensemble]),
+        [[7.0, { "lead" => "fm", "preset" => "glass" }],
+         [14.0, { "knob" => "cutoff", "amount" => 0.12, "seconds" => 5.0 }],
+         [22.0, { "patch" => "prophet_pad" }],
+         [27.0, { "lead" => "fm", "preset" => "drone" }]],
       ]
     when "dangelo_root"
       [
