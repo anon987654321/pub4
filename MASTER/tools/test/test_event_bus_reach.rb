@@ -94,6 +94,7 @@ class TestEventBusReach < Minitest::Test
     assert_includes result[:references].fetch("pipeline:stage_start"), "web/public/face_semantics.js"
     assert_empty result[:contract_missing_publishers]
     assert_empty result[:retired_topics]
+    assert_empty result[:reference_anchor_gaps]
   end
 
   def test_retired_topics_are_reported_deterministically
