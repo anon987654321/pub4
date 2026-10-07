@@ -2,11 +2,13 @@
 
 require "fileutils"
 require "socket"
+require "yaml"
 
 module RadioVideo
   ROOT = File.expand_path("../../..", __dir__)
   DILLA_ROOT = File.expand_path("..", __dir__)
   THREE_MODULE = File.join(ROOT, "MASTER", "web", "public", "three.face.module.js")
+  POSTPRO_VIDEO_RECIPE = File.join(ROOT, "STUDIO", "postpro", "video.yml")
   DEFAULT_AUDIO = File.join(DILLA_ROOT, "dilla.wav")
   DEFAULT_OUTPUT = File.join(DILLA_ROOT, "dilla.mp4")
   WIDTH = 720
@@ -25,6 +27,7 @@ module RadioVideo
 
     abort "video: missing #{input} — run dilla showcase first" unless File.file?(input) && File.size?(input)
     abort "video: Three.js bundle is missing at #{THREE_MODULE}; run web assets:build first" unless File.file?(THREE_MODULE)
+    validate_postpro_recipe!
 
     browser = browser_path or abort "video: no Chrome/Chromium browser found"
     ffmpeg = executable("ffmpeg") or abort "video: ffmpeg is required"
@@ -39,7 +42,7 @@ module RadioVideo
     )
     url = "http://127.0.0.1:#{server.port}/"
 
-    warn "video0: BRGEN tunnel + #{File.basename(input)} -> #{output}"
+    warn "video0: architectural score + #{File.basename(input)} -> #{output}"
     warn "video0: #{WIDTH}x#{HEIGHT} #{FPS}fps H.264/AAC, #{format_seconds(seconds)} cap"
 
     pid = Process.spawn(
@@ -58,7 +61,9 @@ module RadioVideo
     begin
       abort "video: browser did not produce a capture" unless server.wait(timeout: [seconds + 45.0, 90.0].max)
       terminate(pid)
-      transcode!(ffmpeg, capture, output, seconds)
+      raw = File.join(tmp, "raw.mp4")
+      transcode!(ffmpeg, capture, raw, seconds)
+      postpro_video!(ffmpeg, raw, output)
     ensure
       terminate(pid)
       server.close
@@ -70,6 +75,39 @@ module RadioVideo
     output
   end
 
+  def validate_postpro_recipe!
+    return true if ENV["DILLA_VIDEO_POSTPRO"].to_s == "0"
+    data = YAML.safe_load_file(POSTPRO_VIDEO_RECIPE, aliases: false)
+    presets = data.fetch("presets")
+    name = ENV.fetch("DILLA_VIDEO_POSTPRO", "dmt_bled").to_s
+    preset = presets.fetch(name) { abort "video: no postpro video preset #{name.inspect}" }
+    filters = Array(preset.fetch("filters")).map(&:to_s)
+    abort "video: postpro preset #{name.inspect} is empty" if filters.empty?
+    filters.each { |filter| abort "video: blank postpro filter" if filter.strip.empty? }
+    true
+  rescue Errno::ENOENT
+    abort "video: missing shared Postpro recipe #{POSTPRO_VIDEO_RECIPE}"
+  end
+
+  def postpro_video!(ffmpeg, input, output)
+    return FileUtils.mv(input, output) if ENV["DILLA_VIDEO_POSTPRO"].to_s == "0"
+    data = YAML.safe_load_file(POSTPRO_VIDEO_RECIPE, aliases: false)
+    name = ENV.fetch("DILLA_VIDEO_POSTPRO", "dmt_bled").to_s
+    filters = Array(data.fetch("presets").fetch(name).fetch("filters")).map(&:to_s)
+    partial = "#{output}.partial"
+    args = [
+      ffmpeg, "-y", "-hide_banner", "-loglevel", "error", "-i", input,
+      "-vf", filters.join(","), "-c:v", "libx264", "-preset", "medium",
+      "-profile:v", "high", "-pix_fmt", "yuv420p", "-crf", "22",
+      "-c:a", "copy", "-movflags", "+faststart", partial
+    ]
+    system(*args) or abort "video: Postpro video grade #{name.inspect} failed"
+    FileUtils.mv(partial, output)
+    warn "video0: postpro=#{name} filters=#{filters.length}"
+    output
+  ensure
+    FileUtils.rm_f(partial) if defined?(partial) && partial && File.file?(partial)
+  end
   def video_seconds
     raw = ENV.fetch("DILLA_VIDEO_SECONDS", "0")
     value = Float(raw, exception: false)
