@@ -179,14 +179,12 @@ class TestGrooveTiming < Minitest::Test
 
   def test_dilla_nano_feel_is_sub_millisecond_deterministic_and_role_specific
     with_env("DILLA_NANO_FEEL" => "1", "RENDER_SEED" => "42") do
-      values = %i[kick_anchor snare hat_down bass pad lead].map do |role|
-        send(:nano_timing_ms, role, 3, 7, 60.0 / 90.0)
-      end
+      roles = %i[kick_anchor snare hat_down bass pad lead]
+      values = roles.map { |role| send(:nano_timing_ms, role, 3, 7, 60.0 / 90.0) }
+      repeat = roles.map { |role| send(:nano_timing_ms, role, 3, 7, 60.0 / 90.0) }
       values.each { |value| assert_operator value.abs, :<, 1.0, "nano feel escaped one millisecond" }
-      assert_equal values,
-                   values.map { |role_value| role_value },
-                   "nano feel changed without moving the musical position"
-      refute_equal values.uniq.size, 1, "all roles share one nano offset"
+      assert_equal values, repeat, "nano feel is not deterministic at the same musical position"
+      assert_operator values.uniq.size, :>, 1, "all roles share one nano offset"
       assert_equal values[1], send(:nano_timing_ms, :snare, 3, 7, 60.0 / 90.0)
     end
   end
