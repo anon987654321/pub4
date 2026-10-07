@@ -1,0 +1,33 @@
+# frozen_string_literal: true
+# Canonical MIDI transformation vocabulary for DILLA.
+# Effects are musical operators, not sound effects. Keep chains short enough to
+# explain: motif -> transform -> instrument.
+chain:
+  default:
+    - scale
+    - ghost
+    - microshift
+    - probability
+  sparse:
+    - scale
+    - fragment
+    - microshift
+  kinetic:
+    - scale
+    - ratchet
+    - velocity_curve
+    - microshift
+  alien:
+    - scale
+    - mirror
+    - fragment
+    - octave_bloom
+    - microshift
+parameters:
+  probability: 0.84
+  microshift_ms: 1.8
+  ratchet_max: 3
+  ghost_probability: 0.18
+  fragment_probability: 0.22
+  octave_probability: 0.08
+  octave_span: 12
