@@ -37,16 +37,17 @@ module Master
           route = @router.route(text)
           intent = route[:intent]
           risk = route[:risk]
-          model = select_model(risk)
-          council = COUNCIL_TIERS.include?(risk)
+          mode = Master::Operator::Mode.for(risk, intent:)
+          spec = Master::Operator::Mode.spec(mode)
           {
             intent:,
             risk:,
-            model_tier: model,
-            use_council: council,
-            council_roles: council ? roles_for(intent) : [],
-            evidence_req: council,
-            evidence_fields: council ? EVIDENCE_CONTRACT : [],
+            mode:,
+            model_tier: spec[:model_tier],
+            use_council: spec[:council],
+            council_roles: spec[:council] ? roles_for(intent) : [],
+            evidence_req: spec[:council],
+            evidence_fields: spec[:council] ? EVIDENCE_CONTRACT : [],
           }
         end
 
