@@ -48,7 +48,7 @@ module Master
       def security_lines
         profile = Master::Core::Capabilities.for(:fix)
         [
-          "security0 at master0: secure defaults, constitutional admission",
+          "security0 at master0: secure defaults, law-bound admission",
           "cap0 at security0: profile #{profile.name}, #{profile.capabilities.join(" ")}",
           "pledge0 at security0: openbsd=#{Master::Ground::Pledge.openbsd?}, staged reduction",
           "memory0 at security0: unveil-style restricted views available",
