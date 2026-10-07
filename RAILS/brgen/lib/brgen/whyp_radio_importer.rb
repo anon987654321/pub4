@@ -78,13 +78,41 @@ module Brgen
         collection_url
       ]
 
-      stdout, stderr, status = with_timeout { Open3.capture3(*args) }
+      stdout, stderr, status = run_bounded(args)
       return if status.success?
 
       detail = [ stderr, stdout ].compact_blank.join("\n").lines.last(20).join
       abort "radio: yt-dlp failed\n#{detail}"
     rescue Timeout::Error
       abort "radio: yt-dlp exceeded #{timeout_seconds}s"
+    end
+
+    def run_bounded(argv)
+      Open3.popen3(*argv, pgroup: true) do |stdin, stdout, stderr, wait_thr|
+        stdin.close
+        readers = [stdout, stderr].map { |io| Thread.new { io.read } }
+        timed_out = false
+        status = begin
+          Timeout.timeout(timeout_seconds) { wait_thr.value }
+        rescue Timeout::Error
+          timed_out = true
+          kill_group(wait_thr.pid)
+          wait_thr.value
+        end
+        output, error = readers.map(&:value)
+        raise Timeout::Error if timed_out
+
+        [output, error, status]
+      end
+    end
+
+    def kill_group(pid)
+      pgid = Process.getpgid(pid)
+      Process.kill("TERM", -pgid)
+      sleep 0.2
+      Process.kill("KILL", -pgid)
+    rescue Errno::ESRCH
+      nil
     end
 
     def build_manifest
@@ -164,8 +192,5 @@ module Brgen
       DEFAULT_TIMEOUT
     end
 
-    def with_timeout(&block)
-      Timeout.timeout(timeout_seconds, &block)
-    end
   end
 end
