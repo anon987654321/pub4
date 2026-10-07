@@ -11,18 +11,38 @@ module Master
       module_function
 
       def run(goal, root:, bus: nil, model: nil, model_id: nil, max_turns: 40, on_turn: nil, memory: nil,
-              container: nil, risk: :low)
+              container: nil, risk: :low, mode: nil)
         workspace_root = workspace_root_for(root)
         transcript = []
         observer = build_turn_observer(transcript, root: workspace_root, bus:, on_turn:)
 
         memory ||= Master::Core::Memory.new(risk:)
         model ||= Master::Core::Model.new(**{ model_id:, chat: agent_chat(container, bus:) }.compact)
-        mission = start_mission(goal, root:, bus:, model: model_id || model)
+        operator_mode = mode ? Master::Operator::Mode.for(mode) : :repair
+        mode_spec = Master::Operator::Mode.spec(operator_mode)
+        mission = start_mission(
+          goal,
+          root:,
+          bus:,
+          model: model_id || model,
+          mode: operator_mode,
+          risk:,
+          intent: Master::CLI::IntentRouter.new.classify(goal),
+        )
         seed_continuation(memory, mission.record)
         begin
-          mission.transition!(:plan, plan: Master::Ground::ActivePlan.read(root) || "fold plan: constitutional turn loop")
-          capabilities = Master::Core::Capabilities.for(:fix)
+          mission.transition!(
+            :plan,
+            plan: Master::Ground::ActivePlan.read(root) || "fold plan: constitutional turn loop",
+          )
+          capabilities = Master::Operator::Mode.capabilities(operator_mode)
+          bus&.publish(
+            "operator:mode",
+            mode: operator_mode,
+            risk: mode_spec[:risk],
+            model_tier: mode_spec[:model_tier],
+            council_required: mode_spec[:council],
+          )
           world = build_world(root: workspace_root, container:, capabilities:, network: network_client(container))
           mission.transition!(:execute)
           done = build_fold(root:, model:, memory:, world:, max_turns:, observer:, capabilities:).run(goal)
@@ -58,7 +78,7 @@ module Master
         ->(url:) { fetcher.call(url:) }
       end
 
-      def start_mission(goal, root:, bus:, model:)
+      def start_mission(goal, root:, bus:, model:, mode:, risk:, intent:)
         checkpoint = lambda do |id:, root:, files:|
           Master::Fix::Checkpoint.new(root:, dir: File.join(root, ".master", "checkpoints")).create(
             label: "mission-#{id}", files:,
@@ -66,7 +86,8 @@ module Master
         end
         Master::Fix::Mission.new(root:, bus:, checkpoint:).start_or_resume!(
           goal:, scope: root, model:, effort: ENV.fetch("MASTER_EFFORT", "medium"),
-          plan: Master::Ground::ActivePlan.read(root), origin: "fold", auto_continue: true
+          plan: Master::Ground::ActivePlan.read(root), origin: "fold", auto_continue: true,
+          mode:, risk:, intent:,
         )
       end
 
