@@ -82,11 +82,19 @@ module Master
           d(bits.join(", "))
         end
 
-        def phase_tinted(text, _phase)\n          d(text)\n        end\n\n        def prompt_token
+        def phase_tinted(text, _phase)
+          d(text)
+        end
+
+        def prompt_token
           File.basename(ENV["SHELL"].to_s) == "zsh" ? "%" : "$"
         end
 
-        def phase_prompt(last_ok, _phase)\n          last_ok ? d(prompt_token) : d("!")\n        end\n\n        def token_label(tokens)
+        def phase_prompt(last_ok, _phase)
+          last_ok ? d(prompt_token) : d("!")
+        end
+
+        def token_label(tokens)
           return "0" unless tokens&.positive?
 
           value = tokens.to_i
@@ -99,7 +107,11 @@ module Master
 
         private
 
-        def boot_surface(text)\n          text.to_s.gsub(ANSI_ESCAPE, "")\n        end\n\n        # The prompt is one physical command line, not a dashboard: path, Git,
+        def boot_surface(text)
+          text.to_s.gsub(ANSI_ESCAPE, "")
+        end
+
+        # The prompt is one physical command line, not a dashboard: path, Git,
         # phase, cursor. Reline owns editing; never embed a second prompt line.
         def shell_prompt(phase, last_ok)
           git = git_prompt_text
