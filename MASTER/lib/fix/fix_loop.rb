@@ -84,7 +84,8 @@ module Master
         @file_collector = FileCollector.new(root:, bus:)
         @rule_order = LawOrder.new(rules:, learnings:, bus:, root:)
         @pass_runner = build_pass_runner(rules:, agent:, scanner:, root:, bus:, learnings:,
-          ground_truth:, preserve_user_intent:, law_resolver:, homeostat: @homeostat, discipline: @convergence_discipline)
+          ground_truth:, preserve_user_intent:, law_resolver:, homeostat: @homeostat,
+          discipline: @convergence_discipline, wishlist: @wishlist)
         @sweeps = build_sweeps(agent:, root:, bus:)
       end
 
