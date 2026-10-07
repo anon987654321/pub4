@@ -115,12 +115,12 @@ module Operator
     # zero findings can mean either a healthy corpus or an applicability gap.
     def rule_reach_and_blind_rows
       [master_row("rule_reach", "data/laws.yml", "rules no configuration can run") do
-         require File.join(MASTER, "lib/operator/rule_reach")
+         require File.join(MASTER, "lib/operator/law_reach")
          unreachable = Operator::RuleReach.unreachable
          [unreachable.size, Operator::RuleReach.ceiling, unreachable]
        end,
        master_row("rule_audit.blind", "data/laws.yml", "rules proved on input their subjects never get") do
-         require File.join(MASTER, "lib/operator/rule_audit")
+         require File.join(MASTER, "lib/operator/law_audit")
          blind = Operator::RuleAudit.audit[:fixture_blindness]
          [blind.size, Operator::RuleAudit.ceilings.fetch("blind"), blind.map { |row| "#{row[:rule]}: #{row[:detail]}" }]
        end]
@@ -131,7 +131,7 @@ module Operator
       # corpus or an applicability gap, so they belong in RuleAudit output rather
       # than a monotonic ceiling.
       [master_row("rule_audit.saturated", "data/laws.yml", "rules flagging most of what they read") do
-         require File.join(MASTER, "lib/operator/rule_audit")
+         require File.join(MASTER, "lib/operator/law_audit")
          saturated = Operator::RuleAudit.audit[:saturation]
          [saturated.size, Operator::RuleAudit.ceilings.fetch("saturated"),
           saturated.map { |row| format("%s: %d/%d files", row[:rule], row[:hits], row[:applicable]) }]
@@ -191,7 +191,7 @@ module Operator
       [master_row("rule_fixture_debt", "data/laws.yml", "registry rules with no worked example") do
          $LOAD_PATH.unshift(File.join(MASTER, "lib")) unless $LOAD_PATH.include?(File.join(MASTER, "lib"))
          require "master"
-         require "review/scan/rule_dsl"
+         require "review/scan/law_dsl"
          unfixtured = Master::Review::Scan::Rule.registry.reject do |klass|
            (klass.respond_to?(:dsl_fires) && (klass.dsl_fires || klass.dsl_does_not_fire)) ||
              !klass.respond_to?(:dsl_block)
