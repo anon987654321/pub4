@@ -9202,7 +9202,6 @@ body.vertical-marketplace {
   --bol-blue: var(--accent);
   --bol-blue-dark: var(--vertical-marketplace-accent-hover);
   --bol-blue-soft: #eef5ff;
-  --bol-page: #ffffff;
   --bol-ink: #111111;
   --bol-muted: #666666;
   --bol-rule: #d9d9d9;
@@ -9365,7 +9364,6 @@ body.vertical-marketplace .bol-primary {
 }
 
 body.vertical-marketplace .bol-primary:hover {
-  background: var(--bol-blue-dark);
   color: #fff;
   text-decoration: none;
 }
@@ -10280,8 +10278,6 @@ body.vertical-marketplace .listing-photo-camera {
   place-items: center;
   gap: 6px;
   border: 2px dashed var(--bol-blue);
-  background: #fff;
-  color: var(--bol-blue);
   cursor: pointer;
 }
 
@@ -10891,9 +10887,6 @@ form[data-publishing="true"] .post-progressive-nav {
    friendlier and more product-led: white paper, clear blue actions, soft wells,
    rounded product imagery and restrained red only for price/deal signals. */
 body.vertical-marketplace {
-  --bol-blue: #0066d4;
-  --bol-blue-dark: #004f9e;
-  --bol-blue-soft: #eef5ff;
   --bol-mint: #e9f8f0;
   --bol-peach: #fff2e8;
   --bol-page: #ffffff;
@@ -10923,7 +10916,6 @@ body.vertical-marketplace #navBar.storefront-nav--bol {
 body.vertical-marketplace .storefront-utility--bol {
   min-height: 36px;
   background: #fff;
-  color: var(--bol-muted);
   border-block-end: 1px solid var(--bol-rule);
 }
 
@@ -10972,7 +10964,6 @@ body.vertical-marketplace .bol-market-hero {
   border: 1px solid #e3eafa;
   border-radius: 20px;
   overflow: hidden;
-  background: var(--bol-blue-soft);
 }
 
 body.vertical-marketplace .bol-market-hero-media {
@@ -10981,7 +10972,6 @@ body.vertical-marketplace .bol-market-hero-media {
 
 body.vertical-marketplace .bol-primary {
   border-radius: 999px;
-  background: var(--bol-blue);
 }
 
 body.vertical-marketplace .bol-primary:hover {
@@ -11025,7 +11015,6 @@ body.vertical-marketplace .bol-kind-tabs {
 }
 
 body.vertical-marketplace .bol-kind-tabs a {
-  border-bottom-width: 3px;
 }
 
 body.vertical-marketplace .bol-filter-column .listing-filter-group {
@@ -11096,8 +11085,6 @@ body.vertical-marketplace .store-buybox .btn-primary {
   }
 
   body.vertical-marketplace .bol-market-hero {
-    grid-template-columns: 1fr;
-    min-height: 0;
     border-radius: 16px;
   }
 
@@ -11171,12 +11158,10 @@ body.vertical-marketplace .store-pdp-description > div {
 }
 
 body.vertical-marketplace .deal-card-title {
-  font-weight: 600;
   letter-spacing: 0;
 }
 
 body.vertical-marketplace .deal-price {
-  font-weight: 800;
   font-variant-numeric: tabular-nums;
 }
 
