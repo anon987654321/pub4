@@ -3193,7 +3193,7 @@ SHOWCASE_MODES = {
       when /Flying Lotus/i
         %w[dilla_lopsided dillatime].sample(random: @rng)
       else
-        "dilla_fantastic"
+        @c.fetch("drum_preset", "dilla_fantastic").to_s
       end
     end
 
