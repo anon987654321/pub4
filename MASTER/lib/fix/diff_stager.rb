@@ -12,7 +12,7 @@ module Master
   # When staging_enabled? in config, tools push here instead of writing directly.
   # CLI commands: /stage (list), /apply [n|all], /discard [n|all]
     class DiffStager
-      include Master::Io::AtomicWrite
+      include ::Master::Io::AtomicWrite
       Entry = Struct.new(:id, :path, :old_content, :new_content, :tool, :created_at, keyword_init: true) do
         def diff
           Diffy::Diff.new(old_content.to_s, new_content.to_s, context: 3)
