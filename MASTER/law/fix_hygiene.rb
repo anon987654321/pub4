@@ -10,7 +10,7 @@ Law.define(:NO_INFINITY_TO_I) do
   languages %i[ruby]
   path_exclude %r{/law/fix_hygiene\.rb\z}
   detect do |line|
-    code = line.gsub(/(['"]).*?\1/, "")
+    code = line.gsub(/(['"]).*?\1/, "").sub(/#.*\z/, "")
     code.match?(
       /Float::(?:INFINITY|POSITIVE_INFINITY|NEGATIVE_INFINITY|NAN).*?\.(?:to_i|to_int)\b|
        \.(?:to_i|to_int)\b.*?Float::(?:INFINITY|POSITIVE_INFINITY|NEGATIVE_INFINITY|NAN)/x
