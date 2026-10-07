@@ -20,7 +20,6 @@ module Master
         model ||= Master::Core::Model.new(**{ model_id:, chat: agent_chat(container, bus:) }.compact)
         requested_mode = mode ? Master::Operator::Mode.for(mode) : Master::Operator::Mode.for(risk)
         mission = start_mission(
-
           goal,
           root:,
           bus:,
@@ -120,3 +119,202 @@ module Master
         elsif done.reason == :needs_user
           mission.block!(reason: done.summary.to_s)
         else
+          mission.defer!(reason: "attempt #{done.reason}: #{continuation_summary(done)}")
+        end
+      end
+
+      # Core::Model speaks RubyLLM's chat shape and, left alone, calls RubyLLM
+      # itself. The agent's dispatcher is the door every other call passes:
+      # MASTER_MODEL, ollama, the circuit breaker, the failover hop and the cost
+      # ledger all live there, and a fold that went round it had none of them —
+      # forced to a local model, it still asked OpenRouter and died on a 503.
+      #
+      # Every model is asked the same way: one schema, temperature 0. The fold
+      # behaves alike whichever model answers, and each tier enforces the
+      # schema as far as it can. The reply's `why` is the model's reason for the
+      # effect, and the bus carries it to the operator before the effect runs.
+      #
+      # The schema is the turn's offer (Core::Model.offer). Core::Model builds a
+      # fresh chat each turn, so the ladder is shared by all of them.
+      AgentChat = Struct.new(:agent, :bus, :system, :format, :ladder) do
+        def with_instructions(text) = AgentChat.new(agent, bus, text, format, ladder)
+        def with_format(schema) = AgentChat.new(agent, bus, system, schema, ladder)
+
+        def ask(prompt)
+          reply = agent.ask_once(prompt, system:, law: false, temperature: 0,
+                                         format: format || Master::Core::Model::SCHEMA, **Hash(ladder&.pinned))
+          ladder&.hear(reply)
+          why = CoreBridge.reason_in(reply)
+          bus&.publish("core:reason", why:) if why
+          Reply.new(reply)
+        end
+      end
+      Reply = Struct.new(:content)
+
+      # A local model that cannot hold the fold says so the same way twice: a
+      # reply with no object in it, or an object with no verb the fold knows.
+      # A refusal arrives as one of those. After STRIKES in a row the fold asks
+      # the next larger model this machine runs, and past the largest, the
+      # routed cloud lane when the network answers. It climbs and never steps
+      # back down within a goal: a model that failed twice in a row on this
+      # transcript has shown what it does with it.
+      class ModelLadder
+        STRIKES = 2
+        LOCAL = /\Aollama[:\/]/
+
+        def initialize(agent:, bus: nil, router: nil, online: -> { Master::Ground::BootReceipt.network? })
+          @agent = agent
+          @bus = bus
+          @router = router
+          @online = online
+          @model = nil
+          @strikes = 0
+        end
+
+        def pinned = @model ? { model: @model } : {}
+
+        def hear(reply)
+          @strikes = unparsed?(reply) ? @strikes + 1 : 0
+          climb if @strikes >= STRIKES
+        end
+
+        private
+
+        # parse answers a note whose kind is :parse_error, and only for these.
+        def unparsed?(reply)
+          Master::Core::Model.parse(reply, verbs: Master::Core::VERBS).args[:kind] == :parse_error
+        end
+
+        def climb
+          current = @model || @agent.model
+          @strikes = 0
+          higher = larger_local(current) || cloud_lane(current)
+          @bus&.publish("core:escalation", from: current, to: higher, strikes: STRIKES)
+          @model = higher if higher
+        end
+
+        # The smallest pulled model heavier than this one, among those that fit.
+        def larger_local(current)
+          return unless current.to_s.match?(LOCAL)
+
+          sized = router.local_models.map { |id| [id, router.ollama_size(id.sub(LOCAL, ""))] }
+          floor = router.ollama_size(current.to_s.sub(LOCAL, ""))
+          sized.select { |_, size| size > floor }.min_by(&:last)&.first
+        end
+
+        def cloud_lane(current)
+          return unless @online.call
+
+          Array(@agent.candidate_models).find { |id| !id.to_s.match?(LOCAL) && id != current }
+        end
+
+        def router
+          @router ||= Master::CLI::Routing::ModelRouter.new(config: Master::Ground::Config.new(Master::ROOT))
+        end
+      end
+
+      # Read the way Core::Model.parse reads the object: first brace to last.
+      def reason_in(reply)
+        json = reply.to_s.gsub(/```[a-z]*/i, "")[/\{.*\}/m]
+        why = json && JSON.parse(json)["why"].to_s.strip
+        why unless why.to_s.empty?
+      rescue JSON::ParserError, TypeError => e
+        # No reason is a reply without one, not a failed turn: Model.parse
+        # reports the malformed object itself.
+        Master::Ground::Swallow.log(e, context: "CoreBridge.reason_in")
+      end
+
+      def agent_chat(container, bus:)
+        agent = container && container[:agent]
+        return unless agent.respond_to?(:ask_once)
+
+        AgentChat.new(agent, bus, nil, nil, ModelLadder.new(agent:, bus:))
+      end
+
+      # The Fold writes through World rather than the Io tools, so the turn's
+      # WriteTracker hears of a write only from here.
+      def build_turn_observer(transcript, root:, bus:, on_turn:)
+        lambda do |turn:, effect:, observation:|
+          line = "#{turn}: #{effect} -> #{observation}"
+          transcript << line
+          if effect.verb == :write && observation.ok?
+            Master::Trace::WriteTracker.current&.record(File.expand_path(effect.args[:path].to_s, root))
+          end
+          bus&.publish("core:turn", turn:, effect: effect.to_s, verb: effect.verb, subject: effect_subject(effect),
+                                    ok: observation.ok?, detail: observation.message)
+          on_turn&.call(line)
+        end
+      end
+
+      # The part of an effect a person names it by: the file, the command, the
+      # question. Written content stays out; it is the payload.
+      def effect_subject(effect)
+        args = effect.args
+        case effect.verb
+        when :exec then Array(args[:argv]).join(" ")
+        when :git then [args[:operation], *Array(args[:paths])].join(" ")
+        else (args[:path] || args[:prompt] || args[:text] || args[:summary] || args[:scope]).to_s
+        end
+      end
+
+      def build_fold(root:, model:, memory:, world:, max_turns:, observer:,
+                     capabilities: Master::Core::Capabilities.for(:fix))
+        Master::Core::Fold.new(
+          model:,
+          constitution: Master::Core::Constitution.load(data_dir: Master.data_path, verify: scan_verifier,
+                                                        sandbox: shell_sandbox(root: root),
+                                                        capabilities:),
+          world:,
+          memory:,
+          max_turns:,
+          observer:,
+        )
+      end
+
+      # The Fold writes through World, not through the Io tools, so it needs the
+      # same guard handed to it. Handed in as `verify:` rather than required by
+      # Constitution, because a require puts lib/review/ inside the fold spine
+      # (test_core_no_lib_backedges). Returns the blocking findings as strings.
+      def scan_verifier
+        lambda do |path:, content:|
+          Master::Review::Scan::WriteGuard.default.verdict(path:, content:).blocking
+                                          .map { |f| "#{f[:rule]}:#{f[:line]} #{f[:message]}" }
+        end
+      end
+
+      # And the Fold EXECS through World, not through Io::Shell — the same
+      # sentence, one verb over. Io::Shell has consulted Ground::Policy::Sandbox
+      # since that gate was wired in, so the hardened policy was live on the tool
+      # path and absent from the constitutional one, which is the path that runs
+      # unattended. Handed in rather than required, because core reaches nothing
+      # in lib/ (test_no_lib_backedges).
+      #
+      # Scope is checked before policy classification. Policy decides whether
+      # a command is safe, needs a person, or is unknown; scope decides whether
+      # the argv can explicitly reach outside this workspace at all. Unknown
+      # policy does not mean unlimited filesystem authority.
+      def shell_sandbox(root:)
+        lambda { |argv|
+          scope_error = Master::Ground::Policy::Sandbox.scope_violation(argv, root:)
+          next scope_error if scope_error
+
+          decision = Master::Ground::Policy::Sandbox.decide(argv.join(" "))
+          next decision.reason if decision.deny?
+          next({ ask: decision.reason }) if decision.recognised_ask?
+
+          nil
+        }
+      end
+
+      def run_string(goal, root:, bus: nil, model: nil, model_id: nil)
+        return "core: no goal" if goal.to_s.strip.empty?
+        # An injected model (tests) runs offline; a real one needs a provider key.
+        return Master.no_api_key_message if model.nil? && !Master.any_api_key_present?
+
+        result = run(goal, root:, bus:, model:, model_id:)
+        header = "core: #{result[:reason]} turns=#{result[:turns]}"
+        [header, *result[:transcript], result[:summary]].compact.join("\n")
+      end
+    end
+  end
+end
