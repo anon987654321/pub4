@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # law/css.rb — every css law, one Law.define per rule.
-# REDUCED_MOTION and NO_IMPORTANT live once, in the registry (web_rules.rb).
+# REDUCED_MOTION and NO_IMPORTANT live once, in the registry (web_laws.rb).
 # Both judge a FILE's posture — whether the reset block exists, whether an
 # !important erases or paints, whether it sits inside an override media —
 # and the per-line twins here fired on face.css's own reduced-motion reset,
@@ -30,7 +30,7 @@ Law.define(:LOGICAL_PROPERTIES) do
   good "margin-inline-start: 8px;"
 end
 
-# MAGIC_COLOR lives once, in the registry (js_rules.rb): its narrowing —
+# MAGIC_COLOR lives once, in the registry (js_laws.rb): its narrowing —
 # token definitions, intentional markers, the mailer and manifest carve-outs —
 # is behavioural, measured across 596 retired findings, and a bare hex detector
 # beside it double-counted every one it got wrong.
@@ -110,7 +110,7 @@ Law.define(:NO_MULTIPLE_LANGUAGES) do
   # a column move is done safely.
   #
   # And a file whose job is to detect another language has to quote it — the
-  # distinction Law.conduct already draws for law/. web_rules.rb carries an ERB
+  # distinction Law.conduct already draws for law/. web_laws.rb carries an ERB
   # regex, an operator message reading "<tag><%= … %></tag>" and advice about
   # auto-escaped <%= %>; none is a template, all three are about one.
   path_exclude %r{/(?:knowledge_store|catalog_index)\.rb\z|/memory/search\.rb\z|/review/scan/rules/|/db/migrate/}
