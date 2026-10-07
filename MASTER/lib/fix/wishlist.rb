@@ -37,14 +37,32 @@ module Master
         "wishlist: #{e.class}: #{e.message}"
       end
 
-      def self.pending_context(root, limit: 8)
+      def self.pending_context(root, limit: 24)
         path = File.join(root, OUT_PATH)
         return unless File.file?(path)
 
         lines = File.readlines(path, encoding: "UTF-8", chomp: true)
-        headings = lines.select { |line| line.match?(/\A### \d+\./) }.first(limit)
-        headings.empty? ? nil : "Pending wishlist proposals:\n#{headings.join("\n")}"
-      rescue StandardError
+        sections = lines.slice_before { |line| line.match?(/\A### \d+\./) }.drop(1)
+        sections = sections.first(limit)
+        sections = sections.select do |section|
+          implementation = section.find { |line| line.start_with?("implementation:") }
+          implementation.nil? || implementation.match?(/\bnext_fix\b/)
+        end
+        return if sections.empty?
+
+        body = sections.map(&:join).join("\n")
+        <<~TEXT.strip
+          Pending wishlist proposals eligible for automatic implementation.
+          Treat each supported next_fix proposal as an actual repair target, not as
+          a suggestion to discuss. Implement all proposals that remain supported by
+          current evidence and constitutional rules. Carry any unimplemented item
+          forward by leaving its evidence and anchor intact; never mark operator,
+          research, or unsupported external work as completed.
+          
+          #{body}
+        TEXT
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "Fix::Wishlist.pending_context")
         nil
       end
 
@@ -163,6 +181,7 @@ module Master
           body << "anchor: #{item["anchor"]}"
           body << "change: #{item["change"]}"
           body << "evidence: #{item["evidence"]}"
+          body << "implementation: #{item["implementation"]}"
           body << "reversibility: #{item["reversibility"]}"
           body << ""
         end
