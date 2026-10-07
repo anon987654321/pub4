@@ -20,6 +20,7 @@ module Master
         "decision_choices" => 7,
         "alternatives_min" => 5,
         "alternatives_max" => 20,
+        "observation_to_mutation_ratio" => 10,
       }.freeze
 
       def initialize(root:, bus: nil)
@@ -91,6 +92,12 @@ module Master
         required = limits["clean_runs_required"].to_i
         return { eligible: false, fatal: false, reason: "clean streak incomplete" } if clean_runs < required
 
+        protected = protected_floor_failures
+        unless protected.empty?
+          emit("fix_loop:premature_exit", reason: "protected_floor", failures: protected)
+          return { eligible: false, fatal: true, reason: "constitutional floor failed", failures: protected }
+        end
+
         {
           eligible: true,
           fatal: false,
@@ -103,6 +110,8 @@ module Master
       end
 
       def strategy_for(files:, findings: [])
+        return :adversarial if diminishing_returns?
+
         rules = Array(findings).map { |finding| finding[:rule].to_s.downcase }
         return :adversarial if rules.any? { |rule| rule.include?("security") || rule.include?("injection") || rule.include?("auth") }
 
@@ -122,6 +131,9 @@ module Master
           active-file budget: #{active_files}/#{limits["working_memory_items"]} before chunking
           independent-concern budget: #{concern_cap} per reasoning round
           decision-choice budget: #{choices}; prefer elimination over branching
+          observation-to-mutation ratio: at least #{limits["observation_to_mutation_ratio"]}:1 on broad structural work
+          locality: keep a change beside the behavior it owns; relocate only with reference-graph proof
+          progressive complexity: reveal detail only when the simpler layer is insufficient
           scientific method: state the observed fact, hypothesis, falsifier, and smallest measurement before acting
           alternatives: generate #{limits["alternatives_min"]}-#{limits["alternatives_max"]} materially different candidates when ideation is required
           preserve best state: never trade a measured improvement for an unmeasured aesthetic
@@ -186,6 +198,22 @@ module Master
             row.values_at(:path, :bytes, :lines, :sha256).join(":")
           end.join("|")
         )
+      end
+
+      def protected_floor_failures
+        return [] unless File.expand_path(@root) == File.expand_path(Master::ROOT)
+
+        checks = {
+          File.join(Master::ROOT, "data", "soul.yml") => /PRESERVE_THEN_IMPROVE_NEVER_BREAK/,
+          File.join(Master::ROOT, "data", "laws.yml") => /(?:^|\n)(?:ROBUSTNESS|SINGULARITY|LINEARITY|PROXIMITY):/,
+        }
+        checks.filter_map do |path, pattern|
+          next if File.file?(path) && File.read(path, encoding: "UTF-8").match?(pattern)
+
+          relative(path)
+        rescue StandardError
+          relative(path)
+        end
       end
 
       def relative(path)
