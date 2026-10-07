@@ -365,7 +365,7 @@ module ImprovisedLine
       end
     end
 
-    transformed = DillaMidiEffects.apply(events, name: chain_name.to_sym, rng:)
+    transformed = DillaMidiEffects.apply(events, name: chain_name.to_sym, rng:, params: DillaMidiEffects::DEFAULTS.merge(scale_pcs: scale.map { |interval| (root + interval) % 12 }))
     transformed.map do |event|
       {
         hz: midi_to_hz(event.midi).round(2),
