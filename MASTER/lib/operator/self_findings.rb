@@ -390,6 +390,7 @@ module Operator
       unless stale.empty?
         warn "self_findings #{name}: #{stale.size} recorded member(s) stale — fresh attribution required"
         stale.first(20).each { |member| warn "  stale: #{member}" }
+        return false
       end
       return true unless current.size > ceiling(name)
 
