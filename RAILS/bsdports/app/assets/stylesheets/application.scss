@@ -8,6 +8,7 @@
 // passes sets the same property on an element both could match.
 
 @use "stack" as *;
+@use "surface_chrome_endgame" as endgame;
 @use "sass:meta";
 @use "dialect_tokens" as x;
 
@@ -599,3 +600,5 @@ article dd + dt {
 
   a { text-decoration: underline; }
 }
+
+@include endgame.bsdports;
