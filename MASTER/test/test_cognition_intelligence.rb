@@ -96,6 +96,28 @@ class TestCognitionIntelligence < Minitest::Test
     assert_equal :explore, Master::Cognition::Intelligence.posture_for(item)
   end
 
+  def test_decision_frame_teaches_from_local_observation_to_consequence
+    frame = Master::Cognition::Intelligence.decision_frame(
+      observation: "the reader changed",
+      hypothesis: "the caller contract may drift",
+      falsifier: "existing contract suite remains green",
+      measurement: "caller contract suite",
+      source: "MASTER/lib/core.rb",
+      selected: "verify callers first",
+    )
+
+    assert_equal "the reader changed", frame["teaching"][:local]
+    assert_equal "MASTER/lib/core.rb", frame["teaching"][:boundary]
+    assert_equal "verify callers first", frame["teaching"][:next_step]
+  end
+
+  def test_fertility_does_not_call_inactivity_dead_without_enough_evidence
+    result = Master::Cognition::Intelligence.fertility(consumers: 0, unused_days: 200, confidence: 0.5)
+
+    assert_equal :investigate, result[:posture]
+    assert_includes result[:dead_evidence], :long_unused
+  end
+
   def test_counterfactual_frame_names_a_separating_measurement
     frame = Master::Cognition::Intelligence.counterfactual_frame(
       hypothesis: "the smaller change is safer",
