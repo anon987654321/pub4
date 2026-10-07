@@ -75,6 +75,14 @@ class FrontendAuditorTest < Minitest::Test
     assert_view_rule('<nav aria-label="Actions"></nav>', :empty_landmark)
   end
 
+  def test_brgen_views_have_no_invalid_paragraph_blocks
+    brgen_root = Pathname(__dir__).join("..", "..", "..", "brgen").realpath
+    findings = Shared::FrontendAuditor.call(root: brgen_root)
+    violations = findings.select { |finding| finding.rule == :invalid_paragraph_block }
+
+    assert_empty violations, violations.map { |finding| finding.path.to_s }.join(", ")
+  end
+
   def test_flags_main_landmarks_in_regular_views
     assert_view_rule("<main><h1>Nested</h1></main>", :nested_main)
   end
