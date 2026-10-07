@@ -329,6 +329,33 @@ class TestDillaLiveSynth < Minitest::Test
     end
   end
 
+  def test_showcase_defaults_to_the_canonical_dillatime_kit
+    with_env("DILLA_SHOWCASE" => "1", "DILLA_LIVE_KIT" => nil) do
+      score = LiveSynth::Improviser.new(
+        rng: Random.new(7),
+        reference: "slum_village_players_documented",
+        family: "prophet"
+      )
+      kit = score.instance_variable_get(:@kit)
+      grid = kit.instance_variable_get(:@grid)
+      assert_equal :dillatime, kit.instance_variable_get(:@preset)
+      assert_equal [0, 11], grid.fetch(:kicks)
+      assert_equal [4, 12], grid.fetch(:snares)
+      assert_equal [0, 2, 6, 8, 10, 14], grid.fetch(:hats)
+    end
+  end
+
+  def test_showcase_output_gain_lands_before_the_true_peak_limiter
+    chain = LiveSynth.showcase_tape_chain
+    gain = "volume=#{LiveSynth.stream.fetch("showcase_output_gain").to_f}"
+    gain_index = chain.index(gain)
+    limiter_index = chain.index("alimiter=limit=0.93")
+    refute_nil gain_index
+    refute_nil limiter_index
+    assert_operator gain_index, :<, limiter_index
+  end
+
+
   def test_esen_flow_is_reachable_and_all_its_chords_voice
     score = LiveSynth::Progression.new("esen_flow", rng: Random.new(9))
     chords = score.instance_variable_get(:@chords)
