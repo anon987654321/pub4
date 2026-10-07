@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "open3"
+require_relative "../io/exec"
 require "set"
 require "yaml"
 
@@ -70,7 +70,7 @@ module Operator
         File.read(full, encoding: "UTF-8").lines.count { |line| !body_ignorable?(line) }
       end.sum
 
-      out, status = Open3.capture2e("git", "-C", root, "diff", "--unified=0", "HEAD", "--", *lib_paths)
+      out, status = Master::Io::Exec.capture2e("git", "-C", root, "diff", "--unified=0", "HEAD", "--", *lib_paths)
       return 0 unless status.success?
 
       added = 0
@@ -88,7 +88,7 @@ module Operator
       added - deleted + untracked_body
     end
     def sponsored_ceiling?(root, tree_deltas, body_delta)
-      before, status = Open3.capture2e("git", "-C", root, "show", "HEAD:#{TREE_CEILING}")
+      before, status = Master::Io::Exec.capture2e("git", "-C", root, "show", "HEAD:#{TREE_CEILING}")
       raise "ratchet sponsorship: #{TREE_CEILING} unreadable at HEAD: #{before}" unless status.success?
 
       old = YAML.safe_load(before, aliases: true)
@@ -116,19 +116,19 @@ module Operator
     end
 
     def git_checkout?(root)
-      _out, status = Open3.capture2e("git", "-C", root, "rev-parse", "--git-dir")
+      _out, status = Master::Io::Exec.capture2e("git", "-C", root, "rev-parse", "--git-dir")
       status.success?
     end
 
     def tracked_paths(root)
-      out, status = Open3.capture2e("git", "-C", root, "ls-files", "-z")
+      out, status = Master::Io::Exec.capture2e("git", "-C", root, "ls-files", "-z")
       raise "ratchet sponsorship: git ls-files failed: #{out}" unless status.success?
 
       out.split("\x00").reject(&:empty?).to_set
     end
 
     def diff_statuses(root, paths = [])
-      out, status = Open3.capture2e("git", "-C", root, "diff", "--name-status", "HEAD", "--", *paths)
+      out, status = Master::Io::Exec.capture2e("git", "-C", root, "diff", "--name-status", "HEAD", "--", *paths)
       return {} unless status.success?
 
       out.lines.each_with_object({}) do |line, result|
