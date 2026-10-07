@@ -4,8 +4,8 @@
 # snapshot_RAILS.md, snapshot_OPENBSD.md and snapshot_STUDIO.md.
 #
 # These are the packs handed to another model when it needs the whole tree
-# rather than a summary: every git-tracked text file inlined when the share pack fits the hard size ceiling,
-# plus a tree listing, omitted-file ledger and the reading protocol.
+# rather than a summary: every git-tracked text file inlined when the share pack fits the hard size
+# ceiling, plus a tree listing, omitted-file ledger and the reading protocol.
 #
 # The generator that made them was `bin/snapshot`, deleted with the DEPLOY tree
 # in the OPENBSD reorganisation — so the source mirrors sat stale at a
@@ -229,6 +229,7 @@ module Operator
       out << "snapshot0: complete tree=#{tree} files=#{paths.size} text=#{texts.size} binary=#{binaries.size} omitted=#{omitted.size} bytes=#{out.bytesize}\n"
       out
     end
+
     def write(tree, io: $stdout)
       paths = tracked(tree)
       if paths.empty?
