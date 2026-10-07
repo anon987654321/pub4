@@ -126,6 +126,30 @@ class InferStageTest < Minitest::Test
     assert_match(/requires explicit/, result.message)
   end
 
+  def test_destructive_consent_must_be_affirmative_not_a_request_for_confirmation
+    session = FakeSession.new
+    session.last_inferred_command = "rebuild"
+    session.last_inferred_args = "master"
+    infer = Master::CLI::Stages::Infer.new(bus: @bus, session:)
+
+    result = infer.call(ctx("please confirm again"))
+
+    refute result.ok?
+    assert_equal :policy, result.category
+  end
+
+  def test_negated_destructive_consent_is_rejected
+    session = FakeSession.new
+    session.last_inferred_command = "rebuild"
+    session.last_inferred_args = "master"
+    infer = Master::CLI::Stages::Infer.new(bus: @bus, session:)
+
+    result = infer.call(ctx("yes, do not do it again"))
+
+    refute result.ok?
+    assert_equal :policy, result.category
+  end
+
   def test_repeating_a_destructive_inference_with_consent_still_promotes
     session = FakeSession.new
     session.last_inferred_command = "rebuild"
