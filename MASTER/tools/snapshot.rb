@@ -257,9 +257,10 @@ module Operator
 
       Master::Trace::Dmesg.status(
         "snapshot0",
-        "#{tree}, #{paths.size} files, #{final_texts.size} text, #{binaries.size} binary, #{omitted.size} omitted, #{out.delete_prefix(REPO + "/")}, #{(File.size(out) / 1_000_000.0).round(2)} MB",
+        "#{tree}, #{paths.size} files, #{final_texts.size} text, #{binaries.size} binary, #{omitted.size} omitted, root/#{out.delete_prefix(REPO + "/")}, #{File.size(out)} bytes, max #{MAX_BYTES}",
         io:
       )
+      out
     end
 
     def run(trees = TREES, io: $stdout)
