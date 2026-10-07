@@ -77,8 +77,11 @@ export default class extends Controller {
   }
 
   safeUrl(value) {
+    const raw = String(value ?? "").trim()
+    if (!raw) return "#"
+
     try {
-      const url = new URL(String(value ?? ""), window.location.origin)
+      const url = new URL(raw, window.location.origin)
       return url.origin === window.location.origin ? this.escape(url.href) : "#"
     } catch (_) {
       return "#"
