@@ -8,6 +8,7 @@ class TestRecoveredDesignSemantics < Minitest::Test
   EXPECTED = %i[
     README_VISION
     INTERACTION_SEMANTICS
+    HTML_HEADING_HIERARCHY
     CONFIGURATION_SHAPE
     STYLE_FOLLOWS_STRUCTURE
   ].freeze
@@ -50,6 +51,7 @@ class TestRecoveredDesignSemantics < Minitest::Test
 
   def test_semantic_laws_are_questions_not_fake_lexical_detectors
     assert Law.rules.fetch(:INTERACTION_SEMANTICS).semantic?
+    assert Law.rules.fetch(:HTML_HEADING_HIERARCHY).semantic?
     assert Law.rules.fetch(:STYLE_FOLLOWS_STRUCTURE).semantic?
     refute Law.rules.fetch(:INTERACTION_SEMANTICS).scannable?
     refute Law.rules.fetch(:STYLE_FOLLOWS_STRUCTURE).scannable?
