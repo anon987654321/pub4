@@ -55,11 +55,9 @@ class EventsController < ApplicationController
   def edit; end
 
   def update
-    if @event.update(event_params)
-      redirect_to @event, notice: t("flash.event_updated")
-    else
-      render :edit, status: :unprocessable_entity
-    end
+    return render :edit, status: :unprocessable_entity unless @event.update(event_params)
+
+    redirect_to @event, notice: t("flash.event_updated")
   end
 
   # Cancelling is not deleting: people have it in their calendar, and an event
