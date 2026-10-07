@@ -216,7 +216,15 @@ class TestAgent < Minitest::Test
   # must not be asked by every one of them in turn.
   def test_master_model_respects_local_only_boundary
     agent = agent_routed_by(LocalRouter.new(%w[ollama:phi4:mini]))
-    with_env = ->(key, value) { old = ENV[key]; ENV[key] = value; yield ensure ENV[key] = old }
+    with_env = lambda do |key, value, &block|
+      old = ENV[key]
+      begin
+        ENV[key] = value
+        block.call
+      ensure
+        old.nil? ? ENV.delete(key) : ENV[key] = old
+      end
+    end
 
     with_env.call("MASTER_MODEL", "grok-cli:auto") do
       with_env.call("MASTER_LOCAL_ONLY", "1") do
