@@ -75,6 +75,13 @@ module Master
         nil
       end
 
+      def self.pending_titles(root, target: root, limit: BATCH_SIZE)
+        new(root:, agent: nil).pending_titles(target:, limit:)
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "Fix::Wishlist.pending_titles")
+        []
+      end
+
       def claimable(target:, limit: BATCH_SIZE, run_id: nil)
         ledger = load_ledger
         head = @git.head
@@ -249,6 +256,10 @@ module Master
 
       def pending_count(target:)
         claimable(target:, limit: MAX_PROPOSALS).size
+      end
+
+      def pending_titles(target:, limit: BATCH_SIZE)
+        claimable(target:, limit:).map { |proposal| proposal["title"].to_s }.reject(&:empty?)
       end
 
       def render_pending(target:, limit: BATCH_SIZE)
