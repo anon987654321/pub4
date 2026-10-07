@@ -214,6 +214,7 @@ module Master
       def orientation_contract
         [
           "judgment: rank changes by causal leverage, not finding volume",
+          "attention: keep reasoning bounded and preserve high-uncertainty candidates",
           "scales: reason local → subsystem → tree → repository → production → human",
           "equivalence: compare purpose, inputs, outputs, side effects and boundaries, not names",
           "uncertainty: preserve uncertain or contradicted work until a falsifier or measurement resolves it",
