@@ -105,6 +105,23 @@ module Master
             .map(&:first)
       end
 
+      # Attention is finite. Select the highest-leverage candidates first,
+      # but keep an uncertain candidate visible when it would otherwise disappear.
+      def attention_budget(items, slots: 5, token_budget: 2_000)
+        rows = rank_by_leverage(items)
+        chosen = rows.first(slots.to_i)
+        uncertain = rows.drop(slots.to_i).select { |item| uncertainty_score(item) >= 0.65 }.first
+        chosen << uncertain if uncertain && !chosen.include?(uncertain)
+        {
+          slots: slots.to_i,
+          token_budget: token_budget.to_i,
+          candidates: rows.size,
+          selected: chosen,
+          deferred: rows - chosen,
+          preserved_uncertainty: uncertain,
+        }.freeze
+      end
+
       def judgment(item)
         confidence = signal(item, :confidence, fallback: 0.5).to_f.clamp(0.0, 1.0)
         uncertainty = uncertainty_score(item)
