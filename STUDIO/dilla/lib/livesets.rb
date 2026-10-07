@@ -3175,7 +3175,26 @@ SHOWCASE_MODES = {
       @lead_enabled = @c["lead_enabled"]
       @drums = drums.nil? ? @c["drums"] : drums
       @fade = nil
-      @kit = Kit.new(@c, beat: @beat, rng:)
+      @kit = Kit.new(@c, beat: @beat, rng:, preset: live_kit_preset)
+    end
+
+    def live_kit_preset
+      forced = ENV["DILLA_LIVE_KIT"].to_s.strip
+      return forced unless forced.empty?
+
+      artist = @reference.to_h.fetch("artist", "").to_s
+      case artist
+      when /J Dilla/i
+        %w[dilla_fantastic dilla_lopsided dilla_donuts].sample(random: @rng)
+      when /D'Angelo/i
+        %w[dillatime dilla_lopsided].sample(random: @rng)
+      when /Madlib/i
+        %w[dilla_donuts dillatime].sample(random: @rng)
+      when /Flying Lotus/i
+        %w[dilla_lopsided dillatime].sample(random: @rng)
+      else
+        "dilla_fantastic"
+      end
     end
 
     def describe
@@ -3496,12 +3515,17 @@ SHOWCASE_MODES = {
     ROLL = [[0.0, 4], [0.5, 8]].freeze
     SILENT_BAND = 1e-6
 
-    def initialize(config, beat:, rng:)
+    def initialize(config, beat:, rng:, preset: nil)
       @kick = config.fetch("kick")
       @snare = config.fetch("snare")
       @beat = beat
       @rng = rng
       @noise = Random.new(rng.seed ^ NOISE_SEED)
+      name = (preset || ENV.fetch("DILLA_LIVE_KIT", "dilla_fantastic")).to_s.downcase.tr("-", "_").to_sym
+      @grid = DillaLofiMachine::DRUM_PRESETS.fetch(name) do
+        abort "live0: no live kit #{name.inspect} — have #{DillaLofiMachine::DRUM_PRESETS.keys.join(', ')}"
+      end
+      @preset = name
       @kicks = []
       @snares = []
       @low = 0.0
@@ -3509,8 +3533,31 @@ SHOWCASE_MODES = {
     end
 
     def write!(start, length)
-      @kicks.concat(kick_hits(start, length))
-      @snares.concat(snare_hits(start, length))
+      if @grid
+        @kicks.concat(grid_hits(start, length, @grid[:kicks], :kick_anchor, 1.0))
+        @snares.concat(grid_hits(start, length, @grid[:snares], :snare, 1.0))
+        @snares.concat(grid_hits(start, length, @grid[:ghosts], :ghost, 0.24))
+      else
+        @kicks.concat(kick_hits(start, length))
+        @snares.concat(snare_hits(start, length))
+      end
+    end
+
+    def grid_hits(start, length, steps, role, gain)
+      step_seconds = @beat / 4.0
+      bars = [(length / (4.0 * @beat)).ceil, 1].max
+      hits = []
+      bars.times do |bar|
+        Array(steps).each do |step|
+          next unless step.to_i.between?(0, 15)
+
+          at = start + (bar * 4.0 * @beat) + (step.to_i * step_seconds)
+          next if at >= start + length
+          offset = dilla_timing_ms(role, bar, step.to_i, nil, @beat) / 1000.0
+          hits << [at + offset, gain]
+        end
+      end
+      hits
     end
 
     # Adds the clap into left and right; returns the kick for its own channels.
