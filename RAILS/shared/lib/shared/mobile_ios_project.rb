@@ -36,7 +36,7 @@ module Shared
             "INFOPLIST_FILE" => "../Info.plist",
             "CODE_SIGN_ENTITLEMENTS" => "../Pub4Mobile.entitlements",
             "CODE_SIGN_STYLE" => "Automatic",
-            "MARKETING_VERSION" => "1.0.0",
+            "MARKETING_VERSION" => "1.0.3",
             "CURRENT_PROJECT_VERSION" => "1",
           },
           "configs" => apps.to_h { |app| [ config_name(app), app_settings(app) ] }
