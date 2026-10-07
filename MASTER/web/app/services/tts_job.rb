@@ -52,14 +52,9 @@ class TtsJob
     return job if job.ready?
 
     job.forget_stale_failure!
-    # Write the token file now, before the client can start polling — perform()
-    # used to be the only writer, but it only runs once the background worker
-    # thread dequeues this job, which can be seconds after enqueue if other
-    # jobs are ahead of it. In that window, GET /chat/tts/status found no token
-    # file, returned a real 404 (not 202 pending), and the client's pollTTSJob
-    # treats any non-202 as fatal and throws immediately. Writing the token at
-    # enqueue time closes that race, so the single server TTS path can report
-    # the job accurately instead of manufacturing a second narrator.
+    # Write the token before polling can begin. The status endpoint must see a
+    # pending job immediately after enqueue, so the single server TTS path owns
+    # one accurate state from enqueue through completion.
     job.write_token
     rank = PRIORITIES.fetch(lane.to_s, DEFAULT_PRIORITY)
     @queue_mutex.synchronize do
