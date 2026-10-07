@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "digest"
+require "json"
 require_relative "../cognition/intelligence"
 
 module Master
