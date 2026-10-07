@@ -209,11 +209,42 @@ class TestDillaLiveSynth < Minitest::Test
   end
 
   def test_showcase_generates_dilla_mp4_from_the_finished_wav
-    source = File.read(dilla("lib/livesets.rb"))
-    assert_includes source, 'require_relative "radio_video"'
-    assert_includes source, 'File.join(File.dirname(audio), "dilla.mp4")'
-    assert_includes source, 'showcase_video!(output)'
-    assert_includes source, 'DILLA_SHOWCASE_VIDEO'
+    Dir.mktmpdir("dilla-video-contract-") do |dir|
+      audio = File.join(dir, "dilla.wav")
+      output = File.join(dir, "dilla.mp4")
+      File.binwrite(audio, "RIFF")
+      File.binwrite(output, "stale")
+
+      captured = nil
+      RadioVideo.stub(:run, ->(argv) { captured = argv.dup; File.binwrite(argv.last, "mp4"); argv.last }) do
+        result = LiveSynth.showcase_video!(audio)
+        assert_equal output, result
+      end
+
+      assert_equal [audio, output], captured
+      assert_path_exists output
+      assert_operator File.size(output), :>, 0
+    end
+  end
+
+  def test_showcase_video_failure_is_fatal_and_removes_stale_output
+    Dir.mktmpdir("dilla-video-failure-") do |dir|
+      audio = File.join(dir, "dilla.wav")
+      output = File.join(dir, "dilla.mp4")
+      File.binwrite(audio, "RIFF")
+      File.binwrite(output, "stale")
+
+      error = assert_raises(RuntimeError) do
+        RadioVideo.stub(:run, ->(_argv) { raise "capture failed" }) do
+          LiveSynth.stub(:log, ->(_message) {}) do
+            LiveSynth.showcase_video!(audio)
+          end
+        end
+      end
+
+      assert_equal "capture failed", error.message
+      refute_path_exists output
+    end
   end
 
   def test_live_moog_and_prophet_family_pools_are_restricted

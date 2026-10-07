@@ -2262,8 +2262,10 @@ SHOWCASE_MODES = {
 
   def showcase!(rng: rng!, mode: nil)
     previous = ENV["DILLA_SHOWCASE"]
+    previous_video = ENV["DILLA_SHOWCASE_VIDEO"]
     visual = nil
     ENV["DILLA_SHOWCASE"] = "1"
+    ENV["DILLA_SHOWCASE_VIDEO"] = "1" unless ENV.key?("DILLA_SHOWCASE_VIDEO")
     if ENV["DILLA_LIVE_VISUAL"] == "1"
       require_relative "live_audiovisual"
       visual = LiveAudiovisual.start!
@@ -2346,15 +2348,20 @@ SHOWCASE_MODES = {
       FileUtils.rm_f(output) if output&.include?(File.join(Dir.tmpdir, "dilla-live-"))
     end
     previous.nil? ? ENV.delete("DILLA_SHOWCASE") : ENV["DILLA_SHOWCASE"] = previous
+    previous_video.nil? ? ENV.delete("DILLA_SHOWCASE_VIDEO") : ENV["DILLA_SHOWCASE_VIDEO"] = previous_video
   end
 
   def showcase_video!(audio)
     output = File.join(File.dirname(audio), "dilla.mp4")
+    FileUtils.rm_f(output)
     require_relative "radio_video"
     log("video -> #{output}")
     RadioVideo.run([audio, output])
+    abort "live0: video renderer returned without #{output}" unless File.file?(output) && File.size?(output)
+    output
   rescue StandardError => e
-    log("video skipped: #{e.class}: #{e.message}")
+    log("video FAILED: #{e.class}: #{e.message}")
+    raise
   end
 
   def showcase_output
