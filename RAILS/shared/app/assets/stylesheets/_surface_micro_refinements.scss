@@ -80,7 +80,7 @@ body[data-layout-pass="micro-320"] {
   font-size: clamp(var(--text-lg), 3.2vw, var(--text-2xl));
 
   /* srf:018 */
-  line-height: 1.05;
+  line-height: 1.25;
 
   /* srf:019 */
   letter-spacing: var(--tracking-tight);
@@ -236,7 +236,7 @@ form textarea {
   resize: vertical;
 
   /* srf:055 */
-  line-height: 1.55;
+  line-height: 1.5;
 
   /* srf:056 */
   padding-block: var(--space-3);
@@ -556,7 +556,7 @@ form > :is(.actions, .field--actions, .post-progressive-actions) {
   max-inline-size: 74ch;
 
   /* srf:130 */
-  line-height: 1.45;
+  line-height: 1.5;
 
   /* srf:131 */
   text-wrap: pretty;
@@ -817,7 +817,7 @@ form > :is(.actions, .field--actions, .post-progressive-actions) {
   gap: 4px;
 
   /* srf:192 */
-  line-height: 1.2;
+  line-height: 1.25;
 
 }
 
