@@ -236,7 +236,7 @@ module Master
         # OpenBSD 7.1 (GENERIC.MP) #400: date / builder@host:/path
         def identity_lines(context)
           [
-            d("master0 at mainbus0: MASTER #{release_version} (CONSTITUTIONAL) ##{context[:build]}"),
+            d("master0 at mainbus0: MASTER #{release_version} ##{context[:build]}"),
             d("host0 at mainbus0: #{context[:user]}@#{context[:host]}:#{@config['root'] || Dir.pwd}"),
           ]
         end
