@@ -6,14 +6,13 @@ Authority order: `MASTER/data/soul.yml` > `MASTER/data/laws.yml` >
 executable law (`MASTER/law/*.rb` and `MASTER/lib/review/scan/rules/*.rb`) >
 this file > the per-tree contract. Feature truth is `RAILS/apps.yml`.
 
-**MASTER is the primary configuration; this file is secondary and so is every
-other harness file.** Claude Code reads this one, Codex and most agents read
-`AGENTS.md`, Gemini CLI reads `GEMINI.md`, Cursor reads `.cursorrules`, Copilot
-reads `.github/copilot-instructions.md` — and all four of those are generated
-from one marked block in `MASTER/AGENTS.md` by `cd MASTER && rake
-docs:agent_contracts`, with `rake lint:agent_contracts` failing when one drifts.
-Whichever door an agent comes through, it is pointed at `MASTER/data/soul.yml`
-and `MASTER/data/laws.yml` before it writes. Change the law there, never in a
+**MASTER is the primary configuration; this file is secondary.** Claude Code reads
+`CLAUDE.md` directly. `AGENTS.md`, `GEMINI.md`, `.cursorrules` and
+`.github/copilot-instructions.md` are generated from one marked block in
+`MASTER/AGENTS.md` by `cd MASTER && rake docs:agent_contracts`, with
+`rake lint:agent_contracts` failing when one drifts. Whichever door an agent
+comes through, it is pointed at `MASTER/data/soul.yml` and
+`MASTER/data/laws.yml` before it writes. Change the law there, never in a
 harness file.
 
 This file points; it does not copy. Every subsystem keeps its own contract and
@@ -31,9 +30,10 @@ renamed.
 | `OPENBSD/` | The deploy pipeline and the VPS runbook. Production is one box, `vm23`. | `MASTER/bin/operator vps state` |
 | `STUDIO/` | Media production: dilla, postpro, replicate and lora. | `STUDIO/*/<tool>.rb` |
 
-Nothing else sits at the repo root but this file, `TODO.md` — the single
-repo-wide backlog (every per-tree debt/TODO/blocker list was folded into it) —
-and `TREE.md`, the map of the four governed trees. `STUDIO/` is the canonical media tool plane; `MASTER/tools/` keeps compatibility symlinks. (`WISHLIST.md` folded into `TODO.md`
+The repo root holds the four governed trees plus a small set of repository
+contracts/configuration: `CLAUDE.md`, generated agent harnesses,
+`ARCHITECTURE.md`, `TODO.md` and `VERSION`. There is no `TREE.md` on current main;
+the tree contracts and `RAILS/README.md` are the map. `STUDIO/` is the canonical media tool plane; `MASTER/tools/` keeps compatibility symlinks. (`WISHLIST.md` folded into `TODO.md`
 on 2026-09-06 — one backlog, forward work as its last section.) Build output
 never sits at the root whatever the tool's default: dilla writes to `$PWD`
 unless `DILLA_OUTPUT_DIR` says otherwise, and one session's renders lived at the
