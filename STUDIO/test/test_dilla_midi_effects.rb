@@ -41,6 +41,21 @@ class TestDillaMidiEffects < Minitest::Test
   end
 
 
+  def test_compositional_operators_are_registered
+    names = %i[transpose chord invert arp note_repeat euclidean humanize grace_notes reverse stutter gate hocket call_response]
+    names.each { |name| assert_respond_to DillaMidiEffects, name }
+  end
+
+  def test_compositional_film_is_seed_reproducible
+    a = DillaMusicalFilm.plan(scene: "flylo_haze_01", index: 1, total: 5, seed: 9, tension: 0.4, energy: 0.55)
+    b = DillaMusicalFilm.plan(scene: "flylo_haze_01", index: 1, total: 5, seed: 9, tension: 0.4, energy: 0.55)
+    assert_equal a, b
+    assert_includes %w[film_intro film_motion film_hook film_breakdown film_alien], a.fetch(:midi_chain)
+    refute_empty a.fetch(:voices)
+    assert a.fetch(:critique).key?(:memorable)
+    assert a.fetch(:mutation).key?(:action)
+  end
+
   def test_live_improviser_routes_through_the_midi_rack_and_scene_state
     livesets = File.read(File.expand_path("../dilla/lib/livesets.rb", __dir__))
     assert_includes livesets, 'require_relative "midi_effects"'

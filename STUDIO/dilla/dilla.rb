@@ -101,6 +101,9 @@ require_relative "lib/harmony"
 require_relative "lib/ledger"
 require_relative "lib/groove"
 require_relative "lib/listen"
+require_relative "lib/midi_effects"
+require_relative "lib/scene"
+require_relative "lib/musical_film"
 
 # Terse OpenBSD-style console log (see lib/ledger.rb). Prefer dmesg over
 # decorative banners; set DILLA_DMESG=0 to silence, =2 for verbose argv.
@@ -44458,6 +44461,7 @@ SHOWCASE_DEFAULTS = {
   "LIVE_COPY_MACHINE" => "4",
   "LIVE_VOICE_STACK" => "3",
   "LIVE_HOCKET" => "3",
+  "DILLA_FILM" => "1",
 }.freeze
 
 def prepare_showcase_defaults!
@@ -44467,6 +44471,15 @@ def prepare_showcase_defaults!
 end
 
 def live!(argv)
+  mode_arg = argv.find { |arg| arg.match?(/Amode=/i) }.to_s.downcase
+  if mode_arg == "mode=flylo"
+    ENV["DILLA_FILM"] = "1"
+    ENV["DILLA_MIDI_CHAIN"] ||= "film_motion"
+    ENV["SIDECHAIN_STYLE"] ||= "flylo"
+    ENV["SIDECHAIN_DRUM_WEIGHT"] ||= "1.2"
+    ENV["SIDECHAIN_HARM_WEIGHT"] ||= "1.15"
+    ENV["FLYLO_CHORD_DUCK"] ||= "0.9"
+  end
   # Bare live mode is the same showcase sound as the finite renderer, but with
   # the visualizer attached and the tour looping forever. No second synth graph:
   # ruby dilla.rb live enters this branch, then LiveSynth runs the same scenes,
@@ -44676,6 +44689,7 @@ end
 
 DISPATCH = {
   "capabilities" => -> { puts Studio::AnalogCapabilities.report(:dilla) },
+  "film" => lambda { puts JSON.pretty_generate(DillaMusicalFilm.demo(seed: ENV.fetch("RENDER_SEED", "16842").to_i)) },
   "quality" => -> { dilla_quality(ARGV.shift || File.join(OUTPUT_DIR, "full_track.mp3"), ARGV.shift) },
   "help" => -> { help(ARGV.shift) },
   "scan" => -> { scan },

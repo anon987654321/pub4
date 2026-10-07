@@ -49,6 +49,7 @@ require_relative "process_spawn"
 require_relative "ableton_play"
 require_relative "composer_mind"
 require_relative "scene"
+require_relative "musical_film"
 
 module Livesets
   D = File.expand_path("..", __dir__)
@@ -2264,8 +2265,21 @@ SHOWCASE_MODES = {
             index: index,
             tension: index.to_f / [showcase_scenes(mode).length - 1, 1].max
           )
+          film = DillaMusicalFilm.plan(
+            scene: name,
+            index: index,
+            total: showcase_scenes(mode).length,
+            seed: rng.respond_to?(:seed) ? rng.seed : ENV.fetch("LIVE_SEED", "0").to_i,
+            tension: world.fetch(:tension),
+            energy: world.fetch(:energy),
+            bpm: 84.0
+          )
+          ENV["DILLA_SCENE_MIDI_CHAIN"] = film.fetch(:midi_chain).to_s
+          ENV["DILLA_FILM_WORLD_EVENT"] = film.fetch(:world_event).to_s
+          ENV["DILLA_FILM_DUCK"] = film.dig(:dynamic, :texture_duck).to_s
           visual&.publish(
             world.merge(
+              film: film.slice(:phase, :midi_chain, :world_event, :voices, :dynamic, :architecture, :critique, :mutation, :next_scene),
               seed: rng.respond_to?(:seed) ? rng.seed : ENV.fetch("LIVE_SEED", "0").to_i,
               started_at: Process.clock_gettime(Process::CLOCK_MONOTONIC),
               hue: (0.52 + ((index * 0.037) % 0.34)).round(4)
@@ -3507,7 +3521,7 @@ SHOWCASE_MODES = {
     end
 
     def stage_midi_events!(stage, events, fm: nil, patch: nil)
-      chain = ENV.fetch("DILLA_MIDI_CHAIN", "default").to_sym
+      chain = ENV.fetch("DILLA_SCENE_MIDI_CHAIN", ENV.fetch("DILLA_MIDI_CHAIN", "default")).to_sym
       transformed = DillaMidiEffects.apply(events, name: chain, rng: @rng, params: DillaMidiEffects::DEFAULTS.merge(scale_pcs: @lead_scale_pcs))
       transformed.each do |event|
         if fm

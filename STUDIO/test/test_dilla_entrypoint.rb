@@ -17,9 +17,16 @@ class TestDillaEntrypoint < Minitest::Test
     assert_includes source, 'mode=flylo'
     assert_includes source, 'dilla.wav'
     assert_includes source, 'require_relative "lib/sound"'
+    assert_includes source, 'require_relative "lib/musical_film"'
     assert_includes source, 'DILLA_LIVE_VISUAL'
     assert_includes source, 'DILLA_SHOWCASE_LOOP'
   end
+  def test_film_command_is_admitted_by_the_dilla_entrypoint
+    source = File.read(ENTRY)
+    assert_includes source, '"film" => lambda'
+    assert_includes source, 'DillaMusicalFilm.demo'
+  end
+
   def test_video_command_is_admitted_by_the_dilla_entrypoint
     source = File.read(ENTRY)
     assert_includes source, '"video" => lambda'

@@ -137,6 +137,141 @@ module DillaMidiEffects
   # Turn a motif's scale degrees into a MIDI phrase. Repeated degrees are
   # allowed; their memory stays with the motif rather than being erased by the
   # effect chain.
+  def transpose(events, rng:, params:)
+    semitones = params.fetch(:transpose).to_i
+    events.map { |event| event.with(midi: event.midi + semitones) }
+  end
+
+  def chord(events, rng:, params:)
+    intervals = Array(params.fetch(:chord_intervals)).map(&:to_i)
+    spread = params.fetch(:chord_gain).to_f.clamp(0.0, 1.0)
+    events.flat_map do |event|
+      [event, *intervals.map { |interval| event.with(midi: (event.midi + interval).clamp(24, 108), gain: event.gain * spread) }]
+    end
+  end
+
+  def invert(events, rng:, params:)
+    return events if events.empty?
+
+    pivot = events.map(&:midi).sum.to_f / events.length
+    events.map { |event| event.with(midi: (pivot + (pivot - event.midi)).round.clamp(24, 108)) }
+  end
+
+  def arp(events, rng:, params:)
+    return events if events.length < 2
+
+    ordered = events.sort_by(&:midi)
+    step = [ordered.map(&:held).sum / ordered.length, 0.04].max
+    events.each_with_index.map do |event, index|
+      note = ordered[index % ordered.length].midi
+      event.with(midi: note, at: event.at + (index % ordered.length) * step * 0.16)
+    end
+  end
+
+  def note_repeat(events, rng:, params:)
+    count = params.fetch(:note_repeat).to_i.clamp(1, 6)
+    return events if count <= 1
+
+    events.flat_map do |event|
+      slice = event.held / count
+      Array.new(count) do |index|
+        event.with(
+          at: event.at + (slice * index),
+          held: [slice * 0.72, 0.018].max,
+          gain: event.gain * (1.0 - index * 0.06)
+        )
+      end
+    end
+  end
+
+  def euclidean(events, rng:, params:)
+    steps = params.fetch(:euclidean_steps).to_i.clamp(1, 32)
+    pulses = params.fetch(:euclidean_pulses).to_i.clamp(1, steps)
+    events.each_with_index.select { |_, index| ((index * pulses) % steps) < pulses }.map(&:first)
+  end
+
+  def humanize(events, rng:, params:)
+    width = params.fetch(:humanize_ms).to_f.abs / 1000.0
+    gain = params.fetch(:humanize_gain).to_f.abs
+    events.map do |event|
+      event.with(
+        at: event.at + rng.rand(-width..width),
+        gain: (event.gain + rng.rand(-gain..gain)).clamp(0.0, 1.0)
+      )
+    end
+  end
+
+  def grace_notes(events, rng:, params:)
+    interval = params.fetch(:grace_interval).to_i
+    amount = params.fetch(:grace_gain).to_f.clamp(0.0, 1.0)
+    events.flat_map do |event|
+      grace_at = [event.at - [event.held * 0.18, 0.035].max, 0.0].max
+      grace = event.with(
+        midi: (event.midi + interval).clamp(24, 108),
+        at: grace_at,
+        held: [event.held * 0.12, 0.018].max,
+        gain: event.gain * amount,
+        role: :grace
+      )
+      [grace, event]
+    end
+  end
+
+  def reverse(events, rng:, params:)
+    return events if events.length < 2
+
+    start = events.map(&:at).min
+    finish = events.map { |event| event.at + event.held }.max
+    events.map do |event|
+      new_at = start + (finish - (event.at + event.held))
+      event.with(at: new_at)
+    end
+  end
+
+  def mirror(events, rng:, params:)
+    return events if events.length < 2
+
+    pivot = events.first.midi
+    events.map.with_index do |event, index|
+      mirrored = pivot + (pivot - event.midi)
+      event.with(midi: mirrored.clamp(24, 108), gain: event.gain * (index.even? ? 1.0 : 0.92))
+    end
+  end
+
+  def stutter(events, rng:, params:)
+    return events if events.length < 2
+
+    repeats = params.fetch(:stutter_repeats).to_i.clamp(2, 6)
+    fragment = events.first([events.length, params.fetch(:stutter_events).to_i.clamp(1, events.length)].min)
+    span = [fragment.map { |event| event.held }.sum, 0.08].max
+    fragment.flat_map do |event|
+      Array.new(repeats) do |index|
+        event.with(at: event.at + (index * span), gain: event.gain * (1.0 - index * 0.08))
+      end
+    end
+  end
+
+  def gate(events, rng:, params:)
+    amount = params.fetch(:gate_ratio).to_f.clamp(0.08, 1.0)
+    events.map { |event| event.with(held: [event.held * amount, 0.018].max) }
+  end
+
+  def hocket(events, rng:, params:)
+    voices = Array(params.fetch(:hocket_voices)).map(&:to_sym)
+    voices = %i[call response] if voices.empty?
+    events.each_with_index.map { |event, index| event.with(role: voices[index % voices.length]) }
+  end
+
+  def call_response(events, rng:, params:)
+    split = (events.length / 2.0).ceil
+    events.each_with_index.map do |event, index|
+      event.with(role: index < split ? :call : :response, gain: index < split ? event.gain : event.gain * 0.9)
+    end
+  end
+
+  # Turn a motif's scale degrees into a MIDI phrase. Repeated degrees are
+  # allowed; their memory stays with the motif rather than being erased by the
+  # effect chain.
   def motif_events(degrees:, root:, at:, beat:, rhythm:, gain: 0.3, role: :lead)
     degrees.each_with_index.map do |degree, index|
       length = rhythm[index % rhythm.length].to_f * beat
