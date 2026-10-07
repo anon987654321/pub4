@@ -9,7 +9,7 @@ module Master
       # FixLoop's run/recovery responsibilities on their own.
       module PassRunnerBuilder
         def build_pass_runner(rules:, agent:, scanner:, root:, bus:, learnings:,
-          ground_truth:, preserve_user_intent:, law_resolver:, homeostat: nil, discipline: nil)
+          ground_truth:, preserve_user_intent:, law_resolver:, homeostat: nil, discipline: nil, wishlist: nil)
           committer = Committer.new(git: @git, bus:, root:,
                                        ground_truth:, preserve_user_intent:)
           conflict_resolver = ConflictResolver.new(root:, bus:, law_resolver:)
@@ -24,7 +24,7 @@ module Master
             rules:, agent:, scanner:, learnings:, preamble:,
             clean_runs_required:,
             plateau_window:,
-            ground_truth:, homeostat:, council:, visual_pass:, opportunity_pass:, discipline:
+            ground_truth:, homeostat:, council:, visual_pass:, opportunity_pass:, discipline:, wishlist:
           )
         end
       end

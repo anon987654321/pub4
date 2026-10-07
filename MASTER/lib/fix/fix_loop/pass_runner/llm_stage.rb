@@ -28,6 +28,52 @@ module Master
             fixed
           end
 
+          def run_wishlist_stage(findings, pass:, files:, deadline:, run_id:)
+            return 0 if findings.empty? || Time.now >= deadline
+
+            fixed = 0
+            findings.each do |finding|
+              break if Time.now >= deadline
+
+              rule = Wishlist::Rule.new(Wishlist::RULE_ID)
+              proposal = finding[:wishlist_proposal] || {}
+              loop = LawLoop.new(
+                rule:, agent: @agent, scanner: @scanner, root: @root, bus: @bus,
+                learnings: @learnings, committer: @committer, stage_commit: true,
+                visual_custody: @visual_pass&.custody,
+              )
+              loop.injected_preamble = [
+                @preamble,
+                "AUTOMATIC WISHLIST PROPOSAL",
+                "Proposal: #{proposal["uid"]}",
+                "Evidence is binding context; re-read the live anchor before changing it.",
+                "Implement the smallest change that satisfies the proposal and preserves unrelated behavior.",
+              ].join("\n\n")
+              result = loop.run_once([finding[:file]], external_violations: [finding])
+              applied = result[:fixed].to_i
+              fixed += applied
+              @wishlist&.mark_attempt(
+                proposal_id: finding[:wishlist_id],
+                fixed: applied,
+                status: result[:status],
+                message: result[:breakdown].to_h.keys.join(", "),
+                run_id: run_id || proposal["generated_by_run"],
+              )
+              @bus&.publish(
+                "fix_loop:wishlist_attempt",
+                pass:,
+                id: finding[:wishlist_id],
+                status: result[:status],
+                fixed: applied,
+              )
+            end
+            Master::Trace::Dmesg.status("fix0", "pass #{pass}, wishlist #{fixed}/#{findings.size} applied") if findings.any?
+            fixed
+          rescue StandardError => e
+            Master::Ground::Swallow.log(e, context: "fix_loop.wishlist_stage", event_bus: @bus)
+            0
+          end
+
           def run_dependency_levels(runnable, files:, pass:, rule_violations:, deadline:, council: nil)
             fixed = 0
             breakdown = Hash.new(0)

@@ -13,6 +13,7 @@ require_relative "pass_runner/stream_stage"
 require_relative "structural_stage"
 require_relative "../transaction"
 require_relative "../resource_budget"
+require_relative "../wishlist"
 require_relative "../../review/scan/rule_health"
 
 module Master
@@ -33,7 +34,7 @@ module Master
         def initialize(bus:, committer:, conflict_resolver:, llm_router:, root:,
                        rules:, agent:, scanner:, learnings:, preamble:,
                        clean_runs_required:, plateau_window:, ground_truth: nil, homeostat: nil, council: nil,
-                       visual_pass: nil, opportunity_pass: nil, preflight: nil, discipline: nil)
+                       visual_pass: nil, opportunity_pass: nil, preflight: nil, discipline: nil, wishlist: nil)
           @bus = bus
           @committer = committer
           @conflict_resolver = conflict_resolver
@@ -61,6 +62,7 @@ module Master
           @council = council
           @visual_pass = visual_pass
           @opportunity_pass = opportunity_pass
+          @wishlist = wishlist || Wishlist.new(root: @root, agent: @agent, event_bus: @bus)
           @discipline = discipline || ConvergenceDiscipline.new(root: @root, bus: @bus)
           @ground_truth_failures = 0
           emit_coverage = lambda do |target, pass|
@@ -116,7 +118,7 @@ module Master
         end
 
         def run_pass(files:, target:, pass:, deadline:, transaction_id:, history:, seen_snapshots:,
-                     recurring_violations:, consecutive_clean:)
+                     recurring_violations:, consecutive_clean:, wishlist_proposals: [], run_id: nil)
           pass_mtimes = mtimes(files)
           @pass_progress = false
           @coverage_reporter&.call(target, pass)
@@ -125,6 +127,7 @@ module Master
           @discipline.observe(pass:, findings: found, files:, progressed: @pass_progress)
 
           visual, opportunities, found = merge_evidence_findings(target:, files:, pass:, found:)
+          found += Wishlist.findings(wishlist_proposals, root: @root)
           return evidence_abort_result(visual, opportunities) if found.empty? && (visual&.err? || opportunities&.err?)
 
           found, shed = supplement_with_improvements(found, pass:, files:, deadline:, consecutive_clean:)
@@ -134,7 +137,7 @@ module Master
 
           # A reload skips the rule stage: it would ask the model about the whole
           # scan on code that is already out of date.
-          dispatch_llm_stages(unstreamed(found, streamed), files, pass, deadline, visual) unless CodeWatch.requested?
+          dispatch_llm_stages(unstreamed(found, streamed), files, pass, deadline, visual, run_id:) unless CodeWatch.requested?
           delivered = deliver_pass(found, files, pass)
           return delivered unless CodeWatch.requested? && delivered.status == :continue
 
