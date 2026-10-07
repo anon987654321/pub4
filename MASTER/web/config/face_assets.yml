@@ -32,6 +32,7 @@ face_eager:
   - face_particles.js
   - face_audio_bridge.js
   - face_tts_bridge.js
+  - face_tts_polish.js
   - face_expression_bridge.js
   - face_blendshape_bridge.js
   - face_council_multi.js
