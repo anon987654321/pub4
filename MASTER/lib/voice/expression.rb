@@ -269,6 +269,12 @@ end
         VERTICAL_BIASES[app.to_s.downcase.to_sym] || {}
       end
 
+      def mood_signal(history_entry, key, fallback)
+        value = history_entry[key] || history_entry[key.to_s]
+        number = value.to_f if value
+        number.finite? ? number : fallback
+      end
+
       def mood_arc(history:)
         entries = Array(history)
         return { arousal: 0.45, valence: 0.0, entropy: 0.2, decay_rate: 0.65 } if entries.empty?
