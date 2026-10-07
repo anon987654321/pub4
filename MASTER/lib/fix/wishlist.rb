@@ -110,7 +110,7 @@ module Master
           if recorded_digest.empty? || recorded_digest != current_digest
             proposal["status"] = "stale"
             proposal["stale_reason"] = "anchor changed since proposal"
-            proposal["stale_at"] = Master::Time.utc_now.iso8601
+            proposal["stale_at"] = Master::Clock.utc_now.iso8601
             changed = true
             @bus&.publish("wishlist:stale", id: proposal["uid"], reason: proposal["stale_reason"])
             next
