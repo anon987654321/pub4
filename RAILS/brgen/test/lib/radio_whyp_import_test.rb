@@ -21,6 +21,38 @@ class RadioWhypImportTest < ActiveSupport::TestCase
     end
   end
 
+  test "yt-dlp timeout kills its process group" do
+    Dir.mktmpdir do |dir|
+      pidfile = File.join(dir, "child.pid")
+      launcher = File.join(dir, "yt-dlp")
+      File.write(
+        launcher,
+        "#!/bin/sh\n"         "echo \\$! > #{pidfile.dump}\n"         "sleep 30 &\n"         "wait\n",
+      )
+      File.chmod(0o755, launcher)
+
+      importer = Brgen::WhypRadioImporter.new(
+        collection_url: "https://whyp.it/collections/timeout-test",
+        audio_root: Pathname.new(dir).join("audio"),
+        manifest_root: Pathname.new(dir).join("manifest"),
+      )
+      importer.define_singleton_method(:require_commands!) {}
+      previous_path = ENV["PATH"]
+      previous_timeout = ENV["YTDLP_TIMEOUT"]
+      ENV["PATH"] = dir
+      ENV["YTDLP_TIMEOUT"] = "0.5"
+
+      error = assert_raises(SystemExit) { importer.send(:download_collection) }
+      assert_equal 1, error.status
+
+      child = Integer(File.read(pidfile))
+      assert_raises(Errno::ESRCH) { Process.kill(0, child) }
+    ensure
+      previous_path.nil? ? ENV.delete("PATH") : ENV["PATH"] = previous_path
+      previous_timeout.nil? ? ENV.delete("YTDLP_TIMEOUT") : ENV["YTDLP_TIMEOUT"] = previous_timeout
+    end
+  end
+
   test "seeds one manifest into both radio cities idempotently" do
     Dir.mktmpdir do |dir|
       audio = Pathname.new(dir).join("track-1.mp3")
