@@ -91,6 +91,22 @@ class TestLawLoopPolicy < Minitest::Test
     end
   end
 
+  def test_repair_routing_uses_live_operation_aware_model_selection
+    agent = Object.new
+    calls = []
+    agent.define_singleton_method(:model_for) do |operation:|
+      calls << operation
+      operation.to_sym == :file_write ? "grok-cli:auto" : "ollama:glm-5.3-flash:cloud"
+    end
+
+    loop = Master::Fix::LawLoop.allocate
+    loop.instance_variable_set(:@agent, agent)
+    selected = loop.send(:routing_model_ids)
+
+    assert_equal({ strong: "grok-cli:auto", fast: "ollama:glm-5.3-flash:cloud" }, selected)
+    assert_equal %i[file_write code_generation], calls
+  end
+
   def test_visual_custody_is_limited_to_frontend_rails_sources
     loop = Master::Fix::LawLoop.allocate
 
