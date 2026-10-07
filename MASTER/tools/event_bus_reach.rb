@@ -3,6 +3,7 @@
 require "ripper"
 require "set"
 require "json"
+require "yaml"
 require_relative "../lib/trace/dmesg"
 
 module Operator
@@ -32,6 +33,7 @@ module Operator
     SUBSCRIBE_METHODS = %w[subscribe].freeze
     EVENT_NAME = /\A[a-z][a-z0-9_]*:[a-z][a-z0-9_:-]*\z/
     WILDCARDS = ["*", "**"].freeze
+    TOPIC_CONTRACT_PATH = File.join(MASTER, "data", "event_topics.yml").freeze
 
     module_function
 
@@ -240,6 +242,36 @@ module Operator
       path.delete_prefix("#{MASTER}/")
     end
 
+
+
+    def topic_contract
+      @topic_contract ||= begin
+        data = YAML.safe_load_file(TOPIC_CONTRACT_PATH)
+        raise "event topic contract missing or unreadable: #{TOPIC_CONTRACT_PATH}" unless data.is_a?(Hash)
+        data
+      end
+    end
+
+    def contract_topics
+      publishers = topic_contract.fetch("publishers", {})
+      Array(publishers.is_a?(Hash) ? publishers.values.flatten : publishers).map(&:to_s).to_set
+    end
+
+    def retired_topics
+      Array(topic_contract.fetch("retired", [])).map(&:to_s).to_set
+    end
+
+    def contracted_publishers(data)
+      expected = contract_topics
+      actual = data[:publishers].keys.to_set
+      (expected - actual).sort
+    end
+
+    def retired_occurrences(data)
+      retired = retired_topics
+      data.values.flat_map { |rows| rows.keys }.select { |topic| retired.include?(topic) }.uniq.sort
+    end
+
     def collect
       publishers = Hash.new { |h, k| h[k] = [] }
       subscribers = Hash.new { |h, k| h[k] = [] }
@@ -282,12 +314,16 @@ module Operator
       consumed = (data[:subscribers].keys + data[:listeners].keys).to_set
 
       unpublished = topics.select { |topic| !published.include?(topic) }.sort
-      unconsumed = published.reject { |topic| consumed.include?(topic) }.sort
+      unconsumed = published.reject { |topic| !consumed.include?(topic) }.sort
+      contract_missing_publishers = contracted_publishers(data)
+      retired = retired_occurrences(data)
 
       {
         **data,
         unpublished: unpublished,
         unconsumed: unconsumed,
+        contract_missing_publishers: contract_missing_publishers,
+        retired_topics: retired,
       }
     end
 
@@ -296,7 +332,8 @@ module Operator
 
       if json
         io.puts(JSON.pretty_generate(result))
-        return strict && (result[:unpublished].any? || result[:unconsumed].any?) ? 1 : 0
+        return strict && (result[:unpublished].any? || result[:unconsumed].any? ||
+                          result[:contract_missing_publishers].any? || result[:retired_topics].any?) ? 1 : 0
       end
 
       Master::Trace::Dmesg.attach(
@@ -323,7 +360,22 @@ module Operator
         end
       end
 
-      strict && (result[:unpublished].any? || result[:unconsumed].any?) ? 1 : 0
+      unless result[:contract_missing_publishers].empty?
+        Master::Trace::Dmesg.status("eventbus0", "contract topics with no publisher", io:)
+        result[:contract_missing_publishers].each do |topic|
+          Master::Trace::Dmesg.status("eventbus0", topic, io:)
+        end
+      end
+
+      unless result[:retired_topics].empty?
+        Master::Trace::Dmesg.status("eventbus0", "retired topics present in census", io:)
+        result[:retired_topics].each do |topic|
+          Master::Trace::Dmesg.status("eventbus0", topic, io:)
+        end
+      end
+
+      strict && (result[:unpublished].any? || result[:unconsumed].any? ||
+                 result[:contract_missing_publishers].any? || result[:retired_topics].any?) ? 1 : 0
     end
   end
 end
