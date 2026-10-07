@@ -530,33 +530,6 @@ module Master
         value.to_s.downcase.gsub(/[^a-z0-9]+/, "_").gsub(/\A_+|_+\z/, "")[0, 64]
       end
 
-      def write_report(items, state:, target:, run_id:)
-        FileUtils.mkdir_p(File.dirname(out_file))
-        body = [
-          "# MASTER wishlist — #{Master::Clock.utc_now.iso8601}",
-          "",
-          "run: #{run_id}",
-          "target: #{target}",
-          "state: #{state}",
-          "items: #{items.size}",
-          "",
-        ]
-
-        items.each_with_index do |item, index|
-          body << "### #{index + 1}. #{item["title"]}"
-          body << ""
-          body << "#{item["rationale"]} [#{item["effort"]}; #{item["implementation"]}]"
-          body << "id: #{item["id"]}"
-          body << "anchor: #{item["anchor"]}"
-          body << "change: #{item["change"]}"
-          body << "evidence: #{item["evidence"]}"
-          body << "implementation: #{item["implementation"]}"
-          body << "reversibility: #{item["reversibility"]}"
-          body << ""
-        end
-
-        File.write(out_file, body.join("\n"))
-      end
     end
   end
 end
