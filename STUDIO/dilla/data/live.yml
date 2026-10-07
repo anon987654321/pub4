@@ -207,7 +207,7 @@ progressions:
       - { name: C7#11, bass: 36, tones: [52, 58, 60, 66] }
       - { name: Fm9, bass: 41, tones: [53, 56, 60, 63] }
       - { name: Bmaj7#11, bass: 47, tones: [54, 58, 63, 66] }
-      - { name: G13sus, bass: 43, tones: [53, 57, 62, 66] }
+      - { name: G7sus4, bass: 43, tones: [53, 57, 62, 65] }
       - { name: Dm9, bass: 38, tones: [53, 57, 60, 64] }
     knobs:
       cutoff: { sine_seconds: 19, phase: 0.7, centre: 0.52, depth: 0.38 }
