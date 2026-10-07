@@ -13,14 +13,14 @@ require_relative "../lib/trace/dmesg"
 # tools/security_sweep.rb is SWEEP_ROOT for the same reason.
 INVENTORY_ROOT = File.expand_path("../..", __dir__)
 # Both lists had gone stale in both directions at once, which is the worst state
-# an allowlist can be in: five of seven files and four of six directories named
-# subjects that no longer exist, while the four canonical trees, TODO.md and
-# ARCHITECTURE.md was absent from the allowlist — so this tool reported
-# as non-canonical top-level directories. A report that names the repo's own
-# trees as sprawl is one nobody acts on, and that is how it stayed wrong.
+# an allowlist can be in: subjects that no longer exist were still named while
+# current canonical files/directories were missing, so the inventory reported
+# the repo's own trees as sprawl. A report that names its own trees as sprawl is
+# one nobody acts on, and that is how it stayed wrong.
 #
-# CLAUDE.md says what belongs at the root: itself, TODO.md, ARCHITECTURE.md, and
-# else. The three harness files beside it are generated from MASTER/AGENTS.md by
+# CLAUDE.md says what belongs at the root: the repository contracts and the four
+# governed trees. The generated harness files sit beside it because their agents
+# read them there.
 # `rake docs:agent_contracts` and have to sit where their agent reads them.
 # test/test_lifecycle_tools.rb holds both lists to the tree in both directions.
 ALLOWED_ROOT_FILES = %w[
