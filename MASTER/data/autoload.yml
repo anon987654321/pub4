@@ -32,7 +32,7 @@ autoload:
     - cli/command_registry/model.rb
     - cli/command_registry/observe.rb
     - cli/command_registry/review.rb
-    - cli/command_registry/rules.rb
+    - cli/command_registry/laws.rb
     - cli/command_registry/status.rb
     - cli/command_registry/workspace.rb
     # Master::CLI::Pipeline::Pass -- pass_result.rb holds its Result value type.
@@ -40,21 +40,21 @@ autoload:
     # Master::Review::Scan::Rules -- each file is RuleDSL.rule calls into the
     # shared registry, not a constant of its own. The structural_rules
     # DIRECTORY beside structural_rules.rb does autoload.
-    - review/scan/rules/cosmetic_rules.rb
-    - review/scan/rules/external_linter_rules.rb
-    - review/scan/rules/graph_rules.rb
-    - review/scan/rules/js_rules.rb
-    - review/scan/rules/lexical_rules.rb
-    - review/scan/rules/meta_rules.rb
-    - review/scan/rules/naming_rules.rb
-    - review/scan/rules/ruby_rules.rb
-    - review/scan/rules/semantic_rules.rb
-    - review/scan/rules/structural_question_rules.rb
-    - review/scan/rules/structural_rules.rb
-    - review/scan/rules/surface_rules.rb
-    - review/scan/rules/universal_rules.rb
-    - review/scan/rules/web_rules.rb
-    - review/scan/rules/yaml_bridge_rules.rb
+    - review/scan/laws/cosmetic_rules.rb
+    - review/scan/laws/external_linter_rules.rb
+    - review/scan/laws/graph_rules.rb
+    - review/scan/laws/js_rules.rb
+    - review/scan/laws/lexical_rules.rb
+    - review/scan/laws/meta_rules.rb
+    - review/scan/laws/naming_rules.rb
+    - review/scan/laws/ruby_rules.rb
+    - review/scan/laws/semantic_rules.rb
+    - review/scan/laws/structural_question_rules.rb
+    - review/scan/laws/structural_rules.rb
+    - review/scan/laws/surface_rules.rb
+    - review/scan/laws/universal_rules.rb
+    - review/scan/laws/web_rules.rb
+    - review/scan/laws/yaml_bridge_rules.rb
     # Master::Review::Scan -- the scanner's three engines, split by concern and
     # required by scanner.rb. The directory groups them; it is not a namespace,
     # and each file declares the constant one level up.
