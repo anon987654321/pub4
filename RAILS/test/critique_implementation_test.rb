@@ -162,6 +162,45 @@ class CritiqueImplementationTest < Minitest::Test
     assert_includes brgen, '@use "stack_brgen" as *;'
   end
 
+  def test_yep_search_is_the_shared_rails_default
+    stack = read("shared/app/assets/stylesheets/_stack.scss")
+    brgen_stack = read("shared/app/assets/stylesheets/_stack_brgen.scss")
+    %w[amber bsdports].each do |app|
+      application = read("#{app}/app/assets/stylesheets/application.scss")
+      assert_includes application, '@use "stack" as *;'
+    end
+
+    assert_includes stack, '@forward "search_yep";'
+    assert_includes brgen_stack, '@forward "search_yep";'
+  end
+
+  def test_shared_yep_search_and_affiliate_pens_are_restored
+    search = read("shared/app/assets/stylesheets/_search_yep.scss")
+    affiliate = read("shared/app/views/shared/_affiliate_feed_unit.html.erb")
+    affiliate_css = read("shared/app/assets/stylesheets/_affiliate_feed_unit.scss")
+    brgen_css = read("brgen/app/assets/stylesheets/application.scss")
+
+    assert_includes search, "width: 480px;"
+    assert_includes search, "box-shadow: rgba(0, 0, 0, 0.25) 0 1px 8px 0;"
+    assert_includes search, "border-radius: 16px;"
+    assert_includes affiliate, 'data-controller="parallax-tilt"'
+    assert_includes affiliate, 'data-parallax-tilt-target="tile"'
+    assert_includes affiliate_css, "font-size: 9px;"
+    assert_includes affiliate_css, "letter-spacing: 2px;"
+    assert_includes affiliate_css, "transition: transform 180ms var(--ease-out)"
+    assert_includes brgen_css, ".store-promo-art-cta"
+    assert_includes brgen_css, "background: var(--bol-blue);"
+    assert_includes brgen_css, "font-size: 14px;"
+  end
+
+  def test_radio_restores_first_party_device_tilt_contract
+    source = read("brgen/app/javascript/radio_brgen_tunnel.js")
+    assert_includes source, "DeviceOrientationEvent"
+    assert_includes source, "requestPermission"
+    assert_includes source, 'deviceorientation'
+    assert_includes source, "this.tilt = { x: 0, y: 0 }"
+  end
+
   def test_brgen_radio_restores_the_original_eight_track_warp_tunnel
     source = read("brgen/app/javascript/radio_brgen_tunnel.js")
     importmap = read("brgen/config/importmap.rb")
