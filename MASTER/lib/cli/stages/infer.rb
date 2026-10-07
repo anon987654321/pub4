@@ -38,6 +38,8 @@ module Master
         }.freeze
 
         INFER_DESTRUCTIVE = %w[clear rebuild resync shell rollback].freeze
+        CONSENT_PREFIX = /\A\s*(?:yes|do\s+it|confirm(?:ed)?|go\s+ahead|i\s+mean\s+it)\b/i.freeze
+        CONSENT_NEGATION = /\b(?:no|not|don[\’\']t|do\s+not|never|stop|cancel|without)\b/i.freeze
         # The words Pipeline::Pass#resolve_target maps to a tree.
         TREE_ALIASES = /\A(?:rails|master|itself|self|face)\z/i.freeze
 
@@ -149,7 +151,7 @@ module Master
         end
 
         def explicit_destructive_consent?(msg)
-          msg.match?(/\b(?:yes|confirm|i\s+mean\s+it|explicitly|go\s+ahead)\b/i)
+          CONSENT_PREFIX.match?(msg) && !CONSENT_NEGATION.match?(msg)
         end
 
         def detect_locale(msg)
