@@ -86,6 +86,31 @@ class TestEventBusReach < Minitest::Test
     assert_includes result[:publishers], "pipeline:stage_start"
     assert_includes result[:references].fetch("phantom:recovery"), "web/public/visual_bridge.js"
     assert_includes result[:references].fetch("pipeline:stage_start"), "web/public/face_semantics.js"
+    assert_empty result[:contract_missing_publishers]
+    assert_empty result[:retired_topics]
+  end
+
+  def test_retired_topics_are_reported_deterministically
+    data = {
+      publishers: { "phantom:retry" => ["fixture.js"] },
+      subscribers: {},
+      listeners: {},
+      references: {},
+    }
+
+    assert_equal ["phantom:retry"], Operator::EventBusReach.retired_occurrences(data)
+  end
+
+  def test_contract_publisher_gap_is_reported_deterministically
+    data = {
+      publishers: { "phantom:detected" => ["fixture.rb"] },
+      subscribers: {},
+      listeners: {},
+      references: {},
+    }
+
+    assert_includes Operator::EventBusReach.contracted_publishers(data), "pipeline:stage_start"
+    assert_includes Operator::EventBusReach.contracted_publishers(data), "pipeline:stage_complete"
   end
 
   def test_operator_exposes_the_census
