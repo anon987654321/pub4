@@ -61,6 +61,23 @@ class TestDevice < Minitest::Test
     assert_equal "termux-media-player", Device::API_COMMANDS.fetch(:media_player)
   end
 
+  def test_android_commands_use_the_bounded_exec_primitive
+    stub_const = RbConfig::CONFIG["host_os"]
+    RbConfig::CONFIG["host_os"] = "linux-android"
+    ENV["PREFIX"] = "/data/data/com.termux/files/usr"
+
+    Master::Device.stub(:executable?, true) do
+      Master::Device::Io::Exec.stub(:capture3, ["ok\n", "", Struct.new(:success?).new(true)]) do
+        # Io is the enclosing namespace; this call proves the runtime no longer
+        # wraps a raw Open3 child in Timeout.timeout.
+        assert_equal "ok", Device.send(:run!, "termux-battery-status")
+      end
+    end
+  ensure
+    RbConfig::CONFIG["host_os"] = stub_const
+    ENV.delete("PREFIX")
+  end
+
   def test_status_is_dmesg_style
     lines = Device.status_lines
     assert lines.first.start_with?("device0:")
