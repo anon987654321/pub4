@@ -128,10 +128,12 @@ function renderNoCanvasFallback() {
       </linearGradient>
     </defs>
     <rect width="320" height="220" fill="#000"/>
-    <ellipse cx="160" cy="118" rx="72" ry="112" fill="url(#fallbackGlow)" opacity="0.88"/>
-    <circle cx="126" cy="98" r="14" fill="#000"/>
-    <circle cx="194" cy="98" r="14" fill="#000"/>
-    <path d="M128 152 Q160 160 192 152" fill="none" stroke="#000" stroke-width="5" stroke-linecap="round"/>
+    <ellipse cx="160" cy="110" rx="76" ry="116" fill="url(#fallbackGlow)" opacity="0.88"/>
+    <ellipse cx="126" cy="96" rx="18" ry="16" fill="#000"/>
+    <ellipse cx="194" cy="96" rx="18" ry="16" fill="#000"/>
+    <circle cx="126" cy="96" r="6" fill="#777"/>
+    <circle cx="194" cy="96" r="6" fill="#777"/>
+    <path d="M134 151 Q160 157 186 151" fill="none" stroke="#000" stroke-width="4" stroke-linecap="round"/>
     <text x="160" y="198" text-anchor="middle" font-family="monospace" font-size="16" fill="#fff">no canvas fallback</text>
   `;
   cv.replaceWith(svg);
@@ -725,9 +727,10 @@ if ('ResizeObserver' in window && cv) {
 
 // Grayscale depth map: white = near (high Z), black = background (filtered)
 // Phantom.land technique: sample pixel luminance directly as Z, no edge detection
-// Speculative future-human phenotype: a restrained projection from documented Homo trends —
-// slightly fuller cranial vault, reduced lower-face projection and subtly enlarged orbital field.
-// This is a design hypothesis, not a prediction: current evidence also supports stasis/neutral evolution.
+// Speculative distant-human phenotype: a restrained extension of documented Homo trends —
+// fuller neurocranial vault, more retracted lower face, reduced brow/nasal projection,
+// and a slightly stronger orbital field for visually mediated communication.
+// This is a design hypothesis, not a biological prediction.
 function generateFaceDepthMap(size) {
   const cv = new OffscreenCanvas(size, size);
   const ctx = cv.getContext('2d');
@@ -743,18 +746,18 @@ function generateFaceDepthMap(size) {
   g.addColorStop(1,    'rgba(0,  0,  0,  1)');
   ctx.fillStyle = g;
   ctx.beginPath();
-  ctx.ellipse(cx, cy, W * 0.255 * futureFeatureScale('facial_projection', 0.88) * futureFeatureScale('cranial_width', 1.03), H * 0.48 * futureFeatureScale('cranium_scale', 1.12), 0, 0, Math.PI * 2);
+  ctx.ellipse(cx, cy, W * 0.255 * futureFeatureScale('facial_projection', 0.82) * futureFeatureScale('cranial_width', 1.06), H * 0.48 * futureFeatureScale('cranium_scale', 1.18), 0, 0, Math.PI * 2);
   ctx.fill();
   // Jaw taper — pronounced reduction (smaller mandible, processed food)
   for (const ex of [-0.215, 0.215]) {
-    g = ctx.createRadialGradient(cx + (ex * W * futureFeatureScale('lower_face_scale', 0.90)) + (futureSideBias(Math.sign(ex)) * W), cy + H*0.28, 0, cx + (ex * W * futureFeatureScale('lower_face_scale', 0.90)) + (futureSideBias(Math.sign(ex)) * W), cy + H*0.28, W*0.16 * futureFeatureScale('lower_face_scale', 0.90));
+    g = ctx.createRadialGradient(cx + (ex * W * futureFeatureScale('lower_face_scale', 0.80)) + (futureSideBias(Math.sign(ex)) * W), cy + H*0.28, 0, cx + (ex * W * futureFeatureScale('lower_face_scale', 0.80)) + (futureSideBias(Math.sign(ex)) * W), cy + H*0.28, W*0.16 * futureFeatureScale('lower_face_scale', 0.80));
     g.addColorStop(0,    'rgba(0,0,0,0.98)');
     g.addColorStop(0.50, 'rgba(0,0,0,0.72)');
     g.addColorStop(1,    'rgba(0,0,0,0)');
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   }
   // Cranial vault — enlarged high forehead
-  g = ctx.createRadialGradient(cx, cy - H*(0.37 + 0.006*FACE_GENERATION), 0, cx, cy - H*(0.36 + 0.008*FACE_GENERATION), W*0.31 * futureFeatureScale('cranium_scale', 1.12) * futureFeatureScale('cranial_width', 1.03));
+  g = ctx.createRadialGradient(cx, cy - H*(0.37 + 0.006*FACE_GENERATION), 0, cx, cy - H*(0.36 + 0.008*FACE_GENERATION), W*0.31 * futureFeatureScale('cranium_scale', 1.18) * futureFeatureScale('cranial_width', 1.06));
   g.addColorStop(0,    'rgba(210,210,210,0.78)');
   g.addColorStop(0.55, 'rgba(150,150,150,0.36)');
   g.addColorStop(1,    'rgba(0,  0,  0,  0)');
@@ -778,7 +781,7 @@ function generateFaceDepthMap(size) {
     g.addColorStop(0,   'rgba(0,0,0,0)');
     g.addColorStop(0.5, 'rgba(0,0,0,0.08)');
     g.addColorStop(1,   'rgba(0,0,0,0)');
-    ctx.fillStyle = g; ctx.fillRect(cx + ex*W - W*0.08, cy - H*0.206, W*0.16 * futureFeatureScale('brow_scale', 0.74), H*0.014);
+    ctx.fillStyle = g; ctx.fillRect(cx + ex*W - W*0.08, cy - H*0.206, W*0.16 * futureFeatureScale('brow_scale', 0.66), H*0.014);
   }
   // Brow shelf — minimal neotenic arch
   for (const ex of [-0.112, 0.112]) {
@@ -796,12 +799,12 @@ function generateFaceDepthMap(size) {
   // Eye sockets — larger, rounder (screen/light-environment selection)
   const eyeAlphas = [0.66, 0.62];
   for (let ei = 0; ei < 2; ei++) {
-    const ex = (ei === 0 ? -0.118 : 0.118) * futureFeatureScale('orbital_scale', 1.08) + futureSideBias(ei === 0 ? -1 : 1) * 0.12;
+    const ex = (ei === 0 ? -0.118 : 0.118) * futureFeatureScale('orbital_scale', 1.10) + futureSideBias(ei === 0 ? -1 : 1) * 0.12;
     ctx.save();
     ctx.translate(cx + ex*W, cy - H*0.088);
-    ctx.scale(1.30 * futureFeatureScale('orbital_scale', 1.04), 1.03 * futureFeatureScale('orbital_scale', 1.04) * futureFeatureScale('orbital_vertical_scale', 1.02));
+    ctx.scale(1.30 * futureFeatureScale('orbital_scale', 1.10), 1.03 * futureFeatureScale('orbital_scale', 1.10) * futureFeatureScale('orbital_vertical_scale', 1.06));
     g = ctx.createRadialGradient(0, 0, 0, 0, 0, W*0.106);
-    g.addColorStop(0,    `rgba(0,0,0,${eyeAlphas[ei] * futureFeatureScale('orbital_scale', 1.04)})`);
+    g.addColorStop(0,    `rgba(0,0,0,${eyeAlphas[ei] * futureFeatureScale('orbital_scale', 1.10)})`);
     g.addColorStop(0.45, 'rgba(0,0,0,0.70)');
     g.addColorStop(0.80, 'rgba(0,0,0,0.24)');
     g.addColorStop(1,    'rgba(0,0,0,0)');
@@ -811,12 +814,12 @@ function generateFaceDepthMap(size) {
   }
   // Corneal specular + iris ring — enlarged pupils
   for (const ex of [-0.118, 0.118]) {
-    g = ctx.createRadialGradient(cx + ex*W, cy - H*0.088, 0, cx + ex*W, cy - H*0.088, W*0.040 * futureFeatureScale('pupil_scale', 0.82));
+    g = ctx.createRadialGradient(cx + ex*W, cy - H*0.088, 0, cx + ex*W, cy - H*0.088, W*0.040 * futureFeatureScale('pupil_scale', 0.88));
     g.addColorStop(0,   'rgba(185,185,185,0.42)');
     g.addColorStop(0.55,'rgba(95,95,95,0.18)');
     g.addColorStop(1,   'rgba(0,0,0,0)');
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-    g = ctx.createRadialGradient(cx + ex*W + W*0.011, cy - H*0.102, 0, cx + ex*W + W*0.011, cy - H*0.102, W*0.026 * futureFeatureScale('pupil_scale', 0.82));
+    g = ctx.createRadialGradient(cx + ex*W + W*0.011, cy - H*0.102, 0, cx + ex*W + W*0.011, cy - H*0.102, W*0.026 * futureFeatureScale('pupil_scale', 0.88));
     g.addColorStop(0,   'rgba(240,240,240,0.78)');
     g.addColorStop(0.45,'rgba(190,190,190,0.30)');
     g.addColorStop(1,   'rgba(0,0,0,0)');
@@ -867,7 +870,7 @@ function generateFaceDepthMap(size) {
   // Upper lip — narrow mouth (smaller jaw/teeth)
   ctx.save();
   ctx.translate(cx, cy + H*0.198);
-  ctx.scale(1.85 * futureFeatureScale('mouth_scale', 0.92), 1.0);
+  ctx.scale(1.85 * futureFeatureScale('mouth_scale', 0.84), 1.0);
   g = ctx.createRadialGradient(0, 0, 0, 0, 0, W*0.050);
   g.addColorStop(0,    'rgba(215,215,215,0.78)');
   g.addColorStop(0.38, 'rgba(168,168,168,0.42)');
@@ -878,7 +881,7 @@ function generateFaceDepthMap(size) {
   // Lower lip — compact
   ctx.save();
   ctx.translate(cx, cy + H*0.212);
-  ctx.scale(1.95 * futureFeatureScale('mouth_scale', 0.92), 1.0);
+  ctx.scale(1.95 * futureFeatureScale('mouth_scale', 0.84), 1.0);
   g = ctx.createRadialGradient(0, 0, 0, 0, 0, W*0.056);
   g.addColorStop(0,    'rgba(205,205,205,0.72)');
   g.addColorStop(0.38, 'rgba(158,158,158,0.38)');
@@ -901,7 +904,7 @@ function generateFaceDepthMap(size) {
   g.addColorStop(1,   'rgba(0,0,0,0)');
   ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   // Chin — small, receding point
-  g = ctx.createRadialGradient(cx, cy + H*(0.318 * futureFeatureScale('lower_face_scale', 0.90)), 0, cx, cy + H*0.318, W*0.068);
+  g = ctx.createRadialGradient(cx, cy + H*(0.318 * futureFeatureScale('lower_face_scale', 0.80)), 0, cx, cy + H*0.318, W*0.068);
   g.addColorStop(0,   'rgba(155,155,155,0.52)');
   g.addColorStop(0.58,'rgba(82, 82, 82, 0.20)');
   g.addColorStop(1,   'rgba(0,  0,  0,  0)');
