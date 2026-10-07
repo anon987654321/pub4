@@ -74,6 +74,19 @@ class VisualPassContractTest < Minitest::Test
     refute defined?(::Selenium::WebDriver), "the visual pass drives CDP through GeometryProbe, not Selenium"
   end
 
+  def test_visual_measurement_inconclusive_is_not_a_plateau
+    runner = Master::Fix::FixLoop::PassRunner.allocate
+    committer = Object.new
+    committer.define_singleton_method(:abort_transaction!) { Master::Result.ok(:aborted) }
+    runner.instance_variable_set(:@committer, committer)
+
+    visual = Master::Result.err("rendered visual review: INCONCLUSIVE — no browser", category: :inconclusive)
+    result = runner.send(:evidence_abort_result, visual, nil)
+
+    assert_equal :validation_failed, result.status
+    assert_includes result.message, "INCONCLUSIVE"
+  end
+
   def test_visual_findings_enter_the_existing_ui_council_and_fix_protocol
     with_tmp do |dir|
       pass = Pass.new(agent: :agent, root: dir)
