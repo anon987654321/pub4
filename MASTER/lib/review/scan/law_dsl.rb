@@ -89,4 +89,4 @@ require_relative "rules/meta_rules"
 # a run that had scanned.
 require_relative "rules/law_bridge_rule"
 require_relative "infra_helpers"
-require_relative "rule_registry_audit"
+require_relative "law_registry_audit"
