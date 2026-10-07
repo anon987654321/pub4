@@ -14,7 +14,7 @@ you write:
 
 The authority order is one stack: `soul.yml` > `laws.yml` >
 executable law (`law/*.rb` and `lib/review/scan/rules/*.rb`) > repo harnesses
-(`CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, `.cursorrules`,
+(`CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, `.cursorlaws`,
 `.github/copilot-instructions.md`) > per-tree contracts. Executable law outranks
 every sentence written about it. Harness files route agents to the law; they never
 override executable law and never become a second copy of it.
