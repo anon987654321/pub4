@@ -25,7 +25,7 @@ class TestDillaMidiEffects < Minitest::Test
       rng: Random.new(1),
       params: { scale_pcs: [0, 2, 4, 5, 7, 9, 11] }
     )
-    assert_equal [60, 62, 64, 65, 67, 69, 71].include?(out.first.midi), true
+    assert [60, 62, 64, 65, 67, 69, 71].include?(out.first.midi)
   end
 
   def test_motif_events_keep_the_single_musical_object_shape
@@ -38,6 +38,22 @@ class TestDillaMidiEffects < Minitest::Test
     )
     assert_equal [60, 62, 61], result.map(&:midi)
     assert_equal [0.0, 0.5, 1.0], result.map(&:at)
+  end
+
+
+  def test_live_improviser_routes_through_the_midi_rack_and_scene_state
+    livesets = File.read(File.expand_path("../dilla/lib/livesets.rb", __dir__))
+    assert_includes livesets, 'require_relative "midi_effects"'
+    assert_includes livesets, "DillaMidiEffects.apply"
+    assert_includes livesets, 'require_relative "scene"'
+    assert_includes livesets, "DillaScene.profile"
+    assert_includes livesets, "world_event"
+  end
+
+  def test_video_has_album_chapters
+    video = File.read(File.expand_path("../dilla/lib/radio_video.rb", __dir__))
+    assert_includes video, 'const journey = ["intro", "verse", "hook", "bridge", "solo", "breakdown", "hook", "outro"]'
+    assert_includes video, "const worldEvent"
   end
 
   def test_scene_is_deterministic_and_contains_world_event
