@@ -195,7 +195,7 @@ module Master
         ""
       end
 
-      def extract_version = @soul[/^Version: ([\d.]+)/, 1] || "1.0.0"
+      def extract_version = @soul[/^Version: ([\d.]+)/, 1] || "1.0.3"
       def extract_field(name) = @soul[/^#{Regexp.escape(name)}:\s*(.+)/, 1].to_s.strip
 
       def measure_drift(old_doc, new_doc)
