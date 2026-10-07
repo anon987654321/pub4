@@ -15,11 +15,31 @@ module Operator
 
     def parse(path)
       lines = File.readlines(path, encoding: "UTF-8")
-      pack = lines.filter_map do |line|
-        match = line.match(/\APack: tree=(\S+) git=(\S+) part=(\d+)\/(\d+) /)
-        match && { tree: match[1], git: match[2], part: Integer(match[3]), parts: Integer(match[4]) }
-      end.first
-      raise "snapshot extract: missing Pack header in #{path}" unless pack
+      headers = lines.filter_map do |line|
+        match = line.match(
+          /\APack: tree=(\S+) git=(\S+) part=(\d+)\/(\d+) text_total=(\d+) fragments_total=(\d+) binary=(\d+) omitted=(\d+) files_in_part=(\d+) fragments_in_part=(\d+) max_bytes=(\d+)\s*\z/
+        )
+        next unless match
+
+        {
+          tree: match[1],
+          git: match[2],
+          part: Integer(match[3]),
+          parts: Integer(match[4]),
+          text_total: Integer(match[5]),
+          fragments_total: Integer(match[6]),
+          binary: Integer(match[7]),
+          omitted: Integer(match[8]),
+          files_in_part: Integer(match[9]),
+          fragments_in_part: Integer(match[10]),
+          max_bytes: Integer(match[11]),
+        }
+      end
+      raise "snapshot extract: missing or malformed Pack header in #{path}" unless headers.one?
+      pack = headers.fetch(0)
+      unless pack[:parts].positive? && pack[:part].between?(1, pack[:parts]) && pack[:omitted].zero?
+        raise "snapshot extract: invalid or incomplete Pack header in #{path}"
+      end
 
       files = []
       current = nil
@@ -89,13 +109,26 @@ module Operator
       packs.group_by { |pack| pack.fetch(:tree) }.each do |tree, tree_packs|
         counts = tree_packs.map { |pack| pack.fetch(:parts) }.uniq
         indices = tree_packs.map { |pack| pack.fetch(:part) }.sort
+        text_totals = tree_packs.map { |pack| pack.fetch(:text_total) }.uniq
+        fragment_totals = tree_packs.map { |pack| pack.fetch(:fragments_total) }.uniq
+        binary_totals = tree_packs.map { |pack| pack.fetch(:binary) }.uniq
+        omitted_totals = tree_packs.map { |pack| pack.fetch(:omitted) }.uniq
         raise "snapshot extract: inconsistent part counts for #{tree}" unless counts.size == 1
+        raise "snapshot extract: inconsistent text totals for #{tree}" unless text_totals.size == 1
+        raise "snapshot extract: inconsistent fragment totals for #{tree}" unless fragment_totals.size == 1
+        raise "snapshot extract: inconsistent binary totals for #{tree}" unless binary_totals.size == 1
+        raise "snapshot extract: omitted files declared for #{tree}" unless omitted_totals == [0]
         expected = (1..counts.first).to_a
         raise "snapshot extract: missing or duplicate parts for #{tree}" unless indices == expected
+        raise "snapshot extract: expected #{counts.first} part(s), got #{tree_packs.size} for #{tree}" unless tree_packs.size == counts.first
 
         fragments = Hash.new { |hash, path| hash[path] = [] }
         tree_packs.each do |pack|
-          pack.fetch(:files).each do |file|
+          files = pack.fetch(:files)
+          paths = files.map { |file| file.fetch(:path) }
+          raise "snapshot extract: files_in_part mismatch for #{tree} part #{pack.fetch(:part)}" unless paths.uniq.size == pack.fetch(:files_in_part)
+          raise "snapshot extract: fragments_in_part mismatch for #{tree} part #{pack.fetch(:part)}" unless files.size == pack.fetch(:fragments_in_part)
+          files.each do |file|
             fragments[file.fetch(:path)] << [
               file[:fragment],
               file[:total_fragments],
@@ -130,13 +163,15 @@ module Operator
           FileUtils.mkdir_p(File.dirname(target))
           File.write(target, content, encoding: "UTF-8")
         end
+        expected_text_total = text_totals.fetch(0)
+        expected_fragment_total = fragment_totals.fetch(0)
+        raise "snapshot extract: text file count mismatch for #{tree}" unless fragments.size == expected_text_total
+        raise "snapshot extract: fragment count mismatch for #{tree}" unless fragments.values.sum(&:size) == expected_fragment_total
         total += fragments.size
       end
       total
     end
-
-nd
- end
+  end
 end
 
 if $PROGRAM_NAME == __FILE__

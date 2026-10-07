@@ -114,6 +114,32 @@ class TestSnapshotGenerator < Minitest::Test
       assert_includes error.message, "mixed git revisions"
     end
   end
+  def test_snapshot_extractor_rejects_incomplete_or_inconsistent_metadata
+    Dir.mktmpdir do |dir|
+      fence = "`" * 3
+      part1 = File.join(dir, "snapshot_MASTER.md")
+      part2 = File.join(dir, "snapshot_MASTER.part002.md")
+      header = "tree=MASTER git=abc123 part=1/2 text_total=1 fragments_total=2 binary=0 omitted=0 files_in_part=1 fragments_in_part=1 max_bytes=750000"
+      File.write(part1, ["# MASTER", "", "Pack: #{header}", "", "## `MASTER/example.rb [fragment 1/2 bytes=6 newline=1]`", "", "#{fence}ruby", "first", fence, "", "## Snapshot part complete", ""].join("\n"))
+      File.write(part2, ["# MASTER", "", "Pack: tree=MASTER git=abc123 part=2/2 text_total=1 fragments_total=2 binary=0 omitted=0 files_in_part=1 fragments_in_part=1 max_bytes=750000", "", "## `MASTER/example.rb [fragment 2/2 bytes=7 newline=1]`", "", "#{fence}ruby", "second", fence, "", "## Snapshot part complete", ""].join("\n"))
+
+      packs = [part1, part2].map { |path| Operator::SnapshotExtract.parse(path) }
+      target = File.join(dir, "rehydrated")
+
+      malformed = packs.first.merge(omitted: 1)
+      error = assert_raises(RuntimeError) do
+        Operator::SnapshotExtract.write([malformed, packs.last], File.join(dir, "omitted"))
+      end
+      assert_includes error.message, "invalid or incomplete Pack header"
+
+      bad_count = packs.last.merge(files_in_part: 2)
+      error = assert_raises(RuntimeError) do
+        Operator::SnapshotExtract.write([packs.first, bad_count], target)
+      end
+      assert_includes error.message, "files_in_part mismatch"
+    end
+  end
+
   def test_snapshot_does_not_include_its_own_output
     Dir.mktmpdir do |dir|
       output = File.join(dir, "snapshot_MASTER.md")
