@@ -45303,12 +45303,7 @@ if __FILE__ == $PROGRAM_NAME
   dilla_detach_if_asked!
 
   cmd = ARGV.shift
-  if cmd.nil?
-    # Bare invoke is the instrument now: the live showcase, cycling Dilla's
-    # source-backed harmony, the Moog/DFAM rack, synth demos and exact Bach MIDI.
-    live!(["showcase"])
-    exit
-  elsif render_output_path?(cmd) && !DISPATCH.key?(cmd)
+  if render_output_path?(cmd) && !DISPATCH.key?(cmd)
     ARGV.unshift(cmd)
     default_render!
   else
