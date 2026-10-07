@@ -233,7 +233,7 @@ module Master
           files:, target:, max_passes:, deadline:, budget_seconds:,
           start_pass: resumed.value!, run_id:, wishlist_proposals: []
         )
-        result = continue_with_wishlist(result, files:, target:, max_passes:, budget_seconds:, run_id:) if requested
+        result = continue_with_wishlist(result, files:, target:, max_passes:, budget_seconds:, run_id:)
         finish_run(result, target, run_id, mission:, requested:)
       end
 
