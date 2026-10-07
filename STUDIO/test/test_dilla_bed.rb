@@ -3,8 +3,8 @@
 require_relative "dilla_helper"
 require "open3"
 
-# The bed is dilla's render: a bare `ruby dilla.rb` plays the catalogue through
-# it and `ruby dilla.rb bed` plays it under the narration. These pin what the
+# The bed is dilla's render: the explicit pieces command renders the catalogue,
+# while bare ruby dilla.rb is the finished live showcase. These pin what the
 # operator asked of it and what is easiest to lose in an edit: every piece of
 # the catalogue voiced, nothing played that the engine did not synthesise, no
 # setting without a reader, and a rendered piece that lands where it should.
@@ -135,7 +135,8 @@ class TestDillaBed < Minitest::Test
     skip "ffmpeg and ffprobe not on PATH" unless system("which", "ffmpeg", out: File::NULL, err: File::NULL) &&
                                                    system("which", "ffprobe", out: File::NULL, err: File::NULL)
 
-    Dir.mktmpdir("dilla-noarg-smoke") do |dir|
+    base = ENV.fetch("TMPDIR", "/tmp")
+    Dir.mktmpdir("dilla-noarg-smoke", base) do |dir|
       out = File.join(dir, "demo.wav")
       env = {
         "DILLA_PIECES_ORDER" => "minor_half_step_pair,maj7_minor_cycle",
@@ -145,8 +146,9 @@ class TestDillaBed < Minitest::Test
         "DILLA_SCRATCH_DIR" => File.join(dir, "scratch"),
         "DILLA_NO_PROVENANCE" => "1",
         "DILLA_ASSET_CHECK" => "0",
+        "TMPDIR" => dir,
       }
-      output, error, status = Open3.capture3(env, RbConfig.ruby, DILLA_SOURCE)
+      output, error, status = Open3.capture3(env, RbConfig.ruby, DILLA_SOURCE, "pieces")
 
       assert status.success?, error
       assert File.file?(out), output
@@ -173,9 +175,12 @@ class TestDillaComposition < Minitest::Test
   # The bare invoke is the catalogue, which is what the operator asked demo.wav
   # to be on 2026-09-16: ten to twenty short pieces that are not each other. The
   # six-minute piece keeps a door of its own rather than losing one.
-  def test_a_bare_invoke_renders_the_catalogue
-    assert_match(/if cmd\.nil\?\n(?:\s*#[^\n]*\n)*\s*Bed\.pieces!/, SOURCE)
-    assert_match(/"compose" => -> \{ Composition\.demo! \}/, SOURCE)
+  def test_a_bare_invoke_renders_the_showcase
+    assert_match(/if ARGV\.empty\?/, SOURCE)
+    assert_includes SOURCE, "prepare_showcase_defaults!"
+    assert_match(/live!\(\["showcase", "mode=all"\]\)/, SOURCE)
+    assert_match(/"pieces"\s*=>\s*->\s*\{\s*Bed\.pieces!\s*\}/, SOURCE)
+    assert_match(/"compose"\s*=>\s*->\s*\{\s*Composition\.demo!\s*\}/, SOURCE)
   end
 
   def test_the_piece_is_about_six_minutes_in_twelve_sections
