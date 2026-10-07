@@ -3505,7 +3505,7 @@ SHOWCASE_MODES = {
 
     def stage_midi_events!(stage, events, fm: nil, patch: nil)
       chain = ENV.fetch("DILLA_MIDI_CHAIN", "default").to_sym
-      transformed = DillaMidiEffects.apply(events, name: chain, rng: @rng)
+      transformed = DillaMidiEffects.apply(events, name: chain, rng: @rng, params: DillaMidiEffects::DEFAULTS.merge(scale_pcs: @lead_scale_pcs))
       transformed.each do |event|
         if fm
           stage.fm(event.midi, fm, event.at, event.held, event.gain)
