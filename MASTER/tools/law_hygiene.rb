@@ -16,8 +16,8 @@
 #   idiom. rexml/rexml.rb, drb/drb.rb and mail/mail.rb all do it, and so do
 #   law/law.rb and lib/cli/session.rb.
 #
-#   ruby MASTER/tools/rule_hygiene.rb
-#   ruby MASTER/tools/rule_hygiene.rb --json
+#   ruby MASTER/tools/law_hygiene.rb
+#   ruby MASTER/tools/law_hygiene.rb --json
 
 require "yaml"
 require "json"
@@ -207,7 +207,7 @@ module Operator
       lib = File.join(MASTER, "lib")
       $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
       require "master"
-      require "review/scan/rule_dsl"
+      require "review/scan/law_dsl"
       Master::Review::Scan::Rule.registry.filter_map do |klass|
         rule = Master::Review::Scan::RuleFactory.build(klass, root: MASTER)
         [rule.id.to_s.upcase, rule.severity]
