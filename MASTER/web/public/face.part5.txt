@@ -1160,6 +1160,7 @@ function startEverything() {
   window.MASTER?.boot?.transition?.('FACE', { source: 'startEverything' });
   ensureFrameLoop();
   initAudio();
+  bootChime();
   window.MASTER?.boot?.transition?.('VOICE', { source: 'initAudio' });
   window.MASTER?.boot?.signal?.('voice_ready', { source: 'initAudio' });
   prefetchTtsPhraseBank?.();
