@@ -77,7 +77,7 @@ module Master
         raise ArgumentError, "unknown voice state: #{state}" unless STATES.include?(state)
 
         token = if state == :speaking
-                  Playback.begin_generation!
+                  Playback.begin_reply_generation!
                 else
                   @lock.synchronize { @generation }
                 end
