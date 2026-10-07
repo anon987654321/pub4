@@ -57,6 +57,23 @@ class TestReachExec < Minitest::Test
     assert_equal "piped", out
   end
 
+  # Readers and stdin must run concurrently: a producer that emits a
+  # large input can otherwise fill the pipe before the child gets a chance
+  # to drain stdout, deadlocking the sanctioned subprocess primitive.
+  def test_large_stdin_does_not_deadlock_before_output_readers_start
+    started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+    out, status = E.capture2e(
+      "sh", "-c", "head -c 1",
+      stdin_data: "x" * 1_000_000,
+      timeout: 3,
+    )
+    elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
+
+    assert_equal "x", out
+    assert status.success?
+    assert_operator elapsed, :<, 3
+  end
+
   def test_timeout_returns_fast_non_success_and_reaps_tree
     marker = "master_exec_timeout_probe_#{Process.pid}"
     started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
