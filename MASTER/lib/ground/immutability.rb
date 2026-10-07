@@ -8,7 +8,7 @@ module Master
   module Ground
     # Verifies checksums for the sacred paths declared in data/soul.yml.
     class Immutability
-    include Master::Io::AtomicWrite
+    include ::Master::Io::AtomicWrite
 
       STORE_REL = "data/checksums.yml"
       MANIFEST_REL = "data/soul.yml"
