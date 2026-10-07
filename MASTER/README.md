@@ -318,3 +318,12 @@ Read [AGENTS](AGENTS.md), which routes into the governing law and closes on what
 MASTER refuses and why. Anything strange on purpose says so in a comment beside
 it, and the open work lives in [one backlog](../TODO.md). Licensed MIT.
 
+### Operator execution modes
+
+Every Fold starts with an explicit operator mode: `observe`, `plan`, `repair`, or
+`deploy`. The mode is derived from task risk and intent before the first effect,
+stored inside `.master/mission.json`, and visible in mission status and trace.
+
+The mode selects a starting capability profile; it never outranks `soul.yml`,
+`laws.yml`, executable law, the sandbox, evidence rules or verification. Interrupted
+work resumes under the recorded contract instead of silently widening authority.
