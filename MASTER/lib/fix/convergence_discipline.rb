@@ -158,7 +158,8 @@ module Master
           effect: progressed ? "measured tree change" : "no measured tree change",
         )
         @reasoning_memory ||= Master::Ground::Memory.new(root: @root)
-        key = @reasoning_memory.remember_reasoning(frame, key: "reasoning/fix/#{Time.now.to_i}-#{pass}")
+        digest = Digest::SHA256.hexdigest(JSON.generate(frame))[0, 12]
+        key = @reasoning_memory.remember_reasoning(frame, key: "reasoning/fix/#{Time.now.to_i}-#{pass}-#{digest}")
         @bus&.publish("cognition:reasoning", key:, status: frame[:status] || frame["status"], leverage: top ? Master::Cognition::Intelligence.leverage_score(top) : 0)
       rescue StandardError => e
         @bus&.publish("cognition:reasoning_inconclusive", pass:, error: "#{e.class}: #{e.message}")
