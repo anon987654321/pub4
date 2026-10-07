@@ -62,11 +62,17 @@ class TestFixWishlist < Minitest::Test
     assert_equal "wishlist: drafted 20 item(s) → runtime/wishlist.md", result
   end
 
-  def test_pending_context_exposes_only_the_headings
+  def test_pending_context_exposes_full_next_fix_proposals
     agent = RecordingAgent.new(reply)
     Master::Fix::Wishlist.new(root: @root, agent:).call(state: "done", target: @root, run_id: "r3")
 
     context = Master::Fix::Wishlist.pending_context(@root, limit: 2)
-    assert_equal "Pending wishlist proposals:\n### 1. Wish 1\n### 2. Wish 2", context
+    assert_includes context, "Pending wishlist proposals eligible for automatic implementation."
+    assert_includes context, "### 1. Wish 1"
+    assert_includes context, "### 2. Wish 2"
+    assert_includes context, "anchor: lib/sample.rb:1"
+    assert_includes context, "change: make the next improvement explicit"
+    assert_includes context, "evidence: sample.rb is present in the oriented tree"
+    assert_includes context, "Treat each supported next_fix proposal as an actual repair target"
   end
 end
