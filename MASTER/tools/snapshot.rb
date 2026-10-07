@@ -183,9 +183,8 @@ module Operator
       return 0 if path.match?(/(?:\.bundle|\.min)\.(?:js|css)\z/)
       return 0 if path.end_with?(".map")
       return 5 if path == "MASTER/web/public/three.face.module.js"
-      return 10 if path.match?(%r{/public/.*(?:runtime|bundle)\.js\z})
-      return 50 if path.start_with?("MASTER/web/public/")
-      100
+      return 20 if path.start_with?("MASTER/web/public/") && !path.match?(/face|chat/i)
+      return 100
     end
 
     def mandatory?(path)
