@@ -84,7 +84,7 @@ module Master
         @convergence_discipline = ConvergenceDiscipline.new(root: @root, bus: @bus)
 
         @file_collector = FileCollector.new(root:, bus:)
-        @rule_order = LawOrder.new(rules:, learnings:, bus:, root:)
+        @law_order = LawOrder.new(rules:, learnings:, bus:, root:)
         @pass_runner = build_pass_runner(rules:, agent:, scanner:, root:, bus:, learnings:,
           ground_truth:, preserve_user_intent:, law_resolver:, homeostat: @homeostat,
           discipline: @convergence_discipline, wishlist: @wishlist)
@@ -243,8 +243,8 @@ module Master
 
       def collect_files(target) = @file_collector.collect(target)
 
-      def ordered_rules(violation_counts: {})
-        @rule_order.ordered(violation_counts:)
+      def ordered_laws(violation_counts: {})
+        @law_order.ordered(violation_counts:)
       end
 
       def self.preamble_from_soul = [LawLoop.soul_preamble, Protocol.instruction].join("\n\n")
