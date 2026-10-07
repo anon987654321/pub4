@@ -89,22 +89,25 @@ class TestSnapshotGenerator < Minitest::Test
     assert_includes source, "SOURCE_FRAGMENT_BYTES = 600_000"
   end
 
-  def test_snapshot_extractor_reassembles_fragments_and_rejects_mixed_packs
+  def test_snapshot_extractor_reassembles_parts_and_validates_pack_integrity
     Dir.mktmpdir do |dir|
       fence = "`" * 3
       heading1 = "## `MASTER/example.rb [fragment 1/2 bytes=6 newline=1]`"
       heading2 = "## `MASTER/example.rb [fragment 2/2 bytes=7 newline=1]`"
-      part1 = File.join(dir, "snapshot_MASTER.md")
-      part2 = File.join(dir, "snapshot_MASTER.part002.md")
-      File.write(part1, ["# MASTER", "", "Pack: tree=MASTER git=abc123 part=1/2 text_total=1 fragments_total=2 binary=0 omitted=0", "", heading1, "", "#{fence}ruby", "first", fence, "", "## Snapshot part complete", ""].join("\n"))
-      File.write(part2, ["# MASTER", "", "Pack: tree=MASTER git=abc123 part=2/2 text_total=1 fragments_total=2 binary=0 omitted=0", "", heading2, "", "#{fence}ruby", "second", fence, "", "## Snapshot part complete", ""].join("\n"))
+      master1 = File.join(dir, "snapshot_MASTER.md")
+      master2 = File.join(dir, "snapshot_MASTER.part002.md")
+      rails1 = File.join(dir, "snapshot_RAILS.md")
+      File.write(master1, ["# MASTER", "", "Pack: tree=MASTER git=abc123 part=1/2 text_total=1 fragments_total=2 binary=0 omitted=0", "", heading1, "", "#{fence}ruby", "first", fence, "", "## Snapshot part complete", ""].join("\n"))
+      File.write(master2, ["# MASTER", "", "Pack: tree=MASTER git=abc123 part=2/2 text_total=1 fragments_total=2 binary=0 omitted=0", "", heading2, "", "#{fence}ruby", "second", fence, "", "## Snapshot part complete", ""].join("\n"))
+      File.write(rails1, ["# RAILS", "", "Pack: tree=RAILS git=abc123 part=1/1 text_total=1 fragments_total=1 binary=0 omitted=0", "", "## `RAILS/example.rb [bytes=5 newline=1]`", "", "#{fence}ruby", "rails", fence, "", "## Snapshot part complete", ""].join("\n"))
 
       target = File.join(dir, "rehydrated")
-      packs = [part1, part2].map { |path| Operator::SnapshotExtract.parse(path) }
-      assert_equal 1, Operator::SnapshotExtract.write(packs, target)
+      packs = [master1, master2, rails1].map { |path| Operator::SnapshotExtract.parse(path) }
+      assert_equal 2, Operator::SnapshotExtract.write(packs, target)
       assert_equal "first\nsecond\n", File.read(File.join(target, "MASTER", "example.rb"))
+      assert_equal "rails\n", File.read(File.join(target, "RAILS", "example.rb"))
 
-      mismatched = Operator::SnapshotExtract.parse(part2).merge(git: "different")
+      mismatched = Operator::SnapshotExtract.parse(master2).merge(git: "different")
       error = assert_raises(RuntimeError) do
         Operator::SnapshotExtract.write([packs.first, mismatched], File.join(dir, "bad"))
       end
