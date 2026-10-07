@@ -44,7 +44,10 @@ module Master
         matches = @loaded.select do |s|
           s[:triggers]&.any? { |t| input.match?(Regexp.new(t, Regexp::IGNORECASE)) }
         end
-        matches.each { |skill| record_used(skill[:name]) }
+        matches.each do |skill|
+          record_used(skill[:name])
+          @bus&.publish("skills:triggered", skill: skill[:name], revision: skill[:revision])
+        end
         matches
       end
 
@@ -133,7 +136,24 @@ module Master
           body: skill[:body].to_s,
           source: skill[:source].to_s,
         }
-        skill.merge(revision: Digest::SHA256.hexdigest(Marshal.dump(portable)))
+        skill.merge(revision: Digest::SHA256.hexdigest(Marshal.dump(portable_revision(skill, portable))))
+      end
+
+      def portable_revision(skill, portable)
+        return portable unless skill[:dir] && File.directory?(skill[:dir])
+
+        files = Dir.glob(File.join(skill[:dir], "**", "*"), File::FNM_DOTMATCH).filter_map do |path|
+          next unless File.file?(path) && !File.symlink?(path)
+
+          relative = path.delete_prefix("#{skill[:dir]}/")
+          size = File.size(path)
+          next if size > 1_048_576
+          [relative, size, File.stat(path).mode & 0o111, File.read(path, mode: "rb")]
+        rescue SystemCallError, IOError
+          nil
+        end.sort_by(&:first)
+
+        portable.merge("files" => files)
       end
 
       def sort_by_recency(skills)

@@ -339,10 +339,23 @@ module Master
 
       def self.migrate_record(record, now: Time.now.utc.iso8601)
         version = record["version"].to_i
-        return record if version == VERSION
+        return normalize_v2(record) if version == VERSION
         return migrate_v1(record, now:) if version == 1
 
         raise "mission version #{record["version"]} is unsupported"
+      end
+
+      def self.normalize_v2(record)
+        out = record.dup
+        operator = record["operator"].is_a?(Hash) ? record["operator"] : {}
+        mode = operator["mode"].to_s
+        mode = "repair" unless %w[observe plan repair deploy].include?(mode)
+        out["operator"] = {
+          "mode" => mode,
+          "risk" => operator["risk"],
+          "intent" => operator["intent"]
+        }.compact
+        out
       end
 
       def self.migrate_v1(record, now:)
@@ -560,7 +573,7 @@ module Master
 
         raw = JSON.parse(File.read(path, encoding: "UTF-8"))
         migrated = self.class.migrate_record(raw)
-        persist_record(path, migrated) if migrated["version"].to_i != raw["version"].to_i
+        persist_record(path, migrated) if migrated != raw
         migrated
       rescue JSON::ParserError => e
         Master::Ground::Swallow.log(e, context: "mission.load")
