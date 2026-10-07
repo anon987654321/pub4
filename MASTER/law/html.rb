@@ -225,7 +225,11 @@ Law.define(:NO_INLINE_SCRIPT_BLOCK) do
   # This clause was written twice, identically, with its reason above each copy.
   # The second silently replaced the first, so half of it had never been read by
   # anything.
-  path_exclude %r{/public/\d{3}\.html\z|/script/probe_\w+\.html\z}
+  # Two owned surfaces have a different transport contract:
+  # mailer styles must be embedded because mail clients do not load the web asset
+  # pipeline, and theme_bootstrap is a nonce-bearing first-paint script whose
+  # blocking position is intentional so the chosen theme is present before paint.
+  path_exclude %r{/public/\d{3}\.html\z|/script/probe_\w+\.html\z|/_mailer_styles\.html\.erb\z|/_theme_bootstrap\.html\.erb\z}
   detect { |line| line.match?(/<script(?![^>]*\bsrc=)|<style\b(?![^>]*\bhref=)/) }
   fix "Move it to an asset file and reference it with javascript_include_tag or stylesheet_link_tag."
   bad  "<div><script>boot()</script></div>"
