@@ -163,17 +163,12 @@ module Master
         end
 
         def too_many_lines?(path)
-          return false unless text_candidate?(path)
           limit = Master::Review::Scan::FileProcessor::MAX_LINES
-          File.foreach(path, encoding: "UTF-8").with_index(1) { |_, line| return true if line > limit }
+          File.foreach(path, encoding: "UTF-8", invalid: :replace, undef: :replace)
+              .with_index(1) { |_, line| return true if line > limit }
           false
         rescue StandardError
           true
-        end
-
-        def text_candidate?(path)
-          language = Master.language_for(path)
-          !language.nil? && language != "binary"
         end
 
         def binary?(path)
