@@ -1,4 +1,124 @@
 @use "stack_brgen" as *;
+/* First-party vertical awareness unit.
+ *
+ * The circle keeps the historic “Spin for the win!” geometry: one dot,
+ * one rotating wordmark. The feed remains a flat, content-led surface; the
+ * signal is carried by motion and ink rather than a decorative container line.
+ */
+.brgen-vertical-promo {
+  --promo-signal: var(--accent);
+  background: var(--bg);
+}
+
+.brgen-vertical-promo[data-promo="radio"] {
+  --promo-signal: #4ecdc4;
+}
+
+.brgen-vertical-promo__link {
+  display: grid;
+  grid-template-columns: minmax(8rem, 18rem) minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(1rem, 4vw, 3rem);
+  padding: clamp(1rem, 4vw, 2rem);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.brgen-vertical-promo__link:hover .brgen-vertical-promo__action,
+.brgen-vertical-promo__link:focus-visible .brgen-vertical-promo__action {
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.brgen-vertical-promo__disc {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: clamp(8rem, 42vw, 18rem);
+  aspect-ratio: 1;
+  border: 0;
+  border-radius: 50%;
+  animation: brgen-vertical-promo-spin 100s linear infinite;
+}
+
+.brgen-vertical-promo__host {
+  max-width: 75%;
+  color: var(--text);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-tight);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.brgen-vertical-promo__dot {
+  position: absolute;
+  inset-block-start: 10%;
+  inset-inline-start: 50%;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--promo-signal);
+  transform: translate(-50%, -50%);
+}
+
+.brgen-vertical-promo__copy {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-1);
+  max-width: 42rem;
+}
+
+.brgen-vertical-promo__kicker {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-tight);
+}
+
+.brgen-vertical-promo__title {
+  font-size: clamp(1.35rem, 4vw, 2.25rem);
+  line-height: 1;
+  letter-spacing: var(--tracking-tight);
+}
+
+.brgen-vertical-promo__body {
+  max-width: 58ch;
+  color: var(--text-secondary);
+  font-size: var(--text-base);
+}
+
+.brgen-vertical-promo__action {
+  margin-top: var(--space-2);
+  color: var(--text);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+}
+
+@keyframes brgen-vertical-promo-spin {
+  to {
+    transform: rotate(3000deg);
+  }
+}
+
+@media (max-width: 639px) {
+  .brgen-vertical-promo__link {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+  }
+
+  .brgen-vertical-promo__copy {
+    justify-items: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brgen-vertical-promo__disc {
+    animation: none;
+  }
+}
+
 @use "shell" with ($drawer-chrome: false);
 @use "site_legal";
 @use "sass:meta";
