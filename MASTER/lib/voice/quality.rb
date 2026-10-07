@@ -29,7 +29,7 @@ module Master
         out, _err, status = Open3.capture3(
           "ffprobe", "-v", "error", "-select_streams", "a:0",
           "-show_entries", "format=duration:stream=sample_rate,channels",
-          "-of", "default=noprint_wrappers=1:nokey=1", path
+          "-of", "csv=p=0:s=,", path
         )
         return unless status.success?
 
@@ -42,14 +42,14 @@ module Master
       end
 
       def clipping?(path)
-        out, _err, status = Open3.capture3(
-          "ffmpeg", "-v", "error", "-i", path,
+        _out, err, status = Open3.capture3(
+          "ffmpeg", "-v", "info", "-i", path,
           "-af", "astats=metadata=1:reset=1",
-          "-f", "null", "-", err: File::NULL
+          "-f", "null", "-"
         )
         return false unless status.success?
 
-        out.to_s.include?("clipping")
+        err.to_s.downcase.include?("clipping")
       rescue StandardError
         false
       end
