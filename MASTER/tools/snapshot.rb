@@ -212,7 +212,12 @@ module Operator
           total = fragments.size
           longest = body.scan(/^\x60{3,}/).map(&:length).max.to_i
           fence = 96.chr * [3, longest + 1].max
-          label = total == 1 ? path : "#{path} [fragment #{index + 1}/#{total}]"
+          newline = body.end_with?("\n") ? 1 : 0
+          label = if total == 1
+            "#{path} [bytes=#{body.bytesize} newline=#{newline}]"
+          else
+            "#{path} [fragment #{index + 1}/#{total} bytes=#{body.bytesize} newline=#{newline}]"
+          end
           out = +"## #{96.chr}#{label}#{96.chr}\n\n"
           out << "#{fence}#{FENCE.fetch(File.extname(path), "")}\n"
           out << body
