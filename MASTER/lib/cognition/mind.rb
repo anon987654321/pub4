@@ -44,7 +44,7 @@ module Master
     # whichever comes first. Idle costs nothing, because an idle bus makes no
     # observations to be due for.
     class Mind
-      include Master::Io::AtomicWrite
+      include ::Master::Io::AtomicWrite
       STATE_PATH = ".master/cognition/state.yml"
       TICK_EVERY_S = 60
       TICK_EVERY_OBSERVATIONS = 256
