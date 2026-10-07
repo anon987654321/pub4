@@ -86,14 +86,30 @@ module Master
         end
 
         def filter_entries(entries, include_only:, exclude:)
-          inc_patterns = Array(include_only).map { |p| Regexp.new(p) }
-          exc_patterns = Array(exclude).map { |p| Regexp.new(p) }
+          inc_patterns = compile_filter_patterns(include_only, "include")
+          exc_patterns = compile_filter_patterns(exclude, "exclude")
+          return [] if inc_patterns.nil? || exc_patterns.nil?
 
           entries.select do |entry|
             base = File.basename(entry[:path])
             matches_inc = inc_patterns.empty? || inc_patterns.any? { |r| r.match?(base) }
             matches_exc = exc_patterns.any? { |r| r.match?(base) }
             matches_inc && !matches_exc
+          end
+        end
+
+        def compile_filter_patterns(patterns, kind)
+          Array(patterns).map do |source|
+            Regexp.new(source.to_s)
+          rescue RegexpError => e
+            Master::Ground::Swallow.log(
+              e,
+              context: "antigravity.json_config.#{kind}_filter",
+              pattern: source.to_s,
+            )
+            nil
+          end.tap do |compiled|
+            return if compiled.any?(&:nil?)
           end
         end
       end
@@ -249,8 +265,9 @@ module Master
         def scan_skills_dir(dir_path, source:, include_only: [], exclude: [])
           return unless File.directory?(dir_path)
 
-          inc_patterns = Array(include_only).map { |p| Regexp.new(p) }
-          exc_patterns = Array(exclude).map { |p| Regexp.new(p) }
+          inc_patterns = compile_filter_patterns(include_only, "include")
+          exc_patterns = compile_filter_patterns(exclude, "exclude")
+          return if inc_patterns.nil? || exc_patterns.nil?
 
           Dir.glob(File.join(dir_path, "*")).sort.each do |skill_dir|
             next unless File.directory?(skill_dir)
@@ -264,6 +281,21 @@ module Master
 
             parsed = parse_skill_file(skill_file, skill_dir, source:)
             @skills[parsed[:name]] = parsed if parsed
+          end
+        end
+
+        def compile_filter_patterns(patterns, kind)
+          Array(patterns).map do |source|
+            Regexp.new(source.to_s)
+          rescue RegexpError => e
+            Master::Ground::Swallow.log(
+              e,
+              context: "antigravity.skills.#{kind}_filter",
+              pattern: source.to_s,
+            )
+            nil
+          end.tap do |compiled|
+            return if compiled.any?(&:nil?)
           end
         end
 
