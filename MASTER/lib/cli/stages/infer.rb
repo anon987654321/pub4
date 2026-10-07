@@ -151,8 +151,14 @@ module Master
           )
         end
 
+        CONSENT_PREFIX = /\A\s*(?:yes|do\s+it|confirm(?:ed)?|go\s+ahead|i\s+mean\s+it)\b/i.freeze
+        CONSENT_NEGATION = /\b(?:no|not|don['’]t|do\s+not|never|stop|cancel|without)\b/i.freeze
+
         def explicit_destructive_consent?(msg)
-          msg.match?(/\b(?:yes|confirm|i\s+mean\s+it|explicitly|go\s+ahead)\b/i)
+          text = msg.to_s.strip
+          return false unless text.match?(CONSENT_PREFIX)
+
+          !text.match?(CONSENT_NEGATION)
         end
 
         def detect_locale(msg)
