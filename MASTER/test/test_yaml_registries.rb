@@ -11,7 +11,7 @@ YAML_SPECS = {
   "patterns.yml"                 => { required_keys: %w[infer prompt_archaeology repo_topics], arrays: [] },
   # zsh, injection and refusal_templates moved to laws.yml: they are law, and
   # patterns.yml is the register for what is not. The guarantee moved with them.
-  "laws.yml"                    => { required_keys: %w[transformation_policy architecture plugins tokens runtime_policy self_test veto_patterns anti_patterns rule_deps], arrays: [] },
+  "laws.yml"                    => { required_keys: %w[transformation_policy architecture plugins tokens runtime_policy self_test veto_patterns anti_patterns law_deps], arrays: [] },
 }.freeze
 
 PATTERNS_NAMESPACES = {
@@ -577,8 +577,8 @@ class TestLawsPhysicalOrder < Minitest::Test
   ORDER = %w[
     CAPABILITY_STATUS_MUST_BE_TRUTHFUL ROBUSTNESS SINGULARITY LINEARITY
     PROXIMITY ABSTRACTION DENSITY RENDERED_VALUES prose transformation_policy
-    self_test veto_patterns anti_patterns architecture runtime_policy rule_deps
-    plugins tokens rule_ratchets
+    self_test veto_patterns anti_patterns architecture runtime_policy law_deps
+    plugins tokens law_ratchets
   ].freeze
 
   def test_laws_follow_constitutional_reading_order
