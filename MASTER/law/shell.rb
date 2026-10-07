@@ -16,7 +16,7 @@ Law.define(:DOLLAR_PAREN) do
   good "now=$(date)"
 end
 
-# DOUBLE_BRACKET lives once, in the registry (js_rules.rb): it reads the
+# DOUBLE_BRACKET lives once, in the registry (js_laws.rb): it reads the
 # shebang first — [[ ]] is a keyword in zsh/bash but not POSIX sh, so
 # telling a /bin/sh script to use it is telling it to break. A line
 # detector cannot see the shebang; the shebang-aware twin wins, the same
@@ -86,7 +86,7 @@ Law.define(:NO_INLINE_ASSETS_IN_SHELL) do
   good "cp app/assets/site.css out/"
 end
 
-# QUOTE_VARIABLES lives once, in the registry (js_rules.rb): quoting is a
+# QUOTE_VARIABLES lives once, in the registry (js_laws.rb): quoting is a
 # fact about the interpreter — zsh does not word-split or glob unquoted
 # parameter expansions; sh, ksh and bash all do — and only the registry can
 # read the shebang. 455 of the deep scan's 573 quoting errors were idiomatic
