@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "../../cognition/intelligence"
+
 module Master
   module Review
     module Council
@@ -15,11 +17,17 @@ module Master
         end
 
         def append_judge_synthesis(feedback:, code:, context:, image: nil)
+          machine = Master::Cognition::Intelligence.synthesize_judgments(feedback)
+          @bus&.publish(:council_reasoning_synthesis, synthesis: machine)
+
           synthesis = @judge_enabled ? judge(feedback:, code:, context:, image:) : nil
           return unless synthesis
 
           @bus&.publish(:council_synthesis, synthesis:)
-          feedback << { persona: "Judge", role: "Synthesis", veto_role: false, axiom: nil, feedback: synthesis }
+          feedback << {
+            persona: "Judge", role: "Synthesis", veto_role: false, axiom: nil,
+            feedback: synthesis, cognition: machine,
+          }
         end
 
         def publish_confidence(feedback)

@@ -183,6 +183,34 @@ class TestCouncilDeliberation < Minitest::Test
     assert_equal 4, second.value!.size
   end
 
+  def test_council_emits_machine_synthesis_without_majority_vote
+    events = []
+    bus = Struct.new(:events) do
+      def publish(event, payload = {})
+        events << [event, payload]
+      end
+    end.new(events)
+    personas = Array.new(2) { |i| Persona.new(name: "P#{i}", role: "r", bias: "b", prompt: "p") }
+    delib = Master::Review::Council::Deliberation.new(
+      personas: personas,
+      agent: StubAgent.new,
+      event_bus: bus,
+      judge_enabled: false,
+    )
+    feedback = [
+      { persona: "P0", model: "m0", feedback: "keep", confidence: 0.9 },
+      { persona: "P1", model: "m1", feedback: "remove", confidence: 0.9 },
+    ]
+
+    delib.send(:append_judge_synthesis, feedback: feedback, code: "x", context: nil)
+
+    event = events.find { |name, _| name == :council_reasoning_synthesis }
+    refute_nil event
+    assert_equal true, event.last.fetch(:synthesis).fetch(:disagreement)
+    assert_equal true, event.last.fetch(:synthesis).fetch(:requires_measurement)
+    assert_equal 2, event.last.fetch(:synthesis).fetch(:positions).size
+  end
+
   def test_empty_personas_fails_validation
     result = Master::Review::Council::Deliberation.new(personas: [], agent: StubAgent.new, judge_enabled: false)
                                         .review("puts :ok")

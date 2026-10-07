@@ -46,6 +46,45 @@ class TestMemory < Minitest::Test
     assert_equal 1, counts["feedback"]
   end
 
+  def test_reasoning_memory_round_trips_without_embedding
+    frame = Master::Cognition::Intelligence.decision_frame(
+      observation: "pass found two findings",
+      hypothesis: "the highest-leverage one should be handled first",
+      falsifier: "the next pass regresses",
+      measurement: "next-pass finding count",
+      source: "fix_loop:pass:1",
+      selected: "ROOT",
+      cause: "scan",
+      effect: "repair candidate",
+    )
+
+    key = @mem.remember_reasoning(frame, key: "reasoning/test")
+    assert_equal "reasoning/test", key
+    rows = @mem.reasoning(limit: 1)
+    assert_equal "fix_loop:pass:1", rows.first.fetch("source")
+    assert_equal "ROOT", rows.first.fetch("selected")
+
+    stored = @mem.by_type("reasoning").fetch("reasoning/test")
+    refute stored.key?("vec"), "reasoning frames should not require embedding infrastructure"
+  end
+
+  def test_preference_memory_round_trips_without_embedding
+    frame = Master::Cognition::Intelligence.preference_frame(
+      domain: "music",
+      preference: "leave more negative space between motifs",
+      avoid: "dense continuous lead lines",
+      evidence: "operator accepted sparse takes",
+      source: "operator:feedback",
+    )
+
+    key = @mem.remember_preference(frame, key: "preference/music")
+    assert_equal "preference/music", key
+    row = @mem.preferences(limit: 1).first
+    assert_equal "music", row.fetch("domain")
+    assert_match(/negative space/, row.fetch("preference"))
+    refute @mem.by_type("feedback").fetch(key).key?("vec")
+  end
+
   def test_persistence_survives_reload
     @mem.remember("persist_key", "i survived", type: "reference")
     mem2 = Master::Ground::Memory.new(root: @root)
@@ -109,6 +148,14 @@ class TestMemory < Minitest::Test
     value = @mem.recall(key)
     refute_nil value
     assert value.length >= 3
+  end
+
+  def test_auto_save_feedback_is_idempotent
+    first = @mem.auto_save("prefer sparse layout with one strong action")
+    second = @mem.auto_save("prefer sparse layout with one strong action")
+
+    assert_equal first, second
+    assert_equal 1, @mem.preferences(limit: 10).size
   end
 
   def test_auto_save_feedback_pattern

@@ -156,6 +156,12 @@ dmesg       -> boot/event evidence
 ```
 
 The rule is simple: machinery does not grant authority merely because it can perform an operation. Authority is declared, reduced, observed and verified.
+## Cognitive judgment kernel
+
+MASTER keeps reasoning machinery in one existing spine, Master::Cognition::Intelligence. It separates observation from inference, keeps uncertainty explicit, ranks opportunities by causal leverage, compares concepts by purpose and boundary rather than names, and moves reasoning across local, subsystem, tree, repository, production and human scales. /fix records bounded decision frames in the existing Ground::Memory store, and council deliberation synthesizes model differences without majority-vote semantics.
+
+Operator feedback is durable taste memory in the existing feedback channel. Creative work preserves identity and invariants while mutating one declared axis. Unfinished work gets a fertility assessment; it is never a deletion authority by itself, and deadness needs stronger evidence than mere inactivity.
+
 ## Operator execution modes
 
 Agent work carries one explicit execution mode derived before its first effect:

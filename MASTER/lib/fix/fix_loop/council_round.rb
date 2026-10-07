@@ -95,9 +95,15 @@ module Master
           - generated and private material: detect stale copies, generated outputs, secrets, personal media, caches, and tracked material that should have a custody boundary
           - runtime/deployment: inspect the path from source change to real execution, including packaging, sync, restart, browser/device, network, and production gates where applicable
           - complexity: challenge new abstractions, orchestration, scoring, registries, and layers; delete machinery when an existing primitive is sufficient
+          - leverage: rank concerns by proven causal reach across consumers, boundaries and contracts, not by finding count
+          - scales: inspect local code first, then subsystem, tree, repository, production and human consequences when the evidence crosses those boundaries
+          - unfinished work: distinguish fertile uncertainty from proven deadness; preserve a promising primitive until consumer/value evidence says it should go
+          - creative identity: preserve operator-owned identity and invariants while changing one declared axis at a time
           - failure modes: identify catastrophic, silent, partial, retry, concurrency, stale-state, and rollback failures
           - verification: name the smallest deterministic test or measurement that would actually falsify each concern
           - inversion: assume the proposed repair is wrong and state what breaks, where, and when
+          - panel synthesis: compare each voice by evidence, confidence and falsifier; never choose by majority alone
+          - counterfactual: state the smallest measurement that separates the proposed repair from preserving the current behavior
           - completeness: never accept truncated, placeholder, or simulated work as evidence; require the smallest falsifiable proof
 
           For every actionable finding, anchor it to a repository-relative file plus stable line or symbol.

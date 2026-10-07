@@ -318,6 +318,10 @@ Read [AGENTS](AGENTS.md), which routes into the governing law and closes on what
 MASTER refuses and why. Anything strange on purpose says so in a comment beside
 it, and the open work lives in [one backlog](../TODO.md). Licensed MIT.
 
+### Cognitive judgment
+
+MASTER's reasoning habits are executable, not a second constitution. Master::Cognition::Intelligence keeps observation, hypothesis, falsifier, measurement, causal trace, uncertainty, leverage, counterfactuals, conceptual equivalence, model-difference synthesis, taste and fertility in one place. /fix persists bounded decision frames through the existing .master/memory.yml store, while explicit operator feedback becomes durable taste memory. The model receives compact reasoning and taste context without another memory database or orchestration layer.
+
 ### Operator execution modes
 
 Every Fold starts with an explicit operator mode: `observe`, `plan`, `repair`, or
