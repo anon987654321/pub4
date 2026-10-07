@@ -198,7 +198,9 @@ class TestWebUI < Minitest::Test
 
     refute_includes bridge, "EVENT_MAP"
     assert_includes bridge, "MASTERTopology.classifyEvent"
-    assert_includes registry, "phantom:detected"
+    assert_includes registry, "mergeCanonicalCatalog"
+    assert_includes registry, "remoteKey"
+    refute_includes registry, "phantom:detected"
     assert_includes topologies, "phantom:detected"
     assert_includes topologies, "infer:resolved|route:resolved|llm:routed"
   end
