@@ -9,6 +9,8 @@ require_relative "../ai/orientation"
 require_relative "../io/atomic_write"
 require_relative "../io/git_operations"
 require_relative "../review/scan/semantic_fingerprint"
+require_relative "../master/time"
+require_relative "wishlist/proof_contract"
 
 module Master
   module Fix
@@ -101,7 +103,7 @@ module Master
           if recorded_digest.empty? || recorded_digest != current_digest
             proposal["status"] = "stale"
             proposal["stale_reason"] = "anchor changed since proposal"
-            proposal["stale_at"] = Time.now.utc.iso8601
+            proposal["stale_at"] = Master::Time.utc_now.iso8601
             changed = true
             @bus&.publish("wishlist:stale", id: proposal["uid"], reason: proposal["stale_reason"])
             next
@@ -111,7 +113,7 @@ module Master
             next
           elsif proposal["basis_head"].to_s != head.to_s
             proposal["basis_head"] = head
-            proposal["rebased_at"] = Time.now.utc.iso8601
+            proposal["rebased_at"] = Master::Time.utc_now.iso8601
             changed = true
           end
 
@@ -131,7 +133,7 @@ module Master
         return [] if ids.empty?
 
         ledger = load_ledger
-        now = Time.now.utc.iso8601
+        now = Master::Time.utc_now.iso8601
         claimed = ledger["proposals"].filter_map do |proposal|
           next unless ids.include?(proposal["uid"].to_s) && proposal["status"] == "queued"
 
@@ -197,7 +199,7 @@ module Master
           next unless proposal.fetch("last_fixed", 0).to_i.positive?
 
           proposal["status"] = "applied"
-          proposal["applied_at"] = Time.now.utc.iso8601
+          proposal["applied_at"] = Master::Time.utc_now.iso8601
           proposal["applied_run"] = run_id.to_s
           proposal.delete("claimed_at")
           proposal.delete("claimed_run")
@@ -219,9 +221,23 @@ module Master
           next unless ids.include?(proposal["uid"].to_s)
           next unless proposal["status"] == "applied"
 
-          proposal["status"] = "verified"
-          proposal["verified_at"] = Time.now.utc.iso8601
-          proposal["verified_run"] = run_id.to_s
+          proof = ProofContract.verify(proposal, root: @root)
+          proposal["proof_state"] = proof[:state].to_s
+          proposal["proof_checks"] = Array(proof[:checks]).first(6)
+
+          case proof[:state]
+          when :proven
+            proposal["status"] = "verified"
+            proposal["verified_at"] = Master::Time.utc_now.iso8601
+            proposal["verified_run"] = run_id.to_s
+          when :failed
+            proposal["status"] = "blocked"
+            proposal["blocked_reason"] = "wishlist proof failed"
+            proposal["blocked_at"] = Master::Time.utc_now.iso8601
+          else
+            proposal["status"] = "applied"
+            proposal["verification_reason"] = "proof contract requires external validation"
+          end
           proposal
         end
         save_ledger(ledger) unless changed.empty?
@@ -322,7 +338,7 @@ module Master
       end
 
       def merge_new_items!(ledger, items, state:, target:, run_id:)
-        now = Time.now.utc.iso8601
+        now = Master::Time.utc_now.iso8601
         basis_head = @git.head.to_s
         added = 0
 
@@ -506,7 +522,7 @@ module Master
       def write_report(items, state:, target:, run_id:)
         FileUtils.mkdir_p(File.dirname(out_file))
         body = [
-          "# MASTER wishlist — #{Time.now.utc.iso8601}",
+          "# MASTER wishlist — #{Master::Time.utc_now.iso8601}",
           "",
           "run: #{run_id}",
           "target: #{target}",
