@@ -139,10 +139,15 @@ module Operator
         alternatives.split("|").each { |suffix| topics << "#{prefix}:#{suffix}" }
       end
 
-      # Bare alternation with a repeated topic prefix: prefix:a|prefix:b.
-      text.scan(/([a-z][a-z0-9_]*):([a-z][a-z0-9_:-]*)\|\1:([a-z][a-z0-9_:-]*)/) do |prefix, first, second|
-        topics << "#{prefix}:#{first}"
-        topics << "#{prefix}:#{second}"
+      # Bare alternation with a repeated topic prefix:
+      # prefix:a|prefix:b|prefix:c. Keep the prefix on every arm so ordinary
+      # regex alternation cannot manufacture unrelated event topics.
+      text.scan(/(([a-z][a-z0-9_]*):[a-z][a-z0-9_:-]*(?:\|\2:[a-z][a-z0-9_:-]*)+)/) do |match|
+        match = match.first
+        prefix = match[/\A[a-z][a-z0-9_]*/]
+        match.scan(/#{Regexp.escape(prefix)}:([a-z][a-z0-9_:-]*)/).flatten.each do |suffix|
+          topics << "#{prefix}:#{suffix}"
+        end
       end
 
       topics.uniq
