@@ -104,6 +104,21 @@ class CoreBridgeTest < Minitest::Test
     end
   end
 
+  def test_observe_mode_is_read_only
+    Dir.mktmpdir do |root|
+      File.write(File.join(root, "README.md"), "hello\n")
+      model = ScriptedModel.new(
+        Master::Core::Effect.read("README.md"),
+        Master::Core::Effect.done("read-only assessment"),
+      )
+      result = Master::CLI::CoreBridge.run(
+        "inspect the repository", root:, model:, mode: :observe, max_turns: 2
+      )
+      assert_equal :complete, result[:reason]
+      assert_equal "observe", result[:mission].dig("operator", "mode")
+    end
+  end
+
   def test_run_string_renders_a_transcript
     Dir.mktmpdir do |root|
       model = ScriptedModel.new(*evidence_then_done(summary: "all clear"))
