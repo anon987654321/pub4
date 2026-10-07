@@ -33,6 +33,7 @@ module Master
           "target: #{target ? relative(target, repo_root) : relative(root, repo_root)}",
           "contract: orient → inspect → act → verify",
           "verification: evidence before completion",
+          "intelligence: #{Master::Cognition::Intelligence.orientation_contract}",
           "trees: MASTER, RAILS, OPENBSD, STUDIO; STUDIO = canonical media production plane; MASTER/tools = reasoning and governance utilities",
           "head: #{git_head(repo_root)}",
           "docs: #{key_docs(repo_root).join(", ")}",
