@@ -375,7 +375,7 @@ when "rules"
   # searched for the id, and the enclosing block plus its leading comment is the
   # answer — that comment is where the exemption's reason lives.
   def definition_at(root, id)
-    Dir.glob(File.join(root, "{law/*.rb,lib/review/scan/rules/*.rb}")).sort.each do |path|
+    Dir.glob(File.join(root, "{law/*.rb,lib/review/scan/laws/*.rb}")).sort.each do |path|
       lines = File.readlines(path)
       index = rule_anchor(lines, id)
       next unless index
@@ -461,7 +461,7 @@ when "rules"
       lines << "defined at #{card[:defined_at]}, fixtures and exemption follow"
       card[:definition].each_line { |line| lines << line.chomp.strip }
     else
-      lines << "no definition found under law/ or lib/review/scan/rules/"
+      lines << "no definition found under law/ or lib/review/scan/laws/"
     end
     Master::Trace::Dmesg::Report.print("rules", lines.join("\n"))
   end
