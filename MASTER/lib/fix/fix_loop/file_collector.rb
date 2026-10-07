@@ -22,12 +22,13 @@ module Master
         #
         # A file that must not be edited is not a file worth collecting for a
         # fix pass, so there is one list now and the scanner owns it.
-        attr_reader :skipped
+        attr_reader :skipped, :candidate_count
 
         def initialize(root:, bus: nil)
           @root = root
           @bus = bus
           @skipped = 0
+          @candidate_count = 0
         end
 
         def collect(target)
@@ -111,6 +112,7 @@ module Master
         # Counted and published rather than quietly dropped — a fix pass that
         # silently narrows its own input reads as "nothing left to do".
         def retain(files)
+          @candidate_count = files.size
           kept, dropped = files.partition { |file| !skipped?(file) }
           @skipped = dropped.size
           @bus&.publish("fix_loop:skipped", count: dropped.size, sample: dropped.first(5).map { |f| relative(f) }) if dropped.any?
