@@ -60,11 +60,12 @@ module Master
       def git_capture(root, *args)
         out, status = Open3.capture2e("git", "-C", root, *args)
         text = out.to_s
-        return "" unless status.success?
+        unless status.success?
+          detail = text.lines.last(8).join.strip
+          raise "git #{args.join(" ")} failed#{detail.empty? ? "" : ": #{detail}"}"
+        end
 
         text.bytesize > MAX_DIFF_BYTES ? text.byteslice(0, MAX_DIFF_BYTES) + "\n... [truncated]" : text
-      rescue StandardError
-        ""
       end
 
       def tribunal_summary(feedback)
