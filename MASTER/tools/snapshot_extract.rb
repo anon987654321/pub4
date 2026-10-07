@@ -16,8 +16,8 @@ module Operator
     def parse(path)
       lines = File.readlines(path, encoding: "UTF-8")
       pack = lines.filter_map do |line|
-        match = line.match(/\APack: tree=(\S+) part=(\d+)\/(\d+) /)
-        match && { tree: match[1], part: Integer(match[2]), parts: Integer(match[3]) }
+        match = line.match(/\APack: tree=(\S+) git=(\S+) part=(\d+)\/(\d+) /)
+        match && { tree: match[1], git: match[2], part: Integer(match[3]), parts: Integer(match[4]) }
       end.first
       raise "snapshot extract: missing Pack header in #{path}" unless pack
 
@@ -68,9 +68,12 @@ module Operator
       raise "snapshot extract: no packs" if packs.empty?
 
       trees = packs.map { |pack| pack.fetch(:tree) }.uniq
+      revisions = packs.map { |pack| pack.fetch(:git) }.uniq
       counts = packs.map { |pack| pack.fetch(:parts) }.uniq
       indices = packs.map { |pack| pack.fetch(:part) }.sort
+      tree = trees.fetch(0) if trees.size == 1
       raise "snapshot extract: mixed trees" unless trees.size == 1
+      raise "snapshot extract: mixed git revisions" unless revisions.size == 1
       raise "snapshot extract: inconsistent part counts" unless counts.size == 1
       expected = (1..counts.first).to_a
       raise "snapshot extract: missing or duplicate parts" unless indices == expected
@@ -87,6 +90,8 @@ module Operator
       end
 
       fragments.each do |relative, pieces|
+        expected_prefix = "#{tree}/"
+        raise "snapshot extract: path escapes declared tree #{relative}" unless relative.start_with?(expected_prefix)
         fragment_numbers = pieces.filter_map(&:first)
         if fragment_numbers.empty?
           raise "snapshot extract: duplicate source file #{relative}" unless pieces.size == 1
