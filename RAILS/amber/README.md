@@ -166,28 +166,45 @@ per-owner care record layered on a garment, not a rival model.
 Where Amber's product intelligence lives, and the layer no document has covered.
 All under `app/services/`.
 
-| Service | Role |
-|---|---|
-| `CapsuleBuilder` | Builds a capsule wardrobe and explains why each item earned its place |
-| `DuplicateDetector` | Groups near-identical garments, ranks them, names a keeper and release candidates |
-| `WardrobeGap` | Finds missing categories and connectors; writes `Recommendation` rows |
-| `OutfitCompatibility` | Scores a combination on category balance, color balance, occasion fit |
-| `OutfitGeneration` | Generates outfits from scoped items, layer-aware, biased toward least-worn |
-| `StyleEvolution` | Wear timeline grouped into life phases |
-| `TasteRanker` | Ranks garments on declared preference plus joy, wear, recency and life phase; `explain` names the reasons |
-| `StyleAssistant` | One outfit for today — deterministic per user and date, weather-aware, rests recent wears, persists nothing |
-| `ClosetOrganization` | Care, storage, zoning and restraint tips, each naming its principle and the wardrobe evidence behind it |
-| `WardrobeAnalytics` | Summary, average cost-per-wear, tips. Counts in SQL — it never loads the wardrobe |
-| `WardrobeCharts` | The four analytics figures: category mix, wear distribution, cost-per-wear, idle |
-| `WardrobeAi` | Joy analysis and outfit suggestion; reports `available?` and degrades when unconfigured |
-| `WardrobeVisibilityPolicy` | Answers view / remix / run-AI-analysis against layer 1 consent |
-| `GarmentTaxonomy` | Category normalization, weather fit, formality score, semantic tags |
-| `ShopTheLook` | Local affiliate links plus remote suggestions for an item |
-| `Weather` | Today's conditions, decoded for planning |
-| `DeclutterScore` | Joy, utility and fit into one score and a recommendation |
-| `DeclutterActionRouter` | Decision to destination, donation bucket, and user-facing copy |
-| `DeclutterDashboard` | Summary, top candidates, decision matrix |
-| `LastChanceOutfit` | Final outfit suggestions for a garment about to leave |
+Service: `CapsuleBuilder`; Role: Builds a capsule wardrobe and explains why each item earned its place
+
+Service: `DuplicateDetector`; Role: Groups near-identical garments, ranks them, names a keeper and release candidates
+
+Service: `WardrobeGap`; Role: Finds missing categories and connectors; writes `Recommendation` rows
+
+Service: `OutfitCompatibility`; Role: Scores a combination on category balance, color balance, occasion fit
+
+Service: `OutfitGeneration`; Role: Generates outfits from scoped items, layer-aware, biased toward least-worn
+
+Service: `StyleEvolution`; Role: Wear timeline grouped into life phases
+
+Service: `TasteRanker`; Role: Ranks garments on declared preference plus joy, wear, recency and life phase; `explain` names the reasons
+
+Service: `StyleAssistant`; Role: One outfit for today — deterministic per user and date, weather-aware, rests recent wears, persists nothing
+
+Service: `ClosetOrganization`; Role: Care, storage, zoning and restraint tips, each naming its principle and the wardrobe evidence behind it
+
+Service: `WardrobeAnalytics`; Role: Summary, average cost-per-wear, tips. Counts in SQL — it never loads the wardrobe
+
+Service: `WardrobeCharts`; Role: The four analytics figures: category mix, wear distribution, cost-per-wear, idle
+
+Service: `WardrobeAi`; Role: Joy analysis and outfit suggestion; reports `available?` and degrades when unconfigured
+
+Service: `WardrobeVisibilityPolicy`; Role: Answers view / remix / run-AI-analysis against layer 1 consent
+
+Service: `GarmentTaxonomy`; Role: Category normalization, weather fit, formality score, semantic tags
+
+Service: `ShopTheLook`; Role: Local affiliate links plus remote suggestions for an item
+
+Service: `Weather`; Role: Today's conditions, decoded for planning
+
+Service: `DeclutterScore`; Role: Joy, utility and fit into one score and a recommendation
+
+Service: `DeclutterActionRouter`; Role: Decision to destination, donation bucket, and user-facing copy
+
+Service: `DeclutterDashboard`; Role: Summary, top candidates, decision matrix
+
+Service: `LastChanceOutfit`; Role: Final outfit suggestions for a garment about to leave
 
 Controllers are discoverable from `config/routes.rb`; service intent is not,
 which is why services are enumerated here and controllers are not.
@@ -228,14 +245,17 @@ servers on a normal week.
 
 ## What runs itself
 
-| Piece | Behaviour |
-|--------|-----------|
-| OpenBSD service | `rc.d/amber` starts Falcon + Solid Queue on port 61352 |
-| TLS | relayd + cert renew scripts for `amberapp.art` |
-| Photo upload | Variants, colour extract, one portrait polish, local fingerprint, sustainability score |
-| Declutter hygiene | Daily job: expire overdue wear challenges; nudge 30-day box items |
-| Queue cleanup | Hourly clear of finished Solid Queue jobs |
-| Demo wardrobe | Seeded for guests without an admin filling the catalog |
+Piece: OpenBSD service; Behaviour: `rc.d/amber` starts Falcon + Solid Queue on port 61352
+
+Piece: TLS; Behaviour: relayd + cert renew scripts for `amberapp.art`
+
+Piece: Photo upload; Behaviour: Variants, colour extract, one portrait polish, local fingerprint, sustainability score
+
+Piece: Declutter hygiene; Behaviour: Daily job: expire overdue wear challenges; nudge 30-day box items
+
+Piece: Queue cleanup; Behaviour: Hourly clear of finished Solid Queue jobs
+
+Piece: Demo wardrobe; Behaviour: Seeded for guests without an admin filling the catalog
 
 ## Health checks (tech or laptop)
 
@@ -250,11 +270,11 @@ relayd**.
 
 ## Secrets that keep AI smart
 
-| Env | Required for |
-|-----|----------------|
-| `SECRET_KEY_BASE` | App boot |
-| `OPENROUTER_API_KEY` | LLM joy analysis, vision outfits, capsule LLM path |
-| `AMBER_ENABLE_STUDIO_PHOTO=1` | Optional STUDIO look photography (off by default) |
+Env: `SECRET_KEY_BASE`; Required for: App boot
+
+Env: `OPENROUTER_API_KEY`; Required for: LLM joy analysis, vision outfits, capsule LLM path
+
+Env: `AMBER_ENABLE_STUDIO_PHOTO=1`; Required for: Optional STUDIO look photography (off by default)
 
 Without OpenRouter, Amber still works: **heuristics and rules** (joy from wear,
 rule-based outfits, local capsule). Buttons say so in the UI.

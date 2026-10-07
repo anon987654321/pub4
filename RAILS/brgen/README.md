@@ -82,15 +82,19 @@ app. Every `Brgen::DomainRegistry::ENTRIES` city gets this, not only Bergen:
 `dating.oshlo.no`, `dating.lndon.uk`, `dating.lsangeles.com`. Apexes are usually
 the city with a vowel dropped. Topology: `AGENTS.md`.
 
-| Subapp | Engine | Subdomain (Bergen / LA) |
-|---|---|---|
-| marketplace | `engines/marketplace` | markedsplass.brgen.no / marketplace.lsangeles.com |
-| dating | `engines/dating` | dating.\* |
-| takeaway | `engines/takeaway` | takeaway.\* |
-| tv | `engines/tv` | tv.\* |
-| maps | `engines/maps` | maps.\* |
-| playlist | `engines/playlist` | playlist.\* |
-| messenger | host `config/routes.rb` (not an engine) | messenger.\* |
+Subapp: marketplace; Engine: `engines/marketplace`; Subdomain (Bergen / LA): markedsplass.brgen.no / marketplace.lsangeles.com
+
+Subapp: dating; Engine: `engines/dating`; Subdomain (Bergen / LA): dating.\*
+
+Subapp: takeaway; Engine: `engines/takeaway`; Subdomain (Bergen / LA): takeaway.\*
+
+Subapp: tv; Engine: `engines/tv`; Subdomain (Bergen / LA): tv.\*
+
+Subapp: maps; Engine: `engines/maps`; Subdomain (Bergen / LA): maps.\*
+
+Subapp: playlist; Engine: `engines/playlist`; Subdomain (Bergen / LA): playlist.\*
+
+Subapp: messenger; Engine: host `config/routes.rb` (not an engine); Subdomain (Bergen / LA): messenger.\*
 
 Marketplace is the only localized subdomain word. Messenger was never extracted.
 
@@ -266,27 +270,33 @@ cart and fulfillment, introduced by staged dual-write on a larger Postgres host.
 
 ## Gems
 
-| Gem | Role | Note |
-|-----|------|------|
-| `solidus` (~> 4.7) | Core commerce (catalog, cart, checkout, admin) | Official |
-| `solidus_starter_frontend` | Customer storefront (cart, product, checkout UI) | Official Nebulab starter |
-| `solidus_multi_domain` (optional) | Multi-store / multi-domain | Aligns with city apexes |
+Gem: `solidus` (~> 4.7); Role: Core commerce (catalog, cart, checkout, admin); Note: Official
+
+Gem: `solidus_starter_frontend`; Role: Customer storefront (cart, product, checkout UI); Note: Official Nebulab starter
+
+Gem: `solidus_multi_domain` (optional); Role: Multi-store / multi-domain; Note: Aligns with city apexes
 
 Native `Marketplace::*` remains the public seller/order domain. Solidus is optional for the commerce kernel and can be introduced by dual-write on a larger Postgres host.
 
 ## Amazon.com feature map
 
-| Amazon surface | Solidus target | Status |
-|----------------|----------------|--------|
-| Product detail page (title, images, price, variants) | Spree::Product / Variants + starter frontend PDP | planned |
-| Search + facets (category, brand, price) | Solidus search + taxons; FTS bridge from live_search | planned |
-| Cart + checkout + payment | Solidus order state machine + payment methods | planned |
-| Seller / marketplace (1P + 3P) | Solidus native marketplace features + BRGEN Marketplace::* seller/order state | planned |
-| Reviews + ratings | Spree reviews extension or keep Marketplace::Review | planned |
-| Order tracking / history | Spree::Order customer account | planned |
-| Wishlists / saved | Favorites → Solidus wishlist or keep listing_favorites | planned |
-| Recommendations | later (AI) | planned |
-| City geo scoping | City tenant on Spree::Store / multi_domain | planned |
+Amazon surface: Product detail page (title, images, price, variants); Solidus target: Spree::Product / Variants + starter frontend PDP; Status: planned
+
+Amazon surface: Search + facets (category, brand, price); Solidus target: Solidus search + taxons; FTS bridge from live_search; Status: planned
+
+Amazon surface: Cart + checkout + payment; Solidus target: Solidus order state machine + payment methods; Status: planned
+
+Amazon surface: Seller / marketplace (1P + 3P); Solidus target: Solidus native marketplace features + BRGEN Marketplace::* seller/order state; Status: planned
+
+Amazon surface: Reviews + ratings; Solidus target: Spree reviews extension or keep Marketplace::Review; Status: planned
+
+Amazon surface: Order tracking / history; Solidus target: Spree::Order customer account; Status: planned
+
+Amazon surface: Wishlists / saved; Solidus target: Favorites → Solidus wishlist or keep listing_favorites; Status: planned
+
+Amazon surface: Recommendations; Solidus target: later (AI); Status: planned
+
+Amazon surface: City geo scoping; Solidus target: City tenant on Spree::Store / multi_domain; Status: planned
 
 ## Mount plan (no big-bang)
 
@@ -415,11 +425,11 @@ bin/rails affiliate:import          # pulls Amazon + TradeDoubler
 
 ## Files in this package
 
-| File | Action |
-|------|--------|
-| `amazon_associates.rb` | Replace `RAILS/shared/app/services/shared/amazon_associates.rb` |
-| `affiliate_amazon.rake` | Add as `RAILS/brgen/lib/tasks/affiliate_amazon.rake` |
-| `SETUP.md` | This guide |
+File: `amazon_associates.rb`; Action: Replace `RAILS/shared/app/services/shared/amazon_associates.rb`
+
+File: `affiliate_amazon.rake`; Action: Add as `RAILS/brgen/lib/tasks/affiliate_amazon.rake`
+
+File: `SETUP.md`; Action: This guide
 
 ## Enhanced conversions
 
@@ -435,10 +445,9 @@ POST https://datamanager.googleapis.com/v1/events:ingest
 
 ## Files
 
-| File | Role |
-|------|------|
-| `google_enhanced_conversions.rb` | Hashing + event build + ingest |
-| `google_enhanced_conversions_job.rb` | Async job on order paid |
+File: `google_enhanced_conversions.rb`; Role: Hashing + event build + ingest
+
+File: `google_enhanced_conversions_job.rb`; Role: Async job on order paid
 
 ## Google Ads setup
 
@@ -532,13 +541,15 @@ subdomain constraints.
 
 ## Dintero
 
-| Item | Value |
-|------|-------|
-| Checkout | Shopping API order/session + signed callback |
-| Webhook | `POST /webhooks/dintero` |
-| Webhook secret | `DINTERO_HOOK_SECRET` (HMAC-SHA1 over raw body) |
-| Seller payout | payout destination must report `ACTIVE`; each selected line carries its split |
-| Capture/refund | separate Dintero operations; local paid/refunded state follows webhook confirmation |
+Item: Checkout; Value: Shopping API order/session + signed callback
+
+Item: Webhook; Value: `POST /webhooks/dintero`
+
+Item: Webhook secret; Value: `DINTERO_HOOK_SECRET` (HMAC-SHA1 over raw body)
+
+Item: Seller payout; Value: payout destination must report `ACTIVE`; each selected line carries its split
+
+Item: Capture/refund; Value: separate Dintero operations; local paid/refunded state follows webhook confirmation
 
 Create checkout sessions with an explicit `merchant_reference`. Keep the browser
 return separate from the signed callback. Dintero is the source of truth for
@@ -550,11 +561,11 @@ contracts. Register the hook subscription with `bin/rails dintero:hooks:create`.
 
 ## Stripe
 
-| Item | Value |
-|------|--------|
-| URL | `https://<host>/webhooks/stripe` |
-| Events | `checkout.session.completed`, `checkout.session.async_payment_succeeded` |
-| Secret | `STRIPE_WEBHOOK_SECRET` (`whsec_…`) |
+Item: URL; Value: `https://<host>/webhooks/stripe`
+
+Item: Events; Value: `checkout.session.completed`, `checkout.session.async_payment_succeeded`
+
+Item: Secret; Value: `STRIPE_WEBHOOK_SECRET` (`whsec_…`)
 
 Verification:
 
@@ -567,11 +578,11 @@ Order resolution: `client_reference_id` (`order_id:` / `checkout_id:`) or `metad
 
 ## Vipps
 
-| Item | Value |
-|------|--------|
-| URL | `https://<host>/webhooks/vipps` |
-| Events | at least `epayments.payment.authorized.v1`, `epayments.payment.captured.v1` |
-| Secret | `VIPPS_WEBHOOK_SECRET` (the secret returned by webhook registration) |
+Item: URL; Value: `https://<host>/webhooks/vipps`
+
+Item: Events; Value: at least `epayments.payment.authorized.v1`, `epayments.payment.captured.v1`
+
+Item: Secret; Value: `VIPPS_WEBHOOK_SECRET` (the secret returned by webhook registration)
 
 Register once:
 
