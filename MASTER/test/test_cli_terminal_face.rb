@@ -259,9 +259,11 @@ class TestCliTerminalFace < Minitest::Test
       size: -> { [24, 80] },
       event_bus: bus
     )
-    assert_equal %w[council:** llm:** phantom:** pipeline:**], bus.patterns.keys.sort
+    assert_equal %w[council:** llm:** phantom:** pipeline:** tts:**], bus.patterns.keys.sort
     bus.publish("pipeline:stage_start")
     assert_equal [:thinking], face.instance_variable_get(:@events)
+    bus.publish("tts:anticipate")
+    assert_equal [:thinking, :anticipate], face.instance_variable_get(:@events)
     face.send(:unsubscribe_from_bus)
     bus.publish("council:deliberation")
     assert_equal [:thinking], face.instance_variable_get(:@events)
