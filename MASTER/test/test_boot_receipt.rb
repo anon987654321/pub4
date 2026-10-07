@@ -93,6 +93,23 @@ class TestBootReceipt < Minitest::Test
     assert_operator count, :>, 100
   end
 
+  def test_session_receipt_is_empty_without_runtime_context
+    assert_equal({}, Receipt.session)
+    refute Receipt.lines.any? { |line| line.start_with?("receipt: session ") }
+  end
+
+  def test_session_receipt_joins_commit_memory_and_model
+    memory = Struct.new(:version).new(17)
+    agent = Struct.new(:model).new("test-model")
+
+    receipt = Receipt.session(root: Master::ROOT, agent:, memory:)
+
+    assert_match(/\A[0-9a-f]{12}\z/, receipt.fetch(:commit))
+    assert_equal 17, receipt.fetch(:memory_version)
+    assert_equal "test-model", receipt.fetch(:model)
+    assert_equal Receipt.digest, receipt.fetch(:constitution)
+  end
+
   def test_the_receipt_names_the_commit_it_booted_from
     assert_match(/\A[0-9a-f]{12}\z/, Receipt.commit(Master::ROOT))
     assert Receipt.capabilities["git"], "the receipt is running inside a checkout"
