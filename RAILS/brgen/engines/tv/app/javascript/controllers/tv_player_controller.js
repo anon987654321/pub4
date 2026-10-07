@@ -101,7 +101,7 @@ export default class extends Controller {
   #reportProgress() {
     if (!this.progressUrlValue || !this.hasVideoTarget) return
 
-    const reached = Math.max(this.furthest || 0, this.videoTarget.currentTime || 0)
+    const reached = Math.max(this.furthest ?? 0, this.videoTarget.currentTime ?? 0)
     this.furthest = reached
     if (reached < 1 || reached === this.lastReported) return
     this.lastReported = reached
