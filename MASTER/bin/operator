@@ -5,7 +5,7 @@ require_relative "../lib/boot/entrypoint"
 Master::Boot::Entrypoint.prepare!(root: File.expand_path("..", __dir__))
 
 require "optparse"
-require "open3"
+require_relative "../lib/io/exec"
 require "shellwords"
 
 # Two levels: this lives in MASTER/bin/, and every sibling tree is reached
@@ -155,14 +155,14 @@ when "lint"
   # hook wants; without it, the whole working tree against HEAD.
   diff_base = ARGV.delete("--staged").nil? ? "HEAD" : "--cached"
   scanner = Master::Review::Scan::InfraHelpers.build_scanner(root: Master::ROOT, agent: nil)
-  changed, = Open3.capture2e("git", "-C", ROOT, "diff", "--name-only", diff_base)
+  changed, = Master::Io::Exec.capture2e("git", "-C", ROOT, "diff", "--name-only", diff_base)
   targets = ARGV.empty? ? changed.lines.map { |line| File.join(ROOT, line.chomp) } : ARGV
   files = targets.flat_map { |t| File.directory?(t) ? Dir.glob(File.join(t, "**/*")) : [t] }.select { |p| File.file?(p) }
   touched = nil
   if changed_only
     touched = Hash.new { |hash, key| hash[key] = [] }
     current = nil
-    hunks, = Open3.capture2e("git", "-C", ROOT, "diff", "-U0", diff_base)
+    hunks, = Master::Io::Exec.capture2e("git", "-C", ROOT, "diff", "-U0", diff_base)
     hunks.each_line do |diff_line|
       current = File.join(ROOT, diff_line[6..].chomp) if diff_line.start_with?("+++ b/")
       next unless current && (hunk = diff_line.match(/^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@/))
@@ -215,7 +215,7 @@ when "land"
   end
 
   def run!(*cmd, chdir: ROOT)
-    out, status = Open3.capture2e(*cmd, chdir: chdir)
+    out, status = Master::Io::Exec.capture2e(*cmd, chdir: chdir)
     [out.strip, status.success?]
   end
 
@@ -549,8 +549,9 @@ when "test"
   #   MASTER/tools/**        -> MASTER tool suite
   paths = ARGV.dup
   if paths.empty?
-    paths = IO.popen(%w[git status --porcelain -z], chdir: ROOT, &:read)
-              .split("\0").filter_map { |l| l[3..] }
+    listing, status = Master::Io::Exec.capture2("git", "status", "--porcelain", "-z", chdir: ROOT)
+    die("test", "git status failed", 1) unless status.success?
+    paths = listing.split("\0").filter_map { |l| l[3..] }
   end
   trees = paths.map { |p| p.split("/").first(2) }
   # MASTER/tools is part of MASTER, but it has its own complete suite so tool
@@ -684,13 +685,13 @@ when "pushed?"
 
   failed = false
   paths.each do |path|
-    porcelain, = Open3.capture2e("git", "-C", ROOT, "status", "--porcelain", "--", path)
+    porcelain, = Master::Io::Exec.capture2e("git", "-C", ROOT, "status", "--porcelain", "--", path)
     unless porcelain.strip.empty?
       Master::Trace::Dmesg.status("pushed0", "dirty, #{path}")
       failed = true
       next
     end
-    ahead, = Open3.capture2e("git", "-C", ROOT, "log", "--oneline", "origin/main..HEAD", "--", path)
+    ahead, = Master::Io::Exec.capture2e("git", "-C", ROOT, "log", "--oneline", "origin/main..HEAD", "--", path)
     if ahead.strip.empty?
       Master::Trace::Dmesg.status("pushed0", "pushed, #{path}")
     else
