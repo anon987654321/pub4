@@ -16,6 +16,7 @@ class OperatorModeTest < Minitest::Test
     refute Master::Operator::Mode.capabilities(:plan).allow?(:write)
     assert Master::Operator::Mode.capabilities(:plan).allow?(:model)
     assert Master::Operator::Mode.capabilities(:repair).allow?(:write)
+    assert Master::Operator::Mode.capabilities(:deploy).allow?(:deploy)
   end
 
   def test_assessment_uses_existing_risk_router
