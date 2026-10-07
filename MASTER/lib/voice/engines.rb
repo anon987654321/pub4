@@ -49,8 +49,8 @@ module Master
 
       def synth(name, text:, out_path:, cfg:, emotion:, melody:, voice:, rate:, pitch:)
         case name.to_s
-        when "mlx" then synth_mlx(text, out_path, cfg, emotion, rate:, pitch:)
-        when "chatterbox" then synth_chatterbox(text, out_path, cfg, emotion, rate:, pitch:)
+        when "mlx" then synth_mlx(text, out_path, cfg, emotion, rate:, pitch:, melody:)
+        when "chatterbox" then synth_chatterbox(text, out_path, cfg, emotion, rate:, pitch:, melody:)
         when "replicate_kokoro" then synth_replicate_kokoro(text, out_path, cfg, emotion)
         when "edge_melodic" then synth_edge_melodic(text, out_path, melody, voice, rate, pitch)
         when "edge" then synth_edge(text, out_path, voice, rate, pitch)
@@ -134,7 +134,7 @@ module Master
         status.success?
       end
 
-      def synth_mlx(text, out_path, cfg, emotion, rate: nil, pitch: nil)
+      def synth_mlx(text, out_path, cfg, emotion, rate: nil, pitch: nil, melody: nil)
         py = mlx_python
         return false unless py
 
@@ -237,7 +237,12 @@ module Master
         false
       end
 
-      def synth_chatterbox(text, out_path, cfg, emotion, rate: nil, pitch: nil)
+      def synth_chatterbox(text, out_path, cfg, emotion, rate: nil, pitch: nil, melody: nil)
+        if phrase_plan?(melody)
+          phrasewise = synth_chatterbox_phrasewise(melody[:phrases], out_path, cfg, emotion, rate:, pitch:)
+          return phrasewise if phrasewise
+        end
+
         enriched = Enrich.apply(text, emotion, tags: cfg["paralinguistic_tags"] == true)
         wav = out_path.sub(/\.mp3\z/, ".wav")
         ref = cfg["reference_clip"].to_s
@@ -257,6 +262,95 @@ module Master
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "Engines.synth_chatterbox")
         false
+      end
+
+      def phrase_plan?(melody)
+        phrases = melody.is_a?(Hash) ? melody[:phrases] : nil
+        phrases.is_a?(Array) && phrases.length > 1
+      end
+
+      # One Python process owns the Chatterbox model for the entire utterance.
+      # Each phrase still receives MASTER's measured rate/pitch and pause, then
+      # the finished phrase files are joined once. This keeps the neural model
+      # warm without throwing away Performance's sentence-by-sentence contour.
+      def synth_chatterbox_phrasewise(phrases, out_path, cfg, emotion, rate:, pitch:)
+        return false unless ffmpeg?
+
+        tmp_dir = File.join(Master::ROOT, ".master", "chatterbox")
+        FileUtils.mkdir_p(tmp_dir)
+        token = "#{Process.pid}_#{SecureRandom.hex(4)}"
+        manifest = File.join(tmp_dir, "phrases_#{token}.json")
+        payload = phrases.map do |phrase|
+          {
+            text: Enrich.apply(phrase[:text], emotion, tags: cfg["paralinguistic_tags"] == true),
+            rate: phrase[:rate] || rate,
+            pitch: phrase[:pitch] || pitch,
+          }
+        end
+        File.write(manifest, JSON.generate(payload))
+        device = cfg["chatterbox_device"] || "mps"
+        ref = cfg["reference_clip"].to_s
+        ref = File.expand_path(ref) unless ref.empty?
+        exag = emotion.fetch(:exaggeration) { cfg["exaggeration"] || 0.55 }
+        cfg_weight = emotion.fetch(:cfg_weight) { cfg.fetch("cfg_weight", 0.42) }
+        wav_dir = File.join(tmp_dir, "wav_#{token}")
+        FileUtils.mkdir_p(wav_dir)
+
+        py = chatterbox_phrasewise_py_script(manifest, wav_dir, device, ref, exaggeration: exag, cfg_weight:)
+        _out, _err, status = Master::Io::Exec.capture3("python3", "-c", py)
+        return false unless status.success?
+
+        parts = []
+        phrases.each_with_index do |phrase, index|
+          wav = File.join(wav_dir, "part_#{index}.wav")
+          next unless File.size?(wav)
+
+          mp3 = File.join(tmp_dir, "part_#{token}_#{index}.mp3")
+          next unless convert_to_mp3(wav, mp3)
+          realized = realize_audio_prosody(mp3, rate: phrase[:rate] || rate, pitch: phrase[:pitch] || pitch)
+          parts << [realized, index.zero? ? 0 : phrase.fetch(:pause_ms, 0).to_i]
+        end
+        return false if parts.empty? || parts.length != phrases.length
+
+        concat_mp3(parts, out_path, tmp_dir)
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "Engines.synth_chatterbox_phrasewise")
+        false
+      ensure
+        File.delete(manifest) if defined?(manifest) && manifest && File.exist?(manifest)
+        if defined?(wav_dir) && wav_dir && File.directory?(wav_dir)
+          Dir.glob(File.join(wav_dir, "*")).each { |path| File.delete(path) if File.file?(path) }
+          Dir.rmdir(wav_dir) rescue nil
+        end
+      end
+
+      def chatterbox_phrasewise_py_script(manifest, wav_dir, device, ref, exaggeration:, cfg_weight:)
+        <<~PY
+          import json
+          import torchaudio as ta
+          from chatterbox.mtl_tts import ChatterboxMultilingualTTS
+
+          with open(#{manifest.inspect}, "r", encoding="utf-8") as fh:
+              phrases = json.load(fh)
+
+          model = ChatterboxMultilingualTTS.from_pretrained(
+              device=#{device.inspect}, t3_model="v3"
+          )
+          ref = #{ref.inspect}
+          for index, phrase in enumerate(phrases):
+              kwargs = {
+                  "language_id": "en",
+                  "exaggeration": #{exaggeration.to_f},
+                  "cfg_weight": #{cfg_weight.to_f},
+              }
+              kwargs["audio_prompt_path"] = ref if ref
+              wav = model.generate(phrase["text"], **kwargs)
+              ta.save(
+                  #{File.join(wav_dir, "part_#{index}.wav").inspect},
+                  wav,
+                  model.sr,
+              )
+        PY
       end
 
       def chatterbox_py_script(enriched, device, ref, wav, exaggeration:, cfg_weight:)
