@@ -122,9 +122,9 @@ module Master
           UNIXSocket.open(sock_path) do |s|
             s.write("#{req}\n")
             File.open(audio_path, "wb") do |f|
-              clean = pump_socket_stream(s, StreamTarget.build(io: f, on_chunk:))
-              File.unlink(audio_path) rescue nil unless clean
-              clean
+              result = pump_socket_stream(s, StreamTarget.build(io: f, on_chunk:))
+              File.unlink(audio_path) rescue nil unless result.ok
+              result
             end
           end
         end
@@ -165,16 +165,22 @@ module Master
         written = 0
         loop do
           frame = read_frame(sock, sink)
-          return false if frame == :eof
-          return true if frame == :raw || frame == :clean
+          return StreamResult.new(ok: false, bytes: written) if frame == :eof
+          return StreamResult.new(ok: true, bytes: written) if frame == :clean
+
+          if frame.is_a?(Array) && frame.first == :raw
+            written += frame.last.to_i
+            target.on_chunk&.call(written)
+            return StreamResult.new(ok: true, bytes: written)
+          end
 
           sink.write(frame[1])
           written += frame[1].bytesize
           target.on_chunk&.call(written)
-          return false if target.stale_test&.call
+          return StreamResult.new(ok: false, bytes: written) if target.stale_test&.call
         end
       rescue Errno::EPIPE, Errno::ENOTCONN, Errno::ECONNRESET
-        false
+        StreamResult.new(ok: false, bytes: written)
       end
 
       # The next frame from the wire: an integer-length body for the common
@@ -201,8 +207,8 @@ module Master
       # the whole answer; forward them untouched.
       def consume_raw_response(header, sock, sink)
         sink.write(header)
-        IO.copy_stream(sock, sink)
-        :raw
+        copied = IO.copy_stream(sock, sink)
+        [:raw, header.bytesize + copied]
       end
 
       def read_socket_fill(sock, want)
