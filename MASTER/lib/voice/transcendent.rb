@@ -16,13 +16,11 @@ module Master
         "emotion_enabled" => true,
         "melodic_enabled" => true,
         "melodic_threshold" => 0.45,
-        # Phrase segmentation and inter-phrase rests, without the pentatonic
-        # contour. Separate from melodic_* because it is rhythm rather than
-        # style: melodic_threshold kept the whole phrase plan for lyrical text
-        # only, so every ordinary reply was one Edge call at one rate and one
-        # pitch. The cost is one Edge round trip per phrase, bounded by
-        # Melody::MAX_PHRASES; set false to go back to a single call.
-        "phrase_rhythm_enabled" => true,
+        # Keep ordinary conversation as one synthesis pass so phonemes and
+        # sentence prosody remain continuous. Explicit phrase rhythm is still
+        # available for expressive/experimental runs; lyrical text enables the
+        # melodic phrase engine independently through melodic_contour?.
+        "phrase_rhythm_enabled" => false,
         # Read a Norwegian clause with a Norwegian voice instead of putting it
         # through en-US-JennyNeural. Off, because data/voice.yml sets
         # single_voice: jenny and persona_affects_text_only: true — one voice is
@@ -172,8 +170,9 @@ module Master
         emotion.dig(:scores, :lyrical).to_f >= cfg["melodic_threshold"].to_f
       end
 
-      # Whether to render phrase by phrase at all. Either the contour wants it or
-      # phrase rhythm does; the engine is the same, the plan differs.
+      # Whether to render phrase by phrase at all. Ordinary speech stays one
+      # utterance by default; explicit phrase rhythm remains an operator switch,
+      # while the melodic contour always retains its expressive phrase engine.
       def phrase_rendered?(cfg, emotion)
         melodic_contour?(cfg, emotion) || cfg["phrase_rhythm_enabled"] == true
       end

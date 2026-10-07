@@ -273,4 +273,42 @@ class TestCliTerminalFace < Minitest::Test
     refute Master::CLI::Face::Window.asked?(["hello"])
     refute Master::CLI::Face::Window.asked?(["/face", "extra"])
   end
+  def test_transcendent_face_keeps_one_continuous_take
+    mouth = Master::CLI::Face::Mouth.new(
+      device: Object.new.tap { |d| d.define_singleton_method(:android?) { false } },
+    )
+
+    Master::Voice::Speech.stub(:synthesis_mode, "transcendent") do
+      Master::Voice::Speech.stub(:chunks, ["one.", "two."]) do
+        assert_equal ["one. two."], mouth.send(:chunks, "one. two.")
+      end
+    end
+  end
+
+  def test_classic_face_retains_sentence_chunking
+    mouth = Master::CLI::Face::Mouth.new(
+      device: Object.new.tap { |d| d.define_singleton_method(:android?) { false } },
+    )
+
+    Master::Voice::Speech.stub(:synthesis_mode, "classic") do
+      Master::Voice::Speech.stub(:chunks, ["one.", "two."]) do
+        assert_equal ["one.", "two."], mouth.send(:chunks, "one. two.")
+      end
+    end
+  end
+
+  def test_cli_mouth_smooths_envelope_attacks_and_releases
+    mouth = Master::CLI::Face::Mouth.new(
+      device: Object.new.tap { |d| d.define_singleton_method(:android?) { false } },
+    )
+    frame = [0] * 200
+    loud = [10_000] * 200
+    levels = mouth.send(:levels, frame + loud + frame + loud)
+
+    assert_in_delta 0.55, levels[1], 0.01
+    assert_operator levels[2], :>, 0.40
+    assert_operator levels[3], :>, levels[1]
+    assert_operator levels[3], :<, 1.0
+  end
+
 end

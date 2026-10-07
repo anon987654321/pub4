@@ -41,8 +41,9 @@ module Master
 
         def available? = missing.nil?
 
-        # Speaks text a sentence at a time, calling on_chunk with each before
-        # it is heard and on_level with the mouth's opening while it plays.
+        # Transcendent speaks one whole reply so phonemes can flow across
+        # sentence boundaries. The classic path keeps bounded sentence chunks.
+        # on_chunk marks the take before it is heard; on_level follows its envelope.
         # stop ends it between frames. False when nothing could be spoken.
         def say(text, on_level:, on_chunk: nil, stop: -> { false })
           @last_error = nil
@@ -101,15 +102,26 @@ module Master
         end
 
         def chunks(text)
-          parts = Master::Voice::Speech.chunks(text)
-          parts.empty? ? [text.to_s.strip].reject { |part| part.empty? } : parts
+          clean = text.to_s.strip
+          return [] if clean.empty?
+          return [clean] if Master::Voice::Speech.synthesis_mode.to_s == "transcendent"
+
+          parts = Master::Voice::Speech.chunks(clean)
+          parts.empty? ? [clean] : parts
         end
 
         def levels(samples)
           per = (RATE * FRAME_S).to_i
           rms = samples.each_slice(per).map { |slice| Math.sqrt(slice.sum { |s| s * s } / slice.size.to_f) }
           peak = rms.max.to_f
-          peak.positive? ? rms.map { |value| value / peak } : []
+          return [] unless peak.positive?
+
+          normalized = rms.map { |value| value / peak }
+          previous = 0.0
+          normalized.map do |value|
+            coefficient = value >= previous ? 0.55 : 0.18
+            previous += (value - previous) * coefficient
+          end
         end
 
         def play(path, part, on_level:, stop:)
