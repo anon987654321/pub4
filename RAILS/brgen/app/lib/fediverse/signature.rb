@@ -13,7 +13,7 @@ module Fediverse
     # 5 minutes is enough for clock skew and delivery retries.
     MAX_AGE = 5.minutes
 
-    # Headers we insist were covered by the signature. Without (request-target)
+    # Headers the signature must cover. Without (request-target)
     # a signature for one path is valid for another; without digest a signed
     # request can have its body swapped; without date it replays forever.
     REQUIRED_COVERAGE = %w[(request-target) host date digest].freeze
