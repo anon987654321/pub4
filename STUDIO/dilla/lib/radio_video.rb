@@ -6,7 +6,6 @@ require "socket"
 module RadioVideo
   ROOT = File.expand_path("../../..", __dir__)
   DILLA_ROOT = File.expand_path("..", __dir__)
-  RADIO_TUNNEL = File.join(ROOT, "RAILS", "brgen", "app", "javascript", "radio_brgen_tunnel.js")
   THREE_MODULE = File.join(ROOT, "MASTER", "web", "public", "three.face.module.js")
   DEFAULT_AUDIO = File.join(DILLA_ROOT, "dilla.wav")
   DEFAULT_OUTPUT = File.join(DILLA_ROOT, "dilla.mp4")
@@ -25,7 +24,6 @@ module RadioVideo
     seconds = video_seconds
 
     abort "video: missing #{input} — run dilla showcase first" unless File.file?(input) && File.size?(input)
-    abort "video: BRGEN radio tunnel is missing at #{RADIO_TUNNEL}" unless File.file?(RADIO_TUNNEL)
     abort "video: Three.js bundle is missing at #{THREE_MODULE}; run web assets:build first" unless File.file?(THREE_MODULE)
 
     browser = browser_path or abort "video: no Chrome/Chromium browser found"
@@ -35,7 +33,6 @@ module RadioVideo
 
     server = Server.new(
       audio: input,
-      tunnel: RADIO_TUNNEL,
       three_module: THREE_MODULE,
       html: page_html(seconds),
       output: capture
@@ -450,9 +447,8 @@ module RadioVideo
   class Server
     attr_reader :port
 
-    def initialize(audio:, tunnel:, three_module:, html:, output:)
+    def initialize(audio:, three_module:, html:, output:)
       @audio = audio
-      @tunnel = tunnel
       @three_module = three_module
       @html = html
       @output = output
@@ -523,8 +519,6 @@ module RadioVideo
       case [method, path]
       when ["GET", "/"]
         respond(client, 200, "text/html; charset=utf-8", @html)
-      when ["GET", "/radio_brgen_tunnel.js"]
-        respond_file(client, @tunnel, "text/javascript; charset=utf-8")
       when ["GET", "/three.face.module.js"]
         respond_file(client, @three_module, "text/javascript; charset=utf-8")
       when ["GET", "/visual_field.js"]
