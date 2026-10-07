@@ -45,9 +45,10 @@ module Master
         @record = nil
       end
 
-      def start!(goal:, scope: @root, model: nil, effort: "medium", plan: nil, origin: "unknown", auto_continue: false)
+      def start!(goal:, scope: @root, model: nil, effort: "medium", plan: nil, origin: "unknown", auto_continue: false,
+                  mode: "repair", risk: nil, intent: nil)
         with_lock do
-          start_unlocked!(goal:, scope:, model:, effort:, plan:, origin:, auto_continue:)
+          start_unlocked!(goal:, scope:, model:, effort:, plan:, origin:, auto_continue:, mode:, risk:, intent:)
           persist!
         end
         emit("mission:start", @record.slice("id", "goal", "scope", "model", "effort"))
@@ -87,7 +88,8 @@ module Master
       # Reuse the durable objective when it is still alive. A completed mission
       # is deliberately a new objective on the next wake; a blocked mission may
       # be replaced only by an explicit/manual /fix request.
-      def start_or_resume!(goal:, scope: @root, model: nil, effort: "medium", plan: nil, origin: "unknown", auto_continue: false)
+      def start_or_resume!(goal:, scope: @root, model: nil, effort: "medium", plan: nil, origin: "unknown", auto_continue: false,
+                           mode: "repair", risk: nil, intent: nil)
         # resumed is read after with_lock returns; assignment inside the block
         # would be block-local and the emit below would see an unset local.
         resumed = false
@@ -108,7 +110,10 @@ module Master
               raise active_mission_conflict(current, goal:, scope:)
             end
 
-            start_unlocked!(goal:, scope:, model:, effort:, plan:, origin:, auto_continue:)
+            start_unlocked!(
+              goal:, scope:, model:, effort:, plan:, origin:, auto_continue:,
+              mode:, risk:, intent:
+            )
             persist!
             resumed = false
           end
@@ -355,6 +360,11 @@ module Master
           "scope" => record["scope"].to_s,
           "model" => record["model"].to_s,
           "effort" => %w[low medium high].include?(record["effort"].to_s.downcase) ? record["effort"].to_s.downcase : "medium",
+          "operator" => {
+            "mode" => "repair",
+            "risk" => nil,
+            "intent" => nil
+          },
           "plan" => record["plan"].to_s.byteslice(0, MAX_PLAN_BYTES),
           "summary" => record["summary"],
           "origin" => record["origin"].to_s.empty? ? "legacy" : record["origin"].to_s,
@@ -502,7 +512,8 @@ module Master
         true
       end
 
-      def start_unlocked!(goal:, scope:, model:, effort:, plan:, origin: "unknown", auto_continue: false)
+      def start_unlocked!(goal:, scope:, model:, effort:, plan:, origin: "unknown", auto_continue: false,
+                          mode: "repair", risk: nil, intent: nil)
         @id = SecureRandom.hex(10)
         @record = {
           "version" => VERSION,
@@ -513,6 +524,11 @@ module Master
           "scope" => relative(scope),
           "model" => model.to_s,
           "effort" => normalize_effort(effort),
+          "operator" => {
+            "mode" => Master::Operator::Mode.for(mode).to_s,
+            "risk" => risk&.to_sym,
+            "intent" => intent&.to_sym
+          }.compact,
           "plan" => plan.to_s.byteslice(0, MAX_PLAN_BYTES),
           "summary" => nil,
           "origin" => origin.to_s,
