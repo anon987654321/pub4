@@ -5,6 +5,7 @@ require "open3"
 require "securerandom"
 require "stringio"
 require "tmpdir"
+require_relative "../io/github_operations"
 require_relative "../trace/dmesg"
 
 module Master
@@ -31,10 +32,11 @@ module Master
 
       attr_reader :repo_root
 
-      def initialize(root:, bus: nil, io: $stdout)
+      def initialize(root:, bus: nil, io: $stdout, github: nil)
         @repo_root = repository_root(root)
         @bus = bus
         @io = io
+        @github = github || Master::Io::GitHubOperations.new(root: @repo_root, out: io)
       end
 
       def run(command:, foreign_paths: [], proof_trees: nil)
@@ -196,7 +198,30 @@ module Master
         upstream = git!("rev-parse", "origin/main")
         raise "origin/main moved during fix; publication refused" unless upstream == base
 
-        git!("push", "origin", "refs/heads/#{branch}:refs/heads/main", chdir: worktree)
+        git!("push", "-u", "origin", "HEAD:refs/heads/#{branch}", chdir: worktree)
+
+        if @github.github_remote?
+          result = @github.publish_and_merge!(
+            branch:,
+            base: "main",
+            expected_head: head,
+            title: "MASTER /fix: #{branch}",
+            body: <<~BODY,
+              Automated MASTER convergence change.
+
+              Base: #{base}
+              Head: #{head}
+
+              The isolated worktree completed its final read-only proof before delivery.
+              MASTER will not publish directly to main; GitHub is the merge authority.
+            BODY
+          )
+          raise result.summary unless result.ok
+          return
+        end
+
+        # Local mirrors and integration fixtures keep a simple fast-forward path.
+        git!("push", "origin", "HEAD:refs/heads/main", chdir: worktree)
       end
 
       def cleanup_success(worktree:, branch:)

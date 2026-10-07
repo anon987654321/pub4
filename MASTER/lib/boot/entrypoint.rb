@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
+require "fileutils"
+require "json"
 require "rubygems"
+require "time"
 require_relative "dependency_manager"
 require_relative "../trace/dmesg"
 require_relative "../operator/environment"
@@ -28,6 +31,7 @@ module Master
         manager.activate_environment!
         reexec_mismatched_bundler!(root:, env:, out:, argv:, program:)
         activate_bundle!(root)
+        write_boot_receipt!(root:, out:)
 
         true
       end
@@ -121,6 +125,27 @@ module Master
       rescue ArgumentError
         Master::Trace::Dmesg.status("ruby0", "invalid .ruby-version, #{version_file}", io: out)
         exit 78
+      end
+
+      def write_boot_receipt!(root:, out:)
+        path = File.join(root, ".master", "boot.json")
+        payload = {
+          "pid" => Process.pid,
+          "ruby" => RUBY_VERSION,
+          "ruby_path" => RbConfig.ruby,
+          "platform" => RUBY_PLATFORM,
+          "bundler" => Gem.loaded_specs["bundler"]&.version&.to_s,
+          "root" => root,
+          "at" => Time.now.utc.iso8601,
+        }
+        FileUtils.mkdir_p(File.dirname(path))
+        tmp = "#{path}.#{$}.tmp"
+        File.write(tmp, JSON.generate(payload) + "\n", mode: "w", encoding: "UTF-8")
+        File.rename(tmp, path)
+      rescue StandardError => e
+        Master::Trace::Dmesg.status("boot0", "receipt unavailable, #{e.class}: #{e.message}", io: out)
+      ensure
+        File.delete(tmp) if defined?(tmp) && tmp && File.exist?(tmp)
       end
 
       def same_file?(a, b)

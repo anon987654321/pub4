@@ -148,6 +148,7 @@ module Master
           error_class: e.class.name,
           error_message: e.message,
           phase: current_phase.to_s,
+          run_id: (defined?(run_id) ? run_id : nil),
           backtrace: e.backtrace&.first(8),
         }
         @bus&.publish("fix_loop:crash", **payload)
@@ -155,12 +156,23 @@ module Master
           "fix0",
           "crash #{e.class} @ #{current_phase}: #{e.message.to_s[0, 180]}",
         )
-        @run_journal&.crash(run_id, "#{e.class}: #{e.message}") if defined?(run_id) && run_id
-        mission&.defer!(reason: "crash: #{e.class}: #{e.message}", seconds: 60)
-        Result.err(
+        result = Result.err(
           "fix_loop: crash #{e.class} @ #{current_phase}: #{e.message} @ #{e.backtrace&.first(3)&.join(" | ")}",
           category: :crash,
         )
+        if defined?(run_id) && run_id
+          begin
+            return finish_run(result, target, run_id, mission:, requested:)
+          rescue StandardError => finish_error
+            Master::Ground::Swallow.log(
+              finish_error,
+              context: "fix_loop.crash_terminal",
+              event_bus: @bus,
+            )
+            @run_journal&.crash(run_id, "#{e.class}: #{e.message}; terminalization failed: #{finish_error.class}: #{finish_error.message}")
+          end
+        end
+        result
       end
 
       def finish_run(result, target, run_id, mission: nil, requested: false)

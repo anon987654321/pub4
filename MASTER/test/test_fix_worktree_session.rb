@@ -87,6 +87,49 @@ class TestFixWorktreeSession < Minitest::Test
     end
   end
 
+  def test_github_remote_uses_pr_delivery_without_pushing_main
+    Dir.mktmpdir("master-github-worktree-test-") do |dir|
+      remote = File.join(dir, "remote.git")
+      root = File.join(dir, "pub4")
+      system("git", "init", "--bare", remote)
+      system("git", "clone", remote, root)
+      git(root, "config", "user.name", "MASTER test")
+      git(root, "config", "user.email", "master-test@example.invalid")
+      File.write(File.join(root, "README"), "base\n")
+      FileUtils.mkdir_p(File.join(root, "MASTER", "bin"))
+      File.write(File.join(root, "MASTER", "bin", "master"), <<~RUBY)
+        #!/usr/bin/env ruby
+        File.write(File.join(Dir.pwd, "README"), "after\n")
+        system("git", "add", "README")
+        exit(system("git", "commit", "-m", "worker fix"))
+      RUBY
+      FileUtils.chmod(0o755, File.join(root, "MASTER", "bin", "master"))
+      File.write(File.join(root, "MASTER", "bin", "operator"), "#!/usr/bin/env ruby\nexit 0\n")
+      FileUtils.chmod(0o755, File.join(root, "MASTER", "bin", "operator"))
+      git(root, "add", ".")
+      git(root, "commit", "-m", "initial")
+      git(root, "branch", "-M", "main")
+      git(root, "push", "-u", "origin", "main")
+
+      github = Object.new
+      calls = []
+      github.define_singleton_method(:github_remote?) { true }
+      github.define_singleton_method(:publish_and_merge!) do |**kwargs|
+        calls << kwargs
+        Master::Io::GitHubOperations::Result.new(true, "merged", 99, "https://github.com/anon987654321/pub4/pull/99", "merged-sha")
+      end
+
+      result = Master::Fix::WorktreeSession.new(root:, github:).run(command: "/fix test", proof_trees: ["MASTER"])
+
+      assert result.ok
+      assert_equal 1, calls.size
+      assert_equal "main", calls.first[:base]
+      assert_equal result.head, calls.first[:expected_head]
+      assert_equal "base\n", git_output(root, "show", "origin/main:README")
+      refute File.exist?(result.worktree)
+    end
+  end
+
   def test_auto_merge_refuses_preexisting_local_commits
     Dir.mktmpdir("master-worktree-test-") do |dir|
       remote = File.join(dir, "remote.git")

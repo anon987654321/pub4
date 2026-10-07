@@ -122,9 +122,10 @@ module Master
           raise CommandError.new(["git", "pull", "--ff-only", "origin", "main"], result[:stderr]) unless result[:status].success?
           report("control0: synced <- origin/main #{short(remote)}")
         elsif ancestor?(remote, head)
-          result = command("git", "-C", @repo, "push", "origin", "main")
-          raise CommandError.new(["git", "push", "origin", "main"], result[:stderr]) unless result[:status].success?
-          report("control0: synced -> origin/main #{short(head)}")
+          raise CommandError.new(
+            ["git", "sync", "main"],
+            "local main is ahead of origin/main; publish through the GitHub PR path, never from the control plane"
+          )
         else
           raise CommandError.new(["git", "sync", "main"], "main and origin/main have diverged")
         end
