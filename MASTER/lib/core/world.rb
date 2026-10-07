@@ -286,7 +286,14 @@ module Master::Core
       real_root = File.realpath(@root)
       existing = abs
       existing = File.dirname(existing) until File.exist?(existing)
-      raise "path escapes workspace: #{path}" unless under_root?(File.realpath(existing), real_root)
+      canonical = File.realpath(existing)
+      raise "path escapes workspace: #{path}" unless under_root?(canonical, real_root)
+
+      if File.exist?(abs)
+        canonical_file = File.realpath(abs)
+        raise "path escapes workspace: #{path}" unless under_root?(canonical_file, real_root)
+        raise "credential path refused: #{path}" if secret_path?(canonical_file)
+      end
 
       abs
     end
