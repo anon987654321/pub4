@@ -37,6 +37,39 @@ module Master
 
         # Structured reasoning shares the durable memory store but skips
         # embedding: causal frames are control data, not semantic documents.
+        def remember_preference(frame, key: nil)
+          row = frame.respond_to?(:to_h) ? frame.to_h : frame
+          return unless row.is_a?(Hash) && !row.empty?
+
+          payload = JSON.generate(stringify_keys(row))
+          digest = Digest::SHA256.hexdigest(payload)[0, 12]
+          memory_key = key.to_s.empty? ? "preference/#{Time.now.to_i}-#{digest}" : key.to_s
+          remember(
+            memory_key,
+            payload,
+            type: "feedback",
+            source: row[:source] || row["source"] || "cognition:taste",
+            confidence: row[:confidence] || row["confidence"] || 0.5,
+            embed: false,
+          )
+          memory_key
+        end
+
+        def preferences(limit: 8)
+          rows = by_type("feedback").filter_map do |key, entry|
+            next unless key.to_s.start_with?("preference/", "auto/feedback/")
+            body = entry.is_a?(Hash) ? entry["value"] : entry
+            parsed = JSON.parse(body.to_s)
+            parsed.merge("_key" => key)
+          rescue JSON::ParserError
+            nil
+          end
+          rows.first(limit.to_i)
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "memory.preferences")
+          []
+        end
+
         def remember_reasoning(frame, key: nil)
           row = frame.respond_to?(:to_h) ? frame.to_h : frame
           return unless row.is_a?(Hash) && !row.empty?
@@ -208,7 +241,17 @@ module Master
 
           count = @mutex.synchronize { @store.keys.count { |key| key.start_with?("auto/#{type}/") } }
           key = "auto/#{type}/#{count + 1}"
-          remember(key, snippet, type:, source: "auto_save")
+          if type == "feedback"
+            frame = Master::Cognition::Intelligence.preference_frame(
+              domain: "operator",
+              preference: snippet,
+              evidence: "explicit operator feedback",
+              source: "auto_save",
+            )
+            remember_preference(frame, key:)
+          else
+            remember(key, snippet, type:, source: "auto_save")
+          end
           key
         end
 
