@@ -156,11 +156,6 @@ class TestAntigravitySkills < Minitest::Test
     with_workspace do |root|
       write_skill(File.join(root, ".agents", "skills", "good"), "good", description: "good")
 
-      dir = File.join(root, ".agents", "skills")
-      assert_equal [], skills_for(root).then { |skills| skills.discover!; [] } unless File.directory?(dir)
-
-      discovery = WorkspaceOnly.new(cwd: root, workspace_root: root)
-      skills = A::Skills.new(discovery:, usage_file: File.join(root, "usage.yml"))
       File.write(File.join(root, ".agents", "skills.json"),
                  JSON.generate({ "entries" => [{ "path" => "bad-pack", "include_only" => ["["] }] }))
       FileUtils.mkdir_p(File.join(root, "bad-pack", "bad"))
