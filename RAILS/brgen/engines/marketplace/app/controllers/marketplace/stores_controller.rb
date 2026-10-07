@@ -52,11 +52,9 @@ module Marketplace
     end
 
     def update
-      if @store.update(store_params)
-        redirect_to shop_path(@store.slug), notice: t("marketplace.store_updated")
-      else
-        render :edit, status: :unprocessable_entity
-      end
+      return render :edit, status: :unprocessable_entity unless @store.update(store_params)
+
+      redirect_to shop_path(@store.slug), notice: t("marketplace.store_updated")
     end
 
     def destroy
