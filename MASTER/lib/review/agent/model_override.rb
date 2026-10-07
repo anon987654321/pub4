@@ -81,6 +81,12 @@ module Master
         end
 
         def model_for(operation:)
+          forced = ENV["MASTER_MODEL"].to_s.strip
+          if !forced.empty? && (!@model_router.respond_to?(:unreachable_reason) ||
+                                @model_router.unreachable_reason(forced, wait: false).nil?)
+            return forced
+          end
+
           pinned = @pinned_model if @pinned_model && !Io::ModelSkipCache.skipped?(@pinned_model) &&
                                    pinned_model_reachable?
           runtime = @runtime_model if @runtime_model && !Io::ModelSkipCache.skipped?(@runtime_model) &&
