@@ -96,10 +96,12 @@ class TestSnapshotGenerator < Minitest::Test
   # the command must use the same bounded generator as bin/operator.
   def test_bare_snapshot_command_uses_the_bounded_full_tree_generator
     source = File.read(File.expand_path("../lib/cli/command_registry.rb", __dir__))
-    assert_includes source, "Operator::Snapshot::TREES"
-    assert_includes source, "Operator::Snapshot.write(tree)"
+    assert_includes source, "::Operator::Snapshot::TREES"
+    assert_includes source, "::Operator::Snapshot.write(tree)"
     assert_includes source, "snapshot0: wrote root/"
     refute_includes source, "Master::Snapshot.new(root: Master::REPO_ROOT).write!"
+    refute_includes source, "paths = Operator::Snapshot::TREES"
+    refute_includes source, "Operator::Snapshot::MAX_BYTES)"
   end
 
   def test_operator_snapshot_runs_the_full_root_snapshot_pack
