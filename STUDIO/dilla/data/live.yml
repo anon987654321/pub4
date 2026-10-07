@@ -24,6 +24,8 @@ stream:
   # Every sample leaves through tanh(s * drive), scaled under full scale.
   master_drive: 1.4
   master_scale: 26000
+  # Final showcase lift happens before the existing true-peak limiter.
+  showcase_output_gain: 1.22
   # Each note sits this many cents off concert pitch, drawn per note, so a
   # chord beats like a played instrument rather than a printed one.
   note_drift_cents: 0.7
@@ -250,9 +252,9 @@ demos:
 improvise:
   bpm: 96
   bpm_spread: 3
-  # Historical Dilla/Slum pocket grid used when a reference does not select a
-  # producer-specific family. The renderer adds its micro- and nano-timing on top.
-  drum_preset: dilla_fantastic
+  # Canonical Dilla-time pocket for the live instrument. The renderer adds its
+  # role-specific micro- and nano-timing on top.
+  drum_preset: dillatime
   # The kit, written a chord at a time with the chord. "drums off" stops it.
   drums: true
   # The kick on every beat, doubled with ghost hits between beats, and now
