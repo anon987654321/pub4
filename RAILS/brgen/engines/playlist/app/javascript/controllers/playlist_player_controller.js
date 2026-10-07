@@ -189,7 +189,7 @@ export default class extends Controller {
 
   addComment() {
     if (!this.hasCommentFormTarget || !this.hasAudioTarget) return
-    this.pendingCommentTime = this.audioTarget.currentTime || 0
+    this.pendingCommentTime = this.audioTarget.currentTime ?? 0
     this.commentFormTarget.hidden = false
     this.commentInputTarget.focus()
     this.commentInputTarget.placeholder = `Comment at ${this.#formatTime(this.pendingCommentTime)}`
@@ -234,11 +234,11 @@ export default class extends Controller {
     if (!src && !embed) return
 
     this.srcValue = src
-    this.embedValue = embed || ""
-    this.titleValue = title || ""
-    this.artistValue = artist || ""
-    this.artworkValue = artwork || ""
-    this.trackIdValue = trackId || ""
+    this.embedValue = embed ?? ""
+    this.titleValue = title ?? ""
+    this.artistValue = artist ?? ""
+    this.artworkValue = artwork ?? ""
+    this.trackIdValue = trackId ?? ""
     if (commentsJson) {
       try { this.commentsValue = JSON.parse(commentsJson) } catch (e) { /* keep */ }
     }
@@ -260,7 +260,7 @@ export default class extends Controller {
     }
 
     if (this.hasEmbedTarget) {
-      this.embedTarget.src = embed || ""
+      this.embedTarget.src = embed ?? ""
       this.embedTarget.hidden = !embed
     }
 
@@ -316,8 +316,8 @@ export default class extends Controller {
 
   #tick() {
     const audio = this.hasAudioTarget ? this.audioTarget : null
-    const duration = audio?.duration || 0
-    const current = audio?.currentTime || 0
+    const duration = audio?.duration ?? 0
+    const current = audio?.currentTime ?? 0
     const ratio = duration ? current / duration : 0
 
     if (this.hasCurrentTimeTarget) this.currentTimeTarget.textContent = this.#formatTime(current)
@@ -388,7 +388,7 @@ export default class extends Controller {
       const duration = this.audioTarget.duration
       ctx.fillStyle = "#ffeb3b"
       this.commentsValue.forEach(comment => {
-        const time = comment.time || 0
+        const time = comment.time ?? 0
         const idx = Math.floor((time / duration) * this.peaks.length)
         if (idx >= 0 && idx < this.peaks.length) {
           const x = idx * (barWidth + gap)
@@ -449,7 +449,7 @@ export default class extends Controller {
     ;(this.commentsValue || []).forEach(c => {
       const div = document.createElement("div")
       div.className = "playlist-comment"
-      div.dataset.time = c.time || 0
+      div.dataset.time = c.time ?? 0
       div.setAttribute("data-action", "click->playlist-player#seekToComment")
       div.innerHTML = `<span class="time">${this.#formatTime(c.time || 0)}</span> <span class="text">${(c.text || "").replace(/</g,"&lt;")}</span>`
       list.appendChild(div)
