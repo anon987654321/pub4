@@ -5,7 +5,7 @@ require "fileutils"
 require "prism"
 require "timeout"
 require_relative "semantic_fingerprint"
-require_relative "rule_health"
+require_relative "law_health"
 
 module Master
   module Review
@@ -196,7 +196,7 @@ module Master
 
         # `defined?` rather than a bare constant: this file is reachable from
         # `require "master"` alone, and Rules::SemanticRule only exists once
-        # review/scan/rule_dsl has loaded the registry. Naming it unguarded
+        # review/scan/law_dsl has loaded the registry. Naming it unguarded
         # turned every scan on that path into "scan failed: uninitialized
         # constant", which reads as a broken file rather than a missing require.
         def semantic_rule?(rule)
