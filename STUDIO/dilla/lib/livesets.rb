@@ -2278,7 +2278,8 @@ SHOWCASE_MODES = {
           end
         end
 
-        append = cycle.positive? || ENV["DILLA_SHOWCASE_APPEND"] == "1"
+        append = (cycle.positive? || ENV["DILLA_SHOWCASE_APPEND"] == "1") &&
+                  ENV["DILLA_LIVE_VISUAL"] != "1"
         append_showcase_wav!(paths, output, append:)
       ensure
         FileUtils.remove_entry(scratch) if scratch && File.exist?(scratch)
@@ -2293,6 +2294,7 @@ SHOWCASE_MODES = {
     if visual
       require_relative "live_audiovisual" unless defined?(LiveAudiovisual)
       LiveAudiovisual.stop!
+      FileUtils.rm_f(output) if output&.include?(File.join(Dir.tmpdir, "dilla-live-"))
     end
     previous.nil? ? ENV.delete("DILLA_SHOWCASE") : ENV["DILLA_SHOWCASE"] = previous
   end
