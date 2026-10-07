@@ -11,7 +11,7 @@ module Master
       # consolidated in place. SqliteStore opens the databases, KnowledgeStore
       # records fix outcomes, and neither holds a conversation's memory.
       module Store
-        include Master::Io::AtomicWrite
+        include ::Master::Io::AtomicWrite
 
         def initialize(root: Dir.pwd)
           @root = root
