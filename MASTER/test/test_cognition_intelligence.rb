@@ -96,6 +96,44 @@ class TestCognitionIntelligence < Minitest::Test
     assert_equal :explore, Master::Cognition::Intelligence.posture_for(item)
   end
 
+  def test_counterfactual_frame_names_a_separating_measurement
+    frame = Master::Cognition::Intelligence.counterfactual_frame(
+      hypothesis: "the smaller change is safer",
+      alternative: "the wrapper removal is safer",
+      boundary: "public CLI",
+      measurement: "existing command contract suite",
+      expected_difference: "one path keeps the alias, the other removes it",
+    )
+
+    assert frame[:ready]
+    assert_equal "public CLI", frame[:boundary]
+  end
+
+  def test_synthesis_keeps_dissent_instead_of_majority_vote
+    result = Master::Cognition::Intelligence.synthesize_judgments([
+      { persona: "A", claim: "keep wrapper", confidence: 0.9, falsifier: "caller breaks" },
+      { persona: "B", claim: "remove wrapper", confidence: 0.85, falsifier: "caller break" },
+      { persona: "C", claim: "keep wrapper", confidence: 0.6, falsifier: "caller breaks" },
+    ])
+
+    assert result[:disagreement]
+    assert result[:requires_measurement]
+    assert_nil result[:leading]
+    assert_equal 2, result[:positions].size
+  end
+
+  def test_fertility_preserves_promising_unfinished_work
+    result = Master::Cognition::Intelligence.fertility(
+      consumers: 2,
+      operator_owned: true,
+      novelty: 0.8,
+      unused_days: 20,
+    )
+
+    assert_equal :fertile, result[:posture]
+    assert_includes result[:value_evidence], :consumers
+  end
+
   def test_falsification_questions_are_counterexamples_not_answers
     questions = Master::Cognition::Intelligence.falsification_questions("the patch is harmless")
     assert_equal 5, questions.size
