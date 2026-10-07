@@ -148,7 +148,7 @@ apps:
           Native Marketplace::* is live. Solidus is optional for catalog, cart,
           checkout, fulfillment and merchant operations; enable with SOLIDUS_MARKETPLACE=1.
           Dintero owns marketplace payment authorization, capture and payout splits.
-          See brgen/docs/SOLIDUS_MARKETPLACE.md.
+          See brgen/engines/marketplace/README.md.
         items:
         - { name: "Marketplace::Product (name, description, price, image)", status: done, notes: "Marketplace::Listing native Rails 8" }
         - { name: "Marketplace::Category", status: done }
