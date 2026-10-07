@@ -1076,15 +1076,20 @@ tokens:
         codebase:    { tilt_x: -0.08, tilt_y: 0.10, density: 1.18, fracture: 0.08 }
         ecology:     { tilt_x: 0.12, tilt_y: -0.06, density: 1.32, fracture: 0.12 }
       morphology:
-        model: speculative_future_human
-        generation: 3
-        cranium_scale: 1.06
-        lower_face_scale: 0.90
-        orbital_scale: 1.08
-        brow_scale: 0.84
-        nose_scale: 0.94
-        mouth_scale: 0.92
-        facial_projection: 0.93
+        model: speculative_distant_human
+        generation: 6
+        cranium_scale: 1.12
+        cranial_width: 1.03
+        lower_face_scale: 0.84
+        orbital_scale: 1.04
+        orbital_vertical_scale: 1.02
+        brow_scale: 0.74
+        nose_scale: 0.90
+        mouth_scale: 0.88
+        facial_projection: 0.88
+        jaw_projection: 0.86
+        pupil_scale: 0.82
+        interface_presence: 0.16
         asymmetry: 0.010
         asymmetry_seed: 73421
       shell:
