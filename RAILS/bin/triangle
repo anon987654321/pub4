@@ -19,7 +19,7 @@
 
 require "fileutils"
 require "net/http"
-require "open3"
+require_relative "../../MASTER/lib/io/exec"
 require "yaml"
 require_relative "../../MASTER/lib/operator/ruby_runner"
 
@@ -64,7 +64,7 @@ module Deploy
     def self.log_file(app) = File.join(RUN_DIR, "#{app[:name]}.log")
 
     def self.migrate(app)
-      out, status = Open3.capture2e(env_for(app), BUNDLE, "exec", RUBY, "bin/rails", "db:prepare", chdir: app[:dir])
+      out, status = Master::Io::Exec.capture2e(env_for(app), BUNDLE, "exec", RUBY, "bin/rails", "db:prepare", chdir: app[:dir], timeout: BOOT_TIMEOUT)
       return true if status.success?
 
       warn "triangle: #{app[:name]} db:prepare failed\n#{out.lines.last(8).join}"
