@@ -328,7 +328,7 @@ module Operator
       consumed = (data[:subscribers].keys + data[:listeners].keys).to_set
 
       unpublished = topics.select { |topic| !published.include?(topic) }.sort
-      unconsumed = published.reject { |topic| !consumed.include?(topic) }.sort
+      unconsumed = published.reject { |topic| consumed.include?(topic) }.sort
       contract_missing_publishers = contracted_publishers(data)
       retired = retired_occurrences(data)
       reference_anchor_gaps = missing_reference_anchors(data)
