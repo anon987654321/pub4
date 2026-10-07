@@ -508,6 +508,7 @@ module Master
           consecutive_clean: state[:consecutive_clean],
           wishlist_proposals:, run_id:
         )
+        @convergence_discipline.note_progress! if @pass_runner.respond_to?(:pass_progress?) && @pass_runner.pass_progress?
         if %i[continue reloading].include?(result.status) && wishlist_proposals.any?
           @wishlist.mark_delivered(
             proposal_ids: wishlist_proposals.map { |proposal| proposal["uid"] },
