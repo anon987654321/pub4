@@ -110,6 +110,20 @@ class TestBootReceipt < Minitest::Test
     assert_equal Receipt.digest, receipt.fetch(:constitution)
   end
 
+  def test_session_line_is_operator_readable
+    line = Receipt.session_line(
+      commit: "abc123def456",
+      constitution: "0123456789abcdef",
+      memory_version: 3,
+      model: "test-model",
+    )
+
+    assert_equal(
+      "receipt: session commit=abc123def456 constitution=0123456789abcdef memory=3 model=test-model",
+      line,
+    )
+  end
+
   def test_the_receipt_names_the_commit_it_booted_from
     assert_match(/\A[0-9a-f]{12}\z/, Receipt.commit(Master::ROOT))
     assert Receipt.capabilities["git"], "the receipt is running inside a checkout"
