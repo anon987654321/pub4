@@ -198,6 +198,16 @@ class TestDillaLiveSynth < Minitest::Test
     assert_includes showcase, '"patch" => "vapor_lead"'
   end
 
+  def test_architectural_video_uses_the_local_three_bundle
+    source = File.read(dilla("lib/radio_video.rb"))
+    assert_includes source, 'THREE_MODULE = File.join(ROOT, "MASTER", "web", "public", "three.face.module.js")'
+    assert_includes source, 'new THREE.WebGLRenderer'
+    assert_includes source, 'new THREE.PerspectiveCamera'
+    assert_includes source, 'canvas.captureStream(#{RadioVideo::FPS})'
+    refute_includes source, 'RADIO_TUNNEL'
+    refute_includes source, 'radio_brgen_tunnel.js'
+  end
+
   def test_showcase_generates_dilla_mp4_from_the_finished_wav
     source = File.read(dilla("lib/livesets.rb"))
     assert_includes source, 'require_relative "radio_video"'
