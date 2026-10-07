@@ -82,56 +82,60 @@ module Operator
     def write(packs, root)
       raise "snapshot extract: no packs" if packs.empty?
 
-      trees = packs.map { |pack| pack.fetch(:tree) }.uniq
       revisions = packs.map { |pack| pack.fetch(:git) }.uniq
-      counts = packs.map { |pack| pack.fetch(:parts) }.uniq
-      indices = packs.map { |pack| pack.fetch(:part) }.sort
-      tree = trees.fetch(0) if trees.size == 1
-      raise "snapshot extract: mixed trees" unless trees.size == 1
       raise "snapshot extract: mixed git revisions" unless revisions.size == 1
-      raise "snapshot extract: inconsistent part counts" unless counts.size == 1
-      expected = (1..counts.first).to_a
-      raise "snapshot extract: missing or duplicate parts" unless indices == expected
 
-      fragments = Hash.new { |hash, path| hash[path] = [] }
-      packs.each do |pack|
-        pack.fetch(:files).each do |file|
-          fragments[file.fetch(:path)] << [
-            file[:fragment],
-            file[:total_fragments],
-            file.fetch(:bytes),
-            file.fetch(:newline),
-            file.fetch(:body),
-          ]
+      total = 0
+      packs.group_by { |pack| pack.fetch(:tree) }.each do |tree, tree_packs|
+        counts = tree_packs.map { |pack| pack.fetch(:parts) }.uniq
+        indices = tree_packs.map { |pack| pack.fetch(:part) }.sort
+        raise "snapshot extract: inconsistent part counts for #{tree}" unless counts.size == 1
+        expected = (1..counts.first).to_a
+        raise "snapshot extract: missing or duplicate parts for #{tree}" unless indices == expected
+
+        fragments = Hash.new { |hash, path| hash[path] = [] }
+        tree_packs.each do |pack|
+          pack.fetch(:files).each do |file|
+            fragments[file.fetch(:path)] << [
+              file[:fragment],
+              file[:total_fragments],
+              file.fetch(:bytes),
+              file.fetch(:newline),
+              file.fetch(:body),
+            ]
+          end
         end
-      end
 
-      fragments.each do |relative, pieces|
-        expected_prefix = "#{tree}/"
-        raise "snapshot extract: path escapes declared tree #{relative}" unless relative.start_with?(expected_prefix)
-        fragment_numbers = pieces.filter_map(&:first)
-        if fragment_numbers.empty?
-          raise "snapshot extract: duplicate source file #{relative}" unless pieces.size == 1
-          content = pieces.first.fetch(4)
-          content = content.delete_suffix("\n") if pieces.first.fetch(3).zero?
-        else
-          total = pieces.map { |piece| piece.fetch(1) }.compact.uniq
-          numbers = fragment_numbers.sort
-          raise "snapshot extract: incomplete fragments for #{relative}" unless total.size == 1 && numbers == (1..total.first).to_a
-          content = pieces.sort_by(&:first).map do |piece|
-            body = piece.fetch(4)
-            piece.fetch(3).zero? ? body.delete_suffix("\n") : body
-          end.join
+        fragments.each do |relative, pieces|
+          expected_prefix = "#{tree}/"
+          raise "snapshot extract: path escapes declared tree #{relative}" unless relative.start_with?(expected_prefix)
+          fragment_numbers = pieces.filter_map(&:first)
+          if fragment_numbers.empty?
+            raise "snapshot extract: duplicate source file #{relative}" unless pieces.size == 1
+            content = pieces.first.fetch(4)
+            content = content.delete_suffix("\n") if pieces.first.fetch(3).zero?
+          else
+            total_fragments = pieces.map { |piece| piece.fetch(1) }.compact.uniq
+            numbers = fragment_numbers.sort
+            raise "snapshot extract: incomplete fragments for #{relative}" unless total_fragments.size == 1 && numbers == (1..total_fragments.first).to_a
+            content = pieces.sort_by(&:first).map do |piece|
+              body = piece.fetch(4)
+              piece.fetch(3).zero? ? body.delete_suffix("\n") : body
+            end.join
+          end
+          declared = pieces.sum { |piece| piece.fetch(2) }
+          raise "snapshot extract: byte count mismatch for #{relative}" unless content.bytesize == declared
+
+          target = File.join(root, relative)
+          FileUtils.mkdir_p(File.dirname(target))
+          File.write(target, content, encoding: "UTF-8")
         end
-        declared = pieces.sum { |piece| piece.fetch(2) }
-        raise "snapshot extract: byte count mismatch for #{relative}" unless content.bytesize == declared
-
-        target = File.join(root, relative)
-        FileUtils.mkdir_p(File.dirname(target))
-        File.write(target, content, encoding: "UTF-8")
+        total += fragments.size
       end
-      fragments.size
+      total
     end
+
+nd
  end
 end
 
