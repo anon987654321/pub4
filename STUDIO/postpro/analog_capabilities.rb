@@ -3,10 +3,9 @@
 require "json"
 
 module Studio
-  # Media capability contract owned by Studio.  Keeping the
-    # contract in code makes every emulation direction discoverable by MASTER,
-    # addressable by a stable id, and regression-testable after the design notes
-    # that originally described it no longer exist.
+  # Media capability contract owned by Studio. Keeping the contract in code
+  # makes every emulation direction discoverable by MASTER, addressable by a
+  # stable id, and regression-testable after the design notes are gone.
     module AnalogCapabilities
       POSTPRO = %i[
         exposure_linked_grain per_channel_grain_size shadow_grain_clumping halation_threshold
