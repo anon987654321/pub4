@@ -115,7 +115,8 @@ module Master
 
         line = "next0: your previous question — #{question}"
         Master::Trace::Dmesg.status("next0", question)
-        Master::Voice::Playback.speak(question) unless Master::Trace::Dmesg.log_voice_active?
+        # The question is continuity context, not a second reply. Keep it visible
+        # so /fix can resume the thread without putting two utterances on the speaker.
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "cli.previous_question_footer", event_bus: @refs.bus)
       end
