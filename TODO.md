@@ -2,6 +2,13 @@
 ## Completed in the 2026-10-07 organism/voice/Rails convergence pass
 
 ### Simulated /fix — 2026-10-07
+- Deep /fix hardening: explicit manual /fix now promotes scanner semantics from deterministic clean-file sampling to full semantic coverage, while background runs retain the cheaper sample; coverage reporting reads the scanner's actual mode rather than an environment heuristic.
+- Fix input coverage now aligns with scanner refusal limits, including the 10,000-line boundary; an unreadable file encountered during repair is a validation failure, never an empty finding set.
+- Convergence progress now records post-observation mutations from LLM, visual, opportunity and council-improvement stages, so adaptive pass extension cannot stop merely because the last observation happened before the model-driven repair.
+- Streamed file-repair memory only records rules actually offered to the model after confidence/human filtering; skipped findings remain eligible on the next pass.
+- Repair model selection uses the live operation-aware router for file writes and code generation; explicit MASTER_MODEL is honored except under MASTER_LOCAL_ONLY, which remains the stronger policy boundary.
+- Worktree publication proof remains strict: the isolated worker must pass lexical, RAILS rendered/source, OpenBSD, complete suites, ratchets, sprawl and council stages; a skipped gate (exit 3) is not publishable.
+
 - `/fix` now reports its real collector corpus (`candidates`, `collected`, `skipped`) before Pass 1 and exposes the same coverage in dry-run preview, making a narrowed four-tree run visible instead of silently "clean".
 - RAILS/MASTER-web rendered review remains part of the same `/fix` convergence loop: mobile/desktop/composition captures, ghost-stack/diff evidence and hostile UI critique feed anchored visual findings back into LawLoop. Rendered-evidence INCONCLUSIVE now fails closed as validation rather than masquerading as a plateau.
 - Convergence no longer stops at the configured starting pass count while measured improvement continues: it extends in bounded chunks up to a hard safety ceiling, while true plateaus, oscillation, validation failures, human decisions and budget exhaustion still terminate explicitly.
