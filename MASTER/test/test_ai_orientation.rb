@@ -70,6 +70,9 @@ class TestAiOrientation < Minitest::Test
 
     assert_includes text, "MASTER orientation v3"
     assert_includes text, "target: MASTER/lib"
+    assert_includes text, "judgment: rank changes by causal leverage"
+    assert_includes text, "scales: reason local"
+    assert_includes text, "creative work: preserve identity"
     assert_includes text, "active plan: repair boot verify again"
     assert_includes text, "pending wishes: 1. Better boot receipt"
     assert_includes text, "lib/"
