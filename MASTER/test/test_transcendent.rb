@@ -89,4 +89,9 @@ class TestTranscendent < Minitest::Test
       assert_equal ["+5%", "+8%"], rendered[:phrases].map { |phrase| phrase[:rate] }
     end
   end
+  def test_voice_quality_probe_rejects_missing_audio
+    result = Master::Voice::Quality.inspect("/tmp/master-no-such-tts-file.mp3")
+    refute result[:ok]
+    assert_equal :missing, result[:reason]
+  end
 end
