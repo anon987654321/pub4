@@ -234,55 +234,27 @@ module Operator
       end
 
       binaries, texts = paths.partition { |p| binary?(File.join(REPO, p)) }
-      # Snapshots are committed share-packs. Keep them at the repo root so an
-      # external LLM can fetch one path and receive the complete tree without
-      # needing access to ignored runtime state.
-      out = File.join(REPO, OUTPUT_NAMES.fetch(tree))
+      omitted = []
+      sha = head_sha
 
-      File.open(out, "w") do |f|
-        f.puts "# #{tree} — source snapshot"
-        f.puts
-        f.puts "Generated #{Time.now.utc.strftime('%Y-%m-%d %H:%M UTC')} — git #{head_sha} — " \
-               "#{texts.size} files inlined in full (no size cap)" \
-               "#{binaries.empty? ? '' : ", #{binaries.size} binary listed only"}."
-        f.puts
-        f.puts protocol(tree)
-        f.puts "## Tree"
-        f.puts "```"
-        paths.each { |p| f.puts p }
-        f.puts "```"
-        unless binaries.empty?
-          f.puts
-          f.puts "## Binary files"
-          f.puts
-          f.puts "Listed, not inlined:"
-          f.puts
-          binaries.each { |p| f.puts "- `#{p}`" }
-        end
-        f.puts
-        texts.each do |p|
-          body = File.read(File.join(REPO, p), encoding: "UTF-8")
-          # A file containing a fence run must not break out of its own block.
-          longest = body.scan(/^`{3,}/).map(&:length).max.to_i
-          fence = "`" * [3, longest + 1].max
-          f.puts "## `#{p}`"
-          f.puts
-          f.puts "#{fence}#{FENCE.fetch(File.extname(p), '')}"
-          f.write(body)
-          f.puts unless body.end_with?("\n")
-          f.puts fence
-          f.puts
-        end
-        # The end marker is deliberately last. A transferred or truncated
-        # snapshot without it is incomplete even when the header survived.
-        f.puts "## Snapshot complete"
-        f.puts
-        f.puts "snapshot0: complete tree=#{tree} files=#{paths.size} text=#{texts.size} binary=#{binaries.size}"
+      loop do
+        candidate = texts.reject { |p| mandatory?(p) || omitted.include?(p) }
+          .sort_by { |p| [omission_priority(p), -File.size(File.join(REPO, p)), p] }
+          .first
+        final_texts = texts.reject { |p| omitted.include?(p) }
+        probe = render_snapshot(tree, paths, binaries, final_texts, omitted, sha)
+        break if probe.bytesize <= MAX_BYTES
+        raise "snapshot: #{tree} cannot fit below #{MAX_BYTES} bytes without omitting mandatory files" unless candidate
+        omitted << candidate
       end
+
+      final_texts = texts.reject { |p| omitted.include?(p) }
+      out = File.join(REPO, OUTPUT_NAMES.fetch(tree))
+      File.write(out, render_snapshot(tree, paths, binaries, final_texts, omitted, sha), encoding: "UTF-8")
 
       Master::Trace::Dmesg.status(
         "snapshot0",
-        "#{tree}, #{paths.size} files, #{binaries.size} binary, #{out.delete_prefix(REPO + "/")}, #{(File.size(out) / 1_048_576.0).round(1)} MB",
+        "#{tree}, #{paths.size} files, #{final_texts.size} text, #{binaries.size} binary, #{omitted.size} omitted, #{out.delete_prefix(REPO + "/")}, #{(File.size(out) / 1_000_000.0).round(2)} MB",
         io:
       )
     end
