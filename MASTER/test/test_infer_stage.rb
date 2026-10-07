@@ -60,6 +60,21 @@ class InferStageTest < Minitest::Test
     refute_nil rejected
   end
 
+  def test_destructive_inference_requires_anchored_positive_consent
+    blocked = @infer.call(ctx("please clear context"))
+    assert blocked.err?
+    assert_equal :policy, blocked.category
+
+    negated = @infer.call(ctx("yes, do not clear context"))
+    assert negated.err?
+    assert_equal :policy, negated.category
+
+    allowed = @infer.call(ctx("yes, clear context"))
+    assert allowed.ok?
+    assert_equal :command, allowed.value!.intent
+    assert_equal "clear", allowed.value!.command
+  end
+
   def test_detects_coding_task_type
     result = @infer.call(ctx("fix the bug in lib/foo.rb"))
     assert result.ok?
