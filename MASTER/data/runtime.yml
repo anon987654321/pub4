@@ -27,6 +27,16 @@ cognitive_spine:
     rule: Semantic compression may remove repetition but must retain source references
   - id: route_before_answer
     rule: Current, repository, browser, device and research questions choose their evidence source before answering
+  - id: leverage_before_effort
+    rule: Repair attention follows proven causal reach across consumers, boundaries and contracts rather than finding volume
+  - id: uncertainty_stays_visible
+    rule: Uncertain, contradicted and obsolete claims require falsification or measurement before they become deletion or completion authority
+  - id: panel_synthesis_is_not_majority_vote
+    rule: Model disagreement preserves dissent, evidence and the next separating measurement
+  - id: taste_preserves_owned_identity
+    rule: Explicit operator preferences are durable feedback; creative mutation preserves identity and invariants unless the operator changes them
+  - id: unfinished_work_requires_deadness_evidence
+    rule: Unfinished work is not deleted without evidence of deadness that outweighs evidence of consumers, operator ownership or fertile value
   - id: agents_no_direct_mutation
     rule: Agents do not directly mutate durable state
   - id: external_action_events
