@@ -117,6 +117,27 @@ module Master
         }.freeze
       end
 
+      # Allocate a bounded attention budget without discarding the least certain
+      # candidate merely because it has low measured leverage.
+      def attention_budget(items, slots: 7)
+        rows = Array(items)
+        limit = slots.to_i.clamp(0, rows.size)
+        ranked = rank_by_leverage(rows)
+        selected = ranked.first(limit)
+        preserved_uncertainty = ranked
+          .reject { |item| selected.include?(item) }
+          .sort_by { |item| [-uncertainty_score(item), -leverage_score(item)] }
+          .find { |item| uncertainty_score(item) >= 0.65 }
+
+        selected << preserved_uncertainty if preserved_uncertainty
+        {
+          candidates: rows.size,
+          selected: selected,
+          deferred: ranked.reject { |item| selected.include?(item) },
+          preserved_uncertainty: preserved_uncertainty,
+        }.freeze
+      end
+
       def uncertainty_score(item)
         row = item.respond_to?(:to_h) ? item.to_h : item
         status = (row[:status] || row["status"] || :uncertain).to_sym
@@ -168,7 +189,64 @@ module Master
           "alternatives" => Array(alternatives).map(&:to_s).first(7),
           "selected" => selected.to_s,
           "causal" => { "cause" => cause.to_s, "effect" => effect.to_s }.reject { |_, v| v.empty? },
+          "teaching" => {
+            "local" => observation.to_s,
+            "boundary" => source.to_s,
+            "next_step" => (selected.to_s.empty? ? hypothesis.to_s : selected.to_s),
+          },
         ).freeze
+      end
+
+      # Keep the two hypotheses explicit and name the smallest observation that
+      # could separate them. A counterfactual frame is not itself a verdict.
+      def counterfactual_frame(hypothesis:, alternative:, boundary:, measurement:, expected_difference:)
+        ready = [hypothesis, alternative, boundary, measurement, expected_difference].all? do |value|
+          !value.to_s.strip.empty?
+        end
+        {
+          hypothesis: hypothesis.to_s,
+          alternative: alternative.to_s,
+          boundary: boundary.to_s,
+          measurement: measurement.to_s,
+          expected_difference: expected_difference.to_s,
+          ready:,
+        }.freeze
+      end
+
+      # Unfinished work needs positive value evidence before it is called fertile,
+      # and inactivity alone is never enough to call it dead.
+      def fertility(consumers: 0, operator_owned: false, novelty: 0.0, unused_days: 0, confidence: 0.5)
+        consumers = consumers.to_i
+        novelty = novelty.to_f.clamp(0.0, 1.0)
+        unused_days = unused_days.to_f
+        confidence = confidence.to_f.clamp(0.0, 1.0)
+
+        value_evidence = []
+        value_evidence << :consumers if consumers.positive?
+        value_evidence << :operator_owned if operator_owned
+        value_evidence << :novelty if novelty >= 0.7
+
+        dead_evidence = []
+        dead_evidence << :long_unused if unused_days >= 180
+        dead_evidence << :no_consumers if consumers.zero?
+        dead_evidence << :low_novelty if novelty < 0.2
+        dead_evidence << :low_confidence if confidence < 0.4
+
+        posture =
+          if value_evidence.size >= 2
+            :fertile
+          elsif dead_evidence.size >= 3 && confidence >= 0.8
+            :dead
+          else
+            :investigate
+          end
+
+        {
+          posture:,
+          value_evidence:,
+          dead_evidence:,
+          requires_measurement: posture == :investigate,
+        }.freeze
       end
 
       def creative_frame(identity:, mutable:, invariants:, axis: :one_at_a_time)
@@ -207,6 +285,51 @@ module Master
           "What source or test could directly contradict the claim?",
           "What changed recently that could make old evidence obsolete?",
         ].map { |question| "#{question} Claim: #{value}" }
+      end
+
+      # Collapse identical positions, retain their provenance, and refuse to turn
+      # a split panel into a majority vote. A disagreement stays unresolved until
+      # a measurement can separate the competing claims.
+      def synthesize_judgments(feedback)
+        entries = Array(feedback).filter_map do |entry|
+          row = entry.respond_to?(:to_h) ? entry.to_h : entry
+          next unless row.is_a?(Hash)
+
+          claim = row[:claim] || row["claim"] || row[:feedback] || row["feedback"]
+          claim = claim.to_s.strip
+          next if claim.empty?
+
+          {
+            persona: (row[:persona] || row["persona"]).to_s,
+            claim:,
+            key: claim.downcase.gsub(/\s+/, " "),
+            confidence: signal(row, :confidence, fallback: 0.5).to_f.clamp(0.0, 1.0),
+            falsifier: (row[:falsifier] || row["falsifier"]).to_s.strip,
+          }
+        end
+
+        groups = entries.group_by { |entry| entry[:key] }
+        positions = groups.values.map do |rows|
+          {
+            claim: rows.first[:claim],
+            support: rows.size,
+            confidence: (rows.sum { |row| row[:confidence] } / rows.size).round(4),
+            personas: rows.filter_map { |row| row[:persona].empty? ? nil : row[:persona] }.uniq,
+            falsifiers: rows.filter_map { |row| row[:falsifier].empty? ? nil : row[:falsifier] }.uniq,
+          }.freeze
+        end.sort_by { |position| [-position[:support], -position[:confidence], position[:claim]] }
+
+        disagreement = positions.size > 1
+        requires_measurement = disagreement ||
+          positions.any? { |position| position[:falsifiers].empty? || position[:confidence] < 0.6 }
+        leading = positions.size == 1 ? positions.first[:claim] : nil
+
+        {
+          positions: positions,
+          disagreement:,
+          requires_measurement:,
+          leading:,
+        }.freeze
       end
 
       def signal(row, *keys, fallback: 0)
