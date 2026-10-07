@@ -48,6 +48,13 @@ module Master
           evidence_contract: spec[:evidence]
         }
       end
+
+      def self.summary(value)
+        key = for(value)
+        spec = SPECS.fetch(key)
+        key.to_s + " risk=" + spec[:risk].to_s + " model=" + spec[:model_tier].to_s +
+          " council=" + spec[:council].to_s + " evidence=" + spec[:evidence].to_s
+      end
     end
   end
 end
