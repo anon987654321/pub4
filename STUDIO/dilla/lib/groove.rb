@@ -105,7 +105,11 @@ require "timeout"
 # Lo-fi machine semantics — timing, drum grids, chord voicings, and harmony
 # profiles (no song titles). Ported from RG-69 reference + production DNA.
 module DillaLofiMachine
-  CHORD_TEMPLATES = {
+  # The rich catalogue is canonical in MASTER/data; the legacy map remains
+  # as a compatibility overlay for historically specific voicings.
+  CHORD_CATALOG_PATH = File.expand_path("../../../MASTER/data/music_theory/chords.yml", __dir__).freeze
+  CHORD_CATALOG = YAML.safe_load_file(CHORD_CATALOG_PATH, aliases: false).freeze
+  LEGACY_CHORD_TEMPLATES = {
     "maj" => [0, 4, 7],
     "min" => [0, 3, 7],
     "7" => [0, 4, 7, 10],
@@ -223,6 +227,12 @@ module DillaLofiMachine
     "69" => [0, 4, 7, 9, 2],
   }.freeze
 
+  CHORD_TEMPLATES = CHORD_CATALOG.fetch("templates").transform_keys(&:to_s)
+    .merge(LEGACY_CHORD_TEMPLATES).freeze
+
+  CHORD_CATALOG_SUFFIXES = CHORD_CATALOG.fetch("templates").keys
+    .map(&:to_s).reject { |suffix| suffix.empty? || suffix.include?("/") }.freeze
+
   NOTE_PC = {
     "C" => 0, "B#" => 0, "Db" => 1, "C#" => 1, "D" => 2, "Eb" => 3, "D#" => 3,
     "E" => 4, "Fb" => 4, "F" => 5, "Gb" => 6, "F#" => 6, "G" => 7, "Ab" => 8,
@@ -319,13 +329,11 @@ module DillaLofiMachine
   # Entries are matched whole (\A[A-G][#b]?<sfx>\z), so ordering does NOT
   # decide between them today. Longest-first is kept as house style so the
   # list still reads correctly if that anchoring is ever relaxed.
-  CHORD_SUFFIXES = %w[
-    maj13#11 maj9#11 maj7#11 maj13 maj9low maj9 maj7#9 maj7#5 maj7
-    m11b5 m7b5 mmaj7 m9b5 m13 m11 m9 m7#5 m7 m6
-    9sus4 9sus 7sus4 7sus 7#9b13 7#9#11 7#11 7#9 7alt 7#5 7b13 7b9
-    13#11 13b9 13 7
-    dim7 dim aug add#11 add9 sus9 sus4 sus2 sus 69 9 6 m
-  ].freeze + [""].freeze
+  CHORD_SUFFIXES = ([
+    *CHORD_CATALOG_SUFFIXES,
+    "maj9low", "mmaj7", "m9b5", "m11b5", "7#9b13", "7#9#11",
+    "13b9", "13#11", "9sus4", "9sus", "69"
+  ]).uniq.freeze + [""].freeze
 
 # Compiled once. The interpolated form was rebuilt on every iteration of every
 # call (no /o on an interpolated literal), so a bare "C" — which walks the whole
@@ -1463,7 +1471,7 @@ euclid_sparse: {
   # it and the pad played a semitone cluster at the top. Whatever names the
   # chord has to be verified, or this check only catches the errors nobody was
   # going to make.
-  CORE_TONES = {
+  LEGACY_CORE_TONES = {
     "maj7" => [0, 4, 11], "maj9" => [0, 4, 11, 2], "maj9low" => [0, 4, 11, 2],
     "m7" => [0, 3, 10], "m9" => [0, 3, 10, 2], "m11" => [0, 3, 10, 5], "m7b5" => [0, 3, 6, 10],
     "7" => [0, 4, 10], "7b9" => [0, 4, 10, 1], "7alt" => [0, 4, 10],
@@ -1487,6 +1495,20 @@ euclid_sparse: {
     "dim" => [0, 3, 6], "dim7" => [0, 3, 6, 9], "aug" => [0, 4, 8],
     "maj7#5" => [0, 4, 8, 11],
   }.freeze
+
+  CORE_TONES = LEGACY_CORE_TONES.merge(
+    CHORD_CATALOG.fetch("templates").to_h { |name, intervals|
+      [name.to_s, Array(intervals).first(6)]
+    }.transform_values { |intervals|
+      seen = []
+      intervals.filter_map do |interval|
+        pc = interval.to_i % 12
+        next if seen.include?(pc)
+        seen << pc
+        interval.to_i
+      end
+    }
+  ).freeze
 
   # The major_third_cycle_full gem hands back confidently wrong voicings for several
   # suffixes: "Bbmaj9" comes back as Bb Db F Ab C -- a MINOR ninth -- "C7sus"
