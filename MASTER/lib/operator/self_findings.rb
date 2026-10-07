@@ -1,3 +1,4 @@
+require_relative "../io/exec"
 # frozen_string_literal: true
 
 # What MASTER's own rules find in MASTER's own tree.
@@ -122,8 +123,9 @@ module Operator
     def files
       law # loads Master before FILE_LANGUAGE_MAP is read, as by_rule does
       @files ||= begin
-        listing = IO.popen(["git", "-C", ROOT, "ls-files", "-z", "--cached", "--others",
-                            "--exclude-standard", "--", *TREES], &:read)
+        listing, status = Master::Io::Exec.capture2("git", "-C", ROOT, "ls-files", "-z", "--cached", "--others",
+                                                    "--exclude-standard", "--", *TREES)
+        raise "self_findings: git ls-files failed in #{status.exitstatus || "signal #{status.termsig}"}" unless status.success?
         raise "self_findings: git ls-files failed in #{ROOT}" unless $CHILD_STATUS.success?
 
         extensions = Master::FILE_LANGUAGE_MAP.keys
