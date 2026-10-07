@@ -14,6 +14,7 @@ module RadioVideo
   WIDTH = 720
   HEIGHT = 1280
   FPS = 30
+  DEFAULT_FULL_SOURCE_WAIT_TIMEOUT = 1_800
 
   module_function
 
@@ -59,7 +60,12 @@ module RadioVideo
     )
 
     begin
-      abort "video: browser did not produce a capture" unless server.wait(timeout: [seconds + 45.0, 90.0].max)
+      wait_timeout = if seconds.positive?
+                       [seconds + 45.0, 90.0].max
+                     else
+                       Integer(ENV.fetch("DILLA_VIDEO_WAIT_TIMEOUT", DEFAULT_FULL_SOURCE_WAIT_TIMEOUT))
+                     end
+      abort "video: browser did not produce a capture within #{wait_timeout}s" unless server.wait(timeout: wait_timeout)
       terminate(pid)
       raw = File.join(tmp, "raw.mp4")
       transcode!(ffmpeg, capture, raw, seconds)
