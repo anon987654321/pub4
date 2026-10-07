@@ -94,36 +94,25 @@ module Master
             [@state, @level, @jobs.dup, @words.dup, @draft.dup, @events.slice!(0..)]
           end
 
-          content_rows = [rows - 2, 1].max
-          split = cols >= 64 && content_rows >= 12
-          face_cols = if split
-            [[(cols * 0.58).floor, 34].max, cols - 30].min
-          else
-            cols
-          end
-          panel_cols = [cols - face_cols - 2, 1].max
-
+          content_rows = [rows - CONTROL_ROWS, 1].max
           face = Face.frame(
             state:,
             rows: content_rows,
-            cols: face_cols,
+            cols:,
             t:,
             level:,
             events:,
-            motion: @motion
+            motion: @motion,
+            color: @output.respond_to?(:tty?) && @output.tty? && ENV["NO_COLOR"] != "1"
           ).split("\n")
 
-          body = if split
-            panel = side_panel(state:, jobs:, words:, cols: panel_cols)
-            Array.new(content_rows) do |row|
-              left = face.fetch(row, "")[0, face_cols].to_s.ljust(face_cols)
-              right = panel.fetch(row, "")[0, panel_cols].to_s.ljust(panel_cols)
-              "#{left}  #{right}"
-            end
-          else
-            face
+          transcript_rows = [CONTROL_ROWS - 2, 1].max
+          transcript = tail(column(jobs, words), transcript_rows, cols).map do |line|
+            line.empty? ? line : tint(state, "#{DIM}#{line}#{PLAIN}")
           end
+          face[-transcript_rows, transcript_rows] = transcript if face.length >= transcript_rows
 
+          body = face.first(content_rows)
           body << "#{DIM}#{status(state)[0, cols]}#{PLAIN}"
           body << typed(draft, cols)
           body = body.first(rows)
@@ -132,32 +121,8 @@ module Master
           painted = body.each_with_index.map do |line, i|
             "\e[#{i + 1};1H#{line}\e[K"
           end.join
-          "\e[?25l#{painted}\e[#{rows};#{[draft.length + Master::Face::Contract.master_token.length + 2, cols].min}H\e[?25h"
-        end
-
-        def side_panel(state:, jobs:, words:, cols:)
-          label = Master::Face::Contract.master_token
-          lines = [
-            "#{label} / FACE",
-            "state  #{state}",
-            "",
-            "recent",
-          ]
-          recent = jobs.dup
-          live = words.first.to_s.strip
-          recent << live unless live.empty? || recent.last == live
-          recent.last(5).each do |entry|
-            lines.concat(wrap(entry, cols - 1))
-          end
-          lines << ""
-          lines.concat(
-            wrap(
-              @ear.available? ? "enter sends. type to speak. mic listens while idle." : "enter sends. type to speak.",
-              cols - 1
-            )
-          )
-          lines << "ctrl-c interrupt  ctrl-d leave"
-          lines.flat_map { |line| line.empty? ? [""] : wrap(line, cols) }.first(30)
+          cursor_column = [draft.length + Master::Face::Contract.user_token.length + 2, cols].min
+          "\e[?25l#{painted}\e[#{rows};#{cursor_column}H\e[?25h"
         end
 
         private
@@ -433,13 +398,13 @@ module Master
         def tint(state, line) = state == :listening ? "#{ACCENT}#{line}#{PLAIN}" : line
 
         def status(state)
-          keys = @ear.available? ? "speak, or type — enter sends" : "type — enter sends"
-          "#{Master::Face::Contract.master_token} #{state} — #{keys}; ^D leaves"
+          mic = @ear.available? ? "mic on" : "mic off"
+          "#{state}, #{mic}, Enter sends, Ctrl-C interrupts, Ctrl-D quits"
         end
 
         # The end of the line being typed, which is the part being typed into.
         def typed(draft, cols)
-          line = "#{Master::Face::Contract.master_token} #{draft}"
+          line = "#{Master::Face::Contract.user_token} #{draft}"
           line.length > cols ? line[-cols..] : line
         end
 
