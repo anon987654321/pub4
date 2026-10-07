@@ -1,4 +1,4 @@
-<sub># frozen_string_literal: true
+# frozen_string_literal: true
 
 require_relative "test_helper"
 require_relative "../lib/voice/performance"
@@ -64,5 +64,17 @@ class TestVoicePerformance < Minitest::Test
     assert_equal :opening, plan[0][:role]
     assert_equal :closing, plan[1][:role]
   end
+  def test_phrase_variation_changes_are_smoothed
+    plan = Master::Voice::Performance.plan(
+      "Start here. However, there is a risk. Are you sure? The key is simple.",
+    )
+
+    plan.each_cons(2) do |previous, current|
+      assert_operator (current[:rate_delta] - previous[:rate_delta]).abs, :<=,
+                      Master::Voice::Performance::MAX_RATE_STEP
+      assert_operator (current[:pitch_delta_hz] - previous[:pitch_delta_hz]).abs, :<=,
+                      Master::Voice::Performance::MAX_PITCH_STEP_HZ
+    end
+  end
+
 end
-</sub>
