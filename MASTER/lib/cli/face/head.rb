@@ -1,3 +1,5 @@
+require_relative "../../face/contract"
+
 # frozen_string_literal: true
 
 module Master
@@ -18,6 +20,12 @@ module Master
       class Head
         THRESHOLD = 0.08
         SPREAD = 0.62
+        MORPHOLOGY = Master::Face::Contract.spatial.fetch("morphology", {}).freeze
+        CRANIUM_SCALE = MORPHOLOGY.fetch("cranium_scale", 1.06).to_f
+        LOWER_FACE_SCALE = MORPHOLOGY.fetch("lower_face_scale", 0.90).to_f
+        ORBITAL_SCALE = MORPHOLOGY.fetch("orbital_scale", 1.08).to_f
+        ASYMMETRY = MORPHOLOGY.fetch("asymmetry", 0.010).to_f
+        ASYMMETRY_SEED = MORPHOLOGY.fetch("asymmetry_seed", 73421).to_i
         # A head is not quite as deep as it is wide, and the painting's
         # brightness stands a little proud of it: nose and cheeks out,
         # sockets in.
@@ -28,8 +36,12 @@ module Master
         # Where the eyes and the mouth void sit, in the points' own space, and
         # how far each reaches: the painted socket, the painted pupil, and the
         # hole between the lips.
-        EYES = [-0.118, 0.118].map { |ex| [((((DepthMap::CX + ex) * 2) - 1) * SPREAD), -((((DepthMap::CY - 0.088) * 2) - 1) * SPREAD)] }.freeze
-        SOCKET = [0.187, 0.142].freeze
+        EYES = [-1, 1].map do |side|
+          bias = Math.sin((ASYMMETRY_SEED * 0.0001) + (side * 17.17) + MORPHOLOGY.fetch("generation", 0).to_f * 0.71)
+          ex = (0.118 * ORBITAL_SCALE * side) + (side * ASYMMETRY * bias * 0.12)
+          [((((DepthMap::CX + ex) * 2) - 1) * SPREAD), -((((DepthMap::CY - 0.088) * 2) - 1) * SPREAD)]
+        end.freeze
+        SOCKET = [0.187 * ORBITAL_SCALE, 0.142 * ORBITAL_SCALE].freeze
         PUPIL = 0.07
         MOUTH = [(((DepthMap::CX * 2) - 1) * SPREAD), -((((DepthMap::CY + 0.205) * 2) - 1) * SPREAD)].freeze
         SKIN_ZONE = 0
@@ -37,7 +49,7 @@ module Master
         PUPIL_ZONE = 2
         MOUTH_ZONE = 3
         # How far from the mouth's centre the widest void can reach.
-        MOUTH_REACH = 0.14
+        MOUTH_REACH = 0.14 * LOWER_FACE_SCALE
         STRIDE = 7
 
         attr_reader :count, :dots_wide, :dots_high, :scale, :centre, :eyes, :mouth
@@ -115,13 +127,13 @@ module Master
         # A mask point on the front of its row's ellipse, lifted by its paint.
         def front(x, y, lum, half)
           across = ((x - @centre[0]) / half).clamp(-1.0, 1.0)
-          z = (half * DEPTH_RATIO * Math.sqrt(1 - (across * across))) + ((lum - 0.5) * RELIEF)
+          z = (half * DEPTH_RATIO * CRANIUM_SCALE * Math.sqrt(1 - (across * across))) + ((lum - 0.5) * RELIEF)
           [x - @centre[0], y - @centre[1], z, lum, zone(x, y)]
         end
 
         # The back half of the row's ellipse, at the lattice's spacing.
         def back(_y, half, spacing)
-          depth = half * DEPTH_RATIO
+          depth = half * DEPTH_RATIO * CRANIUM_SCALE
           count = [(Math::PI * (half + depth) / 2 / spacing).round, 2].max
           (1...count).map do |i|
             angle = (Math::PI / 2) + (Math::PI * i / count)
