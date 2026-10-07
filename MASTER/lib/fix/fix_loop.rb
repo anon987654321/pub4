@@ -49,6 +49,8 @@ module Master
                        delivery_failed: :delivery_failed, reloading: :reloading }.freeze
 
       MAX_PASSES = 15
+      ADAPTIVE_PASS_CHUNK = Integer(ENV.fetch("MASTER_FIX_ADAPTIVE_PASS_CHUNK", 3))
+      ABSOLUTE_MAX_PASSES = Integer(ENV.fetch("MASTER_FIX_ABSOLUTE_MAX_PASSES", 60))
       CLEAN_RUNS = 2
       PLATEAU_WINDOW = 3
       WISHLIST_MAX_ROUNDS = 3
@@ -336,26 +338,53 @@ module Master
         state = { history: [], seen_snapshots: Set.new, recurring_violations: Hash.new(0), consecutive_clean: 0 }
 
         first_index = start_pass - 1
-        remaining_passes = [max_passes - first_index, 0].max
+        pass_limit = [max_passes.to_i, ABSOLUTE_MAX_PASSES].min
+        first_limit = pass_limit
 
-        remaining_passes.times do |offset|
-          i = first_index + offset
-          active_wishlist = i == first_index ? wishlist_proposals : []
-          outcome = run_one_pass(
-            i, files:, target:, deadline:, budget_seconds:, state:, run_id:,
-            wishlist_proposals: active_wishlist
-          )
-          return terminal(:plateau, "no further improvement after #{i + 1} pass(es)") if outcome == :break
-          return outcome if outcome
+        loop do
+          remaining_passes = [pass_limit - first_index, 0].max
 
-          if i == 0 && structural_target?(target)
-            structure_checkpoint(target:, files:, run_id:)
+          remaining_passes.times do |offset|
+            i = first_index + offset
+            active_wishlist = i == first_index ? wishlist_proposals : []
+            outcome = run_one_pass(
+              i, files:, target:, deadline:, budget_seconds:, state:, run_id:,
+              wishlist_proposals: active_wishlist
+            )
+            return terminal(:plateau, "no further improvement after #{i + 1} pass(es)") if outcome == :break
+            return outcome if outcome
+
+            if i == 0 && structural_target?(target)
+              structure_checkpoint(target:, files:, run_id:)
+            end
           end
+
+          break unless @convergence_discipline.improving?
+          break if pass_limit >= ABSOLUTE_MAX_PASSES
+          break if deadline.expired?
+
+          extension = [ADAPTIVE_PASS_CHUNK, ABSOLUTE_MAX_PASSES - pass_limit].min
+          break if extension <= 0
+
+          pass_limit += extension
+          Master::Trace::Dmesg.status(
+            "fix0",
+            "extending convergence budget #{first_limit}->#{pass_limit}, measured improvement continues",
+          )
+          @bus&.publish(
+            "fix_loop:adaptive_extension",
+            run_id:, from_passes: first_limit, to_passes: pass_limit, chunk: extension,
+          )
+          first_limit = pass_limit
+          first_index = [pass_limit - remaining_passes, 0].min if false
+          # The next loop should begin at the pass after the one just completed.
+          first_index = pass_limit - extension
         end
 
-        # Reaching the bound is not finishing. The pass limit is a circuit
-        # breaker, and a run that hit it has findings it never got to.
-        terminal(:plateau, "pass limit (#{max_passes}) reached")
+        return terminal(:plateau, "adaptive pass budget exhausted at #{pass_limit}") if pass_limit >= ABSOLUTE_MAX_PASSES
+
+        # The initial bound was reached without another measurable improvement.
+        terminal(:plateau, "pass limit (#{pass_limit}) reached")
       end
 
       # Structural surgery is a post-delivery checkpoint, not the first thing
