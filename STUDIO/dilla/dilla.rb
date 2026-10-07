@@ -21420,7 +21420,7 @@ def nano_timing_ms(role, bar_index, step_index, beat_p = nil)
   ceiling = [NANO_TIMING_MS.fetch(role.to_sym, 0.18), tick_ms * 0.12].min
   return 0.0 if ceiling <= 0.0
 
-  seed = ENV.fetch("RENDER_SEED", ENV.fetch("DILLA_RENDER_SEED", "0")).to_i
+  seed = ENV.fetch("RENDER_SEED", ENV.fetch("DILLA_RENDER_SEED", ENV.fetch("LIVE_SEED", "0"))).to_i
   phase = (bar_index.to_i * 0.71) + (step_index.to_i * 1.37) +
           (stable_hash(role) % 97) * 0.031 + (seed % 997) * 0.0007
   wave = Math.sin(phase * Math::PI)
