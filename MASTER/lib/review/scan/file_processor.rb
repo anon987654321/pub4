@@ -31,6 +31,13 @@ module Master
           @skip_semantic = true
         end
 
+        def full_semantic!
+          @skip_semantic = false
+          @semantic_sample_override = 1.0
+        end
+
+        def semantic_full? = @semantic_sample_override.to_f >= 1.0
+
         def call(path:, depth:, rules:)
           with_file_lock(path) do
             code = read_file(path)
