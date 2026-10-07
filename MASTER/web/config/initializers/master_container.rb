@@ -56,13 +56,12 @@ module MasterContainerLoader
     Rails.logger.warn("master_container: could not warm Master::Ground: #{e.class}: #{e.message}")
   end
 
-  # Arms the one bootstrap thread, and is safe to call on every request that
-  # finds no container. The flag is claimed under the mutex so a burst of
-  # requests during the ~40s boot starts one thread between them, not one each.
+  # Arms exactly one bootstrap thread and remains safe on every request that
+  # finds no container. The mutex owns the claim, so concurrent requests share
+  # one bootstrap attempt instead of starting duplicate threads.
   #
-  # ApplicationController#require_container! calls this. It used to be a stub
-  # returning nil, on the grounds that the initializer owned the thread -- so
-  # there was exactly one attempt per process and no way back from a lost one.
+  # ApplicationController#require_container! calls this when the container is
+  # absent; a later request can re-arm a failed or lost bootstrap.
   def rearm!(config = Rails.application.config)
     return config.x.master_container if config.x.master_container
 
