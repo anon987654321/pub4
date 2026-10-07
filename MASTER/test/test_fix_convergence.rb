@@ -150,15 +150,15 @@ class TestFixConvergence < Minitest::Test
 
   def test_unreadable_scan_result_is_a_fix_failure
     runner = Master::Fix::FixLoop::PassRunner.allocate
-    bus = Object.new
-    events = []
-    bus.define_singleton_method(:publish) { |event, payload = {}| events << [event, payload] }
-    runner.instance_variable_set(:@bus, bus)
     runner.instance_variable_set(:@root, "/tmp")
+    runner.instance_variable_set(:@bus, Object.new.tap do |bus|
+      bus.define_singleton_method(:publish) { |_event, _payload = {}| nil }
+    end)
 
     error = Master::Result.err("file too long: sample.rb", category: :validation)
+
     assert_raises(RuntimeError) do
-      runner.violations_for("/tmp/sample.rb") if File.exist?("/tmp/sample.rb")
+      runner.send(:skip_unreadable, "/tmp/sample.rb", error)
     end
   end
 
