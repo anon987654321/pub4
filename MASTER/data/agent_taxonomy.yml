@@ -16,7 +16,7 @@ agent_types:
     requires:    plan_id
   research:
     purpose:     "external lookup, citations, summaries"
-    tools:       [web_search, web_fetch, search_knowledge, list_dir, tree, read_file]
+    tools:       [web_search, web_fetch, codepen, gist, youtube_transcript, search_knowledge, list_dir, tree, read_file]
     max_runtime: 120s
   verify:
     purpose:     "ruby -c, scan, test, council vote"
@@ -24,7 +24,7 @@ agent_types:
     output:      pass_fail_with_evidence
 
 toolset_groups:
-  research:    [web_search, web_fetch, search_knowledge, deepwiki]
+  research:    [web_search, web_fetch, codepen, gist, youtube_transcript, search_knowledge, deepwiki]
   build:       [read_file, str_replace, write_file, ast_edit, atomic_write, batch_replace]
   verify:      [shell, scan, council_call]
   ship:        [git_context, atomic_write, audit_log]
