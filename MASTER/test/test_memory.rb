@@ -46,6 +46,28 @@ class TestMemory < Minitest::Test
     assert_equal 1, counts["feedback"]
   end
 
+  def test_reasoning_memory_round_trips_without_embedding
+    frame = Master::Cognition::Intelligence.decision_frame(
+      observation: "pass found two findings",
+      hypothesis: "the highest-leverage one should be handled first",
+      falsifier: "the next pass regresses",
+      measurement: "next-pass finding count",
+      source: "fix_loop:pass:1",
+      selected: "ROOT",
+      cause: "scan",
+      effect: "repair candidate",
+    )
+
+    key = @mem.remember_reasoning(frame, key: "reasoning/test")
+    assert_equal "reasoning/test", key
+    rows = @mem.reasoning(limit: 1)
+    assert_equal "fix_loop:pass:1", rows.first.fetch("source")
+    assert_equal "ROOT", rows.first.fetch("selected")
+
+    stored = @mem.by_type("reasoning").fetch("reasoning/test")
+    refute stored.key?("vec"), "reasoning frames should not require embedding infrastructure"
+  end
+
   def test_persistence_survives_reload
     @mem.remember("persist_key", "i survived", type: "reference")
     mem2 = Master::Ground::Memory.new(root: @root)
