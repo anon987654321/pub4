@@ -38,13 +38,6 @@ module Operator
     TREES = TREE_PATHS.keys.freeze
     # A single attachment stays small enough for an LLM file reader; the parts together carry the full tree.
     MAX_BYTES = 750_000
-    MANDATORY_PATHS = %w[
-      MASTER/README.md
-      MASTER/data/soul.yml
-      MASTER/data/laws.yml
-      MASTER/tools/snapshot.rb
-    ].freeze
-
     # Extension → fence language. Anything unlisted gets a bare fence.
     FENCE = {
       ".rb" => "ruby", ".rake" => "ruby", ".gemspec" => "ruby", ".ru" => "ruby",
@@ -190,20 +183,6 @@ module Operator
         - Every change must be something you can defend in one sentence naming the rule it serves or
           the defect it removes. Prefer ten defensible hunks to a hundred stylistic ones.
       MD
-    end
-
-    def omission_priority(path)
-      return 0 if path.match?(%r{/(?:vendor|public/vendor)/})
-      return 0 if path.match?(/(?:\.bundle|\.min)\.(?:js|css)\z/)
-      return 0 if path.end_with?(".map")
-      return 5 if path == "MASTER/web/public/three.face.module.js"
-      return 20 if path.start_with?("MASTER/web/public/") && !path.match?(/face|chat/i)
-      return 100
-    end
-
-    def mandatory?(path)
-      MANDATORY_PATHS.include?(path) ||
-        path.start_with?("MASTER/law/", "MASTER/lib/review/scan/rules/")
     end
 
     SOURCE_FRAGMENT_BYTES = 600_000
