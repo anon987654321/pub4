@@ -42,13 +42,21 @@ class TestResearchSourceTools < Minitest::Test
 
   def test_gist_requires_a_public_gist_url_and_returns_source_text
     tool = Master::Io::Gist.new(governor: allow)
-    response = Struct.new(:code, :body).new("200", "puts :hello\n")
+    body = JSON.generate({
+      "files" => {
+        "hello.rb" => { "content" => "puts :hello\n" },
+        "note.md" => { "content" => "# note\n" }
+      }
+    })
+    response = Struct.new(:code, :body).new("200", body)
     tool.define_singleton_method(:http) { |_uri, _address| response }
 
     result = tool.call(url: "https://gist.github.com/alice/0123456789abcdef")
 
     assert result.ok?, result.to_s
-    assert_equal "puts :hello\n", result.value!
+    assert_includes result.value!, "## hello.rb"
+    assert_includes result.value!, "puts :hello\n"
+    assert_includes result.value!, "## note.md"
   end
 
   def test_gist_rejects_non_gist_urls
