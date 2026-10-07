@@ -148,6 +148,18 @@ class CritiqueImplementationTest < Minitest::Test
     assert_includes brgen_css, "font-size: 14px;"
   end
 
+  def test_yep_search_is_the_shared_rails_default
+    stack = read("shared/app/assets/stylesheets/_stack.scss")
+    brgen_stack = read("shared/app/assets/stylesheets/_stack_brgen.scss")
+    %w[amber bsdports].each do |app|
+      application = read("#{app}/app/assets/stylesheets/application.scss")
+      assert_includes application, '@use "stack" as *;'
+    end
+
+    assert_includes stack, '@forward "search_yep";'
+    assert_includes brgen_stack, '@forward "search_yep";'
+  end
+
   def test_brgen_radio_restores_the_original_eight_track_warp_tunnel
     source = read("brgen/app/javascript/radio_brgen_tunnel.js")
     importmap = read("brgen/config/importmap.rb")
