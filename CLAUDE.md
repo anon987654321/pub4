@@ -32,8 +32,11 @@ renamed.
 
 The repo root holds the four governed trees plus a small set of repository
 contracts/configuration: `CLAUDE.md`, generated agent harnesses,
-`ARCHITECTURE.md`, `TODO.md` and `VERSION`. There is no `TREE.md` on current main;
-the tree contracts and `RAILS/README.md` are the map. `STUDIO/` is the canonical media tool plane; `MASTER/tools/` keeps compatibility symlinks. (`WISHLIST.md` folded into `TODO.md`
+`ARCHITECTURE.md`, `TODO.md` and `VERSION`. `.claude/` is committed Claude
+tooling configuration, and `RECOVERY/` is historical restore evidence; neither
+is a governed product tree. There is no `TREE.md` on current main; the tree
+contracts and `RAILS/README.md` are the map. `STUDIO/` is the canonical media
+tool plane; `MASTER/tools/` keeps compatibility symlinks. (`WISHLIST.md` folded into `TODO.md`
 on 2026-09-06 — one backlog, forward work as its last section.) Build output
 never sits at the root whatever the tool's default: dilla writes to `$PWD`
 unless `DILLA_OUTPUT_DIR` says otherwise, and one session's renders lived at the
