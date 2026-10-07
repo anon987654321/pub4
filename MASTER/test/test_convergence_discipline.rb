@@ -32,6 +32,19 @@ class TestConvergenceDiscipline < Minitest::Test
     assert @bus.events.any? { |event, _| event == "fix_loop:convergence_measure" }
   end
 
+  def test_observe_emits_attention_budget
+    @discipline.begin_run([@path])
+    @discipline.observe(pass: 1, findings: [
+      { rule: "high", consumers: 8, confidence: 0.9 },
+      { rule: "uncertain", confidence: 0.1, status: :uncertain },
+    ], files: [@path], progressed: false)
+
+    event = @bus.events.find { |name, _| name == "fix_loop:attention" }
+    refute_nil event
+    assert_equal 2, event.last.fetch(:candidates)
+    assert_equal true, event.last.fetch(:preserved_uncertainty)
+  end
+
   def test_clean_proof_refuses_unreadable_files
     missing = File.join(@root, "missing.rb")
 
