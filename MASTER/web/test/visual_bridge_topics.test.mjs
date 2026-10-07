@@ -13,6 +13,13 @@ import { createContext, runInContext } from "node:vm";
 const publicDir = join(dirname(fileURLToPath(import.meta.url)), "..", "public");
 const masterDir = join(publicDir, "..", "..");
 const bridgeSource = readFileSync(join(publicDir, "visual_bridge.js"), "utf8");
+const eventTopicsSource = readFileSync(join(masterDir, "data", "event_topics.yml"), "utf8");
+
+function retiredTopics() {
+  const match = eventTopicsSource.match(/^retired:\s*\n((?:[ \t]+-\s*[^\n]+\n?)*)/m);
+  if (!match) throw new Error("event_topics.yml: retired list missing");
+  return [...match[1].matchAll(/^\s*-\s*([^#\n]+?)\s*$/gm)].map((m) => m[1].trim());
+}
 
 const TOPIC = /\b[a-z][a-z0-9_]*:[a-z0-9_]+(?::[a-z0-9_]+)*/g;
 
@@ -132,7 +139,7 @@ test("every topic the bridge listens for is one the bus publishes", () => {
   for (const name of ["phantom:halt", "council:start", "law_loop:autofix_skipped", "tts:job_cancelled"]) {
     assert.ok(listened.has(name), `bridge census missed ${name}`);
   }
-  for (const name of ["phantom:retry", "council:deliberation", "events:connected", "master:visual", "visual_bridge:sse_frame"]) {
+  for (const name of [...retiredTopics(), "council:deliberation", "events:connected", "master:visual", "visual_bridge:sse_frame"]) {
     assert.equal(listened.has(name), false, `bridge census counted ${name}, which the bridge does not listen for`);
   }
 
