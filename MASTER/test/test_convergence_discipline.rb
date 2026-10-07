@@ -30,6 +30,8 @@ class TestConvergenceDiscipline < Minitest::Test
     assert_equal 0, @discipline.best_state.fetch(:score)
     assert_equal 2, @discipline.best_state.fetch(:pass)
     assert @bus.events.any? { |event, _| event == "fix_loop:convergence_measure" }
+    assert @bus.events.any? { |event, _| event == "fix_loop:judgment" }
+    assert File.file?(File.join(@root, ".master", "memory.yml"))
   end
 
   def test_clean_proof_refuses_unreadable_files
