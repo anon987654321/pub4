@@ -64,7 +64,9 @@ module Master
             loop.injected_preamble = [@preamble, council_preamble(council)].compact.join("\n\n")
             result = loop.run_once(files, external_violations: findings)
             @bus&.publish("fix_loop:opportunity_fix", pass:, findings: findings.size, fixed: result[:fixed].to_i)
-            result[:fixed].to_i
+            fixed = result[:fixed].to_i
+            @pass_progress = true if fixed.positive?
+            fixed
           rescue StandardError => e
             Master::Ground::Swallow.log(e, context: "pass_runner.opportunity_stage", event_bus: @bus)
             0
@@ -90,6 +92,7 @@ module Master
               "pass #{pass}, improvement stage #{fixed}/#{findings.size} fixed#{breakdown.empty? ? "" : ", #{breakdown.map { |status, count| "#{count} #{status}" }.join(", ")}"}",
             )
             @bus&.publish("fix_loop:improvement_fix", pass:, findings: findings.size, fixed:, breakdown:)
+            @pass_progress = true if fixed.positive?
             fixed
           rescue StandardError => e
             Master::Ground::Swallow.log(e, context: "pass_runner.improvement_stage", event_bus: @bus)
@@ -109,8 +112,10 @@ module Master
               "The following findings came from the real rendered browser. Use the attached screenshot as evidence. Preserve accessibility, semantics and responsive behavior.",
             ].join("\n\n")
             result = loop.run_once(files, external_violations: findings, image:)
-            @bus&.publish("fix_loop:visual_fix", pass:, findings: findings.size, fixed: result[:fixed].to_i)
-            result[:fixed].to_i
+            fixed = result[:fixed].to_i
+            @pass_progress = true if fixed.positive?
+            @bus&.publish("fix_loop:visual_fix", pass:, findings: findings.size, fixed:)
+            fixed
           rescue StandardError => e
             Master::Ground::Swallow.log(e, context: "pass_runner.visual_stage", event_bus: @bus)
             0
