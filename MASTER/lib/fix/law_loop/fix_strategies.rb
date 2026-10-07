@@ -271,18 +271,29 @@ module Master
 
         def routing_model_ids
           @routing_model_ids ||= begin
-            tiers = Master.models_config.fetch("models", {})
             {
-              strong: first_model_id(tiers["strong"]),
-              fast: first_model_id(tiers["fast"] || tiers["cheap"] || tiers["default"]),
+              strong: routed_fix_model(:file_write, fallback: :architecture),
+              fast: routed_fix_model(:code_generation, fallback: :detect_lexical),
             }
-          rescue StandardError
+          rescue StandardError => e
+            Master::Ground::Swallow.log(e, context: "LawLoop.routing_model_ids", event_bus: @bus)
             { strong: nil, fast: nil }
           end
         end
 
-        def first_model_id(models)
-          Array(models).first && Array(models).first["id"]
+        # Repair stages use the live router, not the first YAML entry in a tier.
+        # This preserves an explicit MASTER_MODEL pin while allowing Grok, GLM,
+        # Claude, Gemini, Ollama and other configured lanes to participate through
+        # the same availability, health, quota and failover machinery.
+        def routed_fix_model(operation, fallback:)
+          return unless @agent.respond_to?(:model_for)
+
+          @agent.model_for(operation:)
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "LawLoop.routed_fix_model", operation:)
+          return @agent.model_for(operation: fallback) if @agent.respond_to?(:model_for)
+
+          nil
         end
       end
     end
