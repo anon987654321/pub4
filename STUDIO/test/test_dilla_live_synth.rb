@@ -675,8 +675,11 @@ class TestDillaLiveSynth < Minitest::Test
     source = File.read(dilla("dilla.rb"))
     early = source.index("if ARGV.empty?")
     provenance = source.index("DillaProvenance.begin!")
+    showcase = source[early...provenance]
     assert_operator early, :<, provenance, "bare showcase starts before render setup"
-    assert_match(/if ARGV\.empty\?.*?live!\(\[["']showcase["']\]\)/m, source)
+    assert_includes showcase, "prepare_showcase_defaults!"
+    assert_includes showcase, 'live!(["showcase", "mode=all"])'
+    refute_includes showcase, 'live!(["showcase"])'
     assert_match(/if cmd\.nil\?.*?live!\(\[["']showcase["']\]\)/m, source)
     refute_match(/if cmd\.nil\?.*?Bed\.pieces!/m, source)
   end
