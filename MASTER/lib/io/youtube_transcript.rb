@@ -65,7 +65,8 @@ module Master
       def player_response(video_id, client)
         watch = get("https://www.youtube.com/watch?v=#{video_id}")
         api_key = watch[/INNERTUBE_API_KEY\s*["']\s*:\s*["']([^"']+)/, 1]
-        raise "player API key not found" if api_key.to_s.empty?
+        client_version = watch[/INNERTUBE_CLIENT_VERSION\s*["']\s*:\s*["']([^"']+)/, 1]
+        raise "player API bootstrap missing" if api_key.to_s.empty?
 
         uri = URI("https://www.youtube.com/youtubei/v1/player?key=#{CGI.escape(api_key)}")
         address = SsrfGuard.pinned_address(uri)
@@ -75,7 +76,7 @@ module Master
           context: {
             client: {
               clientName: client,
-              clientVersion: client_version(client)
+              clientVersion: client_version(client, bootstrap: client_version)
             }
           },
           videoId: video_id
@@ -85,7 +86,9 @@ module Master
         JSON.parse(response.body.to_s)
       end
 
-      def client_version(client)
+      def client_version(client, bootstrap: nil)
+        return bootstrap unless bootstrap.to_s.empty?
+
         {
           "ANDROID" => "20.10.38",
           "WEB" => "2.20261007.01.00",
