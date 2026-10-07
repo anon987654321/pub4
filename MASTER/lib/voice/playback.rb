@@ -101,7 +101,7 @@ module Master
         true
       end
 
-      def speak(text)
+      def speak(text, priority: :reply)
         str = text.to_s.strip
         return if str.empty?
         return unless enabled?
@@ -113,16 +113,14 @@ module Master
 
         return if echo?(str)
 
-        # Classic Edge benefits from sentence-sized jobs because the next file
-        # can be synthesised while the current one is playing. Transcendent is
-        # intentionally kept whole: its own engine chain owns phrase rhythm,
-        # melody, emotion and prosody, and splitting it here can create audible
-        # discontinuities or alter a musical contour.
+        # Conversational replies own the speaker. Diagnostic/council speech can
+        # stay queued, but a reply starts a fresh playback generation so stale
+        # audio is stopped before the answer enters the queue.
+        generation = priority.to_sym == :reply ? begin_reply_generation! : current_generation
         parts = transcendent_mode? ? [str] : Speech.chunks(str)
         parts = [str] if parts.empty?
         reply_voice = Speech.voice_for_text(str)
         reply_style = transcendent_mode? ? :auto : Speech.infer_style(str, fallback: Speech.default_style)
-        generation = current_generation
         queue = ensure_queue
         jobs = parts.each_with_index.map do |part, index|
           [str, part, index == parts.size - 1, reply_voice, reply_style, nil, nil, generation]
@@ -213,6 +211,19 @@ module Master
       # but its generation becomes stale and therefore can never reach the speaker.
       def begin_generation!
         @lock.synchronize { @generation += 1 }
+      end
+
+      # One answer must own the speaker. Cancel older log/council audio at the
+      # process boundary, but preserve the echo memory so the same reply cannot
+      # immediately be re-enqueued by another presentation path.
+      def begin_reply_generation!
+        @lock.synchronize do
+          @generation += 1
+          @queue&.clear
+          @job_generations.clear
+          terminate_player_locked if @playing_pid
+          @generation
+        end
       end
 
       def interrupt!(_reason = nil)
