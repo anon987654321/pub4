@@ -1019,6 +1019,7 @@ export class RadioBrgen {
     this.isStarted = true
     this.audioEngine.setUserInteracted()
     this.audioEngine.start()
+    this._bindTilt?.()
     this.audioEngine.publishTrack?.()
     if (this.overlay) this.overlay.hidden = true
     this.onStart?.()
@@ -1057,7 +1058,7 @@ export class RadioBrgen {
       }
     }
 
-    bindTilt()
+    this._bindTilt = bindTilt
     if (this.overlay) {
       this.overlay.addEventListener("click", onOverlayClick)
       this.overlay.addEventListener("keydown", onOverlayKey)
