@@ -71,15 +71,21 @@ validate nothing and read the result as passing.
 
 Every live voice also passes through the shared physicality layer by default: per-note tape wear, phase memory, sampler smear, sympathetic resonance, transient carry, gentle feedback, velocity-driven articulation, and deterministic drift. Set `DILLA_PHYSICS=0` for a clean A/B without those behaviours.
 
-Bare `ruby dilla.rb` is the live Dilla showcase: it stays on the sound card and
-cycles through source-backed J Dilla, D'Angelo, Flying Lotus and Madlib harmony,
-original Aydin Esen-inspired harmonic flow, the darker Moog/DFAM rack, analogue
-patch demonstrations, FM leads, filter moves, tape-heavy mastering and the
-complete BWV 565 MIDI score. The tour is deliberately slow and dark, with richer
-chord cells and changing instruments. The bare run records the heard post-FX
-program to `dilla.wav` and, after the audio is finalized, builds `dilla.mp4`
-with the local Three.js architectural score renderer. Set
-`DILLA_SHOWCASE_VIDEO=0` to suppress video while keeping the WAV.
+Bare `ruby dilla.rb` renders the complete showcase once to `dilla.wav` and
+then builds `dilla.mp4` from that exact rendered audio. The MP4 is not a static
+spectrum visualizer: Three.js constructs an architectural score with moving
+bays, vaults, rings, orbiting slabs and fracture shards, and the final video
+passes through the shared Postpro video recipe. `DILLA_VIDEO_POSTPRO=dmt_bled`
+is the default bleeding-edge grade; use `architectural_clean`,
+`dilla_heavy`, or `0` for another treatment.
+
+`ruby dilla.rb live` is the corresponding endless performance mode. It enters
+the same showcase engine with the same synths, effects, Dilla drum grids,
+source-backed chord progressions and mutation actions, while opening the local
+Three.js DMT visualizer. The visuals are state-driven by the same scene and
+random stream as the sound rather than producing a second audio renderer, so
+there is one musical source of truth. Set `DILLA_LIVE_VISUAL=0` for sound-only
+live playback.
 
 `ruby dilla.rb compose` writes the other demo: one piece of about six minutes in
 which every part of the engine plays and answers the others. The bass states the
