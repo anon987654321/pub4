@@ -66,10 +66,12 @@ class TestDevice < Minitest::Test
     RbConfig::CONFIG["host_os"] = "linux-android"
     ENV["PREFIX"] = "/data/data/com.termux/files/usr"
 
+    status = Object.new
+    def status.success? = true
+
     Master::Device.stub(:executable?, true) do
-      Master::Device::Io::Exec.stub(:capture3, ["ok\n", "", Struct.new(:success?).new(true)]) do
-        # Io is the enclosing namespace; this call proves the runtime no longer
-        # wraps a raw Open3 child in Timeout.timeout.
+      Master::Io::Exec.stub(:capture3, ["ok\n", "", status]) do
+        # This proves the runtime reaches the sanctioned subprocess primitive.
         assert_equal "ok", Device.send(:run!, "termux-battery-status")
       end
     end
