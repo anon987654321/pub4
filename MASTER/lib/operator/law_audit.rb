@@ -33,8 +33,8 @@
 #                      distinction needs a person, so this reports and does not
 #                      fail.
 #
-#   ruby MASTER/tools/rule_audit.rb
-#   ruby MASTER/tools/rule_audit.rb --json
+#   ruby MASTER/tools/law_audit.rb
+#   ruby MASTER/tools/law_audit.rb --json
 #
 # The adversarial half — steelman the rule, then ask what it fires on that it
 # should not — belongs on top of this, not instead of it. These three are free,
@@ -169,7 +169,7 @@ module Operator
       end
     end
 
-    # "Which rules are never asked" belongs to tools/rule_reach.rb, which counts
+    # "Which rules are never asked" belongs to tools/law_reach.rb, which counts
     # 57 and had counted them before this file existed. A version of it here
     # measured 67 by also counting rules whose semantic prompt is dropped while a
     # lexical detector still enforces them — reachable rules, reported as gaps.
