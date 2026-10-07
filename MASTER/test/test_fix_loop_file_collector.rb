@@ -152,6 +152,45 @@ class TestFixLoopFileCollector < Minitest::Test
     assert_includes files, "lib/fix/fix_loop.rb"
   end
 
+  def test_subtree_target_uses_repository_root_for_scanner_path_policy
+    Dir.mktmpdir do |dir|
+      rails = File.join(dir, "RAILS")
+      path = write(dir, "RAILS/brgen/app/models/post.rb")
+
+      system("git", "-C", dir, "init", "-q", "--initial-branch=main")
+      system("git", "-C", dir, "config", "user.email", "test@example.invalid")
+      system("git", "-C", dir, "config", "user.name", "Test")
+      system("git", "-C", dir, "add", "-A")
+      system("git", "-C", dir, "commit", "-qm", "initial")
+
+      roots = []
+      Master::Review::Scan::Scanner.stub(
+        :skip_path?,
+        ->(_path, root:) { roots << File.expand_path(root); false }
+      ) do
+        assert_equal [path], collector(rails).collect(rails)
+      end
+
+      assert_equal [File.expand_path(dir)], roots.uniq
+    end
+  end
+
+  def test_skip_reason_census_counts_every_dropped_candidate
+    Dir.mktmpdir do |dir|
+      path = write(dir, "RAILS/brgen/app/models/post.rb")
+      collector_instance = collector(dir)
+
+      Master::Review::Scan::Scanner.stub(:skip_path?, ->(_path, root:) { true }) do
+        assert_empty collector_instance.collect(File.join(dir, "RAILS"))
+      end
+
+      assert_equal 1, collector_instance.candidate_count
+      assert_equal 1, collector_instance.skipped
+      assert_equal({ "scanner_path_filter" => 1 }, collector_instance.skip_reasons)
+      refute_nil path
+    end
+  end
+
   def test_repository_root_git_paths_are_resolved_for_master_and_rails_targets
     Dir.mktmpdir do |dir|
       FileUtils.mkdir_p(File.join(dir, "MASTER/lib"))
