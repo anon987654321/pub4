@@ -795,7 +795,7 @@ class TestDillaLiveSynth < Minitest::Test
   end
 
   def test_showcase_uses_a_quieter_conversational_bass
-    score = LiveSynth::Improviser.new(rng: Random.new(4), family: "rhodes", reference: "dilla_flowers_documented")
+    score = LiveSynth::Improviser.new(rng: Random.new(4), family: "rhodes", reference: "slum_village_players_documented")
     stage = LiveSynth::Stage.new(rate: RATE, rng: score.rng)
     ENV["DILLA_SHOWCASE"] = "1"
     score.schedule(stage, 0.0)
