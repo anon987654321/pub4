@@ -13,8 +13,6 @@ require_relative "../../gates/support/gate_result"
 require_relative "../../../MASTER/gates/support/bounded_command"
 require_relative "../../tools/design_tokens"
 
-# frozen_string_literal: true
-
 module Deploy
   # Scan-only constitutional preflight. It uses the private /scan compatibility spelling
   # so this legacy gate can reuse the CLI scanner while public repair remains /fix.
