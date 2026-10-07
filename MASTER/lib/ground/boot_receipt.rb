@@ -48,6 +48,8 @@ module Master
       end
 
       def session(root: MasterPaths::ROOT, agent: nil, memory: nil)
+        return {} unless agent || memory
+
         model = if agent&.respond_to?(:model)
                   agent.model
                 end
