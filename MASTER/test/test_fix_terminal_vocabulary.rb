@@ -14,5 +14,9 @@ class TestFixTerminalVocabulary < Minitest::Test
     assert_equal :crash, loop.send(:terminal_state_for, crash)
     assert_equal :skip, loop.send(:terminal_state_for, skip)
     assert_equal :failed, loop.send(:terminal_state_for, failed)
+
+    protocol = Master::Fix::Protocol::TERMINAL_STATES
+    assert_includes protocol, "CRASH"
+    assert_includes protocol, "SKIP"
   end
 end
