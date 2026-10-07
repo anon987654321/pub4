@@ -201,7 +201,7 @@ module Master
         arg = arg_for(ctx)
         return "usage: /snapshot [no arguments]" unless arg.empty?
 
-        paths = ::Operator::Snapshot::TREES.map { |tree| ::Operator::Snapshot.write(tree) }
+        paths = ::Operator::Snapshot::TREES.flat_map { |tree| Array(::Operator::Snapshot.write(tree)) }
         paths.map do |path|
           relative = path.delete_prefix("#{Master::REPO_ROOT}/")
           bytes = File.size(path)
