@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "open3"
+require_relative "../io/exec"
 require_relative "environment"
 
 module Operator
@@ -45,7 +45,7 @@ module Operator
       rbenv = File.join(rbenv_root, "bin", "rbenv") if rbenv.empty?
       return unless File.executable?(rbenv)
 
-      output, status = Open3.capture2e(
+      output, status = Master::Io::Exec.capture2e(
         { "RBENV_VERSION" => version },
         rbenv, "which", name
       )
@@ -100,7 +100,7 @@ module Operator
     end
 
     def executable?(name)
-      _, status = Open3.capture2e("command", "-v", name)
+      _, status = Master::Io::Exec.capture2e("command", "-v", name)
       status.success?
     end
   end
