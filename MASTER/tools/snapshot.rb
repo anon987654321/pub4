@@ -84,8 +84,9 @@ module Operator
 
         ## Agent analysis protocol
 
-        This document is a **verbatim codebase mirror** for `#{tree}`. Treat every fenced
-        block as source of truth — not a summary. Work through it in this order:
+        This document is a **share-size-bounded source mirror** for `#{tree}`. Treat every fenced
+        block as source of truth — not a summary. The `Omitted text files` section, when present,
+        is authoritative: those tracked text files were excluded only to satisfy the hard size ceiling. Work through it in this order:
 
         ### 1. Orient
         - Read the header (generation metadata, file count, policy) and **Tree** before opening any file block.
@@ -124,10 +125,12 @@ module Operator
         1. Create a temp workspace, e.g. `mktemp -d` → `$SNAP/work`.
         2. For each `## \\`relative/path\\`` heading, recreate directory structure under `$SNAP/work`.
         3. Copy the fenced block body **exactly** (preserve newlines; strip only the outer fences).
-        4. Every git-tracked **text** file is inlined in full — no size cap. Binary files are listed
-           under **Binary files** and are not inlined.
+        4. Every tracked **text** file not named under `Omitted text files` is inlined in full. Binary files
+           are listed under **Binary files** and are not inlined.
         5. Repeat for every sibling `snapshot_*.md` present — each extracts to its own subtree.
-        6. Verify: file count vs Tree, spot-check sizes, run targeted tests from the mirrored tree.
+        6. Verify: file count vs Tree, reconcile `Binary files` + `Omitted text files` against Tree, spot-check
+           sizes, run targeted tests from the mirrored tree. A share pack is complete as a source review
+           only when no required path is omitted.
 
         Do not edit the mirrored tree until you have a written assessment and a trace for the path
         you intend to change.
