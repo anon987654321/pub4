@@ -47,6 +47,7 @@ require "yaml"
 require "tmpdir"
 require_relative "process_spawn"
 require_relative "ableton_play"
+require_relative "composer_mind"
 
 module Livesets
   D = File.expand_path("..", __dir__)
@@ -3175,6 +3176,7 @@ SHOWCASE_MODES = {
       bpm += rng.rand(-@c["bpm_spread"].to_f..@c["bpm_spread"].to_f) unless @reference
       bpm *= LiveSynth::SHOWCASE_TEMPO_SCALE if LiveSynth.showcase?
       @beat = 60.0 / bpm
+      @mind = DillaComposerMind.new(rng:)
       @knobs = Knobs.new(@c.fetch("knobs"), response: @c.fetch("response"), rng:,
                          damping: @c["walk_damping"], pull: @c["walk_pull"])
       @key = @c.fetch("keys").sample(random: rng)
@@ -3297,6 +3299,7 @@ SHOWCASE_MODES = {
       @lead_chord_pcs = @voicing.map { |midi| midi % 12 }.uniq
       @lead_scale_pcs = lead_scale_pitch_classes(name, @lead_chord_pcs)
       @lead_chord_tones = @voicing.flat_map { |midi| [midi + 12, midi + 24] }.uniq
+      @mind.observe_harmony(name || "#{NAMES[(@key + degree) % 12]}#{quality}", @lead_chord_pcs)
 
       pad = pad_spec
       showcase_voicing.each { |midi| stage.note(midi, pad, @next_at, length - 0.05, @c["pad_gain"], :pad) }
@@ -3437,7 +3440,14 @@ SHOWCASE_MODES = {
 
       chord = scale.select { |m| @lead_chord_pcs.include?(m % 12) }
       pool = chord.any? && @rng.rand < 0.68 ? chord : scale
-      pool.min_by { |m| (m - previous - @rng.rand(-reach..reach)).abs }
+      chosen = @mind.choose_note(
+        candidates: pool,
+        previous: previous,
+        chord_pcs: @lead_chord_pcs,
+        scale_pcs: @lead_scale_pcs,
+        reach: reach
+      )
+      @mind.accept_note(chosen)
     end
 
     # FM: scale-aware and chord-tone weighted, in the current harmony.
