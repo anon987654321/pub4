@@ -2,7 +2,7 @@
 
 # law/html.rb — every html law, one Law.define per rule.
 #
-# IMG_ALT and LAZY_IMAGES live once, in the registry (web_rules.rb): both
+# IMG_ALT and LAZY_IMAGES live once, in the registry (web_laws.rb): both
 # judge attributes of a tag, and a tag is not a line — the attribute-per-line
 # spelling put alt= and loading= one line below the detector, so every
 # multi-line <img> was a finding. The registry versions flatten tags first.
@@ -17,7 +17,7 @@ Law.define(:ARIA_INTERACTIVE) do
   good "<button onclick=\"go()\">"
 end
 
-# ARIA_LABELS lives once, in the registry (web_rules.rb): its detector
+# ARIA_LABELS lives once, in the registry (web_laws.rb): its detector
 # flattens multi-line tags and honours label-wrapping before judging, and the
 # per-line duplicate here flagged every attribute-per-line control as nameless
 # — the playlist transport bar carried six labels and six findings at once.
@@ -130,7 +130,7 @@ Law.define(:CLASS_RESTATES_TAG) do
   good "<header class=\"page-header\">"
 end
 
-# HTML_LANG lives once, in the registry (web_rules.rb): it reads through
+# HTML_LANG lives once, in the registry (web_laws.rb): it reads through
 # tag_source, so an `<html` inside a comment, a string or an ERB expression
 # is prose about the tag, not the tag. This bare line regex had no such
 # filter — the tag_source family is why ARIA_LABELS and IMG_ALT retired the
@@ -332,7 +332,7 @@ end
 
 # TAG_HELPER_OVER_MARKUP is retired, not moved. Its detector matched
 # `<p><%= ... %></p>` and its siblings; PREFER_TAG_HELPERS in the registry
-# (lib/review/scan/rules/web_rules.rb, SIMPLE_WRAPPER_TAG_RE) is a strict
+# (lib/review/scan/rules/web_laws.rb, SIMPLE_WRAPPER_TAG_RE) is a strict
 # superset — the same shape plus div, span, li and label, and tolerant of
 # attributes. Measured over 536 RAILS views: every one of this rule's 292
 # findings was also one of the registry's, so it only ever double-reported.
