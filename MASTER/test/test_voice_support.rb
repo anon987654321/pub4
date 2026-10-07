@@ -154,7 +154,7 @@ class TestVoiceSupport < Minitest::Test
     FileUtils.rm_rf(dir)
   end
 
-  def test_speak_refuses_empty_but_keeps_long_text_and_short_text
+  def test_speak_refuses_empty_and_keeps_only_the_current_reply
     queued = []
     long = "x" * 12000
     PB.instance_variable_set(:@pending, nil)
@@ -170,12 +170,12 @@ class TestVoiceSupport < Minitest::Test
       end
     end
 
-    spoken = queued.map { |job| job[1] }.join
-    assert_includes spoken, long
-    assert_includes spoken, "hello"
-    assert_operator queued.size, :>, 1
+    assert_equal 1, queued.size
+    assert_equal " hello ".strip, queued.first[1]
+    refute_includes queued.map { |job| job[1] }, long
   ensure
     PB.instance_variable_set(:@pending, nil)
+    PB.instance_variable_set(:@generation, 0)
   end
 
   # Two paths reached the door with one reply and MASTER said it twice; a
@@ -237,10 +237,11 @@ class TestVoiceSupport < Minitest::Test
       end
     end
 
-    assert_equal ["the same sentence", "a different sentence", "the same sentence"], queued.map(&:first)
+    assert_equal ["the same sentence"], queued.map(&:first)
   ensure
     PB.instance_variable_set(:@pending, nil)
     PB.instance_variable_set(:@last_said, nil)
+    PB.instance_variable_set(:@generation, 0)
   end
 
 # One Edge round trip carried the whole reply, so a long answer stood silent
