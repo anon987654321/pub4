@@ -48,6 +48,7 @@ require "tmpdir"
 require_relative "process_spawn"
 require_relative "ableton_play"
 require_relative "composer_mind"
+require_relative "scene"
 
 module Livesets
   D = File.expand_path("..", __dir__)
@@ -2257,13 +2258,17 @@ SHOWCASE_MODES = {
       begin
         showcase_scenes(mode).each_with_index do |(name, seconds), index|
           log("showcase -> #{name}")
+          world = DillaScene.profile(
+            name,
+            index: index,
+            tension: index.to_f / [showcase_scenes(mode).length - 1, 1].max
+          )
           visual&.publish(
-            scene: name,
-            seed: rng.respond_to?(:seed) ? rng.seed : ENV.fetch("LIVE_SEED", "0").to_i,
-            started_at: Process.clock_gettime(Process::CLOCK_MONOTONIC),
-            energy: (0.28 + ((index % 7) * 0.08)).clamp(0.0, 0.95),
-            fracture: (0.22 + ((index % 9) * 0.065)).clamp(0.0, 0.95),
-            hue: (0.52 + ((index * 0.037) % 0.34)).round(4)
+            world.merge(
+              seed: rng.respond_to?(:seed) ? rng.seed : ENV.fetch("LIVE_SEED", "0").to_i,
+              started_at: Process.clock_gettime(Process::CLOCK_MONOTONIC),
+              hue: (0.52 + ((index * 0.037) % 0.34)).round(4)
+            )
           )
           score, actions = showcase_score(name, rng)
           scene_path = File.join(scratch, format("%02d-%s.wav", index + 1, name))
