@@ -106,7 +106,7 @@ module LiveAudiovisual
     end
     @server = Server.new
     @browser = Process.spawn(
-      browser, "--headless=new", "--disable-dev-shm-usage", "--no-first-run",
+      browser, "--new-window", "--disable-dev-shm-usage", "--no-first-run",
       "--no-default-browser-check", "--window-size=#{WIDTH},#{HEIGHT}",
       "http://127.0.0.1:#{@server.port}/", out: File::NULL, err: File::NULL
     )
