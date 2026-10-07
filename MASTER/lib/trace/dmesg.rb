@@ -71,6 +71,19 @@ module Master
         @log_voice_active == true
       end
 
+      def log_voice_spoken_recently?(text, window: 8.0)
+        clean = text.to_s.gsub(/s+/, " ").strip
+        return false if clean.empty?
+
+        recent = @recent_log_voice
+        return false unless recent
+
+        timestamp, spoken = recent
+        (Process.clock_gettime(Process::CLOCK_MONOTONIC) - timestamp) <= window && spoken == clean
+      rescue StandardError
+        false
+      end
+
       def cfg
         @cfg ||= begin
           data = Master.load_yaml(Master.limits_path, default: {}) || {}
@@ -258,7 +271,7 @@ module Master
         return if clean.empty?
 
         Thread.current[:master_dmesg_tts] = true
-        Master::Voice::Playback.enqueue(
+        accepted = Master::Voice::Playback.enqueue(
           clean,
           voice: Master::Voice::Policy.operator_log_voice,
           style: :neutral,
@@ -266,6 +279,7 @@ module Master
           pitch: Master::Voice::Policy.operator_log_pitch,
           last: true,
         )
+        @recent_log_voice = [Process.clock_gettime(Process::CLOCK_MONOTONIC), clean] if accepted
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "Trace::Dmesg.log_voice")
       ensure
