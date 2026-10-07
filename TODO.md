@@ -1263,17 +1263,18 @@ One decision stays with the operator.
 
 ## MASTER web UI — future-human face — ChatGPT intake 2026-09-11
 
-Closed 2026-09-13 except the operator's look and voice and one check that needs
-a browser on vm23. The refusal is in `MASTER/AGENTS.md`, Refused: the face's design is the
-operator's.
+Closed 2026-09-13 for the original intake; the operator later approved a researched
+redesign on 2026-10-07. The distant-human morphology now uses a single constitutional
+contract shared by browser and CLI; browser rendering on vm23 remains the evidence gate.
 
-- **Morphology.** Landed as a speculative distant-human treatment: fuller
-  neurocranial vault, smaller lower face and jaw projection, flatter brow,
-  restrained orbit enlargement, smaller pupils and seeded developmental
-  asymmetry. This is explicitly an informed design projection, not a scientific
-  prediction; the canonical morphology lives in `data/laws.yml` and is shared
-  by the browser and CLI. The remaining browser-only seam is the real-world
-  rendered smoke on vm23.
+- **Morphology.** Refined 2026-10-07 after current anthropology review:
+  fuller neurocranial vault, more retracted lower face, reduced brow/nasal/jaw
+  projection, stronger orbital field, modest pupil enlargement and seeded
+  asymmetry. It remains an informed design projection, not a scientific
+  prediction; `data/laws.yml` is the single source consumed by browser and CLI.
+  Research basis: modern human cranial globularity/facial retraction plus a
+  cautious speculative extension; skin tone is intentionally not inferred.
+  The remaining seam is the real-world rendered smoke on vm23.
 - **Expression, motion and layout.** Continuous affect instead of named
   expressions, a motion grammar with per-region time constants, speaking motion
   kept below lip-sync, states that read without colour, and a
