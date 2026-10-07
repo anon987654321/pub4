@@ -208,6 +208,10 @@ module Master
   end
 
   require_relative "ai/operator_contract"
+  # operator/ is intentionally outside Zeitwerk because most of it defines the
+  # foreign top-level Operator namespace; Mode is the one Master-owned operator
+  # contract used by the interactive fold path, so load it explicitly.
+  require_relative "operator/mode"
 
   loader = Zeitwerk::Loader.new
   loader.push_dir(__dir__, namespace: Master)
