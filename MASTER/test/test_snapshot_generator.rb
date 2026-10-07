@@ -2,6 +2,7 @@
 
 require_relative "test_helper"
 require "tmpdir"
+require_relative "../tools/snapshot_extract"
 
 class TestSnapshotGenerator < Minitest::Test
   def test_snapshot_contains_tree_and_source
@@ -75,7 +76,7 @@ class TestSnapshotGenerator < Minitest::Test
     assert_includes source, '"STUDIO" => "STUDIO"'
     assert_includes source, '"OPENBSD" => "snapshot_OPENBSD.md"'
     assert_includes source, '" — git "'
-    assert_includes source, "git=#{sha}"
+    assert_includes source, 'git=#{sha}'
   end
 
   def test_snapshot_generator_declares_hard_share_size_ceiling
@@ -88,6 +89,25 @@ class TestSnapshotGenerator < Minitest::Test
     assert_includes source, "SOURCE_FRAGMENT_BYTES = 600_000"
   end
 
+  def test_snapshot_extractor_reassembles_fragments_and_rejects_mixed_packs
+    Dir.mktmpdir do |dir|
+      part1 = File.join(dir, "snapshot_MASTER.md")
+      part2 = File.join(dir, "snapshot_MASTER.part002.md")
+      File.write(part1, "# MASTER\\n\\nPack: tree=MASTER git=abc123 part=1/2 text_total=1 fragments_total=2 binary=0 omitted=0\\n\\n## `MASTER/example.rb [fragment 1/2]`\\n\\n```ruby\\nfirst\\n```\\n\\n## Snapshot part complete\\n")
+      File.write(part2, "# MASTER\\n\\nPack: tree=MASTER git=abc123 part=2/2 text_total=1 fragments_total=2 binary=0 omitted=0\\n\\n## `MASTER/example.rb [fragment 2/2]`\\n\\n```ruby\\nsecond\\n```\\n\\n## Snapshot part complete\\n")
+
+      target = File.join(dir, "rehydrated")
+      packs = [part1, part2].map { |path| Operator::SnapshotExtract.parse(path) }
+      assert_equal 1, Operator::SnapshotExtract.write(packs, target)
+      assert_equal "first\\nsecond\\n", File.read(File.join(target, "MASTER", "example.rb"))
+
+      mismatched = Operator::SnapshotExtract.parse(part2).merge(git: "different")
+      error = assert_raises(RuntimeError) do
+        Operator::SnapshotExtract.write([packs.first, mismatched], File.join(dir, "bad"))
+      end
+      assert_includes error.message, "mixed git revisions"
+    end
+  end
   def test_snapshot_does_not_include_its_own_output
     Dir.mktmpdir do |dir|
       output = File.join(dir, "snapshot_MASTER.md")
