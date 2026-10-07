@@ -10,7 +10,7 @@ here. This file routes; it does not restate, because a second copy drifts and
 the copy is always the one being read.
 
 The block below is the source every other agent's entry file is generated from
-— root `AGENTS.md`, `GEMINI.md`, `.cursorrules` and
+— root `AGENTS.md`, `GEMINI.md`, `.cursorlaws` and
 `.github/copilot-instructions.md`. Edit it here and run
 `cd MASTER && rake docs:agent_contracts`; `rake lint:agent_contracts` fails when
 a generated file drifts from it. One source, four harnesses, no second copy to
@@ -30,7 +30,7 @@ you write:
 
 The authority order is one stack: `soul.yml` > `laws.yml` >
 executable law (`law/*.rb` and `lib/review/scan/rules/*.rb`) > repo harnesses
-(`CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, `.cursorrules`,
+(`CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, `.cursorlaws`,
 `.github/copilot-instructions.md`) > per-tree contracts. Executable law outranks
 every sentence written about it. Harness files route agents to the law; they never
 override executable law and never become a second copy of it.
@@ -289,7 +289,7 @@ loser reads the wrong tree without complaint. Name it for the script
 
 **The three rule-id counts answer three questions.** The scanner's `@rules`
 (147) is what weights anything; a `Rule.registry` walk drops bridge classes; a
-regex over `law/` and the rules files (what `tools/rule_hygiene.rb` uses) counts
+regex over `law/` and the rules files (what `tools/law_hygiene.rb` uses) counts
 more. An unreached-file sweep must include the repo-root `bin/` and filter by no
 extension — `test/test_entrypoint_requires.rb` holds the case that broke
 `bin/operator` for six days.
