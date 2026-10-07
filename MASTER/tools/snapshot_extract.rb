@@ -15,16 +15,26 @@ module Operator
 
     def parse(path)
       lines = File.readlines(path, encoding: "UTF-8")
+      pack = lines.filter_map do |line|
+        match = line.match(/\APack: tree=(\S+) part=(\d+)\/(\d+) /)
+        match && { tree: match[1], part: Integer(match[2]), parts: Integer(match[3]) }
+      end.first
+      raise "snapshot extract: missing Pack header in #{path}" unless pack
+
       files = []
       current = nil
       fence = nil
+      fragment = nil
+      total_fragments = nil
       body = []
 
       flush = lambda do
         return unless current && fence
-        files << [current, body.join]
+        files << { path: current, body: body.join, fragment:, total_fragments: }
         current = nil
         fence = nil
+        fragment = nil
+        total_fragments = nil
         body = []
       end
 
@@ -38,8 +48,10 @@ module Operator
           next
         end
 
-        if (match = line.match(/^## `(.+)`\s*$/))
+        if (match = line.match(/^## #{96.chr}(.+?)(?: \[fragment (\d+)\/(\d+)\])?#{96.chr}\s*$/))
           current = match[1]
+          fragment = match[2]&.to_i
+          total_fragments = match[3]&.to_i
           next
         end
 
@@ -49,19 +61,50 @@ module Operator
       end
 
       raise "snapshot extract: unterminated block in #{path}" if current || fence
-
-      files
+      pack.merge(files:)
     end
 
-    def write(files, root)
-      files.each do |relative, body|
+    def write(packs, root)
+      raise "snapshot extract: no packs" if packs.empty?
+
+      trees = packs.map { |pack| pack.fetch(:tree) }.uniq
+      counts = packs.map { |pack| pack.fetch(:parts) }.uniq
+      indices = packs.map { |pack| pack.fetch(:part) }.sort
+      raise "snapshot extract: mixed trees" unless trees.size == 1
+      raise "snapshot extract: inconsistent part counts" unless counts.size == 1
+      expected = (1..counts.first).to_a
+      raise "snapshot extract: missing or duplicate parts" unless indices == expected
+
+      fragments = Hash.new { |hash, path| hash[path] = [] }
+      packs.each do |pack|
+        pack.fetch(:files).each do |file|
+          fragments[file.fetch(:path)] << [
+            file[:fragment],
+            file[:total_fragments],
+            file.fetch(:body),
+          ]
+        end
+      end
+
+      fragments.each do |relative, pieces|
+        fragment_numbers = pieces.filter_map(&:first)
+        if fragment_numbers.empty?
+          raise "snapshot extract: duplicate source file #{relative}" unless pieces.size == 1
+          content = pieces.first.fetch(2)
+        else
+          total = pieces.map { |piece| piece.fetch(1) }.compact.uniq
+          numbers = fragment_numbers.sort
+          raise "snapshot extract: incomplete fragments for #{relative}" unless total.size == 1 && numbers == (1..total.first).to_a
+          content = pieces.sort_by(&:first).map { |piece| piece.fetch(2) }.join
+        end
+
         target = File.join(root, relative)
         FileUtils.mkdir_p(File.dirname(target))
-        File.write(target, body, encoding: "UTF-8")
+        File.write(target, content, encoding: "UTF-8")
       end
-      files.size
+      fragments.size
     end
-  end
+ end
 end
 
 options = {}
@@ -77,8 +120,7 @@ end
 root = File.expand_path(options.fetch(:root, Dir.mktmpdir("master-snapshot-")))
 FileUtils.mkdir_p(root)
 
-count = ARGV.sum do |path|
-  Operator::SnapshotExtract.write(Operator::SnapshotExtract.parse(path), root)
-end
+packs = ARGV.map { |path| Operator::SnapshotExtract.parse(path) }
+count = Operator::SnapshotExtract.write(packs, root)
 
 Master::Trace::Dmesg.status("snapshot0", "rehydrated #{count} text file(s) into #{root}")
