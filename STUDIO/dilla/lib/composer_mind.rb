@@ -69,6 +69,12 @@ class DillaComposerMind
     repeated.to_f / [recent.length - 1, 1].max
   end
 
+  def lead_probability(base)
+    report = critique
+    adjustment = 0.68 + (report.fetch(:score) * 0.42)
+    (base.to_f * adjustment).clamp(0.0, 1.0)
+  end
+
   def critique
     notes = @note_history
     intervals = @interval_history
