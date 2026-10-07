@@ -15,11 +15,7 @@ Source of truth: `../../MASTER/data/laws.yml#design_system`. The committed
 Primary product work targets these three only (unless explicitly scoped
 elsewhere):
 
-| Surface | Role |
-|---------|------|
-| **brgen** | City social — feed, channels, ambient chat, verticals |
-| **amber** | Luxury wardrobe — outfits, feed compose, soft guests |
-| **MASTER web** | Face + mission control at `ai.brgen.no` — embeddable AI |
+The focus triangle is **brgen** for city social, **amber** for luxury wardrobe, and **MASTER web** for the face and mission control at `ai.brgen.no`.
 
 Shared glue: `pub4-shared` (layout chrome, comments form/row, social locales,
 `master_embed`, empty states). bsdports / tools remain maintenance-only unless
@@ -39,13 +35,7 @@ Social primitives (shared engine):
 
 ## Surfaces
 
-| Surface | Body attributes | Main landmark | Chrome |
-|---------|-----------------|---------------|--------|
-| MASTER chat | `data-layout="face" data-surface="face"` | `main#chat-shell`, holding the `#zin` prompt form | CRT HUD, radius 0 |
-| MASTER dashboard | `data-layout="document" data-surface="face"` | `#main-content` | mono panels |
-| brgen | `data-layout="document" data-surface="social"` | `#main-content` | app-shell + tab-bar |
-| amber | `data-layout="document" data-surface="luxury"` | `#main-content` | app-shell + tab-bar |
-| bsdports | `data-layout="document" data-surface="wscons"` | `#main-content` | top nav, CRT tokens |
+MASTER chat uses `data-layout="face" data-surface="face"` with `main#chat-shell` around the `#zin` form and CRT HUD chrome. MASTER dashboard uses `data-layout="document" data-surface="face"` with `#main-content` and mono panels. brgen and amber use `data-layout="document"` with their social or luxury surface, `#main-content`, and the app shell with tab bar. bsdports uses `data-layout="document" data-surface="wscons"`, `#main-content`, and top-nav CRT chrome.
 
 ## Required on every HTML document
 
@@ -102,12 +92,7 @@ consistency campaign; enforcement lives in `visual_contract_lint`,
 
 ## Dialects
 
-| Surface | Palette | Radius | Type | Theme |
-|---|---|---|---|---|
-| brgen (+verticals) | brgen_old grayscale, per-vertical accents (3-slot map) | 4/8/12/8 | Inter | light default on all eight, `data-theme` toggle |
-| amber | luxury warm paper | –/6/10/14 | Inter + editorial faces (amber-only) | light default, `data-theme` toggle |
-| bsdports | wscons terminal green | 0 | system mono | **one-theme by design** — no toggle until decided otherwise |
-| MASTER face | black + lavender `--c-*` | 0 | JetBrains Mono | **one-theme black by design** |
+Dialect identity stays deliberate: brgen uses its brgen_old grayscale with per-vertical accents, 4/8/12/8 radii, and Inter on a light/dark theme toggle; amber uses warm paper, –/6/10/14 radii, and its editorial faces; bsdports uses wscons green, zero radii, system mono, and one theme; the MASTER face uses black and lavender `--c-*`, zero radii, JetBrains Mono, and one black theme.
 
 - Per-surface typefaces are dialect identity, not drift — but a fifth face is a
   decision, not an accident. amber's editorial fonts never leak into shared
@@ -119,15 +104,7 @@ consistency campaign; enforcement lives in `visual_contract_lint`,
 
 ## Chrome grammar
 
-| Surface | Primary nav | Bottom bar | Brand mark | Search |
-|---|---|---|---|---|
-| brgen core | swipe-reveal swiper (deliberate, hidden at rest) | mobile tab bar | shared `_brand_mark`, fixed top-left, armored | live_search |
-| marketplace | Amazon-style nav bar | inherits | same | nav-bar search (yep surface) |
-| playlist | immersive stage + transport bar (publishes `--tab-bar-h`) | transport | same | — |
-| dating / tv / maps / messenger | immersive or grid, per `_vertical_shell` | varies | same | maps has overlay search |
-| amber | sidebar + tab bar | tab bar | shared mark | live_search |
-| bsdports | top nav (no swipe grammar — index-density identity) | none, deliberate | shared mark | live_search |
-| face | none (single chat surface) | — | `.top-left-logo` (align to `_brand_mark` geometry: queued) | — |
+Chrome follows the surface: brgen core uses the hidden-at-rest swipe-reveal nav and mobile tab bar; marketplace uses its Amazon-style nav; playlist uses an immersive stage with transport; dating, TV, maps, and messenger use their vertical shell grammar; amber uses sidebar plus tab bar; bsdports uses top navigation and no bottom bar; the face is one chat surface with no secondary navigation.
 
 - Immersive vs browsable is load-bearing and CSS-encoded
   (`body[class*="vertical-"]` hides feed chrome). Naming it in markup
