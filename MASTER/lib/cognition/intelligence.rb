@@ -210,6 +210,7 @@ module Master
       end
 
       def signal(row, *keys, fallback: 0)
+        row = row.to_h if row.respond_to?(:to_h) && !row.is_a?(Hash)
         return fallback unless row.is_a?(Hash)
         keys.each do |key|
           value = row[key] || row[key.to_s]
