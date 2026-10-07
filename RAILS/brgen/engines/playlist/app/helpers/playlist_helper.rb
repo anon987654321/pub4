@@ -8,7 +8,7 @@ module PlaylistHelper
 
   def radio_tunnel_catalog
     # YouTube stays as the tail of the catalogue: it is the wider record-crate
-    # the crew curated, and it still plays, it just cannot be analysed.
+    # the crew curated, and it still plays, but analysis cannot run.
     manifest = Brgen::RadioBergenManifest.youtube_tracks
 
     # Optional mix-in of recent hosted youtube/direct from the vertical (still pub4 lineage spirit)
