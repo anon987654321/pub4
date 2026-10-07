@@ -31,6 +31,33 @@ module Master
         { id:, path:, sha256: Digest::SHA256.hexdigest(body), payload: }
       end
 
+      def recent(root: Master::REPO_ROOT, limit: 10)
+        directory = File.join(root, ".master", "receipts")
+        return [] unless File.directory?(directory)
+
+        Dir.glob(File.join(directory, "convergence-*.json")).sort.reverse.first(limit.to_i).filter_map do |path|
+          JSON.parse(File.read(path, encoding: "UTF-8"))
+        rescue JSON::ParserError, EncodingError
+          nil
+        end
+      end
+
+      def trend(root: Master::REPO_ROOT, limit: 10)
+        rows = recent(root:, limit:)
+        rows.each_cons(2).filter_map do |newer, older|
+          before = older.dig("inventory", "totals")
+          after = newer.dig("inventory", "totals")
+          next unless before && after
+
+          {
+            id: newer["id"],
+            newer_state: newer["state"],
+            files_delta: after["files"].to_i - before["files"].to_i,
+            bytes_delta: after["bytes"].to_i - before["bytes"].to_i,
+          }
+        end
+      end
+
       def git_identity(root)
         {
           head: Measure.inventory(root:)[:git],

@@ -95,8 +95,9 @@ module Master
           ],
         },
         "model" => {
-          summary: "show or switch the active model, and connect its subscriptions",
+          summary: "show or switch the active model, inspect laboratory outcomes, and connect its subscriptions",
           detail: ["/model", "/model <name> — routing from data/models.yml.", "/model benchmark — benchmark reachable Ollama models; /model benchmark all includes every reachable lane.",
+                   "/model lab — summarize recorded trajectory quality by model.",
                    "/model auth — show subscription lanes and their authentication state.",
                    "/model auth login claude|chatgpt|grok — run the provider's official browser sign-in flow.",
                    "MASTER never receives or stores your password, OAuth code, cookies or session credentials."],
@@ -194,9 +195,15 @@ module Master
                    "/explain MASTER|RAILS|OPENBSD|STUDIO — focus on one tree.",
                    "It reports what the checkout contains, not what an old README promised."],
         },
+        "events" => {
+          summary: "show the existing EventBus publisher/subscriber reach census",
+          detail: ["/events — report published topics, consumers and browser listeners.",
+                   "/events strict — use the same census as a blocking check for missing publishers or consumers."],
+        },
         "prove" => {
           summary: "run the deterministic local PUB4 convergence proof and write a receipt",
           detail: ["/prove — check constitution presence, four-tree topology, command discoverability, wishlist anchors and snapshot contract.",
+                   "/prove history [N] — show the most recent durable convergence receipts.",
                    "External hardware, vm23, staging money, browser and listening evidence remains INCONCLUSIVE until actually exercised."],
         },
         "face" => {
@@ -246,7 +253,7 @@ module Master
 
       def help_summary
         [
-          "commands: /status /doctor /voice /model /deploy /play /size",
+          "commands: /status /doctor /voice /model /deploy /play /size /events",
           "          /wake /review /critique /fix /face /wishlist /explain /prove",
           "          /session /clear /undo /snapshot",
           "          /android /ios /orders",
