@@ -152,6 +152,17 @@ class WorkflowInferenceTest < Minitest::Test
   end
 
 
+  def test_unconfigured_critique_marks_the_review_incomplete
+    pass = Master::CLI::Pipeline::Pass.allocate
+    pass.instance_variable_set(:@failed_stages, [])
+    pass.instance_variable_set(:@deliberation, nil)
+
+    output = pass.send(:run_critique, Master::ROOT)
+
+    assert_equal "critique failed: deliberation not configured", output
+    assert_includes pass.instance_variable_get(:@failed_stages), "critique"
+  end
+
   def test_a_council_error_marks_the_review_incomplete
     pass = Master::CLI::Pipeline::Pass.allocate
     pass.instance_variable_set(:@failed_stages, [])
