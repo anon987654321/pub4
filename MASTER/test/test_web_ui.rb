@@ -2,6 +2,7 @@
 
 require_relative "test_helper"
 require "rack/test"
+require "yaml"
 
 # Minimal Rack test harness for the web UI chat controller.
 # Tests cover SSE stream, TTS endpoint, and metrics.
@@ -186,8 +187,8 @@ class TestWebUI < Minitest::Test
     assert_includes semantics, "phantom:(?:detected|occurrence|recovery|halt)"
     assert_includes semantics, "pipeline:stage_start"
     assert_includes semantics, "/council:/.test(name)"
-    refute_includes semantics, "phantom:retry"
-    refute_includes semantics, "pipeline:start"
+    retired = YAML.safe_load_file(File.expand_path("../data/event_topics.yml", __dir__)).fetch("retired")
+    retired.each { |topic| refute_includes semantics, topic }
     refute_includes semantics, "council:deliberation"
   end
 
