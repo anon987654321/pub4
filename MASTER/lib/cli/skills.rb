@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "digest"
 require "fileutils"
 require "yaml"
 require_relative "../io/atomic_write"
@@ -23,8 +24,9 @@ module Master
         @loaded = []
         load_antigravity_skills
         load_registry_skills
+        @loaded = @loaded.map { |skill| with_revision(skill) }
         @loaded = sort_by_recency(@loaded)
-        @bus&.publish("skills:loaded", count: @loaded.size)
+        @bus&.publish("skills:loaded", count: @loaded.size, revisions: @loaded.map { |s| s[:revision] })
         @loaded
       end
 
@@ -119,7 +121,19 @@ module Master
           body: row["body"].to_s,
           dir: nil,
           has_ruby: false,
+          source: :registry,
         }
+      end
+
+      def with_revision(skill)
+        portable = {
+          name: skill[:name].to_s,
+          description: skill[:description].to_s,
+          triggers: Array(skill[:triggers]).map(&:to_s),
+          body: skill[:body].to_s,
+          source: skill[:source].to_s,
+        }
+        skill.merge(revision: Digest::SHA256.hexdigest(Marshal.dump(portable)))
       end
 
       def sort_by_recency(skills)
