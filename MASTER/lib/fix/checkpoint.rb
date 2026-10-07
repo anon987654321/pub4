@@ -9,7 +9,7 @@ require_relative "../io/atomic_write"
 module Master
   module Fix
     class Checkpoint
-      include Master::Io::AtomicWrite
+      include ::Master::Io::AtomicWrite
       attr_reader :root, :dir
 
       def initialize(root: Master::ROOT, dir: File.join(Master::ROOT, ".master", "checkpoints"))
