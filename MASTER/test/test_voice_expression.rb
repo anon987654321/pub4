@@ -110,6 +110,15 @@ class TestExpression < Minitest::Test
     assert arc[:decay_rate] < 0.68
   end
 
+  def test_mood_arc_preserves_zero_valued_signals
+    arc = Master::Voice::Expression.mood_arc(history: [
+      { entropy: 0.0, valence: 0.0, arousal: 0.0 },
+    ])
+    assert_equal 0.0, arc[:entropy]
+    assert_equal 0.0, arc[:valence]
+    assert_equal 0.0, arc[:arousal]
+  end
+
   def test_for_council_persona_includes_lane
     expr = Master::Voice::Expression.for_council_persona("Skeptic")
     assert_equal :right, expr[:viseme_lane]
