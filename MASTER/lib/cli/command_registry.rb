@@ -121,6 +121,7 @@ module Master
           metrics: infra[:metrics],
           trace: infra[:trace],
           learnings: infra[:learnings],
+          memory: infra[:memory],
         }
       end
 
