@@ -43,7 +43,16 @@ module DillaMidiEffects
   end
 
   def scale(events, rng:, params:)
-    events
+    pcs = Array(params[:scale_pcs]).map(&:to_i).uniq
+    return events if pcs.empty?
+
+    events.map do |event|
+      next event if pcs.include?(event.midi % 12)
+
+      offsets = (1..6).flat_map { |distance| [-distance, distance] }
+      shift = offsets.find { |distance| pcs.include?((event.midi + distance) % 12) }
+      event.with(midi: event.midi + shift)
+    end
   end
 
   def probability(events, rng:, params:)
