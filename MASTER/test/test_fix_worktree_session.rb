@@ -96,13 +96,13 @@ class TestFixWorktreeSession < Minitest::Test
       git(root, "config", "user.name", "MASTER test")
       git(root, "config", "user.email", "master-test@example.invalid")
       File.write(File.join(root, "README"), "base\n")
+      FileUtils.mkdir_p(File.join(root, "MASTER", "bin"))
       File.write(File.join(root, "MASTER", "bin", "master"), <<~RUBY)
         #!/usr/bin/env ruby
         File.write(File.join(Dir.pwd, "README"), "after\n")
         system("git", "add", "README")
         exit(system("git", "commit", "-m", "worker fix"))
       RUBY
-      FileUtils.mkdir_p(File.join(root, "MASTER", "bin"))
       FileUtils.chmod(0o755, File.join(root, "MASTER", "bin", "master"))
       File.write(File.join(root, "MASTER", "bin", "operator"), "#!/usr/bin/env ruby\nexit 0\n")
       FileUtils.chmod(0o755, File.join(root, "MASTER", "bin", "operator"))
