@@ -160,7 +160,10 @@ module Master
         end
 
         def version
-          store_version
+          File.file?(@path) ? Digest::SHA256.file(@path).hexdigest[0, 16] : "empty"
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "memory.version")
+          "unknown"
         end
 
         private
