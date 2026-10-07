@@ -160,8 +160,8 @@ module Master
         proposal["last_message"] = message.to_s.byteslice(0, 500)
 
         if fixed.to_i.positive?
-          proposal["status"] = "applied"
-          proposal["applied_at"] = Time.now.utc.iso8601
+          proposal["status"] = "claimed"
+          proposal["last_fixed"] = fixed.to_i
         elsif %i[human_decision needs_person].include?(status.to_sym)
           proposal["status"] = "blocked"
         elsif attempts >= MAX_ATTEMPTS
@@ -184,6 +184,30 @@ module Master
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "Fix::Wishlist.mark_attempt", event_bus: @bus)
         nil
+      end
+
+      def mark_delivered(proposal_ids:, run_id:)
+        ids = Array(proposal_ids).map(&:to_s)
+        return [] if ids.empty?
+
+        ledger = load_ledger
+        changed = ledger["proposals"].filter_map do |proposal|
+          next unless ids.include?(proposal["uid"].to_s)
+          next unless proposal["status"] == "claimed"
+          next unless proposal.fetch("last_fixed", 0).to_i.positive?
+
+          proposal["status"] = "applied"
+          proposal["applied_at"] = Time.now.utc.iso8601
+          proposal["applied_run"] = run_id.to_s
+          proposal.delete("claimed_at")
+          proposal.delete("claimed_run")
+          proposal
+        end
+        save_ledger(ledger) unless changed.empty?
+        changed
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "Fix::Wishlist.mark_delivered", event_bus: @bus)
+        []
       end
 
       def mark_verified(proposal_ids:, run_id:)
