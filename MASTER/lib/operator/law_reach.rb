@@ -7,7 +7,7 @@
 # a semantic question, or a practice hook. Policy data in data/laws.yml governs
 # those laws but is not the executable population.
 #
-#   ruby MASTER/tools/rule_reach.rb
+#   ruby MASTER/tools/law_reach.rb
 #
 # The semantic prompt drops info-severity violations deliberately — they double
 # the token cost of every file for findings nobody acts on. Reach therefore
