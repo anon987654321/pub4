@@ -15,7 +15,7 @@ module Master
     # parks a model that just failed (test/test_model_skip_cache.rb).
     module ModelQuota
       extend self
-      include Master::Io::AtomicWrite
+      include ::Master::Io::AtomicWrite
       FREE_RE = /:free\z|\Aopenrouter\//.freeze
       DEFAULT_DAILY = 200
 
