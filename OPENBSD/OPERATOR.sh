@@ -177,9 +177,19 @@ install_root_configs() {
   [[ -d $src/etc ]] || { log ERROR "No etc/ in $src"; return 1 }
   backup_directory /etc "etc-pre-sync" || return 1
 
-  if [[ -f $src/etc/doas.conf ]] && [[ $(tail -c1 "$src/etc/doas.conf" | wc -c) -eq 0 ]]; then
-    print >> "$src/etc/doas.conf"
-    log WARN "doas.conf missing trailing newline — fixed before install"
+  if [[ -f $src/etc/doas.conf ]]; then
+    typeset doas_size doas_last
+    doas_size=$(stat -f %z "$src/etc/doas.conf") || return 1
+    if (( doas_size == 0 )); then
+      print >> "$src/etc/doas.conf"
+      log WARN "doas.conf was empty — fixed before install"
+    else
+      doas_last=$(dd if="$src/etc/doas.conf" bs=1 skip=$((doas_size - 1)) count=1 2>/dev/null | od -An -t x1)
+      if [[ $doas_last != *0a* ]]; then
+        print >> "$src/etc/doas.conf"
+        log WARN "doas.conf missing trailing newline — fixed before install"
+      fi
+    fi
   fi
 
   typeset doas_rollback=""
