@@ -158,6 +158,16 @@ class TestFixConvergence < Minitest::Test
     assert_equal File.join(Master::RAILS_ROOT, "brgen"), resolver.resolve_target("RAILS/brgen")
   end
 
+  def test_fix_target_resolver_accepts_master_relative_internal_paths
+    resolver = Class.new do
+      include Master::CLI::Pipeline::TargetResolver
+      def initialize(root) = @root = root
+    end.new(Master::ROOT)
+
+    assert_equal File.join(Master::ROOT, "lib", "io"), resolver.resolve_target("lib/io")
+  end
+
+
   def test_openbsd_recursive_tree_globs_resolve_to_the_tree_root
     resolver = Class.new do
       include Master::CLI::Pipeline::TargetResolver
@@ -185,6 +195,10 @@ class TestFixConvergence < Minitest::Test
                  Operator::GateChain.trees_for_target("MASTER RAILS OPENBSD STUDIO")
     assert_equal %w[MASTER RAILS OPENBSD STUDIO],
                  Operator::GateChain.trees_for_target("openbsd,rails,master,studio")
+  end
+
+  def test_gate_chain_resolves_master_relative_internal_paths
+    assert_equal ["MASTER"], Operator::GateChain.trees_for_target("lib/io")
   end
 
 
