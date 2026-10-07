@@ -3454,19 +3454,24 @@ SHOWCASE_MODES = {
     def fm_phrase!(stage, length)
       phrase = @c.fetch("fm_phrase")
       preset = @c.fetch("fm").fetch(@lead).transform_keys(&:to_sym)
-      tones = lead_tones(phrase.fetch("range").map(&:to_i))
+      range = phrase.fetch("range").map(&:to_i)
+      tones = lead_tones(range)
       spot = @next_at + ((@rng.rand < 0.5 ? 0.5 : 1.0) * @beat)
       last = tones.sample(random: @rng)
       reach = phrase["reach"]
+      events = []
       while spot < @next_at + length - 0.4
-        last = lead_choice(phrase.fetch("range").map(&:to_i), last, reach)
+        last = lead_choice(range, last, reach)
         duration = phrase["steps"].sample(random: @rng) * @beat
         duration = [duration, length - (spot - @next_at) - 0.18 * @beat].min
         if duration > 0.08 * @beat && @rng.rand < @mind.lead_probability(phrase["odds"])
-          stage.fm(last, preset, spot, duration * phrase["held"], phrase["gain"])
+          events << DillaMidiEffects::Event.new(
+            last, spot, duration * phrase["held"], phrase["gain"], :lead
+          )
         end
         spot += [duration, 0.08 * @beat].max
       end
+      stage_midi_events!(stage, events, fm: preset)
     end
 
     # A patch lead uses the same chord-scale rules and never carries a long
@@ -3477,17 +3482,33 @@ SHOWCASE_MODES = {
       spot = @next_at + ((@rng.rand < 0.5 ? 0.5 : 1.0) * @beat)
       last = tones.sample(random: @rng)
       spec = Patches.spec(@lead)
+      events = []
       while spot < @next_at + length - 0.4
         last = lead_choice(range, last, 5)
         duration = [0.5, 0.5, 1.0, 1.5].sample(random: @rng) * @beat
         duration = [duration, length - (spot - @next_at) - 0.14 * @beat].min
         swing = ((spot - @next_at) / (@beat / 2)).round.odd? ? @c["lead_swing_seconds"] : 0.0
         if duration > 0.08 * @beat && @rng.rand < @mind.lead_probability(@c["lead_odds"])
-          note = last.clamp(*@c["lead_range"])
-          stage.note(note, spec, spot + swing, duration * 0.82, @c["lead_gain"], :lead, from_midi: @last_lead)
-          @last_lead = note
+          events << DillaMidiEffects::Event.new(
+            last, spot + swing, duration * 0.82, @c["lead_gain"], :lead
+          )
         end
         spot += [duration, 0.08 * @beat].max
+      end
+      stage_midi_events!(stage, events, patch: spec)
+    end
+
+    def stage_midi_events!(stage, events, fm: nil, patch: nil)
+      chain = ENV.fetch("DILLA_MIDI_CHAIN", "default").to_sym
+      transformed = DillaMidiEffects.apply(events, name: chain, rng: @rng)
+      transformed.each do |event|
+        if fm
+          stage.fm(event.midi, fm, event.at, event.held, event.gain)
+        else
+          note = event.midi.clamp(*@c["lead_range"])
+          stage.note(note, patch, event.at, event.held, event.gain, :lead, from_midi: @last_lead)
+          @last_lead = note
+        end
       end
     end
 
