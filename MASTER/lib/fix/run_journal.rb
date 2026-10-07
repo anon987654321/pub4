@@ -101,6 +101,15 @@ module Master
         load["runs"].reverse.find { |run| run["state"] == "active" }
       end
 
+      def remaining_seconds(run_id)
+        run = load["runs"].find { |row| row["id"] == run_id }
+        return 0.0 unless run
+
+        remaining_for(run)
+      rescue ArgumentError
+        0.0
+      end
+
       def history(limit: MAX_RUNS)
         load["runs"].last(limit)
       end
@@ -137,7 +146,7 @@ module Master
         active["resumed_from"] = previous_state unless previous_state == "active"
         active["resumed_at"] = Time.now.utc.iso8601
         active["resume_count"] = active.fetch("resume_count", 0).to_i + 1
-        remaining = remaining_seconds(active)
+        remaining = remaining_for(active)
         persist(data)
         emit("fix:resume", run_id: active["id"], pass: next_pass(active),
                       resume_count: active["resume_count"], remaining_seconds: remaining)
@@ -169,7 +178,7 @@ module Master
 
       # No external caller (checked: only start_or_resume calls this, without
       # an explicit receiver, which private allows).
-      def remaining_seconds(run)
+      def remaining_for(run)
         deadline = Time.iso8601(run["deadline_at"].to_s)
         now = Time.now.utc
         last = run["last_seen_at"] && Time.iso8601(run["last_seen_at"].to_s)
