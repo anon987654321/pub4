@@ -2,11 +2,8 @@
 
 require "test_helper"
 
-# The job existed, was correct, and was enqueued by nothing — so every cookieless
-# request's guest row lived forever (102,778 of them on 2026-08-01, 99.3% of the
-# users table). These tests pin the three things that have to hold together: the
-# job removes the right rows, the schedule exists, and the index its scan needs
-# is in the schema.
+# Guest pruning is a lifecycle contract: the job removes only eligible guest
+# rows, the schedule invokes it, and the supporting index matches its query.
 class PruneGuestUsersJobTest < ActiveSupport::TestCase
   def build_guest(created_at:)
     user = User.new(email_address: "guest_#{SecureRandom.hex(6)}@guest.local", guest: true)
