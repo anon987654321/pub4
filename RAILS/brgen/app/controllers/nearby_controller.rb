@@ -41,7 +41,7 @@ class NearbyController < ApplicationController
   # channel page -- the widget IS the frame, there's nowhere to navigate to.
   #
   # Ambient chat: with GPS → geo room; without → #brgen city lobby inline so
-  # anonymous chat "just works" without a second navigation. Soft guests are
+  # anonymous chat works without a second navigation. Soft guests are
   # the identity path (Craigslist-style); never require signup here.
   def widget
     me = Current.user
