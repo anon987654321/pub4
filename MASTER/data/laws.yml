@@ -1095,7 +1095,6 @@ tokens:
         facial_projection: 0.82
         jaw_projection: 0.80
         pupil_scale: 0.88
-        interface_presence: 0.08
         asymmetry: 0.010
         asymmetry_seed: 73421
       shell:
