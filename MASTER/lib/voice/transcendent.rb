@@ -39,6 +39,7 @@ module Master
         cfg = DEFAULTS.merge(stringify_keys(section))
         default_chain = Engines.openbsd? ? %w[chatterbox mlx edge_melodic edge say].join(",") : cfg["engine_chain"]
         cfg["engine_chain"] = ENV.fetch("MASTER_TTS_ENGINE_CHAIN", default_chain)
+        cfg["reference_clip"] = ENV["MASTER_TTS_REFERENCE_CLIP"].to_s.strip unless ENV["MASTER_TTS_REFERENCE_CLIP"].to_s.strip.empty?
         cfg
       rescue StandardError
         DEFAULTS.dup
