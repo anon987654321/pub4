@@ -8,7 +8,7 @@ require_relative "../io/atomic_write"
 module Master
   module CLI
     class Skills
-      include Master::Io::AtomicWrite
+      include ::Master::Io::AtomicWrite
       attr_reader :loaded
 
       def initialize(root:, event_bus: nil)
