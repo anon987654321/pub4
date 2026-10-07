@@ -206,16 +206,42 @@ module Operator
         path.start_with?("MASTER/law/", "MASTER/lib/review/scan/rules/")
     end
 
-    def source_block(path)
+    SOURCE_FRAGMENT_BYTES = 600_000
+
+    def source_fragments(path)
       body = File.read(File.join(REPO, path), encoding: "UTF-8")
-      longest = body.scan(/^\x60{3,}/).map(&:length).max.to_i
-      fence = 96.chr * [3, longest + 1].max
-      out = +"## #{96.chr}#{path}#{96.chr}\n\n"
-      out << "#{fence}#{FENCE.fetch(File.extname(path), "")}\n"
-      out << body
-      out << "\n" unless body.end_with?("\n")
-      out << "#{fence}\n\n"
-      out
+      return [body] if body.bytesize <= SOURCE_FRAGMENT_BYTES
+
+      fragments = []
+      current = +""
+      body.each_line do |line|
+        raise "snapshot: #{path} contains a line larger than #{SOURCE_FRAGMENT_BYTES} bytes" if line.bytesize > SOURCE_FRAGMENT_BYTES
+        if !current.empty? && current.bytesize + line.bytesize > SOURCE_FRAGMENT_BYTES
+          fragments << current
+          current = +""
+        end
+        current << line
+      end
+      fragments << current unless current.empty?
+      fragments
+    end
+
+    def source_units(texts)
+      texts.flat_map do |path|
+        fragments = source_fragments(path)
+        fragments.each_with_index.map do |body, index|
+          total = fragments.size
+          longest = body.scan(/^\x60{3,}/).map(&:length).max.to_i
+          fence = 96.chr * [3, longest + 1].max
+          label = total == 1 ? path : "#{path} [fragment #{index + 1}/#{total}]"
+          out = +"## #{96.chr}#{label}#{96.chr}\n\n"
+          out << "#{fence}#{FENCE.fetch(File.extname(path), "")}\n"
+          out << body
+          out << "\n" unless body.end_with?("\n")
+          out << "#{fence}\n\n"
+          [path, out]
+        end
+      end
     end
 
     def output_paths(tree, part_count)
@@ -226,14 +252,16 @@ module Operator
         (2..part_count).map { |part| File.join(REPO, "snapshot_#{tree}.part#{format('%03d', part)}.md") }
     end
 
-    def render_snapshot(tree, paths, binaries, texts, sha, part_index:, part_count:, source_blocks:, output_paths:)
+    def render_snapshot(tree, paths, binaries, units, sha, part_index:, part_count:, source_units:, output_paths:)
       fence3 = 96.chr * 3
-      total_text = paths.size - binaries.size
+      text_total = paths.size - binaries.size
+      files_in_part = units.map(&:first).uniq.size
       out = String.new
       out << "# #{tree} — source snapshot\n\n"
       out << "Generated #{Time.now.utc.strftime('%Y-%m-%d %H:%M UTC')} — git #{sha}\n"
-      out << "Pack: tree=#{tree} part=#{part_index}/#{part_count} text_total=#{total_text} "
-      out << "binary=#{binaries.size} omitted=0 files_in_part=#{texts.size} max_bytes=#{MAX_BYTES}\n\n"
+      out << "Pack: tree=#{tree} part=#{part_index}/#{part_count} text_total=#{text_total} "
+      out << "fragments_total=#{source_units.size} binary=#{binaries.size} omitted=0 "
+      out << "files_in_part=#{files_in_part} fragments_in_part=#{units.size} max_bytes=#{MAX_BYTES}\n\n"
       out << protocol(tree)
       out << "## Pack\n\n"
       out << "All #{part_count} parts are required for a complete tree. "
@@ -251,24 +279,24 @@ module Operator
         binaries.each { |p| out << "- #{96.chr}#{p}#{96.chr}\n" }
       end
       out << "\n## Omitted text files\n\nNone. Every tracked text file is present across the complete part set.\n\n"
-      texts.each { |path| out << source_blocks.fetch(path) }
+      units.each { |_, block| out << block }
       out << "## Snapshot part complete\n\n"
       out << "snapshot0: complete tree=#{tree} part=#{part_index}/#{part_count} files=#{paths.size} "
-      out << "text_total=#{total_text} files_in_part=#{texts.size} binary=#{binaries.size} omitted=0 "
-      out << "bytes=#{out.bytesize}\n"
+      out << "text_total=#{text_total} files_in_part=#{files_in_part} fragments_in_part=#{units.size} "
+      out << "binary=#{binaries.size} omitted=0 bytes=#{out.bytesize}\n"
       out
     end
 
-    def partition_texts(tree, paths, binaries, texts, source_blocks, sha)
-      return [[]] if texts.empty?
+    def partition_units(tree, paths, binaries, units, sha)
+      return [[]] if units.empty?
 
-      part_count_hint = texts.size
+      part_count_hint = units.size
       hint_paths = output_paths(tree, part_count_hint)
       overhead = render_snapshot(
         tree, paths, binaries, [], sha,
         part_index: 1,
         part_count: part_count_hint,
-        source_blocks:,
+        source_units: units,
         output_paths: hint_paths,
       ).bytesize
       budget = MAX_BYTES - overhead
@@ -277,15 +305,15 @@ module Operator
       groups = []
       current = []
       used = 0
-      texts.each do |path|
-        size = source_blocks.fetch(path).bytesize
-        raise "snapshot: #{tree} file #{path} exceeds per-part ceiling #{MAX_BYTES} bytes" if size > budget
+      units.each do |path, block|
+        size = block.bytesize
+        raise "snapshot: #{tree} file #{path} fragment exceeds per-part ceiling #{MAX_BYTES} bytes" if size > budget
         if current.any? && used + size > budget
           groups << current
           current = []
           used = 0
         end
-        current << path
+        current << [path, block]
         used += size
       end
       groups << current unless current.empty?
@@ -325,16 +353,16 @@ module Operator
 
       binaries, texts = paths.partition { |p| binary?(File.join(REPO, p)) }
       sha = head_sha
-      source_blocks = texts.to_h { |path| [path, source_block(path)] }
-      groups = partition_texts(tree, paths, binaries, texts, source_blocks, sha)
+      units = source_units(texts)
+      groups = partition_units(tree, paths, binaries, units, sha)
       outputs = output_paths(tree, groups.size)
-      rendered = groups.each_with_index.map do |part_texts, index|
+      rendered = groups.each_with_index.map do |part_units, index|
         output = outputs.fetch(index)
         body = render_snapshot(
-          tree, paths, binaries, part_texts, sha,
+          tree, paths, binaries, part_units, sha,
           part_index: index + 1,
           part_count: groups.size,
-          source_blocks:,
+          source_units: units,
           output_paths: outputs,
         )
         raise "snapshot: #{tree} part #{index + 1}/#{groups.size} exceeds #{MAX_BYTES} bytes" if body.bytesize > MAX_BYTES
@@ -347,7 +375,7 @@ module Operator
       rendered.each_with_index do |(path, body), index|
         Master::Trace::Dmesg.status(
           "snapshot0",
-          "#{tree}, part=#{index + 1}/#{rendered.size}, files=#{groups.fetch(index).size}, root/#{path.delete_prefix(REPO + "/")}, #{body.bytesize} bytes, max #{MAX_BYTES}",
+          "#{tree}, part=#{index + 1}/#{rendered.size}, files=#{groups.fetch(index).map(&:first).uniq.size}, fragments=#{groups.fetch(index).size}, root/#{path.delete_prefix(REPO + "/")}, #{body.bytesize} bytes, max #{MAX_BYTES}",
           io:
         )
       end
