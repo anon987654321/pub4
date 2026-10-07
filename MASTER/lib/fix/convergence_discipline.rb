@@ -91,6 +91,14 @@ module Master
         ((initial - current).to_f / initial).round(6)
       end
 
+      def improving?
+        return false if @history.size < 2
+
+        before = @history[-2]
+        current = @history[-1]
+        current[:score].to_i < before[:score].to_i || current[:progressed] == true
+      end
+
       def diminishing_returns?
         cycles = limits["diminishing_cycles"].to_i
         return false if @history.size < cycles + 1
