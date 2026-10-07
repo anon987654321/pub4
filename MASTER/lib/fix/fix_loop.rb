@@ -104,8 +104,10 @@ module Master
 
       def run_unlocked(target, max_passes:, budget_seconds:, incremental:, requested:)
         mission = nil
+        current_phase = :preflight
         return halted_result if halted? && !requested
 
+        current_phase = :corpus
         files = incremental ? @file_collector.collect_changed(target) : @file_collector.collect(target)
         @pass_runner.full_semantic! if requested && @pass_runner.respond_to?(:full_semantic!)
         coverage = {
@@ -127,7 +129,9 @@ module Master
             category: :validation
           )
         end
+        current_phase = :begin_run
         @convergence_discipline.begin_run(files)
+        current_phase = :journal
         journal = @run_journal.start_or_resume(target:, files:, max_passes:, budget_seconds:)
         run_id = journal["id"]
         mission = mission_for(target:, requested:)
@@ -137,12 +141,26 @@ module Master
           return budget_error
         end
 
+        current_phase = :pass
         run_journaled(journal, files:, target:, max_passes:, budget_seconds:, mission:, requested:)
       rescue StandardError => e
-        @bus&.publish("fix_loop:crash", error: e.message, backtrace: e.backtrace&.first(8))
-        @run_journal&.crash(run_id, e.message) if defined?(run_id) && run_id
+        payload = {
+          error_class: e.class.name,
+          error_message: e.message,
+          phase: current_phase.to_s,
+          backtrace: e.backtrace&.first(8),
+        }
+        @bus&.publish("fix_loop:crash", **payload)
+        Master::Trace::Dmesg.status(
+          "fix0",
+          "crash #{e.class} @ #{current_phase}: #{e.message.to_s[0, 180]}",
+        )
+        @run_journal&.crash(run_id, "#{e.class}: #{e.message}") if defined?(run_id) && run_id
         mission&.defer!(reason: "crash: #{e.class}: #{e.message}", seconds: 60)
-        Result.err("fix_loop: #{e.message} @ #{e.backtrace&.first(3)&.join(" | ")}", category: :unknown)
+        Result.err(
+          "fix_loop: crash #{e.class} @ #{current_phase}: #{e.message} @ #{e.backtrace&.first(3)&.join(" | ")}",
+          category: :crash,
+        )
       end
 
       def finish_run(result, target, run_id, mission: nil, requested: false)
