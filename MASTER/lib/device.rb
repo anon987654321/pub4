@@ -3,7 +3,7 @@
 require "json"
 require "open3"
 require "rbconfig"
-require "timeout"
+require_relative "io/exec"
 
 module Master
   module Device
@@ -152,18 +152,14 @@ module Master
         raise Error, "device: unavailable outside Android/Termux" unless android?
         raise Error, "device: #{argv.first} unavailable" unless executable?(argv.first)
 
-        stdout = stderr = status = nil
-        Timeout.timeout(COMMAND_TIMEOUT) do
-          stdout, stderr, status = Open3.capture3(*argv)
-        end
+        stdout, stderr, status = Io::Exec.capture3(*argv, timeout: COMMAND_TIMEOUT)
         return stdout.strip if status.success?
 
         detail = [stderr, stdout].map(&:to_s).map(&:strip).reject(&:empty?).first
-        raise Error, "device: #{argv.first}: #{detail || "exit #{status.exitstatus}"}"
+        exit_detail = status.signaled? ? "signal #{status.termsig}" : "exit #{status.exitstatus}"
+        raise Error, "device: #{argv.first}: #{detail || exit_detail}"
       rescue Errno::ENOENT
         raise Error, "device: #{argv.first} unavailable"
-      rescue Timeout::Error
-        raise Error, "device: #{argv.first}: timeout after #{COMMAND_TIMEOUT}s"
       end
     end
   end
