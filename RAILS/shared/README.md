@@ -481,24 +481,20 @@ RAILS/test/design_contract_test.rb`, `ruby
 RAILS/test/shared_social_routes_test.rb`, `ruby MASTER/gates/runner.rb
 frontend_production`.
 
-## x.com parity recovery (2026-07-20)
+## x.com interaction parity
 
-Recovered from deleted execute-plan stack (tags: `recover/x-parity-stack`,
-`recover/x-modal-sheet`) without full merge.
+The interaction set is held by the contract tests and the live shared components.
+Contract coverage lives in RAILS/test/design_contract_test.rb and
+shared/test/lib/design_tokens_test.rb. Web vitals are emitted by
+shared/frontend/hotwire.js to POST /web_vitals; the bottom sheet is
+shared/frontend/bottom_sheet_controller.js; modal and sheet styling is
+shared/app/assets/stylesheets/_modal.scss. The action bar, icon sprite and
+Shared::UiHelper own their respective UI primitives, while
+shared/_theme_bootstrap and theme_toggle own theme state.
 
-| Piece | Location |
-|-------|----------|
-| Contract tests | `RAILS/test/design_contract_test.rb`, `shared/test/lib/design_tokens_test.rb` |
-| Web vitals (1% sample) | `shared/frontend/hotwire.js` → `POST /web_vitals` (`WebVitalsController`, `fleet.rb`) |
-| Bottom sheet | `shared/frontend/bottom_sheet_controller.js` (`pub4/bottom_sheet`) |
-| Modal / sheet CSS | `shared/app/assets/stylesheets/_modal.scss` (via `@forward "modal"` in `_stack.scss`) |
-| Action bar + icons | `shared/_action_bar`, `shared/_icon`, `shared/icons/*` |
-| UI helper | `Shared::UiHelper` (engine initializer `shared.ui_helper`) |
-| Theme FOUC | `shared/_theme_bootstrap` + `theme_toggle` sets `document.documentElement.dataset.theme` |
-
+The shared shell remains a selective primitive: product layouts diverge where
+their surfaces need different chrome.
 **Not recovered wholesale:** full `_shell` layout rewrite for all apps (main
-layouts already diverge). Pull shell partials only when a product explicitly
-adopts them.
 
 **Gates (from repo root):**
 
@@ -843,46 +839,27 @@ associations for a path segment. All ten `RAILS/*.sh` scripts are reached.
 `MASTER/tools/cohesion.rb <dir>` reads one directory deep; use `--census
 --tree=RAILS --list` for the tree.
 
-## Vertical ownership (2026-08-10)
+## Vertical ownership
 
-brgen hosts five mountable engines and two plain namespaces. Which is which
-matters more than it looks: **tooling that globs `<app>/app/**` sees the
-namespaces and misses the engines**, and this repo has paid for that four times
-— 57 engine views dropped out of four scanners at once when the verticals moved,
-and the falling finding count read as an improvement rather than as blindness.
-The engines live at `brgen/engines/<name>`, not `brgen/app/engines/<name>`.
+brgen's verticals live at brgen/engines/<name>, while messenger remains a
+host namespace under brgen/app/controllers. Tooling must scan both shapes:
+a glob of <app>/app/** sees the host namespaces but misses engines.
 
-| Vertical | Kind | Path | Models | Controllers | Views |
-|---|---|---|---|---|---|
-| marketplace | engine | `brgen/engines/marketplace` | 8 | 12 | 28 |
-| playlist | engine | `brgen/engines/playlist` | 13 | 12 | 27 |
-| tv | engine | `brgen/engines/tv` | 11 | 10 | 23 |
-| takeaway | engine | `brgen/engines/takeaway` | 7 | 7 | 13 |
-| dating | engine | `brgen/engines/dating` | 4 | 6 | 10 |
-| maps | engine | `brgen/engines/maps` | — | 3 | 5 |
-| messenger | namespace | `brgen/app/controllers/{conversations,messages}_controller.rb` | — | 2 | — |
-
-Subdomain constraints in `brgen/config/routes.rb` map hosts onto these through
-`Brgen::DomainRegistry`. The MASTER relay is not a vertical.
+The current mounts are marketplace, playlist, tv, takeaway, dating and maps.
+Messenger is the host namespace covering conversations and messages. Counts
+belong in executable inventory and gates rather than this prose, because the
+numbers change as code moves.
 
 ### Shared concerns each engine actually includes
 
-Measured by scanning for `Shared.concern(:X)` and `include Shared::X` in each
-engine's models — not by looking for the constant name, which over-reports on
-comments and on `Tv` in particular.
-
-| Engine | Concerns |
-|---|---|
-| marketplace | GeoLocatable, MediaProcessable, Notifiable, Reactable, Sluggable, StrictSafeAssociations |
-| takeaway | GeoLocatable, MediaProcessable, Notifiable, Reactable, Sluggable, StrictSafeAssociations, Votable |
-| dating | GeoLocatable, MediaProcessable, Notifiable, Reactable, StrictSafeAssociations |
-| playlist | GeoLocatable, MediaProcessable, Notifiable, Reactable, Sluggable |
-| tv | MediaProcessable, Notifiable, Reactable, Sluggable |
-
-Four concerns are load-bearing everywhere: `MediaProcessable`, `Notifiable`,
-`Reactable`, `Sluggable` (four of five). A change to any of those lands in every
-vertical of brgen plus amber and bsdports at once. `Votable` is takeaway-only
-inside the engines, which is worth knowing before assuming it is safe to change.
+The contract is measured by scanning for Shared.concern(:X) and include Shared::X
+in each engine's models, not by matching the constant name in comments.
+marketplace includes GeoLocatable, MediaProcessable, Notifiable, Reactable,
+Sluggable and StrictSafeAssociations. takeaway adds Votable to that set.
+dating uses GeoLocatable, MediaProcessable, Notifiable, Reactable and
+StrictSafeAssociations. playlist uses GeoLocatable, MediaProcessable, Notifiable,
+Reactable and Sluggable. tv uses MediaProcessable, Notifiable, Reactable and
+Sluggable.
 
 ### Rules
 
