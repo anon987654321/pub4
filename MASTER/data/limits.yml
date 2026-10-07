@@ -1046,6 +1046,19 @@ loc_body_budgets:
   # and a raise needs the commit that folded something in.
   data/laws.yml: 3728
 
+# Historical convergence semantics recovered from pub -> pub2 -> pub3 -> pub4.
+# Reader: Master::Fix::ConvergenceDiscipline. Keep behavior here, not prose-only.
+convergence_discipline:
+  clean_runs_required: 2
+  diminishing_delta: 0.001
+  diminishing_cycles: 3
+  oscillation_window: 3
+  working_memory_items: 7
+  context_switches_per_round: 3
+  decision_choices: 7
+  alternatives_min: 5
+  alternatives_max: 20
+
 # Loop/process budgets — moved from data/ops/process.yml; reader is Ops::ProcessBudget.
 process:
   defaults:
