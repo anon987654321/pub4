@@ -71,7 +71,16 @@ node_bin = ENV["PATH"].to_s.split(File::PATH_SEPARATOR).push("/usr/local/bin")
 #
 # The three MASTER_CI_* widenings are the workflow's, kept here because the
 # workflow sets them and this is where the steps they add are declared.
-ci_steps = [rake["test"], rake["test:core"], rake["test:subsystems"],
+law_syntax = ["law syntax", RUBY, "-e", <<~'RUBY', ROOT]
+  Dir.glob(File.join(ARGV.fetch(0), "law", "*.rb")).sort.each do |path|
+    RubyVM::InstructionSequence.compile_file(path)
+  rescue SyntaxError => e
+    warn "#{path.delete_prefix(ARGV.fetch(0) + File::SEPARATOR)}: #{e.message.lines.first.to_s.strip}"
+    exit 1
+  end
+RUBY
+
+ci_steps = [law_syntax, rake["test"], rake["test:core"], rake["test:subsystems"],
             rake["selftest"], rake["lint:data_singularity"], rake["core_smoke"],
             rake["tools"]]
 ci_steps += [run_bin["smoke"], rake["selfcheck"], rake["constitution"]] if ENV["MASTER_CI_FULL"] == "1"
@@ -99,9 +108,9 @@ end
 full_ci = ci_steps.reject { |step| ["selftest", "core_smoke", "constitution"].include?(step.first) }
 
 PROFILES = {
-  "operator"    => [rake["test"], rake["test:subsystems"], rake["security_sweep"],
+  "operator"    => [law_syntax, rake["test"], rake["test:subsystems"], rake["security_sweep"],
                     rake["test:core"], rake["lint:data_singularity"], rake["lint:dedup"], rake["tools"]],
-  "contributor" => [rake["test"], rake["test:subsystems"], rake["security_sweep"],
+  "contributor" => [law_syntax, rake["test"], rake["test:subsystems"], rake["security_sweep"],
                     rake["lint:data_singularity"], rake["lint:dedup"], rake["tools"]],
   # lint:word_boundary is here and nowhere else: its subject is a `\b` written
   # next to punctuation in a rule regex, which is a word boundary that can never
@@ -110,7 +119,7 @@ PROFILES = {
   # day it was written, so half of what OPEN_CLOSED promised never ran. The lint
   # existed for weeks in no profile at all, which is the defect it detects,
   # wearing the other coat. 0.2s.
-  "agent"       => [rake["selftest"], rake["lint:data_singularity"], rake["lint:dedup"],
+  "agent"       => [law_syntax, rake["selftest"], rake["lint:data_singularity"], rake["lint:dedup"],
                     rake["lint:word_boundary"], rake["tools"]],
   # Face tests keep three homes because they need three runtimes: web/test/*_test.rb boots
   # Rails, test/test_web_*.rb runs in MASTER's bundle, and web/test/*.test.mjs runs under node.
@@ -122,7 +131,7 @@ PROFILES = {
   # 2026-08-10, and another asserted face.runtime.js matches its sources while
   # being unable to report that it did not. Skipped rather than failed where node
   # is absent — a missing interpreter is not a red gate.
-  "web"         => [["web ui static", RUBY, "-Ilib:test", "test/test_web_ui.rb"],
+  "web"         => [law_syntax, ["web ui static", RUBY, "-Ilib:test", "test/test_web_ui.rb"],
                     *(node_bin ? [["web ui behaviour", node_bin, "--test", *Dir[File.join(ROOT, "web/test/*.test.mjs")].sort]] : []),
                     *(web_live ? [rake["test:web"], rake["test:integration_web"]] : [])],
   "ci"          => ci_steps,
