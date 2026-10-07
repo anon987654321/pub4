@@ -68,6 +68,23 @@ class TestMemory < Minitest::Test
     refute stored.key?("vec"), "reasoning frames should not require embedding infrastructure"
   end
 
+  def test_preference_memory_round_trips_without_embedding
+    frame = Master::Cognition::Intelligence.preference_frame(
+      domain: "music",
+      preference: "leave more negative space between motifs",
+      avoid: "dense continuous lead lines",
+      evidence: "operator accepted sparse takes",
+      source: "operator:feedback",
+    )
+
+    key = @mem.remember_preference(frame, key: "preference/music")
+    assert_equal "preference/music", key
+    row = @mem.preferences(limit: 1).first
+    assert_equal "music", row.fetch("domain")
+    assert_match(/negative space/, row.fetch("preference"))
+    refute @mem.by_type("feedback").fetch(key).key?("vec")
+  end
+
   def test_persistence_survives_reload
     @mem.remember("persist_key", "i survived", type: "reference")
     mem2 = Master::Ground::Memory.new(root: @root)
