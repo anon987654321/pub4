@@ -164,6 +164,10 @@ module Master
           publish_confidence(feedback)
           announce_substitution
           Result.ok(feedback)
+        # Programming defects are not a deliberation verdict. Let them escape
+        # so the owning pipeline can fail closed instead of rendering them as prose.
+        rescue NameError, TypeError
+          raise
         rescue StandardError => e
           Result.err("council: #{e.message}", category: :unknown)
         end
