@@ -320,6 +320,15 @@ it, and the open work lives in [one backlog](../TODO.md). Licensed MIT.
 
 ### Cognitive judgment
 
+MASTER's reasoning habits are executable, not a second constitution. Master::Cognition::Intelligence
+keeps observation, hypothesis, falsifier, measurement, causal trace, uncertainty, leverage,
+conceptual equivalence, scale and creative-preservation vocabulary in one place. /fix
+persists its bounded decision frames through the existing .master/memory.yml store, and
+the model receives a compact recent reasoning history on the next turn. This is deliberately
+small: better judgment should reduce machinery, not create another orchestration layer.
+
+### Cognitive judgment
+
 MASTER's reasoning habits are executable, not a second constitution. Master::Cognition::Intelligence keeps observation, hypothesis, falsifier, measurement, causal trace, uncertainty, leverage, counterfactuals, conceptual equivalence, model-difference synthesis, taste and fertility in one place. /fix persists bounded decision frames through the existing .master/memory.yml store, while explicit operator feedback becomes durable taste memory. The model receives compact reasoning and taste context without another memory database or orchestration layer.
 
 ### Operator execution modes
