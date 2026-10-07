@@ -391,13 +391,16 @@ module Operator
     # records a fall so the ground cannot be given back. Moving a file to drop one
     # of those is a namespace judgement and not a tool's to make.
     def sprawl(scan_only:)
+      planner = [RUBY, File.join(MASTER, "tools", "sprawl_plan.rb")]
+      planner << "--write" unless scan_only
+      plan_ok, plan_body = capture(*planner)
       census = [RUBY, File.join(MASTER, "lib", "operator", "sprawl_census.rb")]
       census << "--ratchet" unless scan_only
       ok, body = capture(*census)
       dup_ok, dup_body = capture(RUBY, File.join(MASTER, "tools", "dup_census.rb"))
-      both = ok && dup_ok
+      both = plan_ok && ok && dup_ok
       verdict = "sprawl: #{both ? "at or under every recorded low" : "over a recorded low"}"
-      [both, body + dup_body + [verdict], both ? 0 : 1]
+      [both, plan_body + body + dup_body + [verdict], both ? 0 : 1]
     end
 
     # [ok, body, exitstatus] — the status, because 3 is a third state a boolean
