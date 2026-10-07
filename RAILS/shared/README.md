@@ -268,7 +268,7 @@ at 0-1-0, so it has to keep the later word.
 Every app writes its own rules below the `@use` lines.
 
 Gates and tests that once named a partial now name the rule: `Operator::ScssRules`
-(`MASTER/tools/scss_rules.rb`) reads a stylesheet into selectors and the
+(`MASTER/tools/scss_laws.rb`) reads a stylesheet into selectors and the
 declarations each holds, so "the nav's tabs declare a tap floor" is asserted on
 `.feed-tab` wherever that rule sits. Product pens — the yep.com search, jOxVvNE,
 Amazon's nav bar and logo — are named once, in
