@@ -238,7 +238,7 @@ module Operator
       out = String.new
       out << "# #{tree} — source snapshot\n\n"
       out << "Generated #{Time.now.utc.strftime('%Y-%m-%d %H:%M UTC')} — git #{sha}\n"
-      out << "Pack: tree=#{tree} part=#{part_index}/#{part_count} text_total=#{text_total} "
+      out << "Pack: tree=#{tree} git=#{sha} part=#{part_index}/#{part_count} text_total=#{text_total} "
       out << "fragments_total=#{source_units.size} binary=#{binaries.size} omitted=0 "
       out << "files_in_part=#{files_in_part} fragments_in_part=#{units.size} max_bytes=#{MAX_BYTES}\n\n"
       out << protocol(tree) if part_index == 1
