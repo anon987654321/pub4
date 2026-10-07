@@ -39,11 +39,9 @@ class UsersController < ApplicationController
   def update
     require_user_session
     @user = Current.user
-    if @user.update(profile_params)
-      redirect_to main_app.user_path(@user), notice: t("profile.updated", default: "Profile updated.")
-    else
-      render :edit, status: :unprocessable_entity
-    end
+    return render :edit, status: :unprocessable_entity unless @user.update(profile_params)
+
+    redirect_to main_app.user_path(@user), notice: t("profile.updated", default: "Profile updated.")
   end
 
   def new
