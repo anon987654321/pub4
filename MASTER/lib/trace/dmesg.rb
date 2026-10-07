@@ -223,10 +223,8 @@ module Master
         end
 
         text = line.to_s.gsub(/\s+/, " ").strip
-        tty = io.respond_to?(:tty?) && io.tty?
         emit_mutex.synchronize do
-          io.print "\r\e[K" if tty
-          io.puts(tty ? style(text, io:) : text)
+          io.puts(text)
           io.flush if io.respond_to?(:flush)
         end
         speak_log_line(text) if log_voice_active?
