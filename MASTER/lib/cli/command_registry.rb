@@ -52,6 +52,7 @@ module Master
           "size" => command(:dispatch_size, d[:root]),
           "explain" => command(:dispatch_explain, d[:root]),
           "prove" => command(:dispatch_prove, d[:root]),
+          "events" => command(:dispatch_events, d[:root]),
           "face" => Command.new { |_ctx| dispatch_face },
           "help" => command(:help_text, nil),
         ).merge(control_commands(ai[:standing], ai[:soul]))
