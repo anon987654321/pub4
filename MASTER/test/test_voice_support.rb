@@ -117,6 +117,28 @@ class TestVoiceSupport < Minitest::Test
     FileUtils.rm_rf(dir)
   end
 
+  def test_player_attempt_failure_does_not_start_a_second_native_voice
+    dir = Dir.mktmpdir("voice-double-fallback")
+    player = File.join(dir, "ffplay")
+    audio = File.join(dir, "reply.mp3")
+    File.write(player, "#!/bin/sh\nexit 7\n")
+    File.chmod(0o755, player)
+    File.write(audio, "audio")
+    spoken = []
+
+    PB.stub(:player, [player, []]) do
+      PB.stub(:native_say, ->(text) { spoken << text; true }) do
+        PB.stub(:generation_active?, true) do
+          refute PB.send(:play_or_fallback, audio, "same reply", generation: 0)
+        end
+      end
+    end
+
+    assert_empty spoken
+  ensure
+    FileUtils.rm_rf(dir)
+  end
+
   def test_failed_audio_playback_does_not_fall_through_to_native_voice
     spoken = []
     PB.stub(:player, ["/tmp/missing-player", []]) do
