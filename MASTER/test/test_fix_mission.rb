@@ -175,4 +175,22 @@ class FixMissionTest < Minitest::Test
       assert File.file?(File.join(root, ".master", "checkpoints", checkpoint["id"], "file.txt"))
     end
   end
+  def test_v2_without_operator_is_normalized
+    Dir.mktmpdir do |root|
+      FileUtils.mkdir_p(File.join(root, ".master"))
+      record = {
+        "version" => 2, "id" => "old-v2", "state" => "waiting",
+        "stage" => "verify", "goal" => "old", "scope" => root,
+        "model" => "agy:auto", "effort" => "medium", "plan" => "inspect",
+        "origin" => "fold", "auto_continue" => true
+      }
+      path = File.join(root, ".master", "mission.json")
+      File.write(path, JSON.pretty_generate(record) + "\n")
+
+      migrated = Master::Fix::Mission.current(root:)
+      assert_equal "repair", migrated.dig("operator", "mode")
+      assert File.read(path).include?("\"operator\"")
+    end
+  end
+
 end
