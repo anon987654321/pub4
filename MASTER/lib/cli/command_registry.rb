@@ -14,6 +14,7 @@ require_relative "model_benchmark"
 require_relative "command_registry/rules"
 require_relative "command_registry/host"
 require_relative "command_registry/workspace"
+require_relative "command_registry/convergence"
 require_relative "../plugin"
 
 module Master
@@ -47,6 +48,10 @@ module Master
           "rules" => command(:dispatch_rules, root),
           "snapshot" => command(:dispatch_snapshot, d[:root]),
           "why" => command(:dispatch_why, d[:agent], d[:root]),
+          "wishlist" => command(:dispatch_wishlist, d[:root]),
+          "size" => command(:dispatch_size, d[:root]),
+          "explain" => command(:dispatch_explain, d[:root]),
+          "prove" => command(:dispatch_prove, d[:root]),
           "face" => Command.new { |_ctx| dispatch_face },
           "help" => command(:help_text, nil),
         ).merge(control_commands(ai[:standing], ai[:soul]))

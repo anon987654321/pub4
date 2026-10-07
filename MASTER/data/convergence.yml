@@ -1,0 +1,166 @@
+---
+schema: 1
+name: pub4_convergence
+purpose: Non-authoritative implementation map for the assistant wishlist. Laws remain in soul.yml and laws.yml.
+states: [landed, partial, evidence, operator, missing, rejected]
+principles:
+  - preserve_then_improve
+  - one_source
+  - evidence_over_narrative
+  - no_false_green
+workstreams:
+  - id: kernel_receipts
+    state: landed
+    title: One durable receipt for every meaningful convergence run
+    implementation: MASTER/lib/convergence/receipt.rb
+    proof: MASTER/test/test_convergence_receipt.rb
+  - id: tri_state_evidence
+    state: landed
+    title: PASS / FAIL / INCONCLUSIVE as the evidence vocabulary
+    implementation: MASTER/lib/result.rb
+    proof: MASTER/test/test_result.rb
+  - id: physical_mass
+    state: landed
+    title: Repository byte/file inventory with largest-artifact evidence
+    implementation: MASTER/lib/convergence/measure.rb
+    proof: MASTER/test/test_convergence_measure.rb
+  - id: architecture_explain
+    state: landed
+    title: Living architecture explanation from the real four-tree topology
+    implementation: MASTER/lib/convergence/architecture.rb
+    proof: MASTER/test/test_convergence_architecture.rb
+  - id: wishlist_registry
+    state: landed
+    title: One non-authoritative wishlist registry with honest states and proof owners
+    implementation: MASTER/lib/convergence/wishlist.rb
+    proof: MASTER/test/test_convergence_wishlist.rb
+  - id: command_discovery
+    state: landed
+    title: Discoverable /wishlist, /size, /explain and /prove surfaces
+    implementation: MASTER/lib/cli/command_registry/convergence.rb
+    proof: MASTER/test/test_convergence_commands.rb
+  - id: beautiful_day
+    state: landed
+    title: Deterministic local proof bundle spanning constitution, commands, topology and snapshots
+    implementation: MASTER/lib/convergence/proof.rb
+    proof: MASTER/test/test_convergence_proof.rb
+  - id: longitudinal
+    state: landed
+    title: Append-only convergence receipts suitable for longitudinal comparison
+    implementation: MASTER/lib/convergence/receipt.rb
+    proof: MASTER/test/test_convergence_receipt.rb
+  - id: voice_local_first
+    state: evidence
+    title: Local-first speech ladder and real microphone proof
+    implementation: MASTER/lib/device/audio.rb
+    proof: Operator hardware evidence
+  - id: face_semantic_motion
+    state: evidence
+    title: Large 3D face semantic motion and real-browser/device proof
+    implementation: MASTER/web/public
+    proof: Rendered browser and real-device evidence
+  - id: rails_product_completion
+    state: evidence
+    title: Production marketplace/auth/media flows
+    implementation: RAILS
+    proof: Staging credentials and watched application evidence
+  - id: openbsd_appliance
+    state: evidence
+    title: vm23 deploy, restore, DNS, TLS and resource proof
+    implementation: OPENBSD
+    proof: Watched vm23 session
+  - id: dilla_music
+    state: evidence
+    title: Musical quality, authenticity and listening decisions
+    implementation: STUDIO/dilla
+    proof: Operator listening evidence
+  - id: studio_provenance
+    state: partial
+    title: Media provenance through every generation stage
+    implementation: STUDIO
+    proof: Round-trip artifact inspection
+  - id: security_capability_graph
+    state: partial
+    title: Capability ownership and least-privilege graph
+    implementation: MASTER/lib/core/capabilities.rb
+    proof: MASTER/tools/capability_inventory.rb
+  - id: event_replay
+    state: partial
+    title: Canonical event vocabulary, provenance and replay
+    implementation: MASTER/lib/trace
+    proof: MASTER/tools/event_bus_reach.rb
+  - id: memory_governance
+    state: partial
+    title: Durable memory provenance, contradiction and forgetting
+    implementation: MASTER/lib/core/memory
+    proof: MASTER/test
+  - id: model_laboratory
+    state: partial
+    title: Provider/model outcome history and routing evidence
+    implementation: MASTER/lib/cli/routing
+    proof: MASTER/lib/ai/trajectory
+  - id: browser_proof
+    state: partial
+    title: Rendered geometry, accessibility and performance evidence
+    implementation: RAILS/gates
+    proof: RAILS/gates
+  - id: search_quality
+    state: partial
+    title: Search relevance, explanations and quality corpus
+    implementation: RAILS/brgen
+    proof: Application benchmark
+  - id: moderation_governance
+    state: partial
+    title: Moderation evidence, appeals and audit
+    implementation: RAILS/shared
+    proof: Application workflow proof
+  - id: recovery
+    state: evidence
+    title: Off-host backup and clean-host restore
+    implementation: OPENBSD
+    proof: Restore drill
+  - id: installation
+    state: partial
+    title: One-command host-aware installation and truthful doctor output
+    implementation: MASTER/bin
+    proof: MASTER/bin/doctor
+  - id: snapshot_exchange
+    state: landed
+    title: Bounded share-safe provenance-carrying snapshots
+    implementation: MASTER/tools/snapshot.rb
+    proof: MASTER/test
+  - id: why_provenance
+    state: landed
+    title: Explain the source rule and reason behind a system decision
+    implementation: MASTER/lib/cli/command_registry/rules.rb
+    proof: MASTER/test
+  - id: structural_craft
+    state: partial
+    title: Architecture improves through measured collapse relocation and proof
+    implementation: MASTER/lib/fix
+    proof: MASTER/test
+  - id: personal_companion
+    state: evidence
+    title: Resident voice-first phone companion
+    implementation: MASTER/lib/device
+    proof: Termux hardware evidence
+  - id: unified_command_language
+    state: partial
+    title: One semantic command surface across CLI web voice and device
+    implementation: MASTER/lib/cli
+    proof: MASTER/test
+  - id: media_effects
+    state: partial
+    title: Ruby-native analog audio and image processing
+    implementation: STUDIO
+    proof: STUDIO/test
+  - id: data_minimization
+    state: landed
+    title: Heavy artifacts and source ownership remain measurable rather than invisible
+    implementation: MASTER/lib/convergence/measure.rb
+    proof: MASTER/test/test_convergence_measure.rb
+  - id: no_false_green
+    state: landed
+    title: Claims distinguish source proof from external evidence
+    implementation: MASTER/lib/convergence/proof.rb
+    proof: MASTER/test/test_convergence_proof.rb
