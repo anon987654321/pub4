@@ -105,17 +105,17 @@ class TestRuleFixtures < Minitest::Test
   # without fixtures; a registry rule can, and that gap is where the twin
   # campaign found every silent drift. This ceiling only moves down — a new
   # rule must carry fires:/does_not_fire:, and adding examples to an old one
-  # lowers the recorded number by hand (data/laws.yml, rule_ratchets.fixture_debt).
+  # lowers the recorded number by hand (data/laws.yml, law_ratchets.fixture_debt).
   def test_the_unfixtured_registry_only_shrinks
     unfixtured = Rule.registry.reject do |klass|
       (klass.respond_to?(:dsl_fires) && (klass.dsl_fires || klass.dsl_does_not_fire)) ||
         !klass.respond_to?(:dsl_block)
     end
-    ceiling = Master.law("rule_ratchets").fetch("fixture_debt").fetch("without_fixtures")
+    ceiling = Master.law("law_ratchets").fetch("fixture_debt").fetch("without_fixtures")
     assert_operator unfixtured.size, :<=, ceiling,
       "a new registry rule without fires:/does_not_fire: — carry the worked examples, the way every law must"
     return unless unfixtured.size < ceiling
-    puts "rule_fixture_debt: #{unfixtured.size} < ceiling #{ceiling} — record the new low in data/laws.yml rule_ratchets.fixture_debt"
+    puts "rule_fixture_debt: #{unfixtured.size} < ceiling #{ceiling} — record the new low in data/laws.yml law_ratchets.fixture_debt"
   end
 
 end
