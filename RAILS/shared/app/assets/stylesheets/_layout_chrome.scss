@@ -105,6 +105,7 @@ body[data-layout="document"] {
   max-inline-size: var(--measure);
   color: var(--text-secondary);
   line-height: var(--leading-snug);
+  text-wrap: pretty;
 }
 
 @media (min-width: 640px) {
