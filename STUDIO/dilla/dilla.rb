@@ -21394,6 +21394,40 @@ end
 # moves and every offset is returned exactly as it was computed.
 SHIFT_TIMING_GROUPS = { kick: %i[kick_anchor kick_sync], hat: %i[hat_down hat_up] }.freeze
 
+/*
+ * The last inch of the pocket. MPC timing stays in whole 96-PPQ ticks; the
+ * analogue layer does not. This is deliberately called "nano-feel" rather than
+ * nanosecond timing: it is a bounded sub-millisecond drift applied after the
+ * discrete MPC-style placement, standing for oscillator/tape/hand interaction.
+ *
+ * It is deterministic, phrase-shaped and role-specific. It must never become
+ * another random-humanize knob: the point is a tiny changing relationship
+ * between layers, not noise sprinkled over every event.
+ */
+NANO_TIMING_MS = {
+  kick_anchor: 0.16, kick_sync: 0.22, kick: 0.20,
+  snare: 0.42, snare_plain: 0.34, clap: 0.38, ghost: 0.34,
+  hat_down: 0.16, hat_up: 0.22, hat: 0.18, open: 0.20,
+  bass: 0.14, pad: 0.18, ep: 0.18, keys: 0.18,
+  lead: 0.22, scale_lead: 0.22, xlead: 0.22,
+}.freeze
+
+def nano_timing_ms(role, bar_index, step_index, beat_p = nil)
+  return 0.0 if ENV.fetch("DILLA_NANO_FEEL", "1") == "0"
+  return 0.0 unless beat_p.to_f.positive?
+
+  tick_ms = beat_p.to_f * 1000.0 / 96.0
+  ceiling = [NANO_TIMING_MS.fetch(role.to_sym, 0.18), tick_ms * 0.12].min
+  return 0.0 if ceiling <= 0.0
+
+  seed = ENV.fetch("RENDER_SEED", ENV.fetch("DILLA_RENDER_SEED", "0")).to_i
+  phase = (bar_index.to_i * 0.71) + (step_index.to_i * 1.37) +
+          (stable_hash(role) % 97) * 0.031 + (seed % 997) * 0.0007
+  wave = Math.sin(phase * Math::PI)
+  grain = Math.sin((phase * 2.618) + 0.73)
+  (ceiling * ((wave * 0.68) + (grain * 0.22))).round(3)
+end
+
 def shift_timing_ms(role)
   ENV["SHIFT_TIMING"].to_s.split(",").sum(0.0) do |pair|
     name, ms = pair.split(":", 2).map(&:strip)
@@ -21403,10 +21437,10 @@ def shift_timing_ms(role)
 end
 
 def dilla_timing_ms(role, bar_index, step_index, timing = nil, beat_p = nil)
+  base = pocket_timing_ms(role, bar_index, step_index, timing, beat_p)
   shift = shift_timing_ms(role)
-  return (pocket_timing_ms(role, bar_index, step_index, timing, beat_p) + shift).round(3) unless shift.zero?
-
-  pocket_timing_ms(role, bar_index, step_index, timing, beat_p)
+  nano = nano_timing_ms(role, bar_index, step_index, beat_p)
+  (base + shift + nano).round(3)
 end
 
 def pocket_timing_ms(role, bar_index, step_index, timing, beat_p)
