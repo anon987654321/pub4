@@ -102,7 +102,8 @@ module Operator
         - Verify the rehydrated file count against Tree, reconcile Binary files, confirm omitted=0, and spot-check sizes.
         - If the attachment system exposes only a preview, truncated text, or one part, stop and request the missing parts.
 
-        This pack is deliberately partitioned for transport; the complete tree is the union of all its parts.
+        This pack is deliberately partitioned for transport; no tree uses more than six snapshot files.
+        The complete included source set is the union of all its parts.
         Work through the rest of the protocol only after the reconstruction gate passes.
 
         ### 1. Orient
@@ -349,7 +350,7 @@ module Operator
       excluded = excluded(tree)
       paths = tracked(tree)
       if paths.empty?
-        Master::Trace::Dmesg.status("snapshot0", "#{tree}, no tracked files, skipped", io:)
+        Master::Trace::Dmesg.status("snapshot0", "#{tree}, no included tracked files, skipped", io:)
         return []
       end
 
