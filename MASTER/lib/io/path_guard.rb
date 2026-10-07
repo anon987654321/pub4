@@ -42,7 +42,15 @@ module Master
         unless PathGuard.inside_real_root?(full, @root)
           return Result.err("path escapes project root: #{path}", category: :validation)
         end
-        return Result.err("credential path refused: #{path}", category: :validation) if PathGuard.secret?(full)
+        if File.exist?(full)
+          canonical = File.realpath(full)
+          unless PathGuard.inside_root?(canonical, @root)
+            return Result.err("path escapes project root: #{path}", category: :validation)
+          end
+          return Result.err("credential path refused: #{path}", category: :validation) if PathGuard.secret?(canonical)
+        else
+          return Result.err("credential path refused: #{path}", category: :validation) if PathGuard.secret?(full)
+        end
 
         rel = full.delete_prefix(@root + "/")
         if write && sacred?(rel)
