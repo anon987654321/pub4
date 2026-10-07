@@ -102,6 +102,12 @@ class TestTranscendent < Minitest::Test
   # Phrase rhythm is explicit. A plain conversational turn stays as one
   # synthesis pass, while an operator can still opt into phrase rendering.
   def test_default_plain_speech_does_not_split_into_phrase_engine
+    cfg = Master::Voice::Transcendent.load_config
+    flat = { scores: { lyrical: 0.0 } }
+
+    refute Master::Voice::Transcendent.phrase_rendered?(cfg, flat)
+    refute_includes Master::Voice::Transcendent.build_engine_chain(cfg, flat), "edge_melodic"
+  end
     cfg = Master::Voice::Transcendent.load_config.merge("phrase_rhythm_enabled" => true)
     flat = { scores: { lyrical: 0.0 } }
 
