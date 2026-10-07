@@ -135,14 +135,12 @@ module Operator
       topics = []
 
       # Non-capturing and capturing groups: prefix:(?:a|b) / prefix:(a|b).
-      text.scan(/([a-z][a-z0-9_]*):\\((?:\\?:)?([a-z][a-z0-9_:-]*(?:\\|[a-z][a-z0-9_:-]*)+)\\)/) do |prefix, alternatives|
+      text.scan(/([a-z][a-z0-9_]*):\((?:\?:)?([a-z][a-z0-9_:-]*(?:\|[a-z][a-z0-9_:-]*)+)\)/) do |prefix, alternatives|
         alternatives.split("|").each { |suffix| topics << "#{prefix}:#{suffix}" }
       end
 
-      # Bare alternation: prefix:a|prefix:b. Only expand an alternation when
-      # every arm carries the same event-topic prefix; this avoids inventing
-      # cross-topic matches from ordinary regex alternation.
-      text.scan(/([a-z][a-z0-9_]*):([a-z][a-z0-9_:-]*)\\|\\1:([a-z][a-z0-9_:-]*)/) do |prefix, first, second|
+      # Bare alternation with a repeated topic prefix: prefix:a|prefix:b.
+      text.scan(/([a-z][a-z0-9_]*):([a-z][a-z0-9_:-]*)\|\1:([a-z][a-z0-9_:-]*)/) do |prefix, first, second|
         topics << "#{prefix}:#{first}"
         topics << "#{prefix}:#{second}"
       end
