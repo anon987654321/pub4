@@ -199,9 +199,9 @@
       particles: effectiveParticles,
       reduced_motion_particles: reducedMotionParticles,
       dpr,
-      fps: document.hidden ? Number(budget.hidden_fps) || 0 : fps,
-      pulse_limit: Number(budget.pulse_limit) || 24,
-      hud_labels: Number(budget.hud_labels) || 5
+      fps: document.hidden ? (Number(budget.hidden_fps) ?? 0) : fps,
+      pulse_limit: Number(budget.pulse_limit) ?? 24,
+      hud_labels: Number(budget.hud_labels) ?? 5
     });
   }
 
