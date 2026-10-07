@@ -5,6 +5,7 @@ require "json"
 require "securerandom"
 require "yaml"
 require_relative "performance"
+require_relative "quality"
 
 module Master
   module Voice
@@ -127,8 +128,8 @@ module Master
         played, used_engine = try_engine_chain(
           chain, clean, cfg, emotion, melody, resolved_voice, resolved_rate, resolved_pitch, out_path
         )
-        log_pick(used_engine, resolved_voice, resolved_rate, resolved_pitch, emotion)
         played || Engines.synth_say(clean, out_path, voice: resolved_voice, rate: resolved_rate)
+        log_quality(out_path)
       end
 
       def resolve_voice_and_prosody(clean, cfg, voice:, style:, rate:, pitch:, voice_locked:, style_locked:)
@@ -221,6 +222,19 @@ module Master
           rate: resolved_rate.to_s,
           pitch: resolved_pitch.to_s,
         )
+      end
+
+      def log_quality(path)
+        quality = Quality.inspect(path)
+        target = File.join(Master::ROOT, ".master", "tts_last.json")
+        return unless File.file?(target)
+
+        payload = JSON.parse(File.read(target), symbolize_names: true)
+        payload[:quality] = quality
+        File.write(target, JSON.generate(payload))
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "Transcendent.log_quality")
+        nil
       end
 
       def last_pick
