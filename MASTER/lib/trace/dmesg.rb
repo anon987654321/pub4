@@ -286,7 +286,11 @@ module Master
         Thread.current[:master_dmesg_tts] = false
       end
 
-      def style(text, io: $stdout)\n        text\n      end\n\n      ANSI = /\e\[[0-9;?]*[A-Za-z]/
+      def style(text, io: $stdout)
+        text
+      end
+
+      ANSI = /\e\[[0-9;?]*[A-Za-z]/
       VERDICT = /\b(?:fail(?:ed|ures?)?|errors?|offen[cs]es?|violations?|exceed(?:s|ed)?|missing|expected|refused)\b/i
       FINDING = Regexp.union(/:\d+\b/, VERDICT)
       FINDING_LIMIT = 8
@@ -317,7 +321,11 @@ module Master
 
       def counted(number, noun) = "#{number} #{noun}#{"s" unless number == 1}"
 
-      def pastel\n        nil\n      end\n\n      # A turn as the kernel would print it. Every model call, file, command
+      def pastel
+        nil
+      end
+
+      # A turn as the kernel would print it. Every model call, file, command
       # and request attaches as a numbered unit under its parent, the way sd1 is
       # the second disk, then reports once on what it did. A parent attaches
       # before its first child. An event with no unit renders nothing and stays
