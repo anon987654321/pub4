@@ -33,7 +33,7 @@ module Master
         def initialize(bus:, committer:, conflict_resolver:, llm_router:, root:,
                        rules:, agent:, scanner:, learnings:, preamble:,
                        clean_runs_required:, plateau_window:, ground_truth: nil, homeostat: nil, council: nil,
-                       visual_pass: nil, opportunity_pass: nil, preflight: nil)
+                       visual_pass: nil, opportunity_pass: nil, preflight: nil, discipline: nil)
           @bus = bus
           @committer = committer
           @conflict_resolver = conflict_resolver
@@ -61,6 +61,7 @@ module Master
           @council = council
           @visual_pass = visual_pass
           @opportunity_pass = opportunity_pass
+          @discipline = discipline || ConvergenceDiscipline.new(root: @root, bus: @bus)
           @ground_truth_failures = 0
           emit_coverage = lambda do |target, pass|
             semantic = ENV["MASTER_SCAN_SEMANTIC_SAMPLE"].to_f >= 1.0 ? "full" : "sampled clean-files"
@@ -121,6 +122,7 @@ module Master
           @coverage_reporter&.call(target, pass)
           start_pass_transaction(files:, target:, pass:, transaction_id:)
           found, streamed = observe_pass(files, target, pass, deadline)
+          @discipline.observe(pass:, findings: found, files:, progressed: @pass_progress)
 
           visual, opportunities, found = merge_evidence_findings(target:, files:, pass:, found:)
           return evidence_abort_result(visual, opportunities) if found.empty? && (visual&.err? || opportunities&.err?)
@@ -316,7 +318,18 @@ module Master
           clean_count = consecutive_clean + 1
           @bus&.publish("fix_loop:clean", pass:, consecutive_clean: clean_count)
           @homeostat&.observe(:llm_success)
-          status = clean_count >= @clean_runs_required ? :clean : :continue
+          proof = @discipline.clean_proof(files:, pass:, clean_runs: clean_count, findings: ground_truth)
+          unless proof[:eligible]
+            return PassResult.new(
+              status: proof[:fatal] ? :validation_failed : :continue,
+              consecutive_clean: proof[:fatal] ? 0 : clean_count,
+              message: proof[:reason],
+            )
+          end
+          @bus&.publish("fix_loop:convergence_proof", pass:, clean_runs: clean_count,
+                        files_verified: proof[:files_verified], quality_delta: proof[:quality_delta],
+                        diminishing_returns: proof[:diminishing_returns], best_pass: proof[:best_pass])
+          status = :clean
           PassResult.new(status:, message: "clean after #{pass} pass(es)", consecutive_clean: clean_count)
         end
 
