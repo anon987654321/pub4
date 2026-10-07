@@ -74,6 +74,16 @@ class FaceSpeechRuntimeSpec < Minitest::Test
     assert_equal built, on_disk,
                  "face.part*.txt on disk and the assets:build_face_runtime segment list disagree"
   end
+  def test_voice_preview_uses_the_single_tts_playback_path
+    source = read("web/public/face.part5.txt")
+
+    assert_includes source, 'function previewVoice(voice)'
+    assert_includes source, 'enqueueSpeech("Let\'s work now.", { quirky: false });'
+    refute_includes source, 'const audio = new Audio(src);'
+    refute_includes source, 'audio.playbackRate = getTtsRate();'
+    refute_includes source, 'playDuo([[chosen, "Let\'s work now."]'
+  end
+
   def test_live_stream_tts_does_not_replay_already_spoken_text
     source = read("web/public/face.part1.txt")
     consumer = read("web/public/face.part5.txt")
