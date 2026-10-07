@@ -159,6 +159,10 @@ module Master
           @mutex.synchronize { @store.transform_values { |value| value.is_a?(Hash) ? value["value"] : value } }
         end
 
+        def version
+          store_version
+        end
+
         private
 
         def store_version
