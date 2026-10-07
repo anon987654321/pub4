@@ -163,7 +163,7 @@ function resample(samples, fromRate, toRate = SAMPLE_RATE) {
     const pos = i * ratio;
     const idx = Math.floor(pos);
     const frac = pos - idx;
-    const a = samples[idx] || 0;
+    const a = samples[idx] ?? 0;
     const b = samples[idx + 1] !== undefined ? samples[idx + 1] : a;
     out[i] = a + (b - a) * frac;
   }
