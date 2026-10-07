@@ -84,6 +84,7 @@ module Master
           parts << @code_index.summary if @code_index&.built?
           parts << @memory.context_summary if @memory&.context_summary
           parts << @memory.reasoning_context if @memory&.respond_to?(:reasoning_context)
+          parts << @memory.preference_context if @memory&.respond_to?(:preference_context)
           parts << @memory.turn_recall(last_user_message) if @memory.respond_to?(:turn_recall)
           parts.compact.join("\n\n").then { |s| s.empty? ? nil : filter_prompt(s) }
         end
