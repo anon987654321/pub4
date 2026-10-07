@@ -15,7 +15,7 @@ function escapeHtml(str) {
   return str.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
-const log   = document.getElementById('chat-log');
+const log = document.getElementById('chat-log');
 const CHAT_VIRTUAL_MAX = 56;
 let chatArchived = 0;
 let chatSpacer = null;
@@ -42,7 +42,7 @@ function trimChatLogVirtual() {
   const spacer = ensureChatSpacer();
   if (spacer) spacer.style.height = `${chatArchived * 68}px`;
 }
-const zsh   = document.getElementById('zsh');
+const zsh = document.getElementById('zsh');
 const input = document.getElementById('zin');
 const sessionStartedAt = Date.now();
 const recentReplies = [];
@@ -183,7 +183,7 @@ function appendMsg(role, text = '') {
   });
 }
 
-window._chatOnUser  = (text) => {
+window._chatOnUser = (text) => {
   window._lastUserMessageText = text;
   appendMsg('user', text);
   appendMsg('assistant');
@@ -223,7 +223,7 @@ window._chatOnChunk = (raw) => {
   if (/(?:\(|\b)(?:ha(?:ha)?|heh|lol|lmao|rofl)\b|[🤣😂😆]/i.test(raw)) triggerLaughterBurst();
   updateSessionStats();
 };
-window._chatOnDone  = () => {
+window._chatOnDone = () => {
   _toolStackCount = 0;
   delete document.body.dataset.pipelineStage;
   const stageBar = document.getElementById('pipeline-stage');
