@@ -207,11 +207,11 @@ module Master
                    "External hardware, vm23, staging money, browser and listening evidence remains INCONCLUSIVE until actually exercised."],
         },
         "face" => {
-          summary: "the live terminal face with transcript, voice and input",
+          summary: "the live terminal face with one clean stage and control strip",
           detail: [
             "/face — open the MASTER face in the alternate terminal screen.",
             "It uses the same TurnRouter, ear, mouth and runtime event bus as the shell.",
-            "The stage keeps the face readable beside recent replies, mic state and input; motion stays subtle and voice drives the mouth.",
+            "The face keeps a clean full-width stage; the latest exchange and controls stay in the bottom strip.",
             "Type a line, press enter, or speak while idle. Ctrl-C interrupts; Ctrl-D leaves.",
           ],
         },
