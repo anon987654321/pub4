@@ -44469,6 +44469,22 @@ def prepare_showcase_defaults!
 end
 
 def live!(argv)
+  # Bare live mode is the same showcase sound as the finite renderer, but with
+  # the visualizer attached and the tour looping forever. No second synth graph:
+  # ruby dilla.rb live enters this branch, then LiveSynth runs the same scenes,
+  # source-backed harmony, effects, drum grids and mutation actions.
+  if argv.empty? && ENV["DILLA_LIVE_VISUAL"] != "0"
+    prepare_showcase_defaults!
+    ENV["DILLA_LIVE_VISUAL"] = "1"
+    ENV["DILLA_SHOWCASE_LOOP"] = "1"
+    ENV["DILLA_SHOWCASE_ONCE"] = "0"
+    ENV["DILLA_SHOWCASE_VIDEO"] = "0"
+    ENV["DILLA_SHOWCASE_OUT"] ||= File.join(Dir.tmpdir, "dilla-live.wav")
+    require_relative "lib/livesets"
+    LiveSynth.main(["showcase", "mode=all"])
+    return
+  end
+
   # Ruby buffers stdout when it is not a terminal, so a redirected run shows
   # nothing for the first several progressions and looks stalled while it is
   # playing perfectly well.
