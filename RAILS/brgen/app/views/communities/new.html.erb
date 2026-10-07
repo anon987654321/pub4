@@ -5,17 +5,17 @@
       <% @community.errors.full_messages.each do |msg| %><li><%= msg %></li><% end %>
     </ul>
   <% end %>
-  <p>
+  <div class="field">
     <%= f.label :name %>
     <%= f.text_field :name, placeholder: t("communities.name_placeholder") %>
-  </p>
-  <p>
+  </div>
+  <div class="field">
     <%= f.label :description %>
     <div data-controller="character-counter" data-character-counter-countdown-value="true">
-  <%= f.text_area :description, placeholder: t("communities.description_placeholder"), rows: 3 , maxlength: 1000, data: { character_counter_target: "input" } %>
-  <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
-</div>
-  </p>
+      <%= f.text_area :description, placeholder: t("communities.description_placeholder"), rows: 3, maxlength: 1000, data: { character_counter_target: "input" } %>
+      <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
+    </div>
+  </div>
   <p>
     <%= f.submit t("communities.create") %>
     <%= link_to t("actions.cancel"), communities_path %>
