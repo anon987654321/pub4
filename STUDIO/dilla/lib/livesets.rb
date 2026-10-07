@@ -2119,6 +2119,7 @@ module LiveSynth
       Outboard.tape_machine(speed: :ips7, wow: 0.06, flutter: 0.018),
       "acompressor=threshold=-21dB:ratio=1.16:attack=70:release=380:makeup=1.0",
       "lowpass=f=3000",
+      "volume=#{stream.fetch("showcase_output_gain").to_f}",
       "alimiter=limit=0.93",
     ].freeze
   end
@@ -3208,6 +3209,7 @@ SHOWCASE_MODES = {
     def live_kit_preset
       forced = ENV["DILLA_LIVE_KIT"].to_s.strip
       return forced unless forced.empty?
+      return @c.fetch("drum_preset", "dilla_fantastic").to_s if LiveSynth.showcase?
 
       artist = @reference.to_h.fetch("artist", "").to_s
       case artist
