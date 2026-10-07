@@ -146,10 +146,18 @@ rescue NameError, LoadError => e
 end
 
 def check_web_token
+  web_requested = ENV["MASTER_WEB_LIVE"] == "1" ||
+                  ENV["MASTER_WEB_CHAT"] == "1" ||
+                  File.file?(File.join(ROOT, ".master", "web.pid"))
+  unless web_requested
+    return unmeasured("web-token", "web surface not enabled")
+  end
+
   cfg_path = File.join(ROOT, ".master", "config.yml")
-  cfg = YAML.safe_load_file(cfg_path, aliases: true) rescue {}
+  cfg = YAML.safe_load_file(cfg_path, aliases: true, permitted_classes: [Symbol]) rescue {}
   tok = cfg["web_token"].to_s
-  Check.new(name: "web-token", state: (tok.length >= 8) ? :pass : :fail, detail: tok.empty? ? "unset in .master/config.yml" : "configured")
+  Check.new(name: "web-token", state: tok.length >= 8 ? :pass : :fail,
+            detail: tok.empty? ? "unset in .master/config.yml" : "configured")
 end
 
 def check_key_rotator
