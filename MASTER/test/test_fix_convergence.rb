@@ -158,6 +158,16 @@ class TestFixConvergence < Minitest::Test
     assert_equal File.join(Master::RAILS_ROOT, "brgen"), resolver.resolve_target("RAILS/brgen")
   end
 
+  def test_fix_target_resolver_accepts_master_relative_internal_paths
+    resolver = Class.new do
+      include Master::CLI::Pipeline::TargetResolver
+      def initialize(root) = @root = root
+    end.new(Master::ROOT)
+
+    assert_equal File.join(Master::ROOT, "lib", "io"), resolver.resolve_target("lib/io")
+  end
+
+
   def test_openbsd_recursive_tree_globs_resolve_to_the_tree_root
     resolver = Class.new do
       include Master::CLI::Pipeline::TargetResolver
@@ -185,6 +195,10 @@ class TestFixConvergence < Minitest::Test
                  Operator::GateChain.trees_for_target("MASTER RAILS OPENBSD STUDIO")
     assert_equal %w[MASTER RAILS OPENBSD STUDIO],
                  Operator::GateChain.trees_for_target("openbsd,rails,master,studio")
+  end
+
+  def test_gate_chain_resolves_master_relative_internal_paths
+    assert_equal ["MASTER"], Operator::GateChain.trees_for_target("lib/io")
   end
 
 
@@ -686,26 +700,18 @@ class TestFixConvergence < Minitest::Test
     assert_same council, received, "council findings must reach the repair stage as repair context"
   end
 
-  def test_requested_fix_ends_with_one_wishlist_generation
+  def test_finish_run_only_closes_the_journal
     calls = []
     journal = Object.new
     journal.define_singleton_method(:terminal) { |*args, **kwargs| calls << [:terminal, args, kwargs] }
-    wishlist = Object.new
-    wishlist.define_singleton_method(:call) do |state:, target:, run_id:|
-      calls << [:wishlist, state, target, run_id]
-      "wishlist: drafted 24 item(s)"
-    end
 
     loop = build_loop([])
     loop.instance_variable_set(:@run_journal, journal)
-    loop.instance_variable_set(:@wishlist, wishlist)
 
     loop.send(:finish_run, Master::Result.ok("DONE: clean"), @root, "r1", requested: true)
 
-    assert_equal 2, calls.size
-    assert_equal :terminal, calls.last.first
-    assert_equal :wishlist, calls.first.first
-    assert_equal "done", calls.first[1]
+    assert_equal 1, calls.size
+    assert_equal :terminal, calls.first.first
   end
 
   # 6. A clean tree the ground truth agrees with is the one state that says DONE.
@@ -816,18 +822,26 @@ class TestFixConvergence < Minitest::Test
   end
 
   def test_pending_wishlist_becomes_part_of_the_next_fix_mission
-    FileUtils.mkdir_p(File.join(@root, "runtime"))
-    File.write(File.join(@root, "runtime", "wishlist.md"), <<~WISH)
-      # MASTER wishlist
-      ### 1. Measure the boot boundary
-      ### 2. Add a runtime receipt
-    WISH
+    wishlist = Master::Fix::Wishlist.new(root: @root, agent: RecordingAgent.new(<<~YAML))
+      - id: boot_boundary
+        title: Measure the boot boundary
+        rationale: measure the startup seam
+        anchor: lib/sample.rb:1
+        change: record one deterministic startup receipt
+        effort: cheap
+        reversibility: reversible
+        implementation: next_fix
+        evidence: sample.rb exists
+        proof:
+          - ruby syntax
+    YAML
+    wishlist.call(state: "done", target: @root, run_id: "r1")
 
     plan = build_loop([]).send(:mission_plan)
 
-    assert_includes plan, "Pending wishlist proposals:"
-    assert_includes plan, "### 1. Measure the boot boundary"
-    assert_includes plan, "### 2. Add a runtime receipt"
+    assert_includes plan, "Pending automatic convergence proposals from the durable /fix ledger."
+    assert_includes plan, "Measure the boot boundary"
+    refute_includes plan, "### 1."
   end
 
   def test_a_converged_run_is_done
@@ -836,6 +850,43 @@ class TestFixConvergence < Minitest::Test
     assert result.ok?
     assert_match(/\ADONE: /, result.value!)
   end
+
+  def test_wishlist_open_proof_downgrades_done_to_plateau
+    proposal = { "uid" => "wish-open", "status" => "claimed" }
+    wishlist = Object.new
+    wishlist.define_singleton_method(:call) { |**| "wishlist: drafted 1" }
+    wishlist.define_singleton_method(:claimable) { |**| [proposal] }
+    wishlist.define_singleton_method(:claim) { |rows, **| rows }
+    wishlist.define_singleton_method(:pending_count) { |**| 0 }
+    wishlist.define_singleton_method(:mark_verified) do |**|
+      [{ "uid" => "wish-open", "status" => "applied", "proof_state" => "open" }]
+    end
+
+    loop = build_loop([])
+    loop.instance_variable_set(:@wishlist, wishlist)
+    journal = loop.instance_variable_get(:@run_journal)
+    journal.define_singleton_method(:remaining_seconds) { |_run_id| 600 }
+    journal.define_singleton_method(:history) { |limit:| [{ "id" => "r1", "next_pass" => 1 }] }
+    journal.define_singleton_method(:next_pass) { |_record| 1 }
+    loop.instance_variable_set(:@file_collector, Object.new.tap do |collector|
+      collector.define_singleton_method(:collect) { |_target| [] }
+    end)
+    loop.define_singleton_method(:run_passes) { |**| Master::Result.ok("DONE: clean") }
+
+    result = loop.send(
+      :continue_with_wishlist,
+      Master::Result.ok("DONE: clean"),
+      files: [],
+      target: @root,
+      max_passes: 3,
+      budget_seconds: 600,
+      run_id: "r1",
+    )
+
+    assert_match(/\APLATEAU: /, result.value!)
+    assert_includes result.value!, "wishlist proof inconclusive"
+  end
+
 
   # 7. Running out of passes is not finishing.
   def test_structure_preflight_runs_before_the_first_repair_pass
@@ -865,7 +916,7 @@ class TestFixConvergence < Minitest::Test
       run_id: "r1",
     )
 
-    assert_match(/ADONE: /, result.value!)
+    assert_match(/\ADONE: /, result.value!)
     assert_equal [:structure, target, "r1-structure-first", :structure_first], order.first
     assert_equal [:pass, 0], order.last
   end
@@ -973,8 +1024,6 @@ class TestFixConvergence < Minitest::Test
     refute defined?(Master::Operator::GateChain)
   end
 
-end
-
   def test_structural_context_uses_real_file_predicates
     source = File.read(File.join(Master::ROOT, "lib", "fix", "restructure_sweep", "context.rb"))
     refute_includes source, "select(&:file?)"
@@ -997,3 +1046,4 @@ end
     assert_equal ["MASTER"], Master::CLI::CommandRegistry.send(:fix_targets, "MASTER", root:)
     assert_equal ["MASTER RAILS --apply"], Master::CLI::CommandRegistry.send(:fix_targets, "MASTER RAILS --apply", root:)
   end
+end
