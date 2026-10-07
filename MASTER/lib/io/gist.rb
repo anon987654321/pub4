@@ -28,9 +28,9 @@ module Master
         return perm if perm.err?
 
         response = get("https://api.github.com/gists/#{id}")
-        data = JSON.parse(response.body.to_s)
         return Result.err("gist: HTTP #{response.code}", category: :infrastructure) unless response.code == "200"
 
+        data = JSON.parse(response.body.to_s)
         files = data.fetch("files", {}).map do |name, file|
           { "name" => name.to_s, "content" => file["content"].to_s }
         end
