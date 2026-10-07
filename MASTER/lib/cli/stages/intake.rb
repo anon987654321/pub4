@@ -10,6 +10,10 @@ module Master
         # m[1] = command name, m[2] = args string (may be empty)
         COMMAND_RE = /\A\s*\/([\w-]+)\s*(.*)/m.freeze
 
+        def initialize(root: Master::ROOT)
+          @root = File.realpath(root)
+        end
+
         def call(ctx)
           Master::CLI::PipelineContext.validate!(ctx)
           Master::Trace::WriteTracker.current&.reset!
@@ -45,10 +49,15 @@ module Master
           return message if refs.empty?
 
           snippets = refs.filter_map do |ref|
-            path = File.expand_path(ref, Master::ROOT)
+            path = File.expand_path(ref, @root)
+            next unless Master::Io::PathGuard.inside_real_root?(path, @root)
             next unless File.file?(path)
 
-            content = File.read(path, encoding: "UTF-8")
+            canonical = File.realpath(path)
+            next unless Master::Io::PathGuard.inside_root?(canonical, @root)
+            next if Master::Io::PathGuard.secret?(canonical)
+
+            content = File.read(canonical, encoding: "UTF-8")
             content = content.bytesize > 12_000 ? content.byteslice(0, 12_000) : content
             "[@#{ref}]\n```text\n#{content}\n```"
           rescue StandardError => e
