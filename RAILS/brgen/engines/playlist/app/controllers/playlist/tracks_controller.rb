@@ -29,10 +29,11 @@ class Playlist::TracksController < Playlist::BaseController
     if @set
       @set.set_tracks.find(params[:id]).destroy
       redirect_to set_path(@set)
-    else
-      @playlist.playlist_tracks.find(params[:id]).destroy
-      redirect_to playlist_path(@playlist)
+      return
     end
+
+    @playlist.playlist_tracks.find(params[:id]).destroy
+    redirect_to playlist_path(@playlist)
   end
 
   def update
