@@ -58,7 +58,11 @@ module Master
           puts @refs.renderer.measure(text.chomp, width: reply_measure) unless routine
         end
 
-        Master::Voice::Playback.speak(spoken_form(text)) unless Master::Trace::Dmesg.log_voice_active?
+        spoken = spoken_form(text)
+        unless Master::Trace::Dmesg.log_voice_active? ||
+               Master::Trace::Dmesg.log_voice_spoken_recently?(spoken)
+          Master::Voice::Playback.speak(spoken)
+        end
         print_fix_activity_footer
         print_previous_question_footer
         print_parallel_errors_footer(ok)
