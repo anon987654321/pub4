@@ -1,0 +1,5 @@
+<% state = local_assigns.fetch(:state, :info).to_s %>
+<% label = local_assigns.fetch(:label) %>
+<%= tag.div class: "system-signal", data: { state: state }, role: (state == "error" ? "alert" : "status") do %>
+  <%= label %>
+<% end %>
