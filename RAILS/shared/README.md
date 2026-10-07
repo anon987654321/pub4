@@ -621,12 +621,13 @@ each app's application stylesheet supplying the selectors required by its dialec
 
 
 **Worn at `:root` (verified against `builds/application.css`, 2026-08-10):**
-| App | Dialect | Dark → light mechanism |
-|---|---|---|
-| brgen (+ verticals) | `brgen_old` | `:root` → `#dark-toggle:checked ~ .theme-root` |
-| amber | `luxury` | `:root` and the light selectors in its `application.scss`, both halves |
-| bsdports | `openbsd_wscons`, all radii **0** | Inline `:root` in its own `application.scss` — *not* a mixin here |
-| MASTER web face | `face_root`, radius 0 | `MASTER/web`, outside this tree |
+**Worn dialects**
+
+brgen and its verticals wear brgen_old. amber wears luxury. bsdports wears
+openbsd_wscons with all radii at **0**. The MASTER web face wears face_root with
+radius 0 outside this tree. Theme state remains one shared mechanism; each app
+stylesheet supplies the selectors required by its dialect.
+
 
 **Declared is not worn, third correction (2026-08-26).**
 `openbsd_wscons.text_secondary` has now been wrong three times, and the second
