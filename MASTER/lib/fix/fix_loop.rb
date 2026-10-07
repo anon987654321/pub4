@@ -387,7 +387,17 @@ module Master
           )
 
           if terminal_state_for(result) == :done
-            @wishlist.mark_verified(proposal_ids: claimed.map { |proposal| proposal["uid"] }, run_id:)
+            verification = @wishlist.mark_verified(
+              proposal_ids: claimed.map { |proposal| proposal["uid"] },
+              run_id:,
+            )
+            blocked = verification.count { |row| row["status"] == "blocked" }
+            open = verification.count { |row| row["status"] == "applied" }
+            if blocked.positive?
+              result = terminal(:blocked, "wishlist proof failed for #{blocked} applied proposal(s)")
+            elsif open.positive?
+              result = terminal(:plateau, "wishlist proof inconclusive for #{open} applied proposal(s)")
+            end
           end
 
           rounds += 1
