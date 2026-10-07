@@ -88,12 +88,16 @@ module Master
 
       # /why — one rule explained from law/ and data/laws.yml, and from the
       # model only when nothing local matches.
-      def dispatch_why(agent:, root:, ctx: nil)
+      def dispatch_why(agent:, root:, memory: nil, ctx: nil)
         rule = arg_for(ctx)
         return "usage: /why <law|path|scan_rule|anti_pattern|style.key>" if rule.empty?
+
         local = Trace::WhyExplainer.new(root:).explain(rule)
-        return local if local
-        agent.ask_once(Voice::Personality.why_prompt(rule))
+        answer = local || agent.ask_once(Voice::Personality.why_prompt(rule))
+        receipt = Ground::BootReceipt.session(root:, agent:, memory:)
+        return answer if receipt.empty?
+
+        [answer, Ground::BootReceipt.session_line(receipt)].compact.join("\n")
       end
     end
   end
