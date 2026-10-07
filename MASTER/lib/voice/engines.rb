@@ -137,6 +137,11 @@ module Master
       end
 
       def synth_mlx(text, out_path, cfg, emotion, rate: nil, pitch: nil, melody: nil)
+        if phrase_plan?(melody) && cfg["mlx_phrase_rhythm"] == true
+          phrasewise = synth_mlx_phrasewise(melody[:phrases], out_path, cfg, emotion, rate:, pitch:)
+          return phrasewise if phrasewise
+        end
+
         py = mlx_python
         return false unless py
 
