@@ -44,12 +44,28 @@ module Operator
 
     module_function
 
-    def tracked(tree)
+    def all_tracked(tree)
       path = TREE_PATHS.fetch(tree) { raise "snapshot: unknown tree #{tree.inspect}" }
       out, status = Open3.capture2("git", "ls-files", "-z", path, chdir: REPO)
       raise "git ls-files failed for #{tree} (#{path})" unless status.success?
 
       out.split("\0").reject(&:empty?).sort
+    end
+
+    def excluded_path?(path)
+      parts = path.split("/")
+      return true if parts.any? { |part| part.start_with?(".") }
+      return true if parts.any? { |part| EXCLUDED_DIRS.include?(part) }
+
+      path.include?("/public/assets/") || path.include?("/app/assets/builds/")
+    end
+
+    def tracked(tree)
+      all_tracked(tree).reject { |path| excluded_path?(path) }
+    end
+
+    def excluded(tree)
+      all_tracked(tree).select { |path| excluded_path?(path) }
     end
 
     def binary?(path)
