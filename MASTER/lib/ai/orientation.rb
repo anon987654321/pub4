@@ -219,7 +219,7 @@ module Master
       end
 
       def key_docs(repo_root)
-        %w[CLAUDE.md TREE.md TODO.md].select { |name| File.file?(File.join(repo_root, name)) }
+        %w[CLAUDE.md ARCHITECTURE.md TODO.md].select { |name| File.file?(File.join(repo_root, name)) }
       end
 
       def git_head(repo_root)
