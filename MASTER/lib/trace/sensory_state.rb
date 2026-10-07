@@ -3,6 +3,7 @@
 require "json"
 require "fileutils"
 require "monitor"
+require "time"
 
 module Master
   module Trace
