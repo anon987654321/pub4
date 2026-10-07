@@ -66,7 +66,7 @@ module Master
           @discipline = discipline || ConvergenceDiscipline.new(root: @root, bus: @bus)
           @ground_truth_failures = 0
           emit_coverage = lambda do |target, pass|
-            semantic = ENV["MASTER_SCAN_SEMANTIC_SAMPLE"].to_f >= 1.0 ? "full" : "sampled clean-files"
+            semantic = @scanner.respond_to?(:semantic_full?) && @scanner.semantic_full? ? "full" : "sampled clean-files"
             abstract = @council ? "bounded clean-streak review" : "unavailable"
             visual = @visual_pass&.applicable?(target) ? "rendered" : "not-applicable"
             opportunity = @opportunity_pass&.applicable?(target) ? "bounded" : "not-applicable"
