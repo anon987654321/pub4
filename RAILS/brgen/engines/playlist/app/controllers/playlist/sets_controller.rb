@@ -67,11 +67,9 @@ class Playlist::SetsController < ApplicationController
   end
 
   def update
-    if @set.update(set_params)
-      redirect_to set_path(@set), notice: t("playlist.set_updated")
-    else
-      render :edit, status: :unprocessable_entity
-    end
+    return render :edit, status: :unprocessable_entity unless @set.update(set_params)
+
+    redirect_to set_path(@set), notice: t("playlist.set_updated")
   end
 
   def destroy
