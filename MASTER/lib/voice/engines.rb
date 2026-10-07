@@ -344,13 +344,14 @@ module Master
               device=#{device.inspect}, t3_model="v3"
           )
           ref = #{ref.inspect}
+          if ref:
+              model.prepare_conditionals(ref, exaggeration=#{exaggeration.to_f})
           for index, phrase in enumerate(phrases):
               kwargs = {
                   "language_id": "en",
                   "exaggeration": #{exaggeration.to_f},
                   "cfg_weight": #{cfg_weight.to_f},
               }
-              kwargs["audio_prompt_path"] = ref if ref
               wav = model.generate(phrase["text"], **kwargs)
               ta.save(
                   #{File.join(wav_dir, "part_#{index}.wav").inspect},
