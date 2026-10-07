@@ -33,10 +33,11 @@ module Master
       def capture3(*cmd, timeout: DEFAULT_TIMEOUT, **opts)
         stdin_data, spawn_opts = split_opts(opts)
         Open3.popen3(*cmd, **Master::Ops::ProcessSpawn.options(spawn_opts.merge(pgroup: true))) do |stdin, stdout, stderr, wait_thr|
-          feed(stdin, stdin_data)
           out_reader = reader_for(stdout)
           err_reader = reader_for(stderr)
+          writer = writer_for(stdin, stdin_data)
           status = bounded_wait(wait_thr, timeout, [out_reader, err_reader])
+          writer&.join
           [reap(out_reader), reap(err_reader), status]
         end
       end
@@ -44,9 +45,10 @@ module Master
       def capture2e(*cmd, timeout: DEFAULT_TIMEOUT, **opts)
         stdin_data, spawn_opts = split_opts(opts)
         Open3.popen2e(*cmd, **Master::Ops::ProcessSpawn.options(spawn_opts.merge(pgroup: true))) do |stdin, stdout_err, wait_thr|
-          feed(stdin, stdin_data)
           reader = reader_for(stdout_err)
+          writer = writer_for(stdin, stdin_data)
           status = bounded_wait(wait_thr, timeout, [reader])
+          writer&.join
           [reap(reader), status]
         end
       end
@@ -54,9 +56,10 @@ module Master
       def capture2(*cmd, timeout: DEFAULT_TIMEOUT, **opts)
         stdin_data, spawn_opts = split_opts(opts)
         Open3.popen2(*cmd, **Master::Ops::ProcessSpawn.options(spawn_opts.merge(pgroup: true))) do |stdin, stdout, wait_thr|
-          feed(stdin, stdin_data)
           reader = reader_for(stdout)
+          writer = writer_for(stdin, stdin_data)
           status = bounded_wait(wait_thr, timeout, [reader])
+          writer&.join
           [reap(reader), status]
         end
       end
@@ -70,11 +73,26 @@ module Master
         [stdin_data, opts]
       end
 
+      def writer_for(stdin, data)
+        return close_stdin(stdin) unless data
+
+        Thread.new do
+          feed(stdin, data)
+        end.tap { |thread| thread.report_on_exception = false }
+      end
+
       def feed(stdin, data)
-        stdin.write(data) if data
-        stdin.close
+        stdin.write(data)
       rescue Errno::EPIPE, IOError => e
         Master::Ground::Swallow.log(e, context: "Exec.feed")
+        nil
+      ensure
+        close_stdin(stdin)
+      end
+
+      def close_stdin(stdin)
+        stdin.close unless stdin.closed?
+      rescue IOError
         nil
       end
 
