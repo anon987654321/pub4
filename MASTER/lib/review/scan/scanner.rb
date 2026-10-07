@@ -115,6 +115,11 @@ module Master
           @file_processor.skip_semantic! if @file_processor.respond_to?(:skip_semantic!)
         end
 
+        def full_semantic!
+          @file_processor.full_semantic! if @file_processor.respond_to?(:full_semantic!)
+          self
+        end
+
         private
 
         def findings_for(path, depth:)
