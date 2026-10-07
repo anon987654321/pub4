@@ -92,10 +92,12 @@ module Master
       end
 
       def improving?
-        return false if @history.size < 2
+        return false if @history.empty?
+
+        current = @history[-1]
+        return current[:progressed] == true if @history.size < 2
 
         before = @history[-2]
-        current = @history[-1]
         current[:score].to_i < before[:score].to_i || current[:progressed] == true
       end
 
