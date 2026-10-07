@@ -113,6 +113,14 @@ class TestFixLoopFileCollector < Minitest::Test
     end
   end
 
+  def test_line_limit_matches_scanner
+    Dir.mktmpdir do |dir|
+      path = write(dir, "lib/huge.rb", Array.new(Master::Review::Scan::FileProcessor::MAX_LINES + 1, "x").join("\n"))
+      assert collector(dir).__send__(:skipped?, path)
+      assert_equal :too_many_lines, collector(dir).__send__(:skip_reason, path)
+    end
+  end
+
   def test_authored_source_is_off_limits_to_neither
     Dir.mktmpdir do |dir|
       path = write(dir, "lib/review/thing.rb")
