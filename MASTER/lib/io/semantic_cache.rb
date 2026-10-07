@@ -14,7 +14,7 @@ module Master
     # the other two: an exact prompt+model key on disk under .master/cache, then
     # SemanticIndex for a near-hit, which embeds through Review::Embeddings.
     class SemanticCache
-      include Master::Io::AtomicWrite
+      include ::Master::Io::AtomicWrite
       MAX_ENTRIES = 1000
       DEFAULT_TTL = 300
       BYTES_PER_KB = 1024.0
