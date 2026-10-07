@@ -1,16 +1,21 @@
-<%# NN/g #1 status + #3 freedom: polite region, optional undo action from flash[:undo].
-    A notice with no undo is a toast (shared/flash_toasts), so it is skipped here. %>
+<%# Semantic status stays shared; Amber keeps its existing flash classes and undo action. %>
 <% flash.each do |type, msg| %>
   <% next if type.to_s == "undo" || msg.blank? %>
   <% next if type.to_s == "notice" && flash[:undo].blank? %>
-  <% role = type.to_s == "alert" ? "alert" : "status" %>
-  <div class="flash flash--<%= type %>" role="<%= role %>" aria-live="<%= role == "alert" ? "assertive" : "polite" %>">
-    <span class="flash-msg"><%= msg %></span>
+  <% state = case type.to_s
+             when "alert", "error" then :error
+             when "warning" then :warning
+             when "success" then :success
+             else :info
+             end %>
+  <% content = capture do %>
+    <%= tag.span msg, class: "flash-msg" %>
     <% if (undo = flash[:undo]).is_a?(Hash) && undo["path"].present? %>
       <%= button_to undo["label"].presence || t("items.undo_restore"),
             undo["path"],
             method: (undo["method"].presence || :post).to_sym,
             class: "btn btn-ghost btn-sm flash-undo" %>
     <% end %>
-  </div>
+  <% end %>
+  <%= render "shared/system_signal", state:, classes: ["flash", "flash--#{type}"], content: %>
 <% end %>
