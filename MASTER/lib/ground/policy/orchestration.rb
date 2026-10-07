@@ -57,15 +57,6 @@ module Master
 
         private
 
-        def select_model(risk)
-          case risk
-          when :low then :cheap
-          when :medium then :fast
-          when :high, :critical then :strong
-          else :fast
-          end
-        end
-
         def intent_domain(intent)
           case intent
           when :wire_existing_module, :verify_patch_landed, :write_repo_changes then :code_mutation
