@@ -55,10 +55,32 @@ module Master
 
           Master::Voice::Playback.begin_reply_generation!
           spoken = false
-          chunks(text).each do |part|
+          parts = chunks(text)
+          next_path = nil
+          next_error = nil
+          prefetch = nil
+
+          parts.each_with_index do |part, index|
             break if stop.call
 
-            path = @synthesize.call(part)
+            if index.zero?
+              path = @synthesize.call(part)
+            else
+              path, next_error = prefetch.value
+              @last_error = next_error if next_error
+            end
+
+            if index + 1 < parts.length
+              following = parts[index + 1]
+              prefetch = Thread.new do
+                begin
+                  [@synthesize.call(following), nil]
+                rescue StandardError => e
+                  [nil, "speech synthesis failed: #{e.class}: #{e.message}"]
+                end
+              end
+            end
+
             if path && File.exist?(path)
               on_chunk&.call(part)
               played = play(path, part, on_level:, stop:)
@@ -80,6 +102,7 @@ module Master
           ensure
             File.delete(path) if path && File.exist?(path)
           end
+          prefetch&.join
           spoken
         end
 
