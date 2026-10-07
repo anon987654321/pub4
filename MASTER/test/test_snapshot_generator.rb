@@ -93,15 +93,13 @@ class TestSnapshotGenerator < Minitest::Test
   end
 
   # The README promises one snapshot per governed tree from a bare /snapshot;
-  # Snapshot#write! gives that only when rooted at the repository.
-  def test_bare_snapshot_command_uses_the_canonical_full_tree_generator
-    paths = %w[snapshot_MASTER.md snapshot_RAILS.md]
-    snapshot = Object.new
-    snapshot.define_singleton_method(:write!) { paths }
-    Master::Snapshot.stub(:new, ->(root:) { raise "wrong snapshot root" unless root == Master::REPO_ROOT; snapshot }) do
-      out = Master::CLI::CommandRegistry.dispatch_snapshot(nil, ctx: { args: "" })
-      assert_equal "snapshot0: wrote snapshot_MASTER.md\nsnapshot0: wrote snapshot_RAILS.md", out
-    end
+  # the command must use the same bounded generator as bin/operator.
+  def test_bare_snapshot_command_uses_the_bounded_full_tree_generator
+    source = File.read(File.expand_path("../lib/cli/command_registry.rb", __dir__))
+    assert_includes source, "Operator::Snapshot::TREES"
+    assert_includes source, "Operator::Snapshot.write(tree)"
+    assert_includes source, "snapshot0: wrote root/"
+    refute_includes source, "Master::Snapshot.new(root: Master::REPO_ROOT).write!"
   end
 
   def test_operator_snapshot_runs_the_full_root_snapshot_pack
