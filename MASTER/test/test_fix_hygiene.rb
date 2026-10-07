@@ -37,12 +37,15 @@ class TestFixHygiene < Minitest::Test
   end
 
   def test_hygiene_prompt_mode_points_at_the_canonical_data
-    prompts = Master.load_yaml(Master::PROMPTS_PATH)
+    prompts = Master.load_yaml(File.join(Master::ROOT, "data", "prompts.yml"))
     mode = prompts.fetch("fix_hygiene")
+    modes = Master::Review::Modes.new(root: Master::ROOT)
 
     assert_equal "MASTER/data/fix_hygiene.yml", mode.fetch("source")
-    refute_includes mode.fetch("template"), "numeric ranks: never"
+    assert_empty mode.fetch("template").scan("numeric ranks")
     assert_includes mode.fetch("template"), "%{message}"
+    assert_includes modes.supported, "fix_hygiene"
+    assert_includes modes.wrap("inspect the hygiene contract", mode: "fix_hygiene"), "inspect the hygiene contract"
   end
 
   def test_event_topics_contract_is_data_not_commentary
