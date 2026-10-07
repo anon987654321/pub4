@@ -104,7 +104,7 @@ the whole of it: `rotation` (the voices, chosen per utterance), `post_chain`
 speech, and a pointer). `Voice::Policy` reads them, `Speech#shaped` applies the
 chain, `browser_payload` hands them to the face so it sounds like the server.
 The chain borrows dillas vocabulary; the bed is dillas own render, module `Bed`
-in `STUDIO/dilla/dilla.rb`, declared in `MASTER/tools/dilla/data/bed.yml` and played
+in `STUDIO/dilla/dilla.rb`, declared in `STUDIO/dilla/data/bed.yml` and played
 by `ruby STUDIO/dilla/dilla.rb bed` (the operator's call, 2026-09-14).
 
 **Renders are irreplaceable.** dilla and postpro write real output with rotating
