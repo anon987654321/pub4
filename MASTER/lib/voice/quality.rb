@@ -19,6 +19,7 @@ module Master
           sample_rate: sample_rate,
           channels: channels,
           clipping: clipping?(path),
+          **volume_stats(path),
         }
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "Voice::Quality.inspect")
@@ -53,6 +54,24 @@ module Master
       rescue StandardError
         false
       end
+
+      def volume_stats(path)
+        _out, err, status = Open3.capture3(
+          "ffmpeg", "-v", "info", "-i", path,
+          "-af", "volumedetect",
+          "-f", "null", "-"
+        )
+        return {} unless status.success?
+
+        text = err.to_s
+        {
+          mean_volume_db: text[/mean_volume:\s*(-?\d+(?:\.\d+)?)\s*dB/i, 1]&.to_f,
+          max_volume_db: text[/max_volume:\s*(-?\d+(?:\.\d+)?)\s*dB/i, 1]&.to_f,
+        }.compact
+      rescue StandardError
+        {}
+      end
+
     end
   end
 end
