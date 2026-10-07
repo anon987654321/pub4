@@ -300,3 +300,8 @@ STUDIO/postpro/postpro_*.jpg.json
 
 *_BACKUP.LOG
 *_BACKUP.INDEX
+
+# --- STUDIO/lora subject media ---
+# Subject media is private; deliberate publication requires git add -f.
+STUDIO/lora/*.mp4
+STUDIO/lora/*.mov
