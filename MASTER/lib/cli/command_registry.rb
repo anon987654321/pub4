@@ -47,7 +47,7 @@ module Master
           "voice" => Command.new { |ctx| dispatch_voice(ctx:) },
           "rules" => command(:dispatch_rules, root),
           "snapshot" => command(:dispatch_snapshot, d[:root]),
-          "why" => command(:dispatch_why, d[:agent], d[:root]),
+          "why" => command(:dispatch_why, d[:agent], d[:root], d[:memory]),
           "wishlist" => command(:dispatch_wishlist, d[:root]),
           "size" => command(:dispatch_size, d[:root]),
           "explain" => command(:dispatch_explain, d[:root]),
@@ -121,6 +121,7 @@ module Master
           metrics: infra[:metrics],
           trace: infra[:trace],
           learnings: infra[:learnings],
+          memory: infra[:memory],
         }
       end
 

@@ -159,6 +159,13 @@ module Master
           @mutex.synchronize { @store.transform_values { |value| value.is_a?(Hash) ? value["value"] : value } }
         end
 
+        def version
+          File.file?(@path) ? Digest::SHA256.file(@path).hexdigest[0, 16] : "empty"
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "memory.version")
+          "unknown"
+        end
+
         private
 
         def store_version

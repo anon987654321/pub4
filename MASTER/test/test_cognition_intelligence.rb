@@ -43,6 +43,20 @@ class TestCognitionIntelligence < Minitest::Test
     assert_equal 2, rows.first[:count]
   end
 
+  def test_attention_budget_preserves_one_high_uncertainty_candidate
+    high = { rule: "ROOT", severity: :warning, consumers: 8, confidence: 0.9 }
+    uncertain = { rule: "UNKNOWN", consumers: 0, confidence: 0.1, status: :uncertain }
+    noisy = { rule: "NOISE", severity: :critical, consumers: 0, confidence: 0.9 }
+
+    budget = Master::Cognition::Intelligence.attention_budget([high, uncertain, noisy], slots: 1)
+
+    assert_equal 3, budget[:candidates]
+    assert_includes budget[:selected], high
+    assert_includes budget[:selected], uncertain
+    assert_equal 1, budget[:deferred].size
+    assert_equal uncertain, budget[:preserved_uncertainty]
+  end
+
   def test_leverage_prefers_causal_reach_over_severity_noise
     rows = Master::Cognition::Intelligence.rank_by_leverage([
       { rule: "NOISY", severity: :critical, blast_radius: { files_touched: 1, consumers: 0 } },

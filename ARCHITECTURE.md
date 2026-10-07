@@ -156,7 +156,10 @@ dmesg       -> boot/event evidence
 ```
 
 The rule is simple: machinery does not grant authority merely because it can perform an operation. Authority is declared, reduced, observed and verified.
-## Cognitive judgment kernel
+## Decision context
+
+MASTER keeps the runtime identity of a decision small and reproducible. The existing `Ground::BootReceipt` can be asked for a session receipt that joins the current commit, constitutional digest, durable-memory version and answering model; `/why` exposes it only when that runtime context exists, while ordinary doctor output remains unchanged. Cognition also treats attention as a finite budget: leverage ranks the candidates and high-uncertainty work is retained even when it would otherwise fall outside the first slice.
+
 
 MASTER keeps reasoning machinery in one existing spine, Master::Cognition::Intelligence. It separates observation from inference, keeps uncertainty explicit, ranks opportunities by causal leverage, compares concepts by purpose and boundary rather than names, and moves reasoning across local, subsystem, tree, repository, production and human scales. /fix records bounded decision frames in the existing Ground::Memory store, and council deliberation synthesizes model differences without majority-vote semantics.
 

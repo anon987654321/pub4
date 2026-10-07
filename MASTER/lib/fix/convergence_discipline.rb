@@ -49,8 +49,16 @@ module Master
         @history << state.merge(progressed:)
         @best_state = state if @best_state.nil? || state[:score] < @best_state[:score]
 
-        ranked = Master::Cognition::Intelligence.rank_by_leverage(findings)
+        attention = Master::Cognition::Intelligence.attention_budget(findings, slots: limits["decision_choices"].to_i)
+        ranked = attention[:selected]
         top = ranked.first
+        @bus&.publish(
+          "fix_loop:attention",
+          candidates: attention[:candidates],
+          selected: attention[:selected].size,
+          deferred: attention[:deferred].size,
+          preserved_uncertainty: !attention[:preserved_uncertainty].nil?,
+        )
         @bus&.publish(
           "fix_loop:judgment",
           pass:,

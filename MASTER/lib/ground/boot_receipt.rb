@@ -35,7 +35,7 @@ module Master
       # runs be diffed, and no reader diffs two receipts: bin/doctor prints one.
       # `commit` already names the checkout's HEAD. A field joins with the
       # reader that compares it.
-      def build(root: MasterPaths::ROOT)
+      def build(root: MasterPaths::ROOT, agent: nil, memory: nil)
         {
           commit: commit(root),
           constitution: constitution(root),
@@ -43,7 +43,25 @@ module Master
           providers:,
           capabilities:,
           degraded:,
+          session: session(root:, agent:, memory:),
         }
+      end
+
+      def session(root: MasterPaths::ROOT, agent: nil, memory: nil)
+        return {} unless agent || memory
+
+        model = if agent&.respond_to?(:model)
+                  agent.model
+                end
+        {
+          commit: commit(root),
+          constitution: digest(root:),
+          memory_version: memory&.respond_to?(:version) ? memory.version : nil,
+          model: model.to_s.empty? ? "unknown" : model.to_s,
+        }.compact
+      rescue StandardError => e
+        Swallow.log(e, context: "BootReceipt.session")
+        { commit: commit(root), constitution: digest(root:), memory_version: nil, model: "unknown" }
       end
 
       # One line per section, in authority order. bin/doctor prints these, so
@@ -60,8 +78,13 @@ module Master
           "#{law_counts[:domain]} in law/",
           "receipt: providers #{availability(receipt[:providers])}",
           "receipt: capabilities #{availability(receipt[:capabilities])}",
+          session_line(receipt[:session]) unless receipt[:session].empty?,
           degraded_line(receipt[:degraded]),
         ]
+      end
+
+      def session_line(session)
+        "receipt: session commit=#{session[:commit]} constitution=#{session[:constitution]} "         "memory=#{session[:memory_version] || "none"} model=#{session[:model]}"
       end
 
       def digest(root: MasterPaths::ROOT)
