@@ -31,7 +31,6 @@ module Master
         @best_state = nil
         @baseline = nil
         @reasoning_memory = nil
-        @reasoning_memory = nil
       end
 
       attr_reader :best_state
