@@ -222,7 +222,7 @@ module LiveAudiovisual
           scene.add(line); fractures.push(line)
         }
 
-        let state={scene:"boot",seed:0,started_at:performance.now()/1000,energy:.2,fracture:.2,hue:.58}, target={...state}
+        let state={scene:"boot",seed:0,started_at:performance.now()/1000,energy:.2,fracture:.2,hue:.58,tension:.2,density:.3,contrast:.4,material:"graphite",world_event:"void"}, target={...state}
         async function poll(){try{target={...target,...await fetch("/state",{cache:"no-store"}).then(r=>r.json())}catch(_){}}
         setInterval(poll,140); poll()
         addEventListener("resize",()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight,false)})
@@ -232,19 +232,26 @@ module LiveAudiovisual
           const dt=clock.getDelta(), t=performance.now()/1000
           state.energy+=(Number(target.energy||.2)-state.energy)*Math.min(1,dt*4)
           state.fracture+=(Number(target.fracture||.2)-state.fracture)*Math.min(1,dt*3)
+          state.tension+=(Number(target.tension||.2)-state.tension)*Math.min(1,dt*2.5)
+          state.density+=(Number(target.density||.3)-state.density)*Math.min(1,dt*2.5)
+          state.contrast+=(Number(target.contrast||.4)-state.contrast)*Math.min(1,dt*2.5)
           const age=Math.max(0,t-Number(target.started_at||t))
-          const pulse=Math.min(1,.15+state.energy*.95+Math.sin(age*6.1)*.08)
+          const eventPulse=Math.max(0,Math.sin(age*3.2+(Number(target.seed||0)%97)))*state.contrast
+          const pulse=Math.min(1,.15+state.energy*.95+state.tension*.42+eventPulse*.35+Math.sin(age*6.1)*.08)
 
           camera.position.x=Math.sin(t*.17+Number(target.seed||0)*.001)*3.4+Math.sin(t*.043)*1.3
           camera.position.y=3.4+Math.sin(t*.13)*.85+pulse*.9
           camera.position.z=16-Math.min(10,age*.035)+Math.sin(t*.071)*2.2
           camera.lookAt(0,2.4,-13)
           point.intensity=2.4+pulse*7; key.intensity=1.45+pulse*1.8
-          core.rotation.x+=dt*(.17+state.fracture*.22); core.rotation.y+=dt*(.23+pulse*.28); core.scale.setScalar(.92+pulse*.34)
+          core.rotation.x+=dt*(.17+state.fracture*.22+state.tension*.09)
+          core.rotation.y+=dt*(.23+pulse*.28)
+          core.scale.setScalar(.92+pulse*.34)
+          coreMesh.rotation.z+=dt*state.contrast*.16
 
           rings.forEach((ring,i)=>{ring.rotation.z=t*(.05+i*.009)*(i%2?-1:1);ring.scale.setScalar(1+pulse*.13+Math.sin(t*.8+i)*.035);ring.material.opacity=.12+pulse*.32})
-          architecture.forEach(({mesh,index,side})=>{const wobble=Math.sin(t*.43+index*.72+side*.5);mesh.position.y=3+wobble*.14+pulse*.5;mesh.scale.y=1+pulse*.08+state.fracture*.12*Math.abs(wobble)})
-          slabs.rotation.y=t*.018; shardGroup.rotation.y=t*.027
+          architecture.forEach(({mesh,index,side})=>{const wobble=Math.sin(t*.43+index*.72+side*.5);mesh.position.y=3+wobble*.14+pulse*.5;mesh.scale.y=1+pulse*.08+state.fracture*.12*Math.abs(wobble);mesh.rotation.z=wobble*state.contrast*.035})
+          slabs.rotation.y=t*(.018+state.density*.012); shardGroup.rotation.y=t*(.027+state.tension*.017)
 
           shards.forEach(({mesh,index,seed})=>{
             const p=.16+(seed%1000)/2000
@@ -253,10 +260,11 @@ module LiveAudiovisual
             mesh.position.x+=local*dt*state.fracture*.16
             mesh.position.y+=Math.cos(t*.71+index)*dt*(.3+pulse*.8)
             mesh.scale.setScalar(.55+pulse*.65+Math.max(0,local)*.45)
-            mesh.material.emissiveIntensity=.35+pulse*1.5
+            mesh.material.emissiveIntensity=.35+pulse*1.5+state.contrast*.7
           })
-          fractures.forEach((line,index)=>{line.rotation.y=Math.sin(t*.08+index)*.08+state.fracture*.16*Math.sin(t*.27+index);line.material.opacity=.08+state.fracture*.32+pulse*.22})
-          label.textContent=String(target.scene||"LIVE").replaceAll("_"," ")+" / "+Math.round(state.energy*100)+" ENERGY / "+Math.round(state.fracture*100)+" FRACTURE"
+          fractures.forEach((line,index)=>{line.rotation.y=Math.sin(t*.08+index)*.08+state.fracture*.16*Math.sin(t*.27+index);line.material.opacity=.08+state.fracture*.32+pulse*.22+state.tension*.08})
+          const event=String(target.world_event||"void").replaceAll("_"," ")
+          label.textContent=String(target.scene||"LIVE").replaceAll("_"," ")+" / "+event+" / "+Math.round(state.tension*100)+" TENSION / "+Math.round(state.density*100)+" DENSITY"
           renderer.render(scene,camera); requestAnimationFrame(animate)
         }
         animate()
