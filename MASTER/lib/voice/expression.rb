@@ -273,9 +273,9 @@ end
         entries = Array(history)
         return { arousal: 0.45, valence: 0.0, entropy: 0.2, decay_rate: 0.65 } if entries.empty?
 
-        entropies = entries.map { |h| (h[:entropy] || h["entropy"] || 0.2).to_f }
-        valences = entries.map { |h| (h[:valence] || h["valence"] || 0.0).to_f }
-        arousals = entries.map { |h| (h[:arousal] || h["arousal"] || 0.4).to_f }
+        entropies = entries.map { |h| mood_signal(h, :entropy, 0.2) }
+        valences = entries.map { |h| mood_signal(h, :valence, 0.0) }
+        arousals = entries.map { |h| mood_signal(h, :arousal, 0.4) }
         mean_entropy = entropies.sum / entropies.length
         mean_valence = valences.sum / valences.length
         mean_arousal = arousals.sum / arousals.length
