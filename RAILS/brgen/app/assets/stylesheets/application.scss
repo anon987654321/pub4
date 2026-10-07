@@ -1,5 +1,5 @@
-@use "stack_brgen" as *;
 @use "vertical_promo";
+@use "stack_brgen" as *;
 @use "shell" with ($drawer-chrome: false);
 @use "site_legal";
 @use "sass:meta";
