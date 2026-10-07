@@ -21,7 +21,7 @@ module Master
       MAX_INJECT_TOKEN_CAP = 2_000
       MAX_INJECT_TOKENS = [Master::DEFAULT_CONTEXT_WINDOW / MAX_INJECT_CONTEXT_RATIO, MAX_INJECT_TOKEN_CAP].min.freeze
       MAX_INJECT_ENTRIES = 5
-      TYPES = %w[user feedback project reference general].freeze
+      TYPES = %w[user feedback project reference reasoning general].freeze
       AUTO_SAVE_PATTERNS = {
         "user" => /\b(?:i'?m a|i am a|my role is|i work as)\s+([^.,;\n]{3,80})/i,
         "feedback" => /\b(?:don'?t|stop|never|always|prefer|from now on)\s+([^.,;\n]{3,120})/i,
