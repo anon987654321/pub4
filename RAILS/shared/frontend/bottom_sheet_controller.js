@@ -45,14 +45,14 @@ export default class extends Controller {
 
   pointerDown(event) {
     this.dragging = true
-    this.startY = event.clientY || event.touches?.[0]?.clientY || 0
+    this.startY = event.clientY ?? event.touches?.[0]?.clientY ?? 0
     this.currentY = this.startY
     this.sheetTarget.style.transition = "none"
   }
 
   pointerMove(event) {
     if (!this.dragging) return
-    this.currentY = event.clientY || event.touches?.[0]?.clientY || 0
+    this.currentY = event.clientY ?? event.touches?.[0]?.clientY ?? 0
     const delta = this.currentY - this.startY
     const offset = Math.max(0, Math.min(100, 100 - (this.levelValue * 50) + (delta / 4)))
     this.sheetTarget.style.transform = `translateY(${offset}%)`
