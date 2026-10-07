@@ -118,8 +118,11 @@ module Master
         end
 
         def skip_unreadable(path, result)
-          Master::Trace::Dmesg.once("fix0", "skipped #{path.delete_prefix("#{@root}/")}, #{result.message.split(":").first}")
-          []
+          relative = path.delete_prefix("#{@root}/")
+          message = "fix scan refused #{relative}: #{result.message}"
+          @bus&.publish("fix_loop:unreadable", file: relative, message: result.message)
+          Master::Trace::Dmesg.status("fix0", message[0, 180])
+          raise message
         end
 
         def run_pass(files:, target:, pass:, deadline:, transaction_id:, history:, seen_snapshots:,
