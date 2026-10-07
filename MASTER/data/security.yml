@@ -50,6 +50,9 @@ tools:
       - WebSearch
       - SubdomainOrchestrator
       - WebFetch
+      - CodePen
+      - Gist
+      - YouTubeTranscript
       - MemoryRecord
   # Read by lib/ground/tool.rb (Tool::Domain). The authority domain a standing
   # order acts under and what it may reach. Finance, household and devices wait
