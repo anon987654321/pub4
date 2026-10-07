@@ -97,8 +97,8 @@ workstreams:
   - id: model_laboratory
     state: landed
     title: Provider/model outcome history and routing evidence
-    implementation: MASTER/lib/cli/routing
-    proof: MASTER/lib/ai/trajectory
+    implementation: MASTER/lib/ai/trajectory/laboratory.rb
+    proof: MASTER/test/test_ai_trajectory_laboratory.rb
   - id: browser_proof
     state: partial
     title: Rendered geometry, accessibility and performance evidence
