@@ -261,7 +261,7 @@ window.addEventListener('master:visual', (ev) => {
   }
 
   if (/council:deliberation|council:start/i.test(d.name || '')) {
-    const cDrop  = ex.eye_confidence_drop || 0.25;
+    const cDrop = ex.eye_confidence_drop || 0.25;
     if (eyePool) for (let i = 0; i < eyePool.count; i++) if (eyePool.alive[i])
       eyeCells()[i*window.ParticleKernel.FIELDS_PER_CELL + window.ParticleKernel.FIELD.confidence] = Math.max(0.2, (eyeCells()[i*window.ParticleKernel.FIELDS_PER_CELL + window.ParticleKernel.FIELD.confidence]||0.9) - cDrop);
   }
@@ -435,10 +435,10 @@ if (renderer) {
         const wx = pts[b+3] + (pts[b]   - pts[b+3]) * m + noise;
         const wy = pts[b+4] + (pts[b+1] - pts[b+4]) * m + noise * 0.5;
         const wz = pts[b+5] + (pts[b+2] - pts[b+5]) * m;
-        const rx  = wx * cosY + wz * sinY;
+        const rx = wx * cosY + wz * sinY;
         const rz0 = -wx * sinY + wz * cosY;
-        const ry  = wy * cosX - rz0 * sinX;
-        const rz  = wy * sinX + rz0 * cosX;
+        const ry = wy * cosX - rz0 * sinX;
+        const rz = wy * sinX + rz0 * cosX;
         const dz  = camZ - rz;
         if (dz <= 0.1) continue;
         const px = rx / dz * f2 + cw2 * 0.5;
