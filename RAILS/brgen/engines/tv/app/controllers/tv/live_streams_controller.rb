@@ -41,11 +41,9 @@ module Tv
     end
 
     def update
-      if @live_stream.update(live_stream_params)
-        redirect_to live_stream_path(@live_stream), notice: t("tv.live_stream_updated")
-      else
-        render :show, status: :unprocessable_entity
-      end
+      return render :show, status: :unprocessable_entity unless @live_stream.update(live_stream_params)
+
+      redirect_to live_stream_path(@live_stream), notice: t("tv.live_stream_updated")
     end
 
     def destroy
