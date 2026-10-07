@@ -28,7 +28,13 @@ class TestUnpromptedSpeech < Minitest::Test
 
   # The generated runtime, not just the part file: the boot path that actually
   # ships is the concatenation, and the two have drifted before.
-  def boot_sources = { "face.part5.txt" => read("face.part5.txt"), "face.runtime.js" => read("face.runtime.js") }
+  def boot_sources
+    {
+      "face.part1.txt" => read("face.part1.txt"),
+      "face.part5.txt" => read("face.part5.txt"),
+      "face_speech_runtime.js" => read("face_speech_runtime.js")
+    }
+  end
 
   def code_of(source)
     source.lines.reject { |line| line.strip.start_with?("//") }.join
