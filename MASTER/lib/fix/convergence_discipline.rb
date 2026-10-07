@@ -99,6 +99,14 @@ module Master
         current[:score].to_i < before[:score].to_i || current[:progressed] == true
       end
 
+      def note_progress!
+        return false if @history.empty?
+
+        @history[-1][:progressed] = true
+        emit("fix_loop:convergence_progress", pass: @history[-1][:pass], reason: "post-observation repair")
+        true
+      end
+
       def diminishing_returns?
         cycles = limits["diminishing_cycles"].to_i
         return false if @history.size < cycles + 1
