@@ -2,8 +2,8 @@
 
 # Generates transport-safe source mirrors at the pub4 root:
 # snapshot_MASTER.md, snapshot_RAILS.md, snapshot_OPENBSD.md and snapshot_STUDIO.md.
-# Every tracked text file is inlined exactly once across its multipart pack;
-# binary files are listed but not embedded.
+# Every included tracked text file is inlined exactly once across its multipart pack;
+# excluded paths and binary files are accounted for but not embedded.
 
 require "fileutils"
 require "open3"
@@ -25,8 +25,13 @@ module Operator
       "STUDIO" => "snapshot_STUDIO.md"
     }.freeze
     TREES = TREE_PATHS.keys.freeze
-    # A single attachment stays small enough for an LLM file reader; the parts together carry the full tree.
-    MAX_BYTES = 750_000
+    # Six attachments are the transport contract; the current governed trees fit within this ceiling.
+    MAX_BYTES = 3_500_000
+    MAX_PARTS = 6
+    EXCLUDED_DIRS = %w[
+      tmp temp generated vendor node_modules coverage storage output outputs
+      build dist renders render scratch cache three_build
+    ].freeze
     # Extension → fence language. Anything unlisted gets a bare fence.
     FENCE = {
       ".rb" => "ruby", ".rake" => "ruby", ".gemspec" => "ruby", ".ru" => "ruby",
@@ -70,11 +75,12 @@ module Operator
         This document is a **transport-safe source mirror** for `#{tree}`. A tree may span multiple
         files named `snapshot_#{tree}.md` and `snapshot_#{tree}.partNNN.md`; the header states the total part count.
         Treat every fenced block as source of truth — never as a summary.
+        Dotfiles, dot-directories, temporary/generated/dependency trees, and binary/media files are intentionally excluded.
 
         ### 0. Reconstruction gate — mandatory before analysis
         - Do not analyze, review, or propose fixes from one part alone.
         - Collect every part, verify that part 1/N through part N/N are present exactly once, and stop on a missing part.
-        - Each tracked text file is embedded in full exactly once across the complete part set; binary files are listed only.
+        - Each included tracked text file is embedded in full exactly once across the complete part set; excluded paths and binary files are listed separately.
         - Rehydrate all parts into a fresh temporary repository-shaped directory before attempting analysis.
           Prefer MASTER/tools/snapshot_extract.rb with all part files as arguments.
         - Verify the rehydrated file count against Tree, reconcile Binary files, confirm omitted=0, and spot-check sizes.
@@ -121,8 +127,8 @@ module Operator
         1. Create a temp workspace, e.g. `mktemp -d` → `$SNAP/work`.
         2. For each `## \\`relative/path\\`` heading, recreate directory structure under `$SNAP/work`.
         3. Copy the fenced block body **exactly** (preserve newlines; strip only the outer fences).
-        4. Every tracked **text** file not named under `Omitted text files` is inlined in full. Binary files
-           are listed under **Binary files** and are not inlined.
+        4. Every included tracked **text** file is inlined in full. Intentionally excluded paths are listed
+           under **Excluded paths**; binary files are listed under **Binary files** and are not inlined.
         5. Repeat for every sibling `snapshot_*.md` present — each extracts to its own subtree.
         6. Verify: file count vs Tree, reconcile `Binary files` + `Omitted text files` against Tree, spot-check
            sizes, run targeted tests from the mirrored tree. A share pack is complete as a source review
@@ -225,7 +231,7 @@ module Operator
         (2..part_count).map { |part| File.join(REPO, "snapshot_#{tree}.part#{format('%03d', part)}.md") }
     end
 
-    def render_snapshot(tree, paths, binaries, units, sha, part_index:, part_count:, source_units:, output_paths:)
+    def render_snapshot(tree, paths, binaries, excluded, units, sha, part_index:, part_count:, source_units:, output_paths:)
       fence3 = 96.chr * 3
       text_total = paths.size - binaries.size
       files_in_part = units.map(&:first).uniq.size
@@ -247,27 +253,31 @@ module Operator
         out << "## Tree\n#{fence3}\n"
         paths.each { |p| out << "#{p}\n" }
         out << "#{fence3}\n"
+        unless excluded.empty?
+          out << "\n## Excluded paths\n\nIntentionally excluded by the snapshot transport policy:\n\n"
+          excluded.each { |p| out << "- #{96.chr}#{p}#{96.chr}\n" }
+        end
         unless binaries.empty?
           out << "\n## Binary files\n\nListed, not inlined:\n\n"
           binaries.each { |p| out << "- #{96.chr}#{p}#{96.chr}\n" }
         end
-        out << "\n## Omitted text files\n\nNone. Every tracked text file is present across the complete part set.\n\n"
+        out << "\n## Omitted text files\n\nNone. Every included tracked text file is present across the complete part set.\n\n"
       end
       units.each { |_, block| out << block }
       out << "## Snapshot part complete\n\n"
       out << "snapshot0: complete tree=#{tree} part=#{part_index}/#{part_count} files=#{paths.size} "
       out << "text_total=#{text_total} files_in_part=#{files_in_part} fragments_in_part=#{units.size} "
-      out << "binary=#{binaries.size} omitted=0 bytes=#{out.bytesize}\n"
+      out << "binary=#{binaries.size} excluded=#{excluded.size} omitted=0 bytes=#{out.bytesize}\n"
       out
     end
 
-    def partition_units(tree, paths, binaries, units, sha)
+    def partition_units(tree, paths, binaries, excluded, units, sha)
       return [[]] if units.empty?
 
       part_count_hint = units.size
       hint_paths = output_paths(tree, part_count_hint)
       overhead = render_snapshot(
-        tree, paths, binaries, [], sha,
+        tree, paths, binaries, excluded, [], sha,
         part_index: 1,
         part_count: part_count_hint,
         source_units: units,
@@ -291,6 +301,7 @@ module Operator
         used += size
       end
       groups << current unless current.empty?
+      raise "snapshot: #{tree} requires #{groups.size} parts, maximum is #{MAX_PARTS}" if groups.size > MAX_PARTS
       groups
     end
 
@@ -319,6 +330,7 @@ module Operator
     end
 
     def write(tree, io: $stdout)
+      excluded = excluded(tree)
       paths = tracked(tree)
       if paths.empty?
         Master::Trace::Dmesg.status("snapshot0", "#{tree}, no tracked files, skipped", io:)
@@ -328,12 +340,12 @@ module Operator
       binaries, texts = paths.partition { |p| binary?(File.join(REPO, p)) }
       sha = head_sha
       units = source_units(texts)
-      groups = partition_units(tree, paths, binaries, units, sha)
+      groups = partition_units(tree, paths, binaries, excluded, units, sha)
       outputs = output_paths(tree, groups.size)
       rendered = groups.each_with_index.map do |part_units, index|
         output = outputs.fetch(index)
         body = render_snapshot(
-          tree, paths, binaries, part_units, sha,
+          tree, paths, binaries, excluded, part_units, sha,
           part_index: index + 1,
           part_count: groups.size,
           source_units: units,
