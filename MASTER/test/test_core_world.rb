@@ -92,6 +92,18 @@ class WorldTest < Minitest::Test
     end
   end
 
+  def test_a_symlink_to_an_inside_credential_cannot_be_read
+    with_world do |world, root|
+      secret = File.join(root, "credentials.yml")
+      File.write(secret, "SECRET=hunter2\n")
+      File.symlink(secret, File.join(root, "credential-link.yml"))
+
+      obs = world.perform(E.read("credential-link.yml"))
+      assert obs.err?
+      refute_match(/hunter2/, obs.message.to_s)
+    end
+  end
+
   def test_a_symlink_out_of_the_workspace_cannot_be_read
     with_world do |world, root|
       outside = File.join(File.dirname(root), "outside-#{SecureRandom.hex(4)}.txt")
