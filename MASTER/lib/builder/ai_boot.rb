@@ -184,7 +184,7 @@ module Master
       fix_loop.start_background!(root)
     end
 
-    # A thread whose death says so.
+    # A dead background thread must remain visible.
     #
     # abort_on_exception is false on every background thread here, which is
     # right — a watcher falling over must not take the process with it. The rescue
