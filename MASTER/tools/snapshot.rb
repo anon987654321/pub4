@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
 # Regenerates the verbatim codebase mirrors at the pub4 root: snapshot_MASTER.md,
-# snapshot_RAILS.md, snapshot_OPENBSD.sh and snapshot_STUDIO.md.
+# snapshot_RAILS.md, snapshot_OPENBSD.md and snapshot_STUDIO.md.
 #
 # These are the packs handed to another model when it needs the whole tree
-# rather than a summary: every git-tracked text file inlined in full, no size
-# cap, plus a tree listing and the reading protocol.
+# rather than a summary: every git-tracked text file inlined when the share pack fits the hard size ceiling,
+# plus a tree listing, omitted-file ledger and the reading protocol.
 #
 # The generator that made them was `bin/snapshot`, deleted with the DEPLOY tree
 # in the OPENBSD reorganisation — so the source mirrors sat stale at a
@@ -32,10 +32,17 @@ module Operator
     OUTPUT_NAMES = {
       "MASTER" => "snapshot_MASTER.md",
       "RAILS" => "snapshot_RAILS.md",
-      "OPENBSD" => "snapshot_OPENBSD.sh",
+      "OPENBSD" => "snapshot_OPENBSD.md",
       "STUDIO" => "snapshot_STUDIO.md"
     }.freeze
     TREES = TREE_PATHS.keys.freeze
+    MAX_BYTES = 9_500_000
+    MANDATORY_PATHS = %w[
+      MASTER/README.md
+      MASTER/data/soul.yml
+      MASTER/data/laws.yml
+      MASTER/tools/snapshot.rb
+    ].freeze
 
     # Extension → fence language. Anything unlisted gets a bare fence.
     FENCE = {
@@ -168,6 +175,57 @@ module Operator
       MD
     end
 
+    def omission_priority(path)
+      return 0 if path.match?(%r{/(?:vendor|public/vendor)/})
+      return 0 if path.match?(/(?:\.bundle|\.min)\.(?:js|css)\z/)
+      return 0 if path.end_with?(".map")
+      return 5 if path == "MASTER/web/public/three.face.module.js"
+      return 10 if path.match?(%r{/public/.*(?:runtime|bundle)\.js\z})
+      return 50 if path.start_with?("MASTER/web/public/")
+      100
+    end
+
+    def mandatory?(path)
+      MANDATORY_PATHS.include?(path) ||
+        path.start_with?("MASTER/law/", "MASTER/lib/review/scan/rules/")
+    end
+
+    def render_snapshot(tree, paths, binaries, texts, omitted, sha)
+      fence3 = chr(96) * 3
+      out = String.new
+      out << "# #{tree} — source snapshot\n\n"
+      out << "Generated #{Time.now.utc.strftime(%Y-%m-%d %H:%M UTC)} — git #{sha} — "
+      out << "#{texts.size} files inlined"
+      out << ", #{binaries.size} binary listed only" unless binaries.empty?
+      out << ", #{omitted.size} text omitted for share-size" unless omitted.empty?
+      out << ".\n\n"
+      out << protocol(tree)
+      out << "## Tree\n#{fence3}\n"
+      paths.each { |p| out << "#{p}\n" }
+      out << "#{fence3}\n"
+      unless binaries.empty?
+        out << "\n## Binary files\n\nListed, not inlined:\n\n"
+        binaries.each { |p| out << "- #{chr(96)}#{p}#{chr(96)}\n" }
+      end
+      unless omitted.empty?
+        out << "\n## Omitted text files\n\nThese tracked text files are deliberately omitted only to keep this share pack below the hard 9.5 MB ceiling.\n\n"
+        omitted.each { |p| out << "- #{chr(96)}#{p}#{chr(96)} — #{File.size(File.join(REPO, p))} bytes\n" }
+      end
+      out << "\n"
+      texts.each do |p|
+        body = File.read(File.join(REPO, p), encoding: "UTF-8")
+        longest = body.scan(/^`{3,}/).map(&:length).max.to_i
+        fence = chr(96) * [3, longest + 1].max
+        out << "## #{chr(96)}#{p}#{chr(96)}\n\n"
+        out << "#{fence}#{FENCE.fetch(File.extname(p), )}\n"
+        out << body
+        out << "\n" unless body.end_with?("\n")
+        out << "#{fence}\n\n"
+      end
+      out << "## Snapshot complete\n\n"
+      out << "snapshot0: complete tree=#{tree} files=#{paths.size} text=#{texts.size} binary=#{binaries.size} omitted=#{omitted.size} bytes=#{out.bytesize}\n"
+      out
+    end
     def write(tree, io: $stdout)
       paths = tracked(tree)
       if paths.empty?
