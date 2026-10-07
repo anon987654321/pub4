@@ -2,6 +2,7 @@
 
 require_relative "dilla_helper"
 require_relative "../dilla/lib/livesets"
+require_relative "../dilla/lib/radio_video"
 require "stringio"
 require "digest"
 
@@ -225,6 +226,18 @@ class TestDillaLiveSynth < Minitest::Test
       assert_path_exists output
       assert_operator File.size(output), :>, 0
     end
+  end
+
+  def test_video_process_runner_is_bounded_and_kills_the_process_group
+    error = assert_raises(RuntimeError) do
+      RadioVideo.run_bounded!(
+        [RbConfig.ruby, "-e", "sleep 30"],
+        timeout: 0.1,
+        label: "test video",
+      )
+    end
+
+    assert_includes error.message, "timed out after 0.1s"
   end
 
   def test_showcase_video_failure_is_fatal_and_removes_stale_output
