@@ -323,7 +323,11 @@ module Master
 
         remaining_passes.times do |offset|
           i = first_index + offset
-          outcome = run_one_pass(i, files:, target:, deadline:, budget_seconds:, state:, run_id:, wishlist_proposals:)
+          active_wishlist = i == first_index ? wishlist_proposals : []
+          outcome = run_one_pass(
+            i, files:, target:, deadline:, budget_seconds:, state:, run_id:,
+            wishlist_proposals: active_wishlist
+          )
           return terminal(:plateau, "no further improvement after #{i + 1} pass(es)") if outcome == :break
           return outcome if outcome
 
