@@ -86,14 +86,30 @@ module Master
         end
 
         def filter_entries(entries, include_only:, exclude:)
-          inc_patterns = Array(include_only).map { |p| Regexp.new(p) }
-          exc_patterns = Array(exclude).map { |p| Regexp.new(p) }
+          inc_patterns = compile_filter_patterns(include_only, "include")
+          exc_patterns = compile_filter_patterns(exclude, "exclude")
+          return [] if inc_patterns.nil? || exc_patterns.nil?
 
           entries.select do |entry|
             base = File.basename(entry[:path])
             matches_inc = inc_patterns.empty? || inc_patterns.any? { |r| r.match?(base) }
             matches_exc = exc_patterns.any? { |r| r.match?(base) }
             matches_inc && !matches_exc
+          end
+        end
+
+        def compile_filter_patterns(patterns, kind)
+          Array(patterns).map do |source|
+            Regexp.new(source.to_s)
+          rescue RegexpError => e
+            Master::Ground::Swallow.log(
+              e,
+              context: "antigravity.json_config.#{kind}_filter",
+              pattern: source.to_s,
+            )
+            nil
+          end.tap do |compiled|
+            return if compiled.any?(&:nil?)
           end
         end
       end
