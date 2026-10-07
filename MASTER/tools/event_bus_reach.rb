@@ -93,6 +93,13 @@ module Operator
       return unless args.is_a?(Array) && args[0] == :args_add_block
 
       value = args[1]&.first
+      if value.is_a?(Array) && value[0] == :symbol_literal
+        symbol = value[1]
+        token = symbol.is_a?(Array) && symbol[0] == :symbol ? symbol[1] : nil
+        return token[1].to_s if token.is_a?(Array) && token[0] == :@tstring_content
+        return
+      end
+
       if value.is_a?(Array) && value[0] == :dyna_symbol
         body = value[1]
         return unless body.is_a?(Array) && body[0] == :string_content
