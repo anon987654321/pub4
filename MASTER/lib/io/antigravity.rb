@@ -269,8 +269,18 @@ module Master
         def scan_skills_dir(dir_path, source:, include_only: [], exclude: [])
           return unless File.directory?(dir_path)
 
-          inc_patterns = Array(include_only).map { |p| Regexp.new(p) }
-          exc_patterns = Array(exclude).map { |p| Regexp.new(p) }
+          begin
+            inc_patterns = Array(include_only).map { |p| Regexp.new(p) }
+            exc_patterns = Array(exclude).map { |p| Regexp.new(p) }
+          rescue RegexpError => e
+            Master::Ground::Swallow.log(
+              e,
+              context: "antigravity.skills.filter",
+              source:,
+              dir: dir_path,
+            )
+            return
+          end
 
           Dir.glob(File.join(dir_path, "*")).sort.each do |skill_dir|
             next unless File.directory?(skill_dir)
