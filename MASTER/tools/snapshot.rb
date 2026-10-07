@@ -36,7 +36,8 @@ module Operator
       "STUDIO" => "snapshot_STUDIO.md"
     }.freeze
     TREES = TREE_PATHS.keys.freeze
-    MAX_BYTES = 8_000_000
+    # A single attachment stays small enough for an LLM file reader; the parts together carry the full tree.
+    MAX_BYTES = 750_000
     MANDATORY_PATHS = %w[
       MASTER/README.md
       MASTER/data/soul.yml
@@ -84,11 +85,24 @@ module Operator
 
         ## Agent analysis protocol
 
-        This document is a **share-size-bounded source mirror** for `#{tree}`. Treat every fenced
-        block as source of truth — not a summary. The `Omitted text files` section, when present,
-        is authoritative: those tracked text files were excluded only to satisfy the hard size ceiling. Work through it in this order:
+        This document is a **transport-safe source mirror** for `#{tree}`. A tree may span multiple
+        files named `snapshot_#{tree}.md` and `snapshot_#{tree}.partNNN.md`; the header states the total part count.
+        Treat every fenced block as source of truth — never as a summary.
+
+        ### 0. Reconstruction gate — mandatory before analysis
+        - Do not analyze, review, or propose fixes from one part alone.
+        - Collect every part, verify that part 1/N through part N/N are present exactly once, and stop on a missing part.
+        - Each tracked text file is embedded in full exactly once across the complete part set; binary files are listed only.
+        - Rehydrate all parts into a fresh temporary repository-shaped directory before attempting analysis.
+          Prefer MASTER/tools/snapshot_extract.rb with all part files as arguments.
+        - Verify the rehydrated file count against Tree, reconcile Binary files, confirm omitted=0, and spot-check sizes.
+        - If the attachment system exposes only a preview, truncated text, or one part, stop and request the missing parts.
+
+        This pack is deliberately partitioned for transport; the complete tree is the union of all its parts.
+        Work through the rest of the protocol only after the reconstruction gate passes.
 
         ### 1. Orient
+
         - Read the header (generation metadata, file count, policy) and **Tree** before opening any file block.
         - Note topology: where boot, routing, data, UI, deploy, and tests live relative to each other.
 
