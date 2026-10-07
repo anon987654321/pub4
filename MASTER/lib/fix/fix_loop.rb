@@ -119,7 +119,13 @@ module Master
           "corpus candidates=#{coverage[:candidates]} collected=#{coverage[:collected]} skipped=#{coverage[:skipped]}",
         )
         if coverage[:candidates].positive? && files.empty?
-          return Result.err("fix_loop: corpus collected zero files from #{coverage[:candidates]} candidates", category: :validation)
+          reasons = @file_collector.skip_reasons.sort_by { |reason, count| [-count, reason] }
+          detail = reasons.first(4).map { |reason, count| "#{reason}=#{count}" }.join(", ")
+          suffix = detail.empty? ? "" : " (#{detail})"
+          return Result.err(
+            "fix_loop: corpus collected zero files from #{coverage[:candidates]} candidates#{suffix}",
+            category: :validation
+          )
         end
         @convergence_discipline.begin_run(files)
         journal = @run_journal.start_or_resume(target:, files:, max_passes:, budget_seconds:)
