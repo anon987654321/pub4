@@ -237,4 +237,11 @@ class TestRecoveryPubManifest < Minitest::Test
     assert_includes lineage.dig("canonical_v20_2", "value"), "ask before destructive action"
     assert_includes lineage.fetch("caution"), "The old JSON versions are historical reasoning evidence, not runtime configuration."
   end
+  def test_missing_until_restored_contains_only_absent_targets
+    contract = YAML.safe_load(ROOT.join("MASTER/data/recovery_pub.yml").read, permitted_classes: [Date])
+    paths = contract.fetch("checks").fetch("missing_until_restored")
+    present = paths.select { |path| ROOT.join(path).file? }
+
+    assert_empty present, "recovery ledger marks present paths as missing: #{present.join(", ")}"
+  end
 end
