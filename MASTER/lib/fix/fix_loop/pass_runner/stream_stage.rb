@@ -97,7 +97,7 @@ module Master
             resolve_violations(untouched + fresh)
           end
           def drain_repairs(queue, streamed, pass, deadline)
-            rules = @rule_order.ordered(violation_counts: @violation_counts)
+            rules = @law_order.ordered(violation_counts: @violation_counts)
             stream = Stream.new(streamed, pass, Hash.new(0))
             fixed = 0
             while (item = queue.pop) != :done
