@@ -680,7 +680,7 @@ class TestDillaLiveSynth < Minitest::Test
     assert_includes showcase, "prepare_showcase_defaults!"
     assert_includes showcase, 'live!(["showcase", "mode=all"])'
     refute_includes showcase, 'live!(["showcase"])'
-    assert_match(/if cmd\.nil\?.*?live!\(\[["']showcase["']\]\)/m, source)
+    refute_match(/if cmd\.nil\?/, source)
     refute_match(/if cmd\.nil\?.*?Bed\.pieces!/m, source)
   end
 
