@@ -393,6 +393,11 @@
       }
     }
     const density = finite(topologyProfile.density, 1);
+    const morphology = SPATIAL.morphology || {};
+    const cranialScale = finite(morphology.cranium_scale, 1.12);
+    const cranialWidth = finite(morphology.cranial_width, 1.03);
+    const lowerFaceScale = finite(morphology.lower_face_scale, 0.84);
+    const facialProjection = finite(morphology.facial_projection, 0.88);
     const audioEnergy = Math.max(0, Math.min(1, (audio.rms * 0.45) + (audio.mid * 0.35) + (audio.high * 0.20)));
     const audioPulse = Math.max(audio.onset, audio.bass * 0.65);
     const fracture = finite(topologyProfile.fracture, 0);
@@ -408,7 +413,11 @@
     world.rotation.y += ((pointerX * 0.045) + tiltY * (geometry.fracture + fracture) - world.rotation.y) * 0.035;
     world.rotation.x += ((pointerY * 0.028) + tiltX * (geometry.fracture + fracture) - world.rotation.x) * 0.035;
 
-    shell.scale.setScalar(geometry.shell_scale * (1 + audioPulse * 0.018));
+    shell.scale.set(
+      geometry.shell_scale * cranialWidth * (1 + audioPulse * 0.018),
+      geometry.shell_scale * cranialScale * (1 + audioPulse * 0.010),
+      geometry.shell_scale * facialProjection * (1 + audioPulse * 0.012)
+    );
     shellMaterial.uniforms.uTime.value = now;
     shellMaterial.uniforms.uTension.value = geometry.shell_tension;
     shellMaterial.uniforms.uPulse.value = geometry.shell_pulse;
