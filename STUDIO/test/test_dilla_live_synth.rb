@@ -303,6 +303,33 @@ class TestDillaLiveSynth < Minitest::Test
     assert_equal({ "lead" => "fm", "preset" => "glass" }, say.steering("fm lead glass"))
   end
 
+  def test_live_dilla_references_use_a_historical_grid
+    with_live_env("DILLA_LIVE_KIT" => "dilla_fantastic") do
+      score = LiveSynth::Improviser.new(
+        rng: Random.new(7),
+        reference: "slum_village_players_documented",
+        family: "prophet"
+      )
+      kit = score.instance_variable_get(:@kit)
+      grid = kit.instance_variable_get(:@grid)
+      assert_equal :dilla_fantastic, kit.instance_variable_get(:@preset)
+      assert_equal [0, 6, 10, 11], grid.fetch(:kicks)
+      assert_equal [4, 12], grid.fetch(:snares)
+      assert_equal [7, 15], grid.fetch(:ghosts)
+    end
+  end
+
+  def test_esen_flow_is_reachable_and_all_its_chords_voice
+    score = LiveSynth::Progression.new("esen_flow", rng: Random.new(9))
+    chords = score.instance_variable_get(:@chords)
+    assert_equal 8, chords.length
+    names = chords.map { |chord| chord.fetch("name") }
+    assert_equal %w[Dm9 Abmaj9 Emaj9 C7#11 Fm9 Bmaj7#11 G7sus4 Dm9], names
+    chords.each do |chord|
+      assert_operator Array(chord.fetch("tones")).length, :>=, 3, chord.fetch("name")
+    end
+  end
+
   def test_default_improviser_draws_only_source_backed_dilla_or_dangelo_harmony
     keys = LiveSynth.authentic_progression_keys
     refute_empty keys
