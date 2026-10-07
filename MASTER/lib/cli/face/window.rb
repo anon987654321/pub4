@@ -347,7 +347,7 @@ module Master
         def subscribe_to_bus(event_bus)
           return [] unless event_bus.respond_to?(:subscribe)
 
-          %w[llm:** pipeline:** phantom:** council:**].map do |pattern|
+          %w[llm:** pipeline:** phantom:** council:** tts:**].map do |pattern|
             event_bus.subscribe(pattern) { |event| bus_event(event) }
           end
         rescue StandardError => e
