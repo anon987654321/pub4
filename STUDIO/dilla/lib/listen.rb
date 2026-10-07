@@ -33,21 +33,18 @@ module DillaMaster
   def loss_gates
     raise "loss-gate reference missing: #{REFERENCE_PATH}" unless File.file?(REFERENCE_PATH)
 
-    gates = YAML.safe_load_file(REFERENCE_PATH).fetch("loss_gates")
+    data = YAML.safe_load_file(REFERENCE_PATH)
+    gates = data.fetch("loss_gates")
+    raise "loss-gate reference must be a mapping" unless gates.is_a?(Hash)
+
     missing = REQUIRED_LOSS_GATES.reject { |name| gates.key?(name) }
     raise "loss-gate reference incomplete: missing #{missing.join(", ")}" unless missing.empty?
-    raise "loss-gate reference must be a mapping" unless gates.is_a?(Hash)
 
     gates
   end
 
-  # Hard pre-flight reject, not an advisory score — a take failing this
-  # should not be promoted regardless of beauty/groove. Only checks metrics
-  # actually present in `report` (crest_factor_db from analyze_audio's
-  # `dynamics` block is real; kick/bass timing correlation and the 200-400Hz
-  # mud-zone level aren't measured anywhere in this engine yet, so those two
-  # gates are honest no-ops — `skipped`, not silently passed — until that
-  # analysis exists).
+  # Hard pre-flight reject, not an advisory score — a take failing any of
+  # these should not be promoted even if beauty/groove scored well.
   def passes_loss_gates?(report, path: nil)
     gates = loss_gates
     return { pass: true, failures: [], skipped: [] } if gates.empty? || !report
@@ -89,10 +86,6 @@ module DillaMaster
       skipped << "stereo_phase_correlation (no audio path given)"
     end
 
-    # LUFS / true-peak are already measured by `dilla_quality`. Promotion used
-    # to ignore them, so a take that `quality` itself warned about could still
-    # land in promoted_profiles.json. The numbers live in this file's yaml so
-    # the range is one source, not a second copy of DILLA_QUALITY_LUFS_TARGET.
     tp = report[:true_peak_dbtp] || report["true_peak_dbtp"]
     if tp
       max_tp = gates["true_peak_max_dbtp"]
@@ -112,7 +105,6 @@ module DillaMaster
     end
 
     { pass: failures.empty?, failures:, skipped: }
-  end
   rescue StandardError => e
     {
       pass: false,
