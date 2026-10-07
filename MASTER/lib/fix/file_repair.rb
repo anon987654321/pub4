@@ -32,7 +32,9 @@ module Master
 
       # The rules this repair put to the model, once run has filtered out what
       # waits for a person or fails the confidence gate.
-      def asked_rules = @findings.map { |finding| finding[:rule].to_s }.uniq
+      def asked_rules
+        repairable.map { |finding| finding[:rule].to_s }.uniq
+      end
 
       def run(path)
         @findings = repairable
