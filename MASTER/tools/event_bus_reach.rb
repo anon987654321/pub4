@@ -131,11 +131,23 @@ module Operator
     end
 
     def expanded_regex_topics(body)
-      body.to_s.scan(
-        /([a-z][a-z0-9_]*):(?:\\((?:\\?:)?|\\((?:\\?))?/
-      ).flat_map do |prefix, alternatives|
-        alternatives.split("|").map { |suffix| "#{prefix}:#{suffix}" }
+      text = body.to_s
+      topics = []
+
+      # Non-capturing and capturing groups: prefix:(?:a|b) / prefix:(a|b).
+      text.scan(/([a-z][a-z0-9_]*):\\((?:\\?:)?([a-z][a-z0-9_:-]*(?:\\|[a-z][a-z0-9_:-]*)+)\\)/) do |prefix, alternatives|
+        alternatives.split("|").each { |suffix| topics << "#{prefix}:#{suffix}" }
       end
+
+      # Bare alternation: prefix:a|prefix:b. Only expand an alternation when
+      # every arm carries the same event-topic prefix; this avoids inventing
+      # cross-topic matches from ordinary regex alternation.
+      text.scan(/([a-z][a-z0-9_]*):([a-z][a-z0-9_:-]*)\\|\\1:([a-z][a-z0-9_:-]*)/) do |prefix, first, second|
+        topics << "#{prefix}:#{first}"
+        topics << "#{prefix}:#{second}"
+      end
+
+      topics.uniq
     end
 
     def strip_comments(source)
