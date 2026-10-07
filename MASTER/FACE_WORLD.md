@@ -282,9 +282,31 @@ does not provide a reliable blueprint for what humans will look like thousands o
 millions of years from now. Spaceflight adds real craniofacial and ocular adaptation
 problems, not a settled future phenotype.
 
-The present design therefore projects those measured directions conservatively: a fuller
-neurocranial vault, smaller lower face, flatter brow, restrained orbit enlargement, finer
-facial projection, and smaller pupils. The interface layer remains subordinate to the
-human morphology so the face reads as a future person first and a computational being
-second.
+The present design projects those measured directions conservatively: a fuller and
+higher neurocranial vault, reduced lower-face projection, a more vertical face, a lighter
+masticatory architecture, a restrained brow and slightly finer facial projection. The nose
+is not treated as a single future-human template: contemporary research links parts of
+nasal and mid-facial form to temperature and humidity, so the contract deliberately marks
+the profile as climate-neutral rather than inventing a universal climate phenotype. Seeded
+asymmetry preserves ordinary human irregularity instead of a polished synthetic mask.
+
+The redesign is informed by the 2026 Hubbe/Harvati study, which finds that Homo shows
+long-run cranial expansion and facial reduction but that neutral evolution and stasis
+often fit the data better than a simple directional-selection story. Climate studies
+likewise show real associations between nasal/mid-facial morphology and temperature and
+humidity, without implying a single endpoint for future humans.
+
+References:
+- Hubbe & Harvati, “Evolutionary drivers of encephalization and facial reduction in the
+  genus Homo”, Nature Communications, 2026-07-06:
+  https://doi.org/10.1038/s41467-026-74739-w
+- Zaidi et al., “Investigating the case of human nose shape and climate adaptation”,
+  PLOS Genetics, 2017:
+  https://doi.org/10.1371/journal.pgen.1006616
+- García-Martínez et al., “Respiratory adaptation to climate in modern humans and Upper
+  Palaeolithic individuals”, Scientific Reports, 2021:
+  https://doi.org/10.1038/s41598-021-86830-x
+
+The interface layer remains subordinate to the human morphology so the face reads as a
+future person first and a computational being second.
 
