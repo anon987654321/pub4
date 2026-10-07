@@ -196,11 +196,94 @@ module Master
           "creative work: preserve identity and invariants; mutate one declared axis at a time",
           "unfinished work: distinguish fertile uncertainty from proven deadness before deleting it",
           "teaching: explain the local decision first, then the boundary and consequence it changes",
-        ].join("
-")
+        ].join("\n")
       end
 
-      def causality_contract
+      def counterfactual_frame(hypothesis:, alternative:, boundary:, measurement:, expected_difference:)
+        {
+          hypothesis: hypothesis.to_s,
+          alternative: alternative.to_s,
+          boundary: boundary.to_s,
+          measurement: measurement.to_s,
+          expected_difference: expected_difference.to_s,
+          ready: [hypothesis, alternative, boundary, measurement, expected_difference].all? { |value| !value.to_s.strip.empty? },
+        }.freeze
+      end
+
+      # Synthesize panel opinions without majority-vote semantics. A position leads
+      # only when weighted evidence separates it from the runner-up; disagreement
+      # stays explicit and always carries a next measurement.
+      def synthesize_judgments(reports)
+        rows = Array(reports).filter_map { |report| judgment_row(report) }
+        return { count: 0, positions: [], leading: nil, disagreement: false, requires_measurement: true }.freeze if rows.empty?
+
+        groups = rows.group_by { |row| row[:signature] }
+        positions = groups.map do |signature, group|
+          score = group.sum { |row| row[:confidence] * (1.0 - row[:uncertainty]) }
+          {
+            signature:,
+            position: group.first[:position],
+            score: score.round(4),
+            voices: group.map { |row| row[:source] }.uniq,
+            evidence: group.map { |row| row[:evidence] }.reject(&:empty?).uniq.first(6),
+            falsifiers: group.map { |row| row[:falsifier] }.reject(&:empty?).uniq.first(6),
+          }
+        end.sort_by { |row| -row[:score] }
+        top = positions[0]
+        runner = positions[1]
+        gap = runner ? top[:score] - runner[:score] : top[:score]
+        {
+          count: rows.size,
+          positions: positions.first(7),
+          leading: positions.size == 1 || gap >= 0.15 ? top : nil,
+          disagreement: positions.size > 1,
+          requires_measurement: positions.size > 1 || rows.any? { |row| row[:uncertainty] >= 0.35 },
+          next_measurement: rows.map { |row| row[:falsifier] }.reject(&:empty?).first || "run the smallest deterministic test that separates the leading positions",
+        }.freeze
+      end
+
+      def preference_frame(domain:, preference:, evidence:, source:, avoid: nil, confidence: 0.8)
+        {
+          domain: domain.to_s,
+          preference: preference.to_s,
+          avoid: avoid.to_s,
+          evidence: evidence.to_s,
+          source: source.to_s,
+          confidence: confidence.to_f.clamp(0.0, 1.0).round(4),
+        }.freeze
+      end
+
+      # Fertility is a preservation signal, never a deletion authority. It asks
+      # whether there is concrete value evidence before an unfinished thing is
+      # classified as dead; otherwise the result remains investigate.
+      def fertility(item)
+        row = item.respond_to?(:to_h) ? item.to_h : item
+        row = {} unless row.is_a?(Hash)
+        consumers = signal(row, :consumers, :consumer_count, :dependents, :callers)
+        unused_days = signal(row, :unused_days, :last_used_days, fallback: 0)
+        novelty = signal(row, :novelty, fallback: 0).to_f.clamp(0.0, 1.0)
+        value = []
+        dead = []
+        value << :consumers if consumers.positive?
+        value << :operator_owned if row[:operator_owned] || row["operator_owned"]
+        value << :novelty if novelty >= 0.5
+        value << :recent_use if unused_days < 90
+        dead << :no_consumers if consumers.zero?
+        dead << :long_unused if unused_days >= 180
+        dead << :duplicate if row[:duplicate] || row["duplicate"]
+        dead << :explicit_dead if row[:explicit_dead] || row["explicit_dead"]
+        uncertainty = uncertainty_score(row)
+        posture = if dead.length >= 3 && uncertainty < 0.2
+                     :dead
+                   elsif value.length >= 2
+                     :fertile
+                   else
+                     :investigate
+                   end
+        { posture:, value_evidence: value, dead_evidence: dead, uncertainty: uncertainty.round(4) }.freeze
+      end
+
+      def teaching_frame(local:, boundary:, consequence:, next_step:)
         "causality: cause → effect → evidence; a broken handoff is a finding, not permission to guess"
       end
 
@@ -213,6 +296,34 @@ module Master
           "What source or test could directly contradict the claim?",
           "What changed recently that could make old evidence obsolete?",
         ].map { |question| "#{question} Claim: #{value}" }
+      end
+
+      def judgment_row(report)
+        row = report.respond_to?(:to_h) ? report.to_h : { claim: report.to_s, feedback: report.to_s }
+        position = row[:position] || row["position"] || row[:recommendation] || row["recommendation"] ||
+                   row[:claim] || row["claim"] || row[:feedback] || row["feedback"]
+        position = position.to_s.strip
+        return if position.empty?
+
+        evidence = (row[:evidence] || row["evidence"] || "").to_s.strip
+        falsifier = (row[:falsifier] || row["falsifier"] || "").to_s.strip
+        confidence = signal(row, :confidence, fallback: 0.5).to_f.clamp(0.0, 1.0)
+        status = (row[:status] || row["status"] || :uncertain).to_sym
+        uncertainty = uncertainty_score(row)
+        {
+          source: (row[:model] || row["model"] || row[:persona] || row["persona"] || "anonymous").to_s,
+          position: position,
+          signature: if row.key?(:purpose) || row.key?("purpose") || row.key?(:intent) || row.key?("intent")
+                       conceptual_signature(row)
+                     else
+                       canonicalize(position)
+                     end,
+          confidence:,
+          uncertainty:,
+          evidence:,
+          falsifier:,
+          status:,
+        }
       end
 
       def signal(row, *keys, fallback: 0)
