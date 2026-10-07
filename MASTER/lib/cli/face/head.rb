@@ -21,20 +21,21 @@ module Master
         THRESHOLD = 0.08
         SPREAD = 0.62
         MORPHOLOGY = Master::Face::Contract.spatial.fetch("morphology", {}).freeze
-        CRANIUM_SCALE = MORPHOLOGY.fetch("cranium_scale", 1.12).to_f
-        CRANIAL_WIDTH = MORPHOLOGY.fetch("cranial_width", 1.03).to_f
-        LOWER_FACE_SCALE = MORPHOLOGY.fetch("lower_face_scale", 0.84).to_f
-        ORBITAL_SCALE = MORPHOLOGY.fetch("orbital_scale", 1.04).to_f
-        ORBITAL_VERTICAL_SCALE = MORPHOLOGY.fetch("orbital_vertical_scale", 1.02).to_f
-        BROW_SCALE = MORPHOLOGY.fetch("brow_scale", 0.74).to_f
-        NOSE_SCALE = MORPHOLOGY.fetch("nose_scale", 0.90).to_f
-        JAW_PROJECTION = MORPHOLOGY.fetch("jaw_projection", 0.86).to_f
-        PUPIL_SCALE = MORPHOLOGY.fetch("pupil_scale", 0.82).to_f
+        CRANIUM_SCALE = MORPHOLOGY.fetch("cranium_scale", 1.18).to_f
+        CRANIAL_WIDTH = MORPHOLOGY.fetch("cranial_width", 1.06).to_f
+        LOWER_FACE_SCALE = MORPHOLOGY.fetch("lower_face_scale", 0.80).to_f
+        ORBITAL_SCALE = MORPHOLOGY.fetch("orbital_scale", 1.10).to_f
+        ORBITAL_VERTICAL_SCALE = MORPHOLOGY.fetch("orbital_vertical_scale", 1.06).to_f
+        BROW_SCALE = MORPHOLOGY.fetch("brow_scale", 0.66).to_f
+        NOSE_SCALE = MORPHOLOGY.fetch("nose_scale", 0.86).to_f
+        JAW_PROJECTION = MORPHOLOGY.fetch("jaw_projection", 0.80).to_f
+        PUPIL_SCALE = MORPHOLOGY.fetch("pupil_scale", 0.88).to_f
         ASYMMETRY = MORPHOLOGY.fetch("asymmetry", 0.010).to_f
         ASYMMETRY_SEED = MORPHOLOGY.fetch("asymmetry_seed", 73421).to_i
-        # A head is not quite as deep as it is wide, and the painting's
-        # brightness stands a little proud of it: nose and cheeks out,
-        # sockets in.
+        # The far-future profile keeps the human silhouette but shifts mass
+        # upward and inward: fuller vault, compact lower face, shallow brow,
+        # restrained nasal projection and a slightly deeper orbital field.
+        # The contract owns the numbers so browser and terminal cannot drift.
         DEPTH_RATIO = 1.10 * JAW_PROJECTION
         RELIEF = 0.20 * NOSE_SCALE
         BACK_LIGHT = 0.28
