@@ -47,7 +47,7 @@ class TestCliTerminalFace < Minitest::Test
       Array.new(seen.first, " " * seen.last).join("\n")
     end
     Master::CLI::Face.stub(:frame, renderer) { window.screen(30, 80, 2.0) }
-    assert_equal 26, seen.first
+    assert_equal 23, seen.first
     assert_equal 80, seen.last
   end
 
