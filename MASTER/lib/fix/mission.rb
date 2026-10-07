@@ -12,7 +12,7 @@ module Master
     # Mission is the durable objective. A FixLoop execution is only one attempt
     # to advance it; process death must never erase the work that remains.
     class Mission
-      include Master::Io::AtomicWrite
+      include ::Master::Io::AtomicWrite
 
       VERSION = 2
       REL_PATH = ".master/mission.json"
