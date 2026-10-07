@@ -9201,7 +9201,10 @@ body.vertical-marketplace {
   /* The blue is the vertical accent, not bol's navy (operator, 2026-09-25). */
   --bol-blue: var(--accent);
   --bol-blue-dark: var(--vertical-marketplace-accent-hover);
+  --bol-blue-soft: #eef5ff;
   --bol-ink: #111111;
+  background: var(--bol-page);
+  color: var(--bol-ink);
   --bol-muted: #666666;
   --bol-rule: #d9d9d9;
   --bol-price: #c91f2c;
@@ -10899,8 +10902,6 @@ body.vertical-marketplace {
   --store-green: var(--accent);
   --store-red: #c82435;
   --store-focus: var(--accent);
-  background: var(--bol-page);
-  color: var(--bol-ink);
 }
 
 body.vertical-marketplace #navBar.storefront-nav--bol {
@@ -11071,9 +11072,6 @@ body.vertical-marketplace .store-buybox .btn-primary {
 
 
 @media (max-width: 767px) {
-  body.vertical-marketplace #topHalf {
-  }
-
   body.vertical-marketplace #bottomHalf {
     min-height: 64px;
   }
