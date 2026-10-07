@@ -19,9 +19,11 @@ class ChromeAuditFlatContractTest < Minitest::Test
 
   def test_auth_and_promo_surfaces_do_not_reintroduce_container_borders
     auth = read("shared/app/assets/stylesheets/_auth_form.scss")
-    promo = read("brgen/app/assets/stylesheets/application.scss")
-    assert_includes auth, ".oauth-button {"
+    promo = read("brgen/app/assets/stylesheets/_vertical_promo.scss")
+    app = read("brgen/app/assets/stylesheets/application.scss")
+    assert_includes auth, ".oauth-button {
     assert_includes auth, "border: 0;"
+    assert_includes app, '@use "vertical_promo";'
     assert_includes promo, ".brgen-vertical-promo {"
     assert_includes promo, "background: var(--bg);"
     assert_includes promo, ".brgen-vertical-promo__disc {"
