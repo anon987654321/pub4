@@ -32,11 +32,10 @@ transcendent:
   # The pentatonic contour: a stylistic mode, for lyrical text only.
   melodic_enabled: true
   melodic_threshold: 0.28
-  # Phrase segmentation and the rests between phrases, without the contour.
-  # Separate from melodic_* because it is rhythm rather than style. Costs one
-  # Edge round trip per phrase, capped at Melody::MAX_PHRASES. Set fast_mode true only
-  # when latency matters more than expressive phrase rendering.
-  phrase_rhythm_enabled: true
+  # Ordinary conversation stays one synthesis pass so phonemes and sentence
+  # prosody remain continuous. Phrase rendering remains available as an explicit
+  # expressive mode; the lyrical contour still selects edge_melodic on its own.
+  phrase_rhythm_enabled: false
   # A Norwegian clause is always rendered with Pernille; English uses Jenny.
   # Language routing is a speech rule, not an optional stylistic switch.
   phrase_language_switching: true
