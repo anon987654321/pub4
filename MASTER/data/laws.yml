@@ -517,7 +517,7 @@ runtime_policy:
     artifact_store: sha256
     bundler_remains_authoritative: true
 
-rule_deps:
+law_deps:
 
   # Fix-ordering policy, declared 2026-07-12 in the five-file fold and
   # collateral-deleted by a later laws.yml rewrite. The LawOrder reader consumes
@@ -1343,7 +1343,7 @@ tokens:
         off_scale_opacity: 29
         off_scale_duration: 30
 
-rule_ratchets:
+law_ratchets:
   # Reach is a structural invariant: every executable Law must expose at least
   # one enforcement surface (detector, semantic question, or practice).
   reach:
