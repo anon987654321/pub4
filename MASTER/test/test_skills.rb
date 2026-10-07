@@ -106,6 +106,41 @@ class TestSkills < Minitest::Test
       assert_equal "beta", reloaded.discover!.first[:name]
     end
   end
+  def test_malformed_trigger_does_not_disable_valid_trigger
+    Dir.mktmpdir do |root|
+      data_dir = File.join(root, "data")
+      FileUtils.mkdir_p(data_dir)
+      File.write(File.join(data_dir, "patterns.yml"), <<~YAML)
+        skills_registry:
+          skills:
+            - name: bad
+              description: bad trigger
+              triggers: ["["]
+              body: bad
+            - name: good
+              description: good trigger
+              triggers: ["alpha"]
+              body: good
+      YAML
+
+      bus = Class.new do
+        attr_reader :events
+        def initialize = @events = []
+        def publish(name, payload = {}) = @events << [name, payload]
+      end.new
+
+      skills = Master::CLI::Skills.new(root:, event_bus: bus)
+      skills.discover!
+      matches = skills.trigger_for("alpha")
+
+      assert_equal ["good"], matches.map { |skill| skill[:name] }
+      event = bus.events.find { |name, _| name == "skills:trigger_invalid" }
+      refute_nil event
+      assert_equal "bad", event.last[:skill]
+      assert_equal "[", event.last[:trigger]
+    end
+  end
+
   def test_trigger_emits_revision
     Dir.mktmpdir do |root|
       data_dir = File.join(root, "data")
