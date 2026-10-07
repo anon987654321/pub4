@@ -98,6 +98,7 @@ module Master
           - failure modes: identify catastrophic, silent, partial, retry, concurrency, stale-state, and rollback failures
           - verification: name the smallest deterministic test or measurement that would actually falsify each concern
           - inversion: assume the proposed repair is wrong and state what breaks, where, and when
+          - completeness: never accept truncated, placeholder, or simulated work as evidence; require the smallest falsifiable proof
 
           For every actionable finding, anchor it to a repository-relative file plus stable line or symbol.
           Classify claims as observed, plausible, or requiring validation.
