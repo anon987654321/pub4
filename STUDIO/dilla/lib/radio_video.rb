@@ -462,7 +462,17 @@ module RadioVideo
             const t = performance.now() * 0.001
             const pulse = Math.min(1, a.flux * 1.4 + a.bass * 0.35)
             const clamp01 = (value) => Math.max(0, Math.min(1, value))
-            const tension = clamp01(a.mid * 0.52 + a.high * 0.28 + a.flux * 0.42)
+            const journey = ["intro", "verse", "hook", "bridge", "solo", "breakdown", "hook", "outro"]
+            const events = ["void", "debris", "pulse", "flash", "bloom", "fracture", "debris", "void"]
+            const progress = audio.duration ? clamp01(audio.currentTime / audio.duration) : 0
+            const chapterIndex = Math.min(journey.length - 1, Math.floor(progress * journey.length))
+            const chapter = journey[chapterIndex]
+            const worldEvent = events[chapterIndex]
+            const chapterShape = chapter === "breakdown" ? 0.62 : chapter === "hook" || chapter === "solo" ? 1.12 : 0.9
+            const eventPulse = (worldEvent === "flash" || worldEvent === "fracture")
+              ? Math.max(0, Math.sin(t * 4.2)) * 0.28
+              : worldEvent === "bloom" ? Math.max(0, Math.sin(t * 1.7)) * 0.16 : 0
+            const tension = clamp01((a.mid * 0.52 + a.high * 0.28 + a.flux * 0.42) * chapterShape + eventPulse)
             const release = 1 - tension
             const parametricField = (x, z, phase) => {
               const spine = Math.exp(-Math.abs(x) * 0.28)
@@ -483,10 +493,10 @@ module RadioVideo
 
             rim.intensity = 1.6 + a.high * 4.5
             key.intensity = 1.35 + a.mid * 1.2
-            ring.scale.setScalar(1.0 + pulse * 0.24)
+            ring.scale.setScalar(1.0 + pulse * 0.24 + eventPulse)
             ring.material.opacity = 0.32 + pulse * 0.45
             core.rotation.z = t * 0.13
-            core.scale.set(0.94 + release * 0.10, 1.0 + a.bass * 0.28 + tension * 0.26, 0.94 + a.high * 0.18)
+            core.scale.set(0.94 + release * 0.10 + eventPulse, 1.0 + a.bass * 0.28 + tension * 0.26, 0.94 + a.high * 0.18 + eventPulse)
             atrium.rotation.y = t * 0.045 + a.high * 0.08
             orbit.rotation.y = t * 0.012
             shardGroup.rotation.y = t * 0.018 + a.high * 0.12
@@ -538,7 +548,7 @@ module RadioVideo
               bar.position.y = 0.9 + bar.scale.y * 0.55
             })
 
-            state.textContent = `BASS ${Math.round(a.bass * 100)} / MID ${Math.round(a.mid * 100)} / AIR ${Math.round(a.high * 100)} / TENSION ${Math.round(tension * 100)} — PARAMETRIC SCORE`
+            state.textContent = `${chapter.toUpperCase()} / ${worldEvent.toUpperCase()} / BASS ${Math.round(a.bass * 100)} / AIR ${Math.round(a.high * 100)} / TENSION ${Math.round(tension * 100)}`
             renderer.render(scene, camera)
             requestAnimationFrame(draw)
           }
