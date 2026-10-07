@@ -21,15 +21,8 @@ module Marketplace
       TEST_API_BASE = "https://apitest.vipps.no"
       LIVE_API_BASE = "https://api.vipps.no"
 
-      # The test endpoint is not a safe default in production.
-      #
-      # This used to be a bare ENV.fetch with the test host as its fallback. A
-      # production box missing one variable would then take a customer through a
-      # complete, successful-looking checkout against Vipps' test environment:
-      # a redirect, a confirmation, an order marked paid, and no money. The
-      # class comment above says "never fakes success", and unconfigured it did
-      # not -- but *mis*configured it faked success perfectly, which is worse,
-      # because nothing raises and nobody looks.
+      # The test endpoint is never a production fallback. Choose the environment
+      # explicitly so a missing or invalid production setting fails closed.
       #
       # So the environment is now chosen rather than defaulted. Production uses
       # the live host unless VIPPS_TEST_MODE is explicitly set, and an explicit
