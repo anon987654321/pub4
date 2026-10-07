@@ -13,7 +13,7 @@ module Master
 
           def llm_pass(violations:, files:, pass:, deadline: nil, council: nil)
             rule_violations = violations.group_by { |v| v[:rule].to_s }
-            ordered = @rule_order.ordered(violation_counts: @violation_counts)
+            ordered = @law_order.ordered(violation_counts: @violation_counts)
             runnable = ordered.select { |rule| rule_violations.key?(rule.id.to_s) }
             runnable += semantic_rule_adapters(rule_violations, ordered)
             if runnable.empty? && rule_violations.any?
@@ -77,7 +77,7 @@ module Master
           def run_dependency_levels(runnable, files:, pass:, rule_violations:, deadline:, council: nil)
             fixed = 0
             breakdown = Hash.new(0)
-            @rule_order.dependency_levels(runnable).each do |group|
+            @law_order.dependency_levels(runnable).each do |group|
               break if deadline && Time.now >= deadline
               break if circuit_open?
               results = run_rule_group(group:, files:, pass:, rule_violations:, council:)
@@ -176,7 +176,7 @@ module Master
                               learnings: @learnings, committer: @committer,
                               visual_custody: @visual_pass&.custody)
             rl.injected_preamble = [@preamble, council_preamble(council)].compact.join("\n\n")
-            @bus&.publish("fix_loop:tier2_quality_route", pass:, rule: rule.id) if @rule_order.tier2?(rule.id)
+            @bus&.publish("fix_loop:tier2_quality_route", pass:, rule: rule.id) if @law_order.tier2?(rule.id)
             normalized = Array(external_violations).map do |violation|
               file = violation[:file].to_s
               absolute = file.start_with?("/") ? file : File.expand_path(file, @root)
