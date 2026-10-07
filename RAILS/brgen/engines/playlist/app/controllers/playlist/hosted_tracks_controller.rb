@@ -53,11 +53,9 @@ class Playlist::HostedTracksController < Playlist::BaseController
     if params.dig(:track, :audio_file).present?
       @track.replace_audio!(params[:track][:audio_file], actor: Current.user)
     end
-    if @track.update(track_params.except(:audio_file))
-      redirect_to hosted_track_path(@track), notice: t("playlist.track_updated")
-    else
-      render :edit, status: :unprocessable_entity
-    end
+    return render :edit, status: :unprocessable_entity unless @track.update(track_params.except(:audio_file))
+
+    redirect_to hosted_track_path(@track), notice: t("playlist.track_updated")
   end
 
   def destroy
