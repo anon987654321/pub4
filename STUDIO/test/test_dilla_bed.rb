@@ -172,9 +172,8 @@ class TestDillaComposition < Minitest::Test
   E = DillaEvents
   SOURCE = File.read(File.expand_path("../dilla/dilla.rb", __dir__))
 
-  # The bare invoke is the catalogue, which is what the operator asked demo.wav
-  # to be on 2026-09-16: ten to twenty short pieces that are not each other. The
-  # six-minute piece keeps a door of its own rather than losing one.
+  # Bare invoke is the finished live showcase; the catalogue remains on pieces.
+  # demo.wav stays the durable finite render used by the catalogue smoke test.
   def test_a_bare_invoke_renders_the_showcase
     assert_match(/if ARGV\.empty\?/, SOURCE)
     assert_includes SOURCE, "prepare_showcase_defaults!"
