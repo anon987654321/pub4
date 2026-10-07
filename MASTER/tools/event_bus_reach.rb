@@ -132,7 +132,7 @@ module Operator
 
     def expanded_regex_topics(body)
       body.to_s.scan(
-        /([a-z][a-z0-9_]*):\\(\\?:([a-z][a-z0-9_:-]*(?:\\|[a-z][a-z0-9_:-]*)+)\\)/
+        /([a-z][a-z0-9_]*):(?:\\((?:\\?:)?|\\((?:\\?))?/
       ).flat_map do |prefix, alternatives|
         alternatives.split("|").map { |suffix| "#{prefix}:#{suffix}" }
       end
