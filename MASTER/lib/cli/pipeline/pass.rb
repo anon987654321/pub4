@@ -397,11 +397,16 @@ def default_apply?(*) = false
         end
 
         def deliberation_critique(abs)
-          Master::CLI::CouncilCrit.run(
+          result = Master::CLI::CouncilCrit.run(
             root: abs,
             deliberation: @deliberation,
             bus: @bus,
-          ).then { |result| result.ok? ? result.value! : "critique: #{result.message}" }
+          )
+          return result.value! if result.ok?
+
+          @failed_stages << "critique" unless @failed_stages.include?("critique")
+          Master::Trace::Dmesg.status("crit0", "failed, #{result.message}")
+          "critique failed: #{result.message}"
         rescue StandardError => e
           stage_failure("critique", "crit0", e)
         end
