@@ -7,6 +7,15 @@ require_relative "logging"
 
 module Master
   module Trace
+    # OpenBSD dmesg-style kernel lines for operator progress.
+    # Shape: "unitN at parent: detail" / "unitN: status". Prose, not key=value:
+    # "scan0: 3 violations in 2 files", as the kernel says "sd0: 244198MB".
+    # Config: data/limits.yml#dmesg (enabled: true). Normal is the configured default; verbose and trace are explicit.
+    # ENV MASTER_DMESG accepts 0, quiet, normal, verbose, or trace.
+    #
+    # This shape is the CLI's whole style guide: append-only, one line per fact,
+    # no banner. The machine-readable form of the same facts is the event bus
+    # and the JSONL ledgers under runtime/, not a second presenter here.
     module Dmesg
       module_function
 
@@ -104,6 +113,9 @@ module Master
         emit("#{unit}: #{msg}", io:)
       end
 
+      # Finished command and stage reports use the same grammar as live events.
+      # Existing dmesg lines pass through unchanged; plain lines attach to one
+      # unit instead of inventing headings, gutters or column alignment.
       module Report
         COMMAND_UNITS = {
           "fix" => "fix0", "review" => "review0", "critique" => "crit0",
@@ -122,7 +134,8 @@ module Master
 
         def command(command, text, parent: "master0")
           word = command.to_s.strip.split(/\s+/, 2).first.to_s.delete_prefix("/").downcase
-          render(unit: COMMAND_UNITS.fetch(word) { safe_unit(word) }, parent:, text:)
+          unit = COMMAND_UNITS.fetch(word) { safe_unit(word) }
+          render(unit:, parent:, text:)
         end
 
         def render(unit:, parent:, text:)
@@ -180,6 +193,8 @@ module Master
         end
       end
 
+      # Work that calls a model names itself, and the calls attach under it.
+      # Fiber storage reaches the threads the work spawns, and is put back after.
       def under(unit)
         previous = Fiber[:master_unit]
         Fiber[:master_unit] = unit
@@ -188,6 +203,7 @@ module Master
         Fiber[:master_unit] = previous
       end
 
+      # Once per process, for a fact every lane would otherwise repeat.
       def once(unit, msg, io: $stdout)
         @once ||= {}
         line = "#{unit}: #{msg}"
@@ -200,13 +216,17 @@ module Master
       def emit(line, io: $stdout, force: false)
         return unless enabled? || force
 
+        # Normal mode keeps conversational turns quiet. Explicit command reports
+        # force their already-rendered lines through the same presenter.
         if !force && verbosity == "normal" && Fiber[:master_unit] == "master0" && line.match?(/at \w+0|llm\d+:/)
           return
         end
 
         text = line.to_s.gsub(/\s+/, " ").strip
+        tty = io.respond_to?(:tty?) && io.tty?
         emit_mutex.synchronize do
-          io.puts(text)
+          io.print "\r\e[K" if tty
+          io.puts(tty ? style(text, io:) : text)
           io.flush if io.respond_to?(:flush)
         end
         speak_log_line(text) if log_voice_active?
@@ -220,6 +240,9 @@ module Master
         @emit_mutex ||= Mutex.new
       end
 
+      # Child processes may inherit terminal redraws even though their output
+      # is captured by a pipe. Forward them as completed lines, never as cursor
+      # control sequences interleaved with the parent's dmesg.
       def forward(line, io: $stdout)
         text = line.to_s.scrub.gsub(ANSI, "").delete("\r").chomp
         return if text.strip.empty?
@@ -236,6 +259,7 @@ module Master
 
       def speak_log_line(text)
         return if Thread.current[:master_dmesg_tts]
+
         return if text.match?(/\A(?:voice|tts)\d+(?: at [^:]+)?:/i)
 
         require_relative "../voice/playback"
@@ -262,16 +286,13 @@ module Master
         Thread.current[:master_dmesg_tts] = false
       end
 
-      def style(text, io: $stdout)
-        text
-      end
-
-      ANSI = /\e\[[0-9;?]*[A-Za-z]/
+      def style(text, io: $stdout)\n        text\n      end\n\n      ANSI = /\e\[[0-9;?]*[A-Za-z]/
       VERDICT = /\b(?:fail(?:ed|ures?)?|errors?|offen[cs]es?|violations?|exceed(?:s|ed)?|missing|expected|refused)\b/i
       FINDING = Regexp.union(/:\d+\b/, VERDICT)
       FINDING_LIMIT = 8
 
       def line(unit, parent, detail) = "#{unit} at #{parent}: #{detail}"
+
       def plain(text) = text.to_s.scrub.gsub(ANSI, "").delete("\r")
 
       def collapse(lines)
@@ -296,10 +317,11 @@ module Master
 
       def counted(number, noun) = "#{number} #{noun}#{"s" unless number == 1}"
 
-      def pastel
-        nil
-      end
-
+      def pastel\n        nil\n      end\n\n      # A turn as the kernel would print it. Every model call, file, command
+      # and request attaches as a numbered unit under its parent, the way sd1 is
+      # the second disk, then reports once on what it did. A parent attaches
+      # before its first child. An event with no unit renders nothing and stays
+      # in the event log.
       class Console
         TOOL_UNITS = {
           "read_file" => %w[read io0], "list_dir" => %w[list io0], "search_files" => %w[grep io0],
@@ -346,6 +368,20 @@ module Master
 
         private
 
+        # Lanes ask in parallel, often of one model, so a call is its model on
+        # its thread: the bus publishes in the caller's thread, and a call's
+        # send and outcome happen on the same one. A call attaches to the unit
+        # that asked for it, fold0 or scan0, named by Dmesg.under; anything else
+        # asks from master0.
+        #
+        # A burst is not a conversation. A scan asks a model per file per rule,
+        # and a line for each send and each outcome buried the operator: the
+        # 2026-09-16 /fix printed some two thousand llm lines, every one of them
+        # a lane failing over to the next, and no report at the end. The first
+        # calls under a unit still attach, as devices do; past that the unit
+        # speaks in rollups — how many were asked, how many failed, how many
+        # lanes it walked — and a failure the chain recovered from is not news.
+        # Every call is still in runtime/events/activity.jsonl.
         BURST_AFTER = 3
         ROLLUP_EVERY = 25
         ROLLUP_SECONDS = 20
@@ -365,6 +401,8 @@ module Master
         def llm_outcome(payload)
           key = llm_key(payload)
           unit = @open.delete(key) || "llm0"
+          # The outcome is published on the thread that sent, so the unit that
+          # asked is still in fiber storage when the send's key does not match.
           parent = @llm_parent.delete(key) || Fiber[:master_unit] || "master0"
           usage, @usage = @usage, nil
           tally = llm_tally(parent)
@@ -380,6 +418,8 @@ module Master
           @llm[parent] ||= { calls: 0, failed: 0, models: Set.new, said: 0, at: monotonic }
         end
 
+        # One line per ROLLUP_SECONDS or ROLLUP_EVERY calls, whichever comes
+        # first, and never one that repeats the last.
         def rollup(parent, tally)
           since = tally[:calls] - tally[:said]
           return [] if since < ROLLUP_EVERY && monotonic - tally[:at] < ROLLUP_SECONDS
@@ -398,7 +438,8 @@ module Master
 
         def track_model(event, payload)
           case event
-          when "llm:send" then @ledger[:model_calls] += 1
+          when "llm:send"
+            @ledger[:model_calls] += 1
           when "llm:provider_outcome"
             @ledger[:model_failures] += 1 unless payload[:status].to_s == "success"
           end
@@ -422,6 +463,10 @@ module Master
           end
         end
 
+        # Per-item churn: one line for each file a scan reads, passes or finishes,
+        # each finding a hook sees, each cognition tick. A chat turn that set off
+        # a background self-scan printed 2,657 of these ahead of a one-line
+        # reply. Verbose shows the work; trace shows every item of it.
         CHURN = %w[scan:file_read scan:pass scan:complete scan:semantic_skipped scan:progress
                    hook:on_violation_found cognition:tick homeostat:observe conflict:resolved].freeze
 
@@ -455,103 +500,133 @@ module Master
         end
 
         def event_detail(payload, action: nil)
-          EVENT_FIELDS.filter_map do |key|
+          values = EVENT_FIELDS.filter_map do |key|
             next if key.to_s == action.to_s
             value = payload[key]
-            next if value.nil? || value.to_s.empty?
+            next if value.nil? || value == ""
 
-            "#{key}=#{clip(value)}"
-          end.join(", ")
+            label = key.to_s.tr("_", " ")
+            rendered = case value
+                       when Array then value.first(3).map(&:to_s).join(", ")
+                       else value.to_s
+                       end
+            next if rendered.empty?
+
+            "#{label} #{clip(rendered, 72)}"
+          end
+          values.join(", ")
         end
 
         def terminal(payload)
-          status = payload[:status] || payload[:state] || "unknown"
-          detail = [payload[:reason], payload[:summary]].compact.map { |v| clip(v) }.reject(&:empty?).join(", ")
-          ["fix0: #{status}#{detail.empty? ? "" : ", #{detail}"}"]
-        end
+          state = payload[:state].to_s
+          message = clip(payload[:message], 80)
+          lines = ["fix0: terminal #{state}"]
+          lines[0] = "#{lines[0]}, #{message}" unless message.empty?
+          return lines unless Dmesg.verbose? || Dmesg.trace?
 
-        def parent(unit, parent, detail)
-          ["#{unit} at #{parent}: #{clip(detail)}"]
-        end
-
-        def tool_call(payload)
-          name = payload[:tool].to_s
-          unit, parent = tool_unit(name, payload)
-          @attached[tool_key(payload)] = true
-          @count[unit] += 1
-          ["#{unit} at #{parent}: #{tool_detail(name, payload)}"]
-        end
-
-        def tool_return(payload)
-          name = payload[:tool].to_s
-          unit, _parent = tool_unit(name, payload)
-          ["#{unit}: #{tool_return_detail(payload)}"]
-        end
-
-        def tool_unit(name, payload)
-          configured = TOOL_UNITS[name]
-          return [configured.first, configured.last] if configured
-
-          unit = DmesgUnit.unit_name(name)
-          [unit, payload[:parent].to_s.empty? ? "io0" : payload[:parent].to_s]
-        end
-
-        def tool_key(payload)
-          [payload[:tool], payload[:id], payload[:ts]].map(&:to_s).join(":")
-        end
-
-        def open_unit(prefix, key)
-          @count[prefix] += 1
-          "#{prefix}#{@count[prefix]}"
-        end
-
-        def model_name(model)
-          model.to_s.empty? ? "unknown" : model.to_s
-        end
-
-        def tokens(usage)
-          value = usage && (usage[:total_tokens] || usage["total_tokens"])
-          value ? "#{value} tokens" : nil
-        end
-
-        def seconds(milliseconds)
-          value = milliseconds.to_f
-          value.positive? ? format("%.1fs", value / MS_PER_SECOND) : nil
-        end
-
-        def cents(usage)
-          value = usage && (usage[:cost] || usage["cost"])
-          return nil unless value
-          format("$%.2f", value.to_f / CENTS_PER_DOLLAR)
-        end
-
-        def llm_key(payload)
-          [payload[:id], payload[:model], payload[:ts]].map(&:to_s).join(":")
+          ledger = []
+          ledger << counted(@ledger[:files].to_i, "file in scope") if @ledger[:files].to_i.positive?
+          ledger << counted(@ledger[:rules].to_i, "rule pass") if @ledger[:rules].to_i.positive?
+          ledger << counted(@ledger[:violations].to_i, "rule finding") if @ledger[:violations].to_i.positive?
+          ledger << counted(@ledger[:fixed].to_i, "fix") if @ledger[:fixed].to_i.positive?
+          ledger << counted(@ledger[:changes].to_i, "change") if @ledger[:changes].to_i.positive?
+          ledger << counted(@ledger[:model_calls].to_i, "model call") if @ledger[:model_calls].to_i.positive?
+          ledger << counted(@ledger[:model_failures].to_i, "model failure") if @ledger[:model_failures].to_i.positive?
+          ledger << counted(@ledger[:council].to_i, "council review") if @ledger[:council].to_i.positive?
+          ledger << counted(@ledger[:human_decisions].to_i, "human decision") if @ledger[:human_decisions].to_i.positive?
+          lines << "fix0: ledger, #{ledger.join(", ")}" unless ledger.empty?
+          @ledger = Hash.new(0)
+          lines
         end
 
         def monotonic = Process.clock_gettime(Process::CLOCK_MONOTONIC)
 
-        def clip(value, max = DETAIL_CHARS)
-          value.to_s.gsub(/s+/, " ").strip[0, max].to_s
+        # Tokens and cost arrive inside the call; the outcome that closes the
+        # unit arrives after it.
+        def remember_usage(payload)
+          @usage = payload
+          []
         end
 
-        def remember_usage(payload)
-          @usage = payload[:usage]
+        def tool_call(payload)
+          kind, parent_unit = TOOL_UNITS.fetch(payload[:tool].to_s, [payload[:tool].to_s, "io0"])
+          unit = open_unit(kind, "tool:#{payload[:tool]}")
+          [*parent(parent_unit, "master0"), "#{unit} at #{parent_unit}: #{clip(payload[:subject])}"]
+        end
+
+        def tool_return(payload)
+          unit = @open.delete("tool:#{payload[:tool]}")
+          return [] unless unit
+          return ["#{unit}: #{clip(payload[:error])}"] unless payload[:ok]
+
+          ["#{unit}: #{[size(payload[:bytes]), seconds(payload[:ms])].compact.join(', ')}"]
         end
 
         def fold_turn(payload)
-          detail = clip(payload[:summary] || payload[:goal] || payload[:state])
-          detail.empty? ? [] : ["fold0: #{detail}"]
-        end
-      end
+          verb = payload[:verb].to_s
+          lines = parent("fold0", "master0")
+          return lines << "fold0: done, #{counted(payload[:turn].to_i + 1, "turn")}" if verb == "done"
+          return lines << "fold0: #{verb}, #{clip(payload[:subject])}" unless FOLD_UNITS.key?(verb)
 
-      def self.test_reset!
-        @cfg = nil
-        @pastel = nil
-        @recent_log_voice = nil
-        @log_voice_active = false
-        @verbosity_override = nil
-        @once = nil
+          unit = next_unit(FOLD_UNITS[verb])
+          lines << "#{unit} at fold0: #{clip(payload[:subject])}"
+          lines << "#{unit}: #{fold_result(verb, payload)}"
+        end
+
+        def fold_result(verb, payload)
+          detail = payload[:detail].to_s
+          lines = detail.lines
+          return clip(lines.last) unless payload[:ok]
+          return "#{size(detail.bytesize)}, #{counted(lines.size, "line")}" if verb == "read"
+          return "ok, #{counted(lines.size, "line")}" if verb == "exec"
+
+          clip(lines.first || "ok")
+        end
+
+        def parent(unit, grandparent, detail = PARENT_DETAIL[unit])
+          return [] if @attached[unit]
+
+          @attached[unit] = true
+          ["#{unit} at #{grandparent}: #{detail}"]
+        end
+
+        def open_unit(kind, key)
+          @open[key] = next_unit(kind)
+        end
+
+        def next_unit(kind)
+          number = @count[kind]
+          @count[kind] += 1
+          "#{kind}#{number}"
+        end
+
+        def llm_key(payload) = "llm:#{Thread.current.object_id}:#{payload[:model]}"
+
+        def model_name(model) = model.to_s.delete_suffix(":free")
+
+        def tokens(usage)
+          return unless usage
+
+          return "#{usage[:tokens_out].to_i} tokens out" if usage[:tokens_in].to_i.zero?
+
+          "#{usage[:tokens_in].to_i} tokens in, #{usage[:tokens_out].to_i} out"
+        end
+
+        def cents(usage)
+          cost = usage && usage[:cost_usd].to_f
+          cost&.positive? ? format("%.2f cents", cost * CENTS_PER_DOLLAR) : nil
+        end
+
+        def seconds(ms) = ms ? format("%.1fs", ms.to_f / MS_PER_SECOND) : nil
+
+        def size(bytes) = bytes ? counted(bytes.to_i, "byte") : nil
+
+        def counted(number, noun) = Dmesg.counted(number, noun)
+
+        def clip(text, limit = DETAIL_CHARS)
+          flat = text.to_s.gsub(/\s+/, " ").strip
+          flat.length > limit ? "#{flat[0, limit - 1]}…" : flat
+        end
       end
     end
   end
