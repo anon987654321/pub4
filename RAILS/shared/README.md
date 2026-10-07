@@ -83,12 +83,11 @@ ruby MASTER/tools/rails/build_all_css.rb --check
 
 ---
 
-The four surfaces (brgen + verticals, amber, bsdports, the MASTER face) are one
-family in four dialects. This table is where a new surface starts — pick from
-it, don't invent beside it. Decisions recorded 2026-08-21 at the close of the
-consistency campaign; enforcement lives in `visual_contract_lint`,
-`css_coverage_lint`, `breakpoint_lint`, `empty_state_lint` and
-`MASTER/tools/design_baseline.rb`, all ratcheted.
+The four surfaces (brgen + verticals, amber, bsdports and the MASTER face) are
+one family in four dialects. A new surface starts from these shared contracts;
+enforcement lives in `visual_contract_lint`, `css_coverage_lint`,
+`breakpoint_lint`, `empty_state_lint` and `MASTER/tools/design_baseline.rb`,
+all ratcheted.
 
 ## Dialects
 
