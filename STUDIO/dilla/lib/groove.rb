@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "fileutils"
+require "yaml"
 
 # Time: the groove score, the producer DNA presets that carry each lineage's
 # grid and swing, the groove engine and the rhythm macros.
