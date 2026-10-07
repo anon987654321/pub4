@@ -63,11 +63,9 @@ class CommunitiesController < ApplicationController
   end
 
   def update
-    if @community.update(community_params)
-      redirect_to @community, notice: t("flash.community_updated")
-    else
-      render :edit, status: :unprocessable_entity
-    end
+    return render :edit, status: :unprocessable_entity unless @community.update(community_params)
+
+    redirect_to @community, notice: t("flash.community_updated")
   end
 
   def destroy
