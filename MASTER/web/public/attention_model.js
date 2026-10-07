@@ -236,6 +236,12 @@
     };
   }
 
+  window.addEventListener("tts:anticipate", () => {
+    const t = performance.now();
+    state.nextSaccade = Math.min(state.nextSaccade || Infinity, t + rand(35, 95));
+    cue("gaze_shift");
+  }, { passive: true });
+
   const api = Object.freeze({
     POLICY,
     policyFor,
