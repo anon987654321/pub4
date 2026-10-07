@@ -2239,7 +2239,12 @@ SHOWCASE_MODES = {
 
   def showcase!(rng: rng!, mode: nil)
     previous = ENV["DILLA_SHOWCASE"]
+    visual = nil
     ENV["DILLA_SHOWCASE"] = "1"
+    if ENV["DILLA_LIVE_VISUAL"] == "1"
+      require_relative "live_audiovisual"
+      visual = LiveAudiovisual.start!
+    end
     output = showcase_output
     cycle = 0
 
@@ -2251,6 +2256,14 @@ SHOWCASE_MODES = {
       begin
         showcase_scenes(mode).each_with_index do |(name, seconds), index|
           log("showcase -> #{name}")
+          visual&.publish(
+            scene: name,
+            seed: rng.respond_to?(:seed) ? rng.seed : ENV.fetch("LIVE_SEED", "0").to_i,
+            started_at: Process.clock_gettime(Process::CLOCK_MONOTONIC),
+            energy: (0.28 + ((index % 7) * 0.08)).clamp(0.0, 0.95),
+            fracture: (0.22 + ((index % 9) * 0.065)).clamp(0.0, 0.95),
+            hue: (0.52 + ((index * 0.037) % 0.34)).round(4)
+          )
           score, actions = showcase_score(name, rng)
           scene_path = File.join(scratch, format("%02d-%s.wav", index + 1, name))
           state = showcase_segment!(score, seconds, actions:, output: scene_path)
@@ -2277,6 +2290,10 @@ SHOWCASE_MODES = {
       cycle += 1
     end
   ensure
+    if visual
+      require_relative "live_audiovisual" unless defined?(LiveAudiovisual)
+      LiveAudiovisual.stop!
+    end
     previous.nil? ? ENV.delete("DILLA_SHOWCASE") : ENV["DILLA_SHOWCASE"] = previous
   end
 
