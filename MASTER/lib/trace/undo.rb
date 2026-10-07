@@ -14,7 +14,7 @@ module Master
   # Core::World#do_write, which journals nothing, so after a fold turn undo!
   # restores the newest tool-path snapshot, which may be an earlier session's.
     class Undo
-      include Master::Io::AtomicWrite
+      include ::Master::Io::AtomicWrite
 
       MAX_JOURNAL = 50
 
