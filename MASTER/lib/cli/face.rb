@@ -32,7 +32,7 @@ module Master
       def frame(state:, rows:, cols:, t:, level: nil, events: [], motion: Motion.new, color: false)
         raise ArgumentError, "face: unknown state #{state.inspect}" unless STATES.include?(state)
 
-        look = motion.step(state:, t:, level:, events:, count: ((rows * cols) / 40).clamp(8, 60))
+        look = motion.step(state:, t:, level:, events:, count: ((rows * cols) / 72).clamp(6, 36))
         return Braille.new(rows, cols).word(state.to_s) unless rows >= MIN_ROWS && cols >= MIN_COLS
 
         braille = Braille.new(rows, cols)
