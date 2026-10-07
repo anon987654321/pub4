@@ -1267,11 +1267,13 @@ Closed 2026-09-13 except the operator's look and voice and one check that needs
 a browser on vm23. The refusal is in `MASTER/AGENTS.md`, Refused: the face's design is the
 operator's.
 
-- **Morphology.** Whether the face moves toward a far-future-human form — larger
-  cranium, smaller lower face, wider orbits, seeded developmental asymmetry,
-  slow drift, generations 0 to 4 — and how far; and any blind test of
-  recognisability or perceived intelligence. Seams: geometry in
-  `web/public/face.part1-3.txt`, `VOICE_IDLE_SIGNATURES` in `face.part1.txt`.
+- **Morphology.** Landed as a speculative distant-human treatment: fuller
+  neurocranial vault, smaller lower face and jaw projection, flatter brow,
+  restrained orbit enlargement, smaller pupils and seeded developmental
+  asymmetry. This is explicitly an informed design projection, not a scientific
+  prediction; the canonical morphology lives in `data/laws.yml` and is shared
+  by the browser and CLI. The remaining browser-only seam is the real-world
+  rendered smoke on vm23.
 - **Expression, motion and layout.** Continuous affect instead of named
   expressions, a motion grammar with per-region time constants, speaking motion
   kept below lip-sync, states that read without colour, and a
