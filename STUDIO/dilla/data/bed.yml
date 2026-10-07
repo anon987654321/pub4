@@ -1,6 +1,6 @@
 # The bed: the pad, the drums on top of it, the lead and the bass.
 #
-# module Bed in MASTER/tools/dilla/dilla.rb renders it and reads every number below;
+# module Bed in STUDIO/dilla/dilla.rb renders it and reads every number below;
 # nothing else keeps a copy. Explicit `ruby dilla.rb pieces` renders the catalogue; bare `ruby dilla.rb` runs the finished live showcase.
 # `ruby dilla.rb bed` plays it under MASTER's narration, which is where
 # it began (MASTER/data/voice.yml points here). A key with no reader in module
