@@ -250,6 +250,9 @@ demos:
 improvise:
   bpm: 96
   bpm_spread: 3
+  # Historical Dilla/Slum pocket grid used when a reference does not select a
+  # producer-specific family. The renderer adds its micro- and nano-timing on top.
+  drum_preset: dilla_fantastic
   # The kit, written a chord at a time with the chord. "drums off" stops it.
   drums: true
   # The kick on every beat, doubled with ghost hits between beats, and now
