@@ -14,9 +14,12 @@ Law.define(:README_VISION) do
   path "MASTER/README.md"
   scope :file
   detect do |text|
-    prose = text.lines.reject { |line| line.strip.empty? || line.lstrip.start_with?("#") }
-    first = prose.take(3).join(" ").strip
-    first.empty? || first.scan(/(?:^|[.!?])\s+(?=[A-ZÅØÆ0-9])/).length > 2
+    paragraph = text.split(/\n\s*\n/).find do |block|
+      line = block.strip
+      !line.empty? && !line.start_with?("#")
+    end.to_s.gsub(/\s+/, " ").strip
+    sentences = paragraph.to_s.scan(/[^.!?]+[.!?](?=\s|\z)/).length
+    paragraph.to_s.empty? || sentences > 3
   end
   fix "Put a concise 1–3 sentence project vision in the README's first prose paragraph."
   bad <<~X
