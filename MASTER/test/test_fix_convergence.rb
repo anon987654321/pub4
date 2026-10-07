@@ -77,6 +77,40 @@ class TestFixConvergence < Minitest::Test
   # spelling only long enough to rewrite it to /fix, so no separate scan
   # dispatcher, help topic, or pipeline stage can survive.
 
+  def test_fix_extends_pass_budget_while_measured_state_improves
+    loop = Master::Fix::FixLoop.allocate
+    calls = []
+    checks = 0
+    discipline = Object.new
+    discipline.define_singleton_method(:improving?) do
+      checks += 1
+      checks == 1
+    end
+    loop.instance_variable_set(:@convergence_discipline, discipline)
+    loop.instance_variable_set(:@wishlist, Object.new)
+    loop.define_singleton_method(:run_one_pass) do |i, **|
+      calls << i
+      nil
+    end
+
+    deadline = Object.new
+    deadline.define_singleton_method(:expired?) { false }
+
+    result = loop.send(
+      :run_passes,
+      files: [],
+      target: "/tmp/fix-target",
+      max_passes: 2,
+      deadline:,
+      budget_seconds: 60,
+      start_pass: 1,
+      run_id: "test-run",
+    )
+
+    assert_equal %w[PLATEAU: pass limit (5) reached], [result.value!]
+    assert_equal [0, 1, 2, 3, 4], calls
+  end
+
   def test_convergence_discipline_reports_measured_improvement
     discipline = Master::Fix::ConvergenceDiscipline.new(root: Dir.mktmpdir("discipline"))
     discipline.begin_run([])
