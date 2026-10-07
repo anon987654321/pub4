@@ -86,7 +86,7 @@ module Master
         end
       end
 
-      include Master::Io::AtomicWrite
+      include ::Master::Io::AtomicWrite
       include FixStrategies
       include FixVerification
       include OutcomeTracking
