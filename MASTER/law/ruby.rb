@@ -55,8 +55,9 @@ Law.define(:GUARD_CLAUSE) do
   # file containing a def, a later `if`, a later `else` and a trailing `end`
   # matched, and scope :file reports every hit at line 1. It flagged 321 of
   # 2,381 authored Ruby files, each pointing at frozen_string_literal. The
-  # lookahead keeps the body inside one method. The 3-line fixtures below are
-  # too small to exhibit that, which is why prove! never caught it.
+  # lookahead keeps the body inside one method. The original fixture was
+  # too permissive to exercise the terminal-branch requirement, so prove! did not
+  # catch the detector/fixture mismatch until the detector was tightened.
   # The if and its else must be one block. Allowing any non-def line between
   # them let the match cross an `end` and stitch a method's first `if` — which
   # already returns early — to the `else` of a later, unrelated one. signals.rb
@@ -86,9 +87,9 @@ Law.define(:GUARD_CLAUSE) do
   bad <<~X
     def go(x)
       if x
-        run
+        return run
       else
-        nil
+        return nil
       end
     end
   X
