@@ -51,6 +51,9 @@ module Master
       MAX_PASSES = 15
       CLEAN_RUNS = 2
       PLATEAU_WINDOW = 3
+      WISHLIST_MAX_ROUNDS = 3
+      WISHLIST_MAX_PASSES = 3
+      WISHLIST_MIN_REMAINING_SECONDS = 60
       # Thirty minutes suits API lanes. A run whose every call goes through a
       # subscription CLI (MASTER_MODEL=claude-cli:...) spends that on one
       # council, so the run can be given more.
@@ -133,8 +136,6 @@ module Master
           mission&.defer!(reason: "attempt #{state}: #{result.to_s}")
         end
 
-        wishlist_message = @wishlist.call(state: state.to_s, target:, run_id:) if requested
-        @bus&.publish("fix_loop:wishlist", state:, target:, message: wishlist_message) if requested
         @bus&.publish("fix_loop:terminal", state:, message: result.to_s)
 
         result
@@ -227,7 +228,11 @@ module Master
         resumed = resume_active_transaction(journal:, run_id:, start_pass:)
         return resumed.tap { mission.fail!(resumed.message) } if resumed.err?
 
-        result = run_passes(files:, target:, max_passes:, deadline:, budget_seconds:, start_pass: resumed.value!, run_id:)
+        result = run_passes(
+          files:, target:, max_passes:, deadline:, budget_seconds:,
+          start_pass: resumed.value!, run_id:, wishlist_proposals: []
+        )
+        result = continue_with_wishlist(result, files:, target:, max_passes:, budget_seconds:, run_id:) if requested
         finish_run(result, target, run_id, mission:, requested:)
       end
 
@@ -242,7 +247,7 @@ module Master
           scope: target,
           model: @agent.respond_to?(:model) ? @agent.model : ENV["MASTER_MODEL"],
           effort: ENV.fetch("MASTER_EFFORT", "high"),
-          plan: mission_plan,
+          plan: mission_plan(target:),
           origin: requested ? "manual" : "supervisor",
         )
       rescue StandardError => e
@@ -250,8 +255,8 @@ module Master
         raise
       end
 
-      def mission_plan
-        parts = [Ground::ActivePlan.read(@root), Wishlist.pending_context(@root)].compact
+      def mission_plan(target:)
+        parts = [Ground::ActivePlan.read(@root), Wishlist.pending_context(@root, target:, limit: Wishlist::BATCH_SIZE)].compact
         parts << @transformation_plan.prompt
         parts.empty? ? "fix plan: observe, critique, repair, verify" : parts.join("\n\n")
       end
@@ -308,7 +313,8 @@ module Master
 
       # start_pass is the number of the first pass to run, 1-based like the
       # journal's next_pass; run_one_pass takes the 0-based index.
-      def run_passes(files:, target:, max_passes:, deadline:, budget_seconds:, start_pass: 1, run_id:)
+      def run_passes(files:, target:, max_passes:, deadline:, budget_seconds:, start_pass: 1, run_id:,
+                     wishlist_proposals: [])
         state = { history: [], seen_snapshots: Set.new, recurring_violations: Hash.new(0), consecutive_clean: 0 }
 
         first_index = start_pass - 1
@@ -316,7 +322,7 @@ module Master
 
         remaining_passes.times do |offset|
           i = first_index + offset
-          outcome = run_one_pass(i, files:, target:, deadline:, budget_seconds:, state:, run_id:)
+          outcome = run_one_pass(i, files:, target:, deadline:, budget_seconds:, state:, run_id:, wishlist_proposals:)
           return terminal(:plateau, "no further improvement after #{i + 1} pass(es)") if outcome == :break
           return outcome if outcome
 
@@ -334,6 +340,70 @@ module Master
       # a full-tree run spends its budget on. The first ordinary pass gets to
       # deliver a verified repair; only then does the bounded structural sweep
       # run against freshly observed files.
+      def continue_with_wishlist(result, files:, target:, max_passes:, budget_seconds:, run_id:)
+        state = terminal_state_for(result)
+        return result unless %i[done plateau].include?(state)
+
+        wishlist_message = @wishlist.call(state: state.to_s, target:, run_id:)
+        @bus&.publish("fix_loop:wishlist", state:, target:, message: wishlist_message)
+
+        rounds = 0
+        while rounds < WISHLIST_MAX_ROUNDS
+          pending = @wishlist.claimable(target:, limit: Wishlist::BATCH_SIZE, run_id:)
+          break if pending.empty?
+
+          claimed = @wishlist.claim(pending, run_id:)
+          break if claimed.empty?
+
+          remaining = @run_journal.remaining_seconds(run_id)
+          break if remaining < WISHLIST_MIN_REMAINING_SECONDS
+
+          run_record = @run_journal.history(limit: RunJournal::MAX_RUNS).find { |row| row["id"] == run_id }
+          start_pass = @run_journal.next_pass(run_record)
+          refreshed = @file_collector.collect(target)
+          round_passes = [WISHLIST_MAX_PASSES, max_passes].min
+          round_max_pass = start_pass + round_passes - 1
+          deadline = Ground::Reliability::Deadline.new(remaining)
+
+          Master::Trace::Dmesg.status(
+            "fix0",
+            "wishlist round #{rounds + 1}: #{claimed.size} proposal(s), #{remaining.round}s remaining",
+          )
+
+          result = run_passes(
+            files: refreshed,
+            target:,
+            max_passes: round_max_pass,
+            deadline:,
+            budget_seconds: remaining,
+            start_pass:,
+            run_id:,
+            wishlist_proposals: claimed,
+          )
+
+          if terminal_state_for(result) == :done
+            @wishlist.mark_verified(proposal_ids: claimed.map { |proposal| proposal["uid"] }, run_id:)
+          end
+
+          rounds += 1
+          next if %i[done plateau].include?(terminal_state_for(result))
+
+          break
+        end
+
+        remaining_pending = @wishlist.pending_count(target:)
+        if remaining_pending.positive? && %i[done plateau].include?(terminal_state_for(result))
+          result = terminal(
+            :plateau,
+            "wishlist queue retained #{remaining_pending} supported proposal(s) after #{rounds} bounded round(s)",
+          )
+        end
+        result
+      rescue StandardError => e
+        @bus&.publish("fix_loop:wishlist_error", error: e.message, target:, run_id:)
+        Result.err("wishlist convergence failed: #{e.class}: #{e.message}", category: :unknown)
+      end
+
       def structure_checkpoint(target:, files:, run_id:)
         return if ENV["MASTER_FIX_STRUCTURE_FIRST"] == "0"
 
@@ -362,7 +432,7 @@ module Master
         Result.ok("#{state.to_s.upcase}: #{message}")
       end
 
-      def run_one_pass(i, files:, target:, deadline:, budget_seconds:, state:, run_id:)
+      def run_one_pass(i, files:, target:, deadline:, budget_seconds:, state:, run_id:, wishlist_proposals:)
         pass = i + 1
         transaction_id = "#{run_id}-pass-#{pass}"
         @run_journal.pass_start(run_id, pass, transaction_id:)
