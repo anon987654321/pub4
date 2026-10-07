@@ -15,11 +15,9 @@ module Takeaway
     end
 
     def update
-      if @delivery_driver.update(driver_params)
-        redirect_to delivery_driver_path(@delivery_driver), notice: t("takeaway.driver_updated")
-      else
-        render :show, status: :unprocessable_entity
-      end
+      return render :show, status: :unprocessable_entity unless @delivery_driver.update(driver_params)
+
+      redirect_to delivery_driver_path(@delivery_driver), notice: t("takeaway.driver_updated")
     end
 
     private
