@@ -62,7 +62,7 @@ tts:
   # stretching vowels into an artificial drawl. Pitch stays neutral; sentence
   # roles add only a few hertz where useful.
   default_rate: "-5%"
-  default_pitch: "+0Hz"
+  default_pitch: "-12Hz"
   operator_log:
     voice: christopher
     rate: "-10%"
@@ -92,7 +92,7 @@ tts:
   # Gentle presence shaping. The voice already contains its own formants; post
   # processing should reveal articulation, control peaks, and leave the melody
   # alone rather than imposing a synthetic character.
-  post_chain: "highpass=f=65,equalizer=f=700:t=q:w=1.0:g=0.8,equalizer=f=2800:t=q:w=1.1:g=1.4,lowpass=f=13500,acompressor=threshold=-19dB:ratio=1.5:attack=10:release=120:makeup=1,volume=12dB,alimiter=limit=0.98"
+  post_chain: "highpass=f=65,equalizer=f=145:t=q:w=0.8:g=0.8,equalizer=f=700:t=q:w=1.0:g=0.6,equalizer=f=2800:t=q:w=1.1:g=1.2,lowpass=f=13500,acompressor=threshold=-19dB:ratio=1.5:attack=10:release=120:makeup=1,volume=12dB,alimiter=limit=0.98"
 
   # The bed under the speech, so a pause is not silence.
   #
