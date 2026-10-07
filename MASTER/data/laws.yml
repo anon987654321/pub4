@@ -1075,21 +1075,27 @@ tokens:
         face:        { tilt_x: 0.00, tilt_y: 0.00, density: 1.00, fracture: 0.00 }
         codebase:    { tilt_x: -0.08, tilt_y: 0.10, density: 1.18, fracture: 0.08 }
         ecology:     { tilt_x: 0.12, tilt_y: -0.06, density: 1.32, fracture: 0.12 }
+      # Speculative distant-human design, not a biological forecast. The
+      # defensible direction comes from observed Homo cranial evolution:
+      # greater neurocranial globularity and facial retraction, then a restrained
+      # speculative extension toward a future with less mastication pressure and
+      # more visually mediated communication. Skin tone is deliberately not
+      # inferred: future human diversity is not a single phenotype.
       morphology:
-        model: speculative_distant_human
-        generation: 6
-        cranium_scale: 1.12
-        cranial_width: 1.03
-        lower_face_scale: 0.84
-        orbital_scale: 1.04
-        orbital_vertical_scale: 1.02
-        brow_scale: 0.74
-        nose_scale: 0.90
-        mouth_scale: 0.88
-        facial_projection: 0.88
-        jaw_projection: 0.86
-        pupil_scale: 0.82
-        interface_presence: 0.16
+        model: speculative_distant_human_2026
+        generation: 8
+        cranium_scale: 1.18
+        cranial_width: 1.06
+        lower_face_scale: 0.80
+        orbital_scale: 1.10
+        orbital_vertical_scale: 1.06
+        brow_scale: 0.66
+        nose_scale: 0.86
+        mouth_scale: 0.84
+        facial_projection: 0.82
+        jaw_projection: 0.80
+        pupil_scale: 0.88
+        interface_presence: 0.08
         asymmetry: 0.010
         asymmetry_seed: 73421
       shell:
