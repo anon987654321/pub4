@@ -65,7 +65,7 @@ module Operator
       ::Law.rules
     end
 
-    # Code we did not write and will not fix. MASTER/tools/dilla/tools/venv-demucs is
+    # Code we did not write and will not fix. STUDIO/dilla/.venv-demucs is
     # a Python virtualenv with pip, torch and urllib3 vendored inside it, and
     # its JavaScript and HTML were being graded against this repo's rules —
     # `var headers = []` in urllib3's emscripten worker is not our debt.
