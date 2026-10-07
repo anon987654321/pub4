@@ -2,6 +2,8 @@
 
 require "open3"
 require "fileutils"
+require "json"
+require "securerandom"
 
 module Master
   module Voice
