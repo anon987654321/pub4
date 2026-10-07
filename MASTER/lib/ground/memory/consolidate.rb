@@ -18,6 +18,23 @@ module Master
           cache_context_summary(version, "#{header}\n#{lines.join("\n")}")
         end
 
+        def reasoning_context(limit: 3)
+          rows = reasoning(limit:)
+          return if rows.empty?
+
+          lines = rows.map do |row|
+            claim = row["claim"].to_s
+            selected = row["selected"].to_s
+            status = row["status"].to_s
+            source = row["source"].to_s
+            "- #{claim[0, 220]} | selected=#{selected[0, 80]} | status=#{status} | source=#{source[0, 100]}"
+          end
+          "Causal reasoning memory:\n#{lines.join("\n")}"
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "memory.reasoning_context")
+          nil
+        end
+
         def preference_context(limit: 5)
           rows = preferences(limit:)
           return if rows.empty?
@@ -81,6 +98,7 @@ module Master
           current_type = nil
           ordered_entries(active).each do |key, value|
             type = entry_type(value)
+            next if type == "reasoning"
             next if type == "reasoning"
             lines << "[#{type}]" if type != current_type
             current_type = type
