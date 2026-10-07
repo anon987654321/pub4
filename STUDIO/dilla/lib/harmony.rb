@@ -240,6 +240,7 @@ module DillaImprovisation
 end
 
 require_relative "sound"
+require_relative "midi_effects"
 
 # A lead and a bass, worked out from the chords rather than written down.
 #
@@ -331,11 +332,17 @@ module ImprovisedLine
     return [] if step < 0.06
 
     density = (ENV["LEAD_DENSITY"] || "0.35").to_f.clamp(0.0, 1.0)
+    chain_name = ENV.fetch("DILLA_MIDI_CHAIN", "default")
     target = guides.sample(random: rng)
-    notes = []
-    place = lambda do |semis, at_step, length, gain|
-      notes << { hz: midi_to_hz(base + semis).round(2), at: (at + (at_step * step)).round(4),
-                 held: (step * length).round(4), gain: gain }
+    events = []
+    place = lambda do |midi, at_step, length, gain|
+      events << DillaMidiEffects::Event.new(
+        base + midi,
+        (at + (at_step * step)).round(4),
+        (step * length).round(4),
+        gain,
+        :lead
+      )
     end
 
     place.call(target, 0, 2.2, 0.34)
@@ -346,18 +353,27 @@ module ImprovisedLine
       place.call((12 * octave) + scale[index], 3, 1.0, 0.26)
     end
 
-    return notes unless next_chord_hz
+    if next_chord_hz
+      next_root, = scale_for(next_chord_hz)
+      next_guides = guide_tones(next_chord_hz)
+      unless next_guides.empty?
+        landing = (next_root - root) + next_guides.sample(random: rng)
+        landing -= 12 while landing - target > 7
+        landing += 12 while target - landing > 7
+        place.call(landing + (rng.rand < 0.5 ? -1 : 1), 6.5, 0.5, 0.24)
+        place.call(landing, 7.0, 1.4, 0.32)
+      end
+    end
 
-    next_root, = scale_for(next_chord_hz)
-    next_guides = guide_tones(next_chord_hz)
-    return notes if next_guides.empty?
-
-    landing = (next_root - root) + next_guides.sample(random: rng)
-    landing -= 12 while landing - target > 7
-    landing += 12 while target - landing > 7
-    place.call(landing + (rng.rand < 0.5 ? -1 : 1), 6.5, 0.5, 0.24)
-    place.call(landing, 7.0, 1.4, 0.32)
-    notes
+    transformed = DillaMidiEffects.apply(events, name: chain_name.to_sym, rng:)
+    transformed.map do |event|
+      {
+        hz: midi_to_hz(event.midi).round(2),
+        at: event.at,
+        held: event.held,
+        gain: event.gain
+      }
+    end
   end
 
   # The bass, which is two traditions and they decide different things.
