@@ -12,6 +12,25 @@ module Master
     # of lines. The runtime needs the semantics, not another constitution-shaped
     # document.
     class ConvergenceDiscipline
+      UNMEASURED_SCORE = 1_000_000_000
+
+      DEFAULT_HYGIENE_PROMPT = <<~TEXT.strip
+        fix hygiene contract (enforce on every mutation in this /fix pass):
+        
+        1. numeric ranks: never .to_i/.to_int on values that may be Infinity/NaN; use finite sentinels
+        2. extract-then-match: if you strip a body from source, the next pattern must match that body
+        3. regex fixtures: every new extractor includes a unit fixture of the real surface form
+        4. bare-invoke / defaults: one dispatch path; update tests and comments in the same change
+        5. source pins: assert stable public names, never match against whole multi-MB files
+        6. event topics: literal string publishers; no stale aliases (see data/event_topics.yml)
+        7. dual paths: after early return/exit, delete or share one function with the later twin
+        8. gates: label SKIPPED vs FAILED vs crash
+        9. limits/guidance: new limits keys need a reader, or stay under guidance: only
+        
+        When proposing a patch, name which checklist id (A–G) you satisfied or waive with one line.
+        Deterministic census beats LLM invention for topic lists and call graphs.
+      TEXT
+
       DEFAULTS = {
         "clean_runs_required" => 2,
         "diminishing_delta" => 0.001,
@@ -37,7 +56,7 @@ module Master
 
       def begin_run(files)
         @baseline = snapshot(files)
-        @best_state = state_for(0, Float::INFINITY, @baseline)
+        @best_state = state_for(0, UNMEASURED_SCORE, @baseline)
         @history.clear
         emit("fix_loop:convergence_baseline", files: @baseline.size, digest: digest(@baseline))
         @baseline
@@ -235,6 +254,7 @@ module Master
           evidence rule: unreadable, unmeasured, truncated, or simulated work is not a pass
           leverage rule: fix the change with the widest proven causal reach, not the loudest finding
           unfinished-work rule: preserve fertile uncertainty; delete only after consumer and value evidence
+          #{hygiene_contract}
           #{Master::Cognition::Intelligence.orientation_contract}
           #{Master::Cognition::Intelligence.reasoning_contract}
         TEXT
@@ -282,12 +302,7 @@ module Master
       end
 
       def state_for(pass, score, snapshot)
-        safe_score =
-          if score.is_a?(Numeric) && score.respond_to?(:finite?) && !score.finite?
-            score
-          else
-            score.to_i
-          end
+        safe_score = score_value(score)
         {
           pass: pass.to_i,
           score: safe_score,
@@ -301,11 +316,28 @@ module Master
       end
 
       def score_improved?(current, before)
-        return current < before if current.is_a?(Numeric) && before.is_a?(Numeric) &&
-                                    (!current.respond_to?(:finite?) || current.finite?) &&
-                                    (!before.respond_to?(:finite?) || before.finite?)
+        score_value(current) < score_value(before)
+      end
 
-        current.to_f < before.to_f
+      def score_value(score)
+        return UNMEASURED_SCORE if score.nil?
+        return UNMEASURED_SCORE if score.respond_to?(:finite?) && !score.finite?
+
+        Integer(score)
+      rescue ArgumentError, TypeError
+        UNMEASURED_SCORE
+      end
+
+      def hygiene_contract
+        path = File.join(Master::ROOT, "data", "fix_hygiene.yml")
+        data = Master.load_yaml(path)
+        prompt = data.is_a?(Hash) ? data["llm_prompt"].to_s.strip : ""
+        return prompt unless prompt.empty?
+
+        DEFAULT_HYGIENE_PROMPT
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "convergence_discipline.hygiene_contract", event_bus: @bus)
+        DEFAULT_HYGIENE_PROMPT
       end
 
       def digest(rows)
