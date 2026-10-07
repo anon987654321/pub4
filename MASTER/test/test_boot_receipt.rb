@@ -124,6 +124,16 @@ class TestBootReceipt < Minitest::Test
     )
   end
 
+  def test_session_receipt_builds_without_changing_plain_doctor_lines
+    memory = Struct.new(:version).new(4)
+    agent = Struct.new(:model).new("test-model")
+    receipt = Receipt.build(root: Master::ROOT, agent:, memory:)
+
+    assert_equal 4, receipt.fetch(:session).fetch(:memory_version)
+    assert_includes Receipt.lines(root: Master::ROOT), "receipt: session commit="
+    refute_includes Receipt.lines(root: Master::ROOT), "memory=4"
+  end
+
   def test_the_receipt_names_the_commit_it_booted_from
     assert_match(/\A[0-9a-f]{12}\z/, Receipt.commit(Master::ROOT))
     assert Receipt.capabilities["git"], "the receipt is running inside a checkout"
