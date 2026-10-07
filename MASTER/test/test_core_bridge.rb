@@ -292,4 +292,19 @@ class CoreBridgeSandboxTest < Minitest::Test
     refute_kind_of Master::Core::Verdict::Request, verdict
     refute_kind_of Master::Core::Verdict::Block, verdict
   end
+  def test_observe_mode_is_read_only
+    Dir.mktmpdir do |root|
+      File.write(File.join(root, "README.md"), "hello\n")
+      model = ScriptedModel.new(
+        Master::Core::Effect.read("README.md"),
+        Master::Core::Effect.done("read-only assessment"),
+      )
+      result = Master::CLI::CoreBridge.run(
+        "inspect the repository", root:, model:, mode: :observe, max_turns: 2
+      )
+      assert_equal :complete, result[:reason]
+      assert_equal "observe", result[:mission].dig("operator", "mode")
+    end
+  end
+
 end
