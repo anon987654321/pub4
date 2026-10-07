@@ -16,7 +16,7 @@
                 controller: "typing-input",
                 action: "keydown->typing-input#composerKeydown"
               },
-              html: { role: "form", "aria-label": t("chat.message_label") } do |f| %>
+              html: { "aria-label": t("chat.message_label") } do |f| %>
   <div class="field" data-controller="character-counter" data-character-counter-countdown-value="true">
     <%= f.text_area :content, rows: 4,
           placeholder: t("chat.dm_placeholder"),
