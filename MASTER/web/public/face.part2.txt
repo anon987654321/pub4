@@ -1,3 +1,11 @@
+const FACE_FUTURE_CRANIAL_HEIGHT = futureFeatureScale('cranial_height', 1.04);
+const FACE_FUTURE_CRANIAL_WIDTH = futureFeatureScale('cranial_width', 1.02);
+const FACE_FUTURE_LOWER_FACE = futureFeatureScale('lower_face_scale', 0.92);
+const FACE_FUTURE_FACIAL_PROJECTION = futureFeatureScale('facial_projection', 0.90);
+const FACE_FUTURE_JAW_SOFTENING = futureFeatureScale('jaw_softening', 0.96);
+const FACE_FUTURE_BROW = futureFeatureScale('brow_scale', 0.90);
+const FACE_FUTURE_NOSE = futureFeatureScale('nasal_projection', futureFeatureScale('nose_scale', 0.94));
+
 const VERT_SHADER = `
 vec3 mod289v3(vec3 x){return x-floor(x*(1./289.))*289.;}
 vec4 mod289v4(vec4 x){return x-floor(x*(1./289.))*289.;}
@@ -83,7 +91,15 @@ void main(){
   float curlAmp=uCurl*0.28*(1.0-uRain*0.18);
   vec3 noise=curlNoise(position*0.5+uTime*0.1+seed)*(1.-m)*curlAmp;
   float jawRgn=smoothstep(0.0,0.15,-position.y-0.12)*smoothstep(0.0,0.14,0.28-abs(position.x));
+  float cheekRgn=smoothstep(0.10,0.56,abs(position.y)) * smoothstep(0.52,0.16,abs(position.x));
+  float browRgn=smoothstep(0.26,0.48,abs(position.y)) * smoothstep(0.48,0.16,abs(position.x));
   vec3 p=mix(scatter,position,lm)+noise+vec3(0.,-uJaw*0.05*jawRgn,0.);
+  p.y *= FACE_FUTURE_CRANIAL_HEIGHT;
+  p.x *= mix(FACE_FUTURE_LOWER_FACE, FACE_FUTURE_CRANIAL_WIDTH, smoothstep(-0.72, 0.18, position.y));
+  p.z *= FACE_FUTURE_FACIAL_PROJECTION;
+  p.z += cheekRgn * (FACE_FUTURE_NOSE - 1.0) * 0.018;
+  p.y -= jawRgn * (1.0 - FACE_FUTURE_JAW_SOFTENING) * 0.018;
+  p.y += browRgn * (1.0 - FACE_FUTURE_BROW) * 0.012;
   p.xy += normalize(cursorFace - p.xy + vec2(0.001)) * curiousPull;
   float tremorf=snoise(position*18.0+uTime*3.2+seed)*uTremor*0.003;
   p+=vec3(tremorf,tremorf*0.7,0.0);
