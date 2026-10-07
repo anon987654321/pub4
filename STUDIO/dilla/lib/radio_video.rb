@@ -350,6 +350,58 @@ module RadioVideo
             orbit.add(slab)
           }
 
+          // DMT fracture field: architectural debris that deconstructs and
+          // reassembles with the score instead of becoming a generic particle
+          // cloud. The seed is fixed, but its motion is not periodic.
+          const shardGroup = new THREE.Group()
+          scene.add(shardGroup)
+          const shards = []
+          for (let i = 0; i < 84; i++) {
+            const geo = i % 3 === 0
+              ? new THREE.TetrahedronGeometry(0.18 + (i % 7) * 0.025, 0)
+              : new THREE.BoxGeometry(0.12, 0.12, 0.12)
+            const mat = new THREE.MeshStandardMaterial({
+              color: i % 2 ? 0x5e7494 : 0x9b835c,
+              roughness: 0.42,
+              metalness: 0.48,
+              emissive: 0x0b1830,
+              emissiveIntensity: 0.7
+            })
+            const mesh = new THREE.Mesh(geo, mat)
+            const angle = i * 2.399963
+            const radius = 3.0 + (i % 13) * 0.58
+            mesh.position.set(
+              Math.cos(angle) * radius,
+              0.25 + (i % 17) * 0.29,
+              -4.5 - (i % 25) * 1.8
+            )
+            mesh.rotation.set(angle * 0.37, angle * 0.71, angle * 0.19)
+            shardGroup.add(mesh)
+            shards.push({ mesh, index: i, phase: (i * 1.61803398875) % (Math.PI * 2) })
+          }
+
+          const fractures = []
+          for (let i = 0; i < 16; i++) {
+            const points = []
+            for (let j = 0; j < 10; j++) {
+              const z = 7.5 - j * 3.0
+              const x = Math.sin(i * 1.37 + j * 0.83) * (2.2 + j * 0.45)
+              const y = 0.7 + Math.cos(i * 0.7 + j * 1.1) * 1.8
+              points.push(new THREE.Vector3(x, y, z))
+            }
+            const geo = new THREE.BufferGeometry().setFromPoints(points)
+            const line = new THREE.Line(
+              geo,
+              new THREE.LineBasicMaterial({
+                color: 0x9b8c72,
+                transparent: true,
+                opacity: 0.18
+              })
+            )
+            scene.add(line)
+            fractures.push(line)
+          }
+
           const context = new (window.AudioContext || window.webkitAudioContext)()
           const analyser = context.createAnalyser()
           analyser.fftSize = 2048
@@ -423,6 +475,26 @@ module RadioVideo
             core.scale.y = 1.0 + a.bass * 0.28
             atrium.rotation.y = t * 0.045 + a.high * 0.08
             orbit.rotation.y = t * 0.012
+            shardGroup.rotation.y = t * 0.018 + a.high * 0.12
+            shardGroup.rotation.x = Math.sin(t * 0.07) * 0.08
+
+            shards.forEach(({ mesh, index, phase }) => {
+              const local = Math.sin(t * (0.28 + (index % 9) * 0.021) + phase)
+              mesh.rotation.x += 0.002 + a.flux * 0.012
+              mesh.rotation.y -= 0.001 + a.mid * 0.009
+              mesh.position.y += local * 0.004 + a.bass * 0.012
+              const scale = 0.48 + a.high * 0.52 + Math.max(0, local) * 0.24
+              mesh.scale.setScalar(scale)
+              mesh.material.emissiveIntensity = 0.25 + a.high * 1.05
+              mesh.material.opacity = 0.5 + a.high * 0.45
+              mesh.material.transparent = true
+            })
+
+            fractures.forEach((line, index) => {
+              line.rotation.y = Math.sin(t * 0.07 + index) * 0.07 + a.flux * 0.12
+              line.rotation.x = Math.sin(t * 0.05 + index * 0.31) * 0.035
+              line.material.opacity = 0.07 + a.mid * 0.24 + a.flux * 0.2
+            })
 
             columns.forEach(({ mesh, side, index }) => {
               const local = Math.sin(t * 0.43 + index * 0.62 + side * 0.35)
