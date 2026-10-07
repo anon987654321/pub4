@@ -120,11 +120,9 @@ class PostsController < ApplicationController
   def edit; end
 
   def update
-    if @post.update(post_params)
-      redirect_to @post
-    else
-      render :edit, status: :unprocessable_entity
-    end
+    return render :edit, status: :unprocessable_entity unless @post.update(post_params)
+
+    redirect_to @post
   end
 
   def destroy
