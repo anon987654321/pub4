@@ -9,17 +9,19 @@ require "yaml"
 class TestLora < Minitest::Test
   LORA = File.join(ToolTest::ROOT, "lora")
 
-  # The origin is public, so a tracked photograph of a subject is a published
-  # one. None is tracked, and publishing one is a consent decision that has to
-  # be a deliberate edit to this list.
-  PUBLISHED_PHOTOGRAPHS = [].freeze
+  # Source captures remain private. The public `ideas/` gallery contains generated
+  # or graded work by deliberate design; every other tracked subject-media file
+  # needs an explicit publication decision.
+  PUBLISHED_SUBJECT_MEDIA = [].freeze
 
-  def test_no_photograph_is_committed_without_being_named_here
+  def test_no_private_subject_media_is_committed_without_being_named_here
     tracked, status = Open3.capture2("git", "-C", ToolTest::ROOT, "ls-files", "--", "lora")
     skip "not a git checkout" unless status.success?
 
-    photos = tracked.lines.map(&:strip).grep(/\.(jpe?g|png|heic|webp|mp4|mov|webm)\z/i)
-    assert_empty photos - PUBLISHED_PHOTOGRAPHS, "a photograph is committed under lora/ that nobody named"
+    media = tracked.lines.map(&:strip).grep(/\.(jpe?g|png|heic|webp|mp4|mov|webm)\z/i)
+    subject_media = media.reject { |path| path.start_with?("lora/ideas/") }
+    assert_empty subject_media - PUBLISHED_SUBJECT_MEDIA,
+                 "subject media is committed under lora/ without an explicit publication decision"
     assert_empty Dir[File.join(LORA, "johann", "dataset", "*")], "johann has no consented dataset"
   end
 
