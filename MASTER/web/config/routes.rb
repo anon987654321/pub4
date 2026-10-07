@@ -21,6 +21,7 @@ Rails.application.routes.draw do
   get  "chat/history", to: "chat#history"
   post "chat/command", to: "chat#command"
   get  "chat/metrics", to: "chat#metrics"
+  get  "chat/sensory", to: "chat#sensory"
   get  "chat/skills",  to: "chat#skills"
   get  "runtime/config", to: "runtime#boot_config"
   get  "runtime/status", to: "runtime#status"
