@@ -90,6 +90,11 @@ module Master
           @pass_progress = false
         end
 
+        def full_semantic!
+          @scanner.full_semantic! if @scanner.respond_to?(:full_semantic!)
+          self
+        end
+
         def violations(files) = resolve_violations(files.flat_map { |path| violations_for(path) })
 
         def violations_for(path)
