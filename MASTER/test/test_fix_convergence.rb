@@ -111,6 +111,22 @@ class TestFixConvergence < Minitest::Test
     assert_equal [0, 1, 2, 3, 4], calls
   end
 
+  def test_convergence_scores_rendered_and_opportunity_findings_in_same_pass
+    seen = []
+    discipline = Object.new
+    discipline.define_singleton_method(:observe) do |pass:, findings:, files:, progressed:|
+      seen << findings
+    end
+    discipline.observe(
+      pass: 1,
+      findings: [{ rule: "RENDERED_VISUAL_REFINEMENT" }, { rule: "OPPORTUNITY" }],
+      files: [],
+      progressed: false,
+    )
+
+    assert_equal 2, seen.first.size
+  end
+
   def test_convergence_discipline_reports_measured_improvement
     discipline = Master::Fix::ConvergenceDiscipline.new(root: Dir.mktmpdir("discipline"))
     discipline.begin_run([])
