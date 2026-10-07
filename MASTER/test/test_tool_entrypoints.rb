@@ -19,8 +19,8 @@ class TestToolEntrypoints < Minitest::Test
   def test_flattened_tool_shelves_are_not_recreated
     expected = %w[
       tools/master_design.rb
-      tools/scss_rules.rb
-      tools/frontend_rule_set.rb
+      tools/scss_laws.rb
+      tools/frontend_law_set.rb
       tools/postpro/frame_set.rb
       tools/postpro/rescue.rb
       tools/postpro/uncanny.rb
