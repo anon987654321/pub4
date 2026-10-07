@@ -241,10 +241,9 @@ module Operator
       out << "Pack: tree=#{tree} part=#{part_index}/#{part_count} text_total=#{text_total} "
       out << "fragments_total=#{source_units.size} binary=#{binaries.size} omitted=0 "
       out << "files_in_part=#{files_in_part} fragments_in_part=#{units.size} max_bytes=#{MAX_BYTES}\n\n"
-      out << protocol(tree)
+      out << protocol(tree) if part_index == 1
       out << "## Pack\n\n"
-      out << "All #{part_count} parts are required for a complete tree. "
-      out << "This part is #{96.chr}#{File.basename(output_paths.fetch(part_index - 1))}#{96.chr}.\n\n"
+      out << "All #{part_count} parts are required for a complete tree. Rehydrate every part into the same temporary tree.\n\n"
       if part_index == 1
         out << "Parts:\n\n"
         output_paths.each_with_index { |path, index| out << "- part #{index + 1}/#{part_count}: #{96.chr}#{File.basename(path)}#{96.chr}\n" }
@@ -253,11 +252,13 @@ module Operator
       out << "## Tree\n#{fence3}\n"
       paths.each { |p| out << "#{p}\n" }
       out << "#{fence3}\n"
-      unless binaries.empty?
-        out << "\n## Binary files\n\nListed, not inlined:\n\n"
-        binaries.each { |p| out << "- #{96.chr}#{p}#{96.chr}\n" }
+      if part_index == 1
+        unless binaries.empty?
+          out << "\n## Binary files\n\nListed, not inlined:\n\n"
+          binaries.each { |p| out << "- #{96.chr}#{p}#{96.chr}\n" }
+        end
+        out << "\n## Omitted text files\n\nNone. Every tracked text file is present across the complete part set.\n\n"
       end
-      out << "\n## Omitted text files\n\nNone. Every tracked text file is present across the complete part set.\n\n"
       units.each { |_, block| out << block }
       out << "## Snapshot part complete\n\n"
       out << "snapshot0: complete tree=#{tree} part=#{part_index}/#{part_count} files=#{paths.size} "
