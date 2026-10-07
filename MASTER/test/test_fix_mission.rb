@@ -84,6 +84,9 @@ class FixMissionTest < Minitest::Test
         model: "agy:auto",
         effort: "high",
         plan: "explore then verify",
+        mode: :repair,
+        risk: :high,
+        intent: :write_repo_changes,
       )
 
       mission.transition!(:plan, plan: "inspect before changing")
@@ -98,6 +101,9 @@ class FixMissionTest < Minitest::Test
       assert_equal "agy:auto", record["model"]
       assert_equal "high", record["effort"]
       assert_equal "inspect before changing", record["plan"]
+      assert_equal "repair", record.dig("operator", "mode")
+      assert_equal "high", record.dig("operator", "risk")
+      assert_equal "write_repo_changes", record.dig("operator", "intent")
       assert_equal "clean", record["summary"]
       assert_equal %w[mission:start mission:stage mission:stage mission:stage mission:finish],
                    bus.events.map(&:first)
