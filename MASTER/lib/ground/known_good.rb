@@ -14,7 +14,7 @@ module Master
     # Rollback is deliberately explicit, refuses a dirty checkout, and moves
     # the checkout to the recorded commit rather than silently deleting work.
     class KnownGood
-      include Master::Io::AtomicWrite
+      include ::Master::Io::AtomicWrite
 
       PATH = ".master/known_good.json"
       VERSION = 1
