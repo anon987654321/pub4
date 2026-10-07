@@ -119,6 +119,10 @@ module Master
           @file_processor.full_semantic! if @file_processor.respond_to?(:full_semantic!)
           self
         end
+        def semantic_full?
+          @file_processor.respond_to?(:semantic_full?) && @file_processor.semantic_full?
+        end
+
 
         private
 
