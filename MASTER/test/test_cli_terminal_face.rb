@@ -28,25 +28,26 @@ class TestCliTerminalFace < Minitest::Test
     end
   end
 
-  def test_the_face_uses_the_full_viewport
-    painted = rows_of(window.screen(30, 60, 2.0))
-    head_rows = painted.select { |_, text| text.match?(BRAILLE) }.keys
-    refute_empty head_rows
-    assert_operator head_rows.max, :>, 10
+  def test_the_face_and_transcript_share_the_window
+    painted = rows_of(window.screen(30, 80, 2.0)).values
+    assert painted.any? { |text| text.match?(BRAILLE) }
+    assert painted.any? { |text| text.include?("/ FACE") }
+    assert painted.any? { |text| text.include?("enter sends") }
   end
 
   def test_every_row_of_the_window_is_painted
-    assert_equal (1..30).to_a, rows_of(window.screen(30, 60, 2.0)).keys.sort
+    assert_equal (1..30).to_a, rows_of(window.screen(30, 80, 2.0)).keys.sort
   end
 
-  def test_the_renderer_receives_the_full_terminal_height
-    seen_rows = nil
+  def test_the_renderer_receives_the_content_height_and_face_column_width
+    seen = nil
     renderer = ->(**kwargs) do
-      seen_rows = kwargs.fetch(:rows)
-      Array.new(seen_rows, " ").join("\n")
+      seen = [kwargs.fetch(:rows), kwargs.fetch(:cols)]
+      Array.new(seen.first, " " * seen.last).join("\n")
     end
-    Master::CLI::Face.stub(:frame, renderer) { window.screen(30, 60, 2.0) }
-    assert_equal 30, seen_rows
+    Master::CLI::Face.stub(:frame, renderer) { window.screen(30, 80, 2.0) }
+    assert_equal 28, seen.first
+    assert_operator seen.last, :<, 80
   end
 
   def test_motion_has_a_camera_dolly
@@ -65,13 +66,13 @@ class TestCliTerminalFace < Minitest::Test
     end
   end
 
-  def test_the_column_under_the_head_keeps_three_jobs
+  def test_the_side_panel_keeps_recent_jobs
     face = window
     5.times { |i| face.send(:note_job, ["job #{i}"]) }
-    text = rows_of(face.screen(30, 60, 2.0)).values.join("\n")
+    text = rows_of(face.screen(30, 80, 2.0)).values.join("\n")
     assert_includes text, "job 4"
     assert_includes text, "job 2"
-    refute_includes text, "job 1"
+    refute_includes text, "job 0"
   end
 
   def test_a_failed_turn_does_not_start_picture_work
