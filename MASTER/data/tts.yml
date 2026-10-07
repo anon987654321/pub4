@@ -8,7 +8,10 @@ transcendent:
   enabled: true
   fast_mode: false
   default_mode: transcendent
-  personality: warm_erratic
+  personality: warm_supportive
+  warmth: 0.82
+  depth: 0.68
+  fm_shimmer: 0.08
   # Prefer expressive local engines when they are actually installed. Engines.attempt?
   # remains the availability gate; missing MLX/Chatterbox falls through without delay.
   engine_chain: mlx, chatterbox, edge_melodic, edge, say
