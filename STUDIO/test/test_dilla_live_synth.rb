@@ -948,7 +948,10 @@ class TestDillaLiveSynth < Minitest::Test
   # from inside the engine now, indented under its module, so the anchors allow
   # the two leading spaces.
   def test_the_main_sound_keeps_its_numbers
-    src = File.read(dilla("dilla.rb")).partition("module LivesetStandard").last
+    source = File.read(dilla("dilla.rb"))
+    start = source.index("module LivesetStandard")
+    raise "LivesetStandard module missing" unless start
+    src = source[start, 12_000]
     src = src.partition("\nend\n").first
     pins = {
       /^\s*RATE = 32_000$/ => "32 kHz", /^\s*BLOCK = 1_024$/ => "1024-frame blocks", /^\s*BPM = 118$/ => "118 BPM",
