@@ -52,6 +52,35 @@ class InferStageTest < Minitest::Test
     refute_nil conf_event
   end
 
+  def test_malformed_inference_pattern_does_not_disable_valid_commands
+    config = {
+      "infer" => {
+        "commands" => {
+          "broken" => { "patterns" => ["["], "capture" => "none" },
+          "scan" => { "patterns" => ["\\bscan\\b"], "capture" => "none" },
+        },
+        "negative" => [{ "pattern" => "[", "blocks" => ["scan"] }],
+        "destructive" => ["clear"],
+      },
+    }
+
+    events = Class.new do
+      attr_reader :events
+      def initialize = @events = []
+      def publish(name, payload = {}) = @events << [name, payload]
+    end.new
+
+    Master.stub(:patterns_config, config) do
+      infer = Master::CLI::Stages::Infer.new(bus: events)
+      patterns, negatives, = infer.send(:load_patterns)
+
+      assert patterns.key?("scan")
+      refute patterns.key?("broken")
+      assert_empty negatives
+      assert events.events.any? { |name, payload| name == "infer:pattern_invalid" && payload[:command] == "broken" }
+    end
+  end
+
   def test_negative_pattern_blocks_risky_scan
     result = @infer.call(ctx("scan my email inbox"))
     assert result.ok?
