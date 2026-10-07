@@ -29,6 +29,7 @@
 # order. particle_kernel consumers must not precede attention_model.
 face_eager:
   - attention_model.js
+  - face_future_morphology.js
   - face_particles.js
   - face_audio_bridge.js
   - face_tts_bridge.js
