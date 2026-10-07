@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# GENERATED PROJECTION — source: MASTER/tools/scss_rules.rb. Keep behavior identical.
+# GENERATED PROJECTION — source: MASTER/tools/scss_laws.rb. Keep behavior identical.
 unless defined?(Operator::ScssRules)
 # frozen_string_literal: true
 
