@@ -1,20 +1,9 @@
 # frozen_string_literal: true
 
-# Regenerates the verbatim codebase mirrors at the pub4 root: snapshot_MASTER.md,
-# snapshot_RAILS.md, snapshot_OPENBSD.md and snapshot_STUDIO.md.
-#
-# These are the packs handed to another model when it needs the whole tree
-# rather than a summary: every git-tracked text file inlined when the share pack fits the hard size
-# ceiling, plus a tree listing, omitted-file ledger and the reading protocol.
-#
-# The generator that made them was `bin/snapshot`, deleted with the DEPLOY tree
-# in the OPENBSD reorganisation — so the source mirrors sat stale at a
-# commit that no longer exists in any working checkout, with nothing able to
-# refresh them. This lives in tools/ and is reachable as `MASTER/bin/operator snapshot`,
-# which is the surface an operator already has.
-#
-# Binary files are listed in the tree and skipped in the body; a mirror that
-# claims to inline everything must say which files it could not.
+# Generates transport-safe source mirrors at the pub4 root:
+# snapshot_MASTER.md, snapshot_RAILS.md, snapshot_OPENBSD.md and snapshot_STUDIO.md.
+# Every tracked text file is inlined exactly once across its multipart pack;
+# binary files are listed but not embedded.
 
 require "fileutils"
 require "open3"
