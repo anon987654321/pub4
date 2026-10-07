@@ -22,6 +22,15 @@ function writeQueue(queue) {
   }
 }
 
+function sameOriginUrl(value) {
+  try {
+    const url = new URL(String(value || ""), window.location.origin)
+    return url.origin === window.location.origin ? url.href : null
+  } catch (_) {
+    return null
+  }
+}
+
 export async function enqueueSync(entry) {
   const queue = readQueue()
   queue.push({ ...entry, queuedAt: Date.now() })
@@ -35,8 +44,11 @@ async function flushQueue() {
 
   const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || ""
   await Promise.allSettled(
-    queue.map((entry) =>
-      fetch(entry.url, {
+    queue.map((entry) => {
+      const url = sameOriginUrl(entry.url)
+      if (!url) return Promise.resolve()
+
+      return fetch(url, {
         method: entry.method || "POST",
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
@@ -45,7 +57,7 @@ async function flushQueue() {
         },
         body: entry.body ? new URLSearchParams(entry.body) : undefined
       })
-    )
+    })
   )
 }
 
