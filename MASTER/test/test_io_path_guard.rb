@@ -100,6 +100,8 @@ class PathGuardEscapeTest < Minitest::Test
       refute_includes out, "root:x", "#{glob} reached outside the root"
     end
     refute_includes search.call(pattern: "SECRET", glob: ".*").value!, "hunter2"
+    File.symlink(".env", File.join(@root, "visible.txt"))
+    refute_includes search.call(pattern: "SECRET", glob: "*").value!, "hunter2"
   end
 end
 
