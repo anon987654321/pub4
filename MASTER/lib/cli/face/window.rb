@@ -162,7 +162,7 @@ module Master
           nudge(:key)
           return submit if ENTER.include?(key)
           return change { @draft.clear } if key == "\u0015"
-          return change { @draft.sub!(/\\s*\\S+\\s*\\z/, "") || @draft.clear } if key == "\u0017"
+          return change { @draft.sub!(/\s*\S+\s*\z/, "") || @draft.clear } if key == "\u0017"
           return @output.print("\e[2J\e[H") if key == "\u000c"
           return change { @draft.chop! } if ERASE.include?(key)
 
