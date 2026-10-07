@@ -312,10 +312,10 @@ module RadioVideo
             orbit.add(slab)
           }
 
-          const analyser = new (window.AudioContext || window.webkitAudioContext)().createAnalyser()
+          const context = new (window.AudioContext || window.webkitAudioContext)()
+          const analyser = context.createAnalyser()
           analyser.fftSize = 2048
           analyser.smoothingTimeConstant = 0.72
-          const context = analyser.context
           const source = context.createMediaElementSource(audio)
           const destination = context.createMediaStreamDestination()
           source.connect(analyser)
