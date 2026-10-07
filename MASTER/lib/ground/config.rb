@@ -74,7 +74,7 @@ module Master
         end
       end
 
-      include Master::Io::AtomicWrite
+      include ::Master::Io::AtomicWrite
 
       def save!
         FileUtils.mkdir_p(File.dirname(@path))
