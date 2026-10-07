@@ -129,9 +129,13 @@
     const felt = window.MASTERFeltState?.collectFeltState?.() || "";
     if (!felt) return;
     const parts = felt.split("|");
-    const arousal = parseFloat(parts[4]) || 0.4;
-    const valence = parseFloat(parts[5]) || 0;
-    V.spawn(2, { kind: 13, arousal, valence, confidence: parseFloat(parts[3]) || 0.7, decay: 0.015 });
+    const arousalValue = parseFloat(parts[4]);
+    const valenceValue = parseFloat(parts[5]);
+    const confidenceValue = parseFloat(parts[3]);
+    const arousal = Number.isFinite(arousalValue) ? arousalValue : 0.4;
+    const valence = Number.isFinite(valenceValue) ? valenceValue : 0;
+    const confidence = Number.isFinite(confidenceValue) ? confidenceValue : 0.7;
+    V.spawn(2, { kind: 13, arousal, valence, confidence, decay: 0.015 });
     document.documentElement.dataset.feltState = felt.slice(0, 48);
   });
 
