@@ -554,6 +554,7 @@ class VisualEngine {
     this.centers = []
     this.mouse = { x: 0, y: 0, down: false, active: false }
     this.touch = { x: 0, y: 0, active: false }
+    this.tilt = { x: 0, y: 0 }
     this.time = 0
     this.zOffset = 0
     this.colorInvertValue = 0
@@ -795,6 +796,8 @@ class VisualEngine {
     const interactionX = this.touch.active ? this.touch.x : this.mouse.x
     const interactionY = this.touch.active ? this.touch.y : this.mouse.y
     const isInteracting = (this.touch.active || this.mouse.active) && this.mouse.down
+    const tiltX = this.tilt.x * this.w
+    const tiltY = this.tilt.y * this.h
     const c = this.centerNow
     if (isInteracting) {
       // Pointer coordinates arrive in viewport space; the buffer is capped, so
@@ -804,8 +807,8 @@ class VisualEngine {
       c.x += (this.centerX + (this.centerX - interactionX * sx) * 0.35 - c.x) * 0.08
       c.y += (this.centerY + (this.centerY - interactionY * sy) * 0.35 - c.y) * 0.08
     } else {
-      c.x += (this.centerX - c.x) * 0.015
-      c.y += (this.centerY - c.y) * 0.015
+      c.x += (this.centerX + tiltX - c.x) * 0.015
+      c.y += (this.centerY + tiltY - c.y) * 0.015
     }
 
     if (isPressed) this.colorInvertValue = Math.min(255, this.colorInvertValue + 5)
@@ -1016,6 +1019,7 @@ export class RadioBrgen {
     this.isStarted = true
     this.audioEngine.setUserInteracted()
     this.audioEngine.start()
+    this._bindTilt?.()
     this.audioEngine.publishTrack?.()
     if (this.overlay) this.overlay.hidden = true
     this.onStart?.()
@@ -1023,6 +1027,28 @@ export class RadioBrgen {
 
   setupEventListeners() {
     const startExperience = () => this.start()
+
+    const bindTilt = async () => {
+      if (window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches) return
+      const Ctor = window.DeviceOrientationEvent
+      if (!Ctor) return
+      if (typeof Ctor.requestPermission === "function") {
+        try {
+          const permission = await Ctor.requestPermission()
+          if (permission !== "granted") return
+        } catch {
+          return
+        }
+      }
+      this._tiltHandler = (event) => {
+        if (event.gamma == null) return
+        const gamma = Math.max(-20, Math.min(20, event.gamma || 0))
+        const beta = Math.max(-20, Math.min(20, (event.beta || 0) - 45))
+        this.visualEngine.tilt.x = gamma / 20 * 0.08
+        this.visualEngine.tilt.y = beta / 20 * 0.08
+      }
+      window.addEventListener("deviceorientation", this._tiltHandler, { passive: true })
+    }
 
     const onOverlayClick = () => startExperience()
     const onOverlayKey = (e) => {
@@ -1032,6 +1058,7 @@ export class RadioBrgen {
       }
     }
 
+    this._bindTilt = bindTilt
     if (this.overlay) {
       this.overlay.addEventListener("click", onOverlayClick)
       this.overlay.addEventListener("keydown", onOverlayKey)
@@ -1156,6 +1183,7 @@ export class RadioBrgen {
     this._destroyed = true
     cancelAnimationFrame(this._raf)
     this.audioEngine.stop()
+    if (this._tiltHandler) window.removeEventListener("deviceorientation", this._tiltHandler)
     this._boundHandlers.forEach(([target, event, handler]) => {
       const el = target === "overlay" ? this.overlay : target === "window" ? window : document
       if (el) el.removeEventListener(event, handler)
