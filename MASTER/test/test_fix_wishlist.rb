@@ -122,6 +122,29 @@ class TestFixWishlist < Minitest::Test
     assert_includes verified.first.fetch("proof_checks"), "ruby syntax: passed"
   end
 
+  def test_missing_proof_contract_never_becomes_verified
+    response = reply.sub("proof:
+    - ruby syntax", "")
+    wishlist = Master::Fix::Wishlist.new(root: @root, agent: RecordingAgent.new(response))
+    wishlist.call(state: "done", target: @root, run_id: "r_missing_proof")
+
+    proposal = wishlist.claimable(target: @root, limit: 1, run_id: "r_missing_proof").first
+    wishlist.claim!([proposal], run_id: "r_missing_proof")
+    wishlist.mark_attempt(
+      proposal_id: proposal.fetch("uid"),
+      fixed: 1,
+      status: :continue,
+      message: "changed",
+      run_id: "r_missing_proof",
+    )
+    wishlist.mark_delivered(proposal_ids: [proposal.fetch("uid")], run_id: "r_missing_proof")
+
+    row = wishlist.mark_verified(proposal_ids: [proposal.fetch("uid")], run_id: "r_missing_proof_verify").first
+    assert_equal "applied", row.fetch("status")
+    assert_equal "open", row.fetch("proof_state")
+    assert_includes row.fetch("proof_checks"), "no executable proof contract"
+  end
+
   def test_unsupported_proof_never_becomes_verified
     response = reply.sub("ruby syntax", "human listening test")
     wishlist = Master::Fix::Wishlist.new(root: @root, agent: RecordingAgent.new(response))
