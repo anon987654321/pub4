@@ -18,7 +18,7 @@ module Master
     # queue. It proposes; it does not silently edit source. Concrete wishes are
     # surfaced to the next /fix through the orientation layer.
     class Wishlist
-      include Master::Io::AtomicWrite
+      include ::Master::Io::AtomicWrite
 
       LEDGER_PATH = ".master/fix_wishlist.json"
       SCHEMA = 1
