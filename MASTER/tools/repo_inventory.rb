@@ -24,7 +24,7 @@ INVENTORY_ROOT = File.expand_path("../..", __dir__)
 # `rake docs:agent_contracts` and have to sit where their agent reads them.
 # test/test_lifecycle_tools.rb holds both lists to the tree in both directions.
 ALLOWED_ROOT_FILES = %w[
-  .cursorrules
+  .cursorlaws
   .gitattributes
   .gitignore
   .ruby-version
