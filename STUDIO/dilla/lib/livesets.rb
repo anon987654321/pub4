@@ -3462,7 +3462,7 @@ SHOWCASE_MODES = {
         last = lead_choice(phrase.fetch("range").map(&:to_i), last, reach)
         duration = phrase["steps"].sample(random: @rng) * @beat
         duration = [duration, length - (spot - @next_at) - 0.18 * @beat].min
-        if duration > 0.08 * @beat && @rng.rand < phrase["odds"]
+        if duration > 0.08 * @beat && @rng.rand < @mind.lead_probability(phrase["odds"])
           stage.fm(last, preset, spot, duration * phrase["held"], phrase["gain"])
         end
         spot += [duration, 0.08 * @beat].max
@@ -3482,7 +3482,7 @@ SHOWCASE_MODES = {
         duration = [0.5, 0.5, 1.0, 1.5].sample(random: @rng) * @beat
         duration = [duration, length - (spot - @next_at) - 0.14 * @beat].min
         swing = ((spot - @next_at) / (@beat / 2)).round.odd? ? @c["lead_swing_seconds"] : 0.0
-        if duration > 0.08 * @beat && @rng.rand < @c["lead_odds"]
+        if duration > 0.08 * @beat && @rng.rand < @mind.lead_probability(@c["lead_odds"])
           note = last.clamp(*@c["lead_range"])
           stage.note(note, spec, spot + swing, duration * 0.82, @c["lead_gain"], :lead, from_midi: @last_lead)
           @last_lead = note
