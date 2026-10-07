@@ -30,7 +30,7 @@ module Master
 
         def verify(proposal, root:)
           proofs = Array(proposal["proof"]).map { |value| normalized(value) }.reject(&:empty?)
-          return { state: :proven, checks: [] } if proofs.empty?
+          return { state: :open, checks: ["no executable proof contract"] } if proofs.empty?
 
           path = anchor_path(proposal["anchor"], root)
           return { state: :open, checks: ["anchor is not a file"] } unless path
@@ -61,7 +61,7 @@ module Master
         end
 
         def file_exists(path)
-          File.file?(path) && File.size?(path)
+          File.file?(path)
         end
 
         def ruby_syntax(path)
