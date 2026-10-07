@@ -9,7 +9,7 @@ require_relative "atomic_write"
 module Master
   module Io
     class CircuitBreaker
-      include Master::Io::AtomicWrite
+      include ::Master::Io::AtomicWrite
       include MonitorMixin
 
       FAILURE_THRESHOLD = 8
