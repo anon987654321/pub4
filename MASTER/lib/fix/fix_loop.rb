@@ -21,6 +21,7 @@ require_relative "violation"
 require_relative "wishlist"
 require_relative "protocol"
 require_relative "transformation_plan"
+require_relative "convergence_discipline"
 
 module Master
   module Fix
@@ -75,11 +76,12 @@ module Master
         @reachability = Reachability.new(root: @root, bus:)
         @transformation_plan = TransformationPlan.new(root: Master::ROOT)
         @wishlist = Wishlist.new(root: @root, agent: @agent, event_bus: @bus)
+        @convergence_discipline = ConvergenceDiscipline.new(root: @root, bus: @bus)
 
         @file_collector = FileCollector.new(root:, bus:)
         @rule_order = LawOrder.new(rules:, learnings:, bus:, root:)
         @pass_runner = build_pass_runner(rules:, agent:, scanner:, root:, bus:, learnings:,
-          ground_truth:, preserve_user_intent:, law_resolver:, homeostat: @homeostat)
+          ground_truth:, preserve_user_intent:, law_resolver:, homeostat: @homeostat, discipline: @convergence_discipline)
         @sweeps = build_sweeps(agent:, root:, bus:)
       end
 
@@ -99,6 +101,7 @@ module Master
         return halted_result if halted? && !requested
 
         files = incremental ? @file_collector.collect_changed(target) : @file_collector.collect(target)
+        @convergence_discipline.begin_run(files)
         journal = @run_journal.start_or_resume(target:, files:, max_passes:, budget_seconds:)
         run_id = journal["id"]
         mission = mission_for(target:, requested:)
