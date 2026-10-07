@@ -71,9 +71,13 @@ module Master
       # A glob can climb with `..` and a hit can be a symlink out of the root,
       # so every hit is checked by its realpath rather than by the pattern.
       def searchable?(path)
-        File.file?(path) &&
-          PathGuard.inside_real_root?(File.expand_path(path), @root) &&
-          !PathGuard.secret?(path)
+        return false unless File.file?(path)
+        return false unless PathGuard.inside_real_root?(File.expand_path(path), @root)
+
+        canonical = File.realpath(path)
+        PathGuard.inside_root?(canonical, @root) && !PathGuard.secret?(canonical)
+      rescue SystemCallError
+        false
       end
 
       def binary_file?(path)
