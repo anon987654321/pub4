@@ -206,16 +206,43 @@ module Operator
         path.start_with?("MASTER/law/", "MASTER/lib/review/scan/rules/")
     end
 
-    def render_snapshot(tree, paths, binaries, texts, omitted, sha)
+    def source_block(path)
+      body = File.read(File.join(REPO, path), encoding: "UTF-8")
+      longest = body.scan(/^\x60{3,}/).map(&:length).max.to_i
+      fence = 96.chr * [3, longest + 1].max
+      out = +"## #{96.chr}#{path}#{96.chr}\n\n"
+      out << "#{fence}#{FENCE.fetch(File.extname(path), "")}\n"
+      out << body
+      out << "\n" unless body.end_with?("\n")
+      out << "#{fence}\n\n"
+      out
+    end
+
+    def output_paths(tree, part_count)
+      base = OUTPUT_NAMES.fetch(tree)
+      return [File.join(REPO, base)] if part_count == 1
+
+      [File.join(REPO, base)] +
+        (2..part_count).map { |part| File.join(REPO, "snapshot_#{tree}.part#{format('%03d', part)}.md") }
+    end
+
+    def render_snapshot(tree, paths, binaries, texts, sha, part_index:, part_count:, source_blocks:, output_paths:)
       fence3 = 96.chr * 3
+      total_text = paths.size - binaries.size
       out = String.new
       out << "# #{tree} — source snapshot\n\n"
-      out << "Generated #{Time.now.utc.strftime('%Y-%m-%d %H:%M UTC')} — git #{sha} — "
-      out << "#{texts.size} files inlined"
-      out << ", #{binaries.size} binary listed only" unless binaries.empty?
-      out << ", #{omitted.size} text omitted for share-size" unless omitted.empty?
-      out << ".\n\n"
+      out << "Generated #{Time.now.utc.strftime('%Y-%m-%d %H:%M UTC')} — git #{sha}\n"
+      out << "Pack: tree=#{tree} part=#{part_index}/#{part_count} text_total=#{total_text} "
+      out << "binary=#{binaries.size} omitted=0 files_in_part=#{texts.size} max_bytes=#{MAX_BYTES}\n\n"
       out << protocol(tree)
+      out << "## Pack\n\n"
+      out << "All #{part_count} parts are required for a complete tree. "
+      out << "This part is #{96.chr}#{File.basename(output_paths.fetch(part_index - 1))}#{96.chr}.\n\n"
+      if part_index == 1
+        out << "Parts:\n\n"
+        output_paths.each_with_index { |path, index| out << "- part #{index + 1}/#{part_count}: #{96.chr}#{File.basename(path)}#{96.chr}\n" }
+        out << "\n"
+      end
       out << "## Tree\n#{fence3}\n"
       paths.each { |p| out << "#{p}\n" }
       out << "#{fence3}\n"
@@ -223,58 +250,108 @@ module Operator
         out << "\n## Binary files\n\nListed, not inlined:\n\n"
         binaries.each { |p| out << "- #{96.chr}#{p}#{96.chr}\n" }
       end
-      unless omitted.empty?
-        out << "\n## Omitted text files\n\nThese tracked text files are deliberately omitted only to keep this share pack below the hard 8 MB ceiling.\n\n"
-        omitted.each { |p| out << "- #{96.chr}#{p}#{96.chr} — #{File.size(File.join(REPO, p))} bytes\n" }
-      end
-      out << "\n"
-      texts.each do |p|
-        body = File.read(File.join(REPO, p), encoding: "UTF-8")
-        longest = body.scan(/^`{3,}/).map(&:length).max.to_i
-        fence = 96.chr * [3, longest + 1].max
-        out << "## #{96.chr}#{p}#{96.chr}\n\n"
-        out << "#{fence}#{FENCE.fetch(File.extname(p), "")}\n"
-        out << body
-        out << "\n" unless body.end_with?("\n")
-        out << "#{fence}\n\n"
-      end
-      out << "## Snapshot complete\n\n"
-      out << "snapshot0: complete tree=#{tree} files=#{paths.size} text=#{texts.size} binary=#{binaries.size} omitted=#{omitted.size} bytes=#{out.bytesize}\n"
+      out << "\n## Omitted text files\n\nNone. Every tracked text file is present across the complete part set.\n\n"
+      texts.each { |path| out << source_blocks.fetch(path) }
+      out << "## Snapshot part complete\n\n"
+      out << "snapshot0: complete tree=#{tree} part=#{part_index}/#{part_count} files=#{paths.size} "
+      out << "text_total=#{total_text} files_in_part=#{texts.size} binary=#{binaries.size} omitted=0 "
+      out << "bytes=#{out.bytesize}\n"
       out
+    end
+
+    def partition_texts(tree, paths, binaries, texts, source_blocks, sha)
+      return [[]] if texts.empty?
+
+      part_count_hint = texts.size
+      hint_paths = output_paths(tree, part_count_hint)
+      overhead = render_snapshot(
+        tree, paths, binaries, [], sha,
+        part_index: 1,
+        part_count: part_count_hint,
+        source_blocks:,
+        output_paths: hint_paths,
+      ).bytesize
+      budget = MAX_BYTES - overhead
+      raise "snapshot: #{tree} metadata exceeds per-part ceiling #{MAX_BYTES} bytes" if budget <= 0
+
+      groups = []
+      current = []
+      used = 0
+      texts.each do |path|
+        size = source_blocks.fetch(path).bytesize
+        raise "snapshot: #{tree} file #{path} exceeds per-part ceiling #{MAX_BYTES} bytes" if size > budget
+        if current.any? && used + size > budget
+          groups << current
+          current = []
+          used = 0
+        end
+        current << path
+        used += size
+      end
+      groups << current unless current.empty?
+      groups
+    end
+
+    def tracked_root_outputs(tree)
+      prefix = "snapshot_#{tree}"
+      Dir.children(REPO).filter_map do |name|
+        next unless name.start_with?(prefix) && name.end_with?(".md")
+        next unless name == OUTPUT_NAMES.fetch(tree) || name.match?(/\A#{Regexp.escape(prefix)}\.part\d+\.md\z/)
+
+        name
+      end
+    end
+
+    def tracked_output_names
+      out, = Open3.capture2("git", "ls-files", "-z", "--", "snapshot_*.md", chdir: REPO)
+      out.split("\0").filter_map { |path| File.basename(path) }
+    end
+
+    def cleanup_stale_outputs(tree, keep)
+      tracked = tracked_output_names
+      tracked_root_outputs(tree).each do |name|
+        next if keep.include?(name) || tracked.include?(name)
+
+        File.delete(File.join(REPO, name))
+      end
     end
 
     def write(tree, io: $stdout)
       paths = tracked(tree)
       if paths.empty?
         Master::Trace::Dmesg.status("snapshot0", "#{tree}, no tracked files, skipped", io:)
-        return
+        return []
       end
 
       binaries, texts = paths.partition { |p| binary?(File.join(REPO, p)) }
-      omitted = []
       sha = head_sha
-
-      loop do
-        candidate = texts.reject { |p| mandatory?(p) || omitted.include?(p) }
-          .sort_by { |p| [omission_priority(p), -File.size(File.join(REPO, p)), p] }
-          .first
-        final_texts = texts.reject { |p| omitted.include?(p) }
-        probe = render_snapshot(tree, paths, binaries, final_texts, omitted, sha)
-        break if probe.bytesize <= MAX_BYTES
-        raise "snapshot: #{tree} cannot fit below #{MAX_BYTES} bytes without omitting mandatory files" unless candidate
-        omitted << candidate
+      source_blocks = texts.to_h { |path| [path, source_block(path)] }
+      groups = partition_texts(tree, paths, binaries, texts, source_blocks, sha)
+      outputs = output_paths(tree, groups.size)
+      rendered = groups.each_with_index.map do |part_texts, index|
+        output = outputs.fetch(index)
+        body = render_snapshot(
+          tree, paths, binaries, part_texts, sha,
+          part_index: index + 1,
+          part_count: groups.size,
+          source_blocks:,
+          output_paths: outputs,
+        )
+        raise "snapshot: #{tree} part #{index + 1}/#{groups.size} exceeds #{MAX_BYTES} bytes" if body.bytesize > MAX_BYTES
+        [output, body]
       end
 
-      final_texts = texts.reject { |p| omitted.include?(p) }
-      out = File.join(REPO, OUTPUT_NAMES.fetch(tree))
-      File.write(out, render_snapshot(tree, paths, binaries, final_texts, omitted, sha), encoding: "UTF-8")
+      cleanup_stale_outputs(tree, outputs.map { |path| File.basename(path) })
+      rendered.each { |path, body| File.write(path, body, encoding: "UTF-8") }
 
-      Master::Trace::Dmesg.status(
-        "snapshot0",
-        "#{tree}, #{paths.size} files, #{final_texts.size} text, #{binaries.size} binary, #{omitted.size} omitted, root/#{out.delete_prefix(REPO + "/")}, #{File.size(out)} bytes, max #{MAX_BYTES}",
-        io:
-      )
-      out
+      rendered.each_with_index do |(path, body), index|
+        Master::Trace::Dmesg.status(
+          "snapshot0",
+          "#{tree}, part=#{index + 1}/#{rendered.size}, files=#{groups.fetch(index).size}, root/#{path.delete_prefix(REPO + "/")}, #{body.bytesize} bytes, max #{MAX_BYTES}",
+          io:
+        )
+      end
+      outputs
     end
 
     def run(trees = TREES, io: $stdout)
