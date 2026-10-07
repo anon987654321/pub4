@@ -4,6 +4,11 @@
 require_relative "../lib/check_runner"
 require_relative "../lib/environment"
 require_relative "../lib/ruby_runner"
+require_relative "../lib/deploy_stamp"
+require_relative "../lib/dmesg"
+require "json"
+require "open3"
+require "yaml"
 
 ROOT = File.expand_path("../..", __dir__)
 STEP_TIMEOUT = Integer(ENV.fetch("DEPLOY_CHECK_TIMEOUT", "240"))
@@ -20,5 +25,39 @@ failures = []
 failures << "health core" unless runner.run("health core", RUBY, "OPENBSD/gates/health_check.rb", "--core")
 failures << "public health" unless runner.run("public health", RUBY, "OPENBSD/gates/health_check.rb", "--public", "--all-ready-apps")
 failures << "config drift" unless runner.run("config drift", RUBY, "OPENBSD/gates/config_drift_gate.rb")
+
+# One closeout receipt around the existing gates. The historical operator flow
+# reported one compact answer: what commit is here, what deployment can be
+# rolled back to, which services and ports were checked, and whether the proof
+# finished clean. Keep the checks themselves authoritative; this only composes
+# their observed results so operators do not have to reconstruct the answer from
+# three logs.
+def git_head
+  out, status = Open3.capture2("git", "-C", ROOT, "rev-parse", "--short", "HEAD")
+  status.success? ? out.strip : "unknown"
+end
+
+def configured_ports
+  apps = YAML.safe_load_file(File.join(ROOT, "RAILS", "apps.yml")).fetch("apps")
+  rows = apps.map { |name, metadata| "#{name}:#{metadata.fetch("port")}" }
+  inventory = JSON.parse(File.read(File.join(ROOT, "OPENBSD", "deploy_inventory.json")))
+  face = inventory.fetch("master_face")
+  rows << "master:#{Integer(face.fetch("port"))}"
+  rows.sort
+rescue StandardError
+  ["unknown"]
+end
+
+commit = git_head
+rollback = Deploy::DeployStamp.sha("master") || "unknown"
+service_results = runner.results.select { |result| result.name == "health core" || result.name == "public health" }
+service_state = service_results.map { |result| "#{result.name}=#{result.success ? "clean" : "failed"}" }.join(",")
+ports = configured_ports.join(",")
+status = failures.empty? ? "clean" : "failed"
+Deploy::Dmesg.attach("receipt0", "deploy-vps0", "post-deploy receipt")
+Deploy::Dmesg.status(
+  "receipt0",
+  "commit=#{commit}, rollback=#{rollback}, services=#{service_state}, ports=#{ports}, config_drift=#{failures.include?("config drift") ? "failed" : "clean"}, health=#{status}",
+)
 
 exit(failures.empty? ? 0 : 1)
