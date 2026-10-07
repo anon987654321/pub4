@@ -84,6 +84,24 @@ class TestSelfFindingsDrift < Minitest::Test
     end
   end
 
+  def test_stale_members_make_the_report_inconclusive
+    with_baseline({
+      "findings" => 1,
+      "by_rule" => { "RULE" => 1 },
+      "finding_members" => ["RULE RAILS/deleted.rb:1"]
+    }) do
+      Tool.stub(:population, ["RULE RAILS/deleted.rb:1"]) do
+        Tool.stub(:files, []) do
+          Tool.stub(:rules_behind, 1) do
+            out, = capture_io { refute Tool.report("law") }
+
+            assert_match(/recorded member\(s\) stale/, out)
+          end
+        end
+      end
+    end
+  end
+
   def test_a_rule_that_disappeared_is_reported_too
     with_baseline({ "findings" => 2, "by_rule" => { "GONE" => 2 } }) do
       out, = capture_io { Tool.report_drift({}) }
