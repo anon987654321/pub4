@@ -987,8 +987,6 @@ class TestFixConvergence < Minitest::Test
     refute defined?(Master::Operator::GateChain)
   end
 
-end
-
   def test_structural_context_uses_real_file_predicates
     source = File.read(File.join(Master::ROOT, "lib", "fix", "restructure_sweep", "context.rb"))
     refute_includes source, "select(&:file?)"
@@ -1011,3 +1009,4 @@ end
     assert_equal ["MASTER"], Master::CLI::CommandRegistry.send(:fix_targets, "MASTER", root:)
     assert_equal ["MASTER RAILS --apply"], Master::CLI::CommandRegistry.send(:fix_targets, "MASTER RAILS --apply", root:)
   end
+end
