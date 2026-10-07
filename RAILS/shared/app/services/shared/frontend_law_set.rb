@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# GENERATED PROJECTION — source: MASTER/tools/frontend_rule_set.rb. Keep behavior identical.
+# GENERATED PROJECTION — source: MASTER/tools/frontend_law_set.rb. Keep behavior identical.
 unless defined?(Shared::FrontendRuleSet)
 # frozen_string_literal: true
 
