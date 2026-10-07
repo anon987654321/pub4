@@ -148,6 +148,19 @@ class TestFixConvergence < Minitest::Test
     assert_match(/INCONCLUSIVE.*baseline/, verdict)
   end
 
+  def test_manual_fix_upgrades_semantic_scanning_to_full
+    scanner = Object.new
+    called = false
+    scanner.define_singleton_method(:full_semantic!) { called = true; scanner }
+    runner = Master::Fix::FixLoop::PassRunner.allocate
+    runner.instance_variable_set(:@scanner, scanner)
+
+    runner.full_semantic!
+
+    assert called
+    assert_same scanner, runner.instance_variable_get(:@scanner)
+  end
+
   def test_scan_is_not_a_public_command
     assert_includes Master::CLI::TurnRouter::PIPELINE_SLASH, "scan"
     refute_includes Master::CLI::TurnRouter::PIPELINE_COMMANDS, "scan"
