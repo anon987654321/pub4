@@ -177,6 +177,27 @@ class TestGrooveTiming < Minitest::Test
     end
   end
 
+  def test_dilla_nano_feel_is_sub_millisecond_deterministic_and_role_specific
+    with_env("DILLA_NANO_FEEL" => "1", "RENDER_SEED" => "42") do
+      values = %i[kick_anchor snare hat_down bass pad lead].map do |role|
+        send(:nano_timing_ms, role, 3, 7, 60.0 / 90.0)
+      end
+      values.each { |value| assert_operator value.abs, :<, 1.0, "nano feel escaped one millisecond" }
+      assert_equal values,
+                   values.map { |role_value| role_value },
+                   "nano feel changed without moving the musical position"
+      refute_equal values.uniq.size, 1, "all roles share one nano offset"
+      assert_equal values[1], send(:nano_timing_ms, :snare, 3, 7, 60.0 / 90.0)
+    end
+  end
+
+  def test_dilla_nano_feel_can_be_disabled_without_changing_the_mpc_layer
+    with_env("DILLA_NANO_FEEL" => "0", "SHIFT_TIMING" => nil) do
+      pocket = send(:pocket_timing_ms, :snare, 3, 7, nil, 60.0 / 90.0)
+      assert_equal pocket, send(:dilla_timing_ms, :snare, 3, 7, nil, 60.0 / 90.0)
+    end
+  end
+
   def test_shift_timing_moves_only_the_roles_it_names
     with_env("SHIFT_TIMING" => "snare:-6, hat:4.5") do
       POCKET_ROLES.each do |role|
