@@ -181,6 +181,37 @@ class TestVoiceSupport < Minitest::Test
   # Two paths reached the door with one reply and MASTER said it twice; a
   # retried synthesis said it a third time. A repeat past the window still
   # speaks, because asking the same question twice is a thing a person does.
+  def test_reply_preempts_older_diagnostic_audio
+    queued = []
+    terminated = false
+    PB.instance_variable_set(:@queue, queued)
+    PB.instance_variable_set(:@generation, 7)
+    PB.instance_variable_set(:@playing_pid, 1234)
+    PB.instance_variable_set(:@pending, Set.new)
+
+    PB.stub(:enabled?, true) do
+      PB.stub(:available?, true) do
+        PB.stub(:ensure_queue, queued) do
+          PB.stub(:start_worker!, nil) do
+            PB.stub(:terminate_player_locked, -> { terminated = true; PB.instance_variable_set(:@playing_pid, nil) }) do
+              PB.speak("new answer")
+            end
+          end
+        end
+      end
+    end
+
+    assert terminated
+    assert_equal 8, PB.instance_variable_get(:@generation)
+    assert_equal [["new answer", "new answer", true, anything, anything, nil, nil, 8]],
+                 queued.map { |job| job[0..2] + [job[7]] }.map { |job| [job[0], job[1], job[2], job[7]] }.map { |row| row }
+  ensure
+    PB.instance_variable_set(:@queue, nil)
+    PB.instance_variable_set(:@pending, nil)
+    PB.instance_variable_set(:@generation, 0)
+    PB.instance_variable_set(:@playing_pid, nil)
+  end
+
   def test_a_line_already_waiting_or_just_spoken_is_not_spoken_again
     queued = []
     PB.instance_variable_set(:@pending, nil)
