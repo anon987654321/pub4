@@ -1060,29 +1060,12 @@ function guardVoice(v, opts = {}) {
 function previewVoice(voice) {
   const chosen = guardVoice(voice || State.voiceName, { explicit: true }) || TTS_DEFAULT_VOICE;
   if (!chosen) return;
-  const style = _nextTtsStyle(chosen);
   window.MASTER_FACE?.initAudio?.();
-  if (tts.playing) ttsSkip();
-  loadTTSBlob("Let's work now.", chosen, style)
-    .then(async (blob) => {
-      const src = URL.createObjectURL(blob);
-      if (tts.audio) { try { tts.audio.pause(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:preview_voice_pause", err); } }
-      const audio = new Audio(src);
-      tts.audio = audio;
-      audio.playbackRate = getTtsRate();
-      preSpeechInhale(style);
-      try { await connectTTSAudio(audio, 1.15); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:preview_voice_connect", err); }
-      startVisemeAnim("Let's work now.");
-      audio.onended = audio.onerror = () => {
-        stopVisemeAnim();
-        tts.analyser = null; tts.analyserBuf = null; tts.analyserFreqBuf = null;
-        tts.outputGain = null;
-        URL.revokeObjectURL(src);
-        clearViseme();
-      };
-      audio.play().catch(() => { URL.revokeObjectURL(src); clearViseme(); });
-    })
-    .catch(() => playDuo([[chosen, "Let's work now."]], null, style));
+  if (tts.playing || tts.loading) ttsSkip();
+  // Voice preview is an ordinary utterance. Route it through the same queue,
+  // audio element, cancellation boundary, gain chain and rate path as replies.
+  // There must be exactly one browser speaker.
+  enqueueSpeech("Let's work now.", { quirky: false });
 }
 
 function wireTtsStyleChips() {
