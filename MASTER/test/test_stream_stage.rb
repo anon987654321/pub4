@@ -56,7 +56,7 @@ class StreamStageTest < Minitest::Test
     @repair_state = nil
     @scan_index = 0
     @committer = NullCommitter.new
-    @rule_order = LawOrder.new([Rule.new("LONG_METHOD"), Rule.new("DRY")])
+    @law_order = LawOrder.new([Rule.new("LONG_METHOD"), Rule.new("DRY")])
     @violation_counts = Hash.new(0)
   end
 
