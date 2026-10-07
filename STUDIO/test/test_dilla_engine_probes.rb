@@ -3218,6 +3218,17 @@ class TestDilla < Minitest::Test
            ok[:failures].inspect)
   end
 
+  def test_loss_gates_fail_closed_when_configuration_is_unavailable
+    require File.expand_path("../dilla/lib/listen", __dir__)
+
+    result = DillaMaster.stub(:loss_gates, -> { raise "reference missing" }) do
+      DillaMaster.passes_loss_gates?({ true_peak_dbtp: -1.5, integrated_lufs: -17.0 })
+    end
+
+    refute result[:pass]
+    assert_match(/loss-gate configuration unavailable/, result[:failures].join("\n"))
+  end
+
   def test_loss_gates_lufs_window_matches_the_quality_target
     result = eval_in_engine(<<~RUBY)
       require "yaml"
