@@ -19,6 +19,14 @@ cognitive_spine:
   - failures become repair input
   - workflows replayable from checkpoints
   invariants:
+  - id: evidence_before_belief
+    rule: Material claims separate observation, inference, falsifier, measurement, source and status
+  - id: causal_trace_before_mutation
+    rule: Cross-boundary changes trace cause to effect and expose broken handoffs before mutation
+  - id: provenance_survives_compression
+    rule: Semantic compression may remove repetition but must retain source references
+  - id: route_before_answer
+    rule: Current, repository, browser, device and research questions choose their evidence source before answering
   - id: agents_no_direct_mutation
     rule: Agents do not directly mutate durable state
   - id: external_action_events
