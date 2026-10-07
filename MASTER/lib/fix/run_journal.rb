@@ -16,7 +16,7 @@ module Master
     # next run resume from a known completed pass instead of pretending the
     # previous run finished.
     class RunJournal
-      include Master::Io::AtomicWrite
+      include ::Master::Io::AtomicWrite
 
       VERSION = 1
       PATH = ".master/fix_runs.json"
