@@ -57,12 +57,9 @@ module Partner
 
     def update
       return unless require_owner_of!(@program.store)
+      return render :edit, status: :unprocessable_entity unless @program.update(program_params)
 
-      if @program.update(program_params)
-        redirect_to partner_program_path(@program), notice: t("flash.program_updated")
-      else
-        render :edit, status: :unprocessable_entity
-      end
+      redirect_to partner_program_path(@program), notice: t("flash.program_updated")
     end
 
     private
