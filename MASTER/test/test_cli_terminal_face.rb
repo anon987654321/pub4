@@ -1,4 +1,4 @@
-# frozen_string_literal: true
+<sub># frozen_string_literal: true
 
 require_relative "test_helper"
 require_relative "../lib/cli/face"
@@ -274,3 +274,4 @@ class TestCliTerminalFace < Minitest::Test
     refute Master::CLI::Face::Window.asked?(["/face", "extra"])
   end
 end
+</sub>
