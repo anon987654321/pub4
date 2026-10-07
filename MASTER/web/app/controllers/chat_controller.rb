@@ -12,7 +12,7 @@ class ChatController < ApplicationController
   before_action :require_same_origin!, only: :command
   # Face shell renders immediately; container finishes booting in the background (~90s on VPS).
   # Metrics returns 401/503 JSON — must not hit the HTML warming gate first.
-  skip_before_action :require_container!, only: %i[index metrics metrics_prometheus]
+  skip_before_action :require_container!, only: %i[index metrics metrics_prometheus sensory]
 
   def index
     c = container
@@ -35,6 +35,21 @@ class ChatController < ApplicationController
 
     render json: metrics_payload(c)
   end
+  def sensory
+    render json: Master::Trace::SensoryState.snapshot(root: Master::ROOT)
+  rescue StandardError
+    render json: {
+      version: Master::Trace::SensoryState::VERSION,
+      interaction: "idle",
+      voice: "idle",
+      visual: "idle",
+      task: "idle",
+      system: "ready",
+      updated_at: nil,
+      history: []
+    }
+  end
+
 
   def metrics_prometheus
     c = container
