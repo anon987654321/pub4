@@ -77,6 +77,15 @@ class TestFixConvergence < Minitest::Test
   # spelling only long enough to rewrite it to /fix, so no separate scan
   # dispatcher, help topic, or pipeline stage can survive.
 
+  def test_convergence_accepts_non_finite_baseline_without_coercion_crash
+    discipline = Master::Fix::ConvergenceDiscipline.new(root: @root, bus: @bus)
+    discipline.begin_run([File.join(@root, "dummy.yml")])
+
+    assert_equal Float::INFINITY, discipline.best_state[:score]
+    assert_equal 0.0, discipline.quality_delta
+    refute discipline.improving?
+  end
+
   def test_fix_extends_pass_budget_while_measured_state_improves
     loop = Master::Fix::FixLoop.allocate
     calls = []
