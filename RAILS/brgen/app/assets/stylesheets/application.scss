@@ -10989,6 +10989,33 @@ body.vertical-marketplace .bol-primary:hover {
   background: var(--bol-blue-dark);
 }
 
+/* The owner's marketplace pen used a small, white campaign card with a
+   crisp blue shopping action. Keep those micro-cues in the campaign layer only:
+   no global button restyle, no second commerce dialect. */
+body.vertical-marketplace .store-promo-art {
+  border-radius: 6px;
+}
+
+body.vertical-marketplace .store-promo-art-copy h2 {
+  text-transform: lowercase;
+}
+
+body.vertical-marketplace .store-promo-art-cta {
+  min-height: var(--tap-min);
+  margin-top: var(--space-2);
+  padding: 10px 20px 12px;
+  border-radius: 30px;
+  background: var(--bol-blue);
+  color: #000;
+  font-size: 14px;
+  font-weight: var(--weight-bold);
+}
+
+body.vertical-marketplace .store-promo-art-cta:hover {
+  background: var(--bol-blue-dark);
+  color: #fff;
+}
+
 body.vertical-marketplace .bol-kind-tabs {
   margin-block-end: 32px;
   border-color: var(--bol-rule);
