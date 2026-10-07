@@ -24,7 +24,10 @@ module Master
         CRANIUM_SCALE = MORPHOLOGY.fetch("cranium_scale", 1.18).to_f
         CRANIAL_WIDTH = MORPHOLOGY.fetch("cranial_width", 1.06).to_f
         CRANIAL_HEIGHT = MORPHOLOGY.fetch("cranial_height", 1.04).to_f
+        UPPER_FACE_SCALE = MORPHOLOGY.fetch("upper_face_scale", 0.96).to_f
         LOWER_FACE_SCALE = MORPHOLOGY.fetch("lower_face_scale", 0.80).to_f
+        FACIAL_VERTICALIZATION = MORPHOLOGY.fetch("facial_verticalization", 1.04).to_f
+        MASTICATORY_SCALE = MORPHOLOGY.fetch("masticatory_scale", 0.78).to_f
         ORBITAL_SCALE = MORPHOLOGY.fetch("orbital_scale", 1.10).to_f
         ORBITAL_VERTICAL_SCALE = MORPHOLOGY.fetch("orbital_vertical_scale", 1.06).to_f
         BROW_SCALE = MORPHOLOGY.fetch("brow_scale", 0.66).to_f
@@ -40,7 +43,7 @@ module Master
         # upward and inward: fuller vault, compact lower face, shallow brow,
         # restrained nasal projection and a slightly deeper orbital field.
         # The contract owns the numbers so browser and terminal cannot drift.
-        DEPTH_RATIO = 1.10 * JAW_PROJECTION * JAW_SOFTENING
+        DEPTH_RATIO = 1.10 * JAW_PROJECTION * JAW_SOFTENING * MASTICATORY_SCALE
         RELIEF = 0.20 * NASAL_PROJECTION
         BACK_LIGHT = 0.28
         CACHE_LIMIT = 8
@@ -137,9 +140,13 @@ module Master
 
         # A mask point on the front of its row's ellipse, lifted by its paint.
         def front(x, y, lum, half)
-          across = ((x - @centre[0]) / (half * CRANIAL_WIDTH)).clamp(-1.0, 1.0)
+          local_y = (y - @centre[1]) * FACIAL_VERTICALIZATION
+          upper = ((local_y + 0.38) / 0.80).clamp(0.0, 1.0)
+          width_scale = LOWER_FACE_SCALE + ((UPPER_FACE_SCALE - LOWER_FACE_SCALE) * upper)
+          local_x = (x - @centre[0]) * width_scale
+          across = (local_x / (half * CRANIAL_WIDTH)).clamp(-1.0, 1.0)
           z = (half * DEPTH_RATIO * CRANIUM_SCALE * Math.sqrt(1 - (across * across))) + ((lum - 0.5) * RELIEF)
-          [x - @centre[0], y - @centre[1], z, lum, zone(x, y)]
+          [local_x, local_y, z, lum, zone(x, y)]
         end
 
         # The back half of the row's ellipse, at the lattice's spacing.
