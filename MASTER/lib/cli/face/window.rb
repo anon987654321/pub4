@@ -19,12 +19,10 @@ module Master
         LEAVE = %W[\u0003 \u0004].freeze
         ERASE = %W[\u007f \b].freeze
         EXIT_WORDS = %w[/exit /quit exit quit].freeze
-        ACCENT = "\e[38;2;255;51;68m"
         DIM = "\e[2m"
         PLAIN = "\e[0m"
 
         WORDS = %w[/face face].freeze
-        CONTROL_ROWS = 4
         MESSAGE_FLAGS = %w[-m -p --message --prompt].freeze
 
         # Whether a command line asks for the face and nothing else: `face`,
@@ -397,8 +395,6 @@ module Master
           Master::Ground::Swallow.log(e, context: "face.window.unsubscribe")
         end
         def change(&) = @lock.synchronize(&)
-
-        def tint(state, line) = state == :listening ? "#{ACCENT}#{line}#{PLAIN}" : line
 
         def status(state)
           mic = @ear.available? ? "mic on" : "mic off"
