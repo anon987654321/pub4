@@ -107,6 +107,7 @@ module Master
         return halted_result if halted? && !requested
 
         files = incremental ? @file_collector.collect_changed(target) : @file_collector.collect(target)
+        @pass_runner.full_semantic! if requested && @pass_runner.respond_to?(:full_semantic!)
         coverage = {
           candidates: @file_collector.candidate_count,
           collected: files.size,
