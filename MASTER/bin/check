@@ -72,8 +72,15 @@ node_bin = ENV["PATH"].to_s.split(File::PATH_SEPARATOR).push("/usr/local/bin")
 # The three MASTER_CI_* widenings are the workflow's, kept here because the
 # workflow sets them and this is where the steps they add are declared.
 ci_steps = [rake["test"], rake["test:core"], rake["test:subsystems"],
-            rake["selftest"], rake["lint:data_singularity"], rake["core_smoke"]]
+            rake["selftest"], rake["lint:data_singularity"], rake["core_smoke"],
+            rake["tools"]]
 ci_steps += [run_bin["smoke"], rake["selfcheck"], rake["constitution"]] if ENV["MASTER_CI_FULL"] == "1"
+if node_bin
+  node_tests = Dir[File.join(ROOT, "web/test/*.test.mjs")].sort
+  ci_steps << ["web ui behaviour", node_bin, "--test", *node_tests] unless node_tests.empty?
+else
+  Master::Trace::Dmesg.status("web0", "node tests skipped, no node interpreter")
+end
 ci_steps += [rake["test:web"], rake["test:integration_web"]] if ENV["MASTER_CI_WEB"] == "1"
 if ENV["MASTER_CI_BROWSER"] == "1"
   webgl = File.join(ROOT, "web", "script", "probe_webgl_guard.mjs")
