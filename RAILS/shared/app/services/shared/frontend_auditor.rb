@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require_relative "frontend_rule_set"
-require_relative "../../../lib/operator/scss_rules"
+require_relative "frontend_law_set"
+require_relative "../../../lib/operator/scss_laws"
 
 module Shared
   class FrontendAuditor
