@@ -68,6 +68,8 @@ class TestFixLoopFileCollector < Minitest::Test
       refute_empty skipped, "narrowing the fix input must be announced"
       assert_equal 1, skipped.first.last[:count]
       assert_includes skipped.first.last[:sample], "web/public/face.runtime.js"
+      assert_equal 2, collector(dir, bus:).candidate_count
+      assert_equal 1, bus.events.select { |name, _| name == "fix_loop:skipped" }.first.last[:count]
     end
   end
 
