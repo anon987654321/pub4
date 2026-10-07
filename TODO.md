@@ -2,6 +2,11 @@
 ## Completed in the 2026-10-07 organism/voice/Rails convergence pass
 
 ### Simulated /fix — 2026-10-07
+- `/fix` now reports its real collector corpus (`candidates`, `collected`, `skipped`) before Pass 1 and exposes the same coverage in dry-run preview, making a narrowed four-tree run visible instead of silently "clean".
+- RAILS/MASTER-web rendered review remains part of the same `/fix` convergence loop: mobile/desktop/composition captures, ghost-stack/diff evidence and hostile UI critique feed anchored visual findings back into LawLoop. Rendered-evidence INCONCLUSIVE now fails closed as validation rather than masquerading as a plateau.
+- Convergence no longer stops at the configured starting pass count while measured improvement continues: it extends in bounded chunks up to a hard safety ceiling, while true plateaus, oscillation, validation failures, human decisions and budget exhaustion still terminate explicitly.
+- Repair-model selection is provider-neutral: architecture/file-write and code-generation repair stages now ask the live model router for operation-appropriate models, preserving MASTER_MODEL pins and allowing Grok, GLM/Ollama, Claude, Gemini and other configured lanes to use the same repair protocol and failover machinery.
+
 
 - Target routing is valid for both requested surfaces: `review preview RAILS` and `review preview MASTER/web` are read-only /fix previews backed by FixLoop#preview; the canonical writer remains /fix.
 - Source-search simulation over the current main tree found no <sub>...</sub> transport-wrapper match under MASTER/web, no unsafe anchor/button pattern match in the RAILS search surface, and no new TODO/FIXME/HACK markers in MASTER/web.
