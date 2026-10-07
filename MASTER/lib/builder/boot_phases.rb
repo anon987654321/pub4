@@ -14,6 +14,7 @@ module Master
         event_log = Trace::Log::Event.new(root: @root)
         evidence_log = Trace::Log::Evidence.new(root: @root)
         bus = Trace::EventBus.new(event_log:, evidence_log:)
+        Trace::SensoryState.attach!(bus, root: @root)
         Ground::Swallow.event_bus = bus
         subscribe_interrupt(bus)
 
