@@ -21,16 +21,22 @@ module Master
         THRESHOLD = 0.08
         SPREAD = 0.62
         MORPHOLOGY = Master::Face::Contract.spatial.fetch("morphology", {}).freeze
-        CRANIUM_SCALE = MORPHOLOGY.fetch("cranium_scale", 1.06).to_f
-        LOWER_FACE_SCALE = MORPHOLOGY.fetch("lower_face_scale", 0.90).to_f
-        ORBITAL_SCALE = MORPHOLOGY.fetch("orbital_scale", 1.08).to_f
+        CRANIUM_SCALE = MORPHOLOGY.fetch("cranium_scale", 1.12).to_f
+        CRANIAL_WIDTH = MORPHOLOGY.fetch("cranial_width", 1.03).to_f
+        LOWER_FACE_SCALE = MORPHOLOGY.fetch("lower_face_scale", 0.84).to_f
+        ORBITAL_SCALE = MORPHOLOGY.fetch("orbital_scale", 1.04).to_f
+        ORBITAL_VERTICAL_SCALE = MORPHOLOGY.fetch("orbital_vertical_scale", 1.02).to_f
+        BROW_SCALE = MORPHOLOGY.fetch("brow_scale", 0.74).to_f
+        NOSE_SCALE = MORPHOLOGY.fetch("nose_scale", 0.90).to_f
+        JAW_PROJECTION = MORPHOLOGY.fetch("jaw_projection", 0.86).to_f
+        PUPIL_SCALE = MORPHOLOGY.fetch("pupil_scale", 0.82).to_f
         ASYMMETRY = MORPHOLOGY.fetch("asymmetry", 0.010).to_f
         ASYMMETRY_SEED = MORPHOLOGY.fetch("asymmetry_seed", 73421).to_i
         # A head is not quite as deep as it is wide, and the painting's
         # brightness stands a little proud of it: nose and cheeks out,
         # sockets in.
-        DEPTH_RATIO = 1.10
-        RELIEF = 0.20
+        DEPTH_RATIO = 1.10 * JAW_PROJECTION
+        RELIEF = 0.20 * NOSE_SCALE
         BACK_LIGHT = 0.28
         CACHE_LIMIT = 8
         # Where the eyes and the mouth void sit, in the points' own space, and
@@ -41,8 +47,8 @@ module Master
           ex = (0.118 * ORBITAL_SCALE * side) + (side * ASYMMETRY * bias * 0.12)
           [((((DepthMap::CX + ex) * 2) - 1) * SPREAD), -((((DepthMap::CY - 0.088) * 2) - 1) * SPREAD)]
         end.freeze
-        SOCKET = [0.187 * ORBITAL_SCALE, 0.142 * ORBITAL_SCALE].freeze
-        PUPIL = 0.07
+        SOCKET = [0.187 * ORBITAL_SCALE, 0.142 * ORBITAL_SCALE * ORBITAL_VERTICAL_SCALE].freeze
+        PUPIL = 0.07 * PUPIL_SCALE
         MOUTH = [(((DepthMap::CX * 2) - 1) * SPREAD), -((((DepthMap::CY + 0.205) * 2) - 1) * SPREAD)].freeze
         SKIN_ZONE = 0
         EYE_ZONE = 1
@@ -126,7 +132,7 @@ module Master
 
         # A mask point on the front of its row's ellipse, lifted by its paint.
         def front(x, y, lum, half)
-          across = ((x - @centre[0]) / half).clamp(-1.0, 1.0)
+          across = ((x - @centre[0]) / (half * CRANIAL_WIDTH)).clamp(-1.0, 1.0)
           z = (half * DEPTH_RATIO * CRANIUM_SCALE * Math.sqrt(1 - (across * across))) + ((lum - 0.5) * RELIEF)
           [x - @centre[0], y - @centre[1], z, lum, zone(x, y)]
         end
