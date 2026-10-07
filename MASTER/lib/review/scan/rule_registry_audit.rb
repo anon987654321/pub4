@@ -93,7 +93,7 @@ module Master
         end
 
         # `Rule.inherited` registers every subclass in the process, and a test
-        # that defines one is in the same process. Measured: rule_deps.ungraphed
+        # that defines one is in the same process. Measured: law_deps.ungraphed
         # read 133 on its own and 135 under `rake test`, so a ratchet on it would
         # have been measuring the suite rather than the corpus.
         # TestScanRuleFalsePositives::RaisingRule is the shape.
@@ -120,7 +120,7 @@ module Master
             .map { |klass| RuleFactory.build(klass, root: @root).id.to_s }
             .to_set
           registry = registry.map { |id| id.to_s.downcase }.to_set
-          deps = Master.law("rule_deps", root: @root)
+          deps = Master.law("law_deps", root: @root)
           graphed = deps.keys.map { |k| k.to_s.downcase }.to_set
           registry.reject { |id| graphed.include?(id) }.sort
         end
