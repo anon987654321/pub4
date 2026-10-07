@@ -31,6 +31,7 @@ module Master
         @best_state = nil
         @baseline = nil
         @reasoning_memory = nil
+        @reasoning_memory = nil
       end
 
       attr_reader :best_state
@@ -48,6 +49,20 @@ module Master
         state = state_for(pass, Array(findings).size, current)
         @history << state.merge(progressed:)
         @best_state = state if @best_state.nil? || state[:score] < @best_state[:score]
+
+        ranked = Master::Cognition::Intelligence.rank_by_leverage(findings)
+        top = ranked.first
+        @bus&.publish(
+          "fix_loop:judgment",
+          pass:,
+          top_rule: finding_value(top, :rule),
+          top_file: finding_value(top, :file),
+          leverage: top ? Master::Cognition::Intelligence.leverage_score(top) : 0,
+          uncertainty: top ? Master::Cognition::Intelligence.uncertainty_score(top) : 1.0,
+          posture: top ? Master::Cognition::Intelligence.posture_for(top) : :preserve,
+          scale: top ? Master::Cognition::Intelligence.judgment(top)[:scale] : :local,
+        )
+        remember_reasoning(pass:, findings:, files:, progressed:, top:)
 
         attention = Master::Cognition::Intelligence.attention_budget(findings, slots: limits["decision_choices"].to_i)
         ranked = attention[:selected]
@@ -185,6 +200,39 @@ module Master
           effect: progressed ? "measured tree change" : "no measured tree change",
         )
         @reasoning_memory ||= Master::Ground::Memory.new(root: @root)
+        key = @reasoning_memory.remember_reasoning(frame, key: "reasoning/fix/#{Time.now.to_i}-#{pass}")
+        @bus&.publish("cognition:reasoning", key:, status: frame[:status] || frame["status"], leverage: top ? Master::Cognition::Intelligence.leverage_score(top) : 0)
+      rescue StandardError => e
+        @bus&.publish("cognition:reasoning_inconclusive", pass:, error: "#{e.class}: #{e.message}")
+      end
+
+      def finding_value(finding, key)
+        return nil unless finding
+        finding.respond_to?(key) ? finding.public_send(key) : finding[key] || finding[key.to_s] if finding.respond_to?(:[])
+      end
+
+      def remember_reasoning(pass:, findings:, files:, progressed:, top:)
+        observation = "pass #{pass}: #{Array(findings).size} finding(s) across #{Array(files).size} file(s); progressed=#{progressed}"
+        hypothesis = if top
+          "The highest-leverage next decision is anchored at #{finding_value(top, :file)} under #{finding_value(top, :rule)}."
+        elsif progressed
+          "The latest mutation improved the measured state; re-observe before adding more change."
+        else
+          "No measured progress occurred; preserve the best state and test the hypothesis before mutating."
+        end
+        frame = Master::Cognition::Intelligence.decision_frame(
+          observation:,
+          hypothesis:,
+          falsifier: "the next measured pass fails to improve the finding state or violates ground truth",
+          measurement: "finding count, ground truth, clean proof and next-pass quiescence",
+          source: "fix_loop:pass:#{pass}",
+          selected: top ? finding_value(top, :rule).to_s : "observe",
+          alternatives: %w[repair preserve investigate],
+          status: :uncertain,
+          cause: "observe pass #{pass}",
+          effect: progressed ? "measured tree change" : "no measured tree change",
+        )
+        @reasoning_memory ||= Master::Ground::Memory.new(root: @root)
         digest = Digest::SHA256.hexdigest(JSON.generate(frame))[0, 12]
         key = @reasoning_memory.remember_reasoning(frame, key: "reasoning/fix/#{Time.now.to_i}-#{pass}-#{digest}")
         @bus&.publish("cognition:reasoning", key:, status: frame[:status] || frame["status"], leverage: top ? Master::Cognition::Intelligence.leverage_score(top) : 0)
@@ -218,6 +266,9 @@ module Master
           alternatives: generate #{limits["alternatives_min"]}-#{limits["alternatives_max"]} materially different candidates when ideation is required
           preserve best state: never trade a measured improvement for an unmeasured aesthetic
           evidence rule: unreadable, unmeasured, truncated, or simulated work is not a pass
+          leverage rule: fix the change with the widest proven causal reach, not the loudest finding
+          unfinished-work rule: preserve fertile uncertainty; delete only after consumer and value evidence
+          #{Master::Cognition::Intelligence.orientation_contract}
           leverage rule: fix the change with the widest proven causal reach, not the loudest finding
           unfinished-work rule: preserve fertile uncertainty; delete only after consumer and value evidence
           #{Master::Cognition::Intelligence.orientation_contract}
