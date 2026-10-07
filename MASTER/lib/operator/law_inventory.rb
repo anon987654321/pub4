@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "json"
-require "open3"
+require_relative "../io/exec"
 require "yaml"
 
 module Operator
@@ -290,7 +290,7 @@ module Operator
     end
 
     def history(id)
-      output, status = Open3.capture2("git", "-C", ROOT, "log", "-n", "5", "--format=%h %cs %s", "--", "MASTER/law", "MASTER/data/laws.yml", "MASTER/lib/review/scan/rules")
+      output, status = Master::Io::Exec.capture2("git", "-C", ROOT, "log", "-n", "5", "--format=%h %cs %s", "--", "MASTER/law", "MASTER/data/laws.yml", "MASTER/lib/review/scan/rules")
       return "history unavailable" unless status.success?
 
       matches = output.lines.grep(/#{Regexp.escape(id.to_s)}/i)
