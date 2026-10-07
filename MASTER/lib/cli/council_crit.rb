@@ -26,6 +26,11 @@ module Master
         summary = tribunal_summary(feedback)
         bus&.publish("council:pass", jurors: feedback.size)
         Master::Result.ok(summary)
+      # Programming defects must escape this boundary. Converting a missing
+      # method or malformed type into an ordinary Result would let the pipeline
+      # report a failed council as if it were a normal critique reading.
+      rescue NameError, TypeError
+        raise
       rescue StandardError => e
         Master::Result.err("critique: #{e.message}", category: :infrastructure)
       end
