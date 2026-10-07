@@ -150,6 +150,19 @@ class TestCLI < Minitest::Test
     end
   end
 
+  def test_council_crit_does_not_turn_git_failure_into_empty_diff
+    Master::CLI::CouncilCrit.stub(:git_capture, ->(*) { raise "git unavailable" }) do
+      result = Master::CLI::CouncilCrit.run(
+        root: "/tmp/master",
+        deliberation: Object.new,
+      )
+
+      assert result.err?
+      assert_includes result.message, "critique: git unavailable"
+      assert_equal :infrastructure, result.category
+    end
+  end
+
   def test_council_crit_reports_missing_deliberation
     Master::CLI::CouncilCrit.stub(:diff_artifact, "diff --git a/a b/a\n") do
       result = Master::CLI::CouncilCrit.run(root: "/tmp/master", deliberation: nil)
