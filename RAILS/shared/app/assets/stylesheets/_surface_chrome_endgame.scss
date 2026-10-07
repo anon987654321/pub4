@@ -297,13 +297,12 @@
   .feed-post-meta, .feed-card-meta { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-1) var(--space-2); font-variant-numeric: tabular-nums; }
   .feed-post-actions, .feed-card-actions, .post-show-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); }
   :is(.feed-action, .feed-post-actions a, .feed-post-actions button) { min-inline-size: var(--tap-min); min-block-size: var(--tap-min); display: inline-flex; align-items: center; justify-content: center; }
-  .card-grid, .items-grid, .results-grid, .store-results-grid { min-inline-size: 0; column-gap: var(--tile-gap-col); row-gap: var(--tile-gap-row); }
+  .card-grid, .items-grid, .results-grid { min-inline-size: 0; column-gap: var(--tile-gap-col); row-gap: var(--tile-gap-row); }
   body.vertical-marketplace {
     .store-results-body { min-inline-size: 0; }
-    .store-results-grid { grid-template-columns: repeat(auto-fill, minmax(var(--tile-min-xl), 1fr)); }
-    .deal-card, .listing-card, .cart-item, .store-buybox, .store-panel { min-inline-size: 0; overflow-wrap: anywhere; }
-    .deal-card :is(img, picture), .listing-card :is(img, picture) { display: block; inline-size: 100%; block-size: auto; }
-    .deal-card-title, .listing-card-title, .store-pdp-info h1 { text-wrap: balance; overflow-wrap: anywhere; }
+    .deal-card, .cart-item, .store-buybox, .store-panel { min-inline-size: 0; overflow-wrap: anywhere; }
+    .deal-card :is(img, picture) { display: block; inline-size: 100%; block-size: auto; }
+    .deal-card-title, .store-pdp-info h1 { text-wrap: balance; overflow-wrap: anywhere; }
     .deal-price, .listing-price, [data-money] { font-variant-numeric: tabular-nums lining-nums; }
     .listing-filter-controls { display: grid; gap: var(--space-2); align-content: start; }
     .listing-filter-controls :is(input, select) { min-block-size: var(--tap-min); }
@@ -322,27 +321,25 @@
     .playlist-transport-play, .playlist-top-action { min-inline-size: var(--tap-min); min-block-size: var(--tap-min); }
   }
   body.vertical-dating {
-    .dating-card, .dating-profile, .dating-actions { min-inline-size: 0; }
-    .dating-card :is(h1, h2, h3), .dating-profile :is(h1, h2, h3) { text-wrap: balance; overflow-wrap: anywhere; }
-    .dating-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+    .dating-discover, .swipe-card, .dating-profile-form { min-inline-size: 0; }
+    .dating-intro :is(h1, h2, h3), .swipe-card :is(h1, h2, h3), .dating-profile-form :is(h1, h2, h3) { text-wrap: balance; overflow-wrap: anywhere; }
   }
   body.vertical-takeaway {
-    .restaurant-card, .dish-card, .menu-item, .cart-item { min-inline-size: 0; overflow-wrap: anywhere; }
-    .dish-card :is(h2, h3), .restaurant-card :is(h2, h3) { text-wrap: balance; }
+    main#main-content :is(h1, h2, h3, h4) { text-wrap: balance; overflow-wrap: anywhere; }
+    .cart-item { min-inline-size: 0; overflow-wrap: anywhere; }
     .cart-item :is([data-money], .price, .total) { font-variant-numeric: tabular-nums lining-nums; }
   }
   body.vertical-maps {
-    .place-card, .map-result, .map-results { min-inline-size: 0; }
-    .place-card :is(h2, h3), .map-result :is(h2, h3) { text-wrap: balance; overflow-wrap: anywhere; }
+    .place-card, .map-popup, .map-place-popup { min-inline-size: 0; }
+    .place-card :is(h2, h3), .map-popup :is(h2, h3), .map-place-popup :is(h2, h3) { text-wrap: balance; overflow-wrap: anywhere; }
   }
   body.vertical-tv {
-    .channel-card, .show-card, .tv-show { min-inline-size: 0; }
-    .channel-card :is(h2, h3), .show-card :is(h2, h3), .tv-show :is(h1, h2, h3) { text-wrap: balance; overflow-wrap: anywhere; }
+    .channel-card, .show-card, .tv-show-title { min-inline-size: 0; }
+    .channel-card :is(h2, h3), .show-card :is(h2, h3), .tv-show-title { text-wrap: balance; overflow-wrap: anywhere; }
   }
   @media (max-width: 767px) {
     main#main-content { padding-inline: max(var(--space-4), var(--page-gutter)); padding-block-end: calc(var(--space-16) + env(safe-area-inset-bottom)); }
     .page-header, .feed-header { margin-block-end: var(--space-6); }
-    .store-results-grid { grid-template-columns: repeat(auto-fill, minmax(var(--tile-min-lg), 1fr)); }
   }
 }
 
