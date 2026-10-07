@@ -2639,6 +2639,7 @@ SHOWCASE_MODES = {
         end
       end
     end
+    end
 
     perform!(score, seconds:)
     next_requested ? :next : nil
