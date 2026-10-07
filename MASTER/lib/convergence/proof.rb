@@ -53,7 +53,7 @@ module Master
 
       def check_commands
         commands = Master::CLI::CommandRegistry::HELP_TOPICS.keys
-        required = %w[status fix rules why wishlist size explain prove]
+        required = %w[status fix rules why wishlist size explain prove events]
         missing = required - commands
         missing.empty? ? pass_row("commands", "required convergence commands documented") : fail_row("commands", "missing #{missing.join(", ")}")
       rescue StandardError => e
