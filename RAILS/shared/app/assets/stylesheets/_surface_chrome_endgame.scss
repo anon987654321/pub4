@@ -282,11 +282,7 @@
 @mixin brgen_precision {
   .layout { min-block-size: 0; }
   main#main-content {
-    inline-size: min(100%, var(--container-max));
     min-inline-size: 0;
-    margin-inline: auto;
-    padding-inline: var(--page-gutter);
-    padding-block: var(--space-8) var(--space-16);
   }
   .page-header, .feed-header { min-inline-size: 0; margin-block-end: var(--space-8); }
   .page-header :is(h1, h2), .feed-header :is(h1, h2) { max-inline-size: 22ch; margin-block: 0; text-wrap: balance; }
@@ -351,7 +347,7 @@
 }
 
 @mixin amber_precision {
-  body[data-surface="luxury"] main#main-content { inline-size: min(100%, var(--container-max)); min-inline-size: 0; margin-inline: auto; padding-inline: var(--page-gutter); padding-block: var(--space-8) var(--space-16); }
+  body[data-surface="luxury"] main#main-content { min-inline-size: 0; }
   body[data-surface="luxury"] main#main-content :is(h1, h2, h3, h4) { text-wrap: balance; overflow-wrap: anywhere; font-kerning: normal; }
   body[data-surface="luxury"] main#main-content :is(p, li, dd) { text-wrap: pretty; }
   body[data-surface="luxury"] .page-header, body[data-surface="luxury"] .amber-page-header { min-inline-size: 0; margin-block-end: var(--space-8); }
