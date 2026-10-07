@@ -36,7 +36,7 @@ module Operator
       "STUDIO" => "snapshot_STUDIO.md"
     }.freeze
     TREES = TREE_PATHS.keys.freeze
-    MAX_BYTES = 9_500_000
+    MAX_BYTES = 8_000_000
     MANDATORY_PATHS = %w[
       MASTER/README.md
       MASTER/data/soul.yml
@@ -210,7 +210,7 @@ module Operator
         binaries.each { |p| out << "- #{96.chr}#{p}#{96.chr}\n" }
       end
       unless omitted.empty?
-        out << "\n## Omitted text files\n\nThese tracked text files are deliberately omitted only to keep this share pack below the hard 9.5 MB ceiling.\n\n"
+        out << "\n## Omitted text files\n\nThese tracked text files are deliberately omitted only to keep this share pack below the hard 8 MB ceiling.\n\n"
         omitted.each { |p| out << "- #{96.chr}#{p}#{96.chr} — #{File.size(File.join(REPO, p))} bytes\n" }
       end
       out << "\n"
