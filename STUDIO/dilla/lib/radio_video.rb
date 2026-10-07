@@ -59,7 +59,8 @@ module RadioVideo
       "--window-size=#{WIDTH},#{HEIGHT}",
       url,
       out: File::NULL,
-      err: File::NULL
+      err: File::NULL,
+      pgroup: true
     )
 
     begin
@@ -69,12 +70,12 @@ module RadioVideo
                        positive_timeout(ENV.fetch("DILLA_VIDEO_WAIT_TIMEOUT", DEFAULT_FULL_SOURCE_WAIT_TIMEOUT))
                      end
       abort "video: browser did not produce a capture within #{wait_timeout}s" unless server.wait(timeout: wait_timeout)
-      terminate(pid)
+      terminate(pid, group: true)
       raw = File.join(tmp, "raw.mp4")
       transcode!(ffmpeg, capture, raw, seconds)
       postpro_video!(ffmpeg, raw, output)
     ensure
-      terminate(pid)
+      terminate(pid, group: true)
       server.close
       FileUtils.remove_entry(tmp) if File.exist?(tmp)
     end
@@ -146,18 +147,31 @@ module RadioVideo
     candidates.find { |path| File.executable?(path) } || executable("google-chrome") || executable("chromium") || executable("chrome")
   end
 
-  def terminate(pid)
+  def terminate(pid, group: false)
     return unless pid
-    Process.kill("TERM", pid)
-    Process.wait(pid)
-  rescue Errno::ESRCH, Errno::ECHILD
-    nil
-  ensure
+
+    target = group ? -pid.to_i : pid.to_i
+    Process.kill("TERM", target)
+    deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + PROCESS_GRACE_SECONDS
+    loop do
+      begin
+        reaped = Process.waitpid(pid, Process::WNOHANG)
+        break if reaped
+      rescue Errno::ECHILD, Errno::ESRCH
+        break
+      end
+      break if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
+      sleep 0.05
+    end
+
     begin
-      Process.kill("KILL", pid)
-    rescue Errno::ESRCH, Errno::ECHILD
+      Process.kill("KILL", target)
+    rescue Errno::ESRCH
       nil
     end
+    Process.waitpid(pid, 0) rescue nil
+  rescue Errno::ESRCH, Errno::ECHILD
+    nil
   end
 
   def transcode!(ffmpeg, capture, output, seconds)
@@ -202,7 +216,7 @@ module RadioVideo
       deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + timeout.to_f
       until !wait_thr.alive?
         if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
-          terminate(wait_thr.pid)
+          terminate(wait_thr.pid, group: true)
           stderr_reader.join(PROCESS_GRACE_SECONDS)
           stderr_output = stderr_reader.value.to_s
           raise "#{label} timed out after #{timeout}s#{error_suffix(stderr_output)}"
