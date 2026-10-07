@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../snapshot"
+require_relative "../../tools/snapshot"
 require "shellwords"
 require_relative "../io/media_intent"
 
@@ -200,9 +201,14 @@ module Master
         arg = arg_for(ctx)
         return "usage: /snapshot [no arguments]" unless arg.empty?
 
-        paths = Master::Snapshot.new(root: Master::REPO_ROOT).write!
-        Array(paths).map do |path|
-          "snapshot0: wrote #{path.delete_prefix("#{Master::REPO_ROOT}/")}"
+        paths = Operator::Snapshot::TREES.map do |tree|
+          Operator::Snapshot.write(tree)
+          File.join(Master::REPO_ROOT, Operator::Snapshot::OUTPUT_NAMES.fetch(tree))
+        end
+        paths.map do |path|
+          relative = path.delete_prefix("#{Master::REPO_ROOT}/")
+          bytes = File.size(path)
+          "snapshot0: wrote #{relative} (#{bytes} bytes; max #{Operator::Snapshot::MAX_BYTES})"
         end.join("\n")
       rescue StandardError => e
         "snapshot0: failed — #{e.class}: #{e.message}"
