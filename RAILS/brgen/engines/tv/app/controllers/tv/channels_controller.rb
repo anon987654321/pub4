@@ -29,7 +29,9 @@ class Tv::ChannelsController < Tv::BaseController
   end
 
   def update
-    @channel.update(channel_params) ? redirect_to(channel_path(@channel)) : render(:edit, status: :unprocessable_entity)
+    return render :edit, status: :unprocessable_entity unless @channel.update(channel_params)
+
+    redirect_to channel_path(@channel)
   end
 
   def destroy = (@channel.destroy and redirect_to channels_path)
