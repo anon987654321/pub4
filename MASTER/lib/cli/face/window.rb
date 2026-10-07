@@ -377,12 +377,12 @@ module Master
 
         def status(state)
           keys = @ear.available? ? "speak, or type — enter sends" : "type — enter sends"
-          "face0: #{state} — #{keys}, ^D leaves"
+          "#{Master::Face::Contract.master_token} #{state} — #{keys}; ^D leaves"
         end
 
         # The end of the line being typed, which is the part being typed into.
         def typed(draft, cols)
-          line = "> #{draft}"
+          line = "#{Master::Face::Contract.master_token} #{draft}"
           line.length > cols ? line[-cols..] : line
         end
 
