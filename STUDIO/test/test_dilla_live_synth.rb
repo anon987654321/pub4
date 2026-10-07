@@ -1059,4 +1059,31 @@ class TestDillaLiveSynth < Minitest::Test
     assert_includes source, 'in: tty'
     refute_includes source, 'if STDIN.tty?'
   end
+  def test_showcase_bpm_varies_by_cycle_within_92_to_116
+    first = LiveSynth.showcase_bpm(Random.new(1234), cycle: 0)
+    second = LiveSynth.showcase_bpm(Random.new(1234), cycle: 1)
+
+    assert_operator first, :>=, 92
+    assert_operator first, :<=, 116
+    assert_operator second, :>=, 92
+    assert_operator second, :<=, 116
+    refute_equal first, second
+  end
+
+  def test_showcase_scores_honor_the_selected_showcase_tempo
+    old_showcase = ENV["DILLA_SHOWCASE"]
+    old_bpm = ENV["DILLA_SHOWCASE_BPM"]
+    ENV["DILLA_SHOWCASE"] = "1"
+    ENV["DILLA_SHOWCASE_BPM"] = "100"
+
+    score = LiveSynth::Improviser.new(rng: Random.new(1), reference: "dilla_flowers_documented", family: "prophet")
+    progression = LiveSynth::Progression.new("moog_improv", rng: Random.new(1))
+
+    assert_in_delta 0.6, score.instance_variable_get(:@beat), 0.0001
+    assert_in_delta 2.4, progression.instance_variable_get(:@bar_seconds), 0.0001
+  ensure
+    old_showcase.nil? ? ENV.delete("DILLA_SHOWCASE") : ENV["DILLA_SHOWCASE"] = old_showcase
+    old_bpm.nil? ? ENV.delete("DILLA_SHOWCASE_BPM") : ENV["DILLA_SHOWCASE_BPM"] = old_bpm
+  end
+
 end
