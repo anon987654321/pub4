@@ -31,7 +31,7 @@ module Master
           def evidence_abort_result(visual, opportunities)
             @committer.abort_transaction!
             message = [visual, opportunities].select { |result| result&.err? }.map(&:message).join(" / ")
-            PassResult.new(status: :plateau, consecutive_clean: 0, message:)
+            PassResult.new(status: :validation_failed, consecutive_clean: 0, message:)
           end
 
           def run_visual_pass(target:, files:, pass:)
