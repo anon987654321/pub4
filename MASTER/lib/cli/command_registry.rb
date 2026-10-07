@@ -210,7 +210,7 @@ module Master
 
       # Open the full-screen terminal face without inventing a second model route.
       def dispatch_face(_ctx = nil)
-        return "face0: needs a terminal" unless $stdin.tty?
+        return "face0: needs a terminal" unless $stdin.tty? && $stdout.tty?
 
         container = Fiber[:master_cli_container]
         return "face0: no session" unless container
@@ -222,17 +222,14 @@ module Master
 
           streamed
         end
-        terminal = File.open("/dev/tty", "r+")
         Face::Window.new(
           turn:,
           event_bus: container[:bus],
-          input: terminal,
-          output: terminal,
+          input: $stdin,
+          output: $stdout,
         ).run
       rescue StandardError => e
         "face0: failed — #{e.class}: #{e.message}"
-      ensure
-        terminal&.close
       end
 
       def dispatch_device(_root, ctx: nil)
