@@ -17,7 +17,7 @@ module Master
     # on the next invocation; "delivering" means Git delivery may already have
     # started, so recovery preserves the tree and lets /fix re-observe it.
     class Transaction
-      include Master::Io::AtomicWrite
+      include ::Master::Io::AtomicWrite
 
       Snapshot = Data.define(:path, :exists, :kind, :mode, :link, :store)
 
