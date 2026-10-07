@@ -14,7 +14,7 @@ require "master"
 require_relative "../lib/trace/dmesg"
 
 # Eager-load so Zeitwerk-ignored fragments (loaded via explicit require, e.g.
-# review/scan/rules/*.rb) are defined and resolve like any other constant. Without
+# review/scan/laws/*.rb) are defined and resolve like any other constant. Without
 # this, lazy const_get can't autoload a plural-filename fragment and false-alarms.
 Master.eager_load!
 
