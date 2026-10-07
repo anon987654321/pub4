@@ -176,6 +176,29 @@ module Master
           detail: ["/why <law|path|scan_rule|anti_pattern|style.key> — Trace::WhyExplainer looks it",
                    "up in the constitution, architecture and path ownership, then asks the model only when nothing matches."],
         },
+        "wishlist" => {
+          summary: "the governed assistant wishlist, with an honest state per workstream",
+          detail: ["/wishlist — list the current convergence workstreams.",
+                   "/wishlist <id|word> — inspect one workstream, its implementation anchor and proof owner.",
+                   "The wishlist is non-authoritative. Constitution, code and evidence remain authoritative."],
+        },
+        "size" => {
+          summary: "measured byte, file and Ruby-line mass for the four governed trees",
+          detail: ["/size — measure MASTER, RAILS, OPENBSD and STUDIO.",
+                   "/size MASTER|RAILS|OPENBSD|STUDIO — measure one tree.",
+                   "The command reports observed mass; it never invents a health score."],
+        },
+        "explain" => {
+          summary: "explain the living four-tree architecture from the checkout",
+          detail: ["/explain — show the current PUB4 boundary and measured topology.",
+                   "/explain MASTER|RAILS|OPENBSD|STUDIO — focus on one tree.",
+                   "It reports what the checkout contains, not what an old README promised."],
+        },
+        "prove" => {
+          summary: "run the deterministic local PUB4 convergence proof and write a receipt",
+          detail: ["/prove — check constitution presence, four-tree topology, command discoverability, wishlist anchors and snapshot contract.",
+                   "External hardware, vm23, staging money, browser and listening evidence remains INCONCLUSIVE until actually exercised."],
+        },
         "face" => {
           summary: "the full-screen 3D terminal face",
           detail: [
@@ -223,8 +246,8 @@ module Master
 
       def help_summary
         [
-          "commands: /status /doctor /voice /model /deploy /play",
-          "          /wake /review /critique /fix /face",
+          "commands: /status /doctor /voice /model /deploy /play /size",
+          "          /wake /review /critique /fix /face /wishlist /explain /prove",
           "          /session /clear /undo /snapshot",
           "          /android /ios /orders",
           "          /soul /rules /why /plugin /help /exit /quit",
