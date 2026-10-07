@@ -162,6 +162,26 @@ class CritiqueImplementationTest < Minitest::Test
     assert_includes brgen, '@use "stack_brgen" as *;'
   end
 
+  def test_yep_search_is_the_shared_rails_default
+    stack = read("shared/app/assets/stylesheets/_stack.scss")
+    brgen_stack = read("shared/app/assets/stylesheets/_stack_brgen.scss")
+    %w[amber bsdports].each do |app|
+      application = read("#{app}/app/assets/stylesheets/application.scss")
+      assert_includes application, '@use "stack" as *;'
+    end
+
+    assert_includes stack, '@forward "search_yep";'
+    assert_includes brgen_stack, '@forward "search_yep";'
+  end
+
+  def test_radio_restores_first_party_device_tilt_contract
+    source = read("brgen/app/javascript/radio_brgen_tunnel.js")
+    assert_includes source, "DeviceOrientationEvent"
+    assert_includes source, "requestPermission"
+    assert_includes source, 'deviceorientation'
+    assert_includes source, "this.tilt = { x: 0, y: 0 }"
+  end
+
   def test_brgen_radio_restores_the_original_eight_track_warp_tunnel
     source = read("brgen/app/javascript/radio_brgen_tunnel.js")
     importmap = read("brgen/config/importmap.rb")
