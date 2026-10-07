@@ -81,12 +81,26 @@ class TestSnapshotGenerator < Minitest::Test
 
   def test_snapshot_generator_declares_hard_share_size_ceiling
     source = File.read(File.expand_path("../tools/snapshot.rb", __dir__))
-    assert_includes source, "MAX_BYTES = 750_000"
+    assert_includes source, "MAX_BYTES = 3_500_000"
+    assert_includes source, "MAX_PARTS = 6"
+    assert_includes source, "EXCLUDED_DIRS = %w["
     assert_includes source, 'snapshot_#{tree}.partNNN.md'
     assert_includes source, "Rehydrate all parts into a fresh temporary repository-shaped directory"
     assert_includes source, "snapshot_extract.rb"
     assert_includes source, "omitted=0"
     assert_includes source, "SOURCE_FRAGMENT_BYTES = 600_000"
+  end
+
+  def test_operator_snapshot_excludes_dot_and_non_source_paths
+    source = File.read(File.expand_path("../tools/snapshot.rb", __dir__))
+
+    assert_includes source, "def excluded_path?(path)"
+    assert_includes source, 'part.start_with?(".")'
+    %w[tmp temp generated vendor node_modules coverage storage build dist renders scratch cache three_build].each do |name|
+      assert_includes source, name
+    end
+    assert_includes source, 'path.include?("/public/assets/")'
+    assert_includes source, 'path.include?("/app/assets/builds/")'
   end
 
   def test_snapshot_extractor_reassembles_parts_and_validates_pack_integrity
