@@ -69,7 +69,7 @@ module Master
       def lines(root: MasterPaths::ROOT)
         receipt = build(root:)
         law_counts = receipt[:law]
-        [
+        lines = [
           "receipt: commit #{receipt[:commit]} constitution=#{receipt[:constitution][:digest]}",
           "receipt: soul #{receipt[:constitution][:soul_version]} " \
           "persona=#{receipt[:constitution][:persona]} " \
@@ -78,9 +78,10 @@ module Master
           "#{law_counts[:domain]} in law/",
           "receipt: providers #{availability(receipt[:providers])}",
           "receipt: capabilities #{availability(receipt[:capabilities])}",
-          session_line(receipt[:session]) unless receipt[:session].empty?,
-          degraded_line(receipt[:degraded]),
         ]
+        lines << session_line(receipt[:session]) unless receipt[:session].empty?
+        lines << degraded_line(receipt[:degraded])
+        lines
       end
 
       def session_line(session)
