@@ -39,4 +39,24 @@ class TestCliFaceDispatch < Minitest::Test
 
     assert called
   end
+  def test_known_slash_commands_bypass_the_llm_turn
+    session = Master::CLI::Session.allocate
+    session.instance_variable_set(:@container, {
+      commands: {
+        "play" => Master::CLI::CommandRegistry::Command.new { |ctx| "dilla0: #{ctx.fetch(:args)}" }
+      }
+    })
+    renderer = Object.new
+    def renderer.render(text, **); text; end
+    session.instance_variable_set(:@refs, Struct.new(:renderer).new(renderer))
+    out, = capture_io { session.send(:dispatch_core_slash_command, "/play flying lotus") }
+    assert_includes out, "dilla0: flying lotus"
+  end
+
+  def test_unknown_slash_command_still_reaches_the_sentence_router
+    session = Master::CLI::Session.allocate
+    session.instance_variable_set(:@container, { commands: {} })
+    assert_equal :unhandled, session.send(:dispatch_core_slash_command, "/not-a-command")
+  end
+
 end
