@@ -284,7 +284,12 @@ module Master
       end
 
       def teaching_frame(local:, boundary:, consequence:, next_step:)
-        "causality: cause → effect → evidence; a broken handoff is a finding, not permission to guess"
+        {
+          local: local.to_s,
+          boundary: boundary.to_s,
+          consequence: consequence.to_s,
+          next_step: next_step.to_s,
+        }.freeze
       end
 
       def falsification_questions(claim)
