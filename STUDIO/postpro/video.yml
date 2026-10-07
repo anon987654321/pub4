@@ -29,8 +29,8 @@ presets:
       - eq=contrast=1.23:saturation=1.38:gamma=0.92
       - rgbashift=rh=5:rv=-3:gh=-3:gv=2:bh=3:bv=2
       - chromashift=cbh=4:crh=-4
-      - edgedetect=low=0.03:high=0.16
       - colorlevels=rimin=0.04:rimax=0.92:gimin=0.03:gimax=0.96:bimin=0.08:bimax=0.98
+      - tblend=all_mode=screen:all_opacity=0.16
       - noise=alls=9:allf=t+u
       - unsharp=5:5:0.35:5:5:0
       - vignette=PI/4.5
