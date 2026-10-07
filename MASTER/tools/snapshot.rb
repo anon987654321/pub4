@@ -191,10 +191,10 @@ module Operator
     end
 
     def render_snapshot(tree, paths, binaries, texts, omitted, sha)
-      fence3 = chr(96) * 3
+      fence3 = 96.chr * 3
       out = String.new
       out << "# #{tree} — source snapshot\n\n"
-      out << "Generated #{Time.now.utc.strftime(%Y-%m-%d %H:%M UTC)} — git #{sha} — "
+      out << "Generated #{Time.now.utc.strftime('%Y-%m-%d %H:%M UTC')} — git #{sha} — "
       out << "#{texts.size} files inlined"
       out << ", #{binaries.size} binary listed only" unless binaries.empty?
       out << ", #{omitted.size} text omitted for share-size" unless omitted.empty?
@@ -205,19 +205,19 @@ module Operator
       out << "#{fence3}\n"
       unless binaries.empty?
         out << "\n## Binary files\n\nListed, not inlined:\n\n"
-        binaries.each { |p| out << "- #{chr(96)}#{p}#{chr(96)}\n" }
+        binaries.each { |p| out << "- #{96.chr}#{p}#{96.chr}\n" }
       end
       unless omitted.empty?
         out << "\n## Omitted text files\n\nThese tracked text files are deliberately omitted only to keep this share pack below the hard 9.5 MB ceiling.\n\n"
-        omitted.each { |p| out << "- #{chr(96)}#{p}#{chr(96)} — #{File.size(File.join(REPO, p))} bytes\n" }
+        omitted.each { |p| out << "- #{96.chr}#{p}#{96.chr} — #{File.size(File.join(REPO, p))} bytes\n" }
       end
       out << "\n"
       texts.each do |p|
         body = File.read(File.join(REPO, p), encoding: "UTF-8")
         longest = body.scan(/^`{3,}/).map(&:length).max.to_i
-        fence = chr(96) * [3, longest + 1].max
-        out << "## #{chr(96)}#{p}#{chr(96)}\n\n"
-        out << "#{fence}#{FENCE.fetch(File.extname(p), )}\n"
+        fence = 96.chr * [3, longest + 1].max
+        out << "## #{96.chr}#{p}#{96.chr}\n\n"
+        out << "#{fence}#{FENCE.fetch(File.extname(p), "")}\n"
         out << body
         out << "\n" unless body.end_with?("\n")
         out << "#{fence}\n\n"
