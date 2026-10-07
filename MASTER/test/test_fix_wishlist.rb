@@ -99,4 +99,101 @@ class TestFixWishlist < Minitest::Test
     ledger = JSON.parse(File.read(File.join(@root, ".master", "fix_wishlist.json")))
     assert ledger.fetch("proposals").all? { |row| row.fetch("status") == "stale" }
   end
+
+  def test_successful_delivery_requires_and_records_a_deterministic_proof
+    agent = RecordingAgent.new(reply)
+    wishlist = Master::Fix::Wishlist.new(root: @root, agent:)
+    wishlist.call(state: "done", target: @root, run_id: "r6")
+
+    proposals = wishlist.claimable(target: @root, limit: 1, run_id: "r7")
+    claimed = wishlist.claim!(proposals, run_id: "r7")
+    wishlist.mark_attempt(
+      proposal_id: claimed.first.fetch("uid"),
+      fixed: 1,
+      status: :continue,
+      message: "changed",
+      run_id: "r7",
+    )
+    assert_equal 1, wishlist.mark_delivered(proposal_ids: [claimed.first.fetch("uid")], run_id: "r7").size
+
+    verified = wishlist.mark_verified(proposal_ids: [claimed.first.fetch("uid")], run_id: "r8")
+    assert_equal "verified", verified.first.fetch("status")
+    assert_equal "proven", verified.first.fetch("proof_state")
+    assert_includes verified.first.fetch("proof_checks"), "ruby syntax: passed"
+  end
+
+  def test_missing_proof_contract_never_becomes_verified
+    response = reply.sub("proof:
+    - ruby syntax", "")
+    wishlist = Master::Fix::Wishlist.new(root: @root, agent: RecordingAgent.new(response))
+    wishlist.call(state: "done", target: @root, run_id: "r_missing_proof")
+
+    proposal = wishlist.claimable(target: @root, limit: 1, run_id: "r_missing_proof").first
+    wishlist.claim!([proposal], run_id: "r_missing_proof")
+    wishlist.mark_attempt(
+      proposal_id: proposal.fetch("uid"),
+      fixed: 1,
+      status: :continue,
+      message: "changed",
+      run_id: "r_missing_proof",
+    )
+    wishlist.mark_delivered(proposal_ids: [proposal.fetch("uid")], run_id: "r_missing_proof")
+
+    row = wishlist.mark_verified(proposal_ids: [proposal.fetch("uid")], run_id: "r_missing_proof_verify").first
+    assert_equal "applied", row.fetch("status")
+    assert_equal "open", row.fetch("proof_state")
+    assert_includes row.fetch("proof_checks"), "no executable proof contract"
+  end
+
+  def test_unsupported_proof_never_becomes_verified
+    response = reply.sub("ruby syntax", "human listening test")
+    wishlist = Master::Fix::Wishlist.new(root: @root, agent: RecordingAgent.new(response))
+    wishlist.call(state: "done", target: @root, run_id: "r9")
+
+    proposal = wishlist.claimable(target: @root, limit: 1, run_id: "r10").first
+    wishlist.claim!([proposal], run_id: "r10")
+    wishlist.mark_attempt(
+      proposal_id: proposal.fetch("uid"),
+      fixed: 1,
+      status: :continue,
+      message: "changed",
+      run_id: "r10",
+    )
+    wishlist.mark_delivered(proposal_ids: [proposal.fetch("uid")], run_id: "r10")
+
+    row = wishlist.mark_verified(proposal_ids: [proposal.fetch("uid")], run_id: "r11").first
+    assert_equal "applied", row.fetch("status")
+    assert_equal "open", row.fetch("proof_state")
+    assert_includes row.fetch("verification_reason"), "external validation"
+  end
+
+  def test_failed_proof_blocks_instead_of_claiming_success
+    response = reply.sub("anchor: lib/sample.rb:1", "anchor: lib/sample.yml:1")
+    File.write(File.join(@root, "lib", "sample.yml"), "sample: true\n")
+    wishlist = Master::Fix::Wishlist.new(root: @root, agent: RecordingAgent.new(response))
+    wishlist.call(state: "done", target: @root, run_id: "r12")
+
+    proposal = wishlist.claimable(target: @root, limit: 1, run_id: "r13").first
+    wishlist.claim!([proposal], run_id: "r13")
+    wishlist.mark_attempt(
+      proposal_id: proposal.fetch("uid"),
+      fixed: 1,
+      status: :continue,
+      message: "changed",
+      run_id: "r13",
+    )
+    wishlist.mark_delivered(proposal_ids: [proposal.fetch("uid")], run_id: "r13")
+
+    row = wishlist.mark_verified(proposal_ids: [proposal.fetch("uid")], run_id: "r14").first
+    assert_equal "blocked", row.fetch("status")
+    assert_equal "failed", row.fetch("proof_state")
+    assert_includes row.fetch("blocked_reason"), "proof failed"
+  end
+
+  def test_pending_titles_reads_only_claimable_next_fix_work
+    Master::Fix::Wishlist.new(root: @root, agent: RecordingAgent.new(reply)).call(state: "done", target: @root, run_id: "r15")
+
+    assert_equal ["Wish 1", "Wish 2"], Master::Fix::Wishlist.pending_titles(@root, target: @root, limit: 2)
+  end
+
 end

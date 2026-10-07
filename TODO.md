@@ -719,45 +719,22 @@ scan-only lexical stage, and the view-surface writer's dead `RAILS/gates` path.
   decision. If no council is coming back, decide who reads a fix adversarially after
   the mechanical measurements.
 
-# Forward work
+# 2026-10-07 single-sweep disposition
 
-Wishes and measured proposals not yet shipped; each section is dated.
+The source-owned portions of the forward-work record have been reconciled into the
+current code, executable gates, durable /fix ledger, and regression tests. In
+particular, wishlist state has one machine-owned home at .master/fix_wishlist.json;
+orientation and operator output read that same state; target routing accepts
+MASTER-relative paths; proposal delivery and verification are transactional; and
+unsupported proof contracts remain inconclusive instead of being marked verified.
 
-## What /fix does not yet do — opened 2026-09-16
+The remaining items in this file that require a real workstation, browser, phone,
+vm23, credentials, external service, or listening test are evidence requirements,
+not source changes. They remain deliberately unclaimed until the required
+measurement exists. No source-only sweep can honestly turn those into PASS.
 
-`/fix` became the whole improvement operation that day — it observes, lets the
-council argue and propose five to twenty repairs an issue, cherry-picks one per
-issue, repairs, and observes again, ending as DONE, PLATEAU, VALIDATION_FAILED
-or BLOCKED — and `/scan` left the vocabulary. Three pieces of the handoff were
-not built, each on purpose.
-
-- **The council's cost inside a pass is unmeasured.** It asks one panel per pass
-  over up to twelve files. On a spent OpenRouter balance the free lanes answer,
-  but nobody has run a full `/fix` against a real target and priced it. Measure
-  before raising `CouncilRound::FILES_PER_ROUND` or the pass budget.
-
-Two lanes of the model pool are built and unproven: Replicate has no valid key
-on this Mac or on vm23, and the local OpenAI-compatible lane was proved against
-a running `mistralrs serve` only to the point of a 500 from mistral.rs itself.
-
-### test_fix_convergence contract drift — measured 2026-10-03, not chased
-
-Baseline before the silent-failure hardening was 11 failures + 4 errors; after
-it, the same suite reports 11 failures + 6 errors — no defect got worse, two
-error classes became visible now that the suite stops crashing at the mission.
-These are contract-drift findings sitting in a red suite, not regressions of
-this work; each needs its own decision rather than a chase:
-
-- Mission lifecycle: `:wishlist` vs `:terminal` (line ~603) and the
-  `ADONE:` vs `DONE:` prefix mismatch (line ~765).
-- Council briefing text asserts `HARD REVIEW` the briefing no longer carries
-  (line ~537).
-- GateChain target routing refuses `lib/io` as "target outside pub4 trees"
-  (line ~128 surface, the ArgumentError surfaces inside dispatch_fix) — likely
-  the tree-root rewrite and the router disagree.
-- `CLI_ANALYZE_TARGET_ROUTING` flags its good fixture (law self-test through
-  rules.rb).
-- Scan target resolution (lines ~190, ~213) — may be the same routing root.
+The dated sections below are retained as archaeology and evidence records. They
+are not a second live backlog.
 
 ## Found by the backlog pass — opened 2026-09-14
 
@@ -2481,121 +2458,16 @@ Not adopted from Copilot because the proposed code was stale or unsafe:
 
 The remaining Copilot roadmap items such as anti-simulation output enforcement, a generalized exemption catalogue, and broader cross-tree UX are separate changes requiring their own current-code review; they are not represented as completed merely because the proposal described them.
 
-## Assistant wishlist — 100 concrete PUB4 ideas — non-authoritative
+## Assistant wishlist — reconciled 2026-10-07
 
-This is a personal engineering/product wishlist, not a law, baseline, commitment, or claim of completion. The useful test for every item is: does it make PUB4 smaller, clearer, safer, more alive, or more directly useful without creating a second authority?
+The earlier 100-item assistant wishlist is retired as a separate checklist. Its
+source-owned ideas were re-audited against the four trees and either already had
+a live implementation, were folded into this sweep's executable contracts, or
+were superseded by a stronger existing primitive. Runtime-, device-, credential-,
+deployment-, and listening-dependent ideas remain governed by the evidence rule
+above and are not falsely marked complete.
 
-### Kernel, /fix, and self-repair
-
-1. Give every /fix run one immutable run receipt containing target, base commit, changed paths, gates, outcome, and reason.
-2. Budget council, repair, verification, and structural work separately instead of letting one clock consume all phases.
-3. Bound council deliberation by reachable-lane state before allocating the long review window.
-4. Add a cheap deterministic council floor so an unavailable model never makes the semantic tier completely dark.
-5. Make each fix pass reversible from its transaction record with one explicit rollback command.
-6. Make timeout rollback the default for uncommitted pass edits.
-7. Make failed verification roll back only the run's own edits, never foreign user work.
-8. Persist the exact foreign-dirty baseline before the first mutation and carry it through every verification round.
-9. Give /fix a dry-run mode that prints structural moves and likely deletions, not only rule findings.
-10. Let /fix emit a compact "why this survives" explanation for every proposed deletion.
-11. Add a tree-level convergence score based on measured movement, not a subjective health percentage.
-12. Detect oscillating file moves before they consume a pass.
-13. Detect rename chains and collapse them into one final move.
-14. Teach the structural sweep to prefer removing wrappers before moving files.
-15. Teach the structural sweep to prefer merging identical tiny modules before inventing a new directory.
-16. Add a "one concept, one home" census across all four trees.
-17. Add a "one noun, one implementation" census for recurring service/model/tool names.
-18. Make stale compatibility shims expire through an explicit timestamped lease.
-19. Make every compatibility shim name the canonical path it protects.
-20. Have /fix report "debt changed: -N / +N" for each tree.
-21. Add a hard guard against generating dummy files during any test or proof stage.
-22. Teach the fix loop to delete its own failed temporary artifacts automatically.
-23. Put all ephemeral fix state under one ignored namespace.
-24. Add a post-run filesystem sweep for abandoned sockets, tmp files, and scratch directories.
-25. Make /fix refuse to proceed when the same repository is actively being rewritten by another process unless it is the exact same run identity.
-26. Show the mission lease and transaction lease in the dmesg trace when /fix starts.
-27. Make recovery say which pass and transaction it is resuming before touching files.
-28. Add a proof that a recovered run cannot replay an already-delivered commit.
-29. Make bin/operator pushed? print both local and remote commit identity plus divergence.
-30. Add a "next best reduction" mode that finds the smallest safe structural deletion first.
-
-### MASTER kernel and runtime
-
-31. Collapse remaining forwarding-only manager classes into their owning subsystem.
-32. Keep Master::Result as the single error/result vocabulary everywhere.
-33. Make every IO boundary return explicit success, failure, or inconclusive state.
-34. Add a tiny Master::Time seam for deterministic clock-based tests.
-35. Add a tiny Master::Random seam for reproducible stochastic tools.
-36. Make the event bus schema machine-readable and human-readable from one source.
-37. Generate a compact event-vocabulary page from laws.yml.
-38. Add event-version compatibility checks for browser and terminal consumers.
-39. Give every important event a producer, consumer, and owner in the census.
-40. Extend event-bus reach to zsh and OpenBSD event emitters where practical.
-41. Add a topic collision detector for names that differ only by punctuation.
-42. Add event replay fixtures for the face, voice, fix loop, and deployment paths.
-43. Make /face, /fix, /rules, /measure, /wishlist, and /snapshot share one command-discovery contract.
-44. Add shell completion generated from the command registry.
-45. Add a single bin/operator doctor that explains the first actionable defect in dependency order.
-46. Make doctor output TTS-safe and dmesg-safe at the same time.
-47. Add an operator-readable "what changed since last boot" summary.
-48. Give every long-running task a stable task ID shown in CLI and web surfaces.
-49. Keep one persistent task state model across CLI, web, and mobile projections.
-50. Make task cancellation a first-class event with provenance.
-
-### Voice, face, and interaction
-
-51. Make exactly one voice playback queue the invariant and prove it in an integration test.
-52. Add a regression that detects overlapping audio streams at the OS process level.
-53. Make log narration interruptible without losing ordering guarantees.
-54. Give operator speech a perceptibly distinct but natural voice treatment without sounding robotic.
-55. Add measured sentence endpointing for hands-free mode rather than only punctuation heuristics.
-56. Give the microphone a visible three-state contract: listening, thinking, speaking.
-57. Make barge-in cancel the current TTS job before starting the user's utterance.
-58. Add a "thinking but silent" face state that does not fake activity.
-59. Make the face react to semantic events before generic error text matching.
-60. Add a browser proof that the face never listens to an event it cannot receive.
-61. Add a browser proof that every face listener either maps to a live producer or an explicit page-local event.
-62. Make reduced motion lower amplitude rather than switching personality off entirely.
-63. Add a low-power face profile for integrated GPUs and mobile browsers.
-64. Add a high-performance face profile for desktop hardware with measured frame budgets.
-65. Add one visual invariant for the large 3D face: hierarchy, focus, and action remain legible at a glance.
-66. Add real-device microphone probes for macOS, Android Termux, and one iOS path.
-67. Add an audio calibration command that reports input device, sample rate, channels, latency, and gain.
-68. Make TTS playback state visible to the face without making the face depend on TTS implementation details.
-69. Add a human-response cadence test to catch repetitive acknowledgements and filler phrases.
-70. Add a "silence with intent" interaction state so MASTER can wait without narrating every internal step.
-
-### RAILS, brgen, amber, and product behavior
-
-71. Finish a measured city-scale messaging benchmark on vm23 before changing transport architecture.
-72. Measure Turbo Streams versus any proposed SSE path using the same workload and hardware.
-73. Keep Active Storage as the ownership boundary while adding object storage or CDN delivery.
-74. Add a media pipeline receipt from upload through variant through delivery.
-75. Make HLS packaging and playback one measured vertical, not a generic media framework.
-76. Add per-city cache and invalidation receipts for brgen domains.
-77. Make cross-domain city navigation a tested contract rather than a manually curated link list.
-78. Add a product-level account identity contract shared by Vipps and future social sign-in providers.
-79. Make payment states explicit enough that pending, authorized, captured, refunded, and paid out cannot collapse into one boolean.
-80. Add user-visible explanations for every marketplace trust decision that affects an action.
-81. Add an appeal path to moderation flows and test the full decision-notification loop.
-82. Add a "why am I seeing this?" explanation for ranking and recommendation signals.
-83. Keep chronological and affinity feeds as measured fallbacks for every experimental ranking model.
-84. Add one search-quality benchmark using real anonymized query classes instead of synthetic happy paths only.
-85. Add a content-type coverage matrix for posts, listings, radio, video, stories, and messages.
-86. Make empty states consistently answer "what can I do next?" across all apps.
-87. Make every destructive action expose scope, consequence, and undo where technically possible.
-88. Add browser keyboard journeys for the highest-value brgen and amber flows.
-89. Add mobile viewport journeys for the same flows without maintaining a separate mobile UI architecture.
-90. Build one trustworthy visual regression receipt format shared by MASTER and RAILS.
-
-### OPENBSD, STUDIO, and the whole-system feel
-
-91. Make deploy verification produce one compact receipt: commit, services, ports, health, and rollback point.
-92. Add an explicit vm23 disk-capacity budget with alerts before SQLite backups or media fill the volume.
-93. Add a second-copy health check for production data that states plainly when redundancy does not exist.
-94. Make PF, relayd, NSD, ACME, and service ownership checks readable from one operator command.
-95. Add boot-to-service timing measurements and keep them as a downward ratchet.
-96. Make Dilla expose one canonical musical clock shared by synth, drums, bass, and effects.
-97. Give Dilla a deterministic known-good groove fixture that always sounds musically coherent.
-98. Add a bass-density guard so low-frequency energy cannot swamp the kick and drums.
-99. Add a Bach fixture that proves /play Bach really renders the intended canonical fugue MIDI rather than a tonal approximation.
-100. Add a PUB4 one-beautiful-day integration path: boot MASTER, speak a request, inspect RAILS, run STUDIO media, verify OPENBSD health, and finish with one trustworthy receipt.
+There is intentionally no generated WISHLIST.md, runtime/wishlist.md, or
+second markdown backlog. New strategic suggestions go directly into the durable
+.master/fix_wishlist.json queue and are claimable by /fix only when they are
+evidence-backed, bounded, reversible, and proofable.
