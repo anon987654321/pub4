@@ -851,6 +851,43 @@ class TestFixConvergence < Minitest::Test
     assert_match(/\ADONE: /, result.value!)
   end
 
+  def test_wishlist_open_proof_downgrades_done_to_plateau
+    proposal = { "uid" => "wish-open", "status" => "claimed" }
+    wishlist = Object.new
+    wishlist.define_singleton_method(:call) { |**| "wishlist: drafted 1" }
+    wishlist.define_singleton_method(:claimable) { |**| [proposal] }
+    wishlist.define_singleton_method(:claim) { |rows, **| rows }
+    wishlist.define_singleton_method(:pending_count) { |**| 0 }
+    wishlist.define_singleton_method(:mark_verified) do |**|
+      [{ "uid" => "wish-open", "status" => "applied", "proof_state" => "open" }]
+    end
+
+    loop = build_loop([])
+    loop.instance_variable_set(:@wishlist, wishlist)
+    journal = loop.instance_variable_get(:@run_journal)
+    journal.define_singleton_method(:remaining_seconds) { |_run_id| 600 }
+    journal.define_singleton_method(:history) { |limit:| [{ "id" => "r1", "next_pass" => 1 }] }
+    journal.define_singleton_method(:next_pass) { |_record| 1 }
+    loop.instance_variable_set(:@file_collector, Object.new.tap do |collector|
+      collector.define_singleton_method(:collect) { |_target| [] }
+    end)
+    loop.define_singleton_method(:run_passes) { |**| Master::Result.ok("DONE: clean") }
+
+    result = loop.send(
+      :continue_with_wishlist,
+      Master::Result.ok("DONE: clean"),
+      files: [],
+      target: @root,
+      max_passes: 3,
+      budget_seconds: 600,
+      run_id: "r1",
+    )
+
+    assert_match(/\APLATEAU: /, result.value!)
+    assert_includes result.value!, "wishlist proof inconclusive"
+  end
+
+
   # 7. Running out of passes is not finishing.
   def test_structure_preflight_runs_before_the_first_repair_pass
     target = File.join(@root, "RAILS")
