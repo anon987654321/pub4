@@ -196,15 +196,15 @@ module Operator
            (klass.respond_to?(:dsl_fires) && (klass.dsl_fires || klass.dsl_does_not_fire)) ||
              !klass.respond_to?(:dsl_block)
          end
-         [unfixtured.size, Master.law("rule_ratchets", root: MASTER).dig("fixture_debt", "without_fixtures"),
+         [unfixtured.size, Master.law("law_ratchets", root: MASTER).dig("fixture_debt", "without_fixtures"),
           unfixtured.map(&:name)]
        end,
-       master_row("rule_deps.ungraphed", "data/laws.yml", "registry rules absent from rule_deps") do
+       master_row("law_deps.ungraphed", "data/laws.yml", "registry rules absent from law_deps") do
          $LOAD_PATH.unshift(File.join(MASTER, "lib")) unless $LOAD_PATH.include?(File.join(MASTER, "lib"))
          require "master"
          audit = Master::Review::Scan::RuleRegistryAudit.new(root: MASTER)
          ungraphed = audit.ungraphed_rule_ids
-         [ungraphed.size, Master.law("rule_ratchets", root: MASTER).dig("deps", "ungraphed"), ungraphed.map(&:to_s)]
+         [ungraphed.size, Master.law("law_ratchets", root: MASTER).dig("deps", "ungraphed"), ungraphed.map(&:to_s)]
        end]
     end
 
@@ -830,7 +830,7 @@ def deep_rows
     # a different note and stay out of this verdict; an "unreadable:" note is
     # the reader itself having failed (a missing file, a KeyError on a section
     # that does not exist), and skipping it is how eleven dead rows reported
-    # green for weeks. Seen 2026-10-03: `rule_ratchets` keys removed from
+    # green for weeks. Seen 2026-10-03: `law_ratchets` keys removed from
     # laws.yml left every rule-hygiene row raising KeyError, excluded here, and
     # `measure` came back clean.
     def ok?(rows)
