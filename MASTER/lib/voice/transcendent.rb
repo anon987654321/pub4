@@ -12,7 +12,7 @@ module Master
     # Transcendent orchestrator — emotion, melody, multi-engine chain.
     module Transcendent
       DEFAULTS = {
-        "personality" => "warm_erratic",
+        "personality" => "warm_supportive",
         "engine_chain" => "mlx,chatterbox,edge_melodic,edge,say",
         "emotion_enabled" => true,
         "melodic_enabled" => true,
@@ -142,7 +142,10 @@ module Master
         resolved_pitch = pitch
         personality = cfg["personality"].to_s
 
-        if personality == "warm_erratic" && style != :fixed
+        if personality == "warm_supportive" && style != :fixed
+          resolved_rate ||= supportive_rate(clean, style, cfg)
+          resolved_pitch ||= supportive_pitch(clean, style, cfg)
+        elsif personality == "warm_erratic" && style != :fixed
           resolved_voice, wr_rate, wr_pitch = warm_erratic_prosody(voice, clean, style, voice_locked, style_locked, resolved_voice)
           resolved_rate ||= wr_rate
           resolved_pitch ||= wr_pitch
@@ -155,6 +158,37 @@ module Master
         resolved_rate ||= "-5%"
         resolved_pitch ||= "-18Hz"
         [resolved_voice, resolved_rate, resolved_pitch]
+      end
+
+      def supportive_rate(clean, style, cfg)
+        words = clean.split.length
+        base = case style.to_sym
+               when :calm then -7
+               when :intimate then -6
+               when :storyteller then -5
+               when :question then -3
+               when :energetic then -1
+               else words > 28 ? -6 : -5
+               end
+        warmth = cfg["warmth"].to_f.clamp(0.0, 1.0)
+        depth = cfg["depth"].to_f.clamp(0.0, 1.0)
+        delta = ((warmth - 0.5) * -2.0 + (depth - 0.5) * -1.0).round
+        format("%+d%%", (base + delta).clamp(-10, 2))
+      end
+
+      def supportive_pitch(clean, style, cfg)
+        words = clean.split.length
+        base = case style.to_sym
+               when :calm then -20
+               when :intimate then -18
+               when :storyteller then -14
+               when :question then -8
+               when :energetic then -3
+               else words > 28 ? -16 : -14
+               end
+        depth = cfg["depth"].to_f.clamp(0.0, 1.0)
+        delta = ((depth - 0.5) * 14.0).round
+        format("%+dHz", (base - delta).clamp(-28, 4))
       end
 
       def warm_erratic_prosody(voice, clean, style, voice_locked, style_locked, resolved_voice)
