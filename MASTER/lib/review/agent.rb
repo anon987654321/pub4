@@ -271,14 +271,48 @@ end
         parts.join("\n\n")
       end
 
-      # Deep research also asks for the official documentation.
+      # Deep research also asks for the official documentation. Direct references
+      # to a research surface use its specialized adapter so the evidence arrives
+      # in the shape that surface actually provides.
       def web_snippets(message, mode)
+        text = message.to_s
+        snippets = []
+
+        if (source = specialized_web_source(text))
+          result = source.call(**specialized_web_args(text))
+          snippets << result.value!.to_s if result.respond_to?(:ok?) && result.ok?
+        end
+
         web = evidence_tool("WebSearch")
-        searches = [message.to_s]
-        searches << "#{message} official documentation" if mode == :deep_research
-        searches.filter_map do |query|
-          result = web&.call(query:)
-          result.value!.to_s if result.respond_to?(:ok?) && result.ok?
+        searches = [text]
+        searches << "#{text} official documentation" if mode == :deep_research
+        snippets.concat(
+          searches.filter_map do |query|
+            result = web&.call(query:)
+            result.value!.to_s if result.respond_to?(:ok?) && result.ok?
+          end
+        )
+        snippets
+      end
+
+      def specialized_web_source(message)
+        return evidence_tool("CodePen") if message.match?(/codepen\.io|\bcodepen\b/i)
+        return evidence_tool("Gist") if message.match?(/gist\.github\.com/i)
+        return evidence_tool("YoutubeTranscript") if message.match?(/youtube\.com|youtu\.be|youtube transcript/i)
+
+        nil
+      end
+
+      def specialized_web_args(message)
+        case
+        when message.match?(%r{https://codepen\.io/})
+          { mode: "inspect", url: message[%r{https://codepen\.io/[^\s)]+}], limit: 8 }
+        when message.match?(%r{https://gist\.github\.com/})
+          { url: message[%r{https://gist\.github\.com/[^\s)]+}], full: false }
+        when message.match?(%r{https?://(?:www\.)?youtube\.com/|https?://youtu\.be/})
+          { url: message[/https?:\/\/(?:www\.)?youtube\.com\/[^\s)]+|https?:\/\/youtu\.be\/[^\s)]+/], timestamps: false }
+        else
+          { mode: "trending", limit: 8 }
         end
       end
 
