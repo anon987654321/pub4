@@ -16,7 +16,7 @@ module Master
     # convergence. A second MASTER process must never be started to do the same
     # work.
     class ControlPlane
-      include Master::Io::AtomicWrite
+      include ::Master::Io::AtomicWrite
 
       DEFAULT_INTERVAL = 30
       DEFAULT_DEPLOY = File.join("OPENBSD", "bin", "vps-deploy").freeze
