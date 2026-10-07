@@ -2,6 +2,7 @@
 
 require "yaml"
 require_relative "../cli/routing/provider_canary"
+require_relative "../operator/dream_observer"
 
 module Master
   module Fix
@@ -21,6 +22,7 @@ module Master
         "self_test" => :run_self_test,
         "prune_undo" => :prune_undo_journal,
         "personal_pulse" => :personal_pulse,
+        "dream_observe" => :dream_observe,
       }.freeze
 
       def initialize(root:, agent: nil, scanner: nil, memory: nil, event_bus: nil, homeostat: nil, fix_loop: nil)
@@ -218,6 +220,12 @@ module Master
         Master::Ground::PersonalWorkspace.pulse(root: @root)
       end
 
+      def dream_observe
+        items = Master::Operator::DreamObserver.observe(root: @root)
+        @bus&.publish("heartbeat:dream", items: items.size)
+        "dream queue: #{items.size} item(s)"
+      end
+
       def load_jobs
         path = File.join(@root, "data", "patterns.yml")
         return default_jobs unless File.exist?(path)
@@ -235,6 +243,7 @@ module Master
           { "name" => "prune_memory", "action" => "prune_memory", "interval_seconds" => SECONDS_PER_HOUR },
           { "name" => "self_test", "action" => "self_test", "interval_seconds" => SECONDS_PER_HOUR },
           { "name" => "prune_undo", "action" => "prune_undo", "interval_seconds" => 86_400 },
+          { "name" => "dream_observe", "action" => "dream_observe", "interval_seconds" => 21_600 },
         ]
       end
 
