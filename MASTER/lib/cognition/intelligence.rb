@@ -168,6 +168,12 @@ module Master
           "alternatives" => Array(alternatives).map(&:to_s).first(7),
           "selected" => selected.to_s,
           "causal" => { "cause" => cause.to_s, "effect" => effect.to_s }.reject { |_, v| v.empty? },
+          "teaching" => teaching_frame(
+            local: observation,
+            boundary: source,
+            consequence: hypothesis,
+            next_step: selected || measurement,
+          ),
         ).freeze
       end
 
