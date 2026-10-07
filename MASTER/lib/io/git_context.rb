@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "pathname"
+require_relative "exec"
 
 module Master
   module Io
@@ -46,7 +47,10 @@ module Master
       def git_log(path, limit)
         args = ["git", "-C", @root, "log", "--oneline", "--no-color", "-#{limit}"]
         args << "--" << safe_path(path) if path
-        out = IO.popen(args, err: File::NULL, &:read)
+        result = git_capture(args)
+        return result unless result.ok?
+
+        out = result.value!
         Result.ok(out.strip.empty? ? "(no commits)" : out.strip)
       end
 
@@ -55,21 +59,30 @@ module Master
         safe = safe_path(path)
         return Result.err("git_context blame: file not found: #{path}",
           category: :validation) unless File.exist?(File.join(@root, safe))
-        out = IO.popen(["git", "-C", @root, "blame", "-l", safe], err: File::NULL, &:read)
+        result = git_capture("git", "-C", @root, "blame", "-l", safe)
+        return result unless result.ok?
+
+        out = result.value!
         Result.ok(out.strip.empty? ? "(no blame data)" : out.strip)
       end
 
       def git_diff(path)
         args = ["git", "-C", @root, "diff", "--no-color"]
         args << "--" << safe_path(path) if path
-        out = IO.popen(args, err: File::NULL, &:read)
+        result = git_capture(args)
+        return result unless result.ok?
+
+        out = result.value!
         Result.ok(out.strip.empty? ? "(no unstaged changes)" : out.strip)
       end
 
       # Neither `git status` nor `git blame` takes --no-color; passing it makes git
       # exit on an unknown option with empty stdout, which read as "(clean)".
       def git_status
-        out = IO.popen(["git", "-c", "color.status=false", "-C", @root, "status", "--short"], err: File::NULL, &:read)
+        result = git_capture("git", "-c", "color.status=false", "-C", @root, "status", "--short")
+        return result unless result.ok?
+
+        out = result.value!
         Result.ok(out.strip.empty? ? "(clean)" : out.strip)
       end
 
@@ -91,8 +104,25 @@ module Master
         end
 
         ref_s = raw.gsub(/[^a-zA-Z0-9._~^\-\/]/, "")
-        out = IO.popen(["git", "-C", @root, "show", "--stat", "--no-color", ref_s], err: File::NULL, &:read)
+        result = git_capture("git", "-C", @root, "show", "--stat", "--no-color", ref_s)
+        return Result.err("git_context show: commit not found: #{raw}", category: :validation) unless result.ok?
+
+        out = result.value!
         Result.ok(out.strip.empty? ? "(not found)" : out.strip[0..MAX_OUTPUT_CHARS])
+      end
+
+      def git_capture(*args)
+        argv = args.flatten.map(&:to_s)
+        out, err, status = Exec.capture3(*argv, timeout: Exec::DEFAULT_TIMEOUT)
+        return Result.ok(out) if status.success?
+
+        detail = [err, out].map(&:to_s).map(&:strip).reject(&:empty?).first
+        Result.err(
+          "git_context: git failed (#{status.exitstatus || "signal #{status.termsig}"}): #{detail || argv.join(" ")}",
+          category: :infrastructure,
+        )
+      rescue StandardError => e
+        Result.err("git_context: #{e.class}: #{e.message}", category: :infrastructure)
       end
 
       def safe_path(path)
