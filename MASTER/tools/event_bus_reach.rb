@@ -29,6 +29,9 @@ module Operator
       web/app/**/*.js
     ].freeze
 
+    # Deterministic census: literal strings and symbols only. Interpolation and
+    # wrappers are deliberately not invented into the topic list; the report
+    # should say what the instrument can actually see.
     PUBLISH_METHODS = %w[publish].freeze
     SUBSCRIBE_METHODS = %w[subscribe].freeze
     EVENT_NAME = /\A[a-z][a-z0-9_]*:[a-z][a-z0-9_:-]*\z/
@@ -272,6 +275,17 @@ module Operator
       data.values.flat_map { |rows| rows.keys }.select { |topic| retired.include?(topic) }.uniq.sort
     end
 
+    def missing_reference_anchors(data)
+      anchors = topic_contract.fetch("reference_anchors", {})
+      return [] unless anchors.is_a?(Hash)
+
+      anchors.filter_map do |topic, path|
+        next unless data[:references].fetch(topic.to_s, []).exclude?(path.to_s)
+
+        { topic: topic.to_s, path: path.to_s }
+      end.sort_by { |row| [row[:topic], row[:path]] }
+    end
+
     def collect
       publishers = Hash.new { |h, k| h[k] = [] }
       subscribers = Hash.new { |h, k| h[k] = [] }
@@ -317,6 +331,7 @@ module Operator
       unconsumed = published.reject { |topic| !consumed.include?(topic) }.sort
       contract_missing_publishers = contracted_publishers(data)
       retired = retired_occurrences(data)
+      reference_anchor_gaps = missing_reference_anchors(data)
 
       {
         **data,
@@ -324,6 +339,7 @@ module Operator
         unconsumed: unconsumed,
         contract_missing_publishers: contract_missing_publishers,
         retired_topics: retired,
+        reference_anchor_gaps: reference_anchor_gaps,
       }
     end
 
@@ -333,7 +349,8 @@ module Operator
       if json
         io.puts(JSON.pretty_generate(result))
         return strict && (result[:unpublished].any? || result[:unconsumed].any? ||
-                          result[:contract_missing_publishers].any? || result[:retired_topics].any?) ? 1 : 0
+                          result[:contract_missing_publishers].any? || result[:retired_topics].any? ||
+                          result[:reference_anchor_gaps].any?) ? 1 : 0
       end
 
       Master::Trace::Dmesg.attach(
@@ -374,8 +391,16 @@ module Operator
         end
       end
 
+      unless result[:reference_anchor_gaps].empty?
+        Master::Trace::Dmesg.status("eventbus0", "reference anchors missing", io:)
+        result[:reference_anchor_gaps].each do |row|
+          Master::Trace::Dmesg.status("eventbus0", "#{row[:topic]} -> #{row[:path]}", io:)
+        end
+      end
+
       strict && (result[:unpublished].any? || result[:unconsumed].any? ||
-                 result[:contract_missing_publishers].any? || result[:retired_topics].any?) ? 1 : 0
+                 result[:contract_missing_publishers].any? || result[:retired_topics].any? ||
+                 result[:reference_anchor_gaps].any?) ? 1 : 0
     end
   end
 end
