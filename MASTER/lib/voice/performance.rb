@@ -6,22 +6,51 @@ module Master
   module Voice
     # Engine-agnostic spoken performance plan.
     #
-    # Natural speech is not one rate and one pitch for a paragraph. This layer
-    # turns the semantic/emotional state into small, bounded phrase changes so
-    # every TTS backend can receive the same intent. It deliberately stays
-    # conservative: continuity beats theatrical randomness.
+    # Performance turns emotion into a continuous, bounded contour. It keeps
+    # sentence boundaries as the synthesis contract, but reads clause markers
+    # inside each sentence so punctuation can influence role, emphasis and rest.
     module Performance
-      MAX_RATE_DELTA = 3
-      MAX_PITCH_DELTA_HZ = 8
+      MAX_RATE_DELTA = 6
+      MAX_PITCH_DELTA_HZ = 14
       MAX_RATE_STEP = 2
       MAX_PITCH_STEP_HZ = 5
       MIN_RATE = -12
       MAX_RATE = 10
       MIN_PITCH_HZ = -24
       MAX_PITCH_HZ = 24
-      MIN_PAUSE_MS = 85
-      MAX_PAUSE_MS = 320
-      DEFAULT_PAUSE_MS = 135
+      MIN_PAUSE_MS = 90
+      MAX_PAUSE_MS = 480
+      DEFAULT_PAUSE_MS = 145
+
+      ROLE_RATE = {
+        opening: 1,
+        setup: 0,
+        delivery: 1,
+        parenthetical: -1,
+        contrast: 1,
+        reveal: 2,
+        question: 0,
+        warning: -1,
+        list_item: 0,
+        soft_landing: -1,
+        closing: -2,
+        body: 0,
+      }.freeze
+
+      ROLE_PITCH = {
+        opening: 2,
+        setup: 0,
+        delivery: 3,
+        parenthetical: -2,
+        contrast: 2,
+        reveal: 4,
+        question: 5,
+        warning: -4,
+        list_item: 1,
+        soft_landing: -2,
+        closing: -2,
+        body: 0,
+      }.freeze
 
       module_function
 
@@ -31,18 +60,31 @@ module Master
 
         raw = phrases.each_with_index.map do |phrase, index|
           role = sentence_role(phrase, index, phrases.length)
-          seed = Digest::SHA256.hexdigest(phrase)[0, 4].to_i(16)
-          variation = ((seed % 11) - 5)
-          arousal = emotion.dig(:scores, :arousal).to_f.clamp(0.0, 1.0)
-          delta = ((variation * (0.42 + arousal * 0.22)).round).clamp(-MAX_RATE_DELTA, MAX_RATE_DELTA)
-          pitch = ((variation * 2.0) + role_pitch(role)).round.clamp(-MAX_PITCH_DELTA_HZ, MAX_PITCH_DELTA_HZ)
+          seed = Digest::SHA256.hexdigest(phrase)[0, 8].to_i(16)
+          arousal = score(emotion, :arousal)
+          valence = score(emotion, :valence)
+          intimacy = score(emotion, :intimacy)
+          expressiveness = score(emotion, :expressiveness)
+          arc = arc_factor(index, phrases.length)
+
+          rate = ROLE_RATE.fetch(role) +
+                 ((arousal - 0.35) * 3.0).round +
+                 (expressiveness * 1.5 * arc).round +
+                 ((seed % 5) - 2)
+          pitch = ROLE_PITCH.fetch(role) +
+                  ((valence - 0.5) * 8.0).round -
+                  (intimacy * 4.0).round +
+                  ((seed % 7) - 3)
+          rate, pitch = apply_emphasis(rate, pitch, emphasis_for(role, phrase))
+          rate = rate.clamp(-MAX_RATE_DELTA, MAX_RATE_DELTA)
+          pitch = pitch.clamp(-MAX_PITCH_DELTA_HZ, MAX_PITCH_DELTA_HZ)
 
           {
             text: phrase,
-            role:,
-            rate_delta: delta,
+            role: role,
+            rate_delta: rate,
             pitch_delta_hz: pitch,
-            pause_ms: pause_ms_for(role, index, phrases.length, arousal),
+            pause_ms: pause_ms_for(role, index, phrases.length, emotion),
             emphasis: emphasis_for(role, phrase),
             style: style.to_sym,
           }
@@ -72,38 +114,50 @@ module Master
         end
       end
 
+      def score(emotion, key)
+        emotion.dig(:scores, key).to_f.clamp(0.0, 1.0)
+      end
+
       def smooth_step(value, previous, limit)
-        low = previous - limit
-        high = previous + limit
-        value.clamp(low, high)
+        value.clamp(previous - limit, previous + limit)
       end
 
       def sentence_role(text, index, total)
         return :opening if index.zero? && total > 1
         return :closing if index == total - 1 && total > 1
         return :question if text.end_with?("?")
-        return :warning if text.match?(/\b(warn|warning|careful|risk|unsafe|danger|blocked|failed|error)\b/i)
-        return :contrast if text.match?(/\b(but|however|instead|actually|except|rather)\b/i)
-        return :reveal if text.match?(/\b(the key|the point|interestingly|surprisingly|here's why)\b/i)
+        return :warning if text.match?(/\b(warn|warning|careful|risk|unsafe|danger|blocked|failed|error|critical)\b/i)
+        return :reveal if text.match?(/\b(the key|the point|interestingly|surprisingly|here's why|what matters)\b/i)
+        return :contrast if text.match?(/\b(but|however|instead|actually|except|rather|yet|still)\b/i)
+        return :parenthetical if text.match?(/[()—–]/)
+        return :list_item if text.match?(/\A(?:\d+[.)]|[-*])\s+/)
+        return :soft_landing if index == total - 1 && text.split.length <= 8
 
         :body
       end
 
-      def role_pitch(role)
-        { opening: 2, closing: -2, question: 5, warning: -5, contrast: 3, reveal: 4, body: 0 }.fetch(role)
-      end
+      def pause_ms_for(role, index, total, emotion)
+        base = {
+          opening: 105,
+          setup: 150,
+          delivery: 210,
+          parenthetical: 135,
+          contrast: 250,
+          reveal: 300,
+          question: 185,
+          warning: 245,
+          list_item: 155,
+          soft_landing: 285,
+          closing: 380,
+          body: DEFAULT_PAUSE_MS,
+        }.fetch(role, DEFAULT_PAUSE_MS)
+        base += 35 if %i[reveal contrast warning].include?(role)
+        base += (index * 10)
+        base -= (score(emotion, :arousal) * 55).round
+        base += (score(emotion, :intimacy) * 38).round
+        base += (score(emotion, :tension) * 25).round if emotion.dig(:scores, :tension)
+        return [MIN_PAUSE_MS, MAX_PAUSE_MS].min if total <= 1 && index.zero?
 
-      def pause_ms_for(role, index, _total, arousal)
-        base = case role
-               when :opening then 90
-               when :question then 150
-               when :warning then 190
-               when :contrast, :reveal then 220
-               when :closing then 260
-               else DEFAULT_PAUSE_MS
-               end
-        base += 35 if index.positive?
-        base -= (arousal * 45).round
         base.clamp(MIN_PAUSE_MS, MAX_PAUSE_MS)
       end
 
@@ -113,6 +167,22 @@ module Master
         return :light if text.split.length <= 7
 
         :none
+      end
+
+      def apply_emphasis(rate, pitch, emphasis)
+        case emphasis
+        when :strong then [rate - 1, pitch + 4]
+        when :question then [rate, pitch + 5]
+        when :light then [rate + 1, pitch + 2]
+        else [rate, pitch]
+        end
+      end
+
+      def arc_factor(index, total)
+        return 0.0 if total <= 2
+
+        midpoint = (total - 1) / 2.0
+        1.0 - ((index - midpoint).abs / midpoint)
       end
     end
   end

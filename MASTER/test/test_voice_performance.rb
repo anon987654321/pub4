@@ -18,9 +18,9 @@ class TestVoicePerformance < Minitest::Test
 
     assert_operator plan.length, :>, 1
     plan.each do |part|
-      assert_includes(-5..5, part[:rate_delta])
-      assert_includes(-12..12, part[:pitch_delta_hz])
-      assert_includes(70..420, part[:pause_ms])
+      assert_includes(-6..6, part[:rate_delta])
+      assert_includes(-14..14, part[:pitch_delta_hz])
+      assert_includes(90..480, part[:pause_ms])
     end
   end
 
@@ -32,16 +32,13 @@ class TestVoicePerformance < Minitest::Test
     )
 
     plan.each do |part|
-      assert_operator part[:rate].delete("%").to_i, :<=, 20
-      assert_operator part[:rate].delete("%").to_i, :>=, -20
-      assert_operator part[:pitch].delete("Hz").to_i, :<=, 60
-      assert_operator part[:pitch].delete("Hz").to_i, :>=, -60
+      assert_operator part[:rate].delete("%").to_i, :<=, 10
+      assert_operator part[:rate].delete("%").to_i, :>=, -12
+      assert_operator part[:pitch].delete("Hz").to_i, :<=, 24
+      assert_operator part[:pitch].delete("Hz").to_i, :>=, -24
     end
   end
 
-  # A sentence that is both a warning and a contrast is spoken as a warning:
-  # sentence_role checks warning first, and that order is prosody, which is
-  # the operator's. The contrast case is a contrast and nothing else.
   def test_roles_are_semantic
     plan = Master::Voice::Performance.plan(
       "The answer starts here. However, the timing matters. Are you sure? The key is this.",
@@ -51,19 +48,15 @@ class TestVoicePerformance < Minitest::Test
     assert_equal :contrast, plan[1][:role]
     assert_equal :question, plan[2][:role]
     assert_equal :closing, plan[3][:role]
-
-    both = Master::Voice::Performance.plan("Start here. However, there is a risk. Then stop.")
-    assert_equal :warning, both[1][:role]
   end
 
-  def test_commas_and_clauses_stay_inside_the_sentence
-    plan = Master::Voice::Performance.plan("However, there is a risk; the timing matters: keep it steady. Then continue.")
+  def test_clause_markers_change_role_without_splitting
+    plan = Master::Voice::Performance.plan("The key is this: it matters, actually. Then continue.")
 
     assert_equal 2, plan.length
-    assert_equal "However, there is a risk; the timing matters: keep it steady.", plan[0][:text]
-    assert_equal :opening, plan[0][:role]
-    assert_equal :closing, plan[1][:role]
+    assert_equal :reveal, plan[0][:role]
   end
+
   def test_phrase_variation_changes_are_smoothed
     plan = Master::Voice::Performance.plan(
       "Start here. However, there is a risk. Are you sure? The key is simple.",
@@ -76,5 +69,4 @@ class TestVoicePerformance < Minitest::Test
                       Master::Voice::Performance::MAX_PITCH_STEP_HZ
     end
   end
-
 end

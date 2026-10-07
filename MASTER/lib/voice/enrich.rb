@@ -1,43 +1,65 @@
 # frozen_string_literal: true
 
+require "digest"
+
 module Master
   module Voice
-    # Paralinguistic tags for Chatterbox-Turbo / OmniVoice-style engines.
+    # Disciplined, deterministic paralinguistic enrichment.
+    #
+    # Only Chatterbox-style native tags are emitted. Placement is tied to real
+    # clause boundaries and the same text always produces the same result.
     module Enrich
+      TAGS = {
+        humor: "[chuckle]",
+        comfort: "[sigh]",
+        wonder: "[gasp]",
+        intimacy: "[sigh]",
+        triumph: "[chuckle]",
+      }.freeze
+
       module_function
 
       def apply(text, emotion, tags: false)
-        t = text.to_s
-        return t if t.strip.empty? || !tags
+        source = text.to_s
+        return source if source.strip.empty? || !tags
 
-        primary = emotion[:primary]
         scores = emotion.fetch(:scores, {})
-        out = t.dup
+        primary = emotion[:primary]
+        expressiveness = scores[:expressiveness].to_f
+        intimacy = scores[:intimacy].to_f
+        humor = scores[:humor].to_f
+        candidates = []
+        candidates << [TAGS[:humor], humor * 0.45 + expressiveness * 0.10] if humor >= 0.35
+        candidates << [TAGS[:comfort], scores[:comfort].to_f * 0.34 + intimacy * 0.10] if scores[:comfort].to_f >= 0.35
+        candidates << [TAGS[:wonder], scores[:wonder].to_f * 0.22 + expressiveness * 0.10] if scores[:wonder].to_f >= 0.45
+        candidates << [TAGS[:intimacy], intimacy * 0.16] if intimacy >= 0.72
+        candidates << [TAGS[:triumph], scores[:triumph].to_f * 0.18] if primary == :triumph
 
-        case primary
-        when :humor
-          out = maybe_insert(out, "[chuckle]", 0.35 + scores[:humor].to_f * 0.2)
-        when :triumph
-          out = maybe_insert(out, "[laugh]", 0.18 + scores[:triumph].to_f * 0.15)
-        when :comfort
-          out = maybe_insert(out, "[sigh]", 0.22) if scores[:comfort].to_f > 0.35
-        when :wonder
-          out = maybe_insert(out, "[chuckle]", 0.12)
-        end
-        out
+        tag, strength = candidates.max_by { |candidate| [candidate[1], candidate[0]] }
+        return source unless tag && strength >= 0.24
+
+        insert_tag(source, tag, strength)
       end
 
-      def maybe_insert(text, tag, chance)
-        return text if chance <= 0 || rand >= chance
+      def insert_tag(text, tag, strength)
+        sentences = text.split(/(?<=[.!?])\s+/).map(&:strip).reject(&:empty?)
+        return text if sentences.length < 2
 
-        parts = text.split(/(?<=[.!?])\s+/)
-        return text if parts.length < 2
+        # Hard cap: one event per utterance. The threshold is deterministic so
+        # repeated synthesis does not randomly change the speaker's performance.
+        seed = Digest::SHA256.hexdigest(text)[0, 8].to_i(16)
+        gate = (seed % 100) / 100.0
+        threshold = [0.18 + strength * 0.34, 0.72].min
+        return text if gate > threshold
 
-        idx = rand(1...[parts.length, 3].max)
-        parts[idx] = "#{tag} #{parts[idx]}"
-        parts.join(" ")
+        index = [((seed / 100) % sentences.length), sentences.length - 1].min
+        return text if index.zero?
+
+        sentences[index] = "#{tag} #{sentences[index]}"
+        sentences.join(" ")
       end
-      private_class_method :maybe_insert
+
+      private_class_method :insert_tag
     end
   end
 end

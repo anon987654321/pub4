@@ -15,17 +15,8 @@ module Master
         "engine_chain" => "mlx,chatterbox,edge_melodic,edge,say",
         "emotion_enabled" => true,
         "melodic_enabled" => true,
-        "melodic_threshold" => 0.45,
-        # Keep ordinary conversation as one synthesis pass so phonemes and
-        # sentence prosody remain continuous. Explicit phrase rhythm is still
-        # available for expressive/experimental runs; lyrical text enables the
-        # melodic phrase engine independently through melodic_contour?.
-        "phrase_rhythm_enabled" => false,
-        # Read a Norwegian clause with a Norwegian voice instead of putting it
-        # through en-US-JennyNeural. Off, because data/voice.yml sets
-        # single_voice: jenny and persona_affects_text_only: true — one voice is
-        # a recorded decision, and this is the one thing that would break it.
-        # The machinery is here so the choice is a flag rather than a rewrite.
+        "melodic_threshold" => 0.40,
+        "phrase_rhythm_enabled" => true,
         "phrase_language_switching" => true,
         "mlx_model" => "mlx-community/chatterbox-fp16",
         "mlx_voice" => "default",
@@ -38,8 +29,7 @@ module Master
       module_function
 
       def enabled?
-        cfg = load_config
-        cfg.fetch("enabled", false)
+        load_config.fetch("enabled", false)
       end
 
       def load_config
@@ -47,7 +37,7 @@ module Master
         raw = File.exist?(path) ? YAML.safe_load(File.read(path), permitted_classes: [Symbol]) : {}
         section = raw.is_a?(Hash) ? (raw["transcendent"] || raw[:transcendent] || {}) : {}
         cfg = DEFAULTS.merge(stringify_keys(section))
-        default_chain = Engines.openbsd? ? Engines::OPENBSD_CHAIN.join(",") : cfg["engine_chain"]
+        default_chain = Engines.openbsd? ? %w[chatterbox mlx edge_melodic edge say].join(",") : cfg["engine_chain"]
         cfg["engine_chain"] = ENV.fetch("MASTER_TTS_ENGINE_CHAIN", default_chain)
         cfg
       rescue StandardError
@@ -94,7 +84,11 @@ module Master
                  else
                    variation[:rate] || phrase[:rate]
                  end
-          pitch = melody[:melodic] ? phrase[:pitch] : (variation[:pitch] || phrase[:pitch])
+          pitch = if melody[:melodic]
+                    blend_melodic_pitch(phrase[:pitch], variation[:pitch], base_pitch)
+                  else
+                    variation[:pitch] || phrase[:pitch]
+                  end
 
           phrase.merge(
             rate:,
@@ -114,8 +108,17 @@ module Master
         melodic = melodic_rate.to_s.delete("%").to_i
         performance = performance_rate.to_s.delete("%").to_i
         base = base_rate.to_s.delete("%").to_i
-        delta = performance - base
-        format("%+d%%", (melodic + delta).clamp(-12, 12))
+        format("%+d%%", (melodic + performance - base).clamp(-12, 12))
+      end
+
+      def blend_melodic_pitch(melodic_pitch, performance_pitch, base_pitch)
+        return melodic_pitch || performance_pitch if melodic_pitch.to_s.empty?
+        return melodic_pitch if performance_pitch.to_s.empty?
+
+        melodic = melodic_pitch.to_s.delete("Hz").to_i
+        performance = performance_pitch.to_s.delete("Hz").to_i
+        base = base_pitch.to_s.delete("Hz").to_i
+        format("%+dHz", (melodic + performance - base).clamp(-24, 24))
       end
 
       def synthesize_via_chain(clean, cfg, emotion, melody, resolved_voice, resolved_rate, resolved_pitch, out_path)
@@ -129,10 +132,10 @@ module Master
 
       def resolve_voice_and_prosody(clean, cfg, voice:, style:, rate:, pitch:, voice_locked:, style_locked:)
         resolved_voice = if Language.detect(clean) != :en
-                             Speech.voice_for_text(clean)
-                           else
-                             voice || Speech.default_voice
-                           end
+                           Speech.voice_for_text(clean)
+                         else
+                           voice || Speech.default_voice
+                         end
         resolved_rate = rate
         resolved_pitch = pitch
         personality = cfg["personality"].to_s
@@ -163,22 +166,17 @@ module Master
         [resolved_voice, pick[:rate], pick[:pitch]]
       end
 
-      # The pentatonic contour. Lyrical text only — this is the stylistic mode.
       def melodic_contour?(cfg, emotion)
         return false unless cfg["emotion_enabled"] && cfg["melodic_enabled"]
 
-        emotion.dig(:scores, :lyrical).to_f >= cfg["melodic_threshold"].to_f
+        emotion.dig(:scores, :lyrical).to_f >= cfg["melodic_threshold"].to_f ||
+          emotion[:mode].to_sym == :melodic
       end
 
-      # Whether to render phrase by phrase at all. Ordinary speech stays one
-      # utterance by default; explicit phrase rhythm remains an operator switch,
-      # while the melodic contour always retains its expressive phrase engine.
       def phrase_rendered?(cfg, emotion)
         melodic_contour?(cfg, emotion) || cfg["phrase_rhythm_enabled"] == true
       end
 
-      # nil when switching is off, so Melody attaches no :voice at all and every
-      # phrase inherits the single locked voice.
       def phrase_languages(cfg)
         return unless cfg["phrase_language_switching"] == true
 
@@ -189,12 +187,10 @@ module Master
 
       def build_engine_chain(cfg, emotion, clean)
         chain = cfg["engine_chain"].to_s.split(",").map(&:strip).reject(&:empty?)
-        chain = chain.reject { |e| e == "edge_melodic" } unless phrase_rendered?(cfg, emotion)
-        chain = chain.reject { |e| %w[mlx chatterbox].include?(e) } unless cfg["emotion_enabled"]
-        # The current adapters are wired for English output. Native Norwegian
-        # and Malay utterances must stay on their declared language families.
+        chain = chain.reject { |engine| engine == "edge_melodic" } unless phrase_rendered?(cfg, emotion)
+        chain = chain.reject { |engine| %w[mlx chatterbox].include?(engine) } unless cfg["emotion_enabled"]
         language = Language.detect(clean)
-        chain.reject { |e| %w[mlx chatterbox].include?(e) && language != :en }
+        chain.reject { |engine| %w[mlx chatterbox].include?(engine) && language != :en }
       end
 
       def try_engine_chain(chain, clean, cfg, emotion, melody, resolved_voice, resolved_rate, resolved_pitch, out_path)
@@ -246,6 +242,7 @@ module Master
             rate:,
             pitch:,
             primary: emotion[:primary],
+            blend: emotion[:blend],
             at: Time.now.to_i,
           ),
         )
@@ -260,7 +257,7 @@ module Master
 
         File.binread(path)
       ensure
-        File.unlink(path) if path && File.exist?(path)
+        File.delete(path) if path && File.exist?(path)
       end
     end
   end
