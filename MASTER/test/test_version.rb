@@ -5,7 +5,7 @@ require "test_helper"
 class TestVersion < Minitest::Test
   def test_release_version_comes_from_the_root_version_file
     expected = File.read(File.expand_path("../../VERSION", __dir__), encoding: "UTF-8").strip
-    assert_equal "1.0.0", expected
+    assert_equal "1.0.3", expected
     assert_equal expected, Master::VERSION
   end
 
