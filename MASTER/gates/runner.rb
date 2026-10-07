@@ -206,11 +206,14 @@ passed = results.count { |_name, result| result.outcome == :passed }
 failed = results.select { |_name, result| result.outcome == :failed }.keys
 errored = results.select { |_name, result| result.outcome == :errored }.keys
 inconclusive = results.select { |_name, result| result.outcome == :inconclusive }.keys
+live_skips = results.values.sum(&:live_skips)
 autofix = ENV.fetch("GATE_AUTOFIX", "0") == "1" ? "on" : "off"
-problems = (failed + errored + inconclusive).uniq
 
-summary = "#{passed} of #{results.size} passed in #{format('%.1fs', elapsed)}, autofix #{autofix}"
-summary += "; #{problems.join(', ')} #{problems.size == 1 ? 'failed' : 'failed'}" unless problems.empty?
+summary = "#{passed} pass, #{failed.size} fail, #{live_skips} skip, #{inconclusive.size} inconclusive, #{errored.size} error"
+summary += " in #{format('%.1fs', elapsed)}, autofix #{autofix}"
+summary += "; failed=#{failed.join(',')}" unless failed.empty?
+summary += "; inconclusive=#{inconclusive.join(',')}" unless inconclusive.empty?
+summary += "; errored=#{errored.join(',')}" unless errored.empty?
 say(summary)
 
 exit 1 if failed.any?
