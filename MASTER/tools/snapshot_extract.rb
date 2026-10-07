@@ -26,15 +26,19 @@ module Operator
       fence = nil
       fragment = nil
       total_fragments = nil
+      @bytes = nil
+      @newline = nil
       body = []
 
       flush = lambda do
         return unless current && fence
-        files << { path: current, body: body.join, fragment:, total_fragments: }
+        files << { path: current, body: body.join, fragment:, total_fragments:, bytes: @bytes, newline: @newline }
         current = nil
         fence = nil
         fragment = nil
         total_fragments = nil
+        @bytes = nil
+        @newline = nil
         body = []
       end
 
@@ -48,10 +52,21 @@ module Operator
           next
         end
 
-        if (match = line.match(/^## #{96.chr}(.+?)(?: \[fragment (\d+)\/(\d+)\])?#{96.chr}\s*$/))
+        if (match = line.match(/^## #{96.chr}(.+?) \[bytes=(\d+) newline=(0|1)\]#{96.chr}\s*$/))
           current = match[1]
-          fragment = match[2]&.to_i
-          total_fragments = match[3]&.to_i
+          fragment = nil
+          total_fragments = nil
+          @bytes = Integer(match[2])
+          @newline = Integer(match[3])
+          next
+        end
+
+        if (match = line.match(/^## #{96.chr}(.+?) \[fragment (\d+)\/(\d+) bytes=(\d+) newline=(0|1)\]#{96.chr}\s*$/))
+          current = match[1]
+          fragment = Integer(match[2])
+          total_fragments = Integer(match[3])
+          @bytes = Integer(match[4])
+          @newline = Integer(match[5])
           next
         end
 
@@ -84,6 +99,8 @@ module Operator
           fragments[file.fetch(:path)] << [
             file[:fragment],
             file[:total_fragments],
+            file.fetch(:bytes),
+            file.fetch(:newline),
             file.fetch(:body),
           ]
         end
@@ -95,13 +112,19 @@ module Operator
         fragment_numbers = pieces.filter_map(&:first)
         if fragment_numbers.empty?
           raise "snapshot extract: duplicate source file #{relative}" unless pieces.size == 1
-          content = pieces.first.fetch(2)
+          content = pieces.first.fetch(4)
+          content = content.delete_suffix("\n") if pieces.first.fetch(3).zero?
         else
           total = pieces.map { |piece| piece.fetch(1) }.compact.uniq
           numbers = fragment_numbers.sort
           raise "snapshot extract: incomplete fragments for #{relative}" unless total.size == 1 && numbers == (1..total.first).to_a
-          content = pieces.sort_by(&:first).map { |piece| piece.fetch(2) }.join
+          content = pieces.sort_by(&:first).map do |piece|
+            body = piece.fetch(4)
+            piece.fetch(3).zero? ? body.delete_suffix("\n") : body
+          end.join
         end
+        declared = pieces.sum { |piece| piece.fetch(2) }
+        raise "snapshot extract: byte count mismatch for #{relative}" unless content.bytesize == declared
 
         target = File.join(root, relative)
         FileUtils.mkdir_p(File.dirname(target))
