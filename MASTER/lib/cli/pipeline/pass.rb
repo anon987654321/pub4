@@ -371,7 +371,11 @@ def default_apply?(*) = false
         end
 
         def run_critique(abs)
-          return "critique: deliberation not configured" unless @deliberation
+          unless @deliberation
+            @failed_stages << "critique" unless @failed_stages.include?("critique")
+            Master::Trace::Dmesg.status("crit0", "failed, deliberation not configured")
+            return "critique failed: deliberation not configured"
+          end
 
           [swarm_review(abs), deliberation_critique(abs)].compact.join("\n")
         end
