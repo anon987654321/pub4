@@ -7,7 +7,7 @@ require_relative "../operator/dream_observer"
 module Master
   module Fix
     class Heartbeat
-      include Master::Io::AtomicWrite
+      include ::Master::Io::AtomicWrite
       POLL_INTERVAL = 60
       JOURNAL_KEEP = 50
       STATE_PATH = ".master/heartbeat_state.yml".freeze
