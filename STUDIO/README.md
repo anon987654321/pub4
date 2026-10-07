@@ -1,6 +1,6 @@
 # STUDIO
 
-STUDIO owns the media-production implementations. MASTER remains the governance
+**STUDIO is the media workshop: sound, images, video, and the tools that make them tangible.** MASTER remains the governance
 runtime and exposes each tool through the canonical entrypoint pattern
 `MASTER/tools/<tool>/<tool>.rb`; those paths are compatibility symlinks into
 this tree.
