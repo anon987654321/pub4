@@ -5,7 +5,7 @@ require "fileutils"
 module Master
   module Device
     module OwnerProfile
-      extend Master::Io::AtomicWrite
+      extend ::Master::Io::AtomicWrite
       KEYS = %w[name pet_name language locale timezone communication_style interests].freeze
       LABELS = {
         "name" => "Name",
