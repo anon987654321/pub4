@@ -77,6 +77,16 @@ class TestFixConvergence < Minitest::Test
   # spelling only long enough to rewrite it to /fix, so no separate scan
   # dispatcher, help topic, or pipeline stage can survive.
 
+  def test_convergence_discipline_reports_measured_improvement
+    discipline = Master::Fix::ConvergenceDiscipline.new(root: Dir.mktmpdir("discipline"))
+    discipline.begin_run([])
+    discipline.observe(pass: 1, findings: [1, 2], files: [], progressed: true)
+    discipline.observe(pass: 2, findings: [1], files: [], progressed: false)
+
+    assert discipline.improving?
+    assert_equal 0.5, discipline.quality_delta
+  end
+
   def test_unmeasured_proof_baseline_is_inconclusive_not_green
     pass = Master::CLI::Pipeline::Pass.allocate
     after = Master::CLI::Pipeline::Proof::Reading.new(passed: 1, total: 1, failing: [], finished: 1)
