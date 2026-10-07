@@ -3,6 +3,10 @@
 require_relative "test_helper"
 
 class TestCliFaceDispatch < Minitest::Test
+  def test_master_boot_loads_the_master_operator_mode
+    assert defined?(Master::Operator::Mode), "interactive fold routing needs Master::Operator::Mode"
+  end
+
   def test_fix_registry_loads_the_foreign_gate_chain_before_dispatch
     require_relative "../lib/cli/command_registry/review"
 
