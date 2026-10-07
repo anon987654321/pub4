@@ -206,6 +206,20 @@ class CritiqueImplementationTest < Minitest::Test
     refute File.exist?(File.join(ROOT, "brgen/app/javascript/radio_visualizers.js"))
   end
 
+  def test_yep_search_is_the_shared_rails_search_default
+    shared_stack = read("shared/app/assets/stylesheets/_stack.scss")
+    brgen_stack = read("shared/app/assets/stylesheets/_stack_brgen.scss")
+    amber = read("amber/app/assets/stylesheets/application.scss")
+    bsdports = read("bsdports/app/assets/stylesheets/application.scss")
+    brgen = read("brgen/app/assets/stylesheets/application.scss")
+
+    assert_includes shared_stack, '@forward "search_yep";'
+    assert_includes brgen_stack, '@forward "search_yep";'
+    assert_includes amber, '@use "stack" as *;'
+    assert_includes bsdports, '@use "stack" as *;'
+    assert_includes brgen, '@use "stack_brgen" as *;'
+  end
+
   def test_amber_looks_use_one_3d_mannequin_and_wrapped_photos
     looks = read("amber/app/views/home/_looks.html.erb")
     mannequin = read("amber/app/javascript/controllers/mannequin_3d_controller.js")
