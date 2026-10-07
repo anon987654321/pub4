@@ -2,6 +2,11 @@
 ## Completed in the 2026-10-07 organism/voice/Rails convergence pass
 
 ### Simulated /fix — 2026-10-07
+- Deep manual RAILS pass (source-level, no sandbox runtime): current deterministic hits were rechecked against `MASTER/laws.yml` before mutation. Safe nullish-default cases, terminal update branches, excessive stylesheet blank runs, offline same-origin URL handling, and offline queue growth were corrected; value-selection branches were deliberately left alone where the guard law did not actually apply.
+- `GUARD_CLAUSE` was narrowed to terminal two-way branches so helpers that merely select a value are no longer reported as guard-clause repairs. Its fixtures now prove both a real terminal branch and a non-terminal value selector.
+- `SelfFindings.report` now treats stale recorded members as inconclusive rather than green. The live `main` tree contains 24 stale law members and 24 stale registry members in the recorded snapshot, so the next real census must refresh attribution before that ratchet can honestly claim a current baseline.
+- The recorded RAILS self-findings snapshot contains deleted `RAILS/brgen/public/dilla/dilla.html` members; those are ledger ghosts, not current files, and were not fabricated into repairs.
+
 - Deep /fix hardening: explicit manual /fix now promotes scanner semantics from deterministic clean-file sampling to full semantic coverage, while background runs retain the cheaper sample; coverage reporting reads the scanner's actual mode rather than an environment heuristic.
 - Fix input coverage now aligns with scanner refusal limits, including the 10,000-line boundary; an unreadable file encountered during repair is a validation failure, never an empty finding set.
 - Convergence progress now records post-observation mutations from LLM, visual, opportunity and council-improvement stages, so adaptive pass extension cannot stop merely because the last observation happened before the model-driven repair.
