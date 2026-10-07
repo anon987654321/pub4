@@ -293,7 +293,7 @@
   main#main-content :is(input, select, textarea):focus-visible { border-color: var(--accent); outline: var(--focus-ring); outline-offset: 2px; }
   .feed-post, .feed-card, .post-reading, .comment_item, .newsletter-cta { min-inline-size: 0; overflow-wrap: anywhere; }
   .feed-post :is(img, video), .feed-card :is(img, video), .post-reading :is(img, video) { display: block; max-inline-size: 100%; block-size: auto; }
-  .feed-post-prose, .feed-post-body, .post-reading-body-preview { max-inline-size: 66ch; line-height: 1.55; }
+  .feed-post-prose, .feed-post-body, .post-reading-body-preview { max-inline-size: 66ch; line-height: var(--leading-normal); }
   .feed-post-meta, .feed-card-meta { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-1) var(--space-2); font-variant-numeric: tabular-nums; }
   .feed-post-actions, .feed-card-actions, .post-show-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); }
   :is(.feed-action, .feed-post-actions a, .feed-post-actions button) { min-inline-size: var(--tap-min); min-block-size: var(--tap-min); display: inline-flex; align-items: center; justify-content: center; }
