@@ -19,13 +19,13 @@
           direct_upload: true, required: true %>
   </p>
 
-  <p>
+  <div class="field">
     <%= f.label :caption, t("stories.caption") %>
     <div data-controller="character-counter" data-character-counter-countdown-value="true">
       <%= f.text_field :caption, maxlength: 280, data: { character_counter_target: "input" } %>
       <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
     </div>
-  </p>
+  </div>
 
   <%# The position comes from the one the app already has — locations#update
       stores it coarsened to a ~1 km grid — rather than asking the browser again
