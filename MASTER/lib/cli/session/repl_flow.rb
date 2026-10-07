@@ -115,8 +115,38 @@ module Master
         when "/undo" then run_undo
         when "/clear" then run_input("/clear")
         when "/face" then run_face
-        else :unhandled
+        else dispatch_registered_slash_command(stripped)
         end
+      end
+
+      # Slash commands are already a closed, tested registry. Sending a known
+      # slash command through the LLM makes deterministic commands probabilistic:
+      # /play can become a model turn, return nil after cancellation, or revive
+      # stale natural-language media behavior. Direct registered dispatch keeps
+      # the CLI faithful to its command surface.
+      def dispatch_registered_slash_command(stripped)
+        match = stripped.match(%r{\A/(?<name>[a-z][a-z0-9_-]*)(?:\s+(?<args>.*))?\z}i)
+        return :unhandled unless match
+
+        name = match[:name].downcase
+        command = @container.fetch(:commands, {})[name]
+        return :unhandled unless command
+
+        result = command.call(args: match[:args].to_s)
+        text = if result.is_a?(Master::Result)
+                 @last_ok = result.ok?
+                 result.ok? ? result.value!.to_s : result.message.to_s
+               else
+                 @last_ok = true
+                 result.to_s
+               end
+        puts @refs.renderer.render(text, mode: @last_ok ? :dim : :error) unless text.empty?
+        result
+      rescue StandardError => e
+        @last_ok = false
+        text = "cmd0: /#{name} failed — #{e.class}: #{e.message}"
+        puts @refs.renderer.render(text, mode: :error)
+        nil
       end
 
       def run_face
