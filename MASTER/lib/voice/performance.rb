@@ -13,6 +13,8 @@ module Master
     module Performance
       MAX_RATE_DELTA = 3
       MAX_PITCH_DELTA_HZ = 8
+      MAX_RATE_STEP = 2
+      MAX_PITCH_STEP_HZ = 5
       MIN_RATE = -12
       MAX_RATE = 10
       MIN_PITCH_HZ = -24
@@ -27,7 +29,7 @@ module Master
         phrases = text.to_s.split(/(?<=[.!?])\s+/).map(&:strip).reject(&:empty?)
         phrases = [text.to_s.strip] if phrases.empty?
 
-        phrases.each_with_index.map do |phrase, index|
+        raw = phrases.each_with_index.map do |phrase, index|
           role = sentence_role(phrase, index, phrases.length)
           seed = Digest::SHA256.hexdigest(phrase)[0, 4].to_i(16)
           variation = ((seed % 11) - 5)
@@ -45,6 +47,16 @@ module Master
             style: style.to_sym,
           }
         end
+
+        raw.each_with_index.map do |part, index|
+          previous = raw[index - 1]
+          next part unless previous
+
+          part.merge(
+            rate_delta: smooth_step(part[:rate_delta], previous[:rate_delta], MAX_RATE_STEP),
+            pitch_delta_hz: smooth_step(part[:pitch_delta_hz], previous[:pitch_delta_hz], MAX_PITCH_STEP_HZ),
+          )
+        end
       end
 
       def apply(base_rate:, base_pitch:, text:, emotion: {}, style: :normal)
@@ -58,6 +70,12 @@ module Master
             pitch: format("%+dHz", (base_pitch_value + part[:pitch_delta_hz]).clamp(MIN_PITCH_HZ, MAX_PITCH_HZ)),
           }
         end
+      end
+
+      def smooth_step(value, previous, limit)
+        low = previous - limit
+        high = previous + limit
+        value.clamp(low, high)
       end
 
       def sentence_role(text, index, total)
