@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "fileutils"
+require "open3"
 require "socket"
 require "yaml"
 
@@ -15,6 +16,8 @@ module RadioVideo
   HEIGHT = 1280
   FPS = 30
   DEFAULT_FULL_SOURCE_WAIT_TIMEOUT = 1_800
+  DEFAULT_PROCESS_TIMEOUT = 1_800
+  PROCESS_GRACE_SECONDS = 2.0
 
   module_function
 
@@ -63,7 +66,7 @@ module RadioVideo
       wait_timeout = if seconds.positive?
                        [seconds + 45.0, 90.0].max
                      else
-                       Integer(ENV.fetch("DILLA_VIDEO_WAIT_TIMEOUT", DEFAULT_FULL_SOURCE_WAIT_TIMEOUT))
+                       positive_timeout(ENV.fetch("DILLA_VIDEO_WAIT_TIMEOUT", DEFAULT_FULL_SOURCE_WAIT_TIMEOUT))
                      end
       abort "video: browser did not produce a capture within #{wait_timeout}s" unless server.wait(timeout: wait_timeout)
       terminate(pid)
@@ -107,7 +110,7 @@ module RadioVideo
       "-profile:v", "high", "-pix_fmt", "yuv420p", "-crf", "22",
       "-c:a", "copy", "-movflags", "+faststart", partial
     ]
-    system(*args) or abort "video: Postpro video grade #{name.inspect} failed"
+    run_bounded!(args, timeout: process_timeout, label: "video: Postpro video grade #{name.inspect}")
     FileUtils.mv(partial, output)
     warn "video0: postpro=#{name} filters=#{filters.length}"
     output
@@ -179,7 +182,47 @@ module RadioVideo
       "-movflags", "+faststart",
       output
     ])
-    system(*args) or abort "video: ffmpeg could not write #{output}"
+    run_bounded!(args, timeout: process_timeout, label: "video: ffmpeg could not write #{output}")
+  end
+
+  def process_timeout
+    positive_timeout(ENV.fetch("DILLA_VIDEO_PROCESS_TIMEOUT", DEFAULT_PROCESS_TIMEOUT))
+  end
+
+  def positive_timeout(raw)
+    value = Integer(raw, exception: false)
+    abort "video: timeout must be a positive integer" unless value && value.positive?
+    value
+  end
+
+  def run_bounded!(argv, timeout:, label:)
+    Open3.popen3(*argv, pgroup: true, out: File::NULL) do |stdin, _stdout, stderr, wait_thr|
+      stdin.close
+      stderr_reader = Thread.new { stderr.read.to_s }
+      deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + timeout.to_f
+      until !wait_thr.alive?
+        if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
+          terminate(wait_thr.pid)
+          stderr_reader.join(PROCESS_GRACE_SECONDS)
+          stderr_output = stderr_reader.value.to_s
+          raise "#{label} timed out after #{timeout}s#{error_suffix(stderr_output)}"
+        end
+        sleep 0.05
+      end
+
+      status = wait_thr.value
+      stderr_output = stderr_reader.value
+      raise "#{label}#{error_suffix(stderr_output)}" unless status.success?
+      true
+    ensure
+      stderr_reader&.kill
+      stderr_reader&.join
+    end
+  end
+
+  def error_suffix(stderr)
+    detail = stderr.to_s.lines.map(&:strip).reject(&:empty?).last(8).join(" | ")
+    detail.empty? ? "" : ": #{detail}"
   end
 
   def format_seconds(value)
