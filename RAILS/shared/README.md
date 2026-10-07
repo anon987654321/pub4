@@ -605,11 +605,20 @@ the second table before the first — until 2026-08-10 this section listed only
 the first, and so described brgen in a palette and radius scale it had left.
 
 **Declared (do not merge casually):**
-| Mixin | Radius (xs/sm/md/card·lg) | Notes |
-|---|---|---|
-| `dark-tokens` / `light-tokens` | 4/8/12/16 | Graphite/indigo, parameterised |
-| `luxury-*-tokens` | –/6/10/14 | Warm paper |
-| `brgen-old-*-tokens` | 4/8/12/**8** | True grayscale, no accent hue |
+**Declared dialect tokens**
+
+The shared token mixins are deliberately distinct. dark-tokens and light-tokens
+use 4/8/12/16 radii on the graphite/indigo palette; luxury-*-tokens use
+–/6/10/14 on warm paper; and brgen-old-*-tokens use 4/8/12/**8** on true
+grayscale with no accent hue.
+
+**Worn dialects**
+
+brgen and its verticals wear brgen_old; amber wears luxury; bsdports wears
+openbsd_wscons with all radii at **0**; the MASTER web face wears face_root with
+radius 0 outside this tree. Theme state remains one shared mechanism, with
+each app's application stylesheet supplying the selectors required by its dialect.
+
 
 **Worn at `:root` (verified against `builds/application.css`, 2026-08-10):**
 | App | Dialect | Dark → light mechanism |
