@@ -41,6 +41,8 @@ class TestSkills < Minitest::Test
 
       assert_equal %w[alpha beta], loaded.map { |skill| skill[:name] }
       assert_equal "alpha body", skills.body_for("alpha")
+      assert_match(/A[0-9a-f]{64}z/, skills.find("alpha")[:revision])
+      refute_equal skills.find("alpha")[:revision], skills.find("beta")[:revision]
     end
   end
 
