@@ -27,7 +27,7 @@ class RadioWhypImportTest < ActiveSupport::TestCase
       launcher = File.join(dir, "yt-dlp")
       File.write(
         launcher,
-        "#!/bin/sh\n"         "echo \\$! > #{pidfile.dump}\n"         "sleep 30 &\n"         "wait\n",
+        "#!/bin/sh\n"         "sleep 30 &\n"         "echo \\$! > #{pidfile.dump}\n"         "wait\n",
       )
       File.chmod(0o755, launcher)
 
