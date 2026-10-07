@@ -7,7 +7,7 @@ executable law (`MASTER/law/*.rb` and `MASTER/lib/review/scan/rules/*.rb`) >
 this file > the per-tree contract. Feature truth is `RAILS/apps.yml`.
 
 **MASTER is the primary configuration; this file is secondary.** Claude Code reads
-`CLAUDE.md` directly. `AGENTS.md`, `GEMINI.md`, `.cursorrules` and
+`CLAUDE.md` directly. `AGENTS.md`, `GEMINI.md`, `.cursorlaws` and
 `.github/copilot-instructions.md` are generated from one marked block in
 `MASTER/AGENTS.md` by `cd MASTER && rake docs:agent_contracts`, with
 `rake lint:agent_contracts` failing when one drifts. Whichever door an agent
@@ -193,7 +193,7 @@ goes under "Refused, and why" in `MASTER/AGENTS.md` or `OPENBSD/CLAUDE.md`.
 
 **Every README carries one voice.** It opens with a bold, visionary paragraph, then
 plain Strunk & White prose a regular person follows — no code blocks, no lists, no
-tables — and it passes `bin/operator lint` — the `README_PROSE` rule in `MASTER/lib/review/scan/rules/cosmetic_rules.rb` enforces it, because a convention is a rule, not a paragraph an agent skims. Redo a folder's
+tables — and it passes `bin/operator lint` — the `README_PROSE` rule in `MASTER/lib/review/scan/rules/cosmetic_laws.rb` enforces it, because a convention is a rule, not a paragraph an agent skims. Redo a folder's
 README before you push that folder, so the door to it is never stale. `MASTER/README.md`
 is the reference.
 
