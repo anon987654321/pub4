@@ -240,8 +240,8 @@ module Master
         def remember_auto(type, snippet)
           return if snippet.length < 3
 
-          count = @mutex.synchronize { @store.keys.count { |key| key.start_with?("auto/#{type}/") } }
-          key = "auto/#{type}/#{count + 1}"
+          digest = Digest::SHA256.hexdigest(snippet.downcase)[0, 12]
+          key = "auto/#{type}/#{digest}"
           if type == "feedback"
             frame = Master::Cognition::Intelligence.preference_frame(
               domain: "operator",
