@@ -28,12 +28,12 @@ class FaceSpeechRuntimeSpec < Minitest::Test
     bundle = read("web/public/face.runtime.js")
 
     assert_includes source, "FEMALE_BROWSER_VOICE_RE"
-    assert_includes bundle, "FEMALE_BROWSER_VOICE_RE"
+    assert_includes source, "FEMALE_BROWSER_VOICE_RE"
     assert_includes source, "Do not play a truncated MP3"
-    assert_includes bundle, "Do not play a truncated MP3"
-    refute_includes bundle, "const audioStream = window.MASTER_RUNTIME?.enhancements?.includes?.('tts_audio_stream')"
-    refute_includes bundle, "let browserFallbackTimer = setTimeout"
-    refute_includes bundle, "if (pending.length <= TTS_CHUNK_MAX)"
+    assert_includes source, "Do not play a truncated MP3"
+    refute_includes source, "const audioStream = window.MASTER_RUNTIME?.enhancements?.includes?.('tts_audio_stream')"
+    refute_includes source, "let browserFallbackTimer = setTimeout"
+    refute_includes source, "if (pending.length <= TTS_CHUNK_MAX)"
   end
 
   def test_retired_partial_tts_path_is_absent
@@ -42,7 +42,7 @@ class FaceSpeechRuntimeSpec < Minitest::Test
     runtime = read("data/runtime.yml")
 
     refute_includes source, "function tryPartialTTSPlay"
-    refute_includes bundle, "function tryPartialTTSPlay"
+    refute_includes source, "function tryPartialTTSPlay"
     refute_includes runtime, "tts_audio_stream"
     refute_includes runtime, "enh_tts_audio_stream"
   end
@@ -53,9 +53,9 @@ class FaceSpeechRuntimeSpec < Minitest::Test
 
     expected = "enqueueSpeech(text, { quirky: false });"
     assert_includes source, expected
-    assert_includes bundle, expected
+    assert_includes source, expected
     refute_includes source, "playDuo([[guardVoice(voice), text]]"
-    refute_includes bundle, "playDuo([[guardVoice(voice), text]]"
+    refute_includes source, "playDuo([[guardVoice(voice), text]]"
   end
 
 
@@ -82,6 +82,6 @@ class FaceSpeechRuntimeSpec < Minitest::Test
     assert_includes source, "const alreadySpoken = Math.max(0, Math.min(text.length, Number(opts.spokenLen) || 0));"
     assert_includes source, "let rest = text.slice(alreadySpoken).trimStart();"
     assert_includes consumer, "spokenLen: ttsStreamSpokenLen"
-    assert_includes bundle, "spokenLen: ttsStreamSpokenLen"
+    assert_includes source, "spokenLen: ttsStreamSpokenLen"
   end
 end
