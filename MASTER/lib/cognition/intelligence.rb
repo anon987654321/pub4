@@ -259,6 +259,17 @@ module Master
         }.freeze
       end
 
+      def preference_frame(domain:, preference:, evidence:, source:, avoid: nil, confidence: 0.5)
+        {
+          domain: domain.to_s,
+          preference: preference.to_s.strip,
+          avoid: avoid.to_s.strip,
+          evidence: evidence.to_s.strip,
+          source: source.to_s,
+          confidence: confidence.to_f.clamp(0.0, 1.0).round(4),
+        }.freeze
+      end
+
       def orientation_contract
         [
           "judgment: rank changes by causal leverage, not finding volume",
