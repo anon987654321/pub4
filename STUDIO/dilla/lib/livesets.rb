@@ -46,6 +46,7 @@ require "time"
 require "yaml"
 require "tmpdir"
 require_relative "process_spawn"
+require_relative "listen"
 require_relative "ableton_play"
 require_relative "composer_mind"
 require_relative "scene"
@@ -481,7 +482,7 @@ module Livesets
   # would run ahead of the record all night.
   def grid(bed, drag, want: 90, range: 76..104)
     want, range = [pinned_bpm, 40..200] if pinned_bpm
-    raw = `#{FFPROBE} -v quiet -show_entries format=duration -of csv=p=0 #{bed.shellescape}`.to_f
+    raw = FfmpegProbe.duration(bed).to_f
     # A bed with no length cannot be looped: -stream_loop -1 over an empty file
     # never reaches its end, and the pass hangs with nothing written.
     abort "bed #{bed} has no audio ffprobe can measure" if raw <= 0.2
