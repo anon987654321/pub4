@@ -348,11 +348,9 @@ const INK_ALPHA_MAX = 0.78
 const BUFFER_MAX_W = 960
 const BUFFER_MAX_H = 640
 
-// Phosphor decay. The previous frame is dimmed rather than cleared, so every
-// particle smears warm behind itself as it flies at the camera. This is the
-// glow, and it is a trail rather than a halo: an additive second pass over the
-// same geometry is what NO_WEBGL_GLOW_PASS forbids, and it is also what made
-// MASTER's face read as a lit wireframe.
+// Phosphor decay: dim the previous frame rather than clearing it, so particles
+// leave a trail as they approach. The trail stays in the same pass; no second
+// glow layer is introduced.
 // Postures. Named weight sets the engine eases toward, never snaps to — the
 // easing is the whole effect, because a creature that changed shape on a frame
 // boundary would read as a scene cut. Weights compose, so `dormant` still
