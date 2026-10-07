@@ -163,8 +163,7 @@ module Master
           {
             path: relative(expanded),
             bytes: bytes.bytesize,
-            lines: bytes.count("
-"),
+            lines: bytes.count("\n"),
             sha256: Digest::SHA256.hexdigest(bytes),
           }
         rescue StandardError => e
