@@ -396,8 +396,11 @@
     const morphology = SPATIAL.morphology || {};
     const cranialScale = finite(morphology.cranium_scale, 1.12);
     const cranialWidth = finite(morphology.cranial_width, 1.03);
+    const upperFaceScale = finite(morphology.upper_face_scale, 0.96);
     const lowerFaceScale = finite(morphology.lower_face_scale, 0.84);
+    const facialVerticalization = finite(morphology.facial_verticalization, 1.02);
     const facialProjection = finite(morphology.facial_projection, 0.88);
+
     const audioEnergy = Math.max(0, Math.min(1, (audio.rms * 0.45) + (audio.mid * 0.35) + (audio.high * 0.20)));
     const audioPulse = Math.max(audio.onset, audio.bass * 0.65);
     const fracture = finite(topologyProfile.fracture, 0);
@@ -414,8 +417,8 @@
     world.rotation.x += ((pointerY * 0.028) + tiltX * (geometry.fracture + fracture) - world.rotation.x) * 0.035;
 
     shell.scale.set(
-      geometry.shell_scale * cranialWidth * (1 + audioPulse * 0.018),
-      geometry.shell_scale * cranialScale * (1 + audioPulse * 0.010),
+      geometry.shell_scale * cranialWidth * upperFaceScale * (1 + audioPulse * 0.018),
+      geometry.shell_scale * cranialScale * facialVerticalization * (1 + audioPulse * 0.010),
       geometry.shell_scale * facialProjection * (1 + audioPulse * 0.012)
     );
     shellMaterial.uniforms.uTime.value = now;
