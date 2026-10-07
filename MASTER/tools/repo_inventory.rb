@@ -38,7 +38,7 @@ ALLOWED_ROOT_FILES = %w[
 GENERATED_ROOT_FILES = %w[
   snapshot_MASTER.md
   snapshot_RAILS.md
-  snapshot_OPENBSD.sh
+  snapshot_OPENBSD.md
   snapshot_STUDIO.md
 ].freeze
 ALLOWED_ROOT_DIRS = %w[
