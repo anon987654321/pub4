@@ -31,6 +31,8 @@ cognitive_spine:
     rule: Repair attention follows proven causal reach across consumers, boundaries and contracts rather than finding volume
   - id: finite_attention
     rule: Reasoning selects a bounded working set by leverage and preserves high-uncertainty candidates instead of expanding attention without limit
+  - id: decision_context_receipt
+    rule: Operator explanations may bind current commit, constitution digest, memory version and answering model without changing ordinary boot output
   - id: uncertainty_stays_visible
     rule: Uncertain, contradicted and obsolete claims require falsification or measurement before they become deletion or completion authority
   - id: panel_synthesis_is_not_majority_vote
