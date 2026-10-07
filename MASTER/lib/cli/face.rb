@@ -119,7 +119,7 @@ module Master
         # Only points nearer than this, after turning, are drawn.
         NEAR = -0.05
         # Preserve the silhouette; movement comes from depth and light, not holes.
-        SHIMMER = 0.16
+        SHIMMER = 0.055
         # The void between the lips at rest, and how far the loudest syllable
         # opens it, in the points' own units.
         VOID = 0.045
@@ -128,7 +128,7 @@ module Master
         SHUT = 0.5
         # Particles orbit in head units; the points span 0.62 of centre.
         SPECK_SPAN = 0.45
-        SPECK_LIGHT = 0.35
+        SPECK_LIGHT = 0.22
 
         def initialize(braille, look, t)
           @braille = braille
@@ -173,7 +173,7 @@ module Master
             depth = camera / (camera - rz) * reach
             px = mid_x + (((rx * cr) - (ry * sr)) * depth)
             py = mid_y - (((rx * sr) + (ry * cr)) * depth)
-            @braille.dot(px.floor, py.floor, illumination(lum, x, y, z, phase))
+            @braille.dot(px.floor, py.floor, illumination(lum, x, y, z, phase, zone))
           end
         end
 
@@ -199,7 +199,7 @@ module Master
           [x + (gaze_x * 0.3), y + (gaze_y * 0.3)]
         end
 
-        def illumination(lum, x, y, z, phase)
+        def illumination(lum, x, y, z, phase, zone = nil)
           nx = x / 0.62
           ny = y / 0.62
           nz = z / 0.72
@@ -215,6 +215,8 @@ module Master
           rim = edge * (0.18 + (0.08 * ((nx + 1.0) * 0.5))) * rim_phase
           depth = ((nz + 1.0) * 0.5).clamp(0.0, 1.0)
           grade = 0.68 + (0.18 * depth) + (0.08 * fill) + (0.20 * key) + rim
+          grade *= 0.62 if zone == Head::EYE_ZONE
+          grade += 0.24 if zone == Head::PUPIL_ZONE
           (lum * grade).clamp(0.0, 1.0)
         end
 
