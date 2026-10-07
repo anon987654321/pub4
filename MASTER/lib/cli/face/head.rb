@@ -63,7 +63,7 @@ module Master
         PUPIL_ZONE = 2
         MOUTH_ZONE = 3
         # How far from the mouth's centre the widest void can reach.
-        MOUTH_REACH = 0.14 * LOWER_FACE_SCALE
+        MOUTH_REACH = 0.14 * LOWER_FACE_SCALE * MORPHOLOGY.fetch("mouth_scale", 0.84).to_f
         STRIDE = 7
 
         attr_reader :count, :dots_wide, :dots_high, :scale, :centre, :eyes, :mouth
