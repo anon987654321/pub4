@@ -321,7 +321,8 @@ function offsetCouncilMouthPool(lane, delta = 0.18) {
   for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
     const b = i * K.FIELDS_PER_CELL;
     mouthPool.cells[b + K.FIELD.x] += shift * delta;
-    mouthPool.cells[b + K.FIELD.arousal] = Math.min(1, (mouthPool.cells[b + K.FIELD.arousal] || 0.4) + delta * 0.35);
+    const currentArousal = mouthPool.cells[b + K.FIELD.arousal];
+    mouthPool.cells[b + K.FIELD.arousal] = Math.min(1, (Number.isFinite(currentArousal) ? currentArousal : 0.4) + delta * 0.35);
   }
 }
 function refreshIdleTint() {
