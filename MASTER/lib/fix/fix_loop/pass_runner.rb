@@ -124,7 +124,6 @@ module Master
           @coverage_reporter&.call(target, pass)
           start_pass_transaction(files:, target:, pass:, transaction_id:)
           found, streamed = observe_pass(files, target, pass, deadline)
-          @discipline.observe(pass:, findings: found, files:, progressed: @pass_progress)
 
           visual, opportunities, found = merge_evidence_findings(target:, files:, pass:, found:)
           found += Wishlist.findings(wishlist_proposals, root: @root)
@@ -132,6 +131,11 @@ module Master
 
           found, shed = supplement_with_improvements(found, pass:, files:, deadline:, consecutive_clean:)
           return shed if shed
+
+          # Convergence must score the complete observed surface: lexical,
+          # structural, rendered, opportunity and wishlist evidence all belong
+          # to the same pass before adaptive stopping decides whether to continue.
+          @discipline.observe(pass:, findings: found, files:, progressed: @pass_progress)
           return clean_pass_result(files, pass_mtimes, pass, consecutive_clean) if found.empty?
           return plateau_result if stagnant?(history, seen_snapshots, recurring_violations, found, pass, progressed: @pass_progress)
 
