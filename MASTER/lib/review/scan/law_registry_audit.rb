@@ -59,7 +59,7 @@ module Master
         end
 
         # One statement of "something can run this rule", because three gate
-        # banners and lib/operator/rule_reach.rb all print a count of it and three
+        # banners and lib/operator/law_reach.rb all print a count of it and three
         # separate spellings of the question gave two answers.
         #
         # `folded_into` names the rule that reports for this one: the id survives
