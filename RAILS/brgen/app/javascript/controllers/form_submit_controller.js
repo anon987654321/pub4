@@ -95,7 +95,7 @@ export default class extends Controller {
     const blank = this.element.dataset.formSubmitBlank || "Write something first."
 
     if (title && !title.value.trim()) {
-      const filled = content && content.value.replace(/<[^>]+>/g, " ").trim()
+      const filled = content?.value.replace(/<[^>]+>/g, " ").trim()
       if (!filled) errors.push({ field: content || title, message: blank })
     }
 
