@@ -106,15 +106,21 @@ mem_hint() {
   fi
   # OpenBSD: free pages × page size is awkward; top -b one-liner when present
   if command -v top >/dev/null 2>&1; then
-    line=$(top -b 2>/dev/null | sed -n 's/^Memory: //p' | head -1)
+    line=$(top -b 2>/dev/null | while IFS= read -r top_line; do
+      case "$top_line" in
+        Memory:*) printf "%s\n" "${top_line#Memory: }"; break ;;
+      esac
+    done)
     if [ -n "$line" ]; then
-      printf 'info memory: %s\n' "$line"
-      case "$line" in
-        *Free:\ [0-9]M*|*Free:\ [1-9][0-9]M*)
+      printf "info memory: %s\n" "$line"
+      free_text=${line#*Free: }
+      free_m=${free_text%%M*}
+      case "$free_m" in
+        ''|*[!0-9]*) ;;
+        *)
           # crude: free under ~80M is tight for a third Rails app
-          free_m=$(printf '%s' "$line" | sed -n 's/.*Free: \([0-9]*\)M.*/\1/p')
-          if [ -n "$free_m" ] && [ "$free_m" -lt 80 ] 2>/dev/null; then
-            warn "low free RAM (~${free_m}M) — amber+brgen+master may OOM (see TODO.md multi_app_ram)"
+          if [ "$free_m" -lt 80 ]; then
+            warn "low free RAM (~$free_m M) — amber+brgen+master may OOM (see TODO.md multi_app_ram)"
           fi
           ;;
       esac
