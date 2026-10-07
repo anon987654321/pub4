@@ -94,7 +94,10 @@ module Master
           d(bits.join(", "))
         end
 
-        def phase_tinted(text, _phase)
+        def phase_tinted(text, phase)
+          return d(text) if Aesthetic.wscons?
+          @p.bold.public_send(PHASE_COLORS.fetch(phase.to_s, :red), text)
+        rescue StandardError
           d(text)
         end
 
