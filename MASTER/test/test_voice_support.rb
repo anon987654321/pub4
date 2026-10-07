@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
+require "stringio"
 
 # Enrich adds paralinguistic tags, Playback speaks a reply at a terminal and
 # nowhere else, and ProductionDna is the reference table Voice::Dilla reads.
@@ -391,6 +392,31 @@ end
     assert_raises(KeyError) { DNA.chords_for(:j_dilla, :not_an_album) }
     assert_kind_of Hash, DNA.preset(:dilla_drum_bus)
   end
+  def test_edge_stream_returns_structured_result_and_byte_count
+    audio = StringIO.new
+    sock = StringIO.new([5].pack("Q>") + "hello" + [0].pack("Q>"))
+    target = Master::Voice::SpeechWorker::StreamTarget.build(io: audio)
+
+    result = Master::Voice::Speech.send(:pump_socket_stream, sock, target)
+
+    assert_instance_of Master::Voice::SpeechWorker::StreamResult, result
+    assert result.ok
+    assert_equal 5, result.bytes
+    assert_equal "hello", audio.string
+  end
+
+  def test_edge_stream_marks_eof_after_partial_audio_without_losing_byte_count
+    audio = StringIO.new
+    sock = StringIO.new([5].pack("Q>") + "he")
+    target = Master::Voice::SpeechWorker::StreamTarget.build(io: audio)
+
+    result = Master::Voice::Speech.send(:pump_socket_stream, sock, target)
+
+    refute result.ok
+    assert_equal 2, result.bytes
+    assert_equal "he", audio.string
+  end
+
   def test_stream_failure_after_audio_never_resynthesizes_the_utterance
     fallback = false
     outcome = PB::StreamOutcome.new(ok: false, played_bytes: 1024)
