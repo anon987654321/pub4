@@ -438,6 +438,11 @@ module Master
           next if item["change"].to_s.strip.empty? || item["evidence"].to_s.strip.empty?
           next unless valid_anchor?(anchor)
 
+          reversibility = normalize_choice(item["reversibility"], %w[reversible guarded operator], "guarded")
+          implementation = normalize_choice(item["implementation"], %w[next_fix research operator], "operator")
+          implementation = "operator" if reversibility == "operator" && implementation == "next_fix"
+          implementation = "operator" unless anchor_file(anchor) || implementation != "next_fix"
+
           {
             "id" => id,
             "title" => item["title"].to_s.strip,
@@ -445,8 +450,8 @@ module Master
             "anchor" => anchor,
             "change" => item["change"].to_s.strip,
             "effort" => normalize_choice(item["effort"], %w[cheap medium deep], "medium"),
-            "reversibility" => normalize_choice(item["reversibility"], %w[reversible guarded operator], "guarded"),
-            "implementation" => normalize_choice(item["implementation"], %w[next_fix research operator], "operator"),
+            "reversibility" => reversibility,
+            "implementation" => implementation,
             "evidence" => item["evidence"].to_s.strip,
             "proof" => Array(item["proof"]).map { |value| value.to_s.strip }.reject(&:empty?).first(6),
           }
