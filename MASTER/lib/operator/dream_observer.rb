@@ -22,7 +22,7 @@ module Master
         add_sprawl(items, root)
         add_duplicates(items, root)
         add_dirty(items, root)
-        items = items.first(MAX_ITEMS)
+        items = items.sort_by { |item| [item[:priority].to_i, item[:kind].to_s] }.first(MAX_ITEMS)
         path = File.join(root, QUEUE)
         FileUtils.mkdir_p(File.dirname(path))
         File.write(path, { version: 1, generated_at: Time.now.utc.iso8601, items: items }.to_yaml)
