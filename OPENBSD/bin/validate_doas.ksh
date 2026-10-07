@@ -45,9 +45,14 @@ validate_doas_works() {
 ensure_doas_trailing_newline() {
   typeset f=$1
   [[ -f "$f" ]] || return 1
-  if [[ "$(tail -c1 "$f" | wc -c)" -eq 0 ]]; then
+  typeset size last
+  size=$(stat -f %z "$f") || return 1
+  if (( size == 0 )); then
     echo >> "$f"
+    return 0
   fi
+  last=$(dd if="$f" bs=1 skip=$((size - 1)) count=1 2>/dev/null | od -An -t x1)
+  [[ $last == *0a* ]] || echo >> "$f"
   return 0
 }
 
