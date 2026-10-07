@@ -108,6 +108,7 @@ class TestTranscendent < Minitest::Test
     refute Master::Voice::Transcendent.phrase_rendered?(cfg, flat)
     refute_includes Master::Voice::Transcendent.build_engine_chain(cfg, flat), "edge_melodic"
   end
+
   def test_phrase_rendering_survives_below_the_lyrical_threshold
     cfg = Master::Voice::Transcendent.load_config.merge("phrase_rhythm_enabled" => true)
     flat = { scores: { lyrical: 0.0 } }
