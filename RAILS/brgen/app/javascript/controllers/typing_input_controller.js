@@ -60,6 +60,6 @@ export default class extends Controller {
   }
 
   get csrf() {
-    return document.querySelector("meta[name=csrf-token]")?.content || ""
+    return document.querySelector("meta[name=csrf-token]")?.content ?? ""
   }
 }
