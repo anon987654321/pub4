@@ -270,3 +270,21 @@ and device dependent; the semantic contract remains singular.
 - browser transcript aligned with terminal scrollback
 - monospaced MASTER web typography
 - non-empty CLI results preserved when the presenter returns an empty string
+
+
+## Distant-human morphology
+
+The face uses `MASTER/data/laws.yml#tokens.face_interface.spatial.morphology` as its
+single morphology contract. This is deliberately speculative: current evidence supports
+long-run trends in Homo toward greater cranial globularity and reduced facial robusticity,
+and softer diets are associated with more gracile masticatory architecture, but science
+does not provide a reliable blueprint for what humans will look like thousands or
+millions of years from now. Spaceflight adds real craniofacial and ocular adaptation
+problems, not a settled future phenotype.
+
+The present design therefore projects those measured directions conservatively: a fuller
+neurocranial vault, smaller lower face, flatter brow, restrained orbit enlargement, finer
+facial projection, and smaller pupils. The interface layer remains subordinate to the
+human morphology so the face reads as a future person first and a computational being
+second.
+
