@@ -3514,6 +3514,9 @@ SHOWCASE_MODES = {
     # beat of 32nds, each hit a little harder than the one before.
     ROLL = [[0.0, 4], [0.5, 8]].freeze
     SILENT_BAND = 1e-6
+    HAT_FREQS = [5_400.0, 6_700.0, 8_100.0, 9_300.0].freeze
+    HAT_LEVEL = 0.012
+    HAT_DECAY = 0.026
 
     def initialize(config, beat:, rng:, preset: nil)
       @kick = config.fetch("kick")
@@ -3528,6 +3531,7 @@ SHOWCASE_MODES = {
       @preset = name
       @kicks = []
       @snares = []
+      @hats = []
       @low = 0.0
       @band = 0.0
     end
@@ -3537,6 +3541,7 @@ SHOWCASE_MODES = {
         @kicks.concat(grid_hits(start, length, @grid[:kicks], :kick_anchor, 1.0))
         @snares.concat(grid_hits(start, length, @grid[:snares], :snare, 1.0))
         @snares.concat(grid_hits(start, length, @grid[:ghosts], :ghost, 0.24))
+        @hats.concat(grid_hits(start, length, @grid[:hats], :hat, 1.0))
       else
         @kicks.concat(kick_hits(start, length))
         @snares.concat(snare_hits(start, length))
@@ -3553,7 +3558,8 @@ SHOWCASE_MODES = {
 
           at = start + (bar * 4.0 * @beat) + (step.to_i * step_seconds)
           next if at >= start + length
-          offset = dilla_timing_ms(role, bar, step.to_i, nil, @beat) / 1000.0
+          timing_role = role == :hat ? (step.to_i.even? ? :hat_down : :hat_up) : role
+          offset = dilla_timing_ms(timing_role, bar, step.to_i, nil, @beat) / 1000.0
           hits << [at + offset, gain]
         end
       end
@@ -3565,6 +3571,7 @@ SHOWCASE_MODES = {
       span = left.length.to_f / rate
       kicks = @kicks.select { |t, _| t < clock + span && t > clock - @kick["length_seconds"] }
       snares = @snares.select { |t, _| t < clock + span && t > clock - @snare["length_seconds"] }
+      hats = @hats.select { |t, gain| t < clock + span && t > clock - HAT_DECAY * 8.0 }
       kick = Array.new(left.length, 0.0)
       j = 0
       while j < left.length
@@ -3572,10 +3579,14 @@ SHOWCASE_MODES = {
         bus = kick_bus(kicks, now)
         clap!(left, right, j, now, snares)
         kick[j] = Math.tanh(bus * @kick["bus_drive"]) * @kick["bus_gain"] * @kick["level"]
+        hat = hats.sum { |t, gain| hat_sample(now - t, gain) }
+        left[j] += hat * 0.88
+        right[j] += hat
         j += 1
       end
       @kicks.reject! { |t, _| t < clock - @kick["length_seconds"] }
       @snares.reject! { |t, _| t < clock - @snare["length_seconds"] }
+      @hats.reject! { |t, _| t < clock - HAT_DECAY * 8.0 }
       kick
     end
 
@@ -3622,6 +3633,15 @@ SHOWCASE_MODES = {
         bus += kick_sample(tk) * gain
       end
       bus
+    end
+
+    def hat_sample(tk, gain)
+      return 0.0 if tk.negative? || tk > HAT_DECAY * 8.0
+
+      envelope = Math.exp(-tk / HAT_DECAY)
+      metallic = HAT_FREQS.sum { |frequency| Math.sin(2.0 * Math::PI * frequency * tk) } / HAT_FREQS.length
+      click = tk < 0.0012 ? (1.0 - (tk / 0.0012)) * 0.7 : 0.0
+      (metallic * 0.72 + click) * envelope * HAT_LEVEL * gain
     end
 
     def kick_sample(tk)
