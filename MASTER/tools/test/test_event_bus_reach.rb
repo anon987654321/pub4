@@ -25,6 +25,24 @@ class TestEventBusReach < Minitest::Test
     assert_equal [{ topic: "phantom:recovery", role: :publisher }], rows
   end
 
+  def test_javascript_expands_capturing_group_event_regexes
+    rows = Operator::EventBusReach.js_events('const match = /phantom:(detected|halt|recovery)/i;')
+    refs = rows.select { |row| row[:role] == :reference }.map { |row| row[:topic] }
+
+    assert_includes refs, "phantom:detected"
+    assert_includes refs, "phantom:halt"
+    assert_includes refs, "phantom:recovery"
+  end
+
+  def test_javascript_expands_repeated_prefix_bare_alternation
+    rows = Operator::EventBusReach.js_events('const match = /phantom:detected|phantom:halt|phantom:recovery/i;')
+    refs = rows.select { |row| row[:role] == :reference }.map { |row| row[:topic] }
+
+    assert_includes refs, "phantom:detected"
+    assert_includes refs, "phantom:halt"
+    assert_includes refs, "phantom:recovery"
+  end
+
   def test_javascript_expands_grouped_event_regexes
     rows = Operator::EventBusReach.js_events('const match = /phantom:(?:detected|halt|recovery)/i;')
 
