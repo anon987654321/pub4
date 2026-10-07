@@ -23,7 +23,7 @@ class ChatController < ApplicationController
     # problem, and every chat begins with this page.
     conversation_id
     @model = c&.[](:agent)&.model.to_s.split("/").last.presence || "booting"
-    @tier  = request.env["master.tier"].to_s
+    @tier = request.env["master.tier"].to_s
     @profile = face_profile
     @container_ready = !c.nil?
     render layout: false
@@ -168,8 +168,8 @@ class ChatController < ApplicationController
     return head(:forbidden) if visitor? && input.start_with?("/")
     return stream_smoke_reply(input) if smoke_chat_message?(input)
 
-    response.headers["Content-Type"]      = "text/event-stream"
-    response.headers["Cache-Control"]     = "no-cache"
+    response.headers["Content-Type"] = "text/event-stream"
+    response.headers["Cache-Control"] = "no-cache"
     response.headers["X-Accel-Buffering"] = "no"
 
     ChatService.new(
