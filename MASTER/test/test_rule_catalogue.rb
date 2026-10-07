@@ -154,7 +154,7 @@ class TestRuleCatalogue < Minitest::Test
   end
 
   # The live catalogue, as an invariant rather than as today's numbers: these
-  # three are at zero and zero is the floor recorded in rule_ratchets.hygiene.
+  # three are at zero and zero is the floor recorded in law_ratchets.hygiene.
   def test_the_live_catalogue_is_clean
     report = Operator::RuleHygiene.report
     assert_empty report[:id_case_collisions]
