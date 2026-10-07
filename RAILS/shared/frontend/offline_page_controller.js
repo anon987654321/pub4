@@ -66,7 +66,7 @@ export default class extends Controller {
 
     this.listTarget.innerHTML = items.map(item => `
       <li class="offline-page-item">
-        <a href="${this.escape(item.url)}">${this.escape(item.title)}</a>
+        <a href="${this.safeUrl(item.url)}">${this.escape(item.title)}</a>
         <div class="offline-page-meta">${this.escape(item.meta || "")}</div>
       </li>
     `).join("")
@@ -76,8 +76,17 @@ export default class extends Controller {
     this.listTarget.innerHTML = '<li class="offline-page-item">No cached items yet.</li>'
   }
 
+  safeUrl(value) {
+    try {
+      const url = new URL(String(value ?? ""), window.location.origin)
+      return url.origin === window.location.origin ? this.escape(url.href) : "#"
+    } catch (_) {
+      return "#"
+    }
+  }
+
   escape(value) {
-    return String(value || "")
+    return String(value ?? "")
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
