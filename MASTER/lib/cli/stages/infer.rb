@@ -186,13 +186,18 @@ module Master
           infer = data["infer"] || {}
           commands = infer["commands"] || {}
           patterns = commands.each_with_object({}) do |(name, spec), out|
-            regexes = (spec["patterns"] || []).map { |src| Regexp.new(src, Regexp::IGNORECASE | Regexp::EXTENDED) }
+            regexes = compile_patterns(Array(spec["patterns"]), command: name.to_s)
+            next if regexes.empty?
+
             out[name.to_s] = { regexes:, capture: spec["capture"].to_s }
           end
           negatives = Array(infer["negative"]).filter_map do |row|
             src = row["pattern"].to_s
             next if src.empty?
-            { pattern: Regexp.new(src, Regexp::IGNORECASE), blocks: Array(row["blocks"]).map(&:to_s) }
+
+            pattern = compile_pattern(src, kind: "negative", command: "negative")
+            next unless pattern
+            { pattern:, blocks: Array(row["blocks"]).map(&:to_s) }
           end
           destructive = Array(infer["destructive"]).map(&:to_s)
           destructive = INFER_DESTRUCTIVE if destructive.empty?
@@ -200,6 +205,33 @@ module Master
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "infer.load_patterns")
           [{}, [], INFER_DESTRUCTIVE]
+        end
+
+        def compile_patterns(sources, command:)
+          Array(sources).filter_map do |source|
+            compile_pattern(source.to_s, kind: "command", command:)
+          end
+        end
+
+        def compile_pattern(source, kind:, command:)
+          Regexp.new(source, Regexp::IGNORECASE | (kind == "command" ? Regexp::EXTENDED : 0))
+        rescue RegexpError => e
+          @bus&.publish(
+            "infer:pattern_invalid",
+            command:,
+            kind:,
+            pattern: source,
+            error: e.message,
+          )
+          Master::Ground::Swallow.log(
+            e,
+            context: "infer.pattern_invalid",
+            command:,
+            kind:,
+            pattern: source,
+            event_bus: @bus,
+          )
+          nil
         end
 
         def extract_args(cmd:, capture:, match:, msg:)
