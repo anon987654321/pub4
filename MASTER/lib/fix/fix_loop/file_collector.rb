@@ -22,13 +22,14 @@ module Master
         #
         # A file that must not be edited is not a file worth collecting for a
         # fix pass, so there is one list now and the scanner owns it.
-        attr_reader :skipped, :candidate_count
+        attr_reader :skipped, :candidate_count, :skip_reasons
 
         def initialize(root:, bus: nil)
           @root = root
           @bus = bus
           @skipped = 0
           @candidate_count = 0
+          @skip_reasons = {}
         end
 
         def collect(target)
@@ -88,6 +89,10 @@ module Master
                .select { |file| File.file?(file) && under_path?(file, target) }
         end
 
+        def path_policy_root
+          git_root || @root
+        end
+
         def git_root
           out, err, status = Master::Io::Exec.capture3("git", "-C", @root, "rev-parse", "--show-toplevel")
           return out.to_s.strip.then { |path| path.empty? ? nil : File.expand_path(path) } if status.success?
@@ -113,16 +118,36 @@ module Master
         # silently narrows its own input reads as "nothing left to do".
         def retain(files)
           @candidate_count = files.size
-          kept, dropped = files.partition { |file| !skipped?(file) }
+          @skip_reasons = Hash.new(0)
+          kept = []
+          dropped = []
+
+          files.each do |file|
+            reason = skip_reason(file)
+            if reason
+              dropped << file
+              @skip_reasons[reason.to_s] += 1
+            else
+              kept << file
+            end
+          end
+
           @skipped = dropped.size
-          @bus&.publish("fix_loop:skipped", count: dropped.size, sample: dropped.first(5).map { |f| relative(f) }) if dropped.any?
+          if dropped.any?
+            @bus&.publish(
+              "fix_loop:skipped",
+              count: dropped.size,
+              reasons: @skip_reasons.sort_by { |reason, count| [-count, reason] }.to_h,
+              sample: dropped.first(5).map { |f| relative(f) }
+            )
+          end
           kept.sort
         end
 
         def skipped?(path) = !skip_reason(path).nil?
 
         def skip_reason(path)
-          return :scanner_path_filter if Master::Review::Scan::Scanner.skip_path?(path, root: @root)
+          return :scanner_path_filter if Master::Review::Scan::Scanner.skip_path?(path, root: path_policy_root)
           return :symlink if File.symlink?(path)
           return :binary if binary?(path)
           return :too_large if File.size(path) > Master::Review::Scan::FileProcessor::MAX_FILE_BYTES
