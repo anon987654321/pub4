@@ -39,14 +39,14 @@
     <%= f.text_field :address %>
   </p>
 
-  <p>
+  <div class="field">
     <%= f.label :description, t("events.form.description") %>
     <div data-controller="character-counter" data-character-counter-countdown-value="true">
       <%= f.text_area :description, rows: 5, maxlength: 20_000,
             data: { character_counter_target: "input" } %>
       <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
     </div>
-  </p>
+  </div>
 
   <p>
     <%= f.label :capacity, t("events.form.capacity") %>
