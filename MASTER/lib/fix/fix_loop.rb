@@ -105,6 +105,19 @@ module Master
         return halted_result if halted? && !requested
 
         files = incremental ? @file_collector.collect_changed(target) : @file_collector.collect(target)
+        coverage = {
+          candidates: @file_collector.candidate_count,
+          collected: files.size,
+          skipped: @file_collector.skipped,
+        }
+        @bus&.publish("fix_loop:corpus", target:, **coverage)
+        Master::Trace::Dmesg.status(
+          "fix0",
+          "corpus candidates=#{coverage[:candidates]} collected=#{coverage[:collected]} skipped=#{coverage[:skipped]}",
+        )
+        if coverage[:candidates].positive? && files.empty?
+          return Result.err("fix_loop: corpus collected zero files from #{coverage[:candidates]} candidates", category: :validation)
+        end
         @convergence_discipline.begin_run(files)
         journal = @run_journal.start_or_resume(target:, files:, max_passes:, budget_seconds:)
         run_id = journal["id"]
@@ -193,7 +206,11 @@ module Master
           files: by_file.sort_by { |_, n| -n }.first(10).to_h,
           structure:,
           transformation_order: @transformation_plan.operations.map(&:name),
-          skipped: @file_collector.skipped,
+          coverage: {
+            candidates: @file_collector.candidate_count,
+            collected: files.size,
+            skipped: @file_collector.skipped,
+          },
         )
       end
 
