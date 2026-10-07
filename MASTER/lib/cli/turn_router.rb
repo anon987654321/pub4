@@ -258,9 +258,9 @@ module Master
         end
 
         Master::Trace::Dmesg.under("fold0") do
-          root, risk = assess_fold_risk(goal, container:)
+          root, risk, mode = assess_fold_risk(goal, container:)
           memory = prepare_fold_memory(goal:, container:, risk:)
-          fold_to_result(run_fold_pipeline(goal, root:, container:, on_turn:, memory:, risk:))
+          fold_to_result(run_fold_pipeline(goal, root:, container:, on_turn:, memory:, risk:, mode:))
         end
       rescue StandardError => e
         Master::Result.err("fold0: #{e.message}", category: :infrastructure)
@@ -268,13 +268,19 @@ module Master
 
       def assess_fold_risk(goal, container:)
         root = container.fetch(:root, Dir.pwd)
-        assessment = FoldRisk.assess(goal, root:)
-        risk = assessment[:risk]
-        container[:bus]&.publish("fold:risk", risk:, intent: assessment[:intent])
-        [root, risk]
+        assessment = Master::Operator::Mode.assess(goal, root:)
+        container[:bus]&.publish(
+          "fold:risk",
+          risk: assessment[:risk],
+          intent: assessment[:intent],
+          mode: assessment[:mode],
+          model_tier: assessment[:model_tier],
+          council_required: assessment[:council_required],
+        )
+        [root, assessment[:risk], assessment[:mode]]
       end
 
-      def run_fold_pipeline(goal, root:, container:, on_turn:, memory:, risk:)
+      def run_fold_pipeline(goal, root:, container:, on_turn:, memory:, risk:, mode:)
         CoreBridge.run(
           goal,
           root:,
@@ -284,6 +290,7 @@ module Master
           memory:,
           container:,
           risk:,
+          mode:,
         )
       end
 
