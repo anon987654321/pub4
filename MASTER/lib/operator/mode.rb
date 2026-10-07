@@ -28,7 +28,7 @@ module Master
       end
 
       def self.spec(value)
-        SPECS.fetch(for(value))
+        SPECS.fetch(self.for(value))
       end
 
       def self.capabilities(value)
@@ -37,7 +37,7 @@ module Master
 
       def self.assess(goal, root: Master::ROOT)
         assessment = Master::CLI::FoldRisk.assess(goal, root:)
-        mode = for(assessment[:risk], intent: assessment[:intent])
+        mode = self.for(assessment[:risk], intent: assessment[:intent])
         spec = SPECS.fetch(mode)
         {
           mode: mode,
@@ -50,7 +50,7 @@ module Master
       end
 
       def self.summary(value)
-        key = for(value)
+        key = self.for(value)
         spec = SPECS.fetch(key)
         key.to_s + " risk=" + spec[:risk].to_s + " model=" + spec[:model_tier].to_s +
           " council=" + spec[:council].to_s + " evidence=" + spec[:evidence].to_s
