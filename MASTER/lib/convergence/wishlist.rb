@@ -11,7 +11,7 @@ module Master
       module_function
 
       def config(root: ROOT)
-        YAML.safe_load_file(File.join(root, "data", "convergence.yml"), aliases: false) || {}
+        YAML.safe_load_file(File.join(root, "convergence.yml"), aliases: false) || {}
       end
 
       def items(root: ROOT)
