@@ -203,8 +203,11 @@ class TestVoiceSupport < Minitest::Test
 
     assert terminated
     assert_equal 8, PB.instance_variable_get(:@generation)
-    assert_equal [["new answer", "new answer", true, anything, anything, nil, nil, 8]],
-                 queued.map { |job| job[0..2] + [job[7]] }.map { |job| [job[0], job[1], job[2], job[7]] }.map { |row| row }
+    assert_equal 1, queued.size
+    assert_equal "new answer", queued.first[0]
+    assert_equal "new answer", queued.first[1]
+    assert_equal true, queued.first[2]
+    assert_equal 8, queued.first[7]
   ensure
     PB.instance_variable_set(:@queue, nil)
     PB.instance_variable_set(:@pending, nil)
