@@ -78,6 +78,12 @@ module Master
         head = @git.head
         changed = false
         rows = ledger["proposals"].filter_map do |proposal|
+          if proposal["status"] == "claimed"
+            proposal["status"] = "queued"
+            proposal.delete("claimed_at")
+            proposal.delete("claimed_run")
+            changed = true
+          end
           next unless proposal["status"] == "queued"
           next unless AUTO_IMPLEMENTATIONS.include?(proposal["implementation"])
 
