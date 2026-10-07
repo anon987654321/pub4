@@ -257,16 +257,23 @@ when "snapshot"
   # Lives in MASTER/tools so it is one implementation, reachable from here.
   exec(RbConfig.ruby, File.join(ROOT, "MASTER", "tools", "snapshot.rb"), *ARGV)
 when "wishlist"
-  path = File.join(ROOT, "MASTER", "runtime", "wishlist.md")
+  # Wishlist state is machine-owned JSON under .master, never another markdown
+  # backlog. Display the same queue /fix reads, so the operator and fixer cannot
+  # diverge about what remains claimable.
+  require "fix/wishlist"
+  full = !ARGV.delete("--all").nil?
+  path = File.join(ROOT, Master::Fix::Wishlist::LEDGER_PATH)
   unless File.file?(path)
     Master::Trace::Dmesg.status("wishlist0", "empty, a successful /fix run will draft the next queue")
     exit 0
   end
-  body = File.read(path, encoding: "UTF-8")
-  full = !ARGV.delete("--all").nil?
-  lines = body.lines
-  Master::Trace::Dmesg::Report.print("wishlist", full ? body : lines.first(60).join)
-  Master::Trace::Dmesg.status("wishlist0", "truncated, use --all") unless full || lines.size <= 60
+
+  if full
+    Master::Trace::Dmesg::Report.print("wishlist", File.read(path, encoding: "UTF-8"))
+  else
+    context = Master::Fix::Wishlist.pending_context(ROOT, target: ROOT, limit: Master::Fix::Wishlist::BATCH_SIZE)
+    Master::Trace::Dmesg::Report.print("wishlist", context || "no claimable next_fix proposals")
+  end
 when "event-bus"
   exec(RbConfig.ruby, File.join(ROOT, "MASTER", "tools", "event_bus_reach.rb"), *ARGV)
 when "post-pull"
