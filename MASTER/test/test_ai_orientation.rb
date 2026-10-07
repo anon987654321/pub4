@@ -17,7 +17,7 @@ class TestAiOrientation < Minitest::Test
     FileUtils.mkdir_p(File.join(@root, "RAILS"))
     FileUtils.mkdir_p(File.join(@root, "OPENBSD", "data"))
     File.write(File.join(@root, "CLAUDE.md"), "authority order\n")
-    File.write(File.join(@root, "TREE.md"), "TREE\n")
+    File.write(File.join(@root, "ARCHITECTURE.md"), "ARCHITECTURE\n")
     File.write(File.join(@root, "TODO.md"), "TODO\n")
     File.write(File.join(@master, "lib", "master.rb"), "module Master\nend\n")
     File.write(File.join(@master, "runtime", "active_plan.md"), "repair boot\nverify again\n")
@@ -69,6 +69,7 @@ class TestAiOrientation < Minitest::Test
     text = Master::AI::Orientation.render(root: @master, target: File.join(@master, "lib"))
 
     assert_includes text, "MASTER orientation v3"
+    assert_includes text, "docs: CLAUDE.md, ARCHITECTURE.md, TODO.md"
     assert_includes text, "target: MASTER/lib"
     assert_includes text, "active plan: repair boot verify again"
     assert_includes text, "pending wishes: 1. Better boot receipt"
@@ -87,7 +88,7 @@ class TestAiOrientation < Minitest::Test
     assert_includes text, "deploy_identity=OPENBSD/deploy_inventory.json"
     assert_includes text, "ai.brgen.no:53187"
     assert_includes text, "edge=pf→relayd→loopback"
-    assert_includes text, "design=RAILS/shared/README.md"
+    assert_includes text, "design=MASTER/data/laws.yml"
     assert_includes text, "sandbox_model=MASTER/lib/ground/pledge.rb"
     assert_includes text, "lenses: authority, topology, runtime, privilege, security, design, lifecycle, resources, recovery, observability, provenance, seams"
     assert_includes text, "evidence_ladder: source authority → executable proof → live evidence"
