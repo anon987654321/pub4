@@ -2,6 +2,7 @@
 
 require "digest"
 require "json"
+require_relative "../../cognition/intelligence"
 
 module Master
   module Ground
