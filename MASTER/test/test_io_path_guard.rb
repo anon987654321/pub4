@@ -68,6 +68,16 @@ class PathGuardEscapeTest < Minitest::Test
     refute File.exist?(File.join(@outside, "planted.txt"))
   end
 
+  def test_symlink_to_a_credential_file_inside_the_root_is_refused
+    secret = File.join(@root, "credentials.yml")
+    File.write(secret, "SECRET=hunter2\n")
+    File.symlink(secret, File.join(@root, "credential-link.yml"))
+
+    result = read_file.call(path: "credential-link.yml")
+    refute result.ok?
+    refute_includes result.message.to_s, "hunter2"
+  end
+
   def test_credential_files_are_refused_on_read
     result = read_file.call(path: ".env")
     refute result.ok?
