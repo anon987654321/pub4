@@ -10,8 +10,8 @@ class TestFixLoopObservability < Minitest::Test
     end
   end
 
-  Collector = Struct.new(:candidate_count, :skipped) do
-    def collect(_target) = []
+  Collector = Struct.new(:candidate_count, :skipped, :files) do
+    def collect(_target) = files
   end
 
   Discipline = Struct.new(:error) do
@@ -25,7 +25,7 @@ class TestFixLoopObservability < Minitest::Test
     error = FloatDomainError.new("Infinity can't be coerced into Integer")
     loop = Master::Fix::FixLoop.allocate
     loop.instance_variable_set(:@bus, bus)
-    loop.instance_variable_set(:@file_collector, Collector.new(1, 0))
+    loop.instance_variable_set(:@file_collector, Collector.new(1, 0, [File.join(Master::ROOT, "data", "laws.yml")]))
     loop.instance_variable_set(:@convergence_discipline, Discipline.new(error))
     loop.instance_variable_set(:@run_journal, nil)
 
