@@ -41,11 +41,9 @@ class Communities::WikiController < ApplicationController
   def edit; end
 
   def update
-    if @page.revise!(body: page_params[:body], user: Current.user)
-      redirect_to community_wiki_path(@community, @page), notice: t("flash.wiki_updated")
-    else
-      render :edit, status: :unprocessable_entity
-    end
+    return render :edit, status: :unprocessable_entity unless @page.revise!(body: page_params[:body], user: Current.user)
+
+    redirect_to community_wiki_path(@community, @page), notice: t("flash.wiki_updated")
   rescue ActiveRecord::RecordInvalid
     render :edit, status: :unprocessable_entity
   end
