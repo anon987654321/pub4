@@ -21,17 +21,6 @@ module Master
         PROMPT_MAX_CHARS = Master::Face::Contract.prompt_max
         PROMPT_MEASURE_CH = Master::Face::Contract.prompt_measure
         ANSI_ESCAPE = /\e\[[0-9;?]*[ -\/]*[@-~]/
-        BOOT_FG = "\e[37m"
-        BOOT_RESET = "\e[0m"
-        # The prompt token alone carries the phase; the path and state stay quiet.
-        PHASE_COLORS = {
-          "discover" => :yellow,
-          "implement" => :cyan,
-          "audit" => :red,
-          "grind" => :magenta,
-          "polish" => :magenta,
-          "watch" => :blue,
-        }.freeze
         def splash(model)
           context = splash_context(model)
           text = if verbose_boot?
@@ -39,7 +28,6 @@ module Master
                             root_on_line(context)]
                    host_status = Master::Ground::HostBudget.status_line
                    lines << d(host_status) if host_status
-                   lines.concat(["", splash_ready_line(context)])
                    lines.join("\n")
                  else
                    compact_splash(context)
@@ -94,26 +82,11 @@ module Master
           d(bits.join(", "))
         end
 
-        def phase_tinted(text, phase)
-          return d(text) if Aesthetic.wscons?
-          @p.bold.public_send(PHASE_COLORS.fetch(phase.to_s, :red), text)
-        rescue StandardError
-          d(text)
-        end
-
-        def prompt_token
+        def phase_tinted(text, _phase)\n          d(text)\n        end\n\n        def prompt_token
           File.basename(ENV["SHELL"].to_s) == "zsh" ? "%" : "$"
         end
 
-        def phase_prompt(last_ok, phase)
-          return @p.red(prompt_token) unless last_ok
-          return d(prompt_token) if Aesthetic.wscons?
-
-          color = PHASE_COLORS.fetch(phase.to_s, :red)
-          @p.bold.public_send(color, prompt_token)
-        end
-
-        def token_label(tokens)
+        def phase_prompt(last_ok, _phase)\n          last_ok ? d(prompt_token) : d("!")\n        end\n\n        def token_label(tokens)
           return "0" unless tokens&.positive?
 
           value = tokens.to_i
@@ -126,17 +99,7 @@ module Master
 
         private
 
-        def boot_surface(text)
-          return text unless $stdout.tty?
-          return text if ENV["NO_COLOR"] || ENV["MASTER_BOOT_COLOR"] == "0"
-
-          lines = text.to_s.gsub(ANSI_ESCAPE, "").lines(chomp: true)
-          width = lines.map(&:length).max.to_i
-          body = lines.map { |line| line.ljust(width) }.join("\n")
-          "#{BOOT_FG}#{body}#{BOOT_RESET}"
-        end
-
-        # The prompt is one physical command line, not a dashboard: path, Git,
+        def boot_surface(text)\n          text.to_s.gsub(ANSI_ESCAPE, "")\n        end\n\n        # The prompt is one physical command line, not a dashboard: path, Git,
         # phase, cursor. Reline owns editing; never embed a second prompt line.
         def shell_prompt(phase, last_ok)
           git = git_prompt_text
@@ -280,10 +243,7 @@ module Master
           return "" unless state
 
           label = branch_status(**state)
-          return d(label) if Aesthetic.wscons?
-          return @p.red(label) if state[:dirty]
-
-          @p.cyan(label)
+          d(label)
         end
 
         def branch_status(branch:, ahead:, behind:, dirty:)
