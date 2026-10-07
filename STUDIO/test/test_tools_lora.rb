@@ -18,7 +18,7 @@ class TestLora < Minitest::Test
     tracked, status = Open3.capture2("git", "-C", ToolTest::ROOT, "ls-files", "--", "lora")
     skip "not a git checkout" unless status.success?
 
-    photos = tracked.lines.map(&:strip).grep(/\.(jpe?g|png|heic|webp)\z/i)
+    photos = tracked.lines.map(&:strip).grep(/\.(jpe?g|png|heic|webp|mp4|mov|webm)\z/i)
     assert_empty photos - PUBLISHED_PHOTOGRAPHS, "a photograph is committed under lora/ that nobody named"
     assert_empty Dir[File.join(LORA, "johann", "dataset", "*")], "johann has no consented dataset"
   end
