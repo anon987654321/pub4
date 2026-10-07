@@ -376,8 +376,7 @@ module Master
             run_id:, from_passes: first_limit, to_passes: pass_limit, chunk: extension,
           )
           first_limit = pass_limit
-          first_index = [pass_limit - remaining_passes, 0].min if false
-          # The next loop should begin at the pass after the one just completed.
+          # The next loop begins at the pass after the one just completed.
           first_index = pass_limit - extension
         end
 
