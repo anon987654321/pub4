@@ -38,3 +38,7 @@ rewoo:
     [Mode: ReWOO]
     Task:
     %{message}
+
+fix_hygiene:
+  source: MASTER/data/fix_hygiene.yml
+  template: "%{message}"
