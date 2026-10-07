@@ -8,17 +8,29 @@ class FixConvergenceWiringTest < Minitest::Test
     builder_source = File.read(File.expand_path("../lib/fix/fix_loop/pass_runner_builder.rb", __dir__))
     runner_source = File.read(File.expand_path("../lib/fix/fix_loop/pass_runner.rb", __dir__))
     evidence_source = File.read(File.expand_path("../lib/fix/fix_loop/pass_runner/evidence_stage.rb", __dir__))
+    llm_source = File.read(File.expand_path("../lib/fix/fix_loop/pass_runner/llm_stage.rb", __dir__))
+    wishlist_source = File.read(File.expand_path("../lib/fix/wishlist.rb", __dir__))
+    journal_source = File.read(File.expand_path("../lib/fix/run_journal.rb", __dir__))
     rule_source = File.read(File.expand_path("../lib/fix/law_loop.rb", __dir__))
 
     assert_includes loop_source, 'require_relative "visual_pass"'
     assert_includes loop_source, 'require_relative "opportunity_pass"'
     assert_includes builder_source, "visual_pass:"
     assert_includes builder_source, "opportunity_pass:"
+    assert_includes builder_source, "wishlist:"
 
     assert_includes evidence_source, "run_visual_pass"
     assert_includes evidence_source, "run_opportunity_pass"
     assert_includes evidence_source, "run_visual_stage"
     assert_includes evidence_source, "run_opportunity_stage"
+    assert_includes runner_source, "Wishlist.findings"
+    assert_includes llm_source, "run_wishlist_stage"
+    assert_includes llm_source, "Wishlist::RULE_ID"
+    assert_includes loop_source, "continue_with_wishlist"
+    assert_includes loop_source, "WISHLIST_MAX_ROUNDS"
+    assert_includes wishlist_source, 'LEDGER_PATH = ".master/fix_wishlist.json"'
+    refute_includes wishlist_source, "runtime/wishlist.md"
+    assert_includes journal_source, "def remaining_seconds(run_id)"
     assert_includes runner_source, "OpportunityPass::RULE_ID"
 
     assert_includes rule_source, "external_violations:"
