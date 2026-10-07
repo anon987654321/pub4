@@ -36,6 +36,8 @@ function partSources() {
     readFileSync(join(publicDir, "face.part5.txt"), "utf8"),
   ];
 }
+const faceSource = partSources().join("\n");
+
 
 test("face surface owns the full viewport", () => {
   const css = readFileSync(join(publicDir, "face.css"), "utf8");
@@ -178,7 +180,7 @@ test("live TTS does not delay short completed sentences", () => {
   assert.match(part1, /function pushLiveStreamTts/);
   assert.match(part1, /const chunk = m\[0\]\.trim\(\);/);
   assert.doesNotMatch(part1, /chunk\.length < TTS_MIN_CHUNK/);
-  assert.doesNotMatch(runtime, /chunk\.length < TTS_MIN_CHUNK/);
+  assert.doesNotMatch(faceSource, /chunk\.length < TTS_MIN_CHUNK/);
 });
 
 test("face_speech_runtime.js holds the TTS implementation", () => {
