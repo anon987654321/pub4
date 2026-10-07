@@ -36,6 +36,12 @@ module Master
           path = File.expand_path(text, @root)
           return path if governed_path?(path)
 
+          # CLI analysis targets such as `lib/io` are MASTER-relative when the
+          # caller is the repository root. Resolve that shorthand before
+          # declaring the target outside the four governed trees.
+          master_relative = File.expand_path(text, Master::ROOT)
+          return master_relative if File.file?(master_relative) || File.directory?(master_relative)
+
           raise ArgumentError, "target outside pub4 trees: #{raw.inspect}"
         end
 
