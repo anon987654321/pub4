@@ -126,6 +126,7 @@ module Master
           return :symlink if File.symlink?(path)
           return :binary if binary?(path)
           return :too_large if File.size(path) > Master::Review::Scan::FileProcessor::MAX_FILE_BYTES
+          return :too_many_lines if too_many_lines?(path)
           return :immutable if immutable?(path)
           return :rails_history if rails_history?(path)
 
@@ -159,6 +160,20 @@ module Master
 
         def relative(path)
           path.to_s.delete_prefix("#{@root}#{File::SEPARATOR}")
+        end
+
+        def too_many_lines?(path)
+          return false unless text_candidate?(path)
+          limit = Master::Review::Scan::FileProcessor::MAX_LINES
+          File.foreach(path, encoding: "UTF-8").with_index(1) { |_, line| return true if line > limit }
+          false
+        rescue StandardError
+          true
+        end
+
+        def text_candidate?(path)
+          language = Master.language_for(path)
+          !language.nil? && language != "binary"
         end
 
         def binary?(path)
