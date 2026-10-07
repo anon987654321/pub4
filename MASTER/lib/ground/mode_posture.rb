@@ -8,7 +8,7 @@ module Master
     # Session adherence posture restored from fossil master.yml modes.
     # Source of truth: data/limits.yml#session_modes + ENV MASTER_MODE.
     class ModePosture
-      include Master::Io::AtomicWrite
+      include ::Master::Io::AtomicWrite
       MODES = %w[loose balanced strict].freeze
       STATE_REL = File.join(".master", "mode").freeze
 
