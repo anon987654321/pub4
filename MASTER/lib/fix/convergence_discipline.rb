@@ -100,9 +100,10 @@ module Master
 
         initial = @history.first[:score]
         current = @history.last[:score]
-        return 0.0 if initial.zero?
+        return 0.0 unless finite_score?(initial) && finite_score?(current)
+        return 0.0 if initial.to_f.zero?
 
-        ((initial - current).to_f / initial).round(6)
+        ((initial.to_f - current.to_f) / initial.to_f).round(6)
       end
 
       def improving?
@@ -112,7 +113,7 @@ module Master
         return current[:progressed] == true if @history.size < 2
 
         before = @history[-2]
-        current[:score].to_i < before[:score].to_i || current[:progressed] == true
+        score_improved?(current[:score], before[:score]) || current[:progressed] == true
       end
 
       def note_progress!
@@ -317,12 +318,30 @@ module Master
       end
 
       def state_for(pass, score, snapshot)
+        safe_score =
+          if score.is_a?(Numeric) && score.respond_to?(:finite?) && !score.finite?
+            score
+          else
+            score.to_i
+          end
         {
           pass: pass.to_i,
-          score: score.to_i,
+          score: safe_score,
           snapshot_digest: digest(snapshot),
           captured_files: snapshot.size,
         }
+      end
+
+      def finite_score?(score)
+        score.is_a?(Numeric) && score.respond_to?(:finite?) && score.finite?
+      end
+
+      def score_improved?(current, before)
+        return current < before if current.is_a?(Numeric) && before.is_a?(Numeric) &&
+                                    (!current.respond_to?(:finite?) || current.finite?) &&
+                                    (!before.respond_to?(:finite?) || before.finite?)
+
+        current.to_f < before.to_f
       end
 
       def digest(rows)
