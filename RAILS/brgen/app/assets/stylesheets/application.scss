@@ -9201,7 +9201,6 @@ body.vertical-marketplace {
   /* The blue is the vertical accent, not bol's navy (operator, 2026-09-25). */
   --bol-blue: var(--accent);
   --bol-blue-dark: var(--vertical-marketplace-accent-hover);
-  --bol-blue-soft: #eef5ff;
   --bol-ink: #111111;
   --bol-muted: #666666;
   --bol-rule: #d9d9d9;
@@ -9211,8 +9210,6 @@ body.vertical-marketplace {
   --bol-header-height: 56px;
   --font-ad: var(--font);
   color-scheme: light;
-  background: var(--bol-page);
-  color: var(--bol-ink);
 }
 
 body.vertical-marketplace .app-shell {
@@ -10889,7 +10886,6 @@ form[data-publishing="true"] .post-progressive-nav {
 body.vertical-marketplace {
   --bol-mint: #e9f8f0;
   --bol-peach: #fff2e8;
-  --bol-page: #ffffff;
   --bol-ink: #20242a;
   --bol-muted: #667085;
   --bol-rule: #dfe5ec;
@@ -10900,9 +10896,9 @@ body.vertical-marketplace {
   --store-rule: #ccd4de;
   --store-hairline: #dfe5ec;
   --store-well: #f4f7fb;
-  --store-green: #0066d4;
+  --store-green: var(--accent);
   --store-red: #c82435;
-  --store-focus: #0066d4;
+  --store-focus: var(--accent);
   background: var(--bol-page);
   color: var(--bol-ink);
 }
@@ -10915,7 +10911,6 @@ body.vertical-marketplace #navBar.storefront-nav--bol {
 
 body.vertical-marketplace .storefront-utility--bol {
   min-height: 36px;
-  background: #fff;
   border-block-end: 1px solid var(--bol-rule);
 }
 
@@ -11077,7 +11072,6 @@ body.vertical-marketplace .store-buybox .btn-primary {
 
 @media (max-width: 767px) {
   body.vertical-marketplace #topHalf {
-    min-height: 56px;
   }
 
   body.vertical-marketplace #bottomHalf {
