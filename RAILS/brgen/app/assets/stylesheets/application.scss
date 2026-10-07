@@ -11394,5 +11394,5 @@ body:not([class*="vertical-"]) .chrome-corner .theme-toggle {
   }
 }
 
-@include endgame.brgen;
 @include endgame.brgen_precision;
+@include endgame.brgen;
