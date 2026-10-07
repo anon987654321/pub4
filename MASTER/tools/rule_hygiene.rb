@@ -218,7 +218,7 @@ module Operator
 
     def ceilings
       master_rules # boots the runtime, so Master.law resolves
-      Master.law("rule_ratchets", root: MASTER).fetch("hygiene")
+      Master.law("law_ratchets", root: MASTER).fetch("hygiene")
     end
 
     def report
