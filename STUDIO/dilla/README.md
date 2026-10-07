@@ -98,6 +98,18 @@ kick drops out for a bar or two at most before a return. Every note is an event
 before it sounds, and the swing, ratchets, stutters and reversals are transforms
 that `data/bed.yml` names under `composition`.
 
+The composition path is also a native MIDI transformation system. `lib/midi_effects.rb`
+turns musical events through bounded operators — scale constraint, ghosts, micro-shift,
+probability, velocity curves, ratchets, fragments, mirrors and octave blooms — with
+`data/midi_effects.yml` as the canonical chain vocabulary. `DILLA_MIDI_CHAIN=default|sparse|kinetic|alien`
+selects a chain while the render seed keeps its choices reproducible.
+
+The performance world lives in `lib/scene.rb`: scene, tension, density, contrast,
+material and a small vocabulary of world events travel together. The live architectural
+renderer consumes that state, so the same musical decision can become a note, a space,
+a material change or a visual interruption. The point is a record-length journey rather
+than a loop whose decorations merely change.
+
 `ruby dilla.rb catalogue` plays the older catalogue through one unchanged bed:
 the seven verified recordings and the twelve improvisations, voiced on one
 instrument each, voice-led, with the drums on top, a lead and a bass under it,
