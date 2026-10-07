@@ -1,6 +1,7 @@
 // Pixel Field topology registry. Names every renderable topology and the
 // canonical event bus. Source of truth: data/topologies.yml (SINGULARITY).
-// EVENT_CLASSIFIER and TOPOLOGIES below are currently duplicated from the yml.
+// Runtime data is authoritative; this file owns lookup behavior and fallback
+// mechanics, not a second copy of the canonical catalog.
 // Boot snapshot — /runtime/topologies merge is canonical after first fetch.
 // Renderers ask the registry which topology owns an event; visual_bridge.js
 // reflects topology changes to document.dataset.masterTopology.
@@ -8,45 +9,19 @@
 (() => {
   "use strict";
 
-  const CANONICAL_EVENTS = [
-    "master:emotion",
-    "master:clusters",
-    "master:topology",
-    "master:runtime",
-    "master:attention",
-    "master:pressure",
-    "master:tooling"
-  ];
+  const CANONICAL_EVENTS = [];
 
   const EVENT_CLASSIFIER = [];
 
   const TOPOLOGIES = Object.create(null);
   const FALLBACK_FACE = Object.freeze({
     id: "face",
-    label: "Cognition Mask",
-    purpose: "Unified semantic face projection",
-    renderer: "face_world.js",
-    palette: "operator",
-    zones: ["eyes", "mouth", "brows", "jaw", "crown", "attention_vector"]
+    renderer: "face_world.js"
   });
 
-  const PALETTES = {
-    operator: { bg: "#000000", fg: "#ffffff", accent: "#ff3344" },
-    review:   { bg: "#0a0a0a", fg: "#cccccc", accent: "#3366ff" },
-    visitor:  { bg: "#111111", fg: "#999999", accent: "#666666" }
-  };
-
-  const RUNTIME_MODES = {
-    operator: { palette: "operator", motion: 1.0, density: 1.0, topology_exposure: "full" },
-    review:   { palette: "review",   motion: 0.5, density: 0.8, topology_exposure: "high" },
-    visitor:  { palette: "visitor",  motion: 0.3, density: 0.4, topology_exposure: "low" }
-  };
-
-  const RESOLUTIONS = {
-    small:  { w: 320, h: 180 },
-    medium: { w: 480, h: 270 },
-    large:  { w: 640, h: 360 }
-  };
+  const PALETTES = Object.create(null);
+  const RUNTIME_MODES = Object.create(null);
+  const RESOLUTIONS = Object.create(null);
 
   function classifyEvent(name, payload) {
     const text = payload ? `${name} ${JSON.stringify(payload)}` : name;
@@ -66,15 +41,15 @@
   }
 
   function palette(name) {
-    return PALETTES[name] || PALETTES.operator;
+    return PALETTES[name] || {};
   }
 
   function runtimeMode(name) {
-    return RUNTIME_MODES[name] || RUNTIME_MODES.operator;
+    return RUNTIME_MODES[name] || {};
   }
 
   function resolution(name) {
-    return RESOLUTIONS[name] || RESOLUTIONS.medium;
+    return RESOLUTIONS[name] || {};
   }
 
   function mergeRemoteClassifier(rows) {
@@ -115,20 +90,10 @@
     if (!TOPOLOGIES.face) TOPOLOGIES.face = { ...FALLBACK_FACE };
   }
 
-  // /runtime/topologies is data/topologies.yml rendered verbatim —
-  // RuntimeController#topologies does `Master.load_yaml` and renders it with no
-  // transformation — so every key arrives in the YAML's own lower_snake_case.
-  // This read them in the JS convention for a constant: remote.TOPOLOGIES,
-  // remote.PALETTES, remote.CANONICAL_EVENTS, remote.RUNTIME_MODES,
-  // remote.RESOLUTIONS, remote.EVENT_CLASSIFIER. All six were undefined, so
-  // `|| {}` swallowed every one and the whole remote merge had never once
-  // changed a value since it was written.
-  //
-  // Fixed at the reader rather than by renaming the YAML: lower_snake_case is
-  // the data file's convention and SHOUTING is this file's convention for a
-  // frozen table. A reader that has to translate between two conventions is
-  // where the translation belongs.
-  function remoteKey(remote, name) {
+  // /runtime/topologies renders data/topologies.yml verbatim. Translate its
+  // lower_snake_case keys at this boundary; keep the values in the canonical
+  // data file so this browser module cannot drift into a second catalog.
+    function remoteKey(remote, name) {
     return remote[name.toLowerCase()] ?? remote[name];
   }
 
