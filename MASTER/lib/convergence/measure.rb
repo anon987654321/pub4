@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "time"
-require "open3"
+require_relative "../io/exec"
 
 module Master
   module Convergence
@@ -62,7 +62,7 @@ module Master
       end
 
       def git_head(root)
-        out, status = Open3.capture2("git", "-C", root, "rev-parse", "--short", "HEAD")
+        out, status = Master::Io::Exec.capture2("git", "-C", root, "rev-parse", "--short", "HEAD")
         status.success? ? out.strip : "unavailable"
       rescue StandardError
         "unavailable"
