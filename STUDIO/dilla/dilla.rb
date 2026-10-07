@@ -21394,16 +21394,14 @@ end
 # moves and every offset is returned exactly as it was computed.
 SHIFT_TIMING_GROUPS = { kick: %i[kick_anchor kick_sync], hat: %i[hat_down hat_up] }.freeze
 
-/*
- * The last inch of the pocket. MPC timing stays in whole 96-PPQ ticks; the
- * analogue layer does not. This is deliberately called "nano-feel" rather than
- * nanosecond timing: it is a bounded sub-millisecond drift applied after the
- * discrete MPC-style placement, standing for oscillator/tape/hand interaction.
- *
- * It is deterministic, phrase-shaped and role-specific. It must never become
- * another random-humanize knob: the point is a tiny changing relationship
- * between layers, not noise sprinkled over every event.
- */
+# The last inch of the pocket. MPC timing stays in whole 96-PPQ ticks; the
+# analogue layer does not. This is deliberately called "nano-feel" rather than
+# nanosecond timing: it is a bounded sub-millisecond drift applied after the
+# discrete MPC-style placement, standing for oscillator/tape/hand interaction.
+#
+# It is deterministic, phrase-shaped and role-specific. It must never become
+# another random-humanize knob: the point is a tiny changing relationship
+# between layers, not noise sprinkled over every event.
 NANO_TIMING_MS = {
   kick_anchor: 0.16, kick_sync: 0.22, kick: 0.20,
   snare: 0.42, snare_plain: 0.34, clap: 0.38, ghost: 0.34,
