@@ -461,18 +461,32 @@ module RadioVideo
             const a = bands()
             const t = performance.now() * 0.001
             const pulse = Math.min(1, a.flux * 1.4 + a.bass * 0.35)
+            const clamp01 = (value) => Math.max(0, Math.min(1, value))
+            const tension = clamp01(a.mid * 0.52 + a.high * 0.28 + a.flux * 0.42)
+            const release = 1 - tension
+            const parametricField = (x, z, phase) => {
+              const spine = Math.exp(-Math.abs(x) * 0.28)
+              const depth = Math.exp(-Math.abs(z + 7) * 0.035)
+              const wave = Math.sin(performance.now() * 0.00031 + z * 0.17 + x * 0.23 + phase)
+              return {
+                mass: clamp01(a.bass * 0.72 + spine * 0.18 + depth * 0.08),
+                span: clamp01(a.mid * 0.78 + (1 - spine) * 0.12),
+                porosity: clamp01(a.high * 0.72 + Math.max(0, wave) * 0.18),
+                fracture: clamp01(a.flux * 0.72 + Math.abs(wave) * 0.18)
+              }
+            }
 
-            camera.position.x = Math.sin(t * 0.075) * 2.8 + Math.sin(t * 0.019) * 1.1
-            camera.position.y = 4.2 + Math.sin(t * 0.11) * 0.7 + a.mid * 0.9
+            camera.position.x = Math.sin(t * 0.075) * (2.8 + tension * 2.4) + Math.sin(t * 0.019) * 1.1
+            camera.position.y = 4.2 + Math.sin(t * 0.11) * 0.7 + a.mid * 0.9 + release * 0.45
             camera.position.z = 18.0 - Math.min(5.5, audio.currentTime * 0.07) + Math.sin(t * 0.041) * 1.8
-            camera.lookAt(0, 3.0 + a.bass * 0.45, -6.0)
+            camera.lookAt(0, 3.0 + a.bass * 0.45 - release * 0.25, -6.0)
 
             rim.intensity = 1.6 + a.high * 4.5
             key.intensity = 1.35 + a.mid * 1.2
             ring.scale.setScalar(1.0 + pulse * 0.24)
             ring.material.opacity = 0.32 + pulse * 0.45
             core.rotation.z = t * 0.13
-            core.scale.y = 1.0 + a.bass * 0.28
+            core.scale.set(0.94 + release * 0.10, 1.0 + a.bass * 0.28 + tension * 0.26, 0.94 + a.high * 0.18)
             atrium.rotation.y = t * 0.045 + a.high * 0.08
             orbit.rotation.y = t * 0.012
             shardGroup.rotation.y = t * 0.018 + a.high * 0.12
@@ -498,16 +512,23 @@ module RadioVideo
 
             columns.forEach(({ mesh, side, index }) => {
               const local = Math.sin(t * 0.43 + index * 0.62 + side * 0.35)
-              const lift = 0.22 + a.mid * 0.75 + Math.max(0, local) * 0.18
-              mesh.scale.y = 1.0 + lift
-              mesh.position.y = 3.0 + (mesh.scale.y - 1) * 3.0
-              mesh.material.emissiveIntensity = 0.12 + a.high * 0.7
+              const f = parametricField(mesh.position.x, mesh.position.z, index * 0.13)
+              const height = 0.82 + f.mass * 0.52 + f.span * 0.24 + Math.max(0, local) * 0.12
+              const taper = 0.84 + f.porosity * 0.2
+              mesh.scale.set(taper, height, taper)
+              mesh.position.y = 3.0 + (height - 1) * 2.65
+              mesh.rotation.z = side * local * f.fracture * 0.025
+              mesh.rotation.x = Math.sin(t * 0.11 + index) * f.fracture * 0.018
+              mesh.material.emissiveIntensity = 0.12 + a.high * 0.7 + f.fracture * 0.35
             })
 
             vaults.forEach((line, index) => {
               const s = 0.7 + 0.15 * Math.sin(t * 0.35 + index) + a.high * 0.28
-              line.scale.y = s
-              line.material.opacity = 0.18 + a.mid * 0.28
+              const compression = 0.82 + a.bass * 0.22 + tension * 0.30
+              line.scale.set(1.0 + a.mid * 0.03, s * compression, 1.0 + tension * 0.015)
+              line.position.y = release * 0.18 * Math.sin(t * 0.23 + index)
+              line.rotation.z = Math.sin(t * 0.13 + index) * tension * 0.012
+              line.material.opacity = 0.18 + a.mid * 0.28 + a.high * 0.08
             })
 
             scoreBars.forEach((bar, index) => {
@@ -517,7 +538,7 @@ module RadioVideo
               bar.position.y = 0.9 + bar.scale.y * 0.55
             })
 
-            state.textContent = `BASS ${Math.round(a.bass * 100)} / MID ${Math.round(a.mid * 100)} / AIR ${Math.round(a.high * 100)} — LIVE SCORE`
+            state.textContent = `BASS ${Math.round(a.bass * 100)} / MID ${Math.round(a.mid * 100)} / AIR ${Math.round(a.high * 100)} / TENSION ${Math.round(tension * 100)} — PARAMETRIC SCORE`
             renderer.render(scene, camera)
             requestAnimationFrame(draw)
           }
