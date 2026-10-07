@@ -141,11 +141,19 @@ class TestScanEngines < Minitest::Test
     assert_equal [["scanner:thread_error", 7]], events
   end
 
-  def test_a_wedged_git_reads_as_a_failed_command
-    result = Timeout.stub(:timeout, ->(*) { raise Timeout::Error }) { Host.new.git_capture("git", "status") }
+  def test_git_timeout_is_owned_by_exec
+    seen = nil
+    failed_status = Struct.new(:success?).new(false)
 
-    refute result.last.success?
-    assert_match(/timed out/, result[1])
+    Master::Io::Exec.stub(:capture3, lambda { |*argv, timeout:|
+      seen = [argv, timeout]
+      ["", "git timed out", failed_status]
+    }) do
+      result = Host.new.git_capture("git", "status")
+      assert_equal [ ["git", "status"], 5 ], seen
+      refute result.last.success?
+      assert_equal "git timed out", result[1]
+    end
   end
 
   class Reporter
