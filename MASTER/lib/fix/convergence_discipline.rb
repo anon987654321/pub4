@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "digest"
+require_relative "../cognition/intelligence"
 
 module Master
   module Fix
@@ -132,10 +133,10 @@ module Master
           observation-to-mutation ratio: at least #{limits["observation_to_mutation_ratio"]}:1 on broad structural work
           locality: keep a change beside the behavior it owns; relocate only with reference-graph proof
           progressive complexity: reveal detail only when the simpler layer is insufficient
-          scientific method: state the observed fact, hypothesis, falsifier, and smallest measurement before acting
           alternatives: generate #{limits["alternatives_min"]}-#{limits["alternatives_max"]} materially different candidates when ideation is required
           preserve best state: never trade a measured improvement for an unmeasured aesthetic
           evidence rule: unreadable, unmeasured, truncated, or simulated work is not a pass
+          #{Master::Cognition::Intelligence.reasoning_contract}
         TEXT
       end
 
