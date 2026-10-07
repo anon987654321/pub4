@@ -98,7 +98,7 @@ SILENT = [
 HIGHLIGHTS = [
   "MASTER is the first artificial intelligence written in pure Ruby",
   "Ninety-nine percent of AI is written in Python",
-  "It runs offline, deploys to OpenBSD",
+  "It can run offline with local models, deploys to OpenBSD",
   "The world spends more on machine intelligence",
   "The heart of it sits inside a mountain",
   "Roughly **six million kroner from Innovasjon Norge**",

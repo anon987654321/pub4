@@ -57,8 +57,9 @@ regression fails the build instead of waiting to be noticed. This is the
 unglamorous half of governing by law, and it is the half that makes the claim
 checkable: one command prints every measure beside the number it must respect.
 
-It runs offline, deploys to OpenBSD, and judges a codebase with no cloud behind
-it, so it runs on hardware we own.
+It can run offline when a local model and the required local capabilities are
+available; it deploys to OpenBSD and judges a codebase without requiring a cloud
+control plane.
 
 ## The business, inside a mountain
 

@@ -68,6 +68,8 @@ module Master
         # Inline in chat shell only — keeps first paint off the ~30KB full catalog parse.
         def web_boot_payload_minimal
           runtime_cfg = load("runtime")
+          # Keep topology loading behind the same reader used by the full payload.
+          # A second load path turns one YAML source into two implementations.
           # Path was "OPENBSD/openbsd/vm_resource.yml" — a doubled segment. The
           # file is at OPENBSD/vm_resource.yml, so every load printed
           # "load_yaml: No such file or directory" and fell through to {} via the
@@ -79,7 +81,7 @@ module Master
 
           {
             topologies_path: "/runtime/topologies",
-            topology_catalog: Master.load_yaml(Master.data_path("topologies.yml"), default: {}),
+            topology_catalog: topology_catalog,
             config_path: "/runtime/config",
             enhancements_pending_count: pending,
             enhancements: Array(runtime_cfg["enhancements"]),
@@ -92,6 +94,7 @@ module Master
           @cache = {}
           @catalog = nil
           @catalog_stamp = nil
+          @topology_catalog = nil
         end
 
         private
@@ -109,9 +112,13 @@ module Master
 
         # The three files the browser payload is assembled from. Private because
         # web_boot_payload is its only caller anywhere in the three governed trees.
+        def topology_catalog
+          @topology_catalog ||= Master.load_yaml(Master.data_path("topologies.yml"), default: {})
+        end
+
         def web_boot_sources
           {
-            topologies: Master.load_yaml(Master.data_path("topologies.yml"), default: {}),
+            topologies: topology_catalog,
             # data/ops/visual.yml was deleted on purpose in 68ca272e0: it had
             # drifted on all five values against visual_governor.js, which is
             # now the one place the limits live. The read outlived it and
