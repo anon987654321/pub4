@@ -190,6 +190,33 @@ progressions:
   dilla_love:
     names: [Cm9, Fm9, Bb13, Abmaj9]
 
+  # Aydin Esen-inspired harmonic flow: original material informed by his
+  # emphasis on continuous flow, advanced harmony, piano/synth colour, intervallic
+  # side-steps and tension/release. This is not a transcription of a recording.
+  esen_flow:
+    bar_seconds: 4.1
+    pad_every: 1
+    pads: [prophet_pad, rhodes_tine, vp330_ensemble]
+    bass_patch: moog_bass
+    pad_gain: 0.21
+    bass_hits: [[0.0, 1.7, 0.48], [2.65, 0.82, 0.28]]
+    chords:
+      - { name: Dm9, bass: 38, tones: [53, 57, 60, 64] }
+      - { name: Abmaj9, bass: 44, tones: [51, 55, 58, 62] }
+      - { name: Emaj9, bass: 40, tones: [52, 56, 59, 63] }
+      - { name: C7#11, bass: 36, tones: [52, 58, 60, 66] }
+      - { name: Fm9, bass: 41, tones: [53, 56, 60, 63] }
+      - { name: Bmaj7#11, bass: 47, tones: [54, 58, 63, 66] }
+      - { name: G13sus, bass: 43, tones: [53, 57, 62, 66] }
+      - { name: Dm9, bass: 38, tones: [53, 57, 60, 64] }
+    knobs:
+      cutoff: { sine_seconds: 19, phase: 0.7, centre: 0.52, depth: 0.38 }
+      resonance: { sine_seconds: 13, phase: 1.9, centre: 0.42, depth: 0.35 }
+      detune: { sine_seconds: 29, phase: 0.2, centre: 0.5, depth: 0.18 }
+    response:
+      pad: { cutoff: [0.32, 1.72], resonance: [0.42, 0.82], detune: 0.004 }
+      bass: { cutoff: [0.68, 0.82], resonance: [0.1, null], detune: 0.003 }
+      lead: { cutoff: [0.78, 0.82], resonance: [0.12, null], detune: 0.005 }
   # Verified Melody A.M.-era chord cells, the Royksopp module in dilla.rb, rendered through the
   # same steerable DFAM/progression/session path as every other live set.
   royksopp_live:
