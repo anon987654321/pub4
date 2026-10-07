@@ -120,7 +120,7 @@ module Master
             next
           elsif proposal["basis_head"].to_s != head.to_s
             proposal["basis_head"] = head
-            proposal["rebased_at"] = Master::Time.utc_now.iso8601
+            proposal["rebased_at"] = Master::Clock.utc_now.iso8601
             changed = true
           end
 
@@ -140,7 +140,7 @@ module Master
         return [] if ids.empty?
 
         ledger = load_ledger
-        now = Master::Time.utc_now.iso8601
+        now = Master::Clock.utc_now.iso8601
         claimed = ledger["proposals"].filter_map do |proposal|
           next unless ids.include?(proposal["uid"].to_s) && proposal["status"] == "queued"
 
@@ -206,7 +206,7 @@ module Master
           next unless proposal.fetch("last_fixed", 0).to_i.positive?
 
           proposal["status"] = "applied"
-          proposal["applied_at"] = Master::Time.utc_now.iso8601
+          proposal["applied_at"] = Master::Clock.utc_now.iso8601
           proposal["applied_run"] = run_id.to_s
           proposal.delete("claimed_at")
           proposal.delete("claimed_run")
@@ -235,12 +235,12 @@ module Master
           case proof[:state]
           when :proven
             proposal["status"] = "verified"
-            proposal["verified_at"] = Master::Time.utc_now.iso8601
+            proposal["verified_at"] = Master::Clock.utc_now.iso8601
             proposal["verified_run"] = run_id.to_s
           when :failed
             proposal["status"] = "blocked"
             proposal["blocked_reason"] = "wishlist proof failed"
-            proposal["blocked_at"] = Master::Time.utc_now.iso8601
+            proposal["blocked_at"] = Master::Clock.utc_now.iso8601
           else
             proposal["status"] = "applied"
             proposal["verification_reason"] = "proof contract requires external validation"
@@ -349,7 +349,7 @@ module Master
       end
 
       def merge_new_items!(ledger, items, state:, target:, run_id:)
-        now = Master::Time.utc_now.iso8601
+        now = Master::Clock.utc_now.iso8601
         basis_head = @git.head.to_s
         added = 0
 
@@ -533,7 +533,7 @@ module Master
       def write_report(items, state:, target:, run_id:)
         FileUtils.mkdir_p(File.dirname(out_file))
         body = [
-          "# MASTER wishlist — #{Master::Time.utc_now.iso8601}",
+          "# MASTER wishlist — #{Master::Clock.utc_now.iso8601}",
           "",
           "run: #{run_id}",
           "target: #{target}",
