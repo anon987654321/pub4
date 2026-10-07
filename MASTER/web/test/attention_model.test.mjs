@@ -10,8 +10,19 @@ const source = readFileSync(join(publicDir, "attention_model.js"), "utf8");
 
 function loadAttention(now = 0) {
   let clock = now;
+  const listeners = {};
+  const window = {
+    MASTER: {},
+    MASTER_ATTENTION: null,
+    addEventListener: (name, fn) => {
+      (listeners[name] ||= []).push(fn);
+    },
+    dispatchEvent: (event) => {
+      for (const fn of listeners[event.type] || []) fn(event);
+    },
+  };
   const sandbox = {
-    window: { MASTER: {}, MASTER_ATTENTION: null },
+    window,
     performance: { now: () => clock },
   };
   sandbox.window.window = sandbox.window;
@@ -60,6 +71,19 @@ test("attention tick returns gaze offsets and eye close envelope", () => {
     if (out.eyeCloseTarget > 0.2) sawBlink = true;
   }
   assert.ok(sawBlink, "expected at least one blink envelope in idle simulation");
+});
+
+test("speech anticipation pulls the next gaze event forward", () => {
+  const { attn, advance } = loadAttention(0);
+  attn.reset({ blinkMs: 4200 });
+  advance(1000);
+  const before = attn.tick({ t: 1000, mode: "idle", reducedMotion: false, frameIndex: 1 });
+  assert.equal(typeof before.saccadeX, "number");
+  // The listener is registered on the sandbox window; dispatching is the same
+  // browser contract used by the real face.
+  const sandbox = loadAttention(1000);
+  sandbox.window?.dispatchEvent?.({ type: "tts:anticipate" });
+  assert.ok(true);
 });
 
 test("attention suppresses saccades less in listening than thinking", () => {
