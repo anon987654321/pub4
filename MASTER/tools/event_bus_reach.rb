@@ -88,11 +88,18 @@ module Operator
       return unless args.is_a?(Array) && args[0] == :args_add_block
 
       value = args[1]&.first
+      if value.is_a?(Array) && value[0] == :dyna_symbol
+        body = value[1]
+        return unless body.is_a?(Array) && body[0] == :string_content
+        parts = body.drop(1)
+        return unless parts.all? { |part| part.is_a?(Array) && part[0] == :@tstring_content }
+        return parts.map { |part| part[1] }.join
+      end
+
       return unless value.is_a?(Array) && value[0] == :string_literal
 
       body = value[1]
       return unless body.is_a?(Array) && body[0] == :string_content
-
       parts = body.drop(1)
       return unless parts.all? { |part| part.is_a?(Array) && part[0] == :@tstring_content }
 
