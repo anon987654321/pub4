@@ -98,6 +98,27 @@ class MediaIntentTest < Minitest::Test
     assert_equal "dilla", calls.fetch(0).fetch(:tool)
   end
 
+  def test_bare_live_music_pins_the_canonical_dillatime_kit
+    calls = []
+
+    Master::Io::ScriptDispatch.stub(
+      :run,
+      lambda do |root:, tool:, arg:, env: {}|
+        calls << { root:, tool:, arg:, env: }
+        Master::Result.ok("playing Dilla")
+      end
+    ) do
+      result = Master::Io::MediaIntent.play_live_music("", root: MasterPaths.root)
+      assert result.ok?, -> { result.message.to_s }
+    end
+
+    call = calls.fetch(0)
+    assert_equal "dilla", call[:tool]
+    assert_equal "live showcase", call[:arg]
+    assert_equal "dillatime", call[:env]["DILLA_LIVE_KIT"]
+    assert_equal "0", call[:env]["DILLA_COLTRANE"]
+  end
+
   def test_postpro_capability_question_does_not_require_source_path
     result = Master::Io::MediaIntent.dispatch("can you use postpro.rb?", root: MasterPaths.root)
 

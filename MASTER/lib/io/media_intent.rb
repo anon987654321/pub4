@@ -362,10 +362,11 @@ module Master
       def play_live_music(arg, root: MasterPaths.root, bus: nil)
         name = arg.to_s.strip
         command = name.empty? ? "live showcase" : "live play #{Shellwords.escape(name)}"
-        result = ScriptDispatch.run(
-          root:, tool: "dilla", arg: command,
-          env: { "DILLA_COLTRANE" => "0" }
-        )
+        env = { "DILLA_COLTRANE" => "0" }
+        # Bare /play is the operator's canonical Dilla showcase. Pin its kit so
+        # stale inherited DILLA_LIVE_KIT state cannot resurrect an older groove.
+        env["DILLA_LIVE_KIT"] = "dillatime" if name.empty?
+        result = ScriptDispatch.run(root:, tool: "dilla", arg: command, env:)
         return result unless result.ok?
 
         Result.ok(output: result.value!, rendered: result.value!, media: :dilla_live, style: name)
