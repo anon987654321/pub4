@@ -1,0 +1,36 @@
+# Canonical video-grade recipes shared by the Dilla renderer and Postpro.
+# Geometry happens in Three.js; these filters are the one-pass photographic/video
+# substrate after capture. Set DILLA_VIDEO_POSTPRO=0 for an untreated export.
+
+schema: postpro.video.v1
+
+presets:
+  architectural_clean:
+    description: restrained architectural score; preserve line geometry
+    filters:
+      - eq=contrast=1.05:saturation=1.06:gamma=0.98
+      - vignette=PI/5
+  dilla_heavy:
+    description: tape, chroma registration, bloom, grain and frame memory
+    filters:
+      - gblur=sigma=0.32
+      - tmix=frames=3:weights='1 1 1'
+      - eq=contrast=1.16:saturation=1.24:gamma=0.96
+      - rgbashift=rh=3:rv=-1:gh=-2:gv=1:bh=1:bv=2
+      - chromashift=cbh=2:crh=-2
+      - noise=alls=6:allf=t+u
+      - unsharp=5:5:0.42:5:5:0
+      - vignette=PI/5
+  dmt_bled:
+    description: bleeding-edge geometric trip; controlled temporal smear and chromatic fracture
+    filters:
+      - tmix=frames=5:weights='1 2 3 2 1'
+      - gblur=sigma=0.48
+      - eq=contrast=1.23:saturation=1.38:gamma=0.92
+      - rgbashift=rh=5:rv=-3:gh=-3:gv=2:bh=3:bv=2
+      - chromashift=cbh=4:crh=-4
+      - edgedetect=low=0.03:high=0.16
+      - colorlevels=rimin=0.04:rimax=0.92:gimin=0.03:gimax=0.96:bimin=0.08:bimax=0.98
+      - noise=alls=9:allf=t+u
+      - unsharp=5:5:0.35:5:5:0
+      - vignette=PI/4.5
