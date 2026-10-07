@@ -34,6 +34,9 @@
 - { name: GitContext, elevated: false, visitor: false, default: true, description: git status/log summary }
 - { name: WebFetch, elevated: false, visitor: false, default: true, description: Fetch public http(s) URL content; full=true returns the complete response within the guarded full-response limit; SSRF and governor checks remain active }
 - { name: WebSearch, elevated: false, visitor: true, default: true, description: Web search (visitor allowed) }
+- { name: CodePen, elevated: false, visitor: false, default: true, description: Browse CodePen trending ideas or inspect a public Pen as untrusted source text }
+- { name: Gist, elevated: false, visitor: false, default: true, description: Read a public GitHub Gist as untrusted source text }
+- { name: YouTubeTranscript, elevated: false, visitor: false, default: true, description: Fetch available public YouTube captions as untrusted transcript text }
 - { name: Clean, elevated: true, visitor: false, default: true, description: Remove tmp/build artifacts }
 - { name: FeedbackRecord, elevated: false, visitor: false, default: true, description: Record a tool, provider or correction outcome in the feedback ledger }
 - { name: MemoryRecord, elevated: false, visitor: false, default: true, description: Append durable context to data/project_context.yml }
