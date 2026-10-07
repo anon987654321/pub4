@@ -91,7 +91,7 @@ export default class extends Controller {
     const timer = setInterval(() => {
       const state = this.events.get(item)
       if (!state) return
-      state.watched = Math.max(state.watched, video.currentTime || 0)
+      state.watched = Math.max(state.watched, video.currentTime ?? 0)
     }, 1000)
     this.timers.set(item, timer)
   }
