@@ -106,4 +106,32 @@ class TestSkills < Minitest::Test
       assert_equal "beta", reloaded.discover!.first[:name]
     end
   end
+  def test_trigger_emits_revision
+    Dir.mktmpdir do |root|
+      data_dir = File.join(root, "data")
+      FileUtils.mkdir_p(data_dir)
+      File.write(File.join(data_dir, "patterns.yml"), <<~YAML)
+        skills_registry:
+          skills:
+            - name: alpha
+              description: alpha
+              triggers: ["alpha"]
+              body: alpha body
+      YAML
+
+      bus = Class.new do
+        attr_reader :events
+        def initialize = @events = []
+        def publish(name, payload = {}) = @events << [name, payload]
+      end.new
+
+      skills = Master::CLI::Skills.new(root:, event_bus: bus)
+      skills.discover!
+      skills.trigger_for("alpha")
+      event = bus.events.find { |name, _| name == "skills:triggered" }
+      assert_equal "alpha", event.last[:skill]
+      assert_match(/\A[0-9a-f]{64}\z/, event.last[:revision])
+    end
+  end
+
 end
