@@ -82,7 +82,7 @@ class TestSnapshotGenerator < Minitest::Test
   def test_snapshot_generator_declares_hard_share_size_ceiling
     source = File.read(File.expand_path("../tools/snapshot.rb", __dir__))
     assert_includes source, "MAX_BYTES = 750_000"
-    assert_includes source, "snapshot_#{tree}.partNNN.md"
+    assert_includes source, 'snapshot_#{tree}.partNNN.md'
     assert_includes source, "Rehydrate all parts into a fresh temporary repository-shaped directory"
     assert_includes source, "snapshot_extract.rb"
     assert_includes source, "omitted=0"
