@@ -27,7 +27,10 @@ function applyVerticalTimbre() {
   if (mouthPool) {
     for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
       const b = i * K.FIELDS_PER_CELL;
-      if (VERTICAL_BIAS.arousal != null) mouthCells()[b + K.FIELD.arousal] = Math.min(1, (mouthCells()[b + K.FIELD.arousal] || 0.4) + VERTICAL_BIAS.arousal * 0.08);
+      if (VERTICAL_BIAS.arousal != null) {
+        const currentArousal = mouthCells()[b + K.FIELD.arousal];
+        mouthCells()[b + K.FIELD.arousal] = Math.min(1, (Number.isFinite(currentArousal) ? currentArousal : 0.4) + VERTICAL_BIAS.arousal * 0.08);
+      }
       if (VERTICAL_BIAS.pressure != null) mouthCells()[b + K.FIELD.pressure] = Math.min(1, (mouthCells()[b + K.FIELD.pressure] || 0) + VERTICAL_BIAS.pressure * 0.06);
       if (VERTICAL_BIAS.valence != null) mouthCells()[b + K.FIELD.valence] = (mouthCells()[b + K.FIELD.valence] || 0) + VERTICAL_BIAS.valence * 0.05;
     }
