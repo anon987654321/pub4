@@ -720,7 +720,7 @@ historical_fossils:
     value: "split master.json into modular files for maintainability"
 
 tooling:
-  archive_extractor: MASTER/tools/archaeology/extract_legacy_archives.zsh
+  archive_extractor: MASTER/tools/extract_legacy_archives.zsh
   output_default: ../pub4-archaeology-extracted
   note: >-
     Binary archive extraction is an operator/runtime task. The GitHub connector
