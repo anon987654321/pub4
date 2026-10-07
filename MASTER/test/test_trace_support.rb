@@ -62,6 +62,20 @@ class TestTraceSupport < Minitest::Test
     }]], spoken
   end
 
+  def test_recent_log_voice_can_be_recognized_as_the_same_final_reply
+    Master::Voice::Playback.stub(:enabled?, true) do
+      Master::Voice::Playback.stub(:available?, true) do
+        Master::Voice::Playback.stub(:enqueue, ->(*_args, **_options) { true }) do
+          Master::Trace::Dmesg.with_log_voice do
+            Master::Trace::Dmesg.status("fix0", "same final answer", io: StringIO.new)
+          end
+        end
+      end
+    end
+
+    assert Master::Trace::Dmesg.log_voice_spoken_recently?("fix0: same final answer")
+  end
+
   def test_log_voice_ignores_its_own_voice_and_tts_diagnostics
     spoken = []
     Master::Voice::Playback.stub(:enabled?, true) do
