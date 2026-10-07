@@ -14,7 +14,6 @@ module Master
         "clean_runs_required" => 2,
         "diminishing_delta" => 0.001,
         "diminishing_cycles" => 3,
-        "oscillation_window" => 3,
         "working_memory_items" => 7,
         "context_switches_per_round" => 3,
         "decision_choices" => 7,
@@ -35,7 +34,7 @@ module Master
 
       def begin_run(files)
         @baseline = snapshot(files)
-        @best_state = state_for(0, 0, @baseline)
+        @best_state = state_for(0, Float::INFINITY, @baseline)
         @history.clear
         emit("fix_loop:convergence_baseline", files: @baseline.size, digest: digest(@baseline))
         @baseline
@@ -71,13 +70,13 @@ module Master
         cycles = limits["diminishing_cycles"].to_i
         return false if @history.size < cycles + 1
 
-        deltas = @history.last(cycles).each_cons(2).map do |a, b|
+        deltas = @history.last(cycles + 1).each_cons(2).map do |a, b|
           (a[:score] - b[:score]).abs.to_f
         end
         deltas.all? { |delta| delta <= limits["diminishing_delta"].to_f }
       end
 
-      def clean_proof(files:, pass:, clean_runs:, findings: [])
+      def clean_proof(files:, pass:, clean_runs:, findings: [], required_runs: limits["clean_runs_required"].to_i)
         unreadable = unreadable_paths(files)
         unless unreadable.empty?
           emit("fix_loop:premature_exit", reason: "files_unread", files: unreadable.first(10))
@@ -89,8 +88,7 @@ module Master
           return { eligible: false, fatal: false, reason: "violations remain" }
         end
 
-        required = limits["clean_runs_required"].to_i
-        return { eligible: false, fatal: false, reason: "clean streak incomplete" } if clean_runs < required
+        return { eligible: false, fatal: false, reason: "clean streak incomplete" } if clean_runs < required_runs.to_i
 
         protected = protected_floor_failures
         unless protected.empty?
