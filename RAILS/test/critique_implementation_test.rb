@@ -129,6 +129,16 @@ class CritiqueImplementationTest < Minitest::Test
     assert_includes css, ".item-detail--luxury .luxury-detail-grid"
     assert_includes css, ".item-detail--luxury .luxury-meta"
   end
+  def test_amber_flash_uses_shared_semantic_signal
+    flash = read("amber/app/views/shared/_flash.html.erb")
+    signal = read("shared/app/views/shared/_system_signal.html.erb")
+
+    assert_includes flash, 'render "shared/system_signal"'
+    assert_includes flash, 'state:, classes: ["flash", "flash--#{type}"], content:'
+    assert_includes signal, 'class: classes'
+    assert_includes signal, 'aria: { live: aria_live }'
+  end
+
   def test_shared_yep_search_and_affiliate_pens_are_restored
     search = read("shared/app/assets/stylesheets/_search_yep.scss")
     affiliate = read("shared/app/views/shared/_affiliate_feed_unit.html.erb")
