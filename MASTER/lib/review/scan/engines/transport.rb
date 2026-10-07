@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 require "etc"
-require "timeout"
-
 module Master
   module Review
     module Scan
@@ -20,13 +18,7 @@ module Master
         private
 
         def git_capture(*argv)
-          Timeout.timeout(GIT_TIMEOUT_SECONDS) { Master::Io::Exec.capture3(*argv) }
-        rescue Timeout::Error
-          ["", "git command timed out after #{GIT_TIMEOUT_SECONDS}s", failure_status]
-        end
-
-        def failure_status
-          Struct.new(:success?).new(false)
+          Master::Io::Exec.capture3(*argv, timeout: GIT_TIMEOUT_SECONDS)
         end
 
         def changed_since(ref, repo_root)
