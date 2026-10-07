@@ -82,8 +82,9 @@ module Master
 
         def model_for(operation:)
           forced = ENV["MASTER_MODEL"].to_s.strip
-          if !forced.empty? && (!@model_router.respond_to?(:unreachable_reason) ||
-                                @model_router.unreachable_reason(forced, wait: false).nil?)
+          if !local_only? && !forced.empty? &&
+             (!@model_router.respond_to?(:unreachable_reason) ||
+              @model_router.unreachable_reason(forced, wait: false).nil?)
             return forced
           end
 
