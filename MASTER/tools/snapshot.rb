@@ -254,10 +254,10 @@ module Operator
         output_paths.each_with_index { |path, index| out << "- part #{index + 1}/#{part_count}: #{96.chr}#{File.basename(path)}#{96.chr}\n" }
         out << "\n"
       end
-      out << "## Tree\n#{fence3}\n"
-      paths.each { |p| out << "#{p}\n" }
-      out << "#{fence3}\n"
       if part_index == 1
+        out << "## Tree\n#{fence3}\n"
+        paths.each { |p| out << "#{p}\n" }
+        out << "#{fence3}\n"
         unless binaries.empty?
           out << "\n## Binary files\n\nListed, not inlined:\n\n"
           binaries.each { |p| out << "- #{96.chr}#{p}#{96.chr}\n" }
