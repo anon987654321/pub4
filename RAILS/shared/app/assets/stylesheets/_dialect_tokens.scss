@@ -220,4 +220,12 @@ $vertical-accent-ink: #110f19;
   --sp: 8px;
   --z-app: var(--z-chrome);
   --z-nav: var(--z-ui);
+  --motion-instant: 80ms;
+  --motion-quick: 140ms;
+  --motion-settle: 320ms;
+  --motion-rest: 560ms;
+  --signal-success: #2f8f63;
+  --signal-warning: #a06b24;
+  --signal-error: var(--danger);
+  --signal-info: var(--accent);
 }
