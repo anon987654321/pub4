@@ -19,6 +19,12 @@ class TestEventBusReach < Minitest::Test
     ], Operator::EventBusReach.ruby_events(source)
   end
 
+  def test_ruby_extracts_literal_symbol_publishers
+    rows = Operator::EventBusReach.ruby_events('bus.publish(:"phantom:detected", step: 1)')
+
+    assert_equal [{ topic: "phantom:detected", role: :publisher }], rows
+  end
+
   def test_ruby_extracts_safe_navigation_publishers
     rows = Operator::EventBusReach.ruby_events('bus&.publish("phantom:recovery", step: 1)')
 
