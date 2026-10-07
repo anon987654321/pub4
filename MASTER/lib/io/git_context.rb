@@ -98,7 +98,13 @@ module Master
       def safe_path(path)
         full = File.expand_path(path.to_s, @root)
         raise "path escapes root" unless PathGuard.inside_real_root?(full, @root)
+
+        canonical = File.exist?(full) ? File.realpath(full) : full
+        raise "credential path refused" if PathGuard.secret?(canonical)
+
         Pathname.new(full).relative_path_from(@root).to_s
+      rescue SystemCallError
+        raise "path escapes root"
       end
     end
   end
