@@ -20,7 +20,7 @@ module Master
         when :low then :observe
         when :medium then :plan
         when :high then :repair
-        when :critical then intent.to_sym == :write_repo_changes ? :repair : :deploy
+        when :critical then intent && intent.to_sym == :write_repo_changes ? :repair : :deploy
         else :plan
         end
       rescue StandardError
