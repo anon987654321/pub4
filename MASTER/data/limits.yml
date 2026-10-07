@@ -1058,6 +1058,7 @@ convergence_discipline:
   decision_choices: 7
   alternatives_min: 5
   alternatives_max: 20
+  observation_to_mutation_ratio: 10
 
 # Loop/process budgets — moved from data/ops/process.yml; reader is Ops::ProcessBudget.
 process:
