@@ -43,7 +43,7 @@ module Master
       # coming back, or the passes ran out. HUMAN_DECISION is a safe halt when a
       # proposed fix is irreversible or spans multiple files. BLOCKED is a halt
       # outside the loop's authority, and VALIDATION_FAILED is a repair the tree refused.
-      TERMINAL_STATES = %i[done plateau blocked validation_failed delivery_failed timeout human_decision failed reloading].freeze
+      TERMINAL_STATES = %i[done plateau crash skip blocked validation_failed delivery_failed timeout human_decision failed reloading].freeze
       # A pass status that ends the run, and the state it ends in.
       PASS_ENDINGS = { clean: :done, validation_failed: :validation_failed,
                        delivery_failed: :delivery_failed, reloading: :reloading }.freeze
@@ -351,6 +351,8 @@ module Master
 
       def terminal_state_for(result)
         return :timeout if result.err? && result.category == :timeout
+        return :crash if result.err? && result.category == :crash
+        return :skip if result.err? && result.category == :skip
         return result.value!.to_s[/\A[A-Z_]+/].to_s.downcase.to_sym if result.ok?
 
         :failed
