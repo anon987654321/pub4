@@ -72,8 +72,14 @@ class TestSnapshotGenerator < Minitest::Test
     assert_includes source, '"## Snapshot complete"'
     assert_includes source, 'snapshot0: complete tree='
     assert_includes source, '"STUDIO" => "STUDIO"'
-    assert_includes source, '"OPENBSD" => "snapshot_OPENBSD.sh"'
+    assert_includes source, '"OPENBSD" => "snapshot_OPENBSD.md"'
     assert_includes source, '" — git "'
+  end
+
+  def test_snapshot_generator_declares_hard_share_size_ceiling
+    source = File.read(File.expand_path("../tools/snapshot.rb", __dir__))
+    assert_includes source, "MAX_BYTES = 9_500_000"
+    assert_includes source, "Omitted text files"
   end
 
   def test_snapshot_does_not_include_its_own_output
