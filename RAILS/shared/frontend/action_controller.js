@@ -24,7 +24,7 @@ export default class extends Controller {
   }
 
   connect() {
-    this.originalCount = this.countValue || 0
+    this.originalCount = this.countValue ?? 0
   }
 
   toggle(event) {
@@ -36,7 +36,7 @@ export default class extends Controller {
 
     if (this.hasCountTarget) {
       const delta = isActive ? -1 : 1
-      this.countValue = (this.countValue || 0) + delta
+      this.countValue = (this.countValue ?? 0) + delta
       this.countTarget.textContent = this.countValue
     }
 
