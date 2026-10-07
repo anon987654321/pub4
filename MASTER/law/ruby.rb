@@ -11,7 +11,7 @@ Law.define(:EACH_WITH_OBJECT) do
   good "items.each_with_object({}) { |i, h| h[i] = 1 }"
 end
 
-# FEW_ARGUMENTS lives once, in the registry (universal_rules.rb): it splits
+# FEW_ARGUMENTS lives once, in the registry (universal_laws.rb): it splits
 # the parameter list and counts only positionals, where this regex counted
 # keywords, defaults, splats and blocks as arguments too — a def with four
 # keyword args is the fix, not the offence. KEYWORD_ARGS folds into it: two
@@ -109,7 +109,7 @@ Law.define(:GUARD_CLAUSE) do
   X
 end
 
-# HASH_FETCH lives once, in the registry (ruby_rules.rb): it excludes
+# HASH_FETCH lives once, in the registry (ruby_laws.rb): it excludes
 # memoization (`||=`), the string-or-symbol dual-key fallback in either key
 # order, and comparison chains that merely contain a bracket access — none
 # of which are fetch candidates, all of which this bare regex flagged.
@@ -152,7 +152,7 @@ end
 # N_PLUS_ONE, NO_UPDATE_ATTRIBUTE, PLUCK_OVER_MAP — declared `languages
 # %i[rails]`, and FILE_LANGUAGE_MAP produces no such language: every .rb
 # file is "ruby". The four laws had never matched a single file; the
-# registry twins (ruby_rules.rb, universal_rules.rb), path-scoped to
+# registry twins (ruby_laws.rb, universal_laws.rb), path-scoped to
 # /app/, were the only live implementations all along — the inert-config
 # defect, in the constitution itself. They live once, in the registry.
 
@@ -399,7 +399,7 @@ Law.define(:RUBY_SCREAMING_CONST) do
   good "MAX_RETRIES = 3"
 end
 
-# RUBY_TERNARY_NOT_NESTED lives once, in the registry (cosmetic_rules.rb):
+# RUBY_TERNARY_NOT_NESTED lives once, in the registry (cosmetic_laws.rb):
 # it parses with Prism and asks the AST whether a ternary branch holds a
 # ternary. This regex counted `?` and `:` characters, so a string literal
 # containing a question mark or a hash colon made any ternary "nested".
