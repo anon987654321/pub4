@@ -135,6 +135,13 @@ class GitContextShowTest < Minitest::Test
 
   # The refusal is the colon, not a filename-looking argument: a ref that merely
   # reads file-ish is still a ref.
+  def test_git_context_refuses_credential_paths
+    result = @git.call(operation: "blame", path: ".env")
+
+    refute result.ok?
+    assert_match(/credential path refused/, result.message.to_s)
+  end
+
   def test_the_refusal_is_the_colon_and_not_the_shape
     assert show("HEAD").ok?
     refute show("HEAD:").ok?
