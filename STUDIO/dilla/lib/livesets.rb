@@ -2577,12 +2577,17 @@ SHOWCASE_MODES = {
       nil
     end
     tty_state = nil
-    if tty
-      state = Open3.capture2("stty", "-g", in: tty).first.to_s.strip
-      unless state.empty?
+    if tty&.tty?
+      state, state_status = Open3.capture2("stty", "-g", in: tty, err: File::NULL)
+      state = state.to_s.strip
+      if state_status.success? && !state.empty?
         tty_state = state
-        system("stty", "-icanon", "min", "1", "time", "0", "-echo", in: tty)
-        keyboard = Thread.new do
+        configured = system(
+          "stty", "-icanon", "min", "1", "time", "0", "-echo",
+          in: tty, out: File::NULL, err: File::NULL
+        )
+        if configured
+          keyboard = Thread.new do
           begin
             loop do
               char = tty.getc
@@ -2596,8 +2601,8 @@ SHOWCASE_MODES = {
           rescue StandardError => e
             LiveSynth.log("showcase keyboard: #{e.class}: #{e.message}")
           end
+          log("space = next showcase")
         end
-        log("space = next showcase")
       end
     end
 
@@ -2606,7 +2611,7 @@ SHOWCASE_MODES = {
   ensure
     keyboard&.kill
     keyboard&.join
-    system("stty", tty_state, in: tty, err: File::NULL) if tty_state && tty
+    system("stty", tty_state, in: tty, out: File::NULL, err: File::NULL) if tty_state && tty
     worker&.kill
     worker&.join
     tty&.close

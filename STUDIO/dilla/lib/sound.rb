@@ -1358,6 +1358,7 @@ module AnalogSynth
 
       fm = @fm
       open = knobs["cutoff"]
+      pitch = 1.0
       feed = fm[:fb] * (0.5 + knobs["resonance"])
       j = 0
       while j < left.length

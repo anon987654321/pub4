@@ -367,7 +367,7 @@ class TestDillaLiveSynth < Minitest::Test
     source = File.read(dilla("lib/livesets.rb"))
     assert_includes source, 'aecho=0.85:0.18:375:0.06,volume=0.20'
     refute_includes source, '/<(d+)>/'
-    assert_includes source, 'weights = LiveSynth.showcase? ? "1 0.07 0.44" : "1 1 1"'
+    assert_includes source, 'weights = LiveSynth.showcase? ? "1 0.07 0.50" : "1 1 1"'
     refute_includes source, 'aecho=0.85:0.9:<750>|<1000>|<1500>:0.55|0.45|0.35'
     refute_includes source, 'aecho=0.8:0.85:<375>:0.5'
   end
@@ -421,6 +421,21 @@ class TestDillaLiveSynth < Minitest::Test
     end
   ensure
     saved.nil? ? ENV.delete("DILLA_PHYSICS") : ENV["DILLA_PHYSICS"] = saved
+  end
+
+  def test_fm_voice_survives_a_note_start_between_physics_updates
+    preset = LiveSynth.config.fetch("improvise").fetch("fm").fetch("bell").transform_keys(&:to_sym)
+    voice = AnalogSynth::FmVoice.new(
+      midi: 72, preset:, start: 0.0005, held: 0.4, gain: 0.05,
+      rng: Random.new(23), rate: RATE
+    )
+    left = Array.new(1024, 0.0)
+    right = Array.new(1024, 0.0)
+
+    voice.render!(left, right, 0.0, knobs: { "cutoff" => 0.5, "resonance" => 0.2 })
+
+    assert_operator left.map(&:abs).max, :>, 0.0
+    assert_operator right.map(&:abs).max, :>, 0.0
   end
 
   def test_physics_voice_scan_ignores_fm_voice_entries
@@ -539,7 +554,7 @@ class TestDillaLiveSynth < Minitest::Test
     assert_includes source, 'BachMidi::Score.new'
     assert_includes source, 'DILLA_SHOWCASE'
     assert_includes source, 'speed: :ips7'
-    assert_includes source, 'SHOWCASE_TEMPO_SCALE = 0.84'
+    assert_match(/SHOWCASE_TEMPO_SCALE.*0\.74/, source)
   end
 
   def test_showcase_includes_a_real_tape_floor
@@ -619,8 +634,8 @@ class TestDillaLiveSynth < Minitest::Test
     assert_includes source, "DILLA_SHOWCASE_DARK\" => \"1\""
     assert_includes source, "DILLA_SHOWCASE_TAPE\" => \"1\""
     assert_match(/DILLA_SHOWCASE_TEMPO_SCALE.*0\.74/, source)
-    assert_includes source, 'DILLA_SHOWCASE_BASS_GAIN\" => \"0.00005\"'
-    assert_includes source, 'DILLA_SHOWCASE_BASS_EVERY\" => \"4\"'
+    assert_includes source, 'DILLA_SHOWCASE_BASS_GAIN\" => \"0.00003\"'
+    assert_includes source, 'DILLA_SHOWCASE_BASS_EVERY\" => \"5\"'
     %w[LIVE_GROOVE LIVE_VOICING LIVE_COPY_MACHINE LIVE_VOICE_STACK LIVE_HOCKET].each do |key|
       assert_match(/#{key}\" =>/, source, key)
     end
@@ -729,7 +744,10 @@ class TestDillaLiveSynth < Minitest::Test
 
   def test_showcase_segment_admits_space_as_next_scene_control
     source = File.read(dilla("lib/livesets.rb"))
-    assert_includes source, 'system("stty", "-icanon", "min", "1", "time", "0", "-echo")'
+    assert_includes source, 'File.open("/dev/tty", "r+")'
+    assert_includes source, 'in: tty'
+    assert_includes source, 'err: File::NULL'
+    refute_includes source, 'if STDIN.tty?'
     assert_includes source, 'next_requested = true'
     assert_includes source, 'Session.post!("stop" => true)'
     assert_includes source, 'next_requested ? :next : nil'
@@ -743,11 +761,12 @@ class TestDillaLiveSynth < Minitest::Test
 
   def test_showcase_recording_uses_one_pcm_stream_and_finalizes_wav
     source = File.read(dilla("lib/livesets.rb"))
-    assert_includes source, 'raw = "#{dest}.s16le"'
-    assert_includes source, '| tee #{Shellwords.escape(raw)} |'
-    assert_includes source, 'def finalize_showcase_record!(output, rate)'
-    assert_includes source, '"-f", "wav", output'
-    refute_includes source, "asplit=2[showcase_record][showcase_play]"
+    assert_includes source, 'tee = "[f=wav]#{dest}|[f=s16le]pipe:1"'
+    assert_includes source, '"-f", "tee"'
+    assert_includes source, '[f=wav]'
+    assert_includes source, '[f=s16le]pipe:1'
+    refute_includes source, '.s16le'
+    refute_includes source, 'def finalize_showcase_record!(output, rate)'
   end
 
   def test_showcase_contains_a_broader_flylo_rotation
@@ -755,6 +774,7 @@ class TestDillaLiveSynth < Minitest::Test
     assert_operator scenes.count { |name| name.start_with?("flylo") }, :>=, 8
   end
 
+  def test_live_improviser_reference_renders_sound
     score = LiveSynth::Improviser.new(
       rng: Random.new(9),
       reference: "dilla_flowers_documented",

@@ -27,6 +27,12 @@ class TraceDmesgTest < Minitest::Test
     Master::Trace::Dmesg.remove_instance_variable(:@pastel) if Master::Trace::Dmesg.instance_variable_defined?(:@pastel)
   end
 
+  def test_forward_strips_cursor_control_before_writing_a_child_line
+    io = StringIO.new
+    assert_equal "route0 at fix0: model", Master::Trace::Dmesg.forward("\r\e[Kroute0 at fix0: model\e[K\r\n", io:)
+    assert_equal "route0 at fix0: model\n", io.string
+  end
+
   def test_zsh_law_is_available_before_shell_class_loads
     banned = Master::Io::Shell::BANNED_IN_ZSH
 
