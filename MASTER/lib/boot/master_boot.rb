@@ -56,7 +56,14 @@ module Master
     def start_task_steward(root, container)
       container[:task_steward] = Fix::TaskSteward.start!(
         root:, bus: container[:bus], runner: ->(goal:, mission:) {
-          CLI::CoreBridge.run(goal, root:, bus: container[:bus], model_id: mission["model"], container:)
+          CLI::CoreBridge.run(
+            goal,
+            root:,
+            bus: container[:bus],
+            model_id: mission["model"],
+            mode: mission.dig("operator", "mode"),
+            container:,
+          )
         }
       )
     end
