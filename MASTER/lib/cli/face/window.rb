@@ -94,7 +94,8 @@ module Master
             [@state, @level, @jobs.dup, @words.dup, @draft.dup, @events.slice!(0..)]
           end
 
-          content_rows = [rows - CONTROL_ROWS, 1].max
+          transcript_rows = rows >= 20 ? 3 : 2
+          content_rows = [rows - transcript_rows - 4, 1].max
           face = Face.frame(
             state:,
             rows: content_rows,
@@ -106,15 +107,17 @@ module Master
             color: @output.respond_to?(:tty?) && @output.tty? && ENV["NO_COLOR"] != "1"
           ).split("\n")
 
-          transcript_rows = [CONTROL_ROWS - 2, 1].max
           transcript = tail(column(jobs, words), transcript_rows, cols).map do |line|
-            line.empty? ? line : tint(state, "#{DIM}#{line}#{PLAIN}")
+            line.empty? ? line : "#{DIM}#{line}#{PLAIN}"
           end
-          face[-transcript_rows, transcript_rows] = transcript if face.length >= transcript_rows
 
-          body = face.first(content_rows)
-          body << "#{DIM}#{status(state)[0, cols]}#{PLAIN}"
-          body << typed(draft, cols)
+          body = [
+            "face0 at master0: #{state}#{@ear.available? ? " · mic on" : " · mic off"}",
+            *face.first(content_rows).map { |line| center_line(line, cols) },
+            *transcript,
+            "#{DIM}#{status(state)[0, cols]}#{PLAIN}",
+            typed(draft, cols)
+          ]
           body = body.first(rows)
           body += Array.new(rows - body.length, "") if body.length < rows
 
@@ -406,6 +409,11 @@ module Master
         def typed(draft, cols)
           line = "#{Master::Face::Contract.user_token} #{draft}"
           line.length > cols ? line[-cols..] : line
+        end
+
+        def center_line(line, cols)
+          visible = line.to_s.gsub(/\e\[[0-9;?]*[ -\/]*[@-~]/, "").length
+          line.to_s.rjust(line.to_s.length + [(cols - visible) / 2, 0].max)
         end
 
         # The last rows of the words, wrapped to the window and padded so the
