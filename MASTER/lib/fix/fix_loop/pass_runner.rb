@@ -118,7 +118,7 @@ module Master
         end
 
         def run_pass(files:, target:, pass:, deadline:, transaction_id:, history:, seen_snapshots:,
-                     recurring_violations:, consecutive_clean:, wishlist_proposals: [])
+                     recurring_violations:, consecutive_clean:, wishlist_proposals: [], run_id: nil)
           pass_mtimes = mtimes(files)
           @pass_progress = false
           @coverage_reporter&.call(target, pass)
@@ -137,7 +137,7 @@ module Master
 
           # A reload skips the rule stage: it would ask the model about the whole
           # scan on code that is already out of date.
-          dispatch_llm_stages(unstreamed(found, streamed), files, pass, deadline, visual) unless CodeWatch.requested?
+          dispatch_llm_stages(unstreamed(found, streamed), files, pass, deadline, visual, run_id:) unless CodeWatch.requested?
           delivered = deliver_pass(found, files, pass)
           return delivered unless CodeWatch.requested? && delivered.status == :continue
 
