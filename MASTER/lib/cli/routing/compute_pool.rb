@@ -16,7 +16,7 @@ module Master
       # quality and latency. Free/local lanes are not hard-coded winners: they
       # win when their measured utility is actually better.
       class ComputePool
-        include Master::Io::AtomicWrite
+        include ::Master::Io::AtomicWrite
         Candidate = Struct.new(:id, :quality, :speed, :cost, :context_window,
           :availability, :tool_support, :success_rate, :latency_factor, :score,
           keyword_init: true)
