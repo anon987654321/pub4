@@ -23,8 +23,9 @@ end
 ok = run("contracts", RbConfig.ruby, File.join(ROOT, "test", "run_all.rb"))
 
 APPS.each do |app|
-  ok &&= run(app, RbConfig.ruby, File.join(ROOT, app, "bin", "ci"), chdir: File.join(ROOT, app),
-              env: { "PUB4_CI_APP" => app })
+  app_ok = run(app, RbConfig.ruby, File.join(ROOT, app, "bin", "ci"), chdir: File.join(ROOT, app),
+               env: { "PUB4_CI_APP" => app })
+  ok &&= app_ok
 end
 
 exit(ok ? 0 : 1)

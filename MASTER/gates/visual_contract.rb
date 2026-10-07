@@ -70,6 +70,13 @@ module VisualContractGate
 
   module_function
 
+  def normalize_drift_max(value)
+    number = Float(value, exception: false)
+    return number if number&.finite? && number.between?(0.0, 1.0)
+
+    raise ArgumentError, "VISUAL_DRIFT_MAX_RATIO must be finite and between 0 and 1"
+  end
+
   def volatile_selectors = Array(YAML.safe_load_file(SURFACES)["volatile_selectors"])
 
   # One stylesheet appended after load, so every match is hidden however late
@@ -130,6 +137,7 @@ module VisualContractGate
   #           GateResult's soft failures.
   #   drift — reported always; a rolling baseline makes any intended change drift.
   def grade(results, strict: false, drift_max: nil)
+    drift_max = normalize_drift_max(drift_max) unless drift_max.nil?
     hard = []
     soft = []
 
@@ -295,7 +303,9 @@ File.write(path, JSON.pretty_generate(generated_at: Time.now.utc.iso8601, result
 verdict = VisualContractGate.grade(
   results,
   strict: %w[1 true yes on].include?(ENV["VISUAL_STRICT"].to_s.strip.downcase),
-  drift_max: Float(ENV.fetch("VISUAL_DRIFT_MAX_RATIO", DEFAULT_DRIFT_MAX_RATIO))
+  drift_max: VisualContractGate.normalize_drift_max(
+    ENV.fetch("VISUAL_DRIFT_MAX_RATIO", DEFAULT_DRIFT_MAX_RATIO)
+  )
 )
 
 # Nothing navigated, so nothing was compared. `grade` already skips a row whose

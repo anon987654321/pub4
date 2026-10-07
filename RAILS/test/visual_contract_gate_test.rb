@@ -74,6 +74,15 @@ class VisualContractGateTest < Minitest::Test
     assert_empty VisualContractGate.grade([row(state: :public, status: nil)])[:hard]
   end
 
+  def test_drift_budget_must_be_finite_and_bounded
+    assert_equal 0.25, VisualContractGate.normalize_drift_max("0.25")
+
+    %w[-0.01 1.01 NaN Infinity -Infinity garbage].each do |value|
+      assert_raises(ArgumentError, value) { VisualContractGate.normalize_drift_max(value) }
+    end
+  end
+
+
   def test_accessibility_and_console_are_soft_until_strict
     rows = [row(state: :public, status: 200, a11y: %w[image_without_alt], console: ["boom"])]
 
