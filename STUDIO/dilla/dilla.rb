@@ -44479,7 +44479,7 @@ def live!(argv)
     ENV["DILLA_SHOWCASE_LOOP"] = "1"
     ENV["DILLA_SHOWCASE_ONCE"] = "0"
     ENV["DILLA_SHOWCASE_VIDEO"] = "0"
-    ENV["DILLA_SHOWCASE_OUT"] ||= File.join(Dir.tmpdir, "dilla-live.wav")
+    ENV["DILLA_SHOWCASE_OUT"] = File.join(Dir.tmpdir, "dilla-live-#{Process.pid}.wav")
     require_relative "lib/livesets"
     LiveSynth.main(["showcase", "mode=all"])
     return
