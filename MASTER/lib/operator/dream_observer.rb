@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 require "yaml"
+require "fileutils"
+require "rbconfig"
+require "time"
 require_relative "sprawl_census"
 
 module Master
@@ -44,7 +47,7 @@ module Master
       end
 
       def add_sprawl(items, root)
-        census = Operator::SprawlCensus
+        census = ::Operator::SprawlCensus
         counts = census.counts
         ceiling = census.ceilings
         counts.each do |kind, count|
