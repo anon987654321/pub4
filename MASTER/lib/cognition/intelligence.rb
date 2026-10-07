@@ -174,6 +174,13 @@ module Master
             consequence: hypothesis,
             next_step: selected || measurement,
           ),
+          "counterfactual" => counterfactual_frame(
+            hypothesis: hypothesis,
+            alternative: Array(alternatives).first || "preserve current behavior",
+            boundary: source,
+            measurement: measurement,
+            expected_difference: "the next measurement should distinguish the chosen path from the preserved path",
+          ),
         ).freeze
       end
 
