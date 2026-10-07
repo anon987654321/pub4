@@ -7,6 +7,7 @@ module RadioVideo
   ROOT = File.expand_path("../../..", __dir__)
   DILLA_ROOT = File.expand_path("..", __dir__)
   RADIO_TUNNEL = File.join(ROOT, "RAILS", "brgen", "app", "javascript", "radio_brgen_tunnel.js")
+  THREE_MODULE = File.join(ROOT, "MASTER", "web", "public", "three.face.module.js")
   DEFAULT_AUDIO = File.join(DILLA_ROOT, "dilla.wav")
   DEFAULT_OUTPUT = File.join(DILLA_ROOT, "dilla.mp4")
   WIDTH = 720
@@ -25,6 +26,7 @@ module RadioVideo
 
     abort "video: missing #{input} — run dilla showcase first" unless File.file?(input) && File.size?(input)
     abort "video: BRGEN radio tunnel is missing at #{RADIO_TUNNEL}" unless File.file?(RADIO_TUNNEL)
+    abort "video: Three.js bundle is missing at #{THREE_MODULE}; run web assets:build first" unless File.file?(THREE_MODULE)
 
     browser = browser_path or abort "video: no Chrome/Chromium browser found"
     ffmpeg = executable("ffmpeg") or abort "video: ffmpeg is required"
@@ -34,6 +36,7 @@ module RadioVideo
     server = Server.new(
       audio: input,
       tunnel: RADIO_TUNNEL,
+      three_module: THREE_MODULE,
       html: page_html(seconds),
       output: capture
     )
@@ -151,52 +154,178 @@ module RadioVideo
         <meta charset="utf-8">
         <meta name="viewport" content="width=#{WIDTH},height=#{HEIGHT},initial-scale=1">
         <style>
-          html, body { margin: 0; padding: 0; width: #{WIDTH}px; height: #{HEIGHT}px; background: #000; overflow: hidden; }
+          :root { color-scheme: dark; }
+          html, body { margin: 0; padding: 0; width: #{WIDTH}px; height: #{HEIGHT}px; background: #07080b; overflow: hidden; }
           canvas { display: block; width: #{WIDTH}px; height: #{HEIGHT}px; }
-          .brand {
-            position: fixed;
-            top: 24px;
-            left: 26px;
-            z-index: 10;
-            color: rgba(220,220,220,.84);
-            font: 600 20px/1 system-ui,-apple-system,"Segoe UI",sans-serif;
-            letter-spacing: .02em;
-            text-shadow: 0 1px 8px rgba(0,0,0,.55);
-            pointer-events: none;
-            user-select: none;
+          .hud {
+            position: fixed; inset: 0; pointer-events: none; user-select: none;
+            color: rgba(230,234,236,.78); font: 500 13px/1.35 ui-monospace, SFMono-Regular, Menlo, monospace;
+            letter-spacing: .16em; text-transform: uppercase;
           }
+          .title { position:absolute; top:28px; left:32px; }
+          .state { position:absolute; right:30px; bottom:28px; text-align:right; }
+          .rule { position:absolute; left:32px; right:32px; bottom:22px; height:1px; background:rgba(210,214,218,.16); }
+          .title strong { font-weight:700; color:rgba(244,238,223,.92); }
         </style>
-        <script type="importmap">
-        {
-          "imports": {
-            "pub4/visual_field": "/visual_field.js"
-          }
-        }
-        </script>
       </head>
       <body>
-        <canvas id="radio-canvas" aria-label="Radio Bergen visualizer"></canvas>
+        <canvas id="architectural-score" width="#{WIDTH}" height="#{HEIGHT}"></canvas>
+        <div class="hud">
+          <div class="title"><strong>DILLA TIME</strong><br>LIVE ARCHITECTURE / THREE.JS</div>
+          <div class="state" id="state">HARMONY / POCKET / SPACE</div>
+          <div class="rule"></div>
+        </div>
         <audio id="audio" preload="auto"></audio>
         <script type="module">
-          import { VisualEngine } from "/radio_brgen_tunnel.js"
+          import * as THREE from "/three.face.module.js"
 
           const audio = document.getElementById("audio")
-          const canvas = document.getElementById("radio-canvas")
+          const canvas = document.getElementById("architectural-score")
+          const state = document.getElementById("state")
+          const width = #{WIDTH}
+          const height = #{HEIGHT}
           const limit = #{seconds}
 
-          audio.src = "/audio.wav"
-          const context = new (window.AudioContext || window.webkitAudioContext)()
-          const source = context.createMediaElementSource(audio)
-          const analyser = context.createAnalyser()
+          const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: "high-performance" })
+          renderer.setSize(width, height, false)
+          renderer.setPixelRatio(1)
+          renderer.setClearColor(0x07080b, 1)
+          if ("outputColorSpace" in renderer && THREE.SRGBColorSpace) renderer.outputColorSpace = THREE.SRGBColorSpace
+          if ("toneMapping" in renderer && THREE.ACESFilmicToneMapping) {
+            renderer.toneMapping = THREE.ACESFilmicToneMapping
+            renderer.toneMappingExposure = 1.0
+          }
+
+          const scene = new THREE.Scene()
+          scene.fog = new THREE.FogExp2(0x07080b, 0.031)
+          const camera = new THREE.PerspectiveCamera(39, width / height, 0.1, 90)
+          camera.position.set(0, 4.6, 18.5)
+
+          const hemi = new THREE.HemisphereLight(0xc8d0d4, 0x080a0d, 0.85)
+          scene.add(hemi)
+          const key = new THREE.DirectionalLight(0xf0e8d5, 1.65)
+          key.position.set(4, 10, 7)
+          scene.add(key)
+          const rim = new THREE.PointLight(0x46658a, 2.1, 42)
+          rim.position.set(-7, 5, -8)
+          scene.add(rim)
+
+          const concrete = new THREE.MeshStandardMaterial({ color: 0x8d9194, roughness: 0.78, metalness: 0.12 })
+          const graphite = new THREE.MeshStandardMaterial({ color: 0x1a1e24, roughness: 0.62, metalness: 0.34 })
+          const brass = new THREE.MeshStandardMaterial({ color: 0xb79b61, roughness: 0.42, metalness: 0.62, emissive: 0x2b210f, emissiveIntensity: 0.55 })
+          const blue = new THREE.MeshStandardMaterial({ color: 0x29466a, roughness: 0.5, metalness: 0.4, emissive: 0x0b1830, emissiveIntensity: 0.8 })
+          const lineMat = new THREE.LineBasicMaterial({ color: 0xc8b890, transparent: true, opacity: 0.32 })
+          const glowMat = new THREE.MeshBasicMaterial({ color: 0xc8b890, transparent: true, opacity: 0.45 })
+          const darkLine = new THREE.LineBasicMaterial({ color: 0x52616f, transparent: true, opacity: 0.28 })
+
+          const floor = new THREE.Mesh(new THREE.PlaneGeometry(34, 74), new THREE.MeshStandardMaterial({
+            color: 0x0b0e12, roughness: 0.92, metalness: 0.08
+          }))
+          floor.rotation.x = -Math.PI / 2
+          floor.position.set(0, -0.08, -13)
+          scene.add(floor)
+
+          const grid = new THREE.GridHelper(34, 34, 0x343a42, 0x171b21)
+          grid.position.set(0, 0, -13)
+          grid.material.transparent = true
+          grid.material.opacity = 0.48
+          scene.add(grid)
+
+          const plinth = new THREE.Mesh(new THREE.BoxGeometry(11.8, 0.55, 34), graphite)
+          plinth.position.set(0, 0.18, -11)
+          scene.add(plinth)
+
+          const nave = new THREE.Group()
+          scene.add(nave)
+
+          const bays = 12
+          const columns = []
+          for (let i = 0; i < bays; i++) {
+            const z = 8 - i * 2.55
+            const x = 5.15
+            for (const side of [-1, 1]) {
+              const column = new THREE.Mesh(new THREE.BoxGeometry(0.58, 6.0, 0.58), concrete)
+              column.position.set(side * x, 3.0, z)
+              nave.add(column)
+              columns.push({ mesh: column, side, index: i })
+            }
+            const beam = new THREE.Mesh(new THREE.BoxGeometry(11.15, 0.28, 0.42), concrete)
+            beam.position.set(0, 6.1, z)
+            nave.add(beam)
+          }
+
+          const roof = new THREE.Mesh(new THREE.BoxGeometry(12.2, 0.22, 31.0), graphite)
+          roof.position.set(0, 6.35, -6.2)
+          nave.add(roof)
+
+          const aisle = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.18, 30), brass)
+          aisle.position.set(0, 0.55, -6.8)
+          nave.add(aisle)
+
+          const vaults = []
+          for (let row = 0; row < 9; row++) {
+            const z = 6.2 - row * 3.1
+            const points = []
+            for (let i = 0; i <= 36; i++) {
+              const t = i / 36
+              const x = -5.0 + t * 10.0
+              const arch = Math.sin(t * Math.PI)
+              points.push(new THREE.Vector3(x, 6.1 + arch * 2.2, z))
+            }
+            const geo = new THREE.BufferGeometry().setFromPoints(points)
+            const line = new THREE.Line(geo, lineMat.clone())
+            vaults.push(line)
+            scene.add(line)
+          }
+
+          const atrium = new THREE.Group()
+          atrium.position.set(0, 3.1, -5.0)
+          scene.add(atrium)
+
+          const core = new THREE.Mesh(new THREE.CylinderGeometry(1.55, 2.0, 0.48, 64), brass)
+          core.rotation.x = Math.PI / 2
+          atrium.add(core)
+
+          const ring = new THREE.Mesh(new THREE.TorusGeometry(2.15, 0.06, 10, 96), glowMat)
+          ring.rotation.x = Math.PI / 2
+          atrium.add(ring)
+
+          const ring2 = new THREE.Mesh(new THREE.TorusGeometry(3.05, 0.035, 8, 96), new THREE.MeshBasicMaterial({
+            color: 0x617a96, transparent: true, opacity: 0.22
+          }))
+          ring2.rotation.x = Math.PI / 2
+          atrium.add(ring2)
+
+          const scoreBars = []
+          for (let i = 0; i < 16; i++) {
+            const bar = new THREE.Mesh(new THREE.BoxGeometry(0.11, 2.1, 0.11), blue)
+            const angle = (i / 16) * Math.PI * 2
+            bar.position.set(Math.cos(angle) * 3.75, 0.9, Math.sin(angle) * 3.75)
+            atrium.add(bar)
+            scoreBars.push(bar)
+          }
+
+          const orbit = new THREE.Group()
+          scene.add(orbit)
+          for (let i = 0; i < 8; i++) {
+            const angle = (i / 8) * Math.PI * 2
+            const slab = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.18, 7.8), concrete)
+            slab.position.set(Math.cos(angle) * 8.5, 0.2, Math.sin(angle) * 8.5 - 8)
+            slab.rotation.y = angle
+            orbit.add(slab)
+          }
+
+          const analyser = new (window.AudioContext || window.webkitAudioContext)().createAnalyser()
           analyser.fftSize = 2048
-          analyser.smoothingTimeConstant = 0.58
+          analyser.smoothingTimeConstant = 0.72
+          const context = analyser.context
+          const source = context.createMediaElementSource(audio)
           const destination = context.createMediaStreamDestination()
           source.connect(analyser)
           analyser.connect(destination)
-
           const bins = new Uint8Array(analyser.frequencyBinCount)
           const previous = new Uint8Array(analyser.frequencyBinCount)
-          const visual = new VisualEngine(canvas)
+
           const videoStream = canvas.captureStream(#{FPS})
           const stream = new MediaStream([
             ...videoStream.getVideoTracks(),
@@ -209,65 +338,89 @@ module RadioVideo
             "video/webm"
           ]
           const mimeType = mimeTypes.find((type) => MediaRecorder.isTypeSupported(type))
-          if (!mimeType) {
-            await fetch("/fail", { method: "POST", body: "MediaRecorder WebM unavailable" })
-            throw new Error("MediaRecorder WebM unavailable")
-          }
+          if (!mimeType) throw new Error("MediaRecorder WebM unavailable")
 
-          const chunks = []
           const recorder = new MediaRecorder(stream, {
             mimeType,
-            videoBitsPerSecond: 4_000_000,
-            audioBitsPerSecond: 128_000
+            videoBitsPerSecond: 8_000_000,
+            audioBitsPerSecond: 192_000
           })
-
-          const bandData = () => {
-            analyser.getByteFrequencyData(bins)
-            const len = bins.length
-            const bassEnd = Math.max(1, Math.floor(len * 0.012))
-            const midEnd = Math.max(bassEnd + 1, Math.floor(len * 0.09))
-            let bassSum = 0
-            let midSum = 0
-            let highSum = 0
-            let fluxSum = 0
-            for (let i = 0; i < len; i++) {
-              const value = bins[i]
-              fluxSum += Math.max(0, value - previous[i])
-              previous[i] = value
-              if (i < bassEnd) bassSum += value
-              else if (i < midEnd) midSum += value
-              else highSum += value
-            }
-            const bass = Math.min(1, bassSum / bassEnd / 255)
-            const mid = Math.min(1, (midSum / (midEnd - bassEnd) / 255) * 0.8)
-            const high = Math.min(1, (highSum / (len - midEnd) / 255) * 2.6 * 0.6)
-            const average = (bass + mid + high) / 3
-            const flux = Math.min(1, (fluxSum / len / 255) * 5)
-            return { bass, mid, high, average, beat: flux, flux }
-          }
-
-          let raf
-          const draw = () => {
-            try {
-              visual.update(bandData())
-              visual.render()
-            } catch (error) {
-              console.warn("dilla-video visual frame", error)
-            }
-            raf = requestAnimationFrame(draw)
-          }
-
-          let finished = false
-          const finish = () => {
-            if (finished) return
-            finished = true
-            cancelAnimationFrame(raf)
-            audio.pause()
-            if (recorder.state !== "inactive") recorder.stop()
-          }
-
+          const chunks = []
           recorder.ondataavailable = (event) => {
             if (event.data.size) chunks.push(event.data)
+          }
+
+          function bands() {
+            analyser.getByteFrequencyData(bins)
+            let bass = 0, mid = 0, high = 0, flux = 0
+            const bassEnd = Math.max(2, Math.floor(bins.length * 0.018))
+            const midEnd = Math.max(bassEnd + 1, Math.floor(bins.length * 0.15))
+            for (let i = 0; i < bins.length; i++) {
+              const v = bins[i]
+              flux += Math.max(0, v - previous[i])
+              previous[i] = v
+              if (i < bassEnd) bass += v
+              else if (i < midEnd) mid += v
+              else high += v
+            }
+            bass = Math.min(1, bass / bassEnd / 255 * 1.55)
+            mid = Math.min(1, mid / (midEnd - bassEnd) / 255 * 1.15)
+            high = Math.min(1, high / (bins.length - midEnd) / 255 * 3.0)
+            flux = Math.min(1, flux / bins.length / 255 * 7.0)
+            return { bass, mid, high, flux }
+          }
+
+          const draw = () => {
+            const a = bands()
+            const t = performance.now() * 0.001
+            const pulse = Math.min(1, a.flux * 1.4 + a.bass * 0.35)
+
+            camera.position.x = Math.sin(t * 0.075) * 2.8 + Math.sin(t * 0.019) * 1.1
+            camera.position.y = 4.2 + Math.sin(t * 0.11) * 0.7 + a.mid * 0.9
+            camera.position.z = 18.0 - Math.min(5.5, audio.currentTime * 0.07) + Math.sin(t * 0.041) * 1.8
+            camera.lookAt(0, 3.0 + a.bass * 0.45, -6.0)
+
+            rim.intensity = 1.6 + a.high * 4.5
+            key.intensity = 1.35 + a.mid * 1.2
+            ring.scale.setScalar(1.0 + pulse * 0.24)
+            ring.material.opacity = 0.32 + pulse * 0.45
+            core.rotation.z = t * 0.13
+            core.scale.y = 1.0 + a.bass * 0.28
+            atrium.rotation.y = t * 0.045 + a.high * 0.08
+            orbit.rotation.y = t * 0.012
+
+            columns.forEach(({ mesh, side, index }) => {
+              const local = Math.sin(t * 0.43 + index * 0.62 + side * 0.35)
+              const lift = 0.22 + a.mid * 0.75 + Math.max(0, local) * 0.18
+              mesh.scale.y = 1.0 + lift
+              mesh.position.y = 3.0 + (mesh.scale.y - 1) * 3.0
+              mesh.material.emissiveIntensity = 0.12 + a.high * 0.7
+            })
+
+            vaults.forEach((line, index) => {
+              const s = 0.7 + 0.15 * Math.sin(t * 0.35 + index) + a.high * 0.28
+              line.scale.y = s
+              line.material.opacity = 0.18 + a.mid * 0.28
+            })
+
+            scoreBars.forEach((bar, index) => {
+              const r = 0.74 + a.bass * 0.8 + a.high * 0.25
+              const local = 0.5 + 0.5 * Math.sin(t * 0.8 + index * 0.9)
+              bar.scale.y = 0.25 + r * (0.45 + local * 0.35)
+              bar.position.y = 0.9 + bar.scale.y * 0.55
+            })
+
+            state.textContent = `BASS ${Math.round(a.bass * 100)} / MID ${Math.round(a.mid * 100)} / AIR ${Math.round(a.high * 100)} — LIVE SCORE`
+            renderer.render(scene, camera)
+            requestAnimationFrame(draw)
+          }
+
+          let stopped = false
+          const finish = () => {
+            if (stopped) return
+            stopped = true
+            audio.pause()
+            if (recorder.state !== "inactive") recorder.stop()
           }
 
           recorder.onstop = async () => {
@@ -279,13 +432,15 @@ module RadioVideo
           audio.addEventListener("ended", finish, { once: true })
           audio.addEventListener("loadedmetadata", async () => {
             await context.resume()
-            audio.currentTime = 0
-            recorder.start()
+            recorder.start(1000)
             draw()
             await audio.play()
             const duration = limit > 0 ? Math.min(limit, audio.duration) : audio.duration
             window.setTimeout(finish, Math.max(0.1, duration) * 1000)
           }, { once: true })
+
+          audio.src = "/audio.wav"
+          audio.load()
         </script>
       </body>
       </html>
@@ -295,9 +450,10 @@ module RadioVideo
   class Server
     attr_reader :port
 
-    def initialize(audio:, tunnel:, html:, output:)
+    def initialize(audio:, tunnel:, three_module:, html:, output:)
       @audio = audio
       @tunnel = tunnel
+      @three_module = three_module
       @html = html
       @output = output
       @server = TCPServer.new("127.0.0.1", 0)
@@ -369,6 +525,8 @@ module RadioVideo
         respond(client, 200, "text/html; charset=utf-8", @html)
       when ["GET", "/radio_brgen_tunnel.js"]
         respond_file(client, @tunnel, "text/javascript; charset=utf-8")
+      when ["GET", "/three.face.module.js"]
+        respond_file(client, @three_module, "text/javascript; charset=utf-8")
       when ["GET", "/visual_field.js"]
         respond(client, 200, "text/javascript; charset=utf-8", "export function publishVisual() {}")
       when ["GET", "/audio.wav"]
