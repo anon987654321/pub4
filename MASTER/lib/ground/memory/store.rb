@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require "digest"
+require "json"
+
 module Master
   module Ground
     class Memory
@@ -18,18 +21,52 @@ module Master
           import_external!
         end
 
-        def remember(key, value, type: "general", source: nil, confidence: 0.5)
+        def remember(key, value, type: "general", source: nil, confidence: 0.5, embed: true)
           type = TYPES.include?(type.to_s) ? type.to_s : "general"
           source ||= caller_source
           confidence = confidence.to_f.clamp(0.0, 1.0)
           @mutex.synchronize do
             prune_stale! if @store.size > CONSOLIDATE_THRESHOLD
             previous = @store[key.to_s]
-            entry = entry_for(key:, value:, type:, source:, confidence:)
+            entry = entry_for(key:, value:, type:, source:, confidence:, embed:)
             record_conflict!(key.to_s, previous, entry) if conflicting_entry?(key.to_s, previous, entry)
             @store[key.to_s] = entry
             persist
           end
+        end
+
+        # Structured reasoning shares the durable memory store but skips
+        # embedding: causal frames are control data, not semantic documents.
+        def remember_reasoning(frame, key: nil)
+          row = frame.respond_to?(:to_h) ? frame.to_h : frame
+          return unless row.is_a?(Hash) && !row.empty?
+
+          payload = JSON.generate(stringify_keys(row))
+          digest = Digest::SHA256.hexdigest(payload)[0, 12]
+          memory_key = key.to_s.empty? ? "reasoning/#{Time.now.to_i}-#{digest}" : key.to_s
+          remember(
+            memory_key,
+            payload,
+            type: "reasoning",
+            source: "cognition:intelligence",
+            confidence: row[:confidence] || row["confidence"] || 0.5,
+            embed: false,
+          )
+          memory_key
+        end
+
+        def reasoning(limit: 8)
+          rows = by_type("reasoning").filter_map do |key, entry|
+            body = entry.is_a?(Hash) ? entry["value"] : entry
+            parsed = JSON.parse(body.to_s)
+            parsed.merge("_key" => key, "_ts" => entry.is_a?(Hash) ? entry["ts"].to_i : 0)
+          rescue JSON::ParserError
+            nil
+          end
+          rows.sort_by { |row| -row["_ts"].to_i }.first(limit.to_i)
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "memory.reasoning")
+          []
         end
 
         def provenance(key)
@@ -94,7 +131,7 @@ module Master
           @mutex.synchronize { @store_version }
         end
 
-        def entry_for(key:, value:, type:, source:, confidence:)
+        def entry_for(key:, value:, type:, source:, confidence:, embed: true)
           ts = Time.now.to_i
           entry = {
             "value" => value.to_s,
@@ -106,8 +143,21 @@ module Master
               "confidence" => confidence,
             },
           }
-          entry["vec"] = vec if (vec = Review::Embeddings.embed("#{key} #{value}"))
+          entry["vec"] = vec if embed && (vec = Review::Embeddings.embed("#{key} #{value}"))
           entry
+        end
+
+        def stringify_keys(value)
+          case value
+          when Hash
+            value.each_with_object({}) { |(key, item), out| out[key.to_s] = stringify_keys(item) }
+          when Array
+            value.map { |item| stringify_keys(item) }
+          when Symbol
+            value.to_s
+          else
+            value
+          end
         end
 
         def caller_source
