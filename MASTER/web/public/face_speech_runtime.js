@@ -49,6 +49,38 @@ function beep(freq, dur) {
   o.start(); o.stop(actx.currentTime + dur);
 }
 
+function bootChime() {
+  if (!actx || document.documentElement.dataset.masterBootChime === '1') return;
+  document.documentElement.dataset.masterBootChime = '1';
+  const notes = [261.63, 329.63, 392.0, 523.25];
+  const start = actx.currentTime + 0.03;
+  notes.forEach((freq, index) => {
+    const carrier = actx.createOscillator();
+    const modulator = actx.createOscillator();
+    const modDepth = actx.createGain();
+    const gain = actx.createGain();
+    carrier.type = 'square';
+    carrier.frequency.value = freq;
+    modulator.type = 'sine';
+    modulator.frequency.value = freq * 2;
+    modDepth.gain.value = freq * 0.06;
+    modulator.connect(modDepth);
+    modDepth.connect(carrier.frequency);
+    carrier.connect(gain);
+    gain.connect(actx.destination);
+    const t = start + index * 0.085;
+    gain.gain.setValueAtTime(0.0001, t);
+    gain.gain.exponentialRampToValueAtTime(0.045, t + 0.008);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.145);
+    modDepth.gain.setValueAtTime(freq * 0.06, t);
+    modDepth.gain.exponentialRampToValueAtTime(freq * 0.015, t + 0.11);
+    carrier.start(t);
+    modulator.start(t);
+    carrier.stop(t + 0.15);
+    modulator.stop(t + 0.15);
+  });
+}
+
 const LOW_POWER = (/SMART[-_ ]?TV|SmartTV|Tizen|Web0?S|HbbTV|VIDAA|NetCast|BRAVIA|Sharp|TCL|Hisense|Vizio|Roku|AppleTV|HiSilicon|MTK|AMLogic/i.test(navigator.userAgent) || (typeof navigator.hardwareConcurrency === "number" && navigator.hardwareConcurrency > 0 && navigator.hardwareConcurrency < 4));
 const tts = { lanes: { error: [], nudge: [], response: [] }, queue: [], prefetch: new Map(), attempts: new Map(), meta: new Map(), retryTimer: null, muted: false, playing: false, paused: false, loading: false, cancelToken: 0, current: null, audio: null, visemeTimer: null, serverUnavailable: false, serverUnavailableUntil: 0, serverFailureCount: 0, synthInFlight: 0, analyser: null, analyserBuf: null, analyserFreqBuf: null, pitchOffset: 0, lang: 'en', resumeTime: null, resumeWordIndex: null };
 const TTS_DB_NAME = 'master-tts-v1';
