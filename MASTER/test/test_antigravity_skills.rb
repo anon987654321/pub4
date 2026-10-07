@@ -129,6 +129,20 @@ class TestAntigravitySkills < Minitest::Test
     assert_equal File.expand_path("~/global"), config.resolve_path("~/global")
   end
 
+  def test_json_config_rejects_a_malformed_filter_without_raising
+    with_workspace do |root|
+      base = File.join(root, "base.json")
+      cfg = File.join(root, "skills.json")
+      File.write(base, JSON.generate({ "entries" => [{ "path" => "keep_me" }] }))
+      File.write(cfg, JSON.generate({
+        "inherits" => [{ "path" => "base.json", "include_only" => ["["] }],
+        "entries" => [],
+      }))
+
+      assert_empty Timeout.timeout(5) { A::JsonConfig.load(cfg, workspace_root: root) }
+    end
+  end
+
   def test_json_config_returns_nothing_for_unparseable_json
     with_workspace do |root|
       cfg = File.join(root, "skills.json")
