@@ -1327,3 +1327,7 @@ rule_ratchets:
   deps:
     # Existing debt is held as a measured ceiling and may only fall.
     ungraphed: 133
+
+fix_hygiene_policy:
+  source: data/fix_hygiene.yml
+  law: law/fix_hygiene.rb
