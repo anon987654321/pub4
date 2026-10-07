@@ -3,6 +3,7 @@
 require "fileutils"
 require "json"
 require "rubygems"
+require "time"
 require_relative "dependency_manager"
 require_relative "../trace/dmesg"
 require_relative "../operator/environment"
