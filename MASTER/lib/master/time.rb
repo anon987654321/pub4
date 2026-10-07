@@ -3,7 +3,7 @@
 module Master
   # One clock seam for wall-clock observations. Production uses the real clock;
   # tests can replace these methods without stubbing Ruby's global Time.
-  module Time
+  module Clock
     module_function
 
     def now = ::Time.now
