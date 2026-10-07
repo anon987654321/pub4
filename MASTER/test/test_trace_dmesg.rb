@@ -42,7 +42,7 @@ class TraceDmesgTest < Minitest::Test
     assert_equal law_banned, Master::Ground::Rules.new.data(:zsh).fetch("banned_commands").map(&:to_s)
   end
 
-  def test_injection_guard_falls_back_to_built_in_policy_when_catalogue_has_no_section
+  def test_injection_guard_uses_the_live_policy_for_prompt_injection
     guard = Master::Review::Security::InjectionGuard.new(mode: :permissive)
 
     assert guard.safe?("plain operator text")
