@@ -109,6 +109,18 @@ class TestAntigravitySkills < Minitest::Test
     end
   end
 
+  def test_json_config_rejects_a_malformed_inherited_filter
+    with_workspace do |root|
+      File.write(File.join(root, "base.json"),
+                 JSON.generate({ "entries" => [{ "path" => "keep_me" }] }))
+      cfg = File.join(root, "skills.json")
+      File.write(cfg, JSON.generate({ "inherits" => [{ "path" => "base.json",
+                                                       "include_only" => ["["] }] }))
+
+      assert_empty A::JsonConfig.load(cfg, workspace_root: root)
+    end
+  end
+
   def test_json_config_stops_on_an_inherits_cycle
     with_workspace do |root|
       a = File.join(root, "a.json")
@@ -178,6 +190,18 @@ class TestAntigravitySkills < Minitest::Test
       write_skill(File.join(base, "real"), "real")
 
       assert_equal %w[real], skills_for(root).discover!.map { |s| s[:name] }
+    end
+  end
+
+  def test_skills_rejects_a_malformed_declared_filter_without_aborting_discovery
+    with_workspace do |root|
+      pack = File.join(root, "pack")
+      write_skill(File.join(pack, "wanted"), "wanted")
+      FileUtils.mkdir_p(File.join(root, ".agents"))
+      File.write(File.join(root, ".agents", "skills.json"),
+                 JSON.generate({ "entries" => [{ "path" => "pack", "include_only" => ["["] }] }))
+
+      assert_empty skills_for(root).discover!
     end
   end
 
