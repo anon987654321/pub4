@@ -203,7 +203,7 @@ module Operator
 
     def rule_dependencies
       raw = Master.load_laws(root: MASTER)
-      deps = raw["rule_deps"] || {}
+      deps = raw["law_deps"] || {}
       return deps.transform_keys { |key| key.to_s.downcase }.transform_values { |value| Array(value).map(&:to_s) } if deps.is_a?(Hash)
 
       {}
