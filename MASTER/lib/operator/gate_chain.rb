@@ -97,6 +97,12 @@ module Operator
       return ["STUDIO"] if abs == File.join(ROOT, "STUDIO") || abs.start_with?("#{File.join(ROOT, "STUDIO")}/")
       return ["MASTER"] if abs == MASTER || abs.start_with?("#{MASTER}/")
 
+      # Gate targets like `lib/io` are MASTER-relative shorthand when the
+      # operator is invoked from the repository root. Keep the four-tree
+      # boundary strict while resolving that intentional CLI form first.
+      master_relative = File.expand_path(target.to_s, MASTER)
+      return ["MASTER"] if File.file?(master_relative) || File.directory?(master_relative)
+
       Master::Trace::Dmesg.status("gate0", "target outside pub4 trees, #{target}")
       raise ArgumentError, "target outside pub4 trees: #{target}"
     end
