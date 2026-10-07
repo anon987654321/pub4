@@ -156,3 +156,20 @@ dmesg       -> boot/event evidence
 ```
 
 The rule is simple: machinery does not grant authority merely because it can perform an operation. Authority is declared, reduced, observed and verified.
+## Operator execution modes
+
+Agent work carries one explicit execution mode derived before its first effect:
+`observe`, `plan`, `repair`, or `deploy`. The mode is stored inside the existing
+durable mission record and emitted on the existing event bus; it is not a second
+task ledger or policy source.
+
+`observe` is read-only, `plan` has read/model authority without mutation, `repair`
+uses the existing write/execute/network profile, and `deploy` is the critical
+profile used only by an explicit deployment path. Constitutional law, sandbox,
+evidence, checkpoints and verification remain the final authority and can only
+narrow or refuse an effect.
+
+OpenClaw-style Gateway ownership, Hermes-style durable objectives, Pi-style small
+agent boundaries, Deep Agents-style explicit modes, and Letta-style durable
+trajectories are therefore expressed through MASTER's existing operator, mission,
+skills and evidence surfaces rather than parallel frameworks.
