@@ -95,7 +95,7 @@ workstreams:
     implementation: MASTER/lib/core/memory
     proof: MASTER/test
   - id: model_laboratory
-    state: partial
+    state: landed
     title: Provider/model outcome history and routing evidence
     implementation: MASTER/lib/cli/routing
     proof: MASTER/lib/ai/trajectory
