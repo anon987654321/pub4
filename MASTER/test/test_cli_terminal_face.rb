@@ -28,26 +28,27 @@ class TestCliTerminalFace < Minitest::Test
     end
   end
 
-  def test_the_face_and_transcript_share_the_window
+  def test_the_face_owns_the_stage_and_control_strip
     painted = rows_of(window.screen(30, 80, 2.0)).values
     assert painted.any? { |text| text.match?(BRAILLE) }
-    assert painted.any? { |text| text.include?("/ FACE") }
-    assert painted.any? { |text| text.include?("enter sends") }
+    assert painted.any? { |text| text.include?("idle, mic on") }
+    refute painted.any? { |text| text.include?("/ FACE") }
+    refute painted.any? { |text| text.include?("recent") }
   end
 
   def test_every_row_of_the_window_is_painted
     assert_equal (1..30).to_a, rows_of(window.screen(30, 80, 2.0)).keys.sort
   end
 
-  def test_the_renderer_receives_the_content_height_and_face_column_width
+  def test_the_renderer_receives_the_controlled_height_and_full_width
     seen = nil
     renderer = ->(**kwargs) do
       seen = [kwargs.fetch(:rows), kwargs.fetch(:cols)]
       Array.new(seen.first, " " * seen.last).join("\n")
     end
     Master::CLI::Face.stub(:frame, renderer) { window.screen(30, 80, 2.0) }
-    assert_equal 28, seen.first
-    assert_operator seen.last, :<, 80
+    assert_equal 26, seen.first
+    assert_equal 80, seen.last
   end
 
   def test_motion_has_a_camera_dolly
@@ -66,13 +67,17 @@ class TestCliTerminalFace < Minitest::Test
     end
   end
 
-  def test_the_side_panel_keeps_recent_jobs
+  def test_the_control_strip_keeps_the_latest_transcript
     face = window
     5.times { |i| face.send(:note_job, ["job #{i}"]) }
     text = rows_of(face.screen(30, 80, 2.0)).values.join("\n")
     assert_includes text, "job 4"
     assert_includes text, "job 2"
     refute_includes text, "job 0"
+  end
+
+  def test_typed_input_uses_the_user_token
+    assert_equal "$ hello", window.send(:typed, "hello", 80)
   end
 
   def test_a_failed_turn_does_not_start_picture_work
