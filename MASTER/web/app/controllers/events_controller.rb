@@ -14,9 +14,9 @@ require Rails.root.join("../lib/device/wake_signal").to_s
 class EventsController < ApplicationController
   include ActionController::Live
 
-  QUEUE_CAP          = 256
-  KEEPALIVE_EVERY_S  = 15.0  # SSE comment cadence — long enough to be silent, short enough to keep proxies happy
-  MAX_STREAM_S       = 600   # hard cap — 10 minute stream ceiling
+  QUEUE_CAP = 256
+  KEEPALIVE_EVERY_S = 15.0  # SSE comment cadence — long enough to be silent, short enough to keep proxies happy
+  MAX_STREAM_S = 600   # hard cap — 10 minute stream ceiling
   # The face needs a bounded set of signals, not the whole bus. Keeping this
   # list surface-specific avoids sending unrelated/background events to every
   # open browser.
