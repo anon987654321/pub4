@@ -42,7 +42,7 @@ export default class extends Controller {
     if (this.mode === "carousel" && !this.gallery) return
     if (this.mode === "queue" && !this.hasListenUrlValue) return
     this.isDragging = true
-    this.startX = e.clientX || (e.touches && e.touches[0].clientX) || 0
+    this.startX = e.clientX ?? (e.touches && e.touches[0].clientX) ?? 0
     if (this.currentCard) this.currentCard.classList.add("dragging")
     if (this.gallery) this.gallery.classList.add("dragging")
     e.preventDefault()
@@ -50,7 +50,7 @@ export default class extends Controller {
 
   pointerMove(e) {
     if (!this.isDragging) return
-    const clientX = e.clientX || (e.touches && e.touches[0].clientX) || 0
+    const clientX = e.clientX ?? (e.touches && e.touches[0].clientX) ?? 0
     this.currentX = clientX - this.startX
 
     if (this.mode === "carousel" && this.gallery) {
