@@ -2,7 +2,7 @@
 
 require "fileutils"
 require "json"
-require "open3"
+require_relative "io/exec"
 require "time"
 require "socket"
 require "timeout"
@@ -82,7 +82,7 @@ module Master
         holders = lock_holders(path)
         return false if holders.nil? || holders.empty?
 
-        out, status = Open3.capture2("ps", "-ax", "-o", "pid=,ppid=,pgid=,command=")
+        out, status = Io::Exec.capture2("ps", "-ax", "-o", "pid=,ppid=,pgid=,command=", timeout: Io::Exec::DEFAULT_TIMEOUT)
         return false unless status.success?
 
         rows = out.lines.filter_map do |line|
@@ -159,7 +159,7 @@ module Master
         end
         return nil unless lsof
 
-        out, status = Open3.capture2(lsof, "-t", path)
+        out, status = Io::Exec.capture2(lsof, "-t", path, timeout: Io::Exec::DEFAULT_TIMEOUT)
         return nil unless status.success? || status.exitstatus == 1
 
         out.lines.filter_map { |line| Integer(line.strip, exception: false) }.uniq.reject { |pid| pid == Process.pid }
