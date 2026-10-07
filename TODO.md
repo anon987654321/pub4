@@ -681,43 +681,26 @@ call, and the operator's. The pass's doctrine lives in `WIRING_NOTES.md`.
 
 ---
 
-## The detection audit's remains — opened 2026-10-03
+## Detection audit — reconciled 2026-10-07
 
-What the 2026-10-03 violation-detection audit found beyond what was fixed the
-same day. Fixed first: the two RAILS-prefixed css_budget joins, the
-unreadable-ratchet verdict, the css brace-balance gate (first finding was
-face.css's unclosed `#primer`), the /fix verification tail proving against a
-scan-only lexical stage, and the view-surface writer's dead `RAILS/gates` path.
+The 2026-10-03 audit is retained as archaeology, but its first four source findings
+are now closed by the current executable tree:
 
-- **The `rules:` key is a void six readers read.** `data/laws.yml` has sections
-  (`laws:`, `design_system:`, ...), no top-level `rules:` — but
-  `lib/master.rb:188`, `lib/ground/rules.rb:139`, `tools/rule_reach.rb`,
-  `lib/review/scan/self_test.rb:394`, `rule_registry_audit.rb:158` and
-  `yaml_bridge_rules.rb:109` all `fetch("rules", {})`. Verified live:
-  `Master.rule_count` → 0, `rule_reach --json` → all zeros, and the design_system
-  thresholds arrive as `{}` with silent hardcoded fallbacks (`lib/design.rb:100-167`).
-  Fixing this alone revives the eleven KeyError-dead rule-hygiene ratchet rows and
-  makes `rule_reach` the census it was built to be.
-- **Three CDP probes are registered in no ladder** — `gates/tap_target_probe.rb`,
-  `face_capture_probe.rb`, `focus_walk_probe.rb` are manual-only instruments. Register
-  them as gates.yml rows or fold their assertions into reflow.
-- **Generated-bundle staleness is proved for one of four face bundles**
-  (`test_web_ui.rb:733-770` covers only face.runtime.js). Byte-compare the other three
-  the same way, or add a digest row.
-- **Face markup hooks CSS never styles** (probe against the face corpus: 19 used
-  class names, 3 undefined): `.brand-mark` / `.brand-text` render at
-  `chat/index.html.erb:105-108` with no rule anywhere (face.css styles
-  `.top-left-logo`, which the ERB does not write) — giving the wordmark styling is a
-  rendered-value decision and stays with the operator; and `.mic-indicator` carries no
-  rule and no reader, a naming hook with nothing hooked to it.
-- **css_coverage_lint has no MASTER/web surface**; the face corpus is small (the
-  probe above), so the lint's ratcheted baselines may absorb it — measure before
-  wiring, or keep the probe tool.
-- **No substitute adversarial reader for the dead council.** The council stage has
-  answered "Insufficient credits" and reported skipped, exit 3, since its provider
-  dried up; `bin/gate` refuses DeterministicFloor as a substitute by recorded
-  decision. If no council is coming back, decide who reads a fix adversarially after
-  the mechanical measurements.
+- the executable law census no longer reads a nonexistent top-level `rules:` key;
+  `Master.law_entries`, `RuleRegistryAudit` and `RuleReach` use the live Law
+  registry and current `data/laws.yml` sections;
+- `tap_target_probe`, `face_capture_probe`, and `focus_walk_probe` are now
+  first-class `MASTER/gates/gates.yml` browser-backed gates;
+- `face.runtime.js` has one explicit six-source build contract, with both Ruby and
+  Node regression tests checking that the generated runtime contains every source;
+- `.brand-mark`, `.brand-text`, and `.mic-indicator` have owned CSS and a browser
+  contract test.
+
+The CSS-coverage observation remains a measurement/operator concern rather than a
+missing MASTER/web gate, and the deterministic council floor remains an explicit
+design choice: it exists as `bin/council-floor` but is not silently substituted
+for a skipped paid/provider council. Those decisions are deliberately not promoted
+to false PASS.
 
 # 2026-10-07 single-sweep disposition
 
@@ -1448,8 +1431,9 @@ sound says so. Delete a row when it lands.
 - **27. MIDI export and speech** leave as self-contained pieces.
 - **28. One sequence runner** under demo, stream, showcase, album, setlist,
   live and the bed catalogue.
-- **29. `live` on that runner.** It is `ruby dilla.rb live` now, not yet on a
-  runner.
+- **29. `live` on that runner.** Closed 2026-10-07: `DillaLive` is the live
+  player path, `Livesets` hands its score to that player or `LIVE_OUT`, and
+  the live player has its own command and acceleration contract tests.
 - **30. Retire overlapping players**: `lib/sine_stream.rb` against `live`.
 - **31. Genres as parameters over one pipeline** (43 `render_*` methods); read
   all three techno renderers before merging them.
@@ -1827,15 +1811,18 @@ choose. Numbers are for citation, not for order.
     samples, fine at 120 000, bisected to the filter. The workaround is in
     `ambient_pads`; the boundary is unknown and the other sets sit on the wrong
     side of not knowing.
-96. **Every generator needs a seed** [cheap] — `anoisesrc` seeds from the clock.
-    One audit over the tree for unseeded sources would close the class rather than
-    the instance.
-97. **PRNG draw order is an interface** [cheap] — adding a `rand` above an
-    existing one silently invalidates every journalled seed. Nothing states this
-    and nothing tests it.
-98. **A/B by rendering, always** [cheap] — the kit change was verified by
-    rendering seed 777 against `HEAD` and comparing SHA256. That is the standard
-    and should be a script rather than a habit.
+96. **Every generator needs a seed** — closed 2026-10-07 at the Dilla source
+    level. All current ffmpeg `anoisesrc` call sites are explicitly seeded, and
+    `test_dilla_render_seed.rb` exercises the pinned seed paths and escaped draw
+    sites rather than trusting the setting's name.
+97. **PRNG draw order is an interface** — closed 2026-10-07 for Dilla. Seed
+    derivation is keyed by stable tags rather than global draw order, and the
+    render-pick regression test proves inserting another role between two picks
+    does not change the earlier role's result.
+98. **A/B by rendering, always** — partially automated. Seeded render-repeat
+    coverage now exists in `test_dilla_livesets.rb`; a generic operator A/B command
+    remains intentionally unimplemented because it needs a concrete comparison
+    policy rather than another generic framework.
 99. **Level-match before judging** [cheap] — the louder arm wins every informal
     comparison, and three of this session's comparisons needed a measured trim
     before they meant anything.
