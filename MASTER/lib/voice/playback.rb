@@ -676,8 +676,10 @@ module Master
       # A failed player is recoverable when the policy-mapped native voice exists.
       # Never bypass synthesis failure itself; fallback begins only after a player error.
       def play_or_fallback(path, text, generation:, voice: nil)
+        @lock.synchronize { @last_player_attempted = false }
         return true if play(path, generation:)
         return false unless generation_active?(generation)
+        return false if @lock.synchronize { @last_player_attempted }
 
         native_say(text, voice:)
       end
@@ -709,12 +711,14 @@ module Master
         return false unless generation_active?(generation)
 
         if Device::Audio.media_player_available?
+          @lock.synchronize { @last_player_attempted = true }
           return Device::Audio.play(path)
         end
 
         player_candidates(path).each do |name, args|
           break unless generation_active?(generation)
 
+          @lock.synchronize { @last_player_attempted = true }
           pid = Process.spawn(name, *args, path, **Master::Ops::ProcessSpawn.options(out: File::NULL, err: File::NULL))
           @lock.synchronize { @playing_pid = pid if generation_active?(generation) }
           begin
