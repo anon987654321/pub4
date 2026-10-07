@@ -35,7 +35,7 @@ class TestDocPaths < Minitest::Test
     ARCHITECTURE.md
     AGENTS.md
     GEMINI.md
-    .cursorrules
+    .cursorlaws
     .github/copilot-instructions.md
     MASTER/README.md
     MASTER/AGENTS.md
@@ -67,7 +67,7 @@ class TestDocPaths < Minitest::Test
   # block in MASTER/AGENTS.md. This asserts they exist and still point at the
   # law; rake lint:agent_contracts asserts they are byte-identical to it.
   HARNESS_FILES = %w[
-    AGENTS.md GEMINI.md .cursorrules .github/copilot-instructions.md
+    AGENTS.md GEMINI.md .cursorlaws .github/copilot-instructions.md
   ].freeze
 
   # Human documentation has one shape: README.md at the thing it documents.
