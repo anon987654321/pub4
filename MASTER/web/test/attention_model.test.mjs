@@ -31,6 +31,7 @@ function loadAttention(now = 0) {
   const attn = sandbox.window.MASTER.attention;
   return {
     attn,
+    window,
     advance: (ms) => { clock += ms; },
   };
 }
