@@ -130,8 +130,8 @@ class TestBootReceipt < Minitest::Test
     receipt = Receipt.build(root: Master::ROOT, agent:, memory:)
 
     assert_equal 4, receipt.fetch(:session).fetch(:memory_version)
-    assert_includes Receipt.lines(root: Master::ROOT), "receipt: session commit="
-    refute_includes Receipt.lines(root: Master::ROOT), "memory=4"
+    assert_includes Receipt.session_line(receipt.fetch(:session)), "memory=4"
+    refute Receipt.lines(root: Master::ROOT).any? { |line| line.start_with?("receipt: session ") }
   end
 
   def test_the_receipt_names_the_commit_it_booted_from
