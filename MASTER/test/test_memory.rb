@@ -150,6 +150,14 @@ class TestMemory < Minitest::Test
     assert value.length >= 3
   end
 
+  def test_auto_save_feedback_is_idempotent
+    first = @mem.auto_save("prefer sparse layout with one strong action")
+    second = @mem.auto_save("prefer sparse layout with one strong action")
+
+    assert_equal first, second
+    assert_equal 1, @mem.preferences(limit: 10).size
+  end
+
   def test_auto_save_feedback_pattern
     key = @mem.auto_save("never use awk in zsh scripts, use parameter expansion instead")
     refute_nil key
