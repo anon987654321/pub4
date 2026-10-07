@@ -219,6 +219,15 @@ class TestLawLoopPolicy < Minitest::Test
     end
   end
 
+  def test_file_repair_only_remembers_rules_it_can_actually_attempt
+    finding = { rule: "TEST_RULE", severity: :warning, line: 1, message: "fix me" }
+    repair = Master::Fix::FileRepair.allocate
+    repair.instance_variable_set(:@findings, [finding])
+    repair.define_singleton_method(:repairable) { [] }
+
+    assert_empty repair.asked_rules
+  end
+
   def test_confidence_skip_records_skipped_not_stuck
     Dir.mktmpdir do |root|
       path = File.join(root, "sample.rb")
