@@ -6,9 +6,9 @@ require_relative "../lib/master/random"
 
 class TestMasterTimeRandom < Minitest::Test
   def test_time_seam_exposes_wall_and_monotonic_clocks
-    assert_kind_of ::Time, Master::Time.now
-    assert_kind_of ::Time, Master::Time.utc_now
-    assert_kind_of Numeric, Master::Time.monotonic
+    assert_kind_of ::Time, Master::Clock.now
+    assert_kind_of ::Time, Master::Clock.utc_now
+    assert_kind_of Numeric, Master::Clock.monotonic
   end
 
   def test_random_seam_is_reproducible
