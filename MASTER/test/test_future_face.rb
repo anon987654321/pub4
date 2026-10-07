@@ -12,10 +12,14 @@ class TestFutureFaceContract < Minitest::Test
   end
 
   def test_future_profile_uses_structural_traits_not_skin_or_identity_traits
-    assert_equal "speculative_distant_human_2026", @morphology.fetch("model")
+    assert_equal "speculative_distant_human_2026_r2", @morphology.fetch("model")
     assert_operator @morphology.fetch("cranium_scale"), :>, 1.0
     assert_operator @morphology.fetch("lower_face_scale"), :<, 1.0
     assert_operator @morphology.fetch("facial_projection"), :<, 1.0
+    assert_operator @morphology.fetch("facial_verticalization"), :>, 1.0
+    assert_operator @morphology.fetch("masticatory_scale"), :<, 1.0
+    assert_operator @morphology.fetch("upper_face_scale"), :<, 1.0
+    assert_equal "neutral", @morphology.fetch("climate_variant")
     refute @morphology.key?("skin_tone")
     refute @morphology.key?("ethnicity")
   end
@@ -26,10 +30,15 @@ class TestFutureFaceContract < Minitest::Test
     shader = File.read(File.join(ROOT, "web", "public", "face.part2.txt"))
 
     assert_includes head, 'Master::Face::Contract.spatial.fetch("morphology"'
+    assert_includes head, "FACIAL_VERTICALIZATION"
+    assert_includes head, "MASTICATORY_SCALE"
     assert_includes browser, "FACE_MORPHOLOGY"
     assert_includes browser, "futureFeatureScale"
     assert_includes shader, "FACE_FUTURE_CRANIAL_HEIGHT"
     assert_includes shader, "FACE_FUTURE_FACIAL_PROJECTION"
+    assert_includes shader, "FACE_FUTURE_VERTICALIZATION"
+    assert_includes shader, "FACE_FUTURE_MASTICATORY"
+    assert_includes shader, "futureSideBias"
   end
 
   def test_tts_polish_is_a_projection_not_a_second_speaker
