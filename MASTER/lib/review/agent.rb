@@ -241,6 +241,7 @@ end
         Fiber[:master_tool_streak] = nil
         Fiber[:master_tree_seen] = nil
         Fiber[:master_trajectory_events] = []
+        @memory&.auto_save(message) if @memory&.respond_to?(:auto_save)
         @session.add_message(role: :user, content: message)
       end
 
