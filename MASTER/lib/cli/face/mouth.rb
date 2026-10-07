@@ -53,6 +53,7 @@ module Master
             return false
           end
 
+          Master::Voice::Playback.begin_reply_generation!
           spoken = false
           chunks(text).each do |part|
             break if stop.call
