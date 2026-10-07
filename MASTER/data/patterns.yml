@@ -886,6 +886,11 @@ heartbeat:
     interval_seconds: 3600
     enabled: true
     description: Periodic MASTER self-scan.
+  - name: dream_observe
+    action: dream_observe
+    interval_seconds: 21600
+    enabled: true
+    description: Evidence-only idle queue for neglected TODO, structure and duplicate work.
   - name: prune_undo
     action: prune_undo
     enabled: false
