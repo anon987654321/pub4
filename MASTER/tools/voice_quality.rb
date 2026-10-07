@@ -20,7 +20,9 @@ module Master
       LIMITS = {
         min_sample_rate: 16_000,
         max_duration_s: 180.0,
-        max_probe_duration_s: 30.0,
+        min_mean_volume_db: -50.0,
+        max_mean_volume_db: -5.0,
+        max_peak_volume_db: 0.0,
       }.freeze
 
       module_function
@@ -60,6 +62,9 @@ module Master
         return false if quality[:clipping]
         return false if quality[:sample_rate].to_i < LIMITS[:min_sample_rate]
         return false if quality[:duration_s].to_f > LIMITS[:max_duration_s]
+        return false if quality[:mean_volume_db] && quality[:mean_volume_db] < LIMITS[:min_mean_volume_db]
+        return false if quality[:mean_volume_db] && quality[:mean_volume_db] > LIMITS[:max_mean_volume_db]
+        return false if quality[:max_volume_db] && quality[:max_volume_db] > LIMITS[:max_peak_volume_db]
         true
       end
 
@@ -68,7 +73,7 @@ module Master
         report[:probes].each_with_index do |row, index|
           if row[:quality]
             q = row[:quality]
-            puts "voice_quality: probe=#{index + 1} pass=#{row[:pass]} duration=#{q[:duration_s]}s rate=#{q[:sample_rate]} clipping=#{q[:clipping]}"
+            puts "voice_quality: probe=#{index + 1} pass=#{row[:pass]} duration=#{q[:duration_s]}s rate=#{q[:sample_rate]} mean=#{q[:mean_volume_db] || "?"}dB peak=#{q[:max_volume_db] || "?"}dB clipping=#{q[:clipping]}"
           else
             puts "voice_quality: probe=#{index + 1} pass=#{row[:pass]}"
           end
