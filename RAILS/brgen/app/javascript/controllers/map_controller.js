@@ -134,7 +134,7 @@ export default class extends Controller {
 
   _popupHtml(point) {
     const title = this._escape(point.title || "Map point")
-    const subtitle = this._escape(point.subtitle || "")
+    const subtitle = this._escape(point.subtitle ?? "")
     const url = this._escape(point.url || "#")
     return `
       <div class="map-popup">
