@@ -93,17 +93,71 @@ module Master
           state, level, jobs, words, draft, events = @lock.synchronize do
             [@state, @level, @jobs.dup, @words.dup, @draft.dup, @events.slice!(0..)]
           end
-          # The face gets the full viewport. Only the last four rows become the
-          # control strip; the image remains the complete stage.
-          overlay_rows = [rows, CONTROL_ROWS].min
-          job_rows = [overlay_rows - 2, 1].max
-          face = Face.frame(state:, rows:, cols:, t:, level:, events:, motion: @motion).split("\n")
-          overlay = tail(column(jobs, words), job_rows, cols)
-          overlay << "#{DIM}#{status(state)[0, cols]}#{PLAIN}" << typed(draft, cols)
-          face[-overlay_rows, overlay_rows] = overlay.last(overlay_rows)
-          body = face.map { |line| tint(state, line) }
-          painted = body.each_with_index.map { |line, i| "\e[#{i + 1};1H#{line}\e[K" }.join
-          "\e[?25l#{painted}\e[#{body.size};#{[draft.length + 3, cols].min}H\e[?25h"
+
+          content_rows = [rows - 2, 1].max
+          split = cols >= 64 && content_rows >= 12
+          face_cols = if split
+            [[(cols * 0.58).floor, 34].max, cols - 30].min
+          else
+            cols
+          end
+          panel_cols = [cols - face_cols - 2, 1].max
+
+          face = Face.frame(
+            state:,
+            rows: content_rows,
+            cols: face_cols,
+            t:,
+            level:,
+            events:,
+            motion: @motion
+          ).split("\n")
+
+          body = if split
+            panel = side_panel(state:, jobs:, words:, cols: panel_cols)
+            Array.new(content_rows) do |row|
+              left = face.fetch(row, "")[0, face_cols].to_s.ljust(face_cols)
+              right = panel.fetch(row, "")[0, panel_cols].to_s.ljust(panel_cols)
+              "#{left}  #{right}"
+            end
+          else
+            face
+          end
+
+          body << "#{DIM}#{status(state)[0, cols]}#{PLAIN}"
+          body << typed(draft, cols)
+          body = body.first(rows)
+          body += Array.new(rows - body.length, "") if body.length < rows
+
+          painted = body.each_with_index.map do |line, i|
+            "\e[#{i + 1};1H#{line}\e[K"
+          end.join
+          "\e[?25l#{painted}\e[#{rows};#{[draft.length + Master::Face::Contract.master_token.length + 2, cols].min}H\e[?25h"
+        end
+
+        def side_panel(state:, jobs:, words:, cols:)
+          label = Master::Face::Contract.master_token
+          lines = [
+            "#{label} / FACE",
+            "state  #{state}",
+            "",
+            "recent",
+          ]
+          recent = jobs.dup
+          live = words.first.to_s.strip
+          recent << live unless live.empty? || recent.last == live
+          recent.last(5).each do |entry|
+            lines.concat(wrap(entry, cols - 1))
+          end
+          lines << ""
+          lines.concat(
+            wrap(
+              @ear.available? ? "enter sends. type to speak. mic listens while idle." : "enter sends. type to speak.",
+              cols - 1
+            )
+          )
+          lines << "ctrl-c interrupt  ctrl-d leave"
+          lines.flat_map { |line| line.empty? ? [""] : wrap(line, cols) }.first(30)
         end
 
         private
