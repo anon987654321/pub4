@@ -92,3 +92,66 @@ module Master
 
       def format_opportunity(row)
         kind = row[:category].to_s.tr("_", " ")
+        return "#{row[:dimension]}, #{row[:count]} #{kind}" unless row[:fail_rate]
+
+        "#{row[:dimension]} failed #{(row[:fail_rate] * 100).round}% of #{row[:total]} calls"
+      end
+
+      def last_event(root, pattern)
+        Trace::Log::Event.new(root:).recent(40, pattern:).last
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "CommandRegistry.last_event")
+        nil
+      end
+
+      def format_verdict(rec)
+        pay = rec && rec["payload"]
+        return "" unless pay.is_a?(Hash)
+
+        ", review #{pay["pass"] ? "pass" : "fail"}#{", score #{pay["score"]}" if pay["score"]}"
+      end
+
+      RCCTL = "/usr/sbin/rcctl"
+
+      # Only a host with rcctl has a master service to report.
+      def service_status
+        return {} unless File.executable?(RCCTL)
+
+        _, _, st = Master::Io::Exec.capture3(RCCTL, "check", "master")
+        { state: st.success? ? "ok" : "down" }
+      rescue StandardError => e
+        { state: "unknown, #{e.class}" }
+      end
+
+      # Silent when satisfied, and where bundle40 does not exist.
+      def bundle_status(repo)
+        drift = %w[MASTER MASTER/web].reject do |dir|
+          out, = Master::Io::Exec.capture2e("bundle40", "check", chdir: File.join(repo, dir))
+          out.match?(/dependencies.*satisfied/)
+        end
+        "#{drift.join(", ")} drift, run bundle install" unless drift.empty?
+      rescue Errno::ENOENT
+        nil
+      end
+
+      def format_ago(secs)
+        return "#{secs}s" if secs < 60
+
+        secs < 3600 ? "#{secs / 60}m" : "#{secs / 3600}h"
+      end
+
+      # "tool:failed 4m ago: timeout", the event and what it said.
+      def failure_events(root, n)
+        records = Trace::Log::Event.new(root:).recent(40)
+        records.select { |rec| rec["event"].to_s.match?(Trace::ReplayReader::FAILURE_PATTERN) }.last(n).map do |rec|
+          said = rec["payload"].is_a?(Hash) ? rec["payload"].values_at("error", "message").compact.first : nil
+          ago = format_ago((Time.now.utc - (Time.parse(rec["timestamp"]) rescue Time.now.utc)).to_i.abs)
+          "#{rec["event"]} #{ago} ago#{": #{said.to_s[0, 80]}" if said}"
+        end
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "CommandRegistry.failure_events")
+        []
+      end
+    end
+  end
+end
