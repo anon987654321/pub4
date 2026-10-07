@@ -3,7 +3,7 @@
 # A small deterministic composer: memory, expectation, contrast and bounded
 # surprise. It does not synthesize sound and it never replaces the musical data;
 # it chooses among notes the harmony has already allowed.
-module DillaComposerMind
+class DillaComposerMind
   HISTORY_LIMIT = 32
   MOTIF_WINDOW = 4
   LEAP_PENALTY = 0.045
