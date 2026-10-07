@@ -46,6 +46,19 @@ class TestMemory < Minitest::Test
     assert_equal 1, counts["feedback"]
   end
 
+  def test_version_changes_only_when_persisted_memory_changes
+    empty = @mem.version
+    @mem.remember("version_test", "one")
+    first = @mem.version
+    @mem.remember("version_test", "two")
+    second = @mem.version
+
+    assert_equal "empty", empty
+    assert_match(/\A[0-9a-f]{16}\z/, first)
+    assert_match(/\A[0-9a-f]{16}\z/, second)
+    refute_equal first, second
+  end
+
   def test_reasoning_memory_round_trips_without_embedding
     frame = Master::Cognition::Intelligence.decision_frame(
       observation: "pass found two findings",
