@@ -165,6 +165,11 @@ class CritiqueImplementationTest < Minitest::Test
 
     assert_includes source, 'title: "Microphone Master [Extended]"'
     assert_includes source, 'const OPENING_TRACK_ID = "9EGHwkDix78"'
+    assert_includes source, "this._bindTilt = bindTilt"
+    assert_includes source, "this._bindTilt?.()"
+    assert_includes source, "DeviceOrientationEvent"
+    assert_includes source, "requestPermission"
+    assert_includes source, 'window.addEventListener("deviceorientation", this._tiltHandler, { passive: true })'
     assert_includes source, "float warp = sin"
     assert_includes source, "lineAngleBuf"
     assert_includes source, "gl.drawArrays(gl.LINES"
@@ -175,6 +180,20 @@ class CritiqueImplementationTest < Minitest::Test
     refute_includes source, "vizMode"
     refute_includes importmap, 'radio_visualizers'
     refute File.exist?(File.join(ROOT, "brgen/app/javascript/radio_visualizers.js"))
+  end
+
+  def test_yep_search_is_the_shared_rails_search_default
+    shared_stack = read("shared/app/assets/stylesheets/_stack.scss")
+    brgen_stack = read("shared/app/assets/stylesheets/_stack_brgen.scss")
+    amber = read("amber/app/assets/stylesheets/application.scss")
+    bsdports = read("bsdports/app/assets/stylesheets/application.scss")
+    brgen = read("brgen/app/assets/stylesheets/application.scss")
+
+    assert_includes shared_stack, '@forward "search_yep";'
+    assert_includes brgen_stack, '@forward "search_yep";'
+    assert_includes amber, '@use "stack" as *;'
+    assert_includes bsdports, '@use "stack" as *;'
+    assert_includes brgen, '@use "stack_brgen" as *;'
   end
 
   def test_amber_looks_use_one_3d_mannequin_and_wrapped_photos
