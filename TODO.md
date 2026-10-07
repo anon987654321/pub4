@@ -1,4 +1,13 @@
 ## Completed in the 2026-09-28 backlog convergence pass
+## Completed in the 2026-10-07 organism/voice/Rails convergence pass
+
+- MASTER now projects one redacted sensory state from the existing EventBus for CLI/web/voice-facing state, exposed through `/chat/sensory` and consumed by the face interaction store.
+- Heartbeat now has an evidence-only dream observer: TODO/sprawl/duplicate/checkout evidence is ranked into `.master/dream_queue.yml`; it never mutates source. A structural `sprawl_plan` feeds the existing GateChain without granting it autonomous relocation authority.
+- Voice defaults now declare a warm-supportive, naturally lower delivery; Chatterbox phrase rendering reuses reference conditioning; the voice quality harness checks render health, clipping and level bounds.
+- MASTER face startup/state audio now uses a restrained shared two-operator FM vocabulary for startup, success and error motifs.
+- RAILS shared grammar now has semantic system-state signalling and shared motion tokens consumed by brgen and amber; the primitive uses text/weight/rule as well as color and keeps the flat-ui constraint.
+- These are implementation closures, not runtime-proof closures. The evidence-bound Mac, browser, vm23/OpenBSD, Termux, payment/staging, Dilla/audio and snapshot items below remain open until watched results exist.
+
 ## Completed in the 2026-09-29 KISS convergence pass
 
 - Removed the orphaned GitHub Actions mirror layer: the hosted workflow files are gone, `RAILS/test/premerge_mirrors_ci_test.rb` and workflow-specific dependency checks are gone, and `MASTER/bin/ci` plus `RAILS/bin/premerge` now describe only the local/vm23 verification path.
