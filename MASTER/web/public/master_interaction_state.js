@@ -233,6 +233,32 @@
     });
   });
 
+  async function syncServerState() {
+    try {
+      const response = await fetch("/chat/sensory", { cache: "no-store", credentials: "same-origin" });
+      if (!response.ok) return null;
+      const state = await response.json();
+      if (state.interaction && valid("interaction", state.interaction)) {
+        record("interaction", state.interaction, { source: "server-sensory" });
+      }
+      setVisual({
+        state: valid("visual", state.visual) ? state.visual : store.visual.state,
+        serverState: state.system,
+        serverTask: state.task,
+        serverVoice: state.voice
+      });
+      emit("sensory:sync", {
+        interaction: store.interaction.state,
+        voice: state.voice,
+        task: state.task,
+        system: state.system
+      });
+      return state;
+    } catch (_) {
+      return null;
+    }
+  }
+
   function snapshot() {
     return Object.freeze({
       interaction: immutable(store.interaction),
@@ -245,8 +271,11 @@
     });
   }
 
+  syncServerState();
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) syncServerState(); });
+
   window.MasterInteraction = Object.freeze({
-    STATES, snapshot, emit, setInteraction, beginTurn, commitTurn, discardTurn, interruptTurn,
+    STATES, snapshot, syncServerState, emit, setInteraction, beginTurn, commitTurn, discardTurn, interruptTurn,
     taskCreate, taskUpdate, toolUpdate, remember, setAudio, setVisual
   });
   window.MASTER_INTERACTION = window.MasterInteraction;
