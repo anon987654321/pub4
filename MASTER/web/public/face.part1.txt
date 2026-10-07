@@ -743,7 +743,7 @@ function generateFaceDepthMap(size) {
   g.addColorStop(1,    'rgba(0,  0,  0,  1)');
   ctx.fillStyle = g;
   ctx.beginPath();
-  ctx.ellipse(cx, cy, W * 0.255 * futureFeatureScale('facial_projection', 0.93), H * 0.48 * futureFeatureScale('cranium_scale', 1.06), 0, 0, Math.PI * 2);
+  ctx.ellipse(cx, cy, W * 0.255 * futureFeatureScale('facial_projection', 0.88) * futureFeatureScale('cranial_width', 1.03), H * 0.48 * futureFeatureScale('cranium_scale', 1.12), 0, 0, Math.PI * 2);
   ctx.fill();
   // Jaw taper — pronounced reduction (smaller mandible, processed food)
   for (const ex of [-0.215, 0.215]) {
@@ -754,7 +754,7 @@ function generateFaceDepthMap(size) {
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   }
   // Cranial vault — enlarged high forehead
-  g = ctx.createRadialGradient(cx, cy - H*(0.36 + 0.008*FACE_GENERATION), 0, cx, cy - H*(0.36 + 0.008*FACE_GENERATION), W*0.30 * futureFeatureScale('cranium_scale', 1.06));
+  g = ctx.createRadialGradient(cx, cy - H*(0.37 + 0.006*FACE_GENERATION), 0, cx, cy - H*(0.36 + 0.008*FACE_GENERATION), W*0.31 * futureFeatureScale('cranium_scale', 1.12) * futureFeatureScale('cranial_width', 1.03));
   g.addColorStop(0,    'rgba(210,210,210,0.78)');
   g.addColorStop(0.55, 'rgba(150,150,150,0.36)');
   g.addColorStop(1,    'rgba(0,  0,  0,  0)');
@@ -774,11 +774,11 @@ function generateFaceDepthMap(size) {
   }
   // Supraorbital ridge — nearly flat (reduced aggression selection)
   for (const ex of [-0.112, 0.112]) {
-    g = ctx.createLinearGradient(cx + ex*W - W*0.08, cy - H*0.198, cx + ex*W + W*0.08, cy - H*0.186);
+    g = ctx.createLinearGradient(cx + ex*W - W*0.08, cy - H*0.196, cx + ex*W + W*0.08, cy - H*0.186);
     g.addColorStop(0,   'rgba(0,0,0,0)');
     g.addColorStop(0.5, 'rgba(0,0,0,0.08)');
     g.addColorStop(1,   'rgba(0,0,0,0)');
-    ctx.fillStyle = g; ctx.fillRect(cx + ex*W - W*0.08, cy - H*0.206, W*0.16, H*0.014);
+    ctx.fillStyle = g; ctx.fillRect(cx + ex*W - W*0.08, cy - H*0.206, W*0.16 * futureFeatureScale('brow_scale', 0.74), H*0.014);
   }
   // Brow shelf — minimal neotenic arch
   for (const ex of [-0.112, 0.112]) {
@@ -799,9 +799,9 @@ function generateFaceDepthMap(size) {
     const ex = (ei === 0 ? -0.118 : 0.118) * futureFeatureScale('orbital_scale', 1.08) + futureSideBias(ei === 0 ? -1 : 1) * 0.12;
     ctx.save();
     ctx.translate(cx + ex*W, cy - H*0.088);
-    ctx.scale(1.42 * futureFeatureScale('orbital_scale', 1.08), 1.08 * futureFeatureScale('orbital_scale', 1.08));
+    ctx.scale(1.30 * futureFeatureScale('orbital_scale', 1.04), 1.03 * futureFeatureScale('orbital_scale', 1.04) * futureFeatureScale('orbital_vertical_scale', 1.02));
     g = ctx.createRadialGradient(0, 0, 0, 0, 0, W*0.106);
-    g.addColorStop(0,    `rgba(0,0,0,${eyeAlphas[ei] * futureFeatureScale('orbital_scale', 1.08)})`);
+    g.addColorStop(0,    `rgba(0,0,0,${eyeAlphas[ei] * futureFeatureScale('orbital_scale', 1.04)})`);
     g.addColorStop(0.45, 'rgba(0,0,0,0.70)');
     g.addColorStop(0.80, 'rgba(0,0,0,0.24)');
     g.addColorStop(1,    'rgba(0,0,0,0)');
@@ -811,12 +811,12 @@ function generateFaceDepthMap(size) {
   }
   // Corneal specular + iris ring — enlarged pupils
   for (const ex of [-0.118, 0.118]) {
-    g = ctx.createRadialGradient(cx + ex*W, cy - H*0.088, 0, cx + ex*W, cy - H*0.088, W*0.044);
+    g = ctx.createRadialGradient(cx + ex*W, cy - H*0.088, 0, cx + ex*W, cy - H*0.088, W*0.040 * futureFeatureScale('pupil_scale', 0.82));
     g.addColorStop(0,   'rgba(185,185,185,0.42)');
     g.addColorStop(0.55,'rgba(95,95,95,0.18)');
     g.addColorStop(1,   'rgba(0,0,0,0)');
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-    g = ctx.createRadialGradient(cx + ex*W + W*0.012, cy - H*0.102, 0, cx + ex*W + W*0.012, cy - H*0.102, W*0.028);
+    g = ctx.createRadialGradient(cx + ex*W + W*0.011, cy - H*0.102, 0, cx + ex*W + W*0.011, cy - H*0.102, W*0.026 * futureFeatureScale('pupil_scale', 0.82));
     g.addColorStop(0,   'rgba(240,240,240,0.78)');
     g.addColorStop(0.45,'rgba(190,190,190,0.30)');
     g.addColorStop(1,   'rgba(0,0,0,0)');
