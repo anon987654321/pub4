@@ -251,7 +251,7 @@ body[data-hidden-tab="1"] #cognition-ecology {
   background: transparent;
   color: var(--face-fg);
   font: 16px/1.5 var(--font-mono);
-  padding: 12px 14px;
+  padding: 12px 12px;
   outline: none;
 }
 
@@ -264,7 +264,7 @@ body[data-hidden-tab="1"] #cognition-ecology {
 }
 
 #cmd-palette-list li {
-  padding: 8px 14px;
+  padding: 8px 12px;
   min-height: var(--tap-min);
   font: 16px/1.5 var(--font-mono);
   color: color-mix(in srgb, var(--face-fg) 78%, transparent);
@@ -289,7 +289,7 @@ body[data-face-pip="1"] canvas {
   width: min(34vw, 320px);
   height: min(34vw, 320px);
   inset: auto var(--chrome-inset) calc(56px + var(--safe-bottom)) auto;
-  border-radius: 12px;
+  border-radius: 0;
   transition: inset 180ms var(--ease-out), width 180ms var(--ease-out), height 180ms var(--ease-out), border-radius 180ms var(--ease-out), transform 180ms var(--ease-out), filter var(--transition-fast) var(--ease-out);
 }
 
@@ -627,7 +627,7 @@ body[data-mode="speaking"] #mic-dot {
   background: none;
   border: 0;
   color: inherit;
-  padding: 0px 6px;
+  padding: 0 8px;
   cursor: pointer;
   font: inherit;
 }
@@ -801,7 +801,7 @@ html[data-input-dense="1"] #zsh { border-top: 1.5px solid color-mix(in srgb, var
   background: transparent;
   color: var(--face-fg);
   font: var(--text-meta)/1.5 var(--font-mono);
-  padding: 0px 10px;
+  padding: 0 8px;
   text-align: center;
   white-space: pre-wrap;
   pointer-events: none;
@@ -909,8 +909,8 @@ body[data-mode="speaking"] #spin-btn { display: block; }
 @keyframes cursorBlink { 0%,100%{opacity:1} 50%{opacity:0} }
 
 /* #37 Code block */
-.msg-body pre, .msg-body code { background:transparent; border-bottom:1px dotted color-mix(in srgb, var(--c-code) 18%, transparent); font-family:var(--font-mono); padding:0px 5px; font-size:.88em; }
-.msg-body pre { display:block; padding:8px 10px; margin:4px 0; white-space:pre-wrap; }
+.msg-body pre, .msg-body code { background:transparent; border-bottom:1px dotted color-mix(in srgb, var(--c-code) 18%, transparent); font-family:var(--font-mono); padding:0 4px; font-size:.88em; }
+.msg-body pre { display:block; padding:8px 8px; margin:4px 0; white-space:pre-wrap; }
 .typing-indicator { display:inline-flex; gap:4px; margin-inline-start:6px; vertical-align:middle; align-items:center; }
 .typing-indicator span { width:5px; height:5px; border-radius:50%; background:var(--face-muted); animation:typingPulse 1s infinite var(--ease-in-out); }
 .typing-indicator span:nth-child(2) { animation-delay: .16s; }
@@ -1284,7 +1284,7 @@ body[data-runtime-profile="crt"] #cognition-ecology {
   top: 12%;
   inset-inline-start: 50%;
   transform: translateX(-50%);
-  padding: 4px 10px;
+  padding: 4px 8px;
   font: var(--text-meta)/1.25 var(--font-mono);
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -1467,15 +1467,14 @@ body.wscons-mode #face-phosphor-trail {
   overflow: auto;
   padding: 8px;
   border: 1px solid var(--border-soft);
-  background: color-mix(in srgb, var(--face-bg) 92%, transparent);
-  backdrop-filter: blur(6px);
+  background: var(--face-bg);
   font: 0.78rem/1.35 var(--font-mono);
 }
 .master-task {
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 4px 8px;
-  padding: 7px 4px;
+  padding: 8px 4px;
   border-block-end: 1px solid var(--border-faint);
 }
 .master-task:last-child { border-block-end: 0; }
@@ -1544,7 +1543,7 @@ body.wscons-mode #face-phosphor-trail {
   inset-inline: var(--inset-l) var(--inset-r);
   inset-block-start: var(--inset-t);
   z-index: var(--z-toast);
-  padding: 4px 6px;
+  padding: 4px 8px;
   border: 1px solid var(--border-faint);
   background: var(--face-bg);
   color: var(--face-muted);

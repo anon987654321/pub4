@@ -16,6 +16,7 @@ const tasks = readFileSync(join(publicDir, "master_task_ui.js"), "utf8");
 const workspace = readFileSync(join(publicDir, "master_workspace.js"), "utf8");
 const accessibility = readFileSync(join(publicDir, "master_accessibility.js"), "utf8");
 const part5 = readFileSync(join(publicDir, "face.part5.txt"), "utf8");
+const faceCss = readFileSync(join(publicDir, "face.css"), "utf8");
 const runtime = readFileSync(join(publicDir, "face.runtime.js"), "utf8");
 
 test("canonical interface modules are declared in the shell manifest", () => {
@@ -106,6 +107,19 @@ test("generated face runtime names current face sources", () => {
     const escaped = file.replace(".", "\\.");
     assert.match(runtime, new RegExp(escaped + "\\b"), file + " is not named by face.runtime.js");
   }
+});
+
+test("face shell stays flat and square", () => {
+  assert.doesNotMatch(faceCss, /backdrop-filter\s*:\s*(?!none\b)[^;]+;/i);
+  assert.doesNotMatch(faceCss, /filter\s*:\s*[^;]*\b(?:blur|drop-shadow)\(/i);
+
+  const pip = faceCss.match(/body\[data-face-pip="1"\] canvas\s*\{[^}]+\}/);
+  assert.ok(pip, "PIP face canvas rule is missing");
+  assert.match(pip[0], /border-radius:\s*0;/);
+
+  const rail = faceCss.match(/\.master-task-rail\s*\{[^}]+\}/);
+  assert.ok(rail, "task rail rule is missing");
+  assert.match(rail[0], /background:\s*var\(--face-bg\);/);
 });
 
 test("FaceWorld reports one performance sample per canonical update", () => {

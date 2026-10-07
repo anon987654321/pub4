@@ -703,6 +703,7 @@ tokens:
     sm: 576
     md: 640
     lg: 768
+    desktop: 1024
     wide: 1265
     xl: 1280
   # Shared motion + elevation (borders, never box-shadow) — export via CSS vars in apps.

@@ -138,13 +138,13 @@
   margin-block-start: var(--space-3);
 }
 
-@media (max-width: 900px) {
+@media (max-width: 767px) {
   .affiliate_feed_grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-@media (max-width: 520px) {
+@media (max-width: 479px) {
   .affiliate_feed_unit {
     padding: var(--space-2);
   }
@@ -265,7 +265,7 @@
   background: var(--surface-elevated);
 }
 
-@media (max-width: 520px) {
+@media (max-width: 479px) {
   .affiliate_feed_unit--brgen {
     margin-inline: var(--space-2);
   }
