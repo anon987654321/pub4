@@ -11,6 +11,7 @@ module Master
         arg = arg || arg_for(ctx)
         word, rest = subcommand({ args: arg })
         return dispatch_auth(ctx: rest) if word == "auth"
+        return trajectory_lab(root:) if word == "lab"
         return list_models(root:, metrics:, agent:) if arg == "list"
         return compute_models(agent:, root:) if arg == "compute"
         if arg == "benchmark" || arg.start_with?("benchmark ")
@@ -72,6 +73,13 @@ module Master
         footer = growth.empty? ? [] : ["", "more with:"] + growth.map { |fix| "  #{fix}" }
         footer += ["", "this session:"] + quality unless quality.empty?
         footer.empty? ? "" : "\n#{footer.join("\n")}"
+      end
+
+      def trajectory_lab(root:)
+        path = File.join(root, ".master", "trajectories", "trajectories.ndjson")
+        Master::AI::Trajectory::Laboratory.render(input: path)
+      rescue StandardError => e
+        "model0: lab failed — #{e.class}: #{e.message}"
       end
 
       def compute_models(agent:, root:)
