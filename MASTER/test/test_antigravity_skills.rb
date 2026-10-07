@@ -218,6 +218,18 @@ class TestAntigravitySkills < Minitest::Test
     end
   end
 
+  def test_skills_reference_refuses_a_symlink_outside_the_skill_dir
+    with_workspace do |root|
+      dir = write_skill(File.join(root, ".agents", "skills", "ref"), "ref")
+      FileUtils.mkdir_p(File.join(dir, "references"))
+      outside = File.join(root, "outside.md")
+      File.write(outside, "outside-secret")
+      File.symlink(outside, File.join(dir, "references", "leak.md"))
+
+      assert_nil skills_for(root).then { |skills| skills.discover!; skills.reference_for("ref", "references/leak.md") }
+    end
+  end
+
   # Usage ordering is the only reason record_used exists: a skill used recently
   # sorts above one that was not, and ties fall back to the name.
   def test_skills_sort_most_recently_used_first
