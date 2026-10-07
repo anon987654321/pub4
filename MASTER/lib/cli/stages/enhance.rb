@@ -104,17 +104,23 @@ module Master
         def enhance(msg)
           raw = @agent.ask_once(msg, system: SYSTEM, law: false)
           parsed = JSON.parse(raw.to_s.strip)
-          { enhanced: parsed["enhanced"].to_s.strip, changed: parsed["changed"] == true }
+          editor_result(parsed, msg)
         rescue JSON::ParserError
           if (m = raw.to_s.match(/\{.*\}/m))
-            parsed = JSON.parse(m[0])
-            { enhanced: parsed["enhanced"].to_s.strip, changed: parsed["changed"] == true }
+            editor_result(JSON.parse(m[0]), msg)
           else
             { enhanced: msg, changed: false }
           end
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "Enhance.enhance")
           { enhanced: msg, changed: false }
+        end
+
+        # An editor cannot erase the original turn by claiming changed:true with an empty body.
+        def editor_result(parsed, msg)
+          enhanced = parsed["enhanced"].to_s.strip
+          changed = parsed["changed"] == true && !enhanced.empty?
+          { enhanced: changed ? enhanced : msg, changed: }
         end
 
         def with_timeout
