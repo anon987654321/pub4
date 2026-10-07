@@ -39,7 +39,7 @@ module Master
           capabilities = Master::Operator::Mode.capabilities(operator_mode)
           bus&.publish(
             "operator:mode",
-            mode: operator_mode,
+            mode: requested_mode,
             risk: mission.record.dig("operator", "risk") || mode_spec[:risk],
             model_tier: mode_spec[:model_tier],
             council_required: mode_spec[:council],
