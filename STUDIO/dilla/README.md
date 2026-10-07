@@ -73,10 +73,13 @@ Every live voice also passes through the shared physicality layer by default: pe
 
 Bare `ruby dilla.rb` is the live Dilla showcase: it stays on the sound card and
 cycles through source-backed J Dilla, D'Angelo, Flying Lotus and Madlib harmony,
-the darker Moog/DFAM rack, analogue patch demonstrations, FM leads, filter
-moves, tape-heavy mastering and the complete BWV 565 MIDI score. The tour is
-deliberately slow and dark, with richer chord cells and changing instruments,
-then returns to the beginning. Set `DILLA_SHOWCASE_ONCE=1` for one pass.
+original Aydin Esen-inspired harmonic flow, the darker Moog/DFAM rack, analogue
+patch demonstrations, FM leads, filter moves, tape-heavy mastering and the
+complete BWV 565 MIDI score. The tour is deliberately slow and dark, with richer
+chord cells and changing instruments. The bare run records the heard post-FX
+program to `dilla.wav` and, after the audio is finalized, builds `dilla.mp4`
+with the local Three.js architectural score renderer. Set
+`DILLA_SHOWCASE_VIDEO=0` to suppress video while keeping the WAV.
 
 `ruby dilla.rb compose` writes the other demo: one piece of about six minutes in
 which every part of the engine plays and answers the others. The bass states the
