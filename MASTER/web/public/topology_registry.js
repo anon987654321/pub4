@@ -12,6 +12,7 @@
   const CANONICAL_EVENTS = [];
 
   const EVENT_CLASSIFIER = [];
+  let PROVIDER_DETECT = null;
 
   const TOPOLOGIES = Object.create(null);
   const FALLBACK_FACE = Object.freeze({
@@ -27,8 +28,10 @@
     const text = payload ? `${name} ${JSON.stringify(payload)}` : name;
     const matched = EVENT_CLASSIFIER.find(([pattern]) => pattern.test(text));
     const mapped = matched ? { ...matched[1] } : { topology: "face", entropy: 0.24, confidence: 0.68, mode: "event" };
-    const provider = text.match(PROVIDER_DETECT)?.[0]?.toLowerCase();
-    if (provider) mapped.provider = provider;
+    if (PROVIDER_DETECT) {
+      const provider = text.match(PROVIDER_DETECT)?.[0]?.toLowerCase();
+      if (provider) mapped.provider = provider;
+    }
     return mapped;
   }
 
@@ -82,6 +85,19 @@
     if (!catalog || typeof catalog !== "object") return;
     mergeRemoteClassifier(catalog.event_classifier || []);
     mergeRemoteTopologies(catalog.topologies || []);
+    Object.assign(PALETTES, catalog.palettes || {});
+    Object.assign(RUNTIME_MODES, catalog.runtime_modes || {});
+    Object.assign(RESOLUTIONS, catalog.resolutions || {});
+    if (catalog.canonical_events) {
+      CANONICAL_EVENTS.splice(0, CANONICAL_EVENTS.length, ...catalog.canonical_events);
+    }
+    try {
+      PROVIDER_DETECT = catalog.provider_detect
+        ? new RegExp(catalog.provider_detect, "i")
+        : PROVIDER_DETECT;
+    } catch (err) {
+      window.MASTER_LOG?.warn?.("topology_registry:provider_detect", err);
+    }
     if (!TOPOLOGIES.face) TOPOLOGIES.face = { ...FALLBACK_FACE };
   }
 
@@ -110,8 +126,15 @@
       // mergeRemoteClassifier dropped all of them at its own guard and the
       // casing fix above reached a merge that still did nothing. It already
       // reads either shape, so the rows go through whole.
-      mergeRemoteClassifier(remoteKey(remote, "EVENT_CLASSIFIER"));
-      mergeRemoteTopologies(remoteKey(remote, "TOPOLOGIES"));
+      mergeCanonicalCatalog({
+        event_classifier: remoteKey(remote, "EVENT_CLASSIFIER"),
+        topologies: remoteKey(remote, "TOPOLOGIES"),
+        canonical_events: remoteKey(remote, "CANONICAL_EVENTS"),
+        palettes: remoteKey(remote, "PALETTES"),
+        runtime_modes: remoteKey(remote, "RUNTIME_MODES"),
+        resolutions: remoteKey(remote, "RESOLUTIONS"),
+        provider_detect: remoteKey(remote, "PROVIDER_DETECT"),
+      });
       const canonical = remoteKey(remote, "CANONICAL_EVENTS");
       if (canonical) CANONICAL_EVENTS.splice(0, CANONICAL_EVENTS.length, ...canonical);
       Object.assign(PALETTES, remoteKey(remote, "PALETTES") || {});
