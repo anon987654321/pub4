@@ -32,7 +32,7 @@ class TestDocPaths < Minitest::Test
   # was measured.
   DOCS = %w[
     CLAUDE.md
-    TREE.md
+    ARCHITECTURE.md
     AGENTS.md
     GEMINI.md
     .cursorrules
@@ -77,7 +77,7 @@ class TestDocPaths < Minitest::Test
     tracked_md = tracked.select { |path| path.end_with?(".md") }
     extras = tracked_md.reject do |path|
       File.basename(path) == "README.md" ||
-        path == "TODO.md" || path == "TREE.md" ||
+        path == "TODO.md" || path == "ARCHITECTURE.md" ||
         File.basename(path).match?(/\A(?:AGENTS|CLAUDE|GEMINI)\.md\z/) ||
         path == ".github/copilot-instructions.md" ||
         path == "OPENBSD/RUNBOOK.md" ||
