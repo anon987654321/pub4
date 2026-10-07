@@ -107,20 +107,23 @@ module Operator
  end
 end
 
-options = {}
-OptionParser.new do |opts|
-  opts.banner = "Usage: ruby snapshot_extract.rb [--to DIR] SNAPSHOT.md..."
-  opts.on("--to DIR") { |dir| options[:root] = dir }
-end.parse!(ARGV)
+if $PROGRAM_NAME == __FILE__
+  options = {}
+  OptionParser.new do |opts|
+    opts.banner = "Usage: ruby snapshot_extract.rb [--to DIR] SNAPSHOT.md..."
+    opts.on("--to DIR") { |dir| options[:root] = dir }
+  end.parse!(ARGV)
 
-if ARGV.empty?
-  Master::Trace::Dmesg.status("snapshot0", "give at least one snapshot", io: $stderr)
-  exit 64
+  if ARGV.empty?
+    Master::Trace::Dmesg.status("snapshot0", "give at least one snapshot", io: $stderr)
+    exit 64
+  end
+  root = File.expand_path(options.fetch(:root, Dir.mktmpdir("master-snapshot-")))
+  FileUtils.mkdir_p(root)
+
+  packs = ARGV.map { |path| Operator::SnapshotExtract.parse(path) }
+  count = Operator::SnapshotExtract.write(packs, root)
+
+  Master::Trace::Dmesg.status("snapshot0", "rehydrated #{count} text file(s) into #{root}")
+
 end
-root = File.expand_path(options.fetch(:root, Dir.mktmpdir("master-snapshot-")))
-FileUtils.mkdir_p(root)
-
-packs = ARGV.map { |path| Operator::SnapshotExtract.parse(path) }
-count = Operator::SnapshotExtract.write(packs, root)
-
-Master::Trace::Dmesg.status("snapshot0", "rehydrated #{count} text file(s) into #{root}")
