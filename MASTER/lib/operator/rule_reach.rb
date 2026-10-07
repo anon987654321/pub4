@@ -62,7 +62,7 @@ module Operator
     end
 
     def ceiling
-      Master.law("rule_ratchets", root: MASTER_DIR).dig("reach", "unreachable")
+      Master.law("law_ratchets", root: MASTER_DIR).dig("reach", "unreachable")
     end
 
     def run(json: false)
