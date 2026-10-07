@@ -47,12 +47,12 @@ module Master
           @learnings = learnings
           @preamble = preamble
           @rule_order = LawOrder.new(rules:, learnings:, bus:, root:)
-          take_limits(clean_runs_required:, plateau_window:, ground_truth:, homeostat:, council:, visual_pass:, opportunity_pass:, discipline:)
+          take_limits(clean_runs_required:, plateau_window:, ground_truth:, homeostat:, council:, visual_pass:, opportunity_pass:, discipline:, wishlist:)
         end
 
         # What a pass is judged by, apart from the collaborators it runs through:
         # when it may stop, when it has stopped moving, and who else gets a say.
-        def take_limits(clean_runs_required:, plateau_window:, ground_truth:, homeostat:, council:, visual_pass:, opportunity_pass:, discipline:)
+        def take_limits(clean_runs_required:, plateau_window:, ground_truth:, homeostat:, council:, visual_pass:, opportunity_pass:, discipline:, wishlist:)
           @clean_runs_required = clean_runs_required
           @plateau_window = plateau_window
           @violation_counts = Hash.new(0)
