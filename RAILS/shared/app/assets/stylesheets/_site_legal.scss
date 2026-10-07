@@ -1,42 +1,10 @@
-/* The legal footer and the legal pages.
+/* Legal pages and footer typography.
  *
- * These rules lived in an inline style element at the top of
- * shared/_site_legal_footer.html.erb, which every app's layout renders — so a
- * second type system shipped on every page of all three apps, and
- * NO_INLINE_STYLES had a permanent finding it could not act on. Five separate
- * passes through this backlog reached the same paragraph independently.
- *
- * Moved with every value untouched. One property changed and it renders the
- * same: padding-left became padding-inline-start, which is the identical 1.1rem
- * in LTR and the correct side under [dir="rtl"].
- *
- * The values are off the scales this tree keeps:
- * 1.6rem, .72rem, .85rem, 1.05rem and 13px are not on the type scale, 1.15 and
- * 1.62 are not on design_tokens' line_height list [1, 1.25, 1.4, 1.5, 1.6],
- * .12em is not on the tracking scale, and 64ch is not --measure's 66ch. Snapping
- * any of them changes what a reader sees, and this move changes nothing:
- * measured on brgen.no/privacy before and after, .legal-prose is 724.397px wide
- * with 32px 20px 64px of padding and its h1 is 28.8px/33.12px either way.
- *
- * The spacing sits on EIGHT_PX_RHYTHM's 4px grid: 6, 10, 18, 26 and 34px each
- * moved to the nearest step, so the gaps between the heading, the eyebrow, the
- * sections and the page nav follow the rhythm every other surface keeps. The
- * type values above stay as they are, because they have no rule to follow yet.
+ * Reading copy uses the shared 66ch measure and canonical type/leading tokens.
+ * Chrome links retain the shared 44px interaction floor without changing their
+ * visible line box.
  */
 
-/* The tap floor, without moving anything.
- *
- * Measured at 390px on 2026-09-12: these three links are 91x21, 45x21 and
- * 161x21 on every brgen surface and 42x35, 36x35, 47x35 on amber — against the
- * --tap-min: 44px this tree declares in _layout_chrome.scss. They are chrome,
- * not prose, so the floor applies to them.
- *
- * The hit area is expanded with a pseudo-element rather than with padding or a
- * min-height, because those would grow the footer and the visible type is the
- * operator s. inset-inline: 0 keeps the growth on the block axis where the gap
- * between links is not; the -webkit-tap-highlight stays default so the expanded
- * area still shows it was hit.
- */
 .site-legal nav a {
   position: relative;
 }
@@ -53,50 +21,61 @@
 
 .site-legal .site-verify {
   flex-basis: 100%;
-  font-size: 13px;
+  font-size: var(--text-xs);
   color: var(--text);
   display: flex;
   flex-wrap: wrap;
-  gap: 8px 16px;
+  gap: var(--space-2) var(--space-4);
 }
 
 .site-legal .site-verify strong {
   font-weight: 700;
 }
 
-.legal-prose {
-  max-width: 64ch;
-  margin: 0 auto;
-  padding: 32px 20px 64px;
+ .legal-prose {
+  max-inline-size: var(--measure);
+  margin-inline: auto;
+  padding-block: var(--space-8) var(--space-16);
+  padding-inline: var(--page-gutter);
 }
 
-.legal-prose h1 {
-  font-size: 1.6rem;
-  line-height: 1.15;
-  margin: 0 0 8px;
+ .legal-prose h1 {
+  margin: 0;
+  font-size: var(--text-2xl);
+  line-height: var(--leading-tight);
+  margin-block-end: var(--space-2);
+  text-wrap: balance;
 }
 
-.legal-prose .legal-eyebrow {
-  font-size: 0.72rem;
+ .legal-prose .legal-eyebrow {
+  font-size: var(--text-xs);
   color: var(--text-secondary);
-  margin: 0 0 12px;
+  margin: 0 0 var(--space-2);
+  line-height: var(--leading-snug);
 }
 
 .legal-prose .legal-updated {
   color: var(--text-secondary);
   font-variant-numeric: tabular-nums;
-  font-size: 0.85rem;
-  margin: 0 0 24px;
+  font-size: var(--text-sm);
+  line-height: var(--leading-snug);
+  margin: 0 0 var(--space-6);
 }
 
-.legal-prose h2 {
-  font-size: 1.05rem;
-  margin: 24px 0 8px;
+ .legal-prose h2 {
+  font-size: var(--text-title);
+  line-height: var(--leading-tight);
+  margin-block: var(--space-6) var(--space-2);
+  text-wrap: balance;
 }
 
-.legal-prose p,
+ .legal-prose p,
 .legal-prose li {
-  line-height: 1.62;
+  max-inline-size: var(--measure);
+  line-height: var(--leading-loose);
+  text-wrap: pretty;
+  hyphens: auto;
+  hanging-punctuation: first allow-end last;
 }
 
 .legal-prose ul {
@@ -107,11 +86,11 @@
 
 .legal-prose nav {
   display: flex;
-  gap: 16px;
-  margin-top: 32px;
-  padding-top: 16px;
+  gap: var(--space-4);
+  margin-block-start: var(--space-8);
+  padding-block-start: var(--space-4);
   border-top: 1px solid var(--border);
-  font-size: 14px;
+  font-size: var(--text-sm);
 }
 
 /* dating is a swipe surface with no room for a legal band. It kept this rule
