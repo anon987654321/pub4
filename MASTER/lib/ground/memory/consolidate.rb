@@ -18,6 +18,23 @@ module Master
           cache_context_summary(version, "#{header}\n#{lines.join("\n")}")
         end
 
+        def preference_context(limit: 5)
+          rows = preferences(limit:)
+          return if rows.empty?
+
+          lines = rows.map do |row|
+            domain = row["domain"].to_s
+            preference = row["preference"].to_s
+            avoid = row["avoid"].to_s
+            suffix = avoid.empty? ? "" : " | avoid=#{avoid[0, 100]}"
+            "- #{domain}: #{preference[0, 220]}#{suffix}"
+          end
+          "Taste memory:\n#{lines.join("\n")}"
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "memory.preference_context")
+          nil
+        end
+
         def reasoning_context(limit: 3)
           rows = reasoning(limit:)
           return if rows.empty?
