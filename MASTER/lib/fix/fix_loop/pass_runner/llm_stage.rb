@@ -28,7 +28,7 @@ module Master
             fixed
           end
 
-          def run_wishlist_stage(findings, pass:, files:, deadline:)
+          def run_wishlist_stage(findings, pass:, files:, deadline:, run_id:)
             return 0 if findings.empty? || Time.now >= deadline
 
             fixed = 0
@@ -57,7 +57,7 @@ module Master
                 fixed: applied,
                 status: result[:status],
                 message: result[:breakdown].to_h.keys.join(", "),
-                run_id: proposal["generated_by_run"],
+                run_id: run_id || proposal["generated_by_run"],
               )
               @bus&.publish(
                 "fix_loop:wishlist_attempt",
