@@ -181,6 +181,40 @@ prose:
 
 # Detector-health policy. Measurement-only findings stay visible to observation but
 # do not become automatic repair targets until their detectors have stronger evidence.
+zsh:
+  banned_commands: [sed, awk, tr, cut, find, head, tail, wc, perl, python, bash]
+  forbidden_commands:
+    - command: sed
+      replacement: '${var//find/replace}'
+    - command: awk
+      replacement: '${(s:,:)var} and zsh parameter expansion'
+    - command: tr
+      replacement: '${(L)var} / ${(U)var}'
+    - command: cut
+      replacement: '${(s:,:)var}'
+    - command: find
+      replacement: 'zsh globs such as **/*.rb, *(.) and *(/)'
+    - command: head
+      replacement: '${array[1]} or a bounded slice'
+    - command: tail
+      replacement: '${array[-1]} or a bounded slice'
+    - command: wc
+      replacement: 'Ruby File.size or a Ruby count'
+  native_patterns:
+    replace_all: '${var//find/replace}'
+    lowercase: '${(L)var}'
+    uppercase: '${(U)var}'
+    split: '${(s:,:)var}'
+    join: '${(j:,:)arr}'
+    unique: '${(u)arr}'
+    sort: '${(o)arr}'
+    include_match: '${(M)arr:#*pattern*}'
+    exclude_match: '${arr:#*pattern*}'
+  ssh_reading:
+    rule: 'Read remote files through SSH with Ruby or zsh instead of invoking external text filters.'
+  token_economics:
+    philosophy: 'Prefer one zsh expansion or one Ruby expression over a pipeline of external processes; each subprocess adds cost and policy surface.'
+
 detection_calibration:
   measurement_only:
     CQS:

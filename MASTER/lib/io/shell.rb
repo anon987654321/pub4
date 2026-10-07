@@ -26,19 +26,9 @@ module Master
       # outright now, so the escalation never reaches a shell and a warning
       # before a refusal is two announcements of one answer.
 
-      # What a zsh command may not call, read from the law. The name says which
-      # way round it is: zsh is the shell this repo writes, and these are the
-      # tools banned inside it — bash among them.
-      #
-      # The law's list, and only the law's list. A hardcoded fallback sat behind
-      # a `rescue StandardError` here and had already drifted from it — the
-      # fallback banned grep and perl, which zsh.banned_commands does not — so a
-      # day the law failed to load would have warned about a different set of
-      # tools and said nothing about the swap. This list drives a warning rather
-      # than a refusal, so an empty one loses a warning, not a gate.
-      BANNED_IN_ZSH = %w[
-        sed awk tr cut find head tail wc perl python bash
-      ].freeze
+      # What zsh commands may not call, derived directly from data/laws.yml.
+      # The law is the only vocabulary; absence is a load failure, never a fallback.
+      BANNED_IN_ZSH = Array(Master.load_laws.fetch("zsh").fetch("banned_commands")).map(&:to_s).freeze
 
       INTERACTIVE_RE = /\b(
         vim?|nano|less|more|pager|git\s+add\s+-[ip]|

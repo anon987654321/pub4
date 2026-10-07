@@ -35,8 +35,11 @@ class TraceDmesgTest < Minitest::Test
 
   def test_zsh_law_is_available_before_shell_class_loads
     banned = Master::Io::Shell::BANNED_IN_ZSH
+    law_banned = Master.load_laws.fetch("zsh").fetch("banned_commands").map(&:to_s)
 
-    assert_equal %w[sed awk tr cut find head tail wc perl python bash], banned
+    assert_equal law_banned, banned
+    assert_equal law_banned.sort, banned.sort
+    assert_equal law_banned, Master::Ground::Rules.new.data(:zsh).fetch("banned_commands").map(&:to_s)
   end
 
   def test_injection_guard_falls_back_to_built_in_policy_when_catalogue_has_no_section

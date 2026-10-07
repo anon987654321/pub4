@@ -2077,7 +2077,26 @@ module LiveSynth
 
   def stream = config.fetch("stream")
 
+  # The target is listener tempo after the dark-room tape slowdown.
+  # A separate source BPM compensates for SHOWCASE_TEMPO_SCALE without consuming
+  # the score RNG, so each pass varies predictably and remains reproducible.
+  def showcase_bpm(rng, cycle:)
+    seed = rng.respond_to?(:seed) ? rng.seed.to_i : 0
+    SHOWCASE_TARGET_BPM_MIN + ((seed + (cycle.to_i * SHOWCASE_BPM_CYCLE_STEP)) % SHOWCASE_BPM_RANGE)
+  end
+
+  def showcase_source_bpm(target_bpm)
+    scale = SHOWCASE_TEMPO_SCALE
+    abort "live0: DILLA_SHOWCASE_TEMPO_SCALE must be positive" unless scale.positive?
+
+    (target_bpm.to_f / scale).round(1)
+  end
+
   SHOWCASE_TEMPO_SCALE = Float(ENV.fetch("DILLA_SHOWCASE_TEMPO_SCALE", "0.74"))
+  SHOWCASE_TARGET_BPM_MIN = 92
+  SHOWCASE_TARGET_BPM_MAX = 116
+  SHOWCASE_BPM_CYCLE_STEP = 7
+  SHOWCASE_BPM_RANGE = SHOWCASE_TARGET_BPM_MAX - SHOWCASE_TARGET_BPM_MIN + 1
   SHOWCASE_BASS_GAIN = Float(ENV.fetch("DILLA_SHOWCASE_BASS_GAIN", "0.00003"))
   SHOWCASE_BASS_EVERY = Integer(ENV.fetch("DILLA_SHOWCASE_BASS_EVERY", "5"))
   SHOWCASE_PAD_FLOOR = 53
@@ -2258,6 +2277,11 @@ SHOWCASE_MODES = {
       stopped = false
 
       begin
+        target_bpm = showcase_bpm(rng, cycle:)
+        source_bpm = showcase_source_bpm(target_bpm)
+        previous_showcase_bpm = ENV["DILLA_SHOWCASE_BPM"]
+        ENV["DILLA_SHOWCASE_BPM"] = source_bpm.to_s
+        log("showcase -> tempo #{target_bpm} bpm")
         showcase_scenes(mode).each_with_index do |(name, seconds), index|
           log("showcase -> #{name}")
           world = DillaScene.profile(
@@ -2272,7 +2296,7 @@ SHOWCASE_MODES = {
             seed: rng.respond_to?(:seed) ? rng.seed : ENV.fetch("LIVE_SEED", "0").to_i,
             tension: world.fetch(:tension),
             energy: world.fetch(:energy),
-            bpm: 84.0
+            bpm: target_bpm
           )
           ENV["DILLA_SCENE_MIDI_CHAIN"] = film.fetch(:midi_chain).to_s
           ENV["DILLA_FILM_WORLD_EVENT"] = film.fetch(:world_event).to_s
@@ -2281,6 +2305,7 @@ SHOWCASE_MODES = {
             world.merge(
               film: film.slice(:phase, :midi_chain, :world_event, :voices, :dynamic, :architecture, :critique, :mutation, :next_scene),
               seed: rng.respond_to?(:seed) ? rng.seed : ENV.fetch("LIVE_SEED", "0").to_i,
+              bpm: target_bpm,
               started_at: Process.clock_gettime(Process::CLOCK_MONOTONIC),
               hue: (0.52 + ((index * 0.037) % 0.34)).round(4)
             )
@@ -2303,6 +2328,9 @@ SHOWCASE_MODES = {
                   ENV["DILLA_LIVE_VISUAL"] != "1"
         append_showcase_wav!(paths, output, append:)
       ensure
+        if defined?(previous_showcase_bpm)
+          previous_showcase_bpm.nil? ? ENV.delete("DILLA_SHOWCASE_BPM") : ENV["DILLA_SHOWCASE_BPM"] = previous_showcase_bpm
+        end
         FileUtils.remove_entry(scratch) if scratch && File.exist?(scratch)
       end
 
@@ -3175,7 +3203,7 @@ SHOWCASE_MODES = {
 
     NAMES = DillaImprovisation::PITCH_NAMES
 
-    def initialize(rng:, family: nil, pad: nil, reference: nil, bass_patch: nil, bass_gain: nil, drums: nil)
+    def initialize(rng:, family: nil, pad: nil, reference: nil, bass_patch: nil, bass_gain: nil, drums: nil, bpm: nil)
       @c = LiveSynth.config.fetch("improvise")
       @rng = rng
       fam = family ? @c.fetch("families").fetch(family) { abort "live0: no family #{family}" } : {}
@@ -3193,9 +3221,15 @@ SHOWCASE_MODES = {
       @moves = @c.fetch("moves").to_h { |row| [row["from"], row["to"]] }
       @reference_name = reference || LiveSynth.authentic_progression_key(rng)
       @reference = @reference_name && LiveSynth.documented_progression(@reference_name)
-      bpm = @reference ? @reference.fetch("bpm").to_f : @c["bpm"].to_f
-      bpm += rng.rand(-@c["bpm_spread"].to_f..@c["bpm_spread"].to_f) unless @reference
-      bpm *= LiveSynth::SHOWCASE_TEMPO_SCALE if LiveSynth.showcase?
+      selected_bpm = bpm || (LiveSynth.showcase? && ENV["DILLA_SHOWCASE_BPM"])
+      if selected_bpm
+        bpm = Float(selected_bpm, exception: false)
+        abort "live0: showcase bpm must be between 40 and 200" unless bpm&.between?(40, 200)
+      else
+        bpm = @reference ? @reference.fetch("bpm").to_f : @c["bpm"].to_f
+        bpm += rng.rand(-@c["bpm_spread"].to_f..@c["bpm_spread"].to_f) unless @reference
+        bpm *= LiveSynth::SHOWCASE_TEMPO_SCALE if LiveSynth.showcase?
+      end
       @beat = 60.0 / bpm
       @mind = DillaComposerMind.new(rng:)
       @knobs = Knobs.new(@c.fetch("knobs"), response: @c.fetch("response"), rng:,
@@ -3809,7 +3843,7 @@ SHOWCASE_MODES = {
 
     # loops: how many times round; nil takes the entry's own, 0 goes round
     # until stopped.
-    def initialize(name, rng:, pads: nil, family: nil, loops: nil, master: nil)
+    def initialize(name, rng:, pads: nil, family: nil, loops: nil, master: nil, bpm: nil)
       table = LiveSynth.config.fetch("progressions")
       defaults = table.fetch("soul_jazz_six").except("chords")
       @name = name
@@ -3819,10 +3853,18 @@ SHOWCASE_MODES = {
       @pads = pads&.map { |pad| Patches.name!(pad) } ||
               (family && LiveSynth.config.dig("improvise", "families", family, "pads")) || @p["pads"]
       @rng = rng
+      selected_bpm = bpm || (LiveSynth.showcase? && ENV["DILLA_SHOWCASE_BPM"])
+      @bar_seconds = if selected_bpm
+        value = Float(selected_bpm, exception: false)
+        abort "live0: showcase bpm must be between 40 and 200" unless value&.between?(40, 200)
+        240.0 / value
+      else
+        @p.fetch("bar_seconds").to_f
+      end
       @loops = (loops || @p["loops"]).then { |n| n.to_i.positive? ? n.to_i : nil }
       @knobs = Knobs.new(@p.fetch("knobs"), response: @p.fetch("response"), rng:)
       @walk = @p["walk"] && Walk.new(@p["walk"], opening: @chords)
-      @dfam = @p["dfam"] && Dfam.new(@p["dfam"], step: @p["bar_seconds"] / @p["dfam"]["steps_per_bar"], seed: rng.seed)
+      @dfam = @p["dfam"] && Dfam.new(@p["dfam"], step: @bar_seconds / @p["dfam"]["steps_per_bar"], seed: rng.seed)
       @count = 0
       @at = 0.0
       @override = nil
@@ -3898,13 +3940,13 @@ SHOWCASE_MODES = {
     def chord!(stage)
       chord = @walk ? @walk.next(@count, @rng) : @chords[@count % @chords.size]
       pad = pad_spec
-      chord["tones"].each { |midi| note(stage, midi, pad, @at, @p["bar_seconds"] - 0.1, @p["pad_gain"], :pad) }
+      chord["tones"].each { |midi| note(stage, midi, pad, @at, @bar_seconds - 0.1, @p["pad_gain"], :pad) }
       bass = Patches.spec(bass_name)
       @p["bass_hits"].each { |offset, length, gain| note(stage, chord["bass"], bass, @at + offset, length, gain, :bass) }
       LiveSynth.log("#{chord['name']} on #{pad_name}#{", bass #{bass_name}" if @p['basses']}")
       arpeggio!(stage, chord["tones"]) if @p["arp"] && @rng.rand < @p["arp"]["odds"]
       @count += 1
-      @at += @p["bar_seconds"]
+      @at += @bar_seconds
     end
 
     # Sixteenths across the bar an octave over the voicing: up, down,
@@ -3914,7 +3956,7 @@ SHOWCASE_MODES = {
       patch = arp["patches"].sample(random: @rng)
       notes = tones.map { |m| m + arp["octave"] }
       order = [notes, notes.reverse, notes + notes.reverse[1..-2], notes.shuffle(random: @rng)].sample(random: @rng)
-      step = @p["bar_seconds"] / arp["steps"]
+      step = @bar_seconds / arp["steps"]
       spec = Patches.spec(patch)
       arp["steps"].times { |k| note(stage, order[k % order.size], spec, @at + (k * step), step * arp["held"], arp["gain"], :pad) }
       LiveSynth.log("  arp on #{patch}")
