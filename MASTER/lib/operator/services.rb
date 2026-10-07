@@ -41,6 +41,15 @@ module Master
         openbsd_pledge: Master::Ground::Pledge.openbsd?,
         transactional_fix: true,
         model_authority: "proposal-only",
+        operator_modes: Master::Operator::Mode::SPECS.transform_values do |spec|
+          {
+            profile: spec[:profile],
+            risk: spec[:risk],
+            model_tier: spec[:model_tier],
+            council: spec[:council],
+            evidence: spec[:evidence],
+          }
+        end,
       }
     end
 
