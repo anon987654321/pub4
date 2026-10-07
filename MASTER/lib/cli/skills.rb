@@ -41,8 +41,27 @@ module Master
       end
 
       def trigger_for(input)
-        matches = @loaded.select do |s|
-          s[:triggers]&.any? { |t| input.match?(Regexp.new(t, Regexp::IGNORECASE)) }
+        matches = @loaded.select do |skill|
+          Array(skill[:triggers]).any? do |trigger|
+            begin
+              input.match?(Regexp.new(trigger.to_s, Regexp::IGNORECASE))
+            rescue RegexpError => e
+              @bus&.publish(
+                "skills:trigger_invalid",
+                skill: skill[:name],
+                trigger: trigger.to_s,
+                error: e.message,
+              )
+              Ground::Swallow.log(
+                e,
+                context: "skills.trigger_for",
+                event_bus: @bus,
+                skill: skill[:name],
+                trigger: trigger.to_s,
+              )
+              false
+            end
+          end
         end
         matches.each do |skill|
           record_used(skill[:name])
