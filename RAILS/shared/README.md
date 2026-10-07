@@ -1,6 +1,6 @@
 # Shared Rails engine
 
-This README is the single living documentation surface for `RAILS/shared/`. Executable gates, tests, and configuration remain authoritative; the sections below preserve the operational context that is useful to a human reader.
+**RAILS/shared is the common product grammar: one engine, shared chrome, shared accessibility, and shared contracts.** Executable gates, tests, and configuration remain authoritative; this README records the operating context around them.
 
 MASTER face and all RAILS apps share one **layout chrome** contract. Dialects
 (social / luxury / wscons / face CRT) restyle color, type, and radius. They must
