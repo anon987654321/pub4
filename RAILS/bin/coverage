@@ -6,11 +6,15 @@
 # covered by all consumers and judged after their results are collated.
 require "fileutils"
 require "rbconfig"
+require "tmpdir"
 require "yaml"
 
 ROOT = File.expand_path("..", __dir__)
 APPS_FILE = File.join(ROOT, "apps.yml")
-COVERAGE_ROOT = File.join(ROOT, "coverage")
+PERSISTED_COVERAGE_ROOT = File.join(ROOT, "coverage")
+VERIFYING = ENV["MASTER_FIX_VERIFY"] == "1"
+COVERAGE_ROOT = VERIFYING ? Dir.mktmpdir("pub4-coverage-") : PERSISTED_COVERAGE_ROOT
+at_exit { FileUtils.rm_rf(COVERAGE_ROOT) if VERIFYING }
 SYSTEM_TESTS = ENV.fetch("COVERAGE_SYSTEM", "1") == "1"
 
 $LOAD_PATH.unshift(File.join(ROOT, "..", "MASTER", "lib"))
