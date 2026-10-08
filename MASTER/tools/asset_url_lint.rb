@@ -190,10 +190,10 @@ module Operator
     # is why a shared stylesheet needs the file in shared or in all three.
     def roots_for(path)
       tree = tree_of(path)
-      return [ File.join(RAILS_ROOT, tree, "public"), File.join(RAILS_ROOT, "shared", "public"),
+      return [ File.join(RAILS_ROOT, tree, "public"), File.join(RAILS_ROOT, "__shared", "public"),
               File.join(RAILS_ROOT, tree, "app/assets") ] if APPS.include?(tree)
 
-      [ File.join(RAILS_ROOT, "shared", "public"), File.join(RAILS_ROOT, "shared", "app/assets") ]
+      [ File.join(RAILS_ROOT, "__shared", "public"), File.join(RAILS_ROOT, "__shared", "app/assets") ]
     end
 
     def tree_of(path)
