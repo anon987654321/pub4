@@ -26,7 +26,7 @@ by_rule:
 finding_members:
   - BARE_DIV_WRAPPER RAILS/brgen/public/dilla/dilla.html:35
   - BARE_DIV_WRAPPER RAILS/brgen/public/dilla/dilla.html:45
-  - BLANK_LINE_RUN MASTER/web/app/views/chat/index.html.erb:1
+  - BLANK_LINE_RUN RAILS/master_web/app/views/chat/index.html.erb:1
   - GUARD_CLAUSE RAILS/brgen/app/controllers/communities_controller.rb:1
   - GUARD_CLAUSE RAILS/brgen/app/controllers/conversations_controller.rb:1
   - GUARD_CLAUSE RAILS/brgen/app/controllers/events_controller.rb:1
@@ -65,9 +65,9 @@ finding_members:
   - MEANINGFUL_NAMES RAILS/brgen/engines/marketplace/app/services/marketplace/listing_facets.rb:47
   - MIGRATION_REMOVE_COLUMN RAILS/brgen/db/migrate/20260913130000_drop_unwritten_tv_video_counters.rb:1
   - NEVER_BATCH_DELETE MASTER/tools/dilla/dilla.rb:5695
-  - NO_CHANGELOG_COMMENT MASTER/web/app/services/tts_job.rb:54
-  - NO_CHANGELOG_COMMENT MASTER/web/config/initializers/master_container.rb:63
-  - NO_CHANGELOG_COMMENT MASTER/web/script/face_asset_paths.rb:6
+  - NO_CHANGELOG_COMMENT RAILS/master_web/app/services/tts_job.rb:54
+  - NO_CHANGELOG_COMMENT RAILS/master_web/config/initializers/master_container.rb:63
+  - NO_CHANGELOG_COMMENT RAILS/master_web/script/face_asset_paths.rb:6
   - NO_CHANGELOG_COMMENT RAILS/brgen/app/javascript/controllers/push_controller.js:48
   - NO_CHANGELOG_COMMENT RAILS/brgen/app/javascript/radio_brgen_tunnel.js:348
   - NO_CHANGELOG_COMMENT RAILS/brgen/app/services/marketplace/payments/vipps_checkout.rb:26
@@ -80,116 +80,116 @@ finding_members:
   - NO_CHANGELOG_COMMENT MASTER/tools/postpro/postpro.rb:1529
   - NO_CHANGELOG_COMMENT MASTER/tools/postpro/postpro.rb:2086
   - NO_CHANGELOG_COMMENT MASTER/tools/postpro/postpro.rb:4558
-  - NO_COLUMN_ALIGN MASTER/web/app/controllers/chat_controller.rb:171
-  - NO_COLUMN_ALIGN MASTER/web/app/controllers/chat_controller.rb:172
-  - NO_COLUMN_ALIGN MASTER/web/app/controllers/chat_controller.rb:26
-  - NO_COLUMN_ALIGN MASTER/web/app/controllers/events_controller.rb:15
-  - NO_COLUMN_ALIGN MASTER/web/app/controllers/events_controller.rb:16
-  - NO_COLUMN_ALIGN MASTER/web/app/controllers/events_controller.rb:17
-  - NO_COLUMN_ALIGN MASTER/web/app/controllers/events_controller.rb:26
-  - NO_COLUMN_ALIGN MASTER/web/app/controllers/events_controller.rb:27
-  - NO_COLUMN_ALIGN MASTER/web/app/controllers/events_controller.rb:33
-  - NO_COLUMN_ALIGN MASTER/web/app/controllers/events_controller.rb:34
-  - NO_COLUMN_ALIGN MASTER/web/app/controllers/events_controller.rb:36
-  - NO_COLUMN_ALIGN MASTER/web/app/controllers/events_controller.rb:37
-  - NO_COLUMN_ALIGN MASTER/web/config/environments/production.rb:41
-  - NO_COLUMN_ALIGN MASTER/web/public/chat.js:18
-  - NO_COLUMN_ALIGN MASTER/web/public/chat.js:186
-  - NO_COLUMN_ALIGN MASTER/web/public/chat.js:226
-  - NO_COLUMN_ALIGN MASTER/web/public/chat.js:45
-  - NO_COLUMN_ALIGN MASTER/web/public/face_semantics.js:265
-  - NO_COLUMN_ALIGN MASTER/web/public/face_semantics.js:397
-  - NO_COLUMN_ALIGN MASTER/web/public/face_semantics.js:441
-  - NO_COLUMN_ALIGN MASTER/web/public/face_semantics.js:443
-  - NO_COLUMN_ALIGN MASTER/web/public/face_semantics.js:444
-  - NO_COLUMN_ALIGN MASTER/web/public/face_semantics.js:445
-  - NO_INLINE_SCRIPT_BLOCK MASTER/web/app/views/chat/index.html.erb:152
-  - NO_INLINE_SCRIPT_BLOCK MASTER/web/app/views/chat/index.html.erb:21
-  - NO_INLINE_SCRIPT_BLOCK MASTER/web/app/views/chat/index.html.erb:370
-  - NO_INLINE_SCRIPT_BLOCK MASTER/web/app/views/chat/index.html.erb:47
-  - NO_INLINE_SCRIPT_BLOCK MASTER/web/app/views/chat/index.html.erb:69
-  - NO_INLINE_SCRIPT_BLOCK MASTER/web/app/views/chat/index.html.erb:74
-  - NO_INLINE_SCRIPT_BLOCK MASTER/web/app/views/dashboard/index.html.erb:53
-  - NO_INLINE_SCRIPT_BLOCK MASTER/web/public/406-unsupported-browser.html:9
-  - NO_INLINE_SCRIPT_BLOCK MASTER/web/public/offline.html:28
-  - NO_INLINE_SCRIPT_BLOCK MASTER/web/public/offline.html:7
+  - NO_COLUMN_ALIGN RAILS/master_web/app/controllers/chat_controller.rb:171
+  - NO_COLUMN_ALIGN RAILS/master_web/app/controllers/chat_controller.rb:172
+  - NO_COLUMN_ALIGN RAILS/master_web/app/controllers/chat_controller.rb:26
+  - NO_COLUMN_ALIGN RAILS/master_web/app/controllers/events_controller.rb:15
+  - NO_COLUMN_ALIGN RAILS/master_web/app/controllers/events_controller.rb:16
+  - NO_COLUMN_ALIGN RAILS/master_web/app/controllers/events_controller.rb:17
+  - NO_COLUMN_ALIGN RAILS/master_web/app/controllers/events_controller.rb:26
+  - NO_COLUMN_ALIGN RAILS/master_web/app/controllers/events_controller.rb:27
+  - NO_COLUMN_ALIGN RAILS/master_web/app/controllers/events_controller.rb:33
+  - NO_COLUMN_ALIGN RAILS/master_web/app/controllers/events_controller.rb:34
+  - NO_COLUMN_ALIGN RAILS/master_web/app/controllers/events_controller.rb:36
+  - NO_COLUMN_ALIGN RAILS/master_web/app/controllers/events_controller.rb:37
+  - NO_COLUMN_ALIGN RAILS/master_web/config/environments/production.rb:41
+  - NO_COLUMN_ALIGN RAILS/master_web/public/chat.js:18
+  - NO_COLUMN_ALIGN RAILS/master_web/public/chat.js:186
+  - NO_COLUMN_ALIGN RAILS/master_web/public/chat.js:226
+  - NO_COLUMN_ALIGN RAILS/master_web/public/chat.js:45
+  - NO_COLUMN_ALIGN RAILS/master_web/public/face_semantics.js:265
+  - NO_COLUMN_ALIGN RAILS/master_web/public/face_semantics.js:397
+  - NO_COLUMN_ALIGN RAILS/master_web/public/face_semantics.js:441
+  - NO_COLUMN_ALIGN RAILS/master_web/public/face_semantics.js:443
+  - NO_COLUMN_ALIGN RAILS/master_web/public/face_semantics.js:444
+  - NO_COLUMN_ALIGN RAILS/master_web/public/face_semantics.js:445
+  - NO_INLINE_SCRIPT_BLOCK RAILS/master_web/app/views/chat/index.html.erb:152
+  - NO_INLINE_SCRIPT_BLOCK RAILS/master_web/app/views/chat/index.html.erb:21
+  - NO_INLINE_SCRIPT_BLOCK RAILS/master_web/app/views/chat/index.html.erb:370
+  - NO_INLINE_SCRIPT_BLOCK RAILS/master_web/app/views/chat/index.html.erb:47
+  - NO_INLINE_SCRIPT_BLOCK RAILS/master_web/app/views/chat/index.html.erb:69
+  - NO_INLINE_SCRIPT_BLOCK RAILS/master_web/app/views/chat/index.html.erb:74
+  - NO_INLINE_SCRIPT_BLOCK RAILS/master_web/app/views/dashboard/index.html.erb:53
+  - NO_INLINE_SCRIPT_BLOCK RAILS/master_web/public/406-unsupported-browser.html:9
+  - NO_INLINE_SCRIPT_BLOCK RAILS/master_web/public/offline.html:28
+  - NO_INLINE_SCRIPT_BLOCK RAILS/master_web/public/offline.html:7
   - NO_INLINE_SCRIPT_BLOCK RAILS/brgen/public/dilla/dilla.html:7
   - NO_INLINE_SCRIPT_BLOCK RAILS/brgen/public/dilla/dilla.html:74
   - NO_INLINE_SCRIPT_BLOCK RAILS/__shared/app/views/layouts/_mailer_styles.html.erb:1
   - NO_INLINE_SCRIPT_BLOCK RAILS/__shared/app/views/shared/_link_converter.html.erb:19
   - NO_INLINE_SCRIPT_BLOCK RAILS/__shared/app/views/shared/_theme_bootstrap.html.erb:1
   - NO_INLINE_STYLES RAILS/brgen/public/dilla/dilla.html:67
-  - NO_MULTIPLE_LANGUAGES MASTER/web/lib/tasks/face_runtime.rake:20
-  - NO_MULTIPLE_LANGUAGES MASTER/web/script/browser_probe_support.rb:38
-  - NO_MULTIPLE_LANGUAGES MASTER/web/script/browser_probe_support.rb:52
-  - NO_MULTIPLE_LANGUAGES MASTER/web/script/browser_probe_support.rb:70
-  - NO_MULTIPLE_LANGUAGES MASTER/web/script/browser_probe_support.rb:82
-  - NO_MULTIPLE_LANGUAGES MASTER/web/script/browser_probe_support.rb:91
-  - NO_MULTIPLE_LANGUAGES MASTER/web/script/probe_chat_e2e.rb:106
-  - NO_MULTIPLE_LANGUAGES MASTER/web/script/probe_chat_e2e.rb:123
-  - NO_MULTIPLE_LANGUAGES MASTER/web/script/probe_chat_e2e.rb:132
-  - NO_MULTIPLE_LANGUAGES MASTER/web/script/probe_chat_e2e.rb:77
-  - NO_MULTIPLE_LANGUAGES MASTER/web/script/probe_primer_external.rb:115
-  - NO_MULTIPLE_LANGUAGES MASTER/web/script/probe_primer_external.rb:128
-  - NO_MULTIPLE_LANGUAGES MASTER/web/script/probe_primer_external.rb:79
-  - NO_MULTIPLE_LANGUAGES MASTER/web/script/probe_primer_external.rb:97
-  - NO_MULTIPLE_LANGUAGES MASTER/web/script/screenshot_calibrate.rb:95
-  - NO_MULTIPLE_LANGUAGES MASTER/web/test/face_assets_manifest_test.rb:102
-  - NO_MULTIPLE_LANGUAGES MASTER/web/test/face_assets_manifest_test.rb:91
+  - NO_MULTIPLE_LANGUAGES RAILS/master_web/lib/tasks/face_runtime.rake:20
+  - NO_MULTIPLE_LANGUAGES RAILS/master_web/script/browser_probe_support.rb:38
+  - NO_MULTIPLE_LANGUAGES RAILS/master_web/script/browser_probe_support.rb:52
+  - NO_MULTIPLE_LANGUAGES RAILS/master_web/script/browser_probe_support.rb:70
+  - NO_MULTIPLE_LANGUAGES RAILS/master_web/script/browser_probe_support.rb:82
+  - NO_MULTIPLE_LANGUAGES RAILS/master_web/script/browser_probe_support.rb:91
+  - NO_MULTIPLE_LANGUAGES RAILS/master_web/script/probe_chat_e2e.rb:106
+  - NO_MULTIPLE_LANGUAGES RAILS/master_web/script/probe_chat_e2e.rb:123
+  - NO_MULTIPLE_LANGUAGES RAILS/master_web/script/probe_chat_e2e.rb:132
+  - NO_MULTIPLE_LANGUAGES RAILS/master_web/script/probe_chat_e2e.rb:77
+  - NO_MULTIPLE_LANGUAGES RAILS/master_web/script/probe_primer_external.rb:115
+  - NO_MULTIPLE_LANGUAGES RAILS/master_web/script/probe_primer_external.rb:128
+  - NO_MULTIPLE_LANGUAGES RAILS/master_web/script/probe_primer_external.rb:79
+  - NO_MULTIPLE_LANGUAGES RAILS/master_web/script/probe_primer_external.rb:97
+  - NO_MULTIPLE_LANGUAGES RAILS/master_web/script/screenshot_calibrate.rb:95
+  - NO_MULTIPLE_LANGUAGES RAILS/master_web/test/face_assets_manifest_test.rb:102
+  - NO_MULTIPLE_LANGUAGES RAILS/master_web/test/face_assets_manifest_test.rb:91
   - NO_MULTIPLE_LANGUAGES RAILS/brgen/app/jobs/queue_failure_digest_job.rb:21
   - NO_MULTIPLE_LANGUAGES RAILS/brgen/engines/dating/app/models/dating/profile.rb:103
   - NO_MULTIPLE_LANGUAGES RAILS/brgen/test/helpers/chat_helper_test.rb:10
   - NO_MULTIPLE_LANGUAGES RAILS/brgen/test/helpers/chat_helper_test.rb:9
   - NO_MULTIPLE_LANGUAGES RAILS/brgen/test/system/tiptap_morph_test.rb:26
-  - NULLISH_COALESCING MASTER/web/public/chat.js:259
-  - NULLISH_COALESCING MASTER/web/public/chat.js:276
-  - NULLISH_COALESCING MASTER/web/public/chat.js:363
-  - NULLISH_COALESCING MASTER/web/public/chat.js:445
-  - NULLISH_COALESCING MASTER/web/public/chat.js:576
-  - NULLISH_COALESCING MASTER/web/public/chat.js:589
-  - NULLISH_COALESCING MASTER/web/public/chat.js:903
-  - NULLISH_COALESCING MASTER/web/public/chat_actions.js:283
-  - NULLISH_COALESCING MASTER/web/public/chat_actions.js:8
-  - NULLISH_COALESCING MASTER/web/public/cognition_ecology.js:174
-  - NULLISH_COALESCING MASTER/web/public/face_2d_fallback.js:149
-  - NULLISH_COALESCING MASTER/web/public/face_council_multi.js:30
-  - NULLISH_COALESCING MASTER/web/public/face_micro_interactions.js:59
-  - NULLISH_COALESCING MASTER/web/public/face_semantics.js:248
-  - NULLISH_COALESCING MASTER/web/public/face_semantics.js:257
-  - NULLISH_COALESCING MASTER/web/public/face_semantics.js:265
-  - NULLISH_COALESCING MASTER/web/public/face_speech_runtime.js:1104
-  - NULLISH_COALESCING MASTER/web/public/face_speech_runtime.js:604
-  - NULLISH_COALESCING MASTER/web/public/face_tts_bridge.js:8
-  - NULLISH_COALESCING MASTER/web/public/face_vision_a.js:129
-  - NULLISH_COALESCING MASTER/web/public/face_vision_a.js:132
-  - NULLISH_COALESCING MASTER/web/public/face_vision_a.js:133
-  - NULLISH_COALESCING MASTER/web/public/face_vision_b.js:271
-  - NULLISH_COALESCING MASTER/web/public/face_vision_b.js:272
-  - NULLISH_COALESCING MASTER/web/public/face_vision_b.js:309
-  - NULLISH_COALESCING MASTER/web/public/face_vision_b.js:310
-  - NULLISH_COALESCING MASTER/web/public/face_vision_b.js:311
-  - NULLISH_COALESCING MASTER/web/public/face_vision_b.js:320
-  - NULLISH_COALESCING MASTER/web/public/face_vision_b.js:511
-  - NULLISH_COALESCING MASTER/web/public/face_vision_b.js:63
-  - NULLISH_COALESCING MASTER/web/public/face_vision_core.js:157
-  - NULLISH_COALESCING MASTER/web/public/face_vision_d.js:268
-  - NULLISH_COALESCING MASTER/web/public/face_vision_d.js:303
-  - NULLISH_COALESCING MASTER/web/public/face_vision_d.js:320
-  - NULLISH_COALESCING MASTER/web/public/mic_capture_processor.js:14
-  - NULLISH_COALESCING MASTER/web/public/particle_kernel.js:44
-  - NULLISH_COALESCING MASTER/web/public/particle_kernel.js:45
-  - NULLISH_COALESCING MASTER/web/public/particle_kernel.js:46
-  - NULLISH_COALESCING MASTER/web/public/particle_kernel.js:47
-  - NULLISH_COALESCING MASTER/web/public/particle_kernel.js:48
-  - NULLISH_COALESCING MASTER/web/public/particle_kernel.js:49
-  - NULLISH_COALESCING MASTER/web/public/particle_kernel.js:50
-  - NULLISH_COALESCING MASTER/web/public/particle_kernel.js:51
-  - NULLISH_COALESCING MASTER/web/public/particle_kernel.js:52
-  - NULLISH_COALESCING MASTER/web/public/particle_kernel.js:54
-  - NULLISH_COALESCING MASTER/web/public/particle_kernel.js:55
-  - NULLISH_COALESCING MASTER/web/public/particle_kernel.js:56
-  - NULLISH_COALESCING MASTER/web/public/smart_turn.js:166
-  - NULLISH_COALESCING MASTER/web/public/visual_bridge.js:315
+  - NULLISH_COALESCING RAILS/master_web/public/chat.js:259
+  - NULLISH_COALESCING RAILS/master_web/public/chat.js:276
+  - NULLISH_COALESCING RAILS/master_web/public/chat.js:363
+  - NULLISH_COALESCING RAILS/master_web/public/chat.js:445
+  - NULLISH_COALESCING RAILS/master_web/public/chat.js:576
+  - NULLISH_COALESCING RAILS/master_web/public/chat.js:589
+  - NULLISH_COALESCING RAILS/master_web/public/chat.js:903
+  - NULLISH_COALESCING RAILS/master_web/public/chat_actions.js:283
+  - NULLISH_COALESCING RAILS/master_web/public/chat_actions.js:8
+  - NULLISH_COALESCING RAILS/master_web/public/cognition_ecology.js:174
+  - NULLISH_COALESCING RAILS/master_web/public/face_2d_fallback.js:149
+  - NULLISH_COALESCING RAILS/master_web/public/face_council_multi.js:30
+  - NULLISH_COALESCING RAILS/master_web/public/face_micro_interactions.js:59
+  - NULLISH_COALESCING RAILS/master_web/public/face_semantics.js:248
+  - NULLISH_COALESCING RAILS/master_web/public/face_semantics.js:257
+  - NULLISH_COALESCING RAILS/master_web/public/face_semantics.js:265
+  - NULLISH_COALESCING RAILS/master_web/public/face_speech_runtime.js:1104
+  - NULLISH_COALESCING RAILS/master_web/public/face_speech_runtime.js:604
+  - NULLISH_COALESCING RAILS/master_web/public/face_tts_bridge.js:8
+  - NULLISH_COALESCING RAILS/master_web/public/face_vision_a.js:129
+  - NULLISH_COALESCING RAILS/master_web/public/face_vision_a.js:132
+  - NULLISH_COALESCING RAILS/master_web/public/face_vision_a.js:133
+  - NULLISH_COALESCING RAILS/master_web/public/face_vision_b.js:271
+  - NULLISH_COALESCING RAILS/master_web/public/face_vision_b.js:272
+  - NULLISH_COALESCING RAILS/master_web/public/face_vision_b.js:309
+  - NULLISH_COALESCING RAILS/master_web/public/face_vision_b.js:310
+  - NULLISH_COALESCING RAILS/master_web/public/face_vision_b.js:311
+  - NULLISH_COALESCING RAILS/master_web/public/face_vision_b.js:320
+  - NULLISH_COALESCING RAILS/master_web/public/face_vision_b.js:511
+  - NULLISH_COALESCING RAILS/master_web/public/face_vision_b.js:63
+  - NULLISH_COALESCING RAILS/master_web/public/face_vision_core.js:157
+  - NULLISH_COALESCING RAILS/master_web/public/face_vision_d.js:268
+  - NULLISH_COALESCING RAILS/master_web/public/face_vision_d.js:303
+  - NULLISH_COALESCING RAILS/master_web/public/face_vision_d.js:320
+  - NULLISH_COALESCING RAILS/master_web/public/mic_capture_processor.js:14
+  - NULLISH_COALESCING RAILS/master_web/public/particle_kernel.js:44
+  - NULLISH_COALESCING RAILS/master_web/public/particle_kernel.js:45
+  - NULLISH_COALESCING RAILS/master_web/public/particle_kernel.js:46
+  - NULLISH_COALESCING RAILS/master_web/public/particle_kernel.js:47
+  - NULLISH_COALESCING RAILS/master_web/public/particle_kernel.js:48
+  - NULLISH_COALESCING RAILS/master_web/public/particle_kernel.js:49
+  - NULLISH_COALESCING RAILS/master_web/public/particle_kernel.js:50
+  - NULLISH_COALESCING RAILS/master_web/public/particle_kernel.js:51
+  - NULLISH_COALESCING RAILS/master_web/public/particle_kernel.js:52
+  - NULLISH_COALESCING RAILS/master_web/public/particle_kernel.js:54
+  - NULLISH_COALESCING RAILS/master_web/public/particle_kernel.js:55
+  - NULLISH_COALESCING RAILS/master_web/public/particle_kernel.js:56
+  - NULLISH_COALESCING RAILS/master_web/public/smart_turn.js:166
+  - NULLISH_COALESCING RAILS/master_web/public/visual_bridge.js:315
   - NULLISH_COALESCING RAILS/brgen/app/javascript/controllers/lazy_image_controller.js:52
   - NULLISH_COALESCING RAILS/brgen/app/javascript/controllers/lazy_image_controller.js:53
   - NULLISH_COALESCING RAILS/brgen/app/javascript/controllers/map_controller.js:137
@@ -213,7 +213,7 @@ finding_members:
   - NULLISH_COALESCING RAILS/brgen/engines/tv/app/javascript/controllers/tv_feed_controller.js:77
   - NULLISH_COALESCING RAILS/brgen/engines/tv/app/javascript/controllers/tv_feed_controller.js:94
   - NULLISH_COALESCING RAILS/brgen/engines/tv/app/javascript/controllers/tv_player_controller.js:104
-  - OPTIONAL_CHAINING MASTER/web/public/face_semantics.js:173
+  - OPTIONAL_CHAINING RAILS/master_web/public/face_semantics.js:173
   - OPTIONAL_CHAINING RAILS/brgen/app/javascript/controllers/form_submit_controller.js:98
   - PROSE_ACTIVE_VOICE RAILS/brgen/app/lib/fediverse/signature.rb:16
   - PROSE_ACTIVE_VOICE RAILS/brgen/test/jobs/prune_guest_users_job_test.rb:5
@@ -222,8 +222,8 @@ finding_members:
   - PROSE_ACTIVE_VOICE MASTER/tools/postpro/postpro.rb:2088
   - PROSE_ACTIVE_VOICE_NB RAILS/brgen/config/locales/nb.yml:1748
   - PROSE_OMIT_QUALIFIERS MASTER/lib/builder/ai_boot.rb:183
-  - PROSE_OMIT_QUALIFIERS MASTER/web/CLAUDE.md:295
-  - PROSE_OMIT_QUALIFIERS MASTER/web/test/controllers/tts_controller_test.rb:28
+  - PROSE_OMIT_QUALIFIERS RAILS/master_web/CLAUDE.md:295
+  - PROSE_OMIT_QUALIFIERS RAILS/master_web/test/controllers/tts_controller_test.rb:28
   - PROSE_OMIT_QUALIFIERS RAILS/brgen/app/controllers/invites_controller.rb:48
   - PROSE_OMIT_QUALIFIERS RAILS/brgen/app/controllers/nearby_controller.rb:44
   - PROSE_OMIT_QUALIFIERS RAILS/brgen/app/controllers/users_controller.rb:96
@@ -245,7 +245,7 @@ finding_members:
   - SAFE_NAVIGATION MASTER/tools/dilla/dilla.rb:35800
   - SQUINT_TEST RAILS/brgen/app/assets/stylesheets/application.scss:1
   - SQUINT_TEST RAILS/__shared/app/assets/stylesheets/_search_yep.scss:1
-  - USE_THEN MASTER/web/script/browser_probe_support.rb:1
+  - USE_THEN RAILS/master_web/script/browser_probe_support.rb:1
   - USE_THEN RAILS/brgen/test/controllers/paginated_index_test.rb:1
   - USE_THEN RAILS/brgen/test/controllers/wiki_controller_test.rb:1
   - USE_THEN RAILS/brgen/test/system/dating_swipe_test.rb:1
@@ -259,8 +259,8 @@ registry_by_rule:
   NO_GOD_CLASS: 26
   SILENT_RESCUE: 23
 registry_finding_members:
-  - NO_GOD_CLASS MASTER/web/app/services/chat_service.rb:7
-  - NO_GOD_CLASS MASTER/web/app/services/tts_job.rb:7
+  - NO_GOD_CLASS RAILS/master_web/app/services/chat_service.rb:7
+  - NO_GOD_CLASS RAILS/master_web/app/services/tts_job.rb:7
   - NO_GOD_CLASS OPENBSD/lib/gate_result.rb:33
   - NO_GOD_CLASS RAILS/amber/app/controllers/ai_controller.rb:5
   - NO_GOD_CLASS RAILS/amber/app/controllers/items_controller.rb:3
