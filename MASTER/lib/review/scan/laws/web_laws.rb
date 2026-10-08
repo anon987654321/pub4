@@ -11,7 +11,7 @@ module Master
         #   NO_INLINE_STYLES
         # (test_scan_rule_contracts proves each reaches findings through the bridge).
 
-        RuleDSL.rule :HTML_LANG,
+        LawDSL.law :HTML_LANG,
           severity: :error, tags: %i[ACCESSIBILITY], applies_to: %i[html],
           fires: %(<html>\n),
           does_not_fire: %(<html lang="nb">\n),
@@ -26,7 +26,7 @@ module Master
         # IMG_ALT and LAZY_IMAGES returned from the twin batch: both judge a
         # TAG, and law/ scans lines — the attribute-per-line spelling made
         # every multi-line <img> a finding. tag_source flattens first.
-        RuleDSL.rule :IMG_ALT,
+        LawDSL.law :IMG_ALT,
           severity: :error, tags: %i[ACCESSIBILITY], applies_to: %i[html],
           fires: %(<img src="a.png">\n),
           does_not_fire: %(<img src="a.png" alt="a garment">\n),
@@ -34,7 +34,7 @@ module Master
           scan_lines(tag_source(src), /<img\s+(?![^>]*alt=)/, message: "<img> missing alt= attribute")
         end
 
-        RuleDSL.rule :LAZY_IMAGES,
+        LawDSL.law :LAZY_IMAGES,
           severity: :info, tags: %i[PERFORMANCE], applies_to: %i[html],
           fires: %(<img src="a.png" alt="a">\n),
           does_not_fire: %(<img src="a.png" alt="a" loading="lazy">\n),
@@ -42,7 +42,7 @@ module Master
           scan_lines(tag_source(src), /<img\s+(?![^>]*loading=)/, message: "<img> missing loading=lazy")
         end
 
-        RuleDSL.rule :NO_IMPORTANT,
+        LawDSL.law :NO_IMPORTANT,
           severity: :warning, tags: %i[MAINTAINABILITY], applies_to: %i[css scss],
           fires: ".btn { background: #c00 !important; }\n",
           does_not_fire: ".btn { border: none !important; }\n",
@@ -90,7 +90,7 @@ module Master
         # META_CHARSET lives once, in law/html.rb — fixtures attached, any narrowing
         # this version had learned ported there (2026-08-21 twin retirement).
 
-        RuleDSL.rule :ARIA_LABELS,
+        LawDSL.law :ARIA_LABELS,
           severity: :warning, tags: %i[ACCESSIBILITY], applies_to: %i[html],
           fires: %(<button class="icon-only"><svg></svg></button>\n),
           does_not_fire: %(<button class="icon-only" aria-label="Close"><svg></svg></button>\n),
@@ -102,7 +102,7 @@ module Master
           end
         end
 
-        RuleDSL.rule :NO_TODO_IN_VIEWS,
+        LawDSL.law :NO_TODO_IN_VIEWS,
           severity: :warning, tags: %i[MAINTAINABILITY], applies_to: %i[html],
           fires: %(<%# FIXME: wire the filter %>\n),
           does_not_fire: %(<%# the filter is Marketplace::ListingFacets %>\n),
@@ -111,7 +111,7 @@ module Master
           scan_lines(src, /\b(TODO|FIXME|HACK)\b/, message: "unfinished marker in view — resolve before ship")
         end
 
-        RuleDSL.rule :ANTI_DIVITIS,
+        LawDSL.law :ANTI_DIVITIS,
           severity: :warning, tags: %i[DESIGN], applies_to: %i[html],
           fires: %(<div class="header">\n),
           does_not_fire: %(<header class="header">\n),
@@ -130,7 +130,7 @@ module Master
           </\1>
         }ix.freeze
 
-        RuleDSL.rule :PREFER_TAG_HELPERS,
+        LawDSL.law :PREFER_TAG_HELPERS,
           severity: :info, tags: %i[DESIGN RAILS_IDIOM], applies_to: %i[html],
           fires: %(<p><%= t("hello_world") %></p>\n),
           does_not_fire: %(<%= tag.p t("hello_world") %>\n),
@@ -147,7 +147,7 @@ module Master
         # UTILITY_CLASS_SOUP lives once, in law/html.rb — fixtures attached, any narrowing
         # this version had learned ported there (2026-08-21 twin retirement).
 
-        RuleDSL.rule :ERB_HTML_SAFE,
+        LawDSL.law :ERB_HTML_SAFE,
           severity: :error, tags: %i[SECURITY], applies_to: %i[html],
           fires: %(<%= @post.body.html_safe %>\n),
           does_not_fire: %(<%= sanitize(@post.body).html_safe %>\n),
@@ -176,7 +176,7 @@ module Master
           [finding(line: 1, message: "raw html_safe in view — sanitize first or use auto-escaped <%= %>")]
         end
 
-        RuleDSL.rule :SINGLE_H1,
+        LawDSL.law :SINGLE_H1,
           severity: :warning, tags: %i[SEO ACCESSIBILITY], applies_to: %i[html],
           fires: %(<h1>Bergen</h1>\n<h1>Oslo</h1>\n),
           does_not_fire: %(<h1>Bergen</h1>\n<h2>Oslo</h2>\n),
@@ -190,7 +190,7 @@ module Master
           [finding(line: 1, message: "#{count} <h1> tags — keep one primary heading per view")]
         end
 
-        RuleDSL.rule :FORM_LABEL,
+        LawDSL.law :FORM_LABEL,
           severity: :warning, tags: %i[ACCESSIBILITY], applies_to: %i[html],
           fires: %(<input type="text" name="query">\n),
           does_not_fire: %(<label>Search<input type="text" name="query"></label>\n),
@@ -203,7 +203,7 @@ module Master
         # SKIP_TO_MAIN lives once, in law/html.rb — fixtures attached, any narrowing
         # this version had learned ported there (2026-08-21 twin retirement).
 
-        RuleDSL.rule :ASYNC_STATUS,
+        LawDSL.law :ASYNC_STATUS,
           severity: :info, tags: %i[ACCESSIBILITY], applies_to: %i[html],
           fires: %(<turbo-frame id="feed"></turbo-frame>\n),
           does_not_fire: %(<turbo-frame id="feed" aria-live="polite"></turbo-frame>\n),
@@ -220,7 +220,7 @@ module Master
         # NO_LONG_TRANSITION lives once, in law/css.rb — fixtures attached, any narrowing
         # this version had learned ported there (2026-08-21 twin retirement).
 
-        RuleDSL.rule :REDUCED_MOTION,
+        LawDSL.law :REDUCED_MOTION,
           severity: :info, tags: %i[ACCESSIBILITY], applies_to: %i[css scss],
           description: "animations respect prefers-reduced-motion",
           example_path: "/repo/app/assets/stylesheets/_example.scss",
@@ -238,7 +238,7 @@ module Master
           [finding(line: 1, message: "animation without prefers-reduced-motion override")]
         end
 
-        RuleDSL.rule :TABINDEX_ABOVE_ZERO,
+        LawDSL.law :TABINDEX_ABOVE_ZERO,
           severity: :warning, tags: %i[ACCESSIBILITY], applies_to: %i[html],
           fires: %(<a href="/" tabindex="3">Home</a>\n),
           does_not_fire: %(<a href="/" tabindex="0">Home</a>\n),
@@ -248,7 +248,7 @@ module Master
             message: "tabindex > 0 — remove or use 0/-1 with roving focus pattern")
         end
 
-        RuleDSL.rule :NO_JS_ERB,
+        LawDSL.law :NO_JS_ERB,
           severity: :warning, tags: %i[HOTWIRE], applies_to: %i[html],
           fires: %(<%= render "posts/create.js.erb" %>\n),
           does_not_fire: %(<%= render "posts/create.turbo_stream.erb" %>\n),
@@ -259,7 +259,7 @@ module Master
           findings
         end
 
-        RuleDSL.rule :DATA_REMOTE,
+        LawDSL.law :DATA_REMOTE,
           severity: :warning, tags: %i[HOTWIRE], applies_to: %i[html],
           fires: %(<%= link_to "Slett", post_path(post), remote: true %>\n),
           does_not_fire: %(<%= link_to "Slett", post_path(post), data: { turbo_method: :delete } %>\n),
@@ -275,7 +275,7 @@ module Master
           <input\s+[^>]*type\s*=\s*["']text["'][^>]*(?:name|id)\s*=\s*["'][^"']*(?:email|phone|tel|url|date|password)
         /ix.freeze
 
-        RuleDSL.rule :INPUT_TYPE_SPECIFIC,
+        LawDSL.law :INPUT_TYPE_SPECIFIC,
           severity: :info, tags: %i[ACCESSIBILITY], applies_to: %i[html],
           fires: %(<input type="text" name="email_address">\n),
           does_not_fire: %(<input type="email" name="email_address">\n),
@@ -285,7 +285,7 @@ module Master
             message: "type=text for specialized field — use email/url/tel/date/password input type")
         end
 
-        RuleDSL.rule :FOCUS_VISIBLE,
+        LawDSL.law :FOCUS_VISIBLE,
           severity: :info, tags: %i[ACCESSIBILITY], applies_to: %i[css scss],
           example_path: "/repo/app/assets/stylesheets/application.scss",
           fires: ".btn:hover { background: var(--hover); }\n",
