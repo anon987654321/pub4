@@ -11,7 +11,7 @@ class ImmutablePathsTest < Minitest::Test
 
   def constitution
     rules = [Master::Core::Constitution.immutable_paths_rule(IMMUTABLE)]
-    Master::Core::Constitution.new(rules:)
+    Master::Core::Constitution.new(laws: rules)
   end
 
   def admit(effect) = constitution.admit(effect, nil)
