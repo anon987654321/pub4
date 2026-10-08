@@ -289,7 +289,7 @@ end
         FileUtils.mkdir_p(File.dirname(path))
         File.write(path, code)
       end
-      results = Master::Review::Scan::CrossFileAnalysis.new(root:).call(Dir.glob(File.join(root, "**", "*.rb")))
+      results = Master::Fix::Scan::CrossFileAnalysis.new(root:).call(Dir.glob(File.join(root, "**", "*.rb")))
       results.flat_map { |_, result| result.value! }.map { |finding| finding[:rule] }
     end
   end
