@@ -27,7 +27,7 @@ module Master
           Review::Scan::LawDSL
           wf = Master.load_yaml(Master.limits_path) rescue {}
           sleep_s = ENV["MASTER_AUTOFIX"] == "1" ? wf.dig("autoloop", "scan_file_sleep_s").to_f : 0
-          scanner = Review::Scan::Scanner.new(event_bus: bus, file_sleep_s: sleep_s)
+          scanner = Master::Fix::Scanner.new(event_bus: bus, file_sleep_s: sleep_s)
           Review::Scan::Law.registry.select(&:auto_build?).each do |klass|
             scanner.add_rule(Review::Scan::LawFactory.build(klass, root:, agent:, ecology:))
           end
