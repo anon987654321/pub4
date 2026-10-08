@@ -36,6 +36,22 @@ class PwaDesignContractTest < Minitest::Test
 
   # The bug that sent brgen away, asserted rather than remembered. A digested URL
   # in a precache manifest is pinned at build time and 404s at the next deploy.
+  def test_shared_worker_enforces_network_first_offline_and_retryable_writes
+    worker = read(SHARED_ROOT, "pwa/service_worker.js")
+
+    assert_includes worker, 'new NetworkFirst'
+    assert_includes worker, "networkTimeoutSeconds: 4"
+    assert_includes worker, 'statuses: [200]'
+    assert_includes worker, 'caches.match(request)'
+    assert_includes worker, 'caches.match("/")'
+    assert_includes worker, 'caches.match(OFFLINE_URL)'
+
+    assert_includes worker, 'new BackgroundSyncPlugin(FORM_QUEUE'
+    assert_includes worker, 'self.addEventListener("periodicsync"'
+    assert_includes worker, 'self.registration.showNotification'
+    assert_includes worker, 'clients.openWindow(o)'
+  end
+
   def test_no_worker_precaches_a_fingerprinted_asset
     each_app do |app, root|
       worker = read(root, "app/views/pwa/service-worker.js")
