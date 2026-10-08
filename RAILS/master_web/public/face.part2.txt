@@ -1,0 +1,410 @@
+const FACE_FUTURE_CRANIAL_HEIGHT = futureFeatureScale('cranial_height', 1.04);
+const FACE_FUTURE_CRANIAL_WIDTH = futureFeatureScale('cranial_width', 1.02);
+const FACE_FUTURE_UPPER_FACE = futureFeatureScale('upper_face_scale', 0.96);
+const FACE_FUTURE_LOWER_FACE = futureFeatureScale('lower_face_scale', 0.92);
+const FACE_FUTURE_VERTICALIZATION = futureFeatureScale('facial_verticalization', 1.02);
+const FACE_FUTURE_MASTICATORY = futureFeatureScale('masticatory_scale', 0.90);
+const FACE_FUTURE_FACIAL_PROJECTION = futureFeatureScale('facial_projection', 0.90);
+const FACE_FUTURE_JAW_SOFTENING = futureFeatureScale('jaw_softening', 0.96);
+const FACE_FUTURE_BROW = futureFeatureScale('brow_scale', 0.90);
+const FACE_FUTURE_NOSE = futureFeatureScale('nasal_projection', futureFeatureScale('nose_scale', 0.94));
+
+const VERT_SHADER = `
+vec3 mod289v3(vec3 x){return x-floor(x*(1./289.))*289.;}
+vec4 mod289v4(vec4 x){return x-floor(x*(1./289.))*289.;}
+vec4 permute4(vec4 x){return mod289v4(((x*34.)+1.)*x);}
+vec4 taylorInvSqrt4(vec4 r){return 1.79284291400159-0.85373472095314*r;}
+float snoise(vec3 v){
+  const vec2 C=vec2(1./6.,1./3.);const vec4 D=vec4(0.,.5,1.,2.);
+  vec3 i=floor(v+dot(v,C.yyy));vec3 x0=v-i+dot(i,C.xxx);
+  vec3 g=step(x0.yzx,x0.xyz);vec3 l=1.-g;
+  vec3 i1=min(g.xyz,l.zxy);vec3 i2=max(g.xyz,l.zxy);
+  vec3 x1=x0-i1+C.xxx;vec3 x2=x0-i2+C.yyy;vec3 x3=x0-D.yyy;
+  i=mod289v3(i);
+  vec4 p=permute4(permute4(permute4(i.z+vec4(0.,i1.z,i2.z,1.))+i.y+vec4(0.,i1.y,i2.y,1.))+i.x+vec4(0.,i1.x,i2.x,1.));
+  float n_=.142857142857;vec3 ns=n_*D.wyz-D.xzx;
+  vec4 j=p-49.*floor(p*ns.z*ns.z);
+  vec4 x_=floor(j*ns.z);vec4 y_=floor(j-7.*x_);
+  vec4 x=x_*ns.x+ns.yyyy;vec4 y=y_*ns.x+ns.yyyy;vec4 h=1.-abs(x)-abs(y);
+  vec4 b0=vec4(x.xy,y.xy);vec4 b1=vec4(x.zw,y.zw);
+  vec4 s0=floor(b0)*2.+1.;vec4 s1=floor(b1)*2.+1.;vec4 sh=-step(h,vec4(0.));
+  vec4 a0=b0.xzyw+s0.xzyw*sh.xxyy;vec4 a1=b1.xzyw+s1.xzyw*sh.zzww;
+  vec3 p0=vec3(a0.xy,h.x);vec3 p1=vec3(a0.zw,h.y);vec3 p2=vec3(a1.xy,h.z);vec3 p3=vec3(a1.zw,h.w);
+  vec4 norm=taylorInvSqrt4(vec4(dot(p0,p0),dot(p1,p1),dot(p2,p2),dot(p3,p3)));
+  p0*=norm.x;p1*=norm.y;p2*=norm.z;p3*=norm.w;
+  vec4 m=max(.6-vec4(dot(x0,x0),dot(x1,x1),dot(x2,x2),dot(x3,x3)),0.);m=m*m;
+  return 42.*dot(m*m,vec4(dot(p0,x0),dot(p1,x1),dot(p2,x2),dot(p3,x3)));
+}
+vec3 curlNoise(vec3 p){
+  const float e=.07;
+  float n1,n2,n3,n4;
+  n1=snoise(p+vec3(0,e,0));n2=snoise(p-vec3(0,e,0));
+  n3=snoise(p+vec3(0,0,e));n4=snoise(p-vec3(0,0,e));
+  float cx=(n1-n2)/(2.*e)-(n3-n4)/(2.*e);
+  vec3 q=p+vec3(31.416);
+  n1=snoise(q+vec3(0,0,e));n2=snoise(q-vec3(0,0,e));
+  n3=snoise(q+vec3(e,0,0));n4=snoise(q-vec3(e,0,0));
+  float cy=(n1-n2)/(2.*e)-(n3-n4)/(2.*e);
+  vec3 r=p+vec3(17.);
+  n1=snoise(r+vec3(e,0,0));n2=snoise(r-vec3(e,0,0));
+  n3=snoise(r+vec3(0,e,0));n4=snoise(r-vec3(0,e,0));
+  float cz=(n1-n2)/(2.*e)-(n3-n4)/(2.*e);
+  return vec3(cx,cy,cz);
+}
+uniform float uMorph;
+uniform float uTime;
+uniform vec3 uColor;
+uniform float uHc;
+uniform float uCurl;
+uniform float uJaw;
+uniform vec2 uMouse;
+uniform float uBass;
+uniform float uMids;
+uniform float uHighs;
+uniform float uConfidence;
+uniform float uTremor;
+uniform float uTilt;
+uniform float uRain;
+uniform float uModelSwitch;
+uniform float uEarPulse;
+uniform float uRipple;
+uniform float uVowel;
+uniform float uSurpriseY;
+uniform float uFracture;
+uniform float uBloom;
+uniform float uIdleDrift;
+uniform float uEyeClose;
+uniform float uExposure;
+uniform float uQuestion;
+attribute vec3 scatter;
+attribute float seed;
+attribute float curvature;
+attribute float boundary;
+attribute float zone;
+varying float vAlpha;
+varying vec3 vColor;
+varying float vDepth;
+varying float vZoneVal;
+void main(){
+  float m=smoothstep(0.,1.,uMorph);
+  vec2 cursorFace=uMouse*0.44;
+  float cursorProx=1.0-smoothstep(0.0,0.22,length(position.xy-cursorFace));
+  float lm=max(m,cursorProx*0.96);
+  float curiousPull = uTilt * cursorProx * 0.045;
+  float curlAmp=uCurl*0.28*(1.0-uRain*0.18);
+  vec3 noise=curlNoise(position*0.5+uTime*0.1+seed)*(1.-m)*curlAmp;
+  float jawRgn=smoothstep(0.0,0.15,-position.y-0.12)*smoothstep(0.0,0.14,0.28-abs(position.x));
+  float cheekRgn=smoothstep(0.10,0.56,abs(position.y)) * smoothstep(0.52,0.16,abs(position.x));
+  float browRgn=smoothstep(0.26,0.48,abs(position.y)) * smoothstep(0.48,0.16,abs(position.x));
+  vec3 p=mix(scatter,position,lm)+noise+vec3(0.,-uJaw*0.05*jawRgn,0.);
+  p.y *= FACE_FUTURE_CRANIAL_HEIGHT * FACE_FUTURE_VERTICALIZATION;
+  float faceBand = smoothstep(-0.72, 0.18, position.y);
+  p.x *= mix(FACE_FUTURE_LOWER_FACE, FACE_FUTURE_UPPER_FACE * FACE_FUTURE_CRANIAL_WIDTH, faceBand);
+  float jawBand = smoothstep(-0.80, -0.08, -position.y);
+  p.z *= mix(FACE_FUTURE_FACIAL_PROJECTION, FACE_FUTURE_FACIAL_PROJECTION * FACE_FUTURE_MASTICATORY, jawBand);
+  p.x += futureSideBias(position.x < 0.0 ? -1.0 : 1.0) * 0.25;
+  p.z += cheekRgn * (FACE_FUTURE_NOSE - 1.0) * 0.018;
+  p.y -= jawRgn * (1.0 - FACE_FUTURE_JAW_SOFTENING) * 0.018;
+  p.y += browRgn * (1.0 - FACE_FUTURE_BROW) * 0.012;
+  p.xy += normalize(cursorFace - p.xy + vec2(0.001)) * curiousPull;
+  float tremorf=snoise(position*18.0+uTime*3.2+seed)*uTremor*0.003;
+  p+=vec3(tremorf,tremorf*0.7,0.0);
+  vec2 diff2d=p.xy-uMouse;
+  float dist2d=length(diff2d);
+  if(dist2d<0.20&&dist2d>0.001)p.xy+=normalize(diff2d)*(0.20-dist2d)*0.32;
+  float radial=length(p.xy);
+  p.z+=sin(radial*11.0-uTime*3.8)*uBass*0.05*lm;
+  // FA18 rain — weary mood gravity drift per-seed phase
+  p.y -= uRain * (0.5 + position.y * 0.5) * sin(seed * 6.28 + uTime * 1.8) * 0.07;
+  // FA13 ear pulse — cheek zone oscillation when listening
+  float isEar = 1.0 - smoothstep(0.0, 0.08, abs(zone - 0.2));
+  p.xy += normalize(p.xy + vec2(0.001)) * isEar * uEarPulse * sin(uTime * 9.0 + seed) * 0.022;
+  // FA08 confidence outward drift — low confidence pushes vertices out
+  p.xy *= 1.0 + (1.0 - uConfidence) * 0.045;
+  // FA10 send ripple — radial wave from center
+  if(uRipple > 0.0) {
+    float rwave = sin(radial * 10.0 - uRipple * 18.0) * exp(-uRipple * 2.5) * 0.035;
+    p.xy += normalize(p.xy + vec2(0.001)) * rwave;
+  }
+  // FA05/FA04 vowel jaw — viseme amplitude extends jaw opening
+  float jawRgnV = smoothstep(0.0,0.15,-position.y-0.05) * smoothstep(0.0,0.18,0.30-abs(position.x));
+  p.y -= uVowel * jawRgnV * 0.025;
+  // FA29 surprised Y impulse
+  p.y += uSurpriseY * smoothstep(0.0, 0.6, 0.5 + position.y * 0.8) * 0.12;
+  // FA19 veto fracture — scatter to 8 radial shards by position angle
+  if(uFracture > 0.0) {
+    float ang = atan(position.y, position.x);
+    float shardAng = floor(ang * 4.0 / 3.14159 + 0.5) * 3.14159 / 4.0;
+    p.xy += vec2(cos(shardAng), sin(shardAng)) * uFracture * (0.22 + seed * 0.32);
+  }
+  if(uModelSwitch > 0.0) {
+    float dissolve = smoothstep(0.0, 0.45, uModelSwitch) * (1.0 - smoothstep(0.55, 1.0, uModelSwitch));
+    p += curlNoise(position * 0.9 + seed + vec3(uTime * 0.2)) * dissolve * 0.045;
+  }
+  if(uQuestion > 0.0) {
+    float qt = clamp(uQuestion, 0.0, 1.0);
+    float qSeed = fract(seed * 13.37 + uTime * 0.12);
+    vec2 qStem = vec2(0.02 * sin(qSeed * 18.0), 0.10 - qSeed * 0.34);
+    vec2 qHook = vec2(0.11 * cos(qSeed * 6.2831), 0.12 + 0.10 * sin(qSeed * 6.2831));
+    vec2 qTarget = qSeed < 0.62 ? qHook : qStem;
+    p.xy = mix(p.xy, qTarget, qt * 0.88);
+    p.z += qt * 0.02 * sin(seed * 6.2831);
+  }
+  // FA20 pass bloom — brief outward radial spring then snap back
+  if(uBloom > 0.0) p.xy += normalize(p.xy + vec2(0.001)) * uBloom * 0.30 * (1.0 - radial * 0.6);
+  vec4 mv=modelViewMatrix*vec4(p,1.);
+  float depth=clamp(p.z/0.82,0.,1.);
+  // Treat the point cloud as a shallow physical surface instead of a flat depth gradient.
+  // The ellipsoid normal gives the same face genuine key/fill/rim lighting while keeping
+  // one-pixel rasterisation. Lighting is computed per vertex, so it adds no extra draw call.
+  vec3 normal = normalize(vec3(p.x / 0.62, p.y / 0.62, p.z / 0.82));
+  vec3 keyDir = normalize(vec3(-0.48, 0.28, 0.84));
+  vec3 fillDir = normalize(vec3(0.34, -0.08, 0.94));
+  float keyLight = max(dot(normal, keyDir), 0.0);
+  float fillLight = max(dot(normal, fillDir), 0.0);
+  float rimLight = pow(1.0 - abs(dot(normal, vec3(0.0, 0.0, 1.0))), 2.0);
+  float sculptLight = 0.60 + (0.46 * keyLight) + (0.18 * fillLight) + (0.16 * rimLight);
+  // One point is one pixel. The renderer draws into a FACE_RENDER_SCALE buffer
+  // that CSS upscales with image-rendering:pixelated, so a single fragment here
+  // IS the visible square block on screen. A point that grew toward the camera
+  // stopped being a pixel and became a blob, and a field of overlapping blobs is
+  // what read as a lit wireframe mass rather than a face built out of pixels.
+  gl_PointSize=1.0;
+  gl_Position=projectionMatrix*mv;
+  // Curvature, depth and silhouette used to scale point SIZE. A pixel has no
+  // size to give, so they scale brightness instead — which is how a 1-bit image
+  // has always carried form. This is now the only 3D cue, so it does the work
+  // the deleted glow pass and fresnel rim were doing, without softening an edge.
+  float form=0.78+curvature*0.62+depth*1.22+boundary*0.42;
+  float hc=uHc;
+  float zoneAudio=0.0;
+  if(zone<0.1) zoneAudio=uBass*0.18;
+  else if(zone<0.3) zoneAudio=uMids*0.12;
+  else if(zone<0.5) zoneAudio=uBass*0.08;
+  else if(zone<0.7) zoneAudio=uHighs*0.14;
+  else zoneAudio=uMids*0.10;
+  float eyeRgn = smoothstep(0.30,0.50,zone) * (1.0 - smoothstep(0.50,0.65,zone));
+  float eyeDim = 1.0 - uEyeClose * eyeRgn * 0.82;
+  vAlpha=(hc>0.0?hc:mix(0.28+uIdleDrift*0.08,0.48+depth*0.52,lm)+zoneAudio)*eyeDim;
+  float flickerFreq=0.5+seed*1.5;
+  float flicker=1.0+0.08*sin(seed*6.2831+uTime*flickerFreq);
+  vAlpha*=flicker*uExposure;
+  vAlpha*=1.0-0.45*clamp(uModelSwitch,0.0,1.0);
+  vAlpha*=1.0-0.35*clamp(uQuestion,0.0,1.0);
+  vAlpha*=clamp(form*0.42,0.25,1.0);
+  vAlpha=max(vAlpha,0.08);
+  // 0.35 rather than 0.14 at the far end, and the whole term scaled past 1.
+  // Receding points were painted at a seventh of full brightness — most of a
+  // head turned even slightly — which is half of why the face read as a shadow;
+  // the other half is exposure, in part3. vColor is clamped in the fragment
+  // shader, so the scale saturates the mid-depth points to white and leaves the
+  // far ones a real gradient rather than a run to almost nothing. Depth is the
+  // only 3D cue a 1px field has, and it survives this.
+  float shade = sculptLight * mix(0.78, 1.08, depth);
+  // Warm depth remains subtle; the normal-driven light now carries form.
+  vec3 warmDepth=mix(vec3(0.74,0.66,0.58),vec3(1.0,0.98,0.94),depth);
+  vColor=(hc>0.0?vec3(1.0,1.0,1.0):uColor*warmDepth*shade);
+  vDepth=depth;
+  vZoneVal=zone;
+}`;
+
+const FRAG_SHADER = `
+varying float vAlpha;
+varying vec3 vColor;
+varying float vDepth;
+varying float vZoneVal;
+uniform float uFocusDim;
+void main(){
+  // No gl_PointCoord shaping. At gl_PointSize 1.0 a point is a single fragment,
+  // so there is no interior to carve a disc out of — the mask only ever cost an
+  // interpolation and rounded the one pixel it was drawing.
+  float alpha=vAlpha*uFocusDim;
+  float eyeRgn=smoothstep(0.30,0.50,vZoneVal)*(1.0-smoothstep(0.50,0.65,vZoneVal));
+  float mouthRgn=smoothstep(0.68,0.82,vZoneVal);
+  float zoneDim=mix(1.0,mix(0.82,0.96,mouthRgn),eyeRgn*0.48);
+  alpha*=zoneDim;
+  // No fresnel rim. A rim light is soft-glow shading under another name, and the
+  // silhouette term folded into vAlpha already states the edge as brightness.
+  gl_FragColor=vec4(clamp(vColor,0.0,1.0),max(0.0,alpha));
+}`;
+
+// No edge lines. The face is points, and nothing else: operator decision
+// 2026-08-18, after a phone made the trade visible — the wire mesh is the same
+// weight whatever the grid density is, so on a coarse pointer it outweighed the
+// points it was derived from and the face read as a wireframe.
+let faceGeom, faceMat, facePoints;
+if (_hasWebGL && THREE) {
+  faceGeom = new THREE.BufferGeometry();
+  faceGeom.setAttribute('position', new THREE.BufferAttribute(faceHome, 3));
+  faceGeom.setAttribute('scatter',  new THREE.BufferAttribute(faceScatter, 3));
+  faceGeom.setAttribute('seed',     new THREE.BufferAttribute(faceSeeds, 1));
+  faceGeom.setAttribute('curvature', new THREE.BufferAttribute(faceCurvature, 1));
+  faceGeom.setAttribute('boundary',  new THREE.BufferAttribute(faceBoundary, 1));
+  faceGeom.setAttribute('zone',      new THREE.BufferAttribute(faceZone, 1));
+  faceMat = new THREE.ShaderMaterial({
+    vertexShader: VERT_SHADER, fragmentShader: FRAG_SHADER,
+    uniforms: {
+      uMorph:{value:0}, uTime:{value:0},
+      uColor:{value:new Color(1,1,1)},
+      uHc:{value: State.highContrast ? 1.0 : (State.contrastMore ? 0.9 : 0.0)},
+      uCurl:{value:0}, uJaw:{value:0}, uMouse:{value:{x:0,y:0}},
+      uBass:{value:0},
+      uMids:{value:0}, uHighs:{value:0},
+      uConfidence:{value:1}, uTremor:{value:0}, uTilt:{value:0},
+      uRain:{value:0}, uModelSwitch:{value:0}, uEarPulse:{value:0}, uRipple:{value:0},
+      uVowel:{value:0}, uSurpriseY:{value:0},
+      uFracture:{value:0}, uBloom:{value:0}, uIdleDrift:{value:0}, uEyeClose:{value:0}, uExposure:{value:1.0}, uQuestion:{value:0},
+      uFocusDim:{value:1.0}, uTime:{value:0}
+    },
+    // Normal (not additive) blending, so individual pixels stay crisp and
+    // discrete instead of bleeding into their neighbours. This is the only
+    // point layer there is; the additive halo pass that used to sit behind it
+    // is gone.
+    // No `blending:` here, deliberately. THREE.NormalBlending is not one of the
+    // symbols script/three_face_entry.js re-exports, so naming it set this
+    // material's blending to `undefined` rather than to normal alpha blending.
+    // A THREE.Points sprite carries no map, so its quad is a square: without
+    // alpha blending the layer draws those squares instead of points, which is
+    // the large translucent squares over the face. The material default already
+    // IS normal blending — the same gap the phosphor quad above sidesteps by
+    // saying nothing, after it turned the whole screen white.
+    transparent: true, depthWrite: false
+  });
+  facePoints = new THREE.Points(faceGeom, faceMat);
+}
+
+let morphCurrent = 0.0, morphTarget = 0.88;
+let mouthPool = null;
+let eyePool = null;
+function initSemanticPools() {
+  const K = window.ParticleKernel;
+  if (!K || !faceHome || !faceZone || mouthPool) return;
+  const n = (faceHome.length / 3) | 0;
+  const mouthIdx = [], eyeIdx = [];
+  for (let i = 0; i < n; i++) {
+    const z = faceZone[i];
+    if (z >= 0.68) mouthIdx.push(i);
+    if (z >= 0.30 && z <= 0.55) eyeIdx.push(i);
+  }
+  const particleBudget = Math.max(30, Number(window.MASTER_FACE_STATE?.renderBudget?.().particles) || 200);
+  const mouthCapacity = Math.max(16, Math.min(140, Math.floor(particleBudget * 0.62)));
+  const eyeCapacity = Math.max(14, Math.min(96, particleBudget - mouthCapacity));
+  mouthPool = K.createPool(Math.min(mouthCapacity, mouthIdx.length));
+  eyePool = K.createPool(Math.min(eyeCapacity, eyeIdx.length));
+  for (let mi = 0; mi < mouthIdx.length && mouthPool.count < mouthPool.capacity; mi++) {
+    const i = mouthIdx[mi];
+    K.spawn(mouthPool, faceHome[i * 3], faceHome[i * 3 + 1], {
+      kind: 1, zone: faceZone[i], confidence: 0.88, arousal: 0.25, valence: 0.5, attention: 0.6, decay: 0.006
+    });
+  }
+  for (let ei = 0; ei < eyeIdx.length && eyePool.count < eyePool.capacity; ei++) {
+    const i = eyeIdx[ei];
+    K.spawn(eyePool, faceHome[i * 3], faceHome[i * 3 + 1], {
+      kind: 2, zone: faceZone[i], confidence: 0.92, arousal: 0.2, valence: 0.5, attention: 0.75, decay: 0.012
+    });
+  }
+}
+if (window.ParticleKernel) initSemanticPools();
+else window.addEventListener('DOMContentLoaded', () => { if (window.ParticleKernel) initSemanticPools(); }, { once: true });
+
+// COUNCIL_VOICE was here until 2026-08-13: six council personas mapped to a
+// voice name, defined and never read anywhere in the face sources. Single-voice
+// policy makes it unreachable by design — guardVoice discards its argument and
+// returns MASTER_VOICE_POLICY.neural — so it was six more copies of a voice
+// name that could only ever go stale, and had.
+
+// Pristine chrome: council personas no longer shift the face to a hue
+// (was blue/orange/green/red/purple/yellow per persona) -- only the logo,
+// face, and shell prompt carry visual weight; persona identity is
+// conveyed through text/voice, not an unannounced color change.
+const PERSONA_TINT = {
+  Architect: new Color(1, 1, 1),
+  Skeptic: new Color(1, 1, 1),
+  Pragmatist: new Color(1, 1, 1),
+  Security: new Color(1, 1, 1),
+  User: new Color(1, 1, 1),
+  Mentor: new Color(1, 1, 1)
+};
+
+const colorCurrent = TINT.idle.clone();
+const colorTarget  = TINT.idle.clone();
+function fadeColorTo(c) { colorTarget.copy(c); }
+function applyPersonaVisual(persona) {
+  const tint = PERSONA_TINT[persona];
+  if (!tint) return;
+  fadeColorTo(tint);
+  if (isRichMotionProfile()) State.personaPulse = Math.min(1, (State.personaPulse || 0) + 0.35);
+}
+const COUNCIL_LANE_OFFSET = { left: -0.22, center: 0, right: 0.22 };
+function offsetCouncilMouthPool(lane, delta = 0.18) {
+  const K = window.ParticleKernel;
+  if (!mouthPool || !K || !lane) return;
+  const shift = COUNCIL_LANE_OFFSET[lane] ?? 0;
+  for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
+    const b = i * K.FIELDS_PER_CELL;
+    mouthPool.cells[b + K.FIELD.x] += shift * delta;
+    const currentArousal = mouthPool.cells[b + K.FIELD.arousal];
+    mouthPool.cells[b + K.FIELD.arousal] = Math.min(1, (Number.isFinite(currentArousal) ? currentArousal : 0.4) + delta * 0.35);
+  }
+}
+function refreshIdleTint() {
+  TINT.idle.copy(dayNightTint());
+  colorCurrent.copy(TINT.idle); colorTarget.copy(TINT.idle);
+}
+refreshIdleTint();
+setInterval(() => { if (!State.mood || State.mood === 'idle') { refreshIdleTint(); fadeColorTo(TINT.idle); } }, 60000);
+
+const bloomCtx = null;
+const bloomCv = null;
+
+function dollyZoom(intensity) {
+  const value = Math.max(0, Math.min(1, Number(intensity) || 0));
+  if (!camera || value <= 0) return;
+  State.cameraZoom = Math.max(State.cameraZoom || 0, value);
+  State.cameraZoomAt = performance.now();
+}
+
+const _photoEl = document.getElementById('photo');
+if (_photoEl) _photoEl.addEventListener('change', () => {
+  if (_photoEl.files[0]) { morphCurrent = 0; morphTarget = 1.0; }
+});
+
+let lastT = performance.now();
+let _attnEyeClose = 0;
+window.MASTER_ATTENTION?.reset?.({ blinkMs: State.idleSignature?.blink_ms });
+let nodImpulse = 0;
+let head;
+if (_hasWebGL && THREE && scene && facePoints) {
+  head = new THREE.Object3D();
+  scene.add(head);
+  head.add(facePoints);
+}
+
+async function swapMask(imageUrl) {
+  if (!_hasWebGL || !THREE || !facePoints) return;
+  try {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = imageUrl; });
+    const tmp = document.createElement('canvas');
+    tmp.width = tmp.height = 512;
+    tmp.getContext('2d').drawImage(img, 0, 0, 512, 512);
+    const nd = sampleDepthMapGrid(tmp, FACE_GRID_COLS, FACE_GRID_ROWS);
+    const ng = new THREE.BufferGeometry();
+    ng.setAttribute('position',  new THREE.BufferAttribute(nd.home, 3));
+    ng.setAttribute('scatter',   new THREE.BufferAttribute(nd.scatter, 3));
+    ng.setAttribute('seed',      new THREE.BufferAttribute(nd.seeds, 1));
+    ng.setAttribute('curvature', new THREE.BufferAttribute(nd.curvature, 1));
+    ng.setAttribute('boundary',  new THREE.BufferAttribute(nd.boundary, 1));
+    ng.setAttribute('zone',      new THREE.BufferAttribute(nd.zone, 1));
+    facePoints.geometry.dispose();
+    facePoints.geometry = ng;
+    morphCurrent = 0; morphTarget = 1.0;
+    mouthPool = null; eyePool = null;
+    initSemanticPools();
+    State.flash = 0.5; State.pulse = 0.8;
+    if (uiStatus) uiStatus.textContent = 'mask loaded';
+  } catch (_) {
+    if (uiStatus) uiStatus.textContent = 'mask load failed';
+  }
+}

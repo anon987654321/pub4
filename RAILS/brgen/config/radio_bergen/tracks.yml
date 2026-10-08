@@ -1,0 +1,84 @@
+# Radio Bergen track manifest.
+#
+# Local broadcast files were retired from the source tree with brgen/public.
+# This file now carries the external/reference crate only; locally hosted audio
+# belongs in the application's persistent media/storage layer.
+#
+# Playback rights and attribution remain operator-owned metadata for the archived
+# references. Review before publishing any source that is not independently
+# cleared.
+#
+meta:
+  source_archive: anon987654321/pub2
+  restored_for: pub4
+  product: Radio Bergen
+  review_required:
+    - licensing
+    - attribution
+    - takedown_contact
+    - cache_policy
+
+external_reference:
+  policy: reference_only_until_rights_review
+  youtube:
+    - artist: J Dilla
+      title: Microphone Master
+      id: 9EGHwkDix78
+    - artist: J Dilla
+      title: In Space
+      id: vO2nWXCVt6o
+    - artist: J Dilla
+      title: Timeless
+      id: dbbfo9_7D8g
+    - artist: AFTA-1
+      title: Due Time
+      id: WC09qDzU9y4
+    - artist: Flying Lotus
+      title: Massage Situation
+      id: 6oUx6wGCekM
+    - artist: Madlib
+      title: Eye
+      id: ScVz2mntmCE
+    - artist: Slum Village
+      title: Players
+      id: KsULjOCYdnY
+    - artist: Jay Electronica
+      title: Exhibit A
+      id: H3UIHZshNQ0
+    - artist: Slum Village
+      title: La La (Instrumental)
+      id: EYJxxHQ7sX0
+    - artist: Slum Village
+      title: Get It Together
+      id: t6T-Q6HMbEo
+    - artist: Slum Village
+      title: Fantastic
+      id: a3ISYWWYgz8
+    - artist: Flying Lotus
+      title: me Yesterday//Corded
+      id: 8DgAhgmpXNA
+    - artist: Flying Lotus
+      title: Camel
+      id: fU9YRGLPDQ8
+    - artist: Flying Lotus
+      title: Golden Diva
+      id: iu4FVvR2QQs
+    - artist: Slum Village
+      title: Worlds Full of Sadness
+      id: MU3nfxsz2XA
+    - artist: A. Mochi & Takaaki Itoh
+      title: Sarria's Mind
+      id: gFKArkiz8vU
+    - artist: Samiyam
+      title: Rounded
+      id: oeaY2h_cKsg
+    - artist: Chase Swayze
+      title: Traffic
+      id: bH-30pDoQdo
+    - artist: Chase Swayze
+      title: Underrated
+      id: 1jjFk2Vp5ok
+    - artist: Flying Lotus
+      title: BTS Radio 2006
+      id: 6nWdggkulHk
+      start: 1364

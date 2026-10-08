@@ -1,0 +1,76 @@
+# frozen_string_literal: true
+# Canonical MIDI transformation vocabulary for DILLA.
+# Effects are musical operators, not sound effects. Keep chains short enough to
+# explain: motif -> transform -> instrument.
+chain:
+  default:
+    - scale
+    - ghost
+    - microshift
+    - probability
+  sparse:
+    - scale
+    - fragment
+    - microshift
+  kinetic:
+    - scale
+    - ratchet
+    - velocity_curve
+    - microshift
+  alien:
+    - scale
+    - mirror
+    - fragment
+    - octave_bloom
+    - microshift
+  film_intro:
+    - scale
+    - fragment
+    - humanize
+    - gate
+  film_motion:
+    - scale
+    - chord
+    - arp
+    - microshift
+    - velocity_curve
+  film_hook:
+    - scale
+    - note_repeat
+    - ghost
+    - octave_bloom
+    - microshift
+  film_breakdown:
+    - scale
+    - probability
+    - fragment
+    - gate
+  film_alien:
+    - scale
+    - mirror
+    - reverse
+    - hocket
+    - call_response
+    - microshift
+parameters:
+  probability: 0.84
+  microshift_ms: 1.8
+  ratchet_max: 3
+  ghost_probability: 0.18
+  fragment_probability: 0.22
+  octave_probability: 0.08
+  octave_span: 12
+  transpose: 0
+  chord_intervals: [3, 7]
+  chord_gain: 0.34
+  note_repeat: 3
+  euclidean_steps: 8
+  euclidean_pulses: 5
+  humanize_ms: 4.0
+  humanize_gain: 0.06
+  grace_interval: -1
+  grace_gain: 0.3
+  stutter_repeats: 3
+  stutter_events: 2
+  gate_ratio: 0.52
+  hocket_voices: [call, response]

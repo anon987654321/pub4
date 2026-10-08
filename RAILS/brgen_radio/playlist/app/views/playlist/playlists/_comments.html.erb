@@ -1,0 +1,13 @@
+<%# locals: (active:, comments:) %>
+<%# The timestamped comments on the active track, which seek the player when
+    clicked. The player renders this inside .playlist-app, so the target and
+    the actions resolve against its playlist-player controller. %>
+<section class="playlist-comments" aria-label="<%= t("aria.timestamped_comments") %>" id="playlist:track:<%= active&.id %>:comments" data-playlist-player-target="commentsList">
+  <%= tag.h3 t("playlist.comments_seek") %>
+  <% (comments || []).each do |c| %>
+    <div class="playlist-comment" data-time="<%= c[:time] %>" data-action="click->playlist-player#seekToComment">
+      <span class="time"><%= c[:time] %></span>
+      <span class="text"><%= c[:text] %></span>
+    </div>
+  <% end %>
+</section>

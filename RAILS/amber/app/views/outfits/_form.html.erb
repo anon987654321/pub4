@@ -1,0 +1,31 @@
+<%= form_with model: outfit, class: "form" do |f| %>
+  <%= render "shared/errors", object: outfit %>
+  <div class="field"><%= f.label :name %><%= f.text_field :name, autofocus: true %></div>
+  <div class="field">
+    <%= f.label :description %>
+    <%= character_counter_field f, :description, max: 1000, rows: 3 %>
+  </div>
+  <div class="field">
+    <%= f.label :category %>
+    <%= f.select :category, %w[Casual Formal Work Workout Evening].map { |c| [t("outfits.categories.#{c}"), c] }, include_blank: t("outfits.select_blank") %>
+  </div>
+  <div class="field">
+    <%= f.label :season %>
+    <%= f.select :season, Item::SEASONS, include_blank: t("outfits.select_blank") %>
+  </div>
+  <div class="field"><%= f.label :occasion %><%= f.text_field :occasion %></div>
+  <section class="nested-form" data-controller="nested-form">
+    <%= tag.h3 t("outfits.items_heading") %>
+    <template data-nested-form-target="template">
+      <%= f.fields_for :outfit_items, OutfitItem.new, child_index: "NEW_RECORD" do |outfit_item_fields| %>
+        <%= render "outfit_item_fields", f: outfit_item_fields %>
+      <% end %>
+    </template>
+    <%= f.fields_for :outfit_items do |outfit_item_fields| %>
+      <%= render "outfit_item_fields", f: outfit_item_fields %>
+    <% end %>
+    <div data-nested-form-target="target"></div>
+    <button type="button" class="btn-link" data-action="nested-form#add"><%= t("outfits.add_item") %></button>
+  </section>
+  <div class="actions"><%= f.submit class: "btn" %> <%= link_to t("actions.cancel"), outfits_path %></div>
+<% end %>

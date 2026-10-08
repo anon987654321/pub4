@@ -1,0 +1,102 @@
+<% in_channel = message.conversation.channel? %>
+<% who = in_channel ? message.sender.channel_handle : message.sender.display_name %>
+<li id="<%= dom_id(message) %>" role="listitem">
+<%# data-sender-id is viewer-independent so it stays correct when this partial
+    is rendered from a broadcast job (no Current.user); the conversation-log
+    controller turns it into data-from on arrival. %>
+<article data-sender-id="<%= message.sender_id %>" data-from="<%= message.sender_id == Current.user&.id ? "self" : "peer" %>"<%= " data-bot" if in_channel && message.sender.bot? %><%= " data-expiry=\"#{message.expiry_urgency}\"" if message.expiry_urgency %> aria-label="<%= t("messages.from_aria", name: who) %>">
+  <header>
+    <span class="msg-nick" style="<%= nick_style(who) %>"><%= who %></span> <%# scan: intentional — nick_style emits only the --nick-hue custom property %>
+    <%# A channel is a transcript, so the time is absolute and stable: [19:32],
+        the way every IRC client prints it. Relative time ("3 minutes ago")
+        suits a DM, where recency is the question, but in a room it rewrites
+        every visible line on a timer and gives you nothing to refer back to.
+        The timeago Stimulus controller is gone from this tree entirely: it
+        reads data-timeago-datetime-value, no view ever set one, and its only
+        effect if it had fired would be to overwrite the server's Norwegian
+        with date-fns English. %>
+    <% if in_channel %>
+      <time datetime="<%= message.created_at.iso8601 %>"><%= message.created_at.strftime("%H:%M") %></time>
+    <% else %>
+      <time datetime="<%= message.created_at.iso8601 %>"><%= time_ago(message.created_at) %></time>
+    <% end %>
+<%# messages#update sets edited_at and nothing ever showed it, so a message
+    could change under a reader with no sign that it had. The marker is the
+    whole contract: an edit is allowed because it is visible. %>
+<% if message.edited_at.present? %>
+  <span class="edited-mark" title="<%= l(message.edited_at, format: :short) %>">· <%= t("messages.edited") %></span>
+<% end %>
+    <% if message.expires_at %>
+      <%# A future span, so not time_ago — "forsvinner om …", not "for … siden". %>
+      <span class="expiry-chip" data-expiry="<%= message.expiry_urgency %>">· <%= t("messages.disappears_in", time: time_ago_in_words(message.expires_at)) %></span>
+    <% end %>
+    <%# detect, not find_by. Both controllers preload message_receipts, and
+        find_by ignores a loaded association and issues its own SELECT — so the
+        preload was paid for and thrown away, one query per message per page.
+        This is the same defect the inbox had with unread_count_for. %>
+    <% receipt = message.message_receipts.detect { |r| r.user_id == Current.user&.id } %>
+    <% if receipt&.read? %><span class="read-receipt">· <%= t("messages.read") %></span><% end %>
+  </header>
+  <% if message.story_id %>
+    <p class="msg-reply-context"><%= t("messages.replying_to_story") %></p>
+  <% end %>
+  <% if message.forwarded? %>
+    <p class="msg-forwarded"><%= t("messages.forwarded") %></p>
+  <% end %>
+  <% if message.reply? && message.parent %>
+    <p class="msg-reply-context"><%= t("messages.replying_to", name: message.parent.sender.display_name) %>: <%= truncate(message.parent.content.to_s, length: 60) %></p>
+  <% end %>
+  <%= tag.p format_chat_body(message.content) %>
+  <% if message.link_preview&.ok? %>
+    <%# Title, site and summary — no remote image. Hotlinking one would tell
+        that server the IP of everyone reading the thread, and proxying it is
+        remote media hosting, which is a larger problem than a chat preview. %>
+    <%= link_to message.link_preview.url, class: "link-preview", rel: "nofollow noopener", target: "_blank" do %>
+      <span class="link-preview-site"><%= message.link_preview.site_name.presence || message.link_preview.host %></span>
+      <span class="link-preview-title"><%= message.link_preview.title.presence || message.link_preview.url %></span>
+      <% if message.link_preview.description.present? %>
+        <span class="link-preview-body"><%= truncate(message.link_preview.description, length: 160) %></span>
+      <% end %>
+    <% end %>
+  <% end %>
+  <%= render "messages/reactions", message: message %>
+  <%# Reply, edit, unsend and forward all had a route, a model method and no
+      control anywhere in the tree, so none of them could be reached from a
+      page. Plain forms and links rather than a Stimulus controller: the state
+      each one needs lives in the URL, and a message list is long. %>
+  <% if !message.deleted? && (!in_channel || message.sender_id != Current.user&.id) %>
+    <details class="msg-actions">
+      <summary><%= t("messages.actions") %></summary>
+      <% if in_channel && Current.user.present? && !message.sender.guest? && !message.sender.bot? && message.sender.deleted_at.blank? %>
+        <%= button_to t("messages.private_message_action"), user_conversations_path(message.sender),
+              method: :post, class: "msg-action" %>
+      <% else %>
+        <%= link_to t("messages.reply"), conversation_path(message.conversation, reply_to: message.id) %>
+        <% if message.editable_by?(Current.user) %>
+          <%= link_to t("actions.edit"), conversation_path(message.conversation, edit: message.id) %>
+        <% end %>
+        <% if message.deletable_by?(Current.user) %>
+          <%= button_to t("messages.unsend"), conversation_message_path(message.conversation, message), method: :delete,
+                data: { turbo_confirm: t("messages.confirm_unsend") } %>
+        <% end %>
+        <% if message.forwardable? && local_assigns[:forward_targets].present? %>
+          <%= form_with url: forward_conversation_message_path(message.conversation, message), method: :post do |f| %>
+            <%= f.label :target_conversation_id, t("messages.forward_to") %>
+            <%= f.select :target_conversation_id, forward_targets %>
+            <%= f.submit t("messages.forward") %>
+          <% end %>
+        <% end %>
+      <% end %>
+    </details>
+  <% end %>
+  <% if message.attachment.attached? %>
+    <% if message.message_type == "image" %>
+      <%= lazy_image_tag message.attachment, alt: message.attachment.filename.base, blurhash: message.attachment.try(:metadata).try(:[], "blurhash") %>
+    <% elsif message.message_type == "audio" %>
+      <%= audio_tag message.attachment, controls: true %>
+    <% else %>
+      <%= link_to message.attachment.filename, message.attachment %>
+    <% end %>
+  <% end %>
+</article>
+</li>

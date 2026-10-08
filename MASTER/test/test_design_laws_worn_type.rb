@@ -1,0 +1,127 @@
+# frozen_string_literal: true
+
+require_relative "test_helper"
+
+# worn_type is law only if something reads it. A profile that exists only in
+# laws.yml design_rules is the inert-config hole this tree keeps cutting.
+class TestDesignRulesWornType < Minitest::Test
+  PROFILES = %w[feed catalog chat immersive map legal auth].freeze
+
+  def setup
+    @data = Master::Design::Thresholds.load(root: Master::ROOT)
+    @worn = @data.fetch("worn_type")
+    # gates/support/, not gates/lib/. A reader path that stops resolving errors
+    # on ENOENT rather than failing, which reports a missing file where this
+    # test's subject is "every profile has a reader".
+    @reader = File.join(Master::ROOT, "..", "RAILS", "gates", "support", "geometry_type.rb")
+  end
+
+  def test_worn_type_profiles_exist
+    profiles = @worn.fetch("profiles")
+    PROFILES.each { |name| assert profiles[name], "worn_type.profiles.#{name} missing" }
+  end
+
+  def test_thresholds_worn_profile_merges_feed_defaults
+    catalog = Master::Design::Thresholds.worn_profile("catalog", root: Master::ROOT)
+    assert_equal "catalog", catalog["name"]
+    assert catalog["require_tabular_nums"]
+    assert catalog["measure_min_ch"]
+  end
+
+  def test_every_profile_has_a_reader
+    src = File.read(@reader)
+    PROFILES.each do |name|
+      assert_includes src, name, "geometry_type.rb must name profile #{name}"
+    end
+    assert_includes src, "check_measure"
+    assert_includes src, "check_type_scale"
+    assert_includes src, "check_baseline"
+    assert_includes src, "check_tabular"
+    assert_includes src, "check_accents"
+    assert_includes src, "check_empty"
+    assert_includes src, "check_split"
+    assert_includes src, "check_hanging"
+  end
+
+  # A profile with a reader can still carry a key nothing reads, and that is the
+  # same inert-config hole one level down. worn_type.profiles.map.label_min_px
+  # declares that map labels are at least 12px and no code has ever asked: it
+  # appears in laws.yml and in nothing else, so the floor it states is not a
+  # floor, it is a sentence.
+  #
+  # Named rather than deleted, because the intent is worth keeping and removing
+  # it would quietly drop a legibility rule from the constitution. Named rather
+  # than wired, because enforcing it means measuring rendered label sizes on the
+  # map surface, which is a rendered-gate change and an operator's call about
+  # what the map should look like — not something to invent inside a test.
+  #
+  # When it gains a reader, delete it from here. When another key joins it, this
+  # fails and says so instead of the key going quiet.
+  #
+  # The profile GeometryType.check builds is returned to rendered_geometry.rb,
+  # whose check_rhythm reads rhythm_off_max_pct from it, so both files are the
+  # reader. Reading geometry_type.rb alone listed that key as unread in all
+  # seven profiles while the rhythm gate enforced it in every one.
+  UNREAD_PROFILE_KEYS = Hash.new([].freeze).merge(
+    "map" => %w[label_min_px],
+  ).freeze
+
+  def test_profile_keys_have_a_reader_or_are_declared_unread
+    src = File.read(@reader) + File.read(File.join(File.dirname(@reader), "..", "lib", "rendered", "rendered_geometry.rb"))
+    PROFILES.each do |name|
+      keys = @worn.dig("profiles", name).to_h.keys
+      unread = keys.reject { |key| src.include?(key) }
+      expected = UNREAD_PROFILE_KEYS[name]
+      assert_equal expected.sort, unread.sort,
+                   "worn_type.profiles.#{name}: keys with no reader in geometry_type.rb " \
+                   "changed — wire it, or add it to UNREAD_PROFILE_KEYS with why"
+    end
+  end
+
+  def test_feed_measure_is_the_short_column
+    feed = @worn.dig("profiles", "feed")
+    assert_operator feed["measure_max_ch"].to_i, :<=, 55
+    prose = @data.dig("typography", "line_length", "ideal_ch").to_i
+    assert_operator prose, :>=, 60
+    refute_equal feed["measure_max_ch"].to_i, prose,
+                 "feed and legal/prose must stay different jobs"
+  end
+
+  def test_line_height_scale_matches_rails_and_has_a_preferred_body
+    allowed = Master::Design::Thresholds.allowed_line_heights(root: Master::ROOT)
+    assert_equal [1.0, 1.25, 1.4, 1.5, 1.6], allowed
+    assert_in_delta 1.5, Master::Design::Thresholds.body_line_height_preferred(root: Master::ROOT), 0.001
+    assert_equal 66, Master::Design::Thresholds.measure_ideal_ch(root: Master::ROOT)
+    assert_includes @data.dig("typography", "line_height", "allowed"), 1.25
+  end
+
+  def test_micro_typography_tokens_have_a_reader
+    micro = Master::Design::Thresholds.micro_typography(root: Master::ROOT)
+    assert_equal 3, micro.fetch("orphans")
+    assert_equal 3, micro.fetch("widows")
+    assert_equal [6, 3, 2], micro.fetch("hyphenate_limit_chars")
+    assert_equal "oldstyle-nums", micro.fetch("body_numerals")
+    assert_includes micro.fetch("default_features"), "kern"
+    assert_in_delta 0.7, micro.fetch("void_target"), 0.001
+    # The six assertions above call the reader and check what it returns, which is
+    # what "has a reader" means. A seventh used to assert that laws.yml mentions
+    # `Design::Thresholds.micro_typography` in its text — that passes when the
+    # method is deleted and the comment stays, and fails on a rename that broke
+    # nothing. It measured a spelling.
+  end
+
+  # The reader's caller: the design section of the system prompt.
+  def test_micro_typography_reaches_the_prompt
+    host = Class.new do
+      include Master::Voice::PersonalityPromptBuilder
+
+      def initialize = @rules = Struct.new(:none) { def data(_) = {} }.new
+      def style = {}.tap { |sections| add_design_rules(sections) }.fetch("master_style", "")
+    end
+
+    line = host.new.style.lines.find { |l| l.start_with?("Prose micro-typography") }
+    refute_nil line, "the design section should carry typography.micro"
+    assert_includes line, "oldstyle-nums in body"
+    assert_includes line, "orphans 3 and widows 3"
+  end
+end

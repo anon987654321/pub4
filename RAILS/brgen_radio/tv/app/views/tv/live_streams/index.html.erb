@@ -1,0 +1,29 @@
+<% content_for :title, t("tv.live_streams.title") %>
+
+<%= tag.section class: "tv-live-streams", role: "region", "aria-label": t("tv.live_streams.title") do %>
+  <%= tag.header do %>
+    <%= tag.h1 t("tv.live_streams.title") %>
+  <% end %>
+
+  <turbo-frame aria-live="polite" id="tv-live-streams" data-turbo-action="replace">
+  <%# The list role only while there are streams: the empty state is not a list item. %>
+  <% list_attributes = @live_streams.any? ? { role: "list", "aria-label": t("tv.live_streams_list_aria") } : {} %>
+  <%= tag.div class: "live-stream-grid", **list_attributes do %>
+    <% @live_streams.each do |live_stream| %>
+      <%= render "shared/feed_card",
+        name: live_stream.title,
+        meta: live_stream.status,
+        content: live_stream.description,
+        url: live_stream_path(live_stream),
+        class: "tv",
+        data_attributes: tag.attributes(role: "listitem") %>
+    <% end %>
+    <% if @live_streams.empty? %>
+      <%= render "shared/empty_state",
+            title: t("empty.no_live_streams"),
+            body: t("empty.no_live_streams_body"),
+            action: { label: t("actions.tv_home"), path: root_path } %>
+    <% end %>
+  <% end %>
+  </turbo-frame>
+<% end %>

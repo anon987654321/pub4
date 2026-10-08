@@ -1,0 +1,28 @@
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="mail-shell">
+  <tr><td class="mail-brand">Brgen</td></tr>
+  <tr>
+    <td class="mail-typo-hero">
+      <%= tag.h1 t("mailer.abandoned_cart_title") %>
+      <%= tag.p t("mailer.abandoned_cart_lede") %>
+    </td>
+  </tr>
+
+  <tr><td>
+    <% @orders.each do |order| %>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+        <tr><td class="mail-deal-title"><%= order.listing.title %></td></tr>
+        <tr><td class="mail-deal-meta"><%= order.quantity.presence || 1 %> × <%= Shared::MoneyDisplay.format(order.unit_price_cents, order.payment_currency) %></td></tr>
+      </table>
+    <% end %>
+  </td></tr>
+
+  <tr><td class="mail-cta-wrap">
+    <a href="<%= @cart_url %>" class="mail-cta"><%= t("mailer.abandoned_cart_button") %></a>
+  </td></tr>
+
+  <tr><td class="mail-signoff"><%= t("mailer.signoff") %></td></tr>
+  <tr><td class="mail-permission"><%= t("mailer.abandoned_cart_permission") %></td></tr>
+  <% if @preferences_url.present? %>
+    <tr><td class="mail-footer"><a href="<%= @preferences_url %>"><%= t("email_preferences.title") %></a></td></tr>
+  <% end %>
+</table>

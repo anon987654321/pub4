@@ -1,0 +1,164 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "shellwords"
+require "timeout"
+
+URL = ARGV[0] || "http://localhost:53187/"
+WAIT = Integer(ENV.fetch("PROBE_WAIT", "12"))
+BROWSER_TIMEOUT = Integer(ENV.fetch("PROBE_BROWSER_TIMEOUT", "20"))
+FORCE = ENV["PROBE_FORCE_BROWSER"] == "1"
+CHROME_PATHS = [
+  ENV["CHROME_PATH"],
+  "/usr/local/bin/chromium",
+  "/usr/local/bin/chrome",
+  "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+  "/Applications/Chromium.app/Contents/MacOS/Chromium",
+].compact.freeze
+
+def pick_chrome
+  CHROME_PATHS.find { |path| File.executable?(path) }
+end
+
+def chrome_version_ok?(path, timeout_s: 3)
+  Timeout.timeout(timeout_s) do
+    out = `#{Shellwords.escape(path)} --version 2>/dev/null`
+    !out.to_s.strip.empty?
+  end
+rescue Timeout::Error, StandardError
+  false
+end
+
+def build_browser(path)
+  require "ferrum"
+  Ferrum::Browser.new(
+    headless: true,
+    browser_path: path,
+    process_timeout: BROWSER_TIMEOUT,
+    browser_options: {
+      "headless" => "new",
+      "no-sandbox" => nil,
+      "disable-gpu" => nil,
+      "disable-dev-shm-usage" => nil,
+      "enable-webgl" => nil,
+      "use-gl" => "swiftshader",
+      "enable-unsafe-swiftshader" => nil,
+      "ignore-certificate-errors" => nil,
+      "remote-allow-origins" => "*",
+    },
+    timeout: 90
+  )
+end
+
+def skip_probe(reason)
+  puts "probe: SKIP (#{reason})"
+  exit 0
+end
+
+chrome = pick_chrome
+puts "probe: #{URL}"
+puts "chrome: #{chrome || '(none)'}"
+
+skip_probe("no Chrome executable — set CHROME_PATH or use probe_http") unless chrome
+skip_probe("macOS headless Ferrum unreliable here — set PROBE_FORCE_BROWSER=1 to try") if RUBY_PLATFORM.include?("darwin") && !FORCE
+skip_probe("Chrome --version failed — use probe_http") unless chrome_version_ok?(chrome)
+
+browser = nil
+failures = []
+console_msgs = []
+network_errors = []
+
+begin
+  browser = Timeout.timeout(BROWSER_TIMEOUT + 5) { build_browser(chrome) }
+
+  browser.on(:console) { |msg| console_msgs << "[#{msg.type}] #{msg.args.map(&:value).join(' ')}" rescue nil }
+
+  browser.network.intercept
+  browser.on(:request) { |req| req.continue }
+  browser.on(:response) do |res|
+    s = res.status.to_i
+    network_errors << "#{s} #{res.url.split('?').first.split('/').last}" if s >= 400
+  end
+
+  browser.evaluate_on_new_document(<<~JS)
+    window._errs = [];
+    window.onerror = function(msg, src, line) {
+      window._errs.push(msg + ' @ ' + (src||'').split('/').pop() + ':' + line);
+    };
+    window.addEventListener('unhandledrejection', function(e) {
+      window._errs.push('UNHANDLED: ' + String(e.reason));
+    });
+  JS
+
+  begin
+    browser.go_to URL
+  rescue Ferrum::PendingConnectionsError => e
+    puts "WARN: pending connections on load — #{e.message}"
+  end
+  puts "loaded, waiting #{WAIT}s..."
+  sleep WAIT
+
+  puts "\n=== JS errors ==="
+  errs = browser.evaluate("window._errs || []") rescue []
+  puts errs.empty? ? "(none)" : errs.join("\n")
+  failures << "js errors present" unless errs.empty?
+
+  puts "\n=== network errors ==="
+  puts network_errors.empty? ? "(none)" : network_errors.join("\n")
+  failures << "network errors present" unless network_errors.empty?
+
+  puts "\n=== primer state ==="
+  puts browser.evaluate("document.getElementById('primer') ? 'exists' : 'gone'")
+
+  puts "\n=== simulate tap ==="
+  browser.mouse.click(x: 300, y: 500)
+  sleep 8
+
+  state = browser.evaluate(<<~JS) rescue {}
+    ({
+      primerFired: !!window._primerFired,
+      primerGone: !document.getElementById('primer'),
+      faceSession: document.body.classList.contains('face-session'),
+      zshLive: document.getElementById('zsh').classList.contains('live'),
+      uiStatus: (document.getElementById('ui-status') || {}).textContent || '',
+      faceType: typeof window.MASTER_FACE,
+      errs: window._errs || []
+    })
+  JS
+
+  puts "state: #{state.inspect}"
+  failures << "primer not fired" unless state["primerFired"]
+  failures << "primer still visible" unless state["primerGone"]
+  failures << "face-session missing" unless state["faceSession"]
+  failures << "zsh not live" unless state["zshLive"]
+
+  deadline = Time.now + 60
+  until state["faceType"] == "object" || Time.now > deadline
+    sleep 2
+    state["faceType"] = browser.evaluate("typeof window.MASTER_FACE") rescue "undefined"
+  end
+  failures << "MASTER_FACE missing after 60s" unless state["faceType"] == "object"
+
+  puts "\n=== console log tail ==="
+  puts console_msgs.last(10).join("\n") unless console_msgs.empty?
+rescue Timeout::Error => e
+  skip_probe("browser launch timeout (#{e.class}) — use probe_http")
+rescue StandardError => e
+  if e.class.name == "Ferrum::ProcessTimeoutError"
+    skip_probe("browser launch timeout (Ferrum) — use probe_http")
+  end
+  failures << "probe exception: #{e.class}: #{e.message}"
+  puts "probe error: #{e.class}: #{e.message}"
+  puts e.backtrace.first(3).join("\n")
+ensure
+  browser&.quit
+end
+
+if failures.empty?
+  puts "\nprobe: PASS"
+  exit 0
+else
+  puts "\nprobe: FAIL"
+  failures.each { |f| puts "  - #{f}" }
+  exit 1
+end

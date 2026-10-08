@@ -1,0 +1,5 @@
+<%= render "shared/feed_card",
+  name: order.restaurant.name,
+  meta: "#{t("takeaway.statuses.#{order.status}")} · #{order.total_display} · #{l(order.created_at.to_date, format: :default)}",
+  url: order_path(order),
+  class: "takeaway" %>

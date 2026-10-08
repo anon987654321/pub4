@@ -1,0 +1,32 @@
+<% content_for :title, t("activity.title") %>
+
+<div class="page-header">
+  <hgroup>
+    <p><%= t("activity.local_graph") %></p>
+    <%= tag.h1 t("activity.title") %>
+  </hgroup>
+</div>
+
+<div class="chips chips--bar">
+  <% %w[marketplace takeaway dating tv playlist core].each do |vertical| %>
+    <% active = params[:vertical] == vertical %>
+    <%= link_to t("activity.verticals.#{vertical}", default: vertical), activity_events_path(vertical: vertical), class: "chip#{" active" if active}", aria: { current: active ? "page" : nil } %>
+  <% end %>
+</div>
+
+<%= turbo_frame_tag "activity-events" do %>
+<% if @events.any? %>
+  <div class="activity-event-list" role="list">
+    <% @events.each do |event| %>
+      <div role="listitem">
+        <%= render "activity_events/event", event: event %>
+      </div>
+    <% end %>
+  </div>
+<% else %>
+  <%= render "shared/empty_state",
+        title: t("empty.no_activity"),
+        body: t("empty.no_activity_body"),
+        action: { label: t("empty.city_feed"), path: root_path } %>
+<% end %>
+<% end %>

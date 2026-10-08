@@ -1,0 +1,190 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "json"
+require "net/http"
+require "open3"
+require "yaml"
+require_relative "../lib/dmesg"
+
+ROOT = File.expand_path("../..", __dir__)
+require_relative "../lib/environment"
+
+STAMP_DIR = "/var/db/pub4"
+
+def git_short(path)
+  return "missing" unless File.directory?(path)
+  out, status = Open3.capture2e("git", "-C", path, "rev-parse", "--short", "HEAD")
+  return out.strip if status.success?
+
+  "no-git"
+rescue StandardError
+  "unknown"
+end
+
+def service_state(service)
+  out, status = Open3.capture2e("doas", "-n", "/usr/sbin/rcctl", "check", service)
+  return "ok" if status.success? && out.include?("(ok)")
+
+  out.strip.empty? ? "failed" : out.strip
+rescue StandardError
+  "unknown"
+end
+
+def port_listening?(port)
+  Deploy::Environment.port_open?(port) ? "listening" : "closed"
+end
+
+# The TTS socket is the half of master a green service and an open port do not
+# prove: a worker that dies on EACCES or at Bundler.setup leaves /health up and
+# checks.tts true while no socket answers. /health already reports it, so read
+# it rather than inferring.
+def master_tts_socket(port)
+  http = Net::HTTP.new("127.0.0.1", port)
+  http.open_timeout = 2
+  http.read_timeout = 5
+  response = http.get("/health")
+  return "unknown" unless response.is_a?(Net::HTTPSuccess)
+
+  value = JSON.parse(response.body).dig("deploy", "tts_socket")
+  value.nil? ? "unknown" : value.to_s
+rescue StandardError
+  "unknown"
+end
+
+def deploy_stamp(app)
+  path = File.join(STAMP_DIR, "last_deploy_#{app}.json")
+  return nil unless File.file?(path)
+
+  JSON.parse(File.read(path))
+rescue StandardError => e
+  # A stamp that exists and will not parse is a deploy that wrote half a file,
+  # not a deploy that never happened, so it says so rather than reading as nil.
+  { "sha" => "CORRUPT", "at" => "#{path}: #{e.class}" }
+end
+
+# In-progress deploy status (RAILS/_core.sh's deploy_status, written by both
+# the SKIP_CI=1 path and vps_ci.sh). "running" with a pid that no longer
+# exists means a deploy died mid-step rather than finishing -- surface that
+# distinctly from a genuinely live one so it doesn't read as still-in-flight.
+def deploy_in_progress(app)
+  path = File.join(STAMP_DIR, "deploy_status", "#{app}.json")
+  return nil unless File.file?(path)
+
+  status = JSON.parse(File.read(path))
+  return nil if status["state"] != "running"
+
+  status["stale"] = !pid_alive?(status["pid"])
+  status
+rescue StandardError
+  nil
+end
+
+def pid_alive?(pid)
+  return false unless pid
+
+  Process.kill(0, pid.to_i)
+  true
+rescue Errno::ESRCH
+  false
+rescue Errno::EPERM
+  true # exists, just owned by another user (e.g. root vs. dev)
+rescue StandardError
+  false
+end
+
+def app_row(name, port)
+  dev_sha = git_short(ROOT)
+  deployed_root = Operator::Environment.deployed_app_root(name)
+  stamp = deploy_stamp(name)
+  deployed_sha = if File.directory?(deployed_root)
+                   short = git_short(deployed_root)
+                   short == "no-git" && stamp ? stamp["sha"].to_s : short
+                 else
+                   "missing"
+                 end
+  {
+    app: name,
+    dev_sha: dev_sha,
+    deployed_sha: deployed_sha,
+    drift: dev_sha != deployed_sha,
+    service: service_state(name),
+    port: port,
+    port_state: port_listening?(port),
+    last_deploy: deploy_stamp(name),
+    deploy_in_progress: deploy_in_progress(name),
+  }
+end
+
+def print_deploy_in_progress(status)
+  return unless status
+
+  flag = status["stale"] ? "STALE (pid #{status['pid']} gone -- deploy likely crashed mid-step)" : "pid #{status['pid']}"
+  puts "           DEPLOY IN PROGRESS: #{status['step']} (since #{status['started_at']}, #{flag})"
+end
+
+if ARGV.intersect?(%w[-h --help])
+  puts "usage: ruby34 OPENBSD/bin/vps-state [--json]"
+  puts "  master and every apps.yml app: service, port, deployed SHA and last deploy stamp"
+  exit 0
+end
+
+unless Operator::Environment.on_vps?
+  warn "vps-state: skip — not on VPS (use: bin/operator vps state --remote)"
+  exit 0
+end
+
+apps_yml = YAML.safe_load(File.read(File.join(ROOT, "RAILS", "apps.yml")))
+ports = apps_yml.fetch("apps").transform_values { |m| m.fetch("port").to_i }
+# The names come from the same read as the ports. They were a frozen
+# %w[brgen amber bsdports] twelve lines above this, which is a second fleet
+# inventory sitting beside the file that is the first one — a fourth app would
+# have shown its port here and never its row. master is not in apps.yml because
+# it is not under /home/*/app, so it keeps the block of its own below.
+apps = ports.keys
+
+master_port = Integer(ENV.fetch("MASTER_WEB_PORT", "53187"))
+
+payload = {
+  host: `hostname`.strip,
+  dev_repo: ROOT,
+  dev_sha: git_short(ROOT),
+  master: {
+    service: service_state("master"),
+    port: master_port,
+    port_state: port_listening?(master_port),
+    tts_socket: master_tts_socket(master_port),
+    last_deploy: deploy_stamp("master"),
+    deploy_in_progress: deploy_in_progress("master"),
+  },
+  apps: apps.map { |name| app_row(name, ports.fetch(name)) },
+}
+
+if ARGV.include?("--json")
+  puts JSON.pretty_generate(payload)
+else
+  puts Deploy::Dmesg.line("vps0", "host", "name=#{payload[:host]}")
+  puts Operator::Dmesg.line("git0", "repo", "path=#{payload[:dev_repo]} sha=#{payload[:dev_sha]}")
+  m = payload[:master]
+  puts Operator::Dmesg.line("service0", "master", "state=#{m[:service]} port=#{m[:port]} port_state=#{m[:port_state]} tts=#{m[:tts_socket]}")
+  if m[:deploy_in_progress]
+    status = m[:deploy_in_progress]
+    state = status["stale"] ? "stale" : "running"
+    puts Operator::Dmesg.line("deploy0", "master", "state=#{state} step=#{status['step']} pid=#{status['pid']}")
+  end
+  payload[:apps].each do |row|
+    drift = row[:drift] ? "drift" : "sync"
+    puts Operator::Dmesg.line("service0", row[:app],
+      "state=#{row[:service]} port=#{row[:port]} port_state=#{row[:port_state]} deployment=#{drift}")
+    if row[:last_deploy]
+      puts Operator::Dmesg.line("deploy0", row[:app],
+        "sha=#{row[:last_deploy]['sha']} at=#{row[:last_deploy]['at']}")
+    end
+    if row[:deploy_in_progress]
+      status = row[:deploy_in_progress]
+      state = status["stale"] ? "stale" : "running"
+      puts Operator::Dmesg.line("deploy0", row[:app],
+        "state=#{state} step=#{status['step']} pid=#{status['pid']}")
+    end
+  end
+end

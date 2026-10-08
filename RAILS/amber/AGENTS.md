@@ -1,0 +1,15 @@
+# amber — agent notes
+
+- **Domain:** amberapp.art. **Port:** 61352. **Deploy root:** `RAILS/amber`.
+- **Shared engine:** `RAILS/__shared`.
+- **Inventory:** `apps.yml` (active); wardrobe horizon items in
+  `apps.horizon.yml` (ignore).
+- **Heir ops:** `HEIR.md` (low-ops handoff).
+- **Golden checks:** `OPENBSD/bin/check-rails --profile=contributor`.
+- **VPS:** `MASTER/bin/operator vps deploy amber --remote`.
+- **Honesty:** photo polish ≠ ML segment/matting; fingerprint ≠ embedding; tips
+  = rules; live_streams = style sessions (no video).
+- **AI:** `OPENROUTER_API_KEY` for LLM; otherwise heuristics. STUDIO photos only
+  if `AMBER_ENABLE_STUDIO_PHOTO=1`.
+- **Hygiene:** `DeclutterHygieneJob` daily (challenges + 30d box); see
+  `config/recurring.yml`.

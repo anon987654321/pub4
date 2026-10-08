@@ -1,0 +1,149 @@
+# Engine-local strings.
+#
+# Every engine string used to live in brgen/config/locales, which made a
+# literal in the markup the path of least resistance for engine work and left
+# the engine unmountable anywhere else. Rails::Engine appends
+# config/locales/*.yml to I18n.load_path on its own -- no wiring beyond this
+# file existing -- and I18n deep-merges across load paths, so keys under the
+# same namespace in the host file stay reachable.
+#
+# Keys the host already carries are NOT copied here. Use them.
+en:
+  marketplace:
+    listing_steps_label: "Listing steps"
+    listing_steps:
+      photos: "Photos"
+      details: "Details"
+      location: "Location"
+      review: "Review"
+    kind_label: "What are you listing?"
+    condition: "Condition"
+    condition_help: "Choose the condition that best matches the item."
+    condition_not_set: "Condition not set"
+    source: "Source"
+    choose_shop: "Choose your shop"
+    private_seller: "Private seller"
+    shop_seller: "Shop"
+    sold_by: "Sold by %{name}"
+    from_a_person: "From a person"
+    from_a_shop: "From a shop"
+    cover_photo: "Cover"
+    remove_photo: "Remove"
+    move_photo: "Move photo"
+    take_photo: "Take a photo"
+    photo_camera_hint: "First photo becomes the cover"
+    upload_from_gallery: "Upload from gallery"
+    optional_video: "Optional short video"
+    add_short_video: "Add short video"
+    photo_guidance_label: "Photo guidance"
+    photo_guidance: "Show the whole item · Natural light · Include any flaws · First photo = cover"
+    dismiss_guidance: "Dismiss photo guidance"
+    more_details: "More details"
+    delivery_estimate: "Delivery estimate"
+    fulfilment_method: "Fulfilment"
+    use_current_location: "Use current location"
+    continue: "Continue"
+    back: "Back"
+    save_draft: "Save draft"
+    draft_saved: "Draft saved"
+    untitled_listing: "Untitled listing"
+    price_not_set: "Price not set"
+    location_not_set: "Location not set"
+    location_unavailable: "Location is not available on this device."
+    locating: "Getting your current location…"
+    location_pinned: "Current coordinates added. Add the place name above."
+    location_denied: "Could not read your location. You can enter it manually."
+    most_successful_photos: "Most successful listings have 4–6 photos."
+    fulfilment_methods:
+      self_ship: "Seller ships"
+      local_hub: "Local hub"
+      locker: "Locker"
+      third_party: "Third party"
+    conditions:
+      new_with_tags: "New with tags"
+      new_without_tags: "New without tags"
+      very_good: "Very good"
+      good: "Good"
+      satisfactory: "Satisfactory"
+    inspire_heading: "New in %{city}"
+    browse_categories: "Browse categories"
+    seller_badge: "Seller: %{name}"
+    utility:
+      label: "Shopper service information"
+      delivery: "Free delivery from 20"
+      fast_delivery: "Fast delivery, including evenings"
+      returns: "Free returns"
+    precise_coordinates: "Precise coordinates (optional)"
+    top: "Top"
+    verified: "Verified"
+    order_notification:
+      new_order: "New order"
+      new_order_body: "%{buyer} bought %{title}."
+      new_offer: "New offer"
+      new_offer_body: "%{buyer} sent an offer for %{title}."
+      offer_reminder: "Marketplace offer reminder"
+      offer_reminder_body: "%{buyer} is waiting on an offer for %{title}."
+      offer_accepted: "Offer accepted"
+      offer_accepted_body: "Your offer for %{title} was accepted."
+      offer_declined: "Offer declined"
+      offer_declined_body: "Your offer for %{title} was declined."
+      payment_received: "Payment received"
+      payment_received_body: "Payment for %{title} cleared."
+      payment_confirmed: "Payment confirmed"
+      payment_confirmed_body: "Your payment for %{title} is confirmed."
+      on_its_way: "On its way"
+      delivered: "Delivered"
+    delivery_promise:
+      same_day_bergen: "Today in Bergen"
+      next_day_bergen: "Tomorrow in Bergen"
+      next_day_west: "Tomorrow in Western Norway"
+      one_to_two_days: "1–2 days"
+      three_to_five_days: "3–5 days"
+      pickup_only: "Pickup only"
+    stripe_connect_id: "Stripe Connect account"
+    stripe_connect_hint: "acct_… from Stripe Connect. Payouts stay pending until this is set and Stripe is configured."
+    payouts: Payouts
+    payout_release: Send payout
+    payout_release_confirm: Send this payout to the connected Stripe account?
+    payout_sent: Payout sent
+    payout_not_configured: Stripe Connect is not configured — the payout stays pending.
+    payout_not_pending: That payout is not waiting to be sent.
+    payout_held: Held until fourteen days after delivery, with no open return.
+    payout_statuses:
+      pending: pending
+      sent: sent
+      blocked: blocked
+    deals:
+      ends_in: "ends in %{time}"
+    wishlist:
+      add: Save listing
+      remove: Remove from saved
+    saved_search_default_name: Marketplace search
+    all_categories: All
+    category: Category
+    move_up: "Move up"
+    move_down: "Move down"
+    any_query: Any query
+    alerts_on: alerts on
+    partner_program: Partner program
+    store_created: Store created
+    store_updated: Store updated
+    store_deleted: Store removed
+    store_not_allowed: Only the owner can change this store
+    card_label: "%{title}, %{price}"
+    update_quantity: Update
+    cart_quantity_updated: Quantity updated.
+    cart_quantity_refused: Choose a quantity between 1 and %{available}.
+    cart_item_removed: Removed from cart.
+    payment_providers:
+      stripe: Stripe
+      vipps: Vipps
+      dintero: Dintero
+    checkout_errors:
+      not_configured: Payment with %{provider} is not set up here yet.
+      provider_failed: "%{provider} did not answer as expected. Nothing was charged — try again shortly."
+  activerecord:
+    attributes:
+      marketplace/question:
+        body: Question
+        answer: Answer

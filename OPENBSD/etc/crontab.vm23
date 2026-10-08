@@ -1,0 +1,107 @@
+# Tracked mirror of vm23 root crontab lines installed by OPERATOR.sh.
+# Merge idempotently on deploy. Hand-edits on vm23 should be copied back here.
+# nsd-resign runs from etc/daily.local, not this crontab.
+
+# The most important line in this file, and it is not a job.
+#
+# cron(8) runs with PATH=/bin:/sbin:/usr/bin:/usr/sbin — no /usr/local/bin. Every
+# interpreter this box actually uses lives there: ruby, ruby34, zsh. So every job
+# below whose shebang is `#!/usr/bin/env ruby` or `#!/usr/bin/env zsh` had been
+# failing at exec, once per scheduled tick, since it was installed. Measured
+# 2026-08-12:
+#
+#   relayd-watchdog       every minute   env: ruby: No such file or directory
+#   config-drift-check    every 15 min   /var/log/config_drift.log, same line, forever
+#   renew-certs.sh        weekly         /var/log/cert-renewal.log, env: zsh: ...
+#   nsd-resign            daily          /var/log/daily.out, ruby: not found
+#
+# Only resource_guard.sh ran, because it is the one job with a #!/bin/ksh shebang.
+# Nothing alerted: each failure was one line in a log nobody reads, and the two
+# jobs whose whole purpose is drift detection were themselves the drift.
+#
+# It stayed invisible because the *outcomes* looked fine. Certificates were valid
+# (issued before the breakage, expiring 2026-10-29 with nothing to renew them),
+# and DNSSEC signatures were valid (expiring 2026-08-30 with nothing to re-sign) —
+# and no DS record is published, so the expiry could not bite yet. Publishing DS
+# without this line would have taken every domain down on 2026-08-30.
+PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin
+
+# relayd-watchdog — restart relayd when unhealthy or backends stale
+*/5 * * * * /usr/local/bin/relayd-watchdog
+
+# config-drift-check — relayd/acme/NSD drift detection
+*/15 * * * * /usr/local/bin/config-drift-check >> /var/log/config_drift.log 2>&1
+
+# resource_guard — load shedding when vm23 is overloaded
+*/5 * * * * /usr/local/bin/resource_guard.sh
+
+# renew-certs — weekly ACME renewal (stage-1 installs renew-certs.sh)
+0 2 * * 1 /usr/local/bin/renew-certs.sh >> /var/log/cert-renewal.log 2>&1
+
+# uptime-check — public /up on every apps.yml host, plus the master face.
+# Installed to /usr/local/bin so root cron does not exec the checkout; it
+# reads apps.yml as data instead. Source: OPENBSD/usr/local/bin/uptime-check.sh.
+#
+# ALLOW_BSDPORTS_DOWN=1 while bsdports.org is delegated to the registrar's
+# parking nameservers. The check asks https://bsdports.org/up, parking
+# terminates no TLS, and the answer is 000 whatever the app is doing — so the
+# waiver removes a check that cannot pass rather than one that is failing. The
+# app itself stays covered: deploy-smoke keeps http://127.0.0.1:47312/up
+# required, and `ruby MASTER/gates/runner.rb dns_zones` is the check that stays
+# red until the delegation comes back. Drop this line's prefix the day it does.
+#
+# The redirect is the reason this waiver is hygiene rather than an alert change:
+# `>> log 2>&1` leaves cron nothing to mail, so the 5,142 impossible bsdports
+# lines never reached root — they buried the 2,682 amber lines in a 694 KB log
+# instead. /var/mail/root was last written in October 2025.
+*/5 * * * * ALLOW_BSDPORTS_DOWN=1 /usr/local/bin/uptime-check.sh >> /var/log/uptime-check.log 2>&1
+
+# prune-guests — nightly guest-row hygiene, because nothing runs the job queue.
+#
+# 04:20 and not daily.local, which is where this started. daily.local runs at the
+# tail of /etc/daily, and /etc/daily has the box at load 4.12 by then — over
+# PruneGuestUsersJob's own ceiling of 3.0, so the guard refused and the first
+# night removed nothing at all. Its own slot is after daily(8) finishes, and the
+# wrapper waits for the load to fall rather than skipping the night.
+20 4 * * * /usr/local/bin/prune-guests.sh >> /var/log/prune-guests.log 2>&1
+
+# core-reclaim — give brgen's grown resident set back to the box.
+#
+# resource_guard sheds OPTIONAL apps and never touches CORE="master brgen", so
+# nothing ever returned brgen's growth. Measured 2026-08-17: it boots at 225M,
+# had reached 355M, and one restart took swap from 1142M/1264M (91%) to 812M
+# (64%). The box had been paging continuously at rest, and a page-in is what a
+# visitor feels — amber's home was 12.19s to first byte cold against 0.40s warm.
+40 * * * * /usr/local/bin/core-reclaim.sh >> /var/log/core-reclaim.log 2>&1
+
+# keep-warm — so a visitor is never the one paying for the page-in.
+#
+# One loopback render of brgen and amber every ten minutes keeps their working
+# sets resident. Deliberately not bsdports or master: those are resource_guard's
+# to shed, and warming what another job exists to shed is how two jobs fight.
+*/10 * * * * /usr/local/bin/keep-warm.sh >> /var/log/keep-warm.log 2>&1
+
+# drain-jobs — bounded Solid Queue run for amber and bsdports.
+#
+# brgen_jobs is the one resident worker this box can hold. The drain skips
+# brgen when that service is up, so a second supervisor does not appear under
+# load. amber and bsdports stay on the hourly drain.
+5 * * * * /usr/local/bin/drain-jobs.sh >> /var/log/drain-jobs.log 2>&1
+
+# declutter-hygiene / ports-import — the two recurring.yml schedules that can
+# never fire on their own recurring trigger. drain-jobs.sh only starts a
+# worker for an app whose queue already has due rows, so a job whose sole
+# trigger is a recurring schedule (nothing else ever enqueues it) can never
+# get the worker it needs in order to be enqueued in the first place. Same
+# shape as prune-guests.sh: a direct `rails runner` call, load-gated, no
+# Solid Queue scheduler required.
+0 6 * * * /usr/local/bin/declutter-hygiene.sh >> /var/log/declutter-hygiene.log 2>&1
+0 3 * * * /usr/local/bin/ports-import.sh >> /var/log/ports-import.log 2>&1
+
+# weekly-integrity — integrity_gate plus a public health pass, once a week.
+#
+# No redirect: the script writes /var/log/pub4/weekly_integrity.log itself, so
+# anything cron mails root is a failure of the wrapper rather than of a gate.
+# It takes the pub4 CI lock and stands down when a deploy holds it, and 03:30
+# on a Sunday is the quietest hour on a box this small.
+30 3 * * 0 /usr/local/bin/vps_weekly_integrity.sh

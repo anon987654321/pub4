@@ -1,0 +1,75 @@
+---
+# State — standing orders (event and manual triggers) wired through StandingOrders.
+# trigger: event  — fires when bus publishes event: key (currently tool:after)
+# trigger: manual — only runs when explicitly called via /orders or its callable
+# Every entry needs a callable: key registered in Master::Ground::Orders::Registry.
+# Runtime state (state/last_run_at/last_error) lives in .master/standing_orders_state.yml.
+
+- name: architecture_audit
+  description: Review data/* for shape misfit (files >200 lines, overlapping keys, misnamed modules). Run via /audit architecture.
+  trigger: manual
+  command: audit architecture
+  callable: architecture_audit
+  enabled: true
+
+- name: aggressive_merge
+  description: After source writes, scan for merge/rename targets — thin siblings, *_support sprawl, low-density slugs. Rename to Rails-parameterize snake_case (Strunk-clean tokens); default merge before multiply.
+  trigger: event
+  event: "tool:after"
+  filter: "write_file|str_replace|ast_edit|replace"
+  exclude: "test/|knowledge/|node_modules/"
+  callable: aggressive_merge
+  enabled: true
+
+- name: constitution_drift
+  description: Scan lib/ against the axioms after any source mutation; emit improved/regressed/steady so regressions are caught the moment they land.
+  trigger: event
+  event: "tool:after"
+  filter: "write_file|str_replace|ast_edit|replace"
+  exclude: "data/|test/|knowledge/"
+  command: audit constitution
+  callable: constitution_drift
+  # Disabled: fires a full deep-scan of lib/ on every source write — the exact
+  # repo-wide scan HostBudget exists to prevent from OOM-killing the 1GB VPS.
+  # The per-write job belongs to Fix::WriteGuard, which judges one file
+  # before it lands. What is left here is the tree-wide trend line, and it runs
+  # from the boot path under MASTER_DRIFT=1.
+  enabled: false
+
+- name: autocommit_post_chat
+  description: After any turn that mutated source, generate a Strunk-style commit message and commit.
+  trigger: event
+  event: "tool:after"
+  filter: "write_file|str_replace|ast_edit|replace"
+  command: git autocommit
+  callable: autocommit
+  # Disabled: would auto-commit AND push to the repo after every source-mutating
+  # turn. Opt in deliberately rather than have edits push themselves.
+  enabled: false
+
+- name: backup_repo_offsite
+  description: openrsync the repo root to wingman1.openbsd.amsterdam:backup over SSH.
+  trigger: manual
+  callable: backup
+  # Disabled: pushes the entire working tree to a remote host. Every other
+  # callable in the registry is declared here; this one was the exception, so
+  # `callable: backup` resolved to nothing. Declared now so it is reachable and
+  # visible in data/state.yml — turn it on deliberately, not by default.
+  enabled: false
+
+- name: restart_master_on_web_edit
+  description: Restart MASTER service when web/ files change so edits take effect immediately.
+  trigger: event
+  event: "tool:after"
+  filter: "web/"
+  command: doas rcctl restart master
+  callable: restart_master
+  enabled: true
+
+- name: availability_posture
+  description: Report the interactive capability floor and reachable model ladder without mutating runtime state.
+  trigger: heartbeat
+  interval_s: 120
+  command: status availability
+  callable: availability_posture
+  enabled: true

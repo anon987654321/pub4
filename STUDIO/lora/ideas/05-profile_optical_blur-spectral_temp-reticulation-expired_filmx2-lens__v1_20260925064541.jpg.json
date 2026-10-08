@@ -1,0 +1,37 @@
+{
+  "schema": "postpro.chain.v1",
+  "generated_at": "2026-09-25T04:45:42Z",
+  "input": "/Users/mac/Documents/GitHub/pub4/STUDIO/lora/ideas/05-profile.jpg",
+  "output": "/Users/mac/Documents/GitHub/pub4/STUDIO/lora/ideas/05-profile_optical_blur-spectral_temp-reticulation-expired_filmx2-lens__v1_20260925064541.jpg",
+  "grade_version": "f23a38996d55",
+  "seed": 1011557601,
+  "chain": [
+    {
+      "optical_blur": 0.06
+    },
+    {
+      "spectral_temp": 0.13
+    },
+    {
+      "reticulation": 0.14
+    },
+    {
+      "expired_film": 0.58
+    },
+    {
+      "lens_ghosting": 0.13
+    },
+    {
+      "expired_film": 0.09
+    },
+    {
+      "aerial_depth": 0.64
+    },
+    {
+      "grain": {
+        "intensity": 0.53,
+        "stock": "kodak_vision3"
+      }
+    }
+  ]
+}

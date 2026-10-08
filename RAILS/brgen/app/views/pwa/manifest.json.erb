@@ -1,0 +1,138 @@
+<%
+  # Web App Manifest scope is this origin only. Cross-subdomain absolute URLs
+  # (protocol-relative vertical hosts, AI URL, marketplace root) are ignored by
+  # Chrome and then reported as "property 'url' of 'shortcut' not present".
+  # Keep shortcuts as same-origin relative paths for the active vertical surface.
+  vertical = Current.subapp.to_s
+  # city_name, not Current.city: same resolution the layout uses, so an installed
+  # app on oshlo.no is called Oslo rather than Brgen. The head and the manifest
+  # are served to the same page and disagreeing about the brand is visible at
+  # install time.
+  city = city_name
+  app_name, short_name, description, shortcuts =
+    case vertical
+    when "playlist"
+      [
+        "#{city} Playlist",
+        "Playlist",
+        t("pwa.desc_playlist", city: city, default: "Playlists, sets, and radio for %{city}."),
+        [
+          { "name" => t("pwa.playlists"), "short_name" => t("pwa.home"), "url" => "/" },
+          { "name" => t("pwa.new_playlist"), "short_name" => t("pwa.new"), "url" => "/playlists/new" },
+          { "name" => t("pwa.sets"), "short_name" => t("pwa.sets"), "url" => "/sets" },
+        ],
+      ]
+    when "dating"
+      [
+        "#{city} Dating",
+        "Dating",
+        t("pwa.desc_dating", city: city, default: "Dating in %{city}."),
+        [
+          { "name" => t("pwa.discover"), "short_name" => t("pwa.home"), "url" => "/" },
+          { "name" => t("pwa.matches"), "short_name" => t("pwa.matches"), "url" => "/matches" },
+          { "name" => t("pwa.profile"), "short_name" => t("pwa.profile"), "url" => "/profile" },
+        ],
+      ]
+    when "tv"
+      [
+        "#{city} TV",
+        "TV",
+        t("pwa.desc_tv", city: city, default: "Live streams and channels for %{city}."),
+        [
+          { "name" => t("pwa.home"), "short_name" => t("pwa.home"), "url" => "/" },
+          { "name" => t("pwa.live"), "short_name" => t("pwa.live"), "url" => "/live_streams" },
+        ],
+      ]
+    when "marketplace"
+      [
+        "#{city} Marketplace",
+        "Shop",
+        t("pwa.desc_marketplace", city: city, default: "Marketplace for %{city}."),
+        [
+          { "name" => t("pwa.listings"), "short_name" => t("pwa.home"), "url" => "/" },
+          { "name" => t("pwa.new_listing"), "short_name" => t("pwa.new"), "url" => "/listings/new" },
+        ],
+      ]
+    when "takeaway"
+      [
+        "#{city} Takeaway",
+        "Food",
+        t("pwa.desc_takeaway", city: city, default: "Takeaway for %{city}."),
+        [
+          { "name" => t("pwa.restaurants"), "short_name" => t("pwa.home"), "url" => "/" },
+        ],
+      ]
+    when "maps"
+      [
+        "#{city} Maps",
+        "Maps",
+        t("pwa.desc_maps", city: city, default: "Maps for %{city}."),
+        [
+          { "name" => t("pwa.map"), "short_name" => t("pwa.home"), "url" => "/" },
+        ],
+      ]
+    when "messenger"
+      [
+        "#{city} Messenger",
+        "Chat",
+        t("pwa.desc_messenger", city: city, default: "Messages for %{city}."),
+        [
+          { "name" => t("pwa.inbox"), "short_name" => t("pwa.home"), "url" => "/" },
+        ],
+      ]
+    else
+      [
+        city,
+        city,
+        # Same key the layout's meta description uses, so the installed app and
+        # the page it was installed from say the same thing. pwa.desc_city was
+        # defined in neither locale, so this string was always the English
+        # literal — the exact leak class city_copy_contract_test exists for.
+        t("pages.default_description", city: city),
+        [
+          { "name" => t("nav.new_post"), "short_name" => t("pwa.post"), "url" => "/posts/new" },
+          { "name" => t("pwa.new_listing"), "short_name" => t("pwa.listing"), "url" => "/listings/new" },
+          { "name" => t("pwa.activity"), "short_name" => t("pwa.feed"), "url" => "/activity_events" },
+        ],
+      ]
+    end
+%>
+{
+  "name": <%= raw app_name.to_json %>,
+  "short_name": <%= raw short_name.to_json %>,
+  "start_url": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "launch_handler": { "client_mode": ["navigate-existing", "auto"] },
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-mono-512.png", "sizes": "512x512", "type": "image/png" }
+  ],
+  "scope": "/",
+  "id": "/",
+  "description": <%= raw description.to_json %>,
+  "theme_color": "#ffffff",
+  "background_color": "#ffffff",
+  "lang": <%= raw (Current.locale.presence || I18n.locale).to_s.to_json %>,
+  "shortcuts": <%= raw shortcuts.to_json %>,
+  "categories": ["social", "news", "lifestyle"],
+  "share_target": {
+    "action": "/share",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [
+        { "name": "media", "accept": ["image/*", "video/*"] }
+      ]
+    }
+  },
+  "protocol_handlers": [
+    {
+      "protocol": "web+brgen",
+      "url": "/posts/%s"
+    }
+  ]
+}

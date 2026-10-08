@@ -1,0 +1,4 @@
+<% if @category %>
+  <p><mark><%= @category.name %></mark> — <%= @category.description %></p>
+<% end %>
+<%= render "ports/list" %>

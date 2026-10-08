@@ -1,0 +1,6 @@
+openbsd:
+  name: OpenBSD
+  slug: openbsd
+  tree_path: /usr/ports
+  mirror_url: ftp://ftp.openbsd.org/pub/OpenBSD
+  active: true

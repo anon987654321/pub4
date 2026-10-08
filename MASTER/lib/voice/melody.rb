@@ -1,0 +1,79 @@
+# frozen_string_literal: true
+
+require_relative "language"
+require_relative "policy"
+
+module Master
+  module Voice
+    # Phrase segmentation and inter-phrase rests, plus a bounded melodic contour that
+    # sits on top of them for lyrical text (DiffSinger/CoMelSinger-inspired).
+    #
+    # Segmentation and rests are rhythm, which every utterance wants; the
+    # bounded contour is a stylistic mode that only lyrical text should get.
+    # Phrase rhythm can remain enabled below the melodic threshold without
+    # introducing a large pitch staircase into ordinary speech. `melodic: false`
+    # keeps the phrases and the rests and drops the contour, so a phrase inherits
+    # the resolved rate/pitch through Engines.synthesize_phrase_parts' fetch
+    # defaults.
+    module Melody
+      # Each phrase is its own Edge round trip, so segmentation is also a fan-out
+      # multiplier on a 1 vCPU box. Past this many, trailing clauses are merged
+      # back into the last phrase rather than adding calls.
+      MAX_PHRASES = 6
+
+      module_function
+
+      def plan(text, emotion, melodic: true, languages: nil)
+        phrases = segment(text)
+        arousal = emotion.dig(:scores, :arousal).to_f
+
+        {
+          mode: emotion.fetch(:mode, :melodic),
+          melodic:,
+          base_pitch: arousal > 0.6 ? "+8Hz" : "+0Hz",
+          phrases: build_phrase_plan(phrases, arousal, melodic:, languages:),
+        }
+      end
+
+      def segment(text)
+        phrases = text.to_s.split(/(?<=[.!?,;:])\s+/).map(&:strip).reject(&:empty?)
+        return [text.to_s.strip] if phrases.empty?
+        return phrases if phrases.length <= MAX_PHRASES
+
+        head = phrases.first(MAX_PHRASES - 1)
+        head + [phrases.drop(MAX_PHRASES - 1).join(" ")]
+      end
+
+      def pause_ms_for(index, arousal)
+        return 0 if index.zero?
+        arousal > 0.55 ? 90 : 140
+      end
+
+      def build_phrase_plan(phrases, arousal, melodic: true, languages: nil)
+        config = Policy.prosody.fetch("melody", {})
+        rates = Array(config["rate"]).map(&:to_s).reject(&:empty?)
+        pitches = Array(config["pitch_hz"]).filter_map { |value| Integer(value) rescue nil }
+
+        phrases.each_with_index.map do |phrase, i|
+          entry = { text: phrase, pause_ms: pause_ms_for(i, arousal) }
+          entry = entry.merge(voice_for(phrase, languages)) if languages
+          next entry unless melodic
+
+          rate = rates.empty? ? "0%" : rates.fetch(i % rates.length)
+          pitch_hz = pitches.empty? ? 0 : pitches.fetch(i % pitches.length)
+          entry.merge(rate:, pitch: format("%+dHz", pitch_hz))
+        end
+      end
+
+      # `languages` is the map of detected language to registered voice key, so
+      # the caller owns which voices are in play and this owns only the split.
+      # A phrase with no entry carries no :voice and inherits the resolved one
+      # through Engines.synthesize_phrase_parts' fetch default.
+      def voice_for(phrase, languages)
+        language = Language.detect(phrase)
+        key = languages[language]
+        key ? { voice: key, language: } : {}
+      end
+    end
+  end
+end

@@ -1,0 +1,23 @@
+/* Feeds and card grids are lists, and now say so.
+
+   The containers were bare divs holding a loop of cards, so a screen reader
+   announced no list and offered no list navigation on the city front page,
+   bookmarks, events, the marketplace grids or the tv show grid. They are
+   <ul class="… feed_list"> with an <li> per card now.
+
+   The li generates no box: per spec display:contents removes the element from
+   the box tree and promotes its children, so the container's own grid or flex
+   still treats the card as its item and the layout cannot move. That matters
+   here because these sheets size cards through the container — .deal-grid sets
+   grid-template-columns and .deal-grid .feed-card sets height:100% — and an
+   li box in between would take the grid slot and leave the card resolving
+   100% against auto. Descendant selectors keep matching either way. */
+.feed_list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.feed_list > li {
+  display: contents;
+}

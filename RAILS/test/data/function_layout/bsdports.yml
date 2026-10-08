@@ -1,0 +1,74 @@
+# bsdports function + layout inventory. Terminal dialect, ports catalogue.
+app: bsdports
+checks:
+  # --- chrome ---
+  - {id: chrome.skip_link, in: bsdports/app/views/layouts/application.html.erb, has: [skip-link, 'href="#main-content"']}
+  - {id: chrome.viewport, in: bsdports/app/views/layouts/application.html.erb, has: [viewport-fit=cover]}
+  - {id: chrome.dark, in: bsdports/app/views/layouts/application.html.erb, has: ['color-scheme" content="dark"', "wscons"]}
+  - {id: chrome.csrf, in: bsdports/app/views/layouts/application.html.erb, has: [csrf_meta_tags]}
+  - {id: chrome.importmap, in: bsdports/app/views/layouts/application.html.erb, has: [javascript_importmap_tags]}
+  - {id: chrome.pwa, in: bsdports/app/views/layouts/application.html.erb, has: [pwa_manifest]}
+  - {id: chrome.json_ld, in: bsdports/app/views/layouts/application.html.erb, has: [website_json_ld]}
+  - {id: chrome.brand, in: bsdports/app/views/layouts/application.html.erb, has: [brand]}
+  # --- design ---
+  - {id: design.stack, in: bsdports/app/assets/stylesheets/application.scss, has: ['@use "stack"']}
+  - {id: design.tap_min, in: shared/app/assets/stylesheets/_layout_chrome.scss, has: ["--tap-min: 44px"]}
+  - {id: design.focus_ring, in: shared/app/assets/stylesheets/_focus_ring.scss, has: [":focus-visible"]}
+  - {id: design.no_social_by_default, in: bsdports/config/routes.rb, has: [BSDPORTS_SOCIAL]}
+  # --- ports index ---
+  - {id: ports.index_h1, in: bsdports/app/views/ports/index.html.erb, has: [tag.h1, data-visitor-orientation]}
+  - {id: ports.live_search, in: bsdports/app/views/ports/index.html.erb, has: [live_search_index, ports/live_search_results]}
+  - {id: ports.rss, in: bsdports/app/views/ports/index.html.erb, has: [rss]}
+  - {id: ports.sort, in: bsdports/app/views/ports/index.html.erb, has: ["sort: \"updated\""]}
+  - {id: ports.empty_unimported, in: bsdports/app/views/ports/index.html.erb, has: [empty_unimported]}
+  - {id: ports.last_import, in: bsdports/app/views/ports/index.html.erb, has: [last_import]}
+  - {id: ports.rss_builder, in: bsdports/app/views/ports/index.rss.builder, has: [item]}
+  # --- port show ---
+  - {id: ports.show_h1, in: bsdports/app/views/ports/show.html.erb, has: ["<h1>"]}
+  - {id: ports.install, in: bsdports/app/views/ports/show.html.erb, has: [pkg_add, copyable]}
+  - {id: ports.identity, in: bsdports/app/views/ports/show.html.erb, has: [pkgpath, version]}
+  - {id: ports.maintainer, in: bsdports/app/views/ports/show.html.erb, has: [maintainer]}
+  - {id: ports.homepage, in: bsdports/app/views/ports/show.html.erb, has: [homepage]}
+  - {id: ports.stale, in: bsdports/app/views/ports/show.html.erb, has: [data-state--stale]}
+  - {id: ports.deps, in: bsdports/app/views/ports/show.html.erb, has: [dependencies]}
+  - {id: ports.tree, in: bsdports/app/views/ports/_dependency_tree.html.erb, has: [tree]}
+  - {id: ports.watch, in: bsdports/app/views/ports/_watch_toggle.html.erb, has: [watch]}
+  - {id: ports.watch_stream, in: bsdports/app/views/ports/watch.turbo_stream.erb, has: [watch]}
+  - {id: ports.unwatch_stream, in: bsdports/app/views/ports/unwatch.turbo_stream.erb, has: [watch]}
+  - {id: ports.row, in: bsdports/app/views/ports/_row.html.erb, has: [port]}
+  # --- comments ---
+  - {id: comments.form, in: bsdports/app/views/comments/new.html.erb, has: [comment]}
+  - {id: comments.row, in: bsdports/app/views/comments/_comment.html.erb, has: [comment]}
+  - {id: comments.stream, in: bsdports/app/views/comments/create.turbo_stream.erb, has: [comment]}
+  - {id: comments.routes, in: bsdports/config/routes.rb, has: ["resources :comments"]}
+  # --- categories / maintainers ---
+  - {id: categories.index, in: bsdports/app/views/categories/index.html.erb, has: [categor]}
+  - {id: categories.show, in: bsdports/app/views/categories/show.html.erb, has: [categor]}
+  - {id: categories.search, in: bsdports/app/views/categories/_live_search_results.html.erb, has: [search]}
+  - {id: maintainers.index, in: bsdports/app/views/maintainers/index.html.erb, has: [maintain]}
+  - {id: maintainers.show, in: bsdports/app/views/maintainers/show.html.erb, has: [maintain]}
+  - {id: maintainers.search, in: bsdports/app/views/maintainers/_live_search_results.html.erb, has: [search]}
+  # --- auth / fleet ---
+  - {id: auth.session, in: bsdports/app/views/sessions/new.html.erb, has: [session]}
+  - {id: auth.routes, in: bsdports/config/routes.rb, has: ["resource :session", passwords]}
+  - {id: auth.no_signup, in: bsdports/config/routes.rb, lack: ["resource :registration", "resources :users"]}
+  - {id: fleet.routes, in: bsdports/config/routes.rb, has: [fleet.rb]}
+  - {id: legal.routes, in: bsdports/config/routes.rb, has: [legal.rb]}
+  # --- controllers ---
+  - {id: ctl.ports_index, in: bsdports/app/controllers/ports_controller.rb, has: ["def index", "def show"]}
+  - {id: ctl.ports_watch, in: bsdports/app/controllers/ports_controller.rb, has: ["def watch", "def unwatch"]}
+  - {id: ctl.ports_review, in: bsdports/app/controllers/ports_controller.rb, has: ["def review"]}
+  - {id: ctl.ports_explore, in: bsdports/app/controllers/ports_controller.rb, has: ["def explore"]}
+  - {id: ctl.comments, in: bsdports/app/controllers/comments_controller.rb, has: ["def create"]}
+  - {id: ctl.categories, in: bsdports/app/controllers/categories_controller.rb, has: ["def index", "def show"]}
+  - {id: ctl.maintainers, in: bsdports/app/controllers/maintainers_controller.rb, has: ["def index", "def show"]}
+  # --- pwa ---
+  - {id: pwa.manifest, in: bsdports/app/views/pwa/manifest.json.erb, has: [name]}
+  - {id: pwa.sw, in: bsdports/app/views/pwa/service-worker.js, has: [offline]}
+  # --- live ---
+  - {id: live.home, live: {path: /, status: 200, has: [skip-link, main-content], lack: [Routing Error, "Exception"]}}
+  - {id: live.ports, live: {path: /ports, status: 200, has: [port]}}
+  - {id: live.categories, live: {path: /categories, status: 200, has: [categor]}}
+  - {id: live.maintainers, live: {path: /maintainers, status: 200, has: [maintain]}}
+  - {id: live.sign_in, live: {path: /session/new, status: 200, has: [session]}}
+  - {id: live.search_empty, live: {path: /ports?q=zzz-no-such-port-exists, status: 200, has: [port]}}

@@ -1,0 +1,76 @@
+---
+schema: 1
+# agy is the Antigravity CLI, not a RubyLLM provider: `command` is how it is
+# reached and AGY_BIN/ANTIGRAVITY_BIN name a binary, not an API key. It carries
+# no `ruby_llm_key` for that reason. It used to carry `agy_api_key`, which is
+# not an attribute RubyLLM::Configuration has, so apply_api_keys raised
+# NoMethodError on every boot and nothing in MASTER started. Availability is
+# Master.agy_cli_available?, which looks for the executable.
+agy:
+  env: [AGY_BIN, ANTIGRAVITY_BIN]
+  command: agy
+  strengths: [reasoning, coding, long_context, multimodal, agentic]
+  default_model: agy:auto
+
+openai:
+  env: [OPENAI_API_KEY]
+  ruby_llm_key: openai_api_key
+  min_key_length: 40
+  strengths: [reasoning, coding, multimodal]
+  default_model: gpt-5.5-thinking
+
+anthropic:
+  env: [ANTHROPIC_API_KEY]
+  ruby_llm_key: anthropic_api_key
+  min_key_length: 80
+  strengths: [coding, long_context, instruction_following]
+  default_model: claude-sonnet-4-6
+
+gemini:
+  env: [GOOGLE_API_KEY, GEMINI_API_KEY]
+  ruby_llm_key: gemini_api_key
+  min_key_length: 20
+  strengths: [long_context, multimodal]
+  default_model: gemini-2.5-flash
+
+openrouter:
+  env: [OPENROUTER_API_KEY]
+  ruby_llm_key: openrouter_api_key
+  min_key_length: 40
+  strengths: [cheap, routing, free_tier]
+  default_model: nvidia/nemotron-3-super-120b-a12b:free
+
+deepseek:
+  env: [DEEPSEEK_API_KEY]
+  ruby_llm_key: deepseek_api_key
+  min_key_length: 20
+  strengths: [coding, cheap]
+  default_model: deepseek-chat
+
+xai:
+  env: [XAI_API_KEY]
+  ruby_llm_key: xai_api_key
+  min_key_length: 20
+  strengths: [reasoning, coding, fast]
+  # grok-4-fast and grok-4 are both deprecated by xAI (confirmed 2026-07-11 via
+  # direct API test: 404 "xAI recommends switching to Grok 4.3"). This provider
+  # block only activates with a direct XAI_API_KEY (not set here — OpenRouter
+  # is the active path), so it's a dormant fallback, but keep it non-dead.
+  default_model: grok-4.3
+
+mistral:
+  env: [MISTRAL_API_KEY]
+  ruby_llm_key: mistral_api_key
+  min_key_length: 20
+  strengths: [reasoning, coding]
+  default_model: mistralai/mistral-large
+
+replicate:
+  env: [REPLICATE_API_TOKEN, REPLICATE_API_KEY]
+  strengths: [image_generation, video_generation, tts, fast_inference, specialized_models, edge]
+  default_model: black-forest-labs/flux-2-pro
+
+local:
+  env: []
+  strengths: [privacy, offline, cheap]
+  default_model: local

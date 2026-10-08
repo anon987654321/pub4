@@ -1,0 +1,36 @@
+<% amazon_configured =
+     ENV["AMAZON_ASSOCIATE_TAG"].to_s.strip.present? ||
+     Shared::AmazonMarketplace.configured_countries.any? %>
+
+<p class="affiliate-fine" role="note">
+  <%= affiliate_disclosure_text %>
+  <% partners = [] %>
+  <% partners << "Amazon Associates" if amazon_configured %>
+  <% partners << "TradeDoubler" if ENV["TRADEDOUBLER_TOKEN"].present? || ENV["TRADEDOUBLER_PRODUCTS_TOKEN"].present? %>
+  <% if partners.any? %>
+    <%= t("legal.partner_programs", list: partners.to_sentence) %>
+  <% end %>
+</p>
+
+<% if amazon_configured %>
+  <p class="affiliate-fine affiliate-amazon-required" role="note">
+    As an Amazon Associate I earn from qualifying purchases.
+  </p>
+<% end %>
+
+<% if tradedoubler_site_id.present? || site_contact_email.present? %>
+  <p class="affiliate-fine site-verify" role="note">
+    <% if tradedoubler_site_id.present? %>
+      <span class="site-verify-id">
+        <%= t("legal.site_id_label", default: "TradeDoubler Site ID") %>:
+        <%= tag.strong tradedoubler_site_id %>
+      </span>
+    <% end %>
+    <% if site_contact_email.present? %>
+      <span class="site-verify-contact">
+        <%= t("legal.contact_label", default: "Contact") %>:
+        <%= mail_to site_contact_email %>
+      </span>
+    <% end %>
+  </p>
+<% end %>

@@ -1,0 +1,116 @@
+<% content_for :title, t("pages.cart") %>
+
+<%= render "marketplace/nav_bar",
+      active: "cart",
+      search_url: listings_path,
+      search_placeholder: t("search.marketplace"),
+      cart_count: @cart_items.size %>
+
+<%# Kaufland.de's basket could not be captured: every archived copy is a 403
+    or its bot challenge. It is drawn from the parts that were measured: the
+    result header, the list row (image well, hairline under each line, 24px
+    padding and gap) and the white buy box, which holds the total and the pay
+    buttons beside the lines from 768px. %>
+<header class="store-results-head">
+  <%= tag.h1 t("pages.cart") %>
+  <p class="store-results-count"><%= t("marketplace.item", count: @cart_items.size) %></p>
+</header>
+
+<% if @cart_items.any? %>
+  <div class="store-pdp">
+  <div class="cart-items">
+    <% @cart_items.each do |item| %>
+      <article class="cart-item">
+        <% photo = item.listing.photos.attached? ? item.listing.photos.first : nil %>
+        <%= render "marketplace/card_media", photo:, fallback_char: item.listing.title.to_s.first&.upcase || "?", badge: nil %>
+        <div> <%# scan: intentional — the item's text block; the cart row is the layout %>
+          <h2 class="deal-card-title"><%= link_to item.listing.title, listing_path(item.listing) %></h2>
+          <% if (seller = item.listing.user&.display_name).present? %>
+            <%= tag.span t("marketplace.seller_badge", name: seller), class: "store-badge" %>
+          <% end %>
+          <%# A one-of-a-kind listing has one to buy, so only stocked lines get a
+              quantity to change. %>
+          <% if item.listing.one_of_a_kind? %>
+            <div><%= item.listing.price_display %> × <%= item.quantity || 1 %></div> <%# scan: intentional — a line of text inside the item block %>
+          <% else %>
+            <%= form_with url: cart_item_path(item), method: :patch, class: "cluster" do |f| %>
+              <span><%= item.listing.price_display %> ×</span>
+              <%= f.number_field :quantity, value: item.quantity || 1, min: 1, max: item.listing.available_quantity,
+                    inputmode: "numeric", aria: { label: t("marketplace.order_quantity") } %>
+              <%= f.submit t("marketplace.update_quantity"), class: "btn btn-ghost btn-sm" %>
+            <% end %>
+          <% end %>
+        </div>
+        <div class="cart-item-sum">
+          <%= tag.strong item.total_display, class: "deal-price", data: { money: true } %>
+          <div class="cluster">
+            <%# destructive: no-confirm-ok — a cart line comes back by adding the listing again %>
+            <%= button_to t("actions.remove"), cart_item_path(item),
+                  method: :delete, class: "btn btn-ghost btn-sm" %>
+          </div>
+        </div>
+      </article>
+    <% end %>
+  </div>
+
+  <aside class="store-buybox cart-summary" aria-label="<%= t("marketplace.payment_methods") %>">
+    <p class="store-buybox-price"><%= tag.strong t("marketplace.cart_total", amount: Shared::MoneyDisplay.format(@cart_total)) %></p>
+    <p><%= t("marketplace.cart_pay_hint") %></p>
+
+    <%# Paying the whole basket needs somewhere to send it. Shown before the pay
+        buttons rather than discovered after the money has moved. %>
+    <div class="cart-address">
+      <% if @delivery_address %>
+        <p><%= tag.strong t("marketplace.deliver_to") %> <%= @delivery_address %></p>
+        <%= link_to t("marketplace.change_address"), addresses_path, class: "btn btn-ghost btn-sm" %>
+      <% else %>
+        <p><%= t("marketplace.no_address_yet") %></p>
+        <%= link_to t("marketplace.add_address"), addresses_path, class: "btn btn-sm" %>
+      <% end %>
+    </div>
+
+    <% dintero_ready = Marketplace::Payments::DinteroCheckout.configured? &&
+         @cart_items.all? { |item| Marketplace::Payments::DinteroCheckout.supported_listing?(item.listing) } %>
+    <% vipps_ready = Marketplace::Payments::VippsCheckout.configured? %>
+    <% stripe_ready = Marketplace::Payments::StripeCheckout.configured? &&
+         !(Rails.env.production? && Marketplace::Payments::StripeCheckout.test_key?) %>
+    <%# The pay buttons submit without Turbo: checkout answers with a redirect to
+        the provider's own host, and a fetch cannot follow a cross-origin redirect. %>
+    <% if dintero_ready || vipps_ready || stripe_ready %>
+      <div class="cart-pay-actions" role="group" aria-label="<%= t("marketplace.payment_methods") %>">
+        <% if dintero_ready %>
+          <%= button_to t("marketplace.pay_dintero"), checkout_path,
+                method: :post, params: { provider: "dintero" },
+                class: "btn btn-primary cart-pay-dintero",
+                form: { data: { turbo: false } } %>
+        <% end %>
+        <% if vipps_ready %>
+          <%= button_to t("marketplace.pay_vipps"), checkout_path,
+                method: :post, params: { provider: "vipps" },
+                class: "btn btn-primary cart-pay-vipps",
+                form: { data: { turbo: false } } %>
+        <% end %>
+        <% if stripe_ready %>
+          <%= button_to t("marketplace.pay_stripe"), checkout_path,
+                method: :post, params: { provider: "stripe" },
+                class: "btn btn-ghost cart-pay-stripe",
+                form: { data: { turbo: false } } %>
+        <% end %>
+      </div>
+    <% else %>
+      <p class="hint mt-8" role="status"><%= t("marketplace.cart_pay_unavailable") %></p>
+    <% end %>
+    <p class="hint mt-8"><%= t("marketplace.cart_honest_pay") %></p>
+
+    <%= button_to t("marketplace.send_all_offers"), send_offers_cart_path,
+          method: :post, class: "btn btn-ghost",
+          data: { turbo_confirm: t("marketplace.send_offers_confirm") } %>
+    <p class="hint mt-8"><%= t("marketplace.cart_sellers_hint") %></p>
+  </aside>
+  </div>
+<% else %>
+  <%= render "shared/empty_state",
+        title: t("marketplace.cart_empty_title"),
+        body: t("marketplace.cart_empty_body"),
+        action: { label: t("marketplace.browse_marketplace"), path: root_path } %>
+<% end %>

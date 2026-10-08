@@ -1,0 +1,16 @@
+<%= turbo_stream.replace dom_id(@item, :stats) do %>
+  <%= turbo_frame_tag dom_id(@item, :stats), class: "tag-row luxury-tags" do %>
+    <span class="interaction-success" data-state="success" aria-hidden="true">
+      <svg class="interaction-success__mark" viewBox="0 0 24 24">
+        <path class="interaction-success__check" d="M5 12.5 10 17l9-10"></path>
+      </svg>
+    </span>
+    <span class="tag"><%= t("items.wear_count", count: @item.times_worn.to_i) %></span>
+    <% if @item.price? && @item.times_worn.to_i.positive? %>
+      <span class="tag"><%= t("items.per_wear", amount: number_to_currency(@item.cost_per_wear || (@item.price / @item.times_worn.to_i))) %></span>
+    <% end %>
+    <% if @item.lifecycle_state.present? %><span class="tag"><%= @item.lifecycle_state.humanize %></span><% end %>
+    <% if @item.analysis_status.present? %><span class="tag"><%= analysis_status_label(@item.analysis_status) %></span><% end %>
+  <% end %>
+<% end %>
+<%= turbo_stream.update dom_id(@item, :worn), t("items.worn_times", count: @item.times_worn.to_i) %>

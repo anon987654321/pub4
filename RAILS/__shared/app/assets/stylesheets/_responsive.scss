@@ -1,0 +1,18 @@
+// Bottom clearance for the fixed tab bar, at every width.
+//
+// The shell is single-column at every width (see _shell.scss), so the tab bar
+// is the one always-reachable nav and stays fixed on desktop too. Without
+// clearance above 768px the last row of every page sits underneath it, and a
+// link there resolves to .tab-item instead of to itself -- reproducible at
+// 1440px on takeaway and tv/channels.
+//
+// Reads the published --tab-bar-h rather than a literal height so the
+// clearance tracks the bar. Verticals that hide the bar zero that variable and
+// get their space back.
+main#main-content,
+main[role="main"] {
+  /* --tab-bar-h is declared on :root by app-root-tokens, so the 54px fallback
+     could never be reached — and it disagreed with the 44px the token actually
+     holds, which is the shape a stale fallback takes when nothing reads it. */
+  padding-bottom: calc(var(--tab-bar-h) + var(--safe-bottom) + var(--space-2));
+}

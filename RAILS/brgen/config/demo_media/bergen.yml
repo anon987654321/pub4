@@ -1,0 +1,214 @@
+---
+meta:
+  city: Bergen
+  domain: brgen.no
+  source: 'file rows: MASTER/tools/lora/seed_media.yml, rendered on Replicate and graded
+    by postpro (see README.md); url rows: Wikimedia Commons'
+images:
+  bergen-floyen-morning:
+    file: images/bergen-floyen-morning.jpg
+    graded: true
+  bergen-bryggen-rain:
+    file: images/bergen-bryggen-rain.jpg
+    graded: true
+  bergen-fog-vagen:
+    file: images/bergen-fog-vagen.jpg
+    graded: true
+  bergen-fish-market:
+    file: images/bergen-fish-market.jpg
+    graded: true
+  bergen-concert-hall:
+    file: images/bergen-concert-hall.jpg
+    graded: true
+  bergen-ulriken-trail:
+    file: images/bergen-ulriken-trail.jpg
+    graded: true
+  bergen-hiking:
+    file: images/bergen-hiking.jpg
+    graded: true
+  bergen-damsgardsfjellet:
+    file: images/bergen-damsgardsfjellet.jpg
+    graded: true
+  bergen-lungegaardsvann:
+    file: images/bergen-lungegaardsvann.jpg
+    graded: true
+  bergen-pepperkakebyen:
+    file: images/bergen-pepperkakebyen.jpg
+    graded: true
+  bergen-bakery:
+    file: images/bergen-bakery.jpg
+    graded: true
+  bergen-brunch:
+    file: images/bergen-brunch.jpg
+    graded: true
+  bergen-radio-night:
+    file: images/bergen-radio-night.jpg
+    graded: true
+  bergen-logen:
+    file: images/bergen-logen.jpg
+    graded: true
+  bergen-dog-park:
+    file: images/bergen-dog-park.jpg
+    graded: true
+  bergen-place-floybanen:
+    file: images/bergen-place-floybanen.jpg
+    graded: true
+  bergen-place-bryggen:
+    file: images/bergen-place-bryggen.jpg
+    graded: true
+  bergen-place-fisketorget:
+    file: images/bergen-place-fisketorget.jpg
+    graded: true
+  bergen-place-grieghallen:
+    file: images/bergen-place-grieghallen.jpg
+    graded: true
+  bergen-place-ulriken:
+    file: images/bergen-place-ulriken.jpg
+    graded: true
+  bergen-place-lungegaardsvann:
+    file: images/bergen-place-lungegaardsvann.jpg
+    graded: true
+  bergen-place-nordnesparken:
+    file: images/bergen-place-nordnesparken.jpg
+    graded: true
+  bergen-place-vilvite:
+    file: images/bergen-place-vilvite.jpg
+    graded: true
+  bergen-takeaway-colonialen:
+    file: images/bergen-takeaway-colonialen.jpg
+    graded: true
+  bergen-takeaway-fishme:
+    file: images/bergen-takeaway-fishme.jpg
+    graded: true
+  bergen-takeaway-potetkjelleren:
+    file: images/bergen-takeaway-potetkjelleren.jpg
+    graded: true
+  bergen-takeaway-dyvekes:
+    file: images/bergen-takeaway-dyvekes.jpg
+    graded: true
+  bergen-tv-live-avatar:
+    url: https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/Bryggen%2C_Bergen%2C_Noruega%2C_2019-09-08%2C_DD_115-117_PAN.jpg/480px-Bryggen%2C_Bergen%2C_Noruega%2C_2019-09-08%2C_DD_115-117_PAN.jpg
+    credit: Diego Delso / CC BY-SA 4.0
+  bergen-tv-live-banner:
+    url: https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/Vista_de_Bergen_desde_la_monta%C3%B1a_Fl%C3%B8yen%2C_Noruega%2C_2019-09-08%2C_DD_48.jpg/1280px-Vista_de_Bergen_desde_la_monta%C3%B1a_Fl%C3%B8yen%2C_Noruega%2C_2019-09-08%2C_DD_48.jpg
+    credit: Diego Delso / CC BY-SA 4.0
+  bergen-tv-kultur-avatar:
+    url: https://upload.wikimedia.org/wikipedia/commons/4/4c/Grieghallen.jpg
+    credit: Wikimedia Commons
+  bergen-tv-kultur-banner:
+    url: https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Bryggen_in_Bergen.jpg/1280px-Bryggen_in_Bergen.jpg
+    credit: Wikimedia Commons
+  bergen-tv-bybanen-avatar:
+    url: https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/00_4400_View_over_the_store_Lungeg%C3%A5rdsvann_-_Bergen_%28Norway%29.jpg/480px-00_4400_View_over_the_store_Lungeg%C3%A5rdsvann_-_Bergen_%28Norway%29.jpg
+    credit: Wikimedia Commons
+  bergen-dating-emilie:
+    file: images/bergen-dating-emilie.jpg
+    graded: true
+  bergen-dating-magnus:
+    file: images/bergen-dating-magnus.jpg
+    graded: true
+  bergen-dating-silje:
+    file: images/bergen-dating-silje.jpg
+    graded: true
+  bergen-dating-jonas:
+    file: images/bergen-dating-jonas.jpg
+    graded: true
+  bergen-dating-henrik:
+    file: images/bergen-dating-henrik.jpg
+    graded: true
+  bergen-dating-ingrid:
+    file: images/bergen-dating-ingrid.jpg
+    graded: true
+  bergen-dating-sofie:
+    file: images/bergen-dating-sofie.jpg
+    graded: true
+  bergen-dating-anders:
+    file: images/bergen-dating-anders.jpg
+    graded: true
+  bergen-dating-hanne:
+    file: images/bergen-dating-hanne.jpg
+    graded: true
+  bergen-dating-per:
+    file: images/bergen-dating-per.jpg
+    graded: true
+  bergen-dating-live:
+    file: images/bergen-dating-live.jpg
+    graded: true
+  bergen-dating-marte:
+    file: images/bergen-dating-marte.jpg
+    graded: true
+  bergen-bike-sale:
+    file: images/bergen-bike-sale.jpg
+    graded: true
+  bergen-macbook:
+    file: images/bergen-macbook.jpg
+    graded: true
+  bergen-skis:
+    file: images/bergen-skis.jpg
+    graded: true
+  bergen-sofa:
+    file: images/bergen-sofa.jpg
+    graded: true
+  bergen-stroller:
+    file: images/bergen-stroller.jpg
+    graded: true
+  dating-pool-man-01:
+    file: images/dating-pool-man-01.jpg
+    graded: true
+  dating-pool-man-02:
+    file: images/dating-pool-man-02.jpg
+    graded: true
+  dating-pool-man-03:
+    file: images/dating-pool-man-03.jpg
+    graded: true
+  dating-pool-man-04:
+    file: images/dating-pool-man-04.jpg
+    graded: true
+  dating-pool-man-05:
+    file: images/dating-pool-man-05.jpg
+    graded: true
+  dating-pool-man-06:
+    file: images/dating-pool-man-06.jpg
+    graded: true
+  dating-pool-man-07:
+    file: images/dating-pool-man-07.jpg
+    graded: true
+  dating-pool-man-08:
+    file: images/dating-pool-man-08.jpg
+    graded: true
+  dating-pool-nonbinary-01:
+    file: images/dating-pool-nonbinary-01.jpg
+    graded: true
+  dating-pool-nonbinary-02:
+    file: images/dating-pool-nonbinary-02.jpg
+    graded: true
+  dating-pool-other-01:
+    file: images/dating-pool-other-01.jpg
+    graded: true
+  dating-pool-other-02:
+    file: images/dating-pool-other-02.jpg
+    graded: true
+  dating-pool-woman-01:
+    file: images/dating-pool-woman-01.jpg
+    graded: true
+  dating-pool-woman-02:
+    file: images/dating-pool-woman-02.jpg
+    graded: true
+  dating-pool-woman-03:
+    file: images/dating-pool-woman-03.jpg
+    graded: true
+  dating-pool-woman-04:
+    file: images/dating-pool-woman-04.jpg
+    graded: true
+  dating-pool-woman-05:
+    file: images/dating-pool-woman-05.jpg
+    graded: true
+  dating-pool-woman-06:
+    file: images/dating-pool-woman-06.jpg
+    graded: true
+  dating-pool-woman-07:
+    file: images/dating-pool-woman-07.jpg
+    graded: true
+  dating-pool-woman-08:
+    file: images/dating-pool-woman-08.jpg
+    graded: true

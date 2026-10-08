@@ -1,0 +1,7 @@
+<%# One message replaced in place, for both an edit and an unsend. The row
+    survives an unsend so a threaded reply is not orphaned — what changes is the
+    body, which is why this replaces rather than removes. %>
+<% message = @conversation.messages.find(params[:id]) %>
+<%= turbo_stream.replace dom_id(message) do %>
+  <%= render "messages/message", message: message, in_channel: @conversation.channel? %>
+<% end %>

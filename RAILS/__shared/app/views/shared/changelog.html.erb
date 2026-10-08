@@ -1,0 +1,22 @@
+<%
+  entries = @changelog.fetch("entries")
+%>
+<main class="page" id="main-content">
+  <header class="page-header">
+    <p class="eyebrow">Endringslogg</p>
+    <h1 class="page-title">Hva har endret seg</h1>
+    <p class="page-intro">Publiserte endringer i husets produkt- og driftskontrakter.</p>
+  </header>
+
+  <% entries.each do |entry| %>
+    <article class="changelog-entry">
+      <p class="meta"><%= entry.fetch("date") %></p>
+      <h2><%= entry.fetch("title") %></h2>
+      <ul>
+        <% entry.fetch("items").each do |item| %>
+          <li><%= item %></li>
+        <% end %>
+      </ul>
+    </article>
+  <% end %>
+</main>

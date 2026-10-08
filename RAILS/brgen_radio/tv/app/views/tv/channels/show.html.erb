@@ -1,0 +1,47 @@
+<% content_for :title, @channel.name %>
+<% content_for :json_ld, json_ld_for(@channel, type: :broadcast_channel) %>
+
+<div class="page-header">
+  <hgroup>
+    <p><%= t("tv.channel_subtitle", city: city_name) %></p>
+    <%= tag.h1 @channel.name %>
+  </hgroup>
+  <nav>
+    <% if authenticated? && Current.user == @channel.user %>
+      <%= link_to t("tv.upload_video"), new_channel_video_path(@channel), class: "btn btn-primary btn-sm" %>
+      <%= link_to t("actions.edit"), edit_channel_path(@channel), class: "btn btn-ghost btn-sm" %>
+    <% elsif authenticated? %>
+      <% if @channel.subscriptions.exists?(user: Current.user) %>
+        <%# destructive: no-confirm-ok — reversible — the button becomes Subscribe again in place %>
+        <%= button_to t("tv.unsubscribe"), unsubscribe_channel_path(@channel), method: :delete, class: "btn btn-ghost btn-sm" %>
+      <% else %>
+        <%= button_to t("tv.subscribe"), subscribe_channel_path(@channel), method: :post, class: "btn btn-primary btn-sm" %>
+      <% end %>
+    <% end %>
+  </nav>
+</div>
+
+<article>
+  <div class="chips">
+    <span class="chip"><%= t("tv.subscribers", count: @channel.subscribers_count.to_i) %></span>
+    <span class="chip"><%= t("tv.total_views", count: @channel.total_views.to_i) %></span>
+    <span class="chip"><%= t("tv.videos_shown", count: @videos.count) %></span>
+  </div>
+  <% if @channel.description.present? %>
+    <%= tag.p simple_format(@channel.description) %>
+  <% else %>
+    <p><%= t("tv.no_description") %></p>
+  <% end %>
+</article>
+
+<section>
+  <h2><%= t("tv.videos") %></h2>
+  <% if @videos.any? %>
+    <%= render "tv/channels/channel_videos" %>
+  <% else %>
+    <%= render "shared/empty_state",
+          title: t("empty.no_videos"),
+          body: t("empty.no_videos_body"),
+          action: { label: t("actions.all_channels"), path: channels_path } %>
+  <% end %>
+</section>

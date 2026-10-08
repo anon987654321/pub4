@@ -1,0 +1,91 @@
+<% content_for :title, t("takeaway.order_title", id: @order.id) %>
+
+<div class="page-header">
+  <hgroup>
+    <p><%= link_to @order.restaurant.name, restaurant_path(@order.restaurant) %></p>
+    <%= tag.h1 t("takeaway.order_title", id: @order.id) %>
+  </hgroup>
+  <span class="chip"><%= t("takeaway.statuses.#{@order.status}") %></span>
+</div>
+
+<%# One ticket, several people. Only the host opens it and only the host sends
+    it to the kitchen — that is what makes it one delivery rather than four. %>
+<% if @order.host?(Current.user) && @order.status == "pending" %>
+  <p class="group-share">
+    <% if @order.group? %>
+      <%= link_to t("takeaway.group_link"), group_order_url(@order.group_token) %>
+    <% else %>
+      <%= button_to t("takeaway.open_group"), order_group_path(@order), method: :post, class: "btn btn-ghost btn-sm" %>
+    <% end %>
+  </p>
+<% end %>
+
+<div class="order-status" role="status" aria-live="polite">
+  <%= tag.h2 t("takeaway.status_timeline") %>
+  <div class="chips">
+    <% Takeaway::Order::STATUSES.each do |status| %>
+      <span class="chip"><%= t("takeaway.statuses.#{status}") %><%= " ✓" if @order.status == status %></span>
+    <% end %>
+  </div>
+  <% if (fraction = @order.progress_fraction) %>
+    <div class="order-progress" role="presentation">
+      <div class="order-progress-fill" style="--progress: <%= (fraction * 100).round %>%"></div>
+    </div>
+  <% end %>
+  <% if @order.status == "delivered" %>
+    <p class="eta-badge eta-badge--done"><%= t("takeaway.delivered") %></p>
+  <% elsif @order.status == "cancelled" %>
+    <p class="eta-badge eta-badge--cancelled"><%= t("takeaway.order_cancelled") %></p>
+  <% else %>
+    <p class="eta-badge" data-controller="countdown" data-countdown-target-time-value="<%= @order.estimated_ready_at.iso8601 %>"><%= t("takeaway.eta_calculating") %></p>
+  <% end %>
+
+  <%# Named courier once one is dispatched. Absence is a real state — nobody
+      free within the dispatch radius — so it says so rather than rendering an
+      empty row. %>
+  <% if @order.status == "out_for_delivery" %>
+    <% if (courier = @order.courier_display_name) %>
+      <p class="courier">
+        <%= tag.strong courier %>
+        <% if (km = @order.courier_distance_km) %>
+          <%= t("takeaway.courier_distance", km: km.round(1)) %>
+        <% end %>
+      </p>
+    <% else %>
+      <p class="courier"><%= t("takeaway.courier_unassigned") %></p>
+    <% end %>
+  <% end %>
+</div>
+
+<article aria-label="<%= t("takeaway.order_item") %>">
+  <p><%= t("takeaway.delivery_to", address: @order.delivery_address) %></p>
+  <% if @order.special_instructions.present? %>
+    <p><%= tag.strong t("takeaway.instructions") %> <%= @order.special_instructions %></p>
+  <% end %>
+</article>
+
+<section role="region" aria-label="<%= t("takeaway.order_items") %>">
+  <%= tag.h2 t("takeaway.order_items") %>
+  <% @order.order_items.each do |order_item| %>
+    <article aria-label="<%= t("takeaway.order_item") %>">
+      <%= tag.strong order_item.menu_item.name %> × <%= order_item.quantity %>
+      <span class="item-subtotal"><%= order_item.subtotal_display %></span>
+    </article>
+  <% end %>
+</section>
+
+<article aria-label="<%= t("takeaway.order_item") %>">
+  <p><%= t("takeaway.subtotal", amount: @order.subtotal_display) %></p>
+  <p><%= t("takeaway.delivery", amount: @order.delivery_fee_display) %></p>
+  <%= tag.strong t("takeaway.total", amount: @order.total_display) %>
+</article>
+
+<nav aria-label="<%= t("takeaway.order_actions") %>">
+  <%= button_to t("actions.reorder"), again_order_path(@order), method: :post, class: "btn" %>
+  <%= link_to t("actions.all_orders"), orders_path, class: "btn btn-ghost" %>
+  <% if authenticated? && @order.restaurant.owner?(Current.user) && @order.advanceable? %>
+    <% Takeaway::Order::TRANSITIONS.fetch(@order.status, []).each do |status| %>
+      <%= button_to t("takeaway.statuses.#{status}"), order_path(@order), method: :patch, params: { status: status }, class: "btn btn-primary" %>
+    <% end %>
+  <% end %>
+</nav>

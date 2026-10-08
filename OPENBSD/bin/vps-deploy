@@ -1,0 +1,435 @@
+#!/usr/bin/env zsh
+# Serial VPS deploy entrypoint — sync, CI, restart, health, deploy stamp.
+# Usage: zsh OPENBSD/bin/vps-deploy all|brgen|amber|bsdports|master
+set -euo pipefail
+
+# SSH executes this as a non-login shell on vm23; pin the OpenBSD package path.
+export PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin
+
+usage() {
+  print -r -- "usage: zsh OPENBSD/bin/vps-deploy all|APP|master   (run as dev, never under doas)
+
+  all          master, then every app, amber and bsdports last
+  SKIP_CI=1    skip vps_ci.sh; \${app}.sh and its runtime gate still run
+  VPS_DEPLOY_DRIFT=fail   refuse to deploy when the box's configs differ from the repo
+  PUB4_DEPLOY_BROWSER_GATES=1   add the browser gates after restart"
+}
+case ${1:-} in
+  -h|--help) usage; exit 0 ;;
+esac
+
+# Run as dev, not under doas. This script escalates for the individual steps
+# that need root and pulls as dev for the one that must not: root has no
+# github.com host key, so `doas vps-deploy master` dies at step one with
+#
+#   ==> git pull
+#   Host key verification failed.
+#   fatal: Could not read from remote repository.
+#   Please make sure you have the correct access rights and the repository exists.
+#
+# which reads as a revoked deploy key rather than a wrong user. Adding the host
+# key to root's known_hosts would "fix" it by giving root a path to fetch and
+# execute code from the network, which is the thing the split avoids.
+#
+# The habit is easy to acquire because everything else on this box is doas'd;
+# RUNBOOK.md's agent contract says which of OPERATOR.sh, vps-deploy and vps_ci.sh
+# takes doas.
+if [[ $(id -u) -eq 0 ]]; then
+  print -u2 "vps-deploy: run this as dev, not root — it escalates per step, and"
+  print -u2 "            root cannot reach github (no host key). Try:"
+  print -u2 "            cd /home/dev/pub4 && zsh OPENBSD/bin/vps-deploy ${1:-all}"
+  exit 2
+fi
+
+app=${1:-}
+[[ -n $app ]] || { usage >&2; exit 2 }
+
+case $app in
+  all|master|brgen|amber|bsdports) ;;
+  *) print -u2 "vps-deploy: unknown app \"$app\" — allowed: all, master, brgen, amber, bsdports"; exit 2 ;;
+esac
+
+# One host, one deploy. The parent all process keeps this lock while its
+# re-entrant child processes deploy each app in order; a second top-level deploy
+# is refused rather than running two pulls, precompiles and restarts together.
+lock_dir=${VPS_DEPLOY_LOCK_DIR:-$HOME/.pub4-vps-deploy.lock}
+lock_owner=0
+if [[ -z ${VPS_DEPLOY_LOCK_HELD:-} ]]; then
+  if mkdir "$lock_dir" 2>/dev/null; then
+    export VPS_DEPLOY_LOCK_HELD=1
+    lock_owner=1
+  else
+    print -u2 "vps-deploy: refused — another deploy owns $lock_dir (remove only after confirming no deploy)"
+    exit 75
+  fi
+fi
+
+# A full deploy outlives the ssh session that starts it. When that session is
+# cut — a timeout, a dropped link — the pipe carrying its output dies with it and
+# the only record of what happened is gone, while the deploy itself carries on to
+# completion on the box. Twice now the outcome had to be reconstructed from
+# rcctl and curl afterwards. tee keeps a copy that survives the caller.
+# Once per run, not once per app. `vps-deploy all` re-invokes itself for each
+# app, and without this guard every child added its own tee to the same file:
+# the child output then passed through both and every line landed twice.
+deploy_log=${VPS_DEPLOY_LOG:-$HOME/vps-deploy.log}
+if [[ -z ${VPS_DEPLOY_LOGGING:-} ]]; then
+  export VPS_DEPLOY_LOGGING=1
+  print "vps-deploy: $app, logging to $deploy_log"
+  exec > >(tee -a "$deploy_log") 2>&1
+  print "==> vps-deploy $app started $(date '+%Y-%m-%d %H:%M:%S')"
+fi
+
+# The whole fleet, in the order that survives its own side effects.
+#
+# master is not under /home/*/app, so an operator enumerating the Rails apps does
+# not see it and a typed list leaves it behind. Naming the four here makes the
+# set a definition rather than a habit.
+#
+# Order is load-bearing. Every deploy sheds amber and bsdports — they go to
+# rcctl failed with their ports closed while TLS keeps answering, so the outage
+# reads as a hang rather than a 5xx and nothing reports it. Deploying those two
+# last folds the restore into the same pass instead of leaving a window where
+# they are down and nobody is looking. master leads because it is independent of
+# the Rails apps and is the one that gets forgotten.
+DEPLOY_ALL=(master brgen amber bsdports)
+
+if [[ $app == all ]]; then
+  typeset -i first=1
+  for one in $DEPLOY_ALL; do
+    # Let the previous app's deploy drain before starting the next one's CI.
+    #
+    # One CPU, four apps back to back: each deploy leaves precompile, a restart
+    # and a settling app server behind it, and the next app's test suite walks
+    # straight into that. brgen's CI was killed mid-run on 2026-08-14 at load
+    # 3.43 during exactly this loop, and the same commit passed at load 0.32
+    # when run alone. The load is the pass's own wake, so the pass should wait
+    # for it rather than hand the bill to whichever app is next.
+    #
+    # CiGuard waits on load too, so this is the cheap half — a fixed pause costs
+    # a minute and avoids most of the waiting the guard would otherwise do.
+    if (( ! first )); then
+      print "vps-deploy: all — settling for ${PUB4_DEPLOY_COOLDOWN:-60}s before $one"
+      sleep ${PUB4_DEPLOY_COOLDOWN:-60}
+    fi
+    first=0
+    print "vps-deploy: all -> $one"
+    # Re-entrant rather than inlined: each app gets the full path including its
+    # own health gate and deploy stamp, and a failure halts the pass instead of
+    # deploying the next one on top of a broken box.
+    zsh "$0" "$one" || { print -u2 "vps-deploy: all halted at $one"; exit 1 }
+  done
+  print "vps-deploy: all ok ($DEPLOY_ALL)"
+  exit 0
+fi
+
+repo=${PUB4_ROOT:-/home/dev/pub4}
+stamp_dir=/var/db/pub4
+mkdir -p "$stamp_dir" 2>/dev/null || doas mkdir -p "$stamp_dir"
+doas chmod 755 "$stamp_dir" 2>/dev/null || true
+
+# SHA and time are captured at write_stamp, not here. vps_deploy_master.sh
+# pulls origin/main; reading HEAD before that call stamped the pre-pull SHA
+# (76f1a65fa on 2026-08-12 while /health correctly said 5eff4d87a).
+
+write_stamp() {
+  local name=$1 stamp_status=$2
+  local sha started file
+  sha=$(git -C "$repo" rev-parse --short HEAD)
+  started=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+  file=$stamp_dir/last_deploy_${name}.json
+  doas tee "$file" >/dev/null <<EOF
+{"app":"$name","sha":"$sha","at":"$started","status":"$stamp_status","host":"$(hostname)"}
+EOF
+  doas chmod 644 "$file" 2>/dev/null || true
+}
+
+if [[ $app == master ]]; then
+  print "vps-deploy: master web"
+  if zsh "$repo/OPENBSD/bin/vps_deploy_master.sh"; then
+    write_stamp master ok
+    exit 0
+  fi
+  # A failed run stamps failed, or last_deploy_master.json keeps saying ok
+  # from the last good run and /health reports a live SHA while :53187 is
+  # closed (measured 2026-08-13).
+  write_stamp master failed
+  exit 1
+fi
+
+[[ -d /home/${app}/app ]] || { print -u2 "missing /home/${app}/app"; exit 1 }
+
+# Rails apps do not pull inside vps_ci.sh, so without this step a deploy CIs and
+# syncs whatever the VPS checkout already holds, which can lag origin/main by
+# days. master pulls inside vps_deploy_master.sh; this is the matching step for
+# the three copy-tree apps.
+print "vps-deploy: $app (git pull --ff-only)"
+git -C "$repo" pull --ff-only origin main
+
+print "vps-deploy: $app (preflight load)"
+if [[ -x $repo/OPENBSD/bin/resource_guard.sh ]]; then
+  doas ksh "$repo/OPENBSD/bin/resource_guard.sh" || true
+fi
+
+# The guard's deploy flag, held for the whole deploy and not only the restart.
+#
+# rc.d/<app> touches .deploying-<app> from rc_pre to the end of its /up wait and
+# removes it there. CI, migrate, precompile and the gates all run outside that
+# window at the box's highest load, and resource_guard counts every one of those
+# ticks as a strike. So the counter already stands past GUARD_SHED_STRIKES when
+# the restart's flag comes off, and the next tick sheds the first OPTIONAL
+# service. bsdports leads that list, which is why its own deploy exits 0 and
+# vps-state then reads bsdports(failed) with :47312 closed.
+#
+# Taken after the preflight guard run, which may still shed to free memory for
+# CI. A tick that sees the flag resets the counter, so the guard needs two fresh
+# breaching ticks after this deploy ends before it sheds anything. The name is
+# not .deploying-<app>, because rc.d removes that one mid-deploy; it is touched
+# again at each long stage because the guard ignores a flag older than 30 minutes.
+release_deploy_lock() {
+  (( lock_owner )) || return 0
+  rmdir "$lock_dir" 2>/dev/null || true
+}
+
+deploy_flag="$repo/.deploying-vps-deploy-${app}"
+hold_deploy_flag() { touch "$deploy_flag" 2>/dev/null || true }
+cleanup() {
+  rm -f -- "$deploy_flag"
+  release_deploy_lock
+}
+trap cleanup EXIT
+hold_deploy_flag
+
+# What is about to be deployed, against what is actually running.
+#
+# The gate compares OPENBSD/etc byte-for-byte with live /etc and root's crontab
+# with etc/crontab.vm23. A deploy is exactly when that matters — it is the moment
+# the repo becomes the box.
+#
+# Advisory, not blocking, and deliberately so. Measured 2026-09-10 with
+# `SSH_HOST=dev@brgen.no ruby OPENBSD/gates/config_drift_gate.rb --remote`: eight files
+# differ and two more are absent from the box entirely — emergency_cpu.sh, which
+# is resource_guard's crisis tier, and vps_weekly_integrity.sh, which the crontab
+# has scheduled for weeks. A hard gate here would refuse every deploy until an
+# OPERATOR.sh run nobody has scheduled, and one of the eight is rc.d/master, which
+# starts a production service. Make it blocking the first time a deploy runs with
+# this clean; a warning that names a number is still the difference between
+# knowing and not.
+if [[ -x /usr/local/bin/config_drift_gate.rb ]]; then
+  if ! /usr/local/bin/ruby40 /usr/local/bin/config_drift_gate.rb > /tmp/vps-deploy-drift.out 2>&1; then
+    # ruby40, not grep: coreutils are banned in committed scripts here, and the
+    # gate's own summary line already carries the count in the shape we want.
+    drift_count=$(/usr/local/bin/ruby40 -e \
+      'print File.read("/tmp/vps-deploy-drift.out").scan(/: DRIFT -/).size' 2>/dev/null)
+    print "vps-deploy: $app WARNING — ${drift_count:-?} config(s) on the box differ from the repo being deployed"
+    print "vps-deploy: $app see /tmp/vps-deploy-drift.out"
+    # Blocking is opt-in until the box has run clean once; the default stays the
+    # warning above so an unscheduled OPERATOR.sh run cannot freeze every deploy.
+    if [[ ${VPS_DEPLOY_DRIFT:-warn} == fail ]]; then
+      print -u2 "vps-deploy: $app refused — VPS_DEPLOY_DRIFT=fail and the box has drifted"
+      exit 1
+    fi
+  fi
+fi
+
+if [[ ${SKIP_CI:-} == 1 ]]; then
+  print "vps-deploy: $app (sync via ${app}.sh, SKIP_CI=1)"
+  zsh "$repo/RAILS/${app}/${app}.sh"
+else
+  # The app's resident Solid Queue worker stands down for the CI run.
+  #
+  # vm23 is 1 GB. brgen_jobs holds ~380 MB resident and brgen's suite is 896
+  # tests: on 2026-08-23 the runner was OOM-killed mid-suite with swap at 898 MB
+  # of 1264, and the failure is silent in the worst way — 155 dots, no summary,
+  # no failure block, and vps_ci reporting "Tests: Rails failed". Dots then
+  # nothing in a CI test section means the runner was killed, not that a test
+  # failed. Stopped and restarted here so the knowledge lives in the deploy
+  # rather than in whoever remembers to type it.
+  jobs_service="${app}_jobs"
+  jobs_was_up=0
+  if doas rcctl get "$jobs_service" >/dev/null 2>&1 && doas rcctl check "$jobs_service" >/dev/null 2>&1; then
+    print "vps-deploy: $app (stand down $jobs_service for the CI run)"
+    doas rcctl stop "$jobs_service" >/dev/null 2>&1 && jobs_was_up=1
+  fi
+
+  print "vps-deploy: $app (ci + sync)"
+  # `|| ci_status=$?` rather than a bare call and `ci_status=$?` after it. This
+  # script runs under `set -e`, so a bare failing CI run exits here and the
+  # restart below — the whole reason the stand-down records jobs_was_up — never
+  # runs, leaving the worker stopped with nothing 5xx'ing and the queue simply not
+  # draining. A command followed by `||` is exempt from errexit, which is what
+  # makes the status capture reachable at all.
+  ci_status=0
+  zsh "$repo/OPENBSD/bin/vps_ci.sh" "$app" || ci_status=$?
+
+  if (( jobs_was_up )); then
+    doas rcctl start "$jobs_service" >/dev/null 2>&1 \
+      || print -u2 "vps-deploy: $jobs_service did not come back — start it"
+  fi
+  (( ci_status == 0 )) || exit $ci_status
+fi
+
+# Primary database, then the cache/queue/cable schemas.
+#
+# db_create_migrate_as_app runs db:prepare, which is idempotent — it creates the
+# database when absent, loads the schema when empty, and otherwise runs only
+# pending migrations — and then does the secondary schemas itself. Loading the
+# secondaries alone leaves the primary unmigrated, so a merged migration never
+# reaches production: on 2026-07-29 brgen shipped a counter-cache column its
+# views already read, and every feed render 500'd until an operator ran the
+# three pending migrations by hand.
+print "vps-deploy: $app (primary db migrate + secondary schemas)"
+. "$repo/RAILS/_core.sh"
+. "$repo/RAILS/_bundle.sh"
+. "$repo/RAILS/_runtime_gate.sh"
+. "$repo/RAILS/_database.sh"
+. "$repo/RAILS/_assets.sh"
+# Same reason RAILS/_deploy.sh stops first: db:prepare hangs on the write
+# lock a live Falcon worker already holds on production.sqlite3.
+print "vps-deploy: $app (stop for sqlite migrate)"
+doas rcctl stop "$app" 2>/dev/null || true
+db_create_migrate_as_app "$app" "/home/${app}/app"
+
+# The SKIP_CI=1 path (${app}.sh -> deploy_tracked_app -> rails_runtime_gate)
+# already precompiles as part of its gate. The default ci+sync path
+# (vps_ci.sh) only runs tests against a throwaway test DB and never
+# touches production assets -- without this, public/assets/ is simply
+# never created for a plain `vps-deploy $app` run, so Propshaft 404s
+# every asset_path() and the page renders with no CSS at all. Safe to
+# call unconditionally: Propshaft precompile is idempotent.
+print "vps-deploy: $app (assets precompile)"
+rails_assets_precompile_as_app "$app" "/home/${app}/app" || exit 1
+
+print "vps-deploy: $app (restart)"
+hold_deploy_flag
+if ! doas rcctl restart "$app" || ! doas rcctl check "$app"; then
+  write_stamp "$app" failed
+  exit 1
+fi
+
+port=$(ruby40 -ryaml -e 'puts YAML.safe_load(File.read("'"$repo"'/RAILS/apps.yml")).dig("apps","'"$app"'","port")')
+up_ok=0
+for i in {1..150}; do
+  curl -fsS "http://127.0.0.1:${port}/up" >/dev/null 2>&1 && { up_ok=1; break; }
+  sleep 2
+done
+[[ $up_ok -eq 1 ]] || { write_stamp "$app" failed; print -u2 "vps-deploy: $app /up not ready on :${port}"; exit 1; }
+
+# /up answers before Propshaft is involved, so it says nothing about whether the
+# page a visitor gets is styled. On 2026-08-14 brgen served every page with a
+# <link> to a stylesheet that 404'd — public/assets held zero files — and /up,
+# rcctl check, the port probe and the public TLS check all passed. The site was
+# plainly broken and the only thing that noticed was a person looking at it.
+#
+# So ask for the stylesheet the page actually links, through the Host that owns
+# it: these apps are domain-constrained and a bare-IP request is a 403, which
+# would make this check pass by never finding a link to test.
+domain=$(ruby40 -ryaml -e 'puts YAML.safe_load(File.read("'"$repo"'/RAILS/apps.yml")).dig("apps","'"$app"'","domain")')
+# The page and the link are two reads, because under set -e and pipefail one
+# pipeline that finds no link fails the assignment and ends the deploy with no
+# stamp and no message. A home page that does not answer is a failed deploy; a
+# home page that links no stylesheet is the else branch below.
+home_page=$(curl -fsS --max-time 30 -H "Host: ${domain}" "http://127.0.0.1:${port}/" 2>/dev/null) || {
+  write_stamp "$app" failed
+  print -u2 "vps-deploy: $app / did not answer on :${port} with Host ${domain}"
+  exit 1
+}
+css_href=$(print -r -- "$home_page" | ruby40 -e 'print $stdin.binmode.read[%r{/assets/[^"]+\.css}n].to_s')
+if [[ -n $css_href ]]; then
+  if curl -fsS -o /dev/null --max-time 30 -H "Host: ${domain}" "http://127.0.0.1:${port}${css_href}" 2>/dev/null; then
+    print "vps-deploy: $app stylesheet ok (${css_href})"
+  else
+    write_stamp "$app" failed
+    print -u2 "vps-deploy: $app serves ${css_href} as 404 — precompiled assets missing, the site is unstyled"
+    exit 1
+  fi
+else
+  print "vps-deploy: $app no /assets stylesheet linked on / — nothing to verify"
+fi
+
+queue_schema="$repo/RAILS/${app}/db/queue_schema.rb"
+if [[ -f $queue_schema ]] && ! ruby40 -e 'exit File.read(ARGV[0]).include?("define(version: 0)")' "$queue_schema"; then
+  print "vps-deploy: $app (solid_queue proof)"
+  doas ruby40 "$repo/OPENBSD/gates/solid_queue_proof.rb" "$app" \
+    || { write_stamp "$app" failed; print -u2 "vps-deploy: solid_queue proof failed for $app"; exit 1; }
+fi
+
+# Restore whatever the guard shed while we were deploying.
+#
+# resource_guard sheds its OPTIONAL list — bsdports, then amber — under
+# sustained pressure, and a deploy is exactly that. relayd keeps answering TLS
+# with their ports closed, so the outage reads as a hang rather than a 5xx and
+# nothing reports it: on 2026-08-23 amber and bsdports were restarted by hand
+# three times in one session, each time discovered by a person running curl.
+#
+# `vps-deploy all` folds the restore into its ordering; this pass gives a
+# single-app deploy, the common case, the same restore. Reported, not silent — a
+# service that needed restoring is a fact about the box worth seeing.
+restored=()
+for other in amber bsdports; do
+  [[ $other == "$app" ]] && continue
+  doas rcctl get "$other" >/dev/null 2>&1 || continue          # not configured here
+  doas rcctl check "$other" >/dev/null 2>&1 && continue        # already up
+  if doas rcctl restart "$other" >/dev/null 2>&1 && doas rcctl check "$other" >/dev/null 2>&1; then
+    restored+=("$other")
+  else
+    print -u2 "vps-deploy: $other is down and would not restart — check it"
+  fi
+done
+(( ${#restored} )) && print "vps-deploy: restored after shedding: ${restored}"
+
+# The gates, on the deployed thing.
+#
+# Outside this pass the gates run only when a person types a command, so the
+# half that can only be measured against a running app would be measured on a
+# laptop where it means less. A user journey is real only here: production
+# answers 403 to a request without the right Host header, which development
+# never does.
+#
+# This set is the cheap half: source checks plus the live probes against the
+# loopback. It runs in about forty seconds on this one core with the fleet up,
+# which is what makes it affordable on every deploy.
+#
+# The browser half — rendered_suite, layout_suite, visual_contract — is NOT here
+# and is opt-in through PUB4_DEPLOY_BROWSER_GATES=1. Chrome is installed, but
+# this box is 1GB with four apps resident and resource_guard sheds amber and
+# bsdports under exactly that pressure. A deploy that takes the site down to
+# check the site has failed at the only thing it was for.
+#
+# GATE_AUTOFIX=0 because a gate must not rewrite the tree it is judging, least
+# of all the one that is deployed.
+#
+# GATE_REQUIRE_LIVE=1 because this is the one host where a live gate has no
+# excuse. It turns "port closed, skipping" into a failure, and half this set —
+# flow_journey, page_simulation, port_inventory — measures nothing without a
+# listening app. The fleet was just restarted and the shed apps restored a few
+# lines above, so a closed port here is a deploy that did not come up, not a
+# laptop. bin/check-rails takes the same position on the box through
+# Environment.on_vps?, and a second caller on the same host must not quietly
+# accept a skip.
+gate_names=(production port_inventory generated_asset schema_migration
+            phantom_foreign_keys frontend_production stimulus_components
+            flow_journey page_simulation)
+if [[ -n ${PUB4_DEPLOY_BROWSER_GATES:-} ]]; then
+  gate_names+=(rendered_suite layout_suite)
+fi
+print "vps-deploy: $app (gates: ${gate_names})"
+hold_deploy_flag
+if ! MASTER_STRICT=deploy GATE_AUTOFIX=0 ruby40 "$repo/MASTER/gates/runner.rb" "${gate_names[@]}"; then
+  write_stamp "$app" failed
+  print -u2 "vps-deploy: $app gates failed — the app is deployed and serving, and something"
+  print -u2 "            it is now serving does not hold. Fix or revert; do not deploy over it."
+  exit 1
+fi
+
+# The app deployed last has to be the app still running when the deploy says ok.
+# Every check above ran minutes ago, and a deploy whose own app is down on exit
+# is the one outcome the stamp must never call ok.
+if ! doas rcctl check "$app" >/dev/null 2>&1; then
+  write_stamp "$app" failed
+  print -u2 "vps-deploy: $app is down at the end of its own deploy — doas rcctl restart $app, then read /var/log/daemon"
+  exit 1
+fi
+
+print "vps-deploy: $app ok"
+write_stamp "$app" ok

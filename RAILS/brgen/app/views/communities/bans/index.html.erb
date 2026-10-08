@@ -1,0 +1,64 @@
+<% content_for :title, t("community.bans") %>
+
+<div class="page-header">
+  <hgroup>
+    <p><%= link_to @community.name, community_path(@community) %></p>
+    <%= tag.h1 t("community.bans") %>
+  </hgroup>
+  <%= link_to t("community.mod_queue"), community_moderation_index_path(@community), class: "btn btn-ghost btn-sm" %>
+</div>
+
+<% if @bans.any? %>
+  <ul class="ban-list" role="list">
+    <% @bans.each do |ban| %>
+      <li class="cluster">
+        <%= tag.strong ban.user.display_name %>
+        <span class="chip">
+          <%= ban.permanent? ? t("community.ban_permanent") : t("community.ban_until", time: l(ban.expires_at, format: :event)) %>
+        </span>
+        <% if ban.reason.present? %><%= ban.reason %><% end %>
+        <%= ban.banned_by.display_name %>
+        <%# Any moderator can lift any ban: a mod team that cannot undo each
+            other's mistakes escalates every disagreement to the owner. %>
+        <%# destructive: no-confirm-ok — reversible — the comment above is the whole argument: a mod team undoes its own mistakes, and banning again is a click %>
+        <%= button_to t("community.lift_ban"), community_ban_path(@community, ban),
+              method: :delete, class: "btn btn-ghost btn-sm" %>
+      </li>
+    <% end %>
+  </ul>
+<% else %>
+  <%= render "shared/empty_state",
+        title: t("community.no_bans"),
+        body: t("community.no_bans_body"),
+        action: { label: t("community.mod_queue"), path: community_moderation_index_path(@community) } %>
+<% end %>
+
+<%# Lifting a ban destroys the row above, and with it who imposed it and why.
+    This is where that survives, so it sits on the same page rather than behind
+    another click: the question "who let them back in" is asked while looking at
+    the list the person is no longer on. %>
+<%# No class on the section or the list. The stylesheet reaches them through
+    [aria-labelledby="moderation_log_heading"], which is the attribute that
+    already has to be correct for the heading to name the region — so a styled
+    log and an announced log cannot drift apart, and there is no third name to
+    keep in sync. %>
+<section aria-labelledby="moderation_log_heading">
+  <h2 id="moderation_log_heading"><%= t("community.moderation_log") %></h2>
+
+  <% if @audit_events.any? %>
+    <ol role="list">
+      <% @audit_events.each do |event| %>
+        <li>
+          <%= event.summary %>
+          <%# The machine-readable time is the audited fact; the visible text is
+              the human one. <time> needs no class — it is the only one here. %>
+          <time datetime="<%= event.occurred_at.iso8601 %>">
+            <%= l(event.occurred_at, format: :event) %>
+          </time>
+        </li>
+      <% end %>
+    </ol>
+  <% else %>
+    <p><%= t("community.no_moderation_log") %></p>
+  <% end %>
+</section>

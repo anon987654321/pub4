@@ -1,0 +1,106 @@
+# frozen_string_literal: true
+
+
+ENV["MT_NO_PLUGINS"] = "1"
+ENV["MASTER_TTS_MODE"] = "classic"
+# The pool's live probes sign-in-check CLIs, ask OpenRouter for a balance and
+# knock on local server ports; a suite that did so would grade this machine.
+ENV["MASTER_NO_POOL_PROBES"] = "1"
+# The suite is the proof: a test that drives a writing /fix pass must not start
+# the whole suite again from inside it.
+ENV["MASTER_IN_PROOF"] = "1"
+# Unit tests use the real checkout as their fixture; do not recursively create fix worktrees.
+ENV["MASTER_FIX_WORKTREE"] = "0"
+
+# Direct test entrypoints must use the same pinned, private bundle as bin/cli.
+# Otherwise RubyGems can select a host-installed Minitest (or a native gem
+# built against another Ruby) before the suite has a chance to activate MASTER.
+$LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
+require_relative "../lib/boot/dependency_manager"
+test_root = File.expand_path("..", __dir__)
+test_boot = Master::Boot::DependencyManager.new(root: test_root, env: ENV, out: $stderr)
+test_result = test_boot.ensure!
+unless test_result.ok
+  abort("deps0: #{test_result.message}\n#{test_result.output}".strip)
+end
+test_boot.activate_environment!
+require "bundler/setup"
+
+if ENV["COVERAGE"] == "1"
+  require "simplecov"
+  SimpleCov.start do
+    add_filter "/test/"
+    # The groups name directories that exist. They read lib/master/scan,
+    # lib/master/stages and lib/master/council, a path shape from before the lib
+    # rename, so three panes of this report were empty for as long as anyone ran
+    # it with COVERAGE=1. Groups shape the report rather than the threshold, so
+    # the 85% minimum was never wrong; the reading of it was.
+    add_group "Scan", "lib/review/scan"
+    add_group "Stages", "lib/cli/stages"
+    add_group "Council", "lib/review/council"
+    minimum_coverage 85
+  end
+end
+
+gem "minitest", "~> 5.25"
+require "minitest/autorun"
+require "minitest/mock"
+require "tmpdir"
+require "timeout"
+
+# Load MASTER without booting the CLI
+$LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
+require "master"
+# Hash#dig stays MRI's here. HashDigCompat repairs coltrane's replacement, and
+# only dilla loads coltrane; installing it for every MASTER test ran the suite
+# on a dig the runtime never has. test_master_boot proves the compat in a
+# child process so this one keeps the real method.
+
+# Bound individual tests to prevent hangs, while leaving integration fixtures
+# enough room on slower local runs.
+#
+# A test that needs longer says so by overriding `test_timeout`, rather than the
+# global number rising to fit its worst case. One test needs it: TestRatchets
+# measures every ratchet across the whole 2871-file corpus, which is a minute of
+# honest work and not a hang. Raising the default to cover that would stop the
+# other 1593 tests from catching a real one.
+MASTER_TEST_TIMEOUT = Integer(ENV.fetch("MASTER_TEST_TIMEOUT", "30"))
+Minitest::Test.class_eval do
+  alias_method :run_without_timeout, :run
+
+  def test_timeout = MASTER_TEST_TIMEOUT
+
+  def run(*args)
+    Timeout.timeout(test_timeout) { run_without_timeout(*args) }
+  rescue Timeout::Error
+    failures << Minitest::UnexpectedError.new(Timeout::Error.new("timed out after #{test_timeout}s"))
+    self
+  end
+
+  # Shared by every scan-law test (test_cosmetic_laws, test_web_laws,
+  # test_web_scan_fixtures, test_scan_law_contracts) -- was copy-pasted
+  # byte-identical in all four before this hoist.
+  # A rule that lives in law/ has the bridge as its scanner surface, so its
+  # contract test asserts through it (BUTTON_OVER_ANCHOR set the precedent).
+  def law_findings(id, code, path:)
+    Master::Review::Scan::Laws::LawBridgeLaw.new.check(code, path:).select { |f| f[:law] == id }
+  end
+
+  def rule(id, path: nil)
+    candidates = Master::Review::Scan::Law.registry.filter_map do |klass|
+      instance = klass.new
+      instance if instance.id == id
+    rescue ArgumentError
+      nil
+    end
+    candidates.first || flunk("missing law #{id}")
+  end
+
+  def assert_finding(law, code, path, message)
+    findings = law.check(code, path:)
+
+    refute_empty findings
+    assert findings.any? { |finding| finding[:message].include?(message) },
+      "expected #{law.id} finding containing #{message.inspect}, got #{findings.inspect}"
+  end
+end

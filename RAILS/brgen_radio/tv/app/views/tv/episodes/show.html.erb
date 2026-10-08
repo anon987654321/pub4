@@ -1,0 +1,18 @@
+<% content_for :title, "#{@show.title} - Episode #{@episode.number}" %>
+
+<div class="page-header">
+  <h1><%= @show.title %> — Episode <%= @episode.number %></h1>
+  <%= tag.h2 @episode.title %>
+</div>
+
+<% if @video %>
+  <div class="video-player" data-controller="tv-player">
+    <%= render "tv/videos/tv_video", tv_video: @video %>
+  </div>
+<% else %>
+  <%= render "shared/empty_state",
+        title: t("empty.video_coming_soon"),
+        body: t("empty.video_coming_soon_body"),
+        action: { label: t("actions.back_to_show"), path: channel_show_path(@channel, @show) } %>
+<% end %>
+

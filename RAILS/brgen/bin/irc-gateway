@@ -1,0 +1,11 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Boots the Rails environment and runs the brgen IRC bridge (see IRC_BRIDGE.md).
+# Real IRC clients on Libera/EFnet/etc. connect here and land in the same city
+# channels the web sees. Not started by default — going live needs a listener
+# port opened in pf and the service enabled. Protocol logic lives in
+# lib/brgen/irc/ and is unit-tested; this is only the boot shim.
+require_relative "../config/environment"
+
+Brgen::Irc::Server.new.start

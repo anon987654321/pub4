@@ -1,0 +1,171 @@
+# Written by OPENBSD/bin/domain_watch.rb --update. Committed so a domain
+# changing hands is a reviewable diff rather than a surprise outage.
+---
+amberapp.art:
+  state: registered
+  created: '2026-09-25T05:35:06.0Z'
+  expires: '2027-09-25T23:59:59.0Z'
+  registrar: Domeneshop AS dba domainnameshop.com
+amstrdam.nl:
+  state: registered
+  created: '2026-05-18'
+  registrar: GoDaddy.com
+antibettingblog.com:
+  state: available
+anticasinoblog.com:
+  state: available
+antigamblingblog.com:
+  state: available
+austn.us:
+  state: available
+brdeaux.fr:
+  state: available
+brgen.no:
+  state: registered
+  created: '2020-08-25'
+brmingham.uk:
+  state: registered
+  created: 24-Jun-2021
+  expires: 24-Jun-2026
+  status: Renewal required.
+  registrar: Domeneshop AS t/a Domain Name Shop [Tag = DOMENESHOP-NO]
+brssels.be:
+  state: registered
+bsddocs.org:
+  state: available
+bsdports.org:
+  state: registered
+  created: '2022-08-08T14:15:10Z'
+  expires: '2027-08-08T14:15:10Z'
+  registrar: Domeneshop AS dba domainnameshop.com
+cardff.uk:
+  state: registered
+  created: 13-Aug-2021
+  expires: 13-Aug-2027
+  status: Registered until expiry date.
+  registrar: Domeneshop AS t/a Domain Name Shop [Tag = DOMENESHOP-NO]
+chcago.us:
+  state: available
+denvr.us:
+  state: registered
+  created: '2021-08-13T11:20:09Z'
+  expires: '2027-08-13T11:20:09Z'
+  registrar: Domeneshop AS dba domainnameshop.com
+discordb.org:
+  state: available
+dllas.us:
+  state: available
+dnver.us:
+  state: available
+dtroit.us:
+  state: available
+edinbrgh.uk:
+  state: registered
+  created: 13-Aug-2021
+  expires: 13-Aug-2027
+  status: Registered until expiry date.
+  registrar: Domeneshop AS t/a Domain Name Shop [Tag = DOMENESHOP-NO]
+foball.no:
+  state: registered
+  created: '2022-07-30'
+foodielicio.us:
+  state: available
+frankfrt.de:
+  state: registered
+freehelp.legal:
+  state: available
+gdnsk.pl:
+  state: available
+glasgw.uk:
+  state: registered
+  created: 24-Jun-2021
+  expires: 24-Jun-2026
+  status: Renewal required.
+  registrar: Domeneshop AS t/a Domain Name Shop [Tag = DOMENESHOP-NO]
+gtebrg.se:
+  state: available
+hlsinki.fi:
+  state: available
+houstn.us:
+  state: available
+kbenhvn.dk:
+  state: available
+lchtenstein.li:
+  state: unknown
+  note: registry referral, not a domain record
+lisbon.pt:
+  state: unknown
+  note: lisbon.pt - Forbiden Name
+lndon.uk:
+  state: registered
+  created: 23-Sep-2026
+  expires: 23-Sep-2027
+  status: Registered until expiry date.
+  registrar: Domeneshop AS t/a Domain Name Shop [Tag = DOMENESHOP-NO]
+longyearbyn.no:
+  state: available
+lsangeles.com:
+  state: registered
+  created: '2026-09-23T15:55:03Z'
+  expires: '2027-09-23T15:55:03Z'
+  registrar: Domeneshop AS dba domainnameshop.com
+lverpool.uk:
+  state: registered
+  created: 25-Jun-2021
+  expires: 25-Jun-2026
+  status: Renewal required.
+  registrar: Domeneshop AS t/a Domain Name Shop [Tag = DOMENESHOP-NO]
+mlan.it:
+  state: unknown
+  note: 'Domain:             mlan.it'
+mlmoe.se:
+  state: available
+mnchester.uk:
+  state: registered
+  created: 25-Jun-2021
+  expires: 25-Jun-2026
+  status: Renewal required.
+  registrar: Domeneshop AS t/a Domain Name Shop [Tag = DOMENESHOP-NO]
+mnnesota.com:
+  state: available
+mrseille.fr:
+  state: available
+newyrk.us:
+  state: available
+oshlo.no:
+  state: registered
+  created: '2020-08-22'
+prtland.com:
+  state: available
+pub.attorney:
+  state: available
+pub.healthcare:
+  state: available
+reykjavk.is:
+  state: available
+rottrdam.nl:
+  state: available
+stacyspassion.com:
+  state: available
+stholm.se:
+  state: available
+stvanger.no:
+  state: registered
+  created: '2020-08-22'
+trmso.no:
+  state: available
+trndheim.no:
+  state: registered
+  created: '2020-08-22'
+utrcht.nl:
+  state: available
+wrsawa.pl:
+  state: available
+wshingtondc.com:
+  state: registered
+  created: '2021-08-22T04:10:03Z'
+  expires: '2027-08-22T04:10:03Z'
+  registrar: Domeneshop AS dba domainnameshop.com
+zrich.ch:
+  state: unknown
+  note: registry referral, not a domain record

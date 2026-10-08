@@ -1,0 +1,283 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require_relative "../lib/boot/entrypoint"
+Master::Boot::Entrypoint.prepare!(root: File.expand_path("..", __dir__))
+
+# The scan and critique pass over all four trees — two stages of the
+# repo-wide chain, not the chain itself. `MASTER/bin/operator gate` is the chain:
+# it runs this for the lexical and semantic tiers, then the RAILS gates, the
+# suites, the ratchets and the sprawl census, and attributes every file each
+# stage changed. Run this directly to work on the scanner alone.
+#
+#   ruby bin/gate                      lexical + semantic, full-fix
+#   ruby bin/gate --scan-only          measures, writes nothing
+#   ruby bin/gate --lexical-only       law/ and the scan registry, no council
+#   ruby bin/gate --semantic-only      the critique stage; exit 3 = not measured
+#   ruby bin/gate --explain            prints the ladder, runs nothing
+#   ruby bin/gate --tree=RAILS         one tree instead of the four
+#
+# --tree narrows the scan, not the assertion. A /fix pass aimed at one tree can
+# still write into another, so the clean-tree check at the bottom always
+# includes MASTER alongside whatever was named.
+
+require "open3"
+require_relative "../lib/operator/ruby_runner"
+require_relative "../lib/operator/strict_mode"
+
+ROOT = File.expand_path("..", __dir__)
+REPO = File.expand_path("..", ROOT)
+RUBY = Operator::RubyRunner.ruby_cmd
+BUNDLE = Operator::RubyRunner.bundle_cmd
+# Two autofix switches, both off. MASTER_AUTOFIX gates the background fix loop;
+# MASTER_SCAN_AUTOFIX gates the deterministic AstFixer pass, which defaults on
+# and would otherwise write before the repair stage is reached.
+# MASTER/gates/lib/constitutional_scan.rb carries the same pair.
+STRICT_ENV = Operator::StrictMode.flags
+
+SAFE_ENV = {
+  "MASTER_SAFE_MODE" => "1",
+  "MASTER_BACKGROUND" => "0",
+  "MASTER_AUTOFIX" => "0",
+  "MASTER_SCAN_AUTOFIX" => "0",
+  # Withholds the agent from the scanner. With one, AdversarialRule sends a
+  # prompt per file and the lexical stage outruns its timeout.
+  "MASTER_SCAN_DETERMINISTIC" => "1",
+  # The fix re-exec after origin/main moves (fetch, rebase --autostash, exec
+  # without the bundler wrapper) is a shared-checkout hazard and escapes the
+  # wrapper this file launches with — off under the gate.
+  "MASTER_FIX_HOT_RELOAD" => "0",
+  "MASTER_WATCH" => "0",
+  "MASTER_WATCHER" => "0",
+  "MASTER_HEARTBEAT" => "0",
+  # The caller already owns the checkout's process lock; internal gate children
+  # must not attempt to become a second MASTER owner.
+  "MASTER_INTERNAL_CHILD" => "1",
+  "MASTER_CONTROL_PLANE" => "0",
+  "MASTER_PROCESS_LOCK_FD" => nil,
+}.freeze
+
+# An unknown argument is refused, because ignoring it means "run everything and
+# write". --explain reads as a dry run on `bin/operator gate`, so this surface
+# must never treat it, or any typo, as full-fix.
+KNOWN_FLAGS = %w[--scan-only --lexical-only --semantic-only --explain --help -h].freeze
+unknown = ARGV.reject { |arg| KNOWN_FLAGS.include?(arg) || arg.start_with?("--tree=") }
+unless unknown.empty?
+  warn "gate: unknown argument#{"s" if unknown.size > 1}: #{unknown.join(" ")}"
+  warn "gate: known flags are #{KNOWN_FLAGS.join(" ")}"
+  warn "gate: refusing rather than falling through to full-fix, which writes"
+  exit 2
+end
+
+EXPLAIN = ARGV.include?("--explain") || ARGV.include?("--help") || ARGV.include?("-h")
+
+# The full chain mutates the tree: the scan stage fixes what it finds as it
+# finds it, which is what --scan-only holds back. Prefer SCAN_ONLY=1 in
+# CI/preflight.
+SCAN_ONLY = ENV["MASTER_GATE_SCAN_ONLY"] == "1" || ARGV.include?("--scan-only")
+
+# Two tiers, selectable, because only one of them can currently reach a verdict.
+#
+# The lexical tier is law/ and the scan registry: deterministic detectors, no
+# model, and the half that autofixes. The semantic tier is the critique stage,
+# which reaches the council and therefore a provider, and is inconclusive
+# whenever the provider is unreachable. Run separately, a dead semantic tier
+# cannot hide a lexical pass; `bin/operator gate` reports it as skipped.
+TIER = if ARGV.include?("--lexical-only")
+         :lexical
+       elsif ARGV.include?("--semantic-only")
+         :semantic
+       else
+         :both
+       end
+
+# One path per invocation, since /fix takes a single target, and one line per
+# tier, since one /fix already observes, repairs and observes again, and
+# /critique is the whole critique stage. Scan-only mode is `/fix --dry-run`:
+# the reading, and what a repair would take on, with nothing written.
+def lines_for(path)
+  lexical = SCAN_ONLY ? ["/fix --dry-run #{path}"] : ["/fix #{path}"]
+  semantic = ["/critique #{path}"]
+  case TIER
+  when :lexical then lexical
+  when :semantic then semantic
+  else lexical + semantic
+  end
+end
+
+# The four top-level trees, by the name a person types. `.` is MASTER because this script
+# runs from inside it.
+TREE_PATHS = { "MASTER" => ".", "RAILS" => "../RAILS", "OPENBSD" => "../OPENBSD", "STUDIO" => "../STUDIO" }.freeze
+
+# Named trees when --tree is given, all four otherwise. An unknown name is
+# refused rather than silently narrowing the gate to nothing — a gate that
+# measures no tree and exits 0 is the failure this whole file is written against.
+named_trees = ARGV.filter_map { |arg| arg[/\A--tree=(.+)\z/, 1] }.flat_map { |value| value.split(",") }.map(&:upcase)
+unless (named_trees - TREE_PATHS.keys).empty?
+  warn "gate: unknown tree(s): #{(named_trees - TREE_PATHS.keys).join(" ")}; have #{TREE_PATHS.keys.join(" ")}"
+  exit 2
+end
+SELECTED_TREES = (named_trees.empty? ? TREE_PATHS.keys : named_trees).freeze
+
+COMMANDS = {
+  master: (SELECTED_TREES.include?("MASTER") ? lines_for(".") : []).freeze,
+  # Every sibling tree, because a gate whose target list is shorter than the
+  # repo reports clean on the part it looked at.
+  #
+  # In full-fix mode /fix writes wherever the scan walked; only
+  # Scanner::PathFilter's skip list keeps it out of generated
+  # lora/**/.cache/** copies and dilla's demucs virtualenv. Read the printed
+  # diff before committing; never commit rewrites of generated caches.
+  # `bin/operator gate` names any such path and refuses to call the run clean.
+  deploy: (SELECTED_TREES - ["MASTER"]).map { |tree| TREE_PATHS.fetch(tree) }
+                                       .flat_map { |path| lines_for(path) }.freeze,
+}.freeze
+
+# Always MASTER, whatever was named: see the --tree note in the header.
+ASSERT_PATHS = (SELECTED_TREES | ["MASTER"]).freeze
+
+def run_command(*argv, chdir: ROOT)
+  puts "$ #{argv.join(" ")}"
+  stdout, status = Open3.capture2e(*argv, chdir: chdir)
+  puts stdout
+  abort "err: command failed: #{argv.join(" ")}" unless status.success?
+end
+
+# A stage that could not measure did not pass.
+#
+# bin/cli exits 0 when a command runs to completion, and /critique runs to
+# completion whether or not its council answered. A green gate claims the code
+# was reviewed, so when a stage says in its own output that it reached no
+# verdict, that is the verdict. MASTER/AGENTS.md states the rule under
+# "Inconclusive": a gate that measured nothing is neither a pass nor a failure.
+INCONCLUSIVE = [
+  /quorum not reached/,
+  /^critique failed:/,
+  /^scan failed:/,
+  /^review failed:/,
+  # A fix pass that ran out of clock did not finish fixing, and nobody knows
+  # whether the tree afterwards is better than before. Deliberately not a
+  # warning: "nobody knows" is the state this file exists to refuse.
+  /wall-clock timeout/,
+].freeze
+
+# A stage that never returns is the one shape INCONCLUSIVE cannot catch: every
+# pattern there is something a stage says on its way out, and a council lane
+# blocked on a call that never returns says nothing and never exits.
+#
+# 20 minutes per stage sits far above the slowest honest scan;
+# MASTER_GATE_STAGE_TIMEOUT raises it for a genuinely long full-fix pass. A
+# timeout is inconclusive rather than a failure of the code under test, because
+# nothing was measured.
+STAGE_TIMEOUT = Integer(ENV.fetch("MASTER_GATE_STAGE_TIMEOUT", "1200"))
+
+def run_master_line(line)
+  puts "master> #{line}"
+  stdout, status = capture_with_timeout(line)
+  puts stdout
+  abort "err: MASTER command failed: #{line}" unless status.success?
+
+  hit = INCONCLUSIVE.find { |pattern| stdout.match?(pattern) }
+  return unless hit
+
+  evidence = stdout.lines.grep(hit).map(&:strip).first
+  inconclusive! "#{line} exited 0 but reached no verdict: #{evidence}"
+end
+
+# Nothing measured is neither a pass nor a verdict about the tree, and RAILS'
+# gate runner already spells that third state 3. A semantic-only run exits 3 so
+# its caller can report the tier as skipped; every other mode keeps aborting,
+# because there the tier that went blind is the one that was supposed to work.
+def inconclusive!(message)
+  # A deterministic checklist is not a semantic review. Running it here created
+  # two different things with nearly the same operator-facing meaning: "the
+  # semantic tier was unavailable" and "the semantic tier was satisfied by the
+  # floor". Keep the states separate.
+  if message.start_with?("/critique ")
+    warn "gate: semantic tier INCONCLUSIVE — deterministic checklist is supplemental and does not satisfy semantic review"
+  end
+
+  if TIER == :semantic
+    warn "gate: semantic tier reached no verdict — #{message}"
+    exit 3
+  end
+  abort "err: #{message}"
+end
+
+# capture2e, with a wall clock. Streams into a buffer so a stage killed at the
+# deadline still shows whatever it managed to say.
+def capture_with_timeout(line)
+  buffer = +""
+  Open3.popen2e(SAFE_ENV, File.join(ROOT, "bin", "master"), chdir: REPO) do |stdin, out, wait|
+    stdin.puts(line)
+    stdin.close
+    reader = Thread.new { out.each_line { |l| buffer << l } }
+    unless wait.join(STAGE_TIMEOUT)
+      Process.kill("TERM", wait.pid)
+      wait.join(10) || Process.kill("KILL", wait.pid)
+      reader.join(5)
+      puts buffer
+      inconclusive! "#{line} produced no verdict in #{STAGE_TIMEOUT}s and was killed — " \
+                    "#{buffer.empty? ? 'it printed nothing at all' : "it printed #{buffer.lines.length} line(s)"}. " \
+                    "Nothing was measured; raise MASTER_GATE_STAGE_TIMEOUT only if you know the stage was working."
+    end
+    reader.join
+    return [buffer, wait.value]
+  end
+end
+
+def git_diff(*paths)
+  run_command("git", "diff", "--", *paths, chdir: REPO)
+end
+# The chain ends with a clean tree or it does not end.
+#
+# A dirty tree here is not a bug in /fix. After real work the first run should
+# fail: /fix changed files, the diff is printed above, and the operator reviews
+# it, commits it and runs again. The message names that situation rather than
+# the git invocation behind it.
+def assert_clean(*paths)
+  _stdout, status = Open3.capture2e("git", "diff", "--exit-code", "--", *paths, chdir: REPO)
+  return if status.success?
+
+  changed, = Open3.capture2e("git", "diff", "--name-only", "--", *paths, chdir: REPO)
+  files = changed.split("\n").reject(&:empty?)
+  abort <<~ERR
+    err: #{paths.join(", ")} is not clean after the chain — #{files.length} file(s) modified:
+    #{files.first(20).map { |f| "      #{f}" }.join("\n")}
+    #{files.length > 20 ? "      ... and #{files.length - 20} more\n" : ""}
+    The diff is printed above. This is the expected outcome when /fix had work to
+    do: review those changes, commit them, and run the gate again. It is only a
+    problem if you did not expect /fix to touch them, or if the tree was already
+    dirty before the gate started.
+  ERR
+end
+
+puts "gate: mode=#{SCAN_ONLY ? 'scan-only' : 'full-fix'} tier=#{TIER} trees=#{SELECTED_TREES.join(',')}"
+
+if EXPLAIN
+  COMMANDS.each do |name, lines|
+    puts "  #{name}:"
+    lines.each { |line| puts "    bin/cli #{line}" }
+  end
+  puts "gate: --explain, so nothing above was run"
+  exit 0
+end
+
+# Only the lexical tier writes. The diff prints for it in either mode — in
+# scan-only that is the tell that a step which promised to measure has written —
+# and the clean-tree assertion belongs to full-fix alone. A semantic-only pass
+# asserts nothing about the tree, because it fails on whatever the lexical stage
+# before it just fixed.
+lexical = TIER != :semantic
+
+COMMANDS[:master].each { |line| run_master_line(line) }
+if COMMANDS[:master].any?
+  git_diff("MASTER") if lexical
+  assert_clean("MASTER") if lexical && !SCAN_ONLY
+end
+
+COMMANDS[:deploy].each { |line| run_master_line(line) }
+git_diff(*ASSERT_PATHS) if lexical
+assert_clean(*ASSERT_PATHS) if lexical && !SCAN_ONLY
+
+puts SCAN_ONLY ? "ok: MASTER gate scan-only complete" : "ok: MASTER gate clean"

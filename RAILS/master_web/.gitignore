@@ -1,0 +1,7 @@
+/vendor/bundle
+/log
+/tmp
+/storage
+*.pid
+*.log
+.bundle

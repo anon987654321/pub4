@@ -1,0 +1,256 @@
+#!/usr/bin/env zsh
+# Run one Rails app CI on vm23 with mutex + load gate (serial operator entrypoint).
+# Usage: zsh OPENBSD/bin/vps_ci.sh brgen
+set -euo pipefail
+
+usage="usage: zsh OPENBSD/bin/vps_ci.sh APP — sync APP's copy-tree, then run its bin/ci under the CI lock"
+if [[ ${1:-} == -h || ${1:-} == --help ]]; then
+  print -r -- "$usage"
+  exit 0
+fi
+
+app=${1:-}
+[[ -n $app ]] || { print -u2 -r -- "$usage"; exit 2 }
+
+repo=${PUB4_ROOT:-/home/dev/pub4}
+app_dir=/home/${app}/app
+shared_dir=/home/${app}/shared
+[[ -d $app_dir ]] || { print -u2 "missing $app_dir"; exit 1 }
+
+# deploy_status (from RAILS/_core.sh) -- same in-progress status file the
+# SKIP_CI=1 path (_deploy.sh/_runtime_gate.sh) writes, so `bin/vps-state`
+# is one place to check regardless of which deploy path is running.
+[[ -f ${repo}/RAILS/_core.sh ]] && . "${repo}/RAILS/_core.sh"
+command -v deploy_status >/dev/null 2>&1 || deploy_status() { :; }
+
+export PUB4_CI_GUARD=1
+export PUB4_RAILS_ROOT=${PUB4_RAILS_ROOT:-$repo/RAILS}
+
+# Path and safe creation live in OPENBSD/lib/ci_lock.sh — the lock moved out of
+# world-writable /var/tmp, where root was chmod'ing a caller-chosen, symlinkable path.
+. "${repo}/OPENBSD/lib/ci_lock.sh"
+
+sync_ci_rails_root() {
+  local mirror=/home/${app}/pub4-rails
+  doas mkdir -p "$mirror"
+  # tar extraction is additive-only: a file removed from the source repo
+  # would otherwise linger in the mirror forever. Wipe each synced subtree
+  # before re-extracting so the mirror actually reflects deletions too --
+  # found the hard way when a controller deleted from git upstream kept
+  # passing CI on the VPS from a stale copy months after removal.
+  doas rm -rf "$mirror/RAILS"
+  # git archive is the tracked tree. tar of the working checkout also packed
+  # gitignored RAILS/*/vendor/bundle left by a local bundle, filled /home, and
+  # aborted extract with "Unable to restore mode and times" (2026-08-13).
+  git -C "$repo" archive HEAD RAILS | doas sh -c "cd ${mirror} && tar xf -"
+  if git -C "$repo" cat-file -e HEAD:MASTER/tools 2>/dev/null; then
+    doas rm -rf "$mirror/MASTER/tools"
+    git -C "$repo" archive HEAD MASTER/tools | doas sh -c "cd ${mirror} && tar xf -"
+  fi
+  # MASTER is the design authority: MASTER/tools/rails/build_all_css.rb and the lints
+  # read design_system from MASTER/data/laws.yml through
+  # Operator::MasterDesign, whose first candidate is this mirror's copy. The
+  # app user cannot read /home/dev/pub4, so without it css_build died on
+  # KeyError "social" (2026-09-24).
+  doas rm -f "$mirror/MASTER/data/laws.yml"
+  git -C "$repo" archive HEAD MASTER/data/laws.yml | doas sh -c "cd ${mirror} && tar xf -"
+  # build_all_css.rb picks its Ruby through MASTER/lib/operator/ruby_runner,
+  # which requires its siblings. Without the directory css_build dies on a
+  # LoadError before it compiles anything.
+  doas rm -rf "$mirror/MASTER/lib/operator"
+  git -C "$repo" archive HEAD MASTER/lib/operator | doas sh -c "cd ${mirror} && tar xf -"
+  doas chown -R "${app}:${app}" "$mirror"
+}
+
+# Names every tracked entry at the app root that is neither synced nor kept
+# local. Warns rather than fails: this list is discovered from git at deploy
+# time, so a wrong reading here would refuse a deploy for a documentation file,
+# and a deploy pipeline that cries wolf gets its checks removed. Loud and
+# specific is the useful setting until the set has been stable a while.
+#
+# Found this way: .rubocop.yml was missing and nothing said so for twelve days,
+# and .ruby-version is absent from amber's and bsdports' copy-trees entirely.
+unaccounted_tracked_files() {
+  local app=$1 repo=$2
+  local -a synced=(${(P)3}) kept=(${(P)4})
+  local -a tracked missing
+  tracked=(${(f)"$(git -C "$repo" ls-files "RAILS/$app" 2>/dev/null)"}) || return 0
+  (( ${#tracked} )) || return 0
+
+  local rel top
+  for rel in $tracked; do
+    top=${${rel#RAILS/$app/}%%/*}
+    [[ -n $top ]] || continue
+    # A synced entry may be a subpath — vendor/javascript covers vendor's only
+    # tracked content — so a top-level name counts as accounted when any synced
+    # path is it or descends from it. Without this the check reports `vendor`,
+    # which is the accounting being wrong rather than the sync.
+    (( ${synced[(Ie)$top]} )) && continue
+    # :- is load-bearing under `set -u`. (I) yields an index and is 0 when there
+    # is no match, so it is safe bare; (r) yields the matched VALUE, and a search
+    # that matches nothing is an unset parameter, which nounset makes fatal. This
+    # aborted every deploy's CI step with "synced[(r)$top/*]: parameter not set"
+    # — the guard erroring rather than the thing it guards.
+    [[ -n ${synced[(r)$top/*]:-} ]] && continue
+    (( ${kept[(Ie)$top]} )) && continue
+    [[ $top == *.sh || $top == *.md ]] && continue
+    missing+=($top)
+  done
+
+  local -a uniq_missing=(${(u)missing})
+  (( ${#uniq_missing} )) || return 0
+  print -u2 "vps_ci: $app — tracked but neither synced nor kept local: ${uniq_missing}"
+  print -u2 "vps_ci: $app — add each to paths (bin/ci reads the copy-tree) or to kept_local with a reason"
+}
+
+sync_from_repo() {
+  local src=$repo/RAILS/$app
+  local shared_src=$repo/RAILS/__shared
+  sync_ci_rails_root
+  if [[ -d $src ]]; then
+    # engines/ carries brgen's vertical Rails engines (path gems in the Gemfile);
+    # without it the copy-tree Gemfile's `path: 'engines/<v>'` resolves to a missing
+    # dir and bundle aborts. See RAILS/brgen/ENGINES.md.
+    # .rubocop.yml is here because bin/ci runs from this copy-tree, not from the
+    # repo — so the style gate reads whatever config was last left in the live
+    # dir. It was not synced, so the copy froze on 2026-08-13 while the tracked
+    # one moved on, and the two disagreed: the stale file re-enabled
+    # Layout/LineLength and Style/TrailingCommaInArguments, which the tracked one
+    # leaves to omakase. That produced 1283 offences on vm23 against 2 for the
+    # same command and the same 734 files locally.
+    #
+    # It stayed invisible until RuboCop began running on the VPS at all, and it
+    # deadlocked the pipeline the moment it did: the corrected config can only
+    # reach the live dir through a sync, and the sync is gated behind the CI run
+    # that the stale config was failing.
+    # Everything tracked at the app root is either synced or named as deliberately
+    # not synced. An allowlist that simply omits things fails silently and in the
+    # worst direction: bin/ci runs from this copy-tree, so a config that never
+    # arrives means the gate reads a stale one. .rubocop.yml did exactly that —
+    # frozen on 2026-08-13, re-enabling cops the tracked file leaves to omakase,
+    # producing 1283 offences against 2 locally and deadlocking the pipeline,
+    # because the corrected config could only arrive through the sync that the
+    # stale config was failing.
+    #
+    # KEPT_LOCAL is the other half. Without it, "not in paths" means both "we
+    # decided against it" and "nobody thought about it", and those must not look
+    # alike. sync_accounts_for_every_tracked_file below turns the second into an
+    # error at deploy time rather than a puzzle weeks later.
+    local -a paths=(test app lib config bin db engines public vendor/javascript
+                    Gemfile Gemfile.lock config.ru Rakefile .rubocop.yml .ruby-version)
+    # Named as deliberately not synced, so "absent from paths" stops meaning both
+    # "decided against" and "never considered". log/ and storage/ are the running
+    # app's own state and syncing them would overwrite production data; the rest
+    # is documentation that no gate and no runtime reads.
+    # log/ and storage/ are the running app's own state — syncing them would
+    # overwrite production data. docs/ and script/ are read by no gate and no
+    # runtime. domains.yml has no reader anywhere in the repo (checked
+    # 2026-08-25; the live copy is thirteen days and half a file behind, and
+    # nothing noticed because nothing reads it). Procfile.dev is for `bin/dev`
+    # on a laptop.
+    local -a kept_local=(log storage docs script domains.yml Procfile.dev)
+    unaccounted_tracked_files "$app" "$repo" paths kept_local
+
+    local -a existing=()
+    local rel
+    for rel in "${paths[@]}"; do
+      [[ -e $src/$rel ]] && existing+=($rel)
+    done
+    for rel in ${src}/*.sh(N:t); do existing+=($rel); done
+    [[ ${#existing[@]} -eq 0 ]] && return 0
+    # Same additive-tar pitfall as sync_ci_rails_root above: prune the
+    # directory entries before re-extracting so files deleted upstream
+    # (test/app/lib/config/bin/db) actually disappear from the deployed
+    # copy instead of surviving as stale dead code indefinitely.
+    local dir_rel
+    for dir_rel in test app lib config bin db engines public vendor/javascript; do
+      [[ -d $src/$dir_rel ]] || continue
+      # public/assets is the one synced directory that is not in git: Propshaft
+      # writes it here, on this box, at the precompile step further down the
+      # deploy. Pruning public/ wholesale therefore DELETES the running site's
+      # stylesheets and scripts, and it does so before bin/ci has run — so a CI
+      # failure exits the deploy with the new code live and no assets at all.
+      # brgen served every page with a 404ing <link> that way on 2026-08-14:
+      # public/assets held zero files, `/` still answered 200, and no gate
+      # noticed because the health check never asks for a stylesheet.
+      #
+      # Held aside and put back. A failed deploy then leaves the previous
+      # assets serving the previous markup, which is stale but whole; a
+      # successful one overwrites them at precompile a few steps later.
+      if [[ $dir_rel == public && -d ${app_dir}/public/assets ]]; then
+        doas rm -rf "${app_dir}/.assets-carry"
+        doas mv "${app_dir}/public/assets" "${app_dir}/.assets-carry"
+        doas rm -rf "${app_dir}/public"
+        doas mkdir -p "${app_dir}/public"
+        doas mv "${app_dir}/.assets-carry" "${app_dir}/public/assets"
+        continue
+      fi
+      doas rm -rf "${app_dir}/${dir_rel}"
+    done
+    doas tar cf - -C "$src" "${existing[@]}" | doas sh -c "cd ${app_dir} && tar xf -"
+    doas chown -R "${app}:${app}" "${app_dir}/test" "${app_dir}/app" "${app_dir}/lib" \
+      "${app_dir}/config" "${app_dir}/bin" "${app_dir}/db" "${app_dir}/engines" \
+      "${app_dir}/public" "${app_dir}/vendor" \
+      "${app_dir}/Gemfile" "${app_dir}/Gemfile.lock" \
+      "${app_dir}"/*.sh(N) 2>/dev/null || true
+  fi
+  doas mkdir -p "$shared_dir"
+  doas rm -rf "$shared_dir"
+  doas mkdir -p "$shared_dir"
+  doas tar cf - -C "$shared_src" . | doas sh -c "cd ${shared_dir} && tar xf -"
+  doas chown -R "${app}:${app}" "$shared_dir"
+}
+
+npm_cache=/home/${app}/.npm
+cache_home=/home/${app}/.cache
+print "vps_ci: $app (sync + mutex + load gate)"
+deploy_status "$app" "sync tree"
+sync_from_repo
+pub4_ensure_ci_lock >/dev/null
+ci_rails_root=/home/${app}/pub4-rails/RAILS
+# App users reach /home/dev by GROUP, not other: 750 dev:_pub4ci, members
+# brgen/amber/bsdports/master. That closes the world-readable half of the
+# secrets debt entry, which is the half that mattered -- `other` gets nothing.
+# Idempotent so a fresh box converges on first CI run.
+#
+# Group read, not 710. master is the one service whose working directory is
+# under /home/dev, and getcwd(3) names each ancestor by reading it, so `--x`
+# lets it chdir and then fails Dir.pwd with EACCES. rubygems calls Dir.pwd
+# before Bundler is even loaded, so master died at bundle40 with no log of its
+# own and ai.brgen.no served an empty reply. 710 was verified by traversing,
+# which is a weaker claim than the one it was taken to prove.
+doas groupadd _pub4ci 2>/dev/null || true
+doas usermod -G _pub4ci "${app}" 2>/dev/null || true
+doas chgrp _pub4ci /home/dev 2>/dev/null || true
+doas chmod 750 /home/dev 2>/dev/null || true
+
+# The other half of that entry, which it missed: /home/dev was tightened and
+# /home/<app> was not. /home/brgen, /home/brgen/app and .../app/storage were
+# all 755 with production.sqlite3 at 644 brgen:brgen, so as dev — not brgen,
+# not in group brgen — `sqlite3 .../production.sqlite3 "select count(*) from
+# users"` returned 17756, and that table carries password_digest, otp_secret,
+# remember_token and magic_link_token. Every local account could do it,
+# including www and sshd, which are where a relayd or sshd compromise lands.
+#
+# Only storage tightens. /home/<app> and /home/<app>/app stay 755 because
+# vps-deploy tests `-d /home/<app>/app` as dev, and that needs the traversal.
+# The app itself owns the directory, so it reads and writes as before; every
+# crontab on this box is root's; and relayd declares no file root, so nothing
+# serves these from disk.
+#
+# Re-asserted here rather than done once by hand: sync_from_repo's path list
+# does not include storage today, and a line added to it later would silently
+# put this back to 755.
+doas chmod 750 "/home/${app}/app/storage" 2>/dev/null || true
+doas chmod -R a+rX "${repo}/MASTER/tools" 2>/dev/null || true
+deploy_status "$app" "bundle install + bin/ci"
+doas sh -c "su -m ${app} -c 'export HOME=/home/${app}; export PUB4_ROOT=${repo}; export PUB4_CI_GUARD=1; export PUB4_CI_APP=${app}; export PUB4_RAILS_ROOT=${ci_rails_root}; export NPM_CONFIG_CACHE=${npm_cache}; export XDG_CACHE_HOME=${cache_home}; export BUNDLE_USER_HOME=/home/${app}/.bundle; cd ${app_dir} && bundle40 config unset without 2>/dev/null || true && bundle40 config unset deployment 2>/dev/null || true && bundle40 install --jobs=2 && bundle40 exec bin/ci'" \
+  || { deploy_status "$app" "bundle install + bin/ci" "failed"; exit 1; }
+
+sha=$(git -C "$repo" rev-parse --short HEAD 2>/dev/null || echo unknown)
+started=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+doas mkdir -p /var/db/pub4 2>/dev/null || true
+doas tee "/var/db/pub4/last_deploy_${app}.json" >/dev/null <<EOF
+{"app":"${app}","sha":"${sha}","at":"${started}","status":"ci_ok","host":"$(hostname)"}
+EOF
+deploy_status "$app" "done" "done"

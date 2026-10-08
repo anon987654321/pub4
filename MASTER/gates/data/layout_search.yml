@@ -1,0 +1,113 @@
+# Bounded marketplace layout search space (P4).
+# Each axis has finite legal variants. Hard floors cannot be traded.
+# Soft objectives: Fitts (large primary target), Hick (few peers), resistance
+# (clicks to buy), catalog_scan (price/photo first).
+
+schema: 1
+surface: marketplace_listings
+
+# Minimum total soft score for the *observed* layout to ship.
+target_score: 90
+# Observed must equal the search winner (or be within this rank, 1 = winner only).
+max_winner_rank: 1
+
+axes:
+  price_placement:
+    principle: hierarchy / catalog_retail
+    variants:
+      price_first:
+        desc: "Price before title (Tise/Bol/Newegg)"
+        detect: "price_before_title"
+        scores: { catalog: 40, resistance: -8, fitts: 0, hick: 0 }
+        hard: true
+      title_first:
+        desc: "Title before price (social/blog bias)"
+        detect: "title_before_price"
+        scores: { catalog: 5, resistance: 4, fitts: 0, hick: 0 }
+        hard: false
+
+  media_placement:
+    principle: hierarchy / reading_patterns
+    variants:
+      photo_first:
+        desc: "Media before body text"
+        detect: "photo_before_body"
+        scores: { catalog: 25, resistance: -4, fitts: 2, hick: 0 }
+        hard: true
+      body_first:
+        desc: "Text before photo"
+        detect: "body_before_photo"
+        scores: { catalog: 5, resistance: 6, fitts: 0, hick: 0 }
+        hard: false
+
+  hit_model:
+    principle: fitts_law / least_resistance
+    variants:
+      whole_card:
+        desc: "Single whole-card hit target"
+        detect: "whole_card_hit"
+        scores: { fitts: 18, hick: 10, resistance: -12, catalog: 5 }
+        hard: false
+      multi_cta:
+        desc: "Multiple discrete CTAs per tile"
+        detect: "multi_cta"
+        scores: { fitts: 4, hick: -8, resistance: 10, catalog: 0 }
+        hard: false
+
+  nav_model:
+    principle: consistency / affordance
+    variants:
+      amazon_nav:
+        desc: "Amazon-style #navBar chrome"
+        detect: "amazon_nav"
+        scores: { catalog: 12, resistance: -4, fitts: 4, hick: 2 }
+        hard: true
+      plain_nav:
+        desc: "Generic nav without #navBar"
+        detect: "plain_nav"
+        scores: { catalog: 2, resistance: 4, fitts: 0, hick: 0 }
+        hard: false
+
+  search_model:
+    principle: affordance / progressive_disclosure
+    variants:
+      yep_search:
+        desc: "Yep.com pill search surface"
+        detect: "yep_search"
+        scores: { catalog: 10, fitts: 6, hick: 2, resistance: -3 }
+        hard: true
+      plain_search:
+        desc: "Unstyled bare input"
+        detect: "plain_search"
+        scores: { catalog: 2, fitts: 0, hick: 0, resistance: 2 }
+        hard: false
+
+# Combo bonuses (applied when all listed axis=variant match)
+combo_bonuses:
+  - id: tise_natural_catalog
+    desc: "Price-first + photo-first + whole-card (Tise natural)"
+    when:
+      price_placement: price_first
+      media_placement: photo_first
+      hit_model: whole_card
+    bonus: 12
+  - id: retail_chrome_complete
+    desc: "Amazon nav + Yep search together"
+    when:
+      nav_model: amazon_nav
+      search_model: yep_search
+    bonus: 8
+  - id: high_friction_social
+    desc: "Title-first + multi-CTA (social feed leak)"
+    when:
+      price_placement: title_first
+      hit_model: multi_cta
+    bonus: -20
+
+# Observed layout must satisfy these hard variants to be shippable
+# (independent of being the mathematical winner — safety floor).
+hard_required:
+  price_placement: price_first
+  media_placement: photo_first
+  nav_model: amazon_nav
+  search_model: yep_search

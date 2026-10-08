@@ -1,0 +1,25 @@
+<%# One row of the buyer's order history. Extracted from orders/index for the
+    reflex; the markup is unchanged. %>
+<li class="order-row">
+  <%= link_to order, class: "order-link" do %>
+    <span class="order-title"><%= order.listing&.title || t("marketplace.orders.listing", default: "Listing") %></span>
+  <% end %>
+  <span class="order-status chip"><%= order.try(:status) %></span>
+  <% if order.payment_status == "paid" && order.listing %>
+    <% commerce_key = Shared::Commerce.canonical_id(
+         source: "brgen",
+         type: "listing",
+         city_id: order.listing.city_id,
+         record_id: order.listing.id
+       ) %>
+    <% amber_url = Shared::Commerce.amber_handoff_url(
+         base: ENV.fetch("AMBER_PUBLIC_URL", "https://amberapp.art"),
+         title: order.listing.title,
+         category: order.listing.category&.name,
+         source_url: listing_url(order.listing),
+         commerce_key: commerce_key
+       ) %>
+    <%= link_to t("marketplace.add_to_amber", default: "Add to Amber"), amber_url, class: "chip" if amber_url.present? %>
+  <% end %>
+  <time datetime="<%= order.created_at.iso8601 %>"><%= time_ago(order.created_at) %></time>
+</li>

@@ -1,0 +1,144 @@
+# reader: AnalogSynth::ModelD (lib/sound.rb)
+#
+# Minimoog Model D patches, written as the front panel is set: footages,
+# waveforms, 0-10 dials, the cutoff's -5..+5 scale, switches. That is how the
+# sound charts write a patch and how a player reads one. AnalogSynth::ModelD
+# turns the dials into hertz, seconds and gains, in one place, and plays them
+# through the same ladder as every other patch in the engine.
+#
+# The settings follow the classic sound-chart patches from memory of the
+# published charts, not a transcription of them; a player with the book can
+# correct a dial here and nothing else changes.
+#
+#   oscillators   osc1, osc2: triangle tri_saw saw square wide_pulse narrow_pulse
+#                 osc3: triangle reverse_saw saw square wide_pulse narrow_pulse
+#                 range LO 32' 16' 8' 4' 2'; frequency is OSC 2 and 3's tune dial
+#                 in semitones (-7..+7); keyboard_control: false frees OSC 3 from
+#                 the keys, which with LO makes it the modulation oscillator
+#   mixer         0-10 per source; external is the output patched back into the
+#                 mixer, the Model D's overdrive trick
+#   filter        cutoff -5..+5, emphasis 0-10 (10 sings on its own),
+#                 contour_amount 0-10, keyboard_control_1/2 switches, and the
+#                 filter contour's attack, decay, sustain
+#   loudness      the loudness contour's attack, decay, sustain
+#   controllers   glide 0-10, mod_mix 0 (OSC 3) to 10 (noise), osc_mod and
+#                 filter_mod switches, wheel 0-10, decay_switch
+#   demo          what `live patch <name>` plays: a note or a chord per step
+patches:
+  fat_bass:
+    aliases: [fat bass, moog bass, minimoog bass, bass]
+    oscillators:
+      osc1: { range: "32'", wave: saw }
+      osc2: { range: "16'", wave: saw, frequency: 0.05 }
+      osc3: { range: "16'", wave: square, frequency: -0.08 }
+    mixer: { osc1: 10, osc2: 8, osc3: 7, noise: 0, external: 0 }
+    filter: { cutoff: -3.0, emphasis: 2, contour_amount: 7, keyboard_control_1: true, keyboard_control_2: false, attack: 0, decay: 3, sustain: 3 }
+    loudness: { attack: 0, decay: 5, sustain: 8 }
+    controllers: { glide: 0, mod_mix: 0, osc_mod: false, filter_mod: false, wheel: 0, decay_switch: false }
+    volume: 8
+    demo: { step: 0.26, gate: 0.75, notes: [C2, C2, C3, D#2, F2, F2, G2, A#1, C2, C2, C3, D#2, G2, F2, D#2, A#1] }
+  funk_bass:
+    aliases: [funk bass, funky bass, worrell]
+    oscillators:
+      osc1: { range: "16'", wave: square }
+      osc2: { range: "16'", wave: saw, frequency: 0.05 }
+      osc3: { range: "32'", wave: narrow_pulse }
+    mixer: { osc1: 9, osc2: 7, osc3: 0, noise: 0, external: 4 }
+    filter: { cutoff: -2.0, emphasis: 6, contour_amount: 6, keyboard_control_1: true, keyboard_control_2: false, attack: 0, decay: 2.5, sustain: 0 }
+    loudness: { attack: 0, decay: 3.5, sustain: 6 }
+    controllers: { glide: 2, mod_mix: 0, osc_mod: false, filter_mod: false, wheel: 0, decay_switch: false }
+    volume: 8
+    demo: { step: 0.2, gate: 0.6, notes: [E1, E2, E1, G1, A1, A#1, B1, E2, D2, E1, E1, G1, A1, D2, B1, A1] }
+  minimoog_lead:
+    aliases: [minimoog lead, moog lead, lead, solo]
+    legato: true
+    oscillators:
+      osc1: { range: "16'", wave: saw }
+      osc2: { range: "8'", wave: saw, frequency: 0.07 }
+      osc3: { range: LO, wave: triangle, frequency: 3, keyboard_control: false }
+    mixer: { osc1: 9, osc2: 7, osc3: 0, noise: 0, external: 0 }
+    filter: { cutoff: 0, emphasis: 4, contour_amount: 5, keyboard_control_1: true, keyboard_control_2: true, attack: 1, decay: 5, sustain: 5 }
+    loudness: { attack: 0.5, decay: 5, sustain: 9 }
+    controllers: { glide: 5, mod_mix: 0, osc_mod: true, filter_mod: false, wheel: 1.5, decay_switch: true }
+    volume: 7
+    demo: { step: 0.34, gate: 1.0, notes: [C4, D#4, G4, A#4, G4, F4, D#4, F4, G4, C5, A#4, G4, F4, D#4, C4] }
+  lucky_man:
+    aliases: [lucky man, emerson, portamento lead, glide lead]
+    legato: true
+    oscillators:
+      osc1: { range: "8'", wave: saw }
+      osc2: { range: "8'", wave: square, frequency: 0.1 }
+      osc3: { range: LO, wave: triangle, frequency: 3, keyboard_control: false }
+    mixer: { osc1: 8, osc2: 8, osc3: 0, noise: 0, external: 0 }
+    filter: { cutoff: 1.0, emphasis: 3, contour_amount: 3, keyboard_control_1: true, keyboard_control_2: true, attack: 2, decay: 6, sustain: 7 }
+    loudness: { attack: 1, decay: 6, sustain: 10 }
+    controllers: { glide: 7, mod_mix: 0, osc_mod: true, filter_mod: false, wheel: 2, decay_switch: true }
+    volume: 7
+    demo: { step: 0.7, gate: 1.0, notes: [G3, D4, G4, D5, C5, A#4, G4, D4, G3, A#3, D4, G4] }
+  moog_brass:
+    aliases: [moog brass, brass, horns, horn]
+    voices: 4
+    oscillators:
+      osc1: { range: "8'", wave: saw }
+      osc2: { range: "8'", wave: saw, frequency: 0.1 }
+      osc3: { range: "16'", wave: saw, frequency: -0.1 }
+    mixer: { osc1: 8, osc2: 7, osc3: 5, noise: 0, external: 0 }
+    filter: { cutoff: -1.5, emphasis: 1.5, contour_amount: 6, keyboard_control_1: true, keyboard_control_2: false, attack: 4, decay: 5, sustain: 5 }
+    loudness: { attack: 3, decay: 5, sustain: 9 }
+    controllers: { glide: 0, mod_mix: 0, osc_mod: false, filter_mod: false, wheel: 0, decay_switch: true }
+    volume: 7
+    demo: { step: 1.4, gate: 0.85, notes: [[C3, E3, G3, C4], [F3, A3, C4, F4], [G3, B3, D4, G4], [C3, E3, G3, C4]] }
+  moog_flute:
+    aliases: [moog flute, flute, whistle]
+    legato: true
+    oscillators:
+      osc1: { range: "8'", wave: triangle }
+      osc2: { range: "4'", wave: triangle, frequency: 0.03 }
+      osc3: { range: LO, wave: triangle, frequency: 3, keyboard_control: false }
+    mixer: { osc1: 8, osc2: 1.5, osc3: 0, noise: 1.5, noise_color: pink, external: 0 }
+    filter: { cutoff: 0.5, emphasis: 0, contour_amount: 2, keyboard_control_1: true, keyboard_control_2: true, attack: 3, decay: 4, sustain: 7 }
+    loudness: { attack: 3.5, decay: 4, sustain: 9 }
+    controllers: { glide: 2, mod_mix: 0, osc_mod: true, filter_mod: false, wheel: 1.5, decay_switch: true }
+    volume: 7
+    demo: { step: 0.45, gate: 1.0, notes: [G4, A#4, C5, D5, D#5, D5, C5, A#4, G4, F4, G4] }
+  moog_pluck:
+    aliases: [moog pluck, pluck, plucked]
+    oscillators:
+      osc1: { range: "8'", wave: saw }
+      osc2: { range: "4'", wave: narrow_pulse, frequency: 0.05 }
+      osc3: { range: "16'", wave: triangle }
+    mixer: { osc1: 8, osc2: 5, osc3: 0, noise: 0, external: 0 }
+    filter: { cutoff: -1.0, emphasis: 5, contour_amount: 7, keyboard_control_1: true, keyboard_control_2: true, attack: 0, decay: 3.5, sustain: 0 }
+    loudness: { attack: 0, decay: 4.5, sustain: 0 }
+    controllers: { glide: 0, mod_mix: 0, osc_mod: false, filter_mod: false, wheel: 0, decay_switch: true }
+    volume: 8
+    demo: { step: 0.22, gate: 0.9, notes: [C4, G4, D#4, A#4, C5, G4, D#4, G4, F4, C5, G#4, C5, D#5, C5, G#4, F4] }
+  moog_strings:
+    aliases: [moog strings, strings, bowed, string pad]
+    voices: 4
+    oscillators:
+      osc1: { range: "8'", wave: saw }
+      osc2: { range: "8'", wave: saw, frequency: 0.12 }
+      osc3: { range: "4'", wave: wide_pulse, frequency: -0.1 }
+    mixer: { osc1: 7, osc2: 7, osc3: 4, noise: 0, external: 0 }
+    filter: { cutoff: 0, emphasis: 1, contour_amount: 2, keyboard_control_1: true, keyboard_control_2: true, attack: 6, decay: 6, sustain: 8 }
+    loudness: { attack: 6.5, decay: 6, sustain: 9 }
+    controllers: { glide: 0, mod_mix: 0, osc_mod: false, filter_mod: false, wheel: 0, decay_switch: true }
+    volume: 7
+    demo: { step: 5.0, gate: 0.8, notes: [[C3, G3, D#4, A#4], [G#2, D#3, C4, G4]] }
+  lofi_pad:
+    aliases: [lofi pad, lo-fi pad, lofi, lo-fi, dilla pad]
+    voices: 5
+    oscillators:
+      osc1: { range: "8'", wave: saw }
+      osc2: { range: "8'", wave: saw, frequency: 0.18 }
+      osc3: { range: LO, wave: triangle, frequency: -6, keyboard_control: false }
+    mixer: { osc1: 8, osc2: 8, osc3: 0, noise: 1, noise_color: pink, external: 1.5 }
+    filter: { cutoff: -1.0, emphasis: 1.8, contour_amount: 2, keyboard_control_1: true, keyboard_control_2: false, attack: 7, decay: 7, sustain: 6 }
+    loudness: { attack: 7, decay: 7, sustain: 8.5 }
+    controllers: { glide: 0, mod_mix: 0, osc_mod: false, filter_mod: true, wheel: 3, decay_switch: true }
+    # Condition, not a panel control: an old instrument's oscillators wander,
+    # and tape adds its own wow on top.
+    condition: { drift_cents: 6 }
+    volume: 8
+    demo: { step: 6.0, gate: 0.8, notes: [[C3, D#3, G3, A#3, D4], [F2, G#3, C4, D#4, G4]] }

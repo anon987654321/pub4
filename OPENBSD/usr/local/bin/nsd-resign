@@ -1,0 +1,126 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# nsd-resign — re-sign all NSD zones whose RRSIG validity drops below RESIGN_DAYS.
+# Runs as root (called from /etc/daily.local). Requires ldns-signzone.
+#
+# Usage: nsd-resign [--force]
+#   --force  re-sign every zone unconditionally
+#   NSD_ZONES_DIR  zones and key files (default /var/nsd/zones/master)
+
+require "date"
+require "open3"
+
+ZONES_DIR = ENV.fetch("NSD_ZONES_DIR", "/var/nsd/zones/master")
+RESIGN_DAYS = 14
+VALIDITY_DAYS = 30
+FORCE = ARGV.include?("--force")
+
+def log(msg) = $stdout.puts("nsd-resign: #{msg}")
+
+def expiry_date(signed_zone)
+  File.read(signed_zone).scan(/RRSIG\s+\S+\s+\d+\s+\d+\s+\d+\s+(\d{14})/).flatten.map { |s|
+    Date.strptime(s, "%Y%m%d%H%M%S")
+  }.min
+rescue StandardError => e
+  log "cannot read expiry from #{signed_zone} (#{e.class}: #{e.message}) — resigning"
+  nil
+end
+
+# One KSK and one ZSK — the newest of each — not every key file on disk.
+#
+# ldns-signzone publishes a DNSKEY record for every key it is handed, so
+# globbing K#{zone}.+*.key meant each zone published every key ever generated
+# for it and no key could ever be retired: signing was the thing keeping them
+# alive. Measured 2026-07-31, all 58 zones published 12 DNSKEYs apiece (six
+# KSKs, six ZSKs) from 696 key files on disk, and a DNSKEY response for
+# brgen.no came to 997 bytes — close enough to the 1232-byte practical UDP
+# ceiling that a couple more rotations would have pushed every zone to TCP.
+#
+# The deeper problem is that a rollover is impossible while this is true. The
+# point of a rollover is to publish the new key, wait, then withdraw the old
+# one, and "withdraw" here had no mechanism: the old key file stays, so the old
+# key stays signed and published forever.
+#
+# Selecting by mtime rather than key tag because tags are hashes of the key
+# material and carry no ordering.
+def keys_for(zone)
+  newest = { 257 => nil, 256 => nil }
+  Dir[File.join(ZONES_DIR, "K#{zone}.+*.key")].each do |path|
+    flags = File.read(path)[/DNSKEY\s+(\d+)/, 1].to_i
+    next unless newest.key?(flags)
+    current = newest[flags]
+    newest[flags] = path if current.nil? || File.mtime(path) > File.mtime(current)
+  rescue StandardError
+    next
+  end
+  newest.values.compact.map { |path| path.sub(/\.key$/, "") }
+end
+
+def sign(zone, zone_file, keys, expiry)
+  exp = expiry.strftime("%Y%m%d000000")
+  out, err, st = Open3.capture3(
+    "ldns-signzone", "-e", exp, zone_file, *keys,
+    chdir: ZONES_DIR
+  )
+  unless st.success?
+    log "FAIL #{zone}: #{err.strip}"
+    return false
+  end
+  log "signed #{zone} → expires #{expiry}"
+  true
+rescue SystemCallError => e
+  # A missing ldns-signzone is a failed zone, counted below, not a backtrace that
+  # skips the reload of zones already signed.
+  log "FAIL #{zone}: ldns-signzone #{e.class}: #{e.message}"
+  false
+end
+
+return unless $PROGRAM_NAME == __FILE__
+
+changed = []
+failed = []
+keyed = 0
+
+Dir[File.join(ZONES_DIR, "*.zone")].sort.each do |zone_file|
+  zone = File.basename(zone_file, ".zone")
+  signed = "#{zone_file}.signed"
+  keys = keys_for(zone)
+  next if keys.empty?
+
+  keyed += 1
+
+  needs_sign = FORCE
+  unless needs_sign
+    exp = expiry_date(signed) if File.exist?(signed)
+    needs_sign = exp.nil? || (exp - Date.today) < RESIGN_DAYS
+    next unless needs_sign
+    log "#{zone} expires #{exp || "unknown"} — resigning"
+  end
+
+  unless sign(zone, zone_file, keys, Date.today + VALIDITY_DAYS)
+    failed << zone
+    next
+  end
+
+  changed << zone
+end
+
+if changed.any?
+  changed.each { |z| system("nsd-control", "reload", z) }
+  system("nsd-control", "notify")
+  log "reloaded #{changed.size} zone(s): #{changed.join(", ")}"
+end
+
+# "Nothing to do" is only true of zones that were looked at. No zone files, no
+# keys, or a failed signing is a broken signer, and daily.local mails the
+# exit status, so each of them fails rather than reading as healthy.
+if keyed.zero?
+  log "FAIL no signable zones: no *.zone with keys under #{ZONES_DIR}"
+  exit 1
+end
+if failed.any?
+  log "FAIL #{failed.size} zone(s) not signed: #{failed.join(", ")}"
+  exit 1
+end
+log "all #{keyed} zones valid — nothing to do" if changed.empty?

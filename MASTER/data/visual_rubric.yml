@@ -1,0 +1,25 @@
+# reader: Master::Fix::VisualPass
+# Visual judgement is constrained by the house. These are observable dimensions,
+# not a generic beauty score.
+
+dimensions:
+  hierarchy: "One clear primary action; visual emphasis follows the task."
+  alignment: "Edges, baselines, controls, and repeated elements share the established grid."
+  rhythm: "Spacing and typography use the existing token scales; no arbitrary one-off values."
+  density: "Worst-case content remains calm, legible, and free of accidental crowding or overflow."
+  states: "Empty, loading, validation, error, and success states explain what happened and what can happen next."
+  motion: "Entry, exit, and feedback motion use existing duration/easing tokens and honor reduced motion."
+  content: "Real Norwegian and worst-case strings remain legible; punctuation and dates follow locale conventions."
+  affordance: "Interactive elements look and behave like the same interaction vocabulary elsewhere in the product."
+
+judgment:
+  first_read: "Describe what the eye notices first and whether that matches the task."
+  falsification: "State what observation could disprove the claimed visual defect."
+  pairwise: "Prefer before/after or sibling-surface comparisons when deciding between two compliant alternatives."
+  anti_sycophancy: "Name the five strongest observable weaknesses before proposing a refinement."
+
+constraints:
+  brand: "Use the house's own references, tokens, laws, and observed good surfaces; competitor screenshots are not style targets."
+  edits: "Prefer existing primitives and token substitutions; never invent a new visual system inside a refinement."
+  evidence: "A screenshot proves a rendered state; source proves implementation; neither alone proves intent."
+  stopping: "When evidence is inconclusive, report INCONCLUSIVE rather than manufacture a taste verdict."

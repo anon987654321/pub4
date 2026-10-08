@@ -1,0 +1,53 @@
+version: 1
+principle: "probe, don't assume"
+capabilities:
+  share_target:
+    tier: installed-only
+    server_manifest: true
+  media_session:
+    tier: ship-now
+    probe: "navigator.mediaSession"
+  app_shortcuts:
+    tier: ship-now
+    server_manifest: true
+  launch_handler:
+    tier: ship-now
+    probe: "window.launchQueue"
+  web_share_level_2:
+    tier: verify
+    probe: "navigator.canShare({files})"
+  passkeys:
+    tier: ship-now
+    probe: "window.PublicKeyCredential"
+  web_otp:
+    tier: ship-now
+    probe: "OTPCredential"
+  indexeddb:
+    tier: ship-now
+    probe: "window.indexedDB"
+  opfs:
+    tier: ship-now
+    probe: "navigator.storage && navigator.storage.getDirectory"
+  periodic_background_sync:
+    tier: installed-only
+    probe: "registration.periodicSync"
+  barcode_detector:
+    tier: verify
+    probe: "window.BarcodeDetector"
+  wake_lock:
+    tier: ship-now
+    probe: "navigator.wakeLock"
+  fullscreen:
+    tier: ship-now
+    probe: "document.documentElement.requestFullscreen"
+  geolocation:
+    tier: ship-now
+    probe: "navigator.geolocation"
+  document_picture_in_picture:
+    tier: verify
+    probe: "window.documentPictureInPicture"
+kill:
+  - background_geofencing
+  - silent_push_ios
+  - battery_status_api
+  - payment_request

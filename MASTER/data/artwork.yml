@@ -1,0 +1,49 @@
+version: 1
+house:
+  text_in_artwork: forbidden_for_diffusion
+  grade_required: true
+  provenance_required: true
+  rights_required_for_human_assets: true
+  default_renderer: g1
+lanes:
+  g1:
+    description: "deterministic HTML/SVG renderer"
+    renderer: ferrum
+  g2:
+    description: "procedural data art"
+    deterministic: true
+    source: real_local_data
+  g3:
+    description: "conditioned diffusion"
+    models_from_env: true
+    controls:
+      - ip_adapter
+      - controlnet
+  g4:
+    description: "raw diffusion"
+    allowed: false
+pipeline:
+  - seed
+  - render_or_generate
+  - grade
+  - disclosure
+  - derivatives
+  - visual_rubric
+  - provenance
+  - promote
+exports:
+  web:
+    - avif
+    - webp
+  social:
+    - 1200x630
+    - 1080x1350
+    - 1080x1080
+  print:
+    - a4
+rubric:
+  max_accent_zones: 3
+  require_flat_backgrounds: true
+  require_typographic_hierarchy: true
+  require_accessible_alt: true
+  require_norwegian_text_calibration: true

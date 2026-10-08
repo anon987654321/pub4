@@ -1,0 +1,19 @@
+cases:
+  - id: greeting
+    input: "hello"
+    grammar: chitchat
+  - id: repeat
+    input: "again"
+    grammar: repeat
+  - id: shell_chain
+    input: "ls && pwd"
+    grammar: direct_shell
+  - id: shell_pipe
+    input: "ls | pwd"
+    grammar:
+  - id: focus
+    input: "focus mode"
+    grammar: toggle_focus
+  - id: language_fallback
+    input: "tell me a funny story"
+    grammar:

@@ -1,0 +1,6 @@
+<%# Same shape as votes/create.turbo_stream.erb: replace the card so the count
+    and the active state come back from the server rather than staying whatever
+    the optimistic toggle left behind. %>
+<%= turbo_stream.replace dom_id(@post) do %>
+  <%= render "posts/post", post: @post %>
+<% end %>

@@ -1,0 +1,270 @@
+# frozen_string_literal: true
+
+module Master
+  module Builder
+    module_function
+
+    def build_ai(root, infra)
+      bus = infra[:bus]
+      bundle = build_agent_bundle(root:, infra:, bus:)
+      agent = bundle[:agent]
+      tools = bundle[:tools]
+
+      services = wire_agent_services(root:, infra:, agent:, tools:)
+      scanner = services[:scanner]
+      council = services[:council]
+      autonomous = boot_autonomous(root:, infra:, agent:, scanner:, axioms: council[:axioms])
+        .merge(learnings: infra[:learnings], skills: boot_skills(root, bus))
+      finalize_ai_boot(bus:, root:, infra:, agent:, autonomous:, scanner:, lean_boot: services[:lean_boot])
+
+      { agent:, soul: bundle[:soul], scanner:, ecology: infra[:ecology], swarm: services[:swarm],
+        deliberation: council[:deliberation],
+        ideation: council[:ideation], guard: services[:guard],
+        reference_graph: infra[:reference_graph], agent_pool: bundle[:agent_pool],
+        context_window: bundle[:context_window], tools: }.merge(autonomous)
+    end
+
+    def wire_agent_services(root:, infra:, agent:, tools:)
+      bus = infra[:bus]
+      Ground::ActivePlan.attach(bus, root)
+      agent.wire_constitution(Ground::Constitution.new)
+      scanner = build_scanner(root:, agent:, bus:, ecology: infra[:ecology])
+      lean_boot = ENV["MASTER_FULL_BOOT"] != "1"
+      swarm = lean_boot ? nil : Review::Swarm::Coordinator.new(agent:, event_bus: bus, parent_tools: tools)
+      council = build_council(agent:, bus:, root:)
+      # Permissive for user chat (CLI + web): Tool::Contract validates nothing,
+      # so no strict guard stands behind this one — see data/proposals.yml.
+      guard = Review::Security::InjectionGuard.new(mode: :permissive)
+      { scanner:, lean_boot:, swarm:, council:, guard: }
+    end
+
+    def finalize_ai_boot(bus:, root:, infra:, agent:, autonomous:, scanner:, lean_boot:)
+      autonomous[:standing].wire_container(scanner:, agent:, root:, bus:)
+      Trace::Ledger::Feedback.new(event_bus: bus, learnings: autonomous[:learnings]).attach
+      Trace::Ledger::Reflexion.new(event_bus: bus, root:).attach
+      subscribe_graph_retriever(bus:, infra:, root:) unless lean_boot
+      return unless ENV["MASTER_BOOT_SELF_TEST"] == "1"
+
+      publish_self_test(bus, Review::Scan::SelfTest.new(root:, event_bus: bus).call)
+    end
+
+    def build_agent_bundle(root:, infra:, bus:)
+      tools = build_tools(root:, infra:) + infra[:mcp].tools
+      deps = Review::Agent::Dependencies.from_kwargs(
+        config: infra[:config], session: infra[:session], tools:,
+        circuit_breaker: infra[:breaker], cache: infra[:cache], event_bus: bus,
+        model_router: CLI::Routing::ModelRouter.new(config: infra[:config]),
+        reasoning_modes: Review::Modes.new,
+        memory: infra[:memory], personality: infra[:personality],
+        code_index: infra[:code_index], homeostat: infra[:homeostat]
+      )
+      agent = Review::Agent.new(deps:)
+      soul_doc = Voice::Soul.new(root:, agent:)
+      tools << Io::AskLlm.new(agent:, governor: infra[:governor],
+        circuit_breaker: infra[:breaker], cache: infra[:cache], event_bus: bus)
+      ctx = CLI::ContextWindow.new(session: infra[:session], agent:, model_context: Master.context_window(agent.model),
+        event_bus: bus, root:)
+      ctx.check_and_compact!
+      agent.wire_context_window(ctx)
+      agent_pool = Review::AgentPool.new(governor: infra[:governor], tools:, event_bus: bus)
+      { agent:, tools:, soul: soul_doc, context_window: ctx, agent_pool: }
+    end
+
+    def build_council(agent:, bus:, root:)
+      personas = Review::Council::Personas.load(Master::COUNCIL_PATH)
+      axioms = Ground::Laws.new(root:)
+      deliberation = Review::Council::Deliberation.new(personas:, agent:, event_bus: bus, axioms:)
+      ideation = Review::Council::Ideation.new(agent:, event_bus: bus)
+      { axioms:, deliberation:, ideation: }
+    end
+
+    def subscribe_graph_retriever(bus:, infra:, root:)
+      Review::GraphRetriever.new(reference_graph: infra[:reference_graph], root:).tap do |graph_retriever|
+        bus.subscribe("tool:after") do |event|
+          path = event[:path] || event["path"]
+          next unless path
+
+          neighbours = graph_retriever.neighbors([path])
+          bus.publish("graph:neighbours", path:, neighbours:) unless neighbours.empty?
+        end
+      end
+    end
+
+    def strict_boot_requested?
+      ENV.fetch("MASTER_STRICT_BOOT", "0") == "1"
+    end
+
+    def publish_self_test(bus, self_test)
+      if self_test.err?
+        Trace::Dmesg.status("boot0", "builder self-test failed, #{self_test.message}")
+        bus&.publish("builder:self_test", ok: false, error: self_test.message)
+      elsif !self_test.value!.ok?
+        summary = self_test.value!
+        bus&.publish("builder:self_test", ok: false, violations: summary.violation_count)
+        # A full self-test is a diagnostic, not a production-startup gate.
+        # MASTER_STRICT_BOOT=1 explicitly turns its findings into a boot failure.
+        # Keeping strictness opt-in lets an operator inspect known debt without
+        # making the application disappear merely because the diagnostic is dirty.
+        #
+        # Never under minitest, and that is not a convenience. The rule registry is
+        # a global, and a suite has test-defined rules in it — tools/ratchets.rb
+        # records the same thing about the selftest row, which it measures deep for
+        # exactly this reason. The self-test laws themselves run identically here
+        # and under `rake selftest`; only registry-backed population counts can
+        # differ under a loaded test suite.
+        if strict_boot_requested? && !defined?(Minitest)
+          first = summary.checks.lazy.flat_map(&:findings).first
+          law_counts = summary.checks.map { |check| "#{check.law}=#{check.findings.size}" }.join(", ")
+          detail = if first
+            " — #{first[:path]}:#{first[:line]}: #{first[:message]}"
+          else
+            ""
+          end
+          raise "builder: self_test failed with #{summary.violation_count} violation(s) [#{law_counts}]#{detail}"
+        end
+      end
+    end
+
+    def build_scanner(root:, agent: nil, bus: nil, ecology: nil)
+      Fix::Scanner.build(root:, agent:, bus:, ecology:)
+    end
+
+    def boot_autonomous(root:, infra:, agent:, scanner:, axioms: nil)
+      bus = infra[:bus]
+      lean_boot = ENV["MASTER_FULL_BOOT"] != "1"
+      core = build_autonomous_core(root:, infra:, agent:, scanner:, axioms:, bus:)
+      monitors = build_autonomous_monitors(root:, infra:, agent:, scanner:, bus:, lean_boot:,
+        fix_loop: core[:fix_loop])
+      core.merge(monitors)
+    end
+
+    def build_autonomous_core(root:, infra:, agent:, scanner:, axioms:, bus:)
+      standing = Ground::StandingOrders.new(pipeline: nil, event_bus: bus)
+      git = Io::GitOperations.new(root)
+      laws = scanner.laws
+      learnings = infra[:learnings]
+      fix_loop = build_fix_loop(root:, infra:, agent:, scanner:, axioms:, laws:, learnings:, bus:, git:)
+      watch_loop = build_watch_loop(laws:, agent:, scanner:, root:, bus:, learnings:, fix_loop:)
+      { standing:, git:, fix_loop:, watch_loop: }
+    end
+
+    def build_autonomous_monitors(root:, infra:, agent:, scanner:, bus:, lean_boot:, fix_loop:)
+      heartbeat = Fix::Heartbeat.new(root:, agent:, scanner:, memory: infra[:memory],
+        event_bus: bus, homeostat: infra[:homeostat], fix_loop:)
+      triggers = Trace::Triggers.new(event_bus: bus, scanner:, agent:)
+      triggers.install_defaults!
+      propose_tree = lean_boot ? nil : Fix::ProposeTree.new(root:, agent:, event_bus: bus)
+      subscribe_fix_loop_events(bus:, propose_tree:, fix_loop:, lean_boot:)
+      watcher = build_watcher(bus:, root:)
+      { heartbeat:, triggers:, propose_tree:, watcher: }
+    end
+
+    # MASTER_AUTOFIX=1 enables in-process convergence; off by default to avoid autocommits racing deploys.
+    def build_fix_loop(root:, infra:, agent:, scanner:, axioms:, laws:, learnings:, bus:, git:)
+      fix_loop = Fix::FixLoop.new(
+        laws:, axioms:, agent:, scanner:, root:, bus:, git:, learnings:,
+        incremental: ENV["MASTER_INCREMENTAL"] == "1",
+        ground_truth: infra[:ground_truth], preserve_user_intent: infra[:preserve_user_intent],
+        law_resolver: infra[:law_resolver], homeostat: infra[:homeostat]
+      )
+      start_fix_loop_background(fix_loop, root:, bus:) if ENV["MASTER_AUTOFIX"] == "1"
+      fix_loop
+    end
+
+    # Pre-flight: refuse to start background self-mutation if MASTER's own
+    # lib/ tree is already dirty by its own laws -- autofix compounding on
+    # top of an existing violation is exactly the runaway-loop shape the
+    # oscillation/cycle/plateau detectors exist to catch after the fact.
+    def start_fix_loop_background(fix_loop, root:, bus:)
+      report = Fix::SelfCheck.new(root:).gate!(bus:)
+      unless report.clean?
+        bus&.publish("fix_loop:background_refused", reason: "selfcheck dirty", total: report.total)
+        return
+      end
+      fix_loop.start_background!(root)
+    end
+
+    # A dead background thread must remain visible.
+    #
+    # abort_on_exception is false on every background thread here, which is
+    # right — a watcher falling over must not take the process with it. The rescue
+    # is the other half: with report and abort both off and nothing rescuing, a
+    # thread simply stops, its feature quietly does nothing, and a dead WatchLoop is
+    # indistinguishable from a hang.
+    #
+    # So the exception is published on the bus and logged, and the thread still
+    # dies alone.
+    def watched_thread(bus, where, &block)
+      Thread.new do
+        block.call
+      rescue StandardError, ScriptError => e
+        bus&.publish("boot:thread_died", where:, error: "#{e.class}: #{e.message}")
+        Trace::Dmesg.status("boot0", "#{where} thread died, #{e.class}: #{e.message}")
+      end.tap { |t| t.abort_on_exception = false }
+    end
+
+    # MASTER_WATCH=1 enables reactive file-watching (requires rb-kqueue or rb-inotify).
+    def build_watch_loop(laws:, agent:, scanner:, root:, bus:, learnings:, fix_loop: nil)
+      return unless ENV["MASTER_WATCH"] == "1"
+
+      wl = Fix::WatchLoop.new(laws:, agent:, scanner:, root:, bus:, learnings:, fix_loop:)
+      watched_thread(bus, "watch_loop") { wl.run }
+      wl
+    end
+
+    def subscribe_fix_loop_events(bus:, propose_tree:, fix_loop:, lean_boot:)
+      subscribe_single_proposer(bus:, propose_tree:) unless lean_boot
+      bus.subscribe("system:crit") do
+        watched_thread(bus, "stop_background") { fix_loop.stop_background! if fix_loop.background_alive? }
+      end
+      bus.subscribe("self_violation") { |payload| fix_loop.halt!(reason: "self_violation #{payload[:violations]} violations") }
+
+      # Close the Homeostat loop for the fix_loop events PassRunner/
+      # StagnationDetection/BackgroundRunner don't already observe directly
+      # (they only see their own instance's state, not bus-level events).
+      homeostat = fix_loop.homeostat
+      return unless homeostat
+
+      bus.subscribe("fix_loop:llm_skipped") { homeostat.observe(:llm_failure) }
+      bus.subscribe("fix_loop:timeout") { homeostat.observe(:llm_failure) }
+    end
+
+    # One proposer at a time.
+    #
+    # fix_loop:clean and fix_loop:plateau both fire every time a pass settles.
+    # Without the claim below each one starts a thread while the last still runs,
+    # and a fix loop that settles often — which is what a working one does — piles
+    # up threads that nothing ever joins.
+    def subscribe_single_proposer(bus:, propose_tree:)
+      proposing = { busy: false }
+      gate = Mutex.new
+      propose_once = lambda do
+        claimed = gate.synchronize { proposing[:busy] ? false : (proposing[:busy] = true) }
+        next unless claimed
+
+        watched_thread(bus, "propose_tree") do
+          propose_tree.call
+        ensure
+          gate.synchronize { proposing[:busy] = false }
+        end
+      end
+      bus.subscribe("fix_loop:clean") { propose_once.call }
+      bus.subscribe("fix_loop:plateau") { propose_once.call }
+    end
+
+    # MASTER_WATCHER=0 disables the OpenBSD load watcher; on by default.
+    def build_watcher(bus:, root:)
+      watcher = Fix::Watcher.new(bus:, root:)
+      if ENV["MASTER_WATCHER"] != "0"
+        watched_thread(bus, "load_watcher") { watcher.run_forever }
+      end
+      watcher
+    end
+
+    def boot_skills(root, bus)
+      skills = CLI::Skills.new(root:, event_bus: bus)
+      skills.discover!
+      skills
+    end
+  end
+end

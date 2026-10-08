@@ -1,0 +1,34 @@
+<%# The shared brand-mark mechanism is fixed top-left on every app surface.
+    Type only — no chip, no border, no background. The mechanism is shared;
+    the label remains app-owned so Brgen, Amber and bsdports can develop distinct
+    identities without duplicating chrome code.
+
+    Before this, the three apps did three different things: brgen had a fixed
+    type wordmark, amber rendered a non-fixed SVG, and bsdports had no mark at
+    all. The shared chrome now owns placement and accessibility; each brand owns
+    its wordmark treatment on landing and campaign surfaces.
+
+    <header> wraps it so the wordmark is inside a banner landmark — axe flagged
+    it as the one piece of page content outside any landmark. The header adds no
+    box: the mark is position:fixed, so its parent has no in-flow child and
+    computes to zero height. Do not hang layout off it.
+
+    Params:
+      label  -- the wordmark text. Defaults to the app name.
+      href   -- where home is. Defaults to the app's root_path.
+
+    The mark is the brand and nothing else. brgen used to pass a prefix and a
+    suffix so a vertical's mark read markedsplass.brgen.no, which printed a URL
+    where a logo goes and made the mark a different width on every host. The
+    nav swiper names the active vertical; the mark names the brand. %>
+<% mark_label = local_assigns.fetch(:label) { t("app.name", default: "brgen") } %>
+<% mark_href = local_assigns.fetch(:href) { main_app.respond_to?(:root_path) ? main_app.root_path : "/" } %>
+<%# brgen passes its historical class alongside so every rule already written
+    against .brgen-logo-mark keeps applying. %>
+<% mark_class = local_assigns.fetch(:class_name, "brand-mark") %>
+<% mark_name = t("nav.brand_home", default: mark_label) %>
+<header>
+  <%= link_to mark_href, class: mark_class, aria: { label: mark_name } do %>
+    <span class="brand-text"><%= mark_label %></span>
+  <% end %>
+</header>
