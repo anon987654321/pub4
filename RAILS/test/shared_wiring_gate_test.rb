@@ -83,8 +83,8 @@ class SharedWiringGateTest < Minitest::Test
     end
   end
 
-  ERROR_PAGES = Dir[File.join(ROOT, "{amber,brgen,bsdports,shared}/public/*.html")].freeze
-  ERRORS_CSS = File.read(File.join(ROOT, "shared/public/styles/errors.css"))
+  ERROR_PAGES = Dir[File.join(ROOT, "{amber,brgen,bsdports,__shared}/public/*.html")].freeze
+  ERRORS_CSS = File.read(File.join(ROOT, "__shared/public/styles/errors.css"))
 
   def declared(css) = css.scan(/(--[\w-]+)\s*:/).flatten
 
@@ -112,11 +112,11 @@ class SharedWiringGateTest < Minitest::Test
   # overlay_shared_public copies shared/public over each app's public on deploy,
   # so a page shared carries replaces the page an app carries for itself.
   def test_shared_carries_no_error_page_an_app_carries
-    shared = Dir[File.join(ROOT, "shared/public/*.html")].map { |path| File.basename(path) }
+    shared = Dir[File.join(ROOT, "__shared/public/*.html")].map { |path| File.basename(path) }
     %w[amber brgen bsdports].each do |app|
       clobbered = shared & Dir[File.join(ROOT, app, "public/*.html")].map { |path| File.basename(path) }
 
-      assert_empty clobbered, "shared/public would overwrite #{app}'s #{clobbered.join(", ")} on deploy"
+      assert_empty clobbered, "__shared/public would overwrite #{app}'s #{clobbered.join(", ")} on deploy"
     end
   end
 end
