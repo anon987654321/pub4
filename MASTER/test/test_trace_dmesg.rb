@@ -39,7 +39,7 @@ class TraceDmesgTest < Minitest::Test
 
     assert_equal law_banned, banned
     assert_equal law_banned.sort, banned.sort
-    assert_equal law_banned, Master::Ground::Rules.new.data(:zsh).fetch("banned_commands").map(&:to_s)
+    assert_equal law_banned, Master::Ground::Laws.new.data(:zsh).fetch("banned_commands").map(&:to_s)
   end
 
   def test_injection_guard_uses_the_live_policy_for_prompt_injection
