@@ -115,7 +115,7 @@ module Master
           end
 
           def repair_scanned_file(path, rows, rules, stream)
-            ids = rows.map { |row| row[:rule].to_s }.uniq - ConflictResolver::DRY_RULES
+            ids = rows.map { |row| row[:rule].to_s }.uniq - ConflictResolver::DRY_LAWS
             runnable = rules.select { |rule| ids.include?(rule.id.to_s) }
             return 0 if runnable.empty?
 
