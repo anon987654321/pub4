@@ -10,15 +10,15 @@ module Master
   # The system quiesces naturally — no STARTUP_DELAY, no idle sleep waste.
   #
   # Usage (VPS, after `gem install rb-kqueue` or `rb-inotify`):
-  #   WatchLoop.new(rules:, agent:, scanner:, root:, bus:).run
+  #   WatchLoop.new(laws:, agent:, scanner:, root:, bus:).run
     class WatchLoop
       DEBOUNCE_SECONDS = 5.0
       MAX_EVENTS_PER_MIN = 20
       WATCH_EXTENSIONS = %w[.rb .erb .yml .yaml .json .toml .js .css .html].freeze
       SKIP_DIRS = %w[vendor/ knowledge/ node_modules/ .git/ .bundle/ tmp/ log/ dist/].freeze
 
-      def initialize(rules:, agent:, scanner:, root:, bus: nil, learnings: nil, fix_loop: nil)
-        @rules = rules
+      def initialize(laws:, agent:, scanner:, root:, bus: nil, learnings: nil, fix_loop: nil)
+        @laws = laws
         @agent = agent
         @scanner = scanner
         @root = root
@@ -63,12 +63,12 @@ module Master
             next if in_progress?(p)
             next unless rate_ok?
             @mtime_map[p] = latest_mtime(p)
-            run_rules_on(p)
+            run_laws_on(p)
           end
         end
       end
 
-      def run_rules_on(path)
+      def run_laws_on(path)
         return unless File.exist?(path)
         mark_in_progress(path) do
           if @fix_loop&.background_alive?
@@ -84,11 +84,11 @@ module Master
       end
 
       def run_law_loop_on(path)
-        applicable = @rules.select { |r| r.respond_to?(:applies_to?) ? r.applies_to?(path) : true }
-        applicable.each do |rule|
-          rl = LawLoop.new(rule:, agent: @agent, scanner: @scanner, root: @root, bus: @bus, learnings: @learnings)
+        applicable = @laws.select { |law| r.respond_to?(:applies_to?) ? r.applies_to?(path) : true }
+        applicable.each do |law|
+          rl = LawLoop.new(law:, agent: @agent, scanner: @scanner, root: @root, bus: @bus, learnings: @learnings)
           result = rl.run_once([path])
-          @bus&.publish("watch_loop:file_pass", file: path, rule: rule.id, **result)
+          @bus&.publish("watch_loop:file_pass", file: path, law: law.id, **result)
         end
       end
 
