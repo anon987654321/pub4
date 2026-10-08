@@ -298,6 +298,100 @@ transformation_policy:
     deterministic: "May transform automatically when its proof contract is satisfied."
     review: "May propose and apply only after hostile review and preservation proof."
     recommendation: "Propose only; never mutate."
+  evidence_hierarchy:
+    - id: characterization
+      strength: highest
+      practice: "Capture observable behavior, output, public contracts, and fixtures before structural change."
+    - id: structural
+      strength: high
+      practice: "Prefer AST, dependency, reference, and schema facts over lexical guesses."
+    - id: runtime
+      strength: high
+      practice: "Use tests, execution traces, timing, and output digests when behavior or performance is part of the contract."
+    - id: history
+      strength: medium
+      practice: "Use git history, blame, and co-change evidence to distinguish stable similarity from shared reasons to change."
+    - id: visual
+      strength: high
+      practice: "For rendered surfaces, compare geometry, hierarchy, accessibility, and a visual baseline before and after."
+    - id: semantic
+      strength: medium
+      practice: "Use maintainer or model judgment only after deterministic evidence narrows the question."
+    - id: taste
+      strength: lowest
+      practice: "Aesthetic preference alone may recommend a change but never authorizes an automatic mutation."
+  smell_catalog:
+    code:
+      - dead_code
+      - long_method
+      - god_class
+      - deep_nesting
+      - shotgun_surgery
+      - feature_envy
+      - speculative_generality
+      - duplicate_abstraction
+      - primitive_obsession
+      - flag_argument
+    ruby:
+      - non_idiomatic_iteration
+      - needless_indirection
+      - misplaced_visibility
+      - generic_names
+      - mutable_constants
+      - unnecessary_option_hash
+      - boolean_condition_complexity
+    rails:
+      - fat_controller
+      - n_plus_one
+      - callback_sprawl
+      - validation_overreach
+      - duplicated_view_logic
+      - configuration_drift
+    prose:
+      - duplicated_claim
+      - throat_clearing
+      - qualifier_noise
+      - passive_agent
+      - undefined_term
+      - hierarchy_drift
+      - historical_comment
+      - paragraph_overload
+    visual:
+      - hierarchy_flattening
+      - spacing_drift
+      - token_fragmentation
+      - component_duplication
+      - decoration_compensation
+      - interaction_inconsistency
+      - responsive_drift
+      - inaccessible_state
+  domain_adapters:
+    ruby: "Use Prism/RuboCop-style AST and syntax-aware measurements before lexical transformations."
+    rails: "Check framework conventions, routes, Zeitwerk paths, controller/model boundaries, queries, callbacks, and rendered behavior."
+    prose: "Check claims, terminology, paragraph/heading hierarchy, reading measure, and meaning before style-level edits."
+    visual: "Check semantic HTML, geometry, type hierarchy, spacing, interaction targets, accessibility, and visual regression before decoration."
+  automatic_vetoes:
+    - "Do not auto-refactor a public interface without reference-graph and contract proof."
+    - "Do not auto-merge similar code when the units have different reasons to change."
+    - "Do not delete a file based on absence of textual references alone; inspect constants, loaders, runtime discovery, and deployment paths."
+    - "Do not rewrite prose when the transformation changes a claim, obligation, or legal/constitutional meaning."
+    - "Do not make visual redesigns from taste alone; require a measured usability, accessibility, hierarchy, or consistency defect."
+    - "Do not optimize performance without before/after measurement and output-equivalence evidence."
+  research:
+    - name: "Fowler, Refactoring"
+      url: "https://martinfowler.com/books/refactoring.html"
+    - name: "Refactoring catalog"
+      url: "https://refactoring.com/catalog/"
+    - name: "RuboCop Ruby Style Guide"
+      url: "https://github.com/rubocop/ruby-style-guide"
+    - name: "RuboCop Rails Style Guide"
+      url: "https://github.com/rubocop/rails-style-guide"
+    - name: "GitHub Ruby Style Guide"
+      url: "https://github.com/github/rubocop-github/blob/main/STYLEGUIDE.md"
+    - name: "Code Smells and Refactoring: tertiary systematic review"
+      url: "https://arxiv.org/abs/2004.10777"
+    - name: "Code smell detection and visualization: systematic review"
+      url: "https://arxiv.org/abs/2012.08842"
 
 self_test:
   ROBUSTNESS: scan lib/ for bare_rescue + missing timeouts
