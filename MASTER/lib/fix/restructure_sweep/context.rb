@@ -245,14 +245,19 @@ module Master
 
         def surface_section
           extension = File.extname(@path).downcase
+          relative = relative(@path)
           kind = if PROSE_EXTENSIONS.include?(extension)
                    "prose"
-                 elsif COMMAND_EXTENSIONS.include?(extension) && @path.split("/").any? { |part| COMMAND_ROOTS.include?(part) }
+                 elsif File.basename(@path) == "routes.rb"
+                   "route"
+                 elsif relative.split("/").include?("config") && CONFIG_EXTENSIONS.include?(extension)
+                   "config"
+                 elsif COMMAND_EXTENSIONS.include?(extension) && relative.split("/").any? { |part| COMMAND_ROOTS.include?(part) }
                    "command"
                  else
                    "code"
                  end
-          "Surface: #{kind}; /fix may consolidate structure, code, prose, routes/commands, and configuration when evidence supports it."
+          "Surface: #{kind}; /fix may consolidate one concept across its filesystem, code, prose, route, command and configuration forms when evidence supports it."
         end
 
         def inventory_section
