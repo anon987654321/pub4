@@ -117,14 +117,14 @@ class TestExecutionTrace < Minitest::Test
       path = File.join(root, "broken.rb")
       File.write(path, "def broken(\n  true\nend\n")
 
-      candidate = Master::Review::Scan::AstFixer::Result.new(
+      candidate = Master::Fix::Scan::AstFixer::Result.new(
         path:,
         changed: true,
         transforms: [:repair],
         content: "def repaired; true; end\n",
       )
 
-      Master::Review::Scan::AstFixer.stub(:propose, candidate) do
+      Master::Fix::Scan::AstFixer.stub(:propose, candidate) do
         result = Master::Fix::ExecutionTrace.new(
           root:,
           files: [path],
