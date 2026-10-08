@@ -70,14 +70,14 @@ module Master
 
         attr_reader :stream_autofixes
 
-        def scan(path, depth: :deep, rules: nil)
+        def scan(path, depth: :deep, laws: nil)
           validate_depth!(depth)
           law_set = laws || active_laws(depth)
-          law_set = dispatched_laws(path, law_set) if rules.nil?
+          law_set = dispatched_laws(path, law_set) if laws.nil?
           @file_processor.call(path:, depth:, rules: law_set)
         end
 
-        def scan_dir(dir, depth: :deep, glob: SCAN_GLOB, stream: false, autofix: false, autofix_root: nil, rules: nil)
+        def scan_dir(dir, depth: :deep, glob: SCAN_GLOB, stream: false, autofix: false, autofix_root: nil, laws: nil)
           validate_depth!(depth)
           paths = Dir.glob(File.join(dir, glob)).select { |path| scannable_path?(path, dir) }
           law_set = laws || active_laws(depth)
@@ -85,7 +85,7 @@ module Master
           unit = stream ? @scan_progress[:unit] : Fiber[:master_unit]
           pairs = Master::Trace::Dmesg.under(unit) do
             parallel_map(paths) do |path, idx|
-              scan_one(dir:, path:, depth:, stream:, index: idx, autofix:, autofix_root:, rules: law_set)
+              scan_one(dir:, path:, depth:, stream:, index: idx, autofix:, autofix_root:, laws: law_set)
             end
           end
           pairs.concat(cross_file_pairs(dir, paths))
@@ -126,7 +126,7 @@ module Master
         end
 
         def set_agent(agent)
-          @rules.each { |r| r.set_agent(agent) if r.respond_to?(:set_agent) }
+          @laws.each { |law| law.set_agent(agent) if law.respond_to?(:set_agent) }
           self
         end
 
@@ -190,12 +190,12 @@ module Master
           status.success? ? out.strip : nil
         end
 
-        def scan_one(dir:, path:, depth:, stream:, index: nil, autofix: false, autofix_root: nil, rules: nil)
+        def scan_one(dir:, path:, depth:, stream:, index: nil, autofix: false, autofix_root: nil, laws: nil)
           sleep @file_sleep_s if @file_sleep_s > 0
-          file_result = scan(path, depth:, rules:)
+          file_result = scan(path, depth:, laws:)
           applied = autofix ? autofix_one(path, file_result, root: autofix_root || dir) : []
           if applied.any?
-            file_result = scan(path, depth:, rules:)
+            file_result = scan(path, depth:, laws:)
             emit_autofixed(dir:, path:, applied:) if stream
           end
           emit_scan_progress(dir:, path:, file_result:) if stream
@@ -266,11 +266,11 @@ module Master
           @laws
         end
 
-        # RuleDSL's applies_to scope is already authoritative inside the rule.
+        # LawDSL's applies_to scope is already authoritative inside the rule.
         # Use the same declaration one level earlier so a JavaScript file does
         # not traverse every Ruby-only rule, and a Ruby file does not traverse
-        # the CSS/HTML population. Rules without an explicit scope remain in every
-        # bucket. Explicit rule arrays passed by callers keep the old full set.
+        # the CSS/HTML population. Laws without an explicit scope remain in every
+        # bucket. Explicit law arrays passed by callers keep the old full set.
         def dispatched_laws(path, law_set)
           return law_set unless law_set.equal?(@laws)
           language = Master.language_for(path)
