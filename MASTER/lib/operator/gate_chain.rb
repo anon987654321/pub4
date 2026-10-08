@@ -393,7 +393,7 @@ module Operator
         end,
         ["OPENBSD", [RUBY, "-e", OPENBSD_SUITE], File.join(ROOT, "OPENBSD"), {}, "OPENBSD"],
         ["tools", [RUBY, "-S", "rake"], File.join(MASTER, "tools"), {}, "MASTER", true],
-        ["STUDIO media", [RUBY, "-S", "rake", "test:dilla", "test:postpro", "test:replicate", "test:lora"], File.join(ROOT, "STUDIO"), {}, "STUDIO", true],
+        ["STUDIO media", [RUBY, "-S", "rake", "test"], File.join(ROOT, "STUDIO"), {}, "STUDIO", true],
       ].select { |job| trees.include?(job[-2]) }
     end
 
