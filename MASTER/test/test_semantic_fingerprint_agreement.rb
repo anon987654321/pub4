@@ -36,7 +36,7 @@ class TestSemanticFingerprintAgreement < Minitest::Test
       path = File.join(dir, "sample.rb")
       File.write(path, SAMPLE)
 
-      scanner = Master::Review::Scan::InfraHelpers.build_scanner(root: Master::ROOT)
+      scanner = Master::Fix::Scanner.build(root: Master::ROOT)
       result = scanner.scan(path)
       assert result.ok?, "expected scan to succeed"
 
