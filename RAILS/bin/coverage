@@ -70,7 +70,7 @@ script = <<~'RUBY'
 
   rails_root = File.expand_path("..", Dir.pwd)
   SimpleCov.root(rails_root)
-  SimpleCov.coverage_path(File.join(rails_root, "coverage"))
+  SimpleCov.coverage_path(ENV.fetch("PUB4_COVERAGE_ROOT", File.join(rails_root, "coverage")))
 
   SimpleCov.collate ARGV do
     %i[line branch method].each do |criterion|
@@ -88,7 +88,7 @@ Dir.chdir(ROOT) do
     *Operator::RubyRunner.bundle_cmd,
     "exec", RbConfig.ruby, "-e", script, *resultsets
   ]
-  ok = system(*command, chdir: File.join(ROOT, apps.first))
+  ok = system({ "PUB4_COVERAGE_ROOT" => COVERAGE_ROOT }, *command, chdir: File.join(ROOT, apps.first))
   abort "coverage: collate failed" unless ok
 end
 
