@@ -20,21 +20,21 @@ class WhyExplainerTest < Minitest::Test
     assert_includes out, "priority:"
   end
 
-  def test_explain_registry_rule
+  def test_explain_registry_law
     out = explainer.explain("DRY")
-    assert_includes out, "rule: DRY"
+    assert_includes out, "law: DRY"
     assert_includes out, "Don't Repeat Yourself"
   end
 
-  def test_explain_kernel_rule_from_registry
+  def test_explain_kernel_law_from_registry
     out = explainer.explain("BE_CONCISE")
-    assert_includes out, "rule: BE_CONCISE"
+    assert_includes out, "law: BE_CONCISE"
     assert_includes out, "tier: kernel"
   end
 
-  def test_explain_soul_code_rule_when_not_in_registry
+  def test_explain_soul_code_law_when_not_in_registry
     out = explainer.explain("NO_DEAD_ENDS")
-    assert_includes out, "constitutional rule: NO_DEAD_ENDS"
+    assert_includes out, "constitutional law: NO_DEAD_ENDS"
   end
 
   def test_explain_empty_returns_nil
