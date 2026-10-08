@@ -248,10 +248,10 @@ module Master
 
           @homeostat&.observe(:llm_call)
           excluded = [VisualPass::RULE_ID, OpportunityPass::RULE_ID, CouncilRound::IMPROVEMENT_RULE_ID]
-          source_found = unremembered(found.reject { |v| excluded.include?(v[:rule].to_s) })
-          improvement_found = found.select { |v| v[:rule].to_s == CouncilRound::IMPROVEMENT_RULE_ID }
-          visual_found = found.select { |v| v[:rule].to_s == VisualPass::RULE_ID }
-          opportunity_found = found.select { |v| v[:rule].to_s == OpportunityPass::RULE_ID }
+          source_found = unremembered(found.reject { |v| excluded.include?(v[:law].to_s) })
+          improvement_found = found.select { |v| v[:law].to_s == CouncilRound::IMPROVEMENT_LAW_ID }
+          visual_found = found.select { |v| v[:law].to_s == VisualPass::LAW_ID }
+          opportunity_found = found.select { |v| v[:law].to_s == OpportunityPass::LAW_ID }
           council = @council&.run(files: files_with_violations(source_found, files), pass:, deadline:) if source_found.any?
           run_llm_stage(source_found, files, pass, deadline, council:) if source_found.any?
           run_improvement_stage(improvement_found, pass:, files:, deadline:) if improvement_found.any?
@@ -361,7 +361,7 @@ module Master
             result = @ground_truth.assert_fresh!(path, reason: "claim_task_complete")
             next if result.ok?
 
-            { rule: "GROUND_TRUTH", file: path.delete_prefix("#{@root}/"), line: 0, message: result.message }
+            { law: "GROUND_TRUTH", file: path.delete_prefix("#{@root}/"), line: 0, message: result.message }
           end
         end
 
@@ -386,13 +386,13 @@ module Master
         end
 
         def track_recurrence(found)
-          tally = found.group_by { |v| v[:rule].to_s }.transform_values(&:size)
+          tally = found.group_by { |v| v[:law].to_s }.transform_values(&:size)
           tally.each do |rule_id, _|
             @law_recurrence[rule_id] += 1
             next unless @law_recurrence[rule_id] >= 3
 
-            @law_recurrence.delete(rule_id)
-            sample = found.select { |v| v[:rule].to_s == rule_id }.first(5)
+            @law_recurrence.delete(law_id)
+            sample = found.select { |v| v[:law].to_s == law_id }.first(5)
             @bus&.publish("fix_loop:soul_proposal", root: @root, law: law_id, sample:)
           end
           (@law_recurrence.keys - tally.keys).each { |key| @law_recurrence.delete(key) }
