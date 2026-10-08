@@ -46,7 +46,7 @@ class TestFixReflection < Minitest::Test
 ", File.read(File.join(@root, "lib/example.rb"))
   end
 
-  def test_repair_requires_a_real_law_and_anchor
+  def test_repair_must_name_a_law_from_the_applicable_constitution
     agent = Agent.new(<<~TEXT)
       VERDICT: REPAIR
       SUMMARY: A concrete issue remains.
@@ -55,13 +55,29 @@ class TestFixReflection < Minitest::Test
       EVIDENCE: The supplied source anchor is the measured evidence.
       NEXT: Consolidate the duplicate owner and rerun the same proof.
     TEXT
-    # A temporary root has no MASTER/law registry, so the model claim is not
-    # actionable; the result must become INVESTIGATE instead of inventing authority.
     result = Master::Fix::Reflection.new(agent:, root: @root).call(
       target: @root, state: "plateau", files: [], history: []
     )
-    assert_equal "INVESTIGATE", result.verdict
-    assert_equal "lib/example.rb:1", result.anchor
+    assert_equal "REPAIR", result.verdict
+    assert_equal "SINGULARITY", result.law
+  end
+
+  def test_reflection_prompt_contains_the_canonical_law_selection
+    agent = Agent.new(<<~TEXT)
+      VERDICT: KEEP
+      SUMMARY: The measured tree is coherent.
+      LAW: NONE
+      ANCHOR: NONE
+      EVIDENCE: The run reached a verified clean state.
+      NEXT: NONE
+    TEXT
+
+    Master::Fix::Reflection.new(agent:, root: @root).call(
+      target: @root, state: "done", files: [File.join(@root, "lib/example.rb")], history: []
+    )
+
+    assert_includes agent.prompts.first, "applicable_laws"
+    assert_includes agent.prompts.first, "SINGULARITY"
   end
 
   def test_non_numeric_anchor_line_downgrades_repair
