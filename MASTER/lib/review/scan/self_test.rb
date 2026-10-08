@@ -2,7 +2,7 @@
 
 require "date"
 require "yaml"
-require_relative "rule_dsl"
+require_relative "law_dsl"
 require_relative "../../fix/transformation_plan"
 
 module Master
@@ -28,9 +28,9 @@ module Master
           def deploy_duplicate_id_findings
             deploy_paths.select { |p| p.end_with?(".yml") }.flat_map do |path|
               yaml = Master.load_yaml(path)
-              ids = rule_ids(yaml)
+              ids = law_ids(yaml)
               ids.group_by(&:itself).filter_map do |id, values|
-                finding(path:, line: 1, message: "duplicate id #{id} in OPERATOR config") if values.size > 1
+                finding(path:, line: 1, message: "duplicate law id #{id} in OPERATOR config") if values.size > 1
               end
             rescue StandardError => e
               Master::Ground::Swallow.log(e, context: "SelfTest.operator_duplicates", severity: :load_bearing)
@@ -155,8 +155,8 @@ module Master
         def initialize(root:, event_bus: nil)
           @root = root
           @bus = event_bus
-          rules = Master.load_laws(root:) || {}
-          @checks = rules["self_test"] || {}
+          laws = Master.load_laws(root:) || {}
+          @checks = laws["self_test"] || {}
         end
 
         def call(laws: nil)
@@ -194,11 +194,11 @@ module Master
               bare_rescue_findings + deploy_bare_rescue_findings + timeout_findings +
                 js_silent_catch_findings + library_verify_findings
             }],
-            ["SINGULARITY", lambda { duplicate_rule_id_findings + deploy_duplicate_id_findings }],
-            ["LINEARITY", lambda { structural_findings(Rules::NestingDepthRule.new) + deploy_nesting_findings }],
-            ["PROXIMITY", lambda { rule_test_proximity_findings }],
-            ["ABSTRACTION", lambda { structural_findings(Rules::GodClassRule.new) + deploy_god_class_findings }],
-            ["DENSITY", lambda { structural_findings(Rules::SmallFunctionsRule.new) + deploy_small_files_findings + face_pool_findings }],
+            ["SINGULARITY", lambda { duplicate_law_id_findings + deploy_duplicate_id_findings }],
+            ["LINEARITY", lambda { structural_findings(Laws::NestingDepthLaw.new) + deploy_nesting_findings }],
+            ["PROXIMITY", lambda { law_test_proximity_findings }],
+            ["ABSTRACTION", lambda { structural_findings(Laws::GodClassLaw.new) + deploy_god_class_findings }],
+            ["DENSITY", lambda { structural_findings(Laws::SmallFunctionsLaw.new) + deploy_small_files_findings + face_pool_findings }],
             ["KERNEL_ADHERENCE", lambda { kernel_wiring_findings }],
             ["LAW_MAP", lambda { law_map_findings }],
           ]
@@ -273,11 +273,11 @@ module Master
                    message: "law integrity failed: #{e.class}: #{e.message}")]
         end
 
-        def duplicate_rule_id_findings
+        def duplicate_law_id_findings
           path = File.join(@root, "data", "laws.yml")
-          ids = rule_ids(Master.load_laws(root: @root))
+          ids = law_ids(Master.load_laws(root: @root))
           ids.group_by(&:itself).filter_map do |id, values|
-            finding(path:, line: 1, message: "duplicate rule id #{id}") if values.size > 1
+            finding(path:, line: 1, message: "duplicate law id #{id}") if values.size > 1
           end
         end
 
@@ -334,25 +334,25 @@ module Master
           {}
         end
 
-        def rule_ids(value, ids = [])
+        def law_ids(value, ids = [])
           case value
           when Hash
             ids << value["id"].to_s if value.key?("id")
-            value.each_value { |child| rule_ids(child, ids) }
+            value.each_value { |child| law_ids(child, ids) }
           when Array
-            value.each { |child| rule_ids(child, ids) }
+            value.each { |child| law_ids(child, ids) }
           end
           ids.reject(&:empty?)
         end
 
-        def structural_findings(rule)
+        def structural_findings(law)
           ruby_lib_paths.flat_map do |path|
             code = read_text(path)
-            rule.check(code, path:).map { |result| finding(path:, line: result.line, message: result.message) }
+            law.check(code, path:).map { |result| finding(path:, line: result.line, message: result.message) }
           end
         end
 
-        def rule_test_proximity_findings
+        def law_test_proximity_findings
           Dir.glob(File.join(@root, "lib", "review", "scan", "rules", "*_rule.rb")).sort.filter_map do |path|
             base = File.basename(path, ".rb")
             test_path = File.join(@root, "test", "test_#{base}.rb")
@@ -409,11 +409,11 @@ module Master
             Master::Review::Scan::LawFactory.registry_id(klass, root: @root)&.upcase
           end
           # A rule declared in laws.yml with no Ruby class is still a rule — 126
-          # of the 227 are semantic-only. Checking a principle's rule_ids against
+          # of the 227 are semantic-only. Checking a principle's law_ids against
           # the registry alone calls those unknown and reads as a broken map.
           declared = Master.law_entries(root: @root)
                            .map { |rule| rule["id"].to_s.upcase }
-          map.integrity(registered_rule_ids: registered | declared).map do |msg|
+          map.integrity(registered_law_ids: registered | declared).map do |msg|
             finding(path:, line: 1, message: msg)
           end
         rescue StandardError => e
