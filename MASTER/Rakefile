@@ -675,8 +675,8 @@ end
     Dir.glob(File.join(__dir__, "lib", "review", "scan", "rules", "**", "*.rb")).sort.each { |f| require f }
 
     map = Master::Ground::Map::Principle.load(root: __dir__)
-    registered = Master::Review::Scan::Rule.registry.filter_map do |klass|
-      Master::Review::Scan::RuleFactory.registry_id(klass, root: __dir__)
+    registered = Master::Review::Scan::Law.registry.filter_map do |klass|
+      Master::Review::Scan::LawFactory.registry_id(klass, root: __dir__)
     end
     untraced = map.untraced_rules(registered_rule_ids: registered)
     ceiling = map.rule_trace_ceiling
