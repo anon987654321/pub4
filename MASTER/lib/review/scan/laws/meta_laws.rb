@@ -56,17 +56,17 @@ module Master
           # Asks the question the description asks — has this Law subclass a
           # test — rather than whether a file is named after it.
           #
-          # It used to require the path end `_rule.rb` and look for
+          # It used to require the path end `_law.rb` and look for
           # `<base>_test.rb`. One file in sixteen ends `_rule.rb`; the rest are
-          # `*_laws.rb` and hold nearly every rule there is. And MASTER names
+          # `*_laws.rb` and hold nearly every law there is. And MASTER names
           # tests `test_<base>.rb`, 283 files to 1, so the glob described a
           # convention this tree does not use. Over all sixteen files it
-          # produced one finding, and `test/test_law_bridge_rule.rb` existed.
+          # produced one finding, and `test/test_law_bridge_law.rb` existed.
           # Fifteen skipped, one false positive, nothing correct.
           #
           # Coverage is a mention anywhere in test/ or spec/, of the class or of
           # its id, because the tests that exercise these rules mostly do it in
-          # bulk — test_smell_detectors.rb and test_scan_rule_false_positives.rb
+          # bulk — test_smell_detectors.rb and test_scan_law_false_positives.rb
           # reach rules by id through the scanner. Requiring a file per class
           # would report those as uncovered, which is the false-positive machine
           # the old shape already was, pointed the other way.
@@ -87,7 +87,7 @@ module Master
           # `declare id:` is how a Law subclass names itself, in all sixteen
           # files. The needle read `@id = "..."` and matched nothing in the tree,
           # so only the class-name needle ever did any work and the id half of
-          # this rule was dead from the day it was written.
+          # this law was dead from the day it was written.
           def subclasses(code)
             code.enum_for(:scan, /^\s*class (\w+Law) < Law\b/).map do
               name = Regexp.last_match(1)
@@ -248,14 +248,14 @@ module Master
           end
 
           def reload_learned_smells_if_stale
-            return if @rules_mtime == rules_mtime
+            return if @laws_mtime == laws_mtime
 
             reload_learned_smells!
           end
 
           def reload_learned_smells!
             @learned_smells = Array((Master.load_laws(root: @root) || {}).fetch("learned_smells", [])).select { |item| item.is_a?(Hash) }
-            @rules_mtime = rules_mtime
+            @laws_mtime = laws_mtime
           rescue StandardError => e
             Master::Ground::Swallow.log(e, context: "LearnedSmellsLaw.reload", severity: :load_bearing, path: laws_path)
             raise
@@ -265,7 +265,7 @@ module Master
             File.join(@root, "data", "laws.yml")
           end
 
-          def rules_mtime
+          def laws_mtime
             return nil unless File.exist?(laws_path)
 
             stat = File.stat(laws_path)
@@ -372,7 +372,7 @@ module Master
           # nested constant: RepoEcology::CoChangeGraph can only live at
           # repo_ecology/co_change_graph.rb, so the directory is the nesting, not
           # sprawl. tools/sprawl_census.rb forgives the same shape for the same
-          # reason, and a rule and its census that disagree report one tree twice.
+          # reason, and a law and its census that disagree report one tree twice.
           def lone_file_finding(dir, siblings, subdirs)
             return unless siblings == 1 && subdirs.zero? && dir != @root
             return if File.file?("#{dir}.rb")
