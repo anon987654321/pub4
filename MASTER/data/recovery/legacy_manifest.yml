@@ -962,7 +962,7 @@ master_json_v43_review:
   source_commit: "5eed78fa18c6c3a67c4abb984ec363ff06b685d8"
   value: "Radical v43 consolidation kept PRESERVE_THEN_IMPROVE_NEVER_BREAK, ultra-minimalism, operational convergence, adversarial review, incremental scanning and explicit thresholds."
   absorbed:
-    - "PRESERVE_THEN_IMPROVE_NEVER_BREAK is current soul.yml golden_rule."
+    - "PRESERVE_THEN_IMPROVE_NEVER_BREAK is current soul.yml golden_law."
     - "Ultra-minimalism is represented by current law/practice and design/system contracts."
     - "Adversarial review is current HOSTILE_AUDIT and /fix critique; structural surgery has a second hostile attack."
     - "Incremental structural repair is represented by the bounded RestructureSweep, while full tree gates remain explicit."
