@@ -17,7 +17,7 @@ module Master
       # same idiom lib/ground/laws.rb and every other Law caller in this tree
       # already follows.
       def self.ensure_law!
-        require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
+        require File.join(Master::ROOT, "law", "definition") unless defined?(::Law)
         ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.definitions.empty?
       end
 
