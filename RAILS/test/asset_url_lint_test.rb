@@ -83,6 +83,6 @@ class AssetUrlLintTest < Minitest::Test
   # exists to catch.
   def test_it_reads_something
     assert_operator L.sheets.size, :>, 100, "the stylesheet glob stopped matching"
-    assert_operator L.refs_in(File.join(L::RAILS_ROOT, "shared/app/assets/stylesheets/_fonts.scss")).size, :>=, 2
+    assert_operator L.refs_in(File.join(L::RAILS_ROOT, "__shared/app/assets/stylesheets/_fonts.scss")).size, :>=, 2
   end
 end
