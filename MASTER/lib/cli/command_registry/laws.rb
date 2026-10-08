@@ -45,7 +45,7 @@ module Master
         rows = ::Law::Index.validate!
         lifecycle = rows.group_by { |row| row["lifecycle"] }.transform_values(&:size)
         proof = rows.group_by { |row| row["proof"] }.transform_values(&:size)
-        universal = rows.count { |row| row["principle_scope"] == "universal" }
+        universal = rows.count { |row| row["law_scope"] == "universal" }
 
         [
           "rules: executable index",
