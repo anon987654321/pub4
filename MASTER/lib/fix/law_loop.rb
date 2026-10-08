@@ -122,13 +122,13 @@ module Master
         fixed = fix_batch(violations)
         status = pass_outcome(fixed)
         record_outcomes(files, status)
-        @bus&.publish("law_loop:pass", rule: @law.id, violations: violations.size, fixed:, status:)
+        @bus&.publish("law_loop:pass", law: @law.id, violations: violations.size, fixed:, status:)
         { fixed:, status:, breakdown: @batch_breakdown }
       rescue StandardError => e
-        @bus&.publish("law_loop:error", rule: @rule.id, error: e.message)
+        @bus&.publish("law_loop:error", rule: @law.id, error: e.message)
         # Bus-only meant a crashed rule pass was indistinguishable from a
         # quiet one in the dmesg stream the operator actually reads.
-        Master::Trace::Dmesg.status("fix0", "#{@rule.id}: #{e.class}: #{e.message[0, 90]}")
+        Master::Trace::Dmesg.status("fix0", "#{@law.id}: #{e.class}: #{e.message[0, 90]}")
         { fixed: 0, status: :error, breakdown: { error: 1 } }
       ensure
         @visual_image = nil
@@ -140,7 +140,7 @@ module Master
         files.flat_map do |path|
           next [] unless File.exist?(path)
 
-          result = Master::Result.wrap(@scanner.scan(path, laws: [@rule]))
+          result = Master::Result.wrap(@scanner.scan(path, laws: [@law]))
           raise "rule scan failed for #{path}: #{result.message}" unless result.ok?
 
           ext = File.extname(path).downcase
@@ -199,7 +199,7 @@ module Master
         return :applied if @committer.nil? || stage_commit_mode?
 
         result = @committer.commit_if_dirty(
-          "fix: #{@rule.id} in #{File.basename(violation[:file])}",
+          "fix: #{@law.id} in #{File.basename(violation[:file])}",
           findings: [violation],
           owned_paths: [violation[:file]],
         )
@@ -207,8 +207,8 @@ module Master
 
         :applied
       rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "LawLoop.commit_applied_fix", event_bus: @bus, rule: @rule.id)
-        @bus&.publish("law_loop:commit_refused", rule: @rule.id, file: violation[:file], error: e.message[0, 160])
+        Master::Ground::Swallow.log(e, context: "LawLoop.commit_applied_fix", event_bus: @bus, rule: @law.id)
+        @bus&.publish("law_loop:commit_refused", rule: @law.id, file: violation[:file], error: e.message[0, 160])
         :commit_refused
       end
 
@@ -229,7 +229,7 @@ module Master
         return true unless consensus_required?(violation)
 
         @agent.consensus.approve_fix?(
-          prompt: "Rule #{@rule.id} on #{violation[:file]}",
+          prompt: "Rule #{@law.id} on #{violation[:file]}",
           candidate:,
           violation:,
         )
@@ -245,7 +245,7 @@ module Master
       def apply(path, new_src, violation)
         old_src = File.read(path, encoding: "UTF-8")
         return :stale unless fingerprint_matches?(violation)
-        return reject_fix(path, old_src, "collapsed_content") if CollapseGuard.collapse?(@rule.id, old_src, new_src)
+        return reject_fix(path, old_src, "collapsed_content") if CollapseGuard.collapse?(@law.id, old_src, new_src)
         before = scan_all(path)
         write_atomic(path, new_src)
         after = scan_all(path)
@@ -265,10 +265,10 @@ module Master
           return reject_fix(path, old_src, "visual_regression", evidence: custody.message) unless custody.ok?
         end
 
-        @bus&.publish("law_loop:fix_applied", rule: @rule.id, file: path)
+        @bus&.publish("law_loop:fix_applied", rule: @law.id, file: path)
         true
       rescue StandardError => e
-        @bus&.publish("law_loop:write_error", rule: @rule.id, file: path, error: e.message)
+        @bus&.publish("law_loop:write_error", rule: @law.id, file: path, error: e.message)
         false
       end
 
@@ -315,8 +315,8 @@ module Master
 
       def reject_fix(path, original, reason, **details)
         write_atomic(path, original)
-        @bus&.publish("law_loop:fix_rejected", rule: @rule.id, file: path, reason:, **details)
-        Master::Trace::Dmesg.status("fix0", "#{@rule.id} fix rejected, #{File.basename(path)}: #{reason}")
+        @bus&.publish("law_loop:fix_rejected", rule: @law.id, file: path, reason:, **details)
+        Master::Trace::Dmesg.status("fix0", "#{@law.id} fix rejected, #{File.basename(path)}: #{reason}")
         false
       end
 
@@ -330,7 +330,7 @@ module Master
         Line #{violation[:line]}: #{violation[:message]}
         #{ctx[:fix_line]}
         #{visual_fix_context}
-        #{Protocol.law_prompt(@rule)}
+        #{Protocol.law_prompt(@law)}
 
         #{SEMANTIC_PASS_CHECKLIST}
 
