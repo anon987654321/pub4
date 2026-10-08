@@ -23,6 +23,7 @@ require_relative "wishlist"
 require_relative "protocol"
 require_relative "transformation_plan"
 require_relative "convergence_discipline"
+require_relative "reflection"
 
 module Master
   module Fix
@@ -395,7 +396,7 @@ module Master
             return outcome if outcome
 
             if i == 0 && structural_target?(target)
-              structure_checkpoint(target:, files:, run_id:)
+              structure_checkpoint(target:, files:, run_id:) if structural_enabled?
             end
           end
 
@@ -430,6 +431,24 @@ module Master
       # a full-tree run spends its budget on. The first ordinary pass gets to
       # deliver a verified repair; only then does the bounded structural sweep
       # run against freshly observed files.
+      def reflect_then_continue(result, files:, target:, max_passes:, budget_seconds:, run_id:)
+        reflection = @reflection.call(
+          target:, state: terminal_state_for(result).to_s, files:,
+          history: @convergence_discipline.instance_variable_get(:@history),
+          changed_paths: @git.changed_paths,
+          remaining_seconds: @run_journal.remaining_seconds(run_id)
+        )
+        if reflection.repair?
+          @wishlist.record_reflection!(reflection:, state: terminal_state_for(result).to_s, target:, run_id:)
+        elsif reflection.verdict != "KEEP"
+          Master::Trace::Dmesg.status(
+            "reflect0",
+            "#{reflection.verdict.downcase}, queued for human/investigation rather than autonomous mutation"
+          )
+        end
+        continue_with_wishlist(result, files:, target:, max_passes:, budget_seconds:, run_id:)
+      end
+
       def continue_with_wishlist(result, files:, target:, max_passes:, budget_seconds:, run_id:)
         state = terminal_state_for(result)
         return result unless %i[done plateau].include?(state)
@@ -505,7 +524,7 @@ module Master
       end
 
       def structure_checkpoint(target:, files:, run_id:)
-        return if ENV["MASTER_FIX_STRUCTURE_FIRST"] == "0"
+        return unless structural_enabled?
 
         changes = sweep_tree(target, "#{run_id}-structure-checkpoint", phase: :structure_first)
         return if changes.empty?
@@ -514,6 +533,8 @@ module Master
         Master::Trace::Dmesg.status("fix0", "structure checkpoint kept #{changes.size}; corpus refreshed")
         @bus&.publish("fix_loop:structure_checkpoint", target:, changes: changes.size)
       end
+
+      def structural_enabled? = ENV["MASTER_FIX_STRUCTURAL"] == "1"
 
       def structural_target?(target)
         expanded = File.expand_path(target.to_s)
@@ -583,6 +604,7 @@ module Master
       # A clean or plateaued pass gets structural surgery; anything it keeps
       # sends the loop back into repair with the new file list.
       def structural_repair?(result, files:, target:, state:, run_id:, pass:)
+        return false unless structural_enabled?
         return false unless %i[clean plateau].include?(result.status)
 
         structural = sweep_tree(target, run_id, phase: :normal)
