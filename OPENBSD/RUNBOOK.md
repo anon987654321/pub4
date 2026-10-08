@@ -152,7 +152,7 @@ failed` — root has no github host key, and giving it one would hand root a way
 to fetch and run code from the network. It now refuses that invocation and says
 so; this line used to name all three after the word `doas`.
 
-**Rules:**
+**Laws:**
 
 - Run `MASTER/bin/operator status` before starting work; the copy-paste paths
   are in `OPENBSD/data/operator.yml`.
