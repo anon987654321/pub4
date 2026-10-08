@@ -139,6 +139,46 @@ class TestPipeline < Minitest::Test
     assert_equal ["what is fix_loop for?"], recorder.calls
   end
 
+  def test_intake_expands_only_files_inside_its_configured_root
+    Dir.mktmpdir do |dir|
+      File.write(File.join(dir, "notes.txt"), "inside-only\n")
+      result = Master::CLI::Stages::Intake.new(root: dir).call(
+        Master::CLI::PipelineContext.build(user_message: "summarise @notes.txt"),
+      )
+
+      assert result.ok?, result.inspect
+      assert_includes result.value![:message], "inside-only"
+    end
+  end
+
+  def test_intake_does_not_expand_a_reference_outside_its_configured_root
+    Dir.mktmpdir do |dir|
+      outside = File.join(File.dirname(dir), "intake-outside-#{Process.pid}.txt")
+      File.write(outside, "outside-secret\n")
+      result = Master::CLI::Stages::Intake.new(root: dir).call(
+        Master::CLI::PipelineContext.build(user_message: "read @../#{File.basename(outside)}"),
+      )
+
+      assert result.ok?, result.inspect
+      refute_includes result.value![:message], "outside-secret"
+    ensure
+      File.delete(outside) if outside && File.exist?(outside)
+    end
+  end
+
+  def test_intake_does_not_expand_a_symlink_to_a_secret_file
+    Dir.mktmpdir do |dir|
+      File.write(File.join(dir, ".env"), "API_KEY=inside-secret\n")
+      File.symlink(".env", File.join(dir, "notes.txt"))
+      result = Master::CLI::Stages::Intake.new(root: dir).call(
+        Master::CLI::PipelineContext.build(user_message: "read @notes.txt"),
+      )
+
+      assert result.ok?, result.inspect
+      refute_includes result.value![:message], "inside-secret"
+    end
+  end
+
   def test_fix_claims_the_vm23_control_plane_slot
     probe = Object.new
     seen = nil
