@@ -64,7 +64,7 @@ module Master
       # ABSTRACTION and SINGULARITY are the constitutional_laws under laws.yml `laws:`, not
       # law/ files, so they are read from there.
       def load_laws!
-        require File.expand_path("../../law/law", __dir__)
+        require File.expand_path("../../law/definition", __dir__)
         Law.load_all(File.expand_path("../../law", __dir__)) unless Law.definitions.key?(IDS.first.to_sym)
         missing = IDS.reject { |id| Law.definitions.key?(id.to_sym) || constitutional_laws.key?(id) }
         raise "visual usability law missing: #{missing.join(", ")}" unless missing.empty?
