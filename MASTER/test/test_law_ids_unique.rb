@@ -21,7 +21,7 @@ class TestRuleIdsUnique < Minitest::Test
   end
 
   def scanner
-    @scanner ||= Master::Review::Scan::InfraHelpers.build_scanner(root: Master::ROOT)
+    @scanner ||= Master::Fix::Scanner.build(root: Master::ROOT)
   end
 
   def test_every_registered_rule_id_is_unique
