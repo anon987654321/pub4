@@ -22,7 +22,7 @@ class TestTransformationPlan < Minitest::Test
     refute @plan.ordered?(%w[rename merge])
   end
 
-  def test_every_operation_has_a_present_principle
+  def test_every_operation_has_a_present_description
     @plan.operations.each do |operation|
       refute_empty operation.purpose
     end
@@ -43,7 +43,7 @@ class TestTransformationPlan < Minitest::Test
   def test_refactoring_playbook_covers_all_domains
     playbook = @plan.refactoring_playbook
     assert_equal %w[characterize_before_change one_hat delete_before_abstract same_reason_to_change preparatory_refactoring history_as_evidence make_deletion_easy domain_first],
-                 playbook.fetch("principles").map { |entry| entry.fetch("id") }
+                 playbook.fetch("methods").map { |entry| entry.fetch("id") }
     %w[ruby rails prose visual].each do |domain|
       refute_empty playbook.fetch("technique_by_domain").fetch(domain)
     end
@@ -66,7 +66,7 @@ class TestTransformationPlan < Minitest::Test
   end
 
   def test_rename_policy_covers_code_and_structure
-    assert_equal %w[files constants methods variables rules sections], @plan.rename_policy.fetch("scopes")
+    assert_equal %w[files constants methods variables laws sections], @plan.rename_policy.fetch("scopes")
     assert_equal true, @plan.rename_policy.fetch("require_reference_rewrite")
     assert_equal true, @plan.rename_policy.fetch("preserve_public_signatures")
   end
