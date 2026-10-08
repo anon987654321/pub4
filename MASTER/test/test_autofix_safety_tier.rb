@@ -16,7 +16,7 @@ require_relative "test_helper"
 # that an unattended autofix pass corrupts code.
 class TestAutofixSafetyTier < Minitest::Test
   def setup
-    @scanner = Master::Review::Scan::Scanner.new
+    @scanner = Master::Fix::Scanner.new
   end
 
   def test_a_deleting_transform_waits_for_a_person
