@@ -9,14 +9,14 @@ module Deploy
   #
   # This is not hypothetical drift: per-app copies of the compose/save/upload
   # Stimulus controllers existed until they were deleted in favour of
-  # shared/frontend, and nothing prevents that divergence returning. Source
+  # __shared/frontend, and nothing prevents that divergence returning. Source
   # gates check the shared files are *registered*; this checks they are
   # actually *rendered*, and that the shared chrome has the same shape
   # everywhere.
   class CrossAppEquivalenceGate
     ROOT = File.expand_path("../../../..", __dir__)
     RAILS_ROOT = File.join(ROOT, "RAILS")
-    SHARED_FRONTEND = File.join(RAILS_ROOT, "shared", "frontend")
+    SHARED_FRONTEND = File.join(RAILS_ROOT, "__shared", "frontend")
 
     # The contract every app's layout owes the shared engine, as rendered.
     CHROME = <<~JS
@@ -49,7 +49,7 @@ module Deploy
     def run
       @result = GateResult.new
       unless File.directory?(SHARED_FRONTEND)
-        @result.inconclusive!("cross_app: shared/frontend is missing — shared chrome contract cannot be measured")
+        @result.inconclusive!("cross_app: __shared/frontend is missing — shared chrome contract cannot be measured")
         return @result
       end
 
@@ -110,7 +110,7 @@ module Deploy
         detail = values.map { |app, value| "#{app}=#{value.inspect}" }.join(", ")
         @result.fail(
           "cross_app chrome: #{description} differs between apps — #{detail}. " \
-          "These render from shared/frontend/layouts and must agree."
+          "These render from __shared/frontend/layouts and must agree."
         )
       end
 
@@ -136,7 +136,7 @@ module Deploy
     #   renders there. Asserting that is a false positive factory.
     #
     #   "Does every app instantiate the controllers the *shared layout* mounts?"
-    #   — Yes, necessarily: those come from shared/frontend/layouts, which all
+    #   — Yes, necessarily: those come from __shared/frontend/layouts, which all
     #   three apps render. A divergence there is real drift.
     #
     # Only the second is a contract. The first is reported as an inventory
@@ -161,7 +161,7 @@ module Deploy
       return if unused.empty?
 
       @result.warn(
-        "cross_app stimulus inventory: #{unused.size} shared controller(s) in shared/frontend are not instantiated " \
+        "cross_app stimulus inventory: #{unused.size} shared controller(s) in __shared/frontend are not instantiated " \
         "by any running app — #{unused.sort.join(', ')}. Not a contract violation (a controller may serve a surface " \
         "not probed here), but each is dead code until some view attaches data-controller."
       )
