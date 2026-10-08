@@ -30,7 +30,7 @@ class TestFixLoopPriorities < Minitest::Test
   def test_tier2_ids_exist_on_the_live_scanner
     require "fix/scanner"
     scanner = Master::Fix::Scanner.build(root: Master::ROOT)
-    ids = scanner.rules.map { |rule| rule.id.to_s }
+    ids = scanner.laws.map { |rule| rule.id.to_s }
     missing = Master::Fix::FixLoop::LawOrder::TIER2_QUALITY_RULE_IDS - ids
 
     assert_empty missing, "tier2 names rules the scanner does not build: #{missing.join(", ")}"

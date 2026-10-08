@@ -29,8 +29,8 @@ require_relative "../lib/trace/dmesg"
 root = File.expand_path("..", __dir__)
 scanner = Master::Fix::Scanner.build(root:)
 
-Master::Trace::Dmesg.attach("example0", "master0", "#{scanner.rules.size} laws registered")
-Master::Trace::Dmesg.status("example0", "sample, #{scanner.rules.first(5).map(&:id).join(", ")}")
+Master::Trace::Dmesg.attach("example0", "master0", "#{scanner.laws.size} laws registered")
+Master::Trace::Dmesg.status("example0", "sample, #{scanner.laws.first(5).map(&:id).join(", ")}")
 
 target = ARGV.first ? File.expand_path(ARGV.first, root) : File.join(root, "tools", "fixtures")
 hits = scanner.findings([target], depth: :deep)

@@ -13,7 +13,7 @@ require "prism"
 # spares, and every one of these has a threshold or an exemption that is the
 # whole rule.
 class TestStructuralShapeRules < Minitest::Test
-  Rules = Master::Review::Scan::Rules
+  Rules = Master::Review::Scan::Laws
 
   def flags(rule, source, path: "lib/thing.rb")
     rule.check(source, path:).map(&:message)

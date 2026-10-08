@@ -45,7 +45,7 @@ class TestScanDeterministicMode < Minitest::Test
   end
 
   def agent_backed(scanner)
-    scanner.rules.select { |rule| rule.respond_to?(:set_agent) }
+    scanner.laws.select { |rule| rule.respond_to?(:set_agent) }
   end
 
   def with_agent(rules)

@@ -87,7 +87,7 @@ class TestScanRequestTargets < Minitest::Test
 
   def test_aesthetic_profile_walks_only_aesthetic_rules
     scanner = RecordingScanner.new
-    def scanner.rules
+    def scanner.laws
       [Struct.new(:id).new("CONFIG_HIERARCHY"), Struct.new(:id).new("ANTI_DIVITIS")]
     end
     scanner.instance_variable_set(:@rule_ids, nil)
