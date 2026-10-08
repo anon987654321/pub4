@@ -136,7 +136,7 @@ module Master
         def law_detector?(id)
           require File.join(@root, "law", "law") unless defined?(::Law)
           ::Law.load_all(File.join(@root, "law")) if ::Law.definitions.empty?
-          law = ::Law.definitions[id.to_sym]
+          law = ::Law.definitions[id.to_sym] || ::Law.definitions[id.to_s]
           law&.detect
         end
 
