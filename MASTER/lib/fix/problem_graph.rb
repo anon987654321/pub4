@@ -23,6 +23,9 @@ module Master
         "NO_GOD_CLASS" => "split",
         "SMALL_FILES" => "split",
         "JS_MODULE_SIZE" => "split",
+        "STALE_PATH_REFERENCE" => "rename",
+        "PROSE_DUPLICATION" => "merge",
+        "COMMAND_SURFACE_DUPLICATION" => "merge",
       }.freeze
 
       OPERATION_ALTERNATIVES = {
