@@ -100,7 +100,7 @@ restart.
   that only existed mid-history and was never a bug in current schema.rb.
   Confirm against a fresh DB (or the VPS run) before treating this as real.
 
-**Rule of thumb:** a local `bin/ci` failure is only actionable if you can name
+**Decision test:** a local `bin/ci` failure is only actionable if you can name
 which of the above buckets it's *not* in. When in doubt, read
 `RAILS/__shared/config/ci.rb` directly rather than assuming.
 
