@@ -2,7 +2,7 @@
 
 require_relative "../../../tools/master_design"
 require_relative "../../support/gate_result"
-require_relative "../../../tools/scss_rules"
+require_relative "../../../tools/scss"
 
 module Deploy
   # Dialect purity: social / luxury / CRT / face stay separate; vertical accents single map.
