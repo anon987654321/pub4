@@ -30,6 +30,7 @@
 face_eager:
   - attention_model.js
   - face_particles.js
+  - face_sparse_field.js
   - face_audio_bridge.js
   - face_tts_bridge.js
   - face_tts_polish.js
