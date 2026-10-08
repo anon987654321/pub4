@@ -34,7 +34,7 @@ module Master
           1. LOAD
           Read the live constitution, Law registry, Law examples, protected
           paths, verification commands, and target contract. Do not rely on a
-          remembered rule count.
+          remembered Law count.
 
           2. TRACE
           Before mutation, reread the whole working repository: hash every
@@ -64,19 +64,19 @@ module Master
           positive and negative examples before trusting its findings.
 
           6. SEMANTIC
-          Semantic ask rules are executable. The model is the semantic analyst,
+          Semantic ask Laws are executable. The model is the semantic analyst,
           not a spectator. Read the actual file, its surrounding code, callers
           and relevant related files before deciding whether the rule is
           violated.
 
           7. REPAIR
           Attempt a repair for every actionable finding. Use the smallest
-          evidence-backed strategy that satisfies the rule: mechanical, AST,
+          evidence-backed strategy that satisfies the Law: mechanical, AST,
           semantic-model, structural, or rendered-surface repair as applicable.
           "No deterministic fixer exists" is not a terminal state.
 
           8. VERIFY
-          Reread the changed file, re-run the affected rule, and run the
+          Reread the changed file, re-run the affected Law, and run the
           narrowest behavioral or surface check that proves the repair. A failed
           verification rejects or rolls back that repair.
 
@@ -206,7 +206,6 @@ module Master
         corpus = inventory(target: target_path, root: root)
         corpus["eligible_sample"] = Array(files).first(24).map { |path| relative(path, root) } if files
         corpus["skipped_by_caller"] = skipped.to_i if skipped
-        entries = laws.sort_by { |law| law.id.to_s }.map(&:contract_entry)
         detector_matrix = ProtocolDetectorMatrix.matrix(laws)
         payload = {
           "fix_protocol_version" => VERSION,
@@ -217,8 +216,8 @@ module Master
           "terminal_states" => TERMINAL_STATES,
           "capability_report" => capability_report,
           "corpus" => corpus,
-          "rule_counts" => {
-            "law" => rule_rows.size,
+          "law_counts" => {
+            "laws" => law_rows.size,
             "registry" => registry_count
           },
           "laws" => full ? law_rows : law_rows.map { |entry| entry.slice("id", "severity", "mode", "languages", "question", "fix", "enforcement", "fix_strategy", "verify_strategy") },
@@ -237,7 +236,7 @@ module Master
 
           OPERATING MODEL
           #{atlas}
-          cross-tree proof rule: identify the authority, then the executable
+          cross-tree proof law: identify the authority, then the executable
           proof, then the live evidence. If those disagree, surface drift and
           verify the relevant boundary before repairing it.
 
