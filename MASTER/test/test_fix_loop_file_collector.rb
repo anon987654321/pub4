@@ -121,6 +121,15 @@ class TestFixLoopFileCollector < Minitest::Test
     end
   end
 
+
+  def test_stylesheet_line_limit_covers_large_authored_application_stylesheet
+    Dir.mktmpdir do |dir|
+      path = write(dir, "app/assets/stylesheets/application.scss", Array.new(Master::Fix::Scan::FileProcessor::STYLE_MAX_LINES - 100, "x").join("\n"))
+
+      refute_equal :too_many_lines, collector(dir).__send__(:skip_reason, path)
+    end
+  end
+
   def test_authored_source_is_off_limits_to_neither
     Dir.mktmpdir do |dir|
       path = write(dir, "lib/review/thing.rb")
