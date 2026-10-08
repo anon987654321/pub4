@@ -254,7 +254,7 @@ improvise:
   bpm_spread: 3
   # Canonical Dilla-time pocket for the live instrument. The renderer adds its
   # role-specific micro- and nano-timing on top.
-  drum_preset: dillatime
+  drum_preset: dilla_soul_pocket
   # The kit, written a chord at a time with the chord. "drums off" stops it.
   drums: true
   # The kick on every beat, doubled with ghost hits between beats, and now
