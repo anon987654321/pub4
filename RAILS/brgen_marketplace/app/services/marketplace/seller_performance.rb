@@ -6,7 +6,7 @@ class Marketplace::SellerPerformance
     purchases: "MarketplacePurchaseCompleted",
     shipped: "MarketplaceOrderShipped",
     delivered: "MarketplaceOrderDelivered",
-    returns: "MarketplaceReturnReceived"
+    returns: "MarketplaceReturnReceived",
   }.freeze
 
   def initialize(owner)
@@ -42,7 +42,7 @@ class Marketplace::SellerPerformance
       return_rate: ratio(returns, purchases),
       paid_sales_by_currency: paid_sales,
       review_count: review_scope.count,
-      average_rating: review_scope.average(:rating)&.to_f&.round(2)
+      average_rating: review_scope.average(:rating)&.to_f&.round(2),
     }
   end
 

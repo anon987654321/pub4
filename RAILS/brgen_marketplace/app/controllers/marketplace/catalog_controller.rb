@@ -38,7 +38,7 @@ module Marketplace
         city: city_payload,
         query: query.presence,
         count: listings.length,
-        items: listings.map { |listing| catalog_item(listing, ranker) }
+        items: listings.map { |listing| catalog_item(listing, ranker) },
       }
     end
 
@@ -49,7 +49,7 @@ module Marketplace
       {
         id: city&.id,
         name: city&.name,
-        currency: Current.currency.presence || "NOK"
+        currency: Current.currency.presence || "NOK",
       }
     end
 
@@ -103,7 +103,7 @@ module Marketplace
           locality: listing.location,
           source: "brgen",
           protocol: Shared::Commerce::PROTOCOL
-        }
+        },
       }
     end
 

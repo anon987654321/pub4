@@ -63,7 +63,7 @@ module Shared
           source:,
           model: model.to_s.empty? ? nil : model,
           sha256: Digest::SHA256.file(destination).hexdigest,
-          artifact: destination
+          artifact: destination,
         }
         File.open(path, File::WRONLY | File::CREAT | File::APPEND, 0o640) do |file|
           file.flock(File::LOCK_EX)

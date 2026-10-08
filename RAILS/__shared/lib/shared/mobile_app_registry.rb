@@ -90,7 +90,7 @@ module Shared
             {
               "appID" => "#{team_id}.#{app.ios_bundle_id}",
               "paths" => ["*"],
-            }
+            },
           ]
         }
       ) + "\n"

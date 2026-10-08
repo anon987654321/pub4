@@ -54,7 +54,7 @@ module Shared
           title: title.to_s,
           category: category.to_s.presence,
           source_url: source_url.to_s,
-          commerce_key: commerce_key.to_s
+          commerce_key: commerce_key.to_s,
         }.compact
       )
       "#{base.to_s.sub(%r{/$}, "")}/items/new?#{query}"

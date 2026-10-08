@@ -15,7 +15,7 @@ class Takeaway::Order
       "confirmed" => 30,
       "preparing" => 20,
       "out_for_delivery" => 10,
-      "delivered" => 0
+      "delivered" => 0,
     }.freeze
 
     # How far from the kitchen dispatch will look for a courier. Bergen end to end

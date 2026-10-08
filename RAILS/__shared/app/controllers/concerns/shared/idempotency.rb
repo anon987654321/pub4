@@ -79,7 +79,7 @@ module Shared
           "status" => response.status,
           "body" => response.body.to_s,
           "content_type" => response.media_type,
-          "location" => response.headers["Location"]
+          "location" => response.headers["Location"],
         },
         expires_in: TTL
       )

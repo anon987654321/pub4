@@ -19,7 +19,7 @@ module Shared
         },
         "configs" => apps.to_h { |app| [ config_name(app), "release" ] },
         "targets" => { "Pub4Mobile" => target(apps) },
-        "schemes" => apps.to_h { |app| [ config_name(app), scheme(config_name(app)) ] }
+        "schemes" => apps.to_h { |app| [ config_name(app), scheme(config_name(app)) ] },
       }
     end
 
@@ -40,7 +40,7 @@ module Shared
             "CURRENT_PROJECT_VERSION" => "1",
           },
           "configs" => apps.to_h { |app| [ config_name(app), app_settings(app) ] }
-        }
+        },
       }
     end
 
