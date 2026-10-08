@@ -5,11 +5,11 @@ require_relative "test_helper"
 # The law catalogue contains the governing principles and execution policy;
 # executable law lives in MASTER/law/*.rb. These tests assert each authority
 # without creating a second rule catalogue in YAML.
-class TestRulesRegistry < Minitest::Test
+class TestLawsRegistry < Minitest::Test
   def laws
     require File.expand_path("../law/law", __dir__)
-    ::Law.load_all(File.expand_path("../law", __dir__)) if ::Law.rules.empty?
-    ::Law.rules.values
+    ::Law.load_all(File.expand_path("../law", __dir__)) if ::Law.definitions.empty?
+    ::Law.definitions.values
   end
 
   def test_executable_law_registry_is_not_quietly_empty
