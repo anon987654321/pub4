@@ -50,6 +50,8 @@
   const ghosts = [];
   const trails = [];
   const resonance = { active: false, at: 0, kind: "", energy: 0.0, seed: 0 };
+  const semantic = { kind: "idle", at: 0, energy: 0, x: 0, y: 0, z: 0 };
+  const motion = { resolve: 0, bloom: 0, collapse: 0, fragment: 0 };
 
   const clamp = (v, lo = 0, hi = 1) => Math.max(lo, Math.min(hi, Number(v) || 0));
   const smooth = (a, b, x) => {
@@ -293,7 +295,7 @@
       y: (seeded(trails.length, 61) - 0.5) * 1.6,
       z: -0.18
     };
-    trails.push({ start, end, born: now(), life: 1300 });
+    trails.push({ start, end, kind: "evidence", energy: 0.6, born: now(), life: 1300 });
     while (trails.length > 12) trails.shift();
   }
 
@@ -303,6 +305,14 @@
     resonance.kind = String(kind);
     resonance.energy = clamp(energy);
     resonance.seed += 1;
+    semantic.kind = String(kind);
+    semantic.at = resonance.at;
+    semantic.energy = clamp(energy);
+    semantic.x = kind === "law" ? 0 : kind === "evidence" ? 0.18 : 0;
+    semantic.y = kind === "law" ? 0.34 : kind === "evidence" ? -0.08 : 0.06;
+    semantic.z = 0.14;
+    motion.bloom = Math.max(motion.bloom, clamp(energy));
+    if (kind === "reflection" || kind === "proof") motion.resolve = 1;
     captureGhosts(window.MASTER_FACE?.State || {});
     if (kind === "evidence" || kind === "proof") addTrail();
   }
@@ -389,7 +399,8 @@
     const profile = modeProfile(state);
     const mobile = isMobile();
     const maxActive = mobile ? mobileParticles : maxParticles;
-    const requested = Math.min(maxActive, Math.max(14, Math.round(profile.count * Number(SPEC.density_scale || 1))));
+    const distanceDensity = clamp((6.8 - cameraDistance) / 2.4, 0.34, 1);
+    const requested = Math.min(maxActive, Math.max(14, Math.round(profile.count * Number(SPEC.density_scale || 1) * distanceDensity)));
     const focus = clamp(state.focus ?? state.attention ?? 0.8);
     const confidence = clamp(state.confidence ?? 0.86);
     const risk = clamp(state.risk ?? 0);
@@ -397,6 +408,10 @@
     const cameraDistance = Number(face?.camera?.position?.length?.() || 5.2);
     const distanceReveal = clamp((6.6 - cameraDistance) / 2.8, 0.18, 1);
     const reveal = Math.max(distanceReveal, 0.35 + focus * 0.65);
+    const semanticAge = Math.max(0, time - semantic.at);
+    const semanticLive = semanticAge < 2400 ? 1 - semanticAge / 2400 : 0;
+    const gather = state.mode === "thinking" || state.mode === "working" ? (0.05 + profile.activity * 0.16) * focus : 0;
+    const voiceFilament = state.mode === "speaking" ? (0.10 + (Number(state.arousal) || 0) * 0.22) : 0;
     const breath = reduced ? 0 : Math.sin(time * 0.00035) * (0.012 + profile.activity * 0.018);
     const tide = reduced ? 0 : Math.sin(time * 0.00042 + state.entropy * 4.0) * profile.drift;
     const mouseX = Number(face?.State?.mouseX || 0) * 0.65;
