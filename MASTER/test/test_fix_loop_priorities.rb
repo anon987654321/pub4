@@ -28,7 +28,7 @@ class TestFixLoopPriorities < Minitest::Test
   end
 
   def test_tier2_ids_exist_on_the_live_scanner
-    require "review/scan/infra_helpers"
+    require "fix/scanner"
     scanner = Master::Review::Scan::InfraHelpers.build_scanner(root: Master::ROOT)
     ids = scanner.rules.map { |rule| rule.id.to_s }
     missing = Master::Fix::FixLoop::LawOrder::TIER2_QUALITY_RULE_IDS - ids
