@@ -36,7 +36,7 @@ module Master
       include Master::Review::Scan::ProgressReporter
         include Master::Review::Scan::Transport
 
-        # The Scanner is the coordinator of the review process. What it walks
+        
         # is PathFilter's decision, how it walks is Transport's, and what it
         # says while walking is ProgressReporter's; rule application is its own.
 
@@ -283,19 +283,19 @@ module Master
           entries = []
           languages = Master::FILE_LANGUAGE_MAP.values.compact.map(&:to_s).uniq
           languages << "javascript"
-          Array(laws).each do |rule|
-            declared = if rule.class.respond_to?(:dsl_langs)
-              Array(rule.class.dsl_langs).filter_map { |lang| lang.to_s unless lang.to_s.empty? }
+          Array(laws).each do |law|
+            declared = if law.class.respond_to?(:dsl_langs)
+              Array(law.class.dsl_langs).filter_map { |lang| lang.to_s unless lang.to_s.empty? }
             else
               []
             end
-            entries << [rule, declared]
+            entries << [law, declared]
             languages.concat(declared)
           end
 
           languages.uniq.each_with_object({}) do |language, buckets|
-            buckets[language] = entries.filter_map do |rule, declared|
-              rule if declared.empty? || declared.include?(language)
+            buckets[language] = entries.filter_map do |law, declared|
+              law if declared.empty? || declared.include?(language)
             end.freeze
           end.freeze
         end
@@ -306,8 +306,8 @@ module Master
           stamp = [stat.size, stat.ino, stat.mtime.to_r]
           return @law_prediction_thresholds if @law_prediction_thresholds_stamp == stamp
 
-          rules = Master.load_yaml(path) || {}
-          prediction = rules["prediction_engine"]
+          laws = Master.load_yaml(path) || {}
+          prediction = laws["prediction_engine"]
           prediction = {} unless prediction.is_a?(Hash)
 
           # prediction_engine was retired; an absent policy means no additional
@@ -330,7 +330,7 @@ module Master
         # bin/gate over all four governed trees — adds without deleting.
         #
         # The list is Master::Review::Scan::AstFixer::DELETING_TRANSFORMS rather than a copy here: it
-        # names methods that class defines, and the copy that stood here gated
+        , and the copy that stood here gated
         # only this path while AstFixer ran the transform unasked on the other.
         def deleting_law?(law_id)
           transform = law_transforms[law_id.to_s]
