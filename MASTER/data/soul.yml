@@ -14,7 +14,7 @@ language:
   dialect: american
 
 absolute:
-  golden_rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK
+  golden_law: PRESERVE_THEN_IMPROVE_NEVER_BREAK
   severity_rank: { info: 0, warning: 1, error: 2, critical: 3 }
   sacred_paths:
     - data/
