@@ -30,10 +30,10 @@ class TestVanguardProtocol < Minitest::Test
     assert Ops::RuntimeLoopGuards.guard_subprocess_context!
   end
 
-  # Rule.inherited registers every subclass, and the builder instantiates every
+  # Law.inherited registers every subclass, and the builder instantiates every
   # auto-built one, so without the opt-out this fixture joins every scan the
   # process runs afterwards and fails each file it is handed.
-  class ExplodingAstRule < Review::Scan::Rule
+  class ExplodingAstRule < Review::Scan::Law
     declare id: "exploding_ast", severity: :error
 
     def self.auto_build? = false
