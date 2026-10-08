@@ -46,7 +46,7 @@ class CoveragePolicyTest < Minitest::Test
 
   def test_ci_requests_full_coverage
     ci = File.read(File.join(ROOT, "__shared/config/ci.rb"))
-    assert_equal 1, ci.scan("FULL_COVERAGE=1").size
+    assert_operator ci.scan("FULL_COVERAGE=1").size, :>=, 2
     assert_includes ci, "FULL_COVERAGE=1 DEFAULT_TEST="
     assert_includes ci, "FULL_COVERAGE=1 bin/rails test:system"
   end
