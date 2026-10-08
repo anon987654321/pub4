@@ -106,7 +106,7 @@ module Law
     # principle may have Ruby, zsh, Rails or another domain adapter.
     def universal? = law_scope == :universal
 
-    # Lifecycle controls whether a law may affect enforcement. Existing rules
+    # Lifecycle controls whether a law may affect enforcement. Existing laws
     # default to active for compatibility; candidates can enter proposed/proven
     # without silently becoming merge blockers.
     def enforceable? = %i[active trusted].include?(lifecycle)
@@ -370,7 +370,7 @@ module Law
     VERSION = 1
     PROTOCOL = [
       "IDENTIFY: state the task and intended effects before acting.",
-      "READ: load the applicable constitution/rules before deciding.",
+      "READ: load the applicable constitution/laws before deciding.",
       "EVIDENCE: distinguish observed facts, inference, and proposal.",
       "CHECK: apply every applicable law; do not stop at the first convenient rule.",
       "PREFER: resolve conflicts by declared priority and safety constraints.",
@@ -434,8 +434,8 @@ module Law
     end
   end
 
-  # Derived rule index. Identity, enforcement surface, lifecycle, proof and
-  # universality stay on Law::Rule; this index is generated and never authoritative.
+  # Derived law index. Identity, enforcement surface, lifecycle, proof and
+  # universality stay on Law::Definition; this index is generated and never authoritative.
   module Index
     module_function
 
@@ -459,40 +459,40 @@ module Law
     end
 
     def validate!(definitions = Law.definitions.values)
-      raise ArgumentError, "rule index is empty" if definitions.empty?
+      raise ArgumentError, "law index is empty" if definitions.empty?
 
       ids = definitions.map { |rule| rule.id.to_s }
       duplicate = ids.tally.select { |_, count| count > 1 }.keys
       raise ArgumentError, "duplicate executable law ids: #{duplicate.join(', ')}" unless duplicate.empty?
 
       invalid = definitions.reject { |rule| Definition::LIFECYCLE_TRANSITIONS.key?(rule.lifecycle) }
-      raise ArgumentError, "invalid rule lifecycle: #{invalid.map(&:id).join(', ')}" unless invalid.empty?
+      raise ArgumentError, "invalid law lifecycle: #{invalid.map(&:id).join(', ')}" unless invalid.empty?
 
       invalid = definitions.reject { |rule| %i[never review automatic].include?(rule.autofix) }
-      raise ArgumentError, "invalid rule autofix policy: #{invalid.map(&:id).join(', ')}" unless invalid.empty?
+      raise ArgumentError, "invalid law autofix policy: #{invalid.map(&:id).join(', ')}" unless invalid.empty?
 
       automatic = definitions.select { |rule| rule.autofix == :automatic && !rule.scannable? }
       unless automatic.empty?
         raise ArgumentError, "automatic autofix without deterministic detector: #{automatic.map(&:id).join(', ')}"
       end
 
-      rows(rules)
+      rows(definitions)
     end
 
     def render(definitions = Law.definitions.values)
-      entries = validate!(rules)
+      entries = validate!(definitions)
       JSON.pretty_generate(
         "index_version" => VERSION,
         "law_count" => entries.length,
         "universal_count" => entries.count { |entry| entry["law_scope"] == "universal" },
-        "rules" => entries,
+        "laws" => entries,
       )
     end
   end
 
   LOAD_MUTEX = Mutex.new
 
-  @rules = {}
+  @definitions = {}
   @law_sources = {}
   @law_stamps = {}
   class << self
@@ -501,20 +501,20 @@ module Law
     def define(id, &block)
       b = Builder.new(id)
       b.instance_eval(&block)
-      raise ArgumentError, "duplicate law #{id}" if @rules.key?(id)
-      @rules[id] = b.build
+      raise ArgumentError, "duplicate law #{id}" if @definitions.key?(id)
+      @laws[id] = b.build
     end
 
     def load_all(dir = __dir__)
       files = Dir.glob(File.join(dir, "*.rb")).sort.map { |file| File.expand_path(file) }
       files.reject! { |file| file == File.expand_path(__FILE__) }
 
-      definitions_before = @rules.dup
+      definitions_before = @definitions.dup
       sources_before = @law_sources.dup
       stamps_before = @law_stamps.dup
 
       removed_sources = @law_sources.keys - files
-      removed_sources.each { |source| @law_sources[source].each { |id| @rules.delete(id) } }
+      removed_sources.each { |source| @law_sources[source].each { |id| @laws.delete(id) } }
       removed_sources.each do |source|
         @law_sources.delete(source)
         @law_stamps.delete(source)
@@ -525,16 +525,16 @@ module Law
         stamp = [stat.size, stat.ino, stat.mtime.to_r]
         next if @law_stamps[source] == stamp
 
-        @law_sources[source].to_a.each { |id| @rules.delete(id) }
+        @law_sources[source].to_a.each { |id| @laws.delete(id) }
         @law_sources[source] = []
-        before_ids = @rules.keys
+        before_ids = @laws.keys
         load source
-        @law_sources[source] = @rules.keys - before_ids
+        @law_sources[source] = @laws.keys - before_ids
         @law_stamps[source] = stamp
       end
-      @rules
+      @laws
     rescue StandardError
-      @rules = definitions_before if defined?(definitions_before)
+      @laws = definitions_before if defined?(definitions_before)
       @law_sources = sources_before if defined?(sources_before)
       @law_stamps = stamps_before if defined?(stamps_before)
       raise
@@ -543,7 +543,7 @@ module Law
     def scan(file, language: nil)
       text = File.read(file, encoding: "UTF-8")
       text = conduct(text) if file.start_with?(__dir__)
-      @rules.values.select { |r| r.applies?(file, language) }.flat_map { |r| r.scan(text, file:) }
+      @laws.values.select { |r| r.applies?(file, language) }.flat_map { |r| r.scan(text, file:) }
     end
 
     # A law file necessarily contains the pattern it forbids: in its detector,
