@@ -24,7 +24,7 @@ class WriteGuardTest < Minitest::Test
     guard_class = Master::Fix::WriteGuard
     built = 0
 
-    Master::Review::Scan::InfraHelpers.stub(:build_scanner, ->(**) {
+    Master::Fix::Scanner.stub(:build, ->(**) {
       built += 1
       Struct.new(:rules).new([])
     }) do
