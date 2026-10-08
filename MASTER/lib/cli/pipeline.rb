@@ -177,7 +177,7 @@ module Master
           next [] unless result.ok?
           result.value!.filter_map do |finding|
             law_id = finding.respond_to?(:law_id) ? finding.law_id : finding[:law_id] || finding[:law]
-            law_id.to_s if TIER1_CRITICAL_LAW_IDS.include?(rule_id.to_s)
+            law_id.to_s if TIER1_CRITICAL_LAW_IDS.include?(law_id.to_s)
           end
         end
       end
