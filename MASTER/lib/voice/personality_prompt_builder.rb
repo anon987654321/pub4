@@ -164,7 +164,7 @@ module Master
         anti_simulation = soul.dig("absolute", "anti_simulation", "forbidden") || []
         [
           "<master_constitution tier=\"absolute\">",
-          "golden_rule: #{constitution["golden_rule"]}",
+          "golden_law: #{constitution["golden_law"]}",
           "output_never: #{Array(constitution["banned_output"]).join(', ')}",
           "opener_never: #{Array(strunk["preambles"]).first(4).join(' / ')}",
           "closer_never: #{Array(strunk["endings"]).first(3).join(' / ')}",
