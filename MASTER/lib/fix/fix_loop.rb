@@ -23,6 +23,7 @@ require_relative "wishlist"
 require_relative "protocol"
 require_relative "transformation_plan"
 require_relative "convergence_discipline"
+require_relative "reflection"
 
 module Master
   module Fix
@@ -63,10 +64,10 @@ module Master
       RUN_BUDGET_SECONDS = Integer(ENV.fetch("MASTER_FIX_RUN_BUDGET_S", 30 * 60))
       WORKFLOW_PATH = Master.limits_path.freeze
 
-      def initialize(rules:, agent:, scanner:, root:, axioms: nil, bus: nil, git: nil, learnings: nil,
+      def initialize(laws:, agent:, scanner:, root:, axioms: nil, bus: nil, git: nil, learnings: nil,
                      incremental: false, ground_truth: nil, preserve_user_intent: nil,
                      law_resolver: nil, homeostat: nil)
-        @rules = rules
+        @laws = laws
         @axioms = axioms
         @agent = agent
         path_root = File.expand_path(root)
@@ -85,8 +86,8 @@ module Master
         @convergence_discipline = ConvergenceDiscipline.new(root: @root, bus: @bus)
 
         @file_collector = FileCollector.new(root:, bus:)
-        @law_order = LawOrder.new(rules:, learnings:, bus:, root:)
-        @pass_runner = build_pass_runner(rules:, agent:, scanner:, root:, bus:, learnings:,
+        @law_order = LawOrder.new(laws:, learnings:, bus:, root:)
+        @pass_runner = build_pass_runner(laws:, agent:, scanner:, root:, bus:, learnings:,
           ground_truth:, preserve_user_intent:, law_resolver:, homeostat: @homeostat,
           discipline: @convergence_discipline, wishlist: @wishlist)
         @sweeps = build_sweeps(agent:, root:, bus:)
@@ -110,17 +111,21 @@ module Master
 
         current_phase = :corpus
         files = incremental ? @file_collector.collect_changed(target) : @file_collector.collect(target)
-        @pass_runner.full_semantic! if requested && @pass_runner.respond_to?(:full_semantic!)
-        coverage = {
+                coverage = {
           candidates: @file_collector.candidate_count,
           collected: files.size,
           skipped: @file_collector.skipped,
+          blocking_skips: @file_collector.respond_to?(:blocking_skips) ? @file_collector.blocking_skips : {},
         }
         @bus&.publish("fix_loop:corpus", target:, **coverage)
         Master::Trace::Dmesg.status(
           "fix0",
           "corpus candidates=#{coverage[:candidates]} collected=#{coverage[:collected]} skipped=#{coverage[:skipped]}",
         )
+        unless coverage[:blocking_skips].empty?
+          detail = coverage[:blocking_skips].map { |reason, count| "#{reason}=#{count}" }.join(", ")
+          return Result.err("fix_loop: uninspectable inputs remain: #{detail}", category: :validation)
+        end
         if coverage[:candidates].positive? && files.empty?
           reasons = @file_collector.skip_reasons.sort_by { |reason, count| [-count, reason] }
           detail = reasons.first(4).map { |reason, count| "#{reason}=#{count}" }.join(", ")
@@ -250,6 +255,7 @@ module Master
             candidates: @file_collector.candidate_count,
             collected: files.size,
             skipped: @file_collector.skipped,
+          blocking_skips: @file_collector.respond_to?(:blocking_skips) ? @file_collector.blocking_skips : {},
           },
         )
       end
@@ -290,7 +296,7 @@ module Master
           files:, target:, max_passes:, deadline:, budget_seconds:,
           start_pass: resumed.value!, run_id:, wishlist_proposals: []
         )
-        result = continue_with_wishlist(result, files:, target:, max_passes:, budget_seconds:, run_id:)
+        result = reflect_then_continue(result, files:, target:, max_passes:, budget_seconds:, run_id:)
         finish_run(result, target, run_id, mission:, requested:)
       end
 
