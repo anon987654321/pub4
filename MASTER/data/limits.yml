@@ -16,7 +16,7 @@
 # Add a top-level key only together with its reader.
 schema: 1
 
-principle_groups:
+law_groups:
   axioms:
   - frozen_string
   - explicit
@@ -191,46 +191,46 @@ principle_groups:
 scan_profiles:
   default: full
   core:
-    rules: core
+    laws: core
     aliases:
     - quick
     description: Core axiom and small-function findings after a deep scan
   full:
-    rules: '*'
+    laws: '*'
     aliases:
     - all
     description: All registered scan rules
   axioms_only:
-    rules: axioms
+    laws: axioms
     aliases:
     - axioms
     description: Constitutional axioms only
   solid_focus:
-    rules: solid_focus
+    laws: solid_focus
     aliases:
     - solid
     description: SOLID principles plus axioms
   critical:
-    rules: '*'
+    laws: '*'
     severity:
     - error
     - veto
     description: Only error and veto findings for urgent triage
   solid:
-    rules: solid_focus
+    laws: solid_focus
     description: SOLID principles focus
   axioms:
-    rules: axioms
+    laws: axioms
     description: Constitutional axioms only
   cosmetic:
-    rules: cosmetic
+    laws: cosmetic
     aliases:
     - style
     - hygiene
     - perfection
     description: Hygiene, micro-typography, naming, and style-perfection lint
   aesthetic:
-    rules: aesthetic
+    laws: aesthetic
     aliases:
     - pixel
     - ui
@@ -238,7 +238,7 @@ scan_profiles:
     - design
     description: Pixel-perfect UI/UX, typography, flat design, Fitts/Hick, Rams tags
   rails:
-    rules: '*'
+    laws: '*'
     aliases: []
     description: Full deep scan intended for RAILS app trees (use path RAILS/<app>)
 autoloop:
