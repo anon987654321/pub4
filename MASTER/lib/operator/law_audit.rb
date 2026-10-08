@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-# Audits the rules, not the code they judge.
+# Audits the laws, not the code they judge.
 #
-# Every other instrument here asks whether the tree obeys the rules. This asks
-# whether a rule can see its own subject, because on 2026-08-25 three could not
+# Every other instrument here asks whether the tree obeys the laws. This asks
+# whether a law can see its own subject, because on 2026-08-25 three could not
 # and nothing said so for as long as they had existed:
 #
 #   FROZEN_STRING_LITERAL asks whether a file opens with the magic comment.
@@ -17,16 +17,16 @@
 # first check below exists rather than a cleverer one: a fixture proves with
 # file "-", which has no extension and therefore no comment syntax, so the
 # fixture is read whole while the real file is not. The proof and the production
-# path disagreed about what the detector would be shown, and a rule cannot
+# path disagreed about what the detector would be shown, and a law cannot
 # notice that about itself.
 #
 # Three deterministic checks, no model required:
 #
 #   fixture_blindness  Re-prove bad/good through a filename carrying a real
-#                      extension for the rule's language. A rule whose verdict
+#                      extension for the law's language. A rule whose verdict
 #                      changes was proved against input its subjects never get.
 #   saturation         Firing rate over a real corpus. A rule that flags most of
-#                      what it reads is not enforcing a rule, it is describing
+#                      what it reads is not enforcing a law, it is describing
 #                      the codebase, and its findings are noise at scale.
 #   silent             Fires on nothing in the corpus. Either the tree obeys it
 #                      or it is aimed at something that is not there — the
@@ -36,7 +36,7 @@
 #   ruby MASTER/tools/law_audit.rb
 #   ruby MASTER/tools/law_audit.rb --json
 #
-# The adversarial half — steelman the rule, then ask what it fires on that it
+# The adversarial half — steelman the law, then ask what it fires on that it
 # should not — belongs on top of this, not instead of it. These three are free,
 # repeatable, and caught every one of the three real bugs.
 
@@ -100,8 +100,8 @@ module Operator
         require File.join(MASTER, "lib", "master")
         require File.join(MASTER, "law", "law")
       end
-      ::Law.load_all(File.join(MASTER, "law")) if ::Law.rules.empty?
-      ::Law.rules
+      ::Law.load_all(File.join(MASTER, "law")) if ::Law.definitions.empty?
+      ::Law.definitions
     end
 
     def corpus
@@ -119,27 +119,27 @@ module Operator
     # the defect it was written to find.
     def language_of(path) = Master::FILE_LANGUAGE_MAP[File.extname(path)]&.to_sym
 
-    # An extension the rule's own `languages` would accept. Rules that declare
+    # An extension the law's own `languages` would accept. Rules that declare
     # none apply everywhere, so ruby stands in for them.
-    def realistic_extension(rule)
-      wanted = rule.languages.map(&:to_s)
+    def realistic_extension(law)
+      wanted = law.languages.map(&:to_s)
       wanted = ["ruby"] if wanted.empty?
       Master::FILE_LANGUAGE_MAP.find { |_, lang| wanted.include?(lang) }&.first || ".rb"
     end
 
     # The check that would have caught all three. Prove the fixtures the way a
     # real file is read, not the way a fixture is.
-    def fixture_blindness(rule)
+    def fixture_blindness(law)
       ext = realistic_extension(rule)
       as_file = "fixture#{ext}"
-      bad_seen = !rule.scan(rule.bad, file: as_file).empty?
-      good_seen = rule.scan(rule.good, file: as_file).empty?
+      bad_seen = !law.scan(rule.bad, file: as_file).empty?
+      good_seen = law.scan(rule.good, file: as_file).empty?
       return if bad_seen && good_seen
 
       reason = []
       reason << "bad fixture no longer flagged" unless bad_seen
       reason << "good fixture now flagged" unless good_seen
-      { rule: rule.id.to_s, extension: ext, detail: reason.join(" and ") }
+      { law: law.id.to_s, extension: ext, detail: reason.join(" and ") }
     end
 
     # law/ arrives conducted, the way the runtime reads it.
@@ -150,7 +150,7 @@ module Operator
     # read them raw, so a law matching nothing in the tree but its own `detect`
     # line counted as having found a subject and stayed out of the silent list.
     # Measured both ways on 2026-09-08: 24 raw against 38 conducted, fourteen
-    # rules whose only hit was their own source.
+    # laws whose only hit was their own source.
     def source_of(path)
       code = File.read(path, encoding: "UTF-8").scrub
       return code unless path.to_s.match?(%r{/law/[^/]+\.rb\z})
@@ -161,32 +161,32 @@ module Operator
     def rates
       files = corpus.map { |path| [path, language_of(path), source_of(path)] }
       law.values.select(&:scannable?).filter_map do |rule|
-        applicable = files.select { |path, lang, _| rule.applies?(path, lang) }
+        applicable = files.select { |path, lang, _| law.applies?(path, lang) }
         next if applicable.empty?
 
-        hits = applicable.count { |path, _, text| !rule.scan(text, file: path).empty? }
-        { rule: rule.id.to_s, hits:, applicable: applicable.size, rate: hits.fdiv(applicable.size) }
+        hits = applicable.count { |path, _, text| !law.scan(text, file: path).empty? }
+        { law: law.id.to_s, hits:, applicable: applicable.size, rate: hits.fdiv(applicable.size) }
       end
     end
 
-    # "Which rules are never asked" belongs to tools/law_reach.rb, which counts
+    # "Which laws are never asked" belongs to tools/law_reach.rb, which counts
     # 57 and had counted them before this file existed. A version of it here
-    # measured 67 by also counting rules whose semantic prompt is dropped while a
-    # lexical detector still enforces them — reachable rules, reported as gaps.
-    # One question, one instrument; this one is about whether a rule that DOES
+    # measured 67 by also counting laws whose semantic prompt is dropped while a
+    # lexical detector still enforces them — reachable laws, reported as gaps.
+    # One question, one instrument; this one is about whether a law that DOES
     # run can see its subject.
     def audit
-      blind = law.values.select(&:scannable?).filter_map { |rule| fixture_blindness(rule) }
+      blind = law.values.select(&:scannable?).filter_map { |law| fixture_blindness(law) }
       measured = rates
       {
-        rules: law.size,
+        laws: law.size,
         lexical: law.values.count(&:scannable?),
         semantic: law.values.count(&:semantic?),
-        practice: law.values.count { |r| !r.practice.nil? },
+        practice: law.values.count { |law| !law.practice.nil? },
         corpus: corpus.size,
         fixture_blindness: blind,
         saturation: measured.select { |r| r[:rate] > SATURATION }.sort_by { |r| -r[:rate] },
-        silent: measured.select { |r| r[:hits].zero? }.map { |r| r[:rule] }.sort,
+        silent: measured.select { |row| row[:hits].zero? }.map { |row| row[:law] }.sort,
       }
     end
 
@@ -200,17 +200,17 @@ module Operator
         puts "law_audit: every fixture survives being read as a real file"
       else
         found[:fixture_blindness].each do |f|
-          warn "law_audit: #{f[:rule]} proves on \"-\" but not on #{f[:extension]} — #{f[:detail]}"
+          warn "law_audit: #{f[:law]} proves on \"-\" but not on #{f[:extension]} — #{f[:detail]}"
         end
         warn "law_audit: a fixture read whole and a file read with its comments blanked are different inputs"
       end
 
       found[:saturation].each do |r|
         warn format("law_audit: %s fires on %d of %d applicable files (%d%%) — describing the tree, not judging it",
-                    r[:rule], r[:hits], r[:applicable], (r[:rate] * 100).round)
+                    r[:law], r[:hits], r[:applicable], (r[:rate] * 100).round)
       end
 
-      puts "law_audit: #{found[:silent].size} rule(s) fired on nothing here — #{found[:silent].join(', ')}" unless found[:silent].empty?
+      puts "law_audit: #{found[:silent].size} law(s) fired on nothing here — #{found[:silent].join(', ')}" unless found[:silent].empty?
 
       found[:fixture_blindness].empty? && found[:saturation].empty?
     end
