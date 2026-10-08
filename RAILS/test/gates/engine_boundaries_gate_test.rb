@@ -77,6 +77,38 @@ class EngineBoundariesGateTest < Minitest::Test
     assert_operator result.checks_ran, :>=, 6, "fewer engines than Brgen verticals — check the glob, not the tree"
   end
 
+  def test_nested_engine_is_scanned
+    Dir.mktmpdir do |dir|
+      plant(dir, "RAILS/brgen_dating/lib/dating/engine.rb", "module Dating
+  class Engine
+    isolate_namespace Dating
+  end
+end
+")
+      plant(dir, "RAILS/brgen_marketplace/lib/marketplace/engine.rb", "module Marketplace
+  class Engine
+    isolate_namespace Marketplace
+  end
+end
+")
+      plant(dir, "RAILS/brgen_marketplace/engines/takeaway/lib/takeaway/engine.rb", "module Takeaway
+  class Engine
+    isolate_namespace Takeaway
+  end
+end
+")
+      plant(dir, "RAILS/brgen_marketplace/engines/takeaway/app/models/takeaway/order.rb", "class Takeaway::Order
+  Dating::Profile.first
+end
+")
+
+      result = GATE.run(root: dir)
+
+      refute result.ok?, "the nested engine was invisible to the boundary scan"
+      assert_match(%r{brgen_marketplace/engines/takeaway/app/models/takeaway/order.rb:2 names Dating::}, result.failures.first)
+    end
+  end
+
   def test_no_engines_is_inconclusive_rather_than_clean
     result = Dir.mktmpdir { |dir| GATE.run(root: dir) }
 
