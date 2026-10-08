@@ -7,7 +7,8 @@ module Operator
   module Environment
     module_function
 
-    OPENBSD_RUBY_PATTERN = /\A3\.(?:3|4)\.\d+\z/
+    SUPPORTED_RUBY_MIN = Gem::Version.new("3.3.0")
+    SUPPORTED_RUBY_MAX = Gem::Version.new("4.1.0")
 
     def repo_root(from: __dir__)
       File.expand_path("../../..", from)
@@ -29,14 +30,18 @@ module Operator
       Gem::Version.new(RUBY_VERSION)
     end
 
-    def required_ruby
-      @required_ruby ||= Gem::Version.new(File.read(File.join(repo_root, ".ruby-version")).strip)
+    def preferred_ruby
+      path = File.join(repo_root, ".ruby-version")
+      return if !File.file?(path)
+
+      value = File.read(path).strip
+      value.empty? ? nil : Gem::Version.new(value)
+    rescue ArgumentError
+      nil
     end
 
     def ruby_version_ok?
-      return OPENBSD_RUBY_PATTERN.match?(ruby_version.to_s) if on_openbsd?
-
-      ruby_version == required_ruby
+      ruby_version >= SUPPORTED_RUBY_MIN && ruby_version < SUPPORTED_RUBY_MAX
     end
 
     def tree_kind
@@ -64,41 +69,4 @@ module Operator
       # Swallow's ledger, which also isn't loaded in this module's standalone
       # callers (bin/vps-state, integrity_gate.rb) that never boot the full
       # Master:: namespace. Referencing it here raised NameError and masked
-      # the real (harmless) connection-refused underneath it.
-      false
-    end
-
-    def deployed_app_root(app)
-      "/home/#{app}/app"
-    end
-
-    def ruby_label
-      "#{RbConfig.ruby} (#{RUBY_VERSION})"
-    end
-
-    def ruby_mismatch_message
-      return if ruby_version_ok?
-
-      if on_openbsd?
-        "Ruby #{RUBY_VERSION} detected; OpenBSD MASTER accepts Ruby 3.3.x or 3.4.x; local .ruby-version is #{required_ruby}"
-      else
-        "Ruby #{RUBY_VERSION} detected; pub4 requires .ruby-version"
-      end
-    end
-
-    def next_command_for(mode = self.mode)
-      case mode
-      when :vps_operator
-        "zsh OPENBSD/bin/vps-deploy <app>"
-      when :local_contributor
-        if ruby_version_ok?
-          "OPENBSD/bin/check && cd MASTER && bin/check --profile=contributor"
-        else
-          "MASTER/bin/ruby OPENBSD/bin/check"
-        end
-      else
-        "OPENBSD/bin/check-full"
-      end
-    end
-  end
-end
+      # the real (harmless) connection-refused und...[truncated]
