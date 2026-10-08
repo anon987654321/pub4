@@ -6,7 +6,7 @@ require "digest"
 require "yaml"
 require "tempfile"
 require "prism"
-require_relative "../review/scan/ast_fixer"
+require_relative "ast_fixer"
 
 module Master
   module Fix
