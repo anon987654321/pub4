@@ -13,7 +13,7 @@ require_relative "scan/mechanical_autofix"
 module Master
   module Fix
     class Scanner
-              def self.build(root:, agent: nil, bus: nil, ecology: nil)
+      def self.build(root:, agent: nil, bus: nil, ecology: nil)
         agent = nil if ENV["MASTER_SCAN_DETERMINISTIC"] == "1"
         Review::Scan::LawDSL
         wf = Master.load_yaml(Master.limits_path) rescue {}
@@ -34,11 +34,11 @@ module Master
       end
 
       include Master::Fix::Scan::ProgressReporter
-        include Master::Fix::Scan::Transport
+      include Master::Fix::Scan::Transport
 
         # The Scanner is the coordinator of the review process. What it walks
         # is PathFilter's decision, how it walks is Transport's, and what it
-        # says while walking is ProgressReporter's; rule application is its own.
+      # says while walking is ProgressReporter's; law application is its own.
 
         SCAN_GLOB = "**/*".freeze
         REQUIRED_DEPTH = :deep
