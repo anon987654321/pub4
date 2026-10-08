@@ -46,7 +46,23 @@ module Master
               break if dir == root_prefix
               dir = File.dirname(dir)
             end
-            nil
+            owner_bundle_root(dir)
+          end
+
+          def owner_bundle_root(dir)
+            rails = File.join(@root, "RAILS")
+            return unless File.expand_path(dir).start_with?("#{rails}/")
+
+            relative = File.expand_path(dir).delete_prefix("#{rails}/")
+            case relative.split("/").first
+            when "brgen", "brgen_dating", "brgen_maps", "brgen_marketplace",
+                 "brgen_messenger", "brgen_radio", "brgen_takeaway", "__shared"
+              File.join(rails, "brgen")
+            when "amber"
+              File.join(rails, "amber")
+            when "bsdports"
+              File.join(rails, "bsdports")
+            end
           end
 
           # One rubocop run corrects every file and says, per offense, whether it
