@@ -38,11 +38,11 @@ class TestLawRegistryAudit < Minitest::Test
     assert_in_delta 0.0, empty.adherence_pct
   end
 
-  # Three gate banners and lib/operator/rule_reach.rb print a count of one population,
+  # Three gate banners and lib/operator/law_reach.rb print a count of one population,
   # and they read 107 and 115 for as long as one of them subtracted rather than
   # counted. Both directions: the shared answer, and that it is not the
   # subtraction that used to stand in for it.
-  def test_coverage_agrees_with_rule_reach
+  def test_coverage_agrees_with_law_reach
     report = audit.call
     reach = Operator::LawReach.mechanical(Operator::LawReach.rules).size
 
