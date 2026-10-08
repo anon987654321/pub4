@@ -70,7 +70,7 @@ module Master
               io.puts({
                 path: path.to_s,
                 line: Finding.read(finding, :line),
-                rule: Finding.read(finding, :rule)&.to_s,
+                law: Finding.read(finding, :law)&.to_s,
                 message: Finding.read(finding, :message),
               }.to_json)
             end
@@ -131,9 +131,9 @@ module Master
 
         def law_scope_summary(laws)
           counts = Hash.new(0)
-          Array(laws).each do |rule|
-            languages = if rule.class.respond_to?(:dsl_langs)
-              Array(rule.class.dsl_langs).filter_map { |lang| lang.to_s unless lang.to_s.empty? }
+          Array(laws).each do |law|
+            languages = if law.class.respond_to?(:dsl_langs)
+              Array(law.class.dsl_langs).filter_map { |lang| lang.to_s unless lang.to_s.empty? }
             else
               []
             end
