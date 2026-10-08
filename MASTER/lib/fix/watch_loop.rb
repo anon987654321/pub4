@@ -84,7 +84,7 @@ module Master
       end
 
       def run_law_loop_on(path)
-        applicable = @laws.select { |law| r.respond_to?(:applies_to?) ? r.applies_to?(path) : true }
+        applicable = @laws.select { |law| law.respond_to?(:applies_to?) ? law.applies_to?(path) : true }
         applicable.each do |law|
           rl = LawLoop.new(law:, agent: @agent, scanner: @scanner, root: @root, bus: @bus, learnings: @learnings)
           result = rl.run_once([path])
