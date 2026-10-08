@@ -40,6 +40,16 @@ class TestTransformationPlan < Minitest::Test
     assert_equal true, evidence.fetch("no_content_copy")
   end
 
+  def test_refactoring_playbook_covers_all_domains
+    playbook = @plan.refactoring_playbook
+    assert_equal %w[characterize_before_change one_hat delete_before_abstract same_reason_to_change preparatory_refactoring history_as_evidence make_deletion_easy domain_first],
+                 playbook.fetch("principles").map { |entry| entry.fetch("id") }
+    %w[ruby rails prose visual].each do |domain|
+      refute_empty playbook.fetch("technique_by_domain").fetch(domain)
+    end
+    assert_operator playbook.fetch("gates").length, :>=, 4
+  end
+
   def test_research_backed_cleanup_profile_is_complete
     ids = @plan.evidence_hierarchy.map { |entry| entry.fetch("id") }
     assert_equal %w[characterization structural runtime history visual semantic taste], ids
