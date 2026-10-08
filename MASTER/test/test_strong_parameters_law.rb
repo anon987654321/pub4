@@ -4,22 +4,22 @@ require_relative "test_helper"
 
 # STRONG_PARAMETERS closes principle_map's strong_parameters gap (detects
 # mass_assignment_risk). RAILS is clean of both failure modes today, so the
-# rule earns its place as a guard against regression rather than a backlog —
+# law earns its place as a guard against regression rather than a backlog —
 # which makes the negative direction as important to pin as the positive one.
-class TestStrongParametersRule < Minitest::Test
+class TestStrongParametersLaw < Minitest::Test
   CONTROLLER = "/repo/app/controllers/users_controller.rb"
 
   def scanner
     @scanner ||= Master::Fix::Scanner.build(root: Master::ROOT)
   end
 
-  def rule
-    @rule ||= scanner.rules.find { |r| r.id.to_s == "STRONG_PARAMETERS" } ||
+  def law
+    @law ||= scanner.laws.find { |r| r.id.to_s == "STRONG_PARAMETERS" } ||
               raise("STRONG_PARAMETERS is not registered")
   end
 
   def findings(source, path: CONTROLLER)
-    Array(rule.check("#{source}\n", path:))
+    Array(law.check("#{source}\n", path:))
   end
 
   def test_flags_raw_params_reaching_a_mass_assignment_sink
