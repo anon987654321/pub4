@@ -365,7 +365,7 @@ module Master
         return unless file && line
 
         {
-          law: LAW_ID,
+          rule: LAW_ID,
           file:,
           line:,
           severity: :warning,
