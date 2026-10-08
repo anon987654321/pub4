@@ -260,7 +260,7 @@ module Master
         # screener, etc.` was a finding and the same sentence on its own line was
         # not. Ruby's `#{` and a shell `$#` are not comment openers.
         #
-        # `//` and `/* … */` for the same reason, found when MASTER/web joined
+        # `//` and `/* … */` for the same reason, found when RAILS/master_web joined
         # the corpus: a CSS comment reading "(mood changes etc)" and a JS one
         # listing "style bleed, mood arc, vertical timbre, etc." were the only
         # two findings in 164 files, and both were prose.
