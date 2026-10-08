@@ -217,7 +217,7 @@ module Master
           repository_files(root).select do |path|
             SOURCE_EXT.include?(File.extname(path)) &&
               !path.split("/").any? { |part| %w[test spec fixtures].include?(part) } &&
-              !Master::Review::Scan::Scanner.skip_path?(path, root: root.to_s)
+              !Master::Fix::Scanner.skip_path?(path, root: root.to_s)
           end
         end
 
@@ -225,7 +225,7 @@ module Master
           out, = Master::Io::Exec.capture2e("git", "-C", target.to_s, "ls-files")
           out.lines.map { |line| File.join(target.to_s, line.strip) }.select do |path|
             SOURCE_EXT.include?(File.extname(path)) && File.file?(path) &&
-              !Master::Review::Scan::Scanner.skip_path?(path, root: target.to_s)
+              !Master::Fix::Scanner.skip_path?(path, root: target.to_s)
           end
         end
 
