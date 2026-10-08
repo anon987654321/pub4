@@ -22,13 +22,13 @@ module Operator
     module_function
 
     # One inventory for the executable constitution and the scanner registry.
-    # data/laws.yml is policy/configuration; it is not the executable rule list.
+    # data/laws.yml is policy/configuration; it is not the executable Law list.
     def audit
       @audit ||= Master::Review::Scan::LawRegistryAudit.new(root: MASTER_DIR)
     end
 
-    def rules
-      @rules ||= audit.population
+    def laws
+      @laws ||= audit.population
     end
 
     def mechanical(all)
@@ -36,7 +36,7 @@ module Operator
     end
 
     def prompted(all)
-      semantic_ids = executable_law_rules
+      semantic_ids = executable_laws
         .select(&:enforceable?)
         .filter_map { |law| law.id.to_s if law.semantic? }
         .map(&:downcase).to_set
@@ -51,7 +51,7 @@ module Operator
       Array(all).select { |row| practice_ids.include?(row["id"].to_s.downcase) }
     end
 
-    def unreachable(all = rules)
+    def unreachable(all = laws)
       mechanical_ids = mechanical(all).map { |row| row["id"].to_s.downcase }.to_set
       prompted_ids = prompted(all).map { |row| row["id"].to_s.downcase }.to_set
       practice_ids = practice(all).map { |row| row["id"].to_s.downcase }.to_set
@@ -66,7 +66,7 @@ module Operator
     end
 
     def run(json: false)
-      all = rules
+      all = laws
       mech = mechanical(all)
       asked = prompted(all)
       conduct = practice(all)
@@ -87,7 +87,7 @@ module Operator
         return out.size <= limit ? 0 : 1
       end
 
-      puts "rule_reach: #{all.size} rules — #{mech.size} deterministic, #{asked.size} prompted, "            "#{conduct.size} practice, #{out.size} unreachable (ceiling #{limit})"
+      puts "law_reach: #{all.size} Laws — #{mech.size} deterministic, #{asked.size} prompted, "            "#{conduct.size} practice, #{out.size} unreachable (ceiling #{limit})"
       out.each { |rule| puts "  #{rule["id"]}" }
       puts "rule_reach: every executable rule has a reachable enforcement surface" if out.empty?
       return 0 if out.size <= limit
@@ -96,7 +96,7 @@ module Operator
       1
     end
 
-    def executable_law_rules
+    def executable_laws
       return @executable_law_rules if defined?(@executable_law_rules)
 
       $LOAD_PATH.unshift(File.join(MASTER_DIR, "lib")) unless $LOAD_PATH.include?(File.join(MASTER_DIR, "lib"))
