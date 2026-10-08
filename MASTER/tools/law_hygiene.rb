@@ -149,8 +149,8 @@ module Operator
       $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
       require "master"
       require File.join(MASTER, "law", "law")
-      ::Law.load_all(File.join(MASTER, "law")) if ::Law.rules.empty?
-      ::Law.rules
+      ::Law.load_all(File.join(MASTER, "law")) if ::Law.definitions.empty?
+      ::Law.definitions
     end
 
     def cross_population_duplicates
