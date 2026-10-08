@@ -10,7 +10,7 @@ module Master
 
         VENDORED_JS_RE = %r{/public/three\.module\.js\z}.freeze
 
-        RuleDSL.rule :CONST_BY_DEFAULT,
+        LawDSL.law :CONST_BY_DEFAULT,
           severity: :warning, tags: %i[IMMUTABLE], applies_to: %i[javascript],
           fires: "let total = 0\n",
           does_not_fire: "let total = 0\ntotal += 1\n",
@@ -44,7 +44,7 @@ module Master
 
         # FOR_OF lives once, in law/javascript.rb — fixtures attached, any narrowing
         # this version had learned ported there (2026-08-21 twin retirement).
-        RuleDSL.rule :QUOTE_VARIABLES,
+        LawDSL.law :QUOTE_VARIABLES,
           severity: :error, tags: %i[ROBUSTNESS], applies_to: %i[zsh],
           fires: "#!/bin/bash\ngrep $pattern file\n",
           does_not_fire: "#!/bin/zsh\ngrep $pattern file\n",
@@ -103,7 +103,7 @@ module Master
           end
         end
 
-        RuleDSL.rule :DOUBLE_BRACKET,
+        LawDSL.law :DOUBLE_BRACKET,
           severity: :warning, tags: %i[ROBUSTNESS], applies_to: %i[zsh],
           fires: "#!/bin/zsh\nif [ -f x ]; then echo y; fi\n",
           does_not_fire: "#!/bin/zsh\nif [[ -f x ]]; then echo y; fi\n",
@@ -119,7 +119,7 @@ module Master
         # NO_VAR lives once, in law/javascript.rb — fixtures attached, any narrowing
         # this version had learned ported there (2026-08-21 twin retirement).
 
-        RuleDSL.rule :JS_MODULE_SIZE,
+        LawDSL.law :JS_MODULE_SIZE,
           severity: :warning, tags: %i[SMALL_PARTS], applies_to: %i[javascript],
           fires: ("// line\n" * 301),
           does_not_fire: ("// line\n" * 300),
@@ -159,7 +159,7 @@ module Master
       # it is "should this colour follow the theme or not", which only the person
       # who chose it can answer. Six passes over this rule removed 596 findings
       # and every one was the rule misreading something; none was a substitution.
-        RuleDSL.rule :MAGIC_COLOR,
+        LawDSL.law :MAGIC_COLOR,
           severity: :warning, tags: %i[DESIGN], applies_to: %i[css scss javascript html],
           fires: ".btn { color: #c0392b; }\n",
           does_not_fire: ":root { --danger: #c0392b; }\n",
@@ -232,7 +232,7 @@ module Master
         end
 
       # A11 OPTIONAL_CHAINING_JS — && guard chains in JavaScript (OPTIONAL_CHAINING).
-        RuleDSL.rule :OPTIONAL_CHAINING_JS,
+        LawDSL.law :OPTIONAL_CHAINING_JS,
           severity: :warning, tags: %i[READABILITY], applies_to: %i[javascript],
           fires: "const name = user && user.name\n",
           does_not_fire: "const name = user?.name\n",
