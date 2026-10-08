@@ -65,6 +65,7 @@ module VisualContractGate
   }.freeze
 
   LENSES = %w[task_completion accessibility editorial_character system_trust first_use].freeze
+  DEFAULT_OUTPUT = File.join(Dir.tmpdir, "pub4-visual-contract").freeze
 
   SURFACES = File.expand_path("data/geometry_surfaces.yml", __dir__)
 
@@ -213,7 +214,7 @@ module VisualContractGate
   # blocks on nothing, and it hides that nothing was measured.
   CannotMeasure = Class.new(StandardError)
 
-  def capture(base:, app:, output: File.expand_path("../visual_contract", __dir__))
+  def capture(base:, app:, output: ENV.fetch("VISUAL_CONTRACT_OUTPUT", DEFAULT_OUTPUT))
     FileUtils.mkdir_p(output)
     results = []
 
@@ -293,7 +294,7 @@ rescue VisualContractGate::CannotMeasure => e
   warn "visual_contract: nothing measured, so nothing is claimed"
   exit 3
 end
-path = File.expand_path("../visual_contract/#{app}-manifest.json", __dir__)
+path = File.join(output, "#{app}-manifest.json")
 File.write(path, JSON.pretty_generate(generated_at: Time.now.utc.iso8601, results:) + "\n")
 
 # This used to end at `puts "ok: captured …"` with exit 0 no matter what the
