@@ -358,6 +358,26 @@ improvise:
     prophet: { pads: [prophet_five, prophet_pad], leads: [poly_lead, vapor_lead], bass_patch: moog_bass }
     rhodes: { pads: [rhodes_tine, e_piano], leads: [glass_bell, soft_reed], bass_patch: dub_bass }
   pad_gain: 0.2
+  # How a chord is sounded. "block" is every voice on the downbeat, the way the
+  # pad was always played, and stays the profile outside the showcase. The
+  # showcase walks rotation one chord at a time. Each profile only moves the
+  # onsets and trims the level of voices the chord already has, so the tones,
+  # the register and the voice count are the harmony's own.
+  #   spread_beats  the onset gap from the first voice to the last, in beats
+  #   jitter_ms     random onset wobble per voice, drawn from the improviser's rng
+  #   direction     up rolls from the lowest voice, down from the highest
+  #   gain_from/to  the level of the first and last voice, scaled from pad_gain
+  # A roll of a fifth of a beat is a hand rolling a chord; a bloom of a beat is
+  # a pad swelling in voice by voice. Neither is an arpeggio: every voice holds
+  # to the end of the bar.
+  comp:
+    default: block
+    rotation: [block, roll_up, bloom, roll_down]
+    profiles:
+      block: { spread_beats: 0.0, jitter_ms: 0, direction: up, gain_from: 1.0, gain_to: 1.0 }
+      roll_up: { spread_beats: 0.2, jitter_ms: 5, direction: up, gain_from: 0.9, gain_to: 1.0 }
+      roll_down: { spread_beats: 0.2, jitter_ms: 5, direction: down, gain_from: 1.0, gain_to: 0.9 }
+      bloom: { spread_beats: 1.0, jitter_ms: 8, direction: up, gain_from: 0.75, gain_to: 1.0 }
   pad_chords: [3, 6]
   lead_toggle_odds: 0.18
   lead_gain: 0.14
