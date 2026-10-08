@@ -3,7 +3,7 @@
 module Master
   module Review
     module Scan
-      module Rules
+      module Laws
 
         # Assignment/branch/condition counts for one method, for ABC size.
         #
