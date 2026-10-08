@@ -22,7 +22,11 @@ module Master
             dedupe_key:, impact_radius:)
         end
 
-        def [](key)
+        def evidence_key
+        Digest::SHA256.hexdigest([law_id || law, message, line, impact_radius, blast_radius].map(&:to_s).join("\0"))[0, 24]
+      end
+
+      def [](key)
           public_send(key)
         end
 
