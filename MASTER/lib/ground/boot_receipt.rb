@@ -142,7 +142,7 @@ module Master
       # "0 in law/" while 122 rules were defined and waiting.
       def domain_rule_count(root)
         law_root = executable_law_root(root)
-        require File.join(law_root, "law", "law.rb")
+        require File.join(law_root, "law", "definition.rb")
         ::Law.load_all(File.join(law_root, "law")) if ::Law.definitions.empty?
         ::Law.definitions.size
       rescue StandardError => e
@@ -159,7 +159,7 @@ module Master
           File.join(root, "MASTER"),
           MasterPaths::ROOT
         ]
-        candidates.find { |candidate| File.file?(File.join(candidate, "law", "law.rb")) } || MasterPaths::ROOT
+        candidates.find { |candidate| File.file?(File.join(candidate, "law", "definition.rb")) } || MasterPaths::ROOT
       end
 
       def providers(root: MasterPaths::ROOT)
