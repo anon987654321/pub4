@@ -43,30 +43,6 @@ fix_hygiene:
   source: MASTER/data/fix_hygiene.yml
   template: "%{message}"
 
-
-# Pure prompt transforms. Multi-call strategies live in Review::Inference.
-repeat:
-  template: |
-    Re-read the complete task context once before answering. The full prompt follows twice.
-    %{message}
-
-    %{message}
-self_aware:
-  template: |
-    Before answering, give a compact decision frame with kind, known evidence, unknowns and required tools.
-    Do not expose private chain-of-thought.
-    Then answer:
-    %{message}
-rival:
-  template: |
-    A rival verifier will try to prove this answer wrong. Be exact, evidence-backed and explicit about assumptions.
-    %{message}
-style:
-  template: |
-    Write in a deliberate senior-engineer editorial style: precise, economical and alert to edge cases.
-    Preserve facts and technical meaning.
-    %{message}
-
 inference:
   defaults:
     max_calls: 8

@@ -40,19 +40,6 @@ module Master
           temperature: 0.7
         }.freeze
 
-        TASK_STRATEGIES = {
-          detail_finding: :repeat,
-          planning: :skeleton,
-          hard_reasoning: :self_consistency,
-          subjective: :perspective,
-          ideation: :novelty,
-          exploration: :novelty,
-          code_generation: :rival,
-          code_review: :rival,
-          fixing: :rival,
-          verification: :rival
-        }.freeze
-
         def initialize(agent:, event_bus: nil, root: Master::ROOT)
           @agent = agent
           @bus = event_bus
@@ -62,8 +49,7 @@ module Master
         def run(prompt:, task_type: :exploration, strategy: nil, **options)
           started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
           config = options.fetch(:config, inference_config)
-          selected = (strategy || config.dig("tasks", task_type.to_s) ||
-                      TASK_STRATEGIES[task_type.to_sym] || :direct).to_sym
+          selected = (strategy || config.fetch("tasks", {})[task_type.to_s] || :direct).to_sym
           defaults = config.fetch("defaults", {}).transform_keys(&:to_sym)
           settings = DEFAULTS.merge(defaults).merge(options)
           worker = BudgetedAgent.new(@agent, max_calls: settings.fetch(:max_calls))

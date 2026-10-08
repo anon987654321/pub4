@@ -3,7 +3,7 @@
 module Master
   module Review
     class Modes
-      SUPPORTED = %w[direct react rewoo code_agent fix_hygiene repeat self_aware rival style].freeze
+      SUPPORTED = %w[direct react rewoo code_agent fix_hygiene].freeze
 
       def initialize(root: Master::ROOT)
         @root = root
