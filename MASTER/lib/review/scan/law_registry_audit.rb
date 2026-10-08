@@ -88,6 +88,7 @@ module Master
         def mechanical(entries, registry: build_registry_ids)
           entries.select do |law|
             law["detect_lexical"] || law["detect_structural"] ||
+              law_detector?(law["id"]) ||
               detected?(registry, law["id"]) || detected?(registry, law["folded_into"])
           end
         end
