@@ -125,11 +125,6 @@ module Master
         end
       end
 
-      def rails_target?(target)
-        rails = File.join(@repo_root, "RAILS")
-        target == rails || target.start_with?(rails + File::SEPARATOR)
-      end
-
       def inside_repo?(path)
         path == @repo_root || path.start_with?(@repo_root + File::SEPARATOR)
       end
