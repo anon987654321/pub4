@@ -178,7 +178,7 @@ module Operator
       require "master"
       require "review/scan/infra_helpers"
       ENV["MASTER_SCAN_DETERMINISTIC"] = "1"
-      scanner = Master::Review::Scan::InfraHelpers.build_scanner(root: MASTER, agent: nil)
+      scanner = Master::Fix::Scanner.build(root: MASTER, agent: nil)
       scanner.rules.to_h { |rule| [rule.id.to_s.downcase, rule] }
     end
 
