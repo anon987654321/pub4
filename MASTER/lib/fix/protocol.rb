@@ -157,7 +157,7 @@ module Master
       end
 
       def laws
-        require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
+        require File.join(Master::ROOT, "law", "definition") unless defined?(::Law)
         ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.definitions.empty?
         ::Law.definitions.values
       end
