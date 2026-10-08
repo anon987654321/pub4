@@ -2,7 +2,7 @@
 
 require_relative "test_helper"
 require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
-::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.rules.empty?
+::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.definitions.empty?
 
 class TestLawHandshake < Minitest::Test
   def setup
