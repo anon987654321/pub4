@@ -35,8 +35,7 @@ SimpleCov.start "rails" do
   group "Application", "#{app}/app"
   group "Libraries", "#{app}/lib"
   group "Engines", "#{app}/engines"
-  group "Shared", "__shared/app"
-  group "Shared", "__shared/lib"
+  group "Shared", ["__shared/app", "__shared/lib"]
 
   enable_coverage :branch
   enable_coverage :method
