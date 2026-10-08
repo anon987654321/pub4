@@ -44,7 +44,7 @@ status; `affiliate:seed_placeholders` and `affiliate:drop_placeholders` work
 offline. A placeholder row carries `placeholder: true`, is excluded from `.real`,
 and is labelled in the UI. It is never payable inventory.
 
-`bin/rails test` needs no environment variables. `RAILS/contracts/studio.rb` resolves the
+`bin/rails test` needs no environment variables. `MASTER/contracts/studio.rb` resolves the
 canonical STUDIO media entrypoints from the checkout. Set `PUB4_STUDIO_ROOT` only to point
 at a different Studio tree than the one the code was loaded from.
 
