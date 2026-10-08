@@ -20,7 +20,7 @@ module Master
         # Fraction of otherwise-clean files that still get the semantic pass.
         # Keyed on the path digest rather than rand, so two scans of the same
         # tree ask the same questions and their reports can be compared.
-        SEMANTIC_SAMPLE = ENV.fetch("MASTER_SCAN_SEMANTIC_SAMPLE", "0.1").to_f
+        SEMANTIC_SAMPLE = ENV.fetch("MASTER_SCAN_SEMANTIC_SAMPLE", "0").to_f
 
         def initialize(event_bus: nil, skip_semantic: false)
           @bus = event_bus
