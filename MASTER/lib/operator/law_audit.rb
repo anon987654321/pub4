@@ -111,7 +111,7 @@ module Operator
                         .sort
     end
 
-    # Symbol, because that is what production passes. LawBridgeRule#check does
+    # Symbol, because that is what production passes. LawBridgeLaw#check does
     # `language(path)&.to_sym` and applies? compares against `languages`, which
     # a law declares as %i[ruby]. Handing it the map's String made applies?
     # false for every language-scoped rule, so the first version of this file
