@@ -3746,8 +3746,15 @@ SHOWCASE_MODES = {
         answer_at += subject_rhythm[index] * @beat
       end
 
-      stage_midi_events!(stage, subject_events, patch: Patches.spec(@lead))
-      stage_midi_events!(stage, answer_events, patch: Patches.spec(@lead))
+      if @c.fetch("fm").key?(@lead)
+        preset = @c.fetch("fm").fetch(@lead).transform_keys(&:to_sym)
+        stage_midi_events!(stage, subject_events, fm: preset)
+        stage_midi_events!(stage, answer_events, fm: preset)
+      else
+        spec = Patches.spec(@lead)
+        stage_midi_events!(stage, subject_events, patch: spec)
+        stage_midi_events!(stage, answer_events, patch: spec)
+      end
     end
 
     def stage_midi_events!(stage, events, fm: nil, patch: nil)
@@ -3889,7 +3896,12 @@ SHOWCASE_MODES = {
           next unless step.between?(0, 15)
           at = start + (bar * 4.0 * @beat) + (step * step_seconds)
           next if at >= start + length
-          timing_role = role == :hat ? (step.even? ? :hat_down : :hat_up) : role
+          timing_role = case role
+                         when :hat then step.even? ? :hat_down : :hat_up
+                         when :clap then :snare
+                         when :perc then :ghost
+                         else role
+                         end
           offset = dilla_timing_ms(timing_role, phrase_bar, step, nil, @beat) / 1000.0
           phrase_gain = case variant
                         when 2 then gain * 1.05
