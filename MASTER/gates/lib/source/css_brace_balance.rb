@@ -2,7 +2,7 @@
 
 require_relative "../../support/fleet"
 require_relative "../../support/gate_result"
-require_relative "../../../tools/scss_rules"
+require_relative "../../../tools/scss"
 
 module Deploy
   # A stylesheet with one unclosed brace nests every rule behind it in the
