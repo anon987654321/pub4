@@ -40,6 +40,21 @@ class TestTransformationPlan < Minitest::Test
     assert_equal true, evidence.fetch("no_content_copy")
   end
 
+  def test_research_backed_cleanup_profile_is_complete
+    ids = @plan.evidence_hierarchy.map { |entry| entry.fetch("id") }
+    assert_equal %w[characterization structural runtime history visual semantic taste], ids
+    %w[code ruby rails prose visual].each do |domain|
+      refute_empty @plan.smell_catalog.fetch(domain)
+    end
+    %w[ruby rails prose visual].each do |domain|
+      refute_empty @plan.domain_adapters.fetch(domain)
+    end
+    assert_operator @plan.automatic_vetoes.length, :>=, 5
+    names = @plan.research.map { |entry| entry.fetch("name") }
+    assert_includes names, "Fowler, Refactoring"
+    assert_includes names, "RuboCop Ruby Style Guide"
+  end
+
   def test_rename_policy_covers_code_and_structure
     assert_equal %w[files constants methods variables rules sections], @plan.rename_policy.fetch("scopes")
     assert_equal true, @plan.rename_policy.fetch("require_reference_rewrite")
