@@ -167,7 +167,7 @@ module Master
           end
         end
 
-        class LearnedSmellsRule < Law
+        class LearnedSmellsLaw < Law
           declare id: "LEARNED_SMELLS", severity: :warning, tags: %i[LEARNED_SMELLS SESSION],
                   description: "session-learned smell patterns from laws.yml"
 
