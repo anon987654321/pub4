@@ -45,15 +45,14 @@ SimpleCov.start "rails" do
   coverage :method, ignore: :eval_generated
   track_tests
 
-  # Individual app CI must fully cover its own executable surface. Shared code
-  # is included in every report but is judged only after the three application
-  # runs are collated, because shared branches legitimately divide by consumer.
+  # Each app run must fully cover its own executable surface. Shared code is
+  # included in every report but is judged only after all application reports
+  # are collated, because a shared branch can legitimately be exercised by a
+  # different consumer than the current app.
+  own_source = %r{\A#{Regexp.escape(app)}/(?:app|engines|lib)/}
   %i[line branch method].each do |criterion|
     coverage criterion do
-      minimum 0
-      minimum 100, per: group("Application")
-      minimum 100, per: group("Libraries")
-      minimum 100, per: group("Engines")
+      minimum 100, per: own_source
     end
   end
 end
