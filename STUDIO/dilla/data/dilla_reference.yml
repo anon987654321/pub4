@@ -76,7 +76,7 @@ documented_progressions:
   # Verified external transcriptions folded from the 2026-10-02 chord digest
   # (Hooktheory TheoryTab pages; Reddit posts pulled from the Arctic Shift
   # archive). Additive only — no default rotation pool changes. The face's
-  # browser voicing table (MASTER/web/public/face_music_packs.json) carries
+  # browser voicing table (RAILS/master_web/public/face_music_packs.json) carries
   # the same cells with their sources.
   dilla_flowers_documented:
     producer: dilla
