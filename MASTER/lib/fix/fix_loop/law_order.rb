@@ -37,7 +37,7 @@ module Master
             # test_fix_loop_priorities.rb depends on. score() still computes
             # law- and quality-aware ranking for everything else.
             score = Priority.score(
-              rule_id: r.id, severity: rule_severity(r), frequency:,
+              law_id: r.id, severity: law_severity(r), frequency:,
               age_days: law_age_days(r.id), law_resolver:, laws_index:, quality:
             )
             [tier2?(r.id) ? 0 : 1, -score, i]
@@ -45,9 +45,9 @@ module Master
           topo_sort(sorted, deps)
         end
 
-        def dependency_levels(rules)
+        def dependency_levels(laws)
           deps = load_deps
-          remaining = rules.map(&:id).to_set
+          remaining = laws.map(&:id).to_set
           id_map = laws.to_h { |law| [law.id, law] }
           levels = []
           until remaining.empty?
