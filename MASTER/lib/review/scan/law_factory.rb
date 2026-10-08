@@ -4,7 +4,7 @@ module Master
   module Review
     module Scan
       # Single instantiation path for scan rule classes (avoids ArgumentError drift).
-      module RuleFactory
+      module LawFactory
         BRIDGE_CLASSES = %w[YamlDeclarativeRule VetoPatternRule LawBridgeRule].freeze
 
         module_function
@@ -42,6 +42,8 @@ module Master
           nil
         end
       end
+
+      RuleFactory = LawFactory
     end
   end
 end
