@@ -28,7 +28,8 @@ export default class extends Controller {
     this.originalCount = this.countValue ?? 0
   }
 
-  press() {
+  press(event) {
+    if (event?.button != null && event.button !== 0) return
     if (this.element.matches(":disabled, [aria-disabled='true']")) return
     this.element.classList.add("interaction-stateful")
     this.element.dataset.interactionState = "pressed"
@@ -74,6 +75,8 @@ export default class extends Controller {
           this._failed(btn, isActive)
         }
       }).catch(() => this._failed(btn, isActive))
+    } else if (btn.dataset.interactionState === "pressed") {
+      btn.dataset.interactionState = "idle"
     }
   }
 
