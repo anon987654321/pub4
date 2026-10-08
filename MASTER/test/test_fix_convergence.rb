@@ -53,7 +53,7 @@ class TestFixConvergence < Minitest::Test
 
   def build_loop(violations, ground_truth: nil, council: nil)
     loop = Master::Fix::FixLoop.new(
-      rules: [StubRule.new("TEST_RULE", :warning)],
+      laws: [StubRule.new("TEST_RULE", :warning)],
       agent: OpenCircuitAgent.new,
       scanner: ConstantScanner.new(violations),
       root: @root, bus: @bus, git: StubGit.new, ground_truth:
@@ -157,18 +157,82 @@ class TestFixConvergence < Minitest::Test
     assert_match(/INCONCLUSIVE.*baseline/, verdict)
   end
 
-  def test_unreadable_scan_result_is_a_fix_failure
+  def quiet_runner
     runner = Master::Fix::FixLoop::PassRunner.allocate
     runner.instance_variable_set(:@root, "/tmp")
     runner.instance_variable_set(:@bus, Object.new.tap do |bus|
       bus.define_singleton_method(:publish) { |_event, _payload = {}| nil }
     end)
+    runner
+  end
 
+  def test_an_unreadable_file_is_recorded_and_the_pass_carries_on
+    runner = quiet_runner
     error = Master::Result.err("file too long: sample.rb", category: :validation)
 
-    assert_raises(RuntimeError) do
-      runner.send(:skip_unreadable, "/tmp/sample.rb", error)
-    end
+    assert_equal [], runner.send(:skip_unreadable, "/tmp/sample.rb", error)
+    assert runner.gaps?
+    assert_equal ["sample.rb"], runner.gaps.fetch(:uninspected).keys
+  end
+
+  def test_a_scan_that_raises_costs_that_file_and_not_the_pass
+    runner = quiet_runner
+    path = File.join(@root, "walk.js")
+    File.write(path, "x\n")
+    runner.instance_variable_set(:@preflight, Struct.new(:none) { def findings(_paths) = [] }.new)
+    runner.instance_variable_set(
+      :@scan_phase,
+      Struct.new(:none) { def call(_path) = Master::Result.err("scan failed: boom", category: :infrastructure) }.new
+    )
+    runner.instance_variable_set(:@root, @root)
+
+    assert_equal [], runner.violations_for(path)
+    assert_match(/boom/, runner.gaps.fetch(:uninspected).fetch("walk.js"))
+  end
+
+  def test_a_failing_stage_is_recorded_and_the_next_stage_still_runs
+    runner = quiet_runner
+    ran = []
+
+    first = runner.send(:guarded, :council, 1, :fallback) { raise ArgumentError, "no quorum" }
+    second = runner.send(:guarded, :model_fixes, 1) { ran << :model_fixes }
+
+    assert_equal :fallback, first
+    assert_equal [:model_fixes], second
+    assert_equal [:council], runner.gaps.fetch(:stage_failures).keys
+    assert_match(/ArgumentError: no quorum/, runner.gaps.fetch(:stage_failures).fetch(:council).first)
+  end
+
+  def test_one_failing_model_stage_does_not_stop_the_wishlist_or_the_run_id_reaching_it
+    runner = quiet_runner
+    calls = []
+    runner.instance_variable_set(:@resource_budget, Struct.new(:none) { def measure = {}; def critical?(_) = false }.new)
+    runner.instance_variable_set(:@council, Struct.new(:none) { def run(**) = raise("no lane answered") }.new)
+    runner.define_singleton_method(:unremembered) { |found| found }
+    runner.define_singleton_method(:files_with_violations) { |_found, files| files }
+    runner.define_singleton_method(:run_llm_stage) { |*, **| calls << :model }
+    runner.define_singleton_method(:run_wishlist_stage) { |findings, **kw| calls << [:wishlist, findings.size, kw[:run_id]] }
+    found = [{ law: "SOME_LAW" }, { law: Master::Fix::Wishlist::LAW_ID }]
+
+    runner.send(:dispatch_llm_stages, found, ["a.rb"], 1, nil, nil, run_id: "run-7")
+
+    assert_equal [:model, [:wishlist, 1, "run-7"]], calls
+    assert_equal [:council], runner.gaps.fetch(:stage_failures).keys
+  end
+
+  def test_a_run_that_would_be_done_but_had_gaps_ends_blocked_not_done
+    loop = build_loop([])
+    runner = loop.instance_variable_get(:@pass_runner)
+    done = Master::Result.ok("DONE: all clean")
+
+    assert_same done, loop.send(:blocked_by_gaps, done), "no gaps, no change"
+
+    runner.send(:skip_unreadable, File.join(@root, "walk.js"), Master::Result.err("scan failed", category: :infrastructure))
+    blocked = loop.send(:blocked_by_gaps, done)
+
+    assert_match(/\ABLOCKED: finished with gaps, 1 file\(s\) not scanned \(walk\.js\)/, blocked.value!)
+    plateau = Master::Result.ok("PLATEAU: no further improvement")
+    assert_same plateau, loop.send(:blocked_by_gaps, plateau), "only DONE is downgraded"
   end
 
   def test_manual_fix_upgrades_semantic_scanning_to_full
@@ -354,7 +418,7 @@ class TestFixConvergence < Minitest::Test
   def test_dry_run_does_not_run_mutating_gate_verification
     fix_loop = Object.new
     fix_loop.define_singleton_method(:run) { |target, **| flunk("dry-run started the repair") }
-    fix_loop.define_singleton_method(:preview) { |_| Master::Result.ok(total: 1, rules: { "RULE" => 1 }, files: {}) }
+    fix_loop.define_singleton_method(:preview) { |_| Master::Result.ok(total: 1, laws: { "RULE" => 1 }, files: {}) }
     scanner = Object.new
     def scanner.scan(*) = Master::Result.ok([])
     def scanner.scan_dir(*) = Master::Result.ok([])
@@ -409,7 +473,7 @@ class TestFixConvergence < Minitest::Test
     verified = []
     fix_loop = Object.new
     fix_loop.define_singleton_method(:run) { |target, **| repaired << target; Master::Result.ok("DONE: clean") }
-    fix_loop.define_singleton_method(:preview) { |_| Master::Result.ok(total: 0, rules: {}, files: {}) }
+    fix_loop.define_singleton_method(:preview) { |_| Master::Result.ok(total: 0, laws: {}, files: {}) }
     scanner = Object.new
     def scanner.scan(*) = Master::Result.ok([])
     def scanner.scan_dir(*) = Master::Result.ok([])
@@ -433,7 +497,7 @@ class TestFixConvergence < Minitest::Test
     states = [[0, ["RAILS/app/models/item.rb"]], [0, []]]
     fix_loop = Object.new
     fix_loop.define_singleton_method(:run) { |target, **| Master::Result.ok("DONE: clean") }
-    fix_loop.define_singleton_method(:preview) { |_| Master::Result.ok(total: 0, rules: {}, files: {}) }
+    fix_loop.define_singleton_method(:preview) { |_| Master::Result.ok(total: 0, laws: {}, files: {}) }
     scanner = Object.new
     def scanner.scan(*) = Master::Result.ok([])
     def scanner.scan_dir(*) = Master::Result.ok([])
@@ -606,7 +670,7 @@ class TestFixConvergence < Minitest::Test
     repaired = []
     fix_loop = Object.new
     fix_loop.define_singleton_method(:run) { |target, **| repaired << target; Master::Result.ok("DONE: clean") }
-    fix_loop.define_singleton_method(:preview) { |_| Master::Result.ok(total: 0, rules: {}, files: {}) }
+    fix_loop.define_singleton_method(:preview) { |_| Master::Result.ok(total: 0, laws: {}, files: {}) }
     scanner = Object.new
     def scanner.scan(*) = Master::Result.ok([])
     def scanner.scan_dir(*) = Master::Result.ok([])
@@ -730,7 +794,7 @@ class TestFixConvergence < Minitest::Test
 
     preflight = Master::Fix::Preflight.new(root: @root)
     loop = Master::Fix::FixLoop.new(
-      rules: [StubRule.new("TEST_RULE", :warning)],
+      laws: [StubRule.new("TEST_RULE", :warning)],
       agent: OpenCircuitAgent.new,
       scanner:,
       root: @root,
