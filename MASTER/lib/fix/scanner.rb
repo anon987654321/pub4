@@ -14,16 +14,26 @@ module Master
   module Fix
     class Scanner
               def self.build(root:, agent: nil, bus: nil, ecology: nil)
-                agent = nil if ENV["MASTER_SCAN_DETERMINISTIC"] == "1"
-                Review::Scan::LawDSL
-                wf = Master.load_yaml(Master.limits_path) rescue {}
-                sleep_s = ENV["MASTER_AUTOFIX"] == "1" ? wf.dig("autoloop", "scan_file_sleep_s").to_f : 0
-                scanner = Master::Fix::Scanner.new(event_bus: bus, file_sleep_s: sleep_s)
-                Review::Scan::Law.registry.select(&:auto_build?).each do |klass|
-                  scanner.add_rule(Review::Scan::LawFactory.build(klass, root:, agent:, ecology:))
-                end
-      
-        include Master::Review::Scan::ProgressReporter
+        agent = nil if ENV["MASTER_SCAN_DETERMINISTIC"] == "1"
+        Review::Scan::LawDSL
+        wf = Master.load_yaml(Master.limits_path) rescue {}
+        sleep_s = ENV["MASTER_AUTOFIX"] == "1" ? wf.dig("autoloop", "scan_file_sleep_s").to_f : 0
+        scanner = new(event_bus: bus, file_sleep_s: sleep_s)
+        Review::Scan::Law.registry.select(&:auto_build?).each do |klass|
+          scanner.add_rule(Review::Scan::LawFactory.build(klass, root:, agent:, ecology:))
+        end
+        %w[
+          CoChangeCouplingRule RuleCoverageRule RubocopRule ReekRule InterconnectRule
+          YamlDeclarativeRule VetoPatternRule LawBridgeRule SemanticRule AdversarialRule CommentDriftRule AstOmissionRule
+          LibRootDisciplineRule FileSprawlRule PathPurposeRule
+        ].each do |name|
+          klass = Review::Scan::Rules.const_get(name)
+          scanner.add_rule(Review::Scan::LawFactory.build(klass, root:, agent:, ecology:))
+        end
+        scanner
+      end
+
+      include Master::Review::Scan::ProgressReporter
         include Master::Review::Scan::Transport
 
         # The Scanner is the coordinator of the review process. What it walks
