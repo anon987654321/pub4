@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "fileutils"
-require "json"
 require "rubygems"
 require "time"
 require_relative "dependency_manager"
@@ -101,6 +100,7 @@ module Master
       end
 
       def write_boot_receipt!(root:, out:)
+        require "json"
         path = File.join(root, ".master", "boot.json")
         payload = {
           "pid" => Process.pid,
