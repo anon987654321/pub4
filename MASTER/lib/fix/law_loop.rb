@@ -76,7 +76,7 @@ module Master
           soul = Master.soul_config
           abs = soul.fetch("absolute", {})
           golden = abs["golden_rule"] || "PRESERVE_THEN_IMPROVE_NEVER_BREAK"
-          lines = ["Golden rule: #{golden}",
+          lines = ["Golden law: #{golden}",
                     "Minimum change that eliminates the violation. Do not touch unrelated code."]
           Master::Ground::Rules.new.rules.each { |key, value| lines << "- #{key}: #{value}" }
           lines.join("\n")
@@ -92,7 +92,7 @@ module Master
       include OutcomeTracking
       include AutofixPolicy
 
-      def initialize(rule:, agent:, scanner:, root:, **options)
+      def initialize(law:, agent:, scanner:, root:, **options)
         @rule = rule
         @agent = agent
         @scanner = scanner
@@ -122,10 +122,10 @@ module Master
         fixed = fix_batch(violations)
         status = pass_outcome(fixed)
         record_outcomes(files, status)
-        @bus&.publish("law_loop:pass", rule: @rule.id, violations: violations.size, fixed:, status:)
+        @bus&.publish("law_loop:pass", law: @rule.id, violations: violations.size, fixed:, status:)
         { fixed:, status:, breakdown: @batch_breakdown }
       rescue StandardError => e
-        @bus&.publish("law_loop:error", rule: @rule.id, error: e.message)
+        @bus&.publish("law_loop:error", law: @rule.id, error: e.message)
         # Bus-only meant a crashed rule pass was indistinguishable from a
         # quiet one in the dmesg stream the operator actually reads.
         Master::Trace::Dmesg.status("fix0", "#{@rule.id}: #{e.class}: #{e.message[0, 90]}")
@@ -166,7 +166,7 @@ module Master
         end
         if needs_a_person?(violation) && !deletions_allowed?
           @person_required = true
-          @bus&.publish("law_loop:human_decision_required", rule: violation[:rule], file: violation[:file])
+          @bus&.publish("law_loop:human_decision_required", law: violation[:rule], file: violation[:file])
           return :needs_person
         end
         return :skip_confidence unless autofix_allowed?(violation)
@@ -207,8 +207,8 @@ module Master
 
         :applied
       rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "LawLoop.commit_applied_fix", event_bus: @bus, rule: @rule.id)
-        @bus&.publish("law_loop:commit_refused", rule: @rule.id, file: violation[:file], error: e.message[0, 160])
+        Master::Ground::Swallow.log(e, context: "LawLoop.commit_applied_fix", event_bus: @bus, law: @rule.id)
+        @bus&.publish("law_loop:commit_refused", law: @rule.id, file: violation[:file], error: e.message[0, 160])
         :commit_refused
       end
 
@@ -265,10 +265,10 @@ module Master
           return reject_fix(path, old_src, "visual_regression", evidence: custody.message) unless custody.ok?
         end
 
-        @bus&.publish("law_loop:fix_applied", rule: @rule.id, file: path)
+        @bus&.publish("law_loop:fix_applied", law: @rule.id, file: path)
         true
       rescue StandardError => e
-        @bus&.publish("law_loop:write_error", rule: @rule.id, file: path, error: e.message)
+        @bus&.publish("law_loop:write_error", law: @rule.id, file: path, error: e.message)
         false
       end
 
@@ -315,7 +315,7 @@ module Master
 
       def reject_fix(path, original, reason, **details)
         write_atomic(path, original)
-        @bus&.publish("law_loop:fix_rejected", rule: @rule.id, file: path, reason:, **details)
+        @bus&.publish("law_loop:fix_rejected", law: @rule.id, file: path, reason:, **details)
         Master::Trace::Dmesg.status("fix0", "#{@rule.id} fix rejected, #{File.basename(path)}: #{reason}")
         false
       end
@@ -469,7 +469,7 @@ module Master
           permanent: "law_loop:fail_fast",
           ambiguous: "law_loop:human_intervention",
         }.fetch(category, event)
-        @bus&.publish(name, rule: violation[:rule], file: violation[:file], error: message[0, 120])
+        @bus&.publish(name, law: violation[:rule], file: violation[:file], error: message[0, 120])
       end
 
     end
