@@ -3,7 +3,7 @@
 module Master
   module Review
     module Scan
-      module Rules
+      module Laws
         # Bridges laws.yml veto_patterns into the scanner (constitution.rb also checks writes).
         #
         # A veto is the severity above error, and this was the one rule in the
