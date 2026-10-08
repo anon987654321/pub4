@@ -18,7 +18,7 @@ class TestCliTerminalFace < Minitest::Test
       mouth: Quiet.new(nil),
       input: StringIO.new,
       output: StringIO.new,
-      size: -> { [30, 60] }
+      size: -> { [30, 60] },
     )
   end
 
@@ -87,7 +87,7 @@ class TestCliTerminalFace < Minitest::Test
       mouth: Quiet.new(false),
       input: StringIO.new,
       output: StringIO.new,
-      size: -> { [24, 80] }
+      size: -> { [24, 80] },
     )
     face.stub(:picture, ->(_) { flunk("picture work started after a failed turn") }) { face.send(:answer, "Bug and ember lay out.") }
     text = rows_of(face.screen(24, 80, 1.0)).values.join("\n")
@@ -101,7 +101,7 @@ class TestCliTerminalFace < Minitest::Test
       mouth: Quiet.new(false),
       input: StringIO.new,
       output: StringIO.new,
-      size: -> { [24, 80] }
+      size: -> { [24, 80] },
     )
     pictured = nil
     face.stub(:picture, ->(text) { pictured = text }) { face.send(:answer, "Bug and ember lay out.") }
@@ -119,7 +119,7 @@ class TestCliTerminalFace < Minitest::Test
       input: StringIO.new,
       output: StringIO.new,
       size: -> { [24, 80] },
-      event_bus: bus
+      event_bus: bus,
     )
 
     order = []
@@ -134,7 +134,7 @@ class TestCliTerminalFace < Minitest::Test
     assert result.err?
     assert_equal :timeout, result.category
     assert_equal %i[kill children join], order
-    assert_equal [["user:interrupt", { reason: "face", source: "face", children: children }]], events
+    assert_equal [["user:interrupt", { reason: "face", source: "face", children: }]], events
   end
 
   def test_face_falls_back_to_native_speech_when_synthesis_is_missing
@@ -217,7 +217,7 @@ class TestCliTerminalFace < Minitest::Test
       mouth:,
       input: StringIO.new,
       output: StringIO.new,
-      size: -> { [24, 80] }
+      size: -> { [24, 80] },
     )
     mouth.define_singleton_method(:say) { |*| false }
     mouth.define_singleton_method(:last_error) { "voice0: audio did not play" }
@@ -235,7 +235,7 @@ class TestCliTerminalFace < Minitest::Test
       mouth: Quiet.new(nil),
       input: StringIO.new,
       output: StringIO.new,
-      size: -> { [24, 80] }
+      size: -> { [24, 80] },
     )
     face.send(:set, :speaking, ["reply"])
     face.send(:arm_ear)
@@ -250,7 +250,7 @@ class TestCliTerminalFace < Minitest::Test
       -> { @patterns[pattern].delete(handler) }
     end
     def publish(event)
-      @patterns.each_value { |handlers| handlers.each { |handler| handler.call(event: event) } }
+      @patterns.each_value { |handlers| handlers.each { |handler| handler.call(event:) } }
     end
   end
 
@@ -263,7 +263,7 @@ class TestCliTerminalFace < Minitest::Test
       input: StringIO.new,
       output: StringIO.new,
       size: -> { [24, 80] },
-      event_bus: bus
+      event_bus: bus,
     )
     assert_equal %w[council:** llm:** phantom:** pipeline:** tts:**], bus.patterns.keys.sort
     bus.publish("pipeline:stage_start")

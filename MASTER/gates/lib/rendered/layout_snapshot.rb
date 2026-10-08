@@ -206,7 +206,7 @@ module Deploy
       shown = diffs.first(8)
       more = diffs.size > shown.size ? " (+#{diffs.size - shown.size} more)" : ""
       @result.fail(
-        "layout_snapshot: #{surface.id} drifted from #{rel(path)} — #{tally(diffs)} — #{shown.join("; ")}#{more}"
+        "layout_snapshot: #{surface.id} drifted from #{rel(path)} — #{tally(diffs)} — #{shown.join("; ")}#{more}",
       )
     end
 

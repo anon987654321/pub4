@@ -57,7 +57,7 @@ module Master
         # back to a full directory sweep.
         def repository_files(target)
           root = git_root
-          return nil unless root
+          return unless root
 
           out, _, status = Master::Io::Exec.capture3(
             "git", "-C", root, "ls-files", "-z", "--cached", "--others", "--exclude-standard"
@@ -97,7 +97,7 @@ module Master
         def git_root
           out, err, status = Master::Io::Exec.capture3("git", "-C", @root, "rev-parse", "--show-toplevel")
           return out.to_s.strip.then { |path| path.empty? ? nil : File.expand_path(path) } if status.success?
-          return nil unless checkout_present?
+          return unless checkout_present?
 
           detail = err.to_s.strip
           raise "git root lookup failed: #{detail.empty? ? "exit #{status.exitstatus}" : detail}"
@@ -141,7 +141,7 @@ module Master
               "fix_loop:skipped",
               count: dropped.size,
               reasons: @skip_reasons.sort_by { |reason, count| [-count, reason] }.to_h,
-              sample: dropped.first(5).map { |f| relative(f) }
+              sample: dropped.first(5).map { |f| relative(f) },
             )
           end
           kept.sort

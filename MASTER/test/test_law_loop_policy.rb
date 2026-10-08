@@ -501,7 +501,7 @@ class TestLawLoopPolicy < Minitest::Test
         violation = { file: File.join(root, "sample.rb"), rule: "TEST_RULE", severity: }
         refute loop.send(:consensus_approves?, violation, "candidate-#{severity}")
       end
-      assert_equal ["candidate-error", "candidate-critical"], asked
+      assert_equal %w[candidate-error candidate-critical], asked
     ensure
       previous.nil? ? ENV.delete("MASTER_CONSENSUS_FIXES") : ENV["MASTER_CONSENSUS_FIXES"] = previous
     end

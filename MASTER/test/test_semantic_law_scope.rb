@@ -21,7 +21,7 @@ class TestSemanticLawScope < Minitest::Test
     agent = Object.new
     agent.define_singleton_method(:ask) { |_prompt, operation:| raise "upstream exploded" }
     rule = Master::Review::Scan::Laws::SemanticLaw.new(agent:)
-    
+
     assert_raises(RuntimeError) { rule.check("def foo; end", path: "foo.rb") }
   end
 

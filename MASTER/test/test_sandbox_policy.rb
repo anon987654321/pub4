@@ -59,7 +59,7 @@ class TestSandboxPolicy < Minitest::Test
   def test_scope_rejects_shell_and_inline_interpreter_execution
     root = Dir.mktmpdir("sandbox_scope")
     assert_equal "shell execution outside argv scope is forbidden",
-                 POLICY.scope_violation(%w[sh -c echo\ hi], root:)
+                 POLICY.scope_violation(["sh", "-c", "echo hi"], root:)
     assert_equal "inline interpreter execution is forbidden",
                  POLICY.scope_violation([RbConfig.ruby, "-e", "File.write('/tmp/x', 'x')"], root:)
   ensure

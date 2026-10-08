@@ -149,8 +149,8 @@ module Deploy
         ratio = bg && contrast_ratio(fg, bg)
         next unless ratio
 
-        { label: "vertical_accents.#{vertical}_accent/#{VERTICAL_SURFACE_DIALECT}.#{bg_key}", fg: fg, bg: bg,
-          fg_key: "#{vertical}_accent", bg_key: bg_key, ratio: ratio }
+        { label: "vertical_accents.#{vertical}_accent/#{VERTICAL_SURFACE_DIALECT}.#{bg_key}", fg:, bg:,
+          fg_key: "#{vertical}_accent", bg_key:, ratio: }
       end
     end
 
@@ -162,7 +162,7 @@ module Deploy
       return [] unless ratio
 
       [{ label: "vertical_accent_ink/vertical_accents.#{vertical}_hover", fg: ink, bg: hover,
-         fg_key: "accent_ink", bg_key: "#{vertical}_hover", ratio: ratio }]
+         fg_key: "accent_ink", bg_key: "#{vertical}_hover", ratio: }]
     end
 
     # Values of a custom property that survive the cascade.
@@ -362,7 +362,7 @@ decls.compact.each { |_, v, _| values << v }
           next unless ratio
 
           pairs << { label: "#{dialect_name}.#{fg}/#{bg}", fg: fg_value, bg: bg_value,
-                     fg_key: fg, bg_key: bg, ratio: ratio }
+                     fg_key: fg, bg_key: bg, ratio: }
         end
       end
       pairs
@@ -399,7 +399,7 @@ decls.compact.each { |_, v, _| values << v }
     end
 
     def extract_font_sizes_px(css, root_px: 16.0)
-      extract_declarations(css, "font-size").filter_map { |v| to_px(v, root_px: root_px) }
+      extract_declarations(css, "font-size").filter_map { |v| to_px(v, root_px:) }
     end
 
     def extract_ch_measures(css)
@@ -412,7 +412,7 @@ decls.compact.each { |_, v, _| values << v }
       props.each do |prop|
         extract_declarations(css, prop).each do |raw|
           raw.split(/\s+/).each do |token|
-            px = to_px(token, root_px: root_px)
+            px = to_px(token, root_px:)
             values << px if px && px.positive?
           end
         end
@@ -431,7 +431,7 @@ decls.compact.each { |_, v, _| values << v }
 
     def type_scale_ratio(sizes_px)
       uniq = sizes_px.map { |s| s.round(2) }.uniq.sort
-      return nil if uniq.size < 2
+      return if uniq.size < 2
 
       ratios = uniq.each_cons(2).map { |a, b| (b / a).round(3) }
       ratios
@@ -467,7 +467,7 @@ decls.compact.each { |_, v, _| values << v }
           extract_box_mins(body).any? { |h| h + 0.01 >= min_px } ||
             body.match?(/--space-(1[2-9]|[2-9]\d)|--touch|min-height:\s*44px|height:\s*44px|width:\s*var\(--space-1[2-9]/i)
         end
-        findings << { label: label, paths: paths, covered: covered }
+        findings << { label:, paths:, covered: }
       end
       findings
     end

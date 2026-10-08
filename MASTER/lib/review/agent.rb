@@ -74,7 +74,7 @@ module Master
 
         finalize_chat_response(response, message, dispatch:, image:, stream:, escalation_depth:, task_type:, &blk)
       rescue StandardError => chat_error
-        record_trajectory!(message: message, model: @config.model, outcome: "failed")
+        record_trajectory!(message:, model: @config.model, outcome: "failed")
         Result.err("agent: #{chat_error.message}", category: :handler_exception)
       end
 
@@ -225,7 +225,7 @@ end
 
         @session.add_message(role: :assistant, content: text)
         answered = (response.model if response.respond_to?(:model)) || dispatch[:selected_model]
-        record_trajectory!(message: message, model: answered, outcome: "complete")
+        record_trajectory!(message:, model: answered, outcome: "complete")
         publish_ctx_footer(answered)
         Result::Ok.new(text, answered)
       end
@@ -291,7 +291,7 @@ end
           searches.filter_map do |query|
             result = web&.call(query:)
             result.value!.to_s if result.respond_to?(:ok?) && result.ok?
-          end
+          end,
         )
         snippets
       end
@@ -351,7 +351,7 @@ end
           "model" => model.to_s,
           "events" => events,
           "outcome" => outcome,
-          "verified" => outcome == "complete"
+          "verified" => outcome == "complete",
         )["verified"]
 
         Master::AI::Trajectory::Record.new(
@@ -359,7 +359,7 @@ end
           "model" => model.to_s,
           "events" => events,
           "outcome" => outcome,
-          "verified" => verified
+          "verified" => verified,
         ).append!(File.join(Master::ROOT, ".master", "trajectories", "trajectories.ndjson"))
       rescue StandardError => e
         @bus&.publish("llm:record_error", error: e.message)

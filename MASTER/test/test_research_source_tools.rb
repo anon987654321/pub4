@@ -27,13 +27,13 @@ class TestResearchSourceTools < Minitest::Test
     assert result.ok?, result.to_s
     assert_equal [
       { "title" => "Particle face", "user" => "alpha", "url" => "https://codepen.io/alpha/pen/abc123" },
-      { "title" => "Editorial menu", "user" => "beta", "url" => "https://codepen.io/beta/pen/def456" }
+      { "title" => "Editorial menu", "user" => "beta", "url" => "https://codepen.io/beta/pen/def456" },
     ], result.value!
   end
 
   def test_codepen_rejects_non_codepen_urls
     result = Master::Io::CodePen.new(governor: allow).call(
-      mode: "inspect", url: "https://example.com/pen/nope"
+      mode: "inspect", url: "https://example.com/pen/nope",
     )
 
     refute result.ok?
@@ -45,8 +45,8 @@ class TestResearchSourceTools < Minitest::Test
     body = JSON.generate({
       "files" => {
         "hello.rb" => { "content" => "puts :hello\n" },
-        "note.md" => { "content" => "# note\n" }
-      }
+        "note.md" => { "content" => "# note\n" },
+      },
     })
     response = Struct.new(:code, :body).new("200", body)
     tool.define_singleton_method(:http) { |_uri, _address| response }
@@ -61,7 +61,7 @@ class TestResearchSourceTools < Minitest::Test
 
   def test_gist_rejects_non_gist_urls
     result = Master::Io::Gist.new(governor: allow).call(
-      url: "https://github.com/alice/repo"
+      url: "https://github.com/alice/repo",
     )
 
     refute result.ok?
@@ -81,7 +81,7 @@ class TestResearchSourceTools < Minitest::Test
 
   def test_youtube_transcript_rejects_an_unrelated_url
     result = Master::Io::YoutubeTranscript.new(governor: allow).call(
-      url: "https://example.com/watch?v=dQw4w9WgXcQ"
+      url: "https://example.com/watch?v=dQw4w9WgXcQ",
     )
 
     refute result.ok?

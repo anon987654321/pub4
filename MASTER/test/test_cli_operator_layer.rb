@@ -23,7 +23,7 @@ class TestCliOperatorLayer < Minitest::Test
 
     assert_equal(
       "ollama unreachable at http://127.0.0.1:11434",
-      router.send(:ollama_problem, "ollama:laguna-xs-2.1")
+      router.send(:ollama_problem, "ollama:laguna-xs-2.1"),
     )
   end
 
@@ -32,7 +32,7 @@ class TestCliOperatorLayer < Minitest::Test
 
     [
       "Failed to open TCP connection to localhost:11434",
-      "ollama unreachable at http://127.0.0.1:11434: connection refused"
+      "ollama unreachable at http://127.0.0.1:11434: connection refused",
     ].each do |message|
       error = StandardError.new(message)
       assert dispatcher.send(:offline_error?, error), message
@@ -78,9 +78,9 @@ class TestCliOperatorLayer < Minitest::Test
   def test_vm23_operator_exposes_single_master_screen_lifecycle
     source = File.read(File.join(Master::ROOT, "bin", "operator"))
 
-    assert_includes source, 'bin/operator vps master <status|start|stop|restart>'
-    assert_includes source, 'screen -dmS master'
-    assert_includes source, 'MASTER/bin/master --daemon'
+    assert_includes source, "bin/operator vps master <status|start|stop|restart>"
+    assert_includes source, "screen -dmS master"
+    assert_includes source, "MASTER/bin/master --daemon"
   end
 
   def test_short_cli_replies_are_not_silenced
@@ -161,7 +161,7 @@ class TestCliOperatorLayer < Minitest::Test
       selection = Master::Io::MediaIntent.send(
         :postpro_selection,
         "run postpro.rb over the 1 latest jpgs",
-        dir
+        dir,
       )
 
       assert_equal [new], selection[:files]

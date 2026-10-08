@@ -43,8 +43,8 @@ class TestCliFaceDispatch < Minitest::Test
     session = Master::CLI::Session.allocate
     session.instance_variable_set(:@container, {
       commands: {
-        "play" => Master::CLI::CommandRegistry::Command.new { |ctx| "dilla0: #{ctx.fetch(:args)}" }
-      }
+        "play" => Master::CLI::CommandRegistry::Command.new { |ctx| "dilla0: #{ctx.fetch(:args)}" },
+      },
     })
     renderer = Object.new
     def renderer.render(text, **); text; end

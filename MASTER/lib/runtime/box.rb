@@ -62,7 +62,7 @@ module Master
       end
 
       def current_inspect
-        return nil unless enabled?
+        return unless enabled?
 
         ::Ruby::Box.current&.inspect
       rescue StandardError

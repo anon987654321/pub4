@@ -88,7 +88,7 @@ module Master
         Master::Fix::Mission.new(root:, bus:, checkpoint:).start_or_resume!(
           goal:, scope: root, model:, effort: ENV.fetch("MASTER_EFFORT", "medium"),
           plan: Master::Ground::ActivePlan.read(root), origin: "fold", auto_continue: true,
-          mode:, risk:, intent:,
+          mode:, risk:, intent:
         )
       end
 
@@ -262,7 +262,7 @@ module Master
         Master::Core::Fold.new(
           model:,
           constitution: Master::Core::Constitution.load(data_dir: Master.data_path, verify: scan_verifier,
-                                                        sandbox: shell_sandbox(root: root),
+                                                        sandbox: shell_sandbox(root:),
                                                         capabilities:),
           world:,
           memory:,

@@ -118,7 +118,7 @@ class FixHardeningTest < Minitest::Test
 
     refreshed = runner.send(:refresh_streamed_findings, found, streamed)
 
-    assert_equal ["UNTOUCHED", "FRESH"], refreshed.map { |row| row[:rule] }
+    assert_equal %w[UNTOUCHED FRESH], refreshed.map { |row| row[:rule] }
     refute refreshed.any? { |row| row[:rule] == "STALE" }
   end
 end

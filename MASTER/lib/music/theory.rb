@@ -35,7 +35,7 @@ module Master
         techno_pulse: %w[i i bVI bVII],
         jazz_loop: %w[ii7 V7 I7 vi7],
       }.freeze.merge(
-        CATALOG.fetch("progressions").transform_keys(&:to_sym).transform_values { |v| Array(v).map(&:to_s) }
+        CATALOG.fetch("progressions").transform_keys(&:to_sym).transform_values { |v| Array(v).map(&:to_s) },
       ).freeze
 
       module_function

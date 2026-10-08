@@ -132,9 +132,9 @@ module Master
         selected << preserved_uncertainty if preserved_uncertainty
         {
           candidates: rows.size,
-          selected: selected,
+          selected:,
           deferred: ranked.reject { |item| selected.include?(item) },
-          preserved_uncertainty: preserved_uncertainty,
+          preserved_uncertainty:,
         }.freeze
       end
 
@@ -336,7 +336,7 @@ module Master
         leading = positions.size == 1 ? positions.first[:claim] : nil
 
         {
-          positions: positions,
+          positions:,
           disagreement:,
           requires_measurement:,
           leading:,

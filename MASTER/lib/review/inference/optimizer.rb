@@ -63,7 +63,7 @@ module Master
         def reflect(agent, prompt, scores, temperature:)
           agent.ask_once(
             "Reflect on this prompt optimiser candidate. Identify the smallest textual changes likely to improve its scores without changing the task contract. Do not solve the task.\n\n"             "Prompt:\n#{prompt}\n\nScores:\n#{scores.inspect}",
-            temperature:
+            temperature:,
           )
         end
         private_class_method :reflect
@@ -71,7 +71,7 @@ module Master
         def mutate(agent, prompt, reflection, temperature:)
           agent.ask_once(
             "Mutate this prompt using the reflection. Keep the task contract intact. Return only the mutated prompt.\n\nCurrent:\n#{prompt}\n\nReflection:\n#{reflection}",
-            temperature:
+            temperature:,
           )
         end
         private_class_method :mutate

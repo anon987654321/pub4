@@ -17,7 +17,7 @@ class TestExecutionTrace < Minitest::Test
         root:,
         files: paths,
         digestor: ->(path) { seen << path; Digest::SHA256.file(path) },
-        ruby_checker: ->(_path) {}
+        ruby_checker: ->(_path) {},
       )
       trace.send(:reread, paths, failures = [])
 
@@ -53,7 +53,7 @@ class TestExecutionTrace < Minitest::Test
     trace = Master::Fix::ExecutionTrace.new(
       root: Master::ROOT,
       files: [],
-      dependencies: { scanner: Object.new, fix_loop: nil, deliberation: Object.new, bus: Object.new }
+      dependencies: { scanner: Object.new, fix_loop: nil, deliberation: Object.new, bus: Object.new },
     )
 
     failures = []

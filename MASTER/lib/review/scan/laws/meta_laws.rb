@@ -266,7 +266,7 @@ module Master
           end
 
           def laws_mtime
-            return nil unless File.exist?(laws_path)
+            return unless File.exist?(laws_path)
 
             stat = File.stat(laws_path)
             [stat.size, stat.ino, stat.mtime.to_r]

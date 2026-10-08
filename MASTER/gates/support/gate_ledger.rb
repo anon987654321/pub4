@@ -57,12 +57,12 @@ module Deploy
       line = {
         at: Time.now.utc.iso8601,
         run: run_id,
-        gate: gate,
+        gate:,
         outcome: outcome.to_s,
-        failures: failures,
-        warnings: warnings,
-        errors: errors,
-        duration_ms: duration_ms,
+        failures:,
+        warnings:,
+        errors:,
+        duration_ms:,
       }
       File.open(@path, "a") { |f| f.puts(JSON.generate(line)) }
       self
@@ -97,7 +97,7 @@ module Deploy
         rows.each { |r| counts[r["outcome"].to_s] += 1 }
         times = rows.filter_map { |r| r["duration_ms"] }
         {
-          gate: gate,
+          gate:,
           runs: rows.size,
           passed: counts["passed"],
           failed: counts["failed"],

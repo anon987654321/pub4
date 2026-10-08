@@ -128,7 +128,6 @@ module Master
           Master::Trace::Dmesg.status(unit, parts.join(", "))
         end
 
-
         def law_scope_summary(laws)
           counts = Hash.new(0)
           Array(laws).each do |law|

@@ -99,8 +99,6 @@ class TestSoul < Minitest::Test
     assert_equal DOCUMENT, File.read(File.join(@root, "data", "SOUL.md"))
   end
 
-
-
   def test_system_prompt_carries_identity_judgment_and_boundaries
     soul = Master::Voice::Soul.new(root: @root)
     prompt = soul.system_prompt

@@ -16,8 +16,8 @@ module Master
         {
           ok: duration.positive? && duration <= 180.0,
           duration_s: duration.round(3),
-          sample_rate: sample_rate,
-          channels: channels,
+          sample_rate:,
+          channels:,
           clipping: clipping?(path),
           **volume_stats(path),
         }

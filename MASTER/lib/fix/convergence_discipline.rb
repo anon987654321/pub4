@@ -16,7 +16,7 @@ module Master
 
       DEFAULT_HYGIENE_PROMPT = <<~TEXT.strip
         fix hygiene contract (enforce on every mutation in this /fix pass):
-        
+
         1. numeric ranks: never .to_i/.to_int on values that may be Infinity/NaN; use finite sentinels
         2. extract-then-match: if you strip a body from source, the next pattern must match that body
         3. regex fixtures: every new extractor includes a unit fixture of the real surface form
@@ -26,7 +26,7 @@ module Master
         7. dual paths: after early return/exit, delete or share one function with the later twin
         8. gates: label SKIPPED vs FAILED vs crash
         9. limits/guidance: new limits keys need a reader, or stay under guidance: only
-        
+
         When proposing a patch, name which checklist id (A–G) you satisfied or waive with one line.
         Deterministic census beats LLM invention for topic lists and call graphs.
       TEXT
@@ -227,7 +227,7 @@ module Master
       end
 
       def finding_value(finding, key)
-        return nil unless finding
+        return unless finding
         if finding.respond_to?(key)
           return finding.public_send(key)
         end
@@ -344,7 +344,7 @@ module Master
         Digest::SHA256.hexdigest(
           Array(rows).sort_by { |row| row[:path].to_s }.map do |row|
             row.values_at(:path, :bytes, :lines, :sha256).join(":")
-          end.join("|")
+          end.join("|"),
         )
       end
 

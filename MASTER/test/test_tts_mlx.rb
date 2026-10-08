@@ -24,7 +24,7 @@ class TtsMlxTest < Minitest::Test
             wav = script[/sf\.write\((["'])(.+?)\1,/, 2]
             File.write(wav, "wav") if wav
             ["", "", status]
-          end
+          end,
         ) do
           result = Master::Voice::Engines.send(
             :try_mlx_python_api,
@@ -45,7 +45,7 @@ class TtsMlxTest < Minitest::Test
               "repetition_penalty" => 1.15,
               "min_p" => 0.04,
               "top_p" => 0.92,
-            }
+            },
           )
 
           assert result
@@ -70,11 +70,11 @@ class TtsMlxTest < Minitest::Test
     Master::Voice::Engines.stub(:mlx_python, "python3") do
       Master::Voice::Engines.stub(
         :try_mlx_python_api,
-        ->(*args, **kwargs) { calls << [args, kwargs]; true }
+        ->(*args, **kwargs) { calls << [args, kwargs]; true },
       ) do
         Master::Voice::Engines.stub(
           :try_mlx_cli,
-          ->(*_args) { raise "legacy CLI must not handle Chatterbox" }
+          ->(*_args) { raise "legacy CLI must not handle Chatterbox" },
         ) do
           assert Master::Voice::Engines.send(
             :synth_mlx,
@@ -89,7 +89,7 @@ class TtsMlxTest < Minitest::Test
             },
             { exaggeration: 0.5 },
             rate: "-5%",
-            pitch: "0Hz"
+            pitch: "0Hz",
           )
         end
       end

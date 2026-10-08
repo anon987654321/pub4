@@ -121,7 +121,6 @@ class TestFixLoopFileCollector < Minitest::Test
     end
   end
 
-
   def test_stylesheet_line_limit_covers_large_authored_application_stylesheet
     Dir.mktmpdir do |dir|
       path = write(dir, "app/assets/stylesheets/application.scss", Array.new(Master::Fix::Scan::FileProcessor::STYLE_MAX_LINES - 100, "x").join("\n"))
@@ -175,7 +174,7 @@ class TestFixLoopFileCollector < Minitest::Test
       roots = []
       Master::Fix::Scanner.stub(
         :skip_path?,
-        ->(_path, root:) { roots << File.expand_path(root); false }
+        ->(_path, root:) { roots << File.expand_path(root); false },
       ) do
         assert_equal [path], collector(rails).collect(rails)
       end

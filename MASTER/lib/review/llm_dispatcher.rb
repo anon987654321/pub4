@@ -278,7 +278,7 @@ module Master
           end
         { message: reason, category: }
       rescue StandardError => e
-        @bus&.publish("llm:preflight_error", model: model, error: e.message)
+        @bus&.publish("llm:preflight_error", model:, error: e.message)
         nil
       end
 

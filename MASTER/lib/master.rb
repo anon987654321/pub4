@@ -141,7 +141,6 @@ module Master
     load_yaml(File.join(root, "data", "soul.yml")) || {}
   end
 
-
   # The one reader of data/laws.yml. A missing section raises rather than
   # returning {}, because every caller reads the empty result as a law with nothing in it.
   def self.law_entries(root: ROOT)
@@ -178,7 +177,6 @@ module Master
   def self.tokens(root: ROOT)
     (load_laws(root:) || {})["tokens"] || {}
   end
-
 
   # One path into it, so a key that moves breaks in one place rather than in the
   # nineteen files that each dug the section themselves:

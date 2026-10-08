@@ -30,7 +30,7 @@ module Master
           row&.depends_on || [],
           ownership&.fetch("check", nil) || row&.check,
           ownership,
-          constitutional_laws
+          constitutional_laws,
         ).then { |node| render(node) }
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "RuleLineage.explain", severity: :cosmetic)
@@ -100,7 +100,7 @@ module Master
           "  status: INCONCLUSIVE",
           "  reason: #{error.class}: #{error.message}",
           "  constitution: data/laws.yml",
-          "  executable_law: law/"
+          "  executable_law: law/",
         ].join("\n")
       end
     end

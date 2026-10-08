@@ -37,7 +37,7 @@ module Master
           branches: 3,
           beam: 2,
           depth: 2,
-          temperature: 0.7
+          temperature: 0.7,
         }.freeze
 
         def initialize(agent:, event_bus: nil, root: Master::ROOT)
@@ -87,7 +87,7 @@ module Master
               prompt:,
               samples: bounded(settings.fetch(:samples), max_calls),
               temperature:,
-              extractor: settings[:extractor] || method(:default_extractor)
+              extractor: settings[:extractor] || method(:default_extractor),
             )
           when :skeleton
             Search.skeleton(agent:, prompt:, points: bounded(settings.fetch(:points, 5), [max_calls - 2, 1].max), temperature:)
@@ -98,7 +98,7 @@ module Master
               branches: [bounded(settings.fetch(:branches), 2), 1].max,
               beam: [bounded(settings.fetch(:beam), 2), 1].max,
               depth: [bounded(settings.fetch(:depth), max_calls >= 9 ? 2 : 1), 1].max,
-              temperature:
+              temperature:,
             )
           when :denial
             Novelty.denial(agent:, prompt:, constraints: Array(settings.fetch(:constraints, default_constraints)),
@@ -129,7 +129,7 @@ module Master
               metric: settings.fetch(:metric),
               generations: settings.fetch(:generations, 2),
               population: settings.fetch(:population, 3),
-              temperature:
+              temperature:,
             )
           else
             Master::Result.err("inference: unsupported strategy #{strategy}", category: :validation)
@@ -166,7 +166,7 @@ module Master
             ok:,
             latency_ms: ms,
             calls:,
-            strategy:
+            strategy:,
           )
         end
       end

@@ -429,8 +429,38 @@ class TestDillaLiveSynth < Minitest::Test
     score.schedule(stage, 0.0)
 
     expected = resolve_pad_chord_symbol("Bbm9").fetch(:hz).map { |hz| (69 + (12 * Math.log2(hz / 440.0))).round }.uniq
-    actual = stage.instance_variable_get(:@voices).first(5).map(&:midi)
+    actual = stage.instance_variable_get(:@voices).first(5).map { |voice| (69 + (12 * Math.log2(voice.hz / 440.0))).round }
     assert_equal expected, actual
+  end
+
+  def comp_pad_voices(profile)
+    ENV["LIVE_COMP"] = profile
+    score = LiveSynth::Improviser.new(rng: Random.new(7), reference: "dilla_life", pad: "rhodes_tine")
+    stage = LiveSynth::Stage.new(rate: RATE, rng: score.rng)
+    score.schedule(stage, 0.0)
+    count = resolve_pad_chord_symbol("Bbm9").fetch(:hz).map { |hz| hz.round(2) }.uniq.length
+    voices = stage.instance_variable_get(:@voices).first(count)
+    [voices, score.instance_variable_get(:@beat)]
+  ensure
+    ENV.delete("LIVE_COMP")
+  end
+
+  def test_comp_profiles_move_onsets_but_keep_the_chord
+    midi = ->(voice) { (69 + (12 * Math.log2(voice.hz / 440.0))).round }
+    block, = comp_pad_voices("block")
+    assert_equal 1, block.map(&:start).uniq.length, "block sounds every voice on the downbeat"
+
+    LiveSynth.config.fetch("improvise").fetch("comp").fetch("profiles").each do |name, profile|
+      voices, beat = comp_pad_voices(name)
+      assert_equal block.map(&midi).sort, voices.map(&midi).sort, "#{name} changed the chord tones"
+      starts = voices.sort_by(&midi).map(&:start)
+      starts.reverse! if profile["direction"] == "down"
+      assert_equal starts.sort, starts, "#{name} rolls the wrong way"
+      span = starts.last - starts.first
+      assert_operator span, :<=, (profile["spread_beats"] * beat) + 1e-9, name
+      assert_operator span, :>, 0.0, name unless profile["spread_beats"].zero?
+      assert_operator voices.map(&midi).min, :>=, block.map(&midi).min, "#{name} reaches below the block voicing"
+    end
   end
 
   def test_flylo_inspired_progressions_are_multi_chord_and_voiced

@@ -23,8 +23,8 @@ class PledgeProfileTest < Minitest::Test
   def test_profile_constructor_normalizes_values
     profile = Master::Ground::Pledge::Profile.new(
       name: "fix",
-      capabilities: ["stdio", "write"],
-      promises: +"stdio rpath"
+      capabilities: %w[stdio write],
+      promises: +"stdio rpath",
     )
 
     assert_equal :fix, profile.name

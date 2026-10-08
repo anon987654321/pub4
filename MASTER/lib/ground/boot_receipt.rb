@@ -157,7 +157,7 @@ module Master
         candidates = [
           root,
           File.join(root, "MASTER"),
-          MasterPaths::ROOT
+          MasterPaths::ROOT,
         ]
         candidates.find { |candidate| File.file?(File.join(candidate, "law", "definition.rb")) } || MasterPaths::ROOT
       end

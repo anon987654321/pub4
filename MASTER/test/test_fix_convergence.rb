@@ -263,7 +263,6 @@ class TestFixConvergence < Minitest::Test
     assert_equal File.join(Master::ROOT, "lib", "io"), resolver.resolve_target("lib/io")
   end
 
-
   def test_openbsd_recursive_tree_globs_resolve_to_the_tree_root
     resolver = Class.new do
       include Master::CLI::Pipeline::TargetResolver
@@ -297,7 +296,6 @@ class TestFixConvergence < Minitest::Test
     assert_equal ["MASTER"], Operator::GateChain.trees_for_target("lib/io")
   end
 
-
   def test_studio_recursive_tree_globs_resolve_to_the_tree_root
     resolver = Class.new do
       include Master::CLI::Pipeline::TargetResolver
@@ -314,7 +312,7 @@ class TestFixConvergence < Minitest::Test
       "MASTER/lib" => Master::ROOT,
       "RAILS/__shared" => Master::RAILS_ROOT,
       "OPENBSD/etc" => File.join(Master::REPO_ROOT, "OPENBSD", "etc"),
-      "STUDIO/lora" => File.join(Master::REPO_ROOT, "STUDIO", "lora")
+      "STUDIO/lora" => File.join(Master::REPO_ROOT, "STUDIO", "lora"),
     }.each do |target, expected_root|
       request = Master::CLI::Scan::Request.new(scanner: nil, root: Master::ROOT, arg: target)
       assert_equal expected_root, request.send(:target_arg), target
@@ -403,7 +401,6 @@ class TestFixConvergence < Minitest::Test
     assert_equal false, captured[:apply]
   end
 
-
   def test_exact_all_tree_fix_command_targets_the_repo_and_preserves_gate_scope
     repaired = []
     verified = []
@@ -426,7 +423,6 @@ class TestFixConvergence < Minitest::Test
     assert_equal [Master::REPO_ROOT], repaired
     assert_equal ["MASTER RAILS OPENBSD"], verified
   end
-
 
   def test_fix_reenters_after_gate_repairs_until_the_tree_stabilises
     verified = []
@@ -490,7 +486,7 @@ class TestFixConvergence < Minitest::Test
     fake_trace = Struct.new(:clean?, :summary, :failures).new(
       false,
       "execution_trace: failed",
-      ["MASTER/test/broken.rb: syntax failed: Prism::ParseError"]
+      ["MASTER/test/broken.rb: syntax failed: Prism::ParseError"],
     )
 
     fix_loop = Object.new
@@ -735,7 +731,7 @@ class TestFixConvergence < Minitest::Test
       scanner:,
       root: @root,
       bus: @bus,
-      git: StubGit.new
+      git: StubGit.new,
     )
     runner = loop.instance_variable_get(:@pass_runner)
     runner.instance_variable_set(:@preflight, preflight)
@@ -1018,7 +1014,6 @@ class TestFixConvergence < Minitest::Test
     assert_includes result.value!, "wishlist proof inconclusive"
   end
 
-
   # 7. Running out of passes is not finishing.
   def test_structure_preflight_runs_before_the_first_repair_pass
     target = File.join(@root, "RAILS")
@@ -1066,7 +1061,6 @@ class TestFixConvergence < Minitest::Test
     assert_match(/structural sweep failed/, error.message)
     assert_match(/boom/, error.message)
   end
-
 
   def test_a_pass_limit_is_a_plateau_not_a_done
     violations = [{ rule: "TEST_RULE", file: File.join(@root, "dummy.yml"), line: 1, message: "stays" }]

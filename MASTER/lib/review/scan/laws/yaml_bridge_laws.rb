@@ -142,7 +142,7 @@ module Master
 
           def rules_mtime
             path = File.join(@root, "data", "laws.yml")
-            return nil unless File.exist?(path)
+            return unless File.exist?(path)
 
             stat = File.stat(path)
             [stat.size, stat.ino, stat.mtime.to_r]

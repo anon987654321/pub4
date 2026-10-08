@@ -50,17 +50,17 @@ module VisualContractGate
       public: "/", sign_in: "/session/new", empty: "/?q=visual-contract-no-match",
       results: "/?sort=latest", error: "/404-visual-contract", offline: "/offline",
       # Marketplace vertical (Host markedsplass.* in capture when available)
-      marketplace: "/", marketplace_sign_in: "/session/new",
+      marketplace: "/", marketplace_sign_in: "/session/new"
     },
     amber: {
       public: "/", sign_in: "/session/new", wardrobe: "/items", item: "/items/1",
       outfit: "/outfits/1", upload: "/items/new", ai_result: "/ai/suggest_outfits",
-      empty: "/items?q=visual-contract-no-match", error: "/404-visual-contract", offline: "/offline",
+      empty: "/items?q=visual-contract-no-match", error: "/404-visual-contract", offline: "/offline"
     },
     bsdports: {
       public: "/", empty: "/ports?q=visual-contract-no-match", results: "/ports?q=git",
       detail: "/ports/1", advisory: "/ports/1#cves-security-advisories",
-      dependency: "/ports/1#this-package-requires", error: "/404-visual-contract", offline: "/offline",
+      dependency: "/ports/1#this-package-requires", error: "/404-visual-contract", offline: "/offline"
     },
   }.freeze
 
@@ -166,7 +166,7 @@ module VisualContractGate
 
     {
       hard:, soft: strict ? [] : soft,
-      drift: { states: drifted.length, pixels: drifted.sum { |row| row[:pixel_diff_count].to_i }, worst_ratio: worst },
+      drift: { states: drifted.length, pixels: drifted.sum { |row| row[:pixel_diff_count].to_i }, worst_ratio: worst }
     }
   end
 
@@ -242,12 +242,12 @@ module VisualContractGate
           app: cell[:app], state: cell[:state], viewport: cell[:viewport], route: cell[:route],
           status: cdp.status,
           title: cdp.evaluate("document.title"),
-          screenshot: screenshot,
+          screenshot:,
           screenshot_sha256: Digest::SHA256.file(screenshot).hexdigest,
           **diff,
           console_errors: cdp.console_errors,
           accessibility_violations: accessibility_violations(cdp),
-          lenses: LENSES,
+          lenses: LENSES
         }
       end
     end
@@ -305,8 +305,8 @@ verdict = VisualContractGate.grade(
   results,
   strict: %w[1 true yes on].include?(ENV["VISUAL_STRICT"].to_s.strip.downcase),
   drift_max: VisualContractGate.normalize_drift_max(
-    ENV.fetch("VISUAL_DRIFT_MAX_RATIO", DEFAULT_DRIFT_MAX_RATIO)
-  )
+    ENV.fetch("VISUAL_DRIFT_MAX_RATIO", DEFAULT_DRIFT_MAX_RATIO),
+  ),
 )
 
 # Nothing navigated, so nothing was compared. `grade` already skips a row whose

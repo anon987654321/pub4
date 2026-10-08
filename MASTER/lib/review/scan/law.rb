@@ -249,7 +249,7 @@ module Master
       end
 
       # Compatibility name for callers not yet migrated to the singular Law concept.
-      
+
     end
   end
 end

@@ -55,7 +55,7 @@ class WorldExternalContractTest < Minitest::Test
   def test_exec_captures_a_real_child_process
     Dir.mktmpdir("master-world") do |root|
       result = world(root).perform(
-        Master::Core::Effect.exec([RbConfig.ruby, "-e", "STDOUT.write('world-ok')"], timeout: 3)
+        Master::Core::Effect.exec([RbConfig.ruby, "-e", "STDOUT.write('world-ok')"], timeout: 3),
       )
 
       assert_predicate result, :ok?
@@ -71,8 +71,8 @@ class WorldExternalContractTest < Minitest::Test
       result = world(root).perform(
         Master::Core::Effect.exec(
           [RbConfig.ruby, "-e", "puts ENV.keys.grep(/MASTER_PROBE_API_KEY/).join(',')"],
-          timeout: 3
-        )
+          timeout: 3,
+        ),
       )
 
       assert_predicate result, :ok?
@@ -85,14 +85,13 @@ class WorldExternalContractTest < Minitest::Test
   def test_exec_timeout_is_a_failed_observation_and_returns
     Dir.mktmpdir("master-world") do |root|
       result = world(root).perform(
-        Master::Core::Effect.exec([RbConfig.ruby, "-e", "sleep 4"], timeout: 1)
+        Master::Core::Effect.exec([RbConfig.ruby, "-e", "sleep 4"], timeout: 1),
       )
 
       assert_predicate result, :err?
       assert_includes result.message, "TIMEOUT after"
     end
   end
-
 
   def test_scoped_rollback_preserves_an_unrelated_concurrent_file
     Dir.mktmpdir("master-world") do |root|
@@ -183,7 +182,6 @@ class ChallengeToolBalanceTest < Minitest::Test
       assert_kind_of Array, row[:tests]
     end
   end
-
 
   def test_test_deletion_probe_reports_unique_coverage
     Dir.mktmpdir("master-deletion") do |root|

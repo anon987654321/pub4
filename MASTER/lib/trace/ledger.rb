@@ -116,7 +116,7 @@ module Master
             message: payload[:message] || payload["message"],
             head: payload[:head] || payload["head"],
             paths:,
-            findings: payload[:findings] || payload["findings"] || []
+            findings: payload[:findings] || payload["findings"] || [],
           )
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "Ledger::Feedback.record_commit", event_bus: @bus)
@@ -133,7 +133,7 @@ module Master
             signal: payload[:signal] || payload["signal"],
             value: payload[:value] || payload["value"],
             source: payload[:source] || payload["source"] || "production",
-            context: payload[:context] || payload["context"]
+            context: payload[:context] || payload["context"],
           )
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "Ledger::Feedback.record_production_evidence", event_bus: @bus)

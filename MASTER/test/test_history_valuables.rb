@@ -62,13 +62,13 @@ class TestHistoryValuables < Minitest::Test
       "/tmp/pub3",
       window: nil,
       all_refs: true,
-      paths: ["aight"]
+      paths: ["aight"],
     )
 
     assert_equal(
       ["git", "-C", "/tmp/pub3", "log", "--all", "--find-renames", "--find-copies",
        "--diff-filter=DMR", "--patch", "--", "aight"],
-      args
+      args,
     )
   end
 end

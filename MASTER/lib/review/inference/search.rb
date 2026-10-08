@@ -20,7 +20,7 @@ module Master
             winner:,
             votes: tally,
             confidence: votes.to_f / answers.size,
-            paths:
+            paths:,
           )
         rescue StandardError => e
           Master::Result.err("inference: self-consistency #{e.class}: #{e.message}", category: :handler_exception)
@@ -36,11 +36,11 @@ module Master
           expanded = parallel(
             agent,
             items.map { |item| "Expand this answer point into precise, self-contained content.\n\nPoint: #{item}\n\nTask: #{prompt}" },
-            temperature:
+            temperature:,
           )
           synthesis = ask(
             agent,
-            "Synthesize the following independent sections into one coherent answer. Remove duplicated claims and preserve all material evidence.\n\nTask: #{prompt}\n\nSections:\n#{expanded.join("\n\n---\n\n")}"
+            "Synthesize the following independent sections into one coherent answer. Remove duplicated claims and preserve all material evidence.\n\nTask: #{prompt}\n\nSections:\n#{expanded.join("\n\n---\n\n")}",
           )
           return synthesis if synthesis.is_a?(Master::Result::Err)
 
@@ -57,7 +57,7 @@ module Master
             candidates = frontier.flat_map do |node|
               raw = ask(
                 agent,
-                "Given the current problem state below, propose #{branches} materially different next moves. "                 "Each move must be a complete candidate state, not a commentary on the alternatives.\n\n"                 "Depth: #{level + 1}\nState:\n#{node[:state]}"
+                "Given the current problem state below, propose #{branches} materially different next moves. "                 "Each move must be a complete candidate state, not a commentary on the alternatives.\n\n"                 "Depth: #{level + 1}\nState:\n#{node[:state]}",
               )
               next [] if raw.is_a?(Master::Result::Err)
 
@@ -71,7 +71,7 @@ module Master
             scored = candidates.map do |candidate|
               score = ask(
                 agent,
-                "Score this candidate state from 0.0 to 1.0 for correctness, progress, simplicity and fit to the original problem. "                 "Return one decimal number only. Original problem: #{prompt}\n\nCandidate: #{candidate[:state]}"
+                "Score this candidate state from 0.0 to 1.0 for correctness, progress, simplicity and fit to the original problem. "                 "Return one decimal number only. Original problem: #{prompt}\n\nCandidate: #{candidate[:state]}",
               )
               value = score.is_a?(Master::Result::Err) ? 0.0 : numeric_score(score)
               candidate.merge(score: value)

@@ -67,7 +67,7 @@ module Master
           @bg_thread&.kill if @bg_thread&.alive?
           @bg_thread = nil
           @supervisor = nil
-          Mission.block_current(root: @root, reason: reason)
+          Mission.block_current(root: @root, reason:)
           @bus&.publish("fix_loop:halt", reason:)
           Result.ok("fix_loop halted: #{reason}")
         end

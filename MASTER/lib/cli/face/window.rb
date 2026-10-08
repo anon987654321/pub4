@@ -102,7 +102,7 @@ module Master
             level:,
             events:,
             motion: @motion,
-            color: @output.respond_to?(:tty?) && @output.tty? && ENV["NO_COLOR"] != "1"
+            color: @output.respond_to?(:tty?) && @output.tty? && ENV["NO_COLOR"] != "1",
           ).split("\n")
 
           transcript = tail(column(jobs, words), transcript_rows, cols).map do |line|
@@ -114,7 +114,7 @@ module Master
             *face.first(content_rows).map { |line| center_line(line, cols) },
             *transcript,
             "#{DIM}#{status(state)[0, cols]}#{PLAIN}",
-            typed(draft, cols)
+            typed(draft, cols),
           ]
           body = body.first(rows)
           body += Array.new(rows - body.length, "") if body.length < rows

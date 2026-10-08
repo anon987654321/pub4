@@ -80,12 +80,12 @@ module Deploy
       "sound" => "@stimulus-components/sound",
       "speech-recognition" => "@stimulus-components/speech-recognition",
       "textarea-autogrow" => "@stimulus-components/textarea-autogrow",
-      "timeago" => "@stimulus-components/timeago"
+      "timeago" => "@stimulus-components/timeago",
     }.freeze
 
     VENDOR_FILES = {
       "glow" => "@stimulus-components--glow.js",
-      "places-autocomplete" => "stimulus-places-autocomplete.js"
+      "places-autocomplete" => "stimulus-places-autocomplete.js",
     }.freeze
 
     COMPONENT_OPPORTUNITIES = {
@@ -101,14 +101,14 @@ module Deploy
       "confirmation" => /confirm\(|data-confirm|confirmation/i,
       "reveal-controller" => /IntersectionObserver|intersection.*reveal/i,
       "scroll-to" => /scrollIntoView\(|window\.scrollTo\(/,
-      "scroll-progress" => /scrollY|scrollTop.*scrollHeight/i
+      "scroll-progress" => /scrollY|scrollTop.*scrollHeight/i,
     }.freeze
 
     FORBIDDEN_VIEW_PATTERNS = [
       /data-controller="char-counter"/,
       /controller:\s*["']char-counter/,
       /char-counter-max-value/,
-      /data-char-counter-target/
+      /data-char-counter-target/,
     ].freeze
 
     FORBIDDEN_CONTROLLER_FILES = %w[
@@ -198,7 +198,7 @@ module Deploy
           call_sites.first(3).each do |call_site|
             result.fail(
               "#{path.sub(ROOT + '/', '')}: custom Stimulus behavior overlaps @stimulus-components/#{component} at #{call_site}; inspect this concrete call site before replacing the controller",
-              severity: :soft
+              severity: :soft,
             )
           end
         end

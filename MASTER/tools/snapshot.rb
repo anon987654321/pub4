@@ -16,13 +16,13 @@ module Operator
       "MASTER" => "MASTER",
       "RAILS" => "RAILS",
       "OPENBSD" => "OPENBSD",
-      "STUDIO" => "STUDIO"
+      "STUDIO" => "STUDIO",
     }.freeze
     OUTPUT_NAMES = {
       "MASTER" => "snapshot_MASTER.md",
       "RAILS" => "snapshot_RAILS.md",
       "OPENBSD" => "snapshot_OPENBSD.md",
-      "STUDIO" => "snapshot_STUDIO.md"
+      "STUDIO" => "snapshot_STUDIO.md",
     }.freeze
     TREES = TREE_PATHS.keys.freeze
     # Six attachments are the transport contract; the current governed trees fit within this ceiling.
@@ -298,7 +298,7 @@ module Operator
         part_index: 1,
         part_count: part_count_hint,
         source_units: units,
-        output_paths: hint_paths,
+        output_paths: hint_paths
       ).bytesize
       budget = MAX_BYTES - overhead
       raise "snapshot: #{tree} metadata exceeds per-part ceiling #{MAX_BYTES} bytes" if budget <= 0
@@ -366,7 +366,7 @@ module Operator
           part_index: index + 1,
           part_count: groups.size,
           source_units: units,
-          output_paths: outputs,
+          output_paths: outputs
         )
         raise "snapshot: #{tree} part #{index + 1}/#{groups.size} exceeds #{MAX_BYTES} bytes" if body.bytesize > MAX_BYTES
         [output, body]
@@ -379,7 +379,7 @@ module Operator
         Master::Trace::Dmesg.status(
           "snapshot0",
           "#{tree}, part=#{index + 1}/#{rendered.size}, files=#{groups.fetch(index).map(&:first).uniq.size}, fragments=#{groups.fetch(index).size}, root/#{path.delete_prefix(REPO + "/")}, #{body.bytesize} bytes, max #{MAX_BYTES}",
-          io:
+          io:,
         )
       end
       outputs

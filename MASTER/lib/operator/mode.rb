@@ -9,7 +9,7 @@ module Master
         observe: { profile: :observe, risk: :low, model_tier: :cheap, council: false, evidence: :observed },
         plan: { profile: :plan, risk: :medium, model_tier: :fast, council: false, evidence: :observed_or_inferred },
         repair: { profile: :repair, risk: :high, model_tier: :strong, council: true, evidence: :verified },
-        deploy: { profile: :deploy, risk: :critical, model_tier: :strong, council: true, evidence: :verified }
+        deploy: { profile: :deploy, risk: :critical, model_tier: :strong, council: true, evidence: :verified },
       }.freeze
 
       def self.for(value, intent: nil)
@@ -40,12 +40,12 @@ module Master
         mode = self.for(assessment[:risk], intent: assessment[:intent])
         spec = SPECS.fetch(mode)
         {
-          mode: mode,
+          mode:,
           risk: assessment[:risk],
           intent: assessment[:intent],
           model_tier: spec[:model_tier],
           council_required: spec[:council],
-          evidence_contract: spec[:evidence]
+          evidence_contract: spec[:evidence],
         }
       end
 

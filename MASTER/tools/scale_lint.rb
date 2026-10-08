@@ -101,9 +101,9 @@ module Operator
       allowed = case finding.kind
       when "off_scale_space" then space_px
       when "off_scale_radius" then radius_px
-      else return nil
+      else return
       end
-      m = finding.value.match(LENGTH) or return nil
+      m = finding.value.match(LENGTH) or return
       px = to_px(m[1], m[2].to_s).abs
       "#{allowed.min_by { |step| (step - px).abs }.to_i}px"
     end

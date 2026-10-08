@@ -12,7 +12,6 @@ class MasterPathsTest < Minitest::Test
   end
 end
 
-
 require "minitest/autorun"
 require_relative "../lib/master"
 

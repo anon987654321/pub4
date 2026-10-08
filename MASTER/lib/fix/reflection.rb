@@ -32,7 +32,7 @@ module Master
         law_selection = @applicable_laws.for(path: reflection_path(target:, files:))
         answer = @agent.ask(
           prompt(target:, state:, files:, history:, changed_paths:, orientation:, law_selection:),
-          operation: :reflection
+          operation: :reflection,
         ).to_s
         parsed = parse(answer, allowed_law_ids: law_selection.ids)
         publish(parsed, target:, state:)
@@ -57,7 +57,7 @@ module Master
           history: Array(history).last(6).map { |row| row.to_h.slice(:pass, :score, :progressed) },
           structural_mode: ENV["MASTER_FIX_STRUCTURAL"] == "1" ? "enabled" : "disabled",
           semantic_mode: ENV.fetch("MASTER_SCAN_SEMANTIC_SAMPLE", "0"),
-          applicable_laws: law_selection.to_h
+          applicable_laws: law_selection.to_h,
         }
 
         text = <<~PROMPT
@@ -132,7 +132,7 @@ module Master
 
       def normalize(value)
         value = value.to_s.strip
-        return nil if value.empty? || value.casecmp?("NONE")
+        return if value.empty? || value.casecmp?("NONE")
         value.byteslice(0, MAX_FIELD_BYTES)
       end
 

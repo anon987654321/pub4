@@ -80,15 +80,15 @@ class TestRecoveryPubManifest < Minitest::Test
 
     assert_equal(
       "d1f2770fc43fd0e85e9d640d71e9b0748fd9712e",
-      refs.dig("pub3", "branches", "my-work")
+      refs.dig("pub3", "branches", "my-work"),
     )
     assert_equal(
       "8953b9f9ebc394a4901448fb20369f1c00d1b895",
-      refs.dig("pub2", "branches", "copilot/canonicalize-configuration-files")
+      refs.dig("pub2", "branches", "copilot/canonicalize-configuration-files"),
     )
     assert_equal(
       "468b313046236cd0898c5758edc019ef87923a5c",
-      refs.dig("pub", "branches", "restructure-consolidation")
+      refs.dig("pub", "branches", "restructure-consolidation"),
     )
   end
 
@@ -182,11 +182,11 @@ class TestRecoveryPubManifest < Minitest::Test
 
     assert_equal(
       "preserved-fix",
-      reviews.find { |review| review["commit"] == "d1f6a31af0c82d8f6127b60eabbc76eef0cdef81" }.fetch("disposition")
+      reviews.find { |review| review["commit"] == "d1f6a31af0c82d8f6127b60eabbc76eef0cdef81" }.fetch("disposition"),
     )
     assert_equal(
       "deferred-gap; recover only if mixed-language parsing becomes an actual current requirement",
-      reviews.find { |review| review["commit"] == "97a761812e9b814188f702528cd47d09dddb6cdc" }.fetch("disposition")
+      reviews.find { |review| review["commit"] == "97a761812e9b814188f702528cd47d09dddb6cdc" }.fetch("disposition"),
     )
   end
 

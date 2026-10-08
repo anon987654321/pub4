@@ -130,7 +130,7 @@ module Deploy
     end
 
     def first_room_url(cdp, rooms)
-      return nil unless GeometryProbe.ok?(GeometryProbe.walk(cdp, rooms))
+      return unless GeometryProbe.ok?(GeometryProbe.walk(cdp, rooms))
 
       cdp.evaluate(%(document.querySelector('main a[href*="/channels/"]')?.href || null))
     end
@@ -140,7 +140,7 @@ module Deploy
       GeometryProbe.reachable(GeometryProbe.surfaces).uniq { |s| [s.app, s.host, s.path] }.each do |surface|
         follow = ->(href) { CrawlSupport.fetch(URI.join(surface_base(surface), href).to_s, host: surface.host).code }
         label = "#{surface.app}/#{surface.label}"
-        journeys["pager"] += 1 if TurboJourneys.judge_pager(label, fetch_raw(surface), @result, follow: follow)
+        journeys["pager"] += 1 if TurboJourneys.judge_pager(label, fetch_raw(surface), @result, follow:)
       rescue StandardError => e
         @result.inconclusive!("journey_invariant noscript: #{surface.app}/#{surface.label} fetch failed — #{e.class}: #{e.message}")
       end
@@ -159,7 +159,7 @@ module Deploy
         "journey_invariant idempotence: #{surface.id} lays out differently on two consecutive loads — " \
         "#{diffs.first(4).join('; ')}#{diffs.size > 4 ? " (+#{diffs.size - 4})" : ""} " \
         "(nondeterministic render; every visual assertion on this surface is flaky until fixed)",
-        severity: :soft
+        severity: :soft,
       )
     end
 
@@ -181,7 +181,7 @@ module Deploy
       if restored["title"].to_s != fresh["title"].to_s
         @result.fail(
           "journey_invariant back_button: #{surface.id} restored #{restored["title"].inspect} " \
-          "but a fresh load is #{fresh["title"].inspect} — history navigation does not return the same page"
+          "but a fresh load is #{fresh["title"].inspect} — history navigation does not return the same page",
         )
         return
       end
@@ -192,7 +192,7 @@ module Deploy
       @result.fail(
         "journey_invariant back_button: #{surface.id} after back() differs from a fresh load — " \
         "#{diffs.first(4).join('; ')} (Turbo cache restored a stale or partial view)",
-        severity: :soft
+        severity: :soft,
       )
     end
 
@@ -218,7 +218,7 @@ module Deploy
 
           @result.fail(
             "journey_invariant no_js: #{app} server HTML has no #{mark} landmark at #{surface.path} — " \
-            "present only after JavaScript runs (principle=progressive_enhancement)"
+            "present only after JavaScript runs (principle=progressive_enhancement)",
           )
         end
       end

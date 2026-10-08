@@ -129,22 +129,26 @@ module Master
         {
           "measurement_only_detectors" => values.select { |entry| entry["measurement_mode"] }.map { |entry| entry["id"] },
           "advisory_laws" => values.select { |entry| entry["enforcement"] == "advisory" }.map { |entry| entry["id"] },
-          "semantic_laws_without_deterministic_detector" => values.select { |entry|
+          "semantic_laws_without_deterministic_detector" => values.select do |entry|
             entry["semantic"] && !entry["scannable"]
-          }.map { |entry| entry["id"] },
+          end.map { |entry| entry["id"] },
           "verification_runtime" => "not_measured",
         }
       end
 
       def law_entry(law)
-        base = law.respond_to?(:contract_entry) ? law.contract_entry : {
+        base = if law.respond_to?(:contract_entry)
+law.contract_entry
+else
+{
           "id" => law.id.to_s,
-          "severity" => law.respond_to?(:severity) ? law.severity.to_s : "warning"
+          "severity" => law.respond_to?(:severity) ? law.severity.to_s : "warning",
         }
+end
         base.merge(
           "enforcement" => enforcement(law),
           "fix_strategy" => strategy_for(law),
-          "verify_strategy" => verification_for(law)
+          "verify_strategy" => verification_for(law),
         )
       end
 
@@ -204,7 +208,7 @@ module Master
       def render(root:, target:, files: nil, skipped: nil, full: false)
         target_path = File.realpath(target)
         law_rows = laws.sort_by { |law| law.id.to_s }.map { |law| law_entry(law) }
-        corpus = inventory(target: target_path, root: root)
+        corpus = inventory(target: target_path, root:)
         corpus["eligible_sample"] = Array(files).first(24).map { |path| relative(path, root) } if files
         corpus["skipped_by_caller"] = skipped.to_i if skipped
         detector_matrix = ProtocolDetectorMatrix.matrix(laws)
@@ -221,11 +225,11 @@ module Master
           "corpus" => corpus,
           "law_counts" => {
             "laws" => law_rows.size,
-            "registry" => registry_count
+            "registry" => registry_count,
           },
           "laws" => full ? law_rows : law_rows.map { |entry| entry.slice("id", "severity", "mode", "languages", "question", "fix", "enforcement", "fix_strategy", "verify_strategy") },
           "detector_matrix" => detector_matrix,
-          "detector_summary" => ProtocolDetectorMatrix.summary(detector_matrix)
+          "detector_summary" => ProtocolDetectorMatrix.summary(detector_matrix),
         }
         JSON.pretty_generate(payload)
       end

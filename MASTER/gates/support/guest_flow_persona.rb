@@ -65,11 +65,11 @@ module Deploy
     end
 
     def get(path, host: nil)
-      request(:get, path, host: host)
+      request(:get, path, host:)
     end
 
     def patch_location(lat:, lng:, host: nil)
-      request(:patch, "/location", host: host, form: { "latitude" => lat, "longitude" => lng })
+      request(:patch, "/location", host:, form: { "latitude" => lat, "longitude" => lng })
     end
 
     def assert_capabilities(body, *caps, label:)
@@ -147,7 +147,7 @@ module Deploy
         if (m = body.match(/name="csrf-token"\s+content="([^"]+)"/))
           @csrf = m[1]
         end
-        { code: res.code, body: body, headers: res.to_hash }
+        { code: res.code, body:, headers: res.to_hash }
       end
     end
 

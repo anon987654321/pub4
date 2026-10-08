@@ -2994,7 +2994,8 @@ SHOWCASE_MODES = {
   def self.authentic_progression_keys
     return [] unless defined?(VERIFIED_PROGRESSION_SLOTS)
 
-    VERIFIED_PROGRESSION_SLOTS.filter_map do |name, entry|
+    VERIFIED_PROGRESSION_SLOTS.filter_map do |name|
+      entry = ARTIST_VERIFIED_PROGRESSIONS.fetch(name)
       artist = entry[:artist].to_s
       producer = entry[:producer].to_s
       next unless artist == "J Dilla" || producer == "J Dilla" || artist.include?("D'Angelo")
@@ -3667,7 +3668,7 @@ SHOWCASE_MODES = {
         ending: @beauty_ending
       )
       pad = pad_spec
-      voicing_for_bar.each { |midi| stage.note(midi, pad, @next_at, length - 0.05, @c["pad_gain"], :pad) }
+      comp_pad!(stage, pad, length)
       bass!(stage, bass, bars)
       @kit.write!(@next_at, length) if @drums
       lead!(stage, length) if @lead_on
@@ -3677,6 +3678,32 @@ SHOWCASE_MODES = {
       @next_at += length
       move! unless @reference
     end
+
+# The chord sounded under the named comp profile (data/live.yml, comp:). Only
+# onset and level move; the voices are the bar's own.
+def comp_pad!(stage, pad, length)
+  profile = comp_profile
+  notes = voicing_for_bar.sort
+  notes = notes.reverse if profile["direction"] == "down"
+  steps = [notes.length - 1, 1].max
+  spread = profile["spread_beats"].to_f * @beat
+  jitter = profile["jitter_ms"].to_f / 1000.0
+  notes.each_with_index do |midi, index|
+    fraction = index.to_f / steps
+    onset = spread * fraction
+    onset = [onset + @rng.rand(0.0..jitter), spread].min if jitter.positive? && index.positive?
+    level = profile["gain_from"].to_f + ((profile["gain_to"].to_f - profile["gain_from"].to_f) * fraction)
+    stage.note(midi, pad, @next_at + onset, length - 0.05 - onset, @c["pad_gain"] * level, :pad)
+  end
+end
+
+def comp_profile
+  comp = @c.fetch("comp")
+  name = ENV["LIVE_COMP"].to_s.strip
+  name = comp["rotation"][@chords % comp["rotation"].length] if name.empty? && LiveSynth.showcase?
+  name = comp["default"] if name.empty?
+  comp.fetch("profiles").fetch(name) { abort "live0: no comp profile #{name.inspect} (#{comp['profiles'].keys.join(' ')})" }
+end
 
     def showcase_voicing
       notes = @voicing

@@ -16,7 +16,7 @@ module Master::Core
       repair: %i[stdio read write create execute network],
       deploy: %i[stdio read write create execute network deploy],
       device: %i[stdio read device],
-      world: %i[stdio read world]
+      world: %i[stdio read world],
     }.freeze
 
     def self.for(name)

@@ -8,7 +8,7 @@ module Master
           senior_engineer: "Write like a senior engineer who hunts edge cases, unnecessary machinery and hidden coupling.",
           noir_detective: "Use a restrained noir case-file voice. Change the surface style only; preserve facts and technical meaning.",
           victorian_governess: "Explain with the brisk, exacting voice of a Victorian governess addressing a chaotic household.",
-          drill_sergeant: "Use a brisk drill-sergeant voice. Change the surface style only; preserve facts and technical meaning."
+          drill_sergeant: "Use a brisk drill-sergeant voice. Change the surface style only; preserve facts and technical meaning.",
         }.freeze
 
         module_function
@@ -27,7 +27,7 @@ module Master
             "unknown: the important uncertainty that remains",
             "tools: whether a tool or external evidence is needed",
             "Do not expose private chain-of-thought. Then answer the task.",
-            prompt.to_s
+            prompt.to_s,
           ].join("
 ")
         end
@@ -47,7 +47,7 @@ module Master
             implementation: "A rival reviewer will inspect this implementation. Make every assumption explicit and remove avoidable fragility.",
             review: "This work was produced by a rival team. Review it aggressively for defects, omissions, bypasses and unnecessary complexity.",
             fixing: "A rival verifier will try to prove this fix false. Make the repair minimal, observable and hard to misread.",
-            verification: "Treat every previous claim as untrusted until executable evidence proves it."
+            verification: "Treat every previous claim as untrusted until executable evidence proves it.",
           }.fetch(phase.to_sym, "A rival verifier will try to prove this work false.")
           "#{context}
 
@@ -58,11 +58,11 @@ module Master
           {
             direct: "Reason from the direct perspective: what would the actor actually observe and decide?",
             expert: "Reason as a domain expert: what mechanism, constraint or edge case matters most?",
-            observer: "Reason as an outside observer: what would an impartial reviewer conclude from the evidence?"
+            observer: "Reason as an outside observer: what would an impartial reviewer conclude from the evidence?",
           }.fetch(perspective.to_sym, perspective.to_s)
-            .then { |lens| "#{lens}
+            .then do |lens| "#{lens}
 
-#{prompt}" }
+#{prompt}" end
         end
       end
     end

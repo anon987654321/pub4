@@ -52,7 +52,7 @@ module Master
           {
             model: records.first["model"].to_s,
             calls: records.size,
-            verified: verified,
+            verified:,
             verified_rate: verified.fdiv(records.size),
             benchmark_ratio: scores.sum { |score| score["ratio"].to_f }.fdiv(scores.size),
             latency_ms: latencies.empty? ? nil : latencies.sum.fdiv(latencies.size),

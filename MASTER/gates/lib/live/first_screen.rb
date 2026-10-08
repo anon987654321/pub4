@@ -112,7 +112,7 @@ SCHEMA_FOR_LABEL = {
     # number read out of one stylesheet, and a floor nothing can be shown to
     # fail against is a floor on paper.
     def self.run(rails_root: RAILS)
-      new(rails_root: rails_root).run
+      new(rails_root:).run
     end
 
     def initialize(rails_root: RAILS)
@@ -202,7 +202,7 @@ SCHEMA_FOR_LABEL = {
         return
       end
       body = utf8_body(res.body)
-      %w[Exception Routing\ Error].each do |bad|
+      ["Exception", "Routing Error"].each do |bad|
         @result.fail("first_screen: #{label} saw #{bad}") if body.include?(bad.tr("\\", ""))
       end
       Array(surface[:first_screen]).each do |pat|

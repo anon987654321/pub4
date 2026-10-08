@@ -113,7 +113,6 @@ class TestRatchets < Minitest::Test
                  Operator::Ratchets.rule_saturation_and_silent_rows.map(&:name)
   end
 
-
   # The half that had one owner and now has all of them.
   #
   # Skipped when the measured trees are dirty, and that is not a loophole. This
@@ -271,7 +270,7 @@ class TestRatchets < Minitest::Test
       current: 7,
       ceiling: nil,
       direction: :down,
-      source: "test"
+      source: "test",
     )
 
     assert_equal "unreadable", row.state
@@ -284,7 +283,7 @@ class TestRatchets < Minitest::Test
       current: nil,
       ceiling: 7,
       direction: :down,
-      source: "test"
+      source: "test",
     )
 
     assert_equal "unreadable", row.state

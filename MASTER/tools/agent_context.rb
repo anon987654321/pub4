@@ -164,7 +164,11 @@ module Operator
           path = File.join(dir, name)
           stat = File.lstat(path)
           seen += 1
-          suffix = stat.symlink? ? "@" : stat.directory? ? "/" : ""
+          suffix = if stat.symlink?
+"@"
+else
+stat.directory? ? "/" : ""
+end
           lines << "#{indent}+-- #{name}#{suffix}"
 
           if stat.directory? && !stat.symlink?
@@ -188,7 +192,7 @@ module Operator
         "source_tree: #{root}",
         "depth: #{max_depth}",
         "entries shown: #{seen}",
-        "skips: #{TREE_SKIP.join(", ")}"
+        "skips: #{TREE_SKIP.join(", ")}",
       ]
       (header + [""] + lines).join("\n")
     rescue SystemCallError => e

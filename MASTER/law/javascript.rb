@@ -130,7 +130,6 @@ Law.define(:NO_WEBGL_GLOW_PASS) do
   good "    transparent: true, depthWrite: false"
 end
 
-
 Law.define(:TACTILE_FEEDBACK) do
   source "Haptic interaction feedback — optional secondary signal"
   severity :info
@@ -154,8 +153,6 @@ Law.define(:POINTER_FEEDBACK_EARLY) do
   bad "button.addEventListener('click', showPressedState)"
   good "button.addEventListener('pointerdown', showPressedState)"
 end
-
-
 
 Law.define(:HAPTIC_SINGLE_SOURCE) do
   source "Shared RAILS haptics controller — one tactile implementation"

@@ -19,7 +19,7 @@ module Master
             files: trees.values.sum { |row| row[:files] },
             bytes: trees.values.sum { |row| row[:bytes] },
           },
-          trees: trees,
+          trees:,
         }
       end
 
@@ -32,9 +32,9 @@ module Master
         data[:trees].each do |name, row|
           lines << "converge0: #{name} files=#{row[:files]} bytes=#{row[:bytes]} ruby_lines=#{row[:ruby_lines]}"
         end
-        largest = data[:trees].flat_map { |tree, row|
+        largest = data[:trees].flat_map do |tree, row|
           row[:largest].map { |entry| [tree, entry] }
-        }.sort_by { |_tree, entry| -entry[:bytes] }.first(10)
+        end.sort_by { |_tree, entry| -entry[:bytes] }.first(10)
         largest.each do |tree, entry|
           lines << "converge0: largest #{tree}/#{entry[:path]} bytes=#{entry[:bytes]}"
         end

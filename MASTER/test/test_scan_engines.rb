@@ -150,7 +150,7 @@ class TestScanEngines < Minitest::Test
       ["", "git timed out", failed_status]
     }) do
       result = Host.new.git_capture("git", "status")
-      assert_equal [ ["git", "status"], 5 ], seen
+      assert_equal [ %w[git status], 5 ], seen
       refute result.last.success?
       assert_equal "git timed out", result[1]
     end

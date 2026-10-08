@@ -58,7 +58,6 @@ class FaceSpeechRuntimeSpec < Minitest::Test
     refute_includes source, "playDuo([[guardVoice(voice), text]]"
   end
 
-
   def test_no_face_part_exists_outside_the_build_manifest
     rake = read("web/lib/tasks/face_runtime.rake")
     # The task names parts two ways: a range it maps over, and explicit
@@ -77,10 +76,10 @@ class FaceSpeechRuntimeSpec < Minitest::Test
   def test_voice_preview_uses_the_single_tts_playback_path
     source = read("web/public/face.part5.txt")
 
-    assert_includes source, 'function previewVoice(voice)'
+    assert_includes source, "function previewVoice(voice)"
     assert_includes source, 'enqueueSpeech("Let\'s work now.", { quirky: false });'
-    refute_includes source, 'const audio = new Audio(src);'
-    refute_includes source, 'audio.playbackRate = getTtsRate();'
+    refute_includes source, "const audio = new Audio(src);"
+    refute_includes source, "audio.playbackRate = getTtsRate();"
     refute_includes source, 'playDuo([[chosen, "Let\'s work now."]'
   end
 

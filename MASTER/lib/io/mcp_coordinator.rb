@@ -32,16 +32,16 @@ module Master
         @clients.flat_map do |name, client|
           client.tools.filter_map do |tool|
             McpToolWrapper.new(
-              name: name,
-              client: client,
-              tool: tool,
+              name:,
+              client:,
+              tool:,
               governor: @governor,
               event_bus: @bus,
               timeout: @server_config.fetch(name, {}).fetch("timeout_seconds", DEFAULT_TIMEOUT),
-              tier: @server_config.fetch(name, {}).fetch("tier", DEFAULT_TIER).to_sym
+              tier: @server_config.fetch(name, {}).fetch("tier", DEFAULT_TIER).to_sym,
             )
           rescue StandardError => e
-            @bus&.publish("mcp:tool_wrap_error", name: name, error: e.message)
+            @bus&.publish("mcp:tool_wrap_error", name:, error: e.message)
             nil
           end
         end
@@ -60,9 +60,9 @@ module Master
         client.connect
         @clients[name] = client
         @server_config[name] = cfg
-        @bus&.publish("mcp:server_connected", name: name, transport: transport.to_s)
+        @bus&.publish("mcp:server_connected", name:, transport: transport.to_s)
       rescue StandardError => e
-        @bus&.publish("mcp:server_failed", name: name, error: e.message)
+        @bus&.publish("mcp:server_failed", name:, error: e.message)
       end
 
       def build_mcp_client(_name, transport, cfg)
@@ -71,7 +71,7 @@ module Master
                             MCP::Client::Stdio.new(
                               command: cfg["command"],
                               args: expand_args(cfg["args"] || []),
-                              read_timeout: timeout_for(cfg)
+                              read_timeout: timeout_for(cfg),
                             )
                           when :sse
                             MCP::Client::HTTP.new(url: cfg["url"])
@@ -103,7 +103,7 @@ module Master
 
         Master.load_yaml(path)&.fetch("servers", {}) || {}
       rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "mcp_coordinator.load_servers", event_bus: @bus, path: path)
+        Master::Ground::Swallow.log(e, context: "mcp_coordinator.load_servers", event_bus: @bus, path:)
         {}
       end
     end
@@ -162,8 +162,8 @@ module Master
           payload = {
             server: @mcp_name,
             tool: @mcp_tool.name,
-            ok: ok,
-            latency_ms: started ? elapsed_ms(started) : nil
+            ok:,
+            latency_ms: started ? elapsed_ms(started) : nil,
           }
           payload[:error] = error if error
           @bus&.publish("mcp:tool_after", **payload)

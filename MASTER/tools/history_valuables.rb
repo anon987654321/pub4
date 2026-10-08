@@ -144,7 +144,7 @@ module HistoryValuables
       Master::Trace::Dmesg.status(
         "history0",
         "#{hit[:repo]} #{hit[:commit]} #{hit[:kind]} #{hit[:file]}, #{hit[:line]}",
-        io: $stderr
+        io: $stderr,
       )
     end
     exit 1

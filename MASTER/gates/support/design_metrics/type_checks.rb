@@ -89,7 +89,7 @@ module Deploy
           @result.fail(
             "design_metrics hierarchy: #{bigger} (#{seen[bigger].to_i}px) is only #{ratio}x " \
             "#{smaller} (#{seen[smaller].to_i}px), under min_size_ratio_between_levels #{step}",
-            severity: :soft
+            severity: :soft,
           )
         end
       end
@@ -119,7 +119,7 @@ module Deploy
           @result.fail(
             "design_metrics weights: #{low} and #{high} are #{high - low} apart, under " \
             "min_weight_delta #{delta.to_i} — a step that small does not read (principle=hierarchy)",
-            severity: :soft
+            severity: :soft,
           )
         end
       end

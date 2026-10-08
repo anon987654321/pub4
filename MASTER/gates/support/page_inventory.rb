@@ -60,7 +60,7 @@ module Deploy
       # bsdports keeps the social routes behind BSDPORTS_SOCIAL=1.
       %w[notifications index] => { path: "/notifications", persona: "auth", apps: %w[brgen amber] },
       %w[pages privacy] => { path: "/privacy", persona: "guest" }, %w[pages terms] => { path: "/terms", persona: "guest" }, %w[pages cookies] => { path: "/cookies", persona: "guest" },
-      %w[shared changelog] => { path: "/changelog", persona: "guest" },
+      %w[shared changelog] => { path: "/changelog", persona: "guest" }
     }.freeze
 
     # Rendered by MasterGuestHome inside each app's own home action, so the home row covers it.
@@ -81,7 +81,7 @@ module Deploy
       { id: "bsdports/home", path: "/", persona: "guest" },
       { id: "bsdports/ports", path: "/ports", persona: "guest" },
       { id: "bsdports/categories", path: "/categories", persona: "guest" },
-      { id: "bsdports/maintainers", path: "/maintainers", persona: "guest" }, { id: "bsdports/session", path: "/session/new", persona: "guest" },
+      { id: "bsdports/maintainers", path: "/maintainers", persona: "guest" }, { id: "bsdports/session", path: "/session/new", persona: "guest" }
     ].freeze
 
     module_function
@@ -116,7 +116,7 @@ module Deploy
 
     # Rails' own convention: every part but the last names the controller.
     def manifest_route(app, parts)
-      return nil if parts.size < 2
+      return if parts.size < 2
 
       route_table(app)["#{parts[0..-2].join('/')}##{parts[-1]}"]&.first
     end
@@ -136,9 +136,9 @@ module Deploy
             app: "brgen",
             view: abs.sub("#{ROOT}/", ""),
             abs_view: abs,
-            host: host,
-            path: path,
-            action: action,
+            host:,
+            path:,
+            action:,
             persona: guest_open_brgen?(path, rel) ? "guest" : "auth",
             needs_id: path.match?(/:\w+/),
           }
@@ -156,7 +156,7 @@ module Deploy
           abs = app_override(app, parts) || shared_abs
           {
             id: "#{app}/shared/#{parts.join("/")}",
-            app: app,
+            app:,
             view: abs.sub("#{ROOT}/", ""),
             abs_view: abs,
             host: nil,
@@ -212,9 +212,9 @@ module Deploy
           app: "brgen",
           view: abs.sub("#{ROOT}/", ""),
           abs_view: abs,
-          host: host,
-          path: path,
-          action: action,
+          host:,
+          path:,
+          action:,
           persona: guest_open_brgen?(path, rel) ? "guest" : "auth",
           needs_id: path.match?(/:\w+/),
         }
@@ -235,8 +235,8 @@ module Deploy
           view: abs.sub("#{ROOT}/", ""),
           abs_view: abs,
           host: nil,
-          path: path,
-          action: action,
+          path:,
+          action:,
           persona: guest_open_amber?(path, rel) ? "guest" : "auth",
           needs_id: path.match?(/:\w+/),
         }
@@ -276,8 +276,8 @@ module Deploy
           view: abs.sub("#{ROOT}/", ""),
           abs_view: abs,
           host: nil,
-          path: path,
-          action: action,
+          path:,
+          action:,
           persona: path.end_with?("/edit") ? "auth" : "guest",
           needs_id: path.match?(/:\w+/),
         }

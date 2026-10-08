@@ -89,7 +89,7 @@ class BootSafetySpec < Minitest::Test
     assert_includes source, "STUDIO/dilla"
     assert_includes source, "royksopp\\.rb"
     assert_includes source, 'ps", "-ax", "-o", "pid=,ppid=,pgid=,command="'
-    refute_includes source, 'return false if pid.positive? && process_alive?(pid)'
+    refute_includes source, "return false if pid.positive? && process_alive?(pid)"
     assert_includes source, "0.25"
   end
 

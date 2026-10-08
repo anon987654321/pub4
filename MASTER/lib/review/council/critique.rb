@@ -104,7 +104,7 @@ module Master
             measurements: payload[:metrics] || {},
             structure: { file_count: files.size },
             anchors: files,
-            provenance: { files: files },
+            provenance: { files: },
           )
         end
 

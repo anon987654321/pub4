@@ -25,15 +25,15 @@ module Master
         "language_voice_families" => {
           "en" => { "female" => "jenny", "male" => "andrew" },
           "nb" => { "female" => "pernille", "male" => "finn" },
-          "ms" => { "female" => "yasmin", "male" => "osman" }
+          "ms" => { "female" => "yasmin", "male" => "osman" },
         },
         "post_chain" => nil,
         "prosody" => {
           "melody" => {
             "rate" => ["-1%", "+2%", "+1%", "+3%", "0%", "-2%", "-1%", "+1%", "0%", "+2%"],
-            "pitch_hz" => [0, 6, 10, 6, 0, -6, -10, -6, 3, 0]
+            "pitch_hz" => [0, 6, 10, 6, 0, -6, -10, -6, 3, 0],
           },
-          "pitch_reference_hz" => 180
+          "pitch_reference_hz" => 180,
         },
         "bed" => nil,
       }.freeze

@@ -2020,7 +2020,6 @@ Law.define(:GRICE_COOPERATIVE) do
   X
 end
 
-
 # Capability reduction follows pledge(2): a context may shed authority, never regain it.
 Law.define(:CAPABILITY_REDUCTION_MONOTONIC) do
   source "OpenBSD pledge(2) design grammar, extended to cognitive authority"
@@ -2031,7 +2030,6 @@ Law.define(:CAPABILITY_REDUCTION_MONOTONIC) do
   bad "capabilities.drop(:network); capabilities.acquire(:network)"
   good "capabilities.drop(:network) # remains unavailable in this context"
 end
-
 
 # Rule-system laws. These govern the instrument itself, so they are universal
 # practice/semantic laws rather than language-specific regexes.

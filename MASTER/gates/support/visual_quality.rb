@@ -55,7 +55,7 @@ module Deploy
       earned += score_dialect(body, surface, notes)
       earned += score_density(body, notes)
 
-      Result.new(surface: surface.to_s, score: earned, max: max, target: @target, notes: notes)
+      Result.new(surface: surface.to_s, score: earned, max:, target: @target, notes:)
     end
 
     # Optional PNG content-signal ratio (soft). Requires chunky_png.
@@ -65,7 +65,7 @@ module Deploy
       require "chunky_png"
       img = ChunkyPNG::Image.from_file(path)
       total = img.width * img.height
-      return nil if total.zero?
+      return if total.zero?
 
       step = [1, (total / 50_000.0).ceil].max
       signal = 0
@@ -83,7 +83,7 @@ module Deploy
         end
         i += 1
       end
-      return nil if count.zero?
+      return if count.zero?
 
       (signal.to_f / count).round(4)
     rescue LoadError, StandardError

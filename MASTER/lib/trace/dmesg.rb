@@ -125,7 +125,7 @@ module Master
           "pair" => "pair0", "owner" => "owner0", "wake" => "wake0",
           "doctor" => "doctor0", "rules" => "rules0", "snapshot" => "snapshot0",
           "why" => "why0", "session" => "session0", "undo" => "undo0",
-          "clear" => "cli0", "orders" => "orders0", "soul" => "soul0",
+          "clear" => "cli0", "orders" => "orders0", "soul" => "soul0"
         }.freeze
 
         UNIT_RE = /\A[a-z][a-z0-9_]*\d+(?: at [a-z][a-z0-9_]*\d+)?:/

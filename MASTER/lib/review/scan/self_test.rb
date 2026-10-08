@@ -295,7 +295,7 @@ module Master
               duplicates.drop(1).map do |path, _|
                 finding(
                   path:, line: 1,
-                  message: "top-level fact #{key} duplicates #{reference} (SINGULARITY)",
+                  message: "top-level fact #{key} duplicates #{reference} (SINGULARITY)"
                 )
               end
             end

@@ -98,7 +98,7 @@ module Master
             "phase" => phase,
             "ok" => ok,
             "bytes" => bytes,
-            "error" => error
+            "error" => error,
           }
           %w[path command url operation].each do |key|
             value = args[key.to_sym]

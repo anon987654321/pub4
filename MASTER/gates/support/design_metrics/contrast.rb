@@ -18,15 +18,15 @@ module Deploy
       # WCAG relative luminance for sRGB hex (#rgb / #rrggbb).
       def parse_hex(color)
         s = color.to_s.strip
-        return nil if s.empty? || s.start_with?("var(", "oklch", "color-mix", "rgb")
+        return if s.empty? || s.start_with?("var(", "oklch", "color-mix", "rgb")
 
         s = s.delete_prefix("#")
         case s.length
         when 3 then s = s.chars.map { |c| c * 2 }.join
         when 6 then # ok
-        else return nil
+        else return
         end
-        return nil unless s.match?(/\A[0-9a-fA-F]{6}\z/)
+        return unless s.match?(/\A[0-9a-fA-F]{6}\z/)
 
         s.scan(/../).map { |h| h.to_i(16) }
       end
@@ -42,7 +42,7 @@ module Deploy
       def contrast_ratio(hex_a, hex_b)
         a = parse_hex(hex_a)
         b = parse_hex(hex_b)
-        return nil unless a && b
+        return unless a && b
 
         l1 = relative_luminance(a)
         l2 = relative_luminance(b)
@@ -87,7 +87,7 @@ module Deploy
       def apca_lc(hex_txt, hex_bg)
         txt = parse_hex(hex_txt)
         bg = parse_hex(hex_bg)
-        return nil unless txt && bg
+        return unless txt && bg
 
         k = APCA
         y_txt = apca_screen_luminance(txt)
@@ -126,7 +126,7 @@ module Deploy
       def suggest_contrast_fix(fg_hex, bg_hex, target)
         fg = parse_hex(fg_hex)
         bg = parse_hex(bg_hex)
-        return nil unless fg && bg
+        return unless fg && bg
 
         toward = relative_luminance(bg) > 0.5 ? [0, 0, 0] : [255, 255, 255]
         best = nil
@@ -138,7 +138,7 @@ module Deploy
           ratio = contrast_ratio(hex, bg_hex)
           next unless ratio && ratio >= target
 
-          best = { hex: hex, ratio: ratio }
+          best = { hex:, ratio: }
           break
         end
         best

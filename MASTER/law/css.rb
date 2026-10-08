@@ -270,7 +270,6 @@ Law.define(:NAVIGATION_CONTINUITY) do
   good "navigate_to(result); preserve_context"
 end
 
-
 Law.define(:INTERACTION_PERFORMANCE) do
   source "Web rendering performance — compositor-safe interaction motion"
   severity :warning
@@ -294,8 +293,6 @@ Law.define(:STATE_CHOREOGRAPHY) do
   bad "Tap Pay; briefly spin; disappear with no persistent result."
   good "Tap Pay → working state → self-drawing success mark or persistent failure state; all meanings remain available without motion."
 end
-
-
 
 Law.define(:GESTURE_OWNERSHIP) do
   source "Pointer Events and touch-action — gesture ownership"

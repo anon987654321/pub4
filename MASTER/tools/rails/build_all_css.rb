@@ -228,7 +228,7 @@ def try_npx_sass(app_dir)
     "npx", "--yes", "sass", scss, out,
     "--load-path=#{styles_dir}",
     "--load-path=#{SHARED_STYLES}",
-    "--style=compressed",
+    "--style=compressed"
   ]
   out_msg, status = Open3.capture2e(*cmd)
   if status.success?

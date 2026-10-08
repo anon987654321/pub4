@@ -92,12 +92,12 @@ class TestDependencyManager < Minitest::Test
       assert_match(
         /install_if -> \{ RUBY_PLATFORM =~ \/bsd\|dragonfly\/i \} do\n\s+gem "rb-kqueue", "~> 0\.2"/,
         source,
-        "#{path} must declare rb-kqueue through Bundler install_if"
+        "#{path} must declare rb-kqueue through Bundler install_if",
       )
       assert_match(
         /install_if -> \{ RUBY_PLATFORM =~ \/linux\/ && !RUBY_PLATFORM\.include\?\("android"\) \} do\n\s+gem "rb-inotify", "~> 0\.10"/,
         source,
-        "#{path} must declare rb-inotify through Bundler install_if"
+        "#{path} must declare rb-inotify through Bundler install_if",
       )
     end
   end
@@ -125,7 +125,7 @@ class TestDependencyManager < Minitest::Test
       assert_match(
         /group :tts do\n\s+gem "rb-edge-tts", "= 1\.0\.1"\nend/,
         source,
-        "#{path} must keep Edge TTS out of the default Rails bundle"
+        "#{path} must keep Edge TTS out of the default Rails bundle",
       )
     end
   end
@@ -298,7 +298,6 @@ class TestDependencyManager < Minitest::Test
     assert_equal File.dirname(RbConfig.ruby), env["PATH"].split(File::PATH_SEPARATOR).first
   end
 
-
   def test_clean_bundle_does_not_install_or_touch_lock
     manager = fake_manager([[true, "The Gemfile's dependencies are satisfied", ""]])
     before = File.read(File.join(@root, "Gemfile.lock"))
@@ -424,7 +423,7 @@ class TestDependencyManager < Minitest::Test
 
   def test_resolver_conflict_fails_with_explicit_non_mutating_message
     manager = fake_manager([
-      [false, "", "Could not find compatible versions for gem 'ruby_llm'"]
+      [false, "", "Could not find compatible versions for gem 'ruby_llm'"],
     ])
 
     result = manager.ensure!
@@ -458,7 +457,7 @@ class TestDependencyManager < Minitest::Test
   def test_debian_runs_update_before_install
     manager = fake_manager([
       [true, "Hit", ""],
-      [true, "Installed", ""]
+      [true, "Installed", ""],
     ])
     manager.define_singleton_method(:package_manager_name) { :debian }
     manager.define_singleton_method(:privileged) do |command, label|
@@ -473,7 +472,7 @@ class TestDependencyManager < Minitest::Test
     assert result[:ok]
     assert_equal [
       ["sudo", "-n", "apt-get", "update"],
-      ["sudo", "-n", "apt-get", "install", "-y", *Master::Boot::DependencyManager::SYSTEM_PACKAGES[:debian]]
+      ["sudo", "-n", "apt-get", "install", "-y", *Master::Boot::DependencyManager::SYSTEM_PACKAGES[:debian]],
     ], @commands.map(&:first)
   end
 

@@ -188,7 +188,7 @@ module Master
             current: active.size,
             local_posture: self.class.local_posture?,
             scarce: Io::QuotaGate.blocked?,
-            local_only: local_floor_available? && !cloud_floor_available?
+            local_only: local_floor_available? && !cloud_floor_available?,
           )
           active.first(target)
         end
@@ -436,7 +436,7 @@ module Master
             axiom: primary_axiom(persona), model:, feedback: response,
             confidence: score_confidence(response),
             voice: profile.voice,
-            voice_profile: profile.to_h,
+            voice_profile: profile.to_h
           }
         end
 

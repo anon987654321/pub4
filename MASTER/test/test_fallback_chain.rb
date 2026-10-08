@@ -185,7 +185,7 @@ class TestFallbackChain < Minitest::Test
     router = FakeRouter.new
     router.define_singleton_method(:fallback_chain) do |task_type:|
       calls += 1
-      calls == 1 ? ["first-model"] : ["first-model", "new-model"]
+      calls == 1 ? ["first-model"] : %w[first-model new-model]
     end
     agent.instance_variable_set(:@model_router, router)
 

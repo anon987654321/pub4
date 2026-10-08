@@ -101,7 +101,7 @@ class GateContractSpec < Minitest::Test
 
     assert_includes source, 'require_relative "../lib/operator/ruby_runner"'
     assert_includes source, "RUBY = Operator::RubyRunner.ruby_cmd"
-    assert_includes source, 'Operator::RubyRunner.bundle_cmd'
+    assert_includes source, "Operator::RubyRunner.bundle_cmd"
     refute_includes source, "RbConfig.ruby"
     refute_includes source, "RUBY_PLATFORM.include?(\"openbsd\")"
   end

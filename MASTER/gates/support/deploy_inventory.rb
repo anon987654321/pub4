@@ -46,13 +46,13 @@ module Deploy
         end
 
         App.new(
-          name: name,
+          name:,
           title: metadata["title"],
           domain: metadata.fetch("domain"),
           port: metadata.fetch("port").to_i,
           deploy_script: metadata.fetch("deploy_script"),
           deploy_root: metadata.fetch("deploy_root"),
-          public: metadata.fetch("public", false)
+          public: metadata.fetch("public", false),
         )
       end
     end
@@ -64,7 +64,7 @@ module Deploy
         domain: entry.fetch("domain"),
         port: entry.fetch("port").to_i,
         deploy_script: entry["deploy_script"],
-        deploy_root: entry["deploy_root"]
+        deploy_root: entry["deploy_root"],
       )
     end
   end

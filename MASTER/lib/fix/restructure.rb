@@ -59,7 +59,7 @@ module Master
       def call(plan, message:, review:, allowed_operations: nil)
         refusal = plan.validate_operations!(
           transformation_plan: @transformation_plan,
-          allowed_operations:
+          allowed_operations:,
         )
         return Result.err("restructure refused: #{refusal}", category: :policy) if refusal
 

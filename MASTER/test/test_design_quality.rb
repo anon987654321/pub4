@@ -8,7 +8,7 @@ class TestDesignQuality < Minitest::Test
     Deploy::DesignQuality::Element.new(
       tag: is_control ? "button" : "p",
       role: is_control ? "button" : nil,
-      text: text,
+      text:,
       x:, y:, w:, h:,
       font_size:, font_weight:,
       color: "#ffffff",
@@ -23,7 +23,7 @@ class TestDesignQuality < Minitest::Test
     vector = Deploy::DesignQuality.calculate(
       elements: [element(x: 0, y: 0, w: 40, h: 40, is_control: true)],
       viewport: { w: 390, h: 844 },
-      dialect: :social
+      dialect: :social,
     )
 
     refute vector.hard_ok?
@@ -35,7 +35,7 @@ class TestDesignQuality < Minitest::Test
       elements: [element(x: 0, y: 0)],
       viewport: { w: 390, h: 844 },
       dialect: :social,
-      contrast_ok: false
+      contrast_ok: false,
     )
 
     refute vector.hard_ok?
@@ -46,7 +46,7 @@ class TestDesignQuality < Minitest::Test
     vector = Deploy::DesignQuality.calculate(
       elements: [element(x: 0, y: 0), element(x: 100, y: 27, font_size: 24, font_weight: 700)],
       viewport: { w: 390, h: 844 },
-      dialect: :social
+      dialect: :social,
     )
 
     vector.soft_axes.values.each do |value|

@@ -652,7 +652,7 @@ module Master
           sleep 0.15
         end
 
-        return nil if fast_tts_mode?
+        return if fast_tts_mode?
 
         path = synthesize_edge_oneshot(text:, voice_name:, style_config:, audio_path:)
         shape ? shaped(path) : path

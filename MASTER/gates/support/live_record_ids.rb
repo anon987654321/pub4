@@ -126,7 +126,7 @@ module Deploy
     # this route has no resolver or the table it needs has no seeded row yet.
     def resolve(page)
       method = RESOLVERS[page[:id]]
-      return nil unless method
+      return unless method
 
       params = send(method, page[:app])
       params && substitute(page[:path], params)
@@ -153,7 +153,7 @@ module Deploy
 
     def community(app)
       id = scalar(app, "SELECT id FROM communities WHERE city_id = ? ORDER BY id LIMIT 1", BERGEN_CITY_ID)
-      id && { id: id }
+      id && { id: }
     end
 
     def community_id(app)
@@ -163,7 +163,7 @@ module Deploy
 
     def post(app)
       id = scalar(app, "SELECT id FROM posts WHERE city_id = ? AND removed_at IS NULL ORDER BY id LIMIT 1", BERGEN_CITY_ID)
-      id && { id: id }
+      id && { id: }
     end
 
     def user(app)
@@ -172,12 +172,12 @@ module Deploy
         WHERE city_id = ? AND guest = 0 AND deleted_at IS NULL AND username IS NOT NULL
         ORDER BY id LIMIT 1
       SQL
-      id && { id: id }
+      id && { id: }
     end
 
     def place(app)
       id = scalar(app, "SELECT id FROM places WHERE city_id = ? ORDER BY id LIMIT 1", BERGEN_CITY_ID)
-      id && { id: id }
+      id && { id: }
     end
 
     # Marketplace::CategoriesController#show is `find_by!(slug: params[:id])`
@@ -189,7 +189,7 @@ module Deploy
 
     def marketplace_listing(app)
       id = marketplace_listing_row(app)
-      id && { id: id }
+      id && { id: }
     end
 
     def marketplace_listing_id(app)
@@ -215,29 +215,29 @@ module Deploy
         WHERE privacy = 'public' AND (expires_at IS NULL OR expires_at > datetime('now'))
         ORDER BY id LIMIT 1
       SQL
-      id && { id: id }
+      id && { id: }
     end
 
     # SetsController#show reads private as "owner or collaborator only", which
     # a guest probe is neither.
     def playlist_set(app)
       id = scalar(app, "SELECT id FROM playlist_sets WHERE privacy = 'public' ORDER BY id LIMIT 1")
-      id && { id: id }
+      id && { id: }
     end
 
     def playlist(app)
       id = scalar(app, "SELECT id FROM playlist_playlists WHERE city_id = ? ORDER BY id LIMIT 1", BERGEN_CITY_ID)
-      id && { id: id }
+      id && { id: }
     end
 
     def delivery_driver(app)
       id = scalar(app, "SELECT id FROM takeaway_delivery_drivers ORDER BY id LIMIT 1")
-      id && { id: id }
+      id && { id: }
     end
 
     def restaurant(app)
       id = scalar(app, "SELECT id FROM takeaway_restaurants WHERE city_id = ? ORDER BY id LIMIT 1", BERGEN_CITY_ID)
-      id && { id: id }
+      id && { id: }
     end
 
     def tv_channel_row(app)
@@ -248,7 +248,7 @@ module Deploy
     # params[:id] -- the route declares `param: :slug`).
     def tv_channel(app)
       slug = tv_channel_row(app)
-      slug && { slug: slug }
+      slug && { slug: }
     end
 
     def tv_channel_slug(app)
@@ -266,7 +266,7 @@ module Deploy
         WHERE tv_channels.city_id = ?
         ORDER BY tv_videos.id LIMIT 1
       SQL
-      id && { id: id }
+      id && { id: }
     end
 
     # -- amber -------------------------------------------------------------
@@ -283,7 +283,7 @@ module Deploy
           AND items.lifecycle_state NOT IN ('released', 'donated', 'sold', 'recycled')
         ORDER BY items.id LIMIT 1
       SQL
-      id && { id: id }
+      id && { id: }
     end
 
     # -- bsdports ------------------------------------------------------------
@@ -297,14 +297,14 @@ module Deploy
 
     def bsdports_port(app)
       id = scalar(app, "SELECT id FROM ports ORDER BY id LIMIT 1")
-      id && { id: id }
+      id && { id: }
     end
 
     # -- sqlite plumbing -----------------------------------------------------
 
     def db(app)
       path = DB_PATH[app]
-      return nil unless SQLITE3 && path && File.file?(path)
+      return unless SQLITE3 && path && File.file?(path)
 
       @conn ||= {}
       @conn[app] ||= SQLite3::Database.new(path, readonly: true)

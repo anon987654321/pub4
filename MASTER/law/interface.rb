@@ -93,7 +93,6 @@ Law.define(:VOICE_FAILURES_ARE_ACTIONABLE) do
   X
 end
 
-
 Law.define(:CLI_ANALYZE_TARGET_ROUTING) do
   source "MASTER CLI — deterministic repository analysis targets"
   severity :error
@@ -122,7 +121,6 @@ Law.define(:CLI_ANALYZE_TARGET_ROUTING) do
   end
 end
 
-
 Law.define(:CLI_FACE_DEDICATED_TTY) do
   source "Terminal discipline — full-screen face must not share line-editor input"
   severity :error
@@ -144,7 +142,6 @@ Law.define(:CLI_FACE_DEDICATED_TTY) do
   end
 end
 
-
 Law.define(:CAPABILITY_STATUS_MUST_BE_TRUTHFUL) do
   source "OpenBSD-style status reporting — unavailable capabilities are not ready"
   severity :error
@@ -165,7 +162,6 @@ Law.define(:CAPABILITY_STATUS_MUST_BE_TRUTHFUL) do
       text.match?(/["']ready["']/)
   end
 end
-
 
 Law.define(:SIGNATURE_MOMENT) do
   source "Interaction design — distinctive, frequent, functional moments"
@@ -190,8 +186,6 @@ Law.define(:DIRECT_MANIPULATION_FEEDBACK) do
   bad "click -> request -> finally show any indication that the press happened"
   good "pointerdown/active -> immediate press state; commit -> explicit success or failure state"
 end
-
-
 
 Law.define(:WAITING_STATE_MEANING) do
   source "Interaction status — useful feedback during dead time"

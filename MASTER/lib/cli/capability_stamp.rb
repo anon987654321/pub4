@@ -16,7 +16,7 @@ module Master
         return if id.empty?
 
         health = provider_health || Routing::ProviderHealth.new(
-          path: File.join(root, "runtime", "telemetry", "provider_health.ndjson")
+          path: File.join(root, "runtime", "telemetry", "provider_health.ndjson"),
         )
         availability = policy || Routing::AvailabilityPolicy.new(root:)
         age = health.age_seconds(id)

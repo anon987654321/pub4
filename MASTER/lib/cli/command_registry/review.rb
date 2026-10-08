@@ -79,7 +79,7 @@ module Master
               Master::Fix::ExecutionTrace.new(
                 root: Master.repo_root,
                 scope: trace_scope,
-                dependencies: { scanner:, fix_loop:, deliberation:, bus: }
+                dependencies: { scanner:, fix_loop:, deliberation:, bus: },
               ).run
             rescue SyntaxError, StandardError => e
               Master::Fix::ExecutionTrace::Result.new(
@@ -127,7 +127,7 @@ module Master
         result = Master::Fix::WorktreeSession.new(root:).run(
           command: ["/fix", raw].reject(&:empty?).join(" "),
           foreign_paths: Master::Fix::WorktreeSession.foreign_paths(root:),
-          proof_trees: worktree_proof_trees(target, root:)
+          proof_trees: worktree_proof_trees(target, root:),
         )
         return result.summary if result.ok
 
@@ -192,7 +192,7 @@ module Master
 
       def execution_trace_scopes(target)
         raw = target.to_s.strip
-        return nil if raw.empty?
+        return if raw.empty?
 
         trees = %w[MASTER RAILS OPENBSD STUDIO]
         tokens = raw.split(/\s+/)

@@ -58,7 +58,7 @@ module Operator
 
       Master::Trace::Dmesg.status(
         unit,
-        "#{elapsed.round}s of #{@timeout}s timeout, consider splitting #{name}"
+        "#{elapsed.round}s of #{@timeout}s timeout, consider splitting #{name}",
       )
     end
 

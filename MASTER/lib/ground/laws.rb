@@ -135,7 +135,6 @@ module Master
         limit ? items.first(limit) : items
       end
 
-
       def lookup(id)
         id_str = id.to_s
         kernel[id_str] || philosophy.find { |a| a["id"] == id_str }&.dig("name")

@@ -79,7 +79,7 @@ module Operator
         prompted: asked.size,
         practice: conduct.size,
         unreachable: out.map { |r| r["id"] },
-        ceiling: limit
+        ceiling: limit,
       }
 
       if json

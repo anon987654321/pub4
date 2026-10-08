@@ -51,7 +51,7 @@ module Deploy
 
     def schema_version(app_dir)
       schema = File.join(app_dir, "db", "schema.rb")
-      return nil unless File.file?(schema)
+      return unless File.file?(schema)
 
       # Rails dumps the version with digit separators (2026_09_13_120000), so a
       # bare \d+ never matched a real schema.rb and this comparison never ran.
@@ -114,7 +114,7 @@ module Deploy
       parts = controller.split("/")
       candidates = [
         File.join(app_dir, "app", "controllers", *parts.map { |part| "#{part}_controller.rb" }),
-        File.join(app_dir, "app", "controllers", "#{controller}_controller.rb")
+        File.join(app_dir, "app", "controllers", "#{controller}_controller.rb"),
       ]
       return true if candidates.any? { |path| File.file?(path) }
 

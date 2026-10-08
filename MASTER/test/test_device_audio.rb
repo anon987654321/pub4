@@ -51,7 +51,7 @@ class TestDeviceAudio < Minitest::Test
       assert Audio.stop
       assert_equal [
         [Audio::MEDIA_PLAYER, "play", file.path],
-        [Audio::MEDIA_PLAYER, "stop"]
+        [Audio::MEDIA_PLAYER, "stop"],
       ], calls
     end
   end

@@ -58,7 +58,7 @@ module Deploy
           @result.fail(
             "geometry composition: #{surface.id} first screen renders #{sizes.size} type sizes > " \
             "#{max_sizes} allowed — reduce the visual vocabulary (principle=typography)",
-            severity: :soft
+            severity: :soft,
           )
         end
 
@@ -68,7 +68,7 @@ module Deploy
           @result.fail(
             "geometry composition: #{surface.id} h1 is #{heading}px vs median body #{body.round(1)}px — " \
             "hierarchy is visually weak (principle=hierarchy)",
-            severity: :soft
+            severity: :soft,
           )
         end
 
@@ -78,7 +78,7 @@ module Deploy
         @result.fail(
           "geometry composition: #{surface.id} has #{long_centered} long centered text block(s) " \
           "in the first screen — prefer a readable measure and directional alignment (principle=alignment)",
-          severity: :soft
+          severity: :soft,
         )
       end
     end

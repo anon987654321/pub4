@@ -104,7 +104,7 @@ module Master
 
       def fetch!
         result = command("git", "-C", @repo, "fetch", "--prune", "origin", "main")
-        raise CommandError.new(["git", "fetch", "origin", "main"], result[:stderr]) unless result[:status].success?
+        raise CommandError.new(%w[git fetch origin main], result[:stderr]) unless result[:status].success?
       end
 
       def synchronize_refs!
@@ -123,11 +123,11 @@ module Master
           report("control0: synced <- origin/main #{short(remote)}")
         elsif ancestor?(remote, head)
           raise CommandError.new(
-            ["git", "sync", "main"],
-            "local main is ahead of origin/main; publish through the GitHub PR path, never from the control plane"
+            %w[git sync main],
+            "local main is ahead of origin/main; publish through the GitHub PR path, never from the control plane",
           )
         else
-          raise CommandError.new(["git", "sync", "main"], "main and origin/main have diverged")
+          raise CommandError.new(%w[git sync main], "main and origin/main have diverged")
         end
       end
 
@@ -186,7 +186,7 @@ module Master
           "sha" => sha,
           "status" => status,
           "deployed_sha" => status == "ok" ? sha : load_state["deployed_sha"],
-          "at" => Time.now.utc.iso8601
+          "at" => Time.now.utc.iso8601,
         )
         write_atomic(@state_path, payload + "\n", fsync: true, fsync_dir: true, mode: 0o600)
       end

@@ -102,7 +102,7 @@ module Deploy
       GateAutofix.remeasure_loop(
         measure: -> { run_once },
         apply: ->(result) { GeometryAutofix.apply(result.autofix_findings, dry: GateAutofix.dry_run?) },
-        label: "reflow_autofix"
+        label: "reflow_autofix",
       )
     end
 
@@ -112,7 +112,7 @@ module Deploy
       def autofix_findings = (@autofix_findings ||= [])
 
       def autofix(app:, selector:, kind:, detail: nil)
-        autofix_findings << { app: app, selector: selector, kind: kind, detail: detail }
+        autofix_findings << { app:, selector:, kind:, detail: }
       end
     end
 
@@ -205,13 +205,13 @@ module Deploy
         "reflow overflow: #{surface.app}/#{surface.label} scrolls horizontally at #{widths.join(', ')}px " \
         "(worst #{worst[0]}px: #{worst[1]["scroll_width"]} > #{worst[1]["client_width"]}#{offenders.empty? ? "" : " — #{offenders.join(', ')}"}) " \
         "principle=accessibility",
-        severity: severity
+        severity:,
       )
       offenders.each do |o|
         selector = o.split("@").first
         next if selector.to_s.match?(/\A[a-z]+\z/)
 
-        @result.autofix(app: surface.app, selector: selector, kind: :overflow,
+        @result.autofix(app: surface.app, selector:, kind: :overflow,
                         detail: "#{surface.app}/#{surface.label}: spills at #{worst[0]}px viewport")
       end
     end
@@ -288,7 +288,7 @@ module Deploy
         @result.warn(
           "reflow fingerprint: #{surface.app}/#{surface.label} — no discrete layout transition across " \
           "#{ordered.first[0]}–#{ordered.last[0]}px#{span}; the surface scales continuously rather than " \
-          "switching at breakpoints"
+          "switching at breakpoints",
         )
         return
       end
@@ -300,7 +300,7 @@ module Deploy
         "reflow breakpoints: #{surface.app}/#{surface.label} changes layout at #{transitions.size} points " \
         "across #{ordered.first[0]}–#{ordered.last[0]}px — more transitions than a declared breakpoint set " \
         "(likely content-driven reflow rather than designed breakpoints)",
-        severity: :soft
+        severity: :soft,
       )
     end
   end

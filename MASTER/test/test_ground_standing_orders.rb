@@ -115,7 +115,7 @@ class StandingOrdersTest < Minitest::Test
 
     with_orders([mine, theirs]) do
       assert_equal ["mine"], @orders.due(owner: "owner123").map { |o| o["name"] }
-      assert_equal ["mine", "theirs"], @orders.due.map { |o| o["name"] }
+      assert_equal %w[mine theirs], @orders.due.map { |o| o["name"] }
     end
   end
 
@@ -286,7 +286,7 @@ class StandingOrdersTest < Minitest::Test
     responses = [
       [" M file.rb\n", FakeStatus.new(true)],
       ["", FakeStatus.new(true)],
-      ["", FakeStatus.new(true)]
+      ["", FakeStatus.new(true)],
     ]
 
     event = { path: File.join(root, "file.rb") }
@@ -320,7 +320,7 @@ class StandingOrdersTest < Minitest::Test
     responses = [
       ["", FakeStatus.new(true)],
       ["", FakeStatus.new(true)],
-      ["rejected\n", FakeStatus.new(false)]
+      ["rejected\n", FakeStatus.new(false)],
     ]
 
     Master::Io::Exec.stub(:capture3, ->(*) { [" M file.rb\n", nil, FakeStatus.new(true)] }) do

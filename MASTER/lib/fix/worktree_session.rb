@@ -56,7 +56,7 @@ module Master
         end
         unless ancestor?(local_head, upstream)
           return refused(
-            "local main has unpushed or divergent commits; publish them before auto-merge"
+            "local main has unpushed or divergent commits; publish them before auto-merge",
           )
         end
         base = upstream
@@ -126,7 +126,7 @@ module Master
           base,
           head,
           branch,
-          worktree
+          worktree,
         )
       rescue StandardError => e
         announce("failed, #{e.class}: #{e.message}")
@@ -163,7 +163,7 @@ module Master
           "MASTER_INTERNAL_CHILD" => "1",
           "MASTER_FIX_WORKTREE_CHILD" => "1",
           "MASTER_PROCESS_LOCK_FD" => nil,
-          "MASTER_CONTROL_PLANE" => nil
+          "MASTER_CONTROL_PLANE" => nil,
         )
         run_stream(env, File.join(worktree, "MASTER", "bin", "master"), command, chdir: worktree)
       end

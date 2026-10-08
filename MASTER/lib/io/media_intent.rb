@@ -69,10 +69,10 @@ module Master
         return generate_kick(text, root:) if text.match?(KICK_RE)
         return play_last(text, root:) if text.match?(PLAY_LAST_RE)
         return generate_tone(text, root:) if text.match?(SYNTH_RE)
-        return stop_live_audio(root:, bus: bus) if text.match?(LIVE_AUDIO_STOP_RE)
+        return stop_live_audio(root:, bus:) if text.match?(LIVE_AUDIO_STOP_RE)
         return diagnose_live_audio(root:) if text.match?(LIVE_AUDIO_DIAGNOSTIC_RE)
-        return live_synth(text, root:, bus: bus) if live_synth?(text)
-        return play_background_music(text, root:, bus: bus) if text.match?(BACKGROUND_MUSIC_RE)
+        return live_synth(text, root:, bus:) if live_synth?(text)
+        return play_background_music(text, root:, bus:) if text.match?(BACKGROUND_MUSIC_RE)
         return postprocess(text, root:) if postpro_intent?(text)
         return generate_beat(text, root:) if text.match?(AUDIO_RE)
 
@@ -137,7 +137,7 @@ module Master
       def desktop_directory
         [
           File.expand_path("~/Desktop"),
-          File.expand_path("~/desktop")
+          File.expand_path("~/desktop"),
         ].find { |path| File.directory?(path) }
       end
 
@@ -146,7 +146,7 @@ module Master
           File.expand_path("~/Downloads"),
           File.expand_path("~/downloads"),
           File.expand_path("~/storage/downloads"),
-          "/sdcard/Download"
+          "/sdcard/Download",
         ].find { |path| File.directory?(path) }
       end
 
@@ -350,7 +350,7 @@ module Master
 
       def play_background_music(text, root: MasterPaths.root, bus: nil)
         result = ScriptDispatch.run(
-          root:, tool: "dilla", arg: "live default", env: { "DILLA_COLTRANE" => "0" }
+          root:, tool: "dilla", arg: "live default", env: { "DILLA_COLTRANE" => "0" },
         )
         return result unless result.ok?
 

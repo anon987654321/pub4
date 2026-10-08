@@ -79,7 +79,7 @@ module Operator
       grouped.first(10).each do |ctx, v|
         Master::Trace::Dmesg.status(
           "swallow0",
-          "#{v[:count]}, #{ctx}, #{v[:last]["error_message"].to_s[0, 60]}"
+          "#{v[:count]}, #{ctx}, #{v[:last]["error_message"].to_s[0, 60]}",
         )
       end
       Master::Trace::Dmesg.status("swallow0", "#{grouped.size - 10} more contexts") if grouped.size > 10

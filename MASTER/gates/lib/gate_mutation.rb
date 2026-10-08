@@ -40,7 +40,7 @@ module Deploy
 
       [:drop_main, "remove the main landmark",
        ->(html) {
-         return nil unless html.match?(/<main\b|id=["']main-content["']/i)
+         return unless html.match?(/<main\b|id=["']main-content["']/i)
 
          html.gsub(/<main\b[^>]*>/i, "<div>").gsub(%r{</main>}i, "</div>")
              .gsub(/id=["']main-content["']/i, 'id="content"')
@@ -53,7 +53,7 @@ module Deploy
 
       [:auth_wall, "put a signup wall on a guest-open surface",
        ->(html) {
-         return nil unless html.match?(/<body[^>]*>/i)
+         return unless html.match?(/<body[^>]*>/i)
 
          html.sub(/(<body[^>]*>)/i) { "#{Regexp.last_match(1)}\n<div class=\"gate\">Sign in to continue</div>" }
        }],
@@ -63,7 +63,7 @@ module Deploy
 
       [:mute_buttons, "empty every button's accessible name",
        ->(html) {
-         return nil unless html.match?(/<button\b/i)
+         return unless html.match?(/<button\b/i)
 
          html.gsub(%r{(<button\b[^>]*>).*?(</button>)}mi) { "#{Regexp.last_match(1)}#{Regexp.last_match(2)}" }
              .gsub(/\s+aria-label=(["']).*?\1/i, "")
@@ -71,7 +71,7 @@ module Deploy
 
       [:cta_flood, "multiply primary calls to action past the Hick budget",
        ->(html) {
-         return nil unless html.match?(/<body[^>]*>/i)
+         return unless html.match?(/<body[^>]*>/i)
 
          extra = Array.new(12) { |i| "<button class=\"btn-primary\" type=\"submit\">Act #{i}</button>" }.join("\n")
          html.sub(/(<body[^>]*>)/i) { "#{Regexp.last_match(1)}\n#{extra}" }
@@ -80,7 +80,7 @@ module Deploy
       [:gut_content, "strip the surface down to an empty shell",
        ->(html) {
          body = html[%r{<body[^>]*>(.*?)</body>}mi, 1]
-         return nil if body.nil? || body.length < 400
+         return if body.nil? || body.length < 400
 
          html.sub(%r{(<body[^>]*>).*?(</body>)}mi) { "#{Regexp.last_match(1)}<div></div>#{Regexp.last_match(2)}" }
        }],
@@ -116,7 +116,7 @@ module Deploy
         if baseline[:hard].positive?
           @result.fail(
             "gate_mutation: baseline fixture good_#{id}.html already produces #{baseline[:hard]} hard finding(s) — " \
-            "a 'good' fixture the gates reject makes every mutation result meaningless"
+            "a 'good' fixture the gates reject makes every mutation result meaningless",
           )
           next
         end
@@ -138,7 +138,7 @@ module Deploy
           after = verdict(mutant, id)
           next if caught?(baseline, after)
 
-          survived << { id: id, mutation: mutation_id, description: description, after: after }
+          survived << { id:, mutation: mutation_id, description:, after: }
         end
       end
 
@@ -161,7 +161,7 @@ module Deploy
       gate = PageSimulationGate.new
       fixtures.each do |path|
         id = File.basename(path, ".html").delete_prefix("good_")
-        page = { id: id, app: "brgen", path: "/", persona: "guest", view: path }
+        page = { id:, app: "brgen", path: "/", persona: "guest", view: path }
         html = File.read(path)
         if hard_count(gate.live_findings(page, 200, html, "fixture")).positive?
           @result.fail("gate_mutation: page_simulation already rejects good_#{id}.html — its plants measure nothing")
@@ -191,7 +191,7 @@ module Deploy
     MOBILE_CLEAN = {
       "has_main" => true, "has_skip" => true, "has_tab_bar" => true, "overflow" => false,
       "scroll_width" => 390, "client_width" => 390,
-      "chrome" => [{ "label" => "btn-primary Post", "w" => 120, "h" => 48, "min" => 48 }],
+      "chrome" => [{ "label" => "btn-primary Post", "w" => 120, "h" => 48, "min" => 48 }]
     }.freeze
 
     MOBILE_PLANTS = [
@@ -261,14 +261,14 @@ module Deploy
       caught = applied - survived.size
       rate = (caught.to_f / applied * 100).round
       @result.warn(
-        "gate_mutation: #{caught}/#{applied} mutations caught (#{rate}%), #{inapplicable} inapplicable"
+        "gate_mutation: #{caught}/#{applied} mutations caught (#{rate}%), #{inapplicable} inapplicable",
       )
 
       survived.group_by { |row| row[:mutation] }.sort_by { |_m, rows| -rows.size }.each do |mutation, rows|
         surfaces = rows.map { |r| r[:id] }.sort.join(", ")
         @result.fail(
           "gate_mutation: #{mutation} survives on #{surfaces} — the suite does not detect " \
-          "\"#{rows.first[:description]}\" on #{rows.size == 1 ? 'this surface' : "#{rows.size} surfaces"}"
+          "\"#{rows.first[:description]}\" on #{rows.size == 1 ? 'this surface' : "#{rows.size} surfaces"}",
         )
       end
     end

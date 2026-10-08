@@ -35,7 +35,7 @@ module Deploy
     # cities and prices; it is not fine for a title or a body.
     SEED_SOURCES = [
       "brgen/db/seeds.rb",
-      "brgen/lib/brgen/per_city_seeder.rb"
+      "brgen/lib/brgen/per_city_seeder.rb",
     ].freeze
 
     FORBIDDEN_SEED_CALL = /(?:title|content|body):\s*Faker::Lorem/

@@ -252,8 +252,6 @@ module Operator
       path.delete_prefix("#{MASTER}/")
     end
 
-
-
     def topic_contract
       @topic_contract ||= begin
         data = YAML.safe_load_file(TOPIC_CONTRACT_PATH)
@@ -342,11 +340,11 @@ module Operator
 
       {
         **data,
-        unpublished: unpublished,
-        unconsumed: unconsumed,
-        contract_missing_publishers: contract_missing_publishers,
+        unpublished:,
+        unconsumed:,
+        contract_missing_publishers:,
         retired_topics: retired,
-        reference_anchor_gaps: reference_anchor_gaps,
+        reference_anchor_gaps:,
       }
     end
 

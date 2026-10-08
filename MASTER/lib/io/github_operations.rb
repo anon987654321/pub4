@@ -104,7 +104,7 @@ module Master
 
       def origin_repo
         output, status = @executor.capture2e("git", "-C", @root, "remote", "get-url", "origin", timeout: DEFAULT_TIMEOUT)
-        return nil unless status.success?
+        return unless status.success?
 
         normalize_repo(output)
       end
@@ -114,7 +114,7 @@ module Master
         value = value.sub(%r{\A(?:https?://|git://)github\.com/}, "")
         value = value.sub(%r{\A(?:ssh://)?git@github\.com[:/]}, "")
         value = value.sub(%r{\.git\z}, "")
-        return nil unless value.match?(%r{\A[\w.-]+/[\w.-]+\z})
+        return unless value.match?(%r{\A[\w.-]+/[\w.-]+\z})
         value
       end
 

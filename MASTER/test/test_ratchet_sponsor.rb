@@ -72,7 +72,7 @@ class TestRatchetSponsor < Minitest::Test
 
   def test_fleet_reads_the_canonical_rails_inventory
     assert_equal File.join(Fleet::ROOT, "RAILS", "apps.yml"), Fleet::APPS_YML
-    assert_equal ["amber", "brgen", "bsdports"], Fleet.app_names
+    assert_equal %w[amber brgen bsdports], Fleet.app_names
   end
 
   private

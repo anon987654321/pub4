@@ -24,7 +24,7 @@ module Deploy
 
       @result.warn(
         "calibration: agreement=#{(report[:agreement] * 100).round(1)}% " \
-        "(#{report[:agreed]}/#{report[:total]}) floor=#{(report[:floor] * 100).round(0)}%"
+        "(#{report[:agreed]}/#{report[:total]}) floor=#{(report[:floor] * 100).round(0)}%",
       )
 
       # A calibration set with no cases agrees with nothing; agreement over an
@@ -40,7 +40,7 @@ module Deploy
         mark = c.agree ? "ok" : "DISAGREE"
         @result.warn(
           "calibration [#{mark}] #{c.id}: human=#{c.human} gate=#{c.gate} " \
-          "detail=#{c.detail.inspect}"
+          "detail=#{c.detail.inspect}",
         )
       end
 
@@ -59,7 +59,7 @@ module Deploy
         @result.fail(
           "calibration: agreement #{(report[:agreement] * 100).round(1)}% < " \
           "floor #{(report[:floor] * 100).round(0)}% — retune weights or fix labels " \
-          "(principle=kaizen)"
+          "(principle=kaizen)",
         )
       end
 

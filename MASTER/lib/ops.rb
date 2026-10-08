@@ -38,7 +38,7 @@ module Master
               pid: Process.pid,
               host: Socket.gethostname,
               mode: mode.to_s,
-              at: Time.now.utc.iso8601
+              at: Time.now.utc.iso8601,
             ))
             io.write("\n")
             io.flush
@@ -47,7 +47,7 @@ module Master
           end
 
           io.close
-          return nil unless attempts.zero? && reclaimable?(path)
+          return unless attempts.zero? && reclaimable?(path)
 
           attempts += 1
         end
@@ -157,10 +157,10 @@ module Master
         lsof = ["/usr/sbin/lsof", "/usr/bin/lsof", "lsof"].find do |candidate|
           candidate == "lsof" || File.executable?(candidate)
         end
-        return nil unless lsof
+        return unless lsof
 
         out, status = Io::Exec.capture2(lsof, "-t", path, timeout: Io::Exec::DEFAULT_TIMEOUT)
-        return nil unless status.success? || status.exitstatus == 1
+        return unless status.success? || status.exitstatus == 1
 
         out.lines.filter_map { |line| Integer(line.strip, exception: false) }.uniq.reject { |pid| pid == Process.pid }
       rescue StandardError => e

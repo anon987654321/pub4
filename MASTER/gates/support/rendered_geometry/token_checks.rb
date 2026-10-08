@@ -19,7 +19,7 @@ module Deploy
         @result.fail(
           "geometry tokens: #{surface.id} renders #{rogue.size} text colour(s) outside MASTER/data/laws.yml#tokens — " \
           "#{top.map { |hex, count| "#{hex}×#{count}" }.join(', ')} principle=exact_token_use",
-          severity: :soft
+          severity: :soft,
         )
       end
 

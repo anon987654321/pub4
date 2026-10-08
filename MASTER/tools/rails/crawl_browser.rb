@@ -114,7 +114,7 @@ end
 
 begin
   Timeout.timeout(BrowserProbeSupport::MAX_PROBE_SECONDS) do
-    browser = BrowserProbeSupport.build_browser(chrome: chrome, pending_connection_errors: false)
+    browser = BrowserProbeSupport.build_browser(chrome:, pending_connection_errors: false)
     BrowserProbeSupport.install_error_hooks(browser)
 
     targets.each do |name, port, browser_spec|

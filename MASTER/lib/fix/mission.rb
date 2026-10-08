@@ -353,7 +353,7 @@ module Master
         out["operator"] = {
           "mode" => mode,
           "risk" => operator["risk"],
-          "intent" => operator["intent"]
+          "intent" => operator["intent"],
         }.compact
         out
       end
@@ -376,7 +376,7 @@ module Master
           "operator" => {
             "mode" => "repair",
             "risk" => nil,
-            "intent" => nil
+            "intent" => nil,
           },
           "plan" => record["plan"].to_s.byteslice(0, MAX_PLAN_BYTES),
           "summary" => record["summary"],
@@ -540,7 +540,7 @@ module Master
           "operator" => {
             "mode" => Master::Operator::Mode.for(mode).to_s,
             "risk" => risk&.to_sym,
-            "intent" => intent&.to_sym
+            "intent" => intent&.to_sym,
           }.compact,
           "plan" => plan.to_s.byteslice(0, MAX_PLAN_BYTES),
           "summary" => nil,

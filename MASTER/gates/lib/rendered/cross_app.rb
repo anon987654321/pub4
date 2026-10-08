@@ -110,7 +110,7 @@ module Deploy
         detail = values.map { |app, value| "#{app}=#{value.inspect}" }.join(", ")
         @result.fail(
           "cross_app chrome: #{description} differs between apps — #{detail}. " \
-          "These render from __shared/frontend/layouts and must agree."
+          "These render from __shared/frontend/layouts and must agree.",
         )
       end
 
@@ -125,7 +125,7 @@ module Deploy
       @result.fail(
         "cross_app chrome: #{no_footer.join(', ')} render no footer while #{(chrome.keys - no_footer).join(', ')} do — " \
         "the shared footer partial is not reaching every app",
-        severity: :soft
+        severity: :soft,
       )
     end
 
@@ -153,7 +153,7 @@ module Deploy
         @result.fail(
           "cross_app stimulus: #{name.inspect} is mounted by the shared layout but renders only in " \
           "#{has.join(', ')} — missing from #{(rendered.keys - has).join(', ')}",
-          severity: :soft
+          severity: :soft,
         )
       end
 
@@ -163,7 +163,7 @@ module Deploy
       @result.warn(
         "cross_app stimulus inventory: #{unused.size} shared controller(s) in __shared/frontend are not instantiated " \
         "by any running app — #{unused.sort.join(', ')}. Not a contract violation (a controller may serve a surface " \
-        "not probed here), but each is dead code until some view attaches data-controller."
+        "not probed here), but each is dead code until some view attaches data-controller.",
       )
     end
 

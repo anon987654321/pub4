@@ -69,7 +69,11 @@ module Master
         playback_error = Master::Voice::Playback.last_error if defined?(Master::Voice::Playback)
         reason = [voice_error, playback_error].compact.map(&:to_s).reject(&:empty?).first
         degraded = ENV["MASTER_TTS_DEGRADED"] == "1" || !reason.nil?
-        degraded ? "degraded#{reason ? ": #{reason}" : ""}" : "ready"
+        if degraded
+"degraded#{reason ? ": #{reason}" : ""}"
+else
+"ready"
+end
       when "web" then rcctl_state("master")
       else "unknown"
       end

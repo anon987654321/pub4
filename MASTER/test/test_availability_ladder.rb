@@ -6,7 +6,7 @@ require "tmpdir"
 class AvailabilityLadderTest < Minitest::Test
   def policy(overrides = {})
     Master::CLI::Routing::AvailabilityPolicy.new(
-      config: Master::CLI::Routing::AvailabilityPolicy::DEFAULTS.merge(overrides)
+      config: Master::CLI::Routing::AvailabilityPolicy::DEFAULTS.merge(overrides),
     )
   end
 
@@ -38,7 +38,7 @@ class AvailabilityLadderTest < Minitest::Test
       now = Time.utc(2026, 9, 28, 13, 0, 0)
       health = Master::CLI::Routing::ProviderHealth.new(
         path: File.join(dir, "provider_health.ndjson"),
-        now: -> { now }
+        now: -> { now },
       )
       health.record(model: "cloud-model", status: :success, at: now - 121)
 

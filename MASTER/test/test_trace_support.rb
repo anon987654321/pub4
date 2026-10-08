@@ -41,7 +41,7 @@ class TestTraceSupport < Minitest::Test
       Master::Voice::Playback.stub(:available?, true) do
         Master::Voice::Playback.stub(
           :enqueue,
-          ->(text, **options) { spoken << [text, options] }
+          ->(text, **options) { spoken << [text, options] },
         ) do
           Master::Trace::Dmesg.with_verbosity("trace") do
             Master::Trace::Dmesg.with_log_voice do
@@ -158,7 +158,7 @@ class TestTraceSupport < Minitest::Test
     rendered = Master::Trace::Dmesg::Report.render(
       unit: "check0",
       parent: "master0",
-      text: "alpha\nbeta"
+      text: "alpha\nbeta",
     )
 
     refute_match(/alpha\s{2,}beta/, rendered)
@@ -241,7 +241,7 @@ class TestTraceSupport < Minitest::Test
     rendered = Master::Trace::Dmesg::Report.render(
       unit: "check0",
       parent: "master0",
-      text: "first\nsecond"
+      text: "first\nsecond",
     )
 
     assert_equal "check0 at master0: first\ncheck0: second", rendered
@@ -251,7 +251,7 @@ class TestTraceSupport < Minitest::Test
     rendered = Master::Trace::Dmesg::Report.render(
       unit: "check0",
       parent: "master0",
-      text: "probe0 at check0: scan\nprobe0: clean"
+      text: "probe0 at check0: scan\nprobe0: clean",
     )
 
     assert_equal "probe0 at check0: scan\nprobe0: clean", rendered
@@ -261,7 +261,7 @@ class TestTraceSupport < Minitest::Test
     rendered = Master::Trace::Dmesg::Report.render(
       unit: "check0",
       parent: "master0",
-      text: "first\n\nsecond"
+      text: "first\n\nsecond",
     )
 
     assert_equal "check0 at master0: first\n\ncheck0 at master0: second", rendered
@@ -271,7 +271,7 @@ class TestTraceSupport < Minitest::Test
     rendered = Master::Trace::Dmesg::Report.render(
       unit: "operator0",
       parent: "master0",
-      text: "status0 at operator0: clean"
+      text: "status0 at operator0: clean",
     )
 
     assert_equal "status0 at operator0: clean", rendered

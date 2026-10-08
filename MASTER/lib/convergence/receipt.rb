@@ -16,7 +16,7 @@ module Master
         id = "#{stamp}-#{Process.pid}-#{SecureRandom.hex(4)}"
         payload = {
           schema: 1,
-          id: id,
+          id:,
           command: command.to_s,
           state: state.to_s,
           generated_at: Time.now.utc.iso8601,

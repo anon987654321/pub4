@@ -11,7 +11,7 @@ class TestWebServer < Minitest::Test
     Master.stub_const(:RUBY_PLATFORM, "openbsd") do
       Kernel.stub(:system, running) do
         out = StringIO.new
-        Master::CLI::WebServer.openbsd_status(config:, host: "127.0.0.1", port: 53187, io: out)
+        Master::CLI::WebServer.openbsd_status(config:, host: "127.0.0.1", port: 53_187, io: out)
         assert_includes out.string, "web0: https://ai.brgen.no, up"
       end
     end

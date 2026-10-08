@@ -54,7 +54,6 @@ class WhyExplainerTest < Minitest::Test
     assert_includes out, "executable_law: law/"
   end
 
-
   def test_explain_path_uses_most_specific_ownership
     out = explainer.explain("lib/trace")
 
@@ -69,7 +68,6 @@ class WhyExplainerTest < Minitest::Test
     assert_includes out, "entry: RAILS/bin/triangle"
     assert_includes out, "proof: MASTER/gates/runner.rb --all"
   end
-
 
   def test_explain_style_section
     out = explainer.explain("ruby.quotes")

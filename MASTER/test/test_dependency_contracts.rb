@@ -28,7 +28,7 @@ class TestDependencyContracts < Minitest::Test
   def test_rubocop_uses_the_repository_ruby_pin
     paths = [
       File.join(ROOT, ".rubocop.yml"),
-      File.join(REPO, "RAILS", "shared", ".rubocop.yml")
+      File.join(REPO, "RAILS", "shared", ".rubocop.yml"),
     ]
 
     paths.each do |path|

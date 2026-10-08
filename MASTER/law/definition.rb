@@ -429,13 +429,13 @@ module Law
           "id" => entry["id"].to_s,
           "priority" => entry["priority"].to_i,
           "statement" => entry["statement"].to_s,
-          "applies_to" => Array(entry["applies_to"]).map(&:to_s)
+          "applies_to" => Array(entry["applies_to"]).map(&:to_s),
         }
       end
       law_map = Master.law("law_map")
       {
         "governing_laws" => roots,
-        "law_map_digest" => Digest::SHA256.hexdigest(JSON.generate(law_map))
+        "law_map_digest" => Digest::SHA256.hexdigest(JSON.generate(law_map)),
       }
     end
 

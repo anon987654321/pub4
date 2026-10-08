@@ -65,7 +65,7 @@ class FixMissionTest < Minitest::Test
 
       mission = Master::Fix::Mission.new(root:).start!(goal: "fix RAILS", scope: first)
       replacement = Master::Fix::Mission.new(root:).start_or_resume!(
-        goal: "fix MASTER", scope: second
+        goal: "fix MASTER", scope: second,
       )
 
       saved = Master::Fix::Mission.current(root:)
@@ -121,7 +121,7 @@ class FixMissionTest < Minitest::Test
         "finished_at" => nil,
         "checkpoint" => nil,
         "artifacts" => ["README.md"],
-        "error" => nil
+        "error" => nil,
       }
       path = File.join(root, ".master", "mission.json")
       File.write(path, JSON.pretty_generate(legacy) + "\n")
@@ -138,7 +138,7 @@ class FixMissionTest < Minitest::Test
         scope: root,
         model: "agy:auto",
         effort: "high",
-        plan: "inspect then repair"
+        plan: "inspect then repair",
       )
       assert_equal "legacy-mission", mission.id
       assert_equal "running", mission.record["state"]

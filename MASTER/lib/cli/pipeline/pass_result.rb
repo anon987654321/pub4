@@ -30,7 +30,7 @@ module Master
           def render
             header = Master::Trace::Dmesg::Report.render(
               unit:, parent: "master0",
-              text: "#{target}, #{mode}",
+              text: "#{target}, #{mode}"
             )
             body = sections.filter_map do |title, section|
               next if title.to_s == "mode" && section.to_s.empty?

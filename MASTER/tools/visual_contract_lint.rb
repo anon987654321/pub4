@@ -92,11 +92,11 @@ module Operator
     def run
       findings = scan
       over = counts(findings).select { |kind, count| count > BASELINES.fetch(kind) }
-      counts(findings).each { |kind, count|
- puts "visual_contract_lint: #{kind} #{count} (baseline #{BASELINES.fetch(kind)})" }
+      counts(findings).each do |kind, count|
+ puts "visual_contract_lint: #{kind} #{count} (baseline #{BASELINES.fetch(kind)})" end
       findings.each { |f| puts "  #{f.kind} #{f.file}: #{f.detail}" }
-      over.each { |kind, count|
- warn "visual_contract_lint: #{kind} #{count} exceeds baseline #{BASELINES.fetch(kind)}" }
+      over.each do |kind, count|
+ warn "visual_contract_lint: #{kind} #{count} exceeds baseline #{BASELINES.fetch(kind)}" end
       over.empty?
     end
 
@@ -148,9 +148,9 @@ end
     end
 
     def resolve(tokens, name, depth = 0)
-      return nil if depth > 3
+      return if depth > 3
       value = tokens[name]
-      return nil unless value
+      return unless value
       return value if value.match?(/\A#\h{3,6}\z/)
       inner = value[/var\((--[\w-]+)/, 1]
       inner ? resolve(tokens, inner, depth + 1) : nil
@@ -279,10 +279,10 @@ end
     def resolve_partial(target, load_paths)
       dir = File.dirname(target)
       base = File.basename(target).delete_prefix("_")
-      load_paths.filter_map { |root|
+      load_paths.filter_map do |root|
         [ "_#{base}.scss", "#{base}.scss" ]
           .map { |name| File.expand_path(File.join(root, dir, name)) }.find { |p| File.file?(p) }
-      }.first
+      end.first
     end
 
     # The whole selector group, not its last line. `.widget-empty a,\n.widget-cta
@@ -292,7 +292,7 @@ end
     def nearest_selector(src, line_number)
       lines = src.lines[0...line_number]
       brace = lines.rindex { |l| l.match?(/^\s*[^@\s\/][^{]*\{/) }
-      return nil if brace.nil?
+      return if brace.nil?
 
       first = brace
       first -= 1 while first.positive? && lines[first - 1].match?(/,\s*\z/)

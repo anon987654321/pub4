@@ -141,7 +141,7 @@ module Deploy
       # "css_constitution reduced_motion: brgen/app/assets/stylesheets/foo.scss …"
       # "[CssConstitutionGate] css_constitution flat_ui: brgen/..."
       rel = message[/(?:brgen|amber|bsdports|shared)\/[^\s:]+\.(?:scss|css|erb|js|rb)/]
-      return nil unless rel
+      return unless rel
 
       rails_root = File.expand_path("../..", __dir__) # RAILS/
       candidate = File.join(rails_root, rel)

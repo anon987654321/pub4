@@ -76,10 +76,10 @@ module Master
           context: {
             client: {
               clientName: client,
-              clientVersion: client_version(client, bootstrap: client_version)
-            }
+              clientVersion: client_version(client, bootstrap: client_version),
+            },
           },
-          videoId: video_id
+          videoId: video_id,
         })
         raise "player API HTTP #{response.code}" unless response.code == "200"
 
@@ -92,7 +92,7 @@ module Master
         {
           "ANDROID" => "20.10.38",
           "WEB" => "2.20261007.01.00",
-          "TVHTML5_SIMPLY_EMBEDDED_PLAYER" => "7.20261006.18.00"
+          "TVHTML5_SIMPLY_EMBEDDED_PLAYER" => "7.20261006.18.00",
         }.fetch(client)
       end
 

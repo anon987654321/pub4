@@ -151,7 +151,7 @@ class TestFixLoopCommitter < Minitest::Test
     committer.baseline!(scope: ["rails"])
     committer.commit_if_dirty("fix: rails", owned_paths: [
       File.join(Master::REPO_ROOT, "RAILS/apps.yml"),
-      File.join(Master::REPO_ROOT, "TODO.md")
+      File.join(Master::REPO_ROOT, "TODO.md"),
     ])
 
     assert_empty git.commits
@@ -169,7 +169,7 @@ class TestFixLoopCommitter < Minitest::Test
     committer.commit_if_dirty(
       "fix: rails",
       owned_paths: [File.join(Master::REPO_ROOT, "RAILS/apps.yml"),
-                    File.join(Master::REPO_ROOT, "MASTER/README.md")]
+                    File.join(Master::REPO_ROOT, "MASTER/README.md")],
     )
 
     assert_empty git.commits

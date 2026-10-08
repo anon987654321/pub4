@@ -138,8 +138,6 @@ module Master
         nil
       end
 
-
-
       # Session-owned enqueue path. Callers can provide a generation so
       # interrupted work cannot reach the speaker later. When generation is
       # omitted, Playback uses its current cancellation generation.
@@ -332,7 +330,7 @@ module Master
       end
 
       def await_prefetch(prefetched)
-        return nil unless prefetched
+        return unless prefetched
 
         prepared = prefetched.result_queue.pop
         prefetched.thread.join

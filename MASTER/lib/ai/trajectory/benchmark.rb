@@ -9,7 +9,7 @@ module Master
           "shell_abi" => "zsh only; no Linux text-pipeline reflexes",
           "argv_subprocess" => "Ruby subprocesses use Master::Io::Exec",
           "evidence" => "reads precede writes to the same path",
-          "verification" => "successful work records verification evidence"
+          "verification" => "successful work records verification evidence",
         }.freeze
 
         BANNED_SHELL = %w[bash sh sed awk perl python python3 tr find xargs].freeze
@@ -23,7 +23,7 @@ module Master
             "shell_abi" => Array(events).filter_map { |e| e["command"]&.to_s }.none? { |command| banned_shell?(command) },
             "argv_subprocess" => events.none? { |event| event["backtick"] == true || event["shell_interpolation"] == true },
             "evidence" => writes_have_prior_reads?(events),
-            "verification" => events.any? { |event| verification_event?(event) }
+            "verification" => events.any? { |event| verification_event?(event) },
           }
           points = checks.values.count(true)
           {
@@ -33,7 +33,7 @@ module Master
             "total" => checks.size,
             "ratio" => points.fdiv(checks.size),
             "verified" => record["verified"] == true && checks.values.all?,
-            "outcome" => record["outcome"].to_s
+            "outcome" => record["outcome"].to_s,
           }
         end
 

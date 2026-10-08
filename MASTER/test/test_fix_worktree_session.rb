@@ -41,7 +41,7 @@ class TestFixWorktreeSession < Minitest::Test
       result = session.run(
         command: "/fix test",
         foreign_paths: ["foreign.txt"],
-        proof_trees: ["MASTER"]
+        proof_trees: ["MASTER"],
       )
 
       assert result.ok

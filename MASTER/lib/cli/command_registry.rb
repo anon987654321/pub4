@@ -259,7 +259,7 @@ module Master
             "voice0 at mainbus0: #{enabled ? "on" : "off"}",
             "player=#{player ? player.first : "none"} engine=#{engine}",
             detail,
-            ("error=#{error}" if error && !error.empty?)
+            ("error=#{error}" if error && !error.empty?),
           ].compact.join("\n")}"
         when "test"
           ok = Voice::Playback.speak_now("MASTER voice test.")

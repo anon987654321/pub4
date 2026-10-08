@@ -39,7 +39,7 @@ class TestFixReflection < Minitest::Test
       NEXT: NONE
     TEXT
     result = Master::Fix::Reflection.new(agent:, root: @root).call(
-      target: @root, state: "done", files: [File.join(@root, "lib/example.rb")], history: []
+      target: @root, state: "done", files: [File.join(@root, "lib/example.rb")], history: [],
     )
     assert_equal "KEEP", result.verdict
     assert_equal "puts :example
@@ -56,7 +56,7 @@ class TestFixReflection < Minitest::Test
       NEXT: Consolidate the duplicate owner and rerun the same proof.
     TEXT
     result = Master::Fix::Reflection.new(agent:, root: @root).call(
-      target: @root, state: "plateau", files: [], history: []
+      target: @root, state: "plateau", files: [], history: [],
     )
     assert_equal "REPAIR", result.verdict
     assert_equal "SINGULARITY", result.law
@@ -73,7 +73,7 @@ class TestFixReflection < Minitest::Test
     TEXT
 
     Master::Fix::Reflection.new(agent:, root: @root).call(
-      target: @root, state: "done", files: [File.join(@root, "lib/example.rb")], history: []
+      target: @root, state: "done", files: [File.join(@root, "lib/example.rb")], history: [],
     )
 
     assert_includes agent.prompts.first, "applicable_laws"
@@ -90,7 +90,7 @@ class TestFixReflection < Minitest::Test
       NEXT: edit it
     TEXT
     result = Master::Fix::Reflection.new(agent:, root: @root).call(
-      target: @root, state: "plateau", files: [], history: []
+      target: @root, state: "plateau", files: [], history: [],
     )
     assert_equal "INVESTIGATE", result.verdict
     assert_nil result.anchor
@@ -106,7 +106,7 @@ class TestFixReflection < Minitest::Test
       NEXT: edit it
     TEXT
     result = Master::Fix::Reflection.new(agent:, root: @root).call(
-      target: @root, state: "plateau", files: [], history: []
+      target: @root, state: "plateau", files: [], history: [],
     )
     assert_equal "INVESTIGATE", result.verdict
     assert_nil result.anchor

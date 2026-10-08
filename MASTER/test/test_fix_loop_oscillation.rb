@@ -164,7 +164,7 @@ class TestFixLoopOscillation < Minitest::Test
       Hash.new(0),
       [{ rule: "TEST_RULE", file: "dummy.yml", line: 1, message: "osc" }],
       2,
-      progressed: true
+      progressed: true,
     )
 
     refute stagnant

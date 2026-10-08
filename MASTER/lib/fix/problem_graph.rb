@@ -150,7 +150,7 @@ module Master
           primary_operations: primary.freeze,
           candidate_operations: candidates.freeze,
           confidence:,
-          reason:
+          reason:,
         )
       end
 

@@ -17,7 +17,7 @@ module Operator
       lines = File.readlines(path, encoding: "UTF-8")
       headers = lines.filter_map do |line|
         match = line.match(
-          /\APack: tree=(\S+) git=(\S+) part=(\d+)\/(\d+) text_total=(\d+) fragments_total=(\d+) binary=(\d+) omitted=(\d+) files_in_part=(\d+) fragments_in_part=(\d+) max_bytes=(\d+)\s*\z/
+          /\APack: tree=(\S+) git=(\S+) part=(\d+)\/(\d+) text_total=(\d+) fragments_total=(\d+) binary=(\d+) omitted=(\d+) files_in_part=(\d+) fragments_in_part=(\d+) max_bytes=(\d+)\s*\z/,
         )
         next unless match
 

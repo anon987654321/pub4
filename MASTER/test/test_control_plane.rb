@@ -31,7 +31,7 @@ class ControlPlaneSpec < Minitest::Test
         [["git", "-C", File.expand_path("..", root), "rev-parse", "HEAD"], { stdout: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n", stderr: "", status: Status.new(true) }],
         [["git", "-C", File.expand_path("..", root), "rev-parse", "origin/main"], { stdout: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n", stderr: "", status: Status.new(true) }],
         [["git", "-C", File.expand_path("..", root), "merge-base", "--is-ancestor", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"], { stdout: "", stderr: "", status: Status.new(true) }],
-        [["git", "-C", File.expand_path("..", root), "pull", "--ff-only", "origin", "main"], { stdout: "", stderr: "", status: Status.new(true) }]
+        [["git", "-C", File.expand_path("..", root), "pull", "--ff-only", "origin", "main"], { stdout: "", stderr: "", status: Status.new(true) }],
       ]
       plane.define_singleton_method(:command) { |*argv| commands.shift.fetch(1) }
 
@@ -49,7 +49,7 @@ class ControlPlaneSpec < Minitest::Test
         { stdout: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n", stderr: "", status: Status.new(true) },
         { stdout: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n", stderr: "", status: Status.new(true) },
         { stdout: "", stderr: "", status: Status.new(false) },
-        { stdout: "", stderr: "", status: Status.new(true) }
+        { stdout: "", stderr: "", status: Status.new(true) },
       ]
       seen = []
       plane.define_singleton_method(:command) do |*argv|
@@ -71,7 +71,7 @@ class ControlPlaneSpec < Minitest::Test
         { stdout: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n", stderr: "", status: Status.new(true) },
         { stdout: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n", stderr: "", status: Status.new(true) },
         { stdout: "", stderr: "", status: Status.new(false) },
-        { stdout: "", stderr: "", status: Status.new(false) }
+        { stdout: "", stderr: "", status: Status.new(false) },
       ]
       plane.define_singleton_method(:command) { |*argv| commands.shift }
 

@@ -62,10 +62,10 @@ module Deploy
       Result.new(
         id: exemplar_id.to_s,
         score: earned,
-        max: max,
+        max:,
         target: spec["target_score"].to_i,
         missing_required: missing,
-        notes: notes
+        notes:,
       )
     end
 
