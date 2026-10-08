@@ -182,7 +182,7 @@ module Master
       end
 
       def dispatch_law(ctx: nil)
-        require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
+        require File.join(Master::ROOT, "law", "definition") unless defined?(::Law)
         ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.definitions.empty?
 
         arg = arg_for(ctx)
