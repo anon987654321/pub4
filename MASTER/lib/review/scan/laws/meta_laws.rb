@@ -6,7 +6,7 @@ module Master
       module Laws
       # Detects methods/classes/modules present in recent git history but absent now.
       # Wraps CommitGuard as a standard scan Rule so it runs in the scanner pipeline.
-        class AstOmissionLaw < Rule
+        class AstOmissionLaw < Law
           def self.auto_build? = false
 
           declare id: "ast_omission", severity: :warning, tags: %i[COMPLETENESS],
@@ -41,7 +41,7 @@ module Master
         end
 
         # Every Rule subclass must have a matching test file; gaps mean untested enforcement.
-        class LawCoverageLaw < Rule
+        class LawCoverageLaw < Law
           def self.auto_build? = false
 
           declare id: "rule_coverage", severity: :warning, tags: %i[TEST_COVERAGE],
@@ -89,7 +89,7 @@ module Master
           # so only the class-name needle ever did any work and the id half of
           # this rule was dead from the day it was written.
           def subclasses(code)
-            code.enum_for(:scan, /^\s*class (\w+Rule) < Rule\b/).map do
+            code.enum_for(:scan, /^\s*class (\w+Rule) < Law\b/).map do
               name = Regexp.last_match(1)
               [name, code[Regexp.last_match.end(0), 2000][/declare\s+id:\s*["']([\w.]+)["']/, 1]]
             end
@@ -167,7 +167,7 @@ module Master
           end
         end
 
-        class LearnedSmellsLaw < Rule
+        class LearnedSmellsLaw < Law
           declare id: "LEARNED_SMELLS", severity: :warning, tags: %i[LEARNED_SMELLS SESSION],
                   description: "session-learned smell patterns from laws.yml"
 
@@ -336,7 +336,7 @@ module Master
         # root is found by what makes it Rails — config/application.rb, or a
         # lib/*/engine.rb — rather than by a directory named app, so a plain
         # Ruby tree with its own app/ is still judged.
-        class FileSprawlLaw < Rule
+        class FileSprawlLaw < Law
           TINY_CODE_LINES = 25
           SKIP_RE = %r{/(?:law|core|test|spec|fixtures|templates|node_modules)/|/web/public/}
           RAILS_NAMED = %r{\A(?:app|config|db)/|\Alib/[^/]+/(?:engine|version)\.rb\z}
@@ -435,7 +435,7 @@ module Master
         # Reported per directory rather than per file, because the fix is one
         # entry, not one per member. Scratch and generated trees are out of
         # scope: they are working residue, not structure.
-        class PathPurposeLaw < Rule
+        class PathPurposeLaw < Law
           SKIP_RE = %r{/(?:test|spec|fixtures|node_modules|vendor|tmp|log|scratch|frames?_|renders?)/|/\.}
           def self.auto_build? = false
 
