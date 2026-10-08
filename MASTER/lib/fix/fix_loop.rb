@@ -248,7 +248,7 @@ module Master
         end.flatten
         Result.ok(
           total: violations.size,
-          laws: by_rule.sort_by { |_, n| -n }.first(10).to_h,
+          laws: by_law.sort_by { |_, n| -n }.first(10).to_h,
           files: by_file.sort_by { |_, n| -n }.first(10).to_h,
           structure:,
           transformation_order: @transformation_plan.operations.map(&:name),
