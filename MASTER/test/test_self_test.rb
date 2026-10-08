@@ -25,7 +25,7 @@ class TestSelfTest < Minitest::Test
 
       assert result.ok?
       laws = result.value!.checks.map(&:law)
-      assert_equal %w[LAW_INTEGRITY ROBUSTNESS SINGULARITY LINEARITY PROXIMITY ABSTRACTION DENSITY KERNEL_ADHERENCE PRINCIPLE_MAP], laws
+      assert_equal %w[LAW_INTEGRITY ROBUSTNESS SINGULARITY LINEARITY PROXIMITY ABSTRACTION DENSITY KERNEL_ADHERENCE LAW_MAP], laws
       assert result.value!.violation_count.positive?
       assert_includes bus.events.map(&:first), "self_test:complete"
       assert_includes bus.events.map(&:first), "self_violation"
@@ -85,8 +85,8 @@ class TestSelfTest < Minitest::Test
   def test_data_singularity_ignores_namespaced_data_registers
     Dir.mktmpdir do |root|
       write_fixture_tree(root)
-      FileUtils.mkdir_p(File.join(root, "data", "rules"))
-      File.write(File.join(root, "data", "rules", "one.yml"), "alpha:\n  one: true\n")
+      FileUtils.mkdir_p(File.join(root, "data", "laws"))
+      File.write(File.join(root, "data", "laws", "one.yml"), "alpha:\n  one: true\n")
       File.write(File.join(root, "data", "two.yml"), "alpha:\n  two: true\n")
 
       findings = Master::Review::Scan::SelfTest.new(root:).data_singularity_findings
@@ -164,7 +164,7 @@ class TestSelfTest < Minitest::Test
 
   def write_fixture_tree(root)
     FileUtils.mkdir_p(File.join(root, "data"))
-    FileUtils.mkdir_p(File.join(root, "lib", "judge", "scan", "rules"))
+    FileUtils.mkdir_p(File.join(root, "lib", "judge", "scan", "laws"))
     FileUtils.mkdir_p(File.join(root, "test"))
     File.write(File.join(root, "data", "laws.yml"), laws_yml)
     File.write(File.join(root, "lib", "example.rb"), <<~RUBY)
