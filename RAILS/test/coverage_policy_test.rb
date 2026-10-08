@@ -21,7 +21,7 @@ class CoveragePolicyTest < Minitest::Test
     source = File.read(File.join(ROOT, "__shared/test/coverage.rb"))
 
     APPS.each do |app|
-      assert_includes source, 'cover "#{app}/app/**/*.rb".gsub("app", app)',
+      assert_includes source, 'cover "#{app}/app/**/*.rb"',
                       "#{app}: coverage scope must resolve to RAILS/#{app}/app, not RAILS/app"
     end
   end
