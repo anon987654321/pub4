@@ -26,7 +26,7 @@ class TestAstFixerSafety < Minitest::Test
   def fix(source)
     file = File.join(Dir.mktmpdir("astfixer"), "demo.rb")
     File.write(file, source)
-    Master::Review::Scan::AstFixer.fix(file, source)
+    Master::Fix::Scan::AstFixer.fix(file, source)
     File.read(file)
   ensure
     FileUtils.remove_entry(File.dirname(file)) if file
@@ -57,7 +57,7 @@ class TestAstFixerSafety < Minitest::Test
   # every language it now covers: discard only when the source parsed BEFORE the
   # transform and stops parsing after, and never judge what cannot be measured.
 
-  def fixer(name) = Master::Review::Scan::AstFixer.new(name, "")
+  def fixer(name) = Master::Fix::Scan::AstFixer.new(name, "")
 
   def test_style_balance_check_reads_structure_not_text
     css = fixer("theme.css")
@@ -83,7 +83,7 @@ class TestAstFixerSafety < Minitest::Test
   end
 
   def test_javascript_guard_accepts_module_and_script_syntax
-    skip "node not on PATH" unless Master::Review::Scan::AstFixer.node_available?
+    skip "node not on PATH" unless Master::Fix::Scan::AstFixer.node_available?
 
     js = fixer("app.js")
 
@@ -195,7 +195,7 @@ class TestAstFixerSafety < Minitest::Test
   end
 
   def null_fixer_for(path)
-    fixer = Master::Review::Scan::AstFixer.allocate
+    fixer = Master::Fix::Scan::AstFixer.allocate
     fixer.instance_variable_set(:@path, path)
     fixer.instance_variable_set(:@transforms, [])
     fixer
@@ -203,7 +203,7 @@ class TestAstFixerSafety < Minitest::Test
 
   def test_whole_sub_wrapper_is_removed_only_when_unwrapped_ruby_parses
     source = "<sub># frozen_string_literal: true\nVALUE = 1\n</sub>\n"
-    result = Master::Review::Scan::AstFixer.propose("broken.rb", source)
+    result = Master::Fix::Scan::AstFixer.propose("broken.rb", source)
 
     assert result.changed
     assert_includes result.transforms, :strip_accidental_sub_wrapper
@@ -212,7 +212,7 @@ class TestAstFixerSafety < Minitest::Test
 
   def test_partial_sub_wrapper_is_removed_when_the_tag_is_the_syntax_defect
     source = "VALUE = \"literal\"\n</sub>\n"
-    result = Master::Review::Scan::AstFixer.propose("broken.rb", source)
+    result = Master::Fix::Scan::AstFixer.propose("broken.rb", source)
 
     assert_includes result.transforms, :strip_accidental_sub_wrapper
     assert_equal "VALUE = \"literal\"\n", result.content
@@ -220,7 +220,7 @@ class TestAstFixerSafety < Minitest::Test
 
   def test_valid_ruby_containing_sub_markup_is_never_rewritten
     source = "VALUE = \"<sub>literal</sub>\"\n"
-    result = Master::Review::Scan::AstFixer.propose("broken.rb", source)
+    result = Master::Fix::Scan::AstFixer.propose("broken.rb", source)
 
     refute result.changed
   end
