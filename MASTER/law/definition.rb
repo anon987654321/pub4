@@ -367,7 +367,7 @@ module Law
   module Contract
     module_function
 
-    VERSION = 1
+    VERSION = 2
     PROTOCOL = [
       "IDENTIFY: state the task and intended effects before acting.",
       "READ: load the applicable constitution/laws before deciding.",
@@ -406,28 +406,47 @@ module Law
       entries = Law.definitions.values.sort_by { |law| law.id.to_s }.map(&:contract_entry)
       transformation_policy = Master.law("transformation_policy")
       laws = full ? entries : entries.map { |entry| entry.slice("id", "severity", "mode", "languages", "question") }
+      source = canonical_source
       JSON.pretty_generate(
         "contract_version" => VERSION,
-        "law_digest" => contract_digest(entries, transformation_policy),
+        "law_digest" => contract_digest(entries, transformation_policy, source),
         "protocol" => PROTOCOL,
         "law_policy" => POLICY,
         "transformation_policy" => transformation_policy,
+        "law_source" => source.slice("governing_laws", "law_map_digest"),
         "laws" => laws,
       )
     end
 
     def digest
       entries = Law.definitions.values.sort_by { |law| law.id.to_s }.map(&:contract_entry)
-      contract_digest(entries, Master.law("transformation_policy"))
+      contract_digest(entries, Master.law("transformation_policy"), canonical_source)
     end
 
-    def contract_digest(entries, transformation_policy)
+    def canonical_source
+      roots = Master.law_entries.sort_by { |entry| [entry["priority"].to_i, entry["id"].to_s] }.map do |entry|
+        {
+          "id" => entry["id"].to_s,
+          "priority" => entry["priority"].to_i,
+          "statement" => entry["statement"].to_s,
+          "applies_to" => Array(entry["applies_to"]).map(&:to_s)
+        }
+      end
+      law_map = Master.law("law_map")
+      {
+        "governing_laws" => roots,
+        "law_map_digest" => Digest::SHA256.hexdigest(JSON.generate(law_map))
+      }
+    end
+
+    def contract_digest(entries, transformation_policy, source)
       Digest::SHA256.hexdigest(
         JSON.generate(
           "contract_version" => VERSION,
           "protocol" => PROTOCOL,
           "law_policy" => POLICY,
           "transformation_policy" => transformation_policy,
+          "law_source" => source,
           "laws" => entries,
         ),
       )
