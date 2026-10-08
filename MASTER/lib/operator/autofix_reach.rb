@@ -62,7 +62,7 @@ module Operator
     # Through the accessor, not a second load of laws.yml: the file this tool
     # audits has to be the file the runtime reads, and reader_singularity is
     # the ratchet that keeps those two from drifting apart.
-    def master_rules
+    def master_laws
       lib = File.join(MASTER, "lib")
       $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
       require "master"
@@ -79,7 +79,7 @@ module Operator
           node.each_value(&walk)
         end
       end
-      walk.call(master_rules)
+      walk.call(master_laws)
       found
     end
 
@@ -114,7 +114,7 @@ module Operator
     def detectable_ids
       @detectable_ids ||= begin
         require File.join(MASTER, "lib/operator/law_reach")
-        all = LawReach.rules
+        all = LawReach.laws
         (LawReach.mechanical(all) + LawReach.prompted(all)).map { |r| r["id"].to_s }.to_set
       end
     end
