@@ -171,7 +171,7 @@ class TestRuleCatalogue < Minitest::Test
 
   def test_timeout = 120
 
-  def ids(rules) = Operator::RuleReach.mechanical(rules).map { |r| r["id"] }
+  def ids(rules) = Operator::LawReach.mechanical(rules).map { |r| r["id"] }
 
   # FAIL_VISIBLY's detector lives in law/universal.rb and its laws.yml row
   # carries no detect_lexical — the shape the old count called undetectable.
@@ -213,11 +213,11 @@ class TestRuleCatalogue < Minitest::Test
   end
 
   def test_rule_reach_counts_executable_laws_not_the_eight_policy_principles
-    rows = Operator::RuleReach.rules
+    rows = Operator::LawReach.rules
 
     assert_operator rows.size, :>, 100
     assert_includes rows.map { |row| row["id"] }, "FAIL_VISIBLY"
     assert_includes rows.map { |row| row["id"] }, "TRAILING_WHITESPACE"
-    assert_equal [], Operator::RuleReach.unreachable(rows)
+    assert_equal [], Operator::LawReach.unreachable(rows)
   end
 end
