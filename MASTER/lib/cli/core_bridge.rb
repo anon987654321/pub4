@@ -278,7 +278,7 @@ module Master
       def scan_verifier
         lambda do |path:, content:|
           Master::Fix::WriteGuard.default.verdict(path:, content:).blocking
-                                          .map { |f| "#{f[:rule]}:#{f[:line]} #{f[:message]}" }
+                                          .map { |f| "#{f[:law]}:#{f[:line]} #{f[:message]}" }
         end
       end
 
