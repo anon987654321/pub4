@@ -34,10 +34,10 @@ module Master
       # reference, without modifying anything.
       def dangling_rule_ids(root:)
         Master::Review::Scan::LawDSL
-        registry = Master::Review::Scan::Rule.registry
+        registry = Master::Review::Scan::Law.registry
         return [] if registry.size < MIN_REGISTRY_SIZE
 
-        registered = registry.filter_map { |klass| Master::Review::Scan::RuleFactory.registry_id(klass, root:)&.upcase }.to_set
+        registered = registry.filter_map { |klass| Master::Review::Scan::LawFactory.registry_id(klass, root:)&.upcase }.to_set
         # law/ is the second rule population: a rule whose registry twin
         # retired lives on there, and its principle-map reference is a live
         # pointer, not a dangling one. Loaded from Master::ROOT because law/
