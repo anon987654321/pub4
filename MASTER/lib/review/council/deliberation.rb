@@ -220,7 +220,7 @@ module Master
           recent = Trace::Ledger::Reflexion.new(event_bus: @bus, root:).recent(3)
           return context if recent.empty?
 
-          [context, "Recent reflexions for rule adherence: #{recent.join(' | ')}"].compact.join("\n")
+          [context, "Recent reflexions for law adherence: #{recent.join(' | ')}"].compact.join("\n")
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "deliberation.reflexion", event_bus: @bus)
           context
