@@ -116,8 +116,8 @@ module Operator
     def rule_reach_and_blind_rows
       [master_row("rule_reach", "data/laws.yml", "rules no configuration can run") do
          require File.join(MASTER, "lib/operator/law_reach")
-         unreachable = Operator::RuleReach.unreachable
-         [unreachable.size, Operator::RuleReach.ceiling, unreachable]
+         unreachable = Operator::LawReach.unreachable
+         [unreachable.size, Operator::LawReach.ceiling, unreachable]
        end,
        master_row("rule_audit.blind", "data/laws.yml", "rules proved on input their subjects never get") do
          require File.join(MASTER, "lib/operator/law_audit")
