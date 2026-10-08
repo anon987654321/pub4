@@ -59,7 +59,7 @@ class RouteManifestInventoryTest < Minitest::Test
   # The legal pages are shared views, so their ids carry the shared/ segment the
   # inventory gives them (page_inventory.rb#shared_pages). They were listed here
   # as brgen/pages/* until 2026-08-12, when the per-app copies were dropped in
-  # favour of the one in RAILS/shared -- which is also why all three apps can be
+  # favour of the one in RAILS/__shared -- which is also why all three apps can be
   # asserted now instead of brgen alone.
   def test_routes_beat_the_filename_convention
     expected = { "brgen/bookmarks/index" => "/saved" }
