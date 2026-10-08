@@ -11,10 +11,10 @@ require "review/scan/rule_dsl"
 #
 # A history-backed test would be the stronger one and it is not free: CommitGuard
 # needs real commits, so it wants a temporary repository fixture. What is here
-# is everything that can be pinned without one, which is everything the rule
+# is everything that can be pinned without one, which is everything the law
 # itself decides.
 class TestAstOmissionRule < Minitest::Test
-  Rules = Master::Review::Scan::Rules
+  Rules = Master::Review::Scan::Laws
   ROOT = "/repo"
 
   Omission = Struct.new(:type, :name, :last_seen_at)
@@ -86,7 +86,7 @@ class TestAstOmissionRule < Minitest::Test
   end
 
   # An empty answer from a guard that failed is indistinguishable from a clean
-  # file, so the rule raises as every Scan::Rule does, and the scanner records
+  # file, so the law raises as every Scan::Rule does, and the scanner records
   # that one file as failed measurement and carries on with the rest.
   def test_a_failing_guard_raises_rather_than_reading_as_clean
     guard = FakeGuard.new(raises: RuntimeError.new("git is unhappy"))
@@ -97,7 +97,7 @@ class TestAstOmissionRule < Minitest::Test
   end
 
   # rule_deps orders by this string and the registry keys on it, so a rename
-  # that misses either is a rule that quietly leaves the graph.
+  # that misses either is a law that quietly leaves the graph.
   def test_it_registers_under_the_id_the_dependency_graph_names
     assert_equal "ast_omission", Rules::AstOmissionRule.new(root: ROOT).id.to_s
   end
