@@ -7,7 +7,7 @@ require_relative "test_helper"
 # without creating a second rule catalogue in YAML.
 class TestLawsRegistry < Minitest::Test
   def laws
-    require File.expand_path("../law/law", __dir__)
+    require File.expand_path("../law/definition", __dir__)
     ::Law.load_all(File.expand_path("../law", __dir__)) if ::Law.definitions.empty?
     ::Law.definitions.values
   end
