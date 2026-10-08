@@ -90,7 +90,7 @@ module Master
           #
           # The old check keyed on "#{indent}:#{key}" across the whole file, so
           # every sibling record repeating a field name counted as a duplicate.
-          # principle_map.yml scored 1074 findings for having 135 principles that
+          # laws.yml#law_map scored 1074 findings for having 135 laws that
           # each declare meaning/detects/severity, and runtime.yml 1729. Across
           # the tree that was 8166 findings, all of them false: Psych finds
           # exactly zero real duplicate keys in data/**.yml. It was the single
