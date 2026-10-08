@@ -57,7 +57,7 @@ VAR_FALLBACK = /var\(\s*--[\w-]+\s*,[^()]*\)/
     HEX = /#[0-9a-fA-F]{3,8}\b/
     COMMENT = %r{\A\s*(?://|/\*|\*)}
 
-    # design_rules.yml's whole `typography` block was the last section it
+    # laws.yml's whole `typography` block was the last section it
     # declares that nothing read. flat_ui, eight_px_rhythm, magic hex and
     # contrast all got a reader; type_scale, hierarchy.max_font_weights,
     # letter_spacing.all_caps_min_em and line_height did not. Measured across
@@ -84,7 +84,7 @@ VAR_FALLBACK = /var\(\s*--[\w-]+\s*,[^()]*\)/
     # rest of the tree is supposed to reference.
     TOKEN_SOURCES = %w[_tokens.scss _dialect_tokens.scss].freeze
 
-    # Three rules design_rules.yml and style.yml declare and nothing read.
+    # Three rules laws.yml and style.yml declare and nothing read.
     # IMPORTANT sat in this file with zero call sites while 119 !important
     # shipped; eight_px_rhythm was checked only where the tokens are defined,
     # never where px is written; magic_color_hex_ban_inline had no reader at all.
