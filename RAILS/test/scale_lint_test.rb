@@ -165,7 +165,7 @@ class ScaleLintTest < Minitest::Test
   def test_generated_and_vendored_output_is_not_source
     %w[
       /RAILS/brgen/app/assets/builds/application.css
-      /RAILS/shared/node_modules/x/y.css
+      /RAILS/__shared/node_modules/x/y.css
       /RAILS/brgen/public/assets/application-abc123.css
       /RAILS/amber/vendor/z.scss
     ].each { |path| assert_match LINT::SKIP, path }
