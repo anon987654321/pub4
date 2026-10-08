@@ -18,7 +18,7 @@ module Master
           return true if current == stored.to_s
 
           @bus&.publish(
-            "law_loop:stale_scan", rule: @rule.id, file: violation[:file], expected: stored, actual: current
+            "law_loop:stale_scan", law: @law.id, file: violation[:file], expected: stored, actual: current
           )
           false
         end
