@@ -30,10 +30,10 @@ module Master
         return "rules: nothing matches #{filter.inspect} in #{rules.size} declared" if rows.empty?
 
         require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
-        ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.rules.empty?
+        ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.definitions.empty?
 
         lines = rows.map do |rule|
-          kind = rule_enforcement(::Law.rules[rule["id"].to_s.to_sym])
+          kind = rule_enforcement(::Law.definitions[rule["id"].to_s.to_sym])
           format("%-28s %-10s %-8s %s", rule["id"], rule["tier"], rule["severity"], kind)
         end
         ["#{rows.size} of #{rules.size} rules — bin/operator rules <ID> for one in full", *lines].join("\n")
@@ -41,7 +41,7 @@ module Master
 
       def dispatch_rule_index
         require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
-        ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.rules.empty?
+        ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.definitions.empty?
         rows = ::Law::Index.validate!
         lifecycle = rows.group_by { |row| row["lifecycle"] }.transform_values(&:size)
         proof = rows.group_by { |row| row["proof"] }.transform_values(&:size)
