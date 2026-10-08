@@ -9,7 +9,7 @@ module Master
   # Several are RuboCop-shaped and stay here rather than delegating to RuboCop:
   # each id is a name the law addresses, and delegating renames the law.
 
-  RuleDSL.rule :NO_DEBUG,
+  LawDSL.law :NO_DEBUG,
     severity: :error, tags: %i[CLEAN_CODE], applies_to: %i[ruby],
     fires: "  binding.pry\n",
     does_not_fire: "debugger_enabled = false\n",
@@ -33,7 +33,7 @@ module Master
   PROGRAM_GUARD = /^[^#\n]*(?:\$PROGRAM_NAME|\$0|__FILE__)\s*==\s*(?:\$PROGRAM_NAME|\$0|__FILE__)\s*$/
   PROGRAM_PATH = %r{/test/|/db/seeds(?:\.rb\z|/)|\.rake\z|/Rakefile\z}
 
-  RuleDSL.rule :NO_PUTS,
+  LawDSL.law :NO_PUTS,
     severity: :warning, tags: %i[CLEAN_CODE], applies_to: %i[ruby],
     fires: "  puts(\"ready\")\n",
     # A local named p is not Kernel#p: assignment, a method call on it, and a
@@ -76,7 +76,7 @@ module Master
     findings
   end
 
-  RuleDSL.rule :FROZEN_LITERAL,
+  LawDSL.law :FROZEN_LITERAL,
     severity: :warning, tags: %i[PERFORMANCE], applies_to: %i[ruby],
     fires: "value = 1\n# frozen_string_literal: true\n",
     # Ruby reads the magic comment anywhere in the leading comments, and a
@@ -91,7 +91,7 @@ module Master
     [finding(line: 1, message: "add #{magic}")]
   end
 
-  RuleDSL.rule :LONG_LINE,
+  LawDSL.law :LONG_LINE,
     severity: :info, tags: %i[READABILITY], autofix: false,
     fires: "#{"x" * 121}\n",
     # Two cases that must not fire: a line at the limit, and a line that is only
@@ -109,7 +109,7 @@ module Master
     end
   end
 
-  RuleDSL.rule :TRAILING_WHITESPACE,
+  LawDSL.law :TRAILING_WHITESPACE,
     severity: :info, tags: %i[HYGIENE],
     fires: "value = 1   \n",
     does_not_fire: "value = 1\n\n",
@@ -119,7 +119,7 @@ module Master
     end
   end
 
-  RuleDSL.rule :TODO_FIXME,
+  LawDSL.law :TODO_FIXME,
     severity: :info, tags: %i[COMPLETENESS], autofix: false,
     fires: "  # FIXME: the retry has no cap\n",
     # Both exemptions as worked cases: naming the backlog is not a marker, and
@@ -139,7 +139,7 @@ module Master
                message: "unresolved marker — resolve or delete")
   end
 
-  RuleDSL.rule :RESCUE_EXCEPTION,
+  LawDSL.law :RESCUE_EXCEPTION,
     severity: :warning, tags: %i[ERROR_HANDLING], applies_to: %i[ruby],
     # A rule's worked example is the one place its own forbidden shape is
     # legitimately spelled, and FAIL_VISIBLY reads this file like any other. The
@@ -171,7 +171,7 @@ module Master
     findings
   end
 
-  RuleDSL.rule :SILENT_RESCUE,
+  LawDSL.law :SILENT_RESCUE,
     severity: :error, tags: %i[ERROR_HANDLING FAIL_VISIBLY], applies_to: %i[ruby],
     # The examples are escaped strings on one physical line, and that is what
     # makes them possible here. SilentRescue reads a line that *starts* with
@@ -189,7 +189,7 @@ module Master
     SilentRescue.scan(src, narrow: false).map { |hit| finding(line: hit[:line], message: hit[:message]) }
   end
 
-  RuleDSL.rule :NARROW_SILENT_RESCUE,
+  LawDSL.law :NARROW_SILENT_RESCUE,
     severity: :warning, tags: %i[ERROR_HANDLING], applies_to: %i[ruby],
     # Named class, same discard. The pair with SILENT_RESCUE above is the point:
     # these two split one subject on the class named, and a shared predicate is
@@ -205,7 +205,7 @@ module Master
   # `+=` and friends in, since each is still a binding.
   MODIFIER_RESCUE_DISCARD = %r{(?<![=!<>*+/%|&^-])=(?!=)[^=\n]*\S\s+rescue\s+(?:nil|false|\[\]|\{\})\s*(?:#.*)?$}
 
-  RuleDSL.rule :MODIFIER_SILENT_RESCUE,
+  LawDSL.law :MODIFIER_SILENT_RESCUE,
     severity: :warning, tags: %i[ERROR_HANDLING], applies_to: %i[ruby],
     # The third spelling, and the one the two rules above are blind to by
     # construction: SilentRescue.matches_mode? reads a line that *starts* with
@@ -244,7 +244,7 @@ module Master
   # non-narrow branch; any other class name, scoped or not, matches
   # NARROW_SILENT_RESCUE.
 
-  RuleDSL.rule :CONSECUTIVE_BLANK_LINES,
+  LawDSL.law :CONSECUTIVE_BLANK_LINES,
     severity: :info, tags: %i[HYGIENE],
     fires: "a = 1\n\n\nb = 2\n",
     does_not_fire: "a = 1\n\nb = 2\n",
@@ -259,7 +259,7 @@ module Master
     findings
   end
 
-  RuleDSL.rule :DEBUG_OUTPUT,
+  LawDSL.law :DEBUG_OUTPUT,
     severity: :error, tags: %i[FAIL_VISIBLY], applies_to: %i[ruby],
     example_path: "/repo/lib/example.rb",
     fires: "p value\n",
@@ -284,7 +284,7 @@ module Master
     findings
   end
 
-  RuleDSL.rule :OMIT_NEEDLESS_WORDS,
+  LawDSL.law :OMIT_NEEDLESS_WORDS,
     severity: :info, tags: %i[BE_CONCISE],
     fires: "# This is a helper for totals\n",
     does_not_fire: "# Sums the line items\n",
@@ -300,7 +300,7 @@ module Master
     end
   end
 
-  RuleDSL.rule :TRAILING_COMMENT,
+  LawDSL.law :TRAILING_COMMENT,
     severity: :info, tags: %i[BE_CONCISE],
     fires: "value = 1 # why one\n",
     # The marker is itself a trailing comment, so a line carrying only the
@@ -317,7 +317,7 @@ module Master
     end
   end
 
-  RuleDSL.rule :TIME_ZONE_UNSAFE,
+  LawDSL.law :TIME_ZONE_UNSAFE,
     severity: :warning, tags: %i[ROBUSTNESS], applies_to: %i[ruby],
     description: "bare Time.now/Date.today bypasses Rails Time.zone",
     example_path: "/repo/app/models/example.rb",
@@ -352,7 +352,7 @@ module Master
   # no dropped line carried a run of four or more.
   IDENTITY_COMPARISON = /[\w)\]}'"]\s*===\s*[\w({\[!'"@$:]/
 
-  RuleDSL.rule :NO_ASCII_LINE_ART,
+  LawDSL.law :NO_ASCII_LINE_ART,
     severity: :warning, tags: %i[BE_CONCISE],
     # A divider is decoration in a comment, so this rule must read comments and
     # cannot blank them the way RESCUE_EXCEPTION above does. Its own worked
