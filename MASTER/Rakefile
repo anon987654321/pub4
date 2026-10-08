@@ -668,40 +668,40 @@ end
   # rules. A ceiling makes the real number visible and monotone without turning a
   # standing backlog into a red gate on unrelated work.
   desc "Ratchet: registered rules that trace to no law_map entry may fall, never rise"
-  task :principle_trace do
+  task :law_trace do
     require "yaml"
     $LOAD_PATH.unshift(File.join(__dir__, "lib"))
     require "master"
-    Dir.glob(File.join(__dir__, "lib", "review", "scan", "rules", "**", "*.rb")).sort.each { |f| require f }
+    Dir.glob(File.join(__dir__, "lib", "review", "scan", "laws", "**", "*.rb")).sort.each { |f| require f }
 
-    map = Master::Ground::Map::Principle.load(root: __dir__)
-    registered = Master::Review::Scan::Rule.registry.filter_map do |klass|
-      Master::Review::Scan::RuleFactory.registry_id(klass, root: __dir__)
+    map = Master::Ground::Map::LawMap.load(root: __dir__)
+    registered = Master::Review::Scan::Law.registry.filter_map do |klass|
+      Master::Review::Scan::LawFactory.registry_id(klass, root: __dir__)
     end
-    untraced = map.untraced_rules(registered_rule_ids: registered)
-    ceiling = map.rule_trace_ceiling
+    untraced = map.untraced_laws(registered_law_ids: registered)
+    ceiling = map.law_trace_ceiling
 
     if ceiling.nil?
-      abort "lint:principle_trace: data/principle_map.yml has no rule_trace_ceiling — " \
+      abort "lint:law_trace: data/laws.yml has no law_trace_ceiling — " \
             "record one at the current #{untraced.size} before this gate can hold"
     end
 
     if untraced.size > ceiling
       puts untraced.first(20).map { |id| "  #{id}" }
-      abort "lint:principle_trace: #{untraced.size} registered rules trace to no principle " \
+      abort "lint:law_trace: #{untraced.size} registered rules trace to no principle " \
             "(ceiling #{ceiling}, +#{untraced.size - ceiling}). Map them, or lower the ceiling " \
             "in a commit that says why it moved up."
     end
 
     if untraced.size < ceiling && ENV["RATCHET"] == "1"
-      path = File.join(__dir__, "data", "principle_map.yml")
-      File.write(path, File.read(path).sub(/^rule_trace_ceiling: \d+$/, "rule_trace_ceiling: #{untraced.size}"))
-      puts "lint:principle_trace: ratcheted #{ceiling} -> #{untraced.size}"
+      path = File.join(__dir__, "data", "laws.yml")
+      File.write(path, File.read(path).sub(/^law_trace_ceiling: \d+$/, "law_trace_ceiling: #{untraced.size}"))
+      puts "lint:law_trace: ratcheted #{ceiling} -> #{untraced.size}"
     elsif untraced.size < ceiling
-      puts "lint:principle_trace: #{untraced.size}/#{ceiling} untraced (#{ceiling - untraced.size} under — " \
-           "run `rake lint:principle_trace RATCHET=1` to record the new low)"
+      puts "lint:law_trace: #{untraced.size}/#{ceiling} untraced (#{ceiling - untraced.size} under — " \
+           "run `rake lint:law_trace RATCHET=1` to record the new low)"
     else
-      puts "lint:principle_trace: #{untraced.size}/#{ceiling} of #{registered.size} registered rules untraced"
+      puts "lint:law_trace: #{untraced.size}/#{ceiling} of #{registered.size} registered rules untraced"
     end
   end
 
@@ -789,7 +789,7 @@ end
 AUDIT_GATES = %w[
   dogfood constitution selftest tools core_smoke security_sweep
   lint:frozen lint:data_singularity lint:spine lint:autoload
-  lint:principle_trace lint:scan_coverage lint:reader_singularity lint:doc_citations
+  lint:law_trace lint:scan_coverage lint:reader_singularity lint:doc_citations
   lint:do_not_touch lint:instruments lint:constant_collisions
   lint:capability lint:cohesion lint:rule_reach lint:models lint:dedup
   lint:word_boundary lint:test_naming
