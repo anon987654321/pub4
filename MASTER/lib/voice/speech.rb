@@ -673,14 +673,22 @@ module Master
         return path unless path && chain && File.size?(path)
 
         out = path.sub(/\.mp3\z/, "_shaped.mp3")
-        _stdout, _stderr, status = Master::Io::Exec.capture3("ffmpeg", "-y", "-i", path, "-af", chain, out)
-        return path unless status.success? && File.size?(out)
+        return path unless render_shaped(path, out, chain)
 
         File.unlink(path)
         out
       rescue StandardError => e
         warn_tts("post_chain skipped: #{e.class}: #{e.message.lines.first.to_s.strip}")
         path
+      end
+
+      # A profile that declares layers needs a second input, so it goes through
+      # Layers; every other voice keeps the plain -af chain.
+      def render_shaped(path, out, chain)
+        return Layers.apply(path, out) if Layers.active?
+
+        _stdout, _stderr, status = Master::Io::Exec.capture3("ffmpeg", "-y", "-i", path, "-af", chain, out)
+        status.success? && File.size?(out) ? true : false
       end
 
       # Every failure is kept in last_error; the terminal hears each kind once.

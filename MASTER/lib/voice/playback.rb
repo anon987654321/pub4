@@ -351,9 +351,11 @@ module Master
       # Live streaming needs a player that reads a pipe — ffplay does, afplay
       # cannot — the framed daemon wire, and the classic mode: Transcendent owns
       # its whole utterance, melody and phrase rhythm included, and is never
-      # piped piecemeal (MASTER_TTS_STREAM=0 turns the lane off).
+      # piped piecemeal (MASTER_TTS_STREAM=0 turns the lane off). A profile with
+      # layers mixes a second input, which a player reading one pipe cannot do.
       def stream_playback_ready?
         return false if ENV["MASTER_TTS_STREAM"] == "0"
+        return false if Layers.active?
         return false if transcendent_mode?
         return false unless Speech.edge_tts_available?
         return false unless Speech.stream_wire_enabled?

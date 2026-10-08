@@ -43,13 +43,48 @@ module Master
       def data
         @data ||= begin
           raw = Master.load_yaml(Master.data_path("voice.yml"), default: {}) || {}
-          FALLBACK.merge((raw["tts"] || {}).transform_keys(&:to_s))
+          base = FALLBACK.merge((raw["tts"] || {}).transform_keys(&:to_s))
+          @profile_name = chosen_profile(base)
+          overlay = base["profiles"].is_a?(Hash) ? base["profiles"][@profile_name] : nil
+          warn_unknown_profile unless @profile_name.empty? || overlay.is_a?(Hash)
+          overlay.is_a?(Hash) ? deep_merge(base, overlay) : base
         end
       end
 
       def reload!
         @data = nil
         data
+      end
+
+      # The profile in force: MASTER_TTS_PROFILE wins over `profile:` in voice.yml.
+      # Empty when neither is set, which leaves the voice exactly as declared.
+      def profile_name
+        data
+        @profile_name.to_s
+      end
+
+      def chosen_profile(base)
+        named = ENV["MASTER_TTS_PROFILE"].to_s.strip
+        named = base["profile"].to_s.strip if named.empty?
+        named.downcase
+      end
+
+      def deep_merge(base, overlay)
+        base.merge(overlay) { |_key, kept, laid| kept.is_a?(Hash) && laid.is_a?(Hash) ? deep_merge(kept, laid) : laid }
+      end
+
+      # A misspelt profile must not pass for the default voice without a word.
+      def warn_unknown_profile
+        return unless defined?(Master::Trace::Dmesg)
+
+        Master::Trace::Dmesg.once("voice0", "unknown MASTER_TTS_PROFILE #{@profile_name.inspect}, speaking the default voice")
+      end
+
+      # What a profile adds beyond the chain, for builders an -af chain cannot
+      # express. An empty hash means no layering.
+      def layers
+        value = data["layers"]
+        value.is_a?(Hash) ? value : {}
       end
 
       def single_voice_key
@@ -209,6 +244,8 @@ module Master
           post_chain:,
           prosody:,
           bed:,
+          profile: profile_name,
+          layers:,
           persona_affects_text_only: persona_affects_text_only?,
           stream_live_default: stream_live_default?,
           default_rate:,
