@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "../../operator/ruby_runner"
+
 require "pathname"
 require_relative "../../ground/known_good"
 require_relative "../../operator/ratchet_sponsor"
@@ -392,7 +394,7 @@ module Master
           return true if files.empty?
           return skip_lint("missing Gemfile") unless bundle_context?
 
-          cmd = [Master::BUNDLE_BIN, "exec", "rubocop", "--fail-level", "E", "--force-exclusion", *files]
+          cmd = [Operator::RubyRunner.bundle_cmd(root: @root), "exec", "rubocop", "--fail-level", "E", "--force-exclusion", *files]
           # Io::Exec's own timeout kills rubocop and answers a failed status, so a
           # lint that did not finish blocks the commit. Timeout.timeout around it
           # waited for rubocop anyway, then counted the timeout as a pass, and
