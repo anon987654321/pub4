@@ -29,7 +29,7 @@ module Master
       # Retrying reproduces it. Either the request is wrong, the answer is no, or
       # the operation is over.
       PERMANENT = %i[validation model_missing axiom_violation budget no_api_key policy shutdown abort
-                     handler_exception].freeze
+                     handler_exception, crash].freeze
 
       def retriable? = RETRIABLE.include?(@category)
       def permanent? = PERMANENT.include?(@category)
@@ -64,6 +64,7 @@ module Master
       no_api_key: "no LLM API key configured in env",
       infrastructure: "system / disk / git error",
       handler_exception: "unexpected error during handler execution",
+      crash: "unexpected process failure during a fix stage",
       timeout: "operation exceeded deadline",
       offline: "no network route to the provider — a local model can still answer",
       rate_limit: "tier rate limit exceeded",
