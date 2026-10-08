@@ -179,7 +179,7 @@ module Operator
       require "fix/scanner"
       ENV["MASTER_SCAN_DETERMINISTIC"] = "1"
       scanner = Master::Fix::Scanner.build(root: MASTER, agent: nil)
-      scanner.rules.to_h { |rule| [rule.id.to_s.downcase, rule] }
+      scanner.laws.to_h { |rule| [rule.id.to_s.downcase, rule] }
     end
 
     def catalogue_rows
