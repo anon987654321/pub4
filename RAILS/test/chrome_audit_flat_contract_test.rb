@@ -21,7 +21,7 @@ class ChromeAuditFlatContractTest < Minitest::Test
     auth = read("shared/app/assets/stylesheets/_auth_form.scss")
     promo = read("brgen/app/assets/stylesheets/_vertical_promo.scss")
     app = read("brgen/app/assets/stylesheets/application.scss")
-    assert_includes auth, ".oauth-button {
+    assert_includes auth, ".oauth-button {"
     assert_includes auth, "border: 0;"
     assert_includes app, '@use "vertical_promo";'
     assert_includes promo, ".brgen-vertical-promo {"
@@ -44,11 +44,4 @@ class ChromeAuditFlatContractTest < Minitest::Test
     end
 
     assert_includes modal, ".dialog {"
-    assert_includes cookie, ".cookie-banner {"
-    assert_includes affiliate, ".affiliate_feed_unit {"
-    assert_includes commerce, ".store-buybox {"
-    assert_includes offline, ".offline-page-retry {"
-    assert_includes widgets, ".sidebar-card {"
-    assert_includes newsletter, ".newsletter-capture {"
-  end
-end
+    asser...[truncated]
