@@ -28,7 +28,7 @@ module Master
           digest = ::Law::Contract.digest
           return @default if @default && @default_digest == digest
 
-          @default = new(rules: Master::Fix::Scanner.build(root: Master::ROOT).rules)
+          @default = new(laws: Master::Fix::Scanner.build(root: Master::ROOT).laws)
           @default_digest = digest
           @default
         end
