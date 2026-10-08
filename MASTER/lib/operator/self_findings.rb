@@ -1,20 +1,20 @@
 require_relative "../io/exec"
 # frozen_string_literal: true
 
-# What MASTER's own rules find in MASTER's own tree.
+# What MASTER's own laws find in MASTER's own tree.
 #
-# The question "would running MASTER through its own rules make it tidier" has a
+# The question "would running MASTER through its own laws make it tidier" has a
 # number, and this is it. Two numbers, because this repo has two populations of
-# rules and for a year only one of them was counted:
+# laws and for a year only one of them was counted:
 #
-#   law       the 122 rules in law/ with a lexical detector, applied to every
+#   law       the 122 laws in law/ with a lexical detector, applied to every
 #             tracked source file in the four governed trees
-#   registry  the 145 rules the LawDSL registry builds, run through the
+#   registry  the 145 laws the LawDSL registry builds, run through the
 #             scanner itself and kept at error severity
 #
 # The second row arrived 2026-09-06. The first had been labelled "what our own
-# rules find in our own trees" while measuring the law alone, and nothing
-# anywhere counted what the registry finds: rule_audit runs those rules over a
+# laws find in our own trees" while measuring the law alone, and nothing
+# anywhere counted what the registry finds: rule_audit runs those laws over a
 # sixth of the tree and measures blindness rather than findings, and `bin/operator
 # gate` runs them over all four trees on every pass and records nothing.
 #
@@ -62,13 +62,13 @@ module Operator
         require File.join(MASTER_DIR, "lib", "master")
         require File.join(MASTER_DIR, "law", "law")
       end
-      ::Law.load_all(File.join(MASTER_DIR, "law")) if ::Law.rules.empty?
-      ::Law.rules
+      ::Law.load_all(File.join(MASTER_DIR, "law")) if ::Law.laws.empty?
+      ::Law.laws
     end
 
     # Code we did not write and will not fix. STUDIO/dilla/.venv-demucs is
     # a Python virtualenv with pip, torch and urllib3 vendored inside it, and
-    # its JavaScript and HTML were being graded against this repo's rules —
+    # its JavaScript and HTML were being graded against this repo's laws —
     # `var headers = []` in urllib3's emscripten worker is not our debt.
     # Code we did not write, and code we did not type. A Rails app carries both:
     # public/assets is the precompiled output (1361 `var` findings in amber
@@ -165,7 +165,7 @@ module Operator
 
     # The members behind the count, `RULE path:line`, one per finding.
     # Memoized for the same reason `files` is, and it matters more here: the
-    # corpus is 2869 files against 122 rules, and TestRatchets asks five
+    # corpus is 2869 files against 122 laws, and TestRatchets asks five
     # separate questions of it in one process. Rescanning per question put
     # every one of them over the test timeout. The tree does not change
     # inside a run.
@@ -180,7 +180,7 @@ module Operator
     end
 
     def scan_corpus
-      rules = law # loads Master before the map below is read
+      laws = law # loads Master before the map below is read
       found = []
       files.each do |path|
         # The file list and the reads are two moments, and this is a shared
@@ -205,9 +205,9 @@ module Operator
         lang = Master.language_for(path)&.to_sym
         relative = path.delete_prefix("#{ROOT}/")
 
-        # Pre-filter rules by language to avoid O(files × rules) loop.
+        # Pre-filter laws by language to avoid O(files × laws) loop.
         # Reduces from 349k+ rule.applies? checks to ~1 per file.
-        applicable = rules.select { |_, rule| !rule.semantic? && rule.applies?(path, lang) }
+        applicable = laws.select { |_, rule| !rule.semantic? && rule.applies?(path, lang) }
         applicable.each_value do |rule|
           rule.scan(text, file: path).each { |hit| found << "#{rule.id} #{relative}:#{hit.line}" }
         end
@@ -227,12 +227,12 @@ module Operator
     # A ceiling nobody can hold is decoration, and the warning half is the
     # scan-noise TODO.md already triages one entry at a time.
     #
-    # The scanner's own rules only. A law reaches the scanner through
+    # The scanner's own laws only. A law reaches the scanner through
     # LawBridgeRule and reports under its own id, so the STRICT_MODE_ZSH,
     # NEVER_BATCH_DELETE, RATE_LIMITING_MISSING and MIGRATION_ADD_REFERENCE_NO_FK
     # findings the scan returns are already members of the law row above —
     # fifteen of them, and one fix would have moved two ratchets. Keeping only
-    # ids the scanner carries as rules of its own leaves each finding counted
+    # ids the scanner carries as laws of its own leaves each finding counted
     # once.
     def registry_members
       @registry_members ||= scan_registry
@@ -277,8 +277,8 @@ module Operator
     # reads, which is the inert-config shape this repo hunts — introduced by the
     # reader written to serve two populations.
     KEYS = {
-      "law" => { total: "findings", by_rule: "by_rule", members: "finding_members" },
-      "registry" => { total: "registry_findings", by_rule: "registry_by_rule",
+      "law" => { total: "findings", by_law: "by_rule", members: "finding_members" },
+      "registry" => { total: "registry_findings", by_law: "registry_by_rule",
                       members: "registry_finding_members" },
     }.freeze
 
@@ -287,7 +287,7 @@ module Operator
     def registry_ceiling = ceiling("registry")
 
     # Two attributions, because they answer different questions and both were
-    # wanted on the same day. `by_rule` says which rules moved and by how much,
+    # wanted on the same day. `by_rule` says which laws moved and by how much,
     # which is what you read first. `members` says which lines, which is what
     # you act on. A census recording one integer can say "over by twelve" and
     # name neither, and naming them meant checking out the commit that set the
@@ -321,7 +321,7 @@ module Operator
       []
     end
 
-    # Which rules moved since the baseline, and by how much.
+    # Which laws moved since the baseline, and by how much.
     def report_drift(counts, known = recorded_by_rule)
       if known.empty?
         puts "self_findings: no by_rule recorded with the baseline — run --ratchet at or below it to make the next rise attributable"
@@ -334,7 +334,7 @@ module Operator
 
         format("  %-26s %4d -> %4d  %+d", id, before, after, after - before)
       end
-      puts moved.empty? ? "self_findings: no rule moved since the baseline" : "self_findings: rules that moved since the baseline:"
+      puts moved.empty? ? "self_findings: no rule moved since the baseline" : "self_findings: laws that moved since the baseline:"
       moved.each { |line| puts line }
     end
 
@@ -356,7 +356,7 @@ module Operator
 
     def population(name) = name == "law" ? members : registry_members
 
-    def rules_behind(name) = name == "law" ? law.size : registry_rule_count
+    def laws_behind(name) = name == "law" ? law.size : registry_rule_count
 
     # Both populations are measured on every run, whatever the arguments. One
     # file holds both baselines, so a run that measured one of them and wrote
@@ -376,17 +376,17 @@ module Operator
 
     def json_report
       puts JSON.pretty_generate(POPULATIONS.to_h { |name|
-        [name, { total: population(name).size, by_rule: tally(population(name)) }]
+        [name, { total: population(name).size, by_law: tally(population(name)) }]
       })
       true
     end
 
-    # One population's line, its ten loudest rules, and — only when it is over —
-    # which rules moved and which lines arrived.
+    # One population's line, its ten loudest laws, and — only when it is over —
+    # which laws moved and which lines arrived.
     def report(name)
       current = population(name)
       counts = tally(current)
-      puts "self_findings #{name}: #{current.size} across #{files.size} files from #{rules_behind(name)} rules"
+      puts "self_findings #{name}: #{current.size} across #{files.size} files from #{laws_behind(name)} laws"
       counts.first(10).each { |id, n| puts format("  %-26s %5d", id, n) }
       stale = stale_recorded_members(name)
       unless stale.empty?
@@ -411,7 +411,7 @@ module Operator
       POPULATIONS.each do |name|
         total = population(name).size
         moved = total < previous.fetch(name) ? "recorded #{total} as the new low" : "re-recorded #{total}"
-        puts "self_findings #{name}: #{moved}, with its rules and its members"
+        puts "self_findings #{name}: #{moved}, with its laws and its members"
       end
       true
     end
@@ -425,7 +425,7 @@ module Operator
       prose + POPULATIONS.map { |name| recorded_block(name, population(name)) }.join
     end
 
-    # One population's three keys: the number, the rules behind it, and the
+    # One population's three keys: the number, the laws behind it, and the
     # lines behind those.
     def recorded_block(name, current)
       keys = KEYS.fetch(name)
