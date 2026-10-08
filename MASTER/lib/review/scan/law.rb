@@ -28,12 +28,12 @@ module Master
         end
 
         # Rules that need constructor args (root:, agent:) override this to false.
-        # Builder uses it to auto-discover zero-arg rules from the registry.
+        # Builder uses it to auto-discover zero-arg laws from the registry.
         def self.auto_build?
           true
         end
 
-        # What a rule *is*, declared once at the class level.
+        # What a law *is*, declared once at the class level.
         #
         # Forty-two laws opened with the same constructor — `super()` and
         # five instance variables holding literals — which cross_file_analysis
@@ -62,7 +62,7 @@ module Master
           @id = declared&.fetch(:id, nil) || self.class.name&.split("::")&.last&.downcase || "unknown"
           @description = declared ? declared[:description] : ""
           @severity = declared ? declared[:severity] : :warning
-          @law_tags = declared ? declared[:rule_tags] : []
+          @law_tags = declared ? declared[:law_tags] : []
           @auto_fix = declared ? declared[:auto_fix] : true
         end
 
