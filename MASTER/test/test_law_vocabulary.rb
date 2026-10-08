@@ -3,45 +3,39 @@
 require_relative "test_helper"
 
 class TestLawVocabulary < Minitest::Test
-  def test_normative_terms_normalize_to_law
-    %w[
-      law laws rule rules principle principles convention conventions
-      standard standards guideline guidelines heuristic heuristics
-      precept tenet canon norm doctrine
-    ].each do |term|
-      assert_equal "law", Master::LawVocabulary.normalize(term)
+  ROOTS = %w[lib law bin tools].freeze
+  FORBIDDEN = [
+    /\bRuleFactory\b/,
+    /\bRuleHealth\b/,
+    /\bRuleDSL\b/,
+    /Review::Scan::Rule\b/,
+    /Review::Scan::Rules\b/,
+    /\bscanner\.rules\b/,
+    /\bLaw\.rules\b/,
+    /\bRule\s*=\s*Law\b/,
+    /<\s*Rule\b/,
+  ].freeze
+
+  def files
+    ROOTS.flat_map do |root|
+      Dir.glob(File.join(Master::ROOT, root, "**", "*")).select { |path| File.file?(path) }
+    end.reject { |path| path.include?("/vendor/") || path.include?("/node_modules/") }
+  end
+
+  def test_runtime_uses_law_vocabulary
+    offenders = files.filter_map do |path|
+      source = File.read(path, encoding: "UTF-8", invalid: :replace, undef: :replace)
+      matches = FORBIDDEN.filter_map { |pattern| pattern.source if source.match?(pattern) }
+      matches.empty? ? nil : "#{path.delete_prefix("#{Master::ROOT}/")}: #{matches.join(", ")}"
     end
+
+    assert_empty offenders, "obsolete Rule vocabulary remains:\n#{offenders.join("
+")}"
   end
 
-  def test_multiword_guidance_terms_normalize_to_law
-    %w[usability heuristic design principle style guide].each do |term|
-      assert_equal "law", Master::LawVocabulary.normalize(term)
-    end
-  end
-
-  def test_related_terms_keep_their_technical_identity
-    %w[policy constraint invariant criterion practice].each do |term|
-      refute_equal "law", Master::LawVocabulary.normalize(term)
-      assert_equal :related, Master::LawVocabulary.relation(term)
-    end
-  end
-
-  def test_synonymy_is_symmetric
-    assert Master::LawVocabulary.synonymous?("heuristic", "rule")
-    assert Master::LawVocabulary.synonymous?("RULE", "principle")
-    refute Master::LawVocabulary.synonymous?("policy", "rule")
-  end
-
-  def test_unknown_terms_are_preserved
-    assert_equal "advice", Master::LawVocabulary.normalize("advice")
-    refute Master::LawVocabulary.known?("advice")
-  end
-
-  def test_prompt_explains_the_canonical_term
-    prompt = Master::LawVocabulary.prompt
-
-    assert_includes prompt, "law is MASTER's canonical term"
-    assert_includes prompt, "heuristic"
-    assert_includes prompt, "policy"
+  def test_scanner_exposes_laws_not_rules
+    scanner = Master::Fix::Scanner.build(root: Master::ROOT)
+    assert_respond_to scanner, :laws
+    refute_respond_to scanner, :rules
   end
 end
