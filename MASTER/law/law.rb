@@ -80,7 +80,7 @@ module Law
     #
     # This read `language.nil? || languages.empty? || ...`, so an unresolved
     # file satisfied every language-scoped law — the opposite of what the
-    # registry's Rule#applies_to? has always answered for the same question.
+    # registry's Law#applies_to? has always answered for the same question.
     # 396 tracked files resolve to nil, and 302 of them are not source in any
     # language: .gitignore, .svg, .toml, .env, Gemfile.lock. Each was measured
     # against all 65 language-scoped laws, which is how FROZEN_STRING_LITERAL
@@ -320,7 +320,7 @@ module Law
   end
 
   # Data.define's block is lexical; publish this graph on the generated Law
-  # definition explicitly because Contract, Index and callers use it as Rule API.
+  # definition explicitly because Contract, Index and callers use it as Law API.
   Definition.const_set(:LIFECYCLE_TRANSITIONS, {
     proposed: %i[proven retired],
     proven: %i[active advisory retired],
@@ -370,7 +370,7 @@ module Law
     VERSION = 1
     PROTOCOL = [
       "IDENTIFY: state the task and intended effects before acting.",
-      "READ: load the applicable constitution/rules before deciding.",
+      "READ: load the applicable constitution/laws before deciding.",
       "EVIDENCE: distinguish observed facts, inference, and proposal.",
       "CHECK: apply every applicable law; do not stop at the first convenient rule.",
       "PREFER: resolve conflicts by declared priority and safety constraints.",
@@ -403,7 +403,7 @@ module Law
     }.freeze
 
     def render(full: false)
-      entries = Law.definitions.values.sort_by { |rule| law.id.to_s }.map(&:contract_entry)
+      entries = Law.definitions.values.sort_by { |law| law.id.to_s }.map(&:contract_entry)
       transformation_policy = Master.law("transformation_policy")
       laws = full ? entries : entries.map { |entry| entry.slice("id", "severity", "mode", "languages", "question") }
       JSON.pretty_generate(
@@ -417,7 +417,7 @@ module Law
     end
 
     def digest
-      entries = Law.definitions.values.sort_by { |rule| law.id.to_s }.map(&:contract_entry)
+      entries = Law.definitions.values.sort_by { |law| law.id.to_s }.map(&:contract_entry)
       contract_digest(entries, Master.law("transformation_policy"))
     end
 
@@ -435,25 +435,25 @@ module Law
   end
 
   # Derived law index. Identity, enforcement surface, lifecycle, proof and
-  # universality stay on Law::Rule; this index is generated and never authoritative.
+  # universality stay on Law::Definition; this index is generated and never authoritative.
   module Index
     module_function
 
     VERSION = 1
 
     def rows(definitions = Law.definitions.values)
-      definitions.sort_by { |rule| law.id.to_s }.map do |rule|
+      definitions.sort_by { |law| law.id.to_s }.map do |rule|
         {
           "id" => law.id.to_s,
-          "scope" => rule.scope.to_s,
+          "scope" => law.scope.to_s,
           "law_scope" => rule.law_scope.to_s,
-          "languages" => rule.languages.map(&:to_s),
-          "lifecycle" => rule.lifecycle.to_s,
+          "languages" => law.languages.map(&:to_s),
+          "lifecycle" => law.lifecycle.to_s,
           "autofix" => law.autofix.to_s,
-          "proof" => rule.proof_kind.to_s,
+          "proof" => law.proof_kind.to_s,
           "deterministic" => law.scannable?,
-          "semantic" => rule.semantic?,
-          "practice" => !rule.practice.nil?,
+          "semantic" => law.semantic?,
+          "practice" => !law.practice.nil?,
         }
       end
     end
@@ -461,15 +461,15 @@ module Law
     def validate!(definitions = Law.definitions.values)
       raise ArgumentError, "law index is empty" if definitions.empty?
 
-      ids = definitions.map { |rule| law.id.to_s }
+      ids = definitions.map { |law| law.id.to_s }
       duplicate = ids.tally.select { |_, count| count > 1 }.keys
       raise ArgumentError, "duplicate executable law ids: #{duplicate.join(', ')}" unless duplicate.empty?
 
       invalid = definitions.reject { |law| Definition::LIFECYCLE_TRANSITIONS.key?(law.lifecycle) }
-      raise ArgumentError, "invalid rule lifecycle: #{invalid.map(&:id).join(', ')}" unless invalid.empty?
+      raise ArgumentError, "invalid law lifecycle: #{invalid.map(&:id).join(', ')}" unless invalid.empty?
 
-      invalid = definitions.reject { |rule| %i[never review automatic].include?(law.autofix) }
-      raise ArgumentError, "invalid rule autofix policy: #{invalid.map(&:id).join(', ')}" unless invalid.empty?
+      invalid = definitions.reject { |law| %i[never review automatic].include?(law.autofix) }
+      raise ArgumentError, "invalid law autofix policy: #{invalid.map(&:id).join(', ')}" unless invalid.empty?
 
       automatic = definitions.select { |law| law.autofix == :automatic && !law.scannable? }
       unless automatic.empty?
@@ -483,7 +483,7 @@ module Law
       entries = validate!(definitions)
       JSON.pretty_generate(
         "index_version" => VERSION,
-        "rule_count" => entries.length,
+        "law_count" => entries.length,
         "universal_count" => entries.count { |entry| entry["law_scope"] == "universal" },
         "laws" => entries,
       )
