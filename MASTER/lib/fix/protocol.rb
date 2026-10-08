@@ -64,7 +64,7 @@ module Master
           positive and negative examples before trusting its findings.
 
           6. SEMANTIC
-          Semantic ask rules are executable. The model is the semantic analyst,
+          Semantic ask laws are executable. The model is the semantic analyst,
           not a spectator. Read the actual file, its surrounding code, callers
           and relevant related files before deciding whether the rule is
           violated.
@@ -81,7 +81,7 @@ module Master
           verification rejects or rolls back that repair.
 
           9. REPEAT
-          Rescan filenames, contents, semantic rules, and prior failures after
+          Rescan filenames, contents, semantic laws, and prior failures after
           every kept batch. Continue until DONE, PLATEAU, HUMAN_DECISION, or
           BLOCKED. A pass limit, timeout, or process death ends only the attempt;
           it does not mean the mission is complete.
@@ -98,7 +98,7 @@ module Master
         TEXT
       end
 
-      def strategy_for(rule)
+      def strategy_for(law)
         semantic = rule.respond_to?(:semantic?) && rule.semantic?
         practice = rule.respond_to?(:practice) && !rule.practice.to_s.empty?
         detector = rule.respond_to?(:scannable?) && rule.scannable?
@@ -110,8 +110,8 @@ module Master
         "model_or_human_analysis"
       end
 
-      def verification_for(rule)
-        return "manual_conduct_evidence" if strategy_for(rule) == "conduct_only"
+      def verification_for(law)
+        return "manual_conduct_evidence" if strategy_for(law) == "conduct_only"
         return "semantic_rescan_plus_behavior_or_test" if rule.respond_to?(:semantic?) && rule.semantic?
 
         "rule_rescan_plus_behavior_or_test"
@@ -119,8 +119,8 @@ module Master
 
       # Explicit capability boundary for external agents. These are facts
       # about the live executable law population, not permissions to ignore it.
-      def capability_report(rules = self.rules)
-        eligible = Array(rules).select do |rule|
+      def capability_report(laws = self.laws)
+        eligible = Array(laws).select do |rule|
           !rule.respond_to?(:enforceable?) || rule.enforceable?
         end
         matrix = ProtocolDetectorMatrix.matrix(eligible)
@@ -135,15 +135,15 @@ module Master
         }
       end
 
-      def rule_entry(rule)
+      def law_entry(rule)
         base = rule.respond_to?(:contract_entry) ? rule.contract_entry : {
           "id" => rule.id.to_s,
           "severity" => rule.respond_to?(:severity) ? rule.severity.to_s : "warning"
         }
         base.merge(
           "enforcement" => enforcement(rule),
-          "fix_strategy" => strategy_for(rule),
-          "verify_strategy" => verification_for(rule)
+          "fix_strategy" => strategy_for(law),
+          "verify_strategy" => verification_for(law)
         )
       end
 
@@ -155,16 +155,16 @@ module Master
         surfaces.empty? ? ["unknown"] : surfaces
       end
 
-      def rules
+      def laws
         require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
-        ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.rules.empty?
-        ::Law.rules.values
+        ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.laws.empty?
+        ::Law.laws.values
       end
 
       def registry_count
-        return unless defined?(Master::Review::Scan::Rule) && Master::Review::Scan::Rule.respond_to?(:registry)
+        return unless defined?(Master::Review::Scan::Law) && Master::Review::Scan::Law.respond_to?(:registry)
 
-        Array(Master::Review::Scan::Rule.registry).size
+        Array(Master::Review::Scan::Law.registry).size
       rescue StandardError
         nil
       end
@@ -202,12 +202,12 @@ module Master
 
       def render(root:, target:, files: nil, skipped: nil, full: false)
         target_path = File.realpath(target)
-        rule_rows = rules.sort_by { |rule| rule.id.to_s }.map { |rule| rule_entry(rule) }
+        law_rows = laws.sort_by { |rule| rule.id.to_s }.map { |rule| law_entry(rule) }
         corpus = inventory(target: target_path, root: root)
         corpus["eligible_sample"] = Array(files).first(24).map { |path| relative(path, root) } if files
         corpus["skipped_by_caller"] = skipped.to_i if skipped
-        entries = rules.sort_by { |rule| rule.id.to_s }.map(&:contract_entry)
-        detector_matrix = ProtocolDetectorMatrix.matrix(rules)
+        entries = laws.sort_by { |rule| rule.id.to_s }.map(&:contract_entry)
+        detector_matrix = ProtocolDetectorMatrix.matrix(laws)
         payload = {
           "fix_protocol_version" => VERSION,
           "law_digest" => Law::Contract.digest,
@@ -217,11 +217,11 @@ module Master
           "terminal_states" => TERMINAL_STATES,
           "capability_report" => capability_report,
           "corpus" => corpus,
-          "rule_counts" => {
-            "law" => rule_rows.size,
+          "law_counts" => {
+            "law" => law_rows.size,
             "registry" => registry_count
           },
-          "rules" => full ? rule_rows : rule_rows.map { |entry| entry.slice("id", "severity", "mode", "languages", "question", "fix", "enforcement", "fix_strategy", "verify_strategy") },
+          "laws" => full ? law_rows : law_rows.map { |entry| entry.slice("id", "severity", "mode", "languages", "question", "fix", "enforcement", "fix_strategy", "verify_strategy") },
           "detector_matrix" => detector_matrix,
           "detector_summary" => ProtocolDetectorMatrix.summary(detector_matrix)
         }
@@ -259,7 +259,7 @@ module Master
       end
 
       def rule_prompt(rule)
-        entry = rule_entry(rule)
+        entry = law_entry(rule)
         <<~TEXT.strip
           /fix execution directive for #{entry["id"]}:
           enforcement: #{Array(entry["enforcement"]).join(", ")}
