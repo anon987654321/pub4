@@ -331,7 +331,7 @@ module Master
         return run_fold(rest.to_s, container:, on_turn:) if FOLD_SLASH.include?(name.to_s.downcase)
 
         ctx = PipelineContext.wrap(user_message: input, felt_sense:)
-        ctx = unwrap(Stages::Intake.new.call(ctx))
+        ctx = unwrap(Stages::Intake.new(root: container.fetch(:root, Master::ROOT)).call(ctx))
         return ctx if ctx.is_a?(Master::Result)
 
         if ctx.intent == :llm

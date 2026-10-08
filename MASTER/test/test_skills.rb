@@ -106,19 +106,21 @@ class TestSkills < Minitest::Test
       assert_equal "beta", reloaded.discover!.first[:name]
     end
   end
-  def test_invalid_trigger_does_not_disable_other_skills
+  def test_malformed_trigger_does_not_disable_valid_trigger
     Dir.mktmpdir do |root|
       data_dir = File.join(root, "data")
       FileUtils.mkdir_p(data_dir)
       File.write(File.join(data_dir, "patterns.yml"), <<~YAML)
         skills_registry:
           skills:
-            - name: broken
-              description: broken trigger
+            - name: bad
+              description: bad trigger
               triggers: ["["]
-            - name: healthy
-              description: healthy trigger
-              triggers: ["healthy"]
+              body: bad
+            - name: good
+              description: good trigger
+              triggers: ["alpha"]
+              body: good
       YAML
 
       bus = Class.new do
@@ -129,12 +131,13 @@ class TestSkills < Minitest::Test
 
       skills = Master::CLI::Skills.new(root:, event_bus: bus)
       skills.discover!
+      matches = skills.trigger_for("alpha")
 
-      matches = skills.trigger_for("healthy")
-      assert_equal ["healthy"], matches.map { |skill| skill[:name] }
+      assert_equal ["good"], matches.map { |skill| skill[:name] }
       event = bus.events.find { |name, _| name == "skills:trigger_invalid" }
       refute_nil event
-      assert_equal "broken", event.last[:skill]
+      assert_equal "bad", event.last[:skill]
+      assert_equal "[", event.last[:trigger]
     end
   end
 

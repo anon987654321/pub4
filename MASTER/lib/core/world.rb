@@ -252,7 +252,7 @@ module Master::Core
     # keyboard.js, tokenizer.rb and environment.rb readable.
     SECRET_BASENAME = /
       \A(?:
-        \.env |
+        \.env(?:rc|[._-][a-z0-9._-]+)?\z |
         [a-z0-9_-]+\.env\z |
         (?:credentials?|secrets?|tokens?)(?:[._-]|\z) |
         (?:[a-z0-9]+[._-])?keys?(?:[._-]|\z) |

@@ -141,12 +141,39 @@ class TestAntigravitySkills < Minitest::Test
     assert_equal File.expand_path("~/global"), config.resolve_path("~/global")
   end
 
+  def test_json_config_rejects_a_malformed_filter_without_raising
+    with_workspace do |root|
+      base = File.join(root, "base.json")
+      cfg = File.join(root, "skills.json")
+      File.write(base, JSON.generate({ "entries" => [{ "path" => "keep_me" }] }))
+      File.write(cfg, JSON.generate({
+        "inherits" => [{ "path" => "base.json", "include_only" => ["["] }],
+        "entries" => [],
+      }))
+
+      assert_empty Timeout.timeout(5) { A::JsonConfig.load(cfg, workspace_root: root) }
+    end
+  end
+
   def test_json_config_returns_nothing_for_unparseable_json
     with_workspace do |root|
       cfg = File.join(root, "skills.json")
       File.write(cfg, "{ not json")
 
       assert_empty A::JsonConfig.load(cfg, workspace_root: root)
+    end
+  end
+
+  def test_skills_skips_a_malformed_discovery_filter_and_continues
+    with_workspace do |root|
+      write_skill(File.join(root, ".agents", "skills", "good"), "good", description: "good")
+
+      File.write(File.join(root, ".agents", "skills.json"),
+                 JSON.generate({ "entries" => [{ "path" => "bad-pack", "include_only" => ["["] }] }))
+      FileUtils.mkdir_p(File.join(root, "bad-pack", "bad"))
+      write_skill(File.join(root, "bad-pack", "bad"), "bad")
+
+      assert_equal ["good"], skills_for(root).discover!.map { |skill| skill[:name] }
     end
   end
 
@@ -239,6 +266,18 @@ class TestAntigravitySkills < Minitest::Test
 
       assert_equal "the note", skills.reference_for("ref", "references/note.md")
       assert_nil skills.reference_for("ref", "../../../outside.md")
+    end
+  end
+
+  def test_skills_reference_refuses_a_symlink_outside_the_skill_dir
+    with_workspace do |root|
+      dir = write_skill(File.join(root, ".agents", "skills", "ref"), "ref")
+      FileUtils.mkdir_p(File.join(dir, "references"))
+      outside = File.join(root, "outside.md")
+      File.write(outside, "outside-secret")
+      File.symlink(outside, File.join(dir, "references", "leak.md"))
+
+      assert_nil skills_for(root).then { |skills| skills.discover!; skills.reference_for("ref", "references/leak.md") }
     end
   end
 

@@ -84,6 +84,20 @@ class PathGuardEscapeTest < Minitest::Test
     refute_includes result.message.to_s, "hunter2"
   end
 
+  def test_a_symlink_to_a_credential_file_is_refused_for_read_and_write
+    File.symlink(".env", File.join(@root, "visible.txt"))
+
+    result = read_file.call(path: "visible.txt")
+    refute result.ok?
+    refute_includes result.message.to_s, "hunter2"
+
+    writer = Master::Io::WriteFile.new(root: @root, undo: nil, governor: nil)
+    result = writer.call(path: "visible.txt", content: "REPLACED")
+
+    refute result.ok?
+    assert_equal "SECRET=hunter2\n", File.read(File.join(@root, ".env"))
+  end
+
   def test_read_limit_is_clamped
     body = read_file.call(path: "notes.txt", limit: 1_000_000).value!
     assert_match(/truncated, 5000 total lines/, body) # source-assertion: ok — the tool's returned text, not a source file
@@ -96,6 +110,8 @@ class PathGuardEscapeTest < Minitest::Test
       refute_includes out, "root:x", "#{glob} reached outside the root"
     end
     refute_includes search.call(pattern: "SECRET", glob: ".*").value!, "hunter2"
+    File.symlink(".env", File.join(@root, "visible.txt"))
+    refute_includes search.call(pattern: "SECRET", glob: "*").value!, "hunter2"
   end
 end
 
@@ -129,6 +145,13 @@ class GitContextShowTest < Minitest::Test
 
   # The refusal is the colon, not a filename-looking argument: a ref that merely
   # reads file-ish is still a ref.
+  def test_git_context_refuses_credential_paths
+    result = @git.call(operation: "blame", path: ".env")
+
+    refute result.ok?
+    assert_match(/credential path refused/, result.message.to_s)
+  end
+
   def test_the_refusal_is_the_colon_and_not_the_shape
     assert show("HEAD").ok?
     refute show("HEAD:").ok?

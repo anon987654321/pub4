@@ -15,6 +15,10 @@ class InferStageTest < Minitest::Test
     end
   end
 
+  class FakeSession
+    attr_accessor :last_inferred_command, :last_inferred_args
+  end
+
   def setup
     @bus = FakeBus.new
     @infer = Master::CLI::Stages::Infer.new(bus: @bus)
@@ -151,5 +155,56 @@ class InferStageTest < Minitest::Test
     assert_equal :command, out.intent
     assert_equal "persona", out.command
     assert_equal "ronin", out.args
+  end
+
+  def test_repeating_a_destructive_inference_requires_fresh_consent
+    session = FakeSession.new
+    session.last_inferred_command = "rebuild"
+    session.last_inferred_args = "master"
+    infer = Master::CLI::Stages::Infer.new(bus: @bus, session:)
+
+    result = infer.call(ctx("again"))
+
+    refute result.ok?
+    assert_equal :policy, result.category
+    assert_match(/requires explicit/, result.message)
+  end
+
+  def test_destructive_consent_must_be_affirmative_not_a_request_for_confirmation
+    session = FakeSession.new
+    session.last_inferred_command = "rebuild"
+    session.last_inferred_args = "master"
+    infer = Master::CLI::Stages::Infer.new(bus: @bus, session:)
+
+    result = infer.call(ctx("please confirm again"))
+
+    refute result.ok?
+    assert_equal :policy, result.category
+  end
+
+  def test_negated_destructive_consent_is_rejected
+    session = FakeSession.new
+    session.last_inferred_command = "rebuild"
+    session.last_inferred_args = "master"
+    infer = Master::CLI::Stages::Infer.new(bus: @bus, session:)
+
+    result = infer.call(ctx("yes, do not do it again"))
+
+    refute result.ok?
+    assert_equal :policy, result.category
+  end
+
+  def test_repeating_a_destructive_inference_with_consent_still_promotes
+    session = FakeSession.new
+    session.last_inferred_command = "rebuild"
+    session.last_inferred_args = "master"
+    infer = Master::CLI::Stages::Infer.new(bus: @bus, session:)
+
+    result = infer.call(ctx("yes, again"))
+
+    assert result.ok?
+    assert_equal :command, result.value!.intent
+    assert_equal "rebuild", result.value!.command
+    assert_equal "master", result.value!.args
   end
 end
