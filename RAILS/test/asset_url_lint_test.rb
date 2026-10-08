@@ -64,7 +64,7 @@ class AssetUrlLintTest < Minitest::Test
   # A query string and a fragment are cache-busting and glyph-selecting sugar, not
   # part of the filename: lightGallery ships `lg.woff2?io9a6k` and `lg.svg?io9a6k#lg`.
   def test_query_and_fragment_are_not_part_of_the_filename
-    root = File.join(L::RAILS_ROOT, "shared/public")
+    root = File.join(L::RAILS_ROOT, "__shared/public")
 
     assert L.satisfied?("/fonts/lg.woff2?io9a6k", [root])
     assert L.satisfied?("fonts/lg.woff2?io9a6k#lg", [root])
