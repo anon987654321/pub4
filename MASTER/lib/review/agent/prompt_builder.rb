@@ -43,7 +43,7 @@ module Master
         # The operator's declared principles and soul's absolute and kernel
         # tiers: the part of static_prompt that binds whatever role is asked for.
         def law_prompt
-          require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
+          require File.join(Master::ROOT, "law", "definition") unless defined?(::Law)
           ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.definitions.empty?
 
           parts = []
