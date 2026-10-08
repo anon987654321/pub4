@@ -121,7 +121,7 @@ window.addEventListener('tool:failed', () => systemMotif('error'));
 window.addEventListener('heartbeat:scan_clean', () => systemMotif('success'));
 
 const LOW_POWER = (/SMART[-_ ]?TV|SmartTV|Tizen|Web0?S|HbbTV|VIDAA|NetCast|BRAVIA|Sharp|TCL|Hisense|Vizio|Roku|AppleTV|HiSilicon|MTK|AMLogic/i.test(navigator.userAgent) || (typeof navigator.hardwareConcurrency === "number" && navigator.hardwareConcurrency > 0 && navigator.hardwareConcurrency < 4));
-const tts = { lanes: { error: [], nudge: [], response: [] }, queue: [], prefetch: new Map(), attempts: new Map(), meta: new Map(), retryTimer: null, muted: false, playing: false, paused: false, loading: false, cancelToken: 0, current: null, audio: null, visemeTimer: null, serverUnavailable: false, serverUnavailableUntil: 0, serverFailureCount: 0, synthInFlight: 0, analyser: null, analyserBuf: null, analyserFreqBuf: null, pitchOffset: 0, lang: 'en', resumeTime: null, resumeWordIndex: null };
+const tts = { lanes: { error: [], nudge: [], response: [] }, queue: [], prefetch: new Map(), attempts: new Map(), meta: new Map(), retryTimer: null, muted: false, playing: false, paused: false, loading: false, cancelToken: 0, current: null, audio: null, visemeTimer: null, performancePlan: null, serverUnavailable: false, serverUnavailableUntil: 0, serverFailureCount: 0, synthInFlight: 0, analyser: null, analyserBuf: null, analyserFreqBuf: null, pitchOffset: 0, lang: 'en', resumeTime: null, resumeWordIndex: null };
 const TTS_DB_NAME = 'master-tts-v1';
 const TTS_STORE = 'blobs';
 // Fallback matches data/voice.yml, and has to: a failure to load
@@ -504,6 +504,11 @@ async function loadTTSBlob(text, voice, style) {
     const meta = _parseTtsMetaHeader(res);
     const visemes = _parseTtsVisemeHeader(res) || meta?.viseme_plan || meta?.viseme_hints;
     if (visemes) tts.visemePlan = visemes;
+    if (meta?.performance) {
+      const queued = tts.meta.get(text);
+      if (queued) queued.performance = meta.performance;
+      if (tts.current === text) tts.performancePlan = meta.performance;
+    }
     const blob = await res.blob();
     writeCachedTTS(key, blob);
     return blob;
@@ -568,6 +573,11 @@ async function pollTTSJob(job, signal) {
     const meta = _parseTtsMetaHeader(res);
     const visemes = _parseTtsVisemeHeader(res) || meta?.viseme_plan || meta?.viseme_hints;
     if (visemes) tts.visemePlan = visemes;
+    if (meta?.performance) {
+      const queued = tts.meta.get(tts.current);
+      if (queued) queued.performance = meta.performance;
+      if (tts.current) tts.performancePlan = meta.performance;
+    }
     return res.blob();
   }
   throw new Error('tts timeout');
@@ -820,6 +830,7 @@ function finishTTSPlayback(src, continueQueue = true) {
   if (ttsLive) ttsLive.textContent = '';
   if (spinBtn) { spinBtn.textContent = '❚❚'; spinBtn.setAttribute('aria-label', 'Pause or resume'); }
   tts.current = null;
+  tts.performancePlan = null;
   if (continueQueue) ttsTick();
 }
 
@@ -975,6 +986,7 @@ function ttsTick() {
   const text = dequeueTtsLane();
   if (!text) { resumeSttAfterSpeech(); return; }
   tts.current = text;
+  tts.performancePlan = tts.meta.get(text)?.performance || null;
   tts.lang = detectLang(text);
   tts.playing = true;
   // Duck the mic while we speak: continuous SpeechRecognition has no echo
