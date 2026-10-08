@@ -3,7 +3,7 @@
 module Master
   module Ground
     # Loads and exposes rules, axioms, voice, and workflow from data/*.yml.
-    class Rules
+    class Laws
       # Pure data-accessor readers over the loaded YAML — kept in a separate
       # module so NO_GOD_CLASS's AST-based public-method count only sees
       # Laws' own lookup/parsing methods, not this passthrough layer.
@@ -22,7 +22,7 @@ module Master
         def preserve = voice["preserve"] || {}
 
         # Lazy, for the same reason limits.yml stopped being parsed in the
-        # constructor: `constitution` is the only reader, and every Rules built
+        # constructor: `constitution` is the only reader, and every Laws built
         # to ask for `rules` was opening soul.yml to back an accessor it never
         # touched. LawLoop#build_soul_preamble does exactly that, so a preamble
         # read the file twice and its cache could only ever halve the cost.
@@ -49,8 +49,8 @@ module Master
             ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.rules.empty?
             ::Law.rules.values.to_h { |r| [r.id.to_s, (r.practice || r.fix).to_s.gsub(/\s+/, " ").strip] }.freeze
           rescue StandardError => e
-            Master::Ground::Swallow.log(e, context: "rules.rules", path: File.join(Master::ROOT, "law"))
-            raise "rules registry unreadable: #{e.class}: #{e.message}"
+            Master::Ground::Swallow.log(e, context: "laws.laws", path: File.join(Master::ROOT, "law"))
+            raise "laws registry unreadable: #{e.class}: #{e.message}"
           end
         end
         def thresholds = laws_data["thresholds"] || {}
