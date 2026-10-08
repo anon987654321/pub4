@@ -32,7 +32,7 @@ module Master
           # also means "this linter found nothing", so an unreadable payload
           # cannot go by unsaid.
           def linter_json(*argv)
-            stdout, = Master::Io::Exec.capture3(Operator::RubyRunner.bundle_cmd(root: @root), "exec", *argv, chdir: @root)
+            stdout, = Master::Io::Exec.capture3(::Operator::RubyRunner.bundle_cmd(root: @root), "exec", *argv, chdir: @root)
             return if stdout.empty?
             JSON.parse(stdout)
           rescue JSON::ParserError => e
