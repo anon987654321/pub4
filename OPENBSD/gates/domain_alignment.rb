@@ -6,7 +6,6 @@ require_relative "../../OPENBSD/lib/deploy_inventory"
 require_relative "../../OPENBSD/lib/gate_result"
 require_relative "../../OPENBSD/bin/render_dns"
 
-
 module Deploy
   class DomainAlignmentGate
     ROOT = Pathname.new(File.expand_path("../..", __dir__))
