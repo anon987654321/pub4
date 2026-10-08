@@ -184,7 +184,7 @@ module Master
             line.scan(/line-height\s*:\s*([\d.]+)\s*;/i) do |raw|
               val = raw[0].to_f
               next if val >= 4
-              next unless off_scale?(val, allowed)
+              next unless ::Master::Review::Scan::Laws.off_scale?(val, allowed)
 
               findings << finding(
                 line: num,
