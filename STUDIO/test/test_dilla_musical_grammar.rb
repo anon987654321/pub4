@@ -83,7 +83,6 @@ class TestDillaMusicalGrammar < Minitest::Test
     with_env(
       "DILLA_SHOWCASE" => "0",
       "DILLA_FUGUE" => "1",
-      "DILLA_CURATED_HARMONY" => "1",
       "LIVE_REFERENCE" => nil
     ) do
       improviser = LiveSynth::Improviser.new(rng: Random.new(14), family: "prophet", drums: false)
