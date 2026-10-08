@@ -98,9 +98,10 @@ class TestDillaMusicalGrammar < Minitest::Test
 
       improviser.send(:fugue_phrase!, nil, 8.0)
 
+      range = LiveSynth.config.fetch("improvise").fetch("lead_range").map(&:to_i)
       assert_equal 2, captured.length
       assert_equal [8, 8], captured.map { |events, _| events.length }
-      assert captured.all? { |events, _| events.all? { |event| event.midi.between?(64, 88) } }
+      assert captured.all? { |events, _| events.all? { |event| event.midi.between?(range[0], range[1]) } }
       assert_operator captured.last.first.first.at, :>, captured.first.first.first.at
     end
   end
