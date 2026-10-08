@@ -49,7 +49,7 @@ module Master
       # 8 sequential model calls the operator never asked for — /review and /fix
       # still run the full rule set, deliberately, when a person asks for it.
       def mechanical_scanner_rules
-        @refs.scanner.rules.reject { |rule| rule.respond_to?(:agent?) }
+        @refs.scanner.laws.reject { |rule| rule.respond_to?(:agent?) }
       end
 
       def boot_scan
