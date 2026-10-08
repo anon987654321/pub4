@@ -48,3 +48,29 @@
     stroke-dashoffset: 0;
   }
 }
+
+
+@supports (view-transition-name: none) {
+  ::view-transition-old(root) {
+    animation: interaction-view-out var(--transition-fast) var(--ease-out) both;
+  }
+
+  ::view-transition-new(root) {
+    animation: interaction-view-in var(--transition-normal) var(--ease-out) both;
+  }
+}
+
+@keyframes interaction-view-out {
+  to { opacity: 0; }
+}
+
+@keyframes interaction-view-in {
+  from { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+  }
+}

@@ -12,6 +12,7 @@ class TestRailsInteractionCraft < Minitest::Test
   HAPTICS = File.join(SHARED, "frontend", "haptics_controller.js")
   SHEET = File.join(SHARED, "frontend", "bottom_sheet_controller.js")
   TOAST = File.join(SHARED, "app", "views", "shared", "_toast.html.erb")
+  HOTWIRE = File.join(SHARED, "frontend", "hotwire.js")
 
   def test_shared_interaction_craft_is_forwarded
     stack = File.read(STACK)
@@ -48,6 +49,16 @@ class TestRailsInteractionCraft < Minitest::Test
     js = File.read(HAPTICS)
     assert_includes js, "press()"
     assert_includes js, "this.#vibrate(10)"
+  end
+
+  def test_turbo_navigation_uses_shared_view_transition_boundary
+    js = File.read(HOTWIRE)
+    css = File.read(CRAFT)
+    assert_includes js, "turbo:before-render"
+    assert_includes js, "startViewTransition"
+    assert_includes js, 'data.viewTransitions === "off"'
+    assert_includes css, "::view-transition-old(root)"
+    assert_includes css, "::view-transition-new(root)"
   end
 
   def test_success_toast_has_a_static_and_animated_state
