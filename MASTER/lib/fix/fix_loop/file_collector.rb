@@ -22,7 +22,7 @@ module Master
         #
         # A file that must not be edited is not a file worth collecting for a
         # fix pass, so there is one list now and the scanner owns it.
-        attr_reader :skipped, :candidate_count, :skip_reasons, :blocking_skips
+        attr_reader :skipped, :candidate_count, :skip_reasons, :blocking_skips, :blocking_skips
 
         def initialize(root:, bus: nil)
           @root = root
@@ -30,6 +30,7 @@ module Master
           @skipped = 0
           @candidate_count = 0
           @skip_reasons = {}
+          @blocking_skips = {}
           @blocking_skips = {}
         end
 
@@ -129,6 +130,7 @@ module Master
             if reason
               dropped << file
               @skip_reasons[reason.to_s] += 1
+              @blocking_skips[reason.to_s] += 1 if %i[too_large too_many_lines].include?(reason)
               @blocking_skips[reason.to_s] += 1 if %i[too_large too_many_lines].include?(reason)
             else
               kept << file
