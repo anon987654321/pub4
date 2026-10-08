@@ -117,10 +117,8 @@ module Master
           self
         end
 
-        # Flat findings with :path merged in. scan_dir returns Result wrapping
-        # [path, Result] pairs whose inner values are hashes, so f.rule raises
-        # and the path is discarded unless the caller knows the unwrap. This is
-        # the one documented way to get them out.
+        # Flat findings with :path merged in. scan_dir returns [path, Result]
+        # pairs; this method is the one documented flat extraction API.
         def findings(paths, depth: :deep)
           Array(paths).flat_map { |path| findings_for(path, depth:) }
         end
@@ -165,10 +163,8 @@ module Master
             !result.message.to_s.start_with?("file validation failed")
         end
 
-        # scan_dir answers a Result whose value is [path, Result] pairs, so the
-        # same unwrap was written three times here — twice byte for byte. It
-        # answers the pairs for the outer Result and the rows for an inner one,
-        # which is the same question asked at two depths.
+        # scan_dir wraps path/result pairs; this helper unwraps either the
+        
         def rows_of(result)
           return result.value! if result.respond_to?(:ok?) && result.ok?
           return result unless result.respond_to?(:ok?)
@@ -266,11 +262,9 @@ module Master
           @rules
         end
 
-        # RuleDSL's applies_to scope is already authoritative inside the rule.
-        # Use the same declaration one level earlier so a JavaScript file does
-        # not traverse every Ruby-only rule, and a Ruby file does not traverse
-        # the CSS/HTML population. Rules without an explicit scope remain in every
-        # bucket. Explicit rule arrays passed by callers keep the old full set.
+        # LawDSL's applies_to scope is authoritative inside each law.
+        # Apply the same declaration one level earlier so a file does not traverse
+        # unrelated language populations. Laws without an explicit scope remain global.
         def dispatched_rules(path, rule_set)
           return rule_set unless rule_set.equal?(@rules)
           language = Master.language_for(path)
@@ -334,7 +328,7 @@ module Master
         # only this path while AstFixer ran the transform unasked on the other.
         def deleting_rule?(rule_id)
           transform = rule_transforms[rule_id.to_s]
-          Master::Review::Scan::AstFixer::DELETING_TRANSFORMS.include?(transform.to_s)
+          Master::Fix::Scan::AstFixer::DELETING_TRANSFORMS.include?(transform.to_s)
         end
 
         def rule_transforms
