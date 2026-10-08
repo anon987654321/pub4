@@ -673,6 +673,26 @@ class TestFixConvergence < Minitest::Test
     assert File.file?(script), "rails_gates launches #{script}, which does not exist"
   end
 
+  def test_rails_fix_verification_runs_premerge_after_the_repair_aware_runner
+    calls = []
+    capture = ->(*cmd, chdir: nil, env: {}, **) {
+      calls << { cmd:, chdir:, env: }
+      [true, ["ok"], 0]
+    }
+
+    Operator::GateChain.stub(:capture, capture) do
+      ok, _body, status = Operator::GateChain.rails_verification(scan_only: true)
+      assert ok
+      assert_equal 0, status
+    end
+
+    assert_equal 2, calls.size
+    assert calls.first[:cmd].any? { |arg| arg.to_s.end_with?("runner.rb") }
+    assert calls.last[:cmd].any? { |arg| arg.to_s.end_with?("RAILS/bin/premerge") }
+    assert_equal File.join(Master::REPO_ROOT, "RAILS"), calls.last[:chdir]
+    assert_equal "1", calls.last[:env]["MASTER_FIX_VERIFY"]
+  end
+
   def test_a_proof_marks_its_children_and_restores_the_parent
     pass = Master::CLI::Pipeline::Pass.allocate
     saved = ENV.delete("MASTER_IN_PROOF")
