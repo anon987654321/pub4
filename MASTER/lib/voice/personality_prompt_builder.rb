@@ -81,7 +81,7 @@ module Master
 
         aesthetic = style["aesthetic"].to_s.tr("_", " ").strip
         heading = aesthetic.empty? ? "Markdown you write:" : "Markdown you write follows the #{aesthetic} aesthetic:"
-        lines = [heading, *rules.map { |rule| "- #{rule}" }]
+        lines = [heading, *rules.map { |law| "- #{rule}" }]
         sections["master_style"] = [sections["master_style"], lines.join("\n")].compact.join("\n")
       end
 
@@ -290,11 +290,11 @@ module Master
       #
       # Loaded lazily, and a failure is cosmetic: a prompt missing part of the
       # list is worse than one built without it, and neither should fail a turn.
-      def all_rules
+      def all_laws
         require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
-        ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.rules.empty?
-        ::Law.rules.values.map do |rule|
-          "#{rule.id}: #{(rule.practice || rule.fix).to_s.gsub(/\s+/, ' ').strip}"
+        ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.definitions.empty?
+        ::Law.definitions.values.map do |rule|
+          "#{law.id}: #{(law.practice || law.fix).to_s.gsub(/\s+/, ' ').strip}"
         end
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "PromptBuilder.all_rules", severity: :cosmetic)
