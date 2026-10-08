@@ -7,9 +7,13 @@
 # command without using hosted CI.
 
 require "rbconfig"
+require "yaml"
 
 ROOT = File.expand_path("..", __dir__)
-APPS = %w[brgen amber bsdports eritel].freeze
+APPS = YAML.safe_load_file(File.join(ROOT, "apps.yml")).fetch("apps").filter_map do |name, app|
+  directory = File.join(ROOT, name)
+  name if app["public"] && File.file?(File.join(directory, "bin", "ci"))
+end.freeze
 
 def run(label, *command, chdir: ROOT, env: {})
   puts "ci: #{label} — #{command.join(" ")}"
