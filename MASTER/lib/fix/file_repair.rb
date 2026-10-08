@@ -19,7 +19,7 @@ module Master
         @notes = rules.to_h { |rule| [rule.id.to_s, rule.respond_to?(:description) ? rule.description.to_s : ""] }
         @findings = findings
         ids = findings.map { |finding| finding[:rule].to_s }.uniq
-        super(rule: Scope.new(id: ids.join("+"), description: "file repair"), agent:, scanner:, root:, **options)
+        super(law: Scope.new(id: ids.join("+"), description: "file repair"), agent:, scanner:, root:, **options)
       end
 
       # The findings a model may take on: none that waits for a person or that
@@ -28,7 +28,7 @@ module Master
         @findings.reject { |finding| needs_a_person?(finding) }.select { |finding| autofix_allowed?(finding) }
       end
 
-      def scope = @rule
+      def scope = @law
 
       # The rules this repair put to the model, once run has filtered out what
       # waits for a person or fails the confidence gate.
@@ -47,7 +47,7 @@ module Master
 
       def summary(path)
         first = @findings.min_by { |finding| finding[:line].to_i }
-        { rule: @rule.id, file: path, line: first[:line], severity: :warning,
+        { law: @law.id, file: path, line: first[:line], severity: :warning,
           message: @findings.map { |finding| "#{finding[:rule]} line #{finding[:line]}" }.join("; ") }
       end
 
