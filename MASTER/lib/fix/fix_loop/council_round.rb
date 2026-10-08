@@ -15,8 +15,8 @@ module Master
       # repair nobody applies.
       class CouncilRound
         FILES_PER_ROUND = 12
-        IMPROVEMENT_RULE_ID = "COUNCIL_IMPROVEMENT"
-        IMPROVEMENT_RULE = Data.define(:id) do
+        IMPROVEMENT_LAW_ID = "COUNCIL_IMPROVEMENT"
+        IMPROVEMENT_LAW = Data.define(:id) do
           def severity = :warning
         end
         IMPROVEMENT_SEVERITY = :warning
