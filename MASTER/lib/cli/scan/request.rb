@@ -7,7 +7,7 @@ module Master
     module Scan
       class Request
         EXPLICIT_PROFILE_FLAG = "--profile"
-        ALL_RULES = "*"
+        ALL_LAWS = "*"
         EMPTY_WORKFLOW_PROFILES = [{}, {}].freeze
         # Path aliases so MASTER can target pub4/RAILS and face without ceremony.
         TARGET_ALIASES = {
@@ -19,7 +19,7 @@ module Master
           "self" => File.join(Master::ROOT, "lib"),
         }.freeze
 
-        Result = Struct.new(:pairs, :profile, :rule_filter, :severity_filter, keyword_init: true)
+        Result = Struct.new(:pairs, :profile, :law_filter, :severity_filter, keyword_init: true)
 
         def initialize(scanner:, root:, arg:, depth: :deep, autofix: false)
           @scanner = scanner
@@ -30,13 +30,13 @@ module Master
         end
 
         def call
-          @profile, @rule_filter, @severity_filter = resolve_profile
-          Result.new(pairs: collect_pairs, profile: @profile, rule_filter: @rule_filter, severity_filter: @severity_filter)
+          @profile, @law_filter, @severity_filter = resolve_profile
+          Result.new(pairs: collect_pairs, profile: @profile, law_filter: @law_filter, severity_filter: @severity_filter)
         end
 
         private
 
-        attr_reader :scanner, :root, :arg, :depth, :autofix, :rule_filter
+        attr_reader :scanner, :root, :arg, :depth, :autofix, :law_filter
 
         def collect_pairs
           target = target_arg
@@ -50,7 +50,7 @@ module Master
           dir = target || root
           scan_dir = scanner.scan_dir(
             dir, depth:, glob: "**/*", stream: true,
-            autofix:, autofix_root: root, rules: selected_rules
+            autofix:, autofix_root: root, laws: selected_laws
           )
           scan_dir.ok? ? scan_dir.value! : "scan failed"
         end
@@ -58,10 +58,10 @@ module Master
         # One file is the same contract as a directory walk: scan, and if autofix
         # is on, write the mechanical transforms before the caller sees the pair.
         def file_pairs(target)
-          result = scanner.scan(target, depth:, rules: selected_rules)
+          result = scanner.scan(target, depth:, laws: selected_laws)
           if autofix && scanner.respond_to?(:autofix_one)
             applied = scanner.autofix_one(target, result, root:)
-            result = scanner.scan(target, depth:, rules: selected_rules) if applied.any?
+            result = scanner.scan(target, depth:, laws: selected_laws) if applied.any?
           end
           [[target, result]]
         end
@@ -69,10 +69,10 @@ module Master
         # limits.yml said profiles "filter the report". The walk still ran every
         # rule, so `/review aesthetic master` spent hours on CONFIG_HIERARCHY.
         # The filter is the walk: the report then describes what actually ran.
-        def selected_rules
-          return unless rule_filter && scanner.respond_to?(:rules)
+        def selected_laws
+          return unless law_filter && scanner.respond_to?(:laws)
 
-          scanner.rules.select { |rule| rule_filter.include?(rule.id.to_s) }
+          scanner.laws.select { |rule| law_filter.include?(law.id.to_s) }
         end
 
         def target_arg
@@ -121,11 +121,11 @@ module Master
           return [nil, nil, nil] unless profile_name
 
           cfg = profiles[profile_name] || {}
-          rules = cfg["rules"].to_s
-          rule_ids = groups[rules] || (rules == ALL_RULES ? nil : [rules])
-          rule_filter = (rule_ids && rules != ALL_RULES) ? rule_ids.map(&:to_s).to_set : nil
+          laws = cfg["laws"].to_s
+          law_ids = groups[rules] || (rules == ALL_LAWS ? nil : [rules])
+          law_filter = (law_ids && rules != ALL_LAWS) ? law_ids.map(&:to_s).to_set : nil
           severity_filter = Array(cfg["severity"]).map(&:to_s).to_set
-          [profile_name, rule_filter, severity_filter.empty? ? nil : severity_filter]
+          [profile_name, law_filter, severity_filter.empty? ? nil : severity_filter]
         end
 
         def requested_profile(profiles)
