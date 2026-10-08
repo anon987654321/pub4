@@ -9,7 +9,7 @@ module Master
         new(
           file:,
           line: data[:line] || data["line"],
-          rule: data[:rule] || data[:rule_id] || data["rule"] || data["rule_id"],
+          law: data[:law] || data[:law_id] || data["law"] || data["law_id"],
           message: data[:message] || data["message"],
           severity: data[:severity] || data["severity"],
           fix: data[:fix] || data["fix"],
