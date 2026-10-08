@@ -7,11 +7,11 @@ require_relative "test_helper"
 # its file for the same reason. Without this the whole case errored in setup on
 # uninitialized constant, which is a test that cannot run rather than one that
 # passes — it reported 0 assertions and read as green in a summary line.
-require "review/scan/rules/semantic_rules"
+require "review/scan/laws/semantic_rules"
 
 class TestAdversarialRule < Minitest::Test
   def setup
-    @rule = Master::Review::Scan::Rules::AdversarialRule.new
+    @rule = Master::Review::Scan::Laws::AdversarialLaw.new
   end
 
   def test_responds_to_check
@@ -28,7 +28,7 @@ class TestAdversarialRule < Minitest::Test
   def test_an_unexpected_model_failure_is_not_reported_as_clean
     agent = Object.new
     agent.define_singleton_method(:ask) { |_prompt, operation:| raise "upstream exploded" }
-    rule = Master::Review::Scan::Rules::AdversarialRule.new(agent:)
+    rule = Master::Review::Scan::Laws::AdversarialLaw.new(agent:)
 
     assert_raises(RuntimeError) { rule.check("def foo; end", path: "foo.rb") }
   end
@@ -40,7 +40,7 @@ class TestAdversarialRule < Minitest::Test
       seen = [operation, Fiber[:master_no_tools]]
       "ISSUE:1:unused method"
     end
-    rule = Master::Review::Scan::Rules::AdversarialRule.new(agent:)
+    rule = Master::Review::Scan::Laws::AdversarialLaw.new(agent:)
 
     findings = rule.check("def foo; end", path: "foo.rb")
 
