@@ -55,7 +55,7 @@ module Master
           fires: ".card { box-shadow: 0 2px 8px rgba(0,0,0,.3); }\n",
           # Suppressing a shadow is the law being obeyed, not broken.
           does_not_fire: ".card { box-shadow: none; }\n.b { text-shadow: none; }\n" do |src, path:|
-          next [] unless Rules.ui_path?(path)
+          next [] unless ui_path?(path)
 
           findings = []
           # Block comments blanked: a rationale paragraph explaining a measured
@@ -125,9 +125,9 @@ module Master
           fires: ".card { padding: 10px; }\n",
           # A media condition is not spacing, and 44px is the tap-target token.
           does_not_fire: "@media (min-width: 1280px) { .card { padding: 24px; min-height: 44px; } }\n" do |src, path:|
-          next [] unless Rules.ui_path?(path)
+          next [] unless ui_path?(path)
 
-          allowed = Rules.thresholds.eight_px_rhythm.map(&:to_i)
+          allowed = thresholds.eight_px_rhythm.map(&:to_i)
           findings = []
           src.each_line.with_index(1) do |line, num|
             next if line.strip.start_with?("//", "/*", "*")
@@ -165,9 +165,9 @@ module Master
           example_path: "/repo/app/assets/stylesheets/_example.scss",
           fires: ".prose { line-height: 1.45; }\n",
           does_not_fire: ".prose { line-height: 1.5; }\n.h1 { line-height: 1.25; }\n" do |src, path:|
-          next [] unless Rules.ui_path?(path)
+          next [] unless ui_path?(path)
 
-          allowed = Rules.thresholds.allowed_line_heights.map { |v| v.to_f.round(3) }
+          allowed = thresholds.allowed_line_heights.map { |v| v.to_f.round(3) }
           findings = []
           without_block_comments(src).each_line.with_index(1) do |line, num|
             next if line.strip.start_with?("//", "/*", "*")
@@ -184,7 +184,7 @@ module Master
             line.scan(/line-height\s*:\s*([\d.]+)\s*;/i) do |raw|
               val = raw[0].to_f
               next if val >= 4
-              next unless Rules.off_scale?(val, allowed)
+              next unless off_scale?(val, allowed)
 
               findings << finding(
                 line: num,
@@ -205,9 +205,9 @@ module Master
           # the rule was blind to until 2026-07-21 and the one worth pinning.
           fires: ".btn {\n  width: 12px;\n}\n",
           does_not_fire: ".btn {\n  width: 48px;\n}\n" do |src, path:|
-          next [] unless Rules.ui_path?(path)
+          next [] unless ui_path?(path)
 
-          min = Rules.thresholds.touch_min_px.to_i
+          min = thresholds.touch_min_px.to_i
           button_re = Master::Fix::Scan::AstFixer::WebTransforms::TOUCH_SELECTOR
           findings = []
           current_selector = ""
@@ -242,9 +242,9 @@ module Master
           # A plain <ul> is content being browsed, not options being chosen
           # between — the exemption that took this rule off search results.
           does_not_fire: "<ul>#{(1..8).map { |n| "<li>#{n}</li>" }.join}</ul>\n" do |src, path:|
-          next [] unless Rules.ui_path?(path)
+          next [] unless ui_path?(path)
 
-          max = Rules.thresholds.max_visible_choices.to_i
+          max = thresholds.max_visible_choices.to_i
           findings = []
           # count sibling <li> or nav links in a single block
           #
@@ -316,7 +316,7 @@ module Master
           fires: ".card { color: red; }\n",
           does_not_fire: ".card { gap: var(--sp); }\n",
           description: "ma — breathing room via gap/section spacing tokens" do |src, path:|
-          next [] unless Rules.ui_path?(path)
+          next [] unless ui_path?(path)
           # The keyword has to be a selector this file styles, not a word anywhere
           # in it. brgen's application.scss is a list of @use lines and nothing
           # else; it was reported for lacking section spacing because one of the
@@ -334,7 +334,7 @@ module Master
           fires: ".s1 { font-size: 11px; }\n.s2 { font-size: 12px; }\n.s3 { font-size: 13px; }\n.s4 { font-size: 14px; }\n.s5 { font-size: 15px; }\n.s6 { font-size: 16px; }\n.s7 { font-size: 17px; }\n.s8 { font-size: 18px; }\n.s9 { font-size: 19px; }\n",
           does_not_fire: ".s1 { font-size: 11px; }\n.s2 { font-size: 12px; }\n.s3 { font-size: 13px; }\n.s4 { font-size: 14px; }\n.s5 { font-size: 15px; }\n.s6 { font-size: 16px; }\n.s7 { font-size: 17px; }\n.s8 { font-size: 18px; }\n",
           description: "modular type scale — flag one-off font sizes" do |src, path:|
-          next [] unless Rules.ui_path?(path)
+          next [] unless ui_path?(path)
 
           sizes = src.scan(/font-size\s*:\s*([\d.]+)px/i).flatten.map(&:to_f)
           next [] if sizes.size < 5
@@ -350,7 +350,7 @@ module Master
           fires: ".meta { color: #ccc; }\n",
           does_not_fire: ".meta { color: var(--text-secondary); }\n",
           description: "prefer token colors over low-contrast gray-on-gray magic" do |src, path:|
-          next [] unless Rules.ui_path?(path)
+          next [] unless ui_path?(path)
 
           findings = []
           src.each_line.with_index(1) do |line, num|
@@ -377,7 +377,7 @@ module Master
           fires: ".card { width: 12.5px; }\n",
           does_not_fire: ".card { width: 12px; }\n",
           description: "avoid subpixel/fractional layout that breaks integer grids" do |src, path:|
-          next [] unless Rules.ui_path?(path)
+          next [] unless ui_path?(path)
 
           scan_lines(src, /(?:width|height|top|left|margin|padding|transform:\s*translate)\s*:\s*[\d.]+\.\d+px/i,
             message: "fractional px — prefer integer pixels for pixel-perfect alignment")
@@ -414,7 +414,7 @@ module Master
           description: "page titles use --text-title token not raw 20px",
           fires: ".page-header h1 { font-size: 20px; }\n",
           does_not_fire: ".page-header h1 { font-size: var(--text-title, 1.25rem); }\n" do |src, path:|
-          next [] unless Rules.ui_path?(path)
+          next [] unless ui_path?(path)
 
           findings = []
           src.each_line.with_index(1) do |line, num|
@@ -438,7 +438,7 @@ module Master
           fires: %(<div class="decor"></div>\n),
           # The same class carrying something is the wrapper doing work.
           does_not_fire: %(<div class="decor"><%= yield %></div>\n) do |src, path:|
-          next [] unless Rules.ui_path?(path)
+          next [] unless ui_path?(path)
 
           scan_lines(src, /<div\s+class=["'][^"']*(?:decor|ornament|spacer|filler|gradient-bg)[^"']*["']\s*>\s*<\/div>/i,
             message: "decorative empty div — form follows function; remove or attach semantics")
@@ -449,7 +449,7 @@ module Master
           description: "too many competing visual classes on one node",
           fires: %(<div class="card card--wide is-open u-mt-2 u-p-1 shadow rounded muted">x</div>\n),
           does_not_fire: %(<div class="card card--wide is-open">x</div>\n) do |src, path:|
-          next [] unless Rules.ui_path?(path)
+          next [] unless ui_path?(path)
 
           src.each_line.with_index(1).filter_map do |line, num|
             m = line.match(/class=["']([^"']+)["']/)
@@ -469,7 +469,7 @@ module Master
           # carrying it, and the 79 findings that taught this rule that were all
           # this shape.
           does_not_fire: %(<div data-action="click@window->dropdown#hide">Menu</div>\n) do |src, path:|
-          next [] unless Rules.ui_path?(path)
+          next [] unless ui_path?(path)
 
           # An element is interactive when something activates it, not when a
           # Stimulus controller is attached to it. `data-controller` was in this
@@ -495,7 +495,7 @@ module Master
           description: "Rams less-but-better — flag icon+label+badge pileups",
           fires: %(<button class="btn"><svg class="icon"></svg><span>Save</span></button>\n),
           does_not_fire: %(<button class="btn">Save</button>\n) do |src, path:|
-          next [] unless Rules.ui_path?(path)
+          next [] unless ui_path?(path)
 
           scan_lines(src, /<(button|a)[^>]*>.*?<(svg|img|i)[^>]*>.*?<(span|small|badge)/im,
             message: "control packs icon+extra chrome — prefer one signal (label or icon)")
@@ -524,7 +524,7 @@ module Master
             description: "Rams checklist tag: #{trait.downcase}",
             fires: RAMS_FIXTURES.fetch(trait)[0],
             does_not_fire: RAMS_FIXTURES.fetch(trait)[1] do |src, path:|
-            next [] unless Rules.ui_path?(path)
+            next [] unless ui_path?(path)
             next [] unless path.to_s.include?("/app/views/") || path.to_s.include?("web/")
 
             # Soft detectors — high-signal anti-patterns only
