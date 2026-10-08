@@ -162,7 +162,7 @@ module Master
             require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
             ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.definitions.empty?
             law_violations.keys.reject { |id| known.include?(id.to_s) }.filter_map do |id|
-              law = ::Law.definitions.find { |definition| definition.id.to_s == id.to_s }
+              law = ::Law.definitions.values.find { |definition| definition.id.to_s == id.to_s }
               next unless law&.semantic?
               SemanticFixLaw.new(id: id.to_s, severity: law.severity, law:)
             end
