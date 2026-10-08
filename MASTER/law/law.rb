@@ -21,7 +21,7 @@ module Law
   # construct is prose about it, not an instance of it — "# a bare rescue"
   # became an error-severity finding when FAIL_VISIBLY moved here from the
   # yaml bridge, which had learned this once already. Comment-leading lines
-  # are skipped for the file's own comment syntax; a rule whose subject IS
+  # are skipped for the file's own comment syntax; a law whose subject IS
   # comments (WHY_NOT_WHAT, TYPOGRAPHY_DISCIPLINE) declares `reads_comments
   # true`. Fixtures prove with file "-", which has no extension and so no
   # comment syntax — a fixture is always read whole.
@@ -49,11 +49,11 @@ module Law
       EXTENSION_COMMENT_LEADERS.fetch(File.extname(file).downcase, [])
   end
 
-  # `ask` is the semantic half: a rule whose subject cannot be matched by a
+  # `ask` is the semantic half: a law whose subject cannot be matched by a
   # regex states the question instead, and the model answers it. It sits beside
-  # `detect` rather than in a second file because a rule is one thing and its
+  # `detect` rather than in a second file because a law is one thing and its
   # detector kind is a property of it — the split between executable law and the policy catalogue in data/laws.yml
-  # put 52 rules' detector in one file and their severity and fix text in
+  # put 52 laws' detector in one file and their severity and fix text in
   # another, which is a shape no rename can make legible.
   #
   # bad/good stay required for both kinds. For `detect` they are proved by
@@ -80,7 +80,7 @@ module Law
     #
     # This read `language.nil? || languages.empty? || ...`, so an unresolved
     # file satisfied every language-scoped law — the opposite of what the
-    # registry's Rule#applies_to? has always answered for the same question.
+    # registry's Law#applies_to? has always answered for the same question.
     # 396 tracked files resolve to nil, and 302 of them are not source in any
     # language: .gitignore, .svg, .toml, .env, Gemfile.lock. Each was measured
     # against all 65 language-scoped laws, which is how FROZEN_STRING_LITERAL
@@ -106,7 +106,7 @@ module Law
     # principle may have Ruby, zsh, Rails or another domain adapter.
     def universal? = law_scope == :universal
 
-    # Lifecycle controls whether a rule may affect enforcement. Existing rules
+    # Lifecycle controls whether a law may affect enforcement. Existing rules
     # default to active for compatibility; candidates can enter proposed/proven
     # without silently becoming merge blockers.
     def enforceable? = %i[active trusted].include?(lifecycle)
@@ -151,7 +151,7 @@ module Law
       }.reject { |_, value| value.respond_to?(:empty?) && value.empty? }
     end
 
-    # A rule proves itself before it may judge anything else.
+    # A law proves itself before it may judge anything else.
     #
     # The reach half is proved too, because it was the half that broke:
     # NEVER_BATCH_DELETE declared `languages %i[ruby shell]` and no file can
@@ -199,7 +199,7 @@ module Law
     # Above, they prove through file "-": no extension, so no comment syntax, so
     # the text is read whole. A real subject has an extension and its comment
     # lines are blanked before the detector sees them. Those are different
-    # inputs, and a rule can be right about one and wrong about the other.
+    # inputs, and a law can be right about one and wrong about the other.
     #
     # FROZEN_STRING_LITERAL asks whether a file opens with the magic comment. It
     # proved clean on "-" at every boot and fired on 423 of 423 files under
@@ -208,7 +208,7 @@ module Law
     # and four blanked comment lines are four newlines. Both were found by
     # measuring rather than by any proof, which is why the proof now measures.
     #
-    # Costs nothing at boot and makes the whole defect class unreachable: a rule
+    # Costs nothing at boot and makes the whole defect class unreachable: a law
     # that cannot see its own subject no longer loads.
     def prove_as_real_file!
       declared = languages.map(&:to_s)
@@ -320,7 +320,7 @@ module Law
   end
 
   # Data.define's block is lexical; publish this graph on the generated Law
-  # definition explicitly because Contract, Index and callers use it as Rule API.
+  # definition explicitly because Contract, Index and callers use it as Law API.
   Definition.const_set(:LIFECYCLE_TRANSITIONS, {
     proposed: %i[proven retired],
     proven: %i[active advisory retired],
@@ -347,9 +347,9 @@ module Law
       raise ArgumentError, "#{@h[:id]}: needs detect, ask or practice" if kinds.empty?
 
       # `fix` is in this list because Data requires it and Builder does not
-      # default it, so a rule that omitted it died with "missing keyword: :fix"
+      # default it, so a law that omitted it died with "missing keyword: :fix"
       # from Data#initialize — a message about the implementation rather than
-      # about the rule. Every existing law sets it; only the error changes.
+      # about the law. Every existing law sets it; only the error changes.
       missing = %i[bad good fix].reject { |k| @h.key?(k) }
       raise ArgumentError, "#{@h[:id]}: missing #{missing.join(', ')}" unless missing.empty?
 
@@ -403,7 +403,7 @@ module Law
     }.freeze
 
     def render(full: false)
-      entries = Law.rules.values.sort_by { |rule| rule.id.to_s }.map(&:contract_entry)
+      entries = Law.definitions.values.sort_by { |rule| rule.id.to_s }.map(&:contract_entry)
       transformation_policy = Master.law("transformation_policy")
       laws = full ? entries : entries.map { |entry| entry.slice("id", "severity", "mode", "languages", "question") }
       JSON.pretty_generate(
@@ -417,7 +417,7 @@ module Law
     end
 
     def digest
-      entries = Law.rules.values.sort_by { |rule| rule.id.to_s }.map(&:contract_entry)
+      entries = Law.definitions.values.sort_by { |rule| rule.id.to_s }.map(&:contract_entry)
       contract_digest(entries, Master.law("transformation_policy"))
     end
 
@@ -441,8 +441,8 @@ module Law
 
     VERSION = 1
 
-    def rows(rules = Law.rules.values)
-      rules.sort_by { |rule| rule.id.to_s }.map do |rule|
+    def rows(definitions = Law.definitions.values)
+      definitions.sort_by { |rule| rule.id.to_s }.map do |rule|
         {
           "id" => rule.id.to_s,
           "scope" => rule.scope.to_s,
@@ -458,20 +458,20 @@ module Law
       end
     end
 
-    def validate!(rules = Law.rules.values)
-      raise ArgumentError, "rule index is empty" if rules.empty?
+    def validate!(definitions = Law.definitions.values)
+      raise ArgumentError, "rule index is empty" if definitions.empty?
 
-      ids = rules.map { |rule| rule.id.to_s }
+      ids = definitions.map { |rule| rule.id.to_s }
       duplicate = ids.tally.select { |_, count| count > 1 }.keys
       raise ArgumentError, "duplicate executable law ids: #{duplicate.join(', ')}" unless duplicate.empty?
 
-      invalid = rules.reject { |rule| Definition::LIFECYCLE_TRANSITIONS.key?(rule.lifecycle) }
+      invalid = definitions.reject { |rule| Definition::LIFECYCLE_TRANSITIONS.key?(rule.lifecycle) }
       raise ArgumentError, "invalid rule lifecycle: #{invalid.map(&:id).join(', ')}" unless invalid.empty?
 
-      invalid = rules.reject { |rule| %i[never review automatic].include?(rule.autofix) }
+      invalid = definitions.reject { |rule| %i[never review automatic].include?(rule.autofix) }
       raise ArgumentError, "invalid rule autofix policy: #{invalid.map(&:id).join(', ')}" unless invalid.empty?
 
-      automatic = rules.select { |rule| rule.autofix == :automatic && !rule.scannable? }
+      automatic = definitions.select { |rule| rule.autofix == :automatic && !rule.scannable? }
       unless automatic.empty?
         raise ArgumentError, "automatic autofix without deterministic detector: #{automatic.map(&:id).join(', ')}"
       end
@@ -479,11 +479,11 @@ module Law
       rows(rules)
     end
 
-    def render(rules = Law.rules.values)
+    def render(definitions = Law.definitions.values)
       entries = validate!(rules)
       JSON.pretty_generate(
         "index_version" => VERSION,
-        "rule_count" => entries.length,
+        "law_count" => entries.length,
         "universal_count" => entries.count { |entry| entry["law_scope"] == "universal" },
         "rules" => entries,
       )
@@ -496,7 +496,7 @@ module Law
   @law_sources = {}
   @law_stamps = {}
   class << self
-    attr_reader :rules
+    attr_reader :definitions
 
     def define(id, &block)
       b = Builder.new(id)
@@ -509,7 +509,7 @@ module Law
       files = Dir.glob(File.join(dir, "*.rb")).sort.map { |file| File.expand_path(file) }
       files.reject! { |file| file == File.expand_path(__FILE__) }
 
-      rules_before = @rules.dup
+      definitions_before = @rules.dup
       sources_before = @law_sources.dup
       stamps_before = @law_stamps.dup
 
@@ -534,7 +534,7 @@ module Law
       end
       @rules
     rescue StandardError
-      @rules = rules_before if defined?(rules_before)
+      @rules = definitions_before if defined?(definitions_before)
       @law_sources = sources_before if defined?(sources_before)
       @law_stamps = stamps_before if defined?(stamps_before)
       raise
