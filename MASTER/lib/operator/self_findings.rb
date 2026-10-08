@@ -51,8 +51,8 @@ module Operator
     # nowhere else, so five laws written for the face were enforced against no
     # file at all.
     TREES = %w[
-      MASTER/lib MASTER/law MASTER/tools MASTER/web RAILS/shared/lib OPENBSD
-      RAILS/amber RAILS/brgen RAILS/bsdports RAILS/shared/app RAILS/shared/config
+      MASTER/lib MASTER/law MASTER/tools MASTER/web RAILS/__shared/lib OPENBSD
+      RAILS/amber RAILS/brgen RAILS/bsdports RAILS/__shared/app RAILS/__shared/config
     ].freeze
 
     module_function
