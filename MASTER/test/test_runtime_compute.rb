@@ -68,7 +68,7 @@ class TestRuntimeCompute < Minitest::Test
     source = File.read(File.expand_path("../lib/runtime/compute.rb", __dir__))
 
     assert_includes source, "Ractor::Port"
-    assert_includes source, "Ractor.select(result_port"
+    assert_includes source, "result_port.receive"
     assert_includes source, "respond_to?(:join)"
     assert_includes source, "ractor_port_available?"
   end
