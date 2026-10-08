@@ -200,7 +200,7 @@ module Master
             ["ABSTRACTION", lambda { structural_findings(Rules::GodClassRule.new) + deploy_god_class_findings }],
             ["DENSITY", lambda { structural_findings(Rules::SmallFunctionsRule.new) + deploy_small_files_findings + face_pool_findings }],
             ["KERNEL_ADHERENCE", lambda { kernel_wiring_findings }],
-            ["PRINCIPLE_MAP", lambda { principle_map_findings }],
+            ["LAW_MAP", lambda { law_map_findings }],
           ]
         end
 
@@ -400,13 +400,13 @@ module Master
           findings
         end
 
-        def principle_map_findings
-          path = File.join(@root, "data", "principle_map.yml")
-          return [finding(path:, line: 1, message: "missing data/laws.yml#law_map")] unless File.file?(path)
+        def law_map_findings
+          path = File.join(@root, "data", "laws.yml")
+          return [] unless File.file?(path)
 
           map = Master::Ground::Map::LawMap.load(root: @root)
-          registered = Master::Review::Scan::Rule.registry.filter_map do |klass|
-            Master::Review::Scan::RuleFactory.registry_id(klass, root: @root)&.upcase
+          registered = Master::Review::Scan::Law.registry.filter_map do |klass|
+            Master::Review::Scan::LawFactory.registry_id(klass, root: @root)&.upcase
           end
           # A rule declared in laws.yml with no Ruby class is still a rule — 126
           # of the 227 are semantic-only. Checking a principle's rule_ids against
@@ -417,7 +417,7 @@ module Master
             finding(path:, line: 1, message: msg)
           end
         rescue StandardError => e
-          [finding(path:, line: 1, message: "principle_map integrity failed: #{e.class}: #{e.message}")]
+          [finding(path:, line: 1, message: "law_map integrity failed: #{e.class}: #{e.message}")]
         end
 
         def finding(path:, line:, message:)
