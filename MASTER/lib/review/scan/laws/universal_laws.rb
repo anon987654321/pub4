@@ -3,7 +3,7 @@
 module Master
   module Review
     module Scan
-      module Rules
+      module Laws
 
       # SQL strings embedded in Ruby DB adapter files are expected — only flag
       # actual mixed-medium template files.
