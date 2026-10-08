@@ -56,10 +56,10 @@ class TestReaders < Minitest::Test
   # underscore and every extension, and rendered with neither.
   def test_a_partial_rendered_by_name_is_found
     with_tree do |root|
-      write(root, "RAILS/shared/app/views/shared/_search_loading.html.erb", "<div></div>\n")
+      write(root, "RAILS/__shared/app/views/shared/_search_loading.html.erb", "<div></div>\n")
       write(root, "RAILS/brgen/app/views/posts/index.html.erb", %(<%= render "shared/search_loading" %>\n))
 
-      hits = find(root, "RAILS/shared/app/views/shared/_search_loading.html.erb")
+      hits = find(root, "RAILS/__shared/app/views/shared/_search_loading.html.erb")
 
       assert_includes hits.map(&:kind), :render
       assert_includes hits.map(&:path), "RAILS/brgen/app/views/posts/index.html.erb"
@@ -70,12 +70,12 @@ class TestReaders < Minitest::Test
   # it still breaks the build, so this cannot report zero.
   def test_a_file_only_a_test_asserts_is_not_unreferenced
     with_tree do |root|
-      write(root, "RAILS/shared/app/views/shared/_orphan.html.erb", "<div></div>\n")
+      write(root, "RAILS/__shared/app/views/shared/_orphan.html.erb", "<div></div>\n")
       write(root, "RAILS/test/deploy_gates_contract_test.rb", <<~RUBY)
         %w[_orphan.html.erb].each { |partial| assert File.exist?(partial) }
       RUBY
 
-      hits = find(root, "RAILS/shared/app/views/shared/_orphan.html.erb")
+      hits = find(root, "RAILS/__shared/app/views/shared/_orphan.html.erb")
 
       assert_includes hits.map(&:kind), :test,
                       "a test naming the file is the tripwire that fires on delete"
