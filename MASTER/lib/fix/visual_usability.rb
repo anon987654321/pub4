@@ -67,7 +67,7 @@ module Master
 
       def line(id)
         law = Law.rules[id.to_sym]
-        law ? "#{id}: #{law.ask} Fix: #{law.fix}" : "#{id}: #{axioms.fetch(id).fetch("principle")}"
+        law ? "#{id}: #{law.ask} Fix: #{law.fix}" : "#{id}: #{axioms.fetch(id).fetch("statement")}"
       end
     end
   end
