@@ -120,7 +120,7 @@ module Master
           findings = []
           walk = lambda do |node|
             return unless node
-            if node.is_a?(Prism::IfNode) && node.if_keyword.nil? && Rules.nested_ternary_branch?(node)
+            if node.is_a?(Prism::IfNode) && node.if_keyword.nil? && Laws.nested_ternary_branch?(node)
               findings << finding(line: node.location.start_line,
                 message: "nested ternary — expand to if/elsif/else or case")
             end
@@ -286,10 +286,10 @@ module Master
             code = lines[index + 1].to_s
             next if code.strip.empty? || code.strip.start_with?("#", "end")
 
-            said = Rules.content_words(line.sub(/^\s*#\s*/, ""))
+            said = Laws.content_words(line.sub(/^\s*#\s*/, ""))
             next if said.size < COMMENT_RESTATEMENT_FLOOR
 
-            shared = (said & Rules.content_words(code)).size
+            shared = (said & Laws.content_words(code)).size
             next if shared.to_f / said.size < COMMENT_RESTATEMENT_RATIO
 
             finding(line: index + 1,
