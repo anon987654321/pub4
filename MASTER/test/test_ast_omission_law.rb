@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-require "review/scan/rule_dsl"
+require "review/scan/law_dsl"
 
 # The rule asks CommitGuard which symbols a file has lost since recent commits
 # and turns each answer into a finding. Its own logic is the two guard clauses,
@@ -39,7 +39,7 @@ class TestAstOmissionRule < Minitest::Test
   end
 
   def rule_with(guard)
-    rule = Rules::AstOmissionRule.new(root: ROOT)
+    rule = Laws::AstOmissionRule.new(root: ROOT)
     rule.instance_variable_set(:@guard, guard)
     rule
   end
@@ -99,6 +99,6 @@ class TestAstOmissionRule < Minitest::Test
   # rule_deps orders by this string and the registry keys on it, so a rename
   # that misses either is a rule that quietly leaves the graph.
   def test_it_registers_under_the_id_the_dependency_graph_names
-    assert_equal "ast_omission", Rules::AstOmissionRule.new(root: ROOT).id.to_s
+    assert_equal "ast_omission", Laws::AstOmissionRule.new(root: ROOT).id.to_s
   end
 end
