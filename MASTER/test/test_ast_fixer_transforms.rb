@@ -675,7 +675,7 @@ class TestAstFixerTransforms < Minitest::Test
     Dir.mktmpdir do |dir|
       path = File.join(dir, "space.rb")
       File.write(path, "def call  \n  :ok\t\nend\n")
-      scanner = Master::Review::Scan::Scanner.new(rules: [rule("TRAILING_WHITESPACE")])
+      scanner = Master::Fix::Scanner.new(rules: [rule("TRAILING_WHITESPACE")])
 
       first_scan = scanner.scan(path)
       first_fix = Master::Review::Scan::AstFixer.fix(path, File.read(path, encoding: "UTF-8"))
