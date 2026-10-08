@@ -6,14 +6,14 @@
 pub4 is governed by MASTER, and MASTER's law is data, not prose. Read it before
 you write:
 
-1. `MASTER/data/soul.yml` — the kernel. Absolutes, work rules, anti-simulation.
-2. `MASTER/data/laws.yml` — the declared rule catalogue, in four scopes.
-3. `MASTER/law/*.rb` — the domain law, each rule carrying the example it must
-   flag and the one it must not. Those two examples are the rule.
-4. `MASTER/lib/review/scan/rules/*.rb` — the registry, the rest of the detectors.
+1. `MASTER/data/soul.yml` — the kernel. Absolutes, work laws, anti-simulation.
+2. `MASTER/data/laws.yml` — the canonical declared Law catalogue, in four scopes.
+3. `MASTER/law/*.rb` — the executable Law layer, each Law carrying the example it
+   must flag and the one it must spare.
+4. `MASTER/lib/review/scan/laws/*.rb` — the registry, the rest of the detectors.
 
 The authority order is one stack: `soul.yml` > `laws.yml` >
-executable law (`law/*.rb` and `lib/review/scan/rules/*.rb`) > repo harnesses
+executable law (`law/*.rb` and `lib/review/scan/laws/*.rb`) > repo harnesses
 (`CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, `.cursorlaws`,
 `.github/copilot-instructions.md`) > per-tree contracts. Executable law outranks
 every sentence written about it. Harness files route agents to the law; they never
