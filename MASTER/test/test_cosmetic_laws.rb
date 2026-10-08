@@ -68,7 +68,7 @@ class TestCosmeticRules < Minitest::Test
 
   # MEASURE_OPTIMUM lives once, in law/ — its scanner surface is the bridge.
   def test_measure_optimum_flags_wide_px
-    findings = Master::Review::Scan::Rules::LawBridgeRule.new
+    findings = Master::Review::Scan::Laws::LawBridgeLaw.new
       .check(".prose { max-width: 960px; }\n", path: "app.css")
       .select { |f| f[:rule] == "MEASURE_OPTIMUM" }
     refute_empty findings
