@@ -19,7 +19,7 @@ class TestInterconnectRule < Minitest::Test
     Dir.mktmpdir do |root|
       FileUtils.mkdir_p(File.join(root, "data"))
       files.each { |name, body| File.write(File.join(root, "data", name), body) }
-      yield Master::Review::Scan::Rules::InterconnectRule.new(root:), root
+      yield Master::Review::Scan::Laws::InterconnectRule.new(root:), root
     end
   end
 
