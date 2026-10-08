@@ -11,7 +11,7 @@ require "review/scan/rules/semantic_rules"
 
 class TestAdversarialRule < Minitest::Test
   def setup
-    @rule = Master::Review::Scan::Rules::AdversarialRule.new
+    @rule = Master::Review::Scan::Laws::AdversarialRule.new
   end
 
   def test_responds_to_check
@@ -28,7 +28,7 @@ class TestAdversarialRule < Minitest::Test
   def test_an_unexpected_model_failure_is_not_reported_as_clean
     agent = Object.new
     agent.define_singleton_method(:ask) { |_prompt, operation:| raise "upstream exploded" }
-    rule = Master::Review::Scan::Rules::AdversarialRule.new(agent:)
+    rule = Master::Review::Scan::Laws::AdversarialRule.new(agent:)
 
     assert_raises(RuntimeError) { rule.check("def foo; end", path: "foo.rb") }
   end
@@ -40,7 +40,7 @@ class TestAdversarialRule < Minitest::Test
       seen = [operation, Fiber[:master_no_tools]]
       "ISSUE:1:unused method"
     end
-    rule = Master::Review::Scan::Rules::AdversarialRule.new(agent:)
+    rule = Master::Review::Scan::Laws::AdversarialRule.new(agent:)
 
     findings = rule.check("def foo; end", path: "foo.rb")
 
