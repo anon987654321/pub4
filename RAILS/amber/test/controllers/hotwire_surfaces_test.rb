@@ -96,7 +96,7 @@ class HotwireSurfacesTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_includes response.body, 'data-controller="haptics"'
     assert_includes response.body, 'pointerdown->haptics#press'
-    assert_includes response.body, "items.worn_today"
+    assert_includes response.body, I18n.t("items.worn_today")
   end
 
   test "user show hides another wardrobe that is not public" do
