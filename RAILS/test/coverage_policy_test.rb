@@ -67,7 +67,7 @@ class CoveragePolicyTest < Minitest::Test
     source = File.read(File.join(ROOT, "bin", "premerge"))
 
     assert_includes source, 'group: :coverage'
-    assert_includes source, 'else %i[apps coverage gates]'
+    assert_includes source, 'else %i[apps contracts coverage gates]'
     assert_includes source, 'elsif ARGV.include?("--coverage") then [:coverage]'
     assert_includes source, 'elsif ARGV.include?("--gates") then [:gates]'
   end
