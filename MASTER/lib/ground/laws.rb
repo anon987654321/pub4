@@ -6,13 +6,13 @@ module Master
     class Rules
       # Pure data-accessor readers over the loaded YAML — kept in a separate
       # module so NO_GOD_CLASS's AST-based public-method count only sees
-      # Rules' own lookup/parsing methods, not this passthrough layer.
+      # Laws' own lookup/parsing methods, not this passthrough layer.
       # `workflow` (the whole limits.yml hash) and `workflow_rule(key)` (a generic
       # reader for any key in it) both lived here with zero call sites, and between
       # them they made 29 unread keys in that file look reachable. Deleted with the
       # split — see data/limits.yml. A generic accessor over a data file is how a
       # file stops having readers one can name.
-      module RuleAccessors
+      module LawAccessors
         def voice
           payload = data(:voice)
           payload["voice"] || {}
@@ -43,8 +43,8 @@ module Master
 
         # From law/, the one registry. soul carried absolute.rules until the
         # `conduct` kind let a rule about how to work be a Law like any other.
-        def rules
-          @rules ||= begin
+        def laws
+          @laws ||= begin
             require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
             ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.rules.empty?
             ::Law.rules.values.to_h { |r| [r.id.to_s, (r.practice || r.fix).to_s.gsub(/\s+/, " ").strip] }.freeze
@@ -57,8 +57,8 @@ module Master
         def languages_config = laws_data["languages"] || {}
       end
       # Markdown block rendering for system-prompt injection — a rendering
-      # concern separate from Rules' own lookup/parsing responsibility.
-      module RulePromptBlocks
+      # concern separate from Laws' own lookup/parsing responsibility.
+      module LawPromptBlocks
         def kernel_block
           return if kernel.empty?
 
@@ -75,8 +75,8 @@ module Master
         end
       end
 
-      include RuleAccessors
-      include RulePromptBlocks
+      include LawAccessors
+      include LawPromptBlocks
 
       DATA_ALIASES = {
         workflow: %w[limits workflow],
