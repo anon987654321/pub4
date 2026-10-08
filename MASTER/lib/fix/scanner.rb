@@ -11,7 +11,8 @@ require_relative "../review/scan/engines/transport"
 require_relative "../review/scan/mechanical_autofix"
 
 module Master
-  class Scanner
+  module Fix
+    class Scanner
         include Master::Review::Scan::ProgressReporter
         include Master::Review::Scan::Transport
 
