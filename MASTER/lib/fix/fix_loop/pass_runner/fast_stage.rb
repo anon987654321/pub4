@@ -75,7 +75,7 @@ module Master
             rel_root = root == @root ? "." : root.delete_prefix("#{@root}/")
             Master::Trace::Dmesg.status(FAST_STAGE_UNIT, "rubocop autocorrect, #{Master::Trace::Dmesg.counted(files.size, "file")} in #{rel_root}")
             autocorrect = ENV["MASTER_AUTOFIX"] == "1" ? "-A" : "-a"
-            out, _err, status = Master::Io::Exec.capture3(Operator::RubyRunner.bundle_cmd(root:), "exec", "rubocop", autocorrect, "--no-color",
+            out, _err, status = Master::Io::Exec.capture3(::Operator::RubyRunner.bundle_cmd(root:), "exec", "rubocop", autocorrect, "--no-color",
                                                           "--format", "json", *files, chdir: root)
             report = JSON.parse(out.to_s)
             rows = report.fetch("files", [])
