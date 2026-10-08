@@ -137,6 +137,18 @@ class GitOperationsTest < Minitest::Test
     refute @git.dirty?(".")
   end
 
+  def test_commit_normalizes_subject_case_prefix_and_layout
+    write("lib/style.rb", "# style\n")
+
+    @git.commit(
+      "fix:  remove   noisy title.\n\nThe body states only what changed.",
+      paths: ["lib/style.rb"]
+    )
+
+    assert_equal "Remove noisy title", sh("git", "log", "-1", "--format=%s", chdir: @repo).strip
+    assert_includes sh("git", "log", "-1", "--format=%B", chdir: @repo), "The body states only what changed."
+  end
+
   # The index is shared with every session in the checkout: a path someone else
   # staged, and a file nobody named, both stay out of the commit.
   def test_commit_takes_only_the_named_paths
