@@ -44,8 +44,8 @@ class TestSelfTest < Minitest::Test
       result = Master::Review::Scan::SelfTest.new(root:).call
       singularity = result.value!.checks.find { |check| check.law == "SINGULARITY" }
 
-      assert singularity.findings.any? { |finding| finding[:message].include?("duplicate rule id DUPLICATE_RULE") }
-      refute singularity.findings.any? { |finding| finding[:message].include?("duplicate rule id DUPLICATE_PATTERN") }
+      assert singularity.findings.any? { |finding| finding[:message].include?("duplicate law id DUPLICATE_RULE") }
+      refute singularity.findings.any? { |finding| finding[:message].include?("duplicate law id DUPLICATE_PATTERN") }
     end
   end
 
@@ -90,7 +90,7 @@ class TestSelfTest < Minitest::Test
       File.write(File.join(root, "data", "two.yml"), "alpha:\n  two: true\n")
 
       findings = Master::Review::Scan::SelfTest.new(root:).data_singularity_findings
-      refute findings.any? { |finding| finding[:path].include?("/data/rules/") }
+      refute findings.any? { |finding| finding[:path].include?("/data/laws/") }
     end
   end
 
@@ -176,7 +176,7 @@ class TestSelfTest < Minitest::Test
         end
       end
     RUBY
-    File.write(File.join(root, "lib", "judge", "scan", "rules", "sample_rule.rb"), <<~RUBY)
+    File.write(File.join(root, "lib", "review", "scan", "laws", "sample_law.rb"), <<~RUBY)
       class SampleRule
       end
     RUBY
