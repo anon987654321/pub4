@@ -92,6 +92,9 @@ module Master
         end
 
         def promote(ctx, hit, locale)
+          guard = constitutional_guard(hit[:command], hit[:args], hit[:msg])
+          return guard if guard.is_a?(Master::Result::Err)
+
           publish_infer(hit[:command], hit[:args], hit[:msg], hit[:confidence], locale)
           remember_inference(hit[:command], hit[:args])
           Result.ok(ctx.merge(
