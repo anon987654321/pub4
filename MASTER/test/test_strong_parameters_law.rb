@@ -10,7 +10,7 @@ class TestStrongParametersRule < Minitest::Test
   CONTROLLER = "/repo/app/controllers/users_controller.rb"
 
   def scanner
-    @scanner ||= Master::Review::Scan::InfraHelpers.build_scanner(root: Master::ROOT)
+    @scanner ||= Master::Fix::Scanner.build(root: Master::ROOT)
   end
 
   def rule
