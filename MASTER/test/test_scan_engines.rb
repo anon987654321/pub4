@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-require "review/scan/scanner"
+require "fix/scanner"
 
 # The scanner's supporting engines, first tested here: SourceMasking's
 # length-preserving blanks (a finding's line and column must still point at the
@@ -84,7 +84,7 @@ class TestScanEngines < Minitest::Test
     assert PF.skip_path?("/repo/RAILS/brgen/app/assets/builds/application.css", root:)
     assert PF.skip_path?("/repo/RAILS/__shared/public/swiper-bundle.min.css", root:)
     assert PF.skip_path?("/repo/MASTER/tools/dilla/scratch/venv/x.py", root:)
-    refute PF.skip_path?("/repo/MASTER/lib/review/scan/scanner.rb", root:)
+    refute PF.skip_path?("/repo/MASTER/lib/fix/scanner.rb", root:)
     refute PF.skip_path?("/repo/RAILS/brgen/db/seeds.rb", root:)
   end
 
