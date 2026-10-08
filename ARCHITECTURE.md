@@ -128,14 +128,14 @@ The current migration is deliberately incremental inside pub4. The old pub5 expe
 
 Runtime code does not require sibling implementation files. MASTER's observation and gate tooling may read sibling source as evidence, but it does not become a product dependency.
 
-RAILS keeps brgen, amber and bsdports as ordinary Rails applications. Cross-tree product calls use explicit adapters under `RAILS/contracts/`.
+RAILS keeps brgen, amber and bsdports as ordinary Rails applications. Cross-tree product calls use explicit adapters under `MASTER/contracts/`.
 
-MASTER ingress is represented by `RAILS/contracts/master_client.rb`. Studio execution paths are represented by `RAILS/contracts/studio.rb`. These adapters expose the boundary; they do not load sibling internals.
+MASTER ingress is represented by `MASTER/contracts/master_client.rb`. Studio execution paths are represented by `MASTER/contracts/studio.rb`. These adapters expose the boundary; they do not load sibling internals.
 
 Dilla child-process options live under `STUDIO/dilla/lib/process_spawn.rb`, so Studio's musical runtime is independent of MASTER's process-control namespace.
 
 
-The current boundary is executable: MASTER may invoke STUDIO through the explicit media entrypoints, RAILS crosses to MASTER through the ingress contract and to STUDIO through `RAILS/contracts/studio.rb`, and neither product tree imports sibling implementation files.
+The current boundary is executable: MASTER may invoke STUDIO through the explicit media entrypoints, RAILS crosses to MASTER through the ingress contract and to STUDIO through `MASTER/contracts/studio.rb`, and neither product tree imports sibling implementation files.
 
 STUDIO media ownership includes `dilla/`, `postpro/`, `replicate/`, `lora/`, and `visual/generators/`. `STUDIO/photograph.rb` is the canonical image/short-film entrypoint.
 
