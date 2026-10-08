@@ -116,12 +116,17 @@ module Master
           candidates: @file_collector.candidate_count,
           collected: files.size,
           skipped: @file_collector.skipped,
+          blocking_skips: @file_collector.respond_to?(:blocking_skips) ? @file_collector.blocking_skips : {},
         }
         @bus&.publish("fix_loop:corpus", target:, **coverage)
         Master::Trace::Dmesg.status(
           "fix0",
           "corpus candidates=#{coverage[:candidates]} collected=#{coverage[:collected]} skipped=#{coverage[:skipped]}",
         )
+        unless coverage[:blocking_skips].empty?
+          detail = coverage[:blocking_skips].map { |reason, count| "#{reason}=#{count}" }.join(", ")
+          return Result.err("fix_loop: uninspectable inputs remain: #{detail}", category: :validation)
+        end
         if coverage[:candidates].positive? && files.empty?
           reasons = @file_collector.skip_reasons.sort_by { |reason, count| [-count, reason] }
           detail = reasons.first(4).map { |reason, count| "#{reason}=#{count}" }.join(", ")
