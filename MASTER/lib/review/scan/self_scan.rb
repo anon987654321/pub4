@@ -72,7 +72,7 @@ module Master
 
         def rule_count
           return @rules.size if @rules
-          return @scanner.rules.size if @scanner.respond_to?(:rules)
+          return @scanner.laws.size if @scanner.respond_to?(:rules)
 
           0
         end
