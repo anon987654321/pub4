@@ -66,10 +66,10 @@ class CritiqueImplementationTest < Minitest::Test
 
   def test_brgen_post_sketch_is_a_compact_reading_unit
     post = read("brgen/app/views/posts/_post.html.erb")
-    card = read("shared/app/views/shared/_post_card.html.erb")
-    css = read("shared/app/assets/stylesheets/_minimal.scss")
+    card = read("__shared/app/views/shared/_post_card.html.erb")
+    css = read("__shared/app/assets/stylesheets/_minimal.scss")
     feed = read("brgen/lib/brgen/home_feed.rb")
-    affiliate = read("shared/app/views/shared/_affiliate_feed_unit.html.erb")
+    affiliate = read("__shared/app/views/shared/_affiliate_feed_unit.html.erb")
     home_feed = read("brgen/app/views/home/_live_search_results.html.erb")
 
     assert_includes post, 'render "shared/post_embed_action"'
@@ -87,7 +87,7 @@ class CritiqueImplementationTest < Minitest::Test
 
   def test_brgen_post_detail_uses_the_shared_vote_rail_beside_the_title
     show = read("brgen/app/views/posts/show.html.erb")
-    partial = read("shared/app/views/shared/_post_vote_rail.html.erb")
+    partial = read("__shared/app/views/shared/_post_vote_rail.html.erb")
     stream = read("brgen/app/views/votes/create.turbo_stream.erb")
 
     assert_includes show, 'class="post-reading-layout"'
@@ -106,7 +106,7 @@ class CritiqueImplementationTest < Minitest::Test
     window = read("brgen/app/views/conversations/show.html.erb")
     channel = read("brgen/app/views/channels/show.html.erb")
     css = read("brgen/app/assets/stylesheets/application.scss")
-    artifact = read("shared/app/views/shared/_messenger_artifacts.html.erb")
+    artifact = read("__shared/app/views/shared/_messenger_artifacts.html.erb")
 
     assert_includes rooms, 'class="messenger-rail"'
     assert_includes rooms, 'class="messenger-inbox"'
@@ -131,7 +131,7 @@ class CritiqueImplementationTest < Minitest::Test
   end
   def test_amber_flash_uses_shared_semantic_signal
     flash = read("amber/app/views/shared/_flash.html.erb")
-    signal = read("shared/app/views/shared/_system_signal.html.erb")
+    signal = read("__shared/app/views/shared/_system_signal.html.erb")
 
     assert_includes flash, 'render "shared/system_signal"'
     assert_includes flash, 'state:, classes: ["flash", "flash--#{type}"], content:'
@@ -140,9 +140,9 @@ class CritiqueImplementationTest < Minitest::Test
   end
 
   def test_shared_yep_search_and_affiliate_pens_are_restored
-    search = read("shared/app/assets/stylesheets/_search_yep.scss")
-    affiliate = read("shared/app/views/shared/_affiliate_feed_unit.html.erb")
-    affiliate_css = read("shared/app/assets/stylesheets/_affiliate_feed_unit.scss")
+    search = read("__shared/app/assets/stylesheets/_search_yep.scss")
+    affiliate = read("__shared/app/views/shared/_affiliate_feed_unit.html.erb")
+    affiliate_css = read("__shared/app/assets/stylesheets/_affiliate_feed_unit.scss")
     brgen_css = read("brgen/app/assets/stylesheets/application.scss")
 
     assert_includes search, "width: 480px;"
@@ -159,8 +159,8 @@ class CritiqueImplementationTest < Minitest::Test
   end
 
   def test_yep_search_is_the_shared_rails_search_default
-    shared_stack = read("shared/app/assets/stylesheets/_stack.scss")
-    brgen_stack = read("shared/app/assets/stylesheets/_stack_brgen.scss")
+    shared_stack = read("__shared/app/assets/stylesheets/_stack.scss")
+    brgen_stack = read("__shared/app/assets/stylesheets/_stack_brgen.scss")
     amber = read("amber/app/assets/stylesheets/application.scss")
     bsdports = read("bsdports/app/assets/stylesheets/application.scss")
     brgen = read("brgen/app/assets/stylesheets/application.scss")
@@ -262,7 +262,7 @@ class CritiqueImplementationTest < Minitest::Test
     form = read("brgen/app/views/posts/new.html.erb")
     controller = read("shared/frontend/post_progressive_controller.js")
     boot = read("shared/frontend/stimulus_boot_social.js")
-    importmap = read("shared/config/importmap_baseline.rb")
+    importmap = read("__shared/config/importmap_baseline.rb")
     css = read("brgen/app/assets/stylesheets/application.scss")
 
     assert_includes form, 'post-progressive'
@@ -295,7 +295,7 @@ class CritiqueImplementationTest < Minitest::Test
   end
 
   def test_shared_post_card_does_not_silently_rescue_post_routes
-    card = read("shared/app/views/shared/_post_card.html.erb")
+    card = read("__shared/app/views/shared/_post_card.html.erb")
 
     refute_includes card, "post_path(post) rescue nil"
     assert_includes card, "respond_to?(:post_path)"
@@ -356,7 +356,7 @@ class CritiqueImplementationTest < Minitest::Test
 
   def test_amber_post_like_uses_shared_feed_action_anatomy
     button = read("amber/app/views/posts/_like_button.html.erb")
-    icons = read("shared/app/views/shared/_feed_icon.html.erb")
+    icons = read("__shared/app/views/shared/_feed_icon.html.erb")
 
     assert_includes button, 'class: "feed-action"'
     assert_includes button, 'aria: { label: t("post.like_count", count: post.likes_count) }'
