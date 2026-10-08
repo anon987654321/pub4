@@ -18,12 +18,12 @@ module Master
         CONFIG_EXTENSIONS = %w[.rb .rake .yml .yaml .json].freeze
         STALE_PATHS = %w[RAILS/shared RAILS/mobile RAILS/visual_contract RAILS/contracts RAILS/brgen/engines].freeze
 
-        # [path, rule_id, message, related_paths] for every actionable structural finding.
+        # [path, law_id, message, related_paths] for every actionable structural finding.
         def self.structural_findings(target)
-          rules = structural_rules(target)
+          laws = structural_laws(target)
           local = tracked(target).flat_map do |path|
             code = File.read(path, encoding: "UTF-8")
-            rules.flat_map { |rule| rule.check(code, path:) }.map { |f| [path, f[:rule].to_s, f[:message].to_s, []] }
+            laws.flat_map { |rule| rule.check(code, path:) }.map { |f| [path, f[:rule].to_s, f[:message].to_s, []] }
           rescue StandardError => e
             Master::Ground::Swallow.log(e, context: "restructure.findings", path:)
             []
@@ -198,7 +198,7 @@ module Master
               end
             end
         end
-        def self.structural_rules(target)
+        def self.structural_laws(target)
           scan = Master::Review::Scan
           scan::LawDSL
           js = scan::Law.registry.find { |klass| klass.name.nil? && klass.new.id == "JS_MODULE_SIZE" }
