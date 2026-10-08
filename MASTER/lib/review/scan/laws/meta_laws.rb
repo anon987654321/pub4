@@ -3,10 +3,10 @@
 module Master
   module Review
     module Scan
-      module Rules
+      module Laws
       # Detects methods/classes/modules present in recent git history but absent now.
       # Wraps CommitGuard as a standard scan Rule so it runs in the scanner pipeline.
-        class AstOmissionRule < Rule
+        class AstOmissionLaw < Law
           def self.auto_build? = false
 
           declare id: "ast_omission", severity: :warning, tags: %i[COMPLETENESS],
@@ -41,7 +41,7 @@ module Master
         end
 
         # Every Rule subclass must have a matching test file; gaps mean untested enforcement.
-        class RuleCoverageRule < Rule
+        class LawCoverageLaw < Law
           def self.auto_build? = false
 
           declare id: "rule_coverage", severity: :warning, tags: %i[TEST_COVERAGE],
@@ -58,7 +58,7 @@ module Master
           #
           # It used to require the path end `_rule.rb` and look for
           # `<base>_test.rb`. One file in sixteen ends `_rule.rb`; the rest are
-          # `*_rules.rb` and hold nearly every rule there is. And MASTER names
+          # `*_laws.rb` and hold nearly every rule there is. And MASTER names
           # tests `test_<base>.rb`, 283 files to 1, so the glob described a
           # convention this tree does not use. Over all sixteen files it
           # produced one finding, and `test/test_law_bridge_rule.rb` existed.
@@ -89,7 +89,7 @@ module Master
           # so only the class-name needle ever did any work and the id half of
           # this rule was dead from the day it was written.
           def subclasses(code)
-            code.enum_for(:scan, /^\s*class (\w+Rule) < Rule\b/).map do
+            code.enum_for(:scan, /^\s*class (\w+Rule) < Law\b/).map do
               name = Regexp.last_match(1)
               [name, code[Regexp.last_match.end(0), 2000][/declare\s+id:\s*["']([\w.]+)["']/, 1]]
             end
@@ -116,7 +116,7 @@ module Master
         end
 
         # Runtime authority lives in YAML — not markdown under data/.
-        RuleDSL.rule :RUNTIME_DOCS_YAML,
+        LawDSL.rule :RUNTIME_DOCS_YAML,
           severity: :error,
           tags: %i[CONSTITUTION DOCS],
           applies_to: %i[markdown],
@@ -167,7 +167,7 @@ module Master
           end
         end
 
-        class LearnedSmellsRule < Rule
+        class LearnedSmellsRule < Law
           declare id: "LEARNED_SMELLS", severity: :warning, tags: %i[LEARNED_SMELLS SESSION],
                   description: "session-learned smell patterns from laws.yml"
 
@@ -208,9 +208,9 @@ module Master
               next if line.match?(/scan:\s*intentional\b/)
               next unless line.match?(pattern)
 
-              rule_id = smell["id"].to_s
+              law_id = smell["id"].to_s
               Finding.build(
-                rule: rule_id.empty? ? @id : rule_id,
+                law: law_id.empty? ? @id : law_id,
                 message: smell_message(smell),
                 line: line_number,
                 severity: smell_severity(smell),
@@ -336,7 +336,7 @@ module Master
         # root is found by what makes it Rails — config/application.rb, or a
         # lib/*/engine.rb — rather than by a directory named app, so a plain
         # Ruby tree with its own app/ is still judged.
-        class FileSprawlRule < Rule
+        class FileSprawlLaw < Law
           TINY_CODE_LINES = 25
           SKIP_RE = %r{/(?:law|core|test|spec|fixtures|templates|node_modules)/|/web/public/}
           RAILS_NAMED = %r{\A(?:app|config|db)/|\Alib/[^/]+/(?:engine|version)\.rb\z}
@@ -435,7 +435,7 @@ module Master
         # Reported per directory rather than per file, because the fix is one
         # entry, not one per member. Scratch and generated trees are out of
         # scope: they are working residue, not structure.
-        class PathPurposeRule < Rule
+        class PathPurposeLaw < Law
           SKIP_RE = %r{/(?:test|spec|fixtures|node_modules|vendor|tmp|log|scratch|frames?_|renders?)/|/\.}
           def self.auto_build? = false
 
@@ -458,7 +458,7 @@ module Master
               # An unreadable ownership file must not retire the whole corpus:
               # returning [] here makes every path look owned and the scan
               # reports the tree clean having judged nothing.
-              Master::Ground::Swallow.log(e, context: "PathPurposeRule.owned",
+              Master::Ground::Swallow.log(e, context: "PathPurposeLaw.owned",
                                             severity: :load_bearing, path: File.join(@root, "PATH_OWNERSHIP.yml"))
               []
             end
