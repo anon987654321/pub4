@@ -118,7 +118,7 @@ class TestDillaMusicalGrammar < Minitest::Test
     assert_equal first, second
     assert_operator first.fetch(:void), :>, 0
     assert_operator first.fetch(:density), :>, 0
-    assert first.fetch(:response).in?([:question, :answer])
+    assert_includes %i[question answer], first.fetch(:response)
   end
 
   def test_beauty_timing_gives_each_drum_voice_a_different_personality
