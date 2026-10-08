@@ -7,7 +7,7 @@ require "test_helper"
 # timed-out waiter's ensure deleted the holder's lock on its way out.
 class ScanFileLockTest < Minitest::Test
   def setup
-    @processor = Master::Review::Scan::FileProcessor.new
+    @processor = Master::Fix::Scan::FileProcessor.new
     @target = File.join(Dir.mktmpdir("scan-lock"), "subject.rb")
     File.write(@target, "x = 1\n")
   end
@@ -57,7 +57,7 @@ class ScanFileLockTest < Minitest::Test
     stub_const_timeout(0.1) do
       lock do
         waiter = Thread.new do
-          other = Master::Review::Scan::FileProcessor.new
+          other = Master::Fix::Scan::FileProcessor.new
           assert_raises(RuntimeError) { other.send(:with_file_lock, @target) { flunk "entered a held lock" } }
         end
         waiter.join
@@ -69,7 +69,7 @@ class ScanFileLockTest < Minitest::Test
   private
 
   def stub_const_timeout(seconds)
-    klass = Master::Review::Scan::FileProcessor
+    klass = Master::Fix::Scan::FileProcessor
     original = klass::LOCK_TIMEOUT
     klass.send(:remove_const, :LOCK_TIMEOUT)
     klass.const_set(:LOCK_TIMEOUT, seconds)
