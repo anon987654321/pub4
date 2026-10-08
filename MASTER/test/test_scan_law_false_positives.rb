@@ -12,7 +12,7 @@ require_relative "test_helper"
 # directions: the false positive is gone AND the real violation still fires.
 class TestScanRuleFalsePositives < Minitest::Test
   def scanner
-    @scanner ||= Master::Review::Scan::InfraHelpers.build_scanner(root: Master::ROOT)
+    @scanner ||= Master::Fix::Scanner.build(root: Master::ROOT)
   end
 
   def rule(id)
