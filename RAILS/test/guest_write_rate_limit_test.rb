@@ -44,7 +44,7 @@ class GuestWriteRateLimitTest < Minitest::Test
     @controllers ||= Dir[
       File.join(RAILS_ROOT, "{brgen,amber,bsdports}/app/controllers/**/*.rb"),
       File.join(RAILS_ROOT, "brgen/engines/*/app/controllers/**/*.rb"),
-      File.join(RAILS_ROOT, "shared/app/controllers/**/*.rb")
+      File.join(RAILS_ROOT, "__shared/app/controllers/**/*.rb")
     ].sort
   end
 
