@@ -2,7 +2,7 @@
 
 require_relative "test_helper"
 require "review/scan/rule_dsl"
-require "review/scan/infra_helpers"
+require "fix/scanner"
 require "cli/pipeline/pass"
 
 # `bin/gate` calls /scan its lexical tier, and its own header says what that
