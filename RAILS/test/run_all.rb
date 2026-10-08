@@ -32,6 +32,7 @@
 #
 # Exit status is the number of failing files, capped at 255.
 
+require "digest"
 require "open3"
 require "rbconfig"
 require "timeout"
@@ -45,6 +46,7 @@ module Operator
     # high because four of them shell out to the gate runner, which is slow and
     # is a separate problem from this one.
     TIMEOUT = Integer(ENV.fetch("CONTRACT_TIMEOUT", "300"))
+    REPLAY = Integer(ENV.fetch("CONTRACT_REPLAY", "0")).clamp(0, 5)
 
     Outcome = Struct.new(:file, :status, :runs, :assertions, :failures, :output)
 
@@ -69,7 +71,26 @@ module Operator
         return 1
       end
 
-      outcomes = list.map { |path| report(execute(path)) }
+      outcomes = list.map do |path|
+        outcome = execute(path, seed: replay_seed(path, 0))
+        if outcome.status == :pass && REPLAY.positive?
+          REPLAY.times do |index|
+            replay = execute(path, seed: replay_seed(path, index + 1))
+            next if replay.status == :pass
+
+            outcome = Outcome.new(
+              rel(path),
+              :flake,
+              outcome.runs,
+              outcome.assertions,
+              outcome.failures + replay.failures,
+              "initial run passed, replay #{index + 1} did not:\n#{replay.output}"
+            )
+            break
+          end
+        end
+        report(outcome)
+      end
       summarise(outcomes)
       outcomes.count { |outcome| outcome.status != :pass }.clamp(0, 255)
     end
@@ -81,11 +102,17 @@ module Operator
     # MT_NO_PLUGINS so a globally installed Minitest plugin cannot change what
     # this observes; -I so a file can require_relative its subject the way the
     # app tests do.
-    def execute(path)
+    def replay_seed(path, index)
+      Digest::SHA256.hexdigest("#{rel(path)}:#{index}").then { |hex| hex[0, 8].to_i(16) }
+    end
+
+    def execute(path, seed: nil)
       env = { "MT_NO_PLUGINS" => "1" }
+      command = [RbConfig.ruby, "-I#{TEST_DIR}", path]
+      command.concat(["--seed", seed.to_s]) if seed
       out = nil
       status = nil
-      Open3.popen2e(env, RbConfig.ruby, "-I#{TEST_DIR}", path, chdir: RAILS_ROOT, pgroup: true) do |stdin, io, thread|
+      Open3.popen2e(env, *command, chdir: RAILS_ROOT, pgroup: true) do |stdin, io, thread|
         stdin.close
         begin
           Timeout.timeout(TIMEOUT) do
@@ -111,7 +138,7 @@ module Operator
       Outcome.new(rel(path), state, runs.to_i, assertions.to_i, failures.to_i + errors.to_i, out.to_s)
     end
 
-    MARK = { pass: "ok  ", fail: "FAIL", timeout: "HUNG" }.freeze
+    MARK = { pass: "ok  ", fail: "FAIL", timeout: "HUNG", flake: "FLAKE" }.freeze
 
     def report(outcome)
       @io.puts(format("contracts: %s %-56s %4d runs, %5d assertions",
