@@ -74,7 +74,7 @@ module Master
         return if path.empty? || law.empty?
 
         impacted = [path, *Array(related)].map(&:to_s).reject(&:empty?).uniq.first(MAX_FILES)
-        [path, rule, message.to_s, impacted]
+        [path, law, message.to_s, impacted]
       end
 
       def components(rows)
@@ -117,7 +117,7 @@ module Master
           .uniq
           .sort_by { |operation| operation_position(operation) }
 
-        rules = group.map { |_path, law, _message, _related| law }.uniq
+        laws = group.map { |_path, law, _message, _related| law }.uniq
         id_source = [files, rules, group.map { |path, law, message, _| [path, law, message] }].inspect
         id = Digest::SHA256.hexdigest(id_source)[0, 10]
 
@@ -135,7 +135,7 @@ module Master
                  elsif files.size > 1
                    "#{group.size} findings share an affected file set"
                  else
-                   "one structural signal with #{files.size} affected file(s)"
+                   "one law signal with #{files.size} affected file(s)"
                  end
 
         Problem.new(
