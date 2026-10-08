@@ -1,0 +1,50 @@
+/* Shared interaction craft. These are opt-in physical cues, not a new visual theme. */
+
+.interaction-press {
+  touch-action: manipulation;
+  transition:
+    transform var(--duration-m3-short) var(--ease-m3-spring),
+    opacity var(--transition-fast) var(--ease-out);
+}
+
+.interaction-press:active {
+  transform: scale(0.985);
+}
+
+.interaction-success {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
+  flex: 0 0 auto;
+}
+
+.interaction-success__mark {
+  inline-size: 100%;
+  block-size: 100%;
+  overflow: visible;
+}
+
+.interaction-success__check {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.25;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 24;
+  stroke-dashoffset: 24;
+}
+
+.interaction-success[data-state="success"] .interaction-success__check {
+  animation: interaction-success-check var(--duration-m3-short) var(--ease-m3-spring) forwards;
+}
+
+@keyframes interaction-success-check {
+  to { stroke-dashoffset: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .interaction-success[data-state="success"] .interaction-success__check {
+    stroke-dashoffset: 0;
+  }
+}

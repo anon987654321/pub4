@@ -165,3 +165,29 @@ Law.define(:CAPABILITY_STATUS_MUST_BE_TRUTHFUL) do
       text.match?(/["']ready["']/)
   end
 end
+
+
+Law.define(:SIGNATURE_MOMENT) do
+  source "Interaction design — distinctive, frequent, functional moments"
+  severity :info
+  mode :opportunity
+  languages %i[html javascript css scss]
+  path "RAILS/"
+  ask "Does this product surface have one deliberately distinctive interaction that users encounter often, improves the task rather than merely decorating it, matches the product's character, and remains effortless and accessible? Return CLEAN when an existing interaction already serves this role."
+  fix "Choose one existing high-frequency interaction and give it immediate, restrained, distinctive feedback. Do not invent a feature solely for delight, duplicate the pattern elsewhere, or make motion or haptics the only signal."
+  bad "Add a decorative animation with no relationship to the user's action."
+  good "Make one frequent action produce immediate visual state, optional tactile feedback, and a clear success or failure result."
+end
+
+Law.define(:DIRECT_MANIPULATION_FEEDBACK) do
+  source "Direct manipulation — immediate perceptual feedback"
+  severity :warning
+  mode :opportunity
+  languages %i[html javascript css scss]
+  path "RAILS/"
+  ask "When a user directly presses, drags, swipes, or dismisses something, does the interface acknowledge that input immediately rather than waiting for a delayed release or network result? Check pointer, keyboard, touch, visual state, and failure recovery together."
+  fix "Respond at input start with a small state change, keep the gesture tied to the pointer while it moves, and retain a non-motion keyboard equivalent. Do not make the early feedback imply success before the action is actually committed."
+  bad "click -> request -> finally show any indication that the press happened"
+  good "pointerdown/active -> immediate press state; commit -> explicit success or failure state"
+end
+

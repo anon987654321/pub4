@@ -48,6 +48,7 @@ export default class extends Controller {
     this.startY = event.clientY ?? event.touches?.[0]?.clientY ?? 0
     this.currentY = this.startY
     this.sheetTarget.style.transition = "none"
+    if (event.pointerId != null) this.sheetTarget.setPointerCapture?.(event.pointerId)
   }
 
   pointerMove(event) {
@@ -58,10 +59,13 @@ export default class extends Controller {
     this.sheetTarget.style.transform = `translateY(${offset}%)`
   }
 
-  pointerUp() {
+  pointerUp(event) {
     if (!this.dragging) return
     this.dragging = false
     this.sheetTarget.style.transition = ""
+    if (event?.pointerId != null && this.sheetTarget.hasPointerCapture?.(event.pointerId)) {
+      this.sheetTarget.releasePointerCapture(event.pointerId)
+    }
     const delta = this.currentY - this.startY
     if (delta > 80) this.levelValue = Math.max(0, this.levelValue - 1)
     else if (delta < -80) this.levelValue = Math.min(2, this.levelValue + 1)

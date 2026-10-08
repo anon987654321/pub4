@@ -39,7 +39,13 @@ $base: true !default;
   font-weight: var(--weight-bold);
   text-decoration: none;
   cursor: pointer;
-  transition: opacity var(--transition-fast) var(--ease-out), background 160ms var(--ease-out), border-color 160ms var(--ease-out), color 160ms var(--ease-out), transform var(--duration-m3-short) var(--ease-m3-spring);
+  touch-action: manipulation;
+  transition:
+    opacity var(--transition-fast) var(--ease-out),
+    background var(--transition-fast) var(--ease-out),
+    border-color var(--transition-fast) var(--ease-out),
+    color var(--transition-fast) var(--ease-out),
+    transform var(--duration-m3-short) var(--ease-m3-spring);
 }
 }
 

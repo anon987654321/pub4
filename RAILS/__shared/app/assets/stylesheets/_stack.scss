@@ -5,6 +5,7 @@
 @forward "post_voting";
 @forward "layout_chrome";
 @forward "animations";
+@forward "interaction_craft";
 // Immediately before components, and that is a cascade position rather than an
 // alphabetical one: _components's forced-colors block ties with `.btn` at 0-1-0
 // and has to keep the later word.

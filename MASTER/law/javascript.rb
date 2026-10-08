@@ -129,3 +129,29 @@ Law.define(:NO_WEBGL_GLOW_PASS) do
   bad  "    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending"
   good "    transparent: true, depthWrite: false"
 end
+
+
+Law.define(:TACTILE_FEEDBACK) do
+  source "Haptic interaction feedback — optional secondary signal"
+  severity :info
+  mode :opportunity
+  languages %i[javascript]
+  path "RAILS/"
+  ask "When haptic feedback is used, is it attached to a meaningful user action or threshold, fired at the start of direct manipulation when appropriate, gracefully unavailable, power-conscious, and never the only confirmation?"
+  fix "Keep haptics short and optional, trigger them only for meaningful interactions, suppress them when the page is hidden or the device is power-constrained, and preserve a visible or semantic equivalent."
+  bad "navigator.vibrate([100,100,100,100,100]) for every hover or pointermove"
+  good "pointerdown → brief tick; commit → success pattern; unsupported or suppressed → visible feedback remains"
+end
+
+Law.define(:POINTER_FEEDBACK_EARLY) do
+  source "Pointer Events — early input acknowledgement"
+  severity :info
+  mode :opportunity
+  languages %i[javascript]
+  path "RAILS/"
+  ask "Does a direct-manipulation interaction acknowledge pointer input at pointerdown or an equivalent active state instead of making a click handler carry all perceived responsiveness? Preserve keyboard and assistive-technology behavior."
+  fix "Move only the immediate acknowledgement to pointerdown/active state; leave the actual command and confirmation semantics on the existing action path."
+  bad "button.addEventListener('click', showPressedState)"
+  good "button.addEventListener('pointerdown', showPressedState)"
+end
+

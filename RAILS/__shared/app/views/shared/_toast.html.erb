@@ -1,6 +1,14 @@
 <%# data-turbo-temporary keeps a toast out of Turbo's page cache, so a back
     button does not replay a confirmation that already left. %>
-<% classes = ["toast", local_assigns[:variant] ? "toast--#{local_assigns[:variant]}" : nil].compact.join(" ") %>
+<% variant = local_assigns[:variant].to_s %>
+<% classes = ["toast", variant.present? ? "toast--#{variant}" : nil].compact.join(" ") %>
 <div class="<%= classes %>" role="status" aria-live="polite" data-controller="toast" data-toast-delay-value="<%= local_assigns.fetch(:delay, 4000) %>" data-turbo-temporary>
-  <%= local_assigns[:message] %>
+  <% if variant == "success" %>
+    <span class="interaction-success" data-state="success" aria-hidden="true">
+      <svg class="interaction-success__mark" viewBox="0 0 24 24">
+        <path class="interaction-success__check" d="M5 12.5 10 17l9-10"></path>
+      </svg>
+    </span>
+  <% end %>
+  <span><%= local_assigns[:message] %></span>
 </div>

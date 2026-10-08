@@ -269,3 +269,29 @@ Law.define(:NAVIGATION_CONTINUITY) do
   bad "navigate_to(result); reset_all_page_state"
   good "navigate_to(result); preserve_context"
 end
+
+
+Law.define(:INTERACTION_PERFORMANCE) do
+  source "Web rendering performance — compositor-safe interaction motion"
+  severity :warning
+  mode :opportunity
+  languages %i[css scss]
+  path "RAILS/"
+  ask "Does frequent interaction motion stay on transform and opacity where possible, avoid layout properties such as top/width/height, and avoid permanent will-change or expensive visual effects?"
+  fix "Animate transform and opacity for interaction feedback; let layout properties remain stable, and add will-change only around a measured animation boundary when it removes a real hitch."
+  bad ".card { transition: width 300ms, top 300ms; }"
+  good ".card { transition: transform var(--duration-m3-short) var(--ease-m3-spring), opacity var(--transition-fast) var(--ease-out); }"
+end
+
+Law.define(:STATE_CHOREOGRAPHY) do
+  source "Interaction feedback — loading, success and failure are observable states"
+  severity :warning
+  mode :opportunity
+  languages %i[html css scss javascript]
+  path "RAILS/"
+  ask "Does an action expose a coherent state sequence such as idle → working → success/failure, with the final state remaining understandable after motion stops? Do not rely on color, motion, or a short-lived flash as the only evidence."
+  fix "Give each important action an explicit state, choreograph its transition with the shared motion tokens, and keep a static success or failure representation for reduced motion."
+  bad "Tap Pay; briefly spin; disappear with no persistent result."
+  good "Tap Pay → working state → self-drawing success mark or persistent failure state; all meanings remain available without motion."
+end
+

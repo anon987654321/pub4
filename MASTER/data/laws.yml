@@ -1703,15 +1703,20 @@ law_map:
     ux_laws:
     - cross_platform_consistency
     - direct_manipulation
+    - input_responsiveness
     - fittss_law
     - intuitive_navigation
     - learnability
     - mental_models
     - motion_provides_meaning
+    - interaction_performance
     - peak_end_rule
     - platform_consistency
     - responsive_animation
+    - state_choreography
     - system_status_visibility
+    - tactile_feedback
+    - signature_moment
     - teslers_law
     - von_restorff_effect
     refactoring:
@@ -2364,11 +2369,26 @@ law_map:
       severity: medium
       confidence: 0.75
       operation: simplify
-      law_ids: []
-      status: gap
+      law_ids:
+      - DIRECT_MANIPULATION_FEEDBACK
+      status: covered
+      root: reach
       tags:
       - ux_laws
       source: master.yml@30dad7ead
+
+    input_responsiveness:
+      meaning: 'Direct input receives immediate perceptual acknowledgement'
+      detects: delayed_feedback
+      severity: medium
+      confidence: 0.8
+      operation: improve
+      law_ids:
+      - POINTER_FEEDBACK_EARLY
+      status: covered
+      root: visible_state
+      tags:
+      - ux_laws
     direct_nature_connection:
       meaning: 'Visual and physical access to natural elements  '
       detects: artificial_environment
@@ -3614,12 +3634,26 @@ law_map:
       severity: medium
       confidence: 0.75
       operation: simplify
-      law_ids: []
-      status: gap
-      root: no_surplus
+      law_ids:
+      - STATE_CHOREOGRAPHY
+      status: covered
+      root: visible_state
       tags:
       - ux_laws
       source: master.yml@30dad7ead
+
+    interaction_performance:
+      meaning: 'Frequent interaction motion stays composited and bounded'
+      detects: costly_motion
+      severity: medium
+      confidence: 0.8
+      operation: optimize
+      law_ids:
+      - INTERACTION_PERFORMANCE
+      status: covered
+      root: bounded_load
+      tags:
+      - ux_laws
     mottainai:
       meaning: regret over waste, respect for resources
       detects: wasteful_code
@@ -4205,8 +4239,11 @@ law_map:
       severity: medium
       confidence: 0.75
       operation: simplify
-      law_ids: []
-      status: gap
+      law_ids:
+      - DIRECT_MANIPULATION_FEEDBACK
+      - INTERACTION_PERFORMANCE
+      status: covered
+      root: reach
       tags:
       - ux_laws
       source: master.yml@30dad7ead
@@ -4588,23 +4625,51 @@ law_map:
       severity: medium
       confidence: 0.75
       operation: simplify
-      law_ids: []
-      status: gap
+      law_ids:
+      - STATE_CHOREOGRAPHY
+      status: covered
       root: visible_state
       tags:
       - ux_laws
       source: master.yml@30dad7ead
+
+    state_choreography:
+      meaning: 'Important actions expose stable loading, success and failure states'
+      detects: transient_feedback
+      severity: medium
+      confidence: 0.8
+      operation: improve
+      law_ids:
+      - STATE_CHOREOGRAPHY
+      status: covered
+      root: visible_state
+      tags:
+      - ux_laws
     tactile_surfaces:
       meaning: 'Physical qualities in digital space  '
       detects: unclear_intent
       severity: medium
       confidence: 0.75
       operation: add_whitespace
-      law_ids: []
-      status: gap
+      law_ids:
+      - TACTILE_FEEDBACK
+      status: covered
       root: visible_state
       tags:
       - aesthetic
+
+    tactile_feedback:
+      meaning: 'Optional haptics reinforce meaningful actions without carrying their meaning alone'
+      detects: missing_tactile_feedback
+      severity: low
+      confidence: 0.7
+      operation: improve
+      law_ids:
+      - TACTILE_FEEDBACK
+      status: covered
+      root: visible_state
+      tags:
+      - ux_laws
     tell_dont_ask:
       meaning: command objects rather than querying them
       detects: feature_envy
@@ -4980,6 +5045,18 @@ law_map:
   
   # The eleven root definitions the entries' root: fields reference — folded
   # from data/principle_roots.yml (no reader of its own; the map is the reader).
+    signature_moment:
+      meaning: 'One distinctive, useful interaction carries the product character'
+      detects: generic_interaction
+      severity: low
+      confidence: 0.65
+      operation: improve
+      law_ids:
+      - SIGNATURE_MOMENT
+      status: covered
+      root: stewardship
+      tags:
+      - ux_laws
   roots:
     one_source:
       law: every fact has exactly one definition
