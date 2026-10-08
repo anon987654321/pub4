@@ -31,7 +31,7 @@ daemon="/bin/ksh"
 # Mac) from a silent rewrite into a startup error that says which gem disagrees —
 # which is the failure this box should have, because the rewrite was papering over
 # a lock that does not describe what is installed here.
-daemon_flags="-c 'cd /home/dev/pub4/MASTER/web && set -a && . /etc/master.env && set +a && export PATH=/usr/local/bin:/usr/bin:/bin LANG=C.UTF-8 LC_ALL=C.UTF-8 RAILS_ENV=production CACHE_VERSION=${CACHE_VERSION} SECRET_KEY_BASE_DUMMY=1 BUNDLE_FROZEN=true && exec /usr/local/bin/bundle40 exec falcon serve -n ${FALCON_WORKERS:-1} --health-check-timeout 300 --bind http://127.0.0.1:${PORT}'"
+daemon_flags="-c 'cd /home/dev/pub4/RAILS/master_web && set -a && . /etc/master.env && set +a && export PATH=/usr/local/bin:/usr/bin:/bin LANG=C.UTF-8 LC_ALL=C.UTF-8 RAILS_ENV=production CACHE_VERSION=${CACHE_VERSION} SECRET_KEY_BASE_DUMMY=1 BUNDLE_FROZEN=true && exec /usr/local/bin/bundle40 exec falcon serve -n ${FALCON_WORKERS:-1} --health-check-timeout 300 --bind http://127.0.0.1:${PORT}'"
 # Prod safety flags (MASTER_SAFE_MODE etc.) live in /etc/master.env (see master.env.sample).
 # rc.d sets a minimal set; env can override for the face runtime. See DeployPaths and
 # MASTER/data/limits.yml for resource budgets on 1GB VPS.
@@ -62,7 +62,7 @@ daemon_flags="-c 'cd /home/dev/pub4/MASTER/web && set -a && . /etc/master.env &&
 # and dev is still nopass root. This closes the REMOTE path, which is the one an
 # attacker reaches.
 daemon_user="master"
-daemon_execdir="/home/dev/pub4/MASTER/web"
+daemon_execdir="/home/dev/pub4/RAILS/master_web"
 daemon_logger="daemon.notice"
 daemon_timeout="300"
 . /etc/rc.d/rc.subr
@@ -79,7 +79,7 @@ rc_pre() {
   # deploy cannot rewrite. vps_deploy_master.sh installs both bundles as dev; a
   # failed check here is logged by name so the restart that follows a drifted
   # lock says why, instead of healing it in a way nothing records.
-  for _gemfile in /home/dev/pub4/MASTER/web/Gemfile /home/dev/pub4/MASTER/Gemfile; do
+  for _gemfile in /home/dev/pub4/RAILS/master_web/Gemfile /home/dev/pub4/MASTER/Gemfile; do
     (cd "${_gemfile%/Gemfile}" && BUNDLE_GEMFILE="$_gemfile" BUNDLE_WITHOUT=development:test bundle40 check >/dev/null 2>&1) ||
       logger -t master "bundle40 check failed for $_gemfile — run vps-deploy master as dev to install"
   done
@@ -88,16 +88,16 @@ rc_pre() {
   pkill -f "/home/dev/pub4/MASTER/bin/tts-worker" 2>/dev/null
   rm -f /home/dev/pub4/MASTER/.master/tts.sock /home/dev/pub4/MASTER/.master/tts-0.sock /home/dev/pub4/MASTER/.master/tts-1.sock 2>/dev/null || true
   # Propshaft must not re-digest public/assets/ (nested assets/assets wedges boot).
-  rm -rf /home/dev/pub4/MASTER/web/public/assets/assets 2>/dev/null || true
+  rm -rf /home/dev/pub4/RAILS/master_web/public/assets/assets 2>/dev/null || true
   _face_ok=1
-  for _f in /home/dev/pub4/MASTER/web/public/face.js /home/dev/pub4/MASTER/web/public/face.modules.bundle.js /home/dev/pub4/MASTER/web/public/face_vision.bundle.js; do
+  for _f in /home/dev/pub4/RAILS/master_web/public/face.js /home/dev/pub4/RAILS/master_web/public/face.modules.bundle.js /home/dev/pub4/RAILS/master_web/public/face_vision.bundle.js; do
     [[ -f "$_f" ]] || _face_ok=0
   done
   if [[ "$_face_ok" = "0" ]]; then
-    (cd /home/dev/pub4/MASTER/web && RAILS_ENV=production bundle40 exec rails assets:build_face_runtime assets:build_face_modules_bundle assets:build_face_vision_bundle) 2>/dev/null || true
+    (cd /home/dev/pub4/RAILS/master_web && RAILS_ENV=production bundle40 exec rails assets:build_face_runtime assets:build_face_modules_bundle assets:build_face_vision_bundle) 2>/dev/null || true
   fi
-  _manifest=/home/dev/pub4/MASTER/web/public/assets/.manifest.json
-  _stamp=/home/dev/pub4/MASTER/web/tmp/.assets_precompile_stamp
+  _manifest=/home/dev/pub4/RAILS/master_web/public/assets/.manifest.json
+  _stamp=/home/dev/pub4/RAILS/master_web/tmp/.assets_precompile_stamp
   # Every asset the chat shell loads comes from web/config/face_assets.yml via
   # face_asset_paths.rb, so a new face module is covered the moment it is added
   # to the manifest. The hand-maintained list this replaces covered 23 of 38
@@ -106,7 +106,7 @@ rc_pre() {
   # silently skipped with a stale fingerprint. The tail below is the non-asset
   # inputs (stylesheet, service worker, the views themselves), which the
   # manifest does not and should not describe.
-  _face_assets=$(cd /home/dev/pub4/MASTER/web && ruby40 script/face_asset_paths.rb 2>/dev/null)
+  _face_assets=$(cd /home/dev/pub4/RAILS/master_web && ruby40 script/face_asset_paths.rb 2>/dev/null)
   _face_assets_rc=$?
   _force_precompile=0
   if [[ "$_face_assets_rc" != "0" ]] || [[ -z "$_face_assets" ]]; then
@@ -121,13 +121,13 @@ rc_pre() {
     _force_precompile=1
   fi
   _digest=$(cksum $_face_assets \
-    /home/dev/pub4/MASTER/web/public/face.part*.txt \
-    /home/dev/pub4/MASTER/web/public/face.css \
-    /home/dev/pub4/MASTER/web/public/face.js \
-    /home/dev/pub4/MASTER/web/public/face.modules.bundle.js \
-    /home/dev/pub4/MASTER/web/public/sw.js \
-    /home/dev/pub4/MASTER/web/app/views/shared/_face_boot.html.erb \
-    /home/dev/pub4/MASTER/web/app/views/chat/index.html.erb 2>/dev/null | cksum)
+    /home/dev/pub4/RAILS/master_web/public/face.part*.txt \
+    /home/dev/pub4/RAILS/master_web/public/face.css \
+    /home/dev/pub4/RAILS/master_web/public/face.js \
+    /home/dev/pub4/RAILS/master_web/public/face.modules.bundle.js \
+    /home/dev/pub4/RAILS/master_web/public/sw.js \
+    /home/dev/pub4/RAILS/master_web/app/views/shared/_face_boot.html.erb \
+    /home/dev/pub4/RAILS/master_web/app/views/chat/index.html.erb 2>/dev/null | cksum)
   _skip=0
   if [[ "$_force_precompile" = "0" ]] && [[ -f "$_manifest" ]] && [[ -f "$_stamp" ]] && [[ "$(cat "$_stamp" 2>/dev/null)" = "$_digest" ]]; then
     _skip=1
@@ -138,16 +138,16 @@ rc_pre() {
     # stamp-equals-digest, one failure then made every later start skip
     # precompile as well. Nothing retries until an input file changes.
     #
-    # Measured 2026-08-13 on vm23: MASTER/web had no public/assets directory at
+    # Measured 2026-08-13 on vm23: RAILS/master_web had no public/assets directory at
     # all, a stamp from that day's deploy, and /health reporting
     # face_runtime_digest: null — the field the deploy-confidence playbook says
     # to check. It stayed invisible because public/ is served undigested, so the
     # face kept working while every fingerprinted asset was missing.
-    if (cd /home/dev/pub4/MASTER/web && RAILS_ENV=production bundle40 exec rails assets:precompile) 2>/dev/null; then
+    if (cd /home/dev/pub4/RAILS/master_web && RAILS_ENV=production bundle40 exec rails assets:precompile) 2>/dev/null; then
       if [[ "$_force_precompile" = "1" ]]; then
         logger -t master "precompiled but stamp not written: the digest was computed without the manifest list and would license a skip"
       else
-        mkdir -p /home/dev/pub4/MASTER/web/tmp
+        mkdir -p /home/dev/pub4/RAILS/master_web/tmp
         echo "$_digest" > "$_stamp"
       fi
     else
@@ -160,24 +160,24 @@ rc_pre() {
   _gate=/home/dev/pub4/MASTER/gates/runner.rb
   _gate_name=master_web_assets
   if [[ -f "$_gate" ]]; then
-    _gate_out=$(cd /home/dev/pub4/MASTER/web && RAILS_ENV=production bundle40 exec ruby "$_gate" "$_gate_name" 2>&1)
+    _gate_out=$(cd /home/dev/pub4/RAILS/master_web && RAILS_ENV=production bundle40 exec ruby "$_gate" "$_gate_name" 2>&1)
     _gate_rc=$?
     if [[ "$_gate_rc" != "0" ]]; then
       logger -t master "assets gate failed, forcing fresh precompile and retrying once: $_gate_out"
       # Same rule as the stamp above, and this is the path where breaking it
       # hurts most: the gate has already said the assets are wrong, so stamping
       # a precompile that failed makes every later start skip the retry.
-      if (cd /home/dev/pub4/MASTER/web && RAILS_ENV=production bundle40 exec rails assets:precompile) 2>/dev/null; then
+      if (cd /home/dev/pub4/RAILS/master_web && RAILS_ENV=production bundle40 exec rails assets:precompile) 2>/dev/null; then
         if [[ "$_force_precompile" = "1" ]]; then
           logger -t master "retry precompiled but stamp not written: narrowed digest"
         else
-          mkdir -p /home/dev/pub4/MASTER/web/tmp
+          mkdir -p /home/dev/pub4/RAILS/master_web/tmp
           echo "$_digest" > "$_stamp"
         fi
       else
         logger -t master "retry precompile failed — stamp not written, the gate below decides the start"
       fi
-      _gate_out=$(cd /home/dev/pub4/MASTER/web && RAILS_ENV=production bundle40 exec ruby "$_gate" "$_gate_name" 2>&1)
+      _gate_out=$(cd /home/dev/pub4/RAILS/master_web && RAILS_ENV=production bundle40 exec ruby "$_gate" "$_gate_name" 2>&1)
       _gate_rc=$?
       if [[ "$_gate_rc" != "0" ]]; then
         logger -t master "CRITICAL: assets gate still failing after retry, refusing to start with broken assets: $_gate_out"
@@ -236,7 +236,7 @@ if [[ "$1" = "start" ]] || [[ "$1" = "restart" ]]; then
     if [[ "$_tts_warm_ok" = "0" ]]; then
       logger -t master "CRITICAL: TTS sockets missing after ensure_daemon (check .master/tts-worker-*.log)"
     fi
-    ruby40 /home/dev/pub4/MASTER/web/script/probe_http 2>/dev/null || logger -t master "probe_http failed after restart"
+    ruby40 /home/dev/pub4/RAILS/master_web/script/probe_http 2>/dev/null || logger -t master "probe_http failed after restart"
   fi
 fi
 # rc_pre touched the deploy flag; it comes off here, after the /up, ping and TTS
