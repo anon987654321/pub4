@@ -47,6 +47,7 @@ export default class extends Controller {
     this.targetRotation = 0
     this.pointerActive = false
     this.reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ?? false
+    this.attentionTurn = 0
     this.points = this.buildPoints()
     this.resizeObserver = new ResizeObserver(() => this.resize())
     this.resizeObserver.observe(this.element)
@@ -92,6 +93,7 @@ export default class extends Controller {
     this.images.clear()
     cancelAnimationFrame(this.raf)
     cancelAnimationFrame(this.trackFrame)
+    window.clearTimeout(this.attentionTimer)
     this.canvas?.remove()
   }
 
@@ -105,10 +107,21 @@ export default class extends Controller {
 
   onMannequinChange = (event) => {
     this.setItems(event.detail?.zones || event.detail || {})
+    this.attendToChange()
   }
 
   onSlide = (event) => {
     this.setItems(event.detail?.zones || event.detail || {})
+    this.attendToChange()
+  }
+
+  attendToChange() {
+    if (this.reducedMotion) return
+    this.attentionTurn = 0.1
+    window.clearTimeout(this.attentionTimer)
+    this.attentionTimer = window.setTimeout(() => {
+      this.attentionTurn = 0
+    }, 300)
   }
 
   onTrackScroll() {
@@ -230,7 +243,10 @@ export default class extends Controller {
   frame = () => {
     const now = performance.now()
     if (!this.reducedMotion) {
-      if (!this.pointerActive) this.targetRotation = Math.sin(now * 0.00012) * 0.08
+      if (!this.pointerActive) {
+        const idleTurn = Math.sin(now * 0.00012) * 0.08
+        this.targetRotation = this.attentionTurn || idleTurn
+      }
       this.rotation += (this.targetRotation - this.rotation) * 0.055
     } else {
       this.rotation = 0
