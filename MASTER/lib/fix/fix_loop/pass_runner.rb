@@ -393,7 +393,7 @@ module Master
 
             @law_recurrence.delete(law_id)
             sample = found.select { |v| v[:law].to_s == law_id }.first(5)
-            @bus&.publish("fix_loop:soul_proposal", root: @root, law: rule_id, sample:)
+            @bus&.publish("fix_loop:soul_proposal", root: @root, law: law_id, sample:)
           end
           (@law_recurrence.keys - tally.keys).each { |key| @law_recurrence.delete(key) }
         end
