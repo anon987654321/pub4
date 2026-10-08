@@ -45,5 +45,6 @@ end
 
 if $PROGRAM_NAME == __FILE__
   require "time"
-  exit Operator::SprawlPlan.run(write: ARGV.include?("--write"))
+  Operator::SprawlPlan.run(write: ARGV.include?("--write"))
+  exit 0
 end
