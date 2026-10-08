@@ -12,7 +12,7 @@ module Master
         def accepted? = accepted == true
       end
 
-      # law/law.rb proves ~118 rule fixtures at load, so it is required lazily
+      # law/definition.rb proves ~118 rule fixtures at load, so it is required lazily
       # by whoever first needs Law::Contract rather than eagerly at boot — the
       # same idiom lib/ground/laws.rb and every other Law caller in this tree
       # already follows.
