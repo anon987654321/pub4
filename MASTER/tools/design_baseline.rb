@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# The layout campaign's ratchet: MASTER's design rules measured over RAILS,
+# The layout campaign's ratchet: MASTER's design laws measured over RAILS,
 # per app, held by a ceiling that only descends.
 #
 # The 2026-08-21 campaign took the design findings from ~1,700 to the numbers
@@ -23,10 +23,10 @@ module Operator
     RAILS_ROOT = File.expand_path("../../RAILS", __dir__)
     CEILING = File.join(MASTER_ROOT, "data", "design_baseline.yml")
 
-    # The rules that judge layout, markup shape, and typography — the set the
-    # campaign measured. Info-tier markup-idiom rules (PREFER_TAG_HELPERS,
+    # The laws that judge layout, markup shape, and typography — the set the
+    # campaign measured. Info-tier markup-idiom laws (PREFER_TAG_HELPERS,
     # TAG_HELPER_OVER_MARKUP) are excluded: their thousand-finding backlog is
-    # a campaign of its own and would drown movement in the rules that matter.
+    # a campaign of its own and would drown movement in the laws that matter.
     DESIGN_RULES = %w[
       SEMANTIC_ELEMENTS MOBILE_FIRST NO_IMPORTANT MAGIC_COLOR MEASURE_OPTIMUM
       CLAMP_TYPOGRAPHY LOGICAL_PROPERTIES TYPOGRAPHY_DISCIPLINE
@@ -46,18 +46,18 @@ module Operator
       files.each do |file|
         src = File.read(file, encoding: "UTF-8")
         app = app_for(file)
-        scanner.rules.each do |rule|
+        scanner.laws.each do |law|
           hits = begin
-            rule.check(src, path: file) || []
+            law.check(src, path: file) || []
           rescue StandardError => e
-            # A broken rule must not silently shrink the baseline: the scan
+            # A broken law must not silently shrink the baseline: the scan
             # continues, the breakage is on the record.
-            warn "design_baseline: #{rule.id} raised on #{file}: #{e.class}"
+            warn "design_baseline: #{law.id} raised on #{file}: #{e.class}"
             []
           end
           hits.each do |hit|
-            id = (hit.respond_to?(:[]) ? hit[:rule] : nil).to_s
-            id = rule.id.to_s if id.empty? || id == "law_bridge"
+            id = (hit.respond_to?(:[]) ? hit[:law] : nil).to_s
+            id = law.id.to_s if id.empty? || id == "law_bridge"
             tally[app] += 1 if DESIGN_RULES.include?(id.upcase)
           end
         end
@@ -98,18 +98,18 @@ module Operator
       recorded = ceilings
       recorded_total = recorded.fetch("total", nil)
 
-      # The recorded rule set is read back, not just written. A baseline counted
-      # against a different set of rules than the one running is a number about
+      # The recorded law set is read back, not just written. A baseline counted
+      # against a different set of laws than the one running is a number about
       # nothing — and until this read existed, `rule_ceilings` was a key with a
       # writer and no reader, which is the defect this repo has most of.
       recorded_rules = Array(recorded["rule_ceilings"])
       # Compared as sets, not as arrays: data/design_baseline.yml stores the
-      # list unsorted, so a plain == reported a changed rule set with an empty
-      # added/removed diff — a verdict about ordering, not about the rules.
+      # list unsorted, so a plain == reported a changed law set with an empty
+      # added/removed diff — a verdict about ordering, not about the laws.
       unless recorded_rules.empty? || recorded_rules.sort == DESIGN_RULES.sort
         added = DESIGN_RULES.sort - recorded_rules
         gone = recorded_rules - DESIGN_RULES.sort
-        puts "design_baseline: rule set has changed since the baseline was recorded — " \
+        puts "design_baseline: law set has changed since the baseline was recorded — " \
              "#{"added #{added.join(', ')}" unless added.empty?}" \
              "#{" removed #{gone.join(', ')}" unless gone.empty?}; re-record with --ratchet"
       end
