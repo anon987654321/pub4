@@ -19,7 +19,7 @@ module Master
         rule_lineage(key) ||
           design_law(key) ||
           law(key) ||
-          # The declared rule first: it carries tier and name, and registry_rule
+          # The declared rule first: it carries tier and name, and registry_law
           # borrows the executable law's fix when the declaration has none. An
           # executable law answers for the ids nothing declared.
           registry_law(key) ||
@@ -60,14 +60,14 @@ module Master
       end
 
       # Master.load_laws, not a private re-read. This method used to load
-      # laws.yml and then overwrite base["rules"] with its own copy of the
+      # laws.yml and then overwrite base["laws"] with its own copy of the
       # shard-merge loop — a second implementation of Master.load_laws living
       # two directories away. When the shards were folded into laws.yml on
       # 2026-08-12 that copy started returning {} and assigning it over the real
       # rules, so /why went silent for every registry and scan rule while
       # reporting nothing wrong.
       def laws
-        @rules ||= Master.load_laws(root: @root)
+        @laws ||= Master.load_laws(root: @root)
       end
 
       def soul
@@ -128,7 +128,7 @@ module Master
 
       def soul_law(key)
         slug = key.upcase.tr("-", "_")
-        # law/ holds every rule now, so /why answers for conduct rules too —
+        # law/ holds every Law now, so /why answers for conduct Laws too —
         # it dug soul and returned nothing for NO_COLUMN_ALIGN and FLAT_UI.
         hit = Master::Ground::Laws.new.laws[slug] or return
         ["constitutional law: #{slug}", "  #{hit}"].join("\n")
