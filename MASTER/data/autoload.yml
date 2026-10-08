@@ -38,23 +38,23 @@ autoload:
     # Master::CLI::Pipeline::Pass -- pass_result.rb holds its Result value type.
     - cli/pipeline/pass_result.rb
     # Master::Review::Scan::Laws -- each file uses LawDSL.law calls into the
-    # shared registry, not a constant of its own. The structural_rules
-    # DIRECTORY beside structural_rules.rb does autoload.
-    - review/scan/laws/cosmetic_rules.rb
-    - review/scan/laws/external_linter_rules.rb
-    - review/scan/laws/graph_rules.rb
-    - review/scan/laws/js_rules.rb
-    - review/scan/laws/lexical_rules.rb
-    - review/scan/laws/meta_rules.rb
-    - review/scan/laws/naming_rules.rb
-    - review/scan/laws/ruby_rules.rb
-    - review/scan/laws/semantic_rules.rb
-    - review/scan/laws/structural_question_rules.rb
-    - review/scan/laws/structural_rules.rb
-    - review/scan/laws/surface_rules.rb
-    - review/scan/laws/universal_rules.rb
-    - review/scan/laws/web_rules.rb
-    - review/scan/laws/yaml_bridge_rules.rb
+    # shared registry, not a constant of its own. The structural_laws
+    # DIRECTORY beside structural_laws.rb does autoload.
+    - review/scan/laws/cosmetic_laws.rb
+    - review/scan/laws/external_linter_laws.rb
+    - review/scan/laws/graph_laws.rb
+    - review/scan/laws/js_laws.rb
+    - review/scan/laws/lexical_laws.rb
+    - review/scan/laws/meta_laws.rb
+    - review/scan/laws/naming_laws.rb
+    - review/scan/laws/ruby_laws.rb
+    - review/scan/laws/semantic_laws.rb
+    - review/scan/laws/structural_question_laws.rb
+    - review/scan/laws/structural_laws.rb
+    - review/scan/laws/surface_laws.rb
+    - review/scan/laws/universal_laws.rb
+    - review/scan/laws/web_laws.rb
+    - review/scan/laws/yaml_bridge_laws.rb
     # Master::Review::Scan -- the scanner's three engines, split by concern and
     # required by scanner.rb. The directory groups them; it is not a namespace,
     # and each file declares the constant one level up.
