@@ -14,7 +14,7 @@ require "review/scan/law_dsl"
 # is everything that can be pinned without one, which is everything the rule
 # itself decides.
 class TestAstOmissionRule < Minitest::Test
-  Rules = Master::Review::Scan::Rules
+  Rules = Master::Review::Scan::Laws
   ROOT = "/repo"
 
   Omission = Struct.new(:type, :name, :last_seen_at)
@@ -39,7 +39,7 @@ class TestAstOmissionRule < Minitest::Test
   end
 
   def rule_with(guard)
-    rule = Laws::AstOmissionRule.new(root: ROOT)
+    rule = Laws::AstOmissionLaw.new(root: ROOT)
     rule.instance_variable_set(:@guard, guard)
     rule
   end
@@ -99,6 +99,6 @@ class TestAstOmissionRule < Minitest::Test
   # rule_deps orders by this string and the registry keys on it, so a rename
   # that misses either is a rule that quietly leaves the graph.
   def test_it_registers_under_the_id_the_dependency_graph_names
-    assert_equal "ast_omission", Laws::AstOmissionRule.new(root: ROOT).id.to_s
+    assert_equal "ast_omission", Laws::AstOmissionLaw.new(root: ROOT).id.to_s
   end
 end
