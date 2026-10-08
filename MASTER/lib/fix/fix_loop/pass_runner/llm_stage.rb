@@ -35,7 +35,7 @@ module Master
             findings.each do |finding|
               break if Time.now >= deadline
 
-              rule = Wishlist::Law.new(Wishlist::LAW_ID)
+              law = Wishlist::Law.new(Wishlist::LAW_ID)
               proposal = finding[:wishlist_proposal] || {}
               loop = LawLoop.new(
                 law:, agent: @agent, scanner: @scanner, root: @root, bus: @bus,
