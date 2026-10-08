@@ -24,7 +24,7 @@ module Master
             else
               Master::ROOT
             end
-            Law.load_all(File.join(law_root, "law")) if Law.rules.empty?
+            Law.load_all(File.join(law_root, "law")) if Law.definitions.empty?
           end
 
           def check(code, path:)
@@ -33,7 +33,7 @@ module Master
             # runs Law.conduct at the one read site, so every rule — this
             # bridge and the registry classes alike — sees fixtures and
             # detectors as declarations, not conduct.
-            Law.rules.each_value.flat_map do |rule|
+            Law.definitions.each_value.flat_map do |law|
               next [] unless rule.enforceable?
               next [] unless rule.applies?(path, lang)
 
