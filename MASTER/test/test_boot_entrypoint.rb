@@ -18,6 +18,10 @@ class TestBootEntrypoint < Minitest::Test
     assert_match(/require "bundler\/setup"/, SOURCE)
   end
 
+  def test_json_is_not_loaded_before_bundler_activation
+    assert_equal -1, SOURCE.index('require "json"')
+  end
+
   def test_lockfile_bundler_version_is_read_from_the_master_lock
     Dir.mktmpdir("master-entrypoint") do |root|
       File.write(File.join(root, "Gemfile.lock"), <<~LOCK)
