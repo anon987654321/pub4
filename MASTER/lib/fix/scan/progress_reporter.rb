@@ -14,7 +14,7 @@ module Master
         def reset_scan_progress(total, unit: nil, laws: [])
           @scan_unit_seq = (@scan_unit_seq || -1) + 1
           name = unit || @through_scan_unit || "scan#{@scan_unit_seq}"
-          law_unit = "rules#{@scan_unit_seq}"
+          law_unit = "laws#{@scan_unit_seq}"
           @scan_progress = {
             total:,
             done: 0,
@@ -90,12 +90,12 @@ module Master
             sp[:violations] = sp[:violations].to_i + count
             sp[:dirty_files] = sp[:dirty_files].to_i + 1 if count.positive?
             tally_law_hits(sp, law_hits)
-            [sp[:done], sp[:total], sp[:violations], sp[:dirty_files], sp[:rules].sort_by { |_, n| -n }.first(6)]
+            [sp[:done], sp[:total], sp[:violations], sp[:dirty_files], sp[:laws].sort_by { |_, n| -n }.first(6)]
           end
         end
 
         def tally_law_hits(sp, law_hits)
-          law_hits.each { |rid| sp[:rules][rid.upcase] += 1 }
+          law_hits.each { |rid| sp[:laws][rid.upcase] += 1 }
         end
 
         def log_scan_hit(unit:, done:, total:, rel:, count:, eta_s:)
@@ -129,7 +129,7 @@ module Master
         end
 
 
-        def law_scope_summary(rules)
+        def law_scope_summary(laws)
           counts = Hash.new(0)
           Array(laws).each do |rule|
             languages = if rule.class.respond_to?(:dsl_langs)
@@ -148,8 +148,8 @@ module Master
 
           unit = @scan_progress[:law_unit]
           selected = @scan_progress[:selected_law_count].to_i
-          hit_count = @scan_progress[:rules].values.sum
-          Master::Trace::Dmesg.status(unit, "selected #{selected} rules, #{Master::Trace::Dmesg.counted(hit_count, "finding")}")
+          hit_count = @scan_progress[:laws].values.sum
+          Master::Trace::Dmesg.status(unit, "selected #{selected} laws, #{Master::Trace::Dmesg.counted(hit_count, "finding")}")
         end
 
         def tally(violations, dirty)
@@ -175,7 +175,7 @@ module Master
             ("top: #{top_s}" unless top_s.empty?),
             "note: partial — full report lands after pass completes",
           ].compact.join("\n")
-          # Quiet write — checkpoints already print top rules; avoid spam.
+          # Quiet write — checkpoints already print top laws; avoid spam.
           if defined?(Master::CLI::Scan::Live)
             Master::CLI::Scan::Live.snapshot!(text, root:, note: "streaming checkpoint", announce: false)
           end
