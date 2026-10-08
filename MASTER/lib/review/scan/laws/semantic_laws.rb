@@ -4,7 +4,7 @@ module Master
   module Review
     module Scan
       module Laws
-        # The rules that call a model share how they receive one, and the
+        # The Laws that call a model share how they receive one, and the
         # scanner finds them by asking whether they respond to it.
         module NeedsModel
           def set_agent(agent)
@@ -25,7 +25,7 @@ module Master
           def quota_paused?
             return false unless Master::Io::QuotaGate.blocked?
 
-            Master::Io::QuotaGate.skipped("semantic rules")
+            Master::Io::QuotaGate.skipped("semantic Laws")
             true
           end
 
@@ -36,11 +36,11 @@ module Master
           def note_model_failure(error)
             message = error.message.to_s
             if message.match?(LANE_SILENCE_PATTERN)
-              Master::Io::QuotaGate.skipped("semantic rules")
+              Master::Io::QuotaGate.skipped("semantic Laws")
               return true
             end
 
-            Master::Io::QuotaGate.trip_if_limited(source: "semantic rule #{@id}", message:)
+            Master::Io::QuotaGate.trip_if_limited(source: "semantic Law #{@id}", message:)
           end
 
           # The file is already in the prompt and the reply is a list of lines,
@@ -152,7 +152,7 @@ module Master
             super()
             @agent = agent
             @cache = {}
-            reload_semantic_rules!
+            reload_semantic_laws!
           end
 
           def self.auto_build? = false
@@ -164,8 +164,8 @@ module Master
             return [] unless lang && @agent
             return [] if quota_paused?
 
-            reload_semantic_rules_if_stale
-            scoped = rules_for(lang)
+            reload_semantic_laws_if_stale
+            scoped = laws_for(lang)
             return [] if scoped.empty?
 
             cache_key = semantic_cache_key(path, code)
@@ -189,10 +189,10 @@ module Master
           # Each axiom is { prompt:, severity:, mode: }. info-tier violations stay
           # out of the prompt — they're noise that doubles cost. info-tier
           # opportunities stay in: that's their whole point.
-          def reload_semantic_rules!
-            @rules = load_semantic_rules
-            @rule_tags = @rules.keys.map(&:to_sym)
-            @rules_mtime = rules_mtime
+          def reload_semantic_laws!
+            @laws = load_semantic_laws
+            @law_tags = @laws.keys.map(&:to_sym)
+            @laws_mtime = laws_mtime
             @prompt_frames = {}
           end
 
@@ -203,20 +203,20 @@ module Master
           # rules at all now. Hence a frame per language: one frame built at load
           # cannot honour a scope.
           #
-          # Empty means every language, as it does for Law::Rule#applies? and
-          # Rule#applies_to?. Law refuses a language FILE_LANGUAGE_MAP never
-          # produces (Law::Rule#prove!); test_semantic_rule_scope asks the same of
+          # Empty means every language, as it does for Law::Law#applies? and
+          # Law#applies_to?. Law refuses a language FILE_LANGUAGE_MAP never
+          # produces (Law#prove!); test_semantic_rule_scope asks the same of
           # this population, because a declared language nothing emits aims a rule
           # at no file at all — which is how `rails`, `prose` and `erb` sat here.
-          def rules_for(language)
-            @rules.select { |_, a| a[:languages].empty? || a[:languages].include?(language) }
+          def laws_for(language)
+            @laws.select { |_, a| a[:languages].empty? || a[:languages].include?(language) }
           end
 
-          def reload_semantic_rules_if_stale
-            reload_semantic_rules! if @rules_mtime != rules_mtime
+          def reload_semantic_laws_if_stale
+            reload_semantic_laws! if @laws_mtime != laws_mtime
           end
 
-          def rules_mtime
+          def laws_mtime
             paths = [Master::LAWS_PATH, *Dir.glob(File.join(Master::ROOT, "law", "*.rb"))]
             paths.sort.filter_map do |path|
               next unless File.exist?(path)
@@ -230,13 +230,13 @@ module Master
             require "digest"
             stat = File.stat(path) if File.file?(path)
             file_stamp = stat && [stat.size, stat.ino, stat.mtime.to_r]
-            [path, file_stamp, Digest::SHA256.hexdigest(code), @rules_mtime].join(":")
+            [path, file_stamp, Digest::SHA256.hexdigest(code), @laws_mtime].join(":")
           end
 
           # One source: semantic review is populated from executable Law definitions.
           # The YAML catalogue retains naming, provenance, scope, and other operator
           # metadata, but it no longer carries a second semantic implementation.
-          def load_semantic_rules
+          def load_semantic_laws
             from_law
           end
 
@@ -248,14 +248,14 @@ module Master
             require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
             ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.definitions.empty?
 
-            ::Law.definitions.values.select { |rule| rule.semantic? && rule.enforceable? }.each_with_object({}) do |rule, h|
-              h[rule.id.to_s] = {
-                prompt: "#{rule.ask}\nViolates: #{rule.bad.strip}\nSatisfies: #{rule.good.strip}",
-                severity: rule.severity,
-                mode: rule.mode,
+            ::Law.definitions.values.select { |law| law.semantic? && law.enforceable? }.each_with_object({}) do |law, h|
+              h[law.id.to_s] = {
+                prompt: "#{law.ask}\nViolates: #{law.bad.strip}\nSatisfies: #{law.good.strip}",
+                severity: law.severity,
+                mode: law.mode,
                 reversibility: nil,
                 blast_radius: nil,
-                languages: rule.languages.map(&:to_s),
+                languages: law.languages.map(&:to_s),
               }
             end
           rescue StandardError => e
