@@ -15,7 +15,7 @@ require_relative "../scan_phase"
 require_relative "../transaction"
 require_relative "../resource_budget"
 require_relative "../wishlist"
-require_relative "../../review/scan/rule_health"
+require_relative "../../review/scan/law_health"
 
 module Master
   module Fix
@@ -33,7 +33,7 @@ module Master
         include StructuralStage
 
         def initialize(bus:, committer:, conflict_resolver:, llm_router:, root:,
-                       rules:, agent:, scanner:, learnings:, preamble:,
+                       laws:, agent:, scanner:, learnings:, preamble:,
                        clean_runs_required:, plateau_window:, ground_truth: nil, homeostat: nil, council: nil,
                        visual_pass: nil, opportunity_pass: nil, preflight: nil, discipline: nil, wishlist: nil)
           @bus = bus
@@ -47,7 +47,7 @@ module Master
           @preflight = preflight || Preflight.new(root:, bus:)
           @learnings = learnings
           @preamble = preamble
-          @law_order = LawOrder.new(rules:, learnings:, bus:, root:)
+          @law_order = LawOrder.new(laws:, learnings:, bus:, root:)
           take_limits(clean_runs_required:, plateau_window:, ground_truth:, homeostat:, council:, visual_pass:, opportunity_pass:, discipline:, wishlist:)
         end
 
@@ -56,8 +56,8 @@ module Master
         def take_limits(clean_runs_required:, plateau_window:, ground_truth:, homeostat:, council:, visual_pass:, opportunity_pass:, discipline:, wishlist:)
           @clean_runs_required = clean_runs_required
           @plateau_window = plateau_window
-          @violation_counts = Hash.new(0)
-          @rule_recurrence = Hash.new(0)
+          @law_violation_counts = Hash.new(0)
+          @law_recurrence = Hash.new(0)
           @ground_truth = ground_truth
           @homeostat = homeostat
           @council = council
@@ -110,7 +110,7 @@ module Master
           return skip_unreadable(path, result) if !result.ok? && result.category == :validation
           raise "fix scan failed for #{path}: #{result.message}" unless result.ok?
 
-          findings = result.value!.map { |finding| Master::Review::Scan::RuleHealth.annotate(finding) }
+          findings = result.value!.map { |finding| Master::Review::Scan::LawHealth.annotate(finding) }
           @bus&.publish("fix_loop:scan_progress", file: path.delete_prefix("#{ @root }/"), count: findings.size) if findings.any?
           findings.select { |finding| Severity.at_least?(finding.fetch(:severity, :warning), :warning) }
                   .map { |finding| Violation.from_finding(finding, file: path.delete_prefix("#{@root}/")) }
@@ -388,14 +388,14 @@ module Master
         def track_recurrence(found)
           tally = found.group_by { |v| v[:rule].to_s }.transform_values(&:size)
           tally.each do |rule_id, _|
-            @rule_recurrence[rule_id] += 1
-            next unless @rule_recurrence[rule_id] >= 3
+            @law_recurrence[rule_id] += 1
+            next unless @law_recurrence[rule_id] >= 3
 
-            @rule_recurrence.delete(rule_id)
+            @law_recurrence.delete(rule_id)
             sample = found.select { |v| v[:rule].to_s == rule_id }.first(5)
             @bus&.publish("fix_loop:soul_proposal", root: @root, rule: rule_id, sample:)
           end
-          (@rule_recurrence.keys - tally.keys).each { |key| @rule_recurrence.delete(key) }
+          (@law_recurrence.keys - tally.keys).each { |key| @law_recurrence.delete(key) }
         end
         def circuit_open? = @llm_router.circuit_open?
         def open_breakers = @llm_router.open_breakers
