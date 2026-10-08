@@ -40,6 +40,18 @@ class TestDillaLivesets < Minitest::Test
     assert_includes source, "pgroup: true"
   end
 
+  def test_ab_export_prefers_current_studio_dilla_path
+    stubbing(git_path_exists?: ->(_ref, _root, path) { path == "STUDIO/dilla" }) do
+      assert_equal "STUDIO/dilla", Livesets.ab_dilla_path("main", "/tmp/pub4")
+    end
+  end
+
+  def test_ab_export_keeps_legacy_master_tools_path_for_old_refs
+    stubbing(git_path_exists?: ->(_ref, _root, path) { path == "MASTER/tools/dilla" }) do
+      assert_equal "MASTER/tools/dilla", Livesets.ab_dilla_path("legacy", "/tmp/pub4")
+    end
+  end
+
   def test_the_kept_take_recalls_from_the_journal
     handed = nil
     stubbing(exec: ->(*args) { handed = args }) { Livesets.recall!(["1133818290"]) }
