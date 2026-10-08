@@ -3345,8 +3345,19 @@ SHOWCASE_MODES = {
       @bass = bass_patch || (LiveSynth.showcase? ? "pocket_bass" : fam.fetch("bass_patch", @c["bass_patch"]))
       @bass_gain = bass_gain
       @moves = @c.fetch("moves").to_h { |row| [row["from"], row["to"]] }
-      @reference_name = reference || LiveSynth.authentic_progression_key(rng)
+      @fugue_enabled = ENV["DILLA_FUGUE"] == "1"
+      @reference_name = reference || (@fugue_enabled ? nil : LiveSynth.authentic_progression_key(rng))
       @reference = @reference_name && LiveSynth.documented_progression(@reference_name)
+      curated_default = LiveSynth.showcase? ? "1" : "0"
+      curated_enabled = ENV.fetch("DILLA_CURATED_HARMONY", curated_default) != "0"
+      @curated_progression_name = if !@reference && curated_enabled
+                                    DillaMusicalGrammar.curated_name(rng)
+                                  end
+      @curated_progression = @curated_progression_name && DillaMusicalGrammar::CURATED_PROGRESSIONS.fetch(@curated_progression_name)
+      @curated_index = 0
+      @melody_step = 0
+      @last_melody = nil
+
       selected_bpm = bpm || (LiveSynth.showcase? && ENV["DILLA_SHOWCASE_BPM"])
       if selected_bpm
         bpm = Float(selected_bpm, exception: false)
@@ -3376,6 +3387,9 @@ SHOWCASE_MODES = {
       @lead_on = false
       @lead_enabled = @c["lead_enabled"]
       @drums = drums.nil? ? @c["drums"] : drums
+      LiveSynth.log("harmony -> original #{@curated_progression_name}") if @curated_progression_name
+      LiveSynth.log("harmony -> original fugue mode") if @fugue_enabled
+
       @fade = nil
       @kit = Kit.new(@c, beat: @beat, rng:, preset: live_kit_preset)
     end
@@ -3492,7 +3506,7 @@ SHOWCASE_MODES = {
       @chords_on_pad += 1
       LiveSynth.log("#{name || "#{NAMES[(@key + degree) % 12]}#{quality}"} (#{bars} bar#{'s' if bars > 1}) on #{@pad}"                     "#{" + #{@lead}" if @lead_on}")
       @next_at += length
-      move! unless @reference
+      move! unless @reference || @curated_progression
     end
 
     def showcase_voicing
@@ -3526,6 +3540,13 @@ SHOWCASE_MODES = {
     end
 
     def next_chord
+      if @curated_progression
+        degree, quality = @curated_progression.fetch(@curated_index % @curated_progression.length)
+        @curated_index += 1
+        symbol = "#{NAMES[(@key + degree) % 12]}#{quality}"
+        return [degree, quality, symbol]
+      end
+
       return @state unless @reference
 
       source = @reference.fetch("chords")
@@ -3569,6 +3590,7 @@ SHOWCASE_MODES = {
     end
 
     def lead!(stage, length)
+      return fugue_phrase!(stage, length) if @fugue_enabled
       @c.fetch("fm").key?(@lead) ? fm_phrase!(stage, length) : patch_phrase!(stage, length)
     end
 
@@ -3619,6 +3641,22 @@ SHOWCASE_MODES = {
     def lead_choice(range, previous, reach)
       scale = lead_tones(range)
       return previous if scale.empty?
+
+      composed_default = LiveSynth.showcase? ? "1" : "0"
+      if ENV.fetch("DILLA_COMPOSED_MELODY", composed_default) != "0"
+        tension = 0.22 + ((@melody_step % 16) / 15.0) * 0.68
+        chosen = DillaMusicalGrammar.motif_target(
+          scale_pcs: @lead_scale_pcs,
+          chord_pcs: @lead_chord_pcs,
+          range: range,
+          previous: previous,
+          step: @melody_step,
+          tension: tension
+        )
+        @melody_step += 1
+        @last_melody = chosen
+        return @mind.accept_note(chosen)
+      end
 
       chord = scale.select { |m| @lead_chord_pcs.include?(m % 12) }
       pool = chord.any? && @rng.rand < 0.68 ? chord : scale
@@ -3678,6 +3716,38 @@ SHOWCASE_MODES = {
         spot += [duration, 0.08 * @beat].max
       end
       stage_midi_events!(stage, events, patch: spec)
+    end
+
+    def fugue_phrase!(stage, length)
+      range = @c.fetch("lead_range").map(&:to_i)
+      subject = DillaMusicalGrammar.fugue_subject(@lead_scale_pcs, @lead_chord_pcs, range:)
+      answer = DillaMusicalGrammar.tonal_answer(subject, scale_pcs: @lead_scale_pcs, range:)
+      subject_rhythm = [0.50, 0.50, 0.25, 0.25, 0.50, 0.50, 0.75, 0.50]
+      subject_events = []
+      answer_events = []
+      at = @next_at + (0.25 * @beat)
+      subject.each_with_index do |midi, index|
+        held = subject_rhythm[index] * @beat * 0.82
+        subject_events << DillaMidiEffects::Event.new(
+          midi, at, held, @c["lead_gain"], :lead
+        )
+        at += subject_rhythm[index] * @beat
+      end
+
+      # The answer enters after two beats, in a different register, so the two
+      # voices are heard as conversation rather than doubled unison.
+      answer_at = @next_at + (2.0 * @beat)
+      answer.each_with_index do |midi, index|
+        shifted = (midi - 12).clamp(*range)
+        held = subject_rhythm[index] * @beat * 0.76
+        answer_events << DillaMidiEffects::Event.new(
+          shifted, answer_at, held, @c["lead_gain"] * 0.62, :lead
+        )
+        answer_at += subject_rhythm[index] * @beat
+      end
+
+      stage_midi_events!(stage, subject_events, patch: Patches.spec(@lead))
+      stage_midi_events!(stage, answer_events, patch: Patches.spec(@lead))
     end
 
     def stage_midi_events!(stage, events, fm: nil, patch: nil)
@@ -3763,7 +3833,10 @@ SHOWCASE_MODES = {
       @preset = name
       @kicks = []
       @snares = []
+      @claps = []
       @hats = []
+      @percs = []
+      @perc_noise = Random.new(rng.seed ^ 0xC0FFEE)
       @low = 0.0
       @band = 0.0
     end
@@ -3773,7 +3846,9 @@ SHOWCASE_MODES = {
         @kicks.concat(grid_hits(start, length, @grid[:kicks], :kick_anchor, 1.0))
         @snares.concat(grid_hits(start, length, @grid[:snares], :snare, 1.0))
         @snares.concat(grid_hits(start, length, @grid[:ghosts], :ghost, 0.24))
+        @claps.concat(grid_hits(start, length, @grid[:claps], :clap, 0.58))
         @hats.concat(grid_hits(start, length, @grid[:hats], :hat, 1.0))
+        @percs.concat(grid_hits(start, length, @grid[:perc], :perc, 0.48))
       else
         @kicks.concat(kick_hits(start, length))
         @snares.concat(snare_hits(start, length))
@@ -3784,15 +3859,44 @@ SHOWCASE_MODES = {
       step_seconds = @beat / 4.0
       bars = [(length / (4.0 * @beat)).ceil, 1].max
       hits = []
+      base = Array(steps).map(&:to_i).uniq.select { |step| step.between?(0, 15) }
       bars.times do |bar|
-        Array(steps).each do |step|
-          next unless step.to_i.between?(0, 15)
+        phrase_bar = ((start / (4.0 * @beat)).round + bar)
+        variant = phrase_bar % 4 # statement, repeat, mutation, answer
+        phrase_steps = base.dup
 
-          at = start + (bar * 4.0 * @beat) + (step.to_i * step_seconds)
+        if variant == 2
+          case role
+          when :kick_anchor
+            extra = ([1, 3, 7, 9, 11, 15] - phrase_steps).first
+            phrase_steps << extra if extra
+          when :hat
+            phrase_steps = phrase_steps.reject.with_index { |_step, index| index.odd? && index == phrase_steps.length - 1 }
+          when :ghost, :perc
+            extra = ([2, 5, 9, 13] - phrase_steps).first
+            phrase_steps << extra if extra
+          end
+        elsif variant == 3
+          case role
+          when :hat
+            phrase_steps = phrase_steps.first([phrase_steps.length - 2, 1].max)
+          when :perc, :ghost
+            phrase_steps = phrase_steps.first([phrase_steps.length - 1, 0].max)
+          end
+        end
+
+        phrase_steps.each do |step|
+          next unless step.between?(0, 15)
+          at = start + (bar * 4.0 * @beat) + (step * step_seconds)
           next if at >= start + length
-          timing_role = role == :hat ? (step.to_i.even? ? :hat_down : :hat_up) : role
-          offset = dilla_timing_ms(timing_role, bar, step.to_i, nil, @beat) / 1000.0
-          hits << [at + offset, gain]
+          timing_role = role == :hat ? (step.even? ? :hat_down : :hat_up) : role
+          offset = dilla_timing_ms(timing_role, phrase_bar, step, nil, @beat) / 1000.0
+          phrase_gain = case variant
+                        when 2 then gain * 1.05
+                        when 3 then gain * 0.92
+                        else gain
+                        end
+          hits << [at + offset, phrase_gain]
         end
       end
       hits
@@ -3803,22 +3907,27 @@ SHOWCASE_MODES = {
       span = left.length.to_f / rate
       kicks = @kicks.select { |t, _| t < clock + span && t > clock - @kick["length_seconds"] }
       snares = @snares.select { |t, _| t < clock + span && t > clock - @snare["length_seconds"] }
+      claps = @claps.select { |t, _| t < clock + span && t > clock - @snare["length_seconds"] }
       hats = @hats.select { |t, gain| t < clock + span && t > clock - HAT_DECAY * 8.0 }
+      percs = @percs.select { |t, gain| t < clock + span && t > clock - 0.12 }
       kick = Array.new(left.length, 0.0)
       j = 0
       while j < left.length
         now = clock + (j.to_f / rate)
         bus = kick_bus(kicks, now)
-        clap!(left, right, j, now, snares)
+        clap!(left, right, j, now, snares + claps)
         kick[j] = Math.tanh(bus * @kick["bus_drive"]) * @kick["bus_gain"] * @kick["level"]
         hat = hats.sum { |t, gain| hat_sample(now - t, gain) }
-        left[j] += hat * 0.88
-        right[j] += hat
+        perc = percs.sum { |t, gain| perc_sample(now - t, gain) }
+        left[j] += hat * 0.88 + perc * 0.72
+        right[j] += hat + perc
         j += 1
       end
       @kicks.reject! { |t, _| t < clock - @kick["length_seconds"] }
       @snares.reject! { |t, _| t < clock - @snare["length_seconds"] }
+      @claps.reject! { |t, _| t < clock - @snare["length_seconds"] }
       @hats.reject! { |t, _| t < clock - HAT_DECAY * 8.0 }
+      @percs.reject! { |t, _| t < clock - 0.12 }
       kick
     end
 
@@ -3874,6 +3983,16 @@ SHOWCASE_MODES = {
       metallic = HAT_FREQS.sum { |frequency| Math.sin(2.0 * Math::PI * frequency * tk) } / HAT_FREQS.length
       click = tk < 0.0012 ? (1.0 - (tk / 0.0012)) * 0.7 : 0.0
       (metallic * 0.72 + click) * envelope * HAT_LEVEL * gain
+    end
+
+    def perc_sample(tk, gain)
+      return 0.0 if tk.negative? || tk > 0.12
+
+      envelope = Math.exp(-tk / 0.026)
+      frequency = 420.0 + ((tk * 10_000).to_i % 4) * 155.0
+      tone = Math.sin(2.0 * Math::PI * frequency * tk) * 0.72
+      noise = ((@perc_noise.rand * 2.0) - 1.0) * 0.28
+      (tone + noise) * envelope * 0.018 * gain
     end
 
     def kick_sample(tk)
