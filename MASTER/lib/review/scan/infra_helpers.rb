@@ -22,12 +22,12 @@ module Master
         # 1200s timeout. Opt-in, so nothing changes for an ordinary /scan.
         def build_scanner(root:, agent: nil, bus: nil, ecology: nil)
           agent = nil if ENV["MASTER_SCAN_DETERMINISTIC"] == "1"
-          Review::Scan::RuleDSL
+          Review::Scan::LawDSL
           wf = Master.load_yaml(Master.limits_path) rescue {}
           sleep_s = ENV["MASTER_AUTOFIX"] == "1" ? wf.dig("autoloop", "scan_file_sleep_s").to_f : 0
           scanner = Review::Scan::Scanner.new(event_bus: bus, file_sleep_s: sleep_s)
-          Review::Scan::Rule.registry.select(&:auto_build?).each do |klass|
-            scanner.add_rule(Review::Scan::RuleFactory.build(klass, root:, agent:, ecology:))
+          Review::Scan::Law.registry.select(&:auto_build?).each do |klass|
+            scanner.add_rule(Review::Scan::LawFactory.build(klass, root:, agent:, ecology:))
           end
           %w[
             CoChangeCouplingRule RuleCoverageRule RubocopRule ReekRule InterconnectRule
