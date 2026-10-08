@@ -241,7 +241,6 @@ module Master
         def ids_of(rules) = rules.map { |r| r["id"] }
       end
 
-      RuleRegistryAudit = LawRegistryAudit
-    end
+          end
   end
 end
