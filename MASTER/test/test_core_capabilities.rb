@@ -49,7 +49,7 @@ class CoreCapabilitiesTest < Minitest::Test
 
   def test_constitution_blocks_effects_missing_current_capability
     capabilities = Master::Core::Capabilities.read_only
-    constitution = Master::Core::Constitution.new(rules: [], capabilities:)
+    constitution = Master::Core::Constitution.new(laws: [], capabilities:)
     memory = Master::Core::Memory.new
 
     verdict = constitution.admit(E.write("x", "x"), memory)
