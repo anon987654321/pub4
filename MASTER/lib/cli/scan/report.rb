@@ -100,8 +100,8 @@ module Master
               next if rule_filter && !rule_filter.include?(violation[:rule].to_s)
               next if severity_filter && !severity_filter.include?(violation[:severity].to_s)
 
-              # Canonical RuleDSL ids are uppercase, but some findings carry a
-              # lowercase label (e.g. principle_map.yml's "detects:" taxonomy)
+              # Canonical LawDSL ids are uppercase, but some findings carry a
+              # lowercase label (e.g. laws.yml's law-map "detects:" taxonomy)
               # for the same category -- normalize so it doesn't split into a
               # second entry (see Scanner::ProgressReporter for the same fix).
               groups[violation[:rule].to_s.upcase] << violation
