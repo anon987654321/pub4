@@ -3,7 +3,7 @@
 module Master
   module Review
     module Scan
-      module Rules
+      module Laws
         # The rules that call a model share how they receive one, and the
         # scanner finds them by asking whether they respond to it.
         module NeedsModel
