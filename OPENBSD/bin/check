@@ -11,7 +11,7 @@ STEP_TIMEOUT = Integer(ENV.fetch("DEPLOY_CHECK_TIMEOUT", "240"))
 profile = "operator"
 OptionParser.new do |parser|
   parser.banner = <<~BANNER
-    Usage: OPENBSD/bin/check [--profile=operator|contributor]
+    Usage: OPENBSD/bin/check [--profile=operator|contributor|full]
 
     Local deploy gates, no box required:
       openbsd              OPENBSD/bin/check-openbsd (identity, installed targets, ports,
@@ -22,10 +22,9 @@ OptionParser.new do |parser|
       dr freshness         OPENBSD/bin/dr-pull --check (skips off the operator Mac)
       openbsd contracts    OPENBSD/test/run_all.rb, one process per file
 
-    Both profiles run the same steps; contributor only adds the reminder that
-    OPENBSD/bin/check-full is the one that runs the integrity chain.
+    Operator runs the deployment floor; contributor runs that floor without release checks; full adds release integrity checks.
   BANNER
-  parser.on("--profile=PROFILE", "contributor or operator (default)") { |value| profile = value }
+  parser.on("--profile=PROFILE", "contributor, operator (default), or full") { |value| profile = value }
 end.parse!
 
 runner = Deploy::CheckRunner.new(prefix: "deploy-check", root: ROOT, timeout: STEP_TIMEOUT)
@@ -46,8 +45,13 @@ failures << "dr_freshness" unless runner.run("dr freshness", RUBY, "OPENBSD/bin/
 
 failures << "openbsd_contracts" unless runner.run("openbsd contracts", RUBY, "OPENBSD/test/run_all.rb")
 
+if profile == "full"
+  failures << "rails_contracts" unless runner.run("rails contracts", RUBY, "RAILS/test/run_all.rb")
+  failures << "integrity" unless runner.run("integrity", RUBY, "OPENBSD/gates/integrity_gate.rb")
+end
+
 if profile == "contributor"
-  puts "deploy-check: extended gates     skip — contributor profile (use OPENBSD/bin/check-full for integrity)"
+  puts "deploy-check: release integrity skip — contributor profile"
 end
 
 exit(failures.empty? ? 0 : 1)
