@@ -18,8 +18,12 @@ class TestBootEntrypoint < Minitest::Test
     assert_match(/require "bundler\/setup"/, SOURCE)
   end
 
-  def test_json_is_not_loaded_before_bundler_activation
-    assert_equal -1, SOURCE.index('require "json"')
+  def test_json_is_loaded_only_after_bundler_activation
+    bundle_index = SOURCE.index("activate_bundle!(root)")
+    json_index = SOURCE.index('require "json"')
+    refute_nil bundle_index
+    refute_nil json_index
+    assert_operator json_index, :>, bundle_index
   end
 
   def test_lockfile_bundler_version_is_read_from_the_master_lock
