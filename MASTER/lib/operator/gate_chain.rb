@@ -68,6 +68,10 @@ module Operator
     def verify_fix(target:)
       trees = trees_for_target(target)
       selected = stages(scan_only: true, trees:).reject { |stage| stage.name == "council" }
+      # The Rails source stage now owns the complete Rails premerge proof
+      # (application suites, contracts, coverage, PWA/runtime and gates). Do not
+      # immediately run the generic Rails suite a second time.
+      selected = selected.reject { |stage| stage.name == "suites" } if trees == ["RAILS"]
       # Verification is measurement only. Every selected stage is scan-only;
       # a verification tail must never become a second repair pass under
       # another name. Council stays excluded because provider availability is
