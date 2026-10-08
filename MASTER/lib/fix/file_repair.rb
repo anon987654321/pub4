@@ -47,7 +47,7 @@ module Master
 
       def summary(path)
         first = @findings.min_by { |finding| finding[:line].to_i }
-        { law: @law.id, file: path, line: first[:line], severity: :warning,
+        { rule: @law.id, file: path, line: first[:line], severity: :warning,
           message: @findings.map { |finding| "#{finding[:rule]} line #{finding[:line]}" }.join("; ") }
       end
 
