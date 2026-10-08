@@ -3,6 +3,7 @@
     <%= yield %>
   <% else %>
     <div class="search-skeleton" role="status">
+      <span class="search-loading-message" aria-hidden="true"><%= local_assigns.fetch(:loading_label, t("status.loading_results")) %></span>
       <span class="visually-hidden"><%= t("status.loading_results") %></span>
       <% 4.times do %>
         <div class="search-skeleton-card" aria-hidden="true">
