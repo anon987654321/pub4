@@ -1,40 +1,40 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-require "review/scan/rule_dsl"
+require "review/scan/law_dsl"
 require "review/scan/rules/structural_rules"
 
 class TestScanRuleContracts < Minitest::Test
   Rules = Master::Review::Scan::Rules
 
   def test_small_files_rule_flags_files_over_limit
-    code = Array.new(Rules::SmallFilesRule::LIMIT + 1, "puts :x").join("\n")
+    code = Array.new(Laws::SmallFilesRule::LIMIT + 1, "puts :x").join("\n")
 
-    assert_finding Rules::SmallFilesRule.new, code, "large.rb", "file"
+    assert_finding Laws::SmallFilesRule.new, code, "large.rb", "file"
   end
 
   def test_small_files_rule_reads_code_with_modules_and_leaves_data_and_javascript
-    long = Array.new(Rules::SmallFilesRule::LIMIT + 1, "x").join("\n")
+    long = Array.new(Laws::SmallFilesRule::LIMIT + 1, "x").join("\n")
     %w[bin/operator app.scss deploy.sh].each do |path|
-      refute_empty Rules::SmallFilesRule.new.check(long, path:), path
+      refute_empty Laws::SmallFilesRule.new.check(long, path:), path
     end
     %w[nb.yml snapshot.json TODO.md Gemfile.lock app.js face.part1.txt].each do |path|
-      assert_empty Rules::SmallFilesRule.new.check(long, path:), path
+      assert_empty Laws::SmallFilesRule.new.check(long, path:), path
     end
   end
 
   def test_small_functions_rule_flags_long_methods
-    body = Array.new(Rules::SmallFunctionsRule::MAX + 1, "  puts :x").join("\n")
+    body = Array.new(Laws::SmallFunctionsRule::MAX + 1, "  puts :x").join("\n")
     code = "def oversized\n#{body}\nend\n"
 
-    assert_finding Rules::SmallFunctionsRule.new, code, "large_method.rb", "method oversized"
+    assert_finding Laws::SmallFunctionsRule.new, code, "large_method.rb", "method oversized"
   end
 
   def test_god_class_rule_flags_many_public_methods
-    methods = (1..(Rules::GodClassRule::METHOD_LIMIT + 1)).map { |i| "  def m#{i}; end" }.join("\n")
+    methods = (1..(Laws::GodClassRule::METHOD_LIMIT + 1)).map { |i| "  def m#{i}; end" }.join("\n")
     code = "class TooMuch\n#{methods}\nend\n"
 
-    assert_finding Rules::GodClassRule.new, code, "god.rb", "god class TooMuch"
+    assert_finding Laws::GodClassRule.new, code, "god.rb", "god class TooMuch"
   end
 
   def test_cqs_rule_flags_mutation_plus_return
@@ -45,7 +45,7 @@ class TestScanRuleContracts < Minitest::Test
       end
     RUBY
 
-    assert_finding Rules::CqsRule.new, code, "cqs.rb", "mutates state and returns"
+    assert_finding Laws::CqsRule.new, code, "cqs.rb", "mutates state and returns"
   end
 
   def test_cqs_ignores_guarded_memoized_reader
@@ -57,7 +57,7 @@ class TestScanRuleContracts < Minitest::Test
       end
     RUBY
 
-    assert_empty Rules::CqsRule.new.check(code, path: "memoized.rb")
+    assert_empty Laws::CqsRule.new.check(code, path: "memoized.rb")
   end
 
   def test_cqs_ignores_or_equals_memoized_reader
@@ -68,7 +68,7 @@ class TestScanRuleContracts < Minitest::Test
       end
     RUBY
 
-    assert_empty Rules::CqsRule.new.check(code, path: "memoized_equals.rb")
+    assert_empty Laws::CqsRule.new.check(code, path: "memoized_equals.rb")
   end
 
   def test_cqs_still_flags_a_non_memoized_write_and_return
@@ -80,11 +80,11 @@ class TestScanRuleContracts < Minitest::Test
       end
     RUBY
 
-    assert_finding Rules::CqsRule.new, code, "non_memoized.rb", "mutates state and returns"
+    assert_finding Laws::CqsRule.new, code, "non_memoized.rb", "mutates state and returns"
   end
 
   def test_secret_proximity_reaches_findings_through_the_bridge
-    hits = Rules::LawBridgeRule.new.check(%q{api_key = "sk_live_123456789"}, path: "app.rb")
+    hits = Laws::LawBridgeRule.new.check(%q{api_key = "sk_live_123456789"}, path: "app.rb")
 
     assert hits.any? { |h| h[:rule] == "SECRET_PROXIMITY" }, "hardcoded secret must reach scanner findings"
   end
@@ -102,7 +102,7 @@ class TestScanRuleContracts < Minitest::Test
       lone = File.join(root, "lib", "widgets", "only.rb")
       FileUtils.mkdir_p(File.dirname(lone))
       File.write(lone, "module Only\nend\n" + ("x = 1\n" * 30))
-      rule = Rules::FileSprawlRule.new(root:)
+      rule = Laws::FileSprawlRule.new(root:)
 
       hits = rule.check(File.read(lone), path: lone)
       assert_equal 1, hits.size
@@ -110,7 +110,7 @@ class TestScanRuleContracts < Minitest::Test
 
       tiny = File.join(root, "lib", "widgets", "tiny.rb")
       File.write(tiny, "module Tiny\nend\n")
-      fresh = Rules::FileSprawlRule.new(root:)
+      fresh = Laws::FileSprawlRule.new(root:)
       tiny_hits = fresh.check(File.read(tiny), path: tiny)
       assert_equal 1, tiny_hits.size
       assert_match(/2 code lines/, tiny_hits.first[:message])
@@ -121,14 +121,14 @@ class TestScanRuleContracts < Minitest::Test
       core = File.join(root, "lib", "core", "fold.rb")
       FileUtils.mkdir_p(File.dirname(core))
       File.write(core, "module Fold\nend\n")
-      assert_empty Rules::FileSprawlRule.new(root:).check(File.read(core), path: core)
+      assert_empty Laws::FileSprawlRule.new(root:).check(File.read(core), path: core)
 
       # a lone directory whose owner file sits beside it is a nested constant
       nested = File.join(root, "lib", "cli", "propose", "candidate_sources.rb")
       FileUtils.mkdir_p(File.dirname(nested))
       File.write(nested, "module CandidateSources\nend\n" + ("x = 1\n" * 30))
       File.write(File.join(root, "lib", "cli", "propose.rb"), "class Propose\nend\n")
-      assert_empty Rules::FileSprawlRule.new(root:).check(File.read(nested), path: nested)
+      assert_empty Laws::FileSprawlRule.new(root:).check(File.read(nested), path: nested)
     end
   end
 
@@ -142,7 +142,7 @@ class TestScanRuleContracts < Minitest::Test
         File.write(path, "module Tiny\nend\n")
         path
       end
-      sprawl = ->(path) { Rules::FileSprawlRule.new(root:).check(File.read(path), path:) }
+      sprawl = ->(path) { Laws::FileSprawlRule.new(root:).check(File.read(path), path:) }
 
       write.call("site/config/application.rb")
       %w[site/app/models/tag.rb site/app/models/city.rb site/config/initializers/a.rb site/config/initializers/b.rb
@@ -163,7 +163,7 @@ class TestScanRuleContracts < Minitest::Test
   # contract asserts through the bridge — the id must reach the scanner's
   # findings, unchanged, not just prove itself inside Law.
   def test_advisory_laws_do_not_enter_enforcement_bridge
-    bridge = Rules::LawBridgeRule.new
+    bridge = Laws::LawBridgeRule.new
     law = Law.rules.fetch(:BEAUTIFUL_CODE)
 
     assert_equal :advisory, law.lifecycle
@@ -180,7 +180,7 @@ class TestScanRuleContracts < Minitest::Test
   end
 
   def test_unbounded_retry_reaches_findings_through_the_bridge
-    bridge = Rules::LawBridgeRule.new
+    bridge = Laws::LawBridgeRule.new
     hits = bridge.check("begin\n  call\nrescue\n  retry\nend\n", path: "retry.rb")
     retry_hits = hits.select { |h| h[:rule] == "UNBOUNDED_RETRY" }
 
@@ -208,7 +208,7 @@ class TestScanRuleContracts < Minitest::Test
   }.freeze
 
   def test_every_retired_twin_reaches_findings_through_the_bridge
-    bridge = Rules::LawBridgeRule.new
+    bridge = Laws::LawBridgeRule.new
     RETIRED_TWINS.each do |id|
       law = Law.rules[id.to_sym]
       refute_nil law, "#{id} must exist in law/ — its registry twin is gone"
@@ -314,8 +314,8 @@ class TestScanRuleContracts < Minitest::Test
         duplicate: true
     YAML
 
-    assert_finding Rules::ConfigHierarchyRule.new, code, "config.yml", "configuration nesting depth"
-    assert_finding Rules::ConfigHierarchyRule.new, code, "config.yml", "duplicate configuration key"
+    assert_finding Laws::ConfigHierarchyRule.new, code, "config.yml", "configuration nesting depth"
+    assert_finding Laws::ConfigHierarchyRule.new, code, "config.yml", "duplicate configuration key"
   end
 
   # Depth is a key path. A list of records and a block scalar's prose both
@@ -333,42 +333,42 @@ class TestScanRuleContracts < Minitest::Test
             Review: boundaries
               Coupling: interface shapes
     YAML
-    assert_empty Rules::ConfigHierarchyRule.new.check(flows, path: "gates/data/flows.yml")
+    assert_empty Laws::ConfigHierarchyRule.new.check(flows, path: "gates/data/flows.yml")
 
     locale = "en:\n  brgen:\n    posts:\n      form:\n        title: Title\n"
-    assert_empty Rules::ConfigHierarchyRule.new.check(locale, path: "brgen/config/locales/en.yml")
-    refute_empty Rules::ConfigHierarchyRule.new.check(locale, path: "data/settings.yml")
+    assert_empty Laws::ConfigHierarchyRule.new.check(locale, path: "brgen/config/locales/en.yml")
+    refute_empty Laws::ConfigHierarchyRule.new.check(locale, path: "data/settings.yml")
 
     rows = "apps:\n  brgen:\n    features:\n      core:\n" + ("        - { name: a, status: done }\n" * 3)
-    hits = Rules::ConfigHierarchyRule.new.check(rows, path: "apps.yml")
+    hits = Laws::ConfigHierarchyRule.new.check(rows, path: "apps.yml")
     assert_equal ["configuration nesting depth exceeds 4 below apps.brgen.features.core"], hits.map { |h| h[:message] }
   end
 
   def test_code_hierarchy_rule_flags_many_top_level_constants
     code = %w[Alpha Beta Gamma Delta Epsilon Zeta].map { |name| "class #{name}; end" }.join("\n")
 
-    assert_finding Rules::CodeHierarchyRule.new, code, "many.rb", "top-level constants"
+    assert_finding Laws::CodeHierarchyRule.new, code, "many.rb", "top-level constants"
   end
 
   def test_long_parameter_list_rule_flags_large_api
     code = "def call(a, b, c, d, e)\nend\n"
 
-    assert_finding Rules::LongParameterListRule.new, code, "params.rb", "parameters"
+    assert_finding Laws::LongParameterListRule.new, code, "params.rb", "parameters"
   end
 
   def test_primitive_obsession_rule_flags_traveling_primitives
     code = "def create_order(user_id, status, price, email)\nend\n"
 
-    assert_finding Rules::PrimitiveObsessionRule.new, code, "primitive.rb", "primitive obsession"
+    assert_finding Laws::PrimitiveObsessionRule.new, code, "primitive.rb", "primitive obsession"
   end
 
   # Chains are LAW_OF_DEMETER's; this rule is reflection, and a method that is
   # merely named send is not reflection.
   def test_coupler_rule_flags_reflective_access_only
-    assert_finding Rules::CouplerRule.new, "def call\n  order.send(:recalculate)\nend\n", "reflect.rb", "reflective access"
+    assert_finding Laws::CouplerRule.new, "def call\n  order.send(:recalculate)\nend\n", "reflect.rb", "reflective access"
     domain = "def call\n  client.send(body, token)\n  user.account.profile.address.city.name\nend\n"
 
-    assert_empty Rules::CouplerRule.new.check(domain, path: "domain.rb")
+    assert_empty Laws::CouplerRule.new.check(domain, path: "domain.rb")
   end
 
   def test_lazy_class_rule_flags_delegate_only_class
@@ -378,7 +378,7 @@ class TestScanRuleContracts < Minitest::Test
       end
     RUBY
 
-    assert_finding Rules::LazyClassRule.new, code, "lazy.rb", "lazy class"
+    assert_finding Laws::LazyClassRule.new, code, "lazy.rb", "lazy class"
   end
 
   def test_parameterized_slug_rule_flags_fold_suffix
@@ -423,7 +423,7 @@ class TestScanRuleContracts < Minitest::Test
   # out of the system prompt to protect against a disagreement neither half can
   # have.
   def test_no_id_lives_in_both_law_and_registry
-    Rules::LawBridgeRule.new
+    Laws::LawBridgeRule.new
     law_ids = Law.rules.values.select(&:scannable?).map { |rule| rule.id.to_s }
     registry_ids = Master::Review::Scan::Rule.registry.filter_map do |klass|
       Master::Review::Scan::RuleFactory.registry_id(klass, root: Master::ROOT)&.upcase
