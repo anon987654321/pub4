@@ -72,7 +72,7 @@ module Master
 
     def build_council(agent:, bus:, root:)
       personas = Review::Council::Personas.load(Master::COUNCIL_PATH)
-      axioms = Ground::Rules.new(root:)
+      axioms = Ground::Laws.new(root:)
       deliberation = Review::Council::Deliberation.new(personas:, agent:, event_bus: bus, axioms:)
       ideation = Review::Council::Ideation.new(agent:, event_bus: bus)
       { axioms:, deliberation:, ideation: }
