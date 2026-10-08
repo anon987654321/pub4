@@ -246,9 +246,9 @@ module Master
           # prompt that drifts from its examples is visible rather than implied.
           def from_law
             require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
-            ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.rules.empty?
+            ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.definitions.empty?
 
-            ::Law.rules.values.select { |rule| rule.semantic? && rule.enforceable? }.each_with_object({}) do |rule, h|
+            ::Law.definitions.values.select { |rule| rule.semantic? && rule.enforceable? }.each_with_object({}) do |rule, h|
               h[rule.id.to_s] = {
                 prompt: "#{rule.ask}\nViolates: #{rule.bad.strip}\nSatisfies: #{rule.good.strip}",
                 severity: rule.severity,
