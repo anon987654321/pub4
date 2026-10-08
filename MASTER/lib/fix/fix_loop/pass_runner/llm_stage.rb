@@ -12,15 +12,15 @@ module Master
           private
 
           def llm_pass(violations:, files:, pass:, deadline: nil, council: nil)
-            law_violations = violations.group_by { |v| v[:rule].to_s }
+            law_violations = violations.group_by { |v| v[:law].to_s }
             ordered = @law_order.ordered(violation_counts: @law_violation_counts)
-            runnable = ordered.select { |rule| law_violations.key?(law.id.to_s) }
+            runnable = ordered.select { |law| law_violations.key?(law.id.to_s) }
             runnable += semantic_law_adapters(law_violations, ordered)
             if runnable.empty? && law_violations.any?
               Master::Trace::Dmesg.status(
                 "fix0",
-                "no registered rule fixes #{law_violations.keys.first(5).join(", ")}; " \
-                "registered: #{ordered.map { |r| r.id.to_s }.first(5).join(", ")}",
+                "no registered law fixes #{law_violations.keys.first(5).join(", ")}; " \
+                "registered: #{ordered.map { |law| law.id.to_s }.first(5).join(", ")}",
               )
             end
             fixed = run_dependency_levels(runnable, files:, pass:, law_violations:, deadline:, council:)
@@ -82,7 +82,7 @@ module Master
               break if circuit_open?
               results = run_law_group(group:, files:, pass:, law_violations:, council:)
               fixed += tally_law_results(results, breakdown:, pass:)
-              @human_decision_required ||= results.any? { |_rule, result| result[:status] == :human_decision }
+              @human_decision_required ||= results.any? { |_law, result| result[:status] == :human_decision }
             end
             report_skip_breakdown(breakdown, pass:)
             fixed
@@ -122,15 +122,15 @@ module Master
 
           def run_law_group(group:, files:, pass:, law_violations:, council: nil)
             unless disjoint_law_files?(group, law_violations)
-              return group.map do |rule|
-                [rule, run_law_once(law, files, pass, council:,
+              return group.map do |law|
+                [law, run_law_once(law, files, pass, council:,
                                      external_violations: law_violations[law.id.to_s])]
               end
             end
 
-            group.map do |rule|
+            group.map do |law|
               Thread.new do
-                [rule, run_law_once(law, files, pass, council:,
+                [law, run_law_once(law, files, pass, council:,
                                      external_violations: law_violations[law.id.to_s])]
               end
             end.map(&:value)
@@ -145,7 +145,7 @@ module Master
             return if picks.empty?
 
             "COUNCIL\nThe council read these files and argued about them. These are the repairs " \
-              "it judged strongest. Prefer the one that satisfies the rule with the smallest " \
+              "it judged strongest. Prefer the one that satisfies the law with the smallest " \
               "change that preserves what the code means; ignore any that does neither.\n#{picks.join("\n")}"
           end
 
@@ -162,13 +162,13 @@ module Master
             require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
             ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.definitions.empty?
             law_violations.keys.reject { |id| known.include?(id.to_s) }.filter_map do |id|
-              law = ::Law.definitions[id.to_s]
+              law = ::Law.definitions.find { |definition| definition.id.to_s == id.to_s }
               next unless law&.semantic?
               SemanticFixLaw.new(id: id.to_s, severity: law.severity, law:)
             end
           rescue StandardError => e
             Master::Ground::Swallow.log(e, context: "fix_loop.semantic_law_adapters", event_bus: @bus, severity: :load_bearing)
-            raise "semantic rule adapter load failed: #{e.class}: #{e.message}"
+            raise "semantic law adapter load failed: #{e.class}: #{e.message}"
           end
 
           def run_law_once(law, files, pass, council: nil, external_violations: nil)
