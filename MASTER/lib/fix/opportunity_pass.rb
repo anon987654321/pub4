@@ -6,7 +6,7 @@ module Master
     # cannot express. These are evidence-backed prompts for the normal Council +
     # LawLoop path, not a second fixer.
     class OpportunityPass
-      RULE_ID = "CONVERGENCE_OPPORTUNITY"
+      LAW_ID = "CONVERGENCE_OPPORTUNITY"
       TEXT_FILES = %w[.md .rb .rake .yml .yaml .erb .html .js .css .scss].freeze
       SOURCE_ROOTS = %w[MASTER RAILS OPENBSD STUDIO].freeze
       # %r{} delimiters, not /.../ -- the character class needs a literal /
@@ -21,14 +21,14 @@ module Master
         "MASTER/lib/operator/ratchets.rb" => 600,
       }.freeze
 
-      Rule = Data.define(:id) do
+      Law = Data.define(:id) do
         def severity = :warning
       end
 
       Finding = Data.define(:file, :line, :message, :fix) do
         def to_h
           {
-            rule: OpportunityPass::RULE_ID,
+            law: OpportunityPass::LAW_ID,
             file:,
             line:,
             severity: :warning,
