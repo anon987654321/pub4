@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-require "review/scan/rule_dsl"
+require "review/scan/law_dsl"
 
 # The rule pairs each comment with the method it sits above, asks a model which
 # comments lie, and turns the answer back into findings on the comment's line.
@@ -45,7 +45,7 @@ class TestCommentDriftRule < Minitest::Test
     end
   RUBY
 
-  def rule(agent) = Master::Review::Scan::Rules::CommentDriftRule.new(agent:)
+  def rule(agent) = Master::Review::Scan::Laws::CommentDriftLaw.new(agent:)
 
   def flags(agent, source: SOURCE, path: "lib/thing.rb")
     rule(agent).check(source, path:).map(&:message)
@@ -100,7 +100,7 @@ class TestCommentDriftRule < Minitest::Test
   # No model, no question — and no findings either. Silence here is correct
   # because nothing was asked, which is different from an answer of "clean".
   def test_without_an_agent_it_asks_nothing
-    assert_empty Master::Review::Scan::Rules::CommentDriftRule.new(agent: nil).check(SOURCE, path: "lib/thing.rb")
+    assert_empty Master::Review::Scan::Laws::CommentDriftLaw.new(agent: nil).check(SOURCE, path: "lib/thing.rb")
   end
 
   def test_it_reads_only_ruby
