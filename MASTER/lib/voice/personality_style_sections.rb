@@ -64,7 +64,7 @@ module Master
 
       def zsh_ssh_line(zsh)
         ssh = zsh["ssh_reading"]
-        "SSH reading: #{ssh["rule"]}." if ssh.is_a?(Hash) && ssh["rule"]
+        "SSH reading: #{ssh["law"]}." if ssh.is_a?(Hash) && ssh["rule"]
       end
 
       def zsh_economics_line(zsh)
