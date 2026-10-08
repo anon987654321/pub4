@@ -64,6 +64,22 @@ class TestFixReflection < Minitest::Test
     assert_equal "lib/example.rb:1", result.anchor
   end
 
+  def test_non_numeric_anchor_line_downgrades_repair
+    agent = Agent.new(<<~TEXT)
+      VERDICT: REPAIR
+      SUMMARY: Unsupported line anchor.
+      LAW: SINGULARITY
+      ANCHOR: lib/example.rb:nope
+      EVIDENCE: no measured source.
+      NEXT: edit it
+    TEXT
+    result = Master::Fix::Reflection.new(agent:, root: @root).call(
+      target: @root, state: "plateau", files: [], history: []
+    )
+    assert_equal "INVESTIGATE", result.verdict
+    assert_nil result.anchor
+  end
+
   def test_invalid_anchor_downgrades_repair
     agent = Agent.new(<<~TEXT)
       VERDICT: REPAIR
