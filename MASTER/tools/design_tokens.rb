@@ -8,9 +8,9 @@ require_relative "../lib/trace/dmesg"
 module DesignTokens
   ROOT = File.expand_path("../..", __dir__)
   SOURCE = File.join(ROOT, "MASTER", "data", "laws.yml")
-  ARTIFACT = File.join(ROOT, "RAILS", "shared", "design_tokens.yml")
+  ARTIFACT = File.join(ROOT, "RAILS", "__shared", "design_tokens.yml")
   FACE_ORDER = %w[c_text x_text c_accent c_danger c_code].freeze
-  DIALECT_PATH = File.join(ROOT, "RAILS", "shared", "app", "assets", "stylesheets", "_dialect_tokens.scss")
+  DIALECT_PATH = File.join(ROOT, "RAILS", "__shared", "app", "assets", "stylesheets", "_dialect_tokens.scss")
 
   # Explicit yml-key -> css-var maps for the values that have drifted before
   # (--color-warning, 2026-07-21: shared/_tokens.scss said #ffd400 while
