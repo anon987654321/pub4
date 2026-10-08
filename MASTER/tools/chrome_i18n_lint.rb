@@ -10,7 +10,7 @@ module Operator
   # Mirrors empty_state_lint: baseline 0, never raise to silence new debt.
   # Opt out a deliberate EN-only string with: <%# chrome_i18n: ok %>
   #
-  # MASTER playbook: design_rules.yml#ui_polish + surface_rules ERB_HARDCODED_CHROME.
+  # MASTER playbook: laws.yml#ui_polish + surface_rules ERB_HARDCODED_CHROME.
   module ChromeI18nLint
     # title: "No …" / title: "Nothing …" without t(
     EMPTY_TITLE = /
