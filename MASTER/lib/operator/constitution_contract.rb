@@ -35,7 +35,7 @@ module Operator
       issues << "soul: golden rule missing or changed" unless soul.dig("absolute", "golden_rule") == "PRESERVE_THEN_IMPROVE_NEVER_BREAK"
       issues << "soul: no sacred paths declared" unless Array(soul.dig("absolute", "sacred_paths")).any?
       issues << "rules: missing design tokens" unless laws["tokens"].is_a?(Hash)
-      declared = laws.any? { |_id, value| value.is_a?(Hash) && value["priority"] && value["principle"] }
+      declared = laws.any? { |_id, value| value.is_a?(Hash) && value["priority"] && value["statement"] }
       issues << "rules: no declared policy laws" unless declared
       prose = File.join(@root, "MASTER", "law", "prose.rb")
       issues << "rules: no Bringhurst reference" unless File.file?(prose) && File.read(prose).include?("Bringhurst")
