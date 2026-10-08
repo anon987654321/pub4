@@ -170,7 +170,7 @@ class TestSelfFindingsDrift < Minitest::Test
   end
 
   # The two rows must not count the same finding twice. A law reaches the
-  # scanner through LawBridgeRule and reports under its own id, so a registry
+  # scanner through LawBridgeLaw and reports under its own id, so a registry
   # census that kept those ids would move both ratchets on one fix — fifteen
   # findings on the day the row was written. Asserted against the recorded
   # baseline rather than a live scan, which is a minute of measurement.
