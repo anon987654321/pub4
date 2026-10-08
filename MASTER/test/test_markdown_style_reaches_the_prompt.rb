@@ -63,7 +63,7 @@ class TestMarkdownStyleReachesThePrompt < Minitest::Test
   # The real file, not a fixture: if someone empties the section or renames the
   # key, the prompt silently loses the guidance and only this notices.
   def test_the_real_section_is_present_and_reaches_a_real_prompt
-    section = Master::Ground::Rules.new.data(:markdown_style)
+    section = Master::Ground::Laws.new.data(:markdown_style)
 
     assert_kind_of Hash, section, "data/laws.yml lost its markdown_style section"
     refute_empty Array(section["rules"]), "markdown_style declares no rules"
