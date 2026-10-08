@@ -337,12 +337,12 @@ module Master
           # Counts *code* lines, not the raw start..end span.
           #
           # The span version counted comments and blank lines toward method
-          # length, which contradicts this rule's own description ("methods under
+          # length, which contradicts this law's own description ("methods under
           # 10 lines ideal") — that is about how much logic a method holds, not
           # how well it is explained. In a codebase whose convention is a
           # paragraph of rationale above the tricky line, the effect was backwards:
           # Cli::TurnRouter.call was reported at 22 lines while containing 10 lines
-          # of code and 8 lines of comment, so the only way to satisfy the rule was
+          # of code and 8 lines of comment, so the only way to satisfy the law was
           # to delete the explanation. Penalising documentation is the opposite of
           # what a quality gate should do.
           def check_ast(ast, code, path:)
@@ -742,7 +742,7 @@ module Master
         # whose every method only forwards to one other object carries a name and
         # a file and nothing else. Callers could hold that object directly. :info,
         # because a facade that adds a boundary on purpose is the exception the
-        # reviewer decides — the rule surfaces the shape, not the verdict.
+        # reviewer decides — the law surfaces the shape, not the verdict.
         class MiddleManLaw < Law
           MIN_METHODS = 3
 
