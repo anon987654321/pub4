@@ -31,7 +31,7 @@ module Master
         def constitution
           absolute = soul_data["absolute"] || {}
           {
-            "golden_rule" => absolute["golden_rule"] || laws_data["golden_rule"],
+            "golden_law" => absolute["golden_law"] || laws_data["golden_law"],
             "protection" => absolute["protection_tiers"] || laws_data["protection"],
             "banned_output" => voice["banned_output"],
             # soul is the one source; the voice.yml shadow copy is deleted, so
