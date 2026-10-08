@@ -214,7 +214,7 @@ module Master
           description: "all-caps labels need letter-spacing" do |src, path:|
           next [] unless src.match?(/text-transform:\s*uppercase/i)
           next [] if src.match?(/letter-spacing\s*:/i)
-          [finding(line: 1, message: "uppercase without letter-spacing — add tracking per design_rules.yml")]
+          [finding(line: 1, message: "uppercase without letter-spacing — add tracking per laws.yml")]
         end
 
         # A tab is indentation in source and a field separator in data. A .tsv is
