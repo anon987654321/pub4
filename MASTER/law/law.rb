@@ -442,11 +442,11 @@ module Law
     VERSION = 1
 
     def rows(definitions = Law.definitions.values)
-      definitions.sort_by { |law| law.id.to_s }.map do |rule|
+      definitions.sort_by { |law| law.id.to_s }.map do |law|
         {
           "id" => law.id.to_s,
           "scope" => law.scope.to_s,
-          "law_scope" => rule.law_scope.to_s,
+          "law_scope" => law.law_scope.to_s,
           "languages" => law.languages.map(&:to_s),
           "lifecycle" => law.lifecycle.to_s,
           "autofix" => law.autofix.to_s,
