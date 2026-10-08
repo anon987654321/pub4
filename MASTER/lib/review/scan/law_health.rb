@@ -6,7 +6,7 @@ module Master
       # Reads detector-health policy from laws.yml and projects it onto findings.
       # Measurement-only findings remain visible to the scanner but do not enter
       # the automatic repair threshold.
-      module RuleHealth
+      module LawHealth
         module_function
 
         def measurement_only_ids
