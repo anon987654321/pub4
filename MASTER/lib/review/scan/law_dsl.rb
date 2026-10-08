@@ -22,7 +22,7 @@ module Master
         # behaviour. A rule that carries the case it must NOT fire on cannot drift
         # that way in silence.
         #
-        #   RuleDSL.rule :TIME_ZONE_UNSAFE, ...,
+        #   LawDSL.law :TIME_ZONE_UNSAFE, ...,
         #     fires: "Time.now.beginning_of_day",
         #     does_not_fire: "Time.now.utc.iso8601"
         def self.law(id, severity: :warning, tags: [], applies_to: nil, autofix: true, description: nil,
@@ -36,7 +36,7 @@ module Master
                                 fires:, does_not_fire:, example_path:, detect_semantic:, detect_structural:)
         end
 
-        def self.build_dsl_rule_class(dsl_id:, dsl_desc:, dsl_tags:, severity:, applies_to:, autofix:, block:,
+        def self.build_dsl_law_class(dsl_id:, dsl_desc:, dsl_tags:, severity:, applies_to:, autofix:, block:,
                                            fires: nil, does_not_fire: nil, example_path: nil, detect_semantic: nil, detect_structural: nil)
           cls = Class.new(Law) do
             define_method(:initialize) do
@@ -56,7 +56,7 @@ module Master
           cls
         end
 
-        def self.dsl_rule_attrs(cls, attrs)
+        def self.dsl_law_attrs(cls, attrs)
           attrs.each { |k, v| cls.instance_variable_set("@dsl_#{k}", v) }
         end
 
