@@ -1329,6 +1329,28 @@ tokens:
         battery_fps: 12
         pulse_limit: 24
         hud_labels: 5
+      sparse_field:
+        max_particles: 260
+        mobile_max_particles: 140
+        void_ratio: 0.82
+        idle_particles: 48
+        listening_particles: 88
+        thinking_particles: 148
+        working_particles: 124
+        speaking_particles: 116
+        warning_particles: 78
+        error_particles: 58
+        sleeping_particles: 22
+        ready_particles: 60
+        eye_well_radius: 0.24
+        mouth_void_ratio: 0.86
+        depth_layers: 3
+        asymmetry: 0.028
+        memory_ghost_limit: 48
+        evidence_trail_limit: 12
+        law_resonance_limit: 56
+        density_scale: 1.0
+        motion_vocabulary: [orbit, drift, attract, repel, bloom, collapse, fragment, remember, connect, breathe, resolve]
   # BRGEN_OLD dark — dark-inverted port of the real 2014 desktop.css/mobile.css
   # from pub/__OLD_BACKUPS/BRGEN_OLD. True neutral grayscale, no accent hue,
   # Arial. chrome_bg is the utility-bar tone (darker than bg), mirroring
