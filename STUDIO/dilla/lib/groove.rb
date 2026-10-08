@@ -333,7 +333,7 @@ module DillaLofiMachine
   CHORD_SUFFIXES = ([
     *CHORD_CATALOG_SUFFIXES,
     "maj9low", "mmaj7", "m9b5", "m11b5", "7#9b13", "7#9#11",
-    "13b9", "13#11", "9sus4", "9sus", "69"
+    "13b9", "13#11", "9sus4", "9sus", "69", "maj7#11", "sus9"
   ]).uniq.freeze + [""].freeze
 
 # Compiled once. The interpolated form was rebuilt on every iteration of every

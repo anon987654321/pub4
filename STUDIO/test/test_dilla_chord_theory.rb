@@ -212,4 +212,18 @@ class TestDAngeloProgressions < Minitest::Test
       end
     end
   end
+
+  # maj7#11 carried a template and a core-tone row but no entry in the suffix
+  # whitelist, so every such symbol raised "bad chord symbol" and a showcase
+  # aborted at its reference chord. sus9 had the same gap.
+  def test_lydian_and_sus9_symbols_resolve_to_their_tones
+    midi = ->(hz) { (69 + (12 * Math.log2(hz / 440.0))).round }
+    expected = { "Fmaj7#11" => [53, 57, 60, 64, 71], "Cmaj7#11" => [48, 52, 55, 59, 66],
+                 "F#maj7#11" => [54, 58, 61, 65, 72], "Esus9" => [52, 54, 57, 59, 71] }
+    expected.each do |symbol, notes|
+      chord = DillaLofiMachine.chord_from_symbol(symbol)
+      assert_equal notes, chord[:hz].map(&midi), symbol
+    end
+    refute_nil resolve_pad_chord_symbol("Fmaj7#11")
+  end
 end
