@@ -342,7 +342,7 @@ module Master
         end
 
         def ratchet_sponsorship_ok?(paths)
-          Operator::RatchetSponsor.validate!(root: @root, changed_paths: paths)
+          ::Operator::RatchetSponsor.validate!(root: @root, changed_paths: paths)
           true
         rescue StandardError => e
           @bus&.publish("fix_loop:commit_blocked", reason: "ratchet_sponsorship", error: e.message)
