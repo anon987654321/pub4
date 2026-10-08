@@ -3711,6 +3711,14 @@ SHOWCASE_MODES = {
       @mind.accept_note(chosen)
     end
 
+    def melody_step_duration(default_steps)
+      composed = ENV.fetch("DILLA_COMPOSED_MELODY", LiveSynth.showcase? ? "1" : "0") != "0"
+      return default_steps.sample(random: @rng) unless composed
+
+      rhythm = DillaMusicalGrammar::RHYTHMS.fetch((@melody_step - 1) % DillaMusicalGrammar::RHYTHMS.length)
+      rhythm.fetch((@melody_step - 1) % rhythm.length)
+    end
+
     # FM: scale-aware and chord-tone weighted, in the current harmony.
     def fm_phrase!(stage, length)
       phrase = @c.fetch("fm_phrase")
@@ -3723,9 +3731,7 @@ SHOWCASE_MODES = {
       events = []
       while spot < @next_at + length - 0.4
         last = lead_choice(range, last, reach)
-        rhythm_set = DillaMusicalGrammar::RHYTHMS
-        composed = ENV.fetch("DILLA_COMPOSED_MELODY", LiveSynth.showcase? ? "1" : "0") != "0"
-        duration_beats = composed ? rhythm_set[(@melody_step - 1) % rhythm_set.length][(@melody_step - 1) % rhythm_set[(@melody_step - 1) % rhythm_set.length].length] : phrase["steps"].sample(random: @rng)
+        duration_beats = melody_step_duration(phrase["steps"])
         duration = duration_beats * @beat
         duration = [duration, length - (spot - @next_at) - 0.18 * @beat].min
         if duration > 0.08 * @beat && @rng.rand < @mind.lead_probability(phrase["odds"])
@@ -3749,10 +3755,7 @@ SHOWCASE_MODES = {
       events = []
       while spot < @next_at + length - 0.4
         last = lead_choice(range, last, 5)
-        rhythm_set = DillaMusicalGrammar::RHYTHMS
-        composed = ENV.fetch("DILLA_COMPOSED_MELODY", LiveSynth.showcase? ? "1" : "0") != "0"
-        rhythm = rhythm_set[(@melody_step - 1) % rhythm_set.length]
-        duration_beats = composed ? rhythm[(@melody_step - 1) % rhythm.length] : [0.5, 0.5, 1.0, 1.5].sample(random: @rng)
+        duration_beats = melody_step_duration([0.5, 0.5, 1.0, 1.5])
         duration = duration_beats * @beat
         duration = [duration, length - (spot - @next_at) - 0.14 * @beat].min
         swing = ((spot - @next_at) / (@beat / 2)).round.odd? ? @c["lead_swing_seconds"] : 0.0
