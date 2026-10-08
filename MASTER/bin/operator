@@ -417,10 +417,10 @@ when "laws"
   end
 
   scanner = Master::Fix::Scanner.build(root: master_root, agent: nil)
-  rule = scanner.rules.find { |item| item.id.to_s.casecmp?(id) }
+  rule = scanner.laws.find { |item| item.id.to_s.casecmp?(id) }
   if rule.nil? && declared.nil?
     abort("rule: nothing named #{id.inspect} — neither a declaration in data/laws.yml " \
-          "nor one of the #{scanner.rules.size} rules the scanner loaded")
+          "nor one of the #{scanner.laws.size} rules the scanner loaded")
   end
 
   where = definition_at(master_root, rule&.id.to_s.empty? ? id : rule.id.to_s)
