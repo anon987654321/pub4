@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-require "review/scan/rule_dsl"
+require "review/scan/law_dsl"
 require "prism"
 
 # Five shape rules from structural_rules.rb that nothing named until now:
@@ -22,14 +22,14 @@ class TestStructuralShapeRules < Minitest::Test
   # FILE_LAYOUT — the header and the position of the private marker.
 
   def test_file_layout_flags_a_missing_frozen_header
-    found = flags(Rules::FileLayoutRule.new, "class Thing\nend\n")
+    found = flags(Laws::FileLayoutRule.new, "class Thing\nend\n")
 
     assert_equal 1, found.size
     assert_includes found.first, "frozen_string_literal"
   end
 
   def test_file_layout_accepts_the_header_on_the_first_line
-    assert_empty flags(Rules::FileLayoutRule.new, "# frozen_string_literal: true\nclass Thing\nend\n")
+    assert_empty flags(Laws::FileLayoutRule.new, "# frozen_string_literal: true\nclass Thing\nend\n")
   end
 
   # A private section is what `private` is for, so the methods under it are the
@@ -37,7 +37,7 @@ class TestStructuralShapeRules < Minitest::Test
   # violation and produced 261 findings across MASTER, every one of them a
   # correctly private method.
   def test_file_layout_spares_the_private_methods_under_the_marker
-    assert_empty flags(Rules::FileLayoutRule.new, <<~RUBY)
+    assert_empty flags(Laws::FileLayoutRule.new, <<~RUBY)
       # frozen_string_literal: true
       class Thing
         def a; end
@@ -54,7 +54,7 @@ class TestStructuralShapeRules < Minitest::Test
   # are what the law forbids: re-open the scope, or define a singleton method,
   # which `private` does not reach.
   def test_file_layout_flags_a_scope_reopened_to_public
-    found = flags(Rules::FileLayoutRule.new, <<~RUBY)
+    found = flags(Laws::FileLayoutRule.new, <<~RUBY)
       # frozen_string_literal: true
       class Thing
         private
@@ -72,7 +72,7 @@ class TestStructuralShapeRules < Minitest::Test
   end
 
   def test_file_layout_flags_a_singleton_method_below_private
-    found = flags(Rules::FileLayoutRule.new, <<~RUBY)
+    found = flags(Laws::FileLayoutRule.new, <<~RUBY)
       # frozen_string_literal: true
       class Thing
         private
@@ -90,7 +90,7 @@ class TestStructuralShapeRules < Minitest::Test
   # Visibility resets inside every class and module body, so a nested class's
   # public methods are not below the outer scope's marker.
   def test_file_layout_resets_visibility_in_a_nested_scope
-    assert_empty flags(Rules::FileLayoutRule.new, <<~RUBY)
+    assert_empty flags(Laws::FileLayoutRule.new, <<~RUBY)
       # frozen_string_literal: true
       class Thing
         private
@@ -106,18 +106,18 @@ class TestStructuralShapeRules < Minitest::Test
 
   # A shebang has to come first, so the header sits on the second line.
   def test_file_layout_accepts_the_header_under_a_shebang
-    assert_empty flags(Rules::FileLayoutRule.new, "#!/usr/bin/env ruby\n# frozen_string_literal: true\nclass Thing\nend\n")
+    assert_empty flags(Laws::FileLayoutRule.new, "#!/usr/bin/env ruby\n# frozen_string_literal: true\nclass Thing\nend\n")
   end
 
   def test_file_layout_ignores_a_file_that_is_not_ruby
-    assert_empty flags(Rules::FileLayoutRule.new, "class Thing\nend\n", path: "lib/thing.txt")
+    assert_empty flags(Laws::FileLayoutRule.new, "class Thing\nend\n", path: "lib/thing.txt")
   end
 
   # CYCLOMATIC_COMPLEXITY — one plus every branching node, per method.
 
   def test_cyclomatic_complexity_flags_a_method_over_the_limit
     branches = (1..10).map { |n| "  return :a#{n} if x == #{n}" }.join("\n")
-    found = flags(Rules::CyclomaticComplexityRule.new, "def wide(x)\n#{branches}\nend\n")
+    found = flags(Laws::CyclomaticComplexityRule.new, "def wide(x)\n#{branches}\nend\n")
 
     assert_equal 1, found.size
     assert_includes found.first, "complexity 11"
@@ -129,7 +129,7 @@ class TestStructuralShapeRules < Minitest::Test
   def test_cyclomatic_complexity_spares_a_method_at_the_limit
     branches = (1..9).map { |n| "  return :a#{n} if x == #{n}" }.join("\n")
 
-    assert_empty flags(Rules::CyclomaticComplexityRule.new, "def edge(x)\n#{branches}\nend\n")
+    assert_empty flags(Laws::CyclomaticComplexityRule.new, "def edge(x)\n#{branches}\nend\n")
   end
 
   # Twelve terms is eleven `||` operators, so complexity is twelve. Written with
@@ -138,7 +138,7 @@ class TestStructuralShapeRules < Minitest::Test
   # leaving written down.
   def test_cyclomatic_complexity_counts_boolean_operators_as_branches
     conds = (1..12).map { |n| "x == #{n}" }.join(" || ")
-    found = flags(Rules::CyclomaticComplexityRule.new, "def orred(x)\n  #{conds}\nend\n")
+    found = flags(Laws::CyclomaticComplexityRule.new, "def orred(x)\n  #{conds}\nend\n")
 
     assert_equal 1, found.size, "each || is a path through the method and has to count"
     assert_includes found.first, "complexity 12"
@@ -147,7 +147,7 @@ class TestStructuralShapeRules < Minitest::Test
   # DATA_CLASS — accessors and nothing else.
 
   def test_data_class_flags_accessors_without_behaviour
-    found = flags(Rules::DataClassRule.new, <<~RUBY)
+    found = flags(Laws::DataClassRule.new, <<~RUBY)
       class Point
         attr_reader :x
         attr_reader :y
@@ -160,7 +160,7 @@ class TestStructuralShapeRules < Minitest::Test
   end
 
   def test_data_class_spares_a_class_that_does_something
-    assert_empty flags(Rules::DataClassRule.new, <<~RUBY)
+    assert_empty flags(Laws::DataClassRule.new, <<~RUBY)
       class Point
         attr_reader :x
         attr_reader :y
@@ -173,7 +173,7 @@ class TestStructuralShapeRules < Minitest::Test
   # A constructor and the two printing methods are not behaviour — a Struct has
   # them too, which is the rule's own point.
   def test_data_class_does_not_count_initialize_or_printing_as_behaviour
-    found = flags(Rules::DataClassRule.new, <<~RUBY)
+    found = flags(Laws::DataClassRule.new, <<~RUBY)
       class Point
         attr_reader :x
         attr_reader :y
@@ -187,14 +187,14 @@ class TestStructuralShapeRules < Minitest::Test
   end
 
   def test_data_class_spares_a_single_accessor
-    assert_empty flags(Rules::DataClassRule.new, "class Wrapper\n  attr_reader :inner\nend\n"),
+    assert_empty flags(Laws::DataClassRule.new, "class Wrapper\n  attr_reader :inner\nend\n"),
                  "one accessor is a wrapper, not a data class"
   end
 
   # MIDDLE_MAN — a class whose every method forwards to the same object.
 
   def test_middle_man_flags_a_class_that_only_forwards
-    found = flags(Rules::MiddleManRule.new, <<~RUBY)
+    found = flags(Laws::MiddleManRule.new, <<~RUBY)
       class Facade
         def initialize(inner) = @inner = inner
         def a = @inner.a
@@ -210,7 +210,7 @@ class TestStructuralShapeRules < Minitest::Test
   # The constructor holds the delegate rather than forwarding to it. Counting it
   # would exempt every wrapper that has one, which is all of them.
   def test_middle_man_does_not_count_the_constructor_toward_the_minimum
-    assert_empty flags(Rules::MiddleManRule.new, <<~RUBY)
+    assert_empty flags(Laws::MiddleManRule.new, <<~RUBY)
       class Facade
         def initialize(inner) = @inner = inner
         def a = @inner.a
@@ -220,7 +220,7 @@ class TestStructuralShapeRules < Minitest::Test
   end
 
   def test_middle_man_spares_a_class_with_one_method_of_its_own
-    assert_empty flags(Rules::MiddleManRule.new, <<~RUBY)
+    assert_empty flags(Laws::MiddleManRule.new, <<~RUBY)
       class Facade
         def initialize(inner) = @inner = inner
         def a = @inner.a
@@ -233,7 +233,7 @@ class TestStructuralShapeRules < Minitest::Test
   # Forwarding to two different objects is coordination, which is a reason to
   # exist. The rule is about the class that adds a name and nothing else.
   def test_middle_man_spares_forwarding_to_more_than_one_object
-    assert_empty flags(Rules::MiddleManRule.new, <<~RUBY)
+    assert_empty flags(Laws::MiddleManRule.new, <<~RUBY)
       class Facade
         def initialize(a, b) = (@a, @b = a, b)
         def one = @a.one
@@ -246,7 +246,7 @@ class TestStructuralShapeRules < Minitest::Test
   # NESTING_DEPTH — depth over the AST, not over the margin.
 
   def ast_flags(source)
-    Rules::NestingDepthRule.new.check_ast(Prism.parse(source).value, source, path: "lib/thing.rb").map { |f| f[:message] }
+    Laws::NestingDepthRule.new.check_ast(Prism.parse(source).value, source, path: "lib/thing.rb").map { |f| f[:message] }
   end
 
   def test_nesting_depth_allows_four_levels
