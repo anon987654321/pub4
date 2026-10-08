@@ -76,7 +76,7 @@ task :constitution do
 
   root    = __dir__
   scanner = Master::Fix::Scanner.build(root:)
-  scanner.rules.reject! { |rule| rule.id.to_s == "ast_omission" }
+  scanner.laws.reject! { |rule| rule.id.to_s == "ast_omission" }
   timeout = Integer(ENV.fetch("MASTER_CONSTITUTION_FILE_TIMEOUT", "4"))
   # data/scan_coverage.yml, not File.join(root, "lib") — a path literal here is
   # how core/ stayed outside its own law for three weeks. rake lint:scan_coverage
@@ -90,7 +90,7 @@ task :constitution do
   audit = Master::Review::Scan::LawRegistryAudit.new(root:).call
   # Rules that need a model and did not get one return [] and say nothing, so
   # a report that omits them offers the mechanical half as the whole law.
-  idle = scanner.rules.select { |rule| rule.respond_to?(:agent?) && !rule.agent? }
+  idle = scanner.laws.select { |rule| rule.respond_to?(:agent?) && !rule.agent? }
   puts "constitution: #{audit.mechanical.size} of #{audit.yaml_rules} declared laws active" \
        "#{idle.empty? ? '' : " (#{idle.map(&:id).join(', ')} idle without a model — rake lint:law_reach)"}"
 
