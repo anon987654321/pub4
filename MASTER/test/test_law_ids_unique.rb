@@ -13,6 +13,13 @@ require_relative "test_helper"
 # is the honest place to assert uniqueness, because it is the exact list the scanner
 # walks on every file.
 class TestRuleIdsUnique < Minitest::Test
+  def test_scanner_registry_uses_law_as_the_canonical_concept
+    assert_same Master::Review::Scan::Law, Master::Review::Scan::Rule
+    assert_same Master::Review::Scan::LawDSL, Master::Review::Scan::RuleDSL
+    assert_same Master::Review::Scan::LawFactory, Master::Review::Scan::RuleFactory
+    assert_same Master::Review::Scan::LawRegistryAudit, Master::Review::Scan::RuleRegistryAudit
+  end
+
   def scanner
     @scanner ||= Master::Review::Scan::InfraHelpers.build_scanner(root: Master::ROOT)
   end
