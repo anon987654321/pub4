@@ -202,8 +202,8 @@ module Master
           scan = Master::Review::Scan
           scan::LawDSL
           js = scan::Law.registry.find { |klass| klass.name.nil? && klass.new.id == "JS_MODULE_SIZE" }
-          [scan::Laws::GodClassRule.new, scan::Laws::SmallFilesRule.new,
-           scan::Laws::FileSprawlRule.new(root: target), js&.new].compact
+          [scan::Laws::GodClassLaw.new, scan::Laws::SmallFilesLaw.new,
+           scan::Laws::FileSprawlLaw.new(root: target), js&.new].compact
         end
 
         def self.repository_files(root)
