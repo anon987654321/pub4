@@ -128,18 +128,18 @@ module Master
         ensure_schema
       end
 
-      def record(trigger: nil, strategy: nil, rule: nil, file_type: nil, outcome:)
-        if rule
-          record_fix(rule:, file_type:, outcome:)
+      def record(trigger: nil, strategy: nil, law: nil, file_type: nil, outcome:)
+        if law
+          record_fix(law:, file_type:, outcome:)
         elsif trigger
           record_strategy(trigger:, strategy: strategy || "unknown", outcome:)
         end
       end
 
-      def record_fix(rule:, file_type:, outcome:)
+      def record_fix(law:, file_type:, outcome:)
         @db.execute(
           "INSERT INTO fix_outcomes (ts, rule, file_type, outcome) VALUES (?, ?, ?, ?)",
-          [Time.now.to_i, rule.to_s, file_type.to_s, outcome.to_s],
+          [Time.now.to_i, law.to_s, file_type.to_s, outcome.to_s],
         )
       rescue SQLite3::Exception => e
         warn "knowledge_store: #{e.message}"
@@ -151,9 +151,9 @@ module Master
       # quality. See fix_batch's comment in law_loop.rb for why: counting
       # policy skips as failures deprioritizes a rule further every time
       # it's skipped, without it ever having actually failed a fix.
-      def fix_quality(rule:, file_type: nil)
+      def fix_quality(law:, file_type: nil)
         cutoff = Time.now.to_i - QUALITY_WINDOW_DAYS * 86_400
-        rows = fix_quality_rows(rule:, file_type:, cutoff:)
+        rows = fix_quality_rows(law:, file_type:, cutoff:)
         tally = rows.each_with_object(Hash.new(0)) { |r, h| h[r["outcome"]] = r["n"].to_i }
         total = tally["fixed"] + tally["stuck"]
         return 0.5 if total.zero?
@@ -201,15 +201,15 @@ module Master
         }
       end
 
-      def fix_quality_rows(rule:, file_type:, cutoff:)
+      def fix_quality_rows(law:, file_type:, cutoff:)
         if file_type
           sql = "SELECT outcome, COUNT(*) AS n FROM fix_outcomes " \
                 "WHERE rule = ? AND file_type = ? AND ts >= ? GROUP BY outcome"
-          return @db.execute(sql, [rule.to_s, file_type.to_s, cutoff])
+          return @db.execute(sql, [law.to_s, file_type.to_s, cutoff])
         end
 
         sql = "SELECT outcome, COUNT(*) AS n FROM fix_outcomes WHERE rule = ? AND ts >= ? GROUP BY outcome"
-        @db.execute(sql, [rule.to_s, cutoff])
+        @db.execute(sql, [law.to_s, cutoff])
       end
 
       def existing_strategy(trigger, strategy)
