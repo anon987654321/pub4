@@ -4,7 +4,7 @@ module Master
   module Trace
   # /diag — composed snapshot of internal state. Replaces ad-hoc grep over logs.
     class Diag
-      SECTIONS = %i[drives breaker cache rules ring].freeze
+      SECTIONS = %i[drives breaker cache laws ring].freeze
       RING_LINES = 8
       CACHE_EVENT_LIMIT = 12
 
@@ -61,10 +61,10 @@ module Master
         [line]
       end
 
-      def section_rules
-        return ["rules: -- (no registry)"] unless @registry
+      def section_laws
+        return ["laws: -- (no registry)"] unless @registry
         count = @registry.respond_to?(:registry) ? @registry.registry.size : 0
-        ["rules: #{count} registered"]
+        ["laws: #{count} registered"]
       end
 
       def section_ring
