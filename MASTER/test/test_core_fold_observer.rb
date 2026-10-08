@@ -17,7 +17,7 @@ class FoldObserverTest < Minitest::Test
   def build(model, root:, observer: nil)
     Master::Core::Fold.new(
       model:,
-      constitution: Master::Core::Constitution.new(rules: []),
+      constitution: Master::Core::Constitution.new(laws: []),
       world: Master::Core::World.new(root:),
       memory: Master::Core::Memory.new,
       observer:,
@@ -43,7 +43,7 @@ class FoldObserverTest < Minitest::Test
     Dir.mktmpdir do |root|
       seen = []
       # A rule that blocks every write; the fold observes the refusal and moves on.
-      block_writes = Master::Core::Constitution::Rule.new(
+      block_writes = Master::Core::Constitution::Law.new(
         id: :no_writes, verbs: %i[write],
         judge: ->(_e, _m) { Master::Core::Verdict::Block.new(reason: "no", by: :no_writes) }
       )
