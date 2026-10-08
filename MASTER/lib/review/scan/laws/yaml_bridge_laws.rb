@@ -15,7 +15,7 @@ module Master
         # quoted fix beside it. Only the `fires:`/`does_not_fire:` lines are
         # blanked, not the directory, so a real secret or shell interpolation in
         # a rule file still vetoes.
-        class VetoPatternLaw < Rule
+        class VetoPatternLaw < Law
           def self.auto_build? = false
 
           declare id: "veto_patterns", severity: :veto,
@@ -58,7 +58,7 @@ module Master
         end
 
         # Wires laws.yml detect_lexical entries not already covered by LawDSL classes.
-        class YamlDeclarativeLaw < Rule
+        class YamlDeclarativeLaw < Law
           def self.auto_build? = false
 
           declare id: "yaml_declarative", severity: :warning,
