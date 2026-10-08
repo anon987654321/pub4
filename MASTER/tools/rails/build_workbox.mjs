@@ -13,8 +13,8 @@ import { join, resolve } from "node:path"
 // the entry count stay put), so the reason to stay hand-rolled is gone and the
 // three apps share one worker again.
 const APPS = ["amber", "brgen", "bsdports"]
-const root = resolve(import.meta.dirname, "..")
-const source = join(root, "shared", "pwa", "service_worker.js")
+const root = resolve(import.meta.dirname, "../../..", "RAILS")
+const source = join(root, "__shared", "pwa", "service_worker.js")
 const temp = await mkdtemp(join(tmpdir(), "pub4-workbox-"))
 
 try {
@@ -22,7 +22,7 @@ try {
     const bundled = join(temp, `${app}.js`)
     const destination = join(root, app, "app", "views", "pwa", "service-worker.js")
     const appPublic = join(root, app, "public")
-    const globDirectory = existsSync(appPublic) ? appPublic : join(root, "shared", "public")
+    const globDirectory = existsSync(appPublic) ? appPublic : join(root, "__shared", "public")
     const globPatterns = existsSync(appPublic)
       ? ["**/*.{css,js,png,jpg,jpeg,webp,svg,woff,woff2,ico,html}"]
       : []
