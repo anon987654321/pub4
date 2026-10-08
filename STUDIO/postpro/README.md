@@ -421,7 +421,7 @@ expecting film curves.
 
 ### Who calls it
 
-`MASTER/web/app/services/image_presenter.rb` grades web photos through it. The
+`RAILS/master_web/app/services/image_presenter.rb` grades web photos through it. The
 Rails apps reach it through `Operator::DeployPaths#postpro_script` for newsletter
 heroes and TV thumbnails, by way of `Shared::NewsletterVisuals` and brgen's
 `PostproJob`. `STUDIO/replicate/replicate.rb --postpro PRESET` hands a fresh
