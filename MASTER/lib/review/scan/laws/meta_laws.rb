@@ -5,7 +5,7 @@ module Master
     module Scan
       module Laws
       # Detects methods/classes/modules present in recent git history but absent now.
-      # Wraps CommitGuard as a standard scan Rule so it runs in the scanner pipeline.
+      # Wraps CommitGuard as a standard scan Law so it runs in the scanner pipeline.
         class AstOmissionLaw < Law
           def self.auto_build? = false
 
@@ -40,12 +40,12 @@ module Master
           end
         end
 
-        # Every Rule subclass must have a matching test file; gaps mean untested enforcement.
+        # Every Law subclass must have a matching test file; gaps mean untested enforcement.
         class LawCoverageLaw < Law
           def self.auto_build? = false
 
           declare id: "rule_coverage", severity: :warning, tags: %i[TEST_COVERAGE],
-                  description: "Rule subclass has no corresponding test file"
+                  description: "Law subclass has no corresponding test file"
 
           def initialize(root:)
             super()
@@ -53,7 +53,7 @@ module Master
             @source_dirs = [File.join(root, "test"), File.join(root, "spec")]
           end
 
-          # Asks the question the description asks — has this Rule subclass a
+          # Asks the question the description asks — has this Law subclass a
           # test — rather than whether a file is named after it.
           #
           # It used to require the path end `_rule.rb` and look for
@@ -84,12 +84,12 @@ module Master
 
           private
 
-          # `declare id:` is how a Rule subclass names itself, in all sixteen
+          # `declare id:` is how a Law subclass names itself, in all sixteen
           # files. The needle read `@id = "..."` and matched nothing in the tree,
           # so only the class-name needle ever did any work and the id half of
           # this rule was dead from the day it was written.
           def subclasses(code)
-            code.enum_for(:scan, /^\s*class (\w+Rule) < Law\b/).map do
+            code.enum_for(:scan, /^\s*class (\w+Law) < Law\b/).map do
               name = Regexp.last_match(1)
               [name, code[Regexp.last_match.end(0), 2000][/declare\s+id:\s*["']([\w.]+)["']/, 1]]
             end
