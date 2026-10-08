@@ -22,7 +22,7 @@ module Master
       def findings(paths)
         Array(paths).filter_map do |path|
           next unless File.file?(path)
-          next if Review::Scan::PathFilter.skip_path?(path, root: @root)
+          next if Master::Fix::Scan::PathFilter.skip_path?(path, root: @root)
 
           if Master.language_for(path) == "ruby"
             ruby_finding(path)
