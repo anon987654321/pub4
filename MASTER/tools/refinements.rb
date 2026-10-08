@@ -137,7 +137,7 @@ module Operator
                         .select { |abs| File.file?(abs) }
                         .reject { |abs| Master::Fix::Scanner.skip_path?(abs, root: ROOT) }
 
-        scanner = Master::Review::Scan::InfraHelpers.build_scanner(root: MASTER_DIR)
+        scanner = Master::Fix::Scanner.build(root: MASTER_DIR)
         scanner.findings(corpus, depth: :deep).map do |hit|
           relative = hit[:path].to_s.delete_prefix("#{ROOT}/")
           {
