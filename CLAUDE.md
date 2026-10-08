@@ -258,7 +258,7 @@ pointer.
 | Anything in MASTER | `MASTER/README.md`, then `MASTER/AGENTS.md` |
 | The web face, WebGL, TTS | `MASTER/web/CLAUDE.md` |
 | Deploy, the VPS, rc.d, relayd | `OPENBSD/CLAUDE.md`, then `OPENBSD/RUNBOOK.md` |
-| RAILS CSS or visual work | `RAILS/shared/README.md` |
+| RAILS CSS or visual work | `RAILS/__shared/README.md` |
 | brgen's city hosts and verticals | `RAILS/brgen/AGENTS.md` |
 | Why something odd is deliberate | the comment beside it; standing refusals in `MASTER/AGENTS.md` and `OPENBSD/CLAUDE.md`, "Refused, and why" |
 | The backlog: parity gaps, blockers, debt, what not to chase | `TODO.md` (repo root) |
