@@ -96,7 +96,7 @@ module Master
         # that defines one is in the same process. Measured: law_deps.ungraphed
         # read 133 on its own and 135 under `rake test`, so a ratchet on it would
         # have been measuring the suite rather than the corpus.
-        # TestScanRuleFalsePositives::RaisingRule is the shape.
+        # TestScanRuleFalsePositives::RaisingLaw is the shape.
         #
         # A class whose source cannot be located counts as shipped: over-
         # reporting a rule is safe, and silently dropping one is how a census
@@ -188,7 +188,7 @@ module Master
           @registry_rule_rows = Review::Scan::Law.registry
             .select { |klass| shipped?(klass) }
             .reject { |klass| LawFactory.bridge_class?(klass) }
-            .map { |klass| RuleFactory.build(klass, root: @root) }
+            .map { |klass| LawFactory.build(klass, root: @root) }
             .map do |rule|
               {
                 "id" => rule.id.to_s,
@@ -207,11 +207,11 @@ module Master
         # invisible to Zeitwerk until it does: asked cold, the registry answered
         # 81 mechanical rules where a loaded one answers 115.
         def build_registry_ids
-          Review::Scan::RuleDSL
+          Review::Scan::LawDSL
           Review::Scan::Rule.registry
             .select { |klass| shipped?(klass) }
-            .reject { |klass| RuleFactory.bridge_class?(klass) }
-            .map { |klass| RuleFactory.build(klass, root: @root).id.to_s.downcase }
+            .reject { |klass| LawFactory.bridge_class?(klass) }
+            .map { |klass| LawFactory.build(klass, root: @root).id.to_s.downcase }
             .to_set
         end
 
