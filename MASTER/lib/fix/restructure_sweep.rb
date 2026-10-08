@@ -272,7 +272,12 @@ module Master
       end
 
       def commit_message(problem, plan)
-        "refactor: #{plan.summary.empty? ? "restructure #{relative(problem.files.first)}" : plan.summary}\n\n"           "Addresses laws #{problem.laws.join(", ")} for problem #{problem.id}. Restructured by /fix after the repair passes: "           "a hostile review approved the diff, and parse, eager load, the boot self-test and the related tests held."
+        title = plan.summary.empty? ? "Restructure #{relative(problem.files.first)}" : plan.summary
+        body = [
+          "Address laws #{problem.laws.join(", ")} for problem #{problem.id}.",
+          "Verify the change with hostile review, parsing, eager load, boot self-test, and related tests."
+        ].join("\n\n")
+        [title, body].join("\n\n")
       end
 
       def report(problem, plan, result)
