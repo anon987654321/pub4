@@ -26,9 +26,9 @@ module Master
         /violation/i,
       ].freeze
 
-      def initialize(rules: nil)
-        @rules = rules || Ground::Rules.new
-        soul = @rules.data(:soul) || {}
+      def initialize(laws: nil)
+        @laws = laws || Ground::Laws.new
+        soul = @laws.data(:soul) || {}
         # Under "absolute", where soul.yml actually nests it. There is no
         # top-level anti_simulation key, so this dug nothing and @evidence has
         # always been {} — the evidence contract is enforced by the hardcoded
