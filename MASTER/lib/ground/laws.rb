@@ -46,8 +46,8 @@ module Master
         def laws
           @laws ||= begin
             require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
-            ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.rules.empty?
-            ::Law.rules.values.to_h { |r| [r.id.to_s, (r.practice || r.fix).to_s.gsub(/\s+/, " ").strip] }.freeze
+            ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.definitions.empty?
+            ::Law.definitions.values.to_h { |r| [r.id.to_s, (r.practice || r.fix).to_s.gsub(/\s+/, " ").strip] }.freeze
           rescue StandardError => e
             Master::Ground::Swallow.log(e, context: "laws.laws", path: File.join(Master::ROOT, "law"))
             raise "laws registry unreadable: #{e.class}: #{e.message}"
