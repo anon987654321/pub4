@@ -308,8 +308,8 @@ when "law:matrix"
   Master::Trace::Dmesg::Report.print(command.to_s, output) if output
   exit 0
 when "laws"
-  # One rule: what it says, what it spares, and what it finds — in that order.
-  # The same word as the CLI's /rules, which lists them; this is one in full.
+  # One law: what it says, what it spares, and what it finds — in that order.
+  # The same word as the CLI's /laws, which lists them; this is one in full.
   #
   # It printed findings and nothing else, so the one thing a session actually
   # needs before writing a line was the one thing it could not get cheaply.
