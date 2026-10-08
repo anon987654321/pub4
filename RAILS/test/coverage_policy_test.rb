@@ -72,6 +72,17 @@ class CoveragePolicyTest < Minitest::Test
     assert_includes source, 'elsif ARGV.include?("--gates") then [:gates]'
   end
 
+  def test_all_rails_apps_pin_the_same_simplecov_major_minor_line
+    APPS.each do |app|
+      gemfile = File.read(File.join(ROOT, app, "Gemfile"))
+      lockfile = File.read(File.join(ROOT, app, "Gemfile.lock"))
+
+      assert_includes gemfile, 'gem "simplecov", "~> 1.2", require: false'
+      assert_includes lockfile, "simplecov (1.2.0)"
+      assert_includes lockfile, "simplecov (~> 1.2)"
+    end
+  end
+
   def test_coverage_policy_tracks_runtime_dimensions
     source = File.read(File.join(ROOT, "__shared/test/coverage.rb"))
     assert_includes source, "enable_coverage :branch"
