@@ -31,7 +31,7 @@ class FixConvergenceWiringTest < Minitest::Test
     assert_includes wishlist_source, 'LEDGER_PATH = ".master/fix_wishlist.json"'
     refute_includes wishlist_source, "runtime/wishlist.md"
     assert_includes journal_source, "def remaining_seconds(run_id)"
-    assert_includes runner_source, "OpportunityPass::RULE_ID"
+    assert_includes runner_source, "OpportunityPass::LAW_ID"
 
     assert_includes rule_source, "external_violations:"
     assert_includes rule_source, "image:"

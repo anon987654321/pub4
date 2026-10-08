@@ -39,7 +39,7 @@ module Master
     class VisualPass
       include VisualEvidenceRows
 
-      RULE_ID = "RENDERED_VISUAL_REFINEMENT"
+      LAW_ID = "RENDERED_VISUAL_REFINEMENT"
       SOURCE_EXTENSIONS = %w[.css .scss .erb .html .htm .js .ts].freeze
       MAX_SURFACES = Integer(ENV.fetch("MASTER_VISUAL_SURFACES_PER_PASS", "0"))
       MAX_COMPOSITION_STATES = Integer(ENV.fetch("MASTER_VISUAL_COMPOSITION_STATES", "12"))
@@ -50,7 +50,7 @@ module Master
       # Surface ids are paths, so %r{} keeps the literal slash readable.
       SURFACE_RE = %r{\bsurface\s*[:=]\s*([A-Za-z0-9_./-]+)\b}i.freeze
       VIEWPORT_RE = /\bviewport\s*[:=]\s*([A-Za-z0-9_-]+)\b/i.freeze
-      Rule = Data.define(:id) do
+      Law = Data.define(:id) do
         def severity = :warning
       end
 
@@ -365,7 +365,7 @@ module Master
         return unless file && line
 
         {
-          rule: RULE_ID,
+          rule: LAW_ID,
           file:,
           line:,
           severity: :warning,

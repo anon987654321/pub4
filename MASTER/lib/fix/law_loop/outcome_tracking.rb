@@ -57,7 +57,7 @@ module Master
           tally = results.tally
           @batch_breakdown = tally
           parts = tally.filter_map { |outcome, count| "#{count} #{outcome}" if count.positive? }
-          Master::Trace::Dmesg.status("fix0", "#{@rule.id}, #{results.size} tried: #{parts.join(", ")}")
+          Master::Trace::Dmesg.status("fix0", "#{@law.id}, #{results.size} tried: #{parts.join(", ")}")
         end
 
         def pass_outcome(fixed)
