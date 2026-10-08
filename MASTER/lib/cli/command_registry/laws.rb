@@ -16,25 +16,25 @@ module Master
       # Read-only on purpose. The verb that enforces them is /review, and that
       # needs --apply to write. A second verb that scans and fixes would be the
       # same pipeline under another name.
-      def dispatch_rules(root, ctx: nil)
+      def dispatch_laws(root, ctx: nil)
         filter = arg_for(ctx).downcase
         return dispatch_law_sources(root) if filter == "sources"
         return dispatch_law_index if filter == "index"
 
         laws = Master.law_entries(root:)
-        rows = laws.select do |rule|
+        rows = laws.select do |law|
           next true if filter.empty?
 
-          "#{rule["id"]} #{rule["name"]}".downcase.include?(filter)
+          "#{law["id"]} #{law["name"]}".downcase.include?(filter)
         end
         return "laws: nothing matches #{filter.inspect} in #{laws.size} declared" if rows.empty?
 
         require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
         ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.definitions.empty?
 
-        lines = rows.map do |rule|
-          kind = law_enforcement(::Law.definitions[rule["id"].to_s.to_sym])
-          format("%-28s %-10s %-8s %s", rule["id"], rule["tier"], rule["severity"], kind)
+        lines = rows.map do |law|
+          kind = law_enforcement(::Law.definitions[law["id"].to_s.to_sym])
+          format("%-28s %-10s %-8s %s", law["id"], rule["tier"], rule["severity"], kind)
         end
         ["#{rows.size} of #{laws.size} laws — bin/operator laws <ID> for one in full", *lines].join("\n")
       end
@@ -56,7 +56,7 @@ module Master
           "  index: valid",
         ].join("\n")
       rescue StandardError => e
-        "rules0: executable index failed — #{e.class}: #{e.message}"
+        "laws0: executable index failed — #{e.class}: #{e.message}"
       end
 
       def dispatch_law_sources(root)
@@ -74,11 +74,11 @@ module Master
         ].join("
 ")
       rescue StandardError => e
-        "rules0: source audit failed — #{e.class}: #{e.message}"
+        "laws0: source audit failed — #{e.class}: #{e.message}"
       end
 
-      # A rule absent from law/ is enforced by a scan detector in the registry;
-      # a law/ rule with no detect, ask or practice block is declared only.
+      # A law absent from law/ is enforced by a scan detector in the registry;
+      # a law/ law with no detect, ask or practice block is declared only.
       def law_enforcement(law)
         return "detector" unless law
 
@@ -86,14 +86,14 @@ module Master
         kind.empty? ? "declared" : kind
       end
 
-      # /why — one rule explained from law/ and data/laws.yml, and from the
+      # /why — one law explained from law/ and data/laws.yml, and from the
       # model only when nothing local matches.
       def dispatch_why(agent:, root:, memory: nil, ctx: nil)
-        rule = arg_for(ctx)
+        law = arg_for(ctx)
         return "usage: /why <law|path|scan_rule|anti_pattern|style.key>" if rule.empty?
 
-        local = Trace::WhyExplainer.new(root:).explain(rule)
-        answer = local || agent.ask_once(Voice::Personality.why_prompt(rule))
+        local = Trace::WhyExplainer.new(root:).explain(law)
+        answer = local || agent.ask_once(Voice::Personality.why_prompt(law))
         receipt = Ground::BootReceipt.session(root:, agent:, memory:)
         return answer if receipt.empty?
 
