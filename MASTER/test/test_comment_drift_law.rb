@@ -45,7 +45,7 @@ class TestCommentDriftRule < Minitest::Test
     end
   RUBY
 
-  def rule(agent) = Master::Review::Scan::Rules::CommentDriftRule.new(agent:)
+  def rule(agent) = Master::Review::Scan::Laws::CommentDriftRule.new(agent:)
 
   def flags(agent, source: SOURCE, path: "lib/thing.rb")
     rule(agent).check(source, path:).map(&:message)
@@ -67,7 +67,7 @@ class TestCommentDriftRule < Minitest::Test
   # An index the model invented must be dropped, and the real ones beside it
   # must survive. Asserted with a good index present on purpose: an answer of
   # only "47:..." is empty either way — with the bounds check, because the pair
-  # is nil; without it, because the NoMethodError is swallowed by the rule's own
+  # is nil; without it, because the NoMethodError is swallowed by the law's own
   # rescue and takes every finding in the file with it. Mixing the two is what
   # separates a guard from a crash.
   def test_an_index_the_model_invented_is_dropped_without_losing_the_real_ones
@@ -100,7 +100,7 @@ class TestCommentDriftRule < Minitest::Test
   # No model, no question — and no findings either. Silence here is correct
   # because nothing was asked, which is different from an answer of "clean".
   def test_without_an_agent_it_asks_nothing
-    assert_empty Master::Review::Scan::Rules::CommentDriftRule.new(agent: nil).check(SOURCE, path: "lib/thing.rb")
+    assert_empty Master::Review::Scan::Laws::CommentDriftRule.new(agent: nil).check(SOURCE, path: "lib/thing.rb")
   end
 
   def test_it_reads_only_ruby
