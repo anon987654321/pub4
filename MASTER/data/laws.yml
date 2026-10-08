@@ -370,6 +370,64 @@ transformation_policy:
     rails: "Check framework conventions, routes, Zeitwerk paths, controller/model boundaries, queries, callbacks, and rendered behavior."
     prose: "Check claims, terminology, paragraph/heading hierarchy, reading measure, and meaning before style-level edits."
     visual: "Check semantic HTML, geometry, type hierarchy, spacing, interaction targets, accessibility, and visual regression before decoration."
+  refactoring_playbook:
+    principles:
+      - id: characterize_before_change
+        action: "Capture behavior and contracts before structural change."
+      - id: one_hat
+        action: "Change structure or behavior in a small step, then verify before the next step."
+      - id: delete_before_abstract
+        action: "Try deletion or consolidation before introducing a new abstraction."
+      - id: same_reason_to_change
+        action: "Consolidate only when the units share a reason to change; superficial similarity is insufficient."
+      - id: preparatory_refactoring
+        action: "Reshape code toward a safe seam before making the requested behavior change."
+      - id: history_as_evidence
+        action: "Use git co-change and blame evidence to distinguish accidental similarity from architectural coupling."
+      - id: make_deletion_easy
+        action: "Prefer boundaries and ownership that make obsolete material easy to remove."
+      - id: domain_first
+        action: "Use AST/schema/rendered evidence appropriate to the artifact before lexical cleanup."
+    technique_by_domain:
+      ruby:
+        - rename
+        - extract_method
+        - inline_method
+        - move_method
+        - extract_class
+        - inline_class
+        - replace_conditional_with_polymorphism
+        - introduce_parameter_object
+        - split_phase
+        - separate_query_from_modifier
+      rails:
+        - extract_controller_service
+        - move_query_to_model_or_query_object
+        - remove_callback_sprawl
+        - eliminate_n_plus_one
+        - consolidate_view_logic
+      prose:
+        - rename_concept
+        - extract_concept
+        - inline_redundant_explanation
+        - split_overloaded_paragraph
+        - reorder_for_information_hierarchy
+        - remove_throat_clearing
+        - delete_historical_comment
+      visual:
+        - establish_layout
+        - establish_hierarchy
+        - normalize_spacing
+        - consolidate_tokens
+        - consolidate_components
+        - remove_decorative_compensation
+        - verify_accessibility
+        - verify_visual_regression
+    gates:
+      - "No transformation without an identified smell, seam, or contract improvement."
+      - "No automatic mutation when evidence is weaker than the transformation mode requires."
+      - "After every mutation, re-run the same evidence used to justify it."
+      - "If the measured result is not an improvement, revert rather than rationalize."
   automatic_vetoes:
     - "Do not auto-refactor a public interface without reference-graph and contract proof."
     - "Do not auto-merge similar code when the units have different reasons to change."
@@ -388,6 +446,12 @@ transformation_policy:
       url: "https://github.com/rubocop/rails-style-guide"
     - name: "GitHub Ruby Style Guide"
       url: "https://github.com/github/rubocop-github/blob/main/STYLEGUIDE.md"
+    - name: "Clean Code"
+      url: "https://www.oreilly.com/library/view/clean-code-a/9780136083238/"
+    - name: "Polished Ruby Programming"
+      url: "https://www.packtpub.com/en-us/product/polished-ruby-programming-9781801814669"
+    - name: "Ruby Object-Oriented Design"
+      url: "https://www.poodr.com/"
     - name: "Code Smells and Refactoring: tertiary systematic review"
       url: "https://arxiv.org/abs/2004.10777"
     - name: "Code smell detection and visualization: systematic review"
