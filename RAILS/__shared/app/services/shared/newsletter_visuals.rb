@@ -44,7 +44,7 @@ module Shared
           url: processed,
           alt: "#{city_name} — #{theme}",
           caption: "Processed with postpro",
-          source: :postpro
+          source: :postpro,
         ) if processed
       end
 
@@ -53,7 +53,7 @@ module Shared
         theme:,
         aspect_ratio: "16:9",
         role: "newsletter hero",
-        seed:
+        seed:,
       )
       return nil unless artwork
 
@@ -68,7 +68,7 @@ module Shared
             theme:,
             aspect_ratio: "3:2",
             role: "newsletter editorial interlude #{index + 1}",
-            seed: seed && Integer(seed) + index
+            seed: seed && Integer(seed) + index,
           )
         rescue StandardError => error
           log("artwork #{index + 1} failed: #{error.message}")
@@ -95,7 +95,7 @@ module Shared
           RbConfig.ruby, script,
           "--input", input, "--output", output,
           "--preset", POSTPRO_PRESET,
-          out: File::NULL, err: File::NULL
+          out: File::NULL, err: File::NULL,
         )
         return publish_file(output, "postpro") if ok && File.exist?(output)
       end
@@ -111,7 +111,7 @@ module Shared
       seed ||= Shared::ArtworkPipeline.seed(
         surface: "newsletter",
         city: city_name,
-        brief: "#{role}:#{theme}"
+        brief: "#{role}:#{theme}",
       )
 
       prompt = <<~PROMPT.squish
@@ -132,7 +132,7 @@ module Shared
         url:,
         alt: "#{city_name} — #{theme}",
         caption: "Generated with Replicate for this edition",
-        source: :replicate
+        source: :replicate,
       )
     rescue StandardError => error
       log("Replicate artwork failed: #{error.class}: #{error.message}")
@@ -147,8 +147,8 @@ module Shared
           aspect_ratio:,
           output_format: "webp",
           output_quality: 90,
-          seed:
-        }
+          seed:,
+        },
       }
       response = replicate_post(uri, token, payload)
       prediction = JSON.parse(response)
@@ -201,7 +201,7 @@ module Shared
         surface: "newsletter",
         city: city_name,
         brief: theme,
-        source: "replicate_newsletter"
+        source: "replicate_newsletter",
       )
       "/newsletters/#{Date.current.iso8601}/#{filename}"
     rescue StandardError => error
