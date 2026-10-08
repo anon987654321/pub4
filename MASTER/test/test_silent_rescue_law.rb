@@ -113,7 +113,7 @@ class TestSilentRescueRule < Minitest::Test
     assert_empty @narrow.check(code, path: "x.rb")
   end
 
-  # --- the rule definitions are not exempt from the rules ---------------------
+  # --- the law definitions are not exempt from the laws ---------------------
 
   def test_both_rules_apply_to_rule_source_files
     code = "def f\n  go\nrescue StandardError\n  nil\nend\n"
