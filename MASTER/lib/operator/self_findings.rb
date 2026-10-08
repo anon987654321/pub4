@@ -256,10 +256,10 @@ module Operator
     # `Rule.inherited` registers every subclass in the running process, so a
     # suite that defines one joins the population it is measuring — the trap
     # rule_deps.ungraphed hit first, reading two different numbers depending on
-    # whether a test had defined a rule. RuleRegistryAudit already owns the
+    # whether a test had defined a rule. LawRegistryAudit already owns the
     # question, so this asks it rather than carrying a second answer.
     def shipped?(rule)
-      @audit ||= Master::Review::Scan::RuleRegistryAudit.new(root: MASTER_DIR)
+      @audit ||= Master::Review::Scan::LawRegistryAudit.new(root: MASTER_DIR)
       @audit.shipped?(rule.class)
     end
 
