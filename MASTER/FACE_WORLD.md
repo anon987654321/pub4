@@ -256,6 +256,27 @@ These are implementation directions that all preserve the same state contract.
 The numbered catalogue is deliberately additive. Selection is renderer-budget
 and device dependent; the semantic contract remains singular.
 
+## Sparse gravitational field
+
+The current 3D face uses a sparse, void-first projection layered onto the canonical
+FaceState. It intentionally avoids a filled particle carpet: eyes and mouth are
+described by rings and broken contours, cheeks have three depth layers, and detached
+fragments orbit in the surrounding void.
+
+The field implements the complete interaction vocabulary introduced in the 2026-10-08
+design pass: orbit, drift, attract, repel, bloom, collapse, fragment, remember, connect,
+breathe and resolve. State changes alter density; idle/sleeping are deliberately sparse,
+while thinking, working and speaking reveal more structure. Listening biases the field
+toward the user, speaking grows transient mouth trails, errors fragment the field, and
+reflection/repair recomposes it.
+
+Human presence is a local gravitational force driven by pointer position. Particle memory
+leaves short-lived ghost traces after speech and important state transitions. Evidence
+creates temporary connecting trails; Law/canonical events create resonance rings; three
+depth bands, asymmetric seeds and empty eye/mouth wells preserve the non-human identity
+without turning the face into a dense synthetic mask. The renderer remains subordinate to
+the single FaceState and the existing frame clock.
+
 ## Current landed foundation
 
 - one executable Ruby face contract
