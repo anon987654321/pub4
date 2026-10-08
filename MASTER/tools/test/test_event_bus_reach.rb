@@ -32,7 +32,7 @@ class TestEventBusReach < Minitest::Test
   end
 
   def test_javascript_expands_capturing_group_event_regexes
-    rows = Operator::EventBusReach.js_events('const match = /phantom:(detected|halt|recovery)/i;')
+    rows = Operator::EventBusReach.js_events("const match = /phantom:(detected|halt|recovery)/i;")
     refs = rows.select { |row| row[:role] == :reference }.map { |row| row[:topic] }
 
     assert_includes refs, "phantom:detected"
@@ -41,7 +41,7 @@ class TestEventBusReach < Minitest::Test
   end
 
   def test_javascript_expands_repeated_prefix_bare_alternation
-    rows = Operator::EventBusReach.js_events('const match = /phantom:detected|phantom:halt|phantom:recovery/i;')
+    rows = Operator::EventBusReach.js_events("const match = /phantom:detected|phantom:halt|phantom:recovery/i;")
     refs = rows.select { |row| row[:role] == :reference }.map { |row| row[:topic] }
 
     assert_includes refs, "phantom:detected"
@@ -50,7 +50,7 @@ class TestEventBusReach < Minitest::Test
   end
 
   def test_javascript_expands_grouped_event_regexes
-    rows = Operator::EventBusReach.js_events('const match = /phantom:(?:detected|halt|recovery)/i;')
+    rows = Operator::EventBusReach.js_events("const match = /phantom:(?:detected|halt|recovery)/i;")
 
     refs = rows.select { |row| row[:role] == :reference }.map { |row| row[:topic] }
 

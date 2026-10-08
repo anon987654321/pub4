@@ -27,7 +27,7 @@ module Operator
         Master::Trace::Dmesg.status(
           "rhythm0",
           "cannot load MASTER/data/laws.yml — constitutional measurement unavailable",
-          io: $stderr
+          io: $stderr,
         )
         return false
       end
@@ -37,7 +37,7 @@ module Operator
         Master::Trace::Dmesg.status(
           "rhythm0",
           "MASTER/data/laws.yml has no pixel_perfection.eight_px_rhythm — constitutional measurement unavailable",
-          io: $stderr
+          io: $stderr,
         )
         return false
       end

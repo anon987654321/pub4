@@ -21,7 +21,7 @@ files = Dir.glob(File.join(root, "RAILS", "**", "*")).select { |path| extensions
 patterns = {
   "box_shadow" => /box-shadow\s*:/,
   "gradient" => /(?:linear|radial|conic)-gradient\(/,
-  "href_hash" => /href\s*=\s*["']#["']/
+  "href_hash" => /href\s*=\s*["']#["']/,
 }
 findings = []
 files.each do |path|
@@ -38,7 +38,7 @@ report = {
   "law_version" => law.fetch("version"),
   "files" => files.size,
   "counts" => findings.group_by { |finding| finding["rule"] }.transform_values(&:size),
-  "findings" => findings
+  "findings" => findings,
 }
 if options[:output]
   File.write(options[:output], JSON.pretty_generate(report) + "\n")

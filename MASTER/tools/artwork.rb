@@ -15,7 +15,7 @@ class HouseArtwork
     "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
     "/Applications/Chromium.app/Contents/MacOS/Chromium",
     "/usr/local/bin/chromium",
-    "/usr/local/bin/chrome"
+    "/usr/local/bin/chrome",
   ].compact.freeze
 
   def self.run!(argv)
@@ -25,7 +25,7 @@ class HouseArtwork
       width: 1200,
       height: 630,
       seed: nil,
-      title: "House artwork"
+      title: "House artwork",
     }
 
     OptionParser.new do |opts|
@@ -65,8 +65,8 @@ class HouseArtwork
       browser_options: {
         "no-sandbox" => nil,
         "disable-dev-shm-usage" => nil,
-        "disable-gpu" => nil
-      }
+        "disable-gpu" => nil,
+      },
     )
 
     browser.go_to("file://#{html}")
@@ -78,7 +78,7 @@ class HouseArtwork
       seed: @seed,
       width: @options[:width],
       height: @options[:height],
-      output: @options[:output]
+      output: @options[:output],
     )
   ensure
     browser&.quit
@@ -183,6 +183,5 @@ class HouseArtwork
     CGI.escapeHTML(value.to_s)
   end
 end
-
 
 HouseArtwork.run!(ARGV)

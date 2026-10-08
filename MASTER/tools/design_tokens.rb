@@ -172,7 +172,7 @@ module DesignTokens
     social_text = social.fetch("text")
     drifted << "text=#{social_text}" unless scss.include?("$text: #{social_text}")
 
-    return nil if drifted.empty?
+    return if drifted.empty?
 
     "_dialect_tokens.scss defaults drifted from MASTER tokens anchors: #{drifted.join(', ')}"
   end
@@ -185,7 +185,7 @@ module DesignTokens
 
     actual = match[1].strip
     expected = face_root_css
-    return nil if actual == expected
+    return if actual == expected
 
     "face.css :root drift — run: ruby MASTER/tools/design_tokens.rb generate_face_root_css"
   end
@@ -220,8 +220,8 @@ module DesignTokens
   def property_drift(path, css_var, expected_value)
     body = read_utf8(path)
     m = body.match(property_pattern(css_var))
-    return nil unless m
-    return nil if normalize(m[2]) == normalize(expected_value)
+    return unless m
+    return if normalize(m[2]) == normalize(expected_value)
 
     "#{path.sub("#{ROOT}/", '')}: --#{css_var} is #{m[2].strip}, MASTER/data/laws.yml#tokens says #{expected_value}"
   end
@@ -260,6 +260,6 @@ end
 if $PROGRAM_NAME == __FILE__
   Master::Trace::Dmesg.status(
     "design0",
-    DesignTokens.sync_design_artifact! ? "generated from MASTER/data/laws.yml" : "already in sync"
+    DesignTokens.sync_design_artifact! ? "generated from MASTER/data/laws.yml" : "already in sync",
   )
 end

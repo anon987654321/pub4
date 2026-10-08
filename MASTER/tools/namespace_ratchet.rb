@@ -5,5 +5,5 @@ require_relative "../lib/operator/namespace_ratchet"
 
 exit Operator::NamespaceRatchet.run(
   ratchet: ARGV.include?("--ratchet"),
-  json: ARGV.include?("--json")
+  json: ARGV.include?("--json"),
 )

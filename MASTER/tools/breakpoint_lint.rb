@@ -152,8 +152,8 @@ module Operator
 
     def classify(bound, pixels, ambiguous)
       return "ambiguous_edge" if ambiguous.include?(pixels)
-      return nil if edges.include?(pixels)
-      return nil if bound == "max" && edges.include?(pixels + 1)
+      return if edges.include?(pixels)
+      return if bound == "max" && edges.include?(pixels + 1)
 
       "unknown_edge"
     end

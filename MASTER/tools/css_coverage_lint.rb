@@ -267,8 +267,8 @@ BASELINES = { "undefined_class" => 0, "unused_selector" => 89 }.freeze
     end
 
     def scan
-      undefined_classes.map { |name|
- Finding.new("undefined_class", name, used_names[name].size, rel(used_names[name].first)) } +
+      undefined_classes.map do |name|
+ Finding.new("undefined_class", name, used_names[name].size, rel(used_names[name].first)) end +
         unused_selectors.map { |name| Finding.new("unused_selector", name, 0, nil) }
     end
 

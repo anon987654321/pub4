@@ -42,7 +42,6 @@ module Deploy
       YAML.safe_load_file(File.join(RAILS_ROOT, "apps.yml"), aliases: true).fetch("apps").keys.map(&:to_s).sort
     end
 
-
     def app_root(app) = File.join(RAILS_ROOT, app)
 
     # Every file that can add a route, so editing any of them invalidates the digest.

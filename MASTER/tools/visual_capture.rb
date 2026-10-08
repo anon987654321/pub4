@@ -154,7 +154,7 @@ module MasterVisualCapture
         viewport: { width: values[:width], height: values[:height], scale: 2 },
         status: cdp.status,
         title: cdp.evaluate("document.title"),
-        screenshot: screenshot,
+        screenshot:,
         screenshot_sha256: Digest::SHA256.file(screenshot).hexdigest,
         console_errors: cdp.console_errors,
         geometry: payload,

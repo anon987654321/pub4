@@ -105,7 +105,7 @@ module Operator
     # var(--a, var(--b)) stops at the first ) if you let it, and the message
     # then quotes half a fallback. Walk the depth instead.
     def fallback_text(line, name)
-      rest = line[/var\(\s*#{Regexp.escape(name)}\s*,\s*(.*)/m, 1] or return nil
+      rest = line[/var\(\s*#{Regexp.escape(name)}\s*,\s*(.*)/m, 1] or return
 
       depth = 0
       rest.each_char.take_while do |c|
@@ -137,7 +137,7 @@ module Operator
     # fixed, the interpolated segment is whatever the map holds.
     def interpolated_pattern(stem)
       parts = stem.split(INTERPOLATION_SEGMENT, -1)
-      return nil if parts.size < 2
+      return if parts.size < 2
 
       /\A#{parts.map { |p| Regexp.escape(p) }.join(".+")}\z/
     end
