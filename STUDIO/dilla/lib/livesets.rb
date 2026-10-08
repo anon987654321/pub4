@@ -3801,7 +3801,10 @@ SHOWCASE_MODES = {
     end
 
     def lead!(stage, length)
-      return patch_phrase!(stage, length) if @beauty_ending
+      # An FM-only preset such as bell has no patch to look up; fm_phrase! caps
+      # the phrase at the ending the same way patch_phrase! does.
+      return patch_phrase!(stage, length) if @beauty_ending && Patches.names.include?(@lead.to_s)
+      return fm_phrase!(stage, length) if @beauty_ending
       return fugue_phrase!(stage, length) if @fugue_enabled
       @c.fetch("fm").key?(@lead) ? fm_phrase!(stage, length) : patch_phrase!(stage, length)
     end

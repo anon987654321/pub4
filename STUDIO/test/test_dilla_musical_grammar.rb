@@ -159,6 +159,27 @@ class TestDillaMusicalGrammar < Minitest::Test
     end
   end
 
+  # bell is an FM preset with no patch of that name, so looking it up as a patch
+  # at the ending raised ArgumentError and ended the showcase.
+  def test_the_ending_routes_an_fm_only_lead_to_fm_and_a_patch_lead_to_its_patch
+    config = LiveSynth.config.fetch("improvise")
+    improviser = LiveSynth::Improviser.allocate
+    improviser.instance_variable_set(:@c, config)
+    improviser.instance_variable_set(:@beauty_ending, true)
+    reached = []
+    improviser.define_singleton_method(:fm_phrase!) { |*_| reached << :fm }
+    improviser.define_singleton_method(:patch_phrase!) { |*_| reached << :patch }
+
+    fm_only = config.fetch("fm").keys.find { |name| !LiveSynth::Patches.names.include?(name) }
+    refute_nil fm_only, "the config declares no FM-only lead to route"
+    improviser.instance_variable_set(:@lead, fm_only)
+    improviser.send(:lead!, nil, 4.0)
+    improviser.instance_variable_set(:@lead, LiveSynth::Patches.names.first)
+    improviser.send(:lead!, nil, 4.0)
+
+    assert_equal %i[fm patch], reached
+  end
+
   def test_soul_pocket_declares_all_four_drum_roles
     preset = DillaLofiMachine::DRUM_PRESETS.fetch(:dilla_soul_pocket)
 

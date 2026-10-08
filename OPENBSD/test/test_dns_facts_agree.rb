@@ -240,7 +240,6 @@ class DomainAlignmentGateFixtureTest < Minitest::Test
   end
 end
 
-
 class OwnedDomainFactsAgreeTest < Minitest::Test
   RAILS_APPS = File.expand_path("../../RAILS/apps.yml", __dir__)
   OPERATOR = File.expand_path("../OPERATOR.sh", __dir__)
