@@ -86,6 +86,15 @@ module Master
         @policy.fetch("modes").dup.freeze
       end
 
+      def refactoring_playbook
+        playbook = @policy.fetch("refactoring_playbook")
+        {
+          "principles" => Array(playbook.fetch("principles")).map { |entry| entry.transform_keys(&:to_s).freeze }.freeze,
+          "technique_by_domain" => playbook.fetch("technique_by_domain").transform_keys(&:to_s).transform_values { |values| Array(values).map(&:to_s).freeze }.freeze,
+          "gates" => Array(playbook.fetch("gates")).map(&:to_s).freeze,
+        }.freeze
+      end
+
       def evidence_hierarchy
         Array(@policy.fetch("evidence_hierarchy")).map { |entry| entry.transform_keys(&:to_s).freeze }.freeze
       end
@@ -136,6 +145,7 @@ module Master
 
         REQUIRED.each { |name| operation_mode_known?(name) }
 
+        validate_playbook!
         validate_evidence!
         validate_smells!
         validate_adapters!
@@ -156,6 +166,19 @@ module Master
         modes = @policy.fetch("modes")
         raise ArgumentError, "transformation modes missing" unless modes.is_a?(Hash)
         modes.each_value { |value| raise ArgumentError, "empty transformation mode" if value.to_s.empty? }
+        true
+      end
+
+      def validate_playbook!
+        playbook = refactoring_playbook
+        required = %w[characterize_before_change one_hat delete_before_abstract same_reason_to_change preparatory_refactoring history_as_evidence make_deletion_easy domain_first]
+        ids = playbook.fetch("principles").map { |entry| entry.fetch("id") }
+        missing = required - ids
+        raise ArgumentError, "refactoring principles missing: #{missing.join(", ")}" unless missing.empty?
+        required_domains = %w[ruby rails prose visual]
+        missing_domains = required_domains - playbook.fetch("technique_by_domain").keys
+        raise ArgumentError, "refactoring domains missing: #{missing_domains.join(", ")}" unless missing_domains.empty?
+        raise ArgumentError, "refactoring gates missing" if playbook.fetch("gates").empty?
         true
       end
 
@@ -188,7 +211,7 @@ module Master
       def validate_research!
         raise ArgumentError, "research references missing" if research.empty?
         names = research.map { |entry| entry.fetch("name") }
-        required = ["Fowler, Refactoring", "RuboCop Ruby Style Guide"]
+        required = ["Fowler, Refactoring", "RuboCop Ruby Style Guide", "Clean Code", "Polished Ruby Programming"]
         missing = required - names
         raise ArgumentError, "research references missing: #{missing.join(", ")}" unless missing.empty?
       end
