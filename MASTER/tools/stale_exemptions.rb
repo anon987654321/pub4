@@ -81,10 +81,10 @@ module Operator
     module_function
 
     def master
-      return if defined?(::Master::Review::Scan::InfraHelpers)
+      return if defined?(::Master::Fix::Scanner)
 
       require File.join(MASTER_DIR, "lib", "master")
-      require File.join(MASTER_DIR, "lib", "review", "scan", "scanner")
+      require File.join(MASTER_DIR, "lib", "fix", "scanner")
     end
 
     def law
