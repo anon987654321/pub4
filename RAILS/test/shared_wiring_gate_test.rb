@@ -83,7 +83,7 @@ class SharedWiringGateTest < Minitest::Test
     end
   end
 
-  ERROR_PAGES = Dir[File.join(ROOT, "{amber,brgen,bsdports,__shared}/public/*.html")].freeze
+  ERROR_PAGES = Dir[File.join(ROOT, "{amber,brgen,bsdports}/public/*.html") + Dir[File.join(ROOT, "__shared/public/*.html")]].freeze
   ERRORS_CSS = File.read(File.join(ROOT, "__shared/public/styles/errors.css"))
 
   def declared(css) = css.scan(/(--[\w-]+)\s*:/).flatten
