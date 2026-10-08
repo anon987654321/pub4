@@ -600,7 +600,7 @@ BASELINES = { "undefined_class" => 0, "unused_selector" => 89 }.freeze
     # promoted from an app into shared/frontend does not change the count.
     def rendered_by_javascript
       TREES.flat_map { |t| Dir.glob(File.join(RAILS_ROOT, t, "app/javascript/**/*.js")) } +
-        Dir.glob(File.join(RAILS_ROOT, "shared", "frontend", "**", "*.js"))
+        Dir.glob(File.join(RAILS_ROOT, "__shared", "frontend", "**", "*.js"))
     end
 
     def stylesheets
