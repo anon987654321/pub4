@@ -22,7 +22,7 @@ require_relative "test_helper"
 # rule_dsl.rb requires every laws/*.rb at the bottom, and each LawDSL.law call
 # registers through Law.inherited. Without this the registry is empty and the
 # two assertions below pass having checked nothing.
-require_relative "../lib/review/scan/rule_dsl"
+require_relative "../lib/review/scan/law_dsl"
 
 class TestLawFixtures < Minitest::Test
   Law = Master::Review::Scan::Law
