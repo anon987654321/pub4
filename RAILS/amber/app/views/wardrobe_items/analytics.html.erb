@@ -15,9 +15,9 @@
 </header>
 
 <section class="chips" aria-label="<%= t("wardrobe.metrics") %>">
-  <span class="chip"><%= t("wardrobe.chip_total", count: @analytics[:total_items]) %></span>
-  <span class="chip"><%= t("wardrobe.chip_active", count: @analytics[:active_items]) %></span>
-  <span class="chip"><%= t("wardrobe.chip_never_worn", count: @analytics[:never_worn]) %></span>
+  <span class="chip"><span data-controller="animated-number" data-animated-number-start-value="0" data-animated-number-end-value="<%= @analytics[:total_items] %>" data-animated-number-duration-value="500"><%= @analytics[:total_items] %></span> <%= t("wardrobe.chip_total", count: "") %></span>
+  <span class="chip"><span data-controller="animated-number" data-animated-number-start-value="0" data-animated-number-end-value="<%= @analytics[:active_items] %>" data-animated-number-duration-value="500"><%= @analytics[:active_items] %></span> <%= t("wardrobe.chip_active", count: "") %></span>
+  <span class="chip"><span data-controller="animated-number" data-animated-number-start-value="0" data-animated-number-end-value="<%= @analytics[:never_worn] %>" data-animated-number-duration-value="500"><%= @analytics[:never_worn] %></span> <%= t("wardrobe.chip_never_worn", count: "") %></span>
   <span class="chip"><%= t("wardrobe.chip_underused", count: @analytics[:underused]) %></span>
   <span class="chip"><%= t("wardrobe.chip_box", count: @analytics[:declutter_box]) %></span>
   <span class="chip"><%= t("wardrobe.chip_memory", count: @analytics[:sentimental_archive]) %></span>
