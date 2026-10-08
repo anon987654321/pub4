@@ -164,7 +164,7 @@ class TestScanRuleContracts < Minitest::Test
   # findings, unchanged, not just prove itself inside Law.
   def test_advisory_laws_do_not_enter_enforcement_bridge
     bridge = Laws::LawBridgeLaw.new
-    law = Law.rules.fetch(:BEAUTIFUL_CODE)
+    law = Law.definitions.fetch(:BEAUTIFUL_CODE)
 
     assert_equal :advisory, law.lifecycle
     assert_empty bridge.check("if a; b; else; c; end\n", path: "example.rb"),
@@ -425,8 +425,8 @@ class TestScanRuleContracts < Minitest::Test
   def test_no_id_lives_in_both_law_and_registry
     Laws::LawBridgeLaw.new
     law_ids = Law.rules.values.select(&:scannable?).map { |rule| rule.id.to_s }
-    registry_ids = Master::Review::Scan::Rule.registry.filter_map do |klass|
-      Master::Review::Scan::RuleFactory.registry_id(klass, root: Master::ROOT)&.upcase
+    registry_ids = Master::Review::Scan::Law.registry.filter_map do |klass|
+      Master::Review::Scan::LawFactory.registry_id(klass, root: Master::ROOT)&.upcase
     end
     assert_empty law_ids & registry_ids
   end
