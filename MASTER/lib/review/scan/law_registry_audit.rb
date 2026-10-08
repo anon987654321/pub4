@@ -184,10 +184,10 @@ module Master
           return @registry_rule_rows if defined?(@registry_rule_rows)
 
           require File.join(Master::ROOT, "lib", "master") unless defined?(::Master::ROOT)
-          Review::Scan::RuleDSL
-          @registry_rule_rows = Review::Scan::Rule.registry
+          Review::Scan::LawDSL
+          @registry_rule_rows = Review::Scan::Law.registry
             .select { |klass| shipped?(klass) }
-            .reject { |klass| RuleFactory.bridge_class?(klass) }
+            .reject { |klass| LawFactory.bridge_class?(klass) }
             .map { |klass| RuleFactory.build(klass, root: @root) }
             .map do |rule|
               {
