@@ -26,7 +26,7 @@
 # or the RuleDSL registry, and the other two (WHITESPACE_PUNCTUATION,
 # MESSAGE_CHAIN) carry `folded_into:` naming the rule that reports for them. It
 # is the same instrument error tools/law_reach.rb's own header records against
-# itself, so the question is asked there now, once: `RuleReach.mechanical`
+# itself, so the question is asked there now, once: `LawReach.mechanical`
 # already knows all three populations and loads the laws rather than grepping
 # for them.
 #
@@ -114,8 +114,8 @@ module Operator
     def detectable_ids
       @detectable_ids ||= begin
         require File.join(MASTER, "lib/operator/law_reach")
-        all = RuleReach.rules
-        (RuleReach.mechanical(all) + RuleReach.prompted(all)).map { |r| r["id"].to_s }.to_set
+        all = LawReach.rules
+        (LawReach.mechanical(all) + LawReach.prompted(all)).map { |r| r["id"].to_s }.to_set
       end
     end
 
