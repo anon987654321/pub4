@@ -13,7 +13,7 @@ module Deploy
   #
   # Which one wins is measured, by booting bsdports and reading I18n.load_path:
   #
-  #   10-15  shared/config/locales/{affiliate,legal,social}.{en,nb}.yml
+  #   10-15  __shared/config/locales/{affiliate,legal,social}.{en,nb}.yml
   #   16-17  bsdports/config/locales/{en,nb}.yml
   #
   # shared loads once, ahead of the app, and the last write wins, so the app's
@@ -48,7 +48,7 @@ module Deploy
     def run
       shared = load_locales(File.join(@rails_root, "shared/config/locales/**/*.yml"))
       if shared.empty?
-        @result.inconclusive!("locale_shadowing: no shared locale files found at shared/config/locales")
+        @result.inconclusive!("locale_shadowing: no shared locale files found at __shared/config/locales")
         return @result
       end
 
@@ -73,7 +73,7 @@ module Deploy
     # app; shared's own files load in sorted order, so a bare key in social wipes
     # the same subtree from affiliate and legal.
     def judge_orphans
-      %w[shared amber brgen bsdports].each do |tree|
+      %w[__shared amber brgen bsdports].each do |tree|
         Dir[File.join(@rails_root, tree, "config/locales/**/*.yml")].sort.each do |path|
           doc = begin
             YAML.safe_load_file(path, aliases: true)
