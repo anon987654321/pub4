@@ -113,7 +113,9 @@ module Master
           when :perspective, :perspective_transition
             Novelty.perspective(agent:, prompt:, temperature:)
           when :debate
-            Novelty.debate(agent:, prompt:, rounds: bounded(settings.fetch(:rounds, 2), 3), temperature:)
+            round_limit = [(max_calls - 4) / 3, 0].max
+            rounds = [settings.fetch(:rounds, 1).to_i, round_limit].min
+            Novelty.debate(agent:, prompt:, rounds:, temperature:)
           when :critique_revision, :revise
             Novelty.critique_revision(agent:, prompt:, rounds: bounded(settings.fetch(:rounds, 3), max_calls), temperature:)
           when :novelty

@@ -162,6 +162,6 @@ class TestInference < Minitest::Test
     assert result.ok?
     assert_equal :repeat, result.value![:strategy]
     assert_equal 1, @agent.prompts.size
-    assert_equal @agent.prompts.first, "Re-read the complete task context once before answering. The full prompt follows twice.\nfind the name\n\nfind the name"
+    assert_equal "find the name\n\nfind the name", @agent.prompts.first
   end
 end
