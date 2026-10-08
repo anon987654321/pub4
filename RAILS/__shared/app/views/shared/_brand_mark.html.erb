@@ -1,14 +1,12 @@
-<%# The one brand mark, fixed top-left, on every surface of every app.
-    Type only — no chip, no border, no background. It is a link home and it is
-    the one piece of chrome that is identical everywhere, which is why it lives
-    here rather than three times.
+<%# The shared brand-mark mechanism is fixed top-left on every app surface.
+    Type only — no chip, no border, no background. The mechanism is shared;
+    the label remains app-owned so Brgen, Amber and bsdports can develop distinct
+    identities without duplicating chrome code.
 
     Before this, the three apps did three different things: brgen had a fixed
-    type wordmark, amber rendered a non-fixed SVG (whose own comment describes
-    "retro hairlines"), and bsdports had no mark at all — only a text link inside
-    its nav. The SVG is still the right thing for a landing or marketing surface;
-    it is the wrong thing for chrome that has to sit in a 44px corner on every
-    page.
+    type wordmark, amber rendered a non-fixed SVG, and bsdports had no mark at
+    all. The shared chrome now owns placement and accessibility; each brand owns
+    its wordmark treatment on landing and campaign surfaces.
 
     <header> wraps it so the wordmark is inside a banner landmark — axe flagged
     it as the one piece of page content outside any landmark. The header adds no
