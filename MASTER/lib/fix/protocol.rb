@@ -99,9 +99,9 @@ module Master
       end
 
       def strategy_for(law)
-        semantic = law.respond_to?(:semantic?) && rule.semantic?
-        practice = law.respond_to?(:practice) && !rule.practice.to_s.empty?
-        detector = rule.respond_to?(:scannable?) && rule.scannable?
+        semantic = law.respond_to?(:semantic?) && law.semantic?
+        practice = law.respond_to?(:practice) && !law.practice.to_s.empty?
+        detector = law.respond_to?(:scannable?) && law.scannable?
 
         return "semantic_model_repair" if semantic
         return "conduct_only" if practice && !detector
@@ -112,23 +112,23 @@ module Master
 
       def verification_for(law)
         return "manual_conduct_evidence" if strategy_for(law) == "conduct_only"
-        return "semantic_rescan_plus_behavior_or_test" if rule.respond_to?(:semantic?) && rule.semantic?
+        return "semantic_rescan_plus_behavior_or_test" if law.respond_to?(:semantic?) && law.semantic?
 
-        "rule_rescan_plus_behavior_or_test"
+        "law_rescan_plus_behavior_or_test"
       end
 
       # Explicit capability boundary for external agents. These are facts
       # about the live executable law population, not permissions to ignore it.
       def capability_report(laws = self.laws)
-        eligible = Array(laws).select do |rule|
-          !rule.respond_to?(:enforceable?) || rule.enforceable?
+        eligible = Array(laws).select do |law|
+          !law.respond_to?(:enforceable?) || law.enforceable?
         end
         matrix = ProtocolDetectorMatrix.matrix(eligible)
         values = matrix.values
         {
           "measurement_only_detectors" => values.select { |entry| entry["measurement_mode"] }.map { |entry| entry["id"] },
-          "advisory_rules" => values.select { |entry| entry["enforcement"] == "advisory" }.map { |entry| entry["id"] },
-          "semantic_rules_without_deterministic_detector" => values.select { |entry|
+          "advisory_laws" => values.select { |entry| entry["enforcement"] == "advisory" }.map { |entry| entry["id"] },
+          "semantic_laws_without_deterministic_detector" => values.select { |entry|
             entry["semantic"] && !entry["scannable"]
           }.map { |entry| entry["id"] },
           "verification_runtime" => "not_measured",
@@ -136,22 +136,22 @@ module Master
       end
 
       def law_entry(law)
-        base = law.respond_to?(:contract_entry) ? rule.contract_entry : {
+        base = law.respond_to?(:contract_entry) ? law.contract_entry : {
           "id" => law.id.to_s,
-          "severity" => rule.respond_to?(:severity) ? rule.severity.to_s : "warning"
+          "severity" => law.respond_to?(:severity) ? law.severity.to_s : "warning"
         }
         base.merge(
-          "enforcement" => enforcement(rule),
+          "enforcement" => enforcement(law),
           "fix_strategy" => strategy_for(law),
-          "verify_strategy" => verification_for(rule)
+          "verify_strategy" => verification_for(law)
         )
       end
 
-      def enforcement(rule)
+      def enforcement(law)
         surfaces = []
-        surfaces << "lexical" if rule.respond_to?(:scannable?) && rule.scannable?
-        surfaces << "semantic" if rule.respond_to?(:semantic?) && rule.semantic?
-        surfaces << "conduct" if rule.respond_to?(:practice) && !rule.practice.to_s.empty?
+        surfaces << "lexical" if law.respond_to?(:scannable?) && law.scannable?
+        surfaces << "semantic" if law.respond_to?(:semantic?) && law.semantic?
+        surfaces << "conduct" if law.respond_to?(:practice) && !law.practice.to_s.empty?
         surfaces.empty? ? ["unknown"] : surfaces
       end
 
@@ -202,12 +202,12 @@ module Master
 
       def render(root:, target:, files: nil, skipped: nil, full: false)
         target_path = File.realpath(target)
-        law_rows = rules.sort_by { |rule| law.id.to_s }.map { |rule| rule_entry(rule) }
+        law_rows = laws.sort_by { |law| law.id.to_s }.map { |law| law_entry(law) }
         corpus = inventory(target: target_path, root: root)
         corpus["eligible_sample"] = Array(files).first(24).map { |path| relative(path, root) } if files
         corpus["skipped_by_caller"] = skipped.to_i if skipped
-        entries = rules.sort_by { |rule| rule.id.to_s }.map(&:contract_entry)
-        detector_matrix = ProtocolDetectorMatrix.matrix(rules)
+        entries = laws.sort_by { |law| law.id.to_s }.map(&:contract_entry)
+        detector_matrix = ProtocolDetectorMatrix.matrix(laws)
         payload = {
           "fix_protocol_version" => VERSION,
           "law_digest" => Law::Contract.digest,
@@ -221,7 +221,7 @@ module Master
             "law" => rule_rows.size,
             "registry" => registry_count
           },
-          "rules" => full ? rule_rows : rule_rows.map { |entry| entry.slice("id", "severity", "mode", "languages", "question", "fix", "enforcement", "fix_strategy", "verify_strategy") },
+          "laws" => full ? law_rows : law_rows.map { |entry| entry.slice("id", "severity", "mode", "languages", "question", "fix", "enforcement", "fix_strategy", "verify_strategy") },
           "detector_matrix" => detector_matrix,
           "detector_summary" => ProtocolDetectorMatrix.summary(detector_matrix)
         }
@@ -258,8 +258,8 @@ module Master
         "MASTER /fix external-agent context unavailable: #{e.class}: #{e.message}"
       end
 
-      def law_prompt(rule)
-        entry = rule_entry(rule)
+      def law_prompt(law)
+        entry = law_entry(law)
         <<~TEXT.strip
           /fix execution directive for #{entry["id"]}:
           enforcement: #{Array(entry["enforcement"]).join(", ")}
@@ -271,7 +271,7 @@ module Master
           compliant example: #{entry["good"].to_s}
 
           This is an actionable repair stage. Do not stop merely because the
-          existing rule has no deterministic fixer. Inspect the code semantically
+          existing Law has no deterministic fixer. Inspect the code semantically
           and use AST or model-generated repair when needed. Return UNCHANGED only
           after a concrete repair attempt is blocked by constitutional or
           verification evidence.
