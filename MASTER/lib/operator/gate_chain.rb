@@ -208,9 +208,9 @@ module Operator
 
       Stage.new(
         name: "source",
-        purpose: "every RAILS gate, source and rendered, fix + remeasure",
+        purpose: "every RAILS gate, source/rendered repair, then full Rails verification",
         mutates: !scan_only,
-        run: -> { rails_gates(scan_only:) }
+        run: -> { rails_verification(scan_only:) }
       )
     end
 
@@ -338,6 +338,25 @@ module Operator
       capture(RUBY, File.join(MASTER, "gates", "runner.rb"), "--all",
               chdir: File.join(ROOT, "RAILS"),
               env: strict_env.merge("GATE_AUTOFIX" => scan_only ? "0" : "1"))
+    end
+
+    # The repair-aware runner owns deterministic source/rendered corrections;
+    # premerge is the read-only proof that every Rails test, coverage dimension
+    # and PWA/runtime check survives the repaired tree.
+    def rails_verification(scan_only:)
+      ok, body, status = rails_gates(scan_only:)
+      return [ok, body, status] unless ok
+
+      premerge = File.join(ROOT, "RAILS", "bin", "premerge")
+      return [false, body + ["rails premerge missing: #{premerge}"], 1] unless File.file?(premerge)
+
+      verified, verification_body, verification_status = capture(
+        RUBY,
+        premerge,
+        chdir: File.join(ROOT, "RAILS"),
+        env: strict_env.merge("MASTER_FIX_VERIFY" => "1"),
+      )
+      [verified, body + ["rails premerge: #{verified ? "ok" : "FAIL"}"] + verification_body, verification_status]
     end
 
     def openbsd_gates
