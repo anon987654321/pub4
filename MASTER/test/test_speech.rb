@@ -2,6 +2,7 @@
 
 require_relative "test_helper"
 require "socket"
+require "tmpdir"
 
 class TestSpeech < Minitest::Test
   # Offline, "edge socket produced empty audio" printed fourteen times running.
@@ -572,5 +573,85 @@ class TestSpeech < Minitest::Test
   def test_clean_text_preserves_newline_to_period_pacing
     result = Master::Voice::Speech.clean_text("First line no period\nSecond line no period")
     assert_equal "First line no period. Second line no period", result
+  end
+
+  def with_profile(name)
+    saved = ENV.fetch("MASTER_TTS_PROFILE", nil)
+    name ? ENV["MASTER_TTS_PROFILE"] = name : ENV.delete("MASTER_TTS_PROFILE")
+    Master::Voice::Policy.reload!
+    yield
+  ensure
+    saved ? ENV["MASTER_TTS_PROFILE"] = saved : ENV.delete("MASTER_TTS_PROFILE")
+    Master::Voice::Policy.reload!
+  end
+
+  def test_no_profile_leaves_the_voice_exactly_as_declared
+    with_profile(nil) do
+      assert_equal "", Master::Voice::Policy.profile_name
+      assert_equal "-5%", Master::Voice::Policy.default_rate
+      assert_empty Master::Voice::Policy.layers
+      refute Master::Voice::Layers.active?
+    end
+  end
+
+  def test_the_asmr_profile_overlays_rate_pitch_chain_bed_and_layers
+    with_profile("asmr") do
+      policy = Master::Voice::Policy
+      assert_equal "asmr", policy.profile_name
+      assert_equal "-11%", policy.default_rate
+      assert_equal "-18Hz", policy.default_pitch
+      assert_includes policy.post_chain, "deesser"
+      assert_equal(-17, policy.bed.fetch("gain_db"))
+      assert Master::Voice::Layers.active?
+      assert_equal "asmr", policy.browser_payload.fetch(:profile)
+    end
+  end
+
+  def test_an_unknown_profile_speaks_the_default_voice
+    with_profile("no-such-profile") do
+      assert_equal "-5%", Master::Voice::Policy.default_rate
+      refute Master::Voice::Layers.active?
+    end
+  end
+
+  def test_layers_build_one_seeded_graph_with_a_whisper_bed_and_a_breath_in
+    with_profile("asmr") do
+      argv = Master::Voice::Layers.command(input: "in.mp3", output: "out.mp3", chain: "anull", seconds: 4.0)
+      graph = argv[argv.index("-filter_complex") + 1]
+      %w[amerge amultiply concat adelay apad].each { |filter| assert_includes graph, filter }
+      assert_equal 3, argv.count("lavfi"), "two whisper channels and one breath"
+      assert_equal 3, argv.count { |part| part.include?("seed=") }
+      assert_equal ["-map", "[out]", "-ac", "2", "out.mp3"], argv.last(5)
+    end
+  end
+
+  def test_a_layered_voice_is_never_streamed_piecemeal
+    with_profile("asmr") do
+      refute Master::Voice::Playback.stream_playback_ready?
+    end
+  end
+
+  def test_layers_add_a_breath_and_a_pause_and_keep_the_whisper_inside_the_speech
+    skip "ffmpeg missing" unless system("ffmpeg", "-version", out: File::NULL, err: File::NULL)
+
+    Dir.mktmpdir("layers") do |dir|
+      source = File.join(dir, "speech.mp3")
+      burst = "(0.3*sin(2*PI*140*t)+0.1*sin(2*PI*2800*t))*(lt(t,1.2)+gt(t,1.7)*lt(t,3.2))"
+      assert system("ffmpeg", "-y", "-loglevel", "error", "-f", "lavfi", "-i",
+                    "aevalsrc=exprs='#{burst}':s=24000:d=4", "-ac", "1", source)
+      layered = File.join(dir, "layered.mp3")
+      with_profile("asmr") { assert Master::Voice::Layers.apply(source, layered) }
+
+      probe = IO.popen(["ffprobe", "-v", "error", "-show_entries", "stream=channels", "-show_entries",
+                        "format=duration", "-of", "csv=p=0", layered], &:read).split
+      assert_equal 2, probe.first.to_i
+      assert_in_delta 4.0 + 0.32 + 0.38, probe.last.to_f, 0.05
+
+      # The gap between the two bursts sits 0.38 s later in the layered file.
+      gap = IO.popen(["ffmpeg", "-hide_banner", "-nostats", "-i", layered, "-af",
+                      "atrim=start=1.7:duration=0.2,astats=metadata=0:reset=0", "-f", "null", "-"],
+                     err: %i[child out], &:read)
+      assert_match(/RMS level dB:\s*(-inf|-[1-9]\d\d)/, gap, "the whisper must be silent where the speech is")
+    end
   end
 end

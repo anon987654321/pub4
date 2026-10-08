@@ -114,6 +114,50 @@ tts:
   # 0.85); this raises the synthesised signal itself rather than only its
   # playback gain, so the two do not fight for the same headroom.
 
+  # Named overlays on this section. MASTER_TTS_PROFILE=<name>, or `profile:`
+  # here, lays one over the keys above; Policy.data merges it, so every reader
+  # sees the overlaid value. With neither set the voice is exactly as above.
+  #
+  # asmr is close-mic and unhurried. The chain adds proximity warmth, a soft
+  # air shelf and a de-esser, because ASMR makes sibilants louder than they
+  # are in ordinary speech. `layers` is what an -af chain cannot do, and
+  # Voice::Layers builds it: a breath-in before each utterance, a pause after
+  # it, a decorrelated whisper bed that follows the speech envelope, and a
+  # short delay on one channel for width. All of it is seeded, so the same
+  # sentence renders the same way. Layers need a second input, so they run on
+  # the file path and the live streaming lane stays off while a profile
+  # declares them.
+  profiles:
+    asmr:
+      default_rate: "-11%"
+      default_pitch: "-18Hz"
+      prosody:
+        melody:
+          rate: ["-1%", "0%", "+1%", "0%", "-1%", "0%", "+1%", "0%", "-1%", "0%"]
+          pitch_hz: [0, 2, 4, 2, 0, -2, -4, -2, 1, 0]
+        pitch_reference_hz: 180
+      post_chain: "highpass=f=70,equalizer=f=160:t=q:w=0.9:g=3.5,equalizer=f=2800:t=q:w=1.1:g=0.8,deesser=i=0.4:m=0.5:f=0.5:s=o,highshelf=f=9500:g=3,lowpass=f=13500,acompressor=threshold=-24dB:ratio=2:attack=25:release=300:makeup=1,volume=13.5dB,alimiter=limit=0.98"
+      layers:
+        pause_ms: 320
+        width_ms: 11
+        whisper:
+          gain_db: -20
+          band_hz: [2500, 7500]
+          smoothing_hz: 35
+          boost_db: 14
+          seeds: [11, 12]
+        # Levels are measured against the RMS of a Jenny sentence through the
+        # chain above: the whisper sits near 20 dB under the voice and the
+        # breath-in near 36 dB under it.
+        breath:
+          ms: 380
+          gain_db: -29
+          band_hz: [350, 3200]
+          seed: 5
+      bed:
+        source: STUDIO/dilla/data/bed.yml
+        gain_db: -17
+
 voice:
   style: openbsd_dmesg
   # anti_simulation lives once, in soul.yml absolute.anti_simulation. The
