@@ -28,7 +28,7 @@ module Marketplace
           live: @store.listings.live.count,
           expiring: @store.listings.expiring_soon.count,
           sold: @store.listings.where(status: "sold").count,
-          out_of_stock: @store.listings.live.where.not(stock: nil).where(stock: 0).count
+          out_of_stock: @store.listings.live.where.not(stock: nil).where(stock: 0).count,
         }
       end
     end

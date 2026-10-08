@@ -16,7 +16,7 @@ class ModelCoverageContractTest < Minitest::Test
     "playlist" => "brgen_radio/playlist",
     "takeaway" => "brgen_marketplace/engines/takeaway",
     "tv" => "brgen_radio/tv",
-    "maps" => "brgen_maps"
+    "maps" => "brgen_maps",
   }.freeze
 
   def app_path(app, relative)

@@ -89,8 +89,8 @@ class Marketplace::WebhooksControllerTest < ActionDispatch::IntegrationTest
       transaction: {
         id: "P12345678.txn1",
         merchant_reference: "ref_probe",
-        status: "AUTHORIZED"
-      }
+        status: "AUTHORIZED",
+      },
     }.to_json
 
     post "/webhooks/dintero", params: body,
@@ -116,8 +116,8 @@ class Marketplace::WebhooksControllerTest < ActionDispatch::IntegrationTest
       transaction: {
         id: "P12345678.txn1",
         merchant_reference: "ref_probe",
-        status: "AUTHORIZED"
-      }
+        status: "AUTHORIZED",
+      },
     }.to_json
     signature = OpenSSL::HMAC.hexdigest("SHA1", secret, body)
 
@@ -126,7 +126,7 @@ class Marketplace::WebhooksControllerTest < ActionDispatch::IntegrationTest
            "CONTENT_TYPE" => "application/json",
            "event" => "checkout_transaction",
            "event-delivery" => delivery_id,
-           "event-signature" => signature
+           "event-signature" => signature,
          }
 
     assert_response :ok
@@ -139,7 +139,7 @@ class Marketplace::WebhooksControllerTest < ActionDispatch::IntegrationTest
            "CONTENT_TYPE" => "application/json",
            "event" => "checkout_transaction",
            "event-delivery" => delivery_id,
-           "event-signature" => signature
+           "event-signature" => signature,
          }
 
     assert_response :ok
@@ -161,8 +161,8 @@ class Marketplace::WebhooksControllerTest < ActionDispatch::IntegrationTest
       transaction: {
         id: "txn-header",
         merchant_reference: "ref_probe",
-        status: "AUTHORIZED"
-      }
+        status: "AUTHORIZED",
+      },
     }.to_json
     signature = OpenSSL::HMAC.hexdigest("SHA1", secret, body)
 
@@ -171,7 +171,7 @@ class Marketplace::WebhooksControllerTest < ActionDispatch::IntegrationTest
            "CONTENT_TYPE" => "application/json",
            "event" => "checkout_authorization",
            "event-delivery" => SecureRandom.uuid,
-           "event-signature" => signature
+           "event-signature" => signature,
          }
 
     assert_response :bad_request

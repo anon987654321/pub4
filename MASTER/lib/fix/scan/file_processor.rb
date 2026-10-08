@@ -83,7 +83,7 @@ module Master
         def law_conducted(path, code)
           return code unless path.to_s.match?(%r{/law/[^/]+\.rb\z})
 
-          require File.join(Master::ROOT, "law", "law") unless defined?(Law)
+          require File.join(Master::ROOT, "law", "definition") unless defined?(Law)
           Law.conduct(code)
         end
 

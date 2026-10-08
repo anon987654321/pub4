@@ -81,7 +81,7 @@ module Master
       def executable_law(key)
         slug = key.upcase.tr("-", "_")
         law_root = executable_law_root
-        require File.join(law_root, "law", "law")
+        require File.join(law_root, "law", "definition")
         ::Law.load_all(File.join(law_root, "law")) if ::Law.definitions.empty?
         hit = ::Law.definitions[slug.to_sym]
         return unless hit
@@ -106,7 +106,7 @@ module Master
           File.join(@root, "MASTER"),
           Master::ROOT
         ]
-        candidates.find { |root| File.file?(File.join(root, "law", "law.rb")) } || Master::ROOT
+        candidates.find { |root| File.file?(File.join(root, "law", "definition.rb")) } || Master::ROOT
       end
 
       def registry_law(key)

@@ -41,7 +41,7 @@ module Master
       end
 
       def executable_law_ids
-        require File.join(Master::ROOT, "law", "law")
+        require File.join(Master::ROOT, "law", "definition")
         ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.definitions.empty?
         ::Law.definitions.keys.map { |id| id.to_s.upcase }.to_set
       rescue StandardError => e

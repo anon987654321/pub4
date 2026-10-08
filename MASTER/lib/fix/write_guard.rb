@@ -20,15 +20,19 @@ module Master
           def blocked? = !blocking.empty?
 
           def reason
-            blocking.map { |f| "#{f[:rule]}:#{f[:line]} #{f[:message]}" }.join("; ")
+            blocking.map { |f| "#{f[:law]}:#{f[:line]} #{f[:message]}" }.join("; ")
           end
         end
 
         def self.default
+          require File.join(Master::ROOT, "law", "definition") unless defined?(::Law)
+          ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.definitions.empty?
           digest = ::Law::Contract.digest
           return @default if @default && @default_digest == digest
 
-          @default = new(laws: Master::Fix::Scanner.build(root: Master::ROOT).laws)
+          scanner = Master::Fix::Scanner.build(root: Master::ROOT)
+          laws = scanner.respond_to?(:laws) ? scanner.laws : scanner.rules
+          @default = new(laws:)
           @default_digest = digest
           @default
         end
@@ -45,14 +49,14 @@ module Master
 
         def verdict(path:, content:)
           if (reason = Master::Core::Constitution.forbidden_file_reason(path))
-            return Verdict.new(introduced: [{ rule: :forbidden_file, line: 0, message: reason, severity: :error }])
+            return Verdict.new(introduced: [{ law: :forbidden_file, line: 0, message: reason, severity: :error }])
           end
 
           before = tally(findings(path:, content: (File.read(path) if File.exist?(path))))
           Verdict.new(introduced: findings(path:, content:).select { |f| (before[key(f)] -= 1).negative? })
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "WriteGuard#verdict", severity: :load_bearing, path:)
-          Verdict.new(introduced: [{ rule: :write_guard_error, line: 0, message: e.message, severity: :error }])
+          Verdict.new(introduced: [{ law: :write_guard_error, line: 0, message: e.message, severity: :error }])
         end
 
         private
@@ -65,7 +69,7 @@ module Master
 
         def tally(list) = list.each_with_object(Hash.new(0)) { |f, acc| acc[key(f)] += 1 }
 
-        def key(finding) = finding[:dedupe_key] || "#{finding[:rule]}:#{finding[:message]}"
+        def key(finding) = finding[:dedupe_key] || "#{finding[:law]}:#{finding[:message]}"
       end
     end
   end

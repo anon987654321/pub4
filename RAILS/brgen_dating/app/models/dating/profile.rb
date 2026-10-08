@@ -16,7 +16,7 @@ class Dating::Profile < ApplicationRecord
   has_many_attached :photos
   process_media_variants :photos, variants: {
     thumb: { resize_to_limit: [ 400, 600 ], format: :webp },
-    card: { resize_to_limit: [ 800, 1_200 ], format: :webp }
+    card: { resize_to_limit: [ 800, 1_200 ], format: :webp },
   }
 
   GENDERS = %w[man woman nonbinary other].freeze
@@ -36,7 +36,7 @@ class Dating::Profile < ApplicationRecord
     relation = all
     relation = relation.where(gender: viewer.looking_for) if %w[man woman].include?(viewer&.looking_for)
     relation = relation.where(looking_for: [ viewer.gender, "everyone", nil ]) if viewer&.gender.present?
-    relation
+    relation,
   }
 
   include Shared::RichTextLength

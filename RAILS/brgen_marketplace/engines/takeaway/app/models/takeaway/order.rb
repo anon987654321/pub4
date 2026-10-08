@@ -27,7 +27,7 @@ class Takeaway::Order < ApplicationRecord
     "preparing" => %w[out_for_delivery cancelled],
     "out_for_delivery" => %w[delivered],
     "delivered" => [],
-    "cancelled" => []
+    "cancelled" => [],
   }.freeze
   CENTS_PER_KRONE = 100.0
 
@@ -62,7 +62,7 @@ class Takeaway::Order < ApplicationRecord
     copy = kitchen.orders.build(
       user: strict_safe(:user),
       delivery_address: delivery_address,
-      special_instructions: special_instructions
+      special_instructions: special_instructions,
     )
     order_items.each do |oi|
       item = oi.association(:menu_item).loaded? ? oi.menu_item : oi.strict_safe(:menu_item)
