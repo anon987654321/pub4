@@ -4,8 +4,8 @@ require "digest"
 require "fileutils"
 require "prism"
 require "timeout"
-require_relative "semantic_fingerprint"
-require_relative "law_health"
+require_relative "../../review/scan/semantic_fingerprint"
+require_relative "../../review/scan/law_health"
 
 module Master
   module Fix
