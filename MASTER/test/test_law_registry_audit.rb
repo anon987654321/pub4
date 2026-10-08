@@ -97,7 +97,7 @@ class TestLawRegistryAudit < Minitest::Test
   end
 
   # The escape hatch is idle: no rule declares a detect_lexical, so
-  # YamlDeclarativeRule bridges nothing. This is the tripwire — the day somebody
+  # YamlDeclarativeLaw bridges nothing. This is the tripwire — the day somebody
   # declares one, it fails and asks whether the bridge is still wanted.
   def test_the_lexical_hatch_is_empty
     report = audit.call
