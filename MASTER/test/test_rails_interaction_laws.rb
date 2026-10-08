@@ -16,7 +16,7 @@ class TestRailsInteractionLaws < Minitest::Test
     context = Master::Fix::VisualUsability.context
 
     IDS.each do |id|
-      law = Law.rules.fetch(id.to_sym) { flunk "#{id} is not registered" }
+      law = Law.definitions.fetch(id.to_sym) { flunk "#{id} is not registered" }
       assert_equal :opportunity, law.mode
       assert_includes law.path.to_s, "RAILS/"
       refute_empty law.ask.to_s
