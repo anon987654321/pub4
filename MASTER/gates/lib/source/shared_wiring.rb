@@ -43,12 +43,12 @@ module Deploy
 
     def run
       result = GateResult.new
-      baseline = File.join(RAILS_ROOT, "shared/config/importmap_baseline.rb")
+      baseline = File.join(RAILS_ROOT, "__shared/config/importmap_baseline.rb")
       # autosave, draft-store, media-picker and feed-compose register in
       # stimulus_boot_social.js, not stimulus_boot.js — brgen and amber
       # mount them, bsdports does not, so they moved out of the file every
       # app imports. The two texts are checked together below.
-      boot_files = %w[stimulus_boot.js stimulus_boot_social.js].map { |f| File.join(RAILS_ROOT, "shared/frontend", f) }
+      boot_files = %w[stimulus_boot.js stimulus_boot_social.js].map { |f| File.join(RAILS_ROOT, "__shared/frontend", f) }
 
       result.fail("missing shared importmap baseline") unless File.file?(baseline)
       boot_files.each { |f| result.fail("missing #{File.basename(f)}") unless File.file?(f) }
@@ -69,12 +69,12 @@ module Deploy
       end
 
       REQUIRED_SHARED_INITIALIZERS.each do |file|
-        path = File.join(RAILS_ROOT, "shared/config/initializers", file)
+        path = File.join(RAILS_ROOT, "__shared/config/initializers", file)
         result.fail("missing shared initializer #{file}") unless File.file?(path)
       end
 
       REQUIRED_SHARED_CONTROLLERS.each do |file|
-        path = File.join(RAILS_ROOT, "shared/app/controllers", file)
+        path = File.join(RAILS_ROOT, "__shared/app/controllers", file)
         result.fail("missing shared controller #{file}") unless File.file?(path)
       end
 
