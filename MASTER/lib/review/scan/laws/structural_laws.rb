@@ -5,7 +5,7 @@ require "prism"
 module Master
   module Review
     module Scan
-      module Rules
+      module Laws
         # B05 FILE_LAYOUT — Ruby file order: frozen → require → module → class → public → private.
         class FileLayoutLaw < Rule
           # The three scopes Ruby resets method visibility in, plus the file itself.
