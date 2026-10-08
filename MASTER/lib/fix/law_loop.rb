@@ -78,7 +78,7 @@ module Master
           golden = abs["golden_rule"] || "PRESERVE_THEN_IMPROVE_NEVER_BREAK"
           lines = ["Golden rule: #{golden}",
                     "Minimum change that eliminates the violation. Do not touch unrelated code."]
-          Master::Ground::Rules.new.rules.each { |key, value| lines << "- #{key}: #{value}" }
+          Master::Ground::Laws.new.laws.each { |key, value| lines << "- #{key}: #{value}" }
           lines.join("\n")
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "law_loop.golden_rule")
@@ -140,7 +140,7 @@ module Master
         files.flat_map do |path|
           next [] unless File.exist?(path)
 
-          result = Master::Result.wrap(@scanner.scan(path, rules: [@rule]))
+          result = Master::Result.wrap(@scanner.scan(path, laws: [@rule]))
           raise "rule scan failed for #{path}: #{result.message}" unless result.ok?
 
           ext = File.extname(path).downcase
@@ -330,7 +330,7 @@ module Master
         Line #{violation[:line]}: #{violation[:message]}
         #{ctx[:fix_line]}
         #{visual_fix_context}
-        #{Protocol.rule_prompt(@rule)}
+        #{Protocol.law_prompt(@rule)}
 
         #{SEMANTIC_PASS_CHECKLIST}
 
