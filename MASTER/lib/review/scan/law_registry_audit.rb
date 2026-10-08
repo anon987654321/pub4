@@ -156,7 +156,7 @@ module Master
           ::Law.load_all(File.join(@root, "law")) if ::Law.definitions.empty?
           ::Law.definitions.keys.map { |id| id.to_s.downcase }.to_set
         rescue StandardError => e
-          raise "rule registry law census failed: #{e.class}: #{e.message}"
+          raise "law registry census failed: #{e.class}: #{e.message}"
         end
 
         def load_yaml_laws
@@ -205,7 +205,7 @@ module Master
 
         # The reference loads the law files, and a class in a multi-class file is
         # invisible to Zeitwerk until it does: asked cold, the registry answered
-        # 81 mechanical rules where a loaded one answers 115.
+        # 81 mechanical laws where a loaded one answers 115.
         def build_registry_ids
           Review::Scan::LawDSL
           Review::Scan::Law.registry
