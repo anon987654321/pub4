@@ -38,7 +38,7 @@ module Master
 
         # The Scanner is the coordinator of the review process. What it walks
         # is PathFilter's decision, how it walks is Transport's, and what it
-        # says while walking is ProgressReporter's; rule application is its own.
+        # says while walking is ProgressReporter's; law application is its own.
 
         SCAN_GLOB = "**/*".freeze
         REQUIRED_DEPTH = :deep
