@@ -27,7 +27,7 @@ module Master
           return false unless law.respond_to?(:id)
 
           measurement_only_ids.include?(law.id.to_s) ||
-            (law.respond_to?(:measurement_mode) && rule.measurement_mode == true)
+            (law.respond_to?(:measurement_mode) && law.measurement_mode == true)
         end
 
         def enforcement(law)
@@ -40,7 +40,7 @@ module Master
         def user_message(law)
           case enforcement(law)
           when :measurement then "#{law.id}: measured only — non-blocking"
-          when :blocking then "#{law.id}: blocking rule"
+          when :blocking then "#{law.id}: blocking law"
           else "#{law.id}: advisory finding"
           end
         end
