@@ -60,6 +60,8 @@ class TestRailsInteractionCraft < Minitest::Test
     assert_includes js, "Math.abs(this.currentX) >= this.threshold"
     assert_includes js, "this.thresholdBuzzed = true"
     assert_includes js, "Haptics.pulse(6)"
+    assert_includes js, "_resistedDistance(this.currentX)"
+    assert_includes js, "Math.abs(delta) - 120"
     refute_includes js, "navigator.vibrate("
   end
 

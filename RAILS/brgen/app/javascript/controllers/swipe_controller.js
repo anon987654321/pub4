@@ -68,9 +68,10 @@ export default class extends Controller {
     }
 
     if (!this.currentCard) return
-    const rotate = (this.currentX / this.threshold) * this.maxRotate
-    const scale = 1 - Math.abs(this.currentX) / 1200
-    this.currentCard.style.transform = `translateX(${this.currentX}px) rotate(${rotate}deg) scale(${Math.max(0.96, scale)})`
+    const visualX = this._resistedDistance(this.currentX)
+    const rotate = (visualX / this.threshold) * this.maxRotate
+    const scale = 1 - Math.abs(visualX) / 1200
+    this.currentCard.style.transform = `translateX(${visualX}px) rotate(${rotate}deg) scale(${Math.max(0.96, scale)})`
 
     // Visual feedback
     if (this.currentX > 40) {
@@ -138,6 +139,12 @@ export default class extends Controller {
     }
 
     this.currentX = 0
+  }
+
+  _resistedDistance(delta) {
+    const excess = Math.max(0, Math.abs(delta) - 120)
+    const resistance = 1 + (excess / 600)
+    return delta / resistance
   }
 
   _springBack(card) {
