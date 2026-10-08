@@ -7,12 +7,7 @@ ROOT = File.expand_path("../../..", __dir__)
 MASTER = File.join(ROOT, "MASTER").freeze
 CLI = File.join(MASTER, "bin", "cli").freeze
 
-Master::Boot::Entrypoint.prepare!(root: MASTER)
 
-unless File.file?(CLI)
-  Master::Trace::Dmesg.status("master0", "#{CLI} missing, full pub4 checkout required", io: $stderr)
-  exit 1
-end
 
 ENV["PUB4_ROOT"] ||= ROOT
 
@@ -29,6 +24,14 @@ if ARGV.first == "--fix-context"
 end
 
 if ARGV.first == "--help" || ARGV.first == "-h"
+require_relative "../boot/entrypoint"
+Master::Boot::Entrypoint.prepare!(root: MASTER)
+
+unless File.file?(CLI)
+  Master::Trace::Dmesg.status("master0", "#{CLI} missing, full pub4 checkout required", io: $stderr)
+  exit 1
+end
+
   Master::Trace::Dmesg::Report.print("/help", <<~HELP)
     master — instruct the MASTER runtime with the whole repo in scope
 
