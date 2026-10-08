@@ -87,6 +87,23 @@ random stream as the sound rather than producing a second audio renderer, so
 there is one musical source of truth. Set `DILLA_LIVE_VISUAL=0` for sound-only
 live playback.
 
+The live improviser now has a composed mode as well as the reference-backed mode:
+`DILLA_CURATED_HARMONY=1` selects original eight-chord harmonic arcs with deliberate
+voice-leading, persistent motifs and controlled phrase mutation. The generic showcase
+uses this composed vocabulary; named Dilla/D'Angelo scenes still use their verified
+source-backed progressions. `DILLA_COMPOSED_MELODY=1` makes the lead carry a motif
+across chord changes instead of choosing unrelated notes one chord at a time.
+
+`DILLA_FUGUE=1 DILLA_CURATED_HARMONY=1 ruby dilla.rb live standard` adds an original
+two-voice fugue: subject, tonal answer, bounded counterpoint and the same Dilla pocket.
+It is deliberately separate from `ruby dilla.rb play bach`, which continues to play
+the exact BWV 565 MIDI rather than a reconstruction.
+
+The live drum kit now realizes the full preset grammar — kick, snare, ghost, clap, hat
+and percussion — and uses four-bar statement/repeat/mutation/answer changes. The default
+showcase pocket is the original `dilla_soul_pocket`: sparse enough to breathe, but with
+small clap/percussion answers so the drums articulate the harmony rather than masking it.
+
 `ruby dilla.rb compose` writes the other demo: one piece of about six minutes in
 which every part of the engine plays and answers the others. The bass states the
 key, one verified progression follows it and later comes back mirrored about that
