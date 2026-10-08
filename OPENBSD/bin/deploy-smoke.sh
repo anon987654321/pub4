@@ -241,7 +241,7 @@ if [ "$run_public" = "1" ]; then
     esac
   fi
   # One asset per app, from the engine's shared/public, which the deploy ships by
-  # tarring RAILS/shared wholesale rather than through the asset pipeline. Nothing
+  # tarring RAILS/__shared wholesale rather than through the asset pipeline. Nothing
   # else here proves that tar arrived: /up answers from the app, and propshaft
   # never digests these files, so a sync that dropped public/ would look green.
   #
