@@ -76,9 +76,9 @@ module Master
             ext unless ext.empty?
           end
           ext = extensions.tally.max_by { |_, count| count }&.first || "unknown"
-          @learnings.record(rule: @rule.id, file_type: ext, outcome:)
+          @learnings.record(law: @rule.id, file_type: ext, outcome:)
         rescue StandardError => e
-          Master::Ground::Swallow.log(e, context: "law_loop.record_outcomes", event_bus: @bus, rule: @rule.id)
+          Master::Ground::Swallow.log(e, context: "law_loop.record_outcomes", event_bus: @bus, law: @rule.id)
         end
       end
     end
