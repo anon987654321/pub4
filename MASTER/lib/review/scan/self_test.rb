@@ -390,7 +390,7 @@ module Master
           unless File.file?(infra)
             findings << finding(path: infra, line: 1, message: "missing infra_helpers.rb wiring layer")
           end
-          audit = RuleRegistryAudit.new(root: @root).call
+          audit = LawRegistryAudit.new(root: @root).call
           if audit.adherence_pct < 35.0
             findings << finding(
               path: File.join(@root, "data", "laws.yml"), line: 1,
