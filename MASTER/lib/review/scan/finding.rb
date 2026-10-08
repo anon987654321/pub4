@@ -13,11 +13,11 @@ module Master
         :dedupe_key, :impact_radius
       ) do
         def self.build(
-          rule:, message:, line:, severity: :warning, fix: nil, tags: [],
+          law:, message:, line:, severity: :warning, fix: nil, tags: [],
           reversibility: nil, blast_radius: nil, confidence: nil, why: nil,
           genealogy: nil, dedupe_key: nil, impact_radius: nil
         )
-          new(rule:, rule_id: rule.to_s, message:, line:, severity:, fix:, tags:,
+          new(law:, law_id: law.to_s, message:, line:, severity:, fix:, tags:,
             reversibility:, blast_radius:, confidence:, why:, genealogy:,
             dedupe_key:, impact_radius:)
         end
@@ -28,7 +28,7 @@ module Master
 
         # A finding reaches a reader as this object from a rule and as the plain
         # symbol-keyed Hash scan_dir returns — the trap AGENTS.md records, where
-        # `f.rule` raises on one and `h[:rule]` works on both. #[] above is what
+        # `f.law` raises on one and `h[:law]` works on both. #[] above is what
         # makes one subscript read either, and four readers hand-rolled the same
         # respond_to? ladder around it anyway. Two of them disagreed about to_s.
         # The reader comes first and the subscript second, which is not
@@ -45,8 +45,8 @@ module Master
 
         def to_h
           {
-            rule:,
-            rule_id:,
+            law:,
+            law_id:,
             message:,
             line:,
             severity:,
@@ -65,7 +65,7 @@ module Master
         def to_proof(source: :deterministic, status: :open, subject: nil, evidence: nil)
           Master::Proof.build(
             claim: message,
-            rule: rule_id || rule,
+            law: law_id || law,
             subject:,
             evidence: evidence || message,
             source:,
