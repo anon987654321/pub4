@@ -473,7 +473,7 @@ when "rules"
 
   die("rules", "#{card[:id]} has no detector, nothing to run") unless rule
 
-  one = Master::Review::Scan::Scanner.new(rules: [rule])
+  one = Master::Fix::Scanner.new(rules: [rule])
   default = corpus.casecmp?("all") ? ROOT : master_root
   targets = ARGV.empty? ? [default] : ARGV.map { |path| File.expand_path(path, ROOT) }
   hits = one.findings(targets)
