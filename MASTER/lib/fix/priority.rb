@@ -2,7 +2,7 @@
 
 module Master
   module Fix
-    # Single ranking primitive shared by LawOrder (which rule to fix next)
+    # Single ranking primitive shared by LawOrder (which law to fix next)
     # and ConflictResolver (whether a fix's side effect is bad enough to
     # reject). Replaces BiasGuard#priority_score (LawOrder's prior use) and
     # a plain Severity.rank comparison (ConflictResolver's prior use) with
@@ -11,10 +11,10 @@ module Master
     module Priority
       module_function
 
-      def score(rule_id:, severity:, frequency: 1.0, age_days: 0.0,
-                law_resolver: nil, rules_index: nil, quality: 0.5, tier2: false)
+      def score(law_id:, severity:, frequency: 1.0, age_days: 0.0,
+                law_resolver: nil, laws_index: nil, quality: 0.5, tier2: false)
         sev = Master::SEVERITY_RANK.fetch(severity.to_sym, 1)
-        law_p = law_resolver ? law_resolver.priority(law_resolver.law_for(rule_id, rules_index:)) : 50
+        law_p = law_resolver ? law_resolver.priority(law_resolver.law_for(law_id, laws_index:)) : 50
         # Invert law priority so a lower law number (more foundational) scores higher.
         law_component = (100 - law_p).clamp(0, 100)
         density = sev * frequency.to_f * (1.0 + (age_days.to_f / 30.0))
@@ -27,9 +27,9 @@ module Master
         score(**candidate) > score(**baseline)
       end
 
-      # Shared with ConflictResolver's prior private #build_rules_index --
-      # both need the same rule_id => rule_entry map to resolve law_for.
-      def rules_index(root:)
+      # Shared with ConflictResolver's prior private #build_laws_index --
+      # both need the same law_id => law_entry map to resolve law_for.
+      def laws_index(root:)
         Master.law_entries(root:)
           .each_with_object({}) do |entry, index|
             next unless entry.is_a?(Hash) && entry["id"]
