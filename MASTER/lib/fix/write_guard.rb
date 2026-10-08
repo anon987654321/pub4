@@ -2,7 +2,7 @@
 
 module Master
   module Fix
-      # Every write judged by every mechanical rule, on both write paths, with no
+    # Every write judged by every mechanical rule, on both write paths, with no
       # command to remember. Only what a write *introduces* can block it: a file
       # carrying debt has to stay editable, or the first repair of it is refused.
       #
@@ -28,7 +28,7 @@ module Master
           digest = ::Law::Contract.digest
           return @default if @default && @default_digest == digest
 
-          @default = new(rules: InfraHelpers.build_scanner(root: Master::ROOT).rules)
+          @default = new(rules: Master::Fix::Scanner.build(root: Master::ROOT).rules)
           @default_digest = digest
           @default
         end
