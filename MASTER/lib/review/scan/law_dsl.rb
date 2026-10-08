@@ -15,11 +15,11 @@ module Master
         # fires:/does_not_fire: are the Law's own worked examples, checked by
         # test/test_rule_fixtures.rb.
         #
-        # A scan rule fails in one direction far more often than the other: it
+        # A scan law fails in one direction far more often than the other: it
         # keeps matching a pattern adjacent to the law it enforces. TIME_ZONE_UNSAFE
         # matched every Time.now when the law is about Time.zone, so it reported 13
         # rewrites of Time.now.utc and Time.now.to_i that would have changed no
-        # behaviour. A rule that carries the case it must NOT fire on cannot drift
+        # behaviour. A law that carries the case it must NOT fire on cannot drift
         # that way in silence.
         #
         #   LawDSL.law :TIME_ZONE_UNSAFE, ...,
