@@ -245,7 +245,7 @@ module Operator
       scanner = Master::Review::Scan::InfraHelpers.build_scanner(root: MASTER_DIR)
       own = scanner.rules.select { |rule| shipped?(rule) }.map { |rule| rule.id.to_s }
       @registry_rule_count = own.size
-      corpus = files.reject { |path| Master::Review::Scan::Scanner.skip_path?(path, root: ROOT) }
+      corpus = files.reject { |path| Master::Fix::Scanner.skip_path?(path, root: ROOT) }
       scanner.findings(corpus, depth: :deep).filter_map do |hit|
         next unless hit[:severity].to_s == "error" && own.include?(hit[:rule].to_s)
 
