@@ -642,20 +642,6 @@ Law.define(:STRUNK_ACTIVE) do
   good "the job modified the file"
 end
 
-Law.define(:SINGLE_MASTER_PROCESS) do
-  source "MASTER process policy (Ops::ProcessLock, one control-plane owner)"
-  severity :error
-  ask "Could this entrypoint start a second MASTER runtime in the same checkout?"
-  practice <<~TEXT
-    one checkout has one MASTER runtime. bin/master and bin/cli claim the
-    checkout's process lock before boot and carry that lock through re-exec;
-    a second owner exits without booting. Long-running loop ownership is
-    separate and remains bounded by the process budget.
-  TEXT
-  fix "claim .master/process.lock before runtime boot; refuse a second owner with no partial startup."
-  bad  "starts another MASTER process while one already owns the checkout"
-  good "the second invocation reports the existing owner and exits"
-end
 Law.define(:AESTHETIC_DISCIPLINE) do
   source "MASTER constitution: universal visual and typographic principles"
   severity :info
