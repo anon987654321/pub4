@@ -3,7 +3,7 @@
 module Master
   module Review
     module Scan
-      module Rules
+      module Laws
         # Retired registry twins — each lives once, in law/:
         #   DOLLAR_PAREN
         # (test_scan_rule_contracts proves each reaches findings through the bridge).
