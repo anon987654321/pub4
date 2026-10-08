@@ -15,7 +15,7 @@ module Master::Core
   # or Block (stop). admit folds them: the first Block wins; Revises carry
   # forward; what comes out the end is the effect the World will perform.
   class Constitution
-    Rule = Data.define(:id, :verbs, :judge) do
+    Law = Data.define(:id, :verbs, :judge) do
       def watches?(verb) = verbs.include?(verb)
     end
 
@@ -48,11 +48,11 @@ module Master::Core
       rules = default_rules(rules_data, sacred_paths:)
       rules += [scan_clean_rule(verify)] if verify
       rules += [sandboxed_exec_rule(sandbox)] if sandbox
-      new(rules:, capabilities:)
+      new(laws: rules, capabilities:)
     end
 
-    def initialize(rules:, capabilities: Capabilities.for(:fix))
-      @rules = rules
+    def initialize(laws:, capabilities: Capabilities.for(:fix))
+      @laws = laws
       @capabilities = capabilities
     end
 
@@ -67,10 +67,10 @@ module Master::Core
         )
       end
 
-      @rules.each do |rule|
-        next unless rule.watches?(effect.verb)
+      @laws.each do |law|
+        next unless law.watches?(effect.verb)
 
-        case rule.judge.call(effect, memory)
+        case law.judge.call(effect, memory)
         in Verdict::Block => b then return b
         # Returned as it stands rather than carried on, because the rules after
         # this one would judge an effect a person has not agreed to yet.
@@ -112,7 +112,7 @@ module Master::Core
     # The agent may not rewrite the constitution it is judged by or the spine
     # that folds its effects. A write, or a git stage of such a path, is blocked.
     def self.immutable_paths_rule(immutable)
-      Rule.new(id: :immutable_paths, verbs: %i[write git], judge: lambda { |effect, _memory|
+      Law.new(id: :immutable_paths, verbs: %i[write git], judge: lambda { |effect, _memory|
         targets = effect.verb == :write ? [effect.args[:path]] : Array(effect.args[:paths])
         hit = targets.compact.map(&:to_s).find { |path| immutable_hit?(path, immutable) }
         next nil unless hit
@@ -144,7 +144,7 @@ module Master::Core
 
     # No credential ever reaches disk or the transcript.
     def self.no_secret_rule(veto)
-      Rule.new(id: :no_secret, verbs: %i[write note], judge: lambda { |effect, _memory|
+      Law.new(id: :no_secret, verbs: %i[write note], judge: lambda { |effect, _memory|
         body = [effect.args[:content], effect.args[:text]].compact.map(&:to_s).join("\n")
         next nil unless veto["secrets"] && body.match?(veto["secrets"])
 
@@ -155,7 +155,7 @@ module Master::Core
     # Every Ruby file the agent writes must parse. The check that was missing
     # while 109 lib files rotted; here it cannot be skipped.
     def self.ruby_parses_rule
-      Rule.new(id: :ruby_parses, verbs: %i[write], judge: lambda { |effect, _memory|
+      Law.new(id: :ruby_parses, verbs: %i[write], judge: lambda { |effect, _memory|
         next nil unless effect.args[:path].to_s.end_with?(".rb")
 
         err = ruby_syntax_error(effect.args[:content].to_s)
@@ -167,7 +167,7 @@ module Master::Core
     # to it. Blocking on the whole file would refuse the first repair of any file
     # that already breaks a rule.
     def self.scan_clean_rule(verify)
-      Rule.new(id: :scan_clean, verbs: %i[write], judge: lambda { |effect, _memory|
+      Law.new(id: :scan_clean, verbs: %i[write], judge: lambda { |effect, _memory|
         blocking = verify.call(path: effect.args[:path], content: effect.args[:content].to_s)
         next nil if blocking.empty?
 
@@ -192,7 +192,7 @@ module Master::Core
     # would otherwise be the same value meaning opposite things. A sandbox that
     # only ever returns a String or nil keeps exactly its old behaviour.
     def self.sandboxed_exec_rule(sandbox)
-      Rule.new(id: :sandboxed_exec, verbs: %i[exec], judge: lambda { |effect, _memory|
+      Law.new(id: :sandboxed_exec, verbs: %i[exec], judge: lambda { |effect, _memory|
         answer = sandbox.call(Array(effect.args[:argv]).map(&:to_s)) or next nil
 
         if answer.is_a?(Hash) && answer[:ask]
@@ -211,7 +211,7 @@ module Master::Core
 
     # Unsafe shell never executes.
     def self.safe_exec_rule(veto)
-      Rule.new(id: :safe_exec, verbs: %i[exec], judge: lambda { |effect, _memory|
+      Law.new(id: :safe_exec, verbs: %i[exec], judge: lambda { |effect, _memory|
         command = Array(effect.args[:argv]).join(" ")
         next nil unless veto["unsafe_calls"] && command.match?(veto["unsafe_calls"])
 
@@ -235,7 +235,7 @@ module Master::Core
     # block under the rule's own id when there is one. The block returns nil to
     # pass.
     def self.reason_rule(id, verbs, &reason)
-      Rule.new(id:, verbs:, judge: lambda { |effect, memory|
+      Law.new(id:, verbs:, judge: lambda { |effect, memory|
         text = reason.call(effect, memory)
         text ? Verdict::Block.new(reason: text, by: id) : nil
       })
@@ -323,7 +323,7 @@ module Master::Core
     end
 
     def self.structured_exec_rule
-      Rule.new(id: :structured_exec, verbs: %i[exec], judge: lambda { |effect, _memory|
+      Law.new(id: :structured_exec, verbs: %i[exec], judge: lambda { |effect, _memory|
         argv = effect.args[:argv]
         next nil if argv.is_a?(Array) && argv.all? { |arg| arg.is_a?(String) } && !argv.empty?
 
@@ -335,7 +335,7 @@ module Master::Core
     # A fold that only read is answering, not claiming a change; see
     # Proof#answered_from_reads?.
     def self.evidence_for_done_rule
-      Rule.new(id: :evidence_for_done, verbs: %i[done], judge: lambda { |_effect, memory|
+      Law.new(id: :evidence_for_done, verbs: %i[done], judge: lambda { |_effect, memory|
         next nil if memory.proof.proved? || memory.proof.answered_from_reads?
 
         Verdict::Block.new(reason: "no passing evidence on record", by: :evidence_for_done)
@@ -343,7 +343,7 @@ module Master::Core
     end
 
     def self.git_commit_evidence_rule
-      Rule.new(id: :git_commit_evidence, verbs: %i[git], judge: lambda { |effect, memory|
+      Law.new(id: :git_commit_evidence, verbs: %i[git], judge: lambda { |effect, memory|
         next nil unless effect.args[:operation].to_s.to_sym == :commit
         next nil if memory.proof.proved?
 
@@ -359,7 +359,7 @@ module Master::Core
     # index in this checkout belongs to everyone at once — other sessions, and a
     # human — so "commit whatever is staged" is never a thing the fold means.
     def self.git_commit_scope_rule
-      Rule.new(id: :git_commit_scope, verbs: %i[git], judge: lambda { |effect, _memory|
+      Law.new(id: :git_commit_scope, verbs: %i[git], judge: lambda { |effect, _memory|
         next nil unless effect.args[:operation].to_s.to_sym == :commit
         next nil if Array(effect.args[:paths]).map(&:to_s).any? { |p| !p.strip.empty? }
 
@@ -369,7 +369,7 @@ module Master::Core
 
     # High-risk goals require an in-process council critique before done.
     def self.council_for_done_rule
-      Rule.new(id: :council_for_done, verbs: %i[done], judge: lambda { |_effect, memory|
+      Law.new(id: :council_for_done, verbs: %i[done], judge: lambda { |_effect, memory|
         next nil unless memory.proof.council_required?
         next nil if memory.proof.council_cleared?
 
@@ -379,7 +379,7 @@ module Master::Core
 
     # Medium+ goals must carry ideation notes seeded before the first write.
     def self.ideation_before_write_rule
-      Rule.new(id: :ideation_before_write, verbs: %i[write], judge: lambda { |_effect, memory|
+      Law.new(id: :ideation_before_write, verbs: %i[write], judge: lambda { |_effect, memory|
         next nil if memory.proof.ideation_satisfied?
 
         Verdict::Block.new(reason: "ideation not complete — approaches/chosen must be in memory", by: :ideation_before_write)
