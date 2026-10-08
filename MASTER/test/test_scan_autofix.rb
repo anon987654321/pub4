@@ -177,7 +177,7 @@ class TestScanAutofix < Minitest::Test
     Dir.mktmpdir do |root|
       path = File.join(root, "example.rb")
       File.write(path, "class Example\nend\n")
-      scanner = Master::Review::Scan::Scanner.new(rules: [FakeRule.new("FROZEN_LITERAL", true)])
+      scanner = Master::Fix::Scanner.new(rules: [FakeRule.new("FROZEN_LITERAL", true)])
       def scanner.scan(_path, depth: :deep, **)
         @scan_n = (@scan_n || 0) + 1
         if @scan_n.odd?
