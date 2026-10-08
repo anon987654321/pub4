@@ -383,6 +383,14 @@ SUFFIX_MATCHERS = CHORD_SUFFIXES.map { |sfx| [sfx, /\A[A-G][#b]?#{sfx}\z/i] }.fr
       kicks: [0, 6, 10], snares: [4, 12], hats: [0, 2, 4, 6, 8, 10, 12, 14],
       ghosts: [2, 10], claps: [4, 12], perc: [3, 11],
     },
+    # Original showcase pocket: sparse kick, late backbeat, missing hat steps,
+    # and a small clap/percussion answer. The groove is carried by timing and
+    # omission first; the extra voices only appear as punctuation.
+    dilla_soul_pocket: {
+      swing: 57, humanize: 3, bpm: 92, mode: :dilla_time,
+      kicks: [0, 6, 10, 15], snares: [4, 12], hats: [0, 2, 6, 8, 10, 14],
+      ghosts: [7, 15], claps: [12], perc: [3, 11],
+    },
     # Transcribed from a 92 BPM Ableton set (4_seven): two Drum Racks, one
     # kick one DMX analog clap, both playing an identical 2-bar pattern. Kick
     # on the downbeat, the 16th right after it, and beat 3; clap on the plain
