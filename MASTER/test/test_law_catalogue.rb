@@ -99,7 +99,7 @@ class TestRuleCatalogue < Minitest::Test
   end
 
   # The direction that must still fire: a catalogue entry carrying its own
-  # deterministic detector, which the YamlDeclarativeRule bridge runs, beside a
+  # deterministic detector, which the YamlDeclarativeLaw bridge runs, beside a
   # law that also detects. Two things can fire, so it is a twin.
   def test_a_lexical_entry_beside_a_law_detector_is_a_duplicate
     body = { "laws" => [{ "id" => "BARE_RESCUE", "tier" => "safety", "severity" => "error",
