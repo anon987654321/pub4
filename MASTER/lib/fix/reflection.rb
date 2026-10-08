@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require "digest"
 require "json"
 require_relative "../ai/orientation"
 
@@ -58,7 +57,7 @@ module Master
           semantic_mode: ENV.fetch("MASTER_SCAN_SEMANTIC_SAMPLE", "0"),
         }
 
-        <<~PROMPT.byteslice(0, MAX_CONTEXT_BYTES)
+        prompt = <<~PROMPT
           Fresh-eyes reflection after MASTER /fix.
 
           This is not another repair pass. Reassess the repository from first principles.
@@ -85,6 +84,7 @@ module Master
           Orientation:
           #{orientation}
         PROMPT
+        prompt.byteslice(0, MAX_CONTEXT_BYTES)
       end
 
       def parse(answer)
