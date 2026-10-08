@@ -10,9 +10,10 @@ import { Controller } from "@hotwired/stimulus"
 //
 export default class extends Controller {
   static pulse(pattern) {
-    if (document.hidden || !navigator.vibrate) return
+    const vibration = globalThis.navigator?.vibrate
+    if (globalThis.document?.hidden || typeof vibration !== "function") return
     try {
-      navigator.vibrate(pattern)
+      vibration.call(globalThis.navigator, pattern)
     } catch (_) { /* ignore */ }
   }
 
