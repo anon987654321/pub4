@@ -8,7 +8,7 @@ class TestLibRootDisciplineRule < Minitest::Test
   # files shouldn't land directly in lib/ root without a deliberate,
   # visible decision (adding to ALLOWED_ROOT_FILES).
   def setup
-    @rule = Master::Review::Scan::Rules::LibRootDisciplineRule.new(root: Master::ROOT)
+    @rule = Master::Review::Scan::Laws::LibRootDisciplineLaw.new(root: Master::ROOT)
   end
 
   def test_flags_a_new_file_directly_in_lib_root
@@ -47,7 +47,7 @@ class TestLibRootDisciplineRule < Minitest::Test
   # critical and error only, so the rule fired into a report nobody opened.
   # rake lint:autoload is the shape being copied.
   def test_the_allowance_names_lib_root_exactly
-    allowed = Master::Review::Scan::Rules::LibRootDisciplineRule::ALLOWED_ROOT_FILES
+    allowed = Master::Review::Scan::Laws::LibRootDisciplineLaw::ALLOWED_ROOT_FILES
     present = Dir.glob(File.join(Master::ROOT, "lib", "*.rb")).map { |p| File.basename(p) }
 
     assert_equal present.sort, allowed.sort,
