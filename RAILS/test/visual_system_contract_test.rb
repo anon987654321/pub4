@@ -9,7 +9,7 @@ class VisualSystemContractTest < Minitest::Test
 
   VISUAL_FIELD = ROOT.join("__shared/frontend/visual_field.js")
   VISUAL_SURFACE = ROOT.join("__shared/frontend/visual_surface_controller.js")
-  GRAVITY_FIELD = ROOT.parent.join("MASTER/web/public/gravity_field.js")
+  GRAVITY_FIELD = ROOT.parent.join("RAILS/master_web/public/gravity_field.js")
   IMPORTMAP = ROOT.join("__shared/config/importmap_baseline.rb")
   SOCIAL_BOOT = ROOT.join("__shared/frontend/stimulus_boot_social.js")
   BRGEN_LAYOUT = ROOT.join("brgen/app/views/layouts/application.html.erb")
