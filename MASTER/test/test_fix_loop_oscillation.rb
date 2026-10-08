@@ -105,7 +105,7 @@ class TestFixLoopOscillation < Minitest::Test
     loop = nil
     Master::Fix::FixLoop::Committer.stub(:new, committer) do
       loop = Master::Fix::FixLoop.new(
-        rules: [StubRule.new("TEST_RULE", :warning)],
+        laws: [StubRule.new("TEST_RULE", :warning)],
         agent: OpenCircuitAgent.new,
         scanner: ConstantScanner.new(violations),
         root: @root,
@@ -119,7 +119,7 @@ class TestFixLoopOscillation < Minitest::Test
 
   def build_loop_with_scanner(scanner)
     Master::Fix::FixLoop.new(
-      rules: [StubRule.new("TEST_RULE", :warning)],
+      laws: [StubRule.new("TEST_RULE", :warning)],
       agent: OpenCircuitAgent.new,
       scanner:,
       root: @root,
