@@ -8,7 +8,7 @@ not invent a second z-scale, skip-link, tap floor, or main landmark pattern.
 
 Source of truth: `../../MASTER/data/laws.yml#design_system`. The committed
 `shared/design_tokens.yml` is a generated projection. CSS: `shared/app/assets/stylesheets/_layout_chrome.scss`
-(RAILS), face `:root` generated into `MASTER/web/public/face.css`.
+(RAILS), face `:root` generated into `RAILS/master_web/public/face.css`.
 
 ## Focus triangle (active product surface)
 
@@ -23,7 +23,7 @@ named in a task.
 
 Bridge contract: RAILS hosts embed MASTER via `shared/master_embed` +
 `master_web_url(autostart:, embed:)`. Face boot rules stay in
-`MASTER/web/CLAUDE.md` (primer before WebGL; no three.js at first paint).
+`RAILS/master_web/CLAUDE.md` (primer before WebGL; no three.js at first paint).
 
 Semantic state signal: `shared/system_signal` plus `_surface_signal.scss` uses the same success/warning/error/working vocabulary across brgen and amber without shadows or color-only meaning.
 
@@ -157,7 +157,7 @@ Chrome follows the surface: brgen core uses the hidden-at-rest swipe-reveal nav 
 Token: face joins fleet token names (a face.part*.txt session — the
 --c-*/--x-text namespace is read by the GENERATED bundles. The tap-test fence
 LIFTED 2026-08-22: the local face failing to boot under triangle was nothing
-deeper than MASTER/web's bundle never installed under the pinned repo Ruby — one
+deeper than RAILS/master_web's bundle never installed under the pinned repo Ruby — one
 bundle install, four surfaces up, face answers 200); shared edge scale;
 radius-scale parameter per dialect; scrim unification (operator's eye).
 Components: card-grid still needs a second real consumer.
