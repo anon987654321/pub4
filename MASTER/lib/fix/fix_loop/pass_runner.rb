@@ -232,7 +232,7 @@ module Master
           [found + Array(@council&.improve(files:, pass:, deadline:)), nil]
         end
 
-        # found may now hold three kinds of finding -- ordinary rule
+        # found may now hold three kinds of finding -- ordinary law
         # violations, council-selected improvements, and rendered-visual
         # findings -- each routed to the stage that knows how to fix it. A
         # shed here (unlike supplement_with_improvements above) does not
