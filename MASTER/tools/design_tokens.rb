@@ -153,7 +153,7 @@ module DesignTokens
     true
   end
 
-  def scss_anchor_drift?(path = File.join(ROOT, "shared", "app", "assets", "stylesheets", "_dialect_tokens.scss"))
+  def scss_anchor_drift?(path = File.join(ROOT, "RAILS", "__shared", "app", "assets", "stylesheets", "_dialect_tokens.scss"))
     return "missing #{path}" unless File.file?(path)
 
     scss = read_utf8(path)
