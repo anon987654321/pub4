@@ -2164,23 +2164,44 @@ module Livesets
 
   # dilla.rb as it was at `ref`, exported into scratch with the MASTER code it
   # loads at boot. The crate is linked in rather than copied: an old tree reads
-  # samples/ where it always did.
-  AB_EXPORT = %w[MASTER/tools/dilla MASTER/lib MASTER/Gemfile MASTER/Gemfile.lock].freeze
+  # samples/ where it always did. Historical refs before the STUDIO move keep
+  # dilla under MASTER/tools/dilla; current refs use STUDIO/dilla.
+  AB_DILLA_PATHS = %w[STUDIO/dilla MASTER/tools/dilla].freeze
+  AB_SHARED_EXPORT = %w[MASTER/lib MASTER/Gemfile MASTER/Gemfile.lock].freeze
+
+  def ab_dilla_path(ref, root)
+    AB_DILLA_PATHS.find { |path| git_path_exists?(ref, root, path) } or
+      abort "ab: #{ref} has no canonical dilla entrypoint"
+  end
+
+  def git_path_exists?(ref, root, path)
+    system("git", "-C", root, "cat-file", "-e", "#{ref}:#{path}/dilla.rb", out: File::NULL, err: File::NULL)
+  end
 
   def ab_entry(ref, work)
     return File.join(D, "dilla.rb") unless ref
 
     tree = File.join(work, "tree_#{ref.gsub(/[^\w.-]/, '_')}")
-    unless File.directory?(tree)
-      FileUtils.mkdir_p(tree)
-      root = `git -C #{D.shellescape} rev-parse --show-toplevel`.strip
-      ok = system("/bin/zsh", "-c", "git -C #{root.shellescape} archive #{ref.shellescape} #{AB_EXPORT.join(' ')} | tar -x -C #{tree.shellescape}")
-      abort "ab: cannot export #{ref}" unless ok
-      File.symlink(File.join(D, "samples"), File.join(tree, "STUDIO", "dilla", "samples")) if File.directory?(File.join(D, "samples"))
-    end
-    File.join(tree, "STUDIO", "dilla", "dilla.rb")
-  end
+    root = `git -C #{D.shellescape} rev-parse --show-toplevel`.strip
+    dilla_path = ab_dilla_path(ref, root)
+    entry = File.join(tree, dilla_path, "dilla.rb")
+    return entry if File.file?(entry)
 
+    FileUtils.mkdir_p(tree)
+    paths = [dilla_path, *AB_SHARED_EXPORT]
+    ok = system(
+      "/bin/zsh", "-c",
+      "git -C #{root.shellescape} archive #{ref.shellescape} #{paths.map(&:shellescape).join(' ')} | tar -x -C #{tree.shellescape}"
+    )
+    abort "ab: cannot export #{ref}" unless ok
+    sample_root = File.join(tree, dilla_path, "samples")
+    if File.directory?(File.join(D, "samples")) && !File.exist?(sample_root)
+      FileUtils.mkdir_p(File.dirname(sample_root))
+      File.symlink(File.join(D, "samples"), sample_root)
+    end
+    abort "ab: exported ref #{ref} without #{dilla_path}/dilla.rb" unless File.file?(entry)
+    entry
+  end
   # Decibels to add to each arm so its integrated loudness is the baseline's.
   def ab_trims(measures)
     measures.transform_values { |m| (measures.fetch("baseline")[:lufs] - m[:lufs]).round(2) }
