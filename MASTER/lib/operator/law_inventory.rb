@@ -76,7 +76,7 @@ module Operator
 
     def silent
       require "operator/rule_audit"
-      audit = Operator::RuleAudit.audit
+      audit = Operator::LawAudit.audit
       Array(audit[:silent]).map(&:to_s).sort
     rescue StandardError => e
       [{ "error" => "#{e.class}: #{e.message}" }]
@@ -158,7 +158,7 @@ module Operator
         value.empty? ? "law:silent: none" : nil
       when :costly
         value.each { |row| puts "law:costly #{row[:id]} #{row[:cost_ms]}ms #{row[:samples]} sample(s)" }
-        value.empty? ? "law:costly: no measured rule costs" : nil
+        value.empty? ? "law:costly: no measured law costs" : nil
       when :twin
         value.each { |row| puts "law:twin #{row[:id]} #{row[:twin][:kind]}" }
         value.empty? ? "law:twin: none" : nil
@@ -230,7 +230,7 @@ module Operator
 
     def reach(id)
       require "operator/rule_audit"
-      row = Operator::RuleAudit.rates.find { |item| item[:rule].to_s.downcase == id.to_s.downcase }
+      row = Operator::LawAudit.rates.find { |item| item[:law].to_s.downcase == id.to_s.downcase }
       return {} unless row
 
       {
@@ -257,7 +257,7 @@ module Operator
         File.foreach(file) do |line|
           payload = JSON.parse(line)
           next unless payload.is_a?(Hash)
-          id = payload["rule"] || payload["law_id"]
+          id = payload["law"] || payload["law_id"]
           ms = payload["cost_ms"] || payload["duration_ms"] || payload.dig("cost", "latency_ms")
           next unless id && ms
 
