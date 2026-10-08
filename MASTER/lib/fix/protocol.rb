@@ -34,7 +34,7 @@ module Master
           1. LOAD
           Read the live constitution, rule registry, rule examples, protected
           paths, verification commands, and target contract. Do not rely on a
-          remembered rule count.
+          remembered law count.
 
           2. TRACE
           Before mutation, reread the whole working repository: hash every
@@ -59,7 +59,7 @@ module Master
           legitimately keep nothing.
 
           5. SCAN
-          For every active rule and every applicable file, inspect source
+          For every active law and every applicable file, inspect source
           lexically and structurally. Verify each detector against its worked
           positive and negative examples before trusting its findings.
 
@@ -71,7 +71,7 @@ module Master
 
           7. REPAIR
           Attempt a repair for every actionable finding. Use the smallest
-          evidence-backed strategy that satisfies the rule: mechanical, AST,
+          evidence-backed strategy that satisfies the law: mechanical, AST,
           semantic-model, structural, or rendered-surface repair as applicable.
           "No deterministic fixer exists" is not a terminal state.
 
@@ -98,10 +98,10 @@ module Master
         TEXT
       end
 
-      def strategy_for(rule)
-        semantic = rule.respond_to?(:semantic?) && rule.semantic?
-        practice = rule.respond_to?(:practice) && !rule.practice.to_s.empty?
-        detector = rule.respond_to?(:scannable?) && rule.scannable?
+      def strategy_for(law)
+        semantic = law.respond_to?(:semantic?) && rule.semantic?
+        practice = law.respond_to?(:practice) && !rule.practice.to_s.empty?
+        detector = law.respond_to?(:scannable?) && rule.scannable?
 
         return "semantic_model_repair" if semantic
         return "conduct_only" if practice && !detector
@@ -110,52 +110,52 @@ module Master
         "model_or_human_analysis"
       end
 
-      def verification_for(rule)
-        return "manual_conduct_evidence" if strategy_for(rule) == "conduct_only"
-        return "semantic_rescan_plus_behavior_or_test" if rule.respond_to?(:semantic?) && rule.semantic?
+      def verification_for(law)
+        return "manual_conduct_evidence" if strategy_for(law) == "conduct_only"
+        return "semantic_rescan_plus_behavior_or_test" if law.respond_to?(:semantic?) && rule.semantic?
 
         "rule_rescan_plus_behavior_or_test"
       end
 
       # Explicit capability boundary for external agents. These are facts
       # about the live executable law population, not permissions to ignore it.
-      def capability_report(rules = self.rules)
-        eligible = Array(rules).select do |rule|
-          !rule.respond_to?(:enforceable?) || rule.enforceable?
+      def capability_report(laws = self.laws)
+        eligible = Array(laws).select do |law|
+          !law.respond_to?(:enforceable?) || rule.enforceable?
         end
         matrix = ProtocolDetectorMatrix.matrix(eligible)
         values = matrix.values
         {
           "measurement_only_detectors" => values.select { |entry| entry["measurement_mode"] }.map { |entry| entry["id"] },
-          "advisory_rules" => values.select { |entry| entry["enforcement"] == "advisory" }.map { |entry| entry["id"] },
-          "semantic_rules_without_deterministic_detector" => values.select { |entry|
+          "advisory_laws" => values.select { |entry| entry["enforcement"] == "advisory" }.map { |entry| entry["id"] },
+          "semantic_laws_without_deterministic_detector" => values.select { |entry|
             entry["semantic"] && !entry["scannable"]
           }.map { |entry| entry["id"] },
           "verification_runtime" => "not_measured",
         }
       end
 
-      def rule_entry(rule)
-        base = rule.respond_to?(:contract_entry) ? rule.contract_entry : {
+      def law_entry(law)
+        base = law.respond_to?(:contract_entry) ? rule.contract_entry : {
           "id" => rule.id.to_s,
-          "severity" => rule.respond_to?(:severity) ? rule.severity.to_s : "warning"
+          "severity" => law.respond_to?(:severity) ? rule.severity.to_s : "warning"
         }
         base.merge(
-          "enforcement" => enforcement(rule),
-          "fix_strategy" => strategy_for(rule),
+          "enforcement" => enforcement(law),
+          "fix_strategy" => strategy_for(law),
           "verify_strategy" => verification_for(rule)
         )
       end
 
-      def enforcement(rule)
+      def enforcement(law)
         surfaces = []
-        surfaces << "lexical" if rule.respond_to?(:scannable?) && rule.scannable?
-        surfaces << "semantic" if rule.respond_to?(:semantic?) && rule.semantic?
-        surfaces << "conduct" if rule.respond_to?(:practice) && !rule.practice.to_s.empty?
+        surfaces << "lexical" if law.respond_to?(:scannable?) && rule.scannable?
+        surfaces << "semantic" if law.respond_to?(:semantic?) && rule.semantic?
+        surfaces << "conduct" if law.respond_to?(:practice) && !rule.practice.to_s.empty?
         surfaces.empty? ? ["unknown"] : surfaces
       end
 
-      def rules
+      def laws
         require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
         ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.definitions.empty?
         ::Law.definitions.values
@@ -202,12 +202,12 @@ module Master
 
       def render(root:, target:, files: nil, skipped: nil, full: false)
         target_path = File.realpath(target)
-        rule_rows = rules.sort_by { |rule| rule.id.to_s }.map { |rule| rule_entry(rule) }
+        law_rows = rules.sort_by { |law| rule.id.to_s }.map { |law| law_entry(law) }
         corpus = inventory(target: target_path, root: root)
         corpus["eligible_sample"] = Array(files).first(24).map { |path| relative(path, root) } if files
         corpus["skipped_by_caller"] = skipped.to_i if skipped
-        entries = rules.sort_by { |rule| rule.id.to_s }.map(&:contract_entry)
-        detector_matrix = ProtocolDetectorMatrix.matrix(rules)
+        entries = laws.sort_by { |law| rule.id.to_s }.map(&:contract_entry)
+        detector_matrix = ProtocolDetectorMatrix.matrix(laws)
         payload = {
           "fix_protocol_version" => VERSION,
           "law_digest" => Law::Contract.digest,
@@ -217,11 +217,11 @@ module Master
           "terminal_states" => TERMINAL_STATES,
           "capability_report" => capability_report,
           "corpus" => corpus,
-          "rule_counts" => {
-            "law" => rule_rows.size,
+          "law_counts" => {
+            "law" => law_rows.size,
             "registry" => registry_count
           },
-          "rules" => full ? rule_rows : rule_rows.map { |entry| entry.slice("id", "severity", "mode", "languages", "question", "fix", "enforcement", "fix_strategy", "verify_strategy") },
+          "laws" => full ? law_rows : law_rows.map { |entry| entry.slice("id", "severity", "mode", "languages", "question", "fix", "enforcement", "fix_strategy", "verify_strategy") },
           "detector_matrix" => detector_matrix,
           "detector_summary" => ProtocolDetectorMatrix.summary(detector_matrix)
         }
@@ -237,7 +237,7 @@ module Master
 
           OPERATING MODEL
           #{atlas}
-          cross-tree proof rule: identify the authority, then the executable
+          cross-tree proof law: identify the authority, then the executable
           proof, then the live evidence. If those disagree, surface drift and
           verify the relevant boundary before repairing it.
 
@@ -258,8 +258,8 @@ module Master
         "MASTER /fix external-agent context unavailable: #{e.class}: #{e.message}"
       end
 
-      def rule_prompt(rule)
-        entry = rule_entry(rule)
+      def law_prompt(law)
+        entry = law_entry(law)
         <<~TEXT.strip
           /fix execution directive for #{entry["id"]}:
           enforcement: #{Array(entry["enforcement"]).join(", ")}
@@ -271,7 +271,7 @@ module Master
           compliant example: #{entry["good"].to_s}
 
           This is an actionable repair stage. Do not stop merely because the
-          existing rule has no deterministic fixer. Inspect the code semantically
+          existing law has no deterministic fixer. Inspect the code semantically
           and use AST or model-generated repair when needed. Return UNCHANGED only
           after a concrete repair attempt is blocked by constitutional or
           verification evidence.
