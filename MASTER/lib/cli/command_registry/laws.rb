@@ -50,7 +50,7 @@ module Master
         [
           "laws: executable index",
           "  laws: #{rows.size}",
-          "  universal_principles: #{universal}",
+          "  universal_laws: #{universal}",
           "  lifecycle: #{lifecycle.sort.map { |state, count| "#{state}=#{count}" }.join(", ")}",
           "  proof: #{proof.sort.map { |kind, count| "#{kind}=#{count}" }.join(", ")}",
           "  index: valid",
