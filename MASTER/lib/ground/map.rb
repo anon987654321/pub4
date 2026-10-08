@@ -74,7 +74,7 @@ module Master
       # Loaded from data/principle_map.yml; enforced by SelfTest and /map.
       class LawMap
         # Read-only lookups over `laws` by status/tag -- grouped apart
-        # from loading/integrity to keep PrincipleMap itself under the
+        # from loading/integrity to keep LawMap itself under the
         # NO_GOD_CLASS public-method ceiling (a mixin's methods aren't counted
         # against the including class since they live in their own ModuleNode).
         module Queries
@@ -182,7 +182,6 @@ module Master
 
         private
 
-        def load_data = Master.load_data_yaml(@root, "law_map.yml", PATH, context: "PrincipleMap.load_data")
 
         def build_entries
           raw = @data["laws"] || {}
