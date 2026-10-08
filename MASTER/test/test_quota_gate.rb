@@ -34,7 +34,7 @@ class TestQuotaGate < Minitest::Test
       end
     end.new
 
-    rule = Master::Review::Scan::Rules::AdversarialRule.new.set_agent(agent)
+    rule = Master::Review::Scan::Laws::AdversarialRule.new.set_agent(agent)
 
     assert_empty rule.check("def a = 1\n", path: "x.rb")
     assert_equal ["semantic rules"], Gate.skipped_tiers
@@ -149,9 +149,9 @@ class TestQuotaGate < Minitest::Test
       define_method(:ask) { |prompt, **| @log << prompt; "CLEAN" }
     end.new(asked)
 
-    rule = Master::Review::Scan::Rules::AdversarialRule.new.set_agent(agent)
+    rule = Master::Review::Scan::Laws::AdversarialRule.new.set_agent(agent)
     assert_empty rule.check("def a = 1\n", path: "x.rb"), "a healthy call still returns findings-or-none"
-    assert_equal 1, asked.size, "with credit, the rule asks"
+    assert_equal 1, asked.size, "with credit, the law asks"
 
     Gate.trip!(source: "council", message: CREDITS)
     assert_empty rule.check("def b = 2\n", path: "y.rb")
@@ -169,7 +169,7 @@ class TestQuotaGate < Minitest::Test
     broke = Class.new do
       define_method(:ask) { |_prompt, **| raise(StandardError, CREDITS) }
     end.new
-    rule = Master::Review::Scan::Rules::AdversarialRule.new.set_agent(broke)
+    rule = Master::Review::Scan::Laws::AdversarialRule.new.set_agent(broke)
 
     assert_empty rule.check("def a = 1\n", path: "x.rb")
     assert Gate.blocked?, "the first refusal closes the gate for the whole tier"
