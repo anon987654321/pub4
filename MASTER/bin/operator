@@ -154,7 +154,7 @@ when "lint"
   # --staged reads the index (what this commit includes), the scope a pre-commit
   # hook wants; without it, the whole working tree against HEAD.
   diff_base = ARGV.delete("--staged").nil? ? "HEAD" : "--cached"
-  scanner = Master::Review::Scan::InfraHelpers.build_scanner(root: Master::ROOT, agent: nil)
+  scanner = Master::Fix::Scanner.build(root: Master::ROOT, agent: nil)
   changed, = Master::Io::Exec.capture2e("git", "-C", ROOT, "diff", "--name-only", diff_base)
   targets = ARGV.empty? ? changed.lines.map { |line| File.join(ROOT, line.chomp) } : ARGV
   files = targets.flat_map { |t| File.directory?(t) ? Dir.glob(File.join(t, "**/*")) : [t] }.select { |p| File.file?(p) }
@@ -416,7 +416,7 @@ when "laws"
     (body.first(80) + ["    … #{body.size - 80} more line(s); open #{path} to read the rest\n"]).join
   end
 
-  scanner = Master::Review::Scan::InfraHelpers.build_scanner(root: master_root, agent: nil)
+  scanner = Master::Fix::Scanner.build(root: master_root, agent: nil)
   rule = scanner.rules.find { |item| item.id.to_s.casecmp?(id) }
   if rule.nil? && declared.nil?
     abort("rule: nothing named #{id.inspect} — neither a declaration in data/laws.yml " \
