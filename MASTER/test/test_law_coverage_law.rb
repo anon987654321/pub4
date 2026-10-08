@@ -15,7 +15,7 @@ require "fileutils"
 # Both halves are pinned below, because either one regressing restores a gate
 # that reports nothing and looks green doing it.
 class TestRuleCoverageRule < Minitest::Test
-  Rules = Master::Review::Scan::Rules
+  Rules = Master::Review::Scan::Laws
 
   ONE_CLASS = <<~RUBY
     class WidgetRule < Rule
@@ -122,7 +122,7 @@ class TestRuleCoverageRule < Minitest::Test
     assert_empty messages(ONE_CLASS, path: "/x/lib/review/scan/laws/widget_rules.yml")
   end
 
-  # Only Rule subclasses. RuleDSL declares dozens of rules inline and the
+  # Only Rule subclasses. LawDSL declares dozens of rules inline and the
   # description is about subclasses; counting both would demand a test per
   # declaration and bury the real gap.
   def test_a_plain_class_is_not_a_rule_subclass
