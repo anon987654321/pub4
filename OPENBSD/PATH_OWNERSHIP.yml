@@ -34,7 +34,7 @@ ownership:
     purpose: production Rails contract
     risk: high
     check: OPENBSD/bin/check-rails
-  ../RAILS/shared/:
+  ../RAILS/__shared/:
     purpose: shared Rails engine and deploy helpers
     risk: high
     check: OPENBSD/bin/check-rails
