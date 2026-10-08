@@ -264,7 +264,7 @@ module Master
 
           return [] unless @root == Master::ROOT
 
-          ::Law.load_all(File.join(@root, "law")) if ::Law.rules.empty?
+          ::Law.load_all(File.join(@root, "law")) if ::Law.definitions.empty?
           ::Law::Index.validate!
           Master::Fix::TransformationPlan.new(root: @root).validate!
           []
@@ -353,11 +353,14 @@ module Master
         end
 
         def law_test_proximity_findings
-          Dir.glob(File.join(@root, "lib", "review", "scan", "rules", "*_rule.rb")).sort.filter_map do |path|
-            base = File.basename(path, ".rb")
-            test_path = File.join(@root, "test", "test_#{base}.rb")
-            next if File.exist?(test_path)
-            finding(path:, line: 1, message: "missing nearby test #{File.basename(test_path)}")
+          law_dir = File.join(@root, "lib", "review", "scan", "laws")
+          return [] unless File.directory?(law_dir)
+
+          coverage = Laws::LawCoverageLaw.new(root: @root)
+          Dir.glob(File.join(law_dir, "*.rb")).sort.flat_map do |path|
+            coverage.check(read_text(path), path:).map do |finding|
+              finding(path:, line: finding.line, message: finding.message)
+            end
           end
         end
 
