@@ -2,6 +2,7 @@
 
 require "json"
 require_relative "../ai/orientation"
+require_relative "../ground/law_resolver"
 
 module Master
   module Fix
@@ -20,6 +21,7 @@ module Master
         @agent = agent
         @root = File.expand_path(root)
         @bus = bus
+        @applicable_laws = Master::Ground::ApplicableLaws.new
       end
 
       def call(target:, state:, files:, history:, changed_paths: [], remaining_seconds: nil)
@@ -27,8 +29,12 @@ module Master
         return result("INCONCLUSIVE", "reflection skipped — insufficient run budget") if remaining_seconds && remaining_seconds.to_f < MIN_REMAINING_SECONDS
 
         orientation = Master::AI::Orientation.render(root: @root, target:, depth: 3, max_entries: 120)
-        answer = @agent.ask(prompt(target:, state:, files:, history:, changed_paths:, orientation:), operation: :reflection).to_s
-        parsed = parse(answer)
+        law_selection = @applicable_laws.for(path: reflection_path(target:, files:))
+        answer = @agent.ask(
+          prompt(target:, state:, files:, history:, changed_paths:, orientation:, law_selection:),
+          operation: :reflection
+        ).to_s
+        parsed = parse(answer, allowed_law_ids: law_selection.ids)
         publish(parsed, target:, state:)
         parsed
       rescue StandardError => e
@@ -39,7 +45,11 @@ module Master
 
       private
 
-      def prompt(target:, state:, files:, history:, changed_paths:, orientation:)
+      def reflection_path(target:, files:)
+        Array(files).find { |path| File.file?(path) } || target
+      end
+
+      def prompt(target:, state:, files:, history:, changed_paths:, orientation:, law_selection:)
         metrics = {
           state:,
           files: Array(files).size,
@@ -47,6 +57,7 @@ module Master
           history: Array(history).last(6).map { |row| row.to_h.slice(:pass, :score, :progressed) },
           structural_mode: ENV["MASTER_FIX_STRUCTURAL"] == "1" ? "enabled" : "disabled",
           semantic_mode: ENV.fetch("MASTER_SCAN_SEMANTIC_SAMPLE", "0"),
+          applicable_laws: law_selection.to_h
         }
 
         text = <<~PROMPT
@@ -58,13 +69,19 @@ module Master
           Ask whether ownership is singular, the current structure is simpler, exclusions are
           honest, and the proof actually supports the terminal state.
 
+          The supplied applicable_laws block is authoritative for this reflection. Do not
+          invent a law outside it. The governing laws come from MASTER/data/laws.yml, while
+          executable Laws are the enforcement projection and law_map_concepts records their
+          trace back to the canonical map. Treat unmapped executable laws as constitutional
+          drift to investigate, not as a reason to invent a new law.
+
           Never invent measurements, callers, incidents, requirements, or law ids.
           Never edit source during reflection.
 
           Return exactly:
           VERDICT: KEEP | REPAIR | INVESTIGATE | HUMAN | INCONCLUSIVE
           SUMMARY: one concise sentence
-          LAW: existing law id, or NONE
+          LAW: an id from applicable_laws, or NONE
           ANCHOR: repository-relative path:line, or NONE
           EVIDENCE: one sentence grounded in supplied evidence
           NEXT: one concrete next action, or NONE
@@ -78,7 +95,7 @@ module Master
         text.byteslice(0, MAX_CONTEXT_BYTES)
       end
 
-      def parse(answer)
+      def parse(answer, allowed_law_ids:)
         fields = answer.lines.each_with_object({}) do |line, out|
           key, value = line.split(":", 2)
           out[key.strip.upcase] = value.strip if key && value
@@ -91,24 +108,17 @@ module Master
         next_action = normalize(fields["NEXT"])
         summary = normalize(fields["SUMMARY"]) || "reflection returned no summary"
 
-        unless law && anchor && evidence && next_action && known_law?(law)
+        unless law && anchor && evidence && next_action && applicable_law?(law, allowed_law_ids:)
           verdict = "INVESTIGATE" if verdict == "REPAIR"
-          law = nil unless known_law?(law)
+          law = nil unless applicable_law?(law, allowed_law_ids:)
         end
 
         Result.new(verdict:, summary: summary.to_s.byteslice(0, MAX_FIELD_BYTES),
                    law:, anchor:, evidence:, next_action:)
       end
 
-      def known_law?(law_id)
-        return false if law_id.nil? || law_id.empty?
-        return false unless File.file?(File.join(Master::ROOT, "law", "law.rb"))
-
-        require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
-        ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.definitions.empty?
-        ::Law.definitions.values.any? { |definition| definition.id.to_s.casecmp?(law_id.to_s) }
-      rescue StandardError
-        false
+      def applicable_law?(law_id, allowed_law_ids:)
+        Array(allowed_law_ids).any? { |id| id.to_s.casecmp?(law_id.to_s) }
       end
 
       def valid_anchor(value)
