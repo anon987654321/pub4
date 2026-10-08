@@ -49,6 +49,14 @@ class SharedTopologyContractTest < Minitest::Test
     assert File.file?(File.join(ROOT, "__shared", "pub4-shared.gemspec"))
     assert File.file?(File.join(ROOT, "__shared", "config", "ci.rb"))
   end
+  def test_rails_lockfiles_use_the_canonical_shared_engine_path
+    %w[amber brgen bsdports].each do |app|
+      lockfile = File.read(File.join(ROOT, app, "Gemfile.lock"))
+      refute_includes lockfile, "remote: ../shared"
+      assert_includes lockfile, "remote: ../__shared"
+    end
+  end
+
   def test_pwa_builder_uses_the_canonical_shared_tree
     builder = File.join(REPO, "MASTER", "tools", "rails", "build_workbox.mjs")
     source = File.read(builder, encoding: "UTF-8")
