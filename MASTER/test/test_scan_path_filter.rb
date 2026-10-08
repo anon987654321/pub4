@@ -14,7 +14,7 @@ class TestScanPathFilter < Minitest::Test
   end
 
   def test_generated_bundles_are_skipped_from_every_root
-    Master::Review::Scan::PathFilter::GENERATED_FACE_BUNDLES.each do |bundle|
+    Master::Fix::Scan::PathFilter::GENERATED_FACE_BUNDLES.each do |bundle|
       path = File.join(Master::ROOT, bundle)
       [PUBLIC, File.join(Master::ROOT, "web"), Master::ROOT, Master::REPO_ROOT].each do |root|
         assert Scanner.skip_path?(path, root:), "#{bundle} is scanned from #{root}"
@@ -36,7 +36,7 @@ class TestScanPathFilter < Minitest::Test
   # .gitignore rule already names.
   def test_every_path_exemption_names_something_that_exists
     tracked = IO.popen(["git", "-C", Master::REPO_ROOT, "ls-files"], &:read).split("\n")
-    filter = Master::Review::Scan::PathFilter
+    filter = Master::Fix::Scan::PathFilter
     entries = filter::SKIP_PATH_PREFIXES.map { |prefix| "#{prefix}/" } + filter::SKIP_PATH_FRAGMENTS
     stale = entries.reject do |entry|
       tracked.any? { |path| path.start_with?(entry) || path.include?("/#{entry}") } || ignored_output?(entry)
