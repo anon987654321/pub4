@@ -52,7 +52,7 @@ module Master
           end
 
           def recurring_violation(found, recurring_violations)
-            current = found.to_h { |v| [violation_key(v), v] }
+            current = found.to_h { |v| [evidence_key(v), v] }
             (recurring_violations.keys - current.keys).each { |key| recurring_violations.delete(key) }
             current.each do |key, violation|
               recurring_violations[key] += 1
@@ -65,7 +65,7 @@ module Master
             Digest::SHA256.hexdigest(found.map { |v| violation_key(v) }.sort.join("|"))
           end
 
-          def violation_key(v) = "#{v[:rule]}:#{v[:file]}:#{v[:line]}"
+          def violation_key(v) = "#{v[:law]}:#{v[:file]}:#{v[:line]}"
 
           def trigger_rollback(message)
             result = @committer.abort_transaction!
