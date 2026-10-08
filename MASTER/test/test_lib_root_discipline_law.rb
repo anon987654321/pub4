@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-require_relative "../lib/review/scan/rules/structural_rules"
+require_relative "../lib/review/scan/laws/structural_rules"
 
 class TestLibRootDisciplineRule < Minitest::Test
   # "core stays lean" as a live check (OpenClaw's VISION.md policy) -- new
