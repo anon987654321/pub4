@@ -196,7 +196,7 @@ class TestMasterLoop < Minitest::Test
   # whole through PersonalityPromptBuilder#add_rules; Ground::Constitution cut
   # them to 480 characters, which took 358 off FLAT_HIERARCHY alone.
   def test_operator_conduct_is_a_rule_like_any_other
-    rules = Master::Ground::Rules.new.rules
+    rules = Master::Ground::Laws.new.rules
 
     %w[OPERATOR_AUTONOMY EXECUTE_NOT_INSTRUCT SHELL_DISCIPLINE VPS_SERIAL_TRUTH NO_NEW_FILES
        STRUNK_WHITE FLAT_PIXELS VOICE_TERSE_UNIX MICRO_REFINEMENTS].each do |id|
