@@ -220,7 +220,7 @@ module Operator
         master
         # A rule that takes an agent is a semantic rule, and one model call per
         # file is not what a census of 97 files should cost.
-        Master::Review::Scan::InfraHelpers.build_scanner(root: MASTER_DIR)
+        Master::Fix::Scanner.build(root: MASTER_DIR)
               .rules.reject { |rule| rule.respond_to?(:set_agent) }
       end
     end
