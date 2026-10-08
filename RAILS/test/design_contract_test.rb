@@ -306,7 +306,7 @@ class DesignContractTest < Minitest::Test
             Dir.glob(File.join(ROOT, "*/engines/*/app/assets/stylesheets/**/*.{scss,css}")) +
             Dir.glob(File.join(ROOT, "__shared/app/assets/stylesheets/**/*.{scss,css}")) +
             Dir.glob(File.join(ROOT, "__shared/frontend/**/*.css"))
-    face = File.expand_path("../MASTER/web/public/face.css", ROOT)
+    face = File.expand_path("../RAILS/master_web/public/face.css", ROOT)
     (rails + [face]).uniq.reject { |path| path.match?(TAP_FLOOR_SKIP) || !File.file?(path) }
   end
 end
