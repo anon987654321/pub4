@@ -123,7 +123,7 @@ module Master
       private
 
       DEPLOY_RE = /\b(deploy|ship|shipping|release|publish)\b/i
-      TIER1_CRITICAL_RULE_IDS = %w[PRESERVE_FIRST DECOUPLE DEGRADE_GRACEFULLY].freeze
+      TIER1_CRITICAL_LAW_IDS = %w[PRESERVE_FIRST DECOUPLE DEGRADE_GRACEFULLY].freeze
 
       def initial_context_result(initial)
         return Result.ok(initial) if initial.is_a?(PipelineContext)
@@ -176,8 +176,8 @@ module Master
         summary.pairs.flat_map do |(_path, result)|
           next [] unless result.ok?
           result.value!.filter_map do |finding|
-            rule_id = finding.respond_to?(:rule_id) ? finding.rule_id : finding[:rule_id] || finding[:rule]
-            rule_id.to_s if TIER1_CRITICAL_RULE_IDS.include?(rule_id.to_s)
+            law_id = finding.respond_to?(:law_id) ? finding.law_id : finding[:law_id] || finding[:law]
+            law_id.to_s if TIER1_CRITICAL_LAW_IDS.include?(rule_id.to_s)
           end
         end
       end
