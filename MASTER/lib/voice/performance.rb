@@ -99,6 +99,8 @@ module Master
             rate_delta: smooth_step(part[:rate_delta], previous[:rate_delta], MAX_RATE_STEP),
             pitch_delta_hz: smooth_step(part[:pitch_delta_hz], previous[:pitch_delta_hz], MAX_PITCH_STEP_HZ),
           )
+        end
+
               # One timeline for synthesis metadata, the event bus and Face.
       # Durations are estimates and the browser normalizes them to real audio,
       # so every visual consumer follows the audio clock rather than wall time.
@@ -171,9 +173,6 @@ module Master
 
       def punctuation_for(text)
         text.to_s[/([.!?;:—-])\s*$/, 1].to_s
-      end
-
-end
       end
 
       def apply(base_rate:, base_pitch:, text:, emotion: {}, style: :normal)
