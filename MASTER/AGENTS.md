@@ -447,7 +447,7 @@ conflict between two rules firing on one line.
 face, booted locally on the ports every gate probes. Without it the live half of
 the suite passes having measured nothing.
 
-**Vertical.** One of brgen's mounted Rails engines — `RAILS/brgen/engines/`
+**Vertical.** One of brgen's mounted Rails engines — `RAILS/brgen_* packages/`
 holds tv, dating, takeaway, playlist, marketplace and maps. Each is a named app on its own subdomain, not a section
 of brgen, and "brgen" alone means the main city app only.
 
