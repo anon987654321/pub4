@@ -14,6 +14,7 @@
 # Usage:
 #   RAILS/bin/premerge              # everything
 #   RAILS/bin/premerge --apps       # per-app bin/ci only
+#   RAILS/bin/premerge --pwa       # executable PWA runtime tests only
 #   RAILS/bin/premerge --contracts  # isolated root contract suite only
 #   RAILS/bin/premerge --coverage   # full Rails coverage only
 #   RAILS/bin/premerge --gates      # layout_suite + inventory only
@@ -57,6 +58,16 @@ def app_steps
       ok ? [PASSED, nil] : [FAILED, "bin/ci exited non-zero"]
     })
   end
+end
+
+def pwa_step
+  Step.new(name: "PWA runtime", group: :pwa, run: lambda {
+    package = File.join(ROOT, "package.json")
+    next [BLOCKED, "RAILS/package.json is missing"] unless File.file?(package)
+
+    ok = system("npm", "run", "test:pwa:runtime", chdir: ROOT)
+    ok ? [PASSED, nil] : [FAILED, "npm run test:pwa:runtime exited non-zero"]
+  })
 end
 
 def contracts_step
@@ -112,14 +123,15 @@ def gate_steps
 end
 
 def steps_for(groups)
-  (app_steps + [contracts_step, coverage_step] + gate_steps).select { |s| groups.include?(s.group) }
+  (app_steps + [pwa_step, contracts_step, coverage_step] + gate_steps).select { |s| groups.include?(s.group) }
 end
 
 groups = if ARGV.include?("--apps") then [:apps]
+         elsif ARGV.include?("--pwa") then [:pwa]
          elsif ARGV.include?("--contracts") then [:contracts]
          elsif ARGV.include?("--coverage") then [:coverage]
          elsif ARGV.include?("--gates") then [:gates]
-         else %i[apps contracts coverage gates]
+         else %i[apps pwa contracts coverage gates]
          end
 
 steps = steps_for(groups)
