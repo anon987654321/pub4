@@ -106,7 +106,7 @@ module Master
         # Keeping strictness opt-in lets an operator inspect known debt without
         # making the application disappear merely because the diagnostic is dirty.
         #
-        # Never under minitest, and that is not a convenience. The rule registry is
+        # Never under minitest, and that is not a convenience. The law registry is
         # a global, and a suite has test-defined rules in it — tools/ratchets.rb
         # records the same thing about the selftest row, which it measures deep for
         # exactly this reason. The self-test laws themselves run identically here
