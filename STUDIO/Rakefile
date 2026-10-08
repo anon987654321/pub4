@@ -1,0 +1,233 @@
+# frozen_string_literal: true
+
+require "rake/testtask"
+
+# One process per subject, because every subject here defines its constants and
+# methods at top level on Object and the names collide. postpro and replicate
+# both define `vocab_check`; dilla, postpro and replicate all define PRESETS.
+# Rake::TestTask runs the files it is given in a single process, so isolation
+# has to come from the task split. The tools get one task each -- grouping them
+# was enough to make replicate's self-check assertion read postpro's method.
+#
+# dilla's files get one process each too. Sharing one saved half a second of
+# engine load per file and cost the isolation the name promised: ENV pins and
+# session.json mtimes leaked from file to file, and EnvSandbox restores ENV but
+# not the constants dilla computes from it at load, such as the acapella
+# ONLY/EXCLUDE lists. `rake isolation` still runs them together, on purpose, to
+# find the tests that only pass in company.
+DILLA_SUITES = FileList["test/test_dilla_*.rb"].map { |path| File.basename(path, ".rb").sub(/\Atest_dilla_/, "") }
+
+DILLA_SUITES.each do |suite|
+  Rake::TestTask.new("test:dilla:#{suite}") do |t|
+    t.libs << "test"
+    t.test_files = ["test/test_dilla_#{suite}.rb"]
+    t.warning = false
+  end
+end
+
+desc "dilla's suite, one process per file"
+task "test:dilla" => DILLA_SUITES.map { |suite| "test:dilla:#{suite}" }
+
+TOOL_SUITES = FileList["test/test_tools_*.rb"]
+  .map { |path| File.basename(path, ".rb").sub(/\Atest_tools_/, "") }
+  .reject { |name| name == "gate" }
+
+TOOL_SUITES.each do |tool|
+  Rake::TestTask.new("test:#{tool}") do |t|
+    t.libs << "test"
+    t.test_files = ["test/test_tools_#{tool}.rb"]
+    t.warning = false
+  end
+end
+
+Rake::TestTask.new("test:gate") do |t|
+  t.libs << "test"
+  t.test_files = ["test/test_studio_gate.rb"]
+  t.warning = false
+end
+
+desc "Studio suite — Dilla engine arithmetic, media tools, and the Studio gate itself"
+task test: ["test:gate", "test:dilla", *TOOL_SUITES.map { |tool| "test:#{tool}" }]
+
+desc "The STUDIO parse/boundary gate"
+task :gate do
+  ruby File.expand_path("gate.rb", __dir__)
+end
+
+namespace :postpro do
+  desc "Install postpro's runtime dependencies (ruby-vips, tty-prompt, libvips)"
+  task :bootstrap do
+    # The one place installation is allowed. postpro.rb used to do this from
+    # file scope, so `rake gate` — which loads the file to check that it boots —
+    # could gem-install and reach for brew/apt/pkg_add. A check observes the
+    # environment; repairing it is a separate command, and this is it.
+    ENV["POSTPRO_INSTALL_DEPS"] = "1"
+    script = File.expand_path("postpro/postpro.rb", __dir__)
+    abort "postpro: missing canonical entrypoint #{script}" unless File.file?(script)
+    ruby script, "--vocab-check"
+  end
+end
+
+namespace :replicate do
+  require_relative "replicate/schema_snapshot"
+  desc "Compare MODEL_CAPABILITIES against the schemas Replicate currently declares"
+  task :schema_audit do
+    # The second-source-of-truth problem, made visible. replicate keeps its own
+    # capability table so it can refuse an unsupported option instead of letting
+    # the API ignore it — the right call, and the reason the table can go stale
+    # without anything noticing: the tests check the table against itself, so
+    # drift surfaces as a 422 in production, or as an operator's setting
+    # silently dropped, which is worse because it looks like it worked.
+    #
+    # Deliberately not part of `rake`. It needs the network and a token, and a
+    # check that cannot run must say so rather than pass.
+    require_relative "replicate/client"
+
+    token = Studio::ReplicateClient.load_token
+    if token.to_s.strip.empty?
+      warn("replicate0", "schema audit skipped, no REPLICATE_API_TOKEN; run schema_audit_offline for historical evidence")
+      next
+    end
+
+    engine = File.read(File.expand_path("replicate/replicate.rb", __dir__))
+    table = engine[/^MODEL_CAPABILITIES = \{.*?^\}\.freeze/m] or abort "replicate: MODEL_CAPABILITIES not found"
+    declared = table.scan(/"([^"]+\/[^"]+)" => \{.*?input_keys: %w\[([^\]]*)\]/m)
+                    .to_h { |model, keys| [ model, keys.split ] }
+    abort "replicate: parsed no models — the table's shape changed, and this would pass having read nothing" if declared.empty?
+
+    client = Studio::ReplicateClient.new(token: token)
+    drifted = 0
+    declared.each do |model, ours|
+      live = client.input_keys(model)
+      if live.empty?
+        warn("replicate0", "#{model}, no schema returned, renamed or withdrawn?")
+        drifted += 1
+        next
+      end
+
+      gone = ours - live
+      added = live - ours
+      warn("replicate0", "#{model}, ok, #{ours.length} keys") if gone.empty? && added.empty?
+      next if gone.empty? && added.empty?
+
+      drifted += 1
+      warn("replicate0", "master0", "#{model}, drift")
+      warn("replicate0", "we send undeclared keys, #{gone.join(", ")}") if gone.any?
+      warn("replicate0", "model declares un-sent keys, #{added.join(", ")}") if added.any?
+    rescue StandardError => e
+      warn("replicate0", "#{model}, lookup failed, #{e.class}: #{e.message}")
+      drifted += 1
+    end
+    warn("replicate0", "#{drifted} of #{declared.length} models need attention")
+    exit(1) unless drifted.zero?
+  end
+
+  desc "Record current Replicate input schemas as offline evidence (requires token)"
+  task :schema_snapshot do
+    token = Studio::ReplicateClient.load_token
+    if token.to_s.strip.empty?
+      warn("replicate0", "schema snapshot skipped, no REPLICATE_API_TOKEN, nothing measured")
+      next
+    end
+
+    engine = File.read(File.expand_path("replicate/replicate.rb", __dir__))
+    table = engine[/^MODEL_CAPABILITIES = \{.*?^\}\.freeze/m] or abort "replicate: MODEL_CAPABILITIES not found"
+    declared = table.scan(/"([^"]+\/[^"]+)" => \{/).flatten.uniq
+    abort "replicate: parsed no models — refusing to write an empty snapshot" if declared.empty?
+
+    client = Studio::ReplicateClient.new(token:)
+    document = Replicate::SchemaSnapshot.write(client:, models: declared)
+    warn("replicate0", "schema snapshot wrote #{document.fetch("models").length} models at #{document.fetch("captured_at")}")
+  end
+
+  desc "Compare MODEL_CAPABILITIES with the last recorded provider schema; never claims live freshness"
+  task :schema_audit_offline do
+    snapshot = Replicate::SchemaSnapshot.read
+    if snapshot.nil?
+      warn("replicate0", "schema audit offline inconclusive, no recorded provider schema snapshot")
+      exit(2)
+    end
+
+    ours = File.read(File.expand_path("replicate/replicate.rb", __dir__))
+                .then { |engine| engine[/^MODEL_CAPABILITIES = \{.*?^\}\.freeze/m] }
+                .then { |table| table.scan(/"([^"]+\/[^"]+)" => \{.*?input_keys: %w\[([^\]]*)\]/m).to_h { |model, keys| [model, keys.split.sort] } }
+
+    recorded = Replicate::SchemaSnapshot.by_model
+    missing = recorded.keys - ours.keys
+    added = ours.keys - recorded.keys
+    drifted = []
+
+    (ours.keys & recorded.keys).sort.each do |model|
+      gone = ours.fetch(model) - recorded.fetch(model)
+      extra = recorded.fetch(model) - ours.fetch(model)
+      next if gone.empty? && extra.empty?
+
+      drifted << model
+      warn("replicate0", "master0", "#{model}, baseline drift")
+      warn("replicate0", "table contains absent recorded keys, #{gone.join(", ")}") if gone.any?
+      warn("replicate0", "recorded schema contains absent table keys, #{extra.join(", ")}") if extra.any?
+    end
+
+    warn("replicate0", "snapshot-only models, #{missing.join(", ")}") if missing.any?
+    warn("replicate0", "table-only models, #{added.join(", ")}") if added.any?
+    warn("replicate0", "baseline matches snapshot captured at #{snapshot.fetch("captured_at")}") if drifted.empty? && missing.empty? && added.empty?
+    warn("replicate0", "baseline comparison is historical evidence, not a live provider audit")
+    exit(1) unless drifted.empty? && missing.empty? && added.empty?
+  end
+
+  desc "Emit a MODEL_CAPABILITIES entry for MODEL=owner/name from its live schema"
+  task :schema_suggest do
+    # Adding a model to replicate means declaring exactly which input keys it
+    # accepts, because the whole design is to refuse an option the model does
+    # not take rather than let the API drop it silently. That makes guessing the
+    # keys worse than not adding the model at all: a wrong declaration either
+    # refuses something valid or sends something invalid, and both look like the
+    # tool working.
+    #
+    # So this reads them off the provider instead of anybody typing them. It
+    # prints an entry to paste; it does not edit the table, because which models
+    # this tool offers is a decision about what the pictures look like.
+    require_relative "replicate/client"
+
+    model = ENV["MODEL"].to_s.strip
+    abort "usage: rake replicate:schema_suggest MODEL=owner/name" if model.empty?
+
+    token = Studio::ReplicateClient.load_token
+    abort "replicate: no REPLICATE_API_TOKEN — the schema can only come from the provider" if token.empty?
+
+    keys = Studio::ReplicateClient.new(token: token).input_keys(model)
+    abort "replicate: #{model} returned no input schema (wrong slug, or private?)" if keys.empty?
+
+    # Named so the two knobs replicate exposes are wired if the model has them,
+    # and left out when it does not — flux-schnell takes steps and no guidance,
+    # and that asymmetry is why the ranges are per-model.
+    guidance = keys.find { |k| %w[guidance guidance_scale cfg cfg_scale].include?(k) }
+    steps = keys.find { |k| %w[num_inference_steps steps].include?(k) }
+    negative = keys.find { |k| k.include?("negative") }
+
+    puts "  # #{model} — input keys read from the live schema on #{Time.now.strftime('%Y-%m-%d')}."
+    puts "  #{model.dump} => {"
+    puts "    input_keys: %w[#{keys.join(' ')}],"
+    puts "    negative_prompt_key: #{negative ? negative.dump : 'nil'},"
+    puts "    guidance_key: #{guidance.dump}, guidance_range: (0.0..10.0), guidance_default: 3.0," if guidance
+    puts "    steps_key: #{steps.dump}, steps_range: (1..50), steps_default: 28," if steps
+    puts "  },"
+    puts
+    puts "replicate: ranges and defaults above are placeholders — the schema gives names, not"
+    puts "replicate: what is musical for this model. Read the model page before pasting."
+  end
+end
+
+desc "Find Dilla tests that only pass in company, or only alone (TEST=substring to narrow)"
+task :isolation do
+  # Runs dilla's files together, then each test alone, and names every test
+  # whose answer depends on its company. Three defects had that shape and all
+  # three were found by running one test on its own after a hunch; this does it
+  # for all of them. Not part of `rake`: one process per test is minutes, and
+  # a check nobody will wait for is a check nobody runs.
+  require_relative "isolation"
+  failures = StudioIsolation.run(pattern: ENV["TEST"])
+  exit(1) unless failures.zero?
+end
+
+task default: %i[gate test]

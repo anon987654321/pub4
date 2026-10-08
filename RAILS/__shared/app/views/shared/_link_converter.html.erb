@@ -1,0 +1,17 @@
+<%# TradeDoubler is optional partner/advertising technology.
+    The controller does not create the third-party script tag until advertising
+    consent exists. %>
+<% if Shared::LinkConverter.configured? %>
+  <% script_src = Shared::LinkConverter.script_src(Rails.public_path) %>
+  <% if script_src.present? %>
+    <% epi = Shared::LinkConverter.epi_for(
+      city: (defined?(Current) && (Current.try(:city) || Current.try(:city_record)&.try(:slug))),
+      surface: (defined?(Current) && Current.try(:subapp)) || Rails.application.class.module_parent_name.downcase
+    ) %>
+    <%= tag.div data: {
+      controller: "link-converter",
+      link_converter_src_value: script_src,
+      link_converter_epi_value: epi.to_json
+    } %>
+  <% end %>
+<% end %>

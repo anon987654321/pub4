@@ -1,0 +1,267 @@
+@use "dialect_tokens" as x;
+
+// An app that states its own palette at an unlayered :root in both themes, as
+// brgen does, outranks every palette declaration below on every element, so it
+// forwards this file with ($palette: false) and ships none of them. $luxury is
+// amber's wardrobe extension set; nothing outside amber reads it.
+$palette: true !default;
+$luxury: true !default;
+
+// The token foundation lives in the lowest cascade layer. Un-layered styles
+// beat layered ones regardless of source order, so an app palette written
+// at plain :root (brgen-old, amber luxury, bsdports wscons) now wins BY
+// CONSTRUCTION — reordering @use in an application.scss can no longer
+// silently restore this file's indigo, which shared/README.md carried as a
+// live hazard from 2026-08-10 until today.
+@layer tokens {
+  // Shared light-theme override set — used identically by [data-theme="light"]
+  // and the @media(prefers-color-scheme:light) fallback below, so it's defined once.
+  @mixin semantic-light-overrides {
+    @include x.light-tokens;
+    color-scheme: light;
+    --color-midtone: var(--text-secondary);
+    --color-highlight: var(--surface);
+    --color-accent: var(--accent);
+    --color-border: var(--border);
+    --color-midtone-tint: var(--hover);
+    --text-primary: var(--text);
+  }
+
+  :root {
+    @if $palette {
+      @include x.dark-tokens;
+      color-scheme: dark;
+    }
+    --color-midtone: var(--text-secondary);
+    --color-highlight: var(--surface);
+    --color-accent: var(--accent);
+    --color-danger: var(--danger);
+    /* The three status inks design_tokens.yml shared_chrome declares, and the
+       only colour this file states as a literal: they carry meaning no grey
+       can, so the greyscale scheme in _dialect_tokens.scss does not cover
+       them. tools/design_tokens.rb keeps all three pinned to the yml.
+       --color-info was hand-copied into brgen and amber instead of living
+       here, which is the drift that map only exists to correct. */
+    --color-warning: #c9a227;
+    --color-success: #00ba7c;
+    --color-info: #5b9fd4;
+    --color-overlay: rgb(0 0 0 / 0.4);
+    --color-border: var(--border);
+    --color-midtone-tint: var(--hover);
+    --text-primary: var(--text);
+    /* The one type scale. Until 2026-08-09 the tree ran two: this ladder and a
+       hardcoded 13/15/17px set borrowed from x.com, 89 call sites deep, so the
+       same role rendered 14px in one sheet and 15px in another. The 13/15/17
+       sites were migrated onto these steps; raw font-size literals are now
+       counted by css_constitution's type_scale budget.
+       --text-xl and --text-2xl are new only in the sense of being *declared*:
+       both were already referenced with no fallback (4 and 1 sites), and a
+       var() that resolves to nothing drops the whole declaration, so the amber
+       stat numbers and the affiliate listing price were rendering at body size. */
+    --text-xs: 0.75rem;
+    --text-sm: 0.875rem;
+    --text-base: 1rem;
+    --text-lg: 1.125rem;
+    /* Page / section titles — design_tokens shared_chrome.font_size_title */
+    --text-title: 1.25rem;
+    --text-xl: 1.5rem;
+    /* design_tokens ui_polish.type_tokens.text_display */
+    --text-2xl: 1.75rem;
+  /* The display slot: the one large centred headline a page leads with,
+     at antigravity.google's scale (operator, 2026-09-25). px, not rem, because
+     brgen roots at 18px and the scale is the reference's, not a multiple of
+     the reading size. */
+  --text-display: clamp(40px, 6vw, 88px);
+  /* The gap between a page's sections, from the same reference: 64px on a
+     phone, opening to 160px on a wide screen. */
+  --section-rhythm: clamp(64px, 10vw, 160px);
+    /* Every step here sits on design_laws.yml's 8px rhythm
+       ([0,4,8,12,16,20,24,32,40,44,48,64,96]px) — steps 7/9/11/13/14/15 used to
+       fill the scale out to a smooth 0.25rem stride (28/36/44/52/56/60px),
+       none of which are on the rhythm. Removed rather than snapped to the
+       nearest step, since nothing should be reaching for a step number that
+       doesn't correspond to an allowed value. */
+    /* The half-steps. 6, 10 and 14px joined scale.space_px on 2026-09-02 because
+       67 of ScaleLint 97 off-scale findings sat exactly on them — the midpoints of
+       the scale own gaps. These are their tokens, in rem like the rest of the
+       ladder: spacing that stops growing when a reader raises their font size is a
+       worse answer than spacing that is 0.4px off a grid. */
+    --space-0-5: 0.125rem;  /* 2px  */
+    --space-1: 0.25rem;
+    --space-2: 0.5rem;
+    --space-3: 0.75rem;
+    --space-4: 1rem;
+    --space-5: 1.25rem;
+    --space-6: 1.5rem;
+    --space-8: 2rem;
+    --space-10: 2.5rem;
+    --space-12: 3rem;
+    --space-16: 4rem;
+    /* Page content width for browse-style surfaces. Added 2026-08-10 because the
+       brgen verticals each picked their own: marketplace and takeaway 1280px, tv
+       1100px, and nothing named the number, so the same grid changed width as you
+       moved between subapps of one site. --feed-max (600px) stays separate — that
+       is the single-column reading measure, a different job. */
+    --container-max: 1280px;
+/* The alpha ladder, from design_tokens system.opacity. Composed into colour
+   rather than typed as literals: rgb(from var(--text) r g b / var(--opacity-subtle))
+   gives a tint that tracks the theme, where rgba(255,255,255,.1) is a light
+   theme painted into a dark one. Named by density, so a surface picks a
+   weight instead of inventing a value.
+
+   --opacity-whisper is this family's own rung and is on no reference. It is
+   the tree's most-repeated density: six dialects paint --hover-subtle at 3%,
+   below the lightest tint either reference carries. A ladder that cannot name
+   the rung its own sheets use most is a ladder those sheets go on ignoring. */
+--opacity-whisper: 0.03;
+--opacity-hairline: 0.05;
+--opacity-faint: 0.08;
+--opacity-subtle: 0.1;
+--opacity-soft: 0.12;
+--opacity-medium: 0.2;
+--opacity-half: 0.4;
+--opacity-strong: 0.6;
+--opacity-heavy: 0.8;
+    /* The control block, from design_tokens system. Height is --tap-min, which
+       this tree has used for a 44px touch target since long before this block
+       existed: 126 uses across the three apps, and design.tap_min is what each
+       app's function_layout fixture names. A control must be tappable, so the
+       touch target IS the control height and a second token at the same value
+       would be a second answer to one question.
+
+       The inline padding and gap are absolute because the space scale is rem and
+       brgen roots at 18px: --space-4 is 18px there and 16px everywhere else, and
+       a control that changes width per app is not one control. */
+    --control-pad-inline: 16px;
+    --control-gap: 8px;
+    /* The tile ladder: how narrow a column may get before auto-fill drops one.
+       Nineteen tile grids were writing this nineteen ways -- 72, 108, 140, 160,
+       180, 192, 220, 224, 260 and 280px, four of them as rem, and 9rem in an
+       engine meant 162px because brgen roots at 18px while amber roots at 16
+       and raises to 18 above 1280. Two tiles four pixels apart are not a
+       decision anyone made.
+
+       Six steps, each a width the design already used, each on the 4px grid.
+       px rather than rem on purpose: a tile is an object of a fixed size, and
+       amber's root shift would otherwise make the same grid hold a different
+       number of them above 1280px.
+
+       --tile-min-xl is the catalogue step; --tile-gap-row and --tile-gap-col
+       below pair with it. A wide row gap against a narrow column gap is what
+       makes a dense grid read as rows of goods rather than as a mosaic. */
+    --tile-min-xs: 72px;
+    --tile-min-sm: 108px;
+    --tile-min-md: 160px;
+    --tile-min-lg: 192px;
+    --tile-min-xl: 224px;
+    --tile-min-2xl: 280px;
+    --tile-gap-row: 24px;
+    --tile-gap-col: 8px;
+    --transition-fast: 180ms;
+    --transition-normal: 300ms;
+    /* soul.yml aesthetic_rules CINEMA_PALETTE asks for cubic-bezier easing on
+       every transition. Three of these four spelled out a browser default and
+       called it a curve: --ease-out held cubic-bezier(0.25, 0.1, 0.25, 1), which
+       is the definition of the `ease` keyword, and carried 68 of the family's
+       call sites — so the whole surface animated on the browser default behind a
+       token that looked designed. --ease-linear was `linear` written long, and
+       neither it nor --ease-spring had a single consumer.
+       --ease-out now decelerates hard and settles, which is what a panel, sheet
+       or hover wants; --ease-in-out is symmetric for loops that return to their
+       start; --ease-spring is unchanged, being the one curve here that was
+       always real. --ease-linear stays a true linear for continuous rotation,
+       where any curve would make a spinner visibly stutter once per turn. */
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-linear: cubic-bezier(0, 0, 1, 1);
+    --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+    --ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
+    /* Overlay scrims, one token per worn density. Five densities across one
+       product is the inconsistency made explicit rather than hidden — unifying
+       them is now a one-line-each edit, and a design decision, not archaeology. */
+    --scrim-45: rgb(0 0 0 / 0.45);
+    --scrim-50: rgb(0 0 0 / 0.5);
+    --scrim-55: rgb(0 0 0 / 0.55);
+    --scrim-65: rgb(0 0 0 / 0.65);
+    --scrim-72: rgb(0 0 0 / 0.72);
+    /* The ladder is one source. It was two: --z-brand lived in _layout_chrome
+       and --z-chrome-toggle nowhere at all, so three tiers existed above
+       --z-overlay that this list did not know about, and a reader sizing a new
+       layer against it would have been reading a subset. Two disagreeing
+       sources are what made the brgen wordmark invisible once already. Values
+       are unchanged — this moves where they are declared, not what they are. */
+    --z-canvas: 1;
+    --z-chrome: 10;
+    --z-ui: 90;
+    --z-overlay: 100;
+    --z-chrome-toggle: 110;
+    --z-brand: 120;
+    --z-modal: 1000;
+    --z-toast: 1100;
+    --z-skip: 2000;
+    --color-primary: var(--text);
+    --color-surface: var(--surface);
+
+
+    @if $luxury {
+      /* Luxury minimalist extensions (Aesop/Toteme/Nécessaire inspired) */
+      /* Warm neutrals, generous breathing room, refined for product/wardrobe UIs */
+      --luxury-bg: #efefef;
+      --luxury-surface: #ffffff;
+      --luxury-text: #333333;
+      --luxury-muted: #4d4d4d;
+      --luxury-border: #888888;
+      --luxury-space-xs: 0.5rem;
+      --luxury-space-sm: 0.75rem;
+      --luxury-space-md: 1.5rem;
+      --luxury-space-lg: 2rem;
+      --luxury-space-xl: 3rem;
+      --luxury-font-display: clamp(1.953rem, 1.5rem + 2vw, 2.441rem);
+      --luxury-font-title: 1.563rem;
+      --luxury-font-meta: 0.875rem;
+      --luxury-letter-tight: -0.01em;
+      --luxury-line-relaxed: 1.6;
+    }
+  }
+
+  @if $palette {
+    [data-theme="light"] {
+      @include semantic-light-overrides;
+    }
+
+    @media (prefers-color-scheme: light) {
+      :root:not([data-theme="dark"]) {
+        @include semantic-light-overrides;
+      }
+    }
+  }
+
+  @media (prefers-contrast: high) {
+    :root {
+      --color-border: var(--text);
+      --text-secondary: var(--text-primary);
+    }
+  }
+}
+
+/* Catalog quantities share a width so a column of prices does not dance.
+   Worn on marketplace, takeaway, and feed counts.
+
+   design_rules worn_type.profiles.catalog sets require_tabular_nums, and a
+   sweep of the marketplace engine on 2026-09-08 found four columns outside this
+   list: the cart's per-row totals, the order summary's total, the store's
+   payout list and the variant table's prices. The first three carry data-money
+   now — the generic hook, rather than three new class names — and .variant-price
+   already had a name, so it joins the list.
+
+   Four other money renderings were left alone deliberately, because tabular
+   figures fix a column and none of them is one: a lone price on a deal or
+   listing detail page, the price inside a card's aria-label (never rendered),
+   the price bands in the facet chips (a wrapping row, not a stack) and a
+   variant's price inside a select option label. */
+[data-money],
+.deal-price,
+.listing-price,
+.variant-price,
+.item-subtotal {
+  font-variant-numeric: tabular-nums lining-nums;
+}

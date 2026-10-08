@@ -5,7 +5,7 @@ require "minitest/autorun"
 class RailsUpgradeContractTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
   APPS = %w[brgen amber bsdports].freeze
-  ROOTS = APPS + ["../RAILS/master_web"]
+  ROOTS = APPS + ["../MASTER/web"]
   RAILS_REF = "c9e85dbe297e248dd2f217d04f84a94881ac046a"
 
   def read(path)
@@ -113,7 +113,7 @@ class RailsUpgradeContractTest < Minitest::Test
       assert_includes source, "    globalid (1.4.0)"
     end
 
-    master = File.read(File.expand_path("../RAILS/master_web/Gemfile.lock", ROOT))
+    master = File.read(File.expand_path("../MASTER/web/Gemfile.lock", ROOT))
     assert_match(/^  revision: #{Regexp.escape(RAILS_REF)}$/m, master)
     assert_match(/^    rails \(8\.2\.0\.alpha\)$/m, master)
     assert_includes master, "    herb (0.11.0)"
@@ -136,7 +136,7 @@ class RailsUpgradeContractTest < Minitest::Test
       refute_match(/^    (herb|ractor-dispatch) \(/, platform)
     end
 
-    source = read("../RAILS/master_web/Gemfile.lock")
+    source = read("../MASTER/web/Gemfile.lock")
     assert_equal 1, source.lines.count { |line| line.chomp == "GEM" }
     gem = source.split("\nGEM\n", 2).fetch(1).split("\nPLATFORMS\n", 2).fetch(0)
     assert_includes gem, "    herb (0.11.0)"

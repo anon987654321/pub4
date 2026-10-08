@@ -46,15 +46,15 @@ entries:
     Production is vm23. OpenBSD deploy behavior belongs under `OPENBSD/`; Rails product truth belongs under `RAILS/apps.yml`. `MASTER/data/soul.yml` and `MASTER/data/laws.yml` are the law. Current runtime structure is the code under `MASTER/lib/`, the media implementations under `STUDIO/`, and the MASTER-owned utilities under `MASTER/tools/`; do not substitute an abandoned module target or a historical shell workflow for the present tree.
 - key: project_master_dual_gemfile
   name: MASTER has two Gemfiles
-  description: MASTER/Gemfile (CLI) and RAILS/master_web/Gemfile (Falcon web) are independent
+  description: MASTER/Gemfile (CLI) and MASTER/web/Gemfile (Falcon web) are independent
     — adding a gem to one does NOT make it available in the other
   type: project
   body: |-
-    `MASTER/Gemfile` serves the CLI and `RAILS/master_web/Gemfile` serves the Falcon web tier. They are independent—adding a gem to one does not make it available in the other.
+    `MASTER/Gemfile` serves the CLI and `MASTER/web/Gemfile` serves the Falcon web tier. They are independent—adding a gem to one does not make it available in the other.
 
-    `RAILS/master_web/Gemfile` declares `gem "master", path: ".."`, which loads via the gemspec, not the parent Gemfile. Gems used in `MASTER/lib/` from web handlers must appear in both `MASTER/Gemfile` and `RAILS/master_web/Gemfile`, or in `master.gemspec` as a runtime dependency. Bundling only once leaves Falcon unable to `require` the gem—a LoadError that surfaces as a controller rescue and 503. `rb-edge-tts` exhibited this: CLI worked while `/chat/tts` failed.
+    `MASTER/web/Gemfile` declares `gem "master", path: ".."`, which loads via the gemspec, not the parent Gemfile. Gems used in `MASTER/lib/` from web handlers must appear in both `MASTER/Gemfile` and `MASTER/web/Gemfile`, or in `master.gemspec` as a runtime dependency. Bundling only once leaves Falcon unable to `require` the gem—a LoadError that surfaces as a controller rescue and 503. `rb-edge-tts` exhibited this: CLI worked while `/chat/tts` failed.
 
-    When adding a dependency, edit both Gemfiles, run `bundle install` in `MASTER/` and `RAILS/master_web/`, and verify the gem appears in `RAILS/master_web/Gemfile.lock`.
+    When adding a dependency, edit both Gemfiles, run `bundle install` in `MASTER/` and `MASTER/web/`, and verify the gem appears in `MASTER/web/Gemfile.lock`.
 - key: project_master_seven_module_refactor
   name: historical seven-module refactor proposal
   description: Reverted architecture proposal retained only as provenance

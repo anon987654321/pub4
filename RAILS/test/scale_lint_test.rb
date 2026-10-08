@@ -315,7 +315,7 @@ class ScaleLintTest < Minitest::Test
 
   def test_every_finding_points_at_a_file_that_exists_and_a_real_line
     LINT.findings.first(40).each do |finding|
-      # Repo-relative since the corpus spans RAILS/master_web as well as RAILS.
+      # Repo-relative since the corpus spans MASTER/web as well as RAILS.
       path = File.join(Operator::ScaleLint::REPO_ROOT, finding.file)
       assert File.file?(path), "#{finding.file} is not on disk"
       assert_operator finding.line, :>, 0

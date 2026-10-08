@@ -1,0 +1,15 @@
+# idx	title	slug	seed	bars	pad	lead	drums	pocket	kb
+# title is ours and names the file. slug is the engine's internal name
+# for the progression -- pass it to TRACK= to render that piece again.
+# seed is the RENDER_SEED this take was rendered with. Re-roll a track by
+# deleting its mp3 and re-running with a different DEMO_SEED.
+#
+# CAVEAT: a recorded seed narrows a take down, it does not reconstruct it.
+# Two renders with RENDER_SEED pinned are still not bit-identical -- see
+# the note above noise_seed. Treat this column as a lead, not a guarantee.
+00	mercury_lantern	ubrukte_samples_01	4242	16	stack_rhodes		dilla_slight	neo_soul	1089
+01	velvet_channel	ubrukte_samples_02	4243	16	stack_prophet		flylo_abstract	classic	1089
+02	nickel_mile	ubrukte_samples_03	4244	16	pad_dilla		dilla_drunk	neo_soul	1089
+03	cedar_table	ubrukte_samples_04	4245	16	stack_soul		flylo_cosmogramma	classic	1089
+04	rust_field	ubrukte_samples_05	4246	16	rhodes		mpc3000	neo_soul	1089
+05	glass_pier	ubrukte_samples_06	4247	16	pad_flylo		flylo_zodiac	dusty	1089

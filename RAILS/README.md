@@ -108,7 +108,7 @@ relayd sides in agreement.
 
 The operator half of domain switching is `/domain <name>` in the CLI through
 `SubdomainOrchestrator`, and the browser half is `window.MASTER_ACTIVE_DOMAIN`,
-read by `RAILS/master_web/public/chat_actions.js`. The dedicated domain bar has no
+read by `MASTER/web/public/chat_actions.js`. The dedicated domain bar has no
 source in the tree and no build either: MASTER ignores its precompiled web
 assets, and the precompiled `domain_cluster` bundle that once survived there is gone.
 Restoring the bar means restoring its source.

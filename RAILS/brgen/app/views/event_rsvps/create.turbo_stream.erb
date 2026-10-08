@@ -1,0 +1,8 @@
+<%# Replace the RSVP frame only, so answering does not reload the page and lose
+    the reader's place in a long description. The counts come back from the
+    server rather than from an optimistic guess. %>
+<%= turbo_stream.replace dom_id(@event, :rsvp) do %>
+  <%= turbo_frame_tag dom_id(@event, :rsvp) do %>
+    <%= render "events/rsvp", event: @event, rsvp: @event.rsvp_for(Current.user) %>
+  <% end %>
+<% end %>

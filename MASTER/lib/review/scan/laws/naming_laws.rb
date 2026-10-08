@@ -33,7 +33,7 @@ module Master
           # Prose is not a constant reference. `Master::CLI` is retired as a
           # class and alive as a namespace, so a comment explaining that
           # "Fiber[:master_visitor] is set when a Master::CLI is built" reads as
-          # a use of the retired name — found when RAILS/master_web joined the corpus,
+          # a use of the retired name — found when MASTER/web joined the corpus,
           # where it was one of exactly two findings. A comment cannot resolve a
           # constant, so it cannot resolve a retired one.
           code = source.each_line.map { |line| line.lstrip.start_with?("#") ? "\n" : line }.join

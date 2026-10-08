@@ -169,11 +169,6 @@ test("face.modules.bundle.js is generated from face module entry", () => {
   assert.match(sparse, /pointermove/);
   assert.match(sparse, /master:evidence/);
   assert.match(sparse, /master:law/);
-  assert.match(sparse, /super_void/);
-  assert.match(sparse, /gl_PointSize = 1\.0/);
-  assert.match(sparse, /voice trace|Speaking grows a filament/i);
-  assert.match(sparse, /semantic particles|Semantic particles remember/i);
-  assert.match(sparse, /ghostSerial/);
 
   const manifest = readFileSync(join(root, "config", "face_assets.yml"), "utf8");
   assert.match(manifest, /- face_sparse_field\.js/);
@@ -182,16 +177,6 @@ test("face.modules.bundle.js is generated from face module entry", () => {
   const bundle = readFileSync(bundlePath, "utf8");
   assert.match(bundle, /MASTER_FACE_PARTICLES|face_particles/);
   assert.match(bundle, /MASTER_FACE_BLEND|face_blendshape/);
-});
-
-test("face mic state is explicit and self-healing", () => {
-  const part5 = readFileSync(join(publicDir, "face.part5.txt"), "utf8");
-  assert.match(part5, /function syncMicIndicator/);
-  assert.match(part5, /data-mic/);
-  assert.match(part5, /Microphone listening/);
-  assert.match(part5, /Microphone off/);
-  assert.match(part5, /syncMicIndicator\("listening"\)/);
-  assert.match(part5, /syncMicIndicator\(e\?\.error/);
 });
 
 test("face_speech_playback.js holds viseme mouth animation", () => {

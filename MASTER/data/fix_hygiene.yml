@@ -1,0 +1,25 @@
+schema: 1
+checklist:
+  A: numeric ranks never coerce non-finite values
+  B: extracted source bodies are matched in their extracted representation
+  C: every new extractor has a fixture for a real surface form
+  D: bare-invoke/default behavior has one dispatch path and synchronized tests/comments
+  E: source pins assert stable public names or behavior, not whole large files
+  F: event topics come from deterministic literal publisher census and reject retired aliases
+  G: gates distinguish skipped, failed, inconclusive, and crashed execution
+
+llm_prompt: |
+  fix hygiene contract (enforce on every mutation in this /fix pass):
+
+  1. numeric ranks: never .to_i/.to_int on values that may be Infinity/NaN; use finite sentinels
+  2. extract-then-match: if you strip a body from source, the next pattern must match that body
+  3. regex fixtures: every new extractor includes a unit fixture of the real surface form
+  4. bare-invoke / defaults: one dispatch path; update tests and comments in the same change
+  5. source pins: assert stable public names, never match against whole multi-MB files
+  6. event topics: literal string publishers; no stale aliases (see MASTER/data/event_topics.yml)
+  7. dual paths: after early return/exit, delete or share one function with the later twin
+  8. gates: label SKIPPED vs FAILED vs INCONCLUSIVE vs crash
+  9. limits/guidance: new limits keys need a reader, or stay under guidance: only
+
+  When proposing a patch, name which checklist id (A–G) you satisfied or waive with one line.
+  Deterministic census beats LLM invention for topic lists and call graphs.

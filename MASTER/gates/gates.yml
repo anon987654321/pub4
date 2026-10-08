@@ -88,7 +88,7 @@ frontend_auditor:
 frontend_production:
   require: lib/source/frontend_production
   class: Deploy::FrontendProductionGate
-  pass: "Frontend production gate passed (%{apps} apps + RAILS/master_web layouts)."
+  pass: "Frontend production gate passed (%{apps} apps + MASTER/web layouts)."
   covered_by: release
 
 generated_asset:
@@ -110,7 +110,7 @@ master_tts:
 master_web_assets:
   require: MASTER/lib/operator/gates
   class: Deploy::MasterWebAssetsGate
-  pass: "RAILS/master_web assets gate passed (%{assets} required assets present)."
+  pass: "MASTER/web assets gate passed (%{assets} required assets present)."
   covered_by: production
 
 phantom_foreign_keys:

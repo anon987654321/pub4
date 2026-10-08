@@ -119,19 +119,6 @@ function wakeWordEnabled() {
 let _voiceModeRearmFails = 0;
 let _voiceModeArmedAt = 0;
 
-function syncMicIndicator(reason = "idle") {
-  State.micReason = String(reason || "idle");
-  const dot = document.getElementById("mic-dot");
-  const open = Boolean(State.sttActive && recognition);
-  if (dot) {
-    dot.dataset.mic = open ? "open" : "closed";
-    dot.setAttribute("aria-label", open ? "Microphone listening" : "Microphone off");
-    const label = dot.querySelector("[data-mic-state-text]");
-    if (label) label.textContent = open ? "microphone listening" : "microphone off";
-  }
-  rootBody.dataset.micOpen = open ? "1" : "0";
-}
-
 // The mic opens when the page loads, on the operator's ask (2026-09-15): the
 // face is spoken to, and it should be listening before anyone looks for a
 // control. It used to wait for a stored opt-in that only the wake word could
@@ -312,7 +299,6 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
   recognition.onstart = () => {
     if (_sttStartTimer) { clearTimeout(_sttStartTimer); _sttStartTimer = null; }
     State.sttActive = true;
-    syncMicIndicator("listening");
     State.mode = 'listening';
     window.dispatchEvent(new CustomEvent('stt:start', { detail: { source: 'speech-recognition' } }));
     window.MASTERVisual?.event?.('stt:start', { topology: 'papua-mask', entropy: 0.18, confidence: 0.86, mode: 'listening' });
@@ -405,7 +391,6 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
   }
   recognition.onend = () => {
     State.sttActive = false; State.sttDuck = 0;
-    syncMicIndicator("ended");
     const orphanedTranscript = sttPartial.trim();
     if (sttSilenceTimer) { clearTimeout(sttSilenceTimer); sttSilenceTimer = null; }
     if (orphanedTranscript) {
@@ -428,7 +413,6 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
   };
   recognition.onerror = (e) => {
     State.sttActive = false; State.sttDuck = 0;
-    syncMicIndicator(e?.error || "error");
     if (sttSilenceTimer) { clearTimeout(sttSilenceTimer); sttSilenceTimer = null; }
     if (e && (e.error === 'not-allowed' || e.error === 'service-not-allowed')) {
       // A denied permission stops the retries; a refusal for want of a gesture
@@ -1183,7 +1167,6 @@ function startEverything() {
   wireTtsStyleChips();
   armWakeWord();
   maybeAutoVoice();
-  syncMicIndicator("boot");
   setTimeout(() => { morphTarget = 1.0; }, 600);
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js?v=' + encodeURIComponent(window.MASTER_CACHE_VERSION || 'v2')).catch(() => {});

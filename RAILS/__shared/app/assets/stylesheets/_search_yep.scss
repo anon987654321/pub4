@@ -1,0 +1,79 @@
+/* vYroQxg — recreating yep.com search (exact pen styles). */
+/* scan: intentional-colors — a recreation of someone else's design keeps its exact values */
+
+.search {
+  width: 480px;
+  max-width: 100%;
+  background-color: #ccc;
+  border: 1px solid #ccc;
+  border-radius: var(--radius-pill);
+  font-size: var(--text-lg);
+  /* scale: ok — a recreation keeps its exact values, see line 2 */
+  transition: all 100ms var(--ease-in-out);
+}
+
+.search input,
+.search input[type="search"],
+.search input[type="text"] {
+  background: transparent;
+  outline: none;
+  border: none;
+  width: 100%;
+  padding: 16px 24px;
+  font-size: inherit;
+  color: inherit;
+}
+
+.search input::placeholder,
+.search input:placeholder-shown {
+  color: #aaa;
+}
+
+.search.focus,
+.search.active {
+  background-color: white;
+  border-color: white;
+  /* The lift is what tells you the box took focus — without it the state change
+     is a background swap you can miss. Stripped once by a flat-UI pass over the
+     whole tree, which did not honour the pen allowlist this file sits in and
+     that the four gates carrying PEN_ALLOW exist to enforce. Restored at the
+     pen's exact value. */
+  box-shadow: rgba(0, 0, 0, 0.25) 0 1px 8px 0;
+}
+
+.search.active {
+  border-radius: 16px;
+}
+
+/* The pen's `.search.active #live_results`. Its results are anchors stacked
+   inside the box, sharing its surface, divided from the input by one rule and
+   aligned to the input's own 24px gutter. :not(:empty) because .active is set
+   from the result count and the suggestion slot can be empty at that moment —
+   a border on an empty div is a stray line under the input. */
+.search.active :is(#search_suggestions, #search_palette_suggestions):not(:empty) {
+  border-top: 1px solid #ccc;
+  padding: 0 24px;
+}
+
+.search.active :is(#search_suggestions, #search_palette_suggestions):not(:empty) a {
+  display: block;
+}
+
+/* Map existing live-search markup onto the same surface. */
+.search .search-form {
+  display: block;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.search .search-form input[type="submit"],
+.search .search-form .btn {
+  display: none;
+}
+
+.search .search-form select,
+.search .search-form input[type="number"] {
+  display: none;
+}

@@ -7,7 +7,7 @@
 # StimulusComponentsGate enforces it for the 19 @stimulus-components packages.
 # Tiptap was the exception, pinned to esm.sh, so every compose box on the site
 # depended on a third party being reachable at the moment someone started
-# writing. The pattern here is RAILS/master_web/script/build_three_face.sh: npm-install
+# writing. The pattern here is MASTER/web/script/build_three_face.sh: npm-install
 # a pinned version, esbuild only what the entry point re-exports, commit the
 # artifact so the 1GB VPS never runs npm.
 #

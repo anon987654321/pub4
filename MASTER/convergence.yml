@@ -57,7 +57,7 @@ workstreams:
   - id: face_semantic_motion
     state: evidence
     title: Large 3D face semantic motion and real-browser/device proof
-    implementation: RAILS/master_web/public
+    implementation: MASTER/web/public
     proof: Rendered browser and real-device evidence
   - id: rails_product_completion
     state: evidence

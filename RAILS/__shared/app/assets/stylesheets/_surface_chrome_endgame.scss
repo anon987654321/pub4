@@ -1,0 +1,392 @@
+// Final cascade endpoint for the flat-surface contract.
+//
+// Shared refinement sheets load before each app's dialect code. These mixins are
+// intentionally included at the bottom of the app entrypoints so later dialect
+// rules cannot accidentally resurrect decorative borders, pills or card chrome.
+// Functional focus, error and drag/drop signals remain outside these selectors.
+
+@mixin brgen {
+  .feed-post,
+  .newsletter-cta,
+  .subscribe-box,
+  .post-media-choice,
+  .post-progressive-nav,
+  .home-feed-views,
+  .search_palette_cities,
+  .mobile-sheet-cities,
+  .brgen-media-add-link {
+    border: 0;
+    border-radius: 0;
+  }
+
+  .home-feed-view,
+  .city-network-item {
+    border: 0;
+    border-radius: 0;
+  }
+
+  .home-feed-view + .home-feed-view {
+    border-inline-start: 0;
+  }
+
+  .home-feed-view.is-active,
+  .post-progressive-indicator.is-active {
+    border-block-end: 0;
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.18em;
+  }
+
+  .post-photo-camera {
+    border: 0;
+    border-radius: 0;
+  }
+
+  .comment_item .comment_item {
+    border-inline-start: 0;
+  }
+
+  .radio-home-header,
+  .radio-featured > .playlist-app,
+  .radio-track-list,
+  .radio-playlist-list,
+  .playlist-queue,
+  .playlist-comments {
+    border: 0;
+  }
+
+  .radio-home-link,
+  .radio-section-link,
+  .radio-nav a,
+  .radio-nav-btn,
+  .playlist-top-action,
+  .playlist-add-comment,
+  .playlist-transport-play,
+  .playlist-transport-bar {
+    border: 0;
+    border-radius: 0;
+  }
+
+  .radio-track-list,
+  .radio-playlist-list {
+    border-block-start: 0;
+    background: transparent;
+    gap: 0;
+  }
+
+  .radio-track-card-art {
+    border: 0;
+    border-radius: 0;
+  }
+
+  .radio-archaeology {
+    border: 0;
+  }
+
+  .playlist-comment-form input,
+  .playlist-transport-bar {
+    border: 0;
+    border-radius: 0;
+  }
+
+  .playlist-queue-item {
+    border-block-end: 0;
+  }
+
+  .channel-composer textarea,
+  .live-stream-chat input[type="text"] {
+    border: 0;
+    border-radius: 0;
+  }
+
+  body.vertical-messenger {
+    #messages article,
+    #new_message,
+    #new_message textarea,
+    .disappearing-settings select,
+    .link-preview {
+      border: 0;
+      border-radius: 0;
+    }
+
+    #messages article[data-expiry="later"],
+    #messages article[data-expiry="soon"] {
+      border-style: none;
+      border-color: transparent;
+    }
+  }
+
+  body.vertical-marketplace {
+    #navBar.storefront-nav--bol,
+    .storefront-utility--bol,
+    #bottomHalf,
+    .bol-market-hero,
+    .store-buybox,
+    .deal-card-img,
+    .listing-review-card,
+    .listing-published-notice,
+    .listing-source-option,
+    .listing-step,
+    .listing-video-field,
+    .listing-photo-gallery,
+    .listing-filter-controls select,
+    .listing-filter-controls input,
+    .media-thumb-move,
+    .media-thumb-rm,
+    .store-order input,
+    .store-order textarea,
+    .deal-card .qty-field,
+    .store-seller-center,
+    .store-terms,
+    .seller-summary dt,
+    .seller-summary dd,
+    .order-row,
+    .marketplace-deal,
+    .deal-listing,
+    .store-pdp-media,
+    .listing-questions,
+    .listing-question,
+    .cart-item {
+      border: 0;
+      border-radius: 0;
+    }
+
+    #navBar .section {
+      border-radius: 0;
+    }
+
+    #navBar .nav-search-input,
+    .search-form input[type="search"] {
+      border: 0;
+      border-radius: 0;
+    }
+
+    .store-panel,
+    .store-shortcut-well {
+      border: 0;
+      border-radius: 0;
+    }
+
+    .store-buybox > p {
+      border-block-end: 0;
+    }
+
+    .bol-kind-tabs {
+      border-color: transparent;
+    }
+
+    .bol-kind-tabs a,
+    .listing-step-link.is-active {
+      border-bottom-width: 0;
+      border-bottom-color: transparent;
+    }
+
+    .store-buybox .btn,
+    .deal-card-buy,
+    .listing-buy-bar-cta,
+    .bol-primary {
+      border: 0;
+      border-radius: 0;
+    }
+
+    .store-results-body > .deal-card {
+      border-bottom: 0;
+    }
+  }
+}
+
+@mixin amber {
+  .form input,
+  .form select,
+  .form textarea,
+  .input {
+    border: 0;
+    border-radius: 0;
+  }
+
+  .color-swatch,
+  .style-phase-card,
+  .occasion-card,
+  .zone-row,
+  .carousel-btn,
+  .today-look,
+  .today-look-pick,
+  .feed-post,
+  .newsletter-cta,
+  .subscribe-box,
+  .wardrobe-card {
+    border: 0;
+    border-radius: 0;
+  }
+
+  // Timelines and charts retain their axes/rules: here a line carries
+  // information, not surface decoration.
+
+  .occasion-card--sparse {
+    border: 0;
+    background: color-mix(in srgb, var(--color-warning) 15%, var(--surface-elevated));
+  }
+
+  .occasion-card--covered {
+    border: 0;
+    background: color-mix(in srgb, var(--color-success) 10%, var(--surface-elevated));
+  }
+
+  .amber-editorial-nav,
+  .amber-messenger-composer,
+  .post-show-actions,
+  .post-show-comments {
+    border-block-start: 0;
+    border-block-end: 0;
+  }
+
+  .amber-look {
+    border: 0;
+    border-radius: 0;
+  }
+
+  .amber-messenger-composer textarea,
+  .amber-messenger-composer select {
+    border: 0;
+    border-radius: 0;
+  }
+
+  body[data-surface="luxury"] {
+    .amber-editorial-nav {
+      border: 0;
+    }
+
+    .amber-look,
+    .item-card--luxury,
+    .luxury-section {
+      border: 0;
+      border-radius: 0;
+    }
+
+    .btn,
+    .btn-sm,
+    input,
+    select,
+    textarea {
+      border-radius: 0;
+    }
+  }
+
+  .nested-field {
+    border-block-end: 0;
+  }
+}
+
+/* Precision pass: geometry, type and interaction states remain measurable and
+   shared; verticals only change the visual dialect. */
+@mixin brgen_precision {
+  .layout { min-block-size: 0; }
+  main#main-content {
+    min-inline-size: 0;
+  }
+  .page-header, .feed-header { min-inline-size: 0; margin-block-end: var(--space-8); }
+  .page-header :is(h1, h2), .feed-header :is(h1, h2) { max-inline-size: 22ch; margin-block: 0; text-wrap: balance; }
+  main#main-content :is(h1, h2, h3, h4) { text-wrap: balance; overflow-wrap: anywhere; }
+  main#main-content :is(p, li, dd) { text-wrap: pretty; }
+  main#main-content :is(button, input, select, textarea) { box-sizing: border-box; }
+  main#main-content :is(input, select, textarea) { min-block-size: var(--tap-min); border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: var(--radius-sm); }
+  main#main-content :is(input, select, textarea):focus-visible { border-color: var(--accent); outline: var(--focus-ring); outline-offset: 2px; }
+  .feed-post, .feed-card, .post-reading, .comment_item, .newsletter-cta { min-inline-size: 0; overflow-wrap: anywhere; }
+  .feed-post :is(img, video), .feed-card :is(img, video), .post-reading :is(img, video) { display: block; max-inline-size: 100%; block-size: auto; }
+  .feed-post-prose, .feed-post-body, .post-reading-body-preview { max-inline-size: 66ch; line-height: var(--leading-normal); }
+  .feed-post-meta, .feed-card-meta { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-1) var(--space-2); font-variant-numeric: tabular-nums; }
+  .feed-post-actions, .feed-card-actions, .post-show-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); }
+  :is(.feed-action, .feed-post-actions a, .feed-post-actions button) { min-inline-size: var(--tap-min); min-block-size: var(--tap-min); display: inline-flex; align-items: center; justify-content: center; }
+  .card-grid, .items-grid, .results-grid { min-inline-size: 0; column-gap: var(--tile-gap-col); row-gap: var(--tile-gap-row); }
+  body.vertical-marketplace {
+    .store-results-body { min-inline-size: 0; }
+    .deal-card, .cart-item, .store-buybox, .store-panel { min-inline-size: 0; overflow-wrap: anywhere; }
+    .deal-card :is(img, picture) { display: block; inline-size: 100%; block-size: auto; }
+    .deal-card-title, .store-pdp-info h1 { text-wrap: balance; overflow-wrap: anywhere; }
+    .deal-price, .listing-price, [data-money] { font-variant-numeric: tabular-nums lining-nums; }
+    .listing-filter-controls { display: grid; gap: var(--space-2); align-content: start; }
+    .listing-filter-controls :is(input, select) { min-block-size: var(--tap-min); }
+    .store-buybox { align-self: start; }
+  }
+  body.vertical-messenger {
+    #messages { min-inline-size: 0; }
+    #messages article { min-inline-size: 0; overflow-wrap: anywhere; }
+    #messages article p { max-inline-size: 66ch; text-wrap: pretty; }
+    #new_message { min-inline-size: 0; }
+    #new_message :is(textarea, input) { min-block-size: var(--tap-min); resize: vertical; }
+  }
+  body.vertical-playlist {
+    .radio-track-card, .playlist-queue-item { min-inline-size: 0; }
+    .radio-track-card :is(h2, h3), .playlist-queue-item :is(h2, h3) { text-wrap: balance; overflow-wrap: anywhere; }
+    .playlist-transport-play, .playlist-top-action { min-inline-size: var(--tap-min); min-block-size: var(--tap-min); }
+  }
+  body.vertical-dating {
+    .dating-discover, .swipe-card, .dating-profile-form { min-inline-size: 0; }
+    .dating-intro :is(h1, h2, h3), .swipe-card :is(h1, h2, h3), .dating-profile-form :is(h1, h2, h3) { text-wrap: balance; overflow-wrap: anywhere; }
+  }
+  body.vertical-takeaway {
+    main#main-content :is(h1, h2, h3, h4) { text-wrap: balance; overflow-wrap: anywhere; }
+    .cart-item { min-inline-size: 0; overflow-wrap: anywhere; }
+    .cart-item :is([data-money], .price, .total) { font-variant-numeric: tabular-nums lining-nums; }
+  }
+  body.vertical-maps {
+    .place-card, .map-popup, .map-place-popup { min-inline-size: 0; }
+    .place-card :is(h2, h3), .map-popup :is(h2, h3), .map-place-popup :is(h2, h3) { text-wrap: balance; overflow-wrap: anywhere; }
+  }
+  body.vertical-tv {
+    .channel-card, .show-card, .tv-show-title { min-inline-size: 0; }
+    .channel-card :is(h2, h3), .show-card :is(h2, h3), .tv-show-title { text-wrap: balance; overflow-wrap: anywhere; }
+  }
+  @media (max-width: 767px) {
+    main#main-content { padding-inline: max(var(--space-4), var(--page-gutter)); padding-block-end: calc(var(--space-16) + env(safe-area-inset-bottom)); }
+    .page-header, .feed-header { margin-block-end: var(--space-6); }
+  }
+}
+
+@mixin amber_precision {
+  body[data-surface="luxury"] main#main-content { min-inline-size: 0; }
+  body[data-surface="luxury"] main#main-content :is(h1, h2, h3, h4) { text-wrap: balance; overflow-wrap: anywhere; font-kerning: normal; }
+  body[data-surface="luxury"] main#main-content :is(p, li, dd) { text-wrap: pretty; }
+  body[data-surface="luxury"] .page-header, body[data-surface="luxury"] .amber-page-header { min-inline-size: 0; margin-block-end: var(--space-8); }
+  body[data-surface="luxury"] .luxury-detail-grid, body[data-surface="luxury"] .item-detail-grid, body[data-surface="luxury"] .wardrobe-grid, body[data-surface="luxury"] .items-grid { min-inline-size: 0; column-gap: var(--tile-gap-row); row-gap: var(--space-8); }
+  body[data-surface="luxury"] :is(.item-card--luxury, .wardrobe-card, .style-phase-card, .occasion-card) { min-inline-size: 0; overflow-wrap: anywhere; }
+  body[data-surface="luxury"] :is(.item-card--luxury, .wardrobe-card) :is(img, picture) { display: block; inline-size: 100%; block-size: auto; }
+  body[data-surface="luxury"] .item-card--luxury .item-title, body[data-surface="luxury"] .wardrobe-card :is(h2, h3) { text-wrap: balance; overflow-wrap: anywhere; }
+  body[data-surface="luxury"] .item-card--luxury .item-meta, body[data-surface="luxury"] .commerce-fit-reasons, body[data-surface="luxury"] .shop-feed-note { text-wrap: pretty; line-height: 1.5; }
+  body[data-surface="luxury"] :is(.form input, .form select, .form textarea, .input) { min-block-size: var(--tap-min); border: 1px solid var(--luxury-border); border-radius: var(--radius-sm); background: var(--luxury-surface); color: var(--luxury-text); }
+  body[data-surface="luxury"] :is(.form input, .form select, .form textarea, .input):focus-visible { border-color: var(--luxury-accent, var(--text)); outline: var(--focus-ring); outline-offset: 2px; }
+  body[data-surface="luxury"] .luxury-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+  body[data-surface="luxury"] .luxury-actions .btn { min-block-size: var(--tap-min); min-inline-size: var(--tap-min); }
+  body[data-surface="luxury"] .luxury-title { max-inline-size: 12ch; text-wrap: balance; overflow-wrap: anywhere; }
+  body[data-surface="luxury"] .amber-looks { min-inline-size: 0; row-gap: var(--section-rhythm); }
+  body[data-surface="luxury"] .amber-look { min-inline-size: 0; }
+  body[data-surface="luxury"] .amber-look-stage { min-inline-size: 0; contain: layout paint; }
+  body[data-surface="luxury"] :is(.amber-footer, .site-legal-footer) { min-inline-size: 0; overflow-wrap: anywhere; }
+  @media (max-width: 767px) {
+    body[data-surface="luxury"] main#main-content { padding-inline: max(var(--space-4), var(--page-gutter)); padding-block-end: calc(var(--space-16) + env(safe-area-inset-bottom)); }
+    body[data-surface="luxury"] .luxury-title { max-inline-size: none; font-size: clamp(2.4rem, 12vw, 4rem); }
+  }
+}
+
+@mixin bsdports {
+  body.wscons { min-block-size: 100dvh; font-variant-numeric: tabular-nums; }
+  body.wscons main#main-content { inline-size: min(100%, 760px); min-inline-size: 0; margin-inline: auto; padding-inline: var(--page-gutter); padding-block: var(--space-8) var(--space-16); }
+  body.wscons main#main-content :is(h1, h2, h3, h4) { text-wrap: balance; overflow-wrap: anywhere; }
+  body.wscons main#main-content :is(p, li, dd) { text-wrap: pretty; }
+  body.wscons .port-list { min-inline-size: 0; }
+  body.wscons .port-row { min-inline-size: 0; column-gap: var(--space-4); row-gap: var(--space-1); }
+  body.wscons .port-name { overflow-wrap: anywhere; }
+  body.wscons .ports-purpose { max-inline-size: 62ch; text-wrap: pretty; }
+  body.wscons .install-panel, body.wscons .install-panel [data-controller="clipboard"] { min-inline-size: 0; }
+  body.wscons .install-panel input { min-inline-size: 0; min-block-size: var(--tap-min); }
+  body.wscons :is(input, select, textarea, button, .btn) { box-sizing: border-box; }
+  body.wscons :is(input, select, textarea, button, .btn):focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
+  body.wscons article :is(pre, code) { overflow-wrap: anywhere; }
+  body.wscons article pre { max-inline-size: 100%; white-space: pre-wrap; tab-size: 2; }
+  @media (max-width: 767px) {
+    body.wscons main#main-content { padding-inline: max(var(--space-4), var(--page-gutter)); padding-block-end: calc(var(--space-16) + env(safe-area-inset-bottom)); }
+    body.wscons .port-row { grid-template-columns: minmax(0, 1fr); }
+    body.wscons .install-panel [data-controller="clipboard"] { grid-template-columns: minmax(0, 1fr); }
+  }
+}
+

@@ -1,0 +1,58 @@
+<%# Shared live-search form — Turbo Stream responses via pub4-shared.
+    Surface: vYroQxg .search (yep.com) exact styles. %>
+<div
+  class="search"
+  data-controller="live-search search-focus"
+  role="search"
+  aria-label="<%= label %>"
+  data-action="turbo:submit-end->live-search#complete"
+  data-live-search-updating-value="<%= t("status.updating_results") %>"
+  data-live-search-updated-value="<%= t("status.results_updated") %>"
+  data-live-search-failed-value="<%= t("status.search_failed") %>"
+>
+  <%= form_with url: url, method: :get, data: {
+        controller: "auto-submit",
+        action: "change->auto-submit#submit",
+        turbo_stream: true,
+        live_search_target: "form"
+      } do |f| %>
+    <div class="search-form">
+      <%= f.search_field :q,
+            value: query,
+            placeholder: placeholder,
+            data: {
+              live_search_target: "input",
+              action: "input->live-search#input focus->search-focus#focus blur->search-focus#blur"
+            },
+            aria: { label: t("search.query", default: "Search query"), controls: local_assigns.fetch(:results_id, "live_search_results") } %>
+      <%# capture, not call. The block was written in the calling view, so it
+          owns that view's output buffer: .call appends its markup there and
+          returns the last expression as a plain String, which <%= then escapes.
+          markedsplass.brgen.no printed a literal "</div> </details>" under its
+          filter drawer for that reason. capture runs the block against its own
+          buffer and hands back html_safe output. %>
+      <% if local_assigns[:filter_fields_proc] %>
+        <%= capture(f, &filter_fields_proc) %>
+      <% elsif local_assigns[:extra_fields].present? %>
+        <%= extra_fields %>
+      <% end %>
+      <% if local_assigns.fetch(:show_submit, true) %>
+        <%= f.submit t("search.submit", default: "Search"), class: local_assigns.fetch(:submit_class, "btn btn-sm"), aria: { label: t("search.submit", default: "Search") } %>
+      <% end %>
+    </div>
+  <% end %>
+  <span class="visually-hidden" role="status" aria-live="polite" data-live-search-target="status"></span>
+
+  <%# Inside .search, not beside it: the pen fuses the results into the box when
+      it is active, which is what the 30px pill collapsing to a 16px rectangle
+      is for. Sitting outside, the radius change had nothing to open onto. The
+      id is unchanged — live_searchable.rb replaces this node by id over Turbo
+      Stream, and a nested target replaces the same. A second form on the page — the
+      search palette over every brgen surface — names its own ids, because a
+      stream lands on the first element carrying the id it targets. %>
+  <%= tag.div id: local_assigns.fetch(:suggestions_id, "search_suggestions") do %>
+    <% if local_assigns.fetch(:show_suggestions, true) && respond_to?(:search_suggestions) && search_suggestions.present? %>
+      <%= render "shared/search_suggestions", suggestions: search_suggestions %>
+    <% end %>
+  <% end %>
+</div>

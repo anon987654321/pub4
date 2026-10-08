@@ -46,7 +46,7 @@ module Master
         # Spelled relative to MASTER, and matched relative to whatever root the
         # scan was given — which are the same thing only when MASTER scans
         # itself. `bin/gate` and every cross-tree run pass the repo root, where
-        # these paths arrive as `RAILS/master_web/public/face.runtime.js` and matched
+        # these paths arrive as `MASTER/web/public/face.runtime.js` and matched
         # nothing: the generated face runtime, the two bundles and the three
         # build were scanned, reported, and offered to /fix. face.runtime.js
         # opens with "do not edit by hand" and is rewritten by

@@ -1,0 +1,12 @@
+<li role="listitem" class="port-row">
+  <div> <%# scan: intentional — an anonymous text block; the flex row is the layout and a name here would have no reader %>
+    <%= link_to port.name, port, class: "port-name" %>
+    <code><%= port.version %></code>
+    <code><%= port.pkgpath %></code>
+  </div>
+  <small><%= link_to port.category.name, category_path(port.category) %> · <%= port.comment %></small>
+  <% age = port.last_updated && (Date.current - port.last_updated).to_i %>
+  <% stale = age.present? && age > 365 %>
+  <%= tag.span age.nil? ? t("ports.age_unknown") : t(stale ? "ports.age_stale" : "ports.age_updated", count: age),
+               class: class_names("data-state", "data-state--stale": stale) %>
+</li>

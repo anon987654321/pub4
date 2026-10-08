@@ -1,0 +1,100 @@
+/* Legal pages and footer typography.
+ *
+ * Reading copy uses the shared 66ch measure and canonical type/leading tokens.
+ * Chrome links retain the shared 44px interaction floor without changing their
+ * visible line box.
+ */
+
+.site-legal nav a {
+  position: relative;
+}
+
+.site-legal nav a::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  inset-block-start: 50%;
+  block-size: var(--tap-min);
+  min-inline-size: var(--tap-min);
+  transform: translateY(-50%);
+}
+
+.site-legal .site-verify {
+  flex-basis: 100%;
+  font-size: var(--text-xs);
+  color: var(--text);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+}
+
+.site-legal .site-verify strong {
+  font-weight: 700;
+}
+
+ .legal-prose {
+  max-inline-size: var(--measure);
+  margin-inline: auto;
+  padding-block: var(--space-8) var(--space-16);
+  padding-inline: var(--page-gutter);
+}
+
+ .legal-prose h1 {
+  margin: 0;
+  font-size: var(--text-2xl);
+  line-height: var(--leading-tight);
+  margin-block-end: var(--space-2);
+  text-wrap: balance;
+}
+
+ .legal-prose .legal-eyebrow {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  margin: 0 0 var(--space-2);
+  line-height: var(--leading-snug);
+}
+
+.legal-prose .legal-updated {
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--text-sm);
+  line-height: var(--leading-snug);
+  margin: 0 0 var(--space-6);
+}
+
+ .legal-prose h2 {
+  font-size: var(--text-title);
+  line-height: var(--leading-tight);
+  margin-block: var(--space-6) var(--space-2);
+  text-wrap: balance;
+}
+
+ .legal-prose p,
+.legal-prose li {
+  max-inline-size: var(--measure);
+  line-height: var(--leading-loose);
+  text-wrap: pretty;
+  hyphens: auto;
+  hanging-punctuation: first allow-end last;
+}
+
+.legal-prose ul {
+  /* logical, not padding-left: the same 1.1rem in LTR and the correct side
+     under [dir="rtl"], which _minimal.scss supports. */
+  padding-inline-start: 1.1rem;
+}
+
+.legal-prose nav {
+  display: flex;
+  gap: var(--space-4);
+  margin-block-start: var(--space-8);
+  padding-block-start: var(--space-4);
+  border-top: 1px solid var(--border);
+  font-size: var(--text-sm);
+}
+
+/* dating is a swipe surface with no room for a legal band. It kept this rule
+   when the block was inline; it keeps it here. */
+body.vertical-dating .site-legal {
+  display: none;
+}

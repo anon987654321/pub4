@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<%# data-theme="light" is the default, and it is written rather than left to
+    the OS — operator, 2026-08-29.
+
+    Without it this app has no theme attribute at all, so the shared token
+    sheet's `@media (prefers-color-scheme: dark)` block decides, and a reader
+    whose machine prefers dark gets a dark app. "Light by default" has to mean
+    light on a dark-mode Mac too, or it means nothing.
+
+    It is an attribute rather than a media query so there is exactly one
+    mechanism: _theme_bootstrap overwrites this from localStorage before paint
+    if the reader has chosen, so a saved preference still wins and nothing
+    flashes. %>
+<html lang="<%= I18n.locale %>" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="view-transition" content="same-origin">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#000000" data-light-color="#ffffff" data-dark-color="#000000">
+  <title><%= content_for?(:title) ? "#{yield :title} — BSDports" : "BSDports" %></title>
+  <meta name="description" content="<%= content_for?(:description) ? yield(:description) : "BSDports — search OpenBSD ports, dependencies and local advisories." %>">
+  <link rel="canonical" href="<%= seo_canonical_url %>">
+  <%# The card's description is the blurb without the "BSDports — " prefix the
+      <title> and meta description carry: a card already shows the site name on
+      its own line. %>
+  <%= render "shared/social_card_meta", site_name: "BSDports",
+                                        page_title: content_for(:title).presence,
+                                        page_description: content_for(:description).presence ||
+                                          "Search OpenBSD ports, dependencies and local advisories." %>
+  <%= csrf_meta_tags %>
+  <%= csp_meta_tag %>
+  <%# turbo_refreshes_with in Shared::ApplicationSetup provides its meta tags here. %>
+  <%= yield :head %>
+  <link rel="preload" href="/icon.png" as="image">
+  <link rel="icon" href="/icon.png" type="image/png">
+  <link rel="apple-touch-icon" href="/icon.png">
+  <%= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
+  <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+  <%= yield :json_ld %>
+  <%= json_ld_script(website_json_ld(site_name: "BSDports", url: root_url, description: "Full-text search for OpenBSD ports.")) %>
+  <%= javascript_importmap_tags %>
+</head>
+<body class="wscons <%= "auth-surface" if controller_path.in?(%w[sessions passwords]) %>"
+      data-layout="document"
+      data-layout-pass="micro-320"
+      data-surface="wscons"
+      data-pwa-key="bsdports"
+      data-controller="pwa-standalone feed-hotkey battery-aware network-aware viewport-aware"
+      data-feed-hotkey-help-value="<%= t("hotkeys.help") %>"
+      data-feed-hotkey-coach-value="<%= t("hotkeys.coach") %>"
+      data-feed-hotkey-coach-dismiss-value="<%= t("hotkeys.coach_dismiss") %>">
+<a class="skip-link" href="#main-content"><%= t("skip_to_content") %></a>
+    <%# The shared icon sprite: every icon(...) <use> resolves against it. The
+        shared theme toggle's sun icon was referencing symbols this app never
+        included. %>
+    <%= render "shared/icon_sprite" if icon_sprite? %>
+<%# bsdports had no brand mark at all — only a text link inside the nav, which is
+    not the same thing and is not in the same place as brgen's or amber's. After
+    the skip link, which must stay the first focusable element. %>
+<%= render "shared/brand_mark", label: "bsdports" %>
+<div class="app-shell">
+<nav class="nav-visible" data-pwa-primary-nav data-turbo-permanent aria-label="<%= t("nav.home") %>">
+  <%# The wordmark is shared/_brand_mark, fixed top-left above this nav. A
+      second copy inside the nav was the same link twice, 9px apart. %>
+  <%= link_to t("nav.ports"), ports_path, aria: { current: current_page?(ports_path) ? "page" : nil } %>
+  <%= link_to t("nav.categories"), categories_path, aria: { current: current_page?(categories_path) ? "page" : nil } %>
+  <%= link_to t("nav.maintainers"), maintainers_path, aria: { current: current_page?(maintainers_path) ? "page" : nil } %>
+  <div class="nav-actions">
+    <% if authenticated? %>
+      <%= render "shared/inbox_link" %>
+      <%# destructive: no-confirm-ok — reversible — signing out, and signing in again is the same click %>
+      <%= link_to t("nav.sign_out"), session_path, class: "btn btn-ghost", data: { turbo_method: :delete, turbo_prefetch: false } %>
+    <% else %>
+      <%= link_to t("nav.sign_in"), new_session_path, class: "btn btn-ghost" %>
+    <% end %>
+  </div>
+</nav>
+<%= tag.p(alert, role: "alert", class: "flash-alert") if alert %>
+<main id="main-content" role="main">
+  <%# A third link home lived here, class="logo", inside main. With the nav's
+      .brand removed and shared/_brand_mark in the corner, bsdports was carrying
+      the same link three times on every page. The mark is the one. %>
+  <%= yield %>
+</main>
+<%= render "shared/site_legal_footer" %>
+</div>
+<%= render "shared/flash_toasts" %>
+<%= render "shared/install_prompt",
+      title: t("install.title"),
+      body: t("install.body") %>
+<%= render "shared/nearby_chat_widget" %>
+</body>
+</html>

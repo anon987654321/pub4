@@ -1,0 +1,75 @@
+# Engine-local strings.
+#
+# Every engine string used to live in brgen/config/locales, which made a
+# literal in the markup the path of least resistance for engine work and left
+# the engine unmountable anywhere else. Rails::Engine appends
+# config/locales/*.yml to I18n.load_path on its own -- no wiring beyond this
+# file existing -- and I18n deep-merges across load paths, so keys under the
+# same namespace in the host file stay reachable.
+#
+# Keys the host already carries are NOT copied here. Use them.
+en:
+  playlist:
+    home_eyebrow: "Bergen audio"
+    home_heading: "Hear what the city is making"
+    home_blurb: "Discover local tracks, sets and sounds. Upload a track and give people one link to hear it."
+    navigation: "Radio navigation"
+    featured: "Featured track"
+    open_track: "Open track"
+    recent_eyebrow: "Fresh uploads"
+    recent_tracks: "Recent tracks"
+    see_all_tracks: "See all tracks"
+    city_eyebrow: "From Bergen"
+    popular_playlists: "Popular playlists"
+    playlist_stats: "%{tracks} tracks · %{plays} plays"
+    unknown_creator: "Unknown creator"
+    share_track: "Share %{title}"
+    link_copied: "Link copied"
+    share: "Share"
+    collaborators: "Collaborators"
+    dilla_sketches: "Dilla sketches / beats"
+    synced_position: "Synced position:"
+    youtube_player_aria: "YouTube player"
+    track_created: "Track uploaded"
+    track_updated: "Track updated"
+    track_deleted: "Track removed"
+    imports_queued:
+      one: "%{count} track import queued"
+      other: "%{count} track imports queued"
+    tracks_uploaded:
+      one: "%{count} track uploaded"
+      other: "%{count} tracks uploaded"
+    all_sets: "All sets"
+    audio_files_bulk: "Audio file(s) - bulk upload supported"
+    bars_count:
+      one: "%{count} bar"
+      other: "%{count} bars"
+    collaborators_invite_body: "Invite an editor or viewer by username in the form below."
+    collaborators_owner_only_body: "Only owners can invite collaborators."
+    edit_named: "Edit %{name}"
+    render_queued: "Dilla render queued — refresh for audio"
+    render_statuses:
+      failed: "failed"
+      idle: "idle"
+      queued: "queued"
+      ready: "ready"
+      rendering: "rendering"
+    replace_audio_file: "Replace audio file (keeps URL)"
+    roles:
+      editor: "Editor"
+      owner: "Owner"
+      viewer: "Viewer"
+    set_created: "Set created"
+    set_deleted: "Set removed"
+    set_liked: "Set liked"
+    set_unliked: "Like removed"
+    set_updated: "Set updated"
+    sketch_by: "by %{name}"
+    sketch_removed: "Sketch removed"
+    sketch_saved: "Dilla sketch saved"
+    sketch_track: "track #%{id}"
+    sketch_updated: "Sketch updated"
+    sketches_blurb: "Collaborative beat patterns. Lab:"
+    sketches_not_allowed: "Not allowed to edit dilla sketches in this collab"
+    tunnel_visualizer_aria: "Warp tunnel visualizer"
+    untitled: "Untitled"

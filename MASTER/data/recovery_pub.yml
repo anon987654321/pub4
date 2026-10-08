@@ -1,0 +1,71 @@
+---
+name: pub_restore_contract
+# source_repo and target_repo live once, in data/recovery/legacy_manifest.yml,
+# which this file already names under checks.file_presence. Both keys stood here
+# too, with the same two values and no reader in either tree — a second copy that
+# could only drift. lint:data_singularity and lint:dedup both failed on the pair.
+updated: "2026-10-08"
+layout_note: >-
+  Paths naming DEPLOY/ predate its split into RAILS/, OPENBSD/ and the
+  MASTER/tools plane. Those paths are repointed; DEPLOY/bp and DEPLOY/sh have no
+  successor here.
+
+law:
+  - Never mark renamed material as restored.
+  - Absorbed concepts still require provenance.
+  - Old generated installers are evidence, not production scripts.
+  - Every legacy item needs one of: restored, ported, archived, retired.
+
+critical_items:
+  - id: mega_all_apps
+    source: __OLD_BACKUPS/MEGA_ALL_APPS.md
+    expected_target: RECOVERY/pub/__OLD_BACKUPS/MEGA_ALL_APPS.md
+    current_state: restored
+    gate: file_exists
+
+  - id: ai3_standalone
+    source: ai3/
+    expected_target: RECOVERY/pub/ai3/legacy/
+    current_state: absorbed
+    gate: source_archived_or_importer_tested
+
+  - id: bplans_pipeline
+    source: bplans/
+    # Measured 2026-09-06 against github.com/anon987654321/pub at a3185f4, by
+    # sparse checkout rather than by memory. bplans/ is 163 files: 25 HTML
+    # pages, 30 markdown plans, four Ruby prototypes under norwegianhedge and
+    # pubhealthcare, and the rest images and CSV. There is no generate.rb and
+    # no __shared/template.html.erb anywhere in that repo — `git ls-tree`
+    # matches neither "generate" nor "template" at any path. The pipeline this
+    # row has been waiting to restore was the pages themselves, built by hand.
+    #
+    # So the gate below cannot be met by restoring a generator that never
+    # existed. What is left is a decision the owner has to make and an agent
+    # must not: the content is personal and some of it is explicitly sensitive
+    # (consolidated/archived/sensitive_content_archive.md, barnevernet.html,
+    # the __letters/ correspondence), and pub4 is public.
+    expected_target: owner decision — import the pages, or record them as archived in pub
+    current_state: source_measured_no_generator
+    gate: owner_decision
+  - id: privcam_active_decision
+    source: __OLD_BACKUPS/MEGA_ALL_APPS.md
+    expected_target: retired, with the reason in recovery/legacy_manifest.yml
+    current_state: retired
+    gate: active_app_or_retirement_note
+
+checks:
+  file_presence:
+    - MASTER/data/recovery/legacy_manifest.yml
+    - MASTER/data/recovery/plugin_schema_v1.json
+    - MASTER/data/recovery_pub.yml
+
+  # Only genuinely absent paths stay here. Historical DEPLOY/bp paths belonged
+  # to the old layout and the bplans pipeline never had the generator/templates
+  # this ledger once claimed.
+  missing_until_restored:
+    - RECOVERY/pub/ai3/legacy/ai3.rb
+
+agent_prompt: >
+  Before claiming pub4 restored pub, read RESTORE_FROM_PUB.md and this file.
+  For every item in critical_items, prove it is restored, ported, archived, or
+  retired. Do not infer completion from naming similarity.

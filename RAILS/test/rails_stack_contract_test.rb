@@ -15,14 +15,14 @@ class RailsStackContractTest < Minitest::Test
     RAILS/brgen
     RAILS/amber
     RAILS/bsdports
-    RAILS/master_web
+    MASTER/web
   ].freeze
 
   LOCKED_ROOTS = %w[
     RAILS/brgen
     RAILS/amber
     RAILS/bsdports
-    RAILS/master_web
+    MASTER/web
   ].freeze
 
   def test_every_rails_gemfile_tracks_the_current_stack

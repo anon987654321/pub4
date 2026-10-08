@@ -205,8 +205,8 @@ puts "slice #{from}...#{to}: #{pending.size} to capture, #{(to - from) - pending
 
 # The page fetches the table rather than being handed it: two megabytes through
 # Runtime.evaluate is a two-megabyte JavaScript string to parse.
-public_dir = File.expand_path("../../../RAILS/master_web/public", __dir__)
-abort "no RAILS/master_web/public at #{public_dir}" unless File.directory?(public_dir)
+public_dir = File.expand_path("../../../MASTER/web/public", __dir__)
+abort "no MASTER/web/public at #{public_dir}" unless File.directory?(public_dir)
 
 envelope_path = File.join(public_dir, "loop_envelope.bin")
 if File.size?(envelope_path).to_i == frames * FRAME_BYTES

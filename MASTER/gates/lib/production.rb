@@ -252,7 +252,7 @@ module Deploy
     def run_nested_gates
       assets = MasterWebAssetsGate.run
       @result.merge!(assets)
-      puts "RAILS/master_web assets gate passed (#{MasterWebAssetsGate::REQUIRED.size} required assets present)." if assets.outcome == :passed
+      puts "MASTER/web assets gate passed (#{MasterWebAssetsGate::REQUIRED.size} required assets present)." if assets.outcome == :passed
 
       tts = MasterTtsGate.run
       @result.merge!(tts)

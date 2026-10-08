@@ -1,0 +1,30 @@
+// Battery-aware and visibility-aware helpers.
+// Import from shared or per-app application stylesheet.
+// scan: intentional-important — these classes are JS-applied kill switches
+// (.battery-low, .network-save-data); like the reduced-motion reset they must
+// beat whatever the author set, which is the one honest use of !important — a GUARANTEE, not an argument.
+//
+// html classes are toggled by battery-aware / network-aware controllers.
+// css_coverage: ok
+
+.battery-low {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    // scale: ok — a kill switch, not a step on the duration scale
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .decorative-motion {
+    display: none !important;
+  }
+}
+
+.network-slow img,
+.network-save-data img,
+.power-constrained img {
+  content-visibility: auto;
+}

@@ -1,0 +1,20 @@
+# frozen_string_literal: true
+
+class ChannelsInfiniteScrollReflex < Shared::InfiniteScrollReflex
+  renders "tv/channels/row", as: :channel
+
+  private
+
+  def scope
+    scope = Tv::Channel.publicly_visible.includes(:user)
+    if element.dataset["q"].present?
+      term = "%#{ActiveRecord::Base.sanitize_sql_like(element.dataset["q"])}%"
+      channel_ids = scope.where("name LIKE ? OR description LIKE ?", term, term).pluck(:id)
+      video_ids = Tv::Video.publicly_visible.where("title LIKE ? OR description LIKE ?", term, term).pluck(:tv_channel_id)
+      scope = scope.where(id: (channel_ids + video_ids).uniq)
+    else
+      scope = scope.popular
+    end
+    scope
+  end
+end

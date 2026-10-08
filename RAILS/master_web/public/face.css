@@ -411,22 +411,6 @@ body[data-council-persona]::after {
   fill: currentColor;
 }
 
-#mic-dot[data-mic="open"] {
-  color: var(--c-danger);
-}
-
-#mic-dot[data-mic="closed"] {
-  color: var(--c-mic-off, #6b6b6b);
-}
-
-body[data-mic-open="1"] #mic-dot[data-mic="open"] {
-  animation: micPulse 1.4s var(--ease-in-out) infinite;
-}
-
-body[data-mic-open="0"] #mic-dot[data-mic="closed"] {
-  animation: none;
-}
-
 /* Listening: live colour and the pulse. */
 body[data-mode="listening"] #mic-dot {
   color: var(--c-danger);

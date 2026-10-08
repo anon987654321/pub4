@@ -1,0 +1,37 @@
+---
+total: 0
+apps: {}
+# Renamed from `rules:` on 2026-08-23. lint:data_singularity refuses one
+# top-level key defined in two data files, and laws.yml — the law — owns
+# that name. These are per-rule finding ceilings, which is what they say now.
+rule_ceilings:
+- ANTI_DIVITIS
+- ARIA_INTERACTIVE
+- ARIA_LABELS
+- BARE_DIV_WRAPPER
+- BEM_IN_VIEWS
+- BUTTON_OVER_ANCHOR
+- CLAMP_TYPOGRAPHY
+- CLASS_RESTATES_TAG
+- FORM_LABEL
+- ASYNC_STATUS
+- HTML_LANG
+- IMG_ALT
+- LAZY_IMAGES
+- LOGICAL_PROPERTIES
+- MAGIC_COLOR
+- MEASURE_OPTIMUM
+- META_CHARSET
+- MOBILE_FIRST
+- NO_IMPORTANT
+- NO_INLINE_STYLES
+- NO_LONG_TRANSITION
+- PRESENTATIONAL_CLASS_NAME
+- REDUCED_MOTION
+- SEMANTIC_ELEMENTS
+- SINGLE_H1
+- SKIP_TO_MAIN
+- TABINDEX_ABOVE_ZERO
+- TYPOGRAPHIC_EXCELLENCE
+- TYPOGRAPHY_DISCIPLINE
+- UTILITY_CLASS_SOUP

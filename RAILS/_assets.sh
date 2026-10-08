@@ -5,7 +5,7 @@ set -euo pipefail
 
 # master_web_assets_precompile — Propshaft digest manifest + digested files for production face UI.
 master_web_assets_precompile() {
-  local web_root=${1:-${PUB4:-/home/dev/pub4}/RAILS/master_web}
+  local web_root=${1:-${PUB4:-/home/dev/pub4}/MASTER/web}
   [[ -d $web_root ]] || { log_warn "master_web_assets_precompile: missing ${web_root}"; return 0; }
   log "MASTER web assets:precompile"
   (

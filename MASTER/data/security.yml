@@ -18,12 +18,12 @@
 ingress:
   # Cron/webhook triggers → POST /ingress/cron/:name or /ingress/webhook/:name.
   # Set MASTER_INGRESS_TOKEN in env.
-  # Read by RAILS/master_web/app/controllers/ingress_controller.rb.
+  # Read by MASTER/web/app/controllers/ingress_controller.rb.
   rate_limit_per_minute: 30
   window_seconds: 60
 
 # Per-IP request budgets for the web face, each over its own window. Read by
-# RAILS/master_web/app/controllers/application_controller.rb#web_rate_limit.
+# MASTER/web/app/controllers/application_controller.rb#web_rate_limit.
 web_rate_limits:
   chat: { per_window: 30, window_seconds: 60 }
   tts: { per_window: 30, window_seconds: 60 }

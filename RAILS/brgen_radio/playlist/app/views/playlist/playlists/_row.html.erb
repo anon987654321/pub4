@@ -1,0 +1,4 @@
+<%= link_to playlist_path(playlist), class: "radio-library-item playlist-row" do %>
+  <%= tag.strong playlist.name %>
+  <%= t("playlist.queue_stats", tracks: playlist.tracks_count.to_i, plays: playlist.plays_count.to_i) %>
+<% end %>

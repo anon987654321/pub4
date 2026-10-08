@@ -1,0 +1,48 @@
+<% content_for :title, t("dating.home_title") %>
+
+<div class="dating-app">
+  <header class="dating-page-intro">
+    <div>
+      <p><%= t("dating.local") %></p>
+      <h1><%= t("dating.discover") %></h1>
+      <p><%= t("dating.home_blurb") %></p>
+    </div>
+    <nav aria-label="<%= t("dating.home_title") %>">
+      <%= button_to t("dating.rewind"), rewind_path, method: :post, class: "btn btn-ghost" %>
+      <%= link_to t("dating.matches"), matches_path, class: "btn btn-ghost" %>
+      <% if Current.user&.dating_profile.present? %>
+        <%= link_to t("dating.edit_profile"), edit_profile_path, class: "btn btn-ghost" %>
+      <% elsif Current.user.present? %>
+        <%= link_to t("dating.create_profile"), new_profile_path, class: "btn btn-primary" %>
+      <% end %>
+    </nav>
+  </header>
+
+  <section class="dating-discover-panel">
+    <turbo-frame id="dating-discover" data-turbo-action="replace">
+      <section
+        data-controller="swipe"
+        data-swipe-like-url-value="<%= likes_path %>"
+        data-swipe-dislike-url-value="<%= dislikes_path %>"
+        data-action="pointerdown->swipe#pointerDown pointermove->swipe#pointerMove pointerup->swipe#pointerUp pointercancel->swipe#pointerUp touchstart->swipe#pointerDown touchmove->swipe#pointerMove touchend->swipe#pointerUp keydown.left@window->swipe#pass keydown.right@window->swipe#like"
+        class="dating-discover"
+      >
+        <div id="swipe-stack">
+          <% @profiles.each_with_index do |profile, index| %>
+            <%= render "card", profile: profile, index: index %>
+          <% end %>
+        </div>
+        <% if @profiles.empty? %>
+          <%# Soft guests can like/dislike (require_user_session) — do not auth-wall discover. %>
+          <%= render "shared/empty_state",
+                title: t("empty.no_nearby"),
+                body: t("dating.empty_nearby_body"),
+                action: Current.user&.dating_profile.present? ?
+                  { label: t("dating.edit_profile"), path: edit_profile_path } :
+                  { label: t("dating.create_profile"), path: new_profile_path } %>
+        <% end %>
+        <turbo-frame id="dating-next" src="<%= next_path %>" loading="lazy" hidden></turbo-frame>
+      </section>
+    </turbo-frame>
+  </section>
+</div>

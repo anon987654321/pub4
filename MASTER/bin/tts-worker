@@ -16,7 +16,7 @@ Master::Boot::Entrypoint.prepare!(root: File.expand_path("..", __dir__))
 
 ROOT = File.expand_path("..", __dir__)
 # RUBYLIB and BUNDLE_LOCKFILE confirmed live on vm23 (Falcon's own process has both,
-# pointing at RAILS/master_web's vendored bundler-4.0.7/lib and web/Gemfile.lock) -- neither
+# pointing at MASTER/web's vendored bundler-4.0.7/lib and web/Gemfile.lock) -- neither
 # was covered here, so any spawn path that skips full unsetenv_others isolation (see
 # ENV.delete below) still resolves the wrong Gemfile.lock against MASTER's Gemfile.
 BUNDLE_ISOLATION_KEYS = %w[
@@ -28,7 +28,7 @@ BUNDLE_ISOLATION_KEYS = %w[
 # ENV.delete below can't undo damage already done: if the launching process
 # (Falcon's `bundle exec falcon serve`, or any parent shell that ran `bundle
 # exec`) had RUBYOPT=-rbundler/setup in its environment, Ruby's OWN startup
-# already required "bundler/setup" against THAT Gemfile (RAILS/master_web/Gemfile)
+# already required "bundler/setup" against THAT Gemfile (MASTER/web/Gemfile)
 # before this file's first line ever ran -- deleting RUBYOPT here is too
 # late, and the later `require "bundler/setup"` below is a silent no-op
 # against the wrong, already-resolved Definition. Re-exec into a genuinely

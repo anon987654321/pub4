@@ -1,0 +1,344 @@
+nb:
+  actions:
+    copy: "Kopier"
+    copied: "Kopiert"
+    action_failed: "Handlingen kunne ikke lagres. Prøv igjen."
+    views:
+      one: "1 visning"
+      other: "%{count} visninger"
+    copyable_text: "Tekst som skal kopieres"
+    show: "Vis"
+    hide: "Skjul"
+    save: "Lagre"
+    send: "Send"
+    cancel: "Avbryt"
+    delete: "Slett"
+    remove: "Fjern"
+    create: "Opprett"
+    follow: "Følg"
+    unfollow: "Avfølg"
+    like: "Lik"
+    unlike: "Fjern lik"
+    report: "Rapporter"
+    message: "Melding"
+    mark_read: "Merk som lest"
+    confirm_delete: "Slette?"
+    accept: "Godta"
+    block: "Blokker"
+    read_more: "Les mer"
+    read_less: "Vis mindre"
+  comments:
+    placeholder: "Hva tenker du?"
+    submit: "Kommenter"
+    reply_placeholder: "Svar…"
+    reply: "Svar"
+    title: "Kommentarer"
+    back: "Tilbake"
+    empty_body: "Vær den første til å svare — gjester kan kommentere uten konto."
+    write_reply: "Skriv et svar"
+    ai_summary: "Vis AI-sammendrag (via MASTER)"
+    master_summary: "MASTER-sammendrag:"
+
+  chat:
+    # The eight strings the ambient chat widget shows while it is asking for, or
+    # failing to get, a location. They lived only as t(..., default: "English")
+    # fallbacks in the view, so amber and bsdports rendered the whole recovery
+    # path in English over an nb page — and a `default:` also suppresses
+    # raise_on_missing_translations, so nothing could report it.
+    nearby_tab: "nærområdet"
+    status_asking: "Spør om posisjon …"
+    status_denied: "Posisjon er blokkert — du blir i #brgen. Slå på posisjon i nettleseren for #nearby."
+    status_timeout: "Posisjonen tok for lang tid — du blir i #brgen."
+    status_unavailable: "Posisjon er ikke tilgjengelig — du blir i #brgen."
+    status_blocked: "Denne siden får ikke lese posisjon — #brgen virker fortsatt."
+    status_server: "Kunne ikke lagre posisjonen — prøv igjen."
+    status_network: "Nettverksfeil da posisjonen skulle lagres — prøv igjen."
+    title: "chat"
+    local_room: "lokalt rom"
+    actions_label: "Chatthandlinger"
+    open_messenger: "Åpne Messenger"
+    private_messages_lead: "For private samtaler, åpne Messenger."
+    close: "Lukk"
+    loading: "Laster…"
+    dm_placeholder: "Send en melding…"
+    message_label: "Melding"
+    anon: "anon"
+    open_brgen: "\u00C5pne Brgen-chat"
+    open_brgen_channel: "\u00C5pne #brgen"
+    on_brgen: "Chat p\u00E5 Brgen"
+    lobby_body: "Bylobbyen fungerer uten GPS."
+    open_inbox: "\u00C5pne innboksen for \u00E5 lese og sende meldinger i denne appen."
+    open_messages: "\u00C5pne meldinger"
+    sign_in_inbox: "Logg inn for innboks, eller chat anonymt p\u00E5 Brgen."
+    sending: "sender\u2026"
+    send_failed: "ikke sendt \u2014 trykk for \u00E5 pr\u00F8ve igjen"
+  account:
+    deletion_scheduled: "Sletting planlagt %{on}."
+    cancel_deletion: "Avbryt sletting"
+    export: "Eksporter data"
+    two_factor: "Tofaktoroppsett"
+    delete: "Slett konto"
+    delete_confirm: "Slette kontoen om 30 dager?"
+  auth:
+    toggle_password_visibility: "Vis eller skjul passordet"
+    enable_2fa: "Slå på 2FA"
+    verification_code: "Verifiseringskode"
+    # shared/_oauth_links renders in all three apps and reads these first,
+    # falling back to nav.oauth_* and then to English. Only brgen carries
+    # nav.oauth_*, so amber and bsdports showed the English sign-in buttons.
+    options: "Innloggingsvalg"
+    or_email: "eller e-post"
+    with_github: "Logg inn med GitHub"
+    with_google: "Logg inn med Google"
+    with_facebook: "Logg inn med Facebook"
+    with_snapchat: "Logg inn med Snapchat"
+    with_vipps: "Logg inn med Vipps"
+    two_factor_lead: "Skann QR-koden eller skriv inn hemmeligheten i autentiseringsappen din."
+    magic_link: "Send meg en innloggingslenke"
+  status:
+    updating_results: "Oppdaterer resultater…"
+    results_updated: "Resultater oppdatert"
+    search_failed: "Søket kunne ikke fullføres"
+    saving: "Lagrer…"
+    saved: "Lagret"
+    saved_locally: "Lagret lokalt"
+    restored: "Gjenopprettet"
+    loading_more: "Laster mer…"
+    loading_results: "Laster resultater…"
+  theme:
+    region: "Tema"
+    toggle: "Bytt til lyst tema"
+  master:
+    title: "AI"
+    open: "Åpne"
+    open_full: "Åpne AI"
+    embed_heading: "AI-assistent"
+  messages:
+    # The day-break separator in a conversation log. Rendered by
+    # conversation_log_controller, which cannot reach I18n, so the strings are
+    # handed to it as Stimulus values.
+    today: I dag
+    yesterday: I går
+    # shared/_action_bar renders on every host app but these two keys only
+    # existed in brgen's own locale, so amber shipped "translation missing" as
+    # the aria-label on its reply and share buttons.
+    reply: "Svar"
+    title: "Meldinger"
+    choose_recipient: "Velg mottaker"
+    to: "Til %{name}"
+    from: "Fra %{name}"
+    unread: "var ulest"
+    read: "lest"
+    inbox_clear: "Innboksen er tom."
+    unread_count:
+      one: "%{count} ulest melding — merkes som lest når du åpner siden."
+      other: "%{count} uleste meldinger — merkes som lest når du åpner siden."
+    empty_body: "Ny melding, og søk opp den du vil skrive til."
+    connections: "Forbindelser"
+  newsletter:
+    email_placeholder: "din@epost.com"
+    heading: "Bybrevet"
+    blurb: "Én e-post i uken. Kuratert, ikke rotete. Meld deg av når du vil."
+    marketing_opt_in: "Send meg partnertilbud og sponsede utvalg (valgfritt)"
+    subscribe: "Abonner"
+    unavailable: "Nyhetsbrevet åpner når e-postrutene er satt opp for denne appen."
+    unsubscribe: "Meld deg av"
+    affiliate_disclosure: "Noen lenker er affiliatelenker. Vi kan tjene provisjon."
+  # Plural, and separate from post: — shared/_action_bar asks for posts.share.
+  posts:
+    share: "Del"
+
+  post:
+    submit: "Post"
+    share_look: "Del et look"
+    body_label: "Hva har du på deg?"
+    body_placeholder: "Del antrekket ditt…"
+    tag_outfit: "Merk et antrekk (valgfritt)"
+    tag_item: "Merk et plagg (valgfritt)"
+    outfit_label: "Antrekk"
+    item_label: "Plagg"
+    like_count: "♥ %{count}"
+    by_author: "Innlegg av %{name}"
+    comment_aria: "Kommentar, %{count} kommentarer"
+    repost: "Repost"
+    vote: "Stem"
+    vote_aria: "Stem, poeng %{score}"
+    more_actions: "Flere handlinger"
+    copy_link: "Kopier lenke"
+    view: "Se innlegg"
+    share: "Del innlegg"
+    share_short: "Del"
+    auth_prompt_title: "Bli med i samtalen"
+    auth_prompt_body: "Logg inn for å samle aktivitet, følgere og lagrede innlegg på én konto."
+    auth_prompt_note: "Du kan fortsatt lese uten konto."
+    auth_prompt_trigger: "Bli med"
+  reactions:
+    aria: "Reager med %{kind}"
+    chip_aria: "%{count} %{kind}"
+    chip_mine_aria: "%{count} %{kind} — fjern din"
+    kinds:
+      like: "Liker"
+      love: "Elsker"
+      laugh: "Ler"
+      wow: "Wow"
+      sad: "Trist"
+      angry: "Sint"
+      local: "Lokalt"
+  a11y:
+    skip_to_content: "Hopp til hovedinnhold"
+  # Engine-owned keys. Namespaced under shared: so an app can keep its own
+  # flash: block without colliding, and because the call sites say
+  # t("shared.flash.…") — appended at top level they resolved to nothing at all.
+  shared:
+    advertisement: "Annonse"
+    reported: "Rapportert"
+    view: "Vis"
+    read_more: "Les mer"
+    read_less: "Vis mindre"
+    back: "Tilbake"
+    edit: "Rediger"
+    delete: "Slett"
+    confirm: "Er du sikker?"
+    # Norwegian marks a past span on both sides — "for … siden" — so a relative
+    # time cannot be built by appending a suffix to time_ago_in_words. Fourteen
+    # views did exactly that and every post page read "rundt 2 måneder ago".
+    # Rendered through Shared::UiHelper#time_ago; %{time} is the localised span.
+    time_ago: "for %{time} siden"
+    # Flash messages raised by the engine's own controllers and concerns. These were
+    # 30 hardcoded English strings until 2026-08-11, shown over an nb UI in all three
+    # apps at once — the shared engine was the largest single block of the 169 the
+    # controller_flash lint counts, and the one the original hand count missed.
+    flash:
+      account_deletion_scheduled: "Kontoen slettes om 30 dager. Eksport sendes på e-post hvis det er satt opp."
+      account_deletion_cancelled: "Sletting av kontoen er avbrutt."
+      account_scheduled_for_deletion: "Denne kontoen er satt opp for sletting."
+      sign_in_required: "Logg inn for å fortsette."
+      magic_link_sent: "Finnes det en konto på den adressen, er innloggingslenken på vei."
+      magic_link_invalid: "Innloggingslenken er utløpt eller allerede brukt."
+      rate_limited: "Prøv igjen senere."
+      credentials_invalid: "Prøv en annen e-postadresse eller et annet passord."
+      password_reset_sent: "Instruksjoner for å tilbakestille passordet er sendt (hvis det finnes en bruker med den e-postadressen)."
+      password_reset_done: "Passordet er tilbakestilt."
+      passwords_did_not_match: "Passordene var ikke like."
+      password_reset_link_invalid: "Lenken for å tilbakestille passordet er ugyldig eller utløpt."
+      not_authorized: "Du har ikke tilgang til dette."
+      two_factor_required: "Tofaktorbekreftelse kreves."
+      two_factor_enabled: "Tofaktorautentisering er slått på."
+      two_factor_disabled: "Tofaktorautentisering er slått av."
+      invalid_code: "Ugyldig kode."
+      verified: "Bekreftet."
+      oauth_failed: "Innlogging med OAuth mislyktes."
+      signed_in_with: "Logget inn med %{provider}."
+      signed_in_via_master: "Logget inn via MASTER."
+      sso_link_invalid: "SSO-lenken er utløpt eller ugyldig."
+      sso_session_failed: "Kunne ikke opprette sesjon for %{email}."
+      reaction_added: "Reaksjon lagt til."
+      reaction_removed: "Reaksjon fjernet."
+      sent_for_review: "Sendt til vurdering."
+    errors_prevented:
+      one: "%{count} feil hindret lagringen"
+      other: "%{count} feil hindret lagringen"
+  # Chrome these three apps share. Only brgen carried nb entries for them, so
+  # amber and bsdports rendered the English t() defaults over an nb page.
+  legal:
+    site_id_label: "TradeDoubler Site ID"
+    contact_label: "Kontakt"
+    affiliate_disclosure: "Noen lenker er affiliatelenker. Vi kan tjene provisjon uten ekstra kostnad for deg."
+    partner_programs: "Partnerprogrammer: %{list}."
+    aria: "Juridisk og informasjon"
+    privacy: "Personvern"
+    terms: "Vilkår"
+    cookies: "Informasjonskapsler"
+    cookie_settings: "Cookie-innstillinger"
+    accept_terms: "Jeg godtar vilkårene og personvernerklæringen"
+    accept_age: "Jeg er minst 16 år"
+    dating_age: "Jeg er minst 18 år. Dating er bare for voksne."
+  mailer:
+    password_reset_subject: "Tilbakestill passordet"
+    verify_email_subject: "Bekreft e-postadressen"
+    sign_in_link_subject: "Innloggingslenke"
+    sign_in_link_greeting: "Hei %{name},"
+    sign_in_link_action: "Logg inn"
+    sign_in_link_expiry: "Lenken virker én gang og utløper om %{minutes} minutter."
+    sign_in_link_ignore: "Har du ikke bedt om dette, kan du se bort fra e-posten — ingenting er endret."
+  pages:
+    account: "Konto"
+    two_factor: "Tofaktorautentisering"
+  search:
+    query: "Søkeord"
+    submit: "Søk"
+    results_for:
+      one: "%{count} treff for «%{query}»"
+      other: "%{count} treff for «%{query}»"
+    no_exact_matches: "Ingen eksakte treff. Prøv:"
+  # The service worker's offline shell. Rendered by all three apps.
+  offline:
+    badge: "Frakoblet"
+    title: "%{app} er frakoblet"
+    lead: "Vi viser det sist mellomlagrede innholdet fra denne enheten når det er tilgjengelig."
+    retry: "Prøv igjen"
+    loading: "Laster mellomlagret innhold…"
+    list_label: "Liste over frakoblet innhold"
+  # Shared::AttachmentLimits, which every model inherits through ApplicationRecord.
+  errors:
+    messages:
+      file_too_large: "er for stor (maks %{count} MB)"
+      file_type_not_allowed: "har en filtype som ikke er tillatt her"
+  # shared/_link_embed: the player facade on a post, and the link to the provider.
+  link_embed:
+    play: "Spill av «%{title}» fra %{provider}"
+    open: "Åpne på %{provider}"
+
+
+  cookie_consent:
+    kicker: "Personvernvalg"
+    title: "Informasjonskapsler og lignende teknologier"
+    body: "Vi bruker strengt nødvendig lagring for at tjenesten skal fungere. Valgfri analyse og partnerannonsering er av før du velger."
+    accept: "Godta valgfrie"
+    reject: "Avvis valgfrie"
+    manage: "Tilpass valg"
+    save: "Lagre valg"
+    policy: "Les cookie-erklæringen"
+    settings_title: "Cookie-valg"
+    settings_body: "Velg hvilke valgfrie formål du tillater. Nødvendig lagring er alltid på."
+    purposes:
+      necessary:
+        title: "Nødvendig lagring"
+        body: "Påkrevd for sikkerhet, økter og grunnleggende funksjoner. Det kan ikke slås av her."
+      analytics:
+        title: "Statistikk"
+        body: "Utvalgt ytelsesmåling, inkludert web-vitals-data."
+      advertising:
+        title: "Partnerannonsering"
+        body: "Affiliate- og annonseringsteknologi, inkludert TradeDoubler når det er konfigurert."
+  onboarding:
+    skip: "Hopp over introduksjonen"
+    enter: "Utforsk"
+    brgen:
+      kicker: "En liten guide til Brgen"
+      title: "%{city}, akkurat nå."
+      lead: "En lokal forside for deg som bor her, er innom, eller bare vil se hva som skjer."
+      steps:
+        1:
+          title: "Se det nære"
+          body: "Lokale innlegg, fellesskap og steder holdes nær byen de hører til."
+        2:
+          title: "Bli med"
+          body: "Post, stem, svar og del når du har noe verdt å legge til."
+        3:
+          title: "Hold kontakten"
+          body: "Nærsamtaler og markedsplassen samler det nyttige lokale på ett sted."
+    amber:
+      kicker: "En liten guide til Amber"
+      title: "Kle deg for virkeligheten."
+      lead: "En garderobe, lookbook og social feed bygget rundt klærne du faktisk bruker."
+      steps:
+        1:
+          title: "Ta vare på garderoben"
+          body: "Lagre det du eier og gjør de nyttige detaljene søkbare."
+        2:
+          title: "Bygg antrekk"
+          body: "Gjør enkeltplagg om til antrekk, planer og kombinasjoner du kan bruke igjen."
+        3:
+          title: "Se hva folk bruker"
+          body: "Følg skapere, del looks og bruk samme meldingsløsning som Brgen."

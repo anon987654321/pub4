@@ -5945,7 +5945,7 @@ body.vertical-marketplace :is(.also-nearby h2, .section-heading--md) {
    element means its intrinsic size, the drawing buffer. That buffer is
    capped at BUFFER_MAX_W 960 for fill rate, so without an explicit size the
    tunnel paints a 960px box in the corner of a wide screen.
-   RAILS/master_web/public/face.css sizes its own full-bleed canvas the same way. */
+   MASTER/web/public/face.css sizes its own full-bleed canvas the same way. */
 display: block;
   width: 100dvw;
   height: 100dvh;

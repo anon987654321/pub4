@@ -189,105 +189,6 @@ module DillaMusicalGrammar
   end
 end
 
-module DillaBeautyEngine
-  ARC = [
-    { name: :intimate, density: 0.32, tension: 0.14, foreground: :harmony, void: 0.36, response: :question },
-    { name: :pocket, density: 0.54, tension: 0.28, foreground: :drums, void: 0.18, response: :answer },
-    { name: :statement, density: 0.62, tension: 0.46, foreground: :melody, void: 0.12, response: :question },
-    { name: :expansion, density: 0.72, tension: 0.64, foreground: :counterpoint, void: 0.08, response: :answer },
-    { name: :peak, density: 0.82, tension: 0.82, foreground: :rhythm, void: 0.04, response: :question },
-    { name: :subtraction, density: 0.42, tension: 0.58, foreground: :space, void: 0.48, response: :answer },
-    { name: :afterglow, density: 0.24, tension: 0.30, foreground: :upper_voice, void: 0.58, response: :question },
-    { name: :return, density: 0.48, tension: 0.22, foreground: :groove, void: 0.22, response: :answer }
-  ].freeze
-  ROLE_WEIGHT = { kick_anchor: 0.88, snare: 0.94, clap: 0.60, hat: 0.72, ghost: 0.46, perc: 0.42 }.freeze
-
-  module_function
-
-  def profile(bar)
-    ARC.fetch(bar % ARC.length).merge(bar: bar, phrase: bar / ARC.length)
-  end
-
-  def stable_unit(bar, step, role, salt = 0)
-    role_sum = role.to_s.bytes.sum
-    value = ((bar + 11) * 1_103_515_245) ^
-            ((step + 17) * 12_345) ^
-            ((role_sum + 31 + salt) * 97_531)
-    ((value & 0x7fffffff) % 10_000) / 10_000.0
-  end
-
-  def keep_hit?(role, bar, step, required: false, salt: 0)
-    return true if required
-    row = profile(bar)
-    base = ROLE_WEIGHT.fetch(role, 0.7)
-    story = 0.72 + (row[:density] * 0.42)
-    stable_unit(bar, step, role, salt) < (base * story).clamp(0.18, 0.96)
-  end
-
-  def timing_ms(role, bar, step, beat, swing: 57, humanize: 3)
-    row = profile(bar)
-    half_ms = beat.to_f * 500.0
-    groove_swing = [swing.to_f, 50.0].max - 50.0
-    swing_ms = (groove_swing / 50.0) * half_ms * 0.22
-    trajectory = [0.0, 0.7, 2.8, -1.2].fetch(bar % 4)
-    role_bias = case role
-                when :kick_anchor then -0.8
-                when :snare then 4.5 + trajectory
-                when :ghost then 1.5 + (row[:tension] * 1.8)
-                when :clap then 3.5 + trajectory
-                when :hat_up then swing_ms
-                when :hat_down then -0.8
-                when :perc then -0.8 + (row[:tension] * 1.4)
-                else 0.0
-                end
-    deterministic = (stable_unit(bar, step, role, 211) - 0.5) * humanize.to_f
-    role_bias + (step.odd? ? swing_ms * (role == :hat_up ? 1.0 : 0.15) : 0.0) + deterministic
-  end
-
-  def lead_weight(bar)
-    row = profile(bar)
-    value = 0.72 + (row[:density] * 0.28)
-    value *= 0.62 if row[:response] == :answer
-    value *= 0.54 if row[:foreground] == :space
-    value
-  end
-
-  def drum_weight(role, bar)
-    row = profile(bar)
-    weight = 0.64 + (row[:density] * 0.42)
-    weight *= 0.58 if row[:foreground] == :space && role != :kick_anchor
-    weight *= 0.78 if row[:response] == :answer && role == :hat
-    weight
-  end
-
-  def pad_mask(notes, bar)
-    return notes if notes.length <= 2
-    case profile(bar)[:name]
-    when :subtraction then notes.last(2)
-    when :afterglow then notes.last(3)
-    else notes
-    end
-  end
-
-  def contrary_candidate(candidates, previous, bass_previous)
-    return candidates.first if candidates.empty? || previous.nil? || bass_previous.nil?
-    bass_direction = previous - bass_previous
-    return candidates.min_by { |m| (m - previous).abs } if bass_direction.zero?
-    pool = candidates.sort_by { |m| (m - previous).abs }
-    contrary = pool.select { |m| (m - previous) * bass_direction < 0 }
-    contrary.first || pool.first
-  end
-
-  def bass_cell(root, target, bar)
-    return [] unless target
-    direction = target <=> root
-    return [root + (direction.positive? ? 7 : -5)] if direction.zero?
-    passing = root + (direction.positive? ? 2 : -2)
-    return [passing, target + (direction.positive? ? -1 : 1)] if bar % 4 == 3
-    [root + (direction.positive? ? 7 : -5), target + (direction.positive? ? -1 : 1)]
-  end
-end
-
 module Livesets
   D = File.expand_path("..", __dir__)
   # Homebrew's build where it is installed, whatever PATH resolves otherwise.
@@ -3383,9 +3284,6 @@ SHOWCASE_MODES = {
       loop do
         clock = frame.to_f / @rate
         @inbox.each(clock) { |command| command["stop"] ? stop! : score.command(command, clock) }
-        if seconds && score.respond_to?(:prepare_ending!)
-          score.prepare_ending!(seconds - clock)
-        end
         ending ||= clock if @stopping || score.finished?(clock) || (seconds && clock >= seconds)
         @stopped_at ||= clock if @stopping
         score.schedule(self, clock) unless ending
@@ -3478,12 +3376,6 @@ SHOWCASE_MODES = {
       @curated_index = 0
       @melody_step = 0
       @last_melody = nil
-      @motif_memory = []
-      @previous_bass_note = nil
-      @last_bass_note = nil
-      @suspension_note = nil
-      @beauty_bar = 0
-      @beauty_ending = false
 
       selected_bpm = bpm || (LiveSynth.showcase? && ENV["DILLA_SHOWCASE_BPM"])
       if selected_bpm
@@ -3549,14 +3441,6 @@ SHOWCASE_MODES = {
     end
 
     def finished?(_clock) = false
-
-    def prepare_ending!(remaining)
-      return if @beauty_ending
-      return unless remaining && remaining <= 20.0
-
-      @beauty_ending = true
-      LiveSynth.log("arrangement -> afterglow")
-    end
 
     # The next chord is written a second ahead of the playhead.
     def schedule(stage, clock)
@@ -3632,21 +3516,8 @@ SHOWCASE_MODES = {
       @lead_chord_tones = @voicing.flat_map { |midi| [midi + 12, midi + 24] }.uniq
       @mind.observe_harmony(name || "#{NAMES[(@key + degree) % 12]}#{quality}", @lead_chord_pcs)
 
-      @beauty_bar = (@next_at / (4.0 * @beat)).round
-      @previous_bass_note = @last_bass_note
-      @suspension_note = if @last_melody && @lead_scale_pcs.include?(@last_melody % 12)
-                           @last_melody
-                         end
-      @kit.context!(
-        root_pc: bass % 12,
-        chord_pcs: @lead_chord_pcs,
-        scale_pcs: @lead_scale_pcs,
-        melody_target: @last_melody,
-        tension: DillaBeautyEngine.profile(@beauty_bar)[:tension],
-        ending: @beauty_ending
-      )
       pad = pad_spec
-      voicing_for_bar.each { |midi| stage.note(midi, pad, @next_at, length - 0.05, @c["pad_gain"], :pad) }
+      showcase_voicing.each { |midi| stage.note(midi, pad, @next_at, length - 0.05, @c["pad_gain"], :pad) }
       bass!(stage, bass, bars)
       @kit.write!(@next_at, length) if @drums
       lead!(stage, length) if @lead_on
@@ -3658,17 +3529,12 @@ SHOWCASE_MODES = {
     end
 
     def showcase_voicing
-      notes = @voicing
-      return notes unless LiveSynth.showcase?
+      return @voicing unless LiveSynth.showcase?
 
-      lowest = notes.each_index.min_by { |index| notes[index] }
-      notes.each_with_index.map do |midi, index|
+      lowest = @voicing.each_index.min_by { |index| @voicing[index] }
+      @voicing.each_with_index.map do |midi, index|
         index == lowest && midi < LiveSynth::SHOWCASE_PAD_FLOOR ? midi + 12 : midi
       end
-    end
-
-    def voicing_for_bar
-      DillaBeautyEngine.pad_mask(showcase_voicing, @beauty_bar)
     end
 
     def reference_chord!
@@ -3694,15 +3560,7 @@ SHOWCASE_MODES = {
 
     def next_chord
       if @curated_progression
-        source_index = @curated_index % @curated_progression.length
-        degree, quality = @curated_progression.fetch(source_index)
-        # Once per sixteen chords, let a single chromatic colour pass through
-        # the progression. It is the beautiful wrong chord: brief, intentional,
-        # and resolved by returning to the original vocabulary.
-        if (@curated_index % 16) == 7
-          degree = (degree + 1) % 12
-          quality = "maj9"
-        end
+        degree, quality = @curated_progression.fetch(@curated_index % @curated_progression.length)
         @curated_index += 1
         symbol = "#{NAMES[(@key + degree) % 12]}#{quality}"
         return [degree, quality, symbol]
@@ -3725,7 +3583,6 @@ SHOWCASE_MODES = {
     # chord its lower shell: one restrained root, then the occasional answer.
     def bass!(stage, root, bars)
       spec = Patches.spec(@bass)
-      @last_bass_note = root
       late = @c["bass_late_seconds"]
       at = @next_at
       if LiveSynth.showcase?
@@ -3733,32 +3590,26 @@ SHOWCASE_MODES = {
 
         gain = @bass_gain || LiveSynth::SHOWCASE_BASS_GAIN
         showcase_root = root + 12
-        held = @beauty_ending ? 0.28 * @beat : 0.10 * @beat
-        stage.note(showcase_root, spec, at + 0.028, held, gain, :bass)
-        return unless bars == 2 && !@beauty_ending && @rng.rand < 0.14
+        stage.note(showcase_root, spec, at + 0.028, 0.10 * @beat, gain, :bass)
+        return unless bars == 2 && @rng.rand < 0.05
 
         stage.note(showcase_root, spec, at + (4 * @beat) + 0.032, 0.08 * @beat, gain * 0.20, :bass)
         return
       end
 
-      stage.note(root, spec, at + 0.01, @beauty_ending ? 1.9 * @beat : 1.3 * @beat, @beauty_ending ? 0.34 : 0.5, :bass)
-      unless @beauty_ending
-        stage.note(root, spec, at + (1.5 * @beat) + late, 0.45 * @beat, 0.38, :bass) if @rng.rand < 0.7
-      end
+      stage.note(root, spec, at + 0.01, 1.3 * @beat, 0.5, :bass)
+      stage.note(root, spec, at + (1.5 * @beat) + late, 0.45 * @beat, 0.38, :bass) if @rng.rand < 0.7
 
-      pedal_point = (@beauty_bar % 16).between?(4, 6)
-      target_pc = pedal_point ? (root % 12) : next_root_pc
-      if target_pc && @rng.rand < 0.82
+      target_pc = next_root_pc
+      if target_pc && @rng.rand < 0.78
         target = 36 + target_pc
         target += 12 if target < 38
-        DillaBeautyEngine.bass_cell(root, target, @beauty_bar).each_with_index do |note, index|
-          stage.note(note, spec, at + ((2.35 + (index * 0.28)) * @beat) + late,
-                     (index.zero? ? 0.34 : 0.24) * @beat, 0.26 - (index * 0.04), :bass)
-        end
-      elsif @rng.rand < 0.48
+        approach = target + (target > root ? -1 : 1)
+        stage.note(approach, spec, at + (2.5 * @beat) + late, 0.36 * @beat, 0.30, :bass)
+      elsif @rng.rand < 0.5
         stage.note(root + [7, 12, 10].sample(random: @rng), spec, at + (2.5 * @beat) + late, 0.4 * @beat, 0.32, :bass)
       end
-      return if @beauty_ending || bars != 2
+      return unless bars == 2
 
       stage.note(root, spec, at + (4 * @beat) + 0.01, 1.2 * @beat, 0.46, :bass)
       stage.note(root + 7, spec, at + (5.5 * @beat) + late, 0.5 * @beat, 0.34, :bass) if @rng.rand < 0.6
@@ -3780,7 +3631,6 @@ SHOWCASE_MODES = {
     end
 
     def lead!(stage, length)
-      return patch_phrase!(stage, length) if @beauty_ending
       return fugue_phrase!(stage, length) if @fugue_enabled
       @c.fetch("fm").key?(@lead) ? fm_phrase!(stage, length) : patch_phrase!(stage, length)
     end
@@ -3836,14 +3686,6 @@ SHOWCASE_MODES = {
       composed_default = LiveSynth.showcase? ? "1" : "0"
       if ENV.fetch("DILLA_COMPOSED_MELODY", composed_default) != "0"
         tension = 0.22 + ((@melody_step % 16) / 15.0) * 0.68
-        if @last_melody && (@melody_step % 6).zero? &&
-           @lead_scale_pcs.include?(@last_melody % 12)
-          @motif_memory << @last_melody
-          @motif_memory.shift while @motif_memory.length > 12
-          @melody_step += 1
-          return @mind.accept_note(@last_melody)
-        end
-
         chosen = DillaMusicalGrammar.motif_target(
           scale_pcs: @lead_scale_pcs,
           chord_pcs: @lead_chord_pcs,
@@ -3852,12 +3694,6 @@ SHOWCASE_MODES = {
           step: @melody_step,
           tension: tension
         )
-        if @previous_bass_note
-          candidates = lead_tones(range)
-          chosen = DillaBeautyEngine.contrary_candidate(candidates, previous, @previous_bass_note)
-        end
-        @motif_memory << chosen
-        @motif_memory.shift while @motif_memory.length > 12
         @melody_step += 1
         @last_melody = chosen
         return @mind.accept_note(chosen)
@@ -3885,7 +3721,6 @@ SHOWCASE_MODES = {
 
     # FM: scale-aware and chord-tone weighted, in the current harmony.
     def fm_phrase!(stage, length)
-      length = [length, @beat * 0.9].min if @beauty_ending
       phrase = @c.fetch("fm_phrase")
       preset = @c.fetch("fm").fetch(@lead).transform_keys(&:to_sym)
       range = phrase.fetch("range").map(&:to_i)
@@ -3899,12 +3734,9 @@ SHOWCASE_MODES = {
         duration_beats = melody_step_duration(phrase["steps"])
         duration = duration_beats * @beat
         duration = [duration, length - (spot - @next_at) - 0.18 * @beat].min
-        lead_probability = @mind.lead_probability(phrase["odds"]) * DillaBeautyEngine.lead_weight(@beauty_bar)
-        if duration > 0.08 * @beat && @rng.rand < lead_probability
-          gain = phrase["gain"]
-          gain *= 0.58 if DillaBeautyEngine.profile(@beauty_bar)[:foreground] == :space
+        if duration > 0.08 * @beat && @rng.rand < @mind.lead_probability(phrase["odds"])
           events << DillaMidiEffects::Event.new(
-            last, spot, duration * phrase["held"], gain, :lead
+            last, spot, duration * phrase["held"], phrase["gain"], :lead
           )
         end
         spot += [duration, 0.08 * @beat].max
@@ -3915,7 +3747,6 @@ SHOWCASE_MODES = {
     # A patch lead uses the same chord-scale rules and never carries a long
     # note into the next harmony.
     def patch_phrase!(stage, length)
-      length = [length, @beat * 0.9].min if @beauty_ending
       range = @c["lead_range"].map(&:to_i)
       tones = lead_tones(range)
       spot = @next_at + ((@rng.rand < 0.5 ? 0.5 : 1.0) * @beat)
@@ -3928,21 +3759,10 @@ SHOWCASE_MODES = {
         duration = duration_beats * @beat
         duration = [duration, length - (spot - @next_at) - 0.14 * @beat].min
         swing = ((spot - @next_at) / (@beat / 2)).round.odd? ? @c["lead_swing_seconds"] : 0.0
-        lead_probability = @mind.lead_probability(@c["lead_odds"]) * DillaBeautyEngine.lead_weight(@beauty_bar)
-        if duration > 0.08 * @beat && @rng.rand < lead_probability
-          gain = @c["lead_gain"]
-          gain *= 0.62 if DillaBeautyEngine.profile(@beauty_bar)[:foreground] == :space
-          event_at = spot + swing
+        if duration > 0.08 * @beat && @rng.rand < @mind.lead_probability(@c["lead_odds"])
           events << DillaMidiEffects::Event.new(
-            last, event_at, duration * 0.82, gain, :lead
+            last, spot + swing, duration * 0.82, @c["lead_gain"], :lead
           )
-          # Delayed imitation is a quiet answer to the call, never a second
-          # lead line at equal weight.
-          if !@beauty_ending && (@beauty_bar % 8) == 3 && @rng.rand < 0.42
-            events << DillaMidiEffects::Event.new(
-              last, event_at + @beat, duration * 0.46, gain * 0.34, :lead
-            )
-          end
         end
         spot += [duration, 0.08 * @beat].max
       end
@@ -3950,8 +3770,6 @@ SHOWCASE_MODES = {
     end
 
     def fugue_phrase!(stage, length)
-      return patch_phrase!(stage, length) if @beauty_ending
-
       range = @c.fetch("lead_range").map(&:to_i)
       subject = DillaMusicalGrammar.fugue_subject(@lead_scale_pcs, @lead_chord_pcs, range:)
       answer = DillaMusicalGrammar.tonal_answer(subject, scale_pcs: @lead_scale_pcs, range:)
@@ -4086,30 +3904,6 @@ SHOWCASE_MODES = {
       @perc_noise = Random.new(rng.seed ^ 0xC0FFEE)
       @low = 0.0
       @band = 0.0
-      @context = {
-        root_pc: 0,
-        chord_pcs: [],
-        scale_pcs: [],
-        melody_target: nil,
-        tension: 0.25,
-        ending: false
-      }
-      @kick_pitch_ratio = 1.0
-      @body_hz_factor = 1.0
-    end
-
-    def context!(root_pc:, chord_pcs:, scale_pcs:, melody_target:, tension:, ending:)
-      @context = {
-        root_pc: root_pc.to_i % 12,
-        chord_pcs: Array(chord_pcs),
-        scale_pcs: Array(scale_pcs),
-        melody_target: melody_target,
-        tension: tension.to_f,
-        ending: ending == true
-      }
-      signed_pc = ((@context[:root_pc] + 6) % 12) - 6
-      @kick_pitch_ratio = 2.0**(signed_pc / 24.0)
-      @body_hz_factor = [0.94, 1.0, 1.06].fetch(@context[:root_pc] % 3)
     end
 
     def write!(start, length)
@@ -4133,82 +3927,49 @@ SHOWCASE_MODES = {
       base = Array(steps).map(&:to_i).uniq.select { |step| step.between?(0, 15) }
       bars.times do |bar|
         phrase_bar = ((start / (4.0 * @beat)).round + bar)
-        profile = DillaBeautyEngine.profile(phrase_bar)
-        variant = phrase_bar % 4
+        variant = phrase_bar % 4 # statement, repeat, mutation, answer
         phrase_steps = base.dup
 
-        if profile[:name] == :subtraction || profile[:name] == :afterglow
-          phrase_steps = phrase_steps.select do |step|
-            DillaBeautyEngine.keep_hit?(role, phrase_bar, step,
-                                         required: role == :snare && [4, 12].include?(step), salt: 17)
-          end
-        end
-
-        if variant == 2 && profile[:density] > 0.45
+        if variant == 2
           case role
           when :kick_anchor
-            extra = ([1, 3, 7, 9, 11, 15] - phrase_steps).find do |step|
-              DillaBeautyEngine.keep_hit?(role, phrase_bar, step, salt: 23)
-            end
+            extra = ([1, 3, 7, 9, 11, 15] - phrase_steps).first
             phrase_steps << extra if extra
           when :hat
             phrase_steps = phrase_steps.reject.with_index { |_step, index| index.odd? && index == phrase_steps.length - 1 }
           when :ghost, :perc
-            extra = ([2, 5, 9, 13] - phrase_steps).find do |step|
-              DillaBeautyEngine.keep_hit?(role, phrase_bar, step, salt: 29)
-            end
+            extra = ([2, 5, 9, 13] - phrase_steps).first
             phrase_steps << extra if extra
           end
         elsif variant == 3
           case role
           when :hat
-            phrase_steps = phrase_steps.first([phrase_steps.length - 3, 1].max)
+            phrase_steps = phrase_steps.first([phrase_steps.length - 2, 1].max)
           when :perc, :ghost
-            phrase_steps = phrase_steps.first([phrase_steps.length - 2, 0].max)
-          end
-        end
-
-        if role == :perc && phrase_bar % 8 == 6 && profile[:tension] > 0.45
-          impossible = (phrase_bar * 3 + 5) % 16
-          phrase_steps << impossible unless phrase_steps.include?(impossible)
-        end
-
-        if @context[:ending]
-          phrase_steps = phrase_steps.select do |step|
-            role == :kick_anchor ? step == 0 : (role == :snare && step == 12)
+            phrase_steps = phrase_steps.first([phrase_steps.length - 1, 0].max)
           end
         end
 
         phrase_steps.each do |step|
           next unless step.between?(0, 15)
-          required = (role == :kick_anchor && step == 0) ||
-                     (role == :snare && [4, 12].include?(step))
-          next unless DillaBeautyEngine.keep_hit?(role, phrase_bar, step, required:, salt: 31)
-
           at = start + (bar * 4.0 * @beat) + (step * step_seconds)
           next if at >= start + length
           timing_role = case role
                          when :hat then step.even? ? :hat_down : :hat_up
-                         when :clap then :clap
-                         when :perc then :perc
+                         when :clap then :snare
+                         when :perc then :ghost
                          else role
                          end
-          offset = dilla_timing_ms(timing_role, phrase_bar, step, @grid[:swing], @grid[:humanize]) / 1000.0
-          phrase_gain = gain * DillaBeautyEngine.drum_weight(role, phrase_bar)
-          phrase_gain *= case variant
-                         when 2 then 1.05
-                         when 3 then 0.84
-                         else 1.0
-                         end
+          offset = dilla_timing_ms(timing_role, phrase_bar, step, nil, @beat) / 1000.0
+          phrase_gain = case variant
+                        when 2 then gain * 1.05
+                        when 3 then gain * 0.92
+                        else gain
+                        end
           hits << [at + offset, phrase_gain]
         end
       end
       hits
-    end
-
-    def dilla_timing_ms(role, bar, step, swing, humanize)
-      DillaBeautyEngine.timing_ms(role, bar, step, @beat,
-                                  swing: (swing || 57), humanize: (humanize || 3))
     end
 
     # Adds the clap into left and right; returns the kick for its own channels.
@@ -4306,13 +4067,9 @@ SHOWCASE_MODES = {
 
     def kick_sample(tk)
       drop = @kick["drop_seconds"]
-      base_hz = @kick["base_hz"] * @kick_pitch_ratio
-      phase = 2 * Math::PI * ((base_hz * tk) + (@kick["drop_hz"] * drop * (1.0 - Math.exp(-tk / drop))))
-      body = Math.sin(phase) * Math.exp(-tk / @kick["decay_seconds"])
-      mid_phase = 2 * Math::PI * (145.0 * @kick_pitch_ratio * tk)
-      mid = Math.sin(mid_phase) * Math.exp(-tk / 0.026) * 0.16
+      phase = 2 * Math::PI * ((@kick["base_hz"] * tk) + (@kick["drop_hz"] * drop * (1.0 - Math.exp(-tk / drop))))
       click = tk < @kick["click_seconds"] ? (1.0 - (tk / @kick["click_seconds"])) * @kick["click"] : 0.0
-      body + mid + click
+      (Math.sin(phase) * Math.exp(-tk / @kick["decay_seconds"])) + click
     end
 
     # Three noise bursts a few milliseconds apart and a tail, through a
@@ -4327,7 +4084,7 @@ SHOWCASE_MODES = {
 
         bursts = (0..2).sum { |k| (d = ts - (k * s["burst_gap_seconds"])).negative? ? 0.0 : Math.exp(-d / s["burst_seconds"]) }
         clap += (bursts + (Math.exp(-ts / s["tail_seconds"]) * s["tail_gain"])) * gain
-        body += Math.sin(2 * Math::PI * s["body_hz"] * @body_hz_factor * ts) * Math.exp(-ts / s["body_seconds"]) * gain
+        body += Math.sin(2 * Math::PI * s["body_hz"] * ts) * Math.exp(-ts / s["body_seconds"]) * gain
       end
       return if clap.zero? && body.zero? && @band.abs < SILENT_BAND
 

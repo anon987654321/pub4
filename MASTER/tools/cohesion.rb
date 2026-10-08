@@ -367,7 +367,7 @@ return if collisions.any?
     # test fixtures and vendored trees have families by construction and
     # counting them would drown the signal the roots below carry.
     ROOTS = %w[
-      MASTER/lib MASTER/law MASTER/tools RAILS/master_web/app
+      MASTER/lib MASTER/law MASTER/tools MASTER/web/app
       RAILS/__shared/app RAILS/__shared/lib
       RAILS/brgen/app RAILS/brgen/lib RAILS/amber/app RAILS/amber/lib
       RAILS/bsdports/app RAILS/bsdports/lib

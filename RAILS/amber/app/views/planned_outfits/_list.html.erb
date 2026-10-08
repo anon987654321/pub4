@@ -1,0 +1,13 @@
+<%= turbo_frame_tag "planned-outfits" do %>
+<div class="plan-list">
+  <ul role="list" id="amber-planned-outfits">
+    <%= render partial: "planned_outfits/planned_row", collection: @planned, as: :planned_outfit %>
+  </ul>
+  <% if @planned.empty? %>
+    <%= render "shared/empty_state",
+          title: t("empty.no_planned"),
+          body: t("empty.planned_body"),
+          action: { label: t("planned.browse_outfits"), path: outfits_path } %>
+  <% end %>
+</div>
+<% end %>

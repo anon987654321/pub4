@@ -955,7 +955,7 @@ legacy_cli_reviews:
       - "8c6f9be76341"
     value: "Legacy three.js face modules: state, renderer, shaders, pixel diff, point renderer and offscreen ecology."
     disposition: "retired-by-consolidation"
-    current_mapping: "RAILS/master_web/public/face_world.js and MASTER/FACE_WORLD.md preserve the canonical face state, repository geometry, semantic camera and renderer contract."
+    current_mapping: "MASTER/web/public/face_world.js and MASTER/FACE_WORLD.md preserve the canonical face state, repository geometry, semantic camera and renderer contract."
     reason: "Git history explicitly records each legacy module as dead or obsolete; the current FaceWorld is the consolidated successor."
 
 master_json_v43_review:
@@ -1020,7 +1020,7 @@ legacy_capability_reviews:
         disposition: "partial; recover individual useful commands only when demanded by current MASTER workflow"
       - capability: "UniversalScraper"
         historical_behavior: "Ferrum navigation, screenshots, deep same-domain crawl, page-structure analysis and link extraction."
-        current_mapping: "MASTER/lib/io/web_fetch.rb plus MASTER/tools/rails/crawl_browser.rb and RAILS/master_web/script/browser_probe_support.rb provide bounded fetch/browser verification, not a general scraper service."
+        current_mapping: "MASTER/lib/io/web_fetch.rb plus MASTER/tools/rails/crawl_browser.rb and MASTER/web/script/browser_probe_support.rb provide bounded fetch/browser verification, not a general scraper service."
         disposition: "partial; no class-level restore"
     retired:
       - capability: "WeaviateIntegration"
@@ -1056,7 +1056,7 @@ legacy_capability_reviews:
       - "offscreen canvas support remains in current face runtime bundles."
     disposition: "retired-by-consolidation; do-not-restore-duplicate-renderers"
     notable_fossil:
-      path: "RAILS/master_web/public/face_points_gl.js"
+      path: "MASTER/web/public/face_points_gl.js"
       finding: "The old branch also contains a raw WebGL one-pixel point renderer with explicit parallax/depth semantics and a 700 skull + 400 tunnel budget. No current main file has the same implementation, but the current FaceWorld contract deliberately forbids a second renderer."
       disposition: "behavioral-reference-only; candidate for selective migration only if the canonical renderer needs kinetic-depth evidence"
 

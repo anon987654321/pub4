@@ -1,0 +1,22 @@
+<%# locals: photo, fallback_char, badge: nil, badge_soft: false, badge_sale: false
+    badge_sale is the gate on the sale red: a caller passes it only for a
+    real discount or an active deal, never for sold or a seller's label. %>
+<%# The one shared anatomy the card family actually has: the image slot.
+    deals/_card and listings/_card carried this block byte-similar — same
+    class family, same responsive widths — and only the badge text and its
+    softness differ, so those are the locals. The card BODIES stay local:
+    a deal leads with its discount, a listing with its meta row, and one
+    body partial serving both would be the parameter soup the
+    purchasable-row refutation warned about. %>
+<%# alt stays empty: both callers wrap this slot in a link named by the title
+    and print the title beside it, so a filled alt reads the title twice. %>
+<div class="deal-card-img">
+  <% if photo %>
+    <%= responsive_image_tag photo, alt: "", widths: [360, 720], sizes: "(max-width: 768px) 50vw, 220px" %>
+  <% else %>
+    <div class="deal-card-placeholder" aria-hidden="true"><%= fallback_char %></div>
+  <% end %>
+  <% if badge.present? %>
+    <span class="deal-badge<%= " deal-badge--soft" if local_assigns[:badge_soft] %><%= " deal-badge--sale" if local_assigns[:badge_sale] %>"><%= badge %></span>
+  <% end %>
+</div>

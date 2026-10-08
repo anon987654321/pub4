@@ -1,0 +1,153 @@
+<% content_for :title, @video.title %>
+<% content_for :description, meta_description_for(@video) %>
+<% content_for :json_ld, json_ld_for(@video, type: :video) %>
+<% content_for :og_type, "video.other" %>
+<% content_for :og_image, seo_image_url(@video.thumbnail) %>
+
+<div class="page-header">
+  <hgroup>
+    <p><%= link_to @video.channel.name, channel_path(@video.channel) %></p>
+    <%= tag.h1 @video.title %>
+  </hgroup>
+  <button class="btn-share" data-controller="share"
+          data-share-title-value="<%= @video.title %>"
+          data-share-url-value="<%= request.original_url %>"
+          data-action="click->share#share"><%= t("tv.share") %></button>
+</div>
+
+<%# progress-url is only set for a signed-in viewer: view events belong to a
+    user, so there is no row for a guest to report against. %>
+<div data-controller="tv-player" data-tv-player-auto-wake-lock-value="true" data-tv-player-auto-orientation-value="true" data-tv-player-orientation-value="landscape"
+     <% if @view_event %>data-tv-player-progress-url-value="<%= video_view_event_path(@video, @view_event) %>"<% end %>>
+<% if @video.video_file.attached? %>
+  <div class="tv-media">
+    <%# data-tv-player-target="video" was never declared on any page, so the
+        controller's play/pause binding — and with it the wake lock — had never
+        run. It is required for watch-time reporting, and fixes that too. %>
+    <%= video_tag main_app.url_for(@video.video_file), controls: true, class: "video-player #{tv_media_image_classes(@video.video_file)}", data: { tv_player_target: "video" } %>
+  </div>
+<% elsif @video.thumbnail.attached? %>
+  <div class="tv-media">
+    <%# alt names the video, not the still: this branch renders when the video
+        file is missing, so the poster IS the content for anyone who cannot
+        see it. %>
+    <%= image_tag main_app.url_for(@video.thumbnail), alt: @video.title, class: tv_media_image_classes(@video.thumbnail), width: 1280, height: 720 %>
+  </div>
+<% end %>
+</div>
+
+<article>
+  <div class="chips">
+    <span class="chip"><%= t("tv.feed.views", count: @video.views_count.to_i) %></span>
+    <span class="chip"><%= @video.duration_formatted %></span>
+    <span class="chip"><%= @video.status %></span>
+  <% if @video.published_at.present? %><span class="chip"><%= time_ago(@video.published_at) %></span><% end %>
+</div>
+
+<%# The audio this clip is built on, and — where there is one — the clip it
+    answers. Both are links out to more of the same thing, which is the
+    whole point of giving audio an identity. %>
+<p class="video-lineage">
+  <% if @video.sound %>
+    <%= link_to @video.sound.title, sound_path(@video.sound) %>
+  <% end %>
+  <% if @video.duet_of %>
+    · <%= t("tv.duet_of") %> <%= link_to @video.duet_of.title, video_path(@video.duet_of) %>
+  <% end %>
+  <% if @video.duets.any? %>
+    · <%= t("tv.duet_count", count: @video.duets.size) %>
+  <% end %>
+  <% if @video.allow_duets? && Current.user&.tv_channels&.any? %>
+    <%= link_to t("tv.make_a_duet"),
+          new_channel_video_path(Current.user.tv_channels.first, duet_of_id: @video.id),
+          class: "btn btn-ghost btn-sm" %>
+  <% end %>
+</p>
+  <% if @video.description.present? %>
+    <p class="mt-12"><%= simple_format(@video.description) %></p>
+  <% else %>
+    <%# empty_state: no-action-ok — missing description is not a dead end; channel link is below %>
+    <%= render "shared/empty_state", title: t("empty.no_description"), body: t("empty.no_description_body") %>
+  <% end %>
+</article>
+
+<section>
+  <h2><%= t("tv.channel_subtitle", city: city_name) %></h2>
+  <article>
+    <strong><%= link_to @video.channel.name, channel_path(@video.channel) %></strong>
+    <p>
+      <%= t("tv.subscribers", count: @video.channel.subscribers_count.to_i) %>
+      ·
+      <%= t("tv.total_views", count: @video.channel.total_views.to_i) %>
+    </p>
+    <% if authenticated? && Current.user != @video.channel.user %>
+      <% if @video.channel.subscriptions.exists?(user: Current.user) %>
+        <%# destructive: no-confirm-ok — reversible — the button becomes Subscribe again in place %>
+        <%= button_to t("tv.unsubscribe"), unsubscribe_channel_path(@video.channel), method: :delete, class: "btn btn-ghost btn-sm" %>
+      <% else %>
+        <%= button_to t("tv.subscribe"), subscribe_channel_path(@video.channel), method: :post, class: "btn btn-primary btn-sm" %>
+      <% end %>
+    <% end %>
+  </article>
+</section>
+
+<section>
+  <h2><%= t("tv.notes") %></h2>
+  <%# The container existed and the model broadcast to this stream, but nothing
+      subscribed — so a note from another viewer never arrived. %>
+  <%= turbo_stream_from "tv:video:#{@video.id}:notes" %>
+  <div id="video_notes_<%= @video.id %>">
+    <%= render partial: "tv/video_notes/video_note",
+               collection: @video.video_notes.chronological.includes(:user), as: :video_note %>
+  </div>
+  <% if authenticated? %>
+    <%= form_with url: video_video_notes_path(@video), scope: :video_note, id: "video_note_form", data: { turbo: true } do |f| %>
+      <div class="field">
+        <%= f.label :body, t("tv.add_note") %>
+        <div data-controller="character-counter" data-character-counter-countdown-value="true">
+  <%= f.text_area :body, rows: 2, placeholder: t("tv.note_placeholder") , maxlength: 2000, data: { character_counter_target: "input" } %>
+  <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
+</div>
+      </div>
+      <div class="field">
+        <%= f.label :timestamp, t("tv.note_timestamp") %>
+        <%= f.number_field :timestamp, min: 0, step: 1, inputmode: "numeric" %>
+      </div>
+      <%= f.submit t("tv.save_note"), class: "btn btn-primary btn-sm" %>
+    <% end %>
+  <% end %>
+</section>
+
+<section>
+  <h2><%= t("tv.discussion") %></h2>
+  <% if @video.comments.any? %>
+    <% @video.comments.order(created_at: :asc).each do |comment| %>
+      <article>
+        <p><%= comment.user&.display_name || t("chat.anon") %></p>
+        <%= tag.p comment.body %>
+      </article>
+    <% end %>
+  <% else %>
+    <%= render "shared/empty_state",
+          title: t("empty.no_comments"),
+          body: t("empty.no_comments_body"),
+          action: { label: t("actions.channel"), path: channel_path(@video.channel) } %>
+  <% end %>
+  <%# Tv::CommentsController asks for require_user_session, so guests may
+      comment; only this form said otherwise. %>
+  <% if authenticated? || guest? %>
+    <%# scope: matters -- Tv::CommentsController requires params[:tv_comment],
+        and without it the field posted as a bare "body" and every comment
+        came back 400. The video-notes form above sets its scope the same way. %>
+    <%= form_with url: video_comments_path(@video), scope: :tv_comment, data: { turbo: true } do |f| %>
+      <div class="field">
+        <%= f.label :body, t("tv.add_comment") %>
+        <div data-controller="character-counter" data-character-counter-countdown-value="true">
+  <%= f.text_area :body, rows: 3, placeholder: t("tv.comment_placeholder") , maxlength: 1000, data: { character_counter_target: "input" } %>
+  <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
+</div>
+      </div>
+      <%= f.submit t("tv.post_comment"), class: "btn btn-primary btn-sm" %>
+    <% end %>
+  <% end %>
+</section>

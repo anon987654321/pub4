@@ -305,7 +305,7 @@ namespace :test do
   #
   # The same fix was applied to tools and this task was not revisited,
   # which is how one bug survives in a file that already documents it.
-  desc "Rails web integration tests (RAILS/master_web)"
+  desc "Rails web integration tests (MASTER/web)"
   task :web do
     # Bundler.with_unbundled_env, not a hash of nils. `sh` sets a nil value to the
     # empty string rather than unsetting it, and an empty BUNDLE_GEMFILE still

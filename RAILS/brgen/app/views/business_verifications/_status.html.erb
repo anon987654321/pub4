@@ -1,0 +1,12 @@
+<%# The verified mark, for every reader; and for the owner of a business not yet
+    verified, either the way to ask or word that a request is waiting. Plain
+    text in the header's own type, so the mark claims no chrome of its own. %>
+<% if business.verified? %>
+  <%= tag.p t("business_verifications.badge") %>
+<% elsif local_assigns[:owner] %>
+  <% if business_verification_pending?(business) %>
+    <%= tag.p t("business_verifications.pending") %>
+  <% else %>
+    <%= tag.p link_to(t("business_verifications.request"), main_app.new_business_verification_path(kind: kind, business_id: business.id), class: "btn btn-ghost btn-sm") %>
+  <% end %>
+<% end %>

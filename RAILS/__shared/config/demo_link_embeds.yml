@@ -1,0 +1,130 @@
+# Real, public, embeddable media for the brgen and amber demo feeds, and the
+# posts that carry it. Data rather than Faker: every link is a real recording by
+# an artist from the Bergen area or by a Bergen institution.
+#
+# Each link was checked against its provider's public oEmbed endpoint on
+# 2026-09-15, and title, author_name and thumbnail_url are that answer. The
+# seeders store them with the post, so seeding asks no provider and queues no
+# lookup. A link that later stops resolving still renders, as the plain link.
+#
+# Read by Shared::LinkEmbed.demo_posts. A post's text has to carry its link,
+# because a save that finds a different link starts the embed over.
+verified_on: "2026-09-15"
+
+links:
+  grieg_morning_mood:
+    source_url: https://www.youtube.com/watch?v=yeTdadYSSGo
+    title: "Grieg: Morning Mood from Peer Gynt / Gardner · Bergen Philharmonic Orchestra"
+    author_name: Bergen Philharmonic Orchestra
+    thumbnail_url: https://i.ytimg.com/vi/yeTdadYSSGo/hqdefault.jpg
+  lars_vaular_rett_opp_og_ned:
+    source_url: https://www.youtube.com/watch?v=PpWXwhBi9qM
+    title: Lars Vaular - Rett opp og ned (OFFISIELL MUSIKKVIDEO)
+    author_name: larsvaular
+    thumbnail_url: https://i.ytimg.com/vi/PpWXwhBi9qM/hqdefault.jpg
+  festspillene_2026:
+    source_url: https://www.youtube.com/watch?v=AEgJ6qIy7jE
+    title: Velkommen til Festspillene i Bergen 2026! / Welcome to the Bergen International Festival 2026!
+    author_name: Festspillene i Bergen
+    thumbnail_url: https://i.ytimg.com/vi/AEgJ6qIy7jE/hqdefault.jpg
+  kings_of_convenience_misread:
+    source_url: https://www.youtube.com/watch?v=WOxE7IRizjI
+    title: Kings Of Convenience - Misread
+    author_name: KingsOfConvenienVEVO
+    thumbnail_url: https://i.ytimg.com/vi/WOxE7IRizjI/hqdefault.jpg
+  aurora_runaway:
+    source_url: https://www.youtube.com/watch?v=d_HlPboLRL8
+    title: AURORA - Runaway
+    author_name: iamAURORAVEVO
+    thumbnail_url: https://i.ytimg.com/vi/d_HlPboLRL8/hqdefault.jpg
+  lars_vaular_ka_vet_du:
+    source_url: https://soundcloud.com/larsvaular/lars-vaular-ka-vet-du-prod
+    title: Lars Vaular - Ka Vet Du (prod. Peewee) by larsvaular
+    author_name: larsvaular
+    thumbnail_url: https://i1.sndcdn.com/artworks-000031224098-u9wlz9-t500x500.jpg
+  kygo_stars_will_align:
+    source_url: https://soundcloud.com/kygo/stars-will-align
+    title: Stars Will Align by Kygo
+    author_name: Kygo
+    thumbnail_url: https://i1.sndcdn.com/artworks-mEq8gWbYxrPi-0-t500x500.jpg
+  royksopp_what_else_is_there:
+    source_url: https://soundcloud.com/royksopp/what-else-is-there-andhim
+    title: What Else Is There? (andhim Remix) [feat. Fever Ray] by Röyksopp
+    author_name: Röyksopp
+    thumbnail_url: https://i1.sndcdn.com/artworks-jEFQ4Zn7OfSU-0-t500x500.jpg
+  sondre_lerche_4_for_sure:
+    source_url: https://soundcloud.com/sondrelerche/4-for-sure-4
+    title: 4 For Sure by SondreLerche
+    author_name: SondreLerche
+    thumbnail_url: https://i1.sndcdn.com/artworks-xGHmRGeMHXoqWYbh-sAPOkQ-t500x500.jpg
+
+posts:
+  # Rows in Brgen::BergenDemoData::POSTS's shape, seeded by BergenDemoSeeder.
+  brgen:
+    - user: live_bergenlive
+      community: musikk
+      hours_ago: 4
+      votes: 9
+      link: grieg_morning_mood
+      title: Harmonien spiller Morgenstemning — perfekt til Bybanen i dag
+      content: "Bergen Filharmoniske med Edward Gardner. Litt Grieg før jobb: https://www.youtube.com/watch?v=yeTdadYSSGo"
+      comments:
+        - Harmonien er byens beste band, rett og slett.
+        - Hørte dem i Grieghallen i vår, helt nydelig.
+    - user: henrik_vestland
+      community: musikk
+      hours_ago: 8
+      votes: 11
+      link: lars_vaular_rett_opp_og_ned
+      title: «Rett opp og ned» er fortsatt en Bergen-klassiker
+      content: "Kom på denne på veien opp Sandviksbakken. Hvilken Vaular-låt er deres favoritt? https://www.youtube.com/watch?v=PpWXwhBi9qM"
+      comments:
+        - Den, og hele første albumet hans.
+        - Spilt i hver eneste russebuss i Bergen.
+    - user: marte_kode24
+      community: kultur
+      hours_ago: 12
+      votes: 7
+      link: festspillene_2026
+      title: Festspillene 2026 — hva var høydepunktet deres?
+      content: "Festspillenes egen velkomstfilm for 2026. Jeg sverger til konsertene på Torgallmenningen: https://www.youtube.com/watch?v=AEgJ6qIy7jE"
+      comments:
+        - Åpningen på Torget, uten tvil.
+        - Neste år skal jeg få med meg mer enn én forestilling.
+    - user: sofie_regnby
+      community: musikk
+      hours_ago: 16
+      votes: 8
+      link: kings_of_convenience_misread
+      title: Regnværsmusikk fra Bergen — Kings of Convenience på repeat
+      content: "Det har regnet i fire dager, og «Misread» passer til hver eneste av dem: https://www.youtube.com/watch?v=WOxE7IRizjI"
+      comments:
+        - Erlend Øye kan synge regn bort.
+        - Beste bergensband for grå dager.
+    - user: jonas_7fjell
+      community: musikk
+      hours_ago: 20
+      votes: 6
+      link: lars_vaular_ka_vet_du
+      title: Gammel Vaular fra SoundCloud — «Ka vet du»
+      content: "Gravde fram denne fra arkivet. Høres fortsatt ut som Bergen en fredag: https://soundcloud.com/larsvaular/lars-vaular-ka-vet-du-prod"
+      comments:
+        - Glemte at den lå der. Takk!
+    - user: per_laksevag
+      community: musikk
+      hours_ago: 26
+      votes: 10
+      link: kygo_stars_will_align
+      title: Kygo — «Stars Will Align», rett fra SoundCloud
+      content: "Kygo vokste opp i Bergen, og det hører man fortsatt. Ny favoritt på løpeturen rundt Store Lungegårdsvann: https://soundcloud.com/kygo/stars-will-align"
+      comments:
+        - Perfekt tempo for Lungegårdsvannet.
+        - Denne går på repeat i bilen.
+  # amber's demo wardrobe owner writes these, seeded by AmberDemoSeeder.
+  amber:
+    - link: aurora_runaway
+      body: "<p>Dagens antrekk til konsert: kamelkåpen, ankelboots og gullringene. Lydsporet på vei inn: https://www.youtube.com/watch?v=d_HlPboLRL8</p>"
+    - link: sondre_lerche_4_for_sure
+      body: "<p>Kapselgarderoben har fått et lydspor. Sondre Lerche mens jeg bretter strikk til høsten: https://soundcloud.com/sondrelerche/4-for-sure-4</p>"
+    - link: royksopp_what_else_is_there
+      body: "<p>Regnjakke-uke i Bergen. Ullgenser under, Röyksopp på øret: https://soundcloud.com/royksopp/what-else-is-there-andhim</p>"

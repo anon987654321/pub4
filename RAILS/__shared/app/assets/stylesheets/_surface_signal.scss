@@ -1,0 +1,57 @@
+/* Shared semantic state signal. It carries one state in text, weight and a
+   leading rule; color is never the only channel. No shadow, blur or glow. */
+
+.system-signal {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2, 0.5rem);
+  min-height: var(--tap-min, 44px);
+  padding-inline: var(--space-3, 0.75rem);
+  border-inline-start: 3px solid var(--signal-info);
+  color: var(--text);
+  font-size: var(--text-sm);
+  transition:
+    opacity var(--motion-quick) ease,
+    border-color var(--motion-quick) ease;
+}
+
+.system-signal::before {
+  content: "";
+  inline-size: 0.5rem;
+  block-size: 0.5rem;
+  flex: 0 0 auto;
+  border-radius: var(--radius-pill, 999px);
+  background: currentColor;
+}
+
+.system-signal[data-state="success"] {
+  border-inline-color: var(--signal-success);
+  color: var(--signal-success);
+}
+
+.system-signal[data-state="warning"] {
+  border-inline-color: var(--signal-warning);
+  color: var(--signal-warning);
+}
+
+.system-signal[data-state="error"] {
+  border-inline-color: var(--signal-error);
+  color: var(--signal-error);
+}
+
+.system-signal[data-state="working"] {
+  border-inline-color: var(--signal-info);
+  animation: system-signal-pulse var(--motion-rest) ease-in-out infinite alternate;
+}
+
+@keyframes system-signal-pulse {
+  from { opacity: 0.72; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .system-signal {
+    transition: none;
+    animation: none;
+  }
+}

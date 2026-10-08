@@ -1,0 +1,72 @@
+# Aspirational features — out of scope for agents unless explicitly requested.
+# Canonical active inventory: apps.yml (status: done). Do not implement horizon items by default.
+
+agent_policy: ignore
+
+horizon:
+  brgen:
+    core:
+      - { name: AI feed ranking, status: planned }
+      - { name: "cold-start feed as follows ∪ city popular, home and local tabs", status: planned }
+      - { name: creator monetization, status: planned }
+      - { name: inbound ActivityPub storage, status: planned, notes: "outbound federation is done; the inbox verifies remote Create/Announce/Like and drops them, because storing them needs remote media proxying, remote moderation and a blocklist" }
+      - { name: recurring events / ticketing beyond an external link, status: planned }
+      - { name: messenger voice and video calls (WebRTC), status: planned }
+
+      - { name: city population in seeds, status: planned, notes: "no column or reader in any schema; CitySeed covers all 43 registry cities otherwise" }
+
+      - { name: recent searches in the search palette, status: planned }
+      - { name: messenger conversation archive, status: planned }
+      - { name: messenger notification suppressed while its conversation is open, status: planned }
+    subapp_takeaway:
+      - { name: delivery-area validation and cart expiry, status: planned }
+    subapp_tv:
+      - { name: live stream infrastructure, status: planned }
+    subapp_dating:
+      - { name: premium memberships / boost / super-like purchases, status: planned }
+
+      - { name: premium memberships / boost purchases, status: planned }
+      - { name: two-sided ranked_for (looking_for both ways), status: planned }
+    subapp_marketplace:
+      - { name: AI recommendations, status: planned }
+      - { name: coupons / referral credit / bundle pricing, status: planned }
+      - { name: anonymised buyer-seller contact relay, status: planned, notes: "needs inbound mail routing and per-listing addresses on vm23; brgen.no mail is outbound-verified only" }
+
+      - { name: duplicate-listing detection, status: planned }
+    subapp_playlist:
+      - { name: creator donations / ad-free tier, status: planned }
+    # Fences on every row below: no mandatory commission, no dark patterns, no
+    # hidden fees, and payment never buys a moderation or trust outcome. One
+    # Commerce/Billing/Entitlements domain in shared, consumed by the verticals —
+    # never a billing, promotion or subscription stack per engine.
+    monetization:
+      - { name: plans / subscriptions / entitlements as data (free, Pro, Business), status: planned }
+      - { name: shared Commerce, Ledger and Campaign domains, status: planned, notes: "before any affiliate or promotion code; marketplace, takeaway and amber consume it" }
+      - { name: seller verification badge for a seller with no shop, status: planned, notes: "verified business for stores and restaurants is done (apps.yml); a private seller has no organisation number to check, so this needs its own proof" }
+      - { name: paid listing boosts and category/homepage placement, status: planned, notes: "organic discovery stays quality-weighted; paid never overwhelms it" }
+      - { name: seller credits with a transparent ledger, status: planned, notes: "Finta-style 0% commission plus Flon-style credits" }
+      - { name: seller, listing and promotion analytics, status: planned }
+      - { name: self-service local advertising (CPC/CPM/fixed, geo and time targeting), status: planned }
+      - { name: takeaway Pro (restaurant promotion, coupons, loyalty), status: planned }
+      - { name: business inbox and CRM on messenger, status: planned }
+      - { name: payments abstraction (refunds, invoices, VAT, reconciliation), status: planned }
+      - { name: revenue dashboard (MRR, churn, conversion funnel), status: planned }
+      - { name: marketplace liquidity signals (empty categories, unmet demand), status: planned, notes: "liquidity before ads" }
+  amber:
+    wardrobe:
+      - { name: fashion embeddings (pgvector), status: planned }
+      - { name: visual similarity search, status: planned }
+      - { name: virtual fitting room, status: planned }
+      - { name: mood matcher, status: planned }
+      - { name: event outfit planner, status: planned }
+      - { name: sustainable styles / resale, status: planned }
+      - { name: weather-based suggestions, status: planned }
+      - { name: "outfit scored as a whole (item scores minus clash); wears-well-with on items#show", status: planned }
+      - { name: global trends / local designer highlights, status: planned }
+      - { name: style agents (MASTER integration), status: planned }
+  bsdports:
+    core:
+      - { name: FreeBSD/NetBSD ports parsers, status: planned, notes: "OpenBSD-only production scope" }
+      - { name: semantic package search (pgvector), status: planned }
+      - { name: infrastructure knowledge graph, status: planned }
+      - { name: OpenBSD package intelligence, status: planned }

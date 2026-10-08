@@ -1,0 +1,119 @@
+<% content_for :title, t("marketplace.order_number", id: @order.id) %>
+<%= turbo_stream_from @conversation if @conversation %>
+
+<div class="page-header">
+  <h1><%= t("marketplace.order_number", id: @order.id) %></h1>
+  <p><%= t("marketplace.order_for") %> <%= link_to @order.listing.title, listing_path(@order.listing) %></p>
+</div>
+
+<%# A description list, not paragraphs with bold runs: these are label/value
+    pairs, and dl is the element that says so. %>
+<dl class="order-meta">
+  <dt><%= t("marketplace.order_status") %></dt>
+  <dd><span class="chip"><%= t("marketplace.order_statuses.#{@order.status}", default: @order.status.to_s.humanize) %></span></dd>
+  <dt><%= t("marketplace.order_quantity") %></dt>
+  <dd><%= @order.quantity %></dd>
+  <dt><%= t("marketplace.order_total") %></dt>
+  <dd data-money><%= @order.total_display %></dd>
+  <dt><%= t("marketplace.payment_status") %></dt>
+  <dd><span class="chip"><%= t("marketplace.payment_statuses.#{@order.payment_status}", default: @order.payment_status.to_s.humanize) %></span></dd>
+  <dt><%= t("marketplace.order_buyer") %></dt>
+  <dd><%= @order.buyer.display_name %></dd>
+  <dt><%= t("marketplace.order_seller") %></dt>
+  <dd><%= @order.seller.display_name %></dd>
+  <% if @order.message.present? %>
+    <dt><%= t("marketplace.order_message") %></dt>
+    <dd><%= @order.message %></dd>
+  <% end %>
+</dl>
+
+<% if policy(@order).update? && @order.seller == Current.user && @order.payment_provider == "dintero" && @order.payment_status == "authorized" %>
+  <div class="order-actions">
+    <%= button_to t("marketplace.capture_order"), capture_order_path(@order), method: :post,
+          class: "btn btn-primary", form: { data: { turbo: false } } %>
+  </div>
+<% end %>
+
+<% if policy(@order).update? %>
+  <div class="order-actions">
+    <%= button_to t("marketplace.accept"), order_path(@order, accept: true), method: :patch, class: "btn" %>
+    <%= button_to t("marketplace.decline"), order_path(@order, decline: true), method: :patch, class: "btn btn-ghost" %>
+  </div>
+<% end %>
+
+<% if @returns.present? %>
+  <section class="order-returns" aria-label="<%= t("marketplace.returns") %>">
+    <h2><%= t("marketplace.returns") %></h2>
+    <% @returns.each do |sent_back| %>
+      <article>
+        <p class="order-return-status"><%= t("marketplace.return_statuses.#{sent_back.status}") %></p>
+        <p><%= sent_back.reason %></p>
+        <% if sent_back.resolution_note.present? %>
+          <p class="order-return-note"><%= sent_back.resolution_note %></p>
+        <% end %>
+        <%# The money is a separate fact from the decision, and nothing in the
+            tree moves it yet — saying "refunded" here would be a claim the app
+            cannot back. %>
+        <% if sent_back.status == "received" && !sent_back.refunded? %>
+          <p class="order-return-note"><%= t("marketplace.return_refund_pending") %></p>
+        <% end %>
+        <% if @order.seller == Current.user && sent_back.open? %>
+          <div class="order-actions">
+            <% if sent_back.status == "requested" %>
+              <%= button_to t("marketplace.return_approve"), order_return_path(@order, sent_back, decision: "approve"), method: :patch, class: "btn btn-sm" %>
+              <%= button_to t("marketplace.return_refuse"), order_return_path(@order, sent_back, decision: "refuse"), method: :patch, class: "btn btn-ghost btn-sm" %>
+            <% else %>
+              <%= button_to t("marketplace.return_receive"), order_return_path(@order, sent_back, decision: "receive"), method: :patch, class: "btn btn-sm" %>
+            <% end %>
+          </div>
+        <% end %>
+      </article>
+    <% end %>
+  </section>
+<% end %>
+
+<% if @order.returnable_by?(Current.user) %>
+  <section class="order-return-form" aria-label="<%= t("marketplace.return_request") %>">
+    <h2><%= t("marketplace.return_request") %></h2>
+    <%= form_with url: order_returns_path(@order), method: :post, scope: :return do |f| %>
+      <div class="field">
+        <%= f.label :reason, t("marketplace.return_reason") %>
+        <%= f.text_area :reason, rows: 3, required: true %>
+      </div>
+      <p><%= f.submit t("marketplace.return_send"), class: "btn btn-primary" %></p>
+    <% end %>
+  </section>
+<% end %>
+
+<% if @conversation %>
+  <%# section + h2, not a bare h3: the h1 above is the order, and this is the
+      order's chat -- one level down, not two. The section gives the heading a
+      region to name, so a screen reader can jump to the conversation. %>
+  <section class="order-chat" aria-labelledby="order-chat-heading">
+  <h2 id="order-chat-heading"><%= t("marketplace.chat_with", name: @order.buyer == Current.user ? @order.seller.display_name : @order.buyer.display_name) %></h2>
+  <ul id="messages" role="list" aria-label="<%= t("aria.order_messages") %>">
+    <% @messages.each do |m| %>
+      <%= render "messages/message", message: m %>
+    <% end %>
+  </ul>
+
+  <%= form_with model: @message, url: main_app.conversation_messages_path(@conversation),
+                id: "new_message",
+                data: {
+                  turbo: true,
+                  controller: "typing-input",
+                  action: "keydown->typing-input#composerKeydown"
+                } do |f| %>
+    <div class="field" data-controller="character-counter" data-character-counter-countdown-value="true">
+      <%= f.text_area :content, rows: 3,
+            placeholder: t("chat.dm_placeholder"),
+            enterkeyhint: "send",
+            aria: { label: t("chat.message_label") },
+            data: { character_counter_target: "input" } %>
+      <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
+    </div>
+    <%= f.hidden_field :message_type, value: "text" %>
+    <p><%= f.submit t("actions.send"), class: "btn btn-primary" %></p>
+  <% end %>
+  </section>
+<% end %>

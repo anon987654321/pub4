@@ -1,0 +1,7 @@
+#!/bin/sh
+# Names the subject, then hands over to the shared toolkit. This is the only
+# entry point a subject needs; run_generate.sh dispatches every mode.
+set -eu
+SUBJECT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+export SUBJECT_DIR
+exec "$SUBJECT_DIR/../_toolkit/run_generate.sh" "$@"

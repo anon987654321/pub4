@@ -31,7 +31,7 @@ payload = {
     "name" => "master",
     "domain" => "ai.brgen.no",
     "port" => 53_187,
-    "deploy_root" => "RAILS/master_web",
+    "deploy_root" => "MASTER/web",
   },
 }
 

@@ -32,7 +32,7 @@ module Operator
       MASTER/bin/check
       MASTER/bin/ci
       MASTER/bin/gate
-      RAILS/master_web/bin/ci
+      MASTER/web/bin/ci
       OPENBSD/bin/check
       OPENBSD/bin/check-full
       OPENBSD/bin/check-rails
@@ -53,7 +53,7 @@ module Operator
       "RAILS/amber/bin/ci" => ["RAILS/amber/test/**/*_test.rb"],
       "RAILS/brgen/bin/ci" => ["RAILS/brgen/test/**/*_test.rb", "RAILS/brgen/engines/*/test/**/*_test.rb"],
       "RAILS/bsdports/bin/ci" => ["RAILS/bsdports/test/**/*_test.rb"],
-      "RAILS/master_web/bin/ci" => ["RAILS/master_web/test/**/*_test.rb"],
+      "MASTER/web/bin/ci" => ["MASTER/web/test/**/*_test.rb"],
     }.freeze
 
     # Support files named like tests. A runner loads these; nothing runs them.

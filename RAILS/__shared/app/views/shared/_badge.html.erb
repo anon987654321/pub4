@@ -1,0 +1,2 @@
+<% classes = ["badge", local_assigns[:variant] ? "badge--#{local_assigns[:variant]}" : nil].compact.join(" ") %>
+<span class="<%= classes %>"><%= local_assigns[:text] || local_assigns[:label] %></span>

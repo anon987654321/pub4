@@ -1,0 +1,44 @@
+# Transcendent TTS — emotion-aware multi-engine orchestration (MLX / Replicate).
+#
+# THIS FILE DECIDES HOW MASTER SOUNDS ON THE COMMAND LINE. Transcendent.load_config
+# reads it, enabled/default_mode select the normal speech path, and Speech.synthesize
+# hands conversational replies to Transcendent when that mode is "transcendent".
+#
+transcendent:
+  enabled: true
+  fast_mode: false
+  default_mode: transcendent
+  personality: warm_supportive
+  warmth: 0.82
+  depth: 0.68
+  # Prefer expressive local engines when they are actually installed. Engines.attempt?
+  # remains the availability gate; missing MLX/Chatterbox falls through without delay.
+  engine_chain: mlx, chatterbox, edge_melodic, edge, say
+  emotion_enabled: true
+  # Deterministic, capped Chatterbox Turbo events. No random speech effects.
+  paralinguistic_tags: true
+  melodic_enabled: true
+  melodic_threshold: 0.40
+  # Performance is now part of the normal conversational path. Edge receives the
+  # resulting phrase contour through edge_melodic; local engines receive the same
+  # measured emotion controls.
+  phrase_rhythm_enabled: true
+  phrase_language_switching: true
+  phrase_language_voices:
+    nb: pernille
+    ms: yasmin
+    en: jenny
+  mlx_model: mlx-community/chatterbox-fp16
+  mlx_voice: default
+  mlx_speed: 1.0
+  exaggeration: 0.45
+  cfg_weight: 0.42
+  chatterbox_device: mps
+  # A 8–15 second clean reference clip may be supplied by the operator for a
+  # consistent local Chatterbox identity. Empty means no clip is assumed.
+  reference_clip: ""
+  replicate_model: jaaari/kokoro-82m
+  replicate_voice: af_bella
+  replicate_speed: 1.05
+  replicate_exaggeration: 0.45
+  replicate_cfg_weight: 0.42

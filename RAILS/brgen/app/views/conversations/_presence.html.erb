@@ -1,0 +1,10 @@
+<%# Replaced live by ChannelPresence.broadcast over the conversation's own
+    stream, so the id must match what that targets. Rendered from a background
+    job, so no Current.user here. %>
+<% n = ChannelPresence.count_for(conversation) %>
+<span id="presence_<%= conversation.id %>" class="channel_presence" aria-live="polite">
+  <% if n.positive? %>
+    <span class="channel_presence_dot" aria-hidden="true"></span>
+    <%= n %> here now
+  <% end %>
+</span>

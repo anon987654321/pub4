@@ -1,0 +1,70 @@
+<turbo-frame id="nearby-chat-widget-frame" class="nearby-chat-widget-frame">
+  <% if @conversation.present? && Current.user.present? %>
+    <%= turbo_stream_from @conversation %>
+
+    <div class="nearby-chat-widget-mode" data-nearby-chat-target="mode">
+      <% if @located %>
+        <strong>#<%= ambient_chat_room_label %></strong>
+        <span aria-hidden="true">·</span>
+        ~10&nbsp;km
+        <span aria-hidden="true">·</span>
+        <%= Current.user.anon_handle %>
+        <button type="button"
+                class="nearby-chat-widget-linkish"
+                data-action="nearby-chat#locate"
+                title="<%= t("chat.refresh_location") %>"
+                aria-label="<%= t("chat.refresh_location") %>">↻</button>
+      <% else %>
+        <strong>#<%= ambient_chat_room_label %></strong>
+        <span aria-hidden="true">·</span>
+        <%= t("chat.city_lobby") %>
+        <span aria-hidden="true">·</span>
+        <%= Current.user.channel_handle %>
+        <button type="button"
+                class="nearby-chat-widget-linkish"
+                data-action="nearby-chat#locate"><%= t("chat.use_location") %></button>
+      <% end %>
+    </div>
+
+    <ul id="nearby-widget-log" class="nearby-chat-widget-log conversation-log"
+        data-nearby-chat-target="log"
+        data-controller="conversation-log"
+        data-conversation-log-viewer-id-value="<%= Current.user&.id %>"
+        data-conversation-log-unread-one-value="<%= t("messages.unread_one") %>"
+        data-conversation-log-unread-other-value="<%= t("messages.unread_other") %>"
+        data-conversation-log-today-label-value="<%= t("messages.today") %>"
+        data-conversation-log-yesterday-label-value="<%= t("messages.yesterday") %>"
+        data-conversation-log-locale-value="<%= I18n.locale %>"
+        aria-live="polite"
+        aria-relevant="additions"
+        aria-label="<%= t("chat.log_label", default: "Messages") %>">
+      <% if @messages.blank? %>
+        <li class="nearby-chat-widget-empty-item" role="status">
+          <div class="nearby-chat-widget-empty">
+            <% if @located %>
+              <%= tag.strong t("chat.nearby_title") %>
+              <%= tag.p t("chat.nearby_body") %>
+            <% else %>
+              <%= tag.strong t("chat.lobby_title") %>
+              <%= tag.p t("chat.lobby_body") %>
+            <% end %>
+          </div>
+        </li>
+      <% end %>
+      <% @messages.each do |m| %>
+        <%= render "messages/message", message: m %>
+      <% end %>
+    </ul>
+
+    <%= render "nearby/widget_composer", conversation: @conversation %>
+  <% else %>
+    <%# Soft guests are minted every request on brgen; this branch is recovery
+        if identity or channel create failed — never a pure loading dead end. %>
+    <div class="nearby-chat-widget-empty">
+      <%= tag.strong t("chat.lobby_title") %>
+      <%= tag.p t("chat.recovery_body", default: "Could not open the corner room. Use the city lobby instead — no signup.") %>
+      <%= link_to t("chat.open_brgen_channel", default: "Open #brgen"), channel_path("brgen"),
+            class: "nearby-chat-widget-cta", data: { turbo_frame: "_top" } %>
+    </div>
+  <% end %>
+</turbo-frame>

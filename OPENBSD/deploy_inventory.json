@@ -22,6 +22,6 @@
     "name": "master",
     "domain": "ai.brgen.no",
     "port": 53187,
-    "deploy_root": "RAILS/master_web"
+    "deploy_root": "MASTER/web"
   }
 }

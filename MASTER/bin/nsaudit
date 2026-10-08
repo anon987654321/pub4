@@ -1,0 +1,57 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require_relative "../lib/boot/entrypoint"
+Master::Boot::Entrypoint.prepare!(root: File.expand_path("..", __dir__))
+
+# master-nsaudit — find Master::* references that no longer resolve.
+# Useful after namespace refactors. Exits 0 clean, 1 if any unresolved.
+
+Encoding.default_external = Encoding::UTF_8
+$LOAD_PATH.unshift File.expand_path("../lib", __dir__)
+require "bundler/setup"
+require "master"
+require_relative "../lib/trace/dmesg"
+
+# Eager-load so Zeitwerk-ignored fragments (loaded via explicit require, e.g.
+# review/scan/laws/*.rb) are defined and resolve like any other constant. Without
+# this, lazy const_get can't autoload a plural-filename fragment and false-alarms.
+Master.eager_load!
+
+ROOT = File.expand_path("..", __dir__)
+SKIP = %r{/(vendor|tmp|log|public/assets|public/packs|node_modules|\.git)/}
+
+def resolve(name)
+  name.split("::").inject(Object) { |k, p| k.const_get(p, false) }
+  true
+rescue NameError
+  false
+end
+
+refs = Hash.new { |h, k| h[k] = [] }
+Dir.glob(["lib/**/*.rb", "web/app/**/*.rb", "web/config/**/*.rb", "bin/*"], base: ROOT).each do |rel|
+  path = File.join(ROOT, rel)
+  next if path =~ SKIP
+  next unless File.file?(path)
+  File.foreach(path, encoding: "UTF-8").with_index(1) do |line, lineno|
+    next unless line.valid_encoding?
+    line.scan(/\bMaster(?:::[A-Z][A-Za-z0-9_]*)+\b/).uniq.each do |name|
+      refs[name] << "#{rel}:#{lineno}"
+    end
+  end
+end
+
+unresolved = refs.reject { |name, _| resolve(name) }
+if unresolved.empty?
+  Master::Trace::Dmesg.status("nsaudit0", "clean, #{refs.size} distinct refs")
+  exit 0
+end
+
+Master::Trace::Dmesg.attach("nsaudit0", "master0", "#{unresolved.size} unresolved refs")
+unresolved.sort.each_with_index do |(name, sites), index|
+  unit = "nsref#{index}"
+  Master::Trace::Dmesg.attach(unit, "nsaudit0", name)
+  sites.first(5).each { |site| Master::Trace::Dmesg.status(unit, site) }
+  Master::Trace::Dmesg.status(unit, "#{sites.size - 5} more") if sites.size > 5
+end
+exit 1

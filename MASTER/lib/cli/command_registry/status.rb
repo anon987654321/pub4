@@ -125,7 +125,7 @@ module Master
 
       # Silent when satisfied, and where bundle40 does not exist.
       def bundle_status(repo)
-        drift = %w[MASTER RAILS/master_web].reject do |dir|
+        drift = %w[MASTER MASTER/web].reject do |dir|
           out, = Master::Io::Exec.capture2e("bundle40", "check", chdir: File.join(repo, dir))
           out.match?(/dependencies.*satisfied/)
         end

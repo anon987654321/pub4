@@ -106,59 +106,6 @@ class TestDillaMusicalGrammar < Minitest::Test
     end
   end
 
-
-  def test_beauty_arc_is_eight_bars_and_deterministic
-    assert_equal 8, DillaBeautyEngine::ARC.length
-
-    names = DillaBeautyEngine::ARC.map { |row| row.fetch(:name) }
-    assert_equal %i[intimate pocket statement expansion peak subtraction afterglow return], names
-
-    first = DillaBeautyEngine.profile(13)
-    second = DillaBeautyEngine.profile(13)
-    assert_equal first, second
-    assert_operator first.fetch(:void), :>, 0
-    assert_operator first.fetch(:density), :>, 0
-    assert_includes %i[question answer], first.fetch(:response)
-  end
-
-  def test_beauty_timing_gives_each_drum_voice_a_different_personality
-    beat = 60.0 / 92.0
-
-    kick = DillaBeautyEngine.timing_ms(:kick_anchor, 2, 0, beat)
-    snare = DillaBeautyEngine.timing_ms(:snare, 2, 4, beat)
-    hat = DillaBeautyEngine.timing_ms(:hat_up, 2, 3, beat)
-
-    refute_equal kick, snare
-    refute_equal snare, hat
-  end
-
-  def test_beauty_bass_cell_approaches_the_destination
-    cell = DillaBeautyEngine.bass_cell(36, 40, 7)
-
-    assert_operator cell.length, :>=, 1
-    assert cell.all? { |note| note.is_a?(Integer) }
-    assert_operator (40 - cell.last).abs, :<=, 2
-  end
-
-  def test_beauty_counterpoint_prefers_contrary_motion
-    choices = [64, 67, 71, 74]
-    assert_equal 64, DillaBeautyEngine.contrary_candidate(choices, 67, 62)
-    assert_equal 71, DillaBeautyEngine.contrary_candidate(choices, 67, 72)
-  end
-
-  def test_ending_budget_is_applied_before_the_last_twenty_seconds
-    with_env(
-      "DILLA_SHOWCASE" => "0",
-      "DILLA_FUGUE" => "0",
-      "LIVE_REFERENCE" => nil
-    ) do
-      improviser = LiveSynth::Improviser.new(rng: Random.new(31), family: "prophet", drums: false)
-      refute improviser.instance_variable_get(:@beauty_ending)
-      improviser.prepare_ending!(19.9)
-      assert improviser.instance_variable_get(:@beauty_ending)
-    end
-  end
-
   def test_soul_pocket_declares_all_four_drum_roles
     preset = DillaLofiMachine::DRUM_PRESETS.fetch(:dilla_soul_pocket)
 

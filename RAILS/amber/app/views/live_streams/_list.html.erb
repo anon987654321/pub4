@@ -1,0 +1,14 @@
+<%= turbo_frame_tag "live-streams" do %>
+  <section aria-label="<%= t("live_streams.scheduled_region") %>">
+    <% if @live_streams.any? %>
+      <ul role="list" id="amber-live-streams">
+        <%= render partial: "live_streams/stream_row", collection: @live_streams, as: :live_stream %>
+      </ul>
+    <% else %>
+      <%= render "shared/empty_state",
+            title: t("empty.no_sessions"),
+            body: t("wardrobe.sessions_empty_body"),
+            action: { label: t("actions.wardrobe"), path: items_path } %>
+    <% end %>
+  </section>
+<% end %>

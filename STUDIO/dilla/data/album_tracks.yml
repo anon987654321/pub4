@@ -1,0 +1,57 @@
+# The album running order, and why each track is on it.
+#
+# A tracklist is a set of decisions about a record, not logic, so it lives here
+# rather than in a constant. `dilla.rb album` reads it in this order and
+# crossfades between them.
+
+tracks:
+  # The only track right in every respect: the actual Anuar Zain sample (the file
+  # it replaced was a different record entirely), its own vocal chords rather
+  # than a curated progression laid over them, a first-generation WAV rather than
+  # a decoded mp3, and the stereotools width fix so it does not comb in mono.
+  # minPhase 0.983 against the original -0.670.
+  - path: renders/wav/semua_chordless.wav
+    title: semua untuk mu
+    why: main theme, real sample, chordless
+  - path: renders/beats/dilla_arat_remake.mp3
+    title: arat swost wolet
+    why: remade from samples/arat_swost_wolet
+  - path: renders/beats/semua_gunnhild.mp3
+    title: semua (gunnhild)
+    why: distinct vocal
+  - path: renders/beats/semua_haisam_johann.mp3
+    title: semua (haisam johann)
+    why: distinct vocal
+  - path: renders/beats/rel2_semua_pedal.mp3
+    title: semua pedal
+    why: idea nothing else covers
+  - path: renders/beats/dilla_native_jonas.mp3
+    title: native (jonas v)
+    why: LRA 9.8
+  - path: renders/beats/dilla_native_vocal.mp3
+    title: native vocal
+    why: LRA 9.2
+  - path: renders/beats/dilla_kembara_92.mp3
+    title: kembara 92
+    why: best of 4 kembara takes
+  - path: renders/beats/r4_maj7_cycle.mp3
+    title: maj7 cycle
+    why: idea nothing else covers
+  - path: renders/beats/best1_fugue_arat.mp3
+    title: fugue arat
+    why: best of 3 fugue takes
+  - path: renders/beats/beauty_fugue.mp3
+    title: beauty fugue
+    why: LRA 6.6
+  - path: renders/beats/liquid_dnb.mp3
+    title: liquid dnb
+    why: distinct genre
+  - path: renders/beats/vaular_remix.mp3
+    title: vaular remix
+    why: distinct source
+  - path: renders/beats/su_tunnel_choir.mp3
+    title: su tunnel choir
+    why: distinct texture
+  - path: renders/beats/techno3.mp3
+    title: techno
+    why: best of 6 techno takes

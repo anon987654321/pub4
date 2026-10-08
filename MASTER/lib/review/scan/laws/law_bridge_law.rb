@@ -1,0 +1,67 @@
+# frozen_string_literal: true
+
+require File.join(Master::ROOT, "law", "definition")
+
+module Master
+  module Review
+    module Scan
+      module Laws
+        # Bridges law/*.rb into the scanner. Each Law::Rule proved itself against
+        # its own bad/good fixture at load, so a hit here is a hit a fixture already
+        # vouches for. YamlDeclarativeLaw yields to any id defined here.
+        class LawBridgeLaw < Law
+          def self.auto_build? = false
+
+          declare id: "law_bridge", severity: :warning, description: "law/ — executable rules with fixtures"
+
+          def initialize(root: Master::ROOT)
+            super()
+            @root = root
+            law_root = if File.file?(File.join(root, "law", "definition.rb"))
+              root
+            elsif File.file?(File.join(root, "MASTER", "law", "definition.rb"))
+              File.join(root, "MASTER")
+            else
+              Master::ROOT
+            end
+            ::Law.load_all(File.join(law_root, "law")) if ::Law.definitions.empty?
+          end
+
+          def check(code, path:)
+            lang = language(path)&.to_sym
+            # law/ files arrive already neutralized: FileProcessor#law_conducted
+            # runs Law.conduct at the one read site, so every rule — this
+            # bridge and the registry classes alike — sees fixtures and
+            # detectors as declarations, not conduct.
+            ::Law.definitions.each_value.flat_map do |law|
+              next [] unless law.enforceable?
+              next [] unless law.applies?(path, lang)
+
+              law.scan(code, file: path).map do |hit|
+                Finding.build(
+                  # The id unchanged, not downcased. Downcasing made every
+                  # law-emitted finding a stranger to its own id: violation
+                  # priors, exemptions and dedupe key on UNBOUNDED_RETRY and
+                  # received unbounded_retry, and one line could carry two
+                  # findings that differed only by case while a registry twin
+                  # lived. One id, whatever implements it.
+                  law: law.id.to_s,
+                  message: "#{law.id}: #{law.fix}",
+                  line: hit.line,
+                  severity: severity_for(law.severity),
+                  tags: [law.id.to_s],
+                )
+              end
+            end
+          end
+
+          private
+
+          def severity_for(sev)
+            { warn: :warning, error: :error, info: :info }.fetch(sev, sev)
+          end
+        end
+      end
+    end
+  end
+end

@@ -1,0 +1,33 @@
+<%# Playlist::Set.model_name.route_key is already "playlist_sets", so the
+    [:playlist, ...] prefix asked for playlist_sets_path and /sets/new
+    500'd. Plain `model:` resolves to sets_path / set_path. %>
+<%= form_with model: @set do |form| %>
+  <% if @set.errors.any? %>
+    <div class="error"><%= @set.errors.full_messages.to_sentence %></div>
+  <% end %>
+
+  <div class="field">
+    <%= form.label :name %>
+    <%= form.text_field :name, required: true %>
+  </div>
+
+  <div class="field">
+    <%= form.label :description %>
+    <div data-controller="character-counter" data-character-counter-countdown-value="true">
+  <%= form.text_area :description, rows: 4 , maxlength: 1000, data: { character_counter_target: "input" } %>
+  <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
+</div>
+  </div>
+
+  <div class="field">
+    <%= form.label :privacy %>
+    <%= form.select :privacy, Playlist::Set::PRIVACY_LEVELS.map { |level| [level.humanize, level] } %>
+  </div>
+
+  <div class="field">
+    <%= form.label :collaborative %>
+    <%= form.check_box :collaborative %>
+  </div>
+
+  <%= form.submit class: "btn btn-primary btn-sm" %>
+<% end %>

@@ -1,0 +1,88 @@
+# frozen_string_literal: true
+
+require "minitest/autorun"
+require_relative "../../MASTER/tools/asset_url_lint"
+
+# The gap css_coverage_lint left. It measures class names in both directions and
+# never looks inside a declaration, so no committed tool read `url()` — and the
+# audit that produced it checked `image_tag` and `asset_path`, the reference forms
+# that fail loudly, and skipped the one that fails silently.
+#
+# What it found on the first run was live: amber served a lightgallery.css whose
+# icon font 404'd.
+class AssetUrlLintTest < Minitest::Test
+  L = Operator::AssetUrlLint
+
+  def test_no_kind_exceeds_its_baseline
+    exceeded = L.over_baseline
+
+    assert_empty exceeded, exceeded.join("; ")
+  end
+
+  def test_baselines_are_not_stale
+    counts = L.counts
+
+    L::BASELINES.each do |kind, baseline|
+      assert_equal baseline, counts.fetch(kind),
+                   "#{kind} is at #{counts.fetch(kind)} against #{baseline} — lower it in asset_url_lint.rb"
+    end
+  end
+
+  # The regression this lint was written for. amber's layout links
+  # `/lightgallery.css`, amber has no copy, so it is served shared's.
+  # Asserted through the resolver rather than by listing files, so moving the
+  # assets to a different served root still passes and deleting them fails.
+  def test_amber_can_resolve_the_lightgallery_icon_font
+    sheet = File.join(L::RAILS_ROOT, "__shared/public/lightgallery.css")
+
+    %w[../fonts/lg.woff2 ../fonts/lg.woff ../images/loading.gif].each do |ref|
+      assert L.satisfied_everywhere?(ref, sheet),
+             "#{ref} must resolve for every app that links shared's lightgallery.css, not just brgen"
+    end
+  end
+
+  # My own first run reported PP Neue Montreal in five weights because `expand`
+  # read every `@each $w` in the file rather than the enclosing one, and
+  # brgen's stylesheet has two over different weight lists. Two of the five names
+  # appear in no stylesheet at all. A lint that invents a filename cannot be
+  # trusted about the ones it did not invent.
+  def test_each_expansion_is_scoped_to_the_enclosing_loop
+    body = <<~SCSS
+      @each $w in (400, 500) {
+        @font-face { src: url("/a-#{'#{$w}'}.woff2"); }
+      }
+      @each $w in (700) {
+        @font-face { src: url("/b-#{'#{$w}'}.woff2"); }
+      }
+    SCSS
+    blocks = L.each_blocks(body)
+    offset = body.index("/b-")
+
+    assert_equal ["/b-700.woff2"], L.expand('/b-#{$w}.woff2', offset, blocks)
+  end
+
+  # A query string and a fragment are cache-busting and glyph-selecting sugar, not
+  # part of the filename: lightGallery ships `lg.woff2?io9a6k` and `lg.svg?io9a6k#lg`.
+  def test_query_and_fragment_are_not_part_of_the_filename
+    root = File.join(L::RAILS_ROOT, "__shared/public")
+
+    assert L.satisfied?("/fonts/lg.woff2?io9a6k", [root])
+    assert L.satisfied?("fonts/lg.woff2?io9a6k#lg", [root])
+  end
+
+  def test_remote_and_inline_references_are_not_assets
+    sheet = File.join(L::RAILS_ROOT, "brgen/app/assets/stylesheets/application.scss")
+    refs = L.refs_in(sheet)
+
+    refute_empty refs
+    refute refs.any? { |r| r.start_with?("data:", "http", "//") },
+           "a CDN fallback and a data: URI are not files this tree owns"
+  end
+
+  # An empty scan reads as a clean tree, which is the failure mode every gate here
+  # exists to catch.
+  def test_it_reads_something
+    assert_operator L.sheets.size, :>, 100, "the stylesheet glob stopped matching"
+    assert_operator L.refs_in(File.join(L::RAILS_ROOT, "__shared/app/assets/stylesheets/_fonts.scss")).size, :>=, 2
+  end
+end

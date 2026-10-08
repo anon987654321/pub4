@@ -637,7 +637,7 @@ repo_topics:
     # (awesome-llm-apps personal assistant example removed 2026-05 as dead external bloat)
     - MASTER/knowledge/github_repos/system_prompts_leaks/Perplexity/voice-assistant.md
     - MASTER/knowledge/github_repos/system_prompts_leaks/Perplexity/comet-browser-assistant.md
-    - RAILS/master_web/public/face.js
+    - MASTER/web/public/face.js
     pattern: 'Personal assistants combine persistent context, speech, tools, calendar/mail/files,
       interruption handling, and social presentation.
 
@@ -653,7 +653,7 @@ repo_topics:
     local_evidence:
     - MASTER/knowledge/github_repos/system_prompts_leaks/Perplexity/voice-assistant.md
     - MASTER/knowledge/github_repos/CL4R1T4S/META/Llama4_WhatsApp.txt
-    - RAILS/master_web/public/face.js
+    - MASTER/web/public/face.js
     # (older leaked-system-prompts examples removed 2026-05 during repo bloat cleanup)
     pattern: 'Social intelligence appears as prompt archaeology and expressive UI
       gestures, but needs a safe first-party interaction policy layer.
@@ -705,7 +705,7 @@ repo_topics:
     - MASTER/knowledge/research/tts.yml
     - MASTER/lib/voice/production_dna.rb
     - MASTER/lib/voice/speech.rb
-    - RAILS/master_web/public/face.js
+    - MASTER/web/public/face.js
     pattern: 'Speech style inference, sentence-level TTS, prosody research, visemes,
       and musical timing point toward a lyricism/linguistics engine.
 
@@ -719,7 +719,7 @@ repo_topics:
     status: speculative
     confidence: low
     local_evidence:
-    - RAILS/master_web/public/face.js
+    - MASTER/web/public/face.js
     - MASTER/data/runtime.yml#repo_ecology
     pattern: 'No strong physical exoskeleton repo evidence was found yet. Existing
       evidence points to a cognitive/interface exoskeleton: face, gestures, haptics,
@@ -988,7 +988,7 @@ operator_playbook:
       area: master_web
       signal: "SSE events fire but ecology trails/weather invisible"
       action: "Ecology canvas must sit above #face (z-index 2, mix-blend-mode screen). cognition_ecology.js listens on master:visual; render loop restarts on visibility + visual events."
-      proof: "grep 'z-index: 2' RAILS/master_web/public/face.css; browser devtools shows #cognition-ecology above canvas#face"
+      proof: "grep 'z-index: 2' MASTER/web/public/face.css; browser devtools shows #cognition-ecology above canvas#face"
 
     - id: ship_proof_not_checkboxes
       area: process

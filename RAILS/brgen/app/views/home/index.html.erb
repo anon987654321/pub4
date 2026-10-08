@@ -1,0 +1,57 @@
+<% content_for :title, t("pages.home_title", city: city_name) %>
+<%# The "Bergen, akkurat nå" intro banner and its paths/AI line were removed:
+    the front page opens straight into the feed. Wayfinding to the verticals
+    (main / AI / playlist / marketplace / dating) lives in the top nav, and the
+    anonymous compose box sits above the posts. %>
+<%# No city-today strip. The city right now IS the feed below -- its posts, its
+    people, the rooms they are in, what is for sale and what is on. A separate
+    strip of links to other hosts said the same thing worse, above the thing
+    itself. Operator decision 2026-08-27. %>
+
+<%# BRGEN-105. The front page is live, and it does not move while you read it.
+    Post#broadcast_to_city_feed prepends the new card into #feed-pending, which
+    is hidden; feed_updates_controller counts what lands there and offers it on
+    a chip. The stream is per city because posts are city-tenanted — one shared
+    stream would put Bergen's feed on Oslo's front page.
+
+    Both plural forms are rendered here rather than in the controller, so the
+    rule stays I18n's. %>
+<%# ActsAsTenant.current_tenant rather than Current.city: acts_as_tenant is what
+    scopes posts by city, so its tenant is by definition the city whose feed
+    this is, and Current.city is set from a domain-registry entry that need not
+    be the City record. %>
+<% feed_city = ActsAsTenant.current_tenant %>
+<% if feed_city.respond_to?(:id) %>
+  <%= turbo_stream_from Post.city_feed_stream(feed_city.id) %>
+<% end %>
+
+<nav class="home-feed-views" aria-label="<%= t("home.feed_views", default: "Feed views") %>">
+  <%= link_to t("home.feed_view", default: "Feed"), root_path(feed: params[:feed]), class: "home-feed-view#{' is-active' if params[:view].to_s != "media"}", aria: { current: ("page" if params[:view].to_s != "media") } %>
+  <%= link_to t("home.media_wall_view", default: "Media wall"), root_path(feed: params[:feed], view: "media"), class: "home-feed-view#{' is-active' if params[:view].to_s == "media"}", aria: { current: ("page" if params[:view].to_s == "media") } %>
+</nav>
+
+<section id="feed-panel" aria-label="<%= t("home.local_posts") %>" data-visitor-orientation
+         data-controller="feed-updates"
+         data-feed-updates-one-value="<%= t("home.new_posts.one") %>"
+         data-feed-updates-other-value="<%= t("home.new_posts.other") %>">
+  <%# Where the broadcasts land. Hidden and out of the accessibility tree: these
+      cards are not on the page yet in any sense a reader would recognise, and
+      announcing them as they arrive is the interruption the chip exists to
+      replace. %>
+  <div id="feed-pending" hidden aria-hidden="true" data-feed-updates-target="pending"></div>
+  <p class="chips" hidden data-feed-updates-target="chip">
+    <%= button_tag type: "button", class: "chip", data: { action: "feed-updates#show" } do %>
+      <span data-feed-updates-target="count"></span>
+      <span class="visually-hidden"><%= t("home.show_new_posts") %></span>
+    <% end %>
+  </p>
+  <%# No feed-ordering chips on the front page — operator decision 2026-09-17.
+      Nytt / Hot / Følger / Fellesskap is a which-posts decision, and on root it
+      sat above the thing it ordered. communities/show keeps its chips for the
+      same job; root opens straight into the feed, and feed=following and
+      feed=communities are still reachable by query string. %>
+  <% if home_feed_following? && !authenticated? %>
+    <p class="feed-hint"><%= link_to t("home.follow_sign_in"), new_session_path %><%= t("home.follow_hint") %></p>
+  <% end %>
+  <%= render "home/live_search_results" %>
+</section>

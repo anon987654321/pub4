@@ -77,7 +77,7 @@ for pat in \
   'bin/rails db:seed' \
   'bin/rails test' \
   'ruby.*bin/cli' \
-  'RAILS/master_web/script/probe_face' \
+  'MASTER/web/script/probe_face' \
   'tts-worker --daemon'
 do
   pkill -f "$pat" 2>/dev/null && echo "pkill $pat" || true
@@ -132,4 +132,4 @@ top -b -n1 | first_lines 18
 rcctl check master relayd brgen 2>/dev/null || true
 relayctl show hosts 2>/dev/null | first_lines 12 || true
 
-echo "Done. git pull, sync rc.d/master (-n 2), then probe: ruby40 RAILS/master_web/script/probe_http"
+echo "Done. git pull, sync rc.d/master (-n 2), then probe: ruby40 MASTER/web/script/probe_http"

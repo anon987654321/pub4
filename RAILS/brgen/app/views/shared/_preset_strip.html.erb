@@ -1,0 +1,25 @@
+<%# The look presets for an uploaded image.
+
+    Four copies of these five radios existed — posts/new, posts/edit,
+    marketplace/listings/new, tv/videos/new — and only posts/new wrapped them
+    in a fieldset with a legend, so on three of the four upload forms the
+    group announced as five unrelated controls with no name.
+
+    locals: f (form builder)
+    optional: checked (preset selected by default), hidden (start collapsed),
+              picker_target (wire to media-picker, which reveals the strip
+              once a file is chosen) %>
+<%= tag.fieldset class: "preset-strip",
+      hidden: local_assigns[:hidden],
+      data: (local_assigns[:picker_target] ? { media_picker_target: "presets" } : {}) do %>
+  <legend class="preset-strip-legend"><%= t("media.preset_legend") %></legend>
+  <% %w[none portrait landscape street blockbuster].each do |preset| %>
+    <label class="preset-opt">
+      <%# checked passes only when a default was asked for: forcing
+          checked: false otherwise would override the record's own value. %>
+      <%= f.radio_button :preset, preset,
+            **(local_assigns[:checked] ? { checked: preset == local_assigns[:checked] } : {}) %>
+      <%= t("media.presets.#{preset}") %>
+    </label>
+  <% end %>
+<% end %>

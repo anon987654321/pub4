@@ -1,0 +1,898 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Small, non-interactive Replicate image entrypoint. Credentials stay in env/user config.
+require "optparse"
+require "fileutils"
+require "json"
+require "time"
+require "digest"
+require "securerandom"
+# Paths into MASTER are spelled from this file up to the repo root. A relative
+# ../lib/ would resolve to MASTER/tools/lib/, which does not exist, and abort the
+# whole file on its first require.
+require_relative "client"
+require_relative "script_dispatch"
+require_relative "../postpro/analog_capabilities"
+
+# Shellwords.escape is called in maybe_handoff_postpro; without this require
+# --postpro reaches a NameError instead of a handoff.
+require "shellwords"
+require_relative "craft"
+require_relative "chain"
+
+# What each Replicate model actually accepts, checked against the live schemas
+# rather than remembered.
+#
+# stable-diffusion-3.5-large was wrong in all three of its interesting fields.
+# Its schema is prompt / aspect_ratio / cfg / image / prompt_strength / steps /
+# seed / output_format / output_quality — the guidance knob is `cfg`, not
+# `cfg_scale`; the step count is `steps`, not `num_inference_steps`; and there
+# is NO negative_prompt at all (SD3 had one, 3.5 dropped it). It was the one
+# model in this table declared to accept a negative prompt, so it was the one
+# model for which negative_prompt_supported? returned true — meaning the
+# POSITIVE_SKIN_GUIDANCE fallback was suppressed, a `negative_prompt` key the
+# model does not have was sent, and the provenance sidecar recorded
+# negative_prompt_sent: true. Precisely the failure the file's own comments say
+# was fixed, surviving in the one entry nobody re-read.
+#
+# guidance_key / steps_key / their ranges are here because build_input had been
+# reading options[:guidance], options[:steps] and options[:cfg_scale] for keys
+# no flag could ever set. Three declared capabilities with no way to reach them.
+MODEL_CAPABILITIES = {
+  "black-forest-labs/flux-1.1-pro" => {
+    input_keys: %w[prompt aspect_ratio output_format safety_tolerance seed],
+    negative_prompt_key: nil,
+  },
+  # 4 MP. `raw` is the camera-look toggle BFL added for Ultra: less plastic,
+  # more candid. Set automatically when --stock or --lens is on, because those
+  # flags are how this file asks for a photograph rather than an illustration.
+  "black-forest-labs/flux-1.1-pro-ultra" => {
+    input_keys: %w[prompt aspect_ratio output_format safety_tolerance seed raw],
+    negative_prompt_key: nil,
+  },
+  # Text-instructed edit of an existing picture. Requires --image; generate
+  # without one is a refusal, not a silent text-to-image fallback.
+  "black-forest-labs/flux-kontext-pro" => {
+    input_keys: %w[prompt aspect_ratio output_format safety_tolerance seed input_image],
+    negative_prompt_key: nil,
+  },
+  "black-forest-labs/flux-dev" => {
+    input_keys: %w[prompt aspect_ratio output_format seed guidance num_inference_steps],
+    negative_prompt_key: nil,
+    guidance_key: "guidance", guidance_range: (0.0..10.0), guidance_default: 3.0,
+    steps_key: "num_inference_steps", steps_range: (1..50), steps_default: 28,
+  },
+  "black-forest-labs/flux-schnell" => {
+    input_keys: %w[prompt aspect_ratio output_format seed num_inference_steps],
+    negative_prompt_key: nil,
+    # schnell is a 1-4 step model. The same --steps 28 that is right for dev is
+    # out of range here, which is why the ceiling is per-model and not global.
+    steps_key: "num_inference_steps", steps_range: (1..4), steps_default: 4,
+  },
+  # FLUX 2, the current generation and the default as of 2026-08-25.
+  #
+  # `input_images`, PLURAL, and that is the whole reason these entries were
+  # worth waiting for rather than guessing. FLUX 2 takes up to eight reference
+  # images and holds a character across them, where FLUX 1's editors took a
+  # single `input_image`. The chain validator would refuse a guessed singular
+  # key on every FLUX 2 chain — correctly, and for a reason nobody would have
+  # found quickly.
+  #
+  # Read from Replicate's own documentation rather than from the schema
+  # endpoint, which needs a token this machine does not have. `rake
+  # replicate:schema_audit` is what confirms them against the provider, and
+  # should be the first thing run once a token is present.
+  #
+  # No safety_tolerance: that was a FLUX 1.1 field and nothing in the FLUX 2
+  # documentation carries it. Declaring a key the model does not take is the
+  # exact failure MODEL_CAPABILITIES exists to prevent, so it is left out until
+  # the audit says otherwise.
+  "black-forest-labs/flux-2-max" => {
+    input_keys: %w[prompt input_images aspect_ratio output_format output_quality seed],
+    negative_prompt_key: nil,
+  },
+  "black-forest-labs/flux-2-pro" => {
+    input_keys: %w[prompt input_images aspect_ratio output_format output_quality seed],
+    negative_prompt_key: nil,
+  },
+  # Typography specialist — clean text, captions, complex layouts — and the
+  # widest blend surface at ten references.
+  "black-forest-labs/flux-2-flex" => {
+    input_keys: %w[prompt input_images aspect_ratio output_format output_quality seed],
+    negative_prompt_key: nil,
+  },
+  # Sub-second. The exploration lane: run a prompt here, then commit the winner
+  # to flux-2-max.
+  "black-forest-labs/flux-2-klein-4b" => {
+    input_keys: %w[prompt input_images aspect_ratio output_format output_quality seed],
+    negative_prompt_key: nil,
+  },
+  "black-forest-labs/flux-2-dev" => {
+    input_keys: %w[prompt input_images aspect_ratio output_format output_quality seed],
+    negative_prompt_key: nil,
+  },
+  # Relights a subject without redrawing it: the frame arrives as
+  # `subject_image`, the prompt names the new light, and `light_source` says
+  # which side it comes from. No depth map goes in. The model takes none, and a
+  # chain that hands it one hands it a depth map as the subject.
+  #
+  # Declared from the model page and never read off the schema, so it carries
+  # `unverified: true` and Chain.problems refuses it until `rake
+  # replicate:schema_audit` confirms the keys. `light_source` has no flag; only
+  # a chain stage's options set it, which `chain_option_keys` records.
+  "zsxkib/ic-light" => {
+    input_keys: %w[prompt subject_image light_source seed output_format],
+    negative_prompt_key: nil,
+    chain_option_keys: %w[light_source],
+    unverified: true,
+  },
+  "stability-ai/stable-diffusion-3.5-large" => {
+    input_keys: %w[prompt aspect_ratio output_format seed cfg steps],
+    negative_prompt_key: nil,
+    guidance_key: "cfg", guidance_range: (0.0..20.0), guidance_default: 3.5,
+    steps_key: "steps", steps_range: (1..50), steps_default: 35,
+  },
+}.freeze
+DEFAULT_CAPABILITY = { input_keys: %w[prompt aspect_ratio output_format seed], negative_prompt_key: nil }.freeze
+
+# Sub-second, and the current generation. Explore here, commit to FINAL_MODEL.
+PREVIEW_MODEL = "black-forest-labs/flux-2-klein-4b"
+# What --final asks for. The flag was parsed into options[:final] and nothing
+# ever read it, so `--final` did nothing at all: with REPLICATE_MODEL set to a
+# preview model it silently kept previewing.
+#
+# Max, the highest-fidelity FLUX 2 model. Ordinary runs use REPLICATE_MODEL,
+# flux-2-pro by default; --final is how one image leaves that for the best
+# model the table declares.
+FINAL_MODEL = "black-forest-labs/flux-2-max"
+
+def capability_for(model_id)
+  MODEL_CAPABILITIES[model_id] || DEFAULT_CAPABILITY
+end
+
+def compile_negative_prompt(options)
+  return options[:negative] if options[:negative]
+  return if options[:no_negative]
+
+  parts = [PLASTIC_SKIN_NEGATIVE]
+  parts << ANTI_BEAUTIFICATION_NEGATIVE unless options[:allow_beautify]
+  parts.join(", ")
+end
+
+# --distance is the field that most directly decides the shape of the frame, and
+# it was the field this could not see: inference ran on the raw --prompt before
+# compile_prompt had folded anything into it, so `--distance closeup` produced a
+# 3:2 editorial crop while the word "close-up" typed into the prompt produced
+# 4:5. The structured field and the free text disagreed about which one counted.
+# The explicit --aspect-ratio still wins over both.
+DISTANCE_ASPECT = {
+  "macro" => "1:1", "closeup" => "4:5", "portrait" => "4:5", "half" => "4:5",
+  "three_quarter" => "2:3", "full" => "2:3", "wide" => "16:9", "establishing" => "16:9",
+}.freeze
+
+def infer_aspect_ratio(prompt, explicit, distance = nil)
+  return explicit if explicit
+
+  if distance && (ratio = DISTANCE_ASPECT[distance.to_s.strip.downcase.tr("- ", "__")])
+    return ratio
+  end
+
+  case prompt
+  when /\bportrait\b|\bheadshot\b|\bclose[- ]?up\b/i then "4:5"
+  when /\blandscape\b|\bwide\b|\bpanoram/i then "16:9"
+  when /\bsquare\b|\bavatar\b/i then "1:1"
+  else "3:2" # editorial default
+  end
+end
+
+# The positive half of the same instruction, for models that have no negative
+# prompt at all. Every Flux model is one, including the default -- so on the
+# default model the entire anti-plastic-skin defence was assembled, threaded
+# through four functions, written into the provenance sidecar as if it had been
+# applied, and then dropped on the floor by the input_keys filter in build_input
+# without a word. The sidecar was the worst part: it recorded a negative prompt
+# that was never sent, so the file that exists to make a generation auditable
+# was the thing asserting a constraint the generation never had.
+#
+# You cannot hand Flux a list of things to avoid; naming them in the prompt
+# summons them. What you can do is ask for the opposite in the affirmative,
+# which is what a photographer would have written in the first place.
+POSITIVE_SKIN_GUIDANCE = "natural skin texture with visible pores and fine lines, unretouched, " \
+  "documentary realism, real photographic imperfection"
+
+def negative_prompt_supported?(model_id)
+  cap = capability_for(model_id)
+  !cap[:negative_prompt_key].nil? && cap[:input_keys].include?(cap[:negative_prompt_key])
+end
+
+# A number the model will accept, or a refusal that says what the range is.
+#
+# Silently clamping is the wrong answer here for the same reason a missing film
+# stock was: you asked for 28 steps on a model whose ceiling is 4, paid for the
+# generation, and got something you did not ask for with nothing in the output
+# saying so.
+def model_number(cap, kind, value)
+  return nil if value.nil?
+
+  key = cap[:"#{kind}_key"]
+  abort "warn: --#{kind == :guidance ? 'guidance' : 'steps'} is not a knob on this model" unless key
+
+  range = cap[:"#{kind}_range"]
+  unless range.cover?(value)
+    abort "warn: #{key} #{value} is outside this model's range #{range.first}..#{range.last}"
+  end
+  [key.to_sym, value]
+end
+
+# flux-1.1-pro-ultra's raw mode is the camera look, and the only model here
+# that declares it. Stock or lens in the request means
+# the caller asked for a photograph; --no-raw is how they opt out, --raw
+# is how they force it on a model that has the key.
+def raw_mode?(options)
+  return false if options[:no_raw]
+  return true if options[:raw]
+  !!(options[:stock] || options[:lens])
+end
+
+# Local paths become URLs the provider can actually fetch.
+#
+# Replicate reads input_image/input_images over HTTP. Handing it
+# "/Users/…/frame.jpg" is a path only this machine can resolve, and the API
+# does not fail helpfully on that — it fails somewhere inside the model, after
+# the prediction has been created and billed.
+#
+# Nothing uploaded before this. --image had the same defect, so every edit-model
+# call was passing a local path; the chain executor inherited it, and stage 2
+# would have been the first thing to hit it. Found by printing the payload a
+# chain would send rather than by running one.
+#
+# Already-URLs and data: URIs pass through untouched, so a reference fetched
+# from somewhere else stays as it is.
+def upload_reference(client, path)
+  return path if path.to_s.start_with?("http://", "https://", "data:")
+  return path unless File.file?(path.to_s)
+
+  client.upload_file(path.to_s)
+end
+
+# Up to eight, because that is what flux-2-max and flux-2-pro accept; flex takes
+# ten and klein-4b five, and the model's own schema is what refuses the excess
+# rather than a number guessed here. Empty becomes nil so .compact drops the key
+# entirely — sending an empty list is not the same as not sending one.
+def reference_images(options)
+  refs = (Array(options[:references]) + [options[:image]]).compact.uniq
+  refs.empty? ? nil : refs.first(8)
+end
+
+# The one-picture input keys, in whichever spelling a model uses. input_images,
+# the FLUX 2 list, is filled from reference_images instead.
+SINGLE_IMAGE_KEYS = (Replicate::Chain::IMAGE_INPUT_KEYS - ["input_images"]).freeze
+
+# `passthrough` is a chain stage's own options. A key the model declares and
+# nothing above fills, such as IC-Light's light_source, goes out as the stage
+# wrote it; a key the model does not declare was already refused by
+# Chain.problems, and the filter at the end drops it again.
+def build_input(prompt, options, seed:, negative_prompt:, passthrough: {})
+  cap = capability_for(options[:model])
+  image_key = (cap[:input_keys] & SINGLE_IMAGE_KEYS).first
+  full = {
+    prompt:,
+    aspect_ratio: options[:aspect_ratio],
+    output_format: "webp",
+    safety_tolerance: 2,
+    seed:,
+    negative_prompt:,
+    raw: raw_mode?(options) || nil,
+    # FLUX 2 takes references as a LIST, up to eight, and holds a character
+    # across them. That is the consistency spine a long chain needs: stage N's
+    # outputs become stage N+1's references, so the chain accumulates rather
+    # than drifting. --reference may be given more than once; --image still
+    # works and counts as the first of them.
+    input_images: reference_images(options),
+    output_quality: 90,
+  }.compact
+  full[image_key.to_sym] = options[:image] if image_key && options[:image]
+  passthrough.each { |key, value| full[key.to_sym] = value unless full.key?(key.to_sym) }
+
+  [model_number(cap, :guidance, options[:guidance]),
+   model_number(cap, :steps, options[:steps])].compact.each { |key, value| full[key] = value }
+  if cap[:negative_prompt_key] && full.key?(:negative_prompt)
+    full[cap[:negative_prompt_key].to_sym] = full.delete(:negative_prompt)
+  end
+  full.select { |key, _| cap[:input_keys].include?(key.to_s) }
+end
+
+# Alt text describes what is in the picture. It is not the prompt.
+#
+# This was the fully compiled, diversified prompt truncated to 240 characters,
+# which meant the accessibility text written into the shared gallery manifest
+# opened with "Kodak Portra 400 color negative scan, fine grain, gentle
+# highlight rolloff, 85mm portrait lens, compressed background, creamy bokeh"
+# and ran out of room before it reached the subject. Someone reading with a
+# screen reader got a film-stock datasheet.
+#
+# Emulsion, glass, weather and hour are how the image was made; a viewer who
+# cannot see it needs what it is OF. Subject, then how much of them is in frame,
+# then where they are.
+ALT_TEXT_FIELDS = %i[distance camera_height].freeze
+
+def alt_text_for(base_prompt, options = {}, background = nil)
+  parts = [base_prompt.to_s.strip]
+  ALT_TEXT_FIELDS.each { |field| parts << resolve_vocab(field, options[field]) }
+  parts << background
+  parts.compact.reject(&:empty?).join(", ").gsub(/,\s*/, ", ").strip[0, 240]
+end
+
+# Black Forest Labs' own guidance for FLUX 2, and where this tool sits against it.
+#
+#   structure  Subject + Action + Style + Context, in that order. Word order
+#              matters and the main element goes first — which is why
+#              compile_prompt appends the vocabularies after the caller's
+#              prompt rather than before it.
+#   length     30-80 words for most work. 10-30 for quick exploration, 80+ only
+#              for genuinely complex scenes.
+#   camera     name the body, lens and aperture. "Shot on Hasselblad X2D, 80mm,
+#              f/2.8" beats any vague descriptor.
+#   colour     hex codes tied to specific objects, not colour words.
+#   negatives  FLUX 2 does not support them at all. That is already handled —
+#              the capability table carries negative_prompt_key: nil for all
+#              five, and negative_prompt_supported? warns and folds
+#              POSITIVE_SKIN_GUIDANCE into the positive prompt instead.
+#
+# Measured against this file: the caller's prompt plus three vocabulary fields
+# lands at 63 words, inside the band. All eleven at once is 142 — nearly double
+# the ceiling, and every field past it is competing for the model's attention
+# with the subject. The vocabularies are a menu, not a checklist, and this says
+# so at the moment somebody treats them as one.
+PROMPT_WORD_CEILING = 80
+
+def warn_prompt_length(compiled, model)
+  words = compiled.to_s.split.size
+  return if words <= PROMPT_WORD_CEILING
+
+  warn "warn: the compiled prompt is #{words} words against Black Forest Labs' 80-word " \
+       "guidance for #{model} — past that the later fields compete with the subject rather " \
+       "than describing it. Drop the vocabularies you are not actually deciding."
+end
+
+# A bare "selfie" in the prompt asks for the distortion, and gets it.
+#
+# The word carries a geometry: arm's length is 40-70cm, which is exactly the
+# range where the nose enlarges and the ears fall away, and a model trained on
+# millions of real selfies reproduces that faithfully. It is not a style the
+# model is applying badly; it is the correct rendering of what was asked for.
+#
+# Warned rather than refused, because sometimes the distortion is wanted — it
+# is what makes a selfie read as a selfie. What must not happen is getting it
+# without having chosen it.
+def warn_bare_selfie(prompt, options)
+  return unless prompt.to_s.match?(/\bselfie\b/i)
+  return if options[:selfie_geometry] || options[:subject_distance]
+
+  warn "warn: the prompt says \"selfie\" with no --subject-distance and no " \
+       "--selfie-geometry, so the model will render it at arm's length with the " \
+       "nose enlarged and the ears falling away — which is what a real selfie is."
+  warn "warn: --selfie-geometry keeps the framing and the eye contact and drops " \
+       "the distortion; --subject-distance selfie asks for it deliberately."
+end
+
+# --selfie-geometry asks for the proportions of a portrait from three metres, so
+# a --subject-distance inside the distortion range contradicts it.
+NEAR_SUBJECT_DISTANCES = %w[selfie 0.5m 1m].freeze
+
+def warn_selfie_geometry_distance(options)
+  near = options[:subject_distance]&.to_s&.downcase&.tr("- ", "__")
+  return unless options[:selfie_geometry] && NEAR_SUBJECT_DISTANCES.include?(near)
+
+  warn "warn: --selfie-geometry asks for a portrait's proportions from three metres, and " \
+       "--subject-distance #{near} puts the camera inside the distortion range"
+end
+
+def warn_backfiring_words(prompt)
+  backfiring_words(prompt).each { |word, why| warn "warn: the prompt says \"#{word}\", which #{why}" }
+end
+
+def warn_vocab_conflicts(options)
+  warn_bare_selfie(options[:prompt], options)
+  warn_selfie_geometry_distance(options)
+  warn_backfiring_words(options[:prompt])
+  VOCAB_CONFLICTS.each do |field_a, values_a, field_b, values_b|
+    a = options[field_a]&.to_s&.downcase&.tr("- ", "__")
+    b = options[field_b]&.to_s&.downcase&.tr("- ", "__")
+    next unless a && b && values_a.include?(a) && values_b.include?(b)
+
+    warn "warn: --#{field_a.to_s.tr('_', '-')} #{a} and --#{field_b.to_s.tr('_', '-')} #{b} describe " \
+         "an incompatible picture; the model will honour one of them and not tell you which"
+  end
+end
+
+# Content-addressed so repeated downloads of the same output collapse to one
+# blob; the sidecar records everything needed to reproduce or audit the call.
+def cache_blob(path, cache_dir)
+  digest = Studio::ReplicateClient.checksum(path)
+  FileUtils.mkdir_p(cache_dir)
+  blob_path = File.join(cache_dir, "#{digest}#{File.extname(path)}")
+  FileUtils.cp(path, blob_path) unless File.exist?(blob_path)
+  [digest, blob_path]
+end
+
+# `extra` carries what only a chain knows: which chain, which stage, the YAML's
+# hash, and how long the call took.
+def write_provenance(output, prompt, compiled_prompt, negative_prompt, options, seed, digest, extra = {})
+  sidecar = { output: }.merge(
+    prompt:,
+    compiled_prompt:,
+    negative_prompt:,
+    # Whether the model was actually given it. A sidecar that records a
+    # constraint the request never carried is worse than one that records
+    # nothing, because it is the file you would consult to find out.
+    negative_prompt_sent: !negative_prompt.nil? && negative_prompt_supported?(options[:model]),
+    model: options[:model],
+    aspect_ratio: options[:aspect_ratio],
+    raw: raw_mode?(options) && capability_for(options[:model])[:input_keys].include?("raw"),
+    input_image: options[:image],
+    seed:,
+    sha256: digest,
+    generated_at: Time.now.utc.iso8601,
+  ).merge(extra)
+  File.write("#{output}.json", JSON.pretty_generate(sidecar))
+  sidecar
+end
+
+def append_gallery_manifest(sidecar, alt_text)
+  manifest = File.join(Studio::Paths.repo, ".master", "media", "gallery.jsonl")
+  FileUtils.mkdir_p(File.dirname(manifest))
+  File.open(manifest, "a") { |f| f.puts(sidecar.merge(alt_text:).to_json) }
+end
+
+# Every chain that stopped, and why, beside the gallery of the ones that did not.
+#
+# A dead end nobody wrote down is a dead end the next session pays for again: the
+# same model refusing the same input, the same stage timing out. The gallery
+# holds what worked; this holds the stage, the recipe's hash, the error and the
+# frames that were kept, so a failure is looked up before it is repeated.
+def record_failed_chain(chain, error, produced, manifest: File.join(Studio::Paths.repo, ".master", "media", "failed_chains.jsonl"))
+  FileUtils.mkdir_p(File.dirname(manifest))
+  row = { chain: chain[:name], sha256: chain[:sha256], failed_at: Time.now.utc.iso8601,
+          error: error.class.name, message: error.message, kept: produced }
+  File.open(manifest, "a") { |f| f.puts(row.to_json) }
+  row
+end
+
+# The grade every output gets unless it is turned off.
+#
+# It was `--postpro PRESET`, opt-in, one flag on one command — so the default
+# was no grade at all, and the house look was whatever anyone remembered to
+# type. A look that has to be remembered is not a house look.
+#
+# `portrait` because replicate mostly makes faces and it is the preset built for
+# them: kodak_portra with skin_protect, and grain. The grain is not decoration.
+# Generated skin is too clean and its specular response uniform, because models
+# learn from retouched photography and have no account of subsurface scattering
+# — the tell of a generated portrait. Grain is the direct answer to the first half
+# of that, and it is the single highest-yield thing that can be done to a
+# generated face after the fact.
+#
+# Changed in one place, here, or per run with --postpro, or per shell with
+# REPLICATE_POSTPRO. --no-postpro turns it off entirely, which is what you want
+# when the output is going into another tool that will grade it later.
+HOUSE_POSTPRO = ENV.fetch("REPLICATE_POSTPRO", "portrait")
+
+def maybe_handoff_postpro(output, preset)
+  return output unless preset
+
+  result = Studio::ScriptDispatch.run(
+    root: Studio::Paths.root,
+    tool: "postpro",
+    arg: ["--input", output, "--output", output, "--preset", preset].map { |v| Shellwords.escape(v) }.join(" "),
+  )
+  result.ok? ? output : (abort "warn: postpro handoff failed: #{result.message}")
+end
+
+# Everything below this line is the CLI: it reads ARGV, and the `case` at the
+# end runs a command or aborts with usage. Without this guard, *loading* the file
+# ran a command — so nothing could ever require it, and MASTER/tools/gate.rb could
+# check it no further than "it parses", which is the check an autofix passes
+# while leaving the tool dead.
+#
+# A top-level `return` rather than wrapping 220 lines in an `if`: it ends the
+# file for `load` and `require` exactly as the wrapper would, and re-indenting
+# the whole dispatch would have buried the change in a diff nobody could read.
+# Running it as a script is unaffected — that is the branch that continues.
+# Does everything this file can be asked for actually exist and reach the model?
+#
+# No API calls, no credentials, no cost. It is here because every failure this
+# file had was of the same kind: a value that resolved to nothing and was
+# .compacted away, a negative prompt filtered out by the model's own input_keys
+# and then recorded in the provenance sidecar as if it had been sent, a
+# diversity quota that four same-length pools could not possibly fill. None of
+# them raised. You paid Replicate, waited, and got a picture that was missing
+# the thing you asked for.
+# The keys build_input can fill from something other than a per-model knob.
+# Keep in step with the literal hash there.
+PRODUCIBLE_INPUT_KEYS = (%w[prompt aspect_ratio output_format output_quality safety_tolerance seed raw
+                            input_images] + SINGLE_IMAGE_KEYS).freeze
+
+def vocab_problems
+  problems = []
+
+  VOCABULARIES.each do |field, table|
+    problems << "#{field} vocabulary is empty" if table.empty?
+    table.each do |key, description|
+      problems << "#{field}.#{key} normalises to #{key.downcase.tr('- ', '__').inspect}, so it can never be matched" \
+        if key != key.downcase.tr("- ", "__")
+      problems << "#{field}.#{key} has no description" if description.to_s.strip.empty?
+    end
+    dupes = table.values.tally.select { |_, n| n > 1 }.keys
+    dupes.each { |d| problems << "#{field} has two keys with the identical description #{d[0, 40].inspect}" }
+  end
+
+  # Every --distance has to have an aspect ratio, or the field silently stops
+  # deciding the shape of the frame for that one value.
+  (DISTANCE_VOCAB.keys - DISTANCE_ASPECT.keys).each { |k| problems << "distance #{k} has no DISTANCE_ASPECT entry" }
+  (DISTANCE_ASPECT.keys - DISTANCE_VOCAB.keys).each { |k| problems << "DISTANCE_ASPECT has #{k}, which is not a --distance value" }
+
+  # A capability whose negative_prompt_key is not in its own input_keys drops
+  # the negative prompt in build_input's filter without saying so.
+  MODEL_CAPABILITIES.each do |model, cap|
+    problems << "#{model} lists no prompt input key" unless cap[:input_keys].include?("prompt")
+    key = cap[:negative_prompt_key]
+    problems << "#{model} names negative_prompt_key #{key.inspect} but does not list it in input_keys" \
+      unless key.nil? || cap[:input_keys].include?(key)
+
+    # An input key nothing can fill is the same defect as a vocabulary entry
+    # nothing can select: it reads as a capability and is a comment. This is how
+    # guidance/num_inference_steps/cfg_scale were found — declared here, read in
+    # build_input, and settable by no flag in the parser.
+    %i[guidance steps].each do |kind|
+      knob = cap[:"#{kind}_key"]
+      next unless knob
+
+      problems << "#{model} names #{kind}_key #{knob.inspect}, which is not in its input_keys" \
+        unless cap[:input_keys].include?(knob)
+      problems << "#{model} names #{kind}_key #{knob.inspect} with no #{kind}_range to check against" \
+        unless cap[:"#{kind}_range"]
+    end
+    (Array(cap[:chain_option_keys]) - cap[:input_keys]).each do |key|
+      problems << "#{model} names chain option #{key.inspect}, which is not in its input_keys"
+    end
+    (cap[:input_keys] - PRODUCIBLE_INPUT_KEYS - Array(cap[:chain_option_keys]) -
+      [cap[:guidance_key], cap[:steps_key], cap[:negative_prompt_key]].compact).each do |orphan|
+      problems << "#{model} declares input key #{orphan.inspect}, which build_input has no source for"
+    end
+  end
+  problems << "PREVIEW_MODEL #{PREVIEW_MODEL} has no MODEL_CAPABILITIES entry" unless MODEL_CAPABILITIES.key?(PREVIEW_MODEL)
+  problems << "FINAL_MODEL #{FINAL_MODEL} has no MODEL_CAPABILITIES entry" unless MODEL_CAPABILITIES.key?(FINAL_MODEL)
+
+  # The batch diversity claim, checked rather than asserted: --batch tops out at
+  # 20, so twenty consecutive indices must produce twenty distinct combinations.
+  pools = { expression: EXPRESSION_POOL, pose: POSE_POOL, wardrobe: WARDROBE_POOL, background: BACKGROUND_POOL }
+  pools.each do |name, pool|
+    stride = POOL_STRIDES.fetch(name)
+    problems << "#{name} stride #{stride} shares a factor with its length #{pool.length}, so it cannot visit every entry" \
+      if stride.gcd(pool.length) != 1
+  end
+  tuples = (0...20).map { |i| pools.map { |n, pool| pool[(i * POOL_STRIDES.fetch(n)) % pool.length] } }
+  problems << "a batch of 20 produces only #{tuples.uniq.length} distinct combinations" if tuples.uniq.length < 20
+
+  # Conflict rules have to name fields and values that exist, or the warning
+  # they exist to raise silently never fires.
+  VOCAB_CONFLICTS.each do |field_a, values_a, field_b, values_b|
+    [[field_a, values_a], [field_b, values_b]].each do |field, values|
+      table = VOCABULARIES[field]
+      if table.nil?
+        problems << "VOCAB_CONFLICTS names field #{field}, which is not a vocabulary"
+        next
+      end
+      (values - table.keys).each { |v| problems << "VOCAB_CONFLICTS names #{field} #{v.inspect}, which is not in that vocabulary" }
+    end
+  end
+
+  # Alt text is built from these; a field that is not a vocabulary resolves to
+  # nothing and the gallery loses that part of its description.
+  (ALT_TEXT_FIELDS - VOCABULARIES.keys).each { |f| problems << "ALT_TEXT_FIELDS names #{f}, which is not a vocabulary" }
+
+  problems + scenario_problems + selfie_problems
+end
+
+return unless __FILE__ == $PROGRAM_NAME
+
+# The reporter. vocab_problems sits above the CLI guard so a test or a gate
+# can ask the question without a process exit; this half is the command-line
+# face of the same answer.
+def vocab_check
+  problems = vocab_problems
+  problems.each { |line| puts "BROKEN #{line}" }
+  counts = VOCABULARIES.map { |f, t| "#{f}=#{t.length}" }.join(" ")
+  puts "#{counts}, #{MODEL_CAPABILITIES.length} models — #{problems.length} problem(s)"
+  exit(1) if problems.any?
+end
+
+cache = File.expand_path(ENV.fetch("REPLICATE_CATALOG", "~/.cache/replicate/models.json"))
+blob_cache_dir = File.expand_path(ENV.fetch("REPLICATE_BLOB_CACHE", "~/.cache/replicate/blobs"))
+options = { model: ENV.fetch("REPLICATE_MODEL", "black-forest-labs/flux-2-pro"), aspect_ratio: nil, limit: 100, dry_run: false, batch: 1 }
+parser = OptionParser.new do |p|
+  p.banner = <<~TXT.chomp
+    Usage: replicate.rb generate|search|sync|stats|capabilities|vocab-check|chains|chain NAME|help [options]
+
+    generate without --output prints the result URLs and writes nothing.
+    The token is REPLICATE_API_TOKEN, then REPLICATE_API_KEY, then api_token in
+    ~/.config/replicate/config.json. vocab-check, chains and --dry-run need none.
+    chain NAME --until STAGE stops after that stage; --from STAGE resumes from files an earlier run wrote.
+    Live schemas: cd MASTER/tools && rake replicate:schema_audit (skipped without a token).
+  TXT
+  p.on("--prompt TEXT") { |v| options[:prompt] = v }
+  p.on("--model MODEL") { |v| options[:model] = v; options[:model_explicit] = true }
+  p.on("--aspect-ratio RATIO") { |v| options[:aspect_ratio] = v }
+  p.on("--output FILE") { |v| options[:output] = File.expand_path(v) }
+  p.on("--limit N", Integer) { |v| options[:limit] = v.clamp(1, 1_000) }
+  p.on("--dry-run") { options[:dry_run] = true }
+  p.on("--until STAGE") { |v| options[:until] = v }
+  p.on("--from STAGE") { |v| options[:from] = v }
+  p.on("--stock NAME") { |v| options[:stock] = v }
+  p.on("--lens NAME") { |v| options[:lens] = v }
+  p.on("--focus NAME") { |v| options[:focus] = v }
+  p.on("--composition NAME") { |v| options[:composition] = v }
+  p.on("--camera-height NAME") { |v| options[:camera_height] = v }
+  p.on("--distance NAME") { |v| options[:distance] = v }
+  p.on("--subject-distance NAME") { |v| options[:subject_distance] = v }
+  p.on("--key-side NAME") { |v| options[:key_side] = v }
+  p.on("--fill NAME") { |v| options[:fill] = v }
+  p.on("--catchlight NAME") { |v| options[:catchlight] = v }
+  p.on("--expression NAME") { |v| options[:expression] = v }
+  p.on("--hands NAME") { |v| options[:hands] = v }
+  p.on("--skin NAME") { |v| options[:skin] = v }
+  # The framing and gaze of a selfie with the facial proportions of a portrait
+  # made from three metres. Not a combination a camera can produce.
+  p.on("--selfie-geometry") { options[:selfie_geometry] = true }
+  p.on("--lighting NAME") { |v| options[:lighting] = v }
+  p.on("--weather NAME") { |v| options[:weather] = v }
+  p.on("--time-of-day NAME") { |v| options[:time_of_day] = v }
+  p.on("--negative TEXT") { |v| options[:negative] = v }
+  p.on("--no-negative") { options[:no_negative] = true }
+  p.on("--allow-beautify") { options[:allow_beautify] = true }
+  p.on("--batch N", Integer) { |v| options[:batch] = v.clamp(1, 20) }
+  p.on("--seed N", Integer) { |v| options[:seed] = v }
+  # Both knobs are per-model: --guidance is `guidance` on flux-dev and `cfg` on
+  # SD 3.5, --steps is `num_inference_steps` on Flux and `steps` on SD 3.5, and
+  # the ranges differ. build_input maps and checks; here they are numbers.
+  p.on("--guidance N", Float) { |v| options[:guidance] = v }
+  p.on("--steps N", Integer) { |v| options[:steps] = v }
+  p.on("--preview") { options[:preview] = true }
+  p.on("--final") { options[:final] = true }
+  p.on("--raw") { options[:raw] = true }
+  p.on("--no-raw") { options[:no_raw] = true }
+  p.on("--image FILE") { |v| options[:image] = File.expand_path(v) }
+  # Repeatable. FLUX 2 holds a character across up to eight of these.
+  p.on("--reference FILE") { |v| (options[:references] ||= []) << File.expand_path(v) }
+  p.on("--postpro PRESET") { |v| options[:postpro] = v }
+  # Off entirely. The grade is the default now, so this is the escape hatch.
+  p.on("--no-postpro") { options[:postpro] = false }
+end
+command = ARGV.shift || "help"
+parser.parse!(ARGV)
+if command == "help"
+  puts parser
+  exit 0
+end
+
+case command
+when "capabilities"
+  puts Studio::AnalogCapabilities.report(:replicate)
+when "chains"
+  # The chains this tree ships, from the directory rather than a maintained
+  # list, so adding one is adding a file.
+  names = Replicate::Chain.available
+  if names.empty?
+    puts "replicate: no chains in #{Replicate::Chain::DEFAULT_DIR}"
+  else
+    names.each do |name|
+      chain = Replicate::Chain.load(name)
+      puts "#{name}  (#{chain[:stages].length} stages)"
+      puts "  #{chain[:description].to_s.strip.gsub(/\s+/, ' ')[0, 200]}"
+      puts Replicate::Chain.plan(chain)
+      puts
+    end
+  end
+when "chain"
+  # Validated whole, before anything is spent. A chain that fails at stage 6
+  # because stage 2 could not produce what stage 3 assumed has already cost the
+  # first five, which is why this refuses on the plan rather than on the wire.
+  name = ARGV.shift.to_s
+  abort "usage: replicate chain NAME [--dry-run]" if name.empty?
+
+  chain = begin
+    Replicate::Chain.load(name)
+  rescue Replicate::Chain::Invalid => e
+    abort "replicate: #{e.message}"
+  end
+
+  puts "replicate: chain #{name} — #{chain[:stages].length} stages"
+  puts Replicate::Chain.plan(chain)
+
+  problems = Replicate::Chain.problems(chain, capability_for: method(:capability_for))
+  unless problems.empty?
+    warn ""
+    problems.each { |problem| warn "replicate: REFUSED — #{problem}" }
+    abort "replicate: #{problems.length} problem(s); nothing was requested and nothing was spent"
+  end
+  puts "replicate: the chain is satisfiable — every stage can take what the one before it produces"
+
+  if options[:dry_run]
+    puts "replicate: --dry-run, so nothing was requested"
+    exit 0
+  end
+
+  # The loop itself lives in Chain.run, which takes this block. It is injected
+  # so the carry-forward can be tested without spending anything — see
+  # MASTER/tools/test/test_tools_chain.rb, which hands in a recorder and asserts that stage
+  # N+1 is given stage N's file. That is the one thing a chain must get
+  # right and the one thing that fails silently: a model handed no image
+  # generates from the prompt and returns something plausible.
+  abort "replicate: chain #{name} needs REPLICATE_API_TOKEN to run; --dry-run validates without it" if
+    Studio::ReplicateClient.load_token.to_s.strip.empty?
+
+  base = options[:output] || "chain-#{name}.jpg"
+  ext = File.extname(base)
+  ext = ".jpg" if ext.empty?
+  stem = base.sub(/#{Regexp.escape(File.extname(base))}\z/, "")
+  client = Studio::ReplicateClient.new
+
+  target_for = ->(stage, index) { "#{stem}-#{format('%02d', index + 1)}-#{stage.name}#{ext}" }
+  # --from reads back what an earlier run wrote: the frame, and the seed its
+  # sidecar recorded, so a stage that inherits the seed gets the one it had.
+  resume = lambda do |stage:, index:|
+    path = target_for.call(stage, index)
+    next nil unless File.file?(path)
+
+    sidecar = File.file?("#{path}.json") ? JSON.parse(File.read("#{path}.json")) : {}
+    { path: path, seed: sidecar["seed"] }
+  end
+
+  perform = lambda do |stage:, index:, total:, image:, seed:, references:|
+    target = target_for.call(stage, index)
+    stage_options = options.merge(stage.options).merge(model: stage.model)
+    # Uploaded, not passed as a path: the provider fetches these over HTTP and
+    # a local path is resolvable only here.
+    stage_options[:image] = upload_reference(client, image) if image
+    stage_options[:references] = references.map { |ref| upload_reference(client, ref) } unless references.empty?
+    prompt = stage.inherits.include?("prompt") ? options[:prompt] : stage.prompt
+    compiled = compile_prompt(prompt, stage_options)
+    negative = compile_negative_prompt(stage_options)
+    stage_seed = seed || options[:seed] || SecureRandom.random_number(2**31)
+    input = build_input(compiled, stage_options, seed: stage_seed, negative_prompt: negative, passthrough: stage.options)
+
+    puts "replicate: stage #{index + 1}/#{total} #{stage.name} — #{stage.model}"
+    started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+    urls = Array(client.predict(stage.model, input, timeout: stage.timeout || Replicate::Chain::DEFAULT_TIMEOUT)).flatten.compact
+    duration = (Process.clock_gettime(Process::CLOCK_MONOTONIC) - started).round(2)
+    raise Replicate::Chain::StageFailed, "stage #{stage.name} returned no output" if urls.empty?
+
+    FileUtils.mkdir_p(File.dirname(target))
+    client.download_url(urls.first, target)
+    digest, = cache_blob(target, blob_cache_dir)
+    trace = { chain: { name: chain[:name], sha256: chain[:sha256], stage: stage.name, index: index + 1 },
+              duration_s: duration }
+    sidecar = write_provenance(target, prompt, compiled, negative, stage_options, stage_seed, digest, trace)
+    append_gallery_manifest(sidecar, alt_text_for(prompt, stage_options))
+    puts "replicate: stage #{index + 1} wrote #{target}"
+    kept << target
+    { path: target, seed: stage_seed }
+  end
+
+  kept = []
+  produced = begin
+    Replicate::Chain.run(chain, perform: perform, until_stage: options[:until], image: options[:image],
+                                seed: options[:seed], from_stage: options[:from], resume: resume)
+  rescue Replicate::Chain::Invalid, Replicate::Chain::NothingToResume => e
+    abort "replicate: #{e.message}"
+  rescue StandardError => e
+    record_failed_chain(chain, e, kept)
+    abort "replicate: chain #{name} stopped: #{e.message}; #{kept.length} frame(s) kept, failure recorded"
+  end
+
+  # postpro last, on the final frame only — grading an intermediate would be
+  # graded again by every stage after it. Last means after any upscale too: grain
+  # laid down and then resampled turns to mush.
+  preset = Replicate::Chain.grade_for(chain, produced: produced, requested: options[:postpro])
+  maybe_handoff_postpro(produced.last, preset) if produced.any?
+  puts "replicate: chain #{name} produced #{produced.length} frame(s)"
+  puts produced
+when "vocab-check"
+  vocab_check
+when "generate"
+  abort parser.to_s if options[:prompt].to_s.strip.empty?
+  if !options[:dry_run] && Studio::ReplicateClient.load_token.to_s.strip.empty?
+    abort "replicate: generate needs a token (REPLICATE_API_TOKEN, REPLICATE_API_KEY, or api_token in " \
+          "~/.config/replicate/config.json); --dry-run compiles the prompt without one"
+  end
+  abort "warn: --preview and --final ask for different models" if options[:preview] && options[:final]
+
+  options[:model] = PREVIEW_MODEL if options[:preview] && !ENV.key?("REPLICATE_MODEL") && !options[:model_explicit]
+  # --final overrides REPLICATE_MODEL, unlike --preview. That is the asymmetry
+  # the flag is for: the environment variable is how you leave a session in
+  # preview, and --final is how you say "not this one, do it properly".
+  options[:model] = FINAL_MODEL if options[:final] && !options[:model_explicit]
+  if options[:image]
+    abort "warn: --image #{options[:image]} is not a file" unless File.file?(options[:image])
+  elsif (capability_for(options[:model])[:input_keys] & SINGLE_IMAGE_KEYS).any?
+    abort "warn: #{options[:model]} is an editor; pass --image PATH"
+  end
+  options[:aspect_ratio] = infer_aspect_ratio(options[:prompt], options[:aspect_ratio], options[:distance])
+  client = options[:dry_run] ? nil : Studio::ReplicateClient.new
+
+  options[:postpro] = HOUSE_POSTPRO if options[:postpro].nil?
+  warn_vocab_conflicts(options)
+  # --image and --reference are local paths until they are not. Uploaded once,
+  # here, so build_input below puts URLs into input_image / input_images.
+  unless options[:dry_run]
+    options[:image] = upload_reference(client, options[:image]) if options[:image]
+    options[:references] = Array(options[:references]).map { |r| upload_reference(client, r) } if options[:references]
+  end
+  negative_prompt = compile_negative_prompt(options)
+  # Say it out loud. The request is about to go out without the constraint the
+  # rest of this file spends four functions assembling, and the only reason it
+  # ever looked applied is that nobody was told it was not.
+  unless negative_prompt.nil? || negative_prompt_supported?(options[:model])
+    warn "warn: #{options[:model]} takes no negative prompt; asking for the opposite in the positive instead"
+  end
+
+  # Invariant across the batch — every field it reads is the same for all
+  # twenty images. Only diversify() varies per index.
+  compiled = compile_prompt(options[:prompt], options)
+  compiled = "#{compiled}, #{POSITIVE_SKIN_GUIDANCE}" if negative_prompt && !negative_prompt_supported?(options[:model])
+  warn_prompt_length(compiled, options[:model])
+
+  outputs = (0...options[:batch]).map do |index|
+    varied = diversify(compiled, index, options[:batch])
+    seed = options[:seed] ? options[:seed] + index : SecureRandom.random_number(2**31)
+    input = build_input(varied, options, seed:, negative_prompt:)
+
+    if options[:dry_run]
+      puts "ok: replicate dry-run model=#{options[:model]} input=#{input.inspect}"
+      next nil
+    end
+
+    urls = Array(client.predict(options[:model], input)).flatten.compact
+    abort "warn: replicate returned no output" if urls.empty?
+
+    target = if options[:output]
+               options[:batch] > 1 ? options[:output].sub(/(\.\w+)?\z/) { |ext| "-#{index}#{ext}" } : options[:output]
+             end
+
+    unless target
+      puts "ok: replicate generated\n#{urls.join("\n")}"
+      next nil
+    end
+
+    FileUtils.mkdir_p(File.dirname(target))
+    client.download_url(urls.first, target)
+    digest, = cache_blob(target, blob_cache_dir)
+    sidecar = write_provenance(target, options[:prompt], varied, negative_prompt, options, seed, digest)
+    append_gallery_manifest(sidecar, alt_text_for(options[:prompt], options, batch_background(index, options[:batch])))
+    maybe_handoff_postpro(target, options[:postpro])
+    puts "ok: replicate generated #{target}"
+    target
+  end.compact
+
+  outputs
+when "search"
+  query = ARGV.join(" ").strip
+  abort "usage: replicate.rb search QUERY [--limit N]" if query.empty?
+  rows = Studio::ReplicateClient.new.models(limit: options[:limit], query:)
+  puts rows.map { |row| "#{row['owner']}/#{row['name']}\t#{row['description'].to_s.gsub(/\s+/, ' ')[0, 120]}" }
+when "sync"
+  rows = Studio::ReplicateClient.new.models(limit: options[:limit])
+  FileUtils.mkdir_p(File.dirname(cache))
+  File.write(cache, JSON.pretty_generate({ synced_at: Time.now.utc.iso8601, models: rows }))
+  puts "ok: replicate synced #{rows.length} models to #{cache}"
+when "stats"
+  data = File.file?(cache) ? JSON.parse(File.read(cache)) : { "models" => [] }
+  models = Array(data["models"])
+  owners = models.group_by { |row| row["owner"] }.sort_by { |_, rows| -rows.length }.first(10)
+  puts "catalog: #{models.length} models (#{data['synced_at'] || 'not synced'})"
+  owners.each { |owner, rows| puts "#{owner}: #{rows.length}" }
+else
+  abort parser.to_s
+end

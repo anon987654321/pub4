@@ -1,0 +1,6 @@
+#!/usr/bin/env zsh
+# Ruby bootstrap: bin/ruby is the only interpreter selector.
+set -eu
+
+MASTER=${0:A:h:h}
+exec "${MASTER}/bin/ruby" "${MASTER}/lib/cli/entrypoint.rb" "$@"

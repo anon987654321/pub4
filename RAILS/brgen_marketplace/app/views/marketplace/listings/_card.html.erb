@@ -1,0 +1,65 @@
+<% distance_km = local_assigns[:distance_km] %>
+<% photo = listing.photos.attached? ? listing.photos.first : nil %>
+<% favorited = local_assigns.fetch(:favorited) {
+     @favorited_listing_ids&.include?(listing.id)
+   } %>
+<%# Bol-style catalogue row: image, product information, then the real purchase
+    action at the inline end. The link contains only the product content, so the
+    cart button remains a separate interactive control. %>
+<article class="deal-card listing" data-product-id="<%= listing.id %>">
+  <div class="deal-card-fav-slot">
+    <%= render "marketplace/listings/favorite_button", listing: listing, favorited: favorited == true %>
+  </div>
+
+  <%= link_to listing_path(listing),
+        class: "deal-card-hit",
+        aria: { label: t("marketplace.card_label", title: listing.title, price: listing.price_display) } do %>
+    <%# Sold outranks casual outranks condition, and only sold is loud. %>
+    <% badge, badge_soft =
+         if listing.sold? then [t("marketplace.sold"), false]
+         elsif listing.condition.present?
+           [listing.condition_label, true]
+         end %>
+    <%= render "marketplace/card_media", photo:, fallback_char: listing.title.to_s.first&.upcase || "?", badge:, badge_soft: badge_soft == true %>
+
+    <div class="deal-card-body">
+      <%# A job shows its salary and a room its rent; only goods have a
+          price. headline_amount is one reader so the card does not have to know
+          which of the three detail tables to ask. %>
+      <div class="deal-price"><%= listing.headline_amount %></div>
+      <h2 class="deal-card-title"><%= listing.title %></h2>
+      <% if listing.reviews_count.to_i.positive? %>
+        <%= render "shared/store_stars", rating: listing.rating, count: listing.reviews_count %>
+      <% end %>
+      <div class="deal-meta">
+        <%= [ listing.location,
+              (distance_km ? t("marketplace.distance_km", km: number_with_precision(distance_km, precision: 1)) : nil),
+              listing.category&.name ].compact.join(" · ") %>
+      </div>
+      <div class="listing-source-badges">
+        <%= tag.span listing.store_id.present? ? t("marketplace.from_a_shop") : t("marketplace.from_a_person"), class: "store-badge listing-source-badge#{listing.store_id.present? ? " listing-source-badge--shop" : ""}" %>
+        <%= tag.span listing.delivery_badge, class: "store-badge store-badge--delivery" if listing.delivery_badge.present? %>
+      </div>
+      <% if (seller = listing.user&.display_name).present? %>
+        <%= tag.span t("marketplace.seller_badge", name: seller), class: "store-badge" %>
+      <% end %>
+      <% if @search_ranker.present? && (reasons = @search_ranker.reasons(listing)).any? %>
+        <div class="listing-ranking-reasons" aria-label="<%= t("marketplace.ranking_reasons.label", default: "Why this appears") %>">
+          <% reasons.each do |reason| %>
+            <%= tag.span reason, class: "store-badge listing-ranking-reason" %>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+
+  <% if listing.buyable? && authenticated? && Current.user != listing.user %>
+    <div class="deal-card-actions">
+      <%= button_to t("marketplace.add_to_cart"),
+            listing_orders_path(listing),
+            params: { quantity: 1 },
+            class: "btn btn-primary deal-card-buy" %>
+      <%= link_to t("marketplace.offer"), "#make-offer", class: "deal-card-offer" %>
+    </div>
+  <% end %>
+</article>

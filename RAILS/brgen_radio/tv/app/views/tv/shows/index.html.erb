@@ -1,0 +1,26 @@
+<% content_for :title, t("tv.shows_title") %>
+
+<div class="page-header">
+  <%= tag.h1 t("tv.shows_on", channel: @channel&.name || t("tv.city_tv", city: city_name)) %>
+</div>
+
+<% if @shows.any? %>
+  <%= turbo_frame_tag "tv-shows", target: "_top" do %>
+    <ul id="tv-shows-grid" class="show-grid card-grid feed_list" aria-label="<%= t("tv.shows_aria") %>">
+      <% @shows.each do |show| %>
+        <li><%= render "tv/shows/card", show:, channel: @channel %></li>
+      <% end %>
+    </ul>
+
+    <%= render "shared/infinite_scroll_sentinel",
+               pagy: @pagy,
+               reflex: "ShowsInfiniteScrollReflex#load_more",
+               sentinel_id: "tv-shows-sentinel",
+               channel_slug: @channel&.slug %>
+  <% end %>
+<% else %>
+  <%= render "shared/empty_state",
+        title: t("empty.no_shows"),
+        body: t("empty.no_shows_body"),
+        action: { label: t("tv.back_to_channel"), path: (@channel ? channel_path(@channel) : channels_path) } %>
+<% end %>

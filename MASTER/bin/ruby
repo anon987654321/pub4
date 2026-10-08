@@ -1,0 +1,72 @@
+#!/usr/bin/env zsh
+# Select the best installed Ruby supported by the project's Gemfile.
+set -eu
+
+ROOT=${0:A:h:h}
+MIN_MAJOR=3
+MIN_MINOR=3
+MAX_MAJOR=4
+MAX_MINOR=0
+
+if [[ -n ${PUB4_RUBY:-} && -x ${PUB4_RUBY} ]]; then
+  exec "$PUB4_RUBY" "$@"
+fi
+
+integer BEST_KEY=-1
+BEST_RUBY=
+
+add_candidate() {
+  local ruby=$1
+  [[ -x $ruby ]] || return 0
+
+  local version major minor patch key
+  version=$("$ruby" -e 'print RUBY_VERSION' 2>/dev/null || true)
+  [[ $version == <->.<->.<-> ]] || return 0
+  major=${version%%.*}
+  local rest=${version#*.}
+  minor=${rest%%.*}
+  patch=${rest#*.}
+  if (( major < MIN_MAJOR || major > MAX_MAJOR )); then
+    return 0
+  fi
+  if (( major == MIN_MAJOR && minor < MIN_MINOR )); then
+    return 0
+  fi
+  if (( major == MAX_MAJOR && minor > MAX_MINOR )); then
+    return 0
+  fi
+  (( key = major * 1000000 + minor * 1000 + patch ))
+  if (( key > BEST_KEY )); then
+    BEST_KEY=$key
+    BEST_RUBY=$ruby
+  fi
+}
+
+# rbenv installations are authoritative candidates even when `rbenv` itself is
+# not on PATH: the executable is enough to launch the selected interpreter.
+RBENV_ROOT=${RBENV_ROOT:-$HOME/.rbenv}
+for ruby in "$RBENV_ROOT"/versions/*/bin/ruby(N); do
+  add_candidate "$ruby"
+done
+
+# Common package/Homebrew versioned names, followed by the host's generic ruby.
+for name in ruby4.0 ruby40 ruby3.4 ruby34 ruby3.3 ruby33 ruby; do
+  if (( $+commands[$name] )); then
+    add_candidate "${commands[$name]}"
+  fi
+done
+
+if [[ -n $BEST_RUBY ]]; then
+  if [[ -n ${PREFERRED_RUBY:-} ]]; then
+    :
+  fi
+  ACTUAL=$("$BEST_RUBY" -e 'print RUBY_VERSION')
+  if [[ ${MASTER_DMESG:-} != 0 && ${MASTER_QUIET:-} != 1 ]]; then
+    print -u2 -- "ruby0: selected $ACTUAL ($BEST_RUBY), best supported Ruby available"
+  fi
+  exec "$BEST_RUBY" "$@"
+fi
+
+print -u2 -- "ruby0: no supported Ruby found (requires >= 3.3 and < 4.1)"
+print -u2 -- "ruby0: install Ruby 4.0.x when available; Ruby 3.4.x or 3.3.x is also supported"
+exit 1

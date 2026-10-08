@@ -1,0 +1,72 @@
+# HTTP + Ferrum browser crawl contract.
+# HTTP: paths + expect_status / expect_body
+# browser: checks (selector, js, text_absent) + optional session (MASTER only)
+
+master:
+  port: 53187
+  paths:
+    - path: /up
+      expect_status: 200
+    - path: /
+      expect_status: 200
+      expect_body: 'id="face"'
+    - path: /master_events.js
+      expect_status: 200
+  browser:
+    warmup_s: 3
+    checks:
+      - type: selector
+        id: primer
+      - type: selector
+        id: face
+      - type: js
+        expr: "typeof window.MASTERFeltState === 'object'"
+      - type: js
+        expr: "typeof window.MASTER_SSE === 'object'"
+      - type: js
+        expr: "typeof window.MASTER_CONTAINER === 'object'"
+    session:
+      tap_primer: true
+      wait_s: 2
+      session_timeout_s: 22
+      ping_chat: true
+      chat_wait_s: 4
+
+apps:
+  brgen:
+    port: 38182
+    paths:
+      - path: /up
+        expect_status: 200
+      - path: /
+        expect_status: [200, 302, 301]
+    browser:
+      warmup_s: 2
+      checks:
+        - type: selector
+          id: main-content
+        - type: text_absent
+          value: "Exception"
+        - type: text_absent
+          value: "Routing Error"
+  amber:
+    port: 61352
+    paths:
+      - path: /up
+        expect_status: 200
+    browser:
+      warmup_s: 2
+      checks:
+        - type: selector
+          id: main-content
+
+  bsdports:
+    port: 47312
+    paths:
+      - path: /up
+        expect_status: 200
+    browser:
+      warmup_s: 2
+      checks:
+        - type: selector
+          css: "body"

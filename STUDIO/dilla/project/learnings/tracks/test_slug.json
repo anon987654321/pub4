@@ -1,0 +1,13 @@
+{
+  "id": "test_slug",
+  "artist": "Test",
+  "title": "Track",
+  "copyable_dna": {
+    "drums": {
+      "kicks": [
+        0,
+        8
+      ]
+    }
+  }
+}

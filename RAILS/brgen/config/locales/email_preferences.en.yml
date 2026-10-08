@@ -1,0 +1,12 @@
+en:
+  email_preferences:
+    title: Email preferences
+    intro: Manage the Brgen marketing email sent to this address.
+    marketing_legend: Marketing email
+    marketing_label: Send me Brgen marketing email
+    marketing_help: This controls newsletters, deals and other marketing messages. Transactional messages are separate.
+    save: Save preferences
+    updated: Email preferences updated.
+    unsubscribe_title: Unsubscribe
+    unsubscribe_help: Stop Brgen marketing email and remove this email subscription.
+    unsubscribe: Unsubscribe

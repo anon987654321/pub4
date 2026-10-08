@@ -1,0 +1,137 @@
+<%#
+  Canonical Amber logo — matches the Caprasimo swoosh + radial gradient +
+  white retro hairlines design exactly (viewBox 0 0 1000 500).
+  id_prefix keeps multiple instances on one page unique (defs/clipPath).
+  scan: intentional-colors — a brand mark is painted in its own fixed values;
+  a logo that followed the theme would stop being the logo.
+%>
+<%#
+  view_box: the whole 1000x500 stage by default. A caller that sets the mark in a
+  small box passes the region the word's ink occupies, so the word fills the box.
+%>
+<% id_prefix = local_assigns.fetch(:id_prefix, "amber-logo") %>
+<% view_box = local_assigns.fetch(:view_box, "0 0 1000 500") %>
+<div class="amber-instance">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="<%= view_box %>" preserveAspectRatio="xMinYMid meet" role="img" aria-label="<%= t("amber.logo_aria") %>" class="amber-logo-svg">
+    <title><%= t("amber.logo_aria") %></title>
+    <defs>
+      <path id="<%= id_prefix %>-swoosh-path" d="M50,220 C250,180 750,180 950,220"/>
+      <clipPath id="<%= id_prefix %>-text-mask">
+        <text font-family="'Caprasimo', Arial, sans-serif" letter-spacing="-3" stroke="none" class="amber-logo-word">
+          <%# scan: intentional — the wordmark is the brand name, not translatable copy %><textPath href="#<%= id_prefix %>-swoosh-path" startOffset="2%">amber<tspan dx="10" dy="-40" stroke="none" class="amber-logo-mark">®</tspan></textPath>
+        </text>
+      </clipPath>
+    </defs>
+    <g clip-path="url(#<%= id_prefix %>-text-mask)">
+      <foreignObject x="0" y="100" width="1000" height="300">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="animated-gradient"></div>
+      </foreignObject>
+    </g>
+    <path stroke="#FFFFFF" stroke-width="0.5" stroke-opacity="1.0" fill="none" d="M50,180 C200,100 400,200 600,100 S850,160 950,130"/>
+    <path stroke="#FFFFFF" stroke-width="1" stroke-opacity="1.0" fill="none" d="M50,195 C200,115 400,215 600,115 S850,175 950,145"/>
+    <path stroke="#FFFFFF" stroke-width="1.5" stroke-opacity="1.0" fill="none" d="M50,205 C200,125 400,225 600,125 S850,185 950,155"/>
+    <path stroke="#FFFFFF" stroke-width="2" stroke-opacity="1.0" fill="none" d="M50,213 C200,133 400,233 600,133 S850,193 950,163"/>
+    <path stroke="#FFFFFF" stroke-width="2.5" stroke-opacity="1.0" fill="none" d="M50,220 C200,140 400,240 600,140 S850,200 950,170"/>
+    <path stroke="#FFFFFF" stroke-width="3" stroke-opacity="1.0" fill="none" d="M50,226 C200,146 400,246 600,146 S850,206 950,176"/>
+    <path stroke="#FFFFFF" stroke-width="3" stroke-opacity="1.0" fill="none" d="M50,231 C200,151 400,251 600,151 S850,211 950,181"/>
+    <path stroke="#FFFFFF" stroke-width="3.5" stroke-opacity="1.0" fill="none" d="M50,235 C200,155 400,255 600,155 S850,215 950,185"/>
+    <path stroke="#FFFFFF" stroke-width="4" stroke-opacity="1.0" fill="none" d="M50,238 C200,158 400,258 600,158 S850,218 950,188"/>
+  </svg>
+</div>
+
+/* 8-bit stardust is a surrounding effect, not part of the Amber artwork. */
+.amber-instance--stardust {
+  position: relative;
+  isolation: isolate;
+}
+
+.amber-instance--stardust .amber-logo-svg {
+  position: relative;
+  z-index: 1;
+}
+
+.amber-logo-stardust {
+  position: absolute;
+  inset: -10%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.amber-stardust-spark,
+.amber-stardust-speck {
+  position: absolute;
+  display: block;
+  color: var(--amber-pink-strong, #e7a9c8);
+  image-rendering: pixelated;
+}
+
+.amber-stardust-spark {
+  width: 4px;
+  height: 4px;
+  background: currentColor;
+}
+
+.amber-stardust-spark::before,
+.amber-stardust-spark::after {
+  position: absolute;
+  display: block;
+  content: "";
+  background: currentColor;
+}
+
+.amber-stardust-spark::before {
+  width: 4px;
+  height: 12px;
+  inset-inline-start: 0;
+  inset-block-start: -4px;
+}
+
+.amber-stardust-spark::after {
+  width: 12px;
+  height: 4px;
+  inset-inline-start: -4px;
+  inset-block-start: 0;
+}
+
+.amber-stardust-spark--1 { inset-inline-start: 8%; inset-block-start: 40%; color: var(--amber-pink-strong, #e7a9c8); }
+.amber-stardust-spark--2 { inset-inline-start: 22%; inset-block-start: 14%; color: var(--amber-lilac, #e8def6); transform: scale(.72); }
+.amber-stardust-spark--3 { inset-inline-start: 46%; inset-block-start: 2%; color: var(--amber-blue, #dcecf8); transform: scale(.58); }
+.amber-stardust-spark--4 { inset-inline-end: 20%; inset-block-start: 10%; color: var(--amber-pink-strong, #e7a9c8); transform: scale(.78); }
+.amber-stardust-spark--5 { inset-inline-end: 8%; inset-block-start: 39%; color: var(--amber-lilac, #e8def6); }
+.amber-stardust-spark--6 { inset-inline-end: 20%; inset-block-end: 12%; color: var(--amber-mint, #dff1e7); transform: scale(.64); }
+.amber-stardust-spark--7 { inset-inline-start: 25%; inset-block-end: 6%; color: var(--amber-yellow, #fff0c9); transform: scale(.52); }
+
+.amber-stardust-speck {
+  width: 3px;
+  height: 3px;
+  background: currentColor;
+}
+
+.amber-stardust-speck--1 { inset-inline-start: 15%; inset-block-start: 28%; color: var(--amber-mint, #dff1e7); }
+.amber-stardust-speck--2 { inset-inline-start: 33%; inset-block-start: 7%; color: var(--amber-pink-strong, #e7a9c8); }
+.amber-stardust-speck--3 { inset-inline-end: 32%; inset-block-start: 5%; color: var(--amber-yellow, #fff0c9); }
+.amber-stardust-speck--4 { inset-inline-end: 12%; inset-block-start: 58%; color: var(--amber-blue, #dcecf8); }
+.amber-stardust-speck--5 { inset-inline-end: 36%; inset-block-end: 4%; color: var(--amber-lilac, #e8def6); }
+.amber-stardust-speck--6 { inset-inline-start: 12%; inset-block-end: 16%; color: var(--amber-pink-strong, #e7a9c8); }
+.amber-stardust-speck--7 { inset-inline-start: 41%; inset-block-end: 10%; color: var(--amber-mint, #dff1e7); }
+
+@keyframes amber-stardust-drift {
+  0%, 100% { opacity: .62; transform: translateY(0); }
+  50% { opacity: 1; transform: translateY(-3px); }
+}
+
+.amber-stardust-spark--2,
+.amber-stardust-spark--4,
+.amber-stardust-speck--1,
+.amber-stardust-speck--5 {
+  animation: amber-stardust-drift 4.8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .amber-stardust-spark--2,
+  .amber-stardust-spark--4,
+  .amber-stardust-speck--1,
+  .amber-stardust-speck--5 {
+    animation: none;
+  }
+}

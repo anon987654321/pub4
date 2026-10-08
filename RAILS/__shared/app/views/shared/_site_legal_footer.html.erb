@@ -1,0 +1,29 @@
+<%
+  privacy_href = respond_to?(:privacy_path) ? privacy_path : main_app.privacy_path
+  terms_href = respond_to?(:terms_path) ? terms_path : main_app.terms_path
+  cookies_href = respond_to?(:cookies_path) ? cookies_path : main_app.cookies_path
+%>
+<footer class="site-legal">
+  <%= yield :site_footer_columns %>
+  <nav aria-label="<%= t("legal.aria") %>">
+    <%= link_to t("legal.privacy"), privacy_href %>
+    <%= link_to t("legal.terms"), terms_href %>
+    <%= link_to t("legal.cookies"), cookies_href %>
+    <button type="button" class="cookie-settings-trigger"
+            data-action="click->cookie-consent#open"><%= t("legal.cookie_settings") %></button>
+  </nav>
+  <p class="site-footer-build">
+    <span>v<%= app_version %></span>
+    <span><%= app_revision.first(12) %></span>
+    <%= link_to t("legal.changelog", default: "Endringslogg"), main_app.changelog_path %>
+  </p>
+  <%= render "shared/affiliate_disclosure" %>
+  <% if respond_to?(:email_subscriptions_path) && current_page?(main_app.root_path) %>
+    <%= render "shared/newsletter_signup_popup",
+          city: (respond_to?(:city_name) ? city_name : "Bergen"),
+          artwork_url: Shared::OnboardingArtwork.url(
+            surface: "brgen",
+            city: (respond_to?(:city_name) ? city_name : "Bergen")
+          ) %>
+  <% end %>
+</footer>
