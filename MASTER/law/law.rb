@@ -70,7 +70,7 @@ module Law
     ".html" => "html", ".yml" => "yaml", ".sh" => "zsh", ".md" => "markdown", ".json" => "json"
   }.freeze
 
-  MEMBERS = %i[id source severity mode languages scope principle_scope lifecycle autofix path path_exclude absent detect ask practice fix bad good reads_comments].freeze
+  MEMBERS = %i[id source severity mode languages scope law_scope lifecycle autofix path path_exclude absent detect ask practice fix bad good reads_comments].freeze
   Rule = Data.define(*MEMBERS) do
     # `path` takes a Regexp or a substring; `path_exclude` was already a Regexp,
     # and one member of a pair reading its argument the other way is a trap for
@@ -104,7 +104,7 @@ module Law
 
     # Universal describes the invariant, not the detector syntax. A universal
     # principle may have Ruby, zsh, Rails or another domain adapter.
-    def universal? = principle_scope == :universal
+    def universal? = law_scope == :universal
 
     # Lifecycle controls whether a rule may affect enforcement. Existing rules
     # default to active for compatibility; candidates can enter proposed/proven
@@ -139,7 +139,7 @@ module Law
         "severity" => severity.to_s,
         "mode" => mode.to_s,
         "languages" => languages.map(&:to_s),
-        "principle_scope" => principle_scope.to_s,
+        "law_scope" => law_scope.to_s,
         "lifecycle" => lifecycle.to_s,
         "autofix" => autofix.to_s,
         "proof" => proof_kind.to_s,
@@ -332,9 +332,9 @@ module Law
   }.freeze)
 
   class Builder
-    %i[source severity mode languages scope principle_scope lifecycle autofix path path_exclude absent ask practice fix bad good reads_comments].each { |a| define_method(a) { |v| @h[a] = v } }
+    %i[source severity mode languages scope law_scope lifecycle autofix path path_exclude absent ask practice fix bad good reads_comments].each { |a| define_method(a) { |v| @h[a] = v } }
 
-    def initialize(id) = @h = { id:, severity: :warn, mode: :violation, languages: [], scope: :line, principle_scope: nil, lifecycle: :active, autofix: :review, path: nil, path_exclude: nil, absent: nil, detect: nil, ask: nil, practice: nil, reads_comments: false }
+    def initialize(id) = @h = { id:, severity: :warn, mode: :violation, languages: [], scope: :line, law_scope: nil, lifecycle: :active, autofix: :review, path: nil, path_exclude: nil, absent: nil, detect: nil, ask: nil, practice: nil, reads_comments: false }
     def detect(&block) = @h[:detect] = block
 
     # A law can carry more than one enforcement surface without becoming more
@@ -353,7 +353,7 @@ module Law
       missing = %i[bad good fix].reject { |k| @h.key?(k) }
       raise ArgumentError, "#{@h[:id]}: missing #{missing.join(', ')}" unless missing.empty?
 
-      @h[:principle_scope] ||= @h[:languages].empty? ? :universal : :domain
+      @h[:law_scope] ||= @h[:languages].empty? ? :universal : :domain
       @h[:lifecycle] ||= :active
       @h[:autofix] ||= :review
 
@@ -446,7 +446,7 @@ module Law
         {
           "id" => rule.id.to_s,
           "scope" => rule.scope.to_s,
-          "principle_scope" => rule.principle_scope.to_s,
+          "law_scope" => rule.law_scope.to_s,
           "languages" => rule.languages.map(&:to_s),
           "lifecycle" => rule.lifecycle.to_s,
           "autofix" => rule.autofix.to_s,
@@ -484,7 +484,7 @@ module Law
       JSON.pretty_generate(
         "index_version" => VERSION,
         "rule_count" => entries.length,
-        "universal_count" => entries.count { |entry| entry["principle_scope"] == "universal" },
+        "universal_count" => entries.count { |entry| entry["law_scope"] == "universal" },
         "rules" => entries,
       )
     end
