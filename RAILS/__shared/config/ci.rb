@@ -15,7 +15,7 @@ ENV["BUNDLER_AUDIT_UPDATE"] ||= "1"
 ENV["NPM_CONFIG_CACHE"] ||= File.expand_path("~/.npm")
 monorepo_rails = ENV["PUB4_RAILS_ROOT"].to_s.strip
 monorepo_rails = File.expand_path("../..", __dir__) if monorepo_rails.empty?
-ENV["PUB4_RAILS_ROOT"] ||= monorepo_rails if File.directory?(File.join(monorepo_rails, "shared"))
+ENV["PUB4_RAILS_ROOT"] ||= monorepo_rails if File.directory?(File.join(monorepo_rails, "__shared"))
 master_rails_tools = File.expand_path("../MASTER/tools/rails", monorepo_rails)
 master_rails_tools = "/home/dev/pub4/MASTER/tools/rails" unless File.directory?(master_rails_tools)
 require File.join(master_rails_tools, "operator", "ci_guard")
