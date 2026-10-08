@@ -8,14 +8,14 @@ require "minitest/autorun"
 # github.com/anon987654321/pub4 is public and its history holds seven real 32-hex
 # master.key blobs: DEPLOY/rails/{brgen,amber,bsdports,baibl,blognet,hjerterom}/
 # config/master.key, added 2026-05-06 (ffb39dc12, b1882a484), moved 2026-05-17
-# (28bad8208) and emptied 2026-05-29 (4f3780d89, 6f81a4d34) — plus MASTER/web's,
+# (28bad8208) and emptied 2026-05-29 (4f3780d89, 6f81a4d34) — plus RAILS/master_web's,
 # untracked from the tip at 139c907e6. Emptying a file changes the tip, not the
 # history: `git cat-file -p 28bad8208:DEPLOY/rails/brgen/config/master.key` returns
 # 32 hex characters today. All seven are burned and cannot be un-burned.
 #
 # What made them dangerous was pairing: six sat beside the credentials.yml.enc they
 # decrypt, and three of those .enc files were still tracked here on 2026-08-12 —
-# MASTER/web, amber and bsdports. Verified by decrypting them with the historical
+# RAILS/master_web, amber and bsdports. Verified by decrypting them with the historical
 # keys: each held exactly one value, secret_key_base, and nothing else. No API key,
 # no database password.
 #
@@ -26,7 +26,7 @@ require "minitest/autorun"
 # config.secret_key_base from ENV["SECRET_KEY_BASE"], /etc/<app>.env supplies it at
 # 640 root:<app>, and each rc.d script hard-requires it
 # (`: "${SECRET_KEY_BASE:?missing SECRET_KEY_BASE in /etc/<app>.env}"`), so the
-# service refuses to boot without one. MASTER/web never needed a real value at all:
+# service refuses to boot without one. RAILS/master_web never needed a real value at all:
 # its rc.d exports SECRET_KEY_BASE_DUMMY=1. A re-key would have produced a new
 # secret for a file with no reader.
 #
@@ -65,7 +65,7 @@ class TrackedSecretsTest < Minitest::Test
 
   # The gate above only sees what is tracked now. This one keeps `git add` from
   # making it tracked in the first place, which is the layer that was missing when
-  # MASTER/web/config/master.key was committed.
+  # RAILS/master_web/config/master.key was committed.
   def test_gitignore_still_covers_master_key
     ignored = File.read(File.join(ROOT, ".gitignore"))
 
