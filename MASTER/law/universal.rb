@@ -305,7 +305,7 @@ end
 # Constitutional migration batch 2: architecture, design, and verification laws.
 # Semantic laws live here once their executable question, remedy, and worked
 # examples are defined. The YAML catalogue remains temporarily for compatibility;
-# SemanticRule#from_law gives these definitions precedence during the migration.
+# SemanticLaw#from_law gives these definitions precedence during the migration.
 
 Law.define(:FUNCTIONAL_CORE) do
   source "Functional Core, Imperative Shell (Gary Bernhardt)"
