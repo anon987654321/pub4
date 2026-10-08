@@ -4,12 +4,12 @@ require "minitest/autorun"
 
 class CookieConsentContractTest < Minitest::Test
   ROOT = ENV.fetch("ONBOARDING_TEST_ROOT", File.expand_path("..", __dir__))
-  BANNER = File.join(ROOT, "shared/app/views/shared/_cookie_banner.html.erb")
+  BANNER = File.join(ROOT, "__shared/app/views/shared/_cookie_banner.html.erb")
   COOKIE = File.join(ROOT, "shared/frontend/cookie_consent.js")
   CONTROLLER = File.join(ROOT, "shared/frontend/cookie_consent_controller.js")
-  HELPER = File.join(ROOT, "shared/app/helpers/shared/consent_helper.rb")
+  HELPER = File.join(ROOT, "__shared/app/helpers/shared/consent_helper.rb")
   HOTWIRE = File.join(ROOT, "shared/frontend/hotwire.js")
-  LINK_CONVERTER = File.join(ROOT, "shared/app/views/shared/_link_converter.html.erb")
+  LINK_CONVERTER = File.join(ROOT, "__shared/app/views/shared/_link_converter.html.erb")
   BRGEN_LAYOUT = File.join(ROOT, "brgen/app/views/layouts/application.html.erb")
   AMBER_LAYOUT = File.join(ROOT, "amber/app/views/layouts/application.html.erb")
 
