@@ -46,7 +46,7 @@ module Deploy
     end
 
     def run
-      shared = load_locales(File.join(@rails_root, "shared/config/locales/**/*.yml"))
+      shared = load_locales(File.join(@rails_root, "__shared/config/locales/**/*.yml"))
       if shared.empty?
         @result.inconclusive!("locale_shadowing: no shared locale files found at __shared/config/locales")
         return @result
