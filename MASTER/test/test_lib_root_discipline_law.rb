@@ -8,7 +8,7 @@ class TestLibRootDisciplineRule < Minitest::Test
   # files shouldn't land directly in lib/ root without a deliberate,
   # visible decision (adding to ALLOWED_ROOT_FILES).
   def setup
-    @rule = Master::Review::Scan::Rules::LibRootDisciplineRule.new(root: Master::ROOT)
+    @rule = Master::Review::Scan::Laws::LibRootDisciplineRule.new(root: Master::ROOT)
   end
 
   def test_flags_a_new_file_directly_in_lib_root
@@ -40,14 +40,14 @@ class TestLibRootDisciplineRule < Minitest::Test
   # Both directions at once, against the tree rather than a fixture, because the
   # tree is where the drift happens. An allowance for a file nobody can add back
   # is a hole in the gate that nobody can see, precisely because the thing it
-  # excuses is invisible — the rule's own comment says so about autonomy.rb and
+  # excuses is invisible — the law's own comment says so about autonomy.rb and
   # nothing enforced it. And a root file missing from the list is the deliberate
-  # decision the rule exists to force, which had not been made for two of them:
+  # decision the law exists to force, which had not been made for two of them:
   # the finding is `severity: :warning`, and `rake selfcheck` reads veto,
-  # critical and error only, so the rule fired into a report nobody opened.
+  # critical and error only, so the law fired into a report nobody opened.
   # rake lint:autoload is the shape being copied.
   def test_the_allowance_names_lib_root_exactly
-    allowed = Master::Review::Scan::Rules::LibRootDisciplineRule::ALLOWED_ROOT_FILES
+    allowed = Master::Review::Scan::Laws::LibRootDisciplineRule::ALLOWED_ROOT_FILES
     present = Dir.glob(File.join(Master::ROOT, "lib", "*.rb")).map { |p| File.basename(p) }
 
     assert_equal present.sort, allowed.sort,
