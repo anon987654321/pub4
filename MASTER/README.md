@@ -157,7 +157,7 @@ model nemotron-3-super-120b-a12b, ctx 0/128.0k
 
 Every web change has one extra proof: the page is rendered in a real browser and the screenshot plus measured DOM geometry go back through the same council and fix loop. Source-clean is not visual-clean; `/fix RAILS` and `/fix MASTER/web` continue until the rendered surface converges or the run honestly plateaus.
 
-**vm23 control plane.** Production has one authoritative checkout at `/home/dev/pub4`. Keep the single long-lived MASTER process in `screen`: `MASTER/bin/master --daemon`. The operator wrappers are idempotent: `MASTER/bin/operator vps master status --remote`, `start --remote`, `stop --remote`, and `restart --remote`. The daemon owns Git sync and deployment; `/fix` claims the same execution slot, so repair cannot overlap sync or deploy. A second MASTER process is refused by the process lock.
+**vm23 control plane.** Production has one authoritative checkout at `/home/dev/pub4`. Keep the single long-lived MASTER process in `screen`: `MASTER/bin/master --daemon`. The operator wrappers are idempotent: `MASTER/bin/operator vps master status --remote`, `start --remote`, `stop --remote`, and `restart --remote`. The daemon owns Git sync and deployment; `/fix` claims the same execution slot, so repair cannot overlap sync or deploy. Tree-scoped `/fix` runs may use separate lock namespaces; the same tree remains single-writer.
 
 A successful interactive `/fix` also closes by surfacing the last substantive user question preserved in the session. The question is printed as a dim `next0:` line and spoken once, so the repair loop returns naturally to the human's unfinished thread rather than inventing a new one.
 
