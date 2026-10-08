@@ -256,7 +256,7 @@ pointer.
 | Working on | Read |
 |---|---|
 | Anything in MASTER | `MASTER/README.md`, then `MASTER/AGENTS.md` |
-| The web face, WebGL, TTS | `MASTER/web/CLAUDE.md` |
+| The web face, WebGL, TTS | `RAILS/master_web/CLAUDE.md` |
 | Deploy, the VPS, rc.d, relayd | `OPENBSD/CLAUDE.md`, then `OPENBSD/RUNBOOK.md` |
 | RAILS CSS or visual work | `RAILS/__shared/README.md` |
 | brgen's city hosts and verticals | `RAILS/brgen/AGENTS.md` |
