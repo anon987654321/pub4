@@ -283,7 +283,7 @@ class LocaleContractTest < Minitest::Test
   end
 
   def locale_paths(app, locale)
-    pattern = app == "shared" ? "shared/config/locales/*.#{locale}.yml" : "#{app}/config/locales/*#{locale}.yml"
+    pattern = app == "shared" ? "__shared/config/locales/*.#{locale}.yml" : "#{app}/config/locales/*#{locale}.yml"
     Dir.glob(File.join(ROOT, pattern)).sort
   end
 
