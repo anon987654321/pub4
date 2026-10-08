@@ -3,7 +3,7 @@
 One screen. Everything else is reference, reached from here.
 
 Authority order: `MASTER/data/soul.yml` > `MASTER/data/laws.yml` >
-executable law (`MASTER/law/*.rb` and `MASTER/lib/review/scan/rules/*.rb`) >
+executable law (`MASTER/law/*.rb` and `MASTER/lib/review/scan/laws/*.rb`) >
 this file > the per-tree contract. Feature truth is `RAILS/apps.yml`.
 
 **MASTER is the primary configuration; this file is secondary.** Claude Code reads
@@ -155,7 +155,7 @@ its execution policy, adapters, topology and runtime data. Priority-ranked law
 entries are flat at the top level; there is no canonical `rules:` subtree.
 3. `MASTER/law/*.rb` — the executable constitutional layer, with worked
 examples and enforcement metadata.
-4. `MASTER/lib/review/scan/rules/*.rb` — scanner adapters built around that
+4. `MASTER/lib/review/scan/laws/*.rb` — scanner adapters built around that
 constitution.
 
 Do not hand-parse the catalogue with an assumed YAML shape. Run
@@ -193,7 +193,7 @@ goes under "Refused, and why" in `MASTER/AGENTS.md` or `OPENBSD/CLAUDE.md`.
 
 **Every README carries one voice.** It opens with a bold, visionary paragraph, then
 plain Strunk & White prose a regular person follows — no code blocks, no lists, no
-tables — and it passes `bin/operator lint` — the `README_PROSE` rule in `MASTER/lib/review/scan/rules/cosmetic_laws.rb` enforces it, because a convention is a rule, not a paragraph an agent skims. Redo a folder's
+tables — and it passes `bin/operator lint` — the `README_PROSE` rule in `MASTER/lib/review/scan/laws/cosmetic_laws.rb` enforces it, because a convention is a rule, not a paragraph an agent skims. Redo a folder's
 README before you push that folder, so the door to it is never stale. `MASTER/README.md`
 is the reference.
 
