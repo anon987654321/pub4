@@ -3,7 +3,7 @@
 require_relative "test_helper"
 require "review/scan/law_dsl"
 
-# `languages:` on a semantic rule was inert. SemanticRule.from_yaml kept prompt,
+# `languages:` on a semantic rule was inert. SemanticLaw.from_yaml kept prompt,
 # severity, mode, reversibility and blast_radius and dropped the rest, so a rule
 # declaring `css` was asked about every file and the declaration cost tokens
 # without buying a scope. Its only reader had been the lexical bridge, which
@@ -12,7 +12,7 @@ require "review/scan/law_dsl"
 # Both halves are pinned here: the scope is honoured, and a rule that declares
 # nothing still reaches everything — narrowing this into a rule that only ever
 # asks about a handful of files would be worse than the inert key.
-class TestSemanticRuleScope < Minitest::Test
+class TestSemanticLawScope < Minitest::Test
   def rule = @rule ||= Master::Review::Scan::Laws::SemanticLaw.new(agent: nil)
 
   def scoped(language) = rule.send(:rules_for, language).keys
