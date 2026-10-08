@@ -84,7 +84,7 @@ class WriteGuardTest < Minitest::Test
   # gate would pay that twice for every write, so the guard holds the mechanical
   # half and the per-turn pass holds the rest.
   def test_semantic_rules_are_not_on_the_write_path
-    agent_backed = Master::Review::Scan::InfraHelpers.build_scanner(root: Master::ROOT)
+    agent_backed = Master::Fix::Scanner.build(root: Master::ROOT)
                                                      .rules.select { |rule| rule.respond_to?(:set_agent) }
     refute_empty agent_backed, "the scanner should carry semantic rules for the scan path"
 
