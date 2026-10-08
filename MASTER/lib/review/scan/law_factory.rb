@@ -3,7 +3,7 @@
 module Master
   module Review
     module Scan
-      # Single instantiation path for scan rule classes (avoids ArgumentError drift).
+      # Single instantiation path for scan law classes (avoids ArgumentError drift).
       module LawFactory
         BRIDGE_CLASSES = %w[YamlDeclarativeLaw VetoPatternLaw LawBridgeLaw].freeze
 
@@ -38,7 +38,7 @@ module Master
 
         def registry_id(klass, root: Master::ROOT, agent: nil, ecology: nil)
           build(klass, root:, agent:, ecology:).id.to_s.downcase
-        rescue StandardError # scan: intentional — non-auto-buildable rules have no registry id; nil IS the census answer
+        rescue StandardError # scan: intentional — non-auto-buildable laws have no registry id; nil IS the census answer
           nil
         end
       end
