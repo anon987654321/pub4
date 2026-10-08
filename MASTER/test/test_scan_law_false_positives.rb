@@ -20,7 +20,7 @@ class TestScanRuleFalsePositives < Minitest::Test
   end
 
   # ERB_HTML_SAFE only looks at views, so its cases need a view path.
-  VIEW = "RAILS/shared/app/views/example/show.html.erb"
+  VIEW = "RAILS/__shared/app/views/example/show.html.erb"
 
   def findings(id, source, path: "lib/example.rb")
     Array(rule(id).check(source, path: File.join(Master::ROOT, path)))
@@ -961,7 +961,7 @@ end
   # gamma-encoded luma. Pure red reads 0.21 that way and so passed as dark,
   # while white on it is 4.0:1, under AA. Greys judge exactly as they did.
 
-  CSS = "RAILS/shared/app/assets/stylesheets/example.scss"
+  CSS = "RAILS/__shared/app/assets/stylesheets/example.scss"
 
   def test_light_text_on_a_saturated_mid_colour_is_not_excused_as_dark
     refute_empty findings(:CONTRAST_TOKENS, ".a {\n  background: #ff0000;\n  color: #fff;\n}\n", path: CSS)
