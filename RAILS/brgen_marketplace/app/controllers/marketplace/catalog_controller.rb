@@ -59,50 +59,50 @@ module Marketplace
           source: "brgen",
           type: "listing",
           city_id: listing.city_id,
-          record_id: listing.id,
+          record_id: listing.id
         ),
         type: "marketplace_listing",
         title: listing.title,
         description: listing.description.to_s.tr("\n", " ")[0, 500],
         category: {
           id: listing.category_id,
-          name: listing.category&.name,
+          name: listing.category&.name
         },
         price: {
           cents: listing.price_cents,
-          currency: listing.currency.presence || "NOK",
+          currency: listing.currency.presence || "NOK"
         },
         condition: listing.condition_label,
         availability: {
           status: listing.status,
           quantity: listing.available_quantity,
-          buyable: listing.buyable?,
+          buyable: listing.buyable?
         },
         delivery: {
           code: Marketplace::Listing::DELIVERY_PROMISES.key(listing.delivery_promise),
           label: listing.delivery_badge,
-          fulfilment: Marketplace::Listing::FULFILMENT_METHODS.key(listing.fulfilment_method),
+          fulfilment: Marketplace::Listing::FULFILMENT_METHODS.key(listing.fulfilment_method)
         },
         seller: {
           kind: listing.store_id.present? ? "shop" : "person",
-          name: listing.store&.name || listing.user&.display_name,
+          name: listing.store&.name || listing.user&.display_name
         },
         trust: {
           seller_score: listing.seller_score.to_f,
           rating: listing.rating.to_f,
           reviews: listing.reviews_count.to_i,
-          ranking_score: listing.ranking_score.to_f,
+          ranking_score: listing.ranking_score.to_f
         },
         url: listing_url(listing),
         image_url: catalog_image_url(listing),
         reasons: ranker.reasons(listing),
         handoff: {
-          amber_url: amber_handoff_url(listing),
+          amber_url: amber_handoff_url(listing)
         },
         metadata: {
           locality: listing.location,
           source: "brgen",
-          protocol: Shared::Commerce::PROTOCOL,
+          protocol: Shared::Commerce::PROTOCOL
         },
       }
     end
@@ -123,8 +123,8 @@ module Marketplace
           source: "brgen",
           type: "listing",
           city_id: listing.city_id,
-          record_id: listing.id,
-        ),
+          record_id: listing.id
+        )
       )
     end
 

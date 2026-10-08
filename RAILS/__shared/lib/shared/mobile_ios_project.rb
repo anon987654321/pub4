@@ -39,7 +39,7 @@ module Shared
             "MARKETING_VERSION" => "1.0.3",
             "CURRENT_PROJECT_VERSION" => "1",
           },
-          "configs" => apps.to_h { |app| [ config_name(app), app_settings(app) ] },
+          "configs" => apps.to_h { |app| [ config_name(app), app_settings(app) ] }
         },
       }
     end

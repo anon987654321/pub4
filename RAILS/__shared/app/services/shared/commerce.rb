@@ -10,7 +10,7 @@ module Shared
     Reference = Data.define(:id, :source, :type, :url)
     Candidate = Data.define(
       :id, :title, :description, :merchant, :category, :price_cents, :currency,
-      :condition, :availability, :delivery, :trust, :url, :image_url, :reasons, :metadata,
+      :condition, :availability, :delivery, :trust, :url, :image_url, :reasons, :metadata
     )
 
     EVENT_NAMES = %w[
@@ -22,7 +22,7 @@ module Shared
       order_shipped
       order_delivered
       return_started
-      return_completed,
+      return_completed
     ].freeze
 
     module_function
@@ -55,7 +55,7 @@ module Shared
           category: category.to_s.presence,
           source_url: source_url.to_s,
           commerce_key: commerce_key.to_s,
-        }.compact,
+        }.compact
       )
       "#{base.to_s.sub(%r{/$}, "")}/items/new?#{query}"
     rescue StandardError
