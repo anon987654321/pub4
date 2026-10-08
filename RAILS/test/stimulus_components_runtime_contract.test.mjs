@@ -61,8 +61,12 @@ test("Amber analytics mounts animated number on real metrics", async () => {
   assert.match(source, /data-animated-number-end-value="<%= @analytics\[:never_worn\] %>"/)
 })
 
-test("the timeago adapter keeps the canonical week duration", async () => {
+test("the timeago adapter keeps the canonical week duration and a real consumer", async () => {
   const source = await readVendor("@stimulus-components--timeago.js")
   assert.match(source, /\["week",604800000\]/)
   assert.doesNotMatch(source, /\["week",6048000000\]/)
+
+  const reports = await readSource("brgen/app/views/admin/reports/index.html.erb")
+  assert.match(reports, /data-controller="timeago"/)
+  assert.match(reports, /data-timeago-refresh-interval-value="60000"/)
 })
