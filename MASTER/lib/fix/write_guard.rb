@@ -20,11 +20,13 @@ module Master
           def blocked? = !blocking.empty?
 
           def reason
-            blocking.map { |f| "#{f[:rule]}:#{f[:line]} #{f[:message]}" }.join("; ")
+            blocking.map { |f| "#{f[:law]}:#{f[:line]} #{f[:message]}" }.join("; ")
           end
         end
 
         def self.default
+          require File.join(Master::ROOT, "law", "definition") unless defined?(::Law)
+          ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.definitions.empty?
           digest = ::Law::Contract.digest
           return @default if @default && @default_digest == digest
 
@@ -65,7 +67,7 @@ module Master
 
         def tally(list) = list.each_with_object(Hash.new(0)) { |f, acc| acc[key(f)] += 1 }
 
-        def key(finding) = finding[:dedupe_key] || "#{finding[:rule]}:#{finding[:message]}"
+        def key(finding) = finding[:dedupe_key] || "#{finding[:law]}:#{finding[:message]}"
       end
     end
   end
