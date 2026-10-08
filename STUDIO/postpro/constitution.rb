@@ -10,7 +10,7 @@ module Postpro
     LAWS_PATH = File.expand_path("../../MASTER/data/laws.yml", __dir__).freeze
     LAW_PATHS = [
       File.expand_path("../../MASTER/law/universal.rb", __dir__),
-      File.expand_path("../../MASTER/law/law.rb", __dir__),
+      File.expand_path("../../MASTER/law/definition.rb", __dir__),
     ].freeze
 
     REQUIRED_LAWS = %w[
