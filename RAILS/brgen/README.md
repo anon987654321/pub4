@@ -5,6 +5,14 @@ only feed that ever mattered.** brgen is one Rails process serving many hosts.
 Rails 8.2.0.alpha on SQLite behind Falcon, with Hotwire, Solid Queue, Solid Cache and
 relayd. `AGENTS.md` is the agent map.
 
+## Brand
+
+Brgen is the city-first network: one living local identity spanning conversation,
+commerce, dating, food, maps, media and messaging. The missing vowel is the brand
+mechanic, not a gimmick; it makes every city apex recognizable while leaving the
+place itself in charge. Verticals borrow Brgen's identity and earn their own visual
+dialect only when the surface needs one.
+
 A city is an apex, and the apex is the social feed. Each vertical is a namespaced
 subapp on a subdomain of *that* apex — not a path, and not a second deploy. That
 holds for every row in `Brgen::DomainRegistry::ENTRIES` and not only for Bergen
