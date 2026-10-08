@@ -84,7 +84,7 @@ class TestScanRuleContracts < Minitest::Test
   end
 
   def test_secret_proximity_reaches_findings_through_the_bridge
-    hits = Laws::LawBridgeRule.new.check(%q{api_key = "sk_live_123456789"}, path: "app.rb")
+    hits = Laws::LawBridgeLaw.new.check(%q{api_key = "sk_live_123456789"}, path: "app.rb")
 
     assert hits.any? { |h| h[:rule] == "SECRET_PROXIMITY" }, "hardcoded secret must reach scanner findings"
   end
@@ -163,7 +163,7 @@ class TestScanRuleContracts < Minitest::Test
   # contract asserts through the bridge — the id must reach the scanner's
   # findings, unchanged, not just prove itself inside Law.
   def test_advisory_laws_do_not_enter_enforcement_bridge
-    bridge = Laws::LawBridgeRule.new
+    bridge = Laws::LawBridgeLaw.new
     law = Law.rules.fetch(:BEAUTIFUL_CODE)
 
     assert_equal :advisory, law.lifecycle
@@ -180,7 +180,7 @@ class TestScanRuleContracts < Minitest::Test
   end
 
   def test_unbounded_retry_reaches_findings_through_the_bridge
-    bridge = Laws::LawBridgeRule.new
+    bridge = Laws::LawBridgeLaw.new
     hits = bridge.check("begin\n  call\nrescue\n  retry\nend\n", path: "retry.rb")
     retry_hits = hits.select { |h| h[:rule] == "UNBOUNDED_RETRY" }
 
@@ -208,7 +208,7 @@ class TestScanRuleContracts < Minitest::Test
   }.freeze
 
   def test_every_retired_twin_reaches_findings_through_the_bridge
-    bridge = Laws::LawBridgeRule.new
+    bridge = Laws::LawBridgeLaw.new
     RETIRED_TWINS.each do |id|
       law = Law.rules[id.to_sym]
       refute_nil law, "#{id} must exist in law/ — its registry twin is gone"
@@ -423,7 +423,7 @@ class TestScanRuleContracts < Minitest::Test
   # out of the system prompt to protect against a disagreement neither half can
   # have.
   def test_no_id_lives_in_both_law_and_registry
-    Laws::LawBridgeRule.new
+    Laws::LawBridgeLaw.new
     law_ids = Law.rules.values.select(&:scannable?).map { |rule| rule.id.to_s }
     registry_ids = Master::Review::Scan::Rule.registry.filter_map do |klass|
       Master::Review::Scan::RuleFactory.registry_id(klass, root: Master::ROOT)&.upcase
