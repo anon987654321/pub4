@@ -56,7 +56,7 @@ module Master
         def apps(plan)
           named = plan.paths.flat_map do |path|
             app = path.split("/")[1]
-            app == "shared" ? APPS : [app]
+            app == "__shared" ? APPS : [app]
           end
           named.uniq & APPS
         end
@@ -68,7 +68,7 @@ module Master
             root = File.join(@tree_root, app)
             [
               *Dir.glob(File.join(root, "test", "**", "*_test.rb")),
-              *Dir.glob(File.join(root, "engines", "*", "test", "**", "*_test.rb"))
+              *Dir.glob(File.join(root, "..", "brgen_*", "test", "**", "*_test.rb"))
             ]
           end
         end
