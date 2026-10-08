@@ -70,7 +70,7 @@ module Master
               io.puts({
                 path: path.to_s,
                 line: Finding.read(finding, :line),
-                rule: Finding.read(finding, :law)&.to_s,
+                law: Finding.read(finding, :law)&.to_s,
                 message: Finding.read(finding, :message),
               }.to_json)
             end
@@ -111,7 +111,7 @@ module Master
           parts = ["#{done}/#{total} files", tally(viol_total, dirty), "#{elapsed.round}s"]
           parts << "eta #{eta_s}s" if eta_s&.positive?
           line = parts.join(", ")
-          line += "; top #{top.map { |law, n| "#{rule} #{n}" }.join(", ")}" unless top.empty?
+          line += "; top #{top.map { |law, n| "#{law} #{n}" }.join(", ")}" unless top.empty?
           Master::Trace::Dmesg.status(unit, line)
           write_progress_snapshot(unit:, done:, total:, viol_total:, dirty:, top:, elapsed:, eta_s:)
         end
@@ -131,9 +131,9 @@ module Master
 
         def law_scope_summary(laws)
           counts = Hash.new(0)
-          Array(laws).each do |rule|
-            languages = if rule.class.respond_to?(:dsl_langs)
-              Array(rule.class.dsl_langs).filter_map { |lang| lang.to_s unless lang.to_s.empty? }
+          Array(laws).each do |law|
+            languages = if law.class.respond_to?(:dsl_langs)
+              Array(law.class.dsl_langs).filter_map { |lang| lang.to_s unless lang.to_s.empty? }
             else
               []
             end
@@ -166,7 +166,7 @@ module Master
 
         def write_progress_snapshot(unit:, done:, total:, viol_total:, dirty:, elapsed:, top: [], eta_s: nil)
           root = defined?(Master::ROOT) ? Master::ROOT : Dir.pwd
-          top_s = top.map { |law, n| "#{rule}=#{n}" }.join(" ")
+          top_s = top.map { |law, n| "#{law}=#{n}" }.join(" ")
           text = [
             "phase: streaming #{unit}",
             "progress: #{done}/#{total} files",
