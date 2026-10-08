@@ -3482,10 +3482,7 @@ SHOWCASE_MODES = {
       @previous_bass_note = nil
       @last_bass_note = nil
       @suspension_note = nil
-      @beauty_ending = false
-      @motif_memory = []
-      @last_bass_note = nil
-      @suspension_note = nil
+      @beauty_bar = 0
       @beauty_ending = false
 
       selected_bpm = bpm || (LiveSynth.showcase? && ENV["DILLA_SHOWCASE_BPM"])
@@ -3888,6 +3885,7 @@ SHOWCASE_MODES = {
 
     # FM: scale-aware and chord-tone weighted, in the current harmony.
     def fm_phrase!(stage, length)
+      length = [length, @beat * 0.9].min if @beauty_ending
       phrase = @c.fetch("fm_phrase")
       preset = @c.fetch("fm").fetch(@lead).transform_keys(&:to_sym)
       range = phrase.fetch("range").map(&:to_i)
@@ -3917,6 +3915,7 @@ SHOWCASE_MODES = {
     # A patch lead uses the same chord-scale rules and never carries a long
     # note into the next harmony.
     def patch_phrase!(stage, length)
+      length = [length, @beat * 0.9].min if @beauty_ending
       range = @c["lead_range"].map(&:to_i)
       tones = lead_tones(range)
       spot = @next_at + ((@rng.rand < 0.5 ? 0.5 : 1.0) * @beat)
