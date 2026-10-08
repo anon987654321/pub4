@@ -191,7 +191,7 @@ module Master
         end
 
         def too_many_lines?(path)
-          limit = Master::Fix::Scan::FileProcessor::MAX_LINES
+          limit = Master::Fix::Scan::FileProcessor.max_lines_for(path)
           File.foreach(path, encoding: "UTF-8", invalid: :replace, undef: :replace)
               .with_index(1) { |_, line| return true if line > limit }
           false
