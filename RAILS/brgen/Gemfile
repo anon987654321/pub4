@@ -47,7 +47,7 @@ gem "bootsnap", require: false
 gem "faker", require: false
 
 group :development, :test do
-  gem "simplecov", "~> 1.0", require: false
+  gem "simplecov", "~> 1.2", require: false
   # require: false, like faker above. Bundler.require loads every gem in the
   # groups it is given, so ferrum was constructed into every development and
   # test boot -- a browser driver, for a tree whose two callers already ask
