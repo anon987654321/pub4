@@ -2637,7 +2637,7 @@ style_guides:
     local: rails-style-guide
     rubocop: rubocop-rails-omakase
     enforce_via:
-    - RAILS/shared/.rubocop.yml
+    - RAILS/__shared/.rubocop.yml
   - id: javascript
     repo: https://github.com/airbnb/javascript
     local: javascript
@@ -2650,7 +2650,7 @@ style_guides:
     local: css
     enforce_via:
     - data/laws.yml#style.css
-    - RAILS/shared/frontend
+    - RAILS/__shared/frontend
   - id: thoughtbot
     repo: https://github.com/thoughtbot/guides
     local: guides
@@ -2713,7 +2713,7 @@ style_guides:
   gates:
   - bin/style_gate
   - bundle exec rubocop
-  - RAILS/shared/bin/rubocop
+  - RAILS/__shared/bin/rubocop
 tts_phrases:
   phrases:
   - text: Ready.
