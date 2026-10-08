@@ -32,7 +32,7 @@ module Master
           authority boundaries.
 
           1. LOAD
-          Read the live constitution, rule registry, rule examples, protected
+          Read the live constitution, law registry, law examples, protected
           paths, verification commands, and target contract. Do not rely on a
           remembered law count.
 
@@ -76,7 +76,7 @@ module Master
           "No deterministic fixer exists" is not a terminal state.
 
           8. VERIFY
-          Reread the changed file, re-run the affected rule, and run the
+          Reread the changed file, re-run the affected law, and run the
           narrowest behavioral or surface check that proves the repair. A failed
           verification rejects or rolls back that repair.
 
@@ -99,9 +99,9 @@ module Master
       end
 
       def strategy_for(law)
-        semantic = law.respond_to?(:semantic?) && rule.semantic?
-        practice = law.respond_to?(:practice) && !rule.practice.to_s.empty?
-        detector = law.respond_to?(:scannable?) && rule.scannable?
+        semantic = law.respond_to?(:semantic?) && law.semantic?
+        practice = law.respond_to?(:practice) && !law.practice.to_s.empty?
+        detector = law.respond_to?(:scannable?) && law.scannable?
 
         return "semantic_model_repair" if semantic
         return "conduct_only" if practice && !detector
@@ -112,7 +112,7 @@ module Master
 
       def verification_for(law)
         return "manual_conduct_evidence" if strategy_for(law) == "conduct_only"
-        return "semantic_rescan_plus_behavior_or_test" if law.respond_to?(:semantic?) && rule.semantic?
+        return "semantic_rescan_plus_behavior_or_test" if law.respond_to?(:semantic?) && law.semantic?
 
         "rule_rescan_plus_behavior_or_test"
       end
@@ -121,7 +121,7 @@ module Master
       # about the live executable law population, not permissions to ignore it.
       def capability_report(laws = self.laws)
         eligible = Array(laws).select do |law|
-          !law.respond_to?(:enforceable?) || rule.enforceable?
+          !law.respond_to?(:enforceable?) || law.enforceable?
         end
         matrix = ProtocolDetectorMatrix.matrix(eligible)
         values = matrix.values
@@ -136,22 +136,22 @@ module Master
       end
 
       def law_entry(law)
-        base = law.respond_to?(:contract_entry) ? rule.contract_entry : {
-          "id" => rule.id.to_s,
-          "severity" => law.respond_to?(:severity) ? rule.severity.to_s : "warning"
+        base = law.respond_to?(:contract_entry) ? law.contract_entry : {
+          "id" => law.id.to_s,
+          "severity" => law.respond_to?(:severity) ? law.severity.to_s : "warning"
         }
         base.merge(
           "enforcement" => enforcement(law),
           "fix_strategy" => strategy_for(law),
-          "verify_strategy" => verification_for(rule)
+          "verify_strategy" => verification_for(law)
         )
       end
 
       def enforcement(law)
         surfaces = []
-        surfaces << "lexical" if law.respond_to?(:scannable?) && rule.scannable?
-        surfaces << "semantic" if law.respond_to?(:semantic?) && rule.semantic?
-        surfaces << "conduct" if law.respond_to?(:practice) && !rule.practice.to_s.empty?
+        surfaces << "lexical" if law.respond_to?(:scannable?) && law.scannable?
+        surfaces << "semantic" if law.respond_to?(:semantic?) && law.semantic?
+        surfaces << "conduct" if law.respond_to?(:practice) && !law.practice.to_s.empty?
         surfaces.empty? ? ["unknown"] : surfaces
       end
 
@@ -202,11 +202,11 @@ module Master
 
       def render(root:, target:, files: nil, skipped: nil, full: false)
         target_path = File.realpath(target)
-        law_rows = rules.sort_by { |law| rule.id.to_s }.map { |law| law_entry(law) }
+        law_rows = rules.sort_by { |law| law.id.to_s }.map { |law| law_entry(law) }
         corpus = inventory(target: target_path, root: root)
         corpus["eligible_sample"] = Array(files).first(24).map { |path| relative(path, root) } if files
         corpus["skipped_by_caller"] = skipped.to_i if skipped
-        entries = laws.sort_by { |law| rule.id.to_s }.map(&:contract_entry)
+        entries = laws.sort_by { |law| law.id.to_s }.map(&:contract_entry)
         detector_matrix = ProtocolDetectorMatrix.matrix(laws)
         payload = {
           "fix_protocol_version" => VERSION,
