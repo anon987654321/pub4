@@ -102,7 +102,7 @@ module Deploy
         max_weights = @rules.dig("typography", "hierarchy", "max_font_weights").to_i
         return if delta <= 0
 
-        path = File.join(RAILS, "shared/app/assets/stylesheets/_dialect_tokens.scss")
+        path = File.join(RAILS, "__shared/app/assets/stylesheets/_dialect_tokens.scss")
         weights = read_css(path).scan(/--weight-[\w-]+\s*:\s*(\d{3})\s*;/).flatten.map(&:to_i).uniq.sort
         return if weights.size < 2
 
