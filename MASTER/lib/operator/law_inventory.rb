@@ -176,7 +176,7 @@ module Operator
 
     def load_registry
       require "master"
-      require "review/scan/infra_helpers"
+      require "fix/scanner"
       ENV["MASTER_SCAN_DETERMINISTIC"] = "1"
       scanner = Master::Fix::Scanner.build(root: MASTER, agent: nil)
       scanner.rules.to_h { |rule| [rule.id.to_s.downcase, rule] }
