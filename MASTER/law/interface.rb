@@ -191,3 +191,16 @@ Law.define(:DIRECT_MANIPULATION_FEEDBACK) do
   good "pointerdown/active -> immediate press state; commit -> explicit success or failure state"
 end
 
+
+
+Law.define(:WAITING_STATE_MEANING) do
+  source "Interaction status — useful feedback during dead time"
+  severity :info
+  mode :opportunity
+  languages %i[html css scss javascript]
+  path "RAILS/"
+  ask "When a user is waiting for a meaningful result, does the surface identify what is happening or what is being prepared, rather than exposing only a generic spinner or unexplained motion? Keep the message brief, truthful, localised, and independent of animation."
+  fix "Expose a short status label alongside the existing progress or skeleton state. Keep it accurate and persistent long enough to orient the user; never invent progress or use animation as the only meaning."
+  bad "<div class=\"spinner\" aria-label=\"Loading\"></div>"
+  good "<div aria-busy=\"true\"><span>Loading results…</span><div class=\"skeleton\" aria-hidden=\"true\"></div></div>"
+end
