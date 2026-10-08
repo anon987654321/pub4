@@ -3,7 +3,7 @@
 module Master
   module Review
     module Scan
-      module Rules
+      module Laws
       # Detects methods/classes/modules present in recent git history but absent now.
       # Wraps CommitGuard as a standard scan Rule so it runs in the scanner pipeline.
         class AstOmissionLaw < Rule
