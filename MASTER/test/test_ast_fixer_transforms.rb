@@ -282,7 +282,7 @@ class TestAstFixerTransforms < Minitest::Test
       path = File.join(dir, "cron-job.zsh")
       File.write(path, "#!/usr/bin/env zsh\nprint hi\n")
       File.chmod(0o755, path)
-      Master::Review::Scan::AstFixer.fix(path, File.read(path))
+      Master::Fix::Scan::AstFixer.fix(path, File.read(path))
 
       assert_equal 0o755, File.stat(path).mode & 0o777, "executable bit lost on write_back"
       assert_includes File.read(path), "set -euo pipefail"
@@ -482,7 +482,7 @@ class TestAstFixerTransforms < Minitest::Test
       path = File.join(dir, "app", "limits.rb")
       FileUtils.mkdir_p(File.dirname(path))
       File.write(path, source)
-      result = Master::Review::Scan::AstFixer.fix(path, source)
+      result = Master::Fix::Scan::AstFixer.fix(path, source)
 
       assert_equal source, File.read(path)
       refute_includes result.transforms, :trailing_commas
@@ -678,9 +678,9 @@ class TestAstFixerTransforms < Minitest::Test
       scanner = Master::Fix::Scanner.new(rules: [rule("TRAILING_WHITESPACE")])
 
       first_scan = scanner.scan(path)
-      first_fix = Master::Review::Scan::AstFixer.fix(path, File.read(path, encoding: "UTF-8"))
+      first_fix = Master::Fix::Scan::AstFixer.fix(path, File.read(path, encoding: "UTF-8"))
       second_scan = scanner.scan(path)
-      second_fix = Master::Review::Scan::AstFixer.fix(path, File.read(path, encoding: "UTF-8"))
+      second_fix = Master::Fix::Scan::AstFixer.fix(path, File.read(path, encoding: "UTF-8"))
       third_scan = scanner.scan(path)
 
       assert_operator first_scan.value!.size, :>, 0
@@ -697,7 +697,7 @@ class TestAstFixerTransforms < Minitest::Test
       File.write(path, "def call  \n  :ok\nend\n")
       bus = FakeBus.new
 
-      Master::Review::Scan::AstFixer.fix(path, File.read(path, encoding: "UTF-8"), event_bus: bus)
+      Master::Fix::Scan::AstFixer.fix(path, File.read(path, encoding: "UTF-8"), event_bus: bus)
 
       event = bus.events.find { |name, _payload| name == "ast_fixer:transform" }
       assert event
@@ -713,7 +713,7 @@ class TestAstFixerTransforms < Minitest::Test
       path = File.join(dir, filename)
       FileUtils.mkdir_p(File.dirname(path))
       File.write(path, content)
-      result = Master::Review::Scan::AstFixer.fix(path, content, allow_deletions:)
+      result = Master::Fix::Scan::AstFixer.fix(path, content, allow_deletions:)
       { content: File.read(path), transforms: result.transforms }
     end
   end
