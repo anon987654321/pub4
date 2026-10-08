@@ -3360,7 +3360,7 @@ SHOWCASE_MODES = {
       @fugue_enabled = ENV["DILLA_FUGUE"] == "1"
       @reference_name = reference || (LiveSynth.showcase? || @fugue_enabled ? nil : LiveSynth.authentic_progression_key(rng))
       @reference = @reference_name && LiveSynth.documented_progression(@reference_name)
-      curated_default = LiveSynth.showcase? ? "1" : "0"
+      curated_default = (LiveSynth.showcase? || @fugue_enabled) ? "1" : "0"
       curated_enabled = ENV.fetch("DILLA_CURATED_HARMONY", curated_default) != "0"
       @curated_progression_name = if !@reference && curated_enabled
                                     DillaMusicalGrammar.curated_name(rng)
