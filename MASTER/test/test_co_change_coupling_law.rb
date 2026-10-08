@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-require "review/scan/rule_dsl"
+require "review/scan/law_dsl"
 
 # The rule reads a co-change graph and reports files that move with peers in
 # other modules. Its whole judgement is three filters — same module, weight
@@ -13,7 +13,7 @@ require "review/scan/rule_dsl"
 # as this rule is concerned, so the test needs no repository history and states
 # the coupling it is judging rather than hoping the tree contains one.
 class TestCoChangeCouplingRule < Minitest::Test
-  Rules = Master::Review::Scan::Rules
+  Rules = Master::Review::Scan::Laws
   ROOT = "/repo"
 
   # Paths are relative to a module_of that treats MASTER specially: under
