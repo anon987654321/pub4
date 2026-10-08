@@ -5,7 +5,7 @@ require_relative "../lib/review/scan/laws/structural_rules"
 
 class TestPatternExtractionRule < Minitest::Test
   def setup
-    @rule = Master::Review::Scan::Rules::PatternExtractionRule.new
+    @rule = Master::Review::Scan::Laws::PatternExtractionRule.new
   end
 
   def test_detects_strategy_opportunity
