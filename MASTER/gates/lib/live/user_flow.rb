@@ -14,7 +14,7 @@ require_relative "../../../tools/master_design"
 module Deploy
   # Critical-path user flows + MASTER design/principle semantics.
   # Source checks always run. Live HTTP runs when app ports are open.
-  # Master principles are mapped to concrete detectables (not vibes).
+  # Master laws are mapped to concrete detectables (not vibes).
   # GATE_AUTOFIX=1 remeasures design contracts after mechanical CSS patches.
   # Guest persona probes assert Craigslist-style no-signup capabilities.
   class UserFlowGate
@@ -24,7 +24,7 @@ module Deploy
     RAILS_ROOT = File.join(ROOT, "RAILS")
     MASTER = File.join(ROOT, "MASTER")
     DESIGN_RULES = File.join(MASTER, "data", "laws.yml")
-    PRINCIPLE_MAP = File.join(MASTER, "data", "principle_map.yml")
+    LAW_MAP = File.join(MASTER, "data", "laws.yml")
     DESIGN_DOC = File.join(RAILS_ROOT, "shared", "README.md")
 
     # Every directory that renders a view, the three apps plus brgen's engines.
@@ -35,7 +35,7 @@ module Deploy
     # only correct until the next engine, and the last one cost 71 pages of
     # coverage before anybody noticed.
     VIEW_PATHS = (%w[brgen/app/views amber/app/views bsdports/app/views] +
-                  Dir.glob(File.join(RAILS_ROOT, "brgen/engines/*/app/views"))
+                  Dir.glob(File.join(RAILS_ROOT, "brgen/../brgen_*/app/views"))
                      .map { |path| path.sub("#{RAILS_ROOT}/", "") }.sort).freeze
 
     def self.run
@@ -102,7 +102,7 @@ module Deploy
       "brgen" => {
         "marketplace cart" => ["#{MP}/controllers/marketplace/carts_controller.rb", "#{MP}/views/marketplace/carts/show.html.erb"],
         "marketplace nav bar" => ["#{MP}/views/marketplace/_nav_bar.html.erb"],
-        "yep search surface" => %w[../shared/app/assets/stylesheets/_search_yep.scss],
+        "yep search surface" => %w[../__shared/app/assets/stylesheets/_search_yep.scss],
         "payment scaffold or honest stub" => [
           "app/services/marketplace/payments/stripe_checkout.rb",
           "app/services/marketplace/payments/vipps_checkout.rb",
@@ -123,19 +123,19 @@ module Deploy
 
     def load_master_context
       @design_rules = Operator::MasterDesign.blocks(DESIGN_RULES)
-      @principle_map = File.file?(PRINCIPLE_MAP) ? YAML.safe_load_file(PRINCIPLE_MAP) : {}
+      @law_map = File.file?(LAW_MAP) ? YAML.safe_load_file(LAW_MAP) : {}
       unless File.file?(DESIGN_RULES)
         @result.fail("user_flow: missing MASTER/data/laws.yml")
       end
-      unless File.file?(PRINCIPLE_MAP)
-        @result.fail("user_flow: missing MASTER/data/principle_map.yml")
+      unless File.file?(LAW_MAP)
+        @result.fail("user_flow: missing MASTER/data/laws.yml#law_map")
       end
-      # Semantic anchors must exist so principles stay authoritative
-      flat = @principle_map.dig("principles", "flat_ui") || @principle_map.dig("clusters", "aesthetic")
-      @result.fail("user_flow: principle_map missing aesthetic/flat_ui cluster") unless flat
+      # Semantic anchors must exist so laws stay authoritative
+      flat = @law_map.dig("laws", "flat_ui") || @law_map.dig("clusters", "aesthetic")
+      @result.fail("user_flow: law_map missing aesthetic/flat_ui cluster") unless flat
       touch = @design_rules.dig("layout_rules", "touch", "target_min_px")
       @result.fail("user_flow: design_rules layout_rules.touch.target_min_px missing") unless touch.to_i >= 44
-      @result.warn("user_flow: MASTER design_rules + principle_map loaded (semantic floor)")
+      @result.warn("user_flow: MASTER design_rules + law_map loaded (semantic floor)")
       @result.checked!(4)
     end
 
