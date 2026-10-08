@@ -86,7 +86,7 @@ require_relative "laws/meta_laws"
 # reached law_bridge_rule until InfraHelpers const_get'd it while building a
 # scanner, so `Law.registry` held 144 laws in a fresh process and 145 after
 # anything scanned. Every census over the registry read whichever number its
-# load order happened to produce — rule_deps.ungraphed 133 alone and 134 under
+# load order happened to produce — law_deps.ungraphed 133 alone and 134 under
 # a run that had scanned.
 require_relative "laws/law_bridge_law"
 require_relative "infra_helpers"
