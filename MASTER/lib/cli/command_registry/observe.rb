@@ -11,7 +11,7 @@ module Master
       module_function
 
       VIOLATION_TRUNCATE = Master::VIOLATION_TRUNCATE
-      SCAN_RULE_GROUP_LIMIT = 10
+      SCAN_LAW_GROUP_LIMIT = 10
 
       # The observation /fix starts from: read the tree, repair what a rule can
       # repair mechanically, and report what is left. Pipeline::Pass calls it
@@ -45,8 +45,8 @@ module Master
         request = Scan::Request.new(scanner:, root:, arg: clean_arg, autofix: do_autofix).call
         return request.pairs if request.pairs.is_a?(String)
 
-        pairs, profile, rule_filter, severity_filter = request.pairs, request.profile, request.rule_filter, request.severity_filter
-        pass1_total = run_scan_pass1(pairs:, profile:, rule_filter:, severity_filter:, dry_run:, root:, holder:,
+        pairs, profile, law_filter, severity_filter = request.pairs, request.profile, request.law_filter, request.severity_filter
+        pass1_total = run_scan_pass1(pairs:, profile:, law_filter:, severity_filter:, dry_run:, root:, holder:,
                                      do_autofix:)
 
         pairs, autofixes = run_scan_autofix_phase(
@@ -54,7 +54,7 @@ module Master
         )
 
         text = render_final_scan_report(
-          pairs:, profile:, rule_filter:, severity_filter:, dry_run:, autofixes:, do_autofix:, pass1_total:, on_total:,
+          pairs:, profile:, law_filter:, severity_filter:, dry_run:, autofixes:, do_autofix:, pass1_total:, on_total:,
         )
         holder[:text] = text
         Scan::Live.snapshot!(text, root:, note: "final")
@@ -66,9 +66,9 @@ module Master
       # "done" line reports four lines later, and the snapshot line under it
       # named the same two files twice. The snapshot is still written either
       # way: an interrupted scan leaving nothing behind is what it is for.
-      def run_scan_pass1(pairs:, profile:, rule_filter:, severity_filter:, dry_run:, root:, holder:, do_autofix: true)
+      def run_scan_pass1(pairs:, profile:, law_filter:, severity_filter:, dry_run:, root:, holder:, do_autofix: true)
         pass1 = Scan::Report.new(
-          pairs:, profile:, rule_filter:, severity_filter:,
+          pairs:, profile:, law_filter:, severity_filter:,
           dry_run:, phase: "pass1"
         )
         Scan::Live.emit("pass 1, #{pass1.brief}") if do_autofix
@@ -109,12 +109,12 @@ module Master
         [pairs, autofixes]
       end
 
-      def render_final_scan_report(pairs:, profile:, rule_filter:, severity_filter:, dry_run:, autofixes:, do_autofix:,
+      def render_final_scan_report(pairs:, profile:, law_filter:, severity_filter:, dry_run:, autofixes:, do_autofix:,
                                    pass1_total:, on_total: nil)
         final = Scan::Report.new(
           pairs:,
           profile:,
-          rule_filter:,
+          law_filter:,
           severity_filter:,
           dry_run:,
           autofixes:,
@@ -137,7 +137,7 @@ module Master
         Scan::Report.new(
           pairs: [],
           profile: nil,
-          rule_filter: nil,
+          law_filter: nil,
           dry_run:,
           autofixes:,
           phase: "final",
