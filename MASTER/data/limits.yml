@@ -4,8 +4,8 @@
 #
 # CLAUDE.md points agents at the law; limits.yml carries budgets and standing guidance. Measured 2026-08-02: of 38
 # top-level keys, 9 had a reader and 29 had none — 485 of 794 lines. Both generic
-# accessors that might have reached the rest (`Rules#workflow` and
-# `Rules#workflow_rule(key)`) had zero call sites and are deleted.
+# accessors that might have reached the rest (`Laws#workflow` and
+# `Laws#workflow_law(key)`) had zero call sites and are deleted.
 #
 # So the split is a relabelling, not a deletion. Everything under `guidance:` is
 # still in this file for humans to read — it is
@@ -86,9 +86,6 @@ law_groups:
   interface:
   - nielsen
   - prune
-  llm_rules:
-  - semantic
-  - adversarial
   heavy:
   - rubocop
   - reek
@@ -199,17 +196,17 @@ scan_profiles:
     laws: '*'
     aliases:
     - all
-    description: All registered scan rules
+    description: All registered scan Laws
   axioms_only:
     laws: axioms
     aliases:
     - axioms
-    description: Constitutional axioms only
+    description: Constitutional Laws only
   solid_focus:
     laws: solid_focus
     aliases:
     - solid
-    description: SOLID principles plus axioms
+    description: SOLID Laws plus constitutional Laws
   critical:
     laws: '*'
     severity:
@@ -218,7 +215,7 @@ scan_profiles:
     description: Only error and veto findings for urgent triage
   solid:
     laws: solid_focus
-    description: SOLID principles focus
+    description: SOLID Law focus
   axioms:
     laws: axioms
     description: Constitutional axioms only
@@ -314,7 +311,7 @@ session_modes:
       autofix_mechanical: true
       max_fix_passes: 15
       severity_floor: warning
-      description: Full rules, council on, full fix budget
+      description: Full Laws, council on, full fix budget
 
 # Read by nothing. Reference material for agents, kept
 # because it is worth reading and deleted from no-one's reach — but it does not
@@ -465,8 +462,8 @@ guidance:
   universal_scope:
     policy: ALL_PRINCIPLES_ALL_FILES
     statement: 'All axioms, principles, and philosophies apply to every file in the codebase regardless
-      of file type: Ruby, YAML, Zsh, HTML, CSS, JavaScript, Markdown. Language-specific rules apply only
-      to their target language; universal rules such as SQUINT_TEST, TYPOGRAPHY_DISCIPLINE and MEANINGFUL_NAMES
+      of file type: Ruby, YAML, Zsh, HTML, CSS, JavaScript, Markdown. Language-specific Laws apply only
+      to their target language; universal Laws such as SQUINT_TEST, TYPOGRAPHY_DISCIPLINE and MEANINGFUL_NAMES
       apply everywhere.
 
       '
