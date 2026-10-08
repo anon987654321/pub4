@@ -34,7 +34,7 @@ module Master
           1. LOAD
           Read the live constitution, law registry, law examples, protected
           paths, verification commands, and target contract. Do not rely on a
-          remembered rule count.
+          remembered law count.
 
           2. TRACE
           Before mutation, reread the whole working repository: hash every
@@ -59,14 +59,14 @@ module Master
           legitimately keep nothing.
 
           5. SCAN
-          For every active rule and every applicable file, inspect source
+          For every active law and every applicable file, inspect source
           lexically and structurally. Verify each detector against its worked
           positive and negative examples before trusting its findings.
 
           6. SEMANTIC
-          Semantic ask rules are executable. The model is the semantic analyst,
+          Semantic ask laws are executable. The model is the semantic analyst,
           not a spectator. Read the actual file, its surrounding code, callers
-          and relevant related files before deciding whether the rule is
+          and relevant related files before deciding whether the law is
           violated.
 
           7. REPAIR
@@ -81,7 +81,7 @@ module Master
           verification rejects or rolls back that repair.
 
           9. REPEAT
-          Rescan filenames, contents, semantic rules, and prior failures after
+          Rescan filenames, contents, semantic laws, and prior failures after
           every kept batch. Continue until DONE, PLATEAU, HUMAN_DECISION, or
           BLOCKED. A pass limit, timeout, or process death ends only the attempt;
           it does not mean the mission is complete.
@@ -114,14 +114,14 @@ module Master
         return "manual_conduct_evidence" if strategy_for(law) == "conduct_only"
         return "semantic_rescan_plus_behavior_or_test" if law.respond_to?(:semantic?) && law.semantic?
 
-        "rule_rescan_plus_behavior_or_test"
+        "law_rescan_plus_behavior_or_test"
       end
 
       # Explicit capability boundary for external agents. These are facts
       # about the live executable law population, not permissions to ignore it.
       def capability_report(laws = self.laws)
         eligible = Array(laws).select do |law|
-          !law.respond_to?(:enforceable?) || rule.enforceable?
+          !law.respond_to?(:enforceable?) || law.enforceable?
         end
         matrix = ProtocolDetectorMatrix.matrix(eligible)
         values = matrix.values
@@ -141,7 +141,7 @@ module Master
           "severity" => law.respond_to?(:severity) ? law.severity.to_s : "warning"
         }
         base.merge(
-          "enforcement" => enforcement(rule),
+          "enforcement" => enforcement(law),
           "fix_strategy" => strategy_for(law),
           "verify_strategy" => verification_for(law)
         )
@@ -237,7 +237,7 @@ module Master
 
           OPERATING MODEL
           #{atlas}
-          cross-tree proof rule: identify the authority, then the executable
+          cross-tree proof law: identify the authority, then the executable
           proof, then the live evidence. If those disagree, surface drift and
           verify the relevant boundary before repairing it.
 
@@ -271,7 +271,7 @@ module Master
           compliant example: #{entry["good"].to_s}
 
           This is an actionable repair stage. Do not stop merely because the
-          existing rule has no deterministic fixer. Inspect the code semantically
+          existing law has no deterministic fixer. Inspect the code semantically
           and use AST or model-generated repair when needed. Return UNCHANGED only
           after a concrete repair attempt is blocked by constitutional or
           verification evidence.
