@@ -32,7 +32,7 @@
 # marker can be *named* rather than used: this repo's documentation, rule
 # fixtures and false-positive tests all contain the string. `quoted?` separates
 # them — backticked, inside a string literal, or nested inside another comment of
-# the same language — and lets exactly one through, web_rules.rb:77, which writes
+# the same language — and lets exactly one through, web_laws.rb:77, which writes
 # `/* scan: intentional */` inside a `#` comment. A filter for a foreign opener
 # after the line's own one caught it and re-read every ERB `<%#` as nesting,
 # dropping twenty-six live markers. A disclosed false positive beats a filter
@@ -66,16 +66,16 @@ module Operator
     # The default for a caller that has no path to read a language from.
     ANY_OPENER = COMMENT_OPENERS.values.flatten.uniq.freeze
 
-    Exemption = Struct.new(:path, :line, :reason, :rules, :code, keyword_init: true) do
+    Exemption = Struct.new(:path, :line, :reason, :laws, :code, keyword_init: true) do
       def relative = path.delete_prefix("#{ROOT}/")
-      def live? = !rules.empty?
+      def live? = !laws.empty?
 
       # A marker on a line with no code of its own cannot work at all: scan_lines
       # skips the line the marker is on, and the line it was written about is the
       # next one. Both cases in the tree are the tail of a multi-line comment.
       def misplaced? = !live? && code.empty?
       def shape = misplaced? ? "on a comment line, so no code line is skipped" : "excuses nothing"
-      def to_s = "#{relative}:#{line}#{live? ? " #{rules.uniq.sort.join(",")}" : ""}"
+      def to_s = "#{relative}:#{line}#{live? ? " #{laws.uniq.sort.join(",")}" : ""}"
     end
 
     module_function
@@ -201,7 +201,7 @@ module Operator
     # both. The tail is the half that matters and the half this first got wrong:
     # amber's logo closes its ERB comment and carries a `<textPath>` on the same
     # line, so cutting from the opener to end-of-line deleted the markup three
-    # rules were about to flag — and the marker read as stale because the strip
+    # laws were about to flag — and the marker read as stale because the strip
     # removed its subject along with it.
     def without_marker_comment(line, openers)
       at = line.index(MARKER)
@@ -215,13 +215,13 @@ module Operator
       "#{line[0, opener]}#{tail}".rstrip
     end
 
-    def mechanical_rules
-      @mechanical_rules ||= begin
+    def mechanical_laws
+      @mechanical_laws ||= begin
         master
         # A rule that takes an agent is a semantic rule, and one model call per
         # file is not what a census of 97 files should cost.
         Master::Fix::Scanner.build(root: MASTER_DIR)
-              .rules.reject { |rule| rule.respond_to?(:set_agent) }
+              .laws.reject { |rule| rule.respond_to?(:set_agent) }
       end
     end
 
@@ -229,7 +229,7 @@ module Operator
       @exemptions ||= marked.flat_map do |path, hits|
         held = suppressed(path)
         hits.map do |line, reason, code|
-          Exemption.new(path:, line:, reason:, code:, rules: held[line] + held[:file])
+          Exemption.new(path:, line:, reason:, code:, laws: held[line] + held[:file])
         end
       end
     end
@@ -256,8 +256,8 @@ module Operator
       after = findings_by_line(path, unmarked(raw, openers))
       held = Hash.new { |hash, key| hash[key] = [] }
       marked_lines = marked.fetch(path, []).map(&:first)
-      after.each do |line, rules|
-        gained = rules - before.fetch(line, [])
+      after.each do |line, laws|
+        gained = laws - before.fetch(line, [])
         next if gained.empty?
 
         key = marked_lines.include?(line) ? line : :file
@@ -269,8 +269,8 @@ module Operator
     def findings_by_line(path, text)
       language = Master::FILE_LANGUAGE_MAP[File.extname(path)]&.to_sym
       by_line = Hash.new { |hash, key| hash[key] = [] }
-      mechanical_rules.each do |rule|
-        Array(rule.check(text, path:)).each { |finding| by_line[finding[:line].to_i] << finding[:rule].to_s }
+      mechanical_laws.each do |rule|
+        Array(rule.check(text, path:)).each { |finding| by_line[finding[:line].to_i] << finding[:law].to_s }
       rescue StandardError
         next
       end
