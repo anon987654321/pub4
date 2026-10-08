@@ -29,7 +29,7 @@ class TestLawLoopPolicy < Minitest::Test
       Master::Result.ok([{ rule: "TEST_RULE", severity: :warning, line: 1, message: "fix me" }])
     end
 
-    # The keyword mirrors Review::Scan::Scanner. A double that takes fewer
+    # The keyword mirrors Fix::Scanner. A double that takes fewer
     # arguments than the object it stands for reports a signature the tree does
     # not have, and four tests here read :error for that reason alone.
     def should_autofix?(_rule_id, _confidence, allow_deletions: false)
