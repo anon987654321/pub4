@@ -67,7 +67,7 @@ module Master
           @discipline = discipline || ConvergenceDiscipline.new(root: @root, bus: @bus)
           @ground_truth_failures = 0
           emit_coverage = lambda do |target, pass|
-            semantic = @scan_phase.semantic_full? ? "full" : "sampled clean-files"
+            semantic = @scan_phase.semantic_full? ? "full" : (ENV.fetch("MASTER_SCAN_SEMANTIC_SAMPLE", "0").to_f.positive? ? "deterministic-sample" : "targeted-by-findings")
             abstract = @council ? "bounded clean-streak review" : "unavailable"
             visual = @visual_pass&.applicable?(target) ? "rendered" : "not-applicable"
             opportunity = @opportunity_pass&.applicable?(target) ? "bounded" : "not-applicable"
@@ -393,7 +393,7 @@ module Master
 
             @law_recurrence.delete(rule_id)
             sample = found.select { |v| v[:rule].to_s == rule_id }.first(5)
-            @bus&.publish("fix_loop:soul_proposal", root: @root, rule: rule_id, sample:)
+            @bus&.publish("fix_loop:soul_proposal", root: @root, law: law_id, sample:)
           end
           (@law_recurrence.keys - tally.keys).each { |key| @law_recurrence.delete(key) }
         end
