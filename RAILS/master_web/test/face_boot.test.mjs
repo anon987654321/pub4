@@ -160,6 +160,19 @@ test("concatenated face parts form a syntactically valid module (guards tap-to-s
 
 test("face.modules.bundle.js is generated from face module entry", () => {
   const bundlePath = join(publicDir, "face.modules.bundle.js");
+  const sparse = readFileSync(join(publicDir, "face_sparse_field.js"), "utf8");
+  assert.match(sparse, /void-first/);
+  assert.match(sparse, /super-void|void_ratio/);
+  assert.match(sparse, /orbit/);
+  assert.match(sparse, /remember/);
+  assert.match(sparse, /resonate/);
+  assert.match(sparse, /pointermove/);
+  assert.match(sparse, /master:evidence/);
+  assert.match(sparse, /master:law/);
+
+  const manifest = readFileSync(join(root, "config", "face_assets.yml"), "utf8");
+  assert.match(manifest, /- face_sparse_field\.js/);
+
   assert.ok(existsSync(bundlePath), "run rails assets:build_face_modules_bundle");
   const bundle = readFileSync(bundlePath, "utf8");
   assert.match(bundle, /MASTER_FACE_PARTICLES|face_particles/);
