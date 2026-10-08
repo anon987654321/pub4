@@ -93,7 +93,7 @@ def check_yaml
   Check.new(name: "yaml", state: (errors.empty?) ? :pass : :fail, detail: errors.empty? ? "ok" : errors.join("; "))
 end
 
-# Advisory only, matching PrincipleMapRepair's dangling-reference check --
+# Advisory only, matching LawMapRepair's dangling-reference check --
 # which duplicate is "correct" when two differ even slightly isn't safe to
 # guess, so this reports rather than fixes (see ContentDedupScan's header).
 def check_content_dedup
@@ -198,13 +198,13 @@ require "master"
 if ARGV.include?("--fix")
   require "fileutils"
   require "set"
-  require "fix/principle_map_repair"
-  fixed = Master::Fix::PrincipleMapRepair.fix!(root: ROOT)
+  require "fix/law_map_repair"
+  fixed = Master::Fix::LawMapRepair.fix!(root: ROOT)
   if fixed.any?
-    Master::Trace::Dmesg.status("doctor0", "removed #{fixed.size} dangling rule reference(s) from data/principle_map.yml, backup .bak")
+    Master::Trace::Dmesg.status("doctor0", "removed #{fixed.size} dangling law reference(s) from laws.yml#law_map")
     fixed.each { |id, rid| Master::Trace::Dmesg.status("doctor0", "#{id}, removed #{rid}") }
   else
-    Master::Trace::Dmesg.status("doctor0", "principle_map.yml rule ids clean, nothing to repair")
+    Master::Trace::Dmesg.status("doctor0", "laws.yml law_map ids clean, nothing to repair")
   end
 end
 
