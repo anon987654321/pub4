@@ -143,7 +143,7 @@ module Master
       git = Io::GitOperations.new(root)
       laws = scanner.laws
       learnings = infra[:learnings]
-      fix_loop = build_fix_loop(root:, infra:, agent:, scanner:, axioms:, laws: learnings:, bus:, git:)
+      fix_loop = build_fix_loop(root:, infra:, agent:, scanner:, axioms:, laws:, learnings: bus:, git:)
       watch_loop = build_watch_loop(laws:, agent:, scanner:, root:, bus:, learnings:, fix_loop:)
       { standing:, git:, fix_loop:, watch_loop: }
     end
