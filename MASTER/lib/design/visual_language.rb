@@ -254,7 +254,7 @@ module Master
           [
             *Array(study.dig("bol", "useful_patterns")).first(6),
             *Array(study.dig("x", "useful_patterns")).first(2),
-            *Array(study.dig("hey", "useful_patterns")).first(2)
+            *Array(study.dig("hey", "useful_patterns")).first(2),
           ].join(",")
         when :transactional_food
           Array(study.dig("hey", "useful_patterns")).first(5).join(",")

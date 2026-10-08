@@ -31,7 +31,7 @@ module Master
           "severity" => law.respond_to?(:severity) ? law.severity.to_s : "unknown",
           "applies_to" => Array(law.respond_to?(:applies_to) ? law.applies_to : []),
           "path_exclude" => detector_paths(law),
-          "calibration" => Master::Review::Scan::LawHealth.calibration(law)
+          "calibration" => Master::Review::Scan::LawHealth.calibration(law),
         }
       end
 
@@ -58,7 +58,7 @@ module Master
           "semantic_laws" => matrix.values.count { |e| e["semantic"] },
           "conduct_laws" => matrix.values.count { |e| e["conduct"] },
           "measurement_mode_laws" => matrix.values.count { |e| e["measurement_mode"] },
-          "blocking_laws" => matrix.values.count { |e| e["enforcement"] == "blocking" }
+          "blocking_laws" => matrix.values.count { |e| e["enforcement"] == "blocking" },
         }
       end
     end

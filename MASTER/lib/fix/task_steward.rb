@@ -169,7 +169,7 @@ module Master
 
         Mission.new(root: @root, bus: @bus).defer!(
           reason: "steward: #{error.class}: #{error.message}",
-          seconds: Mission::RETRY_BASE_SECONDS
+          seconds: Mission::RETRY_BASE_SECONDS,
         )
       rescue StandardError => e
         @bus&.publish("task_steward:defer_error", error: "#{e.class}: #{e.message}")

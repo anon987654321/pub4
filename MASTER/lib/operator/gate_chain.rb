@@ -194,7 +194,7 @@ module Operator
         suites_stage(trees:),
         ratchets_stage,
         sprawl_stage(scan_only:),
-        council_stage(scan_only:, trees:)
+        council_stage(scan_only:, trees:),
       ].compact
     end
 
@@ -203,7 +203,7 @@ module Operator
         name: "lexical",
         purpose: "law/ and the scan registry over #{scope}, autofixing",
         mutates: !scan_only,
-        run: -> { gate("--lexical-only", scan_only:, trees:) }
+        run: -> { gate("--lexical-only", scan_only:, trees:) },
       )
     end
 
@@ -214,7 +214,7 @@ module Operator
         name: "source",
         purpose: "every RAILS gate, source/rendered repair, then full Rails verification",
         mutates: !scan_only,
-        run: -> { rails_verification(scan_only:) }
+        run: -> { rails_verification(scan_only:) },
       )
     end
 
@@ -225,7 +225,7 @@ module Operator
         name: "openbsd",
         purpose: "every OpenBSD config, shell and deploy gate",
         mutates: false,
-        run: -> { openbsd_gates }
+        run: -> { openbsd_gates },
       )
     end
 
@@ -234,7 +234,7 @@ module Operator
         name: "suites",
         purpose: suite_purpose(trees),
         mutates: false,
-        run: -> { suites(trees) }
+        run: -> { suites(trees) },
       )
     end
 
@@ -248,7 +248,7 @@ module Operator
         name: "ratchets",
         purpose: "every recorded ceiling, current beside it",
         mutates: false,
-        run: -> { capture(RUBY, File.join(MASTER, "bin", "operator"), "measure", "--deep") }
+        run: -> { capture(RUBY, File.join(MASTER, "bin", "operator"), "measure", "--deep") },
       )
     end
 
@@ -257,7 +257,7 @@ module Operator
         name: "sprawl",
         purpose: "lone dirs, stutter, vague names, duplicate files",
         mutates: !scan_only,
-        run: -> { sprawl(scan_only:) }
+        run: -> { sprawl(scan_only:) },
       )
     end
 
@@ -266,7 +266,7 @@ module Operator
         name: "council",
         purpose: "/critique and /review, then the panel's picks back through the runtime",
         mutates: council_fix?(scan_only:),
-        run: -> { council(scan_only:, trees:) }
+        run: -> { council(scan_only:, trees:) },
       )
     end
 
@@ -571,7 +571,7 @@ module Operator
 
       Master::Trace::Dmesg.status(
         "gate0",
-        "#{clean} clean, #{failed} failed, #{skipped} skipped, #{changed.size} changed, #{foreign.size} foreign"
+        "#{clean} clean, #{failed} failed, #{skipped} skipped, #{changed.size} changed, #{foreign.size} foreign",
       )
       results.select { |r| r.state == "skipped" }.each do |r|
         Master::Trace::Dmesg.status("gate0", "#{r.stage}, skipped, #{r.summary}")

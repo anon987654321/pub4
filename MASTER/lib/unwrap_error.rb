@@ -184,7 +184,7 @@ module Master
       raise ArgumentError, "phantom detector must be a regex literal" unless value.is_a?(String)
 
       literal = value.match(%r{\A/(.*)/([imx]*)\z})
-      return nil if allow_description && !literal
+      return if allow_description && !literal
       raise ArgumentError, "phantom detector must be a regex literal: #{value.inspect}" unless literal
 
       flags = literal[2].chars.reduce(0) do |opts, flag|

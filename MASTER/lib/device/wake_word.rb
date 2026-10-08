@@ -100,7 +100,7 @@ module Master
       def start_recording(path)
         _out, err, status = @run.call(
           "termux-microphone-record", "-f", path, "-l", WINDOW_SECONDS.to_s,
-          "-e", "wav", "-r", RATE_HZ.to_s, "-c", "1",
+          "-e", "wav", "-r", RATE_HZ.to_s, "-c", "1"
         )
         raise "microphone start failed: #{err}" unless status.success?
       end
@@ -118,7 +118,7 @@ module Master
         return "" unless model
 
         out, _err, status = @run.call(
-          "whisper-cli", "-m", model, "-f", path, "-nt", "-np", "-l", "auto",
+          "whisper-cli", "-m", model, "-f", path, "-nt", "-np", "-l", "auto"
         )
         status.success? ? out.to_s.gsub(/\[[^\]]*\]|\([^)]*\)/, " ").split.join(" ") : ""
       rescue StandardError

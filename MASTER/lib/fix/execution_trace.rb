@@ -43,7 +43,7 @@ module Master
         "MASTER/data/providers.yml" => [],
         "MASTER/data/patterns.yml" => [],
         "MASTER/data/limits.yml" => [],
-        "MASTER/data/scan_coverage.yml" => []
+        "MASTER/data/scan_coverage.yml" => [],
       }.freeze
 
       Result = Data.define(:ok, :files, :bytes, :ruby_files, :phases, :failures) do
@@ -91,10 +91,10 @@ module Master
         Result.new(
           ok: failures.empty?,
           files: files.size,
-          bytes: bytes,
+          bytes:,
           ruby_files: ruby_files.size,
-          phases: phases,
-          failures: failures
+          phases:,
+          failures:,
         )
       rescue SyntaxError, StandardError => e
         Result.new(ok: false, files: 0, bytes: 0, ruby_files: 0,
@@ -220,7 +220,7 @@ module Master
           scanner: [:scan, :scan_dir],
           fix_loop: [:run, :preview],
           deliberation: [:review_convergent],
-          bus: [:publish, :subscribe]
+          bus: [:publish, :subscribe],
         }
 
         required.each do |name, methods|

@@ -50,7 +50,6 @@ module Master
 
       private
 
-
       def signature_change?(lines)
         added = lines.grep(DEF_LINE_RE) { Regexp.last_match(1) }
         removed = lines.grep(/^-\s*def\s+(\w+)/) { Regexp.last_match(1) }

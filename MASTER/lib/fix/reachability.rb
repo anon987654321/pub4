@@ -104,13 +104,13 @@ module Master
           failures: result.failures.size,
           warnings: result.warnings.size,
           unchecked: result.unchecked.size,
-          errors: result.errors.size
+          errors: result.errors.size,
         )
         Master::Trace::Dmesg.status(
           "layout0",
           "RAILS family sweep: #{result.outcome}, checks=#{result.checks_ran}, " \
           "failures=#{result.failures.size}, warnings=#{result.warnings.size}, " \
-          "unchecked=#{result.unchecked.size}"
+          "unchecked=#{result.unchecked.size}",
         )
 
         raise "layout suite gate errored: #{result.errors.first}" if result.errored?

@@ -53,7 +53,7 @@ module Master
               confidence: 0.5,
               reasoning: response.to_s,
               artifacts: { fallback: response },
-              votes: { approved: approved ? 1 : 0, rejected: rejected ? 1 : 0, neutral: approved || rejected ? 0 : 1 }
+              votes: { approved: approved ? 1 : 0, rejected: rejected ? 1 : 0, neutral: approved || rejected ? 0 : 1 },
             )
           rescue StandardError => e
             @bus&.publish(:swarm_fallback_failed, error: e.message)

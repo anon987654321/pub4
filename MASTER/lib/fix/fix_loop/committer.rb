@@ -305,7 +305,7 @@ module Master
         end
 
         def normalize_boundary_scope(scope)
-          return nil if scope.nil?
+          return if scope.nil?
 
           values = Array(scope).map(&:to_s).reject(&:empty?).uniq
           known = Master::Phoenix.boundaries(root: @root).map(&:name)
@@ -336,7 +336,7 @@ module Master
           )
           Master::Trace::Dmesg.status(
             "fix0",
-            "architecture scope blocked: #{boundaries.join(", ")} outside #{@boundary_scope.join(", ")}"
+            "architecture scope blocked: #{boundaries.join(", ")} outside #{@boundary_scope.join(", ")}",
           )
           false
         end

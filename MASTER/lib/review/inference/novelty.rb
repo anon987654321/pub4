@@ -10,7 +10,7 @@ module Master
         DEBATE_ROLES = {
           logician: "Prioritise correctness, explicit assumptions and contradictions.",
           engineer: "Prioritise feasibility, failure modes, maintainability and cost.",
-          contrarian: "Assume the obvious approach is wrong and hunt for a materially different mechanism."
+          contrarian: "Assume the obvious approach is wrong and hunt for a materially different mechanism.",
         }.freeze
 
         module_function
@@ -30,7 +30,7 @@ module Master
               "Previous candidate:",
               answer,
               "Deny that approach now. Produce a materially different solution.",
-              "Forbidden approach: #{constraint}"
+              "Forbidden approach: #{constraint}",
             ].join("
 
 ")
@@ -50,15 +50,15 @@ module Master
 
           world = agent.ask_once(
             "You are a world builder. You see only the seed word below. Build a coherent alternative world with 3-5 precise rules of physics, causality, information or incentives. "             "Do not ask what problem this is for.\n\nSeed: #{seed}",
-            temperature:
+            temperature:,
           )
           solution = agent.ask_once(
             "Solve the problem inside the strange world below. Obey its rules even when they are inconvenient. Produce several mechanisms that exploit the altered assumptions.\n\nWorld:\n#{world}\n\nProblem:\n#{problem}",
-            temperature:
+            temperature:,
           )
           evaluation = agent.ask_once(
             "Evaluate these strange-world mechanisms against the original problem. Extract only insights that remain useful after returning to the real world. Reject decorative novelty.\n\nProblem:\n#{problem}\n\nMechanisms:\n#{solution}",
-            temperature:
+            temperature:,
           )
 
           Master::Result.ok(strategy: :strange_world, seed:, world:, solutions: solution, evaluation:)
@@ -74,11 +74,11 @@ module Master
 
           axes = agent.ask_once(
             "Find two meaningfully different, roughly orthogonal dimensions that separate the candidate solutions below. "             "Return exactly two lines: X: low -> high and Y: low -> high.\n\n#{generated.join("\n\n")}",
-            temperature:
+            temperature:,
           )
           mapped = agent.ask_once(
             "Map each numbered candidate onto the X/Y plane. Use only LOW or HIGH for each axis. "             "Return one line per candidate: N X=LOW|HIGH Y=LOW|HIGH.\n\nAxes:\n#{axes}\n\n#{numbered(generated)}",
-            temperature:
+            temperature:,
           )
           grid = parse_grid(mapped, generated.length)
           vacancies = %w[LOW/LOW LOW/HIGH HIGH/LOW HIGH/HIGH].reject { |cell| grid.include?(cell) }.first(fill_limit.to_i)
@@ -86,7 +86,7 @@ module Master
           fillings = vacancies.map do |cell|
             agent.ask_once(
               "Generate a solution that deliberately occupies this currently vacant quadrant. "               "Stay faithful to the theme and make the mechanism genuinely different from the supplied candidates.\n\n"               "Theme: #{theme}\nAxes:\n#{axes}\nVacancy: #{cell}",
-              temperature:
+              temperature:,
             )
           end
 
@@ -101,7 +101,7 @@ module Master
           end
           judge = agent.ask_once(
             "Compare these three perspectives on the same task. Pick the perspective that yields the strongest evidence-backed answer and say why in one paragraph. Then provide the final answer.\n\n" + views.map { |name, text| "#{name}:\n#{text}" }.join("\n\n---\n\n"),
-            temperature:
+            temperature:,
           )
 
           Master::Result.ok(strategy: :perspective_transition, perspectives: views, final: judge)
@@ -122,15 +122,15 @@ module Master
                 role,
                 agent.ask_once(
                   "#{DEBATE_ROLES.fetch(role)}\n\nQuestion:\n#{prompt}\n\nYour prior answer:\n#{answers.fetch(role)}\n\nOther positions:\n#{context}\n\nReconsider them. Change your answer only where their evidence beats yours.",
-                  temperature:
-                )
+                  temperature:,
+                ),
               ]
             end
           end
 
           synthesis = agent.ask_once(
             "Synthesize a final answer from the debate below. Preserve genuine disagreements until evidence resolves them. Do not reward agreement for its own sake.\n\nQuestion:\n#{prompt}\n\n#{answers.map { |role, answer| "#{role}:\n#{answer}" }.join("\n\n---\n\n")}",
-            temperature:
+            temperature:,
           )
           Master::Result.ok(strategy: :debate, positions: answers, final: synthesis)
         rescue StandardError => e
@@ -143,11 +143,11 @@ module Master
           rounds.to_i.times do
             critique = agent.ask_once(
               "Critique the candidate below against the original task. Find concrete errors, omissions, hidden assumptions and simpler alternatives. Do not rewrite it yet.\n\nTask:\n#{prompt}\n\nCandidate:\n#{current}",
-              temperature:
+              temperature:,
             )
             revised = agent.ask_once(
               "Revise the candidate using every valid point in the critique. Preserve correct material and remove unsupported claims.\n\nTask:\n#{prompt}\n\nCandidate:\n#{current}\n\nCritique:\n#{critique}",
-              temperature:
+              temperature:,
             )
             break if revised.to_s.strip == current.to_s.strip
 
@@ -168,13 +168,13 @@ module Master
 
           synthesis = agent.ask_once(
             "Synthesize the strongest genuinely different ideas from the two explorations below. "             "Return one concise idea per bullet. Eliminate near-duplicates, decorative novelty and ideas that violate the stated constraints.\n\n"             "Denial exploration:\n#{denial_result.value![:answers].join("\n\n")}\n\n"             "Strange-world evaluation:\n#{world_result.value![:evaluation]}",
-            temperature:
+            temperature:,
           )
           Master::Result.ok(
             strategy: :novelty,
             denial: denial_result.value!,
             strange_world: world_result.value!,
-            final: synthesis
+            final: synthesis,
           )
         rescue StandardError => e
           Master::Result.err("inference: novelty #{e.class}: #{e.message}", category: :handler_exception)

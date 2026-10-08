@@ -56,8 +56,8 @@ module Master
         Issue.new(
           line: first_difference_line(source.to_s, normalized),
           code: "MD001",
-          message: "Markdown source can be normalized without changing fenced code."
-        )
+          message: "Markdown source can be normalized without changing fenced code.",
+        ),
       ]
     end
 

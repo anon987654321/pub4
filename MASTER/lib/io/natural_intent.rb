@@ -79,7 +79,7 @@ module Master
           location: canonical_hit(message, spec["locations"]),
           file_type: canonical_hit(message, spec["file_types"]),
           preset: canonical_hit(message, spec["presets"]),
-          path: path(message)
+          path: path(message),
         }.compact
       end
 

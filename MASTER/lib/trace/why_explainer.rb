@@ -104,7 +104,7 @@ module Master
         candidates = [
           @root,
           File.join(@root, "MASTER"),
-          Master::ROOT
+          Master::ROOT,
         ]
         candidates.find { |root| File.file?(File.join(root, "law", "law.rb")) } || Master::ROOT
       end

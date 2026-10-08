@@ -167,7 +167,6 @@ module Master
         nil
       end
 
-
       def deploy_intent?(ctx)
         [ctx[:user_message], ctx[:message], ctx[:command], ctx[:task_type]].compact.any? { |value| value.to_s.match?(DEPLOY_RE) }
       end

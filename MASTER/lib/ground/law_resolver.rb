@@ -95,7 +95,7 @@ module Master
             "law_map_concept_count" => concepts.length,
             "unmapped_executable_laws" => unmapped_executable_ids.first(32),
             "unmapped_executable_law_count" => unmapped_executable_ids.length,
-            "complete" => complete?
+            "complete" => complete?,
           }
         end
       end
@@ -132,7 +132,7 @@ module Master
               "id" => id,
               "meaning" => entry["meaning"].to_s,
               "status" => entry["status"].to_s,
-              "law_ids" => Array(entry["law_ids"]).map { |value| value.to_s.upcase }
+              "law_ids" => Array(entry["law_ids"]).map { |value| value.to_s.upcase },
             }
           end
         end.uniq { |entry| entry["id"] }
@@ -141,11 +141,11 @@ module Master
 
         Selection.new(
           path: relative,
-          language: language,
+          language:,
           governing_ids: @resolver.governing_law_ids,
-          executable_ids: executable_ids,
+          executable_ids:,
           concepts: concepts.sort_by { |entry| entry["id"] },
-          unmapped_executable_ids: unmapped
+          unmapped_executable_ids: unmapped,
         )
       end
 

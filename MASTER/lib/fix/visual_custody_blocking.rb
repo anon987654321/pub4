@@ -46,7 +46,7 @@ module Master
           "severity" => severity.to_s,
           "reason" => "This rule modifies rendered values owned by the operator",
           "decision_needed" => "operator_approval",
-          "guidance" => "Run '/why #{rule_id}' to review the rule; then decide whether to approve or defer"
+          "guidance" => "Run '/why #{rule_id}' to review the rule; then decide whether to approve or defer",
         }
       end
     end

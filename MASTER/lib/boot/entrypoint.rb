@@ -16,7 +16,6 @@ module Master
       SUPPORTED_RUBY_MIN = Gem::Version.new("3.3.0")
       SUPPORTED_RUBY_MAX = Gem::Version.new("4.1.0")
 
-
       def prepare!(root:, env: ENV, out: $stderr, argv: ARGV, program: $PROGRAM_NAME)
         root = File.expand_path(root)
         reexec_best_ruby!(root:, env:, out:, argv:, program:)

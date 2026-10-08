@@ -175,7 +175,7 @@ module Master
             law.contract_entry.merge(
               "detect" => !law.detect.nil?,
               "semantic" => !law.ask.nil?,
-              "practice" => !law.practice.nil?
+              "practice" => !law.practice.nil?,
             )
           end
         end
@@ -198,7 +198,7 @@ module Master
                 "autofix" => law.autofix.to_s,
                 "detect" => true,
                 "semantic" => false,
-                "practice" => false
+                "practice" => false,
               }
             end
         end

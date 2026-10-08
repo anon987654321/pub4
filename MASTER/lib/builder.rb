@@ -87,7 +87,6 @@ module Master
       config.fetch(:bus) { $stderr }.puts "config validation warnings: #{config.validate.join('; ')}"
     end
 
-
     def build_infrastructure(root)
       config = Ground::Config.new(root)
       config["model"] ||= Master.default_model

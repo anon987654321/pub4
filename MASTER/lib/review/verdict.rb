@@ -17,7 +17,7 @@ module Master
             evidence: reasons,
             source:,
             status: pass? ? :proven : :failed,
-            metadata: { score: score, reasons: reasons },
+            metadata: { score:, reasons: },
           )
         end
       end

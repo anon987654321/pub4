@@ -41,7 +41,7 @@ module Master
       "constraint" => :related,
       "invariant" => :related,
       "criterion" => :related,
-      "practice" => :related
+      "practice" => :related,
     }.freeze
 
     NORMALIZE_KEY = lambda do |term|

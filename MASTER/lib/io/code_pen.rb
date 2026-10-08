@@ -108,7 +108,7 @@ module Master
           {
             "title" => title,
             "user" => user,
-            "url" => "https://codepen.io/#{user}/pen/#{slug}"
+            "url" => "https://codepen.io/#{user}/pen/#{slug}",
           }
         end.compact.uniq { |item| item["url"] }
       end

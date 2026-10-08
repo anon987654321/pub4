@@ -68,7 +68,7 @@ module Master
             root = File.join(@tree_root, app)
             [
               *Dir.glob(File.join(root, "test", "**", "*_test.rb")),
-              *Dir.glob(File.join(root, "..", "brgen_*", "test", "**", "*_test.rb"))
+              *Dir.glob(File.join(root, "..", "brgen_*", "test", "**", "*_test.rb")),
             ]
           end
         end

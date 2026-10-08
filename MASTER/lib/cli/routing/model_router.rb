@@ -39,7 +39,7 @@ module Master
           @root = root
           @availability = AvailabilityPolicy.new(root: @root)
           @provider_health = provider_health || ProviderHealth.new(
-            path: File.join(@root, "runtime", "telemetry", "provider_health.ndjson")
+            path: File.join(@root, "runtime", "telemetry", "provider_health.ndjson"),
           )
           @rules = load_laws
           @capability_map = Master::CLI::Routing::CapabilityMap.new(path: File.join(@root, "runtime", "telemetry", "model_capabilities.json"),

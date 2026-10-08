@@ -140,7 +140,7 @@ module Master
             domain_adapters: @transformation_plan.domain_adapters,
             smell_catalog: @transformation_plan.smell_catalog,
             refactoring_playbook: @transformation_plan.refactoring_playbook,
-            reason: problem.reason
+            reason: problem.reason,
           }
         end
       end
@@ -193,7 +193,7 @@ module Master
 
         Master::Trace::Dmesg.status(
           "restructure0",
-          "#{found.size} finding(s) -> #{rotated.size} problem(s), "           "#{multifinding} multi-finding, #{multisignal} multi-signal, "           "#{candidate_count} candidate transformation(s)"
+          "#{found.size} finding(s) -> #{rotated.size} problem(s), "           "#{multifinding} multi-finding, #{multisignal} multi-signal, "           "#{candidate_count} candidate transformation(s)",
         )
         @bus&.publish(
           "fix_loop:restructure_problems",
@@ -202,7 +202,7 @@ module Master
           problems: rotated.size,
           multi_finding: multifinding,
           multi_signal: multisignal,
-          candidates: candidate_count
+          candidates: candidate_count,
         )
         rotated
       end
@@ -223,7 +223,7 @@ module Master
           plan,
           message: commit_message(problem, plan),
           review:,
-          allowed_operations: problem.candidate_operations
+          allowed_operations: problem.candidate_operations,
         )
         report(problem, plan, result)
       end
@@ -233,7 +233,7 @@ module Master
           related = Array(related).map { |item| relative(item) }.reject { |item| item == relative(path) }
           [
             "#{relative(path)}: #{rule}: #{message}",
-            (related.empty? ? nil : "  related: #{related.first(8).join(", ")}")
+            (related.empty? ? nil : "  related: #{related.first(8).join(", ")}"),
           ].compact.join("\n")
         end.join("\n")
 
@@ -250,9 +250,9 @@ module Master
           path: relative(problem.files.first),
           message: "#{problem.reason}; confidence=#{problem.confidence}; problem=#{problem.id}",
           problem_id: problem.id,
-          findings: findings,
+          findings:,
           candidate_operations: problem.candidate_operations.join(", "),
-          context: Context.new(@root, problem.files.first, related: problem.files.drop(1)).to_s
+          context: Context.new(@root, problem.files.first, related: problem.files.drop(1)).to_s,
         )
       end
 
@@ -265,8 +265,8 @@ module Master
             path: relative(problem.files.first),
             operations: plan.operations.join(", "),
             summary: plan.summary,
-            diff:
-          )
+            diff:,
+          ),
         ).strip
         answer.start_with?("APPROVE") ? nil : "review: #{answer.lines.first.to_s.strip[0, 200]}"
       end
@@ -275,7 +275,7 @@ module Master
         title = plan.summary.empty? ? "Restructure #{relative(problem.files.first)}" : plan.summary
         body = [
           "Address laws #{problem.laws.join(", ")} for problem #{problem.id}.",
-          "Verify the change with hostile review, parsing, eager load, boot self-test, and related tests."
+          "Verify the change with hostile review, parsing, eager load, boot self-test, and related tests.",
         ].join("\n\n")
         [title, body].join("\n\n")
       end
@@ -290,7 +290,7 @@ module Master
         operation = plan&.operations&.last || problem.primary_operation
         Master::Trace::Dmesg.status(
           "restructure0",
-          "#{operation} problem=#{problem.id} signals=#{problem.size} #{problem.laws.join(",")} #{relative(problem.files.first)}: #{text[0, 140]}"
+          "#{operation} problem=#{problem.id} signals=#{problem.size} #{problem.laws.join(",")} #{relative(problem.files.first)}: #{text[0, 140]}",
         )
         @bus&.publish(
           "fix_loop:restructure",
@@ -305,7 +305,7 @@ module Master
           findings: problem.size,
           ok:,
           message: text[0, 300],
-          evidence:
+          evidence:,
         )
         result.is_a?(Result) ? result : nil
       end

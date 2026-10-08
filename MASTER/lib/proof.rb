@@ -23,8 +23,8 @@ module Master
         rule: rule&.to_s,
         subject: subject&.to_s,
         evidence: freeze_value(evidence),
-        source: source,
-        status: status,
+        source:,
+        status:,
         metadata: metadata.is_a?(Hash) ? freeze_value(metadata) : {}.freeze,
       )
     end

@@ -81,7 +81,7 @@ module Master
 
           {
             text: phrase,
-            role: role,
+            role:,
             rate_delta: rate,
             pitch_delta_hz: pitch,
             pause_ms: pause_ms_for(role, index, phrases.length, emotion),

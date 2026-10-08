@@ -30,7 +30,7 @@ module Master
             value.fetch("entry").to_s,
             Array(value["depends_on"]).map(&:to_s).freeze,
             value.fetch("check").to_s,
-            value.fetch("owner", name).to_s
+            value.fetch("owner", name).to_s,
           )
         end.freeze
       end
@@ -114,9 +114,9 @@ module Master
             evidence: {
               head: head.to_s,
               paths: Array(paths).map(&:to_s),
-              findings: Array(findings).size
+              findings: Array(findings).size,
             },
-            decision: "deliver the validated change"
+            decision: "deliver the validated change",
           )
           entry
         end
@@ -130,9 +130,9 @@ module Master
           commit: git_head(root),
           boundary: require_boundary(boundary, root:),
           signal: signal.to_s,
-          value: value,
+          value:,
           source: source.to_s,
-          context:
+          context:,
         }.compact
         append(root:, entry:)
         entry
@@ -154,7 +154,7 @@ module Master
           constraints: Array(details[:constraints] || details["constraints"]).map(&:to_s),
           alternatives: Array(details[:alternatives] || details["alternatives"]).map(&:to_s),
           evidence: details[:evidence] || details["evidence"],
-          decision: details[:decision] || details["decision"]
+          decision: details[:decision] || details["decision"],
         }
       end
 

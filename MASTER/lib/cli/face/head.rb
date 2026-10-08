@@ -38,7 +38,7 @@ module Master
         MALAR_SCALE = MORPHOLOGY.fetch("malar_scale", 0.94).to_f
         PUPIL_SCALE = MORPHOLOGY.fetch("pupil_scale", 0.88).to_f
         ASYMMETRY = MORPHOLOGY.fetch("asymmetry", 0.010).to_f
-        ASYMMETRY_SEED = MORPHOLOGY.fetch("asymmetry_seed", 73421).to_i
+        ASYMMETRY_SEED = MORPHOLOGY.fetch("asymmetry_seed", 73_421).to_i
         # The far-future profile keeps the human silhouette but shifts mass
         # upward and inward: fuller vault, compact lower face, shallow brow,
         # restrained nasal projection and a slightly deeper orbital field.

@@ -41,7 +41,7 @@ module Master
           "human output has four layers: conversation, result, state, diagnostic; " \
           "raw telemetry never masquerades as prose",
           "MASTER owns its constitution; RAILS and OPENBSD retain their own base-tree contracts and dialects",
-          "child agents inherit the same contract and may not spawn recursively"
+          "child agents inherit the same contract and may not spawn recursively",
         ]
         banned = zsh_banned_commands
         lines << "banned zsh commands: #{banned.join(", ")}" unless banned.empty?
@@ -69,8 +69,8 @@ module Master
             "teacher_distillation" => true,
             "supervised_finetuning" => true,
             "preference_learning" => true,
-            "reinforcement_learning" => true
-          }
+            "reinforcement_learning" => true,
+          },
         }
       end
     end

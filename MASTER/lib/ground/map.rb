@@ -182,7 +182,6 @@ module Master
 
         private
 
-
         def build_entries
           raw = @data["laws"] || {}
           raw.each_with_object({}) do |(id, body), acc|

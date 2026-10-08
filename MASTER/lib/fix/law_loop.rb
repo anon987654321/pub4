@@ -177,7 +177,11 @@ module Master
         @model_unavailable = false
         return :model_unavailable unless @agent
         source = violation[:severity].to_sym == :error ? council_fix(violation) : request_fix(violation)
-        return (@model_unavailable ? :model_unavailable : @model_failed ? :model_failed : :no_proposal) if source.to_s.strip.empty?
+        return (if @model_unavailable
+:model_unavailable
+else
+@model_failed ? :model_failed : :no_proposal
+end) if source.to_s.strip.empty?
 
         verified = reflexion_verify(violation, source)
         return :reflexion_rejected unless verified

@@ -40,7 +40,7 @@ module Master
               loop = LawLoop.new(
                 law:, agent: @agent, scanner: @scanner, root: @root, bus: @bus,
                 learnings: @learnings, committer: @committer, stage_commit: true,
-                visual_custody: @visual_pass&.custody,
+                visual_custody: @visual_pass&.custody
               )
               loop.injected_preamble = [
                 @preamble,

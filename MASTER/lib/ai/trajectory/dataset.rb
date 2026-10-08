@@ -25,7 +25,7 @@ module Master
                 "messages" => messages_for(record),
                 "trajectory" => record["events"],
                 "score" => score,
-                "outcome" => record["outcome"]
+                "outcome" => record["outcome"],
               ))
               count += 1
             rescue JSON::ParserError
@@ -34,7 +34,6 @@ module Master
           end
           count
         end
-
 
         def export_preferences(input:, output:)
           records = File.foreach(input).filter_map do |line|
@@ -55,7 +54,7 @@ module Master
                 "schema" => "master.llm.preference/v1",
                 "task" => chosen["task"],
                 "chosen" => chosen["events"],
-                "rejected" => rejected["events"]
+                "rejected" => rejected["events"],
               ))
               count += 1
             end
@@ -67,7 +66,7 @@ module Master
           [
             { "role" => "system", "content" => Master::AI::OperatorContract.prompt },
             { "role" => "user", "content" => record["task"].to_s },
-            { "role" => "assistant", "content" => JSON.generate(record["events"]) }
+            { "role" => "assistant", "content" => JSON.generate(record["events"]) },
           ]
         end
       end

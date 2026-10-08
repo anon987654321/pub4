@@ -23,7 +23,7 @@ module Master
             summary: text.to_s[/^SUMMARY:[ \t]*(.+)$/, 1].to_s.strip,
             operations:,
             writes:,
-            deletes:
+            deletes:,
           )
         end
 

@@ -26,7 +26,7 @@ module Master
           @bus&.publish(:council_synthesis, synthesis:)
           feedback << {
             persona: "Judge", role: "Synthesis", veto_role: false, axiom: nil,
-            feedback: synthesis, cognition: machine,
+            feedback: synthesis, cognition: machine
           }
         end
 

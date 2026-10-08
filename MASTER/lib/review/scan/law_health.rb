@@ -53,12 +53,12 @@ module Master
           {
             "measurement_mode" => measurement_mode?(law),
             "enforcement" => enforcement(law).to_s,
-            "reason" => config["reason"]
+            "reason" => config["reason"],
           }.compact
         rescue KeyError
           {
             "measurement_mode" => measurement_mode?(law),
-            "enforcement" => enforcement(law).to_s
+            "enforcement" => enforcement(law).to_s,
           }
         end
 

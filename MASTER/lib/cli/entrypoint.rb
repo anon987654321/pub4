@@ -6,8 +6,6 @@ ROOT = File.expand_path("../../..", __dir__)
 MASTER = File.join(ROOT, "MASTER").freeze
 CLI = File.join(MASTER, "bin", "cli").freeze
 
-
-
 ENV["PUB4_ROOT"] ||= ROOT
 
 if ARGV.first == "--fix-context"
@@ -18,7 +16,7 @@ if ARGV.first == "--fix-context"
     File.join(MASTER, "tools", "agent_context.rb"),
     "--fix-context",
     target,
-    *(["--full"] if full)
+    *(["--full"] if full),
   )
 end
 
@@ -68,7 +66,7 @@ $MASTER_PROCESS_LOCK = if ENV["MASTER_INTERNAL_CHILD"] == "1"
                          Master::Ops::ProcessLock.acquire!(
                            root: MASTER,
                            mode: daemon ? "control_plane" : "interactive",
-                           inherit_fd: true
+                           inherit_fd: true,
                          )
                        end
 
@@ -78,7 +76,7 @@ unless ENV["MASTER_INTERNAL_CHILD"] == "1" || $MASTER_PROCESS_LOCK
   Master::Trace::Dmesg.status(
     "master0",
     "another process owns the control plane#{detail}",
-    io: $stderr
+    io: $stderr,
   )
   exit 75
 end
