@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "../../fix/scanner"
+
 # Single wiring layer for the scan rule registry (laws.yml:39 intent).
 module Master
   module Review
