@@ -184,7 +184,7 @@ class TestMasterLoop < Minitest::Test
     assert File.exist?(Master.state_path)
     refute File.exist?(Master.data_path("style.yml"))
     refute File.exist?(Master.data_path("operator_principles.yml"))
-    refute File.exist?(Master.data_path("design_rules.yml"))
+    refute File.exist?(Master.data_path("laws.yml"))
     assert Master.law("style").key?("typography")
     assert Master.tokens.key?("worn_type")
   end
