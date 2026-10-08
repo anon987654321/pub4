@@ -40,7 +40,7 @@ module Operator
     # nothing at all. Every other section kept working, which is why it stood.
     def conduct
       load_master
-      require File.join(MASTER_DIR, "law", "law") unless defined?(::Law)
+      require File.join(MASTER_DIR, "law", "definition") unless defined?(::Law)
       ::Law.load_all(File.join(MASTER_DIR, "law")) if ::Law.definitions.empty?
       ::Law.definitions.values.select(&:practice).to_h do |rule|
         [rule.id.to_s, rule.practice.to_s.gsub(/\s+/, " ").strip]

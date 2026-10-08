@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-require File.join(Master::ROOT, "law", "law")
+require File.join(Master::ROOT, "law", "definition")
 require "yaml"
 
 class TestFixHygiene < Minitest::Test

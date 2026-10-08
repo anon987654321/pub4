@@ -293,7 +293,7 @@ module Master
       def all_laws
         require File.join(Master::ROOT, "law", "definition") unless defined?(::Law)
         ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.definitions.empty?
-        ::Law.definitions.values.map do |rule|
+        ::Law.definitions.values.map do |law|
           "#{law.id}: #{(law.practice || law.fix).to_s.gsub(/\s+/, ' ').strip}"
         end
       rescue StandardError => e

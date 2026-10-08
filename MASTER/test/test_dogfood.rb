@@ -3,7 +3,7 @@
 require "minitest/autorun"
 
 ROOT = File.expand_path("..", __dir__)
-require File.join(ROOT, "law", "law")
+require File.join(ROOT, "law", "definition")
 # The one loader for constitutional YAML — see the read below and
 # test_yaml_registries, which asserts nothing reads those files any other way.
 require File.join(ROOT, "lib", "master")

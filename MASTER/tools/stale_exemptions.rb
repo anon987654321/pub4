@@ -90,7 +90,7 @@ module Operator
     def law
       unless defined?(::Law)
         master
-        require File.join(MASTER_DIR, "law", "law")
+        require File.join(MASTER_DIR, "law", "definition")
       end
       ::Law.load_all(File.join(MASTER_DIR, "law")) if ::Law.definitions.empty?
       ::Law.definitions
