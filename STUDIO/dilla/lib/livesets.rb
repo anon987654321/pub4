@@ -98,6 +98,13 @@ module DillaMusicalGrammar
     [0, -1, 1, 3, 2, 0]
   ].freeze
 
+  RHYTHMS = [
+    [0.50, 0.50, 0.25, 0.75],
+    [1.00, 0.50, 0.50],
+    [0.25, 0.25, 0.50, 1.00],
+    [0.50, 0.25, 0.75, 0.50]
+  ].freeze
+
   def self.curated_name(rng)
     CURATED_PROGRESSIONS.keys.sample(random: rng)
   end
@@ -3716,7 +3723,10 @@ SHOWCASE_MODES = {
       events = []
       while spot < @next_at + length - 0.4
         last = lead_choice(range, last, reach)
-        duration = phrase["steps"].sample(random: @rng) * @beat
+        rhythm_set = DillaMusicalGrammar::RHYTHMS
+        composed = ENV.fetch("DILLA_COMPOSED_MELODY", LiveSynth.showcase? ? "1" : "0") != "0"
+        duration_beats = composed ? rhythm_set[(@melody_step - 1) % rhythm_set.length][(@melody_step - 1) % rhythm_set[(@melody_step - 1) % rhythm_set.length].length] : phrase["steps"].sample(random: @rng)
+        duration = duration_beats * @beat
         duration = [duration, length - (spot - @next_at) - 0.18 * @beat].min
         if duration > 0.08 * @beat && @rng.rand < @mind.lead_probability(phrase["odds"])
           events << DillaMidiEffects::Event.new(
@@ -3739,7 +3749,11 @@ SHOWCASE_MODES = {
       events = []
       while spot < @next_at + length - 0.4
         last = lead_choice(range, last, 5)
-        duration = [0.5, 0.5, 1.0, 1.5].sample(random: @rng) * @beat
+        rhythm_set = DillaMusicalGrammar::RHYTHMS
+        composed = ENV.fetch("DILLA_COMPOSED_MELODY", LiveSynth.showcase? ? "1" : "0") != "0"
+        rhythm = rhythm_set[(@melody_step - 1) % rhythm_set.length]
+        duration_beats = composed ? rhythm[(@melody_step - 1) % rhythm.length] : [0.5, 0.5, 1.0, 1.5].sample(random: @rng)
+        duration = duration_beats * @beat
         duration = [duration, length - (spot - @next_at) - 0.14 * @beat].min
         swing = ((spot - @next_at) / (@beat / 2)).round.odd? ? @c["lead_swing_seconds"] : 0.0
         if duration > 0.08 * @beat && @rng.rand < @mind.lead_probability(@c["lead_odds"])
