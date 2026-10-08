@@ -23,7 +23,7 @@ module Master
             - MASTER/data/laws.yml and MASTER/data/soul.yml are never written.
           TEXT
           "RAILS" => <<~TEXT,
-            RAILS, three Rails 8 apps (brgen, amber, bsdports) and RAILS/shared, a
+            RAILS, three Rails 8 apps (brgen, amber, bsdports) and RAILS/__shared, a
             mixin engine all three mount; brgen's verticals are engines under
             RAILS/brgen/engines.
             - Zeitwerk per app: app/models/foo_bar.rb defines FooBar; a partial
