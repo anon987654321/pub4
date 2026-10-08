@@ -44,6 +44,7 @@ if ARGV.first == "--help" || ARGV.first == "-h"
 end
 
 require_relative "../boot/entrypoint"
+require_relative "../ops"
 Master::Boot::Entrypoint.prepare!(root: MASTER)
 
 unless File.file?(CLI)
