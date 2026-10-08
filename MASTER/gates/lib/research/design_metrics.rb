@@ -94,7 +94,7 @@ module Deploy
     # rather than restating it, so the gate cannot disagree with the tokens.
     def type_ladder
       @type_ladder ||= begin
-        path = File.join(RAILS, "shared/app/assets/stylesheets/_tokens.scss")
+        path = File.join(RAILS, "__shared/app/assets/stylesheets/_tokens.scss")
         read_css(path).scan(/(--text-[\w-]+)\s*:\s*([\d.]+)rem\s*;/)
                       .to_h { |name, rem| [name, rem.to_f * 16] }
       end
@@ -270,7 +270,7 @@ module Deploy
       samples = {
         "brgen/app/assets/stylesheets/application.scss (posts, nav, forms)" =>
           sample_css("brgen", Regexp.union(SAMPLES.values_at(:posts, :nav, :forms))),
-        "shared/app/assets/stylesheets/_minimal.scss" => read_css(File.join(RAILS, "shared/app/assets/stylesheets/_minimal.scss")),
+        "__shared/app/assets/stylesheets/_minimal.scss" => read_css(File.join(RAILS, "__shared/app/assets/stylesheets/_minimal.scss")),
       }
       samples.each do |rel, css|
         DesignMetrics.extract_line_heights(css).each do |lh|
@@ -303,7 +303,7 @@ module Deploy
 
       samples = {
         "brgen/app/assets/stylesheets/application.scss (marketplace)" => sample_css("brgen", SAMPLES[:marketplace]),
-        "shared/app/assets/stylesheets/_minimal.scss" => read_css(File.join(RAILS, "shared/app/assets/stylesheets/_minimal.scss")),
+        "__shared/app/assets/stylesheets/_minimal.scss" => read_css(File.join(RAILS, "__shared/app/assets/stylesheets/_minimal.scss")),
       }
       off = []
       samples.each do |rel, css|
