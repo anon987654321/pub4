@@ -19,7 +19,7 @@ set -eo pipefail
 # SSH and direct invocation use a non-login shell; pin the OpenBSD package path.
 export PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin
 ROOT="${ROOT:-/home/dev/pub4}"
-WEB="$ROOT/MASTER/web"
+WEB="$ROOT/RAILS/master_web"
 
 echo "==> git pull"
 cd "$ROOT" && git pull --ff-only origin main
@@ -33,7 +33,7 @@ export RAILS_ENV=production
 # mistaken for, or leak into, the real one.
 export SECRET_KEY_BASE_DUMMY=1
 
-# Primary database. MASTER/web's migrations reach ai.brgen.no's
+# Primary database. RAILS/master_web's migrations reach ai.brgen.no's
 # production.sqlite3 through this step and no other, so a deploy without it
 # ships code against a schema that is behind.
 #

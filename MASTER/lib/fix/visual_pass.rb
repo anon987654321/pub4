@@ -67,7 +67,7 @@ module Master
       def applicable?(target)
         relative = repo_relative(target)
         relative == "RAILS" || relative.start_with?("RAILS/") ||
-          relative == "MASTER/web" || relative.start_with?("MASTER/web/")
+          relative == "RAILS/master_web" || relative.start_with?("RAILS/master_web/")
       end
 
       def run(target:, files:, pass:)
@@ -204,7 +204,7 @@ module Master
 
       def selected_surfaces(target:, pass:)
         rows = Deploy::GeometryProbe.surfaces(root: repo_root)
-        master = repo_relative(target).start_with?("MASTER/web")
+        master = repo_relative(target).start_with?("RAILS/master_web")
         rows = rows.select { |s| master ? s.app == "master" : s.app != "master" }
         grouped = rows.group_by(&:app)
 
@@ -247,7 +247,7 @@ module Master
       # app misattribute a finding to an unrelated file in another.
       def grep_source(token, allowed:)
         out, status = Open3.capture2("git", "-C", repo_root, "grep", "-l", "--fixed-strings", token,
-                                     "--", "RAILS", "MASTER/web")
+                                     "--", "RAILS", "RAILS/master_web")
         return unless status.success?
 
         out.lines.map(&:strip).map { |rel| File.join(repo_root, rel) }
@@ -258,7 +258,7 @@ module Master
 
       def fallback_sources(target)
         base = repo_relative(target)
-        root = base.start_with?("MASTER/web") ? File.join(repo_root, "MASTER/web") : File.join(repo_root, "RAILS")
+        root = base.start_with?("RAILS/master_web") ? File.join(repo_root, "RAILS/master_web") : File.join(repo_root, "RAILS")
         Dir.glob(File.join(root, "**", "*"))
            .select { |path| source_file?(path) }
            .sort_by { |path| [path.include?("stylesheets") ? 0 : 1, path.length, path] }

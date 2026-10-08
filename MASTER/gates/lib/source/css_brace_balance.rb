@@ -22,7 +22,7 @@ module Deploy
     ROOT = File.expand_path("../../../..", __dir__)
     RAILS = File.join(ROOT, "RAILS")
     APPS = Fleet.app_names.freeze
-    MASTER_WEB = %w[MASTER/web/public/face.css MASTER/web/public/chat_upload.css].freeze
+    MASTER_WEB = %w[RAILS/master_web/public/face.css RAILS/master_web/public/chat_upload.css].freeze
 
     def self.run = new.run
 
@@ -65,7 +65,7 @@ module Deploy
     end
 
     # Same corpus shape CssConstitutionGate scans: every app and engine
-    # stylesheet, minus build output, plus MASTER/web's two named source files.
+    # stylesheet, minus build output, plus RAILS/master_web's two named source files.
     def css_files
       rails = APPS.flat_map do |app|
         bases = [File.join(RAILS, app, "app/assets/stylesheets")]

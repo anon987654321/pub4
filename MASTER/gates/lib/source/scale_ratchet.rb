@@ -15,7 +15,7 @@ module Deploy
   #
   # Per surface rather than in total, because the two surfaces have different
   # owners and different budgets: `apps` is the three Rails apps plus the shared
-  # engine, `face` is MASTER/web/public. A regression in one must not be masked
+  # engine, `face` is RAILS/master_web/public. A regression in one must not be masked
   # by a fall in the other, which a single number would allow.
   #
   # A count over its baseline fails. A count under it is reported, not failed —

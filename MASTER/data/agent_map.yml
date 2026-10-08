@@ -176,44 +176,44 @@ patch_briefs:
     topic: face_boot
     tests: [bin/check --profile=web, web/test/face_boot.test.mjs]
     deploy: vps-deploy master
-    post: cd MASTER/web && bundle exec rails assets:build_face_runtime
+    post: cd RAILS/master_web && bundle exec rails assets:build_face_runtime
   web/public/face.part1.txt:
     check: bin/check --profile=web
     topic: face_boot
     tests: [web/test/face_boot.test.mjs]
     deploy: vps-deploy master
-    post: cd MASTER/web && bundle exec rails assets:build_face_runtime
+    post: cd RAILS/master_web && bundle exec rails assets:build_face_runtime
   web/public/face.part2.txt:
     check: bin/check --profile=web
     topic: face_boot
     tests: [web/test/face_boot.test.mjs]
     deploy: vps-deploy master
-    post: cd MASTER/web && bundle exec rails assets:build_face_runtime
+    post: cd RAILS/master_web && bundle exec rails assets:build_face_runtime
   web/public/face.part3.txt:
     check: bin/check --profile=web
     topic: face_boot
     tests: [web/test/face_boot.test.mjs]
     deploy: vps-deploy master
-    post: cd MASTER/web && bundle exec rails assets:build_face_runtime
+    post: cd RAILS/master_web && bundle exec rails assets:build_face_runtime
   web/public/face.part5.txt:
     check: bin/check --profile=web
     topic: face_boot
     tests: [web/test/face_boot.test.mjs]
     deploy: vps-deploy master
-    post: cd MASTER/web && bundle exec rails assets:build_face_runtime
+    post: cd RAILS/master_web && bundle exec rails assets:build_face_runtime
   web/public/face_speech_runtime.js:
     check: bin/check --profile=web
     topic: face_boot
     tests: [web/test/face_boot.test.mjs]
     deploy: vps-deploy master
-    post: cd MASTER/web && bundle exec rails assets:build_face_runtime
+    post: cd RAILS/master_web && bundle exec rails assets:build_face_runtime
     note: concatenated into face.runtime.js — never hand-edit the generated file
   web/public/face_speech_playback.js:
     check: bin/check --profile=web
     topic: face_boot
     tests: [web/test/face_boot.test.mjs]
     deploy: vps-deploy master
-    post: cd MASTER/web && bundle exec rails assets:build_face_runtime
+    post: cd RAILS/master_web && bundle exec rails assets:build_face_runtime
     note: concatenated into face.runtime.js — never hand-edit the generated file
   web/public/face.runtime.js:
     check: bin/check --profile=web

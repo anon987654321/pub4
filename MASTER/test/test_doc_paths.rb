@@ -252,7 +252,7 @@ class TestDocPaths < Minitest::Test
   # switch this gate off while reading exactly like a fix.
   def test_only_an_ignored_path_counts_as_generated
     assert generated?("web/storage/", "MASTER/README.md"),
-           "MASTER/web/.gitignore names storage, so a clean checkout cannot be asked for it"
+           "RAILS/master_web/.gitignore names storage, so a clean checkout cannot be asked for it"
     refute generated?("web/nowhere/", "MASTER/README.md"),
            "a path nothing ignores is a citation this gate must still check"
     refute generated?("priv/ssh/id_ed25519_brgen.pub", "OPENBSD/RUNBOOK.md"),

@@ -1,9 +1,0 @@
-<% state = local_assigns.fetch(:state, :info).to_s %>
-<% classes = Array(local_assigns[:classes]).compact.join(" ") %>
-<% classes = ["system-signal", classes].reject(&:empty?).join(" ") %>
-<% role = state == "error" ? "alert" : "status" %>
-<% aria_live = role == "alert" ? "assertive" : "polite" %>
-<% body = local_assigns.key?(:content) ? local_assigns.fetch(:content) : local_assigns.fetch(:label) %>
-<%= tag.div class: classes, data: { state: state }, role: role, aria: { live: aria_live } do %>
-  <%= body %>
-<% end %>

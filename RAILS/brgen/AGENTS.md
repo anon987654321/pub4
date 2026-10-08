@@ -41,7 +41,7 @@ Marketplace is the only vertical whose **subdomain word** is localized
 surface at `/food`; the old takeaway host remains only for compatibility. Dating,
 tv, maps, messenger and playlist are the same English token on every city.
 
-**Not a brgen subapp.** `ai.brgen.no` is MASTER (`MASTER/web`), different rc.d.
+**Not a brgen subapp.** `ai.brgen.no` is MASTER (`RAILS/master_web`), different rc.d.
 `amberapp.art` is a separate Rails app. Do not mount either here.
 
 Recipe for engines: `README.md`. Feature inventory: `RAILS/apps.yml`. Local

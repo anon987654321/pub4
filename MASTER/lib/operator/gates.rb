@@ -451,7 +451,7 @@ module Deploy
     end
     private_class_method :check_manifest
 
-    # MASTER/web/public/assets is gitignored — precompile writes it, and only
+    # RAILS/master_web/public/assets is gitignored — precompile writes it, and only
     # where something has run precompile. So its absence means two different
     # things, and this reported the harsher one everywhere: on the deploy host
     # a missing manifest is a real broken deploy, but in a fresh clone or a
@@ -465,10 +465,10 @@ module Deploy
     # GATE_STRICT_INCONCLUSIVE=1 still turns it into a failure.
     def self.check_manifest_missing(result)
       if DEPLOY_HOST_MARKERS.any? { |marker| File.exist?(marker) }
-        result.fail("missing #{MANIFEST} — run: cd MASTER/web && RAILS_ENV=production bundle exec rails assets:precompile")
+        result.fail("missing #{MANIFEST} — run: cd RAILS/master_web && RAILS_ENV=production bundle exec rails assets:precompile")
       else
-        result.inconclusive!("MASTER/web assets not precompiled in this checkout — " \
-                             "gitignored, so nothing to read until `cd MASTER/web && " \
+        result.inconclusive!("RAILS/master_web assets not precompiled in this checkout — " \
+                             "gitignored, so nothing to read until `cd RAILS/master_web && " \
                              "RAILS_ENV=production bundle exec rails assets:precompile` has run here")
       end
     end
@@ -497,7 +497,7 @@ module Deploy
         end
 
         content = File.read(path)
-        result.fail("#{relative_path} must precompile MASTER/web assets") unless content.include?("assets:precompile")
+        result.fail("#{relative_path} must precompile RAILS/master_web assets") unless content.include?("assets:precompile")
         # Matched on the gate name, not on a script path: the per-gate scripts at
         # the RAILS root were shims, and every caller now names the gate for
         # gates/runner.rb instead.

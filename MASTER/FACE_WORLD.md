@@ -265,17 +265,21 @@ fragments orbit in the surrounding void.
 
 The field implements the complete interaction vocabulary introduced in the 2026-10-08
 design pass: orbit, drift, attract, repel, bloom, collapse, fragment, remember, connect,
-breathe and resolve. State changes alter density; idle/sleeping are deliberately sparse,
-while thinking, working and speaking reveal more structure. Listening biases the field
-toward the user, speaking grows transient mouth trails, errors fragment the field, and
-reflection/repair recomposes it.
+breathe and resolve. It adds a super-void state for long silence, three-dimensional depth
+reveal from camera distance, deterministic particle memory, and semantic particle gathering.
+Thinking gathers high on the forehead; listening blooms the cheek/ear structures; speaking
+draws a temporary voice filament around the negative-space mouth; errors fragment; and
+reflection/repair recomposes the field.
 
-Human presence is a local gravitational force driven by pointer position. Particle memory
-leaves short-lived ghost traces after speech and important state transitions. Evidence
-creates temporary connecting trails; Law/canonical events create resonance rings; three
-depth bands, asymmetric seeds and empty eye/mouth wells preserve the non-human identity
-without turning the face into a dense synthetic mask. The renderer remains subordinate to
-the single FaceState and the existing frame clock.
+Human presence is a local gravitational force driven by pointer position and held briefly as
+a decaying presence field, so the face continues to acknowledge a person for a moment after
+the pointer leaves. Eye and mouth wells remain deliberately empty. Evidence creates temporary
+connecting trails; speech creates separate voice traces; Law/canonical events create resonance
+rings. Detached particles orbit in the periphery with a small anti-gravity drift, while
+stable asymmetry and seeded memory prevent the field from becoming a perfectly mirrored
+screen saver. The sparse shader uses one-pixel points rather than soft particle glows, keeping
+negative space as the dominant visual material. The renderer remains subordinate to the
+single FaceState and the existing frame clock.
 
 ## Current landed foundation
 

@@ -24,7 +24,7 @@
           },
           {
             "type": "command",
-            "command": "jq -r '.tool_response.filePath // .tool_input.file_path' | { read -r f; case \"$f\" in */MASTER/web/public/face.part*.txt|*/MASTER/web/public/face_speech_*.js) ROOT=\"$(git rev-parse --show-toplevel)\" && cd \"$ROOT/MASTER/web\" && rbenv exec bundle exec rails assets:build_face_runtime;; esac; } 2>/dev/null || true",
+            "command": "jq -r '.tool_response.filePath // .tool_input.file_path' | { read -r f; case \"$f\" in */RAILS/master_web/public/face.part*.txt|*/RAILS/master_web/public/face_speech_*.js) ROOT=\"$(git rev-parse --show-toplevel)\" && cd \"$ROOT/RAILS/master_web\" && rbenv exec bundle exec rails assets:build_face_runtime;; esac; } 2>/dev/null || true",
             "statusMessage": "Rebuilding face.runtime.js",
             "timeout": 600
           }

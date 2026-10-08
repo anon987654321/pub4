@@ -9,6 +9,7 @@
   const SPEC = SPATIAL.sparse_field || {};
   const MODES = Object.freeze({
     idle:      { count: 48,  activity: 0.12, void: 0.94, drift: 0.10, orbit: 0.18 },
+    super_void:{ count: 18,  activity: 0.05, void: 0.995, drift: 0.018, orbit: 0.04 },
     listening: { count: 88,  activity: 0.42, void: 0.82, drift: 0.18, orbit: 0.28 },
     thinking:  { count: 148, activity: 0.72, void: 0.66, drift: 0.28, orbit: 0.48 },
     working:   { count: 124, activity: 0.66, void: 0.70, drift: 0.24, orbit: 0.42 },
@@ -52,6 +53,8 @@
   const resonance = { active: false, at: 0, kind: "", energy: 0.0, seed: 0 };
   const semantic = { kind: "idle", at: 0, energy: 0, x: 0, y: 0, z: 0 };
   const motion = { resolve: 0, bloom: 0, collapse: 0, fragment: 0 };
+  const presence = { x: 0, y: 0, at: 0 };
+  let ghostSerial = 0;
 
   const clamp = (v, lo = 0, hi = 1) => Math.max(lo, Math.min(hi, Number(v) || 0));
   const smooth = (a, b, x) => {
@@ -176,7 +179,7 @@
         "void main(){",
         "  vec4 mv = modelViewMatrix * vec4(position,1.0);",
         "  gl_Position = projectionMatrix * mv;",
-        "  gl_PointSize = max(1.0, aSize * uSize * 42.0 / max(1.0, -mv.z));",
+        "  gl_PointSize = 1.0;",
         "  vOpacity = aOpacity;",
         "}"
       ].join("\n"),
@@ -187,10 +190,8 @@
         "uniform vec3 uColor;",
         "void main(){",
         "  vec2 p = gl_PointCoord - 0.5;",
-        "  float d = length(p);",
-        "  float soft = smoothstep(0.52, 0.05, d);",
-        "  float core = smoothstep(0.25, 0.0, d);",
-        "  float a = soft * vOpacity * uOpacity * (0.72 + core * 0.65 + uEnergy * 0.2);",
+        "  float square = step(max(abs(p.x), abs(p.y)), 0.5);",
+        "  float a = square * vOpacity * uOpacity * (0.72 + uEnergy * 0.2);",
         "  if(a < 0.008) discard;",
         "  gl_FragColor = vec4(uColor,a);",
         "}"
@@ -271,31 +272,34 @@
 
   function captureGhosts(state) {
     const count = state?.mode === "speaking" ? 8 : 4;
+    ghostSerial += 1;
     for (let n = 0; n < count; n += 1) {
-      const i = Math.floor(seeded(Date.now() + n, 93) * Math.min(maxParticles, 180));
+      const i = Math.floor(seeded(ghostSerial * 17 + n, 93) * Math.min(maxParticles, 180));
       const j = i * 3;
       ghosts.push({
         x: positions[j], y: positions[j + 1], z: positions[j + 2],
         size: sizes[i] * 1.8,
         born: now(),
-        life: state?.mode === "error" ? 2800 : 1700
+        life: state?.mode === "error" ? 2800 : 1700,
+        memory: ghostSerial
       });
     }
     while (ghosts.length > 48) ghosts.shift();
   }
 
-  function addTrail() {
+  function addTrail(kind = "evidence", energy = 0.6) {
+    const index = trails.length + resonance.seed + ghostSerial;
     const start = {
-      x: (seeded(trails.length, 51) - 0.5) * 1.0,
-      y: (seeded(trails.length, 53) - 0.5) * 0.9,
-      z: 0.22
+      x: (seeded(index, kind === "speech" ? 51.1 : 51) - 0.5) * 1.0,
+      y: (seeded(index, kind === "speech" ? 53.1 : 53) - 0.5) * 0.9,
+      z: kind === "speech" ? 0.28 : 0.22
     };
     const end = {
-      x: (seeded(trails.length, 57) - 0.5) * 1.9,
-      y: (seeded(trails.length, 61) - 0.5) * 1.6,
-      z: -0.18
+      x: (seeded(index, kind === "speech" ? 57.1 : 57) - 0.5) * 1.9,
+      y: (seeded(index, kind === "speech" ? 61.1 : 61) - 0.5) * 1.6,
+      z: kind === "speech" ? 0.04 : -0.18
     };
-    trails.push({ start, end, kind: "evidence", energy: 0.6, born: now(), life: 1300 });
+    trails.push({ start, end, kind, energy: clamp(energy), born: now(), life: kind === "speech" ? 820 : 1300 });
     while (trails.length > 12) trails.shift();
   }
 
@@ -396,16 +400,19 @@
 
     const face = window.MASTER_FACE;
     const state = window.MASTER_FACE_STATE?.snapshot?.() || face?.State || {};
-    const profile = modeProfile(state);
+    const cameraDistance = Number(face?.camera?.position?.length?.() || 5.2);
+    const idleAge = Math.max(0, performance.now() - Number(state.lastTouch || 0));
+    const baseProfile = modeProfile(state);
+    const profile = String(state.mode || "").toLowerCase() === "idle" && idleAge > 45_000 ? MODES.super_void : baseProfile;
     const mobile = isMobile();
     const maxActive = mobile ? mobileParticles : maxParticles;
-    const distanceDensity = clamp((6.8 - cameraDistance) / 2.4, 0.34, 1);
-    const requested = Math.min(maxActive, Math.max(14, Math.round(profile.count * Number(SPEC.density_scale || 1) * distanceDensity)));
+    const distanceDensity = clamp((6.8 - cameraDistance) / 2.4, 0.24, 1);
+    const minimum = profile === MODES.super_void ? 8 : 14;
+    const requested = Math.min(maxActive, Math.max(minimum, Math.round(profile.count * Number(SPEC.density_scale || 1) * distanceDensity)));
     const focus = clamp(state.focus ?? state.attention ?? 0.8);
     const confidence = clamp(state.confidence ?? 0.86);
     const risk = clamp(state.risk ?? 0);
     const reduced = Boolean(state.reducedMotion) || matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
-    const cameraDistance = Number(face?.camera?.position?.length?.() || 5.2);
     const distanceReveal = clamp((6.6 - cameraDistance) / 2.8, 0.18, 1);
     const reveal = Math.max(distanceReveal, 0.35 + focus * 0.65);
     const semanticAge = Math.max(0, time - semantic.at);
@@ -414,9 +421,9 @@
     const voiceFilament = state.mode === "speaking" ? (0.10 + (Number(state.arousal) || 0) * 0.22) : 0;
     const breath = reduced ? 0 : Math.sin(time * 0.00035) * (0.012 + profile.activity * 0.018);
     const tide = reduced ? 0 : Math.sin(time * 0.00042 + state.entropy * 4.0) * profile.drift;
-    const mouseX = Number(face?.State?.mouseX || 0) * 0.65;
-    const mouseY = Number(face?.State?.mouseY || 0) * 0.65;
-    const isPointer = pointerActive;
+    const isPointer = pointerActive || (time - presence.at) < 700;
+    const presenceX = isPointer ? (pointerActive ? pointer.x : presence.x) : 0;
+    const presenceY = isPointer ? (pointerActive ? pointer.y : presence.y) : 0;
 
     pointMaterial.uniforms.uTime.value = time * 0.001;
     pointMaterial.uniforms.uEnergy.value = profile.activity + risk * 0.4;
@@ -439,6 +446,7 @@
         tx = Math.cos(a) * radius;
         ty = Math.sin(a) * radius * 0.72;
         tz = Math.sin(a * 1.7) * 0.48;
+        ty += Math.sin(time * 0.00022 + phase[i]) * profile.drift * 0.32;
       }
 
       // Collapse, fragment and resolve are the face's large semantic motions.
@@ -451,6 +459,36 @@
       } else {
         tx += breath * (1 + Math.abs(baseY));
         ty += tide * 0.03;
+
+        // Thought gathers at the forehead; attention becomes visible as
+        // particles choosing one place instead of vibrating everywhere.
+        if ((state.mode === "thinking" || state.mode === "working") && gather > 0 && groups[i] !== 8) {
+          const pull = gather * (groups[i] === 7 || groups[i] === 4 ? 1.0 : 0.42);
+          tx += (0.0 - tx) * pull;
+          ty += (0.36 - ty) * pull;
+          tz += (0.18 - tz) * pull;
+        }
+
+        // Semantic particles remember what just happened: laws live high,
+        // evidence lives low, reflection returns through the centre.
+        if (semanticLive > 0 && groups[i] === 7) {
+          const pull = semanticLive * semantic.energy * 0.16;
+          tx += (semantic.x - tx) * pull;
+          ty += (semantic.y - ty) * pull;
+          tz += (semantic.z - tz) * pull;
+        }
+
+        // Speaking grows a filament around the mouth rather than filling the
+        // lower face. The curve is a voice trace, not a second mouth.
+        if (state.mode === "speaking" && voiceFilament > 0 && groups[i] === 3) {
+          const a = phase[i] + time * 0.0015;
+          const fx = Math.cos(a) * 0.34;
+          const fy = -0.46 + Math.sin(a) * 0.10;
+          tx += (fx - tx) * voiceFilament;
+          ty += (fy - ty) * voiceFilament;
+          tz += 0.05 * Math.sin(a * 2.0);
+        }
+
         if (state.mode === "listening" && groups[i] === 5) {
           const earBloom = 0.06 + profile.activity * 0.10;
           tx += Math.sign(baseX || 1) * earBloom;
@@ -467,7 +505,7 @@
       ty += asym * 0.65;
 
       if (isPointer) {
-        const magnet = pointerForce(tx, ty, pointer.x, pointer.y, state.mode);
+        const magnet = pointerForce(tx, ty, presenceX, presenceY, state.mode);
         tx = magnet[0];
         ty = magnet[1];
       } else if (pointerActive) {
@@ -484,7 +522,10 @@
 
       const rank = active ? 1 : 0;
       const well = groups[i] === 1 || groups[i] === 3 ? 1.18 : 1.0;
-      const targetOpacity = rank * (0.36 + profile.activity * 0.50) * (0.46 + reveal * 0.54) * (0.74 + confidence * 0.26) / Math.max(0.2, profile.void * well);
+      const semanticBoost = semanticLive * semantic.energy * (groups[i] === 7 ? 0.22 : 0.06);
+      const targetOpacity = rank * (0.36 + profile.activity * 0.50 + semanticBoost) *
+        (0.46 + reveal * 0.54) * (0.74 + confidence * 0.26) /
+        Math.max(0.2, profile.void * well);
       opacity[i] += (targetOpacity - opacity[i]) * 0.08;
       sizes[i] = (0.026 + seeded(i, 12.1) * 0.034) * (1 + profile.activity * 0.45) * (groups[i] === 8 ? 0.72 : 1.0);
     }
@@ -520,6 +561,9 @@
     if (!event) return;
     pointer.x = (event.clientX / Math.max(1, innerWidth) - 0.5) * 1.7;
     pointer.y = (event.clientY / Math.max(1, innerHeight) - 0.5) * -1.0;
+    presence.x = pointer.x;
+    presence.y = pointer.y;
+    presence.at = now();
     pointerActive = true;
   }
 
@@ -529,15 +573,25 @@
     if (/law|constitutional|resonance/.test(name) || d.law) resonate("law", d.energy ?? d.confidence ?? 0.6);
     if (/evidence|proof|anchor|verified/.test(name) || d.evidence) resonate("evidence", d.energy ?? 0.72);
     if (/reflect|repair|recompose|fix/.test(name)) resonate("reflection", 0.82);
-    if (/error|veto|blocked/.test(name)) captureGhosts(d);
-    if (/speech|speaking|tts/.test(name)) captureGhosts(d);
+    if (/error|veto|blocked/.test(name)) {
+      motion.fragment = 1;
+      captureGhosts(d);
+    }
+    if (/speech|speaking|tts/.test(name)) {
+      addTrail("speech", d.energy ?? 0.68);
+      captureGhosts(d);
+    }
   }
 
   function onAudio(event) {
     const d = event.detail || {};
     if ((Number(d.onset) || 0) > 0.25 && (Number(d.rms) || 0) > 0.02) {
-      if (String(window.MASTER_FACE?.State?.mode || "") === "speaking") captureGhosts(window.MASTER_FACE.State);
-      addTrail();
+      if (String(window.MASTER_FACE?.State?.mode || "") === "speaking") {
+        captureGhosts(window.MASTER_FACE.State);
+        addTrail("speech", clamp(Number(d.rms) || 0.35));
+      } else {
+        addTrail("evidence", 0.6);
+      }
     }
   }
 
@@ -560,7 +614,9 @@
       ghosts: ghosts.length,
       trails: trails.length,
       mode: window.MASTER_FACE?.State?.mode || "idle",
-      void_ratio: Number(document.documentElement.style.getPropertyValue("--master-face-void") || SPEC.void_ratio || 0.8)
+      void_ratio: Number(document.documentElement.style.getPropertyValue("--master-face-void") || SPEC.void_ratio || 0.8),
+      semantic: { kind: semantic.kind, energy: semantic.energy },
+      presence: { x: presence.x, y: presence.y, age_ms: Math.max(0, now() - presence.at) }
     })
   });
 })();

@@ -38,7 +38,7 @@
 # between title and price, `padding: 2px 4px` on the surface chip over the
 # photo. Nearest allowed step is 4px, which doubles the hairline, or 0, which
 # deletes it. Same class as the 1px chips above — below the grid, not off it.
-# Re-measured 2026-08-10 over 94 stylesheets, up from 92. MASTER/web joined the
+# Re-measured 2026-08-10 over 94 stylesheets, up from 92. RAILS/master_web joined the
 # scan: ai.brgen.no is reachable from brgen's own top nav, so a visitor crosses
 # from three gated apps into an ungated one without leaving the product, and
 # every glob here was shaped for a Rails app while MASTER keeps its stylesheets
@@ -63,7 +63,7 @@ rules:
   # ceiling had not followed. Left at 66 it re-admits them one at a time.
   important: 60
   # 89 -> 90 (2026-08-22). One line, and it is arithmetic rather than drift:
-  # MASTER/web/public/chat_upload.css:30 insets #photo-button's ::before by
+  # RAILS/master_web/public/chat_upload.css:30 insets #photo-button's ::before by
   # 13px, which is exactly how an 18px drawn square centres inside a 44px tap
   # target — (44 - 18) / 2. Both of those numbers are themselves law here
   # (--tap-min is 44; the square is the control's existing optics), so the only
@@ -130,7 +130,7 @@ rules:
   # restated --border as #2c2824, which is 1.44:1 on #000.
   #
   # Recorded at the measured low rather than left loose. The 77 that remain are
-  # 25 in MASTER/web/public/face.css, which this gate also opens, and 52 in
+  # 25 in RAILS/master_web/public/face.css, which this gate also opens, and 52 in
   # RAILS that are all identity or replica — the pen-allowlisted marketplace nav
   # bar's Amazon values, the vertical accent map, the categorical monogram
   # fills, the yep.com recreation, amber's wardrobe gradient, bsdports' status
@@ -216,11 +216,11 @@ rules:
   # _minimal.scss — that last one is the large-screen root scale, and snapping
   # it to a step would rescale every rem in the system.
   #
-  # +2 and +2 on 2026-08-10 are MASTER/web joining the scan (see the header).
+  # +2 and +2 on 2026-08-10 are RAILS/master_web joining the scan (see the header).
   # face.css runs a terminal type ramp — 10/11/13px status chips, monospace, on
   # a canvas — and a 700 weight in two places. Neither reads the RAILS token
   # ladder, because face.css has no access to it: it is served from
-  # MASTER/web/public, outside the asset pipeline that defines --text-* and
+  # RAILS/master_web/public, outside the asset pipeline that defines --text-* and
   # --weight-*. Snapping the numbers alone would only hide that; the fix is a
   # shared token source, which is a decision, not a ratchet.
   # 10 -> 12 on 2026-08-21, a raise in the magic_hex-151 shape: f75050a6d
@@ -258,7 +258,7 @@ rules:
   # 16px; the law is 24. Changing it is a look decision, so it is banked.
   card_padding: 1
   # line-height literals not written as var(--leading-*), first measured
-  # 2026-09-13 at 85 across the fleet and MASTER/web. Moving one onto a token
+  # 2026-09-13 at 85 across the fleet and RAILS/master_web. Moving one onto a token
   # changes leading unless the literal equals a step, so the snap is the
   # operator's; the ceiling is here so the eighty-sixth cannot arrive quietly.
   leading: 85

@@ -260,10 +260,10 @@ Law.define(:PROBE_BEFORE_SHIP) do
   source "MASTER constitution (soul.yml absolute.rules)"
   severity :warn
   practice <<~TEXT
-    after an OPENBSD/ or MASTER/web/ edit, run bin/probe integrity before
+    after an OPENBSD/ or RAILS/master_web/ edit, run bin/probe integrity before
     declaring done. A failing gate means the task is still open.
   TEXT
-  fix "after an OPENBSD/ or MASTER/web/ edit, run bin/probe integrity before declaring done."
+  fix "after an OPENBSD/ or RAILS/master_web/ edit, run bin/probe integrity before declaring done."
   bad  "declares done after the edit"
   good "runs the integrity probe, then declares done"
 end
@@ -284,7 +284,7 @@ Law.define(:RESTART_RAILS) do
   source "MASTER constitution (soul.yml absolute.rules)"
   severity :warn
   practice <<~TEXT
-    one file, one restart. After a MASTER/web, live lib/ or data YAML deploy,
+    one file, one restart. After a RAILS/master_web, live lib/ or data YAML deploy,
     restart and wait before curling. Never batch web edits behind a single
     restart at the end.
   TEXT

@@ -551,7 +551,7 @@ class TestWebUI < Minitest::Test
   end
 
   # NOTE: the legacy face3d_preview.js/face3d_renderer.js WebGL-overlay pair
-  # this test used to cover was deliberately removed in 6f186797 ("MASTER/web:
+  # this test used to cover was deliberately removed in 6f186797 ("RAILS/master_web:
   # remove legacy face3d (Papua-mask) overlay, port homo_futura geometry") --
   # it was a footgun 2D-canvas painter that could permanently block the real
   # WebGL face by grabbing the shared #face canvas context. face3d:nonblank
@@ -739,7 +739,7 @@ class TestWebUI < Minitest::Test
   #
   # Nothing asserted the two agreed. This does, by rebuilding exactly as the
   # rake task does. If it fails, run `rails assets:build_face_runtime` in
-  # MASTER/web and commit the result.
+  # RAILS/master_web and commit the result.
   #
   # Two of the six sources are .js files, not face.part*.txt — the speech
   # runtime and playback, which is where TTS and the browser-voice default live.
@@ -781,7 +781,7 @@ class TestWebUI < Minitest::Test
 
     assert_equal rebuilt.bytesize, built.bytesize,
                  "public/face.runtime.js has drifted from its sources — " \
-                 "run `rails assets:build_face_runtime` in MASTER/web"
+                 "run `rails assets:build_face_runtime` in RAILS/master_web"
     assert_equal rebuilt, built,
                  "public/face.runtime.js differs from its sources at equal length"
   end

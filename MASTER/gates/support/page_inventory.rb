@@ -71,9 +71,9 @@ module Deploy
     # URL from their filename makes the live probe report a 404 for a route that
     # must not exist.
     MASTER_PAGES = [
-      { id: "master/face", view: "MASTER/web/app/views/chat/index.html.erb", path: "/", persona: "guest" },
-      { id: "master/dashboard", view: "MASTER/web/app/views/dashboard/index.html.erb", path: "/dashboard", persona: "guest" },
-      { id: "master/offline", view: "MASTER/web/public/offline.html", path: "/offline.html", persona: "guest" },
+      { id: "master/face", view: "RAILS/master_web/app/views/chat/index.html.erb", path: "/", persona: "guest" },
+      { id: "master/dashboard", view: "RAILS/master_web/app/views/dashboard/index.html.erb", path: "/dashboard", persona: "guest" },
+      { id: "master/offline", view: "RAILS/master_web/public/offline.html", path: "/offline.html", persona: "guest" },
     ].freeze
 
     # Guest-open bsdports catalogue paths (family completeness — CRT dialect).

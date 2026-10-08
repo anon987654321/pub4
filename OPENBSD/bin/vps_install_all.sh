@@ -39,7 +39,7 @@ log "=== MASTER CLI + web ==="
 [[ -d ${PUB4}/MASTER ]] || { log "ERR: MASTER missing"; exit 1 }
 cd "${PUB4}/MASTER"
 bundle install
-cd "${PUB4}/MASTER/web"
+cd "${PUB4}/RAILS/master_web"
 bundle config set --local path vendor/bundle
 bundle install
 RAILS_ENV=production SECRET_KEY_BASE_DUMMY=1 bundle exec rails assets:precompile

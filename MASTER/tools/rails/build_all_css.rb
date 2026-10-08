@@ -258,7 +258,7 @@ def verify_face_css
     "--x-text: #{anchors.fetch('x_text')}",
     "JetBrainsMono Nerd Font",
   ].reject { |m| body.include?(m) }
-  missing.map { |m| "MASTER/web face.css missing #{m}" }
+  missing.map { |m| "RAILS/master_web face.css missing #{m}" }
 end
 
 check_only = ARGV.include?("--check")
