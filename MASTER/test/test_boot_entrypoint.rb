@@ -5,6 +5,15 @@ require "tmpdir"
 
 class TestBootEntrypoint < Minitest::Test
   SOURCE = File.read(File.expand_path("../lib/boot/entrypoint.rb", __dir__))
+  GEMFILE = File.read(File.expand_path("../Gemfile", __dir__))
+  LOCKFILE = File.read(File.expand_path("../Gemfile.lock", __dir__))
+
+  def test_json_matches_ruby_4_default_gem
+    assert_includes GEMFILE, 'gem "json", "= 2.18.0"'
+    assert_match(/^    json \(2\.18\.0\)$/, LOCKFILE)
+    assert_match(/^  json \(= 2\.18\.0\)$/, LOCKFILE)
+    assert_match(/^  json \(2\.18\.0\) sha256=b10506aee4183f5cf49e0efc48073d7b75843ce3782c68dbeb763351c08fd505$/, LOCKFILE)
+  end
 
   def test_dependency_bootstrap_activates_the_master_bundle
     assert_match(/DependencyManager\.ensure!\(.*?\n.*?activate_bundle!\(root\)/m, SOURCE)
