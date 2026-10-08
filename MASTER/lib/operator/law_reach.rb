@@ -24,7 +24,7 @@ module Operator
     # One inventory for the executable constitution and the scanner registry.
     # data/laws.yml is policy/configuration; it is not the executable rule list.
     def audit
-      @audit ||= Master::Review::Scan::RuleRegistryAudit.new(root: MASTER_DIR)
+      @audit ||= Master::Review::Scan::LawRegistryAudit.new(root: MASTER_DIR)
     end
 
     def rules
