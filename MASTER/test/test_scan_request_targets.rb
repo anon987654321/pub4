@@ -87,20 +87,20 @@ class TestScanRequestTargets < Minitest::Test
 
   def test_aesthetic_profile_walks_only_aesthetic_rules
     scanner = RecordingScanner.new
-    def scanner.rules
+    def scanner.laws
       [Struct.new(:id).new("CONFIG_HIERARCHY"), Struct.new(:id).new("ANTI_DIVITIS")]
     end
-    scanner.instance_variable_set(:@rule_ids, nil)
+    scanner.instance_variable_set(:@law_ids, nil)
     def scanner.scan_dir(dir, **opts)
       @dirs << dir
-      @rule_ids = Array(opts[:rules]).map { |rule| rule.id.to_s }
+      @law_ids = Array(opts[:laws]).map { |law| law.id.to_s }
       Master::Result.ok([])
     end
-    def scanner.rule_ids = @rule_ids
+    def scanner.law_ids = @law_ids
 
     Master::CLI::Scan::Request.new(scanner:, root: Master::ROOT, arg: "aesthetic").call
 
-    refute_includes scanner.rule_ids, "CONFIG_HIERARCHY"
-    assert_includes scanner.rule_ids, "ANTI_DIVITIS"
+    refute_includes scanner.law_ids, "CONFIG_HIERARCHY"
+    assert_includes scanner.law_ids, "ANTI_DIVITIS"
   end
 end
