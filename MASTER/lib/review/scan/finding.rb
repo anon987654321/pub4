@@ -8,7 +8,7 @@ module Master
       # why, which Scanner#should_autofix? reads. test_finding_metadata.rb holds
       # the shape.
       Finding = Data.define(
-        :rule, :rule_id, :message, :line, :severity, :fix, :tags,
+        :law, :law_id, :message, :line, :severity, :fix, :tags,
         :reversibility, :blast_radius, :confidence, :why, :genealogy,
         :dedupe_key, :impact_radius
       ) do
