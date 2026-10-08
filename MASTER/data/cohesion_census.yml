@@ -22,11 +22,11 @@ family_members:
 - RAILS/brgen/app/services/marketplace/payments#stripe
 - MASTER/gates/lib/source#honesty
 - MASTER/gates/support#geometry
-- RAILS/shared/app/controllers/concerns/shared#actions
-- RAILS/shared/app/controllers/concerns/shared#auth
-- RAILS/shared/app/models/shared#affiliate
+- RAILS/__shared/app/controllers/concerns/shared#actions
+- RAILS/__shared/app/controllers/concerns/shared#auth
+- RAILS/__shared/app/models/shared#affiliate
 - MASTER/tools/rails/operator#lint
-- RAILS/shared/lib/shared#examples
+- RAILS/__shared/lib/shared#examples
 - STUDIO/dilla/lib#engine
 - STUDIO/dilla/lib#harmony
 - STUDIO/dilla/lib#score
