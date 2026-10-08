@@ -291,7 +291,7 @@ module Master
       # Loaded lazily, and a failure is cosmetic: a prompt missing part of the
       # list is worse than one built without it, and neither should fail a turn.
       def all_laws
-        require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
+        require File.join(Master::ROOT, "law", "definition") unless defined?(::Law)
         ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.definitions.empty?
         ::Law.definitions.values.map do |rule|
           "#{law.id}: #{(law.practice || law.fix).to_s.gsub(/\s+/, ' ').strip}"
