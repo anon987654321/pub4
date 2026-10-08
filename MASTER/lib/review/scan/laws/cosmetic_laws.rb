@@ -3,7 +3,7 @@
 module Master
   module Review
     module Scan
-      module Rules
+      module Laws
         # What DOUBLE_QUOTES_RUBY may rewrite. A module rather than lambdas
         # inside the rule block, which is instance_exec'd once per file and
         # would rebuild them every time.
