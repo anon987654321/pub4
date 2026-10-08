@@ -250,7 +250,7 @@ class GitOperationsTest < Minitest::Test
     @git.push
 
     assert_equal [0, 0], @git.ahead_behind
-    assert_equal %w[ours from], sh("git", "log", "--format=%s", "-2", chdir: @remote).lines.map { _1.split.first }
+    assert_equal %w[Ours from], sh("git", "log", "--format=%s", "-2", chdir: @remote).lines.map { _1.split.first }
     assert File.file?(File.join(@repo, "pending.rb"))
   end
 
