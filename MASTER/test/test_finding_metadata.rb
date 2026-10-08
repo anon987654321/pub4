@@ -23,7 +23,7 @@ class TestFindingMetadata < Minitest::Test
   end
 
   def test_semantic_findings_keep_exact_law_id
-    rule = Master::Review::Scan::Rules::SemanticLaw.new
+    rule = Master::Review::Scan::Laws::SemanticLaw.new
     # The scope the file was asked about, which is what parse_findings reads: a
     # reply naming a rule outside it is one the model invented for this file.
     scoped = {
