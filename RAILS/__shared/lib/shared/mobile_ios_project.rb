@@ -28,13 +28,13 @@ module Shared
       {
         "type" => "application",
         "platform" => "iOS",
-        "sources" => [{ "path" => "../Pub4MobileApp.swift" }],
+        "sources" => [{ "path" => "../../../../MASTER/tools/rails/native/Pub4MobileApp.swift" }],
         "settings" => {
           "base" => {
             "SWIFT_VERSION" => "5.0",
             "GENERATE_INFOPLIST_FILE" => "NO",
-            "INFOPLIST_FILE" => "../Info.plist",
-            "CODE_SIGN_ENTITLEMENTS" => "../Pub4Mobile.entitlements",
+            "INFOPLIST_FILE" => "../../../../MASTER/tools/rails/native/Info.plist",
+            "CODE_SIGN_ENTITLEMENTS" => "../../../../MASTER/tools/rails/native/Pub4Mobile.entitlements",
             "CODE_SIGN_STYLE" => "Automatic",
             "MARKETING_VERSION" => "1.0.3",
             "CURRENT_PROJECT_VERSION" => "1",
