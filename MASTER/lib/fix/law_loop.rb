@@ -92,8 +92,8 @@ module Master
       include OutcomeTracking
       include AutofixPolicy
 
-      def initialize(rule:, agent:, scanner:, root:, **options)
-        @rule = rule
+      def initialize(law:, agent:, scanner:, root:, **options)
+        @law = law
         @agent = agent
         @scanner = scanner
         @root = root
@@ -122,7 +122,7 @@ module Master
         fixed = fix_batch(violations)
         status = pass_outcome(fixed)
         record_outcomes(files, status)
-        @bus&.publish("law_loop:pass", rule: @rule.id, violations: violations.size, fixed:, status:)
+        @bus&.publish("law_loop:pass", rule: @law.id, violations: violations.size, fixed:, status:)
         { fixed:, status:, breakdown: @batch_breakdown }
       rescue StandardError => e
         @bus&.publish("law_loop:error", rule: @rule.id, error: e.message)
