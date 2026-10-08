@@ -55,7 +55,7 @@ class TestScanDeterministicMode < Minitest::Test
   # --- the scanner half ----------------------------------------------------
 
   def test_the_model_backed_rules_get_the_agent_by_default
-    scanner = Master::Review::Scan::InfraHelpers.build_scanner(root: Master::ROOT, agent: fake_agent)
+    scanner = Master::Fix::Scanner.build(root: Master::ROOT, agent: fake_agent)
 
     refute_empty agent_backed(scanner), "no rule takes an agent — this file's premise is stale"
     refute_empty with_agent(agent_backed(scanner)),
@@ -64,7 +64,7 @@ class TestScanDeterministicMode < Minitest::Test
 
   def test_deterministic_mode_withholds_the_agent
     ENV[ENV_KEY] = "1"
-    scanner = Master::Review::Scan::InfraHelpers.build_scanner(root: Master::ROOT, agent: fake_agent)
+    scanner = Master::Fix::Scanner.build(root: Master::ROOT, agent: fake_agent)
 
     assert_empty with_agent(agent_backed(scanner)),
                  "a rule still holds an agent, so it will still send a prompt per file"
