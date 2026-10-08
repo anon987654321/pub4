@@ -146,9 +146,12 @@ module Master
 
       def scan_law(key)
         slug = key.downcase.tr("-", "_")
-        path = File.join(@root, SCAN_LAWS_DIR, "#{slug}_laws.rb")
-        return registry_law(slug) unless File.file?(path)
+        basename = %W[#{slug}_law.rb #{slug}_laws.rb].find do |name|
+          File.file?(File.join(@root, SCAN_LAWS_DIR, name))
+        end
+        return registry_law(slug) unless basename
 
+        path = File.join(@root, SCAN_LAWS_DIR, basename)
         src = File.read(path)
         desc = src[/@description\s*=\s*["']([^"']+)["']/, 1] || "(no description)"
         tags = src[/@rule_tags\s*=\s*%i\[([^\]]+)\]/, 1].to_s.split.first(6).join(" ")
@@ -156,7 +159,7 @@ module Master
           "scan law: #{slug}",
           "  description: #{desc}",
           ("  axioms: #{tags}" unless tags.empty?),
-          "  source: #{SCAN_LAWS_DIR}/#{slug}_laws.rb",
+          "  source: #{SCAN_LAWS_DIR}/#{basename}",
         ].compact.join("\n")
       end
 
