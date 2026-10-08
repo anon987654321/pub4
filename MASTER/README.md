@@ -82,6 +82,10 @@ improvement in the system's ability to make correct, testable, reversible code
 changes. Human work moves upward from editing individual lines toward setting
 governance, judging evidence, and resolving the cases where the machine cannot
 prove its own next step.
+## Ruby 4 runtime
+
+MASTER pins Ruby 4.0.7. Ruby 4 adds experimental `Ruby::Box` isolation, and MASTER exposes it through `Master::Runtime::Box` only when the Ruby process was started with `RUBY_BOX=1`; the adapter never pretends an in-process environment change can enable a box later. ZJIT is an explicit `MASTER_JIT=zjit` experiment, while automatic startup still prefers YJIT. MASTER's Ractor compute path uses `Ractor::Port` on Ruby 4 and keeps the older transport only for Rubies that still provide it. The Box boundary is intended for `/fix` experiments: load a candidate implementation into an isolated box, test it there, compare observable behavior, then promote only through the ordinary law and verification gates.
+
 ## The business, inside a mountain
 
 The world spends more on machine intelligence than on almost anything else, and
@@ -134,7 +138,7 @@ available memory = 1813561344 (1729MB)
 mainbus0 at root: Mac14,2
 cpu0 at mainbus0: Apple M2
 kern0 at mainbus0: Darwin 25.5.0 arm64
-ruby0 at mainbus0: ruby 4.0.5 arm64-darwin25
+ruby0 at mainbus0: ruby 4.0.7 arm64-darwin25
 shell0 at mainbus0: zsh, user mac
 release0 at mainbus0: pub4 1.0.0\nsoul0 at mainbus0: constitution rev 2.8.0
 soul0: imports soul rules limits state patterns openbsd
