@@ -4,7 +4,7 @@ Task-scoped entry for coding agents (Cursor, Codex, Grok, Claude Code). This fil
 
 **Read the repo-root `CLAUDE.md` first.** It is the authority above this file —
 the order is executable law first: `MASTER/data/soul.yml` > `MASTER/data/laws.yml` >
-`MASTER/law/*.rb` + `MASTER/lib/review/scan/rules/*.rb` > repo harnesses >
+`MASTER/law/*.rb` + `MASTER/lib/review/scan/laws/*.rb` > repo harnesses >
 the per-tree contract — and this file carries the five traps that cost the most time
 here. This file routes; it does not restate, because a second copy drifts and
 the copy is always the one being read.
@@ -26,10 +26,10 @@ you write:
 2. `MASTER/data/laws.yml` — the declared rule catalogue, in four scopes.
 3. `MASTER/law/*.rb` — the domain law, each rule carrying the example it must
    flag and the one it must not. Those two examples are the rule.
-4. `MASTER/lib/review/scan/rules/*.rb` — the registry, the rest of the detectors.
+4. `MASTER/lib/review/scan/laws/*.rb` — the registry, the rest of the detectors.
 
 The authority order is one stack: `soul.yml` > `laws.yml` >
-executable law (`law/*.rb` and `lib/review/scan/rules/*.rb`) > repo harnesses
+executable law (`law/*.rb` and `lib/review/scan/laws/*.rb`) > repo harnesses
 (`CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, `.cursorlaws`,
 `.github/copilot-instructions.md`) > per-tree contracts. Executable law outranks
 every sentence written about it. Harness files route agents to the law; they never
@@ -391,7 +391,7 @@ checked rather than believed.
 `law/*.rb` that carries a `bad` and a `good` fixture and proves itself against
 both before it is allowed to judge anything — 122 of them, reaching the scanner
 through `LawBridgeRule`. A *rule* is a row in `data/laws.yml` or a class in
-`lib/review/scan/rules/`, and neither has to prove anything to load. Where an id
+`lib/review/scan/laws/`, and neither has to prove anything to load. Where an id
 exists in both, the law wins: `YamlDeclarativeRule` rejects the row before
 reading it.
 
