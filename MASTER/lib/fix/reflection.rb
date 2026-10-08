@@ -12,7 +12,7 @@ module Master
       MAX_CONTEXT_BYTES = 24_000
       MAX_SUMMARY_BYTES = 1_000
       MIN_REMAINING_SECONDS = 120
-      VERDICTS = %w[KEEP REPAIR INVESTIGATE HUMAN].freeze
+      VERDICTS = %w[KEEP REPAIR INVESTIGATE HUMAN INCONCLUSIVE].freeze
 
       Result = Data.define(:verdict, :summary, :law, :anchor, :evidence, :next_action) do
         def actionable? = %w[REPAIR INVESTIGATE HUMAN].include?(verdict.to_s)
@@ -26,9 +26,9 @@ module Master
       end
 
       def call(target:, state:, files:, history:, changed_paths: [], remaining_seconds: nil)
-        return Result.new(verdict: "KEEP", summary: "reflection unavailable — no model", law: nil, anchor: nil, evidence: nil, next_action: nil) unless @agent.respond_to?(:ask)
+        return Result.new(verdict: "INCONCLUSIVE", summary: "reflection unavailable — no model", law: nil, anchor: nil, evidence: nil, next_action: nil) unless @agent.respond_to?(:ask)
         if remaining_seconds && remaining_seconds.to_f < MIN_REMAINING_SECONDS
-          return Result.new(verdict: "KEEP", summary: "reflection skipped — insufficient run budget", law: nil, anchor: nil, evidence: nil, next_action: nil)
+          return Result.new(verdict: "INCONCLUSIVE", summary: "reflection skipped — insufficient run budget", law: nil, anchor: nil, evidence: nil, next_action: nil)
         end
 
         orientation = Master::AI::Orientation.render(root: @root, target:, depth: 3, max_entries: 120)
@@ -40,7 +40,7 @@ module Master
       rescue StandardError => e
         @bus&.publish("fix_loop:reflection_error", target:, error: "#{e.class}: #{e.message}")
         Master::Trace::Dmesg.status("reflect0", "inconclusive, #{e.class}: #{e.message}")
-        Result.new(verdict: "KEEP", summary: "reflection inconclusive — #{e.class}", law: nil, anchor: nil, evidence: nil, next_action: nil)
+        Result.new(verdict: "INCONCLUSIVE", summary: "reflection inconclusive — #{e.class}", law: nil, anchor: nil, evidence: nil, next_action: nil)
       end
 
       private
@@ -71,7 +71,7 @@ module Master
           Do not invent measurements, callers, incidents, or requirements.
           Do not edit source. Return exactly:
 
-          VERDICT: KEEP | REPAIR | INVESTIGATE | HUMAN
+          VERDICT: KEEP | REPAIR | INVESTIGATE | HUMAN | INCONCLUSIVE
           SUMMARY: one concise sentence
           LAW: existing law id, or NONE
           ANCHOR: repository-relative path:line, or NONE
