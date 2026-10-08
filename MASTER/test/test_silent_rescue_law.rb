@@ -2,14 +2,14 @@
 
 require_relative "test_helper"
 
-Master::Review::Scan::RuleDSL # trigger autoload → rule files registered
+Master::Review::Scan::LawDSL # trigger autoload → rule files registered
 
 # SILENT_RESCUE (:error) flags blanket rescues that discard the error.
 # NARROW_SILENT_RESCUE (:warning) flags narrow-class rescues that do the same.
-# Both are RuleDSL rules — anonymous Rule subclasses found via the registry by id.
+# Both are LawDSL rules — anonymous Law subclasses found via the registry by id.
 class TestSilentRescueRule < Minitest::Test
   def setup
-    reg     = Master::Review::Scan::Rule.registry
+    reg     = Master::Review::Scan::Law.registry
     @silent = reg.find { |k| k.new.id == "SILENT_RESCUE" }&.new
     @narrow = reg.find { |k| k.new.id == "NARROW_SILENT_RESCUE" }&.new
     refute_nil @silent, "SILENT_RESCUE must be registered"
@@ -124,7 +124,7 @@ class TestSilentRescueRule < Minitest::Test
   end
 
   # A rule file quotes the shapes it matches, and prose about a rescue is not a
-  # rescue. Rule#without_comment_lines settles that for every rule; no directory
+  # rescue. Law#without_comment_lines settles that for every rule; no directory
   # needs excusing.
   def test_prose_about_a_rescue_is_not_a_rescue
     code = "# rescue StandardError\n# nil\ndef f = go\n"
@@ -140,7 +140,7 @@ rescue StandardError => _
   false
 end
 "
-  assert_empty Master::Review::Scan::Rules::SilentRescue.scan(src, narrow: false)
+  assert_empty Master::Review::Scan::Laws::SilentRescue.scan(src, narrow: false)
 end
 
 def test_a_non_predicate_rescuing_to_false_is_still_silent
@@ -150,7 +150,7 @@ rescue StandardError
   false
 end
 "
-  refute_empty Master::Review::Scan::Rules::SilentRescue.scan(src, narrow: false)
+  refute_empty Master::Review::Scan::Laws::SilentRescue.scan(src, narrow: false)
 end
 
 # --- MODIFIER_SILENT_RESCUE: the shape the other two cannot see -------------
@@ -160,7 +160,7 @@ end
 # gate doctrine asks for: the shape it must flag and the shapes it must not.
 
 def modifier_rule
-  Master::Review::Scan::Rule.registry.find { |k| k.new.id == "MODIFIER_SILENT_RESCUE" }&.new
+  Master::Review::Scan::Law.registry.find { |k| k.new.id == "MODIFIER_SILENT_RESCUE" }&.new
 end
 
 def test_modifier_rescue_binding_nil_is_flagged
