@@ -20,7 +20,7 @@ class FixHardeningTest < Minitest::Test
 
   def test_measurement_only_finding_stays_visible_but_becomes_non_actionable
     finding = {
-      rule: "MAGIC_COLOR",
+      law: "MAGIC_COLOR",
       severity: :warning,
       tags: [:DESIGN],
       line: 12,
@@ -65,13 +65,13 @@ class FixHardeningTest < Minitest::Test
       path = File.join(root, "sample.rb")
       File.write(path, "puts :x\\n")
       scanner = Object.new
-      scanner.define_singleton_method(:scan) do |_path, rules: nil|
-        Master::Result.ok([{ rule: "CQS", severity: :warning, line: 1, message: "measured" }])
+      scanner.define_singleton_method(:scan) do |_path, laws: nil|
+        Master::Result.ok([{ law: "CQS", severity: :warning, line: 1, message: "measured" }])
       end
       agent = Object.new
       agent.define_singleton_method(:ask) { |_prompt| raise "measurement-only finding reached the model" }
       loop = Master::Fix::LawLoop.new(
-        rule: RuleStub.new(id: "CQS", severity: :warning),
+        law: RuleStub.new(id: "CQS", severity: :warning),
         agent:,
         scanner:,
         root:,
@@ -87,7 +87,7 @@ class FixHardeningTest < Minitest::Test
   def test_rendered_value_block_is_a_human_decision
     loop = Master::Fix::LawLoop.allocate
     finding = {
-      rule: "TYPE_SCALE",
+      law: "TYPE_SCALE",
       file: File.join(Master::ROOT, "web", "face.css"),
       line: 1,
       severity: :warning,
@@ -103,7 +103,7 @@ class FixHardeningTest < Minitest::Test
   def test_stream_refresh_replaces_stale_touched_findings
     runner = Master::Fix::FixLoop::PassRunner.allocate
     runner.define_singleton_method(:violations_for) do |path|
-      [{ rule: "FRESH", file: path, line: 2 }]
+      [{ law: "FRESH", file: path, line: 2 }]
     end
     runner.define_singleton_method(:resolve_violations) do |rows|
       rows
@@ -111,8 +111,8 @@ class FixHardeningTest < Minitest::Test
     runner.instance_variable_set(:@root, Master::ROOT)
 
     found = [
-      { rule: "STALE", file: "lib/master.rb", line: 1 },
-      { rule: "UNTOUCHED", file: "lib/other.rb", line: 4 },
+      { law: "STALE", file: "lib/master.rb", line: 1 },
+      { law: "UNTOUCHED", file: "lib/other.rb", line: 4 },
     ]
     streamed = Set.new([["lib/master.rb", "STALE"]])
 
