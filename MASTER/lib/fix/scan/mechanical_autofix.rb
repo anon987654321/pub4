@@ -92,16 +92,16 @@ module Master
         end
 
         def autofixable_finding?(finding)
-          law = laws_by_id[Finding.read(finding, :rule).to_s]
+          law = laws_by_id[Finding.read(finding, :law).to_s]
           law&.auto_fix
         end
 
         def laws_by_id
-          @laws_by_id ||= scanner_rules.to_h { |law| [law.id.to_s, rule] }
+          @laws_by_id ||= scanner_laws.to_h { |law| [law.id.to_s, law] }
         end
 
-        def scanner_rules
-          return @scanner.laws if @scanner.respond_to?(:rules)
+        def scanner_laws
+          return @scanner.laws if @scanner.respond_to?(:laws)
 
           []
         end
