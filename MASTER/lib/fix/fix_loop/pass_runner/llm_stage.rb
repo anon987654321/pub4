@@ -12,18 +12,18 @@ module Master
           private
 
           def llm_pass(violations:, files:, pass:, deadline: nil, council: nil)
-            rule_violations = violations.group_by { |v| v[:rule].to_s }
-            ordered = @law_order.ordered(violation_counts: @violation_counts)
-            runnable = ordered.select { |rule| rule_violations.key?(rule.id.to_s) }
-            runnable += semantic_rule_adapters(rule_violations, ordered)
-            if runnable.empty? && rule_violations.any?
+            law_violations = violations.group_by { |v| v[:rule].to_s }
+            ordered = @law_order.ordered(violation_counts: @law_violation_counts)
+            runnable = ordered.select { |rule| law_violations.key?(law.id.to_s) }
+            runnable += semantic_law_adapters(law_violations, ordered)
+            if runnable.empty? && law_violations.any?
               Master::Trace::Dmesg.status(
                 "fix0",
-                "no registered rule fixes #{rule_violations.keys.first(5).join(", ")}; " \
+                "no registered rule fixes #{law_violations.keys.first(5).join(", ")}; " \
                 "registered: #{ordered.map { |r| r.id.to_s }.first(5).join(", ")}",
               )
             end
-            fixed = run_dependency_levels(runnable, files:, pass:, rule_violations:, deadline:, council:)
+            fixed = run_dependency_levels(runnable, files:, pass:, law_violations:, deadline:, council:)
             publish_llm_pass_status(pass:, deadline:)
             fixed
           end
@@ -35,10 +35,10 @@ module Master
             findings.each do |finding|
               break if Time.now >= deadline
 
-              rule = Wishlist::Rule.new(Wishlist::RULE_ID)
+              rule = Wishlist::Law.new(Wishlist::LAW_ID)
               proposal = finding[:wishlist_proposal] || {}
               loop = LawLoop.new(
-                rule:, agent: @agent, scanner: @scanner, root: @root, bus: @bus,
+                law:, agent: @agent, scanner: @scanner, root: @root, bus: @bus,
                 learnings: @learnings, committer: @committer, stage_commit: true,
                 visual_custody: @visual_pass&.custody,
               )
@@ -74,14 +74,14 @@ module Master
             0
           end
 
-          def run_dependency_levels(runnable, files:, pass:, rule_violations:, deadline:, council: nil)
+          def run_dependency_levels(runnable, files:, pass:, law_violations:, deadline:, council: nil)
             fixed = 0
             breakdown = Hash.new(0)
             @law_order.dependency_levels(runnable).each do |group|
               break if deadline && Time.now >= deadline
               break if circuit_open?
-              results = run_rule_group(group:, files:, pass:, rule_violations:, council:)
-              fixed += tally_rule_results(results, breakdown:, pass:)
+              results = run_law_group(group:, files:, pass:, law_violations:, council:)
+              fixed += tally_law_results(results, breakdown:, pass:)
               @human_decision_required ||= results.any? { |_rule, result| result[:status] == :human_decision }
             end
             report_skip_breakdown(breakdown, pass:)
@@ -90,16 +90,16 @@ module Master
 
           # A rule that reported no breakdown of its own counts once under its
           # status, so every rule contributes exactly one row either way.
-          def tally_rule_results(results, breakdown:, pass:)
-            results.sum do |rule, result|
-              @violation_counts[rule.id] += result[:fixed].to_i
+          def tally_law_results(results, breakdown:, pass:)
+            results.sum do |law, result|
+              @law_violation_counts[law.id] += result[:fixed].to_i
               tallied = result[:breakdown]
               if tallied.nil? || tallied.empty?
                 breakdown[result[:status] || :unknown] += 1
               else
                 tallied.each { |outcome, count| breakdown[outcome] += count }
               end
-              @bus&.publish("fix_loop:rule_result", pass:, rule: rule.id, **result)
+              @bus&.publish("fix_loop:law_result", pass:, law: law.id, **result)
               result[:fixed].to_i
             end
           end
@@ -120,18 +120,18 @@ module Master
             end
           end
 
-          def run_rule_group(group:, files:, pass:, rule_violations:, council: nil)
-            unless disjoint_rule_files?(group, rule_violations)
+          def run_law_group(group:, files:, pass:, law_violations:, council: nil)
+            unless disjoint_law_files?(group, law_violations)
               return group.map do |rule|
-                [rule, run_law_once(rule, files, pass, council:,
-                                     external_violations: rule_violations[rule.id.to_s])]
+                [rule, run_law_once(law, files, pass, council:,
+                                     external_violations: law_violations[law.id.to_s])]
               end
             end
 
             group.map do |rule|
               Thread.new do
-                [rule, run_law_once(rule, files, pass, council:,
-                                     external_violations: rule_violations[rule.id.to_s])]
+                [rule, run_law_once(law, files, pass, council:,
+                                     external_violations: law_violations[law.id.to_s])]
               end
             end.map(&:value)
           end
@@ -157,26 +157,26 @@ module Master
             def contract_entry = law.contract_entry
           end
 
-          def semantic_rule_adapters(rule_violations, ordered)
-            known = ordered.map { |rule| rule.id.to_s }.to_set
+          def semantic_law_adapters(law_violations, ordered)
+            known = ordered.map { |law| law.id.to_s }.to_set
             require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
-            ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.rules.empty?
-            rule_violations.keys.reject { |id| known.include?(id.to_s) }.filter_map do |id|
-              law = ::Law.rules[id.to_s]
+            ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.definitions.empty?
+            law_violations.keys.reject { |id| known.include?(id.to_s) }.filter_map do |id|
+              law = ::Law.definitions[id.to_s]
               next unless law&.semantic?
               SemanticFixLaw.new(id: id.to_s, severity: law.severity, law:)
             end
           rescue StandardError => e
-            Master::Ground::Swallow.log(e, context: "fix_loop.semantic_rule_adapters", event_bus: @bus, severity: :load_bearing)
+            Master::Ground::Swallow.log(e, context: "fix_loop.semantic_law_adapters", event_bus: @bus, severity: :load_bearing)
             raise "semantic rule adapter load failed: #{e.class}: #{e.message}"
           end
 
-          def run_law_once(rule, files, pass, council: nil, external_violations: nil)
-            rl = LawLoop.new(rule:, agent: @agent, scanner: @scanner, root: @root, bus: @bus,
+          def run_law_once(law, files, pass, council: nil, external_violations: nil)
+            rl = LawLoop.new(law:, agent: @agent, scanner: @scanner, root: @root, bus: @bus,
                               learnings: @learnings, committer: @committer,
                               visual_custody: @visual_pass&.custody)
             rl.injected_preamble = [@preamble, council_preamble(council)].compact.join("\n\n")
-            @bus&.publish("fix_loop:tier2_quality_route", pass:, rule: rule.id) if @law_order.tier2?(rule.id)
+            @bus&.publish("fix_loop:tier2_quality_route", pass:, law: law.id) if @law_order.tier2?(law.id)
             normalized = Array(external_violations).map do |violation|
               file = violation[:file].to_s
               absolute = file.start_with?("/") ? file : File.expand_path(file, @root)
@@ -185,10 +185,10 @@ module Master
             rl.run_once(files, external_violations: normalized.empty? ? nil : normalized)
           end
 
-          def disjoint_rule_files?(rules, rule_violations)
+          def disjoint_law_files?(laws, law_violations)
             seen = Set.new
-            rules.all? do |rule|
-              files = Array(rule_violations[rule.id.to_s]).map { |v| v[:file].to_s }.uniq
+            laws.all? do |law|
+              files = Array(law_violations[law.id.to_s]).map { |v| v[:file].to_s }.uniq
               overlap = files.any? { |f| seen.include?(f) }
               files.each { |f| seen << f }
               !overlap
