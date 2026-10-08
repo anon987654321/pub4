@@ -46,7 +46,7 @@ module Master
           end
         end
 
-        RuleDSL.rule :NO_DECORATIVE_FX,
+        LawDSL.law :NO_DECORATIVE_FX,
           severity: :warning, tags: %i[DESIGN AESTHETIC PIXEL], applies_to: CSS_LANGS, autofix: true,
           description: "flat UI — no blur, glow, or ornamental shadow",
           detect_semantic: "Does the element use shadows or glows that serve no functional purpose?",
@@ -80,7 +80,7 @@ module Master
           findings
         end
 
-        RuleDSL.rule :FLAT_PIXELS,
+        LawDSL.law :FLAT_PIXELS,
           severity: :warning, tags: %i[DESIGN AESTHETIC PIXEL], applies_to: %i[css scss javascript], autofix: true,
           description: "canvas/pixel layers stay crisp — no smoothing/glow language",
           detect_semantic: "Is the rendering intent 'crisp' or 'pixel-art', yet smoothing is enabled?",
@@ -116,7 +116,7 @@ module Master
         # The doctrine is Müller-Brockmann's (Grid Systems in Graphic Design,
         # 1981): a single spatial module, every dimension a multiple of it —
         # named here so the rule carries its book, not just its number.
-        RuleDSL.rule :EIGHT_PX_RHYTHM,
+        LawDSL.law :EIGHT_PX_RHYTHM,
           severity: :info, tags: %i[DESIGN AESTHETIC], applies_to: CSS_LANGS, autofix: true,
           description: "spacing on 8px rhythm (4px hairline allowed) — Müller-Brockmann grid module",
           detect_semantic: "Does the spacing create a visual rhythm that deviates from the 8px grid?",
@@ -159,7 +159,7 @@ module Master
           findings.uniq { |f| [f[:line], f[:message]] }
         end
 
-        RuleDSL.rule :LINE_HEIGHT_ON_SCALE,
+        LawDSL.law :LINE_HEIGHT_ON_SCALE,
           severity: :warning, tags: %i[DESIGN TYPOGRAPHY RHYTHM], applies_to: CSS_LANGS, autofix: false,
           description: "unitless line-height must be on design_rules / ScaleLint scale",
           example_path: "/repo/app/assets/stylesheets/_example.scss",
@@ -196,7 +196,7 @@ module Master
           findings.uniq { |f| [f[:line], f[:message]] }
         end
 
-        RuleDSL.rule :TOUCH_TARGET_MIN,
+        LawDSL.law :TOUCH_TARGET_MIN,
           severity: :warning, tags: %i[DESIGN UX ACCESSIBILITY], applies_to: CSS_LANGS, autofix: true,
           description: "Fitts — interactive targets ≥44px",
           detect_semantic: "Is the interactive element's hit area too small for comfortable thumb use?",
@@ -235,7 +235,7 @@ module Master
           findings
         end
 
-        RuleDSL.rule :CHOICE_OVERLOAD,
+        LawDSL.law :CHOICE_OVERLOAD,
           severity: :info, tags: %i[DESIGN UX], applies_to: HTML_LANGS, autofix: false,
           description: "Hick — too many peer choices without grouping",
           fires: "<nav>#{(1..8).map { |n| "<a href=\"/#{n}\">#{n}</a>" }.join}</nav>\n",
@@ -292,7 +292,7 @@ module Master
           findings
         end
 
-        RuleDSL.rule :PROGRESSIVE_DISCLOSURE,
+        LawDSL.law :PROGRESSIVE_DISCLOSURE,
           severity: :info, tags: %i[DESIGN UX], applies_to: HTML_LANGS, autofix: false,
           fires: %(<form class="settings">\n<input name=\"f1\">\n<input name=\"f2\">\n<input name=\"f3\">\n<input name=\"f4\">\n<input name=\"f5\">\n<input name=\"f6\">\n</form>\n),
           does_not_fire: %(<form class="settings">\n<details><summary>Advanced</summary>\n<input name=\"f1\">\n<input name=\"f2\">\n<input name=\"f3\">\n<input name=\"f4\">\n<input name=\"f5\">\n<input name=\"f6\">\n</details>\n</form>\n),
@@ -311,7 +311,7 @@ module Master
           [finding(line: 1, message: "settings/advanced UI without disclosure pattern — collapse secondary controls")]
         end
 
-        RuleDSL.rule :WHITESPACE_RHYTHM,
+        LawDSL.law :WHITESPACE_RHYTHM,
           severity: :info, tags: %i[DESIGN AESTHETIC], applies_to: CSS_LANGS, autofix: true,
           fires: ".card { color: red; }\n",
           does_not_fire: ".card { gap: var(--sp); }\n",
@@ -329,7 +329,7 @@ module Master
           [finding(line: 1, message: "layout surface without gap/section spacing — set rhythm tokens (design_rules negative_space)")]
         end
 
-        RuleDSL.rule :TYPE_HIERARCHY,
+        LawDSL.law :TYPE_HIERARCHY,
           severity: :info, tags: %i[DESIGN TYPOGRAPHY], applies_to: CSS_LANGS, autofix: false,
           fires: ".s1 { font-size: 11px; }\n.s2 { font-size: 12px; }\n.s3 { font-size: 13px; }\n.s4 { font-size: 14px; }\n.s5 { font-size: 15px; }\n.s6 { font-size: 16px; }\n.s7 { font-size: 17px; }\n.s8 { font-size: 18px; }\n.s9 { font-size: 19px; }\n",
           does_not_fire: ".s1 { font-size: 11px; }\n.s2 { font-size: 12px; }\n.s3 { font-size: 13px; }\n.s4 { font-size: 14px; }\n.s5 { font-size: 15px; }\n.s6 { font-size: 16px; }\n.s7 { font-size: 17px; }\n.s8 { font-size: 18px; }\n",
@@ -345,7 +345,7 @@ module Master
           [finding(line: 1, message: "#{unique.size} distinct px font sizes — prefer modular scale (Müller-Brockmann: one scale, few steps) ≤8 sizes (design_rules.type_scale)")]
         end
 
-        RuleDSL.rule :CONTRAST_TOKENS,
+        LawDSL.law :CONTRAST_TOKENS,
           severity: :info, tags: %i[DESIGN ACCESSIBILITY], applies_to: CSS_LANGS, autofix: false,
           fires: ".meta { color: #ccc; }\n",
           does_not_fire: ".meta { color: var(--text-secondary); }\n",
@@ -372,7 +372,7 @@ module Master
           findings
         end
 
-        RuleDSL.rule :PIXEL_EXACT,
+        LawDSL.law :PIXEL_EXACT,
           severity: :info, tags: %i[DESIGN AESTHETIC PIXEL], applies_to: CSS_LANGS, autofix: false,
           fires: ".card { width: 12.5px; }\n",
           does_not_fire: ".card { width: 12px; }\n",
@@ -384,7 +384,7 @@ module Master
         end
 
         # Family polish (design_rules ui_polish) — ERB chrome must be i18n; titles use tokens.
-        RuleDSL.rule :ERB_HARDCODED_CHROME,
+        LawDSL.law :ERB_HARDCODED_CHROME,
           severity: :warning, tags: %i[DESIGN I18N RAILS VIEWS], applies_to: HTML_LANGS, autofix: false,
           description: "empty/search chrome uses t() not hardcoded English (default_locale nb)",
           fires: %(<%= render "shared/empty", title: "No results" %>\n),
@@ -409,7 +409,7 @@ module Master
           findings
         end
 
-        RuleDSL.rule :TYPE_TITLE_TOKEN,
+        LawDSL.law :TYPE_TITLE_TOKEN,
           severity: :info, tags: %i[DESIGN TYPOGRAPHY], applies_to: CSS_LANGS, autofix: false,
           description: "page titles use --text-title token not raw 20px",
           fires: ".page-header h1 { font-size: 20px; }\n",
@@ -432,7 +432,7 @@ module Master
           findings
         end
 
-        RuleDSL.rule :FORM_FOLLOWS_FUNCTION,
+        LawDSL.law :FORM_FOLLOWS_FUNCTION,
           severity: :info, tags: %i[DESIGN AESTHETIC], applies_to: HTML_LANGS, autofix: false,
           description: "decorative empty wrappers without content/role",
           fires: %(<div class="decor"></div>\n),
@@ -444,7 +444,7 @@ module Master
             message: "decorative empty div — form follows function; remove or attach semantics")
         end
 
-        RuleDSL.rule :SIGNAL_NOISE,
+        LawDSL.law :SIGNAL_NOISE,
           severity: :info, tags: %i[DESIGN AESTHETIC], applies_to: HTML_LANGS, autofix: false,
           description: "too many competing visual classes on one node",
           fires: %(<div class="card card--wide is-open u-mt-2 u-p-1 shadow rounded muted">x</div>\n),
@@ -461,7 +461,7 @@ module Master
           end
         end
 
-        RuleDSL.rule :AFFORDANCE_CLARITY,
+        LawDSL.law :AFFORDANCE_CLARITY,
           severity: :warning, tags: %i[DESIGN UX], applies_to: HTML_LANGS, autofix: false,
           description: "clickable non-buttons need clear affordance",
           fires: %(<div data-action="click->dropdown#toggle">Menu</div>\n),
@@ -490,7 +490,7 @@ module Master
             message: "interactive div/span — use <button> or explicit role+tabindex+keyboard handler")
         end
 
-        RuleDSL.rule :AESTHETIC_MINIMALISM,
+        LawDSL.law :AESTHETIC_MINIMALISM,
           severity: :info, tags: %i[DESIGN AESTHETIC], applies_to: HTML_LANGS, autofix: false,
           description: "Rams less-but-better — flag icon+label+badge pileups",
           fires: %(<button class="btn"><svg class="icon"></svg><span>Save</span></button>\n),
@@ -519,7 +519,7 @@ module Master
         }.freeze
 
         %w[USEFUL UNDERSTANDABLE UNOBTRUSIVE HONEST THOROUGH].each do |trait|
-          RuleDSL.rule :"RAMS_#{trait}",
+          LawDSL.law :"RAMS_#{trait}",
             severity: :info, tags: %i[DESIGN RAMS], applies_to: HTML_LANGS, autofix: false,
             description: "Rams checklist tag: #{trait.downcase}",
             fires: RAMS_FIXTURES.fetch(trait)[0],
@@ -559,7 +559,7 @@ module Master
           end
         end
 
-        RuleDSL.rule :HOST_CAPACITY,
+        LawDSL.law :HOST_CAPACITY,
           severity: :warning, tags: %i[OPS], applies_to: %i[ruby], autofix: false,
           description: "carrying capacity — avoid full-repo scan/fix in hot paths",
           example_path: "/repo/lib/example.rb",
@@ -599,7 +599,7 @@ module Master
           j
         end
 
-        RuleDSL.rule :THIN_CONTROLLER,
+        LawDSL.law :THIN_CONTROLLER,
           severity: :warning, tags: %i[RAILS ARCHITECTURE], applies_to: %i[ruby], autofix: false,
           description: "thin controllers — business logic belongs in models/services",
           example_path: "/repo/app/controllers/example_controller.rb",
@@ -633,7 +633,7 @@ module Master
           findings
         end
 
-        RuleDSL.rule :FAT_MODEL_CALLBACK_SOUP,
+        LawDSL.law :FAT_MODEL_CALLBACK_SOUP,
           severity: :info, tags: %i[RAILS ARCHITECTURE], applies_to: %i[ruby], autofix: false,
           description: "limit model callback piles",
           fires: %w[before_validation before_save after_save after_create after_update after_commit]
@@ -646,7 +646,7 @@ module Master
           [finding(line: 1, message: "#{count} AR callbacks — prefer services/events over callback soup")]
         end
 
-        RuleDSL.rule :RAILS_TAG_HELPER,
+        LawDSL.law :RAILS_TAG_HELPER,
           severity: :info, tags: %i[RAILS VIEWS], applies_to: %i[html], autofix: false,
           description: "prefer tag helpers over raw HTML for dynamic content",
           fires: %(<p><%= @post.title %></p>\n),
@@ -661,7 +661,7 @@ module Master
           findings
         end
 
-        RuleDSL.rule :STIMULUS_CONTROLLER_SIZE,
+        LawDSL.law :STIMULUS_CONTROLLER_SIZE,
           severity: :warning, tags: %i[RAILS JAVASCRIPT], applies_to: %i[javascript], autofix: false,
           description: "Stimulus controllers stay focused",
           # 201 lines against the ceiling of 200, so the example proves the
@@ -681,7 +681,7 @@ module Master
           [finding(line: 1, message: "Stimulus controller #{lines} lines — split at #{max} (data/laws.yml); move targets/actions out (progressive enhancement)")]
         end
 
-        RuleDSL.rule :STIMULUS_PROGRESSIVE,
+        LawDSL.law :STIMULUS_PROGRESSIVE,
           severity: :info, tags: %i[RAILS JAVASCRIPT UX], applies_to: %i[html], autofix: false,
           description: "interactive UI should degrade without JS when possible",
           fires: %(<div data-controller="map"></div>\n),
@@ -692,7 +692,7 @@ module Master
           [finding(line: 1, message: "Stimulus island without form/link fallback — progressive enhancement")]
         end
 
-        RuleDSL.rule :NO_LOGIC_IN_VIEW,
+        LawDSL.law :NO_LOGIC_IN_VIEW,
           severity: :warning, tags: %i[RAILS VIEWS], applies_to: %i[html], autofix: false,
           description: "views present; models/helpers compute",
           fires: %(<% @posts.select { |p| p.published? }.each do |post| %>\n),
@@ -709,7 +709,7 @@ module Master
           findings
         end
 
-        RuleDSL.rule :HELPER_VIEW_ONLY,
+        LawDSL.law :HELPER_VIEW_ONLY,
           severity: :info, tags: %i[RAILS], applies_to: %i[ruby], autofix: false,
           description: "helpers format for views only",
           example_path: "/repo/app/helpers/example_helper.rb",
@@ -720,7 +720,7 @@ module Master
           [finding(line: 1, message: "AR access in helper — helpers format only; queries belong in models")]
         end
 
-        RuleDSL.rule :SCSS_NESTING_DEPTH,
+        LawDSL.law :SCSS_NESTING_DEPTH,
           severity: :warning, tags: %i[RAILS CSS DESIGN], applies_to: %i[scss], autofix: false,
           description: "avoid deep SCSS nesting / preprocessor bloat",
           # Depth is read at each line's end, so the example nests the way SCSS
@@ -740,7 +740,7 @@ module Master
           [finding(line: 1, message: "SCSS nesting depth #{max} — flatten (modern CSS, no preprocessor bloat)")]
         end
 
-        RuleDSL.rule :PWA_MANIFEST_HINT,
+        LawDSL.law :PWA_MANIFEST_HINT,
           severity: :info, tags: %i[RAILS PWA], applies_to: %i[json html], autofix: false,
           description: "PWA surfaces declare manifest",
           example_path: "/repo/app/views/layouts/application.html.erb",
