@@ -9,7 +9,7 @@ class LayoutContractTest < Minitest::Test
   # __dir__ is RAILS/test → ROOT is RAILS/ → REPO is pub4 checkout root.
   ROOT = File.expand_path("..", __dir__)
   REPO = File.expand_path("..", ROOT)
-  SHARED = File.join(ROOT, "shared")
+  SHARED = File.join(ROOT, "__shared")
   FACE_CSS = File.join(REPO, "MASTER", "web", "public", "face.css")
   TOKENS = File.join(SHARED, "design_tokens.yml")
   LAYOUT_CHROME = File.join(SHARED, "app", "assets", "stylesheets", "_layout_chrome.scss")
@@ -73,7 +73,7 @@ class LayoutContractTest < Minitest::Test
   end
 
   def test_no_view_skips_a_heading_level
-    views = Dir.glob(File.join(ROOT, "{amber,brgen,bsdports,shared}", "app", "views", "**", "*.html.erb")) +
+    views = Dir.glob(File.join(ROOT, "{amber,brgen,bsdports,__shared}", "app", "views", "**", "*.html.erb")) +
             Dir.glob(File.join(ROOT, "brgen", "engines", "*", "app", "views", "**", "*.html.erb"))
 
     refute_empty views, "no views found — the glob stopped matching, which is blindness not cleanliness"
@@ -100,7 +100,7 @@ class LayoutContractTest < Minitest::Test
   # profile, now .profile-meta with a flex gap, and one reserving a line box in
   # the marketplace nav, which the storefront flatten removed outright.
   def test_nbsp_is_typography_not_spacing
-    views = Dir.glob(File.join(ROOT, "{amber,brgen,bsdports,shared}", "app", "views", "**", "*.erb")) +
+    views = Dir.glob(File.join(ROOT, "{amber,brgen,bsdports,__shared}", "app", "views", "**", "*.erb")) +
             Dir.glob(File.join(ROOT, "brgen", "engines", "*", "app", "views", "**", "*.erb"))
 
     refute_empty views, "no views found — the glob stopped matching, which is blindness not cleanliness"
@@ -214,7 +214,7 @@ class LayoutContractTest < Minitest::Test
     typography = File.read(File.join(SHARED, "app", "assets", "stylesheets", "_typography.scss"))
 
     assert_includes typography, "--measure: 66ch"
-    stylesheets = Dir.glob(File.join(File.dirname(SHARED), "{amber,brgen,bsdports,shared}/app/assets/stylesheets/**/*.scss"))
+    stylesheets = Dir.glob(File.join(File.dirname(SHARED), "{amber,brgen,bsdports,__shared}/app/assets/stylesheets/**/*.scss"))
     declarers = stylesheets.select { |path| File.read(path).match?(/^\s*--measure(?:-body)?\s*:/) }
 
     assert_equal [File.join(SHARED, "app", "assets", "stylesheets", "_typography.scss")], declarers
