@@ -165,7 +165,7 @@ module Master
       end
 
       def collect_visual_duplicates(findings)
-        path = File.join(repo_root, "RAILS", "gates", "visual_contract.rb")
+        path = File.join(repo_root, "MASTER", "gates", "visual_contract.rb")
         return unless File.file?(path)
         return unless File.read(path, encoding: "UTF-8").include?("selenium-webdriver")
 
