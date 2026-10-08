@@ -129,14 +129,14 @@ module Master
 
         def executable_semantic_ids
           require File.join(@root, "law", "law") unless defined?(::Law)
-          ::Law.load_all(File.join(@root, "law")) if ::Law.rules.empty?
-          ::Law.rules.values.select(&:semantic?).map { |law| law.id.to_s.downcase }.to_set
+          ::Law.load_all(File.join(@root, "law")) if ::Law.definitions.empty?
+          ::Law.definitions.values.select(&:semantic?).map { |law| law.id.to_s.downcase }.to_set
         end
 
         def law_detector?(id)
           require File.join(@root, "law", "law") unless defined?(::Law)
-          ::Law.load_all(File.join(@root, "law")) if ::Law.rules.empty?
-          law = ::Law.rules[id.to_sym]
+          ::Law.load_all(File.join(@root, "law")) if ::Law.definitions.empty?
+          law = ::Law.definitions[id.to_sym]
           law&.detect
         end
 
@@ -153,8 +153,8 @@ module Master
         # `Law.define(:ID)` reads none of them.
         def law_ids
           require File.join(@root, "law", "law") unless defined?(::Law)
-          ::Law.load_all(File.join(@root, "law")) if ::Law.rules.empty?
-          ::Law.rules.keys.map { |id| id.to_s.downcase }.to_set
+          ::Law.load_all(File.join(@root, "law")) if ::Law.definitions.empty?
+          ::Law.definitions.keys.map { |id| id.to_s.downcase }.to_set
         rescue StandardError => e
           raise "rule registry law census failed: #{e.class}: #{e.message}"
         end
@@ -170,8 +170,8 @@ module Master
         def executable_law_rows
           require File.join(Master::ROOT, "lib", "master") unless defined?(::Master::ROOT)
           require File.join(@root, "law", "law") unless defined?(::Law)
-          ::Law.load_all(File.join(@root, "law")) if ::Law.rules.empty?
-          ::Law.rules.values.map do |law|
+          ::Law.load_all(File.join(@root, "law")) if ::Law.definitions.empty?
+          ::Law.definitions.values.map do |law|
             law.contract_entry.merge(
               "detect" => !law.detect.nil?,
               "semantic" => !law.ask.nil?,
@@ -188,7 +188,7 @@ module Master
           @registry_rule_rows = Review::Scan::Law.registry
             .select { |klass| shipped?(klass) }
             .reject { |klass| LawFactory.bridge_class?(klass) }
-            .map { |klass| RuleFactory.build(klass, root: @root) }
+            .map { |klass| LawFactory.build(klass, root: @root) }
             .map do |rule|
               {
                 "id" => rule.id.to_s,
@@ -207,11 +207,11 @@ module Master
         # invisible to Zeitwerk until it does: asked cold, the registry answered
         # 81 mechanical rules where a loaded one answers 115.
         def build_registry_ids
-          Review::Scan::RuleDSL
-          Review::Scan::Rule.registry
+          Review::Scan::LawDSL
+          Review::Scan::Law.registry
             .select { |klass| shipped?(klass) }
-            .reject { |klass| RuleFactory.bridge_class?(klass) }
-            .map { |klass| RuleFactory.build(klass, root: @root).id.to_s.downcase }
+            .reject { |klass| LawFactory.bridge_class?(klass) }
+            .map { |klass| LawFactory.build(klass, root: @root).id.to_s.downcase }
             .to_set
         end
 
