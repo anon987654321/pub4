@@ -8,7 +8,7 @@ module Master
     class FixLoop
       class LawOrder
         # These are scanner ids, not law names. DRY/KISS/SRP never shipped as
-        # Rule#id values, so tier2? was false for every rule and the primary
+        # Law#id values, so tier2? was false for every rule and the primary
         # key was constant. NO_GOD_CLASS is SIMPLEST_WORKS, FEATURE_ENVY is
         # the SRP detector, FEW_ARGUMENTS is the conciseness one.
         TIER2_QUALITY_LAW_IDS = %w[NO_GOD_CLASS FEATURE_ENVY FEW_ARGUMENTS].freeze
@@ -26,14 +26,14 @@ module Master
         def ordered(violation_counts:)
           deps = load_deps
           law_resolver = Master::Ground::LawResolver.new
-          rules_index = Priority.laws_index(root: @root)
+          laws_index = Priority.laws_index(root: @root)
           sorted = @laws.each_with_index.sort_by do |r, i|
             frequency = violation_counts[r.id].to_f
             quality = @learnings&.fix_quality(law: r.id) || 0.5
             # tier2 stays a strict lexicographic primary key, not folded into
             # score()'s additive bonus: a high-frequency generic rule's score
             # can exceed a rare tier2 rule's +50 bonus, which would silently
-            # break the "tier2 quality rules always come first" guarantee
+            # break the "tier2 quality laws always come first" guarantee
             # test_fix_loop_priorities.rb depends on. score() still computes
             # law- and quality-aware ranking for everything else.
             score = Priority.score(
