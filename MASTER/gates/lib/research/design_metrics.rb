@@ -9,7 +9,7 @@ require_relative "../../support/crawl_support"
 require_relative "../../support/geometry_probe"
 require_relative "../../support/design_metrics"
 require_relative "../../../tools/master_design"
-require_relative "../../../tools/scss_rules"
+require_relative "../../../tools/scss"
 
 module Deploy
   # P2: measure design_laws.yml (type, contrast, touch, spacing, measure)
