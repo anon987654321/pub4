@@ -277,7 +277,7 @@ module Master
       # (test_core_no_lib_backedges). Returns the blocking findings as strings.
       def scan_verifier
         lambda do |path:, content:|
-          Master::Review::Scan::WriteGuard.default.verdict(path:, content:).blocking
+          Master::Fix::WriteGuard.default.verdict(path:, content:).blocking
                                           .map { |f| "#{f[:rule]}:#{f[:line]} #{f[:message]}" }
         end
       end
