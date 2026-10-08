@@ -29,8 +29,8 @@ module Master
           original_src = begin
             File.read(path, encoding: "UTF-8")
           rescue StandardError => e
-            Master::Ground::Swallow.log(e, context: "LawLoop.reflexion_source_read", rule: @rule.id)
-            @bus&.publish("law_loop:reflexion_rejected", rule: @rule.id, file: path,
+            Master::Ground::Swallow.log(e, context: "LawLoop.reflexion_source_read", rule: @law.id)
+            @bus&.publish("law_loop:reflexion_rejected", law: @law.id, file: path,
               reason: "source read failed: #{e.message[0, 120]}")
             return
           end
