@@ -71,7 +71,7 @@ module Law
   }.freeze
 
   MEMBERS = %i[id source severity mode languages scope law_scope lifecycle autofix path path_exclude absent detect ask practice fix bad good reads_comments].freeze
-  Rule = Data.define(*MEMBERS) do
+  Definition = Data.define(*MEMBERS) do
     # `path` takes a Regexp or a substring; `path_exclude` was already a Regexp,
     # and one member of a pair reading its argument the other way is a trap for
     # whoever writes the next law.
@@ -112,7 +112,7 @@ module Law
     def enforceable? = %i[active trusted].include?(lifecycle)
 
     def can_transition_to?(state)
-      ::Law::Rule::LIFECYCLE_TRANSITIONS.fetch(lifecycle).include?(state.to_sym)
+      ::Law::Definition::LIFECYCLE_TRANSITIONS.fetch(lifecycle).include?(state.to_sym)
     end
 
     def proof_kind
@@ -172,7 +172,7 @@ module Law
         prove_as_real_file!
       end
 
-      unless ::Law::Rule::LIFECYCLE_TRANSITIONS.key?(lifecycle)
+      unless ::Law::Definition::LIFECYCLE_TRANSITIONS.key?(lifecycle)
         raise ArgumentError, "#{id}: unknown lifecycle #{lifecycle.inspect}"
       end
       unless %i[never review automatic].include?(autofix)
@@ -319,9 +319,9 @@ module Law
     end
   end
 
-  # Data.define's block is lexical; publish this graph on the generated Rule
-  # class explicitly because Contract, Index and callers use it as Rule API.
-  Rule.const_set(:LIFECYCLE_TRANSITIONS, {
+  # Data.define's block is lexical; publish this graph on the generated Law
+  # definition explicitly because Contract, Index and callers use it as Rule API.
+  Definition.const_set(:LIFECYCLE_TRANSITIONS, {
     proposed: %i[proven retired],
     proven: %i[active advisory retired],
     active: %i[observed advisory retired],
@@ -357,7 +357,7 @@ module Law
       @h[:lifecycle] ||= :active
       @h[:autofix] ||= :review
 
-      Rule.new(**@h.slice(*MEMBERS)).prove!
+      Definition.new(**@h.slice(*MEMBERS)).prove!
     end
   end
 
@@ -383,8 +383,8 @@ module Law
 
     POLICY = {
       "lifecycle" => {
-        "states" => Rule::LIFECYCLE_TRANSITIONS.keys.map(&:to_s),
-        "transitions" => Rule::LIFECYCLE_TRANSITIONS.transform_keys(&:to_s).transform_values { |states| states.map(&:to_s) },
+        "states" => Definition::LIFECYCLE_TRANSITIONS.keys.map(&:to_s),
+        "transitions" => Definition::LIFECYCLE_TRANSITIONS.transform_keys(&:to_s).transform_values { |states| states.map(&:to_s) },
       },
       "autofix" => {
         "policies" => %w[never review automatic],
@@ -465,7 +465,7 @@ module Law
       duplicate = ids.tally.select { |_, count| count > 1 }.keys
       raise ArgumentError, "duplicate executable law ids: #{duplicate.join(', ')}" unless duplicate.empty?
 
-      invalid = rules.reject { |rule| Rule::LIFECYCLE_TRANSITIONS.key?(rule.lifecycle) }
+      invalid = rules.reject { |rule| Definition::LIFECYCLE_TRANSITIONS.key?(rule.lifecycle) }
       raise ArgumentError, "invalid rule lifecycle: #{invalid.map(&:id).join(', ')}" unless invalid.empty?
 
       invalid = rules.reject { |rule| %i[never review automatic].include?(rule.autofix) }
