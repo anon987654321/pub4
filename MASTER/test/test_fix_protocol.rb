@@ -50,6 +50,20 @@ class TestFixProtocol < Minitest::Test
     end
   end
 
+  def test_render_exposes_applicable_law_selection
+    Dir.mktmpdir("fix-protocol-laws") do |root|
+      target = File.join(root, "thing.rb")
+      File.write(target, "puts :ok\n")
+
+      payload = JSON.parse(Master::Fix::Protocol.render(root:, target: target))
+      application = payload.fetch("law_application")
+
+      assert_equal "ruby", application.fetch("language")
+      assert_includes application.fetch("governing_laws"), "SINGULARITY"
+      assert_includes application.fetch("executable_laws"), "FROZEN_STRING_LITERAL"
+    end
+  end
+
   def test_rule_metadata_exposes_machine_readable_repair_and_verification
     law = Master::Fix::Protocol.rules.find(&:semantic?)
 
