@@ -88,6 +88,7 @@ module Master
         def mechanical(entries, registry: build_registry_ids)
           entries.select do |law|
             law["detect_lexical"] || law["detect_structural"] ||
+              law_detector?(law["id"]) ||
               detected?(registry, law["id"]) || detected?(registry, law["folded_into"])
           end
         end
@@ -128,13 +129,13 @@ module Master
         private
 
         def executable_semantic_ids
-          require File.join(@root, "law", "law") unless defined?(::Law)
+          require File.join(@root, "law", "definition") unless defined?(::Law)
           ::Law.load_all(File.join(@root, "law")) if ::Law.definitions.empty?
           ::Law.definitions.values.select(&:semantic?).map { |law| law.id.to_s.downcase }.to_set
         end
 
         def law_detector?(id)
-          require File.join(@root, "law", "law") unless defined?(::Law)
+          require File.join(@root, "law", "definition") unless defined?(::Law)
           ::Law.load_all(File.join(@root, "law")) if ::Law.definitions.empty?
           law = ::Law.definitions[id.to_sym]
           law&.detect
@@ -152,7 +153,7 @@ module Master
         # generates its four rules from data/laws.yml, so a grep for a literal
         # `Law.define(:ID)` reads none of them.
         def law_ids
-          require File.join(@root, "law", "law") unless defined?(::Law)
+          require File.join(@root, "law", "definition") unless defined?(::Law)
           ::Law.load_all(File.join(@root, "law")) if ::Law.definitions.empty?
           ::Law.definitions.keys.map { |id| id.to_s.downcase }.to_set
         rescue StandardError => e
@@ -169,7 +170,7 @@ module Master
 
         def executable_law_rows
           require File.join(Master::ROOT, "lib", "master") unless defined?(::Master::ROOT)
-          require File.join(@root, "law", "law") unless defined?(::Law)
+          require File.join(@root, "law", "definition") unless defined?(::Law)
           ::Law.load_all(File.join(@root, "law")) if ::Law.definitions.empty?
           ::Law.definitions.values.map do |law|
             law.contract_entry.merge(
