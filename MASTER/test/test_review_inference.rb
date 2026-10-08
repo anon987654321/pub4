@@ -107,7 +107,7 @@ end
     def scanner.scan_dir(*) = Master::Result.ok([])
     fix = Object.new
     def fix.run(*) = Master::Result.ok("fixed")
-    def fix.preview(*) = Master::Result.ok(total: 0, rules: {}, files: {})
+    def fix.preview(*) = Master::Result.ok(total: 0, laws: {}, files: {})
 
     stub_scan = lambda { |*| "scan: clean" }
     Master::CLI::CommandRegistry.stub(:observe, stub_scan) do
@@ -137,7 +137,7 @@ end
 
   def test_rails_rules_registered
     require_relative "../lib/review/scan/rule_dsl"
-    ids = Master::Review::Scan::Rule.registry.filter_map do |k|
+    ids = Master::Review::Scan::Law.registry.filter_map do |k|
       begin
         k.auto_build? ? k.new.id.to_s.upcase : nil
       rescue StandardError # scan: intentional — non-buildable rules have no id; nil is the census answer
