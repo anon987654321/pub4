@@ -60,6 +60,15 @@ apps:
   brgen:
     title: Brgen
     domain: brgen.no
+    brand:
+      category: city_network
+      promise: "Your city, one living network."
+      position: "The internet of local life: social, commerce, culture, dating, food, maps, media and messaging, joined by the city."
+      distinctive_mechanic: "The city is the product; the city name is compressed by dropping a vowel."
+      voice: [local, direct, lively, uncorporate]
+      visual_character: [deep_blue, editorial_type, local_photography, flat_surfaces, restrained_motion]
+      experience_principles: [city_first, local_before_global, one_network_across_verticals, live_and_present, useful_over_noisy]
+      vertical_architecture: "Verticals inherit Brgen identity and gain a surface dialect; they become standalone brands only when they have a distinct market and promise."
     port: 38182
     # One Falcon process. City apexes (brgen.no, lsangeles.com, …) each carry
     # the feed at the apex and namespaced engines on subdomains
@@ -283,6 +292,14 @@ apps:
 
   amber:
     title: Amber
+    brand:
+      category: personal_wardrobe_intelligence
+      promise: "Know what you own. Wear what matters."
+      position: "A private wardrobe intelligence companion, not a fashion storefront: it helps a person understand, enjoy, wear and edit what they already own."
+      distinctive_mechanic: "A warm personal wardrobe graph expressed through editorial fashion, a dressing-room mannequin and subtle amber/golden cues."
+      voice: [warm, observant, non_judgmental, precise]
+      visual_character: [ivory, amber, ink, soft_texture, pixel_stardust, mannequin_forms]
+      experience_principles: [private_by_default, explain_why, buy_less_wear_more, delight_without_pressure, intelligence_with_honest_boundaries]
     # amberapp.art is amber's one name. amberapp.com is not ours: it is a
     # for-sale lander at another registrar, so read whois before calling a
     # domain ours. The session cookie is domain: :all, which scopes it to the
@@ -357,6 +374,14 @@ apps:
   bsdports:
     title: bsdports
     domain: bsdports.org
+    brand:
+      category: open_source_package_intelligence
+      promise: "The ports tree, understood."
+      position: "A calm, exact interface to BSD software, dependencies, security and package knowledge."
+      distinctive_mechanic: "OpenBSD terminal discipline translated into a browsable public knowledge surface."
+      voice: [exact, calm, technical, trustworthy]
+      visual_character: [terminal_green, flat_black, monospaced_type, dense_information]
+      experience_principles: [truth_before_gloss, provenance_visible, dependency_context, security_first, no_friction]
     port: 47312
     stack_now: SQLite3, Rails 8.2.0.alpha, Hotwire, Falcon, Active Storage, OpenBSD, relayd
     stack_later: PostgreSQL, pgvector, infrastructure knowledge graph, OpenBSD package intelligence
