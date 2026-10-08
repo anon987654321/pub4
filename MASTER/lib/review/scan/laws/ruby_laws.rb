@@ -86,7 +86,7 @@ module Master
         # and a raw params[] reaching a mass-assignment sink never had one.
         # Scoped to /app/ rather than /app/controllers/ because a service or
         # model object handed the params hash carries the same risk.
-        RuleDSL.rule :STRONG_PARAMETERS,
+        LawDSL.law :STRONG_PARAMETERS,
           severity: :error, tags: %i[SECURITY], applies_to: %i[ruby],
           fires: "Post.create(params[:post])\n",
           does_not_fire: "Post.create(params.require(:post).permit(:title))\n",
@@ -107,7 +107,7 @@ module Master
         # KERNEL_COERCION lives once, in law/ruby.rb — fixtures attached, any narrowing
         # this version had learned ported there (2026-08-21 twin retirement).
 
-        RuleDSL.rule :HASH_FETCH,
+        LawDSL.law :HASH_FETCH,
           severity: :info, tags: %i[READABILITY], applies_to: %i[ruby],
           fires: "value = options[:size] || 10\n",
           does_not_fire: "value = options.fetch(:size, 10)\n",
@@ -135,7 +135,7 @@ module Master
         # IMMUTABLE lives once, in law/ruby.rb — fixtures attached, any narrowing
         # this version had learned ported there (2026-08-21 twin retirement).
 
-        RuleDSL.rule :FIND_EACH,
+        LawDSL.law :FIND_EACH,
           severity: :warning, tags: %i[PERFORMANCE], applies_to: %i[ruby],
           fires: "  User.all.each { |u| u.touch }\n",
           does_not_fire: "  User.find_each(batch_size: 500) { |u| u.touch }\n",
@@ -145,7 +145,7 @@ module Master
             message: "unbounded .all.each — use find_each(batch_size: N)")
         end
 
-        RuleDSL.rule :NO_UPDATE_ATTRIBUTE,
+        LawDSL.law :NO_UPDATE_ATTRIBUTE,
           severity: :error, tags: %i[DATA_INTEGRITY], applies_to: %i[ruby],
           fires: "  user.update_attribute(:name, name)\n",
           does_not_fire: "  user.update!(name: name)\n",
@@ -154,7 +154,7 @@ module Master
           scan_lines(src, /\.update_attribute\(/, message: "update_attribute skips validations — use update!")
         end
 
-        RuleDSL.rule :PLUCK_OVER_MAP,
+        LawDSL.law :PLUCK_OVER_MAP,
           severity: :info, tags: %i[PERFORMANCE], applies_to: %i[ruby],
           fires: "  ids = order.items.map(&:id)\n",
           does_not_fire: "  ids = order.items.pluck(:id)\n",
@@ -167,7 +167,7 @@ module Master
         # (universal_rules.rb): two ids counted the same parameter list, one at
         # :warn and one at :info, and every 3+-positional def carried both.
 
-        RuleDSL.rule :DEAD_CODE,
+        LawDSL.law :DEAD_CODE,
           severity: :warning, tags: %i[CLEAN_CODE], applies_to: %i[ruby],
           fires: "  return value\n  log(value)\n",
           # A guard clause keeps the next line reachable, which is the shape a bare
@@ -213,7 +213,7 @@ module Master
         # ceilings recorded at 1/21/1/1 the same day. 40 catches the 24
         # worst (top: 85.5 in brgen's application_helper); walk it down as
         # they fall: 40 -> 30 (81) -> 25 (169) -> 17 (560).
-        RuleDSL.rule :ABC_SIZE,
+        LawDSL.law :ABC_SIZE,
           severity: :warning, tags: %i[COMPLEXITY], applies_to: %i[ruby], autofix: false,
           description: "method ABC size over the ratchet threshold — extract until the pieces name themselves",
           example_path: "/repo/lib/example.rb",
@@ -245,7 +245,7 @@ module Master
         # nothing but a quoted string, so it reported 496 findings across MASTER
         # of which the great majority were a method's last expression or an
         # assertion message, and the fixer would have touched none of them.
-        RuleDSL.rule :TRAILING_COMMAS,
+        LawDSL.law :TRAILING_COMMAS,
           severity: :info, tags: %i[STYLE], applies_to: %i[ruby],
           fires: %(LIST = [\n  "one"\n]\n),
           does_not_fire: %(LIST = [\n  "one",\n]\n),
