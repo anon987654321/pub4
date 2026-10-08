@@ -8,8 +8,8 @@ duplicate_members:
 - MASTER/gates/support/gate_ledger.rb | OPENBSD/lib/gate_ledger.rb
 - MASTER/gates/support/gate_result.rb | OPENBSD/lib/gate_result.rb
 - MASTER/gates/support/utf8.rb | OPENBSD/lib/utf8.rb
-- MASTER/web/config/initializers/inflections.rb | RAILS/__shared/config/initializers/inflections.rb
-- MASTER/web/public/icon.png | RAILS/__shared/public/icon.png
+- RAILS/master_web/config/initializers/inflections.rb | RAILS/__shared/config/initializers/inflections.rb
+- RAILS/master_web/public/icon.png | RAILS/__shared/public/icon.png
 - RAILS/amber/.rubocop.yml | RAILS/brgen/.rubocop.yml | RAILS/bsdports/.rubocop.yml
 - RAILS/amber/Rakefile | RAILS/bsdports/Rakefile
 - RAILS/amber/bin/setup | RAILS/bsdports/bin/setup
