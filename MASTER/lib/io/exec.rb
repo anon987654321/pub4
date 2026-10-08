@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "open3"
-require "timeout"
 # Exec is standalone-loadable on purpose -- it is the subprocess primitive, so
 # anything that shells out may reach it before a runtime boot -- and both of its
 # rescue paths call Swallow. Without this require the swallow raises NameError
@@ -119,15 +118,19 @@ module Master
         end
       end
 
-      def bounded_wait(wait_thr, timeout, readers)
-        children = Fiber[:master_children]
-        wait = -> { Timeout.timeout(timeout) { wait_thr.value } }
-        children ? children.track(wait_thr.pid, &wait) : wait.call
-      rescue Timeout::Error
-        kill_group(wait_thr.pid)
-        readers.each(&:kill)
-        wait_thr.value
-      end
+# Thread#join(limit) is the bound: Exec runs before Bundler activates the
+# lockfile, and requiring the timeout default gem here pins the stock
+# version and fails Bundler.setup when the lockfile asks for a newer one.
+def bounded_wait(wait_thr, timeout, readers)
+  children = Fiber[:master_children]
+  wait = -> { wait_thr.join(timeout) }
+  finished = children ? children.track(wait_thr.pid, &wait) : wait.call
+  return wait_thr.value if finished
+
+  kill_group(wait_thr.pid)
+  readers.each(&:kill)
+  wait_thr.value
+end
 
       def kill_group(pid)
         pgid = Process.getpgid(pid)

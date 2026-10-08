@@ -66,7 +66,7 @@ module Operator
       output, status = Master::Io::Exec.capture2e(path, "-e", "print RUBY_VERSION")
       return unless status.success?
 
-      Gem::Version.new(output.to_s.strip)
+      Gem::Version.new(output.to_s.strip[/\d+(\.\d+)+\z/])
     rescue ArgumentError, Errno::ENOEXEC, Errno::EACCES
       nil
     end
