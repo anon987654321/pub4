@@ -185,7 +185,7 @@ module Operator
 
     # The fourth hygiene check and the dep graph both reported a number that
     # nothing failed on. rule_hygiene warned on its own ceiling and ratchets
-    # never carried the row; RuleRegistryAudit reported dep_graph_gaps and no
+    # never carried the row; LawRegistryAudit reported dep_graph_gaps and no
     # ceiling anywhere read it.
     def fixture_and_dep_rows
       [master_row("rule_fixture_debt", "data/laws.yml", "registry rules with no worked example") do
@@ -202,7 +202,7 @@ module Operator
        master_row("law_deps.ungraphed", "data/laws.yml", "registry rules absent from law_deps") do
          $LOAD_PATH.unshift(File.join(MASTER, "lib")) unless $LOAD_PATH.include?(File.join(MASTER, "lib"))
          require "master"
-         audit = Master::Review::Scan::RuleRegistryAudit.new(root: MASTER)
+         audit = Master::Review::Scan::LawRegistryAudit.new(root: MASTER)
          ungraphed = audit.ungraphed_rule_ids
          [ungraphed.size, Master.law("law_ratchets", root: MASTER).dig("deps", "ungraphed"), ungraphed.map(&:to_s)]
        end]
