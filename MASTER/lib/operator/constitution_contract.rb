@@ -12,7 +12,7 @@ module Operator
       MASTER/data/project_context.yml
       MASTER/bin/cli
       MASTER/lib/review/scan
-      MASTER/law/law.rb
+      MASTER/law/definition.rb
       RAILS/CLAUDE.md
       RAILS/__shared/design_tokens.yml
       OPENBSD/CLAUDE.md
