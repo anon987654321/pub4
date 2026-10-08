@@ -9,7 +9,7 @@ require_relative "../../MASTER/tools/scss_rules"
 
 class DesignContractTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
-  SHARED = File.join(ROOT, "shared")
+  SHARED = File.join(ROOT, "__shared")
   DIALECT_TOKENS_SCSS = File.join(SHARED, "app", "assets", "stylesheets", "_dialect_tokens.scss")
   TOKENS_YML = File.join(SHARED, "design_tokens.yml")
   TOKENS_CSS = File.join(SHARED, "public", "styles", "tokens.css")
@@ -131,7 +131,7 @@ class DesignContractTest < Minitest::Test
   end
 
   def test_shared_base_locks_mobile_text_sizing
-    base = File.read(File.join(ROOT, "shared", "app", "assets", "stylesheets", "_base.scss"))
+    base = File.read(File.join(ROOT, "__shared", "app", "assets", "stylesheets", "_base.scss"))
     assert_includes base, "-webkit-text-size-adjust: 100%;"
     assert_includes base, "text-size-adjust: 100%;"
   end
@@ -304,7 +304,7 @@ class DesignContractTest < Minitest::Test
   def tap_floor_stylesheets
     rails = Dir.glob(File.join(ROOT, "*/app/assets/stylesheets/**/*.{scss,css}")) +
             Dir.glob(File.join(ROOT, "*/engines/*/app/assets/stylesheets/**/*.{scss,css}")) +
-            Dir.glob(File.join(ROOT, "shared/app/assets/stylesheets/**/*.{scss,css}")) +
+            Dir.glob(File.join(ROOT, "__shared/app/assets/stylesheets/**/*.{scss,css}")) +
             Dir.glob(File.join(ROOT, "shared/frontend/**/*.css"))
     face = File.expand_path("../MASTER/web/public/face.css", ROOT)
     (rails + [face]).uniq.reject { |path| path.match?(TAP_FLOOR_SKIP) || !File.file?(path) }
