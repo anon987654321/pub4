@@ -44,7 +44,7 @@ module Operator
     end
 
     def practice(all)
-      practice_ids = executable_law_rules
+      practice_ids = executable_laws
         .select(&:enforceable?)
         .filter_map { |law| law.id.to_s if law.practice }
         .map(&:downcase).to_set
@@ -88,16 +88,16 @@ module Operator
       end
 
       puts "law_reach: #{all.size} Laws — #{mech.size} deterministic, #{asked.size} prompted, "            "#{conduct.size} practice, #{out.size} unreachable (ceiling #{limit})"
-      out.each { |rule| puts "  #{rule["id"]}" }
-      puts "rule_reach: every executable rule has a reachable enforcement surface" if out.empty?
+      out.each { |law| puts "  #{rule["id"]}" }
+      puts "law_reach: every executable Law has a reachable enforcement surface" if out.empty?
       return 0 if out.size <= limit
 
-      warn "rule_reach: #{out.size} executable law(s) have no detector, prompt, or practice surface; ceiling #{limit}"
+      warn "law_reach: #{out.size} executable Law(s) have no detector, prompt, or practice surface; ceiling #{limit}"
       1
     end
 
     def executable_laws
-      return @executable_law_rules if defined?(@executable_law_rules)
+      return @executable_laws if defined?(@executable_laws)
 
       $LOAD_PATH.unshift(File.join(MASTER_DIR, "lib")) unless $LOAD_PATH.include?(File.join(MASTER_DIR, "lib"))
       require "master"
