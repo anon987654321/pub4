@@ -376,7 +376,7 @@ job nothing on vm23 runs, which `Post#broadcast_live_refresh` says in place.
 
 ## Social endpoints
 
-Amber and brgen eval `shared/config/routes/social.rb` (notifications, reactions,
+Amber and brgen eval `__shared/config/routes/social.rb` (notifications, reactions,
 reports). BSDports intentionally omits those routes because its schema has no
 social tables.
 
@@ -438,7 +438,7 @@ unified. brgen's `NotificationsController` subclasses
 on the same `notifications` table. Brgen adds `title`/`body` presenters, a
 `match` kind for dating, and Turbo broadcasts to `brgen:notifications:*`.
 Shared::Notification is the thin engine stub for apps that eval
-`shared/config/routes/social.rb`. Same table, different presentation contract —
+`__shared/config/routes/social.rb`. Same table, different presentation contract —
 duplication beats the wrong abstraction until inbox grouping unifies.
 
 Controllers: `Shared::LiveSearchable`, `StructuredEvents`, `ActorIdentity`.
@@ -831,7 +831,7 @@ proposes a `pub4/lint/` shelf. Decided against. The shelf is already spelled in
 the filenames; the file count does not move, so no ratchet is paid either way;
 and the cost is renaming thirteen constants and following them through
 `MASTER/lib/operator/ratchets.rb` — which derives each constant from the basename —
-plus `shared/config/ci.rb`, `gates/lib/source/scale_ratchet.rb` and nine tests.
+plus `__shared/config/ci.rb`, `gates/lib/source/scale_ratchet.rb` and nine tests.
 That is a cross-tree rename of a ratchet table bought for one path segment, on a
 checkout where the commit hook refuses a cross-tree commit for good reason.
 
@@ -852,7 +852,7 @@ associations for a path segment. All ten `RAILS/*.sh` scripts are reached.
 
 ## Vertical ownership
 
-brgen's verticals live at brgen/engines/<name>, while messenger remains a
+brgen's verticals live at brgen_<name>, while messenger remains a
 host namespace under brgen/app/controllers. Tooling must scan both shapes:
 a glob of <app>/app/** sees the host namespaces but misses engines.
 
@@ -878,7 +878,7 @@ Sluggable.
   vertical reads go through a shared concern.
 - A vertical's views may use any shared Stimulus controller; the baseline is
   registered for every app in `frontend/stimulus_boot.js`.
-- Anything that enumerates brgen's code must glob `brgen/engines/*/app/**`
+- Anything that enumerates brgen's code must glob `brgen_*/app/**`
   alongside `brgen/app/**`, or it is measuring roughly half the app and will
   report the difference as health.
 
