@@ -1715,6 +1715,7 @@ law_map:
     - responsive_animation
     - gesture_ownership
     - state_choreography
+    - waiting_state_meaning
     - system_status_visibility
     - tactile_feedback
     - signature_moment
@@ -4658,6 +4659,18 @@ law_map:
       - STATE_CHOREOGRAPHY
       status: covered
       root: visible_state
+      tags:
+      - ux_laws
+    waiting_state_meaning:
+      meaning: 'Meaningful waits identify what the system is doing'
+      detects: generic_loading
+      severity: low
+      confidence: 0.8
+      operation: improve
+      law_ids:
+      - WAITING_STATE_MEANING
+      status: covered
+      root: system_status
       tags:
       - ux_laws
     tactile_surfaces:
