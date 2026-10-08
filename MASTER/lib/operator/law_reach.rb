@@ -2,7 +2,7 @@
 
 # How many executable laws can fire, and under what conditions.
 #
-# The population is the live Law registry plus scanner-only RuleDSL entries.
+# The population is the live Law registry plus scanner-only LawDSL entries.
 # Each executable law must expose at least one enforcement surface: a detector,
 # a semantic question, or a practice hook. Policy data in data/laws.yml governs
 # those laws but is not the executable population.
