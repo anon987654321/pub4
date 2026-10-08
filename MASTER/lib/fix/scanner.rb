@@ -74,14 +74,14 @@ module Master
           validate_depth!(depth)
           law_set = laws || active_laws(depth)
           law_set = dispatched_laws(path, law_set) if laws.nil?
-          @file_processor.call(path:, depth:, rules: law_set)
+          @file_processor.call(path:, depth:, laws: law_set)
         end
 
         def scan_dir(dir, depth: :deep, glob: SCAN_GLOB, stream: false, autofix: false, autofix_root: nil, laws: nil)
           validate_depth!(depth)
           paths = Dir.glob(File.join(dir, glob)).select { |path| scannable_path?(path, dir) }
           law_set = laws || active_laws(depth)
-          reset_scan_progress(paths.size, rules: law_set) if stream
+          reset_scan_progress(paths.size, laws: law_set) if stream
           unit = stream ? @scan_progress[:unit] : Fiber[:master_unit]
           pairs = Master::Trace::Dmesg.under(unit) do
             parallel_map(paths) do |path, idx|
@@ -304,7 +304,7 @@ module Master
           path = Master::LAWS_PATH
           stat = File.stat(path)
           stamp = [stat.size, stat.ino, stat.mtime.to_r]
-          return @law_law_prediction_thresholds if @law_law_prediction_thresholds_stamp == stamp
+          return @law_prediction_thresholds if @law_prediction_thresholds_stamp == stamp
 
           rules = Master.load_yaml(path) || {}
           prediction = rules["prediction_engine"]
@@ -312,8 +312,8 @@ module Master
 
           # prediction_engine was retired; an absent policy means no additional
           # confidence threshold. The law/autofix policy remains authoritative.
-          @law_law_prediction_thresholds_stamp = stamp
-          @law_law_prediction_thresholds = prediction.freeze
+          @law_prediction_thresholds_stamp = stamp
+          @law_prediction_thresholds = prediction.freeze
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "Scanner.law_prediction_thresholds")
           raise "scanner: prediction policy unreadable: #{e.class}: #{e.message}"
@@ -361,7 +361,7 @@ module Master
         def should_autofix?(law_id, observed_conf, allow_deletions: false)
           return false if !allow_deletions && deleting_law?(law_id)
 
-          threshold = law_prediction_thresholds[law_id.to_s] || law_prediction_thresholds[rule_id]
+          threshold = law_prediction_thresholds[law_id.to_s] || law_prediction_thresholds[law_id]
           return true unless threshold && threshold["confidence"]
 
           observed_conf.to_f >= threshold["confidence"].to_f
