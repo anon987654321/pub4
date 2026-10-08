@@ -2,7 +2,7 @@
 
 require_relative "test_helper"
 require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
-::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.rules.empty?
+::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.definitions.empty?
 
 class TestLawContract < Minitest::Test
   def test_concurrent_law_loads_share_one_registry
@@ -12,7 +12,7 @@ class TestLawContract < Minitest::Test
 
     assert_equal 1, results.map(&:object_id).uniq.size
     assert_operator results.first.size, :>, 100
-    assert_equal results.first.keys.sort, Law.rules.keys.sort
+    assert_equal results.first.keys.sort, Law.definitions.keys.sort
   end
 
   def test_law_loader_restores_previous_registry_when_reload_fails
@@ -30,7 +30,7 @@ class TestLawContract < Minitest::Test
       RUBY
 
       Law.load_all(dir)
-      assert_equal "stable", Law.rules.fetch(:LOAD_ROLLBACK_PROBE).practice
+      assert_equal "stable", Law.definitions.fetch(:LOAD_ROLLBACK_PROBE).practice
 
       File.write(path, <<~RUBY)
         Law.define(:LOAD_ROLLBACK_PROBE) do
@@ -44,7 +44,7 @@ class TestLawContract < Minitest::Test
       RUBY
 
       Law.load_all(dir)
-      assert_equal "updated", Law.rules.fetch(:LOAD_ROLLBACK_PROBE).practice
+      assert_equal "updated", Law.definitions.fetch(:LOAD_ROLLBACK_PROBE).practice
 
       File.write(path, <<~RUBY)
         Law.define(:LOAD_ROLLBACK_PROBE) do
@@ -59,7 +59,7 @@ class TestLawContract < Minitest::Test
       RUBY
 
       assert_raises RuntimeError { Law.load_all(dir) }
-      assert_equal "updated", Law.rules.fetch(:LOAD_ROLLBACK_PROBE).practice
+      assert_equal "updated", Law.definitions.fetch(:LOAD_ROLLBACK_PROBE).practice
     ensure
       Law.load_all(File.join(Master::ROOT, "law"))
     end
@@ -151,7 +151,7 @@ class TestLawContract < Minitest::Test
   end
 
   def test_lifecycle_transitions_are_closed
-    rule = Law.rules.fetch(:VERIFICATION_REQUIRED_FOR_COMPLETION)
+    rule = Law.definitions.fetch(:VERIFICATION_REQUIRED_FOR_COMPLETION)
     assert_equal :trusted, rule.lifecycle
     assert rule.can_transition_to?(:advisory)
     assert rule.can_transition_to?(:retired)
