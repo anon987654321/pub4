@@ -19,7 +19,7 @@ class TestInterconnectRule < Minitest::Test
     Dir.mktmpdir do |root|
       FileUtils.mkdir_p(File.join(root, "data"))
       files.each { |name, body| File.write(File.join(root, "data", name), body) }
-      yield Master::Review::Scan::Rules::InterconnectRule.new(root:), root
+      yield Master::Review::Scan::Laws::InterconnectRule.new(root:), root
     end
   end
 
@@ -82,7 +82,7 @@ class TestInterconnectRule < Minitest::Test
   end
 
   # A named file that is not there is not a parse failure and not a phantom
-  # key — nothing can be said about it, so the rule says nothing.
+  # key — nothing can be said about it, so the law says nothing.
   def test_a_missing_data_file_is_passed_over
     in_tree({}) do |rule, _root|
       assert_empty flags(rule, %(Master.load_yaml("absent.yml").dig("a", "b")\n))
