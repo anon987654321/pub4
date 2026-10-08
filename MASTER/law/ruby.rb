@@ -441,7 +441,7 @@ Law.define(:STRICT_LOADING_MISSING) do
   absent /\bstrict_loading_by_default\b/
   # The base class is where the default is set, and subclasses inherit it.
   # Matching `< ApplicationRecord` too asked all thirty of amber's models to
-  # restate a setting RAILS/shared/app/models/application_record.rb already
+  # restate a setting RAILS/__shared/app/models/application_record.rb already
   # makes — the same shape as the `dependent:` census in proposals.yml, which
   # counted declarations whose behaviour comes from the class above them.
   detect { |text| text.match?(/class\s+\w+\s+<\s+ActiveRecord::Base\b/m) }
