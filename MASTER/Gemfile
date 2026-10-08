@@ -7,6 +7,8 @@ ruby ">= 3.3", "< 4.1"
 gem "fiddle"
 gem "psych"
 gem "yaml"
+# Ruby 4.0.5 ships json 2.18.0 as its default gem; keep boot on that pre-activated version.
+gem "json", "= 2.18.0"
 
 gem "ruby_llm", "~> 2.0"
 gem "mcp", "~> 1.6"
