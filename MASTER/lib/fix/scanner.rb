@@ -266,7 +266,6 @@ module Master
           @laws
         end
 
-        LawDSL's applies_to scope is already authoritative inside the law.
         # Use the same declaration one level earlier so a JavaScript file does
         # not traverse every Ruby-only rule, and a Ruby file does not traverse
         # the CSS/HTML population. Laws without an explicit scope remain in every
