@@ -292,8 +292,8 @@ module Master
       # list is worse than one built without it, and neither should fail a turn.
       def all_rules
         require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
-        ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.rules.empty?
-        ::Law.rules.values.map do |rule|
+        ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.definitions.empty?
+        ::Law.definitions.values.map do |rule|
           "#{rule.id}: #{(rule.practice || rule.fix).to_s.gsub(/\s+/, ' ').strip}"
         end
       rescue StandardError => e
