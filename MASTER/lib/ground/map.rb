@@ -72,43 +72,41 @@ module Master
 
       # Runtime map of fossil master.yml principles → live scan rule IDs + operations.
       # Loaded from data/principle_map.yml; enforced by SelfTest and /map.
-      class Principle
-        # Read-only lookups over `principles` by status/tag -- grouped apart
+      class LawMap
+        # Read-only lookups over `laws` by status/tag -- grouped apart
         # from loading/integrity to keep PrincipleMap itself under the
         # NO_GOD_CLASS public-method ceiling (a mixin's methods aren't counted
         # against the including class since they live in their own ModuleNode).
         module Queries
           def [](id)
-            principles[id.to_s]
+            laws[id.to_s]
           end
 
           def covered
-            principles.select { |_, e| e.status == "covered" }
+            laws.select { |_, e| e.status == "covered" }
           end
 
           def gaps
-            principles.select { |_, e| e.status == "gap" }
+            laws.select { |_, e| e.status == "gap" }
           end
 
           def by_tag(tag)
-            principles.select { |_, e| e.tags.map(&:to_s).include?(tag.to_s) }
+            laws.select { |_, e| e.tags.map(&:to_s).include?(tag.to_s) }
           end
 
           def aesthetic
             by_tag("aesthetic").merge(by_tag("ui"))
           end
 
-          def rules_for(principle_id)
-            entry = self[principle_id]
-            entry ? entry.rule_ids : []
+          def laws_for(law_id)
+            entry = self[law_id]
+            entry ? entry.law_ids : []
           end
         end
 
         include Queries
 
-        PATH = File.join(Master::DATA, "principle_map.yml").freeze
-
-        Entry = Data.define(:id, :meaning, :detects, :severity, :confidence, :operation, :rule_ids, :status, :tags, :immutable, :source)
+        Entry = Data.define(:id, :meaning, :detects, :severity, :confidence, :operation, :law_ids, :status, :tags, :immutable, :source)
 
         def self.load(root: Master::ROOT)
           new(root:)
@@ -116,11 +114,11 @@ module Master
 
         def initialize(root: Master::ROOT)
           @root = root
-          @data = load_data
+          @data = Master.law("law_map", root: @root)
         end
 
-        def principles
-          @principles ||= build_entries
+        def laws
+          @laws ||= build_entries
         end
 
         def clusters
@@ -131,47 +129,47 @@ module Master
           @data["version"].to_s
         end
 
-        # Integrity: covered entries must resolve to registered RuleDSL ids when registry loaded.
-        def integrity(registered_rule_ids: nil)
-          registered = Array(registered_rule_ids).map { |id| id.to_s.upcase }.to_set
+        # Integrity: covered entries must resolve to registered LawDSL ids when registry loaded.
+        def integrity(registered_law_ids: nil)
+          registered = Array(registered_law_ids).map { |id| id.to_s.upcase }.to_set
           findings = []
-          principles.each_value do |entry|
-            if entry.status == "covered" && entry.rule_ids.empty?
-              findings << "covered principle #{entry.id} has no rule_ids"
+          laws.each_value do |entry|
+            if entry.status == "covered" && entry.law_ids.empty?
+              findings << "covered law #{entry.id} has no law_ids"
             end
             next if registered.empty?
 
-            entry.rule_ids.each do |rid|
+            entry.law_ids.each do |rid|
               next if registered.include?(rid.to_s.upcase)
 
-              findings << "principle #{entry.id} maps to unknown rule #{rid}"
+              findings << "law #{entry.id} maps to unknown law #{rid}"
             end
           end
           findings
         end
 
         # The reverse of #integrity. laws.yml declares that every registered rule
-        # traces back to a principle; SelfTest only ever checked principle -> rule,
+        # traces back to a law; SelfTest only ever checked law -> rule,
         # so it reported 0 while this direction stood at 101. Gated by
-        # `rake lint:principle_trace` against a ratcheting ceiling, not a zero the
+        # `rake lint:law_trace` against a ratcheting ceiling, not a zero the
         # repo has never met.
-        def untraced_rules(registered_rule_ids:)
-          mapped = principles.each_value.flat_map { |entry| entry.rule_ids.map { |id| id.to_s.upcase } }.to_set
-          Array(registered_rule_ids).map { |id| id.to_s.upcase }.uniq.reject { |id| mapped.include?(id) }.sort
+        def untraced_laws(registered_law_ids:)
+          mapped = laws.each_value.flat_map { |entry| entry.law_ids.map { |id| id.to_s.upcase } }.to_set
+          Array(registered_law_ids).map { |id| id.to_s.upcase }.uniq.reject { |id| mapped.include?(id) }.sort
         end
 
-        def rule_trace_ceiling
-          @data["rule_trace_ceiling"]
+        def law_trace_ceiling
+          @data["law_trace_ceiling"]
         end
 
         def summary_line
           c = covered.size
           g = gaps.size
           a = aesthetic.size
-          "principle_map #{version}: #{principles.size} principles (#{c} covered, #{g} gap, #{a} aesthetic/ui)"
+          "law_map #{version}: #{laws.size} laws (#{c} covered, #{g} gap, #{a} aesthetic/ui)"
         end
 
-        # Entries with no `source:` (why this principle exists -- what
+        # Entries with no `source:` (why this law exists -- what
         # incident, review, or design decision motivated it) can't be told
         # apart from a stale or accidental addition later. Informational
         # only -- unlike #integrity, never wired into SelfTest, so an
@@ -179,15 +177,15 @@ module Master
         # a DENSITY regression did earlier this session. Matches OpenClaw's
         # check-rule-metadata.mjs (enforced there; advisory here for now).
         def provenance_gaps
-          principles.values.select { |entry| entry.source.to_s.strip.empty? }
+          laws.values.select { |entry| entry.source.to_s.strip.empty? }
         end
 
         private
 
-        def load_data = Master.load_data_yaml(@root, "principle_map.yml", PATH, context: "PrincipleMap.load_data")
+        def load_data = Master.load_data_yaml(@root, "law_map.yml", PATH, context: "PrincipleMap.load_data")
 
         def build_entries
-          raw = @data["principles"] || {}
+          raw = @data["laws"] || {}
           raw.each_with_object({}) do |(id, body), acc|
             next unless body.is_a?(Hash)
 
@@ -198,7 +196,7 @@ module Master
               severity: body["severity"].to_s,
               confidence: body["confidence"].to_f,
               operation: body["operation"],
-              rule_ids: Array(body["rule_ids"]).map(&:to_s),
+              law_ids: Array(body["law_ids"]).map(&:to_s),
               status: body["status"].to_s,
               tags: Array(body["tags"]).map(&:to_s),
               immutable: !!body["immutable"],
