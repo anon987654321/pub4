@@ -16,6 +16,10 @@ class TestRailsInteractionCraft < Minitest::Test
   SWIPE = File.join(ROOT, "RAILS", "brgen", "app", "javascript", "controllers", "swipe_controller.js")
   ACTION = File.join(SHARED, "frontend", "action_controller.js")
   ACTION_BAR = File.join(SHARED, "app", "views", "shared", "_action_bar.html.erb")
+  SEARCH_LOADING = File.join(SHARED, "app", "views", "shared", "_search_loading.html.erb")
+  EMPTY_STATE = File.join(SHARED, "app", "assets", "stylesheets", "_empty_state.scss")
+  LAWS = File.join(ROOT, "MASTER", "data", "laws.yml")
+  INTERFACE = File.join(ROOT, "MASTER", "law", "interface.rb")
 
   def test_shared_interaction_craft_is_forwarded
     stack = File.read(STACK)
@@ -52,6 +56,24 @@ class TestRailsInteractionCraft < Minitest::Test
     js = File.read(HAPTICS)
     assert_includes js, "press()"
     assert_includes js, "this.#vibrate(10)"
+  end
+
+  def test_waiting_state_is_constitutionally_registered
+    laws = File.read(LAWS)
+    interface = File.read(INTERFACE)
+    assert_includes laws, "waiting_state_meaning:"
+    assert_includes laws, "WAITING_STATE_MEANING"
+    assert_includes interface, "Law.define(:WAITING_STATE_MEANING)"
+  end
+
+  def test_waiting_state_names_the_task_without_replacing_the_skeleton
+    erb = File.read(SEARCH_LOADING)
+    css = File.read(EMPTY_STATE)
+    assert_includes erb, "search-loading-message"
+    assert_includes erb, 'aria-hidden="true"'
+    assert_includes erb, 'role="status"'
+    assert_includes erb, 'aria-busy="true"'
+    assert_includes css, ".search-loading-message"
   end
 
   def test_swipe_threshold_has_one_shared_haptic_and_no_raw_vibration
