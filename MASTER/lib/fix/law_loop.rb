@@ -113,7 +113,7 @@ module Master
       # One pass: scan → fix each violating file once → return { fixed:, status: }.
       # External findings are used by rendered and convergence evidence, which
       # has already measured the artifact and therefore must not be rescanned
-      # through a registry rule that knows nothing about that evidence.
+      # through a registry law that knows nothing about that evidence.
       def run_once(files, external_violations: nil, image: nil)
         @visual_image = image
         violations = external_violations || scan_files(files)
@@ -276,18 +276,18 @@ module Master
       # minimum change, so the scout's beat is only the lines the fix already
       # changed: no violation may appear there that was not there before. A
       # whole-file boyscout would command the refactors PRESERVE_FIRST forbids;
-      # this is the half of the rule that is compatible with it.
+      # this is the half of the law that is compatible with it.
       #
       # "New" is counted per law, not matched by message. Messages carry the
       # numbers they measure ("talks to manifest 5 times", "ABC size 43.0"), so
       # a refactor that moved or eased a finding made it read as a new one, and
       # every file repair that did not clear the file outright was refused. A
       # law whose findings did not grow landed nothing; a swap to another law
-      # still grows that rule and is still refused.
+      # still grows that law and is still refused.
       def boyscout_law_violations(before, after, old_src, new_src)
-        had = before.map { |v| v[:rule].to_s }.tally
-        grown = after.map { |v| v[:rule].to_s }.tally.select { |rule, count| count > had.fetch(rule, 0) }.keys
-        landed = after.select { |v| grown.include?(v[:rule].to_s) }
+        had = before.map { |v| v[:law].to_s }.tally
+        grown = after.map { |v| v[:law].to_s }.tally.select { |law, count| count > had.fetch(law, 0) }.keys
+        landed = after.select { |v| grown.include?(v[:law].to_s) }
         return [] if landed.empty?
 
         lo, hi = changed_region(old_src, new_src)
@@ -326,7 +326,7 @@ module Master
         #{preamble}
 
         File: #{File.basename(path)} (#{ctx[:lang]})
-        Rule violated: #{violation[:law]}
+        Law violated: #{violation[:law]}
         Line #{violation[:line]}: #{violation[:message]}
         #{ctx[:fix_line]}
         #{visual_fix_context}
@@ -427,8 +427,8 @@ module Master
 
       def convergence_cfg
         @convergence_cfg ||= begin
-          rules = Master.load_yaml(Master::LAWS_PATH)
-          convergence = rules&.dig("thresholds", "convergence")
+          laws = Master.load_yaml(Master::LAWS_PATH)
+          convergence = laws&.dig("thresholds", "convergence")
           raise "convergence thresholds missing: #{Master::LAWS_PATH}" unless convergence.is_a?(Hash)
           convergence
         end
