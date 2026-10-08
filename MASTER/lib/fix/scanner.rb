@@ -329,7 +329,7 @@ module Master
         # Deletion waits for a person. The word is /fix, and an unattended pass —
         # bin/gate over all four governed trees — adds without deleting.
         #
-        # The list is Master::Fix::AstFixer::DELETING_TRANSFORMS rather than a copy here: it
+        # The list is Master::Fix::Scan::AstFixer::DELETING_TRANSFORMS rather than a copy here: it
         # names methods that class defines, and the copy that stood here gated
         # only this path while AstFixer ran the transform unasked on the other.
         def deleting_rule?(rule_id)
