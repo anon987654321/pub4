@@ -41,7 +41,11 @@ end
 
 def initial_message_from_argv(argv)
   options = parse_initial_message_options(argv)
-  (options[:message] || argv.join(" ")).to_s.strip
+  message = options[:message]
+  return argv.join(" ").strip if message.nil?
+
+  tail = argv.reject { |arg| arg.start_with?("--") }
+  [message, *tail].join(" ").strip
 rescue OptionParser::ParseError => e
   Master::Trace::Dmesg.status("cli0", "option error, #{e.message}", io: $stderr)
   argv.reject { |arg| arg.start_with?("--") }.join(" ").strip
