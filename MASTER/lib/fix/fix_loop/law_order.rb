@@ -24,11 +24,12 @@ module Master
         end
 
         def ordered(violation_counts:)
+          violation_counts ||= {}
           deps = load_deps
           law_resolver = Master::Ground::LawResolver.new
           laws_index = Priority.laws_index(root: @root)
           sorted = @laws.each_with_index.sort_by do |r, i|
-            frequency = violation_counts[r.id].to_f
+            frequency = violation_counts.fetch(r.id, 1).to_f
             quality = @learnings&.fix_quality(law: r.id) || 0.5
             # tier2 stays a strict lexicographic primary key, not folded into
             # score()'s additive bonus: a high-frequency generic rule's score
