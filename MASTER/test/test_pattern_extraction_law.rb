@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-require_relative "../lib/review/scan/rules/structural_rules"
+require_relative "../lib/review/scan/laws/structural_rules"
 
 class TestPatternExtractionRule < Minitest::Test
   def setup
