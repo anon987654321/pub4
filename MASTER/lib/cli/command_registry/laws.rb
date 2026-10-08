@@ -60,7 +60,7 @@ module Master
       end
 
       def dispatch_rule_sources(root)
-        audit = Master::Review::Scan::RuleRegistryAudit.new(root:).call
+        audit = Master::Review::Scan::LawRegistryAudit.new(root:).call
         drift = audit.source_drift
 
         [
