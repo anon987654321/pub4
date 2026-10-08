@@ -35,19 +35,19 @@ module Master
       def fresh(path, findings)
         data = load
         declined = declined_for(path, data)
-        findings.reject { |finding| declined.include?(finding[:rule].to_s) || retired?(finding[:rule], data) }
+        findings.reject { |finding| declined.include?(finding[:law].to_s) || retired?(finding[:law], data) }
       end
 
-      def retired?(rule_id, data = load)
-        stats = data.dig("rules", rule_id.to_s)
+      def retired?(law_id, data = load)
+        stats = data.dig("laws", law_id.to_s)
         return false unless stats && stats["asked"].to_i >= RETIRE_AFTER
 
         return false if (stats["declined"].to_f / stats["asked"]) < RETIRE_RATIO
 
         # Once per rule: the counts still move while in-flight repairs land, so
         # the line itself cannot be the key.
-        ANNOUNCED.add?(rule_id.to_s) && Master::Trace::Dmesg.status(
-          "fix0", "#{rule_id} retired from model repair: declined #{stats["declined"]} of #{stats["asked"]}"
+        ANNOUNCED.add?(law_id.to_s) && Master::Trace::Dmesg.status(
+          "fix0", "#{law_id} retired from model repair: declined #{stats["declined"]} of #{stats["asked"]}"
         )
         true
       end
@@ -59,8 +59,8 @@ module Master
       # fingerprint is the detector's whole source file, so an edit beside it
       # also resets, which costs only a few asks. A count kept before
       # fingerprints existed adopts the current one.
-      def sync_detectors(rules)
-        marks = rules.to_h { |rule| [rule.id.to_s, DETECTORS.fetch(rule.id.to_s) { DETECTORS[rule.id.to_s] = detector_digest(rule) }] }
+      def sync_detectors(laws)
+        marks = laws.to_h { |law| [law.id.to_s, DETECTORS.fetch(law.id.to_s) { DETECTORS[law.id.to_s] = detector_digest(law) }] }
         LOCK.synchronize do
           data = load
           changed = marks.count { |id, digest| digest && refingerprint(data, id, digest) }
@@ -71,14 +71,14 @@ module Master
       # outcomes is a repair's breakdown, { outcome_symbol => count }. A call the
       # model never answered (quota, no lane) says nothing about the findings,
       # so it counts as neither an ask nor a decline.
-      def record(path, rule_ids, outcomes)
+      def record(path, law_ids, outcomes)
         verdict = verdict_for(outcomes)
         return if verdict == :unanswered
 
         LOCK.synchronize do
           data = load
-          rule_ids.each { |id| tally(data, id.to_s, verdict) }
-          remember_file(data, path, rule_ids, verdict)
+          law_ids.each { |id| tally(data, id.to_s, verdict) }
+          remember_file(data, path, law_ids, verdict)
           save(data)
         end
       end
@@ -87,20 +87,20 @@ module Master
 
       # True when the stats changed: a first fingerprint, or a new detector.
       def refingerprint(data, id, digest)
-        stats = data["rules"][id]
+        stats = data["laws"][id]
         return false if stats.nil? || stats["detector"] == digest
 
         unless stats["detector"].nil?
-          data["rules"][id] = { "asked" => 0, "declined" => 0, "applied" => 0 }
+          data["laws"][id] = { "asked" => 0, "declined" => 0, "applied" => 0 }
           data["files"].each_value { |entry| entry["declined"] = Array(entry["declined"]) - [id] }
           ANNOUNCED.delete(id)
           Master::Trace::Dmesg.status("fix0", "#{id} detector changed; its repair record starts afresh")
         end
-        data["rules"][id]["detector"] = digest
+        data["laws"][id]["detector"] = digest
         true
       end
 
-      def detector_digest(rule)
+      def detector_digest(law)
         klass = rule.class
         block = klass.respond_to?(:dsl_block) ? klass.dsl_block : nil
         source = block&.source_location || klass.instance_method(:check).source_location
@@ -119,7 +119,7 @@ module Master
       end
 
       def tally(data, id, verdict)
-        stats = (data["rules"][id] ||= { "asked" => 0, "declined" => 0, "applied" => 0 })
+        stats = (data["laws"][id] ||= { "asked" => 0, "declined" => 0, "applied" => 0 })
         stats["asked"] += 1
         stats["declined"] += 1 if verdict == :declined
         stats["applied"] += 1 if verdict == :applied
@@ -127,7 +127,7 @@ module Master
 
       # A decline is kept against the content it was about; a repair changes the
       # file, so what was declined before no longer describes it.
-      def remember_file(data, path, rule_ids, verdict)
+      def remember_file(data, path, law_ids, verdict)
         key = relative(path)
         return data["files"].delete(key) if verdict == :applied
         return unless verdict == :declined
@@ -135,7 +135,7 @@ module Master
         entry = data["files"][key]
         sha = digest(path)
         earlier = entry && entry["sha"] == sha ? Array(entry["declined"]) : []
-        data["files"][key] = { "sha" => sha, "declined" => (earlier + rule_ids.map(&:to_s)).uniq }
+        data["files"][key] = { "sha" => sha, "declined" => (earlier + law_ids.map(&:to_s)).uniq }
       end
 
       def declined_for(path, data)
@@ -144,11 +144,11 @@ module Master
       end
 
       def load
-        return { "files" => {}, "rules" => {} } unless File.file?(@file)
+        return { "files" => {}, "laws" => {} } unless File.file?(@file)
 
-        { "files" => {}, "rules" => {} }.merge(JSON.parse(File.read(@file)))
+        { "files" => {}, "laws" => {} }.merge(JSON.parse(File.read(@file)))
       rescue JSON::ParserError
-        { "files" => {}, "rules" => {} }
+        { "files" => {}, "laws" => {} }
       end
 
       def save(data)
