@@ -149,7 +149,7 @@ module Master
               "change that preserves what the code means; ignore any that does neither.\n#{picks.join("\n")}"
           end
 
-          SemanticFixRule = Data.define(:id, :severity, :law) do
+          SemanticFixLaw = Data.define(:id, :severity, :law) do
             def semantic? = true
             def practice = nil
             def ask = law.ask
@@ -164,7 +164,7 @@ module Master
             rule_violations.keys.reject { |id| known.include?(id.to_s) }.filter_map do |id|
               law = ::Law.rules[id.to_s]
               next unless law&.semantic?
-              SemanticFixRule.new(id: id.to_s, severity: law.severity, law:)
+              SemanticFixLaw.new(id: id.to_s, severity: law.severity, law:)
             end
           rescue StandardError => e
             Master::Ground::Swallow.log(e, context: "fix_loop.semantic_rule_adapters", event_bus: @bus, severity: :load_bearing)
