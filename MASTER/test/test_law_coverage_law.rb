@@ -15,7 +15,7 @@ require "fileutils"
 # Both halves are pinned below, because either one regressing restores a gate
 # that reports nothing and looks green doing it.
 class TestRuleCoverageRule < Minitest::Test
-  Rules = Master::Review::Scan::Rules
+  Rules = Master::Review::Scan::Laws
 
   ONE_CLASS = <<~RUBY
     class WidgetRule < Rule
@@ -32,7 +32,7 @@ class TestRuleCoverageRule < Minitest::Test
     end
   RUBY
 
-  # The rule keys off a path containing /review/scan/rules/, so the fixture
+  # The rule keys off a path containing /review/scan/laws/, so the fixture
   # supplies one; only the source directory has to exist on disk.
   def messages(code, test_files: {}, dir: "test", path: "/x/lib/review/scan/laws/widget_rules.rb")
     Dir.mktmpdir do |root|
