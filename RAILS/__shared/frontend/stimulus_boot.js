@@ -35,17 +35,66 @@ import NetworkAware from "pub4/network_aware"
 import ViewportAware from "pub4/viewport_aware"
 import Haptics from "pub4/haptics"
 import Geolocation from "pub4/geolocation"
+import RailsNestedForm from "@stimulus-components/rails-nested-form"
+import Lightbox from "@stimulus-components/lightbox"
+import AnimatedNumber from "@stimulus-components/animated-number"
+import Sortable from "@stimulus-components/sortable"
+import Dropdown from "@stimulus-components/dropdown"
+import CheckboxSelectAll from "@stimulus-components/checkbox-select-all"
+import Timeago from "@stimulus-components/timeago"
+import TextareaAutogrow from "@stimulus-components/textarea-autogrow"
+import SpeechRecognition from "@stimulus-components/speech-recognition"
+import Sound from "@stimulus-components/sound"
+import ScrollTo from "@stimulus-components/scroll-to"
+import ScrollReveal from "@stimulus-components/scroll-reveal"
+import ScrollProgress from "@stimulus-components/scroll-progress"
+import RemoteRails from "@stimulus-components/remote-rails"
+import Prefetch from "@stimulus-components/prefetch"
+import PlacesAutocomplete from "stimulus-places-autocomplete"
+import Hotkey from "@stimulus-components/hotkey"
+import Glow from "stimulus-glow"
+import Dialog from "@stimulus-components/dialog"
+import ContentLoader from "@stimulus-components/content-loader"
+import Confirmation from "@stimulus-components/confirmation"
+import ColorPicker from "@stimulus-components/color-picker"
+import Chartjs from "@stimulus-components/chartjs"
+import Carousel from "@stimulus-components/carousel"
 import BottomSheet from "pub4/bottom_sheet"
 
 const COMPONENT_REGISTRATIONS = [
+  [ "animated-number", AnimatedNumber ],
   [ "auto-submit", AutoSubmit ],
+  [ "carousel", Carousel ],
+  [ "chartjs", Chartjs ],
   [ "character-counter", CharacterCounter ],
+  [ "checkbox-select-all", CheckboxSelectAll ],
   [ "clipboard", Clipboard ],
+  [ "color-picker", ColorPicker ],
+  [ "confirmation", Confirmation ],
+  [ "content-loader", ContentLoader ],
+  [ "dialog", Dialog ],
+  [ "dropdown", Dropdown ],
+  [ "glow", Glow ],
+  [ "hotkey", Hotkey ],
+  [ "lightbox", Lightbox ],
+  [ "notification", Notification ],
   [ "toast", Notification ],
-  [ "read-more", ReadMore ],
-  [ "reveal", Reveal ],
   [ "password-visibility", PasswordVisibility ],
+  [ "places-autocomplete", PlacesAutocomplete ],
   [ "popover", Popover ],
+  [ "prefetch", Prefetch ],
+  [ "nested-form", RailsNestedForm ],
+  [ "read-more", ReadMore ],
+  [ "remote-rails", RemoteRails ],
+  [ "reveal", Reveal ],
+  [ "scroll-progress", ScrollProgress ],
+  [ "scroll-reveal", ScrollReveal ],
+  [ "scroll-to", ScrollTo ],
+  [ "sortable", Sortable ],
+  [ "sound", Sound ],
+  [ "speech-recognition", SpeechRecognition ],
+  [ "textarea-autogrow", TextareaAutogrow ],
+  [ "timeago", Timeago ],
 ]
 
 export function bootPub4Stimulus(application) {
