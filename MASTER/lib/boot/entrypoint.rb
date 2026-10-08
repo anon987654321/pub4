@@ -7,18 +7,19 @@ require "time"
 require_relative "dependency_manager"
 require_relative "../trace/dmesg"
 require_relative "../operator/environment"
+require_relative "../operator/ruby_runner"
 
 module Master
   module Boot
     module Entrypoint
       module_function
 
-      OPENBSD_RUBY_PATTERN = /\A3\.(?:3|4)\.\d+\z/
-      ANDROID_RUBY_PATTERN = /\A4\.0\.\d+\z/
+      SUPPORTED_RUBY_MIN = Operator::Environment::SUPPORTED_RUBY_MIN
+      SUPPORTED_RUBY_MAX = Operator::Environment::SUPPORTED_RUBY_MAX
 
       def prepare!(root:, env: ENV, out: $stderr, argv: ARGV, program: $PROGRAM_NAME)
         root = File.expand_path(root)
-        reexec_pinned_ruby!(root:, env:, out:, argv:, program:)
+        reexec_best_ruby!(root:, env:, out:, argv:, program:)
         manager = DependencyManager.new(root:, env:, out:)
         result = manager.ensure!
         unless result.ok
@@ -52,5 +53,4 @@ module Master
           BUNDLE_ONLY BUNDLE_PATH BUNDLE_RETRY BUNDLE_USER_CONFIG
           BUNDLE_USER_HOME BUNDLE_VERSION BUNDLE_WITH BUNDLE_WITHOUT
         ].each { |key| clean_env.delete(key) }
-        clean_env["MASTER_BUNDLER_REEXEC_DONE"] = "1"
-        Master::Trace::Dmesg.status("bun...[truncated]
+        cle...[truncated]
