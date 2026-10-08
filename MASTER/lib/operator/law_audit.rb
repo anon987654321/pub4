@@ -100,8 +100,8 @@ module Operator
         require File.join(MASTER, "lib", "master")
         require File.join(MASTER, "law", "law")
       end
-      ::Law.load_all(File.join(MASTER, "law")) if ::Law.rules.empty?
-      ::Law.rules
+      ::Law.load_all(File.join(MASTER, "law")) if ::Law.definitions.empty?
+      ::Law.definitions
     end
 
     def corpus
