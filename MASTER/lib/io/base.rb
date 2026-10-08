@@ -22,7 +22,7 @@ module Master
         bytes = content.bytesize
         @bus&.publish("tool:before", tool: self.class::NAME, path: written, bytes:, op: "write")
 
-        guard = Master::Review::Scan::WriteGuard.default.verdict(path: full, content:)
+        guard = Master::Fix::WriteGuard.default.verdict(path: full, content:)
         @bus&.publish("write:guard", path: written, introduced: guard.introduced.size, blocked: guard.blocked?) unless guard.introduced.empty?
         return Result.err("write refused — #{guard.reason}", category: :policy) if guard.blocked?
 
