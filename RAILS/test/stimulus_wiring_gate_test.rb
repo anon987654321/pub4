@@ -63,7 +63,7 @@ class StimulusWiringGateTest < Minitest::Test
   # cannot be named binds every app.
   def test_a_shared_helper_binds_the_apps_that_call_it
     gate = Deploy::StimulusWiringGate.new
-    path = File.join(ROOT, "shared/app/helpers/shared/probe_helper.rb")
+    path = File.join(ROOT, "__shared/app/helpers/shared/probe_helper.rb")
     called = %(def lazy_image_tag(source)\n  tag.img(data: { controller: "lazy-image" })\nend\n)
     unnamed = %(tag.img(data: { controller: "lazy-image" })\n)
 
