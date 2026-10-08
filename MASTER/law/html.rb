@@ -256,7 +256,7 @@ Law.define(:NO_INLINE_STYLES) do
 end
 
 Law.define(:NO_JQUERY) do
-  source "RAILS/shared frontend convention"
+  source "RAILS/__shared frontend convention"
   severity :warn
   languages %i[javascript html]
   detect { |line| line.match?(/jQuery\(|\$\((?=\s*["\x27#.])/) }
