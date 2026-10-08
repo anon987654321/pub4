@@ -4,6 +4,7 @@ require "json"
 require "digest"
 require_relative "../ai/orientation"
 require_relative "protocol_detector_matrix"
+require_relative "../ground/law_resolver"
 
 module Master
   module Fix
@@ -207,9 +208,11 @@ module Master
         corpus["eligible_sample"] = Array(files).first(24).map { |path| relative(path, root) } if files
         corpus["skipped_by_caller"] = skipped.to_i if skipped
         detector_matrix = ProtocolDetectorMatrix.matrix(laws)
+        law_application = Master::Ground::ApplicableLaws.new.for(path: target_path).to_h
         payload = {
           "fix_protocol_version" => VERSION,
           "law_digest" => Law::Contract.digest,
+          "law_application" => law_application,
           "operation" => "/fix",
           "target" => relative(target_path, root),
           "stages" => STAGES,
