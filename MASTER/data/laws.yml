@@ -5,7 +5,7 @@
 
 CAPABILITY_STATUS_MUST_BE_TRUTHFUL:
   priority: 1
-  principle: Unavailable capabilities must never be reported as ready.
+  statement: Unavailable capabilities must never be reported as ready.
   applies_to:
   - security
   - observability
@@ -14,7 +14,7 @@ CAPABILITY_STATUS_MUST_BE_TRUTHFUL:
 
 ROBUSTNESS:
   priority: 1
-  principle: Errors fail safely; security first; handle edge cases.
+  statement: Errors fail safely; security first; handle edge cases.
   applies_to:
   - security
   - errors
@@ -30,7 +30,7 @@ ROBUSTNESS:
 
 SINGULARITY:
   priority: 2
-  principle: One source of truth; no duplication; data integrity.
+  statement: One source of truth; no duplication; data integrity.
   applies_to:
   - duplication
   - consistency
@@ -43,7 +43,7 @@ SINGULARITY:
 
 LINEARITY:
   priority: 3
-  principle: Sequential flow; minimal branches; clear path.
+  statement: Sequential flow; minimal branches; clear path.
   applies_to:
   - control_flow
   - nesting
@@ -56,7 +56,7 @@ LINEARITY:
 
 PROXIMITY:
   priority: 4
-  principle: Related code together; cohesive modules.
+  statement: Related code together; cohesive modules.
   applies_to:
   - organization
   - coupling
@@ -69,7 +69,7 @@ PROXIMITY:
 
 ABSTRACTION:
   priority: 5
-  principle: Right level; no leaky abstractions; appropriate hiding.
+  statement: Right level; no leaky abstractions; appropriate hiding.
   applies_to:
   - interfaces
   - encapsulation
@@ -82,7 +82,7 @@ ABSTRACTION:
 
 DENSITY:
   priority: 6
-  principle: Information dense; no noise; signal not noise.
+  statement: Information dense; no noise; signal not noise.
   applies_to:
   - verbosity
   - comments
@@ -95,7 +95,7 @@ DENSITY:
 
 RENDERED_VALUES:
   priority: 7
-  principle: Rendered values are operator-owned.
+  statement: Rendered values are operator-owned.
   applies_to:
   - aesthetics
   - colors
@@ -262,7 +262,7 @@ transformation_policy:
     - recommend
   postflight:
     - prove
-  principles:
+  operations:
     defragment: "Bring one concept or source of truth back together when it is unnecessarily scattered."
     decouple: "Remove unnecessary dependencies and references between independent concerns."
     flatten: "Remove needless wrappers, nesting, delegation layers, directories, and abstractions."
@@ -371,7 +371,7 @@ transformation_policy:
     prose: "Check claims, terminology, paragraph/heading hierarchy, reading measure, and meaning before style-level edits."
     visual: "Check semantic HTML, geometry, type hierarchy, spacing, interaction targets, accessibility, and visual regression before decoration."
   refactoring_playbook:
-    principles:
+    methods:
       - id: characterize_before_change
         action: "Capture behavior and contracts before structural change."
       - id: one_hat
