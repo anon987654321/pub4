@@ -27,7 +27,7 @@ module Master
       ].freeze
 
       def initialize(rules: nil)
-        @rules = rules || Ground::Rules.new
+        @rules = rules || Ground::Laws.new
         soul = @rules.data(:soul) || {}
         # Under "absolute", where soul.yml actually nests it. There is no
         # top-level anti_simulation key, so this dug nothing and @evidence has
