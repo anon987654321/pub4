@@ -693,6 +693,21 @@ class TestFixConvergence < Minitest::Test
     assert_equal "1", calls.last[:env]["MASTER_FIX_VERIFY"]
   end
 
+  def test_rails_source_stage_uses_the_full_verification_path
+    stage = Operator::GateChain.stages(scan_only: true, trees: ["RAILS"])
+                         .find { |candidate| candidate.name == "source" }
+    refute_nil stage
+    seen = nil
+
+    Operator::GateChain.stub(:rails_verification, ->(**args) { seen = args; [true, [], 0] }) do
+      ok, _body, status = stage.run.call
+      assert ok
+      assert_equal 0, status
+    end
+
+    assert_equal({ scan_only: true }, seen)
+  end
+
   def test_a_proof_marks_its_children_and_restores_the_parent
     pass = Master::CLI::Pipeline::Pass.allocate
     saved = ENV.delete("MASTER_IN_PROOF")
