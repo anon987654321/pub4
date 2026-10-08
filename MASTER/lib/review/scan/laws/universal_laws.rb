@@ -3,7 +3,7 @@
 module Master
   module Review
     module Scan
-      module Rules
+      module Laws
 
       # SQL strings embedded in Ruby DB adapter files are expected — only flag
       # actual mixed-medium template files.
@@ -163,7 +163,7 @@ module Master
       # SECRET_PROXIMITY lives once, in law/ — the third retired twin. The two
       # regexes were byte-identical; the registry block was a pure duplicate.
 
-# MAGIC_COLOR lives once, in js_rules.rb (applies_to css/scss/html/js — where colors
+# MAGIC_COLOR lives once, in js_laws.rb (applies_to css/scss/html/js — where colors
 # live). A second copy here with no applies_to double-counted every css/scss color
 # under the same id (a SINGULARITY violation) and added no coverage worth keeping.
 

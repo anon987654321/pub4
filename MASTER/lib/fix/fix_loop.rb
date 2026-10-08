@@ -23,6 +23,7 @@ require_relative "wishlist"
 require_relative "protocol"
 require_relative "transformation_plan"
 require_relative "convergence_discipline"
+require_relative "reflection"
 
 module Master
   module Fix
@@ -63,10 +64,10 @@ module Master
       RUN_BUDGET_SECONDS = Integer(ENV.fetch("MASTER_FIX_RUN_BUDGET_S", 30 * 60))
       WORKFLOW_PATH = Master.limits_path.freeze
 
-      def initialize(rules:, agent:, scanner:, root:, axioms: nil, bus: nil, git: nil, learnings: nil,
+      def initialize(laws:, agent:, scanner:, root:, axioms: nil, bus: nil, git: nil, learnings: nil,
                      incremental: false, ground_truth: nil, preserve_user_intent: nil,
                      law_resolver: nil, homeostat: nil)
-        @rules = rules
+        @laws = laws
         @axioms = axioms
         @agent = agent
         path_root = File.expand_path(root)
@@ -83,10 +84,11 @@ module Master
         @transformation_plan = TransformationPlan.new(root: Master::ROOT)
         @wishlist = Wishlist.new(root: @root, agent: @agent, event_bus: @bus)
         @convergence_discipline = ConvergenceDiscipline.new(root: @root, bus: @bus)
+        @reflection = Reflection.new(agent: @agent, root: @root, bus: @bus)
 
         @file_collector = FileCollector.new(root:, bus:)
-        @law_order = LawOrder.new(rules:, learnings:, bus:, root:)
-        @pass_runner = build_pass_runner(rules:, agent:, scanner:, root:, bus:, learnings:,
+        @law_order = LawOrder.new(laws:, learnings:, bus:, root:)
+        @pass_runner = build_pass_runner(laws:, agent:, scanner:, root:, bus:, learnings:,
           ground_truth:, preserve_user_intent:, law_resolver:, homeostat: @homeostat,
           discipline: @convergence_discipline, wishlist: @wishlist)
         @sweeps = build_sweeps(agent:, root:, bus:)
@@ -110,17 +112,21 @@ module Master
 
         current_phase = :corpus
         files = incremental ? @file_collector.collect_changed(target) : @file_collector.collect(target)
-        @pass_runner.full_semantic! if requested && @pass_runner.respond_to?(:full_semantic!)
-        coverage = {
+                coverage = {
           candidates: @file_collector.candidate_count,
           collected: files.size,
           skipped: @file_collector.skipped,
+          blocking_skips: @file_collector.respond_to?(:blocking_skips) ? @file_collector.blocking_skips : {},
         }
         @bus&.publish("fix_loop:corpus", target:, **coverage)
         Master::Trace::Dmesg.status(
           "fix0",
           "corpus candidates=#{coverage[:candidates]} collected=#{coverage[:collected]} skipped=#{coverage[:skipped]}",
         )
+        unless coverage[:blocking_skips].empty?
+          detail = coverage[:blocking_skips].map { |reason, count| "#{reason}=#{count}" }.join(", ")
+          return Result.err("fix_loop: uninspectable inputs remain: #{detail}", category: :validation)
+        end
         if coverage[:candidates].positive? && files.empty?
           reasons = @file_collector.skip_reasons.sort_by { |reason, count| [-count, reason] }
           detail = reasons.first(4).map { |reason, count| "#{reason}=#{count}" }.join(", ")
@@ -235,14 +241,14 @@ module Master
       def preview(target = @root)
         files = @file_collector.collect(target)
         violations = @pass_runner.violations(files)
-        by_rule = violations.group_by { |v| v[:rule].to_s }.transform_values(&:size)
+        by_law = violations.group_by { |v| v[:law].to_s }.transform_values(&:size)
         by_file = violations.group_by { |v| v[:file].to_s }.transform_values(&:size)
         structure = @sweeps.filter_map do |sweep|
           sweep.preview(target:, run_id: "preview") if sweep.respond_to?(:preview)
         end.flatten
         Result.ok(
           total: violations.size,
-          rules: by_rule.sort_by { |_, n| -n }.first(10).to_h,
+          laws: by_rule.sort_by { |_, n| -n }.first(10).to_h,
           files: by_file.sort_by { |_, n| -n }.first(10).to_h,
           structure:,
           transformation_order: @transformation_plan.operations.map(&:name),
@@ -290,7 +296,7 @@ module Master
           files:, target:, max_passes:, deadline:, budget_seconds:,
           start_pass: resumed.value!, run_id:, wishlist_proposals: []
         )
-        result = continue_with_wishlist(result, files:, target:, max_passes:, budget_seconds:, run_id:)
+        result = reflect_then_continue(result, files:, target:, max_passes:, budget_seconds:, run_id:)
         finish_run(result, target, run_id, mission:, requested:)
       end
 
@@ -430,6 +436,23 @@ module Master
       # a full-tree run spends its budget on. The first ordinary pass gets to
       # deliver a verified repair; only then does the bounded structural sweep
       # run against freshly observed files.
+      def reflect_then_continue(result, files:, target:, max_passes:, budget_seconds:, run_id:)
+        state = terminal_state_for(result)
+        return result unless %i[done plateau].include?(state)
+
+        reflection = @reflection.call(
+          target:, state: state.to_s, files:, history: @convergence_discipline.history,
+          changed_paths: @git.respond_to?(:changed_paths) ? @git.changed_paths : [],
+          remaining_seconds: @run_journal.remaining_seconds(run_id)
+        )
+        if reflection.repair?
+          @wishlist.record_reflection!(reflection:, state: state.to_s, target:, run_id:)
+        elsif reflection.verdict != "KEEP" && reflection.verdict != "INCONCLUSIVE"
+          Master::Trace::Dmesg.status("reflect0", "#{reflection.verdict.downcase}, queued for investigation")
+        end
+        continue_with_wishlist(result, files:, target:, max_passes:, budget_seconds:, run_id:)
+      end
+
       def continue_with_wishlist(result, files:, target:, max_passes:, budget_seconds:, run_id:)
         state = terminal_state_for(result)
         return result unless %i[done plateau].include?(state)
@@ -505,7 +528,7 @@ module Master
       end
 
       def structure_checkpoint(target:, files:, run_id:)
-        return if ENV["MASTER_FIX_STRUCTURE_FIRST"] == "0"
+        return unless structural_enabled?
 
         changes = sweep_tree(target, "#{run_id}-structure-checkpoint", phase: :structure_first)
         return if changes.empty?
@@ -514,6 +537,8 @@ module Master
         Master::Trace::Dmesg.status("fix0", "structure checkpoint kept #{changes.size}; corpus refreshed")
         @bus&.publish("fix_loop:structure_checkpoint", target:, changes: changes.size)
       end
+
+      def structural_enabled? = ENV["MASTER_FIX_STRUCTURAL"] == "1"
 
       def structural_target?(target)
         expanded = File.expand_path(target.to_s)
@@ -583,6 +608,7 @@ module Master
       # A clean or plateaued pass gets structural surgery; anything it keeps
       # sends the loop back into repair with the new file list.
       def structural_repair?(result, files:, target:, state:, run_id:, pass:)
+        return false unless structural_enabled?
         return false unless %i[clean plateau].include?(result.status)
 
         structural = sweep_tree(target, run_id, phase: :normal)

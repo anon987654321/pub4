@@ -13,38 +13,38 @@ require_relative "scan/mechanical_autofix"
 module Master
   module Fix
     class Scanner
-      def self.build(root:, agent: nil, bus: nil, ecology: nil)
+              def self.build(root:, agent: nil, bus: nil, ecology: nil)
         agent = nil if ENV["MASTER_SCAN_DETERMINISTIC"] == "1"
         Review::Scan::LawDSL
         wf = Master.load_yaml(Master.limits_path) rescue {}
         sleep_s = ENV["MASTER_AUTOFIX"] == "1" ? wf.dig("autoloop", "scan_file_sleep_s").to_f : 0
         scanner = new(event_bus: bus, file_sleep_s: sleep_s)
         Review::Scan::Law.registry.select(&:auto_build?).each do |klass|
-          scanner.add_rule(Review::Scan::LawFactory.build(klass, root:, agent:, ecology:))
+          scanner.add_law(Review::Scan::LawFactory.build(klass, root:, agent:, ecology:))
         end
         %w[
-          CoChangeCouplingRule RuleCoverageRule RubocopRule ReekRule InterconnectRule
-          YamlDeclarativeRule VetoPatternRule LawBridgeRule SemanticRule AdversarialRule CommentDriftRule AstOmissionRule
-          LibRootDisciplineRule FileSprawlRule PathPurposeRule
+          CoChangeCouplingLaw LawCoverageLaw RubocopLaw ReekLaw InterconnectLaw
+          YamlDeclarativeLaw VetoPatternLaw LawBridgeLaw SemanticLaw AdversarialLaw CommentDriftLaw AstOmissionLaw
+          LibRootDisciplineLaw FileSprawlLaw PathPurposeLaw
         ].each do |name|
-          klass = Review::Scan::Rules.const_get(name)
-          scanner.add_rule(Review::Scan::LawFactory.build(klass, root:, agent:, ecology:))
+          klass = Review::Scan::Laws.const_get(name)
+          scanner.add_law(Review::Scan::LawFactory.build(klass, root:, agent:, ecology:))
         end
         scanner
       end
 
       include Master::Fix::Scan::ProgressReporter
-      include Master::Fix::Scan::Transport
+        include Master::Fix::Scan::Transport
 
         # The Scanner is the coordinator of the review process. What it walks
         # is PathFilter's decision, how it walks is Transport's, and what it
-      # says while walking is ProgressReporter's; law application is its own.
+        # says while walking is ProgressReporter's; rule application is its own.
 
         SCAN_GLOB = "**/*".freeze
         REQUIRED_DEPTH = :deep
         MAX_VIOLATION_OBJECTS = 100_000
 
-        attr_reader :rules
+        attr_reader :laws
 
         def self.skip_path?(path, root: nil)
           Master::Fix::Scan::PathFilter.skip_path?(path, root:)
@@ -58,34 +58,34 @@ module Master
           Master.language_for(path) || File.basename(path).match?(/\Aface\.part\d+\.txt\z/)
         end
 
-        def initialize(rules: [], event_bus: nil, file_sleep_s: 0)
-          @rules = Array(rules)
+        def initialize(laws: [], event_bus: nil, file_sleep_s: 0)
+          @laws = Array(laws)
           @bus = event_bus
           @mutex = Mutex.new
           @file_sleep_s = file_sleep_s.to_f
           @file_processor = Master::Fix::Scan::FileProcessor.new(event_bus: @bus)
           @stream_autofixes = []
-          @rule_dispatch = build_rule_dispatch(@rules)
+          @law_dispatch = build_law_dispatch(@laws)
         end
 
         attr_reader :stream_autofixes
 
-        def scan(path, depth: :deep, rules: nil)
+        def scan(path, depth: :deep, laws: nil)
           validate_depth!(depth)
-          rule_set = rules || active_rules(depth)
-          rule_set = dispatched_rules(path, rule_set) if rules.nil?
-          @file_processor.call(path:, depth:, rules: rule_set)
+          law_set = laws || active_laws(depth)
+          law_set = dispatched_laws(path, law_set) if laws.nil?
+          @file_processor.call(path:, depth:, laws: law_set)
         end
 
-        def scan_dir(dir, depth: :deep, glob: SCAN_GLOB, stream: false, autofix: false, autofix_root: nil, rules: nil)
+        def scan_dir(dir, depth: :deep, glob: SCAN_GLOB, stream: false, autofix: false, autofix_root: nil, laws: nil)
           validate_depth!(depth)
           paths = Dir.glob(File.join(dir, glob)).select { |path| scannable_path?(path, dir) }
-          rule_set = rules || active_rules(depth)
-          reset_scan_progress(paths.size, rules: rule_set) if stream
+          law_set = laws || active_laws(depth)
+          reset_scan_progress(paths.size, laws: law_set) if stream
           unit = stream ? @scan_progress[:unit] : Fiber[:master_unit]
           pairs = Master::Trace::Dmesg.under(unit) do
             parallel_map(paths) do |path, idx|
-              scan_one(dir:, path:, depth:, stream:, index: idx, autofix:, autofix_root:, rules: rule_set)
+              scan_one(dir:, path:, depth:, stream:, index: idx, autofix:, autofix_root:, laws: law_set)
             end
           end
           pairs.concat(cross_file_pairs(dir, paths))
@@ -111,20 +111,22 @@ module Master
           Result.err("scan_since: #{e.message}", category: :infrastructure)
         end
 
-        def add_rule(rule)
-          @rules << rule
-          @rule_dispatch = build_rule_dispatch(@rules)
+        def add_law(law)
+          @laws << law
+          @law_dispatch = build_law_dispatch(@laws)
           self
         end
 
-        # Flat findings with :path merged in. scan_dir returns [path, Result]
-        # pairs; this method is the one documented flat extraction API.
+        # Flat findings with :path merged in. scan_dir returns Result wrapping
+        # [path, Result] pairs whose inner values are hashes, so f.rule raises
+        # and the path is discarded unless the caller knows the unwrap. This is
+        # the one documented way to get them out.
         def findings(paths, depth: :deep)
           Array(paths).flat_map { |path| findings_for(path, depth:) }
         end
 
         def set_agent(agent)
-          @rules.each { |r| r.set_agent(agent) if r.respond_to?(:set_agent) }
+          @laws.each { |law| law.set_agent(agent) if law.respond_to?(:set_agent) }
           self
         end
 
@@ -163,8 +165,10 @@ module Master
             !result.message.to_s.start_with?("file validation failed")
         end
 
-        # scan_dir wraps path/result pairs; this helper unwraps either the
-        
+        # scan_dir answers a Result whose value is [path, Result] pairs, so the
+        # same unwrap was written three times here — twice byte for byte. It
+        # answers the pairs for the outer Result and the rows for an inner one,
+        # which is the same question asked at two depths.
         def rows_of(result)
           return result.value! if result.respond_to?(:ok?) && result.ok?
           return result unless result.respond_to?(:ok?)
@@ -186,12 +190,12 @@ module Master
           status.success? ? out.strip : nil
         end
 
-        def scan_one(dir:, path:, depth:, stream:, index: nil, autofix: false, autofix_root: nil, rules: nil)
+        def scan_one(dir:, path:, depth:, stream:, index: nil, autofix: false, autofix_root: nil, laws: nil)
           sleep @file_sleep_s if @file_sleep_s > 0
-          file_result = scan(path, depth:, rules:)
+          file_result = scan(path, depth:, laws:)
           applied = autofix ? autofix_one(path, file_result, root: autofix_root || dir) : []
           if applied.any?
-            file_result = scan(path, depth:, rules:)
+            file_result = scan(path, depth:, laws:)
             emit_autofixed(dir:, path:, applied:) if stream
           end
           emit_scan_progress(dir:, path:, file_result:) if stream
@@ -258,38 +262,40 @@ module Master
           pairs
         end
 
-        def active_rules(_depth)
-          @rules
+        def active_laws(_depth)
+          @laws
         end
 
-        # LawDSL's applies_to scope is authoritative inside each law.
-        # Apply the same declaration one level earlier so a file does not traverse
-        # unrelated language populations. Laws without an explicit scope remain global.
-        def dispatched_rules(path, rule_set)
-          return rule_set unless rule_set.equal?(@rules)
+        LawDSL's applies_to scope is already authoritative inside the law.
+        # Use the same declaration one level earlier so a JavaScript file does
+        # not traverse every Ruby-only rule, and a Ruby file does not traverse
+        # the CSS/HTML population. Laws without an explicit scope remain in every
+        # bucket. Explicit law arrays passed by callers keep the old full set.
+        def dispatched_laws(path, law_set)
+          return law_set unless law_set.equal?(@laws)
           language = Master.language_for(path)
-          return rule_set if language.to_s.empty?
+          return law_set if language.to_s.empty?
 
-          @rule_dispatch.fetch(language.to_s, rule_set)
+          @law_dispatch.fetch(language.to_s, law_set)
         end
 
-        def build_rule_dispatch(rules)
+        def build_law_dispatch(laws)
           entries = []
           languages = Master::FILE_LANGUAGE_MAP.values.compact.map(&:to_s).uniq
           languages << "javascript"
-          Array(rules).each do |rule|
-            declared = if rule.class.respond_to?(:dsl_langs)
-              Array(rule.class.dsl_langs).filter_map { |lang| lang.to_s unless lang.to_s.empty? }
+          Array(laws).each do |law|
+            declared = if law.class.respond_to?(:dsl_langs)
+              Array(law.class.dsl_langs).filter_map { |lang| lang.to_s unless lang.to_s.empty? }
             else
               []
             end
-            entries << [rule, declared]
+            entries << [law, declared]
             languages.concat(declared)
           end
 
           languages.uniq.each_with_object({}) do |language, buckets|
-            buckets[language] = entries.filter_map do |rule, declared|
-              rule if declared.empty? || declared.include?(language)
+            buckets[language] = entries.filter_map do |law, declared|
+              law if declared.empty? || declared.include?(language)
             end.freeze
           end.freeze
         end
@@ -300,8 +306,8 @@ module Master
           stamp = [stat.size, stat.ino, stat.mtime.to_r]
           return @prediction_thresholds if @prediction_thresholds_stamp == stamp
 
-          rules = Master.load_yaml(path) || {}
-          prediction = rules["prediction_engine"]
+          laws = Master.load_yaml(path) || {}
+          prediction = laws["prediction_engine"]
           prediction = {} unless prediction.is_a?(Hash)
 
           # prediction_engine was retired; an absent policy means no additional
@@ -326,25 +332,25 @@ module Master
         # The list is Master::Fix::Scan::AstFixer::DELETING_TRANSFORMS rather than a copy here: it
         # names methods that class defines, and the copy that stood here gated
         # only this path while AstFixer ran the transform unasked on the other.
-        def deleting_rule?(rule_id)
-          transform = rule_transforms[rule_id.to_s]
-          Master::Fix::Scan::AstFixer::DELETING_TRANSFORMS.include?(transform.to_s)
+        def deleting_law?(law_id)
+          transform = law_transforms[law_id.to_s]
+          Master::Review::Scan::AstFixer::DELETING_TRANSFORMS.include?(transform.to_s)
         end
 
-        def rule_transforms
+        def law_transforms
           path = Master::LAWS_PATH
           stat = File.stat(path)
           stamp = [stat.size, stat.ino, stat.mtime.to_r]
-          return @rule_transforms if @rule_transforms_stamp == stamp
+          return @law_transforms if @law_transforms_stamp == stamp
 
           laws = Master.law_entries(root: Master::ROOT)
-          @rule_transforms_stamp = stamp
-          @rule_transforms = laws.each_with_object({}) do |law, index|
+          @law_transforms_stamp = stamp
+          @law_transforms = laws.each_with_object({}) do |law, index|
             transform = law["autofix"]
             index[law["id"].to_s] = transform if transform
           end.freeze
         rescue StandardError => e
-          Master::Ground::Swallow.log(e, context: "Scanner.rule_transforms")
+          Master::Ground::Swallow.log(e, context: "Scanner.law_transforms")
           raise "scanner: autofix transform policy unreadable: #{e.class}: #{e.message}"
         end
 
@@ -352,10 +358,10 @@ module Master
         # A deterministic finding carries no confidence at all and Fix::LawLoop
         # reads the absence as 1.0, so a threshold here would wave through exactly
         # the findings nobody scored.
-        def should_autofix?(rule_id, observed_conf, allow_deletions: false)
-          return false if !allow_deletions && deleting_rule?(rule_id)
+        def should_autofix?(law_id, observed_conf, allow_deletions: false)
+          return false if !allow_deletions && deleting_law?(law_id)
 
-          threshold = prediction_thresholds[rule_id.to_s] || prediction_thresholds[rule_id]
+          threshold = prediction_thresholds[law_id.to_s] || prediction_thresholds[law_id]
           return true unless threshold && threshold["confidence"]
 
           observed_conf.to_f >= threshold["confidence"].to_f

@@ -157,14 +157,14 @@ module Master
 
       def rules
         require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
-        ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.rules.empty?
-        ::Law.rules.values
+        ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.definitions.empty?
+        ::Law.definitions.values
       end
 
       def registry_count
-        return unless defined?(Master::Review::Scan::Rule) && Master::Review::Scan::Rule.respond_to?(:registry)
+        return unless defined?(Master::Review::Scan::Law) && Master::Review::Scan::Law.respond_to?(:registry)
 
-        Array(Master::Review::Scan::Rule.registry).size
+        Array(Master::Review::Scan::Law.registry).size
       rescue StandardError
         nil
       end

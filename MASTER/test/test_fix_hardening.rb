@@ -11,7 +11,7 @@ class FixHardeningTest < Minitest::Test
   end
 
   def test_measurement_only_policy_is_law_backed
-    ids = Master::Review::Scan::RuleHealth.measurement_only_ids
+    ids = Master::Review::Scan::LawHealth.measurement_only_ids
 
     assert_includes ids, "CQS"
     assert_includes ids, "MAGIC_COLOR"
@@ -27,7 +27,7 @@ class FixHardeningTest < Minitest::Test
       message: "raw hex color",
     }
 
-    annotated = Master::Review::Scan::RuleHealth.annotate(finding)
+    annotated = Master::Review::Scan::LawHealth.annotate(finding)
 
     assert_equal :warning, annotated[:original_severity]
     assert_equal :info, annotated[:severity]

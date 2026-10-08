@@ -28,7 +28,7 @@
 #   continuation of existing law with some language changes.
 
 # Top-level Law, as law/law.rb declares it: a Master::Law would shadow ::Law
-# for every caller inside module Master (Law.rules, Law::Contract).
+# for every caller inside module Master (Law.definitions, Law::Contract).
 module Law
   module Barnevernloven412
     SOURCE = "Lovdata: barnevernloven § 4-12".freeze

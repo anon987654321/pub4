@@ -368,8 +368,8 @@ when "laws"
              .find { |row| row["id"].to_s.casecmp?(id) }
 
   require File.join(master_root, "law", "law")
-  Law.load_all(File.join(master_root, "law")) if Law.rules.empty?
-  executable_law = Law.rules[id.to_sym]
+  Law.load_all(File.join(master_root, "law")) if Law.definitions.empty?
+  executable_law = Law.definitions[id.to_sym]
 
   # Where it is written. Every ruby file under law/ and the scan registry is
   # searched for the id, and the enclosing block plus its leading comment is the

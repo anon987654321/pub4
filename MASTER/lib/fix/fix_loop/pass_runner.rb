@@ -15,7 +15,7 @@ require_relative "../scan_phase"
 require_relative "../transaction"
 require_relative "../resource_budget"
 require_relative "../wishlist"
-require_relative "../../review/scan/rule_health"
+require_relative "../../review/scan/law_health"
 
 module Master
   module Fix
@@ -33,7 +33,7 @@ module Master
         include StructuralStage
 
         def initialize(bus:, committer:, conflict_resolver:, llm_router:, root:,
-                       rules:, agent:, scanner:, learnings:, preamble:,
+                       laws:, agent:, scanner:, learnings:, preamble:,
                        clean_runs_required:, plateau_window:, ground_truth: nil, homeostat: nil, council: nil,
                        visual_pass: nil, opportunity_pass: nil, preflight: nil, discipline: nil, wishlist: nil)
           @bus = bus
@@ -47,7 +47,7 @@ module Master
           @preflight = preflight || Preflight.new(root:, bus:)
           @learnings = learnings
           @preamble = preamble
-          @law_order = LawOrder.new(rules:, learnings:, bus:, root:)
+          @law_order = LawOrder.new(laws:, learnings:, bus:, root:)
           take_limits(clean_runs_required:, plateau_window:, ground_truth:, homeostat:, council:, visual_pass:, opportunity_pass:, discipline:, wishlist:)
         end
 
@@ -56,8 +56,8 @@ module Master
         def take_limits(clean_runs_required:, plateau_window:, ground_truth:, homeostat:, council:, visual_pass:, opportunity_pass:, discipline:, wishlist:)
           @clean_runs_required = clean_runs_required
           @plateau_window = plateau_window
-          @violation_counts = Hash.new(0)
-          @rule_recurrence = Hash.new(0)
+          @law_violation_counts = Hash.new(0)
+          @law_recurrence = Hash.new(0)
           @ground_truth = ground_truth
           @homeostat = homeostat
           @council = council
@@ -110,7 +110,7 @@ module Master
           return skip_unreadable(path, result) if !result.ok? && result.category == :validation
           raise "fix scan failed for #{path}: #{result.message}" unless result.ok?
 
-          findings = result.value!.map { |finding| Master::Review::Scan::RuleHealth.annotate(finding) }
+          findings = result.value!.map { |finding| Master::Review::Scan::LawHealth.annotate(finding) }
           @bus&.publish("fix_loop:scan_progress", file: path.delete_prefix("#{ @root }/"), count: findings.size) if findings.any?
           findings.select { |finding| Severity.at_least?(finding.fetch(:severity, :warning), :warning) }
                   .map { |finding| Violation.from_finding(finding, file: path.delete_prefix("#{@root}/")) }
@@ -150,7 +150,7 @@ module Master
           return clean_pass_result(files, pass_mtimes, pass, consecutive_clean) if found.empty?
           return plateau_result if stagnant?(history, seen_snapshots, recurring_violations, found, pass, progressed: @pass_progress)
 
-          # A reload skips the rule stage: it would ask the model about the whole
+          ## A reload skips the law stage: it would ask the model about the whole
           # scan on code that is already out of date.
           dispatch_llm_stages(unstreamed(found, streamed), files, pass, deadline, visual, run_id:) unless CodeWatch.requested?
           delivered = deliver_pass(found, files, pass)
@@ -232,7 +232,7 @@ module Master
           [found + Array(@council&.improve(files:, pass:, deadline:)), nil]
         end
 
-        # found may now hold three kinds of finding -- ordinary rule
+        # found may now hold three kinds of finding -- ordinary law
         # violations, council-selected improvements, and rendered-visual
         # findings -- each routed to the stage that knows how to fix it. A
         # shed here (unlike supplement_with_improvements above) does not
@@ -247,11 +247,11 @@ module Master
           end
 
           @homeostat&.observe(:llm_call)
-          excluded = [VisualPass::RULE_ID, OpportunityPass::RULE_ID, CouncilRound::IMPROVEMENT_RULE_ID]
-          source_found = unremembered(found.reject { |v| excluded.include?(v[:rule].to_s) })
-          improvement_found = found.select { |v| v[:rule].to_s == CouncilRound::IMPROVEMENT_RULE_ID }
-          visual_found = found.select { |v| v[:rule].to_s == VisualPass::RULE_ID }
-          opportunity_found = found.select { |v| v[:rule].to_s == OpportunityPass::RULE_ID }
+          excluded = [VisualPass::LAW_ID, OpportunityPass::LAW_ID, CouncilRound::IMPROVEMENT_LAW_ID]
+          source_found = unremembered(found.reject { |v| excluded.include?(v[:law].to_s) })
+          improvement_found = found.select { |v| v[:law].to_s == CouncilRound::IMPROVEMENT_LAW_ID }
+          visual_found = found.select { |v| v[:law].to_s == VisualPass::LAW_ID }
+          opportunity_found = found.select { |v| v[:law].to_s == OpportunityPass::LAW_ID }
           council = @council&.run(files: files_with_violations(source_found, files), pass:, deadline:) if source_found.any?
           run_llm_stage(source_found, files, pass, deadline, council:) if source_found.any?
           run_improvement_stage(improvement_found, pass:, files:, deadline:) if improvement_found.any?
@@ -361,7 +361,7 @@ module Master
             result = @ground_truth.assert_fresh!(path, reason: "claim_task_complete")
             next if result.ok?
 
-            { rule: "GROUND_TRUTH", file: path.delete_prefix("#{@root}/"), line: 0, message: result.message }
+            { law: "GROUND_TRUTH", file: path.delete_prefix("#{@root}/"), line: 0, message: result.message }
           end
         end
 
@@ -386,16 +386,16 @@ module Master
         end
 
         def track_recurrence(found)
-          tally = found.group_by { |v| v[:rule].to_s }.transform_values(&:size)
-          tally.each do |rule_id, _|
-            @rule_recurrence[rule_id] += 1
-            next unless @rule_recurrence[rule_id] >= 3
+          tally = found.group_by { |v| v[:law].to_s }.transform_values(&:size)
+          tally.each do |law_id, _|
+            @law_recurrence[law_id] += 1
+            next unless @law_recurrence[law_id] >= 3
 
-            @rule_recurrence.delete(rule_id)
-            sample = found.select { |v| v[:rule].to_s == rule_id }.first(5)
-            @bus&.publish("fix_loop:soul_proposal", root: @root, rule: rule_id, sample:)
+            @law_recurrence.delete(law_id)
+            sample = found.select { |v| v[:law].to_s == law_id }.first(5)
+            @bus&.publish("fix_loop:soul_proposal", root: @root, law: law_id, sample:)
           end
-          (@rule_recurrence.keys - tally.keys).each { |key| @rule_recurrence.delete(key) }
+          (@law_recurrence.keys - tally.keys).each { |key| @law_recurrence.delete(key) }
         end
         def circuit_open? = @llm_router.circuit_open?
         def open_breakers = @llm_router.open_breakers

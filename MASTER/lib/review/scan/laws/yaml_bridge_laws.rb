@@ -3,7 +3,7 @@
 module Master
   module Review
     module Scan
-      module Rules
+      module Laws
         # Bridges laws.yml veto_patterns into the scanner (constitution.rb also checks writes).
         #
         # A veto is the severity above error, and this was the one rule in the
@@ -15,7 +15,7 @@ module Master
         # quoted fix beside it. Only the `fires:`/`does_not_fire:` lines are
         # blanked, not the directory, so a real secret or shell interpolation in
         # a rule file still vetoes.
-        class VetoPatternRule < Rule
+        class VetoPatternLaw < Law
           def self.auto_build? = false
 
           declare id: "veto_patterns", severity: :veto,
@@ -52,13 +52,13 @@ module Master
           def load_patterns(root)
             (Master.load_laws(root:) || {}).fetch("veto_patterns", {})
           rescue StandardError => e
-            Master::Ground::Swallow.log(e, context: "VetoPatternRule.load_patterns", severity: :load_bearing)
+            Master::Ground::Swallow.log(e, context: "VetoPatternLaw.load_patterns", severity: :load_bearing)
             raise
           end
         end
 
-        # Wires laws.yml detect_lexical entries not already covered by RuleDSL classes.
-        class YamlDeclarativeRule < Rule
+        # Wires laws.yml detect_lexical entries not already covered by LawDSL classes.
+        class YamlDeclarativeLaw < Law
           def self.auto_build? = false
 
           declare id: "yaml_declarative", severity: :warning,
@@ -82,7 +82,7 @@ module Master
 
               declarative_hits(code, entry).map do |hit|
                 Finding.build(
-                  rule: entry[:id].to_s.downcase,
+                  law: entry[:id].to_s.downcase,
                   message: hit.message,
                   line: hit.line,
                   severity: entry[:severity],
@@ -107,14 +107,14 @@ module Master
           end
 
           def build_registry_ids
-            Review::Scan::Rule.registry
-              .reject { |klass| RuleFactory.bridge_class?(klass) }
-              .filter_map { |klass| RuleFactory.registry_id(klass, root: @root) }
+            Review::Scan::Law.registry
+              .reject { |klass| LawFactory.bridge_class?(klass) }
+              .filter_map { |klass| LawFactory.registry_id(klass, root: @root) }
               .to_set
           end
 
           def build_lexical_entries(yaml_rules, registry_ids)
-            law_ids = defined?(::Law) ? ::Law.rules.keys.map(&:to_s).to_set : Set.new
+            law_ids = defined?(::Law) ? ::Law.definitions.keys.map(&:to_s).to_set : Set.new
             yaml_rules
               .select { |r| r["detect_lexical"] && !registry_ids.include?(r["id"].to_s.downcase) }
               .reject { |r| law_ids.include?(r["id"].to_s) } # law/ owns it now
@@ -131,7 +131,7 @@ module Master
               rescue RegexpError => e
                 # A rule declared in laws.yml with an uncompilable regex is
                 # inert law: listed, counted, never run. Drop it, but say which.
-                Master::Ground::Swallow.log(e, context: "YamlDeclarativeRule #{r["id"]}", severity: :load_bearing)
+                Master::Ground::Swallow.log(e, context: "YamlDeclarativeLaw #{r["id"]}", severity: :load_bearing)
                 nil
               end
           end

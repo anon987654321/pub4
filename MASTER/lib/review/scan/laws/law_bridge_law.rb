@@ -5,11 +5,11 @@ require File.join(Master::ROOT, "law", "law")
 module Master
   module Review
     module Scan
-      module Rules
+      module Laws
         # Bridges law/*.rb into the scanner. Each Law::Rule proved itself against
         # its own bad/good fixture at load, so a hit here is a hit a fixture already
-        # vouches for. YamlDeclarativeRule yields to any id defined here.
-        class LawBridgeRule < Rule
+        # vouches for. YamlDeclarativeLaw yields to any id defined here.
+        class LawBridgeLaw < Law
           def self.auto_build? = false
 
           declare id: "law_bridge", severity: :warning, description: "law/ — executable rules with fixtures"
@@ -45,7 +45,7 @@ module Master
                   # received unbounded_retry, and one line could carry two
                   # findings that differed only by case while a registry twin
                   # lived. One id, whatever implements it.
-                  rule: rule.id.to_s,
+                  law: rule.id.to_s,
                   message: "#{rule.id}: #{rule.fix}",
                   line: hit.line,
                   severity: severity_for(rule.severity),

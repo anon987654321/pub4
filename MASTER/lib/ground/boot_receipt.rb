@@ -132,7 +132,7 @@ module Master
       def law(root: MasterPaths::ROOT)
         {
           declared: Master.law_entries(root:).size,
-          registry: Review::Scan::Rule.registry.size,
+          registry: Review::Scan::Law.registry.size,
           domain: domain_rule_count(root),
         }
       end
@@ -143,8 +143,8 @@ module Master
       def domain_rule_count(root)
         law_root = executable_law_root(root)
         require File.join(law_root, "law", "law.rb")
-        ::Law.load_all(File.join(law_root, "law")) if ::Law.rules.empty?
-        ::Law.rules.size
+        ::Law.load_all(File.join(law_root, "law")) if ::Law.definitions.empty?
+        ::Law.definitions.size
       rescue StandardError => e
         Swallow.log(e, context: "BootReceipt.domain_rule_count", severity: :load_bearing)
         raise "boot receipt: executable law population unavailable: #{e.class}: #{e.message}"

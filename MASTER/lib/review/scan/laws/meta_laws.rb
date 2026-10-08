@@ -3,10 +3,10 @@
 module Master
   module Review
     module Scan
-      module Rules
+      module Laws
       # Detects methods/classes/modules present in recent git history but absent now.
-      # Wraps CommitGuard as a standard scan Rule so it runs in the scanner pipeline.
-        class AstOmissionRule < Rule
+      # Wraps CommitGuard as a standard scan Law so it runs in the scanner pipeline.
+        class AstOmissionLaw < Law
           def self.auto_build? = false
 
           declare id: "ast_omission", severity: :warning, tags: %i[COMPLETENESS],
@@ -27,7 +27,7 @@ module Master
             omissions = @guard.check(paths: [rel])
             omissions.map { |o| finding(line: 1, message: "#{o.type} #{o.name} dropped (last seen #{o.last_seen_at})") }
           rescue StandardError => e
-            Master::Ground::Swallow.log(e, context: "ast_omission_rule.check", event_bus: nil, severity: :load_bearing)
+            Master::Ground::Swallow.log(e, context: "ast_omission_law.check", event_bus: nil, severity: :load_bearing)
             raise "ast_omission scan failed: #{e.class}: #{e.message}"
           end
 
@@ -40,12 +40,12 @@ module Master
           end
         end
 
-        # Every Rule subclass must have a matching test file; gaps mean untested enforcement.
-        class RuleCoverageRule < Rule
+        # Every Law subclass must have a matching test file; gaps mean untested enforcement.
+        class LawCoverageLaw < Law
           def self.auto_build? = false
 
-          declare id: "rule_coverage", severity: :warning, tags: %i[TEST_COVERAGE],
-                  description: "Rule subclass has no corresponding test file"
+          declare id: "law_coverage", severity: :warning, tags: %i[TEST_COVERAGE],
+                  description: "Law subclass has no corresponding test file"
 
           def initialize(root:)
             super()
@@ -53,43 +53,43 @@ module Master
             @source_dirs = [File.join(root, "test"), File.join(root, "spec")]
           end
 
-          # Asks the question the description asks — has this Rule subclass a
+          # Asks the question the description asks — has this Law subclass a
           # test — rather than whether a file is named after it.
           #
-          # It used to require the path end `_rule.rb` and look for
+          # It used to require the path end `_law.rb` and look for
           # `<base>_test.rb`. One file in sixteen ends `_rule.rb`; the rest are
-          # `*_rules.rb` and hold nearly every rule there is. And MASTER names
+          # `*_laws.rb` and hold nearly every law there is. And MASTER names
           # tests `test_<base>.rb`, 283 files to 1, so the glob described a
           # convention this tree does not use. Over all sixteen files it
-          # produced one finding, and `test/test_law_bridge_rule.rb` existed.
+          # produced one finding, and `test/test_law_bridge_law.rb` existed.
           # Fifteen skipped, one false positive, nothing correct.
           #
           # Coverage is a mention anywhere in test/ or spec/, of the class or of
           # its id, because the tests that exercise these rules mostly do it in
-          # bulk — test_smell_detectors.rb and test_scan_rule_false_positives.rb
+          # bulk — test_smell_detectors.rb and test_scan_law_false_positives.rb
           # reach rules by id through the scanner. Requiring a file per class
           # would report those as uncovered, which is the false-positive machine
           # the old shape already was, pointed the other way.
           #
-          # spec/ is read because LearnedSmellsRule's only test is
-          # spec/learned_smells_rule_spec.rb, and a class covered from the wrong
+          # spec/ is read because LearnedSmellsLaw's only test is
+          # spec/learned_smells_law_spec.rb, and a class covered from the wrong
           # directory read as uncovered — this rule reporting a gap it had made
           # itself.
           def check(code, path:)
-            return [] unless path.include?("/review/scan/rules/") && path.end_with?(".rb")
+            return [] unless path.include?("/review/scan/laws/") && path.end_with?(".rb")
 
             subclasses(code).reject { |name, id| covered?(name, id) }
-              .map { |name, _| finding(line: 1, message: "rule_coverage: no test names #{name}") }
+              .map { |name, _| finding(line: 1, message: "law_coverage: no test names #{name}") }
           end
 
           private
 
-          # `declare id:` is how a Rule subclass names itself, in all sixteen
+          # `declare id:` is how a Law subclass names itself, in all sixteen
           # files. The needle read `@id = "..."` and matched nothing in the tree,
           # so only the class-name needle ever did any work and the id half of
-          # this rule was dead from the day it was written.
+          # this law was dead from the day it was written.
           def subclasses(code)
-            code.enum_for(:scan, /^\s*class (\w+Rule) < Rule\b/).map do
+            code.enum_for(:scan, /^\s*class (\w+Law) < Law\b/).map do
               name = Regexp.last_match(1)
               [name, code[Regexp.last_match.end(0), 2000][/declare\s+id:\s*["']([\w.]+)["']/, 1]]
             end
@@ -116,7 +116,7 @@ module Master
         end
 
         # Runtime authority lives in YAML — not markdown under data/.
-        RuleDSL.rule :RUNTIME_DOCS_YAML,
+        LawDSL.law :RUNTIME_DOCS_YAML,
           severity: :error,
           tags: %i[CONSTITUTION DOCS],
           applies_to: %i[markdown],
@@ -167,7 +167,7 @@ module Master
           end
         end
 
-        class LearnedSmellsRule < Rule
+        class LearnedSmellsLaw < Law
           declare id: "LEARNED_SMELLS", severity: :warning, tags: %i[LEARNED_SMELLS SESSION],
                   description: "session-learned smell patterns from laws.yml"
 
@@ -184,7 +184,7 @@ module Master
             language = self.language(path)&.to_s
             @learned_smells.flat_map { |smell| findings_for_smell(smell, code, language) }
           rescue StandardError => e
-            Master::Ground::Swallow.log(e, context: "LearnedSmellsRule.check", severity: :load_bearing, path:)
+            Master::Ground::Swallow.log(e, context: "LearnedSmellsLaw.check", severity: :load_bearing, path:)
             raise "learned smell scan failed: #{e.class}: #{e.message}"
           end
 
@@ -208,9 +208,9 @@ module Master
               next if line.match?(/scan:\s*intentional\b/)
               next unless line.match?(pattern)
 
-              rule_id = smell["id"].to_s
+              law_id = smell["id"].to_s
               Finding.build(
-                rule: rule_id.empty? ? @id : rule_id,
+                law: law_id.empty? ? @id : law_id,
                 message: smell_message(smell),
                 line: line_number,
                 severity: smell_severity(smell),
@@ -248,16 +248,16 @@ module Master
           end
 
           def reload_learned_smells_if_stale
-            return if @rules_mtime == rules_mtime
+            return if @laws_mtime == laws_mtime
 
             reload_learned_smells!
           end
 
           def reload_learned_smells!
             @learned_smells = Array((Master.load_laws(root: @root) || {}).fetch("learned_smells", [])).select { |item| item.is_a?(Hash) }
-            @rules_mtime = rules_mtime
+            @laws_mtime = laws_mtime
           rescue StandardError => e
-            Master::Ground::Swallow.log(e, context: "LearnedSmellsRule.reload", severity: :load_bearing, path: laws_path)
+            Master::Ground::Swallow.log(e, context: "LearnedSmellsLaw.reload", severity: :load_bearing, path: laws_path)
             raise
           end
 
@@ -265,7 +265,7 @@ module Master
             File.join(@root, "data", "laws.yml")
           end
 
-          def rules_mtime
+          def laws_mtime
             return nil unless File.exist?(laws_path)
 
             stat = File.stat(laws_path)
@@ -336,7 +336,7 @@ module Master
         # root is found by what makes it Rails — config/application.rb, or a
         # lib/*/engine.rb — rather than by a directory named app, so a plain
         # Ruby tree with its own app/ is still judged.
-        class FileSprawlRule < Rule
+        class FileSprawlLaw < Law
           TINY_CODE_LINES = 25
           SKIP_RE = %r{/(?:law|core|test|spec|fixtures|templates|node_modules)/|/web/public/}
           RAILS_NAMED = %r{\A(?:app|config|db)/|\Alib/[^/]+/(?:engine|version)\.rb\z}
@@ -372,7 +372,7 @@ module Master
           # nested constant: RepoEcology::CoChangeGraph can only live at
           # repo_ecology/co_change_graph.rb, so the directory is the nesting, not
           # sprawl. tools/sprawl_census.rb forgives the same shape for the same
-          # reason, and a rule and its census that disagree report one tree twice.
+          # reason, and a law and its census that disagree report one tree twice.
           def lone_file_finding(dir, siblings, subdirs)
             return unless siblings == 1 && subdirs.zero? && dir != @root
             return if File.file?("#{dir}.rb")
@@ -435,7 +435,7 @@ module Master
         # Reported per directory rather than per file, because the fix is one
         # entry, not one per member. Scratch and generated trees are out of
         # scope: they are working residue, not structure.
-        class PathPurposeRule < Rule
+        class PathPurposeLaw < Law
           SKIP_RE = %r{/(?:test|spec|fixtures|node_modules|vendor|tmp|log|scratch|frames?_|renders?)/|/\.}
           def self.auto_build? = false
 
@@ -458,7 +458,7 @@ module Master
               # An unreadable ownership file must not retire the whole corpus:
               # returning [] here makes every path look owned and the scan
               # reports the tree clean having judged nothing.
-              Master::Ground::Swallow.log(e, context: "PathPurposeRule.owned",
+              Master::Ground::Swallow.log(e, context: "PathPurposeLaw.owned",
                                             severity: :load_bearing, path: File.join(@root, "PATH_OWNERSHIP.yml"))
               []
             end

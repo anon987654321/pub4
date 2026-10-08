@@ -3,7 +3,7 @@
 module Master
   module Review
     module Scan
-      module Rules
+      module Laws
 
         # Assignment/branch/condition counts for one method, for ABC size.
         #
@@ -82,7 +82,7 @@ module Master
         # this version had learned ported there (2026-08-21 twin retirement).
 
         # principle_map: strong_parameters (detects mass_assignment_risk). Two
-        # distinct failures, one rule: permit! waives the whitelist wholesale,
+        # distinct failures, one law: permit! waives the whitelist wholesale,
         # and a raw params[] reaching a mass-assignment sink never had one.
         # Scoped to /app/ rather than /app/controllers/ because a service or
         # model object handed the params hash carries the same risk.
@@ -164,7 +164,7 @@ module Master
         end
 
         # KEYWORD_ARGS was deleted here on 2026-08-21 — folded into FEW_ARGUMENTS
-        # (universal_rules.rb): two ids counted the same parameter list, one at
+        # (universal_laws.rb): two ids counted the same parameter list, one at
         # :warn and one at :info, and every 3+-positional def carried both.
 
         LawDSL.law :DEAD_CODE,

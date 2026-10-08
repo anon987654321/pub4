@@ -28,9 +28,9 @@ module Master
       MAX_ATTEMPTS = 3
       TERMINAL_STATUSES = %w[verified blocked rejected stale superseded].freeze
       AUTO_IMPLEMENTATIONS = %w[next_fix].freeze
-      RULE_ID = "CONVERGENCE_WISHLIST"
+      LAW_ID = "CONVERGENCE_WISHLIST"
 
-      Rule = Data.define(:id) do
+      Law = Data.define(:id) do
         def severity = :warning
       end
 
@@ -254,6 +254,36 @@ module Master
         []
       end
 
+      def record_reflection!(reflection:, state:, target:, run_id:)
+        return false unless reflection.respond_to?(:repair?) && reflection.repair?
+        law = reflection.law.to_s
+        anchor = reflection.anchor.to_s
+        evidence = reflection.evidence.to_s
+        change = reflection.next_action.to_s
+        return false if law.empty? || anchor.empty? || evidence.empty? || change.empty?
+
+        item = {
+          "id" => "reflection_#{Digest::SHA256.hexdigest([law, anchor, evidence, change].join("\n"))[0, 16]}",
+          "title" => reflection.summary.to_s,
+          "rationale" => reflection.summary.to_s,
+          "anchor" => anchor,
+          "change" => change,
+          "effort" => "medium",
+          "reversibility" => "guarded",
+          "implementation" => "next_fix",
+          "evidence" => evidence,
+          "proof" => ["same law and anchor must hold after mutation"],
+        }
+        ledger = load_ledger
+        added = merge_new_items!(ledger, [item], state:, target:, run_id:)
+        save_ledger(ledger) if added.positive?
+        @bus&.publish("wishlist:reflection", added:, law:, anchor:, run_id:)
+        added.positive?
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "Fix::Wishlist.record_reflection!", event_bus: @bus)
+        false
+      end
+
       def pending_count(target:)
         claimable(target:, limit: MAX_PROPOSALS).size
       end
@@ -302,7 +332,7 @@ module Master
           fingerprint = Master::Review::Scan::SemanticFingerprint.for(File.read(file, encoding: "UTF-8"))
           proof = Array(proposal["proof"]).join(", ")
           {
-            rule: RULE_ID,
+            law: LAW_ID,
             file:,
             line: line.to_i,
             severity: :warning,

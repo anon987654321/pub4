@@ -100,8 +100,8 @@ module Operator
         require File.join(MASTER, "lib", "master")
         require File.join(MASTER, "law", "law")
       end
-      ::Law.load_all(File.join(MASTER, "law")) if ::Law.rules.empty?
-      ::Law.rules
+      ::Law.load_all(File.join(MASTER, "law")) if ::Law.definitions.empty?
+      ::Law.definitions
     end
 
     def corpus
@@ -194,23 +194,23 @@ module Operator
       found = audit
       return (puts JSON.pretty_generate(found)) || found[:fixture_blindness].empty? if json
 
-      puts "law_audit: #{found[:lexical]} with a detector + #{found[:semantic]} asked + #{found[:practice]} practice, over #{found[:corpus]} files"
+      puts "rule_audit: #{found[:lexical]} with a detector + #{found[:semantic]} asked + #{found[:practice]} practice, over #{found[:corpus]} files"
 
       if found[:fixture_blindness].empty?
-        puts "law_audit: every fixture survives being read as a real file"
+        puts "rule_audit: every fixture survives being read as a real file"
       else
         found[:fixture_blindness].each do |f|
-          warn "law_audit: #{f[:rule]} proves on \"-\" but not on #{f[:extension]} — #{f[:detail]}"
+          warn "rule_audit: #{f[:rule]} proves on \"-\" but not on #{f[:extension]} — #{f[:detail]}"
         end
-        warn "law_audit: a fixture read whole and a file read with its comments blanked are different inputs"
+        warn "rule_audit: a fixture read whole and a file read with its comments blanked are different inputs"
       end
 
       found[:saturation].each do |r|
-        warn format("law_audit: %s fires on %d of %d applicable files (%d%%) — describing the tree, not judging it",
+        warn format("rule_audit: %s fires on %d of %d applicable files (%d%%) — describing the tree, not judging it",
                     r[:rule], r[:hits], r[:applicable], (r[:rate] * 100).round)
       end
 
-      puts "law_audit: #{found[:silent].size} rule(s) fired on nothing here — #{found[:silent].join(', ')}" unless found[:silent].empty?
+      puts "rule_audit: #{found[:silent].size} rule(s) fired on nothing here — #{found[:silent].join(', ')}" unless found[:silent].empty?
 
       found[:fixture_blindness].empty? && found[:saturation].empty?
     end

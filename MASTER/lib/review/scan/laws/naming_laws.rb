@@ -28,7 +28,7 @@ module Master
         description: "retired constants must not return" do |source, path:|
           # This file names the retired constants, so it flags itself. The old
           # exemption named stale_namespace_rule.rb, which no longer exists.
-          next [] if stale_constants.empty? || path.end_with?("naming_rules.rb")
+          next [] if stale_constants.empty? || path.end_with?("naming_laws.rb")
 
           # Prose is not a constant reference. `Master::CLI` is retired as a
           # class and alive as a namespace, so a comment explaining that
@@ -40,7 +40,7 @@ module Master
           scan_lines(code, stale_pattern, message: "retired constant — use data/laws.yml#stale_namespaces replacement")
         end
 
-      module Rules
+      module Laws
         LawDSL.law :PARAMETERIZED_SLUG,
           severity: :warning,
           tags: %i[FLAT_HIERARCHY DRY],
@@ -84,7 +84,7 @@ module Master
         # `_list` is a domain noun as often as a type: an allow_list is not an
         # Array pretending to be named, and old_string is the edit-tool schema
         # this runtime hands a model. 85 findings before those exclusions, 44 after.
-        class TypeInNameRule < Rule
+        class TypeInNameLaw < Law
           SUFFIX = /_(?:string|str|array|hash|object|list)\z/
           CONVERSION = /\A(?:to|from|as|into)_/
           DIGEST = /(?:prev|last|stable|content|commit|file|source|body|digest|checksum|chain|enacted)_hash\z/
@@ -143,7 +143,7 @@ module Master
         # about the world. Locals were measured and dropped for the same reason:
         # 114 findings, nearly all of them dilla and postpro, where t1 and d8 are
         # the notation the DSP is transcribed from.
-        class NumberedNameRule < Rule
+        class NumberedNameLaw < Law
           NUMBERED = /\A(.*?)(?:_v)?(\d+)\z/
           KEEP = /
             (?:sha|md|crc|base|utf|latin|iso|rfc|x|ipv|http|oauth|ec|s3|p|h|mp|

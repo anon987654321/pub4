@@ -7,7 +7,7 @@ module Master
   module Fix
     module Scan
       # Deterministic AstFixer pass behind `/review --only scan --apply`.
-      # Only runs on files that have findings whose rule has auto_fix=true.
+      # Only runs on files that have findings whose law has auto_fix=true.
       # Idempotent; safe to re-run. Opt out with --dry-run, --no-autofix, or MASTER_SCAN_AUTOFIX=0.
       #
       # This is the governed writer, and that word is the change. AstFixer used
@@ -92,16 +92,16 @@ module Master
         end
 
         def autofixable_finding?(finding)
-          rule = rules_by_id[Finding.read(finding, :rule).to_s]
-          rule&.auto_fix
+          law = laws_by_id[Finding.read(finding, :law).to_s]
+          law&.auto_fix
         end
 
-        def rules_by_id
-          @rules_by_id ||= scanner_rules.to_h { |rule| [rule.id.to_s, rule] }
+        def laws_by_id
+          @laws_by_id ||= scanner_laws.to_h { |law| [law.id.to_s, law] }
         end
 
-        def scanner_rules
-          return @scanner.rules if @scanner.respond_to?(:rules)
+        def scanner_laws
+          return @scanner.laws if @scanner.respond_to?(:laws)
 
           []
         end

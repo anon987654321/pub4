@@ -81,10 +81,10 @@ module Operator
     module_function
 
     def master
-      return if defined?(::Master::Fix::Scanner)
+      return if defined?(::Master::Review::Scan::InfraHelpers)
 
       require File.join(MASTER_DIR, "lib", "master")
-      require File.join(MASTER_DIR, "lib", "fix", "scanner")
+      require File.join(MASTER_DIR, "lib", "review", "scan", "scanner")
     end
 
     def law
@@ -92,8 +92,8 @@ module Operator
         master
         require File.join(MASTER_DIR, "law", "law")
       end
-      ::Law.load_all(File.join(MASTER_DIR, "law")) if ::Law.rules.empty?
-      ::Law.rules
+      ::Law.load_all(File.join(MASTER_DIR, "law")) if ::Law.definitions.empty?
+      ::Law.definitions
     end
 
     # Asked of git for the same reason self_findings asks: the corpus is what the
