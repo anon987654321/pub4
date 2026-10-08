@@ -505,7 +505,7 @@ One table of Dilla DNA drives several renderers. `comfort`, `camel` and `warp`
 are not commands; they are environment overlays on `RENDER_MODE=dilla`. The
 genre renderers, `techno`, `hate`, `industrial`, `analog` and `loose_pocket`,
 are real dispatch keys with arrangements of their own. There is no product
-wrapper: `Shared::DillaProcessor` in `RAILS/shared` shells straight out to
+wrapper: `Shared::DillaProcessor` in `RAILS/__shared` shells straight out to
 `dilla.rb` with `RENDER_MODE=dilla` and the requested track, and attaches the
 file through Active Storage.
 
