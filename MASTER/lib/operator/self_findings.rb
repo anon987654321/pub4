@@ -62,8 +62,8 @@ module Operator
         require File.join(MASTER_DIR, "lib", "master")
         require File.join(MASTER_DIR, "law", "law")
       end
-      ::Law.load_all(File.join(MASTER_DIR, "law")) if ::Law.rules.empty?
-      ::Law.rules
+      ::Law.load_all(File.join(MASTER_DIR, "law")) if ::Law.definitions.empty?
+      ::Law.definitions
     end
 
     # Code we did not write and will not fix. STUDIO/dilla/.venv-demucs is
