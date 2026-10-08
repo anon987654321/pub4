@@ -254,6 +254,37 @@ module Master
         []
       end
 
+      def record_reflection!(reflection:, state:, target:, run_id:)
+        return unless reflection.respond_to?(:repair?) && reflection.repair?
+
+        anchor = reflection.anchor.to_s
+        law = reflection.law.to_s
+        evidence = reflection.evidence.to_s
+        change = reflection.next_action.to_s
+        return if anchor.empty? || law.empty? || evidence.empty? || change.empty?
+
+        item = {
+          "id" => "reflection_#{Digest::SHA256.hexdigest([law, anchor, evidence, change].join("\n"))[0, 16]}",
+          "title" => reflection.summary.to_s,
+          "rationale" => reflection.summary.to_s,
+          "anchor" => anchor,
+          "change" => change,
+          "effort" => "medium",
+          "reversibility" => "guarded",
+          "implementation" => "next_fix",
+          "evidence" => evidence,
+          "proof" => ["file exists"]
+        }
+        ledger = load_ledger
+        added = merge_new_items!(ledger, [item], state:, target:, run_id:)
+        save_ledger(ledger) if added.positive?
+        @bus&.publish("wishlist:reflection", added:, law:, anchor:, run_id:)
+        added.positive?
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "Fix::Wishlist.record_reflection!", event_bus: @bus)
+        false
+      end
+
       def pending_count(target:)
         claimable(target:, limit: MAX_PROPOSALS).size
       end
