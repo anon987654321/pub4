@@ -100,7 +100,7 @@ module Master
             [perspective, agent.ask_once(Transforms.perspective_prompt(prompt, perspective), temperature:)]
           end
           judge = agent.ask_once(
-            "Compare these three perspectives on the same task. Pick the perspective that yields the strongest evidence-backed answer and say why in one paragraph. Then provide the final answer.\n\n"             views.map { |name, text| "#{name}:\n#{text}" }.join("\n\n---\n\n"),
+            "Compare these three perspectives on the same task. Pick the perspective that yields the strongest evidence-backed answer and say why in one paragraph. Then provide the final answer.\n\n" + views.map { |name, text| "#{name}:\n#{text}" }.join("\n\n---\n\n"),
             temperature:
           )
 
