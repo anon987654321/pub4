@@ -6,7 +6,7 @@ require "minitest/autorun"
 
 class PwaDesignContractTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
-  SHARED_ROOT = File.join(ROOT, "shared")
+  SHARED_ROOT = File.join(ROOT, "__shared")
   APPS = %w[amber brgen bsdports].freeze
 
   # All current apps use the shared Workbox worker. This remains an explicit
@@ -36,6 +36,22 @@ class PwaDesignContractTest < Minitest::Test
 
   # The bug that sent brgen away, asserted rather than remembered. A digested URL
   # in a precache manifest is pinned at build time and 404s at the next deploy.
+  def test_shared_worker_enforces_network_first_offline_and_retryable_writes
+    worker = read(SHARED_ROOT, "pwa/service_worker.js")
+
+    assert_includes worker, 'new NetworkFirst'
+    assert_includes worker, "networkTimeoutSeconds: 4"
+    assert_includes worker, 'statuses: [200]'
+    assert_includes worker, 'caches.match(request)'
+    assert_includes worker, 'caches.match("/")'
+    assert_includes worker, 'caches.match(OFFLINE_URL)'
+
+    assert_includes worker, 'new BackgroundSyncPlugin(FORM_QUEUE'
+    assert_includes worker, 'self.addEventListener("periodicsync"'
+    assert_includes worker, 'self.registration.showNotification'
+    assert_includes worker, 'clients.openWindow(o)'
+  end
+
   def test_no_worker_precaches_a_fingerprinted_asset
     each_app do |app, root|
       worker = read(root, "app/views/pwa/service-worker.js")
@@ -81,6 +97,13 @@ class PwaDesignContractTest < Minitest::Test
     assert_includes source, "safeUrl(value)"
     assert_includes source, "url.origin === window.location.origin"
     assert_includes source, 'if (!raw) return "#"'
+  end
+
+  def test_pwa_runtime_test_is_wired_to_the_root_package
+    package = JSON.parse(File.read(File.join(ROOT, "package.json")))
+
+    assert_equal "node --test test/pwa_offline_store.test.mjs",
+                 package.fetch("scripts").fetch("test:pwa:runtime")
   end
 
   def test_offline_replay_queue_is_bounded_and_same_origin
@@ -161,6 +184,47 @@ class PwaDesignContractTest < Minitest::Test
       assert_includes routes, "rails/pwa#assetlinks"
       assert_includes routes, "rails/pwa#apple_app_site_association"
     end
+  end
+
+  def test_pwa_chrome_is_safe_area_and_standalone_aware
+    tokens = read(SHARED_ROOT, "app/assets/stylesheets/_dialect_tokens.scss")
+    chrome = read(SHARED_ROOT, "app/assets/stylesheets/_layout_chrome.scss")
+    shell = read(SHARED_ROOT, "app/assets/stylesheets/_shell.scss")
+    standalone = read(SHARED_ROOT, "frontend/pwa_standalone_controller.js")
+    prompt = read(SHARED_ROOT, "app/views/shared/_install_prompt.html.erb")
+
+    %w[top right bottom left].each do |side|
+      assert_includes tokens, "env(safe-area-inset-#{side}, 0px)"
+    end
+    assert_includes chrome, "--nav-swiper-h"
+    assert_includes chrome, "var(--safe-top)"
+    assert_includes shell, "var(--safe-top)"
+    assert_includes shell, "var(--safe-bottom)"
+
+    assert_includes standalone, "(display-mode: standalone)"
+    assert_includes standalone, "navigator.standalone"
+    assert_includes standalone, "pub4:pwa-display"
+
+    assert_includes prompt, 'role="region"'
+    assert_includes prompt, "aria-label="
+    assert_includes prompt, "install-prompt-secondary"
+  end
+
+  def test_shared_typography_uses_optical_and_rhythm_controls
+    typography = read(SHARED_ROOT, "app/assets/stylesheets/_typography.scss")
+
+    %w[
+      font-feature-settings
+      font-kerning
+      font-optical-sizing
+      font-synthesis
+      font-variant-numeric
+      text-wrap
+    ].each do |property|
+      assert_includes typography, property
+    end
+    assert_includes typography, "hyphens: auto"
+    assert_includes typography, "hanging-punctuation:"
   end
 
   private

@@ -160,7 +160,7 @@ module Deploy
     def resolves?(app, src)
       path = src.sub(%r{\A/}, "")
       File.file?(File.join(RAILS_ROOT, app, "public", path)) ||
-        File.file?(File.join(RAILS_ROOT, "shared", "public", path))
+        File.file?(File.join(RAILS_ROOT, "__shared", "public", path))
     end
 
     def rel(path) = path.sub("#{ROOT}/", "")

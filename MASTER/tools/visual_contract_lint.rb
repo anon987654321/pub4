@@ -201,7 +201,7 @@ end
     RESERVED_MARKER = "reserved: container"
 
     def image_findings
-      views = Dir.glob(File.join(RAILS_ROOT, "{brgen,amber,bsdports,shared}/app/views/**/*.erb")) +
+      views = Dir.glob(File.join(RAILS_ROOT, "{brgen,amber,bsdports,__shared}/app/views/**/*.erb")) +
               Dir.glob(File.join(RAILS_ROOT, "brgen/engines/*/app/views/**/*.erb"))
       views.flat_map do |path|
         lines = File.read(path, encoding: "UTF-8").lines
@@ -259,7 +259,7 @@ end
     # and never brgen.
     def brgen_bundle_sources
       load_paths = [ File.join(RAILS_ROOT, "brgen/app/assets/stylesheets"),
-                     File.join(RAILS_ROOT, "shared/app/assets/stylesheets") ] +
+                     File.join(RAILS_ROOT, "__shared/app/assets/stylesheets") ] +
                    Dir.glob(File.join(RAILS_ROOT, "brgen/engines/*/app/assets/stylesheets"))
       seen = []
       queue = [ File.join(RAILS_ROOT, "brgen/app/assets/stylesheets/application.scss") ]
@@ -317,7 +317,7 @@ end
     STRAY_BTN = /(?<![\w-])btn--?[\w-]+/
 
     def btn_findings
-      views = Dir.glob(File.join(RAILS_ROOT, "{brgen,amber,bsdports,shared}/app/views/**/*.erb")) +
+      views = Dir.glob(File.join(RAILS_ROOT, "{brgen,amber,bsdports,__shared}/app/views/**/*.erb")) +
               Dir.glob(File.join(RAILS_ROOT, "brgen/engines/*/app/views/**/*.erb"))
       views.flat_map do |path|
         File.read(path, encoding: "UTF-8").each_line.with_index(1).filter_map do |line, n|

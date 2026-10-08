@@ -268,8 +268,7 @@ module Deploy
         surfaces = rows.map { |r| r[:id] }.sort.join(", ")
         @result.fail(
           "gate_mutation: #{mutation} survives on #{surfaces} — the suite does not detect " \
-          "\"#{rows.first[:description]}\" on #{rows.size == 1 ? 'this surface' : "#{rows.size} surfaces"}",
-          severity: :soft
+          "\"#{rows.first[:description]}\" on #{rows.size == 1 ? 'this surface' : "#{rows.size} surfaces"}"
         )
       end
     end

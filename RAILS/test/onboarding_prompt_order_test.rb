@@ -18,7 +18,7 @@ class OnboardingPromptOrderTest < Minitest::Test
   # source in a checkout several agents share. Unset in every normal run.
   ROOT = ENV.fetch("ONBOARDING_TEST_ROOT", File.expand_path("..", __dir__))
   QUEUE = File.join(ROOT, "shared/frontend/onboarding_queue.js")
-  BASELINE = File.join(ROOT, "shared/config/importmap_baseline.rb")
+  BASELINE = File.join(ROOT, "__shared/config/importmap_baseline.rb")
 
   # kind => the file that decides whether that prompt appears.
   #
@@ -32,8 +32,8 @@ class OnboardingPromptOrderTest < Minitest::Test
 
   INSTALL = "shared/frontend/install_prompt_controller.js"
   WELCOME = "shared/frontend/welcome_onboarding_controller.js"
-  WELCOME_VIEW = "shared/app/views/shared/_welcome_onboarding.html.erb"
-  ARTWORK = "shared/app/services/shared/onboarding_artwork.rb"
+  WELCOME_VIEW = "__shared/app/views/shared/_welcome_onboarding.html.erb"
+  ARTWORK = "__shared/app/services/shared/onboarding_artwork.rb"
 
   def queue = @queue ||= File.read(QUEUE)
 

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "../../../shared/app/services/shared/cable_health"
+require_relative "../../../__shared/app/services/shared/cable_health"
 
 class CableHealthJob < ApplicationJob
   queue_as :bulk

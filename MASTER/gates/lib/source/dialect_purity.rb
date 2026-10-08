@@ -16,9 +16,9 @@ module Deploy
     def initialize(root: ROOT)
       @rails = File.join(root, "RAILS")
       @master_rules = File.join(root, "MASTER", "data", "laws.yml")
-      # The design system's written rules live in shared/README.md; what this
+      # The design system's written rules live in __shared/README.md; what this
       # checks is that the three it names are still written down there.
-      @design_doc = File.join(@rails, "shared", "README.md")
+      @design_doc = File.join(@rails, "__shared", "README.md")
     end
 
     def run
@@ -50,13 +50,13 @@ module Deploy
     end
 
     def check_design_doc
-      return @result.fail("dialect_purity: missing shared/README.md, the design system's rules") unless File.file?(@design_doc)
+      return @result.fail("dialect_purity: missing __shared/README.md, the design system's rules") unless File.file?(@design_doc)
 
       notes = File.read(@design_doc)
       @result.checked!(3)
-      @result.fail("dialect_purity: shared/README.md lost the dialect table") unless notes.match?(/social|luxury|openbsd_wscons|face_root/i)
-      @result.fail("dialect_purity: shared/README.md lost the Flat rule") unless notes.match?(/Flat rule|box-shadow/i)
-      @result.fail("dialect_purity: shared/README.md lost the vertical accents rule") unless notes.match?(/vertical_accents|_vertical_shell/i)
+      @result.fail("dialect_purity: __shared/README.md lost the dialect table") unless notes.match?(/social|luxury|openbsd_wscons|face_root/i)
+      @result.fail("dialect_purity: __shared/README.md lost the Flat rule") unless notes.match?(/Flat rule|box-shadow/i)
+      @result.fail("dialect_purity: __shared/README.md lost the vertical accents rule") unless notes.match?(/vertical_accents|_vertical_shell/i)
     end
 
     # brgen sets --accent in one place: the map over $vertical-accents, which

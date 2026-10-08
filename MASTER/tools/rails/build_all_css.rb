@@ -23,13 +23,13 @@ end
 
 RAILS_ROOT = File.expand_path("../../../RAILS", __dir__)
 ROOT = File.expand_path("../../..", __dir__)
-SHARED_STYLES = File.join(RAILS_ROOT, "shared", "app", "assets", "stylesheets")
+SHARED_STYLES = File.join(RAILS_ROOT, "__shared", "app", "assets", "stylesheets")
 def shared_public_dir
   home = ENV["HOME"].to_s
   if home != "" && File.directory?(File.join(home, "shared"))
     File.join(home, "shared", "public")
   else
-    File.join(RAILS_ROOT, "shared", "public")
+    File.join(RAILS_ROOT, "__shared", "public")
   end
 end
 

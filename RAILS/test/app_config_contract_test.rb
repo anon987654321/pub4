@@ -17,7 +17,7 @@ class AppConfigContractTest < Minitest::Test
   APPS = %w[amber brgen bsdports].freeze
 
   def job_roots(app)
-    [File.join(ROOT, app, "app", "jobs"), File.join(ROOT, "shared", "app", "jobs"),
+    [File.join(ROOT, app, "app", "jobs"), File.join(ROOT, "__shared", "app", "jobs"),
      *Dir.glob(File.join(ROOT, app, "engines", "*", "app", "jobs"))]
   end
 

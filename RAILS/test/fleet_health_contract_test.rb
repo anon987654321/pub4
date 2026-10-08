@@ -11,13 +11,13 @@ class FleetHealthContractTest < Minitest::Test
       routes = File.read(File.join(ROOT, app, "config", "routes.rb"))
       assert_match(/fleet\.rb/, routes, "#{app} must load shared fleet routes")
     end
-    fleet_routes = File.read(File.join(ROOT, "shared", "config", "routes", "fleet.rb"))
+    fleet_routes = File.read(File.join(ROOT, "__shared", "config", "routes", "fleet.rb"))
     assert_match(/get ["']health["']/, fleet_routes)
   end
 
   def test_shared_security_initializers_present
     %w[security_headers.rb content_security_policy.rb].each do |name|
-      path = File.join(ROOT, "shared", "config", "initializers", name)
+      path = File.join(ROOT, "__shared", "config", "initializers", name)
       assert File.file?(path), "missing #{name}"
       refute_includes File.read(path), "# Rails.application.configure do\n#", "#{name} should be active"
     end
@@ -34,7 +34,7 @@ class FleetHealthContractTest < Minitest::Test
   end
 
   def test_production_baseline_excludes_health_from_host_auth
-    baseline = File.read(File.join(ROOT, "shared", "config", "environments", "production_baseline.rb"))
+    baseline = File.read(File.join(ROOT, "__shared", "config", "environments", "production_baseline.rb"))
     assert_match(%r{/health}, baseline)
     assert_match(/force_ssl = false/, baseline)
   end

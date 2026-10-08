@@ -54,7 +54,7 @@ class I18nResolutionTest < Minitest::Test
   def app_keys(app, locale)
     paths = Dir.glob(File.join(ROOT, "#{app}/config/locales/*#{locale}.yml")) +
             Dir.glob(File.join(ROOT, "#{app}/engines/*/config/locales/*#{locale}.yml")) +
-            Dir.glob(File.join(ROOT, "shared/config/locales/*.#{locale}.yml"))
+            Dir.glob(File.join(ROOT, "__shared/config/locales/*.#{locale}.yml"))
     paths.each_with_object({}) { |path, out| out.merge!(flat_keys(path.sub("#{ROOT}/", ""))) }
   end
 
@@ -68,7 +68,7 @@ class I18nResolutionTest < Minitest::Test
     @keys_used_by[app] ||= begin
       globs = ["#{app}/app/views/**/*.erb", "#{app}/app/helpers/**/*.rb",
                "#{app}/engines/*/app/views/**/*.erb", "#{app}/engines/*/app/helpers/**/*.rb",
-               "shared/app/views/**/*.erb", "shared/app/helpers/**/*.rb"]
+               "__shared/app/views/**/*.erb", "__shared/app/helpers/**/*.rb"]
       globs.flat_map { |glob| Dir.glob(File.join(ROOT, glob)) }.each_with_object({}) do |path, found|
         defaultless_keys(File.read(path)).each { |key| found[key] ||= path.sub("#{ROOT}/", "") }
       end

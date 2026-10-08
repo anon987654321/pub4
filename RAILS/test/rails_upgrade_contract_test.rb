@@ -4,7 +4,7 @@ require "minitest/autorun"
 
 class RailsUpgradeContractTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
-  APPS = %w[brgen amber bsdports eritel].freeze
+  APPS = %w[brgen amber bsdports].freeze
   ROOTS = APPS + ["../MASTER/web"]
   RAILS_REF = "c9e85dbe297e248dd2f217d04f84a94881ac046a"
 
@@ -46,36 +46,12 @@ class RailsUpgradeContractTest < Minitest::Test
 
     assert_includes advisory_schema, 't.integer "severity", default: 1, null: false'
     assert_includes advisory_model, "validates :title, :severity, presence: true"
-
-    declarations = [
-      ["eritel/db/migrate/20260925000100_create_domains.rb", 't.string :state, null: false, default: "pending"'],
-      ["eritel/db/migrate/20260925000300_create_participants_registrants_orders.rb", "t.string :kind, null: false"],
-      ["eritel/db/migrate/20260925000300_create_participants_registrants_orders.rb", 't.string :status, null: false, default: "pending"'],
-      ["eritel/db/migrate/20260925000300_create_participants_registrants_orders.rb", 't.string :verification_status, null: false, default: "pending"'],
-      ["eritel/db/migrate/20260925000300_create_participants_registrants_orders.rb", "t.string :operation, null: false"],
-      ["eritel/db/migrate/20260925000300_create_participants_registrants_orders.rb", 't.string :state, null: false, default: "pending"']
-    ].uniq.each do |path, declaration|
-      assert_includes read(path), declaration
-    end
-
-    {
-      "eritel/app/models/domain.rb" => %w[state],
-      "eritel/app/models/participant.rb" => %w[kind status],
-      "eritel/app/models/registrant.rb" => %w[verification_status],
-      "eritel/app/models/order.rb" => %w[operation state],
-      "eritel/app/models/registry_operation.rb" => %w[state]
-    }.each do |path, fields|
-      source = read(path)
-      fields.each do |field|
-        assert_match(/validates .*#{field}.*presence/, source, "#{path} allows nil enum #{field}")
-      end
-    end
   end
 
   test "Active Storage limits and processing are record-side and post-commit" do
-    application_record = read("shared/app/models/application_record.rb")
-    limits = read("shared/app/models/concerns/shared/attachment_limits.rb")
-    processing = read("shared/app/models/concerns/shared/media_processable.rb")
+    application_record = read("__shared/app/models/application_record.rb")
+    limits = read("__shared/app/models/concerns/shared/attachment_limits.rb")
+    processing = read("__shared/app/models/concerns/shared/media_processable.rb")
 
     assert_includes application_record, "include Shared::AttachmentLimits"
     assert_includes limits, "validate :new_attachments_within_limits"
@@ -85,7 +61,7 @@ class RailsUpgradeContractTest < Minitest::Test
   test "transaction-sensitive job producers enqueue from commit callbacks" do
     {
       "brgen/app/models/post.rb" => "after_commit :federate_creation",
-      "shared/app/models/concerns/shared/link_embeddable.rb" => "after_commit :resolve_link_embed_later",
+      "__shared/app/models/concerns/shared/link_embeddable.rb" => "after_commit :resolve_link_embed_later",
       "amber/app/models/message.rb" => "after_create_commit :enqueue_master_reply",
       "brgen/app/models/notification.rb" => "after_create_commit",
       "brgen/app/models/repost.rb" => "after_create_commit :federate",

@@ -33,7 +33,7 @@ class AssetUrlLintTest < Minitest::Test
   # Asserted through the resolver rather than by listing files, so moving the
   # assets to a different served root still passes and deleting them fails.
   def test_amber_can_resolve_the_lightgallery_icon_font
-    sheet = File.join(L::RAILS_ROOT, "shared/public/lightgallery.css")
+    sheet = File.join(L::RAILS_ROOT, "__shared/public/lightgallery.css")
 
     %w[../fonts/lg.woff2 ../fonts/lg.woff ../images/loading.gif].each do |ref|
       assert L.satisfied_everywhere?(ref, sheet),
@@ -64,7 +64,7 @@ class AssetUrlLintTest < Minitest::Test
   # A query string and a fragment are cache-busting and glyph-selecting sugar, not
   # part of the filename: lightGallery ships `lg.woff2?io9a6k` and `lg.svg?io9a6k#lg`.
   def test_query_and_fragment_are_not_part_of_the_filename
-    root = File.join(L::RAILS_ROOT, "shared/public")
+    root = File.join(L::RAILS_ROOT, "__shared/public")
 
     assert L.satisfied?("/fonts/lg.woff2?io9a6k", [root])
     assert L.satisfied?("fonts/lg.woff2?io9a6k#lg", [root])
@@ -83,6 +83,6 @@ class AssetUrlLintTest < Minitest::Test
   # exists to catch.
   def test_it_reads_something
     assert_operator L.sheets.size, :>, 100, "the stylesheet glob stopped matching"
-    assert_operator L.refs_in(File.join(L::RAILS_ROOT, "shared/app/assets/stylesheets/_fonts.scss")).size, :>=, 2
+    assert_operator L.refs_in(File.join(L::RAILS_ROOT, "__shared/app/assets/stylesheets/_fonts.scss")).size, :>=, 2
   end
 end

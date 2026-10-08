@@ -194,7 +194,7 @@ module Operator
       @views ||= (
         Dir.glob(File.join(RAILS_ROOT, "*/app/views/**/*.erb")) +
         Dir.glob(File.join(RAILS_ROOT, "*/engines/*/app/views/**/*.erb")) +
-        Dir.glob(File.join(RAILS_ROOT, "shared/app/views/**/*.erb"))
+        Dir.glob(File.join(RAILS_ROOT, "__shared/app/views/**/*.erb"))
       ).uniq.sort.reject { |path| path.match?(SKIP) }
     end
 
@@ -202,7 +202,7 @@ module Operator
       @stylesheets ||= (
         Dir.glob(File.join(RAILS_ROOT, "*/app/assets/stylesheets/**/*.{scss,css}")) +
         Dir.glob(File.join(RAILS_ROOT, "*/engines/*/app/assets/stylesheets/**/*.{scss,css}")) +
-        Dir.glob(File.join(RAILS_ROOT, "shared/app/assets/stylesheets/**/*.{scss,css}"))
+        Dir.glob(File.join(RAILS_ROOT, "__shared/app/assets/stylesheets/**/*.{scss,css}"))
       ).uniq.sort.reject { |path| path.match?(SKIP) }
     end
 

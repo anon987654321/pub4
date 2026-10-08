@@ -9,7 +9,7 @@ class SharedRubyLlmLockTest < Minitest::Test
   GEM_NAME = "ruby_llm"
 
   def test_every_app_lock_satisfies_the_shared_engine_requirement
-    spec = Gem::Specification.load(File.join(ROOT, "shared", "pub4-shared.gemspec"))
+    spec = Gem::Specification.load(File.join(ROOT, "__shared", "pub4-shared.gemspec"))
     requirement = spec.dependencies.find { |dependency| dependency.name == GEM_NAME }.requirement
 
     failures = APPS.filter_map do |app|

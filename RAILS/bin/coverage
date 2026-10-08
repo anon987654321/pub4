@@ -1,0 +1,95 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Full Rails coverage is a composition, not a single app's percentage:
+# each application owns its app/engines/lib surface, while the shared engine is
+# covered by all consumers and judged after their results are collated.
+require "fileutils"
+require "rbconfig"
+require "tmpdir"
+require "yaml"
+
+ROOT = File.expand_path("..", __dir__)
+APPS_FILE = File.join(ROOT, "apps.yml")
+PERSISTED_COVERAGE_ROOT = File.join(ROOT, "coverage")
+VERIFYING = ENV["MASTER_FIX_VERIFY"] == "1"
+COVERAGE_ROOT = VERIFYING ? Dir.mktmpdir("pub4-coverage-") : PERSISTED_COVERAGE_ROOT
+at_exit { FileUtils.rm_rf(COVERAGE_ROOT) if VERIFYING }
+SYSTEM_TESTS = ENV.fetch("COVERAGE_SYSTEM", "1") == "1"
+
+$LOAD_PATH.unshift(File.join(ROOT, "..", "MASTER", "lib"))
+require "operator/ruby_runner"
+
+apps = YAML.safe_load_file(APPS_FILE).fetch("apps").filter_map do |name, spec|
+  next unless spec["public"]
+  next unless File.file?(File.join(ROOT, name, "bin", "rails"))
+
+  name
+end.sort
+
+abort "coverage: no active Rails apps" if apps.empty?
+
+def run!(app, *command, env:)
+  dir = File.join(ROOT, app)
+  puts "coverage: #{app}: #{command.join(" ")}"
+  ok = system(env, *Operator::RubyRunner.bundle_cmd, "exec", *command, chdir: dir)
+  abort "coverage: #{app}: command failed" unless ok
+end
+
+apps.each do |app|
+  destination = File.join(COVERAGE_ROOT, app)
+  FileUtils.rm_rf(destination)
+  FileUtils.mkdir_p(destination)
+
+  env = {
+    "RAILS_ENV" => "test",
+    "FULL_COVERAGE" => "1",
+    "PUB4_CI_APP" => app,
+    "PUB4_COVERAGE_PATH" => destination,
+  }
+
+  if app == "brgen" && Dir.glob(File.join(ROOT, app, "engines", "*", "test", "**", "*_test.rb")).any?
+    env["DEFAULT_TEST"] = "{test,engines/*/test}/**/*_test.rb"
+    env["DEFAULT_TEST_EXCLUDE"] = "{test,engines/*/test}/{system,dummy,fixtures}/**/*_test.rb"
+  end
+
+  run!(app, RbConfig.ruby, "bin/rails", "test", env:)
+
+  next unless SYSTEM_TESTS
+  next if ENV["PUB4_CI_GUARD"] == "1" || File.exist?("/var/db/pub4_vps")
+
+  run!(app, RbConfig.ruby, "bin/rails", "test:system", env:)
+end
+
+resultsets = apps.map { |app| File.join(COVERAGE_ROOT, app, ".resultset.json") }
+missing = resultsets.reject { |path| File.file?(path) }
+abort "coverage: result missing: #{missing.join(", ")}" unless missing.empty?
+
+script = <<~'RUBY'
+  require "simplecov"
+
+  rails_root = File.expand_path("..", Dir.pwd)
+  SimpleCov.root(rails_root)
+  SimpleCov.coverage_path(ENV.fetch("PUB4_COVERAGE_ROOT", File.join(rails_root, "coverage")))
+
+  SimpleCov.collate ARGV do
+    %i[line branch method].each do |criterion|
+      coverage criterion do
+        minimum 100
+        minimum 100, per: :file
+      end
+    end
+  end
+RUBY
+
+Dir.chdir(ROOT) do
+  puts "coverage: collating #{resultsets.length} application result(s)"
+  command = [
+    *Operator::RubyRunner.bundle_cmd,
+    "exec", RbConfig.ruby, "-e", script, *resultsets
+  ]
+  ok = system({ "PUB4_COVERAGE_ROOT" => COVERAGE_ROOT }, *command, chdir: File.join(ROOT, apps.first))
+  abort "coverage: collate failed" unless ok
+end
+
+puts "coverage: full Rails line/branch/method coverage gate passed"

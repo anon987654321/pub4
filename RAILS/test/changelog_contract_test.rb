@@ -6,7 +6,7 @@ class ChangelogContractTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
 
   def test_changelog_is_single_source_and_publicly_routed
-    source = File.read(File.join(ROOT, "shared/config/changelog.yml"))
+    source = File.read(File.join(ROOT, "__shared/config/changelog.yml"))
     assert_includes source, 'title: "Convergence"'
 
     %w[brgen amber bsdports].each do |app|
@@ -16,7 +16,7 @@ class ChangelogContractTest < Minitest::Test
   end
 
   def test_footer_publishes_build_identity
-    footer = File.read(File.join(ROOT, "shared/app/views/shared/_site_legal_footer.html.erb"))
+    footer = File.read(File.join(ROOT, "__shared/app/views/shared/_site_legal_footer.html.erb"))
     assert_includes footer, "app_version"
     assert_includes footer, "app_revision"
     assert_includes footer, 'legal.changelog'

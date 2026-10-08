@@ -69,8 +69,8 @@ module Master
           end
         end
 
-        shared = File.join(rails, "shared")
-        raise "RAILS shared engine missing from filesystem" unless File.directory?(shared)
+        shared = File.join(rails, "__shared")
+        raise "RAILS __shared engine missing from filesystem" unless File.directory?(shared)
 
         layout_path = File.join(@repo_root, "MASTER", "gates", "lib", "layout_suite.rb")
         auditor_path = File.join(@repo_root, "MASTER", "gates", "lib", "source", "frontend_auditor.rb")
@@ -123,11 +123,6 @@ module Master
           root = File.join(@repo_root, name)
           target == root || target.start_with?(root + File::SEPARATOR)
         end
-      end
-
-      def rails_target?(target)
-        rails = File.join(@repo_root, "RAILS")
-        target == rails || target.start_with?(rails + File::SEPARATOR)
       end
 
       def inside_repo?(path)

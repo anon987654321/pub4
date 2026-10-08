@@ -85,6 +85,20 @@ class TestGateChain < Minitest::Test
     assert_equal %w[lexical suites], captured.map(&:name)
   end
 
+  def test_rails_fix_verification_uses_the_rails_source_proof_without_generic_suite_duplication
+    source = G::Stage.new(name: "source", purpose: "source", mutates: false, run: -> {})
+    suites = G::Stage.new(name: "suites", purpose: "suites", mutates: false, run: -> {})
+    captured = nil
+
+    G.stub(:stages, [source, suites]) do
+      G.stub(:report, ->(selected, **_kwargs) { captured = selected; [0, []] }) do
+        G.verify_fix(target: "RAILS")
+      end
+    end
+
+    assert_equal %w[source], captured.map(&:name)
+  end
+
   def test_master_fix_verification_reaches_the_constitutional_self_test
     suite = G.suite_jobs(%w[MASTER]).find { |job| job.first == "MASTER" }
     assert_equal [G::RUBY, File.join(G::MASTER, "bin", "check"), "--profile=ci"], suite[1]

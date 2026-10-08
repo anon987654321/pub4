@@ -110,7 +110,7 @@ class ModelCoverageContractTest < Minitest::Test
 
   def test_brgen_vote_model_and_votable_concern_are_wired
     vote = read_app("brgen", "app/models/vote.rb")
-    votable = File.read(File.join(ROOT, "shared/app/models/concerns/shared/votable.rb"))
+    votable = File.read(File.join(ROOT, "__shared/app/models/concerns/shared/votable.rb"))
     post = read_app("brgen", "app/models/post.rb")
     controller = read_app("brgen", "app/controllers/votes_controller.rb")
     routes = read_app("brgen", "config/routes.rb")

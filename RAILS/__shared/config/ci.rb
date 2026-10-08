@@ -15,7 +15,7 @@ ENV["BUNDLER_AUDIT_UPDATE"] ||= "1"
 ENV["NPM_CONFIG_CACHE"] ||= File.expand_path("~/.npm")
 monorepo_rails = ENV["PUB4_RAILS_ROOT"].to_s.strip
 monorepo_rails = File.expand_path("../..", __dir__) if monorepo_rails.empty?
-ENV["PUB4_RAILS_ROOT"] ||= monorepo_rails if File.directory?(File.join(monorepo_rails, "shared"))
+ENV["PUB4_RAILS_ROOT"] ||= monorepo_rails if File.directory?(File.join(monorepo_rails, "__shared"))
 master_rails_tools = File.expand_path("../MASTER/tools/rails", monorepo_rails)
 master_rails_tools = "/home/dev/pub4/MASTER/tools/rails" unless File.directory?(master_rails_tools)
 require File.join(master_rails_tools, "operator", "ci_guard")
@@ -155,7 +155,7 @@ Operator::CiGuard.run! do
     if Dir.glob("engines/*/test/**/*_test.rb").any?
       test_glob = "{test,engines/*/test}/**/*_test.rb"
       test_exclude = "{test,engines/*/test}/{system,dummy,fixtures}/**/*_test.rb"
-      step "rails_test", "env DEFAULT_TEST='#{test_glob}' DEFAULT_TEST_EXCLUDE='#{test_exclude}' bin/rails test"
+      step "rails_test", "env FULL_COVERAGE=1 DEFAULT_TEST='#{test_glob}' DEFAULT_TEST_EXCLUDE='#{test_exclude}' bin/rails test"
     else
       step "rails_test", "bin/rails test"
     end
@@ -163,7 +163,7 @@ Operator::CiGuard.run! do
     # 1-vCPU VPS gate (see resource_guard.sh), but must run in local/dev CI.
     # This is also where axe-core accessibility checks live (see
     # test/application_system_test_case.rb's assert_accessible).
-    step("system_test", "bin/rails test:system") unless vps_host
+    step("system_test", "env FULL_COVERAGE=1 bin/rails test:system") unless vps_host
     seed_env = vps_host ? "env RAILS_ENV=test SKIP_BERGEN_DEMO=1" : "env RAILS_ENV=test"
     # bin/rake, not bin/rails.
     #

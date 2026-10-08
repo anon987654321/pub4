@@ -19,7 +19,7 @@ module Deploy
     CARDS_CSS = File.join(RAILS, "brgen/app/assets/stylesheets/application.scss")
     # The #navBar markup is the storefront header marketplace shares with takeaway.
     NAV = File.join(RAILS, "brgen/app/views/shared/_storefront_nav_bar.html.erb")
-    SEARCH = File.join(RAILS, "shared/app/assets/stylesheets/_search_yep.scss")
+    SEARCH = File.join(RAILS, "__shared/app/assets/stylesheets/_search_yep.scss")
 
     def self.run
       new.run

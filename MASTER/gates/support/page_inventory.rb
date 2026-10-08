@@ -36,7 +36,7 @@ module Deploy
     APPS = Fleet.app_names.to_h { |app| [app, { views: File.join(ROOT, "RAILS", app, "app", "views"), port_key: app }] }
       .merge("master" => { views: nil, port_key: "master" }).freeze
 
-    SHARED_ROOT = File.join(ROOT, "RAILS", "shared", "app", "views")
+    SHARED_ROOT = File.join(ROOT, "RAILS", "__shared", "app", "views")
 
     # brgen's five verticals became mountable engines, and the discovery below
     # only ever walked RAILS/brgen/app/views -- so 57 full-page vertical views

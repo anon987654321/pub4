@@ -26,7 +26,7 @@ class AppFlashI18nTest < Minitest::Test
   # tree => [nb file, en file]. The shared engine ships its locales to all three
   # apps through Rails::Engine's own config/locales path.
   LOCALES = {
-    "shared" => ["shared/config/locales/social.nb.yml", "shared/config/locales/social.en.yml"],
+    "shared" => ["__shared/config/locales/social.nb.yml", "__shared/config/locales/social.en.yml"],
     "amber" => ["amber/config/locales/nb.yml", "amber/config/locales/en.yml"],
     "bsdports" => ["bsdports/config/locales/nb.yml", "bsdports/config/locales/en.yml"],
     "brgen" => ["brgen/config/locales/nb.yml", "brgen/config/locales/en.yml"],
@@ -35,7 +35,7 @@ class AppFlashI18nTest < Minitest::Test
   # Where each tree's controllers live. brgen's verticals are engines, and a
   # single-level glob goes blind to all five of them.
   CONTROLLERS = {
-    "shared" => ["shared/app/controllers/**/*.rb"],
+    "shared" => ["__shared/app/controllers/**/*.rb"],
     "amber" => ["amber/app/controllers/**/*.rb"],
     "bsdports" => ["bsdports/app/controllers/**/*.rb"],
     "brgen" => ["brgen/app/controllers/**/*.rb", "brgen/engines/*/app/controllers/**/*.rb"],
@@ -214,7 +214,7 @@ class AppFlashI18nTest < Minitest::Test
     refute_match(/paths\[["']config\/locales["']\]/, code,
                  "shared/lib/shared/engine.rb overrides the engine's config/locales path")
 
-    shipped = Dir.glob(File.join(ROOT, "shared/config/locales/**/*")).select { |path| File.file?(path) }
+    shipped = Dir.glob(File.join(ROOT, "__shared/config/locales/**/*")).select { |path| File.file?(path) }
     refute_empty shipped
     assert shipped.all? { |path| path.end_with?(".yml", ".rb") },
            "Rails::Engine loads only .yml and .rb from config/locales"

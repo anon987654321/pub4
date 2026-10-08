@@ -54,7 +54,7 @@ class DialectPurityGateTest < Minitest::Test
 
   def sound_tree(dir)
     plant(dir, "MASTER/data/laws.yml", MASTER_RULES)
-    plant(dir, "RAILS/shared/README.md", DESIGN_DOC)
+    plant(dir, "RAILS/__shared/README.md", DESIGN_DOC)
     plant(dir, "RAILS/brgen/app/assets/stylesheets/application.scss", BRGEN)
     plant(dir, "RAILS/bsdports/app/assets/stylesheets/application.scss", BSDPORTS)
     plant(dir, "RAILS/amber/app/assets/stylesheets/application.scss", "// luxury palette\n")
@@ -120,7 +120,7 @@ class DialectPurityGateTest < Minitest::Test
 
   def test_twitter_blue_anywhere_in_the_family_fails
     result = gate_over do |dir|
-      plant(dir, "RAILS/shared/app/assets/stylesheets/_links.scss", "a { color: #1d9bf0; }\n")
+      plant(dir, "RAILS/__shared/app/assets/stylesheets/_links.scss", "a { color: #1d9bf0; }\n")
     end
 
     refute result.ok?, "twitter blue passed"
@@ -147,7 +147,7 @@ class DialectPurityGateTest < Minitest::Test
 
   def test_a_design_doc_that_lost_the_flat_rule_fails
     result = gate_over do |dir|
-      plant(dir, "RAILS/shared/README.md", DESIGN_DOC.sub(/Flat rule.*\n/, ""))
+      plant(dir, "RAILS/__shared/README.md", DESIGN_DOC.sub(/Flat rule.*\n/, ""))
     end
 
     refute result.ok?, "a design doc without the flat rule passed"

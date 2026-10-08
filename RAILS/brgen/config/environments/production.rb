@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "active_support/core_ext/integer/time"
-require File.expand_path("../../../shared/config/environments/production_baseline.rb", __dir__)
+require File.expand_path("../../../__shared/config/environments/production_baseline.rb", __dir__)
 require File.expand_path("../../lib/brgen/domain_registry", __dir__)
 
 Rails.application.configure do

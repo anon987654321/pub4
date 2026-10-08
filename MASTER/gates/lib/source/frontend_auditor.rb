@@ -7,7 +7,7 @@ module Deploy
   class FrontendAuditorGate
     ROOT = File.expand_path("../../../..", __dir__)
     APPS = %w[amber brgen bsdports].freeze
-    SHARED = Pathname.new(File.join(ROOT, "RAILS", "shared"))
+    SHARED = Pathname.new(File.join(ROOT, "RAILS", "__shared"))
 
     # GATE_AUDITOR_STRICT=1 fails on warnings. Without it only :error findings
     # block layout_suite and warnings are reported; runner.rb --explain says so.
@@ -25,8 +25,8 @@ module Deploy
       errors = 0
       warnings = 0
 
-      (apps + ["shared"]).each do |app|
-        root_path = app == "shared" ? SHARED : Pathname.new(File.join(root, "RAILS", app))
+      (apps + ["__shared"]).each do |app|
+        root_path = app == "__shared" ? SHARED : Pathname.new(File.join(root, "RAILS", app))
         result.checked!
         findings = Shared::FrontendAuditor.call(root: root_path)
         errs = findings.select { |f| f.severity == :error }

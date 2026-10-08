@@ -161,7 +161,7 @@ module Operator
     def stylesheets
       Dir.glob(File.join(RAILS_ROOT, "*/app/assets/stylesheets/**/*.{scss,css}")) +
         Dir.glob(File.join(RAILS_ROOT, "*/engines/*/app/assets/stylesheets/**/*.{scss,css}")) +
-        Dir.glob(File.join(RAILS_ROOT, "shared/app/assets/stylesheets/**/*.{scss,css}"))
+        Dir.glob(File.join(RAILS_ROOT, "__shared/app/assets/stylesheets/**/*.{scss,css}"))
     end
 
     # Comments blanked, line numbering preserved.

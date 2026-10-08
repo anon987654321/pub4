@@ -74,9 +74,9 @@ class SharedModelCanonicalizationTest < Minitest::Test
     # If a refactor moves the resolver, update this list — its point is that the
     # `defined?(::X)` decision lives in a known, small set of places, not scattered.
     {
-      "shared/app/services/shared/reaction_toggle.rb" => "defined?(::Reaction)",
-      "shared/app/controllers/shared/notifications_controller.rb" => "defined?(::Notification)",
-      "shared/app/models/concerns/shared/notifiable.rb" => "defined?(::Notification)",
+      "__shared/app/services/shared/reaction_toggle.rb" => "defined?(::Reaction)",
+      "__shared/app/controllers/shared/notifications_controller.rb" => "defined?(::Notification)",
+      "__shared/app/models/concerns/shared/notifiable.rb" => "defined?(::Notification)",
     }.each do |rel, needle|
       body = File.read(File.join(ROOT, rel))
       assert_includes body, needle, "#{rel} lost its canonical resolver (#{needle})"

@@ -89,6 +89,13 @@ end
 # Rails 8.2's HTML+ERB compiler is part of the framework baseline, so every
 # active Rails Gemfile gets the same direct check. The app list comes from
 # apps.yml; MASTER/web is the additional Rails surface outside that matrix.
+if profile == "full" || %w[1 true yes on].include?(ENV["CHECK_RAILS_DEEP"].to_s.strip.downcase)
+  failures << "pwa_runtime" unless runner.run(
+    "pwa runtime", Deploy::RubyRunner.gate_ruby, "-e",
+    'exec("npm", "run", "test:pwa:runtime", chdir: "RAILS")'
+  )
+end
+
 rails_apps = YAML.safe_load_file(File.join(ROOT, "RAILS", "apps.yml")).fetch("apps").keys.map do |app|
   File.join("RAILS", app)
 end + ["MASTER/web"]
@@ -113,6 +120,20 @@ deep_gates = [
   ["visual contract", "visual_contract"],
   ["constitutional scan", "constitutional_scan"],
 ]
+
+# Full coverage and deterministic contract replay are deliberately full-profile
+# checks: they spend the time to prove application behavior, not merely source
+# wiring. The VPS coverage runner omits browser system tests because resource
+# guard parks Chrome there; rendered_suite remains the browser proof.
+if profile == "full" || %w[1 true yes on].include?(ENV["CHECK_RAILS_DEEP"].to_s.strip.downcase)
+  env = LIVE_ENV.merge("CONTRACT_REPLAY" => "1", "COVERAGE_SYSTEM" => (Deploy::Environment.on_vps? ? "0" : "1"))
+  failures << "rails_coverage" unless runner.run(
+    "rails coverage", RUBY, "RAILS/bin/coverage", env: env
+  )
+  failures << "rails_contract_replay" unless runner.run(
+    "rails contract replay", RUBY, "RAILS/test/run_all.rb", env: env
+  )
+end
 
 deep = profile == "full" || %w[1 true yes on].include?(ENV["CHECK_RAILS_DEEP"].to_s.strip.downcase)
 if deep
