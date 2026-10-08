@@ -448,7 +448,7 @@ module Master
 
       # B07 NESTING_DEPTH — control-flow nesting deeper than 4 levels (detect_structural: nesting_depth).
       # Counts control flow only; module/class/def are namespacing and method scope, not the
-      # LINEARITY concern — otherwise deep namespaces (Master::Review::Scan::Rules) flag every method.
+      # LINEARITY concern — otherwise deep namespaces (Master::Review::Scan::Laws) flag every method.
         class NestingDepthLaw < Law
           MAX_DEPTH = 4
 
