@@ -2,7 +2,6 @@
 
 require "digest"
 require "fileutils"
-require "open3"
 require "rbconfig"
 require "rubygems"
 require_relative "../trace/dmesg"
@@ -710,8 +709,19 @@ module Master
       end
 
       def capture(argv, chdir:, env:)
-        stdout, stderr, status = Open3.capture3(env, *argv, chdir: chdir)
-        [status.success?, stdout, stderr]
+        stdout_r, stdout_w = IO.pipe
+        stderr_r, stderr_w = IO.pipe
+        pid = Process.spawn(env, *argv, chdir:, out: stdout_w, err: stderr_w)
+        stdout_w.close
+        stderr_w.close
+        stdout_thread = Thread.new { stdout_r.read }
+        stderr_thread = Thread.new { stderr_r.read }
+        _pid, status = Process.wait2(pid)
+        [status.success?, stdout_thread.value, stderr_thread.value]
+      ensure
+        [stdout_r, stdout_w, stderr_r, stderr_w].compact.each do |io|
+          io.close unless io.closed?
+        end
       end
 
       def which(name) = @env.fetch("PATH", "").split(File::PATH_SEPARATOR).lazy.map { |dir|
