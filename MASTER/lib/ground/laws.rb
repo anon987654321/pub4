@@ -47,7 +47,7 @@ module Master
           @laws ||= begin
             require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
             ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.definitions.empty?
-            ::Law.definitions.values.to_h { |law| [law.id.to_s, (r.practice || r.fix).to_s.gsub(/\s+/, " ").strip] }.freeze
+            ::Law.definitions.values.to_h { |law| [law.id.to_s, (law.practice || law.fix).to_s.gsub(/\s+/, " ").strip] }.freeze
           rescue StandardError => e
             Master::Ground::Swallow.log(e, context: "laws.laws", path: File.join(Master::ROOT, "law"))
             raise "laws registry unreadable: #{e.class}: #{e.message}"
@@ -122,7 +122,7 @@ module Master
         all_laws = Master.law_entries(root: @root)
         all_laws
           .select { |r| r["tier"] == "kernel" }
-          .each_with_object({}) { |r, h| h[r["id"]] = r["name"] }
+          .each_with_object({}) { |law, h| h[law["id"]] = r["name"] }
           .freeze
       end
 
@@ -130,7 +130,7 @@ module Master
         all_laws = Master.law_entries(root: @root)
         items = all_laws
           .reject { |r| r["tier"] == "kernel" }
-          .map { |h| h.transform_keys(&:to_s) }
+          .map { |law| law.transform_keys(&:to_s) }
           .freeze
         limit ? items.first(limit) : items
       end
