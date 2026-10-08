@@ -32,7 +32,7 @@ module Master
           authority boundaries.
 
           1. LOAD
-          Read the live constitution, rule registry, rule examples, protected
+          Read the live constitution, Law registry, Law examples, protected
           paths, verification commands, and target contract. Do not rely on a
           remembered rule count.
 
@@ -59,7 +59,7 @@ module Master
           legitimately keep nothing.
 
           5. SCAN
-          For every active rule and every applicable file, inspect source
+          For every active Law and every applicable file, inspect source
           lexically and structurally. Verify each detector against its worked
           positive and negative examples before trusting its findings.
 
@@ -98,9 +98,9 @@ module Master
         TEXT
       end
 
-      def strategy_for(rule)
-        semantic = rule.respond_to?(:semantic?) && rule.semantic?
-        practice = rule.respond_to?(:practice) && !rule.practice.to_s.empty?
+      def strategy_for(law)
+        semantic = law.respond_to?(:semantic?) && rule.semantic?
+        practice = law.respond_to?(:practice) && !rule.practice.to_s.empty?
         detector = rule.respond_to?(:scannable?) && rule.scannable?
 
         return "semantic_model_repair" if semantic
@@ -110,8 +110,8 @@ module Master
         "model_or_human_analysis"
       end
 
-      def verification_for(rule)
-        return "manual_conduct_evidence" if strategy_for(rule) == "conduct_only"
+      def verification_for(law)
+        return "manual_conduct_evidence" if strategy_for(law) == "conduct_only"
         return "semantic_rescan_plus_behavior_or_test" if rule.respond_to?(:semantic?) && rule.semantic?
 
         "rule_rescan_plus_behavior_or_test"
@@ -119,8 +119,8 @@ module Master
 
       # Explicit capability boundary for external agents. These are facts
       # about the live executable law population, not permissions to ignore it.
-      def capability_report(rules = self.rules)
-        eligible = Array(rules).select do |rule|
+      def capability_report(laws = self.laws)
+        eligible = Array(laws).select do |rule|
           !rule.respond_to?(:enforceable?) || rule.enforceable?
         end
         matrix = ProtocolDetectorMatrix.matrix(eligible)
@@ -135,14 +135,14 @@ module Master
         }
       end
 
-      def rule_entry(rule)
-        base = rule.respond_to?(:contract_entry) ? rule.contract_entry : {
-          "id" => rule.id.to_s,
+      def law_entry(law)
+        base = law.respond_to?(:contract_entry) ? rule.contract_entry : {
+          "id" => law.id.to_s,
           "severity" => rule.respond_to?(:severity) ? rule.severity.to_s : "warning"
         }
         base.merge(
           "enforcement" => enforcement(rule),
-          "fix_strategy" => strategy_for(rule),
+          "fix_strategy" => strategy_for(law),
           "verify_strategy" => verification_for(rule)
         )
       end
@@ -155,7 +155,7 @@ module Master
         surfaces.empty? ? ["unknown"] : surfaces
       end
 
-      def rules
+      def laws
         require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
         ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.definitions.empty?
         ::Law.definitions.values
@@ -202,7 +202,7 @@ module Master
 
       def render(root:, target:, files: nil, skipped: nil, full: false)
         target_path = File.realpath(target)
-        rule_rows = rules.sort_by { |rule| rule.id.to_s }.map { |rule| rule_entry(rule) }
+        law_rows = rules.sort_by { |rule| law.id.to_s }.map { |rule| rule_entry(rule) }
         corpus = inventory(target: target_path, root: root)
         corpus["eligible_sample"] = Array(files).first(24).map { |path| relative(path, root) } if files
         corpus["skipped_by_caller"] = skipped.to_i if skipped
@@ -258,7 +258,7 @@ module Master
         "MASTER /fix external-agent context unavailable: #{e.class}: #{e.message}"
       end
 
-      def rule_prompt(rule)
+      def law_prompt(rule)
         entry = rule_entry(rule)
         <<~TEXT.strip
           /fix execution directive for #{entry["id"]}:
