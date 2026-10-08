@@ -69,8 +69,8 @@ module Master
           end
         end
 
-        shared = File.join(rails, "shared")
-        raise "RAILS shared engine missing from filesystem" unless File.directory?(shared)
+        shared = File.join(rails, "__shared")
+        raise "RAILS __shared engine missing from filesystem" unless File.directory?(shared)
 
         layout_path = File.join(@repo_root, "MASTER", "gates", "lib", "layout_suite.rb")
         auditor_path = File.join(@repo_root, "MASTER", "gates", "lib", "source", "frontend_auditor.rb")
