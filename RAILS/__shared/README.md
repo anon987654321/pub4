@@ -1004,43 +1004,28 @@ This document explains it; it does not redefine it.
 
 ## Packages are vendored, not fetched
 
-All 16 `@stimulus-components/*` packages live in `shared/vendor/javascript/` as
-`@stimulus-components--<name>.js` and pin to those local files through
-`shared/config/importmap_baseline.rb`. The gate fails if the baseline stops
-pinning `vendor/javascript`, and fails on any vendored file under 100 bytes — an
-empty vendor file pins successfully and breaks only at runtime.
+All 32 current Stimulus Components catalogue entries are available from the
+shared vendor tree and resolve through `shared/config/importmap_baseline.rb`.
+The `StimulusComponentsGate` owns the catalogue, requires every entry to have a
+local vendor file, and rejects missing importmap pins.
 
-Vendored: `animated-number`, `auto-submit`, `character-counter`,
-`checkbox-select-all`, `clipboard`, `content-loader`, `dropdown`, `lightbox`,
-`notification`, `password-visibility`, `popover`, `rails-nested-form`,
-`read-more`, `reveal`, `sortable`.
+The catalogue covers animated-number, auto-submit, carousel, character-counter,
+chartjs, checkbox-select-all, clipboard, color-picker, confirmation,
+content-loader, dialog, dropdown, glow, hotkey, lightbox, notification,
+password-visibility, places-autocomplete, popover, prefetch, rails-nested-form,
+read-more, remote-rails, reveal, scroll-progress, scroll-reveal, scroll-to,
+sortable, sound, speech-recognition, textarea-autogrow and timeago.
 
-Textarea growth is native CSS via `field-sizing: content`; there is no autogrow controller.
+The packages are registered once by `shared/frontend/stimulus_boot.js`.
+Dependency-heavy components use small local adapters where their upstream
+runtime would otherwise pull an extra dependency or CDN asset into the
+importmap. That keeps the component capability surface complete without
+violating the vendored/no-CDN frontend law.
 
-**Do not reintroduce CDN pins for these.** `pin` defaults to `preload: true`, so
-every pin emits a `modulepreload` and the browser fetches it eagerly on first
-paint — seven CDN pins once cost brgen 537 requests per page load and left Turbo
-undefined. Any dynamic `import()` behind a preloaded pin is decorative.
-
-The two CDN pins that remain are deliberate and documented in place:
-`@rails/request.js` from jsDelivr (its ESM build uses extensionless relative
-imports that a browser cannot resolve; the `dist` bundle can), and brgen's
-Tiptap pair from esm.sh at `preload: false`.
-
-## Registration
-
-`shared/frontend/stimulus_boot.js` registers the controllers every app uses.
-`stimulus_boot_social.js` (brgen + amber, not bsdports), `stimulus_boot_brgen.js`
-and `stimulus_boot_amber.js` register the rest — split out so an app whose
-views never mount a controller never imports its module either. `nested-form`
-(the short name `@stimulus-components/rails-nested-form` registers under) is
-amber-only, in `stimulus_boot_amber.js`; `checkbox-select-all` is brgen-only,
-in `stimulus_boot_brgen.js`. `gates/lib/source/stimulus_components.rb` reads
-all four files together as one registry.
-
-`shared/frontend/stimulus_components.js` is deprecated and the gate fails if the
-file reappears. The old document pointed at it as the ESM bootstrap for
-non-importmap apps; there are no such apps.
+**Do not reintroduce CDN pins for Stimulus Components.** Component registration is
+a platform capability, not a reason to preload every controller on every page
+from a third party. App-specific controller code remains in the split boot files;
+the shared component catalogue does not.
 
 ## Forbidden
 

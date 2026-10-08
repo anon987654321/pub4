@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "set"
 require_relative "../../support/gate_result"
 require_relative "stimulus_components"
 
