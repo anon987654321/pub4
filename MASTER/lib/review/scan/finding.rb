@@ -1,3 +1,4 @@
+require "digest"
 # frozen_string_literal: true
 
 module Master
@@ -20,6 +21,10 @@ module Master
           new(law:, law_id: law.to_s, message:, line:, severity:, fix:, tags:,
             reversibility:, blast_radius:, confidence:, why:, genealogy:,
             dedupe_key:, impact_radius:)
+        end
+
+        def evidence_key
+          Digest::SHA256.hexdigest([law_id || law, message, line, impact_radius, blast_radius].map(&:to_s).join("\0"))[0, 24]
         end
 
         def [](key)
