@@ -25,10 +25,10 @@ module Master
       end
 
       def winner(law_a, law_b, laws_index: nil)
-        law_a = priority(law_for(law_a, laws_index:))
-        law_b = priority(law_for(law_b, laws_index:))
-        return law_a if law_a < law_b
-        return law_b if law_b < law_a
+        priority_a = priority(law_for(law_a, laws_index:))
+        priority_b = priority(law_for(law_b, laws_index:))
+        return law_a if priority_a < priority_b
+        return law_b if priority_b < priority_a
 
         law_a
       end
