@@ -27,7 +27,7 @@ module Master
           YamlDeclarativeLaw VetoPatternLaw LawBridgeLaw SemanticLaw AdversarialLaw CommentDriftLaw AstOmissionLaw
           LibRootDisciplineLaw FileSprawlLaw PathPurposeLaw
         ].each do |name|
-          klass = Review::Scan::Rules.const_get(name)
+          klass = Review::Scan::Laws.const_get(name)
           scanner.add_law(Review::Scan::LawFactory.build(klass, root:, agent:, ecology:))
         end
         scanner
@@ -300,11 +300,11 @@ module Master
           end.freeze
         end
 
-        def prediction_thresholds
+        def law_prediction_thresholds
           path = Master::LAWS_PATH
           stat = File.stat(path)
           stamp = [stat.size, stat.ino, stat.mtime.to_r]
-          return @prediction_thresholds if @prediction_thresholds_stamp == stamp
+          return @law_law_prediction_thresholds if @law_law_prediction_thresholds_stamp == stamp
 
           rules = Master.load_yaml(path) || {}
           prediction = rules["prediction_engine"]
@@ -312,10 +312,10 @@ module Master
 
           # prediction_engine was retired; an absent policy means no additional
           # confidence threshold. The law/autofix policy remains authoritative.
-          @prediction_thresholds_stamp = stamp
-          @prediction_thresholds = prediction.freeze
+          @law_law_prediction_thresholds_stamp = stamp
+          @law_law_prediction_thresholds = prediction.freeze
         rescue StandardError => e
-          Master::Ground::Swallow.log(e, context: "Scanner.prediction_thresholds")
+          Master::Ground::Swallow.log(e, context: "Scanner.law_prediction_thresholds")
           raise "scanner: prediction policy unreadable: #{e.class}: #{e.message}"
         end
 
@@ -332,25 +332,25 @@ module Master
         # The list is Master::Review::Scan::AstFixer::DELETING_TRANSFORMS rather than a copy here: it
         # names methods that class defines, and the copy that stood here gated
         # only this path while AstFixer ran the transform unasked on the other.
-        def deleting_rule?(rule_id)
-          transform = rule_transforms[rule_id.to_s]
+        def deleting_law?(law_id)
+          transform = law_transforms[law_id.to_s]
           Master::Review::Scan::AstFixer::DELETING_TRANSFORMS.include?(transform.to_s)
         end
 
-        def rule_transforms
+        def law_transforms
           path = Master::LAWS_PATH
           stat = File.stat(path)
           stamp = [stat.size, stat.ino, stat.mtime.to_r]
-          return @rule_transforms if @rule_transforms_stamp == stamp
+          return @law_transforms if @law_transforms_stamp == stamp
 
           laws = Master.law_entries(root: Master::ROOT)
-          @rule_transforms_stamp = stamp
-          @rule_transforms = laws.each_with_object({}) do |law, index|
+          @law_transforms_stamp = stamp
+          @law_transforms = laws.each_with_object({}) do |law, index|
             transform = law["autofix"]
             index[law["id"].to_s] = transform if transform
           end.freeze
         rescue StandardError => e
-          Master::Ground::Swallow.log(e, context: "Scanner.rule_transforms")
+          Master::Ground::Swallow.log(e, context: "Scanner.law_transforms")
           raise "scanner: autofix transform policy unreadable: #{e.class}: #{e.message}"
         end
 
@@ -358,10 +358,10 @@ module Master
         # A deterministic finding carries no confidence at all and Fix::LawLoop
         # reads the absence as 1.0, so a threshold here would wave through exactly
         # the findings nobody scored.
-        def should_autofix?(rule_id, observed_conf, allow_deletions: false)
-          return false if !allow_deletions && deleting_rule?(rule_id)
+        def should_autofix?(law_id, observed_conf, allow_deletions: false)
+          return false if !allow_deletions && deleting_law?(law_id)
 
-          threshold = prediction_thresholds[rule_id.to_s] || prediction_thresholds[rule_id]
+          threshold = law_prediction_thresholds[law_id.to_s] || law_prediction_thresholds[rule_id]
           return true unless threshold && threshold["confidence"]
 
           observed_conf.to_f >= threshold["confidence"].to_f
