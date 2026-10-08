@@ -3,7 +3,7 @@
 module Master
   module Review
   module Scan
-  module Rules
+  module Laws
   # Lexical rules defined via LawDSL — pure Ruby, no YAML.
   # Each auto-registers in Rule.registry and runs on every scan.
   # Several are RuboCop-shaped and stay here rather than delegating to RuboCop:
