@@ -7,7 +7,7 @@ module Master
     module Scan
       module Rules
         # B05 FILE_LAYOUT — Ruby file order: frozen → require → module → class → public → private.
-        class FileLayoutRule < Rule
+        class FileLayoutLaw < Rule
           # The three scopes Ruby resets method visibility in, plus the file itself.
           SCOPE_NODES = [
             Prism::ProgramNode, Prism::ClassNode, Prism::ModuleNode, Prism::SingletonClassNode
@@ -106,7 +106,7 @@ module Master
         end
 
         # B06 EXPLICIT — implicit requires, magic coupling, method_missing without respond_to_missing?.
-        class ExplicitRule < Rule
+        class ExplicitLaw < Rule
           declare id: "EXPLICIT", severity: :warning, tags: %i[EXPLICIT CONVENTION],
                   description: "no implicit requires or magic coupling"
 
@@ -134,7 +134,7 @@ module Master
         end
 
         # B08 CYCLOMATIC_COMPLEXITY — methods with cyclomatic complexity > 10.
-        class CyclomaticComplexityRule < Rule
+        class CyclomaticComplexityLaw < Rule
           MAX_CC = 10
           CC_NODES = [
             Prism::IfNode, Prism::UnlessNode, Prism::WhileNode, Prism::UntilNode,
@@ -168,7 +168,7 @@ module Master
         end
 
         # B09 PATTERN_EXTRACTION — code close to a named design pattern.
-        class PatternExtractionRule < Rule
+        class PatternExtractionLaw < Rule
           BRANCH_THRESHOLD = 3
           PIPELINE_STEP_THRESHOLD = 4
 
@@ -223,7 +223,7 @@ module Master
         end
 
         # B10 DATA_CLASS — class with only attr_accessor and no real methods.
-        class DataClassRule < Rule
+        class DataClassLaw < Rule
           declare id: "DATA_CLASS", severity: :info, tags: %i[SRP SOLID],
                   description: "data class with no behavior — use Struct or Data"
 
@@ -308,7 +308,7 @@ module Master
       # document has no such boundary, and its length is its content. JavaScript
       # is JS_MODULE_SIZE's, which asks the same question with the vendored
       # bundles set aside, so reading it here reported every long script twice.
-        class SmallFilesRule < Rule
+        class SmallFilesLaw < Rule
           LIMIT = 300
           NOT_MODULAR = %w[json yaml markdown javascript].freeze
           DATA_EXTENSIONS = %w[.lock .txt .conf .ipynb .csv].freeze
@@ -327,7 +327,7 @@ module Master
         end
 
       # B02 SMALL_FUNCTIONS — methods over 20 lines via Prism (detect_structural: long_method).
-        class SmallFunctionsRule < Rule
+        class SmallFunctionsLaw < Rule
           IDEAL = 10
           MAX = 20
 
@@ -379,7 +379,7 @@ module Master
         end
 
       # B03 NO_GOD_CLASS — class with >10 public methods (detect_structural: god_class).
-        class GodClassRule < Rule
+        class GodClassLaw < Rule
           METHOD_LIMIT = 10
           LINE_LIMIT = 300
 
@@ -449,7 +449,7 @@ module Master
       # B07 NESTING_DEPTH — control-flow nesting deeper than 4 levels (detect_structural: nesting_depth).
       # Counts control flow only; module/class/def are namespacing and method scope, not the
       # LINEARITY concern — otherwise deep namespaces (Master::Review::Scan::Rules) flag every method.
-        class NestingDepthRule < Rule
+        class NestingDepthLaw < Rule
           MAX_DEPTH = 4
 
           NESTING_TYPES = [
@@ -480,7 +480,7 @@ module Master
         end
 
       # B04 CQS — method that both mutates state and returns a meaningful value.
-        class CqsRule < Rule
+        class CqsLaw < Rule
           declare id: "CQS", severity: :warning, tags: %i[CQS CLEAN_CODE],
                   description: "command-query separation — mutate OR return, not both"
 
@@ -554,7 +554,7 @@ module Master
       # only. These give each a same-file AST proxy; the semantic prompt still
       # carries the cases these heuristics miss.
 
-        class OpenClosedRule < Rule
+        class OpenClosedLaw < Rule
           MIN_BRANCHES = 3
           TYPE_PREDICATE = /\.(class|type|kind)\b/
           # No trailing \b. A word boundary needs a word character on one side,
@@ -594,7 +594,7 @@ module Master
 
         end
 
-        class LiskovRule < Rule
+        class LiskovLaw < Rule
           declare id: "LISKOV", severity: :warning, tags: %i[SOLID LSP],
                   description: "subclass breaks the parent's contract via refused bequest or narrowed signature"
 
@@ -653,7 +653,7 @@ module Master
 
         end
 
-        class DependencyInversionRule < Rule
+        class DependencyInversionLaw < Rule
           COLLABORATOR_SUFFIX = /(Service|Client|Adapter|Gateway|Repository|Provider)\z/
 
           declare id: "DEPENDENCY_INVERSION", severity: :warning, tags: %i[SOLID DIP],
@@ -690,7 +690,7 @@ module Master
 
         end
 
-        class InterfaceSegregationRule < Rule
+        class InterfaceSegregationLaw < Rule
           METHOD_LIMIT = 8
 
           declare id: "INTERFACE_SEGREGATION", severity: :warning, tags: %i[SOLID ISP],
@@ -743,7 +743,7 @@ module Master
         # a file and nothing else. Callers could hold that object directly. :info,
         # because a facade that adds a boundary on purpose is the exception the
         # reviewer decides — the rule surfaces the shape, not the verdict.
-        class MiddleManRule < Rule
+        class MiddleManLaw < Rule
           MIN_METHODS = 3
 
           declare id: "MIDDLE_MAN", severity: :info, tags: %i[ENGINEERING_FIT ABSTRACTION],
