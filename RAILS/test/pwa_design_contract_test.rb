@@ -6,7 +6,7 @@ require "minitest/autorun"
 
 class PwaDesignContractTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
-  SHARED_ROOT = File.join(ROOT, "shared")
+  SHARED_ROOT = File.join(ROOT, "__shared")
   APPS = %w[amber brgen bsdports].freeze
 
   # All current apps use the shared Workbox worker. This remains an explicit
