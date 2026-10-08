@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-require "review/scan/rule_dsl"
+require "review/scan/law_dsl"
 
 class TestCosmeticRules < Minitest::Test
   def test_ruby_snake_methods_flags_camel_case
