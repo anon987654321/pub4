@@ -91,8 +91,8 @@ task :constitution do
   # Rules that need a model and did not get one return [] and say nothing, so
   # a report that omits them offers the mechanical half as the whole law.
   idle = scanner.rules.select { |rule| rule.respond_to?(:agent?) && !rule.agent? }
-  puts "constitution: #{audit.mechanical.size} of #{audit.yaml_rules} declared rules active" \
-       "#{idle.empty? ? '' : " (#{idle.map(&:id).join(', ')} idle without a model — rake lint:rule_reach)"}"
+  puts "constitution: #{audit.mechanical.size} of #{audit.yaml_rules} declared laws active" \
+       "#{idle.empty? ? '' : " (#{idle.map(&:id).join(', ')} idle without a model — rake lint:law_reach)"}"
 
   violations = paths.each_with_index.flat_map do |path, index|
     puts "constitution: scanned #{index}/#{paths.size}" if index.positive? && (index % 25).zero?
@@ -162,7 +162,7 @@ task :selfcheck do
   # gate does not use — it read "error/critical only" for as long as veto was
   # missing from it, which is how nobody noticed veto was missing.
   puts "selfcheck: #{audit.mechanical.size} of #{audit.yaml_rules} declared " \
-       "rules active (rake lint:rule_reach for what the rest need), " \
+       "rules active (rake lint:law_reach for what the rest need), " \
        "#{Master::Fix::SelfCheck::QUICK_SEVERITIES.join('/')} only, across #{Master.scan_roots.join(', ')}"
   report = Master::Fix::SelfCheck.new(root: __dir__).quick
   puts report.summary
@@ -544,10 +544,10 @@ end
     end
   end
 
-  desc "every rule can fire somehow — none is law that no configuration enforces"
+  desc "every law can fire somehow — none is law that no configuration enforces"
   task :rule_reach do
     ok = system(RbConfig.ruby, File.join(__dir__, "tools", "rule_reach.rb"))
-    abort "lint:rule_reach: a rule reaches no detector" unless ok
+    abort "lint:law_reach: a rule reaches no detector" unless ok
   end
 
   desc "Ratchet: lib/ may shrink or hold, never grow past data/spine.yml's ceiling"
@@ -667,7 +667,7 @@ end
   # only ever checked law -> rule and so reported 0 against 101 untraced
   # rules. A ceiling makes the real number visible and monotone without turning a
   # standing backlog into a red gate on unrelated work.
-  desc "Ratchet: registered rules that trace to no law_map entry may fall, never rise"
+  desc "Ratchet: registered laws that trace to no law_map entry may fall, never rise"
   task :law_trace do
     require "yaml"
     $LOAD_PATH.unshift(File.join(__dir__, "lib"))
@@ -688,7 +688,7 @@ end
 
     if untraced.size > ceiling
       puts untraced.first(20).map { |id| "  #{id}" }
-      abort "lint:law_trace: #{untraced.size} registered rules trace to no principle " \
+      abort "lint:law_trace: #{untraced.size} registered laws trace to no principle " \
             "(ceiling #{ceiling}, +#{untraced.size - ceiling}). Map them, or lower the ceiling " \
             "in a commit that says why it moved up."
     end
@@ -701,7 +701,7 @@ end
       puts "lint:law_trace: #{untraced.size}/#{ceiling} untraced (#{ceiling - untraced.size} under — " \
            "run `rake lint:law_trace RATCHET=1` to record the new low)"
     else
-      puts "lint:law_trace: #{untraced.size}/#{ceiling} of #{registered.size} registered rules untraced"
+      puts "lint:law_trace: #{untraced.size}/#{ceiling} of #{registered.size} registered laws untraced"
     end
   end
 
@@ -713,7 +713,7 @@ end
     do_not_touch: ["Every Do Not Touch entry names the gate that fails when its claim stops being true", "tools/do_not_touch.rb"],
     instruments: ["The repo's own measuring code agrees with test/fixtures, whose answers are declared", "tools/instruments.rb"],
     swallowed: ["Load-bearing errors that were swallowed and never looked at", "tools/swallowed_errors.rb"],
-    rule_audit: ["Rules that cannot see their own subject, or fire on nearly everything", "tools/law_audit.rb"],
+    law_audit: ["Rules that cannot see their own subject, or fire on nearly everything", "tools/law_audit.rb"],
     autofix_reach: ["Rules whose autofix names code that does not exist, or names nothing at all", "tools/autofix_reach.rb"],
     rule_hygiene: ["Rule ids, aliases and metadata: collisions, unfinished folds, missing tier/severity", "tools/law_hygiene.rb"],
     word_boundary: ["Flag \\b adjacent to punctuation in rule regexes — a word boundary that can never fire", "tools/word_boundary_lint.rb"],
@@ -791,7 +791,7 @@ AUDIT_GATES = %w[
   lint:frozen lint:data_singularity lint:spine lint:autoload
   lint:law_trace lint:scan_coverage lint:reader_singularity lint:doc_citations
   lint:do_not_touch lint:instruments lint:constant_collisions
-  lint:capability lint:cohesion lint:rule_reach lint:models lint:dedup
+  lint:capability lint:cohesion lint:law_reach lint:models lint:dedup
   lint:word_boundary lint:test_naming
   loc_budget
 ].freeze
