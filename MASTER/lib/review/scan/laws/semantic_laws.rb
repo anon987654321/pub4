@@ -3,7 +3,7 @@
 module Master
   module Review
     module Scan
-      module Rules
+      module Laws
         # The rules that call a model share how they receive one, and the
         # scanner finds them by asking whether they respond to it.
         module NeedsModel
@@ -59,7 +59,7 @@ module Master
         # Steelman-first red-team: the model must defend the code before it can attack it.
         # This suppresses false positives by forcing consideration of legitimate reasons
         # before a violation can survive. Deep depth only; one LLM call per file.
-        class AdversarialRule < Rule
+        class AdversarialLaw < Law
           PROMPT_TEMPLATE = <<~PROMPT.freeze
           Red-team review of %<path>s.
 
@@ -142,7 +142,7 @@ module Master
         # Each executable Law with an ask surface is folded into one LLM call per
         # file. A law may also have a deterministic detector; that is layered
         # evidence for one rule, not a second semantic definition.
-        class SemanticRule < Rule
+        class SemanticLaw < Law
           CODE_SNIPPET_LIMIT = 2000
 
           declare id: "semantic", severity: :warning, autofix: true,
@@ -259,7 +259,7 @@ module Master
               }
             end
           rescue StandardError => e
-            Master::Ground::Swallow.log(e, context: "SemanticRule.from_law", severity: :load_bearing)
+            Master::Ground::Swallow.log(e, context: "SemanticLaw.from_law", severity: :load_bearing)
             raise
           end
 
@@ -290,7 +290,7 @@ module Master
           def violation_block(rules)
             list = rules.map { |id, a| "#{id}: #{a[:prompt]}" }.join("\n")
             <<~BLOCK
-            VIOLATIONS — list ONLY clear breaches. Format: RULE_ID:LINE:description.
+            VIOLATIONS — list ONLY clear breaches. Format: LAW_ID:LINE:description.
             If clean, write CLEAN on its own line.
             #{list}
           BLOCK
@@ -299,7 +299,7 @@ module Master
           def opportunity_block(rules)
             list = rules.map { |id, a| "#{id}: #{a[:prompt]}" }.join("\n")
             <<~BLOCK
-            OPPORTUNITIES — list refactors only if they would simplify. Format: RULE_ID:LINE:reason.
+            OPPORTUNITIES — list refactors only if they would simplify. Format: LAW_ID:LINE:reason.
             If none, write NONE on its own line.
             #{list}
           BLOCK
@@ -319,7 +319,7 @@ module Master
 
               axiom = scoped[match[1]]
               Finding.build(
-                rule: match[1],
+                law: match[1],
                 message: match[3].strip,
                 line: match[2].to_i,
                 severity: axiom[:severity],
@@ -337,7 +337,7 @@ module Master
         # Lexical pass extracts (comment, method_body) pairs; LLM judges drift in one
         # batched call per file. Pairs with the "reassess on touch" directive: lying
         # comments are factual bugs, not style noise.
-        class CommentDriftRule < Rule
+        class CommentDriftLaw < Law
           MAX_PAIRS_PER_FILE = 8
           # Lines of method body sent to LLM for drift comparison.
           BODY_SNIPPET = 20
@@ -371,11 +371,11 @@ module Master
               return [] if @capability_absent
 
               @capability_absent = true
-              Master::Ground::Swallow.log(e, context: "CommentDriftRule", severity: :cosmetic, path:)
+              Master::Ground::Swallow.log(e, context: "CommentDriftLaw", severity: :cosmetic, path:)
               return []
             end
 
-            Master::Ground::Swallow.log(e, context: "CommentDriftRule", severity: :load_bearing, path:)
+            Master::Ground::Swallow.log(e, context: "CommentDriftLaw", severity: :load_bearing, path:)
             raise
           end
 
