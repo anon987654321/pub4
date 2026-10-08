@@ -121,8 +121,8 @@ module Operator
        end,
        master_row("rule_audit.blind", "data/laws.yml", "rules proved on input their subjects never get") do
          require File.join(MASTER, "lib/operator/law_audit")
-         blind = Operator::RuleAudit.audit[:fixture_blindness]
-         [blind.size, Operator::RuleAudit.ceilings.fetch("blind"), blind.map { |row| "#{row[:rule]}: #{row[:detail]}" }]
+         blind = Operator::LawAudit.audit[:fixture_blindness]
+         [blind.size, Operator::LawAudit.ceilings.fetch("blind"), blind.map { |row| "#{row[:rule]}: #{row[:detail]}" }]
        end]
     end
 
@@ -132,8 +132,8 @@ module Operator
       # than a monotonic ceiling.
       [master_row("rule_audit.saturated", "data/laws.yml", "rules flagging most of what they read") do
          require File.join(MASTER, "lib/operator/law_audit")
-         saturated = Operator::RuleAudit.audit[:saturation]
-         [saturated.size, Operator::RuleAudit.ceilings.fetch("saturated"),
+         saturated = Operator::LawAudit.audit[:saturation]
+         [saturated.size, Operator::LawAudit.ceilings.fetch("saturated"),
           saturated.map { |row| format("%s: %d/%d files", row[:rule], row[:hits], row[:applicable]) }]
        end]
     end
