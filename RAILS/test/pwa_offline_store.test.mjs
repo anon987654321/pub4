@@ -16,7 +16,7 @@ globalThis.document = {
     selector === 'meta[name="csrf-token"]' ? { content: "csrf-contract" } : null,
 }
 
-globalThis.navigator = { onLine: false }
+Object.defineProperty(globalThis.navigator, "onLine", { value: false, configurable: true })
 globalThis.window = {
   location: new URL("https://brgen.no/offline"),
   addEventListener: (type, handler) => listeners.set(type, handler),
