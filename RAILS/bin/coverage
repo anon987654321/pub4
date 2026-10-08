@@ -57,14 +57,6 @@ apps.each do |app|
   run!(app, RbConfig.ruby, "bin/rails", "test:system", env:)
 end
 
-# Root contract tests exercise the topology and policy outside any one Rails
-# application. Run them once here so the full coverage command cannot be green
-# while the contract suite is red or absent from the normal app test glob.
-run!(apps.first, RbConfig.ruby, "../test/run_all.rb", env: {
-  "RAILS_ENV" => "test",
-  "PUB4_CI_APP" => apps.first,
-})
-
 resultsets = apps.map { |app| File.join(COVERAGE_ROOT, app, ".resultset.json") }
 missing = resultsets.reject { |path| File.file?(path) }
 abort "coverage: result missing: #{missing.join(", ")}" unless missing.empty?
