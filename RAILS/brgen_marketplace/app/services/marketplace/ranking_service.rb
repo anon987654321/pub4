@@ -6,7 +6,7 @@ module Marketplace
       relevance: 0.25,
       performance: 0.35,
       delivery: 0.20,
-      seller: 0.20
+      seller: 0.20,
     }.freeze
 
     # Persisted ranking is deliberately global and user-agnostic. A scheduled
@@ -23,7 +23,7 @@ module Marketplace
         relevance_score * WEIGHTS[:relevance] +
         performance_score * WEIGHTS[:performance] +
         delivery_score * WEIGHTS[:delivery] +
-        seller_score * WEIGHTS[:seller]
+        seller_score * WEIGHTS[:seller],
       ).round(4)
     end
 
