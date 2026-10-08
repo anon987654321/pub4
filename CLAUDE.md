@@ -137,11 +137,11 @@ claiming or disclaiming one.
 ## Mirror MASTER: hold its law before you write under it
 
 MASTER judges every effect against a constitution. You write in the same tree,
-so you are held to the same one, and the only way to be held to a rule is to
+so you are held to the same one, and the only way to be held to a Law is to
 know it. Skimming the file is not knowing it.
 
-**Read the law once per session, one rule at a time, before the first edit.**
-Sequentially, each rule on its own — id, what it forbids, the fix it names, and
+**Read the law once per session, one Law at a time, before the first edit.**
+Sequentially, each Law on its own — id, what it forbids, the fix it names, and
 the exemption it carries. The exemption is the half that gets skipped and the
 half that was earned against a measured false positive. Stop on each and hold
 it before moving to the next.
@@ -162,10 +162,10 @@ Do not hand-parse the catalogue with an assumed YAML shape. Run
 `ruby MASTER/tools/agent_context.rb --tree`; it is the bounded operator-facing
 view of the live law contract and its enforcement surfaces.
 
-You have it when you can name the rule that governs a line you are about to
+You have it when you can name the Law that governs a line you are about to
 write without opening the file. Until then, open the file.
 
-**A rule you cannot state is a rule you will break**, and the breakage is
+**A Law you cannot state is a Law you will break**, and the breakage is
 usually the exemption rather than the rule — every scan noise entry in
 `TODO.md` is somebody who knew the rule and not what it spares.
 
@@ -189,11 +189,11 @@ reader. Before calling code wrong, check what your scan measured.
 that is what `git log` is for. A standing refusal with no code to sit beside
 goes under "Refused, and why" in `MASTER/AGENTS.md` or `OPENBSD/CLAUDE.md`.
 
-## House rules
+## House Laws
 
 **Every README carries one voice.** It opens with a bold, visionary paragraph, then
 plain Strunk & White prose a regular person follows — no code blocks, no lists, no
-tables — and it passes `bin/operator lint` — the `README_PROSE` rule in `MASTER/lib/review/scan/laws/cosmetic_laws.rb` enforces it, because a convention is a rule, not a paragraph an agent skims. Redo a folder's
+tables — and it passes `bin/operator lint` — the `README_PROSE` rule in `MASTER/lib/review/scan/laws/cosmetic_laws.rb` enforces it, because a convention does not become a second Law in prose an agent skims. Redo a folder's
 README before you push that folder, so the door to it is never stale. `MASTER/README.md`
 is the reference.
 
