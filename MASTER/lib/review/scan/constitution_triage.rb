@@ -15,7 +15,7 @@ module Master
       # Rakefile, which is the instrument failure VERIFY_THE_INSTRUMENT names.
       #
       # The objection that commit raised was right, and is answered below rather
-      # than restored with the class: RULE_RETUNE_IDS was fifty rule ids copied
+      # than restored with the class: LAW_RETUNE_IDS was fifty rule ids copied
       # by hand out of data/laws.yml with nothing asserting the two still agree.
       # Eight named no live rule in any of the three registries — five of them
       # the lowercase spelling of a rule since renamed (debug_output, long_line,
@@ -26,7 +26,7 @@ module Master
       # All eight are gone, and test_constitution_triage.rb fails when an id here
       # stops naming a rule, which is what EXEMPTIONS_EXPIRE asks of an allowlist.
       class ConstitutionTriage
-        SCANNER_SELF_PATHS = %r{\Alib/review/scan/(?:rules/|rule|law_dsl|law_factory|scanner|file_processor|self_scan|self_test|infra_helpers|law_registry_audit)}.freeze
+        SCANNER_SELF_PATHS = %r{\Alib/review/scan/(?:laws/|law|law_dsl|law_factory|scanner|file_processor|self_scan|self_test|infra_helpers|law_registry_audit)}.freeze
 
         # Rules under active retune: noisy enough that gating on them would gate
         # on the detector rather than on the code. Every id here must name a rule
@@ -34,11 +34,11 @@ module Master
         #
         # FILE_LAYOUT and DOUBLE_QUOTES_RUBY came off on 2026-09-08, when both
         # detectors were rewritten onto the parse tree. They were not noisy
-        # rules; they were line readings of scope-shaped law, and together they
+        # laws; they were line readings of scope-shaped law, and together they
         # reported 849 findings over MASTER of which 842 were the law being
         # obeyed. A rule parked here for a detector fault is parked forever,
         # because the parking is what stops anyone measuring it.
-        RULE_RETUNE_IDS = %w[
+        LAW_RETUNE_IDS = %w[
           COMPLETION_THEATER
           CONSECUTIVE_BLANK_LINES
           COUPLER_SMELLS
@@ -100,11 +100,11 @@ module Master
         private
 
         def classify(finding)
-          return :timed_out if finding[:rule].to_s == "SCAN_TIMEOUT"
+          return :timed_out if finding[:law].to_s == "SCAN_TIMEOUT"
 
           rel = relative_path(finding[:file].to_s)
           return :scanner_self_reference if rel.match?(SCANNER_SELF_PATHS)
-          return :rule_retune if RULE_RETUNE_IDS.include?(finding[:rule].to_s)
+          return  :law_retune if LAW_RETUNE_IDS.include?(finding[:law].to_s)
 
           :true_violation
         end
