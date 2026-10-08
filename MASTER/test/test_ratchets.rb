@@ -188,7 +188,7 @@ class TestRatchets < Minitest::Test
 
     assert_includes master.members, "MASTER/lib/operator/ratchets.rb", "a source file must still be counted" # source-assertion: ok — a census result, not a source file
     refute_includes master.members, "MASTER/test/test_ratchets.rb", "a test is coverage, not sprawl"
-    refute_includes master.members, "MASTER/web/test/test_helper.rb", "a nested test directory is still tests"
+    refute_includes master.members, "RAILS/master_web/test/test_helper.rb", "a nested test directory is still tests"
   end
 
   def forget_tracked_files =Operator::Ratchets.instance_variable_set(:@tracked_source_files, nil)
