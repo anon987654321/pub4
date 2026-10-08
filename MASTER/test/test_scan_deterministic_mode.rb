@@ -45,7 +45,7 @@ class TestScanDeterministicMode < Minitest::Test
   end
 
   def agent_backed(scanner)
-    scanner.rules.select { |rule| rule.respond_to?(:set_agent) }
+    scanner.laws.select { |rule| rule.respond_to?(:set_agent) }
   end
 
   def with_agent(rules)
@@ -74,7 +74,7 @@ class TestScanDeterministicMode < Minitest::Test
   # than through a second mechanism. If that guard goes, this switch is inert
   # and nothing else would say so.
   def test_an_agentless_adversarial_rule_finds_nothing
-    rule = Master::Review::Scan::Rules::AdversarialRule.new(agent: nil)
+    rule = Master::Review::Scan::Laws::AdversarialRule.new(agent: nil)
 
     assert_empty rule.check("def a(x)\n  x\nend\n", path: "lib/thing.rb")
   end
