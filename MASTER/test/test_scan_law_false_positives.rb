@@ -16,7 +16,7 @@ class TestScanRuleFalsePositives < Minitest::Test
   end
 
   def rule(id)
-    scanner.rules.find { |r| r.id.to_s == id.to_s } || raise("rule #{id} is not registered")
+    scanner.laws.find { |r| r.id.to_s == id.to_s } || raise("rule #{id} is not registered")
   end
 
   # ERB_HTML_SAFE only looks at views, so its cases need a view path.
@@ -211,7 +211,7 @@ end
   end
 
   def test_magic_color_is_registered_once
-    count = scanner.rules.count { |rule| rule.id.to_s == "MAGIC_COLOR" }
+    count = scanner.laws.count { |rule| rule.id.to_s == "MAGIC_COLOR" }
     assert_equal 1, count, "MAGIC_COLOR must be one rule, not #{count} (SINGULARITY: unique by id)"
   end
 
@@ -393,7 +393,7 @@ end
   # The other eight are the only implementation of what they detect and stay.
 
   def test_no_learned_smell_shares_an_id_with_a_registered_rule
-    registered = scanner.rules.map { |rule| rule.id.to_s.downcase }
+    registered = scanner.laws.map { |rule| rule.id.to_s.downcase }
     clashing = learned_smell_ids.select { |id| registered.include?(id.downcase) }
 
     assert_empty clashing,
@@ -405,7 +405,7 @@ end
   # LONG_LINE vs long_line was exactly that.
   def test_no_learned_smell_reports_what_a_registered_rule_already_reports
     source = "x = 1\n#{'a' * 130}\n"
-    findings = scanner.rules.flat_map do |rule|
+    findings = scanner.laws.flat_map do |rule|
       next [] unless rule.respond_to?(:check)
 
       Array(rule.check(source, path: "lib/sample.rb")).map { |f| [f[:line], rule.id.to_s.downcase] }
@@ -639,7 +639,7 @@ end
   # third rule saying the same thing, so the question has to be "how many rules in
   # this tree call this line a discard", which is exactly what it counts.
   def discard_reporters(source)
-    scanner.rules.select do |rule|
+    scanner.laws.select do |rule|
       Array(rule.check(source, path: File.join(Master::ROOT, "lib/example.rb")))
         .any? { |f| f[:message].to_s.match?(/discard|swallow/i) }
     end.map { |rule| rule.id.to_s }
@@ -754,7 +754,7 @@ end
   # Law's own line scan now, keyed on the file's comment syntax, with
   # reads_comments as the opt-in for rules whose subject IS comments.
 
-  def bridge = scanner.rules.find { |r| r.id.to_s == "law_bridge" } || raise("bridge rule is not registered")
+  def bridge = scanner.laws.find { |r| r.id.to_s == "law_bridge" } || raise("bridge rule is not registered")
 
   LINE_RULES = %w[FAIL_VISIBLY GUARD_EXPENSIVE_OPS].freeze
 
@@ -796,7 +796,7 @@ end
   end
 
   def test_the_deleted_rule_does_not_come_back
-    refute scanner.rules.any? { |r| r.id.to_s == "EMPTY_RESCUE" },
+    refute scanner.laws.any? { |r| r.id.to_s == "EMPTY_RESCUE" },
            "EMPTY_RESCUE was collapsed into SILENT_RESCUE/NARROW_SILENT_RESCUE — re-registering it " \
            "restores the double-report this test exists to prevent"
   end
@@ -844,7 +844,7 @@ end
   # still declines skip_comments. All three directions asserted.
 
   def smell_findings(smell_id, source, path: "lib/example.rb")
-    rule = scanner.rules.find { |r| r.id.to_s == "LEARNED_SMELLS" } || raise("LEARNED_SMELLS not registered")
+    rule = scanner.laws.find { |r| r.id.to_s == "LEARNED_SMELLS" } || raise("LEARNED_SMELLS not registered")
     Array(rule.check(source, path: File.join(Master::ROOT, path)))
       .select { |f| (f[:rule_id] || f[:rule]).to_s == smell_id.to_s }
   end
