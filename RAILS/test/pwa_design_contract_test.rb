@@ -99,6 +99,13 @@ class PwaDesignContractTest < Minitest::Test
     assert_includes source, 'if (!raw) return "#"'
   end
 
+  def test_pwa_runtime_test_is_wired_to_the_root_package
+    package = JSON.parse(File.read(File.join(ROOT, "package.json")))
+
+    assert_equal "node --test test/pwa_offline_store.test.mjs",
+                 package.fetch("scripts").fetch("test:pwa:runtime")
+  end
+
   def test_offline_replay_queue_is_bounded_and_same_origin
     source = read(SHARED_ROOT, "frontend/pwa_offline_store.js")
     assert_includes source, "MAX_QUEUE_SIZE = 100"
