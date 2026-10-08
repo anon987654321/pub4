@@ -192,7 +192,7 @@ module Operator
          $LOAD_PATH.unshift(File.join(MASTER, "lib")) unless $LOAD_PATH.include?(File.join(MASTER, "lib"))
          require "master"
          require "review/scan/law_dsl"
-         unfixtured = Master::Review::Scan::Rule.registry.reject do |klass|
+         unfixtured = Master::Review::Scan::Law.registry.reject do |klass|
            (klass.respond_to?(:dsl_fires) && (klass.dsl_fires || klass.dsl_does_not_fire)) ||
              !klass.respond_to?(:dsl_block)
          end
