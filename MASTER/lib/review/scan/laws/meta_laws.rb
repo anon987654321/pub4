@@ -6,7 +6,7 @@ module Master
       module Rules
       # Detects methods/classes/modules present in recent git history but absent now.
       # Wraps CommitGuard as a standard scan Rule so it runs in the scanner pipeline.
-        class AstOmissionRule < Rule
+        class AstOmissionLaw < Rule
           def self.auto_build? = false
 
           declare id: "ast_omission", severity: :warning, tags: %i[COMPLETENESS],
@@ -41,7 +41,7 @@ module Master
         end
 
         # Every Rule subclass must have a matching test file; gaps mean untested enforcement.
-        class RuleCoverageRule < Rule
+        class LawCoverageLaw < Rule
           def self.auto_build? = false
 
           declare id: "rule_coverage", severity: :warning, tags: %i[TEST_COVERAGE],
@@ -116,7 +116,7 @@ module Master
         end
 
         # Runtime authority lives in YAML — not markdown under data/.
-        RuleDSL.rule :RUNTIME_DOCS_YAML,
+        LawDSL.rule :RUNTIME_DOCS_YAML,
           severity: :error,
           tags: %i[CONSTITUTION DOCS],
           applies_to: %i[markdown],
@@ -336,7 +336,7 @@ module Master
         # root is found by what makes it Rails — config/application.rb, or a
         # lib/*/engine.rb — rather than by a directory named app, so a plain
         # Ruby tree with its own app/ is still judged.
-        class FileSprawlRule < Rule
+        class FileSprawlLaw < Rule
           TINY_CODE_LINES = 25
           SKIP_RE = %r{/(?:law|core|test|spec|fixtures|templates|node_modules)/|/web/public/}
           RAILS_NAMED = %r{\A(?:app|config|db)/|\Alib/[^/]+/(?:engine|version)\.rb\z}
@@ -435,7 +435,7 @@ module Master
         # Reported per directory rather than per file, because the fix is one
         # entry, not one per member. Scratch and generated trees are out of
         # scope: they are working residue, not structure.
-        class PathPurposeRule < Rule
+        class PathPurposeLaw < Rule
           SKIP_RE = %r{/(?:test|spec|fixtures|node_modules|vendor|tmp|log|scratch|frames?_|renders?)/|/\.}
           def self.auto_build? = false
 
@@ -458,7 +458,7 @@ module Master
               # An unreadable ownership file must not retire the whole corpus:
               # returning [] here makes every path look owned and the scan
               # reports the tree clean having judged nothing.
-              Master::Ground::Swallow.log(e, context: "PathPurposeRule.owned",
+              Master::Ground::Swallow.log(e, context: "PathPurposeLaw.owned",
                                             severity: :load_bearing, path: File.join(@root, "PATH_OWNERSHIP.yml"))
               []
             end
