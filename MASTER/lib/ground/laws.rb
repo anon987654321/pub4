@@ -63,7 +63,7 @@ module Master
           return if kernel.empty?
 
           pairs = kernel.map { |id, stmt| "  #{id}: #{stmt}" }.join("\n")
-          "## Kernel Rules (enforced)\n#{pairs}"
+          "## Kernel Laws (enforced)\n#{pairs}"
         end
 
         def philosophy_block(limit: 5)
@@ -71,7 +71,7 @@ module Master
           return if items.empty?
 
           top = items.map { |a| "  #{a["id"]}: #{a["name"]}" }.join("\n")
-          "## Rules (top #{items.size})\n#{top}"
+          "## Laws (top #{items.size})\n#{top}"
         end
       end
 
@@ -92,7 +92,7 @@ module Master
       def initialize(root: nil)
         @root = root || Master::ROOT
         @data_dir = File.join(@root, "data")
-        # limits.yml is no longer parsed here. It was loaded on every Rules
+        # limits.yml is no longer parsed here. It was loaded on every Laws
         # construction purely to back two accessors nobody called; the callers that
         # do want it (scan/request, fix_loop, mode_posture) each read it themselves,
         # mtime-cached. `data(:workflow)` still resolves it through DATA_ALIASES.
