@@ -277,7 +277,7 @@ class LayoutContractTest < Minitest::Test
     refute_nil zone, "nav_swiper sets no edge zone, so a mouse cannot recover the bar"
     assert_operator zone.to_i, :>, 0
 
-    controller = File.read(File.join(ROOT, "shared/frontend/nav_autohide_controller.js"))
+    controller = File.read(File.join(ROOT, "__shared/frontend/nav_autohide_controller.js"))
     assert_includes controller, "if (this.zoneValue > 0)",
                     "the zone guard is what makes an unset zone silent — keep them described together"
   end
