@@ -19,7 +19,7 @@ class TestSmellDetectors < Minitest::Test
 
   # BOOLEAN_TRAP
 
-  def boolean_trap = Master::Review::Scan::Laws::BooleanTrapRule.new
+  def boolean_trap = Master::Review::Scan::Laws::BooleanTrapLaw.new
 
   def test_boolean_trap_flags_a_positional_boolean_default
     found = findings(boolean_trap, "def shadow_lift(image, preserve_blacks = true)\n  image\nend\n")
@@ -38,7 +38,7 @@ class TestSmellDetectors < Minitest::Test
 
   # DATA_CLUMPS
 
-  def data_clumps = Master::Review::Scan::Laws::DataClumpsRule.new
+  def data_clumps = Master::Review::Scan::Laws::DataClumpsLaw.new
 
   CLUMP = <<~RUBY
     def write(title, summary, author, path)
@@ -77,7 +77,7 @@ class TestSmellDetectors < Minitest::Test
 
   # TYPE_IN_NAME
 
-  def type_in_name = Master::Review::Scan::Laws::TypeInNameRule.new
+  def type_in_name = Master::Review::Scan::Laws::TypeInNameLaw.new
 
   def test_type_in_name_flags_a_parameter_that_names_its_type
     found = findings(type_in_name, "def speak(text_str)\n  text_str\nend\n")
@@ -114,7 +114,7 @@ class TestSmellDetectors < Minitest::Test
 
   # NUMBERED_NAME
 
-  def numbered_name = Master::Review::Scan::Laws::NumberedNameRule.new
+  def numbered_name = Master::Review::Scan::Laws::NumberedNameLaw.new
 
   def test_numbered_name_flags_numbered_siblings
     found = findings(numbered_name, "def mix_v7\n  1\nend\n\ndef mix_v8\n  2\nend\n")
