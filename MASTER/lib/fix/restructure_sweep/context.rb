@@ -15,6 +15,7 @@ module Master
         PROSE_EXTENSIONS = %w[.md .txt].freeze
         COMMAND_EXTENSIONS = %w[.rb .rake .sh .zsh].freeze
         COMMAND_ROOTS = %w[bin tools].freeze
+        CONFIG_EXTENSIONS = %w[.rb .rake .yml .yaml .json].freeze
         STALE_PATHS = %w[RAILS/shared RAILS/mobile RAILS/visual_contract RAILS/contracts RAILS/brgen/engines].freeze
 
         # [path, rule_id, message, related_paths] for every actionable structural finding.
@@ -101,7 +102,7 @@ module Master
         end
 
         def self.surface_findings(target)
-          stale_reference_findings(target) + prose_findings(target) + command_surface_findings(target)
+          stale_reference_findings(target) + prose_findings(target) + command_surface_findings(target) + route_surface_findings(target) + config_surface_findings(target)
         end
 
         def self.stale_reference_findings(target)
@@ -139,6 +140,37 @@ module Master
               [path, "PROSE_DUPLICATION", "prose paragraph is duplicated across #{paths.size} files", paths.reject { |other| other == path }.first(8)]
             end
           end.flatten(1)
+        end
+
+        def self.route_surface_findings(target)
+          repository_files(target).select { |path| File.basename(path) == "routes.rb" }.filter_map do |path|
+            text = File.read(path, encoding: "UTF-8")
+            helpers = text.scan(/\bas:\s*:([a-z][a-z0-9_]*)/i).flatten
+            duplicates = helpers.tally.select { |_name, count| count > 1 }.keys
+            next if duplicates.empty?
+
+            [path, "ROUTE_SURFACE_DUPLICATION", "route helper(s) declared more than once: #{duplicates.join(", ")}", []]
+          rescue StandardError => e
+            Master::Ground::Swallow.log(e, context: "restructure.routes", path:)
+            nil
+          end
+        end
+
+        def self.config_surface_findings(target)
+          repository_files(target).filter_map do |path|
+            relative = relative_static(path, target)
+            next unless relative.split("/").include?("config") && CONFIG_EXTENSIONS.include?(File.extname(path).downcase)
+
+            text = File.read(path, encoding: "UTF-8")
+            keys = text.scan(/^\s*config\.x\.([A-Za-z0-9_]+)\s*=/).flatten
+            duplicates = keys.tally.select { |_name, count| count > 1 }.keys
+            next if duplicates.empty?
+
+            [path, "CONFIG_SURFACE_DUPLICATION", "config.x setting(s) assigned more than once: #{duplicates.join(", ")}", []]
+          rescue StandardError => e
+            Master::Ground::Swallow.log(e, context: "restructure.config", path:)
+            nil
+          end
         end
 
         def self.command_surface_findings(target)
