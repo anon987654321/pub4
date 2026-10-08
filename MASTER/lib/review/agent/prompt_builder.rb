@@ -44,7 +44,7 @@ module Master
         # tiers: the part of static_prompt that binds whatever role is asked for.
         def law_prompt
           require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
-          ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.rules.empty?
+          ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.definitions.empty?
 
           parts = []
           parts << "MASTER enforcement contract (executable law digest=#{Law::Contract.digest}):\n" \
