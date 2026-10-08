@@ -123,7 +123,7 @@ module Deploy
         # only one of them reports a red that no edit in the tree can clear.
         REQUIRED_PUBLIC_FILES.each do |file|
           next if File.file?(File.join(RAILS_ROOT, app, "public", file))
-          next if File.file?(File.join(RAILS_ROOT, "shared", "public", file))
+          next if File.file?(File.join(RAILS_ROOT, "__shared", "public", file))
 
           result.fail("#{app}: missing public/#{file}, and shared/public/#{file} is not there to overlay either")
         end
