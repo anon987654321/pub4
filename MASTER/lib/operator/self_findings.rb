@@ -101,7 +101,7 @@ module Operator
         # the scanner has required it.
         require File.join(MASTER_DIR, "lib", "review", "scan", "scanner")
         Regexp.union(
-          Master::Review::Scan::PathFilter::GENERATED_FACE_BUNDLES.map { |p| %r{/#{Regexp.escape(p)}\z} },
+          Master::Fix::Scan::PathFilter::GENERATED_FACE_BUNDLES.map { |p| %r{/#{Regexp.escape(p)}\z} },
         )
       end
     end
