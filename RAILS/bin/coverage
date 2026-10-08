@@ -80,7 +80,7 @@ script = <<~'RUBY'
     %i[line branch method].each do |criterion|
       coverage criterion do
         minimum 100
-        minimum_per_file 100
+        minimum 100, per: :file
       end
     end
   end
