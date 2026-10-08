@@ -589,6 +589,7 @@ GEM
       railties (>= 5.2)
       redis (>= 4.0, < 6.0)
     string-format (0.2.0)
+    simplecov (1.0.1)
     stringio (3.2.0)
     thor (1.5.0)
     thread-local (1.1.0)
@@ -652,6 +653,7 @@ PLATFORMS
 
 
 DEPENDENCIES
+  simplecov (~> 1.0)
   bcrypt (~> 3.1.7)
   bootsnap
   brakeman
