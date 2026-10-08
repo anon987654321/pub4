@@ -19,7 +19,7 @@ require "review/scan/rule_dsl"
 # violation. A detector tested only for firing proves nothing about what it
 # spares.
 class TestSolidRules < Minitest::Test
-  Rules = Master::Review::Scan::Rules
+  Rules = Master::Review::Scan::Laws
 
   def flags(rule, source)
     rule.check(source, path: "lib/thing.rb").map(&:message)
