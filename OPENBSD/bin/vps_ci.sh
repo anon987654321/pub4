@@ -105,7 +105,7 @@ unaccounted_tracked_files() {
 
 sync_from_repo() {
   local src=$repo/RAILS/$app
-  local shared_src=$repo/RAILS/shared
+  local shared_src=$repo/RAILS/__shared
   sync_ci_rails_root
   if [[ -d $src ]]; then
     # engines/ carries brgen's vertical Rails engines (path gems in the Gemfile);
