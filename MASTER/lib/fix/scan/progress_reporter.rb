@@ -11,28 +11,28 @@ module Master
 
         private
 
-        def reset_scan_progress(total, unit: nil, rules: [])
+        def reset_scan_progress(total, unit: nil, laws: [])
           @scan_unit_seq = (@scan_unit_seq || -1) + 1
           name = unit || @through_scan_unit || "scan#{@scan_unit_seq}"
-          rule_unit = "rules#{@scan_unit_seq}"
+          law_unit = "rules#{@scan_unit_seq}"
           @scan_progress = {
             total:,
             done: 0,
             violations: 0,
             dirty_files: 0,
-            rules: Hash.new(0),
-            rule_unit:,
-            selected_rule_count: Array(rules).size,
+            laws: Hash.new(0),
+            law_unit:,
+            selected_law_count: Array(laws).size,
             unit: name,
             started_at: Process.clock_gettime(Process::CLOCK_MONOTONIC),
           }
           $stdout.sync = true
           Master::Trace::Dmesg.attach(name, "master0", Master::Trace::Dmesg.counted(total, "file"))
-          selected = Array(rules)
-          summary = rule_scope_summary(selected)
-          detail = "selected #{selected.size} rules"
+          selected = Array(laws)
+          summary = law_scope_summary(selected)
+          detail = "selected #{selected.size} laws"
           detail += ", #{summary}" unless summary.empty?
-          Master::Trace::Dmesg.attach(rule_unit, name, detail)
+          Master::Trace::Dmesg.attach(law_unit, name, detail)
         end
 
         def emit_scan_progress(dir:, path:, file_result:)
@@ -41,9 +41,9 @@ module Master
           findings = file_result.ok? ? Array(file_result.value!) : []
           count = findings.size
           rel = path.sub(dir, "").delete_prefix("/")
-          rule_hits = findings.filter_map { |f| Finding.read(f, :rule)&.to_s }
+          law_hits = findings.filter_map { |f| Finding.read(f, :law)&.to_s }
 
-          done, total, viol_total, dirty, top = update_scan_progress_state(count, rule_hits)
+          done, total, viol_total, dirty, top = update_scan_progress_state(count, law_hits)
 
           elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - @scan_progress[:started_at]
           eta_s = done.positive? ? ((elapsed / done) * (total - done)).round : nil
@@ -53,7 +53,7 @@ module Master
           append_scan_hits_jsonl(path, findings)
           log_scan_checkpoint(unit:, done:, total:, viol_total:, dirty:, top:, elapsed:, eta_s:)
           log_scan_completion(unit:, done:, total:, viol_total:, dirty:, elapsed:) if done == total
-          log_rule_completion if done == total
+          log_law_completion if done == total
           @bus&.publish("scan:progress", done:, total:, path: rel, violations: count, eta_s:, top: top.to_h)
         end
 
@@ -70,7 +70,7 @@ module Master
               io.puts({
                 path: path.to_s,
                 line: Finding.read(finding, :line),
-                rule: Finding.read(finding, :rule)&.to_s,
+                rule: Finding.read(finding, :law)&.to_s,
                 message: Finding.read(finding, :message),
               }.to_json)
             end
@@ -83,19 +83,19 @@ module Master
           nil
         end
 
-        def update_scan_progress_state(count, rule_hits)
+        def update_scan_progress_state(count, law_hits)
           @mutex.synchronize do
             sp = @scan_progress
             sp[:done] += 1
             sp[:violations] = sp[:violations].to_i + count
             sp[:dirty_files] = sp[:dirty_files].to_i + 1 if count.positive?
-            tally_rule_hits(sp, rule_hits)
+            tally_law_hits(sp, law_hits)
             [sp[:done], sp[:total], sp[:violations], sp[:dirty_files], sp[:rules].sort_by { |_, n| -n }.first(6)]
           end
         end
 
-        def tally_rule_hits(sp, rule_hits)
-          rule_hits.each { |rid| sp[:rules][rid.upcase] += 1 }
+        def tally_law_hits(sp, law_hits)
+          law_hits.each { |rid| sp[:rules][rid.upcase] += 1 }
         end
 
         def log_scan_hit(unit:, done:, total:, rel:, count:, eta_s:)
@@ -111,7 +111,7 @@ module Master
           parts = ["#{done}/#{total} files", tally(viol_total, dirty), "#{elapsed.round}s"]
           parts << "eta #{eta_s}s" if eta_s&.positive?
           line = parts.join(", ")
-          line += "; top #{top.map { |rule, n| "#{rule} #{n}" }.join(", ")}" unless top.empty?
+          line += "; top #{top.map { |law, n| "#{rule} #{n}" }.join(", ")}" unless top.empty?
           Master::Trace::Dmesg.status(unit, line)
           write_progress_snapshot(unit:, done:, total:, viol_total:, dirty:, top:, elapsed:, eta_s:)
         end
@@ -129,9 +129,9 @@ module Master
         end
 
 
-        def rule_scope_summary(rules)
+        def law_scope_summary(rules)
           counts = Hash.new(0)
-          Array(rules).each do |rule|
+          Array(laws).each do |rule|
             languages = if rule.class.respond_to?(:dsl_langs)
               Array(rule.class.dsl_langs).filter_map { |lang| lang.to_s unless lang.to_s.empty? }
             else
@@ -143,11 +143,11 @@ module Master
           counts.sort_by { |scope, _| scope }.map { |scope, count| "#{scope} #{count}" }.join(", ")
         end
 
-        def log_rule_completion
+        def log_law_completion
           return unless @scan_progress
 
-          unit = @scan_progress[:rule_unit]
-          selected = @scan_progress[:selected_rule_count].to_i
+          unit = @scan_progress[:law_unit]
+          selected = @scan_progress[:selected_law_count].to_i
           hit_count = @scan_progress[:rules].values.sum
           Master::Trace::Dmesg.status(unit, "selected #{selected} rules, #{Master::Trace::Dmesg.counted(hit_count, "finding")}")
         end
@@ -166,7 +166,7 @@ module Master
 
         def write_progress_snapshot(unit:, done:, total:, viol_total:, dirty:, elapsed:, top: [], eta_s: nil)
           root = defined?(Master::ROOT) ? Master::ROOT : Dir.pwd
-          top_s = top.map { |rule, n| "#{rule}=#{n}" }.join(" ")
+          top_s = top.map { |law, n| "#{rule}=#{n}" }.join(" ")
           text = [
             "phase: streaming #{unit}",
             "progress: #{done}/#{total} files",
