@@ -34,7 +34,7 @@ Rails.application.routes.draw do
   post   "posts/:post_id/bookmark" => "bookmarks#create",  as: :bookmark_post
   delete "posts/:post_id/bookmark" => "bookmarks#destroy", as: :unbookmark_post
 
-  instance_eval(File.read(File.expand_path("../../shared/config/routes/legal.rb", __dir__)))
+  instance_eval(File.read(File.expand_path("../../__shared/config/routes/legal.rb", __dir__)))
 
   jobs_constraint = lambda { |request|
     session_id = request.cookie_jar.signed[:session_id]
@@ -57,12 +57,12 @@ Rails.application.routes.draw do
     post "magic", to: "sessions#request_magic", as: :request_magic
   end
   resources :passwords, param: :token, only: %i[new create edit update]
-  instance_eval(File.read(File.expand_path("../../shared/config/routes/auth.rb", __dir__)))
-  instance_eval(File.read(File.expand_path("../../shared/config/routes/verification.rb", __dir__)))
+  instance_eval(File.read(File.expand_path("../../__shared/config/routes/auth.rb", __dir__)))
+  instance_eval(File.read(File.expand_path("../../__shared/config/routes/verification.rb", __dir__)))
   post "fingerprint" => "fingerprints#create"
-  instance_eval(File.read(File.expand_path("../../shared/config/routes/fleet.rb", __dir__)))
+  instance_eval(File.read(File.expand_path("../../__shared/config/routes/fleet.rb", __dir__)))
   resources :activity_events, only: :index
-  instance_eval(File.read(File.expand_path("../../shared/config/routes/social.rb", __dir__)))
+  instance_eval(File.read(File.expand_path("../../__shared/config/routes/social.rb", __dir__)))
 
   namespace :admin do
     resources :reports, only: %i[index update]
@@ -195,7 +195,7 @@ get "i/:token" => "invites#show", as: :invite
     resources :members, only: %i[create destroy], controller: "group_members"
   end
 
-  # TV vertical, extracted to a mountable engine (engines/tv). Routes now live in
+  # TV vertical, extracted to a mountable engine (../brgen_radio/tv). Routes now live in
   # the engine's config/routes.rb; the host mounts it under the same subdomain
   # constraint. Host references to its helpers are tv.* (see application_helper,
   # sitemaps_controller). The pilot for the vertical-as-engine split — see README.md.
@@ -206,27 +206,27 @@ get "i/:token" => "invites#show", as: :invite
   # top-level mount. Nesting it silently drops the helper. See README.md.
   mount Tv::Engine, at: "/", as: "tv", constraints: { subdomain: TV_SUBDOMAINS }
 
-  # dating vertical extracted to engines/dating (mountable engine). Top-level mount with
+  # dating vertical extracted to ../brgen_dating (mountable engine). Top-level mount with
   # constraints: keyword — NOT a constraints(subdomain:) block, which would drop the
   # dating.* mounted helper. See brgen/README.md.
   mount Dating::Engine, at: "/", as: "dating", constraints: { subdomain: DATING_SUBDOMAINS }
 
-  # playlist vertical extracted to engines/playlist (mountable engine). Top-level mount with
+  # playlist vertical extracted to ../brgen_radio/playlist (mountable engine). Top-level mount with
   # constraints: keyword — NOT a constraints(subdomain:) block, which would drop the
   # playlist.* mounted helper. See brgen/README.md.
   mount Playlist::Engine, at: "/", as: "playlist", constraints: { subdomain: RADIO_SUBDOMAINS }
 
-  # takeaway vertical extracted to engines/takeaway (mountable engine). Top-level mount with
+  # takeaway vertical extracted to ../brgen_takeaway (mountable engine). Top-level mount with
   # constraints: keyword — NOT a constraints(subdomain:) block, which would drop the
   # takeaway.* mounted helper. See brgen/README.md.
   mount Takeaway::Engine, at: "/", as: "takeaway", constraints: { subdomain: TAKEAWAY_SUBDOMAINS }
 
-  # marketplace vertical extracted to engines/marketplace (mountable engine). Top-level mount with
+  # marketplace vertical extracted to ../brgen_marketplace (mountable engine). Top-level mount with
   # constraints: keyword — NOT a constraints(subdomain:) block, which would drop the
   # marketplace.* mounted helper. See brgen/README.md.
   mount Marketplace::Engine, at: "/", as: "marketplace", constraints: { subdomain: MARKETPLACE_SUBDOMAINS }
 
-  # maps vertical extracted to engines/maps. Place stays a host model.
+  # maps vertical extracted to ../brgen_maps. Place stays a host model.
   # Top-level mount with constraints: keyword — NOT a constraints(subdomain:)
   # block, which would drop the maps.* mounted helper. See brgen/README.md.
   mount Maps::Engine, at: "/", as: "maps", constraints: { subdomain: MAPS_SUBDOMAINS }
