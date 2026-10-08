@@ -3,12 +3,12 @@
 require "etc"
 require "open3"
 require "timeout"
-require_relative "../review/scan/cross_file_analysis"
-require_relative "../review/scan/file_processor"
-require_relative "../review/scan/engines/path_filter"
-require_relative "../review/scan/engines/progress_reporter"
-require_relative "../review/scan/engines/transport"
-require_relative "../review/scan/mechanical_autofix"
+require_relative "scan/cross_file_analysis"
+require_relative "scan/file_processor"
+require_relative "scan/path_filter"
+require_relative "scan/progress_reporter"
+require_relative "scan/transport"
+require_relative "scan/mechanical_autofix"
 
 module Master
   module Fix
@@ -33,8 +33,8 @@ module Master
         scanner
       end
 
-      include Master::Review::Scan::ProgressReporter
-        include Master::Review::Scan::Transport
+      include Master::Fix::Scan::ProgressReporter
+        include Master::Fix::Scan::Transport
 
         # The Scanner is the coordinator of the review process. What it walks
         # is PathFilter's decision, how it walks is Transport's, and what it
@@ -47,7 +47,7 @@ module Master
         attr_reader :rules
 
         def self.skip_path?(path, root: nil)
-          Master::Review::Scan::PathFilter.skip_path?(path, root:)
+          Master::Fix::Scan::PathFilter.skip_path?(path, root:)
         end
 
         def self.scan_candidate?(path, root: nil)
@@ -63,7 +63,7 @@ module Master
           @bus = event_bus
           @mutex = Mutex.new
           @file_sleep_s = file_sleep_s.to_f
-          @file_processor = Master::Review::Scan::FileProcessor.new(event_bus: @bus)
+          @file_processor = Master::Fix::Scan::FileProcessor.new(event_bus: @bus)
           @stream_autofixes = []
           @rule_dispatch = build_rule_dispatch(@rules)
         end
@@ -206,7 +206,7 @@ module Master
         end
 
         def autofix_one(path, file_result, root:)
-          applied = Master::Review::Scan::MechanicalAutofix.new(scanner: self, root:, event_bus: @bus).apply([[path, file_result]])
+          applied = Master::Fix::Scan::MechanicalAutofix.new(scanner: self, root:, event_bus: @bus).apply([[path, file_result]])
           return [] if applied.empty?
 
           @mutex.synchronize { @stream_autofixes.concat(applied) }
@@ -221,7 +221,7 @@ module Master
         end
 
         def cross_file_pairs(dir, paths)
-          Master::Review::Scan::CrossFileAnalysis.new(root: dir).call(paths)
+          Master::Fix::Scan::CrossFileAnalysis.new(root: dir).call(paths)
         rescue StandardError => e
           @bus&.publish("scanner:cross_file_error", path: dir, error: e.message)
           raise "cross-file scan failed for #{dir}: #{e.class}: #{e.message}"
@@ -329,7 +329,7 @@ module Master
         # Deletion waits for a person. The word is /fix, and an unattended pass —
         # bin/gate over all four governed trees — adds without deleting.
         #
-        # The list is Master::Review::Scan::AstFixer::DELETING_TRANSFORMS rather than a copy here: it
+        # The list is Master::Fix::AstFixer::DELETING_TRANSFORMS rather than a copy here: it
         # names methods that class defines, and the copy that stood here gated
         # only this path while AstFixer ran the transform unasked on the other.
         def deleting_rule?(rule_id)
