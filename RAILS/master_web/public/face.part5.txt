@@ -119,6 +119,19 @@ function wakeWordEnabled() {
 let _voiceModeRearmFails = 0;
 let _voiceModeArmedAt = 0;
 
+function syncMicIndicator(reason = "idle") {
+  State.micReason = String(reason || "idle");
+  const dot = document.getElementById("mic-dot");
+  const open = Boolean(State.sttActive && recognition);
+  if (dot) {
+    dot.dataset.mic = open ? "open" : "closed";
+    dot.setAttribute("aria-label", open ? "Microphone listening" : "Microphone off");
+    const label = dot.querySelector("[data-mic-state-text]");
+    if (label) label.textContent = open ? "microphone listening" : "microphone off";
+  }
+  rootBody.dataset.micOpen = open ? "1" : "0";
+}
+
 // The mic opens when the page loads, on the operator's ask (2026-09-15): the
 // face is spoken to, and it should be listening before anyone looks for a
 // control. It used to wait for a stored opt-in that only the wake word could
