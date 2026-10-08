@@ -36,7 +36,7 @@ module Master
         @bg_control.pop(timeout: IDLE_SLEEP_DEFAULT) == :stop
       end
 
-      # The deep self-scan over lib/ runs 181 rules and takes north of a minute.
+      # The deep self-scan over lib/ runs 181 laws and takes north of a minute.
       # Inline it held the prompt hostage for the whole boot, so the operator sat
       # at "scan…" with no way to type. It reports when it lands instead.
       def start_boot_scan
@@ -48,13 +48,13 @@ module Master
       # with the interactive turn. Running them here queued a plain "hey" behind
       # 8 sequential model calls the operator never asked for — /review and /fix
       # still run the full rule set, deliberately, when a person asks for it.
-      def mechanical_scanner_rules
-        @refs.scanner.rules.reject { |rule| rule.respond_to?(:agent?) }
+      def mechanical_scanner_laws
+        @refs.scanner.laws.reject { |rule| rule.respond_to?(:agent?) }
       end
 
       def boot_scan
         result = Master::Review::Scan::SelfScan.new(scanner: @refs.scanner, root: @refs.root, event_bus: @refs.bus,
-          rules: mechanical_scanner_rules).call(autofix: false)
+          laws: mechanical_scanner_laws).call(autofix: false)
         return unless result.ok?
 
         summary = result.value!
@@ -69,9 +69,9 @@ module Master
       # is the stage that writes.
       def boot_scan_line(summary)
         count = summary.violation_count
-        return "scan0: lib/ clean, #{summary.rule_count} rules" if count.zero?
+        return "scan0: lib/ clean, #{summary.rule_count} laws" if count.zero?
 
-        "scan0: lib/ #{count} #{count == 1 ? 'violation' : 'violations'}, #{summary.rule_count} rules; /fix lib repairs them"
+        "scan0: lib/ #{count} #{count == 1 ? 'violation' : 'violations'}, #{summary.rule_count} laws; /fix lib repairs them"
       end
 
       def run_self_scan
@@ -108,7 +108,7 @@ module Master
 
       def background_cycle!
         lib_dir = File.join(@refs.root, "lib")
-        result = @refs.scanner.scan_dir(lib_dir, depth: :deep, rules: mechanical_scanner_rules)
+        result = @refs.scanner.scan_dir(lib_dir, depth: :deep, laws: mechanical_scanner_laws)
         return unless result.ok?
         n = count_violations(result.value!)
         prev = violations_count
