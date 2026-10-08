@@ -43,7 +43,7 @@
 require "json"
 
 module Operator
-  module RuleAudit
+  module LawAudit
     MASTER = File.expand_path("../..", __dir__)
     ROOT = File.expand_path("..", MASTER)
 
@@ -218,6 +218,6 @@ module Operator
 end
 
 if $PROGRAM_NAME == __FILE__
-  ok = Operator::RuleAudit.run(json: ARGV.include?("--json"))
+  ok = Operator::LawAudit.run(json: ARGV.include?("--json"))
   exit(ok ? 0 : 1)
 end
