@@ -92,7 +92,7 @@ class TestScanEngines < Minitest::Test
     include Master::Review::Scan::Transport
 
     def self.skip_path?(path, root:) = Master::Review::Scan::PathFilter.skip_path?(path, root:)
-    def self.scan_candidate?(path, root:) = Master::Review::Scan::Scanner.scan_candidate?(path, root:)
+    def self.scan_candidate?(path, root:) = Master::Fix::Scanner.scan_candidate?(path, root:)
 
     def initialize(bus = nil) = @bus = bus
     public :scan_since_paths, :parallel_map, :under_path?, :git_capture
