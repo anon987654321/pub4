@@ -571,7 +571,7 @@ when "test"
   end
   app_suites = rails_parts.include?("shared") ? %w[brgen amber bsdports] : (rails_parts & %w[brgen amber bsdports])
   app_suites.each do |app|
-    jobs << ["#{app} suite", [RUBY, BUNDLE, "exec", RUBY, "bin/rails", "test"],
+    jobs << ["#{app} suite", [BUNDLE, "exec", RUBY, "bin/rails", "test"],
              File.join(ROOT, "RAILS", app), {}]
   end
   if rails_parts.any? { |part| %w[gates test].include?(part) } || !app_suites.empty?
