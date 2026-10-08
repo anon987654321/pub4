@@ -56,7 +56,8 @@ module Master
           def rubocop_pass(files, root)
             rel_root = root == @root ? "." : root.delete_prefix("#{@root}/")
             Master::Trace::Dmesg.status(FAST_STAGE_UNIT, "rubocop autocorrect, #{Master::Trace::Dmesg.counted(files.size, "file")} in #{rel_root}")
-            out, _err, status = Master::Io::Exec.capture3(Master::BUNDLE_BIN, "exec", "rubocop", "-A", "--no-color",
+            autocorrect = ENV["MASTER_AUTOFIX"] == "1" ? "-A" : "-a"
+            out, _err, status = Master::Io::Exec.capture3(Master::BUNDLE_BIN, "exec", "rubocop", autocorrect, "--no-color",
                                                           "--format", "json", *files, chdir: root)
             stuck = status.success? ? [] : uncorrected_files(out, files, root)
             stuck.each { |path| @bus&.publish("fix_loop:rubocop_file_failed", file: path) }
@@ -89,12 +90,24 @@ module Master
 
           def apply_ast_fixes(path, src, rel)
             fixed = 0
-            ast_result = Review::Scan::AstFixer.fix(path, src)
+            ast_result = Review::Scan::AstFixer.propose(
+              path,
+              src,
+              allow_deletions: Review::Scan::AstFixer.deletions_allowed?,
+              event_bus: @bus,
+            )
             if ast_result&.changed
-              src = File.read(path, encoding: "UTF-8")
-              fixed += ast_result.transforms.size
-              @bus&.publish("fix_loop:ast_fixed", file: rel, transforms: ast_result.transforms)
-              Master::Trace::Dmesg.status(FAST_STAGE_UNIT, "ast fix, #{rel}: #{ast_result.transforms.join(", ")}")
+              verdict = Review::Scan::WriteGuard.default.verdict(path:, content: ast_result.content)
+              if verdict.blocked?
+                @bus&.publish("fix_loop:ast_refused", file: rel, reason: verdict.reason)
+                Master::Trace::Dmesg.status(FAST_STAGE_UNIT, "ast fix refused, #{rel}: #{verdict.reason[0, 140]}")
+              else
+                Review::Scan::AstFixer.write(path, ast_result.content, event_bus: @bus, transforms: ast_result.transforms)
+                src = ast_result.content
+                fixed += ast_result.transforms.size
+                @bus&.publish("fix_loop:ast_fixed", file: rel, transforms: ast_result.transforms)
+                Master::Trace::Dmesg.status(FAST_STAGE_UNIT, "ast fix, #{rel}: #{ast_result.transforms.join(", ")}")
+              end
             end
             [fixed, src]
           end
