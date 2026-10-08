@@ -19,7 +19,7 @@ require_relative "law_loop/autofix_policy"
 
 module Master
   module Fix
-  # Single-pass fixer for one rule across a set of files.
+  # Single-pass fixer for one law across a set of files.
   # FixLoop owns the outer convergence loop; LawLoop fixes one batch per call.
   #
   # Fix routing (per violation severity + file size):
@@ -92,7 +92,7 @@ module Master
       include OutcomeTracking
       include AutofixPolicy
 
-      def initialize(rule:, agent:, scanner:, root:, **options)
+      def initialize(law:, agent:, scanner:, root:, **options)
         @law = law
         @agent = agent
         @scanner = scanner
@@ -122,10 +122,10 @@ module Master
         fixed = fix_batch(violations)
         status = pass_outcome(fixed)
         record_outcomes(files, status)
-        @bus&.publish("law_loop:pass", rule: @law.id, violations: violations.size, fixed:, status:)
+        @bus&.publish("law_loop:pass", law: @law.id, violations: violations.size, fixed:, status:)
         { fixed:, status:, breakdown: @batch_breakdown }
       rescue StandardError => e
-        @bus&.publish("law_loop:error", rule: @law.id, error: e.message)
+        @bus&.publish("law_loop:error", law: @law.id, error: e.message)
         # Bus-only meant a crashed rule pass was indistinguishable from a
         # quiet one in the dmesg stream the operator actually reads.
         Master::Trace::Dmesg.status("fix0", "#{@law.id}: #{e.class}: #{e.message[0, 90]}")
@@ -166,7 +166,7 @@ module Master
         end
         if needs_a_person?(violation) && !deletions_allowed?
           @person_required = true
-          @bus&.publish("law_loop:human_decision_required", rule: violation[:law], file: violation[:file])
+          @bus&.publish("law_loop:human_decision_required", law: violation[:law], file: violation[:file])
           return :needs_person
         end
         return :skip_confidence unless autofix_allowed?(violation)
@@ -208,7 +208,7 @@ module Master
         :applied
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "LawLoop.commit_applied_fix", event_bus: @bus, rule: @law.id)
-        @bus&.publish("law_loop:commit_refused", rule: @law.id, file: violation[:file], error: e.message[0, 160])
+        @bus&.publish("law_loop:commit_refused", law: @law.id, file: violation[:file], error: e.message[0, 160])
         :commit_refused
       end
 
@@ -229,7 +229,7 @@ module Master
         return true unless consensus_required?(violation)
 
         @agent.consensus.approve_fix?(
-          prompt: "Rule #{@law.id} on #{violation[:file]}",
+          prompt: "Law #{@law.id} on #{violation[:file]}",
           candidate:,
           violation:,
         )
@@ -265,10 +265,10 @@ module Master
           return reject_fix(path, old_src, "visual_regression", evidence: custody.message) unless custody.ok?
         end
 
-        @bus&.publish("law_loop:fix_applied", rule: @law.id, file: path)
+        @bus&.publish("law_loop:fix_applied", law: @law.id, file: path)
         true
       rescue StandardError => e
-        @bus&.publish("law_loop:write_error", rule: @law.id, file: path, error: e.message)
+        @bus&.publish("law_loop:write_error", law: @law.id, file: path, error: e.message)
         false
       end
 
@@ -285,9 +285,9 @@ module Master
       # rule whose findings did not grow landed nothing; a swap to another rule
       # still grows that rule and is still refused.
       def boyscout_violations(before, after, old_src, new_src)
-        had = before.map { |v| v[:rule].to_s }.tally
-        grown = after.map { |v| v[:rule].to_s }.tally.select { |rule, count| count > had.fetch(rule, 0) }.keys
-        landed = after.select { |v| grown.include?(v[:rule].to_s) }
+        had = before.map { |v| v[:law].to_s }.tally
+        grown = after.map { |v| v[:law].to_s }.tally.select { |law, count| count > had.fetch(law, 0) }.keys
+        landed = after.select { |v| grown.include?(v[:law].to_s) }
         return [] if landed.empty?
 
         lo, hi = changed_region(old_src, new_src)
@@ -315,7 +315,7 @@ module Master
 
       def reject_fix(path, original, reason, **details)
         write_atomic(path, original)
-        @bus&.publish("law_loop:fix_rejected", rule: @law.id, file: path, reason:, **details)
+        @bus&.publish("law_loop:fix_rejected", law: @law.id, file: path, reason:, **details)
         Master::Trace::Dmesg.status("fix0", "#{@law.id} fix rejected, #{File.basename(path)}: #{reason}")
         false
       end
@@ -469,7 +469,7 @@ module Master
           permanent: "law_loop:fail_fast",
           ambiguous: "law_loop:human_intervention",
         }.fetch(category, event)
-        @bus&.publish(name, rule: violation[:law], file: violation[:file], error: message[0, 120])
+        @bus&.publish(name, law: violation[:law], file: violation[:file], error: message[0, 120])
       end
 
     end
