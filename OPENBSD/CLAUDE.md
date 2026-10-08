@@ -78,7 +78,7 @@ restart.
 
 ## `bin/ci`'s `Setup` step behaves differently locally vs. on the VPS
 
-`RAILS/shared/config/ci.rb` gates several steps on `vps_host` (true when
+`RAILS/__shared/config/ci.rb` gates several steps on `vps_host` (true when
 `PUB4_CI_GUARD=1`, `/var/db/pub4_vps` exists, or `/etc/relayd.conf` exists):
 
 - `Security: Importmap audit` and `Tests: System (a11y)` — **skipped on the
@@ -102,7 +102,7 @@ restart.
 
 **Rule of thumb:** a local `bin/ci` failure is only actionable if you can name
 which of the above buckets it's *not* in. When in doubt, read
-`RAILS/shared/config/ci.rb` directly rather than assuming.
+`RAILS/__shared/config/ci.rb` directly rather than assuming.
 
 ## Copy-tree sync must delete before it extracts
 
@@ -178,7 +178,7 @@ file sits in a comment on that file; these have no single file to sit on.
 
 - **No fourth public Rails app** beyond brgen, amber and bsdports until brgen's
   high-churn verticals are engines with their own migrations and tests, money and
-  identity primitives live in `RAILS/shared` with more than one consumer, and CI
+  identity primitives live in `RAILS/__shared` with more than one consumer, and CI
   runs the layout suite and `/up` smoke for all three apps. Every restart before
   pub4 grew surface before its boundaries held; horizon ideas wait in
   `RAILS/apps.horizon.yml`.
