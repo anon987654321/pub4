@@ -5,7 +5,7 @@ module Master
     module Scan
     # Inline Ruby Law definition — executable alternative to laws.yml entries.
     # Defined rules auto-register via Law.inherited; no YAML required.
-    # Rule subclasses inherit Law.auto_build? == true; specialized rules that
+    # Law subclasses inherit Law.auto_build? == true; specialized rules that
     # need constructor arguments override self.auto_build? = false explicitly.
     #
     #   LawDSL.law :NO_PUTS, severity: :warning, applies_to: %i[ruby] do |src, path:|
@@ -13,7 +13,7 @@ module Master
     #   end
       module LawDSL
         # fires:/does_not_fire: are the Law's own worked examples, checked by
-        # test/test_rule_fixtures.rb.
+        # test/test_law_fixtures.rb.
         #
         # A scan law fails in one direction far more often than the other: it
         # keeps matching a pattern adjacent to the law it enforces. TIME_ZONE_UNSAFE
@@ -42,7 +42,7 @@ module Master
             define_method(:initialize) do
               super()
               @id = dsl_id; @description = dsl_desc
-              @severity = severity; @rule_tags = dsl_tags; @auto_fix = autofix
+              @severity = severity; @law_tags = dsl_tags; @auto_fix = autofix
             end
             define_method(:check) do |code, path:|
               langs = self.class.dsl_langs
@@ -67,21 +67,21 @@ module Master
 end
 
 require_relative "law"
-require_relative "laws/lexical_rules"
-require_relative "laws/ruby_rules"
-require_relative "laws/web_rules"
-require_relative "laws/cosmetic_rules"
-require_relative "laws/surface_rules"
-require_relative "laws/js_rules"
-require_relative "laws/universal_rules"
-require_relative "laws/structural_rules"
-require_relative "laws/structural_question_rules"
-require_relative "laws/external_linter_rules"
-require_relative "laws/semantic_rules"
-require_relative "laws/graph_rules"
-require_relative "laws/yaml_bridge_rules"
-require_relative "laws/naming_rules"
-require_relative "laws/meta_rules"
+require_relative "laws/lexical_laws"
+require_relative "laws/ruby_laws"
+require_relative "laws/web_laws"
+require_relative "laws/cosmetic_laws"
+require_relative "laws/surface_laws"
+require_relative "laws/js_laws"
+require_relative "laws/universal_laws"
+require_relative "laws/structural_laws"
+require_relative "laws/structural_question_laws"
+require_relative "laws/external_linter_laws"
+require_relative "laws/semantic_laws"
+require_relative "laws/graph_laws"
+require_relative "laws/yaml_bridge_laws"
+require_relative "laws/naming_laws"
+require_relative "laws/meta_laws"
 # The registry is what these requires load, and this one was missing: nothing
 # reached law_bridge_rule until InfraHelpers const_get'd it while building a
 # scanner, so `Law.registry` held 144 rules in a fresh process and 145 after
