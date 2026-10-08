@@ -33,7 +33,7 @@ class AssetUrlLintTest < Minitest::Test
   # Asserted through the resolver rather than by listing files, so moving the
   # assets to a different served root still passes and deleting them fails.
   def test_amber_can_resolve_the_lightgallery_icon_font
-    sheet = File.join(L::RAILS_ROOT, "shared/public/lightgallery.css")
+    sheet = File.join(L::RAILS_ROOT, "__shared/public/lightgallery.css")
 
     %w[../fonts/lg.woff2 ../fonts/lg.woff ../images/loading.gif].each do |ref|
       assert L.satisfied_everywhere?(ref, sheet),
