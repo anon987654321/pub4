@@ -116,19 +116,19 @@ module Master
 
           def apply_ast_fixes(path, src, rel)
             fixed = 0
-            ast_result = Review::Scan::AstFixer.propose(
+            ast_result = Master::Fix::Scan::AstFixer.propose(
               path,
               src,
-              allow_deletions: Review::Scan::AstFixer.deletions_allowed?,
+              allow_deletions: Master::Fix::Scan::AstFixer.deletions_allowed?,
               event_bus: @bus,
             )
             if ast_result&.changed
-              verdict = Review::Scan::WriteGuard.default.verdict(path:, content: ast_result.content)
+              verdict = Master::Fix::WriteGuard.default.verdict(path:, content: ast_result.content)
               if verdict.blocked?
                 @bus&.publish("fix_loop:ast_refused", file: rel, reason: verdict.reason)
                 Master::Trace::Dmesg.status(FAST_STAGE_UNIT, "ast fix refused, #{rel}: #{verdict.reason[0, 140]}")
               else
-                Review::Scan::AstFixer.write(path, ast_result.content, event_bus: @bus, transforms: ast_result.transforms)
+                Master::Fix::Scan::AstFixer.write(path, ast_result.content, event_bus: @bus, transforms: ast_result.transforms)
                 src = ast_result.content
                 fixed += ast_result.transforms.size
                 @bus&.publish("fix_loop:ast_fixed", file: rel, transforms: ast_result.transforms)
