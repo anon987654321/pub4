@@ -207,7 +207,7 @@ module Master
 
         :applied
       rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "LawLoop.commit_applied_fix", event_bus: @bus, rule: @law.id)
+        Master::Ground::Swallow.log(e, context: "LawLoop.commit_applied_fix", event_bus: @bus, law: @law.id)
         @bus&.publish("law_loop:commit_refused", law: @law.id, file: violation[:file], error: e.message[0, 160])
         :commit_refused
       end
