@@ -8,29 +8,29 @@ module Master
     # The current schema stores the eight governing principles at top level;
     # older callers/tests may still hand us a { "laws" => ... } wrapper.
     class LawResolver
-      def initialize(rules_data: nil)
-        data = rules_data || Master.load_yaml(Master::LAWS_PATH)
-        @laws = principle_entries(data)
+      def initialize(laws_data: nil)
+        data = laws_data || Master.load_yaml(Master::LAWS_PATH)
+        @laws = law_entries(data)
           .transform_values { |value| value["priority"].to_i }
           .sort_by { |_, priority| priority }
           .to_h
       end
 
-      def law_for(rule_id, rules_index: nil)
-        entry = rules_index&.dig(rule_id.to_s.upcase) || rules_index&.dig(rule_id.to_s)
+      def law_for(law_id, laws_index: nil)
+        entry = laws_index&.dig(law_id.to_s.upcase) || laws_index&.dig(law_id.to_s)
         return unless entry
 
         tags = Array(entry["violates_law"] || entry["supports_law"] || infer_law(entry))
         tags.first
       end
 
-      def winner(rule_a, rule_b, rules_index: nil)
-        law_a = priority(law_for(rule_a, rules_index:))
-        law_b = priority(law_for(rule_b, rules_index:))
-        return rule_a if law_a < law_b
-        return rule_b if law_b < law_a
+      def winner(law_a, law_b, laws_index: nil)
+        law_a = priority(law_for(law_a, laws_index:))
+        law_b = priority(law_for(law_b, laws_index:))
+        return law_a if law_a < law_b
+        return law_b if law_b < law_a
 
-        rule_a
+        law_a
       end
 
       def priority(law_name)
@@ -39,7 +39,7 @@ module Master
 
       private
 
-      def principle_entries(data)
+      def law_entries(data)
         wrapped = data["laws"]
         return wrapped if wrapped.is_a?(Hash)
 
