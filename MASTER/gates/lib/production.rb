@@ -82,7 +82,7 @@ module Deploy
 
     # The baseline is only in force when the app's own production.rb includes it.
     def production_lines(production)
-      baseline = File.join(RAILS_ROOT, "shared", "config", "environments", "production_baseline.rb")
+      baseline = File.join(RAILS_ROOT, "__shared", "config", "environments", "production_baseline.rb")
       lines = active_lines(production)
       lines += active_lines(baseline) if File.read(production).include?("production_baseline")
       lines
@@ -191,7 +191,7 @@ module Deploy
     def check_ci(app_failures, app_dir)
       ci_bin = File.join(app_dir, "bin", "ci")
       ci_config = File.join(app_dir, "config", "ci.rb")
-      shared_ci = File.join(RAILS_ROOT, "shared", "config", "ci.rb")
+      shared_ci = File.join(RAILS_ROOT, "__shared", "config", "ci.rb")
       if File.file?(ci_bin)
         ci_parts = [File.read(ci_bin)]
         ci_parts << File.read(ci_config) if File.file?(ci_config)
