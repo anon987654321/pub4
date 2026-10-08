@@ -20,6 +20,13 @@ class TestLawInventory < Minitest::Test
     assert row.key?(:history)
   end
 
+  def test_health_reach_uses_the_live_law_audit
+    row = Operator::LawInventory.health("ONE_SOURCE")
+    refute_nil row
+    assert_operator row.fetch(:health).fetch(:applicable), :>, 0
+    assert row.fetch(:health).key?(:hits)
+  end
+
   def test_matrix_is_derived_from_council_axes
     matrix = Operator::LawInventory.matrix
     assert_operator matrix.size, :>, 5
