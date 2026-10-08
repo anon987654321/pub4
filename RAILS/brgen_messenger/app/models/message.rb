@@ -24,7 +24,7 @@ class Message < ApplicationRecord
   has_one_attached :attachment
   process_media_variants :attachment, variants: {
     inline: { resize_to_limit: [ 900, 900 ], format: :webp },
-    thumb: { resize_to_limit: [ 320, 320 ], format: :webp }
+    thumb: { resize_to_limit: [ 320, 320 ], format: :webp },
   }
 
   # unless deleted?: unsend! empties the body and keeps the row, and without
@@ -114,7 +114,7 @@ class Message < ApplicationRecord
   # orphans whatever replied to it.
   def unsend!
     update_columns(
-      content: "", deleted_at: Time.current, updated_at: Time.current
+      content: "", deleted_at: Time.current, updated_at: Time.current,
     )
   end
 
@@ -179,7 +179,7 @@ class Message < ApplicationRecord
       conversation,
       targets: ".conversation-log",
       partial: "messages/message",
-      locals: { message: fresh }
+      locals: { message: fresh },
     )
   end
 
