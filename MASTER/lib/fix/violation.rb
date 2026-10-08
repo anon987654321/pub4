@@ -2,7 +2,7 @@
 
 module Master
   module Fix
-    Violation = Struct.new(:file, :line, :rule, :message, :severity, :fix, :confidence, :ext, :fingerprint,
+    Violation = Struct.new(:file, :line, :law, :message, :severity, :fix, :confidence, :ext, :fingerprint,
                            :reversibility, :blast_radius, keyword_init: true) do
       def self.from_finding(finding, file:, ext: nil)
         data = finding.respond_to?(:to_h) ? finding.to_h : finding
@@ -29,7 +29,7 @@ module Master
         {
           file:,
           line:,
-          rule:,
+          law:,
           message:,
           severity:,
           fix:,
