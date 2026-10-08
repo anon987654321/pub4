@@ -80,7 +80,7 @@ class TestStimulusComponentsPreference < Minitest::Test
   # Every @stimulus-components registration goes through the shared boot: the
   # module is executed with its imports stubbed and asked what it registers.
   def test_shared_boot_remains_the_single_registration_path
-    names = boot_registrations(File.join(REPO, "RAILS/shared/frontend/stimulus_boot.js"))
+    names = boot_registrations(File.join(REPO, "RAILS/__shared/frontend/stimulus_boot.js"))
 
     %w[auto-submit clipboard toast read-more reveal password-visibility popover].each do |name|
       assert_includes names, name
