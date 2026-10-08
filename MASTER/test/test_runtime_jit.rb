@@ -27,12 +27,31 @@ class TestRuntimeJit < Minitest::Test
     ENV.delete("MASTER_JIT")
   end
 
+  def test_zjit_is_an_explicit_opt_in_mode
+    assert_includes Master::Runtime::Jit::MODES, "zjit"
+    Master::Runtime::Jit.stub(:enable_zjit!, ->(reason:) { reason == "forced" }) do
+      ENV["MASTER_JIT"] = "zjit"
+      assert Master::Runtime::Jit.apply!
+    end
+  ensure
+    ENV.delete("MASTER_JIT")
+  end
+
+  def test_zjit_is_not_auto_selected
+    Master::Runtime::Jit.stub(:auto_allowed?, true) do
+      Master::Runtime::Jit.stub(:enable_yjit!, ->(reason:) { reason == "auto" }) do
+        ENV.delete("MASTER_JIT")
+        assert Master::Runtime::Jit.apply!
+      end
+    end
+  ensure
+    ENV.delete("MASTER_JIT")
+  end
+
   def test_snapshot_has_stable_shape
     snapshot = Master::Runtime::Jit.snapshot
-    assert snapshot.key?(:mode)
-    assert snapshot.key?(:available)
-    assert snapshot.key?(:enabled)
-    assert snapshot.key?(:constrained)
-    assert snapshot.key?(:stats)
+    %i[mode available enabled constrained yjit_available yjit_enabled zjit_available zjit_enabled stats].each do |key|
+      assert snapshot.key?(key)
+    end
   end
 end
