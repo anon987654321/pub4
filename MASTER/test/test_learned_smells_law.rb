@@ -6,7 +6,7 @@ require "fileutils"
 
 $LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
 require "master"
-require "review/scan/rules/meta_rules"
+require "review/scan/laws/meta_rules"
 
 class LearnedSmellsRuleSpec < Minitest::Test
   def test_learned_smell_rules_are_loaded_from_laws_yml
@@ -25,7 +25,7 @@ class LearnedSmellsRuleSpec < Minitest::Test
         YAML
       )
 
-      rule = Master::Review::Scan::Rules::LearnedSmellsRule.new(root: dir)
+      rule = Master::Review::Scan::Laws::LearnedSmellsLaw.new(root: dir)
       findings = rule.check("guard clause\n", path: File.join(dir, "app", "demo.rb"))
 
       assert_equal 1, findings.size
@@ -41,7 +41,7 @@ class LearnedSmellsRuleSpec < Minitest::Test
       File.write(File.join(dir, "data", "laws.yml"), "learned_smells: [\n")
 
       assert_raises(Psych::SyntaxError) do
-        Master::Review::Scan::Rules::LearnedSmellsRule.new(root: dir)
+        Master::Review::Scan::Laws::LearnedSmellsLaw.new(root: dir)
       end
     end
   end
@@ -60,7 +60,7 @@ class LearnedSmellsRuleSpec < Minitest::Test
         YAML
       )
 
-      rule = Master::Review::Scan::Rules::LearnedSmellsRule.new(root: dir)
+      rule = Master::Review::Scan::Laws::LearnedSmellsLaw.new(root: dir)
       findings = rule.check("needle\n", path: File.join(dir, "app", "demo.js"))
 
       assert_equal [], findings
