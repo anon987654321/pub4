@@ -49,7 +49,7 @@ class TestFixCorpus < Minitest::Test
   end
 
   def test_a_writing_fix_asks_every_clean_file_and_a_skip_still_wins
-    processor = Master::Review::Scan::FileProcessor.new
+    processor = Master::Fix::Scan::FileProcessor.new
     processor.ask_every_rule!
     assert processor.send(:semantic_due?, [], "lib/fix/protocol.rb")
     processor.skip_semantic!
