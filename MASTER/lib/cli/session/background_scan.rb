@@ -43,7 +43,7 @@ module Master
         @boot_scan_thread = Thread.new { @scan_gate.synchronize { Master::Trace::Dmesg.under("scan0") { boot_scan } } }
       end
 
-      # Rules that call the model (AdversarialRule, SemanticRule, CommentDriftRule
+      # Rules that call the model (AdversarialRule, SemanticLaw, CommentDriftRule
       # — anything mixing in Rules::NeedsModel) share the one local ollama process
       # with the interactive turn. Running them here queued a plain "hey" behind
       # 8 sequential model calls the operator never asked for — /review and /fix
