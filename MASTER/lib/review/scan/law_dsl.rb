@@ -5,7 +5,7 @@ module Master
     module Scan
     # Inline Ruby Law definition — executable alternative to laws.yml entries.
     # Defined laws auto-register via Law.inherited; no YAML required.
-    # Rule subclasses inherit Law.auto_build? == true; specialized laws that
+    # Law subclasses inherit Law.auto_build? == true; specialized laws that
     # need constructor arguments override self.auto_build? = false explicitly.
     #
     #   LawDSL.law :NO_PUTS, severity: :warning, applies_to: %i[ruby] do |src, path:|
@@ -19,7 +19,7 @@ module Master
         # keeps matching a pattern adjacent to the law it enforces. TIME_ZONE_UNSAFE
         # matched every Time.now when the law is about Time.zone, so it reported 13
         # rewrites of Time.now.utc and Time.now.to_i that would have changed no
-        # behaviour. A rule that carries the case it must NOT fire on cannot drift
+        # behaviour. # A law that carries the case it must NOT fire on cannot drift
         # that way in silence.
         #
         #   LawDSL.law :TIME_ZONE_UNSAFE, ...,
