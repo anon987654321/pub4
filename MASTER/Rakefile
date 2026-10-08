@@ -75,7 +75,7 @@ task :constitution do
   require "review/scan/constitution_triage"
 
   root    = __dir__
-  scanner = Master::Review::Scan::InfraHelpers.build_scanner(root:)
+  scanner = Master::Fix::Scanner.build(root:)
   scanner.rules.reject! { |rule| rule.id.to_s == "ast_omission" }
   timeout = Integer(ENV.fetch("MASTER_CONSTITUTION_FILE_TIMEOUT", "4"))
   # data/scan_coverage.yml, not File.join(root, "lib") — a path literal here is
