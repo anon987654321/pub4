@@ -30,7 +30,7 @@ class TestBootReceipt < Minitest::Test
     law = Receipt.law
 
     assert_operator law[:declared], :>, 200
-    assert_equal Master::Review::Scan::Rule.registry.size, law[:registry]
+    assert_equal Master::Review::Scan::Law.registry.size, law[:registry]
     assert_includes Receipt.lines.join("\n"), "#{law[:declared]} declared"
   end
 

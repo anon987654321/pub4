@@ -170,8 +170,8 @@ module Operator
 
     def load_law
       require File.join(MASTER, "law", "law")
-      Law.load_all(LAW_ROOT) if Law.rules.empty?
-      Law.rules.transform_keys { |key| key.to_s.downcase }
+      Law.load_all(LAW_ROOT) if Law.definitions.empty?
+      Law.definitions.transform_keys { |key| key.to_s.downcase }
     end
 
     def load_registry

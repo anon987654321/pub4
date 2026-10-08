@@ -6,11 +6,11 @@ require "yaml"
 module Master
   module Review
     module Scan
-      module Rules
+      module Laws
         # Detects phantom reads — Ruby code digs keys that don't exist in the corresponding data/*.yml.
         # Also detects orphan keys — top-level YAML keys with zero references in lib/.
         # Only meaningful when scanning lib/ with root: access.
-        class InterconnectRule < Rule
+        class InterconnectLaw < Law
           LOAD_CALL = /load_yaml(?:_data)?\s*\(\s*["']([^"']+\.yml)["']/.freeze
           DIG_CALL = /\.dig\(\s*((?:["'][^"']+["']\s*,?\s*)+)\)/.freeze
           FETCH_CALL = /\.fetch\(\s*["']([^"']+)["']/.freeze
@@ -115,7 +115,7 @@ module Master
         # Reads the co-change graph from RepoEcology (built once at boot) instead of
         # mining git per-scan. Flags cross-module pairs — likely DECOUPLE candidates
         # the lexical rules can't see.
-        class CoChangeCouplingRule < Rule
+        class CoChangeCouplingLaw < Law
           WEIGHT_THRESHOLD = 5
 
           def self.auto_build? = false

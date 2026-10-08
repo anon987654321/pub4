@@ -82,8 +82,8 @@ module Master
         slug = key.upcase.tr("-", "_")
         law_root = executable_law_root
         require File.join(law_root, "law", "law")
-        ::Law.load_all(File.join(law_root, "law")) if ::Law.rules.empty?
-        hit = ::Law.rules[slug.to_sym]
+        ::Law.load_all(File.join(law_root, "law")) if ::Law.definitions.empty?
+        hit = ::Law.definitions[slug.to_sym]
         return unless hit
 
         [
@@ -120,7 +120,7 @@ module Master
           ("  name: #{hit['name']}" if hit["name"]),
           ("  source: #{hit['source']}" if hit["source"]),
           ("  fix: #{hit["fix"]}" if hit["fix"] || begin
-            executable = ::Law.rules[slug.to_sym] if defined?(::Law)
+            executable = ::Law.definitions[slug.to_sym] if defined?(::Law)
             executable&.fix
           end),
         ].compact.join("\n")

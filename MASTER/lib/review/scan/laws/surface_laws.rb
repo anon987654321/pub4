@@ -3,7 +3,7 @@
 module Master
   module Review
     module Scan
-      module Rules
+      module Laws
         # Surface law: pixel/UI aesthetic + Rails HTML/JS/ERB conventions.
         # One file — views, CSS, Stimulus, touch targets, flat design.
 

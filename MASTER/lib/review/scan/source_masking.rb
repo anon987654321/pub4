@@ -20,7 +20,7 @@ module Master
     # deliberately untouched — several rules mean to read comments.
     def without_comment_lines(code) = code.gsub(COMMENT_LINE) { |line| " " * line.length }
 
-    # A RuleDSL registration spells its own forbidden shape in `fires:` and
+    # A LawDSL registration spells its own forbidden shape in `fires:` and
     # `does_not_fire:`, which is the one place that shape is legitimately
     # written. Law.conduct makes the same argument for law/'s bad/good and
     # neutralizes them before a law judges law/; this is the registry's half.
@@ -242,7 +242,7 @@ module Master
 end
 
 # Also a module method: lib/operator/self_findings.rb needs it without being a
-# Rule, and every other mask here is only ever reached through one.
+# Law, and every other mask here is only ever reached through one.
 module_function :without_foreign_heredocs
 public :without_foreign_heredocs
 

@@ -65,7 +65,10 @@ module Master
             Digest::SHA256.hexdigest(found.map { |v| violation_key(v) }.sort.join("|"))
           end
 
-          def violation_key(v) = "#{v[:rule]}:#{v[:file]}:#{v[:line]}"
+          def violation_key(v)
+            return v.evidence_key if v.respond_to?(:evidence_key)
+            "#{v[:law]}:#{v[:file]}:#{v[:line]}:#{v[:fingerprint]}"
+          end
 
           def trigger_rollback(message)
             result = @committer.abort_transaction!

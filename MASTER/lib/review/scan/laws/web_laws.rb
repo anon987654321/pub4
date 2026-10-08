@@ -3,7 +3,7 @@
 module Master
   module Review
     module Scan
-      module Rules
+      module Laws
 
         # Retired registry twins — each lives once, in law/:
         #   ARIA_INTERACTIVE, BUTTON_OVER_ANCHOR, CLAMP_TYPOGRAPHY, I18N_COVERAGE

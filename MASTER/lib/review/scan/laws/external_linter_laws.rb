@@ -6,7 +6,7 @@ require "json"
 module Master
   module Review
     module Scan
-      module Rules
+      module Laws
         # Shared plumbing for rules that bridge an external Ruby linter: locate the
         # binary and run it for a parsed JSON report. Mixed in rather than inherited
         # so the helper itself never lands in the auto-registering Rule registry.
@@ -39,7 +39,7 @@ module Master
           end
         end
 
-        class RubocopRule < Rule
+        class RubocopLaw < Law
           include ExternalLinter
 
           def self.auto_build? = false
@@ -66,7 +66,7 @@ module Master
           end
         end
 
-        class ReekRule < Rule
+        class ReekLaw < Law
           include ExternalLinter
 
           def self.auto_build? = false

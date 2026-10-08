@@ -8,7 +8,7 @@ module Master
       # arguments -- kept separate so NO_GOD_CLASS's line count reflects
       # FixLoop's run/recovery responsibilities on their own.
       module PassRunnerBuilder
-        def build_pass_runner(rules:, agent:, scanner:, root:, bus:, learnings:,
+        def build_pass_runner(laws:, agent:, scanner:, root:, bus:, learnings:,
           ground_truth:, preserve_user_intent:, law_resolver:, homeostat: nil, discipline: nil, wishlist: nil)
           committer = Committer.new(git: @git, bus:, root:,
                                        ground_truth:, preserve_user_intent:)
@@ -21,7 +21,7 @@ module Master
 
           PassRunner.new(
             bus:, committer:, conflict_resolver:, llm_router:, root:,
-            rules:, agent:, scanner:, learnings:, preamble:,
+            laws:, agent:, scanner:, learnings:, preamble:,
             clean_runs_required:,
             plateau_window:,
             ground_truth:, homeostat:, council:, visual_pass:, opportunity_pass:, discipline:, wishlist:

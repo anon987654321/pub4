@@ -11,7 +11,7 @@ require_relative "../lib/review/scan/rule_dsl"
 class TestDemeterAndSimulationScope < Minitest::Test
   RB = "/repo/lib/example.rb"
 
-  def rule(id) = Master::Review::Scan::Rule.registry.find { |klass| klass.name.nil? && klass.new.id == id }.new
+  def rule(id) = Master::Review::Scan::Law.registry.find { |klass| klass.name.nil? && klass.new.id == id }.new
   def fires?(id, src, path: RB) = rule(id).check("#{src}\n", path:).any?
 
   def test_demeter_fires_on_navigation

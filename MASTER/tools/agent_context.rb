@@ -41,8 +41,8 @@ module Operator
     def conduct
       load_master
       require File.join(MASTER_DIR, "law", "law") unless defined?(::Law)
-      ::Law.load_all(File.join(MASTER_DIR, "law")) if ::Law.rules.empty?
-      ::Law.rules.values.select(&:practice).to_h do |rule|
+      ::Law.load_all(File.join(MASTER_DIR, "law")) if ::Law.definitions.empty?
+      ::Law.definitions.values.select(&:practice).to_h do |rule|
         [rule.id.to_s, rule.practice.to_s.gsub(/\s+/, " ").strip]
       end
     rescue StandardError => e
