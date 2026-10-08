@@ -14,7 +14,6 @@ require "fileutils"
 require "prism"
 require "tmpdir"
 require_relative "../lib/trace/dmesg"
-require_relative "../lib/trace/dmesg"
 
 src = File.expand_path(ARGV[0].to_s)
 test = File.expand_path(ARGV[1].to_s)
