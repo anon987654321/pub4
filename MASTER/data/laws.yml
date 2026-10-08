@@ -177,7 +177,7 @@ prose:
       participle: '\w+(?:et|dd|tt|t)'
       agent: 'av'
 
-# One file holds the governing rule catalogue and its supporting execution policy.
+# One file holds the governing Law catalogue and its supporting execution policy.
 
 # Detector-health policy. Measurement-only findings stay visible to observation but
 # do not become automatic repair targets until their detectors have stronger evidence.
