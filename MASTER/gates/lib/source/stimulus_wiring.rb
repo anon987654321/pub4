@@ -161,8 +161,8 @@ module Deploy
     # Where an app's elements can come from: its views and its engines' views,
     # its helpers and scripts, and everything shared renders or ships.
     def mount_sources(app)
-      views(app) + Dir.glob(File.join(@rails_root, "{#{app},#{app}/engines/*,shared}/app/{helpers,components,javascript}/**/*.{rb,js,erb}")) +
-        Dir.glob(File.join(@rails_root, "shared/frontend/**/*.js"))
+      views(app) + Dir.glob(File.join(@rails_root, "{#{app},#{app}/engines/*,__shared}/app/{helpers,components,javascript}/**/*.{rb,js,erb}")) +
+        Dir.glob(File.join(@rails_root, "__shared/frontend/**/*.js"))
     end
 
     # Identifiers registered by the boot files a given app's index.js calls —
