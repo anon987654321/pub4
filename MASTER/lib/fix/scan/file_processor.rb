@@ -16,11 +16,17 @@ module Master
         LOCK_TIMEOUT = 30
         MAX_FILE_BYTES = 10 * 1024 * 1024
         MAX_LINES = 10_000
+        STYLE_EXTENSIONS = %w[.css .scss].freeze
+        STYLE_MAX_LINES = 12_000
 
         # Fraction of otherwise-clean files that still get the semantic pass.
         # Keyed on the path digest rather than rand, so two scans of the same
         # tree ask the same questions and their reports can be compared.
         SEMANTIC_SAMPLE = ENV.fetch("MASTER_SCAN_SEMANTIC_SAMPLE", "0").to_f
+
+        def self.max_lines_for(path)
+          STYLE_EXTENSIONS.include?(File.extname(path.to_s).downcase) ? STYLE_MAX_LINES : MAX_LINES
+        end
 
         def initialize(event_bus: nil, skip_semantic: false)
           @bus = event_bus
@@ -62,7 +68,7 @@ module Master
           return validation if validation.err?
 
           code = File.read(path, encoding: "UTF-8").scrub
-          return Result.err("file too long: #{path}", category: :validation) if code.lines.count > MAX_LINES
+          return Result.err("file too long: #{path}", category: :validation) if code.lines.count > self.class.max_lines_for(path)
 
           @bus&.publish("scan:file_read", path:, sha256: Digest::SHA256.hexdigest(code))
           Result.ok(law_conducted(path, code))
