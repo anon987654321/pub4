@@ -54,7 +54,7 @@ module Master
           next false unless content&.include?(old_string)
 
           updated = content.gsub(old_string, new_string)
-          verdict = Master::Review::Scan::WriteGuard.default.verdict(path:, content: updated)
+          verdict = Master::Fix::WriteGuard.default.verdict(path:, content: updated)
           next refuse(path, verdict) if verdict.blocked?
 
           write_atomic(path, updated)
