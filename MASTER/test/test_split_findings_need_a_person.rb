@@ -1,14 +1,14 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-require_relative "../lib/review/scan/rule_dsl"
+require_relative "../lib/review/scan/law_dsl"
 
 # LawLoop asks for one corrected file per answer. Splitting a 1,018-line
 # Rakefile needs new files, so Opus answered UNCHANGED twice after an
 # architecture plan, three model calls for nothing on every oversized file.
 # A finding whose repair spans files says so, and waits for a person.
 class TestSplitFindingsNeedAPerson < Minitest::Test
-  Rules = Master::Review::Scan::Rules
+  Rules = Master::Review::Scan::Laws
 
   def needs_a_person?(finding)
     violation = Master::Fix::Violation.from_finding(finding.to_h, file: "example.rb").to_h
