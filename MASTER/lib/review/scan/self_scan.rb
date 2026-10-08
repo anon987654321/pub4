@@ -11,7 +11,7 @@ module Master
         Summary = Data.define(:pairs, :law_count, :violation_count, :targets, :autofixes) do
           def line
             scanned = targets.map { |target| target.end_with?("/") ? target : "#{target}/" }.join("+")
-            "judge: #{scanned} #{law_count} rules, #{violation_count} violations"
+            "judge: #{scanned} #{law_count} laws, #{violation_count} violations"
           end
         end
 
@@ -20,7 +20,7 @@ module Master
           @root = root
           @bus = event_bus
           @targets = targets
-          @rules = rules
+          @laws = laws
         end
 
         def call(stream: false, autofix: false)
@@ -71,8 +71,8 @@ module Master
         end
 
         def law_count
-          return @rules.size if @rules
-          return @scanner.laws.size if @scanner.respond_to?(:rules)
+          return @laws.size if @laws
+          return @scanner.laws.size if @scanner.respond_to?(:laws)
 
           0
         end
