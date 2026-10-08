@@ -334,7 +334,7 @@ module Master
         # only this path while AstFixer ran the transform unasked on the other.
         def deleting_law?(law_id)
           transform = law_transforms[law_id.to_s]
-          Master::Review::Scan::AstFixer::DELETING_TRANSFORMS.include?(transform.to_s)
+          Master::Fix::Scan::AstFixer::DELETING_TRANSFORMS.include?(transform.to_s)
         end
 
         def law_transforms
