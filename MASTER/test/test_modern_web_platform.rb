@@ -89,7 +89,7 @@ class TestModernWebPlatformEvidence < Minitest::Test
     context = Master::Fix::VisualUsability.context
 
     MODERN_LAWS.each do |id|
-      law = Law.rules.fetch(id.to_sym) { flunk "#{id} is not a law" }
+      law = Law.definitions.fetch(id.to_sym) { flunk "#{id} is not a law" }
       refute_empty law.ask.to_s.strip, "#{id} asks nothing"
       assert_includes Master::Fix::VisualUsability.ids, id
       assert_match(/^#{id}: #{Regexp.escape(law.ask)} Fix: /, context)
