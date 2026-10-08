@@ -77,13 +77,13 @@ Minitest::Test.class_eval do
     self
   end
 
-  # Shared by every scan-rule test (test_cosmetic_rules, test_web_rules,
-  # test_web_scan_fixtures, test_scan_rule_contracts) -- was copy-pasted
+  # Shared by every scan-law test (test_cosmetic_laws, test_web_laws,
+  # test_web_scan_fixtures, test_scan_law_contracts) -- was copy-pasted
   # byte-identical in all four before this hoist.
   # A rule that lives in law/ has the bridge as its scanner surface, so its
   # contract test asserts through it (BUTTON_OVER_ANCHOR set the precedent).
   def law_findings(id, code, path:)
-    Master::Review::Scan::Laws::LawBridgeRule.new.check(code, path:).select { |f| f[:rule] == id }
+    Master::Review::Scan::Laws::LawBridgeLaw.new.check(code, path:).select { |f| f[:law] == id }
   end
 
   def rule(id, path: nil)
@@ -93,14 +93,14 @@ Minitest::Test.class_eval do
     rescue ArgumentError
       nil
     end
-    candidates.first || flunk("missing rule #{id}")
+    candidates.first || flunk("missing law #{id}")
   end
 
-  def assert_finding(rule, code, path, message)
-    findings = rule.check(code, path:)
+  def assert_finding(law, code, path, message)
+    findings = law.check(code, path:)
 
     refute_empty findings
     assert findings.any? { |finding| finding[:message].include?(message) },
-      "expected #{rule.id} finding containing #{message.inspect}, got #{findings.inspect}"
+      "expected #{law.id} finding containing #{message.inspect}, got #{findings.inspect}"
   end
 end
