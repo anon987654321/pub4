@@ -22,7 +22,7 @@ module Operator
     module_function
 
     # One inventory for the executable constitution and the scanner registry.
-    # data/laws.yml is policy/configuration; it is not the executable rule list.
+    # data/laws.yml is policy/configuration; it is not the executable law list.
     def audit
       @audit ||= Master::Review::Scan::LawRegistryAudit.new(root: MASTER_DIR)
     end
@@ -87,12 +87,12 @@ module Operator
         return out.size <= limit ? 0 : 1
       end
 
-      puts "rule_reach: #{all.size} rules — #{mech.size} deterministic, #{asked.size} prompted, "            "#{conduct.size} practice, #{out.size} unreachable (ceiling #{limit})"
+      puts "law_reach: #{all.size} rules — #{mech.size} deterministic, #{asked.size} prompted, "            "#{conduct.size} practice, #{out.size} unreachable (ceiling #{limit})"
       out.each { |rule| puts "  #{rule["id"]}" }
-      puts "rule_reach: every executable rule has a reachable enforcement surface" if out.empty?
+      puts "law_reach: every executable law has a reachable enforcement surface" if out.empty?
       return 0 if out.size <= limit
 
-      warn "rule_reach: #{out.size} executable law(s) have no detector, prompt, or practice surface; ceiling #{limit}"
+      warn "law_reach: #{out.size} executable law(s) have no detector, prompt, or practice surface; ceiling #{limit}"
       1
     end
 
