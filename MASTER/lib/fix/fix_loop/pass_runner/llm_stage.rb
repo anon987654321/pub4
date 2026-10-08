@@ -176,7 +176,7 @@ module Master
                               learnings: @learnings, committer: @committer,
                               visual_custody: @visual_pass&.custody)
             rl.injected_preamble = [@preamble, council_preamble(council)].compact.join("\n\n")
-            @bus&.publish("fix_loop:tier2_quality_route", pass:, rule: rule.id) if @law_order.tier2?(rule.id)
+            @bus&.publish("fix_loop:tier2_quality_route", pass:, law: law.id) if @law_order.tier2?(rule.id)
             normalized = Array(external_violations).map do |violation|
               file = violation[:file].to_s
               absolute = file.start_with?("/") ? file : File.expand_path(file, @root)
