@@ -8,7 +8,7 @@ require_relative "../lib/review/scan/rule_dsl"
 # architecture plan, three model calls for nothing on every oversized file.
 # A finding whose repair spans files says so, and waits for a person.
 class TestSplitFindingsNeedAPerson < Minitest::Test
-  Rules = Master::Review::Scan::Rules
+  Rules = Master::Review::Scan::Laws
 
   def needs_a_person?(finding)
     violation = Master::Fix::Violation.from_finding(finding.to_h, file: "example.rb").to_h
