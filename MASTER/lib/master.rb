@@ -152,7 +152,7 @@ module Master
     end
 
     data.filter_map do |id, value|
-      next unless value.is_a?(Hash) && value["priority"] && value["principle"]
+      next unless value.is_a?(Hash) && value["priority"] && value["statement"]
       value.merge("id" => id.to_s)
     end
   end
