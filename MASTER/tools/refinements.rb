@@ -135,7 +135,7 @@ module Operator
         corpus = tracked.reject { |rel| SELF_DESCRIBING.include?(rel) }
                         .map { |rel| File.join(ROOT, rel) }
                         .select { |abs| File.file?(abs) }
-                        .reject { |abs| Master::Review::Scan::Scanner.skip_path?(abs, root: ROOT) }
+                        .reject { |abs| Master::Fix::Scanner.skip_path?(abs, root: ROOT) }
 
         scanner = Master::Review::Scan::InfraHelpers.build_scanner(root: MASTER_DIR)
         scanner.findings(corpus, depth: :deep).map do |hit|
