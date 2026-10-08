@@ -109,11 +109,11 @@ class TestLawContract < Minitest::Test
     rows = Law::Index.validate!
     assert_operator rows.length, :>, 100
     assert rows.all? { |row| row.key?("id") && row.key?("lifecycle") && row.key?("proof") }
-    assert_operator rows.count { |row| row["principle_scope"] == "universal" }, :>, 0
+    assert_operator rows.count { |row| row["law_scope"] == "universal" }, :>, 0
 
     rendered = JSON.parse(Law::Index.render)
     assert_equal rows.length, rendered.fetch("rule_count")
-    assert_equal rows.count { |row| row["principle_scope"] == "universal" }, rendered.fetch("universal_count")
+    assert_equal rows.count { |row| row["law_scope"] == "universal" }, rendered.fetch("universal_count")
   end
 
   def test_deterministic_law_proof_checks_each_declared_language
@@ -124,7 +124,7 @@ class TestLawContract < Minitest::Test
       mode: :violation,
       languages: %i[ruby scss],
       scope: :file,
-      principle_scope: :domain,
+      law_scope: :domain,
       lifecycle: :active,
       autofix: :review,
       path: nil,
