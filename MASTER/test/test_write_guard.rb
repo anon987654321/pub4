@@ -13,7 +13,7 @@ class WriteGuardTest < Minitest::Test
 
   def setup
     @tmp = Dir.mktmpdir("write_guard_test")
-    @guard = Master::Review::Scan::WriteGuard.default
+    @guard = Master::Fix::WriteGuard.default
   end
 
   def teardown = FileUtils.remove_entry(@tmp)
@@ -21,7 +21,7 @@ class WriteGuardTest < Minitest::Test
   def path(name = "example.rb") = File.join(@tmp, name)
 
   def test_default_rebuilds_after_law_digest_changes
-    guard_class = Master::Review::Scan::WriteGuard
+    guard_class = Master::Fix::WriteGuard
     built = 0
 
     Master::Review::Scan::InfraHelpers.stub(:build_scanner, ->(**) {
@@ -41,7 +41,7 @@ class WriteGuardTest < Minitest::Test
 
     assert_equal 2, built
   ensure
-    Master::Review::Scan::WriteGuard.reset_default!
+    Master::Fix::WriteGuard.reset_default!
   end
 
   def test_a_write_that_introduces_an_error_is_blocked
@@ -88,7 +88,7 @@ class WriteGuardTest < Minitest::Test
                                                      .rules.select { |rule| rule.respond_to?(:set_agent) }
     refute_empty agent_backed, "the scanner should carry semantic rules for the scan path"
 
-    guarded = Master::Review::Scan::WriteGuard.new(rules: agent_backed)
+    guarded = Master::Fix::WriteGuard.new(rules: agent_backed)
 
     assert_empty guarded.verdict(path:, content: DIRTY).introduced
   end
