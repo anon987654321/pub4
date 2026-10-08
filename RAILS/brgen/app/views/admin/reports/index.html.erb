@@ -25,7 +25,7 @@
         <p>
           <%= report.reportable_type %>#<%= report.reportable_id %>
           · <%= t("admin.reported_by", name: report.user.display_name) %>
-          · <%= time_ago(report.created_at) %>
+          · <time datetime="<%= report.created_at.iso8601 %>" data-controller="timeago" data-timeago-datetime-value="<%= report.created_at.iso8601 %>" data-timeago-refresh-interval-value="60000" data-timeago-add-suffix-value="true"><%= time_ago(report.created_at) %></time>
         </p>
         <% if report.details.present? %><%= tag.p report.details %><% end %>
         <nav class="cluster">
