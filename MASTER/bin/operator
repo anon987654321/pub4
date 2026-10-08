@@ -146,7 +146,7 @@ when "lint"
   # tool typed the change. Paths given are scanned as named; with none, the diff
   # against HEAD is.
   require "master"
-  require "review/scan/infra_helpers"
+  require "fix/scanner"
   # --changed-lines judges only the lines this diff added, so a file's standing
   # debt does not block the commit that merely touched it — the shape a
   # pre-commit hook wants.
@@ -324,7 +324,7 @@ when "laws"
   # the definition verbatim, comments included, rather than a summary of it —
   # a summary is where an exemption goes missing.
   require "master"
-  require "review/scan/infra_helpers"
+  require "fix/scanner"
   require "yaml"
   require "json"
   health = !ARGV.delete("--health").nil? || !ARGV.delete("--deep").nil?
