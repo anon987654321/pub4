@@ -5,11 +5,11 @@ require "minitest/autorun"
 class SocialFrontpageContractTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
 
-  COOKIE = File.join(ROOT, "shared/app/views/shared/_cookie_banner.html.erb")
-  EN = File.join(ROOT, "shared/config/locales/social.en.yml")
-  NB = File.join(ROOT, "shared/config/locales/social.nb.yml")
-  PROMPT = File.join(ROOT, "shared/app/views/shared/_post_auth_prompt.html.erb")
-  MODAL = File.join(ROOT, "shared/app/assets/stylesheets/_modal.scss")
+  COOKIE = File.join(ROOT, "__shared/app/views/shared/_cookie_banner.html.erb")
+  EN = File.join(ROOT, "__shared/config/locales/social.en.yml")
+  NB = File.join(ROOT, "__shared/config/locales/social.nb.yml")
+  PROMPT = File.join(ROOT, "__shared/app/views/shared/_post_auth_prompt.html.erb")
+  MODAL = File.join(ROOT, "__shared/app/assets/stylesheets/_modal.scss")
   BRGEN_SHOW = File.join(ROOT, "brgen/app/views/posts/show.html.erb")
   AMBER_SHOW = File.join(ROOT, "amber/app/views/posts/show.html.erb")
   MASTER_RUNTIME = File.join(ROOT, "..", "MASTER/data/runtime.yml")
