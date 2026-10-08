@@ -182,6 +182,7 @@
         "varying float vOpacity;",
         "uniform float uOpacity;",
         "uniform float uEnergy;",
+        "uniform vec3 uColor;",
         "void main(){",
         "  vec2 p = gl_PointCoord - 0.5;",
         "  float d = length(p);",
@@ -189,7 +190,7 @@
         "  float core = smoothstep(0.25, 0.0, d);",
         "  float a = soft * vOpacity * uOpacity * (0.72 + core * 0.65 + uEnergy * 0.2);",
         "  if(a < 0.008) discard;",
-        "  gl_FragColor = vec4(1.0,1.0,1.0,a);",
+        "  gl_FragColor = vec4(uColor,a);",
         "}"
       ].join("\n"),
       transparent: true,
@@ -306,13 +307,14 @@
     if (kind === "evidence" || kind === "proof") addTrail();
   }
 
-  function pointerMagnetism(targetX, targetY, px, py) {
+  function pointerForce(targetX, targetY, px, py, mode) {
     const dx = targetX - px;
     const dy = targetY - py;
     const d = Math.hypot(dx, dy);
     if (d > 0.95) return [targetX, targetY];
     const force = (1 - d / 0.95) * 0.22;
-    return [targetX + dx * -force, targetY + dy * -force];
+    const sign = /error|warning/.test(String(mode || "").toLowerCase()) ? 1 : -1;
+    return [targetX + dx * force * sign, targetY + dy * force * sign];
   }
 
   function updateGhosts(time) {
@@ -434,6 +436,14 @@
       } else {
         tx += breath * (1 + Math.abs(baseY));
         ty += tide * 0.03;
+        if (state.mode === "listening" && groups[i] === 5) {
+          const earBloom = 0.06 + profile.activity * 0.10;
+          tx += Math.sign(baseX || 1) * earBloom;
+          ty += Math.sin(phase[i]) * earBloom * 0.4;
+        }
+        if (state.mode === "ready" && groups[i] !== 8) {
+          tx *= 1.0 + Math.sin(time * 0.0005 + phase[i]) * 0.012;
+        }
       }
 
       // Deterministic asymmetry: tiny stable offsets, never a perfect synthetic mirror.
@@ -442,7 +452,7 @@
       ty += asym * 0.65;
 
       if (isPointer) {
-        const magnet = pointerMagnetism(tx, ty, pointer.x, pointer.y);
+        const magnet = pointerForce(tx, ty, pointer.x, pointer.y, state.mode);
         tx = magnet[0];
         ty = magnet[1];
       } else if (pointerActive) {
