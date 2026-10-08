@@ -13,6 +13,8 @@ class TestRailsInteractionCraft < Minitest::Test
   SHEET = File.join(SHARED, "frontend", "bottom_sheet_controller.js")
   TOAST = File.join(SHARED, "app", "views", "shared", "_toast.html.erb")
   HOTWIRE = File.join(SHARED, "frontend", "hotwire.js")
+  ACTION = File.join(SHARED, "frontend", "action_controller.js")
+  ACTION_BAR = File.join(SHARED, "app", "views", "shared", "_action_bar.html.erb")
 
   def test_shared_interaction_craft_is_forwarded
     stack = File.read(STACK)
@@ -49,6 +51,21 @@ class TestRailsInteractionCraft < Minitest::Test
     js = File.read(HAPTICS)
     assert_includes js, "press()"
     assert_includes js, "this.#vibrate(10)"
+  end
+
+  def test_action_state_choreography_is_shared_and_server_aware
+    js = File.read(ACTION)
+    bar = File.read(ACTION_BAR)
+    css = File.read(CRAFT)
+    assert_includes js, 'import Haptics from "pub4/haptics"'
+    assert_includes js, 'dataset.interactionState = "working"'
+    assert_includes js, 'dataset.interactionState = "confirmed"'
+    assert_includes js, 'dataset.interactionState = "error"'
+    assert_includes js, 'setAttribute("aria-busy", "true")'
+    assert_includes js, "if (res.ok)"
+    assert_includes bar, "pointerdown->action#press"
+    assert_includes css, 'data-interaction-state="working"'
+    assert_includes css, 'data-interaction-state="confirmed"'
   end
 
   def test_turbo_navigation_uses_shared_view_transition_boundary

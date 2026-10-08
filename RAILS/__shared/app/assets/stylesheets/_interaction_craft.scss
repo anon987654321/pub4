@@ -74,3 +74,30 @@
     animation: none;
   }
 }
+
+.interaction-stateful[data-interaction-state="working"] {
+  opacity: 0.72;
+}
+
+.interaction-stateful[data-interaction-state="confirmed"] {
+  animation: interaction-confirmed var(--duration-m3-short) var(--ease-m3-spring);
+}
+
+.interaction-stateful[data-interaction-state="error"] {
+  animation: interaction-error var(--transition-fast) var(--ease-out);
+}
+
+@keyframes interaction-confirmed {
+  50% { transform: scale(1.04); }
+}
+
+@keyframes interaction-error {
+  50% { transform: translateX(2px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .interaction-stateful[data-interaction-state="confirmed"],
+  .interaction-stateful[data-interaction-state="error"] {
+    animation: none;
+  }
+}

@@ -3,6 +3,7 @@
 // Matches x.com interaction patterns (hover accent, live counts)
 
 import { Controller } from "@hotwired/stimulus"
+import Haptics from "pub4/haptics"
 
 export default class extends Controller {
   static targets = ["count"]
@@ -27,7 +28,15 @@ export default class extends Controller {
     this.originalCount = this.countValue ?? 0
   }
 
+  press() {
+    if (this.element.matches(":disabled, [aria-disabled='true']")) return
+    this.element.classList.add("interaction-stateful")
+    this.element.dataset.interactionState = "pressed"
+    Haptics.pulse(8)
+  }
+
   toggle(event) {
+
     event.preventDefault()
     const btn = event.currentTarget || this.element
     const isActive = btn.classList.contains(this.activeClassValue)
@@ -41,6 +50,10 @@ export default class extends Controller {
     }
 
     if (this.urlValue) {
+      this.element.classList.add("interaction-stateful")
+      this.element.dataset.interactionState = "working"
+      this.element.setAttribute("aria-busy", "true")
+
       const headers = {
         "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')?.content || "",
         "Accept": "text/vnd.turbo-stream.html, application/json"
@@ -55,14 +68,36 @@ export default class extends Controller {
         init.body = body.toString()
       }
       fetch(this.urlValue, init).then(res => {
-        if (!res.ok) this._failed(btn, isActive)
+        if (res.ok) {
+          this._succeeded(btn)
+        } else {
+          this._failed(btn, isActive)
+        }
       }).catch(() => this._failed(btn, isActive))
     }
   }
 
+  _succeeded(btn) {
+    btn.dataset.interactionState = "confirmed"
+    btn.removeAttribute("aria-busy")
+    Haptics.pulse([12, 30, 12])
+    window.setTimeout(() => {
+      if (btn.dataset.interactionState === "confirmed") {
+        btn.dataset.interactionState = "idle"
+      }
+    }, 260)
+  }
+
   _failed(btn, wasActive) {
     this._rollback(btn, wasActive)
+    btn.dataset.interactionState = "error"
+    btn.removeAttribute("aria-busy")
     this._notify(this.errorMessageValue)
+    window.setTimeout(() => {
+      if (btn.dataset.interactionState === "error") {
+        btn.dataset.interactionState = "idle"
+      }
+    }, 400)
   }
 
   _rollback(btn, wasActive) {

@@ -44,7 +44,7 @@
   <button type="button"
           class="feed-action feed-action--like<%= " active" if local_assigns[:liked] %>"
           data-controller="action popover"
-          data-action="action#toggle mouseenter->popover#show mouseleave->popover#hide"
+          data-action="pointerdown->action#press action#toggle mouseenter->popover#show mouseleave->popover#hide"
           data-action-url-value="<%= reactions_path %>"
           data-action-target-gid-value="<%= record.to_signed_global_id %>"
           data-action-kind-value="like"
