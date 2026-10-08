@@ -97,6 +97,21 @@ class EngineRenderSmokeTest < ActionDispatch::IntegrationTest
     assert_includes response.body, ERB::Util.html_escape(I18n.t("playlist.share_track", title: track.title))
   end
 
+  test "marketplace food renders through the nested takeaway engine" do
+    restaurant = Takeaway::Restaurant.create!(
+      user: @user,
+      name: "Smoke Food",
+      address: "Food Street 1",
+      cuisine_type: "Pizza",
+      active: true
+    )
+
+    host! "markedsplass.brgen.no"
+    get "/food/restaurants/#{restaurant.to_param}"
+    assert_response :success, "marketplace food 500'd: #{@response.body[0, 300]}"
+    assert_includes response.body, "Smoke Food"
+  end
+
   test "takeaway home renders the canonical promotional art with a photographed menu item" do
     restaurant = Takeaway::Restaurant.create!(
       user: @user,

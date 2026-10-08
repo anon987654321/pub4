@@ -77,7 +77,6 @@ gem "pub4-shared", path: "../__shared"
 gem "brgen-tv", path: "../brgen_radio/tv", require: "tv"
 gem "brgen-marketplace", path: "../brgen_marketplace", require: "marketplace"
 gem "brgen-playlist", path: "../brgen_radio/playlist", require: "playlist"
-gem "brgen-takeaway", path: "../brgen_takeaway", require: "takeaway"
 gem "brgen-dating", path: "../brgen_dating", require: "dating"
 gem "brgen-maps", path: "../brgen_maps", require: "maps"
 

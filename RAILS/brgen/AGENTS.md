@@ -28,17 +28,18 @@ markedsplass.brgen.no    marketplace.lsangeles.com     markedsplass.oshlo.no
 | What | Engine / code | Bergen | Los Angeles |
 |---|---|---|---|
 | Main feed (posts, communities, events, stories, DMs) | host `app/` | `brgen.no` | `lsangeles.com` |
-| Marketplace | `engines/marketplace` | `markedsplass.brgen.no` | `marketplace.lsangeles.com` |
+| Marketplace + food | `engines/marketplace` + nested `engines/takeaway` | `markedsplass.brgen.no` + `/food` | `marketplace.lsangeles.com` + `/food` |
 | Dating | `engines/dating` | `dating.brgen.no` | `dating.lsangeles.com` |
-| Takeaway | `engines/takeaway` | `takeaway.brgen.no` | `takeaway.lsangeles.com` |
+| Legacy Takeaway host | compatibility mount of Marketplace food | `takeaway.brgen.no` | `takeaway.lsangeles.com` |
 | TV | `engines/tv` | `tv.brgen.no` | `tv.lsangeles.com` |
 | Maps | `engines/maps` | `maps.brgen.no` | `maps.lsangeles.com` |
 | Playlist | `engines/playlist` | `radio.brgen.no` | `radio.lsangeles.com` |
 | Messenger | host routes, not an engine | `messenger.brgen.no` | `messenger.lsangeles.com` |
 
 Marketplace is the only vertical whose **subdomain word** is localized
-(`markedsplass` / `marketplace` / `marktplatz` / …). Dating, tv, takeaway, maps,
-messenger, playlist are the same English token on every city.
+(`markedsplass` / `marketplace` / `marktplatz` / …). Food ordering is a Marketplace
+surface at `/food`; the old takeaway host remains only for compatibility. Dating,
+tv, maps, messenger and playlist are the same English token on every city.
 
 **Not a brgen subapp.** `ai.brgen.no` is MASTER (`MASTER/web`), different rc.d.
 `amberapp.art` is a separate Rails app. Do not mount either here.

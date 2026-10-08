@@ -52,9 +52,10 @@ the tracked app at `/home/<app>/app` and its own copy of the engine at
 `/home/<app>/shared`. Every app vendors a separate copy; syncing to the wrong
 one makes precompile a silent no-op. `MASTER/contracts/studio.rb` resolves the canonical STUDIO media entrypoints from the source or deployed tree; callers do not reach into sibling implementation directories.
 
-**brgen's verticals are mountable engines**, not namespaced controllers:
-`brgen_{marketplace,dating,radio/playlist, takeaway, radio/tv}`. Subdomain constraints
-in `brgen/config/routes.rb` via `Brgen::DomainRegistry` map `markedsplass`,
+**brgen's verticals are mountable engines**, not namespaced controllers. Marketplace
+contains the food-ordering Takeaway engine as a nested package; it is exposed at
+`/food` on the marketplace host. Subdomain constraints in `brgen/config/routes.rb`
+via `Brgen::DomainRegistry` map `markedsplass`,
 `dating`, `tv` and the rest onto them. Messenger and the MASTER relay are not
 engines. Tooling that globs `<app>/app/**` misses engine code — four scanners
 stopped seeing 57 views when the verticals moved, and the falling finding count

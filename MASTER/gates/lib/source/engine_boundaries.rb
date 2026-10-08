@@ -5,8 +5,9 @@ require_relative "../../support/gate_result"
 module Deploy
   # One brgen vertical reaching into another's constants.
   #
-  # Each vertical under brgen/engines is an engine with `isolate_namespace`, and
-  # that isolates tables, routes and helpers — not constants. Nothing stops
+  # Each Brgen vertical package is an engine with `isolate_namespace`, and nested
+  # engines such as Marketplace's food surface are discovered just like siblings.
+  # Isolation covers tables, routes and helpers — not constants. Nothing stops
   # `Dating::Match` from naming `Marketplace::Order`, and once two engines share a
   # model neither can be mounted, tested or removed alone. Packwerk exists to hold
   # this line and brings a C extension through better_html; a text read holds it
@@ -83,6 +84,7 @@ module Deploy
     def namespaces
       engine_paths = [
         *Dir.glob(File.join(engines_root, "brgen_*", "lib", "*", "engine.rb")),
+        *Dir.glob(File.join(engines_root, "brgen_*", "engines", "*", "lib", "*", "engine.rb")),
         *Dir.glob(File.join(engines_root, "brgen_radio", "*", "lib", "*", "engine.rb"))
       ]
       engine_paths.sort.each_with_object({}) do |path, out|

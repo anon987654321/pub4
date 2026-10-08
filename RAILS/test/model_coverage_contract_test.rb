@@ -8,25 +8,27 @@ require "minitest/autorun"
 class ModelCoverageContractTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
 
-  # brgen's five verticals became mountable engines, so app/{models,controllers}/
-  # <vertical>/ moved to engines/<vertical>/app/.... These contracts still asked
-  # for the old path and had been red since; nothing in the gate suite runs this
-  # file, so the failure was silent. Resolve either location.
-  ENGINES = %w[dating marketplace playlist takeaway tv maps].freeze
+  # Vertical packages are siblings under RAILS, except Marketplace's food
+  # engine, which is intentionally nested inside the Marketplace package.
+  ENGINE_ROOTS = {
+    "dating" => "brgen_dating",
+    "marketplace" => "brgen_marketplace",
+    "playlist" => "brgen_radio/playlist",
+    "takeaway" => "brgen_marketplace/engines/takeaway",
+    "tv" => "brgen_radio/tv",
+    "maps" => "brgen_maps"
+  }.freeze
 
-  # The verticals' routes moved with them: engines/<vertical>/config/routes.rb.
-  # These contracts assert that a route exists somewhere in the app's routing
-  # surface, so reading routes.rb means reading the host's plus every engine's.
   def app_path(app, relative)
     direct = File.join(ROOT, app, relative)
     return direct if File.file?(direct)
 
-    vertical = relative[%r{\Aapp/(?:models|controllers|views)/([a-z_]+)/}, 1]
-    return direct unless ENGINES.include?(vertical)
+    vertical = relative[%r{\A(?:app|test)/(?:models|controllers|views)/([a-z_]+)/}, 1]
+    engine_root = ENGINE_ROOTS[vertical]
+    return direct unless engine_root
 
-    File.join(ROOT, app, "engines", vertical, relative)
+    File.join(ROOT, engine_root, relative)
   end
-
   def read_app(app, relative)
     return routing_surface(app) if relative == "config/routes.rb"
 
@@ -38,16 +40,14 @@ class ModelCoverageContractTest < Minitest::Test
     ([ path ] + concerns).map { |file| File.read(file) }.join("\n")
   end
 
-  # Vertical tests moved into engines/<vertical>/test/ with everything else.
   def assert_app_file(app, relative)
-    assert File.file?(app_path(app, relative)) ||
-           File.file?(File.join(ROOT, app, "engines", relative[%r{\Atest/\w+/([a-z_]+)/}, 1].to_s, relative)),
-           "missing #{app}/#{relative}"
+    assert File.file?(app_path(app, relative)), "missing #{app}/#{relative}"
   end
 
   def routing_surface(app)
     files = [File.join(ROOT, app, "config", "routes.rb")] +
-            Dir.glob(File.join(ROOT, app, "engines", "*", "config", "routes.rb")).sort
+            Dir.glob(File.join(ROOT, app, "engines", "*", "config", "routes.rb")).sort +
+            ENGINE_ROOTS.values.map { |root| File.join(ROOT, root, "config", "routes.rb") }
     present = files.select { |f| File.file?(f) }
     assert present.any?, "missing #{app}/config/routes.rb"
     present.map { |f| File.read(f) }.join("\n")

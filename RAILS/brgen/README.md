@@ -86,7 +86,7 @@ Subapp: marketplace; Engine: `engines/marketplace`; Subdomain (Bergen / LA): mar
 
 Subapp: dating; Engine: `engines/dating`; Subdomain (Bergen / LA): dating.\*
 
-Subapp: takeaway; Engine: `engines/takeaway`; Subdomain (Bergen / LA): takeaway.\*
+Subapp: marketplace/food; Engine: `engines/takeaway` inside marketplace; Subdomain (Bergen / LA): markedsplass.brgen.no/food / marketplace.lsangeles.com/food
 
 Subapp: tv; Engine: `engines/tv`; Subdomain (Bergen / LA): tv.\*
 
@@ -99,7 +99,7 @@ Subapp: messenger; Engine: host `config/routes.rb` (not an engine); Subdomain (B
 Marketplace is the only localized subdomain word. Messenger was never extracted.
 
 brgen main keeps the x.com-style social feed; the marketplace engine owns every
-listing there is; the rest are their own hosts.
+listing there is, including food ordering; the remaining verticals have their own hosts.
 
 There is no listing model in the host app. Both tiers are one `Marketplace::Listing`, which
 `belongs_to :store, optional: true` — a listing with a store is a shop's

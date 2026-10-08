@@ -17,7 +17,8 @@
 #   brgen.no                 lsangeles.com                 main feed
 #   markedsplass.brgen.no    marketplace.lsangeles.com     marketplace (word is localized)
 #   dating.brgen.no          dating.lsangeles.com
-#   takeaway.brgen.no        takeaway.lsangeles.com
+#   markedsplass.brgen.no/food marketplace.lsangeles.com/food   marketplace food
+  takeaway.brgen.no        takeaway.lsangeles.com              legacy food host
 #   tv.brgen.no              tv.lsangeles.com
 #   maps.brgen.no            maps.lsangeles.com
 #   radio.brgen.no        radio.lsangeles.com
@@ -34,6 +35,7 @@ primary:
   domains:
     core: brgen.no
     marketplace: markedsplass.brgen.no
+    food: markedsplass.brgen.no/food
     dating: dating.brgen.no
     takeaway: takeaway.brgen.no
     tv: tv.brgen.no

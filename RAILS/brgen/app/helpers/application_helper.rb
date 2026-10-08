@@ -98,7 +98,7 @@ def brgen_nav_items
     # Marketplace. The 2026-08-17 note that argued for one Norwegian label in an
     # otherwise English bar is answered by the bar having no fixed language now.
     [ "marketplace", nav_label("marketplace"), "//#{marketplace_host}/" ],
-    [ "takeaway",    nav_label("takeaway"),    "//takeaway.#{domain}/" ],
+    [ "takeaway",    nav_label("takeaway"),    "//#{marketplace_host}/food/" ],
     [ "messenger",   nav_label("messenger"),   "//messenger.#{domain}/" ],
     [ "maps",        nav_label("maps"),        "//maps.#{domain}/" ],
     [ "tv",          nav_label("tv"),          "//tv.#{domain}/" ]
@@ -279,9 +279,9 @@ def surface_theme = DEFAULT_SURFACE_THEME
     when Marketplace::Order
       marketplace.order_url(record, host: domain, subdomain: marketplace_subdomain)
     when Takeaway::Restaurant
-      takeaway.restaurant_url(record, host: domain, subdomain: "takeaway")
+      marketplace_food.restaurant_url(record, host: domain, subdomain: marketplace_subdomain)
     when Takeaway::Order
-      takeaway.order_url(record, host: domain, subdomain: "takeaway")
+      marketplace_food.order_url(record, host: domain, subdomain: marketplace_subdomain)
     when Place
       maps.place_url(record, host: domain, subdomain: "maps")
     when Dating::Match

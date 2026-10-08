@@ -216,9 +216,13 @@ get "i/:token" => "invites#show", as: :invite
   # playlist.* mounted helper. See brgen/README.md.
   mount Playlist::Engine, at: "/", as: "playlist", constraints: { subdomain: RADIO_SUBDOMAINS }
 
-  # takeaway vertical extracted to ../brgen_takeaway (mountable engine). Top-level mount with
-  # constraints: keyword — NOT a constraints(subdomain:) block, which would drop the
-  # takeaway.* mounted helper. See brgen/README.md.
+  # Food ordering is part of Marketplace. The engine remains internally named Takeaway
+  # to preserve its proven model and table contract, but its canonical public surface is
+  # /food on the localized marketplace host.
+  mount Takeaway::Engine, at: "/food", as: "marketplace_food", constraints: { subdomain: MARKETPLACE_SUBDOMAINS }
+
+  # Legacy compatibility: existing takeaway.<city> links continue to resolve through the
+  # same engine while clients and navigation move to markedsplass.<city>/food.
   mount Takeaway::Engine, at: "/", as: "takeaway", constraints: { subdomain: TAKEAWAY_SUBDOMAINS }
 
   # marketplace vertical extracted to ../brgen_marketplace (mountable engine). Top-level mount with

@@ -9,8 +9,10 @@ marketplace subdomain, localised per country — `markedsplass.brgen.no`,
 
 Store owners post product listings across categories, buyers add them to a cart
 and check out through Dintero, Vipps or Stripe when configured, and both sides
-leave reviews. Deals and saved searches aid discovery, and `favorite` bookmarks
-a listing.
+leave reviews. Food ordering is part of the same commerce surface at `/food`:
+restaurants, menus, delivery and group orders are backed by the nested `Takeaway::`
+engine without creating a second product boundary. Deals and saved searches aid
+discovery, and `favorite` bookmarks a listing.
 
 The two tiers are one model rather than two places. `Listing belongs_to :store,
 optional: true`: with a store it is a shop's product, without one it is a person
@@ -84,3 +86,8 @@ events before any production cutover.
 
 The 1 GB OpenBSD host remains the wrong place for the Solidus install. Native
 BRGEN continues to serve the public marketplace until a staged cutover is deliberate.
+
+
+## Food
+
+The canonical food surface is `/food` on the localized Marketplace host: `markedsplass.<city>/food` or `marketplace.<city>/food`. The former `takeaway.<city>` host remains a compatibility mount of the same engine; new links should point to Marketplace.

@@ -98,9 +98,9 @@ fails `page_simulation` on any non-partial shared view without a row.
 ### Routing, assets and media
 
 Subdomain constraints live in `brgen/config/routes.rb` and resolve through
-`Brgen::DomainRegistry`, which maps the marketplace aliases, playlist, takeaway,
-tv, maps, dating, messenger's conversations and the MASTER relay onto their
-modules. Scoped roots use single-prefixed helpers — `marketplace_root_path`, not
+`Brgen::DomainRegistry`, which maps the marketplace aliases, playlist, tv, maps,
+dating, messenger's conversations and the MASTER relay onto their modules; food
+ordering is nested in Marketplace, with the old takeaway host retained for compatibility. Scoped roots use single-prefixed helpers — `marketplace_root_path`, not
 `marketplace_marketplace_root_path` — and `ApplicationHelper#marketplace_root_url`
 delegates to `Rails.application.routes.url_helpers` so it does not shadow the
 route helper. `runner.rb domain_alignment` holds the DNS, registry, inventory and

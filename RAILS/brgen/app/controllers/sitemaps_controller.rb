@@ -20,8 +20,8 @@ class SitemapsController < ApplicationController
     case subapp
     when :tv then entries.concat(tv_entries)
     when :playlist then entries.concat(playlist_entries)
-    when :takeaway then entries.concat(takeaway_entries)
-    when :marketplace then entries.concat(marketplace_entries)
+    when :takeaway then entries.concat(food_entries)
+    when :marketplace then entries.concat(marketplace_entries).concat(food_entries)
     when :maps then entries.concat(maps_entries)
     when :dating, :messenger, :ai
       # Personal profiles and private conversations are never indexed — root only.
@@ -87,8 +87,10 @@ class SitemapsController < ApplicationController
       entries_for(Playlist::Set.publicly_listed, changefreq: "weekly", priority: "0.5") { |s| playlist.set_url(s) }
   end
 
-  def takeaway_entries
-    entries_for(Takeaway::Restaurant.indexable.in_current_city, changefreq: "weekly", priority: "0.7") { |r| takeaway.restaurant_url(r) }
+  def food_entries
+    entries_for(Takeaway::Restaurant.indexable.in_current_city, changefreq: "weekly", priority: "0.7") do |r|
+      marketplace_food.restaurant_url(r)
+    end
   end
 
   def marketplace_entries
