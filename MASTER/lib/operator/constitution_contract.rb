@@ -14,7 +14,7 @@ module Operator
       MASTER/lib/review/scan
       MASTER/law/law.rb
       RAILS/CLAUDE.md
-      RAILS/shared/design_tokens.yml
+      RAILS/__shared/design_tokens.yml
       OPENBSD/CLAUDE.md
       OPENBSD/PATH_OWNERSHIP.yml
       OPENBSD/data/operator.yml
@@ -68,7 +68,7 @@ module Operator
 
     def tree_authority_issues
       issues = []
-      rails_tokens = File.join(@root, "RAILS/shared/design_tokens.yml")
+      rails_tokens = File.join(@root, "RAILS/__shared/design_tokens.yml")
       if File.file?(rails_tokens)
         header = File.read(rails_tokens).lines.first(2).join
         issues << "rails: generated design tokens lost MASTER source marker" unless header.include?("MASTER/data/laws.yml")
