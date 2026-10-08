@@ -19,11 +19,11 @@ module Deploy
     SOURCE_GLOB = "{app,lib,config,db,test}/**/*.{rb,erb,rake}"
     NAMESPACE = /isolate_namespace\s+([A-Z]\w*)/
 
-    # Engine directory => { relative path => engines it may name }. The courier
+    # Engine package => { relative path => engines it may name }. The courier
     # layer on the maps page plots the viewer's own takeaway orders that are out
     # for delivery, which is a read of another vertical's data by design.
     EXEMPT = {
-      "maps" => { "app/controllers/maps/home_controller.rb" => %w[Takeaway] },
+      "brgen_maps" => { "app/controllers/maps/home_controller.rb" => %w[Takeaway] },
     }.freeze
 
     def self.run(root: ROOT, exempt: EXEMPT)
@@ -38,7 +38,7 @@ module Deploy
     def run
       result = GateResult.new
       engines = namespaces
-      return result.inconclusive!("engine_boundaries: no isolate_namespace under RAILS/brgen/engines — nothing was read") if engines.empty?
+      return result.inconclusive!("engine_boundaries: no isolated Brgen verticals — nothing was read") if engines.empty?
 
       used = []
       engines.each do |dir, own|
@@ -72,7 +72,7 @@ module Deploy
 
     private
 
-    def engines_root = File.join(@root, "RAILS", "brgen", "engines")
+    def engines_root = File.join(@root, "RAILS")
 
     # A row whose read has gone excuses the next crossing someone adds to that file.
     def stale_exemptions(used)
@@ -81,9 +81,9 @@ module Deploy
     end
 
     def namespaces
-      Dir.glob(File.join(engines_root, "*", "lib", "*", "engine.rb")).sort.each_with_object({}) do |path, out|
+      Dir.glob(File.join(engines_root, "brgen_*", "lib", "*", "engine.rb"))\n         .concat(Dir.glob(File.join(engines_root, "brgen_radio", "*", "lib", "*", "engine.rb")))\n         .sort.each_with_object({}) do |path, out|
         name = File.read(path)[NAMESPACE, 1] or next
-        out[path.delete_prefix("#{engines_root}/").split("/").first] = name
+        out[path.delete_prefix("#{engines_root}/").sub(%r{/lib/.*\z}, "")] = name
       end
     end
   end
