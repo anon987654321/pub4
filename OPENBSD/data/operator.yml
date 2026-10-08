@@ -23,7 +23,7 @@ app_layout:
   bootstrap: Greenfield apps use rails new once; existing apps are maintained in-tree.
   deploy_entrypoint: RAILS/<app>/<app>.sh copies the tracked tree to /home/<app>/app
   deployed_tree: /home/<app>/app is what relayd serves — not the dev git checkout alone
-  shared_engine: RAILS/shared (pub4-shared gem)
+  shared_engine: RAILS/__shared (pub4-shared gem)
 
 single_source_of_truth:
   features: RAILS/apps.yml
