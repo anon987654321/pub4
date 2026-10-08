@@ -3,7 +3,7 @@
 require "date"
 require "psych"
 require "rbconfig"
-require_relative "../review/scan/engines/path_filter"
+require_relative "scan/path_filter"
 
 module Master
   module Fix
