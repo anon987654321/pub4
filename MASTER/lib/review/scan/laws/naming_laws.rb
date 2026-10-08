@@ -16,7 +16,7 @@ module Master
         stale_constants.map { |name| /(?<![\w:])#{Regexp.escape(name)}(?!::|\w)/ },
       )
 
-      RuleDSL.rule :STALE_NAMESPACE,
+      LawDSL.law :STALE_NAMESPACE,
         severity: :error,
         tags: %i[ONE_SOURCE],
         applies_to: %i[ruby],
@@ -41,7 +41,7 @@ module Master
         end
 
       module Rules
-        RuleDSL.rule :PARAMETERIZED_SLUG,
+        LawDSL.law :PARAMETERIZED_SLUG,
           severity: :warning,
           tags: %i[FLAT_HIERARCHY DRY],
           applies_to: %i[ruby],
@@ -202,7 +202,7 @@ module Master
         # A sequence word is a timestamp wearing a name. If two files differ,
         # the name says how; if it cannot, they are one file or the difference
         # is not yet understood.
-        RuleDSL.rule :FILE_SEQUENCE_NAME,
+        LawDSL.law :FILE_SEQUENCE_NAME,
           severity: :warning,
           does_not_fire: "class AddThing < ActiveRecord::Migration[8.0]; end\n",
           example_path: "/repo/db/migrate/20260101000000_add_thing_v2.rb",
@@ -236,7 +236,7 @@ module Master
         # rather than what is in it, so the next reader must open it. base, common,
         # shared and core_ext were in this list and came out: all four are ordinary
         # Ruby structure, and base.rb accounted for 3 of 6 findings, all false.
-        RuleDSL.rule :FILE_VAGUE_NAME,
+        LawDSL.law :FILE_VAGUE_NAME,
           severity: :info,
           does_not_fire: "module FormatHelper; end\n",
           example_path: "/repo/app/helpers/format_helper.rb",
