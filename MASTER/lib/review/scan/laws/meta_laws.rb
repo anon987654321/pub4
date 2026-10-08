@@ -71,7 +71,7 @@ module Master
           # would report those as uncovered, which is the false-positive machine
           # the old shape already was, pointed the other way.
           #
-          # spec/ is read because LearnedSmellsRule's only test is
+          # spec/ is read because LearnedSmellsLaw's only test is
           # spec/learned_smells_rule_spec.rb, and a class covered from the wrong
           # directory read as uncovered — this rule reporting a gap it had made
           # itself.
@@ -167,7 +167,7 @@ module Master
           end
         end
 
-        class LearnedSmellsRule < Rule
+        class LearnedSmellsLaw < Rule
           declare id: "LEARNED_SMELLS", severity: :warning, tags: %i[LEARNED_SMELLS SESSION],
                   description: "session-learned smell patterns from laws.yml"
 
@@ -184,7 +184,7 @@ module Master
             language = self.language(path)&.to_s
             @learned_smells.flat_map { |smell| findings_for_smell(smell, code, language) }
           rescue StandardError => e
-            Master::Ground::Swallow.log(e, context: "LearnedSmellsRule.check", severity: :load_bearing, path:)
+            Master::Ground::Swallow.log(e, context: "LearnedSmellsLaw.check", severity: :load_bearing, path:)
             raise "learned smell scan failed: #{e.class}: #{e.message}"
           end
 
@@ -257,7 +257,7 @@ module Master
             @learned_smells = Array((Master.load_laws(root: @root) || {}).fetch("learned_smells", [])).select { |item| item.is_a?(Hash) }
             @rules_mtime = rules_mtime
           rescue StandardError => e
-            Master::Ground::Swallow.log(e, context: "LearnedSmellsRule.reload", severity: :load_bearing, path: laws_path)
+            Master::Ground::Swallow.log(e, context: "LearnedSmellsLaw.reload", severity: :load_bearing, path: laws_path)
             raise
           end
 
