@@ -228,7 +228,7 @@ module Operator
     # scan-noise TODO.md already triages one entry at a time.
     #
     # The scanner's own rules only. A law reaches the scanner through
-    # LawBridgeRule and reports under its own id, so the STRICT_MODE_ZSH,
+    # LawBridgeLaw and reports under its own id, so the STRICT_MODE_ZSH,
     # NEVER_BATCH_DELETE, RATE_LIMITING_MISSING and MIGRATION_ADD_REFERENCE_NO_FK
     # findings the scan returns are already members of the law row above —
     # fifteen of them, and one fix would have moved two ratchets. Keeping only
