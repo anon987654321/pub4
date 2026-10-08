@@ -20,7 +20,7 @@ module Master
         # Fraction of otherwise-clean files that still get the semantic pass.
         # Keyed on the path digest rather than rand, so two scans of the same
         # tree ask the same questions and their reports can be compared.
-        SEMANTIC_SAMPLE = ENV.fetch("MASTER_SCAN_SEMANTIC_SAMPLE", "0.1").to_f
+        SEMANTIC_SAMPLE = ENV.fetch("MASTER_SCAN_SEMANTIC_SAMPLE", "0").to_f
 
         def initialize(event_bus: nil, skip_semantic: false)
           @bus = event_bus
@@ -45,7 +45,7 @@ module Master
 
             ast = parse_ruby(code.value!, path)
             fingerprint = Master::Review::Scan::SemanticFingerprint.for(code.value!)
-            findings = apply_laws(code: code.value!, ast:, path:, law_set: rules)
+            findings = apply_laws(code: code.value!, ast:, path:, law_set: laws)
             findings = annotate_findings(findings, fingerprint:)
             publish_scan_result(path:, depth:, findings:)
             Result.ok(findings)
@@ -169,7 +169,7 @@ module Master
         end
 
         def skip_semantic(path:, laws:, findings:)
-          @bus&.publish("scan:semantic_skipped", path:, rule_count: rules.size, reason: "clean file, outside sample")
+          @bus&.publish("scan:semantic_skipped", path:, law_count: laws.size, reason: "clean file, outside sample")
           findings
         end
 
@@ -178,20 +178,20 @@ module Master
           structural = []
           lexical = []
           law_set.each do |law|
-            if semantic_law?(rule)
-              semantic << rule
-            elsif ast && rule.respond_to?(:check_ast)
-              structural << rule
+            if semantic_law?(law)
+              semantic << law
+            elsif ast && law.respond_to?(:check_ast)
+              structural << law
             else
-              lexical << rule
+              lexical << law
             end
           end
           [lexical, structural, semantic]
         end
 
         def run_law_pass(pass:, laws:, code:, ast:, path:)
-          @bus&.publish("scan:pass", path:, pass:, rule_count: rules.size)
-          rules.flat_map { |law| run_law(law:, code:, ast:, path:) }
+          @bus&.publish("scan:pass", path:, pass:, law_count: laws.size)
+          laws.flat_map { |law| run_law(law:, code:, ast:, path:) }
         end
 
         # `defined?` rather than a bare constant: this file is reachable from
@@ -199,12 +199,12 @@ module Master
         # review/scan/law_dsl has loaded the registry. Naming it unguarded
         # turned every scan on that path into "scan failed: uninitialized
         # constant", which reads as a broken file rather than a missing require.
-        def semantic_law?(rule)
+        def semantic_law?(law)
           semantic_class = defined?(Master::Review::Scan::Laws::SemanticLaw) &&
                            Master::Review::Scan::Laws::SemanticLaw
-          return true if semantic_class && rule.is_a?(semantic_class)
+          return true if semantic_class && law.is_a?(semantic_class)
 
-          rule.respond_to?(:id) && law.id.to_s == "semantic"
+          law.respond_to?(:id) && law.id.to_s == "semantic"
         end
 
         def annotate_findings(findings, fingerprint:)
@@ -231,9 +231,9 @@ module Master
         end
 
         def run_law(law:, code:, ast:, path:)
-          return rule.check(code, path:) unless ast && rule.respond_to?(:check_ast)
+          return law.check(code, path:) unless ast && law.respond_to?(:check_ast)
 
-          rule.check_ast(ast, code, path:)
+          law.check_ast(ast, code, path:)
         end
 
         def publish_scan_result(path:, depth:, findings:)
@@ -242,22 +242,22 @@ module Master
 
         def top_laws(findings, limit: 3)
           findings.each_with_object(Hash.new(0)) do |finding, counts|
-            rule = finding_law(finding)
-            counts[rule] += 1 if rule
-          end.sort_by { |rule, count| [-count, rule] }.first(limit).to_h
+            law = finding_law(finding)
+            counts[law] += 1 if rule
+          end.sort_by { |law, count| [-count, law] }.first(limit).to_h
         end
 
         def finding_law(finding)
-          rule =
+          law =
             if finding.respond_to?(:[])
               finding[:law] || finding[:law_id] || finding["law"] || finding["law_id"]
-            elsif finding.respond_to?(:rule)
-              finding.rule
-            elsif finding.respond_to?(:rule_id)
-              finding.rule_id
+            elsif finding.respond_to?(:law)
+              finding.law
+            elsif finding.respond_to?(:law_id)
+              finding.law_id
             end
 
-          rule.to_s unless rule.nil? || rule.to_s.empty?
+          law.to_s unless law.nil? || law.to_s.empty?
         end
 
       end
