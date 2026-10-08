@@ -109,11 +109,11 @@ class TestHeartbeat < Minitest::Test
         enabled: true
     YAML
     File.write(File.join(root, "data", "laws.yml"), rules_yaml)
-    # SelfTest's PRINCIPLE_MAP check reports "missing data/principle_map.yml"
+    # SelfTest's LAW_MAP check reports "missing laws.yml#law_map"
     # against a bare fixture root, which made the "clean scan" case impossible
     # to reach — it always published heartbeat:violations instead. An empty map
     # satisfies integrity (nothing to be inconsistent about).
-    File.write(File.join(root, "data", "principle_map.yml"),
-               { "schema" => 1, "version" => "test-fixture", "principles" => {} }.to_yaml)
+    File.write(File.join(root, "data", "laws.yml"),
+               { "law_map" => { "schema" => 1, "version" => "test-fixture", "laws" => {} } }.to_yaml)
   end
 end
