@@ -44,8 +44,8 @@ module Master
         return false unless blocker
 
         log_conflict(
-          law_a: baseline[:rule_id],
-          law_b: blocker["rule"],
+          law_a: baseline[:law_id],
+          law_b: blocker["law"],
           resolution: "reject fix: introduced higher-priority #{blocker["severity"]} finding",
           file: path,
           line: blocker["line"],
@@ -107,13 +107,13 @@ module Master
       end
 
       def resolve_pair(best, finding)
-        favored = @law_resolver.winner(best["rule"], finding["law"], laws_index: @laws_index)
-        if favored == best["rule"]
-          log_conflict(law_a: best["rule"], law_b: finding["law"],
-            resolution: "law priority favors #{best["rule"]}", file: finding["file"], line: finding["line"])
+        favored = @law_resolver.winner(best["law"], finding["law"], laws_index: @laws_index)
+        if favored == best["law"]
+          log_conflict(law_a: best["law"], law_b: finding["law"],
+            resolution: "law priority favors #{best["law"]}", file: finding["file"], line: finding["line"])
           best
         else
-          log_conflict(law_a: finding["law"], law_b: best["rule"],
+          log_conflict(law_a: finding["law"], law_b: best["law"],
             resolution: "law priority favors #{finding["law"]}", file: best["file"], line: best["line"])
           finding
         end
