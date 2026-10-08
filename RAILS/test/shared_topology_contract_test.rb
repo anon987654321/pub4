@@ -49,4 +49,12 @@ class SharedTopologyContractTest < Minitest::Test
     assert File.file?(File.join(ROOT, "__shared", "pub4-shared.gemspec"))
     assert File.file?(File.join(ROOT, "__shared", "config", "ci.rb"))
   end
+  def test_pwa_builder_uses_the_canonical_shared_tree
+    builder = File.join(REPO, "MASTER", "tools", "rails", "build_workbox.mjs")
+    source = File.read(builder, encoding: "UTF-8")
+
+    assert_includes source, 'join(root, "__shared", "pwa", "service_worker.js")'
+    assert_includes source, 'join(root, "__shared", "public")'
+    refute_match(/join\(root,\s*["']shared["']/, source)
+  end
 end
