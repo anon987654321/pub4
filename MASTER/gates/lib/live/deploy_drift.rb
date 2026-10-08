@@ -38,7 +38,7 @@ module Deploy
     # Paths whose changes mean an app is stale. The shared engine is compiled
     # into every Rails app's bundle, so a shared-only commit still leaves each
     # app behind until it redeploys.
-    SHARED_PATHS = ["RAILS/shared"].freeze
+    SHARED_PATHS = ["RAILS/__shared"].freeze
     MASTER_PATHS = ["MASTER/web", "MASTER/lib", "MASTER/data"].freeze
 
     def self.run = new.run
