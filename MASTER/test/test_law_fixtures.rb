@@ -16,16 +16,16 @@
 # satisfied. A rule that carries the case it must not fire on cannot drift that
 # way in silence, which is why does_not_fire matters more here than fires.
 #
-# Add examples to a rule with RuleDSL.rule(..., fires:, does_not_fire:).
+# Add examples to a rule with LawDSL.rule(..., fires:, does_not_fire:).
 
 require_relative "test_helper"
-# rule_dsl.rb requires every rules/*.rb at the bottom, and each RuleDSL.rule call
-# registers through Rule.inherited. Without this the registry is empty and the
+# rule_dsl.rb requires every rules/*.rb at the bottom, and each LawDSL.rule call
+# registers through Law.inherited. Without this the registry is empty and the
 # two assertions below pass having checked nothing.
 require_relative "../lib/review/scan/rule_dsl"
 
 class TestRuleFixtures < Minitest::Test
-  Rule = Master::Review::Scan::Rule
+  Law = Master::Review::Scan::Law
 
   # `html` is what the web rules declare in applies_to:, and it was missing, so
   # every one of them fell through to the ruby path — a view rule guarded by
@@ -47,7 +47,7 @@ class TestRuleFixtures < Minitest::Test
   }.freeze
 
   def self.fixtured
-    @fixtured ||= Rule.registry.select do |klass|
+    @fixtured ||= Law.registry.select do |klass|
       klass.respond_to?(:dsl_fires) && (klass.dsl_fires || klass.dsl_does_not_fire)
     end
   end
@@ -96,8 +96,8 @@ class TestRuleFixtures < Minitest::Test
 
   # A harness that silently stops finding rules passes forever.
   def test_the_harness_still_sees_rules
-    assert_operator Rule.registry.size, :>, 100,
-                    "only #{Rule.registry.size} rules registered — the registry stopped loading"
+    assert_operator Law.registry.size, :>, 100,
+                    "only #{Law.registry.size} rules registered — the registry stopped loading"
     assert_operator self.class.fixtured.size, :>=, 2,
                     "only #{self.class.fixtured.size} rules carry examples — fixtures stopped being read"
   end
@@ -107,7 +107,7 @@ class TestRuleFixtures < Minitest::Test
   # rule must carry fires:/does_not_fire:, and adding examples to an old one
   # lowers the recorded number by hand (data/laws.yml, law_ratchets.fixture_debt).
   def test_the_unfixtured_registry_only_shrinks
-    unfixtured = Rule.registry.reject do |klass|
+    unfixtured = Law.registry.reject do |klass|
       (klass.respond_to?(:dsl_fires) && (klass.dsl_fires || klass.dsl_does_not_fire)) ||
         !klass.respond_to?(:dsl_block)
     end
