@@ -216,10 +216,7 @@ module Master
           remaining = deadline - Process.clock_gettime(Process::CLOCK_MONOTONIC)
           raise Timeout::Error if remaining <= 0
 
-          selected = Ractor.select(result_port, timeout: remaining)
-          raise Timeout::Error unless selected
-
-          _port, message = selected
+          message = Timeout.timeout(remaining) { result_port.receive }
           worker_id, index, ok, value = message
           ractor = ractors.fetch(worker_id)
           active.delete(index)
