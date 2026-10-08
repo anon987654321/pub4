@@ -2,6 +2,7 @@
 
 require_relative "test_helper"
 require_relative "../lib/voice/performance"
+load File.expand_path("../lib/voice/performance.rb", __dir__)
 
 class TestVoicePerformanceTimeline < Minitest::Test
   def test_timeline_uses_one_audio_clock
