@@ -235,10 +235,14 @@ module Master
           skill = find(name)
           return unless skill
 
-          ref_path = File.expand_path(reference_rel_path, skill[:dir])
-          return unless File.file?(ref_path) && ref_path.start_with?(skill[:dir])
+          skill_root = File.realpath(skill[:dir])
+          ref_path = File.expand_path(reference_rel_path, skill_root)
+          return unless File.file?(ref_path)
 
-          File.read(ref_path, encoding: "UTF-8")
+          canonical = File.realpath(ref_path)
+          return unless canonical == skill_root || canonical.start_with?("#{skill_root}#{File::SEPARATOR}")
+
+          File.read(canonical, encoding: "UTF-8")
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "antigravity.skills.reference_for", name:, reference_rel_path:)
           nil
