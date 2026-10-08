@@ -56,7 +56,7 @@ module Master
             return 0 if Time.now >= deadline || findings.empty?
 
             loop = LawLoop.new(
-              rule: OpportunityPass::Rule.new(OpportunityPass::RULE_ID),
+              law: OpportunityPass::Law.new(OpportunityPass::RULE_ID),
               agent: @agent, scanner: @scanner, root: @root, bus: @bus,
               learnings: @learnings, committer: @committer,
               visual_custody: @visual_pass&.custody,
@@ -75,9 +75,9 @@ module Master
           def run_improvement_stage(findings, pass:, files:, deadline:)
             return 0 if findings.empty? || Time.now >= deadline
 
-            rule = CouncilRound::IMPROVEMENT_RULE.new(CouncilRound::IMPROVEMENT_RULE_ID)
+            law = CouncilRound::IMPROVEMENT_LAW.new(CouncilRound::IMPROVEMENT_LAW_ID)
             loop = LawLoop.new(
-              rule:, agent: @agent, scanner: @scanner, root: @root, bus: @bus,
+              law:, agent: @agent, scanner: @scanner, root: @root, bus: @bus,
               learnings: @learnings, committer: @committer
             )
             loop.injected_preamble = [
@@ -103,7 +103,7 @@ module Master
             return 0 if Time.now >= deadline || findings.empty? || image.nil?
 
             loop = LawLoop.new(
-              rule: VisualPass::Rule.new(VisualPass::RULE_ID),
+              law: VisualPass::Law.new(VisualPass::LAW_ID),
               agent: @agent, scanner: @scanner, root: @root, bus: @bus,
               learnings: @learnings, committer: @committer
             )
