@@ -224,7 +224,7 @@ class GitOperationsTest < Minitest::Test
     @git.push
 
     assert_equal [0, 0], @git.ahead_behind
-    assert_includes sh("git", "log", "--oneline", chdir: @remote), "pushes"
+    assert_includes sh("git", "log", "--oneline", chdir: @remote), "Pushes"
   end
 
   def push_from_another_clone(file, content)
