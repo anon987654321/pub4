@@ -26,17 +26,18 @@ class WriteGuardTest < Minitest::Test
 
     Master::Fix::Scanner.stub(:build, ->(**) {
       built += 1
-      Struct.new(:rules).new([])
+      Struct.new(:laws).new([])
     }) do
       guard_class.reset_default!
 
-      ::Law::Contract.stub(:digest, "digest-one") do
-        first = guard_class.default
-        ::Law::Contract.stub(:digest, "digest-two") do
-          second = guard_class.default
-          refute_same first, second
-        end
-      end
+      # One stub after the other: Minitest keeps a single alias per method, so a
+      # stub nested inside another on the same method removes the alias the outer
+      # one restores from, and Law::Contract.digest stays undefined afterwards.
+      first = nil
+      second = nil
+      ::Law::Contract.stub(:digest, "digest-one") { first = guard_class.default }
+      ::Law::Contract.stub(:digest, "digest-two") { second = guard_class.default }
+      refute_same first, second
     end
 
     assert_equal 2, built
@@ -80,15 +81,15 @@ class WriteGuardTest < Minitest::Test
     assert_match(/forbidden file/, verdict.reason)
   end
 
-  # Semantic rules are 126 of the 225 and cost an LLM call per file. A per-write
+  # Semantic laws are 126 of the 225 and cost an LLM call per file. A per-write
   # gate would pay that twice for every write, so the guard holds the mechanical
   # half and the per-turn pass holds the rest.
-  def test_semantic_rules_are_not_on_the_write_path
+  def test_semantic_laws_are_not_on_the_write_path
     agent_backed = Master::Fix::Scanner.build(root: Master::ROOT)
-                                                     .rules.select { |rule| rule.respond_to?(:set_agent) }
-    refute_empty agent_backed, "the scanner should carry semantic rules for the scan path"
+                                       .laws.select { |law| law.respond_to?(:set_agent) }
+    refute_empty agent_backed, "the scanner should carry semantic laws for the scan path"
 
-    guarded = Master::Fix::WriteGuard.new(rules: agent_backed)
+    guarded = Master::Fix::WriteGuard.new(laws: agent_backed)
 
     assert_empty guarded.verdict(path:, content: DIRTY).introduced
   end
