@@ -46,7 +46,7 @@ module Master
           "wake" => command(:dispatch_wake, root),
           "doctor" => command(:dispatch_doctor, root),
           "voice" => Command.new { |ctx| dispatch_voice(ctx:) },
-          "rules" => command(:dispatch_rules, root),
+          "laws" => command(:dispatch_laws, root),
           "snapshot" => command(:dispatch_snapshot, d[:root]),
           "why" => command(:dispatch_why, d[:agent], d[:root], d[:memory]),
           "wishlist" => command(:dispatch_wishlist, d[:root]),
@@ -183,7 +183,7 @@ module Master
 
       def dispatch_law(ctx: nil)
         require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
-        ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.rules.empty?
+        ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.definitions.empty?
 
         arg = arg_for(ctx)
         case arg
