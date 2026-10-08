@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-require "review/scan/rule_dsl"
+require "review/scan/law_dsl"
 
 # `laws.yml` describes this detector as a "single-method heuristic, same-file
 # only" with a "genuine false-positive risk on generic-but-unrelated
@@ -10,7 +10,7 @@ require "review/scan/rule_dsl"
 # receiver dominates, there are five or more receiver calls in total, and the
 # method touches its own state less often than it touches the neighbour.
 class TestFeatureEnvyRule < Minitest::Test
-  def rule = Master::Review::Scan::Rules::FeatureEnvyRule.new
+  def rule = Master::Review::Scan::Laws::FeatureEnvyLaw.new
 
   def flags(source, path: "lib/thing.rb")
     rule.check(source, path:).map(&:message)
