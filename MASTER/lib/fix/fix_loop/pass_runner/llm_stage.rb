@@ -35,10 +35,10 @@ module Master
             findings.each do |finding|
               break if Time.now >= deadline
 
-              rule = Wishlist::Rule.new(Wishlist::RULE_ID)
+              law = Wishlist::Law.new(Wishlist::LAW_ID)
               proposal = finding[:wishlist_proposal] || {}
               loop = LawLoop.new(
-                rule:, agent: @agent, scanner: @scanner, root: @root, bus: @bus,
+                law:, agent: @agent, scanner: @scanner, root: @root, bus: @bus,
                 learnings: @learnings, committer: @committer, stage_commit: true,
                 visual_custody: @visual_pass&.custody,
               )
@@ -176,7 +176,7 @@ module Master
                               learnings: @learnings, committer: @committer,
                               visual_custody: @visual_pass&.custody)
             rl.injected_preamble = [@preamble, council_preamble(council)].compact.join("\n\n")
-            @bus&.publish("fix_loop:tier2_quality_route", pass:, law: law.id) if @law_order.tier2?(rule.id)
+            @bus&.publish("fix_loop:tier2_quality_route", pass:, law: law.id) if @law_order.tier2?(law.id)
             normalized = Array(external_violations).map do |violation|
               file = violation[:file].to_s
               absolute = file.start_with?("/") ? file : File.expand_path(file, @root)
