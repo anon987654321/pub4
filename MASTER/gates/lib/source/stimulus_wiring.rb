@@ -95,7 +95,7 @@ module Deploy
       @rails_root = root
       @unmounted_allowed = unmounted_allowed
       @shadowed_allowed = shadowed_allowed
-      @boot_texts = BOOT_FILES.transform_values { |f| File.read(File.join(@rails_root, "shared/frontend", f)) }
+      @boot_texts = BOOT_FILES.transform_values { |f| File.read(File.join(@rails_root, "__shared/frontend", f)) }
     end
 
     def run
@@ -278,12 +278,12 @@ module Deploy
     def views(app)
       Dir.glob(File.join(@rails_root, app, "app/views/**/*.erb")) +
         Dir.glob(File.join(@rails_root, app, "engines/*/app/views/**/*.erb")) +
-        Dir.glob(File.join(@rails_root, "shared/app/views/**/*.erb"))
+        Dir.glob(File.join(@rails_root, "__shared/app/views/**/*.erb"))
     end
 
     def helper_or_component?(path)
       normalized = path.delete_prefix("#{@rails_root}/")
-      normalized.start_with?("shared/app/helpers/", "shared/app/components/") ||
+      normalized.start_with?("__shared/app/helpers/", "__shared/app/components/") ||
         normalized.start_with?("#{normalized.split("/").first}/app/helpers/") ||
         normalized.match?(%r{\A(?:amber|brgen|bsdports)/engines/[^/]+/app/helpers/})
     end
@@ -296,7 +296,7 @@ module Deploy
     # call the method that emits it. When the enclosing method cannot be named,
     # the identifier binds every app, as before.
     def shared_helper_unused_by?(app, path, text, id)
-      return false unless path.start_with?(File.join(@rails_root, "shared/app/helpers/"))
+      return false unless path.start_with?(File.join(@rails_root, "__shared/app/helpers/"))
 
       at = text.index(/(?:controller:\s*|data-controller=)"[^"]*\b#{Regexp.escape(id)}\b/)
       method = at && text[0, at].scan(/^\s*def\s+(?:self\.)?([a-z_]\w*[?!]?)/).flatten.last
@@ -459,7 +459,7 @@ module Deploy
       [
         File.join(@rails_root, app, "app/javascript/controllers", file),
         *Dir.glob(File.join(@rails_root, app, "engines/*/app/javascript/controllers", file)),
-        File.join(@rails_root, "shared/frontend", file),
+        File.join(@rails_root, "__shared/frontend", file),
       ].find { |path| File.file?(path) }
     end
 
