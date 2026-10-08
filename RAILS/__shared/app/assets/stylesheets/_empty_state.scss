@@ -95,7 +95,13 @@ body[data-theme="wscons"] .empty-state,
   background: transparent;
 }
 
-/* Search skeleton (live_search loading) */
+/* Search loading: a short visible status names the wait; skeletons preserve layout. */
+.search-loading-message {
+  margin-inline: var(--space-4);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+
 .search-skeleton {
   display: grid;
   gap: var(--space-3);
