@@ -74,7 +74,7 @@ module Master
     end
 
     # Scanners call this with whatever directory they are scanning
-    # (RuleRegistryAudit, SelfTest, YamlBridgeRules, Fix::Priority all pass
+    # (LawRegistryAudit, SelfTest, YamlBridgeRules, Fix::Priority all pass
     # root: @root). For any root but our own, "this project has no laws.yml" is
     # the answer, not a fault — so absence is quiet there and stays loud for
     # ROOT, where a missing constitution is a real failure. Before this, every
