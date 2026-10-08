@@ -153,6 +153,7 @@ module Deploy
       check_theme(host, surface[:theme], data)
       check_chat_corner(host, data)
       check_top_band_alignment(host, data)
+      check_optical_band_center(host, data)
       check_band_overlap(host, data)
       check_mark_label(host, data)
     rescue StandardError => e
@@ -249,6 +250,31 @@ module Deploy
         "Everything in the top band centres on the nav bar — take `top` from " \
         "--chrome-inset-block, which follows the bar, not --chrome-inset, which is a " \
         "distance from the screen edge.",
+      )
+    end
+
+    # Box-centering is a useful scaffold, but text has its own rendered
+    # bounds. A padded label can sit mathematically central while its visible
+    # glyph run is visibly high or low. The browser's Range bounds give us a
+    # deterministic paint proxy without pretending it is a font-shape model.
+    OPTICAL_CENTER_TOLERANCE_PX = 2.5
+
+    def check_optical_band_center(host, data)
+      present = (data["band"] || {}).reject { |_, box| box.nil? }
+      offenders = present.filter_map do |selector, box|
+        text = box["text_rect"]
+        next unless text
+
+        delta = text["cy"].to_f - box["cy"].to_f
+        next unless delta.abs > OPTICAL_CENTER_TOLERANCE_PX
+
+        "#{selector} text center #{text["cy"]} vs box center #{box["cy"]} (#{delta.round(2)}px)"
+      end
+      return if offenders.empty?
+
+      @result.fail(
+        "#{host} top chrome has #{offenders.size} optically off-centre text run(s) — "         "#{offenders.first(4).join('; ')}. Correct the rendered ink position, not merely the box.",
+        severity: :soft
       )
     end
 
@@ -368,8 +394,30 @@ module Deploy
         for (const sel of %<band>s) {
           const t = document.querySelector(sel);
           const tr = t?.getBoundingClientRect();
+          let textRect = null;
+          if (t && tr && tr.width > 0 && tr.height > 0) {
+            const range = document.createRange();
+            try {
+              range.selectNodeContents(t);
+              const rects = Array.from(range.getClientRects()).filter(r => r.width > 0.5 && r.height > 0.5);
+              if (rects.length) {
+                const left = Math.min(...rects.map(r => r.left));
+                const top = Math.min(...rects.map(r => r.top));
+                const right = Math.max(...rects.map(r => r.right));
+                const bottom = Math.max(...rects.map(r => r.bottom));
+                textRect = {
+                  x: Math.round(left * 100) / 100,
+                  y: Math.round(top * 100) / 100,
+                  w: Math.round((right - left) * 100) / 100,
+                  h: Math.round((bottom - top) * 100) / 100,
+                  cx: Math.round((left + right) * 50) / 100,
+                  cy: Math.round((top + bottom) * 50) / 100
+                };
+              }
+            } catch (_) {}
+          }
           band[sel] = (tr && tr.width > 0 && tr.height > 0)
-            ? { cy: Math.round(tr.top + tr.height / 2), l: Math.round(tr.left), r: Math.round(tr.right) }
+            ? { cy: Math.round(tr.top + tr.height / 2), l: Math.round(tr.left), r: Math.round(tr.right), text_rect: textRect }
             : null;
         }
         const mark = document.querySelector(".brgen-logo-mark .brand-text")?.textContent.trim() ?? "";
