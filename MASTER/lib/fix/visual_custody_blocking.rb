@@ -23,13 +23,13 @@ module Master
 
       # Is this rule's repair blocked on operator decision?
       def fix_blocking_law?(law_id)
-        OPERATOR_OWNED_LAW_IDS.include?(rule_id.to_s)
+        OPERATOR_OWNED_LAW_IDS.include?(law_id.to_s)
       end
 
       # User-facing reason why the repair is blocked.
       def blocking_reason(law_id)
         if fix_blocking_law?(law_id)
-          "rendered_value_decision_required — #{rule_id} modifies operator-owned visual or design values"
+          "rendered_value_decision_required — #{law_id} modifies operator-owned visual or design values"
         else
           nil
         end
@@ -46,7 +46,7 @@ module Master
           "severity" => severity.to_s,
           "reason" => "This law modifies rendered values owned by the operator",
           "decision_needed" => "operator_approval",
-          "guidance" => "Run '/why #{rule_id}' to review the law; then decide whether to approve or defer"
+          "guidance" => "Run '/why #{law_id}' to review the law; then decide whether to approve or defer"
         }
       end
     end
