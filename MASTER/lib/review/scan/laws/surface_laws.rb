@@ -16,7 +16,7 @@ module Master
 
         module_function
 
-        def ::Master::Review::Scan::Laws.ui_path?(path)
+        def ui_path?(path)
           path.to_s.match?(UI_PATH) || path.to_s.include?("views") || path.to_s.end_with?(".erb", ".html", ".scss", ".css")
         end
 
@@ -27,7 +27,7 @@ module Master
         end
 
         def thresholds
-          ::Master::Design::Thresholds
+          Master::Design::Thresholds
         end
 
         # STIMULUS_CONTROLLER_SIZE's numbers are declared, not invented here:
@@ -39,7 +39,7 @@ module Master
         # nothing.
         def stimulus_limits
           @stimulus_limits ||= begin
-            entry = ::Master.law_entries(root: ::Master::ROOT)
+            entry = Master.law_entries(root: Master::ROOT)
                           .find { |r| r["id"].to_s.upcase == "STIMULUS_CONTROLLER_SIZE" }
             config = entry && entry["detect_structural"]
             config.is_a?(Hash) ? config : {}
@@ -208,7 +208,7 @@ module Master
           next [] unless ::Master::Review::Scan::Laws.ui_path?(path)
 
           min = ::Master::Review::Scan::Laws.thresholds.touch_min_px.to_i
-          button_re = ::Master::Fix::Scan::AstFixer::WebTransforms::TOUCH_SELECTOR
+          button_re = Master::Fix::Scan::AstFixer::WebTransforms::TOUCH_SELECTOR
           findings = []
           current_selector = ""
           src.each_line.with_index(1) do |line, num|
@@ -225,7 +225,7 @@ module Master
             next unless "#{current_selector}\n#{line}".match?(button_re) ||
                         (line.match?(/min-height|height/) && path.to_s.include?("button"))
 
-            line.scan(::Master::Fix::Scan::AstFixer::WebTransforms::TOUCH_DIMENSION) do |raw|
+            line.scan(Master::Fix::Scan::AstFixer::WebTransforms::TOUCH_DIMENSION) do |raw|
               px = raw[0].to_i
               next if px >= min || px.zero?
 
@@ -563,11 +563,11 @@ module Master
           severity: :warning, tags: %i[OPS], applies_to: %i[ruby], autofix: false,
           description: "carrying capacity — avoid full-repo scan/fix in hot paths",
           example_path: "/repo/lib/example.rb",
-          fires: "scanner.scan_dir(::Master::ROOT)\n",
+          fires: "scanner.scan_dir(Master::ROOT)\n",
           does_not_fire: "scanner.scan_dir(target_dir)\n" do |src, path:|
           next [] unless path.to_s.include?("lib/")
 
-          scan_lines(src, /scan_dir\([^)]*ROOT|fix_loop\.run\(\s*(@root|root|::Master::ROOT)/,
+          scan_lines(src, /scan_dir\([^)]*ROOT|fix_loop\.run\(\s*(@root|root|Master::ROOT)/,
             message: "full-root scan/fix — scope to path; respect host carrying capacity")
         end
 
