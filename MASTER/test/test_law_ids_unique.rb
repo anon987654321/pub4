@@ -5,7 +5,7 @@ require_relative "test_helper"
 # SINGULARITY, applied to the scanner itself. On 2026-08-01 the same rule id
 # (MAGIC_COLOR) was registered by two classes — js_rules.rb and universal_rules.rb —
 # and every matching line was counted twice. Nothing caught it because the one place
-# that enumerates the registry, RuleRegistryAudit#build_registry_ids, folds ids into
+# that enumerates the registry, LawRegistryAudit#build_registry_ids, folds ids into
 # a Set (`.to_set`) before anyone looks — a duplicate collapses to one and vanishes.
 #
 # The built scanner does NOT dedup: `scanner.rules` holds one instance per registered
@@ -17,7 +17,7 @@ class TestRuleIdsUnique < Minitest::Test
     assert_same Master::Review::Scan::Law, Master::Review::Scan::Rule
     assert_same Master::Review::Scan::LawDSL, Master::Review::Scan::RuleDSL
     assert_same Master::Review::Scan::LawFactory, Master::Review::Scan::RuleFactory
-    assert_same Master::Review::Scan::LawRegistryAudit, Master::Review::Scan::RuleRegistryAudit
+    assert_same Master::Review::Scan::LawRegistryAudit, Master::Review::Scan::LawRegistryAudit
   end
 
   def scanner
@@ -43,7 +43,7 @@ class TestRuleIdsUnique < Minitest::Test
       .map { |klass| Master::Review::Scan::RuleFactory.build(klass, root: Master::ROOT).id.to_s.downcase }
 
     assert_equal built.size, built.uniq.size,
-                 "the scanner registry has a duplicate id that RuleRegistryAudit's " \
+                 "the scanner registry has a duplicate id that LawRegistryAudit's " \
                  ".to_set would silently swallow: " \
                  "#{built.tally.select { |_, n| n > 1 }.keys.join(", ")}"
   end
