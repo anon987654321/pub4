@@ -11,7 +11,7 @@ module Master
     # answer to "what is in force right now". So a report could quote a rule
     # count from data/laws.yml while the scanner held a different registry, and
     # nothing compared them. This is the comparison: commit, constitution, the
-    # three rule populations, providers and capabilities in one hash, over a
+    # three law populations, providers and capabilities in one hash, over a
     # digest of the files that decide behaviour.
     #
     # Deterministic: no timestamps, no host paths. Two boots of the same tree
@@ -113,7 +113,7 @@ module Master
       # correctly. A receipt that reports what is in force must read it the way
       # the runtime does, or it reports a second parse of the same file.
       def constitution(root)
-        soul = Rules.new(root:).soul_data
+        soul = Laws.new(root:).soul_data
         {
           soul_version: soul["version"] || "unreadable",
           persona: soul["persona"],
@@ -133,20 +133,20 @@ module Master
         {
           declared: Master.law_entries(root:).size,
           registry: Review::Scan::Law.registry.size,
-          domain: domain_rule_count(root),
+          domain: domain_law_count(root),
         }
       end
 
       # Loaded here rather than assumed: law/ reaches the registry only when
       # something has required it, so a receipt printed from bin/doctor said
       # "0 in law/" while 122 laws were defined and waiting.
-      def domain_rule_count(root)
+      def domain_law_count(root)
         law_root = executable_law_root(root)
         require File.join(law_root, "law", "law.rb")
         ::Law.load_all(File.join(law_root, "law")) if ::Law.definitions.empty?
         ::Law.definitions.size
       rescue StandardError => e
-        Swallow.log(e, context: "BootReceipt.domain_rule_count", severity: :load_bearing)
+        Swallow.log(e, context: "BootReceipt.domain_law_count", severity: :load_bearing)
         raise "boot receipt: executable law population unavailable: #{e.class}: #{e.message}"
       end
 
