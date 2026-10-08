@@ -8,14 +8,14 @@ module Master
       class SelfScan
         DEFAULT_TARGETS = ["lib"].freeze
 
-        Summary = Data.define(:pairs, :rule_count, :violation_count, :targets, :autofixes) do
+        Summary = Data.define(:pairs, :law_count, :violation_count, :targets, :autofixes) do
           def line
             scanned = targets.map { |target| target.end_with?("/") ? target : "#{target}/" }.join("+")
-            "judge: #{scanned} #{rule_count} rules, #{violation_count} violations"
+            "judge: #{scanned} #{law_count} rules, #{violation_count} violations"
           end
         end
 
-        def initialize(scanner:, root:, event_bus: nil, targets: DEFAULT_TARGETS, rules: nil)
+        def initialize(scanner:, root:, event_bus: nil, targets: DEFAULT_TARGETS, laws: nil)
           @scanner = scanner
           @root = root
           @bus = event_bus
@@ -30,7 +30,7 @@ module Master
           pairs.concat(singularity_pairs)
           summary = Summary.new(
             pairs:,
-            rule_count:,
+            law_count:,
             violation_count: count_violations(pairs),
             targets: @targets,
             autofixes:,
@@ -46,7 +46,7 @@ module Master
 
         def scan_target(target, stream:)
           path = File.join(@root, target)
-          result = @scanner.scan_dir(path, depth: :deep, stream:, rules: @rules)
+          result = @scanner.scan_dir(path, depth: :deep, stream:, laws: @rules)
           wrapped = Result.wrap(result)
           raise "self-scan target failed: #{target}: #{wrapped.message}" unless wrapped.ok?
 
@@ -64,13 +64,13 @@ module Master
           return [] unless check&.findings&.any?
 
           findings = check.findings.map do |finding|
-            Finding.build(rule: "SINGULARITY", message: finding[:message], line: finding[:line],
+            Finding.build(law: "SINGULARITY", message: finding[:message], line: finding[:line],
               severity: :error, tags: %i[SINGULARITY])
           end
           [[File.join(@root, "data"), Result.ok(findings)]]
         end
 
-        def rule_count
+        def law_count
           return @rules.size if @rules
           return @scanner.laws.size if @scanner.respond_to?(:rules)
 
@@ -88,11 +88,11 @@ module Master
         end
 
         def publish(summary)
-          @bus&.publish("self_scan:complete", rules: summary.rule_count,
+          @bus&.publish("self_scan:complete", laws: summary.law_count,
             violations: summary.violation_count, autofixes: summary.autofixes)
           return if summary.violation_count.zero?
 
-          @bus&.publish("self_violation", rules: summary.rule_count, violations: summary.violation_count)
+          @bus&.publish("self_violation", laws: summary.law_count, violations: summary.violation_count)
         end
       end
     end
