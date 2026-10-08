@@ -54,16 +54,16 @@ module Operator
     CORPUS = [
       "MASTER/lib/**/*.rb",
       "MASTER/law/*.rb",
-      "RAILS/shared/app/**/*.rb",
+      "RAILS/__shared/app/**/*.rb",
       # Recursive, and both stylesheet homes. The non-recursive `stylesheets/*`
       # reached the partials at that one level and nothing below it, which is
       # why six css laws — CLAMP_TYPOGRAPHY, FIXED_HEIGHT, LOGICAL_PROPERTIES,
       # MEASURE_OPTIMUM, NO_IMPORT_SCSS, NO_LONG_TRANSITION — reported firing on
       # nothing. A law judged against no file of its own language is untested,
       # not clean.
-      "RAILS/shared/app/assets/stylesheets/**/*.scss",
-      "RAILS/shared/frontend/**/*.scss",
-      "RAILS/shared/frontend/**/*.js",
+      "RAILS/__shared/app/assets/stylesheets/**/*.scss",
+      "RAILS/__shared/frontend/**/*.scss",
+      "RAILS/__shared/frontend/**/*.js",
       # The face and the chat client — the largest hand-written JavaScript this
       # repo owns, and the subject of two laws (FACE_POINT_IS_ONE_PIXEL,
       # NO_WEBGL_GLOW_PASS) written for these files and no others. The corpus
