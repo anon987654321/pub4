@@ -10,10 +10,6 @@ import DraftStore from "pub4/draft_store"
 import MediaPicker from "pub4/media_picker"
 import FeedCompose from "pub4/feed_compose"
 import VisualSurface from "pub4/visual_surface"
-
-// @stimulus-components packages, matching stimulus_boot.js's own table
-// convention — see its COMPONENT_REGISTRATIONS for why these stay separate
-// from the plain application.register() calls below.
 export function bootSocialStimulus(application) {
   application.register("media-exclusive", MediaExclusive)
   application.register("browser-fingerprint", BrowserFingerprint)

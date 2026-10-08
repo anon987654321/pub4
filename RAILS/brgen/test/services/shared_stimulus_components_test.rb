@@ -24,37 +24,9 @@ class SharedStimulusComponentsTest < Minitest::Test
 
   def test_shared_stimulus_components_are_registered
     source = registry_source
-    %w[
-      Clipboard
-      Dropdown
-      Hotkey
-      Notification
-      Reveal
-      Sortable
-      toast
-      PasswordVisibility
-      RailsNestedForm
-      CharacterCounter
-      CheckboxSelectAll
-      ReadMore
-    ].each do |component|
-      assert_includes source, component
-    end
-
-    # timeago read data-timeago-datetime-value, which no view ever set, so its
-    # only possible effect was to replace localised Norwegian with date-fns
-    # English. carousel's one element left amber's wardrobe showcase, which is a
-    # CSS marquee, and it pulled swiper from cdn.jsdelivr.net. Matched on the
-    # registration form, not the bare word, so prose naming either passes.
-    %w[timeago carousel].each do |name|
-      refute_match(/\["#{name}",/, source, "#{name} has no consumer in any app")
-    end
-
-    # Dialog, ScrollTo, Sound and SpeechRecognition were imported, registered,
-    # pinned and vendored with no data-controller for them in any of the four
-    # apps. Kept out.
-    %w[Dialog ScrollTo Sound SpeechRecognition].each do |dead|
-      refute_includes source, dead, "#{dead} has no consumer in any app"
+    require_relative "../../../../MASTER/gates/lib/source/stimulus_components"
+    Deploy::StimulusComponentsGate::REQUIRED_CONTROLLERS.each do |component|
+      assert_match(/\[ "#{Regexp.escape(component)}",/, source, "missing registration for #{component}")
     end
   end
 

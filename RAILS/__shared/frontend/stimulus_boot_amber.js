@@ -5,10 +5,6 @@
 import OutboundClick from "pub4/outbound_click"
 import LuxuryProduct from "pub4/luxury_product"
 import EdgeSwiper from "pub4/edge_swiper"
-
-// @stimulus-components packages, matching stimulus_boot.js's own table
-// convention — see its COMPONENT_REGISTRATIONS for why these stay separate
-// from the plain application.register() calls below.
 export function bootAmberStimulus(application) {
   application.register("outbound-click", OutboundClick)
   application.register("luxury-product", LuxuryProduct)

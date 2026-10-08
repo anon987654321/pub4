@@ -75,7 +75,12 @@ pin "pwa/offline_store", to: "pwa_offline_store.js"
 pin "lightgallery", to: "lightgallery.js"
 pin "idb-keyval", to: "idb-keyval.js"
 
+pin "stimulus-glow", to: "@stimulus-components--glow.js"
+pin "stimulus-places-autocomplete", to: "stimulus-places-autocomplete.js"
+
 %w[
-  animated-number auto-submit character-counter checkbox-select-all clipboard
-  dropdown lightbox notification read-more reveal sortable password-visibility popover rails-nested-form
+  animated-number auto-submit carousel character-counter chartjs checkbox-select-all clipboard
+  color-picker confirmation content-loader dialog dropdown hotkey lightbox notification
+  password-visibility popover prefetch rails-nested-form read-more remote-rails reveal
+  scroll-progress scroll-reveal scroll-to sortable sound speech-recognition textarea-autogrow timeago
 ].each { |name| sc_pin.call(name) }

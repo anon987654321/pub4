@@ -9,10 +9,6 @@ import ConversationLog from "pub4/conversation_log"
 import OptimisticSend from "pub4/optimistic_send"
 import Presence from "pub4/presence"
 import PostProgressive from "pub4/post_progressive"
-
-// @stimulus-components packages, matching stimulus_boot.js's own table
-// convention — see its COMPONENT_REGISTRATIONS for why these stay separate
-// from the plain application.register() calls below.
 export function bootBrgenStimulus(application) {
   application.register("brgen-shell", BrgenShell)
   application.register("dismiss", Dismiss)

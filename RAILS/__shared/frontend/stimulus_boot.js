@@ -46,7 +46,6 @@ import TextareaAutogrow from "@stimulus-components/textarea-autogrow"
 import SpeechRecognition from "@stimulus-components/speech-recognition"
 import Sound from "@stimulus-components/sound"
 import ScrollTo from "@stimulus-components/scroll-to"
-import ScrollReveal from "@stimulus-components/scroll-reveal"
 import ScrollProgress from "@stimulus-components/scroll-progress"
 import RemoteRails from "@stimulus-components/remote-rails"
 import Prefetch from "@stimulus-components/prefetch"
@@ -110,7 +109,6 @@ export function bootPub4Stimulus(application) {
   application.register("link-converter", LinkConverter)
   application.register("theme-toggle", ThemeToggle)
   application.register("infinite-scroll", InfiniteScroll)
-  application.register("scroll-reveal", ScrollReveal)
   application.register("nav-autohide", NavAutohide)
   application.register("action", ActionController)
   application.register("tiptap-editor", TiptapEditor)

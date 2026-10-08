@@ -33,15 +33,60 @@ module Deploy
     REQUIRED_PACKAGES = %w[password-visibility rails-nested-form].freeze
 
     # Current upstream catalogue, verified against stimulus-components.com.
-    # This is an inventory for /fix, not a requirement to install everything.
     UPSTREAM_COMPONENTS = %w[
-      animated-number auto-submit carousel character-counter chartjs
-      checkbox-select-all clipboard color-picker confirmation content-loader
-      dialog dropdown glow hotkey lightbox notification password-visibility
-      places-autocomplete popover prefetch rails-nested-form read-more
-      remote-rails reveal-controller scroll-progress scroll-reveal scroll-to
-      sortable sound speech-recognition textarea-autogrow timeago
+      animated-number auto-submit carousel character-counter chartjs checkbox-select-all clipboard
+      color-picker confirmation content-loader dialog dropdown glow hotkey lightbox notification
+      password-visibility places-autocomplete popover prefetch rails-nested-form read-more remote-rails
+      reveal-controller scroll-progress scroll-reveal scroll-to sortable sound speech-recognition
+      textarea-autogrow timeago
     ].freeze
+
+    REQUIRED_CONTROLLERS = %w[
+      animated-number auto-submit carousel chartjs character-counter checkbox-select-all clipboard
+      color-picker confirmation content-loader dialog dropdown glow hotkey lightbox notification
+      password-visibility places-autocomplete popover prefetch nested-form read-more remote-rails reveal
+      scroll-progress scroll-reveal scroll-to sortable sound speech-recognition textarea-autogrow timeago
+    ].freeze
+
+    COMPONENT_PACKAGES = {
+      "animated-number" => "@stimulus-components/animated-number",
+      "auto-submit" => "@stimulus-components/auto-submit",
+      "carousel" => "@stimulus-components/carousel",
+      "character-counter" => "@stimulus-components/character-counter",
+      "chartjs" => "@stimulus-components/chartjs",
+      "checkbox-select-all" => "@stimulus-components/checkbox-select-all",
+      "clipboard" => "@stimulus-components/clipboard",
+      "color-picker" => "@stimulus-components/color-picker",
+      "confirmation" => "@stimulus-components/confirmation",
+      "content-loader" => "@stimulus-components/content-loader",
+      "dialog" => "@stimulus-components/dialog",
+      "dropdown" => "@stimulus-components/dropdown",
+      "glow" => "stimulus-glow",
+      "hotkey" => "@stimulus-components/hotkey",
+      "lightbox" => "@stimulus-components/lightbox",
+      "notification" => "@stimulus-components/notification",
+      "password-visibility" => "@stimulus-components/password-visibility",
+      "places-autocomplete" => "stimulus-places-autocomplete",
+      "popover" => "@stimulus-components/popover",
+      "prefetch" => "@stimulus-components/prefetch",
+      "rails-nested-form" => "@stimulus-components/rails-nested-form",
+      "read-more" => "@stimulus-components/read-more",
+      "remote-rails" => "@stimulus-components/remote-rails",
+      "reveal-controller" => "@stimulus-components/reveal",
+      "scroll-progress" => "@stimulus-components/scroll-progress",
+      "scroll-reveal" => "@stimulus-components/scroll-reveal",
+      "scroll-to" => "@stimulus-components/scroll-to",
+      "sortable" => "@stimulus-components/sortable",
+      "sound" => "@stimulus-components/sound",
+      "speech-recognition" => "@stimulus-components/speech-recognition",
+      "textarea-autogrow" => "@stimulus-components/textarea-autogrow",
+      "timeago" => "@stimulus-components/timeago"
+    }.freeze
+
+    VENDOR_FILES = {
+      "glow" => "@stimulus-components--glow.js",
+      "places-autocomplete" => "stimulus-places-autocomplete.js"
+    }.freeze
 
     COMPONENT_OPPORTUNITIES = {
       "clipboard" => /navigator\.clipboard|writeText\(/,
@@ -119,19 +164,17 @@ module Deploy
 
       if File.file?(BASELINE)
         baseline = File.read(BASELINE)
-        result.checked!(1 + (REQUIRED_PACKAGES.size * 2))
-        # Vendored means every @stimulus-components pin resolves to a file in
-        # __shared/vendor/javascript, not that the baseline mentions the path.
+        result.checked!(COMPONENT_PACKAGES.size + 1)
         pinned = pinned_components(baseline)
-        result.fail("importmap pins no @stimulus-components at all") if pinned.empty?
-        pinned.reject { |pkg| File.file?(File.join(VENDOR, "@stimulus-components--#{pkg}.js")) }.each do |pkg|
-          result.fail("importmap pins @stimulus-components/#{pkg} with no vendored file in __shared/vendor/javascript")
+        missing = COMPONENT_PACKAGES.keys.reject do |name|
+          package = COMPONENT_PACKAGES.fetch(name)
+          package.start_with?("@stimulus-components/") ? pinned.include?(name) : baseline.include?(%(pin "#{package}"))
         end
-        REQUIRED_PACKAGES.each do |pkg|
-          result.fail("importmap missing #{pkg}") unless baseline.include?(pkg)
-          # A pin resolves at boot, so a pinned name with no file on disk fails
-          # in the browser and nowhere else.
-          result.fail("vendored package missing on disk: #{pkg}") unless File.file?(File.join(VENDOR, "@stimulus-components--#{pkg}.js"))
+        missing.each { |name| result.fail("importmap missing #{COMPONENT_PACKAGES.fetch(name)}") }
+
+        COMPONENT_PACKAGES.each_key do |name|
+          file = VENDOR_FILES.fetch(name, "@stimulus-components--#{name}.js")
+          result.fail("vendored package missing on disk: #{name}") unless File.file?(File.join(VENDOR, file))
         end
       else
         result.fail("missing shared importmap baseline")
