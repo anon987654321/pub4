@@ -26,7 +26,7 @@ end
 # files batch-deleted before a conversion step) that did not survive the
 # master.yml -> MASTER migration. Consequence class: unrecoverable data loss.
 Law.define(:NEVER_BATCH_DELETE) do
-  principle_scope :universal
+  law_scope :universal
   source "master.yml v66 file_deletion_protocol — never batch-delete files"
   severity :error
   # zsh, not shell: FILE_LANGUAGE_MAP emits "zsh" for .sh/.zsh/.bash and no file
