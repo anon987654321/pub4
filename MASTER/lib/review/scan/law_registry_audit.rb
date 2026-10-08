@@ -53,7 +53,7 @@ module Master
             semantic_only: c[:semantic_only],
             structural_unwired: c[:structural_unwired],
             dep_graph_gaps: ungraphed_law_ids(registry),
-            mechanical: mechanical(yaml_entries, registry:).map { |rule| law["id"] },
+            mechanical: mechanical(yaml_entries, registry:).map { |law| law["id"] },
             source_drift: source_drift(yaml_entries, registry),
           )
         end
@@ -65,7 +65,7 @@ module Master
         # `folded_into` names the law that reports for this one: the id survives
         # so principle_map can trace it, and the detector exists once, elsewhere.
         def source_drift(yaml_entries, registry)
-          yaml_ids = yaml_entries.map { |rule| key_of(rule) }.to_set
+          yaml_ids = yaml_entries.map { |law| key_of(law) }.to_set
           laws = law_ids
           registry_ids = registry.map(&:to_s).map(&:downcase).to_set
 
@@ -86,8 +86,8 @@ module Master
         end
 
         def mechanical(entries, registry: build_registry_ids)
-          entries.select do |rule|
-            rule["detect_lexical"] || rule["detect_structural"] ||
+          entries.select do |law|
+            law["detect_lexical"] || law["detect_structural"] ||
               detected?(registry, law["id"]) || detected?(registry, law["folded_into"])
           end
         end
@@ -96,7 +96,7 @@ module Master
         # that defines one is in the same process. Measured: law_deps.ungraphed
         # read 133 on its own and 135 under `rake test`, so a ratchet on it would
         # have been measuring the suite rather than the corpus.
-        # TestScanRuleFalsePositives::RaisingRule is the shape.
+        # TestScanLawFalsePositives::RaisingLaw is the shape.
         #
         # A class whose source cannot be located counts as shipped: over-
         # reporting a law is safe, and silently dropping one is how a census
@@ -154,7 +154,7 @@ module Master
         def law_ids
           require File.join(@root, "law", "law") unless defined?(::Law)
           ::Law.load_all(File.join(@root, "law")) if ::Law.definitions.empty?
-          ::Law.rules.keys.map { |id| id.to_s.downcase }.to_set
+          ::Law.definitions.keys.map { |id| id.to_s.downcase }.to_set
         rescue StandardError => e
           raise "rule registry law census failed: #{e.class}: #{e.message}"
         end
@@ -189,13 +189,13 @@ module Master
             .select { |klass| shipped?(klass) }
             .reject { |klass| LawFactory.bridge_class?(klass) }
             .map { |klass| LawFactory.build(klass, root: @root) }
-            .map do |rule|
+             .map do |law|
               {
-                "id" => rule.id.to_s,
-                "severity" => rule.severity.to_s,
-                "mode" => rule.mode.to_s,
-                "languages" => Array(rule.languages).map(&:to_s),
-                "autofix" => rule.autofix.to_s,
+                "id" => law.id.to_s,
+                "severity" => law.severity.to_s,
+                "mode" => law.mode.to_s,
+                "languages" => Array(law.languages).map(&:to_s),
+                "autofix" => law.autofix.to_s,
                 "detect" => true,
                 "semantic" => false,
                 "practice" => false
@@ -216,29 +216,29 @@ module Master
         end
 
         def classify_yaml_entries(yaml_entries, registry)
-          lexical_wired, lexical_unwired = yaml_entries.select { |r| law["detect_lexical"] }
-                                                       .partition { |r| registry.include?(key_of(law)) }
+          lexical_wired, lexical_unwired = yaml_entries.select { |law| law["detect_lexical"] }
+                                                       .partition { |law| registry.include?(key_of(law)) }
           semantic_laws = executable_semantic_ids
-          semantic_only = yaml_entries.select do |r|
+          semantic_only = yaml_entries.select do |law|
             semantic_laws.include?(key_of(law)) &&
               !law["detect_lexical"] &&
               !law["detect_structural"] &&
               !law_detector?(law["id"])
           end
-          structural_unwired = yaml_entries.select { |r| law["detect_structural"] }
-                                           .reject { |r| registry.include?(key_of(law)) }
+          structural_unwired = yaml_entries.select { |law| law["detect_structural"] }
+                                           .reject { |law| registry.include?(key_of(law)) }
 
           {
-            yaml_ids: yaml_entries.map { |r| key_of(law) },
-            kernel: yaml_entries.select { |r| law["tier"] == "kernel" }.map { |r| key_of(law) },
+            yaml_ids: yaml_entries.map { |law| key_of(law) },
+            kernel: yaml_entries.select { |law| law["tier"] == "kernel" }.map { |law| key_of(law) },
             lexical_wired: ids_of(lexical_wired), lexical_unwired: ids_of(lexical_unwired),
             semantic_only: ids_of(semantic_only), structural_unwired: ids_of(structural_unwired)
           }
         end
 
         # The registry is keyed by downcased id; the report keeps the id as declared.
-        def key_of(rule) = law["id"].to_s.downcase
-        def ids_of(rules) = rules.map { |r| law["id"] }
+        def key_of(law) = law["id"].to_s.downcase
+        def ids_of(laws) = laws.map { |law| law["id"] }
       end
 
           end
