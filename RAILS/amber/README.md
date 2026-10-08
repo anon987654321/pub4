@@ -6,6 +6,13 @@ keeps a style timeline, and makes recommendations that can say where they came
 from. Rails 8.2.0.alpha on SQLite behind Falcon, with Hotwire, Active Storage and relayd,
 on port 61352.
 
+## Brand
+
+Amber is a personal wardrobe intelligence brand, not another fashion shop. Its
+emotional territory is warmth, intimacy and taste with evidence: the wardrobe is
+the source of truth, recommendations explain themselves, and the product helps the
+owner wear and understand what already exists before it encourages another purchase.
+
 Deploy it with `doas zsh RAILS/amber/amber.sh` and prove it on
 `http://127.0.0.1:61352/up`. Check the port and not the site: every deploy of any
 app sheds amber, and relayd keeps answering TLS while it is down, so the failure
