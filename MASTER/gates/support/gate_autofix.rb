@@ -2,7 +2,7 @@
 
 require "set"
 require_relative "../../tools/scss"
-require_relative "../../tools/frontend_rule_set"
+require_relative "../../tools/frontend_law_set"
 
 module Deploy
   # Immediate mechanical autofix + remeasure for RAILS gates.
