@@ -76,7 +76,7 @@ module Master
           soul = Master.soul_config
           abs = soul.fetch("absolute", {})
           golden = abs["golden_rule"] || "PRESERVE_THEN_IMPROVE_NEVER_BREAK"
-          lines = ["Golden rule: #{golden}",
+          lines = ["Golden law: #{golden}",
                     "Minimum change that eliminates the violation. Do not touch unrelated code."]
           Master::Ground::Laws.new.laws.each { |key, value| lines << "- #{key}: #{value}" }
           lines.join("\n")
