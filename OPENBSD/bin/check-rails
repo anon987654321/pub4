@@ -114,6 +114,20 @@ deep_gates = [
   ["constitutional scan", "constitutional_scan"],
 ]
 
+# Full coverage and deterministic contract replay are deliberately full-profile
+# checks: they spend the time to prove application behavior, not merely source
+# wiring. The VPS coverage runner omits browser system tests because resource
+# guard parks Chrome there; rendered_suite remains the browser proof.
+if profile == "full" || %w[1 true yes on].include?(ENV["CHECK_RAILS_DEEP"].to_s.strip.downcase)
+  env = LIVE_ENV.merge("CONTRACT_REPLAY" => "1", "COVERAGE_SYSTEM" => (Deploy::Environment.on_vps? ? "0" : "1"))
+  failures << "rails_coverage" unless runner.run(
+    "rails coverage", RUBY, "RAILS/bin/coverage", env: env
+  )
+  failures << "rails_contract_replay" unless runner.run(
+    "rails contract replay", RUBY, "RAILS/test/run_all.rb", env: env
+  )
+end
+
 deep = profile == "full" || %w[1 true yes on].include?(ENV["CHECK_RAILS_DEEP"].to_s.strip.downcase)
 if deep
   # CheckRunner's timeout is per-runner, and the default 240s would kill
