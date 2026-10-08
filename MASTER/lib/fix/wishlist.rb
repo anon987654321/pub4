@@ -28,9 +28,9 @@ module Master
       MAX_ATTEMPTS = 3
       TERMINAL_STATUSES = %w[verified blocked rejected stale superseded].freeze
       AUTO_IMPLEMENTATIONS = %w[next_fix].freeze
-      RULE_ID = "CONVERGENCE_WISHLIST"
+      LAW_ID = "CONVERGENCE_WISHLIST"
 
-      Rule = Data.define(:id) do
+      Law = Data.define(:id) do
         def severity = :warning
       end
 
@@ -333,7 +333,7 @@ module Master
           fingerprint = Master::Review::Scan::SemanticFingerprint.for(File.read(file, encoding: "UTF-8"))
           proof = Array(proposal["proof"]).join(", ")
           {
-            rule: RULE_ID,
+            law: LAW_ID,
             file:,
             line: line.to_i,
             severity: :warning,
