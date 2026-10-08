@@ -24,7 +24,7 @@ module Master
           #{Master::LawVocabulary.prompt}
 
           Load the current MASTER constitution and executable law first. MASTER's
-          canonical normative term is "law": rule, principle, convention,
+          canonical normative term is "law": law, principle, convention,
           standard, guideline, heuristic and similar disciplinary terms resolve
           to the same Law concept. Related terms such as policy or constraint
           retain their technical meaning. This protocol adds procedure; it never overrides soul.yml, executable law,
@@ -32,9 +32,9 @@ module Master
           authority boundaries.
 
           1. LOAD
-          Read the live constitution, rule registry, rule examples, protected
+          Read the live constitution, law registry, law examples, protected
           paths, verification commands, and target contract. Do not rely on a
-          remembered rule count.
+          remembered law count.
 
           2. TRACE
           Before mutation, reread the whole working repository: hash every
@@ -59,7 +59,7 @@ module Master
           legitimately keep nothing.
 
           5. SCAN
-          For every active rule and every applicable file, inspect source
+          For every active law and every applicable file, inspect source
           lexically and structurally. Verify each detector against its worked
           positive and negative examples before trusting its findings.
 
@@ -71,12 +71,12 @@ module Master
 
           7. REPAIR
           Attempt a repair for every actionable finding. Use the smallest
-          evidence-backed strategy that satisfies the rule: mechanical, AST,
+          evidence-backed strategy that satisfies the law: mechanical, AST,
           semantic-model, structural, or rendered-surface repair as applicable.
           "No deterministic fixer exists" is not a terminal state.
 
           8. VERIFY
-          Reread the changed file, re-run the affected rule, and run the
+          Reread the changed file, re-run the affected law, and run the
           narrowest behavioral or surface check that proves the repair. A failed
           verification rejects or rolls back that repair.
 
@@ -127,8 +127,8 @@ module Master
         values = matrix.values
         {
           "measurement_only_detectors" => values.select { |entry| entry["measurement_mode"] }.map { |entry| entry["id"] },
-          "advisory_rules" => values.select { |entry| entry["enforcement"] == "advisory" }.map { |entry| entry["id"] },
-          "semantic_rules_without_deterministic_detector" => values.select { |entry|
+          "advisory_laws" => values.select { |entry| entry["enforcement"] == "advisory" }.map { |entry| entry["id"] },
+          "semantic_laws_without_deterministic_detector" => values.select { |entry|
             entry["semantic"] && !entry["scannable"]
           }.map { |entry| entry["id"] },
           "verification_runtime" => "not_measured",
@@ -202,11 +202,11 @@ module Master
 
       def render(root:, target:, files: nil, skipped: nil, full: false)
         target_path = File.realpath(target)
-        law_rows = laws.sort_by { |rule| rule.id.to_s }.map { |rule| law_entry(rule) }
+        law_rows = laws.sort_by { |law| law.id.to_s }.map { |law| law_entry(law) }
         corpus = inventory(target: target_path, root: root)
         corpus["eligible_sample"] = Array(files).first(24).map { |path| relative(path, root) } if files
         corpus["skipped_by_caller"] = skipped.to_i if skipped
-        entries = laws.sort_by { |rule| rule.id.to_s }.map(&:contract_entry)
+        entries = laws.sort_by { |law| law.id.to_s }.map(&:contract_entry)
         detector_matrix = ProtocolDetectorMatrix.matrix(laws)
         payload = {
           "fix_protocol_version" => VERSION,
@@ -258,8 +258,8 @@ module Master
         "MASTER /fix external-agent context unavailable: #{e.class}: #{e.message}"
       end
 
-      def rule_prompt(rule)
-        entry = law_entry(rule)
+      def law_prompt(law)
+        entry = law_entry(law)
         <<~TEXT.strip
           /fix execution directive for #{entry["id"]}:
           enforcement: #{Array(entry["enforcement"]).join(", ")}
