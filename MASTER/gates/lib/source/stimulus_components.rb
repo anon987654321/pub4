@@ -11,9 +11,9 @@ module Deploy
     # app that doesn't mount them never imports the module. The three files
     # together are this gate's "boot" vocabulary.
     BOOT_FILES = %w[stimulus_boot.js stimulus_boot_social.js stimulus_boot_brgen.js stimulus_boot_amber.js]
-      .map { |f| File.join(RAILS_ROOT, "shared/frontend", f) }.freeze
+      .map { |f| File.join(RAILS_ROOT, "__shared/frontend", f) }.freeze
     BASELINE = File.join(RAILS_ROOT, "shared/config/importmap_baseline.rb")
-    VENDOR = File.join(RAILS_ROOT, "shared/vendor/javascript")
+    VENDOR = File.join(RAILS_ROOT, "__shared/vendor/javascript")
 
     # Controller names the boot files must register between them, and package
     # names the importmap must pin. These are two different vocabularies and
@@ -114,18 +114,18 @@ module Deploy
         REQUIRED_CONTROLLERS.each do |name|
           result.fail("pub4_stimulus_boot must register #{name}") unless boot.include?(%("#{name}"))
         end
-        result.fail("deprecated stimulus_components.js must not return") if File.file?(File.join(RAILS_ROOT, "shared/frontend/stimulus_components.js"))
+        result.fail("deprecated stimulus_components.js must not return") if File.file?(File.join(RAILS_ROOT, "__shared/frontend/stimulus_components.js"))
       end
 
       if File.file?(BASELINE)
         baseline = File.read(BASELINE)
         result.checked!(1 + (REQUIRED_PACKAGES.size * 2))
         # Vendored means every @stimulus-components pin resolves to a file in
-        # shared/vendor/javascript, not that the baseline mentions the path.
+        # __shared/vendor/javascript, not that the baseline mentions the path.
         pinned = pinned_components(baseline)
         result.fail("importmap pins no @stimulus-components at all") if pinned.empty?
         pinned.reject { |pkg| File.file?(File.join(VENDOR, "@stimulus-components--#{pkg}.js")) }.each do |pkg|
-          result.fail("importmap pins @stimulus-components/#{pkg} with no vendored file in shared/vendor/javascript")
+          result.fail("importmap pins @stimulus-components/#{pkg} with no vendored file in __shared/vendor/javascript")
         end
         REQUIRED_PACKAGES.each do |pkg|
           result.fail("importmap missing #{pkg}") unless baseline.include?(pkg)
