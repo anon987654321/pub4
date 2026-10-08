@@ -25,7 +25,7 @@ class RequestVerdictTest < Minitest::Test
   end
 
   def law(sandbox)
-    C::Constitution.new(rules: [C::Constitution.send(:sandboxed_exec_rule, sandbox)])
+    C::Constitution.new(laws: [C::Constitution.send(:sandboxed_exec_rule, sandbox)])
   end
 
   def effect = E.exec(%w[rm -rf /tmp/scratch])
@@ -52,7 +52,7 @@ class RequestVerdictTest < Minitest::Test
 
   # The rules after this one would be judging an effect nobody has agreed to.
   def test_a_request_returns_immediately_and_is_not_revised_further
-    later = C::Constitution::Rule.new(
+    later = C::Constitution::Law.new(
       id: :never_reached, verbs: %i[exec],
       judge: ->(_e, _m) { raise "a later rule ran after a Request" }
     )
