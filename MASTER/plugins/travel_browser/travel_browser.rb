@@ -50,7 +50,7 @@ module Master
       def status
         {
           plugin: manifest.id,
-          runtime: runtime,
+          runtime:,
           browser: ferrum_available? ? "ferrum" : "unavailable",
           sessions: Dir.glob(File.join(session_root, "*")).select { |p| File.directory?(p) }.map { |p| File.basename(p) }.sort,
           final_purchase_gate: true,
