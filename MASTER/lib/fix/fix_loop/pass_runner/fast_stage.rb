@@ -75,23 +75,33 @@ module Master
             autocorrect = ENV["MASTER_AUTOFIX"] == "1" ? "-A" : "-a"
             out, _err, status = Master::Io::Exec.capture3(Master::BUNDLE_BIN, "exec", "rubocop", autocorrect, "--no-color",
                                                           "--format", "json", *files, chdir: root)
-            stuck = status.success? ? [] : uncorrected_files(out, files, root)
+            report = JSON.parse(out.to_s)
+            rows = report.fetch("files", [])
+            stuck = uncorrected_files(rows, root)
+            corrected = rows.sum { |entry| entry.fetch("offenses", []).count { |offense| offense["corrected"] == true } }
             stuck.each { |path| @bus&.publish("fix_loop:rubocop_file_failed", file: path) }
-            summary = stuck.empty? ? "ok" : "partial, #{Master::Trace::Dmesg.counted(stuck.size, "file")} keep offenses"
-            Master::Trace::Dmesg.status(FAST_STAGE_UNIT, "rubocop #{summary}, #{Master::Trace::Dmesg.counted(files.size, "file")}")
-            files.size - stuck.size
+            summary = if stuck.empty?
+                        corrected.zero? ? "clean" : "corrected #{corrected} offense(s)"
+                      else
+                        "partial, #{stuck.size} file(s) keep offenses; corrected #{corrected}"
+                      end
+            summary = "failed: no machine-readable report" if !status.success? && rows.empty?
+            Master::Trace::Dmesg.status(FAST_STAGE_UNIT, "rubocop #{summary}, checked #{Master::Trace::Dmesg.counted(files.size, "file")}")
+            corrected
+          rescue JSON::ParserError
+            @bus&.publish("fix_loop:rubocop_report_unreadable", files: files.map { |path| path.delete_prefix("#{@root}/") })
+            Master::Trace::Dmesg.status(FAST_STAGE_UNIT, "rubocop inconclusive: JSON report unreadable")
+            0
           end
 
-          # Every file counts as stuck when rubocop itself failed and printed no report.
-          def uncorrected_files(out, files, root)
-            report = JSON.parse(out.to_s)
-            report.fetch("files", []).filter_map do |entry|
-              next if entry.fetch("offenses", []).all? { |offense| offense["corrected"] }
+          # The JSON report is the source of truth: a file with no remaining offenses
+          # is not evidence that RuboCop corrected anything during this invocation.
+          def uncorrected_files(rows, root)
+            rows.filter_map do |entry|
+              next if entry.fetch("offenses", []).all? { |offense| offense["corrected"] == true }
 
               File.expand_path(entry["path"], root)
             end
-          rescue JSON::ParserError
-            files
           end
 
           def analyze_ruby_file(path)
