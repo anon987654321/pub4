@@ -107,7 +107,7 @@ end
     def scanner.scan_dir(*) = Master::Result.ok([])
     fix = Object.new
     def fix.run(*) = Master::Result.ok("fixed")
-    def fix.preview(*) = Master::Result.ok(total: 0, rules: {}, files: {})
+    def fix.preview(*) = Master::Result.ok(total: 0, laws: {}, files: {})
 
     stub_scan = lambda { |*| "scan: clean" }
     Master::CLI::CommandRegistry.stub(:observe, stub_scan) do
