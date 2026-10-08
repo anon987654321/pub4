@@ -7,7 +7,7 @@ module Deploy
     #
     # Split out of design_metrics.rb when that file passed its length ceiling
     # again. One subject — every one of these reads a font declaration out of
-    # the SCSS and judges it against design_rules.yml's typography section —
+    # the SCSS and judges it against laws.yml's typography section —
     # and the largest of the four the gate carries.
     #
     # A module included back into the gate, like ContrastChecks beside it, so
