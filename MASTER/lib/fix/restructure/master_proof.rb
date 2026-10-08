@@ -37,7 +37,7 @@ module Master
         def run_test(test) = run(RbConfig.ruby, "-Ilib", "-Itest", test)
 
         def run(*command)
-          Master::Io::Exec.capture2e(ENV_BOOT, Operator::RubyRunner.bundle_cmd(root: @tree_root), "exec", *command, chdir: @tree_root,
+          Master::Io::Exec.capture2e(ENV_BOOT, ::Operator::RubyRunner.bundle_cmd(root: @tree_root), "exec", *command, chdir: @tree_root,
                                                                                    timeout: TIMEOUT_S)
         end
       end
