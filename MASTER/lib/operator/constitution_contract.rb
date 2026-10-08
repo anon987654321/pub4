@@ -60,8 +60,8 @@ module Operator
 
     def law_issues
       require File.join(@root, "MASTER", "law", "law")
-      ::Law.load_all(File.join(@root, "MASTER", "law")) if ::Law.rules.empty?
-      ::Law.rules.empty? ? ["law: no executable rules loaded"] : []
+      ::Law.load_all(File.join(@root, "MASTER", "law")) if ::Law.definitions.empty?
+      ::Law.definitions.empty? ? ["law: no executable laws loaded"] : []
     rescue StandardError => e
       ["law: #{e.class}: #{e.message}"]
     end
