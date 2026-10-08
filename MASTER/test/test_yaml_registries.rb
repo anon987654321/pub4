@@ -133,8 +133,8 @@ class TestLawsYamlRegistry < Minitest::Test
     refute soul.dig("absolute", "rules"), "soul must not hold rules; law/ is the registry"
     law_dir = File.expand_path("../law", __dir__)
     require File.join(law_dir, "law")
-    ::Law.load_all(law_dir) if ::Law.rules.empty?
-    preserve_rule = ::Law.rules.fetch(:PRESERVE_FIRST)
+    ::Law.load_all(law_dir) if ::Law.definitions.empty?
+    preserve_rule = ::Law.definitions.fetch(:PRESERVE_FIRST)
     assert_equal :error, preserve_rule.severity
     assert_match(/never rewrite working code/i, preserve_rule.practice)
     assert_match(/Preserve behavior and intent/, preserve_rule.fix)
@@ -450,8 +450,8 @@ end
   def executable_law_ids
     law_dir = File.expand_path("../law", __dir__)
     require File.join(law_dir, "law")
-    ::Law.load_all(law_dir) if ::Law.rules.empty?
-    ::Law.rules.keys.map(&:to_s)
+    ::Law.load_all(law_dir) if ::Law.definitions.empty?
+    ::Law.definitions.keys.map(&:to_s)
   end
 
   def data
