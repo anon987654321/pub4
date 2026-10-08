@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "../../operator/ruby_runner"
+
 module Master
   module Fix
     class Restructure
@@ -35,7 +37,7 @@ module Master
         def run_test(test) = run(RbConfig.ruby, "-Ilib", "-Itest", test)
 
         def run(*command)
-          Master::Io::Exec.capture2e(ENV_BOOT, Master::BUNDLE_BIN, "exec", *command, chdir: @tree_root,
+          Master::Io::Exec.capture2e(ENV_BOOT, Operator::RubyRunner.bundle_cmd(root: @tree_root), "exec", *command, chdir: @tree_root,
                                                                                    timeout: TIMEOUT_S)
         end
       end
