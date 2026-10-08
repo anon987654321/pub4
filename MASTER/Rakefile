@@ -76,7 +76,7 @@ task :constitution do
 
   root    = __dir__
   scanner = Master::Fix::Scanner.build(root:)
-  scanner.rules.reject! { |rule| rule.id.to_s == "ast_omission" }
+  scanner.laws.reject! { |law| law.id.to_s == "ast_omission" }
   timeout = Integer(ENV.fetch("MASTER_CONSTITUTION_FILE_TIMEOUT", "4"))
   # data/scan_coverage.yml, not File.join(root, "lib") — a path literal here is
   # how core/ stayed outside its own law for three weeks. rake lint:scan_coverage
@@ -84,13 +84,13 @@ task :constitution do
   paths = Master.scan_roots(root:).flat_map { |dir| Dir.glob(File.join(root, dir, Master::Fix::Scanner::SCAN_GLOB)) }
                 .select { |path| Master::Fix::Scanner.scan_candidate?(path, root:) }
   puts "constitution: #{paths.size} file(s) across #{Master.scan_roots(root:).join(', ')}"
-  # Which half of the law is running. Rules needing a model return [] without
-  # one, and no local gate attaches one, so "clean" over 99 rules and "clean"
+  # Which half of the law is running. Laws needing a model return [] without
+  # one, and no local gate attaches one, so "clean" over 99 laws and "clean"
   # over 225 are different claims that otherwise print the same.
   audit = Master::Review::Scan::LawRegistryAudit.new(root:).call
-  # Rules that need a model and did not get one return [] and say nothing, so
+  # Laws that need a model and did not get one return [] and say nothing, so
   # a report that omits them offers the mechanical half as the whole law.
-  idle = scanner.rules.select { |rule| rule.respond_to?(:agent?) && !rule.agent? }
+  idle = scanner.laws.select { |law| law.respond_to?(:agent?) && !law.agent? }
   puts "constitution: #{audit.mechanical.size} of #{audit.yaml_rules} declared laws active" \
        "#{idle.empty? ? '' : " (#{idle.map(&:id).join(', ')} idle without a model — rake lint:law_reach)"}"
 
@@ -101,7 +101,7 @@ task :constitution do
 
     result.value!.map { |finding| finding.merge(file: path) }
   rescue Timeout::Error
-    [{ rule: "SCAN_TIMEOUT", rule_id: "SCAN_TIMEOUT", severity: :error, line: 1,
+    [{ law: "SCAN_TIMEOUT", law_id: "SCAN_TIMEOUT", severity: :error, line: 1,
        message: "scan exceeded #{timeout}s per-file budget", file: path }]
   end
   triage = Master::Review::Scan::ConstitutionTriage.new(root:)
@@ -119,8 +119,8 @@ task :constitution do
       next if bucket.findings.empty?
 
       puts "[#{bucket.name}] #{bucket.findings.size}"
-      bucket.findings.group_by { |v| v[:rule] }.sort_by { |_, vs| -vs.size }.first(8).each do |rule, vs|
-        puts "  #{rule}: #{vs.size}"
+      bucket.findings.group_by { |v| v[:law] }.sort_by { |_, vs| -vs.size }.first(8).each do |law, vs|
+        puts "  #{law}: #{vs.size}"
         vs.first(3).each { |v| puts "    #{v[:file]}:#{v[:line]}: #{v[:message]}" }
       end
     end
@@ -140,7 +140,7 @@ task :selftest do
 
   summary = result.value!
   # What this gate did not measure, said before what it did. bin/check
-  # --profile=agent runs this task, and "0 findings" over 99 rules and over 225
+  # --profile=agent runs this task, and "0 findings" over 99 laws and over 225
   # are different claims that printed identically.
   puts "selftest: #{Master::Review::Scan::LawRegistryAudit.new(root: __dir__).call.coverage_line}"
   puts summary.line
@@ -162,7 +162,7 @@ task :selfcheck do
   # gate does not use — it read "error/critical only" for as long as veto was
   # missing from it, which is how nobody noticed veto was missing.
   puts "selfcheck: #{audit.mechanical.size} of #{audit.yaml_rules} declared " \
-       "rules active (rake lint:law_reach for what the rest need), " \
+       "laws active (rake lint:law_reach for what the rest need), " \
        "#{Master::Fix::SelfCheck::QUICK_SEVERITIES.join('/')} only, across #{Master.scan_roots.join(', ')}"
   report = Master::Fix::SelfCheck.new(root: __dir__).quick
   puts report.summary
@@ -547,7 +547,7 @@ end
   desc "every law can fire somehow — none is law that no configuration enforces"
   task :law_reach do
     ok = system(RbConfig.ruby, File.join(__dir__, "tools", "law_reach.rb"))
-    abort "lint:law_reach: a rule reaches no detector" unless ok
+    abort "lint:law_reach: a law reaches no detector" unless ok
   end
 
   desc "Ratchet: lib/ may shrink or hold, never grow past data/spine.yml's ceiling"
@@ -559,8 +559,8 @@ end
     # 2026-08-10, and spine.yml had already recorded the problem with that
     # without resolving it -- lint:spine charged for comment lines and [DENSITY]
     # deliberately did not, so a paragraph of rationale above a tricky line
-    # satisfied one rule and breached the other. In a tree whose convention is to
-    # write that paragraph, the two rules were pulling in opposite directions and
+    # satisfied one law and breached the other. In a tree whose convention is to
+    # write that paragraph, the two laws were pulling in opposite directions and
     # three ratchet passes had been paid for out of dead code rather than
     # deciding which one meant it. They now agree.
     #
@@ -595,7 +595,7 @@ end
 
     if core_files > config.fetch("core_files")
       abort "lint:spine: the fold spine has #{core_files} files, ceiling is #{config['core_files']} — " \
-            "a new ability is a verb in world.rb and a new constraint is a rule in constitution.rb, " \
+            "a new ability is a verb in world.rb and a new constraint is a law in constitution.rb, " \
             "not a new concept"
     end
 
@@ -663,9 +663,9 @@ end
     end
   end
 
-  # laws.yml's LAW_MAP law names the rule -> law direction; SelfTest
-  # only ever checked law -> rule and so reported 0 against 101 untraced
-  # rules. A ceiling makes the real number visible and monotone without turning a
+  # laws.yml's LAW_MAP law names the law -> law direction; SelfTest
+  # only ever checked law -> law and so reported 0 against 101 untraced
+  # laws. A ceiling makes the real number visible and monotone without turning a
   # standing backlog into a red gate on unrelated work.
   desc "Ratchet: registered laws that trace to no law_map entry may fall, never rise"
   task :law_trace do
@@ -713,10 +713,10 @@ end
     do_not_touch: ["Every Do Not Touch entry names the gate that fails when its claim stops being true", "tools/do_not_touch.rb"],
     instruments: ["The repo's own measuring code agrees with test/fixtures, whose answers are declared", "tools/instruments.rb"],
     swallowed: ["Load-bearing errors that were swallowed and never looked at", "tools/swallowed_errors.rb"],
-    law_audit: ["Rules that cannot see their own subject, or fire on nearly everything", "tools/law_audit.rb"],
-    autofix_reach: ["Rules whose autofix names code that does not exist, or names nothing at all", "tools/autofix_reach.rb"],
-    rule_hygiene: ["Rule ids, aliases and metadata: collisions, unfinished folds, missing tier/severity", "tools/law_hygiene.rb"],
-    word_boundary: ["Flag \\b adjacent to punctuation in rule regexes — a word boundary that can never fire", "tools/word_boundary_lint.rb"],
+    law_audit: ["Laws that cannot see their own subject, or fire on nearly everything", "tools/law_audit.rb"],
+    autofix_reach: ["Laws whose autofix names code that does not exist, or names nothing at all", "tools/autofix_reach.rb"],
+    rule_hygiene: ["Law ids, aliases and metadata: collisions, unfinished folds, missing tier/severity", "tools/law_hygiene.rb"],
+    word_boundary: ["Flag \\b adjacent to punctuation in law regexes — a word boundary that can never fire", "tools/word_boundary_lint.rb"],
     test_naming: ["MASTER test files are test_<subject>.rb, not <subject>_test.rb", "tools/test_naming.rb"],
     constant_collisions: ["No two files loadable into one process define the same top-level constant", "tools/constant_collisions.rb"],
     models: ["every model data/models.yml names is one the provider still serves (needs network)", "tools/model_catalog_check.rb"],
@@ -760,7 +760,7 @@ end
       "- web/app/views/chat/index.html.erb" =>
         "shared file reference, not a fact — agent_map and council both point at the chat view",
       "strategy: highest_priority_wins" =>
-        "coincident strings for two different facts: limits.yml rule-conflict strategy, soul.yml conflict resolution",
+        "coincident strings for two different facts: limits.yml law-conflict strategy, soul.yml conflict resolution",
       # The three "open:" entries that were here are gone rather than expired:
       # each named a cross-file duplicate that has since been collapsed to one
       # source. anti_simulation's forbidden list is soul.yml only now (the
@@ -924,7 +924,7 @@ end
 # keys with no reader, so a budget nothing read would have been the 45th.
 #
 # A budget falls on its own whenever the subsystem falls, and rises only in a
-# commit that names what the lines buy — data/spine.yml's rule, stated the same
+# commit that names what the lines buy — data/spine.yml's law, stated the same
 # way so the two ratchets say one thing. A diff that grows a subsystem past its
 # budget fails here, and the first remedy is extraction or deletion.
 #
@@ -933,7 +933,7 @@ end
 # at roughly 30% slack. `loc_budgets` counted raw lines: blanks, comments and
 # the module wrappers Zeitwerk requires. That charged for the paragraph
 # explaining a change as well as the change, and took three raises in one day
-# to say so — lib/trace for namespaces, law for a rule that could finally fire,
+# to say so — lib/trace for namespaces, law for a law that could finally fire,
 # lib/review for the measure that exempted the namespaces. All three are moot
 # in this unit.
 #
@@ -979,7 +979,7 @@ task :loc_budget do
   puts "loc_budget: ok"
 end
 
-desc "Every law/ rule flags its bad fixture and spares its good one, then every law judges law/ itself"
+desc "Every law/ law flags its bad fixture and spares its good one, then every law judges law/ itself"
 task :dogfood do
   ruby "-Ilib", "test/test_dogfood.rb"
 end
