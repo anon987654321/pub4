@@ -86,6 +86,17 @@ class HotwireSurfacesTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_equal 1, item.reload.times_worn
     assert_includes response.body, I18n.t("items.wear_count", count: 1)
+    assert_includes response.body, "interaction-success"
+    assert_includes response.body, "interaction-success__check"
+  end
+
+  test "wear action has an early tactile signal without a new per-button controller" do
+    item = @user.items.create!(title: "Jacket", category: "Outerwear", times_worn: 0)
+    get item_path(item)
+    assert_response :success
+    assert_includes response.body, 'data-controller="haptics"'
+    assert_includes response.body, 'pointerdown->haptics#press'
+    assert_includes response.body, "items.worn_today"
   end
 
   test "user show hides another wardrobe that is not public" do
