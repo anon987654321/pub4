@@ -150,7 +150,7 @@ module Master
           return clean_pass_result(files, pass_mtimes, pass, consecutive_clean) if found.empty?
           return plateau_result if stagnant?(history, seen_snapshots, recurring_violations, found, pass, progressed: @pass_progress)
 
-          # A reload skips the rule stage: it would ask the model about the whole
+          ## A reload skips the law stage: it would ask the model about the whole
           # scan on code that is already out of date.
           dispatch_llm_stages(unstreamed(found, streamed), files, pass, deadline, visual, run_id:) unless CodeWatch.requested?
           delivered = deliver_pass(found, files, pass)
@@ -361,7 +361,7 @@ module Master
             result = @ground_truth.assert_fresh!(path, reason: "claim_task_complete")
             next if result.ok?
 
-            { rule: "GROUND_TRUTH", file: path.delete_prefix("#{@root}/"), line: 0, message: result.message }
+            { law: "GROUND_TRUTH", file: path.delete_prefix("#{@root}/"), line: 0, message: result.message }
           end
         end
 
@@ -387,13 +387,13 @@ module Master
 
         def track_recurrence(found)
           tally = found.group_by { |v| v[:law].to_s }.transform_values(&:size)
-          tally.each do |rule_id, _|
-            @law_recurrence[rule_id] += 1
-            next unless @law_recurrence[rule_id] >= 3
+          tally.each do |law_id, _|
+            @law_recurrence[law_id] += 1
+            next unless @law_recurrence[law_id] >= 3
 
-            @law_recurrence.delete(rule_id)
-            sample = found.select { |v| v[:law].to_s == rule_id }.first(5)
-            @bus&.publish("fix_loop:soul_proposal", root: @root, rule: rule_id, sample:)
+            @law_recurrence.delete(law_id)
+            sample = found.select { |v| v[:law].to_s == law_id }.first(5)
+            @bus&.publish("fix_loop:soul_proposal", root: @root, law: rule_id, sample:)
           end
           (@law_recurrence.keys - tally.keys).each { |key| @law_recurrence.delete(key) }
         end
