@@ -74,7 +74,7 @@ module Master
           "receipt: soul #{receipt[:constitution][:soul_version]} " \
           "persona=#{receipt[:constitution][:persona]} " \
           "sacred_paths=#{receipt[:constitution][:sacred_paths]}",
-          "receipt: law #{law_counts[:declared]} declared, #{law_counts[:registry]} scan rules, " \
+          "receipt: law #{law_counts[:declared]} declared, #{law_counts[:registry]} scan laws, " \
           "#{law_counts[:domain]} in law/",
           "receipt: providers #{availability(receipt[:providers])}",
           "receipt: capabilities #{availability(receipt[:capabilities])}",
@@ -123,10 +123,10 @@ module Master
       end
 
       # Three populations, counted from what is loaded rather than from a number
-      # in prose. They are allowed to differ — 78 declared rules resolve through
+      # in prose. They are allowed to differ — 78 declared laws resolve through
       # a fold and carry no detector — but a receipt that prints one of them as
       # the total is the misreport this exists to prevent.
-      # `rules:` is a flat array, whatever CLAUDE.md's enumeration snippet says
+      # `laws:` is a flat array, whatever CLAUDE.md's enumeration snippet says
       # about scopes — that snippet raises on this file. Counting the array is
       # the reading that matches the data.
       def law(root: MasterPaths::ROOT)
@@ -139,7 +139,7 @@ module Master
 
       # Loaded here rather than assumed: law/ reaches the registry only when
       # something has required it, so a receipt printed from bin/doctor said
-      # "0 in law/" while 122 rules were defined and waiting.
+      # "0 in law/" while 122 laws were defined and waiting.
       def domain_rule_count(root)
         law_root = executable_law_root(root)
         require File.join(law_root, "law", "law.rb")
