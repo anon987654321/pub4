@@ -50,8 +50,8 @@ module Deploy
       base = app_root(app)
       Dir.glob(File.join(base, "config", "routes.rb")) +
         Dir.glob(File.join(base, "config", "routes", "**", "*.rb")).sort +
-        Dir.glob(File.join(RAILS_ROOT, "shared", "config", "routes.rb")) +
-        Dir.glob(File.join(RAILS_ROOT, "shared", "config", "routes", "**", "*.rb")).sort +
+        Dir.glob(File.join(RAILS_ROOT, "__shared", "config", "routes.rb")) +
+        Dir.glob(File.join(RAILS_ROOT, "__shared", "config", "routes", "**", "*.rb")).sort +
         Dir.glob(File.join(base, "engines", "*", "config", "routes.rb")).sort
     end
 
