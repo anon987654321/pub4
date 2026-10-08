@@ -23,7 +23,7 @@ module Master
 
         # Lazy, for the same reason limits.yml stopped being parsed in the
         # constructor: `constitution` is the only reader, and every Laws built
-        # to ask for `rules` was opening soul.yml to back an accessor it never
+        # to ask for `laws` was opening soul.yml to back an accessor it never
         # touched. LawLoop#build_soul_preamble does exactly that, so a preamble
         # read the file twice and its cache could only ever halve the cost.
         def soul_data = Master.soul_config(root: @root)
@@ -41,8 +41,8 @@ module Master
           }.freeze
         end
 
-        # From law/, the one registry. soul carried absolute.rules until the
-        # `conduct` kind let a rule about how to work be a Law like any other.
+        # From law/, the one registry. soul carried absolute.laws until the
+        # `conduct` kind let a law about how to work be a Law like any other.
         def laws
           @laws ||= begin
             require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
