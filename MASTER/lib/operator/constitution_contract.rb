@@ -32,7 +32,7 @@ module Operator
       issues = required_paths
       soul = load_yaml("MASTER/data/soul.yml")
       laws = load_yaml("MASTER/data/laws.yml")
-      issues << "soul: golden rule missing or changed" unless soul.dig("absolute", "golden_rule") == "PRESERVE_THEN_IMPROVE_NEVER_BREAK"
+      issues << "soul: golden rule missing or changed" unless soul.dig("absolute", "golden_law") == "PRESERVE_THEN_IMPROVE_NEVER_BREAK"
       issues << "soul: no sacred paths declared" unless Array(soul.dig("absolute", "sacred_paths")).any?
       issues << "rules: missing design tokens" unless laws["tokens"].is_a?(Hash)
       declared = laws.any? { |_id, value| value.is_a?(Hash) && value["priority"] && value["statement"] }
