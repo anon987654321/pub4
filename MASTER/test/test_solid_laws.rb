@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-require "review/scan/rule_dsl"
+require "review/scan/law_dsl"
 
 # The four SOLID proxies — OpenClosedRule, LiskovRule, DependencyInversionRule,
 # InterfaceSegregationRule. Until now nothing named any of them, and three of
@@ -19,7 +19,7 @@ require "review/scan/rule_dsl"
 # violation. A detector tested only for firing proves nothing about what it
 # spares.
 class TestSolidRules < Minitest::Test
-  Rules = Master::Review::Scan::Rules
+  Rules = Master::Review::Scan::Laws
 
   def flags(rule, source)
     rule.check(source, path: "lib/thing.rb").map(&:message)
