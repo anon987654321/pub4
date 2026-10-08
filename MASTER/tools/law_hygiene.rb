@@ -121,7 +121,7 @@ module Operator
     # regrowth. What the old count was hiding is in statement_conflicts below.
     #
     # `detect_lexical` in the catalogue does count: it is a deterministic
-    # detector the YamlDeclarativeRule bridge runs. There are none today, which
+    # detector the YamlDeclarativeLaw bridge runs. There are none today, which
     # is the escape hatch sitting idle rather than the check being blind.
     def detector_homes
       homes = Hash.new { |h, k| h[k] = [] }
