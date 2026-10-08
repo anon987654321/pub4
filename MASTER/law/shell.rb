@@ -77,7 +77,7 @@ Law.define(:NEVER_BATCH_DELETE) do
 end
 
 Law.define(:NO_INLINE_ASSETS_IN_SHELL) do
-  source "RAILS/shared frontend convention"
+  source "RAILS/__shared frontend convention"
   severity :warn
   languages %i[zsh]
   detect { |line| line.match?(/<style\b|<script\b/) }
