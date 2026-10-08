@@ -1,7 +1,6 @@
 // Entry for esbuild face.modules.bundle.js — side-effect imports only.
 import "../public/face_blendshape_bridge.js";
 import "../public/face_particles.js";
-import "../public/face_sparse_field.js";
 import "../public/face_audio_bridge.js";
 import "../public/face_tts_bridge.js";
 import "../public/face_expression_bridge.js";
