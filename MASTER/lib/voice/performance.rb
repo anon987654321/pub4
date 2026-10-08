@@ -100,8 +100,9 @@ module Master
             pitch_delta_hz: smooth_step(part[:pitch_delta_hz], previous[:pitch_delta_hz], MAX_PITCH_STEP_HZ),
           )
         end
+      end
 
-              # One timeline for synthesis metadata, the event bus and Face.
+      # One timeline for synthesis metadata, the event bus and Face.
       # Durations are estimates and the browser normalizes them to real audio,
       # so every visual consumer follows the audio clock rather than wall time.
       def timeline(text, emotion: {}, style: :normal, rate: nil, pitch: nil, voice: nil)
