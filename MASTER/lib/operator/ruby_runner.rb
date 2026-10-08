@@ -22,16 +22,19 @@ module Operator
       return explicit if !explicit.empty? && File.executable?(explicit)
 
       ruby = best_available_ruby(root:)&.fetch(:path, nil)
-      if ruby
-        sibling = File.join(File.dirname(ruby), "bundle")
-        return sibling if File.executable?(sibling)
-      end
-
-      path = openbsd_path("bundle", root:)
-      return path if path
-
-      path = command_path("bundle")
-      path.empty? ? "bundle" : path
+      candidates = []
+      candidates << File.join(File.dirname(ruby), "bundle") if ruby
+      home = File.expand_path("~")
+      candidates.concat(
+        [
+          File.join(home, "bin", "bundle"),
+          File.join(home, ".local", "bin", "bundle"),
+          File.join(home, ".rbenv", "shims", "bundle")
+        ]
+      )
+      candidates << openbsd_path("bundle", root:)
+      candidates << command_path("bundle")
+      candidates.compact.find { |candidate| File.executable?(candidate) } || "bundle"
     end
 
     def best_available_ruby(root: Environment.repo_root)
