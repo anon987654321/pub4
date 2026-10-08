@@ -24,7 +24,7 @@ require "json"
 require_relative "../lib/trace/dmesg"
 
 module Operator
-  module RuleHygiene
+  module LawHygiene
     MASTER = File.expand_path("..", __dir__)
 
     module_function
@@ -32,7 +32,7 @@ module Operator
     # Through the accessor, not a second load of laws.yml: the file this tool
     # audits has to be the file the runtime reads, and reader_singularity is
     # the ratchet that keeps those two from drifting apart.
-    def master_rules
+    def master_laws
       lib = File.join(MASTER, "lib")
       $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
       require "master"
@@ -41,12 +41,12 @@ module Operator
 
     # The two populations laws.yml declares, and no third. A hand-rolled walk
     # over every hash carrying an "id" was the first version, and it read the
-    # eight check names inside AUTOMATED_CSS_ANALYSIS's `config:` as eight rules
+    # eight check names inside AUTOMATED_CSS_ANALYSIS's `config:` as eight laws
     # — so missing_metadata counted config keys that were never going to carry a
     # tier, and eight_px_rhythm, a check id, collided by case with the real
-    # EIGHT_PX_RHYTHM. A rule's config is its own; only the populations are rules.
-    def yaml_rules
-      body = master_rules
+    # EIGHT_PX_RHYTHM. A rule's config is its own; only the populations are laws.
+    def yaml_laws
+      body = master_laws
       Master.law_entries(root: MASTER).select { |r| r.is_a?(Hash) && r["id"] } +
         Array(body["learned_smells"]).select { |r| r.is_a?(Hash) && r["id"] }
     end
@@ -57,13 +57,13 @@ module Operator
     end
 
     def dsl_ids
-      Dir.glob(File.join(MASTER, "lib", "review", "scan", "rules", "*.rb"))
-         .flat_map { |p| File.read(p, encoding: "UTF-8").scrub.scan(/RuleDSL\.rule\s+:(\w+)/).flatten }
+      Dir.glob(File.join(MASTER, "lib", "review", "scan", "laws", "*.rb"))
+         .flat_map { |p| File.read(p, encoding: "UTF-8").scrub.scan(/LawDSL\.rule\s+:(\w+)/).flatten }
     end
 
-    def all_ids = (yaml_rules.map { |r| r["id"] } + law_ids + dsl_ids).compact
+    def all_ids = (yaml_laws.map { |r| r["id"] } + law_ids + dsl_ids).compact
 
-    # Two ids differing only by case are two rules as far as every registry is
+    # Two ids differing only by case are two laws as far as every registry is
     # concerned and one rule as far as a reader is concerned. Findings, priors
     # and exemptions key on the id, so the pair silently splits a rule's history.
     def id_case_collisions
@@ -75,7 +75,7 @@ module Operator
     # two is a fold that never finished.
     def alias_shadows_live_rule
       live = all_ids.map(&:downcase)
-      yaml_rules.flat_map do |r|
+      yaml_laws.flat_map do |r|
         Array(r["aliases"]).select { |a| live.include?(a.to_s.downcase) }
                            .map { |a| { rule: r["id"], alias_name: a.to_s } }
       end
@@ -84,7 +84,7 @@ module Operator
     # A rule with neither tier nor severity cannot be sorted, filtered or
     # prioritised, and every count that groups by either quietly omits it.
     def missing_metadata
-      yaml_rules.select { |r| r["tier"].to_s.strip.empty? && r["severity"].to_s.strip.empty? }
+      yaml_laws.select { |r| r["tier"].to_s.strip.empty? && r["severity"].to_s.strip.empty? }
                 .map { |r| r["id"] }
     end
 
@@ -96,8 +96,8 @@ module Operator
     # The rule for resolving one: whichever population holds the detector owns
     # the wording. A population that only restates it is the copy.
     #
-    # There were four populations here. soul.yml was the fourth, and its rules
-    # moved into law/practice.rb, so `absolute.rules` reads nil and the branch
+    # There were four populations here. soul.yml was the fourth, and its laws
+    # moved into law/practice.rb, so `absolute.laws` reads nil and the branch
     # contributed an empty list to every comparison — a reader of a key that no
     # longer exists, which reader_singularity counts and nothing else would.
     # A home is a population that DETECTS, and laws.yml mostly does not.
@@ -126,8 +126,8 @@ module Operator
     def detector_homes
       homes = Hash.new { |h, k| h[k] = [] }
       law_detectors.each { |id| homes[id] << "law/" }
-      dsl_ids.map(&:upcase).each { |id| homes[id] << "RuleDSL" }
-      yaml_rules.each do |r|
+      dsl_ids.map(&:upcase).each { |id| homes[id] << "LawDSL" }
+      yaml_laws.each do |r|
         next unless %w[detect_lexical].any? { |k| r[k].to_s.strip != "" }
 
         homes[r["id"].to_s.upcase] << "laws.yml"
@@ -138,7 +138,7 @@ module Operator
     # A law with a `practice` or an `ask` cannot fire on a line: the first is a
     # rule about conduct and the second needs a model. FLAT_PIXELS is why this
     # matters — law/practice.rb states the flat-design principle and
-    # surface_rules.rb detects `imageSmoothingEnabled = true`, which is the
+    # surface_laws.rb detects `imageSmoothingEnabled = true`, which is the
     # principle and its one mechanical case, and law/practice.rb says so.
     def law_detectors
       loaded_laws.values.select(&:detect).map { |l| l.id.to_s.upcase }
@@ -149,8 +149,8 @@ module Operator
       $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
       require "master"
       require File.join(MASTER, "law", "law")
-      ::Law.load_all(File.join(MASTER, "law")) if ::Law.rules.empty?
-      ::Law.rules
+      ::Law.load_all(File.join(MASTER, "law")) if ::Law.laws.empty?
+      ::Law.laws
     end
 
     def cross_population_duplicates
@@ -174,7 +174,7 @@ module Operator
     def statement_conflicts
       laws = loaded_laws
       registry_severity = dsl_severities
-      yaml_rules.filter_map do |r|
+      yaml_laws.filter_map do |r|
         id = r["id"].to_s.upcase
         law = laws[id.to_sym]
         next conflict(id, "law/", law.fix, law.severity, r) if law
@@ -182,7 +182,7 @@ module Operator
         severity = registry_severity[id]
         next unless severity
 
-        conflict(id, "RuleDSL", r["fix"], severity, r)
+        conflict(id, "LawDSL", r["fix"], severity, r)
       end
     end
 
@@ -217,7 +217,7 @@ module Operator
     end
 
     def ceilings
-      master_rules # boots the runtime, so Master.law resolves
+      master_laws # boots the runtime, so Master.law resolves
       Master.law("law_ratchets", root: MASTER).fetch("hygiene")
     end
 
@@ -240,7 +240,7 @@ module Operator
         Master::Trace::Dmesg.status("rule0", "#{a[:rule]} claims alias #{a[:alias_name]}, itself a live rule, unfinished fold", io: $stderr)
       end
       unless r[:missing_metadata].empty?
-        Master::Trace::Dmesg.status("rule0", "#{r[:missing_metadata].size} rules declare neither tier nor severity")
+        Master::Trace::Dmesg.status("rule0", "#{r[:missing_metadata].size} laws declare neither tier nor severity")
       end
       r[:statement_conflicts].each do |c|
         Master::Trace::Dmesg.status("rule0", "#{c[:rule]} differs between laws.yml and #{c[:home]}, #{c[:reasons].join("; ")}", io: $stderr)
@@ -256,6 +256,6 @@ module Operator
 end
 
 if $PROGRAM_NAME == __FILE__
-  ok = Operator::RuleHygiene.run(json: ARGV.include?("--json"))
+  ok = Operator::LawHygiene.run(json: ARGV.include?("--json"))
   exit(ok ? 0 : 1)
 end
