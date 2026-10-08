@@ -30,7 +30,7 @@
 # notification) that the shared engine already served. Same collapse as the
 # sortable / animated-number / character-counter set above. Measured in a
 # clean worktree after that deletion.
-# 30 -> 29 on 2026-09-09: MASTER/web and RAILS/shared no longer carry the same
+# 30 -> 29 on 2026-09-09: MASTER/web and RAILS/__shared no longer carry the same
 # filter_parameter_logging.rb. Recorded rather than left, because a ceiling above
 # the real number is room the next duplicate grows into without an argument -- the
 # ratchet test fails on slack in exactly the way it fails on debt.
@@ -44,7 +44,7 @@
 #       this census's 200-byte floor for stubs that legitimately repeat. Each
 #       is five lines handing over to config/ci.rb, which is the collapse.
 #   -1  MASTER/web/bin/setup took `# frozen_string_literal: true` and stopped
-#       matching RAILS/shared/bin/setup. MASTER/web/Rakefile did the same and
+#       matching RAILS/__shared/bin/setup. MASTER/web/Rakefile did the same and
 #       left the Rakefile set, which still has its other three members.
 #   +1  add_link_embed_to_posts, written identically into amber and brgen.
 #
@@ -84,8 +84,8 @@ duplicate_members:
 - MASTER/gates/support/gate_ledger.rb | OPENBSD/lib/gate_ledger.rb
 - MASTER/gates/support/gate_result.rb | OPENBSD/lib/gate_result.rb
 - MASTER/gates/support/utf8.rb | OPENBSD/lib/utf8.rb
-- MASTER/web/config/initializers/inflections.rb | RAILS/shared/config/initializers/inflections.rb
-- MASTER/web/public/icon.png | RAILS/shared/public/icon.png
+- MASTER/web/config/initializers/inflections.rb | RAILS/__shared/config/initializers/inflections.rb
+- MASTER/web/public/icon.png | RAILS/__shared/public/icon.png
 - RAILS/amber/.rubocop.yml | RAILS/brgen/.rubocop.yml | RAILS/bsdports/.rubocop.yml
 - RAILS/amber/Rakefile | RAILS/bsdports/Rakefile
 - RAILS/amber/bin/setup | RAILS/bsdports/bin/setup
@@ -93,7 +93,7 @@ duplicate_members:
 - RAILS/amber/config/boot.rb | RAILS/brgen/config/boot.rb | RAILS/bsdports/config/boot.rb
 - RAILS/amber/config/cable.yml | RAILS/brgen/config/cable.yml
 - RAILS/amber/config/cache.yml | RAILS/brgen/config/cache.yml
-- RAILS/amber/config/storage.yml | RAILS/brgen/config/storage.yml | RAILS/bsdports/config/storage.yml | RAILS/shared/config/storage.yml
+- RAILS/amber/config/storage.yml | RAILS/brgen/config/storage.yml | RAILS/bsdports/config/storage.yml | RAILS/__shared/config/storage.yml
 - RAILS/amber/db/migrate/20260504180350_create_users.rb | RAILS/brgen/db/migrate/20260311162114_create_users.rb | RAILS/bsdports/db/migrate/20260501020807_create_users.rb
 - RAILS/amber/db/migrate/20260504180352_create_sessions.rb | RAILS/brgen/db/migrate/20260311162121_create_sessions.rb | RAILS/bsdports/db/migrate/20260501020818_create_sessions.rb
 - RAILS/amber/db/migrate/20260709120000_add_shared_auth_fields_to_users.rb | RAILS/brgen/db/migrate/20260709120000_add_shared_auth_fields_to_users.rb | RAILS/bsdports/db/migrate/20260709120000_add_shared_auth_fields_to_users.rb
@@ -105,7 +105,7 @@ duplicate_members:
 - RAILS/brgen/app/javascript/controllers/application.js | RAILS/bsdports/app/javascript/controllers/application.js
 - RAILS/brgen/db/cable_schema.rb | RAILS/bsdports/db/cable_schema.rb
 - RAILS/brgen/db/cache_schema.rb | RAILS/bsdports/db/cache_schema.rb
-- RAILS/brgen/db/migrate/20260625140000_create_anonymous_post_quotas.rb | RAILS/shared/db/migrate/20260625140000_create_anonymous_post_quotas.rb
+- RAILS/brgen/db/migrate/20260625140000_create_anonymous_post_quotas.rb | RAILS/__shared/db/migrate/20260625140000_create_anonymous_post_quotas.rb
 - STUDIO/dilla/livesets_midi/burzum Project_slamdunk.mid | STUDIO/dilla/livesets_midi/burzum Project_slamdunk_hakim.mid
 - STUDIO/dilla/livesets_midi/dnb Project_Untitled(1).mid | STUDIO/dilla/livesets_midi/dnb Project_Untitled.mid
 - STUDIO/dilla/project/learnings/last_learn.json | STUDIO/dilla/project/learnings/learn_20260727_151757.json
