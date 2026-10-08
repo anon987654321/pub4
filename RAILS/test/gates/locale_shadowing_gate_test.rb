@@ -25,7 +25,7 @@ class LocaleShadowingGateTest < Minitest::Test
 
   def gate_over(shared:, app:, budget: "brgen: 0\n")
     Dir.mktmpdir do |dir|
-      plant(dir, "RAILS/shared/config/locales/social.nb.yml", shared)
+      plant(dir, "RAILS/__shared/config/locales/social.nb.yml", shared)
       plant(dir, "RAILS/brgen/config/locales/nb.yml", app)
       budget_path = plant(dir, "locale_shadowing.yml", budget)
       GATE.run(root: dir, apps: %w[brgen], budget: budget_path)
@@ -43,7 +43,7 @@ class LocaleShadowingGateTest < Minitest::Test
 
   def test_unreadable_budget_is_inconclusive
     Dir.mktmpdir do |dir|
-      plant(dir, "RAILS/shared/config/locales/social.nb.yml", locale('"Home"'))
+      plant(dir, "RAILS/__shared/config/locales/social.nb.yml", locale('"Home"'))
       plant(dir, "RAILS/brgen/config/locales/nb.yml", locale('"Brgen home"'))
       budget = plant(dir, "locale_shadowing.yml", "not: [valid")
       result = GATE.run(root: dir, apps: %w[brgen], budget:)
@@ -53,7 +53,7 @@ class LocaleShadowingGateTest < Minitest::Test
 
   def gate_with_budget(shared:, app:, budget:)
     Dir.mktmpdir do |dir|
-      plant(dir, "RAILS/shared/config/locales/social.nb.yml", shared)
+      plant(dir, "RAILS/__shared/config/locales/social.nb.yml", shared)
       plant(dir, "RAILS/brgen/config/locales/nb.yml", app)
       budget_path = budget && plant(dir, "locale_shadowing.yml", budget)
       GATE.run(root: dir, apps: %w[brgen], budget: budget_path || File.join(dir, "missing.yml"))
@@ -62,8 +62,8 @@ class LocaleShadowingGateTest < Minitest::Test
 
   def test_unreadable_locale_file_is_inconclusive
     Dir.mktmpdir do |dir|
-      plant(dir, "RAILS/shared/config/locales/social.nb.yml", "nb:\n  nav:\n    home: \"Home\"\n")
-      plant(dir, "RAILS/shared/config/locales/broken.yml", "nb: [broken")
+      plant(dir, "RAILS/__shared/config/locales/social.nb.yml", "nb:\n  nav:\n    home: \"Home\"\n")
+      plant(dir, "RAILS/__shared/config/locales/broken.yml", "nb: [broken")
       plant(dir, "RAILS/brgen/config/locales/nb.yml", "nb:\n  nav:\n    home: \"Home\"\n")
       budget = plant(dir, "locale_shadowing.yml", "brgen: 0\n")
       result = GATE.run(root: dir, apps: %w[brgen], budget:)
