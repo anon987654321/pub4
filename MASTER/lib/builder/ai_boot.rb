@@ -126,7 +126,7 @@ module Master
     end
 
     def build_scanner(root:, agent: nil, bus: nil, ecology: nil)
-      Review::Scan::InfraHelpers.build_scanner(root:, agent:, bus:, ecology:)
+      Fix::Scanner.build(root:, agent:, bus:, ecology:)
     end
 
     def boot_autonomous(root:, infra:, agent:, scanner:, axioms: nil)
