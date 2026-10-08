@@ -129,7 +129,7 @@ class DeploySmokeContractTest < Minitest::Test
   end
 
   def test_production_baseline_serves_precompiled_assets
-    baseline = read(File.join(ROOT, "shared/config/environments/production_baseline.rb"))
+    baseline = read(File.join(ROOT, "__shared/config/environments/production_baseline.rb"))
     assert_includes baseline, "config.public_file_server.enabled = true"
     assert_includes baseline, "config.public_file_server.headers"
     assert_includes baseline, 'ENV["CDN_ASSET_HOST"]'
