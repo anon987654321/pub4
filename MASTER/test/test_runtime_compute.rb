@@ -64,6 +64,20 @@ class TestRuntimeCompute < Minitest::Test
     )
   end
 
+  def test_ruby4_transport_uses_ractor_ports_when_available
+    source = File.read(File.expand_path("../lib/runtime/compute.rb", __dir__))
+
+    assert_includes source, "Ractor::Port"
+    assert_includes source, "result_port.receive"
+    assert_includes source, "respond_to?(:join)"
+    assert_includes source, "ractor_port_available?"
+  end
+
+  def test_ractor_port_capability_is_feature_detected
+    expected = defined?(Ractor::Port) && Ractor::Port.respond_to?(:new)
+    assert_equal expected, Master::Runtime::Compute.ractor_port_available?
+  end
+
   def test_parallel_group_can_force_the_thread_backend
     group = Master::CLI::Pipeline::ParallelGroup.new(
       Master::RuntimeComputeTestStage.new(2),

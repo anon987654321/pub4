@@ -116,11 +116,22 @@ module Master
 
       def ractor_map(items, operation:, workers:, timeout:)
         jobs = prepare_ractor_jobs(items)
-        ractors = spawn_ractors(operation, worker_limit(jobs.size, workers))
-        seed_ractors(ractors, jobs)
-        collect_ractor_results(ractors, jobs, timeout)
+        ractors = nil
+        result_port = nil
+
+        if ractor_port_available?
+          result_port = Ractor::Port.new
+          ractors = spawn_ractors(operation, worker_limit(jobs.size, workers), result_port:)
+          seed_ractors(ractors, jobs)
+          collect_ractor_results_with_port(result_port, ractors, jobs, timeout)
+        else
+          ractors = spawn_ractors(operation, worker_limit(jobs.size, workers))
+          seed_ractors(ractors, jobs)
+          collect_ractor_results(ractors, jobs, timeout)
+        end
       ensure
         stop_ractors(ractors)
+        close_ractor_port(result_port)
       end
 
       def prepare_ractor_jobs(items)
@@ -130,30 +141,43 @@ module Master
         items.map { |item| Ractor.make_shareable(item, copy: true) }
       end
 
-      def spawn_ractors(operation, worker_count)
+      def ractor_port_available?
+        defined?(Ractor::Port) && Ractor::Port.respond_to?(:new)
+      end
+
+      def spawn_ractors(operation, worker_count, result_port: nil)
         Array.new(worker_count) do |worker_id|
-          Ractor.new(operation.to_sym, worker_id) do |op, id|
-            Master::Runtime::Compute.ractor_loop(op, id)
+          Ractor.new(operation.to_sym, worker_id, result_port) do |op, id, port|
+            Master::Runtime::Compute.ractor_loop(op, id, port)
           end
         end
       end
 
-      def ractor_loop(operation, worker_id)
+      def ractor_loop(operation, worker_id, result_port = nil)
         loop do
           message = Ractor.receive
           break if message == :stop
 
           job_index, payload = message
-          ractor_process(worker_id, job_index, operation, payload)
+          ractor_process(worker_id, job_index, operation, payload, result_port:)
         end
       end
 
-      def ractor_process(worker_id, job_index, operation, payload)
+      def ractor_process(worker_id, job_index, operation, payload, result_port: nil)
         result = invoke(operation, payload)
-        Ractor.yield([worker_id, job_index, true, Ractor.make_shareable(result, copy: true)])
+        emit_ractor_result(
+          [worker_id, job_index, true, Ractor.make_shareable(result, copy: true)],
+          result_port,
+        )
       rescue StandardError, SecurityError => e
         error = { "class" => e.class.name.to_s, "message" => e.message.to_s }.freeze
-        Ractor.yield([worker_id, job_index, false, error])
+        emit_ractor_result([worker_id, job_index, false, error], result_port)
+      end
+
+      def emit_ractor_result(message, result_port)
+        return Ractor.yield(message) unless result_port
+
+        result_port << Ractor.make_shareable(message, copy: true)
       end
 
       def seed_ractors(ractors, jobs)
@@ -175,6 +199,29 @@ module Master
             results[index] = ractor_result!(ok, index, value)
             next_index = refill_ractor(ractor, next_index, jobs, active)
           end
+        end
+        results
+      rescue Timeout::Error
+        kill_ractors(ractors)
+        raise TimeoutError, timeout
+      end
+
+      def collect_ractor_results_with_port(result_port, ractors, jobs, timeout)
+        results = Array.new(jobs.size)
+        active = (0...[ractors.size, jobs.size].min).to_h { |index| [index, ractors[index]] }
+        next_index = active.size
+        deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + timeout
+
+        until active.empty?
+          remaining = deadline - Process.clock_gettime(Process::CLOCK_MONOTONIC)
+          raise Timeout::Error if remaining <= 0
+
+          message = Timeout.timeout(remaining) { result_port.receive }
+          worker_id, index, ok, value = message
+          ractor = ractors.fetch(worker_id)
+          active.delete(index)
+          results[index] = ractor_result!(ok, index, value)
+          next_index = refill_ractor(ractor, next_index, jobs, active)
         end
         results
       rescue Timeout::Error
@@ -217,11 +264,23 @@ module Master
       rescue StandardError
         nil
       ensure
-        ractor_take(ractor)
+        join_ractor(ractor)
       end
 
-      def ractor_take(ractor)
-        ractor.take
+      def join_ractor(ractor)
+        return ractor.join if ractor.respond_to?(:join)
+
+        ractor.take if ractor.respond_to?(:take)
+      rescue StandardError
+        nil
+      end
+
+      def close_ractor_port(port)
+        return unless port
+        return unless port.respond_to?(:close)
+        return if port.closed?
+
+        port.close
       rescue StandardError
         nil
       end
