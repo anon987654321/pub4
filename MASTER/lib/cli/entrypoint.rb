@@ -44,7 +44,6 @@ if ARGV.first == "--help" || ARGV.first == "-h"
 end
 
 require_relative "../boot/entrypoint"
-require_relative "../ops"
 Master::Boot::Entrypoint.prepare!(root: MASTER)
 
 unless File.file?(CLI)
@@ -61,6 +60,7 @@ elsif ENV["MASTER_INTERNAL_CHILD"] == "1"
 end
 
 require_relative "../master"
+require_relative "../ops"
 
 $MASTER_PROCESS_LOCK = if ENV["MASTER_INTERNAL_CHILD"] == "1"
                          nil
