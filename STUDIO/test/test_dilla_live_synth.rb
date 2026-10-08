@@ -429,7 +429,7 @@ class TestDillaLiveSynth < Minitest::Test
     score.schedule(stage, 0.0)
 
     expected = resolve_pad_chord_symbol("Bbm9").fetch(:hz).map { |hz| (69 + (12 * Math.log2(hz / 440.0))).round }.uniq
-    actual = stage.instance_variable_get(:@voices).first(5).map(&:midi)
+    actual = stage.instance_variable_get(:@voices).first(5).map { |voice| (69 + (12 * Math.log2(voice.hz / 440.0))).round }
     assert_equal expected, actual
   end
 

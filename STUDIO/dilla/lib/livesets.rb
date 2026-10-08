@@ -2994,7 +2994,8 @@ SHOWCASE_MODES = {
   def self.authentic_progression_keys
     return [] unless defined?(VERIFIED_PROGRESSION_SLOTS)
 
-    VERIFIED_PROGRESSION_SLOTS.filter_map do |name, entry|
+    VERIFIED_PROGRESSION_SLOTS.filter_map do |name|
+      entry = ARTIST_VERIFIED_PROGRESSIONS.fetch(name)
       artist = entry[:artist].to_s
       producer = entry[:producer].to_s
       next unless artist == "J Dilla" || producer == "J Dilla" || artist.include?("D'Angelo")
