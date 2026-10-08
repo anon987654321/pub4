@@ -20,15 +20,15 @@ module Master
         sleep_s = ENV["MASTER_AUTOFIX"] == "1" ? wf.dig("autoloop", "scan_file_sleep_s").to_f : 0
         scanner = new(event_bus: bus, file_sleep_s: sleep_s)
         Review::Scan::Law.registry.select(&:auto_build?).each do |klass|
-          scanner.add_rule(Review::Scan::LawFactory.build(klass, root:, agent:, ecology:))
+          scanner.add_law(Review::Scan::LawFactory.build(klass, root:, agent:, ecology:))
         end
         %w[
-          CoChangeCouplingRule RuleCoverageRule RubocopRule ReekRule InterconnectRule
-          YamlDeclarativeRule VetoPatternRule LawBridgeRule SemanticRule AdversarialRule CommentDriftRule AstOmissionRule
-          LibRootDisciplineRule FileSprawlRule PathPurposeRule
+          CoChangeCouplingLaw LawCoverageLaw RubocopLaw ReekLaw InterconnectLaw
+          YamlDeclarativeLaw VetoPatternLaw LawBridgeLaw SemanticLaw AdversarialLaw CommentDriftLaw AstOmissionLaw
+          LibRootDisciplineLaw FileSprawlLaw PathPurposeLaw
         ].each do |name|
           klass = Review::Scan::Rules.const_get(name)
-          scanner.add_rule(Review::Scan::LawFactory.build(klass, root:, agent:, ecology:))
+          scanner.add_law(Review::Scan::LawFactory.build(klass, root:, agent:, ecology:))
         end
         scanner
       end
@@ -44,7 +44,7 @@ module Master
         REQUIRED_DEPTH = :deep
         MAX_VIOLATION_OBJECTS = 100_000
 
-        attr_reader :rules
+        attr_reader :laws
 
         def self.skip_path?(path, root: nil)
           Master::Review::Scan::PathFilter.skip_path?(path, root:)
@@ -58,34 +58,34 @@ module Master
           Master.language_for(path) || File.basename(path).match?(/\Aface\.part\d+\.txt\z/)
         end
 
-        def initialize(rules: [], event_bus: nil, file_sleep_s: 0)
-          @rules = Array(rules)
+        def initialize(laws: [], event_bus: nil, file_sleep_s: 0)
+          @laws = Array(laws)
           @bus = event_bus
           @mutex = Mutex.new
           @file_sleep_s = file_sleep_s.to_f
           @file_processor = Master::Review::Scan::FileProcessor.new(event_bus: @bus)
           @stream_autofixes = []
-          @rule_dispatch = build_rule_dispatch(@rules)
+          @law_dispatch = build_law_dispatch(@laws)
         end
 
         attr_reader :stream_autofixes
 
         def scan(path, depth: :deep, rules: nil)
           validate_depth!(depth)
-          rule_set = rules || active_rules(depth)
-          rule_set = dispatched_rules(path, rule_set) if rules.nil?
-          @file_processor.call(path:, depth:, rules: rule_set)
+          law_set = laws || active_laws(depth)
+          law_set = dispatched_laws(path, law_set) if rules.nil?
+          @file_processor.call(path:, depth:, rules: law_set)
         end
 
         def scan_dir(dir, depth: :deep, glob: SCAN_GLOB, stream: false, autofix: false, autofix_root: nil, rules: nil)
           validate_depth!(depth)
           paths = Dir.glob(File.join(dir, glob)).select { |path| scannable_path?(path, dir) }
-          rule_set = rules || active_rules(depth)
-          reset_scan_progress(paths.size, rules: rule_set) if stream
+          law_set = laws || active_laws(depth)
+          reset_scan_progress(paths.size, rules: law_set) if stream
           unit = stream ? @scan_progress[:unit] : Fiber[:master_unit]
           pairs = Master::Trace::Dmesg.under(unit) do
             parallel_map(paths) do |path, idx|
-              scan_one(dir:, path:, depth:, stream:, index: idx, autofix:, autofix_root:, rules: rule_set)
+              scan_one(dir:, path:, depth:, stream:, index: idx, autofix:, autofix_root:, rules: law_set)
             end
           end
           pairs.concat(cross_file_pairs(dir, paths))
@@ -111,9 +111,9 @@ module Master
           Result.err("scan_since: #{e.message}", category: :infrastructure)
         end
 
-        def add_rule(rule)
-          @rules << rule
-          @rule_dispatch = build_rule_dispatch(@rules)
+        def add_law(law)
+          @laws << law
+          @law_dispatch = build_law_dispatch(@laws)
           self
         end
 
@@ -262,8 +262,8 @@ module Master
           pairs
         end
 
-        def active_rules(_depth)
-          @rules
+        def active_laws(_depth)
+          @laws
         end
 
         # RuleDSL's applies_to scope is already authoritative inside the rule.
@@ -271,19 +271,19 @@ module Master
         # not traverse every Ruby-only rule, and a Ruby file does not traverse
         # the CSS/HTML population. Rules without an explicit scope remain in every
         # bucket. Explicit rule arrays passed by callers keep the old full set.
-        def dispatched_rules(path, rule_set)
-          return rule_set unless rule_set.equal?(@rules)
+        def dispatched_laws(path, law_set)
+          return law_set unless law_set.equal?(@laws)
           language = Master.language_for(path)
-          return rule_set if language.to_s.empty?
+          return law_set if language.to_s.empty?
 
-          @rule_dispatch.fetch(language.to_s, rule_set)
+          @law_dispatch.fetch(language.to_s, law_set)
         end
 
-        def build_rule_dispatch(rules)
+        def build_law_dispatch(laws)
           entries = []
           languages = Master::FILE_LANGUAGE_MAP.values.compact.map(&:to_s).uniq
           languages << "javascript"
-          Array(rules).each do |rule|
+          Array(laws).each do |rule|
             declared = if rule.class.respond_to?(:dsl_langs)
               Array(rule.class.dsl_langs).filter_map { |lang| lang.to_s unless lang.to_s.empty? }
             else
