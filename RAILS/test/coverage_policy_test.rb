@@ -67,7 +67,7 @@ class CoveragePolicyTest < Minitest::Test
     source = File.read(File.join(ROOT, "bin", "premerge"))
 
     assert_includes source, 'group: :coverage'
-    assert_includes source, 'else %i[apps contracts coverage gates]'
+    assert_includes source, 'else %i[apps pwa contracts coverage gates]'
     assert_includes source, 'elsif ARGV.include?("--coverage") then [:coverage]'
     assert_includes source, 'elsif ARGV.include?("--gates") then [:gates]'
   end
@@ -90,4 +90,12 @@ class CoveragePolicyTest < Minitest::Test
     assert_includes source, "enable_coverage :eval"
     assert_includes source, "track_tests"
   end
+  def test_fix_verification_coverage_uses_a_disposable_root
+    source = File.read(File.join(ROOT, "bin", "coverage"))
+    assert_includes source, 'VERIFYING = ENV["MASTER_FIX_VERIFY"] == "1"'
+    assert_includes source, 'Dir.mktmpdir("pub4-coverage-")'
+    assert_includes source, 'ENV.fetch("PUB4_COVERAGE_ROOT", File.join(rails_root, "coverage"))'
+    assert_includes source, 'FileUtils.rm_rf(COVERAGE_ROOT) if VERIFYING'
+  end
+
 end
