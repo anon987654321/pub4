@@ -43,17 +43,17 @@ nothing.
 `path: '../shared'` in each app's Gemfile. It carries models, controllers,
 views, Stimulus controllers, policies and lints that all three apps share.
 Concerns come in through `Shared.concern(:Votable)`, routes through an
-`instance_eval` of `shared/config/routes/social.rb` in each app's `routes.rb`. A
+`instance_eval` of `__shared/config/routes/social.rb` in each app's `routes.rb`. A
 change in `shared/` lands in three apps at once — check all three before
 assuming a fix is local.
 
 **Shared deploys as a sibling, not a subdirectory.** The copy-tree deploy puts
 the tracked app at `/home/<app>/app` and its own copy of the engine at
 `/home/<app>/shared`. Every app vendors a separate copy; syncing to the wrong
-one makes precompile a silent no-op. `RAILS/contracts/studio.rb` resolves the canonical STUDIO media entrypoints from the source or deployed tree; callers do not reach into sibling implementation directories.
+one makes precompile a silent no-op. `MASTER/contracts/studio.rb` resolves the canonical STUDIO media entrypoints from the source or deployed tree; callers do not reach into sibling implementation directories.
 
 **brgen's verticals are mountable engines**, not namespaced controllers:
-`brgen/engines/{marketplace,dating,playlist,takeaway,tv}`. Subdomain constraints
+`brgen_{marketplace,dating,radio/playlist, takeaway, radio/tv}`. Subdomain constraints
 in `brgen/config/routes.rb` via `Brgen::DomainRegistry` map `markedsplass`,
 `dating`, `tv` and the rest onto them. Messenger and the MASTER relay are not
 engines. Tooling that globs `<app>/app/**` misses engine code — four scanners
