@@ -32,7 +32,7 @@ module Operator
 
     def preferred_ruby
       path = File.join(repo_root, ".ruby-version")
-      return if !File.file?(path)
+      return unless File.file?(path)
 
       value = File.read(path).strip
       value.empty? ? nil : Gem::Version.new(value)
@@ -69,4 +69,37 @@ module Operator
       # Swallow's ledger, which also isn't loaded in this module's standalone
       # callers (bin/vps-state, integrity_gate.rb) that never boot the full
       # Master:: namespace. Referencing it here raised NameError and masked
-      # the real (harmless) connection-refused und...[truncated]
+      # the real (harmless) connection-refused underneath it.
+      false
+    end
+
+    def deployed_app_root(app)
+      "/home/#{app}/app"
+    end
+
+    def ruby_label
+      "#{RbConfig.ruby} (#{RUBY_VERSION})"
+    end
+
+    def ruby_mismatch_message
+      return if ruby_version_ok?
+
+      "Ruby #{RUBY_VERSION} detected; MASTER supports Ruby >= 3.3 and < 4.1; preferred .ruby-version is #{preferred_ruby || "unset"}"
+    end
+
+    def next_command_for(mode = self.mode)
+      case mode
+      when :vps_operator
+        "zsh OPENBSD/bin/vps-deploy <app>"
+      when :local_contributor
+        if ruby_version_ok?
+          "OPENBSD/bin/check && cd MASTER && bin/check --profile=contributor"
+        else
+          "MASTER/bin/ruby OPENBSD/bin/check"
+        end
+      else
+        "OPENBSD/bin/check-full"
+      end
+    end
+  end
+end
