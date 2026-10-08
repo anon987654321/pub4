@@ -167,13 +167,13 @@ module Master
           detail: ["/snapshot — write snapshot_MASTER.md, snapshot_RAILS.md, snapshot_OPENBSD.md and snapshot_STUDIO.md at the pub4 root.",
                    "Snapshots are source packs, not runtime state; they are deliberately visible beside the trees they describe."],
         },
-        "rules" => {
+        "laws" => {
           summary: "the declared laws, one line each",
           detail: ["/laws [filter] — id, tier, severity and kind from data/laws.yml.",
                    "bin/operator laws <ID> prints one in full."],
         },
         "why" => {
-          summary: "what a rule says, and where it comes from",
+          summary: "what a law says, and where it comes from",
           detail: ["/why <law|path|scan_rule|anti_pattern|style.key> — Trace::WhyExplainer looks it",
                    "up in the constitution, architecture and path ownership, then asks the model only when nothing matches."],
         },
