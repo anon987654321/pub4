@@ -50,7 +50,7 @@ class TestScanAutofix < Minitest::Test
   # file now, by the same guard every constitutional write passes.
   class RefusingGuard
     def verdict(path:, content:)
-      Master::Review::Scan::WriteGuard::Verdict.new(
+      Master::Fix::WriteGuard::Verdict.new(
         introduced: [{ rule: :NO_GOD_CLASS, line: 1, message: "would introduce #{path}/#{content.size}", severity: :error }],
       )
     end
@@ -61,7 +61,7 @@ class TestScanAutofix < Minitest::Test
       path = File.join(root, "example.rb")
       original = "class Example\nend\n"
       File.write(path, original)
-      autofix = Master::Review::Scan::MechanicalAutofix.new(
+      autofix = Master::Fix::Scan::MechanicalAutofix.new(
         scanner: FakeScanner.new(findings_by_pass: [], rules: [FakeRule.new("FROZEN_LITERAL", true)]),
         root:,
         write_guard: RefusingGuard.new,
@@ -80,7 +80,7 @@ class TestScanAutofix < Minitest::Test
     Dir.mktmpdir do |root|
       path = File.join(root, "example.rb")
       File.write(path, "class Example\nend\n")
-      autofix = Master::Review::Scan::MechanicalAutofix.new(
+      autofix = Master::Fix::Scan::MechanicalAutofix.new(
         scanner: FakeScanner.new(findings_by_pass: [], rules: [FakeRule.new("FROZEN_LITERAL", true)]),
         root:,
       )
@@ -94,9 +94,9 @@ class TestScanAutofix < Minitest::Test
   end
 
   def test_mechanical_autofix_enabled_by_default
-    assert Master::Review::Scan::MechanicalAutofix.enabled?(env: {})
-    assert Master::Review::Scan::MechanicalAutofix.enabled?(env: { "MASTER_SCAN_AUTOFIX" => "1" })
-    refute Master::Review::Scan::MechanicalAutofix.enabled?(env: { "MASTER_SCAN_AUTOFIX" => "0" })
+    assert Master::Fix::Scan::MechanicalAutofix.enabled?(env: {})
+    assert Master::Fix::Scan::MechanicalAutofix.enabled?(env: { "MASTER_SCAN_AUTOFIX" => "1" })
+    refute Master::Fix::Scan::MechanicalAutofix.enabled?(env: { "MASTER_SCAN_AUTOFIX" => "0" })
   end
 
   def test_observe_applies_ast_fixer_then_rescans
