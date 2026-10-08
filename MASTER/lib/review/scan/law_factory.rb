@@ -25,7 +25,7 @@ module Master
           else klass.new(root:)
           end
         rescue ArgumentError => e
-          # This rescue exists for one shape: a rule whose initialize does not
+          # This rescue exists for one shape: a law whose initialize does not
           # take the keywords offered. Law's prove! also raises ArgumentError,
           # and retrying bare here turned "a fixture stopped flagging" into
           # half the law silently missing — LawBridgeLaw.new re-ran with
@@ -43,7 +43,7 @@ module Master
         end
       end
 
-      LawFactory = LawFactory
+      
     end
   end
 end
