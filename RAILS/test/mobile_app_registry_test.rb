@@ -2,8 +2,8 @@
 
 require "json"
 require "minitest/autorun"
-require_relative "../shared/lib/shared/mobile_app_registry"
-require_relative "../shared/lib/shared/mobile_ios_project"
+require_relative "../__shared/lib/shared/mobile_app_registry"
+require_relative "../__shared/lib/shared/mobile_ios_project"
 
 class MobileAppRegistryTest < Minitest::Test
   REGISTRY = Shared::MobileAppRegistry
@@ -47,10 +47,10 @@ class MobileAppRegistryTest < Minitest::Test
 
     assert_equal REGISTRY.all.map { |app| app.key.to_s.split("_").map(&:capitalize).join },
                  spec.fetch("configs").keys
-    assert_equal [{ "path" => "../Pub4MobileApp.swift" }], spec.fetch("targets").fetch("Pub4Mobile").fetch("sources")
+    assert_equal [{ "path" => "../../../../MASTER/tools/rails/native/Pub4MobileApp.swift" }], spec.fetch("targets").fetch("Pub4Mobile").fetch("sources")
     settings = spec.fetch("targets").fetch("Pub4Mobile").fetch("settings").fetch("base")
-    assert_equal "../Info.plist", settings.fetch("INFOPLIST_FILE")
-    assert_equal "../Pub4Mobile.entitlements", settings.fetch("CODE_SIGN_ENTITLEMENTS")
+    assert_equal "../../../../MASTER/tools/rails/native/Info.plist", settings.fetch("INFOPLIST_FILE")
+    assert_equal "../../../../MASTER/tools/rails/native/Pub4Mobile.entitlements", settings.fetch("CODE_SIGN_ENTITLEMENTS")
 
     REGISTRY.all.each do |app|
       config = spec.fetch("targets").fetch("Pub4Mobile").fetch("settings").fetch("configs").fetch(
