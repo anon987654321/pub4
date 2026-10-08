@@ -79,7 +79,7 @@ class TestScanEngines < Minitest::Test
   def test_path_filter_skips_generated_and_vendored_paths_from_either_root
     root = "/repo"
 
-    assert PF.skip_path?("/repo/MASTER/web/public/face.runtime.js", root:)
+    assert PF.skip_path?("/repo/RAILS/master_web/public/face.runtime.js", root:)
     assert PF.skip_path?("/repo/RAILS/brgen/db/schema.rb", root:)
     assert PF.skip_path?("/repo/RAILS/brgen/app/assets/builds/application.css", root:)
     assert PF.skip_path?("/repo/RAILS/__shared/public/swiper-bundle.min.css", root:)
