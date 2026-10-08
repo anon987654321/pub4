@@ -9,7 +9,7 @@ require_relative "../io/exec"
 #
 #   law       the 122 rules in law/ with a lexical detector, applied to every
 #             tracked source file in the four governed trees
-#   registry  the 145 rules the RuleDSL registry builds, run through the
+#   registry  the 145 rules the LawDSL registry builds, run through the
 #             scanner itself and kept at error severity
 #
 # The second row arrived 2026-09-06. The first had been labelled "what our own
@@ -243,7 +243,7 @@ module Operator
     def scan_registry
       law # loads Master, as scan_corpus does
       scanner = Master::Fix::Scanner.build(root: MASTER_DIR)
-      own = scanner.rules.select { |rule| shipped?(rule) }.map { |rule| rule.id.to_s }
+      own = scanner.laws.select { |rule| shipped?(rule) }.map { |rule| rule.id.to_s }
       @registry_rule_count = own.size
       corpus = files.reject { |path| Master::Fix::Scanner.skip_path?(path, root: ROOT) }
       scanner.findings(corpus, depth: :deep).filter_map do |hit|
@@ -255,7 +255,7 @@ module Operator
 
     # `Rule.inherited` registers every subclass in the running process, so a
     # suite that defines one joins the population it is measuring — the trap
-    # rule_deps.ungraphed hit first, reading two different numbers depending on
+    # law_deps.ungraphed hit first, reading two different numbers depending on
     # whether a test had defined a rule. LawRegistryAudit already owns the
     # question, so this asks it rather than carrying a second answer.
     def shipped?(rule)
