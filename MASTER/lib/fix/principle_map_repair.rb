@@ -8,7 +8,7 @@ module Master
     # bin/doctor --fix's config self-repair (OpenClaw's doctor --fix
     # pattern): known, safe-to-automate drift in principle_map.yml.
     #
-    # In scope: rule_ids pointing at a RuleDSL id that no longer exists
+    # In scope: rule_ids pointing at a LawDSL id that no longer exists
     # (renamed rule, deleted rule, typo). Found and fixed by hand twice
     # this session before this existed -- a dangling reference is a
     # broken pointer, not real content, so removing it can't lose
@@ -18,7 +18,7 @@ module Master
     # explains before rewriting rather than guessing.
     module PrincipleMapRepair
       # Rule.registry is empty until something references
-      # Master::Review::Scan::RuleDSL (Zeitwerk-autoload trigger -- a bare
+      # Master::Review::Scan::LawDSL (Zeitwerk-autoload trigger -- a bare
       # `require "master"` alone leaves it at 0). Confirmed by hand while
       # building this: without the trigger in #dangling_rule_ids, every
       # rule_id in the file looks "dangling" against an empty registry
@@ -33,7 +33,7 @@ module Master
       # Returns [[principle_id, rule_id], ...] for every dangling
       # reference, without modifying anything.
       def dangling_rule_ids(root:)
-        Master::Review::Scan::RuleDSL
+        Master::Review::Scan::LawDSL
         registry = Master::Review::Scan::Rule.registry
         return [] if registry.size < MIN_REGISTRY_SIZE
 
