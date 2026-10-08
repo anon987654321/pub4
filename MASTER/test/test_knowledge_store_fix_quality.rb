@@ -13,11 +13,11 @@ class TestKnowledgeStoreFixQuality < Minitest::Test
   def test_skipped_outcomes_are_recorded_but_excluded_from_quality
     Dir.mktmpdir do |root|
       store = Master::Ground::KnowledgeStore.new(root:)
-      store.record(rule: "TEST_RULE", file_type: "rb", outcome: "fixed")
-      3.times { store.record(rule: "TEST_RULE", file_type: "rb", outcome: "skipped") }
+      store.record(law: "TEST_RULE", file_type: "rb", outcome: "fixed")
+      3.times { store.record(law: "TEST_RULE", file_type: "rb", outcome: "skipped") }
 
       # 1/1 real attempts succeeded -- skipped attempts must not dilute this.
-      assert_in_delta 1.0, store.fix_quality(rule: "TEST_RULE"), 0.001
+      assert_in_delta 1.0, store.fix_quality(law: "TEST_RULE"), 0.001
     ensure
       store&.close
     end
@@ -26,9 +26,9 @@ class TestKnowledgeStoreFixQuality < Minitest::Test
   def test_skipped_only_history_returns_neutral_default
     Dir.mktmpdir do |root|
       store = Master::Ground::KnowledgeStore.new(root:)
-      3.times { store.record(rule: "TEST_RULE", file_type: "rb", outcome: "skipped") }
+      3.times { store.record(law: "TEST_RULE", file_type: "rb", outcome: "skipped") }
 
-      assert_in_delta 0.5, store.fix_quality(rule: "TEST_RULE"), 0.001
+      assert_in_delta 0.5, store.fix_quality(law: "TEST_RULE"), 0.001
     ensure
       store&.close
     end
@@ -37,10 +37,10 @@ class TestKnowledgeStoreFixQuality < Minitest::Test
   def test_fixed_and_stuck_mix_computes_real_quality
     Dir.mktmpdir do |root|
       store = Master::Ground::KnowledgeStore.new(root:)
-      2.times { store.record(rule: "TEST_RULE", file_type: "rb", outcome: "fixed") }
-      2.times { store.record(rule: "TEST_RULE", file_type: "rb", outcome: "stuck") }
+      2.times { store.record(law: "TEST_RULE", file_type: "rb", outcome: "fixed") }
+      2.times { store.record(law: "TEST_RULE", file_type: "rb", outcome: "stuck") }
 
-      assert_in_delta 0.5, store.fix_quality(rule: "TEST_RULE"), 0.001
+      assert_in_delta 0.5, store.fix_quality(law: "TEST_RULE"), 0.001
     ensure
       store&.close
     end
@@ -67,9 +67,9 @@ class TestKnowledgeStoreFixQuality < Minitest::Test
       old_db.close
 
       store = Master::Ground::KnowledgeStore.new(root:)
-      store.record(rule: "OLD_RULE", file_type: "rb", outcome: "skipped")
+      store.record(law: "OLD_RULE", file_type: "rb", outcome: "skipped")
 
-      assert_in_delta 1.0, store.fix_quality(rule: "OLD_RULE"), 0.001
+      assert_in_delta 1.0, store.fix_quality(law: "OLD_RULE"), 0.001
     ensure
       store&.close
     end
