@@ -42,11 +42,11 @@ class TestFixHygiene < Minitest::Test
   def test_hygiene_laws_are_loaded_and_prove_their_polarity
     Law.load_all(File.join(Master::ROOT, "law"))
 
-    assert Law.rules.key?(:NO_INFINITY_TO_I)
-    assert Law.rules.key?(:NO_OVERESCAPED_NONCAPTURING)
-    assert Law.rules.fetch(:NO_INFINITY_TO_I).scan("Float::INFINITY.to_i").any?
-    assert_empty Law.rules.fetch(:NO_INFINITY_TO_I).scan("value.to_i")
-    assert Law.rules.fetch(:NO_OVERESCAPED_NONCAPTURING).scan('body.scan(/phantom:\\\\(?:detected|halt|recovery)/)').any?
+    assert Law.definitions.key?(:NO_INFINITY_TO_I)
+    assert Law.definitions.key?(:NO_OVERESCAPED_NONCAPTURING)
+    assert Law.definitions.fetch(:NO_INFINITY_TO_I).scan("Float::INFINITY.to_i").any?
+    assert_empty Law.definitions.fetch(:NO_INFINITY_TO_I).scan("value.to_i")
+    assert Law.definitions.fetch(:NO_OVERESCAPED_NONCAPTURING).scan('body.scan(/phantom:\\\\(?:detected|halt|recovery)/)').any?
   end
 
   def test_hygiene_prompt_mode_points_at_the_canonical_data
