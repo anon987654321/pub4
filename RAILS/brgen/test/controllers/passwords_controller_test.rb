@@ -4,7 +4,7 @@ require "test_helper"
 
 # passwords/new and passwords/edit were byte-identical in brgen and bsdports, so
 # app_duplication_test asked for them to be extracted; they now live only in
-# RAILS/shared/app/views/passwords. Neither app had a test that rendered them,
+# RAILS/__shared/app/views/passwords. Neither app had a test that rendered them,
 # which meant nothing would have caught the extraction resolving to no template
 # at all. This is that test.
 class PasswordsControllerTest < ActionDispatch::IntegrationTest
