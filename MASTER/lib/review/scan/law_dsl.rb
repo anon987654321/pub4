@@ -19,7 +19,7 @@ module Master
         # keeps matching a pattern adjacent to the law it enforces. TIME_ZONE_UNSAFE
         # matched every Time.now when the law is about Time.zone, so it reported 13
         # rewrites of Time.now.utc and Time.now.to_i that would have changed no
-        # behaviour. A rule that carries the case it must NOT fire on cannot drift
+        # behaviour. A law that carries the case it must NOT fire on cannot drift
         # that way in silence.
         #
         #   LawDSL.law :TIME_ZONE_UNSAFE, ...,
