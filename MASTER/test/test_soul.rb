@@ -27,7 +27,7 @@ class TestSoul < Minitest::Test
       refute absolute.key?(key), "soul must not hold rules; law/ is the registry"
     end
 
-    rules = Master::Ground::Rules.new.rules
+    rules = Master::Ground::Laws.new.rules
     refute_empty rules, "law/ must load"
     missing = rules.keys.reject { |id| prompt.include?(id) }
     assert_empty missing, "rules absent from the prompt: #{missing.first(5).join(', ')}"
