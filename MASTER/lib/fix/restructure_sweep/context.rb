@@ -200,10 +200,10 @@ module Master
         end
         def self.structural_rules(target)
           scan = Master::Review::Scan
-          scan::RuleDSL
-          js = scan::Rule.registry.find { |klass| klass.name.nil? && klass.new.id == "JS_MODULE_SIZE" }
-          [scan::Rules::GodClassRule.new, scan::Rules::SmallFilesRule.new,
-           scan::Rules::FileSprawlRule.new(root: target), js&.new].compact
+          scan::LawDSL
+          js = scan::Law.registry.find { |klass| klass.name.nil? && klass.new.id == "JS_MODULE_SIZE" }
+          [scan::Laws::GodClassRule.new, scan::Laws::SmallFilesRule.new,
+           scan::Laws::FileSprawlRule.new(root: target), js&.new].compact
         end
 
         def self.repository_files(root)
