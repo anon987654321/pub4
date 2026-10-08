@@ -52,6 +52,124 @@ require_relative "composer_mind"
 require_relative "scene"
 require_relative "musical_film"
 
+module DillaMusicalGrammar
+  # Original harmonic material: these are compositional cells, not transcriptions.
+  # Roots are semitone offsets from the chosen tonic; quality names use the same
+  # parser as DillaImprovisation.
+  CURATED_PROGRESSIONS = {
+    velvet_descent: [
+      [0, "m9"], [10, "13"], [8, "maj9"], [5, "m9"],
+      [3, "maj7"], [8, "m9"], [7, "7alt"], [0, "m9"]
+    ],
+    midnight_turnaround: [
+      [0, "m9"], [5, "m11"], [10, "13"], [3, "maj9"],
+      [8, "m9"], [1, "maj7#11"], [7, "7alt"], [0, "m9"]
+    ],
+    dorian_lullaby: [
+      [0, "m9"], [10, "13"], [3, "maj9"], [5, "m11"],
+      [8, "maj9"], [1, "maj7#11"], [7, "7alt"], [0, "m9"]
+    ],
+    chromatic_soul_rise: [
+      [0, "m9"], [11, "maj9"], [10, "m9"], [9, "maj9"],
+      [8, "m9"], [7, "13"], [5, "m11"], [0, "m9"]
+    ],
+    suspended_blue: [
+      [0, "m11"], [5, "sus9"], [10, "13sus"], [3, "maj7#11"],
+      [8, "m9"], [6, "sus2"], [7, "7alt"], [0, "m11"]
+    ]
+  }.freeze
+
+  MOTIFS = [
+    [0, 2, 1, 3, 5, 4],
+    [0, 1, 3, 2, 4, 2],
+    [0, 2, 4, 3, 1, 2],
+    [0, -1, 1, 3, 2, 0]
+  ].freeze
+
+  def self.curated_name(rng)
+    CURATED_PROGRESSIONS.keys.sample(random: rng)
+  end
+
+  def self.motif_target(scale_pcs:, chord_pcs:, range:, previous:, step:, tension: 0.35)
+    return previous if scale_pcs.empty?
+    low, high = range
+    pool = (low..high).select { |m| scale_pcs.include?(m % 12) }
+    return previous if pool.empty?
+
+    motif = MOTIFS[(step / 6) % MOTIFS.length]
+    slot = step % motif.length
+    degree = motif[slot]
+    phrase = (step / motif.length) % 4
+
+    degree =
+      case phrase
+      when 1 then motif.reverse[slot]
+      when 2 then -motif[slot]
+      when 3 then motif[(slot + 2) % motif.length]
+      else degree
+      end
+
+    base_index = (degree % scale_pcs.length)
+    target_pc = scale_pcs[base_index]
+    candidates = pool.select { |m| m % 12 == target_pc }
+    candidates = pool if candidates.empty?
+
+    chord_candidates = candidates.select { |m| chord_pcs.include?(m % 12) }
+    candidates = chord_candidates unless chord_candidates.empty? || ((slot + step) % 5).between?(1, 3) && tension > 0.62
+
+    chosen = candidates.min_by do |m|
+      distance = (m - previous).abs
+      leap = distance > 7 ? (distance - 7) * 1.8 : 0
+      register = ((m - ((low + high) / 2.0)).abs * 0.08)
+      distance + leap + register
+    end
+
+    chosen || previous
+  end
+
+  def self.fugue_subject(scale_pcs, chord_pcs, range:)
+    low, high = range
+    pool = (low..high).select { |m| scale_pcs.include?(m % 12) }
+    return [low] if pool.empty?
+
+    anchor = pool.select { |m| chord_pcs.include?(m % 12) }.first || pool.first
+    intervals = [0, 2, -1, 2, 2, -3, 1, -2]
+    notes = [anchor]
+    intervals.drop(1).each do |interval|
+      target = notes.last + interval
+      target += 12 while target < low
+      target -= 12 while target > high
+      notes << pool.min_by { |m| (m - target).abs }
+    end
+    notes
+  end
+
+  def self.tonal_answer(subject, scale_pcs:, range:)
+    low, high = range
+    pool = (low..high).select { |m| scale_pcs.include?(m % 12) }
+    return subject if pool.empty?
+
+    answer = subject.map { |m| m + 7 }
+    answer.map do |target|
+      target += 12 while target < low
+      target -= 12 while target > high
+      pool.min_by { |m| (m - target).abs }
+    end
+  end
+
+  def self.parallel_safe?(a, b)
+    a.zip(b).each_cons(2).all? do |voices|
+      first_a, first_b = voices[0]
+      second_a, second_b = voices[1]
+      first_interval = ((first_b - first_a).abs % 12)
+      second_interval = ((second_b - second_a).abs % 12)
+      motion_a = second_a - first_a
+      motion_b = second_b - first_b
+      !(motion_a * motion_b > 0 && [0, 7].include?(first_interval) && [0, 7].include?(second_interval))
+    end
+  end
+end
+
 module Livesets
   D = File.expand_path("..", __dir__)
   # Homebrew's build where it is installed, whatever PATH resolves otherwise.
