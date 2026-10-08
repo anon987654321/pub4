@@ -122,6 +122,33 @@
   // nodes occupy. Height over line-height cannot answer this for a control,
   // because padding and min-height are most of a button's box, and a 44px
   // button around one 20px line divides out as two.
+  const textPaintRect = (el) => {
+    const boxes = [];
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    while (walker.nextNode()) {
+      const node = walker.currentNode;
+      if (!node.textContent.trim()) continue;
+      const range = document.createRange();
+      try { range.selectNodeContents(node); } catch (_) { continue; }
+      for (const box of range.getClientRects()) {
+        if (box.width > 0.5 && box.height > 0.5) boxes.push(box);
+      }
+    }
+    if (!boxes.length) return null;
+    const left = Math.min(...boxes.map(b => b.left));
+    const top = Math.min(...boxes.map(b => b.top));
+    const right = Math.max(...boxes.map(b => b.right));
+    const bottom = Math.max(...boxes.map(b => b.bottom));
+    return {
+      x: Math.round(left * 100) / 100,
+      y: Math.round(top * 100) / 100,
+      w: Math.round((right - left) * 100) / 100,
+      h: Math.round((bottom - top) * 100) / 100,
+      cx: Math.round((left + right) * 50) / 100,
+      cy: Math.round((top + bottom) * 50) / 100
+    };
+  };
+
   const textLines = (el, fontSize) => {
     const tops = [];
     el.childNodes.forEach(n => {
@@ -292,6 +319,10 @@
       display: cs.display,
       text_align: cs.textAlign,
       text_lines: ownText ? textLines(el, parseFloat(cs.fontSize)) : 0,
+      // Browser text selection bounds are a perceptual proxy for the painted
+      // text, rather than the containing element box. They let rendered gates
+      // detect optical centering without pretending CSS boxes are glyph ink.
+      text_rect: ownText ? textPaintRect(el) : null,
       // Needed to tell a text field from a submit button: both are
       // <input>, only one takes a caret, and only one triggers the iOS
       // focus zoom. The selector alone cannot say which.
