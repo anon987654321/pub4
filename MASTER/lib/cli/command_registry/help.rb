@@ -168,9 +168,9 @@ module Master
                    "Snapshots are source packs, not runtime state; they are deliberately visible beside the trees they describe."],
         },
         "rules" => {
-          summary: "the declared rules, one line each",
-          detail: ["/rules [filter] — id, tier, severity and kind from data/laws.yml.",
-                   "bin/operator rules <ID> prints one in full."],
+          summary: "the declared laws, one line each",
+          detail: ["/laws [filter] — id, tier, severity and kind from data/laws.yml.",
+                   "bin/operator laws <ID> prints one in full."],
         },
         "why" => {
           summary: "what a rule says, and where it comes from",
@@ -257,7 +257,7 @@ module Master
           "          /wake /review /critique /fix /face /wishlist /explain /prove",
           "          /session /clear /undo /snapshot",
           "          /android /ios /orders",
-          "          /soul /rules /why /plugin /help /exit /quit",
+          "          /soul /laws /why /plugin /help /exit /quit",
           "input:    !cmd governed shell, << multiline, /help X details",
           "write:    /fix is the write path; everything else is read, route or chat",
         ].join("\n")
