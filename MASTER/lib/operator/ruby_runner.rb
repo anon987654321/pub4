@@ -30,7 +30,8 @@ module Operator
       path = openbsd_path("bundle", root:)
       return path if path
 
-      command_path("bundle")
+      path = command_path("bundle")
+      path.empty? ? "bundle" : path
     end
 
     def best_available_ruby(root: Environment.repo_root)
