@@ -113,7 +113,7 @@ module Master
 
       def valid_anchor(value)
         path, line = value.to_s.split(":", 2)
-        return unless line.to_s.match?(/Ad+z/)
+        return unless line.to_s.match?(/\A\d+\z/)
         absolute = File.expand_path(path.to_s, @root)
         return unless absolute.start_with?("#{@root}#{File::SEPARATOR}")
         return unless File.file?(absolute)
