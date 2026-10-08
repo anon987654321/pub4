@@ -17,14 +17,14 @@ module Master
           def initialize(root: Master::ROOT)
             super()
             @root = root
-            law_root = if File.file?(File.join(root, "law", "law.rb"))
+            law_root = if File.file?(File.join(root, "law", "definition.rb"))
               root
-            elsif File.file?(File.join(root, "MASTER", "law", "law.rb"))
+            elsif File.file?(File.join(root, "MASTER", "law", "definition.rb"))
               File.join(root, "MASTER")
             else
               Master::ROOT
             end
-            Law.load_all(File.join(law_root, "law")) if Law.definitions.empty?
+            ::Law.load_all(File.join(law_root, "law")) if ::Law.definitions.empty?
           end
 
           def check(code, path:)
@@ -33,11 +33,11 @@ module Master
             # runs Law.conduct at the one read site, so every rule — this
             # bridge and the registry classes alike — sees fixtures and
             # detectors as declarations, not conduct.
-            Law.definitions.each_value.flat_map do |law|
-              next [] unless rule.enforceable?
-              next [] unless rule.applies?(path, lang)
+            ::Law.definitions.each_value.flat_map do |law|
+              next [] unless law.enforceable?
+              next [] unless law.applies?(path, lang)
 
-              rule.scan(code, file: path).map do |hit|
+              law.scan(code, file: path).map do |hit|
                 Finding.build(
                   # The id unchanged, not downcased. Downcasing made every
                   # law-emitted finding a stranger to its own id: violation
@@ -45,11 +45,11 @@ module Master
                   # received unbounded_retry, and one line could carry two
                   # findings that differed only by case while a registry twin
                   # lived. One id, whatever implements it.
-                  law: rule.id.to_s,
-                  message: "#{rule.id}: #{rule.fix}",
+                  law: law.id.to_s,
+                  message: "#{law.id}: #{law.fix}",
                   line: hit.line,
-                  severity: severity_for(rule.severity),
-                  tags: [rule.id.to_s],
+                  severity: severity_for(law.severity),
+                  tags: [law.id.to_s],
                 )
               end
             end
