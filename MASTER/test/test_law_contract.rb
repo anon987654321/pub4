@@ -68,7 +68,7 @@ class TestLawContract < Minitest::Test
   def test_contract_has_stable_machine_readable_shape
     data = JSON.parse(Law::Contract.render)
 
-    assert_equal 1, data.fetch("contract_version")
+    assert_equal 2, data.fetch("contract_version")
     assert_match(/\A[0-9a-f]{64}\z/, data.fetch("law_digest"))
     assert_equal Law::Contract::PROTOCOL, data.fetch("protocol")
     assert data.fetch("law_policy").fetch("lifecycle").key?("states")
@@ -99,6 +99,30 @@ class TestLawContract < Minitest::Test
     refute_equal before, Law::Contract.digest
   ensure
     Master.define_singleton_method(:law, original) if original
+  end
+
+  def test_digest_covers_the_canonical_law_map
+    before = Law::Contract.digest
+    original = Master.method(:law)
+    Master.define_singleton_method(:law) do |section, root: Master::ROOT|
+      value = original.call(section, root:)
+      section.to_s == "law_map" ? value.merge("_probe" => "changed") : value
+    end
+
+    refute_equal before, Law::Contract.digest
+  ensure
+    Master.define_singleton_method(:law, original) if original
+  end
+
+  def test_contract_exposes_the_governing_law_roots
+    data = JSON.parse(Law::Contract.render)
+    roots = data.fetch("law_source").fetch("governing_laws")
+
+    assert_equal %w[
+      CAPABILITY_STATUS_MUST_BE_TRUTHFUL ROBUSTNESS SINGULARITY LINEARITY
+      PROXIMITY ABSTRACTION DENSITY RENDERED_VALUES
+    ], roots.map { |entry| entry.fetch("id") }
+    assert_match(/\A[0-9a-f]{64}\z/, data.fetch("law_source").fetch("law_map_digest"))
   end
 
   def test_digest_changes_with_the_executable_law_set
