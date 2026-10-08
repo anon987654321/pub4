@@ -39,7 +39,7 @@ module Master
 
       def initialize(root: Master::ROOT, scanner: nil)
         @root = File.expand_path(root)
-        @scanner = scanner || Master::Review::Scan::InfraHelpers.build_scanner(root: @root)
+        @scanner = scanner || Master::Fix::Scanner.build(root: @root)
       end
 
       def quick = run(severity_filter: QUICK_SEVERITIES)
