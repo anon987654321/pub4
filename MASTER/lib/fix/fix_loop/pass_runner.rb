@@ -11,6 +11,7 @@ require_relative "pass_runner/stagnation_detection"
 require_relative "pass_runner/evidence_stage"
 require_relative "pass_runner/stream_stage"
 require_relative "structural_stage"
+require_relative "../scan_phase"
 require_relative "../transaction"
 require_relative "../resource_budget"
 require_relative "../wishlist"
@@ -43,6 +44,7 @@ module Master
           @resource_budget = ResourceBudget.new(root:)
           @agent = agent
           @scanner = scanner
+          @scan_phase = ScanPhase.new(scanner:, root:, bus:)
           @preflight = preflight || Preflight.new(root:, bus:)
           @learnings = learnings
           @preamble = preamble
@@ -66,7 +68,7 @@ module Master
           @discipline = discipline || ConvergenceDiscipline.new(root: @root, bus: @bus)
           @ground_truth_failures = 0
           emit_coverage = lambda do |target, pass|
-            semantic = @scanner.respond_to?(:semantic_full?) && @scanner.semantic_full? ? "full" : "sampled clean-files"
+            semantic = @scan_phase.semantic_full? ? "full" : "sampled clean-files"
             abstract = @council ? "bounded clean-streak review" : "unavailable"
             visual = @visual_pass&.applicable?(target) ? "rendered" : "not-applicable"
             opportunity = @opportunity_pass&.applicable?(target) ? "bounded" : "not-applicable"
@@ -91,7 +93,7 @@ module Master
         end
 
         def full_semantic!
-          @scanner.full_semantic! if @scanner.respond_to?(:full_semantic!)
+          @scan_phase.full_semantic!
           self
         end
 
@@ -105,7 +107,7 @@ module Master
           preflight = @preflight.findings([path])
           return preflight.map { |finding| Violation.from_finding(finding, file: path.delete_prefix("#{@root}/")) } if preflight.any?
 
-          result = Master::Result.wrap(@scanner.scan(path))
+          result = @scan_phase.call(path)
           return skip_unreadable(path, result) if !result.ok? && result.category == :validation
           raise "fix scan failed for #{path}: #{result.message}" unless result.ok?
 
