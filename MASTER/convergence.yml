@@ -112,7 +112,7 @@ workstreams:
   - id: moderation_governance
     state: partial
     title: Moderation evidence, appeals and audit
-    implementation: RAILS/shared
+    implementation: RAILS/__shared
     proof: Application workflow proof
   - id: recovery
     state: evidence
