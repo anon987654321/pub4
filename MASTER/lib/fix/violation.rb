@@ -1,3 +1,4 @@
+require "digest"
 # frozen_string_literal: true
 
 module Master
@@ -19,6 +20,10 @@ module Master
           reversibility: data[:reversibility] || data["reversibility"],
           blast_radius: data[:blast_radius] || data["blast_radius"],
         )
+      end
+
+      def evidence_key
+        Digest::SHA256.hexdigest([law, file, line, fingerprint, message].map(&:to_s).join("\0"))[0, 24]
       end
 
       def [](key)
