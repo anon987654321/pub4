@@ -240,14 +240,14 @@ module Master
       def preview(target = @root)
         files = @file_collector.collect(target)
         violations = @pass_runner.violations(files)
-        by_rule = violations.group_by { |v| v[:rule].to_s }.transform_values(&:size)
+        by_law = violations.group_by { |v| v[:law].to_s }.transform_values(&:size)
         by_file = violations.group_by { |v| v[:file].to_s }.transform_values(&:size)
         structure = @sweeps.filter_map do |sweep|
           sweep.preview(target:, run_id: "preview") if sweep.respond_to?(:preview)
         end.flatten
         Result.ok(
           total: violations.size,
-          rules: by_rule.sort_by { |_, n| -n }.first(10).to_h,
+          laws: by_law.sort_by { |_, n| -n }.first(10).to_h,
           files: by_file.sort_by { |_, n| -n }.first(10).to_h,
           structure:,
           transformation_order: @transformation_plan.operations.map(&:name),
