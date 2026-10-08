@@ -36,7 +36,12 @@ class SharedTopologyContractTest < Minitest::Test
     end
 
     assert_empty hits.sort,
-                 "retired RAILS/shared topology still referenced:  #{hits.join("  ")}Move filesystem references to RAILS/__shared; keep retired-path detectors in their explicit allowlist."
+                 <<~MESSAGE
+                   retired RAILS/shared topology still referenced:
+                     #{hits.join("
+  ")}
+                   Move filesystem references to RAILS/__shared; keep retired-path detectors in their explicit allowlist.
+                 MESSAGE
   end
 
   def test_the_canonical_shared_tree_exists
