@@ -270,7 +270,7 @@ module Master
         @bus&.publish(
           "fix_loop:restructure",
           path: relative(problem.files.first),
-          rule: problem.rules.join(","),
+          law: problem.laws.join(","),
           laws: problem.laws,
           problem_id: problem.id,
           operation:,
