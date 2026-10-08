@@ -63,12 +63,12 @@ module Master
             next if in_progress?(p)
             next unless rate_ok?
             @mtime_map[p] = latest_mtime(p)
-            run_rules_on(p)
+            run_laws_on(p)
           end
         end
       end
 
-      def run_rules_on(path)
+      def run_laws_on(path)
         return unless File.exist?(path)
         mark_in_progress(path) do
           if @fix_loop&.background_alive?
@@ -84,9 +84,9 @@ module Master
       end
 
       def run_law_loop_on(path)
-        applicable = @laws.select { |r| r.respond_to?(:applies_to?) ? r.applies_to?(path) : true }
-        applicable.each do |rule|
-          rl = LawLoop.new(law:, agent: @agent, scanner: @scanner, root: @root, bus: @bus, learnings: @learnings)
+        applicable = @laws.select { |r| law.respond_to?(:applies_to?) ? law.applies_to?(path) : true }
+        applicable.each do |law|
+          rl = LawLoop.new(law: agent: @agent, scanner: @scanner, root: @root, bus: @bus, learnings: @learnings)
           result = rl.run_once([path])
           @bus&.publish("watch_loop:file_pass", file: path, law: law.id, **result)
         end
