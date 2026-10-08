@@ -17,7 +17,7 @@ require "set"
 require "json"
 
 module Operator
-  module RuleReach
+  module LawReach
     MASTER_DIR = File.expand_path("../..", __dir__)
     module_function
 
@@ -109,5 +109,5 @@ module Operator
 end
 
 if $PROGRAM_NAME == __FILE__
-  exit Operator::RuleReach.run(json: ARGV.include?("--json"))
+  exit Operator::LawReach.run(json: ARGV.include?("--json"))
 end
