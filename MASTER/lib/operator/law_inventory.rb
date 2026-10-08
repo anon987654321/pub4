@@ -20,15 +20,15 @@ module Operator
     module_function
 
     def all(deep: false)
-      law_rules = load_law
+      law_laws = load_law
       registry = load_registry
       catalogue = catalogue_rows
       councils = council_rows
       deps = rule_dependencies
 
-      ids = (catalogue.keys | law_rules.keys | registry.keys).sort
+      ids = (catalogue.keys | law_laws.keys | registry.keys).sort
       ids.to_h do |id|
-        rule = law_rules[id]
+        rule = law_laws[id]
         scan = registry[id]
         row = catalogue[id] || {}
         {
@@ -104,7 +104,7 @@ module Operator
         {
           persona: persona["name"].to_s,
           axes:,
-          rules: matches.sort
+          laws: matches.sort
         }
       end
     end
@@ -112,10 +112,10 @@ module Operator
     def render(id:, deep: false, json: false)
       row = id ? (deep ? health(id) : one(id)) : nil
       return JSON.pretty_generate(row) if json
-      return "rule: #{id}: not found" unless row
+      return "law: #{id}: not found" unless row
 
       lines = []
-      lines << "rule: #{row[:id]}"
+      lines << "law: #{row[:id]}"
       lines << "  name: #{row[:name]}" if row[:name]
       lines << "  severity: #{row[:severity]}" if row[:severity]
       lines << "  mode: #{row[:mode]}" if row[:mode]
@@ -163,7 +163,7 @@ module Operator
         value.each { |row| puts "law:twin #{row[:id]} #{row[:twin][:kind]}" }
         value.empty? ? "law:twin: none" : nil
       when :matrix
-        value.each { |row| puts "law:matrix #{row[:persona]} axes=#{row[:axes].join(",")} rules=#{row[:rules].join(",")}" }
+        value.each { |row| puts "law:matrix #{row[:persona]} axes=#{row[:axes].join(",")} laws=#{row[:laws].join(",")}" }
         nil
       end
     end
@@ -179,7 +179,7 @@ module Operator
       require "fix/scanner"
       ENV["MASTER_SCAN_DETERMINISTIC"] = "1"
       scanner = Master::Fix::Scanner.build(root: MASTER, agent: nil)
-      scanner.rules.to_h { |rule| [rule.id.to_s.downcase, rule] }
+      scanner.laws.to_h { |rule| [rule.id.to_s.downcase, rule] }
     end
 
     def catalogue_rows
@@ -257,7 +257,7 @@ module Operator
         File.foreach(file) do |line|
           payload = JSON.parse(line)
           next unless payload.is_a?(Hash)
-          id = payload["rule"] || payload["rule_id"]
+          id = payload["rule"] || payload["law_id"]
           ms = payload["cost_ms"] || payload["duration_ms"] || payload.dig("cost", "latency_ms")
           next unless id && ms
 
@@ -290,7 +290,7 @@ module Operator
     end
 
     def history(id)
-      output, status = Master::Io::Exec.capture2("git", "-C", ROOT, "log", "-n", "5", "--format=%h %cs %s", "--", "MASTER/law", "MASTER/data/laws.yml", "MASTER/lib/review/scan/rules")
+      output, status = Master::Io::Exec.capture2("git", "-C", ROOT, "log", "-n", "5", "--format=%h %cs %s", "--", "MASTER/law", "MASTER/data/laws.yml", "MASTER/lib/review/scan/laws")
       return "history unavailable" unless status.success?
 
       matches = output.lines.grep(/#{Regexp.escape(id.to_s)}/i)
