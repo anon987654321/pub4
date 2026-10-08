@@ -111,7 +111,7 @@ module Master
         def finding(line:, message:, fix: nil, confidence: nil, why: nil, genealogy: nil, impact_radius: nil,
                     dedupe_key: nil, blast_radius: nil)
           Finding.build(
-            rule: @id,
+            law: @id,
             message:,
             line:,
             severity: @severity,
@@ -233,7 +233,7 @@ module Master
       end
 
       # Compatibility name for callers not yet migrated to the singular Law concept.
-      Rule = Law
+      
     end
   end
 end
