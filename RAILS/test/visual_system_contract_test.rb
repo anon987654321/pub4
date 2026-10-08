@@ -29,13 +29,13 @@ class VisualSystemContractTest < Minitest::Test
       devicePixelRatio: 2,
       dispatchEvent(event) {
         events.push(event)
-        return true,
-      },
+        return true
+      }
     }
     globalThis.CustomEvent = class {
       constructor(name, options = {}) {
         this.type = name
-        this.detail = options.detail || {},
+        this.detail = options.detail || {}
       },
     }
     globalThis.document = {
@@ -130,7 +130,7 @@ class VisualSystemContractTest < Minitest::Test
       assert.ok(field.points.length > 0)
       field.frame(1016)
       assert.ok([...field.points].every(Number.isFinite))
-      field.destroy(),
+      field.destroy()
     }
 
     const field = new VisualField({ canvas, surface: "social" })
