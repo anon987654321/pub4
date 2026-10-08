@@ -46,10 +46,9 @@ class ChatController < ApplicationController
       task: "idle",
       system: "ready",
       updated_at: nil,
-      history: []
+      history: [],
     }
   end
-
 
   def metrics_prometheus
     c = container

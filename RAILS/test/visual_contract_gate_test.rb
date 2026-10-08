@@ -82,7 +82,6 @@ class VisualContractGateTest < Minitest::Test
     end
   end
 
-
   def test_accessibility_and_console_are_soft_until_strict
     rows = [row(state: :public, status: 200, a11y: %w[image_without_alt], console: ["boom"])]
 

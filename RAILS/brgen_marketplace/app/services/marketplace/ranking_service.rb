@@ -6,7 +6,7 @@ module Marketplace
       relevance: 0.25,
       performance: 0.35,
       delivery: 0.20,
-      seller: 0.20
+      seller: 0.20,
     }.freeze
 
     # Persisted ranking is deliberately global and user-agnostic. A scheduled

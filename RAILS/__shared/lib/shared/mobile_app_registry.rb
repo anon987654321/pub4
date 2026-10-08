@@ -14,7 +14,7 @@ module Shared
       :android_package,
       :android_certificate_env,
       :ios_bundle_id,
-      :ios_team_id_env
+      :ios_team_id_env,
     )
 
     ROOT = File.expand_path("../../..", __dir__)
@@ -36,7 +36,7 @@ module Shared
             raw.fetch("android").fetch("package"),
             raw.fetch("android").fetch("certificate_env"),
             raw.fetch("ios").fetch("bundle_id"),
-            raw.fetch("ios").fetch("team_id_env")
+            raw.fetch("ios").fetch("team_id_env"),
           )
         end
       end.freeze
@@ -70,8 +70,8 @@ module Shared
             "namespace" => "android_app",
             "package_name" => app.android_package,
             "sha256_cert_fingerprints" => fingerprints,
-          }
-        }
+          },
+        },
       ]) + "\n"
     end
 
@@ -90,9 +90,9 @@ module Shared
             {
               "appID" => "#{team_id}.#{app.ios_bundle_id}",
               "paths" => ["*"],
-            }
-          ]
-        }
+            },
+          ],
+        },
       ) + "\n"
     end
 

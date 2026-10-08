@@ -51,7 +51,7 @@ module Shared
         key,
         { "state" => "processing" },
         expires_in: LOCK_TTL,
-        unless_exist: true
+        unless_exist: true,
       )
       return if claimed
 
@@ -79,9 +79,9 @@ module Shared
           "status" => response.status,
           "body" => response.body.to_s,
           "content_type" => response.media_type,
-          "location" => response.headers["Location"]
+          "location" => response.headers["Location"],
         },
-        expires_in: TTL
+        expires_in: TTL,
       )
     rescue StandardError => error
       Rails.logger.warn("[idempotency] response cache failed: #{error.class}: #{error.message}")

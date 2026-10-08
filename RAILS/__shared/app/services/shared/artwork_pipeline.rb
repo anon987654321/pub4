@@ -45,7 +45,7 @@ module Shared
 
         record!(
           surface:, city:, brief:, seed: seed_value, source:,
-          destination:, model: ENV["NEWSLETTER_REPLICATE_MODEL"]
+          destination:, model: ENV["NEWSLETTER_REPLICATE_MODEL"],
         )
         destination
       end
@@ -63,7 +63,7 @@ module Shared
           source:,
           model: model.to_s.empty? ? nil : model,
           sha256: Digest::SHA256.file(destination).hexdigest,
-          artifact: destination
+          artifact: destination,
         }
         File.open(path, File::WRONLY | File::CREAT | File::APPEND, 0o640) do |file|
           file.flock(File::LOCK_EX)
@@ -90,7 +90,7 @@ module Shared
           RbConfig.ruby, postpro_script,
           "--input", input, "--output", output,
           "--preset", GRADE_PRESET,
-          out: File::NULL, err: File::NULL
+          out: File::NULL, err: File::NULL,
         )
         raise "postpro grading failed" unless ok
       end

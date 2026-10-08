@@ -66,6 +66,22 @@ module Master
           @auto_fix = declared ? declared[:auto_fix] : true
         end
 
+        # Project the DSL declaration into the Law-facing metadata contract.
+        # Generated scanner laws keep language/mode/autofix on their class because
+        # they are executable wrappers rather than YAML-backed Definitions.
+        def mode
+          return :semantic if self.class.respond_to?(:dsl_detect_semantic) && self.class.dsl_detect_semantic
+          return :structural if self.class.respond_to?(:dsl_detect_structural) && self.class.dsl_detect_structural
+          :mechanical
+        end
+
+        def languages
+          return [] unless self.class.respond_to?(:dsl_langs)
+          Array(self.class.dsl_langs)
+        end
+
+        def autofix = auto_fix
+
         # Default for AST-based laws: a subclass implements check_ast and gets
         # this for free. Rules with non-AST logic override #check instead.
         def check(code, path:)
