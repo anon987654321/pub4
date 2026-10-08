@@ -10,7 +10,7 @@ require "review/scan/rule_dsl"
 # receiver dominates, there are five or more receiver calls in total, and the
 # method touches its own state less often than it touches the neighbour.
 class TestFeatureEnvyRule < Minitest::Test
-  def rule = Master::Review::Scan::Rules::FeatureEnvyRule.new
+  def rule = Master::Review::Scan::Laws::FeatureEnvyRule.new
 
   def flags(source, path: "lib/thing.rb")
     rule.check(source, path:).map(&:message)
