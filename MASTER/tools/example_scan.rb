@@ -14,15 +14,13 @@
 #
 # The four things worth knowing, all shown below:
 #
-#   1. Build the scanner with InfraHelpers.build_scanner(root:), not Scanner.new.
+#   1. Build the scanner with Master::Fix::Scanner.build(root:).
 #   2. scan(path, depth:) takes a path; scan_dir(dir, depth:, stream:) takes a
 #      directory. There is no scan_file.
-#   3. findings(paths) is the flat API: an Array of Hashes with :path, :rule,
-#      :line, :message. scan/scan_dir still return Result wrapping [path, Result]
-#      pairs whose inner values are Hashes — f.rule raises, h[:rule] works.
-#   4. depth: defaults shallow. The gates use :deep, and a shallow scan of a
-#      clean-looking file is how "0 findings" gets reported having run half the
-#      rules.
+#   3. findings(paths) is the flat API: an Array of finding Hashes with :path,
+#      :line, :message. scan/scan_dir return Result-wrapped path/result pairs.
+#   4. Use depth: :deep. Fix's scan contract is deep-only, so a partial walk
+#      must never masquerade as a clean measurement.
 
 $LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
 require "master"
@@ -31,13 +29,13 @@ require_relative "../lib/trace/dmesg"
 root = File.expand_path("..", __dir__)
 scanner = Master::Fix::Scanner.build(root:)
 
-Master::Trace::Dmesg.attach("example0", "master0", "#{scanner.rules.size} rules registered")
+Master::Trace::Dmesg.attach("example0", "master0", "#{scanner.rules.size} laws registered")
 Master::Trace::Dmesg.status("example0", "sample, #{scanner.rules.first(5).map(&:id).join(", ")}")
 
 target = ARGV.first ? File.expand_path(ARGV.first, root) : File.join(root, "tools", "fixtures")
 hits = scanner.findings([target], depth: :deep)
 hits.each do |finding|
   rel = finding[:path].to_s.sub("#{root}/", "")
-  Master::Trace::Dmesg.status("example0", "#{rel}:#{finding[:line]}, #{finding[:rule]}, #{finding[:message]}")
+  Master::Trace::Dmesg.status("example0", "#{rel}:#{finding[:line]}, #{finding[:law]}, #{finding[:message]}")
 end
 Master::Trace::Dmesg.status("example0", "#{hits.size} finding(s)")
