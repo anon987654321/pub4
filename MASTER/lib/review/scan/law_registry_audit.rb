@@ -4,7 +4,7 @@ module Master
   module Review
     module Scan
       # Audits executable law population vs Ruby scanner registry.
-      class RuleRegistryAudit
+      class LawRegistryAudit
         Report = Data.define(:yaml_rules, :registry_ids, :kernel_ids, :lexical_wired, :lexical_unwired,
                              :semantic_only, :structural_unwired, :dep_graph_gaps, :mechanical, :source_drift) do
           # A clean report is only meaningful when its population is explicit.
@@ -114,10 +114,10 @@ module Master
         end
 
         def ungraphed_rule_ids(registry = nil)
-          Review::Scan::RuleDSL
-          registry ||= Review::Scan::Rule.registry
+          Review::Scan::LawDSL
+          registry ||= Review::Scan::Law.registry
             .select { |klass| shipped?(klass) }
-            .map { |klass| RuleFactory.build(klass, root: @root).id.to_s }
+            .map { |klass| LawFactory.build(klass, root: @root).id.to_s }
             .to_set
           registry = registry.map { |id| id.to_s.downcase }.to_set
           deps = Master.law("law_deps", root: @root)
@@ -240,6 +240,8 @@ module Master
         def key_of(rule) = rule["id"].to_s.downcase
         def ids_of(rules) = rules.map { |r| r["id"] }
       end
+
+      RuleRegistryAudit = LawRegistryAudit
     end
   end
 end
