@@ -62,9 +62,6 @@ module Master
 
       end
 
-      # Compatibility API; new code should speak in Law terms.
-      LawDSL.define_singleton_method(:rule) { |*args, **kwargs, &block| law(*args, **kwargs, &block) }
-      RuleDSL = LawDSL
     end
   end
 end
