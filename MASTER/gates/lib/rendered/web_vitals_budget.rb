@@ -26,7 +26,7 @@ module Deploy
   # reading available here.
   class WebVitalsBudget
     ROOT = File.expand_path("../../../..", __dir__)
-    SHARED = File.join(ROOT, "RAILS", "shared")
+    SHARED = File.join(ROOT, "RAILS", "__shared")
     HOTWIRE = File.join(SHARED, "frontend", "hotwire.js")
 
     # Google's "good" thresholds, which is the right starting ceiling: this is a
