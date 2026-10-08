@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "../../operator/ruby_runner"
+
 module Master
   module Fix
     class LawLoop
@@ -52,7 +54,7 @@ module Master
         # there fails with "Could not locate Gemfile" whatever the fix.
         def own_test_command(suite, test)
           ruby = [RbConfig.ruby, "-Ilib", "-Itest", test]
-          File.file?(File.join(suite, "Gemfile")) ? [Master::BUNDLE_BIN, "exec", *ruby] : ruby
+          File.file?(File.join(suite, "Gemfile")) ? [Operator::RubyRunner.bundle_cmd(root: @root), "exec", *ruby] : ruby
         end
 
         def own_test_for(path)
