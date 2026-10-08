@@ -79,6 +79,33 @@ class TestDillaMusicalGrammar < Minitest::Test
     end
   end
 
+  def test_fugue_builds_two_independent_eight_note_voices
+    with_env(
+      "DILLA_SHOWCASE" => "0",
+      "DILLA_FUGUE" => "1",
+      "DILLA_CURATED_HARMONY" => "1",
+      "LIVE_REFERENCE" => nil
+    ) do
+      improviser = LiveSynth::Improviser.new(rng: Random.new(14), family: "prophet", drums: false)
+      improviser.instance_variable_set(:@lead_scale_pcs, [0, 2, 3, 5, 7, 9, 10])
+      improviser.instance_variable_set(:@lead_chord_pcs, [0, 3, 7, 10])
+      improviser.instance_variable_set(:@lead, "poly_lead")
+      improviser.instance_variable_set(:@next_at, 0.0)
+
+      captured = []
+      improviser.define_singleton_method(:stage_midi_events!) do |stage, events, **kwargs|
+        captured << [events, kwargs]
+      end
+
+      improviser.send(:fugue_phrase!, nil, 8.0)
+
+      assert_equal 2, captured.length
+      assert_equal [8, 8], captured.map { |events, _| events.length }
+      assert captured.all? { |events, _| events.all? { |event| event.midi.between?(64, 88) } }
+      assert_operator captured.last.first.first.at, :>, captured.first.first.first.at
+    end
+  end
+
   def test_soul_pocket_declares_all_four_drum_roles
     preset = DillaLofiMachine::DRUM_PRESETS.fetch(:dilla_soul_pocket)
 
