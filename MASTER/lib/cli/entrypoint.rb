@@ -23,7 +23,6 @@ if ARGV.first == "--fix-context"
 end
 
 if ARGV.first == "--help" || ARGV.first == "-h"
-Master::Boot::Entrypoint.prepare!(root: MASTER)
 
   Master::Trace::Dmesg::Report.print("/help", <<~HELP)
     master — instruct the MASTER runtime with the whole repo in scope
