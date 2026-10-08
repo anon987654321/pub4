@@ -7,7 +7,7 @@ require_relative "../../support/geometry_probe"
 module Deploy
   # PERF-100. The telemetry existed and the ratchet did not.
   #
-  # RAILS/shared/frontend/hotwire.js has sampled LCP, CLS and INP through
+  # RAILS/__shared/frontend/hotwire.js has sampled LCP, CLS and INP through
   # PerformanceObserver at one percent and beaconed them to /web_vitals for some
   # time, and design_contract_test.rb proves that wiring is present. What none of
   # it does is fail: a one-percent sample lands in a log line nobody reads, so a
