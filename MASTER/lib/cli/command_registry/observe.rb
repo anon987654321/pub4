@@ -34,7 +34,7 @@ module Master
         dry_run = dry_run_arg?(arg)
         no_autofix = no_autofix_arg?(arg)
         clean_arg = strip_scan_flags(arg)
-        do_autofix = !dry_run && !no_autofix && Master::Review::Scan::MechanicalAutofix.enabled?
+        do_autofix = !dry_run && !no_autofix && Master::Fix::Scan::MechanicalAutofix.enabled?
         [arg, dry_run, no_autofix, clean_arg, do_autofix]
       end
 
@@ -128,7 +128,7 @@ module Master
       end
 
       def apply_scan_autofixes(scanner:, root:, pairs:)
-        Master::Review::Scan::MechanicalAutofix.new(scanner:, root:).apply(pairs).map do |applied|
+        Master::Fix::Scan::MechanicalAutofix.new(scanner:, root:).apply(pairs).map do |applied|
           { path: applied.path, transforms: applied.transforms }
         end
       end
