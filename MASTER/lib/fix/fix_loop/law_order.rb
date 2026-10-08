@@ -16,8 +16,8 @@ module Master
         AGE_PATH = File.join("data", "violation_age.yml").freeze
         SKIP_DIRS_RE = %r{/(\.git|vendor|tmp|var|node_modules|\.bundle|coverage|log|dist|knowledge)/}.freeze
 
-        def initialize(rules:, learnings:, bus:, root:)
-          @rules = rules
+        def initialize(laws:, learnings:, bus:, root:)
+          @laws = laws
           @learnings = learnings
           @bus = bus
           @root = root
@@ -27,7 +27,7 @@ module Master
           deps = load_deps
           law_resolver = Master::Ground::LawResolver.new
           rules_index = Priority.rules_index(root: @root)
-          sorted = @rules.each_with_index.sort_by do |r, i|
+          sorted = @laws.each_with_index.sort_by do |r, i|
             frequency = violation_counts[r.id].to_f
             quality = @learnings&.fix_quality(rule: r.id) || 0.5
             # tier2 stays a strict lexicographic primary key, not folded into
@@ -45,10 +45,10 @@ module Master
           topo_sort(sorted, deps)
         end
 
-        def dependency_levels(rules)
+        def dependency_levels(laws)
           deps = load_deps
-          remaining = rules.map(&:id).to_set
-          id_map = rules.to_h { |r| [r.id, r] }
+          remaining = laws.map(&:id).to_set
+          id_map = laws.to_h { |r| [r.id, r] }
           levels = []
           until remaining.empty?
             ready = remaining.select { |id| Array(deps[id]).none? { |dep| remaining.include?(dep) } }
@@ -77,24 +77,24 @@ module Master
         end
 
         def topo_sort(rules, deps)
-          id_map = rules.to_h { |r| [r.id, r] }
+          id_map = laws.to_h { |r| [r.id, r] }
           in_deg = Hash.new(0)
           adj = Hash.new { |h, k| h[k] = [] }
-          rules.each do |rule|
+          laws.each do |rule|
             (deps[rule.id] || []).each do |dep_id|
               next unless id_map[dep_id]
               adj[dep_id] << rule.id
               in_deg[rule.id] += 1
             end
           end
-          queue = rules.select { |r| in_deg[r.id].zero? }.map(&:id)
+          queue = laws.select { |r| in_deg[r.id].zero? }.map(&:id)
           sorted = []
           until queue.empty?
             id = queue.shift
             sorted << id_map[id]
             adj[id].each { |nxt| in_deg[nxt] -= 1; queue << nxt if in_deg[nxt].zero? }
           end
-          sorted + (rules - sorted)
+          sorted + (laws - sorted)
         end
 
         def load_deps
