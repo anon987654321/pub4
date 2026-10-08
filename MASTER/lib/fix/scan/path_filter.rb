@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Master
-  module Review
+  module Fix
     module Scan
       # What the scanner refuses to look at. Every entry here is a path nobody
       # authored, so a finding against it is a finding against a generator and
