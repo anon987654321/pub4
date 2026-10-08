@@ -7,7 +7,7 @@ module Master
     class Restructure
       # Each app a restructure touches still passes Rails' own zeitwerk:check,
       # and when a stylesheet moved, every app compiles to the same CSS rules.
-      # RAILS/shared is the mixin engine all three apps mount, so a change there
+      # RAILS/__shared is the mixin engine all three apps mount, so a change there
       # is proved in all three.
       class RailsProof < Proof
         APPS = %w[brgen amber bsdports].freeze
