@@ -23,7 +23,7 @@ module Master
           laws = structural_laws(target)
           local = tracked(target).flat_map do |path|
             code = File.read(path, encoding: "UTF-8")
-            laws.flat_map { |rule| rule.check(code, path:) }.map { |f| [path, f[:rule].to_s, f[:message].to_s, []] }
+            laws.flat_map { |law| law.check(code, path:) }.map { |finding| [path, finding[:law].to_s, finding[:message].to_s, []] }
           rescue StandardError => e
             Master::Ground::Swallow.log(e, context: "restructure.findings", path:)
             []
@@ -88,13 +88,13 @@ module Master
           rows = Master::Fix::Scan::CrossFileAnalysis.new(root: target).call(production_files(target))
           findings = rows.flat_map { |_path, result| result.value_or([]) }
           findings.filter_map do |finding|
-            next unless %w[PARALLEL_HIERARCHY CYCLIC_DEPENDENCY].include?(finding[:rule].to_s)
+            next unless %w[PARALLEL_HIERARCHY CYCLIC_DEPENDENCY].include?(finding[:law].to_s)
 
             related = finding[:impact_radius].is_a?(Hash) ? Array(finding[:impact_radius][:files]) : []
             path = related.first
             next unless path
 
-            [path, finding[:rule].to_s, finding[:message].to_s, related]
+            [path, finding[:law].to_s, finding[:message].to_s, related]
           end
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "restructure.cross_file_findings", target:)
