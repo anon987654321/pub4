@@ -550,6 +550,9 @@ module Master
           "BUNDLE_PATH" => bundle_gems_path,
           "BUNDLE_DISABLE_SHARED_GEMS" => "1",
         )
+        without = @env["BUNDLE_WITHOUT"].to_s
+        without = "tts" if without.empty? && @env["MASTER_SKIP_TTS"] == "1"
+        env["BUNDLE_WITHOUT"] = without unless without.empty?
         env
       end
 
