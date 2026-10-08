@@ -15,7 +15,7 @@ module Master
       MAX_FINDINGS = 24
       MAX_FILES = 12
 
-      RULE_OPERATIONS = {
+      LAW_OPERATIONS = {
         "DEAD_SUBTREE" => "defragment",
         "PARALLEL_HIERARCHY" => "merge",
         "CYCLIC_DEPENDENCY" => "decouple",
@@ -46,11 +46,11 @@ module Master
       ) do
         def primary_operation = primary_operations.first.to_s
 
-        def rules = findings.map { |_path, rule, _message, _related| rule }.uniq
+        def laws = findings.map { |_path, law, _message, _related| law }.uniq
 
         def size = findings.size
 
-        def multi_signal? = rules.size > 1
+        def multi_signal? = laws.size > 1
       end
 
       def initialize(plan:)
@@ -68,10 +68,10 @@ module Master
       private
 
       def normalize(row)
-        path, rule, message, related = Array(row)
+        path, law, message, related = Array(row)
         path = path.to_s
-        rule = rule.to_s
-        return if path.empty? || rule.empty?
+        law = law.to_s
+        return if path.empty? || law.empty?
 
         impacted = [path, *Array(related)].map(&:to_s).reject(&:empty?).uniq.first(MAX_FILES)
         [path, rule, message.to_s, impacted]
@@ -111,18 +111,18 @@ module Master
 
       def problem(group)
         files = group.flat_map(&:last).uniq.sort
-        primary = group.map { |_path, rule, _message, _related| RULE_OPERATIONS.fetch(rule, "recommend") }.uniq
+        primary = group.map { |_path, law, _message, _related| LAW_OPERATIONS.fetch(law, "recommend") }.uniq
         candidates = primary.flat_map { |operation| OPERATION_ALTERNATIVES.fetch(operation, [operation]) }
           .select { |operation| operation == "recommend" || operation_exists?(operation) }
           .uniq
           .sort_by { |operation| operation_position(operation) }
 
-        rules = group.map { |_path, rule, _message, _related| rule }.uniq
-        id_source = [files, rules, group.map { |path, rule, message, _| [path, rule, message] }].inspect
+        rules = group.map { |_path, law, _message, _related| law }.uniq
+        id_source = [files, rules, group.map { |path, law, message, _| [path, law, message] }].inspect
         id = Digest::SHA256.hexdigest(id_source)[0, 10]
 
         confidence =
-          if group.size >= 3 && rules.size >= 2 && files.size >= 2
+          if group.size >= 3 && laws.size >= 2 && files.size >= 2
             :high
           elsif group.size >= 2
             :medium
@@ -130,8 +130,8 @@ module Master
             :single
           end
 
-        reason = if rules.size > 1
-                   "correlated #{rules.size} structural signals across #{files.size} files"
+        reason = if laws.size > 1
+                   "correlated #{laws.size} laws across #{files.size} files"
                  elsif files.size > 1
                    "#{group.size} findings share an affected file set"
                  else
