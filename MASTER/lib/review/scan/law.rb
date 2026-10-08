@@ -27,7 +27,7 @@ module Master
           @registry_mutex.synchronize { @registry.dup }
         end
 
-        # Rules that need constructor args (root:, agent:) override this to false.
+        # Laws that need constructor args (root:, agent:) override this to false.
         # Builder uses it to auto-discover zero-arg laws from the registry.
         def self.auto_build?
           true
@@ -187,7 +187,7 @@ module Master
         # findings across the tree, every one of them created by an author doing
         # the right thing.
         #
-        # Rules that measure the shape of a line read it without its marker. A
+        # Laws that measure the shape of a line read it without its marker. A
         # line still too long with the marker removed is still too long.
         #
         # The marker can share its comment with other machine directives —
