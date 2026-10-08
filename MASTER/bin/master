@@ -3,4 +3,4 @@
 set -eu
 
 MASTER=${0:A:h:h}
-exec "${MASTER}/bin/ruby" "${MASTER}/lib/cli/master_entrypoint.rb" "$@"
+exec "${MASTER}/bin/ruby" "${MASTER}/lib/cli/entrypoint.rb" "$@"
