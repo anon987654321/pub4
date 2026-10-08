@@ -3,7 +3,7 @@
 # Every scan rule that carries worked examples must satisfy them.
 #
 # Across seven categories audited in RAILS/FINAL_TODO.md, six failed the same
-# way: the rule matched a pattern adjacent to the law it enforced.
+# way: the law matched a pattern adjacent to the law it enforced.
 #
 #   TIME_ZONE_UNSAFE     matched Time.now; the law is about Time.zone, and
 #                        Time.now.utc / Time.now.to_i read neither.
@@ -12,11 +12,11 @@
 #   css_px_width         read an @media condition as an element width.
 #   target_no_controller knew one of the three ways a controller registers.
 #
-# Every one of those is a false *positive*: the rule fires where the law is
+# Every one of those is a false *positive*: the law fires where the law is
 # satisfied. A rule that carries the case it must not fire on cannot drift that
 # way in silence, which is why does_not_fire matters more here than fires.
 #
-# Add examples to a rule with LawDSL.law(..., fires:, does_not_fire:).
+# Add examples to a law with LawDSL.law(..., fires:, does_not_fire:).
 
 require_relative "test_helper"
 # rule_dsl.rb requires every laws/*.rb at the bottom, and each LawDSL.law call
