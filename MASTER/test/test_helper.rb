@@ -83,11 +83,11 @@ Minitest::Test.class_eval do
   # A rule that lives in law/ has the bridge as its scanner surface, so its
   # contract test asserts through it (BUTTON_OVER_ANCHOR set the precedent).
   def law_findings(id, code, path:)
-    Master::Review::Scan::Rules::LawBridgeRule.new.check(code, path:).select { |f| f[:rule] == id }
+    Master::Review::Scan::Laws::LawBridgeRule.new.check(code, path:).select { |f| f[:rule] == id }
   end
 
   def rule(id, path: nil)
-    candidates = Master::Review::Scan::Rule.registry.filter_map do |klass|
+    candidates = Master::Review::Scan::Law.registry.filter_map do |klass|
       instance = klass.new
       instance if instance.id == id
     rescue ArgumentError
