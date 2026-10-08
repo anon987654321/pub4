@@ -5,7 +5,7 @@ require "minitest/autorun"
 class CiContractTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
   APPS = %w[brgen amber bsdports eritel].freeze
-  SHARED_CI = File.join(ROOT, "shared", "config", "ci.rb")
+  SHARED_CI = File.join(ROOT, "__shared", "config", "ci.rb")
 
   def read(path)
     File.read(path)
