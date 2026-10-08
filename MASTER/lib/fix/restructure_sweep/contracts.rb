@@ -24,8 +24,7 @@ module Master
           TEXT
           "RAILS" => <<~TEXT,
             RAILS, three Rails 8 apps (brgen, amber, bsdports) and RAILS/__shared, a
-            mixin engine all three mount; brgen's verticals are engines under
-            RAILS/brgen/engines.
+            mixin engine all three mount; brgen's verticals are sibling packages under RAILS/brgen_*; each owns its
             - Zeitwerk per app: app/models/foo_bar.rb defines FooBar; a partial
               app/views/posts/_card.html.erb is reached by render "posts/card".
             - User-facing text goes through I18n keys and defaults to Norwegian; never
