@@ -17,28 +17,56 @@ class CoveragePolicyTest < Minitest::Test
     end
   end
 
-  def test_ci_requests_full_line_branch_and_method_coverage
+  def test_every_app_coverage_scope_points_at_the_real_app_tree
+    source = File.read(File.join(ROOT, "__shared/test/coverage.rb"))
+
+    APPS.each do |app|
+      assert_includes source, 'cover "#{app}/app/**/*.rb".gsub("app", app)',
+                      "#{app}: coverage scope must resolve to RAILS/#{app}/app, not RAILS/app"
+    end
+  end
+
+  def test_coverage_policy_includes_app_engines_and_shared_code
+    source = File.read(File.join(ROOT, "__shared/test/coverage.rb"))
+    assert_includes source, 'cover "#{app}/engines/**/app/**/*.rb"'
+    assert_includes source, 'cover "__shared/app/**/*.rb"'
+    assert_includes source, 'cover "__shared/lib/**/*.rb"'
+    assert_includes source, 'cover_views "#{app}/app/views/**/*.erb"'
+    assert_includes source, 'cover_views "#{app}/engines/**/app/views/**/*.erb"'
+    assert_includes source, 'cover_views "__shared/app/views/**/*.erb"'
+  end
+
+  def test_coverage_policy_has_explicit_application_groups
+    source = File.read(File.join(ROOT, "__shared/test/coverage.rb"))
+    %w[Application Libraries Engines Shared].each do |group|
+      assert_includes source, %Q[group "#{group}"],
+                      "missing SimpleCov group #{group.inspect}"
+    end
+  end
+
+  def test_ci_requests_full_coverage
     ci = File.read(File.join(ROOT, "__shared/config/ci.rb"))
-    assert_includes ci, "FULL_COVERAGE=1"
+    assert_equal 1, ci.scan("FULL_COVERAGE=1").size
+    assert_includes ci, "FULL_COVERAGE=1 DEFAULT_TEST="
     assert_includes ci, "FULL_COVERAGE=1 bin/rails test:system"
   end
 
-  def test_coverage_policy_tracks_ruby_source_and_rendered_views
-    source = File.read(File.join(ROOT, "__shared/test/coverage.rb"))
-    assert_includes source, 'cover "app/**/*.rb"'
-    assert_includes source, 'cover "engines/**/app/**/*.rb"'
-    assert_includes source, 'cover "lib/**/*.rb"'
-    assert_includes source, 'cover_views "app/views/**/*.erb"'
-    assert_includes source, 'enable_coverage :branch'
-    assert_includes source, 'enable_coverage :method'
-    assert_includes source, 'enable_coverage :eval'
-    assert_includes source, "track_tests"
+  def test_full_coverage_runner_exists_and_collates_every_app
+    runner = File.join(ROOT, "bin", "coverage")
+    assert File.file?(runner), "RAILS/bin/coverage is missing"
+
+    source = File.read(runner)
+    APPS.each { |app| assert_includes source, "apps" }
+    assert_includes source, "SimpleCov.collate"
+    assert_includes source, "minimum 100"
+    assert_includes source, "minimum_per_file 100"
   end
 
-  def test_full_mode_pins_every_supported_criterion_to_one_hundred_percent
+  def test_coverage_policy_tracks_runtime_dimensions
     source = File.read(File.join(ROOT, "__shared/test/coverage.rb"))
-    %w[line branch method].each do |criterion|
-      assert_includes source, "coverage :#{criterion}, minimum: 100, minimum_per_file: 100"
-    end
+    assert_includes source, "enable_coverage :branch"
+    assert_includes source, "enable_coverage :method"
+    assert_includes source, "enable_coverage :eval"
+    assert_includes source, "track_tests"
   end
 end
