@@ -198,7 +198,7 @@ rules:
   # accent itself is 5.45, in this same band: holding a hover to a stricter
   # standard than the token it belongs to is not a contrast decision either.
   contrast_below_aaa: 38
-  # These two are what gives design_rules.yml's `typography` block a reader.
+  # These two are what gives laws.yml's `typography` block a reader.
   # type_scale counts font-size literals off the --text-* ladder in
   # _tokens.scss; weight_ladder counts font-weight literals off
   # --weight-normal/bold/heavy. Both read their ladder out of the stylesheet
