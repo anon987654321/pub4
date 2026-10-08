@@ -119,7 +119,7 @@ ci && npm run build:pwa` from this directory. `/offline` renders the shared
 partial, and the styled 404, 422 and 500 pages in `shared/public/` are copied
 into each app's `public/` at deploy.
 
-Rails reaches the canonical media plane through `RAILS/contracts/studio.rb`. STUDIO owns postpro, replicate, dilla and photograph entrypoints; Rails does not load their implementation classes. Provider tokens belong in the app's `/etc/<app>.env` and not in
+Rails reaches the canonical media plane through `MASTER/contracts/studio.rb`. STUDIO owns postpro, replicate, dilla and photograph entrypoints; Rails does not load their implementation classes. Provider tokens belong in the app's `/etc/<app>.env` and not in
 Rails credentials or source. MASTER's natural-language media routing is local to
 the agent runtime, so Rails callers should go through the shared service boundary
 and keep their jobs observable and retryable.
