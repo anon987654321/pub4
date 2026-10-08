@@ -78,7 +78,7 @@ module Master
           golden = abs["golden_rule"] || "PRESERVE_THEN_IMPROVE_NEVER_BREAK"
           lines = ["Golden rule: #{golden}",
                     "Minimum change that eliminates the violation. Do not touch unrelated code."]
-          Master::Ground::Laws.new.rules.each { |key, value| lines << "- #{key}: #{value}" }
+          Master::Ground::Laws.new.laws.each { |key, value| lines << "- #{key}: #{value}" }
           lines.join("\n")
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "law_loop.golden_rule")
@@ -157,7 +157,7 @@ module Master
       # were rejected on re-scan — every non-apply collapsed to `false` before
       # the one line anyone reads. The tally of these symbols is that line.
       def fix_violation(violation)
-        if VisualCustodyBlocking.fix_blocking_rule?(violation[:law])
+        if VisualCustodyBlocking.fix_blocking_law?(violation[:law])
           @person_required = true
           review = VisualCustodyBlocking.prepare_operator_review(violation)
           @bus&.publish("fix:requires_operator_decision", finding: review)
@@ -229,7 +229,7 @@ module Master
         return true unless consensus_required?(violation)
 
         @agent.consensus.approve_fix?(
-          prompt: "Rule #{@law.id} on #{violation[:file]}",
+          prompt: "Law #{@law.id} on #{violation[:file]}",
           candidate:,
           violation:,
         )
@@ -250,7 +250,7 @@ module Master
         write_atomic(path, new_src)
         after = scan_all(path)
         return reject_fix(path, old_src, "new_violations", before:, after:) if after.size > before.size
-        if (scouts = boyscout_violations(before, after, old_src, new_src)).any?
+        if (scouts = boyscout_law_violations(before, after, old_src, new_src)).any?
           return reject_fix(path, old_src, "boyscout_violation", violations: scouts.size)
         end
         if @conflicts.reject_higher_priority?(original_violation: violation, before:, after:, path:)
@@ -278,13 +278,13 @@ module Master
       # whole-file boyscout would command the refactors PRESERVE_FIRST forbids;
       # this is the half of the rule that is compatible with it.
       #
-      # "New" is counted per rule, not matched by message. Messages carry the
+      # "New" is counted per law, not matched by message. Messages carry the
       # numbers they measure ("talks to manifest 5 times", "ABC size 43.0"), so
       # a refactor that moved or eased a finding made it read as a new one, and
       # every file repair that did not clear the file outright was refused. A
-      # law whose findings did not grow landed nothing; a swap to another rule
+      # law whose findings did not grow landed nothing; a swap to another law
       # still grows that rule and is still refused.
-      def boyscout_violations(before, after, old_src, new_src)
+      def boyscout_law_violations(before, after, old_src, new_src)
         had = before.map { |v| v[:rule].to_s }.tally
         grown = after.map { |v| v[:rule].to_s }.tally.select { |rule, count| count > had.fetch(rule, 0) }.keys
         landed = after.select { |v| grown.include?(v[:rule].to_s) }
@@ -351,7 +351,7 @@ module Master
       def prompt_context_for(violation:, path:, style:)
         # bin/doctor has no extension; its shebang says ruby, and so does
         # language_for. Labelled "text", the model answered in ruby anyway.
-        lang = Master::Review::Scan::Rule::EXT_LANG.fetch(File.extname(path).downcase, nil) ||
+        lang = Master::Review::Scan::Law::EXT_LANG.fetch(File.extname(path).downcase, nil) ||
                Master.language_for(path) || "text"
         fix_hint = violation[:fix].to_s.strip
         fix_line = fix_hint.empty? ? "" : "How to fix: #{fix_hint}"
@@ -420,7 +420,7 @@ module Master
       end
 
       def ext_language(ext)
-        Master::Review::Scan::Rule::EXT_LANG.fetch(ext.downcase, "text")
+        Master::Review::Scan::Law::EXT_LANG.fetch(ext.downcase, "text")
       rescue StandardError
         "text"
       end
