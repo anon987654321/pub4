@@ -23,19 +23,22 @@ module Shared
     module_function
 
     def all
-      @all ||= YAML.safe_load_file(CONFIG, aliases: false).fetch("mobile").map do |key, raw|
-        App.new(
-          key.to_sym,
-          raw.fetch("name"),
-          raw.fetch("host"),
-          raw.fetch("url"),
-          raw.fetch("kind").to_sym,
-          raw["vertical"]&.to_sym,
-          raw.fetch("android").fetch("package"),
-          raw.fetch("android").fetch("certificate_env"),
-          raw.fetch("ios").fetch("bundle_id"),
-          raw.fetch("ios").fetch("team_id_env")
-        )
+      @all ||= YAML.safe_load_file(CONFIG, aliases: false).fetch("apps").flat_map do |app_key, app|
+        Array(app["mobile"]).map do |key, raw|
+          host = raw.fetch("host", app.fetch("domain"))
+          App.new(
+            key.to_sym,
+            raw.fetch("name", app.fetch("title")),
+            host,
+            raw.fetch("url", "https://#{host}/"),
+            raw.fetch("kind", app_key == "brgen" ? "core" : "standalone").to_sym,
+            raw["vertical"]&.to_sym,
+            raw.fetch("android").fetch("package"),
+            raw.fetch("android").fetch("certificate_env"),
+            raw.fetch("ios").fetch("bundle_id"),
+            raw.fetch("ios").fetch("team_id_env")
+          )
+        end
       end.freeze
     end
 
