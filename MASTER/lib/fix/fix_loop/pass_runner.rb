@@ -98,6 +98,25 @@ module Master
 
         def pass_progress? = @pass_progress == true
 
+        # What this run could not inspect or run. A file whose scan fails, or a
+        # stage that raises, costs that file or that stage and nothing else: the
+        # pass carries on and every other stage still gets its turn. The run
+        # then ends blocked instead of done, because a clean result over files
+        # nobody read is not a clean result.
+        def uninspected = (@uninspected ||= {})
+
+        def stage_failures = (@stage_failures ||= Hash.new { |hash, stage| hash[stage] = [] })
+
+        def gaps? = !(uninspected.empty? && stage_failures.empty?)
+
+        def gaps = { uninspected: uninspected.dup, stage_failures: stage_failures.transform_values(&:dup) }
+
+        def reset_gaps!
+          @uninspected = nil
+          @stage_failures = nil
+          self
+        end
+
         def violations(files) = resolve_violations(files.flat_map { |path| violations_for(path) })
 
         def violations_for(path)
@@ -107,8 +126,7 @@ module Master
           return preflight.map { |finding| Violation.from_finding(finding, file: path.delete_prefix("#{@root}/")) } if preflight.any?
 
           result = @scan_phase.call(path)
-          return skip_unreadable(path, result) if !result.ok? && result.category == :validation
-          raise "fix scan failed for #{path}: #{result.message}" unless result.ok?
+          return skip_unreadable(path, result) unless result.ok?
 
           findings = result.value!.map { |finding| Master::Review::Scan::LawHealth.annotate(finding) }
           @bus&.publish("fix_loop:scan_progress", file: path.delete_prefix("#{ @root }/"), count: findings.size) if findings.any?
@@ -120,12 +138,32 @@ module Master
           @conflict_resolver.filter_findings(raw.map(&:to_h)).map { |row| row.transform_keys(&:to_sym) }
         end
 
+        MAX_UNINSPECTED_LINES = 20
+
+        # A file the scanner refuses or fails on is recorded and skipped, and the
+        # pass goes on without it. The first few are named on the terminal; the
+        # rest are counted in the terminal verdict.
         def skip_unreadable(path, result)
           relative = path.delete_prefix("#{@root}/")
-          message = "fix scan refused #{relative}: #{result.message}"
-          @bus&.publish("fix_loop:unreadable", file: relative, message: result.message)
-          Master::Trace::Dmesg.status("fix0", message[0, 180])
-          raise message
+          uninspected[relative] = result.message.to_s[0, 200]
+          @bus&.publish("fix_loop:unreadable", file: relative, category: result.category, message: result.message)
+          if uninspected.size <= MAX_UNINSPECTED_LINES
+            Master::Trace::Dmesg.status("fix0", "scan skipped #{relative}: #{result.message}"[0, 180])
+          end
+          []
+        end
+
+        # A stage that raises costs that stage, not the pass. The error is kept
+        # where the final verdict reads it, published, and printed once; the
+        # caller continues with the fallback it named.
+        def guarded(stage, pass, fallback = nil)
+          yield
+        rescue StandardError => e
+          stage_failures[stage] << "pass #{pass}: #{e.class}: #{e.message.to_s[0, 160]}"
+          @bus&.publish("fix_loop:stage_failed", stage:, pass:, error_class: e.class.name, message: e.message)
+          Master::Trace::Dmesg.status("fix0", "pass #{pass}, #{stage} failed, carrying on: #{e.class}: #{e.message}"[0, 200])
+          Master::Ground::Swallow.log(e, context: "fix_loop.stage.#{stage}", event_bus: @bus, severity: :load_bearing)
+          fallback
         end
 
         def run_pass(files:, target:, pass:, deadline:, transaction_id:, history:, seen_snapshots:,
@@ -136,11 +174,15 @@ module Master
           start_pass_transaction(files:, target:, pass:, transaction_id:)
           found, streamed = observe_pass(files, target, pass, deadline)
 
-          visual, opportunities, found = merge_evidence_findings(target:, files:, pass:, found:)
+          visual, opportunities, found = guarded(:evidence, pass, [nil, nil, found]) do
+            merge_evidence_findings(target:, files:, pass:, found:)
+          end
           found += Wishlist.findings(wishlist_proposals, root: @root)
           return evidence_abort_result(visual, opportunities) if found.empty? && (visual&.err? || opportunities&.err?)
 
-          found, shed = supplement_with_improvements(found, pass:, files:, deadline:, consecutive_clean:)
+          found, shed = guarded(:improvements, pass, [found, nil]) do
+            supplement_with_improvements(found, pass:, files:, deadline:, consecutive_clean:)
+          end
           return shed if shed
 
           # Convergence must score the complete observed surface: lexical,
@@ -238,7 +280,10 @@ module Master
         # shed here (unlike supplement_with_improvements above) does not
         # abort: found is non-empty, so the transaction still delivers
         # whatever the fast/observation stages already produced.
-        def dispatch_llm_stages(found, files, pass, deadline, visual)
+        # Each stage below is guarded on its own: one that raises is recorded and
+        # the next still runs, so a council that cannot meet does not take the
+        # model fixes, the visual pass or the wishlist down with it.
+        def dispatch_llm_stages(found, files, pass, deadline, visual, run_id: nil)
           resources = @resource_budget.measure
           if @resource_budget.critical?(resources)
             @bus&.publish("fix_loop:model_work_shed", pass:, reasons: resources[:reasons], values: resources[:values])
@@ -247,16 +292,30 @@ module Master
           end
 
           @homeostat&.observe(:llm_call)
-          excluded = [VisualPass::LAW_ID, OpportunityPass::LAW_ID, CouncilRound::IMPROVEMENT_LAW_ID]
-          source_found = unremembered(found.reject { |v| excluded.include?(v[:law].to_s) })
-          improvement_found = found.select { |v| v[:law].to_s == CouncilRound::IMPROVEMENT_LAW_ID }
-          visual_found = found.select { |v| v[:law].to_s == VisualPass::LAW_ID }
-          opportunity_found = found.select { |v| v[:law].to_s == OpportunityPass::LAW_ID }
-          council = @council&.run(files: files_with_violations(source_found, files), pass:, deadline:) if source_found.any?
-          run_llm_stage(source_found, files, pass, deadline, council:) if source_found.any?
-          run_improvement_stage(improvement_found, pass:, files:, deadline:) if improvement_found.any?
-          run_opportunity_stage(opportunity_found, files, pass, deadline, council:) if opportunity_found.any?
-          run_visual_stage(visual_found, pass:, image: visual&.value!&.fetch(:image, nil), files:, deadline:) if visual_found.any?
+          routed = route_findings(found)
+          source_found = routed.fetch(:source)
+          council = guarded(:council, pass) { @council&.run(files: files_with_violations(source_found, files), pass:, deadline:) } if source_found.any?
+          guarded(:model_fixes, pass) { run_llm_stage(source_found, files, pass, deadline, council:) } if source_found.any?
+          guarded(:improvements_fix, pass) { run_improvement_stage(routed.fetch(:improvement), pass:, files:, deadline:) } if routed.fetch(:improvement).any?
+          guarded(:opportunities, pass) { run_opportunity_stage(routed.fetch(:opportunity), files, pass, deadline, council:) } if routed.fetch(:opportunity).any?
+          guarded(:visual, pass) do
+            run_visual_stage(routed.fetch(:visual), pass:, image: visual&.value!&.fetch(:image, nil), files:, deadline:)
+          end if routed.fetch(:visual).any?
+          guarded(:wishlist, pass) { run_wishlist_stage(routed.fetch(:wishlist), pass:, files:, deadline:, run_id:) } if routed.fetch(:wishlist).any?
+        end
+
+        # Each kind of finding goes to the stage that knows how to fix it; what
+        # no special stage claims is source the model repairs.
+        def route_findings(found)
+          by_law = ->(law_id) { found.select { |violation| violation[:law].to_s == law_id } }
+          special = [VisualPass::LAW_ID, OpportunityPass::LAW_ID, CouncilRound::IMPROVEMENT_LAW_ID, Wishlist::LAW_ID]
+          {
+            source: unremembered(found.reject { |violation| special.include?(violation[:law].to_s) }),
+            improvement: by_law.(CouncilRound::IMPROVEMENT_LAW_ID),
+            opportunity: by_law.(OpportunityPass::LAW_ID),
+            visual: by_law.(VisualPass::LAW_ID),
+            wishlist: by_law.(Wishlist::LAW_ID),
+          }
         end
 
         def run_fast_stage(files, pass)
@@ -269,9 +328,10 @@ module Master
         end
 
         def observe_pass(files, target, pass, deadline)
-          run_fast_stage(files, pass)
+          guarded(:fast_fixes, pass) { run_fast_stage(files, pass) }
           found, streamed = streaming_observation(files, target, pass, deadline)
-          [files.empty? ? found : found + structural_findings(files:), streamed]
+          structure = files.empty? ? [] : guarded(:structure, pass, []) { structural_findings(files:) }
+          [found + structure, streamed]
         end
 
         def run_observation_stage(files, target)

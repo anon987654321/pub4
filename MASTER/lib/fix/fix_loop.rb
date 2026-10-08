@@ -110,6 +110,7 @@ module Master
         current_phase = :preflight
         return halted_result if halted? && !requested
 
+        @pass_runner&.reset_gaps!
         current_phase = :corpus
         files = incremental ? @file_collector.collect_changed(target) : @file_collector.collect(target)
                 coverage = {
@@ -182,7 +183,25 @@ module Master
         result
       end
 
+      # A run that reaches DONE after skipping files it could not scan, or
+      # stages that raised, has proved nothing about them. Every stage and pass
+      # still ran; the verdict says what they could not.
+      def blocked_by_gaps(result)
+        return result unless @pass_runner&.gaps? && result.ok? && terminal_state_for(result) == :done
+
+        gaps = @pass_runner.gaps
+        parts = []
+        unless gaps[:uninspected].empty?
+          named = gaps[:uninspected].keys.first(3).join(", ")
+          parts << "#{gaps[:uninspected].size} file(s) not scanned (#{named})"
+        end
+        gaps[:stage_failures].each { |stage, rows| parts << "#{stage} stage failed #{rows.size}x, last #{rows.last}" }
+        Master::Trace::Dmesg.status("fix0", "finished with gaps: #{parts.join("; ")}"[0, 220])
+        terminal(:blocked, "finished with gaps, #{parts.join("; ")}")
+      end
+
       def finish_run(result, target, run_id, mission: nil, requested: false)
+        result = blocked_by_gaps(result)
         state = terminal_state_for(result)
         @run_journal.terminal(run_id, state, message: result.to_s)
 
