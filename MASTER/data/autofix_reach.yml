@@ -21,7 +21,7 @@
 #
 # 31 -> 25 on 2026-09-05. The six were PRECOMPUTE_MATH, ANALOG_WARMTH,
 # PURE_FUNCTIONS, SPECULATIVE_GENERALITY, SYSTEM_STATUS and CACHE_LLM — each a
-# semantic-only detector at info severity, which SemanticRule's info filter
+# semantic-only detector at info severity, which SemanticLaw's info filter
 # drops, so nothing ever reported them and no fix could ever be reached. Their
 # `fix:` lines ask for film grain, a spinner and a deletion; none is mechanical
 # either. Demoted to false with the reason, not swept.
