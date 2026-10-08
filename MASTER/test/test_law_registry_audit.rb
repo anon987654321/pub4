@@ -44,7 +44,7 @@ class TestLawRegistryAudit < Minitest::Test
   # subtraction that used to stand in for it.
   def test_coverage_agrees_with_law_reach
     report = audit.call
-    reach = Operator::LawReach.mechanical(Operator::LawReach.rules).size
+    reach = Operator::LawReach.mechanical(Operator::LawReach.laws).size
 
     assert_equal reach, report.mechanical.size
     assert_includes report.coverage_line, "#{reach} of #{report.yaml_laws}"
