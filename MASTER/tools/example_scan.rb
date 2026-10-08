@@ -29,7 +29,7 @@ require "master"
 require_relative "../lib/trace/dmesg"
 
 root = File.expand_path("..", __dir__)
-scanner = Master::Review::Scan::InfraHelpers.build_scanner(root:)
+scanner = Master::Fix::Scanner.build(root:)
 
 Master::Trace::Dmesg.attach("example0", "master0", "#{scanner.rules.size} rules registered")
 Master::Trace::Dmesg.status("example0", "sample, #{scanner.rules.first(5).map(&:id).join(", ")}")
