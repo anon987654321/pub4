@@ -49,7 +49,7 @@ module Operator
 
     # The bare form only. `scan: intentional-colors` and `scan: intentional-important`
     # are file-head directives to one rule each, with their own semantics and
-    # their own scope, and they are not what Rule#scan_lines reads.
+    # their own scope, and they are not what Law#scan_lines reads.
     MARKER = /scan:\s*intentional\b(?!-)/
 
     # Per language, because `#` opens a comment in Ruby and is a hex colour in
@@ -66,9 +66,9 @@ module Operator
     # The default for a caller that has no path to read a language from.
     ANY_OPENER = COMMENT_OPENERS.values.flatten.uniq.freeze
 
-    Exemption = Struct.new(:path, :line, :reason, :rules, :code, keyword_init: true) do
+    Exemption = Struct.new(:path, :line, :reason, :laws, :code, keyword_init: true) do
       def relative = path.delete_prefix("#{ROOT}/")
-      def live? = !rules.empty?
+      def live? = !laws.empty?
 
       # A marker on a line with no code of its own cannot work at all: scan_lines
       # skips the line the marker is on, and the line it was written about is the
@@ -184,8 +184,8 @@ module Operator
     end
 
     # The marker removed and the line kept, so every line number still points
-    # where it did. This is Rule#without_scan_marker, which cannot be called from
-    # here — it is a private instance method on a rule.
+    # where it did. This is Law#without_scan_marker, which cannot be called from
+    # here — it is a private instance method on a law.
     #
     # Through the same language-aware openers the rest of this reads, because the
     # naive `rindex` over every opener cut `  <%# scan: … ` at the `#` and left a
@@ -215,8 +215,8 @@ module Operator
       "#{line[0, opener]}#{tail}".rstrip
     end
 
-    def mechanical_rules
-      @mechanical_rules ||= begin
+    def mechanical_laws
+      @mechanical_laws ||= begin
         master
         # A rule that takes an agent is a semantic rule, and one model call per
         # file is not what a census of 97 files should cost.
@@ -229,7 +229,7 @@ module Operator
       @exemptions ||= marked.flat_map do |path, hits|
         held = suppressed(path)
         hits.map do |line, reason, code|
-          Exemption.new(path:, line:, reason:, code:, rules: held[line] + held[:file])
+          Exemption.new(path:, line:, reason:, code:, laws: held[line] + held[:file])
         end
       end
     end
@@ -269,15 +269,15 @@ module Operator
     def findings_by_line(path, text)
       language = Master::FILE_LANGUAGE_MAP[File.extname(path)]&.to_sym
       by_line = Hash.new { |hash, key| hash[key] = [] }
-      mechanical_rules.each do |rule|
-        Array(rule.check(text, path:)).each { |finding| by_line[finding[:line].to_i] << finding[:rule].to_s }
+      mechanical_laws.each do |law|
+        Array(law.check(text, path:)).each { |finding| by_line[finding[:line].to_i] << finding[:rule].to_s }
       rescue StandardError
         next
       end
-      law.each_value do |rule|
-        next if rule.semantic? || !rule.applies?(path, language)
+      law.each_value do |law|
+        next if law.semantic? || !law.applies?(path, language)
 
-        rule.scan(text, file: path).each { |hit| by_line[hit.line.to_i] << rule.id.to_s }
+        law.scan(text, file: path).each { |hit| by_line[hit.line.to_i] << law.id.to_s }
       rescue StandardError
         next
       end
