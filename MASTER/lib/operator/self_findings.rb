@@ -242,7 +242,7 @@ module Operator
     # documents: InfraHelpers, then `findings`. There is no scan_file.
     def scan_registry
       law # loads Master, as scan_corpus does
-      scanner = Master::Review::Scan::InfraHelpers.build_scanner(root: MASTER_DIR)
+      scanner = Master::Fix::Scanner.build(root: MASTER_DIR)
       own = scanner.rules.select { |rule| shipped?(rule) }.map { |rule| rule.id.to_s }
       @registry_rule_count = own.size
       corpus = files.reject { |path| Master::Fix::Scanner.skip_path?(path, root: ROOT) }
