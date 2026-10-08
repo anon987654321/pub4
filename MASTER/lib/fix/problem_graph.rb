@@ -26,6 +26,8 @@ module Master
         "STALE_PATH_REFERENCE" => "rename",
         "PROSE_DUPLICATION" => "merge",
         "COMMAND_SURFACE_DUPLICATION" => "merge",
+        "ROUTE_SURFACE_DUPLICATION" => "simplify",
+        "CONFIG_SURFACE_DUPLICATION" => "simplify",
       }.freeze
 
       OPERATION_ALTERNATIVES = {
