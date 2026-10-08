@@ -156,7 +156,7 @@ module Deploy
     # runs error and critical severities over lib and law, while this is the
     # whole registry over the whole tree, against a recorded number.
     DEFAULT_TARGETS = %w[
-      ../RAILS/brgen ../RAILS/amber ../RAILS/bsdports ../RAILS/shared
+      ../RAILS/brgen ../RAILS/amber ../RAILS/bsdports ../RAILS/__shared
       ../OPENBSD ../MASTER
     ].freeze
 
