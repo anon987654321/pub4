@@ -82,11 +82,11 @@ spine:
   # were not tidying. Io::GitHooks wrote a pre-commit hook from the boot path
   # while bin/operator hooks points core.hooksPath at OPENBSD/dev/githooks, which git
   # honours instead — so the file it wrote could never run on a guarded tree.
-  # RuleRegistryAudit::Report#lines and #hatch_line rendered an eight-row report
+  # LawRegistryAudit::Report#lines and #hatch_line rendered an eight-row report
   # nothing printed; the tripwire they were credited with is the test asserting
   # both lexical sets are empty, which stays. BootReceipt#commit shed six lines
   # by asking git rev-parse instead of walking .git by hand. Against them,
-  # RuleRegistryAudit#mechanical adds thirteen and buys one statement of a
+  # LawRegistryAudit#mechanical adds thirteen and buys one statement of a
   # population three gate banners and rule_reach were each spelling for
   # themselves, at two different answers.
   # 38096 -> 38108, and /rules is most of it. The law had no lister: the only
