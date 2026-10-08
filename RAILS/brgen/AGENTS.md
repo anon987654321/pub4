@@ -50,7 +50,7 @@ the registry keys off city apexes, not localhost.
 ## Deploy
 
 Full Rails 8 app in this directory. `brgen.sh` copy-tree deploys to
-`/home/brgen/app` on vm23. Port **38182**. Shared engine: `RAILS/shared`.
+`/home/brgen/app` on vm23. Port **38182**. Shared engine: `RAILS/__shared`.
 
 - Golden checks: `OPENBSD/bin/check-rails --profile=contributor`; scan via `cd
   MASTER && bundle exec ruby bin/cli` → `/scan RAILS/brgen`.
