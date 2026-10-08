@@ -85,7 +85,7 @@ module Operator
       $LOAD_PATH.unshift(File.join(MASTER_ROOT, "lib")) unless $LOAD_PATH.include?(File.join(MASTER_ROOT, "lib"))
       require "master"
       require "review/scan/law_dsl"
-      Master::Review::Scan::InfraHelpers.build_scanner(root: Master::ROOT)
+      Master::Fix::Scanner.build(root: Master::ROOT)
     end
 
     def ceilings
