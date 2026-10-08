@@ -1,5 +1,5 @@
 PATH
-  remote: ../shared
+  remote: ../__shared
   specs:
     pub4-shared (0.1.0)
       builder (>= 3.2)
