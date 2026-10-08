@@ -17,42 +17,42 @@ PATH
       webpush (>= 1.1)
 
 PATH
-  remote: engines/dating
+  remote: ../brgen_dating
   specs:
     brgen-dating (0.1.0)
       pub4-shared
       rails (>= 8.0)
 
 PATH
-  remote: engines/maps
+  remote: ../brgen_maps
   specs:
     brgen-maps (0.1.0)
       pub4-shared
       rails (>= 8.0)
 
 PATH
-  remote: engines/marketplace
+  remote: ../brgen_marketplace
   specs:
     brgen-marketplace (0.1.0)
       pub4-shared
       rails (>= 8.0)
 
 PATH
-  remote: engines/playlist
+  remote: ../brgen_radio/playlist
   specs:
     brgen-playlist (0.1.0)
       pub4-shared
       rails (>= 8.0)
 
 PATH
-  remote: engines/takeaway
+  remote: ../brgen_takeaway
   specs:
     brgen-takeaway (0.1.0)
       pub4-shared
       rails (>= 8.0)
 
 PATH
-  remote: engines/tv
+  remote: ../brgen_radio/tv
   specs:
     brgen-tv (0.1.0)
       pub4-shared
