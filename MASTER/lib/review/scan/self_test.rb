@@ -256,10 +256,10 @@ module Master
         end
 
         def law_integrity_findings
-          require File.join(@root, "law", "law") unless defined?(::Law)
+          require File.join(@root, "law", "definition") unless defined?(::Law)
           lifecycle = ::Law::Definition::LIFECYCLE_TRANSITIONS
           required = %i[proposed proven active observed trusted advisory retired]
-          return [finding(path: File.join(@root, "law", "law.rb"), line: 1,
+          return [finding(path: File.join(@root, "law", "definition.rb"), line: 1,
                           message: "law lifecycle states drift")] unless lifecycle.keys == required
 
           return [] unless @root == Master::ROOT
@@ -269,7 +269,7 @@ module Master
           Master::Fix::TransformationPlan.new(root: @root).validate!
           []
         rescue StandardError => e
-          [finding(path: File.join(@root, "law", "law.rb"), line: 1,
+          [finding(path: File.join(@root, "law", "definition.rb"), line: 1,
                    message: "law integrity failed: #{e.class}: #{e.message}")]
         end
 
