@@ -101,7 +101,7 @@ module Master
       end
 
       def detector_digest(law)
-        klass = rule.class
+        klass = law.class
         block = klass.respond_to?(:dsl_block) ? klass.dsl_block : nil
         source = block&.source_location || klass.instance_method(:check).source_location
         file = source&.first
