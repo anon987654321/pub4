@@ -14,7 +14,7 @@ module Master
 
         EXT_LANG = Master::FILE_LANGUAGE_MAP
 
-        attr_reader :id, :description, :severity, :rule_tags, :auto_fix
+        attr_reader :id, :description, :severity, :law_tags, :auto_fix
 
         @registry = []
         @registry_mutex = Mutex.new
@@ -35,10 +35,10 @@ module Master
 
         # What a rule *is*, declared once at the class level.
         #
-        # Forty-two subclasses opened with the same constructor — `super()` and
+        # Forty-two laws opened with the same constructor — `super()` and
         # five instance variables holding literals — which cross_file_analysis
         # reported as twenty-three byte-identical structures. Identity is a
-        # declaration, so it reads as one, and RuleDSL's generated classes say
+        # declaration, so it reads as one, and LawDSL's generated classes say
         # the same five things through the same names.
         #
         # autofix defaults to false because a rule that names no transform
@@ -46,7 +46,7 @@ module Master
         # nothing at all, which is what an undeclared subclass has always got.
         def self.declare(id:, description: "", severity: :warning, tags: [], autofix: false)
           @declaration = { id: id.to_s, description: description.to_s, severity:,
-                           rule_tags: Array(tags), auto_fix: autofix }
+                           law_tags: Array(tags), auto_fix: autofix }
         end
 
         # Inherited, so a subclass of a declared rule keeps its parent's identity
@@ -62,7 +62,7 @@ module Master
           @id = declared&.fetch(:id, nil) || self.class.name&.split("::")&.last&.downcase || "unknown"
           @description = declared ? declared[:description] : ""
           @severity = declared ? declared[:severity] : :warning
-          @rule_tags = declared ? declared[:rule_tags] : []
+          @law_tags = declared ? declared[:rule_tags] : []
           @auto_fix = declared ? declared[:auto_fix] : true
         end
 
@@ -76,7 +76,7 @@ module Master
           check_ast(Prism.parse(code).value, code, path:)
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "#{self.class}#check_ast", severity: :load_bearing, path:)
-          raise "rule #{@id} AST check failed: #{e.class}: #{e.message}"
+          raise "law #{@id} AST check failed: #{e.class}: #{e.message}"
         end
 
         def language(path)
@@ -111,12 +111,12 @@ module Master
         def finding(line:, message:, fix: nil, confidence: nil, why: nil, genealogy: nil, impact_radius: nil,
                     dedupe_key: nil, blast_radius: nil)
           Finding.build(
-            rule: @id,
+            law: @id,
             message:,
             line:,
             severity: @severity,
             fix:,
-            tags: @rule_tags,
+            tags: @law_tags,
             confidence: confidence || default_confidence,
             why: why || default_why(message),
             genealogy: genealogy || default_genealogy(message),
@@ -155,7 +155,7 @@ module Master
         end
 
         # Blocks opened by one keyword, as [first_line, source] pairs. Lexical on
-        # purpose: the rules that read this ask how large a def or a class is,
+        # purpose: the laws that read this ask how large a def or a class is,
         # and they must answer on a file Prism will not parse.
         def keyword_blocks(code, keyword)
           opener = /\A\s*#{keyword}\b/
@@ -224,7 +224,7 @@ module Master
         end
 
         def default_genealogy(message)
-          [@rule_tags.first || "GENERAL", @id, message.to_s.split(" — ").first.to_s]
+          [@law_tags.first || "GENERAL", @id, message.to_s.split(" — ").first.to_s]
         end
 
         def default_dedupe_key(message)
@@ -233,7 +233,7 @@ module Master
       end
 
       # Compatibility name for callers not yet migrated to the singular Law concept.
-      Rule = Law
+      
     end
   end
 end
