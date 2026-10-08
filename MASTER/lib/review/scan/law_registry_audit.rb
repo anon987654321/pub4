@@ -190,13 +190,12 @@ module Master
             .reject { |klass| LawFactory.bridge_class?(klass) }
             .map { |klass| LawFactory.build(klass, root: @root) }
              .map do |law|
-              entry = law.contract_entry
               {
-                "id" => entry["id"].to_s,
-                "severity" => entry["severity"].to_s,
-                "mode" => entry["mode"].to_s,
-                "languages" => Array(entry["languages"]).map(&:to_s),
-                "autofix" => entry["autofix"].to_s,
+                "id" => law.id.to_s,
+                "severity" => law.severity.to_s,
+                "mode" => law.mode.to_s,
+                "languages" => Array(law.languages).map(&:to_s),
+                "autofix" => law.autofix.to_s,
                 "detect" => true,
                 "semantic" => false,
                 "practice" => false
