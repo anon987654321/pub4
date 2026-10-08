@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
-# Screenshot-first calibration loop (design_rules.yml automated_iteration).
+# Screenshot-first calibration loop (laws.yml automated_iteration).
 # Captures primer + post-tap session at desktop/mobile, writes manifest + latest symlink.
 # Prereq: MASTER web on loopback (53187). Sync CSS first:
 #   bundle exec rails assets:precompile   # updates public/assets/.manifest.json
