@@ -132,7 +132,7 @@ class TestGateChain < Minitest::Test
 
     refute_nil studio
     assert_equal "STUDIO", studio[4]
-    assert_equal [G::RUBY, "-S", "rake", "test:dilla", "test:postpro", "test:replicate", "test:lora"], studio[1]
+    assert_equal [G::RUBY, "-S", "rake", "test"], studio[1]
     assert_equal File.join(G::ROOT, "STUDIO"), studio[2]
   end
 
