@@ -36,7 +36,7 @@ SINGULARITY:
   - consistency
   - data_integrity
   research:
-    - name: "DRY Principle (Andrew Hunt, David Thomas)"
+    - name: "DRY (Andrew Hunt, David Thomas)"
       url: "https://pragprog.com/titles/pragddd/the-pragmatic-programmer"
     - name: "Database Normalization Theory"
       url: "https://en.wikipedia.org/wiki/Database_normalization"
@@ -171,7 +171,7 @@ prose:
       - 'heller enn'          # rather than
       - 'ikke bare'           # not only
     # Bokmål builds the periphrastic passive with bli/ble/blitt and marks the
-    # agent with `av`, which is the same shape the English rule judges.
+    # agent with `av`, which is the same shape the English Law judges.
     passive:
       auxiliary: '(?:ble|blitt)'
       participle: '\w+(?:et|dd|tt|t)'
@@ -211,7 +211,7 @@ zsh:
     include_match: '${(M)arr:#*pattern*}'
     exclude_match: '${arr:#*pattern*}'
   ssh_reading:
-    rule: 'Read remote files through SSH with Ruby or zsh instead of invoking external text filters.'
+    law: 'Read remote files through SSH with Ruby or zsh instead of invoking external text filters.'
   token_economics:
     philosophy: 'Prefer one zsh expansion or one Ruby expression over a pipeline of external processes; each subprocess adds cost and policy surface.'
 
@@ -269,7 +269,7 @@ transformation_policy:
     merge: "Join equivalent or near-equivalent logic, prose, configuration, or structure."
     split: "Separate unlike concerns that have been fused into one unit."
     relocate: "Put code, data, prose, and configuration beside the thing that owns or consumes it."
-    rename: "Names state present meaning; rename files, constants, methods, variables, rules, and sections when the existing name misleads."
+    rename: "Names state present meaning; rename files, constants, methods, variables, laws, and sections when the existing name misleads."
     reorder: "Put primary facts and load-bearing logic before secondary detail and exceptions."
     remove: "Delete dead, redundant, historical, transitional, or otherwise unnecessary material."
     reflow: "Change physical line and paragraph boundaries to follow semantic structure and reading rhythm."
@@ -291,7 +291,7 @@ transformation_policy:
     changelog_history: "Use git commit history, not source comments, for historical change records."
     rationale: "Keep a comment when it explains a non-obvious present constraint, invariant, or reason."
   rename:
-    scopes: [files, constants, methods, variables, rules, sections]
+    scopes: [files, constants, methods, variables, laws, sections]
     require_reference_rewrite: true
     preserve_public_signatures: true
   modes:
@@ -466,10 +466,10 @@ self_test:
   DENSITY: no method > long_method threshold in lib/
   KERNEL_ADHERENCE: infra_helpers.rb wiring layer present; law adherence >= 35%
   LAW_MAP: every law id named by data/laws.yml#law_map resolves to a registered
-      rule, and every covered principle names at least one. The reverse direction —
-      every registered rule traced by some law — is `rake lint:law_trace`,
+      Law, and every covered Law names at least one. The reverse direction —
+      every registered Law traced by some law — is `rake lint:law_trace`,
       a ratcheting ceiling, because it has never been zero.
-  LAW_INTEGRITY: executable law lifecycle, proof metadata, universal-principle scope,
+  LAW_INTEGRITY: executable law lifecycle, proof metadata, universal-Law scope,
       and the derived law index remain internally consistent.
   fail_action: publish self_violation event; refuse autoloop fixes that don't restore
     the law
@@ -485,7 +485,7 @@ veto_patterns:
     # blocker. 87 findings in lib/, every one read and classified, 0 real:
     #
     #   `def execute_resync`, `execute_job`, `pre_execute?`, `phase: "post_execute"`
-    #   `@db.execute(sql, [args])` — the parameterized form this rule prescribes
+    #   `@db.execute(sql, [args])` — the parameterized form this Law prescribes
     #   `@db.execute(<<~SQL, args)` — likewise, via heredoc
     #   `"context: gathering for query=#{query[0, 60]}"` — a log line
     #   `# Unsafe shell never executes.` — a comment
@@ -516,7 +516,7 @@ veto_patterns:
     #   41  an ellipsis in prose or in documented syntax — "\n... [truncated]",
     #       %i[...], for...of, require(...).permit(...)
     #   26  Ruby's exclusive range operator — lines[0...-1], (1...lines.length)
-    #    3  the source of the rules that detect TODO/FIXME, quoting it
+    #    3  the source of the Laws that detect TODO/FIXME, quoting it
     #
     # Zero real unfinished work, at :veto — the strongest severity there is.
     # 119 false vetoes do not gate anything; they teach the reader that a veto is
@@ -527,7 +527,7 @@ veto_patterns:
     #
     #   #[^\n]*\b(TODO|FIXME)\b   a marker in a comment, which is what a marker
     #                             is. The last three false vetoes were TODO
-    #                             inside the regex literals of the rules that
+    #                             inside the regex literals of the Laws that
     #                             detect TODO; none has a `#` before it.
     #   ^\s*\.\.\.\s*$            a stubbed body — `...` alone on its line. This
     #                             is the shape lexical TODO_FIXME does not have,
@@ -537,7 +537,7 @@ veto_patterns:
     #                             and spending. No narrowing rescues a word.
     #
     # The comment clause deliberately does not carry TODO_FIXME's hardcoded
-    # `path.include?("/review/scan/rules/")` exemption. Copying an exemption into
+    # `path.include?("/review/scan/laws/")` exemption. Copying an exemption into
     # a second file is how the two drift; being precise about what a marker looks
     # like needs no exemption at all.
     #
@@ -547,7 +547,7 @@ veto_patterns:
     # Narrowed a third time, by the same measurement. `\b` holds between the O and
     # the dot, so `TODO.md` — the backlog CLAUDE.md tells every agent to cite — read
     # as a work marker. Every veto it raised across lib/ and law/ was that filename,
-    # none was unfinished work, so the rule punished the house rule that sends a
+    # none was unfinished work, so the Law punished the house Law that sends a
     # reader there. The lookahead sits on the marker rather than on the line, so
     # `# TODO: fix, and see TODO.md` still vetoes on the marker.
     detect: "#[^\\n]*\\b(TODO|FIXME)\\b(?!\\.md)|^\\s*\\.\\.\\.\\s*$"
@@ -681,7 +681,7 @@ law_deps:
   # collateral-deleted by a later laws.yml rewrite. The LawOrder reader consumes
   # this dependency graph and tolerates optional cold-start priors when no priors
   # section is present; the topological sort ignores ids absent from the live
-  # rule catalogue.
+  # Law catalogue.
 
   # Structural operations: flatten nesting before decoupling (flattening
   # exposes the hidden coupling that DECOUPLE then targets).
@@ -716,7 +716,7 @@ law_deps:
   COMMENTS_AS_DEODORANT:
     after: [DEFRAG, MERGE, FLATTEN, EXTRACT]
 
-  # Strunk rules after all structural operations — prose quality is a
+  # Strunk Laws after all structural operations — prose quality is a
   # final-pass concern.
   OMIT_NEEDLESS:
     after: [DEFRAG, REFLOW]
@@ -730,11 +730,11 @@ law_deps:
     after: [MERGE, FLATTEN, DEFRAG]
 
   # Bayesian/RL priors updated last — they need the post-fix violation
-  # counts from all other rules.
+  # counts from all other Laws.
   PATTERN_EXTRACTION:
     after: [DEFRAG, MERGE, DECOUPLE, FLATTEN]
 
-  # Scanner rule ordering — structural before style, security before polish.
+  # Scanner Law ordering — structural before style, security before polish.
   bare_rescue:
     after: [fail_visibly]
   silent_rescue:
