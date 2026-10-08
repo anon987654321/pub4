@@ -9,12 +9,12 @@ module Master
     require_relative "source_masking"
     require_relative "../../master"
 
-      class Rule
+      class Law
         include SourceMasking
 
         EXT_LANG = Master::FILE_LANGUAGE_MAP
 
-        attr_reader :id, :description, :severity, :rule_tags, :auto_fix
+        attr_reader :id, :description, :severity, :law_tags, :auto_fix
 
         @registry = []
         @registry_mutex = Mutex.new
@@ -46,7 +46,7 @@ module Master
         # nothing at all, which is what an undeclared subclass has always got.
         def self.declare(id:, description: "", severity: :warning, tags: [], autofix: false)
           @declaration = { id: id.to_s, description: description.to_s, severity:,
-                           rule_tags: Array(tags), auto_fix: autofix }
+                           law_tags: Array(tags), auto_fix: autofix }
         end
 
         # Inherited, so a subclass of a declared rule keeps its parent's identity
@@ -62,7 +62,7 @@ module Master
           @id = declared&.fetch(:id, nil) || self.class.name&.split("::")&.last&.downcase || "unknown"
           @description = declared ? declared[:description] : ""
           @severity = declared ? declared[:severity] : :warning
-          @rule_tags = declared ? declared[:rule_tags] : []
+          @law_tags = declared ? declared[:law_tags] : []
           @auto_fix = declared ? declared[:auto_fix] : true
         end
 
@@ -111,12 +111,12 @@ module Master
         def finding(line:, message:, fix: nil, confidence: nil, why: nil, genealogy: nil, impact_radius: nil,
                     dedupe_key: nil, blast_radius: nil)
           Finding.build(
-            rule: @id,
+            law: @id,
             message:,
             line:,
             severity: @severity,
             fix:,
-            tags: @rule_tags,
+            tags: @law_tags,
             confidence: confidence || default_confidence,
             why: why || default_why(message),
             genealogy: genealogy || default_genealogy(message),
@@ -231,6 +231,9 @@ module Master
           "#{@id}:#{message.to_s.downcase.gsub(/\b\d+\b/, "#")}"
         end
       end
+
+      # Compatibility name for callers not yet migrated to the singular Law concept.
+      Rule = Law
     end
   end
 end
