@@ -81,7 +81,11 @@ module Deploy
     end
 
     def namespaces
-      Dir.glob(File.join(engines_root, "brgen_*", "lib", "*", "engine.rb"))\n         .concat(Dir.glob(File.join(engines_root, "brgen_radio", "*", "lib", "*", "engine.rb")))\n         .sort.each_with_object({}) do |path, out|
+      engine_paths = [
+        *Dir.glob(File.join(engines_root, "brgen_*", "lib", "*", "engine.rb")),
+        *Dir.glob(File.join(engines_root, "brgen_radio", "*", "lib", "*", "engine.rb"))
+      ]
+      engine_paths.sort.each_with_object({}) do |path, out|
         name = File.read(path)[NAMESPACE, 1] or next
         out[path.delete_prefix("#{engines_root}/").sub(%r{/lib/.*\z}, "")] = name
       end
