@@ -171,8 +171,8 @@ module Master
             raise "semantic rule adapter load failed: #{e.class}: #{e.message}"
           end
 
-          def run_law_once(rule, files, pass, council: nil, external_violations: nil)
-            rl = LawLoop.new(rule:, agent: @agent, scanner: @scanner, root: @root, bus: @bus,
+          def run_law_once(law, files, pass, council: nil, external_violations: nil)
+            rl = LawLoop.new(law:, agent: @agent, scanner: @scanner, root: @root, bus: @bus,
                               learnings: @learnings, committer: @committer,
                               visual_custody: @visual_pass&.custody)
             rl.injected_preamble = [@preamble, council_preamble(council)].compact.join("\n\n")
