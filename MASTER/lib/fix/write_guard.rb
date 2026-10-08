@@ -25,6 +25,8 @@ module Master
         end
 
         def self.default
+          require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
+          ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.definitions.empty?
           digest = ::Law::Contract.digest
           return @default if @default && @default_digest == digest
 
