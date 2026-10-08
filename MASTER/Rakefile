@@ -663,11 +663,11 @@ end
     end
   end
 
-  # laws.yml's PRINCIPLE_MAP law names the rule -> principle direction; SelfTest
-  # only ever checked principle -> rule and so reported 0 against 101 untraced
+  # laws.yml's LAW_MAP law names the rule -> law direction; SelfTest
+  # only ever checked law -> rule and so reported 0 against 101 untraced
   # rules. A ceiling makes the real number visible and monotone without turning a
   # standing backlog into a red gate on unrelated work.
-  desc "Ratchet: registered rules that trace to no principle_map entry may fall, never rise"
+  desc "Ratchet: registered rules that trace to no law_map entry may fall, never rise"
   task :principle_trace do
     require "yaml"
     $LOAD_PATH.unshift(File.join(__dir__, "lib"))
