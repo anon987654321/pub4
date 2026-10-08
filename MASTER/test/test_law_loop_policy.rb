@@ -286,7 +286,7 @@ class TestLawLoopPolicy < Minitest::Test
     Master.define_singleton_method(:load_yaml) do |path, symbolize_names: false, default: {}|
       if path.end_with?("soul.yml")
         count += 1
-        { "absolute" => { "golden_rule" => "CACHE_ME" } }
+        { "absolute" => { "golden_law" => "CACHE_ME" } }
       else
         original.call(path, symbolize_names:, default:)
       end
