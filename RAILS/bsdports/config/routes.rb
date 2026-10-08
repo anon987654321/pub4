@@ -20,15 +20,15 @@ Rails.application.routes.draw do
     get  "magic", to: "sessions#magic", as: :magic
     post "magic", to: "sessions#request_magic", as: :request_magic
   end
-  instance_eval(File.read(File.expand_path("../../shared/config/routes/legal.rb", __dir__)))
-  instance_eval(File.read(File.expand_path("../../shared/config/routes/auth.rb", __dir__)))
-  instance_eval(File.read(File.expand_path("../../shared/config/routes/verification.rb", __dir__)))
+  instance_eval(File.read(File.expand_path("../../__shared/config/routes/legal.rb", __dir__)))
+  instance_eval(File.read(File.expand_path("../../__shared/config/routes/auth.rb", __dir__)))
+  instance_eval(File.read(File.expand_path("../../__shared/config/routes/verification.rb", __dir__)))
   # Social stack (notifications/reactions/reports/fingerprint) needs tables bsdports
   # does not have. Opt in with BSDPORTS_SOCIAL=1 only after migrations land.
   if ENV["BSDPORTS_SOCIAL"] == "1"
-    instance_eval(File.read(File.expand_path("../../shared/config/routes/social.rb", __dir__)))
+    instance_eval(File.read(File.expand_path("../../__shared/config/routes/social.rb", __dir__)))
   end
-  instance_eval(File.read(File.expand_path("../../shared/config/routes/fleet.rb", __dir__)))
+  instance_eval(File.read(File.expand_path("../../__shared/config/routes/fleet.rb", __dir__)))
   resources :passwords, param: :token, only: %i[new create edit update]
 
   root "ports#index"
