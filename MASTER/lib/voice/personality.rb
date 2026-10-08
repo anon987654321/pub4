@@ -39,7 +39,7 @@ module Master
       attr_reader :name, :voice, :tts_rate, :tts_pitch, :style, :description, :knowledge_sources, :disclaimer
 
       def self.persona_names(root: nil)
-        Ground::Rules.new(root:).data(:personas).keys.map(&:to_sym)
+        Ground::Laws.new(root:).data(:personas).keys.map(&:to_sym)
       end
 
       def self.why_prompt(rule)
@@ -49,7 +49,7 @@ module Master
 
       def initialize(name = DEFAULT, root: nil, homeostat: nil)
         @name = name.to_sym
-        @rules = Ground::Rules.new(root:)
+        @rules = Ground::Laws.new(root:)
         personas = @rules.data(:personas)
         persona = personas[@name.to_s] || personas[DEFAULT.to_s] || FALLBACK_PERSONA
         assign_persona(persona)
