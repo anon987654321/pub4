@@ -32,7 +32,7 @@ class TestIoBatchReplace < Minitest::Test
 
   def replace(governor: Governor.new(Master::Result.ok("ok")), blocked: [], **args)
     tool = Master::Io::BatchReplace.new(root: @root, governor:)
-    Master::Review::Scan::WriteGuard.stub(:default, Guard.new(blocked)) { tool.call(**args) }
+    Master::Fix::WriteGuard.stub(:default, Guard.new(blocked)) { tool.call(**args) }
   end
 
   def test_replaces_text_in_safe_extensions_only
