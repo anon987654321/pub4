@@ -61,22 +61,22 @@ module Master
       end
 
       # law/ keys its registry by symbol. DENSITY, PROXIMITY, LINEARITY,
-      # ABSTRACTION and SINGULARITY are the axioms under laws.yml `laws:`, not
+      # ABSTRACTION and SINGULARITY are the constitutional_laws under laws.yml `laws:`, not
       # law/ files, so they are read from there.
       def load_laws!
         require File.expand_path("../../law/law", __dir__)
-        Law.load_all(File.expand_path("../../law", __dir__)) unless Law.rules.key?(IDS.first.to_sym)
-        missing = IDS.reject { |id| Law.rules.key?(id.to_sym) || axioms.key?(id) }
+        Law.load_all(File.expand_path("../../law", __dir__)) unless Law.definitions.key?(IDS.first.to_sym)
+        missing = IDS.reject { |id| Law.definitions.key?(id.to_sym) || constitutional_laws.key?(id) }
         raise "visual usability law missing: #{missing.join(", ")}" unless missing.empty?
       end
 
-      def axioms
-        @axioms ||= Master.load_yaml(Master::LAWS_PATH).fetch("laws", {})
+      def constitutional_laws
+        @constitutional_laws ||= Master.load_yaml(Master::LAWS_PATH).fetch("laws", {})
       end
 
       def line(id)
-        law = Law.rules[id.to_sym]
-        law ? "#{id}: #{law.ask} Fix: #{law.fix}" : "#{id}: #{axioms.fetch(id).fetch("statement")}"
+        law = Law.definitions[id.to_sym]
+        law ? "#{id}: #{law.ask} Fix: #{law.fix}" : "#{id}: #{constitutional_laws.fetch(id).fetch("statement")}"
       end
     end
   end
