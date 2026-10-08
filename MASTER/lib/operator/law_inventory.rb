@@ -169,7 +169,7 @@ module Operator
     end
 
     def load_law
-      require File.join(MASTER, "law", "law")
+      require File.join(MASTER, "law", "definition")
       Law.load_all(LAW_ROOT) if Law.definitions.empty?
       Law.definitions.transform_keys { |key| key.to_s.downcase }
     end
