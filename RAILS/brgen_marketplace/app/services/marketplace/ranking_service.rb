@@ -23,7 +23,7 @@ module Marketplace
         relevance_score * WEIGHTS[:relevance] +
         performance_score * WEIGHTS[:performance] +
         delivery_score * WEIGHTS[:delivery] +
-        seller_score * WEIGHTS[:seller],
+        seller_score * WEIGHTS[:seller]
       ).round(4)
     end
 
