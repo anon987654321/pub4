@@ -3346,7 +3346,7 @@ SHOWCASE_MODES = {
       @bass_gain = bass_gain
       @moves = @c.fetch("moves").to_h { |row| [row["from"], row["to"]] }
       @fugue_enabled = ENV["DILLA_FUGUE"] == "1"
-      @reference_name = reference || (@fugue_enabled ? nil : LiveSynth.authentic_progression_key(rng))
+      @reference_name = reference || (LiveSynth.showcase? || @fugue_enabled ? nil : LiveSynth.authentic_progression_key(rng))
       @reference = @reference_name && LiveSynth.documented_progression(@reference_name)
       curated_default = LiveSynth.showcase? ? "1" : "0"
       curated_enabled = ENV.fetch("DILLA_CURATED_HARMONY", curated_default) != "0"
