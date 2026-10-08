@@ -37,7 +37,7 @@ module Master
         - Reconcile the structural ratchet when the measured core gets smaller. Keep the recorded ceiling honest.
 
         Problem: %<problem_id>s
-        Signals: %<rule>s
+        Laws: %<law>s
         Why these findings were grouped: %<message>s
 
         Findings:
@@ -46,7 +46,7 @@ module Master
         Candidate transformations:
         %<candidate_operations>s
 
-        Any combination of these is allowed: defragment scattered concepts; decouple
+        Any combination of these is allowed across the repository surfaces: defragment scattered concepts; decouple
         independent concerns; flatten wrappers, nesting and needless directories;
         merge equivalent logic; split unlike responsibilities; relocate code beside
         its owner; rename misleading names; reorder for importance; remove redundant
@@ -75,7 +75,7 @@ module Master
       TEXT
 
       ATTACK = <<~TEXT
-        A restructure, proposed for problem %<problem_id>s (%<rule>s) at %<path>s:
+        A restructure, proposed for problem %<problem_id>s (%<law>s) at %<path>s:
         operations: %<operations>s
         %<summary>s
 
@@ -120,7 +120,7 @@ module Master
           {
             problem_id: problem.id,
             files: problem.files.map { |path| relative(path) },
-            rules: problem.rules,
+            laws: problem.laws,
             candidate_operations: problem.candidate_operations,
             primary_operation: problem.primary_operation,
             confidence: problem.confidence.to_s,
@@ -160,7 +160,7 @@ module Master
         [expanded]
       end
 
-      # [path, rule, message, related_paths] for each structural finding, smallest moves first;
+      # [path, law, message, related_paths] for each repository-surface finding, smallest moves first;
       # within a rule the order rotates by run, so every finding comes up. Dead
       # subtrees and cross-file architecture defects carry their evidence paths
       # into the proposal rather than collapsing to one filename.
@@ -226,7 +226,7 @@ module Master
           transformations: @transformation_plan.prompt,
           preservation: @transformation_plan.preservation_contract.map { |key, value| "  #{key}: #{value}" }.join("\n"),
           contracts: Contracts.for(tree).strip,
-          rule: problem.rules.join(", "),
+          law: problem.laws.join(", "),
           path: relative(problem.files.first),
           message: "#{problem.reason}; confidence=#{problem.confidence}; problem=#{problem.id}",
           problem_id: problem.id,
@@ -241,7 +241,7 @@ module Master
           format(
             ATTACK,
             problem_id: problem.id,
-            rule: problem.rules.join(", "),
+            law: problem.laws.join(", "),
             path: relative(problem.files.first),
             operations: plan.operations.join(", "),
             summary: plan.summary,
@@ -252,7 +252,7 @@ module Master
       end
 
       def commit_message(problem, plan)
-        "refactor: #{plan.summary.empty? ? "restructure #{relative(problem.files.first)}" : plan.summary}\n\n"           "Addresses #{problem.rules.join(", ")} for problem #{problem.id}. Restructured by /fix after the repair passes: "           "a hostile review approved the diff, and parse, eager load, the boot self-test and the related tests held."
+        "refactor: #{plan.summary.empty? ? "restructure #{relative(problem.files.first)}" : plan.summary}\n\n"           "Addresses laws #{problem.laws.join(", ")} for problem #{problem.id}. Restructured by /fix after the repair passes: "           "a hostile review approved the diff, and parse, eager load, the boot self-test and the related tests held."
       end
 
       def report(problem, plan, result)
@@ -265,13 +265,13 @@ module Master
         operation = plan&.operations&.last || problem.primary_operation
         Master::Trace::Dmesg.status(
           "restructure0",
-          "#{operation} problem=#{problem.id} signals=#{problem.size} #{problem.rules.join(",")} #{relative(problem.files.first)}: #{text[0, 140]}"
+          "#{operation} problem=#{problem.id} signals=#{problem.size} #{problem.laws.join(",")} #{relative(problem.files.first)}: #{text[0, 140]}"
         )
         @bus&.publish(
           "fix_loop:restructure",
           path: relative(problem.files.first),
           rule: problem.rules.join(","),
-          rules: problem.rules,
+          laws: problem.laws,
           problem_id: problem.id,
           operation:,
           candidate_operations: problem.candidate_operations,
