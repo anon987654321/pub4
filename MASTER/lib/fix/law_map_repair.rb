@@ -42,8 +42,8 @@ module Master
 
       def executable_law_ids
         require File.join(Master::ROOT, "law", "law")
-        ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.rules.empty?
-        ::Law.rules.keys.map { |id| id.to_s.upcase }.to_set
+        ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.definitions.empty?
+        ::Law.definitions.keys.map { |id| id.to_s.upcase }.to_set
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "LawMapRepair.executable_law_ids", severity: :load_bearing)
         raise "law-map Law registry unreadable: #{e.class}: #{e.message}"
