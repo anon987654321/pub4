@@ -56,7 +56,7 @@ module Master
             return 0 if Time.now >= deadline || findings.empty?
 
             loop = LawLoop.new(
-              law: OpportunityPass::Law.new(OpportunityPass::RULE_ID),
+              law: OpportunityPass::Law.new(OpportunityPass::LAW_ID),
               agent: @agent, scanner: @scanner, root: @root, bus: @bus,
               learnings: @learnings, committer: @committer,
               visual_custody: @visual_pass&.custody,
