@@ -29,7 +29,7 @@ module Master
           $stdout.sync = true
           Master::Trace::Dmesg.attach(name, "master0", Master::Trace::Dmesg.counted(total, "file"))
           selected = Array(laws)
-          summary = rule_scope_summary(selected)
+          summary = law_scope_summary(selected)
           detail = "selected #{selected.size} laws"
           detail += ", #{summary}" unless summary.empty?
           Master::Trace::Dmesg.attach(law_unit, name, detail)
@@ -53,7 +53,7 @@ module Master
           append_scan_hits_jsonl(path, findings)
           log_scan_checkpoint(unit:, done:, total:, viol_total:, dirty:, top:, elapsed:, eta_s:)
           log_scan_completion(unit:, done:, total:, viol_total:, dirty:, elapsed:) if done == total
-          log_rule_completion if done == total
+          log_law_completion if done == total
           @bus&.publish("scan:progress", done:, total:, path: rel, violations: count, eta_s:, top: top.to_h)
         end
 
@@ -111,7 +111,7 @@ module Master
           parts = ["#{done}/#{total} files", tally(viol_total, dirty), "#{elapsed.round}s"]
           parts << "eta #{eta_s}s" if eta_s&.positive?
           line = parts.join(", ")
-          line += "; top #{top.map { |law, n| "#{rule} #{n}" }.join(", ")}" unless top.empty?
+          line += "; top #{top.map { |law, n| "#{law} #{n}" }.join(", ")}" unless top.empty?
           Master::Trace::Dmesg.status(unit, line)
           write_progress_snapshot(unit:, done:, total:, viol_total:, dirty:, top:, elapsed:, eta_s:)
         end
@@ -166,7 +166,7 @@ module Master
 
         def write_progress_snapshot(unit:, done:, total:, viol_total:, dirty:, elapsed:, top: [], eta_s: nil)
           root = defined?(Master::ROOT) ? Master::ROOT : Dir.pwd
-          top_s = top.map { |law, n| "#{rule}=#{n}" }.join(" ")
+          top_s = top.map { |law, n| "#{law}=#{n}" }.join(" ")
           text = [
             "phase: streaming #{unit}",
             "progress: #{done}/#{total} files",
