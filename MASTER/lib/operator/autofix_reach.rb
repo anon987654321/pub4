@@ -33,7 +33,7 @@
 # Corrected, it reports six and none of them was on the old list:
 # PRECOMPUTE_MATH, ANALOG_WARMTH, PURE_FUNCTIONS, SPECULATIVE_GENERALITY,
 # SYSTEM_STATUS and CACHE_LLM each declare a semantic detector at info severity,
-# which SemanticRule's info filter drops — so nothing ever reports them and the
+# which SemanticLaw's info filter drops — so nothing ever reports them and the
 # autofix claim can never be reached. Raise the severity, give one a detector,
 # or say `autofix: false`.
 #
