@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
-require_relative "rule_lineage"
+require_relative "law_lineage"
 
 module Master
   module Trace
   # Local lookup for /why <id>; falls back to LLM when nothing matches.
     class WhyExplainer
-      SCAN_RULES_DIR = "lib/review/scan/laws"
+      SCAN_LAWS_DIR = "lib/review/scan/laws"
 
       def initialize(root: Master::ROOT)
         @root = root
@@ -22,10 +22,10 @@ module Master
           # The declared rule first: it carries tier and name, and registry_rule
           # borrows the executable law's fix when the declaration has none. An
           # executable law answers for the ids nothing declared.
-          registry_rule(key) ||
-          soul_rule(key) ||
+          registry_law(key) ||
+          soul_law(key) ||
           executable_law(key) ||
-          scan_rule(key) ||
+          scan_law(key) ||
           anti_pattern(key) ||
           style_key(key)
       end
@@ -35,7 +35,7 @@ module Master
       def rule_lineage(key)
         return unless key.include?("/") || File.exist?(File.join(@root, key))
 
-        RuleLineage.new(root: @root).explain(key)
+        LawLineage.new(root: @root).explain(key)
       end
 
       # The design law. It sits at laws.yml#beauty, line 92 of 4,215, and an
@@ -45,7 +45,7 @@ module Master
       def design_law(key)
         return unless %w[beauty design design_law aesthetic].include?(key.downcase)
 
-        b = rules["beauty"] || {}
+        b = laws["beauty"] || {}
         return if b.empty?
 
         lines = ["design law (data/laws.yml#beauty) — governs every visual decision:"]
@@ -66,7 +66,7 @@ module Master
       # 2026-08-12 that copy started returning {} and assigning it over the real
       # rules, so /why went silent for every registry and scan rule while
       # reporting nothing wrong.
-      def rules
+      def laws
         @rules ||= Master.load_laws(root: @root)
       end
 
@@ -109,13 +109,13 @@ module Master
         candidates.find { |root| File.file?(File.join(root, "law", "law.rb")) } || Master::ROOT
       end
 
-      def registry_rule(key)
+      def registry_law(key)
         slug = key.upcase.tr("-", "_")
         hit = Master.law_entries(root: @root).find { |r| r["id"].to_s.upcase == slug }
         return unless hit
 
         [
-          "rule: #{hit['id']}",
+          "law: #{hit['id']}",
           ("  tier: #{hit['tier']}" if hit["tier"]),
           ("  name: #{hit['name']}" if hit["name"]),
           ("  source: #{hit['source']}" if hit["source"]),
@@ -126,12 +126,12 @@ module Master
         ].compact.join("\n")
       end
 
-      def soul_rule(key)
+      def soul_law(key)
         slug = key.upcase.tr("-", "_")
         # law/ holds every rule now, so /why answers for conduct rules too —
         # it dug soul and returned nothing for NO_COLUMN_ALIGN and FLAT_UI.
-        hit = Master::Ground::Rules.new.rules[slug] or return
-        ["constitutional rule: #{slug}", "  #{hit}"].join("\n")
+        hit = Master::Ground::Laws.new.laws[slug] or return
+        ["constitutional law: #{slug}", "  #{hit}"].join("\n")
       end
 
       def law(key)
@@ -144,24 +144,24 @@ module Master
         ].join("\n")
       end
 
-      def scan_rule(key)
+      def scan_law(key)
         slug = key.downcase.tr("-", "_")
-        path = File.join(@root, SCAN_RULES_DIR, "#{slug}_rule.rb")
-        return registry_rule(slug) unless File.file?(path)
+        path = File.join(@root, SCAN_LAWS_DIR, "#{slug}_laws.rb")
+        return registry_law(slug) unless File.file?(path)
 
         src = File.read(path)
         desc = src[/@description\s*=\s*["']([^"']+)["']/, 1] || "(no description)"
         tags = src[/@rule_tags\s*=\s*%i\[([^\]]+)\]/, 1].to_s.split.first(6).join(" ")
         [
-          "scan rule: #{slug}",
+          "scan law: #{slug}",
           "  description: #{desc}",
           ("  axioms: #{tags}" unless tags.empty?),
-          "  source: #{SCAN_RULES_DIR}/#{slug}_rule.rb",
+          "  source: #{SCAN_LAWS_DIR}/#{slug}_laws.rb",
         ].compact.join("\n")
       end
 
       def anti_pattern(key)
-        ap = rules["anti_patterns"] || {}
+        ap = laws["anti_patterns"] || {}
         %w[forbidden discouraged].each do |level|
           Array(ap[level]).each do |entry|
             reason = entry["reason"].to_s
