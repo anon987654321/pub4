@@ -43,7 +43,6 @@ module Master
           @root = root
           @resource_budget = ResourceBudget.new(root:)
           @agent = agent
-          @scanner = scanner
           @scan_phase = ScanPhase.new(scanner:, root:, bus:)
           @preflight = preflight || Preflight.new(root:, bus:)
           @learnings = learnings
