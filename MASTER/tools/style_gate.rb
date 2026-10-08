@@ -28,7 +28,7 @@ results << run(
   chdir: ROOT,
 )
 
-shared_rubocop = File.join(RAILS_ROOT, "shared", "bin", "rubocop")
+shared_rubocop = File.join(RAILS_ROOT, "__shared", "bin", "rubocop")
 if File.executable?(shared_rubocop)
   Dir.glob(File.join(RAILS_ROOT, "*")).select { |path| File.directory?(path) }.sort.each do |app|
     gemfile = File.join(app, "Gemfile")
