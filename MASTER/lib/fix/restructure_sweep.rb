@@ -58,6 +58,15 @@ module Master
         The preservation contract is mandatory:
         %<preservation>s
 
+        Evidence hierarchy (strongest first):
+        %<evidence_hierarchy>s
+
+        Domain adapters and smell vocabulary:
+        %<domain_profile>s
+
+        Automatic vetoes:
+        %<automatic_vetoes>s
+
         The tree, and the contracts to keep:
         %<contracts>s
 
@@ -124,6 +133,9 @@ module Master
             candidate_operations: problem.candidate_operations,
             primary_operation: problem.primary_operation,
             confidence: problem.confidence.to_s,
+            evidence_hierarchy: @transformation_plan.evidence_hierarchy,
+            domain_adapters: @transformation_plan.domain_adapters,
+            smell_catalog: @transformation_plan.smell_catalog,
             reason: problem.reason
           }
         end
@@ -226,6 +238,9 @@ module Master
           transformations: @transformation_plan.prompt,
           preservation: @transformation_plan.preservation_contract.map { |key, value| "  #{key}: #{value}" }.join("\n"),
           contracts: Contracts.for(tree).strip,
+          evidence_hierarchy: @transformation_plan.evidence_hierarchy.map { |entry| "  #{entry.fetch("id")}: #{entry.fetch("practice")}" }.join("\n"),
+          domain_profile: @transformation_plan.domain_adapters.map { |domain, adapter| "  #{domain}: #{adapter}; smells=#{@transformation_plan.smell_catalog.fetch(domain, []).join(", ")}" }.join("\n"),
+          automatic_vetoes: @transformation_plan.automatic_vetoes.map { |veto| "  - #{veto}" }.join("\n"),
           law: problem.laws.join(", "),
           path: relative(problem.files.first),
           message: "#{problem.reason}; confidence=#{problem.confidence}; problem=#{problem.id}",
