@@ -25,7 +25,7 @@ class TestLimitsSplit < Minitest::Test
     # the mechanism lint:spine uses so a stale number cannot pass quietly.
     "loc_body_budgets" => %w[Rakefile loc_body_budgets],
     "dmesg" => ["lib/trace/dmesg.rb", "dmesg"],
-    "principle_groups" => ["lib/cli/scan/request.rb", "principle_groups"],
+    "law_groups" => ["lib/cli/scan/request.rb", "law_groups"],
     "process" => ["lib/ops.rb", "process"],
     "scan_profiles" => ["lib/cli/scan/request.rb", "scan_profiles"],
     "session_modes" => ["lib/ground/mode_posture.rb", "session_modes"],
@@ -73,7 +73,7 @@ class TestLimitsSplit < Minitest::Test
   # nothing applied.
   def test_nothing_under_guidance_has_grown_a_reader
     sources = Dir.glob(File.join(Master::ROOT, "{lib,core,bin,web/app}", "**", "*.rb"))
-                 .reject { |path| path.end_with?("rule_accessors.rb", "rules.rb") }
+                 .reject { |path| path.end_with?("law_accessors.rb", "laws.rb") }
     bodies = sources.to_h { |path| [path.sub("#{Master::ROOT}/", ""), File.read(path)] }
 
     # Both halves, or this is the same coincidence in the other direction: a
@@ -94,10 +94,10 @@ class TestLimitsSplit < Minitest::Test
 
   # Both accessors that made the unread keys look reachable.
   def test_the_generic_accessors_are_gone
-    rules = Master::Ground::Rules.new
+    laws = Master::Ground::Laws.new
 
-    refute_respond_to rules, :workflow_rule, "a generic reader over limits.yml defeats the split"
-    refute_respond_to rules, :workflow
+    refute_respond_to laws, :workflow_law, "a generic reader over limits.yml defeats the split"
+    refute_respond_to laws, :workflow
   end
 
   # The split relabels the guidance; it does not delete it from limits.yml.
