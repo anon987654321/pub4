@@ -26,12 +26,12 @@ module Master
           "semantic" => rule.respond_to?(:semantic?) && rule.semantic?,
           "conduct" => rule.respond_to?(:practice) && !rule.practice.to_s.empty?,
           "detector_kind" => detector_kind(rule),
-          "enforcement" => Master::Review::Scan::RuleHealth.enforcement(rule).to_s,
-          "measurement_mode" => Master::Review::Scan::RuleHealth.measurement_mode?(rule),
+          "enforcement" => Master::Review::Scan::LawHealth.enforcement(rule).to_s,
+          "measurement_mode" => Master::Review::Scan::LawHealth.measurement_mode?(rule),
           "severity" => rule.respond_to?(:severity) ? rule.severity.to_s : "unknown",
           "applies_to" => Array(rule.respond_to?(:applies_to) ? rule.applies_to : []),
           "path_exclude" => detector_paths(rule),
-          "calibration" => Master::Review::Scan::RuleHealth.calibration(rule)
+          "calibration" => Master::Review::Scan::LawHealth.calibration(rule)
         }
       end
 
