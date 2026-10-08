@@ -58,7 +58,7 @@ module Operator
 
     def dsl_ids
       Dir.glob(File.join(MASTER, "lib", "review", "scan", "rules", "*.rb"))
-         .flat_map { |p| File.read(p, encoding: "UTF-8").scrub.scan(/RuleDSL\.rule\s+:(\w+)/).flatten }
+         .flat_map { |p| File.read(p, encoding: "UTF-8").scrub.scan(/LawDSL\.rule\s+:(\w+)/).flatten }
     end
 
     def all_ids = (yaml_rules.map { |r| r["id"] } + law_ids + dsl_ids).compact
@@ -121,12 +121,12 @@ module Operator
     # regrowth. What the old count was hiding is in statement_conflicts below.
     #
     # `detect_lexical` in the catalogue does count: it is a deterministic
-    # detector the YamlDeclarativeRule bridge runs. There are none today, which
+    # detector the YamlDeclarativeLaw bridge runs. There are none today, which
     # is the escape hatch sitting idle rather than the check being blind.
     def detector_homes
       homes = Hash.new { |h, k| h[k] = [] }
       law_detectors.each { |id| homes[id] << "law/" }
-      dsl_ids.map(&:upcase).each { |id| homes[id] << "RuleDSL" }
+      dsl_ids.map(&:upcase).each { |id| homes[id] << "LawDSL" }
       yaml_rules.each do |r|
         next unless %w[detect_lexical].any? { |k| r[k].to_s.strip != "" }
 
@@ -182,7 +182,7 @@ module Operator
         severity = registry_severity[id]
         next unless severity
 
-        conflict(id, "RuleDSL", r["fix"], severity, r)
+        conflict(id, "LawDSL", r["fix"], severity, r)
       end
     end
 
@@ -208,8 +208,8 @@ module Operator
       $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
       require "master"
       require "review/scan/law_dsl"
-      Master::Review::Scan::Rule.registry.filter_map do |klass|
-        rule = Master::Review::Scan::RuleFactory.build(klass, root: MASTER)
+      Master::Review::Scan::Law.registry.filter_map do |klass|
+        rule = Master::Review::Scan::LawFactory.build(klass, root: MASTER)
         [rule.id.to_s.upcase, rule.severity]
       rescue StandardError # scan: intentional — a rule that will not build has no severity to compare
         nil
