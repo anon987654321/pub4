@@ -76,6 +76,18 @@ module DillaMusicalGrammar
     suspended_blue: [
       [0, "m11"], [5, "sus9"], [10, "13sus"], [3, "maj7#11"],
       [8, "m9"], [6, "sus2"], [7, "7alt"], [0, "m11"]
+    ],
+    ivory_afterglow: [
+      [0, "maj9"], [9, "m9"], [2, "m11"], [7, "13"],
+      [5, "maj9"], [10, "m9"], [3, "7alt"], [0, "maj9"]
+    ],
+    blue_hour_major: [
+      [0, "maj9"], [9, "m9"], [2, "m11"], [7, "13"],
+      [5, "maj9"], [10, "7"], [1, "maj7#11"], [0, "maj9"]
+    ],
+    moonlit_bossa: [
+      [0, "m9"], [8, "maj7#11"], [5, "m9"], [10, "13"],
+      [3, "maj9"], [1, "7alt"], [0, "m9"], [0, "m6/9"]
     ]
   }.freeze
 
@@ -3506,7 +3518,7 @@ SHOWCASE_MODES = {
       @chords_on_pad += 1
       LiveSynth.log("#{name || "#{NAMES[(@key + degree) % 12]}#{quality}"} (#{bars} bar#{'s' if bars > 1}) on #{@pad}"                     "#{" + #{@lead}" if @lead_on}")
       @next_at += length
-      move! unless @reference || @curated_progression
+      move! unless @reference
     end
 
     def showcase_voicing
@@ -3722,6 +3734,13 @@ SHOWCASE_MODES = {
       range = @c.fetch("lead_range").map(&:to_i)
       subject = DillaMusicalGrammar.fugue_subject(@lead_scale_pcs, @lead_chord_pcs, range:)
       answer = DillaMusicalGrammar.tonal_answer(subject, scale_pcs: @lead_scale_pcs, range:)
+      answer = answer.map.with_index do |midi, index|
+        midi = (midi - 12).clamp(*range)
+        if index.positive? && !DillaMusicalGrammar.parallel_safe?(subject, answer)
+          midi = (midi + (index.even? ? 2 : -2)).clamp(*range)
+        end
+        midi
+      end
       subject_rhythm = [0.50, 0.50, 0.25, 0.25, 0.50, 0.50, 0.75, 0.50]
       subject_events = []
       answer_events = []
@@ -3772,10 +3791,10 @@ SHOWCASE_MODES = {
     end
 
     def move!
-      @state = DillaImprovisation.walk(@moves, @state, @rng)
+      @state = DillaImprovisation.walk(@moves, @state, @rng) unless @curated_progression
       change_pad((@pads - [@pad]).sample(random: @rng)) if @chords_on_pad >= @rng.rand(Range.new(*@c["pad_chords"]))
       toggle_lead! if @lead_enabled && @rng.rand < @c["lead_toggle_odds"]
-      modulate! if (@chords % @c["modulate_every"]).zero? && @state.first.zero?
+      modulate! if !@curated_progression && (@chords % @c["modulate_every"]).zero? && @state.first.zero?
     end
 
     def change_pad(name)
