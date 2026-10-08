@@ -30,7 +30,7 @@ module Master
           digest = ::Law::Contract.digest
           return @default if @default && @default_digest == digest
 
-          @default = new(laws: Master::Fix::Scanner.build(root: Master::ROOT).laws)
+          scanner = Master::Fix::Scanner.build(root: Master::ROOT)\n          laws = scanner.respond_to?(:laws) ? scanner.laws : scanner.rules\n          @default = new(laws:)
           @default_digest = digest
           @default
         end
@@ -54,7 +54,7 @@ module Master
           Verdict.new(introduced: findings(path:, content:).select { |f| (before[key(f)] -= 1).negative? })
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "WriteGuard#verdict", severity: :load_bearing, path:)
-          Verdict.new(introduced: [{ rule: :write_guard_error, line: 0, message: e.message, severity: :error }])
+          Verdict.new(introduced: [{ law: :write_guard_error, line: 0, message: e.message, severity: :error }])
         end
 
         private
