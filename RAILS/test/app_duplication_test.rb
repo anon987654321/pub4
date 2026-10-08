@@ -32,6 +32,6 @@ class AppDuplicationTest < Minitest::Test
     offenders = duplicates.select { |_relative, lines, _count| lines > MAX_DUPLICATED_LINES }
 
     assert_empty offenders.map { |relative, lines, count| "#{relative} (#{lines} lines x#{count})" },
-                 "identical in more than one app and big enough to extract into RAILS/shared"
+                 "identical in more than one app and big enough to extract into RAILS/__shared"
   end
 end
