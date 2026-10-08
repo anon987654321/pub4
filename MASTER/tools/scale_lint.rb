@@ -227,7 +227,7 @@ module Operator
     # a check that only reads literals.
     def weight_tokens
       @weight_tokens ||= begin
-        file = File.join(REPO_ROOT, "RAILS/shared/app/assets/stylesheets/_dialect_tokens.scss")
+        file = File.join(REPO_ROOT, "RAILS/__shared/app/assets/stylesheets/_dialect_tokens.scss")
         body = File.file?(file) ? File.read(file) : ""
         body.scan(/(--weight-[\w-]+)\s*:\s*(\d+)\s*;/).to_h { |n, v| [ n, v.to_i ] }
       end
