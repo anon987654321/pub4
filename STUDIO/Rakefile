@@ -28,6 +28,26 @@ end
 desc "dilla's suite, one process per file"
 task "test:dilla" => DILLA_SUITES.map { |suite| "test:dilla:#{suite}" }
 
+
+# Tests outside the Dilla/tool naming families still belong to the default
+# suite. Keep each in its own process so a top-level constant from one subject
+# cannot become an accidental dependency of the next.
+GENERAL_TEST_SUITES = FileList["test/*_test.rb"]
+  .reject { |path| File.basename(path).match?(/\Atest_(?:dilla|tools)_/) }
+  .reject { |path| File.basename(path) == "test_studio_gate.rb" }
+  .map { |path| File.basename(path, ".rb") }
+
+GENERAL_TEST_SUITES.each do |suite|
+  Rake::TestTask.new("test:#{suite}") do |t|
+    t.libs << "test"
+    t.test_files = ["test/#{suite}.rb"]
+    t.warning = false
+  end
+end
+
+desc "Standalone STUDIO contract tests not owned by a single media tool"
+task "test:general" => GENERAL_TEST_SUITES.map { |suite| "test:#{suite}" }
+
 TOOL_SUITES = FileList["test/test_tools_*.rb"]
   .map { |path| File.basename(path, ".rb").sub(/\Atest_tools_/, "") }
   .reject { |name| name == "gate" }
@@ -47,7 +67,7 @@ Rake::TestTask.new("test:gate") do |t|
 end
 
 desc "Studio suite — Dilla engine arithmetic, media tools, and the Studio gate itself"
-task test: ["test:gate", "test:dilla", *TOOL_SUITES.map { |tool| "test:#{tool}" }]
+task test: ["test:gate", "test:dilla", "test:general", *TOOL_SUITES.map { |tool| "test:#{tool}" }]
 
 desc "The STUDIO parse/boundary gate"
 task :gate do
