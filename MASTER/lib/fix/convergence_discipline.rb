@@ -74,7 +74,7 @@ module Master
         @bus&.publish(
           "fix_loop:judgment",
           pass:,
-          top_rule: finding_value(top, :rule),
+          top_law: finding_value(top, :law),
           top_file: finding_value(top, :file),
           leverage: top ? Master::Cognition::Intelligence.leverage_score(top) : 0,
           uncertainty: top ? Master::Cognition::Intelligence.uncertainty_score(top) : 1.0,
@@ -96,7 +96,7 @@ module Master
         @bus&.publish(
           "fix_loop:judgment",
           pass:,
-          top_rule: finding_value(top, :rule),
+          top_law: finding_value(top, :law),
           top_file: finding_value(top, :file),
           leverage: top ? Master::Cognition::Intelligence.leverage_score(top) : 0,
           uncertainty: top ? Master::Cognition::Intelligence.uncertainty_score(top) : 1.0,
@@ -188,8 +188,8 @@ module Master
       def strategy_for(files:, findings: [])
         return :adversarial if diminishing_returns?
 
-        rules = Array(findings).map { |finding| finding[:rule].to_s.downcase }
-        return :adversarial if rules.any? { |rule| rule.include?("security") || rule.include?("injection") || rule.include?("auth") }
+        laws = Array(findings).map { |finding| finding[:law].to_s.downcase }
+        return :adversarial if laws.any? { |law| law.include?("security") || law.include?("injection") || law.include?("auth") }
 
         languages = Array(files).map { |path| File.extname(path).downcase }.reject(&:empty?).uniq
         return :ensemble if languages.size > 1 || Array(files).size > limits["working_memory_items"].to_i
@@ -201,7 +201,7 @@ module Master
       def remember_reasoning(pass:, findings:, files:, progressed:, top:)
         observation = "pass #{pass}: #{Array(findings).size} finding(s) across #{Array(files).size} file(s); progressed=#{progressed}"
         hypothesis = if top
-          "The highest-leverage next decision is anchored at #{finding_value(top, :file)} under #{finding_value(top, :rule)}."
+          "The highest-leverage next decision is anchored at #{finding_value(top, :file)} under #{finding_value(top, :law)}."
         elsif progressed
           "The latest mutation improved the measured state; re-observe before adding more change."
         else
@@ -213,7 +213,7 @@ module Master
           falsifier: "the next measured pass fails to improve the finding state or violates ground truth",
           measurement: "finding count, ground truth, clean proof and next-pass quiescence",
           source: "fix_loop:pass:#{pass}",
-          selected: top ? finding_value(top, :rule).to_s : "observe",
+          selected: top ? finding_value(top, :law).to_s : "observe",
           alternatives: %w[repair preserve investigate],
           status: :uncertain,
           cause: "observe pass #{pass}",
