@@ -66,7 +66,7 @@ module Master
           @auto_fix = declared ? declared[:auto_fix] : true
         end
 
-        # Default for AST-based rules: a subclass implements check_ast and gets
+        # Default for AST-based laws: a subclass implements check_ast and gets
         # this for free. Rules with non-AST logic override #check instead.
         def check(code, path:)
           raise NotImplementedError, "#{self.class}#check not implemented" unless respond_to?(:check_ast)
@@ -126,7 +126,7 @@ module Master
           )
         end
 
-        # Every node under this one, in source order. Ten rules in
+        # Every node under this law, in source order. Ten rules in
         # structural_rules.rb each carried a byte-identical private `visit` doing
         # exactly this — the copy-paste TODO.md names as "one shared AST-walk
         # helper". They call this now, and a fix to the traversal lands once.
