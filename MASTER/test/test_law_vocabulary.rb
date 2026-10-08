@@ -29,8 +29,7 @@ class TestLawVocabulary < Minitest::Test
       matches.empty? ? nil : "#{path.delete_prefix("#{Master::ROOT}/")}: #{matches.join(", ")}"
     end
 
-    assert_empty offenders, "obsolete Rule vocabulary remains:\n#{offenders.join("
-")}"
+    assert_empty offenders, "obsolete Rule vocabulary remains:\n#{offenders.join("\n")}"
   end
 
   def test_scanner_exposes_laws_not_rules
