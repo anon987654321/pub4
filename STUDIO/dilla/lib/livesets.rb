@@ -3383,6 +3383,9 @@ SHOWCASE_MODES = {
       loop do
         clock = frame.to_f / @rate
         @inbox.each(clock) { |command| command["stop"] ? stop! : score.command(command, clock) }
+        if seconds && score.respond_to?(:prepare_ending!)
+          score.prepare_ending!(seconds - clock)
+        end
         ending ||= clock if @stopping || score.finished?(clock) || (seconds && clock >= seconds)
         @stopped_at ||= clock if @stopping
         score.schedule(self, clock) unless ending
@@ -3476,6 +3479,7 @@ SHOWCASE_MODES = {
       @melody_step = 0
       @last_melody = nil
       @motif_memory = []
+      @previous_bass_note = nil
       @last_bass_note = nil
       @suspension_note = nil
       @beauty_ending = false
@@ -3632,6 +3636,10 @@ SHOWCASE_MODES = {
       @mind.observe_harmony(name || "#{NAMES[(@key + degree) % 12]}#{quality}", @lead_chord_pcs)
 
       @beauty_bar = (@next_at / (4.0 * @beat)).round
+      @previous_bass_note = @last_bass_note
+      @suspension_note = if @last_melody && @lead_scale_pcs.include?(@last_melody % 12)
+                           @last_melody
+                         end
       @kit.context!(
         root_pc: bass % 12,
         chord_pcs: @lead_chord_pcs,
@@ -3689,7 +3697,15 @@ SHOWCASE_MODES = {
 
     def next_chord
       if @curated_progression
-        degree, quality = @curated_progression.fetch(@curated_index % @curated_progression.length)
+        source_index = @curated_index % @curated_progression.length
+        degree, quality = @curated_progression.fetch(source_index)
+        # Once per sixteen chords, let a single chromatic colour pass through
+        # the progression. It is the beautiful wrong chord: brief, intentional,
+        # and resolved by returning to the original vocabulary.
+        if (@curated_index % 16) == 7
+          degree = (degree + 1) % 12
+          quality = "maj9"
+        end
         @curated_index += 1
         symbol = "#{NAMES[(@key + degree) % 12]}#{quality}"
         return [degree, quality, symbol]
@@ -3733,7 +3749,8 @@ SHOWCASE_MODES = {
         stage.note(root, spec, at + (1.5 * @beat) + late, 0.45 * @beat, 0.38, :bass) if @rng.rand < 0.7
       end
 
-      target_pc = next_root_pc
+      pedal_point = (@beauty_bar % 16).between?(4, 6)
+      target_pc = pedal_point ? (root % 12) : next_root_pc
       if target_pc && @rng.rand < 0.82
         target = 36 + target_pc
         target += 12 if target < 38
@@ -3838,9 +3855,9 @@ SHOWCASE_MODES = {
           step: @melody_step,
           tension: tension
         )
-        if @last_bass_note
+        if @previous_bass_note
           candidates = lead_tones(range)
-          chosen = DillaBeautyEngine.contrary_candidate(candidates, previous, @last_bass_note)
+          chosen = DillaBeautyEngine.contrary_candidate(candidates, previous, @previous_bass_note)
         end
         @motif_memory << chosen
         @motif_memory.shift while @motif_memory.length > 12
@@ -3916,9 +3933,17 @@ SHOWCASE_MODES = {
         if duration > 0.08 * @beat && @rng.rand < lead_probability
           gain = @c["lead_gain"]
           gain *= 0.62 if DillaBeautyEngine.profile(@beauty_bar)[:foreground] == :space
+          event_at = spot + swing
           events << DillaMidiEffects::Event.new(
-            last, spot + swing, duration * 0.82, gain, :lead
+            last, event_at, duration * 0.82, gain, :lead
           )
+          # Delayed imitation is a quiet answer to the call, never a second
+          # lead line at equal weight.
+          if !@beauty_ending && (@beauty_bar % 8) == 3 && @rng.rand < 0.42
+            events << DillaMidiEffects::Event.new(
+              last, event_at + @beat, duration * 0.46, gain * 0.34, :lead
+            )
+          end
         end
         spot += [duration, 0.08 * @beat].max
       end
