@@ -75,8 +75,8 @@ module Operator
     end
 
     def silent
-      require "operator/rule_audit"
-      audit = Operator::RuleAudit.audit
+      require "operator/law_audit"
+      audit = Operator::LawAudit.audit
       Array(audit[:silent]).map(&:to_s).sort
     rescue StandardError => e
       [{ "error" => "#{e.class}: #{e.message}" }]
@@ -169,7 +169,7 @@ module Operator
     end
 
     def load_law
-      require File.join(MASTER, "law", "law")
+      require File.join(MASTER, "law", "definition")
       Law.load_all(LAW_ROOT) if Law.definitions.empty?
       Law.definitions.transform_keys { |key| key.to_s.downcase }
     end
@@ -229,8 +229,8 @@ module Operator
     end
 
     def reach(id)
-      require "operator/rule_audit"
-      row = Operator::RuleAudit.rates.find { |item| item[:rule].to_s.downcase == id.to_s.downcase }
+      require "operator/law_audit"
+      row = Operator::LawAudit.rates.find { |item| item[:rule].to_s.downcase == id.to_s.downcase }
       return {} unless row
 
       {
