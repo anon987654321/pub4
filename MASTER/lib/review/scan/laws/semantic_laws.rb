@@ -245,7 +245,7 @@ module Master
           # the model gets the same two cases the author had to write down, so a
           # prompt that drifts from its examples is visible rather than implied.
           def from_law
-            require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
+            require File.join(Master::ROOT, "law", "definition") unless defined?(::Law)
             ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.definitions.empty?
 
             ::Law.definitions.values.select { |law| law.semantic? && law.enforceable? }.each_with_object({}) do |law, h|
