@@ -29,18 +29,18 @@ class VisualSystemContractTest < Minitest::Test
       devicePixelRatio: 2,
       dispatchEvent(event) {
         events.push(event)
-        return true
-      }
+        return true,
+      },
     }
     globalThis.CustomEvent = class {
       constructor(name, options = {}) {
         this.type = name
-        this.detail = options.detail || {}
-      }
+        this.detail = options.detail || {},
+      },
     }
     globalThis.document = {
       hidden: false,
-      documentElement: { dataset: {}, style: {} }
+      documentElement: { dataset: {}, style: {} },
     }
     globalThis.performance = { now: () => 1000 }
     globalThis.matchMedia = () => ({ matches: false })
@@ -58,7 +58,7 @@ class VisualSystemContractTest < Minitest::Test
       bass: 0,
       mid: 0,
       high: 0,
-      beat: 0
+      beat: 0,
     })
 
     assert.deepEqual(
@@ -71,7 +71,7 @@ class VisualSystemContractTest < Minitest::Test
         bass: zero.bass,
         mid: zero.mid,
         high: zero.high,
-        beat: zero.beat
+        beat: zero.beat,
       },
       {
         activity: 0,
@@ -82,8 +82,8 @@ class VisualSystemContractTest < Minitest::Test
         bass: 0,
         mid: 0,
         high: 0,
-        beat: 0
-      }
+        beat: 0,
+      },
     )
 
     const inherited = normalizeVisual({ arousal: 0.7 })
@@ -103,7 +103,7 @@ class VisualSystemContractTest < Minitest::Test
       beginPath() {},
       moveTo() {},
       lineTo() {},
-      stroke() {}
+      stroke() {},
     }
 
     const canvas = {
@@ -112,7 +112,7 @@ class VisualSystemContractTest < Minitest::Test
       style: {},
       setAttribute() {},
       getContext() { return context },
-      parentElement: null
+      parentElement: null,
     }
 
     const surfaces = {
@@ -121,7 +121,7 @@ class VisualSystemContractTest < Minitest::Test
       dating: "pair",
       luxury: "ambient",
       radio: "tunnel",
-      mannequin: "mannequin"
+      mannequin: "mannequin",
     }
 
     for (const [surface, topology] of Object.entries(surfaces)) {
@@ -130,7 +130,7 @@ class VisualSystemContractTest < Minitest::Test
       assert.ok(field.points.length > 0)
       field.frame(1016)
       assert.ok([...field.points].every(Number.isFinite))
-      field.destroy()
+      field.destroy(),
     }
 
     const field = new VisualField({ canvas, surface: "social" })
@@ -170,7 +170,7 @@ class VisualSystemContractTest < Minitest::Test
       social
       dating
       luxury
-      radio
+      radio,
     ].each { |token| assert_includes source, token }
   end
 
