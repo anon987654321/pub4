@@ -40,7 +40,7 @@ module Master
           scan_lines(code, stale_pattern, message: "retired constant — use data/laws.yml#stale_namespaces replacement")
         end
 
-      module Rules
+      module Laws
         LawDSL.law :PARAMETERIZED_SLUG,
           severity: :warning,
           tags: %i[FLAT_HIERARCHY DRY],
