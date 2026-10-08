@@ -10,7 +10,7 @@ class Marketplace::CheckoutsController < Marketplace::BaseController
     Marketplace::Payments::ProviderError,
     Marketplace::Payments::DinteroClient::Error,
     Net::OpenTimeout, Net::ReadTimeout, SocketError, OpenSSL::SSL::SSLError,
-    Errno::ECONNREFUSED, Errno::ECONNRESET, JSON::ParserError, KeyError
+    Errno::ECONNREFUSED, Errno::ECONNRESET, JSON::ParserError, KeyError,
   ].freeze
 
   # The only hosts a checkout may send a buyer to. The URL comes back from the
@@ -19,7 +19,7 @@ class Marketplace::CheckoutsController < Marketplace::BaseController
   PROVIDER_HOSTS = {
     "stripe" => %w[checkout.stripe.com],
     "vipps" => %w[vipps.no],
-    "dintero" => %w[checkout.dintero.com]
+    "dintero" => %w[checkout.dintero.com],
   }.freeze
 
   # POST /checkout  provider=stripe|vipps
@@ -159,7 +159,7 @@ class Marketplace::CheckoutsController < Marketplace::BaseController
       buyer: Current.user,
       variant: variant,
       price_cents: variant&.price_cents_or_listing || listing.price_cents,
-      quantity: 1
+      quantity: 1,
     )
     unless order.persisted?
       redirect_to listing_path(listing), alert: t("flash.marketplace.offer_failed")
@@ -175,7 +175,7 @@ class Marketplace::CheckoutsController < Marketplace::BaseController
       title: I18n.t("marketplace.order_notification.new_order"),
       body: I18n.t("marketplace.order_notification.new_order_body", buyer: Current.user.display_name, title: listing.title),
       source: order,
-      kind: "order"
+      kind: "order",
     ) if seller
     order.record_activity!("MarketplaceOfferSent", actor: Current.user, source_vertical: "marketplace")
     order
@@ -207,17 +207,17 @@ class Marketplace::CheckoutsController < Marketplace::BaseController
     case provider
     when "stripe"
       Marketplace::Payments::StripeCheckout.start!(
-        order: payable, success_url: return_url(payable, "stripe"), cancel_url: cart_url
+        order: payable, success_url: return_url(payable, "stripe"), cancel_url: cart_url,
       )
     when "vipps"
       Marketplace::Payments::VippsCheckout.start!(
-        order: payable, return_url: return_url(payable, "vipps")
+        order: payable, return_url: return_url(payable, "vipps"),
       )
     when "dintero"
       Marketplace::Payments::DinteroCheckout.start!(
         order: payable,
         return_url: return_url(payable, "dintero"),
-        callback_url: dintero_callback_url
+        callback_url: dintero_callback_url,
       )
     end
   end
@@ -250,7 +250,7 @@ class Marketplace::CheckoutsController < Marketplace::BaseController
 
     checkout = Current.user.marketplace_checkouts.create!(
       marketplace_address: address,
-      currency: orders.first.payment_currency
+      currency: orders.first.payment_currency,
     )
     orders.each do |order|
       added_to_checkout = order.marketplace_checkout_id.blank?
@@ -263,7 +263,7 @@ class Marketplace::CheckoutsController < Marketplace::BaseController
         actor: Current.user,
         source_vertical: "marketplace",
         visibility: "private",
-        metadata: { checkout_id: checkout.id }
+        metadata: { checkout_id: checkout.id },
       )
     end
     checkout.recalculate!
