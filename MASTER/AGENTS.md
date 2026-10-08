@@ -96,7 +96,7 @@ the 47 conduct rules a detector cannot describe, the rules that can refuse a
 write, and how many run without a model. Read it when the full catalogue will
 not fit.
 
-Ruby is pinned to 4.0.5: run `RBENV_VERSION=4.0.5 rbenv exec ruby ...`.
+Ruby is pinned to 4.0.7: run `RBENV_VERSION=4.0.7 rbenv exec ruby ...`.
 
 ## Ruby and zsh, never the GNU text tools
 
@@ -207,7 +207,7 @@ An agent arrives with none of the session context that makes the tree
 navigable, so these are the facts that are not deducible from the code and
 that a fresh agent gets wrong on its first attempt.
 
-**Ruby is pinned by `MASTER/.ruby-version` for development.** It is currently 4.0.5. On OpenBSD, `MASTER/bin/ruby` accepts the packaged Ruby 3.3.x/3.4.x lane instead of requiring 4.0.5; bare `ruby` is not the project contract.
+**Ruby is pinned by `MASTER/.ruby-version` for development.** It is currently 4.0.7. On OpenBSD, `MASTER/bin/ruby` accepts the packaged Ruby 3.3.x/3.4.x lane instead of requiring 4.0.7; bare `ruby` is not the project contract.
 
 **The checkout is shared and usually dirty.** Never `git add -A`. Commit
 path-scoped: `git commit -- <paths>`. When the pre-commit hook refuses over
