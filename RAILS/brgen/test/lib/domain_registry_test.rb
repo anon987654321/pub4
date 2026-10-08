@@ -82,6 +82,43 @@ class DomainRegistryTest < ActiveSupport::TestCase
     assert_includes subs, "bergen"
   end
 
+  test "host normalization is idempotent across ports, www and trailing dots" do
+    Brgen::DomainRegistry::ENTRIES.each do |entry|
+      [
+        entry.domain,
+        "www.#{entry.domain}",
+        "#{entry.domain}:443",
+        "www.#{entry.domain}:8443",
+        "#{entry.domain}."
+      ].each do |host|
+        normalized = Brgen::DomainRegistry.normalize_host(host)
+        assert_equal normalized, Brgen::DomainRegistry.normalize_host(normalized),
+                     "#{host.inspect} normalization is not idempotent"
+        assert_equal entry.domain, Brgen::DomainRegistry.resolve(host).entry.domain
+      end
+    end
+  end
+
+  test "declared subapps round-trip through every city apex" do
+    aliases = Brgen::DomainRegistry::SUBAPP_ALIASES
+    Brgen::DomainRegistry::ENTRIES.each do |entry|
+      aliases.each do |subdomain, expected|
+        result = Brgen::DomainRegistry.resolve("#{subdomain}.#{entry.domain}")
+        assert_equal expected, result.subapp
+        assert_equal entry.domain, result.entry.domain
+      end
+    end
+  end
+
+  test "unknown subdomains fail closed instead of becoming arbitrary modules" do
+    Brgen::DomainRegistry::ENTRIES.first(8).each do |entry|
+      error = assert_raises(Brgen::DomainRegistry::UnknownSubdomain) do
+        Brgen::DomainRegistry.resolve("not-a-real-vertical.#{entry.domain}")
+      end
+      assert_equal "not-a-real-vertical", error.message
+    end
+  end
+
   # Was :nl. nl.yml held five keys against en.yml's 1579 and was deleted on
   # 2026-08-25, so amstrdam.nl, rottrdam.nl and utrcht.nl now get English rather
   # than five Dutch words on an English page. See Brgen::LocaleBridge.
