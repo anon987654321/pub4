@@ -14,7 +14,7 @@ class TestStrongParametersRule < Minitest::Test
   end
 
   def rule
-    @rule ||= scanner.rules.find { |r| r.id.to_s == "STRONG_PARAMETERS" } ||
+    @rule ||= scanner.laws.find { |r| r.id.to_s == "STRONG_PARAMETERS" } ||
               raise("STRONG_PARAMETERS is not registered")
   end
 

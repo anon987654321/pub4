@@ -137,7 +137,7 @@ end
 
   def test_rails_rules_registered
     require_relative "../lib/review/scan/rule_dsl"
-    ids = Master::Review::Scan::Rule.registry.filter_map do |k|
+    ids = Master::Review::Scan::Law.registry.filter_map do |k|
       begin
         k.auto_build? ? k.new.id.to_s.upcase : nil
       rescue StandardError # scan: intentional — non-buildable rules have no id; nil is the census answer

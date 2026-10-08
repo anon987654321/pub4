@@ -719,7 +719,7 @@ class TestAstFixerTransforms < Minitest::Test
   end
 
   def rule(id)
-    Master::Review::Scan::Rule.registry.each do |klass|
+    Master::Review::Scan::Law.registry.each do |klass|
       instance = klass.new
       return instance if instance.id == id
     rescue ArgumentError

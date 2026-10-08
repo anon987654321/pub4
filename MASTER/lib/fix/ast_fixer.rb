@@ -112,7 +112,7 @@ module Master
         # law/*.rb fixtures are load-bearing bad inputs: SQUINT_TEST's bad
         # fixture IS four consecutive blank lines, and collapse_blank_lines
         # "fixed" it — the fixture stopped flagging, prove! raised at load,
-        # and RuleFactory's keyword-mismatch rescue turned that into half the
+        # and LawFactory's keyword-mismatch rescue turned that into half the
         # law silently missing (every id after squint_test). A file whose job
         # is to hold the forbidden pattern must never be cleaned of it.
         LAW_DIR_RE = %r{/law/[^/]+\.rb\z}
