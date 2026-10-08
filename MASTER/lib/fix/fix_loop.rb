@@ -437,9 +437,11 @@ module Master
       # deliver a verified repair; only then does the bounded structural sweep
       # run against freshly observed files.
       def reflect_then_continue(result, files:, target:, max_passes:, budget_seconds:, run_id:)
+        return result unless %i[done plateau].include?(terminal_state_for(result))
+
         reflection = @reflection.call(
           target:, state: terminal_state_for(result).to_s, files:,
-          history: @convergence_discipline.instance_variable_get(:@history),
+          history: @convergence_discipline.history,
           changed_paths: @git.changed_paths,
           remaining_seconds: @run_journal.remaining_seconds(run_id)
         )
