@@ -150,7 +150,7 @@ module Master
           return :scanner_path_filter if Master::Fix::Scanner.skip_path?(path, root: path_policy_root)
           return :symlink if File.symlink?(path)
           return :binary if binary?(path)
-          return :too_large if File.size(path) > Master::Review::Scan::FileProcessor::MAX_FILE_BYTES
+          return :too_large if File.size(path) > Master::Fix::Scan::FileProcessor::MAX_FILE_BYTES
           return :too_many_lines if too_many_lines?(path)
           return :immutable if immutable?(path)
           return :rails_history if rails_history?(path)
@@ -188,7 +188,7 @@ module Master
         end
 
         def too_many_lines?(path)
-          limit = Master::Review::Scan::FileProcessor::MAX_LINES
+          limit = Master::Fix::Scan::FileProcessor::MAX_LINES
           File.foreach(path, encoding: "UTF-8", invalid: :replace, undef: :replace)
               .with_index(1) { |_, line| return true if line > limit }
           false
