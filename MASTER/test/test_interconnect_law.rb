@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-require "review/scan/rule_dsl"
+require "review/scan/law_dsl"
 require "tmpdir"
 require "fileutils"
 
@@ -19,7 +19,7 @@ class TestInterconnectRule < Minitest::Test
     Dir.mktmpdir do |root|
       FileUtils.mkdir_p(File.join(root, "data"))
       files.each { |name, body| File.write(File.join(root, "data", name), body) }
-      yield Master::Review::Scan::Rules::InterconnectRule.new(root:), root
+      yield Master::Review::Scan::Laws::InterconnectLaw.new(root:), root
     end
   end
 
