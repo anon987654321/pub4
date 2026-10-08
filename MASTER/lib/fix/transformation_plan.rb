@@ -30,7 +30,7 @@ module Master
           Operation.new(
             name: name.to_s,
             position: index + 1,
-            purpose: @policy.fetch("principles").fetch(name.to_s),
+            purpose: @policy.fetch("operations").fetch(name.to_s),
           )
         end.freeze
       end
@@ -89,7 +89,7 @@ module Master
       def refactoring_playbook
         playbook = @policy.fetch("refactoring_playbook")
         {
-          "principles" => Array(playbook.fetch("principles")).map { |entry| entry.transform_keys(&:to_s).freeze }.freeze,
+          "methods" => Array(playbook.fetch("methods")).map { |entry| entry.transform_keys(&:to_s).freeze }.freeze,
           "technique_by_domain" => playbook.fetch("technique_by_domain").transform_keys(&:to_s).transform_values { |values| Array(values).map(&:to_s).freeze }.freeze,
           "gates" => Array(playbook.fetch("gates")).map(&:to_s).freeze,
         }.freeze
@@ -119,7 +119,7 @@ module Master
         pre = preflight
         post = postflight
         order = Array(@policy.fetch("order")).map(&:to_s)
-        principles = @policy.fetch("principles")
+        operations = @policy.fetch("operations")
         raise ArgumentError, "transformation order is empty" if order.empty?
 
         duplicates = order.tally.select { |_, count| count > 1 }.keys
@@ -131,8 +131,8 @@ module Master
         unknown = order - REQUIRED
         raise ArgumentError, "unknown transformations: #{unknown.join(", ")}" unless unknown.empty?
 
-        absent = order.reject { |name| principles.key?(name) }
-        raise ArgumentError, "transformation principles missing: #{absent.join(", ")}" unless absent.empty?
+        absent = order.reject { |name| operations.key?(name) }
+        raise ArgumentError, "transformation operations missing: #{absent.join(", ")}" unless absent.empty?
 
         overlap = (pre & order) | (post & order)
         raise ArgumentError, "transformation appears in multiple phases: #{overlap.join(", ")}" unless overlap.empty?
@@ -172,9 +172,9 @@ module Master
       def validate_playbook!
         playbook = refactoring_playbook
         required = %w[characterize_before_change one_hat delete_before_abstract same_reason_to_change preparatory_refactoring history_as_evidence make_deletion_easy domain_first]
-        ids = playbook.fetch("principles").map { |entry| entry.fetch("id") }
+        ids = playbook.fetch("methods").map { |entry| entry.fetch("id") }
         missing = required - ids
-        raise ArgumentError, "refactoring principles missing: #{missing.join(", ")}" unless missing.empty?
+        raise ArgumentError, "refactoring methods missing: #{missing.join(", ")}" unless missing.empty?
         required_domains = %w[ruby rails prose visual]
         missing_domains = required_domains - playbook.fetch("technique_by_domain").keys
         raise ArgumentError, "refactoring domains missing: #{missing_domains.join(", ")}" unless missing_domains.empty?
