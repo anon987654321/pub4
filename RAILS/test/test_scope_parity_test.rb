@@ -20,7 +20,7 @@ require "minitest/autorun"
 # a narrower local glob still passes, just over less.
 class TestScopeParityTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
-  CI = File.join(ROOT, "shared", "config", "ci.rb")
+  CI = File.join(ROOT, "__shared", "config", "ci.rb")
 
   # Apps that carry mountable engines. Only these need the wider glob; the others
   # have no engines/ directory and Rails' default already covers them.
