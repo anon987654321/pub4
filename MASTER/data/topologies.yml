@@ -73,8 +73,8 @@ emotional_mapping:
   recovery: gradual_recomposition
 
 visual_fleet:
-  field: RAILS/shared/frontend/visual_field.js
-  controller: RAILS/shared/frontend/visual_surface_controller.js
+  field: RAILS/__shared/frontend/visual_field.js
+  controller: RAILS/__shared/frontend/visual_surface_controller.js
   contract: pub4:visual
   surfaces:
     master: { topology: orb, purpose: cognition command center }
