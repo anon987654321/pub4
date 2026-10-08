@@ -23,7 +23,7 @@
 # applied, and this tool got it wrong for as long as it asked it. It counted the
 # three detect_* columns in laws.yml and reported twelve autofix claims as
 # undetectable — every one of the twelve wrong. Ten have a live detector in law/
-# or the RuleDSL registry, and the other two (WHITESPACE_PUNCTUATION,
+# or the LawDSL registry, and the other two (WHITESPACE_PUNCTUATION,
 # MESSAGE_CHAIN) carry `folded_into:` naming the rule that reports for them. It
 # is the same instrument error tools/law_reach.rb's own header records against
 # itself, so the question is asked there now, once: `LawReach.mechanical`
@@ -109,7 +109,7 @@ module Operator
     def dangling = named_transforms.reject { |n| implemented?(n[:transform]) }
 
     # Detection is RuleReach's question, not this tool's: it knows law/, the
-    # RuleDSL registry and `folded_into` as well as the yml columns, and it
+    # LawDSL registry and `folded_into` as well as the yml columns, and it
     # loads the laws instead of grepping for a literal `Law.define(:ID)`.
     def detectable_ids
       @detectable_ids ||= begin
