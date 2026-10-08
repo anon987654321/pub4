@@ -221,7 +221,7 @@ Law.define(:PERCENT_LITERAL) do
 end
 
 Law.define(:RATE_LIMITING_MISSING) do
-  principle_scope :universal
+  law_scope :universal
   source "OWASP API Security — rate limiting"
   severity :error
   languages %i[ruby]
@@ -588,7 +588,7 @@ end
 # covers its HTTP too — a narrowing, recorded here, that keeps the honest
 # idioms quiet.
 Law.define(:EXPLICIT_HTTP_TIMEOUT) do
-  principle_scope :universal
+  law_scope :universal
   source "Kleppmann, DDIA — timeouts on every outbound call"
   severity :warn
   languages %i[ruby]
