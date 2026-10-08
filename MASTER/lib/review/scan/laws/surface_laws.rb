@@ -615,7 +615,7 @@ module Master
           while i < lines.size
             if lines[i].match?(/^\s*def\s+\w+/)
               start = i
-              j = Rules.method_body_end_line(lines, start)
+              j = Laws.method_body_end_line(lines, start)
               body_len = j - start
               if body_len > 40
                 findings << finding(line: start + 1, message: "controller action ~#{body_len} lines — thin controllers, fat models/services (rails_conventions)")
@@ -668,7 +668,7 @@ module Master
           # boundary rather than a number far from it.
           fires: "export default class extends Controller {\n#{"  step();\n" * 199}}\n",
           does_not_fire: "export default class extends Controller {\n  connect() {}\n}\n" do |src, path:|
-          limits = Rules.stimulus_limits
+          limits = Laws.stimulus_limits
           max = limits.fetch("max_lines", 200).to_i
           # The declared pattern is Stimulus's own naming convention, so it is
           # narrower than the guess it replaces and finds the same four files in
@@ -727,7 +727,7 @@ module Master
           # is written. The same five levels on one line measure zero.
           fires: ".a {\n  .b {\n    .c {\n      .d {\n        .e {\n          color: red;\n        }\n      }\n    }\n  }\n}\n",
           does_not_fire: ".a {\n  .b {\n    color: red;\n  }\n}\n" do |src, path:|
-          next [] unless Rules.rails_path?(path) || path.to_s.include?("/assets/")
+          next [] unless Laws.rails_path?(path) || path.to_s.include?("/assets/")
           max = 0
           depth = 0
           src.each_line do |line|
