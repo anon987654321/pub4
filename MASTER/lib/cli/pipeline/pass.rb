@@ -416,7 +416,7 @@ def default_apply?(*) = false
         end
 
         def map_line
-          Master::Ground::Map::Principle.load(root: @root).summary_line
+          Master::Ground::Map::LawMap.load(root: @root).summary_line
         rescue StandardError => e
           stage_failure("principle map", "map0", e)
         end
