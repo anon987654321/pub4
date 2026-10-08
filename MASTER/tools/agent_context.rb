@@ -65,7 +65,7 @@ module Operator
 
     def coverage
       load_master
-      Master::Review::Scan::RuleRegistryAudit.new(root: MASTER_DIR).call.coverage_line
+      Master::Review::Scan::LawRegistryAudit.new(root: MASTER_DIR).call.coverage_line
     rescue StandardError => e
       "rule coverage unavailable (#{e.class})"
     end
