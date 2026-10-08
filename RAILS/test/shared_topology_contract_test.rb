@@ -20,7 +20,7 @@ class SharedTopologyContractTest < Minitest::Test
   def retired_path_hits(source)
     source.lines.each_with_index.filter_map do |line, index|
       next unless line.match?(/RAILS\/shared(?:\/|")/) ||
-                  line.match?(/File\.join\([^\n)]*,\s*["']shared["']/) ||
+                  line.match?(/(?:File\.|\b)join\([^\n)]*,\s*["']shared["']/) ||
                   line.match?(/File\.expand_path\([^\n)]*(?:\.\.\/)+shared\//) ||
                   line.match?(/(?:\.\.\/)+shared\/(?:app|config|lib|frontend|public|pwa|design_tokens)/)
 
