@@ -42,7 +42,7 @@ class TestConstitutionTriage < Minitest::Test
 
   def live_rule_ids
     ids = Set.new
-    Master::Review::Scan::InfraHelpers.build_scanner(root: Master::ROOT).rules.each { |rule| ids << rule.id.to_s }
+    Master::Fix::Scanner.build(root: Master::ROOT).rules.each { |rule| ids << rule.id.to_s }
     collect_yaml_ids(YAML.unsafe_load_file(File.join(Master::ROOT, "data/laws.yml")), ids)
     Law.rules.each_key { |id| ids << id.to_s } if defined?(Law)
     ids
