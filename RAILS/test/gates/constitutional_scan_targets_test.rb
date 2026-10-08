@@ -75,7 +75,7 @@ class ConstitutionalScanTargetsTest < Minitest::Test
   # Silent truncation reads as "covered everything". Whatever is dropped has to
   # be nameable, which is what #skipped is for.
   def test_skipped_targets_are_recorded_not_discarded
-    gate = build(changed: ["RAILS/shared/app/models/concerns/shared/votable.rb"])
+    gate = build(changed: ["RAILS/__shared/app/models/concerns/shared/votable.rb"])
 
     assert_equal %w[shared], names(gate.targets)
     refute_empty gate.skipped
