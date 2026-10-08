@@ -91,8 +91,10 @@ module Master
             "language" => language,
             "governing_laws" => governing_ids,
             "executable_laws" => executable_ids,
-            "law_map_concepts" => concepts,
-            "unmapped_executable_laws" => unmapped_executable_ids,
+            "law_map_concepts" => concepts.first(32),
+            "law_map_concept_count" => concepts.length,
+            "unmapped_executable_laws" => unmapped_executable_ids.first(32),
+            "unmapped_executable_law_count" => unmapped_executable_ids.length,
             "complete" => complete?
           }
         end
