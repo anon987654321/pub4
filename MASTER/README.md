@@ -155,7 +155,7 @@ model nemotron-3-super-120b-a12b, ctx 0/128.0k
 ~/Documents/GitHub/pub4/MASTER main (discover) %
 ```
 
-Every web change has one extra proof: the page is rendered in a real browser and the screenshot plus measured DOM geometry go back through the same council and fix loop. Source-clean is not visual-clean; `/fix RAILS` and `/fix MASTER/web` continue until the rendered surface converges or the run honestly plateaus.
+Every web change has one extra proof: the page is rendered in a real browser and the screenshot plus measured DOM geometry go back through the same council and fix loop. Source-clean is not visual-clean; `/fix RAILS` and `/fix RAILS/master_web` continue until the rendered surface converges or the run honestly plateaus.
 
 **vm23 control plane.** Production has one authoritative checkout at `/home/dev/pub4`. Keep the single long-lived MASTER process in `screen`: `MASTER/bin/master --daemon`. The operator wrappers are idempotent: `MASTER/bin/operator vps master status --remote`, `start --remote`, `stop --remote`, and `restart --remote`. The daemon owns Git sync and deployment; `/fix` claims the same execution slot, so repair cannot overlap sync or deploy. Tree-scoped `/fix` runs may use separate lock namespaces; the same tree remains single-writer.
 
@@ -252,7 +252,7 @@ without turning a resource emergency into a restart storm.
 **Deep `/fix` trace.** Before `/fix` is allowed to mutate, it rereads the whole working repository, including tracked and non-ignored untracked files, hashes every file, syntax-checks every file MASTER classifies as Ruby, verifies the boot entrypoint chain, reloads boot-critical YAML, and checks the live scanner/fix-loop/council/bus graph. A trace failure stops the repair before the first write; the gate and re-observation remain the final proof after repairs.
 
 **Rendered convergence.** Source-clean is not improvement-clean. Every `/fix` pass starts with deterministic
-observation and, for `RAILS/` or `MASTER/web`, a real rendered observation. MASTER captures real browser surfaces through the existing
+observation and, for `RAILS/` or `RAILS/master_web`, a real rendered observation. MASTER captures real browser surfaces through the existing
 GeometryProbe/CDP gates, gives the screenshot and measured geometry to the UI
 council, turns the council's selected repairs into ordinary fix-loop findings,
 and renders again on the next pass. Typography, hierarchy, spacing,
