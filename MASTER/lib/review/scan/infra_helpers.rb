@@ -35,7 +35,7 @@ module Master
             LibRootDisciplineRule FileSprawlRule PathPurposeRule
           ].each do |name|
             klass = Review::Scan::Rules.const_get(name)
-            scanner.add_rule(Review::Scan::RuleFactory.build(klass, root:, agent:, ecology:))
+            scanner.add_rule(Review::Scan::LawFactory.build(klass, root:, agent:, ecology:))
           end
           scanner
         end
