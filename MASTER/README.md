@@ -61,6 +61,27 @@ It can run offline when a local model and the required local capabilities are
 available; it deploys to OpenBSD and judges a codebase without requiring a cloud
 control plane.
 
+## Bounded recursive improvement
+
+MASTER is deliberately built around a small self-improving loop: observe,
+understand, change, test, learn, and observe again. The unusual part is that
+the machinery doing the inspection is itself inside the system being inspected.
+`/fix` can therefore repair a scanner, rerun the repaired scanner, repair the next
+layer it exposes, verify the result, and re-enter the same loop. This is not a
+claim of an unbounded technological singularity; it is a bounded engineering
+analogue of recursive self-improvement.
+
+The boundaries are deliberate. Laws, tests, transaction checkpoints, evidence
+requirements, capability boundaries, time budgets, and explicit human-blocking
+states constrain what the loop may change. An unavailable model, network, TTS
+worker, or other optional capability is a degraded or failed state, never
+automatic evidence of success.
+
+The important unit of progress is therefore not merely a code change. It is an
+improvement in the system's ability to make correct, testable, reversible code
+changes. Human work moves upward from editing individual lines toward setting
+governance, judging evidence, and resolving the cases where the machine cannot
+prove its own next step.
 ## The business, inside a mountain
 
 The world spends more on machine intelligence than on almost anything else, and
