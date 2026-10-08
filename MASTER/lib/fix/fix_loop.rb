@@ -64,10 +64,10 @@ module Master
       RUN_BUDGET_SECONDS = Integer(ENV.fetch("MASTER_FIX_RUN_BUDGET_S", 30 * 60))
       WORKFLOW_PATH = Master.limits_path.freeze
 
-      def initialize(rules:, agent:, scanner:, root:, axioms: nil, bus: nil, git: nil, learnings: nil,
+      def initialize(laws:, agent:, scanner:, root:, axioms: nil, bus: nil, git: nil, learnings: nil,
                      incremental: false, ground_truth: nil, preserve_user_intent: nil,
                      law_resolver: nil, homeostat: nil)
-        @rules = rules
+        @laws = laws
         @axioms = axioms
         @agent = agent
         path_root = File.expand_path(root)
@@ -86,8 +86,8 @@ module Master
         @convergence_discipline = ConvergenceDiscipline.new(root: @root, bus: @bus)
 
         @file_collector = FileCollector.new(root:, bus:)
-        @law_order = LawOrder.new(rules:, learnings:, bus:, root:)
-        @pass_runner = build_pass_runner(rules:, agent:, scanner:, root:, bus:, learnings:,
+        @law_order = LawOrder.new(laws:, learnings:, bus:, root:)
+        @pass_runner = build_pass_runner(laws:, agent:, scanner:, root:, bus:, learnings:,
           ground_truth:, preserve_user_intent:, law_resolver:, homeostat: @homeostat,
           discipline: @convergence_discipline, wishlist: @wishlist)
         @sweeps = build_sweeps(agent:, root:, bus:)
