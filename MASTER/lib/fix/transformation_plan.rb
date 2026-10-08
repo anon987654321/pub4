@@ -61,6 +61,8 @@ module Master
           "Preflight: #{preflight.join(", ")}.",
           "Postflight: #{postflight.join(", ")}.",
           "Use the smallest evidenced operation; recommend rather than mutate when proof is insufficient.",
+          "Evidence priority: characterization, structural, runtime, and visual evidence outrank semantic judgment; taste alone never authorizes mutation.",
+          "Check the domain smell catalog and adapter before proposing a transformation; similarity is not sameness and duplication is not automatically abstraction-worthy.",
         ].join("\n")
       end
 
@@ -82,6 +84,26 @@ module Master
 
       def modes
         @policy.fetch("modes").dup.freeze
+      end
+
+      def evidence_hierarchy
+        Array(@policy.fetch("evidence_hierarchy")).map { |entry| entry.transform_keys(&:to_s).freeze }.freeze
+      end
+
+      def smell_catalog
+        @policy.fetch("smell_catalog").transform_keys(&:to_s).transform_values { |values| Array(values).map(&:to_s).freeze }.freeze
+      end
+
+      def domain_adapters
+        @policy.fetch("domain_adapters").transform_keys(&:to_s).transform_values(&:to_s).freeze
+      end
+
+      def automatic_vetoes
+        Array(@policy.fetch("automatic_vetoes")).map(&:to_s).freeze
+      end
+
+      def research
+        Array(@policy.fetch("research")).map { |entry| entry.transform_keys(&:to_s).freeze }.freeze
       end
 
       def validate!
@@ -113,6 +135,12 @@ module Master
         end
 
         REQUIRED.each { |name| operation_mode_known?(name) }
+
+        validate_evidence!
+        validate_smells!
+        validate_adapters!
+        validate_vetoes!
+        validate_research!
         true
       rescue KeyError => e
         raise ArgumentError, "transformation policy missing #{e.key.inspect}"
@@ -129,6 +157,40 @@ module Master
         raise ArgumentError, "transformation modes missing" unless modes.is_a?(Hash)
         modes.each_value { |value| raise ArgumentError, "empty transformation mode" if value.to_s.empty? }
         true
+      end
+
+      def validate_evidence!
+        ids = evidence_hierarchy.map { |entry| entry.fetch("id") }
+        raise ArgumentError, "evidence hierarchy is empty" if ids.empty?
+        raise ArgumentError, "duplicate evidence level" unless ids.uniq.length == ids.length
+        required = %w[characterization structural runtime history visual semantic taste]
+        missing = required - ids
+        raise ArgumentError, "evidence hierarchy missing: #{missing.join(", ")}" unless missing.empty?
+      end
+
+      def validate_smells!
+        required = %w[code ruby rails prose visual]
+        missing = required - smell_catalog.keys
+        raise ArgumentError, "smell catalog missing: #{missing.join(", ")}" unless missing.empty?
+        raise ArgumentError, "empty smell catalog" if smell_catalog.values.any?(&:empty?)
+      end
+
+      def validate_adapters!
+        required = %w[ruby rails prose visual]
+        missing = required - domain_adapters.keys
+        raise ArgumentError, "domain adapters missing: #{missing.join(", ")}" unless missing.empty?
+      end
+
+      def validate_vetoes!
+        raise ArgumentError, "automatic vetoes missing" if automatic_vetoes.empty?
+      end
+
+      def validate_research!
+        raise ArgumentError, "research references missing" if research.empty?
+        names = research.map { |entry| entry.fetch("name") }
+        required = ["Fowler, Refactoring", "RuboCop Ruby Style Guide"]
+        missing = required - names
+        raise ArgumentError, "research references missing: #{missing.join(", ")}" unless missing.empty?
       end
 
       def load_policy
