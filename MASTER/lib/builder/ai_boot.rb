@@ -143,7 +143,7 @@ module Master
       git = Io::GitOperations.new(root)
       laws = scanner.laws
       learnings = infra[:learnings]
-      fix_loop = build_fix_loop(root:, infra:, agent:, scanner:, axioms:, laws:, learnings: bus:, git:)
+      fix_loop = build_fix_loop(root:, infra:, agent:, scanner:, axioms:, laws:, learnings:, bus:, git:)
       watch_loop = build_watch_loop(laws:, agent:, scanner:, root:, bus:, learnings:, fix_loop:)
       { standing:, git:, fix_loop:, watch_loop: }
     end
@@ -172,7 +172,7 @@ module Master
     end
 
     # Pre-flight: refuse to start background self-mutation if MASTER's own
-    # lib/ tree is already dirty by its own rules -- autofix compounding on
+    # lib/ tree is already dirty by its own laws -- autofix compounding on
     # top of an existing violation is exactly the runaway-loop shape the
     # oscillation/cycle/plateau detectors exist to catch after the fact.
     def start_fix_loop_background(fix_loop, root:, bus:)
