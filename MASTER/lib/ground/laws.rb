@@ -121,15 +121,15 @@ module Master
       def kernel
         all_laws = Master.law_entries(root: @root)
         all_laws
-          .select { |r| r["tier"] == "kernel" }
-          .each_with_object({}) { |law, h| h[law["id"]] = r["name"] }
+          .select { |law| law["tier"] == "kernel" }
+          .each_with_object({}) { |law, h| h[law["id"]] = law["name"] }
           .freeze
       end
 
       def philosophy(limit: nil)
         all_laws = Master.law_entries(root: @root)
         items = all_laws
-          .reject { |r| r["tier"] == "kernel" }
+          .reject { |law| law["tier"] == "kernel" }
           .map { |law| law.transform_keys(&:to_s) }
           .freeze
         limit ? items.first(limit) : items
