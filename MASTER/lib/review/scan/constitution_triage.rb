@@ -28,8 +28,8 @@ module Master
       class ConstitutionTriage
         SCANNER_SELF_PATHS = %r{\Alib/review/scan/(?:laws/|law|law_dsl|law_factory|scanner|file_processor|self_scan|self_test|infra_helpers|law_registry_audit)}.freeze
 
-        # Rules under active retune: noisy enough that gating on them would gate
-        # on the detector rather than on the code. Every id here must name a rule
+        # Laws under active retune: noisy enough that gating on them would gate
+        # on the detector rather than on the code. Every id here must name a law
         # the scanner, data/laws.yml or law/ still defines.
         #
         # FILE_LAYOUT and DOUBLE_QUOTES_RUBY came off on 2026-09-08, when both
