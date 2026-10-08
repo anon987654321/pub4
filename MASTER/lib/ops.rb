@@ -204,17 +204,25 @@ module Master
     end
 
     module LoopOwner
-      DIR = File.join(Master::ROOT, ".master", "active_loop").freeze
-      INFO = File.join(DIR, "owner.json").freeze
+      ROOT_DIR = File.join(Master::ROOT, ".master", "active_loop").freeze
       STALE_SECONDS = 3600
 
       module_function
 
+      def dir
+        value = ENV["MASTER_ACTIVE_LOOP_DIR"].to_s
+        value.empty? ? ROOT_DIR : File.expand_path(value)
+      end
+
+      def info
+        File.join(dir, "owner.json")
+      end
+
       def claim(name)
         cleanup_stale!
-        FileUtils.mkdir_p(File.dirname(DIR))
-        Dir.mkdir(DIR)
-        File.write(INFO, JSON.generate(loop: name.to_s, pid: Process.pid, at: Time.now.utc.iso8601))
+        FileUtils.mkdir_p(File.dirname(dir))
+        Dir.mkdir(dir)
+        File.write(info, JSON.generate(loop: name.to_s, pid: Process.pid, at: Time.now.utc.iso8601))
         true
       rescue Errno::EEXIST => e
         Master::Ground::Swallow.log(e, context: "LoopOwner.claim")
@@ -222,22 +230,22 @@ module Master
       end
 
       def release
-        FileUtils.rm_rf(DIR) if Dir.exist?(DIR)
+        FileUtils.rm_rf(dir) if Dir.exist?(dir)
       end
 
       def active
         cleanup_stale!
-        return unless File.exist?(INFO)
+        return unless File.exist?(info)
 
-        JSON.parse(File.read(INFO))
+        JSON.parse(File.read(info))
       rescue StandardError
         { "loop" => "unknown" }
       end
 
       def cleanup_stale!
-        return unless File.exist?(INFO)
+        return unless File.exist?(info)
 
-        data = JSON.parse(File.read(INFO))
+        data = JSON.parse(File.read(info))
         pid = data["pid"].to_i
         at = Time.iso8601(data["at"].to_s) rescue Time.at(0)
         stale = pid <= 0 || !process_alive?(pid) || (Time.now.utc - at) > STALE_SECONDS
