@@ -1,5 +1,5 @@
 ---
-# Physical order is intentional: governing principles first, then how /fix applies them, proves them, and reaches the world.
+# Physical order is intentional: governing laws first, then how /fix applies them, proves them, and reaches the world.
 # The first eight entries are priority-ranked laws. The remaining sections are their execution policy, adapters, topology, runtime, and
 # operator-owned configuration. Historical change belongs in git; comments here state present constraints only.
 
@@ -465,9 +465,9 @@ self_test:
   ABSTRACTION: no class > god_class threshold in lib/
   DENSITY: no method > long_method threshold in lib/
   KERNEL_ADHERENCE: infra_helpers.rb wiring layer present; law adherence >= 35%
-  PRINCIPLE_MAP: every law id named by data/principle_map.yml resolves to a registered
+  LAW_MAP: every law id named by data/laws.yml#law_map resolves to a registered
       rule, and every covered principle names at least one. The reverse direction —
-      every registered rule traced by some principle — is `rake lint:principle_trace`,
+      every registered rule traced by some law — is `rake lint:law_trace`,
       a ratcheting ceiling, because it has never been zero.
   LAW_INTEGRITY: executable law lifecycle, proof metadata, universal-principle scope,
       and the derived law index remain internally consistent.
@@ -1511,7 +1511,7 @@ law_ratchets:
     saturated: 0
   hygiene:
     id_case_collisions: 0
-    alias_shadows_live_rule: 0
+    alias_shadows_live_law: 0
     missing_metadata: 0
     cross_population_duplicates: 0
     statement_conflicts: 0
