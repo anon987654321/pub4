@@ -121,7 +121,7 @@ module Master
           .sort_by { |operation| operation_position(operation) }
 
         laws = group.map { |_path, law, _message, _related| law }.uniq
-        id_source = [files, rules, group.map { |path, law, message, _| [path, law, message] }].inspect
+        id_source = [files, laws, group.map { |path, law, message, _| [path, law, message] }].inspect
         id = Digest::SHA256.hexdigest(id_source)[0, 10]
 
         confidence =
