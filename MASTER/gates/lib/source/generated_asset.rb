@@ -72,10 +72,10 @@ module Deploy
       out = IO.popen(["git", "-C", ROOT, "status", "--porcelain", "-z", "--", "RAILS"], err: File::NULL, &:read)
       @dirty_paths =
         if $?&.success?
-          out.split("\0").filter_map { |entry|
+          out.split("\0").filter_map do |entry|
             rel = entry[3..]
             File.join(ROOT, rel) if rel && !rel.empty?
-          }.to_set
+          end.to_set
         end
     rescue SystemCallError
       @dirty_paths = nil
@@ -175,7 +175,7 @@ module Deploy
 
         result.fail(
           "#{app_name}: application.css declares --#{name}: #{extra.join(', ')} " \
-          "which no source declares (sources have #{allowed[name].join(', ')})"
+          "which no source declares (sources have #{allowed[name].join(', ')})",
         )
       end
     end

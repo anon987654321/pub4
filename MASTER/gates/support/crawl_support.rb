@@ -71,7 +71,7 @@ module CrawlSupport
     uri = URI(url)
     Net::HTTP.start(uri.host, uri.port,
                     use_ssl: uri.scheme == "https",
-                    open_timeout: open_timeout,
+                    open_timeout:,
                     read_timeout: timeout) do |http|
       req = Net::HTTP::Get.new(uri.request_uri)
       req["Host"] = host if host

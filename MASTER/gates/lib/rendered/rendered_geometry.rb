@@ -45,7 +45,7 @@ module Deploy
       GateAutofix.remeasure_loop(
         measure: -> { run_once },
         apply: ->(result) { GeometryAutofix.apply(result.autofix_findings, dry: GateAutofix.dry_run?) },
-        label: "geometry_autofix"
+        label: "geometry_autofix",
       )
     end
 
@@ -56,7 +56,7 @@ module Deploy
       def autofix_findings = (@autofix_findings ||= [])
 
       def autofix(app:, selector:, kind:, detail: nil)
-        autofix_findings << { app: app, selector: selector, kind: kind, detail: detail }
+        autofix_findings << { app:, selector:, kind:, detail: }
       end
     end
 
@@ -179,7 +179,7 @@ module Deploy
       @result.fail(
         "geometry input_zoom: #{surface.id} renders #{offenders.size} text field(s) under " \
         "#{floor.to_i}px — #{named.join('; ')}. iOS Safari zooms the viewport on focus and does " \
-        "not zoom back (principle=accessibility)"
+        "not zoom back (principle=accessibility)",
       )
     end
 
@@ -229,7 +229,7 @@ module Deploy
       @result.fail(
         "geometry subpixel: #{surface.id} paints #{by_key.size} distinct component(s) on fractional " \
         "pixels (#{offenders.size} instances) — #{named.join('; ')} (principle=pixel_perfection)",
-        severity: :soft
+        severity: :soft,
       )
     end
 
@@ -331,7 +331,7 @@ module Deploy
     def rect_gap(a, b)
       dx = [b["x"].to_f - (a["x"].to_f + a["w"].to_f), a["x"].to_f - (b["x"].to_f + b["w"].to_f)].max
       dy = [b["y"].to_f - (a["y"].to_f + a["h"].to_f), a["y"].to_f - (b["y"].to_f + b["h"].to_f)].max
-      return nil if dx.negative? && dy.negative?
+      return if dx.negative? && dy.negative?
 
       [dx, dy].reject(&:negative?).min
     end
@@ -356,7 +356,7 @@ module Deploy
           bg_color: element["bg_color"],
           is_text: !element["text"].to_s.strip.empty?,
           is_control: element["interactive"] || element["role"] == "button",
-          is_image: element["tag"] == "img"
+          is_image: element["tag"] == "img",
         )
       end
       return if mapped.empty?
@@ -364,16 +364,16 @@ module Deploy
       dialect = { "brgen" => :social, "amber" => :luxury }.fetch(surface.app.to_s, :default)
       vector = Deploy::DesignQuality.calculate(
         elements: mapped,
-        viewport: viewport,
-        dialect: dialect,
-        contrast_ok: rendered_design_quality_contrast_ok?(elements)
+        viewport:,
+        dialect:,
+        contrast_ok: rendered_design_quality_contrast_ok?(elements),
       )
       @result.fail(
         "geometry design_quality: #{surface.id} fails rendered hard floor "         "(tap=#{vector.tap_ok} contrast=#{vector.contrast_ok})",
-        severity: :hard
+        severity: :hard,
       ) unless vector.hard_ok?
       @result.warn(
-        "geometry design_quality: #{surface.id} rhythm=#{vector.rhythm.round(2)} "         "hierarchy=#{vector.hierarchy.round(2)} density=#{vector.density.round(2)} "         "alignment=#{vector.alignment.round(2)} balance=#{vector.balance.round(2)}"
+        "geometry design_quality: #{surface.id} rhythm=#{vector.rhythm.round(2)} "         "hierarchy=#{vector.hierarchy.round(2)} density=#{vector.density.round(2)} "         "alignment=#{vector.alignment.round(2)} balance=#{vector.balance.round(2)}",
       )
     end
 
@@ -422,7 +422,7 @@ module Deploy
         end
       @result.fail(
         "geometry overflow: #{surface.id} scrolls horizontally (#{scroll}px > #{client}px viewport) — #{names}",
-        severity: :hard
+        severity: :hard,
       )
       offenders.each do |o|
         @result.autofix(app: surface.app, selector: o["sel"], kind: :overflow,
@@ -451,7 +451,7 @@ module Deploy
         @result.fail(
           "geometry touch: #{surface.id} #{key} renders #{w}×#{h} < #{@min_touch.to_i}px " \
           "(#{group.size}×, #{label.to_s.strip[0, 30].inspect}) principle=fitts_law",
-          severity: sev
+          severity: sev,
         )
         @result.autofix(app: surface.app, selector: key, kind: :touch,
                         detail: "#{surface.id}: rendered #{w}×#{h}, floor #{@min_touch.to_i}px") if sev == :hard
@@ -468,7 +468,7 @@ module Deploy
         @result.fail(
           "geometry occlusion: #{surface.id} #{key} centre pixel is owned by #{el["hit"].sub("blocked:", "")} " \
           "(#{group.size}× unclickable) principle=fitts_law",
-          severity: sev
+          severity: sev,
         )
       end
     end
@@ -503,7 +503,7 @@ module Deploy
           "#{el["hit"].sub("under_chrome:", "")} — fixed chrome cannot be scrolled out from " \
           "under a blocker, so this target is dead for the life of the page " \
           "(#{group.size}×) principle=fitts_law",
-          severity: :hard
+          severity: :hard,
         )
         @result.autofix(app: surface.app, selector: key, kind: :occlusion,
                         detail: "#{surface.id}: fixed chrome buried by #{el["hit"].sub("under_chrome:", "")}")
@@ -524,7 +524,7 @@ module Deploy
       @result.fail(
         "geometry rhythm: #{surface.id} #{off.size}/#{gaps.size} rendered gaps (#{ratio}%) off the 8px scale — " \
         "#{sample.map { |px, rows| "#{px}px×#{rows.size}" }.join(', ')} principle=rhythm",
-        severity: :soft
+        severity: :soft,
       )
     end
 

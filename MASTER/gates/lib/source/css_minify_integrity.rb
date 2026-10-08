@@ -64,8 +64,8 @@ module Deploy
       ]
 
       begin
-        expanded = Sass.compile(entry, load_paths: load_paths, style: :expanded).css
-        compressed = Sass.compile(entry, load_paths: load_paths, style: :compressed).css
+        expanded = Sass.compile(entry, load_paths:, style: :expanded).css
+        compressed = Sass.compile(entry, load_paths:, style: :compressed).css
       rescue StandardError => e
         result.fail("css_minify_integrity: #{app} failed to compile (#{e.class}: #{e.message})")
         return
@@ -90,7 +90,7 @@ module Deploy
         result.fail(
           "css_minify_integrity: #{app} lost selector(s) under compression -- " \
           "list started with #{selectors.first.inspect} (#{selectors.length} items), " \
-          "missing after compression: #{missing.inspect}"
+          "missing after compression: #{missing.inspect}",
         )
       end
       # This app's stylesheet was compiled and compared; an app without an

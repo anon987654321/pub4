@@ -167,7 +167,7 @@ module Deploy
           width: PHONE[0],
           height: PHONE[1],
           snapshot: false,
-          port: base.port
+          port: base.port,
         )
       end
     end
@@ -221,7 +221,7 @@ module Deploy
       if m["overflow"]
         @result.fail(
           "mobile_flow: #{label} horizontal overflow scroll=#{m["scroll_width"]} client=#{m["client_width"]}",
-          severity: :hard
+          severity: :hard,
         )
       end
 
@@ -233,7 +233,7 @@ module Deploy
         sev = primary ? :hard : :soft
         @result.fail(
           "mobile_flow: #{label} touch target #{c["label"].inspect} is #{c["w"]}×#{c["h"]} (min #{TOUCH_MIN}px)",
-          severity: sev
+          severity: sev,
         )
       end
 

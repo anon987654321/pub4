@@ -388,7 +388,7 @@ module Deploy
         rows.group_by { |page| LiveRecordIds.unresolved_reason(page) }.each do |reason, grouped|
           paths = grouped.map { |page| page[:path] }.uniq
           @result.warn(
-            "page_simulation: #{app} #{paths.size} guest page(s) need a record id and got no live probe — "             "#{paths.join(", ")} — #{reason}"
+            "page_simulation: #{app} #{paths.size} guest page(s) need a record id and got no live probe — "             "#{paths.join(", ")} — #{reason}",
           )
         end
       end

@@ -86,7 +86,7 @@ module Deploy
       missing = values.select { |_, v| v.empty? }.keys
       @result.inconclusive!(
         "flow:#{flow["id"]} did not run — #{missing.join(', ')} unset, so the signed-in half " \
-        "of this app went unmeasured (export them against a seeded app to run it)"
+        "of this app went unmeasured (export them against a seeded app to run it)",
       )
       nil
     end
@@ -94,7 +94,7 @@ module Deploy
     def run_flow(flow, port, app)
       id = flow["id"]
       captures = {}
-      client = FlowClient.new(port: port, default_host: Fleet.public_host(app))
+      client = FlowClient.new(port:, default_host: Fleet.public_host(app))
       credentials = credentials_for(flow)
       return if credentials.nil?
 
@@ -207,7 +207,7 @@ module Deploy
     OPS = {
       ">" => ->(a, b) { a > b }, "<" => ->(a, b) { a < b },
       ">=" => ->(a, b) { a >= b }, "<=" => ->(a, b) { a <= b },
-      "==" => ->(a, b) { a == b }, "!=" => ->(a, b) { a != b },
+      "==" => ->(a, b) { a == b }, "!=" => ->(a, b) { a != b }
     }.freeze
 
     def check_assertions(flow, captures)
@@ -220,7 +220,7 @@ module Deploy
         # green against an empty catalogue.
         @result.inconclusive!(
           "flow:#{flow["id"]} skipped invariants — #{Array(flow["requires_data"]).join('/')} is 0, " \
-          "the dataset is empty (seed the app to make this journey meaningful)"
+          "the dataset is empty (seed the app to make this journey meaningful)",
         )
         return
       end
@@ -249,7 +249,7 @@ module Deploy
         why = rule["why"] ? " — #{rule["why"]}" : ""
         @result.fail(
           "flow:#{flow["id"]} invariant broken: #{left_name}(#{left}) #{rule["op"]} " \
-          "#{right_raw.is_a?(Integer) ? right : "#{right_raw}(#{right})"}#{why}"
+          "#{right_raw.is_a?(Integer) ? right : "#{right_raw}(#{right})"}#{why}",
         )
       end
     end
@@ -310,8 +310,8 @@ module Deploy
             verb, params = :get, nil if code != 307 && code != 308
             next
           end
-          return Response.new(code: code, body: response.body.to_s,
-                              final_url: display_url(url, header_host), redirects: redirects)
+          return Response.new(code:, body: response.body.to_s,
+                              final_url: display_url(url, header_host), redirects:)
         end
         raise "too many redirects (#{redirects.join(' → ')})"
       end

@@ -29,7 +29,7 @@ module Deploy
       {
         app: "brgen", host: "maps.brgen.no", path: "/",
         ready: "window.__mapReady === true",
-        label: "maps",
+        label: "maps"
       },
     ].freeze
 

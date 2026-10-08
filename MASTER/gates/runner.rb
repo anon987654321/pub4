@@ -133,7 +133,7 @@ def record(name, result, duration_ms)
     failures: result.failures.size,
     warnings: result.warnings.size,
     errors: result.errors.size,
-    duration_ms:
+    duration_ms:,
   )
 end
 

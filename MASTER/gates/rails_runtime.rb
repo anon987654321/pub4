@@ -47,7 +47,7 @@ RUBY
 
 def run!(cmd, chdir: ROOT, env: nil)
   env_vars = env ? ENV.to_h.merge(env) : ENV.to_h
-  stdout, stderr, status = Open3.capture3(env_vars, *cmd, chdir: chdir)
+  stdout, stderr, status = Open3.capture3(env_vars, *cmd, chdir:)
   [status.success?, [stdout, stderr].join.strip]
 end
 

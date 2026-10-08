@@ -57,7 +57,7 @@ module Deploy
       buffer = +""
       loop do
         opcode, payload = read_single_frame(deadline)
-        return nil unless opcode
+        return unless opcode
 
         case opcode
         when 0x9 # ping -> pong

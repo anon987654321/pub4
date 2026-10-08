@@ -51,13 +51,13 @@ module Deploy
             @result.fail(
               "geometry contrast: #{surface.id} #{fg} on #{bg} = #{ratio} < #{floor} " \
               "(#{size.round}px#{bold ? ' bold' : ''}, e.g.#{where} #{el["key"]}) principle=accessibility",
-              severity: :hard
+              severity: :hard,
             )
           elsif ratio < @aaa && !large
             @result.fail(
               "geometry contrast: #{surface.id} #{fg} on #{bg} = #{ratio} < design_rules AAA #{@aaa}" \
               "#{apca_note(fg, bg, size, bold)}",
-              severity: :soft
+              severity: :soft,
             )
           end
 
@@ -77,14 +77,14 @@ module Deploy
         lc = DesignMetrics.apca_lc(fg, bg)
         return "" unless lc
 
-        " (APCA Lc #{lc.abs.round(1)}, wants #{DesignMetrics.apca_threshold(size, bold: bold).round})"
+        " (APCA Lc #{lc.abs.round(1)}, wants #{DesignMetrics.apca_threshold(size, bold:).round})"
       end
 
       def check_apca(surface, el, fg, bg, size, bold)
         lc = DesignMetrics.apca_lc(fg, bg)
         return unless lc
 
-        want = DesignMetrics.apca_threshold(size, bold: bold)
+        want = DesignMetrics.apca_threshold(size, bold:)
         return if lc.abs >= want
 
         key = [:apca, fg, bg, want]
@@ -94,7 +94,7 @@ module Deploy
         @result.fail(
           "geometry apca: #{surface.id} #{fg} on #{bg} = Lc #{lc.abs.round(1)} < #{want.round} " \
           "(#{size.round}px#{bold ? ' bold' : ''}, e.g. #{el["key"]}) principle=perceptual_contrast",
-          severity: :soft
+          severity: :soft,
         )
       end
     end

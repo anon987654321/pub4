@@ -56,7 +56,7 @@ module Deploy
       if stamps.empty?
         result.inconclusive!(
           "deploy_drift: no deploy stamps under #{STAMP_DIR} — this gate only has something to " \
-          "compare on the deploy host"
+          "compare on the deploy host",
         )
         return result
       end
@@ -110,7 +110,7 @@ module Deploy
       more = commits.size > 3 ? " (+#{commits.size - 3} more)" : ""
       result.fail(
         "deploy_drift: #{app} is running #{sha} but #{commits.size} commit(s) since then touch " \
-        "#{paths.join(', ')} — #{subjects.join(' | ')}#{more}"
+        "#{paths.join(', ')} — #{subjects.join(' | ')}#{more}",
       )
     end
 

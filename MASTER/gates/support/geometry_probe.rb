@@ -46,7 +46,7 @@ module Deploy
       def surfaces(path = DATA, root: ROOT)
         cfg = config(path)
         vps = cfg.fetch("viewports")
-        ports = app_ports(root: root)
+        ports = app_ports(root:)
         rows = []
 
         if cfg["include_brgen_verticals"]
@@ -65,7 +65,7 @@ module Deploy
           Array(s["viewports"]).each do |vp|
             w, h = vps.fetch(vp)
             app = s.fetch("app")
-            rows << Surface.new(app: app, label: s.fetch("label"), host: s["host"],
+            rows << Surface.new(app:, label: s.fetch("label"), host: s["host"],
                                 path: s.fetch("path"), viewport: vp, width: w, height: h,
                                 snapshot: !!s["snapshot"], port: ports[app],
                                 profile: s["profile"])
@@ -90,7 +90,7 @@ module Deploy
       # browser probe skips markedsplass entirely (design_metrics_gate.rb:317).
       def host_map(root: ROOT, path: DATA)
         map = {}
-        surfaces(path, root: root).each do |s|
+        surfaces(path, root:).each do |s|
           map[s.host] ||= "127.0.0.1:#{s.port}" if s.host && s.port
         end
         map
@@ -108,12 +108,12 @@ module Deploy
       # rc.d script that actually binds it, rather than becoming a fourth copy
       # of 53187 beside rc.d, bin/triangle and relayd.conf.
       def app_ports(root: ROOT)
-        Inventory.new(root: root).apps.to_h { |a| [a.name, a.port] }
+        Inventory.new(root:).apps.to_h { |a| [a.name, a.port] }
                  .merge("master" => master_port(root))
       end
 
       def app_up?(app, root: ROOT)
-        port = app_ports(root: root)[app]
+        port = app_ports(root:)[app]
         port && CrawlSupport.port_open?("127.0.0.1", port)
       end
     end
@@ -139,9 +139,9 @@ module Deploy
     # Probe a list of surfaces, yielding [surface, payload] as each completes.
     # One browser for the whole run; one navigation per surface.
     def self.each_payload(surfaces, root: ROOT)
-      return enum_for(:each_payload, surfaces, root: root) unless block_given?
+      return enum_for(:each_payload, surfaces, root:) unless block_given?
 
-      with_browser(root: root) do |cdp|
+      with_browser(root:) do |cdp|
         surfaces.each { |surface| yield surface, walk(cdp, surface) }
       end
     end
@@ -149,9 +149,9 @@ module Deploy
     # One browser, caller drives navigation. Gates that need more than a single
     # load per surface (idempotence, back-button, tab order, width sweeps) use
     # this rather than paying for a browser launch each.
-    def self.with_browser(root: ROOT, warm: surfaces(DATA, root: root))
+    def self.with_browser(root: ROOT, warm: surfaces(DATA, root:))
       warm_surfaces(warm)
-      CdpSession.open(host_map: host_map(root: root)) do |cdp|
+      CdpSession.open(host_map: host_map(root:)) do |cdp|
         cdp.on_new_document(DETERMINISM)
         yield cdp
       end
@@ -282,7 +282,7 @@ module Deploy
 
     # Only probe surfaces whose app is actually listening.
     def self.reachable(surfaces, root: ROOT)
-      ports = app_ports(root: root)
+      ports = app_ports(root:)
       surfaces.select do |s|
         port = ports[s.app]
         port && CrawlSupport.port_open?("127.0.0.1", port)
@@ -290,7 +290,7 @@ module Deploy
     end
 
     def self.unreachable_apps(surfaces, root: ROOT)
-      ports = app_ports(root: root)
+      ports = app_ports(root:)
       surfaces.map(&:app).uniq.reject do |app|
         port = ports[app]
         port && CrawlSupport.port_open?("127.0.0.1", port)

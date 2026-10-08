@@ -61,11 +61,11 @@ module Deploy
     # carry `value`; everything else carries only a `description` or a class
     # name, because serialising the object would need a second round trip.
     def console_args_text(args)
-      Array(args).map { |arg|
+      Array(args).map do |arg|
         next arg["value"].to_s if arg.key?("value")
 
         arg["description"] || arg["className"] || arg["type"].to_s
-      }.join(" ").strip
+      end.join(" ").strip
     end
 
     # The message alone loses where it came from, and "Script error" with no

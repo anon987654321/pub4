@@ -188,7 +188,7 @@ module Deploy
       Array(cdp.evaluate(PROBE)).each do |hit|
         @result.fail(
           "occlusion: #{label} — #{hit["control"]}#{" (#{hit['label']})" unless hit["label"].to_s.empty?} " \
-          "is covered by #{hit["covered_by"]} at #{hit["at"].join(",")}; a press there misses it"
+          "is covered by #{hit["covered_by"]} at #{hit["at"].join(",")}; a press there misses it",
         )
       end
       true

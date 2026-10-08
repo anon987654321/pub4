@@ -51,8 +51,8 @@ module Deploy
     # comparisons are unchanged. An unknown token returns nil and is reported as
     # untracked, which is the safe direction: a name nothing declares sets nothing.
     def tracking_from_token(block)
-      name = block[/letter-spacing\s*:\s*var\(\s*(--tracking-[\w-]+)/, 1] or return nil
-      value = tracking_ladder[name] or return nil
+      name = block[/letter-spacing\s*:\s*var\(\s*(--tracking-[\w-]+)/, 1] or return
+      value = tracking_ladder[name] or return
 
       value.to_s
     end

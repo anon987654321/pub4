@@ -44,7 +44,7 @@ require_relative "support/fleet"
 
 options = {
   url: nil, audio: nil, out: nil, fps: 20, seconds: nil, clip: nil,
-  work: nil, exposure: 0.0, tint: 0.0, timeout: 40, viewport: [1280, 720], scale: 2, warmup: 20, crf: 28,
+  work: nil, exposure: 0.0, tint: 0.0, timeout: 40, viewport: [1280, 720], scale: 2, warmup: 20, crf: 28
 }
 OptionParser.new do |o|
   o.banner = "usage: face_loop_record.rb --audio WAV --out MP4 [options]"

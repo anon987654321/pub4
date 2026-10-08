@@ -8,7 +8,7 @@ module Deploy
       social: 0.52..0.68,
       luxury: 0.38..0.55,
       face: 0.55..0.75,
-      default: 0.45..0.65
+      default: 0.45..0.65,
     }.freeze
     MIN_WEIGHT_DELTA = 200
 
@@ -25,8 +25,8 @@ module Deploy
       keyword_init: true
     ) do
       def soft_axes
-        { rhythm: rhythm, hierarchy: hierarchy, density: density,
-          alignment: alignment, balance: balance }
+        { rhythm:, hierarchy:, density:,
+          alignment:, balance: }
       end
 
       def hard_ok? = tap_ok && contrast_ok
@@ -51,7 +51,7 @@ module Deploy
         alignment: alignment_score(content),
         balance: balance_score(content, viewport),
         tap_ok: tap_score(controls),
-        contrast_ok: contrast_ok
+        contrast_ok:,
       )
     end
 

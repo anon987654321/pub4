@@ -175,7 +175,7 @@ module Deploy
         @result.inconclusive!(
           "keyboard_flow: #{label} would not release focus to the document, so tab order " \
           "could not be measured from the start (an autofocus field holding focus reads as a " \
-          "misplaced skip link)"
+          "misplaced skip link)",
         )
         return false
       end
@@ -231,7 +231,7 @@ module Deploy
 
     def forced_active(cdp, index)
       selector = %([data-gate-state="#{index}"])
-      return nil unless cdp.force_pseudo_state(selector, ["active"])
+      return unless cdp.force_pseudo_state(selector, ["active"])
 
       paint(cdp, index, "none")
     ensure
@@ -301,7 +301,7 @@ module Deploy
       @result.fail(
         "keyboard_flow: #{label} #{ringless.size}/#{stops.size} focus stops render no visible ring — #{sample}. " \
         "design_tokens focus_ring is '2px solid', and flat_ui forbids box-shadow, so this must come from outline " \
-        "(principle=accessibility)"
+        "(principle=accessibility)",
       )
     end
 
@@ -314,7 +314,7 @@ module Deploy
       @result.fail(
         "keyboard_flow: #{label} #{hidden.size}/#{stops.size} tab stops are off-screen " \
         "(e.g. #{hidden.first(2).map { |s| s["sel"] }.join(', ')}) — keyboard focus enters a hidden region",
-        severity: :soft
+        severity: :soft,
       )
     end
   end

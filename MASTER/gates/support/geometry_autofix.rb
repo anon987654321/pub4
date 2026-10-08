@@ -117,7 +117,7 @@ module Deploy
         when /\A\/\/ (.+)\z/        then detail = Regexp.last_match(1).strip; next
         when /\A(.+?) \{/
           selector = Regexp.last_match(1).strip
-          row = { selector: selector, kind: kind, detail: detail, parsed: true }
+          row = { selector:, kind:, detail:, parsed: true }
           detail = nil
           kind ? row : nil
         else
@@ -165,13 +165,13 @@ module Deploy
     # step is needed as a selector, and an id anywhere makes the rest noise.
     def css_selector(raw)
       s = raw.to_s.sub(/\[\d+\]\z/, "").strip
-      return nil if s.empty?
+      return if s.empty?
 
       parts = s.split(">")
       idx = parts.rindex { |p| p.start_with?("#") }
       parts = parts[idx..] if idx
       tail = parts.last(2).join(" > ")
-      return nil if tail.match?(/\A[a-z]+\z/) # bare `div` is too broad to patch
+      return if tail.match?(/\A[a-z]+\z/) # bare `div` is too broad to patch
 
       tail
     end
@@ -269,7 +269,7 @@ module Deploy
       require "net/http"
       html = Net::HTTP.get(URI("http://127.0.0.1:#{port}/"))
       href = html[%r{/assets/application[^"']*\.css}]
-      return nil unless href
+      return unless href
 
       Net::HTTP.get(URI("http://127.0.0.1:#{port}#{href}"))
     rescue StandardError # scan: intentional — an unreachable page yields no geometry; the caller reports it

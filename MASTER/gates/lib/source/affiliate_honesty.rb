@@ -35,7 +35,7 @@ module Deploy
     # enforcement if a tree that violates it fails, and the only way to show
     # that is to run the gate over a tree built to violate it.
     def self.run(rails_root: RAILS)
-      new(rails_root: rails_root).run
+      new(rails_root:).run
     end
 
     def initialize(rails_root: RAILS)

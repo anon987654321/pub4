@@ -118,7 +118,7 @@ module Deploy
 
       [
         File.join(WEB_ROOT, "script/probe_face"),
-        File.join(WEB_ROOT, "script/ci_web_probe")
+        File.join(WEB_ROOT, "script/ci_web_probe"),
       ].each do |path|
         result.fail("RAILS/master_web: missing #{File.basename(path)}") unless File.file?(path)
       end

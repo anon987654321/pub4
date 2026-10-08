@@ -88,7 +88,7 @@ module Deploy
         next unless html.match?(/<main\b|<html\b/i)
 
         surface = dialect_surface(id)
-        q = @quality.score(html, surface: surface)
+        q = @quality.score(html, surface:)
         apply_quality_result!(q, context: "fixture good/#{id}")
       end
     end
@@ -167,14 +167,14 @@ module Deploy
       if r.missing_required.any?
         return @result.fail(
           "#{context}: exemplar #{r.id} missing required #{r.missing_required.join(', ')} (#{r.score}/#{r.max})",
-          severity: :hard
+          severity: :hard,
         )
       end
 
       unless r.pass?
         return @result.fail(
           "#{context}: exemplar #{r.id} score #{r.score}/#{r.max} < target #{r.target} notes=#{r.notes.join(',')}",
-          severity: :soft
+          severity: :soft,
         )
       end
 
@@ -186,7 +186,7 @@ module Deploy
 
       @result.fail(
         "#{context}: quality #{q.score}/#{q.max} < target #{q.target} notes=#{q.notes.join(',')} principle=venustas",
-        severity: :soft
+        severity: :soft,
       )
     end
 
@@ -200,8 +200,8 @@ module Deploy
     end
 
     def fetch(url, host: nil)
-      res = CrawlSupport.fetch(url, host: host)
-      return nil unless res.code.to_i.between?(200, 399)
+      res = CrawlSupport.fetch(url, host:)
+      return unless res.code.to_i.between?(200, 399)
 
       res.body.to_s
     rescue StandardError # scan: intentional — nil is the measured-nothing signal, reported downstream as the gate's warning

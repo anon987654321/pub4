@@ -87,7 +87,7 @@ module Deploy
             "geometry choices: #{surface.id} #{group["sel"]} offers #{count} peer choices " \
             "(#{over ? "over nav_items_warn #{warn_at}" : "over max_visible_choices #{max_choices}"}) " \
             "with no progressive disclosure (principle=hick)",
-            severity: over ? :hard : :soft
+            severity: over ? :hard : :soft,
           )
         end
       end
@@ -113,7 +113,7 @@ module Deploy
           "geometry proximity: #{surface.id} has #{offenders.size} block(s) spaced wider inside than out — " \
           "#{worst.map { |r| "#{r["sel"]} (children #{r["pad"]}px apart, #{r["gap"]}px to the next block)" }.join('; ')}. " \
           "Their own parts read as further apart than they are from their neighbour (principle=proximity)",
-          severity: :soft
+          severity: :soft,
         )
       end
 
@@ -168,7 +168,7 @@ module Deploy
         @result.fail(
           "geometry scan_path: #{surface.id} puts #{buried.size} primary action(s) in the weak " \
           "bottom-left area — #{buried.first(3).map { |el| el["key"] }.join('; ')} (principle=reading_patterns)",
-          severity: :soft
+          severity: :soft,
         )
       end
 

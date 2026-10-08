@@ -85,7 +85,7 @@ module Deploy
       engine_paths = [
         *Dir.glob(File.join(engines_root, "brgen_*", "lib", "*", "engine.rb")),
         *Dir.glob(File.join(engines_root, "brgen_*", "engines", "*", "lib", "*", "engine.rb")),
-        *Dir.glob(File.join(engines_root, "brgen_radio", "*", "lib", "*", "engine.rb"))
+        *Dir.glob(File.join(engines_root, "brgen_radio", "*", "lib", "*", "engine.rb")),
       ]
       engine_paths.sort.each_with_object({}) do |path, out|
         name = File.read(path)[NAMESPACE, 1] or next

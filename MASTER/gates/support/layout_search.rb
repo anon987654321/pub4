@@ -40,7 +40,7 @@ module Deploy
       @axes.each_key do |axis|
         axes[axis.to_s] = detect_variant(axis.to_s, ctx).to_s
       end
-      Observation.new(axes: axes, id: candidate_id(axes))
+      Observation.new(axes:, id: candidate_id(axes))
     end
 
     def enumerate(ctx = nil)
@@ -69,11 +69,11 @@ module Deploy
       obs_rank = obs_rank ? obs_rank + 1 : nil
 
       {
-        observed: observed,
+        observed:,
         observed_candidate: obs_candidate,
         observed_rank: obs_rank,
         winner: win,
-        ranking: ranking,
+        ranking:,
         target: @target,
         max_rank: @max_rank,
         hard_required_ok: hard_required_ok?(observed.axes),
@@ -124,11 +124,11 @@ module Deploy
 
       Candidate.new(
         id: candidate_id(axes),
-        axes: axes,
+        axes:,
         score: total,
-        breakdown: breakdown,
-        hard_ok: hard_ok,
-        illegal: illegal
+        breakdown:,
+        hard_ok:,
+        illegal:,
       )
     end
 

@@ -19,7 +19,7 @@ module Deploy
     end
 
     def self.check(html, schema_id, schemas: nil)
-      new(schemas: schemas).check(html, schema_id)
+      new(schemas:).check(html, schema_id)
     end
 
     def initialize(schemas: nil)
@@ -51,8 +51,8 @@ module Deploy
           findings << Finding.new(
             schema_id: schema_id.to_s,
             severity: sev,
-            principle: principle,
-            message: "surface_schema:#{schema_id} missing marker #{mid} (#{label}) principle=#{principle}"
+            principle:,
+            message: "surface_schema:#{schema_id} missing marker #{mid} (#{label}) principle=#{principle}",
           )
         end
       end
@@ -68,8 +68,8 @@ module Deploy
         findings << Finding.new(
           schema_id: schema_id.to_s,
           severity: sev,
-          principle: principle,
-          message: "surface_schema:#{schema_id} #{cid} #{bound} (#{label}) principle=#{principle}"
+          principle:,
+          message: "surface_schema:#{schema_id} #{cid} #{bound} (#{label}) principle=#{principle}",
         )
       end
 
@@ -85,7 +85,7 @@ module Deploy
           schema_id: schema_id.to_s,
           severity: default_sev,
           principle: schema["principle"],
-          message: "surface_schema:#{schema_id} order: #{a} must precede #{b} (#{label})"
+          message: "surface_schema:#{schema_id} order: #{a} must precede #{b} (#{label})",
         )
       end
 
@@ -102,8 +102,8 @@ module Deploy
         findings << Finding.new(
           schema_id: schema_id.to_s,
           severity: sev,
-          principle: principle,
-          message: msg
+          principle:,
+          message: msg,
         )
       end
 

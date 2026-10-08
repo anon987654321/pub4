@@ -22,7 +22,7 @@ module Deploy
     RAILS_VERSION = Gem::Version.new(RAILS_STACK.fetch("rails"))
 
     def self.run(skip_nested: false)
-      new(skip_nested: skip_nested).run
+      new(skip_nested:).run
     end
 
     def initialize(skip_nested: false)
@@ -241,7 +241,7 @@ module Deploy
       if File.file?(deploy_script)
         deploy_text = File.read(deploy_script)
         deploy_contract = [deploy_text, File.file?(SHARED_DEPLOY) ? File.read(SHARED_DEPLOY) : ""].join("\n")
-        fail_app!(app_failures, 'deploy script must call shared deploy entrypoint') unless deploy_text.include?('deploy_tracked_app "$APP_NAME"')
+        fail_app!(app_failures, "deploy script must call shared deploy entrypoint") unless deploy_text.include?('deploy_tracked_app "$APP_NAME"')
         fail_app!(app_failures, "deploy contract must require ruby40") unless deploy_contract.include?("need_cmd ruby40")
         fail_app!(app_failures, "deploy contract must configure relayd for #{domain}") unless deploy_contract.include?("relayd_add_relay")
       else

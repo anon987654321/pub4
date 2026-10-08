@@ -79,7 +79,7 @@ def run(label, command, chdir: ROOT)
   stderr = +""
   status = nil
 
-  Open3.popen3(*command, chdir: chdir) do |stdin, out, err, wait_thread|
+  Open3.popen3(*command, chdir:) do |stdin, out, err, wait_thread|
     stdin.close
     stdout_reader = Thread.new { out.read }
     stderr_reader = Thread.new { err.read }

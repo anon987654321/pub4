@@ -89,9 +89,9 @@ module Deploy
     end
 
     def fetch(url, host: nil)
-      res = CrawlSupport.fetch(url, host: host)
+      res = CrawlSupport.fetch(url, host:)
       code = res.code.to_i
-      return nil unless code.between?(200, 399)
+      return unless code.between?(200, 399)
 
       res.body.to_s
     rescue StandardError # scan: intentional — nil is the measured-nothing signal, reported downstream as the gate's warning

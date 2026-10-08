@@ -100,7 +100,7 @@ module Deploy
     def self.from_error(exception, gate:, backtrace_lines: 3)
       trace = Array(exception.backtrace).first(backtrace_lines).join(" | ")
       new.errored!(
-        "#{gate} raised #{exception.class}: #{exception.message}#{trace.empty? ? '' : " @ #{trace}"}"
+        "#{gate} raised #{exception.class}: #{exception.message}#{trace.empty? ? '' : " @ #{trace}"}",
       )
     end
 
