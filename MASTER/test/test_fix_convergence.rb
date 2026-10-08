@@ -312,7 +312,7 @@ class TestFixConvergence < Minitest::Test
   def test_scan_request_resolves_all_four_trees_from_repo_root
     {
       "MASTER/lib" => Master::ROOT,
-      "RAILS/shared" => Master::RAILS_ROOT,
+      "RAILS/__shared" => Master::RAILS_ROOT,
       "OPENBSD/etc" => File.join(Master::REPO_ROOT, "OPENBSD", "etc"),
       "STUDIO/lora" => File.join(Master::REPO_ROOT, "STUDIO", "lora")
     }.each do |target, expected_root|
