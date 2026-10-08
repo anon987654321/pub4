@@ -8,8 +8,8 @@ module Master
       module Rules
         # Bridges law/*.rb into the scanner. Each Law::Rule proved itself against
         # its own bad/good fixture at load, so a hit here is a hit a fixture already
-        # vouches for. YamlDeclarativeRule yields to any id defined here.
-        class LawBridgeRule < Rule
+        # vouches for. YamlDeclarativeLaw yields to any id defined here.
+        class LawBridgeLaw < Rule
           def self.auto_build? = false
 
           declare id: "law_bridge", severity: :warning, description: "law/ — executable rules with fixtures"
