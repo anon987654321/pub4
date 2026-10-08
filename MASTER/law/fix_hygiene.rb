@@ -13,7 +13,7 @@ Law.define(:NO_INFINITY_TO_I) do
     code = line.gsub(/(['"]).*?\1/, "").sub(/#.*\z/, "")
     code.match?(
       /Float::(?:INFINITY|POSITIVE_INFINITY|NEGATIVE_INFINITY|NAN).*?\.(?:to_i|to_int)\b|
-       \.(?:to_i|to_int)\b.*?Float::(?:INFINITY|POSITIVE_INFINITY|NEGATIVE_INFINITY|NAN)/x
+       \.(?:to_i|to_int)\b.*?Float::(?:INFINITY|POSITIVE_INFINITY|NEGATIVE_INFINITY|NAN)/x,
     )
   end
   fix "Use a finite sentinel or score_value before integer coercion; never call to_i/to_int on a non-finite float."
