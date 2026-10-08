@@ -85,7 +85,7 @@ module Master
         private_class_method :dead_subtree, :referenced_outside?, :names_in_file, :relative_static
 
         def self.cross_file_findings(target)
-          rows = Master::Review::Scan::CrossFileAnalysis.new(root: target).call(production_files(target))
+          rows = Master::Fix::Scan::CrossFileAnalysis.new(root: target).call(production_files(target))
           findings = rows.flat_map { |_path, result| result.value_or([]) }
           findings.filter_map do |finding|
             next unless %w[PARALLEL_HIERARCHY CYCLIC_DEPENDENCY].include?(finding[:rule].to_s)
