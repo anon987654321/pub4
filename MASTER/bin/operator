@@ -563,7 +563,7 @@ when "test"
   if trees.any? { |t| t.first == "MASTER" }
     jobs << ["MASTER suite", %w[bundle exec rake test], File.join(ROOT, "MASTER"), {}]
     if tool_paths.any?
-      jobs << ["MASTER tools suite", [RUBY, "-S", "rake"], File.join(ROOT, "MASTER", "tools"), {}]
+      jobs << ["MASTER tools suite", [BUNDLE, "exec", RUBY, "-S", "rake"], File.join(ROOT, "MASTER", "tools"), {}]
     end
     if paths.any? { |p| p.start_with?("MASTER/law/") }
       jobs << ["MASTER dogfood", %w[bundle exec rake dogfood], File.join(ROOT, "MASTER"), {}]
