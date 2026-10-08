@@ -3,7 +3,7 @@
 module Master
   module Review
     module Scan
-      # Blanking the regions a rule must not match inside: comments, ERB tags,
+      # Blanking the regions a law must not match inside: comments, ERB tags,
       # labelled controls, var() fallbacks, mask declarations, and the media
       # queries whose whole job is to override.
       #
@@ -17,7 +17,7 @@ module Master
     # Comment-only lines, not trailing comments: blanking from an unquoted `#`
     # needs to know whether it is inside a string, and guessing wrong drops real
     # findings. This is the half that is provably safe. scan_lines itself is
-    # deliberately untouched — several rules mean to read comments.
+    # deliberately untouched — several laws mean to read comments.
     def without_comment_lines(code) = code.gsub(COMMENT_LINE) { |line| " " * line.length }
 
     # A LawDSL registration spells its own forbidden shape in `fires:` and
@@ -28,7 +28,7 @@ module Master
     # One physical line, because that is what a declaration is here and being
     # loose about it would blank a continuation carrying real code.
     RULE_FIXTURE_LINE = /^[ \t]*(?:fires|does_not_fire):[^\n]*/
-    def without_rule_fixtures(code) = code.gsub(RULE_FIXTURE_LINE) { |line| " " * line.length }
+    def without_law_fixtures(code) = code.gsub(RULE_FIXTURE_LINE) { |line| " " * line.length }
 
     # A word inside a regex literal is a token in a pattern, not an instance of
     # itself — the distinction COMPLETION_THEATER learned for `etc` and
@@ -40,16 +40,16 @@ module Master
 
     # The same trick for ERB output tags, and for the same reason.
     #
-    # Attribute rules ask "does this tag contain alt=" as `<img\s+(?![^>]*alt=)`.
+    # Attribute laws ask "does this tag contain alt=" as `<img\s+(?![^>]*alt=)`.
     # `[^>]*` cannot cross a `>` — and `<%= deal.image_url %>` ends in one. So on
     # the ordinary Rails shape
     #
     #   <img src="<%= deal.image_url %>" alt="<%= deal.title %>">
     #
-    # the lookahead gives up at the `%>` of src, never reaches alt=, and the rule
+    # the lookahead gives up at the `%>` of src, never reaches alt=, and the law
     # reports a missing alt on a tag that has one. Every <img> in this repo whose
     # src is dynamic and whose alt comes after it was a finding; all four IMG_ALT
-    # hits across the fleet were this, and none was a real missing alt. The rule
+    # hits across the fleet were this, and none was a real missing alt. The law
     # could not pass on correct Rails markup, which makes its zero unreachable
     # and its findings unactionable.
     #
@@ -89,7 +89,7 @@ module Master
       masked
     end
 
-    # What an HTML attribute rule should read: no ERB, one tag per line.
+    # What an HTML attribute law should read: no ERB, one tag per line.
     def tag_source(code) = with_tags_flattened(without_erb_tags(code))
 
     # A control wrapped in a <label> that has text is labelled — that is the
@@ -109,7 +109,7 @@ module Master
     LABEL_ELEMENT = %r{<label\b[^>]*>.*?</label>}m
     def without_labelled_controls(code) = code.gsub(LABEL_ELEMENT) { |el| el.gsub(/[^\n]/, " ") }
 
-    # What a control-labelling rule should read: also blind to controls whose
+    # What a control-labelling law should read: also blind to controls whose
     # <label> wrapper already names them.
     def control_source(code) = with_tags_flattened(without_labelled_controls(without_erb_tags(code)))
 
@@ -120,7 +120,7 @@ module Master
     # ordinary correct spelling in HTML — `<button>Save</button>`, where the
     # element's own text IS its name — read as nameless. That was 39 of the 55
     # ARIA_LABELS findings across this repo, against 4 genuinely nameless
-    # controls. A rule that reports correct markup eleven times for each real
+    # controls. A law that reports correct markup eleven times for each real
     # defect is one people learn to scroll past.
     #
     # An element, not a line: ERB blanked, the whole tag read quote-aware, and
@@ -137,7 +137,7 @@ module Master
 
     # `var(--token, #hex)` is the token being used, with the literal as the
     # fallback the spec asks for. Flagging it tells correct, defensive CSS to
-    # stop citing a token — the opposite of the rule's own point.
+    # stop citing a token — the opposite of the law's own point.
     VAR_FALLBACK = /var\(\s*--[a-z0-9-]+\s*,[^)]*\)/i
     def without_var_fallbacks(code) = code.gsub(VAR_FALLBACK) { |v| v.gsub(/[^\n]/, " ") }
 
@@ -256,7 +256,7 @@ public :without_foreign_heredocs
     # repo is written — so blanking all ERB before reading content made every
     # translated button look empty. Output tags become a placeholder and keep
     # naming their control; `<% if %>` and `<%# comment %>` render nothing and
-    # are still blanked. (First draft of this rule blanked all three and
+    # are still blanked. (First draft of this law blanked all three and
     # reported 20 correctly-labelled buttons.)
     ERB_OUTPUT_TAG = /<%=+.*?%>/m
     ERB_SILENT_TAG = /<%(?!=).*?%>/m
@@ -281,7 +281,7 @@ end end.join
         next if m[0].match?(NAMED_ATTR)
         # A hidden input is not in the accessibility tree, so it has no name
         # to give and nothing to announce. FORM_LABEL already excluded these;
-        # this rule did not, and every one of its four remaining findings was
+        # this law did not, and every one of its four remaining findings was
         # a hidden field — three carrying ids for a form to submit and one
         # already marked aria-hidden.
         next if m[0].match?(/type\s*=\s*["']hidden["']|aria-hidden\s*=\s*["']true["']/i)
@@ -299,8 +299,8 @@ end end.join
 
     # Does the CSS block containing `line_number` paint a dark background?
     #
-    # Contrast is a relation, so a rule that reads only the foreground cannot
-    # answer it. Walks back to the nearest `{` — the enclosing rule — and takes
+    # Contrast is a relation, so a law that reads only the foreground cannot
+    # answer it. Walks back to the nearest `{` — the enclosing law — and takes
     # the last background colour declared in it. Deliberately narrow: a
     # background set on a parent selector, or in a token, is not visible from
     # here, so this says "no" and the finding stands.
