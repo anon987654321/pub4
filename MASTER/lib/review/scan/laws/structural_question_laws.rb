@@ -6,7 +6,7 @@ require "psych"
 module Master
   module Review
     module Scan
-      module Rules
+      module Laws
         class ConfigHierarchyLaw < Rule
           MAX_DEPTH = 4
           TOP_LEVEL_LIMIT = 12
