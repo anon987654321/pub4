@@ -19,9 +19,9 @@ class EngineBoundariesGateTest < Minitest::Test
   def over(files = {}, exempt: {}, **planted)
     files = files.merge(planted)
     Dir.mktmpdir do |dir|
-      plant(dir, "RAILS/brgen/engines/dating/lib/dating/engine.rb", "module Dating\n  class Engine\n    isolate_namespace Dating\n  end\nend\n")
-      plant(dir, "RAILS/brgen/engines/takeaway/lib/takeaway/engine.rb", "module Takeaway\n  class Engine\n    isolate_namespace Takeaway\n  end\nend\n")
-      files.each { |rel, body| plant(dir, "RAILS/brgen/engines/#{rel}", body) }
+      plant(dir, "RAILS/brgen_dating/lib/dating/engine.rb", "module Dating\n  class Engine\n    isolate_namespace Dating\n  end\nend\n")
+      plant(dir, "RAILS/brgen_takeaway/lib/takeaway/engine.rb", "module Takeaway\n  class Engine\n    isolate_namespace Takeaway\n  end\nend\n")
+      files.each { |rel, body| plant(dir, "RAILS/brgen_#{rel}", body) }
       GATE.run(root: dir, exempt:)
     end
   end
@@ -53,7 +53,7 @@ class EngineBoundariesGateTest < Minitest::Test
     result = over(
       { "dating/app/controllers/dating/home_controller.rb" => "Takeaway::Order.where(user_id: 1)\n",
         "dating/app/controllers/dating/other_controller.rb" => "Takeaway::Order.where(user_id: 1)\n" },
-      exempt: { "dating" => { "app/controllers/dating/home_controller.rb" => %w[Takeaway] } }
+      exempt: { "brgen_dating" => { "app/controllers/dating/home_controller.rb" => %w[Takeaway] } }
     )
 
     assert_equal 1, result.failures.size, result.failures.join(", ")
@@ -74,7 +74,7 @@ class EngineBoundariesGateTest < Minitest::Test
     result = GATE.run
 
     assert result.ok?, result.failures.join("\n")
-    assert_operator result.checks_ran, :>=, 6, "fewer engines than brgen mounts — check the glob, not the tree"
+    assert_operator result.checks_ran, :>=, 6, "fewer engines than Brgen verticals — check the glob, not the tree"
   end
 
   def test_no_engines_is_inconclusive_rather_than_clean
