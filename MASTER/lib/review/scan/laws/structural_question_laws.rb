@@ -6,8 +6,8 @@ require "psych"
 module Master
   module Review
     module Scan
-      module Rules
-        class ConfigHierarchyRule < Rule
+      module Laws
+        class ConfigHierarchyRule < Law
           MAX_DEPTH = 4
           TOP_LEVEL_LIMIT = 12
 
@@ -149,7 +149,7 @@ module Master
           end
         end
 
-        class CodeHierarchyRule < Rule
+        class CodeHierarchyRule < Law
           TOP_LEVEL_LIMIT = 5
 
           declare id: "CODE_HIERARCHY", severity: :warning, tags: %i[ARCHITECTURE HIERARCHY],
@@ -179,7 +179,7 @@ module Master
           end
         end
 
-        class LongParameterListRule < Rule
+        class LongParameterListRule < Law
           LIMIT = 4
 
           declare id: "LONG_PARAMETER_LIST", severity: :warning, tags: %i[BLOATERS API],
@@ -202,7 +202,7 @@ module Master
           end
         end
 
-        class PrimitiveObsessionRule < Rule
+        class PrimitiveObsessionRule < Law
           PRIMITIVE_HINTS = /\b(id|name|type|status|flag|count|price|amount|date|email|phone|url)\b|_id\z/i
 
           # data/laws.yml declares this one info, and the catalogue owns a
@@ -233,7 +233,7 @@ module Master
         #
         # Keyword parameters are exempt: `def render(path, cache: true)` already
         # forces the call site to say what is true, which is the whole point.
-        class BooleanTrapRule < Rule
+        class BooleanTrapRule < Law
           declare id: "BOOLEAN_TRAP", severity: :info, tags: %i[API DOMAIN_LANGUAGE],
                   description: "a positional boolean parameter makes every call site a riddle"
 
@@ -267,7 +267,7 @@ module Master
         # implementers reports the interface working. Overlapping windows over
         # the same set of signatures are one clump seen through three frames, so
         # the longest run wins. Without either, the count was 81; with them, 48.
-        class DataClumpsRule < Rule
+        class DataClumpsRule < Law
           MIN_CLUMP = 3
           MIN_SIGNATURES = 3
 
@@ -309,14 +309,14 @@ module Master
           end
         end
 
-        # Message chains are LAW_OF_DEMETER's (universal_rules.rb), which counts
+        # Message chains are LAW_OF_DEMETER's (universal_laws.rb), which counts
         # navigation steps. The five-name regex this rule also ran read
         # transform pipelines as chains: all 72 of its MASTER findings were
         # shapes like `to_s.strip.lines.first`, and none of them a Demeter
         # finding. Reflection is `send` with a method name for its first
         # argument; `client.send(body, token)` is a method that happens to be
         # called send.
-        class CouplerRule < Rule
+        class CouplerRule < Law
           INTIMACY = /\.(?:instance_variable_get|instance_variable_set)\s*\(|\.(?:public_)?send\s*\(\s*[:"']/
 
           declare id: "COUPLER_SMELLS", severity: :warning, tags: %i[COUPLING DEMETER],
@@ -338,7 +338,7 @@ module Master
         # god_class]) — a dangling reference, since the check previously lived
         # under COUPLER_SMELLS. This gives it a real matching id and a single
         # responsibility of its own.
-        class FeatureEnvyRule < Rule
+        class FeatureEnvyRule < Law
           declare id: "FEATURE_ENVY", severity: :warning, tags: %i[COUPLING DEMETER],
                   description: "method talks to one collaborator's internals more than its own"
 
@@ -385,7 +385,7 @@ module Master
           end
         end
 
-        class LazyClassRule < Rule
+        class LazyClassRule < Law
           # info, as the catalogue declares it — see PRIMITIVE_OBSESSION above.
           declare id: "LAZY_CLASS", severity: :info, tags: %i[DISPENSABLES SRP],
                   description: "classes should own behavior, not only delegate"
