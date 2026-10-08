@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "fileutils"
+require_relative "../../lib/io/exec"
 require_relative "../../../RAILS/__shared/lib/shared/mobile_app_registry"
 require_relative "../../../RAILS/__shared/lib/shared/mobile_ios_project"
 
@@ -44,8 +45,9 @@ module MobileTool
       "--manifest=#{app.url}manifest.json",
       "--directory=#{directory}"
     ]
-    puts "android: #{app.key}: #{command.join(" ")}"
-    exec(*command)
+    output, status = Master::Io::Exec.capture2e(*command, timeout: 300)
+    puts output unless output.to_s.empty?
+    exit status.exitstatus || 1 unless status.success?
   end
 
   def generate_ios_project
@@ -54,17 +56,21 @@ module MobileTool
     spec = File.join(directory, "project.yml")
     Shared::MobileIosProject.write(spec)
 
-    unless system("xcodegen", "--version", out: File::NULL, err: File::NULL)
+    version_output, version_status = Master::Io::Exec.capture2e("xcodegen", "--version", timeout: 30)
+    unless version_status.success?
       warn "ios: xcodegen is required; install it with brew install xcodegen"
       exit 69
     end
 
-    ok = system(
+    output, status = Master::Io::Exec.capture2e(
       "xcodegen", "generate",
       "--spec", spec,
-      "--project", directory
+      "--project", directory,
+      timeout: 120
     )
-    exit 1 unless ok
+    puts version_output unless version_output.to_s.empty?
+    puts output unless output.to_s.empty?
+    exit status.exitstatus || 1 unless status.success?
 
     puts "ios: generated #{File.join(directory, "Pub4Mobile.xcodeproj")}"
   end
