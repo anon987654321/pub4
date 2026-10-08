@@ -5,7 +5,7 @@ require "review/scan/rule_dsl"
 require "review/scan/rules/structural_rules"
 
 class TestScanRuleContracts < Minitest::Test
-  Rules = Master::Review::Scan::Rules
+  Rules = Master::Review::Scan::Laws
 
   def test_small_files_rule_flags_files_over_limit
     code = Array.new(Rules::SmallFilesRule::LIMIT + 1, "puts :x").join("\n")
@@ -164,7 +164,7 @@ class TestScanRuleContracts < Minitest::Test
   # findings, unchanged, not just prove itself inside Law.
   def test_advisory_laws_do_not_enter_enforcement_bridge
     bridge = Rules::LawBridgeRule.new
-    law = Law.rules.fetch(:BEAUTIFUL_CODE)
+    law = Law.definitions.fetch(:BEAUTIFUL_CODE)
 
     assert_equal :advisory, law.lifecycle
     assert_empty bridge.check("if a; b; else; c; end\n", path: "example.rb"),
@@ -172,7 +172,7 @@ class TestScanRuleContracts < Minitest::Test
   end
 
   def test_trusted_transformation_law_remains_in_semantic_population
-    law = Law.rules.fetch(:TRANSFORMATIONS)
+    law = Law.definitions.fetch(:TRANSFORMATIONS)
 
     assert_equal :trusted, law.lifecycle
     assert law.semantic?
@@ -210,7 +210,7 @@ class TestScanRuleContracts < Minitest::Test
   def test_every_retired_twin_reaches_findings_through_the_bridge
     bridge = Rules::LawBridgeRule.new
     RETIRED_TWINS.each do |id|
-      law = Law.rules[id.to_sym]
+      law = Law.definitions[id.to_sym]
       refute_nil law, "#{id} must exist in law/ — its registry twin is gone"
       ext = TWIN_EXT.fetch(law.languages.first&.to_s, ".rb")
       path = "#{law.path || "/lib/"}example#{ext}"
@@ -424,16 +424,16 @@ class TestScanRuleContracts < Minitest::Test
   # have.
   def test_no_id_lives_in_both_law_and_registry
     Rules::LawBridgeRule.new
-    law_ids = Law.rules.values.select(&:scannable?).map { |rule| rule.id.to_s }
-    registry_ids = Master::Review::Scan::Rule.registry.filter_map do |klass|
-      Master::Review::Scan::RuleFactory.registry_id(klass, root: Master::ROOT)&.upcase
+    law_ids = Law.definitions.values.select(&:scannable?).map { |rule| rule.id.to_s }
+    registry_ids = Master::Review::Scan::Law.registry.filter_map do |klass|
+      Master::Review::Scan::LawFactory.registry_id(klass, root: Master::ROOT)&.upcase
     end
     assert_empty law_ids & registry_ids
   end
 
   # Every registered rule over one planted source carrying what fools a line
   # scanner: a comment and a string naming what rules look for, a heredoc, a
-  # regex literal, non-ASCII identifiers. Measured 2026-09-13 across 148 rules:
+  # regex literal, non-ASCII identifiers. Measured 2026-09-13 across 148 laws:
   # none raised, none answered differently twice, none reported one finding
   # twice, and CRLF moved no line number. This keeps it that way.
   PLANTED = <<~'RUBY'
@@ -454,7 +454,7 @@ class TestScanRuleContracts < Minitest::Test
   def test_every_rule_is_stable_across_runs_line_endings_and_duplicates
     scanner = Master::Fix::Scanner.build(root: Master::ROOT)
     path = File.join(Master::ROOT, "lib", "example_input_shapes.rb")
-    rules = scanner.rules.select { |rule| rule.respond_to?(:check) }
+    rules = scanner.laws.select { |rule| rule.respond_to?(:check) }
     defects = rules.flat_map { |rule| input_shape_defects(rule, path) }
 
     assert_operator rules.size, :>, 100, "the registry is not being read"
