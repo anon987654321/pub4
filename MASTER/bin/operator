@@ -473,7 +473,7 @@ when "laws"
 
   die("laws", "#{card[:id]} has no executable detector, nothing to run") unless rule
 
-  one = Master::Fix::Scanner.new(rules: [rule])
+  one = Master::Fix::Scanner.new(laws: [rule])
   default = corpus.casecmp?("all") ? ROOT : master_root
   targets = ARGV.empty? ? [default] : ARGV.map { |path| File.expand_path(path, ROOT) }
   hits = one.findings(targets)
