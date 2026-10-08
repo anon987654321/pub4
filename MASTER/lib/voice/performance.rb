@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "digest"
+require "json"
 
 module Master
   module Voice
@@ -99,6 +100,80 @@ module Master
             pitch_delta_hz: smooth_step(part[:pitch_delta_hz], previous[:pitch_delta_hz], MAX_PITCH_STEP_HZ),
           )
         end
+      end
+
+      # One timeline for synthesis metadata, the event bus and Face.
+      # Durations are estimates and the browser normalizes them to real audio,
+      # so every visual consumer follows the audio clock rather than wall time.
+      def timeline(text, emotion: {}, style: :normal, rate: nil, pitch: nil, voice: nil)
+        clean = text.to_s.strip.gsub(/\s+/, " ")
+        parts = plan(clean, emotion:, style:)
+        cursor = 0
+        rendered = parts.map.with_index do |part, index|
+          duration = [part[:text].split.length * 355 + part[:pause_ms], 180].max
+          row = part.merge(index:, start_ms: cursor, end_ms: cursor + duration, duration_ms: duration)
+          cursor += duration
+          row
+        end
+        events = rendered.each_with_index.flat_map do |part, index|
+          rows = [{
+            at_ms: part[:start_ms],
+            type: "phrase",
+            index: index,
+            role: part[:role],
+            energy: phrase_energy(part[:text]),
+          }]
+          if part[:emphasis] != :none
+            rows << {
+              at_ms: [part[:start_ms] + 35, part[:end_ms] - 1].min,
+              type: "accent",
+              index: index,
+              emphasis: part[:emphasis],
+              rate_delta: part[:rate_delta],
+              pitch_delta_hz: part[:pitch_delta_hz],
+            }
+          end
+          rows << {
+            at_ms: part[:end_ms],
+            type: "pause",
+            duration_ms: part[:pause_ms],
+            punctuation: punctuation_for(part[:text]),
+          }
+          if index.positive?
+            rows << {
+              at_ms: part[:start_ms],
+              type: "breath",
+              duration_ms: [110, part[:pause_ms]].min,
+              energy: [0.7 - score(emotion, :arousal) * 0.25, 0.18].max.round(3),
+            }
+          end
+          rows
+        end.sort_by { |event| [event[:at_ms], event[:type]] }
+        signature = {
+          schema: 1,
+          text: clean,
+          voice: voice.to_s,
+          style: style.to_s,
+          rate: rate.to_s,
+          pitch: pitch.to_s,
+        }
+        {
+          schema: 1,
+          clock: "audio",
+          duration_normalization: true,
+          performance_id: Digest::SHA256.hexdigest(JSON.generate(signature))[0, 20],
+          estimated_duration_ms: [cursor, 1].max,
+          voice: voice.to_s,
+          style: style.to_s,
+          rate: rate.to_s,
+          pitch: pitch.to_s,
+          phrases: rendered,
+          events: events.first(160),
+        }
+      end
+
+      def punctuation_for(text)
+        text.to_s[/([.!?;:—-])\s*$/, 1].to_s
       end
 
       def apply(base_rate:, base_pitch:, text:, emotion: {}, style: :normal)

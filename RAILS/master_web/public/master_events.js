@@ -44,6 +44,8 @@
     "pressure:updated": { targets: ["ecology", "face"], fields: ["pct", "tokens", "limit"] },
     "ctx:footer": { targets: ["face"], fields: ["pct", "token_est", "model"] },
     "tts:anticipate": { targets: ["face"], fields: ["style", "expression"] },
+    "tts:performance": { targets: ["face"], fields: ["performance", "performance_id"] },
+    "tts:performance:event": { targets: ["face"], fields: ["type", "at_ms", "index", "energy", "emphasis", "duration_ms", "performance_id"] },
     "tts:style:active": { targets: ["face"], fields: ["style", "rate", "pitch", "expression"] },
     "tts:playback:start": { targets: ["face"], fields: ["text", "voice", "style", "duration", "backend"] },
     "tts:playback:end": { targets: ["face"], fields: ["text", "interrupted", "backend"] },

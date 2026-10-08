@@ -360,6 +360,13 @@ class TtsJob
 
   def write_meta_json
     stream = Master::Voice::Expression.viseme_stream(@text, style: @style, rate: @rate)
+    performance = Master::Voice::Performance.timeline(
+      @text,
+      style: @style,
+      rate: @rate,
+      pitch: @pitch,
+      voice: @voice,
+    )
     File.write(
       meta_path,
       JSON.generate(
@@ -367,6 +374,7 @@ class TtsJob
         voice: @voice.to_s,
         style: @style.to_s,
         mime_type:,
+        performance:,
         **stream.transform_keys(&:to_s),
       ),
     )

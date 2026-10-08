@@ -81,9 +81,40 @@ function fallbackVisemePlan(text, durationMs) {
   });
 }
 
+function performanceFrames() {
+  const events = tts.performancePlan?.events;
+  if (!Array.isArray(events) || !events.length) return null;
+  return events
+    .map((event) => ({
+      at: Number(event.at_ms),
+      type: String(event.type || 'event'),
+      ...event,
+    }))
+    .filter((event) => Number.isFinite(event.at))
+    .sort((a, b) => a.at - b.at);
+}
+
+function emitPerformanceTimeline(audio, frames, cursorState) {
+  if (!frames?.length || !audio || !Number.isFinite(audio.currentTime)) return;
+  const estimated = Number(tts.performancePlan?.estimated_duration_ms);
+  const actual = Number(audio.duration) * 1000;
+  const scale = estimated > 0 && actual > 0 ? actual / estimated : 1;
+  const elapsed = (audio.currentTime * 1000) / scale;
+  while (cursorState.index < frames.length && frames[cursorState.index].at <= elapsed) {
+    const event = frames[cursorState.index++];
+    emitTtsEvent('tts:performance:event', {
+      ...event,
+      performance_id: tts.performancePlan?.performance_id || null,
+      audio_elapsed_ms: Math.round(audio.currentTime * 1000),
+    });
+  }
+}
+
 function startVisemeAnim(text) {
   stopVisemeAnim();
   const frames = planFrames();
+  const performance = performanceFrames();
+  const performanceCursor = { index: 0 };
   if (frames) {
     let cursor = 0;
     tts.visemeTimer = setInterval(() => {
@@ -91,6 +122,7 @@ function startVisemeAnim(text) {
       const audio = tts.audio;
       if (!audio || audio.paused) return;
       const elapsed = audio.currentTime * 1000;
+      emitPerformanceTimeline(audio, performance, performanceCursor);
       let applied = null;
       while (cursor < frames.length && frames[cursor].at <= elapsed) {
         applied = frames[cursor];
@@ -115,6 +147,7 @@ function startVisemeAnim(text) {
       fallbackPlan = { durationMs, frames: fallbackVisemePlan(text, durationMs) };
     }
     const elapsed = audio && Number.isFinite(audio.currentTime) ? audio.currentTime * 1000 : 0;
+    emitPerformanceTimeline(audio, performance, performanceCursor);
     let current = fallbackPlan.frames[0] || { shape: 'neutral', amp: 0 };
     for (const frame of fallbackPlan.frames) {
       if (frame.at > elapsed) break;
@@ -143,6 +176,8 @@ function stopVisemeAnim() {
 window.MASTER_SPEECH_PLAYBACK = Object.freeze({
   VISEME_STEP_MS,
   planFrames,
+  performanceFrames,
+  emitPerformanceTimeline,
   fallbackVisemePlan,
   setViseme,
   clearViseme,

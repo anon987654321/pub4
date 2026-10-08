@@ -16,7 +16,19 @@ class TtsController < ApplicationController
     style_locked = ActiveModel::Type::Boolean.new.cast(params[:style_locked]) == true
     voice_key, synth_style, rate, pitch = tts_voice_and_style(text)
     pre = Master::Voice::Expression.for_pre_speech(style: synth_style, text:)
+    performance = Master::Voice::Performance.timeline(
+      text,
+      style: synth_style,
+      rate: rate,
+      pitch: pitch,
+      voice: voice_key,
+    )
     container[:bus]&.publish("tts:anticipate", style: synth_style.to_s, expression: pre)
+    container[:bus]&.publish(
+      "tts:performance",
+      performance: performance,
+      performance_id: performance[:performance_id],
+    )
     publish_tts_style(voice_key, synth_style, text:)
     job = TtsJob.enqueue(
       text:,

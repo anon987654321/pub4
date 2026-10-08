@@ -138,17 +138,19 @@ test("plan playback stops when the utterance is no longer playing", () => {
   assert.equal(h.liveTimers(), 0);
 });
 
-test("the browser speech path runs the plan on the wall clock it starts on", () => {
+test("the browser speech path does not invent a wall clock before audio exists", () => {
   const h = loadPlayback(PLAN);
   h.tts.playing = true;
   h.api.startVisemeAnim("hello", { clock: "wall" });
 
   h.tick();
-  assert.equal(h.State.viseme, "A");
+  assert.equal(h.State.viseme, "neutral");
   h.tick(120);
+  assert.equal(h.State.viseme, "neutral");
+
+  h.tts.audio = { paused: false, currentTime: 0, duration: 1 };
+  h.tick();
   assert.equal(h.State.viseme, "A");
-  h.tick(120);
-  assert.equal(h.State.viseme, "M");
 });
 
 test("plan playback releases its timer once the last frame is applied", () => {
