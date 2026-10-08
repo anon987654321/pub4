@@ -6,10 +6,10 @@
 pub4 is governed by MASTER, and MASTER's law is data, not prose. Read it before
 you write:
 
-1. `MASTER/data/soul.yml` — the kernel. Absolutes, work rules, anti-simulation.
-2. `MASTER/data/laws.yml` — the declared rule catalogue, in four scopes.
-3. `MASTER/law/*.rb` — the domain law, each rule carrying the example it must
-   flag and the one it must not. Those two examples are the rule.
+1. `MASTER/data/soul.yml` — the kernel. Absolutes, work laws, anti-simulation.
+2. `MASTER/data/laws.yml` — the canonical declared Law catalogue, in four scopes.
+3. `MASTER/law/*.rb` — the executable Law layer, each Law carrying the example it
+   must flag and the one it must spare.
 4. `MASTER/lib/review/scan/laws/*.rb` — the registry, the rest of the detectors.
 
 The authority order is one stack: `soul.yml` > `laws.yml` >
