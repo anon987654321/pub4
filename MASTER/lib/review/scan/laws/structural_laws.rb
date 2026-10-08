@@ -252,7 +252,7 @@ module Master
         # intentionally high"). MASTER's own lib/-vs-core/ split has been an
         # ongoing, unresolved tension; this at least stops lib/ root itself
         # from silently accumulating new files with no deliberate decision.
-        class LibRootDisciplineRule < Rule
+        class LibRootDisciplineLaw < Rule
           # autonomy.rb left the list with the subsystem it named. An allowance
           # for a file nobody can add back is the exemption-outlives-its-subject
           # shape this repo keeps writing down, and
@@ -286,7 +286,7 @@ module Master
             [finding(
               line: 1,
               message: "#{File.basename(path)} added directly to lib/ root — move it into a " \
-                "subsystem folder, or add it to LibRootDisciplineRule::ALLOWED_ROOT_FILES if it's genuinely core",
+                "subsystem folder, or add it to LibRootDisciplineLaw::ALLOWED_ROOT_FILES if it's genuinely core",
             )]
           end
 
