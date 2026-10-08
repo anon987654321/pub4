@@ -86,7 +86,6 @@ class TestTripleMemory < Minitest::Test
   end
 end
 
-
 require "minitest/autorun"
 class VerbClosureTest < Minitest::Test
   CLOSED = Master::Core::VERBS.freeze

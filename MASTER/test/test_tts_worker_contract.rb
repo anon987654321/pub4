@@ -13,7 +13,7 @@ class TtsWorkerContractTest < Minitest::Test
         text: "hello",
         voice_name: nil,
         style_config: { rate: "+0%", pitch: "+0Hz" },
-        audio_path: "/tmp/m_tts_probe.mp3"
+        audio_path: "/tmp/m_tts_probe.mp3",
       )
       assert_nil result
     end

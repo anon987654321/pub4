@@ -60,7 +60,6 @@ class TestFixTransaction < Minitest::Test
   end
 end
 
-
   def test_checkpoint_advances_the_rollback_floor
     Dir.mktmpdir do |dir|
       path = File.join(dir, "note.txt")

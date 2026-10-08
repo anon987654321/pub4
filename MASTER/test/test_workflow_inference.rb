@@ -75,7 +75,6 @@ class WorkflowInferenceTest < Minitest::Test
     ENV["MASTER_DMESG"] = previous
   end
 
-
   def test_mode_line_distinguishes_mechanical_full_from_sampled_semantic_scan
     posture = Master::Ground::ModePosture.new(root: File.expand_path("..", __dir__))
 
@@ -150,7 +149,6 @@ class WorkflowInferenceTest < Minitest::Test
     assert_match(/review\d+: incomplete, failed fix/, out)
     refute_includes out, "complete\n"
   end
-
 
   def test_unconfigured_critique_marks_the_review_incomplete
     pass = Master::CLI::Pipeline::Pass.allocate

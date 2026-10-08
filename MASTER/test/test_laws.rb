@@ -48,7 +48,7 @@ class TestAxioms < Minitest::Test
       File.write(File.join(data, "laws.yml"), "{}\n")
       File.write(
         File.join(data, "voice.yml"),
-        "voice:\n  custom_marker: temporary-root\n"
+        "voice:\n  custom_marker: temporary-root\n",
       )
 
       laws = Master::Ground::Laws.new(root:)

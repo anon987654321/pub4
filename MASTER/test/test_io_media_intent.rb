@@ -151,7 +151,7 @@ class MediaIntentSpec < Minitest::Test
     runner = ->(**_kwargs) { Master::Result.ok("live default started") }
 
     with_dispatch_stub(runner) do
-      result = MediaIntent.play_background_music("play some royksopp in the background", bus: bus)
+      result = MediaIntent.play_background_music("play some royksopp in the background", bus:)
       assert result.ok?
     end
     assert_equal [["client_action", { action: "dilla_bg", artist: "royksopp" }]], events
@@ -162,7 +162,7 @@ class MediaIntentSpec < Minitest::Test
     runner = ->(**_kwargs) { Master::Result.ok("live default started") }
 
     with_dispatch_stub(runner) do
-      assert MediaIntent.play_background_music("play some background music", bus: bus).ok?
+      assert MediaIntent.play_background_music("play some background music", bus:).ok?
     end
     assert_equal [["client_action", { action: "dilla_bg" }]], events
   end
@@ -174,7 +174,7 @@ class MediaIntentSpec < Minitest::Test
     runner = ->(**_kwargs) { Master::Result.ok("stopped") }
 
     with_dispatch_stub(runner) do
-      result = MediaIntent.stop_live_audio(bus: bus)
+      result = MediaIntent.stop_live_audio(bus:)
       assert result.ok?
     end
     assert_equal [["client_action", { action: "dilla_bg", stop: true }]], events

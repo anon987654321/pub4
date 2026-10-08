@@ -66,7 +66,7 @@ class TestInference < Minitest::Test
       strategy: :self_consistency,
       samples: 3,
       max_calls: 3,
-      extractor: ->(text) { text[/ANSWER:\s*(\w+)/, 1] }
+      extractor: ->(text) { text[/ANSWER:\s*(\w+)/, 1] },
     )
 
     assert result.ok?
@@ -82,7 +82,7 @@ class TestInference < Minitest::Test
       prompt: "design a pipeline",
       strategy: :skeleton,
       points: 3,
-      max_calls: 5
+      max_calls: 5,
     )
 
     assert result.ok?
@@ -96,9 +96,9 @@ class TestInference < Minitest::Test
       agent: @agent,
       prompt: "solve this",
       strategy: :denial,
-      constraints: ["loops", "recursion"],
+      constraints: %w[loops recursion],
       rounds: 2,
-      max_calls: 2
+      max_calls: 2,
     )
 
     assert result.ok?
@@ -113,7 +113,7 @@ class TestInference < Minitest::Test
       prompt: "solve the repository problem",
       strategy: :strange_world,
       seeds: ["gravity"],
-      max_calls: 3
+      max_calls: 3,
     )
 
     assert result.ok?
@@ -127,7 +127,7 @@ class TestInference < Minitest::Test
       agent: @agent,
       prompt: "should this change ship?",
       strategy: :perspective,
-      max_calls: 4
+      max_calls: 4,
     )
 
     assert result.ok?
@@ -144,7 +144,7 @@ class TestInference < Minitest::Test
       dataset: [{ input: "x", expected: "candidate 1" }],
       metric:,
       generations: 0,
-      population: 1
+      population: 1,
     )
 
     assert result.ok?
@@ -156,7 +156,7 @@ class TestInference < Minitest::Test
       agent: @agent,
       prompt: "find the name",
       task_type: :detail_finding,
-      max_calls: 1
+      max_calls: 1,
     )
 
     assert result.ok?

@@ -52,7 +52,6 @@ class TestBootEntrypoint < Minitest::Test
     end
   end
 
-
   def test_android_accepts_supported_ruby_four_patch_release
     assert_match(/ANDROID_RUBY_PATTERN/, SOURCE)
     assert_includes SOURCE, 'RUBY_PLATFORM.include?("android")'
@@ -83,7 +82,7 @@ class TestBootEntrypoint < Minitest::Test
       Master::Boot::Entrypoint.stub(:exec, ->(clean, program, *argv) { captured = [clean, program, argv] }) do
         Gem.stub(:loaded_specs, { "bundler" => active }) do
           Master::Boot::Entrypoint.reexec_mismatched_bundler!(
-            root:, env:, out: StringIO.new, argv: ["--fast"], program: "/tmp/bin/cli"
+            root:, env:, out: StringIO.new, argv: ["--fast"], program: "/tmp/bin/cli",
           )
         end
       end

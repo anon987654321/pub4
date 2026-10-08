@@ -226,7 +226,6 @@ class TestSpeech < Minitest::Test
     assert_equal "audio/mp4", Master::Voice::Speech.mime_type_for(".m4a")
   end
 
-
   def test_clean_text_does_not_cut_the_tail
     text = ("Norwegian tail stays present. " * 220).strip
     assert_equal text, Master::Voice::Speech.clean_text(text)
@@ -534,7 +533,6 @@ class TestSpeech < Minitest::Test
       assert_equal 6, speech.send(:worker_timeout, 4000)
     end
   end
-
 
   def test_worker_timeout_respects_explicit_env_override_regardless_of_length
     ENV["MASTER_TTS_TIMEOUT"] = "7"

@@ -76,8 +76,8 @@ class TestSelfFindingsDrift < Minitest::Test
       "findings" => 2,
       "finding_members" => [
         "RULE MASTER/lib/operator/self_findings.rb:999999",
-        "RULE MASTER/lib/operator/does_not_exist.rb:1"
-      ]
+        "RULE MASTER/lib/operator/does_not_exist.rb:1",
+      ],
     }
     with_baseline(baseline) do
       assert_equal baseline["finding_members"], Tool.stale_recorded_members("law")
@@ -88,7 +88,7 @@ class TestSelfFindingsDrift < Minitest::Test
     with_baseline({
       "findings" => 1,
       "by_rule" => { "RULE" => 1 },
-      "finding_members" => ["RULE RAILS/deleted.rb:1"]
+      "finding_members" => ["RULE RAILS/deleted.rb:1"],
     }) do
       Tool.stub(:population, ["RULE RAILS/deleted.rb:1"]) do
         Tool.stub(:files, []) do

@@ -11,10 +11,10 @@ class TestVoiceQualityHarness < Minitest::Test
 
   def test_quality_limits_reject_clipping
     refute Master::Voice::QualityHarness.quality_ok?(
-      ok: true, duration_s: 1.0, sample_rate: 24_000, clipping: true, mean_volume_db: -18.0, max_volume_db: -2.0
+      ok: true, duration_s: 1.0, sample_rate: 24_000, clipping: true, mean_volume_db: -18.0, max_volume_db: -2.0,
     )
     assert Master::Voice::QualityHarness.quality_ok?(
-      ok: true, duration_s: 1.0, sample_rate: 24_000, clipping: false, mean_volume_db: -18.0, max_volume_db: -2.0
+      ok: true, duration_s: 1.0, sample_rate: 24_000, clipping: false, mean_volume_db: -18.0, max_volume_db: -2.0,
     )
   end
 

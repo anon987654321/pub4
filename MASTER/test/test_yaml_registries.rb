@@ -572,7 +572,6 @@ end
 
 end
 
-
 class TestLawsPhysicalOrder < Minitest::Test
   ORDER = %w[
     CAPABILITY_STATUS_MUST_BE_TRUTHFUL ROBUSTNESS SINGULARITY LINEARITY

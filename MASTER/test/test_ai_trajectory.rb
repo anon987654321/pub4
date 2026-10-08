@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-
 require_relative "test_helper"
 require "json"
 
@@ -70,7 +69,7 @@ class TestAiTrajectory < Minitest::Test
         "model" => "small-model",
         "events" => [{ "tool" => "Tree" }, { "tool" => "verify" }],
         "outcome" => "complete",
-        "verified" => true
+        "verified" => true,
       )
       trajectory.append!(path)
       loaded = JSON.parse(File.read(path))

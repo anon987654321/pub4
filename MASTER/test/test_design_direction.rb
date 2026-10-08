@@ -29,7 +29,6 @@ class DesignDirectionTest < Minitest::Test
   end
 end
 
-
   def test_measure_accessor_delegates_to_thresholds
     assert_equal Master::Design::Thresholds.measure_ideal_ch,
                  Master::Design.measure_ideal_ch

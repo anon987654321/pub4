@@ -32,7 +32,7 @@ class TestUnpromptedSpeech < Minitest::Test
     {
       "face.part1.txt" => read("face.part1.txt"),
       "face.part5.txt" => read("face.part5.txt"),
-      "face_speech_runtime.js" => read("face_speech_runtime.js")
+      "face_speech_runtime.js" => read("face_speech_runtime.js"),
     }
   end
 

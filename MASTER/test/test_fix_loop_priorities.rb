@@ -41,7 +41,7 @@ class TestFixLoopPriorities < Minitest::Test
       rules = [Rule.new("A", :warning), Rule.new("B", :error)]
       order = Master::Fix::FixLoop::LawOrder.new(laws:, learnings: nil, bus: nil, root: dir)
 
-      assert_equal ["B", "A"], order.ordered(violation_counts: {}).map(&:id)
+      assert_equal %w[B A], order.ordered(violation_counts: {}).map(&:id)
     end
   end
 

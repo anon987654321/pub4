@@ -44,7 +44,7 @@ class TestRefinementContracts < Minitest::Test
     lines = Master::CLI::PresentationContract.status_lines(
       ahead_behind: [0, 0], branch: "main", head: "abc", dirty: false,
       svc: { state: "ok" }, bg: "stopped", af: "off", stage: nil, verdict: "",
-      bndl: nil, failures: ["retry_attempt3: timeout"], rsi: [], config: {},
+      bndl: nil, failures: ["retry_attempt3: timeout"], rsi: [], config: {}
     )
     assert_includes lines, "recent failure: retry attempt: timeout"
     refute lines.any? { |line| line.start_with?("trace0:") }

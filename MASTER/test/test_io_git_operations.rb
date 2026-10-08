@@ -142,7 +142,7 @@ class GitOperationsTest < Minitest::Test
 
     @git.commit(
       "fix:  remove   noisy title.\n\nThe body states only what changed.",
-      paths: ["lib/style.rb"]
+      paths: ["lib/style.rb"],
     )
 
     assert_equal "Remove noisy title", sh("git", "log", "-1", "--format=%s", chdir: @repo).strip

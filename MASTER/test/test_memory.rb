@@ -139,7 +139,6 @@ class TestMemory < Minitest::Test
     assert_equal "conversation:2", conflicts.first.fetch("incoming_provenance").fetch("source")
   end
 
-
   # data/ is the constitution, so the runtime imports what the operator wrote
   # there and never plants a file of its own.
   def test_brain_files_are_imported_and_never_created

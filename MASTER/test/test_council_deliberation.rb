@@ -192,7 +192,7 @@ class TestCouncilDeliberation < Minitest::Test
     end.new(events)
     personas = Array.new(2) { |i| Persona.new(name: "P#{i}", role: "r", bias: "b", prompt: "p") }
     delib = Master::Review::Council::Deliberation.new(
-      personas: personas,
+      personas:,
       agent: StubAgent.new,
       event_bus: bus,
       judge_enabled: false,
@@ -202,7 +202,7 @@ class TestCouncilDeliberation < Minitest::Test
       { persona: "P1", model: "m1", feedback: "remove", confidence: 0.9 },
     ]
 
-    delib.send(:append_judge_synthesis, feedback: feedback, code: "x", context: nil)
+    delib.send(:append_judge_synthesis, feedback:, code: "x", context: nil)
 
     event = events.find { |name, _| name == :council_reasoning_synthesis }
     refute_nil event

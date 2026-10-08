@@ -70,7 +70,7 @@ class TestCognitionIntelligence < Minitest::Test
   def test_conceptual_equivalence_ignores_names_and_order
     left = {
       purpose: "Preserve the current contract",
-      inputs: ["source", "tests"],
+      inputs: %w[source tests],
       outputs: ["verified result"],
       side_effects: ["write"],
       invariants: ["public api"],
@@ -79,7 +79,7 @@ class TestCognitionIntelligence < Minitest::Test
       invariants: ["public API"],
       side_effects: ["write"],
       outputs: ["verified result"],
-      inputs: ["tests", "source"],
+      inputs: %w[tests source],
       purpose: "  preserve the current contract ",
       name: "another_name",
     }

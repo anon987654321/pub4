@@ -17,11 +17,11 @@ class MediaIntentTest < Minitest::Test
         lambda do |root:, tool:, arg:, env: {}|
           calls << { root:, tool:, arg:, env: }
           Master::Result.ok("postpro: graded")
-        end
+        end,
       ) do
         result = Master::Io::MediaIntent.dispatch(
           %(run postpro.rb over "#{source}"),
-          root:
+          root:,
         )
 
         assert result.ok?, -> { result.message.to_s }
@@ -36,7 +36,7 @@ class MediaIntentTest < Minitest::Test
 
   def test_natural_postpro_language_extracts_intent_and_entities
     parsed = Master::Io::NaturalIntent.resolve(
-      "run postpro over the latest 3 jpg photos in my Downloads folder"
+      "run postpro over the latest 3 jpg photos in my Downloads folder",
     )
 
     refute_nil parsed
@@ -51,7 +51,7 @@ class MediaIntentTest < Minitest::Test
 
   def test_natural_media_intent_does_not_read_digits_from_a_path_as_a_count
     parsed = Master::Io::NaturalIntent.resolve(
-      'run postpro over "/tmp/master-media-12345/new photos"'
+      'run postpro over "/tmp/master-media-12345/new photos"',
     )
 
     refute_nil parsed
@@ -71,7 +71,7 @@ class MediaIntentTest < Minitest::Test
       selection = Master::Io::MediaIntent.send(
         :postpro_selection,
         "edit the latest photos",
-        source
+        source,
       )
 
       assert_equal 5, selection[:files].size
@@ -89,7 +89,7 @@ class MediaIntentTest < Minitest::Test
       lambda do |root:, tool:, arg:, env: {}|
         calls << { root:, tool:, arg:, env: }
         Master::Result.ok("playing Dilla")
-      end
+      end,
     ) do
       result = Master::Io::MediaIntent.dispatch("play some music locally", root: MasterPaths.root)
       assert result.ok?, -> { result.message.to_s }
@@ -106,7 +106,7 @@ class MediaIntentTest < Minitest::Test
       lambda do |root:, tool:, arg:, env: {}|
         calls << { root:, tool:, arg:, env: }
         Master::Result.ok("playing Dilla")
-      end
+      end,
     ) do
       result = Master::Io::MediaIntent.play_live_music("", root: MasterPaths.root)
       assert result.ok?, -> { result.message.to_s }
@@ -134,7 +134,7 @@ class MediaIntentTest < Minitest::Test
       lambda do |root:, tool:, arg:, env: {}|
         calls << { root:, tool:, arg:, env: }
         Master::Result.ok("playing Dilla background")
-      end
+      end,
     ) do
       result = Master::Io::MediaIntent.dispatch("play your music in the background", root: MasterPaths.root)
       assert result.ok?
@@ -157,11 +157,11 @@ class MediaIntentTest < Minitest::Test
         lambda do |root:, tool:, arg:, env: {}|
           calls << { root:, tool:, arg:, env: }
           Master::Result.ok("postpro: varied")
-        end
+        end,
       ) do
         result = Master::Io::MediaIntent.dispatch(
           "run 5 random extreme postpro.rb variations of the new images in my local Desktop folder",
-          root: home
+          root: home,
         )
         assert result.ok?, -> { result.message.to_s }
       end
@@ -182,11 +182,11 @@ class MediaIntentTest < Minitest::Test
         lambda do |root:, tool:, arg:, env: {}|
           calls << { root:, tool:, arg:, env: }
           Master::Result.ok("postpro: varied")
-        end
+        end,
       ) do
         pattern = File.join(dir, "*.jpg")
         result = Master::Io::MediaIntent.dispatch(
-          "run 5 random extreme postpro.rb variations of #{pattern}"
+          "run 5 random extreme postpro.rb variations of #{pattern}",
         )
         assert result.ok?, -> { result.message.to_s }
       end

@@ -20,7 +20,7 @@ class TraceDmesgTest < Minitest::Test
     Master::Trace::Dmesg.stub(:require, ->(name) { raise LoadError, "cannot load such file -- #{name}" }) do
       assert_equal "deps0: installing bundle", Master::Trace::Dmesg.style(
         "deps0: installing bundle",
-        io:
+        io:,
       )
     end
   ensure

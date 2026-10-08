@@ -71,7 +71,6 @@ class TestMelodicConcat < Minitest::Test
     assert_equal fmt[:channels], E.send(:silence_format, rest)[:channels]
   end
 
-
   def test_multiphase_melodic_speech_never_returns_only_the_first_phrase_without_ffmpeg
     first = File.join(@dir, "first.mp3")
     second = File.join(@dir, "second.mp3")

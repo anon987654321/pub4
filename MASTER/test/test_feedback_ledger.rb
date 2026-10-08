@@ -116,7 +116,7 @@ class TestFeedbackLedger < Minitest::Test
     db = SQLite3::Database.new(File.join(root, ".master", "knowledge.sqlite3"))
     db.results_as_hash = true
     rows = db.execute("SELECT dimension FROM feedback_events WHERE event_type = 'fix_improvement'")
-    assert_equal ["T205", "T205"], rows.map { |row| row["dimension"] }
+    assert_equal %w[T205 T205], rows.map { |row| row["dimension"] }
     refute Dir.exist?(File.join(root, "runtime")), "retired runtime namespace was created"
   ensure
     db&.close

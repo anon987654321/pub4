@@ -191,7 +191,7 @@ class TestLLMDispatcher < Minitest::Test
           0.05,
           RbConfig.ruby,
           "-e",
-          "trap('TERM') { exit! }; sleep 2"
+          "trap('TERM') { exit! }; sleep 2",
         )
       end
     end

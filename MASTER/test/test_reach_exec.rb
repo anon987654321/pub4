@@ -65,7 +65,7 @@ class TestReachExec < Minitest::Test
     out, status = E.capture2e(
       "sh", "-c", "head -c 1",
       stdin_data: "x" * 1_000_000,
-      timeout: 3,
+      timeout: 3
     )
     elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
 

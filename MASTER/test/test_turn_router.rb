@@ -93,7 +93,7 @@ end
 
   def test_deploy_confirmation_survives_natural_language_routing
     args = Master::CLI::TurnRouter.deployment_args(
-      "please deploy MASTER and RAILS and OPENBSD to vm23 --confirm"
+      "please deploy MASTER and RAILS and OPENBSD to vm23 --confirm",
     )
 
     assert_equal "all --confirm", args

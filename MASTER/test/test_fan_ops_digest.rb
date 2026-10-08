@@ -7,12 +7,12 @@ class TestFanOpsDigest < Minitest::Test
   CONFIG = {
     "sender_allow" => ["mail.onlyfans.com"],
     "extractors" => [
-      { "match" => 'New message from (?<handle>.+?) on (?<platform>OnlyFans)', "event" => "message" },
+      { "match" => "New message from (?<handle>.+?) on (?<platform>OnlyFans)", "event" => "message" },
     ],
     "injection_patterns" => [
-      'ignore (all |any )?(previous|prior|above) (instructions|prompts)',
-      'system prompt|disregard your (rules|instructions)',
-      'you are now|act as|pretend to be',
+      "ignore (all |any )?(previous|prior|above) (instructions|prompts)",
+      "system prompt|disregard your (rules|instructions)",
+      "you are now|act as|pretend to be",
     ],
     "minor_cues" => [
       '\b(jeg er|im|i am|i''m) (bare )?(1[0-7]|15|16|17)\b',

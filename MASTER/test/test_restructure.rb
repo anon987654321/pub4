@@ -96,7 +96,7 @@ class TestRestructure < Minitest::Test
     plan = Restructure::Plan.parse("OPERATIONS: split\n=== DELETE MASTER/lib/tiny.rb\n=== END\n")
     reason = plan.validate_operations!(
       transformation_plan: Master::Fix::TransformationPlan.new(root: Master::ROOT),
-      allowed_operations: ["remove"]
+      allowed_operations: ["remove"],
     )
 
     assert_includes reason, "outside the problem's candidate set"
@@ -119,7 +119,7 @@ class TestRestructure < Minitest::Test
     result = restructure.call(
       plan,
       message: "x",
-      review: ->(_diff) { reviewed = true }
+      review: ->(_diff) { reviewed = true },
     )
 
     refute result.ok?

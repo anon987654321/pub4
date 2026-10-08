@@ -97,7 +97,7 @@ class TreeContractTest < Minitest::Test
       "dilla" => "../../STUDIO/dilla",
       "lora" => "../../STUDIO/lora",
       "postpro" => "../../STUDIO/postpro",
-      "replicate" => "../../STUDIO/replicate"
+      "replicate" => "../../STUDIO/replicate",
     }
 
     links.each do |name, target|

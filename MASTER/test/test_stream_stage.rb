@@ -19,7 +19,7 @@ class StreamStageTest < Minitest::Test
       @repaired.pop(timeout: 5) || raise("no repair started while the scan ran") if index == 2
       [
         { rule: "LONG_METHOD", file: File.basename(path), line: 1, message: "long" },
-        { rule: "DRY", file: File.basename(path), line: 2, message: "dry" }
+        { rule: "DRY", file: File.basename(path), line: 2, message: "dry" },
       ]
     end
   end

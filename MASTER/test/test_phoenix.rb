@@ -36,7 +36,7 @@ class TestPhoenix < Minitest::Test
       constraints: ["preserve public commands"],
       alternatives: ["leave it", "replace it with a direct call"],
       evidence: { findings: 0, tests: ["test_phoenix"] },
-      decision: "replace with the direct call"
+      decision: "replace with the direct call",
     )
 
     assert_equal 1, entry[:schema]
@@ -58,7 +58,7 @@ class TestPhoenix < Minitest::Test
       message: "fix: boundary seam",
       head: "abc123",
       paths: [master_file, rails_file],
-      findings: [{ rule: "BOUNDARY" }]
+      findings: [{ rule: "BOUNDARY" }],
     )
 
     assert_equal %w[master rails], entries.map { |entry| entry[:boundary] }
@@ -76,7 +76,7 @@ class TestPhoenix < Minitest::Test
       signal: "request.p95_ms",
       value: 184,
       source: "production",
-      context: { route: "/search" }
+      context: { route: "/search" },
     )
 
     entry = JSON.parse(File.readlines(File.join(dir, Master::Phoenix::JOURNAL)).last)

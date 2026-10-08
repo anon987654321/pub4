@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-
 ENV["MT_NO_PLUGINS"] = "1"
 ENV["MASTER_TTS_MODE"] = "classic"
 # The pool's live probes sign-in-check CLIs, ask OpenRouter for a balance and

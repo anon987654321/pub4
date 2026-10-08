@@ -39,9 +39,9 @@ class TestAiOrientation < Minitest::Test
             "attempts" => 0,
             "anchor_sha256" => Digest::SHA256.file(File.join(@master, "lib", "master.rb")).hexdigest,
             "basis_head" => "",
-          }
-        ]
-      )
+          },
+        ],
+      ),
     )
     File.write(File.join(@root, "RAILS", "CLAUDE.md"), "rails contract\n")
     File.write(File.join(@root, "RAILS", "apps.yml"), <<~YAML)
@@ -106,7 +106,7 @@ class TestAiOrientation < Minitest::Test
   def test_render_surfaces_inventory_drift
     File.write(
       File.join(@root, "OPENBSD", "deploy_inventory.json"),
-      '{"apps":[{"name":"brgen","domain":"brgen.no","port":99999}],"master_face":{"domain":"ai.brgen.no","port":53187}}'
+      '{"apps":[{"name":"brgen","domain":"brgen.no","port":99999}],"master_face":{"domain":"ai.brgen.no","port":53187}}',
     )
 
     text = Master::AI::Orientation.render(root: @master)

@@ -179,7 +179,7 @@ class TestVoiceSupport < Minitest::Test
 
   def test_speak_refuses_empty_and_keeps_only_the_current_reply
     queued = []
-    long = "x" * 12000
+    long = "x" * 12_000
     PB.instance_variable_set(:@pending, nil)
     PB.stub(:enabled?, true) do
       PB.stub(:available?, true) do
@@ -295,7 +295,6 @@ ensure
   PB.instance_variable_set(:@pending, nil)
   PB.instance_variable_set(:@last_said, nil)
 end
-
 
   def test_transcendent_reply_stays_one_synthesis_unit
     queued = []

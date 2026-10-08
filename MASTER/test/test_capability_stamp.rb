@@ -9,7 +9,7 @@ class CapabilityStampTest < Minitest::Test
   def health_at(dir, at:, status: :success, model: "claude-cli:opus")
     health = Master::CLI::Routing::ProviderHealth.new(
       path: File.join(dir, "runtime", "telemetry", "provider_health.ndjson"),
-      now: -> { at }
+      now: -> { at },
     )
     health.record(model:, status:, at:)
     health
@@ -23,7 +23,7 @@ class CapabilityStampTest < Minitest::Test
 
       assert_equal(
         "model0 at master0: served claude-cli:opus, level L4, health fresh 41s, degraded no",
-        Master::CLI::CapabilityStamp.render(model: "claude-cli:opus", root: dir, provider_health: health, policy:)
+        Master::CLI::CapabilityStamp.render(model: "claude-cli:opus", root: dir, provider_health: health, policy:),
       )
     end
   end
@@ -34,13 +34,13 @@ class CapabilityStampTest < Minitest::Test
       health = health_at(dir, at: now - 180, model: "web-chat:grok")
       health_now = Master::CLI::Routing::ProviderHealth.new(
         path: health.path,
-        now: -> { now }
+        now: -> { now },
       )
       policy = Master::CLI::Routing::AvailabilityPolicy.new(root: dir)
 
       assert_equal(
         "model0 at master0: served web-chat:grok, level L3, health stale 180s, degraded yes",
-        Master::CLI::CapabilityStamp.render(model: "web-chat:grok", root: dir, provider_health: health_now, policy:)
+        Master::CLI::CapabilityStamp.render(model: "web-chat:grok", root: dir, provider_health: health_now, policy:),
       )
     end
   end
@@ -51,7 +51,7 @@ class CapabilityStampTest < Minitest::Test
 
       assert_equal(
         "model0 at master0: served ollama:qwen3, level L2, health unknown, degraded unknown",
-        Master::CLI::CapabilityStamp.render(model: "ollama:qwen3", root: dir, policy:)
+        Master::CLI::CapabilityStamp.render(model: "ollama:qwen3", root: dir, policy:),
       )
     end
   end

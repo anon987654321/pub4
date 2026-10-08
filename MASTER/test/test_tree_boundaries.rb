@@ -10,7 +10,7 @@ class TreeBoundaryContractTest < Minitest::Test
     "RAILS apps" => File.join(ROOT, "RAILS", "*", "app", "**", "*.rb"),
     "RAILS shared" => File.join(ROOT, "RAILS", "shared", "app", "**", "*.rb"),
     "RAILS app libs" => File.join(ROOT, "RAILS", "*", "lib", "**", "*.rb"),
-    "STUDIO dilla" => File.join(ROOT, "STUDIO", "dilla", "**", "*.rb")
+    "STUDIO dilla" => File.join(ROOT, "STUDIO", "dilla", "**", "*.rb"),
   }.freeze
 
   FORBIDDEN = %r{
