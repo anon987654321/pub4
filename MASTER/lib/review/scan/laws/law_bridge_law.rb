@@ -5,7 +5,7 @@ require File.join(Master::ROOT, "law", "law")
 module Master
   module Review
     module Scan
-      module Rules
+      module Laws
         # Bridges law/*.rb into the scanner. Each Law::Rule proved itself against
         # its own bad/good fixture at load, so a hit here is a hit a fixture already
         # vouches for. YamlDeclarativeLaw yields to any id defined here.
