@@ -7,7 +7,7 @@ module Master
     module Scan
       class Request
         EXPLICIT_PROFILE_FLAG = "--profile"
-        ALL_RULES = "*"
+        ALL_LAWS = "*"
         EMPTY_WORKFLOW_PROFILES = [{}, {}].freeze
         # Path aliases so MASTER can target pub4/RAILS and face without ceremony.
         TARGET_ALIASES = {
@@ -70,9 +70,9 @@ module Master
         # rule, so `/review aesthetic master` spent hours on CONFIG_HIERARCHY.
         # The filter is the walk: the report then describes what actually ran.
         def selected_laws
-          return unless law_filter && scanner.respond_to?(:rules)
+          return unless law_filter && scanner.respond_to?(:laws)
 
-          scanner.laws.select { |rule| law_filter.include?(rule.id.to_s) }
+          scanner.laws.select { |law| law_filter.include?(law.id.to_s) }
         end
 
         def target_arg
@@ -121,9 +121,9 @@ module Master
           return [nil, nil, nil] unless profile_name
 
           cfg = profiles[profile_name] || {}
-          rules = cfg["rules"].to_s
-          law_ids = groups[rules] || (rules == ALL_RULES ? nil : [rules])
-          law_filter = (law_ids && rules != ALL_RULES) ? law_ids.map(&:to_s).to_set : nil
+          laws = cfg["laws"].to_s
+          law_ids = groups[laws] || (laws == ALL_LAWS ? nil : [laws])
+          law_filter = (law_ids && laws != ALL_LAWS) ? law_ids.map(&:to_s).to_set : nil
           severity_filter = Array(cfg["severity"]).map(&:to_s).to_set
           [profile_name, law_filter, severity_filter.empty? ? nil : severity_filter]
         end
