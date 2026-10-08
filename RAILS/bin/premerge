@@ -14,6 +14,8 @@
 # Usage:
 #   RAILS/bin/premerge              # everything
 #   RAILS/bin/premerge --apps       # per-app bin/ci only
+#   RAILS/bin/premerge --contracts  # isolated root contract suite only
+#   RAILS/bin/premerge --coverage   # full Rails coverage only
 #   RAILS/bin/premerge --gates      # layout_suite + inventory only
 #   RAILS/bin/premerge --list       # what would run, and skip nothing
 
