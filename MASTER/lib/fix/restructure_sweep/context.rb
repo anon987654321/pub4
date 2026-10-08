@@ -12,6 +12,10 @@ module Master
         REQUIRERS = 5
         SMALL = 400
         RELATED_LINES = 180
+        PROSE_EXTENSIONS = %w[.md .txt].freeze
+        COMMAND_EXTENSIONS = %w[.rb .rake .sh .zsh].freeze
+        COMMAND_ROOTS = %w[bin tools].freeze
+        STALE_PATHS = %w[RAILS/shared RAILS/mobile RAILS/visual_contract RAILS/contracts RAILS/brgen/engines].freeze
 
         # [path, rule_id, message, related_paths] for every actionable structural finding.
         def self.structural_findings(target)
@@ -23,7 +27,7 @@ module Master
             Master::Ground::Swallow.log(e, context: "restructure.findings", path:)
             []
           end
-          local + cross_file_findings(target) + dead_subtree_findings(target)
+          local + cross_file_findings(target) + dead_subtree_findings(target) + surface_findings(target)
         end
 
         def self.dead_subtree_findings(target)
@@ -96,6 +100,72 @@ module Master
           []
         end
 
+        def self.surface_findings(target)
+          stale_reference_findings(target) + prose_findings(target) + command_surface_findings(target)
+        end
+
+        def self.stale_reference_findings(target)
+          rows = repository_files(target).filter_map do |path|
+            text = File.read(path, encoding: "UTF-8")
+            matches = STALE_PATHS.select { |needle| text.include?(needle) }
+            matches.empty? ? nil : [path, matches]
+          rescue StandardError => e
+            Master::Ground::Swallow.log(e, context: "restructure.stale_reference", path:)
+            nil
+          end
+          rows.filter_map do |path, matches|
+            related = rows.select { |_other, other_matches| (matches & other_matches).any? }
+                        .map(&:first).reject { |other| other == path }.first(8)
+            [path, "STALE_PATH_REFERENCE", "#{matches.length} retired topology reference(s): #{matches.join(", ")}", related]
+          end
+        end
+
+        def self.prose_findings(target)
+          paragraphs = Hash.new { |hash, key| hash[key] = [] }
+          repository_files(target).select { |path| PROSE_EXTENSIONS.include?(File.extname(path).downcase) }.each do |path|
+            File.read(path, encoding: "UTF-8").split(/\n\s*\n+/).each do |block|
+              next if block.lstrip.start_with?("```") || block.include?("\n```")
+              normalized = block.lines.map(&:strip).reject(&:empty?).join(" ").downcase.gsub(/\s+/, " ").strip
+              next if normalized.length < 120 || normalized.split.length < 20
+              paragraphs[normalized] << path
+            end
+          rescue StandardError => e
+            Master::Ground::Swallow.log(e, context: "restructure.prose", path:)
+          end
+          paragraphs.filter_map do |_paragraph, paths|
+            paths = paths.uniq
+            next if paths.size < 2
+            paths.map do |path|
+              [path, "PROSE_DUPLICATION", "prose paragraph is duplicated across #{paths.size} files", paths.reject { |other| other == path }.first(8)]
+            end
+          end.flatten(1)
+        end
+
+        def self.command_surface_findings(target)
+          signatures = repository_files(target).filter_map do |path|
+            relative = relative_static(path, target)
+            ext = File.extname(path).downcase
+            root = relative.split("/").first
+            next unless COMMAND_EXTENSIONS.include?(ext) && (COMMAND_ROOTS.include?(root) || relative.include?("/bin/"))
+
+            text = File.read(path, encoding: "UTF-8")
+            commands = []
+            text.scan(/^\s*when\s+["\x27]([a-z][a-z0-9_:-]*)["\x27]/i) { |match| commands << match.first.downcase }
+            text.scan(/\bCOMMANDS\s*=\s*%i\[([^\]]+)\]/) { |match| commands.concat(match.first.scan(/[a-z][a-z0-9_:-]*/i).map(&:downcase)) }
+            commands = commands.uniq.sort
+            next if commands.empty?
+            [path, commands]
+          rescue StandardError => e
+            Master::Ground::Swallow.log(e, context: "restructure.commands", path:)
+            nil
+          end
+          signatures.group_by { |_path, commands| commands }.values
+            .select { |group| group.size > 1 }.flat_map do |group|
+              group.map do |path, commands|
+                [path, "COMMAND_SURFACE_DUPLICATION", "command surface #{commands.join(", ")} is duplicated across #{group.size} executables", group.map(&:first).reject { |other| other == path }.first(8)]
+              end
+            end
+        end
         def self.structural_rules(target)
           scan = Master::Review::Scan
           scan::RuleDSL
@@ -135,11 +205,23 @@ module Master
         end
 
         def to_s
-          [inventory_section, history_section, file_section, related_section, directory_section, owner_section,
+          [surface_section, inventory_section, history_section, file_section, related_section, directory_section, owner_section,
            reference_section, production_reference_section, requirer_section].compact.join("\n\n")
         end
 
         private
+
+        def surface_section
+          extension = File.extname(@path).downcase
+          kind = if PROSE_EXTENSIONS.include?(extension)
+                   "prose"
+                 elsif COMMAND_EXTENSIONS.include?(extension) && @path.split("/").any? { |part| COMMAND_ROOTS.include?(part) }
+                   "command"
+                 else
+                   "code"
+                 end
+          "Surface: #{kind}; /fix may consolidate structure, code, prose, routes/commands, and configuration when evidence supports it."
+        end
 
         def inventory_section
           tracked = Context.repository_files(@root)
