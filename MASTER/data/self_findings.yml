@@ -183,13 +183,13 @@ finding_members:
   - GUARD_CLAUSE RAILS/brgen/engines/playlist/app/controllers/playlist/tracks_controller.rb:1
   - GUARD_CLAUSE RAILS/brgen/engines/takeaway/app/controllers/takeaway/delivery_drivers_controller.rb:1
   - GUARD_CLAUSE RAILS/brgen/engines/tv/app/controllers/tv/live_streams_controller.rb:1
-  - GUARD_CLAUSE RAILS/shared/app/controllers/concerns/shared/passwords_actions.rb:1
-  - GUARD_CLAUSE RAILS/shared/app/controllers/two_factor_setups_controller.rb:1
-  - GUARD_CLAUSE RAILS/shared/app/helpers/shared/ui_helper.rb:1
-  - GUARD_CLAUSE RAILS/shared/app/models/concerns/shared/notifiable.rb:1
-  - GUARD_CLAUSE RAILS/shared/app/models/shared/affiliate_conversion.rb:1
-  - GUARD_CLAUSE RAILS/shared/app/services/shared/amazon_associates.rb:1
-  - GUARD_CLAUSE RAILS/shared/app/services/shared/tradedoubler.rb:1
+  - GUARD_CLAUSE RAILS/__shared/app/controllers/concerns/shared/passwords_actions.rb:1
+  - GUARD_CLAUSE RAILS/__shared/app/controllers/two_factor_setups_controller.rb:1
+  - GUARD_CLAUSE RAILS/__shared/app/helpers/shared/ui_helper.rb:1
+  - GUARD_CLAUSE RAILS/__shared/app/models/concerns/shared/notifiable.rb:1
+  - GUARD_CLAUSE RAILS/__shared/app/models/shared/affiliate_conversion.rb:1
+  - GUARD_CLAUSE RAILS/__shared/app/services/shared/amazon_associates.rb:1
+  - GUARD_CLAUSE RAILS/__shared/app/services/shared/tradedoubler.rb:1
   - GUARD_CLAUSE MASTER/tools/postpro/postpro.rb:1
   - I18N_COVERAGE RAILS/brgen/app/views/email_subscription_mailer/confirm.html.erb:2
   - I18N_COVERAGE RAILS/brgen/app/views/posts/new.html.erb:75
@@ -252,9 +252,9 @@ finding_members:
   - NO_INLINE_SCRIPT_BLOCK MASTER/web/public/offline.html:7
   - NO_INLINE_SCRIPT_BLOCK RAILS/brgen/public/dilla/dilla.html:7
   - NO_INLINE_SCRIPT_BLOCK RAILS/brgen/public/dilla/dilla.html:74
-  - NO_INLINE_SCRIPT_BLOCK RAILS/shared/app/views/layouts/_mailer_styles.html.erb:1
-  - NO_INLINE_SCRIPT_BLOCK RAILS/shared/app/views/shared/_link_converter.html.erb:19
-  - NO_INLINE_SCRIPT_BLOCK RAILS/shared/app/views/shared/_theme_bootstrap.html.erb:1
+  - NO_INLINE_SCRIPT_BLOCK RAILS/__shared/app/views/layouts/_mailer_styles.html.erb:1
+  - NO_INLINE_SCRIPT_BLOCK RAILS/__shared/app/views/shared/_link_converter.html.erb:19
+  - NO_INLINE_SCRIPT_BLOCK RAILS/__shared/app/views/shared/_theme_bootstrap.html.erb:1
   - NO_INLINE_STYLES RAILS/brgen/public/dilla/dilla.html:67
   - NO_MULTIPLE_LANGUAGES MASTER/web/lib/tasks/face_runtime.rake:20
   - NO_MULTIPLE_LANGUAGES MASTER/web/script/browser_probe_support.rb:38
@@ -354,7 +354,7 @@ finding_members:
   - OPTIONAL_CHAINING RAILS/brgen/app/javascript/controllers/form_submit_controller.js:98
   - PROSE_ACTIVE_VOICE RAILS/brgen/app/lib/fediverse/signature.rb:16
   - PROSE_ACTIVE_VOICE RAILS/brgen/test/jobs/prune_guest_users_job_test.rb:5
-  - PROSE_ACTIVE_VOICE RAILS/shared/app/models/concerns/shared/strict_safe_associations.rb:13
+  - PROSE_ACTIVE_VOICE RAILS/__shared/app/models/concerns/shared/strict_safe_associations.rb:13
   - PROSE_ACTIVE_VOICE MASTER/tools/dilla/dilla.rb:34060
   - PROSE_ACTIVE_VOICE MASTER/tools/postpro/postpro.rb:2088
   - PROSE_ACTIVE_VOICE_NB RAILS/brgen/config/locales/nb.yml:1748
@@ -367,7 +367,7 @@ finding_members:
   - PROSE_OMIT_QUALIFIERS RAILS/brgen/app/models/reaction.rb:49
   - PROSE_OMIT_QUALIFIERS RAILS/brgen/engines/playlist/app/helpers/playlist_helper.rb:18
   - PROSE_OMIT_QUALIFIERS RAILS/brgen/engines/takeaway/app/models/takeaway/delivery_driver.rb:26
-  - PROSE_OMIT_QUALIFIERS RAILS/shared/app/controllers/concerns/shared/authentication.rb:240
+  - PROSE_OMIT_QUALIFIERS RAILS/__shared/app/controllers/concerns/shared/authentication.rb:240
   - PROSE_OMIT_QUALIFIERS MASTER/tools/dilla/lib/harmony.rb:2220
   - PROSE_OMIT_QUALIFIERS MASTER/tools/dilla/lib/sine_stream.rb:240
   - PROSE_OMIT_QUALIFIERS MASTER/tools/dilla/lib/sine_stream.rb:5
@@ -381,16 +381,16 @@ finding_members:
   - RUBY_NUMERIC_UNDERSCORE OPENBSD/test/test_disk_usage.rb:9
   - SAFE_NAVIGATION MASTER/tools/dilla/dilla.rb:35800
   - SQUINT_TEST RAILS/brgen/app/assets/stylesheets/application.scss:1
-  - SQUINT_TEST RAILS/shared/app/assets/stylesheets/_search_yep.scss:1
+  - SQUINT_TEST RAILS/__shared/app/assets/stylesheets/_search_yep.scss:1
   - USE_THEN MASTER/web/script/browser_probe_support.rb:1
   - USE_THEN RAILS/brgen/test/controllers/paginated_index_test.rb:1
   - USE_THEN RAILS/brgen/test/controllers/wiki_controller_test.rb:1
   - USE_THEN RAILS/brgen/test/system/dating_swipe_test.rb:1
-  - USE_THEN RAILS/shared/app/controllers/omniauth_callbacks_controller.rb:1
-  - USE_THEN RAILS/shared/app/services/shared/newsletter_visuals.rb:1
-  - USE_THEN RAILS/shared/app/services/shared/tradedoubler.rb:1
+  - USE_THEN RAILS/__shared/app/controllers/omniauth_callbacks_controller.rb:1
+  - USE_THEN RAILS/__shared/app/services/shared/newsletter_visuals.rb:1
+  - USE_THEN RAILS/__shared/app/services/shared/tradedoubler.rb:1
   - WHY_NOT_WHAT RAILS/brgen/app/jobs/listing_expiry_job.rb:26
-  - WHY_NOT_WHAT RAILS/shared/app/controllers/concerns/shared/findable_by_slug.rb:15
+  - WHY_NOT_WHAT RAILS/__shared/app/controllers/concerns/shared/findable_by_slug.rb:15
 registry_findings: 49
 registry_by_rule:
   NO_GOD_CLASS: 26
