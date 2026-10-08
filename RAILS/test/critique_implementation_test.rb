@@ -219,6 +219,9 @@ class CritiqueImplementationTest < Minitest::Test
     assert_includes mannequin, "drawWrapped"
     assert_includes mannequin, "surfacePoint"
     assert_includes mannequin, "this.rotation"
+    assert_includes mannequin, "attendToChange"
+    assert_includes mannequin, "this.reducedMotion"
+    assert_includes mannequin, "this.attentionTurn = 0.1"
     assert_includes carousel, "amber:mannequin-change"
     assert_includes dressing, 'data-controller="mannequin-3d"'
     assert_includes dressing, "data-mannequin-3d-zones-value"
