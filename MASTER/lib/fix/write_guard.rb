@@ -39,8 +39,8 @@ module Master
         end
 
         # A rule that takes an agent is a semantic rule whatever it is called.
-        def initialize(rules:)
-          @rules = rules.reject { |rule| rule.respond_to?(:set_agent) }
+        def initialize(laws:)
+          @laws = laws.reject { |rule| rule.respond_to?(:set_agent) }
         end
 
         def verdict(path:, content:)
@@ -60,7 +60,7 @@ module Master
         def findings(path:, content:)
           return [] if content.nil?
 
-          @rules.flat_map { |rule| Array(rule.check(content, path: path.to_s)) }
+          @laws.flat_map { |rule| Array(rule.check(content, path: path.to_s)) }
         end
 
         def tally(list) = list.each_with_object(Hash.new(0)) { |f, acc| acc[key(f)] += 1 }
