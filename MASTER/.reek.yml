@@ -1,7 +1,7 @@
 # Reek configuration for MASTER
 #
 # Who reads this: nothing, by default — and that is easy to get wrong. reek
-# appears in no CI step, but lib/review/scan/rules/external_linter_rules.rb
+# appears in no CI step, but lib/review/scan/laws/external_linter_rules.rb
 # defines a "reek" scan rule that shells out to `reek --format json <path>`,
 # which picks this file up. That rule returns early unless
 # MASTER_EXTERNAL_LINT=1, and nothing in lib/, bin/, data/ or OPENBSD sets it.
