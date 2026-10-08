@@ -5,7 +5,7 @@ code in this repository.
 
 Scope: `RAILS/`. Repo-wide rules are in `../CLAUDE.md`; authority order is
 `MASTER/data/soul.yml` > `MASTER/data/laws.yml` >
-executable law (`MASTER/law/*.rb` and `MASTER/lib/review/scan/rules/*.rb`) >
+executable law (`MASTER/law/*.rb` and `MASTER/lib/review/scan/laws/*.rb`) >
 `../CLAUDE.md` > this file.
 
 This file is a pointer. `README.md` in this directory is the maintained
