@@ -293,7 +293,7 @@ decls.compact.each { |_, v, _| values << v }
           brgen/engines/*/app/assets/stylesheets/*.scss
           {shared,brgen,amber,bsdports}/app/**/*.erb
           brgen/engines/*/app/**/*.erb
-          shared/frontend/**/*.js
+          __shared/frontend/**/*.js
           {shared,brgen,amber,bsdports}/app/javascript/**/*.js
         ]
         names = Set.new
