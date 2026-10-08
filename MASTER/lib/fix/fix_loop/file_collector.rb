@@ -147,7 +147,7 @@ module Master
         def skipped?(path) = !skip_reason(path).nil?
 
         def skip_reason(path)
-          return :scanner_path_filter if Master::Review::Scan::Scanner.skip_path?(path, root: path_policy_root)
+          return :scanner_path_filter if Master::Fix::Scanner.skip_path?(path, root: path_policy_root)
           return :symlink if File.symlink?(path)
           return :binary if binary?(path)
           return :too_large if File.size(path) > Master::Review::Scan::FileProcessor::MAX_FILE_BYTES
