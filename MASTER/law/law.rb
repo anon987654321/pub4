@@ -502,7 +502,7 @@ module Law
       b = Builder.new(id)
       b.instance_eval(&block)
       raise ArgumentError, "duplicate law #{id}" if @definitions.key?(id)
-      @laws[id] = b.build
+      @definitions[id] = b.build
     end
 
     def load_all(dir = __dir__)
@@ -514,7 +514,7 @@ module Law
       stamps_before = @law_stamps.dup
 
       removed_sources = @law_sources.keys - files
-      removed_sources.each { |source| @law_sources[source].each { |id| @laws.delete(id) } }
+      removed_sources.each { |source| @law_sources[source].each { |id| @definitions.delete(id) } }
       removed_sources.each do |source|
         @law_sources.delete(source)
         @law_stamps.delete(source)
@@ -525,16 +525,16 @@ module Law
         stamp = [stat.size, stat.ino, stat.mtime.to_r]
         next if @law_stamps[source] == stamp
 
-        @law_sources[source].to_a.each { |id| @laws.delete(id) }
+        @law_sources[source].to_a.each { |id| @definitions.delete(id) }
         @law_sources[source] = []
-        before_ids = @laws.keys
+        before_ids = @definitions.keys
         load source
-        @law_sources[source] = @laws.keys - before_ids
+        @law_sources[source] = @definitions.keys - before_ids
         @law_stamps[source] = stamp
       end
-      @laws
+      @definitions
     rescue StandardError
-      @laws = definitions_before if defined?(definitions_before)
+      @definitions = definitions_before if defined?(definitions_before)
       @law_sources = sources_before if defined?(sources_before)
       @law_stamps = stamps_before if defined?(stamps_before)
       raise
@@ -543,7 +543,7 @@ module Law
     def scan(file, language: nil)
       text = File.read(file, encoding: "UTF-8")
       text = conduct(text) if file.start_with?(__dir__)
-      @laws.values.select { |r| r.applies?(file, language) }.flat_map { |r| r.scan(text, file:) }
+      @definitions.values.select { |r| r.applies?(file, language) }.flat_map { |r| r.scan(text, file:) }
     end
 
     # A law file necessarily contains the pattern it forbids: in its detector,
