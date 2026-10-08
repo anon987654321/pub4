@@ -89,5 +89,4 @@ require_relative "laws/meta_laws"
 # load order happened to produce — law_deps.ungraphed 133 alone and 134 under
 # a run that had scanned.
 require_relative "laws/law_bridge_law"
-require_relative "infra_helpers"
 require_relative "law_registry_audit"
