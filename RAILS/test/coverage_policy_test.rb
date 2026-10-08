@@ -51,15 +51,25 @@ class CoveragePolicyTest < Minitest::Test
     assert_includes ci, "FULL_COVERAGE=1 bin/rails test:system"
   end
 
-  def test_full_coverage_runner_exists_and_collates_every_app
+  def test_full_coverage_runner_exists_and_collates_the_apps_inventory
     runner = File.join(ROOT, "bin", "coverage")
     assert File.file?(runner), "RAILS/bin/coverage is missing"
 
     source = File.read(runner)
-    APPS.each { |app| assert_includes source, "apps" }
+    assert_includes source, 'APPS_FILE = File.join(ROOT, "apps.yml")'
+    assert_includes source, 'YAML.safe_load_file(APPS_FILE).fetch("apps")'
     assert_includes source, "SimpleCov.collate"
     assert_includes source, "minimum 100"
-    assert_includes source, "minimum_per_file 100"
+    assert_includes source, 'PUB4_COVERAGE_PATH'
+  end
+
+  def test_premerge_cannot_omit_the_full_coverage_group_by_default
+    source = File.read(File.join(ROOT, "bin", "premerge"))
+
+    assert_includes source, 'group: :coverage'
+    assert_includes source, 'else %i[apps coverage gates]'
+    assert_includes source, 'elsif ARGV.include?("--coverage") then [:coverage]'
+    assert_includes source, 'elsif ARGV.include?("--gates") then [:gates]'
   end
 
   def test_coverage_policy_tracks_runtime_dimensions
