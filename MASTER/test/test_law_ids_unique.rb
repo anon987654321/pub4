@@ -12,24 +12,24 @@ require_relative "test_helper"
 # class, so two classes claiming one id appear as two entries with the same #id. That
 # is the honest place to assert uniqueness, because it is the exact list the scanner
 # walks on every file.
-class TestRuleIdsUnique < Minitest::Test
+class TestLawIdsUnique < Minitest::Test
   def test_scanner_registry_uses_law_as_the_canonical_concept
-    assert_same Master::Review::Scan::Law, Master::Review::Scan::Rule
-    assert_same Master::Review::Scan::LawDSL, Master::Review::Scan::RuleDSL
-    assert_same Master::Review::Scan::LawFactory, Master::Review::Scan::RuleFactory
-    assert_same Master::Review::Scan::LawRegistryAudit, Master::Review::Scan::LawRegistryAudit
+    assert_respond_to Master::Review::Scan::Law, :registry
+    assert_respond_to Master::Review::Scan::LawDSL, :law
+    assert_respond_to Master::Review::Scan::LawFactory, :build
+    assert_respond_to Master::Review::Scan::LawRegistryAudit, :new
   end
 
   def scanner
     @scanner ||= Master::Fix::Scanner.build(root: Master::ROOT)
   end
 
-  def test_every_registered_rule_id_is_unique
-    ids = scanner.rules.map { |rule| rule.id.to_s }
+  def test_every_registered_law_id_is_unique
+    ids = scanner.laws.map { |rule| rule.id.to_s }
     dupes = ids.tally.select { |_id, count| count > 1 }
 
     assert_empty dupes,
-                 "two rule classes share an id, so their matches double-count " \
+                 "two law classes share an id, so their matches double-count " \
                  "(SINGULARITY): #{dupes.map { |id, n| "#{id}×#{n}" }.join(", ")}. " \
                  "Give one a distinct id or delete the duplicate registration."
   end
@@ -37,13 +37,13 @@ class TestRuleIdsUnique < Minitest::Test
   # The audit's Set-folding is where the last dup hid. Pin that the pre-fold count
   # equals the post-fold count, so the audit can never again mask a collision.
   def test_the_registry_audit_does_not_mask_a_collision
-    Master::Review::Scan::RuleDSL
-    built = Master::Review::Scan::Rule.registry
-      .reject { |klass| Master::Review::Scan::RuleFactory.bridge_class?(klass) }
-      .map { |klass| Master::Review::Scan::RuleFactory.build(klass, root: Master::ROOT).id.to_s.downcase }
+    Master::Review::Scan::LawDSL
+    built = Master::Review::Scan::Law.registry
+      .reject { |klass| Master::Review::Scan::LawFactory.bridge_class?(klass) }
+      .map { |klass| Master::Review::Scan::LawFactory.build(klass, root: Master::ROOT).id.to_s.downcase }
 
     assert_equal built.size, built.uniq.size,
-                 "the scanner registry has a duplicate id that LawRegistryAudit's " \
+                 "the scanner registry has a duplicate law id that LawRegistryAudit's " \
                  ".to_set would silently swallow: " \
                  "#{built.tally.select { |_, n| n > 1 }.keys.join(", ")}"
   end
