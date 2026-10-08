@@ -56,7 +56,7 @@ module Deploy
     private
 
     def source_files(app_dir)
-      shared_dir = File.join(RAILS_ROOT, "shared")
+      shared_dir = File.join(RAILS_ROOT, "__shared")
       patterns = WATCHED.map { |pattern| File.join(app_dir, pattern) } +
                  SHARED_WATCHED.map { |pattern| File.join(shared_dir, pattern) }
       patterns.flat_map { |pattern| Dir.glob(pattern) }
@@ -215,7 +215,7 @@ module Deploy
     # A worker that is not recognisably Workbox-generated is not silently accepted:
     # that would turn a drifted generator path into a green asset gate.
     def service_worker_stale?(app_dir, result, app_name)
-      sw_source = File.join(RAILS_ROOT, "shared", "pwa", "service_worker.js")
+      sw_source = File.join(RAILS_ROOT, "__shared", "pwa", "service_worker.js")
       sw_build = File.join(app_dir, "app", "views", "pwa", "service-worker.js")
       return unless File.file?(sw_source)
 
