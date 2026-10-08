@@ -46,7 +46,7 @@ module Master
         def to_h
           {
             law:,
-            law_id:
+            law_id:,
             message:,
             line:,
             severity:,
