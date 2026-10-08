@@ -59,7 +59,7 @@ module Master
         # Steelman-first red-team: the model must defend the code before it can attack it.
         # This suppresses false positives by forcing consideration of legitimate reasons
         # before a violation can survive. Deep depth only; one LLM call per file.
-        class AdversarialLaw < Rule
+        class AdversarialLaw < Law
           PROMPT_TEMPLATE = <<~PROMPT.freeze
           Red-team review of %<path>s.
 
@@ -142,7 +142,7 @@ module Master
         # Each executable Law with an ask surface is folded into one LLM call per
         # file. A law may also have a deterministic detector; that is layered
         # evidence for one rule, not a second semantic definition.
-        class SemanticLaw < Rule
+        class SemanticLaw < Law
           CODE_SNIPPET_LIMIT = 2000
 
           declare id: "semantic", severity: :warning, autofix: true,
@@ -337,7 +337,7 @@ module Master
         # Lexical pass extracts (comment, method_body) pairs; LLM judges drift in one
         # batched call per file. Pairs with the "reassess on touch" directive: lying
         # comments are factual bugs, not style noise.
-        class CommentDriftLaw < Rule
+        class CommentDriftLaw < Law
           MAX_PAIRS_PER_FILE = 8
           # Lines of method body sent to LLM for drift comparison.
           BODY_SNIPPET = 20
