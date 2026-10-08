@@ -4,8 +4,8 @@
 #
 # CLAUDE.md points agents at the law; limits.yml carries budgets and standing guidance. Measured 2026-08-02: of 38
 # top-level keys, 9 had a reader and 29 had none — 485 of 794 lines. Both generic
-# accessors that might have reached the rest (`Rules#workflow` and
-# `Rules#workflow_rule(key)`) had zero call sites and are deleted.
+# accessors that might have reached the rest (`Laws#workflow` and
+# `Laws#workflow_rule(key)`) had zero call sites and are deleted.
 #
 # So the split is a relabelling, not a deletion. Everything under `guidance:` is
 # still in this file for humans to read — it is
@@ -191,46 +191,46 @@ principle_groups:
 scan_profiles:
   default: full
   core:
-    rules: core
+    laws: core
     aliases:
     - quick
     description: Core axiom and small-function findings after a deep scan
   full:
-    rules: '*'
+    laws: '*'
     aliases:
     - all
     description: All registered scan rules
   axioms_only:
-    rules: axioms
+    laws: axioms
     aliases:
     - axioms
     description: Constitutional axioms only
   solid_focus:
-    rules: solid_focus
+    laws: solid_focus
     aliases:
     - solid
     description: SOLID principles plus axioms
   critical:
-    rules: '*'
+    laws: '*'
     severity:
     - error
     - veto
     description: Only error and veto findings for urgent triage
   solid:
-    rules: solid_focus
+    laws: solid_focus
     description: SOLID principles focus
   axioms:
-    rules: axioms
+    laws: axioms
     description: Constitutional axioms only
   cosmetic:
-    rules: cosmetic
+    laws: cosmetic
     aliases:
     - style
     - hygiene
     - perfection
     description: Hygiene, micro-typography, naming, and style-perfection lint
   aesthetic:
-    rules: aesthetic
+    laws: aesthetic
     aliases:
     - pixel
     - ui
@@ -238,7 +238,7 @@ scan_profiles:
     - design
     description: Pixel-perfect UI/UX, typography, flat design, Fitts/Hick, Rams tags
   rails:
-    rules: '*'
+    laws: '*'
     aliases: []
     description: Full deep scan intended for RAILS app trees (use path RAILS/<app>)
 autoloop:
@@ -344,7 +344,7 @@ guidance:
     max_cycles: 16
     codebase_map: true
   file_reading:
-    rule: READ_FULL_FILES
+    law: READ_FULL_FILES
     statement: Read complete files. Never grep, head, tail, or partial‑read to understand code.
     rationale: Partial view yields partial (wrong) changes.
     allowed_exceptions:
@@ -354,7 +354,7 @@ guidance:
     - head -N file to check structure
     - tail -N file to check endings
   before_edit:
-    rule: READ_BEFORE_WRITE
+    law: READ_BEFORE_WRITE
     statement: Read every file that could be affected before editing any file.
     see_also: edit_context
     steps:
@@ -364,7 +364,7 @@ guidance:
     - Run ruby -c FILE after every write
     - Run ruby -e require_relative after every commit
   edit_context:
-    rule: TIERED_BLAST_RADIUS_READ
+    law: TIERED_BLAST_RADIUS_READ
     statement: Read depth scales with change radius — not every edit requires a full-corpus read.
     always:
     - Full read of every file you will edit
@@ -396,31 +396,31 @@ guidance:
       full-file reads.
   code_principles:
     no_hardcoding:
-      rule: NO_HARDCODED_CONSTANTS
+      law: NO_HARDCODED_CONSTANTS
       statement: Prose, patterns, and config belong in data/*.yml, not Ruby strings.
     single_source:
-      rule: ONE_SOURCE
+      law: ONE_SOURCE
       statement: If it is in a data file, the code reads from there. No duplicates.
     no_magic_numbers:
-      rule: NAMED_CONSTANTS
+      law: NAMED_CONSTANTS
       statement: Extract literals to named constants with .freeze
     no_bare_rescue:
-      rule: SPECIFIC_RESCUE
+      law: SPECIFIC_RESCUE
       statement: Always rescue SpecificError => e. Propagate or log via event bus.
     guard_first:
-      rule: GUARD_CLAUSES_FIRST
+      law: GUARD_CLAUSES_FIRST
       statement: Return Result.ok(ctx) unless condition before main logic.
     one_responsibility:
-      rule: SINGLE_RESPONSIBILITY
+      law: SINGLE_RESPONSIBILITY
       statement: Split if you can name two reasons to change it.
     cqs:
-      rule: COMMAND_QUERY_SEPARATION
+      law: COMMAND_QUERY_SEPARATION
       statement: Queries return data and do not mutate. Commands mutate and do not return values.
     inject_deps:
-      rule: DEPENDENCY_INJECTION
+      law: DEPENDENCY_INJECTION
       statement: Never instantiate collaborators inside a method.
     result_monad:
-      rule: RESULT_MONAD
+      law: RESULT_MONAD
       statement: Pipeline stages return Master::Result. Use .ok? and .err?; propagate Err without calling
         .value!.
   scan_rules:
