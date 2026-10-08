@@ -15,22 +15,22 @@ class DogfoodSpec < Minitest::Test
   # Failure here is the archaeological audit: a capability went missing, or a
   # detector regressed.
   #
-  # A practice rule has no detector — no regex can read "one SSH session" off a
+  # A practice law has no detector — no regex can read "one SSH session" off a
   # file — so its fixtures are illustrative and this proof does not apply. What
-  # still applies is that it HAS them: Builder refuses a rule without a bad and a
-  # good whatever its kind, because a rule carrying no example of its own subject
+  # still applies is that it HAS them: Builder refuses a law without a bad and a
+  # good whatever its kind, because a law carrying no example of its own subject
   # is the unfalsifiable shape this file exists to reject.
-  Law.rules.each do |id, rule|
-    if rule.scannable?
+  Law.definitions.each do |id, law|
+    if law.scannable?
       define_method("test_law_#{id}_proves_itself") do
-        refute_empty rule.scan(rule.bad),  "#{id}: bad fixture not flagged"
-        assert_empty rule.scan(rule.good), "#{id}: good fixture flagged (false positive)"
+        refute_empty law.scan(law.bad),  "#{id}: bad fixture not flagged"
+        assert_empty law.scan(law.good), "#{id}: good fixture flagged (false positive)"
       end
     else
       define_method("test_rule_#{id}_carries_both_examples") do
-        refute_empty rule.bad.to_s.strip,  "#{id}: no example of breaking it"
-        refute_empty rule.good.to_s.strip, "#{id}: no example of following it"
-        refute_equal rule.bad.to_s.strip, rule.good.to_s.strip, "#{id}: the two examples are the same"
+        refute_empty law.bad.to_s.strip,  "#{id}: no example of breaking it"
+        refute_empty law.good.to_s.strip, "#{id}: no example of following it"
+        refute_equal law.bad.to_s.strip, law.good.to_s.strip, "#{id}: the two examples are the same"
       end
     end
   end
