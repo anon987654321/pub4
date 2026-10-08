@@ -10,7 +10,7 @@ class TestLawRegistryAudit < Minitest::Test
   # the shape that made rule_deps.ungraphed read 133 alone and 135 under
   # `rake test` — a census answering a different number depending on what else
   # the process had run.
-  class RuleDefinedByATest < Master::Review::Scan::Rule
+  class RuleDefinedByATest < Master::Review::Scan::Law
     def initialize
       super
       @id = "rule_defined_by_a_test"
@@ -57,7 +57,7 @@ class TestLawRegistryAudit < Minitest::Test
   # becoming two catalogue rules.
   def test_a_rule_can_be_semantic_and_mechanical_at_once
     report = audit.call
-    law = Master::Review::Scan::Rules::SemanticRule.new(agent: nil)
+    law = Master::Review::Scan::Laws::SemanticRule.new(agent: nil)
 
     assert_includes report.mechanical, "FAIL_VISIBLY"
     refute_includes report.semantic_only, "FAIL_VISIBLY"
@@ -79,7 +79,7 @@ class TestLawRegistryAudit < Minitest::Test
   end
 
   def test_a_rule_a_test_defined_is_not_in_the_corpus
-    assert_includes Master::Review::Scan::Rule.registry, RuleDefinedByATest,
+    assert_includes Master::Review::Scan::Law.registry, RuleDefinedByATest,
                     "the premise: defining the class registers it"
 
     refute_includes audit.ungraphed_rule_ids, "rule_defined_by_a_test"
