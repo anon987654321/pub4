@@ -4,7 +4,7 @@ require_relative "test_helper"
 require "review/scan/rule_dsl"
 require_relative "../lib/operator/rule_reach"
 
-class TestRuleRegistryAudit < Minitest::Test
+class TestLawRegistryAudit < Minitest::Test
   # Defined here on purpose: Rule.inherited registers every subclass in the
   # process, so this class is in the registry the moment this file loads. It is
   # the shape that made rule_deps.ungraphed read 133 alone and 135 under
@@ -19,7 +19,7 @@ class TestRuleRegistryAudit < Minitest::Test
     def check(_code, path:) = []
   end
 
-  def audit = Master::Review::Scan::RuleRegistryAudit.new(root: Master::ROOT)
+  def audit = Master::Review::Scan::LawRegistryAudit.new(root: Master::ROOT)
 
   def test_audit_reports_yaml_and_registry_counts
     report = audit.call
