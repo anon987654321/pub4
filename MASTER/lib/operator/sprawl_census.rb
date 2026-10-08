@@ -110,7 +110,7 @@ module Operator
 
     # A repeated word is not automatically a stutter. dilla/dilla.rb is the tool
     # named after its folder and reads correctly at a command line, and
-    # law/law.rb is how Ruby finds the Law namespace. entry_point? below is
+    # law/definition.rb is how Ruby finds the Law namespace. entry_point? below is
     # what separates those from a file that says the name twice over.
     def stutter
       tracked.select do |f|
@@ -130,7 +130,7 @@ module Operator
       # The repeated word is only a stutter when the file says it twice: once
       # for the namespace and again for the thing inside it, which is how
       # lib/cli/session.rb comes to hold Master::CLI::Session. Said once, it is a module
-      # root and how Ruby finds the namespace at all -- law/law.rb declares Law.
+      # root and how Ruby finds the namespace at all -- law/definition.rb declares Law.
       # Said not at all, the file is a script and its folder is named after the
       # tool, which is `ruby STUDIO/dilla/dilla.rb` reading correctly.
       name = File.basename(path, File.extname(path))
