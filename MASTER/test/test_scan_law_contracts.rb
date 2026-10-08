@@ -454,7 +454,7 @@ class TestScanRuleContracts < Minitest::Test
   def test_every_rule_is_stable_across_runs_line_endings_and_duplicates
     scanner = Master::Fix::Scanner.build(root: Master::ROOT)
     path = File.join(Master::ROOT, "lib", "example_input_shapes.rb")
-    rules = scanner.rules.select { |rule| rule.respond_to?(:check) }
+    rules = scanner.laws.select { |rule| rule.respond_to?(:check) }
     defects = rules.flat_map { |rule| input_shape_defects(rule, path) }
 
     assert_operator rules.size, :>, 100, "the registry is not being read"
