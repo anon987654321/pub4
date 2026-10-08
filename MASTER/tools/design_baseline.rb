@@ -46,7 +46,7 @@ module Operator
       files.each do |file|
         src = File.read(file, encoding: "UTF-8")
         app = app_for(file)
-        scanner.rules.each do |rule|
+        scanner.laws.each do |rule|
           hits = begin
             rule.check(src, path: file) || []
           rescue StandardError => e
