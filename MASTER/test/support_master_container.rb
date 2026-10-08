@@ -19,7 +19,7 @@ module Master
           version: "test"
           persona: anchor
           absolute:
-            golden_rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK
+            golden_law: PRESERVE_THEN_IMPROVE_NEVER_BREAK
             rules:
               FAIL_VISIBLY: never swallow an error silently.
               SIMPLEST_WORKS: refuse god classes.
