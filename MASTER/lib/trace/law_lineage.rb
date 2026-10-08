@@ -8,7 +8,7 @@ module Master
       Node = Data.define(
         :path, :boundary, :entry, :depends_on, :check, :ownership, :laws
       )
-      Law = Data.define(:id, :priority, :principle)
+      Law = Data.define(:id, :priority, :statement)
 
       def initialize(root: Master::ROOT)
         @root = File.expand_path(root)
@@ -70,7 +70,7 @@ module Master
       def constitutional_laws
         laws = (Master.load_laws(root: @root) || {})["laws"] || {}
         laws.map do |id, value|
-          Law.new(id.to_s, value.fetch("priority"), value.fetch("principle").to_s)
+          Law.new(id.to_s, value.fetch("priority"), value.fetch("statement").to_s)
         end.sort_by(&:priority)
       end
 
