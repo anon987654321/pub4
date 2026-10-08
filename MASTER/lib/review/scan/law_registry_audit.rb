@@ -9,12 +9,12 @@ module Master
                              :semantic_only, :structural_unwired, :dep_graph_gaps, :mechanical, :source_drift) do
           # A clean report is only meaningful when its population is explicit.
           #
-          # Counted, never subtracted. A rule may be semantic-only, mechanical-only,
+          # Counted, never subtracted. A law may be semantic-only, mechanical-only,
           # or layered and therefore belong to both populations. The audit reports
           # those populations independently so a semantic layer can never disappear
           # merely because its catalogue representation changed.
-          def coverage_line = "#{mechanical.size} of #{yaml_laws} rules run without a model " \
-                              "(see rake lint:rule_reach for what the rest need)"
+          def coverage_line = "#{mechanical.size} of #{yaml_laws} laws run without a model " \
+                              "(see rake lint:law_reach for what the rest need)"
 
           # The share of declared law that something can run. self_test.rb fails
           # below 35 and laws.yml self_test names the threshold.
@@ -53,7 +53,7 @@ module Master
             semantic_only: c[:semantic_only],
             structural_unwired: c[:structural_unwired],
             dep_graph_gaps: ungraphed_law_ids(registry),
-            mechanical: mechanical(yaml_entries, registry:).map { |law| law["id"] },
+            mechanical: mechanical(yaml_entries, registry:).map { |rule| law["id"] },
             source_drift: source_drift(yaml_entries, registry),
           )
         end
@@ -62,15 +62,15 @@ module Master
         # banners and lib/operator/law_reach.rb all print a count of it and three
         # separate spellings of the question gave two answers.
         #
-        # `folded_into` names the rule that reports for this one: the id survives
+        # `folded_into` names the law that reports for this one: the id survives
         # so principle_map can trace it, and the detector exists once, elsewhere.
         def source_drift(yaml_entries, registry)
-          yaml_ids = yaml_entries.map { |law| key_of(rule) }.to_set
+          yaml_ids = yaml_entries.map { |rule| key_of(rule) }.to_set
           laws = law_ids
           registry_ids = registry.map(&:to_s).map(&:downcase).to_set
 
           yaml_only = yaml_entries.filter_map do |law|
-            id = key_of(rule)
+            id = key_of(law)
             folded = law["folded_into"].to_s.downcase
             next if laws.include?(id) || registry_ids.include?(id)
             next if !folded.empty? && (laws.include?(folded) || registry_ids.include?(folded))
@@ -86,8 +86,8 @@ module Master
         end
 
         def mechanical(entries, registry: build_registry_ids)
-          entries.select do |law|
-            law["detect_lexical"] || law["detect_structural"] ||
+          entries.select do |rule|
+            rule["detect_lexical"] || rule["detect_structural"] ||
               detected?(registry, law["id"]) || detected?(registry, law["folded_into"])
           end
         end
@@ -96,10 +96,10 @@ module Master
         # that defines one is in the same process. Measured: law_deps.ungraphed
         # read 133 on its own and 135 under `rake test`, so a ratchet on it would
         # have been measuring the suite rather than the corpus.
-        # TestScanRuleFalsePositives::RaisingLaw is the shape.
+        # TestScanRuleFalsePositives::RaisingRule is the shape.
         #
         # A class whose source cannot be located counts as shipped: over-
-        # reporting a rule is safe, and silently dropping one is how a census
+        # reporting a law is safe, and silently dropping one is how a census
         # stops measuring.
         # Anchored at the start as well as after a slash: a file run as the main
         # script reports the path it was invoked with, so `ruby -Itest
@@ -149,14 +149,14 @@ module Master
         end
 
         # Asked of the loaded registry, not of the source text: law/prose.rb
-        # generates its four rules from data/laws.yml, so a grep for a literal
+        # generates its four laws from data/laws.yml, so a grep for a literal
         # `Law.define(:ID)` reads none of them.
         def law_ids
           require File.join(@root, "law", "law") unless defined?(::Law)
           ::Law.load_all(File.join(@root, "law")) if ::Law.definitions.empty?
-          ::Law.definitions.keys.map { |id| id.to_s.downcase }.to_set
+          ::Law.rules.keys.map { |id| id.to_s.downcase }.to_set
         rescue StandardError => e
-          raise "law registry law census failed: #{e.class}: #{e.message}"
+          raise "rule registry law census failed: #{e.class}: #{e.message}"
         end
 
         def load_yaml_laws
@@ -189,9 +189,9 @@ module Master
             .select { |klass| shipped?(klass) }
             .reject { |klass| LawFactory.bridge_class?(klass) }
             .map { |klass| LawFactory.build(klass, root: @root) }
-            .map do |law|
+            .map do |rule|
               {
-                "id" => law.id.to_s,
+                "id" => rule.id.to_s,
                 "severity" => rule.severity.to_s,
                 "mode" => rule.mode.to_s,
                 "languages" => Array(rule.languages).map(&:to_s),
@@ -203,7 +203,7 @@ module Master
             end
         end
 
-        # The reference loads the rule files, and a class in a multi-class file is
+        # The reference loads the law files, and a class in a multi-class file is
         # invisible to Zeitwerk until it does: asked cold, the registry answered
         # 81 mechanical rules where a loaded one answers 115.
         def build_registry_ids
@@ -216,21 +216,21 @@ module Master
         end
 
         def classify_yaml_entries(yaml_entries, registry)
-          lexical_wired, lexical_unwired = yaml_entries.select { |r| r["detect_lexical"] }
-                                                       .partition { |r| registry.include?(key_of(r)) }
+          lexical_wired, lexical_unwired = yaml_entries.select { |r| law["detect_lexical"] }
+                                                       .partition { |r| registry.include?(key_of(law)) }
           semantic_laws = executable_semantic_ids
           semantic_only = yaml_entries.select do |r|
-            semantic_laws.include?(key_of(r)) &&
-              !r["detect_lexical"] &&
-              !r["detect_structural"] &&
-              !law_detector?(r["id"])
+            semantic_laws.include?(key_of(law)) &&
+              !law["detect_lexical"] &&
+              !law["detect_structural"] &&
+              !law_detector?(law["id"])
           end
-          structural_unwired = yaml_entries.select { |r| r["detect_structural"] }
-                                           .reject { |r| registry.include?(key_of(r)) }
+          structural_unwired = yaml_entries.select { |r| law["detect_structural"] }
+                                           .reject { |r| registry.include?(key_of(law)) }
 
           {
-            yaml_ids: yaml_entries.map { |r| key_of(r) },
-            kernel: yaml_entries.select { |r| r["tier"] == "kernel" }.map { |r| key_of(r) },
+            yaml_ids: yaml_entries.map { |r| key_of(law) },
+            kernel: yaml_entries.select { |r| law["tier"] == "kernel" }.map { |r| key_of(law) },
             lexical_wired: ids_of(lexical_wired), lexical_unwired: ids_of(lexical_unwired),
             semantic_only: ids_of(semantic_only), structural_unwired: ids_of(structural_unwired)
           }
@@ -238,7 +238,7 @@ module Master
 
         # The registry is keyed by downcased id; the report keeps the id as declared.
         def key_of(rule) = law["id"].to_s.downcase
-        def ids_of(rules) = rules.map { |r| r["id"] }
+        def ids_of(rules) = rules.map { |r| law["id"] }
       end
 
           end
