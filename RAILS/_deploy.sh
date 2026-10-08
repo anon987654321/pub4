@@ -32,10 +32,19 @@ deploy_tracked_app() {
   doas mkdir -p "$APP_DIR"
 
   sync_tree "${SRC_DIR}/" "${APP_DIR}"
-  doas rm -rf "/home/${app_name}/shared"
-  sync_tree "${PUB4_RAILS_ROOT:-/home/dev/pub4/RAILS}/shared" "/home/${app_name}/shared"
-  doas chown -R "${app_name}:${app_name}" "/home/${app_name}/shared"
+  doas rm -rf "/home/${app_name}/__shared"
+  sync_tree "${PUB4_RAILS_ROOT:-/home/dev/pub4/RAILS}/__shared" "/home/${app_name}/__shared"
+  doas chown -R "${app_name}:${app_name}" "/home/${app_name}/__shared"
   doas chown -R "${app_name}:${app_name}" "$APP_DIR"
+  if [[ $app_name == brgen ]]; then
+    for vertical in "${PUB4_RAILS_ROOT:-/home/dev/pub4/RAILS}"/brgen_*; do
+      [[ -d $vertical ]] || continue
+      local_name=${vertical:t}
+      doas rm -rf "/home/${app_name}/${local_name}"
+      sync_tree "$vertical" "/home/${app_name}/${local_name}"
+      doas chown -R "${app_name}:${app_name}" "/home/${app_name}/${local_name}"
+    done
+  fi
   overlay_shared_initializers "$APP_DIR"
   overlay_shared_public "$APP_DIR"
   # (removed) overlay_brgen_radio_manifest — the function was never defined and the
