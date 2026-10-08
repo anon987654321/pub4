@@ -6,7 +6,7 @@ require_relative "test_helper"
 # generated face bundles sit there, and a scan rooted at that directory must
 # skip them exactly as a scan rooted at MASTER or the repo does.
 class TestScanPathFilter < Minitest::Test
-  Scanner = Master::Review::Scan::Scanner
+  Scanner = Master::Fix::Scanner
   PUBLIC = File.join(Master::ROOT, "web", "public")
 
   def test_the_face_alias_points_at_the_face_sources
