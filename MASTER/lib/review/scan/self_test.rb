@@ -394,7 +394,7 @@ module Master
           if audit.adherence_pct < 35.0
             findings << finding(
               path: File.join(@root, "data", "laws.yml"), line: 1,
-              message: "rule adherence #{audit.adherence_pct}% below 35% — wire lexical/structural adapters"
+              message: "law adherence #{audit.adherence_pct}% below 35% — wire lexical/structural adapters"
             )
           end
           findings
