@@ -18,7 +18,7 @@ module Master
       # is discarded, so a slow-burn conflict-heavy period doesn't just move
       # the unbounded-growth problem from one file to an unbounded set of them.
       LOG_GENERATIONS = 3
-      DRY_RULES = %w[DRY duplicate_code].freeze
+      DRY_LAWS = %w[DRY duplicate_code].freeze
       WET_AHA = "WET/AHA".freeze
       DUPLICATION_THRESHOLD = 3
 
@@ -27,12 +27,12 @@ module Master
         @bus = bus
         @config = config || load_config
         @law_resolver = law_resolver || Ground::LawResolver.new
-        @rules_index = Priority.rules_index(root: @root)
+        @laws_index = Priority.laws_index(root: @root)
       end
 
       def filter_findings(findings)
         rows = findings.map { |finding| normalize(finding) }
-        suppress_dry_below_rule_of_three(rows).then { |kept| suppress_lower_priority_laws(kept) }
+        suppress_dry_below_law_of_three(rows).then { |kept| suppress_lower_priority_laws(kept) }
       end
 
       # Would applying this fix trade the original violation for a worse one?
@@ -44,8 +44,8 @@ module Master
         return false unless blocker
 
         log_conflict(
-          rule_a: baseline[:rule_id],
-          rule_b: blocker["rule"],
+          law_a: baseline[:rule_id],
+          law_b: blocker["rule"],
           resolution: "reject fix: introduced higher-priority #{blocker["severity"]} finding",
           file: path,
           line: blocker["line"],
@@ -60,10 +60,10 @@ module Master
       # finding (string keys only).
       def priority_of(row)
         {
-          rule_id: (row[:rule] || row["rule"]).to_s,
+          law_id: (row[:law] || row["law"]).to_s,
           severity: (row[:severity] || row["severity"]).to_s.to_sym,
           law_resolver: @law_resolver,
-          rules_index: @rules_index,
+          laws_index: @laws_index,
         }
       end
 
@@ -77,14 +77,14 @@ module Master
 
       attr_reader :root, :bus, :config
 
-      def suppress_dry_below_rule_of_three(rows)
-        dry_rows = rows.select { |finding| DRY_RULES.include?(finding["rule"]) }
+      def suppress_dry_below_law_of_three(rows)
+        dry_rows = rows.select { |finding| DRY_LAWS.include?(finding["law"]) }
         return rows unless dry_rows.any? && dry_rows.size < DUPLICATION_THRESHOLD
 
         dry_rows.each do |finding|
           log_conflict(
-            rule_a: finding["rule"],
-            rule_b: WET_AHA,
+            law_a: finding["law"],
+            law_b: WET_AHA,
             resolution: "favor WET/AHA below three duplications",
             file: finding["file"],
             line: finding["line"],
@@ -107,25 +107,25 @@ module Master
       end
 
       def resolve_pair(best, finding)
-        favored = @law_resolver.winner(best["rule"], finding["rule"], rules_index: @rules_index)
+        favored = @law_resolver.winner(best["rule"], finding["law"], laws_index: @laws_index)
         if favored == best["rule"]
-          log_conflict(rule_a: best["rule"], rule_b: finding["rule"],
+          log_conflict(law_a: best["rule"], law_b: finding["law"],
             resolution: "law priority favors #{best["rule"]}", file: finding["file"], line: finding["line"])
           best
         else
-          log_conflict(rule_a: finding["rule"], rule_b: best["rule"],
-            resolution: "law priority favors #{finding["rule"]}", file: best["file"], line: best["line"])
+          log_conflict(law_a: finding["law"], law_b: best["rule"],
+            resolution: "law priority favors #{finding["law"]}", file: best["file"], line: best["line"])
           finding
         end
       end
 
-      def log_conflict(rule_a:, rule_b:, resolution:, file:, line:)
+      def log_conflict(law_a:, law_b:, resolution:, file:, line:)
         payload = {
           timestamp: Time.now.utc.iso8601,
           strategy: config.fetch("strategy", "highest_priority_wins"),
           prompt_user: config.fetch("prompt_user", false),
-          rule_a: rule_a.to_s,
-          rule_b: rule_b.to_s,
+          law_a: law_a.to_s,
+          law_b: law_b.to_s,
           resolution: resolution.to_s,
           file: file.to_s,
           line: line.to_i,
