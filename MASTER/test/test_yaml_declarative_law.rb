@@ -17,7 +17,7 @@ require "fileutils"
 # for the purpose, and the emptiness of the live one is asserted separately, as
 # a fact with a date on it rather than as coverage.
 class TestYamlDeclarativeLaw < Minitest::Test
-  Rules = Master::Review::Scan::Rules
+  Laws = Master::Review::Scan::Laws
 
   def in_corpus(rules)
     Dir.mktmpdir do |root|
