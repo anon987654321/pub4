@@ -119,15 +119,15 @@ class TestAxioms < Minitest::Test
       FileUtils.mkdir_p(data)
       File.write(File.join(data, "laws.yml"), "{}\n")
       soul = File.join(data, "soul.yml")
-      File.write(soul, "absolute:\n  golden_rule: first\n")
+      File.write(soul, "absolute:\n  golden_law: first\n")
 
       rules = Master::Ground::Rules.new(root:)
-      assert_equal "first", rules.soul_data.fetch("absolute").fetch("golden_rule")
+      assert_equal "first", rules.soul_data.fetch("absolute").fetch("golden_law")
 
-      File.write(soul, "absolute:\n  golden_rule: second\n")
+      File.write(soul, "absolute:\n  golden_law: second\n")
 
-      assert_equal "second", rules.soul_data.fetch("absolute").fetch("golden_rule")
-      assert_equal "second", rules.constitution.fetch("golden_rule")
+      assert_equal "second", rules.soul_data.fetch("absolute").fetch("golden_law")
+      assert_equal "second", rules.constitution.fetch("golden_law")
     end
   end
 
