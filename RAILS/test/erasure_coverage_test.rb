@@ -60,7 +60,7 @@ class ErasureCoverageTest < Minitest::Test
     "marketplace_listing_favorites" => "private marketplace saved-listing state",
     "community_memberships"         => "account membership and moderation roles",
     "dating_likes"                  => "private dating intent and comments",
-    "dating_dislikes"               => "private dating pass history"
+    "dating_dislikes"               => "private dating pass history",
   }.freeze
 
   # Every table whose columns look personal, and what erasure does about it.
@@ -107,7 +107,7 @@ class ErasureCoverageTest < Minitest::Test
     "cities"                              => [ :not_personal, "a city's own coordinates" ],
     "places"                              => [ :not_personal, "a public place's address, with no owning user" ],
     "fedi_actors"                         => [ :not_personal, "an actor on another server — not our account to erase" ],
-    "takeaway_restaurants"                => [ :not_personal, "a business address, and the business is not the user" ]
+    "takeaway_restaurants"                => [ :not_personal, "a business address, and the business is not the user" ],
   }.freeze
 
   def schema = @schema ||= File.read(SCHEMA)
