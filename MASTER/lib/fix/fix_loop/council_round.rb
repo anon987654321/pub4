@@ -5,7 +5,7 @@ module Master
     class FixLoop
       # The council, inside the loop. A pass that found violations asks the
       # panel what is wrong with the files those violations are in, has it
-      # propose competing repairs, and hands the strongest of them to the rule
+      # propose competing repairs, and hands the strongest of them to the law
       # loop as context. A critique that ends in prose changes nothing; this is
       # the seam where it becomes a repair the fixer can weigh.
       #
@@ -15,8 +15,8 @@ module Master
       # repair nobody applies.
       class CouncilRound
         FILES_PER_ROUND = 12
-        IMPROVEMENT_RULE_ID = "COUNCIL_IMPROVEMENT"
-        IMPROVEMENT_RULE = Data.define(:id) do
+        IMPROVEMENT_LAW_ID = "COUNCIL_IMPROVEMENT"
+        IMPROVEMENT_LAW = Data.define(:id) do
           def severity = :warning
         end
         IMPROVEMENT_SEVERITY = :warning
@@ -86,7 +86,7 @@ module Master
           Attack the current design before proposing repairs.
 
           Inspect explicitly:
-          - authority: identify every source of truth, registry, generated projection, compatibility shim, and precedence rule; flag competing authorities and dead policy
+          - authority: identify every source of truth, registry, generated projection, compatibility shim, and precedence law; flag competing authorities and dead policy
           - topology: trace direct callers, callees, entrypoints, side effects, mutable state, event-bus edges, and cross-tree reach
           - scope: identify the smallest correct write boundary and anything the change could accidentally touch outside it
           - bypasses: look for environment flags, fast paths, fallback modes, skip switches, rescue branches, defaults, or aliases that can silently weaken a safety property
@@ -199,7 +199,7 @@ module Master
           return unless file && line
 
           {
-            rule: IMPROVEMENT_RULE_ID,
+            law: IMPROVEMENT_LAW_ID,
             kind: :improvement,
             file:,
             line:,
