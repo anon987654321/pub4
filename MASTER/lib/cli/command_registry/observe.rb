@@ -3,7 +3,7 @@
 require_relative "../scan/report"
 require_relative "../scan/request"
 require_relative "../scan/live"
-require_relative "../../review/scan/mechanical_autofix"
+require_relative "../../fix/scan/mechanical_autofix"
 
 module Master
   module CLI
