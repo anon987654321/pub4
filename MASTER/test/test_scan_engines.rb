@@ -74,7 +74,7 @@ class TestScanEngines < Minitest::Test
     refute Masker.new.dark_background_near?(css, 7)
   end
 
-  PF = Master::Review::Scan::PathFilter
+  PF = Master::Fix::Scan::PathFilter
 
   def test_path_filter_skips_generated_and_vendored_paths_from_either_root
     root = "/repo"
@@ -89,9 +89,9 @@ class TestScanEngines < Minitest::Test
   end
 
   class Host
-    include Master::Review::Scan::Transport
+    include Master::Fix::Scan::Transport
 
-    def self.skip_path?(path, root:) = Master::Review::Scan::PathFilter.skip_path?(path, root:)
+    def self.skip_path?(path, root:) = Master::Fix::Scan::PathFilter.skip_path?(path, root:)
     def self.scan_candidate?(path, root:) = Master::Fix::Scanner.scan_candidate?(path, root:)
 
     def initialize(bus = nil) = @bus = bus
@@ -157,7 +157,7 @@ class TestScanEngines < Minitest::Test
   end
 
   class Reporter
-    include Master::Review::Scan::ProgressReporter
+    include Master::Fix::Scan::ProgressReporter
 
     def initialize
       @mutex = Mutex.new
