@@ -76,7 +76,7 @@ module Master
         # test_scan_path_filter holds that, because an exemption whose subject is
         # gone excuses whatever next takes its name.
         SKIP_PATH_PREFIXES = %w[
-          RAILS/shared/reference
+          RAILS/__shared/reference
         ].freeze
         # public/assets/ is what Propshaft precompiles into, gitignored in every
         # app, and a finding there is a finding against a digest copy.
