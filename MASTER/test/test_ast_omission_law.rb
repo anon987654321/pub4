@@ -14,7 +14,7 @@ require "review/scan/law_dsl"
 # is everything that can be pinned without one, which is everything the rule
 # itself decides.
 class TestAstOmissionRule < Minitest::Test
-  Rules = Master::Review::Scan::Rules
+  Rules = Master::Review::Scan::Laws
   ROOT = "/repo"
 
   Omission = Struct.new(:type, :name, :last_seen_at)
