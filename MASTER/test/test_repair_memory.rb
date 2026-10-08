@@ -4,11 +4,11 @@ require_relative "test_helper"
 require "tmpdir"
 
 # /fix asked the model again, every run, about findings it had declined on
-# files that had not changed, and kept sending rules it declined nearly always.
+# files that had not changed, and kept sending Laws it declined nearly always.
 class TestRepairMemory < Minitest::Test
   Memory = Master::Fix::RepairMemory
 
-  def finding(rule) = { rule:, line: 1, message: "m" }
+  def finding(law) = { law:, line: 1, message: "m" }
 
   def test_a_decline_holds_until_the_file_changes
     Dir.mktmpdir do |root|
@@ -47,7 +47,7 @@ class TestRepairMemory < Minitest::Test
       memory = Memory.new(root:)
       path = File.join(root, "a.rb")
       File.write(path, "x = 1\n")
-      detector = File.join(root, "rule.rb")
+      detector = File.join(root, "law.rb")
       File.write(detector, "old\n")
       rule = Class.new { define_method(:check) { nil } }
       rule.define_method(:id) { "ENVY" }
