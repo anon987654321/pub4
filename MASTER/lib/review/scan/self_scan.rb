@@ -20,7 +20,7 @@ module Master
           @root = root
           @bus = event_bus
           @targets = targets
-          @laws = rules
+          @laws = laws
         end
 
         def call(stream: false, autofix: false)
@@ -30,7 +30,7 @@ module Master
           pairs.concat(singularity_pairs)
           summary = Summary.new(
             pairs:,
-            rule_count:,
+            law_count:,
             violation_count: count_violations(pairs),
             targets: @targets,
             autofixes:,
@@ -46,7 +46,7 @@ module Master
 
         def scan_target(target, stream:)
           path = File.join(@root, target)
-          result = @scanner.scan_dir(path, depth: :deep, stream:, rules: @laws)
+          result = @scanner.scan_dir(path, depth: :deep, stream:, laws: @laws)
           wrapped = Result.wrap(result)
           raise "self-scan target failed: #{target}: #{wrapped.message}" unless wrapped.ok?
 
@@ -72,7 +72,7 @@ module Master
 
         def law_count
           return @laws.size if @laws
-          return @scanner.laws.size if @scanner.respond_to?(:rules)
+          return @scanner.laws.size if @scanner.respond_to?(:laws)
 
           0
         end
@@ -88,11 +88,11 @@ module Master
         end
 
         def publish(summary)
-          @bus&.publish("self_scan:complete", rules: summary.law_count,
+          @bus&.publish("self_scan:complete", laws: summary.law_count,
             violations: summary.violation_count, autofixes: summary.autofixes)
           return if summary.violation_count.zero?
 
-          @bus&.publish("self_violation", rules: summary.law_count, violations: summary.violation_count)
+          @bus&.publish("self_violation", laws: summary.law_count, violations: summary.violation_count)
         end
       end
     end
