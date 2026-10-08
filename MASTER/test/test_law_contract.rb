@@ -147,7 +147,7 @@ class TestLawContract < Minitest::Test
   def test_lifecycle_transitions_are_published_on_rule
     assert Law::Rule.const_defined?(:LIFECYCLE_TRANSITIONS, false)
     assert_equal %i[proposed proven active observed trusted advisory retired],
-                 Law::Rule::LIFECYCLE_TRANSITIONS.keys
+                 Law::Definition::LIFECYCLE_TRANSITIONS.keys
   end
 
   def test_lifecycle_transitions_are_closed
