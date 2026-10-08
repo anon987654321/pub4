@@ -26,7 +26,7 @@ module Master
         def ordered(violation_counts:)
           deps = load_deps
           law_resolver = Master::Ground::LawResolver.new
-          rules_index = Priority.rules_index(root: @root)
+          laws_index = Priority.laws_index(root: @root)
           sorted = @laws.each_with_index.sort_by do |r, i|
             frequency = violation_counts[r.id].to_f
             quality = @learnings&.fix_quality(law: r.id) || 0.5
@@ -38,7 +38,7 @@ module Master
             # law- and quality-aware ranking for everything else.
             score = Priority.score(
               law_id: r.id, severity: law_severity(r), frequency:,
-              age_days: law_age_days(r.id), law_resolver:, rules_index:, quality:
+              age_days: law_age_days(r.id), law_resolver:, laws_index:, quality:
             )
             [tier2?(r.id) ? 0 : 1, -score, i]
           end.map(&:first)
@@ -60,7 +60,7 @@ module Master
         end
 
         def tier2?(law_id)
-          TIER2_QUALITY_RULE_IDS.include?(rule_id.to_s)
+          TIER2_QUALITY_LAW_IDS.include?(law_id.to_s)
         end
 
         private
@@ -77,7 +77,7 @@ module Master
         end
 
         def topo_sort(laws, deps)
-          id_map = laws.to_h { |r| [r.id, r] }
+          id_map = laws.to_h { |law| [law.id, law] }
           in_deg = Hash.new(0)
           adj = Hash.new { |h, k| h[k] = [] }
           laws.each do |law|
