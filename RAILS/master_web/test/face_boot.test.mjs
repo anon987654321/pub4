@@ -171,7 +171,7 @@ test("face.modules.bundle.js is generated from face module entry", () => {
   assert.match(sparse, /master:law/);
   assert.match(sparse, /super_void/);
   assert.match(sparse, /gl_PointSize = 1\.0/);
-  assert.match(sparse, /voice trace|voice filament|Speaking grows a filament/i);
+  assert.match(sparse, /voice trace|Speaking grows a filament/i);
   assert.match(sparse, /semantic particles|Semantic particles remember/i);
   assert.match(sparse, /ghostSerial/);
 
