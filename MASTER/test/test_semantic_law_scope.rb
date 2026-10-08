@@ -4,23 +4,23 @@ require_relative "test_helper"
 require "review/scan/rule_dsl"
 
 # `languages:` on a semantic rule was inert. SemanticRule.from_yaml kept prompt,
-# severity, mode, reversibility and blast_radius and dropped the rest, so a rule
+# severity, mode, reversibility and blast_radius and dropped the rest, so a law
 # declaring `css` was asked about every file and the declaration cost tokens
 # without buying a scope. Its only reader had been the lexical bridge, which
 # carries no rules now.
 #
-# Both halves are pinned here: the scope is honoured, and a rule that declares
-# nothing still reaches everything — narrowing this into a rule that only ever
+# Both halves are pinned here: the scope is honoured, and a law that declares
+# nothing still reaches everything — narrowing this into a law that only ever
 # asks about a handful of files would be worse than the inert key.
 class TestSemanticRuleScope < Minitest::Test
-  def rule = @rule ||= Master::Review::Scan::Rules::SemanticRule.new(agent: nil)
+  def rule = @rule ||= Master::Review::Scan::Laws::SemanticRule.new(agent: nil)
 
   def scoped(language) = rule.send(:rules_for, language).keys
 
   def test_an_unexpected_model_failure_is_not_reported_as_clean
     agent = Object.new
     agent.define_singleton_method(:ask) { |_prompt, operation:| raise "upstream exploded" }
-    rule = Master::Review::Scan::Rules::SemanticRule.new(agent:)
+    rule = Master::Review::Scan::Laws::SemanticRule.new(agent:)
     
     assert_raises(RuntimeError) { rule.check("def foo; end", path: "foo.rb") }
   end
@@ -32,7 +32,7 @@ class TestSemanticRuleScope < Minitest::Test
       calls += 1
       "CLEAN"
     end
-    rule = Master::Review::Scan::Rules::SemanticRule.new(agent:)
+    rule = Master::Review::Scan::Laws::SemanticRule.new(agent:)
 
     rule.check("x = 1\n", path: "virtual.rb")
     rule.check("y = 2\n", path: "virtual.rb")
@@ -83,7 +83,7 @@ class TestSemanticRuleScope < Minitest::Test
   # of the other one. NEVER_BATCH_DELETE declared `shell` and could read no file
   # for it; laws.yml carried `rails`, `prose` and `erb` across 13 rows for the
   # same reason — nothing emits them, and while the key was unread nothing said
-  # so. Now that it is read, a phantom language aims a rule at no file at all.
+  # so. Now that it is read, a phantom language aims a law at no file at all.
   def test_no_declared_language_is_one_no_file_can_carry
     known = Master::FILE_LANGUAGE_MAP.values.uniq
     declared = Master.law_entries(root: Master::ROOT)
