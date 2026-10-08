@@ -257,7 +257,7 @@ module Master
 
         def law_integrity_findings
           require File.join(@root, "law", "law") unless defined?(::Law)
-          lifecycle = ::Law::Rule::LIFECYCLE_TRANSITIONS
+          lifecycle = ::Law::Definition::LIFECYCLE_TRANSITIONS
           required = %i[proposed proven active observed trusted advisory retired]
           return [finding(path: File.join(@root, "law", "law.rb"), line: 1,
                           message: "law lifecycle states drift")] unless lifecycle.keys == required
