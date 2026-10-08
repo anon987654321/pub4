@@ -43,6 +43,8 @@ module Master
         STATE_CHOREOGRAPHY
         TACTILE_FEEDBACK
         POINTER_FEEDBACK_EARLY
+        GESTURE_OWNERSHIP
+        HAPTIC_SINGLE_SOURCE
         SIGNATURE_MOMENT
       ].freeze
 

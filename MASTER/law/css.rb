@@ -295,3 +295,16 @@ Law.define(:STATE_CHOREOGRAPHY) do
   good "Tap Pay → working state → self-drawing success mark or persistent failure state; all meanings remain available without motion."
 end
 
+
+
+Law.define(:GESTURE_OWNERSHIP) do
+  source "Pointer Events and touch-action — gesture ownership"
+  severity :warning
+  mode :opportunity
+  languages %i[html css scss javascript]
+  path "RAILS/"
+  ask "Does a drag or swipe surface explicitly declare which pan remains with the browser and which axis belongs to the interaction? A direct-manipulation gesture must not compete silently with page scrolling, navigation gestures, or pull-to-refresh."
+  fix "Declare touch-action on the gesture surface: use pan-y for horizontal swipes in a vertical page, pan-x for vertical rails, or none when the interaction deliberately owns both axes. Keep an equivalent keyboard/control path."
+  bad ".card-stack { touch-action: auto; }"
+  good ".card-stack { touch-action: pan-y; }"
+end

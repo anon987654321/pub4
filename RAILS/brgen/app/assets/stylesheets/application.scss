@@ -4643,7 +4643,15 @@ label.field--check-label > input { min-height: var(--tap-min); min-width: var(--
 
 // ============================================================ pages: dating
 
-/* Dating swipe stack */
+/* Dating swipe stack. Horizontal card drags leave vertical page scrolling to the browser. */
+.dating-discover {
+  touch-action: pan-y;
+}
+
+.track-row {
+  touch-action: pan-y;
+}
+
 #swipe-stack {
   display: grid;
   position: relative;

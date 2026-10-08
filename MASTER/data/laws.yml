@@ -1713,6 +1713,7 @@ law_map:
     - peak_end_rule
     - platform_consistency
     - responsive_animation
+    - gesture_ownership
     - state_choreography
     - system_status_visibility
     - tactile_feedback
@@ -4247,6 +4248,20 @@ law_map:
       tags:
       - ux_laws
       source: master.yml@30dad7ead
+    
+    gesture_ownership:
+      meaning: 'A direct gesture declares its relationship to browser scrolling'
+      detects: ambiguous_gesture_pan
+      severity: medium
+      confidence: 0.8
+      operation: clarify
+      law_ids:
+      - GESTURE_OWNERSHIP
+      status: covered
+      root: reach
+      tags:
+      - ux_laws
+
     reversible_changes:
       meaning: every change should be undoable
       detects: irreversible_change
@@ -4670,6 +4685,20 @@ law_map:
       root: visible_state
       tags:
       - ux_laws
+
+    haptic_single_source:
+      meaning: 'Tactile feedback uses the shared implementation'
+      detects: duplicate_haptics
+      severity: low
+      confidence: 0.85
+      operation: consolidate
+      law_ids:
+      - HAPTIC_SINGLE_SOURCE
+      status: covered
+      root: one_source
+      tags:
+      - ux_laws
+
     tell_dont_ask:
       meaning: command objects rather than querying them
       detects: feature_envy

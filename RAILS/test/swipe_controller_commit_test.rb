@@ -21,6 +21,7 @@ class SwipeControllerCommitTest < Minitest::Test
   IMPORTS = {
     %(import { Controller } from "@hotwired/stimulus") => "class Controller { constructor(element) { this.element = element } }",
     %(import { enqueueSync } from "pwa/offline_store") => "const queued = []; const enqueueSync = async (entry) => { queued.push(entry) }",
+    %(import Haptics from "pub4/haptics") => "const Haptics = { pulse() {} }",
   }.freeze
 
   PAGE = <<~JS

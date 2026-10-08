@@ -100,13 +100,6 @@ class KeyboardReachableControlsTest < Minitest::Test
       "become a page scroll and pointercancel snaps the sheet back through pointerUp. " \
       "none on the sheet, or on its handle alone so the link list still scrolls, is " \
       "a choice about how the sheet feels.",
-    "brgen/engines/dating/app/views/dating/home/index.html.erb swipe" =>
-      "Cards swipe horizontally and neither .dating-discover, #swipe-stack nor " \
-      ".swipe-card declares touch-action, so a diagonal drag can scroll the page " \
-      "and cancel the swipe. pan-y is the usual value.",
-    "brgen/engines/playlist/app/views/playlist/sets/show.html.erb swipe" =>
-      "Each .track-row swipes horizontally inside a vertically scrolling list, and " \
-      "without pan-y a swipe that starts off-axis scrolls the page instead.",
   }.freeze
 
   Surface = Struct.new(:path, :tag, :attrs, :controller, :match)

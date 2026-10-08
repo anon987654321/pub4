@@ -155,3 +155,16 @@ Law.define(:POINTER_FEEDBACK_EARLY) do
   good "button.addEventListener('pointerdown', showPressedState)"
 end
 
+
+
+Law.define(:HAPTIC_SINGLE_SOURCE) do
+  source "Shared RAILS haptics controller — one tactile implementation"
+  severity :info
+  mode :opportunity
+  languages %i[javascript]
+  path "RAILS/"
+  ask "Does Rails interaction code use the shared haptics implementation instead of reaching directly for navigator.vibrate, so suppression, timing and future native adapters remain one source of truth?"
+  fix "Import the shared pub4/haptics controller or its pulse API. Keep raw navigator.vibrate behind that shared implementation."
+  bad "navigator.vibrate(10)"
+  good "Haptics.pulse(10)"
+end

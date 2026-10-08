@@ -9,6 +9,13 @@ import { Controller } from "@hotwired/stimulus"
 //   <button data-controller="haptics" data-action="click->haptics#match">Match</button>
 //
 export default class extends Controller {
+  static pulse(pattern) {
+    if (document.hidden || !navigator.vibrate) return
+    try {
+      navigator.vibrate(pattern)
+    } catch (_) { /* ignore */ }
+  }
+
   static values = {
     pattern: String
   }
@@ -58,9 +65,6 @@ export default class extends Controller {
   }
 
   #vibrate(pattern) {
-    if (!navigator.vibrate) return
-    try {
-      navigator.vibrate(pattern)
-    } catch (_) { /* ignore */ }
+    this.constructor.pulse(pattern)
   }
 }
