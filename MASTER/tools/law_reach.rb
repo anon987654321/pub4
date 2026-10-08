@@ -3,4 +3,4 @@
 
 require_relative "../lib/operator/rule_reach"
 
-exit Operator::RuleReach.run(json: ARGV.include?("--json"))
+exit Operator::LawReach.run(json: ARGV.include?("--json"))
