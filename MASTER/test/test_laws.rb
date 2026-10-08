@@ -4,37 +4,37 @@ require_relative "test_helper"
 
 class TestAxioms < Minitest::Test
   def setup
-    @rules = Master::Ground::Rules.new
+    @laws = Master::Ground::Laws.new
   end
 
   def test_kernel_not_empty
-    refute @rules.kernel.empty?, "kernel axioms must be present"
+    refute @laws.kernel.empty?, "kernel axioms must be present"
   end
 
   def test_kernel_has_preserve_first
-    assert @rules.kernel.key?("PRESERVE_FIRST")
+    assert @laws.kernel.key?("PRESERVE_FIRST")
   end
 
   def test_philosophy_sorted_by_priority
-    items = @rules.philosophy
+    items = @laws.philosophy
     refute items.empty?
     priorities = items.map { |a| a["priority"].to_i }
     assert_equal priorities.sort, priorities
   end
 
   def test_kernel_block_formatted
-    block = @rules.kernel_block
-    assert block.include?("## Kernel Rules")
+    block = @laws.kernel_block
+    assert block.include?("## Kernel Laws")
     assert block.include?("PRESERVE_FIRST")
   end
 
   def test_philosophy_block_limit
-    block = @rules.philosophy_block(limit: 3)
+    block = @laws.philosophy_block(limit: 3)
     assert block.include?("(top 3)")
   end
 
   def test_lookup_kernel
-    val = @rules.lookup("PRESERVE_FIRST")
+    val = @laws.lookup("PRESERVE_FIRST")
     refute_nil val
     assert val.length > 5
   end
@@ -51,8 +51,8 @@ class TestAxioms < Minitest::Test
         "voice:\n  custom_marker: temporary-root\n"
       )
 
-      rules = Master::Ground::Rules.new(root:)
-      assert_equal "temporary-root", rules.data(:voice).fetch("custom_marker")
+      laws = Master::Ground::Laws.new(root:)
+      assert_equal "temporary-root", laws.data(:voice).fetch("custom_marker")
     end
   end
 
@@ -72,11 +72,11 @@ class TestAxioms < Minitest::Test
       end
 
       write_laws.call("first")
-      rules = Master::Ground::Rules.new(root:)
-      assert_equal "first", rules.lookup("TEMP_RULE")
+      laws = Master::Ground::Laws.new(root:)
+      assert_equal "first", laws.lookup("TEMP_RULE")
 
       write_laws.call("second")
-      assert_equal "second", rules.lookup("TEMP_RULE")
+      assert_equal "second", laws.lookup("TEMP_RULE")
     end
   end
 
@@ -87,11 +87,11 @@ class TestAxioms < Minitest::Test
       path = File.join(data, "voice.yml")
       File.write(path, "voice:\n  custom_marker: first\n")
 
-      rules = Master::Ground::Rules.new(root:)
-      assert_equal "first", rules.voice.fetch("custom_marker")
+      laws = Master::Ground::Laws.new(root:)
+      assert_equal "first", laws.voice.fetch("custom_marker")
 
       File.write(path, "voice:\n  custom_marker: second\n")
-      assert_equal "second", rules.voice.fetch("custom_marker")
+      assert_equal "second", laws.voice.fetch("custom_marker")
     end
   end
 
@@ -104,12 +104,12 @@ class TestAxioms < Minitest::Test
       voice = File.join(data, "voice.yml")
       File.write(voice, "voice:\n  marker: file\n")
 
-      rules = Master::Ground::Rules.new(root:)
-      assert_equal "file", rules.data(:voice).fetch("voice").fetch("marker")
+      laws = Master::Ground::Laws.new(root:)
+      assert_equal "file", laws.data(:voice).fetch("voice").fetch("marker")
 
       File.delete(voice)
 
-      assert_equal "folded", rules.data(:voice).fetch("marker")
+      assert_equal "folded", laws.data(:voice).fetch("marker")
     end
   end
 
@@ -121,18 +121,18 @@ class TestAxioms < Minitest::Test
       soul = File.join(data, "soul.yml")
       File.write(soul, "absolute:\n  golden_law: first\n")
 
-      rules = Master::Ground::Rules.new(root:)
-      assert_equal "first", rules.soul_data.fetch("absolute").fetch("golden_law")
+      laws = Master::Ground::Laws.new(root:)
+      assert_equal "first", laws.soul_data.fetch("absolute").fetch("golden_law")
 
       File.write(soul, "absolute:\n  golden_law: second\n")
 
-      assert_equal "second", rules.soul_data.fetch("absolute").fetch("golden_law")
-      assert_equal "second", rules.constitution.fetch("golden_law")
+      assert_equal "second", laws.soul_data.fetch("absolute").fetch("golden_law")
+      assert_equal "second", laws.constitution.fetch("golden_law")
     end
   end
 
   def test_constitution_carries_anti_simulation_from_soul
-    anti = @rules.constitution["anti_simulation"]
+    anti = @laws.constitution["anti_simulation"]
     refute_nil anti, "soul absolute.anti_simulation must reach the constitution accessor"
     assert_equal %w[will would could might], anti["forbidden"]
     assert anti.dig("require_evidence", "completion"), "evidence contract must survive"
