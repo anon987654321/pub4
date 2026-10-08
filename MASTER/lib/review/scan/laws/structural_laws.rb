@@ -379,7 +379,7 @@ module Master
         end
 
       # B03 NO_GOD_CLASS — class with >10 public methods (detect_structural: god_class).
-        class GodClassRule < Law
+        class GodClassLaw < Law
           METHOD_LIMIT = 10
           LINE_LIMIT = 300
 
@@ -449,7 +449,7 @@ module Master
       # B07 NESTING_DEPTH — control-flow nesting deeper than 4 levels (detect_structural: nesting_depth).
       # Counts control flow only; module/class/def are namespacing and method scope, not the
       # LINEARITY concern — otherwise deep namespaces (Master::Review::Scan::Rules) flag every method.
-        class NestingDepthRule < Law
+        class NestingDepthLaw < Law
           MAX_DEPTH = 4
 
           NESTING_TYPES = [
@@ -480,7 +480,7 @@ module Master
         end
 
       # B04 CQS — method that both mutates state and returns a meaningful value.
-        class CqsRule < Law
+        class CqsLaw < Law
           declare id: "CQS", severity: :warning, tags: %i[CQS CLEAN_CODE],
                   description: "command-query separation — mutate OR return, not both"
 
@@ -554,7 +554,7 @@ module Master
       # only. These give each a same-file AST proxy; the semantic prompt still
       # carries the cases these heuristics miss.
 
-        class OpenClosedRule < Law
+        class OpenClosedLaw < Law
           MIN_BRANCHES = 3
           TYPE_PREDICATE = /\.(class|type|kind)\b/
           # No trailing \b. A word boundary needs a word character on one side,
@@ -594,7 +594,7 @@ module Master
 
         end
 
-        class LiskovRule < Law
+        class LiskovLaw < Law
           declare id: "LISKOV", severity: :warning, tags: %i[SOLID LSP],
                   description: "subclass breaks the parent's contract via refused bequest or narrowed signature"
 
@@ -653,7 +653,7 @@ module Master
 
         end
 
-        class DependencyInversionRule < Law
+        class DependencyInversionLaw < Law
           COLLABORATOR_SUFFIX = /(Service|Client|Adapter|Gateway|Repository|Provider)\z/
 
           declare id: "DEPENDENCY_INVERSION", severity: :warning, tags: %i[SOLID DIP],
@@ -690,7 +690,7 @@ module Master
 
         end
 
-        class InterfaceSegregationRule < Law
+        class InterfaceSegregationLaw < Law
           METHOD_LIMIT = 8
 
           declare id: "INTERFACE_SEGREGATION", severity: :warning, tags: %i[SOLID ISP],
@@ -743,7 +743,7 @@ module Master
         # a file and nothing else. Callers could hold that object directly. :info,
         # because a facade that adds a boundary on purpose is the exception the
         # reviewer decides — the rule surfaces the shape, not the verdict.
-        class MiddleManRule < Law
+        class MiddleManLaw < Law
           MIN_METHODS = 3
 
           declare id: "MIDDLE_MAN", severity: :info, tags: %i[ENGINEERING_FIT ABSTRACTION],
