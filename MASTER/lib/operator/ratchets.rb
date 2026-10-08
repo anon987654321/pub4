@@ -106,31 +106,31 @@ module Operator
     # a row whose current IS its ceiling is a row that can never fail, which is
     # the shape of defect the rest of this file exists to catch.
     def master_yaml_rows
-      [*rule_reach_and_blind_rows, *rule_saturation_and_silent_rows, *autofix_rows,
-       *rule_hygiene_rows_a, *rule_hygiene_rows_b, *fixture_and_dep_rows,
+      [*law_reach_and_blind_rows, *law_saturation_and_silent_rows, *autofix_rows,
+       *law_hygiene_rows_a, *law_hygiene_rows_b, *fixture_and_dep_rows,
        *self_findings_rows, *reach_rows, *namespace_rows, *sprawl_rows].compact
     end
 
     # Reach and fixture blindness are ratcheted; silent is observational because
     # zero findings can mean either a healthy corpus or an applicability gap.
-    def rule_reach_and_blind_rows
-      [master_row("rule_reach", "data/laws.yml", "rules no configuration can run") do
+    def law_reach_and_blind_rows
+      [master_row("law_reach", "data/laws.yml", "rules no configuration can run") do
          require File.join(MASTER, "lib/operator/law_reach")
          unreachable = Operator::LawReach.unreachable
          [unreachable.size, Operator::LawReach.ceiling, unreachable]
        end,
-       master_row("rule_audit.blind", "data/laws.yml", "rules proved on input their subjects never get") do
+       master_row("law_audit.blind", "data/laws.yml", "rules proved on input their subjects never get") do
          require File.join(MASTER, "lib/operator/law_audit")
          blind = Operator::LawAudit.audit[:fixture_blindness]
          [blind.size, Operator::LawAudit.ceilings.fetch("blind"), blind.map { |row| "#{row[:rule]}: #{row[:detail]}" }]
        end]
     end
 
-    def rule_saturation_and_silent_rows
+    def law_saturation_and_silent_rows
       # Silent rules are observation-only: zero findings can mean a healthy
       # corpus or an applicability gap, so they belong in RuleAudit output rather
       # than a monotonic ceiling.
-      [master_row("rule_audit.saturated", "data/laws.yml", "rules flagging most of what they read") do
+      [master_row("law_audit.saturated", "data/laws.yml", "rules flagging most of what they read") do
          require File.join(MASTER, "lib/operator/law_audit")
          saturated = Operator::LawAudit.audit[:saturation]
          [saturated.size, Operator::LawAudit.ceilings.fetch("saturated"),
@@ -152,34 +152,34 @@ module Operator
        end]
     end
 
-    def rule_hygiene_rows_a
-      [master_row("rule_hygiene.id_case_collisions", "data/laws.yml", "ids differing only by case") do
-         require File.join(MASTER, "tools/rule_hygiene")
-         collisions = Operator::RuleHygiene.report[:id_case_collisions]
-         [collisions.size, Operator::RuleHygiene.ceilings.fetch("id_case_collisions"), collisions.map(&:to_s)]
+    def law_hygiene_rows_a
+      [master_row("law_hygiene.id_case_collisions", "data/laws.yml", "ids differing only by case") do
+         require File.join(MASTER, "tools/law_hygiene")
+         collisions = Operator::LawHygiene.report[:id_case_collisions]
+         [collisions.size, Operator::LawHygiene.ceilings.fetch("id_case_collisions"), collisions.map(&:to_s)]
        end,
-       master_row("rule_hygiene.alias_shadows_live_rule", "data/laws.yml", "aliases naming a rule that still exists") do
-         require File.join(MASTER, "tools/rule_hygiene")
-         shadows = Operator::RuleHygiene.report[:alias_shadows_live_rule]
-         [shadows.size, Operator::RuleHygiene.ceilings.fetch("alias_shadows_live_rule"), shadows.map(&:to_s)]
+       master_row("law_hygiene.alias_shadows_live_law", "data/laws.yml", "aliases naming a rule that still exists") do
+         require File.join(MASTER, "tools/law_hygiene")
+         shadows = Operator::LawHygiene.report[:alias_shadows_live_law]
+         [shadows.size, Operator::LawHygiene.ceilings.fetch("alias_shadows_live_law"), shadows.map(&:to_s)]
        end]
     end
 
-    def rule_hygiene_rows_b
-      [master_row("rule_hygiene.missing_metadata", "data/laws.yml", "rules with neither tier nor severity") do
-         require File.join(MASTER, "tools/rule_hygiene")
-         missing = Operator::RuleHygiene.report[:missing_metadata]
-         [missing.size, Operator::RuleHygiene.ceilings.fetch("missing_metadata"), missing.map(&:to_s)]
+    def law_hygiene_rows_b
+      [master_row("law_hygiene.missing_metadata", "data/laws.yml", "rules with neither tier nor severity") do
+         require File.join(MASTER, "tools/law_hygiene")
+         missing = Operator::LawHygiene.report[:missing_metadata]
+         [missing.size, Operator::LawHygiene.ceilings.fetch("missing_metadata"), missing.map(&:to_s)]
        end,
-       master_row("rule_hygiene.cross_population_duplicates", "data/laws.yml", "one id with two detectors") do
-         require File.join(MASTER, "tools/rule_hygiene")
-         duplicates = Operator::RuleHygiene.report[:cross_population_duplicates]
-         [duplicates.size, Operator::RuleHygiene.ceilings.fetch("cross_population_duplicates"), duplicates.map(&:to_s)]
+       master_row("law_hygiene.cross_population_duplicates", "data/laws.yml", "one id with two detectors") do
+         require File.join(MASTER, "tools/law_hygiene")
+         duplicates = Operator::LawHygiene.report[:cross_population_duplicates]
+         [duplicates.size, Operator::LawHygiene.ceilings.fetch("cross_population_duplicates"), duplicates.map(&:to_s)]
        end,
-       master_row("rule_hygiene.statement_conflicts", "data/laws.yml", "one id, two statements") do
-         require File.join(MASTER, "tools/rule_hygiene")
-         conflicts = Operator::RuleHygiene.report[:statement_conflicts]
-         [conflicts.size, Operator::RuleHygiene.ceilings.fetch("statement_conflicts"), conflicts.map(&:to_s)]
+       master_row("law_hygiene.statement_conflicts", "data/laws.yml", "one id, two statements") do
+         require File.join(MASTER, "tools/law_hygiene")
+         conflicts = Operator::LawHygiene.report[:statement_conflicts]
+         [conflicts.size, Operator::LawHygiene.ceilings.fetch("statement_conflicts"), conflicts.map(&:to_s)]
        end]
     end
 
@@ -188,11 +188,11 @@ module Operator
     # never carried the row; LawRegistryAudit reported dep_graph_gaps and no
     # ceiling anywhere read it.
     def fixture_and_dep_rows
-      [master_row("rule_fixture_debt", "data/laws.yml", "registry rules with no worked example") do
+      [master_row("law_fixture_debt", "data/laws.yml", "registry rules with no worked example") do
          $LOAD_PATH.unshift(File.join(MASTER, "lib")) unless $LOAD_PATH.include?(File.join(MASTER, "lib"))
          require "master"
          require "review/scan/law_dsl"
-         unfixtured = Master::Review::Scan::Rule.registry.reject do |klass|
+         unfixtured = Master::Review::Scan::Law.registry.reject do |klass|
            (klass.respond_to?(:dsl_fires) && (klass.dsl_fires || klass.dsl_does_not_fire)) ||
              !klass.respond_to?(:dsl_block)
          end
@@ -667,7 +667,7 @@ end
 
 def deep_rows
   # This ceiling belongs to the principle map, not this presentation layer.
-  principle_trace_ceiling = YAML.safe_load_file(File.join(MASTER, "data", "principle_map.yml")).fetch("rule_trace_ceiling", nil)
+  law_trace_ceiling = YAML.safe_load_file(File.join(MASTER, "data", "laws.yml")).fetch("rule_trace_ceiling", nil)
 
   [
     # Deep because it parses every tracked Ruby file in four top-level trees with Prism.
@@ -678,8 +678,8 @@ def deep_rows
         shell_row("selfcheck", "MASTER", "bundle exec rake selfcheck", /selfcheck: (\d+) violation/, nil),
         # Deep because the rule registry is global and a suite run has test-defined
         # rules in it: measured in-process it reads high and fails a green tree.
-        shell_row("principle_trace", "MASTER", "bundle exec rake lint:principle_trace",
-                  /principle_trace: (\d+)[\/ ]/, principle_trace_ceiling),
+        shell_row("law_trace", "MASTER", "bundle exec rake lint:law_trace",
+                  /law_trace: (\d+)[\/ ]/, law_trace_ceiling),
         # Deep because it scans every RAILS view and stylesheet with the full
         # design rule set — the layout campaign's ratchet (2026-08-21).
         shell_row("design_baseline", "MASTER", "bundle exec ruby tools/design_baseline.rb",
