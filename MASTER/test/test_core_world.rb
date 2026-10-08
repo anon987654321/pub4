@@ -117,6 +117,18 @@ class WorldTest < Minitest::Test
     end
   end
 
+  def test_a_symlink_to_a_credential_file_cannot_be_read
+    with_world do |world, root|
+      File.write(File.join(root, ".env"), "SECRET=hunter2\n")
+      File.symlink(".env", File.join(root, "visible.txt"))
+
+      obs = world.perform(E.read("visible.txt"))
+
+      refute obs.ok?, "a credential symlink must be refused"
+      refute_includes obs.message.to_s, "hunter2"
+    end
+  end
+
   def test_exec_does_not_honor_model_chosen_env
     with_world do |world|
       obs = world.perform(E.exec(
