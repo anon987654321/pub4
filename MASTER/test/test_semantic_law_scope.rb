@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-require "review/scan/rule_dsl"
+require "review/scan/law_dsl"
 
 # `languages:` on a semantic rule was inert. SemanticRule.from_yaml kept prompt,
 # severity, mode, reversibility and blast_radius and dropped the rest, so a rule
@@ -13,14 +13,14 @@ require "review/scan/rule_dsl"
 # nothing still reaches everything — narrowing this into a rule that only ever
 # asks about a handful of files would be worse than the inert key.
 class TestSemanticRuleScope < Minitest::Test
-  def rule = @rule ||= Master::Review::Scan::Rules::SemanticRule.new(agent: nil)
+  def rule = @rule ||= Master::Review::Scan::Laws::SemanticLaw.new(agent: nil)
 
   def scoped(language) = rule.send(:rules_for, language).keys
 
   def test_an_unexpected_model_failure_is_not_reported_as_clean
     agent = Object.new
     agent.define_singleton_method(:ask) { |_prompt, operation:| raise "upstream exploded" }
-    rule = Master::Review::Scan::Rules::SemanticRule.new(agent:)
+    rule = Master::Review::Scan::Laws::SemanticLaw.new(agent:)
     
     assert_raises(RuntimeError) { rule.check("def foo; end", path: "foo.rb") }
   end
@@ -32,7 +32,7 @@ class TestSemanticRuleScope < Minitest::Test
       calls += 1
       "CLEAN"
     end
-    rule = Master::Review::Scan::Rules::SemanticRule.new(agent:)
+    rule = Master::Review::Scan::Laws::SemanticLaw.new(agent:)
 
     rule.check("x = 1\n", path: "virtual.rb")
     rule.check("y = 2\n", path: "virtual.rb")
