@@ -71,8 +71,8 @@ module Master
         # A law file necessarily contains the pattern it forbids — detector,
         # fix text, bad fixture. Law.conduct neutralizes those lines (keeping
         # line numbers) before law judges law/; that only covered Law.scan,
-        # so every REGISTRY rule read law/ raw and NULL_BLINDNESS flagged
-        # law/null_blindness.rb's own detector. One read site, so every rule
+        # so every REGISTRY law read law/ raw and NULL_BLINDNESS flagged
+        # law/null_blindness.rb's own detector. One read site, so every law
         # sees the same conducted text.
         def law_conducted(path, code)
           return code unless path.to_s.match?(%r{/law/[^/]+\.rb\z})
@@ -142,7 +142,7 @@ module Master
         # pass, and the pass ran only when the cheap passes had already found
         # something. So a file that read as clean was never asked the 74
         # questions — and reported "0 findings", which is a claim about the whole
-        # rule set rather than about the third of it that ran.
+        # law set rather than about the third of it that ran.
         #
         # The cost gate is real: one LLM call per file is not free on a tree this
         # size. Keeping it, but sampling a deterministic slice so clean files are
@@ -162,7 +162,7 @@ module Master
         # Relative to the repo, not the absolute path: keyed on the latter, two
         # checkouts of the same tree sample different files and a scan is not
         # reproducible off the machine that ran it. Relative also holds still
-        # while the file is edited, so a rule does not switch on and off under
+        # while the file is edited, so a law does not switch on and off under
         # someone's keystrokes.
         def sample_key(path)
           path.to_s.delete_prefix("#{Master::ROOT}/")
@@ -243,7 +243,7 @@ module Master
         def top_laws(findings, limit: 3)
           findings.each_with_object(Hash.new(0)) do |finding, counts|
             law = finding_law(finding)
-            counts[law] += 1 if rule
+            counts[law] += 1 if law
           end.sort_by { |law, count| [-count, law] }.first(limit).to_h
         end
 
