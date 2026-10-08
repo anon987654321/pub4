@@ -139,7 +139,7 @@ module Operator
     # and a single number would hide which surface moved. Measured against the
     # same scale, because that is the whole point.
     #
-    # The face's sheets live in MASTER/web/public (fe829068c). The directory is
+    # The face's sheets live in RAILS/master_web/public (fe829068c). The directory is
     # found by where face.css actually is rather than named once, because each
     # time the sources moved the corpus emptied silently and every face/*
     # baseline read as fixed while nothing was measured.
