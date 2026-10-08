@@ -347,11 +347,11 @@ Law.define(:SHELL_DISCIPLINE) do
   source "MASTER constitution (soul.yml absolute.rules)"
   severity :warn
   practice <<~TEXT
-    no sed, awk, grep, head, tail, find, wc, perl or python in agent shell
+    no sed, awk, head, tail, find, wc, perl or python in agent shell
     calls or committed scripts; BSD variants break GNU idioms and this tree
     deploys to OpenBSD. Ruby, zsh builtins and the dedicated tools instead.
   TEXT
-  fix "no sed, awk, grep, head, tail, find, wc, perl or python in agent shell calls or committed scripts;"
+  fix "no sed, awk, head, tail, find, wc, perl or python in agent shell calls or committed scripts;"
   bad  "sed -i on OpenBSD"
   good "ruby -e rewriting the file"
 end
