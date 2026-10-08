@@ -14,7 +14,7 @@ class RecoveryContractTest < Minitest::Test
   end
 
   def test_idempotency_releases_failed_mutation_lock
-    source = File.read(File.join(ROOT, "RAILS/shared/app/controllers/concerns/shared/idempotency.rb"))
+    source = File.read(File.join(ROOT, "RAILS/__shared/app/controllers/concerns/shared/idempotency.rb"))
     assert_includes source, 'if response.status >= 500'
     assert_includes source, "Rails.cache.delete(idempotency_cache_key)"
     assert_includes source, '"X-Idempotency-Key"'
