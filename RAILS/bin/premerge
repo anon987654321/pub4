@@ -57,6 +57,16 @@ def app_steps
   end
 end
 
+def coverage_step
+  Step.new(name: "full Rails coverage (line/branch/method)", group: :coverage, run: lambda {
+    runner = File.join(ROOT, "bin", "coverage")
+    next [BLOCKED, "RAILS/bin/coverage is missing"] unless File.file?(runner)
+
+    ok = system(*RUBY, runner, chdir: ROOT)
+    ok ? [PASSED, nil] : [FAILED, "bin/coverage exited non-zero"]
+  })
+end
+
 def gate_steps
   [
     Step.new(name: "layout_suite (source + fixture gates)", group: :gates, run: lambda {
@@ -90,12 +100,13 @@ def gate_steps
 end
 
 def steps_for(groups)
-  (app_steps + gate_steps).select { |s| groups.include?(s.group) }
+  (app_steps + [coverage_step] + gate_steps).select { |s| groups.include?(s.group) }
 end
 
 groups = if ARGV.include?("--apps") then [:apps]
+         elsif ARGV.include?("--coverage") then [:coverage]
          elsif ARGV.include?("--gates") then [:gates]
-         else %i[apps gates]
+         else %i[apps coverage gates]
          end
 
 steps = steps_for(groups)
