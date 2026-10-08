@@ -383,7 +383,7 @@ module Master
         # back, then lock. Ground::Pledge holds that order in stage1_boot! and
         # stage2_lock!, and a caller that assembles its own
         # promise string somewhere else restricts a different process than the one
-        # data/principle_map.yml pledge_unveil describes.
+        # data/laws.yml#law_map pledge_unveil describes.
         #
         # Two shapes, and the second is why the wrapper is not simply exempt:
         # unveiling "/" with anything but the empty permission leaves the whole
@@ -427,7 +427,7 @@ module Master
         # sink, and this asks how it writes. It does not ask whether every action
         # publishes tool:before — a subscription that never happens leaves no line
         # to read — so a tool that mutates without publishing is outside its reach
-        # and stays the gap data/principle_map.yml audit_logging records.
+        # and stays the gap data/laws.yml#law_map audit_logging records.
         LawDSL.law :AUDIT_APPEND_ONLY,
           severity: :error, tags: %i[SECURITY], applies_to: %i[ruby], autofix: false,
           fires: %Q(bus.subscribe("tool:before") { |e| record(e) }\nFile.open(@path, "w") { |f| f.puts(line) }\n),
