@@ -106,7 +106,7 @@ module Master
           end
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "fix_loop.load_deps", event_bus: @bus)
-          raise "fix_loop: rule dependencies unreadable: #{e.class}: #{e.message}"
+          raise "fix_loop: law dependencies unreadable: #{e.class}: #{e.message}"
         end
 
         def load_age
