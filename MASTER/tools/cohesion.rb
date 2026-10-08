@@ -8,7 +8,7 @@
 # three files that reference each other in both directions stays that way.
 #
 #   ruby MASTER/tools/cohesion.rb STUDIO/dilla/lib/engine
-#   ruby MASTER/tools/cohesion.rb --json RAILS/shared/lib
+#   ruby MASTER/tools/cohesion.rb --json RAILS/__shared/lib
 #
 # It emits a plan rather than a patch. Moving code between files is not a
 # line-level edit and MASTER's autofix transforms are all line-level; a merge
@@ -295,7 +295,7 @@ return if collisions.any?
     end
 
     # Families are siblings, so the read is one directory deep. Pointed at a tree
-    # root such as RAILS/shared it reads zero files, and "nothing to merge" over
+    # root such as RAILS/__shared it reads zero files, and "nothing to merge" over
     # zero files is a blind instrument, not a clean one — so it says so and exits 2.
     def run(dir, json: false)
       if Dir.glob(File.join(dir, "*.rb")).empty?
@@ -368,7 +368,7 @@ return if collisions.any?
     # counting them would drown the signal the roots below carry.
     ROOTS = %w[
       MASTER/lib MASTER/law MASTER/tools MASTER/web/app
-      RAILS/shared/app RAILS/shared/lib
+      RAILS/__shared/app RAILS/__shared/lib
       RAILS/brgen/app RAILS/brgen/lib RAILS/amber/app RAILS/amber/lib
       RAILS/bsdports/app RAILS/bsdports/lib
       STUDIO/dilla/lib STUDIO/lora STUDIO/postpro STUDIO/replicate
