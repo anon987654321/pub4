@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-# Audits the rules, not the code they judge.
+# Audits the laws, not the code they judge.
 #
-# Every other instrument here asks whether the tree obeys the rules. This asks
+# Every other instrument here asks whether the tree obeys the laws. This asks
 # whether a rule can see its own subject, because on 2026-08-25 three could not
 # and nothing said so for as long as they had existed:
 #
@@ -121,25 +121,25 @@ module Operator
 
     # An extension the rule's own `languages` would accept. Rules that declare
     # none apply everywhere, so ruby stands in for them.
-    def realistic_extension(rule)
-      wanted = rule.languages.map(&:to_s)
+    def realistic_extension(law)
+      wanted = law.languages.map(&:to_s)
       wanted = ["ruby"] if wanted.empty?
       Master::FILE_LANGUAGE_MAP.find { |_, lang| wanted.include?(lang) }&.first || ".rb"
     end
 
     # The check that would have caught all three. Prove the fixtures the way a
     # real file is read, not the way a fixture is.
-    def fixture_blindness(rule)
+    def fixture_blindness(law)
       ext = realistic_extension(rule)
       as_file = "fixture#{ext}"
-      bad_seen = !rule.scan(rule.bad, file: as_file).empty?
-      good_seen = rule.scan(rule.good, file: as_file).empty?
+      bad_seen = !law.scan(rule.bad, file: as_file).empty?
+      good_seen = law.scan(rule.good, file: as_file).empty?
       return if bad_seen && good_seen
 
       reason = []
       reason << "bad fixture no longer flagged" unless bad_seen
       reason << "good fixture now flagged" unless good_seen
-      { rule: rule.id.to_s, extension: ext, detail: reason.join(" and ") }
+      { law: law.id.to_s, extension: ext, detail: reason.join(" and ") }
     end
 
     # law/ arrives conducted, the way the runtime reads it.
@@ -150,7 +150,7 @@ module Operator
     # read them raw, so a law matching nothing in the tree but its own `detect`
     # line counted as having found a subject and stayed out of the silent list.
     # Measured both ways on 2026-09-08: 24 raw against 38 conducted, fourteen
-    # rules whose only hit was their own source.
+    # laws whose only hit was their own source.
     def source_of(path)
       code = File.read(path, encoding: "UTF-8").scrub
       return code unless path.to_s.match?(%r{/law/[^/]+\.rb\z})
@@ -161,25 +161,25 @@ module Operator
     def rates
       files = corpus.map { |path| [path, language_of(path), source_of(path)] }
       law.values.select(&:scannable?).filter_map do |rule|
-        applicable = files.select { |path, lang, _| rule.applies?(path, lang) }
+        applicable = files.select { |path, lang, _| law.applies?(path, lang) }
         next if applicable.empty?
 
-        hits = applicable.count { |path, _, text| !rule.scan(text, file: path).empty? }
-        { rule: rule.id.to_s, hits:, applicable: applicable.size, rate: hits.fdiv(applicable.size) }
+        hits = applicable.count { |path, _, text| !law.scan(text, file: path).empty? }
+        { law: law.id.to_s, hits:, applicable: applicable.size, rate: hits.fdiv(applicable.size) }
       end
     end
 
-    # "Which rules are never asked" belongs to tools/law_reach.rb, which counts
+    # "Which laws are never asked" belongs to tools/law_reach.rb, which counts
     # 57 and had counted them before this file existed. A version of it here
-    # measured 67 by also counting rules whose semantic prompt is dropped while a
-    # lexical detector still enforces them — reachable rules, reported as gaps.
+    # measured 67 by also counting laws whose semantic prompt is dropped while a
+    # lexical detector still enforces them — reachable laws, reported as gaps.
     # One question, one instrument; this one is about whether a rule that DOES
     # run can see its subject.
     def audit
       blind = law.values.select(&:scannable?).filter_map { |rule| fixture_blindness(rule) }
       measured = rates
       {
-        rules: law.size,
+        laws: law.size,
         lexical: law.values.count(&:scannable?),
         semantic: law.values.count(&:semantic?),
         practice: law.values.count { |r| !r.practice.nil? },
