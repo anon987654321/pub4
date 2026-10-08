@@ -19,7 +19,7 @@ require_relative "law_loop/autofix_policy"
 
 module Master
   module Fix
-  # Single-pass fixer for one rule across a set of files.
+  # Single-pass fixer for one law across a set of files.
   # FixLoop owns the outer convergence loop; LawLoop fixes one batch per call.
   #
   # Fix routing (per violation severity + file size):
@@ -78,7 +78,7 @@ module Master
           golden = abs["golden_rule"] || "PRESERVE_THEN_IMPROVE_NEVER_BREAK"
           lines = ["Golden law: #{golden}",
                     "Minimum change that eliminates the violation. Do not touch unrelated code."]
-          Master::Ground::Rules.new.rules.each { |key, value| lines << "- #{key}: #{value}" }
+          Master::Ground::Laws.new.laws.each { |key, value| lines << "- #{key}: #{value}" }
           lines.join("\n")
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "law_loop.golden_rule")
@@ -93,7 +93,7 @@ module Master
       include AutofixPolicy
 
       def initialize(law:, agent:, scanner:, root:, **options)
-        @rule = rule
+        @law = law
         @agent = agent
         @scanner = scanner
         @root = root
@@ -128,7 +128,7 @@ module Master
         @bus&.publish("law_loop:error", law: @rule.id, error: e.message)
         # Bus-only meant a crashed rule pass was indistinguishable from a
         # quiet one in the dmesg stream the operator actually reads.
-        Master::Trace::Dmesg.status("fix0", "#{@rule.id}: #{e.class}: #{e.message[0, 90]}")
+        Master::Trace::Dmesg.status("fix0", "#{@law.id}: #{e.class}: #{e.message[0, 90]}")
         { fixed: 0, status: :error, breakdown: { error: 1 } }
       ensure
         @visual_image = nil
@@ -140,7 +140,7 @@ module Master
         files.flat_map do |path|
           next [] unless File.exist?(path)
 
-          result = Master::Result.wrap(@scanner.scan(path, rules: [@rule]))
+          result = Master::Result.wrap(@scanner.scan(path, laws: [@law]))
           raise "rule scan failed for #{path}: #{result.message}" unless result.ok?
 
           ext = File.extname(path).downcase
@@ -157,16 +157,16 @@ module Master
       # were rejected on re-scan — every non-apply collapsed to `false` before
       # the one line anyone reads. The tally of these symbols is that line.
       def fix_violation(violation)
-        if VisualCustodyBlocking.fix_blocking_rule?(violation[:rule])
+        if VisualCustodyBlocking.fix_blocking_law?(violation[:law])
           @person_required = true
           review = VisualCustodyBlocking.prepare_operator_review(violation)
           @bus&.publish("fix:requires_operator_decision", finding: review)
-          Master::Trace::Dmesg.status("fix0", "#{violation[:rule]} blocked, operator-owned rendered value: #{violation[:file]}")
+          Master::Trace::Dmesg.status("fix0", "#{violation[:law]} blocked, operator-owned rendered value: #{violation[:file]}")
           return :needs_person
         end
         if needs_a_person?(violation) && !deletions_allowed?
           @person_required = true
-          @bus&.publish("law_loop:human_decision_required", law: violation[:rule], file: violation[:file])
+          @bus&.publish("law_loop:human_decision_required", law: violation[:law], file: violation[:file])
           return :needs_person
         end
         return :skip_confidence unless autofix_allowed?(violation)
@@ -199,7 +199,7 @@ module Master
         return :applied if @committer.nil? || stage_commit_mode?
 
         result = @committer.commit_if_dirty(
-          "fix: #{@rule.id} in #{File.basename(violation[:file])}",
+          "fix: #{@law.id} in #{File.basename(violation[:file])}",
           findings: [violation],
           owned_paths: [violation[:file]],
         )
@@ -229,7 +229,7 @@ module Master
         return true unless consensus_required?(violation)
 
         @agent.consensus.approve_fix?(
-          prompt: "Rule #{@rule.id} on #{violation[:file]}",
+          prompt: "Rule #{@law.id} on #{violation[:file]}",
           candidate:,
           violation:,
         )
@@ -250,7 +250,7 @@ module Master
         write_atomic(path, new_src)
         after = scan_all(path)
         return reject_fix(path, old_src, "new_violations", before:, after:) if after.size > before.size
-        if (scouts = boyscout_violations(before, after, old_src, new_src)).any?
+        if (scouts = boyscout_law_violations(before, after, old_src, new_src)).any?
           return reject_fix(path, old_src, "boyscout_violation", violations: scouts.size)
         end
         if @conflicts.reject_higher_priority?(original_violation: violation, before:, after:, path:)
@@ -276,18 +276,18 @@ module Master
       # minimum change, so the scout's beat is only the lines the fix already
       # changed: no violation may appear there that was not there before. A
       # whole-file boyscout would command the refactors PRESERVE_FIRST forbids;
-      # this is the half of the rule that is compatible with it.
+      # this is the half of the law that is compatible with it.
       #
-      # "New" is counted per rule, not matched by message. Messages carry the
+      # "New" is counted per law, not matched by message. Messages carry the
       # numbers they measure ("talks to manifest 5 times", "ABC size 43.0"), so
       # a refactor that moved or eased a finding made it read as a new one, and
       # every file repair that did not clear the file outright was refused. A
       # rule whose findings did not grow landed nothing; a swap to another rule
       # still grows that rule and is still refused.
-      def boyscout_violations(before, after, old_src, new_src)
-        had = before.map { |v| v[:rule].to_s }.tally
-        grown = after.map { |v| v[:rule].to_s }.tally.select { |rule, count| count > had.fetch(rule, 0) }.keys
-        landed = after.select { |v| grown.include?(v[:rule].to_s) }
+      def boyscout_law_violations(before, after, old_src, new_src)
+        had = before.map { |v| v[:law].to_s }.tally
+        grown = after.map { |v| v[:law].to_s }.tally.select { |rule, count| count > had.fetch(rule, 0) }.keys
+        landed = after.select { |v| grown.include?(v[:law].to_s) }
         return [] if landed.empty?
 
         lo, hi = changed_region(old_src, new_src)
@@ -316,7 +316,7 @@ module Master
       def reject_fix(path, original, reason, **details)
         write_atomic(path, original)
         @bus&.publish("law_loop:fix_rejected", law: @rule.id, file: path, reason:, **details)
-        Master::Trace::Dmesg.status("fix0", "#{@rule.id} fix rejected, #{File.basename(path)}: #{reason}")
+        Master::Trace::Dmesg.status("fix0", "#{@law.id} fix rejected, #{File.basename(path)}: #{reason}")
         false
       end
 
@@ -326,11 +326,11 @@ module Master
         #{preamble}
 
         File: #{File.basename(path)} (#{ctx[:lang]})
-        Rule violated: #{violation[:rule]}
+        Law violated: #{violation[:law]}
         Line #{violation[:line]}: #{violation[:message]}
         #{ctx[:fix_line]}
         #{visual_fix_context}
-        #{Protocol.rule_prompt(@rule)}
+        #{Protocol.law_prompt(@law)}
 
         #{SEMANTIC_PASS_CHECKLIST}
 
@@ -427,8 +427,8 @@ module Master
 
       def convergence_cfg
         @convergence_cfg ||= begin
-          rules = Master.load_yaml(Master::LAWS_PATH)
-          convergence = rules&.dig("thresholds", "convergence")
+          laws = Master.load_yaml(Master::LAWS_PATH)
+          convergence = laws&.dig("thresholds", "convergence")
           raise "convergence thresholds missing: #{Master::LAWS_PATH}" unless convergence.is_a?(Hash)
           convergence
         end
@@ -458,7 +458,7 @@ module Master
         publish_fix_failure(info[:category], event, violation, message)
         Master::Trace::Dmesg.status(
           "fix0",
-          "#{violation[:rule]} fix failed, #{violation[:file].to_s.delete_prefix("#{@root}/")}: " \
+          "#{violation[:law]} fix failed, #{violation[:file].to_s.delete_prefix("#{@root}/")}: " \
           "#{info[:category]}, #{error.class}: #{message[0, 160]}",
         )
         info[:category] == :transient ? :retry : :stop
@@ -469,7 +469,7 @@ module Master
           permanent: "law_loop:fail_fast",
           ambiguous: "law_loop:human_intervention",
         }.fetch(category, event)
-        @bus&.publish(name, law: violation[:rule], file: violation[:file], error: message[0, 120])
+        @bus&.publish(name, law: violation[:law], file: violation[:file], error: message[0, 120])
       end
 
     end
