@@ -64,6 +64,9 @@ module Master
         Domain adapters and smell vocabulary:
         %<domain_profile>s
 
+        Refactoring technique playbook:
+        %<refactoring_playbook>s
+
         Automatic vetoes:
         %<automatic_vetoes>s
 
@@ -136,6 +139,7 @@ module Master
             evidence_hierarchy: @transformation_plan.evidence_hierarchy,
             domain_adapters: @transformation_plan.domain_adapters,
             smell_catalog: @transformation_plan.smell_catalog,
+            refactoring_playbook: @transformation_plan.refactoring_playbook,
             reason: problem.reason
           }
         end
@@ -240,6 +244,7 @@ module Master
           contracts: Contracts.for(tree).strip,
           evidence_hierarchy: @transformation_plan.evidence_hierarchy.map { |entry| "  #{entry.fetch("id")}: #{entry.fetch("practice")}" }.join("\n"),
           domain_profile: @transformation_plan.domain_adapters.map { |domain, adapter| "  #{domain}: #{adapter}; smells=#{@transformation_plan.smell_catalog.fetch(domain, []).join(", ")}" }.join("\n"),
+          refactoring_playbook: @transformation_plan.refactoring_playbook.fetch("technique_by_domain").map { |domain, techniques| "  #{domain}: #{techniques.join(", ")}" }.join("\n"),
           automatic_vetoes: @transformation_plan.automatic_vetoes.map { |veto| "  - #{veto}" }.join("\n"),
           law: problem.laws.join(", "),
           path: relative(problem.files.first),
