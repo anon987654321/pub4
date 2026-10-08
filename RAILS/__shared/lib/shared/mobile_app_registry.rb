@@ -18,12 +18,12 @@ module Shared
     )
 
     ROOT = File.expand_path("../../..", __dir__)
-    CONFIG = File.join(ROOT, "mobile", "apps.yml")
+    CONFIG = File.join(ROOT, "apps.yml")
 
     module_function
 
     def all
-      @all ||= YAML.safe_load_file(CONFIG, aliases: false).fetch("apps").map do |key, raw|
+      @all ||= YAML.safe_load_file(CONFIG, aliases: false).fetch("mobile").map do |key, raw|
         App.new(
           key.to_sym,
           raw.fetch("name"),
