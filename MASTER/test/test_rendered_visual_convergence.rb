@@ -53,6 +53,9 @@ class TestRenderedVisualConvergence < Minitest::Test
       assert_includes first["primary_candidates"].map { |c| c["tag"].to_s.downcase }, "button"
       assert_includes walk.dig("visual", "typography", "heading_sizes").map { |h| [h["tag"], h["px"].to_i] }, ["h1", 40]
       assert_includes walk.dig("visual", "typography", "distinct_font_sizes").map(&:to_i), 24
+      text_box = Array(walk["elements"]).find { |el| el["tag"] == "h1" }
+      assert text_box["text_rect"], "geometry walk must expose browser text paint bounds for optical checks"
+      assert_operator text_box.dig("text_rect", "w"), :>, 0
       refute_includes JSON.generate(walk), "text_measures_ch_approx"
       assert_equal ["image_without_alt"], a11y
     end
