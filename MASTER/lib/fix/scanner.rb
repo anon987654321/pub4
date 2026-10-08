@@ -126,7 +126,7 @@ module Master
         end
 
         def set_agent(agent)
-          @laws.each { |law| law.set_agent(agent) if r.respond_to?(:set_agent) }
+          @laws.each { |law| law.set_agent(agent) if law.respond_to?(:set_agent) }
           self
         end
 
@@ -266,15 +266,15 @@ module Master
           @laws
         end
 
-        # RuleDSL's applies_to scope is already authoritative inside the rule.
+        LawDSL's applies_to scope is already authoritative inside the law.
         # Use the same declaration one level earlier so a JavaScript file does
         # not traverse every Ruby-only rule, and a Ruby file does not traverse
-        # the CSS/HTML population. Rules without an explicit scope remain in every
-        # bucket. Explicit rule arrays passed by callers keep the old full set.
+        # the CSS/HTML population. Laws without an explicit scope remain in every
+        # bucket. Explicit law arrays passed by callers keep the old full set.
         def dispatched_laws(path, law_set)
           return law_set unless law_set.equal?(@laws)
           language = Master.language_for(path)
-          return rule_set if language.to_s.empty?
+          return law_set if language.to_s.empty?
 
           @law_dispatch.fetch(language.to_s, law_set)
         end
@@ -284,8 +284,8 @@ module Master
           languages = Master::FILE_LANGUAGE_MAP.values.compact.map(&:to_s).uniq
           languages << "javascript"
           Array(laws).each do |law|
-            declared = if rule.class.respond_to?(:dsl_langs)
-              Array(rule.class.dsl_langs).filter_map { |lang| lang.to_s unless lang.to_s.empty? }
+            declared = if law.class.respond_to?(:dsl_langs)
+              Array(law.class.dsl_langs).filter_map { |lang| lang.to_s unless lang.to_s.empty? }
             else
               []
             end
@@ -332,8 +332,8 @@ module Master
         # The list is Master::Fix::Scan::AstFixer::DELETING_TRANSFORMS rather than a copy here: it
         # names methods that class defines, and the copy that stood here gated
         # only this path while AstFixer ran the transform unasked on the other.
-        def deleting_law?(rule_id)
-          transform = law_transforms[rule_id.to_s]
+        def deleting_law?(law_id)
+          transform = law_transforms[law_id.to_s]
           Master::Review::Scan::AstFixer::DELETING_TRANSFORMS.include?(transform.to_s)
         end
 
@@ -358,10 +358,10 @@ module Master
         # A deterministic finding carries no confidence at all and Fix::LawLoop
         # reads the absence as 1.0, so a threshold here would wave through exactly
         # the findings nobody scored.
-        def should_autofix?(rule_id, observed_conf, allow_deletions: false)
-          return false if !allow_deletions && deleting_law?(rule_id)
+        def should_autofix?(law_id, observed_conf, allow_deletions: false)
+          return false if !allow_deletions && deleting_law?(law_id)
 
-          threshold = prediction_thresholds[rule_id.to_s] || prediction_thresholds[rule_id]
+          threshold = prediction_thresholds[law_id.to_s] || prediction_thresholds[law_id]
           return true unless threshold && threshold["confidence"]
 
           observed_conf.to_f >= threshold["confidence"].to_f
