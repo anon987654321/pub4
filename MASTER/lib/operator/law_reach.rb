@@ -102,8 +102,8 @@ module Operator
       $LOAD_PATH.unshift(File.join(MASTER_DIR, "lib")) unless $LOAD_PATH.include?(File.join(MASTER_DIR, "lib"))
       require "master"
       require File.join(MASTER_DIR, "law", "law")
-      ::Law.load_all(File.join(MASTER_DIR, "law")) if ::Law.rules.empty?
-      @executable_law_rules = ::Law.rules.values
+      ::Law.load_all(File.join(MASTER_DIR, "law")) if ::Law.definitions.empty?
+      @executable_law_rules = ::Law.definitions.values
     end
   end
 end
