@@ -323,7 +323,7 @@ class TestAstFixerTransforms < Minitest::Test
   # An addition is visible in the diff it makes; a deletion is invisible to
   # anyone who does not already know what stood there. Scanner#should_autofix?
   # has said so since the safety tier was written, and AstFixer ran the deleting
-  # transform anyway — the tier covered the rule-driven path and MechanicalAutofix
+  # transform anyway — the tier covered the law-driven path and MechanicalAutofix
   # went the other way, so an unattended `bin/operator gate` deleted code no rule
   # had asked it to. MASTER_AUTOFIX=1 is what a person asking looks like, the same
   # signal Fix::LawLoop reads.
@@ -675,7 +675,7 @@ class TestAstFixerTransforms < Minitest::Test
     Dir.mktmpdir do |dir|
       path = File.join(dir, "space.rb")
       File.write(path, "def call  \n  :ok\t\nend\n")
-      scanner = Master::Fix::Scanner.new(rules: [rule("TRAILING_WHITESPACE")])
+      scanner = Master::Fix::Scanner.new(laws: [rule("TRAILING_WHITESPACE")])
 
       first_scan = scanner.scan(path)
       first_fix = Master::Fix::Scan::AstFixer.fix(path, File.read(path, encoding: "UTF-8"))
@@ -719,7 +719,7 @@ class TestAstFixerTransforms < Minitest::Test
   end
 
   def rule(id)
-    Master::Review::Scan::Rule.registry.each do |klass|
+    Master::Review::Scan::Law.registry.each do |klass|
       instance = klass.new
       return instance if instance.id == id
     rescue ArgumentError
