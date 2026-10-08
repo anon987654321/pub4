@@ -250,7 +250,7 @@ module Master
           fires: %(LIST = [\n  "one"\n]\n),
           does_not_fire: %(LIST = [\n  "one",\n]\n),
           description: "trailing commas in multi-line collections" do |src, path:|
-          next [] if AstFixer::DeadCodeAndCommas.rubocop_forbids_trailing_comma?(path)
+          next [] if Master::Fix::Scan::AstFixer::DeadCodeAndCommas.rubocop_forbids_trailing_comma?(path)
 
           parsed = Prism.parse(src)
           next [] if parsed.failure?
