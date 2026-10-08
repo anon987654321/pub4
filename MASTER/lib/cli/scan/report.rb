@@ -6,11 +6,11 @@ module Master
   module CLI
     module Scan
       class Report
-        def initialize(pairs:, profile:, rule_filter:, severity_filter: nil, dry_run: false, autofixes: [],
+        def initialize(pairs:, profile:, law_filter:, severity_filter: nil, dry_run: false, autofixes: [],
                        phase: nil, prior_total: nil)
           @pairs = pairs
           @profile = profile
-          @rule_filter = rule_filter
+          @law_filter = law_filter
           @severity_filter = severity_filter
           @dry_run = dry_run
           @autofixes = Array(autofixes)
@@ -29,8 +29,8 @@ module Master
           lines << autofix_line if autofix_line
           cross_file_line = cross_file_drifts_line
           lines << cross_file_line if cross_file_line
-          ranked.first(CommandRegistry::SCAN_RULE_GROUP_LIMIT).each do |rule, violations|
-            lines << "#{rule} #{violations.size}"
+          ranked.first(CommandRegistry::SCAN_RULE_GROUP_LIMIT).each do |law, violations|
+            lines << "#{law} #{violations.size}"
             lines.concat(violations.first(3).map { |violation| violation_line(violation) })
           end
           lines << omitted_line if omitted_count.positive?
@@ -54,7 +54,7 @@ module Master
 
         private
 
-        attr_reader :pairs, :profile, :rule_filter, :severity_filter, :dry_run, :autofixes, :conflicts,
+        attr_reader :pairs, :profile, :law_filter, :severity_filter, :dry_run, :autofixes, :conflicts,
                     :phase, :prior_total
 
         def render_clean
@@ -95,16 +95,16 @@ module Master
           []
         end
 
-        def by_rule
-          @by_rule ||= clustered_violations.each_with_object(Hash.new { |h, k| h[k] = [] }) do |violation, groups|
-              next if rule_filter && !rule_filter.include?(violation[:rule].to_s)
+        def by_law
+          @by_law ||= clustered_violations.each_with_object(Hash.new { |h, k| h[k] = [] }) do |violation, groups|
+              next if law_filter && !law_filter.include?(violation[:law].to_s)
               next if severity_filter && !severity_filter.include?(violation[:severity].to_s)
 
               # Canonical RuleDSL ids are uppercase, but some findings carry a
               # lowercase label (e.g. principle_map.yml's "detects:" taxonomy)
               # for the same category -- normalize so it doesn't split into a
               # second entry (see Scanner::ProgressReporter for the same fix).
-              groups[violation[:rule].to_s.upcase] << violation
+              groups[violation[:law].to_s.upcase] << violation
           end
         end
 
@@ -141,13 +141,13 @@ module Master
         end
 
         def total
-          @total ||= by_rule.values.sum(&:size)
+          @total ||= by_law.values.sum(&:size)
         end
 
         # Blast radius, not firing count: an error across five files outranks an
         # info across five hundred. impact_radius was computed already, for display.
         def ranked
-          @ranked ||= by_rule.sort_by do |rule, v|
+          @ranked ||= by_law.sort_by do |rule, v|
             radius = impact_radius(v)
             [-(radius[:files_affected] * radius[:severity_multiplier]), -v.size, rule]
           end
@@ -189,7 +189,7 @@ module Master
           return if clusters.empty?
 
           summary = clusters.first(3).map do |cluster|
-            "#{cluster[:rule]}×#{cluster[:count]}#{cluster[:files] > 1 ? " in #{cluster[:files]} files" : ""}"
+            "#{cluster[:law]}×#{cluster[:count]}#{cluster[:files] > 1 ? " in #{cluster[:files]} files" : ""}"
           end.join(" ")
           "cross-file DRY: #{summary}"
         end
@@ -211,7 +211,7 @@ module Master
         end
 
         def default_dedupe_key(violation)
-          "#{violation[:rule]}:#{violation[:message].to_s.downcase.gsub(/\b\d+\b/, "#")}"
+          "#{violation[:law]}:#{violation[:message].to_s.downcase.gsub(/\b\d+\b/, "#")}"
         end
 
         def default_why(violation)
@@ -219,12 +219,12 @@ module Master
         end
 
         def default_genealogy(violation)
-          [violation[:severity].to_s.upcase, violation[:rule].to_s, violation[:message].to_s.split(" — ").first]
+          [violation[:severity].to_s.upcase, violation[:law].to_s, violation[:message].to_s.split(" — ").first]
         end
 
         def cross_file_duplicate_clusters
           by_signature = clustered_violations.group_by do |violation|
-            [violation[:rule].to_s, violation[:message].to_s.downcase, violation[:fix].to_s.downcase]
+            [violation[:law].to_s, violation[:message].to_s.downcase, violation[:fix].to_s.downcase]
           end
 
           by_signature.filter_map do |(rule, message, fix), cluster|
@@ -232,13 +232,13 @@ module Master
             next if files.size < 2 && cluster.size < 3
 
             {
-              rule:,
+              law:,
               message:,
               fix:,
               count: cluster.size,
               files: files.size,
             }
-          end.sort_by { |cluster| [-cluster[:count], -cluster[:files], cluster[:rule]] }
+          end.sort_by { |cluster| [-cluster[:count], -cluster[:files], cluster[:law]] }
         end
 
         def header
