@@ -117,7 +117,7 @@ SCHEMA_FOR_LABEL = {
 
     def initialize(rails_root: RAILS)
       @rails_root = rails_root
-      @tokens = File.join(rails_root, "shared/app/assets/stylesheets/_dialect_tokens.scss")
+      @tokens = File.join(rails_root, "__shared/app/assets/stylesheets/_dialect_tokens.scss")
     end
 
     def run
