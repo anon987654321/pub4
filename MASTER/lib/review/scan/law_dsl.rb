@@ -4,14 +4,14 @@ module Master
   module Review
     module Scan
     # Inline Ruby rule definition — JE-style alternative to laws.yml entries.
-    # Defined rules auto-register via Rule.inherited; no YAML required.
-    # Rule subclasses inherit Rule.auto_build? == true; specialized rules that
+    # Defined rules auto-register via Law.inherited; no YAML required.
+    # Rule subclasses inherit Law.auto_build? == true; specialized rules that
     # need constructor arguments override self.auto_build? = false explicitly.
     #
-    #   RuleDSL.rule :NO_PUTS, severity: :warning, applies_to: %i[ruby] do |src, path:|
+    #   LawDSL.law :NO_PUTS, severity: :warning, applies_to: %i[ruby] do |src, path:|
     #     scan_lines(src, /\bputs\b/, message: "puts in production code")
     #   end
-      module RuleDSL
+      module LawDSL
         # fires:/does_not_fire: are the rule's own worked examples, checked by
         # test/test_rule_fixtures.rb.
         #
@@ -25,20 +25,20 @@ module Master
         #   RuleDSL.rule :TIME_ZONE_UNSAFE, ...,
         #     fires: "Time.now.beginning_of_day",
         #     does_not_fire: "Time.now.utc.iso8601"
-        def self.rule(id, severity: :warning, tags: [], applies_to: nil, autofix: true, description: nil,
+        def self.law(id, severity: :warning, tags: [], applies_to: nil, autofix: true, description: nil,
                       fires: nil, does_not_fire: nil, example_path: nil, detect_semantic: nil, detect_structural: nil, &block)
           raise ArgumentError, "block required" unless block
 
           dsl_id = id.to_s
           dsl_desc = description || dsl_id.tr("_", " ")
           dsl_tags = Array(tags)
-          build_dsl_rule_class(dsl_id:, dsl_desc:, dsl_tags:, severity:, applies_to:, autofix:, block:,
+          build_dsl_law_class(dsl_id:, dsl_desc:, dsl_tags:, severity:, applies_to:, autofix:, block:,
                                 fires:, does_not_fire:, example_path:, detect_semantic:, detect_structural:)
         end
 
         def self.build_dsl_rule_class(dsl_id:, dsl_desc:, dsl_tags:, severity:, applies_to:, autofix:, block:,
                                            fires: nil, does_not_fire: nil, example_path: nil, detect_semantic: nil, detect_structural: nil)
-          cls = Class.new(Rule) do
+          cls = Class.new(Law) do
             define_method(:initialize) do
               super()
               @id = dsl_id; @description = dsl_desc
@@ -51,7 +51,7 @@ module Master
               instance_exec(code, path:, &self.class.dsl_block) || []
             end
           end
-          dsl_rule_attrs(cls, block:, langs: applies_to, autofix:, fires:, does_not_fire:, example_path:, detect_semantic:, detect_structural:)
+          dsl_law_attrs(cls, block:, langs: applies_to, autofix:, fires:, does_not_fire:, example_path:, detect_semantic:, detect_structural:)
           cls.class_eval { class << self; attr_reader :dsl_block, :dsl_langs, :dsl_autofix, :dsl_fires, :dsl_does_not_fire, :dsl_example_path, :dsl_detect_semantic, :dsl_detect_structural; end }
           cls
         end
@@ -61,11 +61,15 @@ module Master
         end
 
       end
+
+      # Compatibility API; new code should speak in Law terms.
+      LawDSL.define_singleton_method(:rule) { |*args, **kwargs, &block| law(*args, **kwargs, &block) }
+      RuleDSL = LawDSL
     end
   end
 end
 
-require_relative "rule"
+require_relative "law"
 require_relative "rules/lexical_rules"
 require_relative "rules/ruby_rules"
 require_relative "rules/web_rules"
@@ -83,7 +87,7 @@ require_relative "rules/naming_rules"
 require_relative "rules/meta_rules"
 # The registry is what these requires load, and this one was missing: nothing
 # reached law_bridge_rule until InfraHelpers const_get'd it while building a
-# scanner, so `Rule.registry` held 144 rules in a fresh process and 145 after
+# scanner, so `Law.registry` held 144 rules in a fresh process and 145 after
 # anything scanned. Every census over the registry read whichever number its
 # load order happened to produce — rule_deps.ungraphed 133 alone and 134 under
 # a run that had scanned.
