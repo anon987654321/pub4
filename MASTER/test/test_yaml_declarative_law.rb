@@ -16,14 +16,14 @@ require "fileutils"
 # the corpus is supplied: the mechanism is proved against a rules file written
 # for the purpose, and the emptiness of the live one is asserted separately, as
 # a fact with a date on it rather than as coverage.
-class TestYamlDeclarativeRule < Minitest::Test
+class TestYamlDeclarativeLaw < Minitest::Test
   Rules = Master::Review::Scan::Rules
 
   def in_corpus(rules)
     Dir.mktmpdir do |root|
       FileUtils.mkdir_p(File.join(root, "data"))
       File.write(File.join(root, "data", "laws.yml"), { "rules" => { "line" => rules } }.to_yaml)
-      yield Rules::YamlDeclarativeRule.new(root:), root
+      yield Laws::YamlDeclarativeLaw.new(root:), root
     end
   end
 
@@ -38,8 +38,8 @@ class TestYamlDeclarativeRule < Minitest::Test
       FileUtils.mkdir_p(File.join(root, "data"))
       File.write(File.join(root, "data", "laws.yml"), { "rules" => { "line" => rules } }.to_yaml)
 
-      first = Rules::YamlDeclarativeRule.new(root:)
-      second = Rules::YamlDeclarativeRule.new(root:)
+      first = Laws::YamlDeclarativeLaw.new(root:)
+      second = Laws::YamlDeclarativeLaw.new(root:)
       second.check("ordinary\n", path: File.join(root, "lib/thing.rb"))
 
       barrier = Queue.new
