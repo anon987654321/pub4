@@ -163,6 +163,47 @@ class PwaDesignContractTest < Minitest::Test
     end
   end
 
+  def test_pwa_chrome_is_safe_area_and_standalone_aware
+    tokens = read(SHARED_ROOT, "app/assets/stylesheets/_dialect_tokens.scss")
+    chrome = read(SHARED_ROOT, "app/assets/stylesheets/_layout_chrome.scss")
+    shell = read(SHARED_ROOT, "app/assets/stylesheets/_shell.scss")
+    standalone = read(SHARED_ROOT, "frontend/pwa_standalone_controller.js")
+    prompt = read(SHARED_ROOT, "app/views/shared/_install_prompt.html.erb")
+
+    %w[top right bottom left].each do |side|
+      assert_includes tokens, "env(safe-area-inset-#{side}, 0px)"
+    end
+    assert_includes chrome, "--nav-swiper-h"
+    assert_includes chrome, "var(--safe-top)"
+    assert_includes shell, "var(--safe-top)"
+    assert_includes shell, "var(--safe-bottom)"
+
+    assert_includes standalone, "(display-mode: standalone)"
+    assert_includes standalone, "navigator.standalone"
+    assert_includes standalone, "pub4:pwa-display"
+
+    assert_includes prompt, 'role="region"'
+    assert_includes prompt, "aria-label="
+    assert_includes prompt, "install-prompt-secondary"
+  end
+
+  def test_shared_typography_uses_optical_and_rhythm_controls
+    typography = read(SHARED_ROOT, "app/assets/stylesheets/_typography.scss")
+
+    %w[
+      font-feature-settings
+      font-kerning
+      font-optical-sizing
+      font-synthesis
+      font-variant-numeric
+      text-wrap
+    ].each do |property|
+      assert_includes typography, property
+    end
+    assert_includes typography, "hyphens: auto"
+    assert_includes typography, "hanging-punctuation:"
+  end
+
   private
 
   # The invariant is that the primary navigation landmark has an accessible
