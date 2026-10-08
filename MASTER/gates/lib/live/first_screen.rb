@@ -102,7 +102,7 @@ SCHEMA_FOR_LABEL = {
           skip_h1: json_api || s[:label].to_s.start_with?("maps"),
           css_touch: s[:label].to_s.start_with?("marketplace") ? [
             [BRGEN_CSS, /\.deal-card\b/, nil],
-            ["shared/app/assets/stylesheets/_search_yep.scss", nil, '\.search'],
+            ["__shared/app/assets/stylesheets/_search_yep.scss", nil, '\.search'],
           ] : [],
         }
       end
