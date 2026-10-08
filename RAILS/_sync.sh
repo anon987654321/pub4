@@ -66,7 +66,7 @@ sync_tree() {
 # overlay_shared_initializers APP_DIR — shared config wins over stale per-app copies
 overlay_shared_initializers() {
   local app_dir=$1
-  local shared_init=${PUB4_RAILS_ROOT:-/home/dev/pub4/RAILS}/shared/config/initializers
+  local shared_init=${PUB4_RAILS_ROOT:-/home/dev/pub4/RAILS}/__shared/config/initializers
   [[ -d $shared_init ]] || return 0
   sync_tree "$shared_init" "${app_dir}/config/initializers" 0
   log_ok "shared initializers overlaid (merge, app-specific files preserved)"
@@ -76,7 +76,7 @@ overlay_shared_initializers() {
 # Never clobber per-app brand icons/manifests (amber palette, etc.).
 overlay_shared_public() {
   local app_dir=$1
-  local shared_public=${PUB4_RAILS_ROOT:-/home/dev/pub4/RAILS}/shared/public
+  local shared_public=${PUB4_RAILS_ROOT:-/home/dev/pub4/RAILS}/__shared/public
   local entry
   [[ -d $shared_public ]] || return 0
   ${_PRIV} mkdir -p "${app_dir}/public"
@@ -97,7 +97,7 @@ overlay_shared_public() {
 # overlay_shared_bin APP_DIR — ci.rb expects bin/rubocop, brakeman, bundler-audit stubs
 overlay_shared_bin() {
   local app_dir=$1
-  local shared_bin=${PUB4_RAILS_ROOT:-/home/dev/pub4/RAILS}/shared/bin
+  local shared_bin=${PUB4_RAILS_ROOT:-/home/dev/pub4/RAILS}/__shared/bin
   [[ -d $shared_bin ]] || return 0
   ${_PRIV} mkdir -p "${app_dir}/bin"
   for tool in rubocop brakeman bundler-audit; do
@@ -105,8 +105,8 @@ overlay_shared_bin() {
     ${_PRIV} cp "${shared_bin}/${tool}" "${app_dir}/bin/${tool}"
     ${_PRIV} chmod 755 "${app_dir}/bin/${tool}"
   done
-  [[ -f ${PUB4_RAILS_ROOT:-/home/dev/pub4/RAILS}/shared/.rubocop.yml ]] \
-    && ${_PRIV} cp "${PUB4_RAILS_ROOT:-/home/dev/pub4/RAILS}/shared/.rubocop.yml" "${app_dir}/.rubocop.yml"
+  [[ -f ${PUB4_RAILS_ROOT:-/home/dev/pub4/RAILS}/__shared/.rubocop.yml ]] \
+    && ${_PRIV} cp "${PUB4_RAILS_ROOT:-/home/dev/pub4/RAILS}/__shared/.rubocop.yml" "${app_dir}/.rubocop.yml"
   log_ok "shared bin stubs overlaid"
 }
 
