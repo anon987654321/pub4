@@ -46,6 +46,14 @@ class TestDependencyManager < Minitest::Test
     manager
   end
 
+  def test_dependency_bootstrap_does_not_preload_open3_or_timeout
+    source = File.read(File.join(Master::ROOT, "lib", "boot", "dependency_manager.rb"))
+
+    refute_includes source, 'require "open3"'
+    assert_includes source, "Process.spawn"
+    assert_includes source, "IO.pipe"
+  end
+
   def test_master_requires_the_pinned_ruby_in_gemfile_and_lock
     gemfile = File.read(File.join(Master::ROOT, "Gemfile"))
     lock = File.read(File.join(Master::ROOT, "Gemfile.lock"))
