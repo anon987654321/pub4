@@ -3592,13 +3592,35 @@ SHOWCASE_MODES = {
 
       stage.note(root, spec, at + 0.01, 1.3 * @beat, 0.5, :bass)
       stage.note(root, spec, at + (1.5 * @beat) + late, 0.45 * @beat, 0.38, :bass) if @rng.rand < 0.7
-      if @rng.rand < 0.5
+
+      target_pc = next_root_pc
+      if target_pc && @rng.rand < 0.78
+        target = 36 + target_pc
+        target += 12 if target < 38
+        approach = target + (target > root ? -1 : 1)
+        stage.note(approach, spec, at + (2.5 * @beat) + late, 0.36 * @beat, 0.30, :bass)
+      elsif @rng.rand < 0.5
         stage.note(root + [7, 12, 10].sample(random: @rng), spec, at + (2.5 * @beat) + late, 0.4 * @beat, 0.32, :bass)
       end
       return unless bars == 2
 
       stage.note(root, spec, at + (4 * @beat) + 0.01, 1.2 * @beat, 0.46, :bass)
       stage.note(root + 7, spec, at + (5.5 * @beat) + late, 0.5 * @beat, 0.34, :bass) if @rng.rand < 0.6
+    end
+
+    def next_root_pc
+      if @curated_progression
+        degree, = @curated_progression.fetch(@curated_index % @curated_progression.length)
+        return (@key + degree) % 12
+      end
+
+      if @reference
+        symbol = @reference.fetch("chords").fetch(@reference_index % @reference.fetch("chords").length).to_s
+        root_pc, = Livesets.parse_chord(symbol)
+        return root_pc if root_pc
+      end
+
+      nil
     end
 
     def lead!(stage, length)
