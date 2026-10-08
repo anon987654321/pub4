@@ -12,7 +12,7 @@ require_relative "test_helper"
 # class, so two classes claiming one id appear as two entries with the same #id. That
 # is the honest place to assert uniqueness, because it is the exact list the scanner
 # walks on every file.
-class TestRuleIdsUnique < Minitest::Test
+class TestLawIdsUnique < Minitest::Test
   def test_scanner_registry_uses_law_as_the_canonical_concept
     assert_same Master::Review::Scan::Law, Master::Review::Scan::Law
     assert_same Master::Review::Scan::LawDSL, Master::Review::Scan::LawDSL
@@ -24,12 +24,12 @@ class TestRuleIdsUnique < Minitest::Test
     @scanner ||= Master::Review::Scan::InfraHelpers.build_scanner(root: Master::ROOT)
   end
 
-  def test_every_registered_rule_id_is_unique
+  def test_every_registered_law_id_is_unique
     ids = scanner.laws.map { |rule| rule.id.to_s }
     dupes = ids.tally.select { |_id, count| count > 1 }
 
     assert_empty dupes,
-                 "two rule classes share an id, so their matches double-count " \
+                 "two law classes share an id, so their matches double-count " \
                  "(SINGULARITY): #{dupes.map { |id, n| "#{id}×#{n}" }.join(", ")}. " \
                  "Give one a distinct id or delete the duplicate registration."
   end
