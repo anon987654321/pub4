@@ -49,7 +49,7 @@ def usage
       bin/operator test [<path>...]       smallest complete proof for the paths (default: dirty files)
       bin/operator land -m <msg> <path>...  commit, rebase, re-check, push
       bin/operator worktree <name>|finish own checkout, or finish (rebase, push the branch, do not merge main)
-      bin/operator rules <ID> [--card] [--health] [--deep] [--json] [--corpus MASTER|all] [path...]
+      bin/operator laws <ID> [--card] [--health] [--deep] [--json] [--corpus MASTER|all] [path...]
                                       the rule, its exemption, then what it finds
       bin/operator hooks                  install the shared-tree commit guard
       bin/operator readers <path>         who reaches this file, across all four governed trees
@@ -307,7 +307,7 @@ when "law:matrix"
   output = Operator::LawInventory.render_collection(:matrix, json: ARGV.include?("--json"))
   Master::Trace::Dmesg::Report.print(command.to_s, output) if output
   exit 0
-when "rules"
+when "laws"
   # One rule: what it says, what it spares, and what it finds — in that order.
   # The same word as the CLI's /rules, which lists them; this is one in full.
   #
@@ -330,7 +330,7 @@ when "rules"
   health = !ARGV.delete("--health").nil? || !ARGV.delete("--deep").nil?
   json_health = ARGV.include?("--json")
   id = ARGV.shift.to_s
-  die("rules", "usage, bin/operator rules <ID> [--card] [--json] [--corpus MASTER|all] [path...]", 64) if id.empty?
+  die("laws", "usage, bin/operator laws <ID> [--card] [--json] [--corpus MASTER|all] [path...]", 64) if id.empty?
 
   corpus = "MASTER"
   ARGV.delete_if { |arg| (m = arg.match(/\A--corpus=(.+)\z/)) && (corpus = m[1]) }
@@ -341,9 +341,9 @@ when "rules"
 
   if health
     row = Operator::LawInventory.health(id)
-    die("rules", "nothing named #{id.inspect}") unless row
+    die("laws", "nothing named #{id.inspect}") unless row
     output = Operator::LawInventory.render(id:, deep: true, json: json_health)
-    json_health ? puts(output) : Master::Trace::Dmesg::Report.print("rules", output)
+    json_health ? puts(output) : Master::Trace::Dmesg::Report.print("laws", output)
     exit 0
   end
 
@@ -443,8 +443,8 @@ when "rules"
             else
               "declared only, no detector; resolves through a fold or prompt"
             end
-    lines << "rule #{card[:id]}, #{reach}" if reach
-    lines << "rule #{card[:id]}" unless reach
+    lines << "law #{card[:id]}, #{reach}" if reach
+    lines << "law #{card[:id]}" unless reach
     if declared
       %w[name source tier severity autofix fix detect detect_semantic detect_structural].each do |key|
         lines << "#{key}, #{declared[key]}" if declared[key]
@@ -463,7 +463,7 @@ when "rules"
     else
       lines << "no definition found under law/ or lib/review/scan/laws/"
     end
-    Master::Trace::Dmesg::Report.print("rules", lines.join("\n"))
+    Master::Trace::Dmesg::Report.print("laws", lines.join("\n"))
   end
 
   if card_only
@@ -471,7 +471,7 @@ when "rules"
     exit 0
   end
 
-  die("rules", "#{card[:id]} has no detector, nothing to run") unless rule
+  die("laws", "#{card[:id]} has no executable detector, nothing to run") unless rule
 
   one = Master::Fix::Scanner.new(rules: [rule])
   default = corpus.casecmp?("all") ? ROOT : master_root
@@ -484,8 +484,8 @@ when "rules"
   if as_json
     puts JSON.pretty_generate(card.merge(corpus: corpus, findings: rows))
   else
-    Master::Trace::Dmesg.attach("rules0", "operator0", "#{rule.id}, #{rows.size} finding(s) over #{corpus}")
-    rows.each { |row| Master::Trace::Dmesg.status("rules0", "#{row[:path]}:#{row[:line]}, #{row[:rule]}, #{row[:message]}") }
+    Master::Trace::Dmesg.attach("laws0", "operator0", "#{rule.id}, #{rows.size} finding(s) over #{corpus}")
+    rows.each { |row| Master::Trace::Dmesg.status("laws0", "#{row[:path]}:#{row[:line]}, #{row[:rule]}, #{row[:message]}") }
   end
   exit(rows.empty? ? 0 : 1)
 when "readers"
