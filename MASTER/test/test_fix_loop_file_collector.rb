@@ -85,7 +85,7 @@ class TestFixLoopFileCollector < Minitest::Test
       ].each do |rel|
         path = write(dir, rel, "x\n")
 
-        assert Master::Review::Scan::Scanner.skip_path?(path, root: dir), "scanner skips #{rel}"
+        assert Master::Fix::Scanner.skip_path?(path, root: dir), "scanner skips #{rel}"
         assert collector(dir).__send__(:skipped?, path), "fix collector skips #{rel}"
       end
     end
@@ -97,7 +97,7 @@ class TestFixLoopFileCollector < Minitest::Test
       schema = write(dir, "RAILS/brgen/db/schema.rb")
       source = write(dir, "RAILS/brgen/app/models/post.rb")
 
-      refute Master::Review::Scan::Scanner.skip_path?(migration, root: dir),
+      refute Master::Fix::Scanner.skip_path?(migration, root: dir),
              "migration safety must still be able to scan migrations"
       assert collector(dir).__send__(:skipped?, migration)
       assert collector(dir).__send__(:skipped?, schema)
@@ -125,7 +125,7 @@ class TestFixLoopFileCollector < Minitest::Test
     Dir.mktmpdir do |dir|
       path = write(dir, "lib/review/thing.rb")
 
-      refute Master::Review::Scan::Scanner.skip_path?(path, root: dir)
+      refute Master::Fix::Scanner.skip_path?(path, root: dir)
       refute collector(dir).__send__(:skipped?, path)
     end
   end
@@ -164,7 +164,7 @@ class TestFixLoopFileCollector < Minitest::Test
       system("git", "-C", dir, "commit", "-qm", "initial")
 
       roots = []
-      Master::Review::Scan::Scanner.stub(
+      Master::Fix::Scanner.stub(
         :skip_path?,
         ->(_path, root:) { roots << File.expand_path(root); false }
       ) do
@@ -180,7 +180,7 @@ class TestFixLoopFileCollector < Minitest::Test
       path = write(dir, "RAILS/brgen/app/models/post.rb")
       collector_instance = collector(dir)
 
-      Master::Review::Scan::Scanner.stub(:skip_path?, ->(_path, root:) { true }) do
+      Master::Fix::Scanner.stub(:skip_path?, ->(_path, root:) { true }) do
         assert_empty collector_instance.collect(File.join(dir, "RAILS"))
       end
 
