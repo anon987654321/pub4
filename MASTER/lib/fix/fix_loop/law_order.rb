@@ -11,13 +11,13 @@ module Master
         # Rule#id values, so tier2? was false for every rule and the primary
         # key was constant. NO_GOD_CLASS is SIMPLEST_WORKS, FEATURE_ENVY is
         # the SRP detector, FEW_ARGUMENTS is the conciseness one.
-        TIER2_QUALITY_RULE_IDS = %w[NO_GOD_CLASS FEATURE_ENVY FEW_ARGUMENTS].freeze
+        TIER2_QUALITY_LAW_IDS = %w[NO_GOD_CLASS FEATURE_ENVY FEW_ARGUMENTS].freeze
         PRIORS_PATH = File.join(Master::ROOT, "data", "laws.yml").freeze
         AGE_PATH = File.join("data", "violation_age.yml").freeze
         SKIP_DIRS_RE = %r{/(\.git|vendor|tmp|var|node_modules|\.bundle|coverage|log|dist|knowledge)/}.freeze
 
-        def initialize(rules:, learnings:, bus:, root:)
-          @rules = rules
+        def initialize(laws:, learnings:, bus:, root:)
+          @laws = laws
           @learnings = learnings
           @bus = bus
           @root = root
@@ -26,10 +26,10 @@ module Master
         def ordered(violation_counts:)
           deps = load_deps
           law_resolver = Master::Ground::LawResolver.new
-          rules_index = Priority.rules_index(root: @root)
-          sorted = @rules.each_with_index.sort_by do |r, i|
+          rules_index = Priority.laws_index(root: @root)
+          sorted = @laws.each_with_index.sort_by do |r, i|
             frequency = violation_counts[r.id].to_f
-            quality = @learnings&.fix_quality(rule: r.id) || 0.5
+            quality = @learnings&.fix_quality(law: r.id) || 0.5
             # tier2 stays a strict lexicographic primary key, not folded into
             # score()'s additive bonus: a high-frequency generic rule's score
             # can exceed a rare tier2 rule's +50 bonus, which would silently
@@ -38,7 +38,7 @@ module Master
             # law- and quality-aware ranking for everything else.
             score = Priority.score(
               rule_id: r.id, severity: rule_severity(r), frequency:,
-              age_days: violation_age_days(r.id), law_resolver:, rules_index:, quality:
+              age_days: law_age_days(r.id), law_resolver:, laws_index:, quality:
             )
             [tier2?(r.id) ? 0 : 1, -score, i]
           end.map(&:first)
@@ -48,7 +48,7 @@ module Master
         def dependency_levels(rules)
           deps = load_deps
           remaining = rules.map(&:id).to_set
-          id_map = rules.to_h { |r| [r.id, r] }
+          id_map = laws.to_h { |law| [law.id, law] }
           levels = []
           until remaining.empty?
             ready = remaining.select { |id| Array(deps[id]).none? { |dep| remaining.include?(dep) } }
@@ -59,42 +59,42 @@ module Master
           levels
         end
 
-        def tier2?(rule_id)
-          TIER2_QUALITY_RULE_IDS.include?(rule_id.to_s)
+        def tier2?(law_id)
+          TIER2_QUALITY_LAW_IDS.include?(law_id.to_s)
         end
 
         private
 
-        def rule_severity(rule)
-          rule.respond_to?(:severity) ? rule.severity : :warning
+        def law_severity(law)
+          law.respond_to?(:severity) ? law.severity : :warning
         end
 
-        def violation_age_days(rule_id)
-          age = load_age[rule_id.to_s]
+        def law_age_days(law_id)
+          age = load_age[law_id.to_s]
           return age.to_f if age
 
           0.0
         end
 
-        def topo_sort(rules, deps)
-          id_map = rules.to_h { |r| [r.id, r] }
+        def topo_sort(laws, deps)
+          id_map = laws.to_h { |law| [law.id, law] }
           in_deg = Hash.new(0)
           adj = Hash.new { |h, k| h[k] = [] }
-          rules.each do |rule|
-            (deps[rule.id] || []).each do |dep_id|
+          laws.each do |law|
+            (deps[law.id] || []).each do |dep_id|
               next unless id_map[dep_id]
-              adj[dep_id] << rule.id
-              in_deg[rule.id] += 1
+              adj[dep_id] << law.id
+              in_deg[law.id] += 1
             end
           end
-          queue = rules.select { |r| in_deg[r.id].zero? }.map(&:id)
+          queue = laws.select { |law| in_deg[law.id].zero? }.map(&:id)
           sorted = []
           until queue.empty?
             id = queue.shift
             sorted << id_map[id]
             adj[id].each { |nxt| in_deg[nxt] -= 1; queue << nxt if in_deg[nxt].zero? }
           end
-          sorted + (rules - sorted)
+          sorted + (laws - sorted)
         end
 
         def load_deps
