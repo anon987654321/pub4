@@ -51,7 +51,7 @@ module Master
           # The council convened with its persona names and the diff, and nothing
           # else: Critique loaded council.yml and no other data file, so the
           # Typographer had no typography principles and the Architect had no
-          # architecture ones. principle_map.yml held 135 of them the panel never
+          # architecture ones. laws.yml#law_map held 135 of them the panel never
           # saw, and the 137 recovered from master.yml are exactly the kind a
           # scanner cannot check and a judge can — which is why they were dropped
           # when the only consumer left was a regex.
@@ -102,7 +102,7 @@ module Master
 
             lines = sample(all, clusters).map { |entry| "- #{entry.id} — #{entry.meaning.to_s.strip}" }
             <<~BRIEF
-              House principles for this panel (#{lines.size} of #{all.size}), from data/principle_map.yml.
+              House principles for this panel (#{lines.size} of #{all.size}), from data/laws.yml#law_map.
               Cite the ones a change violates or satisfies by name; do not treat the list as a checklist to walk.
               #{lines.join("\n")}
             BRIEF
@@ -111,7 +111,7 @@ module Master
           end
 
           def principles_in(clusters)
-            Master::Ground::Map::Principle.load.principles.values.select { |entry| (entry.tags & clusters).any? }
+            Master::Ground::Map::LawMap.load.laws.values.select { |entry| (entry.tags & clusters).any? }
           end
 
           # Round-robin across the clusters, not the first N alphabetically.
