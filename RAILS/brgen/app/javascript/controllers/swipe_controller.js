@@ -17,6 +17,7 @@ export default class extends Controller {
     this.isDragging = false
     this.threshold = 80
     this.maxRotate = 18
+    this.thresholdBuzzed = false
   }
 
   disconnect() {
@@ -43,6 +44,7 @@ export default class extends Controller {
     if (this.mode === "carousel" && !this.gallery) return
     if (this.mode === "queue" && !this.hasListenUrlValue) return
     this.isDragging = true
+    this.thresholdBuzzed = false
     this.startX = e.clientX ?? (e.touches && e.touches[0].clientX) ?? 0
     if (this.currentCard) this.currentCard.classList.add("dragging")
     if (this.gallery) this.gallery.classList.add("dragging")
@@ -53,6 +55,11 @@ export default class extends Controller {
     if (!this.isDragging) return
     const clientX = e.clientX ?? (e.touches && e.touches[0].clientX) ?? 0
     this.currentX = clientX - this.startX
+
+    if (!this.thresholdBuzzed && Math.abs(this.currentX) >= this.threshold) {
+      this.thresholdBuzzed = true
+      Haptics.pulse(6)
+    }
 
     if (this.mode === "carousel" && this.gallery) {
       this.gallery.scrollLeft -= this.currentX * 0.35
@@ -84,6 +91,7 @@ export default class extends Controller {
     if (this.gallery) this.gallery.classList.remove("dragging")
 
     const delta = this.currentX
+    this.thresholdBuzzed = false
 
     if (this.mode === "carousel" && this.gallery) {
       if (Math.abs(delta) > this.threshold) {

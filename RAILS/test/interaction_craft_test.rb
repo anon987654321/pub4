@@ -13,6 +13,7 @@ class TestRailsInteractionCraft < Minitest::Test
   SHEET = File.join(SHARED, "frontend", "bottom_sheet_controller.js")
   TOAST = File.join(SHARED, "app", "views", "shared", "_toast.html.erb")
   HOTWIRE = File.join(SHARED, "frontend", "hotwire.js")
+  SWIPE = File.join(ROOT, "RAILS", "brgen", "app", "javascript", "controllers", "swipe_controller.js")
   ACTION = File.join(SHARED, "frontend", "action_controller.js")
   ACTION_BAR = File.join(SHARED, "app", "views", "shared", "_action_bar.html.erb")
 
@@ -51,6 +52,15 @@ class TestRailsInteractionCraft < Minitest::Test
     js = File.read(HAPTICS)
     assert_includes js, "press()"
     assert_includes js, "this.#vibrate(10)"
+  end
+
+  def test_swipe_threshold_has_one_shared_haptic_and_no_raw_vibration
+    js = File.read(SWIPE)
+    assert_includes js, 'import Haptics from "pub4/haptics"'
+    assert_includes js, "Math.abs(this.currentX) >= this.threshold"
+    assert_includes js, "this.thresholdBuzzed = true"
+    assert_includes js, "Haptics.pulse(6)"
+    refute_includes js, "navigator.vibrate("
   end
 
   def test_action_state_choreography_is_shared_and_server_aware
