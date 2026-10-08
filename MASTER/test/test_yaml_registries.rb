@@ -124,9 +124,9 @@ class TestLawsYamlRegistry < Minitest::Test
     assert recovery.fetch("recovery").any? { |step| step.include?("publish phantom:detected") }
   end
 
-  def test_soul_golden_rule_maps_to_kernel_preserve_rule
+  def test_soul_golden_law_maps_to_kernel_preserve_rule
     soul = Master.load_yaml(File.join(DATA, "soul.yml"))
-    assert_equal "PRESERVE_THEN_IMPROVE_NEVER_BREAK", soul.dig("absolute", "golden_rule")
+    assert_equal "PRESERVE_THEN_IMPROVE_NEVER_BREAK", soul.dig("absolute", "golden_law")
     # The wording lives in law/, not in soul or laws.yml. This asserted soul.absolute.rules
     # still carried it, which test_soul.rb asserts soul must not — one of the
     # two had to be reading the tree as it is.
