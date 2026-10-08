@@ -64,7 +64,7 @@ abort "coverage: result missing: #{missing.join(", ")}" unless missing.empty?
 script = <<~'RUBY'
   require "simplecov"
 
-  rails_root = File.expand_path(".", Dir.pwd)
+  rails_root = File.expand_path("..", Dir.pwd)
   SimpleCov.root(rails_root)
   SimpleCov.coverage_path(File.join(rails_root, "coverage"))
 
