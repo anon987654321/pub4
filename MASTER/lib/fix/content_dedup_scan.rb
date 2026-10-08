@@ -6,7 +6,7 @@ module Master
     # files, matching OpenCrabs' dedup_scan.rs -- reads each file, flags exact
     # duplicate lines (within a file or across files), reported for human
     # review (never auto-applied: which copy is "right" when two differ even
-    # slightly isn't safe to guess, unlike PrincipleMapRepair's dangling-
+    # slightly isn't safe to guess, unlike LawMapRepair's dangling-
     # reference removal, which can't lose information either way).
     #
     # Conservative on purpose: short/structural lines repeat constantly and
@@ -18,7 +18,7 @@ module Master
       MIN_DUPLICATE_COUNT = 2
 
       DEFAULT_FILES = %w[
-        data/soul.yml data/laws.yml data/principle_map.yml
+        data/soul.yml data/laws.yml data/laws.yml#law_map
         data/patterns.yml
       ].freeze
 
