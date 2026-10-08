@@ -52,12 +52,13 @@ module Master
         @reasoning_memory = nil
       end
 
-      attr_reader :best_state
+      attr_reader :best_state, :history
 
       def begin_run(files)
         @baseline = snapshot(files)
         @best_state = state_for(0, UNMEASURED_SCORE, @baseline)
         @history.clear
+        @history = []
         emit("fix_loop:convergence_baseline", files: @baseline.size, digest: digest(@baseline))
         @baseline
       end
