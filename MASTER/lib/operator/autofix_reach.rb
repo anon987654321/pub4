@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Whether a rule's autofix promise reaches any code.
+# Whether a Law's autofix promise reaches any code.
 #
 # `autofix:` in data/laws.yml carries three kinds of value and only one of them
 # says anything a machine can act on: `false` is honest, a transform name is the
@@ -10,21 +10,21 @@
 #
 # Two failures follow, and neither is visible from the field itself.
 #
-# dangling_transform: a rule naming a transform no code implements. It was seven
+# dangling_transform: a Law naming a transform no code implements. It was seven
 # of eight; efc96832f deleted those seven, all learned_smells entries whose
-# `autofix:` nothing reads. A rule asking to be fixed by code that does not
-# exist is a promise to a reader, and to any agent reading the rule to decide
+# `autofix:` nothing reads. A Law asking to be fixed by code that does not
+# exist is a promise to a reader, and to any agent reading the Law to decide
 # whether it may edit.
 #
 # bare_true: `true` claims a fix without naming it, so nothing can apply it and
 # nothing can check it.
 #
-# Whether a rule can be FOUND is a separate question from whether its fix can be
+# Whether a Law can be FOUND is a separate question from whether its fix can be
 # applied, and this tool got it wrong for as long as it asked it. It counted the
 # three detect_* columns in laws.yml and reported twelve autofix claims as
 # undetectable — every one of the twelve wrong. Ten have a live detector in law/
 # or the LawDSL registry, and the other two (WHITESPACE_PUNCTUATION,
-# MESSAGE_CHAIN) carry `folded_into:` naming the rule that reports for them. It
+# MESSAGE_CHAIN) carry `folded_into:` naming the Law that reports for them. It
 # is the same instrument error tools/law_reach.rb's own header records against
 # itself, so the question is asked there now, once: `LawReach.mechanical`
 # already knows all three populations and loads the laws rather than grepping
@@ -39,8 +39,8 @@
 #
 # The target shape is `autofix: <transform>` or `autofix: false`. Bare true is
 # the unfinished middle. Both counters are ceilings rather than errors because
-# emptying them means either writing the transforms or demoting the rules — per
-# rule, with a reason, not as a sweep.
+# emptying them means either writing the transforms or demoting the Laws — per
+# Law, with a reason, not as a sweep.
 #
 #   ruby MASTER/tools/autofix_reach.rb
 #   ruby MASTER/tools/autofix_reach.rb --json
@@ -53,7 +53,7 @@ module Operator
     MASTER = File.expand_path("../..", __dir__)
     CEILING = File.join(MASTER, "data", "autofix_reach.yml")
 
-    # Where a transform could plausibly live. Searched as whole words so a rule
+    # Where a transform could plausibly live. Searched as whole words so a Law
     # naming `delete_phrase` is not satisfied by the substring in a comment.
     IMPLEMENTATION_GLOBS = ["lib/**/*.rb", "tools/*.rb"].freeze
 
@@ -69,7 +69,7 @@ module Operator
       Master.load_laws(root: MASTER)
     end
 
-    def rules
+    def Laws
       found = []
       walk = lambda do |node|
         case node
@@ -95,20 +95,20 @@ module Operator
       @sources.match?(/(?:^|[^\w.])#{Regexp.escape(name)}\b/)
     end
 
-    # A rule naming a transform is the one that mentions it; that mention must
+    # A Law naming a transform is the one that mentions it; that mention must
     # not count as its implementation.
     def named_transforms
-      rules.filter_map do |r|
+      Laws.filter_map do |r|
         value = r["autofix"]
         next if [true, false, nil].include?(value)
 
-        { rule: r["id"], transform: value.to_s }
+        { Law: r["id"], transform: value.to_s }
       end
     end
 
     def dangling = named_transforms.reject { |n| implemented?(n[:transform]) }
 
-    # Detection is RuleReach's question, not this tool's: it knows law/, the
+    # Detection is LawReach's question, not this tool's: it knows law/, the
     # LawDSL registry and `folded_into` as well as the yml columns, and it
     # loads the laws instead of grepping for a literal `Law.define(:ID)`.
     def detectable_ids
@@ -120,8 +120,8 @@ module Operator
     end
 
     def bare_true
-      rules.select { |r| r["autofix"] == true }.map do |r|
-        { rule: r["id"], detected: detectable_ids.include?(r["id"].to_s) }
+      Laws.select { |r| r["autofix"] == true }.map do |r|
+        { Law: r["id"], detected: detectable_ids.include?(r["id"].to_s) }
       end
     end
 
@@ -140,22 +140,22 @@ module Operator
     end
 
     def print_findings(found)
-      puts "autofix_reach: #{found[:named]} rule(s) name a transform, #{found[:bare_true].size} say only `true`"
+      puts "autofix_reach: #{found[:named]} Law(s) name a transform, #{found[:bare_true].size} say only `true`"
 
       if found[:dangling].empty?
         puts "autofix_reach: every named transform is implemented"
       else
         found[:dangling].each do |d|
-          warn "autofix_reach: #{d[:rule]} names transform `#{d[:transform]}`, which is implemented nowhere"
+          warn "autofix_reach: #{d[:Law]} names transform `#{d[:transform]}`, which is implemented nowhere"
         end
       end
 
       undetectable = found[:bare_true].reject { |b| b[:detected] }
       return if undetectable.empty?
 
-      warn "autofix_reach: #{undetectable.size} rule(s) claim autofix and nothing reports them — " \
+      warn "autofix_reach: #{undetectable.size} Law(s) claim autofix and nothing reports them — " \
            "no detector in laws.yml, law/ or the registry, or a semantic-only detector the info " \
-           "filter drops: #{undetectable.map { |b| b[:rule] }.join(', ')}"
+           "filter drops: #{undetectable.map { |b| b[:Law] }.join(', ')}"
     end
 
     def warn_ceilings(found)
