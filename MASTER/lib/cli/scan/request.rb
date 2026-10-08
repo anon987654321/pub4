@@ -177,7 +177,7 @@ module Master
           return cached[:value] if cached && cached[:stamp] == stamp
 
           data = Master.load_yaml(path)
-          value = [data["principle_groups"] || {}, data["scan_profiles"] || {}]
+          value = [data["law_groups"] || {}, data["scan_profiles"] || {}]
           @workflow_profiles_cache[path] = { stamp:, value: }
           value
         rescue StandardError => e
