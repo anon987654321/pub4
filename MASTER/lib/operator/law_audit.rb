@@ -72,7 +72,7 @@ module Operator
       # and NO_VAR and NO_COLUMN_ALIGN were reported silent while this
       # directory broke them. Top level only: web/public/vendor and
       # web/public/models are vendored, and BUILD_OUTPUT is generated.
-      "MASTER/web/public/*.js",
+      "RAILS/master_web/public/*.js",
     ].freeze
 
     # esbuild writes these from web/script/build_*.sh. Minified third-party
