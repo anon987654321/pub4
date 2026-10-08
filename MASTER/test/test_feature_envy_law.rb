@@ -5,12 +5,12 @@ require "review/scan/rule_dsl"
 
 # `laws.yml` describes this detector as a "single-method heuristic, same-file
 # only" with a "genuine false-positive risk on generic-but-unrelated
-# primitives", so the thresholds are the rule and each one is pinned from both
+# primitives", so the thresholds are the law and each one is pinned from both
 # sides. It fires when a method names one receiver at least four times, that
 # receiver dominates, there are five or more receiver calls in total, and the
 # method touches its own state less often than it touches the neighbour.
 class TestFeatureEnvyRule < Minitest::Test
-  def rule = Master::Review::Scan::Rules::FeatureEnvyRule.new
+  def rule = Master::Review::Scan::Laws::FeatureEnvyRule.new
 
   def flags(source, path: "lib/thing.rb")
     rule.check(source, path:).map(&:message)
@@ -37,7 +37,7 @@ class TestFeatureEnvyRule < Minitest::Test
   #
   # Written first with four neighbour calls, which passed for the wrong reason:
   # four is below the floor below, so the floor exempted it and the counterweight
-  # was never consulted. Deleting `count > local` from the rule left that version
+  # was never consulted. Deleting `count > local` from the law left that version
   # green. Five calls clears the floor, so only the counterweight can spare this.
   def test_it_spares_a_method_that_touches_its_own_state_more
     assert_empty flags(<<~RUBY), "more own-state references than neighbour calls is not envy"
