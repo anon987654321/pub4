@@ -6,7 +6,7 @@ require "yaml"
 module Master
   module Review
     module Scan
-      module Rules
+      module Laws
         # Detects phantom reads — Ruby code digs keys that don't exist in the corresponding data/*.yml.
         # Also detects orphan keys — top-level YAML keys with zero references in lib/.
         # Only meaningful when scanning lib/ with root: access.
