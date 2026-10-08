@@ -159,7 +159,7 @@ module Master
 
           def semantic_rule_adapters(rule_violations, ordered)
             known = ordered.map { |rule| rule.id.to_s }.to_set
-            require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
+            require File.join(Master::ROOT, "law", "definition") unless defined?(::Law)
             ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.definitions.empty?
             rule_violations.keys.reject { |id| known.include?(id.to_s) }.filter_map do |id|
               law = ::Law.definitions[id.to_s]
