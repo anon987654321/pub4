@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require_relative "../boot/entrypoint"
 require_relative "../trace/dmesg"
 
 ROOT = File.expand_path("../../..", __dir__)
@@ -24,13 +23,7 @@ if ARGV.first == "--fix-context"
 end
 
 if ARGV.first == "--help" || ARGV.first == "-h"
-require_relative "../boot/entrypoint"
 Master::Boot::Entrypoint.prepare!(root: MASTER)
-
-unless File.file?(CLI)
-  Master::Trace::Dmesg.status("master0", "#{CLI} missing, full pub4 checkout required", io: $stderr)
-  exit 1
-end
 
   Master::Trace::Dmesg::Report.print("/help", <<~HELP)
     master — instruct the MASTER runtime with the whole repo in scope
@@ -49,6 +42,14 @@ end
     MASTER/bin/cli owns slash commands and interactive routing.
   HELP
   exit 0
+end
+
+require_relative "../boot/entrypoint"
+Master::Boot::Entrypoint.prepare!(root: MASTER)
+
+unless File.file?(CLI)
+  Master::Trace::Dmesg.status("master0", "#{CLI} missing, full pub4 checkout required", io: $stderr)
+  exit 1
 end
 
 daemon = ARGV.delete("--daemon")
