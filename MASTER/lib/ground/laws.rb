@@ -92,7 +92,7 @@ module Master
       def initialize(root: nil)
         @root = root || Master::ROOT
         @data_dir = File.join(@root, "data")
-        # limits.yml is no longer parsed here. It was loaded on every Rules
+        # limits.yml is no longer parsed here. It was loaded on every Laws
         # construction purely to back two accessors nobody called; the callers that
         # do want it (scan/request, fix_loop, mode_posture) each read it themselves,
         # mtime-cached. `data(:workflow)` still resolves it through DATA_ALIASES.
