@@ -81,7 +81,7 @@ proposals:
       Shared::CascadingAssociationsLoad wraps has_many/has_one at the class
       level, so the census counted declarations whose behaviour is supplied by
       the concern rather than by the line.
-    refuted_by: RAILS/shared/app/models/concerns/shared/cascading_associations_load.rb
+    refuted_by: RAILS/__shared/app/models/concerns/shared/cascading_associations_load.rb
 
   - id: schema-org-builders-are-unreachable
     tree: RAILS
@@ -91,7 +91,7 @@ proposals:
       build_schema dispatches to them by type, and json_ld_for is called from
       fourteen views across brgen, its engines and amber. Only recipe_schema and
       generic_schema are genuinely unemitted.
-    refuted_by: RAILS/shared/app/helpers/schema_helper.rb
+    refuted_by: RAILS/__shared/app/helpers/schema_helper.rb
 
   - id: rubocop-config-missing-in-bsdports
     tree: RAILS
