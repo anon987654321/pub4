@@ -28,7 +28,7 @@ class TestPathPurposeRule < Minitest::Test
   def in_tree(ownership: OWNERSHIP)
     Dir.mktmpdir do |root|
       File.write(File.join(root, "PATH_OWNERSHIP.yml"), ownership.to_yaml) if ownership
-      yield Master::Review::Scan::Rules::PathPurposeRule.new(root:), root
+      yield Master::Review::Scan::Laws::PathPurposeRule.new(root:), root
     end
   end
 
@@ -97,7 +97,7 @@ class TestPathPurposeRule < Minitest::Test
   def test_malformed_ownership_yaml_is_logged_rather_than_retiring_the_corpus_in_silence
     Dir.mktmpdir do |root|
       File.write(File.join(root, "PATH_OWNERSHIP.yml"), ": not yaml [")
-      rule = Master::Review::Scan::Rules::PathPurposeRule.new(root:)
+      rule = Master::Review::Scan::Laws::PathPurposeRule.new(root:)
 
       assert_empty rule.check("", path: File.join(root, "scratchpad/thing.rb"))
       logged = Master::Ground::Swallow.recent(context: "PathPurposeRule.owned", limit: 20)
