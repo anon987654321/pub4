@@ -169,7 +169,7 @@ module Master
         end
 
         def skip_semantic(path:, rules:, findings:)
-          @bus&.publish("scan:semantic_skipped", path:, rule_count: rules.size, reason: "clean file, outside sample")
+          @bus&.publish("scan:semantic_skipped", path:, rule_count: rules.size, reason: "clean file, semantic sampling disabled or not selected")
           findings
         end
 
