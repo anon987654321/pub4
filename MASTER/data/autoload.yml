@@ -37,7 +37,7 @@ autoload:
     - cli/command_registry/workspace.rb
     # Master::CLI::Pipeline::Pass -- pass_result.rb holds its Result value type.
     - cli/pipeline/pass_result.rb
-    # Master::Review::Scan::Rules -- each file is RuleDSL.rule calls into the
+    # Master::Review::Scan::Laws -- each file uses LawDSL.law calls into the
     # shared registry, not a constant of its own. The structural_rules
     # DIRECTORY beside structural_rules.rb does autoload.
     - review/scan/laws/cosmetic_rules.rb
