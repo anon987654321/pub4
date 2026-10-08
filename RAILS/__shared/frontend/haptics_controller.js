@@ -4,7 +4,7 @@ import { Controller } from "@hotwired/stimulus"
 // Automatically suppressed when battery is low or page is hidden.
 //
 // Usage:
-//   <button data-controller="haptics" data-action="pointerdown->haptics#press click->haptics#tick">Like</button>
+//   <button data-controller="haptics" data-action="pointerdown->haptics#press">Like</button>
 //   <button data-controller="haptics" data-action="click->haptics#success">Save</button>
 //   <button data-controller="haptics" data-action="click->haptics#match">Match</button>
 //

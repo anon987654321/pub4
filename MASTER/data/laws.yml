@@ -5045,18 +5045,18 @@ law_map:
   
   # The eleven root definitions the entries' root: fields reference — folded
   # from data/principle_roots.yml (no reader of its own; the map is the reader).
-    signature_moment:
-      meaning: 'One distinctive, useful interaction carries the product character'
-      detects: generic_interaction
-      severity: low
-      confidence: 0.65
-      operation: improve
-      law_ids:
-      - SIGNATURE_MOMENT
-      status: covered
-      root: stewardship
-      tags:
-      - ux_laws
+  signature_moment:
+    meaning: 'One distinctive, useful interaction carries the product character'
+    detects: generic_interaction
+    severity: low
+    confidence: 0.65
+    operation: improve
+    law_ids:
+    - SIGNATURE_MOMENT
+    status: covered
+    root: stewardship
+    tags:
+    - ux_laws
   roots:
     one_source:
       law: every fact has exactly one definition
