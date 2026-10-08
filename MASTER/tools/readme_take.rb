@@ -263,7 +263,7 @@ end
 
 def record!
   unless face_up?
-    Master::Trace::Dmesg.status("readme0", "no face at #{FACE_URL}, start MASTER/web", io: $stderr)
+    Master::Trace::Dmesg.status("readme0", "no face at #{FACE_URL}, start RAILS/master_web", io: $stderr)
     exit 1
   end
 
