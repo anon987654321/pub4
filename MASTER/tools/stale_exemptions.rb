@@ -92,8 +92,8 @@ module Operator
         master
         require File.join(MASTER_DIR, "law", "law")
       end
-      ::Law.load_all(File.join(MASTER_DIR, "law")) if ::Law.rules.empty?
-      ::Law.rules
+      ::Law.load_all(File.join(MASTER_DIR, "law")) if ::Law.definitions.empty?
+      ::Law.definitions
     end
 
     # Asked of git for the same reason self_findings asks: the corpus is what the
