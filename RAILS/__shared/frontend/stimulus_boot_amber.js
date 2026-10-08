@@ -10,5 +10,5 @@ export function bootAmberStimulus(application) {
   application.register("luxury-product", LuxuryProduct)
   application.register("edge-swiper", EdgeSwiper)
 
-  COMPONENT_REGISTRATIONS.forEach(([name, component]) => application.register(name, component))
+
 }

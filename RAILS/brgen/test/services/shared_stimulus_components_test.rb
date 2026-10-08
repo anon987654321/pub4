@@ -73,11 +73,8 @@ class SharedStimulusComponentsTest < Minitest::Test
                     'data-controller="clipboard"'
   end
 
-  # A snippet library is copied by hand, so a snippet naming a controller that
-  # stimulus_boot.js no longer registers hands someone a dead element and no
-  # error. content-loader was retired 2026-08-21 and examples.html.erb kept
-  # offering it for three weeks. The registry is the authority; this asks only
-  # that the documentation stay inside it.
+  # A snippet library is copied by hand, so every controller it offers must
+  # resolve against the shared registry.
   def test_every_controller_the_snippet_library_offers_is_registered
     registered = registry_source.scan(/\["([a-z-]+)",/).flatten.to_set
 

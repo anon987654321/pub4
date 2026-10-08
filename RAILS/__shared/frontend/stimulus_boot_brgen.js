@@ -18,5 +18,5 @@ export function bootBrgenStimulus(application) {
   application.register("presence", Presence)
   application.register("post-progressive", PostProgressive)
 
-  COMPONENT_REGISTRATIONS.forEach(([name, component]) => application.register(name, component))
+
 }

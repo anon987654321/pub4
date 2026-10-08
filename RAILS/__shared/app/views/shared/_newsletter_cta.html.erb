@@ -1,4 +1,4 @@
-<div class="sidebar-card newsletter-cta subscribe-box" data-controller="scroll-reveal" data-minimal-reveal>
+<div class="sidebar-card newsletter-cta subscribe-box" data-controller="scroll-reveal" data-scroll-reveal-target="item" data-minimal-reveal>
   <%= tag.h2 local_assigns.fetch(:heading, t("newsletter.heading")) %>
   <p><%= local_assigns.fetch(:blurb, t("newsletter.blurb")) %></p>
   <% if defined?(email_subscriptions_path) %>

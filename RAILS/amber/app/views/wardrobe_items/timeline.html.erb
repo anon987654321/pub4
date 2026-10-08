@@ -31,7 +31,7 @@
         <% if group[:items].any? %>
           <ol class="style-phase-list" role="list" data-controller="scroll-reveal">
             <% group[:items].each do |item| %>
-              <li role="listitem" class="timeline-item">
+              <li role="listitem" class="timeline-item" data-scroll-reveal-target="item">
                 <%= link_to item[:title], item_path(item[:id]) %>
                 <%= item[:category] %>
                 <% if item[:mood_effect].present? %>

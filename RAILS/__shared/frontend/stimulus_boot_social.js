@@ -21,5 +21,5 @@ export function bootSocialStimulus(application) {
   application.register("feed-compose", FeedCompose)
   application.register("visual-field", VisualSurface)
 
-  COMPONENT_REGISTRATIONS.forEach(([name, component]) => application.register(name, component))
+
 }

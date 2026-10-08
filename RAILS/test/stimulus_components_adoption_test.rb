@@ -35,7 +35,7 @@ class StimulusComponentsAdoptionTest < Minitest::Test
   def test_full_catalogue_is_registered_from_shared_boot
     boot = File.read(File.join(ROOT, "shared/frontend/stimulus_boot.js"))
     gate::REQUIRED_CONTROLLERS.each do |name|
-      assert_includes boot, %(["#{name}",), "shared boot does not register #{name}")
+      assert_match(/\[\s*"#{Regexp.escape(name)}",/, boot, "shared boot does not register #{name}")
     end
   end
 end

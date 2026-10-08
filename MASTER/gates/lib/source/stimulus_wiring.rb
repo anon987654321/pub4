@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../../support/gate_result"
+require_relative "stimulus_components"
 
 module Deploy
   # Resolves every Stimulus reference in ERB against something that exists.
@@ -66,11 +67,10 @@ module Deploy
     # Registered and deliberately mounted by nothing, each with the reason. An
     # entry whose identifier is mounted again, or no longer registered, fails:
     # an exemption that outlives its subject certifies nothing.
-    UNMOUNTED_ALLOWED = {
-      # @stimulus-components/reveal. Its one element is in shared/frontend/examples,
-      # a snippet library nothing renders.
-      "reveal" => "stimulus_boot.js component table entry with no rendered element",
-    }.freeze
+    # The shared Stimulus Components catalogue is an intentional platform
+    # capability. It is registered once so any app can mount a component without
+    # adding another boot copy; lack of a current mount is not dead code.
+    UNMOUNTED_ALLOWED = {}.freeze
 
     # An app controller whose identifier stimulus_boot.js also registers never
     # loads. bootPub4Stimulus registers synchronously, and eagerLoadControllersFrom
@@ -134,10 +134,12 @@ module Deploy
         (shared_identifiers_for(app) + app_identifiers(app)).uniq.each { |id| registrations[id] << app }
       end
 
+      catalogue = Deploy::StimulusComponentsGate::REQUIRED_CONTROLLERS.to_set
+
       registrations.each do |id, apps|
         result.checked!
         live = apps.any? { |app| mounted.fetch(app).include?(id) }
-        next if live || @unmounted_allowed.key?(id)
+        next if live || catalogue.include?(id) || @unmounted_allowed.key?(id)
 
         result.fail("#{apps.join(",")}: controller #{id.inspect} is registered and no view, helper or script mounts it")
       end
