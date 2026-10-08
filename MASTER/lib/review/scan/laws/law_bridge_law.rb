@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require File.join(Master::ROOT, "law", "law")
+require File.join(Master::ROOT, "law", "definition")
 
 module Master
   module Review
