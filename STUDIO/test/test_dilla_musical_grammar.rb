@@ -114,6 +114,27 @@ class TestDillaMusicalGrammar < Minitest::Test
     refute_empty preset.fetch(:perc)
   end
 
+  def test_live_config_uses_the_soul_pocket
+    assert_equal "dilla_soul_pocket",
+                 LiveSynth.config.fetch("improvise").fetch("drum_preset")
+  end
+
+  def test_curated_bass_can_see_the_next_harmonic_root
+    with_env(
+      "DILLA_SHOWCASE" => "0",
+      "DILLA_FUGUE" => "1",
+      "LIVE_REFERENCE" => nil
+    ) do
+      improviser = LiveSynth::Improviser.new(rng: Random.new(22), family: "prophet", drums: false)
+      progression = improviser.instance_variable_get(:@curated_progression)
+      assert_equal 8, progression.length
+      key = improviser.instance_variable_get(:@key)
+      current_index = improviser.instance_variable_get(:@curated_index)
+      next_degree = progression.fetch(current_index % progression.length).first
+      assert_equal (key + next_degree) % 12, improviser.send(:next_root_pc)
+    end
+  end
+
   def test_kit_realizes_clap_and_percussion_layers
     config = LiveSynth.config.fetch("improvise")
     beat = 60.0 / 92.0
