@@ -391,7 +391,7 @@ module Law
         "automatic_requires_deterministic_detector" => true,
       },
       "universality" => {
-        "principle_is_universal" => true,
+        "law_is_universal" => true,
         "detectors_may_be_domain_specific" => true,
       },
       "vocabulary" => Master::LawVocabulary::TERMS,
