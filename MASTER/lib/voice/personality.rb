@@ -49,7 +49,7 @@ module Master
 
       def initialize(name = DEFAULT, root: nil, homeostat: nil)
         @name = name.to_sym
-        @laws = Ground::Rules.new(root:)
+        @laws = Ground::Laws.new(root:)
         personas = @laws.data(:personas)
         persona = personas[@name.to_s] || personas[DEFAULT.to_s] || FALLBACK_PERSONA
         assign_persona(persona)
