@@ -39,7 +39,7 @@ module Master
           end
         end
 
-        class RubocopRule < Rule
+        class RubocopLaw < Rule
           include ExternalLinter
 
           def self.auto_build? = false
@@ -66,7 +66,7 @@ module Master
           end
         end
 
-        class ReekRule < Rule
+        class ReekLaw < Rule
           include ExternalLinter
 
           def self.auto_build? = false
