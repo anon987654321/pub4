@@ -29,7 +29,7 @@ module Master
         end
         return "laws: nothing matches #{filter.inspect} in #{laws.size} declared" if rows.empty?
 
-        require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
+        require File.join(Master::ROOT, "law", "definition") unless defined?(::Law)
         ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.definitions.empty?
 
         lines = rows.map do |law|
@@ -40,7 +40,7 @@ module Master
       end
 
       def dispatch_law_index
-        require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
+        require File.join(Master::ROOT, "law", "definition") unless defined?(::Law)
         ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.definitions.empty?
         rows = ::Law::Index.validate!
         lifecycle = rows.group_by { |row| row["lifecycle"] }.transform_values(&:size)

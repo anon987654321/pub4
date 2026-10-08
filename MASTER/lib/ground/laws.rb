@@ -45,7 +45,7 @@ module Master
         # `conduct` kind let a law about how to work be a Law like any other.
         def laws
           @laws ||= begin
-            require File.join(Master::ROOT, "law", "law") unless defined?(::Law)
+            require File.join(Master::ROOT, "law", "definition") unless defined?(::Law)
             ::Law.load_all(File.join(Master::ROOT, "law")) if ::Law.definitions.empty?
             ::Law.definitions.values.to_h { |law| [law.id.to_s, (law.practice || law.fix).to_s.gsub(/\s+/, " ").strip] }.freeze
           rescue StandardError => e

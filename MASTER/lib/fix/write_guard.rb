@@ -30,7 +30,9 @@ module Master
           digest = ::Law::Contract.digest
           return @default if @default && @default_digest == digest
 
-          @default = new(laws: Master::Fix::Scanner.build(root: Master::ROOT).laws)
+          scanner = Master::Fix::Scanner.build(root: Master::ROOT)
+          laws = scanner.respond_to?(:laws) ? scanner.laws : scanner.rules
+          @default = new(laws:)
           @default_digest = digest
           @default
         end
@@ -47,14 +49,14 @@ module Master
 
         def verdict(path:, content:)
           if (reason = Master::Core::Constitution.forbidden_file_reason(path))
-            return Verdict.new(introduced: [{ rule: :forbidden_file, line: 0, message: reason, severity: :error }])
+            return Verdict.new(introduced: [{ law: :forbidden_file, line: 0, message: reason, severity: :error }])
           end
 
           before = tally(findings(path:, content: (File.read(path) if File.exist?(path))))
           Verdict.new(introduced: findings(path:, content:).select { |f| (before[key(f)] -= 1).negative? })
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "WriteGuard#verdict", severity: :load_bearing, path:)
-          Verdict.new(introduced: [{ rule: :write_guard_error, line: 0, message: e.message, severity: :error }])
+          Verdict.new(introduced: [{ law: :write_guard_error, line: 0, message: e.message, severity: :error }])
         end
 
         private

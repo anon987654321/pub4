@@ -59,7 +59,7 @@ module Operator
     end
 
     def law_issues
-      require File.join(@root, "MASTER", "law", "law")
+      require File.join(@root, "MASTER", "law", "definition")
       ::Law.load_all(File.join(@root, "MASTER", "law")) if ::Law.definitions.empty?
       ::Law.definitions.empty? ? ["law: no executable laws loaded"] : []
     rescue StandardError => e
