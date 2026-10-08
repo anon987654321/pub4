@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Integrity of the rule catalogue itself: ids, aliases, and the metadata every
+# Integrity of the law catalogue itself: ids, aliases, and the metadata every
 # report quotes.
 #
 # Three checks, each one that survived being measured. Two more were proposed and
@@ -9,7 +9,7 @@
 #
 #   "every alias must resolve to a live id" is backwards. An alias IS a retired
 #   id — KISS carries long_method, god_class, nesting_depth and arity because it
-#   absorbed them. An alias pointing at a live rule is the defect, not the
+#   absorbed them. An alias pointing at a live law is the defect, not the
 #   reverse.
 #
 #   "a folder must not share a name with a file inside it" flags a normal Ruby
@@ -58,30 +58,30 @@ module Operator
 
     def dsl_ids
       Dir.glob(File.join(MASTER, "lib", "review", "scan", "laws", "*.rb"))
-         .flat_map { |p| File.read(p, encoding: "UTF-8").scrub.scan(/LawDSL\.rule\s+:(\w+)/).flatten }
+         .flat_map { |p| File.read(p, encoding: "UTF-8").scrub.scan(/LawDSL\.law\s+:(\w+)/).flatten }
     end
 
     def all_ids = (yaml_laws.map { |r| r["id"] } + law_ids + dsl_ids).compact
 
     # Two ids differing only by case are two laws as far as every registry is
-    # concerned and one rule as far as a reader is concerned. Findings, priors
+    # concerned and one law as far as a reader is concerned. Findings, priors
     # and exemptions key on the id, so the pair silently splits a rule's history.
     def id_case_collisions
       all_ids.group_by(&:downcase).select { |_, v| v.uniq.size > 1 }.map { |_, v| v.uniq }
     end
 
     # An alias naming a rule that still exists makes a lookup ambiguous: DRY
-    # claims duplicate_code, and duplicate_code is its own live rule. One of the
+    # claims duplicate_code, and duplicate_code is its own live law. One of the
     # two is a fold that never finished.
-    def alias_shadows_live_rule
+    def alias_shadows_live_law
       live = all_ids.map(&:downcase)
       yaml_laws.flat_map do |r|
         Array(r["aliases"]).select { |a| live.include?(a.to_s.downcase) }
-                           .map { |a| { rule: r["id"], alias_name: a.to_s } }
+                           .map { |a| { law: r["id"], alias_name: a.to_s } }
       end
     end
 
-    # A rule with neither tier nor severity cannot be sorted, filtered or
+    # A law with neither tier nor severity cannot be sorted, filtered or
     # prioritised, and every count that groups by either quietly omits it.
     def missing_metadata
       yaml_laws.select { |r| r["tier"].to_s.strip.empty? && r["severity"].to_s.strip.empty? }
@@ -155,8 +155,8 @@ module Operator
 
     def cross_population_duplicates
       detector_homes.select { |_, where| where.uniq.size > 1 }
-                    .map { |id, where| { rule: id, homes: where.uniq } }
-                    .sort_by { |h| h[:rule] }
+                    .map { |id, where| { law: id, homes: where.uniq } }
+                    .sort_by { |h| h[:law] }
     end
 
     # One id, two statements. This is what the old duplicate count was reaching
@@ -196,7 +196,7 @@ module Operator
                            fix.to_s.strip != entry["fix"].to_s.strip
       return if reasons.empty?
 
-      { rule: id, home:, reasons: }
+      { law: id, home:, reasons: }
     end
 
     # law/ writes :warn where the catalogue writes "warning", and they are the
@@ -208,8 +208,8 @@ module Operator
       $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
       require "master"
       require "review/scan/law_dsl"
-      Master::Review::Scan::Rule.registry.filter_map do |klass|
-        rule = Master::Review::Scan::RuleFactory.build(klass, root: MASTER)
+      Master::Review::Scan::Law.registry.filter_map do |klass|
+        rule = Master::Review::Scan::LawFactory.build(klass, root: MASTER)
         [rule.id.to_s.upcase, rule.severity]
       rescue StandardError # scan: intentional — a rule that will not build has no severity to compare
         nil
@@ -223,7 +223,7 @@ module Operator
 
     def report
       { id_case_collisions:,
-        alias_shadows_live_rule:,
+        alias_shadows_live_law:,
         missing_metadata:,
         cross_population_duplicates:,
         statement_conflicts: }
@@ -234,16 +234,16 @@ module Operator
       return (puts JSON.pretty_generate(r)) || true if json
 
       r[:id_case_collisions].each do |pair|
-        Master::Trace::Dmesg.status("rule0", "#{pair.inspect} differ only by case, one rule, split history", io: $stderr)
+        Master::Trace::Dmesg.status("rule0", "#{pair.inspect} differ only by case, one law, split history", io: $stderr)
       end
-      r[:alias_shadows_live_rule].each do |a|
-        Master::Trace::Dmesg.status("rule0", "#{a[:rule]} claims alias #{a[:alias_name]}, itself a live rule, unfinished fold", io: $stderr)
+      r[:alias_shadows_live_law].each do |a|
+        Master::Trace::Dmesg.status("rule0", "#{a[:law]} claims alias #{a[:alias_name]}, itself a live law, unfinished fold", io: $stderr)
       end
       unless r[:missing_metadata].empty?
         Master::Trace::Dmesg.status("rule0", "#{r[:missing_metadata].size} laws declare neither tier nor severity")
       end
       r[:statement_conflicts].each do |c|
-        Master::Trace::Dmesg.status("rule0", "#{c[:rule]} differs between laws.yml and #{c[:home]}, #{c[:reasons].join("; ")}", io: $stderr)
+        Master::Trace::Dmesg.status("rule0", "#{c[:law]} differs between laws.yml and #{c[:home]}, #{c[:reasons].join("; ")}", io: $stderr)
       end
 
       c = ceilings
