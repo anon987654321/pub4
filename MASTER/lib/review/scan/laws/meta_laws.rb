@@ -27,7 +27,7 @@ module Master
             omissions = @guard.check(paths: [rel])
             omissions.map { |o| finding(line: 1, message: "#{o.type} #{o.name} dropped (last seen #{o.last_seen_at})") }
           rescue StandardError => e
-            Master::Ground::Swallow.log(e, context: "ast_omission_rule.check", event_bus: nil, severity: :load_bearing)
+            Master::Ground::Swallow.log(e, context: "ast_omission_law.check", event_bus: nil, severity: :load_bearing)
             raise "ast_omission scan failed: #{e.class}: #{e.message}"
           end
 
@@ -44,7 +44,7 @@ module Master
         class LawCoverageLaw < Law
           def self.auto_build? = false
 
-          declare id: "rule_coverage", severity: :warning, tags: %i[TEST_COVERAGE],
+          declare id: "law_coverage", severity: :warning, tags: %i[TEST_COVERAGE],
                   description: "Law subclass has no corresponding test file"
 
           def initialize(root:)
@@ -71,15 +71,15 @@ module Master
           # would report those as uncovered, which is the false-positive machine
           # the old shape already was, pointed the other way.
           #
-          # spec/ is read because LearnedSmellsRule's only test is
-          # spec/learned_smells_rule_spec.rb, and a class covered from the wrong
+          # spec/ is read because LearnedSmellsLaw's only test is
+          # spec/learned_smells_law_spec.rb, and a class covered from the wrong
           # directory read as uncovered — this rule reporting a gap it had made
           # itself.
           def check(code, path:)
-            return [] unless path.include?("/review/scan/rules/") && path.end_with?(".rb")
+            return [] unless path.include?("/review/scan/laws/") && path.end_with?(".rb")
 
             subclasses(code).reject { |name, id| covered?(name, id) }
-              .map { |name, _| finding(line: 1, message: "rule_coverage: no test names #{name}") }
+              .map { |name, _| finding(line: 1, message: "law_coverage: no test names #{name}") }
           end
 
           private
@@ -116,7 +116,7 @@ module Master
         end
 
         # Runtime authority lives in YAML — not markdown under data/.
-        LawDSL.rule :RUNTIME_DOCS_YAML,
+        LawDSL.law :RUNTIME_DOCS_YAML,
           severity: :error,
           tags: %i[CONSTITUTION DOCS],
           applies_to: %i[markdown],
@@ -184,7 +184,7 @@ module Master
             language = self.language(path)&.to_s
             @learned_smells.flat_map { |smell| findings_for_smell(smell, code, language) }
           rescue StandardError => e
-            Master::Ground::Swallow.log(e, context: "LearnedSmellsRule.check", severity: :load_bearing, path:)
+            Master::Ground::Swallow.log(e, context: "LearnedSmellsLaw.check", severity: :load_bearing, path:)
             raise "learned smell scan failed: #{e.class}: #{e.message}"
           end
 
@@ -257,7 +257,7 @@ module Master
             @learned_smells = Array((Master.load_laws(root: @root) || {}).fetch("learned_smells", [])).select { |item| item.is_a?(Hash) }
             @rules_mtime = rules_mtime
           rescue StandardError => e
-            Master::Ground::Swallow.log(e, context: "LearnedSmellsRule.reload", severity: :load_bearing, path: laws_path)
+            Master::Ground::Swallow.log(e, context: "LearnedSmellsLaw.reload", severity: :load_bearing, path: laws_path)
             raise
           end
 
