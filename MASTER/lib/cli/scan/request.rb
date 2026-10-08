@@ -72,7 +72,7 @@ module Master
         def selected_laws
           return unless law_filter && scanner.respond_to?(:laws)
 
-          scanner.laws.select { |rule| law_filter.include?(law.id.to_s) }
+          scanner.laws.select { |law| law_filter.include?(law.id.to_s) }
         end
 
         def target_arg
@@ -122,8 +122,8 @@ module Master
 
           cfg = profiles[profile_name] || {}
           laws = cfg["laws"].to_s
-          law_ids = groups[rules] || (rules == ALL_LAWS ? nil : [rules])
-          law_filter = (law_ids && rules != ALL_LAWS) ? law_ids.map(&:to_s).to_set : nil
+          law_ids = groups[laws] || (laws == ALL_LAWS ? nil : [laws])
+          law_filter = (law_ids && laws != ALL_LAWS) ? law_ids.map(&:to_s).to_set : nil
           severity_filter = Array(cfg["severity"]).map(&:to_s).to_set
           [profile_name, law_filter, severity_filter.empty? ? nil : severity_filter]
         end
