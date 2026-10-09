@@ -88,15 +88,22 @@ module Master
       def finish(breath, last_input)
         return "[mix]anull[out]" unless breath
 
+        [
+          "#{breath_filter(breath, last_input)}[br]",
+          "[br][mix]concat=n=2:v=0:a=1[out]",
+        ]
+      end
+
+      # One breath-in from a white noise input, band-limited and faded in over
+      # the first 42 percent and out over the rest. The human profile reuses it
+      # in mono before a long sentence.
+      def breath_filter(breath, input, stereo: true)
         low, high = breath.fetch("band_hz")
         rise = (breath.fetch("ms") * 0.42 / 1000).round(3)
         fall = (breath.fetch("ms") * 0.58 / 1000).round(3)
-        [
-          "[#{last_input}:a]bandpass=f=#{Math.sqrt(low * high).round}:width_type=h:w=#{high - low}," \
-          "afade=t=in:d=#{rise},afade=t=out:st=#{rise}:d=#{fall},volume=#{breath.fetch('gain_db')}dB," \
-          "pan=stereo|c0=c0|c1=c0,#{FLOAT_STEREO}[br]",
-          "[br][mix]concat=n=2:v=0:a=1[out]",
-        ]
+        tail = stereo ? "pan=stereo|c0=c0|c1=c0,#{FLOAT_STEREO}" : "aformat=sample_fmts=fltp:sample_rates=#{RATE}:channel_layouts=mono"
+        "[#{input}:a]bandpass=f=#{Math.sqrt(low * high).round}:width_type=h:w=#{high - low}," \
+          "afade=t=in:d=#{rise},afade=t=out:st=#{rise}:d=#{fall},volume=#{breath.fetch('gain_db')}dB,#{tail}"
       end
     end
   end

@@ -7,7 +7,9 @@ require_relative "../lib/voice/speech"
 class SpeechContractSpec < Minitest::Test
   def test_clean_text_preserves_spoken_content_while_removing_markup
     cleaned = Master::Voice::Speech.clean_text("hello `code` https://example.com ```ruby\nx\n```")
-    assert_includes cleaned, "https://example.com"
+    # A URL is spoken as its host: nobody wants the scheme and path read aloud.
+    assert_includes cleaned, "example.com"
+    refute_includes cleaned, "https://"
     assert_includes cleaned, "code"
     assert_includes cleaned, "x"
     refute_includes cleaned, "```"

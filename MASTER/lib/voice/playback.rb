@@ -117,14 +117,10 @@ module Master
         # stay queued, but a reply starts a fresh playback generation so stale
         # audio is stopped before the answer enters the queue.
         generation = priority.to_sym == :reply ? begin_reply_generation! : current_generation
-        parts = transcendent_mode? ? [str] : Speech.chunks(str)
-        parts = [str] if parts.empty?
         reply_voice = Speech.voice_for_text(str)
         reply_style = transcendent_mode? ? :auto : Speech.infer_style(str, fallback: Speech.default_style)
         queue = ensure_queue
-        jobs = parts.each_with_index.map do |part, index|
-          [str, part, index == parts.size - 1, reply_voice, reply_style, nil, nil, generation]
-        end
+        jobs = Human.active? ? human_jobs(str, reply_voice, reply_style, generation) : speech_jobs(str, reply_voice, reply_style, generation)
 
         @lock.synchronize do
           jobs.each do |job|
@@ -138,7 +134,27 @@ module Master
         nil
       end
 
-      # Session-owned enqueue path. Callers can provide a generation so
+def speech_jobs(str, voice, style, generation)
+  parts = transcendent_mode? ? [str] : Speech.chunks(str)
+  parts = [str] if parts.empty?
+  parts.each_with_index.map do |part, index|
+    [str, part, index == parts.size - 1, voice, style, nil, nil, generation]
+  end
+end
+
+# The human profile speaks a reply clause by clause: each clause is its
+# own job with the rate, pitch, pause and breath Shaping planned for it,
+# and the single worker plays them in the order they were queued.
+def human_jobs(str, voice, style, generation)
+  clauses = Shaping.plan(str, base_rate: Policy.default_rate, base_pitch: Policy.default_pitch)
+  clauses = [Shaping::Clause.new(text: str, pause_ms: 0, rate: Policy.default_rate, pitch: Policy.default_pitch)] if clauses.empty?
+  clauses.each_with_index.map do |clause, index|
+    { text: clause.text, last: index == clauses.size - 1, voice:, style:, rate: clause.rate, pitch: clause.pitch,
+      generation:, pause_ms: clause.pause_ms, breath: clause.breath }
+  end
+end
+
+# Session-owned enqueue path. Callers can provide a generation so
       # interrupted work cannot reach the speaker later. When generation is
       # omitted, Playback uses its current cancellation generation.
       def enqueue(text, generation: nil, voice: nil, style: nil, rate: nil, pitch: nil, last: true)
@@ -354,6 +370,7 @@ module Master
       def stream_playback_ready?
         return false if ENV["MASTER_TTS_STREAM"] == "0"
         return false if Layers.active?
+        return false if Human.active?
         return false if transcendent_mode?
         return false unless Speech.edge_tts_available?
         return false unless Speech.stream_wire_enabled?
@@ -511,7 +528,7 @@ module Master
       # The whole-file lane behind the live one: make the audio, then drop it
       # the moment the generation died under us instead of speaking stale text.
       def synthesize_job(values)
-        path = synthesize(
+        path = human_clause_path(values) || synthesize(
           values[:part],
           voice: values[:voice],
           style: values[:style],
@@ -523,7 +540,20 @@ module Master
         PreparedAudio.new(**values, path: active ? path : nil)
       end
 
-      def decode_job(job)
+# A planned clause, spoken by the human pipeline; nil for any other job,
+# or when the pipeline cannot speak it, so the ordinary lane takes over.
+def human_clause_path(values)
+  job = values[:job]
+  return unless Human.active? && job.is_a?(Hash) && job.key?(:pause_ms)
+
+  path = Human.synthesize_clause(
+    text: values[:part], rate: values[:rate], pitch: values[:pitch],
+    pause_ms: job[:pause_ms].to_i, breath: job[:breath] == true, voice: values[:voice]
+  )
+  path && Speech.shaped(path)
+end
+
+def decode_job(job)
         if job.is_a?(Hash)
           {
             job:,

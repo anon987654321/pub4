@@ -10,6 +10,7 @@ require "timeout"
 require_relative "policy"
 require_relative "strunk_pass"
 require_relative "lexicon"
+require_relative "shaping"
 require_relative "speech_worker"
 
 module Master
@@ -294,7 +295,7 @@ module Master
       # Certainly, Of course..." on the output side, which nothing did before.
       def clean_text(text)
         StrunkPass.call(
-          text.to_s
+          Shaping.speakable(text)
             .gsub("```", "")
             .gsub("`", "")
             .gsub(/[•●▪▫◦]/, ". ")
@@ -325,7 +326,17 @@ module Master
             out << sentence
           end
         end
-        out.empty? ? [clean] : out
+        out.empty? ? [clean] : cut_first_chunk(out)
+      end
+
+      # The first packet is what the listener waits for, so it is cut at a clause
+      # boundary near tts.streaming.first_chunk_chars; the rest keeps its packing.
+      def cut_first_chunk(out)
+        limit = Policy.first_chunk_chars
+        return out unless limit.positive?
+
+        head, rest = Shaping.split_first(out.first, limit)
+        rest ? [head, rest, *out.drop(1)] : out
       end
 
       def synthesis_mode
@@ -350,6 +361,11 @@ module Master
       end
 
       def synthesize(text, voice: nil, style: default_style, rate: nil, pitch: nil, mode: nil, voice_locked: false, style_locked: false)
+        if Human.active?
+          human = Human.synthesize(text.to_s, voice: voice_locked ? voice : nil, rate:, pitch:)
+          return shaped(human) if human
+        end
+
         text_str = clean_text(text)
         return if text_str.empty?
 

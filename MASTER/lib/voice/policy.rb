@@ -87,6 +87,24 @@ module Master
         value.is_a?(Hash) ? value : {}
       end
 
+      # The `human` profile's clause pipeline (Voice::Human). Off for every
+      # other voice, so the default never passes through it.
+      def human_pipeline?
+        data["human_pipeline"] == true
+      end
+
+      # The breath before a long sentence in the human pipeline; nil when absent.
+      def breath
+        value = data["breath"]
+        value.is_a?(Hash) && !value.empty? ? value : nil
+      end
+
+      # Characters in the first packet of a reply; 0 keeps sentence packing.
+      def first_chunk_chars
+        value = data["streaming"]
+        value.is_a?(Hash) ? value["first_chunk_chars"].to_i : 0
+      end
+
       def single_voice_key
         sym = data["single_voice"].to_s.strip.downcase.to_sym
         sym = FALLBACK["single_voice"].to_sym if sym == :""
