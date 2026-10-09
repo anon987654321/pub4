@@ -5,6 +5,7 @@ require "test_helper"
 # Every brgen mailer's subject resolves through I18n, and both parts of a
 # multipart mail carry the link the reader has to click.
 class BrgenMailersTest < ActionMailer::TestCase
+  include Rails.application.routes.url_helpers
   test "subscription confirmation subject is a key and both parts carry the token" do
     sub = EmailSubscription.create!(email: "letters-test@example.com")
     mail = EmailSubscriptionMailer.confirm(sub)

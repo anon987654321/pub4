@@ -252,8 +252,8 @@ class StructuredDataTest < ActionDispatch::IntegrationTest
 
     locs = sitemap_locs
 
-    assert_includes locs, takeaway.restaurant_url(real, host: "takeaway.brgen.no")
-    refute_includes locs, takeaway.restaurant_url(demo, host: "takeaway.brgen.no")
+    assert_includes locs, marketplace_food.restaurant_url(real, host: "takeaway.brgen.no")
+    refute_includes locs, marketplace_food.restaurant_url(demo, host: "takeaway.brgen.no")
   end
 
   test "the migration marks the seeded restaurants by name and seeded owner only" do

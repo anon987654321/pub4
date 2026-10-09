@@ -3,6 +3,8 @@
 require "test_helper"
 
 class EmailSubscriptionsControllerTest < ActionDispatch::IntegrationTest
+  setup { host! "brgen.no" }
+
   test "show renders without mutating the subscription" do
     subscription = EmailSubscription.create!(
       email: "preferences-show@example.com",

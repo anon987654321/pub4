@@ -67,4 +67,8 @@ class EmailSubscriptionsController < ApplicationController
     sub.destroy!
     redirect_to root_path, notice: t("flash.unsubscribed")
   end
+
+  private
+
+  def find_subscription = EmailSubscription.find_by!(token: params[:token])
 end
