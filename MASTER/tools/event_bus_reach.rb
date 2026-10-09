@@ -10,12 +10,13 @@ module Operator
   module EventBusReach
     REPO = File.expand_path("../..", __dir__)
     MASTER = File.join(REPO, "MASTER")
+    # The web face lives in RAILS; reports keep the "web/" prefix the topic
+    # contract names it by.
+    WEB = File.join(REPO, "RAILS", "master_web")
 
     RUBY_GLOBS = %w[
       lib/**/*.rb
       core/**/*.rb
-      web/app/**/*.rb
-      web/config/**/*.rb
       bin/*
       tools/**/*.rb
       test/**/*.rb
@@ -23,10 +24,15 @@ module Operator
       Rakefile
     ].freeze
 
+    WEB_RUBY_GLOBS = %w[
+      app/**/*.rb
+      config/**/*.rb
+    ].freeze
+
     JS_GLOBS = %w[
-      web/public/**/*.js
-      web/public/**/*.mjs
-      web/app/**/*.js
+      public/**/*.js
+      public/**/*.mjs
+      app/**/*.js
     ].freeze
 
     # Deterministic census: literal strings and symbols only. Interpolation and
@@ -40,15 +46,15 @@ module Operator
 
     module_function
 
-    def files(globs)
-      Dir.glob(globs.flat_map { |glob| File.join(MASTER, glob) })
+    def files(globs, root = MASTER)
+      Dir.glob(globs.flat_map { |glob| File.join(root, glob) })
          .select { |path| File.file?(path) }
          .reject { |path| File.basename(path).end_with?(".bundle.js") }
          .sort
     end
 
-    def ruby_files = @ruby_files ||= files(RUBY_GLOBS)
-    def js_files = @js_files ||= files(JS_GLOBS)
+    def ruby_files = @ruby_files ||= files(RUBY_GLOBS) + files(WEB_RUBY_GLOBS, WEB)
+    def js_files = @js_files ||= files(JS_GLOBS, WEB)
 
     def read(path)
       File.read(path, encoding: "UTF-8")
@@ -249,6 +255,8 @@ module Operator
     end
 
     def relative(path)
+      return "web/#{path.delete_prefix("#{WEB}/")}" if path.start_with?("#{WEB}/")
+
       path.delete_prefix("#{MASTER}/")
     end
 
@@ -285,7 +293,7 @@ module Operator
       return [] unless anchors.is_a?(Hash)
 
       anchors.filter_map do |topic, path|
-        next unless data[:references].fetch(topic.to_s, []).exclude?(path.to_s)
+        next if data[:references].fetch(topic.to_s, []).include?(path.to_s)
 
         { topic: topic.to_s, path: path.to_s }
       end.sort_by { |row| [row[:topic], row[:path]] }
