@@ -9,7 +9,7 @@ require "open3"
 # -c safe.directory because the daemon runs as `master` and the checkout belongs
 # to `dev`; HealthController#git_healthy? carries the same flag for the same reason.
 Rails.application.config.x.booted_sha = begin
-  repo = Rails.root.join("..").to_s
+  repo = Master::REPO_ROOT
   out, status = Open3.capture2("git", "-c", "safe.directory=#{repo}", "-C", repo,
                                "rev-parse", "--short", "HEAD", err: File::NULL)
   status.success? ? out.strip.freeze : nil

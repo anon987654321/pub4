@@ -2,7 +2,7 @@
 
 require "digest"
 require "json"
-require_relative "../../../lib/io/exec"
+require_relative "../../../../MASTER/lib/io/exec"
 
 class ChatController < ApplicationController
   include ActionController::Live
@@ -251,7 +251,7 @@ class ChatController < ApplicationController
   end
 
   def metrics_payload(c)
-    repo_root = Rails.root.join("..").to_s
+    repo_root = Master::ROOT
     out, = Master::Io::Exec.capture2e("git", "-C", repo_root, "status", "--porcelain", timeout: 5)
     dirty = out.lines.count
     open_models = c[:breaker].respond_to?(:open_models) ? c[:breaker].open_models : []

@@ -11,7 +11,7 @@ import { fileURLToPath } from "node:url";
 import { createContext, runInContext } from "node:vm";
 
 const publicDir = join(dirname(fileURLToPath(import.meta.url)), "..", "public");
-const masterDir = join(publicDir, "..", "..");
+const masterDir = join(publicDir, "..", "..", "..", "MASTER");
 const bridgeSource = readFileSync(join(publicDir, "visual_bridge.js"), "utf8");
 const eventTopicsSource = readFileSync(join(masterDir, "data", "event_topics.yml"), "utf8");
 
@@ -32,7 +32,7 @@ const NOT_BUS_TOPICS = {
 
 function publishedTopics() {
   const topics = new Set();
-  for (const tree of ["lib", "web/app", "web/lib"]) {
+  for (const tree of ["lib", "../RAILS/master_web/app", "../RAILS/master_web/lib"]) {
     const base = join(masterDir, tree);
     for (const name of readdirSync(base, { recursive: true })) {
       if (!name.endsWith(".rb")) continue;

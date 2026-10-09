@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const publicDir = join(root, "public");
 const manifest = readFileSync(join(root, "config", "face_assets.yml"), "utf8");
-const laws = readFileSync(join(root, "..", "data", "laws.yml"), "utf8");
+const laws = readFileSync(join(root, "..", "..", "MASTER", "data", "laws.yml"), "utf8");
 const interaction = readFileSync(join(publicDir, "master_interaction_state.js"), "utf8");
 const audio = readFileSync(join(publicDir, "face_audio_field.js"), "utf8");
 const render = readFileSync(join(publicDir, "face_render_policy.js"), "utf8");

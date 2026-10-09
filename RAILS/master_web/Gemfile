@@ -24,7 +24,7 @@ group :development, :test do
   gem "bundler-audit", require: false
 end
 
-gem "master", path: ".."
+gem "master", path: "../../MASTER"
 
 # MASTER lib deps (must mirror root Gemfile)
 gem "ruby_llm", "~> 2.0"
@@ -44,6 +44,9 @@ end
 gem "fiddle"
 gem "reline", "~> 0.6"
 gem "wisper", "~> 2.0"
+# lib/io/youtube_transcript.rb requires it; a bundled gem since Ruby 3.4, so
+# without a Gemfile line the container build raises LoadError and /health stays 503.
+gem "rexml"
 install_if -> { RUBY_PLATFORM =~ /bsd|dragonfly/i } do
   gem "rb-kqueue", "~> 0.2", require: false
 end

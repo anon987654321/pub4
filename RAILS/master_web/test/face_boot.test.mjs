@@ -51,7 +51,7 @@ test("face surface owns the full viewport", () => {
 
 test("MASTER web face uses the same monospaced presentation contract as the CLI", () => {
   const css = readFileSync(join(publicDir, "face.css"), "utf8");
-  const rules = readFileSync(join(root, "..", "data", "laws.yml"), "utf8");
+  const rules = readFileSync(join(root, "..", "..", "MASTER", "data", "laws.yml"), "utf8");
   assert.match(css, /html, body \{[\s\S]*?font:\s*16px\/1\.5 var\(--font-mono\)/);
   assert.match(css, /--font-label:\s*"JetBrainsMono Nerd Font"/);
   assert.match(rules, /face_interface:/);
@@ -83,7 +83,7 @@ test("FaceWorld consumes the semantic layers and bounded render budget", () => {
 
 test("Face state derives modes and aliases from the shared contract", () => {
   const state = readFileSync(join(publicDir, "face_state.js"), "utf8");
-  const rules = readFileSync(join(root, "..", "data", "laws.yml"), "utf8");
+  const rules = readFileSync(join(root, "..", "..", "MASTER", "data", "laws.yml"), "utf8");
   assert.match(state, /CONTRACT_STATE\.modes/);
   assert.match(state, /Object\.entries\(CONTRACT\.mode_aliases/);
   assert.match(state, /mobile_particles/);
@@ -380,7 +380,7 @@ test("chat index includes photo attach", () => {
 });
 
 test("face_research catalog documents ar5iv and github references", () => {
-  const research = readFileSync(join(root, "..", "data", "runtime.yml"), "utf8");
+  const research = readFileSync(join(root, "..", "..", "MASTER", "data", "runtime.yml"), "utf8");
   assert.match(research, /2405\.13050/);
   assert.match(research, /2410\.22370/);
   assert.match(research, /open-webui/);
@@ -451,7 +451,7 @@ test("nothing takes a 2D context on the shared #face canvas", () => {
 });
 
 test("face runtime consumes the constitutional state contract", () => {
-  const contract = readFileSync(join(root, "..", "data", "laws.yml"), "utf8");
+  const contract = readFileSync(join(root, "..", "..", "MASTER", "data", "laws.yml"), "utf8");
   const state = readFileSync(join(publicDir, "face_state.js"), "utf8");
   const index = readFileSync(join(root, "app", "views", "chat", "index.html.erb"), "utf8");
   assert.match(contract, /face_interface:[\\s\\S]*schema: 1/);
@@ -502,7 +502,7 @@ test("face.css keeps primer and prompt layering stable", () => {
 
 test("MASTER web and CLI share one monospaced face contract", () => {
   const css = readFileSync(join(publicDir, "face.css"), "utf8");
-  const rules = readFileSync(join(root, "..", "data", "laws.yml"), "utf8");
+  const rules = readFileSync(join(root, "..", "..", "MASTER", "data", "laws.yml"), "utf8");
   assert.match(rules, /face_root:[\s\S]*font_label:.*JetBrainsMono/);
   assert.match(css, /--font-label:\s*"JetBrainsMono/);
   assert.match(css, /html, body[\s\S]*font:\s*16px\/1\.5 var\(--font-mono\)/);
@@ -633,7 +633,7 @@ test("face runtime keeps named SSE reactions on the POST stream path", () => {
 
 test("web face is an evolved rendering of the CLI face", () => {
   const part3 = readFileSync(join(publicDir, "face.part3.txt"), "utf8");
-  const cliFace = readFileSync(join(root, "..", "lib", "cli", "face.rb"), "utf8");
+  const cliFace = readFileSync(join(root, "..", "..", "MASTER", "lib", "cli", "face.rb"), "utf8");
   assert.match(cliFace, /GREYS = \(232\.\.255\)/);
   assert.match(cliFace, /SPECK_LIGHT/);
   assert.match(part3, /CLI_FACE_WEB_DENSITY = 2400/);
@@ -794,7 +794,7 @@ test("service worker avoids stale undigested precache", () => {
 test("Android wake reaches the existing face event pipe", () => {
   const bridge = readFileSync(join(publicDir, "visual_bridge.js"), "utf8");
   const events = readFileSync(join(root, "app", "controllers", "events_controller.rb"), "utf8");
-  const wake = readFileSync(join(root, "..", "lib", "device", "wake_signal.rb"), "utf8");
+  const wake = readFileSync(join(root, "..", "..", "MASTER", "lib", "device", "wake_signal.rb"), "utf8");
   assert.match(bridge, /type === "device:wake"/);
   assert.match(bridge, /master:wake/);
   assert.match(bridge, /mode: "wake"/);

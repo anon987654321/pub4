@@ -87,7 +87,7 @@ module MasterContainerLoader
     config.x.master_container_mutex.synchronize do
       return config.x.master_container if config.x.master_container
 
-      root = Rails.root.join("..").to_s
+      root = Master::ROOT
       Master.prepare_runtime!
       Master::Voice::TtsSupervisor.ensure_daemon!(root:)
       TtsJob.ensure_worker!
