@@ -3,12 +3,17 @@
 require "fileutils"
 require "open3"
 require "socket"
+require "tmpdir"
 require "yaml"
 
 module RadioVideo
   ROOT = File.expand_path("../../..", __dir__)
   DILLA_ROOT = File.expand_path("..", __dir__)
-  THREE_MODULE = File.join(ROOT, "MASTER", "web", "public", "three.face.module.js")
+  # The film uses 24 Three.js classes and the face bundle exports 17, so a full
+  # single-file build can be named here (esbuild over `three`, \"export * from three\").
+  THREE_MODULE = ENV.fetch("DILLA_VIDEO_THREE_MODULE") do
+    File.join(ROOT, "RAILS", "master_web", "public", "three.face.module.js")
+  end
   POSTPRO_VIDEO_RECIPE = File.join(ROOT, "STUDIO", "postpro", "video.yml")
   DEFAULT_AUDIO = File.join(DILLA_ROOT, "dilla.wav")
   DEFAULT_OUTPUT = File.join(DILLA_ROOT, "dilla.mp4")
@@ -109,7 +114,7 @@ module RadioVideo
       ffmpeg, "-y", "-hide_banner", "-loglevel", "error", "-i", input,
       "-vf", filters.join(","), "-c:v", "libx264", "-preset", "medium",
       "-profile:v", "high", "-pix_fmt", "yuv420p", "-crf", "22",
-      "-c:a", "copy", "-movflags", "+faststart", partial
+      "-c:a", "copy", "-movflags", "+faststart", "-f", (File.extname(output).delete_prefix(".") == "mov" ? "mov" : "mp4"), partial
     ]
     run_bounded!(args, timeout: process_timeout, label: "video: Postpro video grade #{name.inspect}")
     FileUtils.mv(partial, output)
