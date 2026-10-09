@@ -265,7 +265,8 @@ module Operator
       # defaults could never fire.
       # -> 77 (2026-09-25). dating's home blurb gained nb and en keys in the
       # engine's locales, so its English default went with them.
-      "translate_default" => 77,
+      # 77 -> 0: every t() in the shipped views reads its text from a locale file, none carries a default:.
+      "translate_default" => 0,
       # 0, and a ratchet at zero is a ban. Every finding was a sentence written
       # in English inside a view option — an empty state's body, an action's
       # label, a title that does not open with "No" — on apps that default to
