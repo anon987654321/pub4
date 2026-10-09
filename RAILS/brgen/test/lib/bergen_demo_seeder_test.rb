@@ -44,7 +44,7 @@ class BergenDemoSeederTest < ActiveSupport::TestCase
       Brgen::BergenDemoSeeder.new(@city, attach_media: false).seed!
     end
 
-    playlist = Playlist::Playlist.find_by!(city: @city, name: Brgen::BergenDemoSeeder::RADIO_BERGEN_PLAYLIST)
+    playlist = Playlist::Playlist.strict_loading(false).find_by!(city: @city, name: Brgen::BergenDemoSeeder::RADIO_BERGEN_PLAYLIST)
     assert playlist.public_access
     assert_operator playlist.tracks.count, :>=, 20
 

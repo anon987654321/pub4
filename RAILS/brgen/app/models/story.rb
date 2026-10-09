@@ -55,7 +55,7 @@ class Story < ApplicationRecord
     grouped = scope.group_by(&:user_id)
     return grouped.values.first(limit) if user.blank?
 
-    followed = user.following.ids.to_set
+    followed = user.follows_as_follower.pluck(:followed_id).to_set
     grouped.values.sort_by { |stories| followed.include?(stories.first.user_id) ? 0 : 1 }.first(limit)
   end
 

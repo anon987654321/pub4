@@ -67,7 +67,7 @@ class NearbyControllerTest < ActionDispatch::IntegrationTest
     get nearby_room_path
 
     room = Conversation.find_by!(slug: geo_room_slug(lat, lng))
-    assert_equal [ a.id, b.id ].sort, room.participants.pluck(:id).sort
+    assert_equal [ a.id, b.id ].sort, ConversationParticipant.where(conversation_id: room.id).pluck(:user_id).sort
   end
 
   test "messages in a geo room render under the anonymous handle, not the real display name" do
@@ -103,10 +103,10 @@ class NearbyControllerTest < ActionDispatch::IntegrationTest
 
     sign_in(me)
 
-    assert_raises(ActiveRecord::RecordNotFound) do
-      post nearby_path, params: { user_id: leaving.id }
-    end
-    assert_not Conversation.direct_between(me, leaving).exists? if Conversation.respond_to?(:direct_between)
+    post nearby_path, params: { user_id: leaving.id }
+
+    assert_response :not_found
+    assert_nil Conversation.direct_between(me, leaving)
   end
 
   test "visiting an unknown geo-room slug directly does not auto-create it" do
