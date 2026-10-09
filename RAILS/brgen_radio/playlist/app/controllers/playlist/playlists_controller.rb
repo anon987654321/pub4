@@ -2,6 +2,7 @@
 
 class Playlist::PlaylistsController < Playlist::BaseController
   include Shared::FindableBySlug
+  include Playlist::OwnerVisibility
   allow_unauthenticated_access only: %i[index show embed]
   before_action :require_user_session, only: %i[new create]
   before_action :set_playlist, only: %i[show embed edit update destroy]

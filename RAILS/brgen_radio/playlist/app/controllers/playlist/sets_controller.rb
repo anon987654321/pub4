@@ -6,6 +6,7 @@
 # `Playlist::Playlist::Set` and both index actions raised NameError.
 class Playlist::SetsController < ApplicationController
   include Shared::LiveSearchable
+  include Playlist::OwnerVisibility
 
   before_action :require_user_session, only: %i[new create]
   before_action :set_set, only: %i[show edit update destroy]

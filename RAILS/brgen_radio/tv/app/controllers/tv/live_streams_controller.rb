@@ -67,6 +67,10 @@ module Tv
       render_http_error(:not_found, "not_found") unless Rails.application.config.x.tv_live_streaming
     end
 
+    def set_public_live_stream
+      @live_stream = Tv::LiveStream.publicly_visible.includes(:user, channel: { banner_attachment: :blob }).find(params[:id])
+    end
+
     def set_live_stream
       @live_stream = Tv::LiveStream.includes(:user, channel: { banner_attachment: :blob }).find(params[:id])
     end
