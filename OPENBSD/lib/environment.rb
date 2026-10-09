@@ -98,7 +98,7 @@ module Deploy
           "MASTER/bin/ruby OPENBSD/bin/check"
         end
       else
-        "OPENBSD/bin/check-full"
+        "OPENBSD/bin/check --profile=full"
       end
     end
   end

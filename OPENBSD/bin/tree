@@ -205,7 +205,7 @@ class ProjectTree
     horizon = File.exist?(File.join(repo, "RAILS", "apps.horizon.yml"))
     line(:drift, "RAILS/apps.horizon.yml — agent-ignore; keep out of contributor path") if horizon
 
-    puts "  → Gates: OPENBSD/bin/check-full | check-rails --profile=contributor"
+    puts "  → Gates: OPENBSD/bin/check --profile=full | check-rails --profile=contributor"
   end
 
   def breakdown_lib(lib_root)
