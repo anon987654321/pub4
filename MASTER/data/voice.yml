@@ -94,6 +94,39 @@ tts:
   # alone rather than imposing a synthetic character.
   post_chain: "highpass=f=65,equalizer=f=145:t=q:w=0.8:g=0.8,equalizer=f=700:t=q:w=1.0:g=0.6,equalizer=f=2800:t=q:w=1.1:g=1.2,lowpass=f=13500,acompressor=threshold=-19dB:ratio=1.5:attack=10:release=120:makeup=1,volume=12dB,alimiter=limit=0.98"
 
+  # Text shaping, read by Voice::Shaping. The pauses are silence joined between
+  # separately synthesised clauses: rb_edge_tts escapes its input, so SSML
+  # <break> never reaches the engine and would be read aloud as markup. Only the
+  # clause split and the pauses are used by the `human` pipeline; the text
+  # rewrite (numbers, paths, hashes, markdown) runs for every voice.
+  shaping:
+    max_clause_chars: 90
+    min_clause_chars: 28
+    breath_min_chars: 110
+    comma_ms: 160
+    semicolon_ms: 260
+    period_ms: 380
+    question_ms: 420
+    paragraph_ms: 650
+    clause_ms: 120
+
+  # Seeded variation per clause, applied only while `enabled` (the human
+  # profile). Small by design: the amounts are added to default_rate and
+  # default_pitch, and the same text and seed give the same numbers.
+  variation:
+    enabled: false
+    rate_jitter_pct: 2
+    pitch_jitter_hz: 4
+    end_slow_pct: -2
+    end_fall_hz: -6
+    question_rise_hz: 8
+
+  # Latency. The first packet of a reply is cut at a clause boundary near
+  # this many characters, so the first words are synthesised from a short
+  # clause while the rest is prepared behind it. 0 turns it off.
+  streaming:
+    first_chunk_chars: 90
+
   # The bed under the speech, so a pause is not silence.
   #
   # dilla renders it: module Bed in STUDIO/dilla/dilla.rb, declared in
@@ -157,6 +190,37 @@ tts:
       bed:
         source: STUDIO/dilla/data/bed.yml
         gain_db: -17
+    # human is opt-in (MASTER_TTS_PROFILE=human) and changes how MASTER sounds,
+    # so it ships for the operator to hear before it can become the default.
+    # It speaks a reply clause by clause (Voice::Human): each clause goes to the
+    # first engine that can speak its language (the local_engines below, then
+    # Edge), is trimmed of the engine's own edge silence, and is given a real
+    # pause, a seeded rate and pitch movement, and a soft breath before a long
+    # sentence. The chain is the minimal one: the default chain's compressor
+    # and three-band EQ are dropped, the one presence lift and a tanh soft-clip
+    # ahead of the limiter stay, and the gain is set so the loudness lands
+    # within about 1 LU of the default voice (ebur128 over seven sentences, same
+    # Edge audio: default chain -12.4 LUFS, this chain -12.2).
+    # local_engines gain_db brings each model's raw level to Edge's -21.8 LUFS so
+    # the chain sees the same input whichever engine spoke.
+    human:
+      human_pipeline: true
+      variation:
+        enabled: true
+      post_chain: "highpass=f=70,equalizer=f=2800:t=q:w=1.1:g=1.0,volume=10.3dB,asoftclip=type=tanh:threshold=0.8,alimiter=limit=0.85"
+      breath:
+        ms: 300
+        gain_db: -32
+        band_hz: [350, 3200]
+        seed: 5
+      local_engines:
+        - name: kokoro
+          model: mlx-community/Kokoro-82M-bf16
+          voice: af_heart
+          lang_code: a
+          languages: [en]
+          server: http://127.0.0.1:8765
+          gain_db: 4.4
 
 voice:
   style: openbsd_dmesg
