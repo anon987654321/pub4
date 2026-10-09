@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "../../voice/policy"
+
 module Master
   module CLI
     module Face
@@ -20,6 +22,11 @@ module Master
         # Full rotation made the Braille head collapse into a narrow silhouette.
         YAW = { idle: [0.20, 0.32], thinking: [0.28, 0.55] }.freeze
         EVENTS = %i[key listen nod thinking phantom council anticipate].freeze
+        # How the face attends, from the contract the browser face reads too.
+        AWARE = Master::Voice::Policy.awareness.freeze
+        LISTENING = AWARE.fetch("listening", {}).freeze
+        GLANCE_SCALE = { listening: LISTENING.fetch("glance_scale", 1.0),
+                         speaking: AWARE.fetch("speaking", {}).fetch("glance_scale", 1.0) }.freeze
 
         # A critically damped spring, stepped implicitly so a long frame can
         # never make it overshoot or blow up.
@@ -42,7 +49,9 @@ module Master
           @yaw, @pitch, @roll, @lean, @dip = Array.new(5) { Spring.new(0.0, 0.0) }
           @dolly = Spring.new(1.0, 0.0)
           @eye = Spring.new(1.0, 0.0)
-          @gaze_lon, @gaze_lat, @mouth = Array.new(3) { Spring.new(0.0, 0.0) }
+          @gaze_lon, @gaze_lat, @mouth, @mouth_wide = Array.new(4) { Spring.new(0.0, 0.0) }
+          @mouth_open = Spring.new(1.0, 0.0)
+          @viseme = "neutral"
           @next_blink = 2.2
           @next_glance = 0.9
           @glance = [0.0, 0.0]
@@ -50,9 +59,11 @@ module Master
         end
 
         # Advances to time t in seconds and answers the Look to draw.
-        def step(state:, t:, level: nil, events: [], count: 24)
+        def step(state:, t:, level: nil, events: [], count: 24, heard: false, viseme: "neutral")
           dt = @t ? (t - @t).clamp(0.0, 0.25) : 0.0
           @t = t
+          @heard = heard && state == :listening
+          @viseme = viseme
           events.each { |event| react(event) }
           turn(state, t, dt)
           features(state, t, dt, level)
@@ -109,9 +120,17 @@ module Master
           end
           @pitch.toward(pitch_for(state, t), 6.0, dt)
           @roll.toward(state == :listening ? 0.13 : 0.18 * Math.sin(t * 0.7), 4.0, dt)
-          @lean.toward(state == :listening ? 0.1 : 0.0, 4.0, dt)
+          @lean.toward(lean_for(state), 4.0, dt)
           @dip.toward(0.0, 7.0, dt)
           @dolly.toward(dolly_for(state, t), 3.8, dt)
+        end
+
+        # Leaning in is the listening settle, and a little more while the user is
+        # actually speaking; the browser feeds the same number through the contract.
+        def lean_for(state)
+          return 0.0 unless state == :listening
+
+          LISTENING.fetch("lean", 0.1) + (@heard ? LISTENING.fetch("heard_lean", 0.0) : 0.0)
         end
 
         def dolly_for(state, t)
@@ -135,6 +154,9 @@ module Master
           @gaze_lat.toward(@glance[1], 26.0, dt)
           heard = level.nil? ? Face.timed_level((t * FPS).to_i) : level.to_f.clamp(0.0, 1.0)
           @mouth.toward(state == :speaking ? heard : 0.0, 24.0, dt)
+          shape = state == :speaking && @viseme != "neutral" ? Master::Voice::Policy.mouth_shape(@viseme) : nil
+          @mouth_open.toward(shape ? shape.fetch("open") : 1.0, 30.0, dt)
+          @mouth_wide.toward(shape ? shape.fetch("wide") : 0.0, 30.0, dt)
         end
 
         def blink(t)
@@ -147,7 +169,7 @@ module Master
         def eye_target(state, t)
           return 0.0 if t.between?(@next_blink, @next_blink + 0.16)
 
-          state == :listening ? 1.4 : 1.0
+          state == :listening ? LISTENING.fetch("eye_open", 1.4) : 1.0
         end
 
         # A glance lands somewhere near centre and holds for a moment; now
@@ -157,7 +179,8 @@ module Master
 
           @next_glance = t + @rng.rand(0.35..2.2)
           home = @rng.rand < 0.3
-          @glance = home ? [0.0, 0.0] : [@rng.rand(-0.09..0.09), @rng.rand(-0.04..0.04)]
+          scale = GLANCE_SCALE.fetch(state, 1.0)
+          @glance = home ? [0.0, 0.0] : [@rng.rand(-0.09..0.09) * scale, @rng.rand(-0.04..0.04) * scale]
           @glance = [@glance[0] + 0.05, @glance[1] + 0.05] if state == :thinking
         end
 
@@ -194,6 +217,7 @@ module Master
             dolly: @dolly.x.clamp(0.96, 1.09),
             bob: (0.02 * Math.sin(t * 1.1)) + (0.01 * noise(t * 0.5, 6)) + @dip.x,
             eye_open: @eye.x.clamp(0.0, 1.5), gaze: [@gaze_lon.x, @gaze_lat.x], mouth: @mouth.x.clamp(0.0, 1.0),
+            mouth_open: @mouth_open.x.clamp(0.0, 1.0), mouth_wide: @mouth_wide.x.clamp(-1.0, 1.0),
             particles: @particles.map { |p| place(p, t) }
           )
         end
@@ -206,7 +230,7 @@ module Master
         end
 
         # One frame's worth of motion, in model units and radians.
-        Look = Data.define(:yaw, :pitch, :roll, :scale, :dolly, :bob, :eye_open, :gaze, :mouth, :particles)
+        Look = Data.define(:yaw, :pitch, :roll, :scale, :dolly, :bob, :eye_open, :gaze, :mouth, :mouth_open, :mouth_wide, :particles)
 
         # Smooth value noise in [-1, 1]: lattice values from an integer hash,
         # eased between, so drift wanders without repeating.

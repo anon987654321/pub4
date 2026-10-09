@@ -69,6 +69,7 @@ uniform float uModelSwitch;
 uniform float uEarPulse;
 uniform float uRipple;
 uniform float uVowel;
+uniform float uMouthWide;
 uniform float uSurpriseY;
 uniform float uFracture;
 uniform float uBloom;
@@ -129,6 +130,9 @@ void main(){
   // FA05/FA04 vowel jaw — viseme amplitude extends jaw opening
   float jawRgnV = smoothstep(0.0,0.15,-position.y-0.05) * smoothstep(0.0,0.18,0.30-abs(position.x));
   p.y -= uVowel * jawRgnV * 0.025;
+  // Wide (E, I) stretches the lips sideways, negative (O, U) draws them in:
+  // voice.yml face.mouth.shapes, scaled by uMouthWide.
+  p.x += position.x * uMouthWide * jawRgnV;
   // FA29 surprised Y impulse
   p.y += uSurpriseY * smoothstep(0.0, 0.6, 0.5 + position.y * 0.8) * 0.12;
   // FA19 veto fracture — scatter to 8 radial shards by position angle
@@ -252,7 +256,7 @@ if (_hasWebGL && THREE) {
       uMids:{value:0}, uHighs:{value:0},
       uConfidence:{value:1}, uTremor:{value:0}, uTilt:{value:0},
       uRain:{value:0}, uModelSwitch:{value:0}, uEarPulse:{value:0}, uRipple:{value:0},
-      uVowel:{value:0}, uSurpriseY:{value:0},
+      uVowel:{value:0}, uMouthWide:{value:0}, uSurpriseY:{value:0},
       uFracture:{value:0}, uBloom:{value:0}, uIdleDrift:{value:0}, uEyeClose:{value:0}, uExposure:{value:1.0}, uQuestion:{value:0},
       uFocusDim:{value:1.0}, uTime:{value:0}
     },

@@ -238,6 +238,34 @@ function syncSemanticPools(dtSec) {
     }
   }
 }
+// How the face attends, from voice.yml's face.awareness (the terminal
+// face reads the same block through Voice::Policy.awareness).
+//
+// Echo-safe means the mic cannot be hearing MASTER: nothing playing or loading
+// and the tail after the last sentence has passed. Only then does the user's
+// speech reach the face; a recogniser partial heard while MASTER is audible is
+// usually MASTER itself, which is the known mic-TTS echo fault.
+function faceEchoSafe() {
+  if (tts.playing || tts.loading) return false;
+  const tail = window.MASTER_VOICE_POLICY?.awareness?.echo_safe?.tts_tail_ms ?? 900;
+  return !tts.endedAt || performance.now() - tts.endedAt >= tail;
+}
+
+function faceAwareness() {
+  const spec = window.MASTER_VOICE_POLICY?.awareness || {};
+  const out = { glanceScale: 1, lean: 0, heard: false };
+  if (State.reducedMotion) return out;
+  if (State.mode === 'speaking') out.glanceScale = spec.speaking?.glance_scale ?? 1;
+  if (State.mode !== 'listening') return out;
+  const listening = spec.listening || {};
+  out.glanceScale = listening.glance_scale ?? 1;
+  const hold = spec.heard_hold_ms ?? 1200;
+  out.heard = faceEchoSafe() && !!State.heardAt && performance.now() - State.heardAt < hold;
+  // Pitch is positive downward in this head, so leaning in is a positive value.
+  out.lean = (listening.lean ?? 0) * 0.5 + (out.heard ? (listening.heard_lean ?? 0) : 0);
+  return out;
+}
+
 function frame(t) {
   if (State.hidden || document.hidden) {
     frameLoopActive = false;
@@ -393,6 +421,7 @@ function frame(t) {
     // on top of what attention_model.js already does for gaze jitter.
     const idleSig = State.idleSignature || { breath: 1, saccade: 0.2, pulse_floor: 0.1 };
     const composureFactor = Math.max(0.3, Math.min(1.6, (idleSig.saccade ?? 0.2) / 0.2));
+    const aware = faceAwareness();
     const attn = window.MASTER_ATTENTION?.tick?.({
       t,
       mode: State.mode,
@@ -402,14 +431,14 @@ function frame(t) {
       calmStareUntil: State.calmStareUntil,
       nervousUntil: State.nervousUntil,
       blinkMs: State.idleSignature?.blink_ms,
-      saccade: idleSig.saccade,
+      saccade: idleSig.saccade * aware.glanceScale,
       frameIndex: _dbgFrames,
     }) || { saccadeX: 0, microJitter: 0, fixationPitch: 0, eyeCloseTarget: 0 };
     const saccadeX = attn.saccadeX || 0;
     const microJitter = attn.microJitter || 0;
     _attnEyeClose = attn.eyeCloseTarget || 0;
     const yaw   = State.mouseX * 0.9 * openness + State.tiltX * 0.62 + Math.sin(sec * 0.2) * 0.055 * composureFactor + saccadeX + microJitter;
-    const pitch = State.mouseY * 0.52 * openness + State.tiltY * 0.5 + Math.sin(sec * 0.27) * 0.035 * composureFactor + (attn.fixationPitch || 0);
+    const pitch = State.mouseY * 0.52 * openness + State.tiltY * 0.5 + Math.sin(sec * 0.27) * 0.035 * composureFactor + (attn.fixationPitch || 0) + aware.lean;
     // FaceWorld owns camera position, distance, field of view and parallax.
     // The legacy face loop only owns the head pose and semantic state; keeping
     // camera motion out of this clock prevents two targets fighting every frame.
@@ -516,6 +545,11 @@ function frame(t) {
     }
     const vowelAmp = (State.visemeAmp || 0) * (['A','E','I','O','U'].includes(State.viseme) ? 1.0 : 0.3);
     faceMat.uniforms.uVowel.value += (vowelAmp - faceMat.uniforms.uVowel.value) * 0.15;
+    // The lips' width for the current viseme, from voice.yml's face.mouth table.
+    const mouthSpec = window.MASTER_VOICE_POLICY?.mouth;
+    const shape = mouthSpec?.shapes?.[State.viseme] || mouthSpec?.shapes?.neutral;
+    const wideTarget = (shape?.wide || 0) * (mouthSpec?.wide_gain ?? 0) * (State.visemeAmp || 0);
+    faceMat.uniforms.uMouthWide.value += (wideTarget - faceMat.uniforms.uMouthWide.value) * 0.2;
     State.surpriseY = (State.surpriseY || 0) * 0.88;
     faceMat.uniforms.uSurpriseY.value = State.surpriseY;
     State.fracture = (State.fracture || 0) * 0.91;

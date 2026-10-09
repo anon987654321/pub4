@@ -339,6 +339,9 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
     // Before the transcript is accumulated: yielding the turn should happen on
     // the first interim words, not after the silence timer has run.
     bargeInIfSpeaking(`${final} ${interim}`);
+    // Awareness is fed from recogniser partials, and only echo-safe ones: while
+    // MASTER is audible or just finished, a partial is probably MASTER itself.
+    if (faceEchoSafe()) State.heardAt = performance.now();
     if (final.trim()) sttFinalSoFar = sttFinalSoFar ? `${sttFinalSoFar} ${final.trim()}` : final.trim();
     sttPartial = `${sttFinalSoFar} ${interim.trim()}`.trim();
     window.dispatchEvent(new CustomEvent('stt:partial', { detail: { transcript: sttPartial, text: sttPartial, final: Boolean(final.trim()) } }));

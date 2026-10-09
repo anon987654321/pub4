@@ -176,7 +176,9 @@ def test_the_post_chain_is_read_and_applied
                "the face shapes from browser_payload; it must carry the same chain"
 
   ran = shape_with_recorded_ffmpeg
-  assert_equal ["-af", chain], ran[:argv][ran[:argv].index("-af"), 2], "Speech never applies the chain"
+  assert_equal ["-af", Master::Voice::Policy.shaped_chain], ran[:argv][ran[:argv].index("-af"), 2],
+               "Speech never applies the chain (post_chain plus the room)"
+  assert ran[:argv][ran[:argv].index("-af") + 1].start_with?(chain)
   assert ran[:result].end_with?("_shaped.mp3"), "Speech kept the unshaped file"
 
   # No per-file normalisation: the chain runs once per utterance, and loudnorm

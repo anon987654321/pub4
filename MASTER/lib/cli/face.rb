@@ -29,10 +29,10 @@ module Master
       # are what happened since the last frame (Motion::EVENTS). level is the
       # audio's loudness from 0.0 to 1.0 while speaking, or nil when no
       # envelope reached us, and the mouth moves on a timer.
-      def frame(state:, rows:, cols:, t:, level: nil, events: [], motion: Motion.new, color: false)
+      def frame(state:, rows:, cols:, t:, level: nil, events: [], motion: Motion.new, color: false, heard: false, viseme: "neutral")
         raise ArgumentError, "face: unknown state #{state.inspect}" unless STATES.include?(state)
 
-        look = motion.step(state:, t:, level:, events:, count: ((rows * cols) / 72).clamp(6, 36))
+        look = motion.step(state:, t:, level:, events:, heard:, viseme:, count: ((rows * cols) / 72).clamp(6, 36))
         return Braille.new(rows, cols).word(state.to_s) unless rows >= MIN_ROWS && cols >= MIN_COLS
 
         braille = Braille.new(rows, cols)
@@ -183,9 +183,14 @@ module Master
         # the mouth void opens with the audio and thins at its rim.
         def feature(x, y, zone, phase)
           mouth_x, mouth_y = @head.mouth
-          void = VOID + (VOID_OPEN * @look.mouth)
+          void = VOID + (VOID_OPEN * @look.mouth * @look.mouth_open)
           if zone == Head::MOUTH_ZONE
-            return if ((x - mouth_x)**2) + ((y - mouth_y)**2) < void * void * (0.7 + (0.3 * Math.sin(phase * 7)))
+            # The opening is an ellipse: wide stretches it sideways, negative
+            # (O, U) rounds it, in the proportions the contract declares.
+            stretch = 1.0 + (0.6 * @look.mouth_wide)
+            squeeze = 1.0 - (0.3 * @look.mouth_wide)
+            reach = ((((x - mouth_x) / stretch)**2) + (((y - mouth_y) / squeeze)**2))
+            return if reach < void * void * (0.7 + (0.3 * Math.sin(phase * 7)))
 
             return [x, y]
           end

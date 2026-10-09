@@ -181,6 +181,77 @@ module Master
         value.empty? ? nil : value
       end
 
+      # The room the voice speaks in: early reflections on a stereo image,
+      # declared in voice.yml `room:`. Empty when switched off
+      # (MASTER_TTS_PROFILE=dry), which leaves the dry voice.
+      def room
+        value = data["room"]
+        value.is_a?(Hash) && value["enabled"] != false && !value.empty? ? value : {}
+      end
+
+      # post_chain plus the room, as ffmpeg runs it. The browser is handed the
+      # two apart (browser_payload) because it builds the room from WebAudio.
+      def shaped_chain
+        wet = room_chain
+        wet ? [post_chain, wet].compact.join(",") : post_chain
+      end
+
+      # Mono to stereo, a short delay on one side for width, reflections as
+      # parallel echoes, fixed makeup gain, and the limiter again because the
+      # reflections add level above the chain's own ceiling.
+      def room_chain
+        cfg = room
+        return nil if cfg.empty?
+
+        delays = Array(cfg["reflections_ms"]).map { |ms| format("%g", ms) }.join("|")
+        decays = Array(cfg["decays"]).map { |value| format("%g", value) }.join("|")
+        [
+          "pan=stereo|c0=0.707*c0|c1=0.707*c0",
+          "adelay=0|#{cfg.fetch('width_ms', 0).to_i}",
+          "aecho=1:#{format('%g', cfg.fetch('out_gain', 0.9))}:#{delays}:#{decays}",
+          "volume=#{format('%g', cfg.fetch('gain_db', 0))}dB",
+          "alimiter=limit=0.98",
+        ].join(",")
+      end
+
+      # voice.yml `face:`, the one home of how both faces attend and shape the
+      # mouth. Read at top level, beside `tts:`, so no profile overlays it.
+      def face_section(key)
+        raw = Master.load_yaml(Master.data_path("voice.yml"), default: {}) || {}
+        value = (raw["face"] || {})[key]
+        value.is_a?(Hash) ? value : {}
+      end
+
+      def awareness = (@awareness ||= face_section("awareness"))
+      def mouth = (@mouth ||= face_section("mouth"))
+
+      # True when the mic cannot be hearing MASTER: nothing playing or loading,
+      # and the tail after the last sentence has passed. The terminal listens
+      # only between utterances; the browser listens while it speaks, so this is
+      # the gate every feed of "the user is speaking" goes through.
+      def echo_safe?(playing:, loading: false, ms_since_tts_end: nil)
+        return false if playing || loading
+
+        tail = awareness.fetch("echo_safe", {}).fetch("tts_tail_ms", 900)
+        ms_since_tts_end.nil? || ms_since_tts_end >= tail
+      end
+
+      # The viseme a letter makes, by the same rule the browser's setViseme uses:
+      # a vowel is itself, a bilabial or labiodental closes the lips, any other
+      # letter is the relaxed E.
+      def viseme_for(char)
+        letter = char.to_s.downcase
+        return letter.upcase if %w[a e i o u].include?(letter)
+
+        mouth.fetch("closed_letters", "mbpfwv").include?(letter) && !letter.empty? ? "M" : "E"
+      end
+
+      # { "open" => 0..1, "wide" => -1..1 } for a viseme name.
+      def mouth_shape(name)
+        shapes = mouth.fetch("shapes", {})
+        shapes.fetch(name.to_s, shapes.fetch("neutral", { "open" => 0.0, "wide" => 0.0 }))
+      end
+
       # The musical bed, as declared. Nil when absent; the renderer is the
       # caller's, because MASTER's web face and a terminal narrator mix audio
       # in entirely different ways.
@@ -242,6 +313,9 @@ module Master
           language_voice_families: language_voice_families.transform_values { |family| family.transform_values(&:to_s) },
           voices: voice_aliases,
           post_chain:,
+          room:,
+          awareness:,
+          mouth:,
           prosody:,
           bed:,
           profile: profile_name,

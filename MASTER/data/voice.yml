@@ -94,6 +94,26 @@ tts:
   # alone rather than imposing a synthetic character.
   post_chain: "highpass=f=65,equalizer=f=145:t=q:w=0.8:g=0.8,equalizer=f=700:t=q:w=1.0:g=0.6,equalizer=f=2800:t=q:w=1.1:g=1.2,lowpass=f=13500,acompressor=threshold=-19dB:ratio=1.5:attack=10:release=120:makeup=1,volume=12dB,alimiter=limit=0.98"
 
+  # The room MASTER speaks in (operator decision 2026-10-09: the default voice).
+  # Polished chain above stays dry; Policy.shaped_chain appends this for ffmpeg
+  # and browser_payload hands it to the face, which builds the same reflections
+  # from WebAudio and pans the voice with the head (pan.follow_head: gain
+  # `strength` of the head x, limited to +-`max`, 0 centre, 1 hard side).
+  # Loudness is held within ~1 LU of the dry voice (ebur128, a spoken sentence);
+  # gain_db is that makeup. The dry voice is one line away:
+  # MASTER_TTS_PROFILE=dry, or `profile: dry` in this file.
+  room:
+    enabled: true
+    reflections_ms: [19, 31, 47, 73, 109, 151]
+    decays: [0.30, 0.22, 0.17, 0.12, 0.08, 0.05]
+    out_gain: 0.9
+    width_ms: 9
+    gain_db: 0
+    pan:
+      follow_head: true
+      strength: 0.6
+      max: 0.55
+
   # The bed under the speech, so a pause is not silence.
   #
   # dilla renders it: module Bed in STUDIO/dilla/dilla.rb, declared in
@@ -128,7 +148,12 @@ tts:
   # the file path and the live streaming lane stays off while a profile
   # declares them.
   profiles:
+    dry:
+      room:
+        enabled: false
     asmr:
+      room:
+        enabled: false
       default_rate: "-11%"
       default_pitch: "-18Hz"
       prosody:
@@ -157,6 +182,43 @@ tts:
       bed:
         source: STUDIO/dilla/data/bed.yml
         gain_db: -17
+
+# How both faces attend and shape the mouth. The browser reads these as
+# MASTER_VOICE_POLICY.awareness and .mouth (Policy.browser_payload); the
+# terminal face reads Policy.awareness and Policy.mouth. One home, no copies.
+face:
+  # Awareness of the user is fed only when the mic cannot be hearing MASTER
+  # (echo_safe); otherwise the face keeps its own idle behaviour. glance_scale
+  # narrows the saccades toward the user, lean is the forward settle, eye_open
+  # the lid opening (1 = ordinary).
+  awareness:
+    listening: { glance_scale: 0.35, eye_open: 1.4, lean: 0.10, heard_lean: 0.06 }
+    speaking:  { glance_scale: 0.60 }
+    # The user counts as speaking for this long after the last recogniser
+    # partial, in milliseconds.
+    heard_hold_ms: 1200
+    echo_safe:
+      # No awareness while TTS is audible, loading, or inside this tail after it
+      # ends, when room reverb and the recogniser's buffer still carry the
+      # sentence MASTER just spoke.
+      tts_tail_ms: 900
+  # The mouth by viseme. open scales how far the lips part (0 closes them on a
+  # bilabial), wide stretches (+) or rounds (-) the opening. The browser takes
+  # the viseme from its playback plan and moves the jaw region of the face
+  # shader by wide * wide_gain; the terminal reads the reply's letters at each
+  # syllable onset in the audio envelope and draws the void as an ellipse of
+  # the same proportions.
+  mouth:
+    wide_gain: 0.12
+    closed_letters: "mbpfwv"
+    shapes:
+      neutral: { open: 0.0, wide: 0.0 }
+      A: { open: 1.0, wide: 0.2 }
+      E: { open: 0.6, wide: 0.9 }
+      I: { open: 0.35, wide: 1.0 }
+      O: { open: 0.9, wide: -0.7 }
+      U: { open: 0.45, wide: -1.0 }
+      M: { open: 0.0, wide: -0.2 }
 
 voice:
   style: openbsd_dmesg

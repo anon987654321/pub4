@@ -669,7 +669,7 @@ module Master
       # result all return the unshaped path. A missing effect must cost the effect,
       # never the sentence.
       def shaped(path)
-        chain = Policy.post_chain
+        chain = Policy.shaped_chain
         return path unless path && chain && File.size?(path)
 
         out = path.sub(/\.mp3\z/, "_shaped.mp3")

@@ -409,7 +409,7 @@ module Master
       # it the same way it kills afplay: through @playing_pid.
       def stream_cmd(player_path, player_args)
         cmd = [player_path, *player_args, "-f", "mp3"]
-        chain = Policy.post_chain
+        chain = Policy.shaped_chain
         cmd += ["-af", chain] if chain && !chain.empty?
         cmd << "pipe:0"
         cmd
