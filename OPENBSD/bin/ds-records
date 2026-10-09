@@ -4,7 +4,7 @@
 # Print the DS record for every signed zone, derived from the KSK that is
 # actually in the signed zone right now.
 #
-# Run on vm23:  doas ruby40 /home/dev/pub4/OPENBSD/bin/ds-records
+# Run on vm23:  doas ruby /home/dev/pub4/OPENBSD/bin/ds-records
 #
 # Why this exists rather than a checked-in list of DS records:
 #
@@ -33,7 +33,7 @@ require "digest"
 ZONE_DIR = ENV.fetch("NSD_ZONE_DIR", "/var/nsd/zones/master")
 
 if ARGV.intersect?(%w[-h --help])
-  puts "usage: doas ruby40 OPENBSD/bin/ds-records   (NSD_ZONE_DIR=dir, default #{ZONE_DIR})"
+  puts "usage: doas ruby OPENBSD/bin/ds-records   (NSD_ZONE_DIR=dir, default #{ZONE_DIR})"
   puts "  one DS record per KSK in every *.zone.signed, derived from the zone rather than any .ds file"
   exit 0
 end
@@ -47,7 +47,7 @@ unless File.directory?(ZONE_DIR)
   exit 0
 end
 unless File.readable?(ZONE_DIR) && File.executable?(ZONE_DIR)
-  abort "ds-records: #{ZONE_DIR} is not readable by this user; run: doas ruby40 #{__FILE__}"
+  abort "ds-records: #{ZONE_DIR} is not readable by this user; run: doas ruby #{__FILE__}"
 end
 
 # Owner name in DNS wire format: each label length-prefixed, root label to end.

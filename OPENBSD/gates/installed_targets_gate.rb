@@ -51,9 +51,13 @@ module Deploy
     # Base-system and package binaries. The gate is about what THIS repo is
     # responsible for installing, not about auditing the OpenBSD ports tree.
     PROVIDED_BY_PACKAGES = %w[
-      ruby40 bundle40 ruby34 bundle34 git sqlite3 psql rcctl relayctl nsd-control acme-client
+      git sqlite3 psql rcctl relayctl nsd-control acme-client
       vips ffmpeg node npm doas su tee logger newsyslog drill dig sendmail curl wget
     ].freeze
+    # Ruby arrives by version (OPENBSD/lib/ruby_select.sh lists them); every
+    # suffix it may pick is provided by the package of that version.
+    RUBY_SUFFIXES = ["4.0", "40", "3.4", "34", "3.3", "33", ""].freeze
+    RUBY_PACKAGE_BINARIES = RUBY_SUFFIXES.flat_map { |suffix| %w[ruby bundle gem].map { |tool| "#{tool}#{suffix}" } }.freeze
 
     module_function
 
@@ -78,7 +82,7 @@ module Deploy
       referrers.each_with_object({}) do |path, acc|
         read(path).scan(TARGET) do |dir, name|
           name = name.sub(/\.\z/, "") # prose punctuation, not part of the filename
-          next if PROVIDED_BY_PACKAGES.include?(name)
+          next if PROVIDED_BY_PACKAGES.include?(name) || RUBY_PACKAGE_BINARIES.include?(name)
 
           (acc["#{dir}/#{name}"] ||= []) << path.delete_prefix("#{root}/")
         end

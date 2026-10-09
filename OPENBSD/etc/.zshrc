@@ -5,7 +5,7 @@ export WEAVIATE_API_KEY=__REDACTED__
 export GEMINI_API_KEY=__REDACTED__
 export DEEPSEEK_API_KEY=__REDACTED__
 
-export PATH="/home/dev/.local/share/gem/ruby/4.0/bin:$PATH"
+path=(/home/dev/.local/share/gem/ruby/*/bin(N) $path)
 
 export MASTER_AESTHETIC="${MASTER_AESTHETIC:-wscons}"
 export MASTER_BRUTALIST=1
@@ -21,4 +21,5 @@ source "${PUB4_ROOT}/FUN/zshrc.shared"
 [[ -n $MASTER_NOAUTOSTART ]] && return
 
 (cd ~/pub4 && RUBYOPT=-W0 git pull -q 2>/dev/null)
-cd ~/pub4/MASTER && exec bundle40 exec ruby40 bin/cli
+source "${PUB4_ROOT}/OPENBSD/lib/ruby_select.sh"
+cd ~/pub4/MASTER && exec "$BUNDLE" exec "$RUBY" bin/cli

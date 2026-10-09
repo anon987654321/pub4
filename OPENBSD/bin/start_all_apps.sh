@@ -19,8 +19,9 @@ esac
 # hand with no caller environment, so a PUB4_ROOT needs setting here too.
 # Production has one checkout, and a worktree is never a deploy target.
 ROOT=/home/dev/pub4
+. "$ROOT/OPENBSD/lib/ruby_select.sh"
 ALL_APPS_FLAG=/var/db/pub4_all_apps
-APPS=$(ruby40 -ryaml -e 'puts YAML.safe_load_file(ARGV[0]).fetch("apps").keys.join(" ")' "$ROOT/RAILS/apps.yml")
+APPS=$("$RUBY" -ryaml -e 'puts YAML.safe_load_file(ARGV[0]).fetch("apps").keys.join(" ")' "$ROOT/RAILS/apps.yml")
 [ -n "$APPS" ] || { echo "start_all_apps: no apps read from $ROOT/RAILS/apps.yml" >&2; exit 1; }
 SERVICES="master $APPS"
 
@@ -42,5 +43,5 @@ for svc in $SERVICES; do
   rcctl check "$svc" || exit 1
 done
 
-ruby40 "$ROOT/OPENBSD/gates/health_check.rb" --all-ready-apps
+"$RUBY" "$ROOT/OPENBSD/gates/health_check.rb" --all-ready-apps
 echo "all apps up (resource_guard shedding disabled via $ALL_APPS_FLAG)"

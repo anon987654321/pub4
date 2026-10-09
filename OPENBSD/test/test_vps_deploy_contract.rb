@@ -108,6 +108,6 @@ class VpsDeployContractTest < Minitest::Test
 
   def test_the_flag_is_taken_before_ci_and_the_app_is_checked_before_ok
     assert_operator SOURCE.index("\nhold_deploy_flag\n"), :<, SOURCE.index("OPENBSD/bin/vps_ci.sh")
-    assert_operator SOURCE.rindex(%(doas rcctl check "$app")), :>, SOURCE.index("GATE_REQUIRE_LIVE=1 ruby40")
+    assert_operator SOURCE.rindex(%(doas rcctl check "$app")), :>, SOURCE.index(%(GATE_AUTOFIX=0 "$RUBY" "$repo/MASTER/gates/runner.rb"))
   end
 end

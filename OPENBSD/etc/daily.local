@@ -2,7 +2,7 @@
 # Interpreters by absolute path, and PATH set anyway.
 #
 # /etc/daily inherits cron's environment, which does not include /usr/local/bin —
-# where every interpreter on this box lives. `ruby` on line 2 and `ruby40` on the
+# where every interpreter on this box lives. `ruby` on line 2 and the versioned Ruby on the
 # config_drift_gate line both failed to exec on every run, and the second one was
 # invisible because its `2>&1` sent the shell's own "not found" into the output
 # file it was writing. See etc/crontab.vm23 for the full accounting; the PATH line
@@ -11,14 +11,21 @@
 PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin
 export PATH
 
-/usr/local/bin/ruby40 /usr/local/bin/nsd-resign
+# This installs to /usr/local/bin and cannot source the repo's ruby_select.sh:
+# take the first Ruby the packages left beside it.
+RUBY=
+for _r in ruby4.0 ruby40 ruby3.4 ruby34 ruby3.3 ruby33 ruby; do
+  if [ -x "/usr/local/bin/$_r" ]; then RUBY="/usr/local/bin/$_r"; break; fi
+done
+
+"$RUBY" /usr/local/bin/nsd-resign
 # Two different questions. config-drift-check: do relayd routes, acme SANs and
 # nsd zones agree with each other on this box? config_drift_gate.rb: does every
 # tracked /etc and /usr/local/bin file match its repo mirror byte for byte?
 /usr/local/bin/config-drift-check || logger -t daily.local "config-drift-check failed"
 # Installed copy only. Root must not execute the writable checkout.
 if [ -x /usr/local/bin/config_drift_gate.rb ]; then
-  /usr/local/bin/ruby40 /usr/local/bin/config_drift_gate.rb >/var/log/config-drift.out 2>&1 || \
+  "$RUBY" /usr/local/bin/config_drift_gate.rb >/var/log/config-drift.out 2>&1 || \
     logger -t daily.local "repo/live config drift — see /var/log/config-drift.out"
 fi
 # su without -l, and its failure is now audible. `su -l` runs dev's login profile,
@@ -67,18 +74,18 @@ fi
 # /usr/ports/graphics/libvips, whose package is kept at
 # /usr/ports/packages/amd64/all/libvips-8.14.5.tgz.
 #
-# ruby40 rather than `vips -l | grep svgload`: grep is banned in committed
+# ruby rather than `vips -l | grep svgload`: grep is banned in committed
 # scripts here (laws.yml, BSD/GNU idiom drift), and the exit status is the
 # whole signal anyway.
 if command -v vips >/dev/null 2>&1; then
-  /usr/local/bin/ruby40 -e '
+  "$RUBY" -e '
     require "rubygems"
     raw = ARGV.fetch(0).to_s
     match = raw.match(/(\\d+\\.\\d+\\.\\d+)/)
     exit 1 unless match && Gem::Version.new(match[1]) >= Gem::Version.new("8.18.2")
   ' "$(vips --version 2>/dev/null)" || \
     logger -t daily.local "libvips below 8.18.2 — update /usr/ports/graphics/libvips before image processing"
-  /usr/local/bin/ruby40 -e 'exit(`vips -l 2>/dev/null`.include?("svgload") ? 0 : 1)' || \
+  "$RUBY" -e 'exit(`vips -l 2>/dev/null`.include?("svgload") ? 0 : 1)' || \
     logger -t daily.local "libvips lost svgload — amber garment cut-outs degrade silently; make reinstall in /usr/ports/graphics/libvips"
 else
   logger -t daily.local "libvips absent — amber garment cut-outs cannot render"

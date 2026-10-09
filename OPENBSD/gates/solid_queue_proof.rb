@@ -103,6 +103,14 @@ module SolidQueueProof
     end
   end
 
+# The bundler that belongs to the Ruby running this gate: OPENBSD/lib/ruby_select.sh
+# chose that Ruby, and its install name (ruby34, ruby40) carries the suffix.
+def bundle_command
+  suffix = RbConfig::CONFIG["ruby_install_name"].to_s.delete_prefix("ruby")
+  path = File.join(RbConfig::CONFIG["bindir"], "bundle#{suffix}")
+  File.executable?(path) ? path : "bundle"
+end
+
   def main(argv)
     app = argv.fetch(0) { abort "usage: solid_queue_proof.rb APP" }
     app_dir = "/home/#{app}/app"
@@ -125,7 +133,7 @@ module SolidQueueProof
         "export HOME=/home/#{app}",
         "cd #{Shellwords.escape(app_dir)}",
         "env RAILS_ENV=production SECRET_KEY_BASE=#{Shellwords.escape(secret)} " \
-          "bundle40 exec rails runner -e production #{Shellwords.escape(runner_source(app, tries))}",
+          "#{bundle_command} exec rails runner -e production #{Shellwords.escape(runner_source(app, tries))}",
       ].join(" && "),
     ]
 

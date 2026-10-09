@@ -10,6 +10,7 @@ if [[ ${1:-} == -h || ${1:-} == --help ]]; then
 fi
 
 PUB4=${PUB4:-/home/dev/pub4}
+. "${PUB4}/OPENBSD/lib/ruby_select.sh"
 LOG=${LOG:-/tmp/pub4_install_$(date +%Y%m%d_%H%M%S).log}
 
 exec > >(tee -a "$LOG") 2>&1
@@ -17,10 +18,10 @@ exec > >(tee -a "$LOG") 2>&1
 log() { printf '[%s] %s\n' "$(date +%H:%M:%S)" "$*" }
 
 log "pub4 install — log: $LOG"
-# ruby40, not awk, and the pattern changed with it: OpenBSD vmstat -s writes
+# ruby, not awk, and the pattern changed with it: OpenBSD vmstat -s writes
 # "53853 pages free" and has no line matching /free memory/ at all, so the awk
 # this replaces printed an empty figure on every run it ever made.
-log "free memory: $(vmstat -s | ruby40 -e 'puts $stdin.read[/^\s*(\d+)\s+pages free/, 1].to_s + " pages free"' 2>/dev/null || print unknown)"
+log "free memory: $(vmstat -s | "$RUBY" -e 'puts $stdin.read[/^\s*(\d+)\s+pages free/, 1].to_s + " pages free"' 2>/dev/null || print unknown)"
 
 # Every fallible step below logs a WARN and continues, and the script used to end
 # on `doas rcctl check master || true` — so a run that deployed nothing exited 0.
@@ -48,7 +49,7 @@ doas rcctl restart master 2>/dev/null || doas rcctl start master
 doas rcctl check master || { log "WARN: master not ok"; failed=$((failed + 1)); }
 
 typeset -a APPS
-APPS=(${(f)"$(ruby40 -ryaml -e 'puts YAML.safe_load_file(ARGV[0]).fetch("apps").keys' "${PUB4}/RAILS/apps.yml")"})
+APPS=(${(f)"$("$RUBY" -ryaml -e 'puts YAML.safe_load_file(ARGV[0]).fetch("apps").keys' "${PUB4}/RAILS/apps.yml")"})
 (( ${#APPS} )) || { log "ERR: no apps read from ${PUB4}/RAILS/apps.yml"; exit 1 }
 
 for app in $APPS; do

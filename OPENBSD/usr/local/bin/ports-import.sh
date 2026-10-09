@@ -12,6 +12,13 @@
 PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin
 export PATH
 
+# This installs to /usr/local/bin and cannot source the repo's ruby_select.sh:
+# take the first Ruby the packages left beside it.
+RUBY=
+for _r in ruby4.0 ruby40 ruby3.4 ruby34 ruby3.3 ruby33 ruby; do
+  if [ -x "/usr/local/bin/$_r" ]; then RUBY="/usr/local/bin/$_r"; break; fi
+done
+
 CEILING=${PORTS_IMPORT_LOAD_CEILING:-3.0}
 WAIT_TICKS=${PORTS_IMPORT_WAIT_TICKS:-15}
 TICK_SECONDS=${PORTS_IMPORT_TICK_SECONDS:-120}
@@ -24,7 +31,7 @@ stamp() {
 # boot this wrapper is about to cause. See prune-guests.sh for the measurement
 # that found the 1-minute figure self-defeating.
 load_is_low() {
-  ruby40 -e '
+  "$RUBY" -e '
     n = `sysctl -n vm.loadavg 2>/dev/null`.scan(/\d+(?:\.\d+)?/)
     exit(1) if n.size < 3
     exit(n[1].to_f <= ARGV[0].to_f ? 0 : 1)
@@ -48,7 +55,7 @@ if ! wait_for_quiet; then
   exit 0
 fi
 
-out=$(su -m bsdports -c "cd /home/bsdports/app && set -a && . /etc/bsdports.env && set +a && HOME=/home/bsdports RAILS_ENV=production /usr/local/bin/ruby40 bin/rails runner /usr/local/bin/ports_import.rb" 2>&1)
+out=$(su -m bsdports -c "cd /home/bsdports/app && set -a && . /etc/bsdports.env && set +a && HOME=/home/bsdports RAILS_ENV=production $RUBY bin/rails runner /usr/local/bin/ports_import.rb" 2>&1)
 status=$?
 
 result=$(printf '%s\n' "$out" | grep '^platform=')

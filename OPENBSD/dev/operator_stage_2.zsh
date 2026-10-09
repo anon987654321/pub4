@@ -16,7 +16,7 @@ check_libvips_security() {
     return 1
   }
 
-  /usr/local/bin/ruby40 -e '
+  "$RUBY" -e '
     require "rubygems"
     raw = ARGV.fetch(0).to_s
     match = raw.match(/(\d+\.\d+\.\d+)/)

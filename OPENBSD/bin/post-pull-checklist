@@ -17,10 +17,10 @@ post-pull: deployed /home/<app>/app trees are NOT updated by git pull alone.
 post-pull: never git stash to force a pull through; a stashed Gemfile.lock took master down.
 
 Next (serial — one app at a time):
-  1. ruby40 OPENBSD/bin/vps-state
+  1. ruby OPENBSD/bin/vps-state
   2. zsh OPENBSD/bin/vps-deploy <app>     # not vps_ci.sh: it syncs and tests, never migrates or restarts
-  3. ruby40 OPENBSD/gates/integrity_gate.rb
-  4. ruby40 OPENBSD/gates/health_check.rb --public --all-ready-apps
+  3. ruby OPENBSD/gates/integrity_gate.rb
+  4. ruby OPENBSD/gates/health_check.rb --public --all-ready-apps
   5. sh OPENBSD/bin/deploy-smoke.sh       # fast local+public smoke (ALLOW_AMBER_DOWN=1 if needed)
 
 MASTER web changes also need:
