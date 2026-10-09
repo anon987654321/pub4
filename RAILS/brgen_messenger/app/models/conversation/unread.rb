@@ -24,11 +24,15 @@ class Conversation
                  "messages.created_at > COALESCE(conversation_participants.last_read_at, ?)",
                  Time.at(0)
                )
+               .where.not(sender_id: user.id)
+               .visible.unexpired
       end
 
-      # DMs only — public channels are ambient and must not light the badge.
+      # DMs only — public channels are ambient and must not light the badge, and a
+      # muted thread was silenced by its owner, so it does not either.
       def unread_total_for(user)
-        unread_scope_for(user).where(conversations: { slug: nil }).count
+        unread_scope_for(user).where(conversations: { slug: nil })
+                              .where(conversation_participants: { muted_at: nil }).count
       end
 
       # The newest message of each conversation, in two queries. A list row shows
@@ -47,9 +51,7 @@ class Conversation
     end
 
     def unread_count_for(user)
-      participant = conversation_participants.find_by(user:)
-      return 0 unless participant
-      messages.where("created_at > ?", participant.last_read_at || Time.at(0)).count
+      self.class.unread_scope_for(user).where(conversation_id: id).count
     end
 
     # Three queries, not two per message.
@@ -66,7 +68,9 @@ class Conversation
     def mark_read_for!(user)
       conversation_participants.find_by(user:)&.update!(last_read_at: Time.current)
 
-      ids = messages.unexpired.pluck(:id)
+      # Other people's messages only: a receipt is what the sender reads to learn
+      # it was seen, so the reader has no use for one on their own line.
+      ids = messages.unexpired.where.not(sender_id: user.id).pluck(:id)
       return if ids.empty?
 
       now = Time.current
@@ -81,9 +85,27 @@ class Conversation
       end
 
       unread = already.filter_map { |mid, read_at| mid if read_at.nil? }
-      return if unread.empty?
+      MessageReceipt.where(message_id: unread, user_id: user.id).update_all(read_at: now, updated_at: now) if unread.any?
+      broadcast_read_states(missing + unread)
+    end
 
-      MessageReceipt.where(message_id: unread, user_id: user.id).update_all(read_at: now, updated_at: now)
+    private
+
+    # Tells the people whose messages were just opened, live, that they were: the
+    # chip in each line is replaced in place, not the line, so the log's
+    # new-message pill does not count it. Capped at the newest twenty, because a
+    # first visit to a long thread would otherwise queue one render per message;
+    # older lines catch up on their next load. Direct and group threads only —
+    # a channel shows no per-line state.
+    def broadcast_read_states(message_ids)
+      return if message_ids.empty? || slug.present?
+
+      messages.where(id: message_ids).order(id: :desc).limit(20).each do |message|
+        Turbo::StreamsChannel.broadcast_update_later_to(
+          self, target: "delivery_#{ActionView::RecordIdentifier.dom_id(message)}",
+          partial: "messages/delivery", locals: { message: message }
+        )
+      end
     end
   end
 end

@@ -23,6 +23,15 @@ class ConversationParticipant < ApplicationRecord
 
   def pinned? = pinned_at.present?
 
+  # Mute silences push and the badge; archive takes the thread out of the list.
+  # Both are the viewer's own handling of their inbox, and both are timestamps
+  # for the reason pinned_at is.
+  scope :muted, -> { where.not(muted_at: nil) }
+  scope :archived, -> { where.not(archived_at: nil) }
+
+  def muted? = muted_at.present?
+  def archived? = archived_at.present?
+
   # Ops, then voices, then members; stable by id within a tier.
   scope :by_rank, lambda {
     order(Arel.sql("CASE role WHEN 'op' THEN 0 WHEN 'voice' THEN 1 ELSE 2 END"), :id)

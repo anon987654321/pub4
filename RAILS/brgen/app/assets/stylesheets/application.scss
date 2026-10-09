@@ -1510,7 +1510,15 @@ body.vertical-messenger .layout > main#main-content > section.messenger-window {
   padding-inline: 0;
 }
 
+/* Pinned to the foot of the screen, above the on-screen keyboard. Below 1280px
+   the pane is as tall as its log and the page scrolls, so without this the
+   composer sat at the end of the thread, a long scroll below the fold, and the
+   keyboard covered it when it did open. --keyboard-inset is published by the
+   viewport-aware controller from visualViewport. */
 .messenger-composer-area {
+  position: sticky;
+  bottom: var(--keyboard-inset, 0px);
+  z-index: 1;
   flex: none;
   padding: var(--space-2) var(--space-3);
   padding-block-end: max(var(--space-3), env(safe-area-inset-bottom));
@@ -7740,6 +7748,13 @@ body.vertical-messenger ul[aria-label="Conversations"] mark {
   min-width: 0;
 }
 
+/* The sender's state, "· sent" or "· read", shown on the viewer's own lines
+   only. The partial renders the same text for every viewer, so a peer's line
+   must not tell the reader what their own message's state is. */
+body.vertical-messenger article[data-from="peer"] > header .read-receipt {
+  display: none;
+}
+
 /* "· edited", after the timestamp. Quiet on purpose — it is provenance, not
    content, and it sits in a line the reader scans rather than reads. */
 .edited-mark {
@@ -7950,7 +7965,10 @@ body.vertical-messenger #messages article img {
   max-width: 100%;
 }
 
-body.vertical-messenger #new_message {
+/* The stacked composer of the channel page. The DM composer is a
+   .messenger-composer and styles itself; these ID-specific rules used to win
+   over it and gave its send button the full row. */
+body.vertical-messenger #new_message:not(.messenger-composer) {
   position: sticky;
   bottom: max(var(--space-3), env(safe-area-inset-bottom), var(--keyboard-inset));
   padding: var(--space-3);
@@ -7959,7 +7977,7 @@ body.vertical-messenger #new_message {
   border: 1px solid var(--msg-border);
 }
 
-body.vertical-messenger #new_message textarea {
+body.vertical-messenger #new_message:not(.messenger-composer) textarea {
   width: 100%;
   resize: vertical;
   min-height: 4rem;
@@ -7972,7 +7990,7 @@ body.vertical-messenger #new_message textarea {
   font-size: var(--text-base);
 }
 
-body.vertical-messenger #new_message input[type="submit"] {
+body.vertical-messenger #new_message:not(.messenger-composer) input[type="submit"] {
   margin-top: var(--space-2);
   width: 100%;
   min-height: var(--tap-min);
@@ -8043,6 +8061,9 @@ body.vertical-messenger .msg-actions {
 }
 
 body.vertical-messenger .msg-actions summary {
+  display: flex;
+  align-items: center;
+  min-height: var(--tap-min);
   color: var(--msg-muted);
   cursor: pointer;
 }

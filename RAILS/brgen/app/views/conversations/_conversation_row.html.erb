@@ -25,16 +25,25 @@
       <span class="messenger-inbox-main">
         <strong class="messenger-inbox-name"><%= display_name.presence || t("messages.anonymous") %></strong>
         <% if last %>
-          <span class="messenger-inbox-preview"><%= truncate(last.content.to_s, length: 80) %></span>
+          <%# A view-once line is not previewed: the list would otherwise keep
+              showing what the thread has promised to remove. %>
+          <span class="messenger-inbox-preview"><%= conversation.view_once? ? t("messages.view_once_chip").upcase_first : truncate(last.content.to_s, length: 80) %></span>
         <% end %>
       </span>
       <span class="messenger-inbox-meta">
+        <% if local_assigns[:muted] %>
+          <small><%= t("messages.muted") %></small>
+        <% end %>
         <% if unread.positive? %>
           <mark><%= unread %></mark>
         <% elsif last %>
           <time datetime="<%= last.created_at.iso8601 %>"><%= time_ago(last.created_at) %></time>
         <% end %>
       </span>
+    <% end %>
+    <% if @archive %>
+      <%# destructive: no-confirm-ok — reversible — it moves the thread back to the inbox, nothing else %>
+      <%= button_to t("messages.unarchive"), conversation_archive_path(conversation), method: :delete, class: "btn btn-ghost btn-sm" %>
     <% end %>
     <% if pinned %>
       <%# destructive: no-confirm-ok — reversible — unpinning changes the order of the list, nothing else %>

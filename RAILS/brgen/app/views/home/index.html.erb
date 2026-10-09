@@ -25,9 +25,21 @@
   <%= turbo_stream_from Post.city_feed_stream(feed_city.id) %>
 <% end %>
 
-<nav class="home-feed-views" aria-label="<%= t("home.feed_views", default: "Feed views") %>">
-  <%= link_to t("home.feed_view", default: "Feed"), root_path(feed: params[:feed]), class: "home-feed-view#{' is-active' if params[:view].to_s != "media"}", aria: { current: ("page" if params[:view].to_s != "media") } %>
-  <%= link_to t("home.media_wall_view", default: "Media wall"), root_path(feed: params[:feed], view: "media"), class: "home-feed-view#{' is-active' if params[:view].to_s == "media"}", aria: { current: ("page" if params[:view].to_s == "media") } %>
+<nav class="home-feed-views" aria-label="<%= t("home.feed_views") %>">
+  <%= link_to t("home.feed_view"), root_path(feed: params[:feed]), class: "home-feed-view#{' is-active' if params[:view].to_s != "media"}", aria: { current: ("page" if params[:view].to_s != "media") } %>
+  <%= link_to t("home.media_wall_view"), root_path(feed: params[:feed], view: "media"), class: "home-feed-view#{' is-active' if params[:view].to_s == "media"}", aria: { current: ("page" if params[:view].to_s == "media") } %>
+  <%# The way into the messenger from the front page, one tap on a phone and
+      visible without the tab bar, which rests hidden. It is a link to this
+      host's own inbox, not the Messenger host in the swiper: the same session,
+      no second sign-in. The count is the unread badge's, and its words are
+      spoken because a number alone names nothing. %>
+  <%= link_to conversations_path, class: "home-feed-view" do %>
+    <%= t("nav.messages") %>
+    <% if (unread = messenger_unread_badge) %>
+      <sup class="nav_link_badge" aria-hidden="true"><%= unread %></sup>
+      <span class="visually-hidden"><%= t("messages.unread_badge", count: messenger_unread_total) %></span>
+    <% end %>
+  <% end %>
 </nav>
 
 <section id="feed-panel" aria-label="<%= t("home.local_posts") %>" data-visitor-orientation

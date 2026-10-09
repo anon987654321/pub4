@@ -19,7 +19,7 @@ pin_all_from "app/javascript/controllers", under: "controllers"
 # one of them from an engine. Dead in production as a result: the playlist audio
 # player (playlist/playlists/_player), the TV video player on all three watch
 # pages, and dating's intro/discover toggle on its landing page.
-%w[Dating Marketplace Playlist Takeaway Tv].each do |vertical|
+%w[Dating Marketplace Playlist Takeaway Tv BrgenMessenger].each do |vertical|
   next unless Object.const_defined?("#{vertical}::Engine")
 
   dir = Object.const_get("#{vertical}::Engine").root.join("app/javascript/controllers")

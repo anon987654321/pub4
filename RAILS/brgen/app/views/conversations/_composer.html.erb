@@ -5,8 +5,12 @@
               aria: { label: t("messages.composer_label") },
               data: {
                 turbo: true,
-                controller: "typing-input",
+                controller: "typing-input optimistic-send",
                 typing_input_url_value: conversation_typing_indicators_path(conversation),
+                optimistic_send_handle_value: Current.user&.display_name.to_s,
+                optimistic_send_pending_label_value: t("chat.sending"),
+                optimistic_send_failed_label_value: t("chat.send_failed"),
+                optimistic_send_offline_label_value: t("messages.offline"),
                 action: "keydown->typing-input#composerKeydown input->typing-input#ping turbo:submit-end->typing-input#markValue"
               } do |f| %>
   <% if reply_to %>
@@ -45,6 +49,9 @@
         voice note goes through the same create path as a photo. %>
     <%= f.file_field :attachment, accept: "audio/*,image/*", class: "media-input-hidden", data: { voice_recorder_target: "file" } %>
     <%= f.hidden_field :message_type, value: "text", data: { voice_recorder_target: "type" } %>
+    <%# One name per attempt, kept across retries: the server answers a repeat
+        with the message it already has instead of writing it twice. %>
+    <%= f.hidden_field :client_token, value: nil, data: { optimistic_send_target: "token" } %>
     <%= f.hidden_field :duration_seconds, data: { voice_recorder_target: "duration" } %>
 
     <span class="messenger-composer-record"
@@ -77,3 +84,4 @@
         does, and it costs no new file. %>
     <%= f.submit t("actions.send"), class: "btn btn-primary messenger-composer-send" %>
   </div>
+<% end %>

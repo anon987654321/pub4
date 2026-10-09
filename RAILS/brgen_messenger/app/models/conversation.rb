@@ -16,6 +16,11 @@ class Conversation < ApplicationRecord
   validates :conversation_type, inclusion: { in: %w[direct group] }
 
   scope :for_user, ->(u) { joins(:conversation_participants).where(conversation_participants: { user: u }) }
+  # The inbox is two lists: what you keep in view and what you put away. The
+  # archive state is the viewer's own, read off the participant row that
+  # for_user already joins.
+  scope :in_inbox, -> { where(conversation_participants: { archived_at: nil }) }
+  scope :in_archive, -> { where.not(conversation_participants: { archived_at: nil }) }
   scope :channels, -> { where(conversation_type: "group").where.not(slug: nil).order(:slug) }
 
   # find_or_create_by! is a read then a write, and two joins of the same room
@@ -87,6 +92,18 @@ class Conversation < ApplicationRecord
   end
 
   def group_dm? = conversation_type == "group" && slug.blank?
+  def direct? = conversation_type == "direct"
+
+  # A block between the two people of a direct thread, in either direction. The
+  # other side of a block is not told, so the check reads both rows; a group is
+  # not covered because one block there would silence the room for everyone.
+  def blocked_between?(user)
+    return false unless direct? && user
+
+    others = conversation_participants.where.not(user_id: user.id).select(:user_id)
+    Block.where(blocker_id: user.id, blocked_id: others)
+         .or(Block.where(blocker_id: others, blocked_id: user.id)).exists?
+  end
 
   # Ops rename the room and remove people; any member may add. A group chat
   # where only the founder can bring a friend in is one people work around by
@@ -111,10 +128,32 @@ class Conversation < ApplicationRecord
     "1m" => 60,
     "5m" => 300,
     "1h" => 3600,
-    "24h" => 86_400
+    "24h" => 86_400,
+    # View once: a zero-length timer, read as "when everyone it was sent to has
+    # opened it" rather than as a clock. It reuses the one column the other
+    # options live in, so a conversation is in exactly one ephemeral mode.
+    "after_read" => 0
   }.freeze
 
   def disappearing_messages? = disappearing_duration.present? && disappearing_duration.positive?
+  def view_once? = disappearing_duration == 0
+  def ephemeral? = disappearing_messages? || view_once?
+
+  # A view-once message goes the next time the thread is opened after every
+  # person it was sent to has read it. Expiry is the same unsend the timer uses,
+  # so search, forwarding and the preview all stop seeing it. Bots never read,
+  # so they are not waited for.
+  def expire_read_messages!
+    return unless view_once?
+
+    messages.visible.where(
+      "NOT EXISTS (SELECT 1 FROM conversation_participants cp " \
+      "JOIN users u ON u.id = cp.user_id " \
+      "WHERE cp.conversation_id = messages.conversation_id AND cp.user_id <> messages.sender_id AND u.bot = ? " \
+      "AND NOT EXISTS (SELECT 1 FROM message_receipts r WHERE r.message_id = messages.id " \
+      "AND r.user_id = cp.user_id AND r.read_at IS NOT NULL))", false
+    ).find_each(&:expire!)
+  end
 
   def display_name_for(user)
     return name if conversation_type == "group" && name.present?

@@ -122,7 +122,7 @@
     <%# DMs only — public channels are ambient and must not light the badge.
         One COUNT, not a Ruby sum over 2 queries per thread on every render of
         every page. The filter lives in unread_total_for. %>
-    <% unread = Conversation.unread_total_for(Current.user) %>
+    <% unread = messenger_unread_total %>
     <div data-controller="push"
          data-push-vapid-key-value="<%= Shared::Vapid.public_key %>"
          data-push-subscribe-url-value="<%= main_app.push_subscriptions_path %>"

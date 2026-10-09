@@ -1,3 +1,10 @@
+<%# The sender gets their line in the response as well as from the broadcast.
+    The broadcast is the path every other reader's line takes, and it is lost
+    to a socket that dropped and has not resubscribed yet, which is exactly the
+    state of a phone that has just come back online. Turbo removes an existing
+    child with the same id before appending, so when both arrive there is one
+    line, not two. %>
+<%= turbo_stream.append_all ".conversation-log", partial: "messages/message", locals: { message: @rendered } %>
 <%= turbo_stream.replace "new_message" do %>
   <% if @conversation.channel? %>
     <%= render "channels/composer", conversation: @conversation, message: Message.new %>

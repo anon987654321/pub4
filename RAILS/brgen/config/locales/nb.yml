@@ -103,6 +103,9 @@ nb:
     opens_new_tab: "%{label} (åpnes i ny fane)"
   skip_to_content: Hopp til hovedinnhold
   home:
+    feed_views: Visninger og meldinger
+    feed_view: Innlegg
+    media_wall_view: Mediavegg
     new_posts:
       one: 1 nytt innlegg
       other: "%{count} nye innlegg"
@@ -444,6 +447,39 @@ nb:
     search_empty_title: Ingen treff
     search_empty_body: Meldinger som er forsvunnet eller angret kan ikke søkes fram.
     search: Søk
+    mute: Demp
+    unmute: Opphev demping
+    muted: Dempet
+    archive: Arkiver
+    unarchive: Flytt til innboksen
+    archive_link: "Arkiv (%{count})"
+    inbox_link: Innboks
+    archive_title: Arkiverte samtaler
+    archive_empty_title: Ingen arkiverte samtaler
+    archive_empty_body: Samtaler du arkiverer samles her, og kommer tilbake når noen skriver til deg.
+    block_user: Blokker
+    unblock_user: Opphev blokkering
+    confirm_block: Blokkere denne personen? Dere kan ikke skrive til hverandre før blokkeringen er opphevet. Personen får ikke beskjed.
+    blocked_by_me: Du har blokkert denne personen. Opphev blokkeringen for å skrive igjen.
+    blocked_either: Du kan ikke sende meldinger i denne samtalen.
+    report_message: Rapporter melding
+    delivery_sent: sendt
+    read_by: "lest av %{count}"
+    unread_badge:
+      one: "%{count} ulest melding"
+      other: "%{count} uleste meldinger"
+    open_messenger: Åpne meldinger
+    disappearing_options:
+      "off": Av
+      "1m": 1 minutt
+      "5m": 5 minutter
+      "1h": 1 time
+      "24h": 24 timer
+      after_read: Når den er lest
+    disappearing_note: Skjermbilde kan ikke hindres. Den du skriver til kan fortsatt ta bilde av skjermen eller kopiere teksten.
+    view_once_chip: forsvinner når den er lest
+    offline: Du er frakoblet. Meldingen sendes når du er på nett igjen.
+    retry: Prøv igjen
   comments:
     sort_label: Sorter kommentarer
   push:
@@ -1740,6 +1776,11 @@ nb:
     disappearing_messages_updated: Forsvinnende meldinger er oppdatert.
     conversation_pinned: Samtalen er festet.
     conversation_unpinned: Samtalen er løsnet.
+    conversation_muted: Samtalen er dempet. Du får verken varsler eller merke.
+    conversation_unmuted: Demping opphevet.
+    conversation_archived: Samtalen er arkivert.
+    conversation_unarchived: Samtalen ligger i innboksen igjen.
+    messaging_blocked: Du kan ikke sende meldinger i denne samtalen.
     crossposted: Krysspostet.
     wiki_created: Siden er laget.
     wiki_updated: Siden er oppdatert.

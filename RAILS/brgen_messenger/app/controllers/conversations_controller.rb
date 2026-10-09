@@ -5,8 +5,10 @@ class ConversationsController < ApplicationController
   # The rail is part of the window, not part of the inbox, so it loads for the
   # room you are reading as well as for the list. Arriving straight at a
   # conversation URL used to give you that conversation and nothing else — no
-  # way to reach another room without going back first.
-  before_action :load_rail, only: %i[index show]
+  # way to reach another room without going back first. #show loads it itself,
+  # after view-once messages are expired, so the rail's preview never shows a
+  # line the thread has just removed.
+  before_action :load_rail, only: :index
 
   def index
     # DMs only — public channels live under /channels, not the messenger list.
@@ -14,12 +16,16 @@ class ConversationsController < ApplicationController
     # a correlated subquery rather than a raw "messages.created_at" order on an
     # unjoined table — the latter needs .references(:messages) and then
     # LEFT-JOIN-duplicates each conversation once per message.
+    # ?arkiv=1 is the archive: the same list, the other half of the viewer's own
+    # archive flag.
+    @archive = params[:arkiv].present?
+    threads = Conversation.for_user(Current.user).where(slug: nil)
     @pagy, @conversations = pagy(
-      Conversation.for_user(Current.user)
-                  .where(slug: nil)
+      (@archive ? threads.in_archive : threads.in_inbox)
                   .includes(:participants)
                   .order(Conversation::INBOX_ORDER)
     )
+
     @last_messages = Conversation.last_messages_for(@conversations.map(&:id))
     # One grouped COUNT for the whole list. The view used to call
     # unread_count_for per row, which includes(:messages) does not help with —
@@ -29,6 +35,9 @@ class ConversationsController < ApplicationController
     @pinned_ids = ConversationParticipant.pinned
                                          .where(user_id: Current.user.id, conversation_id: @conversations.map(&:id))
                                          .pluck(:conversation_id).to_set
+    @muted_ids = ConversationParticipant.muted
+                                        .where(user_id: Current.user.id, conversation_id: @conversations.map(&:id))
+                                        .pluck(:conversation_id).to_set
   end
 
   # Search the reader's own messages. Scoped through the conversations they
@@ -68,7 +77,14 @@ class ConversationsController < ApplicationController
     # participants for the group roster; strict loading makes that a preload
     # rather than a nice-to-have.
     @conversation = Conversation.for_user(Current.user).includes(:participants).find(params[:id])
+    # Before the read is recorded: what was opened on an earlier visit goes now,
+    # and what is being opened for the first time stays for this one.
+    @conversation.expire_read_messages!
     @conversation.mark_read_for!(Current.user)
+    load_rail
+    @participant = @conversation.conversation_participants.find_by(user: Current.user)
+    @blocked = @conversation.blocked_between?(Current.user)
+    @blocked_by_me = @blocked && @conversation.other_participants(Current.user).any? { |other| Current.user.blocking?(other) }
     # parent: :sender for the reply line, message_receipts for the read chip —
     # both are read once per message, so both are preloaded once per page.
     @messages = @conversation.messages.visible.unexpired
@@ -144,9 +160,13 @@ class ConversationsController < ApplicationController
   def load_rail
     @rail_conversations = Conversation.for_user(Current.user)
                                       .where(slug: nil)
+                                      .in_inbox
                                       .includes(:participants)
                                       .order(Conversation::INBOX_ORDER)
                                       .limit(30)
+    # How many threads are put away, so the rail links to them only when there is
+    # something behind the link.
+    @archived_count = Conversation.for_user(Current.user).where(slug: nil).in_archive.count
     @rail_last_messages = Conversation.last_messages_for(@rail_conversations.map(&:id))
     @rail_unread = Conversation.unread_counts_for(Current.user)
   end

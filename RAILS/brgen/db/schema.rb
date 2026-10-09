@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_28_110000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_09_121000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -331,9 +331,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_110000) do
     t.string "role", default: "member", null: false
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
+    t.datetime "muted_at"
+    t.datetime "archived_at"
     t.index ["conversation_id", "user_id"], name: "index_conversation_participants_on_pair", unique: true
     t.index ["conversation_id"], name: "index_conversation_participants_on_conversation_id"
     t.index ["user_id", "pinned_at"], name: "index_conversation_participants_on_user_id_and_pinned_at"
+    t.index ["user_id", "archived_at"], name: "index_conversation_participants_on_user_id_and_archived_at"
     t.index ["user_id"], name: "index_conversation_participants_on_user_id"
   end
 
@@ -982,12 +985,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_110000) do
     t.integer "sender_id"
     t.integer "story_id"
     t.datetime "updated_at", null: false
+    t.string "client_token"
     t.index ["conversation_id", "deleted_at"], name: "index_messages_on_conversation_id_and_deleted_at"
     t.index ["conversation_id"], name: "index_messages_on_conversation_id"
     t.index ["expires_at"], name: "index_messages_on_expires_at", where: "expires_at IS NOT NULL"
     t.index ["forwarded_from_id"], name: "index_messages_on_forwarded_from_id"
     t.index ["link_preview_id"], name: "index_messages_on_link_preview_id"
     t.index ["parent_id"], name: "index_messages_on_parent_id"
+    t.index ["sender_id", "client_token"], name: "index_messages_on_sender_id_and_client_token", unique: true
     t.index ["sender_id"], name: "index_messages_on_sender_id"
     t.index ["story_id"], name: "index_messages_on_story_id"
   end
@@ -1015,6 +1020,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_110000) do
     t.string "status", default: "open", null: false
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
+    t.text "decision_reason"
+    t.datetime "decided_at"
     t.index ["reportable_type", "reportable_id"], name: "index_moderation_reports_on_reportable_type_and_reportable_id"
     t.index ["status", "created_at"], name: "index_moderation_reports_on_status_and_created_at"
     t.index ["user_id"], name: "index_moderation_reports_on_user_id"

@@ -100,6 +100,9 @@ en:
     opens_new_tab: "%{label} (opens in a new tab)"
   skip_to_content: Skip to main content
   home:
+    feed_views: Views and messages
+    feed_view: Posts
+    media_wall_view: Media wall
     new_posts:
       one: 1 new post
       other: "%{count} new posts"
@@ -440,6 +443,39 @@ en:
     search_empty_title: Nothing matched
     search_empty_body: Disappeared and unsent messages are not searchable.
     search: Search
+    mute: Mute
+    unmute: Unmute
+    muted: Muted
+    archive: Archive
+    unarchive: Move to inbox
+    archive_link: "Archive (%{count})"
+    inbox_link: Inbox
+    archive_title: Archived conversations
+    archive_empty_title: No archived conversations
+    archive_empty_body: Conversations you archive collect here, and come back when someone writes to you.
+    block_user: Block
+    unblock_user: Unblock
+    confirm_block: Block this person? You cannot message each other until you unblock. They are not told.
+    blocked_by_me: You blocked this person. Unblock to write again.
+    blocked_either: You cannot send messages in this conversation.
+    report_message: Report message
+    delivery_sent: sent
+    read_by: "read by %{count}"
+    unread_badge:
+      one: "%{count} unread message"
+      other: "%{count} unread messages"
+    open_messenger: Open messages
+    disappearing_options:
+      "off": Off
+      "1m": 1 minute
+      "5m": 5 minutes
+      "1h": 1 hour
+      "24h": 24 hours
+      after_read: Once read
+    disappearing_note: A screenshot cannot be prevented. The person you write to can still photograph the screen or copy the text.
+    view_once_chip: disappears once read
+    offline: You are offline. The message is sent when you are back online.
+    retry: Try again
   comments:
     sort_label: Sort comments
   push:
@@ -1732,6 +1768,11 @@ en:
     disappearing_messages_updated: Disappearing messages updated.
     conversation_pinned: Conversation pinned.
     conversation_unpinned: Conversation unpinned.
+    conversation_muted: Conversation muted. No notifications or badge.
+    conversation_unmuted: Unmuted.
+    conversation_archived: Conversation archived.
+    conversation_unarchived: Conversation is back in the inbox.
+    messaging_blocked: You cannot send messages in this conversation.
     crossposted: Crossposted.
     wiki_created: Page created.
     wiki_updated: Page updated.
