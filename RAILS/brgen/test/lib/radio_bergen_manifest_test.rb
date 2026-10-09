@@ -28,7 +28,7 @@ class RadioBergenManifestTest < ActiveSupport::TestCase
   # is a claim about this repo. They named studio/radio-bergen/ for weeks after
   # 41b20306d deleted it, and nothing failed.
   test "every repo path in the archaeology lines exists" do
-    root = Pathname.new(File.expand_path("../../../..", __dir__))
+    root = Pathname.new(Shared::Contracts.root)
     paths = Brgen::RadioBergenManifest.archaeology_lines.join("\n")
                                       .scan(%r{\b(?:RAILS|STUDIO|MASTER|OPENBSD)/[\w./-]+\.\w+})
 

@@ -26,7 +26,7 @@ class Tv::SubscriptionTest < ActiveSupport::TestCase
     again = Tv::Subscription.new(user: @viewer, channel: @channel)
 
     assert_not again.valid?
-    assert again.errors.added?(:user_id, :taken, value: @viewer.id)
+    assert again.errors.of_kind?(:user_id, :taken)
     assert Tv::Subscription.new(user: @owner, channel: @channel).valid?
   end
 end

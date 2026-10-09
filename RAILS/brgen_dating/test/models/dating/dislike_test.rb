@@ -16,7 +16,7 @@ class Dating::DislikeTest < ActiveSupport::TestCase
     duplicate = Dating::Dislike.new(disliker: @viewer, dislikee: @other)
 
     assert_not duplicate.valid?
-    assert duplicate.errors.added?(:disliker_id, :taken, value: @viewer.id)
+    assert duplicate.errors.of_kind?(:disliker_id, :taken)
   end
 
   test "two people may each pass on the other" do

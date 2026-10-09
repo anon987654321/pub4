@@ -144,7 +144,7 @@ class ApplicationHelperTest < ActionView::TestCase
 
   test "city network includes every owned domain that is a city apex" do
     apps = YAML.safe_load(
-      File.read(File.expand_path("../../../apps.yml", __dir__)),
+      File.read(File.join(Shared::Contracts.root, "RAILS", "apps.yml")),
       aliases: false
     )
     owned_city_domains = apps.fetch("owned_domains").select do |domain|

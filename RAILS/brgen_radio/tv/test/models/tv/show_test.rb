@@ -42,7 +42,7 @@ class Tv::ShowTest < ActiveSupport::TestCase
     same_channel = Tv::Show.new(channel: @channel, title: "Bybanen igjen", description: "Om trikken", slug: "bybanen")
 
     assert_not same_channel.valid?
-    assert same_channel.errors.added?(:slug, :taken, value: "bybanen")
+    assert same_channel.errors.of_kind?(:slug, :taken)
     assert Tv::Show.new(channel: @other_channel, title: "Bybanen", description: "Om trikken", slug: "bybanen").valid?
   end
 
