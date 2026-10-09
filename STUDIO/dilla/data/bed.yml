@@ -333,17 +333,27 @@ drums:
     industrial: [industrial_techno, sp1200, sp303, mpc3000, madlib_dusty, crate_dig, boom_*, pack_729_*]
   crate: samples/drums
   samples: { kick: kick.wav, snare: snare.wav, ghost: ghost.wav, hat: hat.wav, open_hat: open_hat.wav, clap: ind_clap.wav }
-  # Dilla time: the hats rigid, the snare rushed, the kick swung and late,
-  # the ghosts later still. The parts disagree, and the disagreement is the
-  # groove. The engine's own `dilla_drag` feel (lib/groove.rb) drags the
-  # snare late instead. They differ on purpose: this rushed snare is the feel
-  # the operator heard and kept when the bed became the render (2026-09-14),
-  # and the engine's other renders keep the drag he was given on 2026-09-08.
-  # One drum-grid registry (restructuring proposal 9) settles it for both.
+  # Dilla time: the hats rigid, the snare early, the kick swung and late, the
+  # ghosts later still. The parts disagree, and the disagreement is the
+  # groove. The sources are in data/dilla_reference.yml, principles.drum_timing: hats
+  # straight and snare early is Charnas's own count on "Don't Say a Word"
+  # (Okayplayer), DJ Mag, The Pudding and Big Noise Radio; the early snare is
+  # also LRB (about 65 ms, 5/192 of a bar) and Ethan Hein; the kick lagging is
+  # LRB, Big Noise Radio and the singmemory Donuts essay.
+  #
+  # The snare sits 28 ms early, four ticks of the MPC3000's 96 PPQ at this
+  # tempo: audibly rushed, and inside the 65 to 85 ms the sources cite, because
+  # a snare pushed that far reads as a mistake rather than a lean. Hats and
+  # snare carry no drift: Hein finds Dilla's deviations repeat identically all
+  # through a song, so the pocket is the same every bar and only the kick
+  # (Butterfield's erratic part) wanders. `anchor` names the kick steps that
+  # sit on the grid with no shift, the downbeat the others lean against (The
+  # Pudding on "Fall in Love"). The engine's own `dilla_drag` feel
+  # (lib/groove.rb) drags the snare late instead, on purpose.
   feels:
     hat:   { swing: 0.0,  shift: 0.0,    drift: 0.0 }
-    snare: { swing: 0.0,  shift: -0.014, drift: 0.002 }
-    kick:  { swing: 0.17, shift: 0.016,  drift: 0.004 }
+    snare: { swing: 0.0,  shift: -0.028, drift: 0.0 }
+    kick:  { swing: 0.17, shift: 0.016,  drift: 0.006, anchor: [0] }
     ghost: { swing: 0.17, shift: 0.026,  drift: 0.004 }
   # D'Angelo feel (FEEL_PROFILE=dangelo in dilla.rb, documented in its
   # DAngeloFeel module). Derived numbers from the 2026-10-03 research — the
@@ -356,9 +366,14 @@ drums:
     snare: { swing: 0.06, shift: 0.03,   drift: 0.004 }
     kick:  { swing: 0.10, shift: 0.02,   drift: 0.004 }
     ghost: { swing: 0.10, shift: 0.032,  drift: 0.005 }
-  hat_accents: { downbeat: 0.95, eighth: 0.7, sixteenth: 0.45, jitter: 0.3, open_odds: 0.35 }
-  tape: { head_bump_hz: 60, head_bump_db: 3.4, drive: 1.7, wow_hz: 0.31, flutter_hz: 6.2, rolloff_hz: 14000 }
-  slam: { threshold_db: -38, ratio: 12, attack_ms: 0.6, release_ms: 90, makeup_db: 8, blend: 0.6 }
+  # Velocity is the half of the pocket the ear reads as a person. The hats sit
+  # well under the backbeat and step down from the downbeat through the eighths
+  # to the sixteenths; the backbeat is the loudest thing in the bar and is not
+  # struck twice alike. Ghost notes stay in drum_parts at 0.22 to 0.34.
+  hat_accents: { downbeat: 0.8, eighth: 0.58, sixteenth: 0.38, jitter: 0.35, open_odds: 0.25 }
+  backbeat: { level: 0.92, spread: 0.2 }
+  tape: { head_bump_hz: 60, head_bump_db: 2.6, drive: 1.7, wow_hz: 0.31, flutter_hz: 6.2, rolloff_hz: 14000 }
+  slam: { threshold_db: -38, ratio: 12, attack_ms: 0.6, release_ms: 90, makeup_db: 6, blend: 0.4 }
   finish: sonitex_sp1200
   sonitex: { drive: 1.45, bandwidth_hz: 8000, crush_bits: 12, crush_hz: 26095, crush_mix: 0.52, lowpass_hz: 12000 }
   gain_db: -8
@@ -382,23 +397,32 @@ composition:
   motif: { steps: [0, 3, 6, 10], lengths: [3, 2, 4, 5], velocities: [0.9, 0.7, 0.8, 0.65] }
   # Percussion answers each lead note this many sixteenths later.
   answer: { steps: 2, velocity: 0.35 }
+  # What the drum transforms do to the pocket (the hits are the kit's, in dilla
+  # time already). Humanize is a couple of milliseconds, not eight: Dilla's
+  # offsets repeat identically, so random jitter that moves the rigid hats off
+  # the reference unmakes the conflict. No section lists `swing` for the kit,
+  # because the voices carry their own swing in `feels` and a second one pushed
+  # the odd-step hats and ghosts late again. Ghost, ratchet, accent and quantize
+  # are lighter for the same reason: a grace note before one hit in eight, a
+  # roll on one in ten, a 1.1 push on the beat, and quantize pulling two-fifths
+  # of the way home so the feel survives it.
   transforms:
-    humanize: { ms: 8, spread: 0.12 }
+    humanize: { ms: 2.5, spread: 0.1 }
     swing: { amount: 0.54 }
     shift: { steps: 1 }
     stretch: { factor: 1.5 }
     reverse: {}
     repeat: { times: 2 }
-    ratchet: { count: 3, odds: 0.25 }
-    ghost: { odds: 0.3, level: 0.3 }
-    accent: { amount: 1.25 }
+    ratchet: { count: 3, odds: 0.1 }
+    ghost: { odds: 0.12, level: 0.3 }
+    accent: { amount: 1.1 }
     drop: { odds: 0.15 }
     transpose: { semitones: 12 }
     invert: {}
     chop: { pieces: 3 }
     stutter: { steps: 2, repeats: 4 }
     probabilize: { odds: 0.7 }
-    quantize: { strength: 1.0 }
+    quantize: { strength: 0.4 }
     resample: { rate: 0.75 }
   sections:
     - name: atmosphere
@@ -436,7 +460,7 @@ composition:
       grid: flylo
       voices: [kick, snare, ghost, hat, open_hat]
       density: 0.85
-      drums: [humanize, swing]
+      drums: [humanize]
       hate: { profile: hardgroove, elements: [hat, perc_a, perc_b] }
       lead: []
       gains_db: { texture: -8, kit: 0, hate: -12, bass: 0, pads: 0, lead: -60 }
@@ -446,7 +470,7 @@ composition:
       grid: dilla
       voices: [kick, snare, ghost, hat, open_hat]
       density: 1.0
-      drums: [humanize, swing]
+      drums: [humanize]
       hate: { profile: hardgroove, elements: [hat, clap, perc_a, perc_b] }
       lead: []
       gains_db: { texture: -10, kit: 0, hate: -10, bass: 0, pads: -2, lead: 0 }
@@ -456,7 +480,7 @@ composition:
       grid: flylo
       voices: [kick, snare, ghost, hat, open_hat]
       density: 1.0
-      drums: [swing, ghost, ratchet, accent, stutter]
+      drums: [ghost, ratchet, accent, stutter]
       hate: { profile: hardgroove, elements: [hat, open, clap, perc_a, perc_b] }
       lead: [ratchet, stutter]
       kick_drop: [10]
@@ -500,7 +524,7 @@ composition:
       grid: dilla
       voices: [kick, snare, ghost, hat, open_hat]
       density: 1.0
-      drums: [swing, accent, ghost]
+      drums: [accent, ghost]
       hate: { profile: industrial, elements: [kick, hat, clap, perc_a, perc_b] }
       lead: [reverse, invert]
       gains_db: { texture: -10, kit: 0, hate: -4, bass: 0, pads: -3, lead: 0 }
@@ -510,7 +534,7 @@ composition:
       grid: techno
       voices: [kick, snare, ghost, hat, open_hat]
       density: 1.0
-      drums: [swing, ghost, ratchet, accent, quantize]
+      drums: [ghost, ratchet, accent, quantize]
       hate: { profile: industrial, elements: [kick, hat, open, clap, perc_a, perc_b, texture] }
       lead: [transpose]
       gains_db: { texture: -8, kit: 0, hate: -3, bass: 0, pads: -2, lead: 0 }

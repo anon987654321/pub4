@@ -274,6 +274,48 @@ principles:
       - Preserve intentional asymmetry.
       - Do not rely on a fixed swing percentage.
 
+  # Drum timing, cross-checked 2026-10-09 against secondary sources only (the
+  # book itself was unreadable). A rule is encoded in data/bed.yml `drums` only
+  # where at least three sources agree; `agree` counts them. Read by tests
+  # (test_dilla_bed.rb) for the numbers it pins, not by the engine.
+  drum_timing:
+    sources:
+      okayplayer: "https://www.okayplayer.com/culture/j-dilla-time-book-dan-charnas-interview.html"
+      lrb: "https://www.lrb.co.uk/the-paper/v44/n20/francis-gooding/basement-beats"
+      hein_chameleon: "https://ethanhein.substack.com/p/dilla-time-in-chameleon"
+      hein_get_dis_money: "https://www.ethanhein.com/wp/2022/dilla-time/"
+      pudding: "https://pudding.cool/2023/06/groove/"
+      bignoise: "https://bignoiseradio.com/dilla-time-simple-complex-music-production-techniques/"
+      djmag: "https://djmag.com/features/d-dilla-life-and-legacy-of-hip-hop-phenomenon"
+      singmemory: "https://singmemory.substack.com/p/donuts"
+      sunhouse: "https://sunhou.se/blog/j-dilla-fall-in-love"
+    rules:
+      - rule: "Hats are the straight reference; the snare is early against them."
+        evidence: "Charnas counted it in a waveform editor on 'Don't Say a Word': 'the hi-hats are straight and the snare is early.'"
+        agree: [okayplayer, djmag, pudding, bignoise]
+        encoded: "feels.hat shift 0, drift 0; feels.snare shift -0.028"
+      - rule: "The snare is rushed by tens of milliseconds, not single digits."
+        evidence: "LRB: about 65 ms, 5/192 of a bar (the old -14 ms was two ticks at 96 PPQ, about a fifth of it). Hein: a thirty-second early gives the limping feel. Drum Town drills 30 ms."
+        agree: [lrb, hein_get_dis_money]
+        encoded: "28 ms, held under the cited 65 to 85 ms; the figure is one-sourced in ms"
+      - rule: "The kick lags and is the erratic part; the bass lags further."
+        evidence: "Kicks delayed (Big Noise Radio), 'let bass kicks lag' (LRB), 'a kick drum late and a snare drum early' (singmemory). Butterfield's microtiming study calls the kick erratic against stable snare and hat. Pudding finds kick straight on 'Fall in Love'."
+        agree: [bignoise, lrb, singmemory]
+        encoded: "feels.kick swing 0.17, shift 0.016, drift 0.006; step 0 anchored (Pudding, Sunhouse)"
+      - rule: "The offsets repeat identically all through a song; random per-hit jitter is not Dilla."
+        evidence: "Hein: 'his microrhythms are repeated identically, many times per song', unlike jazz and funk, where timing varies bar to bar."
+        agree: [hein_get_dis_money, hein_chameleon]
+        encoded: "feels drift 0 on hat and snare; humanize 2.5 ms, not 8; the old composition swing removed from the kit"
+      - rule: "A preset swing percentage does not make the feel; the MPC swings per track and shifts per track."
+        evidence: "MPC 60 onward gave each track its own clock (LRB); swing 50 is straight, 66 is triplet (Pudding, Big Noise Radio); one element sits on a swing value while others go past or between it (Sunhouse); Charnas: not just 'timing correct off' (Okayplayer, LRB)."
+        agree: [lrb, okayplayer, bignoise, pudding]
+        encoded: "per-voice feels, as before"
+    not_encoded:
+      - "Velocity unevenness and ghost notes: Sunhouse/MPC-forum figures (ghosts at 35 to 50 percent) come from a product-style post; only the direction (soft ghosts, uneven backbeat) is kept."
+      - "Layered or doubled hits with micro-offsets, and kick+snare stacking: one forum thread, not Dilla-specific."
+      - "Time versus Donuts differences: Donuts was largely Pro Tools time-stretch, not the MPC3000 (Paste); no timing figures found."
+      - "Kick decay and tuning: taste, no source. The crate kick is untouched."
+
   sampling_engine:
     philosophy:
       - Choose emotionally compelling material.

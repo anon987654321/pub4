@@ -36978,7 +36978,8 @@ module Bed
   # late, and the ghosts drag later still. Drift is a few milliseconds and small
   # on purpose; his feel is a placement, not an imprecision.
   FEELS = DRUMS.fetch("feels").to_h do |name, feel|
-    [name.to_sym, { swing: Float(feel["swing"]), shift: Float(feel["shift"]), drift: Float(feel["drift"]) }]
+    [name.to_sym, { swing: Float(feel["swing"]), shift: Float(feel["shift"]), drift: Float(feel["drift"]),
+                    anchor: Array(feel["anchor"]).map { |step| Integer(step) } }]
   end.freeze
 
   # The D'Angelo profile (see DAngeloFeel above), read only when FEEL_PROFILE
@@ -36992,6 +36993,8 @@ module Bed
 
   def step_time(step, feel)
     bend = ENV["FEEL_PROFILE"] == "dangelo" && DANGELO_FEELS[feel] ? DANGELO_FEELS[feel] : FEELS.fetch(feel)
+    return (step * STEP).round(4) if Array(bend[:anchor]).include?(step)
+
     base = step * STEP
     base += bend[:swing] * STEP if step.odd?
     base += bend[:shift]
@@ -37185,6 +37188,12 @@ module Bed
   end
 
   HAT_ACCENTS = DRUMS.fetch("hat_accents")
+  BACKBEAT = DRUMS.fetch("backbeat")
+
+  # A backbeat is never struck the same twice: level is the loudest it plays and
+  # spread is how far under it a hit may land, so the pocket breathes in
+  # velocity as well as in time.
+  def backbeat_velocity = (Float(BACKBEAT.fetch("level")) * (1.0 - (rand * Float(BACKBEAT.fetch("spread"))))).round(3)
 
   def drum_bar(shape, path) = kit_bar(drum_parts(shape), path)
 
@@ -37201,7 +37210,7 @@ module Bed
     end.to_h
 
     kicks = spaced.map { |step, velocity| [step_time(step, :kick), velocity] }
-    backbeats = shape[:snare].map { |step| [step_time(step, :snare), 1.0] }
+    backbeats = shape[:snare].map { |step| [step_time(step, :snare), backbeat_velocity] }
     backbeats << [step_time(shape[:double], :snare), 0.55] if shape[:double]
     ghosts = shape[:ghosts].map { |step| [step_time(step, :ghost), 0.22 + (rand * 0.12)] }
     hats = []
