@@ -120,6 +120,8 @@ class VpsDeployContractTest < Minitest::Test
     ci = File.read(File.join(ROOT, "OPENBSD", "bin", "vps_ci.sh"), encoding: "UTF-8")
     assert_includes ci, "shared_dir=/home/${app}/__shared"
     assert_includes ci, "RAILS/brgen_*"
+    # A directory the repo no longer has must not survive the sync, or its stale tests keep running.
+    assert_includes ci, '[[ -d $src/engines ]] || doas rm -rf "${app_dir}/engines"'
 
     APPS.each do |app|
       gemfile = File.join(ROOT, "RAILS", app, "Gemfile")

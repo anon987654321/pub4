@@ -202,6 +202,10 @@ sync_from_repo() {
       fi
       doas rm -rf "${app_dir}/${dir_rel}"
     done
+    # engines/ moved out to the sibling brgen_* directories. The loop above prunes a
+    # directory only while the repo still has it, so the retired copy stayed on the box
+    # and bin/ci kept running its tests.
+    [[ -d $src/engines ]] || doas rm -rf "${app_dir}/engines"
     doas tar cf - -C "$src" "${existing[@]}" | doas sh -c "cd ${app_dir} && tar xf -"
     doas chown -R "${app}:${app}" "${app_dir}/test" "${app_dir}/app" "${app_dir}/lib" \
       "${app_dir}/config" "${app_dir}/bin" "${app_dir}/db" "${app_dir}/engines" \
