@@ -49,7 +49,9 @@ module Master
           @yaw, @pitch, @roll, @lean, @dip = Array.new(5) { Spring.new(0.0, 0.0) }
           @dolly = Spring.new(1.0, 0.0)
           @eye = Spring.new(1.0, 0.0)
-          @gaze_lon, @gaze_lat, @mouth = Array.new(3) { Spring.new(0.0, 0.0) }
+          @gaze_lon, @gaze_lat, @mouth, @mouth_wide = Array.new(4) { Spring.new(0.0, 0.0) }
+          @mouth_open = Spring.new(1.0, 0.0)
+          @viseme = "neutral"
           @next_blink = 2.2
           @next_glance = 0.9
           @glance = [0.0, 0.0]
@@ -57,10 +59,11 @@ module Master
         end
 
         # Advances to time t in seconds and answers the Look to draw.
-        def step(state:, t:, level: nil, events: [], count: 24, heard: false)
+        def step(state:, t:, level: nil, events: [], count: 24, heard: false, viseme: "neutral")
           dt = @t ? (t - @t).clamp(0.0, 0.25) : 0.0
           @t = t
           @heard = heard && state == :listening
+          @viseme = viseme
           events.each { |event| react(event) }
           turn(state, t, dt)
           features(state, t, dt, level)
@@ -151,6 +154,9 @@ module Master
           @gaze_lat.toward(@glance[1], 26.0, dt)
           heard = level.nil? ? Face.timed_level((t * FPS).to_i) : level.to_f.clamp(0.0, 1.0)
           @mouth.toward(state == :speaking ? heard : 0.0, 24.0, dt)
+          shape = state == :speaking && @viseme != "neutral" ? Master::Face::Contract.mouth_shape(@viseme) : nil
+          @mouth_open.toward(shape ? shape.fetch("open") : 1.0, 30.0, dt)
+          @mouth_wide.toward(shape ? shape.fetch("wide") : 0.0, 30.0, dt)
         end
 
         def blink(t)
@@ -211,6 +217,7 @@ module Master
             dolly: @dolly.x.clamp(0.96, 1.09),
             bob: (0.02 * Math.sin(t * 1.1)) + (0.01 * noise(t * 0.5, 6)) + @dip.x,
             eye_open: @eye.x.clamp(0.0, 1.5), gaze: [@gaze_lon.x, @gaze_lat.x], mouth: @mouth.x.clamp(0.0, 1.0),
+            mouth_open: @mouth_open.x.clamp(0.0, 1.0), mouth_wide: @mouth_wide.x.clamp(-1.0, 1.0),
             particles: @particles.map { |p| place(p, t) }
           )
         end
@@ -223,7 +230,7 @@ module Master
         end
 
         # One frame's worth of motion, in model units and radians.
-        Look = Data.define(:yaw, :pitch, :roll, :scale, :dolly, :bob, :eye_open, :gaze, :mouth, :particles)
+        Look = Data.define(:yaw, :pitch, :roll, :scale, :dolly, :bob, :eye_open, :gaze, :mouth, :mouth_open, :mouth_wide, :particles)
 
         # Smooth value noise in [-1, 1]: lattice values from an integer hash,
         # eased between, so drift wanders without repeating.

@@ -1316,6 +1316,23 @@ tokens:
       # cannot be hearing MASTER itself (echo_safe); otherwise the face keeps its
       # own idle behaviour. glance_scale narrows the saccades toward the user,
       # lean is the forward settle, eye_open the lid opening (1 = ordinary).
+      # The mouth by viseme, for both faces. open scales how far the lips part
+      # (0 closes them on a bilabial), wide stretches (+) or rounds (-) the
+      # opening. The browser takes the viseme from its playback plan and moves the
+      # jaw region of the face shader by wide * wide_gain; the terminal reads the
+      # reply's letters at each syllable onset in the audio envelope and draws
+      # the void as an ellipse of the same proportions.
+      mouth:
+        wide_gain: 0.12
+        closed_letters: "mbpfwv"
+        shapes:
+          neutral: { open: 0.0, wide: 0.0 }
+          A: { open: 1.0, wide: 0.2 }
+          E: { open: 0.6, wide: 0.9 }
+          I: { open: 0.35, wide: 1.0 }
+          O: { open: 0.9, wide: -0.7 }
+          U: { open: 0.45, wide: -1.0 }
+          M: { open: 0.0, wide: -0.2 }
       awareness:
         listening: { glance_scale: 0.35, eye_open: 1.4, lean: 0.10, heard_lean: 0.06 }
         speaking:  { glance_scale: 0.60 }

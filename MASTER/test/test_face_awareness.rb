@@ -44,4 +44,33 @@ class TestFaceAwareness < Minitest::Test
     assert_includes part5, "if (faceEchoSafe()) State.heardAt"
     refute_match(/State\.heardAt\s*=(?!.*faceEchoSafe)/, part5.lines.reject { |l| l.include?("faceEchoSafe") }.join)
   end
+
+  def test_the_mouth_shapes_come_from_the_contract_for_both_faces
+    assert_equal "A", C.viseme_for("a")
+    assert_equal "M", C.viseme_for("b")
+    assert_equal "E", C.viseme_for("t")
+    assert_equal 0.0, C.mouth_shape("M").fetch("open")
+    assert_operator C.mouth_shape("I").fetch("wide"), :>, 0
+    assert_operator C.mouth_shape("U").fetch("wide"), :<, 0
+    assert_equal 0.0, C.mouth_shape("nonsense").fetch("wide")
+  end
+
+  def test_the_terminal_mouth_rounds_on_o_and_stretches_on_e
+    wide = lambda do |viseme|
+      motion = Master::CLI::Face::Motion.new(seed: 3)
+      look = nil
+      40.times { |i| look = motion.step(state: :speaking, t: i * 0.05, level: 0.8, viseme:) }
+      look.mouth_wide
+    end
+    assert_operator wide.call("E"), :>, 0.3
+    assert_operator wide.call("O"), :<, -0.3
+    assert_in_delta 0.0, wide.call("neutral"), 0.01
+  end
+
+  def test_the_browser_mouth_uses_the_contract_wide_gain
+    shader = File.read(File.join(Master::ROOT, "..", "RAILS", "master_web", "public", "face.part2.txt"))
+    loop = File.read(File.join(Master::ROOT, "..", "RAILS", "master_web", "public", "face.part3.txt"))
+    assert_includes shader, "uMouthWide"
+    assert_includes loop, "mouthSpec?.wide_gain"
+  end
 end

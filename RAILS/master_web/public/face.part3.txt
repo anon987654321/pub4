@@ -545,6 +545,11 @@ function frame(t) {
     }
     const vowelAmp = (State.visemeAmp || 0) * (['A','E','I','O','U'].includes(State.viseme) ? 1.0 : 0.3);
     faceMat.uniforms.uVowel.value += (vowelAmp - faceMat.uniforms.uVowel.value) * 0.15;
+    // The lips' width for the current viseme, from the shared contract table.
+    const mouthSpec = FACE_CONTRACT.spatial?.mouth;
+    const shape = mouthSpec?.shapes?.[State.viseme] || mouthSpec?.shapes?.neutral;
+    const wideTarget = (shape?.wide || 0) * (mouthSpec?.wide_gain ?? 0) * (State.visemeAmp || 0);
+    faceMat.uniforms.uMouthWide.value += (wideTarget - faceMat.uniforms.uMouthWide.value) * 0.2;
     State.surpriseY = (State.surpriseY || 0) * 0.88;
     faceMat.uniforms.uSurpriseY.value = State.surpriseY;
     State.fracture = (State.fracture || 0) * 0.91;
