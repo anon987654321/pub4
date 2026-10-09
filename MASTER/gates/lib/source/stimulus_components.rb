@@ -41,13 +41,6 @@ module Deploy
       textarea-autogrow timeago
     ].freeze
 
-    REQUIRED_CONTROLLERS = %w[
-      animated-number auto-submit carousel chartjs character-counter checkbox-select-all clipboard
-      color-picker confirmation content-loader dialog dropdown glow hotkey lightbox notification
-      password-visibility places-autocomplete popover prefetch nested-form read-more remote-rails reveal
-      scroll-progress scroll-reveal scroll-to sortable sound speech-recognition textarea-autogrow timeago
-    ].freeze
-
     COMPONENT_PACKAGES = {
       "animated-number" => "@stimulus-components/animated-number",
       "auto-submit" => "@stimulus-components/auto-submit",
