@@ -13,7 +13,7 @@ module Shared
     module_function
 
     def script
-      Contracts::Studio.postpro_script
+      ::Contracts::Studio.postpro_script
     end
 
     def available?
