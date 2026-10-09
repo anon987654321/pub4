@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "test_helper"
+require "minitest/mock"
 
 class PostproJobTest < ActiveSupport::TestCase
   test "postpro script resolves to STUDIO/postpro/postpro.rb" do
@@ -9,6 +10,13 @@ class PostproJobTest < ActiveSupport::TestCase
     # The media tools live under STUDIO after the four-tree reset.
     assert_includes script.to_s, "/STUDIO/postpro/postpro.rb"
     assert File.file?(script), "expected postpro at #{script}"
+  end
+
+  test "a tool that cannot start here is skipped, not failed" do
+    Shared::PostproProcessor.stub(:runnable?, false) do
+      refute Shared::PostproProcessor.available?
+      assert Shared::PostproProcessor.skip?
+    end
   end
 
   test "valid presets delegate to shared processor" do

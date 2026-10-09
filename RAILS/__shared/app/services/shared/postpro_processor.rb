@@ -18,7 +18,17 @@ module Shared
 
     def available?
       path = script
-      !path.to_s.empty? && File.file?(path)
+      !path.to_s.empty? && File.file?(path) && runnable?
+    end
+
+    # The tool loads libvips and numo at start-up, before it reads a flag, so
+    # `--help` under the Ruby that will run it says whether it can start here.
+    # A box without those gems then skips the photo, as it does with no script,
+    # instead of marking every upload "failed".
+    def runnable?
+      return @runnable unless @runnable.nil?
+
+      @runnable = system(RbConfig.ruby, script.to_s, "--help", out: File::NULL, err: File::NULL) ? true : false
     end
 
     def skip?
