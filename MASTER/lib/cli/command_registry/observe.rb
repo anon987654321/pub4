@@ -45,7 +45,7 @@ module Master
         request = Scan::Request.new(scanner:, root:, arg: clean_arg, autofix: do_autofix).call
         return request.pairs if request.pairs.is_a?(String)
 
-        pairs, profile, rule_filter, severity_filter = request.pairs, request.profile, request.rule_filter, request.severity_filter
+        pairs, profile, rule_filter, severity_filter = request.pairs, request.profile, request.law_filter, request.severity_filter
         pass1_total = run_scan_pass1(pairs:, profile:, rule_filter:, severity_filter:, dry_run:, root:, holder:,
                                      do_autofix:)
 
