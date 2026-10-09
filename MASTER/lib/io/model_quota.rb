@@ -69,7 +69,8 @@ module Master
 
       def burn_rate_per_day(model, day: today_key, now: Time.now.utc)
         used = count(model, day:)
-        start = Time.utc(*Date.strptime(day, "%Y-%m-%d").year_month_day)
+        date = Date.strptime(day, "%Y-%m-%d")
+        start = Time.utc(date.year, date.month, date.day)
         elapsed = [now.to_f - start.to_f, 300.0].max
         return 0.0 if used.zero?
 

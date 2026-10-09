@@ -264,12 +264,16 @@ module Master
         true
       end
 
+      # A refused claim leaves the holder in place: releasing here would delete
+      # the owner file of the loop that does hold the slot.
       def with_claim(name)
         return false unless claim(name)
 
-        yield
-      ensure
-        release
+        begin
+          yield
+        ensure
+          release
+        end
       end
     end
 

@@ -3,6 +3,17 @@
 require "fileutils"
 require "rubygems"
 require "time"
+
+# Ground::Swallow and others require json before Bundler.setup runs. With a
+# newer json gem installed, RubyGems activates that one and Bundler then
+# refuses the Gemfile's pin. Activating the pin first keeps boot on it.
+json_pin = File.read(File.expand_path("../../Gemfile", __dir__))[/^gem "json", "= ([\d.]+)"/, 1]
+begin
+  gem "json", json_pin if json_pin
+rescue Gem::LoadError
+  nil
+end
+
 require_relative "dependency_manager"
 require_relative "../trace/dmesg"
 require_relative "../operator/environment"

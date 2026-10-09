@@ -58,7 +58,7 @@ module Master
           end
         rescue StandardError => e
           @bus&.publish("scan:error", path:, error: e.message)
-          Result.err("scan failed: #{e.message}", category: :infrastructure)
+          Result.err("scan failed: #{e.message} at #{e.backtrace&.first}", category: :infrastructure)
         end
 
         private

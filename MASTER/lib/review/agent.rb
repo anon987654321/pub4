@@ -176,6 +176,10 @@ end
         last = result
         attempted = [chosen]
         loop do
+          # A silent door refuses every hop, so walking the chain would only
+          # publish one failover event per catalogue model for each call.
+          break if Master::Review::LLMDispatcher::LaneSilence.silent?
+
           fallback = single_call_fallback_models.reject { |model| attempted.include?(model) }.first
           break unless fallback
 
