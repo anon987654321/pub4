@@ -2,7 +2,7 @@
 
 require "minitest/autorun"
 require "tmpdir"
-require_relative "../../../../MASTER/tools/rails/design_tokens"
+require_relative "../../../../MASTER/tools/design_tokens"
 
 class DesignTokensTest < Minitest::Test
   FACE_CSS = File.expand_path("../../../../RAILS/master_web/public/face.css", __dir__)

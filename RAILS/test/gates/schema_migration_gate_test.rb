@@ -3,7 +3,7 @@
 require "minitest/autorun"
 require "tmpdir"
 require_relative "gate_fixture"
-require_relative "../../gates/lib/source/schema_migration"
+require_relative "../../../MASTER/gates/lib/source/schema_migration"
 
 # Four defects that all read as "the app is fine" until something migrates.
 #

@@ -5,7 +5,7 @@
 require "yaml"
 require "minitest/autorun"
 require_relative "../../MASTER/tools/master_design"
-require_relative "../../MASTER/tools/scss_rules"
+require_relative "../../MASTER/tools/scss"
 
 class DesignContractTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)

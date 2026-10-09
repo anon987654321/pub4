@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_15_120000) do
+ActiveRecord::Schema[8.2].define(version: 2026_09_28_090000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.datetime "created_at", null: false
@@ -443,8 +443,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_15_120000) do
     t.integer "outfit_id"
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
+    t.integer "score", default: 0, null: false
     t.index ["item_id"], name: "index_posts_on_item_id"
     t.index ["outfit_id"], name: "index_posts_on_outfit_id"
+    t.index ["score"], name: "index_posts_on_score"
     t.index ["user_id"], name: "index_posts_on_user_id"
   end
 
@@ -585,6 +587,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_15_120000) do
     t.index ["day", "host"], name: "index_visit_counts_on_day_and_host"
   end
 
+  create_table "votes", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.string "votable_type", null: false
+    t.integer "votable_id", null: false
+    t.integer "value", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "votable_type", "votable_id"], name: "index_votes_on_user_and_votable", unique: true
+    t.index ["user_id"], name: "index_votes_on_user_id"
+    t.index ["votable_type", "votable_id"], name: "index_votes_on_votable"
+  end
+
   create_table "wardrobe_items", force: :cascade do |t|
     t.date "acquisition_date"
     t.string "condition"
@@ -662,6 +676,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_15_120000) do
   add_foreign_key "sessions", "users"
   add_foreign_key "style_preferences", "users"
   add_foreign_key "sustainability_metrics", "items"
+  add_foreign_key "votes", "users"
   add_foreign_key "wardrobe_items", "items"
   add_foreign_key "wardrobe_items", "users"
   add_foreign_key "wear_logs", "items"

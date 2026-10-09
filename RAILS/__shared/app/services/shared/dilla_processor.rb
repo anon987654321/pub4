@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
-require_relative "../../../../contracts/studio"
+require "shared/contracts"
+Shared::Contracts.require_contract("studio")
 require "rbconfig"
 require "fileutils"
 require "open3"

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
-require_relative "../../../app/services/shared/master_messenger"
+require_relative "../../app/services/shared/master_messenger"
 
 class MasterMessengerTest < Minitest::Test
   Client = Struct.new(:calls) do

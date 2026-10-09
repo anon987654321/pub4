@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
-require_relative "../../../contracts/studio"
+require "shared/contracts"
+Shared::Contracts.require_contract("studio")
 
 class AiController < ApplicationController
   before_action :require_real_user

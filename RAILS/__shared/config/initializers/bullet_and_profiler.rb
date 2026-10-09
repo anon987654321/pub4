@@ -10,11 +10,20 @@
 #
 # rescue LoadError rather than assuming: these are development-group gems, and a
 # production boot that has not installed them must not die on this file.
+#
+# bullet raises RuntimeError at require time when the pinned Rails edge is newer
+# than the versions it knows ("does not support active_record 8.2.0.alpha yet"),
+# which aborted every development and test boot. It leaves a half-defined Bullet
+# module behind, so only a clean require counts as loaded.
+bullet_loaded = false
 if Rails.env.development? || Rails.env.test?
   begin
     require "bullet"
+    bullet_loaded = true
   rescue LoadError
     nil
+  rescue RuntimeError => e
+    warn "bullet disabled: #{e.message}"
   end
   begin
     require "rack-mini-profiler"
@@ -23,15 +32,15 @@ if Rails.env.development? || Rails.env.test?
   end
 end
 
-if defined?(Bullet) && (Rails.env.development? || Rails.env.test?)
+if bullet_loaded
   Bullet.enable = true
   Bullet.bullet_logger = true
   Bullet.rails_logger = true
-Bullet.add_footer = false
-# Raising in test is what makes this a gate rather than a log nobody reads.
-# strict_loading_by_default is development-only and set to :log, so before
-# this line neither N+1 guard could fail anything in any environment.
-Bullet.raise = true if Rails.env.test?
+  Bullet.add_footer = false
+  # Raising in test is what makes this a gate rather than a log nobody reads.
+  # strict_loading_by_default is development-only and set to :log, so before
+  # this line neither N+1 guard could fail anything in any environment.
+  Bullet.raise = true if Rails.env.test?
 end
 
 if defined?(Rack::MiniProfiler) && Rails.env.development?

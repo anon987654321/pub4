@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
-require_relative "../../../../contracts/master_client"
+require "shared/contracts"
+Shared::Contracts.require_contract("master_client")
 
 module Shared
   # One messenger adapter for every mounted app. It talks to MASTER through authenticated

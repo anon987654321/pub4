@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
-require_relative "../shared/app/services/shared/outbound_http"
+require_relative "../__shared/app/services/shared/outbound_http"
 require_relative "../brgen/app/lib/fediverse/client"
 
 class FediverseSsrfTest < Minitest::Test

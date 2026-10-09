@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_28_110000) do
+ActiveRecord::Schema[8.2].define(version: 2026_09_28_140000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -663,14 +663,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_110000) do
     t.integer "total_cents", default: 0, null: false
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
+    t.datetime "abandoned_cart_reminded_at"
     t.index ["dintero_order_id"], name: "index_marketplace_checkouts_on_dintero_order_id", unique: true
     t.index ["dintero_session_id"], name: "index_marketplace_checkouts_on_dintero_session_id"
     t.index ["dintero_transaction_id"], name: "index_marketplace_checkouts_on_dintero_transaction_id"
     t.index ["marketplace_address_id"], name: "index_marketplace_checkouts_on_marketplace_address_id"
+    t.index ["status", "abandoned_cart_reminded_at", "updated_at"], name: "index_marketplace_checkouts_on_abandoned_cart_reminder"
     t.index ["user_id", "status"], name: "index_marketplace_checkouts_on_user_id_and_status"
     t.index ["user_id"], name: "index_marketplace_checkouts_on_user_id"
-    t.datetime "abandoned_cart_reminded_at"
-    t.index ["status", "abandoned_cart_reminded_at", "updated_at"], name: "index_marketplace_checkouts_on_abandoned_cart_reminder"
   end
 
   create_table "marketplace_deals", force: :cascade do |t|
@@ -724,6 +724,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_110000) do
     t.index ["listing_id"], name: "idx_job_details_listing", unique: true
   end
 
+  create_table "marketplace_listing_events", force: :cascade do |t|
+    t.integer "listing_id", null: false
+    t.integer "user_id"
+    t.string "event_type", null: false
+    t.text "metadata", default: "{}", null: false
+    t.datetime "occurred_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["listing_id", "event_type", "occurred_at"], name: "index_marketplace_listing_events_on_listing_type_time"
+    t.index ["listing_id"], name: "index_marketplace_listing_events_on_listing_id"
+    t.index ["occurred_at"], name: "index_marketplace_listing_events_on_occurred_at"
+    t.index ["user_id"], name: "index_marketplace_listing_events_on_user_id"
+  end
+
   create_table "marketplace_listing_favorites", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "listing_id", null: false
@@ -759,12 +773,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_110000) do
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.integer "views_count", default: 0, null: false
+    t.integer "delivery_promise", default: 3, null: false
+    t.integer "fulfilment_method", default: 0, null: false
+    t.float "ranking_score", default: 0.0, null: false
+    t.float "seller_score", default: 0.8, null: false
     t.index ["category_id"], name: "index_marketplace_listings_on_category_id"
     t.index ["city_id", "kind", "category_id"], name: "index_marketplace_listings_on_city_id_and_kind_and_category_id"
+    t.index ["city_id", "ranking_score"], name: "index_marketplace_listings_on_city_and_ranking"
     t.index ["city_id", "slug"], name: "index_marketplace_listings_on_city_and_slug", unique: true
     t.index ["city_id"], name: "index_marketplace_listings_on_city_id"
+    t.index ["delivery_promise"], name: "index_marketplace_listings_on_delivery_promise"
     t.index ["kind", "city_id"], name: "index_marketplace_listings_on_kind_and_city_id"
     t.index ["latitude", "longitude"], name: "index_marketplace_listings_on_latitude_and_longitude"
+    t.index ["ranking_score"], name: "index_marketplace_listings_on_ranking_score"
     t.index ["status", "expires_at"], name: "index_marketplace_listings_on_status_and_expires_at"
     t.index ["store_id"], name: "index_marketplace_listings_on_store_id"
     t.index ["user_id"], name: "index_marketplace_listings_on_user_id"
@@ -806,21 +827,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_110000) do
     t.index ["payment_reference"], name: "index_marketplace_orders_on_payment_reference"
     t.index ["payment_status"], name: "index_marketplace_orders_on_payment_status"
     t.index ["variant_id"], name: "index_marketplace_orders_on_variant_id"
-  end
-
-  create_table "marketplace_webhook_deliveries", force: :cascade do |t|
-    t.integer "attempts", default: 0, null: false
-    t.string "event", limit: 128, null: false
-    t.string "event_delivery", limit: 128, null: false
-    t.string "last_error", limit: 500
-    t.string "provider", limit: 32, null: false
-    t.datetime "received_at", null: false
-    t.datetime "succeeded_at"
-    t.string "status", default: "processing", limit: 32, null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["provider", "event_delivery"], name: "index_marketplace_webhook_deliveries_identity", unique: true
-    t.index ["status"], name: "index_marketplace_webhook_deliveries_on_status"
   end
 
   create_table "marketplace_payouts", force: :cascade do |t|
@@ -945,6 +951,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_110000) do
     t.index ["listing_id"], name: "index_marketplace_variants_on_listing_id"
   end
 
+  create_table "marketplace_webhook_deliveries", force: :cascade do |t|
+    t.integer "attempts", default: 0, null: false
+    t.string "event", limit: 128, null: false
+    t.string "event_delivery", limit: 128, null: false
+    t.string "last_error", limit: 500
+    t.string "provider", limit: 32, null: false
+    t.datetime "received_at", null: false
+    t.datetime "succeeded_at"
+    t.string "status", limit: 32, default: "processing", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["provider", "event_delivery"], name: "index_marketplace_webhook_deliveries_identity", unique: true
+    t.index ["status"], name: "index_marketplace_webhook_deliveries_on_status"
+  end
+
   create_table "mentions", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "mentionable_id", null: false
@@ -1015,6 +1036,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_110000) do
     t.string "status", default: "open", null: false
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
+    t.text "decision_reason"
+    t.datetime "decided_at"
     t.index ["reportable_type", "reportable_id"], name: "index_moderation_reports_on_reportable_type_and_reportable_id"
     t.index ["status", "created_at"], name: "index_moderation_reports_on_status_and_created_at"
     t.index ["user_id"], name: "index_moderation_reports_on_user_id"
@@ -1939,6 +1962,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_110000) do
   add_foreign_key "marketplace_gig_details", "marketplace_listings", column: "listing_id"
   add_foreign_key "marketplace_housing_details", "marketplace_listings", column: "listing_id"
   add_foreign_key "marketplace_job_details", "marketplace_listings", column: "listing_id"
+  add_foreign_key "marketplace_listing_events", "marketplace_listings", column: "listing_id"
+  add_foreign_key "marketplace_listing_events", "users"
   add_foreign_key "marketplace_listing_favorites", "marketplace_listings", column: "listing_id"
   add_foreign_key "marketplace_listing_favorites", "users"
   add_foreign_key "marketplace_listings", "cities"

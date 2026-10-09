@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
-require_relative "../shared/app/models/concerns/shared/money_display"
+require_relative "../__shared/app/models/concerns/shared/money_display"
 
 class MoneyDisplayTest < Minitest::Test
   M = Shared::MoneyDisplay

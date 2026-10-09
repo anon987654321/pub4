@@ -192,7 +192,7 @@
   <%= render "shared/welcome_onboarding", surface: "amber",
         city: (defined?(Current) && Current.respond_to?(:city_record) && Current.city_record&.name) || "Bergen" %>
 <% end %>
-<%= render "shared/cookie_banner" />
+<%= render "shared/cookie_banner" %>
 <%= render "shared/install_prompt",
       title: t("install.title"),
       body: t("install.body"),
