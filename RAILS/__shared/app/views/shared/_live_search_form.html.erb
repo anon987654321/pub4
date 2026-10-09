@@ -19,6 +19,8 @@
     <div class="search-form">
       <%= f.search_field :q,
             value: query,
+            id: local_assigns.fetch(:input_id, "q"),
+            autocomplete: "off",
             placeholder: placeholder,
             data: {
               live_search_target: "input",

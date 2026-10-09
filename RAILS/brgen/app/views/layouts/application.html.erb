@@ -177,7 +177,7 @@
   <% if !vertical_surface? && current_page?(main_app.root_path) %>
     <%= render "shared/welcome_onboarding", surface: "brgen", city: city_name %>
   <% end %>
-  <%= render "shared/cookie_banner" />
+  <%= render "shared/cookie_banner" %>
   <%# after_engagement: the first screen is the page. On a phone the prompt
       rose over the feed before anything else had painted, so it waits for the
       visitor's first scroll, tap or key, on every surface and vertical. %>

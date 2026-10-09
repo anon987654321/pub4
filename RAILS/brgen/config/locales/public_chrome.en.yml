@@ -1,0 +1,26 @@
+---
+en:
+  home:
+    pagination: Home feed pagination
+    media_wall_view: Media wall
+    media_wall_add_hint: Share a photo or video
+    feed_views: Feed views
+    feed_view: Feed
+  post:
+    new_steps: Create post
+    new_step_media: 1 · Media
+    new_step_text: 2 · Post
+    new_publishing: Publishing…
+    new_media_heading: Start with media
+    new_media_hint: Add a photo first, or continue with text only.
+    new_media_camera_hint: Camera or photo library
+    new_video_hint: Record or choose a video
+    new_audio_hint: Record or choose audio
+    new_continue: Continue
+    new_text_only: Continue without a photo
+    new_write_heading: Write your post
+  posts:
+    video: Post video
+    audio: Post audio
+  pwa:
+    queued: Saved for offline

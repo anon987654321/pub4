@@ -29,6 +29,15 @@ class SearchPaletteTest < ActionDispatch::IntegrationTest
     assert_select ".search_palette ##{SearchController::PALETTE_SUGGESTIONS}", 1
   end
 
+  test "the palette's search box and the page's own never share an id, and neither autocompletes" do
+    get communities_path
+    assert_response :success
+
+    assert_select "input#q", 1
+    assert_select ".search_palette input#search_palette_q[autocomplete=off]", 1
+    assert_select "main input#q[autocomplete=off]", 1
+  end
+
   test "the palette's search streams into the palette's own slots" do
     get global_search_path(q: "bergen", surface: SearchController::PALETTE), headers: STREAM
 

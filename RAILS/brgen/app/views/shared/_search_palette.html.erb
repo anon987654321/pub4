@@ -30,6 +30,7 @@
       <%= render "shared/live_search_form",
                  url: main_app.global_search_path,
                  query: params[:q],
+                 input_id: "search_palette_q",
                  placeholder: t("nav.search_placeholder"),
                  label: t("nav.search"),
                  show_submit: false,

@@ -1,0 +1,17 @@
+---
+en:
+  marketplace:
+    ranking_reasons:
+      label: Why this appears
+    share_to_feed: Share to BRGEN feed
+    add_to_amber: Add to Amber
+    seller_center:
+      title: Seller centre
+      live: Live listings
+      expiring: Expiring soon
+      sold: Sold
+      out_of_stock: Out of stock
+      purchases: Purchases
+      delivery_rate: Delivery completion
+      return_rate: Return rate
+      rating: Average rating

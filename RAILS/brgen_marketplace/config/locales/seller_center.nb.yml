@@ -1,0 +1,17 @@
+---
+nb:
+  marketplace:
+    ranking_reasons:
+      label: Hvorfor du ser dette
+    share_to_feed: Del i BRGEN-feeden
+    add_to_amber: Legg til i Amber
+    seller_center:
+      title: Selgersenter
+      live: Aktive annonser
+      expiring: Utløper snart
+      sold: Solgt
+      out_of_stock: Utsolgt
+      purchases: Kjøp
+      delivery_rate: Fullførte leveranser
+      return_rate: Returandel
+      rating: Gjennomsnittlig vurdering
