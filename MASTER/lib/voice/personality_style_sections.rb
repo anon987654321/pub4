@@ -4,7 +4,7 @@ module Master
   module Voice
     # The code and design style sections of Personality's system prompt: zsh,
     # Ruby, web, typography, heuristics, accessibility and the design rules, each
-    # read from laws.yml sections through @rules. PersonalityPromptBuilder
+    # read from laws.yml sections through @laws. PersonalityPromptBuilder
     # includes this and decides which sections a prompt carries.
     module PersonalityStyleSections
       private
@@ -12,7 +12,7 @@ module Master
       def add_language_style(sections)
         lines = zsh_style_lines
         lines << stack_line if stack_line
-        style = @rules.data(:ruby_style)
+        style = @laws.data(:ruby_style)
         if style.is_a?(Hash) && !style.empty?
           lines.concat(ruby_style_lines(style))
           lines.concat(web_style_lines(style))
@@ -27,7 +27,7 @@ module Master
       # than whatever the model saw last. These 58 leaf values sat under
       # style.ruby.rails_stack and nothing had ever read one of them.
       def stack_line
-        s = @rules.data(:rails_stack)
+        s = @laws.data(:rails_stack)
         return unless s.is_a?(Hash) && s["rails"]
 
         "Stack: Rails #{s['rails']}, Turbo #{s['turbo_rails']}, Stimulus #{s['stimulus']}, " \
@@ -35,7 +35,7 @@ module Master
       end
 
       def zsh_style_lines
-        zsh = @rules.data(:zsh) || @rules.data(:zsh_patterns)
+        zsh = @laws.data(:zsh) || @laws.data(:zsh_patterns)
         return [] unless zsh.is_a?(Hash) && !zsh.empty?
 
         [zsh_banned_line(zsh), zsh_replacement_line(zsh), zsh_pattern_line(zsh),
@@ -154,7 +154,7 @@ module Master
       # out. Grouping also keeps the list at ten rather than twelve: #1 is
       # claimed by both SYSTEM_STATUS and FEEDBACK_LOOPS.
       def heuristics_style_line
-        by_number = Array(@rules.data(:rules)&.dig("rules"))
+        by_number = Array(@laws.data(:rules)&.dig("rules"))
                     .select { |r| r["source"].to_s.include?("Nielsen") }
                     .group_by { |r| r["source"][/[Hh]euristic #?(\d+)/, 1] }
                     .reject { |number, _| number.nil? }
@@ -254,7 +254,7 @@ module Master
       # session writes markdown; the aesthetic that governs it belongs in the
       # same prompt as the design thresholds, not only in a file a scan reads.
       def markdown_style_line
-        md = @rules.data(:rules)["markdown_style"]
+        md = @laws.data(:rules)["markdown_style"]
         return unless md.is_a?(Hash)
 
         rules = Array(md["rules"])
@@ -264,7 +264,7 @@ module Master
       end
 
       def beauty_line
-        beauty = @rules.data(:rules)["beauty"]
+        beauty = @laws.data(:rules)["beauty"]
         return unless beauty.is_a?(Hash) && !beauty.empty?
 
         "Aesthetic touchstones: #{beauty.keys.join(', ')} (rules.beauty) -- cite these for conceptual design judgment design_laws.yml can't measure lexically."

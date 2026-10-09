@@ -38,7 +38,7 @@ module Master
       private
 
       def build_system_prompt(context: :full)
-        soul = @rules.data(:soul)
+        soul = @laws.data(:soul)
         sections = base_prompt_sections
         add_runtime_state(sections)
         add_constitution(sections, soul)
@@ -73,7 +73,7 @@ module Master
       # yaml changes what the model is told. That is the whole reason the
       # section exists rather than a paragraph in a prompt.
       def add_markdown_style(sections)
-        style = @rules.data(:markdown_style)
+        style = @laws.data(:markdown_style)
         return unless style.is_a?(Hash)
 
         rules = Array(style["rules"]).map(&:to_s).reject(&:empty?)
@@ -159,8 +159,8 @@ module Master
       end
 
       def absolute_constitution(soul)
-        constitution = @rules.constitution
-        strunk = @rules.strunk
+        constitution = @laws.constitution
+        strunk = @laws.strunk
         anti_simulation = soul.dig("absolute", "anti_simulation", "forbidden") || []
         [
           "<master_constitution tier=\"absolute\">",
@@ -213,7 +213,7 @@ module Master
       end
 
       def kernel_constitution
-        kernel = @rules.kernel
+        kernel = @laws.kernel
         return if kernel.empty?
 
         body = kernel.map { |key, value| "#{key}=#{value}" }.join("\n")
@@ -221,7 +221,7 @@ module Master
       end
 
       def philosophy_line
-        philosophy = @rules.philosophy(limit: Personality::AXIOM_DISPLAY_LIMIT)
+        philosophy = @laws.philosophy(limit: Personality::AXIOM_DISPLAY_LIMIT)
         return if philosophy.empty?
 
         "philosophy: #{philosophy.map { |item| item["id"] }.join(' · ')}"
@@ -241,7 +241,7 @@ module Master
       end
 
       def add_output_format(sections)
-        preserve = @rules.preserve
+        preserve = @laws.preserve
         sections["master_output_format"] = <<~XML.strip
           <master_output_format>
           Plain prose. Sentence case throughout. No markdown headers, bold, bullet lists, or numbered lists.
@@ -271,7 +271,7 @@ module Master
       # on it is the same mistake as the aesthetic_rules section that had to be
       # collapsed for the same reason.
       def add_rules(sections)
-        rules = all_rules
+        rules = all_laws
         return if rules.empty?
 
         sections["master_style"] = "<master_style>\nRules:\n#{rules.join("\n")}\n</master_style>"
@@ -297,7 +297,7 @@ module Master
           "#{law.id}: #{(law.practice || law.fix).to_s.gsub(/\s+/, ' ').strip}"
         end
       rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "PromptBuilder.all_rules", severity: :cosmetic)
+        Master::Ground::Swallow.log(e, context: "PromptBuilder.all_laws", severity: :cosmetic)
         []
       end
 
@@ -327,7 +327,7 @@ module Master
       end
 
       def add_refusal_policy(sections)
-        refusal = @rules.data(:refusal_templates)
+        refusal = @laws.data(:refusal_templates)
         return unless refusal.is_a?(Hash)
 
         phrasing = refusal["refusal_phrasing"] || {}
