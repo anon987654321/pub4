@@ -19,7 +19,7 @@ class SharedStimulusComponentsTest < Minitest::Test
   BOOT_FILES = %w[stimulus_boot.js stimulus_boot_social.js stimulus_boot_brgen.js stimulus_boot_amber.js].freeze
 
   def registry_source
-    BOOT_FILES.map { |f| read_source(File.join(ROOT, "shared/frontend", f)) }.join("\n")
+    BOOT_FILES.map { |f| read_source(File.join(ROOT, "__shared/frontend", f)) }.join("\n")
   end
 
   def test_shared_stimulus_components_are_registered
@@ -31,7 +31,7 @@ class SharedStimulusComponentsTest < Minitest::Test
   end
 
   def test_shared_components_are_wired_into_the_views_that_use_them
-    assert_includes read_source(File.join(ROOT, "shared/app/views/shared/_toast.html.erb")), 'data-controller="toast"'
+    assert_includes read_source(File.join(ROOT, "__shared/app/views/shared/_toast.html.erb")), 'data-controller="toast"'
     # shared/frontend/examples.html.erb is not asserted here. Its first line says
     # "Copy selected examples into each app": it is a snippet library, so its
     # containing data-controller="toast" proves the documentation documents the
@@ -40,8 +40,8 @@ class SharedStimulusComponentsTest < Minitest::Test
 
     wardrobe_form = read_source(File.join(ROOT, "amber/app/views/wardrobe_items/_form.html.erb"))
     assert_includes wardrobe_form, "character-counter"
-    assert_includes read_source(File.join(ROOT, "shared/app/views/comments/_form_fields.html.erb")), "tiptap-editor"
-    assert_includes read_source(File.join(ROOT, "shared/app/assets/stylesheets/_base.scss")), "field-sizing: content"
+    assert_includes read_source(File.join(ROOT, "__shared/app/views/comments/_form_fields.html.erb")), "tiptap-editor"
+    assert_includes read_source(File.join(ROOT, "__shared/app/assets/stylesheets/_base.scss")), "field-sizing: content"
     # What matters here is that the post partial is fragment-cached at all. The
     # exact key was pinned as a literal, which froze an implementation detail:
     # keying on Current.user&.id meant a per-guest key, and brgen mints a fresh
@@ -68,19 +68,19 @@ class SharedStimulusComponentsTest < Minitest::Test
                     "popover was removed as dead weight -- do not reintroduce it as a tooltip"
     assert_includes read_source(File.join(ROOT, "brgen/app/views/posts/_post.html.erb")), "shared/post_card"
     assert_includes read_source(File.join(ROOT, "amber/app/views/posts/_post.html.erb")), "shared/post_card"
-    assert_includes read_source(File.join(ROOT, "shared/app/views/shared/_post_card.html.erb")), "shared/feed_card"
-    assert_includes read_source(File.join(ROOT, "shared/app/views/shared/_copyable.html.erb")),
+    assert_includes read_source(File.join(ROOT, "__shared/app/views/shared/_post_card.html.erb")), "shared/post_vote_rail"
+    assert_includes read_source(File.join(ROOT, "__shared/app/views/shared/_copyable.html.erb")),
                     'data-controller="clipboard"'
   end
 
   # A snippet library is copied by hand, so every controller it offers must
   # resolve against the shared registry.
   def test_every_controller_the_snippet_library_offers_is_registered
-    registered = registry_source.scan(/\["([a-z-]+)",/).flatten.to_set
+    registered = registry_source.scan(/(?:register\(|\[ ?)"([a-z-]+)",/).flatten.to_set
 
     refute_empty registered, "no registrations parsed — the scan broke, not the tree"
 
-    snippets = read_source(File.join(ROOT, "shared/frontend/examples.html.erb"))
+    snippets = read_source(File.join(ROOT, "__shared/frontend/examples.html.erb"))
     offered = snippets.scan(/data-controller="([^"]+)"/).flatten.flat_map(&:split).to_set
 
     refute_empty offered, "no snippets parsed — the scan broke, not the tree"
