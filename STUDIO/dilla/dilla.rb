@@ -80,6 +80,7 @@ end
 require "fileutils"
 require "json"
 require "yaml"
+require "zlib"
 require "shellwords"
 require "tmpdir"
 require_relative "../../STUDIO/postpro/analog_capabilities"
@@ -21441,6 +21442,8 @@ def dilla_timing_ms(role, bar_index, step_index, timing = nil, beat_p = nil)
   base = pocket_timing_ms(role, bar_index, step_index, timing, beat_p)
   shift = shift_timing_ms(role)
   nano = nano_timing_ms(role, bar_index, step_index, beat_p)
+  return base if shift.zero? && nano.zero?
+
   (base + shift + nano).round(3)
 end
 
@@ -36975,21 +36978,35 @@ module Bed
 
   # Dilla time, as Dan Charnas sets it out: straight and swing at once. The hats
   # are the rigid reference, the snare is pushed early, the kick is swung and
-  # late, and the ghosts drag later still. Drift is a few milliseconds and small
-  # on purpose; his feel is a placement, not an imprecision.
-  FEELS = DRUMS.fetch("feels").to_h do |name, feel|
-    [name.to_sym, { swing: Float(feel["swing"]), shift: Float(feel["shift"]), drift: Float(feel["drift"]),
-                    anchor: Array(feel["anchor"]).map { |step| Integer(step) } }]
-  end.freeze
+  # late, and the ghosts drag later still. Swing is a share of a step already;
+  # `shift_steps` and `drift_steps` are shares of a step too, because the sources
+  # state the lean as a fraction of the beat (Linn's swing ratio, Charnas's 5/192
+  # of a bar, Hein's thirty-second) and a fraction follows the tempo where a
+  # fixed millisecond figure would not. `shift` and `drift` in seconds remain for
+  # the feels that were measured in seconds (pieces.yml, feels_dangelo).
+  def self.feel_row(feel)
+    lean = ->(steps, seconds) { feel.key?(steps) ? Float(feel[steps]) * STEP : Float(feel.fetch(seconds, 0.0)) }
+    { swing: Float(feel.fetch("swing", 0.0)), shift: lean.call("shift_steps", "shift"), drift: lean.call("drift_steps", "drift"),
+      anchor: Array(feel["anchor"]).map { |step| Integer(step) } }
+  end
+
+  FEELS = DRUMS.fetch("feels").to_h { |name, feel| [name.to_sym, feel_row(feel)] }.freeze
 
   # The D'Angelo profile (see DAngeloFeel above), read only when FEEL_PROFILE
   # asks for it. A role bed.yml has not yet filled falls back to the stock
   # feel, so naming a half-landed profile can never stop a render; with the
   # env unset this table is never consulted and nothing already hearing
   # changes.
-  DANGELO_FEELS = DRUMS.fetch("feels_dangelo", {}).to_h do |name, feel|
-    [name.to_sym, { swing: Float(feel["swing"]), shift: Float(feel["shift"]), drift: Float(feel["drift"]) }]
-  end.freeze
+  DANGELO_FEELS = DRUMS.fetch("feels_dangelo", {}).to_h { |name, feel| [name.to_sym, feel_row(feel)] }.freeze
+
+  # The pocket is one bar that repeats: Hein finds the drum loop of "Get Dis
+  # Money" is a single bar and Dilla's offsets recur identically through a song,
+  # and Charnas calls the placement precise rather than random. So the drift of a
+  # step is fixed for the pass, drawn from the pass seed and the step alone, and
+  # every bar leans the same way. Seeded per pass by `pocket_seed!`.
+  def pocket_seed!(seed) = (@pocket_seed = Integer(seed))
+
+  def pocket_drift(feel, step) = Random.new(Zlib.crc32("#{@pocket_seed || 0}:#{feel}:#{step}")).rand - 0.5
 
   def step_time(step, feel)
     bend = ENV["FEEL_PROFILE"] == "dangelo" && DANGELO_FEELS[feel] ? DANGELO_FEELS[feel] : FEELS.fetch(feel)
@@ -36998,7 +37015,7 @@ module Bed
     base = step * STEP
     base += bend[:swing] * STEP if step.odd?
     base += bend[:shift]
-    base += (rand - 0.5) * bend[:drift] if bend[:drift].positive?
+    base += pocket_drift(feel, step) * bend[:drift] if bend[:drift].positive?
     [base, 0.0].max.round(4)
   end
 
@@ -37212,7 +37229,7 @@ module Bed
     kicks = spaced.map { |step, velocity| [step_time(step, :kick), velocity] }
     backbeats = shape[:snare].map { |step| [step_time(step, :snare), backbeat_velocity] }
     backbeats << [step_time(shape[:double], :snare), 0.55] if shape[:double]
-    ghosts = shape[:ghosts].map { |step| [step_time(step, :ghost), 0.22 + (rand * 0.12)] }
+    ghosts = shape[:ghosts].map { |step| [step_time(step, :ghost), 0.3 + (rand * 0.12)] }
     hats = []
     opens = []
     shape[:hats].each do |step|
@@ -37493,6 +37510,7 @@ module Bed
   # cache would mostly miss.
   def render!(path, seed, progressions: nil, log: true)
     srand(seed)
+    pocket_seed!(seed)
     progressions ||= pick_progressions
     chords = voice_pass(progressions, deal_instruments(progressions.size))
     log_pass(seed, progressions, chords) if log
@@ -38154,6 +38172,7 @@ module Composition
 
   def render!(dest, seed)
     srand(seed)
+    Bed.pocket_seed!(seed)
     ensure_drum_kit!
     chords, tonic = harmony
     lead = lead_plan(chords, Random.new(seed))

@@ -168,7 +168,7 @@ class TestGrooveTiming < Minitest::Test
   # Shift timing is opt-in. Unset, every offset is the pocket's own value, down
   # to its class, so no take made without the knob changes by a digit.
   def test_unset_shift_timing_leaves_every_offset_as_the_pocket_computed_it
-    with_env("SHIFT_TIMING" => nil) do
+    with_env("SHIFT_TIMING" => nil, "DILLA_NANO_FEEL" => "0") do
       POCKET_ROLES.product([nil, 0.5]).each do |role, beat_p|
         pocket = send(:pocket_timing_ms, role, 3, 5, nil, beat_p)
         timed = send(:dilla_timing_ms, role, 3, 5, nil, beat_p)
@@ -197,7 +197,7 @@ class TestGrooveTiming < Minitest::Test
   end
 
   def test_shift_timing_moves_only_the_roles_it_names
-    with_env("SHIFT_TIMING" => "snare:-6, hat:4.5") do
+    with_env("SHIFT_TIMING" => "snare:-6, hat:4.5", "DILLA_NANO_FEEL" => "0") do
       POCKET_ROLES.each do |role|
         pocket = send(:pocket_timing_ms, role, 2, 4, nil, 0.5)
         shift = { snare: -6.0, hat_down: 4.5, hat_up: 4.5 }.fetch(role, 0.0)

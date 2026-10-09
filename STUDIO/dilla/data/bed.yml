@@ -341,20 +341,25 @@ drums:
   # also LRB (about 65 ms, 5/192 of a bar) and Ethan Hein; the kick lagging is
   # LRB, Big Noise Radio and the singmemory Donuts essay.
   #
-  # The snare sits 28 ms early, four ticks of the MPC3000's 96 PPQ at this
-  # tempo: audibly rushed, and inside the 65 to 85 ms the sources cite, because
-  # a snare pushed that far reads as a mistake rather than a lean. Hats and
-  # snare carry no drift: Hein finds Dilla's deviations repeat identically all
-  # through a song, so the pocket is the same every bar and only the kick
-  # (Butterfield's erratic part) wanders. `anchor` names the kick steps that
-  # sit on the grid with no shift, the downbeat the others lean against (The
-  # Pudding on "Fall in Love"). The engine's own `dilla_drag` feel
-  # (lib/groove.rb) drags the snare late instead, on purpose.
+  # Every lean is a share of a 16th step, so it follows the tempo: Linn defines
+  # swing as the split of an eighth, Charnas puts the rushed snare at 5/192 of a
+  # bar (0.42 step) and Hein at a thirty-second (0.5 step), and a millisecond
+  # figure fixed at 88 BPM would be too heavy at 70 and too light at 100. The
+  # snare sits 0.30 step early, about 51 ms at 88 BPM, which is under the cited
+  # 0.42 to 0.5 because a snare that far forward is a gamble the ear has not yet
+  # approved. Hats and snare carry no drift: Hein finds Dilla's deviations repeat
+  # identically all through a song, and the drift that remains (kick, ghost) is
+  # one fixed draw per step and pass, so every bar leans the same way (the pocket
+  # cycle, `pocket_drift` in dilla.rb). The off-beat hats lean 0.05 step late,
+  # lighter than the kick (Hein, "Warp factor" and "Get Dis Money"); the
+  # downbeats are the anchor. `anchor` names the kick steps that sit on the
+  # grid with no shift (The Pudding on "Fall in Love"). The engine's own
+  # `dilla_drag` feel (lib/groove.rb) drags the snare late instead, on purpose.
   feels:
-    hat:   { swing: 0.0,  shift: 0.0,    drift: 0.0 }
-    snare: { swing: 0.0,  shift: -0.028, drift: 0.0 }
-    kick:  { swing: 0.17, shift: 0.016,  drift: 0.006, anchor: [0] }
-    ghost: { swing: 0.17, shift: 0.026,  drift: 0.004 }
+    hat:   { swing: 0.05, shift_steps: 0.0,   drift_steps: 0.0 }
+    snare: { swing: 0.0,  shift_steps: -0.30, drift_steps: 0.0 }
+    kick:  { swing: 0.17, shift_steps: 0.09,  drift_steps: 0.035, anchor: [0] }
+    ghost: { swing: 0.17, shift_steps: 0.15,  drift_steps: 0.025 }
   # D'Angelo feel (FEEL_PROFILE=dangelo in dilla.rb, documented in its
   # DAngeloFeel module). Derived numbers from the 2026-10-03 research — the
   # hats keep the rigid reference, the backbeat drags behind them, the kick is
