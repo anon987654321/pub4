@@ -47,6 +47,21 @@ class VoiceMessageTest < ActionDispatch::IntegrationTest
     assert message.attachment.attached?
   end
 
+  # The composer posts a photo as message_type "text"; the thread only draws an
+  # image for "image", so the server decides from the attachment.
+  test "a photo posted as text is stored and drawn as an image" do
+    sign_in_as(@sender)
+    photo = Rack::Test::UploadedFile.new(StringIO.new(ActiveSupport::TestCase::PIXEL_PNG), "image/png", true, original_filename: "bilde.png")
+
+    post conversation_messages_path(@conversation),
+         params: { message: { message_type: "text", attachment: photo } }
+
+    message = @conversation.messages.order(:created_at).last
+    assert_equal "image", message.message_type
+    get conversation_path(@conversation)
+    assert_includes response.body, "bilde"
+  end
+
   test "an attachment that is neither a voice note nor a photo is refused" do
     sign_in_as(@sender)
     script = Rack::Test::UploadedFile.new(StringIO.new("#!/bin/sh\necho hi\n"), "text/x-shellscript", true, original_filename: "run.sh")

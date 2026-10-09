@@ -13,9 +13,9 @@
     <% artifact_kinds << "preview" unless artifact_kinds.include?("preview") %>
   <% end %>
 <% end %>
-<aside class="messenger-artifact-pane" aria-label="<%= t("messages.artifacts_label", default: "Artifacts") %>">
+<aside class="messenger-artifact-pane" aria-label="<%= t("messages.artifacts_label") %>">
   <header class="messenger-artifact-header">
-    <h2><%= t("messages.artifacts", default: "Artifacts") %></h2>
+    <h2><%= t("messages.artifacts") %></h2>
     <% if artifact_kinds.any? %>
       <span class="messenger-artifact-count"><%= artifact_kinds.size %></span>
     <% end %>
@@ -25,17 +25,17 @@
     <div class="messenger-artifact-body">
       <% if artifact_message.respond_to?(:attachment) && artifact_message.attachment.attached? %>
         <% if artifact_message.respond_to?(:voice?) && artifact_message.voice? %>
-          <p class="messenger-artifact-kind"><%= t("messages.artifact_voice", default: "Voice") %></p>
+          <p class="messenger-artifact-kind"><%= t("messages.artifact_voice") %></p>
           <%= audio_tag url_for(artifact_message.attachment), controls: true, preload: "metadata", class: "messenger-artifact-audio" %>
         <% elsif artifact_message.attachment.content_type.to_s.start_with?("image/") %>
-          <p class="messenger-artifact-kind"><%= t("messages.artifact_image", default: "Image") %></p>
-          <%= image_tag url_for(artifact_message.attachment), alt: t("messages.artifact_image_alt", default: "Image attached to the conversation"), loading: "lazy", decoding: "async", class: "messenger-artifact-image" %>
+          <p class="messenger-artifact-kind"><%= t("messages.artifact_image") %></p>
+          <%= image_tag url_for(artifact_message.attachment), alt: t("messages.artifact_image_alt"), loading: "lazy", decoding: "async", class: "messenger-artifact-image" %>
         <% else %>
-          <p class="messenger-artifact-kind"><%= t("messages.artifact_file", default: "File") %></p>
-          <%= link_to t("messages.open_attachment", default: "Open attachment"), url_for(artifact_message.attachment), class: "btn btn-ghost btn-sm" %>
+          <p class="messenger-artifact-kind"><%= t("messages.artifact_file") %></p>
+          <%= link_to t("messages.open_attachment"), url_for(artifact_message.attachment), class: "btn btn-ghost btn-sm" %>
         <% end %>
       <% elsif artifact_message.respond_to?(:link_preview) && artifact_message.link_preview.present? %>
-        <p class="messenger-artifact-kind"><%= t("messages.artifact_preview", default: "Link preview") %></p>
+        <p class="messenger-artifact-kind"><%= t("messages.artifact_preview") %></p>
         <%= render "shared/link_embed", embed: artifact_message.link_preview %>
       <% end %>
 
@@ -45,8 +45,8 @@
     </div>
   <% else %>
     <div class="messenger-artifact-empty" role="status">
-      <strong><%= t("messages.no_artifacts", default: "No artifacts yet") %></strong>
-      <p><%= t("messages.no_artifacts_body", default: "Images, voice notes and link previews appear here when shared in the conversation.") %></p>
+      <strong><%= t("messages.no_artifacts") %></strong>
+      <p><%= t("messages.no_artifacts_body") %></p>
     </div>
   <% end %>
 </aside>
