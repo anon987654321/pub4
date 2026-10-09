@@ -37,6 +37,14 @@
   <% end %>
 
   <h2 class="messenger-inbox-heading"><%= t("messages.title") %></h2>
+  <%# The archive is a second list behind one link, shown only when it holds
+      something. %>
+  <% if @archive %>
+    <%= link_to t("messages.inbox_link"), conversations_path, class: "messenger-inbox-search", data: { turbo_frame: "_top" } %>
+  <% elsif (@archived_count || 0).positive? %>
+    <%= link_to t("messages.archive_link", count: @archived_count), conversations_path(arkiv: 1),
+                class: "messenger-inbox-search", data: { turbo_frame: "_top" } %>
+  <% end %>
   <ul class="messenger-inbox-list" role="list">
     <% if Current.user %>
       <% rail_conversations.each do |room| %>
@@ -52,7 +60,7 @@
             <span class="messenger-room-copy">
               <span class="messenger-inbox-name"><%= room.display_name_for(Current.user) %></span>
               <% if last %>
-                <span class="messenger-room-preview"><%= truncate(last.content.to_s, length: 56) %></span>
+                <span class="messenger-room-preview"><%= room.view_once? ? t("messages.view_once_chip").upcase_first : truncate(last.content.to_s, length: 56) %></span>
               <% end %>
             </span>
             <span class="messenger-room-meta">

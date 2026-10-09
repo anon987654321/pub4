@@ -1,0 +1,5 @@
+<%# One line's state for its sender. Its own partial because two things render it:
+    the message partial, and the update Conversation#mark_read_for! broadcasts
+    into #delivery_message_N when the recipient opens the thread. %>
+<% state, read_by = message.delivery_state %>
+· <%= state == :read ? (read_by > 1 ? t("messages.read_by", count: read_by) : t("messages.read")) : t("messages.delivery_sent") %>

@@ -22,7 +22,6 @@ body[data-layout-pass="micro-320"] .theme-root {
 body[data-layout-pass="micro-320"] .app-shell {
     min-inline-size: 0;
   min-block-size: 0;
-  position: relative;
   isolation: isolate;
   }
   /* semantic: keeps shell geometry shrinkable and explicit */

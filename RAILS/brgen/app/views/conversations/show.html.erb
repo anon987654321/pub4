@@ -93,15 +93,45 @@
                     invited: @master_invited %>
             </section>
 
+            <%# Handling of your own inbox: each of these is yours alone and the
+                other side is told nothing. Block is only offered in a direct
+                thread; a group is left by leaving it. %>
+            <section class="messenger-details-section">
+              <% if @participant&.muted? %>
+                <%= button_to t("messages.unmute"), conversation_mute_path(@conversation), method: :delete, class: "btn btn-ghost btn-sm" %>
+              <% else %>
+                <%= button_to t("messages.mute"), conversation_mute_path(@conversation), class: "btn btn-ghost btn-sm" %>
+              <% end %>
+              <% if @participant&.archived? %>
+                <%= button_to t("messages.unarchive"), conversation_archive_path(@conversation), method: :delete, class: "btn btn-ghost btn-sm" %>
+              <% else %>
+                <%= button_to t("messages.archive"), conversation_archive_path(@conversation), class: "btn btn-ghost btn-sm", form: { data: { turbo_frame: "_top" } } %>
+              <% end %>
+              <% if @conversation.direct? && (blockee = @conversation.other_participants(Current.user).first) %>
+                <% if @blocked_by_me %>
+                  <%= button_to t("messages.unblock_user"), unblock_user_path(blockee), method: :delete, class: "btn btn-ghost btn-sm" %>
+                <% else %>
+                  <%= button_to t("messages.block_user"), block_user_path(blockee), class: "btn btn-ghost btn-sm",
+                        data: { turbo_confirm: t("messages.confirm_block") } %>
+                <% end %>
+              <% end %>
+            </section>
+
             <section class="messenger-details-section">
               <%= form_with url: conversation_path(@conversation), method: :patch,
                     class: "disappearing-settings#{" disappearing-settings--active" if @conversation.disappearing_messages?}" do |form| %>
                 <span class="disappearing-badge" aria-hidden="true"></span>
                 <label for="disappearing"><%= t("messages.disappearing") %></label>
                 <%= form.select :disappearing,
-                      Conversation::DISAPPEARING_OPTIONS.keys.map { |key| [key, key] },
+                      Conversation::DISAPPEARING_OPTIONS.keys.map { |key| [t("messages.disappearing_options.#{key}"), key] },
                       { selected: Conversation::DISAPPEARING_OPTIONS.key(@conversation.disappearing_duration) || "off" },
                       { id: "disappearing", onchange: "this.form.requestSubmit()" } %>
+              <% end %>
+              <%# Said once, where the setting is: a disappearing message is a
+                  courtesy between people, not a guarantee. We cannot see a
+                  screenshot, so we do not claim to. %>
+              <% if @conversation.ephemeral? %>
+                <p class="messenger-header-meta"><%= t("messages.disappearing_note") %></p>
               <% end %>
             </section>
           </div>
@@ -170,10 +200,14 @@
         <% end %>
       <% end %>
 
-      <%= render "conversations/composer",
-                    conversation: @conversation,
-                    message: @message,
-                    reply_to: @reply_to %>
+      <% if @blocked %>
+        <p class="messenger-blocked" role="status"><%= @blocked_by_me ? t("messages.blocked_by_me") : t("messages.blocked_either") %></p>
+      <% else %>
+        <%= render "conversations/composer",
+                      conversation: @conversation,
+                      message: @message,
+                      reply_to: @reply_to %>
+      <% end %>
     </div>
   <% end %>
   <%= render "shared/messenger_artifacts", messages: @messages %>

@@ -39,6 +39,9 @@ class Message < ApplicationRecord
   # A text message with no body still fails the presence rule above.
   before_validation { self.content = "" if content.nil? }
   validates :content, length: { maximum: 10_000 }
+  # A token is a name for one attempt, not content: bounded so a client cannot
+  # park a large string in an indexed column.
+  validates :client_token, length: { maximum: 64 }, allow_nil: true
   validates :message_type, inclusion: { in: %w[text image file audio] }
 
   # The composer accepts audio/* and image/*, and the server holds the same
@@ -69,6 +72,7 @@ class Message < ApplicationRecord
 
   after_create :attach_link_preview
   after_create :deliver_receipts
+  after_create :resurface_for_recipients
   after_create :clear_typing_indicators
   after_create :schedule_expiration, if: :should_expire?
   after_create_commit :maybe_summon_bot, if: :bot_worthy?
@@ -145,6 +149,17 @@ class Message < ApplicationRecord
 
   def should_expire? = expires_at.present? || conversation.disappearing_messages?
 
+  # What the sender is told about one message, from the receipts the other people
+  # in the thread hold: sent, or read by some number of them. There is no
+  # "delivered" between the two, because the receipt row is written when the
+  # message is, whether or not any device has it, and a state that is always true
+  # is not information. Read off the loaded association, never queried: the log
+  # preloads message_receipts, and a state per line must not cost a query per line.
+  def delivery_state
+    read_by = message_receipts.count { |receipt| receipt.user_id != sender_id && receipt.read? }
+    [ read_by.positive? ? :read : :sent, read_by ]
+  end
+
   def mark_as_read!(user)
     receipt = message_receipts.find_or_initialize_by(user: user)
     receipt.update!(read_at: Time.current) unless receipt.read_at
@@ -211,6 +226,12 @@ def deliver_receipts
     ids.map { |uid| { message_id: id, user_id: uid, delivered_at: now, created_at: now, updated_at: now } },
   )
 end
+
+  # A new message brings an archived thread back for the people it was sent to:
+  # an archive that swallowed replies would be a place to lose them.
+  def resurface_for_recipients
+    conversation.conversation_participants.archived.where.not(user_id: sender_id).update_all(archived_at: nil)
+  end
 
   def clear_typing_indicators
     TypingIndicator.where(conversation:, user: sender).delete_all
