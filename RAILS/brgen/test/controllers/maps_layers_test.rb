@@ -127,8 +127,8 @@ class MapsLayersTest < ActionDispatch::IntegrationTest
     courier = points.find { |p| p["type"] == "courier" }
     assert_not_nil courier, "the person waiting for the food is who this is for"
     # The pin has to carry the host, not just the path: an order lives on the
-    # takeaway subdomain and the map is drawn on the apex.
-    assert_equal "http://takeaway.brgen.no/orders/#{order.id}", courier["url"]
+    # marketplace host under /food and the map is drawn on the apex.
+    assert_equal "http://markedsplass.brgen.no/food/orders/#{order.id}", courier["url"]
   end
 
   test "a delivered order stops drawing its courier" do

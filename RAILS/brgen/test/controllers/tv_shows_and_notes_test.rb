@@ -17,7 +17,7 @@ class TvShowsAndNotesTest < ActionDispatch::IntegrationTest
       email_address: "tsn_viewer@brgen.no", password: "password123", username: "tsn_viewer", guest: false
     )
     ActsAsTenant.current_tenant = @city
-    @channel = Tv::Channel.create!(user: @owner, name: "Kanal", slug: "kanal-#{SecureRandom.hex(4)}")
+    @channel = Tv::Channel.create!(user: @owner, name: "Brygge-TV", slug: "kanal-#{SecureRandom.hex(4)}")
     @video = Tv::Video.create!(
       channel: @channel, user: @owner, title: "Bryggen i tåke", status: "published",
       published_at: Time.current, duration_seconds: 90
