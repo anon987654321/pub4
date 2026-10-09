@@ -211,6 +211,62 @@ class TestDillaComposition < Minitest::Test
     end
   end
 
+  # Dilla time, as the sources set it out (data/dilla_reference.yml,
+  # principles.drum_timing): the hats are the straight reference, the snare is
+  # early against them by tens of milliseconds, the kick lags and is the one
+  # part that wanders, and the pocket repeats identically bar to bar.
+  def test_the_drum_feels_keep_hats_straight_snare_early_and_kick_late
+    feels = Bed::FEELS
+
+    assert_equal 0.0, feels.fetch(:hat).fetch(:shift)
+    assert_equal 0.0, feels.fetch(:hat).fetch(:swing)
+    assert_equal 0.0, feels.fetch(:hat).fetch(:drift)
+    assert_operator feels.fetch(:snare).fetch(:shift), :<=, -0.020, "a snare under 20 ms early is not rushed"
+    assert_operator feels.fetch(:snare).fetch(:shift), :>=, -0.085, "past the cited 65 to 85 ms it reads as a mistake"
+    assert_equal 0.0, feels.fetch(:snare).fetch(:drift), "the snare repeats identically"
+    assert_operator feels.fetch(:kick).fetch(:shift), :>, 0.0
+    assert_operator feels.fetch(:kick).fetch(:drift), :>=, feels.fetch(:snare).fetch(:drift)
+    assert_includes feels.fetch(:kick).fetch(:anchor), 0
+  end
+
+  def test_an_anchored_kick_sits_on_the_grid_and_the_rest_do_not
+    srand(5)
+
+    assert_in_delta 0.0, Bed.step_time(0, :kick), 1e-9
+    assert_operator Bed.step_time(4, :kick), :>, 4 * Bed::STEP
+    assert_in_delta(-0.028, Bed.step_time(4, :snare) - (4 * Bed::STEP), 1e-3)
+    assert_in_delta 8 * Bed::STEP, Bed.step_time(8, :hat), 1e-3
+  end
+
+  def test_the_pocket_replays_for_a_seed_and_the_hats_do_not_move
+    run = lambda do |seed|
+      srand(seed)
+      Bed.drum_parts(Bed::SHAPES.fetch(0))
+    end
+
+    assert_equal run.call(3), run.call(3)
+    hats = run.call(3).fetch(:hat) + run.call(9).fetch(:hat)
+    hats.each { |at, _velocity| assert_in_delta 0.0, at - ((at / Bed::STEP).round * Bed::STEP), 1e-3 }
+  end
+
+  def test_the_kit_does_not_swing_twice_or_jitter_the_reference
+    assert_operator C::FORM.fetch("transforms").fetch("humanize").fetch("ms"), :<=, 4
+    kit = C::SECTIONS.flat_map { |section| section.fetch("drums") }
+
+    refute_includes kit, "swing", "the voices carry their own swing in feels"
+    assert_operator C::FORM.fetch("transforms").fetch("quantize").fetch("strength"), :<, 1.0
+  end
+
+  def test_the_backbeat_is_the_loudest_thing_and_is_never_struck_alike
+    srand(2)
+    levels = Array.new(40) { Bed.backbeat_velocity }
+
+    assert_operator levels.max, :<=, 1.0
+    assert_operator levels.uniq.size, :>, 10
+    assert_operator levels.min, :>=, 0.6
+    assert_operator Bed::HAT_ACCENTS.fetch("downbeat"), :<, Bed::BACKBEAT.fetch("level"), "the hats sit under the backbeat"
+  end
+
   def test_every_transform_the_data_names_exists
     named = C::SECTIONS.flat_map { |section| section.fetch("drums") + section.fetch("lead") }.uniq
 
