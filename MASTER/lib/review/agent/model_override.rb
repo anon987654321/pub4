@@ -54,6 +54,17 @@ module Master
           false
         end
 
+# The saved model leads every chain, not only the interactive session's:
+# a one-shot instruction and a /fix pass build their own agent and never
+# reach Session#run, so the pin they were saved for never applied. The
+# reachability probe runs once per agent, whatever its answer.
+def pin_boot_model_once!
+  return if @boot_pin_checked
+
+  @boot_pin_checked = true
+  pin_boot_model!
+end
+
         def pin_boot_model!
           saved = @config["model"].to_s
           return if @pinned_model || saved.empty? || saved == Ground::Config::DEFAULTS["model"]
