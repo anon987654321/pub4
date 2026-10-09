@@ -3,6 +3,7 @@
 require "minitest/autorun"
 require "set"
 require_relative "../source_reader"
+require_relative "../../../__shared/lib/shared/contracts"
 
 # The shared Stimulus components, as a wiring contract: what stimulus_boot.js
 # registers and keeps out, the views that use the components, and the snippet
@@ -24,7 +25,7 @@ class SharedStimulusComponentsTest < Minitest::Test
 
   def test_shared_stimulus_components_are_registered
     source = registry_source
-    require_relative "../../../../MASTER/gates/lib/source/stimulus_components"
+    require File.join(Shared::Contracts.root, "MASTER", "gates", "lib", "source", "stimulus_components")
     Deploy::StimulusComponentsGate::REQUIRED_CONTROLLERS.each do |component|
       assert_match(/\[ "#{Regexp.escape(component)}",/, source, "missing registration for #{component}")
     end

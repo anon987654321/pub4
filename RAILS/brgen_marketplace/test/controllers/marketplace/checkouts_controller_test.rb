@@ -131,7 +131,7 @@ class Marketplace::CheckoutsControllerTest < ActionDispatch::IntegrationTest
     )
     with_stripe_start(lambda { |order:, success_url:, cancel_url:|
       assert_instance_of Marketplace::Checkout, order
-      assert_equal @order.reload.price_cents, order.reload.total_cents
+      assert_equal @order.reload.total_cents, order.reload.total_cents
       "https://checkout.stripe.com/c/pay/cs_basket"
     }) do
       post marketplace.checkout_path, params: { provider: "stripe" }
