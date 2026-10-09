@@ -14,7 +14,9 @@ app=${1:-}
 
 repo=${PUB4_ROOT:-/home/dev/pub4}
 app_dir=/home/${app}/app
-shared_dir=/home/${app}/shared
+# The Gemfiles name path gems relative to the app dir (../__shared, ../brgen_*),
+# so the copy-tree keeps them as siblings of app/, the layout RAILS/_deploy.sh builds.
+shared_dir=/home/${app}/__shared
 [[ -d $app_dir ]] || { print -u2 "missing $app_dir"; exit 1 }
 
 # deploy_status (from RAILS/_core.sh) -- same in-progress status file the
@@ -200,6 +202,18 @@ sync_from_repo() {
   doas mkdir -p "$shared_dir"
   doas tar cf - -C "$shared_src" . | doas sh -c "cd ${shared_dir} && tar xf -"
   doas chown -R "${app}:${app}" "$shared_dir"
+  # brgen mounts its verticals as path gems at ../brgen_*; the copy-tree needs
+  # each one beside app/ or bundle aborts on a missing path.
+  if [[ $app == brgen ]]; then
+    local vertical vertical_name
+    for vertical in $repo/RAILS/brgen_*(N/); do
+      vertical_name=${vertical:t}
+      doas rm -rf "/home/${app}/${vertical_name}"
+      doas mkdir -p "/home/${app}/${vertical_name}"
+      doas tar cf - -C "$vertical" . | doas sh -c "cd /home/${app}/${vertical_name} && tar xf -"
+      doas chown -R "${app}:${app}" "/home/${app}/${vertical_name}"
+    done
+  fi
 }
 
 npm_cache=/home/${app}/.npm
