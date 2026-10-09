@@ -25,7 +25,7 @@ rails_assets_precompile_as_app() {
   secret=$(app_secret_for "$app_name")
   log "assets:precompile for ${app_name}"
   run_rails_as_app "$app_name" "$app_dir" \
-    "SECRET_KEY_BASE=${secret} RAILS_ENV=production bundle40 exec rails assets:precompile" \
+    "SECRET_KEY_BASE=${secret} RAILS_ENV=production ${BUNDLE} exec rails assets:precompile" \
     || { log_err "assets:precompile failed for ${app_name}"; return 1; }
   log_ok "assets ready for ${app_name}"
 }

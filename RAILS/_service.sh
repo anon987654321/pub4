@@ -71,7 +71,7 @@ relayd_confirm_live() {
   local app_port=$1
   local deadline=20
 
-  if ${_PRIV} ruby40 -e '
+  if ${_PRIV} "$RUBY" -e '
     require "socket"
     port, deadline = ARGV.map(&:to_i)
     deadline.times do
@@ -88,7 +88,7 @@ relayd_confirm_live() {
     return 0
   fi
 
-  if ${_PRIV} ruby40 -e '
+  if ${_PRIV} "$RUBY" -e '
     require "socket"
     begin
       Socket.tcp("127.0.0.1", ARGV[0].to_i, connect_timeout: 1) { |s| s.close }
@@ -126,7 +126,7 @@ relayd_add_relay() {
   # OpenBSD sed -i takes the next arg as a backup suffix. GNU `sed -i "1a\\"`
   # without one is a no-op or a corrupt edit on the box. Rewrite in ruby.
   if ! grep -q "table <${app}>" "$conf" 2>/dev/null; then
-    ${_PRIV} ruby40 -e '
+    ${_PRIV} "$RUBY" -e '
       path, app = ARGV
       body = File.read(path)
       line = "table <#{app}> { 127.0.0.1 }\n"
@@ -137,7 +137,7 @@ relayd_add_relay() {
     changed=1
   fi
   if ! grep -q "forward to <${app}>" "$conf" 2>/dev/null; then
-    ${_PRIV} ruby40 -e '
+    ${_PRIV} "$RUBY" -e '
       path, app, domain = ARGV
       body = File.read(path)
       line = "  match request header \"Host\" value \"#{domain}\" forward to <#{app}>\n"
@@ -150,7 +150,7 @@ relayd_add_relay() {
     changed=1
   fi
   if ! grep -q "forward to <${app}> port" "$conf" 2>/dev/null; then
-    ${_PRIV} ruby40 -e '
+    ${_PRIV} "$RUBY" -e '
       path, app, port = ARGV
       body = File.read(path)
       line = "  forward to <#{app}> port #{port} check http \"/up\" code 200\n"

@@ -3,10 +3,12 @@
 # sibling _*.sh helper file, then exposes deploy_tracked_app as the single
 # entry point each app's <app>.sh script calls.
 #
-# Requires: zsh, ruby40, bundle, rails, doas
+# Requires: zsh, a Ruby and bundler (OPENBSD/lib/ruby_select.sh picks them), rails, doas
 set -euo pipefail
 
 typeset _deploy_sh_dir=${${(%):-%x}:A:h}
+
+. "${_deploy_sh_dir:h}/OPENBSD/lib/ruby_select.sh"
 
 . "${_deploy_sh_dir}/_core.sh"
 . "${_deploy_sh_dir}/_bundle.sh"
@@ -21,7 +23,7 @@ typeset _deploy_sh_dir=${${(%):-%x}:A:h}
 deploy_tracked_app() {
   local app_name=${1:-$APP_NAME}
 
-  need_cmd ruby40 bundle doas
+  need_cmd "$RUBY" "$BUNDLE" doas
 
   [[ -d $SRC_DIR ]] || { log_err "missing source tree: $SRC_DIR"; exit 1; }
 
