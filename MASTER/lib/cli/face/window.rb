@@ -159,19 +159,19 @@ module Master
         # Idle, with nothing typed, listens on its own. Enter or a typed
         # character stops that take; the keys stay on this thread.
         # The user is speaking while recogniser partials keep arriving, and only
-        # when the mic cannot be hearing MASTER (Contract.echo_safe?). The terminal
+        # when the mic cannot be hearing MASTER (Policy.echo_safe?). The terminal
         # listens between utterances, so the gate holds, and it stays the one
         # place that says so.
         def user_speaking?(state)
           return false unless @heard_at && state == :listening
-          return false unless Master::Face::Contract.echo_safe?(playing: false)
+          return false unless Master::Voice::Policy.echo_safe?(playing: false)
 
-          hold = Master::Face::Contract.awareness.fetch("heard_hold_ms", 1200) / 1000.0
+          hold = Master::Voice::Policy.awareness.fetch("heard_hold_ms", 1200) / 1000.0
           Process.clock_gettime(Process::CLOCK_MONOTONIC) - @heard_at < hold
         end
 
         # The reply's own letters, one per syllable onset in the audio envelope:
-        # the same letter-to-viseme rule the browser applies (Contract.viseme_for).
+        # the same letter-to-viseme rule the browser applies (Policy.viseme_for).
         # Between onsets the last shape holds; a quiet frame returns it to neutral.
         def advance_viseme(level)
           onset = level > 0.3 && (@prev_level || 0.0) <= 0.3
@@ -180,7 +180,7 @@ module Master
           return unless onset
 
           letters = @spoken_letters ||= []
-          @viseme = Master::Face::Contract.viseme_for(letters.shift) unless letters.empty?
+          @viseme = Master::Voice::Policy.viseme_for(letters.shift) unless letters.empty?
         end
 
         def current_viseme = @viseme || "neutral"

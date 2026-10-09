@@ -214,6 +214,44 @@ module Master
         ].join(",")
       end
 
+      # voice.yml `face:`, the one home of how both faces attend and shape the
+      # mouth. Read at top level, beside `tts:`, so no profile overlays it.
+      def face_section(key)
+        raw = Master.load_yaml(Master.data_path("voice.yml"), default: {}) || {}
+        value = (raw["face"] || {})[key]
+        value.is_a?(Hash) ? value : {}
+      end
+
+      def awareness = (@awareness ||= face_section("awareness"))
+      def mouth = (@mouth ||= face_section("mouth"))
+
+      # True when the mic cannot be hearing MASTER: nothing playing or loading,
+      # and the tail after the last sentence has passed. The terminal listens
+      # only between utterances; the browser listens while it speaks, so this is
+      # the gate every feed of "the user is speaking" goes through.
+      def echo_safe?(playing:, loading: false, ms_since_tts_end: nil)
+        return false if playing || loading
+
+        tail = awareness.fetch("echo_safe", {}).fetch("tts_tail_ms", 900)
+        ms_since_tts_end.nil? || ms_since_tts_end >= tail
+      end
+
+      # The viseme a letter makes, by the same rule the browser's setViseme uses:
+      # a vowel is itself, a bilabial or labiodental closes the lips, any other
+      # letter is the relaxed E.
+      def viseme_for(char)
+        letter = char.to_s.downcase
+        return letter.upcase if %w[a e i o u].include?(letter)
+
+        mouth.fetch("closed_letters", "mbpfwv").include?(letter) && !letter.empty? ? "M" : "E"
+      end
+
+      # { "open" => 0..1, "wide" => -1..1 } for a viseme name.
+      def mouth_shape(name)
+        shapes = mouth.fetch("shapes", {})
+        shapes.fetch(name.to_s, shapes.fetch("neutral", { "open" => 0.0, "wide" => 0.0 }))
+      end
+
       # The musical bed, as declared. Nil when absent; the renderer is the
       # caller's, because MASTER's web face and a terminal narrator mix audio
       # in entirely different ways.
@@ -276,6 +314,8 @@ module Master
           voices: voice_aliases,
           post_chain:,
           room:,
+          awareness:,
+          mouth:,
           prosody:,
           bed:,
           profile: profile_name,

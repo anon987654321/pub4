@@ -24,37 +24,6 @@ module Master
         prompt(root:).fetch("measure_ch", Master::Design::Thresholds.measure_ideal_ch(root:))
       end
 
-      def awareness(root: Master::ROOT) = spatial(root:).fetch("awareness", {})
-
-      # True when the mic cannot be hearing MASTER: nothing playing or loading,
-      # and the tail after the last sentence has passed. The terminal listens
-      # only between utterances; the browser listens while it speaks, so this is
-      # the gate every feed of "the user is speaking" goes through.
-      def echo_safe?(playing:, loading: false, ms_since_tts_end: nil, root: Master::ROOT)
-        return false if playing || loading
-
-        tail = awareness(root:).fetch("echo_safe", {}).fetch("tts_tail_ms", 900)
-        ms_since_tts_end.nil? || ms_since_tts_end >= tail
-      end
-
-      def mouth(root: Master::ROOT) = spatial(root:).fetch("mouth", {})
-
-      # The viseme a letter makes, by the same rule the browser's setViseme uses:
-      # a vowel is itself, a bilabial or labiodental closes the lips, any other
-      # letter is the relaxed E.
-      def viseme_for(char, root: Master::ROOT)
-        letter = char.to_s.downcase
-        return letter.upcase if %w[a e i o u].include?(letter)
-
-        mouth(root:).fetch("closed_letters", "mbpfwv").include?(letter) && !letter.empty? ? "M" : "E"
-      end
-
-      # { "open" => 0..1, "wide" => -1..1 } for a viseme name.
-      def mouth_shape(name, root: Master::ROOT)
-        shapes = mouth(root:).fetch("shapes", {})
-        shapes.fetch(name.to_s, shapes.fetch("neutral", { "open" => 0.0, "wide" => 0.0 }))
-      end
-
       def budget(root: Master::ROOT) = spatial(root:).fetch("budget", {})
       def camera(root: Master::ROOT) = spatial(root:).fetch("camera", {})
       def layers(root: Master::ROOT)

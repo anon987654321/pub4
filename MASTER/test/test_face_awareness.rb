@@ -2,10 +2,10 @@
 
 require_relative "test_helper"
 
-# The face attends through one contract (laws.yml spatial.awareness). The
-# browser reads it as MASTER_FACE_CONTRACT; the terminal through Face::Contract.
+# The face attends through one contract (voice.yml face:). The browser
+# reads it as MASTER_VOICE_POLICY; the terminal through Voice::Policy.
 class TestFaceAwareness < Minitest::Test
-  C = Master::Face::Contract
+  C = Master::Voice::Policy
 
   def test_the_contract_declares_listening_speaking_and_the_echo_gate
     spec = C.awareness
@@ -65,6 +65,18 @@ class TestFaceAwareness < Minitest::Test
     assert_operator wide.call("E"), :>, 0.3
     assert_operator wide.call("O"), :<, -0.3
     assert_in_delta 0.0, wide.call("neutral"), 0.01
+  end
+
+  def test_laws_yml_no_longer_carries_the_face_settings
+    laws = File.read(File.join(Master::ROOT, "data", "laws.yml"))
+    refute_includes laws, "closed_letters"
+    refute_includes laws, "heard_hold_ms"
+  end
+
+  def test_the_browser_receives_both_blocks_in_the_voice_payload
+    payload = C.browser_payload
+    assert_equal C.awareness, payload.fetch(:awareness)
+    assert_equal C.mouth, payload.fetch(:mouth)
   end
 
   def test_the_browser_mouth_uses_the_contract_wide_gain

@@ -131,7 +131,7 @@ void main(){
   float jawRgnV = smoothstep(0.0,0.15,-position.y-0.05) * smoothstep(0.0,0.18,0.30-abs(position.x));
   p.y -= uVowel * jawRgnV * 0.025;
   // Wide (E, I) stretches the lips sideways, negative (O, U) draws them in:
-  // spatial.mouth.shapes in the face contract, scaled by uMouthWide.
+  // voice.yml face.mouth.shapes, scaled by uMouthWide.
   p.x += position.x * uMouthWide * jawRgnV;
   // FA29 surprised Y impulse
   p.y += uSurpriseY * smoothstep(0.0, 0.6, 0.5 + position.y * 0.8) * 0.12;

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "../../face/contract"
+require_relative "../../voice/policy"
 
 module Master
   module CLI
@@ -23,7 +23,7 @@ module Master
         YAW = { idle: [0.20, 0.32], thinking: [0.28, 0.55] }.freeze
         EVENTS = %i[key listen nod thinking phantom council anticipate].freeze
         # How the face attends, from the contract the browser face reads too.
-        AWARE = Master::Face::Contract.awareness.freeze
+        AWARE = Master::Voice::Policy.awareness.freeze
         LISTENING = AWARE.fetch("listening", {}).freeze
         GLANCE_SCALE = { listening: LISTENING.fetch("glance_scale", 1.0),
                          speaking: AWARE.fetch("speaking", {}).fetch("glance_scale", 1.0) }.freeze
@@ -154,7 +154,7 @@ module Master
           @gaze_lat.toward(@glance[1], 26.0, dt)
           heard = level.nil? ? Face.timed_level((t * FPS).to_i) : level.to_f.clamp(0.0, 1.0)
           @mouth.toward(state == :speaking ? heard : 0.0, 24.0, dt)
-          shape = state == :speaking && @viseme != "neutral" ? Master::Face::Contract.mouth_shape(@viseme) : nil
+          shape = state == :speaking && @viseme != "neutral" ? Master::Voice::Policy.mouth_shape(@viseme) : nil
           @mouth_open.toward(shape ? shape.fetch("open") : 1.0, 30.0, dt)
           @mouth_wide.toward(shape ? shape.fetch("wide") : 0.0, 30.0, dt)
         end

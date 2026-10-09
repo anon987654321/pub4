@@ -238,8 +238,8 @@ function syncSemanticPools(dtSec) {
     }
   }
 }
-// How the face attends, from the contract's spatial.awareness (the terminal
-// face reads the same block through Face::Contract.awareness).
+// How the face attends, from voice.yml's face.awareness (the terminal
+// face reads the same block through Voice::Policy.awareness).
 //
 // Echo-safe means the mic cannot be hearing MASTER: nothing playing or loading
 // and the tail after the last sentence has passed. Only then does the user's
@@ -247,12 +247,12 @@ function syncSemanticPools(dtSec) {
 // usually MASTER itself, which is the known mic-TTS echo fault.
 function faceEchoSafe() {
   if (tts.playing || tts.loading) return false;
-  const tail = FACE_CONTRACT.spatial?.awareness?.echo_safe?.tts_tail_ms ?? 900;
+  const tail = window.MASTER_VOICE_POLICY?.awareness?.echo_safe?.tts_tail_ms ?? 900;
   return !tts.endedAt || performance.now() - tts.endedAt >= tail;
 }
 
 function faceAwareness() {
-  const spec = FACE_CONTRACT.spatial?.awareness || {};
+  const spec = window.MASTER_VOICE_POLICY?.awareness || {};
   const out = { glanceScale: 1, lean: 0, heard: false };
   if (State.reducedMotion) return out;
   if (State.mode === 'speaking') out.glanceScale = spec.speaking?.glance_scale ?? 1;
@@ -545,8 +545,8 @@ function frame(t) {
     }
     const vowelAmp = (State.visemeAmp || 0) * (['A','E','I','O','U'].includes(State.viseme) ? 1.0 : 0.3);
     faceMat.uniforms.uVowel.value += (vowelAmp - faceMat.uniforms.uVowel.value) * 0.15;
-    // The lips' width for the current viseme, from the shared contract table.
-    const mouthSpec = FACE_CONTRACT.spatial?.mouth;
+    // The lips' width for the current viseme, from voice.yml's face.mouth table.
+    const mouthSpec = window.MASTER_VOICE_POLICY?.mouth;
     const shape = mouthSpec?.shapes?.[State.viseme] || mouthSpec?.shapes?.neutral;
     const wideTarget = (shape?.wide || 0) * (mouthSpec?.wide_gain ?? 0) * (State.visemeAmp || 0);
     faceMat.uniforms.uMouthWide.value += (wideTarget - faceMat.uniforms.uMouthWide.value) * 0.2;
