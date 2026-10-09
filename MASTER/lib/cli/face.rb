@@ -29,10 +29,10 @@ module Master
       # are what happened since the last frame (Motion::EVENTS). level is the
       # audio's loudness from 0.0 to 1.0 while speaking, or nil when no
       # envelope reached us, and the mouth moves on a timer.
-      def frame(state:, rows:, cols:, t:, level: nil, events: [], motion: Motion.new, color: false)
+      def frame(state:, rows:, cols:, t:, level: nil, events: [], motion: Motion.new, color: false, heard: false)
         raise ArgumentError, "face: unknown state #{state.inspect}" unless STATES.include?(state)
 
-        look = motion.step(state:, t:, level:, events:, count: ((rows * cols) / 72).clamp(6, 36))
+        look = motion.step(state:, t:, level:, events:, heard:, count: ((rows * cols) / 72).clamp(6, 36))
         return Braille.new(rows, cols).word(state.to_s) unless rows >= MIN_ROWS && cols >= MIN_COLS
 
         braille = Braille.new(rows, cols)

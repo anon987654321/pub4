@@ -24,6 +24,19 @@ module Master
         prompt(root:).fetch("measure_ch", Master::Design::Thresholds.measure_ideal_ch(root:))
       end
 
+      def awareness(root: Master::ROOT) = spatial(root:).fetch("awareness", {})
+
+      # True when the mic cannot be hearing MASTER: nothing playing or loading,
+      # and the tail after the last sentence has passed. The terminal listens
+      # only between utterances; the browser listens while it speaks, so this is
+      # the gate every feed of "the user is speaking" goes through.
+      def echo_safe?(playing:, loading: false, ms_since_tts_end: nil, root: Master::ROOT)
+        return false if playing || loading
+
+        tail = awareness(root:).fetch("echo_safe", {}).fetch("tts_tail_ms", 900)
+        ms_since_tts_end.nil? || ms_since_tts_end >= tail
+      end
+
       def budget(root: Master::ROOT) = spatial(root:).fetch("budget", {})
       def camera(root: Master::ROOT) = spatial(root:).fetch("camera", {})
       def layers(root: Master::ROOT)

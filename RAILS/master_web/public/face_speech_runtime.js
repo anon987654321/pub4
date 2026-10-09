@@ -871,6 +871,7 @@ function finishTTSPlayback(src, continueQueue = true) {
   // when the utterance was cut off — an interruption is not a completed thought.
   if (continueQueue) window.MASTER_ATTENTION?.cue?.('utterance_end');
   tts.visemePlan = null;
+  tts.endedAt = performance.now();
   if (tts.panTimer) { clearInterval(tts.panTimer); tts.panTimer = null; }
   if (tts.outputGain && actx && Number.isFinite(tts.playbackGain)) {
     tts.outputGain.gain.setValueAtTime(tts.playbackGain, actx.currentTime);

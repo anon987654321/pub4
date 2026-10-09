@@ -102,6 +102,7 @@ module Master
             level:,
             events:,
             motion: @motion,
+            heard: user_speaking?(state),
             color: @output.respond_to?(:tty?) && @output.tty? && ENV["NO_COLOR"] != "1",
           ).split("\n")
 
@@ -156,6 +157,18 @@ module Master
 
         # Idle, with nothing typed, listens on its own. Enter or a typed
         # character stops that take; the keys stay on this thread.
+        # The user is speaking while recogniser partials keep arriving, and only
+        # when the mic cannot be hearing MASTER (Contract.echo_safe?). The terminal
+        # listens between utterances, so the gate holds, and it stays the one
+        # place that says so.
+        def user_speaking?(state)
+          return false unless @heard_at && state == :listening
+          return false unless Master::Face::Contract.echo_safe?(playing: false)
+
+          hold = Master::Face::Contract.awareness.fetch("heard_hold_ms", 1200) / 1000.0
+          Process.clock_gettime(Process::CLOCK_MONOTONIC) - @heard_at < hold
+        end
+
         def arm_ear
           return unless @ear.available?
           return if @hearing
@@ -220,7 +233,7 @@ module Master
 
           set(:listening, ["listening — say stop or type to interrupt"])
           nudge(:listen)
-          heard = @ear.listen(stop: -> { @halt_ear || @closing }, on_partial: ->(text) { show(["heard: #{text}"]) })
+          heard = @ear.listen(stop: -> { @halt_ear || @closing }, on_partial: ->(text) { @heard_at = Process.clock_gettime(Process::CLOCK_MONOTONIC); show(["heard: #{text}"]) })
           set(:idle, ["heard nothing"]) unless heard
           heard
         rescue StandardError => e

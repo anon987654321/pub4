@@ -1310,6 +1310,23 @@ tokens:
       links: [[lib, law], [law, tools], [tools, web], [web, openbsd], [openbsd, lib],
               [lib, tools], [law, web], [tools, openbsd], [web, lib], [openbsd, law]]
       layers: [identity, eyes, mouth, cognition, repository, event_field, camera, hud]
+      # How the face attends. One declaration for both faces: the browser reads it
+      # as MASTER_FACE_CONTRACT.spatial.awareness and the terminal through
+      # Face::Contract.awareness. Awareness of the user is fed only when the mic
+      # cannot be hearing MASTER itself (echo_safe); otherwise the face keeps its
+      # own idle behaviour. glance_scale narrows the saccades toward the user,
+      # lean is the forward settle, eye_open the lid opening (1 = ordinary).
+      awareness:
+        listening: { glance_scale: 0.35, eye_open: 1.4, lean: 0.10, heard_lean: 0.06 }
+        speaking:  { glance_scale: 0.60 }
+        # The user counts as speaking for this long after the last recogniser
+        # partial, in milliseconds.
+        heard_hold_ms: 1200
+        echo_safe:
+          # No awareness while TTS is audible, loading, or inside this tail after
+          # it ends, when room reverb and the recogniser's buffer still carry the
+          # sentence MASTER just spoke.
+          tts_tail_ms: 900
       camera:
         distance: 5.20
         parallax: 0.06
