@@ -62,6 +62,18 @@ sync_ci_rails_root() {
   # LoadError before it compiles anything.
   doas rm -rf "$mirror/MASTER/lib/operator"
   git -C "$repo" archive HEAD MASTER/lib/operator | doas sh -c "cd ${mirror} && tar xf -"
+  # The tools above require these by require_relative ("../lib/trace/dmesg" from
+  # design_tokens, rhythm_lint and adhoc_empty_lint, then its own siblings), so
+  # without them css_build, rhythm_lint and adhoc_empty_lint die on a LoadError
+  # (2026-10-09). Named files, not MASTER/lib: the box has little disk and RAM.
+  # tar overwrites each file, and the set is fixed by name, so nothing lingers.
+  # OPENBSD/test/test_ci_mirror_contract.rb resolves the require graph of every
+  # tool ci.rb runs and fails when a target is missing from this list.
+  local -a lib_files=(MASTER/lib/boot/paths.rb MASTER/lib/ground/swallow.rb
+                      MASTER/lib/io/exec.rb MASTER/lib/ops/process_spawn.rb
+                      MASTER/lib/trace/dmesg.rb MASTER/lib/trace/logging.rb
+                      MASTER/lib/voice/playback.rb)
+  git -C "$repo" archive HEAD "${lib_files[@]}" | doas sh -c "cd ${mirror} && tar xf -"
   doas chown -R "${app}:${app}" "$mirror"
 }
 
