@@ -88,7 +88,9 @@ class IconSpriteTest < ActionDispatch::IntegrationTest
 
       sprite = response.body[%r{<svg class="icon-sprite".*?</svg>}m]
       assert sprite, "the sprite did not render"
-      outside = response.body.sub(sprite, "")
+      # Strip the sprite's symbols rather than slicing to the first </svg>: a symbol
+      # may hold an inner <svg>, which ends a non-greedy match inside the sprite.
+      outside = response.body.gsub(%r{<symbol\b.*?</symbol>}m, "")
       icon_paths = outside.scan(/<path /).size
 
       # The marketplace animated logo and a handful of hand-built SVGs legitimately
