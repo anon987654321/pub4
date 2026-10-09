@@ -354,7 +354,7 @@
   body[data-surface="luxury"] .item-card--luxury .item-title, body[data-surface="luxury"] .wardrobe-card :is(h2, h3) { text-wrap: balance; overflow-wrap: anywhere; }
   body[data-surface="luxury"] .item-card--luxury .item-meta, body[data-surface="luxury"] .commerce-fit-reasons, body[data-surface="luxury"] .shop-feed-note { text-wrap: pretty; line-height: 1.5; }
   body[data-surface="luxury"] :is(.form input, .form select, .form textarea, .input) { min-block-size: var(--tap-min); border: 1px solid var(--luxury-border); border-radius: var(--radius-sm); background: var(--luxury-surface); color: var(--luxury-text); }
-  body[data-surface="luxury"] :is(.form input, .form select, .form textarea, .input):focus-visible { border-color: var(--luxury-accent, var(--text)); outline: var(--focus-ring); outline-offset: 2px; }
+  body[data-surface="luxury"] :is(.form input, .form select, .form textarea, .input):focus-visible { border-color: var(--text); outline: var(--focus-ring); outline-offset: 2px; }
   body[data-surface="luxury"] .luxury-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
   body[data-surface="luxury"] .luxury-actions .btn { min-block-size: var(--tap-min); min-inline-size: var(--tap-min); }
   body[data-surface="luxury"] .luxury-title { max-inline-size: 12ch; text-wrap: balance; overflow-wrap: anywhere; }

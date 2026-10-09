@@ -147,7 +147,7 @@ module Operator
     def source_files
       @source_files ||= scss_files +
                         Dir.glob(File.join(rails_root, "{*,*/engines/*}/app/{helpers,views,javascript}/**/*.{rb,erb,js}")) +
-                        Dir.glob(File.join(rails_root, "shared/vendor/javascript/**/*.js"))
+                        Dir.glob(File.join(rails_root, "*/vendor/javascript/**/*.js"))
     end
 
     def rails_root

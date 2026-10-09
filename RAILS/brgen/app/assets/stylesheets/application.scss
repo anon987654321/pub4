@@ -1085,7 +1085,6 @@ label.compose-action:hover { color: var(--text); }
   margin: 0;
   color: var(--text-secondary);
   font-size: var(--text-sm);
-  line-height: var(--leading-relaxed);
 }
 
 
@@ -9236,7 +9235,7 @@ body.vertical-marketplace {
   --bol-blue-dark: var(--vertical-marketplace-accent-hover);
   --bol-blue-soft: #eef5ff;
   --bol-ink: #111111;
-  background: var(--bol-page);
+  background: unset;
   color: var(--bol-ink);
   --bol-muted: #666666;
   --bol-rule: #d9d9d9;
@@ -9269,7 +9268,7 @@ body.vertical-marketplace #main-content {
   max-width: none;
   margin: 0 auto;
   padding: 0 var(--bol-gutter) 64px;
-  background: var(--bol-page);
+  background: unset;
 }
 
 body.vertical-marketplace #navBar.storefront-nav--bol {
@@ -9288,7 +9287,7 @@ body.vertical-marketplace .storefront-utility--bol {
   gap: 32px;
   padding: 0 var(--bol-gutter);
   border-bottom: 1px solid var(--bol-rule);
-  background: var(--bol-page);
+  background: unset;
   color: var(--bol-muted);
   font-size: 12px;
   line-height: 1;
@@ -9555,7 +9554,7 @@ body.vertical-marketplace .deal-card-img .deal-badge {
   inset-block-start: 8px;
   inset-inline-start: 8px;
   background: var(--bol-ink);
-  color: var(--bol-page);
+  color: unset;
   border-radius: 2px;
 }
 
@@ -10267,7 +10266,7 @@ body.vertical-marketplace .listing-step-link span {
   margin-inline-end: 6px;
   place-items: center;
   border-radius: 50%;
-  background: var(--bol-page);
+  background: unset;
   font-size: 12px;
   font-weight: 700;
 }
@@ -10339,7 +10338,7 @@ body.vertical-marketplace .listing-photo-guidance {
   margin-top: 12px;
   padding: 10px 12px;
   border-inline-start: 3px solid var(--bol-blue);
-  background: var(--bol-page);
+  background: unset;
   color: var(--bol-ink);
   font-size: 13px;
 }
@@ -10467,7 +10466,7 @@ body.vertical-marketplace .listing-review-cover {
   display: grid;
   aspect-ratio: 1;
   place-items: center;
-  background: var(--bol-page);
+  background: unset;
   color: var(--bol-muted);
   font-size: 28px;
   font-weight: 700;
@@ -10507,7 +10506,7 @@ body.vertical-marketplace .listing-source-badges {
 }
 
 body.vertical-marketplace .listing-source-badge {
-  background: var(--bol-page);
+  background: unset;
   color: var(--bol-muted);
 }
 
