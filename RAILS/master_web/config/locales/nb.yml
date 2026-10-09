@@ -73,6 +73,7 @@ nb:
     primer_title: "start AI"
     primer_capabilities: "stemme · bilde · musikk · kode"
     primer_consent: "Starter bilde, lyd og mikrofon; tekst virker om grafikken feiler."
+    primer_noscript: "Siden trenger JavaScript. Slå det på og last siden på nytt for å chatte."
     starting: "starter…"
     loading_title: "laster… %{n}%"
     loading_status: "laster ansiktet %{n}%"

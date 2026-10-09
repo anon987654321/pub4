@@ -59,6 +59,7 @@ en:
     primer_title: "launch AI"
     primer_capabilities: "voice · image · music · code"
     primer_consent: "Starts visuals, sound and the microphone; text remains available if graphics fail."
+    primer_noscript: "This page needs JavaScript. Turn it on and reload to chat."
     starting: "starting…"
     loading_title: "loading… %{n}%"
     loading_status: "loading face %{n}%"
