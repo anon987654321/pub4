@@ -47,6 +47,16 @@
         <%= render "shared/empty_state",
               title: t("messages.empty_title"),
               body: t("messages.empty_body") %>
+        <%# A visitor has no direct messages to list. The two ways in are said
+            plainly: sign in for the inbox, or join the open room, which asks
+            for no account. %>
+        <% if Current.user.nil? || Current.user.guest? %>
+          <p class="msg-reply-context">
+            <%= t("chat.sign_in_inbox") %>
+            <%= link_to t("nav.sign_in"), new_session_path %> ·
+            <%= link_to t("chat.join_room"), channel_path("brgen"), data: { turbo_frame: "_top" } %>
+          </p>
+        <% end %>
       <% end %>
     </div>
   <% end %>

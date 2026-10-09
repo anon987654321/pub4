@@ -255,6 +255,26 @@ class ConversationHandlingTest < ActionDispatch::IntegrationTest
     assert_predicate @conversation.reload, :view_once?
   end
 
+  # A visitor has no inbox. The page names the two ways in rather than showing a
+  # dead end.
+  test "a signed-out visitor is told how to sign in or join the open room" do
+    host! "brgen.no"
+    get conversations_path
+
+    assert_response :success
+    assert_includes response.body, I18n.t("chat.sign_in_inbox")
+    assert_includes response.body, new_session_path
+    assert_includes response.body, channel_path("brgen")
+  end
+
+  test "a signed-in reader with no threads is not shown the visitor hint" do
+    lone = create_user("handle_lone")
+    sign_in_as(lone)
+    get conversations_path
+
+    assert response.body.exclude?(I18n.t("chat.sign_in_inbox"))
+  end
+
   test "a message read once is gone on the next open" do
     @conversation.update!(disappearing_duration: 0)
     sign_in_as(@user)
