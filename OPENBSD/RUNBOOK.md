@@ -387,6 +387,14 @@ OPENBSD/OPERATOR.sh …'`.
 
 ## Rails deploy
 
+Rehearse first, from the checkout you are about to ship: `ruby OPENBSD/bin/rehearse`
+runs in seconds and covers what the box's CI would otherwise tell you forty
+minutes in. It runs the CI lints and the dialect check, and the static contracts
+that tie the deploy scripts to the tree: every repo path a script names exists,
+the CI mirror carries what the tools require, the copy-tree layout matches the
+Gemfiles, and no test file leaves a test call outside its class. It does not boot
+Rails; `rails_test` on the box is where the remaining failures live.
+
 ```zsh
 cd /home/dev/pub4 && git pull --ff-only
 cd RAILS && doas zsh deploy.sh          # brgen (default)

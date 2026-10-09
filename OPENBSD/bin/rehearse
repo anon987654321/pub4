@@ -1,0 +1,61 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Rehearses a deploy on this machine, in seconds, before it costs forty minutes
+# on vm23. Everything vps_ci.sh and bin/ci check that needs no Rails boot runs
+# here: the CI lints from RAILS/__shared/config/ci.rb, the dialect check, and the
+# static contracts that tie the deploy scripts to the checkout (every named repo
+# path exists, the CI mirror carries what the tools require, the copy-tree layout
+# matches the Gemfiles, no test file leaves a call outside its class).
+#
+# It does not boot Rails or run the suite; that is the box's rails_test step, and
+# the failures that survive this rehearsal are the real ones.
+#
+# Usage: OPENBSD/bin/rehearse   (exit 0 only when every check passes)
+
+require "open3"
+require "rbconfig"
+
+ROOT = File.expand_path("../..", __dir__)
+RUBY = RbConfig.ruby
+
+LINTS = %w[
+  MASTER/tools/rhythm_lint.rb
+  MASTER/tools/rails/operator/fallback_drift_lint.rb
+  MASTER/tools/empty_state_lint.rb
+  MASTER/tools/adhoc_empty_lint.rb
+  MASTER/tools/chrome_i18n_lint.rb
+  MASTER/tools/rails/operator/dialect_token_drift_check.rb
+].freeze
+
+CONTRACTS = %w[
+  OPENBSD/test/test_deploy_paths_exist.rb
+  OPENBSD/test/test_vps_deploy_contract.rb
+  OPENBSD/test/test_ci_mirror_contract.rb
+  OPENBSD/test/test_ruby_select.rb
+  RAILS/test/require_relative_targets_test.rb
+  RAILS/test/no_top_level_test_calls_test.rb
+  RAILS/test/coverage_layout_test.rb
+].freeze
+
+def run(label, *argv, chdir: ROOT)
+  started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+  out, status = Open3.capture2e(*argv, chdir: chdir)
+  secs = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
+  puts format("%-4s %5.1fs  %s", status.success? ? "ok" : "FAIL", secs, label)
+  puts out.lines.last(12).map { |l| "       #{l.rstrip}" } unless status.success?
+  status.success?
+end
+
+results = []
+LINTS.each do |tool|
+  results << run(tool, RUBY, File.join(ROOT, tool), chdir: File.join(ROOT, "MASTER"))
+end
+CONTRACTS.each do |test|
+  dir = test.split("/").first
+  results << run(test, RUBY, "-Itest", "-I#{File.join(ROOT, 'MASTER', 'lib')}", File.join(ROOT, test), chdir: File.join(ROOT, dir))
+end
+
+failed = results.count(false)
+puts failed.zero? ? "rehearsal: all #{results.size} checks passed" : "rehearsal: #{failed} of #{results.size} failed — fix these before vps-deploy"
+exit(failed.zero? ? 0 : 1)
