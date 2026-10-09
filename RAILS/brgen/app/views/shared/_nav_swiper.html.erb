@@ -61,6 +61,9 @@
               the qualifier it is rather than as part of the place name. %>
           <% if (badge = nav_item_badge(slug)) %>
             <sup class="nav_link_badge"><%= badge %></sup>
+            <% if slug == "messenger" %>
+              <span class="visually-hidden"><%= t("messages.unread_badge", count: messenger_unread_total) %></span>
+            <% end %>
           <% end %>
         <% end %>
       <% end %>

@@ -121,9 +121,28 @@ def nav_item_active?(slug) = slug == (active_vertical.to_s.presence || "front")
   NAV_BADGED_SLUGS = %w[ai].freeze
 
   def nav_item_badge(slug)
+    return messenger_unread_badge if slug == "messenger"
     return unless NAV_BADGED_SLUGS.include?(slug)
 
     t("nav.vertical_badge_new", default: nil).presence
+  end
+
+  # Unread direct messages for the signed-in reader, asked of the database once
+  # per request however many surfaces show it: the layout's push badge, the
+  # swiper's Messenger entry and the front page's own link all read this.
+  def messenger_unread_total
+    return 0 unless Current.user
+
+    @messenger_unread_total ||= Conversation.unread_total_for(Current.user)
+  end
+
+  # The swiper's Messenger entry wears the count when there is one, in the pill
+  # "nytt!" uses. 99+ keeps the pill from growing past its word.
+  def messenger_unread_badge
+    count = messenger_unread_total
+    return unless count.positive?
+
+    count > 99 ? "99+" : count.to_s
   end
 
   def active_vertical
