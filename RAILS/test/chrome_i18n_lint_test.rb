@@ -131,13 +131,25 @@ class ChromeI18nLintTest < Minitest::Test
     end
   end
 
+  # The lint is only a floor while it still reads the views. Zero findings means
+  # nothing without this: it has to see the shipped views, and it has to flag a
+  # string that is hardcoded, which a throwaway view proves without a debt to lean on.
+  def test_the_scan_still_reads_the_views_and_flags_a_hardcoded_string
+    refute_empty Operator::ChromeI18nLint.view_paths
+
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "show.html.erb")
+      File.write(path, %(<%= link_to t("items.open", default: "Open"), item_path(@item) %>\n))
+      kinds = Operator::ChromeI18nLint.findings_in(path, Operator::ChromeI18nLint::DEFAULT_RULES, skip_translated: false).map(&:kind)
+
+      assert_includes kinds, "translate_default"
+    end
+  end
+
   # Every counted string lives in a file the lint can still open. A rule whose
   # findings point at nothing is how a ratchet turns into a number.
   def test_every_finding_resolves_to_a_real_line
-    findings = Operator::ChromeI18nLint.scan
-    refute_empty findings
-
-    missing = findings.reject do |finding|
+    missing = Operator::ChromeI18nLint.scan.reject do |finding|
       path = File.join(Operator::ChromeI18nLint.rails_root, finding.file)
       File.file?(path) && File.readlines(path, encoding: "UTF-8").length >= finding.line
     end
