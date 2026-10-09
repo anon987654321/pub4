@@ -11,7 +11,13 @@ app = ENV["PUB4_CI_APP"].to_s.strip
 app = File.basename(Dir.pwd) if app.empty?
 app = File.basename(File.expand_path("..")) if app == "app"
 
-raise "coverage: unknown Rails app #{app.inspect}" unless File.directory?(File.join(rails_root, app))
+# The monorepo keeps the app at RAILS/<app>; the deploy copy-tree keeps it at
+# /home/<app>/app beside __shared, so the directory is "app" while the name
+# stays the app. Without this the copy-tree run died "unknown Rails app".
+app_dir = [app, "app"].find do |dir|
+  File.file?(File.join(rails_root, dir, "config", "application.rb"))
+end
+raise "coverage: unknown Rails app #{app.inspect}" unless app_dir
 
 SimpleCov.root(rails_root)
 SimpleCov.coverage_path(
@@ -22,19 +28,19 @@ SimpleCov.coverage_path(
 SimpleCov.command_name "#{app}:rails"
 
 SimpleCov.start "rails" do
-  cover "#{app}/app/**/*.rb"
-  cover "#{app}/engines/**/app/**/*.rb"
-  cover "#{app}/lib/**/*.rb"
+  cover "#{app_dir}/app/**/*.rb"
+  cover "#{app_dir}/engines/**/app/**/*.rb"
+  cover "#{app_dir}/lib/**/*.rb"
   cover "__shared/app/**/*.rb"
   cover "__shared/lib/**/*.rb"
 
-  cover_views "#{app}/app/views/**/*.erb"
-  cover_views "#{app}/engines/**/app/views/**/*.erb"
+  cover_views "#{app_dir}/app/views/**/*.erb"
+  cover_views "#{app_dir}/engines/**/app/views/**/*.erb"
   cover_views "__shared/app/views/**/*.erb"
 
-  group "Application", "#{app}/app"
-  group "Libraries", "#{app}/lib"
-  group "Engines", "#{app}/engines"
+  group "Application", "#{app_dir}/app"
+  group "Libraries", "#{app_dir}/lib"
+  group "Engines", "#{app_dir}/engines"
   group "Shared", ["__shared/app", "__shared/lib"]
 
   enable_coverage :branch
@@ -49,7 +55,7 @@ SimpleCov.start "rails" do
   # included in every report but is judged only after all application reports
   # are collated, because a shared branch can legitimately be exercised by a
   # different consumer than the current app.
-  own_source = %r{\A#{Regexp.escape(app)}/(?:app|engines|lib)/}
+  own_source = %r{\A#{Regexp.escape(app_dir)}/(?:app|engines|lib)/}
   %i[line branch method].each do |criterion|
     coverage criterion do
       minimum 100, per: own_source
