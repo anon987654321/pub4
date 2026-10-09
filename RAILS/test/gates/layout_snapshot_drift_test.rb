@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
-require_relative "../../gates/lib/rendered/layout_snapshot"
+require_relative "../../../MASTER/gates/lib/rendered/layout_snapshot"
 
 # layout_snapshot's comparison, over hand-built snapshots. Nothing here launches
 # Chrome: the gate distils a probe payload into this shape, and every judgement

@@ -10,9 +10,9 @@
            caption: caption,
            zones: garments.each_with_object({}) { |garment, memo|
              memo[garment.zone] = {
-               id: garment.id,
+               id: garment.try(:id),
                name: garment.title,
-               url: garment.photos.attached? ? responsive_image_url(garment.photos.first, widths: [720]) : nil
+               url: (garment.respond_to?(:photos) && garment.photos.attached?) ? responsive_image_url(garment.photos.first, widths: [720]) : nil
              }
            }
          }

@@ -5,7 +5,7 @@ require "net/http"
 require "socket"
 require "uri"
 require "yaml"
-require_relative "../gates/support/fleet"
+require_relative "../../MASTER/gates/support/fleet"
 
 # Per-app function + layout inventory. Each YAML row is one falsifiable check:
 # a file must contain (or omit) a marker, or a live GET must render one.

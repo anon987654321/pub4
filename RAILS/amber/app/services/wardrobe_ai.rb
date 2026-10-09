@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
 require "zlib"
-require_relative "../../../contracts/studio"
+require "shared/contracts"
+Shared::Contracts.require_contract("studio")
 
 class WardrobeAi
   # The no-model answers. See wardrobe_ai/offline.rb — most machines and vm23

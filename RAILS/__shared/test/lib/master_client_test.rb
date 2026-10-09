@@ -3,7 +3,7 @@
 require "minitest/autorun"
 require "json"
 require "net/http"
-require_relative "../../../contracts/master_client"
+require_relative "../../../../MASTER/contracts/master_client"
 
 class MasterClientTest < Minitest::Test
   def test_health_uses_ingress_health

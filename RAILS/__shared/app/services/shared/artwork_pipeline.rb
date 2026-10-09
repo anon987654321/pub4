@@ -4,7 +4,8 @@ require "digest"
 require "fileutils"
 require "json"
 require "open-uri"
-require_relative "../../../../contracts/studio"
+require "shared/contracts"
+Shared::Contracts.require_contract("studio")
 require "tmpdir"
 require "time"
 

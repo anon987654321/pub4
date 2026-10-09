@@ -2,7 +2,7 @@
 
 require "minitest/autorun"
 require "tmpdir"
-require_relative "../contracts/studio"
+require_relative "../../MASTER/contracts/studio"
 
 class StudioContractTest < Minitest::Test
   def test_photograph_contract_reads_structured_result

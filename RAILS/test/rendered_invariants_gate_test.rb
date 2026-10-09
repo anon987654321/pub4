@@ -3,7 +3,7 @@
 require "minitest/autorun"
 require "json"
 require_relative "gates/method_swap"
-require_relative "../gates/lib/rendered/rendered_invariants"
+require_relative "../../MASTER/gates/lib/rendered/rendered_invariants"
 
 # rendered_invariants decides three things from one probe payload: the served
 # palette against the declared one, the chat tab's corner against a table of

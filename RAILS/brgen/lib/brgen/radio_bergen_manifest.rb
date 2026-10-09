@@ -2,7 +2,8 @@
 
 require "yaml"
 require "pathname"
-require_relative "../../../contracts/studio"
+require "shared/contracts"
+Shared::Contracts.require_contract("studio")
 
 module Brgen
   # Shared Radio Bergen manifest loader — pub2 index.html archaeology split into data + Rails.

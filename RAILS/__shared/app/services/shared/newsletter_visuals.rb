@@ -3,7 +3,8 @@
 require "date"
 require "json"
 require "net/http"
-require_relative "../../../../contracts/studio"
+require "shared/contracts"
+Shared::Contracts.require_contract("studio")
 require "rbconfig"
 require "tmpdir"
 require "fileutils"
