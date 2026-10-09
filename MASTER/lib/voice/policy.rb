@@ -219,7 +219,7 @@ module Master
       # reflections add level above the chain's own ceiling.
       def room_chain
         cfg = room
-        return nil if cfg.empty?
+        return if cfg.empty?
 
         delays = Array(cfg["reflections_ms"]).map { |ms| format("%g", ms) }.join("|")
         decays = Array(cfg["decays"]).map { |value| format("%g", value) }.join("|")
