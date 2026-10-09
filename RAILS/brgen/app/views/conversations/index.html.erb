@@ -42,11 +42,17 @@
       <% elsif @archive %>
         <%= render "shared/empty_state",
               title: t("messages.archive_empty_title"),
-              body: t("messages.archive_empty_body") %>
+              body: t("messages.archive_empty_body"),
+              action: { label: t("messages.inbox_link"), path: conversations_path } %>
       <% else %>
         <%= render "shared/empty_state",
               title: t("messages.empty_title"),
-              body: t("messages.empty_body") %>
+              body: t("messages.empty_body"),
+              action: if Current.user.nil? || Current.user.guest?
+                        { label: t("nav.sign_in"), path: new_session_path }
+                      else
+                        { label: t("messages.new_message"), path: new_conversation_path }
+                      end %>
         <%# A visitor has no direct messages to list. The two ways in are said
             plainly: sign in for the inbox, or join the open room, which asks
             for no account. %>
