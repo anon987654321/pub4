@@ -242,7 +242,7 @@ module Deploy
         deploy_text = File.read(deploy_script)
         deploy_contract = [deploy_text, File.file?(SHARED_DEPLOY) ? File.read(SHARED_DEPLOY) : ""].join("\n")
         fail_app!(app_failures, "deploy script must call shared deploy entrypoint") unless deploy_text.include?('deploy_tracked_app "$APP_NAME"')
-        fail_app!(app_failures, "deploy contract must require ruby40") unless deploy_contract.include?("need_cmd ruby40")
+        fail_app!(app_failures, "deploy contract must require the resolved ruby and bundle") unless deploy_contract.include?('need_cmd "$RUBY" "$BUNDLE"')
         fail_app!(app_failures, "deploy contract must configure relayd for #{domain}") unless deploy_contract.include?("relayd_add_relay")
       else
         fail_app!(app_failures, "missing deploy script #{metadata.fetch('deploy_script')}")

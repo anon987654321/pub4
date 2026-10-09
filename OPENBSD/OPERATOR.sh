@@ -24,6 +24,8 @@ zmodload zsh/datetime
 
 typeset -a TMPFILES
 SCRIPT_DIR=${0:a:h}
+# A box with no Ruby yet still runs the stages that install one.
+source "${SCRIPT_DIR}/lib/ruby_select.sh" || print -u2 "OPERATOR: no Ruby installed; steps that need one will fail"
 REPO_ROOT=${SCRIPT_DIR:h}
 CONFIG_ROOT=${REPO_ROOT}/OPENBSD
 
@@ -256,8 +258,8 @@ sync_openbsd_apply() {
   /sbin/pfctl -f /etc/pf.conf  || { log ERROR "pf reload failed"; return 1 }
   /sbin/pfctl -e 2>/dev/null || log WARN "pf already enabled or enable skipped"
 
-  if [[ -x /usr/bin/ruby40 ]] || command -v ruby40 >/dev/null 2>&1; then
-    ruby40 "${SCRIPT_DIR}/relayd_prune_keypairs.rb" --apply /etc/relayd.conf \
+  if [[ -n ${RUBY:-} ]]; then
+    "$RUBY" "${SCRIPT_DIR}/relayd_prune_keypairs.rb" --apply /etc/relayd.conf \
       || log WARN "relayd keypair prune failed"
   fi
   relayd -n -f /etc/relayd.conf || { log ERROR "relayd.conf invalid after sync"; return 1 }
@@ -278,7 +280,7 @@ sync_openbsd_apply() {
     mkdir -p "$scan_log_dir" || { log ERROR "cannot create $scan_log_dir"; return 1 }
     chmod 700 "$scan_log_dir"
     log INFO "MASTER rules scan (OPERATOR) — strict pre-apply per laws.yml (ROBUSTNESS/SINGULARITY/LINEARITY/PROXIMITY/ABSTRACTION/DENSITY + veto)"
-    if ! su dev -c 'cd /home/dev/pub4/MASTER && MASTER_SCAN_DETERMINISTIC=1 MASTER_SAFE_MODE=1 bundle40 exec ruby bin/gate --scan-only --tree=OPENBSD' 2>&1 | tee "$scan_log"; then
+    if ! su dev -c "cd /home/dev/pub4/MASTER && MASTER_SCAN_DETERMINISTIC=1 MASTER_SAFE_MODE=1 $BUNDLE exec $RUBY bin/gate --scan-only --tree=OPENBSD" 2>&1 | tee "$scan_log"; then
       log ERROR "MASTER scan found violations — refusing sync/apply (self_violation would occur per laws.yml)"
       return 1
     fi
@@ -395,7 +397,7 @@ sync_openbsd_apply() {
   fi
   wait_for_up 38182 brgen 24 5 || return 1
 
-  ruby40 "${SCRIPT_DIR}/gates/health_check.rb" --core && log INFO "health_check ok" \
+  "$RUBY" "${SCRIPT_DIR}/gates/health_check.rb" --core && log INFO "health_check ok" \
     || { log ERROR "health_check failed"; return 1; }
 }
 
@@ -410,7 +412,7 @@ trap 'error_handler $? $LINENO' ERR INT TERM
 # These four restate facts data/dns.yml already declares — BRGEN_IP is its
 # nameserver.ip, HYP_IP the first of its xfr_peers, PUBLIC_RESOLVERS its
 # resolvers.public. They stay as literals because this block is sourced before
-# anything, and making it shell out to ruby40 to boot would put the deploy
+# anything, and making it shell out to ruby to boot would put the deploy
 # script behind an interpreter it also installs. test_dns_facts_agree fails if
 # either copy moves without the other.
 typeset -r BRGEN_IP="46.23.89.226"
@@ -542,8 +544,8 @@ main() {
         log ERROR "first_install rewrites DNS material; rerun with I_UNDERSTAND_DNS_WIPE=1 if this is intentional"
         exit 1
       }
-      ruby40 "${SCRIPT_DIR}/gates/verify_openbsd_idempotency.rb" || exit 1
-      ruby40 "${SCRIPT_DIR}/gates/verify_deploy_identity.rb" || exit 1
+      "$RUBY" "${SCRIPT_DIR}/gates/verify_openbsd_idempotency.rb" || exit 1
+      "$RUBY" "${SCRIPT_DIR}/gates/verify_deploy_identity.rb" || exit 1
       stage_1
       stage_2
       ;;
@@ -552,13 +554,13 @@ main() {
         log ERROR "stage_1 rewrites DNS material; rerun with I_UNDERSTAND_DNS_WIPE=1 if this is intentional"
         exit 1
       }
-      ruby40 "${SCRIPT_DIR}/gates/verify_openbsd_idempotency.rb" || exit 1
-      ruby40 "${SCRIPT_DIR}/gates/verify_deploy_identity.rb" || exit 1
+      "$RUBY" "${SCRIPT_DIR}/gates/verify_openbsd_idempotency.rb" || exit 1
+      "$RUBY" "${SCRIPT_DIR}/gates/verify_deploy_identity.rb" || exit 1
       stage_1
       ;;
     --stage-2|--stage2)
-      ruby40 "${SCRIPT_DIR}/gates/verify_openbsd_idempotency.rb" || exit 1
-      ruby40 "${SCRIPT_DIR}/gates/verify_deploy_identity.rb" || exit 1
+      "$RUBY" "${SCRIPT_DIR}/gates/verify_openbsd_idempotency.rb" || exit 1
+      "$RUBY" "${SCRIPT_DIR}/gates/verify_deploy_identity.rb" || exit 1
       stage_2
       ;;
     "")

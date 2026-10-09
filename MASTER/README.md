@@ -320,7 +320,7 @@ The perception loop is bounded and stoppable. It does not automatically activate
 **vm23 operator path.** From the authoritative OpenBSD checkout at `/home/dev/pub4`, run as `dev` rather than under `doas`:
 
 ```console
-cd /home/dev/pub4 && git pull --ff-only origin main && ruby40 -c MASTER/lib/md.rb && ruby40 -c MASTER/lib/pdf.rb && zsh OPENBSD/bin/vps-deploy master
+cd /home/dev/pub4 && git pull --ff-only origin main && ruby -c MASTER/lib/md.rb && ruby -c MASTER/lib/pdf.rb && zsh OPENBSD/bin/vps-deploy master
 ```
 
 The Markdown infrastructure is landed, including `Master::MD`, `Master::PDF`, the constitutional Markdown style, and safe formatting cleanup. A semantic Strunk-and-White rewrite of every Markdown file is not yet claimed complete; commands, contracts, evidence logs, and historical records must survive that pass unchanged in meaning.

@@ -22,18 +22,23 @@ daemon="/bin/ksh"
 # Sourced inside the app user's shell rather than interpolated here, where the
 # secret would sit in ps(1) argv; under set -a because `.` sets a bare
 # KEY=value unexported, and the job classes need every key in the file.
-daemon_flags="-c 'cd ${APP_DIR} && set -a && . /etc/brgen.env && set +a && export RAILS_ENV=production HOME=/home/brgen PUB4_ROOT=/home/dev/pub4 PUB4_RAILS_ROOT=/home/dev/pub4/RAILS && exec /usr/local/bin/bundle40 exec rake solid_queue:start'"
+# rc.d cannot source the repo, so pick whichever bundler the package manager
+# installed (OpenBSD ships Ruby by version; none is named here).
+for _bundle in /usr/local/bin/bundle4.0 /usr/local/bin/bundle40 /usr/local/bin/bundle3.4 /usr/local/bin/bundle34 /usr/local/bin/bundle3.3 /usr/local/bin/bundle33 /usr/local/bin/bundle; do
+  if [ -x "$_bundle" ]; then break; fi
+done
+daemon_flags="-c 'cd ${APP_DIR} && set -a && . /etc/brgen.env && set +a && export RAILS_ENV=production HOME=/home/brgen PUB4_ROOT=/home/dev/pub4 PUB4_RAILS_ROOT=/home/dev/pub4/RAILS && exec ${_bundle} exec rake solid_queue:start'"
 daemon_user="brgen"
 daemon_execdir="/home/brgen/app"
 daemon_logger="daemon.notice"
 daemon_timeout="120"
 
 . /etc/rc.d/rc.subr
-# The process renames itself to "ruby40: solid-queue-supervisor(1.2.4): ...",
+# The process renames itself to "ruby<version>: solid-queue-supervisor(1.2.4): ...",
 # hence both - and _. rc.subr checks with `pgrep -q -xf "${pexp}"`, and -x
 # anchors the whole argv, which continues past the name: the trailing .* is
 # what lets rcctl check and stop see a running worker at all.
-pexp="ruby40.*solid[-_]queue.*"
+pexp="ruby[0-9.]*.*solid[-_]queue.*"
 rc_bg=YES
 rc_reload=NO
 

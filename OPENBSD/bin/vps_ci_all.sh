@@ -10,20 +10,21 @@ fi
 
 repo=${PUB4_ROOT:-/home/dev/pub4}
 script=${repo}/OPENBSD/bin/vps_ci.sh
+source "${repo}/OPENBSD/lib/ruby_select.sh"
 # The fleet is apps.yml's, in its order; a literal list here keeps testing three
 # apps after a fourth ships.
-apps=(${(f)"$(ruby40 -ryaml -e 'puts YAML.safe_load_file(ARGV[0]).fetch("apps").keys' "${repo}/RAILS/apps.yml")"})
+apps=(${(f)"$("$RUBY" -ryaml -e 'puts YAML.safe_load_file(ARGV[0]).fetch("apps").keys' "${repo}/RAILS/apps.yml")"})
 (( ${#apps} )) || { print -u2 "vps_ci_all: no apps read from ${repo}/RAILS/apps.yml"; exit 1 }
 max_load=${PUB4_CI_MAX_LOAD:-4}
 
-# The 5-minute average, and one ruby40 rather than two awks per tick — the same
+# The 5-minute average, and one ruby rather than two awks per tick — the same
 # shape vps_master_scan.sh uses, for the same two reasons: awk is banned in
 # committed scripts here, and one process both reads the figure and decides on
 # it, so there is no window where the value read is not the value compared.
 # OpenBSD prints the three numbers bare and macOS wraps them in braces, which is
 # why this scans for numbers rather than splitting on whitespace.
 load_over_max() {
-  ruby40 -e '
+  "$RUBY" -e '
     n = `sysctl -n vm.loadavg 2>/dev/null`.scan(/\d+(?:\.\d+)?/)
     exit(0) if n.size < 3
     exit(n[1].to_f > ARGV[0].to_f ? 0 : 1)

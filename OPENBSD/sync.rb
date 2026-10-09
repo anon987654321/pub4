@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 # Mirror live VPS config into OPENBSD/ with secret redaction.
-# Run on VPS: doas ruby40 ~/pub4/OPENBSD/sync.rb
+# Run on VPS: doas ruby ~/pub4/OPENBSD/sync.rb
 
 require "fileutils"
 require_relative "gates/config_drift_gate"
@@ -34,7 +34,7 @@ end
 # A Mac has its own /etc/pf.conf and /etc/ssh/sshd_config, and copying those
 # over the vm23 mirror is a silent overwrite.
 unless on_vps?
-  warn "sync: refused - run on vm23 as root (doas ruby40 OPENBSD/sync.rb); this machine's /etc is not the box's"
+  warn "sync: refused - run on vm23 as root (doas ruby OPENBSD/sync.rb); this machine's /etc is not the box's"
   exit 2
 end
 

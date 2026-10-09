@@ -159,7 +159,7 @@ so; this line used to name all three after the word `doas`.
 - Treat `RAILS/apps.yml` and `OPENBSD/deploy_inventory.json` as inventories, not
   suggestions.
 - Any `/etc` change made on vm23 must be copied back to `OPENBSD/etc/`.
-- Use `ruby40` and `bundle40` on OpenBSD; `zsh OPENBSD/bin/vps_ci.sh <app>` for
+- Use the available Ruby on OpenBSD (ruby40, ruby34 … resolved by `OPENBSD/lib/ruby_select.sh`, which sets `$RUBY` and `$BUNDLE`); `zsh OPENBSD/bin/vps_ci.sh <app>` for
   per-app CI.
 - Keep secrets in `/etc/*.env`; never commit them.
 - Keep Rails `config.assume_ssl = true`; do not enable `force_ssl` behind
@@ -297,7 +297,7 @@ dead one until it is written down.
 
 | Script | Run from | What it is for |
 |--------|----------|----------------|
-| `ruby OPENBSD/sync.rb` (as `doas ruby40`) | vm23 | Mirror live `/etc` config **back into** `OPENBSD/`, with secret redaction. The repo→live direction is well travelled; this is the return leg, and skipping it is how `relayd.conf` drifted for weeks (see the warning under *OpenBSD deploy*). |
+| `ruby OPENBSD/sync.rb` (as `doas ruby`) | vm23 | Mirror live `/etc` config **back into** `OPENBSD/`, with secret redaction. The repo→live direction is well travelled; this is the return leg, and skipping it is how `relayd.conf` drifted for weeks (see the warning under *OpenBSD deploy*). |
 | `ruby OPENBSD/ptr_openbsd_amsterdam.rb --ipv4 … --hostname …` | anywhere | Set the PTR record via openbsd.amsterdam's `ptr4`/`ptr6` endpoints; `--ipv6` sets the v6 record. Needed only if the VM's IP changes. It prints the request as a dry run unless `APPLY_PTR=1` is set. |
 | `zsh OPENBSD/bin/vps_run_remote.sh` | workstation | Bootstrap a *fresh* VM: copies `vps_install_all.sh` up through the server4 hypervisor jump and runs it. Not for routine deploys — use `vps-deploy`. |
 | `ksh OPENBSD/bin/manual_master_deploy.ksh` | vm23, under tmux | Fallback when `vps_deploy_master.sh` stalls. It pkills the stuck deploy and its precompile, then precompiles MASTER web, runs the `master_web_assets` gate, restarts master and relayd, and probes `/up`. Output goes to `/tmp/master_manual.log`, not the terminal — `tail -f` it. |
@@ -391,13 +391,13 @@ OPENBSD/OPERATOR.sh …'`.
 cd /home/dev/pub4 && git pull --ff-only
 cd RAILS && doas zsh deploy.sh          # brgen (default)
 doas zsh deploy.sh amber                     # or: all
-ruby40 OPENBSD/gates/health_check.rb --public --all-ready-apps
+ruby OPENBSD/gates/health_check.rb --public --all-ready-apps
 ```
 
 Per-app: `doas zsh RAILS/<app>/<app>.sh`. New Propshaft assets need `rails
 assets:precompile` before restart.
 
-Ruby on VPS: `ruby40`, `bundle40`. Never parallel `bin/ci` across SSH sessions.
+Ruby on VPS: the available Ruby (ruby40, ruby34 … resolved by `OPENBSD/lib/ruby_select.sh`). Never parallel `bin/ci` across SSH sessions.
 
 **`gc.auto` is 0 in `/home/dev/pub4`, and that is load-bearing.** git runs `gc
 --auto` after a pull and detaches it, so on 2026-08-23 the pull that set up a
@@ -521,7 +521,7 @@ the full installer from macOS.
 
 ## Post-change
 
-- Run `ruby40 OPENBSD/gates/health_check.rb --public --all-ready-apps`.
+- Run `ruby OPENBSD/gates/health_check.rb --public --all-ready-apps`.
 - Copy any live `/etc` changes back into `OPENBSD/etc/`.
 - Put a lasting reason in a comment beside the config or script it explains, a
   standing refusal in `OPENBSD/CLAUDE.md`, and open work in the repo-root
@@ -538,7 +538,7 @@ on launch day:
 2. On vm23, stop the app: `doas rcctl stop <app> <app>_jobs`.
 3. Move the primary aside (never delete): `mv
    /home/<app>/app/storage/production.sqlite3{,.pre-launch}`.
-4. As the app user: `bundle40 exec bin/rails db:prepare` — schema, no seeds.
+4. As the app user: `bundle exec bin/rails db:prepare` — schema, no seeds.
    brgen demo seeds are the DEMO; a launch database starts empty. If a curated
    skeleton is wanted (cities, categories, admin), seed ONLY
    `db/seeds/launch.rb` — write it that week, review it that week.

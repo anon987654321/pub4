@@ -72,6 +72,13 @@ def ssh_key
   File.expand_path(ENV.fetch("PUB4_SSH_KEY", "~/.ssh/id_ed25519_brgen"))
 end
 
+# A command for the box that runs a Ruby script with whatever Ruby the box has.
+# The resolution happens there, through OPENBSD/lib/ruby_select.sh, never here.
+def remote_ruby(*argv)
+  resolver = %q(. OPENBSD/lib/ruby_select.sh && exec "$RUBY" "$@")
+  "cd /home/dev/pub4 && #{Shellwords.join(["sh", "-c", resolver, "sh", *argv])}"
+end
+
 def ssh_run(remote_cmd)
   cmd = ["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=15", "-i", ssh_key, ssh_host, remote_cmd]
   exec(*cmd)
@@ -613,7 +620,7 @@ when "vps"
         else
           print "master0: screen master stopped"
         fi
-        ruby40 -I MASTER/lib -e 'require "master"; p=Master::Ops::ProcessLock.owner(File.join(Master::ROOT, ".master", "process.lock")); puts(p.empty? ? "master0: process lock free" : "master0: process #{p["pid"]} on #{p["host"]}, mode #{p["mode"]}")'
+        MASTER/bin/ruby -I MASTER/lib -e 'require "master"; p=Master::Ops::ProcessLock.owner(File.join(Master::ROOT, ".master", "process.lock")); puts(p.empty? ? "master0: process lock free" : "master0: process #{p["pid"]} on #{p["host"]}, mode #{p["mode"]}")'
         ;;
       stop)
         screen -S master -X quit 2>/dev/null || true
@@ -643,7 +650,7 @@ when "vps"
     end
   when "state"
     if ARGV.delete("--remote")
-      ssh_run("cd /home/dev/pub4 && #{Shellwords.join(["ruby40", "OPENBSD/bin/vps-state", *ARGV])}")
+      ssh_run(remote_ruby("OPENBSD/bin/vps-state", *ARGV))
     else
       exec(File.join(OPENBSD_OPS, "bin", "vps-state"), *ARGV)
     end
@@ -659,9 +666,8 @@ when "vps"
     remote = !ARGV.delete("--remote").nil?
     args = ARGV.dup
     die("vps", "usage, bin/operator vps admin <status|services|service|pf|disk|memory|swap|dmesg|packages|updates|upgrade|reboot> [args] [--remote]", 64) if args.empty?
-    command = ["ruby40", "OPENBSD/bin/vps_admin.rb", *args]
     if remote
-      ssh_run("cd /home/dev/pub4 && #{Shellwords.join(command)}")
+      ssh_run(remote_ruby("OPENBSD/bin/vps_admin.rb", *args))
     else
       exec(File.join(OPENBSD_OPS, "bin", "vps_admin.rb"), *args)
     end
@@ -669,7 +675,7 @@ when "vps"
     app = ARGV.shift
     abort(usage) if app.to_s.empty?
     if ARGV.delete("--remote")
-      ssh_run("cd /home/dev/pub4 && #{Shellwords.join(["ruby40", "OPENBSD/bin/vps-logs", app, *ARGV])}")
+      ssh_run(remote_ruby("OPENBSD/bin/vps-logs", app, *ARGV))
     else
       exec(File.join(OPENBSD_OPS, "bin", "vps-logs"), app, *ARGV)
     end

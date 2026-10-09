@@ -60,14 +60,14 @@ rails_runtime_gate() {
     secret=$(app_secret_for "$app_name")
     deploy_status "$app_name" "runtime gate: bundle install"
     run_rails_as_app "$app_name" "$app_dir" \
-      "bundle40 config unset without && bundle40 install --jobs=2" \
+      "${BUNDLE} config unset without && ${BUNDLE} install --jobs=2" \
       || { deploy_status "$app_name" "runtime gate: bundle install" "failed"; log_err "ci bundle install failed"; return 1; }
     deploy_status "$app_name" "runtime gate: bundle check"
-    run_rails_as_app "$app_name" "$app_dir" bundle40 check \
+    run_rails_as_app "$app_name" "$app_dir" "$BUNDLE" check \
       || { deploy_status "$app_name" "runtime gate: bundle check" "failed"; log_err "bundle check failed"; return 1; }
     deploy_status "$app_name" "runtime gate: db:prepare"
     run_rails_as_app "$app_name" "$app_dir" \
-      "SECRET_KEY_BASE=${secret} RAILS_ENV=production bundle40 exec rails db:prepare" \
+      "SECRET_KEY_BASE=${secret} RAILS_ENV=production ${BUNDLE} exec rails db:prepare" \
       || { deploy_status "$app_name" "runtime gate: db:prepare" "failed"; log_err "db:prepare failed"; return 1; }
     deploy_status "$app_name" "runtime gate: secondary dbs"
     rails_prepare_secondary_dbs_as_app "$app_name" "$app_dir" \
@@ -84,7 +84,7 @@ rails_runtime_gate() {
       fi
       deploy_status "$app_name" "runtime gate: bin/ci"
       run_rails_as_app "$app_name" "$app_dir" \
-        "SECRET_KEY_BASE=${secret} PUB4_RAILS_ROOT=${rails_tree} RAILS_ENV=test CI=1 PUB4_CI_GUARD=1 bundle40 exec bin/ci" \
+        "SECRET_KEY_BASE=${secret} PUB4_RAILS_ROOT=${rails_tree} RAILS_ENV=test CI=1 PUB4_CI_GUARD=1 ${BUNDLE} exec bin/ci" \
         || { deploy_status "$app_name" "runtime gate: bin/ci" "failed"; log_err "bin/ci failed"; return 1; }
     fi
   else

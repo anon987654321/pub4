@@ -5,6 +5,13 @@
 PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin
 export PATH
 
+# This installs to /usr/local/bin and cannot source the repo's ruby_select.sh:
+# take the first Ruby the packages left beside it.
+RUBY=
+for _r in ruby4.0 ruby40 ruby3.4 ruby34 ruby3.3 ruby33 ruby; do
+  if [ -x "/usr/local/bin/$_r" ]; then RUBY="/usr/local/bin/$_r"; break; fi
+done
+
 # Are the domains still ours, and how long have we got.
 #
 # Weekly rather than daily because it makes one whois query per domain and the
@@ -26,7 +33,7 @@ export PATH
 # been failing every night.)
 #
 # Plain ASCII in the logger line: syslog renders an em dash as M-bM^@M^T.
-su dev -c 'cd /home/dev/pub4 && /usr/local/bin/ruby40 OPENBSD/bin/domain_watch.rb' \
+su dev -c "cd /home/dev/pub4 && $RUBY OPENBSD/bin/domain_watch.rb" \
   > /var/log/domain_watch.log 2>&1 ||
   logger -t weekly.local "domain_watch: a domain is expiring, lapsed or changed hands - see /var/log/domain_watch.log"
 

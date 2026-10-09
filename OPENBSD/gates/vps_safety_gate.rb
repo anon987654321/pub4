@@ -75,8 +75,8 @@ Dir.glob(File.join(OPENBSD, "etc", "rc.d", "*")).sort.each do |path|
 
   text = File.read(path)
   rel = path.delete_prefix("#{ROOT}/")
-  if text.include?("falcon serve") && !text.include?("bundle40 exec falcon")
-    failures << "#{rel} must invoke falcon via bundle40 exec (gem binstub, not PATH)"
+  if text.include?("falcon serve") && !text.match?(/\${_bundle} exec falcon/)
+    failures << "#{rel} must invoke falcon via ${_bundle} exec (gem binstub, not PATH)"
   end
 end
 

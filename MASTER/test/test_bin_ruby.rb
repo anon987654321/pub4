@@ -100,7 +100,7 @@ class TestBinRuby < Minitest::Test
     end
   end
 
-  def test_ruby_runner_prefers_the_pinned_rbenv_over_generic_ruby40
+  def test_ruby_runner_prefers_the_pinned_rbenv_over_generic_versioned_ruby
     old_path = ENV["PATH"]
     old_fake_path = ENV["FAKE_RBENV_PATH"]
     old_rbenv_root = ENV["RBENV_ROOT"]

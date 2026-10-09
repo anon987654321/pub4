@@ -34,12 +34,13 @@ fi
 
 # One definition of the lock path; it moved out of world-writable /var/tmp.
 . "${ROOT}/OPENBSD/lib/ci_lock.sh"
+. "${ROOT}/OPENBSD/lib/ruby_select.sh"
 LOCK=$(pub4_ci_lock_path)
 
 # Probe the flock with-ci-lock and CiGuard take, rather than asking fuser(1):
 # where fuser is missing the old test was simply false, and the run went ahead
-# racing CI. ruby40 exits 0 only when the lock is held by someone else.
-if [ -f "$LOCK" ] && ruby40 -e 'exit(File.open(ARGV[0]).flock(File::LOCK_EX | File::LOCK_NB) ? 1 : 0)' "$LOCK" 2>/dev/null; then
+# racing CI. ruby exits 0 only when the lock is held by someone else.
+if [ -f "$LOCK" ] && "$RUBY" -e 'exit(File.open(ARGV[0]).flock(File::LOCK_EX | File::LOCK_NB) ? 1 : 0)' "$LOCK" 2>/dev/null; then
   echo "$(date -u +%FT%TZ) skip: pub4 CI lock held"
   exit 0
 fi
@@ -55,7 +56,7 @@ git fetch origin main 2>&1 || true
 # invisible. The status line below is the report; the exit code carries it to
 # anyone who runs this by hand.
 status=0
-ruby40 OPENBSD/gates/integrity_gate.rb || status=1
-ruby40 OPENBSD/gates/health_check.rb --public --all-ready-apps --json || status=1
+"$RUBY" OPENBSD/gates/integrity_gate.rb || status=1
+"$RUBY" OPENBSD/gates/health_check.rb --public --all-ready-apps --json || status=1
 echo "== $(date -u +%FT%TZ) weekly integrity end status=$status"
 exit "$status"

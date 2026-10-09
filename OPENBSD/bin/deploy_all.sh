@@ -23,7 +23,9 @@ SCRIPT_DIR=${0:a:h}
 DEPLOY_ROOT=${SCRIPT_DIR:h}
 
 : "${USE_GIT_PULL:=1}"
-: "${REMOTE_RUBY:=ruby40}"
+# Empty: the box picks its own Ruby through OPENBSD/lib/ruby_select.sh. Set it
+# to a path on the box to force one.
+: "${REMOTE_RUBY:=}"
 : "${RUN_REMOTE_HEALTH:=1}"
 : "${ALLOW_PARTIAL_DEPLOY:=0}"
 
@@ -33,6 +35,11 @@ log() { printf '[%s] %s\n' "$(date +%H:%M:%S)" "$*" }
 error() { log "ERROR: $*"; exit 1 }
 
 vssh() { vm23_ssh "$@" }
+
+# The Ruby is resolved on the box, never here: this machine's Ruby is not its.
+remote_ruby() {
+  print -r -- "${REMOTE_RUBY:+RUBY=${(q)REMOTE_RUBY} }sh -c '. OPENBSD/lib/ruby_select.sh && exec \"\$RUBY\" \"\$@\"' sh $*"
+}
 
 typeset run_per_app=0
 [[ ${1:-} == --per-app ]] && run_per_app=1
@@ -93,7 +100,7 @@ fi
 
 if [[ $RUN_REMOTE_HEALTH == 1 ]]; then
   log "Authoritative remote health gate..."
-  if ! vssh "cd ${REMOTE_PUB4} && ${REMOTE_RUBY} OPENBSD/gates/health_check.rb --public --all-ready-apps"; then
+  if ! vssh "cd ${REMOTE_PUB4} && $(remote_ruby OPENBSD/gates/health_check.rb --public --all-ready-apps)"; then
     [[ $ALLOW_PARTIAL_DEPLOY == 1 ]] \
       && log "WARN: remote health failed — ALLOW_PARTIAL_DEPLOY=1 set" \
       || error "remote health failed"
@@ -102,4 +109,4 @@ fi
 
 log "Deploy finished."
 log "VPS: ssh ${VM23_SSH_OPTS[*]} ${SSH_USER}@${SSH_HOST}"
-log "Health: ${REMOTE_RUBY} ${REMOTE_PUB4}/OPENBSD/gates/health_check.rb --public --all-ready-apps (on VPS)"
+log "Health: ruby_select.sh, then ${REMOTE_PUB4}/OPENBSD/gates/health_check.rb --public --all-ready-apps (on VPS)"

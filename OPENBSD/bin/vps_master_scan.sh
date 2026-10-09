@@ -14,12 +14,13 @@ repo=${PUB4_ROOT:-/home/dev/pub4}
 # that caller-chosen path in a world-writable directory. The helper keeps the lock
 # in root-owned /var/db/pub4 and ignores an override pointing anywhere else.
 . "${repo}/OPENBSD/lib/ci_lock.sh"
+. "${repo}/OPENBSD/lib/ruby_select.sh"
 max_load=${PUB4_CI_MAX_LOAD:-4}
 
 # awk twice, in a repo that bans it in committed scripts. Ruby also spares the
 # second invocation: one process reads the load and decides.
 load=$(sysctl -n vm.loadavg 2>/dev/null)
-if ! ruby40 -e 'n = ARGV[0].to_s.scan(/\d+(?:\.\d+)?/); exit 1 if n.size < 3; exit(n[1].to_f > ARGV[1].to_f ? 1 : 0)' "$load" "$max_load"; then
+if ! "$RUBY" -e 'n = ARGV[0].to_s.scan(/\d+(?:\.\d+)?/); exit 1 if n.size < 3; exit(n[1].to_f > ARGV[1].to_f ? 1 : 0)' "$load" "$max_load"; then
   print -u2 "vps_master_scan: load ${load:-unreadable} over $max_load (5-minute average)"
   exit 1
 fi
@@ -33,5 +34,5 @@ print "vps_master_scan: lock $lock $*"
 # and the documented way to scan on vm23 has never taken the lock or run the
 # scan. bin/with-ci-lock is the same idea in the one language this box is
 # guaranteed to have.
-ruby40 "$repo/OPENBSD/bin/with-ci-lock" \
-  env MASTER_SCAN_DETERMINISTIC=1 MASTER_SAFE_MODE=1 bundle40 exec ruby bin/cli "$@"
+"$RUBY" "$repo/OPENBSD/bin/with-ci-lock" \
+  env MASTER_SCAN_DETERMINISTIC=1 MASTER_SAFE_MODE=1 "$BUNDLE" exec "$RUBY" bin/cli "$@"

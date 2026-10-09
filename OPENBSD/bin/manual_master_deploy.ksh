@@ -24,13 +24,14 @@ set -e
 set -o pipefail
 LOG=/tmp/master_manual.log
 exec >"$LOG" 2>&1
+. /home/dev/pub4/OPENBSD/lib/ruby_select.sh
 set -x
 _fail=0
 echo "START $(date -u)"
 
 pkill -9 -f vps_deploy_master 2>/dev/null
 pkill -9 -f "rails assets:precompile" 2>/dev/null
-pkill -9 -f "bundle40 exec rails assets" 2>/dev/null
+pkill -9 -f "bundle[0-9.]* exec rails assets" 2>/dev/null
 pkill -9 -f "rcctl restart master" 2>/dev/null
 pkill -9 -f "falcon.*53187" 2>/dev/null
 sleep 1
@@ -49,10 +50,10 @@ if [[ -f "$MANIFEST" ]] && [[ "${FORCE_PRECOMPILE:-0}" != "1" ]]; then
   echo precompile_skip manifest_exists
 else
   echo precompile_start
-  bundle40 exec rails assets:build_face_runtime assets:build_face_modules_bundle assets:build_face_vision_bundle || _fail=1
-  bundle40 exec rails assets:precompile || _fail=1
+  "$BUNDLE" exec rails assets:build_face_runtime assets:build_face_modules_bundle assets:build_face_vision_bundle || _fail=1
+  "$BUNDLE" exec rails assets:precompile || _fail=1
 fi
-ruby40 /home/dev/pub4/MASTER/gates/runner.rb master_web_assets || _fail=1
+"$RUBY" /home/dev/pub4/MASTER/gates/runner.rb master_web_assets || _fail=1
 if [[ "$_fail" -ne 0 ]]; then
   echo FAILED precompile_or_gate
   exit 1
@@ -81,5 +82,5 @@ echo
 
 doas rcctl restart relayd
 curl -sS -m 5 -o /dev/null -w "relayd_https=%{http_code}\n" -H "Host: ai.brgen.no" "https://127.0.0.1/up" -k
-ruby40 /home/dev/pub4/RAILS/master_web/script/probe_http
+"$RUBY" /home/dev/pub4/RAILS/master_web/script/probe_http
 echo "DONE $(date -u)"

@@ -41,20 +41,25 @@ daemon="/bin/ksh"
 # generates sets RUBY_YJIT_ENABLE=1, and a future Ruby may turn it on at build
 # time. Without this line the box would quietly start paying for it, and the
 # symptom would be swap rather than anything that names YJIT.
-daemon_flags="-c 'cd ${APP_DIR} && set -a && . /etc/brgen.env && set +a && export RUBY_YJIT_ENABLE=0 RAILS_ENV=production HOME=/home/brgen PUB4_ROOT=/home/dev/pub4 PUB4_RAILS_ROOT=/home/dev/pub4/RAILS && exec /usr/local/bin/bundle40 exec falcon serve -n ${FALCON_WORKERS:-1} --health-check-timeout 300 --bind http://127.0.0.1:${PORT}'"
+# rc.d cannot source the repo, so pick whichever bundler the package manager
+# installed (OpenBSD ships Ruby by version; none is named here).
+for _bundle in /usr/local/bin/bundle4.0 /usr/local/bin/bundle40 /usr/local/bin/bundle3.4 /usr/local/bin/bundle34 /usr/local/bin/bundle3.3 /usr/local/bin/bundle33 /usr/local/bin/bundle; do
+  if [ -x "$_bundle" ]; then break; fi
+done
+daemon_flags="-c 'cd ${APP_DIR} && set -a && . /etc/brgen.env && set +a && export RUBY_YJIT_ENABLE=0 RAILS_ENV=production HOME=/home/brgen PUB4_ROOT=/home/dev/pub4 PUB4_RAILS_ROOT=/home/dev/pub4/RAILS && exec ${_bundle} exec falcon serve -n ${FALCON_WORKERS:-1} --health-check-timeout 300 --bind http://127.0.0.1:${PORT}'"
 daemon_user="brgen"
 daemon_execdir="/home/brgen/app"
 daemon_logger="daemon.notice"
 daemon_timeout="120"
 . /etc/rc.d/rc.subr
-pexp="ruby40.*${PORT}"
+pexp="ruby[0-9.]*.*${PORT}"
 rc_bg=YES
 rc_reload=NO
 
 rc_pre() {
   touch /home/dev/pub4/.deploying-brgen 2>/dev/null || true
   pkill -f "falcon.*${PORT}" 2>/dev/null || true
-  pkill -f "ruby40.*${PORT}" 2>/dev/null || true
+  pkill -f "ruby[0-9.]*.*${PORT}" 2>/dev/null || true
   sleep 1
 }
 

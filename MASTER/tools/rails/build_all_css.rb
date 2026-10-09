@@ -195,9 +195,10 @@ end
 def bundle_cmd(_app_dir)
   return Operator::RubyRunner.bundle_cmd if defined?(Operator::RubyRunner)
 
-  # Without MASTER, OpenBSD's pinned bundler is bundle40 when it is installed.
-  on_path = ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).any? { |dir| File.executable?(File.join(dir, "bundle40")) }
-  on_path ? "bundle40" : "bundle"
+  # Without MASTER, the bundler of the running Ruby (ruby34 -> bundle34) when it is installed.
+  versioned = "bundle#{RbConfig::CONFIG["ruby_install_name"].delete_prefix("ruby")}"
+  on_path = ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).any? { |dir| File.executable?(File.join(dir, versioned)) }
+  on_path ? versioned : "bundle"
 end
 
 def try_dartsass(app_dir)
