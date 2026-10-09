@@ -99,7 +99,7 @@ module Operator
       @generated_bundles ||= begin
         # path_filter.rb is an autoload ignore, so the constant exists only once
         # the scanner has required it.
-        require File.join(MASTER_DIR, "lib", "fix", "scanner")
+        require File.join(MASTER_DIR, "lib", "fix", "scan", "path_filter")
         Regexp.union(
           Master::Fix::Scan::PathFilter::GENERATED_FACE_BUNDLES.map { |p| %r{/#{Regexp.escape(p)}\z} },
         )

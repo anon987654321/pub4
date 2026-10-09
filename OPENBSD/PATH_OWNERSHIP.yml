@@ -125,10 +125,6 @@ ownership:
     purpose: OPENBSD contract tests, run by bin/check
     risk: medium
     check: OPENBSD/bin/check
-  tools/:
-    purpose: tree.rb (repo shape) and reach.rb (deploy reach), both Ruby helpers
-    risk: low
-    check: ruby OPENBSD/test/test_reach.rb
   etc/:
     purpose: repo mirror of live /etc configs
     risk: critical

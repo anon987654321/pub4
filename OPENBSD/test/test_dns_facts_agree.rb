@@ -87,8 +87,9 @@ class DomainWatchPopulationTest < Minitest::Test
     RenderDns.define_singleton_method(:zones, original)
   end
 
-  def test_the_watched_zones_are_the_rendered_zones
-    assert_equal RenderDns.zones.keys.sort, Deploy::DomainWatch.zones
+  def test_the_watched_zones_include_every_rendered_zone_and_every_owned_domain
+    assert_empty RenderDns.zones.keys - Deploy::DomainWatch.zones
+    assert_empty Deploy::DomainWatch.owned_domains - Deploy::DomainWatch.zones
     assert_operator Deploy::DomainWatch.zones.size, :>, 40
   end
 end
@@ -274,6 +275,6 @@ class OwnedDomainFactsAgreeTest < Minitest::Test
   def test_domain_watch_includes_owned_domains_without_turning_them_into_zones
     owned = Deploy::DomainWatch.owned_domains
     assert_equal EXPECTED.sort, owned.sort
-    assert_equal RenderDns.zones.sort, (Deploy::DomainWatch.zones - owned).sort
+    assert_equal (RenderDns.zones.keys - owned).sort, (Deploy::DomainWatch.zones - owned).sort
   end
 end

@@ -173,7 +173,7 @@ class TestGitHooks < Minitest::Test
   def test_master_tools_belongs_to_the_session_that_claimed_it
     write("MASTER/tools/.session", "other-session\n")
     write("MASTER/tools/beat.rb", "# a take\n")
-    git!("add", "STUDIO/.session", "STUDIO/beat.rb")
+    git!("add", "MASTER/tools/.session", "MASTER/tools/beat.rb")
     out, status = commit("touch MASTER/tools")
 
     refute_committed out, status, /REFUSED — MASTER\/tools is owned by session 'other-session'/
@@ -182,7 +182,7 @@ class TestGitHooks < Minitest::Test
   def test_the_claiming_session_may_commit_master_tools
     write("MASTER/tools/.session", "mine\n")
     write("MASTER/tools/beat.rb", "# a take\n")
-    git!("add", "STUDIO/.session", "STUDIO/beat.rb")
+    git!("add", "MASTER/tools/.session", "MASTER/tools/beat.rb")
     out, status = commit("touch MASTER/tools", env: { "PUB4_SESSION" => "mine" })
 
     assert status.success?, "the owning session was refused its own tree:\n#{out}"
@@ -200,7 +200,7 @@ class TestGitHooks < Minitest::Test
     out, status = commit("break the engine")
 
     refute_committed out, status, /REFUSED — .*dilla\.rb does not parse/
-    assert_match(/PUB4_PARSE_SKIP=1/, out)
+    assert_match(/PUB4_RUBY_PARSE_SKIP=1/, out)
   end
 
   def test_a_staged_engine_file_that_parses_commits
@@ -213,7 +213,7 @@ class TestGitHooks < Minitest::Test
 
   def test_a_staged_non_engine_ruby_file_needs_no_parse
     write("MASTER/tools/scratch.rb", "# not the engine\n")
-    git!("add", "STUDIO/scratch.rb")
+    git!("add", "MASTER/tools/scratch.rb")
     out, status = commit("ruby outside the engine")
 
     assert status.success?, "a Ruby file outside the engine was refused a parse:\n#{out}"
@@ -222,9 +222,9 @@ class TestGitHooks < Minitest::Test
   def test_the_parse_override_is_honoured
     write("STUDIO/dilla/dilla.rb", "end\n")
     git!("add", "STUDIO/dilla/dilla.rb")
-    out, status = commit("broken, deliberately", env: { "PUB4_PARSE_SKIP" => "1" })
+    out, status = commit("broken, deliberately", env: { "PUB4_RUBY_PARSE_SKIP" => "1", "PUB4_PARSE_SKIP" => "1" })
 
-    assert status.success?, "PUB4_PARSE_SKIP=1 did not let the commit through:\n#{out}"
+    assert status.success?, "PUB4_RUBY_PARSE_SKIP=1 with PUB4_PARSE_SKIP=1 did not let the commit through:\n#{out}"
   end
 
   # --- 5. pre-push: a push carries everything beneath it -------------------

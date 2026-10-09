@@ -9,7 +9,10 @@
 # OPERATOR.sh legitimately contains UTF-8 bytes (em dashes in comments); the
 # plain string #include? checks below tolerated that under the remote's
 # US-ASCII default external encoding, but the =~ regex checks do not.
-script = File.read(ARGV.fetch(0, File.expand_path("../OPERATOR.sh", __dir__)), encoding: "UTF-8")
+# With no argument the script is OPERATOR.sh and the two stage scripts it
+# sources, because the nsd backup/delete and the db:prepare live in the stages.
+paths = ARGV.empty? ? ["OPERATOR.sh", "dev/operator_stage_1.zsh", "dev/operator_stage_2.zsh"].map { |p| File.expand_path("../#{p}", __dir__) } : [ARGV.fetch(0)]
+script = paths.map { |path| File.read(path, encoding: "UTF-8") }.join("\n")
 
 issues = []
 

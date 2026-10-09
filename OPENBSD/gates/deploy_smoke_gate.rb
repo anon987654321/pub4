@@ -67,7 +67,7 @@ def check_httpd(failures)
 end
 
 MASTER_RC = File.join(ROOT, "OPENBSD", "etc", "rc.d", "master")
-AUTH_TIER = File.join(ROOT, "MASTER", "web", "app", "middleware", "auth_tier.rb")
+AUTH_TIER = File.join(ROOT, "RAILS", "master_web", "app", "middleware", "auth_tier.rb")
 
 # Every path rc.d/master's post-start block asks the local Falcon for, with the
 # line that asks.
@@ -112,7 +112,7 @@ def check_apps_production(failures)
     next unless File.file?(production)
 
     text = File.read(production)
-    baseline = File.join(RAILS_ROOT, "shared", "config", "environments", "production_baseline.rb")
+    baseline = File.join(RAILS_ROOT, "__shared", "config", "environments", "production_baseline.rb")
     text += "\n#{File.read(baseline)}" if text.include?("production_baseline") && File.file?(baseline)
     domain = metadata.fetch("domain")
     failures << "#{name}: production.rb missing assume_ssl" unless text.match?(/\bconfig\.assume_ssl\s*=\s*true\b/)
@@ -128,13 +128,13 @@ def check_apps_production(failures)
 end
 
 def check_master_web(failures)
-  master_web = File.join(ROOT, "MASTER", "web", "config", "environments", "production.rb")
+  master_web = File.join(ROOT, "RAILS", "master_web", "config", "environments", "production.rb")
   if File.file?(master_web)
     text = File.read(master_web)
     failures << "RAILS/master_web: missing assume_ssl" unless text.match?(/\bconfig\.assume_ssl\s*=\s*true\b/)
   end
 
-  auth_tier = File.join(ROOT, "MASTER", "web", "app", "middleware", "auth_tier.rb")
+  auth_tier = File.join(ROOT, "RAILS", "master_web", "app", "middleware", "auth_tier.rb")
   if File.file?(auth_tier)
     text = File.read(auth_tier)
     failures << "RAILS/master_web: forbidden author URL auth bypass" if text.match?(/\bauthor_url\b|\bAUTHOR_NAME\b|\bmaster_author\b/)
@@ -144,7 +144,7 @@ def check_master_web(failures)
     failures << "RAILS/master_web: missing AuthTier middleware"
   end
 
-  master_web_root = File.join(ROOT, "MASTER", "web")
+  master_web_root = File.join(ROOT, "RAILS", "master_web")
   [
     File.join(master_web_root, "public/face.runtime.js"),
     File.join(master_web_root, "lib/tasks/face_runtime.rake"),

@@ -111,24 +111,24 @@ class VpsDeployContractTest < Minitest::Test
     assert_operator SOURCE.rindex(%(doas rcctl check "$app")), :>, SOURCE.index(%(GATE_AUTOFIX=0 "$RUBY" "$repo/MASTER/gates/runner.rb"))
   end
 
-# The copy-tree on vm23 keeps path gems beside app/, so every ../X an app
-# Gemfile names must be a directory vps_ci.sh syncs there. The layout moved
-# (shared became __shared, engines/ became sibling brgen_* directories) and the
-# CI mirror kept building the old one until a deploy died on
-# "The path /home/brgen/__shared does not exist".
-def test_ci_mirror_syncs_every_sibling_path_gem_the_gemfiles_name
-  ci = File.read(File.join(ROOT, "OPENBSD", "bin", "vps_ci.sh"), encoding: "UTF-8")
-  assert_includes ci, "shared_dir=/home/${app}/__shared"
-  assert_includes ci, "RAILS/brgen_*"
+  # The copy-tree on vm23 keeps path gems beside app/, so every ../X an app
+  # Gemfile names must be a directory vps_ci.sh syncs there. The layout moved
+  # (shared became __shared, engines/ became sibling brgen_* directories) and the
+  # CI mirror kept building the old one until a deploy died on
+  # "The path /home/brgen/__shared does not exist".
+  def test_ci_mirror_syncs_every_sibling_path_gem_the_gemfiles_name
+    ci = File.read(File.join(ROOT, "OPENBSD", "bin", "vps_ci.sh"), encoding: "UTF-8")
+    assert_includes ci, "shared_dir=/home/${app}/__shared"
+    assert_includes ci, "RAILS/brgen_*"
 
-  APPS.each do |app|
-    gemfile = File.join(ROOT, "RAILS", app, "Gemfile")
-    next unless File.file?(gemfile)
+    APPS.each do |app|
+      gemfile = File.join(ROOT, "RAILS", app, "Gemfile")
+      next unless File.file?(gemfile)
 
-    File.read(gemfile).scan(%r{path:\s*"\.\./([^/"]+)}).flatten.uniq.each do |sibling|
-      synced = sibling == "__shared" || (app == "brgen" && sibling.start_with?("brgen_"))
-      assert synced, "#{app}/Gemfile names ../#{sibling}, which vps_ci.sh does not sync beside app/"
+      File.read(gemfile).scan(%r{path:\s*"\.\./([^/"]+)}).flatten.uniq.each do |sibling|
+        synced = sibling == "__shared" || (app == "brgen" && sibling.start_with?("brgen_"))
+        assert synced, "#{app}/Gemfile names ../#{sibling}, which vps_ci.sh does not sync beside app/"
+      end
     end
   end
-end
 end
