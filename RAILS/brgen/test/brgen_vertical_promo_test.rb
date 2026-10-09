@@ -16,11 +16,11 @@ class BrgenVerticalPromoTest < ActiveSupport::TestCase
   end
 
   test "feed and infinite scroll both use the first-party promo seam" do
-    feed = File.read(File.expand_path("../../brgen/lib/brgen/home_feed.rb", __dir__))
-    view = File.read(File.expand_path("../../brgen/app/views/home/_live_search_results.html.erb", __dir__))
-    partial = File.read(File.expand_path("../../brgen/app/views/home/_vertical_promo_unit.html.erb", __dir__))
-    reflex = File.read(File.expand_path("../../brgen/app/reflexes/home_infinite_scroll_reflex.rb", __dir__))
-    locales = File.read(File.expand_path("../../brgen/config/locales/promo.en.yml", __dir__))
+    feed = File.read(Rails.root.join("lib/brgen/home_feed.rb"))
+    view = File.read(Rails.root.join("app/views/home/_live_search_results.html.erb"))
+    partial = File.read(Rails.root.join("app/views/home/_vertical_promo_unit.html.erb"))
+    reflex = File.read(Rails.root.join("app/reflexes/home_infinite_scroll_reflex.rb"))
+    locales = File.read(Rails.root.join("config/locales/promo.en.yml"))
 
     assert_includes feed, "PROMOTION_EVERY = AFFILIATE_EVERY * 3"
     assert_includes feed, "VERTICAL_PROMOTIONS"
@@ -31,7 +31,7 @@ class BrgenVerticalPromoTest < ActiveSupport::TestCase
   end
 
   test "promo css preserves the source rotation without a third-party animation library" do
-    css = File.read(File.expand_path("../../brgen/app/assets/stylesheets/_vertical_promo.scss", __dir__))
+    css = File.read(Rails.root.join("app/assets/stylesheets/_vertical_promo.scss"))
 
     assert_includes css, "rotate(3000deg)"
     assert_includes css, "100s linear infinite"
