@@ -48,7 +48,8 @@ class EngineRenderSmokeTest < ActionDispatch::IntegrationTest
     host! "tv.brgen.no"
     channel = Tv::Channel.create!(name: "Smoke TV", slug: "smoke-#{SecureRandom.hex(3)}", user: @user)
     attach_pixel(channel.banner) if channel.respond_to?(:banner)
-    video = Tv::Video.create!(title: "Smoke clip", channel: channel, user: @user)
+    video = Tv::Video.create!(title: "Smoke clip", channel: channel, user: @user,
+                             status: "published", published_at: Time.current)
     attach_pixel(video.thumbnail)
 
     # Tv::Engine is mounted at "/" on the tv subdomain, so its video show is
