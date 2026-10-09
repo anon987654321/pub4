@@ -45,7 +45,7 @@ class TestBootModelPin < Minitest::Test
 
   def test_the_reachability_probe_runs_once_per_agent
     router = FakeRouter.new(reachable: false)
-    agent = FakeAgent.new(saved: "claude-cli:claude-sonnet-5-5", router: router)
+    agent = FakeAgent.new(saved: "claude-cli:claude-sonnet-5-5", router:)
     3.times { agent.routed_models }
 
     assert_equal 1, router.probes

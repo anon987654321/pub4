@@ -96,8 +96,8 @@ module Master
         body = line.chomp
         ending = line[body.length..]
         return line if body.strip.empty?
-        return nil if body.match?(/\A\s*\|?[\s:|-]+\|[\s:|-]*\z/) && body.include?("-")
-        return nil if body.match?(/\A\s*([-*_])(\s*\1){2,}\s*\z/)
+        return if body.match?(/\A\s*\|?[\s:|-]+\|[\s:|-]*\z/) && body.include?("-")
+        return if body.match?(/\A\s*([-*_])(\s*\1){2,}\s*\z/)
 
         if body.match?(/\A\s*\|.*\|\s*\z/)
           cells = body.strip.sub(/\A\|/, "").sub(/\|\z/, "").split("|").map(&:strip).reject(&:empty?)
@@ -188,7 +188,7 @@ module Master
       def plan(raw, lang: nil, seed: nil, base_rate: "+0%", base_pitch: "+0Hz")
         cfg = settings
         key = language_key(raw.to_s, lang)
-        text = speakable(raw.to_s, lang: lang)
+        text = speakable(raw.to_s, lang:)
         paragraphs = text.split(/\n[ \t]*\n+/).map { |p| p.gsub(/\s*\n\s*/, " ").strip }.reject(&:empty?)
         clauses = []
         paragraphs.each_with_index do |paragraph, p_index|
