@@ -1632,6 +1632,7 @@ en:
       playlist: playlist
       maps: maps
   a11y:
+    city_link: "%{city} (%{domain})"
     skip_to_content: Skip to main content
     reports_header: Reports
     report: Report

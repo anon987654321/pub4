@@ -6,7 +6,7 @@
 
     `origin=widget` is what tells MessagesController to answer with the widget
     composer instead of the page one. %>
-<% handle = Current.user&.channel_handle || t("chat.anon", default: "anon") %>
+<% handle = Current.user&.channel_handle || t("chat.anon") %>
 <%= form_with model: local_assigns.fetch(:message, Message.new),
               url: conversation_messages_path(conversation),
               id: "nearby_widget_message", class: "nearby-chat-widget-composer",
@@ -15,8 +15,8 @@
                 controller: "typing-input optimistic-send",
                 typing_input_url_value: conversation_typing_indicators_path(conversation),
                 optimistic_send_handle_value: handle,
-                optimistic_send_pending_label_value: t("chat.sending", default: "sending…"),
-                optimistic_send_failed_label_value: t("chat.send_failed", default: "not sent — tap to retry"),
+                optimistic_send_pending_label_value: t("chat.sending"),
+                optimistic_send_failed_label_value: t("chat.send_failed"),
                 action: "turbo:submit-end->typing-input#markValue keydown->typing-input#composerKeydown input->typing-input#ping"
               } do |f| %>
   <%= f.text_area :content, rows: 1,
@@ -24,8 +24,8 @@
         maxlength: 500,
         autocomplete: "off",
         enterkeyhint: "send",
-        aria: { label: t("chat.message_label", default: "Message") } %>
+        aria: { label: t("chat.message_label") } %>
   <%= f.hidden_field :message_type, value: "text" %>
   <%= hidden_field_tag "origin", "widget" %>
-  <%= f.submit t("actions.send", default: "Send"), class: "btn btn-primary btn-sm" %>
+  <%= f.submit t("actions.send"), class: "btn btn-primary btn-sm" %>
 <% end %>

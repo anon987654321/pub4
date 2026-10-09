@@ -44,20 +44,20 @@
                     method: :post,
                     class: "feed-action#{" active" if reposted}",
                     form_class: "feed-action-form",
-                    aria: { label: t("post.repost", default: "Repost"), pressed: reposted },
-                    title: t("post.repost", default: "Repost") do %>
+                    aria: { label: t("post.repost"), pressed: reposted },
+                    title: t("post.repost") do %>
         <%= render "shared/feed_icon", name: "repost" %>
         <span class="feed-action-count"><%= post.reposts_count.positive? ? post.reposts_count : "" %></span>
       <% end %>
       <div class="feed-action-menu" data-controller="dropdown" data-action="click@window->dropdown#hide">
-        <button type="button" class="feed-action" aria-label="<%= t("post.more_actions", default: "More actions") %>"
+        <button type="button" class="feed-action" aria-label="<%= t("post.more_actions") %>"
                 aria-expanded="false" data-dropdown-button data-action="click->dropdown#toggle">
           <%= render "shared/feed_icon", name: "more" %>
         </button>
         <div class="feed-action-menu-list hidden" data-dropdown-target="menu">
           <button type="button" data-controller="clipboard" data-clipboard-source-value="<%= post_url(post) %>"
-                  data-action="click->clipboard#copy"><%= t("post.copy_link", default: "Copy link") %></button>
-          <%= link_to t("post.view", default: "View post"), post_path(post) %>
+                  data-action="click->clipboard#copy"><%= t("post.copy_link") %></button>
+          <%= link_to t("post.view"), post_path(post) %>
           <%= form_with url: post_repost_path(post), method: :post, class: "feed-quote-form" do %>
             <%= text_area_tag :comment, quote, maxlength: Repost::COMMENT_MAX, required: true,
                   rows: 2, placeholder: t("post.quote_placeholder"),
@@ -71,8 +71,8 @@
               data-controller="clipboard"
               data-clipboard-source-value="<%= post_url(post) %>"
               data-action="click->clipboard#copy"
-              title="<%= t("post.share_short", default: "Share") %>"
-              aria-label="<%= t("post.share", default: "Share post") %>">
+              title="<%= t("post.share_short") %>"
+              aria-label="<%= t("post.share") %>">
         <%= render "shared/feed_icon", name: "share" %>
       </button>
     <% end %>

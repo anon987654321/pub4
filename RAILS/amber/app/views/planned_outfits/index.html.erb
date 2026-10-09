@@ -9,10 +9,10 @@
       stay exactly as they are. %>
   <div class="field-row">
     <%= f.date_field :planned_date, min: Date.current, class: "input",
-          aria: { label: t("planned.date", default: "Date") } %>
+          aria: { label: t("planned.date") } %>
     <%= f.select :outfit_id, @outfits.map { |o| [o.name, o.id] },
-          { include_blank: t("planned.select_outfit", default: "Select outfit…") },
-          { aria: { label: t("planned.outfit", default: "Outfit") } } %>
+          { include_blank: t("planned.select_outfit") },
+          { aria: { label: t("planned.outfit") } } %>
     <%= f.text_field :notes, placeholder: t("planned.notes"), aria: { label: t("planned.notes") } %>
     <%= f.submit t("planned.plan_it"), class: "btn" %>
   </div>

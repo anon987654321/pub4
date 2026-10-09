@@ -12,27 +12,27 @@
                 }) do |f| %>
     <%= render "shared/errors", object: @post %>
 
-    <nav class="post-progressive-nav" aria-label="<%= t("post.new_steps", default: "Create post") %>">
+    <nav class="post-progressive-nav" aria-label="<%= t("post.new_steps") %>">
       <span class="post-progressive-indicator is-active" data-post-progressive-target="indicator">
-        <%= t("post.new_step_media", default: "1 · Media") %>
+        <%= t("post.new_step_media") %>
       </span>
       <span class="post-progressive-indicator" data-post-progressive-target="indicator">
-        <%= t("post.new_step_text", default: "2 · Post") %>
+        <%= t("post.new_step_text") %>
       </span>
     </nav>
 
     <p class="post-publishing" data-post-progressive-target="publishing"
        role="status" aria-live="polite" hidden>
-      <%= t("post.new_publishing", default: "Publishing…") %>
+      <%= t("post.new_publishing") %>
     </p>
 
     <section class="post-progressive-step" data-post-progressive-target="step"
              aria-labelledby="post-media-heading">
       <h2 id="post-media-heading" tabindex="-1" data-post-progressive-heading>
-        <%= t("post.new_media_heading", default: "Start with media") %>
+        <%= t("post.new_media_heading") %>
       </h2>
       <p class="form-help">
-        <%= t("post.new_media_hint", default: "Add a photo first, or continue with text only.") %>
+        <%= t("post.new_media_hint") %>
       </p>
 
       <div class="field post-photo-entry" data-controller="media-picker direct-upload">
@@ -48,34 +48,34 @@
                 data-action="click->media-picker#trigger">
           <%= icon :camera, size: 28 %>
           <strong><%= t("posts.add_photo") %></strong>
-          <small><%= t("post.new_media_camera_hint", default: "Camera or photo library") %></small>
+          <small><%= t("post.new_media_camera_hint") %></small>
         </button>
         <div class="post-media-secondary">
           <label class="post-media-choice">
             <%= icon :video, size: 22 %>
             <span>
-              <strong><%= t("compose.record_video", default: "Video") %></strong>
-              <small><%= t("post.new_video_hint", default: "Record or choose a video") %></small>
+              <strong><%= t("compose.record_video") %></strong>
+              <small><%= t("post.new_video_hint") %></small>
             </span>
             <%= f.file_field :video,
                   accept: "video/*",
                   capture: "environment",
                   direct_upload: true,
                   class: "visually-hidden",
-                  aria: { label: t("compose.record_video", default: "Video") },
+                  aria: { label: t("compose.record_video") },
                   data: { post_progressive_target: "mediaInput" } %>
           </label>
           <label class="post-media-choice">
             <%= icon :mic, size: 22 %>
             <span>
-              <strong><%= t("compose.record_audio", default: "Audio") %></strong>
-              <small><%= t("post.new_audio_hint", default: "Record or choose audio") %></small>
+              <strong><%= t("compose.record_audio") %></strong>
+              <small><%= t("post.new_audio_hint") %></small>
             </span>
             <%= f.file_field :audio,
                   accept: "audio/*",
                   direct_upload: true,
                   class: "visually-hidden",
-                  aria: { label: t("compose.record_audio", default: "Audio") },
+                  aria: { label: t("compose.record_audio") },
                   data: { post_progressive_target: "mediaInput" } %>
           </label>
         </div>
@@ -86,11 +86,11 @@
       <div class="post-progressive-actions">
         <button type="button" class="btn btn-primary"
                 data-action="click->post-progressive#next">
-          <%= t("post.new_continue", default: "Continue") %>
+          <%= t("post.new_continue") %>
         </button>
         <button type="button" class="btn btn-ghost"
                 data-action="click->post-progressive#skipMedia">
-          <%= t("post.new_text_only", default: "Continue without a photo") %>
+          <%= t("post.new_text_only") %>
         </button>
       </div>
     </section>
@@ -98,7 +98,7 @@
     <section class="post-progressive-step" data-post-progressive-target="step"
              aria-labelledby="post-content-heading">
       <h2 id="post-content-heading" tabindex="-1" data-post-progressive-heading>
-        <%= t("post.new_write_heading", default: "Write your post") %>
+        <%= t("post.new_write_heading") %>
       </h2>
 
       <div class="field">
@@ -149,7 +149,7 @@
       <div class="post-progressive-actions">
         <button type="button" class="btn btn-ghost"
                 data-action="click->post-progressive#back">
-          <%= t("actions.back", default: "Back") %>
+          <%= t("actions.back") %>
         </button>
         <%= f.submit t("post.submit"), class: "btn btn-primary" %>
       </div>

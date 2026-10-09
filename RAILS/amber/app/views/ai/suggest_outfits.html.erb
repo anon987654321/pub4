@@ -45,7 +45,7 @@
       <% end %>
       <% if s["source"] %><p><%= t("ai.source", source: s["source"]) %></p><% end %>
       <% if s["outfit_id"] %>
-        <p><%= link_to t("actions.view_outfit", default: "View outfit"), outfit_path(s["outfit_id"]), class: "btn" %></p>
+        <p><%= link_to t("actions.view_outfit"), outfit_path(s["outfit_id"]), class: "btn" %></p>
       <% end %>
     </article>
   <% end %>

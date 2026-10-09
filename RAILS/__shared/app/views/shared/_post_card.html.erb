@@ -22,7 +22,7 @@
 <% downvoted = local_assigns.fetch(:downvoted, false) %>
 <% body_plain = strip_tags(content.to_s).squish %>
 <% derived_title = strip_tags(title.to_s).squish.presence || body_plain.truncate(88, separator: " ") %>
-<% more_label = local_assigns.fetch(:more_label, t("post.read_more", default: "Read full post")) %>
+<% more_label = local_assigns.fetch(:more_label, t("post.read_more")) %>
 <% vote_rail = capture do %>
   <%= render "shared/post_vote_rail",
         post: post, vote_path: vote_path, vote_score: vote_score,

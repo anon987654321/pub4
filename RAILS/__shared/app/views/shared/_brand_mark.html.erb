@@ -21,12 +21,12 @@
     suffix so a vertical's mark read markedsplass.brgen.no, which printed a URL
     where a logo goes and made the mark a different width on every host. The
     nav swiper names the active vertical; the mark names the brand. %>
-<% mark_label = local_assigns.fetch(:label) { t("app.name", default: "brgen") } %>
+<% mark_label = local_assigns.fetch(:label) { t("app.name") } %>
 <% mark_href = local_assigns.fetch(:href) { main_app.respond_to?(:root_path) ? main_app.root_path : "/" } %>
 <%# brgen passes its historical class alongside so every rule already written
     against .brgen-logo-mark keeps applying. %>
 <% mark_class = local_assigns.fetch(:class_name, "brand-mark") %>
-<% mark_name = t("nav.brand_home", default: mark_label) %>
+<% mark_name = t("nav.brand_home") %>
 <header>
   <%= link_to mark_href, class: mark_class, aria: { label: mark_name } do %>
     <span class="brand-text"><%= mark_label %></span>

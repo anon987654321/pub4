@@ -20,13 +20,13 @@
   <dialog class="composer" data-feed-compose-target="dialog"
           data-action="click->feed-compose#backdropClose close->feed-compose#closed">
     <%= form_with model: Post.new, url: main_app.posts_path, class: "composer-form",
-          data: { controller: "form-submit", feed_compose_target: "box", pwa_offline: true, pwa_queued_text: t("pwa.queued", default: "Lagret for offline"),
+          data: { controller: "form-submit", feed_compose_target: "box", pwa_offline: true, pwa_queued_text: t("pwa.queued"),
                   action: "submit->form-submit#lock",
                   form_submit_blank: t("feed.compose_blank") } do |f| %>
       <header class="composer-header">
-        <h2 class="composer-title"><%= t("feed.compose_title", default: "Post to %{city}", city: city_name) %></h2>
+        <h2 class="composer-title"><%= t("feed.compose_title", city: city_name) %></h2>
         <button type="button" class="composer-close" data-action="click->feed-compose#close"
-                aria-label="<%= t("common.close", default: "Close") %>">
+                aria-label="<%= t("common.close") %>">
           <%= icon :close, size: 20 %>
         </button>
       </header>
@@ -35,7 +35,7 @@
         <% if guest? %>
           <span class="compose-avatar" aria-hidden="true">G</span>
           <span class="composer-author-name">
-            <%= t("feed.posting_as_guest", default: "Posting as a guest") %>
+            <%= t("feed.posting_as_guest") %>
             <%= f.hidden_field :anonymous, value: true %>
           </span>
         <% else %>
@@ -45,7 +45,7 @@
       </div>
 
       <div class="composer-body" data-controller="tiptap-editor">
-        <%= f.label :content, t("feed.compose_title", default: "Post to %{city}", city: city_name), class: "visually-hidden" %>
+        <%= f.label :content, t("feed.compose_title", city: city_name), class: "visually-hidden" %>
         <%= f.hidden_field :title, data: { feed_compose_target: "title" } %>
         <%= f.text_area :content,
               rows: 3,

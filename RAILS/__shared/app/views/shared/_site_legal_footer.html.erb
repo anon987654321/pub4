@@ -15,7 +15,7 @@
   <p class="site-footer-build">
     <span>v<%= app_version %></span>
     <span><%= app_revision.first(12) %></span>
-    <%= link_to t("legal.changelog", default: "Endringslogg"), main_app.changelog_path %>
+    <%= link_to t("legal.changelog"), main_app.changelog_path %>
   </p>
   <%= render "shared/affiliate_disclosure" %>
   <% if respond_to?(:email_subscriptions_path) && current_page?(main_app.root_path) %>

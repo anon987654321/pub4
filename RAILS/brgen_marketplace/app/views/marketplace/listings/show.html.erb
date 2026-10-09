@@ -73,7 +73,7 @@
           data-share-title-value="<%= @listing.title %>"
           data-share-url-value="<%= request.original_url %>"
           data-action="click->share#share"><%= t("marketplace.share") %></button>
-  <%= link_to t("marketplace.share_to_feed", default: "Share to BRGEN feed"),
+  <%= link_to t("marketplace.share_to_feed"),
         main_app.new_post_path(title: @listing.title, url: request.original_url),
         class: "btn btn-ghost btn-sm" %>
   <%= render "shared/affiliate_disclosure" %>

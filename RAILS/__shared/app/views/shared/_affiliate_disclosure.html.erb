@@ -22,13 +22,13 @@
   <p class="affiliate-fine site-verify" role="note">
     <% if tradedoubler_site_id.present? %>
       <span class="site-verify-id">
-        <%= t("legal.site_id_label", default: "TradeDoubler Site ID") %>:
+        <%= t("legal.site_id_label") %>:
         <%= tag.strong tradedoubler_site_id %>
       </span>
     <% end %>
     <% if site_contact_email.present? %>
       <span class="site-verify-contact">
-        <%= t("legal.contact_label", default: "Contact") %>:
+        <%= t("legal.contact_label") %>:
         <%= mail_to site_contact_email %>
       </span>
     <% end %>

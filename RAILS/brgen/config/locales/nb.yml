@@ -1640,6 +1640,7 @@ nb:
       playlist: spilleliste
       maps: kart
   a11y:
+    city_link: "%{city} (%{domain})"
     skip_to_content: Hopp til innholdet
     reports_header: Rapporter
     report: Rapport

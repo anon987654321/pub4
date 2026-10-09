@@ -55,6 +55,7 @@ nb:
       age_days: "Alder (dager)"
       notes: "Notater"
   nav:
+    connections: "Skapere"
     home: "Hjem"
     feed: "Feed"
     wardrobe: "Garderobe"
@@ -107,7 +108,9 @@ nb:
     empty_title: "Ingen varsler ennå"
     empty_body: "Oppdateringer vises her."
   home:
+    new_in: "Nytt"
     looks:
+      mannequin_label: "3D-mannekeng for garderoben"
       title: "Fire antrekk fra garderoben"
       names:
         weekend: "Helgetur"
@@ -382,7 +385,13 @@ nb:
     suggest_local_html: "<strong>OpenRouter er ikke satt opp</strong> — forslagene bruker lokale regler fra glede-/aktiv-garderoben din. Sett <code>OPENROUTER_API_KEY</code> for LLM- og bildebasert styling."
     studio_photo_html: "STUDIO-fotografering er slått på (<code>AMBER_ENABLE_STUDIO_PHOTO=1</code>) — bilder kan følge med når genereringen lykkes."
     submit_to_compose: "Send inn skjemaet for å sette sammen antrekk av klær du allerede eier."
+  commerce_fit:
+    handoff: "Startet fra en vare i BRGEN-markedsplassen. Når du lagrer, følger kilden med garderobeposten."
+    local: "BRGEN-markedsplassen"
+  post:
+    like: "Lik"
   pwa:
+    queued: "Lagret for offline"
     description: "Sosial mote. Del antrekk, hold orden på garderoben og kle deg sammen med folk du følger."
     add_item: "Legg til plagg"
     item: "Plagg"
@@ -878,6 +887,8 @@ nb:
       zoning: "Hvor hvert plagg står, planlagt etter rekkevidde og etter veien du går gjennom rommet."
       restraint: "Hvor mye garderoben bør romme, og hva den tomme stangen er til for."
   dressing_room:
+    mannequin_label: "3D-garderobe"
+    mannequin_hint: "Beveg deg over figuren for å se hvordan plagget faller"
     title: "Miks & match"
     zone_head: "Tilbehør"
     zone_top: "Overdeler"

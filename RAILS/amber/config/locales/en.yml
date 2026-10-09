@@ -56,6 +56,7 @@ en:
       age_days: "Age (days)"
       notes: "Notes"
   nav:
+    connections: "Creators"
     home: "Home"
     feed: "Feed"
     wardrobe: "Wardrobe"
@@ -108,7 +109,9 @@ en:
     empty_title: "No notifications yet"
     empty_body: "Updates will appear here."
   home:
+    new_in: "New in"
     looks:
+      mannequin_label: "3D wardrobe mannequin"
       title: "Four looks from the wardrobe"
       names:
         weekend: "Weekend walk"
@@ -383,7 +386,13 @@ en:
     suggest_local_html: "<strong>OpenRouter not configured</strong> — suggestions use local rules from your joy/active wardrobe. Set <code>OPENROUTER_API_KEY</code> for LLM + vision styling."
     studio_photo_html: "STUDIO photograph is enabled (<code>AMBER_ENABLE_STUDIO_PHOTO=1</code>) — look photos may attach when generation succeeds."
     submit_to_compose: "Submit the form to compose from clothes you already own."
+  commerce_fit:
+    handoff: "Started from a BRGEN marketplace item. Saving keeps the source reference with this wardrobe record."
+    local: "BRGEN marketplace"
+  post:
+    like: "Like"
   pwa:
+    queued: "Saved for offline"
     description: "Social fashion. Share outfits, keep a wardrobe, and dress with people you follow."
     add_item: "Add item"
     item: "Item"
@@ -880,6 +889,8 @@ en:
       zoning: "Where each garment sits, planned by reach and by the path you walk through the room."
       restraint: "How much the wardrobe should hold, and what the empty rail is for."
   dressing_room:
+    mannequin_label: "3D wardrobe"
+    mannequin_hint: "Move across the figure to inspect the drape"
     title: "Mix & Match"
     zone_head: "Accessories"
     zone_top: "Tops"

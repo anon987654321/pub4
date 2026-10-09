@@ -37,7 +37,7 @@
         data-conversation-log-locale-value="<%= I18n.locale %>"
         aria-live="polite"
         aria-relevant="additions"
-        aria-label="<%= t("chat.log_label", default: "Messages") %>">
+        aria-label="<%= t("chat.log_label") %>">
       <% if @messages.blank? %>
         <li class="nearby-chat-widget-empty-item" role="status">
           <div class="nearby-chat-widget-empty">
@@ -62,8 +62,8 @@
         if identity or channel create failed — never a pure loading dead end. %>
     <div class="nearby-chat-widget-empty">
       <%= tag.strong t("chat.lobby_title") %>
-      <%= tag.p t("chat.recovery_body", default: "Could not open the corner room. Use the city lobby instead — no signup.") %>
-      <%= link_to t("chat.open_brgen_channel", default: "Open #brgen"), channel_path("brgen"),
+      <%= tag.p t("chat.recovery_body") %>
+      <%= link_to t("chat.open_brgen_channel"), channel_path("brgen"),
             class: "nearby-chat-widget-cta", data: { turbo_frame: "_top" } %>
     </div>
   <% end %>

@@ -4,7 +4,7 @@
 
 <% if @swatches.present? %>
   <section aria-label="<%= t("ai.palette_aria") %>">
-    <%= tag.h2 t("ai.swatches_from_items", default: "Swatches from your items") %>
+    <%= tag.h2 t("ai.swatches_from_items") %>
     <div class="tag-row color-swatch-row">
       <% @swatches.each do |title, color| %>
         <span class="chip" title="<%= title %>">

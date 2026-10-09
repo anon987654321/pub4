@@ -35,7 +35,7 @@
 
   <% if @result["gap_items"]&.any? %>
     <section>
-      <%= tag.h2 t("ai.gap_items", default: "Gap items to consider") %>
+      <%= tag.h2 t("ai.gap_items") %>
       <p><%= t("ai.gap_items_hint") %></p>
       <ul><% @result["gap_items"].each do |gap_item| %><li><%= gap_item %></li><% end %></ul>
     </section>

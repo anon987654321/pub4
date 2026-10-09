@@ -35,12 +35,12 @@
         </div>
       <% elsif @post.video.attached? %>
         <%= video_tag @post.video, controls: true, playsinline: true, preload: "metadata",
-              class: "post-image post-video", aria: { label: @post.title.presence || t("posts.video", default: "Post video") } %>
+              class: "post-image post-video", aria: { label: @post.title.presence || t("posts.video") } %>
       <% end %>
 
       <% if @post.audio.attached? %>
         <%= audio_tag @post.audio, controls: true, preload: "metadata", class: "post-audio",
-              aria: { label: @post.title.presence || t("posts.audio", default: "Post audio") } %>
+              aria: { label: @post.title.presence || t("posts.audio") } %>
       <% end %>
 
       <% if @post.content.present? %>
@@ -90,9 +90,9 @@
         </button>
         <% if authenticated? %>
           <% if Current.user.bookmarked?(@post) %>
-            <%= button_to t("bookmark.unsave", default: "Unsave"), unbookmark_post_path(@post), method: :delete, class: "btn btn-ghost btn-sm" %>
+            <%= button_to t("bookmark.unsave"), unbookmark_post_path(@post), method: :delete, class: "btn btn-ghost btn-sm" %>
           <% else %>
-            <%= button_to t("bookmark.save", default: "Save"), bookmark_post_path(@post), method: :post, class: "btn btn-ghost btn-sm" %>
+            <%= button_to t("bookmark.save"), bookmark_post_path(@post), method: :post, class: "btn btn-ghost btn-sm" %>
           <% end %>
           <%= render "shared/report_button", target: @post, reason: nil %>
         <% end %>
@@ -114,7 +114,7 @@
   <% end %>
 
   <% if @comments.any? %>
-    <nav class="comment-sort feed-tabs" aria-label="<%= t("comments.sort_label", default: "Sort comments") %>">
+    <nav class="comment-sort feed-tabs" aria-label="<%= t("comments.sort_label") %>">
       <% PostsController::COMMENT_SORTS.each do |sort| %>
         <%= link_to t("comments.sort.#{sort}", default: sort.capitalize),
               main_app.post_path(@post, sort: sort),

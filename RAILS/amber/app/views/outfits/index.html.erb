@@ -8,8 +8,8 @@
   </hgroup>
   <nav role="navigation" aria-label="<%= t("pages.outfits") %>">
     <%= link_to t("pages.new_outfit"), new_outfit_path, class: "btn" %>
-    <%= link_to t("pages.dressing_room", default: "Dressing room"), dressing_room_outfits_path, class: "btn" %>
-    <%= link_to t("amber.nav.ai_suggest", default: "Outfit suggestions"), ai_suggest_outfits_path, class: "btn" %>
+    <%= link_to t("pages.dressing_room"), dressing_room_outfits_path, class: "btn" %>
+    <%= link_to t("amber.nav.ai_suggest"), ai_suggest_outfits_path, class: "btn" %>
   </nav>
 </header>
 
@@ -19,7 +19,7 @@
   <% end %>
   <%= form_with url: generate_outfits_path, method: :post do |f| %>
     <div class="field"><%= f.text_field :weather, value: @default_weather, placeholder: t("outfits.weather_placeholder"), aria: { label: t("outfits.weather_placeholder") } %></div>
-    <div class="field"><%= f.select :season, Item::SEASONS, { include_blank: t("outfits.season", default: "Season"), selected: case Time.current.month when 3..5 then "Spring" when 6..8 then "Summer" when 9..11 then "Autumn" else "Winter" end }, { aria: { label: t("outfits.season", default: "Season") } } %></div>
+    <div class="field"><%= f.select :season, Item::SEASONS, { include_blank: t("outfits.season"), selected: case Time.current.month when 3..5 then "Spring" when 6..8 then "Summer" when 9..11 then "Autumn" else "Winter" end }, { aria: { label: t("outfits.season") } } %></div>
     <div class="field"><%= f.text_field :occasion, placeholder: t("outfits.occasion_placeholder"), aria: { label: t("outfits.occasion_placeholder") } %></div>
     <div class="field"><%= f.submit t("outfits.generate"), class: "btn" %></div>
   <% end %>

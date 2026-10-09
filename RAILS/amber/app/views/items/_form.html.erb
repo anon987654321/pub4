@@ -4,7 +4,7 @@
   <% if commerce.is_a?(Hash) && commerce["key"].present? %>
     <%= hidden_field_tag "item[commerce_key]", commerce["key"] %>
     <%= hidden_field_tag "item[source_url]", commerce["source_url"] %>
-    <p class="form-note commerce-handoff-note"><%= t("commerce_fit.handoff", default: "Started from a BRGEN marketplace item. Saving keeps the source reference with this wardrobe record.") %></p>
+    <p class="form-note commerce-handoff-note"><%= t("commerce_fit.handoff") %></p>
   <% end %>
   <%= render "shared/errors", object: item %>
   <div class="field"><%= f.label :title %><%= f.text_field :title, autofocus: true %></div>
@@ -37,7 +37,7 @@
   <div class="field media-picker" data-controller="media-picker direct-upload" data-action="dragover->media-picker#dragover dragleave->media-picker#dragleave drop->media-picker#drop">
     <%= f.label :photos %>
     <%= f.file_field :photos, multiple: true, accept: "image/*", direct_upload: true, data: { media_picker_target: "input", action: "change->media-picker#pick" } %>
-    <button type="button" class="btn btn-ghost" data-action="click->media-picker#trigger"><%= t("items.choose_or_drop", default: "Choose or drop photos") %></button>
+    <button type="button" class="btn btn-ghost" data-action="click->media-picker#trigger"><%= t("items.choose_or_drop") %></button>
     <div class="media-picker-preview" data-media-picker-target="preview"></div>
     <p><%= t("items.photo_processing_html") %></p>
   </div>

@@ -10,7 +10,7 @@
       <% else %>
         <%= link_to entry.city, city_network_href(entry),
                     class: "city-network-item",
-                    aria: { label: "#{entry.city} (#{entry.domain})" } %>
+                    aria: { label: t("a11y.city_link", city: entry.city, domain: entry.domain) } %>
       <% end %>
     <% end %>
   </nav>

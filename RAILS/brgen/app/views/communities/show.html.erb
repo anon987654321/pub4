@@ -83,8 +83,8 @@
       the feeds use needs a reflex that knows this scope, so a plain link keeps
       it working without JS until that exists. %>
   <% if @pagy.next %>
-    <nav class="cluster" aria-label="<%= t("nav.pagination", default: "Pagination") %>">
-      <%= link_to t("actions.load_more", default: "Older posts"),
+    <nav class="cluster" aria-label="<%= t("nav.pagination") %>">
+      <%= link_to t("actions.load_more"),
                   community_path(@community, page: @pagy.next), rel: "next", class: "btn btn-ghost" %>
     </nav>
   <% end %>

@@ -11,7 +11,7 @@
     <% elsif post.video.attached? %>
       <%= video_tag post.video, controls: true, muted: true, playsinline: true, preload: "metadata",
             class: "brgen-media-video",
-            aria: { label: post.title.presence || t("post.view", default: "Play video") } %>
+            aria: { label: post.title.presence || t("post.view") } %>
     <% end %>
   </div>
   <%= link_to post_path(post), class: "brgen-media-caption-link" do %>

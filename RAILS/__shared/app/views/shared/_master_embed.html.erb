@@ -17,17 +17,17 @@
          data-surface="master-embed">
   <% if bare %>
     <h2 id="ai-embed-heading" class="visually-hidden"><%= heading %></h2>
-    <%= link_to t("master.open_full", default: "Open AI"), master_web_url,
+    <%= link_to t("master.open_full"), master_web_url,
           class: "visually-hidden",
           target: "_blank", rel: "noopener" %>
   <% else %>
     <div class="ai-embed-bar">
       <h2 id="ai-embed-heading" class="ai-embed-heading"><%= heading %></h2>
-      <%= link_to t("master.open", default: "Open"), master_web_url,
+      <%= link_to t("master.open"), master_web_url,
             class: "ai-embed-open",
             target: "_blank",
             rel: "noopener",
-            aria: { label: t("master.open_full", default: "Open AI") } %>
+            aria: { label: t("master.open_full") } %>
     </div>
   <% end %>
   <iframe

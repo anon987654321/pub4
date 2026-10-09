@@ -1,7 +1,7 @@
-<% content_for :title, t("bookmark.saved_title", default: "Saved") %>
+<% content_for :title, t("bookmark.saved_title") %>
 
 <header class="page-header">
-  <%= tag.h1 t("bookmark.saved_title", default: "Saved") %>
+  <%= tag.h1 t("bookmark.saved_title") %>
 </header>
 
 <% if @posts.any? %>
@@ -12,8 +12,8 @@
   </ul>
 <% else %>
   <%= render "shared/empty_state",
-        title: t("bookmark.empty_title", default: "Nothing saved yet"),
-        body: t("bookmark.empty_body", default: "Tap Save on any post to keep it here."),
+        title: t("bookmark.empty_title"),
+        body: t("bookmark.empty_body"),
         action: { label: t("empty.city_feed"), path: root_path } %>
 <% end %>
 
