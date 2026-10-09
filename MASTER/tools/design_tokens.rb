@@ -56,6 +56,13 @@ module DesignTokens
     "luxury" => LUXURY_MAP,
   }.freeze
 
+  # amber is the wardrobe app and keeps its own luxury palette, set from its --amber-*
+  # ink, muted and rule colours on a white page. The check and the sync both leave
+  # these four properties in that one stylesheet alone, so a sync never repaints it.
+  APP_OWNED_PALETTE = {
+    "RAILS/amber/app/assets/stylesheets/application.scss" => %w[luxury-bg luxury-text luxury-muted luxury-border].freeze,
+  }.freeze
+
   module_function
 
   def read_utf8(path)
@@ -240,6 +247,8 @@ module DesignTokens
         mappings.each do |yml_key, css_var|
           next unless source.key?(yml_key)
 
+          next if app_owned?(path, css_var)
+
           expected = source[yml_key]
           if sync
             findings << "#{path.sub("#{ROOT}/", '')}: synced --#{css_var} -> #{expected}" if sync_property!(path, css_var, expected)
@@ -251,6 +260,10 @@ module DesignTokens
       end
     end
     findings
+  end
+
+  def app_owned?(path, css_var)
+    APP_OWNED_PALETTE.fetch(path.sub("#{ROOT}/", ""), []).include?(css_var)
   end
 
   def sync_dialect_tokens! = reconcile_dialect_maps(sync: true)

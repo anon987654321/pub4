@@ -114,4 +114,19 @@ DesignTokens.face_root_css.lines.grep(/--#{key.to_s.tr('_', '-')}/).first.to_s.s
       assert social.key?(key), "MASTER tokens#social missing #{key}"
     end
   end
+
+# amber keeps its own luxury palette. The exemption names four properties in
+# one stylesheet; anything wider would let a sync repaint another app.
+def test_only_amber_owns_four_luxury_properties_and_the_check_still_passes
+  amber = File.join(DesignTokens::ROOT, "RAILS/amber/app/assets/stylesheets/application.scss")
+  brgen = File.join(DesignTokens::ROOT, "RAILS/brgen/app/assets/stylesheets/application.scss")
+
+  %w[luxury-bg luxury-text luxury-muted luxury-border].each do |var|
+    assert DesignTokens.app_owned?(amber, var), "amber should own --#{var}"
+    refute DesignTokens.app_owned?(brgen, var), "brgen must not own --#{var}"
+  end
+  refute DesignTokens.app_owned?(amber, "luxury-accent"), "the exemption must stay at four properties"
+  assert_equal 4, DesignTokens::APP_OWNED_PALETTE.values.flatten.size
+  assert_empty DesignTokens.dialect_token_drift
+end
 end
