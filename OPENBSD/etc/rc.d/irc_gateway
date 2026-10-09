@@ -18,7 +18,7 @@ for _bundle in /usr/local/bin/bundle4.0 /usr/local/bin/bundle40 /usr/local/bin/b
   if [ -x "$_bundle" ]; then break; fi
 done
 daemon="/bin/ksh"
-daemon_flags="-c 'cd /home/brgen/app && export IRC_HOST=127.0.0.1 IRC_PORT=6667 && set -a && . /etc/brgen.env && set +a && export RAILS_ENV=production HOME=/home/brgen && exec ${_bundle} exec ruby bin/irc-gateway'"
+daemon_flags="-c 'cd /home/brgen/app && export IRC_HOST=127.0.0.1 IRC_PORT=6667 && set -a && . /etc/brgen.env && set +a && export RAILS_ENV=production HOME=/home/brgen && export BUNDLE_VERSION=system && exec ${_bundle} exec ruby bin/irc-gateway'"
 daemon_user="brgen"
 daemon_execdir="/home/brgen/app"
 daemon_logger="daemon.notice"

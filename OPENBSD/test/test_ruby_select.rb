@@ -84,4 +84,16 @@ class TestRubySelect < Minitest::Test
       assert_match(/no Ruby found/, err)
     end
   end
+
+def test_bundler_stays_on_the_installed_version
+  with_path("ruby34", "bundle34") do |dir|
+    shells.each do |shell|
+      out, err, status = Open3.capture3({ "PATH" => dir }, shell, "-c", %q(. "$1" && printf "%s" "$BUNDLE_VERSION"), shell, LIB, unsetenv_others: true)
+      assert status.success?, err
+      assert_equal "system", out, "a lockfile from another Bundler must not trigger a switch the deploy user cannot install"
+    end
+    out, = Open3.capture3({ "PATH" => dir, "BUNDLE_VERSION" => "4.0.7" }, "/bin/sh", "-c", %q(. "$1" && printf "%s" "$BUNDLE_VERSION"), "sh", LIB, unsetenv_others: true)
+    assert_equal "4.0.7", out
+  end
+end
 end

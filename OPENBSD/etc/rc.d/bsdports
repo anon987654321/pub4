@@ -39,7 +39,7 @@ daemon="/bin/ksh"
 for _bundle in /usr/local/bin/bundle4.0 /usr/local/bin/bundle40 /usr/local/bin/bundle3.4 /usr/local/bin/bundle34 /usr/local/bin/bundle3.3 /usr/local/bin/bundle33 /usr/local/bin/bundle; do
   if [ -x "$_bundle" ]; then break; fi
 done
-daemon_flags="-c 'cd ${APP_DIR} && set -a && . /etc/bsdports.env && set +a && export RUBY_YJIT_ENABLE=0 RAILS_ENV=production HOME=/home/bsdports && exec ${_bundle} exec falcon serve -n ${FALCON_WORKERS:-1} --health-check-timeout 300 --bind http://127.0.0.1:${PORT}'"
+daemon_flags="-c 'cd ${APP_DIR} && set -a && . /etc/bsdports.env && set +a && export RUBY_YJIT_ENABLE=0 RAILS_ENV=production HOME=/home/bsdports && export BUNDLE_VERSION=system && exec ${_bundle} exec falcon serve -n ${FALCON_WORKERS:-1} --health-check-timeout 300 --bind http://127.0.0.1:${PORT}'"
 daemon_user="bsdports"
 daemon_execdir="/home/bsdports/app"
 daemon_logger="daemon.notice"

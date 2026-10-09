@@ -27,7 +27,7 @@ daemon="/bin/ksh"
 for _bundle in /usr/local/bin/bundle4.0 /usr/local/bin/bundle40 /usr/local/bin/bundle3.4 /usr/local/bin/bundle34 /usr/local/bin/bundle3.3 /usr/local/bin/bundle33 /usr/local/bin/bundle; do
   if [ -x "$_bundle" ]; then break; fi
 done
-daemon_flags="-c 'cd ${APP_DIR} && set -a && . /etc/brgen.env && set +a && export RAILS_ENV=production HOME=/home/brgen PUB4_ROOT=/home/dev/pub4 PUB4_RAILS_ROOT=/home/dev/pub4/RAILS && exec ${_bundle} exec rake solid_queue:start'"
+daemon_flags="-c 'cd ${APP_DIR} && set -a && . /etc/brgen.env && set +a && export RAILS_ENV=production HOME=/home/brgen PUB4_ROOT=/home/dev/pub4 PUB4_RAILS_ROOT=/home/dev/pub4/RAILS && export BUNDLE_VERSION=system && exec ${_bundle} exec rake solid_queue:start'"
 daemon_user="brgen"
 daemon_execdir="/home/brgen/app"
 daemon_logger="daemon.notice"

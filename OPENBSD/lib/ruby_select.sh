@@ -44,6 +44,11 @@ BUNDLE=$(_rs_find "bundle$RUBY_SUFFIX") || BUNDLE=$(_rs_find bundle) || BUNDLE=b
 GEM=$(_rs_find "gem$RUBY_SUFFIX") || GEM=$(_rs_find gem) || GEM=gem
 RUBY_CACHE_KEY=ruby$("$RUBY" -e 'print RUBY_VERSION.split(".").first(2).join' 2>/dev/null || printf '%s' "$RUBY_SUFFIX")
 
-export RUBY RUBY_SUFFIX BUNDLE GEM RUBY_CACHE_KEY
+# The Bundler the box has is the Bundler to use. A lockfile written by another
+# Bundler would otherwise make this one fetch and switch to it, and that install
+# targets the system gem directory, which the deploy user cannot write.
+BUNDLE_VERSION=${BUNDLE_VERSION:-system}
+
+export RUBY RUBY_SUFFIX BUNDLE GEM RUBY_CACHE_KEY BUNDLE_VERSION
 unset _rs_name _rs_path _rs_candidate _rs_base
 unset -f _rs_find 2>/dev/null || true
