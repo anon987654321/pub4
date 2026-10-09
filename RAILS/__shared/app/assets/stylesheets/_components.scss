@@ -1,3 +1,7 @@
+// The layer order, reset, input floor, focus ring and utilities are
+// _base.scss, emitted by this @use, which Sass requires before any rule.
+@use "base";
+
 /* One shared form surface. App dialects may refine it later, but no form
    is allowed to fall back to the browser's unrelated control language. */
 form :is(
@@ -232,10 +236,6 @@ dialog::backdrop {
     transition: none;
   }
 }
-
-// The layer order, reset, input floor, focus ring and utilities are
-// _base.scss, emitted here by the @use, ahead of everything below.
-@use "base";
 
 /* The button family is _buttons.scss, forwarded immediately before this
    file. The two media blocks at the foot of this one still name `.btn` and must

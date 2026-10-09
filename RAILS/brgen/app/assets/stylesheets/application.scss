@@ -10,6 +10,9 @@
 
 // ============================================================ tokens
 
+// The wordmark keeps the platform UI face it has always been set in.
+$brgen-logo-font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
 :root {
   // BRGEN_OLD dark — dark-inverted port of the real 2014 desktop.css/
   // mobile.css (pub/__OLD_BACKUPS/BRGEN_OLD). Page surfaces remain true
