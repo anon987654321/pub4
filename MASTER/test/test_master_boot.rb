@@ -1,4 +1,6 @@
-    puts [broken, {}.dig(:missing, :nested).inspect, { outer: {} }.dig(:outer, :missing, :nested).inspect,
+# frozen_string_literal: true
+
+puts [broken, {}.dig(:missing, :nested).inspect, { outer: {} }.dig(:outer, :missing, :nested).inspect,
           { outer: { inner: "value" } }.dig(:outer, :inner),
           Hash.ancestors.count { |a| a == Master::HashDigCompat }].join(" ")
   RUBY

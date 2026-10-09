@@ -49,7 +49,7 @@ module Deploy
     # Rules are applied in order and first match wins, so callers should pass
     # specific hosts before any wildcard.
     def self.open(host_map: {}, timeout: DEFAULT_TIMEOUT, webgl: false)
-      session = new(host_map: host_map, timeout: timeout, webgl: webgl)
+      session = new(host_map:, timeout:, webgl:)
       session.start
       yield session
     ensure
@@ -113,7 +113,7 @@ module Deploy
 
     def viewport(width, height, mobile: false, scale: 1)
       send_cmd("Emulation.setDeviceMetricsOverride",
-               width: width, height: height, deviceScaleFactor: scale, mobile: mobile)
+               width:, height:, deviceScaleFactor: scale, mobile:)
     end
 
     def headers(hash)
@@ -128,7 +128,7 @@ module Deploy
     # can recover from the Navigation timing entry (Chrome exposes responseStatus
     # on PerformanceNavigationTiming).
     def navigate(url, settle: 0.2)
-      send_cmd("Page.navigate", url: url)
+      send_cmd("Page.navigate", url:)
       deadline = monotonic + @timeout
       loop do
         state = begin
@@ -239,7 +239,7 @@ module Deploy
 
     KEY_CODES = {
       "Tab" => [9, "Tab"], "Enter" => [13, "Enter"], "Escape" => [27, "Escape"],
-      "Space" => [32, "Space"], "ArrowDown" => [40, "ArrowDown"], "ArrowUp" => [38, "ArrowUp"],
+      "Space" => [32, "Space"], "ArrowDown" => [40, "ArrowDown"], "ArrowUp" => [38, "ArrowUp"]
     }.freeze
 
     def press(key, shift: false)
@@ -247,8 +247,8 @@ module Deploy
       modifiers = shift ? 8 : 0
       %w[rawKeyDown keyUp].each do |type|
         send_cmd("Input.dispatchKeyEvent",
-                 type: type, windowsVirtualKeyCode: code, nativeVirtualKeyCode: code,
-                 key: dom_key, code: dom_key, modifiers: modifiers)
+                 type:, windowsVirtualKeyCode: code, nativeVirtualKeyCode: code,
+                 key: dom_key, code: dom_key, modifiers:)
       end
     end
 
@@ -256,7 +256,7 @@ module Deploy
     # frame and cropping it afterwards — and jpeg matters when the caller is
     # taking thousands of these rather than one.
     def screenshot(path, format: "png", quality: nil, clip: nil, capture_beyond_viewport: false)
-      params = { format: format, captureBeyondViewport: capture_beyond_viewport }
+      params = { format:, captureBeyondViewport: capture_beyond_viewport }
       params[:quality] = quality if quality && format == "jpeg"
       params[:clip] = clip.merge(scale: clip.fetch(:scale, 1)) if clip
       res = send_cmd("Page.captureScreenshot", **params)
@@ -278,7 +278,7 @@ module Deploy
         @css_enabled = true
       end
       root = send_cmd("DOM.getDocument", depth: 0).dig("root", "nodeId")
-      node = send_cmd("DOM.querySelector", nodeId: root, selector: selector)["nodeId"].to_i
+      node = send_cmd("DOM.querySelector", nodeId: root, selector:)["nodeId"].to_i
       return false if node.zero?
 
       send_cmd("CSS.forcePseudoState", nodeId: node, forcedPseudoClasses: states)
@@ -351,7 +351,7 @@ module Deploy
     def dispatch(method, params)
       @id += 1
       id = @id
-      payload = JSON.generate(params.empty? ? { id: id, method: method } : { id: id, method: method, params: params })
+      payload = JSON.generate(params.empty? ? { id:, method: } : { id:, method:, params: })
       write_frame(payload)
       await_response(id, method)
     end
@@ -371,7 +371,7 @@ module Deploy
       connect(discover_page_target)
       enable_domains
       @css_enabled = false
-      @boot_scripts.each { |source| dispatch("Page.addScriptToEvaluateOnNewDocument", source: source) }
+      @boot_scripts.each { |source| dispatch("Page.addScriptToEvaluateOnNewDocument", source:) }
       Kernel.warn "  [cdp] rebuilt the DevTools connection after a desync (#{@recoveries}/#{MAX_RECOVERIES})"
     ensure
       @recovering = false
@@ -391,11 +391,10 @@ module Deploy
         next unless message
 
         if message["id"]
-          if message["id"] == id
-            return unwrap(message, method)
-          else
+          return unwrap(message, method) if message["id"] == id
+
             @pending[message["id"]] = message
-          end
+
         else
           @events << message
           @events.shift while @events.length > 500
@@ -413,7 +412,7 @@ module Deploy
 
     def read_message(timeout)
       frame = read_frame(timeout)
-      return nil unless frame
+      return unless frame
 
       JSON.parse(frame)
     rescue JSON::ParserError

@@ -191,7 +191,7 @@ module Master
         format("%+dHz", (base - delta).clamp(-28, 4))
       end
 
-      def warm_erratic_prosody(voice, clean, style, voice_locked, style_locked, resolved_voice)
+      def warm_erratic_prosody(voice, clean, style, _voice_locked, style_locked, resolved_voice)
         locked_style = style_locked ? style : nil
         if voice
           pick = WarmErratic.pick_for_voice(voice, clean, style: locked_style)

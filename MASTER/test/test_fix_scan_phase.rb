@@ -5,7 +5,7 @@ require "tmpdir"
 
 class TestFixScanPhase < Minitest::Test
   FakeScanner = Struct.new(:result, :full, keyword_init: true) do
-    def scan(path, depth:)
+    def scan(_path, depth:)
       raise "unexpected depth" unless depth == :deep
       result
     end

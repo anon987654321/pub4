@@ -15,7 +15,7 @@ module Master
         when "", "status"
           status = Master::Ground::Pairing.status
           device = Master::Device::Agent.status(root:)
-          { pairing: status, device: device }.inspect
+          { pairing: status, device: }.inspect
         when /\Aowner(?:\s+(.*))?\z/
           return "pair: local owner pairing requires Android/Termux" unless Master::Device.android? && Fiber[:master_visitor] != true
 
@@ -86,7 +86,7 @@ module Master
 
       # /deploy — canonical remote vm23 deployment. Command#review_gate requires
       # --confirm before this handler can mutate production.
-      def dispatch_deploy(root, ctx: nil)
+      def dispatch_deploy(_root, ctx: nil)
         target = arg_for(ctx).split(/\s+/).reject { |token| token.start_with?("--") }.first.to_s.downcase
         target = "all" if target.empty?
         allowed = %w[all master brgen amber bsdports]
@@ -95,7 +95,7 @@ module Master
         operator = File.join(MasterPaths.repo, "MASTER", "bin", "operator")
         output, status = Master::Io::Exec.capture2e(
           RbConfig.ruby, operator, "vps", "deploy", target, "--remote",
-          chdir: MasterPaths.repo,
+          chdir: MasterPaths.repo
         )
         summary = deploy_summary(output, status)
         return Result.ok(summary) if status.success?

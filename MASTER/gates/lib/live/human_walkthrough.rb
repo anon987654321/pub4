@@ -64,7 +64,7 @@ module Deploy
     # marker read out of a view, and a marker list nothing can be shown to fail
     # against is the decorative _tab_bar.html.erb entry all over again.
     def self.run(rails_root: RAILS_ROOT)
-      new(rails_root: rails_root).run
+      new(rails_root:).run
     end
 
     def initialize(rails_root: RAILS_ROOT)
@@ -180,7 +180,7 @@ end
       end
       result.checked!(3 + files.fetch(:nav).length)
 
-      if app.name == "brgen"
+      return unless app.name == "brgen"
 # layout_with_partials, not layout: brgen's sidebar moved into
 # layouts/_sidebar.html.erb when the layout was split for length, and
 # the search form went with it. The rendered markup did not change.
@@ -191,7 +191,7 @@ end
           result.fail("brgen: mobile tab missing aria/i18n marker ##{i + 1}") unless nav_source.match?(pat)
         end
         result.checked!(1 + Array(files[:mobile_tabs]).size)
-      end
+
     end
 
     def nokogiri_available?
@@ -213,7 +213,7 @@ end
       end
 
       html = response.body.to_s
-      %w[Exception Routing\ Error].each do |bad|
+      ["Exception", "Routing Error"].each do |bad|
         result.fail("#{app.name}: visitor saw #{bad.tr('\\', '')}") if html.include?(bad.tr("\\", ""))
       end
       result.checked!(3)

@@ -70,7 +70,7 @@ module Operator
       row.merge(
         twin: twin_status(row[:id]),
         history: history(row[:id]),
-        silent_reason: silent_reason(row[:id], row[:health])
+        silent_reason: silent_reason(row[:id], row[:health]),
       )
     end
 
@@ -104,13 +104,17 @@ module Operator
         {
           persona: persona["name"].to_s,
           axes:,
-          rules: matches.sort
+          rules: matches.sort,
         }
       end
     end
 
     def render(id:, deep: false, json: false)
-      row = id ? (deep ? health(id) : one(id)) : nil
+      row = if id
+deep ? health(id) : one(id)
+else
+nil
+end
       return JSON.pretty_generate(row) if json
       return "rule: #{id}: not found" unless row
 
@@ -236,13 +240,13 @@ module Operator
       {
         hits: row[:hits],
         applicable: row[:applicable],
-        reach_rate: row[:rate]
+        reach_rate: row[:rate],
       }
     rescue StandardError
       {}
     end
 
-    def silent_reason(id, health)
+    def silent_reason(_id, health)
       return "no corpus with matching language/path" if health.empty?
       return "no findings in measured corpus" if health[:hits].to_i.zero?
       nil

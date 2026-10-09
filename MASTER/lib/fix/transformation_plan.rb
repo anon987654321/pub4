@@ -162,7 +162,7 @@ module Master
         operations.index { |operation| operation.name == name.to_s } || raise(ArgumentError, "unknown transformation: #{name}")
       end
 
-      def operation_mode_known?(name)
+      def operation_mode_known?(_name)
         modes = @policy.fetch("modes")
         raise ArgumentError, "transformation modes missing" unless modes.is_a?(Hash)
         modes.each_value { |value| raise ArgumentError, "empty transformation mode" if value.to_s.empty? }

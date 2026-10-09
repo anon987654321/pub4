@@ -204,7 +204,7 @@ module Deploy
         if ch < min_ch || ch > max_ch
           @result.fail(
             "design_metrics measure: measure_body #{measure} outside #{min_ch}–#{max_ch}ch (principle=hierarchy)",
-            severity: :hard
+            severity: :hard,
           )
         end
       else
@@ -243,12 +243,12 @@ module Deploy
       end
 
       # Interactive coverage across product CSS
-      DesignMetrics.interactive_touch_coverage(css_map, min_px: min_px).each do |row|
+      DesignMetrics.interactive_touch_coverage(css_map, min_px:).each do |row|
         next if row[:covered]
 
         @result.fail(
           "design_metrics touch: #{row[:label]} lacks min-height ≥ #{min_px.to_i}px in #{row[:paths].join(', ')} (principle=fitts_law)",
-          severity: :hard
+          severity: :hard,
         )
       end
 
@@ -312,7 +312,7 @@ module Deploy
           r = px.round
           next if r > 128 # section heroes
 
-          off << [rel, r] if DesignMetrics.off_rhythm?(r, allowed: allowed, base: base)
+          off << [rel, r] if DesignMetrics.off_rhythm?(r, allowed:, base:)
         end
       end
       # Cap soft noise
@@ -340,12 +340,12 @@ module Deploy
         inventory.concat(DesignMetrics.extract_font_sizes_px(File.read(path)))
       end
       uniq = inventory.map(&:round).uniq
-      if uniq.size > max_sizes + 6 # allow some responsive noise beyond token set
+      return unless uniq.size > max_sizes + 6 # allow some responsive noise beyond token set
         @result.fail(
           "design_metrics type_scale: brgen SCSS uses #{uniq.size} distinct px sizes (budget ~#{max_sizes + 6}) principle=hierarchy",
-          severity: :soft
+          severity: :soft,
         )
-      end
+
     end
 
     def optional_browser_hit_targets
@@ -381,7 +381,7 @@ module Deploy
           cdp.clear_cookies
           cdp.navigate(surface.url)
           rows = cdp.evaluate(
-            "Array.from(document.querySelectorAll(#{probe[:selector].to_json})).slice(0,5).map(el => { const r = el.getBoundingClientRect(); return { width: r.width, height: r.height }; })"
+            "Array.from(document.querySelectorAll(#{probe[:selector].to_json})).slice(0,5).map(el => { const r = el.getBoundingClientRect(); return { width: r.width, height: r.height }; })",
           )
           unless rows.is_a?(Array) && rows.any?
             @result.fail("design_metrics browser: no elements for #{probe[:selector]} on #{probe[:path]}", severity: :soft)
@@ -396,7 +396,7 @@ module Deploy
 
             @result.fail(
               "design_metrics browser: #{probe[:path]} element ~#{w.to_i}×#{h.to_i} < #{min_px}px (principle=fitts_law)",
-              severity: :hard
+              severity: :hard,
             )
           end
         end

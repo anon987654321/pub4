@@ -172,7 +172,7 @@ module Master
           rate:,
           pitch:,
           reference_clip: cfg["reference_clip"],
-          cfg:,
+          cfg:
         )
         result ? realize_pitch(result, pitch) : false
       rescue StandardError => e
@@ -197,7 +197,7 @@ module Master
         [false, nil]
       end
 
-      def try_mlx_python_api(py, model, enriched, voice, speed, out_path, emotion:, rate:, pitch:, reference_clip:, cfg:)
+      def try_mlx_python_api(py, model, enriched, _voice, _speed, out_path, emotion:, rate:, pitch:, reference_clip:, cfg:)
         wav = out_path.sub(/\.mp3\z/, ".wav")
         ref = reference_clip.to_s.strip
         ref = File.expand_path(ref) unless ref.empty?
@@ -414,7 +414,7 @@ module Master
         ok = system(
           "ffmpeg", "-y", "-i", path, "-af", filters.join(","),
           "-codec:a", "libmp3lame", "-q:a", "2", out,
-          out: File::NULL, err: File::NULL,
+          out: File::NULL, err: File::NULL
         )
         return path unless ok && File.size?(out)
 
@@ -434,7 +434,7 @@ module Master
           "ffmpeg", "-y", "-i", path,
           "-af", "rubberband=pitch=#{format("%.6f", pitch_ratio(pitch))}",
           "-codec:a", "libmp3lame", "-q:a", "2", out,
-          out: File::NULL, err: File::NULL,
+          out: File::NULL, err: File::NULL
         )
         return path unless ok && File.size?(out)
 
