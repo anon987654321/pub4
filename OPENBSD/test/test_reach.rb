@@ -4,7 +4,7 @@ require "minitest/autorun"
 require "tmpdir"
 require "fileutils"
 require_relative "../lib/utf8"
-require_relative "../tools/reach"
+load File.expand_path("../bin/reach", __dir__)
 
 # Every check here is shown failing before it is trusted passing. A probe nobody
 # has watched fire is the same shape as the drift it looks for: complete,

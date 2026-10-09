@@ -101,6 +101,7 @@ append_template() {
   typeset content; content=$(<"$src")
   print -r -- "$content" >> "$dst"
 }
+
 install_static() {
   typeset src=${CONFIG_ROOT}/$1 dst=$2
   [[ -f $src ]] || { log ERROR "Missing file: $src"; exit 1 }
