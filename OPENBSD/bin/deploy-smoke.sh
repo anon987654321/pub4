@@ -108,7 +108,7 @@ mem_hint() {
   if command -v top >/dev/null 2>&1; then
     line=$(top -b 2>/dev/null | while IFS= read -r top_line; do
       case "$top_line" in
-        Memory:*) printf "%s\n" "${top_line#Memory: }"; break ;;
+        (Memory:*) printf "%s\n" "${top_line#Memory: }"; break ;;
       esac
     done)
     if [ -n "$line" ]; then
