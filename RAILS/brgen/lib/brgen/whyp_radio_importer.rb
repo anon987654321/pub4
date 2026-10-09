@@ -187,7 +187,8 @@ module Brgen
     end
 
     def timeout_seconds
-      Integer(ENV.fetch("YTDLP_TIMEOUT", DEFAULT_TIMEOUT))
+      seconds = Float(ENV.fetch("YTDLP_TIMEOUT", DEFAULT_TIMEOUT))
+      seconds.positive? ? seconds : DEFAULT_TIMEOUT
     rescue ArgumentError
       DEFAULT_TIMEOUT
     end

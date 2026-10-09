@@ -1190,6 +1190,7 @@ en:
     sort_label: Sort
     sort_price_high: Price ↓
     sort_price_low: Price ↑
+    sort_rank: Most relevant
     sort_recent: Newest
     stores:
       delete: Delete store

@@ -18,6 +18,7 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
   def user(prefix)
     User.strict_loading(false).create!(
       email_address: "#{prefix}-#{SecureRandom.hex(4)}@brgen.no",
+      username: "#{prefix.tr("-", "_")}_#{SecureRandom.hex(3)}",
       password: "password123", city: @city,
     )
   end

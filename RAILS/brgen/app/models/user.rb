@@ -109,7 +109,7 @@ class User < ApplicationRecord
   # showed on the reposter's profile would be a bookmark with extra steps — the
   # whole point is that it reaches the followers.
   def timeline_posts
-    author_ids = [ id ] + following.ids
+    author_ids = [ id ] + follows_as_follower.pluck(:followed_id)
     Post.where(user_id: author_ids)
         .or(Post.where(id: Repost.where(user_id: author_ids).select(:post_id)))
         .order(created_at: :desc)

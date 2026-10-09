@@ -74,7 +74,7 @@ module Shared
       end
 
       def postpro_script
-        Contracts::Studio.postpro_script&.to_s
+        ::Contracts::Studio.postpro_script&.to_s
       end
 
       def ledger_path

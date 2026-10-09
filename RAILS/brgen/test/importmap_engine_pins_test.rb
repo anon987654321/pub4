@@ -22,7 +22,15 @@ require "test_helper"
 # This asserts the outcome rather than the mechanism, so it survives a rewrite of
 # how the pinning is done and fails if a vertical is added without pinning.
 class ImportmapEnginePinsTest < ActiveSupport::TestCase
-  VERTICALS = %w[dating marketplace playlist takeaway tv].freeze
+  # Each vertical engine lives beside brgen under RAILS/, not inside it.
+  ENGINE_ROOTS = {
+    "dating" => "brgen_dating",
+    "marketplace" => "brgen_marketplace",
+    "playlist" => "brgen_radio/playlist",
+    "takeaway" => "brgen_marketplace/engines/takeaway",
+    "tv" => "brgen_radio/tv"
+  }.freeze
+  VERTICALS = ENGINE_ROOTS.keys.freeze
 
   def imports
     @imports ||= JSON.parse(
@@ -44,7 +52,7 @@ class ImportmapEnginePinsTest < ActiveSupport::TestCase
 
   test "every engine that ships Stimulus controllers has them pinned" do
     shipping = VERTICALS.select do |vertical|
-      Dir.glob(Rails.root.join("engines", vertical, "app/javascript/controllers/*_controller.js")).any?
+      Dir.glob(Rails.root.join("..", ENGINE_ROOTS.fetch(vertical), "app/javascript/controllers/*_controller.js")).any?
     end
     refute_empty shipping, "no engine ships controllers — the glob is wrong, not the tree"
 

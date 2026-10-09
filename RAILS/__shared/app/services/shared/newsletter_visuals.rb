@@ -225,7 +225,7 @@ module Shared
       "file://#{path}"
     end
 
-    def postpro_script = Contracts::Studio.postpro_script&.to_s
+    def postpro_script = ::Contracts::Studio.postpro_script&.to_s
 
     def log(message)
       Rails.logger.warn("NewsletterVisuals: #{message}") if defined?(Rails)

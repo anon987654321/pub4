@@ -11,7 +11,7 @@ module Shared
     MAX_CONTEXT = 24
     MAX_PROMPT_BYTES = 12_000
 
-    def initialize(client: Contracts::MasterClient::Client.new)
+    def initialize(client: ::Contracts::MasterClient::Client.new)
       @client = client
     end
 

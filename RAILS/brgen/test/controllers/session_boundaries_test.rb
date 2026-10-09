@@ -38,6 +38,7 @@ class SessionBoundariesTest < ActionDispatch::IntegrationTest
   test "a same-origin csrf header is accepted for a write" do
     original = ActionController::Base.allow_forgery_protection
     ActionController::Base.allow_forgery_protection = true
+    https!
 
     get new_session_path
     token = controller.send(:form_authenticity_token)
@@ -51,7 +52,7 @@ class SessionBoundariesTest < ActionDispatch::IntegrationTest
          }
 
     assert_response :redirect
-    assert_equal @user.id, controller.current_user.id
+    assert_equal 1, @user.sessions.reload.count, "the same-origin write did not sign in"
   ensure
     ActionController::Base.allow_forgery_protection = original
   end
@@ -89,8 +90,8 @@ class SessionBoundariesTest < ActionDispatch::IntegrationTest
 
     assert_nil controller.send(:find_session_by_cookie), "deletion must revoke an existing session"
     assert_empty @user.sessions.reload, "a departing account must have no usable session rows"
-    assert_not_equal @user.id, controller.current_user&.id
-    assert_predicate session_row, :destroyed?
+    assert_not_equal @user.id, controller.send(:current_user)&.id
+    assert_not Session.exists?(session_row.id), "the session row survived the deletion marker"
   end
 
   test "destroying the session row signs the browser out" do

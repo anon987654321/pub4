@@ -26,7 +26,7 @@ class BrgenVerticalPromoTest < ActiveSupport::TestCase
     assert_includes feed, "VERTICAL_PROMOTIONS"
     assert_includes view, 'render "home/vertical_promo_unit"'
     assert_includes reflex, 'partial: "home/vertical_promo_unit"'
-    assert_includes partial, 't("promo.radio.kicker")'
+    assert_includes partial, 't("promo.#{slug}.kicker")'
     assert_includes locales, "Spin for the win!"
   end
 

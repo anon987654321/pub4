@@ -16,7 +16,7 @@ module Shared
     module_function
 
     def script
-      Contracts::Studio.dilla_script
+      ::Contracts::Studio.dilla_script
     end
 
     def available?

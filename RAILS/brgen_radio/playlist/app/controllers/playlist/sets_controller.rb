@@ -6,6 +6,7 @@
 # `Playlist::Playlist::Set` and both index actions raised NameError.
 class Playlist::SetsController < ApplicationController
   include Shared::LiveSearchable
+  include Playlist::OwnerVisibility
 
   before_action :require_user_session, only: %i[new create]
   before_action :set_set, only: %i[show edit update destroy]
@@ -101,9 +102,9 @@ class Playlist::SetsController < ApplicationController
     end
   end
 
-  # form_with model: @set submits the model's param_key, "playlist_set".
+  # form_with model: @set submits "set": the engine isolates the Playlist namespace, so the param_key drops the prefix.
   def set_params
-    params.require(:playlist_set).permit(:name, :description, :privacy, :collaborative)
+    params.require(:set).permit(:name, :description, :privacy, :collaborative)
   end
 
   def authorize_owner_or_editor

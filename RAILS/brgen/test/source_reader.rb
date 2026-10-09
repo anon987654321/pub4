@@ -23,8 +23,8 @@ module SourceReader
         # /home/dev/pub4, which is why the box never saw it.
         File.expand_path("../..", __dir__)
       ]
-      candidates.find { |path| File.readable?(File.join(path, "shared", "app")) } ||
-        candidates.find { |path| File.directory?(File.join(path, "shared")) } ||
+      candidates.find { |path| File.readable?(File.join(path, "__shared", "app")) } ||
+        candidates.find { |path| File.directory?(File.join(path, "__shared")) } ||
         candidates.last
     end.freeze
 
