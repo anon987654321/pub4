@@ -64,17 +64,17 @@ model_defs:
     context_window: 1000000
     score: { quality: 0.99, speed: 0.95, cost: 1.0 }
   agy_gemini_pro: &agy_gemini_pro
-    id: agy:gemini-2.5-pro
+    id: agy:gemini-3.1-pro-high
     <<: *model_defaults
     context_window: 1000000
     score: { quality: 0.98, speed: 0.85, cost: 1.0 }
   agy_gemini_flash: &agy_gemini_flash
-    id: agy:gemini-2.5-flash
+    id: agy:gemini-3.8-flash-medium
     <<: *model_defaults
     context_window: 1000000
     score: { quality: 0.92, speed: 0.98, cost: 1.0 }
   agy_gemini_flash_thinking: &agy_gemini_flash_thinking
-    id: agy:gemini-3.7-flash-thinking
+    id: agy:gemini-3.8-flash-high
     <<: *model_defaults
     context_window: 1000000
     score: { quality: 0.99, speed: 0.88, cost: 1.0 }

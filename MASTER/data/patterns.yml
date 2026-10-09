@@ -816,9 +816,9 @@ auth_profiles:
       priority: 0
       models:
         - agy:auto
-        - agy:gemini-2.5-pro
-        - agy:gemini-2.5-flash
-        - agy:gemini-3.7-flash-thinking
+        - agy:gemini-3.1-pro-high
+        - agy:gemini-3.8-flash-medium
+        - agy:gemini-3.8-flash-high
     - id: claude_subscription
       name: claude
       auth: subscription
