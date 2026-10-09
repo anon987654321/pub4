@@ -289,6 +289,12 @@ principles:
       djmag: "https://djmag.com/features/d-dilla-life-and-legacy-of-hip-hop-phenomenon"
       singmemory: "https://singmemory.substack.com/p/donuts"
       sunhouse: "https://sunhou.se/blog/j-dilla-fall-in-love"
+      linn: "https://brettworks.com/2013/07/23/roger-linn-on-drum-machine-groove-and-j-dillas-off-beat-sound/"
+      hein_warp: "https://ethanhein.substack.com/p/warp-factor"
+      hein_get_dis_money_post: "https://ethanhein.substack.com/p/get-dis-money"
+      soundfly: "https://flypaper.soundfly.com/play/three-examples-of-dilla-swing/"
+      musicradar_ghost: "https://www.musicradar.com/tuition/tech/how-to-add-groove-and-pace-to-a-beat-using-ghost-notes-625526"
+      samplefocus_ghost: "https://samplefocus.com/blog/how-to-produce-ghost-notes-for-organic-drums"
     rules:
       - rule: "Hats are the straight reference; the snare is early against them."
         evidence: "Charnas counted it in a waveform editor on 'Don't Say a Word': 'the hi-hats are straight and the snare is early.'"
@@ -297,7 +303,7 @@ principles:
       - rule: "The snare is rushed by tens of milliseconds, not single digits."
         evidence: "LRB: about 65 ms, 5/192 of a bar (the old -14 ms was two ticks at 96 PPQ, about a fifth of it). Hein: a thirty-second early gives the limping feel. Drum Town drills 30 ms."
         agree: [lrb, hein_get_dis_money]
-        encoded: "28 ms, held under the cited 65 to 85 ms; the figure is one-sourced in ms"
+        encoded: "feels.snare shift_steps -0.30 (51 ms at 88 BPM), under the cited 0.42 to 0.5 step; see the tempo rule"
       - rule: "The kick lags and is the erratic part; the bass lags further."
         evidence: "Kicks delayed (Big Noise Radio), 'let bass kicks lag' (LRB), 'a kick drum late and a snare drum early' (singmemory). Butterfield's microtiming study calls the kick erratic against stable snare and hat. Pudding finds kick straight on 'Fall in Love'."
         agree: [bignoise, lrb, singmemory]
@@ -310,11 +316,32 @@ principles:
         evidence: "MPC 60 onward gave each track its own clock (LRB); swing 50 is straight, 66 is triplet (Pudding, Big Noise Radio); one element sits on a swing value while others go past or between it (Sunhouse); Charnas: not just 'timing correct off' (Okayplayer, LRB)."
         agree: [lrb, okayplayer, bignoise, pudding]
         encoded: "per-voice feels, as before"
+      - rule: "A lean is a fraction of the step, bar or beat, so it follows the tempo; it is not a fixed number of milliseconds."
+        evidence: "Linn defines swing as the split of the eighth ('a 90 BPM groove feels looser at 62% than at 66%'); LRB puts the rushed snare at 5/192 of a bar; Hein at a thirty-second note; The Pudding gives swing as a share of the beat. The same 0.30 step is 62 ms at 74 BPM, 51 at 88 and 44 at 104."
+        agree: [linn, lrb, hein_get_dis_money, pudding]
+        encoded: "feels use shift_steps and drift_steps (shares of a 16th); round one's fixed 28 ms was 0.14 step at 74 BPM and 0.19 at 104"
+      - rule: "The pocket is one bar that repeats identically; the bass and the sample loop against it on another length."
+        evidence: "Hein, 'Get Dis Money': the drum loop is one bar, the bassline seven, the sample seven of Herbie's eight. Hein, 'Dilla Time': microrhythms repeat identically many times per song. Charnas: the placement was precise, not aleatory (LRB, Okayplayer)."
+        agree: [hein_get_dis_money_post, hein_get_dis_money, lrb, okayplayer]
+        encoded: "pocket_drift in dilla.rb: one fixed draw per step and pass seed, so every bar leans alike; snare, hats and the downbeat kick carry none"
+      - rule: "Off-beat hats lean late, with lighter swing than the kick; the downbeat hats are the anchor."
+        evidence: "Hein: 'kick drums programmed with heavy swing, hi-hats with lighter swing' (Warp factor); the 'and' hats are late on 'Get Dis Money'. Soundfly reads 'U-Love' with the hats behind (seen through a search summary only, the page itself refused a fetch)."
+        agree: [hein_warp, hein_get_dis_money_post, soundfly]
+        encoded: "feels.hat swing 0.05 step on odd steps only; the weakest encoded rule, kept small beside the straight-hat counts above"
+      - rule: "Ghost notes are soft, 30 to 50 percent against a 90 to 100 backbeat, and sit on the 16ths between hat strokes or just before a backbeat."
+        evidence: "General drumming practice, not Dilla-specific: MusicRadar ghost-note tutorial (30 to 40 percent on 16ths before backbeats), Samplefocus (soft taps, a different sample layer), a Gearspace thread. Dilla's own ghost velocities were not found."
+        agree: [musicradar_ghost, samplefocus_ghost]
+        encoded: "ghost velocity 0.30 to 0.42, was 0.22 to 0.34; the ghost sample is already its own softer voice"
     not_encoded:
       - "Velocity unevenness and ghost notes: Sunhouse/MPC-forum figures (ghosts at 35 to 50 percent) come from a product-style post; only the direction (soft ghosts, uneven backbeat) is kept."
       - "Layered or doubled hits with micro-offsets, and kick+snare stacking: one forum thread, not Dilla-specific."
       - "Time versus Donuts differences: Donuts was largely Pro Tools time-stretch, not the MPC3000 (Paste); no timing figures found."
-      - "Kick decay and tuning: taste, no source. The crate kick is untouched."
+      - "Kick decay, tuning and a layered sub: the general layering guides agree with each other but none is about Dilla; Dilla's kick sample is unnamed. The crate kick is untouched."
+      - "Tambourine or shaker straight and a little late: Hein 'Warp factor' only (the 'Get Dis Money' shakers are late only by implication)."
+      - "Bass lagging far behind the drums (LRB, Hein): two sources, but it is not a drum and is left to the bass."
+      - "Open-hat gating, ride versus closed hat: no source describes Dilla's; BeatTips and a forum call his hats minimal."
+      - "Whether the wobble repeats per beat or per bar: only Hein's one-bar 'Get Dis Money' loop; no second source gives a cycle length, so the cycle is the engine's bar."
+      - "Questlove and Adam Neely: the Okayplayer Questlove interview page held no timing claims, and no Neely transcript was found. Fantastic Vol. 2, The Shining, Welcome 2 Detroit and Ruff Draft: no drum timing found."
 
   sampling_engine:
     philosophy:

@@ -218,15 +218,39 @@ class TestDillaComposition < Minitest::Test
   def test_the_drum_feels_keep_hats_straight_snare_early_and_kick_late
     feels = Bed::FEELS
 
-    assert_equal 0.0, feels.fetch(:hat).fetch(:shift)
-    assert_equal 0.0, feels.fetch(:hat).fetch(:swing)
+    assert_equal 0.0, feels.fetch(:hat).fetch(:shift), "the downbeat hats are the reference"
     assert_equal 0.0, feels.fetch(:hat).fetch(:drift)
-    assert_operator feels.fetch(:snare).fetch(:shift), :<=, -0.020, "a snare under 20 ms early is not rushed"
-    assert_operator feels.fetch(:snare).fetch(:shift), :>=, -0.085, "past the cited 65 to 85 ms it reads as a mistake"
+    assert_operator feels.fetch(:hat).fetch(:swing), :<, feels.fetch(:kick).fetch(:swing), "hats swing lighter than the kick"
+    steps = feels.fetch(:snare).fetch(:shift) / Bed::STEP
+    assert_operator steps, :<=, -0.15, "a snare under a third of a 16th early is not rushed"
+    assert_operator steps, :>=, -0.50, "past Hein's thirty-second it reads as a mistake"
     assert_equal 0.0, feels.fetch(:snare).fetch(:drift), "the snare repeats identically"
     assert_operator feels.fetch(:kick).fetch(:shift), :>, 0.0
     assert_operator feels.fetch(:kick).fetch(:drift), :>=, feels.fetch(:snare).fetch(:drift)
     assert_includes feels.fetch(:kick).fetch(:anchor), 0
+  end
+
+  # The leans are shares of a step, so they follow the tempo; a second figure
+  # in seconds is still read for the feels measured that way.
+  def test_a_lean_in_steps_follows_the_step_and_one_in_seconds_does_not
+    assert_in_delta 0.3 * Bed::STEP, Bed.feel_row("swing" => 0.0, "shift_steps" => 0.3, "drift_steps" => 0.0).fetch(:shift), 1e-12
+    assert_in_delta(-0.014, Bed.feel_row("swing" => 0.0, "shift" => -0.014, "drift" => 0.0).fetch(:shift), 1e-12)
+    assert_in_delta 0.3 * Bed::STEP, Bed::FEELS.fetch(:snare).fetch(:shift).abs, 1e-12
+  end
+
+  # The pocket cycle: one fixed draw per step and pass, so every bar leans the
+  # same way, the passes differ from each other, and the steps from each other.
+  def test_the_pocket_cycle_repeats_every_bar_and_differs_by_step_and_pass
+    Bed.pocket_seed!(11)
+    first = (0..15).map { |step| Bed.step_time(step, :kick) }
+    again = (0..15).map { |step| Bed.step_time(step, :kick) }
+
+    assert_equal first, again
+    drift = (1..15).map { |step| Bed.step_time(step, :kick) - ((step * Bed::STEP) + (step.odd? ? Bed::FEELS[:kick][:swing] * Bed::STEP : 0.0) + Bed::FEELS[:kick][:shift]) }
+    assert_operator drift.map { |d| d.round(5) }.uniq.size, :>, 6, "every step leans its own way"
+    Bed.pocket_seed!(12)
+    refute_equal first, (0..15).map { |step| Bed.step_time(step, :kick) }
+    Bed.pocket_seed!(0)
   end
 
   def test_an_anchored_kick_sits_on_the_grid_and_the_rest_do_not
@@ -234,8 +258,9 @@ class TestDillaComposition < Minitest::Test
 
     assert_in_delta 0.0, Bed.step_time(0, :kick), 1e-9
     assert_operator Bed.step_time(4, :kick), :>, 4 * Bed::STEP
-    assert_in_delta(-0.028, Bed.step_time(4, :snare) - (4 * Bed::STEP), 1e-3)
+    assert_in_delta Bed::FEELS.fetch(:snare).fetch(:shift), Bed.step_time(4, :snare) - (4 * Bed::STEP), 1e-3
     assert_in_delta 8 * Bed::STEP, Bed.step_time(8, :hat), 1e-3
+    assert_operator Bed.step_time(9, :hat), :>, 9 * Bed::STEP, "the off-beat hats lean late"
   end
 
   def test_the_pocket_replays_for_a_seed_and_the_hats_do_not_move
@@ -246,7 +271,11 @@ class TestDillaComposition < Minitest::Test
 
     assert_equal run.call(3), run.call(3)
     hats = run.call(3).fetch(:hat) + run.call(9).fetch(:hat)
-    hats.each { |at, _velocity| assert_in_delta 0.0, at - ((at / Bed::STEP).round * Bed::STEP), 1e-3 }
+    hats.each do |at, _velocity|
+      step = (at / Bed::STEP).round
+      assert_in_delta(step.odd? ? Bed::FEELS[:hat][:swing] * Bed::STEP : 0.0, at - (step * Bed::STEP), 1e-3)
+    end
+    assert_operator run.call(3).fetch(:ghost).map(&:last).min, :>=, 0.3, "ghosts sit at 30 to 45 percent, the general drumming range"
   end
 
   def test_the_kit_does_not_swing_twice_or_jitter_the_reference
