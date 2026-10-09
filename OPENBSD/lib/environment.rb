@@ -7,7 +7,7 @@ module Deploy
   module Environment
     module_function
 
-    OPENBSD_RUBY_PATTERN = /\\A3\\.(?:3|4)\\.\\d+\\z/
+    OPENBSD_RUBY_PATTERN = /\A3\.(?:3|4)\.\d+\z/
 
     def repo_root(from: __dir__)
       # OPENBSD/lib -> OPENBSD -> the tree root, where .ruby-version is pinned.

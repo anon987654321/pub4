@@ -95,7 +95,7 @@ end
 
 def app_row(name, port)
   dev_sha = git_short(ROOT)
-  deployed_root = Operator::Environment.deployed_app_root(name)
+  deployed_root = Deploy::Environment.deployed_app_root(name)
   stamp = deploy_stamp(name)
   deployed_sha = if File.directory?(deployed_root)
                    short = git_short(deployed_root)
@@ -129,7 +129,7 @@ if ARGV.intersect?(%w[-h --help])
   exit 0
 end
 
-unless Operator::Environment.on_vps?
+unless Deploy::Environment.on_vps?
   warn "vps-state: skip — not on VPS (use: bin/operator vps state --remote)"
   exit 0
 end
@@ -164,26 +164,26 @@ if ARGV.include?("--json")
   puts JSON.pretty_generate(payload)
 else
   puts Deploy::Dmesg.line("vps0", "host", "name=#{payload[:host]}")
-  puts Operator::Dmesg.line("git0", "repo", "path=#{payload[:dev_repo]} sha=#{payload[:dev_sha]}")
+  puts Deploy::Dmesg.line("git0", "repo", "path=#{payload[:dev_repo]} sha=#{payload[:dev_sha]}")
   m = payload[:master]
-  puts Operator::Dmesg.line("service0", "master", "state=#{m[:service]} port=#{m[:port]} port_state=#{m[:port_state]} tts=#{m[:tts_socket]}")
+  puts Deploy::Dmesg.line("service0", "master", "state=#{m[:service]} port=#{m[:port]} port_state=#{m[:port_state]} tts=#{m[:tts_socket]}")
   if m[:deploy_in_progress]
     status = m[:deploy_in_progress]
     state = status["stale"] ? "stale" : "running"
-    puts Operator::Dmesg.line("deploy0", "master", "state=#{state} step=#{status['step']} pid=#{status['pid']}")
+    puts Deploy::Dmesg.line("deploy0", "master", "state=#{state} step=#{status['step']} pid=#{status['pid']}")
   end
   payload[:apps].each do |row|
     drift = row[:drift] ? "drift" : "sync"
-    puts Operator::Dmesg.line("service0", row[:app],
+    puts Deploy::Dmesg.line("service0", row[:app],
       "state=#{row[:service]} port=#{row[:port]} port_state=#{row[:port_state]} deployment=#{drift}")
     if row[:last_deploy]
-      puts Operator::Dmesg.line("deploy0", row[:app],
+      puts Deploy::Dmesg.line("deploy0", row[:app],
         "sha=#{row[:last_deploy]['sha']} at=#{row[:last_deploy]['at']}")
     end
     if row[:deploy_in_progress]
       status = row[:deploy_in_progress]
       state = status["stale"] ? "stale" : "running"
-      puts Operator::Dmesg.line("deploy0", row[:app],
+      puts Deploy::Dmesg.line("deploy0", row[:app],
         "state=#{state} step=#{status['step']} pid=#{status['pid']}")
     end
   end
