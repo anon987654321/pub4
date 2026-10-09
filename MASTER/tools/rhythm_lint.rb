@@ -9,7 +9,7 @@ module Operator
   # Validates every spacing-tagged value in MASTER's tokens and every --space
   # custom property a stylesheet defines, in shared, each app and each engine
   # (a token defined beside the view it serves is still a token), against MASTER's own
-  # laws.yml design_rules.pixel_perfection.eight_px_rhythm allowlist. Reads that
+  # laws.yml tokens.scale.space_px allowlist. Reads that
   # allowlist from MASTER directly rather than duplicating it, so the two
   # can never drift apart through a second machine-readable authority
   # (the --color-warning bug found 2026-07-21).
@@ -32,11 +32,11 @@ module Operator
         return false
       end
 
-      allowed = rules.dig("pixel_perfection", "eight_px_rhythm")
+      allowed = rules.dig("scale", "space_px")
       unless allowed
         Master::Trace::Dmesg.status(
           "rhythm0",
-          "MASTER/data/laws.yml has no pixel_perfection.eight_px_rhythm — constitutional measurement unavailable",
+          "MASTER/data/laws.yml has no tokens.scale.space_px — constitutional measurement unavailable",
           io: $stderr,
         )
         return false
