@@ -123,10 +123,10 @@ module Master
         { state: "unknown, #{e.class}" }
       end
 
-      # Silent when satisfied, and where bundle40 does not exist.
+      # Silent when satisfied, and where no bundler exists.
       def bundle_status(repo)
         drift = %w[MASTER RAILS/master_web].reject do |dir|
-          out, = Master::Io::Exec.capture2e("bundle40", "check", chdir: File.join(repo, dir))
+          out, = Master::Io::Exec.capture2e(Master::BUNDLE_BIN, "check", chdir: File.join(repo, dir))
           out.match?(/dependencies.*satisfied/)
         end
         "#{drift.join(", ")} drift, run bundle install" unless drift.empty?

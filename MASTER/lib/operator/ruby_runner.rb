@@ -7,6 +7,10 @@ module Operator
   module RubyRunner
     module_function
 
+    # The order OPENBSD/lib/ruby_select.sh and bin/ruby use: the newest Ruby the
+    # host's packages or Homebrew installed wins, the generic name is last.
+    RUBY_NAMES = %w[ruby4.0 ruby40 ruby3.4 ruby34 ruby3.3 ruby33 ruby].freeze
+
     def ruby_cmd(root: Environment.repo_root)
       explicit = ENV["PUB4_RUBY"].to_s
       return explicit if !explicit.empty? && File.executable?(explicit)
@@ -43,7 +47,7 @@ module Operator
       if Environment.on_openbsd?
         candidates.concat(%w[ruby34 ruby33].filter_map { |name| path = command_path(name); path.empty? ? nil : path })
       end
-      %w[ruby4.0 ruby40 ruby3.4 ruby34 ruby3.3 ruby33 ruby].each do |name|
+      RUBY_NAMES.each do |name|
         path = command_path(name)
         candidates << path unless path.empty?
       end
@@ -100,8 +104,8 @@ module Operator
     def openbsd_path(name, root: Environment.repo_root)
       return unless RUBY_PLATFORM.match?(/openbsd/)
 
-      %w[ruby34 ruby33].each do |ruby_command|
-        command = name == "ruby" ? ruby_command : ruby_command.sub("\\Aruby", "bundle")
+      RUBY_NAMES.each do |ruby_command|
+        command = name == "ruby" ? ruby_command : ruby_command.sub(/\Aruby/, name)
         path = command_path(command)
         return path unless path.empty?
       end

@@ -24,7 +24,13 @@ module Master
   COUNCIL_PATH = File.join(DATA, "council.yml").freeze
   LAWS_PATH = File.join(DATA, "laws.yml").freeze
 
-  BUNDLE_BIN = RUBY_PLATFORM.include?("openbsd") ? "bundle40" : "bundle"
+# The bundler of the Ruby that is running (ruby34 -> bundle34, ruby -> bundle).
+# OpenBSD installs Ruby by version, so no version is named here.
+BUNDLE_BIN = begin
+  versioned = "bundle#{RbConfig::CONFIG["ruby_install_name"].delete_prefix("ruby")}"
+  on_path = ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).any? { |dir| File.executable?(File.join(dir, versioned)) }
+  on_path ? versioned : "bundle"
+end
   MIN_API_KEY_LENGTH_HEURISTIC = 20
   MAX_CONSTITUTION_BYTES = 10 * 1024 * 1024
   YAML_LOAD_TIMEOUT_S = 20

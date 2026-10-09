@@ -137,7 +137,7 @@ if BUNDLE
     run("#{app} importmap", importmap_audit, chdir: dir)
   end
 else
-  UNCHECKED << "bundle/bundle40 not on PATH — #{APPS.size} app dartsass + importmap audit step(s) skipped " \
+  UNCHECKED << "bundle not on PATH — #{APPS.size} app dartsass + importmap audit step(s) skipped " \
                "(set BUNDLE_CMD to the intended Bundler executable)"
 end
 
