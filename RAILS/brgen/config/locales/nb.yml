@@ -1197,6 +1197,7 @@ nb:
     sort_label: Sorter
     sort_price_high: Pris ↓
     sort_price_low: Pris ↑
+    sort_rank: Mest relevante
     sort_recent: Nyeste
     stores:
       delete: Slett butikk
