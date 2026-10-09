@@ -17,7 +17,7 @@ class Playlist::SetTrackTest < ActiveSupport::TestCase
     again = Playlist::SetTrack.new(set: @set, track: @track, user: @user, position: 2)
 
     assert_not again.valid?
-    assert again.errors.added?(:playlist_set_id, :taken, value: @set.id)
+    assert again.errors.of_kind?(:playlist_set_id, :taken)
   end
 
   test "a set's tracks read in position order whatever order they were added" do

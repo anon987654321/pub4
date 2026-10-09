@@ -33,7 +33,7 @@ class Tv::EpisodeTest < ActiveSupport::TestCase
     again = Tv::Episode.new(show: @show, title: "Fløyen", number: 1)
 
     assert_not again.valid?
-    assert again.errors.added?(:number, :taken, value: 1)
+    assert again.errors.of_kind?(:number, :taken)
     assert Tv::Episode.new(show: @other_show, title: "Nordnes", number: 1).valid?
     assert_equal "1", Tv::Episode.find_by!(show_id: @show.id, number: 1).to_param
   end

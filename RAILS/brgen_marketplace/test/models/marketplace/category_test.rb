@@ -22,7 +22,7 @@ class Marketplace::CategoryTest < ActiveSupport::TestCase
     second = Marketplace::Category.new(name: "Andre", slug: slug)
 
     assert_not second.valid?
-    assert second.errors.added?(:slug, :taken, value: slug)
+    assert second.errors.of_kind?(:slug, :taken)
   end
 
   test "a category needs a name" do

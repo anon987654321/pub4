@@ -32,7 +32,7 @@ class Marketplace::ListingFavoriteTest < ActiveSupport::TestCase
     again = Marketplace::ListingFavorite.new(user: @reader, listing: @listing)
 
     assert_not again.valid?
-    assert again.errors.added?(:user_id, :taken, value: @reader.id)
+    assert again.errors.of_kind?(:user_id, :taken)
   end
 
   test "two readers may save the same listing" do

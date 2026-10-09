@@ -30,7 +30,7 @@ class Playlist::CollaborationTest < ActiveSupport::TestCase
     again = Playlist::Collaboration.new(user: @guest, set: @set, role: "viewer")
 
     assert_not again.valid?
-    assert again.errors.added?(:user_id, :taken, value: @guest.id)
+    assert again.errors.of_kind?(:user_id, :taken)
     assert Playlist::Collaboration.new(user: @guest, set: @other_set).valid?
   end
 

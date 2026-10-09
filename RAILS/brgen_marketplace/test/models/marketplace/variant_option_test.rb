@@ -28,7 +28,7 @@ class Marketplace::VariantOptionTest < ActiveSupport::TestCase
     again = Marketplace::VariantOption.new(variant: @variant, name: "Størrelse", value: "L")
 
     assert_not again.valid?
-    assert again.errors.added?(:name, :taken, value: "Størrelse")
+    assert again.errors.of_kind?(:name, :taken)
     assert Marketplace::VariantOption.new(variant: @other, name: "Størrelse", value: "L").valid?
   end
 

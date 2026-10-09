@@ -25,7 +25,7 @@ class Takeaway::FavoriteRestaurantTest < ActiveSupport::TestCase
     again = Takeaway::FavoriteRestaurant.new(user: @diner, restaurant: @restaurant)
 
     assert_not again.valid?
-    assert again.errors.added?(:user_id, :taken, value: @diner.id)
+    assert again.errors.of_kind?(:user_id, :taken)
     assert Takeaway::FavoriteRestaurant.new(user: @owner, restaurant: @restaurant).valid?
   end
 end

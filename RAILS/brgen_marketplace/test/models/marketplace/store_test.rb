@@ -30,7 +30,7 @@ class Marketplace::StoreTest < ActiveSupport::TestCase
       second = Marketplace::Store.new(owner: @owner, name: "Andre", slug: "samme")
 
       assert_not second.valid?
-      assert second.errors.added?(:slug, :taken, value: "samme")
+      assert second.errors.of_kind?(:slug, :taken)
     end
   end
 

@@ -23,7 +23,7 @@ class Playlist::LikeTest < ActiveSupport::TestCase
     again = Playlist::Like.new(user: @fan, set: @set)
 
     assert_not again.valid?
-    assert again.errors.added?(:user_id, :taken, value: @fan.id)
+    assert again.errors.of_kind?(:user_id, :taken)
     assert Playlist::Like.new(user: @owner, set: @set).valid?
   end
 

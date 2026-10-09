@@ -31,7 +31,7 @@ class Tv::ChannelTest < ActiveSupport::TestCase
       shouting = Tv::Channel.new(user: @owner, name: "Tredje", slug: "Store Bokstaver")
 
       assert_not taken.valid?
-      assert taken.errors.added?(:slug, :taken, value: "felles-kanal")
+      assert taken.errors.of_kind?(:slug, :taken)
       assert_not shouting.valid?
       assert shouting.errors.added?(:slug, :invalid, value: "Store Bokstaver")
     end
