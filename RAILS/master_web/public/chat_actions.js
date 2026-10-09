@@ -338,6 +338,10 @@ async function sendMessage(text) {
     }, {
       onMessage(rawData) {
         const raw = rawData || "";
+        // The face runtime drops the trace frame; the degraded path must too.
+        if (raw.length < 200 && raw.startsWith("{")) {
+          try { if (JSON.parse(raw)?.type === "trace") return; } catch (_) { /* plain text that opens with a brace */ }
+        }
         if (raw === "[DONE]") {
           flushSpeech(true);
           window.MASTERVoice?.setLastText?.(assistantBuffer);
@@ -418,3 +422,34 @@ function startMic(btn) {
 
 window.collectFeltState = collectFeltState;
 if (!window.sendMessage) window.sendMessage = sendMessage;
+
+// The prompt's Enter and submit handlers live in the face runtime. When that
+// module never loads (blocked, offline mid-boot, import error) the prompt is on
+// screen but typing does nothing, so a failed face would leave no text chat at
+// all. These listeners answer only while MASTER_FACE.sendMessage is absent; the
+// runtime takes over the moment it exists, so a message is never sent twice.
+(() => {
+  const form = document.getElementById("zsh");
+  const input = chatInput();
+  if (!form || !input) return;
+  const faceOwnsSend = () => typeof window.MASTER_FACE?.sendMessage === "function";
+  form.addEventListener("submit", (event) => {
+    if (faceOwnsSend()) return;
+    event.preventDefault();
+    const text = input.value.trim();
+    if (!text) return;
+    input.value = "";
+    sendMessage(text).catch((err) => { window.MASTER_LOG?.warn?.("chat:degraded_send", err); });
+  });
+  input.addEventListener("keydown", (event) => {
+    if (faceOwnsSend() || event.key !== "Enter" || event.shiftKey || event.isComposing) return;
+    event.preventDefault();
+    form.requestSubmit();
+  });
+  // The textarea is one line (24px) inside a 44px strip. A tap on the strip
+  // beside it, the "user $" label above all, lands on nothing; hand it to the input.
+  form.addEventListener("click", (event) => {
+    if (event.target.closest("button, a, input, textarea, select")) return;
+    input.focus();
+  });
+})();
