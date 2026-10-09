@@ -1,5 +1,5 @@
 source "https://rubygems.org"
-ruby "4.0.5"
+ruby ">= 3.4", "< 4.1"
 
 gem "rails", github: "rails/rails", ref: "c9e85dbe297e248dd2f217d04f84a94881ac046a"
 # The modern asset pipeline for Rails [https://github.com/rails/propshaft]
