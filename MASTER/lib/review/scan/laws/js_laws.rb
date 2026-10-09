@@ -129,7 +129,7 @@ module Master
           line_count = src.lines.size
           next [] if line_count <= 300
           [finding(line: 1, message: "JS file #{line_count} lines — split at 300; extract cohesive modules",
-                    blast_radius: Rule::SPANS_FILES)]
+                    blast_radius: Law::SPANS_FILES)]
         end
 
         # STIMULUS_CONTROLLER_SIZE lives in surface_rules.rb with the rest of the

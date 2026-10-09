@@ -15,7 +15,7 @@ module Master
           end.uniq
 
           directories.flat_map do |dir|
-            Operator::Cohesion.plans_for(dir).map do |plan|
+            ::Operator::Cohesion.plans_for(dir).map do |plan|
               {
                 rule: RULE_ID,
                 laws: %w[SINGULARITY ABSTRACTION DENSITY PROXIMITY KISS],
