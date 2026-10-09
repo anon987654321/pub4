@@ -8,10 +8,18 @@ module Shared
   module Contracts
     module_function
 
+    def root
+      configured = ENV["PUB4_ROOT"].to_s.strip
+      configured.empty? ? File.expand_path("../../../..", __dir__) : configured
+    end
+
     def dir
-      root = ENV["PUB4_ROOT"].to_s.strip
-      root = File.expand_path("../../../..", __dir__) if root.empty?
       File.join(root, "MASTER", "contracts")
+    end
+
+    # MASTER/tools holds the plain-Ruby audits the shared test examples run.
+    def tool_path(name)
+      File.join(root, "MASTER", "tools", name.to_s)
     end
 
     def require_contract(name)

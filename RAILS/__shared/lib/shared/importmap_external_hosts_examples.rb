@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
-require "operator/importmap_preload_audit"
+require_relative "contracts"
+require Shared::Contracts.tool_path("importmap_preload_audit")
 
 module Shared
   # The importmap contract, shared because the importmap is shared: all three
