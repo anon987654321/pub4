@@ -71,7 +71,7 @@ class HealthController < ActionController::API
   # than in a global git config on the box, which nothing in this repo
   # provisions and which a rebuild would lose.
   def git_healthy?
-    repo = Rails.root.join("..").to_s
+    repo = Master::REPO_ROOT
     system("git", "-c", "safe.directory=#{repo}", "-C", repo, "rev-parse", "--is-inside-work-tree",
            out: File::NULL, err: File::NULL)
   rescue StandardError => _

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require Rails.root.join("../lib/device/wake_signal").to_s
+require Rails.root.join("../../MASTER/lib/device/wake_signal").to_s
 
 # EventsController — bounded SSE stream of EventBus events to the orb visualizer, at
 # GET /events/stream. It subscribes only to the face's declared signal families and writes each event
@@ -107,7 +107,7 @@ class EventsController < ApplicationController
   private
 
   def emit_wake(response, stream_started_at, last_wake_id)
-    event = Master::Device::WakeSignal.read(root: Rails.root.join("..").to_s)
+    event = Master::Device::WakeSignal.read(root: Master::ROOT)
     return unless event
     return unless event[:type].to_s == "device:wake"
     return unless event[:at].to_f > stream_started_at

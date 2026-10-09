@@ -7,7 +7,7 @@ import { runInNewContext } from "node:vm";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const source = readFileSync(join(root, "public", "topology_registry.js"), "utf8");
-const yaml = readFileSync(join(root, "..", "data", "topologies.yml"), "utf8");
+const yaml = readFileSync(join(root, "..", "..", "MASTER", "data", "topologies.yml"), "utf8");
 
 // /runtime/topologies renders data/topologies.yml verbatim, so the keys arrive
 // in the YAML's lower_snake_case. This file reads them in the JS convention for

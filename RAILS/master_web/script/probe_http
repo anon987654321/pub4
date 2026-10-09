@@ -80,7 +80,7 @@ begin
 
   token = ENV["PROBE_TOKEN"].to_s
   if token.empty?
-    cfg_path = File.expand_path("../../.master/config.yml", __dir__)
+    cfg_path = File.expand_path("../../../MASTER/.master/config.yml", __dir__)
     if File.file?(cfg_path)
       cfg = YAML.safe_load_file(cfg_path) rescue {}
       candidate = cfg.is_a?(Hash) ? cfg["web_token"].to_s : ""

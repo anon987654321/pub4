@@ -3,6 +3,13 @@
 require "test_helper"
 
 class ChatControllerTest < ActionDispatch::IntegrationTest
+  test "index tells a visitor without JavaScript what is missing" do
+    get root_path
+
+    assert_response :success
+    assert_match(%r{<noscript><p id="primer-noscript"[^>]*>#{Regexp.escape(I18n.t("face.primer_noscript"))}</p></noscript>}, response.body)
+  end
+
   test "index renders chat shell" do
     get root_path
 

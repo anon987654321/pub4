@@ -11,7 +11,7 @@ import { runInNewContext } from "node:vm";
 // closed: the page had its own invented chain while the terminal used dilla's.
 const here = dirname(fileURLToPath(import.meta.url));
 const source = readFileSync(join(here, "..", "public", "face_speech_runtime.js"), "utf8");
-const voiceYml = readFileSync(join(here, "..", "..", "data", "voice.yml"), "utf8");
+const voiceYml = readFileSync(join(here, "..", "..", "..", "MASTER", "data", "voice.yml"), "utf8");
 
 const declaredChain = (() => {
   const match = voiceYml.match(/^\s*post_chain:\s*(?:>-?|\|-?)?\s*"?([^"\n]+)"?\s*$/m);
