@@ -13,15 +13,15 @@ class RhythmLintTest < Minitest::Test
   end
 
   def test_missing_rhythm_rule_is_not_clean
-    with_design_rules({ "pixel_perfection" => {} }) do
-      refute LINT.run, "missing eight_px_rhythm must fail the measurement"
+    with_design_rules({ "scale" => {} }) do
+      refute LINT.run, "missing scale.space_px must fail the measurement"
     end
   end
 
   def test_live_rhythm_configuration_is_present
     rules = LINT.load_design_rules
     refute_nil rules
-    refute_empty rules.fetch("pixel_perfection").fetch("eight_px_rhythm")
+    refute_empty rules.fetch("scale").fetch("space_px")
   end
 
   private
