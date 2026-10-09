@@ -119,7 +119,7 @@ module Master
           rows = [{
             at_ms: part[:start_ms],
             type: "phrase",
-            index: index,
+            index:,
             role: part[:role],
             energy: phrase_energy(part[:text]),
           }]
@@ -127,7 +127,7 @@ module Master
             rows << {
               at_ms: [part[:start_ms] + 35, part[:end_ms] - 1].min,
               type: "accent",
-              index: index,
+              index:,
               emphasis: part[:emphasis],
               rate_delta: part[:rate_delta],
               pitch_delta_hz: part[:pitch_delta_hz],

@@ -24,7 +24,7 @@ module Deploy
       "maps" => "map", "maps_places" => "map",
       "messenger" => "chat", "conversations" => "chat",
       "session_new" => "auth", "sign_in" => "auth",
-      "privacy" => "legal", "terms" => "legal", "cookies" => "legal",
+      "privacy" => "legal", "terms" => "legal", "cookies" => "legal"
     }.freeze
 
     WALK = File.read(File.join(__dir__, "geometry_type_walk.js"))
@@ -94,7 +94,7 @@ module Deploy
       result.fail(
         "geometry measure: #{surface.id} #{bad.size} prose run(s) outside #{min.to_i}–#{max.to_i}ch " \
         "(profile=#{spec["name"]}) — #{sample} (principle=bringhurst)",
-        severity: :soft
+        severity: :soft,
       )
     end
 
@@ -163,11 +163,11 @@ module Deploy
       result.fail(
         "geometry glyphs: #{surface.id} draws æøå from a fallback face — #{families.first(3).join(', ')} " \
         "lack#{'s' if families.size == 1} them (principle=ui_polish)",
-        severity: :soft
+        severity: :soft,
       )
     end
 
-    def check_type_scale(result, surface, data, spec)
+    def check_type_scale(result, surface, data, _spec)
       sizes = data["type_sizes"]
       return unless sizes.is_a?(Hash) && sizes.size > 1
 
@@ -184,11 +184,11 @@ module Deploy
       result.fail(
         "geometry type_scale: #{surface.id} computed sizes #{stray.sort.map { |s| "#{s}px" }.join(", ")} " \
         "sit off the #{ratio} scale from body #{body}px (principle=ruder)",
-        severity: :soft
+        severity: :soft,
       )
     end
 
-    def check_baseline(result, surface, data, spec)
+    def check_baseline(result, surface, data, _spec)
       mod = (worn["baseline_module_px"] || 4).to_f
       rows = Array(data["baselines"])
       return if rows.size < 3
@@ -200,7 +200,7 @@ module Deploy
       result.fail(
         "geometry baseline: #{surface.id} #{off.size}/#{rows.size} first-line baselines off the " \
         "#{mod.to_i}px module (principle=hochuli)",
-        severity: :soft
+        severity: :soft,
       )
     end
 
@@ -217,7 +217,7 @@ module Deploy
       result.fail(
         "geometry tabular: #{surface.id} #{missing.size} quantity run(s) without tabular-nums — " \
         "#{sample} (principle=catalog_figures)",
-        severity: :soft
+        severity: :soft,
       )
     end
 
@@ -234,7 +234,7 @@ module Deploy
       result.fail(
         "geometry accents: #{surface.id} wears #{live.size} accent hues #{live.sort.join(", ")} " \
         "(max #{max} for profile=#{spec["name"]}) (principle=vignelli)",
-        severity: :soft
+        severity: :soft,
       )
     end
 
@@ -246,17 +246,17 @@ module Deploy
       max = spec["empty_max_pct"].to_f / 100.0
       return if max <= 0
 
-      if ratio < min || ratio > max
+      return unless ratio < min || ratio > max
         result.fail(
           "geometry empty_ratio: #{surface.id} #{(ratio * 100).round}% empty " \
           "(profile=#{spec["name"]} wants #{spec["empty_min_pct"]}-#{spec["empty_max_pct"]}%) " \
           "(principle=ma)",
-          severity: :soft
+          severity: :soft,
         )
-      end
+
     end
 
-    def check_split(result, surface, data, spec)
+    def check_split(result, surface, data, _spec)
       split = data["split"]
       return unless split.is_a?(Hash)
 
@@ -271,11 +271,11 @@ module Deploy
       result.fail(
         "geometry split: #{surface.id} main/aside #{split["main"]}px/#{split["aside"]}px " \
         "(#{ratio}) outside #{min}-#{max} (principle=modulor)",
-        severity: :soft
+        severity: :soft,
       )
     end
 
-    def check_hanging(result, surface, data, spec)
+    def check_hanging(result, surface, data, _spec)
       rows = Array(data["hanging"])
       return if rows.empty?
 
@@ -287,11 +287,11 @@ module Deploy
       result.fail(
         "geometry hanging: #{surface.id} #{bad.size} list marker(s) sit inside the measure — " \
         "#{sample} (principle=tschichold)",
-        severity: :soft
+        severity: :soft,
       )
     end
 
-    def check_rag(result, surface, data, spec)
+    def check_rag(result, surface, data, _spec)
       rag = rules.dig("typography", "rag") || {}
       minimum_lines = rag.fetch("inspect_from_lines", 5).to_i
       extreme_ratio = rag.fetch("extreme_last_line_ratio", 0.12).to_f
@@ -307,17 +307,17 @@ module Deploy
       result.fail(
         "geometry rag: #{surface.id} has #{rows.size} long prose block(s) ending in an extremely short line — " \
         "#{sample}; rebalance copy, measure or breaks before tightening the type",
-        severity: :soft
+        severity: :soft,
       )
     end
 
-    def check_micro_typography(result, surface, data, spec)
+    def check_micro_typography(result, surface, data, _spec)
       rows = Array(data.dig("typography", "prose"))
       return if rows.empty?
 
       profile = Master::Design::Typography.for_surface(
         path: surface.path,
-        purpose: surface.label
+        purpose: surface.label,
       )
       missing = []
       rows.each do |row|
@@ -331,7 +331,7 @@ module Deploy
 
       result.fail(
         "geometry micro_type: #{surface.id} rendered prose lacks #{missing.join(", ")} contract",
-        severity: :soft
+        severity: :soft,
       )
     rescue StandardError
       nil

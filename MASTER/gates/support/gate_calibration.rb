@@ -39,9 +39,9 @@ module Deploy
       total = cases.size
       rate = total.positive? ? (agreed.to_f / total) : 0.0
       {
-        cases: cases,
-        agreed: agreed,
-        total: total,
+        cases:,
+        agreed:,
+        total:,
         agreement: rate.round(4),
         floor: @floor,
         pass: rate + 1e-9 >= @floor,
@@ -150,16 +150,16 @@ module Deploy
 
       agree = agreement?(human, gate_verdict, detail)
       CaseResult.new(
-        id: id,
-        human: human,
+        id:,
+        human:,
         gate: gate_verdict,
-        agree: agree,
-        detail: detail,
-        notes: notes
+        agree:,
+        detail:,
+        notes:,
       )
     end
 
-    def agreement?(human, gate, detail)
+    def agreement?(human, gate, _detail)
       case human
       when "pass"
         gate == "pass" || gate == "soft"
@@ -194,8 +194,8 @@ module Deploy
         suggested = [current - 3, 5].max
         suggestions << {
           dimension: dim,
-          current: current,
-          suggested: suggested,
+          current:,
+          suggested:,
           message: "False positives mention #{dim} ×#{count} — consider weight #{current}→#{suggested}",
         }
       end

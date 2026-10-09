@@ -8,7 +8,6 @@ module Master
       SECRET_ALPHANUMERIC_DASH = "#{SECRET_ALPHANUMERIC}_-"
       SECRET_BEARER = "#{SECRET_ALPHANUMERIC}_-."
 
-
       SENSITIVE_KEYS = /
         \A(?:password|passwd|secret|token|api[_-]?key|authorization|cookie|private[_-]?key)\z
       /ix
@@ -191,7 +190,7 @@ module Master
         end
       end
 
-      def self.scrub_array(key, array, seen:, depth: 0)
+      def self.scrub_array(_key, array, seen:, depth: 0)
         scrub_container(array, seen:, depth:)
       end
 

@@ -134,7 +134,7 @@ module Master
           suffix = detail.empty? ? "" : " (#{detail})"
           return Result.err(
             "fix_loop: corpus collected zero files from #{coverage[:candidates]} candidates#{suffix}",
-            category: :validation
+            category: :validation,
           )
         end
         current_phase = :begin_run
@@ -200,7 +200,7 @@ module Master
         terminal(:blocked, "finished with gaps, #{parts.join("; ")}")
       end
 
-      def finish_run(result, target, run_id, mission: nil, requested: false)
+      def finish_run(result, _target, run_id, mission: nil, requested: false)
         result = blocked_by_gaps(result)
         state = terminal_state_for(result)
         @run_journal.terminal(run_id, state, message: result.to_s)
@@ -599,7 +599,7 @@ module Master
           )
         end
         state[:consecutive_clean] = result.consecutive_clean
-        return nil if structural_repair?(result, files:, target:, state:, run_id:, pass:)
+        return if structural_repair?(result, files:, target:, state:, run_id:, pass:)
 
         @run_journal.pass_finish(run_id, pass, status: result.status, message: result.message)
         ending = PASS_ENDINGS[result.status]

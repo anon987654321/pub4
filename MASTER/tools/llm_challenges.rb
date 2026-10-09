@@ -32,7 +32,7 @@ module Master
               methods: methods.map(&:first),
               protected: [],
               unprotected: [],
-              errors: [baseline[:output].to_s]
+              errors: [baseline[:output].to_s],
             )
           end
 
@@ -63,9 +63,9 @@ module Master
           Result.new(
             baseline_ok: true,
             methods: methods.map(&:first),
-            protected: protected,
-            unprotected: unprotected,
-            errors: errors
+            protected:,
+            unprotected:,
+            errors:,
           )
         ensure
           File.write(@test_path, original) if original
@@ -88,7 +88,7 @@ module Master
           raise "could not parse #{@test_path}: #{e.class}: #{e.message}"
         end
 
-        def coverage_run(source)
+        def coverage_run(_source)
           Tempfile.create(["master-test-coverage", ".json"]) do |report|
             report_path = report.path
             runner = Tempfile.create(["master-test-runner", ".rb"]) do |file|
@@ -137,7 +137,7 @@ module Master
           methods: result.methods,
           protected: result.protected,
           unprotected: result.unprotected,
-          errors: result.errors
+          errors: result.errors,
         }
       end
 
@@ -181,7 +181,7 @@ module Master
           test_files: tests.size,
           direct_test_name_matches: covered,
           direct_test_ratio: lib.empty? ? 1.0 : (covered.to_f / lib.size),
-          large_ruby_files: large.first(25)
+          large_ruby_files: large.first(25),
         }
       end
     end

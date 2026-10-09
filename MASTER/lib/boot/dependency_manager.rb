@@ -132,7 +132,7 @@ module Master
             changed: bundler.changed || system[:changed] || retry_bundle.changed,
             bundler: bundler.bundler,
             bundle: retry_bundle.bundle,
-            system: system,
+            system:,
             message: retry_bundle.message,
             output: retry_bundle.output,
           )
@@ -156,16 +156,16 @@ module Master
           output = join_output(stdout, stderr)
           if !ok && native_build_failure?(output)
             system = install_system_packages
-            return fail_result("bundle update failed; system dependencies unavailable", output: output) unless system[:ok]
+            return fail_result("bundle update failed; system dependencies unavailable", output:) unless system[:ok]
 
             ok, stdout, stderr = run_bundle(*args)
             output = join_output(output, join_output(stdout, stderr))
           end
 
           if ok
-            ok_result("bundle updated", changed: true, bundle: true, output: output, bundler: bundler.bundler)
+            ok_result("bundle updated", changed: true, bundle: true, output:, bundler: bundler.bundler)
           else
-            fail_result("bundle update failed", output: output)
+            fail_result("bundle update failed", output:)
           end
         end
       rescue StandardError => e
@@ -236,8 +236,8 @@ module Master
           ruby_required: locked_ruby_version,
           bundler: bundler_version,
           bundler_installed: bundler_path(bundler_version),
-          bundle_ok: bundle_ok,
-          bundle_output: bundle_output,
+          bundle_ok:,
+          bundle_output:,
           package_manager: package_manager_name,
         }
       end
@@ -286,16 +286,16 @@ module Master
         unless ok
           return fail_result(
             "bundler #{version} installation failed",
-            output: output,
+            output:,
           )
         end
 
         refresh_gem_state!
         if bundler_path(version)
-          ok_result("bundler #{version} installed", changed: true, bundler: version, output: output)
+          ok_result("bundler #{version} installed", changed: true, bundler: version, output:)
         else
           fail_result("bundler #{version} installed but its executable is unavailable",
-                      output: output)
+                      output:)
         end
       end
 
@@ -385,7 +385,7 @@ module Master
           message = dependency_conflict?(output) ?
             "bundle dependency constraints conflict; no automatic lockfile rewrite was attempted" :
             "bundle install failed"
-          fail_result(message, output: output)
+          fail_result(message, output:)
         end
       end
 
@@ -434,12 +434,12 @@ module Master
         ok, stdout, stderr = run_bundle("install", "--jobs", bundle_jobs.to_s, "--retry", "3")
         output = join_output(previous_output, stdout, stderr)
         if ok
-          ok_result("bundle installed in user path", changed: true, bundle: true, output: output)
+          ok_result("bundle installed in user path", changed: true, bundle: true, output:)
         else
           message = dependency_conflict?(output) ?
             "bundle dependency constraints conflict; no automatic lockfile rewrite was attempted" :
             "bundle install failed in user path"
-          fail_result(message, output: output)
+          fail_result(message, output:)
         end
       end
 
@@ -466,7 +466,7 @@ module Master
       end
 
       def bundler_path(version)
-        return nil if version.to_s.empty?
+        return if version.to_s.empty?
 
         bundler_spec(version)&.then do |spec|
           executable = File.join(spec.full_gem_path, "exe", "bundle")
@@ -489,7 +489,7 @@ module Master
         candidates.concat(
           Gem::Specification.find_all_by_name("bundler").select do |spec|
             spec.version.to_s == version.to_s
-          end
+          end,
         )
 
         candidates.compact.find do |spec|
@@ -575,7 +575,7 @@ module Master
 
       def git_common_dir
         output, status = Open3.capture2e("git", "-C", @root, "rev-parse", "--git-common-dir")
-        return nil unless status.success?
+        return unless status.success?
 
         File.expand_path(output.strip, @root)
       rescue StandardError
@@ -669,8 +669,8 @@ module Master
           [[["brew", "install", *packages], "brew"]]
         when :debian
           [
-            privileged(["apt-get", "update"], "apt-get"),
-            privileged(["apt-get", "install", "-y", *packages], "apt-get")
+            privileged(%w[apt-get update], "apt-get"),
+            privileged(["apt-get", "install", "-y", *packages], "apt-get"),
           ].compact
         when :fedora
           [privileged(["dnf", "install", "-y", *packages], "dnf")].compact
@@ -696,7 +696,7 @@ module Master
         return :macos if RUBY_PLATFORM.include?("darwin") && @command_path.call("brew")
         return :debian if @command_path.call("apt-get")
         return :fedora if @command_path.call("dnf")
-        return :arch if @command_path.call("pacman")
+        :arch if @command_path.call("pacman")
       end
 
       def with_lock
@@ -724,13 +724,13 @@ module Master
         end
       end
 
-      def which(name) = @env.fetch("PATH", "").split(File::PATH_SEPARATOR).lazy.map { |dir|
+      def which(name) = @env.fetch("PATH", "").split(File::PATH_SEPARATOR).lazy.map do |dir|
         path = File.join(dir, name)
         path if File.file?(path) && File.executable?(path)
-      }.find(&:itself)
+      end.find(&:itself)
 
       def run(command, chdir:, env:)
-        @runner.call(command, chdir: chdir, env: env)
+        @runner.call(command, chdir:, env:)
       end
 
       def ok_result(message, changed:, bundler: nil, bundle: nil, output: nil)

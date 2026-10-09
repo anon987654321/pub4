@@ -20,7 +20,7 @@ module Master
 
       def find(query, root: ROOT)
         q = query.to_s.downcase.strip
-        return nil if q.empty?
+        return if q.empty?
 
         items(root:).find { |item| "#{item[:id]} #{item[:title]}".downcase.include?(q) }
       end
@@ -56,7 +56,7 @@ module Master
           id: item.fetch("id"),
           title: item.fetch("title"),
           state: STATES.include?(item.fetch("state").to_sym) ? item.fetch("state").to_s : "missing",
-          implementation: implementation,
+          implementation:,
           proof: item.fetch("proof").to_s,
           implementation_present: path_present?(root, implementation),
         }
@@ -66,7 +66,7 @@ module Master
         format("%-28s %-11s %s", item[:id], item[:state], item[:title])
       end
 
-      def path_present?(root, implementation)
+      def path_present?(_root, implementation)
         return true if %w[RAILS OPENBSD STUDIO].include?(implementation)
 
         path = File.expand_path(implementation, Master::REPO_ROOT)

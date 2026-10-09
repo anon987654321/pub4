@@ -182,7 +182,7 @@ class TestFixConvergence < Minitest::Test
     runner.instance_variable_set(:@preflight, Struct.new(:none) { def findings(_paths) = [] }.new)
     runner.instance_variable_set(
       :@scan_phase,
-      Struct.new(:none) { def call(_path) = Master::Result.err("scan failed: boom", category: :infrastructure) }.new
+      Struct.new(:none) { def call(_path) = Master::Result.err("scan failed: boom", category: :infrastructure) }.new,
     )
     runner.instance_variable_set(:@root, @root)
 

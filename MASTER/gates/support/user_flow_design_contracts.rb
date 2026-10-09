@@ -152,10 +152,10 @@ module Deploy
       def design_contract_checks
         design_contracts.each { |contract| apply_design_contract(contract) }
         # The flat rule in shared/README.md is the product constitution for non-pen CSS.
-        if File.file?(DESIGN_DOC)
+        return unless File.file?(DESIGN_DOC)
           notes = File.read(DESIGN_DOC)
           @result.fail("user_flow: shared/README.md lost the Flat rule") unless notes.match?(/Flat rule|box-shadow/i)
-        end
+
       end
 
       def apply_design_contract(contract)
@@ -249,9 +249,9 @@ module Deploy
           count = body.scan(/<h1\b/i).size
           @result.fail("#{label}: #{rel} has #{count} h1 tags (max #{contract[:max_h1]})") if count > contract[:max_h1]
         end
-        if contract[:forbidden] && !(contract[:allow_path] && path.match?(contract[:allow_path]))
+        return unless contract[:forbidden] && !(contract[:allow_path] && path.match?(contract[:allow_path]))
           @result.fail("#{label}: forbidden pattern in #{rel}") if body.match?(contract[:forbidden])
-        end
+
       end
     end
   end

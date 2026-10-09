@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require_relative "../../face/contract"
 
 # frozen_string_literal: true

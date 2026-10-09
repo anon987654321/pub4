@@ -25,7 +25,7 @@ module Master
         items = items.sort_by { |item| [item[:priority].to_i, item[:kind].to_s] }.first(MAX_ITEMS)
         path = File.join(root, QUEUE)
         FileUtils.mkdir_p(File.dirname(path))
-        File.write(path, { version: 1, generated_at: Time.now.utc.iso8601, items: items }.to_yaml)
+        File.write(path, { version: 1, generated_at: Time.now.utc.iso8601, items: }.to_yaml)
         items
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "DreamObserver.observe")
@@ -46,7 +46,7 @@ module Master
         end
       end
 
-      def add_sprawl(items, root)
+      def add_sprawl(items, _root)
         census = ::Operator::SprawlCensus
         counts = census.counts
         ceiling = census.ceilings
