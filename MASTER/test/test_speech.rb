@@ -592,6 +592,58 @@ class TestSpeech < Minitest::Test
     end
   end
 
+  def test_the_default_voice_speaks_in_a_room
+    with_profile(nil) do
+      policy = Master::Voice::Policy
+      refute_empty policy.room
+      chain = policy.shaped_chain
+      assert chain.start_with?(policy.post_chain)
+      %w[pan=stereo adelay= aecho=].each { |filter| assert_includes chain, filter }
+      assert_equal policy.room, policy.browser_payload.fetch(:room)
+      assert_equal policy.post_chain, policy.browser_payload.fetch(:post_chain)
+      assert policy.room.dig("pan", "follow_head")
+    end
+  end
+
+  def test_the_dry_profile_restores_the_voice_without_a_room
+    with_profile("dry") do
+      assert_empty Master::Voice::Policy.room
+      assert_equal Master::Voice::Policy.post_chain, Master::Voice::Policy.shaped_chain
+    end
+  end
+
+  def test_asmr_keeps_its_own_layers_and_no_room
+    with_profile("asmr") do
+      assert_empty Master::Voice::Policy.room
+      assert Master::Voice::Layers.active?
+    end
+  end
+
+  def test_the_room_holds_loudness_within_one_lu_of_the_dry_voice
+    skip "ffmpeg missing" unless system("ffmpeg", "-version", out: File::NULL, err: File::NULL)
+
+    Dir.mktmpdir("room") do |dir|
+      # Real speech, not tones: the limiter and compressor in the chain treat a
+      # steady tone nothing like a sentence. macOS `say` is the one speaker to hand.
+      skip "say missing" unless system("say", "-v", "?", out: File::NULL, err: File::NULL)
+
+      spoken = File.join(dir, "speech.aiff")
+      assert system("say", "-o", spoken, "The gate passed on all four trees. Nothing was skipped, and the room is ready to hear.")
+      source = File.join(dir, "speech.wav")
+      assert system("ffmpeg", "-y", "-loglevel", "error", "-i", spoken, "-ac", "1", "-ar", "24000", source)
+      loudness = lambda do |chain|
+        out = IO.popen(["ffmpeg", "-hide_banner", "-nostats", "-i", source, "-af", "#{chain},ebur128",
+                        "-f", "null", "-"], err: %i[child out], &:read)
+        out.scan(/I:\s+(-?[\d.]+) LUFS/).last.first.to_f
+      end
+      with_profile(nil) do
+        wet = loudness.call(Master::Voice::Policy.shaped_chain)
+        dry = loudness.call(Master::Voice::Policy.post_chain)
+        assert_in_delta dry, wet, 1.0
+      end
+    end
+  end
+
   def test_the_asmr_profile_overlays_rate_pitch_chain_bed_and_layers
     with_profile("asmr") do
       policy = Master::Voice::Policy

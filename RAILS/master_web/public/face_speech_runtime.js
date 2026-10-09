@@ -749,6 +749,55 @@ function buildVoiceChain(ctx, chainText) {
   return { input: stages[0].input, output: stages[stages.length - 1].output, stages: stages.length, skipped };
 }
 
+// The room from data/voice.yml's tts.room, as WebAudio: the dry voice plus one
+// delayed, attenuated tap per early reflection, the second channel delayed by
+// width_ms, and a StereoPanner that follows the head's yaw. ffmpeg builds the
+// same reflections on the server (Policy#room_chain), so both lanes speak in
+// one room. Returns null when the policy declares none, and the voice stays dry.
+function buildRoom(ctx, room) {
+  if (!room || !Array.isArray(room.reflections_ms) || !room.reflections_ms.length) return null;
+  const input = ctx.createGain();
+  const merger = ctx.createChannelMerger(2);
+  const mono = ctx.createGain();
+  mono.channelCount = 1;
+  mono.channelCountMode = 'explicit';
+  input.connect(mono);
+  const widthDelay = ctx.createDelay(0.1);
+  widthDelay.delayTime.value = (Number(room.width_ms) || 0) / 1000;
+  const sum = ctx.createGain();
+  const level = Math.pow(0.707, 1);
+  sum.gain.value = level;
+  mono.connect(sum);
+  room.reflections_ms.forEach((ms, i) => {
+    const tap = ctx.createDelay(0.5);
+    tap.delayTime.value = ms / 1000;
+    const decay = ctx.createGain();
+    decay.gain.value = (room.decays?.[i] ?? 0.1);
+    mono.connect(tap);
+    tap.connect(decay);
+    decay.connect(sum);
+  });
+  sum.connect(merger, 0, 0);
+  sum.connect(widthDelay);
+  widthDelay.connect(merger, 0, 1);
+  const makeup = ctx.createGain();
+  makeup.gain.value = Math.pow(10, (Number(room.gain_db) || 0) / 20) * (Number(room.out_gain) || 0.9);
+  merger.connect(makeup);
+  const panner = ctx.createStereoPanner();
+  makeup.connect(panner);
+  const pan = room.pan || {};
+  const follow = pan.follow_head !== false;
+  const strength = Number(pan.strength) || 0;
+  const limit = Number(pan.max) || 0.5;
+  // The head turns about +-0.9 rad at most; that span maps onto +-strength.
+  const update = () => {
+    const yaw = window.MASTER_FACE?.head?.rotation?.y || 0;
+    const target = follow ? Math.max(-limit, Math.min(limit, (yaw / 0.9) * strength)) : 0;
+    panner.pan.setTargetAtTime(target, ctx.currentTime, 0.08);
+  };
+  return { input, output: panner, update };
+}
+
 async function connectTTSAudio(audio, boostValue = 1.35) {
   if (LOW_POWER) return;
   if (!actx || actx.state === 'closed') return;
@@ -778,9 +827,18 @@ async function connectTTSAudio(audio, boostValue = 1.35) {
   tts.playbackGain = masterGainValue;
   analyser.fftSize = 256;
   analyser.smoothingTimeConstant = 0.72;
+  const room = chain ? buildRoom(actx, window.MASTER_VOICE_POLICY?.room) : null;
+  if (tts.panTimer) { clearInterval(tts.panTimer); tts.panTimer = null; }
   if (chain) {
     msrc.connect(chain.input);
-    chain.output.connect(masterGain);
+    if (room) {
+      chain.output.connect(room.input);
+      room.output.connect(masterGain);
+      room.update();
+      tts.panTimer = setInterval(room.update, 60);
+    } else {
+      chain.output.connect(masterGain);
+    }
   } else {
     const boost = actx.createGain();
     boost.gain.value = boostValue;
@@ -813,6 +871,7 @@ function finishTTSPlayback(src, continueQueue = true) {
   // when the utterance was cut off — an interruption is not a completed thought.
   if (continueQueue) window.MASTER_ATTENTION?.cue?.('utterance_end');
   tts.visemePlan = null;
+  if (tts.panTimer) { clearInterval(tts.panTimer); tts.panTimer = null; }
   if (tts.outputGain && actx && Number.isFinite(tts.playbackGain)) {
     tts.outputGain.gain.setValueAtTime(tts.playbackGain, actx.currentTime);
   }

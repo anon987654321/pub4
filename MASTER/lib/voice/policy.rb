@@ -181,6 +181,39 @@ module Master
         value.empty? ? nil : value
       end
 
+      # The room the voice speaks in: early reflections on a stereo image,
+      # declared in voice.yml `room:`. Empty when switched off
+      # (MASTER_TTS_PROFILE=dry), which leaves the dry voice.
+      def room
+        value = data["room"]
+        value.is_a?(Hash) && value["enabled"] != false && !value.empty? ? value : {}
+      end
+
+      # post_chain plus the room, as ffmpeg runs it. The browser is handed the
+      # two apart (browser_payload) because it builds the room from WebAudio.
+      def shaped_chain
+        wet = room_chain
+        wet ? [post_chain, wet].compact.join(",") : post_chain
+      end
+
+      # Mono to stereo, a short delay on one side for width, reflections as
+      # parallel echoes, fixed makeup gain, and the limiter again because the
+      # reflections add level above the chain's own ceiling.
+      def room_chain
+        cfg = room
+        return nil if cfg.empty?
+
+        delays = Array(cfg["reflections_ms"]).map { |ms| format("%g", ms) }.join("|")
+        decays = Array(cfg["decays"]).map { |value| format("%g", value) }.join("|")
+        [
+          "pan=stereo|c0=0.707*c0|c1=0.707*c0",
+          "adelay=0|#{cfg.fetch('width_ms', 0).to_i}",
+          "aecho=1:#{format('%g', cfg.fetch('out_gain', 0.9))}:#{delays}:#{decays}",
+          "volume=#{format('%g', cfg.fetch('gain_db', 0))}dB",
+          "alimiter=limit=0.98",
+        ].join(",")
+      end
+
       # The musical bed, as declared. Nil when absent; the renderer is the
       # caller's, because MASTER's web face and a terminal narrator mix audio
       # in entirely different ways.
@@ -242,6 +275,7 @@ module Master
           language_voice_families: language_voice_families.transform_values { |family| family.transform_values(&:to_s) },
           voices: voice_aliases,
           post_chain:,
+          room:,
           prosody:,
           bed:,
           profile: profile_name,
