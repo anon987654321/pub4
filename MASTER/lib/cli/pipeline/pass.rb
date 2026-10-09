@@ -287,7 +287,7 @@ def default_apply?(*) = false
           # On vm23 the control plane shares this process and owns Git sync + deploy.
           # Claim the same execution slot around an interactive /fix so the control
           # plane cannot fetch, rebase or deploy while the fix loop is mutating main.
-          Master::Ops::LoopOwner.with_claim("fix") do
+          claimed = Master::Ops::LoopOwner.with_claim("fix") do
             result = @fix_loop.run(abs, requested: true)
             unless result.ok?
               @failed_stages << "fix" unless @failed_stages.include?("fix")
@@ -299,6 +299,12 @@ def default_apply?(*) = false
             Master::Trace::Dmesg.status("fix0", msg[0, 120])
             msg
           end
+          return claimed unless claimed == false
+
+          holder = Master::Ops::LoopOwner.active || {}
+          @failed_stages << "fix" unless @failed_stages.include?("fix")
+          Master::Trace::Dmesg.status("fix0", "failed, loop slot held by #{holder["loop"]} pid #{holder["pid"]}; no repair ran")
+          "fix failed: loop slot held by #{holder["loop"]} pid #{holder["pid"]}"
         rescue StandardError => e
           stage_failure("fix", "fix0", e)
         end
