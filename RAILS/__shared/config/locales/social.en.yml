@@ -299,6 +299,9 @@ en:
     settings_title: "Cookie choices"
     settings_body: "Choose the optional purposes you allow. Necessary storage is always on."
     purposes:
+      necessary:
+        title: "Necessary storage"
+        body: "Required for security, sessions and basic functions. It cannot be turned off here."
       analytics:
         title: "Statistics"
         body: "Sampled performance measurement, including web-vitals data."

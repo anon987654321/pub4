@@ -1,0 +1,26 @@
+---
+nb:
+  home:
+    pagination: Sidevisning for forsiden
+    media_wall_view: Mediavegg
+    media_wall_add_hint: Del et bilde eller en video
+    feed_views: Visninger av feeden
+    feed_view: Feed
+  post:
+    new_steps: Lag innlegg
+    new_step_media: 1 · Media
+    new_step_text: 2 · Innlegg
+    new_publishing: Publiserer…
+    new_media_heading: Start med media
+    new_media_hint: Legg til et bilde først, eller fortsett med bare tekst.
+    new_media_camera_hint: Kamera eller bildebibliotek
+    new_video_hint: Ta opp eller velg en video
+    new_audio_hint: Ta opp eller velg lyd
+    new_continue: Fortsett
+    new_text_only: Fortsett uten bilde
+    new_write_heading: Skriv innlegget ditt
+  posts:
+    video: Innleggsvideo
+    audio: Innleggslyd
+  pwa:
+    queued: Lagret for offline
