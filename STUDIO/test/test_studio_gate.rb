@@ -8,7 +8,7 @@ class TestStudioGate < Minitest::Test
     %w[dilla/dilla.rb postpro/postpro.rb replicate/replicate.rb photograph.rb].each do |entry|
       path = File.join(Studio::Gate::ROOT, entry)
       assert File.file?(path), "missing STUDIO/#{entry}"
-      assert_match(/__FILE__\s*==\s*(\$PROGRAM_NAME|\$0)/, File.read(path))
+      assert_match(/__FILE__\s*==\s*(\$PROGRAM_NAME|\$0)|(\$PROGRAM_NAME|\$0)\s*==\s*__FILE__/, File.read(path))
     end
   end
 

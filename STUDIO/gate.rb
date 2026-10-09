@@ -55,7 +55,7 @@ module Studio
         return
       end
 
-      return if File.read(path).match?(/if \$PROGRAM_NAME == __FILE__|if __FILE__ == \$PROGRAM_NAME|if \$0 == __FILE__/)
+      return if File.read(path).match?(/\$(?:PROGRAM_NAME|0)\s*==\s*__FILE__|__FILE__\s*==\s*\$(?:PROGRAM_NAME|0)/)
 
       @failures << "#{entry}: CLI runs at load; add a PROGRAM_NAME guard"
     end
