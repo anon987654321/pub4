@@ -38,8 +38,10 @@ class UserPurgeJobTest < ActiveJob::TestCase
         city: @city
       )
       post = Post.create!(user: other, title: "Relationship target", content: "x", city: @city)
+      category = Marketplace::Category.create!(name: "Purge", slug: "purge-#{SecureRandom.hex(3)}")
       listing = Marketplace::Listing.create!(
         user: other,
+        category: category,
         title: "Saved listing",
         price_cents: 100,
         status: "active"
