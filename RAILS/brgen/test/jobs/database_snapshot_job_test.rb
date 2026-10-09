@@ -19,8 +19,6 @@ class Shared::DatabaseSnapshotJobTest < ActiveSupport::TestCase
       ENV.delete("PUB4_BACKUP_DIR")
     end
   end
-end
-
   test "fails when gzip cannot produce the snapshot" do
     Dir.mktmpdir do |dir|
       ENV["PUB4_BACKUP_DIR"] = dir
@@ -34,3 +32,4 @@ end
       ENV.delete("PUB4_BACKUP_DIR")
     end
   end
+end
