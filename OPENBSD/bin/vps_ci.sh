@@ -275,7 +275,9 @@ doas chmod 750 /home/dev 2>/dev/null || true
 doas chmod 750 "/home/${app}/app/storage" 2>/dev/null || true
 doas chmod -R a+rX "${repo}/MASTER/tools" 2>/dev/null || true
 deploy_status "$app" "bundle install + bin/ci"
-doas sh -c "su -m ${app} -c 'export HOME=/home/${app}; export PUB4_ROOT=${repo}; export PUB4_CI_GUARD=1; export PUB4_CI_APP=${app}; export PUB4_RAILS_ROOT=${ci_rails_root}; export NPM_CONFIG_CACHE=${npm_cache}; export XDG_CACHE_HOME=${cache_home}; export BUNDLE_USER_HOME=/home/${app}/.bundle; cd ${app_dir} && ${BUNDLE} config unset without 2>/dev/null || true && ${BUNDLE} config unset deployment 2>/dev/null || true && ${BUNDLE} install --jobs=2 && ${BUNDLE} exec bin/ci'" \
+# The brgen suite ran 59 minutes on this 1 vCPU box (coverage on) and was cut off at the
+# guard's default 3600s still running, so CI gets two hours; the guard itself stays on.
+doas sh -c "su -m ${app} -c 'export HOME=/home/${app}; export PUB4_ROOT=${repo}; export PUB4_CI_GUARD=1; export PUB4_CI_APP=${app}; export PUB4_CI_TIMEOUT=${PUB4_CI_TIMEOUT:-7200}; export PUB4_RAILS_ROOT=${ci_rails_root}; export NPM_CONFIG_CACHE=${npm_cache}; export XDG_CACHE_HOME=${cache_home}; export BUNDLE_USER_HOME=/home/${app}/.bundle; cd ${app_dir} && ${BUNDLE} config unset without 2>/dev/null || true && ${BUNDLE} config unset deployment 2>/dev/null || true && ${BUNDLE} install --jobs=2 && ${BUNDLE} exec bin/ci'" \
   || { deploy_status "$app" "bundle install + bin/ci" "failed"; exit 1; }
 
 sha=$(git -C "$repo" rev-parse --short HEAD 2>/dev/null || echo unknown)

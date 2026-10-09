@@ -120,6 +120,8 @@ class VpsDeployContractTest < Minitest::Test
     ci = File.read(File.join(ROOT, "OPENBSD", "bin", "vps_ci.sh"), encoding: "UTF-8")
     assert_includes ci, "shared_dir=/home/${app}/__shared"
     assert_includes ci, "RAILS/brgen_*"
+    # The suite outlasts the guard's one-hour default on this box.
+    assert_includes ci, "export PUB4_CI_TIMEOUT=${PUB4_CI_TIMEOUT:-7200}"
     # A directory the repo no longer has must not survive the sync, or its stale tests keep running.
     assert_includes ci, '[[ -d $src/engines ]] || doas rm -rf "${app_dir}/engines"'
 
