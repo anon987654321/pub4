@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "test_helper"
+require "minitest/mock"
 
 class MonthlyAnalyticsRollupJobTest < ActiveSupport::TestCase
   test "writes monthly analytics rollup to cache" do

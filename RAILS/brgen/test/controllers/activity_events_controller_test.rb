@@ -18,7 +18,7 @@ class ActivityEventsControllerTest < ActionDispatch::IntegrationTest
       password: "password123", username: "activity_leaving_#{SecureRandom.hex(3)}",
       city: @city
     )
-    visible_event = ActivityEvent.create!(
+    ActivityEvent.create!(
       actor: leaving, source_vertical: "marketplace", event_name: "ListingCreated",
       subject_type: "Post", subject_id: 1, visibility: "public", moderation_state: "clean"
     )
@@ -27,6 +27,6 @@ class ActivityEventsControllerTest < ActionDispatch::IntegrationTest
     get activity_events_path
 
     assert_response :success
-    refute_includes response.body, visible_event.id.to_s
+    assert_select ".activity-event-list", count: 0
   end
 end

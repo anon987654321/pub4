@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "test_helper"
+require "minitest/mock"
 
 class PostTest < ActiveSupport::TestCase
   test "departing accounts are not attributed on their posts" do
