@@ -15,10 +15,10 @@ module Master
         # config["model"] alone sits at the tail of the routed chain, where no
         # turn reaches it while an earlier lane answers.
         def model
-          live = @runtime_model
-          return live if live.present? && @model_router&.unreachable_reason(live, wait: false).nil?
+          live = @runtime_model.to_s.empty? ? nil : @runtime_model
+          return live if live && @model_router&.unreachable_reason(live, wait: false).nil?
 
-          @runtime_model = nil if live.present?
+          @runtime_model = nil if live
           routed_models.first
         rescue StandardError => e
           @bus&.publish("llm:model_state_error", error: e.message)
