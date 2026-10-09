@@ -125,7 +125,10 @@ module Master
         bin = cfg["mlx_bin"].to_s.strip
         return File.executable?(bin) if bin != ""
 
-        return true if system("which", "mlx_audio.tts.generate", out: File::NULL, err: File::NULL)
+        # The CLI cannot run a chatterbox model (synth_mlx sends those through the
+        # Python API), so its presence says nothing about them.
+        return true if !cfg["mlx_model"].to_s.downcase.include?("chatterbox") &&
+                       system("which", "mlx_audio.tts.generate", out: File::NULL, err: File::NULL)
 
         _out, status = Master::Io::Exec.capture2(py, "-c", "import mlx_audio.tts", err: File::NULL)
         status.success?
