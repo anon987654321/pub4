@@ -22,7 +22,7 @@
 # Env:
 #   REPLICATE_API_TOKEN / REPLICATE_API_KEY / ~/.config/replicate/config.json
 #   LORA_REPLICATE_DEST   owner/name (default: $username/#{SUBJECT}-flux)
-#   LORA_TRIGGER          default #{SUBJECT}
+#   LORA_TRIGGER          default $TRIGGER from subject.env, else #{SUBJECT}
 #   LORA_REPLICATE_STEPS  default 1000 (Replicate's default; local YAML uses 1800)
 #   REPLICATE_WEBHOOK_URL     optional; also set --async to not poll
 #   LORA_REPLICATE_TIMEOUT seconds (default 3600)
@@ -66,7 +66,7 @@ options = {
   resume: nil,
   cancel: nil,
   destination: ENV["LORA_REPLICATE_DEST"].to_s.strip,
-  trigger: ENV.fetch("LORA_TRIGGER", "#{SUBJECT}"),
+  trigger: ENV.fetch("LORA_TRIGGER") { ENV.fetch("TRIGGER", SUBJECT) },
   steps: (ENV["LORA_REPLICATE_STEPS"] || "1000").to_i,
   lora_rank: (ENV["LORA_REPLICATE_LORA_RANK"] || "16").to_i,
   timeout: (ENV["LORA_REPLICATE_TIMEOUT"] || "3600").to_i,
