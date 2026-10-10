@@ -36,7 +36,8 @@
       </p>
 
       <div class="field post-photo-entry" data-controller="media-picker direct-upload">
-        <%= f.file_field :image,
+        <%= f.file_field :images,
+              multiple: true,
               accept: "image/*",
               capture: "environment",
               direct_upload: true,
