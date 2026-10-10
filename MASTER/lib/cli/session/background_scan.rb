@@ -40,7 +40,13 @@ module Master
       # Inline it held the prompt hostage for the whole boot, so the operator sat
       # at "scan…" with no way to type. It reports when it lands instead.
       def start_boot_scan
-        @boot_scan_thread = Thread.new { @scan_gate.synchronize { Master::Trace::Dmesg.under("scan0") { boot_scan } } }
+        @boot_scan_thread = Thread.new do
+          # The scan is pure Ruby and holds the GVL for whole time slices, so a plain
+          # "hello" waited behind it for 58 seconds. MRI scales a thread's slice by its
+          # priority; the lowest keeps the prompt's turns short while the scan lands.
+          Thread.current.priority = -3
+          @scan_gate.synchronize { Master::Trace::Dmesg.under("scan0") { boot_scan } }
+        end
       end
 
       # Rules that call the model (AdversarialRule, SemanticLaw, CommentDriftRule
