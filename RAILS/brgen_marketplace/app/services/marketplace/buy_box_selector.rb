@@ -31,17 +31,17 @@ module Marketplace
 
         if listing.price_cents.to_i > winner.price_cents.to_i && winner.price_cents.to_i.positive?
           percent = ((listing.price_cents.to_f / winner.price_cents) - 1) * 100
-          reasons << I18n.t("marketplace.buy_box_reason.price", percent: percent.round)
+          reasons << I18n.t("marketplace.buy_box_reason.price", percent: percent.round, default: "Your listed price is %{percent}% higher than the selected offer.")
         end
         if listing.delivery_promise.to_i > winner.delivery_promise.to_i
           reasons << I18n.t("marketplace.buy_box_reason.delivery",
-                            current: delivery_label(listing), winner: delivery_label(winner))
+                            current: delivery_label(listing), winner: delivery_label(winner), default: "Delivery is slower (%{current} versus %{winner}).")
         end
         if current.performance < winning.performance
           reasons << I18n.t("marketplace.buy_box_reason.performance",
-                            score: (current.performance * 100).round)
+                            score: (current.performance * 100).round, default: "Your seller-performance score is %{score}%.")
         end
-        reasons << I18n.t("marketplace.buy_box_reason.combined") if reasons.empty?
+        reasons << I18n.t("marketplace.buy_box_reason.combined", default: "The selected offer scores better across price, delivery, stock, fulfilment, and seller performance.") if reasons.empty?
         reasons
       end
 
