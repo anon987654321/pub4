@@ -177,11 +177,9 @@ end
     load_yaml(File.join(root, "data", "agent_taxonomy.yml")) || {}
   end
 
-  # The design blocks are rules like any other now: `tier: design` with the old
-  # nested section under `config`. This rebuilds the map they used to form, so
-  # everything that dug design_rules by block name still reaches its key.
+  # The one reader of data/tokens.yml: the design values every gate, lint and generated view reads.
   def self.tokens(root: ROOT)
-    (load_laws(root:) || {})["tokens"] || {}
+    (load_yaml(File.join(root, "data", "tokens.yml"), default: {}) || {})["tokens"] || {}
   end
 
   # One path into it, so a key that moves breaks in one place rather than in the

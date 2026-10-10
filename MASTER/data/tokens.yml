@@ -1,0 +1,702 @@
+---
+# Design tokens: the one source for colour, type, spacing, viewport, dialects and the face
+# interface. RAILS/__shared/design_tokens.yml, the face CSS :root and the SCSS views are
+# generated from this file (MASTER/tools/design_tokens.rb). Read it through Master.tokens;
+# values here are operator-owned (laws.yml RENDERED_VALUES).
+tokens:
+  # Canonical material design values. This block is the only machine-readable
+  # design-token authority; RAILS/__shared/design_tokens.yml is a generated view.
+  # Canonical design token anchors — keep in sync with _dialect_tokens.scss defaults and face.css :root.
+  # Regenerate face :root: ruby MASTER/tools/rails/generate_face_root_css.rb
+  #
+  # Dialect → consumer map (do not merge casually):
+  #   social       → brgen + shared shell (IRIX flat dark/light)
+  #   light        → light-mode overlay for social apps (theme toggle)
+  #   luxury       → amber wardrobe (Aesop/Toteme warm neutrals)
+  #   openbsd_wscons → bsdports terminal green (opt-in via body class)
+  #   face_root    → MASTER web face.css :root only (CRT-flat, all radii 0)
+  # Intent: social = soft radii; face/bsdports = CRT-flat zeros; luxury = calm product.
+  # Light social = indigo on cool paper (not Twitter
+  # The viewport scale. Every other axis in this system is single-sourced; this one
+  # was not, so responsive breakpoints were written by hand and drifted: 13 distinct
+  # widths across 58 media queries in the three apps plus the engine.
+  #
+  # NOT a CSS custom property, and cannot be one: `@media (min-width: var(--x))` is
+  # invalid CSS, so a media query has to carry a literal. That is why this section is
+  # a declared set rather than a generated variable — the numbers stay in the
+  # stylesheets and Operator::BreakpointLint asserts they are these numbers.
+  #
+  # Every edge below is `min-width`. A max-width bound is the edge MINUS 1px, never
+  # the edge itself: `(max-width: 768px)` and `(min-width: 768px)` both match at
+  # exactly 768px, so both blocks apply and the later one silently wins.
+  #
+  # Each edge is here because something already uses it, with the count as of
+  # 2026-08-11. New work picks one of these; a new edge is a design decision that
+  # goes in this list first.
+  viewport:
+    xs: 480
+    sm: 576
+    md: 640
+    lg: 768
+    desktop: 1024
+    wide: 1265
+    xl: 1280
+  # Shared motion + elevation (borders, never box-shadow) — export via CSS vars in apps.
+  # Layout chrome is the family contract across MASTER face + RAILS apps (dialects may
+  # restyle surfaces; they must not invent a second z-scale, tap floor, or skip-link).
+  shared_chrome:
+    space_2xs: "0.25rem"
+    space_xs: "0.5rem"
+    space_sm: "0.75rem"
+    space_md: "1.5rem"
+    space_lg: "2rem"
+    space_xl: "3rem"
+    space_2xl: "4rem"
+    color_success: "#00ba7c"
+    color_warning: "#c9a227"
+    color_info: "#5b9fd4"
+    color_danger: "#d1594a"
+    focus_ring: "2px solid var(--accent, currentColor)"
+    elev_1: "1px solid var(--border)"
+    transition_fast: "180ms"
+    transition_normal: "300ms"
+    ease_out: "cubic-bezier(0.16,1,0.3,1)"
+    ease_spring: "cubic-bezier(0.32,0.72,0,1)"
+    font_size_meta: "0.8125rem"
+    font_size_body: "1rem"
+    font_size_title: "1.25rem"
+    font_size_display: "1.75rem"
+    measure_body: "66ch"
+    font: '"Helvetica Neue Pro", "Helvetica Neue", Arial, sans-serif'
+    font_code: '"JetBrainsMono Nerd Font", "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, monospace'
+    chrome_inset: "12px"
+    tap_min: "44px"
+    bar_height: "44px"
+    page_gutter: "clamp(16px, 5vw, 48px)"
+    feed_max: "600px"
+  # The one geometry. Measured from joi.com on 2026-08-31 at 1440x900 with images
+  # and media blocked, then moulded to this repo's law. Structure lives here and
+  # is shared by every app; colour stays in the dialect blocks below, which is why
+  # merging the three dialects did not mean deleting them.
+  #
+  # Kept, because each beats what stood here:
+  #   opacity ladder  a tokenised alpha scale composed into colour, instead of
+  #                   hand-typed rgba() literals. The tree had no equivalent axis.
+  #   two radii       cards at one step, controls fully round. 104 measured
+  #                   elements carried the card radius and 48 the pill; nothing
+  #                   else but avatars. This family ran four card radii.
+  #   control block   44px tall, 8px internal gap, pill, hairline border. 44 is
+  #                   already tap_min here, so the measurement met the law.
+  #   tile grid       equal tracks, wide row gap, narrow column gap — what makes
+  #                   a dense catalogue scan as rows rather than as a mosaic.
+  #
+  # Rejected, with the reason, because a measurement is not a mandate:
+  #   10px root       its whole rem ladder hangs off html font-size 10px. brgen
+  #                   sets 18px (see chrome_inset above); rescaling moves every
+  #                   rem in three apps.
+  #   shadow depth    its elevation is glow and drop shadow throughout.
+  #                   css_constitution FLAT_PATTERN forbids all of it and this
+  #                   family elevates with borders.
+  #   2px / 6px gaps  its base grid. Ours is 8px with a 4px hairline.
+  #   absolute leading it leads in px. design_rules line_height forbid_absolute_px
+  #                   is true, and px leading does not inherit through an 18px root.
+  #   weight 500      its body weight, 100 from normal against a min_weight_delta
+  #                   of 200 — a step you cannot see.
+  #   the palette     hot rose on near-black, for a product that is not this one.
+  system:
+    tile_min: "224px"
+    tile_gap_row: "24px"
+    tile_gap_col: "8px"
+    control_pad_inline: "16px"
+    control_gap: "8px"
+    radius_card: "12px"
+  storefront_art:
+    name: "matte_product_promotion"
+    family: "marketplace_takeaway"
+    purpose: "Generate clean promotional product artwork while Rails owns all readable copy and offer data."
+    composition:
+      aspect: "14:5"
+      text_zone: "left 48%"
+      product_zone: "right 44%"
+      safe_gap: "24px"
+      product_max_height: "82%"
+      product_max_width: "42%"
+    typography:
+      headline_lines: 2
+      headline_role: "dominant"
+      support_lines: 2
+      offer_role: "secondary"
+      cta_role: "tertiary"
+      embedded_text: false
+    surface:
+      material: "matte paper"
+      texture: "barely perceptible"
+      lighting: "soft diffuse studio light"
+      contrast: "calm"
+    imagery:
+      product_count: "one hero product or one coherent small group"
+      product_cutout: true
+      perspective: "natural"
+      background_scene: false
+      generic_stock_scene: false
+    palette:
+      marketplace: ["warm white", "stone", "charcoal", "single campaign accent"]
+      takeaway: ["warm white", "cream", "charcoal", "single cuisine accent"]
+    forbidden:
+      - "glow"
+      - "drop_shadow"
+      - "busy_background"
+      - "embedded_typography"
+      - "fake_price"
+      - "fake_rating"
+      - "decorative_lifestyle_scene"
+    prompt_template: "Clean matte promotional artwork for {vertical}: {subject}; isolated product, natural proportions, soft diffuse studio light, quiet paper-like background, generous negative space on the left for real typography, no readable text, no logos, no badges, no price, no interface elements."
+  radio:
+    name: "radio"
+    inspirations:
+      - "soundcloud"
+      - "whyp"
+    home: "discovery_first"
+    player: "waveform_first"
+    sharing: "single_track_permalink"
+    privacy: "private_and_unlisted_first"
+    chrome: "dark_audio"
+  # amber's wardrobe dialect: the family greyscale, so the garment photographed
+  # on it is the only colour on the page. Use in amber + shared product views.
+  luxury:
+    light_bg: "#efefef"
+    light_surface: "#ffffff"
+    light_text: "#333333"
+    light_muted: "#4d4d4d"
+    light_border: "#888888"
+    light_accent: "#000000"
+    light_danger: "#82372d"
+    dark_bg: "#000000"
+    dark_surface: "#111111"
+    dark_text: "#efefef"
+    dark_muted: "#999999"
+    dark_border: "#666666"
+    dark_accent: "#efefef"
+    space_2xs: "0.25rem"
+    space_xs: "0.5rem"
+    space_sm: "0.75rem"
+    space_md: "1.5rem"
+    space_lg: "2rem"
+    space_xl: "3rem"
+    space_2xl: "4rem"
+    color_success: "#00ba7c"
+    color_warning: "#c9a227"
+    color_info: "#5b9fd4"
+    radius_sm: "6px"
+    radius_md: "10px"
+    radius_lg: "14px"
+    font_size_display: "clamp(1.953rem, 1.5rem + 2vw, 2.441rem)"
+    font_size_title: "1.563rem"
+    font_size_body: "1rem"
+    font_size_meta: "0.875rem"
+    letter_spacing_tight: "-0.01em"
+    line_height_tight: "1.25"
+    line_height_relaxed: "1.6"
+
+  # Storefront promotional-art system for Marketplace and Takeaway. The image is
+  # generated without typography; Rails places real copy over it. This keeps
+  # product art reusable across campaigns and keeps prices/headlines exact.
+  promotional_art:
+    layouts:
+      hero:
+        aspect_ratio: "16:9"
+        copy_zone: "42%"
+        product_zone: "58%"
+        safe_inset: "32px"
+      campaign:
+        aspect_ratio: "3:2"
+        copy_zone: "40%"
+        product_zone: "60%"
+        safe_inset: "28px"
+      tile:
+        aspect_ratio: "1:1"
+        copy_zone: "100%"
+        product_zone: "100%"
+        safe_inset: "20px"
+      portrait:
+        aspect_ratio: "4:5"
+        copy_zone: "44%"
+        product_zone: "56%"
+        safe_inset: "24px"
+    matte_backgrounds:
+      chalk: "#f7f5ef"
+      paper: "#efede8"
+      stone: "#e2ded5"
+      sand: "#e9decb"
+      charcoal: "#292725"
+    matte_inks:
+      chalk: "#292725"
+      paper: "#292725"
+      stone: "#292725"
+      sand: "#292725"
+      charcoal: "#f7f5ef"
+    product:
+      max_items: 4
+      primary_share: "0.58"
+      secondary_share: "0.30"
+      edge_clearance: "8%"
+      object_fit: "contain"
+      lighting: "large soft studio source, neutral white balance"
+      shadow: "soft natural contact shadow only"
+    typography:
+      eyebrow:
+        size: "0.8125rem"
+        weight: 600
+        leading: "1.25"
+      headline:
+        size: "clamp(2rem, 5vw, 4rem)"
+        weight: 400
+        leading: "1"
+        max_lines: 2
+      body:
+        size: "1rem"
+        weight: 400
+        leading: "1.5"
+        max_lines: 3
+      price:
+        size: "clamp(2rem, 4vw, 3rem)"
+        weight: 800
+        leading: "1"
+      cta:
+        max_words: 4
+    copy:
+      max_headline_characters: 54
+      max_body_characters: 120
+      max_badge_words: 4
+      max_cta_words: 4
+    generation:
+      image_only: true
+      preserve_product_identity: true
+      background: "clean matte studio paper, nearly uniform tone"
+      composition: "product separated from copy zone with generous negative space"
+      typography_in_image: false
+      fake_logo_in_image: false
+      fake_badge_in_image: false
+      watermark_in_image: false
+      gradients: false
+      glow: false
+      decorative_props: false
+      busy_background: false
+      hard_crop: false
+      product_reflection: false
+      prompt_negative:
+        - "text"
+        - "typography"
+        - "headline"
+        - "price text"
+        - "sale badge"
+        - "watermark"
+        - "busy background"
+        - "decorative props"
+        - "dramatic glow"
+        - "lens flare"
+        - "hard crop"
+        - "cut-off product"
+
+  face_root:
+    anchors:
+      c_text: "oklch(86% 0.02 300)"
+      x_text: "#d8d6e0"
+      c_accent: "oklch(78% 0.10 300)"
+      c_danger: "oklch(60% 0.14 35)"
+      c_code: "oklch(74% 0.11 275)"
+    font_mono: '"JetBrainsMono Nerd Font", "JetBrains Mono", "Cascadia Code", "Fira Code", ui-monospace, monospace'
+    font_label: '"JetBrainsMono Nerd Font", "JetBrains Mono", "Cascadia Code", "Fira Code", ui-monospace, monospace'
+    face_bg: "black"
+    derived:
+      face_fg: "var(--c-text)"
+      face_muted: "color-mix(in oklch, var(--c-text) 81%, black)"
+      face_dim: "color-mix(in srgb, var(--c-text) 18%, transparent)"
+      face_soft: "color-mix(in srgb, var(--c-text) 8%, transparent)"
+      face_alert: "color-mix(in oklch, var(--c-danger) 75%, white)"
+      mood_accent: "var(--c-accent)"
+      canvas_mood_accent: "var(--c-accent)"
+      border_faint: "color-mix(in srgb, var(--face-fg) 10%, transparent)"
+      border_soft: "color-mix(in srgb, var(--face-fg) 14%, transparent)"
+      border_strong: "color-mix(in srgb, var(--face-fg) 24%, transparent)"
+      hover_tint: "color-mix(in srgb, var(--face-fg) 8%, transparent)"
+    layout:
+      tap-min: 44px
+      text-meta: "0.8125rem"
+      text-title: "1.25rem"
+      baseline: "4px"
+      measure: "60ch"
+      leading-body: "1.5"
+      leading-title: "1.25"
+      radius-xs: "0"
+      radius-sm: "0"
+      radius-md: "0"
+      radius-lg: "0"
+      radius-pill: "0"
+      face-bar-height: "44px"
+      bar-height: "44px"
+      hud-tier-status: "calc(var(--face-bar-height) + var(--safe-bottom) + 8px)"
+      hud-tier-caption: "calc(var(--face-bar-height) + var(--safe-bottom) + var(--tap-min))"
+      face-phosphor-decay: "0.80"
+      transition-fast: "180ms"
+      transition-normal: "300ms"
+      ease-out: "cubic-bezier(0.16,1,0.3,1)"
+      ease-linear: "cubic-bezier(0,0,1,1)"
+      ease-in-out: "cubic-bezier(0.65,0,0.35,1)"
+      ease-spring: "cubic-bezier(0.32,0.72,0,1)"
+      z-canvas: "1"
+      z-chrome: "10"
+      z-ui: "90"
+      z-overlay: "100"
+      z-modal: "1000"
+      z-toast: "1100"
+      z-skip: "2000"
+  # One semantic face contract. CLI, browser HUD, 2D fallback and 3D FaceWorld
+  # consume this vocabulary; renderers may project it, but may not redefine it.
+  face_interface:
+    schema: 1
+    prompt:
+      font: font_code
+      measure_ch: 66
+      max_ch: 72
+      line_height: 1.5
+      user_token: "$"
+      master_token: "master$"
+    state:
+      modes: [idle, listening, thinking, working, speaking, warning, error, sleeping, ready]
+      default_mode: idle
+      default_topology: papua-mask
+      entropy: 0.18
+      confidence: 0.86
+      attention: 1.0
+      arousal: 0.22
+      valence: 0.18
+      focus: 0.86
+      activity: 0.14
+      risk: 0.0
+    interaction:
+      states: [idle, waking, listening, holding, yielded, processing, speaking, sleeping, error]
+      turn_states: [draft, listening, committed, interrupted, discarded, failed]
+      task_states: [queued, active, waiting-human, waiting-network, waiting-model, complete, failed, cancelled]
+      tool_states: [queued, active, retry, complete, failed]
+      events:
+        - speech:start
+        - speech:partial
+        - speech:end
+        - speech:abort
+        - speech:attention
+        - tts:start
+        - tts:end
+        - tts:interrupt
+        - turn:started
+        - turn:committed
+        - turn:discarded
+        - turn:interrupted
+        - audio:update
+        - render:frame
+        - render:quality
+        - performance:receipt
+        - workspace:node:created
+        - workspace:node:updated
+        - workspace:node:removed
+        - workspace:relation:created
+        - workspace:focus
+        - task:queued
+        - task:active
+        - task:waiting-human
+        - task:waiting-network
+        - task:waiting-model
+        - task:complete
+        - task:failed
+        - task:cancelled
+        - tool:queued
+        - tool:active
+        - tool:retry
+        - tool:complete
+        - tool:failed
+    audio:
+      fields: [rms, peak, bass, mid, high, centroid, onset, speechActivity, speaker, playback,
+               sentencePosition, sampleRate, channels, analyserWindow, latencyMs, playbackBufferMs, underruns]
+    performance:
+      target_fps: 60
+      target_frame_ms: 16.667
+      main_thread_budget_ms: 8
+      gpu_budget_mb: 128
+      memory_budget_mb: 192
+    workspace:
+      persistence: explicit_opt_in
+      stable_ids: true
+      provenance: required
+      relationships: true
+    mode_aliases:
+      phantom: error
+      escalation: warning
+      tool: thinking
+      memory: thinking
+      event: thinking
+      codebase: working
+      fixing: working
+      complete: ready
+      converged: ready
+      settled: idle
+    spatial:
+      topology_profiles:
+        papua-mask: { tilt_x: 0.00, tilt_y: 0.00, density: 1.00, fracture: 0.00 }
+        face:        { tilt_x: 0.00, tilt_y: 0.00, density: 1.00, fracture: 0.00 }
+        codebase:    { tilt_x: -0.08, tilt_y: 0.10, density: 1.18, fracture: 0.08 }
+        ecology:     { tilt_x: 0.12, tilt_y: -0.06, density: 1.32, fracture: 0.12 }
+      # Speculative distant-human design, not a biological forecast. The
+      # defensible direction comes from observed Homo cranial evolution:
+      # greater neurocranial globularity and facial retraction, then a restrained
+      # speculative extension toward a future with less mastication pressure and
+      # more visually mediated communication. Skin tone is deliberately not
+      # inferred: future human diversity is not a single phenotype.
+      morphology:
+        model: speculative_distant_human_2026_r2
+        generation: 9
+        cranium_scale: 1.18
+        cranial_width: 1.06
+        cranial_height: 1.04
+        upper_face_scale: 0.96
+        lower_face_scale: 0.80
+        facial_verticalization: 1.04
+        masticatory_scale: 0.78
+        orbital_scale: 1.10
+        orbital_vertical_scale: 1.06
+        brow_scale: 0.66
+        nose_scale: 0.86
+        nasal_projection: 0.86
+        mouth_scale: 0.84
+        facial_projection: 0.82
+        jaw_projection: 0.80
+        pupil_scale: 0.88
+        asymmetry: 0.010
+        asymmetry_seed: 73421
+        variation_band: 0.025
+        climate_variant: neutral
+      shell:
+        radius: 1.58
+        width_segments: 28
+        height_segments: 20
+      nodes:
+        lib: [-1.38, 0.10, -0.28]
+        law: [-0.70, 1.18, -0.10]
+        tools: [1.40, 0.05, -0.20]
+        web: [0.70, -1.10, -0.12]
+        openbsd: [-0.82, -1.05, -0.16]
+      links: [[lib, law], [law, tools], [tools, web], [web, openbsd], [openbsd, lib],
+              [lib, tools], [law, web], [tools, openbsd], [web, lib], [openbsd, law]]
+      layers: [identity, eyes, mouth, cognition, repository, event_field, camera, hud]
+      camera:
+        distance: 5.20
+        parallax: 0.06
+        orbit_limit: 0.16
+      fov: 38
+      budget:
+        desktop_points: 1200
+        mobile_points: 420
+        desktop_particles: 200
+        mobile_particles: 120
+        reduced_motion_particles: 64
+        max_device_pixel_ratio: 2.0
+        active_fps: 24
+        idle_fps: 12
+        hidden_fps: 0
+        reduced_motion_fps: 8
+        battery_fps: 12
+        pulse_limit: 24
+        hud_labels: 5
+      sparse_field:
+        max_particles: 260
+        mobile_max_particles: 140
+        void_ratio: 0.82
+        idle_particles: 48
+        listening_particles: 88
+        thinking_particles: 148
+        working_particles: 124
+        speaking_particles: 116
+        warning_particles: 78
+        error_particles: 58
+        sleeping_particles: 22
+        ready_particles: 60
+        eye_well_radius: 0.24
+        mouth_void_ratio: 0.86
+        depth_layers: 3
+        asymmetry: 0.028
+        memory_ghost_limit: 48
+        evidence_trail_limit: 12
+        law_resonance_limit: 56
+        density_scale: 1.0
+        motion_vocabulary: [orbit, drift, attract, repel, bloom, collapse, fragment, remember, connect, breathe, resolve]
+  # BRGEN_OLD dark — dark-inverted port of the real 2014 desktop.css/mobile.css
+  # from pub/__OLD_BACKUPS/BRGEN_OLD. True neutral grayscale, no accent hue,
+  # Arial. chrome_bg is the utility-bar tone (darker than bg), mirroring
+  # the original's dark
+  brgen_old_dark:
+    bg: "#000000"
+    surface: "#111111"
+    surface_elevated: "#111111"
+    search_bg: "#111111"
+    text: "#efefef"
+    text_secondary: "#a3a3a3"
+    border: "#666666"
+    accent: "#efefef"
+    accent_hover: "#d0d0d0"
+    danger: "#e46151"
+    chrome_bg: "#0d0d0d"
+    radius_xs: "4px"
+    radius_sm: "8px"
+    radius_md: "12px"
+    radius_pill: "9999px"
+    radius_card: "8px"
+    radius_lg: "8px"
+  brgen_old_light:
+    bg: "#efefef"
+    surface: "#ffffff"
+    surface_elevated: "#ffffff"
+    search_bg: "#ffffff"
+    text: "#333333"
+    text_secondary: "#4d4d4d"
+    border: "#666666"
+    accent: "#000000"
+    accent_hover: "#000000"
+    danger: "#b24c3f"
+    chrome_bg: "#333333"
+    radius_xs: "4px"
+    radius_sm: "8px"
+    radius_md: "12px"
+    radius_pill: "9999px"
+    radius_card: "8px"
+    radius_lg: "8px"
+  openbsd_wscons:
+    bg: "#000000"
+    surface: "#000000"
+    surface_elevated: "#0a140a"
+    search_bg: "#0f1a0f"
+    text: "#63c363"
+    text_secondary: "#499149"
+    border: "#1a3a1a"
+    hover: "rgba(99, 195, 99, 0.1)"
+    hover_subtle: "rgba(99, 195, 99, 0.03)"
+    accent: "#63c363"
+    accent_hover: "#4fa34f"
+    danger: "#ff6b6b"
+    font_size: "12px"
+    line_height: "16px"
+    radius_pill: "0"
+    radius_card: "0"
+  # Dark flat SGI-IRIX/8-bit chrome — used by the shared stack social apps (_dialect_tokens.scss), not MASTER face.
+  # Flat: no bevels, no box-shadow. Subtle radii for cards and controls. Cool
+  # graphite/indigo palette in place of x.com's black/blue.
+  social:
+    bg: "#000000"
+    surface: "#111111"
+    surface_elevated: "#111111"
+    search_bg: "#111111"
+    text: "#efefef"
+    text_secondary: "#a3a3a3"
+    border: "#666666"
+    hover: "rgba(216, 214, 224, 0.1)"
+    hover_subtle: "rgba(216, 214, 224, 0.03)"
+    accent: "#efefef"
+    accent_hover: "#9686e8"
+    danger: "#e46151"
+    font_size: "16px"
+    line_height: "20px"
+    radius_xs: "4px"
+    radius_sm: "8px"
+    radius_md: "12px"
+    radius_pill: "9999px"
+    radius_card: "16px"
+    radius_lg: "16px"
+    space_2xs: "0.25rem"
+    space_xs: "0.5rem"
+    space_sm: "0.75rem"
+    space_md: "1rem"
+    space_lg: "1.5rem"
+    space_xl: "2rem"
+    color_success: "#00ba7c"
+    color_warning: "#c9a227"
+    color_info: "#5b9fd4"
+    transition_fast: "180ms"
+    transition_normal: "300ms"
+    ease_out: "cubic-bezier(0.16,1,0.3,1)"
+    ease_spring: "cubic-bezier(0.32,0.72,0,1)"
+    sidebar: "275px"
+    feed_max: "600px"
+    widgets: "350px"
+    layout_max: "1265px"
+  light:
+    bg: "#efefef"
+    surface: "#ffffff"
+    surface_elevated: "#ffffff"
+    search_bg: "#ffffff"
+    text: "#333333"
+    text_secondary: "#4d4d4d"
+    border: "#666666"
+    hover: "rgba(26, 24, 36, 0.1)"
+    hover_subtle: "rgba(26, 24, 36, 0.03)"
+    accent: "#000000"
+    accent_hover: "#4a3fb0"
+    danger: "#a9483c"
+  # brgen vertical accent map (single source — mirrored in $vertical-accents in brgen's application.scss)
+  #
+  # Every accent below was tuned to be legible AS INK on a light surface, which
+  # makes all seven too light to carry light ink themselves: against --bg
+  # (#f7f6fa) they measure 1.77–3.46:1. Anything painting on one of these uses
+  # --accent-ink, not --bg. The ink's value lives in $vertical-accent-ink in
+  # brgen's application.scss, which is where it is measured. When adding a
+  # vertical, check every
+  # column, not just the one you need — the `hover` column is the one that has
+  # been missed twice.
+  vertical_accents:
+    marketplace: { accent: "#98876e", hover: "#8d7e66", light: "#98876e" }
+    tv: { accent: "#dc635c", hover: "#b83a33", light: "#dc635c" }
+    dating: { accent: "#00d4aa", hover: "#00b391", light: "#009579" }
+    takeaway: { accent: "#e07b39", hover: "#c26a30", light: "#c26a30" }
+    playlist: { accent: "#12b6c4", hover: "#0f9aa6", light: "#0e8a94" }
+    maps: { accent: "#5b8fd4", hover: "#4a7ab8", light: "#5585c5" }
+    messenger: { accent: "#6b7fd7", hover: "#5566c4", light: "#6b7fd7" }
+  vertical_accent_ink: "#110f19"
+  # The rhythm scale. Every spacing, radius, line-height and weight literal in the
+  # family's stylesheets must land on a step below, or on a token that resolves to
+  # one. Operator::ScaleLint reads this; scale_lint_test.rb ratchets the findings.
+  #
+  # This is the same argument `viewport:` above makes, applied to the axis it says
+  # is already single-sourced and is not. Colour, motion, elevation and the dialect
+  # maps are single-sourced. Rhythm was never measured, and on 2026-08-15 it
+  # measured 539 spacing literals over 93 distinct values, and 13 distinct
+  # line-heights for what is one body-text rhythm.
+  #
+  # NOT CSS custom properties, and mostly cannot be: `padding: 0.35rem` is a
+  # literal an author typed, and no variable exists that would have stopped them.
+  # Like `viewport:`, this is a declared set that a lint asserts the sheets obey,
+  # not a variable the sheets consume.
+  scale:
+    space_px: [0, 1, 2, 3, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 56, 64, 72, 80, 96, 128]
+    letter_spacing_em: [-0.03, -0.02, -0.01, 0, 0.05, 0.08, 0.14]
+    line_height: [1, 1.25, 1.4, 1.5, 1.6]
+    radius_px: [0, 2, 4, 8, 12, 16]
+    font_weight: [400, 500, 600, 700, 800]
+    opacity: [0.03, 0.05, 0.08, 0.1, 0.12, 0.2, 0.4, 0.6, 0.8]
+    duration_ms: [180, 300]
+    baselines:
+      apps:
+        off_scale_space: 7
+        off_scale_line_height: 2
+        absolute_line_height: 0
+        off_scale_radius: 0
+        off_scale_font_weight: 0
+        off_scale_tracking: 0
+        off_scale_opacity: 27
+        off_scale_duration: 20
+      face:
+        off_scale_space: 9
+        off_scale_radius: 0
+        off_scale_line_height: 0
+        absolute_line_height: 0
+        off_scale_font_weight: 0
+        off_scale_tracking: 10
+        off_scale_opacity: 29
+        off_scale_duration: 30
+

@@ -15,7 +15,7 @@ module Deploy
 
     def initialize(root: ROOT)
       @rails = File.join(root, "RAILS")
-      @master_rules = File.join(root, "MASTER", "data", "laws.yml")
+      @master_rules = File.join(root, "MASTER", "data", "tokens.yml")
       # The design system's written rules live in __shared/README.md; what this
       # checks is that the three it names are still written down there.
       @design_doc = File.join(@rails, "__shared", "README.md")
@@ -36,7 +36,7 @@ module Deploy
     def check_tokens
       data = Operator::MasterDesign.tokens(@master_rules)
       if data.empty?
-        @result.fail("dialect_purity: missing MASTER/data/laws.yml tokens")
+        @result.fail("dialect_purity: missing MASTER/data/tokens.yml")
         return
       end
       @result.checked!(7)

@@ -21,7 +21,7 @@ module Deploy
 
     ROOT = File.expand_path("../../../..", __dir__)
     RAILS = File.join(ROOT, "RAILS")
-    MASTER_RULES = File.join(ROOT, "MASTER", "data", "laws.yml")
+    MASTER_RULES = File.join(ROOT, "MASTER", "data", "tokens.yml")
     APPS = %w[brgen amber bsdports shared].freeze
 
     # The component families the sampled checks read, named by the class a

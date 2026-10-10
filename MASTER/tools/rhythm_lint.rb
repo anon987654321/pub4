@@ -9,7 +9,7 @@ module Operator
   # Validates every spacing-tagged value in MASTER's tokens and every --space
   # custom property a stylesheet defines, in shared, each app and each engine
   # (a token defined beside the view it serves is still a token), against MASTER's own
-  # laws.yml tokens.scale.space_px allowlist. Reads that
+  # tokens.yml tokens.scale.space_px allowlist. Reads that
   # allowlist from MASTER directly rather than duplicating it, so the two
   # can never drift apart through a second machine-readable authority
   # (the --color-warning bug found 2026-07-21).
@@ -26,7 +26,7 @@ module Operator
       unless rules
         Master::Trace::Dmesg.status(
           "rhythm0",
-          "cannot load MASTER/data/laws.yml — constitutional measurement unavailable",
+          "cannot load MASTER/data/tokens.yml — constitutional measurement unavailable",
           io: $stderr,
         )
         return false
@@ -36,7 +36,7 @@ module Operator
       unless allowed
         Master::Trace::Dmesg.status(
           "rhythm0",
-          "MASTER/data/laws.yml has no tokens.scale.space_px — constitutional measurement unavailable",
+          "MASTER/data/tokens.yml has no tokens.scale.space_px — constitutional measurement unavailable",
           io: $stderr,
         )
         return false

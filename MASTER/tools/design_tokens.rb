@@ -7,7 +7,7 @@ require_relative "../lib/trace/dmesg"
 
 module DesignTokens
   ROOT = File.expand_path("../..", __dir__)
-  SOURCE = File.join(ROOT, "MASTER", "data", "laws.yml")
+  SOURCE = File.join(ROOT, "MASTER", "data", "tokens.yml")
   ARTIFACT = File.join(ROOT, "RAILS", "__shared", "design_tokens.yml")
   FACE_ORDER = %w[c_text x_text c_accent c_danger c_code].freeze
   DIALECT_PATH = File.join(ROOT, "RAILS", "__shared", "app", "assets", "stylesheets", "_dialect_tokens.scss")
@@ -111,7 +111,7 @@ module DesignTokens
     return false if actual == canonical
 
     body = YAML.dump(canonical).sub(/\A---\n/, "")
-    File.write(path, "# GENERATED from MASTER/data/laws.yml#tokens. Do not edit by hand.\n#{body}")
+    File.write(path, "# GENERATED from MASTER/data/tokens.yml. Do not edit by hand.\n#{body}")
     true
   end
 
@@ -230,7 +230,7 @@ module DesignTokens
     return unless m
     return if normalize(m[2]) == normalize(expected_value)
 
-    "#{path.sub("#{ROOT}/", '')}: --#{css_var} is #{m[2].strip}, MASTER/data/laws.yml#tokens says #{expected_value}"
+    "#{path.sub("#{ROOT}/", '')}: --#{css_var} is #{m[2].strip}, MASTER/data/tokens.yml says #{expected_value}"
   end
 
   # sync: true writes corrections and returns changed paths; sync: false
@@ -273,6 +273,6 @@ end
 if $PROGRAM_NAME == __FILE__
   Master::Trace::Dmesg.status(
     "design0",
-    DesignTokens.sync_design_artifact! ? "generated from MASTER/data/laws.yml" : "already in sync",
+    DesignTokens.sync_design_artifact! ? "generated from MASTER/data/tokens.yml" : "already in sync",
   )
 end

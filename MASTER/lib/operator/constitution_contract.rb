@@ -34,7 +34,8 @@ module Operator
       laws = load_yaml("MASTER/data/laws.yml")
       issues << "soul: golden rule missing or changed" unless soul.dig("absolute", "golden_law") == "PRESERVE_THEN_IMPROVE_NEVER_BREAK"
       issues << "soul: no sacred paths declared" unless Array(soul.dig("absolute", "sacred_paths")).any?
-      issues << "rules: missing design tokens" unless laws["tokens"].is_a?(Hash)
+      tokens = load_yaml("MASTER/data/tokens.yml")
+      issues << "rules: missing design tokens" unless tokens["tokens"].is_a?(Hash)
       declared = laws.any? { |_id, value| value.is_a?(Hash) && value["priority"] && value["statement"] }
       issues << "rules: no declared policy laws" unless declared
       prose = File.join(@root, "MASTER", "law", "prose.rb")
@@ -71,7 +72,7 @@ module Operator
       rails_tokens = File.join(@root, "RAILS/__shared/design_tokens.yml")
       if File.file?(rails_tokens)
         header = File.read(rails_tokens).lines.first(2).join
-        issues << "rails: generated design tokens lost MASTER source marker" unless header.include?("MASTER/data/laws.yml")
+        issues << "rails: generated design tokens lost MASTER source marker" unless header.include?("MASTER/data/tokens.yml")
       end
       issues << "openbsd: missing operator recipe authority" unless File.file?(File.join(@root, "OPENBSD/data/operator.yml"))
       issues

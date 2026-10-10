@@ -9,7 +9,7 @@ module Deploy
   # is the reader. A profile that exists only in YAML is inert — MASTER
   # test_design_rules_worn_type.rb fails if a profile name is missing here.
   module GeometryType
-    RULES = File.join(File.expand_path("../../..", __dir__), "MASTER", "data", "laws.yml")
+    RULES = File.join(File.expand_path("../../..", __dir__), "MASTER", "data", "tokens.yml")
 
     LABEL_PROFILES = {
       "marketplace" => "catalog", "marketplace_cart" => "catalog",

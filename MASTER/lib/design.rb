@@ -79,9 +79,7 @@ module Master
     # Canonical browser/CLI face contract. This lives beside design thresholds because
     # both terminal and web projections consume it; callers never parse the YAML shape.
     def self.face_interface(root: Master::ROOT)
-      path = File.join(root, "data", "laws.yml")
-      data = Master.load_yaml(path, default: {}) || {}
-      interface = data.dig("tokens", "face_interface")
+      interface = Master.tokens(root:)["face_interface"]
       interface.is_a?(Hash) ? interface : {}
     rescue StandardError => e
       Master::Ground::Swallow.log(e, context: "Design.face_interface")
@@ -143,7 +141,7 @@ module Master
         raw = dig("typography", "line_height", "allowed", root:)
         return raw.map(&:to_f) if raw.is_a?(Array) && !raw.empty?
 
-        # Same steps as laws.yml#tokens.scale.line_height / ScaleLint
+        # Same steps as tokens.yml#tokens.scale.line_height / ScaleLint
         [1.0, 1.25, 1.4, 1.5, 1.6]
       end
 

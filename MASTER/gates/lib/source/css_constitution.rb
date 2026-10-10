@@ -21,7 +21,7 @@ module Deploy
 
     ROOT = File.expand_path("../../../..", __dir__)
     RAILS = File.join(ROOT, "RAILS")
-    MASTER_DESIGN = File.join(ROOT, "MASTER", "data", "laws.yml")
+    MASTER_DESIGN = File.join(ROOT, "MASTER", "data", "tokens.yml")
     APPS = %w[brgen amber bsdports shared].freeze
 
     # `: none` is how a stylesheet *complies* with flat_ui, so it cannot be the

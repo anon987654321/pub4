@@ -53,7 +53,7 @@ class DialectPurityGateTest < Minitest::Test
   BSDPORTS = ":root {\n  color-scheme: light;\n  --radius-pill: 0;\n  --radius-card: 0;\n}\n"
 
   def sound_tree(dir)
-    plant(dir, "MASTER/data/laws.yml", MASTER_RULES)
+    plant(dir, "MASTER/data/tokens.yml", MASTER_RULES)
     plant(dir, "RAILS/__shared/README.md", DESIGN_DOC)
     plant(dir, "RAILS/brgen/app/assets/stylesheets/application.scss", BRGEN)
     plant(dir, "RAILS/bsdports/app/assets/stylesheets/application.scss", BSDPORTS)
@@ -129,7 +129,7 @@ class DialectPurityGateTest < Minitest::Test
 
   def test_a_missing_vertical_accent_entry_fails
     result = gate_over do |dir|
-      plant(dir, "MASTER/data/laws.yml", MASTER_RULES.sub(%(    dating:\n      accent: "#b3315a"\n), ""))
+      plant(dir, "MASTER/data/tokens.yml", MASTER_RULES.sub(%(    dating:\n      accent: "#b3315a"\n), ""))
     end
 
     refute result.ok?, "a missing vertical accent passed"
@@ -138,7 +138,7 @@ class DialectPurityGateTest < Minitest::Test
 
   def test_a_dialect_missing_from_master_design_fails
     result = gate_over do |dir|
-      plant(dir, "MASTER/data/laws.yml", MASTER_RULES.sub(/  luxury:\n    accent: "#b08d57"\n/, ""))
+      plant(dir, "MASTER/data/tokens.yml", MASTER_RULES.sub(/  luxury:\n    accent: "#b08d57"\n/, ""))
     end
 
     refute result.ok?, "a missing dialect passed"
@@ -156,7 +156,7 @@ class DialectPurityGateTest < Minitest::Test
 
   def test_a_missing_master_rules_fails_rather_than_passing_empty
     result = gate_over do |dir|
-      File.delete(File.join(dir, "MASTER/data/laws.yml"))
+      File.delete(File.join(dir, "MASTER/data/tokens.yml"))
     end
 
     refute result.ok?, "missing MASTER design rules passed"

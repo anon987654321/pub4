@@ -32,7 +32,7 @@ module Deploy
 
     ROOT = File.expand_path("../../../..", __dir__)
     RAILS_ROOT = File.join(ROOT, "RAILS")
-    MASTER_RULES = File.join(ROOT, "MASTER", "data", "laws.yml")
+    MASTER_RULES = File.join(ROOT, "MASTER", "data", "tokens.yml")
 
     # Controls whose failure costs the user the interaction outright. Everything
     # else reports soft so one noisy surface cannot wall off the merge.

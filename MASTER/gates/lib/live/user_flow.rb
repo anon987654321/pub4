@@ -23,8 +23,8 @@ module Deploy
     ROOT = File.expand_path("../../../..", __dir__)
     RAILS_ROOT = File.join(ROOT, "RAILS")
     MASTER = File.join(ROOT, "MASTER")
-    DESIGN_RULES = File.join(MASTER, "data", "laws.yml")
-    LAW_MAP = File.join(MASTER, "data", "laws.yml")
+    DESIGN_RULES = File.join(MASTER, "data", "tokens.yml")
+    LAW_MAP = File.join(MASTER, "data", "tokens.yml")
     DESIGN_DOC = File.join(RAILS_ROOT, "__shared", "README.md")
 
     # Every directory that renders a view, the three apps plus brgen's engines.

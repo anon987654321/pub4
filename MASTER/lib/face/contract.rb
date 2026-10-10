@@ -11,9 +11,7 @@ module Master
       module_function
 
       def data(root: Master::ROOT)
-        Master.load_yaml(File.join(root, "data", "laws.yml"), default: {})
-          .fetch("tokens", {})
-          .fetch("face_interface", {})
+        Master.tokens(root:).fetch("face_interface", {})
       end
 
       def prompt(root: Master::ROOT) = data(root:).fetch("prompt", {})
