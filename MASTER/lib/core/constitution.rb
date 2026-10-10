@@ -71,7 +71,7 @@ module Master::Core
           by: :capability_evaluator_error,
         )
       end
-      unless allowed
+      unless allowed == true
         return Verdict::Block.new(
           reason: "capability refused: #{effect.capability}",
           by: :capability,
@@ -79,7 +79,21 @@ module Master::Core
       end
 
       @laws.each do |law|
-        next unless law.watches?(effect.verb)
+        watching = begin
+          law.watches?(effect.verb)
+        rescue StandardError => e
+          return Verdict::Block.new(
+            reason: "law applicability check failed: #{law.id} (#{e.class})",
+            by: :law_evaluator_error,
+          )
+        end
+        unless watching == true || watching == false
+          return Verdict::Block.new(
+            reason: "law applicability check returned invalid result: #{law.id} (#{watching.class})",
+            by: :law_evaluator_error,
+          )
+        end
+        next unless watching
 
         answer = begin
           law.judge.call(effect, memory)
