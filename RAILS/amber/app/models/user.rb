@@ -11,7 +11,10 @@ class User < ApplicationRecord
 
   has_many :posts,           dependent: :destroy
   has_many :comments,        dependent: :destroy
+  # votes.user_id is a foreign key: without the cascade, deleting a voter is a 500.
+  has_many :votes,           dependent: :destroy
   has_many :items,           dependent: :destroy
+  has_many :wardrobe_items,  dependent: :destroy
   has_many :outfits,         dependent: :destroy
   has_many :planned_outfits, dependent: :destroy
   has_many :style_preferences, dependent: :destroy
