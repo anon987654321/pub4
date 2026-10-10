@@ -191,6 +191,7 @@ module Operator
         lexical_stage(scan_only:, trees:, scope:),
         rails_stage(scan_only:, trees:),
         openbsd_stage(trees:),
+        rehearse_stage(trees:),
         suites_stage(trees:),
         ratchets_stage,
         sprawl_stage(scan_only:),
@@ -226,6 +227,19 @@ module Operator
         purpose: "every OpenBSD config, shell and deploy gate",
         mutates: false,
         run: -> { openbsd_gates },
+      )
+    end
+
+    # The deploy checks that need no Rails boot, in seconds, so a moved path or a
+    # stale mirror list fails here and not forty minutes into a run on vm23.
+    def rehearse_stage(trees:)
+      return unless trees.include?("OPENBSD") || trees.include?("RAILS")
+
+      Stage.new(
+        name: "rehearse",
+        purpose: "the deploy rehearsal: CI lints and the static deploy contracts (OPENBSD/bin/rehearse)",
+        mutates: false,
+        run: -> { capture(RUBY, File.join(ROOT, "OPENBSD", "bin", "rehearse"), chdir: ROOT) },
       )
     end
 

@@ -45,6 +45,7 @@ class TestGateChain < Minitest::Test
 
     refute_includes scoped, "source", "the RAILS gate runner says nothing about MASTER"
     refute_includes scoped, "openbsd", "the OpenBSD gate runner says nothing about MASTER"
+    refute_includes scoped, "rehearse", "the deploy rehearsal covers RAILS and OPENBSD only"
     assert_includes scoped, "ratchets", "the ratchets are repo-wide by definition and cheap"
     assert_equal %w[MASTER tools], G.suite_jobs(%w[MASTER]).map(&:first)
     assert_equal ["RAILS contracts", "brgen suite", "amber suite", "bsdports suite"],
@@ -68,7 +69,7 @@ class TestGateChain < Minitest::Test
 
     assert_includes scoped, "openbsd"
     refute_includes scoped, "source"
-    assert_equal %w[openbsd suites ratchets sprawl council], scoped
+    assert_equal %w[lexical openbsd rehearse suites ratchets sprawl council], scoped
   end
 
   def test_fix_verification_does_not_duplicate_the_lexical_stage
