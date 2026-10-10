@@ -46,7 +46,6 @@
       face is fetched with the stylesheet rather than discovered after it. The
       italic loads on demand: only a campaign line asks for it. %>
   <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
-  <link rel="stylesheet" href="/lightgallery.css">
   <meta name="lg-license" content="<%= ENV.fetch("LIGHTGALLERY_LICENSE", "0000-0000-000-0000") %>">
   <%= yield :json_ld %>
   <%= json_ld_script(organization_json_ld(site_name: city_name, url: main_app.root_url, area_served: city_name)) %>
