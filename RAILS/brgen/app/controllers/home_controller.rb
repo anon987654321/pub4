@@ -7,6 +7,7 @@ class HomeController < ApplicationController
   def index
     return render_master_guest_home!(title: "Brgen") if params[:master].present? && master_guest_home?
 
+    @local_activity = Brgen::LocalActivity.for(ActsAsTenant.current_tenant)
     @feed = params[:feed]
     scope = Brgen::HomeFeed.scope(feed: @feed, authenticated: authenticated?, sort: params[:sort])
     @neighborhoods = Neighborhood.where(city_id: ActsAsTenant.current_tenant&.id).order(:name)
