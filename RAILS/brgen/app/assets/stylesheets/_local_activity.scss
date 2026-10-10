@@ -1,0 +1,50 @@
+.home-neighborhood-filter,
+.local-activity {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 0.5rem);
+  flex-wrap: wrap;
+  margin-block: var(--space-3, 0.75rem);
+}
+
+.home-neighborhood-filter label,
+.local-activity-heading h2 {
+  font-size: var(--text-sm, 0.875rem);
+  font-weight: 600;
+}
+
+.home-neighborhood-filter select {
+  min-width: 10rem;
+  max-width: 100%;
+}
+
+.local-activity {
+  display: block;
+  border-block: 1px solid var(--border);
+  padding-block: var(--space-3, 0.75rem);
+}
+
+.local-activity-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2, 0.5rem);
+}
+
+.local-activity-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.25rem 0.75rem;
+  padding-block: var(--space-2, 0.5rem);
+}
+
+.local-activity-item > span,
+.local-activity-item small {
+  color: var(--ink-muted);
+  font-size: var(--text-xs, 0.75rem);
+}
+
+.local-activity-item > a {
+  grid-column: 1 / -1;
+  overflow-wrap: anywhere;
+}
