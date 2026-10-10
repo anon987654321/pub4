@@ -1,30 +1,45 @@
-<%# The white buy box beside the listing's picture: price, state, facts and
-    the actions. %>
+<%# The primary offer is selected among shop listings that share an explicit product key. %>
+<% buybox_listing = @buy_box_result&.winner || @listing %>
 <section class="store-buybox marketplace-listing" aria-label="<%= t("marketplace.buy_actions") %>">
-  <p class="listing-price"><%= @listing.price_display %></p>
-  <% if @listing.sold? %>
+  <p class="listing-price"><%= buybox_listing.price_display %></p>
+  <% if buybox_listing.sold? %>
     <p class="listing-status"><%= t("marketplace.sold_notice") %></p>
-  <% elsif @listing.expired? %>
+  <% elsif buybox_listing.expired? %>
     <p class="listing-status"><%= t("marketplace.expired_notice") %></p>
-    <% if Current.user.present? && Current.user == @listing.user %>
-      <%= button_to t("marketplace.renew"), renew_listing_path(@listing), method: :post, class: "btn btn-primary btn-sm" %>
+    <% if Current.user.present? && Current.user&.id == buybox_listing.user_id %>
+      <%= button_to t("marketplace.renew"), renew_listing_path(buybox_listing), method: :post, class: "btn btn-primary btn-sm" %>
     <% end %>
   <% end %>
-  <% if @listing.photo_processing? %>
+  <% if buybox_listing.photo_processing? %>
     <p class="listing-status listing-status--muted"><%= t("marketplace.photo_processing_notice") %></p>
   <% end %>
-  <p><%= [@listing.condition_label, @listing.location].compact.join(" · ") %></p>
-  <p class="listing-delivery"><%= @listing.delivery_badge %></p>
-  <p><%= tag.strong(t("marketplace.sold_by", name: (@listing.store&.name || @listing.user&.display_name || t("chat.anon")))) %> · <%= @listing.store_id.present? ? t("marketplace.shop_seller") : t("marketplace.private_seller") %><% if @listing.reviews_count.to_i.positive? %> · <%= t("marketplace.seller_rating", rating: number_with_precision(@listing.rating, precision: 1)) %><% end %></p>
-  <p><%= t("marketplace.views", count: @listing.views_count.to_i) %> · <%= t("marketplace.saves", count: @listing.favorites.size) %></p>
-  <%= render "marketplace/listings/buy_bar" %>
+  <p><%= [buybox_listing.condition_label, buybox_listing.location].compact.join(" · ") %></p>
+  <p class="listing-delivery"><%= buybox_listing.delivery_badge %></p>
+  <p><%= tag.strong(t("marketplace.sold_by", name: (buybox_listing.store&.name || buybox_listing.user&.display_name || t("chat.anon")))) %> · <%= buybox_listing.store_id.present? ? t("marketplace.shop_seller") : t("marketplace.private_seller") %><% if buybox_listing.reviews_count.to_i.positive? %> · <%= t("marketplace.seller_rating", rating: number_with_precision(buybox_listing.rating, precision: 1)) %><% end %></p>
+  <p><%= t("marketplace.views", count: buybox_listing.views_count.to_i) %> · <%= t("marketplace.saves", count: buybox_listing.favorites.size) %></p>
+  <% if @buy_box_result && @buy_box_result.offers.size > 1 %>
+    <p class="listing-status"><%= t("marketplace.buy_box_heading", default: "Recommended shop offer") %></p>
+    <details class="buy-box-offers">
+      <summary><%= t("marketplace.more_shop_offers", default: "Compare %{count} shop offers", count: @buy_box_result.offers.size) %></summary>
+      <ul>
+        <% @buy_box_result.offers.each do |offer| %>
+          <li>
+            <%= link_to offer.title, listing_path(offer) %>
+            <span><%= offer.price_display %></span>
+            <small><%= offer.store&.name || offer.user&.display_name %></small>
+          </li>
+        <% end %>
+      </ul>
+    </details>
+  <% end %>
+  <%= render "marketplace/listings/buy_bar", listing: buybox_listing %>
   <%# seller can read back nil: User is acts_as_tenant-scoped on city, so a
       seller with no city (or another city) is invisible under this tenant and
       the association returns nil. Without this guard the != test passes and
       main_app.user_conversations_path(nil) raises UrlGenerationError, 500ing the whole
       listing page. %>
-  <% seller = @listing.user %>
-  <% if @listing.buyable? && Current.user.present? && seller.present? && Current.user != seller %>
+  <% seller = buybox_listing.user %>
+  <% if buybox_listing.buyable? && Current.user.present? && seller.present? && Current.user != seller %>
     <%= button_to t("marketplace.message_seller_btn"), main_app.user_conversations_path(seller), method: :post, class: "btn btn-ghost" %>
   <% end %>
 </section>
