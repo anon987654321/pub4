@@ -161,6 +161,13 @@
               <% end %>
             </div>
           </div>
+          <% if @stores.any? %>
+            <div class="field">
+              <%= f.label :buy_box_key, t("marketplace.buy_box_key", default: "Shared product key (shop offers)") %>
+              <%= f.text_field :buy_box_key, maxlength: 120, autocomplete: "off" %>
+              <p class="form-help"><%= t("marketplace.buy_box_key_hint", default: "Use the same exact EAN, SKU, or model-and-variant key for identical shop offers. Leave blank to keep this offer separate. Private listings never compete.") %></p>
+            </div>
+          <% end %>
         <% end %>
 
         <details class="advanced-fields listing-more-details">
