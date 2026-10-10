@@ -156,6 +156,34 @@ class TestWebBrowse < Minitest::Test
     assert_includes request.response_options[:body], "Blocked unsafe redirect"
   end
 
+  def test_redirect_to_a_private_http_service_is_blocked_on_follow_up
+    request = InterceptedRequest.new(url: "https://example.com/start")
+    response = FakeResponse.new(
+      code: "302",
+      headers: { "location" => "http://127.0.0.1/admin", "content-type" => "text/plain" },
+      body: "",
+    )
+    client = FakeHTTP.new(response)
+    requested_hosts = []
+    budget = tool.send(:new_budget)
+
+    Guard.stub(:pinned_address, ->(uri) { uri.host == "example.com" ? "93.184.216.34" : nil }) do
+      Guard.stub(:http_for, lambda { |uri, _address, timeout:|
+        requested_hosts << uri.host
+        client
+      }) do
+        tool.send(:handle_request, request, budget:)
+        follow_up = InterceptedRequest.new(url: "http://127.0.0.1/admin")
+        tool.send(:handle_request, follow_up, budget:)
+
+        assert_equal 302, request.response_options[:responseCode]
+        assert_equal "http://127.0.0.1/admin", request.response_options[:responseHeaders]["location"]
+        assert follow_up.aborted, "the redirect target must be rejected before opening a socket"
+        assert_equal ["example.com"], requested_hosts
+      end
+    end
+  end
+
   def test_it_is_registered_for_the_builder_the_llm_and_the_catalogue
     assert Master::Builder::DEFAULT_TOOL_MAP.key?("WebBrowse")
     assert_equal Master::Io::LLM::WebBrowse, Master::Review::LLMDispatcher::LLM_TOOL_MAP.fetch(Master::Io::WebBrowse)
