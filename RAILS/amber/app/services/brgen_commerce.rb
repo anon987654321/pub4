@@ -45,7 +45,7 @@ class BrgenCommerce
     private
 
     def cache_key(query, limit)
-      ["amber", "brgen-commerce", query.downcase, limit.to_i]
+      [ "amber", "brgen-commerce", query.downcase, limit.to_i ]
     end
 
     def fetch_json(query, limit)

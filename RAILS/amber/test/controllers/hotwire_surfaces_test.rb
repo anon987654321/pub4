@@ -28,7 +28,7 @@ class HotwireSurfacesTest < ActionDispatch::IntegrationTest
     assert_redirected_to messages_path
 
     master = User.master_bot
-    assert Current.user.received_messages.where(sender: master).exists?
+    assert @user.received_messages.where(sender: master).exists?
 
     get messages_path
     assert_response :success
@@ -95,7 +95,7 @@ class HotwireSurfacesTest < ActionDispatch::IntegrationTest
     get item_path(item)
     assert_response :success
     assert_includes response.body, 'data-controller="haptics"'
-    assert_includes response.body, 'pointerdown->haptics#press'
+    assert_select "[data-action=?]", "pointerdown->haptics#press"
     assert_includes response.body, I18n.t("items.worn_today")
   end
 

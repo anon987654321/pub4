@@ -24,8 +24,10 @@ class RecentFeaturesIntegrationTest < ActionDispatch::IntegrationTest
       public: false
     )
 
+    # The lookup is scoped to publicly_visible (de4c4251e), so a private profile
+    # is not found at all rather than redirected: its existence is not disclosed.
     get creator_profile_path(profile.handle)
-    assert_redirected_to root_path
+    assert_response :not_found
   end
 
   test "departing creator profiles are no longer public" do

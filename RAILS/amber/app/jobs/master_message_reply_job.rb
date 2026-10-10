@@ -9,11 +9,11 @@ class MasterMessageReplyJob < ApplicationJob
 
     sender_id = message.sender_id
     master_id = message.recipient_id
-    messages = Message.where(sender_id: [sender_id, master_id], recipient_id: [sender_id, master_id])
+    messages = Message.where(sender_id: [ sender_id, master_id ], recipient_id: [ sender_id, master_id ])
                       .includes(:sender).order(:created_at).last(24)
     reply = Shared::MasterMessenger.new.reply(
       messages:, sender: message.sender, message:,
-      session_key: "amber:#{[sender_id, master_id].sort.join("-")}", channel: "amber-messenger"
+      session_key: "amber:#{[ sender_id, master_id ].sort.join("-")}", channel: "amber-messenger"
     )
     return if reply.blank?
 

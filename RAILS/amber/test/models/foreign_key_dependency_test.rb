@@ -87,7 +87,6 @@ class ForeignKeyDependencyTest < ActiveSupport::TestCase
     "User -> Shared::Reaction (user_id)",
     "User -> Shared::ReviewCase (reporter_id)",
     "User -> Shared::ReviewCase (reviewer_id)",
-    "User -> WardrobeItem (user_id)",
     "User -> WearLog (user_id)"
   ].freeze
 

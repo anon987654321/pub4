@@ -57,7 +57,7 @@ class TasteRanker
     cat = category.to_s.downcase
     hit = preferences.any? { |preference| title.include?(preference) || cat.include?(preference) }
     wear_bonus = if user.respond_to?(:wear_logs)
-      [user.wear_logs.count.to_f / 50.0, 0.2].min
+      [ user.wear_logs.count.to_f / 50.0, 0.2 ].min
     else
       0.0
     end

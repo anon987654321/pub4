@@ -49,7 +49,7 @@ class SecurityAdvisoryTest < ActiveSupport::TestCase
     medium = advisory(severity: :medium).tap(&:save!)
     critical = advisory(identifier: "CVE-2026-0005", severity: :critical).tap(&:save!)
 
-    assert_equal [medium], SecurityAdvisory.not_critical.to_a
+    assert_equal [ medium ], SecurityAdvisory.not_critical.to_a
     refute SecurityAdvisory.not_critical.include?(critical)
   end
 
