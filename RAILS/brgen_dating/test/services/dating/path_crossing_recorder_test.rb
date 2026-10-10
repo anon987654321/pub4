@@ -48,7 +48,7 @@ class Dating::PathCrossingRecorderTest < ActiveSupport::TestCase
     assert_equal now.to_date, crossing.crossing_on
     assert_equal 60.39, crossing.approx_latitude.to_f
     assert_equal 5.32, crossing.approx_longitude.to_f
-    assert_equal 0, Dating::LocationPing.active(now: now + 6.minutes).count
+    assert_equal 0, Dating::LocationPing.active(now + 6.minutes).count
   end
 
   test "does not create a location ping when discovery consent is off" do
