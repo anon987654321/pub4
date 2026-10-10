@@ -4,13 +4,20 @@ module Shared
   # Locates MASTER/contracts for the repo checkout and for the deploy copy-tree,
   # where __shared sits beside app/ under /home/<app> and MASTER is outside it.
   # PUB4_ROOT (exported by rc.d and vps_ci.sh) names the checkout that holds
-  # MASTER; without it, the repo root is four levels above this file.
+  # MASTER. A task started as the app user without it (db:prepare and the asset
+  # precompile in vps-deploy) has no PUB4_ROOT, and the repo-relative walk lands
+  # on /home/MASTER, which killed the first deploy that reached the migration and
+  # left the app stopped. So the root is the first candidate that really holds
+  # MASTER/contracts: PUB4_ROOT, the repo root four levels above this file, then
+  # the box's own checkout.
   module Contracts
+    CHECKOUT_ON_BOX = "/home/dev/pub4"
+
     module_function
 
     def root
-      configured = ENV["PUB4_ROOT"].to_s.strip
-      configured.empty? ? File.expand_path("../../../..", __dir__) : configured
+      candidates = [ENV["PUB4_ROOT"].to_s.strip, File.expand_path("../../../..", __dir__), CHECKOUT_ON_BOX].reject(&:empty?)
+      candidates.find { |path| File.directory?(File.join(path, "MASTER", "contracts")) } || candidates.first
     end
 
     def dir
