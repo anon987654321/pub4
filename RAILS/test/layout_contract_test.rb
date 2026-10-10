@@ -10,7 +10,7 @@ class LayoutContractTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
   REPO = File.expand_path("..", ROOT)
   SHARED = File.join(ROOT, "__shared")
-  FACE_CSS = File.join(REPO, "MASTER", "web", "public", "face.css")
+  FACE_CSS = File.join(ROOT, "master_web", "public", "face.css")
   TOKENS = File.join(SHARED, "design_tokens.yml")
   LAYOUT_CHROME = File.join(SHARED, "app", "assets", "stylesheets", "_layout_chrome.scss")
   SHELL_WIDGETS = File.join(SHARED, "app", "assets", "stylesheets", "_shell_widgets.scss")
@@ -21,8 +21,8 @@ class LayoutContractTest < Minitest::Test
     "brgen" => File.join(ROOT, "brgen", "app", "views", "layouts", "application.html.erb"),
     "amber" => File.join(ROOT, "amber", "app", "views", "layouts", "application.html.erb"),
     "bsdports" => File.join(ROOT, "bsdports", "app", "views", "layouts", "application.html.erb"),
-    "master_chat" => File.join(REPO, "MASTER", "web", "app", "views", "chat", "index.html.erb"),
-    "master_dashboard" => File.join(REPO, "MASTER", "web", "app", "views", "dashboard", "index.html.erb"),
+    "master_chat" => File.join(ROOT, "master_web", "app", "views", "chat", "index.html.erb"),
+    "master_dashboard" => File.join(ROOT, "master_web", "app", "views", "dashboard", "index.html.erb"),
   }.freeze
 
   # A heading level skipped inside one view breaks the outline screen-reader
