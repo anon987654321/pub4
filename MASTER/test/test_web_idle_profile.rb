@@ -10,7 +10,7 @@ class IdleProfileSpec < Minitest::Test
   end
 
   def test_calm_is_default_runtime_profile
-    part1 = read("web/public/face.part1.txt")
+    part1 = read("../RAILS/master_web/public/face.part1.txt")
 
     assert_includes part1, "['calm', 'full', 'crt', 'battery']"
     assert_includes part1, "function isRichMotionProfile()"
@@ -18,8 +18,8 @@ class IdleProfileSpec < Minitest::Test
   end
 
   def test_rich_motion_gates_decorative_idle_features
-    part1 = read("web/public/face.part1.txt")
-    part3 = read("web/public/face.part3.txt")
+    part1 = read("../RAILS/master_web/public/face.part1.txt")
+    part3 = read("../RAILS/master_web/public/face.part3.txt")
 
     assert_includes part1, "isRichMotionProfile()) startStar()"
     assert_includes part3, "if (!isRichMotionProfile()) return"

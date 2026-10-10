@@ -63,8 +63,8 @@ module Master
           return "self" if abs == File.join(@root, "lib")
           return "master" if abs == @root
           return "rails" if abs == Master::RAILS_ROOT
-          return "face" if abs == File.join(@root, "web", "public")
-          return "web" if abs == File.join(@root, "web")
+          return "face" if abs == File.join(Master::RAILS_ROOT, "master_web", "public")
+          return "web" if abs == File.join(Master::RAILS_ROOT, "master_web")
           if abs.start_with?("#{Master::RAILS_ROOT}/")
             return "rails/#{abs.delete_prefix("#{Master::RAILS_ROOT}/")}"
           end
@@ -83,8 +83,8 @@ module Master
             "." => @root,
             "rails" => Master::RAILS_ROOT,
             "RAILS" => Master::RAILS_ROOT,
-            "face" => File.join(@root, "web", "public"),
-            "web" => File.join(@root, "web"),
+            "face" => File.join(Master::RAILS_ROOT, "master_web", "public"),
+            "web" => File.join(Master::RAILS_ROOT, "master_web"),
           }
         end
       end

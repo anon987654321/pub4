@@ -2,14 +2,14 @@
 
 require "yaml"
 
-# Shared reader for web/config/face_assets.yml.
+# Shared reader for RAILS/master_web/config/face_assets.yml.
 #
 # Four specs used to scrape `javascript_include_tag(*%w[...])` and
 # `faceModulesList: %w[...]` straight out of chat/index.html.erb. Those literals
 # are gone — the view renders from the manifest — so each spec would otherwise
 # grow its own copy of this parsing.
 module FaceManifestHelper
-  PATH = File.expand_path("../../web/config/face_assets.yml", __dir__).freeze
+  PATH = File.expand_path("../../RAILS/master_web/config/face_assets.yml", __dir__).freeze
 
   module_function
 

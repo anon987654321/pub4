@@ -24,9 +24,9 @@ class ErrorSpeechSpec < Minitest::Test
 
   def read(path) = File.read(File.join(ROOT, path))
 
-  def service = @service ||= read("web/app/services/chat_service.rb")
+  def service = @service ||= read("../RAILS/master_web/app/services/chat_service.rb")
 
-  def face = @face ||= read("web/public/face.part5.txt")
+  def face = @face ||= read("../RAILS/master_web/public/face.part5.txt")
 
   def test_the_client_still_has_an_error_lane_keyed_on_the_prefix
     assert_includes face, "raw.startsWith('ERROR:')",

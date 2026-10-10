@@ -153,14 +153,14 @@ module Master
         end
 
         def check_web_dir(root)
-          dir = File.join(root, "web")
+          dir = File.expand_path("../RAILS/master_web", root)
           return ok("web_dir", "no web face — OK for headless") unless File.directory?(dir)
 
           gemfile = File.join(dir, "Gemfile")
           if File.exist?(gemfile)
             ok("web_dir", "web face with Gemfile detected")
           else
-            warn_check("web_dir", "web/ exists but no Gemfile — may be incomplete")
+            warn_check("web_dir", "RAILS/master_web exists but no Gemfile — may be incomplete")
           end
         end
       end

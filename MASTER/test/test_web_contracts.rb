@@ -4,7 +4,7 @@ require_relative "test_helper"
 require "master"
 
 require "minitest/autorun"
-require_relative "support/face_manifest_helper"
+require_relative "support_face_manifest_helper"
 
 class MasterNamespaceSpec < Minitest::Test
   include FaceManifestHelper
@@ -14,7 +14,7 @@ class MasterNamespaceSpec < Minitest::Test
   end
 
   def test_master_namespace_exposes_canonical_facade
-    source = read("web/public/master_namespace.js")
+    source = read("../RAILS/master_web/public/master_namespace.js")
 
     %w[boot face speech speechRuntime speechPlayback events ecology chat container attention].each do |name|
       assert_includes source, %("#{name}")
@@ -31,8 +31,8 @@ end
 # frozen_string_literal: true
 class TestSmokeChatProbe < Minitest::Test
   def test_smoke_chat_bypasses_container_warmup
-    app = File.read(File.join(Master::ROOT, "web", "app", "controllers", "application_controller.rb"))
-    chat = File.read(File.join(Master::ROOT, "web", "app", "controllers", "chat_controller.rb"))
+    app = File.read(File.join(Master::ROOT, "..", "RAILS", "master_web", "app", "controllers", "application_controller.rb"))
+    chat = File.read(File.join(Master::ROOT, "..", "RAILS", "master_web", "app", "controllers", "chat_controller.rb"))
     assert_includes app, "smoke_chat_probe?"
     assert_includes chat, "stream_smoke_reply"
     assert_includes chat, "ping"
@@ -42,8 +42,8 @@ end
 # frozen_string_literal: true
 class TestPropshaftPaths < Minitest::Test
   def test_excludes_digest_output_directory
-    app_rb = File.read(File.join(Master::ROOT, "web", "config", "application.rb"))
-    safety = File.read(File.join(Master::ROOT, "web", "config", "initializers", "propshaft_safety.rb"))
+    app_rb = File.read(File.join(Master::ROOT, "..", "RAILS", "master_web", "config", "application.rb"))
+    safety = File.read(File.join(Master::ROOT, "..", "RAILS", "master_web", "config", "initializers", "propshaft_safety.rb"))
     assert_includes app_rb, "excluded_paths"
     assert_includes app_rb, "public", "assets"
     assert_includes safety, '"assets", "assets"'

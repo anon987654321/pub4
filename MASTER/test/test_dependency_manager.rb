@@ -63,7 +63,7 @@ class TestDependencyManager < Minitest::Test
   end
 
   def test_watcher_gems_are_locked_with_ffi_in_both_bundles
-    [File.join(Master::ROOT, "Gemfile.lock"), File.join(Master::ROOT, "web", "Gemfile.lock")].each do |path|
+    [File.join(Master::ROOT, "Gemfile.lock"), File.join(Master::ROOT, "..", "RAILS", "master_web", "Gemfile.lock")].each do |path|
       source = File.read(path)
 
       assert_match(/rb-inotify \(0\.10\.1\)\n\s+ffi \(~> 1\.0\)/, source, "#{path} must lock rb-inotify with ffi")
@@ -86,7 +86,7 @@ class TestDependencyManager < Minitest::Test
   end
 
   def test_watcher_gems_use_install_if_across_master_bundles
-    [File.join(Master::ROOT, "Gemfile"), File.join(Master::ROOT, "web", "Gemfile")].each do |path|
+    [File.join(Master::ROOT, "Gemfile"), File.join(Master::ROOT, "..", "RAILS", "master_web", "Gemfile")].each do |path|
       source = File.read(path)
 
       assert_match(
@@ -120,7 +120,7 @@ class TestDependencyManager < Minitest::Test
   end
 
   def test_edge_tts_isolated_to_tts_group_in_both_master_bundles
-    [File.join(Master::ROOT, "Gemfile"), File.join(Master::ROOT, "web", "Gemfile")].each do |path|
+    [File.join(Master::ROOT, "Gemfile"), File.join(Master::ROOT, "..", "RAILS", "master_web", "Gemfile")].each do |path|
       source = File.read(path)
       assert_match(
         /group :tts do\n\s+gem "rb-edge-tts", "= 1\.0\.1"\nend/,

@@ -50,13 +50,13 @@ class TestWebServer < Minitest::Test
   # printed its success line and returned, but nothing was ever listening
   # on the port).
   def test_spawn_env_points_bundle_gemfile_at_web_dir_not_master
-    web_dir = File.join(Master::ROOT, "web")
+    web_dir = File.join(Master::RAILS_ROOT, "master_web")
     env = Master::CLI::WebServer.spawn_env(web_dir)
     assert_equal File.join(web_dir, "Gemfile"), env["BUNDLE_GEMFILE"]
   end
 
   def test_spawn_env_strips_all_bundle_isolation_keys
-    env = Master::CLI::WebServer.spawn_env(File.join(Master::ROOT, "web"))
+    env = Master::CLI::WebServer.spawn_env(File.join(Master::RAILS_ROOT, "master_web"))
     Master::Voice::TtsSupervisor::BUNDLE_ISOLATION_KEYS.each do |key|
       assert_nil env[key], "expected #{key} to be stripped from the spawn env"
     end

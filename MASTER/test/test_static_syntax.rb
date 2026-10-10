@@ -33,7 +33,7 @@ class StaticSyntaxSpec < Minitest::Test
   def test_visual_javascript_is_syntactically_valid
     skip "node not available" unless system("which node > /dev/null 2>&1")
 
-    paths = Dir.glob(File.join(ROOT, "web", "public", "*.js"))
+    paths = Dir.glob(File.join(ROOT, "..", "RAILS", "master_web", "public", "*.js"))
     return if paths.empty?
 
     slice = (paths.size / NODE_CHECK_CONCURRENCY.to_f).ceil

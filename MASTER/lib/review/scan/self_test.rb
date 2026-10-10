@@ -128,7 +128,7 @@ module Master
 
           def deploy_path_allowed?(path, deploy_root)
             rel = path.delete_prefix("#{deploy_root}/")
-            !Scanner.skip_path?(rel) && !DEPLOY_IGNORED_SEGMENTS.any? { |segment| rel.split("/").include?(segment) }
+            !Master::Fix::Scanner.skip_path?(rel) && !DEPLOY_IGNORED_SEGMENTS.any? { |segment| rel.split("/").include?(segment) }
           end
         end
 
@@ -243,10 +243,10 @@ module Master
         end
 
         def js_silent_catch_findings
-          web = File.join(@root, "web", "public")
+          web = File.expand_path("../RAILS/master_web/public", @root)
           return [] unless File.directory?(web)
           Dir.glob(File.join(web, "**", "*.js"))
-            .reject { |path| Scanner.skip_path?(path, root: @root) }
+            .reject { |path| Master::Fix::Scanner.skip_path?(path, root: @root) }
             .flat_map do |path|
               read_lines(path).each_with_index.filter_map do |line, index|
                 next unless line.match?(/catch\s*\([^)]*\)\s*\{\s*\}/)
@@ -365,7 +365,7 @@ module Master
         end
 
         def face_pool_findings
-          semantics = File.join(@root, "web", "public", "face_semantics.js")
+          semantics = File.expand_path("../RAILS/master_web/public/face_semantics.js", @root)
           return [] unless File.file?(semantics)
           body = read_text(semantics)
           return [] unless body.match?(/mouthPool\.cells|eyePool\.cells/)

@@ -164,7 +164,7 @@ class TestSelfTest < Minitest::Test
 
   def write_fixture_tree(root)
     FileUtils.mkdir_p(File.join(root, "data"))
-    FileUtils.mkdir_p(File.join(root, "lib", "judge", "scan", "laws"))
+    FileUtils.mkdir_p(File.join(root, "lib", "review", "scan", "laws"))
     FileUtils.mkdir_p(File.join(root, "test"))
     File.write(File.join(root, "data", "laws.yml"), laws_yml)
     File.write(File.join(root, "lib", "example.rb"), <<~RUBY)

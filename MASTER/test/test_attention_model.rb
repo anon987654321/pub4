@@ -22,7 +22,7 @@ require "minitest/autorun"
 # the numbers are declared as literals precisely so they can be checked without
 # one.
 class TestAttentionModel < Minitest::Test
-  MODEL = File.expand_path("../web/public/attention_model.js", __dir__)
+  MODEL = File.expand_path("../../RAILS/master_web/public/attention_model.js", __dir__)
 
   # Resting adult blink rate is roughly 15-20/min. The floor is set below that
   # deliberately — this face is meant to read as composed — but a rate under 8
@@ -106,7 +106,7 @@ class TestAttentionModel < Minitest::Test
   def test_blinks_can_be_cued_by_speech
     assert_match(/function cue\(/, source, "no cue(): blinking stays a timer rather than punctuation")
     assert_match(/utterance_end/, source)
-    speech = File.read(File.expand_path("../web/public/face_speech_runtime.js", __dir__))
+    speech = File.read(File.expand_path("../../RAILS/master_web/public/face_speech_runtime.js", __dir__))
     assert_match(/MASTER_ATTENTION\?\.cue\?\.\(/, speech,
                  "the speech runtime must cue a blink when an utterance completes")
   end

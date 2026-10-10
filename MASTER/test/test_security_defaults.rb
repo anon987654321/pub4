@@ -20,8 +20,8 @@ class TestSecurityDefaults < Minitest::Test
 
   # enforced path => [file that reads it, the expression it reads it with]
   READERS = {
-    %w[ingress rate_limit_per_minute] => ["web/app/controllers/ingress_controller.rb", "rate_limit_per_minute"],
-    %w[ingress window_seconds] => ["web/app/controllers/ingress_controller.rb", "window_seconds"],
+    %w[ingress rate_limit_per_minute] => ["../RAILS/master_web/app/controllers/ingress_controller.rb", "rate_limit_per_minute"],
+    %w[ingress window_seconds] => ["../RAILS/master_web/app/controllers/ingress_controller.rb", "window_seconds"],
     %w[tools custom require_review_for_destructive] =>
       ["lib/cli/destructive_routes.rb", "require_review_for_destructive"],
     %w[tools profiles public] => ["lib/ground/tool.rb", "profiles"],
@@ -31,16 +31,16 @@ class TestSecurityDefaults < Minitest::Test
     %w[pairing allowlist_path] => ["lib/ground/pairing.rb", "allowlist_path"],
     %w[pairing redeem_per_minute] => ["lib/ground/pairing.rb", "redeem_per_minute"],
     %w[pairing redeem_window_seconds] => ["lib/ground/pairing.rb", "redeem_window_seconds"],
-    %w[web_rate_limits chat per_window] => ["web/app/controllers/application_controller.rb", "web_rate_limits"],
-    %w[web_rate_limits chat window_seconds] => ["web/app/controllers/application_controller.rb", "web_rate_limits"],
-    %w[web_rate_limits tts per_window] => ["web/app/controllers/application_controller.rb", "web_rate_limits"],
-    %w[web_rate_limits tts window_seconds] => ["web/app/controllers/application_controller.rb", "web_rate_limits"],
-    %w[web_rate_limits tts_poll per_window] => ["web/app/controllers/application_controller.rb", "web_rate_limits"],
-    %w[web_rate_limits tts_poll window_seconds] => ["web/app/controllers/application_controller.rb", "web_rate_limits"],
-    %w[web_rate_limits read per_window] => ["web/app/controllers/application_controller.rb", "web_rate_limits"],
-    %w[web_rate_limits read window_seconds] => ["web/app/controllers/application_controller.rb", "web_rate_limits"],
-    %w[web_rate_limits write per_window] => ["web/app/controllers/application_controller.rb", "web_rate_limits"],
-    %w[web_rate_limits write window_seconds] => ["web/app/controllers/application_controller.rb", "web_rate_limits"],
+    %w[web_rate_limits chat per_window] => ["../RAILS/master_web/app/controllers/application_controller.rb", "web_rate_limits"],
+    %w[web_rate_limits chat window_seconds] => ["../RAILS/master_web/app/controllers/application_controller.rb", "web_rate_limits"],
+    %w[web_rate_limits tts per_window] => ["../RAILS/master_web/app/controllers/application_controller.rb", "web_rate_limits"],
+    %w[web_rate_limits tts window_seconds] => ["../RAILS/master_web/app/controllers/application_controller.rb", "web_rate_limits"],
+    %w[web_rate_limits tts_poll per_window] => ["../RAILS/master_web/app/controllers/application_controller.rb", "web_rate_limits"],
+    %w[web_rate_limits tts_poll window_seconds] => ["../RAILS/master_web/app/controllers/application_controller.rb", "web_rate_limits"],
+    %w[web_rate_limits read per_window] => ["../RAILS/master_web/app/controllers/application_controller.rb", "web_rate_limits"],
+    %w[web_rate_limits read window_seconds] => ["../RAILS/master_web/app/controllers/application_controller.rb", "web_rate_limits"],
+    %w[web_rate_limits write per_window] => ["../RAILS/master_web/app/controllers/application_controller.rb", "web_rate_limits"],
+    %w[web_rate_limits write window_seconds] => ["../RAILS/master_web/app/controllers/application_controller.rb", "web_rate_limits"],
   }.merge(
     # Tool::Domain reads every row's reach, and consent where a domain waits for one.
     %w[coding research projects security personal wellbeing household finance devices]
@@ -87,7 +87,7 @@ class TestSecurityDefaults < Minitest::Test
 
     # Distinctive leaf names only — "enabled" or "port" would match half the tree.
     distinctive = %w[deny_patterns require_scope channel_default health_path]
-    sources = Dir.glob(File.join(Master::ROOT, "{lib,core,bin,web/app}", "**", "*.rb"))
+    sources = Dir.glob(File.join(Master::ROOT, "{lib,core,bin,../RAILS/master_web/app}", "**", "*.rb"))
 
     distinctive.each do |name|
       readers = sources.select { |path| File.read(path).include?(name) }
@@ -97,7 +97,7 @@ class TestSecurityDefaults < Minitest::Test
   end
 
   def test_ingress_controller_uses_the_file_rather_than_its_own_constant
-    body = source("web/app/controllers/ingress_controller.rb")
+    body = source("../RAILS/master_web/app/controllers/ingress_controller.rb")
 
     refute_includes body, "INGRESS_RATE_LIMIT = 30",
                     "the hardcoded limit is back; the file is the source"

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
-require_relative "support/face_manifest_helper"
+require_relative "support_face_manifest_helper"
 
 class VisualGovernorSpec < Minitest::Test
   include FaceManifestHelper
@@ -9,7 +9,7 @@ class VisualGovernorSpec < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
   # layouts/application.html.erb is dead for this purpose — ChatController#index
   # renders `layout: false` (web/CLAUDE.md); chat/index.html.erb is the real page.
-  ENTRYPOINT = File.join(ROOT, "web", "app", "views", "chat", "index.html.erb")
+  ENTRYPOINT = File.join(ROOT, "..", "RAILS", "master_web", "app", "views", "chat", "index.html.erb")
 
   # The limits and the hidden-tab pause are behaviour, driven in
   # web/test/visual_limits.test.mjs. What stays here is what the page template

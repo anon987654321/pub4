@@ -11,39 +11,39 @@ topics:
       - lib/voice/speech.rb
       - lib/voice/speech_worker.rb
       - lib/voice/tts_supervisor.rb
-      - web/app/services/tts_job.rb
-      - web/app/controllers/tts_controller.rb
-      - web/app/controllers/health_controller.rb
-      - web/public/face_speech_runtime.js
-      - web/public/face.part5.txt
+      - RAILS/master_web/app/services/tts_job.rb
+      - RAILS/master_web/app/controllers/tts_controller.rb
+      - RAILS/master_web/app/controllers/health_controller.rb
+      - RAILS/master_web/public/face_speech_runtime.js
+      - RAILS/master_web/public/face.part5.txt
       - OPENBSD/etc/rc.d/master
     tests:
       - test/test_speech.rb
       - test/test_yaml_registries.rb
-      - web/test/controllers/health_controller_test.rb
-      - web/test/face_boot.test.mjs
+      - RAILS/master_web/test/controllers/health_controller_test.rb
+      - RAILS/master_web/test/face_boot.test.mjs
     deploy: zsh /home/dev/pub4/OPENBSD/bin/vps_deploy_master.sh
     playbook: master_web_single_voice_defaults
     proof: curl -fsS http://127.0.0.1:53187/health | jq '{status, checks, deploy}'
 
   face_boot:
     files:
-      - web/app/views/chat/index.html.erb
-      - web/public/face.js
-      - web/public/face.part1.txt
-      - web/public/face.part2.txt
-      - web/public/face.part3.txt
-      - web/public/face.part5.txt
-      - web/public/face_speech_runtime.js
-      - web/public/face_speech_playback.js
-      - web/public/face.runtime.js
-      - web/public/container_gate.js
-      - web/public/boot_fsm.js
+      - RAILS/master_web/app/views/chat/index.html.erb
+      - RAILS/master_web/public/face.js
+      - RAILS/master_web/public/face.part1.txt
+      - RAILS/master_web/public/face.part2.txt
+      - RAILS/master_web/public/face.part3.txt
+      - RAILS/master_web/public/face.part5.txt
+      - RAILS/master_web/public/face_speech_runtime.js
+      - RAILS/master_web/public/face_speech_playback.js
+      - RAILS/master_web/public/face.runtime.js
+      - RAILS/master_web/public/container_gate.js
+      - RAILS/master_web/public/boot_fsm.js
       - OPENBSD/etc/rc.d/master
     tests:
-      - web/test/face_boot.test.mjs
+      - RAILS/master_web/test/face_boot.test.mjs
       - bin/check --profile=web
-      - web/script/probe_http
+      - RAILS/master_web/script/probe_http
     deploy: zsh /home/dev/pub4/OPENBSD/bin/vps_deploy_master.sh
     playbook: master_web_single_voice_defaults
     note: No WebGL before primer tap. Rebuild face.runtime.js after editing face.part* or speech modules.
@@ -81,7 +81,7 @@ topics:
       - MASTER/lib/operator/gates.rb
       - OPENBSD/bin/vps-deploy
     tests:
-      - web/script/probe_http
+      - RAILS/master_web/script/probe_http
     command: ssh dev@46.23.89.226 'zsh /home/dev/pub4/OPENBSD/bin/vps_deploy_master.sh'
     playbook: post_sync_vps_proof
 
@@ -90,7 +90,7 @@ topics:
       - data/soul.yml
       - data/personas.yml
       - lib/voice/personality.rb
-      - web/app/views/chat/index.html.erb
+      - RAILS/master_web/app/views/chat/index.html.erb
     note: TTS voice is whatever data/voice.yml tts.single_voice names (jenny since 2026-09-12); persona changes LLM style only.
 
 patch_briefs:
@@ -164,71 +164,71 @@ patch_briefs:
     tests: [test/test_speech.rb]
     deploy: vps-deploy master
     playbook: master_web_single_voice_defaults
-  web/app/views/chat/index.html.erb:
+  RAILS/master_web/app/views/chat/index.html.erb:
     check: bin/check --profile=web
     topic: face_boot
-    tests: [bin/check --profile=web, web/test/face_boot.test.mjs]
+    tests: [bin/check --profile=web, RAILS/master_web/test/face_boot.test.mjs]
     deploy: vps-deploy master
     playbook: master_web_single_voice_defaults
     note: primer/WebGL guard lives here — read web/CLAUDE.md first
-  web/public/face.js:
+  RAILS/master_web/public/face.js:
     check: bin/check --profile=web
     topic: face_boot
-    tests: [bin/check --profile=web, web/test/face_boot.test.mjs]
+    tests: [bin/check --profile=web, RAILS/master_web/test/face_boot.test.mjs]
     deploy: vps-deploy master
     post: cd RAILS/master_web && bundle exec rails assets:build_face_runtime
-  web/public/face.part1.txt:
+  RAILS/master_web/public/face.part1.txt:
     check: bin/check --profile=web
     topic: face_boot
-    tests: [web/test/face_boot.test.mjs]
+    tests: [RAILS/master_web/test/face_boot.test.mjs]
     deploy: vps-deploy master
     post: cd RAILS/master_web && bundle exec rails assets:build_face_runtime
-  web/public/face.part2.txt:
+  RAILS/master_web/public/face.part2.txt:
     check: bin/check --profile=web
     topic: face_boot
-    tests: [web/test/face_boot.test.mjs]
+    tests: [RAILS/master_web/test/face_boot.test.mjs]
     deploy: vps-deploy master
     post: cd RAILS/master_web && bundle exec rails assets:build_face_runtime
-  web/public/face.part3.txt:
+  RAILS/master_web/public/face.part3.txt:
     check: bin/check --profile=web
     topic: face_boot
-    tests: [web/test/face_boot.test.mjs]
+    tests: [RAILS/master_web/test/face_boot.test.mjs]
     deploy: vps-deploy master
     post: cd RAILS/master_web && bundle exec rails assets:build_face_runtime
-  web/public/face.part5.txt:
+  RAILS/master_web/public/face.part5.txt:
     check: bin/check --profile=web
     topic: face_boot
-    tests: [web/test/face_boot.test.mjs]
+    tests: [RAILS/master_web/test/face_boot.test.mjs]
     deploy: vps-deploy master
     post: cd RAILS/master_web && bundle exec rails assets:build_face_runtime
-  web/public/face_speech_runtime.js:
+  RAILS/master_web/public/face_speech_runtime.js:
     check: bin/check --profile=web
     topic: face_boot
-    tests: [web/test/face_boot.test.mjs]
-    deploy: vps-deploy master
-    post: cd RAILS/master_web && bundle exec rails assets:build_face_runtime
-    note: concatenated into face.runtime.js — never hand-edit the generated file
-  web/public/face_speech_playback.js:
-    check: bin/check --profile=web
-    topic: face_boot
-    tests: [web/test/face_boot.test.mjs]
+    tests: [RAILS/master_web/test/face_boot.test.mjs]
     deploy: vps-deploy master
     post: cd RAILS/master_web && bundle exec rails assets:build_face_runtime
     note: concatenated into face.runtime.js — never hand-edit the generated file
-  web/public/face.runtime.js:
+  RAILS/master_web/public/face_speech_playback.js:
     check: bin/check --profile=web
     topic: face_boot
-    tests: [web/test/face_boot.test.mjs]
+    tests: [RAILS/master_web/test/face_boot.test.mjs]
+    deploy: vps-deploy master
+    post: cd RAILS/master_web && bundle exec rails assets:build_face_runtime
+    note: concatenated into face.runtime.js — never hand-edit the generated file
+  RAILS/master_web/public/face.runtime.js:
+    check: bin/check --profile=web
+    topic: face_boot
+    tests: [RAILS/master_web/test/face_boot.test.mjs]
     note: generated — edit sources and run assets:build_face_runtime
-  web/public/three.face.module.js:
+  RAILS/master_web/public/three.face.module.js:
     check: bin/check --profile=web
     topic: face_boot
-    tests: [bin/check --profile=web, web/test/face_boot.test.mjs]
+    tests: [bin/check --profile=web, RAILS/master_web/test/face_boot.test.mjs]
     note: heavy WebGL bundle — deferred until primer tap only
-  web/public/face.css:
+  RAILS/master_web/public/face.css:
     check: bin/check --profile=web
     topic: face_boot
-    tests: [web/test/face_boot.test.mjs]
+    tests: [RAILS/master_web/test/face_boot.test.mjs]
     deploy: vps-deploy master
     post: ruby MASTER/tools/rails/generate_face_root_css.rb
   OPENBSD/etc/rc.d/master:

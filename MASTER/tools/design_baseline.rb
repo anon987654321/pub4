@@ -71,12 +71,12 @@ module Operator
         # The MASTER face is the fourth surface: its hand-written css and chat
         # views are inside the same instrument (generated bundles and digested
         # assets are outputs, not sources, and stay out).
-        Dir[File.join(MASTER_ROOT, "web/app/views/**/*.erb")] +
-        [File.join(MASTER_ROOT, "web/public/face.css"), File.join(MASTER_ROOT, "web/public/chat_upload.css")].select { |f| File.file?(f) }
+        Dir[File.join(RAILS_ROOT, "master_web/app/views/**/*.erb")] +
+        %w[face.css chat_upload.css].map { |name| File.join(RAILS_ROOT, "master_web/public", name) }.select { |f| File.file?(f) }
     end
 
     def app_for(file)
-      return "face" if file.start_with?(File.join(MASTER_ROOT, "web"))
+      return "face" if file.start_with?(File.join(RAILS_ROOT, "master_web"))
       rel = file.sub("#{RAILS_ROOT}/", "")
       rel.include?("/engines/") ? "engines" : rel.split("/").first
     end

@@ -69,7 +69,7 @@ class TestOpenCrabsFeatures < Minitest::Test
   TELEMETRY = /segment\.(io|com)|mixpanel|google-analytics|googletagmanager|sentry\.io|posthog|amplitude\.com|update[._-]check/i
 
   def test_nothing_phones_home
-    files = Dir.glob(File.join(Master::ROOT, "{lib,web/app,web/config,bin}/**/*.{rb,js,erb}"))
+    files = Dir.glob(File.join(Master::ROOT, "{lib,../RAILS/master_web/app,../RAILS/master_web/config,bin}/**/*.{rb,js,erb}"))
     assert_operator files.size, :>, 100, "the glob found nothing to read"
     assert "https://www.google-analytics.com/collect".match?(TELEMETRY)
     hits = files.reject { |f| f.include?("/test") }.select { |f| File.read(f, encoding: "UTF-8").match?(TELEMETRY) }

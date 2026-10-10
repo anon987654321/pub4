@@ -7,7 +7,7 @@ require_relative "test_helper"
 # motion immediately at parse time — shake-to-skip never fired on an iPhone.
 class TestFaceMotionPermission < Minitest::Test
   def part3
-    File.read(File.join(Master::ROOT, "web/public/face.part3.txt"))
+    File.read(File.join(Master::ROOT, "../RAILS/master_web/public/face.part3.txt"))
   end
 
   def test_asks_for_motion_as_well_as_orientation

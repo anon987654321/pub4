@@ -3,7 +3,7 @@
 require_relative "test_helper"
 
 class TestWebTtsContract < Minitest::Test
-  WEB_ROOT = File.join(Master::ROOT, "web")
+  WEB_ROOT = File.join(Master::RAILS_ROOT, "master_web")
 
   def test_routes_expose_tts_endpoints
     routes = File.read(File.join(WEB_ROOT, "config", "routes.rb"))

@@ -92,7 +92,7 @@ else
 end
 ci_steps += [rake["test:web"], rake["test:integration_web"]] if ENV["MASTER_CI_WEB"] == "1"
 if ENV["MASTER_CI_BROWSER"] == "1"
-  webgl = File.join(ROOT, "web", "script", "probe_webgl_guard.mjs")
+  webgl = File.join(ROOT, "..", "RAILS", "master_web", "script", "probe_webgl_guard.mjs")
   if node_bin && File.file?(webgl)
     # The probe reads this itself; without it a machine with no browser reports
     # a pass having launched nothing.

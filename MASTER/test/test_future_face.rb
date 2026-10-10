@@ -26,8 +26,8 @@ class TestFutureFaceContract < Minitest::Test
 
   def test_cli_and_web_read_the_same_morphology_contract
     head = File.read(File.join(ROOT, "lib", "cli", "face", "head.rb"))
-    browser = File.read(File.join(ROOT, "web", "public", "face.part1.txt"))
-    shader = File.read(File.join(ROOT, "web", "public", "face.part2.txt"))
+    browser = File.read(File.join(ROOT, "..", "RAILS", "master_web", "public", "face.part1.txt"))
+    shader = File.read(File.join(ROOT, "..", "RAILS", "master_web", "public", "face.part2.txt"))
 
     assert_includes head, 'Master::Face::Contract.spatial.fetch("morphology"'
     assert_includes head, "FACIAL_VERTICALIZATION"
@@ -42,8 +42,8 @@ class TestFutureFaceContract < Minitest::Test
   end
 
   def test_tts_polish_is_a_projection_not_a_second_speaker
-    source = File.read(File.join(ROOT, "web", "public", "face_tts_polish.js"))
-    manifest = File.read(File.join(ROOT, "web", "config", "face_assets.yml"))
+    source = File.read(File.join(ROOT, "..", "RAILS", "master_web", "public", "face_tts_polish.js"))
+    manifest = File.read(File.join(ROOT, "..", "RAILS", "master_web", "config", "face_assets.yml"))
     assert_includes source, "preservesPitch"
     assert_includes source, "MASTER_SPEECH_RUNTIME"
     assert_includes manifest, "face_tts_polish.js"

@@ -22,7 +22,7 @@ require "minitest/autorun"
 # model introducing itself afterwards. Measured on the live face 2026-08-14:
 # "my name is Johann, remember it" was answered with that pitch nearly verbatim.
 class TestUnpromptedSpeech < Minitest::Test
-  PUBLIC = File.expand_path("../web/public", __dir__)
+  PUBLIC = File.expand_path("../../RAILS/master_web/public", __dir__)
 
   def read(name) = File.read(File.join(PUBLIC, name), encoding: "UTF-8")
 

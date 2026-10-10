@@ -10,7 +10,7 @@ require_relative "test_helper"
 # method on the class it names, without booting Rails (TtsJob only needs a
 # Rails.root stub to load).
 class TestWebContainerSurface < Minitest::Test
-  WEB = File.join(Master::ROOT, "web")
+  WEB = File.join(Master::RAILS_ROOT, "master_web")
 
   def tts_job_class
     @tts_job ||= begin

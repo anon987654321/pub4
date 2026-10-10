@@ -10,10 +10,10 @@ class FaceSpeechPlaybackSpec < Minitest::Test
   end
 
   def test_playback_module_holds_viseme_functions
-    playback = read("web/public/face_speech_playback.js")
-    speech = read("web/public/face_speech_runtime.js")
-    part5 = read("web/public/face.part5.txt")
-    rake = read("web/lib/tasks/face_runtime.rake")
+    playback = read("../RAILS/master_web/public/face_speech_playback.js")
+    speech = read("../RAILS/master_web/public/face_speech_runtime.js")
+    part5 = read("../RAILS/master_web/public/face.part5.txt")
+    rake = read("../RAILS/master_web/lib/tasks/face_runtime.rake")
 
     assert_includes playback, "function startVisemeAnim"
     assert_includes playback, "function stopVisemeAnim"

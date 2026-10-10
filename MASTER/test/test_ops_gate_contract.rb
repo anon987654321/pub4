@@ -184,8 +184,8 @@ class GateContractSpec < Minitest::Test
   def test_web_command_palette_matches_the_slash_surface
     require_relative "../lib/cli/command_registry/help"
     surface = Master::CLI::CommandRegistry.command_surface
-    view = File.read(File.expand_path("../web/app/views/chat/index.html.erb", __dir__))
-    chat = File.read(File.expand_path("../web/public/chat.js", __dir__))
+    view = File.read(File.expand_path("../../RAILS/master_web/app/views/chat/index.html.erb", __dir__))
+    chat = File.read(File.expand_path("../../RAILS/master_web/public/chat.js", __dir__))
 
     assert_includes view, "window.MASTER_COMMANDS"
     assert_includes view, "CommandRegistry.command_surface"

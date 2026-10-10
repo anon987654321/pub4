@@ -18,7 +18,7 @@ class TestAgentMap < Minitest::Test
   end
 
   def test_patch_brief_face_runtime_generated_note
-    brief = Master::Ground::Map::Agent.patch_brief("web/public/face.runtime.js")
+    brief = Master::Ground::Map::Agent.patch_brief("RAILS/master_web/public/face.runtime.js")
     assert_includes brief, "generated"
   end
 

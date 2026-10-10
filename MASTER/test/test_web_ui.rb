@@ -49,7 +49,7 @@ class TestWebUI < Minitest::Test
   end
 
   def face_runtime_source
-    base = File.expand_path("../web/public", __dir__)
+    base = File.expand_path("../../RAILS/master_web/public", __dir__)
     segments = (1..3).map { |part| File.read(File.join(base, "face.part#{part}.txt")) }
     segments << File.read(File.join(base, "face_speech_runtime.js"))
     segments << File.read(File.join(base, "face_speech_playback.js"))
@@ -107,7 +107,7 @@ class TestWebUI < Minitest::Test
   end
 
   def test_tts_endpoint_has_rate_limit_before_action
-    app_controller = File.read(File.expand_path("../web/app/controllers/application_controller.rb", __dir__))
+    app_controller = File.read(File.expand_path("../../RAILS/master_web/app/controllers/application_controller.rb", __dir__))
 
     assert_includes app_controller, 'before_action :enforce_tts_rate_limit, if: -> { controller_name == "tts" && action_in?(TTS_SYNTH_ACTIONS) }'
     assert_includes app_controller, "TTS_SYNTH_ACTIONS = %i[show].freeze"
@@ -116,7 +116,7 @@ class TestWebUI < Minitest::Test
   end
 
   def test_sensitive_web_actions_route_through_auth_pipeline
-    app_controller = File.read(File.expand_path("../web/app/controllers/application_controller.rb", __dir__))
+    app_controller = File.read(File.expand_path("../../RAILS/master_web/app/controllers/application_controller.rb", __dir__))
 
     assert_includes app_controller, "AUTHENTICATED_ACTIONS = %i["
     assert_includes app_controller, "before_action :require_authenticated!, if: -> { action_in?(AUTHENTICATED_ACTIONS) }"
@@ -125,13 +125,13 @@ class TestWebUI < Minitest::Test
   end
 
   def test_authenticated_web_actions_are_rate_limited
-    app_controller = File.read(File.expand_path("../web/app/controllers/application_controller.rb", __dir__))
+    app_controller = File.read(File.expand_path("../../RAILS/master_web/app/controllers/application_controller.rb", __dir__))
 
     assert_includes app_controller, "before_action :enforce_web_write_rate_limit, if: -> { action_in?(%i[command enhance photo post_event state]) }"
   end
 
   def test_message_endpoint_uses_strong_params
-    chat_controller = File.read(File.expand_path("../web/app/controllers/chat_controller.rb", __dir__))
+    chat_controller = File.read(File.expand_path("../../RAILS/master_web/app/controllers/chat_controller.rb", __dir__))
 
     assert_includes chat_controller, "mp = message_params"
     assert_includes chat_controller, "input = mp[:message].to_s.strip"
@@ -139,7 +139,7 @@ class TestWebUI < Minitest::Test
   end
 
   def test_chat_service_smoke_messages_bypass_pipeline
-    chat_service = File.read(File.expand_path("../web/app/services/chat_service.rb", __dir__))
+    chat_service = File.read(File.expand_path("../../RAILS/master_web/app/services/chat_service.rb", __dir__))
 
     assert_includes chat_service, "SMOKE_MESSAGES"
     assert_includes chat_service, "stream_open!"
@@ -148,7 +148,7 @@ class TestWebUI < Minitest::Test
   end
 
   def test_chat_index_loads_particle_kernel_before_face
-    index = File.read(File.expand_path("../web/app/views/chat/index.html.erb", __dir__))
+    index = File.read(File.expand_path("../../RAILS/master_web/app/views/chat/index.html.erb", __dir__))
     kernel_idx = index.index("particle_kernel.js")
     face_idx = index.rindex('asset_path("face.js")')
     refute_nil kernel_idx
@@ -158,7 +158,7 @@ class TestWebUI < Minitest::Test
     refute_match(/rel="modulepreload"[^>]+asset_path\("face\.js"\)/, index)
     # Boot modules are declared in web/config/face_assets.yml and rendered from
     # it; the view no longer names them, so assert against the manifest.
-    manifest = YAML.safe_load_file(File.expand_path("../web/config/face_assets.yml", __dir__))
+    manifest = YAML.safe_load_file(File.expand_path("../../RAILS/master_web/config/face_assets.yml", __dir__))
     %w[chat_actions visual_bridge visual_governor].each do |name|
       assert_includes manifest["shell_manifest"], name
     end
@@ -173,7 +173,7 @@ class TestWebUI < Minitest::Test
   end
 
   def test_visual_bridge_does_not_blur_face_canvas
-    source = File.read(File.expand_path("../web/public/visual_bridge.js", __dir__))
+    source = File.read(File.expand_path("../../RAILS/master_web/public/visual_bridge.js", __dir__))
 
     refute_includes source, "blur("
     assert_includes source, 'face.style.filter = ""'
@@ -182,7 +182,7 @@ class TestWebUI < Minitest::Test
   end
 
   def test_face_semantics_uses_published_event_vocabulary
-    semantics = File.read(File.expand_path("../web/public/face_semantics.js", __dir__))
+    semantics = File.read(File.expand_path("../../RAILS/master_web/public/face_semantics.js", __dir__))
 
     assert_includes semantics, "phantom:(?:detected|occurrence|recovery|halt)"
     assert_includes semantics, "pipeline:stage_start"
@@ -193,8 +193,8 @@ class TestWebUI < Minitest::Test
   end
 
   def test_visual_bridge_delegates_event_classification_to_registry
-    bridge = File.read(File.expand_path("../web/public/visual_bridge.js", __dir__))
-    registry = File.read(File.expand_path("../web/public/topology_registry.js", __dir__))
+    bridge = File.read(File.expand_path("../../RAILS/master_web/public/visual_bridge.js", __dir__))
+    registry = File.read(File.expand_path("../../RAILS/master_web/public/topology_registry.js", __dir__))
     topologies = File.read(File.expand_path("../data/topologies.yml", __dir__))
 
     refute_includes bridge, "EVENT_MAP"
@@ -208,9 +208,9 @@ class TestWebUI < Minitest::Test
 
   def test_face_owns_the_single_animation_clock
     source = face_runtime_source
-    ecology = File.read(File.expand_path("../web/public/cognition_ecology_render.js", __dir__))
-    gravity = File.read(File.expand_path("../web/public/gravity_field.js", __dir__))
-    world = File.read(File.expand_path("../web/public/face_world.js", __dir__))
+    ecology = File.read(File.expand_path("../../RAILS/master_web/public/cognition_ecology_render.js", __dir__))
+    gravity = File.read(File.expand_path("../../RAILS/master_web/public/gravity_field.js", __dir__))
+    world = File.read(File.expand_path("../../RAILS/master_web/public/face_world.js", __dir__))
 
     assert_includes source, "ensureFrameLoop"
     assert_includes source, "frameLoopActive = false"
@@ -222,7 +222,7 @@ class TestWebUI < Minitest::Test
   end
 
   def test_face_state_observer_does_not_watch_its_own_attribute_writes
-    source = File.read(File.expand_path("../web/public/face_state.js", __dir__))
+    source = File.read(File.expand_path("../../RAILS/master_web/public/face_state.js", __dir__))
 
     # Regression: face_state.js's applyFrom() writes el.dataset.runtimeStatus on
     # the same elements observe() watches. Observing `attributes: true` there
@@ -292,9 +292,9 @@ class TestWebUI < Minitest::Test
   end
 
   def test_primer_tap_unlocks_prompt_before_face_ready
-    index = File.read(File.expand_path("../web/app/views/chat/index.html.erb", __dir__))
-    css = File.read(File.expand_path("../web/public/face.css", __dir__))
-    part5 = File.read(File.expand_path("../web/public/face.part5.txt", __dir__))
+    index = File.read(File.expand_path("../../RAILS/master_web/app/views/chat/index.html.erb", __dir__))
+    css = File.read(File.expand_path("../../RAILS/master_web/public/face.css", __dir__))
+    part5 = File.read(File.expand_path("../../RAILS/master_web/public/face.part5.txt", __dir__))
 
     assert_includes index, "dismissPrimer"
     assert_includes index, "revealPrompt"
@@ -317,7 +317,7 @@ class TestWebUI < Minitest::Test
   end
 
   def test_command_palette_wired_in_chat_js
-    source = File.read(File.expand_path("../web/public/chat.js", __dir__))
+    source = File.read(File.expand_path("../../RAILS/master_web/public/chat.js", __dir__))
 
     assert_includes source, "wireCommandPalette"
     assert_includes source, "MASTERCommandPalette"
@@ -325,10 +325,10 @@ class TestWebUI < Minitest::Test
   end
 
   def test_opencrabs_web_handlers_present
-    chat = File.read(File.expand_path("../web/public/chat.js", __dir__))
-    actions = File.read(File.expand_path("../web/public/chat_actions.js", __dir__))
-    service = File.read(File.expand_path("../web/app/services/chat_service.rb", __dir__))
-    dashboard = File.read(File.expand_path("../web/app/views/dashboard/index.html.erb", __dir__))
+    chat = File.read(File.expand_path("../../RAILS/master_web/public/chat.js", __dir__))
+    actions = File.read(File.expand_path("../../RAILS/master_web/public/chat_actions.js", __dir__))
+    service = File.read(File.expand_path("../../RAILS/master_web/app/services/chat_service.rb", __dir__))
+    dashboard = File.read(File.expand_path("../../RAILS/master_web/app/views/dashboard/index.html.erb", __dir__))
 
     assert_includes chat, "_chatOnCompaction"
     assert_includes chat, "_chatOnCtxFooter"
@@ -357,17 +357,17 @@ class TestWebUI < Minitest::Test
   # says which words the panel is meant to show.
   def assert_localised_copy(template, key, english)
     assert_includes template, %(t("#{key}"))
-    locale = YAML.safe_load_file(File.expand_path("../web/config/locales/en.yml", __dir__))
+    locale = YAML.safe_load_file(File.expand_path("../../RAILS/master_web/config/locales/en.yml", __dir__))
     value = key.split(".").reduce(locale.fetch("en")) { |node, segment| node.fetch(segment) }
     assert_equal english, value, "en.yml #{key} drifted from the copy this page promises"
   end
 
   def test_wave3_felt_sense_and_face_part5_wiring
-    actions = File.read(File.expand_path("../web/public/chat_actions.js", __dir__))
-    part5 = File.read(File.expand_path("../web/public/face.part5.txt", __dir__))
-    service = File.read(File.expand_path("../web/app/services/chat_service.rb", __dir__))
+    actions = File.read(File.expand_path("../../RAILS/master_web/public/chat_actions.js", __dir__))
+    part5 = File.read(File.expand_path("../../RAILS/master_web/public/face.part5.txt", __dir__))
+    service = File.read(File.expand_path("../../RAILS/master_web/app/services/chat_service.rb", __dir__))
     agent = File.read(File.expand_path("../lib/review/agent.rb", __dir__))
-    index = File.read(File.expand_path("../web/app/views/chat/index.html.erb", __dir__))
+    index = File.read(File.expand_path("../../RAILS/master_web/app/views/chat/index.html.erb", __dir__))
 
     assert_includes actions, "window.collectFeltState = collectFeltState"
     assert_includes actions, "function collectFeltState()"
@@ -386,10 +386,10 @@ class TestWebUI < Minitest::Test
   end
 
   def test_ui_backlog_wired
-    chat = File.read(File.expand_path("../web/public/chat.js", __dir__))
-    part5 = File.read(File.expand_path("../web/public/face.part5.txt", __dir__))
-    index = File.read(File.expand_path("../web/app/views/chat/index.html.erb", __dir__))
-    dashboard = File.read(File.expand_path("../web/app/views/dashboard/index.html.erb", __dir__))
+    chat = File.read(File.expand_path("../../RAILS/master_web/public/chat.js", __dir__))
+    part5 = File.read(File.expand_path("../../RAILS/master_web/public/face.part5.txt", __dir__))
+    index = File.read(File.expand_path("../../RAILS/master_web/app/views/chat/index.html.erb", __dir__))
+    dashboard = File.read(File.expand_path("../../RAILS/master_web/app/views/dashboard/index.html.erb", __dir__))
 
     assert_includes chat, "wireUiBacklog"
     assert_includes chat, "MASTERLogSearch"
@@ -405,8 +405,8 @@ class TestWebUI < Minitest::Test
   end
 
   def test_wave3_history_and_export_wired
-    chat = File.read(File.expand_path("../web/public/chat.js", __dir__))
-    css = File.read(File.expand_path("../web/public/face.css", __dir__))
+    chat = File.read(File.expand_path("../../RAILS/master_web/public/chat.js", __dir__))
+    css = File.read(File.expand_path("../../RAILS/master_web/public/face.css", __dir__))
 
     assert_includes chat, "wireHistorySidebar"
     assert_includes chat, "MASTERHistory"
@@ -437,7 +437,7 @@ class TestWebUI < Minitest::Test
   # public/assets/ is excluded: it is precompiled output, gitignored, and
   # regenerated from these sources.
   def test_no_corner_hud_readouts_return
-    root = File.expand_path("../web/public", __dir__)
+    root = File.expand_path("../../RAILS/master_web/public", __dir__)
     sources = Dir[File.join(root, "*.js"), File.join(root, "*.css"), File.join(root, "*.txt")]
               .reject { |path| path.include?("/assets/") }
 
@@ -451,9 +451,9 @@ class TestWebUI < Minitest::Test
   end
 
   def test_ecology_render_uses_the_shared_face_clock
-    source = File.read(File.expand_path("../web/public/cognition_ecology_render.js", __dir__))
-    ecology = File.read(File.expand_path("../web/public/cognition_ecology.js", __dir__))
-    css = File.read(File.expand_path("../web/public/face.css", __dir__))
+    source = File.read(File.expand_path("../../RAILS/master_web/public/cognition_ecology_render.js", __dir__))
+    ecology = File.read(File.expand_path("../../RAILS/master_web/public/cognition_ecology.js", __dir__))
+    css = File.read(File.expand_path("../../RAILS/master_web/public/face.css", __dir__))
 
     assert_includes source, "MASTEREcologyRender = Object.freeze({ update })"
     refute_includes source, "requestAnimationFrame"
@@ -463,14 +463,14 @@ class TestWebUI < Minitest::Test
   end
 
   def test_models_enable_strict_loading_by_default
-    application_record = File.read(File.expand_path("../web/app/models/application_record.rb", __dir__))
+    application_record = File.read(File.expand_path("../../RAILS/master_web/app/models/application_record.rb", __dir__))
 
     assert_includes application_record, "self.strict_loading_by_default = true"
   end
 
   def test_tts_endpoint_sets_cache_headers_and_supports_conditional_get
-    tts_controller = File.read(File.expand_path("../web/app/controllers/tts_controller.rb", __dir__))
-    tts_job = File.read(File.expand_path("../web/app/services/tts_job.rb", __dir__))
+    tts_controller = File.read(File.expand_path("../../RAILS/master_web/app/controllers/tts_controller.rb", __dir__))
+    tts_job = File.read(File.expand_path("../../RAILS/master_web/app/services/tts_job.rb", __dir__))
 
     assert_includes tts_job, "Digest::SHA256.hexdigest"
     assert_includes tts_job, "def failed?"
@@ -513,9 +513,9 @@ class TestWebUI < Minitest::Test
   end
 
   def test_face_tts_bridges_global_style_events
-    bridge = File.read(File.expand_path("../web/public/visual_bridge.js", __dir__))
-    speech = File.read(File.expand_path("../web/public/face_speech_runtime.js", __dir__))
-    events = File.read(File.expand_path("../web/public/master_events.js", __dir__))
+    bridge = File.read(File.expand_path("../../RAILS/master_web/public/visual_bridge.js", __dir__))
+    speech = File.read(File.expand_path("../../RAILS/master_web/public/face_speech_runtime.js", __dir__))
+    events = File.read(File.expand_path("../../RAILS/master_web/public/master_events.js", __dir__))
 
     assert_includes bridge, "new EventSource(\"/events/stream\")"
     assert_includes bridge, "type === \"tts:anticipate\""
@@ -540,8 +540,8 @@ class TestWebUI < Minitest::Test
   end
 
   def test_face_semantics_routes_expression_through_blend_bridge_not_pools
-    semantics = File.read(File.expand_path("../web/public/face_semantics.js", __dir__))
-    bridge = File.read(File.expand_path("../web/public/face_blendshape_bridge.js", __dir__))
+    semantics = File.read(File.expand_path("../../RAILS/master_web/public/face_semantics.js", __dir__))
+    bridge = File.read(File.expand_path("../../RAILS/master_web/public/face_blendshape_bridge.js", __dir__))
 
     refute_match(/mouthPool\.cells|eyePool\.cells/, semantics)
     assert_includes semantics, "MASTER_FACE_BLEND"
@@ -561,11 +561,11 @@ class TestWebUI < Minitest::Test
   # the old face3d flag is gone; the semantics bridge feeds MASTER_FACE_STATE.
 
   def test_public_asset_manifest_matches_source_files
-    public_dir = File.expand_path("../web/public", __dir__)
+    public_dir = File.expand_path("../../RAILS/master_web/public", __dir__)
     manifest_path = File.join(public_dir, "assets", ".manifest.json")
     skip "public asset manifest is absent; run Rails asset precompile to check drift" unless File.file?(manifest_path)
 
-    index = File.read(File.expand_path("../web/app/views/chat/index.html.erb", __dir__))
+    index = File.read(File.expand_path("../../RAILS/master_web/app/views/chat/index.html.erb", __dir__))
     manifest = JSON.parse(File.read(manifest_path))
     boot_sources = boot_manifest_sources(index)
 
@@ -596,7 +596,7 @@ class TestWebUI < Minitest::Test
   # because face.runtime.js had not been rebuilt since. Precompiling would have
   # "resolved" that drift by copying the broken source over the good asset.
   def test_public_js_has_no_template_literal_called_as_a_function
-    public_dir = File.expand_path("../web/public", __dir__)
+    public_dir = File.expand_path("../../RAILS/master_web/public", __dir__)
     sources = Dir[File.join(public_dir, "*.js")] + Dir[File.join(public_dir, "face.part*.txt")]
     offenders = sources.flat_map do |path|
       File.readlines(path).each_with_index.filter_map do |line, i|
@@ -614,7 +614,7 @@ class TestWebUI < Minitest::Test
   # Reads web/config/face_assets.yml, which the view now renders from, rather
   # than scraping a javascript_include_tag(*%w[...]) literal out of the ERB.
   def boot_manifest_sources(index)
-    manifest = YAML.safe_load_file(File.expand_path("../web/config/face_assets.yml", __dir__))
+    manifest = YAML.safe_load_file(File.expand_path("../../RAILS/master_web/config/face_assets.yml", __dir__))
     manifest_js = Array(manifest["shell_manifest"]).map { |name| "#{name}.js" }
     face_parts = index.scan(/face\.part\d+\.txt/).uniq.sort
 
@@ -756,10 +756,10 @@ class TestWebUI < Minitest::Test
     "// Import map + MASTER_ASSET_PATHS resolve tail module imports at runtime.\n"
 
   def test_face_audio_field_publishes_shared_reactive_bands
-    audio = File.read(File.expand_path("../web/public/face_audio_field.js", __dir__))
-    particles = File.read(File.expand_path("../web/public/face_particles.js", __dir__))
-    phosphor = File.read(File.expand_path("../web/public/face_phosphor_trail.js", __dir__))
-    world = File.read(File.expand_path("../web/public/face_world.js", __dir__))
+    audio = File.read(File.expand_path("../../RAILS/master_web/public/face_audio_field.js", __dir__))
+    particles = File.read(File.expand_path("../../RAILS/master_web/public/face_particles.js", __dir__))
+    phosphor = File.read(File.expand_path("../../RAILS/master_web/public/face_phosphor_trail.js", __dir__))
+    world = File.read(File.expand_path("../../RAILS/master_web/public/face_world.js", __dir__))
 
     assert_includes audio, 'CustomEvent("audio:update"'
     %w[--master-audio-bass --master-audio-mid --master-audio-high --master-audio-onset].each do |token|
@@ -771,7 +771,7 @@ class TestWebUI < Minitest::Test
   end
 
   def test_face_runtime_matches_its_sources
-    dir = File.expand_path("../web/public", __dir__)
+    dir = File.expand_path("../../RAILS/master_web/public", __dir__)
     missing = FACE_RUNTIME_SOURCES.reject { |name| File.file?(File.join(dir, name)) }
     assert_empty missing, "face runtime sources missing: #{missing.join(', ')}"
 
@@ -813,7 +813,7 @@ class TestWebUI < Minitest::Test
   # and its template sat unreachable while a static copy drifted past them --
   # and the failure is silent, because a manifest is still returned.
   def test_no_static_manifest_shadows_the_route
-    static = File.expand_path("../web/public/manifest.json", __dir__)
+    static = File.expand_path("../../RAILS/master_web/public/manifest.json", __dir__)
 
     refute File.exist?(static),
            "public/manifest.json shadows pwa#manifest — the route cannot vary the manifest by host while it exists"
@@ -825,15 +825,15 @@ class TestWebUI < Minitest::Test
   # started flag stayed claimed -- so the one attempt was the only attempt.
   # These two lines are what make a second one possible.
   def test_container_bootstrap_uses_standard_error_boundary
-    loader = File.read(File.expand_path("../web/config/initializers/master_container.rb", __dir__))
+    loader = File.read(File.expand_path("../../RAILS/master_web/config/initializers/master_container.rb", __dir__))
 
     refute_includes loader, "rescue Exception"
     assert_includes loader, "rescue StandardError"
   end
 
   def test_container_bootstrap_can_be_rearmed
-    loader = File.read(File.expand_path("../web/config/initializers/master_container.rb", __dir__))
-    controller = File.read(File.expand_path("../web/app/controllers/application_controller.rb", __dir__))
+    loader = File.read(File.expand_path("../../RAILS/master_web/config/initializers/master_container.rb", __dir__))
+    controller = File.read(File.expand_path("../../RAILS/master_web/app/controllers/application_controller.rb", __dir__))
 
     assert_includes controller, "MasterContainerLoader.rearm!",
                     "require_container! must be able to start a new attempt, not just observe the failed one"
@@ -855,7 +855,7 @@ class TestWebUI < Minitest::Test
   # Rails whose TtsSupervisor exits 3 when called; the second run, with no asset
   # task in ARGV, proves the stub is reached at all.
   def test_container_does_not_boot_during_an_assets_task
-    loader = File.expand_path("../web/config/initializers/master_container.rb", __dir__)
+    loader = File.expand_path("../../RAILS/master_web/config/initializers/master_container.rb", __dir__)
     probe = <<~RUBY
       X = Struct.new(:master_start_ms, :master_container, :master_container_mutex, :master_bootstrap_started)
       Config = Struct.new(:x) { def after_initialize; end }
@@ -884,7 +884,7 @@ class TestWebUI < Minitest::Test
   # A note that outlives its turn is the same bug pointed the other way: the
   # next visitor on that thread inherits a persona nobody asked for.
   def test_chat_service_clears_the_persona_note
-    service = File.read(File.expand_path("../web/app/services/chat_service.rb", __dir__))
+    service = File.read(File.expand_path("../../RAILS/master_web/app/services/chat_service.rb", __dir__))
 
     assert_includes service, "Fiber[:master_persona_note] = nil"
     assert_includes service, "def clear_fiber_flags"

@@ -72,7 +72,7 @@ class TestLimitsSplit < Minitest::Test
   # any more, and leaving it below the line is how this file filled up with rules
   # nothing applied.
   def test_nothing_under_guidance_has_grown_a_reader
-    sources = Dir.glob(File.join(Master::ROOT, "{lib,core,bin,web/app}", "**", "*.rb"))
+    sources = Dir.glob(File.join(Master::ROOT, "{lib,core,bin,../RAILS/master_web/app}", "**", "*.rb"))
                  .reject { |path| path.end_with?("law_accessors.rb", "laws.rb") }
     bodies = sources.to_h { |path| [path.sub("#{Master::ROOT}/", ""), File.read(path)] }
 

@@ -320,7 +320,7 @@ namespace :test do
     # failed in a grandchild the list had supposedly freed. Both call `unbundled`
     # now, which is this method by another name.
     Bundler.with_unbundled_env do
-      Dir.chdir(File.join(__dir__, "web")) { sh "bundle exec rails test" }
+      Dir.chdir(File.join(__dir__, "..", "RAILS", "master_web")) { sh "bundle exec rails test" }
     end
   end
 

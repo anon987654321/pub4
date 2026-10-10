@@ -58,26 +58,24 @@ module Master
         # lib/operator/self_findings.rb needs the same four and had its own copy of
         # them inside a regex. One fact, one home; the census reads this.
         GENERATED_FACE_BUNDLES = %w[
-          web/public/three.face.module.js web/public/face.runtime.js
-          web/public/face.modules.bundle.js web/public/face_vision.bundle.js
+          RAILS/master_web/public/three.face.module.js RAILS/master_web/public/face.runtime.js
+          RAILS/master_web/public/face.modules.bundle.js RAILS/master_web/public/face_vision.bundle.js
         ].freeze
-        SKIP_RELATIVE_PATHS = (%w[
-          .master runtime web/public/assets web/script/three_build web/node_modules web/tmp web/log
-        ] + GENERATED_FACE_BUNDLES).flat_map { |path| [path, "MASTER/#{path}"] }.freeze
+        MASTER_LOCAL_PATHS = %w[.master runtime].flat_map { |path| [path, "MASTER/#{path}"] }.freeze
+        SKIP_RELATIVE_PATHS = (MASTER_LOCAL_PATHS + GENERATED_FACE_BUNDLES + %w[
+          RAILS/master_web/public/assets RAILS/master_web/script/three_build
+          RAILS/master_web/node_modules RAILS/master_web/tmp RAILS/master_web/log
+        ]).freeze
 
         # Not authored anywhere: `builds/` is what dartsass compiles the tracked
         # _*.scss into, so every finding in it is a duplicate of one already
         # reported against the source, and fixing the copy is undone by the next
-        # `bin/rails css:build`. shared/reference holds the original CodePen
-        # sources kept for provenance and shipped by nothing, and lightgallery
-        # arrived minified from jsDelivr.
+        # `bin/rails css:build`.
         #
         # Each entry names a path that is tracked or gitignored build output;
         # test_scan_path_filter holds that, because an exemption whose subject is
         # gone excuses whatever next takes its name.
-        SKIP_PATH_PREFIXES = %w[
-          RAILS/__shared/reference
-        ].freeze
+        #
         # public/assets/ is what Propshaft precompiles into, gitignored in every
         # app, and a finding there is a finding against a digest copy.
         SKIP_PATH_FRAGMENTS = %w[
@@ -114,22 +112,27 @@ module Master
 
           rel = relative_path(path, root)
           return true if SKIP_PATH_SUFFIXES.any? { |suffix| rel == suffix || rel.end_with?("/#{suffix}") }
-          return true if SKIP_PATH_PREFIXES.any? { |prefix| rel == prefix || rel.start_with?("#{prefix}/") }
           return true if SKIP_PATH_FRAGMENTS.any? { |fragment| rel.include?(fragment) }
           return true if VENDORED_ASSET.match?(rel)
 
-          SKIP_RELATIVE_PATHS.any? { |prefix| under?(rel, prefix) || under?(master_relative(path), prefix) }
+          SKIP_RELATIVE_PATHS.any? do |prefix|
+            under?(rel, prefix) || under?(master_relative(path), prefix) || under?(repo_relative(path), prefix)
+          end
         end
 
         def under?(rel, prefix) = rel == prefix || rel.start_with?("#{prefix}/")
 
-        # A scan rooted inside MASTER — `/scan face` is web/public — sees
-        # face.runtime.js as a bare basename that no MASTER-relative entry
-        # matches, so the generated bundles and web/public/assets were walked and
-        # offered to /fix. Anchoring on MASTER as well makes the list hold from any
-        # root beneath it.
+        # A scan rooted inside the face — `/scan face` is RAILS/master_web/public —
+        # sees face.runtime.js as a bare basename that no repo-relative entry
+        # matches, so the generated bundles and public/assets were walked and
+        # offered to /fix. Anchoring on MASTER and on the repo as well makes the
+        # list hold from any root beneath it.
         def master_relative(path)
           relative_path(path, Master::ROOT)
+        end
+
+        def repo_relative(path)
+          relative_path(path, Master::REPO_ROOT)
         end
 
         def relative_segments(path, root)
