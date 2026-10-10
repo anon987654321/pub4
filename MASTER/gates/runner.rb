@@ -9,6 +9,10 @@ require "optparse"
 require "rbconfig"
 require "yaml"
 
+# The box runs with a US-ASCII locale; source files are UTF-8, and two gates raised
+# "invalid byte sequence" reading them there and blocked nothing.
+Encoding.default_external = Encoding::UTF_8
+
 ROOT = File.expand_path("../..", __dir__)
 GATES_DIR = __dir__
 REGISTRY_DEFAULT = File.join(GATES_DIR, "gates.yml")
