@@ -66,6 +66,9 @@ export BUNDLE_WITHOUT=development:test BUNDLE_PATH="$BUNDLE_PATH_DEV"
 # only checks it now, because it runs as root; installing belongs here, as dev.
 bundle_config_once "$ROOT/MASTER" PATH "$BUNDLE_PATH_DEV"
 (cd "$ROOT/MASTER" && BUNDLE_GEMFILE=Gemfile "$BUNDLE" install)
+# From here the lock is read, never written: a later `bundle exec` re-resolved and wrote a lock
+# without the Rails git source, and the asset step died on it. rc.d runs frozen for the same reason.
+export BUNDLE_FROZEN=true
 
 echo "==> db prepare"
 BUNDLE_WITHOUT=development:test "$BUNDLE" exec rails db:prepare
