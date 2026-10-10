@@ -23,6 +23,7 @@ class Post < ApplicationRecord
   LIVE_LOCATION_PRECISION = 2
 
   has_one_attached :image
+  has_many_attached :images
   has_one_attached :video
   has_one_attached :audio
   process_media_variants :image, variants: {
@@ -32,6 +33,7 @@ class Post < ApplicationRecord
 
   belongs_to :user
   belongs_to :community, optional: true
+  belongs_to :neighborhood, optional: true
 
   has_many :reposts, dependent: :destroy
   has_many :reposters, through: :reposts, source: :user
@@ -46,6 +48,7 @@ class Post < ApplicationRecord
   validates :content, length: { maximum: 40_000 }
   validate :live_content_length, if: :live?
   validate :crosspost_lands_somewhere_new, if: :crosspost?
+  validate :neighborhood_belongs_to_current_city
 
   # In-request refresh, not broadcasts_refreshes: that macro enqueues
   # Turbo::Streams::BroadcastStreamJob, and nothing on vm23 runs the queue.
@@ -132,6 +135,13 @@ class Post < ApplicationRecord
     ids = connection.select_values(sanitize_sql_array([ "SELECT rowid FROM posts_fts WHERE posts_fts MATCH ?", q ]))
     ids.any? ? where(id: ids) : none
   }
+
+  def neighborhood_belongs_to_current_city
+    return if neighborhood_id.blank?
+    return if Neighborhood.where(id: neighborhood_id, city_id: city_id).exists?
+
+    errors.add(:neighborhood_id, :invalid)
+  end
 
   def live? = latitude.present? && longitude.present?
   def crosspost? = crossposted_from_id.present?
