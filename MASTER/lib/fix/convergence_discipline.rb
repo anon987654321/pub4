@@ -49,24 +49,45 @@ module Master
         @history = []
         @best_state = nil
         @baseline = nil
+        @critical_baseline = nil
         @reasoning_memory = nil
       end
 
       attr_reader :best_state, :history
 
-      def begin_run(files)
+      def begin_run(files, preserve_run_baseline: false)
         @baseline = snapshot(files)
+        unless preserve_run_baseline
+          @authority_baseline = authority_state
+          @critical_baseline = snapshot(critical_source_files)
+        end
         @best_state = state_for(0, UNMEASURED_SCORE, @baseline)
         @history.clear
-        emit("fix_loop:convergence_baseline", files: @baseline.size, digest: digest(@baseline))
+        emit("fix_loop:convergence_baseline", files: @baseline.size, digest: digest(@baseline),
+                                                  authority_digest: digest_authorities(@authority_baseline),
+                                                  critical_files: Array(@critical_baseline).size)
         @baseline
       end
 
+      Decision = Struct.new(:action, :reason, keyword_init: true)
+
       def observe(pass:, findings:, files:, progressed:)
+        findings = Array(findings)
         current = snapshot(files)
-        state = state_for(pass, Array(findings).size, current)
+        identities = findings.map { |finding| finding_identity(finding) }.uniq.sort
+        state = state_for(pass, findings.size, current).merge(
+          finding_ids: identities,
+          finding_digest: Digest::SHA256.hexdigest(identities.join("\0")),
+          risk_vector: risk_vector(findings),
+        )
+        previous = @history.last
         @history << state.merge(progressed:)
-        @best_state = state if @best_state.nil? || state[:score] < @best_state[:score]
+        if @best_state.nil? || @best_state[:score] == UNMEASURED_SCORE || state_better?(state, @best_state)
+          @best_state = state
+        end
+        previous_ids = Array(previous && previous[:finding_ids])
+        resolved = previous_ids - identities
+        introduced = identities - previous_ids
 
         global_top = Master::Cognition::Intelligence.rank_by_leverage(findings).first
         judge(pass:, findings:, files:, progressed:, top: global_top)
@@ -91,6 +112,10 @@ module Master
           progressed:,
           best_violations: @best_state[:score],
           quality_delta:,
+          finding_digest: state[:finding_digest],
+          finding_ids_resolved: resolved.size,
+          finding_ids_introduced: introduced.size,
+          risk_vector: state[:risk_vector],
         )
         state
       end
@@ -134,7 +159,38 @@ module Master
         return current[:progressed] == true if @history.size < 2
 
         before = @history[-2]
-        score_improved?(current[:score], before[:score]) || current[:progressed] == true
+        comparison = current[:risk_vector] <=> before[:risk_vector]
+        return comparison.negative? if comparison && !comparison.zero?
+        return false if comparison&.positive?
+
+        current[:progressed] == true
+      end
+
+      def adaptive_decision(deadline_expired:, pass_limit:, absolute_limit:)
+        return Decision.new(action: :stop, reason: :deadline) if deadline_expired
+        return Decision.new(action: :stop, reason: :absolute_limit) if pass_limit.to_i >= absolute_limit.to_i
+        return Decision.new(action: :extend, reason: :measured_improvement) if improving?
+
+        Decision.new(action: :stop, reason: :no_improvement)
+      end
+
+      # Compact index into terminal evidence; the source snapshots and verifier
+      # output remain the primary records.
+      def receipt
+        latest = @history.last || {}
+        {
+          version: 1,
+          observations: @history.size,
+          pass: latest[:pass],
+          files_observed: latest[:captured_files],
+          findings: latest[:score],
+          finding_digest: latest[:finding_digest],
+          risk_vector: latest[:risk_vector],
+          snapshot_digest: latest[:snapshot_digest],
+          best_pass: @best_state&.fetch(:pass, nil),
+          quality_delta:,
+          authority_digest: digest_authorities(@authority_baseline),
+        }.compact
       end
 
       def note_progress!
@@ -156,6 +212,22 @@ module Master
       end
 
       def clean_proof(files:, pass:, clean_runs:, findings: [], required_runs: limits["clean_runs_required"].to_i)
+        unless complete_authority_baseline?
+          emit("fix_loop:premature_exit", reason: "authority_baseline_unavailable")
+          return { eligible: false, fatal: true, reason: "governing authority baseline unavailable" }
+        end
+
+        authority_changes = changed_authorities
+        unless authority_changes.empty?
+          emit("fix_loop:premature_exit", reason: "governing_authority_changed", files: authority_changes)
+          return {
+            eligible: false,
+            fatal: true,
+            reason: "governing authority changed during run; reload and re-evaluate under the new law",
+            authority_changes:,
+          }
+        end
+
         unreadable = unreadable_paths(files)
         unless unreadable.empty?
           emit("fix_loop:premature_exit", reason: "files_unread", files: unreadable.first(10))
@@ -173,6 +245,22 @@ module Master
         unless protected.empty?
           emit("fix_loop:premature_exit", reason: "protected_floor", failures: protected)
           return { eligible: false, fatal: true, reason: "constitutional floor failed", failures: protected }
+        end
+
+        critical_changes = safety_critical_changes(files)
+        unless critical_changes.empty?
+          syntax_failures = independent_ruby_parse(critical_source_files)
+          unless syntax_failures.empty?
+            emit("fix_loop:premature_exit", reason: "independent_parser_failed", failures: syntax_failures)
+            return {
+              eligible: false,
+              fatal: true,
+              reason: "independent Ruby parse failed after repair-engine changes",
+              critical_changes:,
+              syntax_failures:,
+            }
+          end
+          emit("fix_loop:independent_verification", changed_paths: critical_changes, ruby_files_parsed: critical_source_files.count { |path| File.extname(path) == ".rb" })
         end
 
         {
@@ -228,6 +316,50 @@ module Master
         @bus&.publish("cognition:reasoning_inconclusive", pass:, error: "#{e.class}: #{e.message}")
       end
 
+      def finding_identity(finding)
+        law = finding_value(finding, :law) || finding_value(finding, :law_id) || finding_value(finding, :rule)
+        file = finding_value(finding, :file) || finding_value(finding, :path)
+        fingerprint = finding_value(finding, :fingerprint).to_s.strip
+        explicit = fingerprint.empty? ? finding_value(finding, :evidence_key).to_s.strip : fingerprint
+        if !explicit.empty?
+          identity = [law, file, explicit]
+        else
+          line = finding_value(finding, :line)
+          message = finding_value(finding, :message).to_s.gsub(/\s+/, " ").strip.downcase
+          identity = [law, file, line, message.empty? ? finding.to_s : message]
+        end
+        Digest::SHA256.hexdigest(identity.map { |value| value.to_s.strip }.join("\0"))[0, 24]
+      end
+
+      # Lexicographic risk ordering means fewer warnings cannot compensate for
+      # an increase in critical or error-level findings.
+      def risk_vector(findings)
+        counts = [0, 0, 0, 0]
+        Array(findings).each do |finding|
+          severity = finding_value(finding, :severity).to_s.downcase
+          index = if severity.match?(/critical|blocker|fatal|veto/)
+            0
+          elsif severity.match?(/error|high|severe/)
+            1
+          elsif severity.match?(/info|advisory|low/)
+            3
+          else
+            2
+          end
+          counts[index] += 1
+        end
+        counts
+      end
+
+      def state_better?(candidate, known)
+        candidate_vector = candidate[:risk_vector]
+        known_vector = known[:risk_vector]
+        return candidate[:score] < known[:score] unless candidate_vector && known_vector
+
+        comparison = candidate_vector <=> known_vector
+        comparison.negative? || (comparison.zero? && candidate[:score] < known[:score])
+      end
+
       def finding_value(finding, key)
         return unless finding
         if finding.respond_to?(key)
@@ -272,6 +404,77 @@ module Master
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "convergence_discipline.config", event_bus: @bus)
           DEFAULTS
+        end
+      end
+
+      def authority_paths
+        %w[soul.yml laws.yml].map { |name| File.join(Master::ROOT, "data", name) }
+      end
+
+      def authority_state
+        authority_paths.to_h do |path|
+          value = File.file?(path) ? Digest::SHA256.file(path).hexdigest : nil
+          [relative(path), value]
+        rescue StandardError => e
+          emit("fix_loop:authority_fingerprint_failed", file: relative(path), error: "#{e.class}: #{e.message}")
+          [relative(path), nil]
+        end
+      end
+
+      def complete_authority_baseline?
+        @authority_baseline.is_a?(Hash) &&
+          !@authority_baseline.empty? &&
+          @authority_baseline.values.all? { |value| value.to_s.match?(/\A[0-9a-f]{64}\z/) }
+      end
+
+      def changed_authorities
+        current = authority_state
+        (@authority_baseline.keys | current.keys).select do |path|
+          @authority_baseline[path] != current[path]
+        end.sort
+      end
+
+      def digest_authorities(state)
+        return unless state.is_a?(Hash)
+
+        Digest::SHA256.hexdigest(state.sort.map { |path, hash| "#{path}:#{hash}" }.join("\0"))
+      end
+
+      def critical_source_files
+        paths = [
+          File.join(@root, "MASTER", "lib", "scan_phase.rb"),
+          File.join(@root, "MASTER", "data", "laws.yml"),
+          File.join(@root, "MASTER", "data", "soul.yml"),
+        ]
+        patterns = %w[
+          MASTER/lib/fix/**/*.rb
+          MASTER/lib/review/scan/**/*.rb
+          MASTER/lib/law/**/*.rb
+        ]
+        paths.concat(patterns.flat_map { |pattern| Dir.glob(File.join(@root, pattern)) })
+        paths.select { |path| File.file?(path) }.uniq.sort
+      end
+
+      def safety_critical_changes(_files)
+        before = Array(@critical_baseline).to_h { |row| [row[:path], row[:sha256]] }
+        after = snapshot(critical_source_files).to_h { |row| [row[:path], row[:sha256]] }
+        (before.keys | after.keys).select do |path|
+          before[path] != after[path]
+        end.sort
+      end
+
+      def independent_ruby_parse(files)
+        return Array(files).select { |path| File.extname(path) == ".rb" }.map do |path|
+          { file: relative(path), error: "RubyVM::AbstractSyntaxTree unavailable" }
+        end unless defined?(RubyVM::AbstractSyntaxTree)
+
+        Array(files).filter_map do |path|
+          next unless File.extname(path) == ".rb"
+
+          RubyVM::AbstractSyntaxTree.parse_file(path)
+          nil
+        rescue StandardError, SyntaxError => e
+          { file: relative(path), error: "#{e.class}: #{e.message.to_s[0, 240]}" }
         end
       end
 

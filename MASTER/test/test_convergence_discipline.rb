@@ -45,8 +45,67 @@ class TestConvergenceDiscipline < Minitest::Test
     assert_equal true, event.last.fetch(:preserved_uncertainty)
   end
 
+  def test_finding_digest_is_order_independent_and_risk_ordering_is_lexicographic
+    @discipline.begin_run([@path])
+    findings = [
+      { law: "ROBUSTNESS", file: "example.rb", line: 2, message: "unsafe input", severity: :error },
+      { law: "DENSITY", file: "example.rb", line: 4, message: "long method", severity: :warning },
+    ]
+    first = @discipline.observe(pass: 1, findings:, files: [@path], progressed: false)
+    second = @discipline.observe(pass: 2, findings: findings.reverse, files: [@path], progressed: false)
+
+    assert_equal first[:finding_digest], second[:finding_digest]
+    refute @discipline.improving?
+
+    third = @discipline.observe(
+      pass: 3,
+      findings: [{ law: "DENSITY", file: "example.rb", line: 4, message: "long method", severity: :warning }],
+      files: [@path],
+      progressed: false,
+    )
+    assert_equal [0, 0, 1, 0], third[:risk_vector]
+    assert @discipline.improving?
+    assert_equal third[:finding_digest], @discipline.receipt.fetch(:finding_digest)
+  end
+
+  def test_adaptive_decision_requires_progress_and_respects_hard_limits
+    assert_equal :no_improvement,
+                 @discipline.adaptive_decision(deadline_expired: false, pass_limit: 1, absolute_limit: 60).reason
+
+    @discipline.begin_run([@path])
+    @discipline.observe(pass: 1, findings: [], files: [@path], progressed: true)
+    assert_equal :extend,
+                 @discipline.adaptive_decision(deadline_expired: false, pass_limit: 1, absolute_limit: 60).action
+    assert_equal :deadline,
+                 @discipline.adaptive_decision(deadline_expired: true, pass_limit: 1, absolute_limit: 60).reason
+    assert_equal :absolute_limit,
+                 @discipline.adaptive_decision(deadline_expired: false, pass_limit: 60, absolute_limit: 60).reason
+  end
+
+  def test_finding_fingerprint_survives_source_line_movement
+    first = { law: "ROBUSTNESS", file: "example.rb", line: 8, fingerprint: "unsafe-call:abc123" }
+    moved = { law: "ROBUSTNESS", file: "example.rb", line: 19, fingerprint: "unsafe-call:abc123" }
+
+    assert_equal @discipline.send(:finding_identity, first), @discipline.send(:finding_identity, moved)
+  end
+
+  def test_clean_proof_rejects_governing_authority_drift
+    authority = File.join(@root, "authority.yml")
+    File.write(authority, "authority: original\\n")
+    @discipline.define_singleton_method(:authority_paths) { [authority] }
+    @discipline.begin_run([@path])
+    File.write(authority, "authority: changed\\n")
+
+    proof = @discipline.clean_proof(files: [@path], pass: 2, clean_runs: 2)
+
+    refute proof.fetch(:eligible)
+    assert proof.fetch(:fatal)
+    assert_match(/governing authority changed/, proof.fetch(:reason))
+  end
+
   def test_clean_proof_refuses_unreadable_files
     missing = File.join(@root, "missing.rb")
+    @discipline.begin_run([@path, missing])
 
     proof = @discipline.clean_proof(files: [@path, missing], pass: 2, clean_runs: 2)
 

@@ -72,10 +72,11 @@ module Master
         end
       end
 
-      def terminal(run_id, state, message: nil)
+      def terminal(run_id, state, message: nil, evidence: nil)
         update(run_id) do |run|
           run["state"] = state.to_s
           run["message"] = message.to_s[0, 400] unless message.nil?
+          run["evidence"] = evidence if evidence.is_a?(Hash)
           run["finished_at"] = Time.now.utc.iso8601
         end
       end

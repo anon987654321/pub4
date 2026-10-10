@@ -150,7 +150,7 @@ module Master
         end
 
         current_phase = :pass
-        run_journaled(journal, files:, target:, max_passes:, budget_seconds:, mission:, requested:)
+        run_journaled(journal, files:, target:, max_passes:, budget_seconds:, mission:, requested:, incremental:)
       rescue StandardError => e
         payload = {
           error_class: e.class.name,
@@ -203,7 +203,8 @@ module Master
       def finish_run(result, _target, run_id, mission: nil, requested: false)
         result = blocked_by_gaps(result)
         state = terminal_state_for(result)
-        @run_journal.terminal(run_id, state, message: result.to_s)
+        evidence = @convergence_discipline.receipt if @convergence_discipline.respond_to?(:receipt)
+        @run_journal.terminal(run_id, state, message: result.to_s, evidence:)
 
         if mission&.requeue_if_requested!
           @bus&.publish("fix_loop:mission_requeued", run_id:, state:, reason: "wake received during attempt")
@@ -299,7 +300,7 @@ module Master
 
       # The run once its journal is open and a mission records it: resume what
       # an earlier process left, then the passes, then the terminal state.
-      def run_journaled(journal, files:, target:, max_passes:, budget_seconds:, mission:, requested:)
+      def run_journaled(journal, files:, target:, max_passes:, budget_seconds:, mission:, requested:, incremental:)
         run_id = journal["id"]
         files = StreamCursor.order(@root, target, files)
         deadline = Ground::Reliability::Deadline.new(journal["remaining_seconds"].to_f)
@@ -315,8 +316,50 @@ module Master
           files:, target:, max_passes:, deadline:, budget_seconds:,
           start_pass: resumed.value!, run_id:, wishlist_proposals: []
         )
+        result = verify_incremental_scope(
+          result, incremental:, journal:, target:, files:, max_passes:, deadline:, budget_seconds:, run_id:
+        )
         result = reflect_then_continue(result, files:, target:, max_passes:, budget_seconds:, run_id:)
         finish_run(result, target, run_id, mission:, requested:)
+      end
+
+      # Incremental mode narrows repair work, never completion proof.
+      # A clean changed-file run must recollect and verify the complete target
+      # before its DONE verdict can reach reflection or mission completion.
+      def verify_incremental_scope(result, incremental:, journal:, target:, files:, max_passes:, deadline:,
+                                   budget_seconds:, run_id:)
+        return result unless incremental && terminal_state_for(result) == :done
+
+        full_files = StreamCursor.order(@root, target, @file_collector.collect(target))
+        files.replace(full_files)
+        blocking = @file_collector.respond_to?(:blocking_skips) ? @file_collector.blocking_skips : {}
+        unless blocking.empty?
+          detail = blocking.map { |reason, count| "#{reason}=#{count}" }.join(", ")
+          return terminal(:blocked, "full-scope proof could not inspect target: #{detail}")
+        end
+        if @file_collector.candidate_count.positive? && full_files.empty?
+          return terminal(:blocked, "full-scope proof collected no files from #{@file_collector.candidate_count} candidates")
+        end
+        return Result.err("full-scope proof exceeded the run deadline", category: :timeout) if deadline.expired?
+
+        @reachability.verify!(target, files: full_files)
+        run_record = @run_journal.history(limit: RunJournal::MAX_RUNS).find { |row| row["id"] == run_id }
+        start_pass = @run_journal.next_pass(run_record || journal)
+        if start_pass > ABSOLUTE_MAX_PASSES
+          return terminal(:blocked, "full-scope proof could not start within the absolute pass limit")
+        end
+
+        @convergence_discipline.begin_run(full_files, preserve_run_baseline: true)
+        proof_limit = [[max_passes.to_i, start_pass + CLEAN_RUNS - 1].max, ABSOLUTE_MAX_PASSES].min
+        @bus&.publish(
+          "fix_loop:full_scope_proof",
+          run_id:, target:, files: full_files.size, start_pass:, pass_limit: proof_limit
+        )
+        Master::Trace::Dmesg.status("fix0", "incremental repair clean; verifying full target files=#{full_files.size}")
+        run_passes(
+          files: full_files, target:, max_passes: proof_limit, deadline:, budget_seconds:,
+          start_pass:, run_id:, wishlist_proposals: []
+        )
       end
 
       def mission_for(target:, requested: false)
@@ -424,9 +467,24 @@ module Master
             end
           end
 
-          break unless @convergence_discipline.improving?
-          break if pass_limit >= ABSOLUTE_MAX_PASSES
-          break if deadline.expired?
+          decision = if @convergence_discipline.respond_to?(:adaptive_decision)
+            @convergence_discipline.adaptive_decision(
+              deadline_expired: deadline.expired?, pass_limit:, absolute_limit: ABSOLUTE_MAX_PASSES
+            )
+          else
+            action = if deadline.expired? || pass_limit >= ABSOLUTE_MAX_PASSES
+              :stop
+            elsif @convergence_discipline.improving?
+              :extend
+            else
+              :stop
+            end
+            { action:, reason: deadline.expired? ? :deadline : (pass_limit >= ABSOLUTE_MAX_PASSES ? :absolute_limit : :no_improvement) }
+          end
+          unless decision[:action] == :extend
+            stop_reason = decision[:reason]
+            break
+          end
 
           extension = [ADAPTIVE_PASS_CHUNK, ABSOLUTE_MAX_PASSES - pass_limit].min
           break if extension <= 0
@@ -445,9 +503,10 @@ module Master
           first_index = pass_limit - extension
         end
 
+        return timed_out(pass_limit - 1, pass_limit, budget_seconds) if stop_reason == :deadline
         return terminal(:plateau, "adaptive pass budget exhausted at #{pass_limit}") if pass_limit >= ABSOLUTE_MAX_PASSES
 
-        # The initial bound was reached without another measurable improvement.
+        # The bound was reached without evidence that another pass would help.
         terminal(:plateau, "pass limit (#{pass_limit}) reached")
       end
 

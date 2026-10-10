@@ -79,7 +79,10 @@ module Master
           8. VERIFY
           Reread the changed file, re-run the affected Law, and run the
           narrowest behavioral or surface check that proves the repair. A failed
-          verification rejects or rolls back that repair.
+          verification rejects or rolls back that repair. Incremental mode may
+          narrow repair work, but never completion proof: before DONE, recollect
+          the complete eligible target and obtain the required clean proof over
+          that full scope.
 
           9. REPEAT
           Rescan filenames, contents, semantic rules, and prior failures after
@@ -89,7 +92,8 @@ module Master
 
           10. REPORT
           Report commands, corpus, findings before and after, repairs attempted,
-          repairs rejected, verification output, and unresolved findings. Never
+          repairs rejected, verification output, and unresolved findings. Keep
+          a compact evidence receipt linked to the durable run record. Never
           convert an unmeasured state into a pass and never describe a future
           action as completed.
 

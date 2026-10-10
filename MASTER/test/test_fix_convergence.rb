@@ -120,6 +120,70 @@ class TestFixConvergence < Minitest::Test
     assert_equal [0, 1, 2, 3, 4], calls
   end
 
+  def test_incremental_done_requires_a_full_target_proof
+    loop = Master::Fix::FixLoop.allocate
+    full_files = [File.join(@root, "dummy.yml")]
+    second = File.join(@root, "second.rb")
+    File.write(second, "puts :second\\n")
+    full_files << second
+
+    collector = Object.new
+    collector.define_singleton_method(:collect) { |_target| full_files.dup }
+    collector.define_singleton_method(:candidate_count) { full_files.size }
+    collector.define_singleton_method(:skipped) { 0 }
+    collector.define_singleton_method(:blocking_skips) { {} }
+    loop.instance_variable_set(:@file_collector, collector)
+
+    observed = []
+    discipline = Object.new
+    discipline.define_singleton_method(:begin_run) { |files, **_options| observed << files.dup }
+    loop.instance_variable_set(:@convergence_discipline, discipline)
+
+    journal = Object.new
+    journal.define_singleton_method(:history) do |limit:|
+      [{ "id" => "run", "passes" => [{ "pass" => 1, "state" => "committed" }] }]
+    end
+    journal.define_singleton_method(:next_pass) { |_record| 2 }
+    loop.instance_variable_set(:@run_journal, journal)
+
+    reachability = Object.new
+    reachability.define_singleton_method(:verify!) { |_target, files:| observed << files.dup }
+    loop.instance_variable_set(:@reachability, reachability)
+    loop.instance_variable_set(:@bus, @bus)
+
+    calls = []
+    loop.define_singleton_method(:terminal_state_for) do |result|
+      result.value!.start_with?("DONE:") ? :done : :plateau
+    end
+    loop.define_singleton_method(:run_passes) do |**args|
+      calls << args
+      Master::Result.ok("DONE: full-scope proof passed")
+    end
+
+    deadline = Object.new
+    deadline.define_singleton_method(:expired?) { false }
+    partial = [File.join(@root, "dummy.yml")]
+    result = loop.send(
+      :verify_incremental_scope,
+      Master::Result.ok("DONE: changed files clean"),
+      incremental: true,
+      journal: { "id" => "run" },
+      target: @root,
+      files: partial,
+      max_passes: 10,
+      deadline:,
+      budget_seconds: 60,
+      run_id: "run",
+    )
+
+    assert_equal "DONE: full-scope proof passed", result.value!
+    assert_equal full_files.sort, partial.sort
+    assert_equal full_files.sort, calls.fetch(0).fetch(:files).sort
+    assert_equal 2, calls.fetch(0).fetch(:start_pass)
+    assert_equal 10, calls.fetch(0).fetch(:max_passes)
+    assert_equal full_files.sort, observed.fetch(0).sort
+  end
+
   def test_convergence_scores_rendered_and_opportunity_findings_in_same_pass
     seen = []
     discipline = Object.new
@@ -376,7 +440,7 @@ class TestFixConvergence < Minitest::Test
       "MASTER/lib" => Master::ROOT,
       "RAILS/__shared" => Master::RAILS_ROOT,
       "OPENBSD/etc" => File.join(Master::REPO_ROOT, "OPENBSD", "etc"),
-      "STUDIO/replicate/lora" => File.join(Master::REPO_ROOT, "STUDIO", "lora"),
+      "STUDIO/lora" => File.join(Master::REPO_ROOT, "STUDIO", "lora"),
     }.each do |target, expected_root|
       request = Master::CLI::Scan::Request.new(scanner: nil, root: Master::ROOT, arg: target)
       assert_equal expected_root, request.send(:target_arg), target
