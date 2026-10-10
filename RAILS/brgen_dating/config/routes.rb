@@ -5,6 +5,9 @@
 Dating::Engine.routes.draw do
   root "home#index"
   get "next" => "home#next", as: :next
+  resources :path_crossings, only: :index do
+    collection { post :locate }
+  end
   resource :profile, only: %i[new create edit update show] do
     # Three answers, because a profile answering eight is a bio in disguise.
     resources :prompts, only: %i[create destroy]
