@@ -68,23 +68,10 @@ module Master
         @history << state.merge(progressed:)
         @best_state = state if @best_state.nil? || state[:score] < @best_state[:score]
 
-        ranked = Master::Cognition::Intelligence.rank_by_leverage(findings)
-        top = ranked.first
-        @bus&.publish(
-          "fix_loop:judgment",
-          pass:,
-          top_law: finding_value(top, :law),
-          top_file: finding_value(top, :file),
-          leverage: top ? Master::Cognition::Intelligence.leverage_score(top) : 0,
-          uncertainty: top ? Master::Cognition::Intelligence.uncertainty_score(top) : 1.0,
-          posture: top ? Master::Cognition::Intelligence.posture_for(top) : :preserve,
-          scale: top ? Master::Cognition::Intelligence.judgment(top)[:scale] : :local,
-        )
-        remember_reasoning(pass:, findings:, files:, progressed:, top:)
+        global_top = Master::Cognition::Intelligence.rank_by_leverage(findings).first
+        judge(pass:, findings:, files:, progressed:, top: global_top)
 
         attention = Master::Cognition::Intelligence.attention_budget(findings, slots: limits["decision_choices"].to_i)
-        ranked = attention[:selected]
-        top = ranked.first
         @bus&.publish(
           "fix_loop:attention",
           candidates: attention[:candidates],
@@ -92,17 +79,11 @@ module Master
           deferred: attention[:deferred].size,
           preserved_uncertainty: !attention[:preserved_uncertainty].nil?,
         )
-        @bus&.publish(
-          "fix_loop:judgment",
-          pass:,
-          top_law: finding_value(top, :law),
-          top_file: finding_value(top, :file),
-          leverage: top ? Master::Cognition::Intelligence.leverage_score(top) : 0,
-          uncertainty: top ? Master::Cognition::Intelligence.uncertainty_score(top) : 1.0,
-          posture: top ? Master::Cognition::Intelligence.posture_for(top) : :preserve,
-          scale: top ? Master::Cognition::Intelligence.judgment(top)[:scale] : :local,
-        )
-        remember_reasoning(pass:, findings:, files:, progressed:, top:)
+        # The attention budget can pick a different finding than the global top; only then is a
+        # second judgment a different fact. Otherwise it was the same event and the same memory
+        # write, published twice.
+        selected_top = attention[:selected].first
+        judge(pass:, findings:, files:, progressed:, top: selected_top) unless same_finding?(global_top, selected_top)
         emit(
           "fix_loop:convergence_measure",
           pass:,
@@ -112,6 +93,27 @@ module Master
           quality_delta:,
         )
         state
+      end
+
+      def judge(pass:, findings:, files:, progressed:, top:)
+        @bus&.publish(
+          "fix_loop:judgment",
+          pass:,
+          top_law: finding_value(top, :law),
+          top_file: finding_value(top, :file),
+          leverage: top ? Master::Cognition::Intelligence.leverage_score(top) : 0,
+          uncertainty: top ? Master::Cognition::Intelligence.uncertainty_score(top) : 1.0,
+          posture: top ? Master::Cognition::Intelligence.posture_for(top) : :preserve,
+          scale: top ? Master::Cognition::Intelligence.judgment(top)[:scale] : :local,
+        )
+        remember_reasoning(pass:, findings:, files:, progressed:, top:)
+      end
+
+      def same_finding?(first, second)
+        return true if first.equal?(second)
+        return false if first.nil? || second.nil?
+
+        %i[law file line].all? { |key| finding_value(first, key) == finding_value(second, key) }
       end
 
       def quality_delta

@@ -113,7 +113,7 @@ module Master
         @pass_runner&.reset_gaps!
         current_phase = :corpus
         files = incremental ? @file_collector.collect_changed(target) : @file_collector.collect(target)
-                coverage = {
+        coverage = {
           candidates: @file_collector.candidate_count,
           collected: files.size,
           skipped: @file_collector.skipped,
