@@ -29,7 +29,7 @@ module Master
       # Retrying reproduces it. Either the request is wrong, the answer is no, or
       # the operation is over.
       PERMANENT = %i[validation model_missing axiom_violation budget no_api_key policy shutdown abort
-                     handler_exception, crash].freeze
+                     handler_exception crash].freeze
 
       def retriable? = RETRIABLE.include?(@category)
       def permanent? = PERMANENT.include?(@category)

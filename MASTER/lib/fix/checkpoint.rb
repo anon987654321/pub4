@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "digest"
 require "fileutils"
 require "json"
 require "time"
@@ -10,6 +11,11 @@ module Master
   module Fix
     class Checkpoint
       include ::Master::Io::AtomicWrite
+
+      MANIFEST_VERSION = 2
+
+      class IntegrityError < StandardError; end
+
       attr_reader :root, :dir
 
       def initialize(root: Master::ROOT, dir: File.join(Master::ROOT, ".master", "checkpoints"))
@@ -23,7 +29,11 @@ module Master
         target = File.join(dir, id)
         FileUtils.mkdir_p(target)
         copy_files(normalized, from: root, to: target)
-        manifest = { id:, label:, files: normalized, created_at: Time.now.utc.iso8601 }
+        sha256 = file_checksums(normalized, from: target)
+        manifest = {
+          id:, label:, format_version: MANIFEST_VERSION,
+          files: sha256.keys, sha256:, created_at: Time.now.utc.iso8601,
+        }
         write_atomic(File.join(target, "manifest.json"), JSON.pretty_generate(manifest) + "\n", mode: 0o600)
         manifest
       end
@@ -44,11 +54,50 @@ module Master
 
         manifest = JSON.parse(File.read(manifest_path, encoding: "UTF-8"))
         files = Array(manifest["files"]).map { |path| normalize_relative(path) }
+        verify_checksums!(manifest, files, checkpoint_dir:)
         copy_files(files, from: checkpoint_dir, to: root)
         manifest
       end
 
       private
+
+      def file_checksums(files, from:)
+        files.each_with_object({}) do |relative, checksums|
+          path = File.join(from, relative)
+          checksums[relative] = Digest::SHA256.file(path).hexdigest if File.file?(path)
+        end
+      end
+
+      def verify_checksums!(manifest, files, checkpoint_dir:)
+        # Manifests predating version 2 have no integrity metadata. Preserve
+        # their historical restore behavior; every new checkpoint is verified
+        # before any destination file is replaced.
+        return if manifest["format_version"].nil? && !manifest.key?("sha256")
+
+        unless manifest["format_version"] == MANIFEST_VERSION
+          raise IntegrityError, "unsupported checkpoint manifest version: #{manifest["format_version"].inspect}"
+        end
+
+        checksums = manifest["sha256"]
+        raise IntegrityError, "checkpoint manifest lacks SHA-256 checksums" unless checksums.is_a?(Hash)
+
+        normalized = checksums.each_with_object({}) do |(relative, expected), result|
+          result[normalize_relative(relative)] = expected
+        end
+        unless normalized.keys.sort == files.sort
+          raise IntegrityError, "checkpoint manifest file list does not match its checksum list"
+        end
+
+        normalized.each do |relative, expected|
+          source = File.join(checkpoint_dir, relative)
+          raise IntegrityError, "checkpoint file is missing: #{relative}" unless File.file?(source)
+
+          unless expected.is_a?(String) && expected.match?(/\A[0-9a-f]{64}\z/) &&
+                 Digest::SHA256.file(source).hexdigest == expected
+            raise IntegrityError, "checkpoint SHA-256 mismatch: #{relative}"
+          end
+        end
+      end
 
       def slug(text)
         clean = text.to_s.downcase.gsub(/[^a-z0-9]+/, "-")
