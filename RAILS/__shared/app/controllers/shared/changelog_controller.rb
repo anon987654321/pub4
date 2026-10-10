@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "date"
 require "yaml"
 
 module Shared
@@ -11,7 +12,9 @@ module Shared
     def show
       @changelog = YAML.safe_load_file(
         Shared::Engine.root.join("config/changelog.yml"),
-        permitted_classes: [],
+        # Each entry's `date:` is an unquoted YAML date, which loads as a Date. With
+        # no permitted classes safe_load raised DisallowedClass on every request.
+        permitted_classes: [Date],
         aliases: false
       )
       render template: "shared/changelog", layout: "application"
