@@ -79,7 +79,21 @@
 
     <%# The photo and the link embed share the media slot; either may be absent. %>
     <% post_media = capture do %>
-      <%= link_to(responsive_image_tag(post.image, alt: post.title, loading: "lazy", class: "post-image"), post) if post.image.attached? %>
+      <% if post.images.attached? %>
+        <div class="post-images" data-controller="post-gallery" data-action="click->post-gallery#open">
+          <% post.images.each do |image| %>
+            <%= link_to rails_blob_path(image, disposition: "inline"), data: { gallery_item: true }, aria: { label: post.title } do %>
+              <%= image_tag image.variant(resize_to_limit: [800, 800]), alt: post.title, loading: "lazy", decoding: "async", class: "post-image" %>
+            <% end %>
+          <% end %>
+        </div>
+      <% elsif post.image.attached? %>
+        <div class="post-images" data-controller="post-gallery" data-action="click->post-gallery#open">
+          <%= link_to rails_blob_path(post.image, disposition: "inline"), data: { gallery_item: true }, aria: { label: post.title } do %>
+            <%= responsive_image_tag(post.image, alt: post.title, loading: "lazy", class: "post-image") %>
+          <% end %>
+        </div>
+      <% end %>
       <% if (embed = post.link_embed_record) %>
         <%= render "shared/link_embed", embed: embed %>
       <% end %>
