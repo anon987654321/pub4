@@ -1,4 +1,5 @@
 @use "post_gallery";
+@use "local_activity";
 @use "vertical_promo";
 @use "stack_brgen" as *;
 @use "shell" with ($drawer-chrome: false);
