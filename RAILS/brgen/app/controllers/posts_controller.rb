@@ -84,6 +84,7 @@ class PostsController < ApplicationController
     end
 
     @post = Post.new(post_params.except(:nearby))
+    @neighborhoods = Neighborhood.where(city_id: ActsAsTenant.current_tenant&.id).order(:name)
     @post.user = Current.user
     @post.anonymous = true if Current.user.guest? || ActiveModel::Type::Boolean.new.cast(post_params[:anonymous])
     stamp_nearby!
@@ -113,6 +114,7 @@ class PostsController < ApplicationController
       PostproJob.perform_later(@post.to_gid.to_s, preset) if preset && @post.image.attached?
       redirect_to @post, notice: t("flash.posted")
     else
+      @neighborhoods = Neighborhood.where(city_id: ActsAsTenant.current_tenant&.id).order(:name)
       render :new, status: :unprocessable_entity
     end
   end
@@ -187,7 +189,14 @@ class PostsController < ApplicationController
   end
 
   def post_params
-    params.require(:post).permit(:title, :content, :community_id, :anonymous, :image, :video, :audio, :preset, :flair, :nearby)
+    permitted = params.require(:post).permit(:title, :content, :community_id, :neighborhood_id, :anonymous, :image, :video, :audio, :preset, :flair, :nearby, images: [])
+    # A multi-file field sends [""] when untouched; do not replace existing
+    # gallery attachments with that empty sentinel during an edit.
+    if permitted[:images].present?
+      permitted[:images] = permitted[:images].reject(&:blank?)
+      permitted.delete(:images) if permitted[:images].empty?
+    end
+    permitted
   end
 
   # What is left of the Live layer, and the only part of it the front page did
