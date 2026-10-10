@@ -36,6 +36,8 @@ CONTRACTS = %w[
   RAILS/test/require_relative_targets_test.rb
   RAILS/test/no_top_level_test_calls_test.rb
   RAILS/test/coverage_layout_test.rb
+  RAILS/test/erb_container_balance_test.rb
+  RAILS/test/test_path_idioms_test.rb
 ].freeze
 
 def run(label, *argv, chdir: ROOT)

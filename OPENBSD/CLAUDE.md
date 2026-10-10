@@ -104,6 +104,40 @@ restart.
 which of the above buckets it's *not* in. When in doubt, read
 `RAILS/__shared/config/ci.rb` directly rather than assuming.
 
+## Two layouts: the repo and the box's copy-tree
+
+Code runs in two shapes of the same tree, and a path that is right in one is
+wrong in the other. Nearly every deploy failure of 2026-10-09 was this, found
+one at a time over a forty-minute CI loop.
+
+The repo checkout has `RAILS/<app>`, `RAILS/__shared`, `RAILS/brgen_*`,
+`MASTER`, `OPENBSD` and `STUDIO` side by side. On vm23 an app's user sees only
+`/home/<app>/app` (the contents of `RAILS/<app>`, so the directory is called
+`app`, never `brgen`), `/home/<app>/__shared`, and for brgen the
+`/home/brgen/brgen_*` siblings. MASTER is not in it. `PUB4_ROOT`, exported by
+`rc.d` and by `vps_ci.sh`, names the full checkout at `/home/dev/pub4`, which
+holds MASTER and `RAILS/apps.yml`.
+
+What to write, so both layouts work:
+
+- An app file: `Rails.root`, never `File.expand_path` with a fixed run of `..`,
+  and never a literal `brgen/` path segment.
+- A sibling engine: `Rails.root.join("..", "brgen_marketplace")`. It resolves in
+  both, because the engines are siblings of the app in both.
+- Anything in MASTER or the repo root: `Shared::Contracts.root`, `.dir` and
+  `.tool_path` (`RAILS/__shared/lib/shared/contracts.rb`). They honour
+  `PUB4_ROOT` and fall back to walking up from the checkout.
+- Never `engines/<x>` under the app root (the directory is gone), and never
+  `RAILS/shared` (it is `RAILS/__shared`).
+
+Three static guards enforce this without a Rails boot, and `ruby
+OPENBSD/bin/rehearse` runs them in seconds before any deploy:
+`test_deploy_paths_exist.rb` (every repo path a deploy script names exists),
+`RAILS/test/test_path_idioms_test.rb` (the walk-up and `brgen/` idioms), and
+`RAILS/test/require_relative_targets_test.rb`. Run it before `vps-deploy`; the box's
+`rails_test` is where only the failures it cannot see survive, and that step
+takes about 80 minutes on one vCPU.
+
 ## Copy-tree sync must delete before it extracts
 
 `vps_ci.sh`'s `sync_from_repo()`/`sync_ci_rails_root()` sync the repo to each

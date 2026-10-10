@@ -1,0 +1,83 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Runs MASTER's /fix over one tree from a worktree, the way that works here.
+#
+#   MASTER/bin/fix-here <MASTER|RAILS|OPENBSD|STUDIO|path> [--model ID|none] [--no-probe] [--dry]
+#
+# Why a wrapper: the plain `bin/master /fix` refuses in a worktree ("auto-merge
+# requires checked-out main") and in the shared checkout would push a branch to
+# origin. A fresh worktree has none of the gitignored MASTER/.master state, so the
+# saved model never applies and /fix falls to a free lane. Disk filled twice in one
+# session with agents running /fix and suites side by side. Each of these cost an
+# agent a rediscovery; this does them once.
+#
+# It never pushes. Review `git diff` afterwards, keep what you can verify, and land
+# it with bin/operator land or worktree finish.
+
+require "open3"
+require "fileutils"
+require "json"
+
+ROOT = File.expand_path("../..", __dir__)
+MASTER = File.join(ROOT, "MASTER")
+MIN_FREE_GIB = 2.0
+TREES = %w[MASTER RAILS OPENBSD STUDIO].freeze
+
+args = ARGV.dup
+dry = args.delete("--dry")
+probe = !args.delete("--no-probe")
+model_flag = (i = args.index("--model")) ? (args.delete_at(i) && args.delete_at(i)) : nil
+tree = args.shift
+abort "usage: MASTER/bin/fix-here <#{TREES.join('|')}|path> [--model ID|none] [--no-probe] [--dry]" if tree.to_s.empty? || args.any?
+abort "fix-here: #{tree} is not one of #{TREES.join(', ')} and not a path in this checkout" unless TREES.include?(tree) || File.exist?(File.join(ROOT, tree))
+
+# 1. A worktree, not the shared checkout: .git is a file in a worktree.
+shared = File.directory?(File.join(ROOT, ".git"))
+abort "fix-here: this is the shared checkout; take your own first: MASTER/bin/operator worktree <name> (FIX_HERE_SHARED=1 overrides)" if shared && ENV["FIX_HERE_SHARED"] != "1"
+
+# 2. Disk: a /fix run plus its tests writes logs and caches; below this tools start failing.
+out, ok = Open3.capture2e("df", "-kP", ROOT)
+free = ok ? out.lines.last.to_s.split[3].to_f / (1024 * 1024) : nil
+abort "fix-here: cannot read free disk" unless free
+abort format("fix-here: %.1f GiB free, need %.1f. Remove merged worktrees (bin/operator doctor lists them).", free, MIN_FREE_GIB) if free < MIN_FREE_GIB
+
+# 3. The saved model: .master is gitignored, so a new worktree has none. Copy the
+# main checkout's, which holds the operator's choice.
+common, = Open3.capture2e("git", "-C", ROOT, "rev-parse", "--git-common-dir")
+main_root = File.expand_path("..", File.expand_path(common.strip, ROOT))
+source_config = File.join(main_root, "MASTER", ".master", "config.yml")
+target_config = File.join(MASTER, ".master", "config.yml")
+if !File.file?(target_config) && File.file?(source_config)
+  FileUtils.mkdir_p(File.dirname(target_config))
+  FileUtils.cp(source_config, target_config) unless dry
+end
+saved = [target_config, source_config].map { |f| File.file?(f) ? File.read(f)[/^model:\s*(\S+)/, 1] : nil }.compact.first
+model = model_flag == "none" ? nil : (model_flag || saved)
+
+env = { "MASTER_INTERNAL_CHILD" => "1", "MASTER_FIX_WORKTREE_CHILD" => "1" }
+env["MASTER_MODEL"] = model if model
+log = File.join(MASTER, ".master", "fix-#{File.basename(tree)}.log")
+
+puts "fix0 at fix-here: tree=#{tree} worktree=#{ROOT}"
+puts "fix0 at fix-here: disk=#{format('%.1f', free)} GiB free, model=#{model || 'pool (none forced)'}, log=#{log}"
+if dry
+  puts "fix0 at fix-here: --dry, would run MASTER/bin/master /fix #{tree}"
+  exit 0
+end
+
+# 4. Prove the lane before a run that takes hours: one real call, and the model that
+# served it is read from MASTER's own record, not assumed.
+if probe && model
+  before = File.file?(File.join(MASTER, ".master", "metrics.jsonl")) ? File.readlines(File.join(MASTER, ".master", "metrics.jsonl"), encoding: "UTF-8", invalid: :replace).size : 0
+  question = "In one sentence: what bug does def total(items) items.sum { |i| i.price * i.qty } / items.size end have when items is empty?"
+  _, probe_ok = Open3.capture2e(env, File.join(MASTER, "bin", "master"), question)
+  rows = File.readlines(File.join(MASTER, ".master", "metrics.jsonl"), encoding: "UTF-8", invalid: :replace).drop(before).grep(/llm_response/)
+  served = rows.filter_map { |r| JSON.parse(r).dig("llm_response", "model") rescue nil }.last
+  abort "fix-here: the lane check failed (call ok=#{probe_ok}, served by #{served.inspect}, wanted #{model}). Run with --no-probe to skip, or fix the lane first." unless probe_ok && served == model
+  puts "fix0 at fix-here: lane proven, #{served} answered"
+end
+
+FileUtils.mkdir_p(File.dirname(log))
+puts "fix0 at fix-here: running; follow it with: tail -f #{log}"
+exec(env, File.join(MASTER, "bin", "master"), "/fix", tree, chdir: ROOT, out: [log, "w"], err: [:child, :out])
