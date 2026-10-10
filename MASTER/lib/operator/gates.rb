@@ -408,8 +408,8 @@ module Deploy
   class MasterWebAssetsGate
     # The repository root: this file is MASTER/lib/operator/gates.rb.
     ROOT = File.expand_path("../../..", __dir__)
-    FACE_CSS = File.join(ROOT, "MASTER", "web", "public", "face.css")
-    WEB_ROOT = File.join(ROOT, "MASTER", "web")
+    FACE_CSS = File.join(ROOT, "RAILS", "master_web", "public", "face.css")
+    WEB_ROOT = File.join(ROOT, "RAILS", "master_web")
     ASSETS_DIR = File.join(WEB_ROOT, "public", "assets")
     MANIFEST = File.join(ASSETS_DIR, ".manifest.json")
     REQUIRED = %w[face.css face.js face.runtime.js chat.js three.face.module.js].freeze

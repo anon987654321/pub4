@@ -40,8 +40,8 @@ module Operator
       File.join("amber", "app", "assets", "stylesheets"),
       File.join("bsdports", "app", "assets", "stylesheets"),
       File.join("shared", "app", "assets", "stylesheets"),
-      File.join("MASTER", "web", "public"),
-      File.join("MASTER", "web", "src"),
+      File.join("RAILS", "master_web", "public"),
+      File.join("RAILS", "master_web", "src"),
     ].freeze
 
     def initialize(root:)

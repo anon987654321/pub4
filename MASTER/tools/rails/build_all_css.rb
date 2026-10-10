@@ -250,7 +250,7 @@ def verify_build(app, out)
 end
 
 def verify_face_css
-  path = File.join(ROOT, "MASTER", "web", "public", "face.css")
+  path = File.join(ROOT, "RAILS", "master_web", "public", "face.css")
   return [] unless File.file?(path)
 
   body = File.read(path)

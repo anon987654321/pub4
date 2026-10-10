@@ -7,7 +7,7 @@ require_relative "../design_tokens"
 # "../../.." reaches the checkout root where RAILS/master_web/public/face.css lives. This is a
 # nonexistent <parent>/RAILS/master_web/public/face.css.
 ROOT = File.expand_path("../../../", __dir__)
-FACE_CSS = File.join(ROOT, "MASTER", "web", "public", "face.css")
+FACE_CSS = File.join(ROOT, "RAILS", "master_web", "public", "face.css")
 
 changed = DesignTokens.sync_face_css!(FACE_CSS)
 puts changed ? "updated #{FACE_CSS}" : "face.css :root already in sync"

@@ -10,7 +10,7 @@ module Deploy
   class FrontendProductionGate
     ROOT = File.expand_path("../../../..", __dir__)
     RAILS_ROOT = File.join(ROOT, "RAILS")
-    WEB_ROOT = File.join(ROOT, "MASTER", "web")
+    WEB_ROOT = File.join(ROOT, "RAILS", "master_web")
     APPS_YML = File.join(RAILS_ROOT, "apps.yml")
 
     def self.run
