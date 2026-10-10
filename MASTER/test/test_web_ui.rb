@@ -2,6 +2,7 @@
 
 require_relative "test_helper"
 require "rack/test"
+require "digest"
 require "yaml"
 
 # Minimal Rack test harness for the web UI chat controller.
@@ -770,20 +771,20 @@ class TestWebUI < Minitest::Test
     assert_includes world, 'addEventListener("audio:update"'
   end
 
-  def test_face_runtime_matches_its_sources
+  # The runtime is a loader that fetches each source by URL, and the server caches those for a
+  # year, so each source is named by the digest of its content. A runtime naming an old digest
+  # sends browsers back to a stale part: the face stayed blank after the shader fix shipped.
+  def test_face_runtime_names_every_source_by_its_current_digest
     dir = File.expand_path("../../RAILS/master_web/public", __dir__)
     missing = FACE_RUNTIME_SOURCES.reject { |name| File.file?(File.join(dir, name)) }
     assert_empty missing, "face runtime sources missing: #{missing.join(', ')}"
 
-    body = FACE_RUNTIME_SOURCES.map { |name| File.read(File.join(dir, name)) }.join("\n")
-    rebuilt = "#{FACE_RUNTIME_BANNER}#{body}\n"
     built = File.read(File.join(dir, "face.runtime.js"))
-
-    assert_equal rebuilt.bytesize, built.bytesize,
-                 "public/face.runtime.js has drifted from its sources — " \
-                 "run `rails assets:build_face_runtime` in RAILS/master_web"
-    assert_equal rebuilt, built,
-                 "public/face.runtime.js differs from its sources at equal length"
+    FACE_RUNTIME_SOURCES.each do |name|
+      digest = Digest::SHA256.file(File.join(dir, name)).hexdigest[0, 10]
+      assert_includes built, "#{name}?v=#{digest}",
+                      "public/face.runtime.js names #{name} at an old digest — run `rails assets:build_face_runtime` in RAILS/master_web"
+    end
   end
 
   # The request-scoped persona note is the only path by which a caller can put

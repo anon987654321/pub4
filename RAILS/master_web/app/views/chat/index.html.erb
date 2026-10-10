@@ -40,8 +40,8 @@
         same twelve names, free to drift apart; the map is now derived. %>
     window.MASTER_ASSET_PATHS = {
       faceModulesList: <%= raw FaceAssets.eager.to_json %>,
-      faceModules: <%= raw FaceAssets.module_names.to_h { |name| [name, asset_path(name)] }.to_json %>,
-      <%= raw FaceAssets.singletons.map { |key, file| "#{key}: #{asset_path(file).to_json}" }.join(",\n      ") %>
+      faceModules: <%= raw FaceAssets.module_names.to_h { |name| [name, FaceAssets.versioned(asset_path(name), name)] }.to_json %>,
+      <%= raw FaceAssets.singletons.map { |key, file| "#{key}: #{FaceAssets.versioned(asset_path(file), file).to_json}" }.join(",\n      ") %>
     };
   </script>
   <script nonce="<%= content_security_policy_nonce %>">
@@ -246,7 +246,7 @@
         if(retried)window.MASTER?.boot?.transition?.('RECOVERING', { source: 'loadFace_retry' });
         window.MASTER?.boot?.transition?.('ASSETS', { source: 'loadFace', retried: !!retried });
         resetFaceCanvasForWebGL();
-        import("<%= asset_path("face.js") %>").then(function(){
+        import("<%= FaceAssets.versioned(asset_path("face.js"), "face.js") %>").then(function(){
           if(boot())clearWatch();
         }).catch(function(){
           window.__MASTER_FACE_IMPORT__=false;

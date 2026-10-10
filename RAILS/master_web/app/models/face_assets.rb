@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "digest"
 require "yaml"
 
 # Reader for config/face_assets.yml — the one manifest of face JavaScript.
@@ -10,10 +11,24 @@ require "yaml"
 module FaceAssets
   PATH = File.expand_path("../../config/face_assets.yml", __dir__).freeze
 
+  PUBLIC_DIR = File.expand_path("../../public", __dir__).freeze
+
   MODULE_GROUPS = %w[face_eager face_runtime_deferred face_vision_deferred].freeze
   SHELL_GROUPS = %w[shell_early shell_manifest shell_late].freeze
 
   module_function
+
+  # A file under public/ is served as it is, so asset_path cannot fingerprint it, and the server
+  # caches it for a year. A browser that had loaded the old face.part2.txt kept it after the shader
+  # fix shipped and the face stayed blank. A digest of the file's content in the query makes a
+  # changed file a new URL and an unchanged one a cache hit.
+  def versioned(path, name)
+    file = File.join(PUBLIC_DIR, name.to_s)
+    return path if path.to_s.include?("?") || path.to_s.match?(/-[0-9a-f]{8,}\.[a-z0-9]+\z/)
+    return path unless File.file?(file)
+
+    "#{path}?v=#{Digest::SHA256.file(file).hexdigest[0, 10]}"
+  end
 
   def manifest
     @manifest ||= YAML.safe_load_file(PATH).freeze
