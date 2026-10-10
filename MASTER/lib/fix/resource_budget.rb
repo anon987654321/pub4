@@ -19,14 +19,21 @@ module Master
         disk_free_gb: { warn: 5, crit: 2 },
       }.freeze
 
+      # Share of physical memory this process may hold before model work is shed.
+      # DEFAULTS is the floor, sized for vm23's 1 GB, where 20% of RAM is under it
+      # and nothing changes; a 16 GB laptop gets 3.2 GB, which the 768 MB figure
+      # never allowed for: pass 1 alone crossed it and every model fix was shed.
+      RSS_SHARE = { "warn" => 0.10, "crit" => 0.20 }.freeze
+
       attr_reader :root
       MEASURE_TTL_S = 2
 
-      def initialize(root:, config: nil, clock: Process::CLOCK_MONOTONIC, cpus: Etc.nprocessors, platform: RUBY_PLATFORM)
+      def initialize(root:, config: nil, clock: Process::CLOCK_MONOTONIC, cpus: Etc.nprocessors, platform: RUBY_PLATFORM, memory_mb: nil)
         @root = root
         @config = config || Master::Ops::ProcessBudget.config
         @clock = clock
         @cpus = [cpus.to_i, 1].max
+        @memory_mb = memory_mb
         @platform = platform.to_s[/darwin|openbsd|linux/]
         @last_measurement_at = nil
         @last_measurement = nil
@@ -77,8 +84,7 @@ module Master
           # are per CPU: vm23's one vCPU reads them as written.
           [:load_avg_1m, limit("load_avg_1m", "warn", DEFAULTS[:load_avg_1m][:warn]) * @cpus,
            limit("load_avg_1m", "crit", DEFAULTS[:load_avg_1m][:crit]) * @cpus],
-          [:rss_mb, limit("master_rss_mb", "warn", DEFAULTS[:master_rss_mb][:warn]),
-           limit("master_rss_mb", "crit", DEFAULTS[:master_rss_mb][:crit])],
+          [:rss_mb, rss_limit("warn"), rss_limit("crit")],
           [:fd_count, resource_limit("fd_count", "warn"), resource_limit("fd_count", "crit")],
           [:thread_count, resource_limit("thread_count", "warn"), resource_limit("thread_count", "crit")],
           [:process_count, resource_limit("process_count", "warn"), resource_limit("process_count", "crit")],
@@ -146,6 +152,36 @@ module Master
         return configured if configured.positive?
 
         DEFAULTS.fetch(name.to_sym).fetch(level.to_sym)
+      end
+
+      def rss_limit(level)
+        configured = @config.dig("load", "master_rss_mb", level).to_f
+        return configured if configured.positive?
+
+        floor = DEFAULTS[:master_rss_mb].fetch(level.to_sym)
+        memory = physical_memory_mb
+        memory ? [floor, (memory * RSS_SHARE.fetch(level)).round].max : floor
+      end
+
+      def physical_memory_mb
+        return @memory_mb if @memory_mb
+
+        @memory_mb = detect_physical_memory_mb
+      end
+
+      def detect_physical_memory_mb
+        if File.file?("/proc/meminfo")
+          kb = File.read("/proc/meminfo")[/^MemTotal:\s+(\d+) kB$/, 1]
+          return kb.to_i / 1024 if kb
+        end
+        sysctl = ["/sbin/sysctl", "/usr/sbin/sysctl"].find { |bin| File.executable?(bin) }
+        return unless sysctl
+
+        key = @platform == "darwin" ? "hw.memsize" : "hw.physmem"
+        out, status = Open3.capture2e(sysctl, "-n", key)
+        status.success? ? out.to_i / (1024 * 1024) : nil
+      rescue StandardError
+        nil
       end
 
       def limit(section, key, fallback)
