@@ -416,8 +416,13 @@ module Deploy
     # Same two files Operator::CiGuard uses to recognise vm23. Only there is a missing
     # precompiled manifest a deploy fault rather than an unbuilt checkout.
     DEPLOY_HOST_MARKERS = ["/etc/relayd.conf", "/var/db/pub4_vps"].freeze
+    # :via_rc_d names a script that restarts master through the service loop and
+    # builds nothing itself: rc.d/master precompiles when its input digest moved
+    # and runs this gate before it lets the start proceed, so the script inherits
+    # both. check_rc_d_master holds that claim.
+    RC_D_MASTER = "OPENBSD/etc/rc.d/master"
     DEPLOY_SCRIPTS = {
-      "OPENBSD/OPERATOR.sh" => :start_or_restart,
+      "OPENBSD/OPERATOR.sh" => :via_rc_d,
       # vps_on_vm_install.sh is not listed: it only execs vps_install_all.sh.
       "OPENBSD/bin/vps_install_all.sh" => :start_or_restart,
       "OPENBSD/bin/vps_console.exp" => :restart,
@@ -497,6 +502,11 @@ module Deploy
         end
 
         content = File.read(path)
+        if restart_mode == :via_rc_d
+          check_via_rc_d(result, relative_path, content)
+          next
+        end
+
         result.fail("#{relative_path} must precompile RAILS/master_web assets") unless content.include?("assets:precompile")
         # Matched on the gate name, not on a script path: the per-gate scripts at
         # the RAILS root were shims, and every caller now names the gate for
@@ -514,5 +524,20 @@ module Deploy
       end
     end
     private_class_method :check_deploy_scripts
+
+    def self.check_via_rc_d(result, relative_path, content)
+      restarts = content.match?(/svcs=\([^)]*\bmaster\b[^)]*\)/) && content.include?("rcctl restart $svc")
+      result.fail("#{relative_path} must restart master through rc.d") unless restarts
+      rc_d = File.join(ROOT, RC_D_MASTER)
+      unless File.file?(rc_d)
+        result.fail("missing #{RC_D_MASTER}, which #{relative_path} relies on to precompile and gate assets")
+        return
+      end
+
+      rc_content = File.read(rc_d)
+      result.fail("#{RC_D_MASTER} must precompile RAILS/master_web assets") unless rc_content.include?("assets:precompile")
+      result.fail("#{RC_D_MASTER} must run the master_web_assets gate") unless rc_content.include?("master_web_assets")
+    end
+    private_class_method :check_via_rc_d
   end
 end

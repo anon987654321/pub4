@@ -45,7 +45,7 @@ module Deploy
               brgen/app/assets/stylesheets
               amber/app/assets/stylesheets
               bsdports/app/assets/stylesheets
-              shared/app/assets/stylesheets
+              __shared/app/assets/stylesheets
             ],
             # Intentional exceptions are the documented product pens — the yep.com
             # search, jOxVvNE, Amazon's nav bar and logo — read with their rules

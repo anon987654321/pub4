@@ -12,7 +12,7 @@ module Deploy
     # together are this gate's "boot" vocabulary.
     BOOT_FILES = %w[stimulus_boot.js stimulus_boot_social.js stimulus_boot_brgen.js stimulus_boot_amber.js]
       .map { |f| File.join(RAILS_ROOT, "__shared/frontend", f) }.freeze
-    BASELINE = File.join(RAILS_ROOT, "shared/config/importmap_baseline.rb")
+    BASELINE = File.join(RAILS_ROOT, "__shared/config/importmap_baseline.rb")
     VENDOR = File.join(RAILS_ROOT, "__shared/vendor/javascript")
 
     # Controller names the boot files must register between them, and package

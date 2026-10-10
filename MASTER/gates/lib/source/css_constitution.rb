@@ -182,7 +182,7 @@ VAR_FALLBACK = /var\(\s*--[\w-]+\s*,[^()]*\)/
     # carrying its own copy of the scale is a second source that drifts, and
     # the drift is invisible precisely because both files look maintained.
     def token_path(name)
-      File.join(RAILS, "shared", "app/assets/stylesheets", name)
+      File.join(RAILS, "__shared", "app/assets/stylesheets", name)
     end
 
     def size_ladder

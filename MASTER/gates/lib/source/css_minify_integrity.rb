@@ -58,7 +58,7 @@ module Deploy
       # read as a broken stylesheet, and the minify check it exists to run never
       # executed for brgen at all.
       load_paths = [
-        File.join(RAILS_ROOT, "shared", "app/assets/stylesheets"),
+        File.join(RAILS_ROOT, "__shared", "app/assets/stylesheets"),
         File.join(RAILS_ROOT, app, "app/assets/stylesheets"),
         *Dir.glob(File.join(RAILS_ROOT, app, "engines/*/app/assets/stylesheets")),
       ]
