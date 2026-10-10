@@ -1,5 +1,6 @@
-# MASTER-local gate support; sibling implementation imports are forbidden.
 # frozen_string_literal: true
+
+# MASTER-local gate support; sibling implementation imports are forbidden.
 
 require "yaml"
 require_relative "../../support/gate_result"

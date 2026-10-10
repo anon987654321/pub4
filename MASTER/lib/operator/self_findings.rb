@@ -1,5 +1,6 @@
-require_relative "../io/exec"
 # frozen_string_literal: true
+
+require_relative "../io/exec"
 
 # What MASTER's own rules find in MASTER's own tree.
 #
