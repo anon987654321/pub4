@@ -245,7 +245,7 @@ module CrateDig
   # Pick one audio file per item. Prefers the lossless-ish restored transfer the
   # Great 78 Project publishes over the lossy derivative, but takes what is
   # there -- a 78 transfer is band-limited long before the codec is the problem.
-  PREFERRED = %w[VBR\ MP3 Flac 24bit\ Flac MP3].freeze
+  PREFERRED = ["VBR MP3", "Flac", "24bit Flac", "MP3"].freeze
 
   def best_file(identifier)
     meta = http_json("https://archive.org/metadata/#{identifier}")

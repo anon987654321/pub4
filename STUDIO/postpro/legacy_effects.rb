@@ -76,7 +76,6 @@ module Postpro
   end
 end
 
-
 module Postpro
   module LegacyEffects
     def cinemascope_bars(image, intensity = 1.0, aspect_ratio = "2.35:1", _mode = "professional")
@@ -152,7 +151,6 @@ module Postpro
   end
 end
 
-
 module Postpro
   module LegacyEffects
     def vhs_degrade(image, intensity = 0.65, _mode = "professional")
@@ -197,7 +195,6 @@ module Postpro
     end
   end
 end
-
 
 module Postpro
   module LegacyEffects

@@ -125,7 +125,7 @@ module DillaMusicalFilm
     end
   end
 
-  def demo(seed: 16842)
+  def demo(seed: 16_842)
     scenes = %w[flylo flylo_haze_01 flylo_massage_situation flylo_computer_face flylo_haze_05]
     scenes.each_with_index.map do |scene, index|
       plan(scene:, index:, total: scenes.length, seed:, tension: index.fdiv([scenes.length - 1, 1].max), energy: 0.34 + index * 0.12)

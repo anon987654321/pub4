@@ -6,7 +6,6 @@ require "net/http"
 require "tmpdir"
 require "uri"
 
-
 # Recover the operator's old Ableton beats without requiring Ableton Live itself.
 # .als files are gzip-compressed XML; the Ableton reader already understands that
 # document, so /play should use the real notes and their clip positions rather

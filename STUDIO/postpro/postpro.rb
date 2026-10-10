@@ -1099,7 +1099,6 @@ PRESETS = {
   legacy_scratch_print: { fx: %w[film_curve film_scratches color_fade], stock: :kodachrome,
                           temp: 5400, intensity: 0.68 },
 
-
   legacy_cross_process: { fx: %w[film_curve cross_process film_halation grain], stock: :fuji_velvia,
                           temp: 5500, intensity: 0.72 },
 
@@ -1114,7 +1113,6 @@ PRESETS = {
 
   legacy_glitch: { fx: %w[glitch], stock: :kodak_portra,
                    temp: 6500, intensity: 0.68 },
-
 
   dilla_vinyl_hot: { fx: %w[dilla_head_bump dilla_vinyl_bandlimit dilla_phasy grain],
                      stock: :kodak_portra, temp: 5000, intensity: 0.72 },
@@ -3651,7 +3649,6 @@ RANDOM_LANES = {
 RANDOM_LANE_NAMES = RANDOM_LANES.keys.freeze
 
 def random_lane(rng) = RANDOM_LANE_NAMES.sample(random: rng)
-
 
 # One or two steps carry the look and the rest are barely there.
 #

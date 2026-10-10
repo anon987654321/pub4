@@ -1459,7 +1459,7 @@ module Livesets
     journal!(
       named: @named, at: Time.now.utc.iso8601, seed: seed, set: "chord_based_beats", seconds: total, bed: nil, progression_name: name.to_s,
       progression: symbols, bpm: bpm, bar_s: bar, chord_s: chord_s, chord_bars: ENV["LIVE_CHORD_BARS"], kit_cycle: kit_cycle, form: form,
-      bus_patch: ENV['LIVE_BUS_PATCH'], muted: muted.join(","),
+      bus_patch: ENV["LIVE_BUS_PATCH"], muted: muted.join(","),
       weights: weights("chord_based_beats"),
       drums: { kick_ms: hits[:kick], snare_ms: hits[:snare], ghost_ms: hits[:ghost], hat_ms: hits[:hat] }, groove: groove,
       **console_record("chord_based_beats"), lufs: ENV["LIVE_LUFS"], rig: "dilla.rb live set chord_based_beats"
@@ -1632,7 +1632,7 @@ module Livesets
       named: @named, at: Time.now.utc.iso8601, seed: seed, set: "sampled_based_beats", shareable: shareable?("bed" => slug), seconds: total, bed: slug, credit: credit(slug), sample_worth: sw,
       bpm: g[:bpm], bpm_pin: pinned_bpm, drag: drag, bars_in_loop: g[:bars_in_loop], voicing: choice, progression: prog,
       chop_at: slice_at, reversed: reverse, bar_s: bar, form: form, hocket: voice_of.values.max.to_i + 1,
-      bus_patch: ENV['LIVE_BUS_PATCH'], muted: muted.join(","),
+      bus_patch: ENV["LIVE_BUS_PATCH"], muted: muted.join(","),
       weights: weights("sampled_based_beats"),
       drums: { kick_ms: hits[:kick], snare_ms: hits[:snare], ghost_ms: hits[:ghost], hat_ms: hits[:hat] }, groove: groove,
       **console_record("sampled_based_beats"), lufs: ENV["LIVE_LUFS"], rig: "dilla.rb live set sampled_based_beats"
@@ -1754,7 +1754,7 @@ module Livesets
       named: @named, at: Time.now.utc.iso8601, seed: seed, set: "ambient_pads", shareable: shareable?("bed" => slug), seconds: total, bed: slug, credit: credit(slug), sample_worth: sw,
       bpm: g[:bpm], bpm_pin: pinned_bpm, drag: drag, bars_in_loop: g[:bars_in_loop], progression: prog,
       chop_at: slice_at, hold_s: hold, bar_s: bar, drums: nil, form: form,
-      copy_machine: copies('ambient_pads'), voice_stack: voice_stack_plan.size, bus_patch: ENV['LIVE_BUS_PATCH'], muted: muted.join(","),
+      copy_machine: copies("ambient_pads"), voice_stack: voice_stack_plan.size, bus_patch: ENV["LIVE_BUS_PATCH"], muted: muted.join(","),
       weights: weights("ambient_pads"),
       **console_record("ambient_pads"), lufs: ENV["LIVE_LUFS"], rig: "dilla.rb live set ambient_pads"
     )
@@ -1937,9 +1937,9 @@ module Livesets
   # before, which is how a default can move without moving a kept take.
   RECALLED = {
     "LIVE_BED" => ["bed", nil], "LIVE_KIT" => ["kit", nil], "LIVE_PROGRESSION" => ["progression_name", nil],
-    "LIVE_VOICING" => ["voicing", "down"], "LIVE_LENGTH" => ["seconds", nil], "LIVE_ROOM" => ["room", "warm"],
-    "LIVE_KIT_CYCLE" => ["kit_cycle", "phrase"], "LIVE_FORM" => ["form", nil], "LIVE_MUTE" => ["muted", nil], "LIVE_WEIGHTS" => ["weights", nil], "LIVE_DRAG" => ["drag", nil], "LIVE_BPM" => ["bpm_pin", nil], "LIVE_GROOVE" => ["groove", "drunk"], "LIVE_CHORD_BARS" => ["chord_bars", nil], "LIVE_LUFS" => ["lufs", nil],
-    "LIVE_COPY_MACHINE" => ["copy_machine", "0"], "LIVE_VOICE_STACK" => ["voice_stack", "1"], "LIVE_HOCKET" => ["hocket", "1"],
+    "LIVE_VOICING" => %w[voicing down], "LIVE_LENGTH" => ["seconds", nil], "LIVE_ROOM" => %w[room warm],
+    "LIVE_KIT_CYCLE" => %w[kit_cycle phrase], "LIVE_FORM" => ["form", nil], "LIVE_MUTE" => ["muted", nil], "LIVE_WEIGHTS" => ["weights", nil], "LIVE_DRAG" => ["drag", nil], "LIVE_BPM" => ["bpm_pin", nil], "LIVE_GROOVE" => %w[groove drunk], "LIVE_CHORD_BARS" => ["chord_bars", nil], "LIVE_LUFS" => ["lufs", nil],
+    "LIVE_COPY_MACHINE" => %w[copy_machine 0], "LIVE_VOICE_STACK" => %w[voice_stack 1], "LIVE_HOCKET" => %w[hocket 1],
     "LIVE_BUS_PATCH" => ["bus_patch", nil],
   }.freeze
 
@@ -2211,7 +2211,7 @@ module Livesets
     bands = measures.to_h { |arm, m| [arm, m[:bands].map { |db| db + trims.fetch(arm) }] }
     noise = ab_band_move(bands, "control")
     moved = ab_band_move(bands, "changed")
-    lines = trims.map { |arm, db| format("%-9s trim %+6.2f dB  bands %s", arm, db, bands[arm].map { |b| format('%6.1f', b) }.join(' ')) }
+    lines = trims.map { |arm, db| format("%-9s trim %+6.2f dB  bands %s", arm, db, bands[arm].map { |b| format("%6.1f", b) }.join(" ")) }
     verdict = moved > [noise * 2, 0.3].max ? "real" : "inside the noise"
     lines << format("level-matched, the changed arm moves a band %.1f dB against %.1f dB between two baselines -- %s",
                     moved, noise, verdict)
@@ -3044,14 +3044,14 @@ SHOWCASE_MODES = {
 
   def self.play_reference(name)
     presets = {
-      "dilla_flowers_documented" => ["dilla_flowers_documented", "rhodes_tine"],
-      "dilla_so_far_to_go_documented" => ["dilla_so_far_to_go_documented", "e_piano"],
-      "slum_village_players_documented" => ["slum_village_players_documented", "rhodes_tine"],
-      "flylo_beginners_falafel_documented" => ["flylo_beginners_falafel_documented", "prophet_pad"],
-      "flylo_camel_documented" => ["flylo_camel_documented", "prophet_pad"],
-      "madlib_accordion_loop_documented" => ["madlib_accordion_loop_documented", "e_piano"],
-      "madlib_figaro_documented" => ["madlib_figaro_documented", "rhodes_tine"],
-      "royksopp_what_else_is_there_documented" => ["royksopp_what_else_is_there_documented", "juno_pad"],
+      "dilla_flowers_documented" => %w[dilla_flowers_documented rhodes_tine],
+      "dilla_so_far_to_go_documented" => %w[dilla_so_far_to_go_documented e_piano],
+      "slum_village_players_documented" => %w[slum_village_players_documented rhodes_tine],
+      "flylo_beginners_falafel_documented" => %w[flylo_beginners_falafel_documented prophet_pad],
+      "flylo_camel_documented" => %w[flylo_camel_documented prophet_pad],
+      "madlib_accordion_loop_documented" => %w[madlib_accordion_loop_documented e_piano],
+      "madlib_figaro_documented" => %w[madlib_figaro_documented rhodes_tine],
+      "royksopp_what_else_is_there_documented" => %w[royksopp_what_else_is_there_documented juno_pad],
     }
     preset = presets.fetch(name.to_s) { abort "play: no sound preset for #{name}" }
     [preset.first, preset.last]

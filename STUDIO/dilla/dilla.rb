@@ -23215,7 +23215,7 @@ def pick_external_drum_kit!
     kit_dir = File.join(EXTERNAL_DRUM_KIT_CACHE, "drum-samples", kit)
     if Dir.exist?(kit_dir)
       @current_external_kit = kit
-      return
+      nil
     end
   end
   # Nothing else. An external kit is somebody else's recording of a drum, and
@@ -30362,8 +30362,8 @@ def render_hate_techno(destination = File.join(ROOT, "hate_session.mp3"))
               "apulsator=hz=0.09:amount=0.25:offset_r=0.25," \
               "chorus=0.6:0.9:50|70|90:0.4|0.32|0.3:0.25|0.4|0.3:2|2.3|1.3," \
               "aphaser=speed=0.15:decay=0.55:delay=3.0," \
-              "aecho=0.8:0.9:#{(step * 7000).round}|#{(step * 11000).round}:0.55|0.4," \
-              "aecho=0.7:0.8:#{(step * 17000).round}|#{(step * 23000).round}:0.4|0.3," \
+              "aecho=0.8:0.9:#{(step * 7000).round}|#{(step * 11_000).round}:0.55|0.4," \
+              "aecho=0.7:0.8:#{(step * 17_000).round}|#{(step * 23_000).round}:0.4|0.3," \
               "stereowiden=delay=32:feedback=0.5:crossfeed=0.4:drymix=0.6," \
               "volume=#{ENV.fetch('HATE_PAULSTRETCH_GAIN', '43')}dB")
   end
@@ -38671,8 +38671,6 @@ module DillaLive
   end
 end
 
-
-
 # Verified chord cells from Röyksopp's Melody A.M. era, used as harmonic source
 # material for an original Dilla live arrangement. No melodies, recordings or
 # original production are reproduced here.
@@ -38788,7 +38786,7 @@ module RoyksoppLive
       sox = audio_tool("sox")
       return [sox, "-q", "-t", "raw", "-r", RATE.to_s, "-e", "signed", "-b", "16", "-c", "2", "-", "-d"] if sox
       ffplay = audio_tool("ffplay")
-      return [ffplay, "-f", "s16le", "-ar", RATE.to_s, "-ac", "2", "-nodisp", "-autoexit", "-loglevel", "quiet", "-i", "-"] if ffplay
+      [ffplay, "-f", "s16le", "-ar", RATE.to_s, "-ac", "2", "-nodisp", "-autoexit", "-loglevel", "quiet", "-i", "-"] if ffplay
     end
 
     def self.claim!
@@ -39226,7 +39224,6 @@ module LivesetStandard
     ffplay = local_audio_tool("ffplay")
     abort "liveset: ffmpeg is required" unless ffmpeg
     abort "liveset: no local soundcard player — install sox or ffplay" unless sox_tool || ffplay
-
 
     # The knobs: cutoff breathes over 23 s, resonance over 31 s, out of phase.
     dfam_rng = Random.new
@@ -39983,9 +39980,6 @@ module DillaTakes
       end
     end
 
-
-
-
     knob_rng = Random.new
     DFAM_KNOBS = {
       vcf_decay: DfamKnob.new(0.03, 0.22, knob_rng, speed: 0.08),
@@ -40413,7 +40407,6 @@ module DillaTakes
         # Parallel distortion on the drum bus: grit blended under the clean hits.
         drums += Math.tanh(drums * 12.0) * 0.025
         # The pads pump against the kick.
-
 
       beat_len = 4 * DFAM_STEP
       breath += BREATH_GLIDE * ((1.0 - (BREATH_DEPTH * Math.exp(-(now % beat_len) / BREATH_RECOVER_S))) - breath)
@@ -41044,9 +41037,6 @@ module DillaTakes
       end
     end
 
-
-
-
     knob_rng = Random.new
     DFAM_KNOBS = {
       vcf_decay: DfamKnob.new(0.03, 0.22, knob_rng, speed: 0.08),
@@ -41462,7 +41452,6 @@ module DillaTakes
         # The pads pump against the kick.
         pump = 1.0 - (0.25 * duck)
 
-
       deck = CUTS_ON ? cut[(now / (DFAM_STEP / 2)).floor % 32] : "A"
       gain_a += CUT_GLIDE * ((deck == "A" ? 1.0 : 0.0) - gain_a)
       gain_b += CUT_GLIDE * ((deck == "B" ? 1.0 : 0.0) - gain_b)
@@ -41773,9 +41762,6 @@ module DillaTakes
         @value = @lo + ((@hi - @lo) * @x)
       end
     end
-
-
-
 
     knob_rng = Random.new
     DFAM_KNOBS = {
@@ -42169,7 +42155,6 @@ module DillaTakes
         # The pads pump against the kick.
         pump = 1.0 - (0.25 * duck)
 
-
       deck = cut[(now / (DFAM_STEP / 2)).floor % 32]
       gain_a += CUT_GLIDE * ((deck == "A" ? 1.0 : 0.0) - gain_a)
       gain_b += CUT_GLIDE * ((deck == "B" ? 1.0 : 0.0) - gain_b)
@@ -42399,9 +42384,6 @@ module DillaTakes
         @value = @lo + ((@hi - @lo) * @x)
       end
     end
-
-
-
 
     knob_rng = Random.new
     DFAM_KNOBS = {
@@ -42778,7 +42760,6 @@ module DillaTakes
         pump = 1.0 - (0.25 * duck)
         left[j] += (pad_l[j] * pump) + drums + rumble
 
-
       right[j] += (pad_r[j] * pump) + drums + rumble
       # The Crystallizer on the lead.
       cl = crys_out_l = 0.0
@@ -43034,9 +43015,6 @@ module DillaTakes
         @value = @lo + ((@hi - @lo) * @x)
       end
     end
-
-
-
 
     knob_rng = Random.new
     DFAM_KNOBS = {
@@ -43453,7 +43431,6 @@ module DillaTakes
         # The pads pump against the kick.
         pump = 1.0 - (0.25 * duck)
 
-
       deck = cut[(now / (DFAM_STEP / 2)).floor % 32]
       gain_a += CUT_GLIDE * ((deck == "A" ? 1.0 : 0.0) - gain_a)
       gain_b += CUT_GLIDE * ((deck == "B" ? 1.0 : 0.0) - gain_b)
@@ -43668,9 +43645,6 @@ module DillaTakes
         @value = @lo + ((@hi - @lo) * @x)
       end
     end
-
-
-
 
     knob_rng = Random.new
     DFAM_KNOBS = {

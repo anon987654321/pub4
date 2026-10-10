@@ -1750,7 +1750,7 @@ euclid_sparse: {
   pad_bass *= 2.0 while 12.0 * Math.log2(ch[:hz].min / pad_bass) > 17.0
   upper_root = NOTE_PC[upper.strip.match(/\A([A-G][#b]?)/i)&.captures&.first&.then { |r| r[0].upcase + r[1..].to_s }]
   hz = trim_slash_voicing(pad_bass.round(2), ch[:hz], root_pc: upper_root)
-  return ch.merge(name: sym, hz:, bass_hz:)
+  ch.merge(name: sym, hz:, bass_hz:)
   end
 
   def note_hz(name, octave: 3)
@@ -2407,7 +2407,6 @@ module DillaGroove
     state_gain = PHRASE_STATE_GAIN.fetch(phrase_state(bar))
     (1.0 + ((state_gain - 1.0) * weight)).clamp(0.78, 1.10).round(4)
   end
-
 
   # Slow-oscillating timing drift applied on top of per-hit jitter — the
   # difference between a groove that "breathes" over a phrase and one that's
@@ -3358,7 +3357,6 @@ module DillaRhythm
   end
 end
 
-
 module DillaRecordDna
   DATA_FILE = File.expand_path("../data/record_dna.yml", __dir__)
   PPQ = 480
@@ -3465,7 +3463,6 @@ module DillaRecordDna
     at = bar_at + 15 * sixteenth + rng.rand(-2..2)
     tracks[:texture] << event(at, sixteenth / 2, note, 35 + rng.rand(0..28), symbol)
   end
-
 
   def write_midi(name, chords:, bars:, dest:, seed: 4242, bpm: 90)
     result = compose(name, chords:, bars:, seed:, bpm:)

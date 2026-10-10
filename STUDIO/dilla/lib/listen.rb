@@ -113,7 +113,6 @@ module DillaMaster
     }
   end
 
-
   # Minimum L/R phase correlation across the whole file — 1.0 is mono-identical
   # (perfectly safe), 0.0 is fully decorrelated, negative cancels when summed
   # to mono. Reports the worst moment, not the average, since a single bad

@@ -236,7 +236,6 @@ module AnalogSynth
     def total(held) = held + release
   end
 
-
   # ---------------------------------------------------------------- physicality
   #
   # A shared, deterministic physicality layer. It is intentionally small: the
