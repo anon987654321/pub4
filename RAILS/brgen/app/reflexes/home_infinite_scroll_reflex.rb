@@ -12,6 +12,8 @@ class HomeInfiniteScrollReflex < Shared::InfiniteScrollReflex
       sort: element.dataset["sort"]
     )
     scope = scope.includes(:user, :community, :votes)
+    scope = scope.where(neighborhood_id: element.dataset["neighborhood-id"]) if element.dataset["neighborhood-id"].present?
+    scope = scope.with_attached_image.with_attached_images
     return scope unless element.dataset["q"].present?
 
     term = "%#{ActiveRecord::Base.sanitize_sql_like(element.dataset["q"])}%"
