@@ -10,12 +10,13 @@ class AmberScriptTest < ActiveSupport::TestCase
   # not the sibling @deploy.sh/@bundle.sh — those are shell tooling run from
   # the source checkout, never part of the deployed app itself. Rails.root's
   # parent only holds them in a source-tree checkout (local dev, CI); on a
-  # deployed target, fall back to the known checkout root.
+  # deployed target, fall back to the checkout root,
+  # which Shared::Contracts.root resolves from PUB4_ROOT.
   def self.shared_rails_root
     local = Rails.root.join("..")
     return local if local.join("_deploy.sh").exist?
 
-    Pathname.new(ENV.fetch("PUB4_RAILS_ROOT", "/home/dev/pub4/RAILS"))
+    Pathname.new(ENV.fetch("PUB4_RAILS_ROOT") { File.join(Shared::Contracts.root, "RAILS") })
   end
 
   test "deploy script is configured for amber instead of a template placeholder" do
