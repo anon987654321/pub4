@@ -1,27 +1,40 @@
 # brgen dating
 
-**Matchmaking for a city you already live in.** dating is a mountable Rails engine
-served at `dating.<city>` — `dating.brgen.no`, `dating.lsangeles.com` — not a
-separate app. `../../README.md` is the recipe; `../../AGENTS.md` is the topology.
+**Matchmaking for a city you already live in.** Dating shows you the people of your own town,
+asks them to prove they are who they look like, and leaves the rest to the two of you.
 
-Each user builds a `Profile`, then likes or dislikes others one at a time, with
-`home#next` serving the next candidate. A mutual like creates a `Match`. Those
-four models — `Profile`, `Like`, `Dislike`, `Match` — take the `dating_` table
-prefix from `isolate_namespace Dating`.
+Dating is a mountable Rails engine served at `dating.<city>`, for instance `dating.brgen.no`
+and `dating.lsangeles.com`. It is not a separate app: it runs in brgen's process, with brgen's
+users, and the city comes from the apex the visitor arrived through. The recipe for building
+a vertical is in `RAILS/brgen/README.md`, and the topology is in `RAILS/brgen/AGENTS.md`.
 
-Routes are drawn on `Dating::Engine` and mounted under `constraints(subdomain:
-DATING_SUBDOMAINS)`. Root is the candidate feed and `GET next` advances it;
-`resource :profile` is the user's own card, `likes` and `dislikes` record swipes,
-and `matches#index` lists the mutuals.
+Each person builds a profile of photos, a short bio and up to three prompt answers. The deck
+shows one candidate at a time, and the next one comes from `home#next`. A like or a dislike
+moves the deck along, and a rewind undoes the last dislike. When two people like each other the
+engine creates a match, and the matches page lists them. A separate page shows who has liked
+you, since that is a different decision from swiping through the deck. A short list of picks,
+five a day, gives a break from a deck with no bottom. The list is stored, so it stays the same
+all day, and it skips anyone who was picked earlier in the week.
 
-Making or editing a profile asks for Vipps Login first, because a verified phone
-number is what puts a real person behind a face shown to strangers. The gate
-fails open. When `VIPPS_CLIENT_ID` is absent the Vipps provider never registers,
-the check is skipped, and anyone signed in can put a profile in the deck; a
-missing variable should not lock a whole city out of the vertical. Production
-must therefore carry the Vipps keys in `/etc/brgen.env`, or dating runs with no
-identity check at all.
+Two things stand between a stranger and a face in the deck. Making or editing a profile asks
+for Vipps Login first, because a verified phone number puts a real person behind a profile.
+Beyond that, a person can ask for a verification: a selfie in a pose the app draws at random,
+reviewed by a human. Face matching is not automatic, since it fails on the people it should
+serve, and a wrong rejection on a dating profile is worse than a slow approval. Only a
+reviewer, the same admin who works the moderation queue, may approve or reject one.
 
-The engine depends on `pub4-shared` for `User`, authentication, tenancy and the
-design system. The host reaches its helpers namespaced, as
-`dating.matches_url(…, subdomain: "dating")`.
+The Vipps gate fails open. When `VIPPS_CLIENT_ID` and its secret are absent, the Vipps provider
+never registers, the check is skipped, and anyone signed in can put a profile in the deck. A
+missing variable should not lock a whole city out of the vertical. Production must therefore
+carry both Vipps keys in `/etc/brgen.env`, or dating runs with no identity check at all.
+
+The models are `Profile`, `Prompt`, `Like`, `Dislike`, `Match`, `DailyPick` and `Verification`.
+`isolate_namespace Dating` gives their tables the `dating_` prefix. The engine lives in
+brgen's database and carries no migrations of its own; they are in `RAILS/brgen/db/migrate`.
+Routes are drawn on `Dating::Engine`, and brgen mounts the engine at the root under
+`constraints(subdomain: DATING_SUBDOMAINS)`. From the host, reach its helpers namespaced, as
+in `dating.matches_url(…, subdomain: "dating")`.
+
+The engine depends on `pub4-shared` for `User`, authentication, tenancy and the design system,
+and its boot shape comes from `Shared::VerticalEngine`. Its strings live in the engine's own
+Norwegian and English locale files, and Norwegian is the default.

@@ -1,24 +1,39 @@
 # brgen tv
 
-**A television channel anyone in the city can start.** tv is a mountable Rails
-engine served at `tv.<city>` — `tv.brgen.no`, `tv.lsangeles.com`.
-`../../README.md` is the recipe; `../../AGENTS.md` is the topology.
+**A television channel anyone in the city can start.** Tv gives every neighbourhood a screen of
+its own, for what the town makes, what it streams live and what it wants to watch next.
 
-Channels publish videos, live streams and multi-episode shows. Viewers comment,
-take timestamped notes against a video, and chat in real time while a stream
-runs. View events and subscriptions feed trending and the per-channel feeds.
+Tv is a mountable Rails engine served at `tv.<city>`, for instance `tv.brgen.no` and
+`tv.lsangeles.com`. It is not a separate app: it runs in brgen's process, with brgen's users,
+and the city comes from the apex. The recipe for a vertical is in `RAILS/brgen/README.md`, and
+the topology is in `RAILS/brgen/AGENTS.md`.
 
-The `tv_` tables, prefixed by `isolate_namespace Tv`, are `Channel`, `Video`,
-`Broadcast`, `LiveStream`, `Show`, `Episode`, `StreamChat`, `VideoNote`,
-`Comment`, `Subscription` and `ViewEvent`.
+Channels publish videos, live streams and shows with numbered episodes. Viewers comment, take
+notes pinned to a moment in a video, and chat in real time while a stream runs. Subscriptions
+follow channels. The home page is a grid of trending, live and recent videos, ranked by watch
+time. The feed at `/feed` is the other shape, one video to a screen, ranked by how much of each
+people actually watched, ten at a time. Both depend on `ViewEvent`, which records watch time
+because a view counted at page load ranks a bounce like a full watch. Each clip may be built on
+a `Sound`, and a sound has a page that gathers every clip made on the same audio.
 
-Routes live in the engine's own `config/routes.rb` and the host mounts them under
-`constraints(subdomain: TV_SUBDOMAINS)`. Root is the trending home; channels nest
-videos, live streams and shows with their episodes; a live stream carries
-`go_live` and `end_live` and its stream chats. Stream chat and video notes
-broadcast over Turbo Streams on `tv:live_stream:*` and `tv:video:*`, with
-explicit partials rather than inferred ones.
+The models are `Channel`, `Video`, `Broadcast`, `LiveStream`, `Show`, `Episode`, `StreamChat`,
+`VideoNote`, `Comment`, `Subscription`, `ViewEvent` and `Sound`. `isolate_namespace Tv` gives
+their tables the `tv_` prefix, and the migrations are in `RAILS/brgen/db/migrate`.
 
-The engine depends on `pub4-shared` for `User`, authentication, tenancy and the
-design system. `isolate_namespace Tv` also gives unprefixed route helpers inside
-the engine; the host reaches them as `tv.channel_url(…, subdomain: "tv")`.
+Routes live in the engine's own `config/routes.rb`, and brgen mounts the engine at the root
+under `constraints(subdomain: TV_SUBDOMAINS)`. Channels are addressed by slug and nest their
+videos, live streams and shows. A live stream carries `go_live` and `end_live` and its stream
+chats. Stream chat and video notes broadcast over Turbo Streams, on `tv:live_stream:<id>:entries`
+and `tv:video:<id>:notes`, with explicit partials rather than inferred ones. Inside the engine
+the helpers carry no prefix, so a link reads `channel_url`. From the host, reach them as
+`tv.channel_url(…, subdomain: "tv")`.
+
+A new city starts with no television, so the engine ships a content pipeline. The rake task
+`tv:starter_pack` writes clips, posters and a manifest. It generates with Replicate when
+`REPLICATE_API_TOKEN` is set. Without the token it refuses in plain words, and with
+`TV_TEST_CARDS=1` it draws honest test cards with ffmpeg instead. The task `tv:ingest` reads a
+manifest into a channel with published videos. It matches channels by slug, so it can run again.
+
+The engine depends on `pub4-shared` for `User`, authentication, tenancy and the design system.
+Its models include the shared concerns for media processing, notifications, reactions and
+slugs.

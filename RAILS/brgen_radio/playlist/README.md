@@ -1,26 +1,41 @@
 # brgen playlist
 
-**Music is better when someone is listening with you.** playlist is a mountable
-Rails engine served at `playlist.<city>` — `radio.brgen.no`,
-`radio.lsangeles.com`. `../../README.md` is the recipe; `../../AGENTS.md` is
-the topology.
+**Music is better when someone is listening with you.** Playlist lets a city build its soundtrack
+together, hear the same song at the same moment, and talk over it as it plays.
 
-Users build playlists and sets, import hosted tracks, and collaborate on them.
-Synchronised listening parties let people hear the same thing at the same time,
-with party chat and timestamped comments against the audio. `DillaSketch` ties a
-track to the studio's dilla engine so `render_audio` can generate one. Likes and
-listens drive discovery.
+Playlist is a mountable Rails engine, and the public name of its host is radio: the engine is
+served at `radio.<city>`, for instance `radio.brgen.no` and `radio.lsangeles.com`. The engine
+keeps the name Playlist in its directory, module and tables, and the host constraint is called
+`RADIO_SUBDOMAINS`. The old `playlist.<city>` host no longer resolves, and no alias was kept. The
+engine is not a separate app: it runs in brgen's process, with brgen's users. The recipe for a
+vertical is in `RAILS/brgen/README.md`, and the topology is in `RAILS/brgen/AGENTS.md`.
 
-The `playlist_` tables, prefixed by `isolate_namespace Playlist`, are `Playlist`,
-`Track`, `PlaylistTrack`, `Set`, `SetTrack`, `Collaboration`, `ListeningParty`,
-`PartyMessage`, `Listen`, `Like`, `TimestampedComment`, `DillaSketch` and
-`AudioVersion`.
+Users build playlists and sets, add tracks, and invite collaborators as owner, editor or viewer.
+Pasting URLs, one to a line, imports tracks into a playlist from YouTube, Spotify, SoundCloud,
+Whyp or a direct link, and any member with a real account can upload an audio file as a hosted
+track. A set can open a listening party, where people hear the same thing at the same time and
+chat beside it. Listeners leave comments pinned to a moment in a track. Likes and listens drive
+discovery.
 
-Routes are drawn on `Playlist::Engine` and mounted under `constraints(subdomain:
-PLAYLIST_SUBDOMAINS)`. Playlists and sets nest tracks, collaborations and dilla
-sketches; sets add likes and a `listening_party` with its party messages;
-`hosted_tracks` and `listens` round out import and playback.
+A `DillaSketch` ties a playlist or a set to the studio's dilla engine. Its `render_audio` action
+queues `DillaRenderJob` on the bulk queue, which renders through `Shared::DillaProcessor` and the
+STUDIO contract, attaches the render to the sketch, and by default publishes it as a track. When
+the dilla script is missing on the machine, the sketch records the failure in its `render_error`
+instead of failing quietly.
 
-The engine depends on `pub4-shared` for `User`, authentication, tenancy and the
-design system. The host reaches its helpers as `playlist.playlist_url(…,
-subdomain: "playlist")`.
+The models are `Playlist`, `Track`, `PlaylistTrack`, `Set`, `SetTrack`, `Collaboration`,
+`ListeningParty`, `PartyMessage`, `Listen`, `Like`, `TimestampedComment`, `DillaSketch` and
+`AudioVersion`. `isolate_namespace Playlist` gives their tables the `playlist_` prefix, and the
+migrations are in `RAILS/brgen/db/migrate`. Inside the engine, write `::Playlist::Playlist` with
+the leading colons, because the plain name resolves to the module's own model first.
+
+Routes are drawn on `Playlist::Engine`, and brgen mounts the engine at the root under
+`constraints(subdomain: RADIO_SUBDOMAINS)`. Playlists and sets nest their tracks, collaborations
+and dilla sketches. A playlist also has an embeddable page. A set adds a like and a
+`listening_party` with its party messages, and `hosted_tracks` and `listens` round out upload
+and playback. From the host, reach the helpers as `playlist.playlist_url(…, subdomain: "radio")`.
+
+The engine depends on `pub4-shared` for `User`, authentication, tenancy and the design system.
+On screen it uses an immersive stage with a transport bar, and it publishes the bar's height so
+floating widgets clear it. Its stylesheet rules live in brgen's single `application.scss`,
+scoped under `body.vertical-playlist`.

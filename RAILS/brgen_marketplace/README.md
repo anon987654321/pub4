@@ -1,93 +1,90 @@
 # brgen marketplace
 
-**Every listing in brgen lives here, the shop's product and the chair someone is
-selling alike.** marketplace is a mountable Rails engine served at the
-marketplace subdomain, localised per country — `markedsplass.brgen.no`,
-`marketplace.lsangeles.com`, resolved through
-`Brgen::DomainRegistry::SUBAPP_ALIASES`. `../../README.md` is the recipe;
-`../../AGENTS.md` is the topology.
+**Every listing in brgen lives here, the shop's product and the chair someone is selling alike.**
+Marketplace is one place for a city to buy, sell, rent, hire and order dinner, without asking
+anyone to learn a second site for each.
 
-Store owners post product listings across categories, buyers add them to a cart
-and check out through Dintero, Vipps or Stripe when configured, and both sides
-leave reviews. Food ordering is part of the same commerce surface at `/food`:
-restaurants, menus, delivery and group orders are backed by the nested `Takeaway::`
-engine without creating a second product boundary. Deals and saved searches aid
-discovery, and `favorite` bookmarks a listing.
+Marketplace is a mountable Rails engine served at the marketplace subdomain, spelled in each
+country's own word: `markedsplass.brgen.no`, `marketplace.lsangeles.com`, `marktplatz` in
+Germany, `mercato` in Italy. `Brgen::DomainRegistry::SUBAPP_ALIASES` resolves every spelling
+to this engine. It is not a separate app: it runs in brgen's process, with brgen's users. The
+recipe for a vertical is in `RAILS/brgen/README.md`, and the topology is in
+`RAILS/brgen/AGENTS.md`.
 
-The two tiers are one model rather than two places. `Listing belongs_to :store,
-optional: true`: with a store it is a shop's product, without one it is a person
-selling a chair. Only the first is built out. The seeds always attach a store,
-there is no separate casual surface, and the storefront chrome wraps both.
+Store owners open a shop and post product listings across categories. Buyers add listings to a
+cart, give an address, and check out through Dintero, Vipps or Stripe, whichever is configured.
+Sellers take payouts, answer public questions on a listing, offer sizes and colours as variants,
+and accept returns. Both sides leave reviews. Deals and saved searches aid discovery, a star
+bookmarks a listing for the wishlist page, and a merchant feed in XML goes out for shopping
+search engines.
 
-Nothing casual lives in the host app either, so do not go looking for it there:
-the host has no listing model at all. What is Craigslist-shaped about brgen is the access
-model rather than the catalogue: `ListingPolicy` lets anyone list without signing
-up, and `Shared::Authentication` gives an anonymous visitor a soft `Current.user`
-to do it with. The taxonomy is consumer goods — electronics, clothing, furniture,
-vehicles, services — with no housing, jobs or gigs.
+The two tiers are one model rather than two places. `Listing belongs_to :store, optional:
+true`: with a store it is a shop's product, and without one it is a person selling a chair. The
+seeds always attach a store, there is no separate casual surface, and the storefront chrome
+wraps both. A listing also has a kind. Goods is the default, and job, housing and gig listings
+carry their own facts in a detail table each, so that no column sits empty for every bicycle.
+The kind is a parameter of the index page. Seeded categories are consumer goods only:
+electronics, clothing, furniture, vehicles and services, each with children.
 
-The `marketplace_` tables, prefixed by `isolate_namespace Marketplace`, are
-`Store`, `Listing`, `Category`, `Order`, `Review`, `Deal`, `ListingFavorite` and
-`SavedSearch`.
+Nothing casual lives in the host app, so do not look for it there; the host has no listing
+model at all. What is Craigslist-shaped about brgen is the access model. `ListingPolicy` asks
+only for a user, and `Shared::Authentication` gives an anonymous visitor a soft `Current.user`
+to list with, so no one has to sign up first.
 
-`webhooks/dintero` is engine-local; `/webhooks/stripe` and `/webhooks/vipps` are host-owned payment callbacks shared with the marketplace domain. Dintero uses signed raw-body webhooks and a separate signed session callback. Solidus remains optional and mounts only when its integration is explicitly enabled.
+The models are `Store`, `Listing`, `Category`, `Order`, `Checkout`, `Review`, `Deal`,
+`ListingFavorite`, `SavedSearch`, `Address`, `Payout`, `Question`, `Return`, `Variant`,
+`VariantOption`, `ListingEvent`, `WebhookDelivery` and the three detail tables `JobDetail`,
+`HousingDetail` and `GigDetail`. `isolate_namespace Marketplace` gives their tables the
+`marketplace_` prefix, and the migrations are in `RAILS/brgen/db/migrate`. Payment services
+and the Dintero client are in brgen's `app/services/marketplace/payments`, not in the engine.
 
-The engine depends on `pub4-shared` for `User`, authentication, tenancy and the
-design system. The host reaches its helpers as `marketplace.listing_url(…,
-subdomain: "markedsplass")`.
+Routes are drawn on `Marketplace::Engine`, and brgen mounts the engine at the root under
+`constraints(subdomain: MARKETPLACE_SUBDOMAINS)`. From the host, reach the helpers as
+`marketplace.listing_url(…, subdomain: "markedsplass")`. The saved list is at `/wishlist`,
+because the host declares `/saved` for bookmarks before it mounts this engine, and a `/saved`
+here would never run.
 
-## Optional Solidus commerce kernel
-
-BRGEN keeps Marketplace::* as the public seller and order domain. Solidus is an
-optional commerce kernel for catalog, cart, checkout, fulfillment and merchant
-operations. It is staged behind SOLIDUS_MARKETPLACE=1 rather than replacing the
-marketplace domain in place.
-
-Solidus can cover mixed carts, split shipments, merchant storefronts, merchant
-dashboards, permissions, flexible fulfillment and managed payouts. BRGEN does
-not install the legacy solidus_marketplace extension.
-
-Marketplace::Listing, Marketplace::Store, Marketplace::Order, seller policy,
-buyer–seller messaging, local geography, offers, questions and returns remain
-BRGEN-owned. Solidus provides the commerce kernel around product, variant, taxon,
-cart, checkout, shipment and merchant operations once the database and cutover
-are staged.
-
-### Dintero
-
-Dintero owns marketplace money movement. A seller payout destination must be
-approved and ACTIVE before the seller slice is sent in an inline split. BRGEN
-persists the exact split contract on each local order and reuses it for capture
-and refund, so later configuration changes cannot silently rewrite a historical
-transaction. Capture is a separate transition from authorization, and BRGEN does
-not mark an order paid merely because a browser returned from checkout.
-
-Dintero's Shopping API creates payment sessions for a Shopping order. The
-integration keeps local dintero_order_id, dintero_session_id and
-dintero_transaction_id rather than treating a local order id as a Dintero resource.
-Dintero hook delivery has its own event-delivery identity. BRGEN verifies the raw
-request body before JSON parsing, stores event-delivery for replay handling, and
-keeps the signed session callback separate from the webhook route.
-
-The checkout adapter is explicitly gated by DINTERO_CHECKOUT_ENABLED=1. A
-credentialed but unverified integration therefore cannot present a payment button
-before the Shopping API payload has been exercised in Dintero test mode. Capture
-and refund confirmation remain webhook-authoritative.
-
-### Staging
-
-Use a non-production host and a database supported by the Solidus deployment.
-Set SOLIDUS_MARKETPLACE=1 and run the Solidus installer only on that staging host.
-Verify the Dintero Shopping draft-order and session payload against the current
-test account before setting DINTERO_CHECKOUT_ENABLED=1. Register the Dintero hook
-subscription against the HTTPS route configured in DINTERO_HOOK_URL. Exercise
-authorization, capture, refund, duplicate delivery, seller approval and settlement
-events before any production cutover.
-
-The 1 GB OpenBSD host remains the wrong place for the Solidus install. Native
-BRGEN continues to serve the public marketplace until a staged cutover is deliberate.
-
+Payment callbacks split between engine and host. `webhooks/dintero` and its signed session
+callback are engine-local. The `webhooks/stripe` route in the engine hands off to the host's
+Stripe controller, so that a dashboard pointed at either URL still pays the order, and the
+host also owns `/webhooks/vipps`. Dintero webhooks are verified on the raw body before any
+JSON parsing, and each delivery is stored for replay handling.
 
 ## Food
 
-The canonical food surface is `/food` on the localized Marketplace host: `markedsplass.<city>/food` or `marketplace.<city>/food`. The former `takeaway.<city>` host remains a compatibility mount of the same engine; new links should point to Marketplace.
+The canonical food surface is `/food` on the localised Marketplace host, as in
+`markedsplass.<city>/food` or `marketplace.<city>/food`. Restaurants, menus, delivery drivers,
+group orders and reviews are backed by the nested `Takeaway` engine, kept at
+`engines/takeaway`. Marketplace and takeaway share one campaign-art system, described in the
+shared engine's README. The former `takeaway.<city>` host remains a compatibility mount of the
+same engine, and new links should point to Marketplace.
+
+## Dintero
+
+Dintero owns marketplace money movement. A seller's payout destination must be approved and
+ACTIVE before the seller's slice goes out in an inline split. BRGEN stores the exact split
+contract on each local order and reuses it for capture and refund, so a later change of
+configuration cannot rewrite a historical transaction. Capture is a separate step from
+authorisation, and BRGEN does not mark an order paid because a browser came back from checkout.
+Paid status follows the webhook.
+
+Dintero's Shopping API creates the payment sessions. The integration keeps its own
+`dintero_order_id`, `dintero_session_id` and `dintero_transaction_id` and never treats a local
+order id as a Dintero resource. The checkout adapter is gated by `DINTERO_CHECKOUT_ENABLED=1`,
+so a credentialed but unverified integration cannot show a payment button before the Shopping
+API payload has been exercised in Dintero's test mode. The hook subscription registers against
+the HTTPS address in `DINTERO_HOOK_URL`, which must not point at localhost or at Dintero.
+
+## Solidus
+
+Solidus is an optional commerce kernel for catalogue, cart, checkout, fulfilment and merchant
+operations. It stays behind `SOLIDUS_MARKETPLACE=1` and mounts at `/solidus` only when its gems
+are also loaded. The native `Marketplace::*` models remain the public seller and order domain
+until a deliberate cutover. Listings, stores, orders, seller policy, buyer and seller
+messaging, local geography, offers, questions and returns stay BRGEN's own. BRGEN does not
+install the legacy solidus_marketplace extension.
+
+The 1 GB OpenBSD host is the wrong place to install Solidus. Install it only on a staging host
+with a database the Solidus deployment supports. Before any production cutover, verify the
+Dintero Shopping payload against the current test account, and exercise authorisation, capture,
+refund, duplicate delivery, seller approval and settlement events.
