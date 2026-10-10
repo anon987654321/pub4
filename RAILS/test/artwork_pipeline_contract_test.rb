@@ -13,6 +13,7 @@ class ArtworkPipelineContractTest < Minitest::Test
     assert_equal true, law.dig("house", "provenance_required")
     assert_equal false, law.dig("lanes", "g4", "allowed")
     assert_equal 3, law.dig("rubric", "max_accent_zones")
+    assert_includes law.dig("exports", "web"), "webp"
   end
 
   def test_onboarding_artwork_uses_shared_publication_boundary
