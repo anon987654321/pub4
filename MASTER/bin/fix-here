@@ -90,4 +90,25 @@ end
 
 FileUtils.mkdir_p(File.dirname(log))
 puts "fix0 at fix-here: running; follow it with: tail -f #{log}"
-exec(env, File.join(MASTER, "bin", "master"), "/fix", tree, chdir: ROOT, out: [log, "w"], err: [:child, :out])
+
+# 5. A RAILS run is judged on what is rendered: the visual pass, the layout snapshot, the
+# geometry and tap-target gates all answer "nothing listening" and count as inconclusive
+# when no app is up, and a run that measured no layout cannot improve one. So the apps
+# are booted around the run and stopped after it, whatever the run did.
+live = tree == "RAILS" || tree.start_with?("RAILS/")
+operator = File.join(MASTER, "bin", "operator")
+triangle_log = File.join(File.dirname(log), "triangle-#{File.basename(tree)}.log")
+if live
+  puts "fix0 at fix-here: booting the apps for the rendered gates, log=#{triangle_log}"
+  up = system(operator, "triangle", "up", chdir: ROOT, out: [triangle_log, "w"], err: [:child, :out])
+  puts "fix0 at fix-here: #{up ? 'apps are up' : 'the apps did not all boot; layout evidence will be partial (see the triangle log)'}"
+end
+
+status = nil
+begin
+  pid = Process.spawn(env, File.join(MASTER, "bin", "master"), "/fix", tree, chdir: ROOT, out: [log, "w"], err: [:child, :out])
+  status = Process.wait2(pid).last
+ensure
+  system(operator, "triangle", "down", chdir: ROOT, out: File::NULL, err: File::NULL) if live
+end
+exit(status&.exitstatus || 1)
