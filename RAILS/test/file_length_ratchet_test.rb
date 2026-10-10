@@ -205,7 +205,7 @@ class FileLengthRatchetTest < Minitest::Test
     # records twice for __dir__ paths.
     # 455 -> 449: the same inline-notice rule, in the sheet amber and
     # bsdports share.
-    "shared/app/assets/stylesheets/_minimal.scss" => 449,
+    "__shared/app/assets/stylesheets/_minimal.scss" => 449,
   }.freeze
 
   COMMENT_STARTS = ["#", "//", "/*", "*", "<%#"].freeze

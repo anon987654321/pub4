@@ -4,7 +4,7 @@ require "minitest/autorun"
 
 class FormAndOverlaySurfaceContractTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
-  CSS = File.read(File.join(ROOT, "shared/app/assets/stylesheets/_components.scss"))
+  CSS = File.read(File.join(ROOT, "__shared/app/assets/stylesheets/_components.scss"))
   HOOK = File.read(File.expand_path("../../OPENBSD/dev/githooks/pre-push", __dir__))
 
   def test_text_controls_have_a_shared_surface_and_focus_state

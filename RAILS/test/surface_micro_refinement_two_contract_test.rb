@@ -4,7 +4,7 @@ require "minitest/autorun"
 
 class SurfaceMicroRefinementTwoContractTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
-  SHEET = File.join(ROOT, "shared/app/assets/stylesheets/_surface_micro_refinements_two.scss")
+  SHEET = File.join(ROOT, "__shared/app/assets/stylesheets/_surface_micro_refinements_two.scss")
 
   def test_marked_refinements_are_contiguous
     source = File.read(SHEET, encoding: "UTF-8")

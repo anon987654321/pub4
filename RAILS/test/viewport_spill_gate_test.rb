@@ -17,7 +17,7 @@ class ViewportSpillGateTest < Minitest::Test
   REPO = File.expand_path("../..", __dir__)
 
   def test_the_manifest_registers_it_under_the_rendered_suite
-    row = YAML.safe_load_file(File.join(ROOT, "gates/gates.yml")).fetch("viewport_spill")
+    row = YAML.safe_load_file(File.expand_path("../../MASTER/gates/gates.yml", __dir__)).fetch("viewport_spill")
 
     assert_equal "lib/rendered/viewport_spill", row.fetch("require")
     assert_equal "Deploy::ViewportSpillGate", row.fetch("class")
@@ -25,7 +25,7 @@ class ViewportSpillGateTest < Minitest::Test
   end
 
   def test_the_suite_runs_it
-    source = File.read(File.join(ROOT, "gates/lib/rendered_suite.rb"))
+    source = File.read(File.expand_path("../../MASTER/gates/lib/rendered_suite.rb", __dir__))
 
     assert_includes source, "rendered/viewport_spill"
     assert_includes source, "ViewportSpillGate"

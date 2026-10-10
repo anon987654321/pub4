@@ -82,7 +82,7 @@ class OwnershipGuardReadsAColumnTest < Minitest::Test
   def controllers
     (Dir.glob(File.join(ROOT, "{amber,brgen,bsdports}/app/controllers/**/*.rb")) +
      Dir.glob(File.join(ROOT, "brgen/engines/*/app/controllers/**/*.rb")) +
-     Dir.glob(File.join(ROOT, "shared/app/controllers/**/*.rb")))
+     Dir.glob(File.join(ROOT, "__shared/app/controllers/**/*.rb")))
       .reject { |path| path.include?("/vendor/") }
       .map { |path| path.sub("#{ROOT}/", "") }
   end

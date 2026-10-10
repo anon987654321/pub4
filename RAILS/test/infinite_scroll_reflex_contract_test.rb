@@ -85,7 +85,7 @@ class InfiniteScrollReflexContractTest < Minitest::Test
   def test_every_declared_partial_exists_on_disk
     missing = reflexes.flat_map do |path|
       app = path.delete_prefix("#{ROOT}/").split("/").first
-      roots = [File.join(ROOT, app, "app", "views"), File.join(ROOT, "shared", "app", "views")] +
+      roots = [File.join(ROOT, app, "app", "views"), File.join(ROOT, "__shared", "app", "views")] +
               Dir.glob(File.join(ROOT, "brgen", "engines", "*", "app", "views"))
 
       code(path).scan(/partial:\s*"([^"]+)"|renders\s+"([^"]+)"/).flatten.compact.uniq.filter_map do |partial|
@@ -102,7 +102,7 @@ class InfiniteScrollReflexContractTest < Minitest::Test
   # The spine itself: if these move back into the subclasses the duplication is
   # back, and nothing else would say so.
   def test_the_shared_parent_owns_the_spine
-    parent = File.read(File.join(ROOT, "shared", "app", "reflexes", "shared", "infinite_scroll_reflex.rb"))
+    parent = File.read(File.join(ROOT, "__shared", "app", "reflexes", "shared", "infinite_scroll_reflex.rb"))
 
     # Either spelling — the parent declares it inside `class << self`.
     assert_match(/def (self\.)?renders\(/, parent, "the parent must provide the `renders` declaration")

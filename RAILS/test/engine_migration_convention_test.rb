@@ -25,7 +25,7 @@ class EngineMigrationConventionTest < Minitest::Test
   ].freeze
 
   def test_no_new_migration_is_added_to_the_engine
-    present = Dir.glob(File.join(ROOT, "shared/db/migrate/*.rb")).map { |path| File.basename(path) }.sort
+    present = Dir.glob(File.join(ROOT, "__shared/db/migrate/*.rb")).map { |path| File.basename(path) }.sort
 
     assert_equal HISTORICAL.sort, present,
                  "a migration here runs in no app — db:migrate:status lists only each app's own. " \
@@ -35,7 +35,7 @@ class EngineMigrationConventionTest < Minitest::Test
 
   # The inverse: the declaration must stay gone, or the next reader trusts it.
   def test_the_engine_declares_no_migration_path
-    engine = File.read(File.join(ROOT, "shared/lib/shared/engine.rb"))
+    engine = File.read(File.join(ROOT, "__shared/lib/shared/engine.rb"))
     code = engine.lines.reject { |line| line.strip.start_with?("#") }.join
 
     refute_match(/config\.paths\["db\/migrate"\]/, code,

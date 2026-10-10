@@ -39,7 +39,7 @@ class SurfaceChromeEndgameContractTest < Minitest::Test
   end
 
   def test_endgame_file_has_no_shadow_or_important_vetoes
-    source = source("shared/app/assets/stylesheets/_surface_chrome_endgame.scss")
+    source = source("__shared/app/assets/stylesheets/_surface_chrome_endgame.scss")
     refute_includes source, "box-shadow"
     refute_includes source, "!important"
   end

@@ -21,7 +21,7 @@ class ImportmapIntegrityContractTest < Minitest::Test
   end
 
   test "external importmap pins make integrity handling explicit" do
-    source = File.read(File.join(ROOT, "shared", "config", "importmap_baseline.rb"))
+    source = File.read(File.join(ROOT, "__shared", "config", "importmap_baseline.rb"))
 
     source.lines.grep(/pin\s+["'][^"']+["'].*https?:\/\//).each do |line|
       assert_match(/integrity:\s*(?:false|["'][^"']+["'])/, line,
@@ -30,7 +30,7 @@ class ImportmapIntegrityContractTest < Minitest::Test
   end
 
   test "the shared importmap stays the single pin source for framework modules" do
-    source = File.read(File.join(ROOT, "shared", "config", "importmap_baseline.rb"))
+    source = File.read(File.join(ROOT, "__shared", "config", "importmap_baseline.rb"))
 
     %w[
       @hotwired/turbo-rails

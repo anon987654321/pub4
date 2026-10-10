@@ -33,8 +33,8 @@ class SharedModelCanonicalizationTest < Minitest::Test
   # Where the model class itself is declared — the `class Reaction` line naturally
   # has no `defined?` and must not be flagged.
   DEFINITION_FILES = %w[
-    shared/app/models/shared/reaction.rb
-    shared/app/models/shared/notification.rb
+    __shared/app/models/shared/reaction.rb
+    __shared/app/models/shared/notification.rb
   ].freeze
 
   def sources

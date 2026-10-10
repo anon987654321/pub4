@@ -15,7 +15,7 @@ require "minitest/autorun"
 # Source-level on purpose: this is a class-method side effect at controller-class
 # definition time, and RAILS/test/*.rb run under bare ruby with no app bundle.
 class AuthNoopIsAudibleTest < Minitest::Test
-  SOURCE = File.expand_path("../shared/app/controllers/concerns/shared/authentication.rb", __dir__)
+  SOURCE = File.expand_path("../__shared/app/controllers/concerns/shared/authentication.rb", __dir__)
 
   # A comment outlives its rule: a rule and its explanation
   # contain the same words. The comment above the guard says "silent no-op", so an

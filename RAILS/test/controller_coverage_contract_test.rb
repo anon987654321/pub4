@@ -141,7 +141,7 @@ class ControllerCoverageContractTest < Minitest::Test
   def test_views_do_not_call_a_pagy_helper_their_app_may_not_have
     views = Dir.glob(File.join(ROOT, "{amber,brgen,bsdports}", "app", "views", "**", "*.erb")) +
             Dir.glob(File.join(ROOT, "brgen", "engines", "*", "app", "views", "**", "*.erb")) +
-            Dir.glob(File.join(ROOT, "shared", "app", "views", "**", "*.erb"))
+            Dir.glob(File.join(ROOT, "__shared", "app", "views", "**", "*.erb"))
 
     refute_empty views, "no views found — the glob stopped matching, which is blindness not cleanliness"
 

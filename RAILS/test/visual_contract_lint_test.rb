@@ -44,9 +44,9 @@ class VisualContractLintTest < Minitest::Test
 
     assert_empty old_glob.map { |p| File.expand_path(p) } - sources,
                  "the resolver lost a file the directory glob had"
-    assert_includes sources, File.expand_path(File.join(L::RAILS_ROOT, "shared/app/assets/stylesheets/_components.scss")),
+    assert_includes sources, File.expand_path(File.join(L::RAILS_ROOT, "__shared/app/assets/stylesheets/_components.scss")),
                     "a partial _stack_brgen forwards must be in the bundle"
-    assert_includes sources, File.expand_path(File.join(L::RAILS_ROOT, "shared/app/assets/stylesheets/_shell.scss")),
+    assert_includes sources, File.expand_path(File.join(L::RAILS_ROOT, "__shared/app/assets/stylesheets/_shell.scss")),
                     "a shared partial application.scss @uses by bare name must be in the bundle"
   end
 
@@ -56,7 +56,7 @@ class VisualContractLintTest < Minitest::Test
   # never brgen — and accent_on_prose is a claim about brgen's grayscale
   # identity, not about the luxury or wscons dialects.
   def test_a_shared_partial_brgen_does_not_forward_is_not_in_its_bundle
-    minimal = File.expand_path(File.join(L::RAILS_ROOT, "shared/app/assets/stylesheets/_minimal.scss"))
+    minimal = File.expand_path(File.join(L::RAILS_ROOT, "__shared/app/assets/stylesheets/_minimal.scss"))
 
     assert_path_exists minimal
     refute_includes L.brgen_bundle_sources, minimal

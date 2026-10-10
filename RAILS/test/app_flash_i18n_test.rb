@@ -205,14 +205,14 @@ class AppFlashI18nTest < Minitest::Test
   # files to I18n.load_path a second time (after the app, so shared wins every
   # key both define), or a paths override that stops the engine loading them.
   def test_the_engine_loads_its_locale_files_once_and_ahead_of_the_app
-    engine = File.read(File.join(ROOT, "shared/lib/shared/engine.rb"))
+    engine = File.read(File.join(ROOT, "__shared/lib/shared/engine.rb"))
     code = engine.lines.reject { |line| line.strip.start_with?("#") }.join
 
     refute_match(/i18n\.load_path\s*(<<|\+=|\.concat|\.push|\.unshift)/, code,
-                 "shared/lib/shared/engine.rb registers locale files by hand; Rails::Engine already " \
+                 "__shared/lib/shared/engine.rb registers locale files by hand; Rails::Engine already " \
                  "loads config/locales, so this loads them twice and the second copy outranks the app")
     refute_match(/paths\[["']config\/locales["']\]/, code,
-                 "shared/lib/shared/engine.rb overrides the engine's config/locales path")
+                 "__shared/lib/shared/engine.rb overrides the engine's config/locales path")
 
     shipped = Dir.glob(File.join(ROOT, "__shared/config/locales/**/*")).select { |path| File.file?(path) }
     refute_empty shipped

@@ -49,8 +49,8 @@ class PwaInstallableGateTest < Minitest::Test
       write(File.join(root, app, "app/views/pwa/service-worker.js"), "self.addEventListener")
       write(File.join(root, app, "public/icon-192.png"), "png")
     end
-    write(File.join(root, "shared/public/icon-512.png"), "png")
-    write(File.join(root, "shared/public/icon-mask.png"), "png")
+    write(File.join(root, "__shared/public/icon-512.png"), "png")
+    write(File.join(root, "__shared/public/icon-mask.png"), "png")
   end
 
   def with_tree(manifest: MANIFEST)
@@ -71,7 +71,7 @@ class PwaInstallableGateTest < Minitest::Test
 
   def test_an_icon_in_neither_public_root_is_named_with_both_places_it_was_missed
     with_tree do |root|
-      FileUtils.rm(File.join(root, "shared/public/icon-512.png"))
+      FileUtils.rm(File.join(root, "__shared/public/icon-512.png"))
 
       assert_match(%r{brgen declares /icon-512\.png, which is in neither brgen/public nor shared/public},
                    GATE.run.failures.join(" | "))

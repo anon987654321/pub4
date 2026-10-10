@@ -10,7 +10,7 @@ class StimulusWiringGateTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
 
   def test_manifest_registers_the_gate_under_layout_suite
-    row = YAML.safe_load_file(File.join(ROOT, "gates/gates.yml")).fetch("stimulus_wiring")
+    row = YAML.safe_load_file(File.expand_path("../../MASTER/gates/gates.yml", __dir__)).fetch("stimulus_wiring")
 
     assert_equal "lib/source/stimulus_wiring", row.fetch("require")
     assert_equal "Deploy::StimulusWiringGate", row.fetch("class")
@@ -18,7 +18,7 @@ class StimulusWiringGateTest < Minitest::Test
   end
 
   def test_layout_suite_runs_the_gate
-    source = File.read(File.join(ROOT, "gates/lib/layout_suite.rb"))
+    source = File.read(File.expand_path("../../MASTER/gates/lib/layout_suite.rb", __dir__))
     assert_includes source, "stimulus_wiring"
     assert_includes source, "StimulusWiringGate"
   end

@@ -4,11 +4,11 @@ require "minitest/autorun"
 
 class SurfaceMicroRefinementContractTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
-  SHEET = File.join(ROOT, "shared/app/assets/stylesheets/_surface_micro_refinements.scss")
-  MATRIX = File.join(ROOT, "shared/SURFACE_MICRO_REFINEMENT_MATRIX.md")
+  SHEET = File.join(ROOT, "__shared/app/assets/stylesheets/_surface_micro_refinements.scss")
+  MATRIX = File.join(ROOT, "__shared/SURFACE_MICRO_REFINEMENT_MATRIX.md")
   STACKS = %w[
-    shared/app/assets/stylesheets/_stack.scss
-    shared/app/assets/stylesheets/_stack_brgen.scss
+    __shared/app/assets/stylesheets/_stack.scss
+    __shared/app/assets/stylesheets/_stack_brgen.scss
   ].freeze
 
   def test_sheet_has_exactly_288_marked_refinements

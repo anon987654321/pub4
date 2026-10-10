@@ -8,8 +8,9 @@ class DeployGatesContractTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
   REPO_ROOT = File.expand_path("../..", __dir__)
   OPENBSD_ROOT = File.join(REPO_ROOT, "OPENBSD")
+  MASTER_GATES = File.join(REPO_ROOT, "MASTER", "gates")
 
-  GATES = YAML.safe_load_file(File.join(ROOT, "gates", "gates.yml")).freeze
+  GATES = YAML.safe_load_file(File.join(MASTER_GATES, "gates.yml")).freeze
 
   # Every gate is declared once, in gates.yml. This used to be four tables that
   # had to agree — runner.rb's GATE_MAP (name -> file), IN_PROCESS (name ->
@@ -19,7 +20,7 @@ class DeployGatesContractTest < Minitest::Test
   def test_every_gate_resolves_to_a_file
     GATES.each do |name, row|
       if row.key?("script")
-        assert File.file?(File.join(ROOT, "gates", row["script"])),
+        assert File.file?(File.join(MASTER_GATES, row["script"])),
                "#{name} points at gates/#{row['script']}, which does not exist"
       else
         assert File.file?("#{gate_file(row)}.rb"),
@@ -81,7 +82,7 @@ class DeployGatesContractTest < Minitest::Test
   # Inside gates/, the _gate suffix says nothing the directory has not already
   # said, and _gate_logic only ever existed to avoid colliding with a root shim.
   def test_gate_files_carry_no_redundant_suffix
-    named = Dir.glob(File.join(ROOT, "gates", "**", "*.rb")).map { |path| File.basename(path, ".rb") }
+    named = Dir.glob(File.join(MASTER_GATES, "**", "*.rb")).map { |path| File.basename(path, ".rb") }
     redundant = named.select { |name| name.end_with?("_gate", "_gate_logic") }
 
     assert_empty redundant, "drop the suffix — gates/lib/<name>.rb defines Deploy::<Name>Gate: #{redundant}"
@@ -94,7 +95,7 @@ class DeployGatesContractTest < Minitest::Test
     declared = GATES.reject { |_, row| row.key?("script") }
                     .reject { |_, row| row["require"].to_s.start_with?("MASTER/", "OPENBSD/", "STUDIO/") }
                     .map { |_, row| File.basename(row["require"]) }
-    present = Dir.glob(File.join(ROOT, "gates", "lib", "**", "*.rb")).map { |path| File.basename(path, ".rb") }
+    present = Dir.glob(File.join(MASTER_GATES, "lib", "**", "*.rb")).map { |path| File.basename(path, ".rb") }
 
     assert_equal declared.sort, present.sort,
                  "gates/lib/ holds exactly the gates in gates.yml; support code belongs in gates/support/"
@@ -168,8 +169,8 @@ class DeployGatesContractTest < Minitest::Test
     end
   end
 
-  def test_check_full_runs_repository_contract_tests
-    source = File.read(File.join(OPENBSD_ROOT, "bin", "check-full"))
+  def test_check_runs_repository_contract_tests
+    source = File.read(File.join(OPENBSD_ROOT, "bin", "check"))
 
     assert_includes source, 'runner.run("rails contracts"'
     # Was an inline Dir[...].each { require } that loaded all sixty-nine files
@@ -193,7 +194,7 @@ class DeployGatesContractTest < Minitest::Test
   end
 
   def test_production_gate_does_not_require_deleted_retired_app_gate
-    source = File.read(File.join(ROOT, "gates", "lib", "production.rb"))
+    source = File.read(File.join(MASTER_GATES, "lib", "production.rb"))
 
     refute_includes source, "archive_restore_gate"
   end
@@ -209,8 +210,8 @@ class DeployGatesContractTest < Minitest::Test
   end
 
   def test_rails_runtime_gate_runs_production_in_process
-    assert File.file?(File.join(ROOT, "gates", "lib", "production.rb"))
-    source = File.read(File.join(ROOT, "gates", "rails_runtime.rb"))
+    assert File.file?(File.join(MASTER_GATES, "lib", "production.rb"))
+    source = File.read(File.join(MASTER_GATES, "rails_runtime.rb"))
     assert_includes source, "Deploy::ProductionGate.run(skip_nested: true)"
     refute_includes source, "GATE_SKIP_NESTED"
   end
@@ -237,14 +238,14 @@ class DeployGatesContractTest < Minitest::Test
   def test_gate_support_files_exist
     %w[dom_surface_schema guest_flow_persona exemplar_structure visual_quality gate_calibration page_inventory]
       .each do |name|
-        assert File.file?(File.join(ROOT, "gates", "support", "#{name}.rb")), "missing gates/support/#{name}.rb"
+        assert File.file?(File.join(MASTER_GATES, "support", "#{name}.rb")), "missing gates/support/#{name}.rb"
       end
-    assert File.directory?(File.join(ROOT, "gates", "fixtures", "exemplars"))
-    assert File.file?(File.join(ROOT, "gates", "data", "calibration.yml"))
+    assert File.directory?(File.join(MASTER_GATES, "fixtures", "exemplars"))
+    assert File.file?(File.join(MASTER_GATES, "data", "calibration.yml"))
   end
 
   def test_surface_schema_fixtures_exist
-    dir = File.join(ROOT, "gates", "fixtures", "surfaces")
+    dir = File.join(MASTER_GATES, "fixtures", "surfaces")
     assert File.directory?(dir)
     assert Dir.glob(File.join(dir, "good_*.html")).size >= 4
     assert Dir.glob(File.join(dir, "bad_*.html")).size >= 4
@@ -266,7 +267,7 @@ class DeployGatesContractTest < Minitest::Test
     }.each do |leaf, parent|
       assert_equal parent, GATES.dig(leaf, "covered_by"), "#{leaf} should be covered by #{parent}"
     end
-    assert_includes File.read(File.join(ROOT, "gates", "runner.rb")), "resolve_gates"
+    assert_includes File.read(File.join(MASTER_GATES, "runner.rb")), "resolve_gates"
   end
 
   def test_apps_yml_validator_points_at_the_canonical_rails_inventory
@@ -276,9 +277,9 @@ class DeployGatesContractTest < Minitest::Test
   end
 
   def test_production_gate_runs_apps_yml_validator_in_process
-    source = File.read(File.join(ROOT, "gates", "lib", "production.rb"))
+    source = File.read(File.join(MASTER_GATES, "lib", "production.rb"))
     assert_includes source, "AppsYmlValidator.run"
-    assert File.file?(File.join(ROOT, "gates", "lib", "source", "apps_yml.rb"))
+    assert File.file?(File.join(MASTER_GATES, "lib", "source", "apps_yml.rb"))
   end
 
   def test_deploy_at_aliases_are_retired
@@ -345,7 +346,7 @@ class DeployGatesContractTest < Minitest::Test
   # their subject, and only their row lives here.
   def gate_file(row)
     required = row.fetch("require")
-    base = required.start_with?("MASTER/", "OPENBSD/", "STUDIO/") ? File.expand_path("..", ROOT) : File.join(ROOT, "gates")
+    base = required.start_with?("MASTER/", "OPENBSD/", "STUDIO/") ? File.expand_path("..", ROOT) : File.join(MASTER_GATES)
     File.join(base, required)
   end
 

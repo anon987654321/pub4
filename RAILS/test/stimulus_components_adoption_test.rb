@@ -12,13 +12,13 @@ class StimulusComponentsAdoptionTest < Minitest::Test
 
   def test_gate_is_registered
     require "yaml"
-    row = YAML.safe_load_file(File.join(ROOT, "gates/gates.yml")).fetch("stimulus_components")
+    row = YAML.safe_load_file(File.expand_path("../../MASTER/gates/gates.yml", __dir__)).fetch("stimulus_components")
     assert_equal "Deploy::StimulusComponentsGate", row.fetch("class")
-    assert File.file?(File.join(ROOT, "gates/lib/source/stimulus_components.rb"))
+    assert File.file?(File.expand_path("../../MASTER/gates/lib/source/stimulus_components.rb", __dir__))
   end
 
   def test_full_catalogue_is_pinned_and_vendored
-    baseline = File.read(File.join(ROOT, "shared/config/importmap_baseline.rb"))
+    baseline = File.read(File.join(ROOT, "__shared/config/importmap_baseline.rb"))
     pinned = gate.pinned_components(baseline)
 
     gate::COMPONENT_PACKAGES.each do |name, package|
@@ -26,14 +26,14 @@ class StimulusComponentsAdoptionTest < Minitest::Test
       assert pinned_ok, "missing importmap pin for #{package}"
 
       filename = gate::VENDOR_FILES.fetch(name, "@stimulus-components--#{name}.js")
-      path = File.join(ROOT, "shared/vendor/javascript", filename)
+      path = File.join(ROOT, "__shared/vendor/javascript", filename)
       assert File.file?(path), "missing #{path}"
       assert_operator File.size(path), :>, 100
     end
   end
 
   def test_full_catalogue_is_registered_from_shared_boot
-    boot = File.read(File.join(ROOT, "shared/frontend/stimulus_boot.js"))
+    boot = File.read(File.join(ROOT, "__shared/frontend/stimulus_boot.js"))
     gate::REQUIRED_CONTROLLERS.each do |name|
       assert_match(/\[\s*"#{Regexp.escape(name)}",/, boot, "shared boot does not register #{name}")
     end

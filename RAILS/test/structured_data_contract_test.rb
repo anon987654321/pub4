@@ -14,7 +14,7 @@ class StructuredDataContractTest < Minitest::Test
   end
 
   def test_event_schema_declares_real_event_fields
-    helper = read_rel("shared/app/helpers/schema_helper.rb")
+    helper = read_rel("__shared/app/helpers/schema_helper.rb")
     show = read_rel("brgen/app/views/events/show.html.erb")
     assert_includes helper, "def event_schema"
     assert_includes helper, '"@type" => "Event"'
@@ -26,7 +26,7 @@ class StructuredDataContractTest < Minitest::Test
   end
 
   def test_schema_helper_grows_collection_and_rating
-    helper = read_rel("shared/app/helpers/schema_helper.rb")
+    helper = read_rel("__shared/app/helpers/schema_helper.rb")
     assert_includes helper, "def collection_page_schema"
     assert_includes helper, "CollectionPage"
     assert_includes helper, "def aggregate_rating_snippet"
@@ -36,7 +36,7 @@ class StructuredDataContractTest < Minitest::Test
 
   def test_sitemapped_profile_emits_person_json_ld
     show = read_rel("brgen/app/views/users/show.html.erb")
-    helper = read_rel("shared/app/helpers/schema_helper.rb")
+    helper = read_rel("__shared/app/helpers/schema_helper.rb")
     assert_includes show, "json_ld_for(@user, type: :person)"
     assert_includes helper, "display_name"
   end

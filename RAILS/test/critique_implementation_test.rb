@@ -263,8 +263,8 @@ class CritiqueImplementationTest < Minitest::Test
 
   def test_brgen_new_post_is_progressive_and_photo_first
     form = read("brgen/app/views/posts/new.html.erb")
-    controller = read("shared/frontend/post_progressive_controller.js")
-    boot = read("shared/frontend/stimulus_boot_social.js")
+    controller = read("__shared/frontend/post_progressive_controller.js")
+    boot = read("__shared/frontend/stimulus_boot_social.js")
     importmap = read("__shared/config/importmap_baseline.rb")
     css = read("brgen/app/assets/stylesheets/application.scss")
 
@@ -417,7 +417,7 @@ class CritiqueImplementationTest < Minitest::Test
     # search_hotkey_controller.js — which bound / and Cmd-K on the ports index and
     # nowhere else — into the shared feed-hotkey controller registered on every
     # layout. The claim being pinned is "/ focuses search", not which file holds it.
-    hotkey = read("shared/frontend/feed_hotkey_controller.js")
+    hotkey = read("__shared/frontend/feed_hotkey_controller.js")
     layout = read("bsdports/app/views/layouts/application.html.erb")
 
     # Through the locale, not the literal. bsdports is fully translated now, so
