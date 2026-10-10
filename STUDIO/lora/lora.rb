@@ -51,7 +51,16 @@ parser = OptionParser.new do |opts|
   end
 end
 
-parser.order!(ARGV)
+# The router owns the leading options only. The first argument it does not own,
+# and everything after it, belongs to the subject's lane: OptionParser would
+# reject --generate-replicate as invalid before the lane ever saw it.
+head = []
+while %w[--subject --list --status -h --help].include?(ARGV.first.to_s.split("=").first)
+  flag = ARGV.shift
+  head << flag
+  head << ARGV.shift if flag == "--subject"
+end
+parser.order!(head)
 subject = options[:subject].strip
 subject = ARGV.shift if subject.empty? && ARGV.first && !ARGV.first.start_with?("-")
 

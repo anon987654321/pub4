@@ -215,4 +215,12 @@ class TestLoraReplicate < Minitest::Test
     assert_equal true, Video.build_input(Video.preset("final"), prompt: "p", image_url: "u", audio: true)["generate_audio"]
     assert_raises(ArgumentError) { Video.preset("nope") }
   end
+  # --- routing --------------------------------------------------------------
+
+  def test_the_router_passes_lane_flags_through_to_the_subject
+    router = File.expand_path("../lora/lora.rb", __dir__)
+    out, = Open3.capture2e("ruby", router, "--subject", "johann", "--generate-replicate", "--dry-run")
+
+    refute_match(/invalid option/, out)
+  end
 end

@@ -91,6 +91,7 @@ GEM
       json_schemer (>= 2.4)
     midilib (4.0.2)
     mini_mime (1.1.5)
+    mini_portile2 (2.8.9)
     minitest (5.27.0)
     multipart-post (2.4.1)
     net-http (0.9.1)
@@ -195,6 +196,8 @@ GEM
     simplecov_json_formatter (0.1.4)
     simpleidn (0.3.0)
     sqlite3 (2.9.4)
+      mini_portile2 (~> 2.8.0)
+    sqlite3 (2.9.4-aarch64-linux-gnu)
     sqlite3 (2.9.4-arm64-darwin)
     sqlite3 (2.9.4-x86_64-linux-gnu)
     stringio (3.2.0)
@@ -311,6 +314,7 @@ CHECKSUMS
   mcp (1.6.0) sha256=73fe3be93df68cffd6e73c852e7a1182a0a5eacdaff586b864bfeac22ae6f7be
   midilib (4.0.2) sha256=2eb9a981c792f647298bc8945fbb01f48007d35ac609cdaa8169adee3d81749e
   mini_mime (1.1.5) sha256=8681b7e2e4215f2a159f9400b5816d85e9d8c6c6b491e96a12797e798f8bccef
+  mini_portile2 (2.8.9) sha256=0cd7c7f824e010c072e33f68bc02d85a00aeb6fce05bb4819c03dfd3c140c289
   minitest (5.27.0) sha256=2d3b17f8a36fe7801c1adcffdbc38233b938eb0b4966e97a6739055a45fa77d5
   multipart-post (2.4.1) sha256=9872d03a8e552020ca096adadbf5e3cb1cd1cdd6acd3c161136b8a5737cdb4a8
   net-http (0.9.1) sha256=25ba0b67c63e89df626ed8fac771d0ad24ad151a858af2cc8e6a716ca4336996
@@ -355,6 +359,7 @@ CHECKSUMS
   simplecov_json_formatter (0.1.4) sha256=529418fbe8de1713ac2b2d612aa3daa56d316975d307244399fa4838c601b428
   simpleidn (0.3.0) sha256=12ca730bed2f3db04d11e9bfd1bca3e11fb37f55b21eb2e9793fb5814bf54d03
   sqlite3 (2.9.4) sha256=6161c5b9c17886b289558e6c8082b28a22a814736d2433c9a67f4c6bfcde5c97
+  sqlite3 (2.9.4-aarch64-linux-gnu) sha256=ecabed721e6eaad54601d2685f09029d90025efc8d931040dc89cb3f8a2080ec
   sqlite3 (2.9.4-arm64-darwin) sha256=1d5aad413a815d236e96d43f05a1acc600b6cd086800770342a3f9c2877499ff
   sqlite3 (2.9.4-x86_64-linux-gnu) sha256=537a3eda71b1df1336d0055cbebe55a7317c34870c192c7b6b9d8d0be6871847
   stringio (3.2.0) sha256=c37cb2e58b4ffbd33fe5cd948c05934af997b36e0b6ca6fdf43afa234cf222e1

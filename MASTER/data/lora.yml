@@ -1,0 +1,49 @@
+# What MASTER knows about the person-LoRA tooling in STUDIO/lora, read by
+# lib/io/lora_intent.rb. Recognition, subjects and the spending gate are data so
+# a new subject or a new phrase is an edit here and not in Ruby.
+#
+# Order matters: the first intent whose `match` and `action` both hit wins, and
+# `context` (where given) must hit too. A request that names a video and a LoRA
+# is a video, so video precedes selfie, and selfie precedes train.
+
+# Who "me", "my" and "meg" mean. A request that names a subject means that
+# subject whoever is asking.
+me: johann
+
+subjects:
+  johann: { names: [johann], pronoun: he }
+  ragnhild: { names: [ragnhild], pronoun: she }
+
+first_person: '\b(?:me|my|myself|mine|meg|min|mitt|mine)\b'
+
+# A paid request is planned and run as a dry run (preflight, estimate, the
+# prompt and the model) unless the sentence also carries one of these.
+confirm: '\b(?:confirm(?:ed)?|for real|go ahead|bekreft\w*|kj[øo]r\s+p[åa]\s+ordentlig)\b'
+draft: '\b(?:draft|quick(?:ly)?|cheap(?:ly)?|preview|rough|utkast)\b'
+final: '\b(?:final|high[- ]quality|best quality|polished|proper)\b'
+kling: '\bkling\b'
+
+action: '\b(?:generate|make|create|render|produce|take|give|get|build|train|fine[- ]?tune|start|animate|shoot|lag|lage|generer|lag\s+meg|trene|tren|bygg)\b'
+
+intents:
+  - name: status
+    match: '\blora\b.*\b(?:status|state|progress|ready|trained|blocked)\b|\b(?:status|state|progress)\b.*\blora\b'
+    needs_action: false
+  - name: video
+    match: '\b(?:video|clip|animation|animate|klipp)\b'
+    context: '\b(?:lora|selfie|selfies|portrait|photo|still|johann|ragnhild)\b|\bof\s+(?:me|myself)\b|\bav\s+meg\b'
+  - name: selfie
+    match: '\bselfies?\b'
+  - name: train
+    match: '\bloras?\b'
+
+# Sizes. The selfies set is drawn, so any sitting number in 1..selfie_sittings
+# is valid. A plural request with no number is selfie_batch frames, and no
+# single request exceeds selfie_max: each frame is a paid render.
+selfie_sittings: 48
+selfie_batch: 4
+selfie_max: 8
+
+# Motion for a clip when the sentence gives none. Plain, because a first frame
+# that is already right needs little help to move.
+video_prompt: "%{he} looks at the camera and smiles slightly, a gentle natural movement, soft handheld drift"

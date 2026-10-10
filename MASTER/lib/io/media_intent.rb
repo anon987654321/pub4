@@ -7,6 +7,7 @@ require_relative "../boot/paths"
 require_relative "script_dispatch"
 require_relative "constraint_dsl"
 require_relative "natural_intent"
+require_relative "lora_intent"
 
 module Master
   module Io
@@ -59,12 +60,13 @@ module Master
       POSTPRO_IMAGE_GLOB_RE = %r{(?:~|/)[^\s"\']*[\*?\[\]{}][^\s"\']*\.(?:jpe?g|png|webp|tiff?)\b}i.freeze
 
       def handles?(text)
-        text.match?(KICK_RE) || text.match?(PLAY_LAST_RE) || text.match?(SYNTH_RE) || text.match?(LIVE_AUDIO_STOP_RE) || live_synth?(text) || POSTPRO_CAPABILITY_RE.match?(text) ||
+        LoraIntent.handles?(text) || text.match?(KICK_RE) || text.match?(PLAY_LAST_RE) || text.match?(SYNTH_RE) || text.match?(LIVE_AUDIO_STOP_RE) || live_synth?(text) || POSTPRO_CAPABILITY_RE.match?(text) ||
           text.match?(BACKGROUND_MUSIC_RE) || text.match?(LIVE_AUDIO_DIAGNOSTIC_RE) || text.match?(AUDIO_RE) || postpro_intent?(text) ||
           text.match?(IMAGE_RE) && text.match?(/\b(?:photo|portrait|image|picture)\b/i)
       end
 
       def dispatch(text, root: MasterPaths.root, bus: nil)
+        return LoraIntent.dispatch(text, root:) if LoraIntent.handles?(text)
         return postpro_capability if POSTPRO_CAPABILITY_RE.match?(text)
         return generate_kick(text, root:) if text.match?(KICK_RE)
         return play_last(text, root:) if text.match?(PLAY_LAST_RE)
