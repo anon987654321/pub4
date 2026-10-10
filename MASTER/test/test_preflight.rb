@@ -12,7 +12,7 @@ class TestPreflight < Minitest::Test
       findings = Master::Fix::Preflight.new(root:).findings([path])
 
       assert_equal 1, findings.size
-      assert_equal "PREFLIGHT", findings.first[:rule]
+      assert_equal "PREFLIGHT", findings.first[:law]
       assert_equal :critical, findings.first[:severity]
       assert_match(/Ruby syntax error/, findings.first[:message])
     end
@@ -26,7 +26,7 @@ class TestPreflight < Minitest::Test
       findings = Master::Fix::Preflight.new(root:).findings([path])
 
       assert_equal 1, findings.size
-      assert_equal "PREFLIGHT", findings.first[:rule]
+      assert_equal "PREFLIGHT", findings.first[:law]
       assert_match(/YAML parse error/, findings.first[:message])
     end
   end

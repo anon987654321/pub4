@@ -97,14 +97,14 @@ module Master
 
         def by_rule
           @by_rule ||= clustered_violations.each_with_object(Hash.new { |h, k| h[k] = [] }) do |violation, groups|
-              next if rule_filter && !rule_filter.include?(violation[:rule].to_s)
+              next if rule_filter && !rule_filter.include?(violation[:law].to_s)
               next if severity_filter && !severity_filter.include?(violation[:severity].to_s)
 
               # Canonical LawDSL ids are uppercase, but some findings carry a
               # lowercase label (e.g. laws.yml's law-map "detects:" taxonomy)
               # for the same category -- normalize so it doesn't split into a
               # second entry (see Scanner::ProgressReporter for the same fix).
-              groups[violation[:rule].to_s.upcase] << violation
+              groups[violation[:law].to_s.upcase] << violation
           end
         end
 
@@ -211,7 +211,7 @@ module Master
         end
 
         def default_dedupe_key(violation)
-          "#{violation[:rule]}:#{violation[:message].to_s.downcase.gsub(/\b\d+\b/, "#")}"
+          "#{violation[:law]}:#{violation[:message].to_s.downcase.gsub(/\b\d+\b/, "#")}"
         end
 
         def default_why(violation)
@@ -219,12 +219,12 @@ module Master
         end
 
         def default_genealogy(violation)
-          [violation[:severity].to_s.upcase, violation[:rule].to_s, violation[:message].to_s.split(" — ").first]
+          [violation[:severity].to_s.upcase, violation[:law].to_s, violation[:message].to_s.split(" — ").first]
         end
 
         def cross_file_duplicate_clusters
           by_signature = clustered_violations.group_by do |violation|
-            [violation[:rule].to_s, violation[:message].to_s.downcase, violation[:fix].to_s.downcase]
+            [violation[:law].to_s, violation[:message].to_s.downcase, violation[:fix].to_s.downcase]
           end
 
           by_signature.filter_map do |(rule, message, fix), cluster|

@@ -44,7 +44,7 @@ class StructuralStageTest < Minitest::Test
       findings = structural_findings(files: Dir.glob(File.join(dir, "*.rb")))
 
       assert_equal 1, findings.size
-      assert_equal "STRUCTURAL_COHESION", findings.first[:rule]
+      assert_equal "STRUCTURAL_COHESION", findings.first[:law]
       assert findings.first[:evidence].key?(:external_references)
     end
   end

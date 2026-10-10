@@ -247,9 +247,9 @@ module Operator
       @registry_rule_count = own.size
       corpus = files.reject { |path| Master::Fix::Scanner.skip_path?(path, root: ROOT) }
       scanner.findings(corpus, depth: :deep).filter_map do |hit|
-        next unless hit[:severity].to_s == "error" && own.include?(hit[:rule].to_s)
+        next unless hit[:severity].to_s == "error" && own.include?(hit[:law].to_s)
 
-        "#{hit[:rule]} #{hit[:path].to_s.delete_prefix("#{ROOT}/")}:#{hit[:line]}"
+        "#{hit[:law]} #{hit[:path].to_s.delete_prefix("#{ROOT}/")}:#{hit[:line]}"
       end.sort
     end
 

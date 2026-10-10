@@ -18,7 +18,7 @@ module Master
       def initialize(findings:, rules:, agent:, scanner:, root:, **options)
         @notes = rules.to_h { |rule| [rule.id.to_s, rule.respond_to?(:description) ? rule.description.to_s : ""] }
         @findings = findings
-        ids = findings.map { |finding| finding[:rule].to_s }.uniq
+        ids = findings.map { |finding| finding[:law].to_s }.uniq
         super(law: Scope.new(id: ids.join("+"), description: "file repair"), agent:, scanner:, root:, **options)
       end
 
@@ -33,7 +33,7 @@ module Master
       # The rules this repair put to the model, once run has filtered out what
       # waits for a person or fails the confidence gate.
       def asked_rules
-        repairable.map { |finding| finding[:rule].to_s }.uniq
+        repairable.map { |finding| finding[:law].to_s }.uniq
       end
 
       def run(path)
@@ -47,8 +47,8 @@ module Master
 
       def summary(path)
         first = @findings.min_by { |finding| finding[:line].to_i }
-        { rule: @law.id, file: path, line: first[:line], severity: :warning,
-          message: @findings.map { |finding| "#{finding[:rule]} line #{finding[:line]}" }.join("; ") }
+        { law: @law.id, file: path, line: first[:line], severity: :warning,
+          message: @findings.map { |finding| "#{finding[:law]} line #{finding[:line]}" }.join("; ") }
       end
 
       # Straight to the file: no architecture plan, and one candidate.
@@ -81,14 +81,14 @@ module Master
       end
 
       def rule_notes
-        @findings.map { |finding| finding[:rule].to_s }.uniq
+        @findings.map { |finding| finding[:law].to_s }.uniq
                  .map { |id| "- #{id}: #{@notes[id].to_s.empty? ? "see the finding" : @notes[id]}" }.join("\n")
       end
 
       def finding_lines
         lines = @findings.sort_by { |finding| finding[:line].to_i }.map do |finding|
           hint = finding[:fix].to_s.strip
-          "- line #{finding[:line]}, #{finding[:rule]}: #{finding[:message]}#{" (how: #{hint})" unless hint.empty?}"
+          "- line #{finding[:line]}, #{finding[:law]}: #{finding[:message]}#{" (how: #{hint})" unless hint.empty?}"
         end
         lines.join("\n")
       end

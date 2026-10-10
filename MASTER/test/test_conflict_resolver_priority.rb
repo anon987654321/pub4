@@ -10,9 +10,9 @@ class TestConflictResolverPriority < Minitest::Test
   def test_rejects_when_a_strictly_more_severe_finding_is_introduced
     Dir.mktmpdir do |dir|
       resolver = Master::Fix::ConflictResolver.new(root: dir, config: {})
-      original = { rule: "STYLE_RULE", severity: "warning" }
+      original = { law: "STYLE_RULE", severity: "warning" }
       before = []
-      after = [{ "rule" => "SAFETY_RULE", "severity" => "critical", "line" => 5 }]
+      after = [{ "law" => "SAFETY_RULE", "severity" => "critical", "line" => 5 }]
 
       assert resolver.reject_higher_priority?(original_violation: original, before:, after:, path: "f.rb")
 
@@ -25,9 +25,9 @@ class TestConflictResolverPriority < Minitest::Test
   def test_does_not_reject_when_introduced_finding_is_not_more_severe
     Dir.mktmpdir do |dir|
       resolver = Master::Fix::ConflictResolver.new(root: dir, config: {})
-      original = { rule: "SAFETY_RULE", severity: "critical" }
+      original = { law: "SAFETY_RULE", severity: "critical" }
       before = []
-      after = [{ "rule" => "STYLE_RULE", "severity" => "warning", "line" => 5 }]
+      after = [{ "law" => "STYLE_RULE", "severity" => "warning", "line" => 5 }]
 
       refute resolver.reject_higher_priority?(original_violation: original, before:, after:, path: "f.rb")
     end
@@ -36,8 +36,8 @@ class TestConflictResolverPriority < Minitest::Test
   def test_does_not_reject_when_nothing_new_was_introduced
     Dir.mktmpdir do |dir|
       resolver = Master::Fix::ConflictResolver.new(root: dir, config: {})
-      original = { rule: "STYLE_RULE", severity: "warning" }
-      finding = { "rule" => "SAFETY_RULE", "severity" => "critical", "line" => 5 }
+      original = { law: "STYLE_RULE", severity: "warning" }
+      finding = { "law" => "SAFETY_RULE", "severity" => "critical", "line" => 5 }
 
       refute resolver.reject_higher_priority?(original_violation: original, before: [finding], after: [finding], path: "f.rb")
     end

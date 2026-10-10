@@ -80,7 +80,7 @@ module Master
       def finding(path:, line:, message:)
         relative = path.delete_prefix("#{@root}/")
         @bus&.publish("fix_loop:preflight_finding", file: relative, line:, message:)
-        { rule: "PREFLIGHT", file: path, line:, message:, severity: :critical }
+        { law: "PREFLIGHT", file: path, line:, message:, severity: :critical }
       end
     end
   end

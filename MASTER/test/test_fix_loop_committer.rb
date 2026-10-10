@@ -131,9 +131,9 @@ class TestFixLoopCommitter < Minitest::Test
     write_file("lib/ok.rb", "OK = 1\n")
     git = FakeGit.new(["lib/theirs.rb"], ["lib/theirs.rb", "lib/ok.rb"])
     findings = [
-      { rule: "NO_PUTS", file: "lib/ok.rb", line: 3 },
-      { rule: "LONG_LINE", file: File.join(@dir, "lib/ok.rb"), line: 9 },
-      { rule: "NO_PUTS", file: "lib/theirs.rb", line: 1 },
+      { law: "NO_PUTS", file: "lib/ok.rb", line: 3 },
+      { law: "LONG_LINE", file: File.join(@dir, "lib/ok.rb"), line: 9 },
+      { law: "NO_PUTS", file: "lib/theirs.rb", line: 1 },
     ]
     committer = Master::Fix::FixLoop::Committer.new(git:, bus: FakeBus.new, root: @dir)
     committer.baseline!

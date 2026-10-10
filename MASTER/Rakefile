@@ -101,7 +101,7 @@ task :constitution do
 
     result.value!.map { |finding| finding.merge(file: path) }
   rescue Timeout::Error
-    [{ rule: "SCAN_TIMEOUT", rule_id: "SCAN_TIMEOUT", severity: :error, line: 1,
+    [{ law: "SCAN_TIMEOUT", law_id: "SCAN_TIMEOUT", severity: :error, line: 1,
        message: "scan exceeded #{timeout}s per-file budget", file: path }]
   end
   triage = Master::Review::Scan::ConstitutionTriage.new(root:)
@@ -119,7 +119,7 @@ task :constitution do
       next if bucket.findings.empty?
 
       puts "[#{bucket.name}] #{bucket.findings.size}"
-      bucket.findings.group_by { |v| v[:rule] }.sort_by { |_, vs| -vs.size }.first(8).each do |rule, vs|
+      bucket.findings.group_by { |v| v[:law] }.sort_by { |_, vs| -vs.size }.first(8).each do |rule, vs|
         puts "  #{rule}: #{vs.size}"
         vs.first(3).each { |v| puts "    #{v[:file]}:#{v[:line]}: #{v[:message]}" }
       end

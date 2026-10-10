@@ -290,7 +290,7 @@ end
         File.write(path, code)
       end
       results = Master::Fix::Scan::CrossFileAnalysis.new(root:).call(Dir.glob(File.join(root, "**", "*.rb")))
-      results.flat_map { |_, result| result.value! }.map { |finding| finding[:rule] }
+      results.flat_map { |_, result| result.value! }.map { |finding| finding[:law] }
     end
   end
 
@@ -760,7 +760,7 @@ end
 
   def bridge_findings(source, path: "lib/example.rb")
     Array(bridge.check(source, path: File.join(Master::ROOT, path)))
-      .map { |f| f[:rule].to_s }.select { |id| LINE_RULES.include?(id) }
+      .map { |f| f[:law].to_s }.select { |id| LINE_RULES.include?(id) }
   end
 
   def test_a_comment_naming_a_forbidden_construct_is_not_a_finding
@@ -792,7 +792,7 @@ end
   # violation still fires through the same comment-skipping scan.
   def test_comment_reading_laws_still_see_comments
     hits = Array(bridge.check("# increment counter\n", path: File.join(Master::ROOT, "lib/example.rb")))
-    assert(hits.any? { |f| f[:rule] == "WHY_NOT_WHAT" }, "WHY_NOT_WHAT reads comments by design")
+    assert(hits.any? { |f| f[:law] == "WHY_NOT_WHAT" }, "WHY_NOT_WHAT reads comments by design")
   end
 
   def test_the_deleted_rule_does_not_come_back
@@ -846,7 +846,7 @@ end
   def smell_findings(smell_id, source, path: "lib/example.rb")
     rule = scanner.laws.find { |r| r.id.to_s == "LEARNED_SMELLS" } || raise("LEARNED_SMELLS not registered")
     Array(rule.check(source, path: File.join(Master::ROOT, path)))
-      .select { |f| (f[:rule_id] || f[:rule]).to_s == smell_id.to_s }
+      .select { |f| (f[:law_id] || f[:law]).to_s == smell_id.to_s }
   end
 
   def test_magic_number_ignores_numbers_in_comments

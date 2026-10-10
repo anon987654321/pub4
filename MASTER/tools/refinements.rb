@@ -144,7 +144,7 @@ module Operator
             tree: relative.split("/").first,
             file: relative,
             line: hit[:line],
-            rule: hit[:rule].to_s,
+            rule: hit[:law].to_s,
             severity: hit[:severity].to_s,
             message: hit[:message].to_s[0, 160],
           }

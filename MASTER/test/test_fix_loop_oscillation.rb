@@ -139,7 +139,7 @@ class TestFixLoopOscillation < Minitest::Test
 
   def test_oscillation_fires_when_violation_set_repeats
     # Pass 1: snapshot recorded. Pass 2: same snapshot -> oscillation break.
-    loop, committer = build_loop([{ rule: "TEST_RULE", file: "dummy.yml", line: 1, message: "osc" }])
+    loop, committer = build_loop([{ law: "TEST_RULE", file: "dummy.yml", line: 1, message: "osc" }])
     result = loop.run(@root)
 
     assert result.ok?
@@ -154,7 +154,7 @@ class TestFixLoopOscillation < Minitest::Test
   end
 
   def test_progressed_pass_spares_oscillation_rollback
-    loop, committer = build_loop([{ rule: "TEST_RULE", file: "dummy.yml", line: 1, message: "osc" }])
+    loop, committer = build_loop([{ law: "TEST_RULE", file: "dummy.yml", line: 1, message: "osc" }])
     pass_runner = loop.instance_variable_get(:@pass_runner)
 
     stagnant = pass_runner.send(
@@ -162,7 +162,7 @@ class TestFixLoopOscillation < Minitest::Test
       [],
       ["snapshot"],
       Hash.new(0),
-      [{ rule: "TEST_RULE", file: "dummy.yml", line: 1, message: "osc" }],
+      [{ law: "TEST_RULE", file: "dummy.yml", line: 1, message: "osc" }],
       2,
       progressed: true,
     )
@@ -188,7 +188,7 @@ class TestFixLoopOscillation < Minitest::Test
 
   def test_oscillation_fires_once_not_every_pass
     # Even if max_passes is high, oscillation fires exactly once then stops.
-    loop = build_loop([{ rule: "TEST_RULE", file: "dummy.yml", line: 1, message: "osc" }])
+    loop = build_loop([{ law: "TEST_RULE", file: "dummy.yml", line: 1, message: "osc" }])
     loop.run(@root, max_passes: 10)
 
     osc = @bus.events.select { |e| e[:event] == "fix_loop:oscillation" }
@@ -196,11 +196,11 @@ class TestFixLoopOscillation < Minitest::Test
   end
 
   def test_cycle_detector_fires_when_same_violation_recurs_without_identical_snapshot
-    persistent = { rule: "TEST_RULE", file: "dummy.yml", line: 1, message: "still here" }
+    persistent = { law: "TEST_RULE", file: "dummy.yml", line: 1, message: "still here" }
     scans = [
       [persistent],
-      [persistent, { rule: "TEST_RULE", file: "dummy.yml", line: 2, message: "new" }],
-      [persistent, { rule: "TEST_RULE", file: "dummy.yml", line: 3, message: "newer" }],
+      [persistent, { law: "TEST_RULE", file: "dummy.yml", line: 2, message: "new" }],
+      [persistent, { law: "TEST_RULE", file: "dummy.yml", line: 3, message: "newer" }],
     ]
     loop = build_loop_with_scanner(SequenceScanner.new(scans))
     loop.run(@root, max_passes: 5)
@@ -247,7 +247,7 @@ class TestFixLoopOscillation < Minitest::Test
   end
 
   def test_fix_loop_streams_per_file_scan_progress
-    loop = build_loop([{ rule: "TEST_RULE", line: 1, message: "boom" }])
+    loop = build_loop([{ law: "TEST_RULE", line: 1, message: "boom" }])
 
     loop.preview(@root)
 

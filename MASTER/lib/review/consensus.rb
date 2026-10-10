@@ -62,7 +62,7 @@ module Master
           Return JSON only: {"approved":true|false,"reason":"short reason"}
 
           Violation:
-          rule=#{violation[:rule]}
+          rule=#{violation[:law]}
           severity=#{violation[:severity]}
           file=#{violation[:file]}
           line=#{violation[:line]}

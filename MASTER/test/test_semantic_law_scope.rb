@@ -66,7 +66,7 @@ class TestSemanticLawScope < Minitest::Test
   def test_a_finding_outside_the_scope_asked_is_discarded
     css = rule.send(:rules_for, "css")
     response = "RAILS_THIN_CONTROLLER_SEMANTIC:3:fat controller\nAESTHETIC_FLAT_SEMANTIC:4:gradient\n"
-    ids = rule.send(:parse_findings, response, css).map { |f| f[:rule] }
+    ids = rule.send(:parse_findings, response, css).map { |f| f[:law] }
 
     assert_equal ["AESTHETIC_FLAT_SEMANTIC"], ids
   end

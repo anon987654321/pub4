@@ -184,7 +184,7 @@ class VisualPassContractTest < Minitest::Test
       find = ->(pick) { pass.send(:finding_for, pick, [css, html], { ".hero" => css }) }
 
       by_selector = find.("surface: master/chat/mobile viewport: mobile .hero laws: #{law}")
-      assert_equal [Pass::RULE_ID, css, 2], [by_selector[:rule], by_selector[:file], by_selector[:line]]
+      assert_equal [Pass::RULE_ID, css, 2], [by_selector[:law], by_selector[:file], by_selector[:line]]
       by_text = find.(%(surface: master/chat/mobile viewport: mobile text anchor: "Welcome home" laws: #{law}))
       assert_equal [html, 2], [by_text[:file], by_text[:line]]
       assert_nil find.("viewport: mobile .hero laws: #{law}"), "no surface, no finding"

@@ -86,9 +86,9 @@ class TestCLI < Minitest::Test
 
   def test_scan_report_uses_inverted_pyramid_order
     findings = [
-      { rule: "STYLE", line: 2, message: "style issue" },
-      { rule: "STYLE", line: 3, message: "another style issue" },
-      { rule: "SECURITY", line: 8, message: "security issue" },
+      { law: "STYLE", line: 2, message: "style issue" },
+      { law: "STYLE", line: 3, message: "another style issue" },
+      { law: "SECURITY", line: 8, message: "security issue" },
     ]
     output = Master::CLI::Scan::Report.new(
       pairs: [["sample.rb", Master::Result.ok(findings)]],
@@ -103,7 +103,7 @@ class TestCLI < Minitest::Test
   end
 
   def test_scan_dry_run_report_says_no_changes_made
-    findings = [{ rule: "STYLE", line: 2, message: "style issue" }]
+    findings = [{ law: "STYLE", line: 2, message: "style issue" }]
 
     output = Master::CLI::Scan::Report.new(
       pairs: [["sample.rb", Master::Result.ok(findings)]],

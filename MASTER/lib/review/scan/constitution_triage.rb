@@ -100,11 +100,11 @@ module Master
         private
 
         def classify(finding)
-          return :timed_out if finding[:rule].to_s == "SCAN_TIMEOUT"
+          return :timed_out if finding[:law].to_s == "SCAN_TIMEOUT"
 
           rel = relative_path(finding[:file].to_s)
           return :scanner_self_reference if rel.match?(SCANNER_SELF_PATHS)
-          return :rule_retune if RULE_RETUNE_IDS.include?(finding[:rule].to_s)
+          return :rule_retune if RULE_RETUNE_IDS.include?(finding[:law].to_s)
 
           :true_violation
         end

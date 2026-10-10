@@ -497,7 +497,7 @@ when "laws"
   hits = one.findings(targets)
   rows = hits.map do |item|
     { path: item[:path].to_s.sub(%r{\A#{Regexp.escape(ROOT)}/}, ""), line: item[:line],
-      rule: item[:rule].to_s, message: item[:message].to_s }
+      rule: item[:law].to_s, message: item[:message].to_s }
   end
   if as_json
     puts JSON.pretty_generate(card.merge(corpus: corpus, findings: rows))

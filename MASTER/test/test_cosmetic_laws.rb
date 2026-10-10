@@ -70,7 +70,7 @@ class TestCosmeticRules < Minitest::Test
   def test_measure_optimum_flags_wide_px
     findings = Master::Review::Scan::Laws::LawBridgeLaw.new
       .check(".prose { max-width: 960px; }\n", path: "app.css")
-      .select { |f| f[:rule] == "MEASURE_OPTIMUM" }
+      .select { |f| f[:law] == "MEASURE_OPTIMUM" }
     refute_empty findings
   end
 end

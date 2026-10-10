@@ -115,7 +115,7 @@ module Master
           end
 
           def repair_scanned_file(path, rows, rules, stream)
-            ids = rows.map { |row| row[:rule].to_s }.uniq - ConflictResolver::DRY_LAWS
+            ids = rows.map { |row| row[:law].to_s }.uniq - ConflictResolver::DRY_LAWS
             runnable = rules.select { |rule| ids.include?(rule.id.to_s) }
             return 0 if runnable.empty?
 
@@ -160,7 +160,7 @@ module Master
           STREAMED_LOCK = Mutex.new
 
           def findings_of(rows, ids, path)
-            rows.select { |row| ids.include?(row[:rule].to_s) }.map { |row| row.merge(file: path) }
+            rows.select { |row| ids.include?(row[:law].to_s) }.map { |row| row.merge(file: path) }
           end
 
           def run_streamed_rules(runnable, path, rel, stream)
@@ -188,7 +188,7 @@ module Master
           def unstreamed(found, streamed)
             return found if streamed.empty?
 
-            found.reject { |violation| streamed.include?([violation[:file].to_s, violation[:rule].to_s]) }
+            found.reject { |violation| streamed.include?([violation[:file].to_s, violation[:law].to_s]) }
           end
         end
       end

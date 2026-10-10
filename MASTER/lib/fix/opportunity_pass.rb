@@ -28,7 +28,7 @@ module Master
       Finding = Data.define(:file, :line, :message, :fix) do
         def to_h
           {
-            rule: OpportunityPass::LAW_ID,
+            law: OpportunityPass::LAW_ID,
             file:,
             line:,
             severity: :warning,

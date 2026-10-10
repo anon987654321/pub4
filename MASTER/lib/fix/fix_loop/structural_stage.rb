@@ -17,7 +17,7 @@ module Master
           directories.flat_map do |dir|
             ::Operator::Cohesion.plans_for(dir).map do |plan|
               {
-                rule: RULE_ID,
+                law: RULE_ID,
                 laws: %w[SINGULARITY ABSTRACTION DENSITY PROXIMITY KISS],
                 source: "cohesion",
                 file: relative_path(plan.fetch(:files).first, dir),

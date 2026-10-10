@@ -20,9 +20,9 @@ class TestFileRepair < Minitest::Test
 
   # Findings shrink once the file changes, so the apply guard sees progress.
   class Scanner
-    def scan(path, rules: nil)
+    def scan(path, laws: nil)
       text = File.read(path)
-      found = [{ rule: "FEW_ARGUMENTS", severity: :warning, line: 1, message: "m" }]
+      found = [{ law: "FEW_ARGUMENTS", severity: :warning, line: 1, message: "m" }]
       Master::Result.ok(text.include?("bad") ? found : [])
     end
 
@@ -30,9 +30,9 @@ class TestFileRepair < Minitest::Test
   end
 
   def findings(path)
-    [{ rule: "FEW_ARGUMENTS", line: 1, message: "3+ positional args", file: path, severity: :warning },
-     { rule: "CQS", line: 2, message: "query mutates", file: path, severity: :warning },
-     { rule: "SMALL_FILES", line: 1, message: "split", file: path, severity: :warning,
+    [{ law: "FEW_ARGUMENTS", line: 1, message: "3+ positional args", file: path, severity: :warning },
+     { law: "CQS", line: 2, message: "query mutates", file: path, severity: :warning },
+     { law: "SMALL_FILES", line: 1, message: "split", file: path, severity: :warning,
        blast_radius: { files_touched: 2 } }]
   end
 

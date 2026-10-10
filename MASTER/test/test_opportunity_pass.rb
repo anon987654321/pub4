@@ -17,7 +17,7 @@ class OpportunityPassTest < Minitest::Test
 
       assert_equal 1, findings.size
       assert_includes findings.first[:message], "dead Rake glob"
-      assert_equal Master::Fix::OpportunityPass::RULE_ID, findings.first[:rule]
+      assert_equal Master::Fix::OpportunityPass::RULE_ID, findings.first[:law]
     end
   end
 

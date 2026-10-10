@@ -86,7 +86,7 @@ class TestScanRuleContracts < Minitest::Test
   def test_secret_proximity_reaches_findings_through_the_bridge
     hits = Laws::LawBridgeLaw.new.check(%q{api_key = "sk_live_123456789"}, path: "app.rb")
 
-    assert hits.any? { |h| h[:rule] == "SECRET_PROXIMITY" }, "hardcoded secret must reach scanner findings"
+    assert hits.any? { |h| h[:law] == "SECRET_PROXIMITY" }, "hardcoded secret must reach scanner findings"
   end
 
   def test_magic_color_rule_flags_raw_css_color
@@ -182,7 +182,7 @@ class TestScanRuleContracts < Minitest::Test
   def test_unbounded_retry_reaches_findings_through_the_bridge
     bridge = Laws::LawBridgeLaw.new
     hits = bridge.check("begin\n  call\nrescue\n  retry\nend\n", path: "retry.rb")
-    retry_hits = hits.select { |h| h[:rule] == "UNBOUNDED_RETRY" }
+    retry_hits = hits.select { |h| h[:law] == "UNBOUNDED_RETRY" }
 
     refute_empty retry_hits, "uncapped retry must reach scanner findings via the bridge"
     assert_equal :error, retry_hits.first[:severity]
@@ -215,7 +215,7 @@ class TestScanRuleContracts < Minitest::Test
       ext = TWIN_EXT.fetch(law.languages.first&.to_s, ".rb")
       path = "#{law.path || "/lib/"}example#{ext}"
       hits = bridge.check(law.bad, path:)
-      assert hits.any? { |h| h[:rule] == id }, "#{id} must reach scanner findings via the bridge"
+      assert hits.any? { |h| h[:law] == id }, "#{id} must reach scanner findings via the bridge"
     end
   end
 

@@ -199,7 +199,7 @@ module Master
           return unless file && line
 
           {
-            rule: IMPROVEMENT_RULE_ID,
+            law: IMPROVEMENT_RULE_ID,
             kind: :improvement,
             file:,
             line:,

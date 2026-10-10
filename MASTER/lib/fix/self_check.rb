@@ -29,7 +29,7 @@ module Master
 
           lines = [line]
           Array(findings).first(20).each do |item|
-            lines << "  #{item[:path]}:#{item[:line]} #{item[:rule]}"
+            lines << "  #{item[:path]}:#{item[:line]} #{item[:law]}"
           end
           extra = Array(findings).size - 20
           lines << "  … and #{extra} more" if extra.positive?
@@ -85,7 +85,7 @@ module Master
       end
 
       def build_report(violations)
-        by_rule = violations.group_by { |item| item[:rule] }.transform_values(&:size)
+        by_rule = violations.group_by { |item| item[:law] }.transform_values(&:size)
         by_severity = violations.group_by { |item| item[:severity] }.transform_values(&:size)
         Report.new(total: violations.size, by_rule:, by_severity:, error: nil, findings: violations)
       end

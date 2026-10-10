@@ -269,7 +269,7 @@ module Master
         def with_finding_ids(message, findings, paths)
           lines = Array(findings).filter_map do |finding|
             file = finding[:file].to_s.delete_prefix("#{@root}/")
-            "#{finding[:rule]} #{file}:#{finding[:line].to_i}" if paths.include?(file)
+            "#{finding[:law]} #{file}:#{finding[:line].to_i}" if paths.include?(file)
           end.uniq
           return message.to_s if lines.empty?
 

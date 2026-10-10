@@ -37,7 +37,7 @@ module Master
 
       # Prepare a finding for operator review when it's blocked.
       def prepare_operator_review(finding)
-        rule_id = finding.respond_to?(:rule_id) ? finding.rule_id : finding[:rule]
+        rule_id = finding.respond_to?(:law_id) ? finding.law_id : finding[:law]
         path = finding.respond_to?(:path) ? finding.path : finding[:file]
         severity = finding.respond_to?(:severity) ? finding.severity : finding[:severity]
         {

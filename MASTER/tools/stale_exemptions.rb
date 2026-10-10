@@ -270,7 +270,7 @@ module Operator
       language = Master::FILE_LANGUAGE_MAP[File.extname(path)]&.to_sym
       by_line = Hash.new { |hash, key| hash[key] = [] }
       mechanical_rules.each do |rule|
-        Array(rule.check(text, path:)).each { |finding| by_line[finding[:line].to_i] << finding[:rule].to_s }
+        Array(rule.check(text, path:)).each { |finding| by_line[finding[:line].to_i] << finding[:law].to_s }
       rescue StandardError
         next
       end

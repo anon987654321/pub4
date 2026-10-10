@@ -30,7 +30,7 @@ SELFSCAN_SRC = <<~SCRIPT.freeze
   findings = result.ok? ? result.value! : []
   bad = findings.select { |f| %i[error critical].include?(f[:severity].to_sym) }
   Master::Trace::Dmesg.status("scan0", "#{findings.size} finding(s), #{bad.size} critical")
-  bad.first(10).each { |f| Master::Trace::Dmesg.status("scan0", "#{f[:file]}:#{f[:line]}, #{f[:severity]}, #{f[:rule]}, #{f[:message]}") }
+  bad.first(10).each { |f| Master::Trace::Dmesg.status("scan0", "#{f[:file]}:#{f[:line]}, #{f[:severity]}, #{f[:law]}, #{f[:message]}") }
   exit(bad.empty? ? 0 : 1)
 SCRIPT
 

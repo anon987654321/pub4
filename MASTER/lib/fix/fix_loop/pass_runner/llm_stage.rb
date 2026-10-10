@@ -12,7 +12,7 @@ module Master
           private
 
           def llm_pass(violations:, files:, pass:, deadline: nil, council: nil)
-            rule_violations = violations.group_by { |v| v[:rule].to_s }
+            rule_violations = violations.group_by { |v| v[:law].to_s }
             ordered = @law_order.ordered(violation_counts: @violation_counts)
             runnable = ordered.select { |rule| rule_violations.key?(rule.id.to_s) }
             runnable += semantic_rule_adapters(rule_violations, ordered)

@@ -44,8 +44,8 @@ module Master
         rescue StandardError => e
           # A check that could not run approves nothing, as a broken quorum
           # approves nothing: the fix is refused and says why.
-          Master::Ground::Swallow.log(e, context: "LawLoop.reflexion_verify", rule: @rule.id)
-          @bus&.publish("law_loop:reflexion_rejected", rule: @rule.id, file: path, reason: "reflexion failed: #{e.message[0, 120]}")
+          Master::Ground::Swallow.log(e, context: "LawLoop.reflexion_verify", rule: @law.id)
+          @bus&.publish("law_loop:reflexion_rejected", rule: @law.id, file: path, reason: "reflexion failed: #{e.message[0, 120]}")
           nil
         end
 
@@ -58,7 +58,7 @@ module Master
           <<~PROMPT
             Verify this proposed code fix is correct. Reply ONLY with "SAFE" or "UNSAFE: <reason>".
 
-            VIOLATION: #{violation[:rule]} line #{violation[:line]} — #{violation[:message]}
+            VIOLATION: #{violation[:law]} line #{violation[:line]} — #{violation[:message]}
 
             The change, as a unified diff of the whole file:
             ```diff
@@ -89,10 +89,10 @@ module Master
         # paragraph, an empty string, approved the fix before.
         def handle_reflexion_response(response, path, proposed_src)
           unless response.match?(/\ASAFE\b/)
-            @bus&.publish("law_loop:reflexion_rejected", rule: @rule.id, file: path, reason: response[0, 160])
+            @bus&.publish("law_loop:reflexion_rejected", rule: @law.id, file: path, reason: response[0, 160])
             return
           end
-          @bus&.publish("law_loop:reflexion_approved", rule: @rule.id, file: path)
+          @bus&.publish("law_loop:reflexion_approved", rule: @law.id, file: path)
           proposed_src
         end
 
@@ -105,7 +105,7 @@ module Master
             prompt:,
             ext: File.extname(path).downcase,
             source: src,
-            wait_context: { rule: @rule.id, file: path, mode: :council },
+            wait_context: { rule: @law.id, file: path, mode: :council },
             image: @visual_image,
           )
         end
@@ -124,7 +124,7 @@ module Master
         def diff_fix(violation:, src:, path:)
           prompt = build_prompt_for(violation:, src:, path:, style: :diff)
           MAX_FIX_RETRIES.times do |attempt|
-            wait_before_retry(attempt, rule: @rule.id, file: path, mode: :diff)
+            wait_before_retry(attempt, rule: @law.id, file: path, mode: :diff)
             response = ask_agent(prompt, image: @visual_image).to_s
             next if response.strip == "UNCHANGED"
             result = PatchApplier.apply(src, response)
@@ -145,7 +145,7 @@ module Master
             prompt:,
             ext:,
             source: src,
-            wait_context: { rule: @rule.id, file: path, mode: :genetic },
+            wait_context: { rule: @law.id, file: path, mode: :genetic },
             image: @visual_image,
           )
           best_candidate(Array(candidates), path)
@@ -169,7 +169,7 @@ module Master
 
           response
         rescue StandardError => e
-          Master::Ground::Swallow.log(e, context: "LawLoop.architect_then_fix", rule: @rule.id)
+          Master::Ground::Swallow.log(e, context: "LawLoop.architect_then_fix", rule: @law.id)
           whole_file_fallback(violation:, src:, path:, reason: e.message)
         end
 
@@ -206,25 +206,25 @@ module Master
           end
           scored.empty? ? nil : scored.min_by(&:first).last
         rescue StandardError => e
-          Master::Ground::Swallow.log(e, context: "LawLoop.best_candidate", rule: @rule.id)
+          Master::Ground::Swallow.log(e, context: "LawLoop.best_candidate", rule: @law.id)
           nil
         end
 
         def rescan_candidate(candidate, path)
           Tempfile.open(["rl_score", File.extname(path)]) do |f|
             f.write(candidate); f.flush
-            result = Master::Result.wrap(@scanner.scan(f.path, rules: [@rule]))
+            result = Master::Result.wrap(@scanner.scan(f.path, laws: [@law]))
             raise "candidate rescan failed: #{result.message}" unless result.ok?
 
             result.value!.size
           end
         rescue StandardError => e
-          Master::Ground::Swallow.log(e, context: "LawLoop.rescan_candidate", rule: @rule.id)
+          Master::Ground::Swallow.log(e, context: "LawLoop.rescan_candidate", rule: @law.id)
           raise
         end
 
         def whole_file_fallback(violation:, src:, path:, reason:)
-          @bus&.publish("law_loop:edit_format_fallback", rule: @rule.id, file: path, reason: reason.to_s[0, 160])
+          @bus&.publish("law_loop:edit_format_fallback", rule: @law.id, file: path, reason: reason.to_s[0, 160])
           prompt = build_prompt_for(violation:, src:, path:, style: :file)
           model = routing_model_ids[:fast]
           raw = model ? ask_once_agent(prompt, model:, image: @visual_image).to_s : ask_once_agent(prompt, image: @visual_image).to_s
@@ -238,7 +238,7 @@ module Master
           raw = model ? ask_once_agent(prompt, model:, image: @visual_image) : ask_once_agent(prompt, image: @visual_image)
           raw.to_s
         rescue StandardError => e
-          Master::Ground::Swallow.log(e, context: "LawLoop.architecture_plan", rule: @rule.id)
+          Master::Ground::Swallow.log(e, context: "LawLoop.architecture_plan", rule: @law.id)
           ""
         end
 
@@ -247,7 +247,7 @@ module Master
           You are planning a safe refactor for a Ruby file.
 
           File: #{path}
-          Rule: #{violation[:rule]}
+          Rule: #{violation[:law]}
           Violation: line #{violation[:line]} — #{violation[:message]}
 
           #{ARCHITECTURE_PLAN_GUIDANCE}

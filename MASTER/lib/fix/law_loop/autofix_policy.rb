@@ -31,17 +31,17 @@ module Master
 
         def autofix_allowed?(violation)
           if needs_a_person?(violation) && !deletions_allowed?
-            @bus&.publish("law_loop:autofix_skipped", rule: violation[:rule], reason: :needs_a_person)
+            @bus&.publish("law_loop:autofix_skipped", rule: violation[:law], reason: :needs_a_person)
             return false
           end
           return true unless @scanner.respond_to?(:should_autofix?, true)
 
           confidence = violation[:confidence] || violation["confidence"] || 1.0
-          allowed = @scanner.__send__(:should_autofix?, violation[:rule], confidence,
+          allowed = @scanner.__send__(:should_autofix?, violation[:law], confidence,
                                       allow_deletions: deletions_allowed?)
           unless allowed
-            @bus&.publish("law_loop:autofix_skipped", rule: violation[:rule], confidence:)
-            Master::Trace::Dmesg.status("fix0", "#{violation[:rule]} autofix skipped, confidence #{confidence}")
+            @bus&.publish("law_loop:autofix_skipped", rule: violation[:law], confidence:)
+            Master::Trace::Dmesg.status("fix0", "#{violation[:law]} autofix skipped, confidence #{confidence}")
           end
           allowed
         end

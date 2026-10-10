@@ -49,7 +49,7 @@ class TestScanner < Minitest::Test
       path = File.join(dir, "sample.rb")
       File.write(path, "puts 'ok'\n")
       bus = FakeBus.new
-      scanner = Master::Fix::Scanner.new(rules: [build_rule], event_bus: bus)
+      scanner = Master::Fix::Scanner.new(laws: [build_rule], event_bus: bus)
 
       result = scanner.scan(path)
 
@@ -61,7 +61,7 @@ class TestScanner < Minitest::Test
   end
 
   def test_scan_documents_and_enforces_preconditions
-    scanner = Master::Fix::Scanner.new(rules: [build_rule])
+    scanner = Master::Fix::Scanner.new(laws: [build_rule])
 
     missing = scanner.scan("/tmp/master-missing-file.rb")
 
@@ -75,13 +75,13 @@ class TestScanner < Minitest::Test
       path = File.join(dir, "sample.rb")
       File.write(path, "puts 'ok'\n")
       bus = FakeBus.new
-      scanner = Master::Fix::Scanner.new(rules: [build_rule(findings: [
-        { rule: "Style/One" },
+      scanner = Master::Fix::Scanner.new(laws: [build_rule(findings: [
+        { law: "Style/One" },
         { rule_id: "Lint/Two" },
-        { "rule" => "Style/One" },
+        { "law" => "Style/One" },
         { "rule_id" => "Naming/Three" },
-        { rule: "Lint/Two" },
-        { rule: "Metrics/Four" },
+        { law: "Lint/Two" },
+        { law: "Metrics/Four" },
       ])], event_bus: bus)
 
       result = scanner.scan(path)
@@ -97,7 +97,7 @@ class TestScanner < Minitest::Test
       path = File.join(dir, "binary.rb")
       File.binwrite(path, "\x00binary")
 
-      scanner = Master::Fix::Scanner.new(rules: [])
+      scanner = Master::Fix::Scanner.new(laws: [])
       result = scanner.scan_dir(dir)
 
       assert result.ok?
@@ -113,7 +113,7 @@ class TestScanner < Minitest::Test
       path = File.join(dir, "sample.rb")
       File.write(path, "puts 'ok'\n")
       bus = FakeBus.new
-      scanner = BoomScanner.new(rules: [build_rule], event_bus: bus)
+      scanner = BoomScanner.new(laws: [build_rule], event_bus: bus)
 
       result = scanner.scan_dir(dir)
 
@@ -128,7 +128,7 @@ class TestScanner < Minitest::Test
       path = File.join(dir, "sample.rb")
       File.write(path, "puts 'ok'\n")
       scanner = Master::Fix::Scanner.new(
-        rules: [build_rule(findings: [{ rule: "STYLE", line: 1, message: "issue" }])],
+        laws: [build_rule(findings: [{ law: "STYLE", line: 1, message: "issue" }])],
       )
 
       out, = capture_io { scanner.scan_dir(dir, stream: true) }
@@ -147,7 +147,7 @@ class TestScanner < Minitest::Test
       path = File.join(bin, "doctor")
       File.write(path, "#!/usr/bin/env ruby\nputs :ok\n")
       File.write(File.join(dir, "notes.toml"), "key = \"value\"\n")
-      scanner = PathScanner.new(rules: [])
+      scanner = PathScanner.new(laws: [])
 
       result = scanner.scan_dir(dir)
 
@@ -179,7 +179,7 @@ class TestScanner < Minitest::Test
       File.write(File.join(dir, "RAILS", "amber", "public", "assets", "application-1a2b.js"), "console.log('digest')\n")
       FileUtils.mkdir_p(File.join(dir, "db", "schema"))
       File.write(File.join(dir, "db", "schema", "module.rb"), "puts 'authored'\n")
-      scanner = PathScanner.new(rules: [])
+      scanner = PathScanner.new(laws: [])
 
       result = scanner.scan_dir(dir)
 
@@ -197,12 +197,12 @@ class TestScanner < Minitest::Test
       3.times do |idx|
         File.write(File.join(dir, "sample#{idx}.rb"), "DATA = File.read(\"config/app.yml\")\n")
       end
-      scanner = Master::Fix::Scanner.new(rules: [])
+      scanner = Master::Fix::Scanner.new(laws: [])
 
       result = scanner.scan_dir(dir)
       findings = result.value!.flat_map { |_path, file_result| Master::Result.wrap(file_result).value_or([]) }
 
-      assert findings.any? { |finding| finding[:rule] == "CROSS_FILE_DRY" }
+      assert findings.any? { |finding| finding[:law] == "CROSS_FILE_DRY" }
     end
   end
 
@@ -214,13 +214,13 @@ class TestScanner < Minitest::Test
         def id = "semantic"
         def check(_code, path:) = raise "semantic should not run"
       end.new
-      static_error = build_rule(findings: [{ rule: "STATIC", severity: :error, line: 1, message: "stop" }])
-      scanner = Master::Fix::Scanner.new(rules: [static_error, semantic])
+      static_error = build_rule(findings: [{ law: "STATIC", severity: :error, line: 1, message: "stop" }])
+      scanner = Master::Fix::Scanner.new(laws: [static_error, semantic])
 
       result = scanner.scan(path)
 
       assert result.ok?
-      assert_equal ["STATIC"], result.value!.map { |finding| finding[:rule] }
+      assert_equal ["STATIC"], result.value!.map { |finding| finding[:law] }
     end
   end
 
@@ -245,7 +245,7 @@ class TestScanner < Minitest::Test
       File.write(deploy_path, "puts 'changed deploy'\n")
       git(repo, "add", ".")
       git(repo, "commit", "-m", "change")
-      scanner = PathScanner.new(rules: [])
+      scanner = PathScanner.new(laws: [])
 
       result = scanner.scan_since("HEAD~1", dir: File.join(repo, "web"))
       paths = result.value!.map(&:first)
@@ -262,12 +262,12 @@ class TestScanner < Minitest::Test
       path = File.join(dir, "sample.rb")
       File.write(path, "puts 'ok'\n")
       scanner = Master::Fix::Scanner.new(
-        rules: [build_rule(findings: [{ rule: "STYLE", line: 1, message: "issue" }])],
+        laws: [build_rule(findings: [{ law: "STYLE", line: 1, message: "issue" }])],
       )
 
       hits = scanner.findings([path, dir])
 
-      assert hits.all? { |item| item[:path] && item[:rule] == "STYLE" }
+      assert hits.all? { |item| item[:path] && item[:law] == "STYLE" }
       assert hits.any? { |item| item[:path] == path }
     end
   end

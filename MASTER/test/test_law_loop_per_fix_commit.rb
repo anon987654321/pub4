@@ -22,10 +22,10 @@ class TestLawLoopPerFixCommit < Minitest::Test
   end
 
   class RecordingScanner
-    def scan(path, rules: nil)
+    def scan(path, laws: nil)
       source = File.read(path)
       findings = Array.new(source.scan("violation").size) do |index|
-        { rule: "TEST_RULE", severity: :warning, line: index + 1, message: "fix me" }
+        { law: "TEST_RULE", severity: :warning, line: index + 1, message: "fix me" }
       end
       Master::Result.ok(findings)
     end
@@ -38,7 +38,7 @@ class TestLawLoopPerFixCommit < Minitest::Test
       @answers = [before, after]
     end
 
-    def scan(_path, rules: nil)
+    def scan(_path, laws: nil)
       Master::Result.ok(@answers.size > 1 ? @answers.shift : @answers.first)
     end
   end
@@ -70,7 +70,7 @@ class TestLawLoopPerFixCommit < Minitest::Test
 
   def build_loop(root:, bus:, scanner:, agent:, committer: nil)
     loop = Master::Fix::LawLoop.new(
-      rule: Rule.new("TEST_RULE", :warning),
+      law: Rule.new("TEST_RULE", :warning),
       agent:,
       scanner:,
       root:,
@@ -86,7 +86,7 @@ class TestLawLoopPerFixCommit < Minitest::Test
 
   def violation_in(path)
     Master::Fix::Violation.from_finding(
-      { rule: "TEST_RULE", severity: :warning, line: 1, message: "fix me" },
+      { law: "TEST_RULE", severity: :warning, line: 1, message: "fix me" },
       file: path, ext: ".rb",
     )
   end
@@ -153,8 +153,8 @@ class TestLawLoopPerFixCommit < Minitest::Test
       path = File.join(root, "sample.rb")
       File.write(path, "violation\n")
       bus = FakeBus.new
-      before = [{ rule: "TEST_RULE", severity: :warning, line: 1, message: "fix me" }]
-      after = [{ rule: "NEW_RULE", severity: :warning, line: 1, message: "left behind" }]
+      before = [{ law: "TEST_RULE", severity: :warning, line: 1, message: "fix me" }]
+      after = [{ law: "NEW_RULE", severity: :warning, line: 1, message: "left behind" }]
       loop = build_loop(root:, bus:, scanner: SequenceScanner.new(before, after), agent: FixingAgent.new)
 
       refute loop.send(:apply, path, "clean but wrong\n", violation_in(path))
@@ -171,9 +171,9 @@ class TestLawLoopPerFixCommit < Minitest::Test
     Dir.mktmpdir do |root|
       path = File.join(root, "sample.rb")
       File.write(path, "violation\n")
-      before = [{ rule: "ABC_SIZE", severity: :warning, line: 1, message: "ABC size 43.0 for #build" },
-                { rule: "TEST_RULE", severity: :warning, line: 1, message: "fix me" }]
-      after = [{ rule: "ABC_SIZE", severity: :warning, line: 1, message: "ABC size 31.0 for #build" }]
+      before = [{ law: "ABC_SIZE", severity: :warning, line: 1, message: "ABC size 43.0 for #build" },
+                { law: "TEST_RULE", severity: :warning, line: 1, message: "fix me" }]
+      after = [{ law: "ABC_SIZE", severity: :warning, line: 1, message: "ABC size 31.0 for #build" }]
       loop = build_loop(root:, bus: FakeBus.new, scanner: SequenceScanner.new(before, after), agent: FixingAgent.new)
 
       assert loop.send(:apply, path, "eased\n", violation_in(path))
@@ -186,7 +186,7 @@ class TestLawLoopPerFixCommit < Minitest::Test
     Dir.mktmpdir do |root|
       path = File.join(root, "sample.rb")
       File.write(path, "violation\n")
-      carried = [{ rule: "OLD_RULE", severity: :warning, line: 9, message: "preexisting" }]
+      carried = [{ law: "OLD_RULE", severity: :warning, line: 9, message: "preexisting" }]
       loop = build_loop(root:, bus: FakeBus.new, scanner: SequenceScanner.new(carried, carried),
                         agent: FixingAgent.new)
 
@@ -211,7 +211,7 @@ class TestLawLoopPerFixCommit < Minitest::Test
       message, findings, owned_paths = committer.calls.first
       assert_equal "fix: TEST_RULE in sample.rb", message
       assert_equal [path], owned_paths
-      assert_equal ["TEST_RULE"], findings.map { |f| f[:rule] }
+      assert_equal ["TEST_RULE"], findings.map { |f| f[:law] }
     end
   end
 

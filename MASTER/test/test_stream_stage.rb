@@ -18,8 +18,8 @@ class StreamStageTest < Minitest::Test
     def scan(path, index)
       @repaired.pop(timeout: 5) || raise("no repair started while the scan ran") if index == 2
       [
-        { rule: "LONG_METHOD", file: File.basename(path), line: 1, message: "long" },
-        { rule: "DRY", file: File.basename(path), line: 2, message: "dry" },
+        { law: "LONG_METHOD", file: File.basename(path), line: 1, message: "long" },
+        { law: "DRY", file: File.basename(path), line: 2, message: "dry" },
       ]
     end
   end
@@ -30,7 +30,7 @@ class StreamStageTest < Minitest::Test
     def scan(path)
       return [] if @repaired[path]
 
-      [{ rule: "LONG_METHOD", file: File.basename(path), line: 1, message: "long" }]
+      [{ law: "LONG_METHOD", file: File.basename(path), line: 1, message: "long" }]
     end
   end
 
@@ -47,6 +47,9 @@ class StreamStageTest < Minitest::Test
 
   # No origin to ask in a unit test.
   def reload_due? = false
+
+  # The conflict resolver is not under test; rows pass through as hashes.
+  def resolve_violations(raw) = raw.map(&:to_h)
 
   def setup
     @root = "/repo"
@@ -76,7 +79,7 @@ class StreamStageTest < Minitest::Test
 
     refute(streamed.any? { |_file, rule| rule == "DRY" })
     assert_equal 3, unstreamed(found, streamed).size
-    assert(unstreamed(found, streamed).all? { |row| row[:rule] == "DRY" })
+    assert(unstreamed(found, streamed).all? { |row| row[:law] == "DRY" })
   end
 
   def test_findings_are_refreshed_after_a_stream_repair

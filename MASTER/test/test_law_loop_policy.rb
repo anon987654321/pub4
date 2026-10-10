@@ -25,8 +25,8 @@ class TestLawLoopPolicy < Minitest::Test
       @deletions_asked = []
     end
 
-    def scan(_path, rules: nil)
-      Master::Result.ok([{ rule: "TEST_RULE", severity: :warning, line: 1, message: "fix me" }])
+    def scan(_path, laws: nil)
+      Master::Result.ok([{ law: "TEST_RULE", severity: :warning, line: 1, message: "fix me" }])
     end
 
     # The keyword mirrors Fix::Scanner. A double that takes fewer
@@ -45,11 +45,11 @@ class TestLawLoopPolicy < Minitest::Test
       @paths = []
     end
 
-    def scan(path, rules: nil)
+    def scan(path, laws: nil)
       @paths << path
       source = File.read(path)
       findings = Array.new(source.scan("violation").size) do |index|
-        { rule: "TEST_RULE", severity: :warning, line: index + 1, message: "fix me" }
+        { law: "TEST_RULE", severity: :warning, line: index + 1, message: "fix me" }
       end
       Master::Result.ok(findings)
     end
@@ -78,8 +78,8 @@ class TestLawLoopPolicy < Minitest::Test
       path = File.join(root, "sample.rb")
       File.write(path, "puts :x\\n")
       scanner = Object.new
-      scanner.define_singleton_method(:scan) do |_path, rules: nil|
-        Master::Result.ok([{ rule: "CQS", severity: :warning, line: 1, message: "measured" }])
+      scanner.define_singleton_method(:scan) do |_path, laws: nil|
+        Master::Result.ok([{ law: "CQS", severity: :warning, line: 1, message: "measured" }])
       end
       agent = Agent.new
       loop = build_loop(root:, bus: FakeBus.new, scanner:, agent:)
@@ -123,7 +123,7 @@ class TestLawLoopPolicy < Minitest::Test
       bus = FakeBus.new
       loop = build_loop(root:, bus:, scanner: RecordingScanner.new, agent: Agent.new)
 
-      applied = loop.send(:apply, path, "clean\n", { rule: "TEST_RULE", file: path, line: 1 })
+      applied = loop.send(:apply, path, "clean\n", { law: "TEST_RULE", file: path, line: 1 })
 
       assert applied, "the fix was not applied: #{bus.events.last.inspect}"
       assert_equal "clean\n", File.read(path)
@@ -142,7 +142,7 @@ class TestLawLoopPolicy < Minitest::Test
                  %(exit(File.read(File.join(__dir__, "..", "sample.rb")).include?("kept") ? 0 : 1)\n))
       bus = FakeBus.new
       loop = build_loop(root:, bus:, scanner: RecordingScanner.new, agent: Agent.new)
-      violation = { rule: "TEST_RULE", file: path, line: 1 }
+      violation = { law: "TEST_RULE", file: path, line: 1 }
 
       refute loop.send(:apply, path, "clean\n", violation), "a fix its test fails must not stand"
       assert_equal "violation\n", File.read(path)
@@ -155,7 +155,7 @@ class TestLawLoopPolicy < Minitest::Test
   end
 
   class BrokenRuleScanner
-    def scan(_path, rules: nil)
+    def scan(_path, laws: nil)
       Master::Result.err("scanner unavailable", category: :infrastructure)
     end
   end
@@ -220,7 +220,7 @@ class TestLawLoopPolicy < Minitest::Test
   end
 
   def test_file_repair_only_remembers_rules_it_can_actually_attempt
-    finding = { rule: "TEST_RULE", severity: :warning, line: 1, message: "fix me" }
+    finding = { law: "TEST_RULE", severity: :warning, line: 1, message: "fix me" }
     repair = Master::Fix::FileRepair.allocate
     repair.instance_variable_set(:@findings, [finding])
     repair.define_singleton_method(:repairable) { [] }
@@ -234,7 +234,7 @@ class TestLawLoopPolicy < Minitest::Test
       File.write(path, "puts :x\n")
       learnings = RecordingLearnings.new
       loop = Master::Fix::LawLoop.new(
-        rule: Rule.new("TEST_RULE", :warning),
+        law: Rule.new("TEST_RULE", :warning),
         agent: Agent.new,
         scanner: Scanner.new(allow_autofix: false),
         root:,
@@ -245,7 +245,7 @@ class TestLawLoopPolicy < Minitest::Test
       result = loop.run_once([path])
 
       assert_equal :skipped, result[:status]
-      assert_equal [{ rule: "TEST_RULE", file_type: "rb", outcome: :skipped }], learnings.calls
+      assert_equal [{ law: "TEST_RULE", file_type: "rb", outcome: :skipped }], learnings.calls
     end
   end
 
@@ -350,7 +350,7 @@ class TestLawLoopPolicy < Minitest::Test
   end
 
   class BrokenRescanScanner < RecordingScanner
-    def scan(path, rules: nil)
+    def scan(path, laws: nil)
       @paths << path
       Master::Result.err("rescan unavailable", category: :infrastructure)
     end
@@ -386,7 +386,7 @@ class TestLawLoopPolicy < Minitest::Test
       path = File.join(root, "sample.rb")
       File.write(path, "puts :x\n")
       loop = build_loop(root:, bus: FakeBus.new, scanner: Scanner.new, agent: ScriptedAgent.new(reply))
-      loop.send(:reflexion_verify, { rule: "TEST_RULE", file: path, line: 1, message: "fix me" }, "puts :y\n")
+      loop.send(:reflexion_verify, { law: "TEST_RULE", file: path, line: 1, message: "fix me" }, "puts :y\n")
     end
   end
 
@@ -405,7 +405,7 @@ class TestLawLoopPolicy < Minitest::Test
     original = (1..200).map { |n| "line_#{n} = #{n}\n" }.join
     proposed = original.sub("line_150 = 150", "line_150 = :fixed")
     prompt = build_loop(root: Dir.pwd, bus: FakeBus.new, scanner: Scanner.new, agent: ScriptedAgent.new("SAFE"))
-               .send(:reflexion_prompt, { rule: "TEST_RULE", line: 150, message: "fix me" }, original, proposed)
+               .send(:reflexion_prompt, { law: "TEST_RULE", line: 150, message: "fix me" }, original, proposed)
 
     assert_includes prompt, "-line_150 = 150"
     assert_includes prompt, "+line_150 = :fixed"
@@ -418,7 +418,7 @@ class TestLawLoopPolicy < Minitest::Test
     Dir.mktmpdir do |root|
       path = File.join(root, "sample.rb")
       File.write(path, "puts :x\n")
-      violation = { rule: "TEST_RULE", file: path, line: 1, message: "fix me" }
+      violation = { law: "TEST_RULE", file: path, line: 1, message: "fix me" }
       fenced = build_loop(root:, bus: FakeBus.new, scanner: Scanner.new, agent: ScriptedAgent.new("Here:\n```ruby\nputs :y\n```\n"))
       unchanged = build_loop(root:, bus: FakeBus.new, scanner: Scanner.new, agent: ScriptedAgent.new("UNCHANGED"))
 
@@ -468,7 +468,7 @@ class TestLawLoopPolicy < Minitest::Test
 
       outcome = loop.send(:fix_violation,
                           Master::Fix::LawLoop::Violation.from_finding(
-                            { rule: "TEST_RULE", severity: :warning, line: 1, message: "fix me" },
+                            { law: "TEST_RULE", severity: :warning, line: 1, message: "fix me" },
                             file: path, ext: ".rb",
                           ))
 
@@ -498,7 +498,7 @@ class TestLawLoopPolicy < Minitest::Test
 
       ENV.delete("MASTER_CONSENSUS_FIXES")
       %i[error critical].each do |severity|
-        violation = { file: File.join(root, "sample.rb"), rule: "TEST_RULE", severity: }
+        violation = { file: File.join(root, "sample.rb"), law: "TEST_RULE", severity: }
         refute loop.send(:consensus_approves?, violation, "candidate-#{severity}")
       end
       assert_equal %w[candidate-error candidate-critical], asked
@@ -515,7 +515,7 @@ class TestLawLoopPolicy < Minitest::Test
       agent = Agent.new
       agent.define_singleton_method(:consensus) { consensus }
       loop = build_loop(root:, bus: FakeBus.new, scanner: Scanner.new, agent:)
-      violation = { file: File.join(root, "sample.rb"), rule: "TEST_RULE", severity: :warning }
+      violation = { file: File.join(root, "sample.rb"), law: "TEST_RULE", severity: :warning }
       previous = ENV["MASTER_CONSENSUS_FIXES"]
 
       ENV.delete("MASTER_CONSENSUS_FIXES")
@@ -539,7 +539,7 @@ class TestLawLoopPolicy < Minitest::Test
       bus = FakeBus.new
       loop = build_loop(root:, bus:, scanner: Scanner.new, agent: Agent.new)
       violation = Master::Fix::Violation.from_finding(
-        { rule: "TEST_RULE", severity: :warning, line: 1, message: "fix me", reversibility: "impossible" },
+        { law: "TEST_RULE", severity: :warning, line: 1, message: "fix me", reversibility: "impossible" },
         file: path, ext: ".rb",
       )
 
@@ -551,7 +551,7 @@ class TestLawLoopPolicy < Minitest::Test
   def test_an_irreversible_or_wide_fix_waits_for_a_person
     Dir.mktmpdir do |root|
       loop = build_loop(root:, bus: FakeBus.new, scanner: Scanner.new, agent: Agent.new)
-      base = { rule: "TEST_RULE", severity: :warning, line: 1, message: "fix me" }
+      base = { law: "TEST_RULE", severity: :warning, line: 1, message: "fix me" }
       path = File.join(root, "sample.rb")
       violation = ->(extra) { Master::Fix::Violation.from_finding(base.merge(extra), file: path, ext: ".rb") }
 
@@ -587,7 +587,7 @@ class TestLawLoopPolicy < Minitest::Test
 
   def build_loop(root:, bus:, scanner:, agent:)
     Master::Fix::LawLoop.new(
-      rule: Rule.new("TEST_RULE", :warning),
+      law: Rule.new("TEST_RULE", :warning),
       agent:,
       scanner:,
       root:,

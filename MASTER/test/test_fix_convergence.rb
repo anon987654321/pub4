@@ -802,7 +802,7 @@ class TestFixConvergence < Minitest::Test
 
     violations = runner.send(:violations_for, path)
 
-    assert_equal "PREFLIGHT", violations.first[:rule]
+    assert_equal "PREFLIGHT", violations.first[:law]
     refute scanner_called
   end
 

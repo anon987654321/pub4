@@ -27,7 +27,7 @@ module Master
           return if test_file_for(violation[:file]).any?
 
           @bus&.publish(
-            "law_loop:fix_unverified", rule: @rule.id, file: violation[:file], note: "fix unverified — add test"
+            "law_loop:fix_unverified", rule: @law.id, file: violation[:file], note: "fix unverified — add test"
           )
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "law_loop.note_unverified_fix", event_bus: @bus)

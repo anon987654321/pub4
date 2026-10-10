@@ -29,7 +29,7 @@ class LearnedSmellsRuleSpec < Minitest::Test
       findings = rule.check("guard clause\n", path: File.join(dir, "app", "demo.rb"))
 
       assert_equal 1, findings.size
-      assert_equal "SESSION_GUARD_CLAUSE", findings.first.rule_id
+      assert_equal "SESSION_GUARD_CLAUSE", findings.first.law_id
       assert_equal "guard clauses should be named explicitly", findings.first.message
       assert_equal :warning, findings.first.severity
     end

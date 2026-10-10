@@ -157,16 +157,16 @@ module Master
       # were rejected on re-scan — every non-apply collapsed to `false` before
       # the one line anyone reads. The tally of these symbols is that line.
       def fix_violation(violation)
-        if VisualCustodyBlocking.fix_blocking_rule?(violation[:rule])
+        if VisualCustodyBlocking.fix_blocking_rule?(violation[:law])
           @person_required = true
           review = VisualCustodyBlocking.prepare_operator_review(violation)
           @bus&.publish("fix:requires_operator_decision", finding: review)
-          Master::Trace::Dmesg.status("fix0", "#{violation[:rule]} blocked, operator-owned rendered value: #{violation[:file]}")
+          Master::Trace::Dmesg.status("fix0", "#{violation[:law]} blocked, operator-owned rendered value: #{violation[:file]}")
           return :needs_person
         end
         if needs_a_person?(violation) && !deletions_allowed?
           @person_required = true
-          @bus&.publish("law_loop:human_decision_required", rule: violation[:rule], file: violation[:file])
+          @bus&.publish("law_loop:human_decision_required", rule: violation[:law], file: violation[:file])
           return :needs_person
         end
         return :skip_confidence unless autofix_allowed?(violation)
@@ -330,7 +330,7 @@ end) if source.to_s.strip.empty?
         #{preamble}
 
         File: #{File.basename(path)} (#{ctx[:lang]})
-        Rule violated: #{violation[:rule]}
+        Rule violated: #{violation[:law]}
         Line #{violation[:line]}: #{violation[:message]}
         #{ctx[:fix_line]}
         #{visual_fix_context}
@@ -429,21 +429,7 @@ end) if source.to_s.strip.empty?
         "text"
       end
 
-      def convergence_cfg
-        @convergence_cfg ||= begin
-          rules = Master.load_yaml(Master::LAWS_PATH)
-          convergence = rules&.dig("thresholds", "convergence")
-          raise "convergence thresholds missing: #{Master::LAWS_PATH}" unless convergence.is_a?(Hash)
-          convergence
-        end
-      rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "law_loop.convergence_cfg", event_bus: @bus)
-        raise "law_loop: convergence configuration unreadable: #{e.class}: #{e.message}"
-      end
-
-      def genetic_autofix_candidates
-        convergence_cfg["genetic_autofix_candidates"] || LawLoop::GENETIC_AUTOFIX_CANDIDATES
-      end
+      def genetic_autofix_candidates = LawLoop::GENETIC_AUTOFIX_CANDIDATES
 
       def scan_all(path)
         result = Master::Result.wrap(@scanner.scan(path))
@@ -462,7 +448,7 @@ end) if source.to_s.strip.empty?
         publish_fix_failure(info[:category], event, violation, message)
         Master::Trace::Dmesg.status(
           "fix0",
-          "#{violation[:rule]} fix failed, #{violation[:file].to_s.delete_prefix("#{@root}/")}: " \
+          "#{violation[:law]} fix failed, #{violation[:file].to_s.delete_prefix("#{@root}/")}: " \
           "#{info[:category]}, #{error.class}: #{message[0, 160]}",
         )
         info[:category] == :transient ? :retry : :stop
@@ -473,7 +459,7 @@ end) if source.to_s.strip.empty?
           permanent: "law_loop:fail_fast",
           ambiguous: "law_loop:human_intervention",
         }.fetch(category, event)
-        @bus&.publish(name, rule: violation[:rule], file: violation[:file], error: message[0, 120])
+        @bus&.publish(name, rule: violation[:law], file: violation[:file], error: message[0, 120])
       end
 
     end

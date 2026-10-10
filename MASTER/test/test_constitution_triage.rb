@@ -7,10 +7,10 @@ class TestConstitutionTriage < Minitest::Test
   def test_buckets_scanner_self_and_rule_retune_findings
     triage = Master::Review::Scan::ConstitutionTriage.new(root: Master::ROOT)
     findings = [
-      { rule: "SILENT_RESCUE", file: File.join(Master::ROOT, "lib/ground/config.rb") },
-      { rule: "magic_number", file: File.join(Master::ROOT, "lib/ground/config.rb") },
-      { rule: "SQL_INJECTION", file: File.join(Master::ROOT, "lib/review/scan/laws/yaml_bridge_rules.rb") },
-      { rule: "SCAN_TIMEOUT", file: File.join(Master::ROOT, "lib/slow.rb") },
+      { law: "SILENT_RESCUE", file: File.join(Master::ROOT, "lib/ground/config.rb") },
+      { law: "magic_number", file: File.join(Master::ROOT, "lib/ground/config.rb") },
+      { law: "SQL_INJECTION", file: File.join(Master::ROOT, "lib/review/scan/laws/yaml_bridge_rules.rb") },
+      { law: "SCAN_TIMEOUT", file: File.join(Master::ROOT, "lib/slow.rb") },
     ]
 
     buckets = triage.buckets(findings).to_h { |bucket| [bucket.name, bucket.findings.size] }

@@ -46,7 +46,7 @@ class TestPipeline < Minitest::Test
       @rules = [FakeRule.new("SELF_RULE", false)]
     end
 
-    def scan_dir(path, depth:, stream: false, rules: nil)
+    def scan_dir(path, depth:, stream: false, laws: nil)
       Master::Result.ok([[File.join(path, "example.rb"), Master::Result.ok(@findings)]])
     end
   end
@@ -230,7 +230,7 @@ class TestPipeline < Minitest::Test
     Dir.mktmpdir do |dir|
       write_rules(dir)
       bus = FakeBus.new
-      scanner = FakeScanner.new([{ rule: "SELF_RULE", line: 1, message: "violation" }])
+      scanner = FakeScanner.new([{ law: "SELF_RULE", line: 1, message: "violation" }])
       pipe = Master::CLI::Pipeline.new([OkStage.new], root: dir, scanner:, bus:)
 
       result = pipe.call(Master::Result.ok(user_message: "deploy now"))
@@ -246,7 +246,7 @@ class TestPipeline < Minitest::Test
     Dir.mktmpdir do |dir|
       write_rules(dir)
       bus = FakeBus.new
-      scanner = FakeScanner.new([{ rule: "PRESERVE_FIRST", rule_id: "PRESERVE_FIRST", line: 1, message: "breaks behavior" }])
+      scanner = FakeScanner.new([{ law: "PRESERVE_FIRST", law_id: "PRESERVE_FIRST", line: 1, message: "breaks behavior" }])
       pipe = Master::CLI::Pipeline.new([OkStage.new], root: dir, scanner:, bus:)
 
       result = pipe.call(Master::Result.ok(user_message: "deploy now"))
@@ -268,7 +268,7 @@ class TestPipeline < Minitest::Test
       system("git", "-C", dir, "commit", "-m", "baseline", out: File::NULL, err: File::NULL)
       File.write(File.join(dir, "lib", "tracked.rb"), "puts :dirty\n")
       bus = FakeBus.new
-      scanner = FakeScanner.new([{ rule: "PRESERVE_FIRST", rule_id: "PRESERVE_FIRST", line: 1, message: "breaks behavior" }])
+      scanner = FakeScanner.new([{ law: "PRESERVE_FIRST", law_id: "PRESERVE_FIRST", line: 1, message: "breaks behavior" }])
       pipe = Master::CLI::Pipeline.new([OkStage.new], root: dir, scanner:, bus:)
 
       result = pipe.call(Master::Result.ok(user_message: "deploy now"))
@@ -311,7 +311,7 @@ class TestPipeline < Minitest::Test
 
   def test_deploy_gate_skips_non_deploy_messages
     Dir.mktmpdir do |dir|
-      scanner = FakeScanner.new([{ rule: "SELF_RULE", line: 1, message: "violation" }])
+      scanner = FakeScanner.new([{ law: "SELF_RULE", line: 1, message: "violation" }])
       pipe = Master::CLI::Pipeline.new([OkStage.new], root: dir, scanner:)
 
       result = pipe.call(Master::Result.ok(user_message: "scan the project"))
