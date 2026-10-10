@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "shared/contracts"
 require "yaml"
 require "pathname"
 require "shared/contracts"
@@ -29,7 +30,7 @@ module Brgen
       def lessons_candidates
         [
           rails_root.join("config/radio_bergen/archive_lessons.yml"),
-          Pathname.new(File.expand_path("../../../../MASTER/data/pub_archive_restore.yml", __dir__))
+          Pathname.new(File.join(Shared::Contracts.root, "MASTER", "data", "pub_archive_restore.yml"))
         ]
       end
 

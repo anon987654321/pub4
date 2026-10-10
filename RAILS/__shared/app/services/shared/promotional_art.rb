@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
-require File.join(ENV.fetch("PUB4_ROOT", File.expand_path("../../../../../", __dir__)), "MASTER", "tools", "master_design")
+require "shared/contracts"
+require Shared::Contracts.tool_path("master_design")
 
 module Shared
   class PromotionalArt
