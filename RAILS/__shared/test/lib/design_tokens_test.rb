@@ -22,7 +22,7 @@ class DesignTokensTest < Minitest::Test
 
     assert_includes block, "BEGIN:generated-face-root"
     assert_includes block, "END:generated-face-root"
-    assert_includes block, "generate_face_root_css.rb"
+    assert_includes block, "design_tokens.rb generate_face_root_css"
   end
 
   def test_sync_face_css_updates_drifted_block
