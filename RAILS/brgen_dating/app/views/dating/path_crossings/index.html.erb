@@ -27,6 +27,7 @@
 
     <section class="section-divider" aria-label="<%= t("dating.path_crossings_title", default: "Crossed paths") %>">
       <% if @crossings.any? %>
+        <% neighborhood_names = Neighborhood.where(id: @crossings.filter_map(&:neighborhood_id)).pluck(:id, :name).to_h %>
         <% @crossings.each do |crossing| %>
           <% profile = @profiles_by_user_id[crossing.other_user_id(Current.user.id)] %>
           <% next unless profile %>
@@ -36,7 +37,7 @@
             <% end %>
             <div>
               <h2><%= profile.name %></h2>
-              <p><%= crossing.neighborhood&.name || t("dating.path_crossings_approximate_area", default: "Nearby area") %> · <%= time_ago_in_words(crossing.crossed_at) %></p>
+              <p><%= neighborhood_names[crossing.neighborhood_id] || t("dating.path_crossings_approximate_area", default: "Nearby area") %> · <%= time_ago_in_words(crossing.crossed_at) %></p>
               <%= button_to t("dating.like", default: "Like"), likes_path, params: { user_id: profile.user_id }, method: :post, class: "btn btn-primary btn-sm" %>
             </div>
           </article>
