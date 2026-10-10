@@ -53,4 +53,30 @@ class TestGateRegression < Minitest::Test
 
     assert_empty regressions(base, failed("ratchets", "\e[31mmeasure0: a 9 / 7 OVER +2\e[0m"))
   end
+
+  DRIFT = "layout_snapshot: brgen/core/mobile drifted from MASTER/gates/data/layout_snapshots/brgen-core-mobile.json — " \
+          "hierarchy %d, density %d, reflow %d, style %d — hierarchy: h1/body ratio %s"
+
+  def drift(h, d, r, s, ratio = "1.29 → 2.00") = format(DRIFT, h, d, r, s, ratio)
+
+  def test_a_surface_that_drifts_further_is_a_regression
+    base = baseline(failed("layout_snapshot", drift(5, 9, 15, 43)))
+    found = regressions(base, failed("layout_snapshot", drift(6, 9, 15, 43)))
+
+    assert_equal 1, found.size
+    assert_match(/grew/, found.first)
+  end
+
+  def test_a_surface_that_drifts_less_or_the_same_is_not
+    base = baseline(failed("layout_snapshot", drift(5, 9, 15, 43)))
+
+    assert_empty regressions(base, failed("layout_snapshot", drift(5, 9, 15, 43)))
+    assert_empty regressions(base, failed("layout_snapshot", drift(4, 9, 14, 40)))
+  end
+
+  def test_a_drift_is_matched_by_its_surface_not_by_its_detail_text
+    base = baseline(failed("layout_snapshot", drift(5, 9, 15, 43, "1.29 → 2.00")))
+
+    assert_empty regressions(base, failed("layout_snapshot", drift(5, 9, 15, 43, "1.31 → 1.98; primary action moved")))
+  end
 end

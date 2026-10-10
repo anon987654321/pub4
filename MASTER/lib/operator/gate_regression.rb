@@ -12,7 +12,10 @@ module Operator
   # regression, and an OVER count that grew is a regression. A standing
   # failure that stays the same or shrinks is not this run's to clear.
   class GateRegression
-    SIGNAL = /OVER|unreadable|fail|error|violation|regress|blind|saturat|over a recorded|rose to/i
+    SIGNAL = /OVER|unreadable|fail|error|violation|regress|blind|saturat|over a recorded|rose to|drifted from/i
+
+    # layout_snapshot reports each surface's drift as counts per kind of change.
+    DRIFT_COUNTS = /\b(?:hierarchy|density|reflow|style|nudge)\s+(\d+)/
 
     # stage => the failing lines it printed, for stages that failed.
     def self.snapshot(results)
@@ -43,14 +46,27 @@ module Operator
     def describe(stage, line, before)
       same = before.select { |old| key(old) == key(line) }
       return "#{stage}: new, #{line}" if same.empty?
-      return unless line.match?(/OVER/)
 
-      now = number(line)
-      worst_before = same.filter_map { |old| number(old) }.min
+      now = weight(line)
+      worst_before = same.filter_map { |old| weight(old) }.min
       "#{stage}: grew, #{line}" if now && worst_before && now > worst_before
     end
 
-    def key(line) = line.gsub(/\d+/, "#")
+    # A drifted surface is the same finding whatever its detail text says, so it is matched by
+    # the surface; every other line by its words with the figures stripped.
+    def key(line)
+      surface = line[/drifted from (\S+)/, 1]
+      surface ? "drift:#{surface}" : line.gsub(/\d+/, "#")
+    end
+
+    # How bad a line is: an OVER row's current value, or a drift's total count of changes.
+    def weight(line)
+      return number(line) if line.match?(/OVER/)
+
+      counts = line.scan(DRIFT_COUNTS).flatten.map(&:to_i)
+      counts.sum unless counts.empty?
+    end
+
 
     # The first figure after the name: the current value of an OVER row.
     def number(line) = line[/\s(\d+)\s*\//, 1]&.to_i
