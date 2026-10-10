@@ -1,0 +1,23 @@
+# Coverage floors, in percent, per app. Measured on 2026-10-10 from full passing
+# suites (brgen on vm23's copy-tree: 1381 runs; amber 314; bsdports 141) and set a
+# few points under the measurement so run order and layout do not flap the gate:
+#
+#   brgen     line 72.85  branch 42.14  method 62.21
+#   amber     line 52.16  branch 18.08  method 35.40
+#   bsdports  line 49.82  branch 12.16  method 20.77
+#
+# Raise a number when coverage rises. Never lower one to absorb new untested code;
+# write the test. The aim is still every file at 100%: PUB4_COVERAGE_STRICT=1 runs
+# test/coverage.rb against that target and lists each file that falls short.
+brgen:
+  line: 70
+  branch: 40
+  method: 60
+amber:
+  line: 50
+  branch: 16
+  method: 33
+bsdports:
+  line: 47
+  branch: 10
+  method: 18

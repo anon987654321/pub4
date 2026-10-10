@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require "yaml"
 
 class CoveragePolicyTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
@@ -21,18 +22,18 @@ class CoveragePolicyTest < Minitest::Test
     source = File.read(File.join(ROOT, "__shared/test/coverage.rb"))
 
     APPS.each do |app|
-      assert_includes source, 'cover "#{app}/app/**/*.rb"',
+      assert_includes source, 'cover "#{app_dir}/app/**/*.rb"',
                       "#{app}: coverage scope must resolve to RAILS/#{app}/app, not RAILS/app"
     end
   end
 
   def test_coverage_policy_includes_app_engines_and_shared_code
     source = File.read(File.join(ROOT, "__shared/test/coverage.rb"))
-    assert_includes source, 'cover "#{app}/engines/**/app/**/*.rb"'
+    assert_includes source, 'cover "#{app_dir}/engines/**/app/**/*.rb"'
     assert_includes source, 'cover "__shared/app/**/*.rb"'
     assert_includes source, 'cover "__shared/lib/**/*.rb"'
-    assert_includes source, 'cover_views "#{app}/app/views/**/*.erb"'
-    assert_includes source, 'cover_views "#{app}/engines/**/app/views/**/*.erb"'
+    assert_includes source, 'cover_views "#{app_dir}/app/views/**/*.erb"'
+    assert_includes source, 'cover_views "#{app_dir}/engines/**/app/views/**/*.erb"'
     assert_includes source, 'cover_views "__shared/app/views/**/*.erb"'
   end
 
@@ -96,6 +97,31 @@ class CoveragePolicyTest < Minitest::Test
     assert_includes source, 'Dir.mktmpdir("pub4-coverage-")'
     assert_includes source, 'ENV.fetch("PUB4_COVERAGE_ROOT", File.join(rails_root, "coverage"))'
     assert_includes source, 'FileUtils.rm_rf(COVERAGE_ROOT) if VERIFYING'
+  end
+
+  # The enforced number is a recorded floor per app. Without an entry the gate would
+  # raise at load for that app, and a floor outside 1..100 would pass nothing or
+  # everything.
+  def test_every_app_has_a_recorded_coverage_floor_for_each_criterion
+    floors = YAML.safe_load_file(File.join(ROOT, "__shared/test/coverage_floors.yml"))
+
+    APPS.each do |app|
+      %w[line branch method].each do |criterion|
+        value = floors.dig(app, criterion)
+        assert_kind_of Numeric, value, "#{app}: no #{criterion} floor in coverage_floors.yml"
+        assert_operator value, :>, 0, "#{app}: #{criterion} floor must be above zero"
+        assert_operator value, :<=, 100, "#{app}: #{criterion} floor is a percentage"
+      end
+    end
+  end
+
+  # One-file runs cannot reach a whole-app number, so the minimum applies to full
+  # runs only; strict mode keeps the 100%-per-file target reachable on request.
+  def test_the_minimum_applies_to_full_runs_and_strict_mode_keeps_the_old_target
+    source = File.read(File.join(ROOT, "__shared/test/coverage.rb"))
+    assert_includes source, 'ENV["PUB4_COVERAGE_STRICT"] == "1"'
+    assert_includes source, 'ENV["FULL_COVERAGE"] == "1" || ENV["PUB4_CI_GUARD"] == "1"'
+    assert_includes source, "minimum 100, per: own_source"
   end
 
 end
