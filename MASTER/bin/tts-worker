@@ -189,11 +189,36 @@ ZERO_FRAME = "\x00".b * STREAM_FRAME_BYTES
 # reused across requests (4b9da6d2d).
 NO_AUDIO = 2
 
+# A synthesis child is bounded. rb_edge_tts has no timeout of its own and Edge never answers
+# some requests (an unknown voice, a dropped websocket), so the parent's plain wait blocked
+# for good: the worker is single-threaded, so one stuck child was a dead worker that still
+# held its socket and answered pings.
+CHILD_DEADLINE_S = Integer(ENV.fetch("MASTER_TTS_CHILD_TIMEOUT", "45"))
+
+# The child's status, or nil when it was killed for running past the deadline.
+def wait_with_deadline(pid, seconds = CHILD_DEADLINE_S)
+  deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + seconds
+  loop do
+    done, status = Process.wait2(pid, Process::WNOHANG)
+    return status if done
+
+    if Process.clock_gettime(Process::CLOCK_MONOTONIC) > deadline
+      Process.kill("KILL", pid) rescue nil
+      Process.wait(pid) rescue nil
+      Master::Trace::Dmesg.status("tts0", "synthesis child ran past #{seconds}s, killed", io: $stderr)
+      return nil
+    end
+    sleep 0.05
+  end
+end
+
 def synth_streamed(request, client)
   pid = Process.fork { stream_child(request, client) }
-  _pid, status = Process.wait2(pid)
-  return true if status.success?
-  return false unless status.exitstatus == NO_AUDIO
+  status = wait_with_deadline(pid)
+  return true if status&.success?
+  # A killed child may already have sent audio, so it is not retried: the client sees the
+  # stream end without its end frame, drops it as truncated, and asks for the whole file.
+  return false unless status&.exitstatus == NO_AUDIO
 
   stream_from_subprocess(request, client)
 rescue NotImplementedError, StandardError => e
@@ -274,12 +299,22 @@ end
 # The argv order VOICE RATE PITCH OUT_PATH is the one-shot wire contract.
 def synth_subprocess(request, out_path)
   script = File.expand_path(__FILE__)
-  _out, err, status = Open3.capture3(
-    worker_env, Gem.ruby, script, request.voice, request.rate, request.pitch, out_path,
-    stdin_data: request.text.to_s
-  )
+  err = +""
+  status = nil
+  Open3.popen3(worker_env, Gem.ruby, script, request.voice, request.rate, request.pitch, out_path) do |stdin, stdout, stderr, wait_thr|
+    stdin.write(request.text.to_s)
+    stdin.close
+    drains = [Thread.new { stdout.read }, Thread.new { err << stderr.read.to_s }]
+    unless wait_thr.join(CHILD_DEADLINE_S)
+      Process.kill("KILL", wait_thr.pid) rescue nil
+      Master::Trace::Dmesg.status("tts0", "one-shot ran past #{CHILD_DEADLINE_S}s, killed", io: $stderr)
+      return false
+    end
+    drains.each(&:join)
+    status = wait_thr.value
+  end
   unless status.success?
-    Master::Trace::Dmesg.status("tts0", "one-shot failed, #{err.to_s.strip}", io: $stderr) unless err.to_s.strip.empty?
+    Master::Trace::Dmesg.status("tts0", "one-shot failed, #{err.strip}", io: $stderr) unless err.strip.empty?
     return false
   end
   File.exist?(out_path) && File.size(out_path) > 0
@@ -314,8 +349,8 @@ def synth_forked(request, out_path)
       exit!(1)
     end
   end
-  _pid, status = Process.wait2(pid)
-  return true if status.success? && File.exist?(out_path) && File.size(out_path) > 0
+  status = wait_with_deadline(pid)
+  return true if status&.success? && File.exist?(out_path) && File.size(out_path) > 0
 
   # Edge answered the forked child with nothing. A fresh interpreter has made the audio
   # when a child did not, so ask once that way before reporting an empty file.
