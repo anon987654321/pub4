@@ -261,8 +261,8 @@ module Master
                      capabilities: Master::Core::Capabilities.for(:fix))
         Master::Core::Fold.new(
           model:,
-          constitution: Master::Core::Constitution.load(data_dir: Master.data_path, verify: scan_verifier,
-                                                        sandbox: shell_sandbox(root:),
+          constitution: Master::Core::Constitution.load(data_dir: Master.data_path, workspace_root: root,
+                                                        verify: scan_verifier, sandbox: shell_sandbox(root:),
                                                         capabilities:),
           world:,
           memory:,

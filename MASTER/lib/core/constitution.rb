@@ -42,13 +42,12 @@ module Master::Core
     # gate was wired in, but the Fold does not exec through Io::Shell. It execs
     # through World. So the hardened gate was live for the tool path and absent
     # from the constitutional one, which is the path that actually runs unattended.
-    def self.load(data_dir:, verify: nil, sandbox: nil, capabilities: Capabilities.for(:fix))
+    def self.load(data_dir:, workspace_root: nil, verify: nil, sandbox: nil, capabilities: Capabilities.for(:fix))
       rules_data = YAML.safe_load_file(File.join(data_dir, "laws.yml"), aliases: true)
       master_root = File.expand_path(File.dirname(data_dir))
-      repo_root = File.basename(master_root) == "MASTER" ? File.dirname(master_root) : master_root
-      roots = [master_root, repo_root].uniq.freeze
+      workspace_root = File.expand_path(workspace_root || master_root)
       sacred_paths = Paths.sacred_paths(root: master_root)
-      rules = default_rules(rules_data, sacred_paths:, roots:)
+      rules = default_rules(rules_data, sacred_paths:, master_root:, workspace_root:)
       rules += [scan_clean_rule(verify)] if verify
       rules += [sandboxed_exec_rule(sandbox)] if sandbox
       new(laws: rules, capabilities:)
@@ -126,13 +125,13 @@ module Master::Core
 
     # The rules. Each is a few lines because the dangerous thing is expressed as
     # a predicate, not prose. Safety rules Block; hygiene rules Revise.
-    def self.default_rules(data, sacred_paths: [], roots: [])
+    def self.default_rules(data, sacred_paths: [], master_root: nil, workspace_root: nil)
       veto = (data["veto_patterns"] || {}).filter_map { |n, s| [n, safe_rx(s["detect"])] }.to_h
       immutable = Array(sacred_paths).map(&:to_s).freeze
 
       [
         no_secret_rule(veto),
-        immutable_paths_rule(immutable, roots:),
+        immutable_paths_rule(immutable, master_root:, workspace_root:),
         ruby_parses_rule,
         structured_exec_rule,
         safe_exec_rule(veto),
@@ -153,60 +152,31 @@ module Master::Core
     # catalogue remains descriptive and must not become a second write-protection list.
     # The agent may not rewrite the constitution it is judged by or the spine
     # that folds its effects. A write, or a git stage of such a path, is blocked.
-    def self.immutable_paths_rule(immutable, roots: [])
+    def self.immutable_paths_rule(immutable, master_root: nil, workspace_root: nil)
       Law.new(id: :immutable_paths, verbs: %i[write git], judge: lambda { |effect, _memory|
         targets = effect.verb == :write ? [effect.args[:path]] : Array(effect.args[:paths])
-        hit = targets.compact.map(&:to_s).find { |path| immutable_hit?(path, immutable, roots:) }
+        hit = targets.compact.map(&:to_s).find do |path|
+          immutable_hit?(path, immutable, master_root:, workspace_root:)
+        end
         next nil unless hit
 
         Verdict::Block.new(reason: "immutable path: #{hit}", by: :immutable_paths)
       })
     end
 
-    # Compare workspace-relative paths, irrespective of whether an effect names
-    # a file relative to MASTER/, relative to the repository root, or absolutely.
-    # Roots come from Constitution.load's data_dir, not process working-directory
-    # assumptions. Expansion also collapses "." and ".." segments.
-    def self.immutable_hit?(path, immutable, roots: [])
-      targets = normalized_path_variants(path, roots:)
+    # Resolve the target exactly as World does: relative to the one workspace
+    # whose boundary the effect will use. Resolve declarations relative to the
+    # MASTER root that owns soul.yml. Never interpret one relative target against
+    # two roots: that both overblocked unrelated paths and obscured which file
+    # was actually being judged.
+    def self.immutable_hit?(path, immutable, master_root: nil, workspace_root: nil)
+      target = File.expand_path(path.to_s, File.expand_path(workspace_root || "/"))
       immutable.any? do |guard|
         subtree = guard.to_s.end_with?("/")
-        guarded = normalized_path_variants(guard, roots:)
-        guarded.any? do |target|
-          targets.any? do |norm|
-            subtree ? norm == target || norm.start_with?("#{target}/") : norm == target
-          end
-        end
+        protected_path = File.expand_path(guard.to_s.delete_suffix("/"), File.expand_path(master_root || "/"))
+        subtree ? target == protected_path || target.start_with?("#{protected_path}/") : target == protected_path
       end
     end
-
-    def self.normalized_path_variants(path, roots:)
-      text = path.to_s
-      bases = Array(roots).map { |root| File.expand_path(root.to_s) }.uniq
-      variants = []
-
-      if text.start_with?(File::SEPARATOR)
-        full = File.expand_path(text)
-        bases.each do |root|
-          next unless full == root || full.start_with?("#{root}#{File::SEPARATOR}")
-
-          variants << (full == root ? "" : full.delete_prefix("#{root}#{File::SEPARATOR}"))
-        end
-      elsif bases.empty?
-        variants << File.expand_path(text, File::SEPARATOR).delete_prefix(File::SEPARATOR)
-      else
-        bases.each do |root|
-          full = File.expand_path(text, root)
-          next unless full == root || full.start_with?("#{root}#{File::SEPARATOR}")
-
-          variants << (full == root ? "" : full.delete_prefix("#{root}#{File::SEPARATOR}"))
-        end
-      end
-
-      variants.map { |value| value.delete_prefix("MASTER/").delete_prefix("./") }
-              .reject(&:empty?).uniq
-    end
-    private_class_method :normalized_path_variants
 
     # No credential ever reaches disk or the transcript.
     def self.no_secret_rule(veto)
@@ -506,7 +476,6 @@ module Master::Core
                          :operands_after_flags, :git_clean_all?, :forbidden_file_rule, :scope_creep_rule,
                          :two_hats_rule, :evidence_for_done_rule,
                          :git_commit_evidence_rule, :git_commit_scope_rule, :council_for_done_rule,
-                         :ideation_before_write_rule, :new_path_rule, :ruby_syntax_error, :safe_rx,
-                         :normalized_path_variants
+                         :ideation_before_write_rule, :new_path_rule, :ruby_syntax_error, :safe_rx
   end
 end

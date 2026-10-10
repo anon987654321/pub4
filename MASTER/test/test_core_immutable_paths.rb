@@ -9,22 +9,23 @@ require "master"
 class ImmutablePathsTest < Minitest::Test
   IMMUTABLE = %w[data/laws.yml data/soul.yml lib/core.rb lib/core/].freeze
 
-  def constitution
-    roots = [Master::ROOT, Master::REPO_ROOT].uniq
-    rules = [Master::Core::Constitution.immutable_paths_rule(IMMUTABLE, roots:)]
+  def constitution(workspace_root: Master::ROOT)
+    rules = [Master::Core::Constitution.immutable_paths_rule(
+      IMMUTABLE, master_root: Master::ROOT, workspace_root:
+    )]
     Master::Core::Constitution.new(laws: rules)
   end
 
-  def admit(effect) = constitution.admit(effect, nil)
+  def admit(effect, workspace_root: Master::ROOT) = constitution(workspace_root:).admit(effect, nil)
 
-  def assert_blocked(effect, by:)
-    verdict = admit(effect)
+  def assert_blocked(effect, by:, workspace_root: Master::ROOT)
+    verdict = admit(effect, workspace_root:)
     assert_instance_of Master::Core::Verdict::Block, verdict
     assert_equal by, verdict.by
   end
 
-  def assert_allowed(effect)
-    assert_instance_of Master::Core::Verdict::Allow, admit(effect)
+  def assert_allowed(effect, workspace_root: Master::ROOT)
+    assert_instance_of Master::Core::Verdict::Allow, admit(effect, workspace_root:)
   end
 
   def test_write_to_constitution_is_blocked
@@ -53,6 +54,16 @@ class ImmutablePathsTest < Minitest::Test
   def test_absolute_repository_path_with_master_prefix_is_blocked
     path = File.join(Master::REPO_ROOT, "MASTER", "data", "laws.yml")
     assert_blocked Master::Core::Effect.write(path, "x"), by: :immutable_paths
+  end
+
+  def test_repo_relative_master_path_is_blocked
+    effect = Master::Core::Effect.write("MASTER/data/laws.yml", "x")
+    assert_blocked effect, by: :immutable_paths, workspace_root: Master::REPO_ROOT
+  end
+
+  def test_repo_root_file_with_the_same_relative_name_is_not_overblocked
+    effect = Master::Core::Effect.write("data/laws.yml", "x")
+    assert_allowed effect, workspace_root: Master::REPO_ROOT
   end
 
   def test_absolute_git_stage_of_sacred_path_is_blocked
