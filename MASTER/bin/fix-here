@@ -27,7 +27,13 @@ TREES = %w[MASTER RAILS OPENBSD STUDIO].freeze
 args = ARGV.dup
 dry = args.delete("--dry")
 probe = !args.delete("--no-probe")
-model_flag = (i = args.index("--model")) ? (args.delete_at(i) && args.delete_at(i)) : nil
+model_flag = nil
+if (i = args.index("--model"))
+  abort "fix-here: --model requires an ID or 'none'" if args[i + 1].to_s.empty? || args[i + 1].start_with?("--")
+
+  args.delete_at(i)
+  model_flag = args.delete_at(i)
+end
 tree = args.shift
 abort "usage: MASTER/bin/fix-here <#{TREES.join('|')}|path> [--model ID|none] [--no-probe] [--dry]" if tree.to_s.empty? || args.any?
 abort "fix-here: #{tree} is not one of #{TREES.join(', ')} and not a path in this checkout" unless TREES.include?(tree) || File.exist?(File.join(ROOT, tree))
@@ -48,15 +54,19 @@ common, = Open3.capture2e("git", "-C", ROOT, "rev-parse", "--git-common-dir")
 main_root = File.expand_path("..", File.expand_path(common.strip, ROOT))
 source_config = File.join(main_root, "MASTER", ".master", "config.yml")
 target_config = File.join(MASTER, ".master", "config.yml")
-if !File.file?(target_config) && File.file?(source_config)
+if !dry && !File.file?(target_config) && File.file?(source_config)
   FileUtils.mkdir_p(File.dirname(target_config))
-  FileUtils.cp(source_config, target_config) unless dry
+  FileUtils.cp(source_config, target_config)
 end
 saved = [target_config, source_config].map { |f| File.file?(f) ? File.read(f)[/^model:\s*(\S+)/, 1] : nil }.compact.first
 model = model_flag == "none" ? nil : (model_flag || saved)
 
 env = { "MASTER_INTERNAL_CHILD" => "1", "MASTER_FIX_WORKTREE_CHILD" => "1" }
-env["MASTER_MODEL"] = model if model
+if model_flag == "none"
+  env["MASTER_MODEL"] = nil
+elsif model
+  env["MASTER_MODEL"] = model
+end
 log = File.join(MASTER, ".master", "fix-#{File.basename(tree)}.log")
 
 puts "fix0 at fix-here: tree=#{tree} worktree=#{ROOT}"

@@ -26,9 +26,19 @@ module Master
 
       def sacred_paths
         @sacred_paths ||= begin
-          manifest = File.join(@root, MANIFEST)
-          soul = YAML.safe_load_file(manifest, aliases: true) || {}
-          Array(soul.dig("absolute", "sacred_paths")).map(&:to_s).map { |path| normalize(path) }.uniq.freeze
+          manifest_root = [@root, File.join(@root, "MASTER")].find do |candidate|
+            File.file?(File.join(candidate, MANIFEST))
+          end
+
+          if manifest_root
+            soul = YAML.safe_load_file(File.join(manifest_root, MANIFEST), aliases: true) || {}
+            prefix = manifest_root == @root ? "" : "MASTER/"
+            Array(soul.dig("absolute", "sacred_paths")).map(&:to_s).map do |path|
+              normalize("#{prefix}#{path}")
+            end.uniq.freeze
+          else
+            [].freeze
+          end
         rescue Errno::ENOENT
           [].freeze
         end

@@ -2,6 +2,7 @@
 
 require_relative "test_helper"
 require "cli/command_registry/command"
+require_relative "../lib/cli/command_registry/review"
 
 class TestCommandReviewGate < Minitest::Test
   class Receiver
@@ -61,6 +62,13 @@ class TestCommandReviewGate < Minitest::Test
 
     assert_equal "did the risky thing", result
     assert_equal 1, receiver.calls.size
+  end
+
+  def test_fix_proof_scope_resolves_from_the_repository_root
+    registry = Master::CLI::CommandRegistry
+
+    assert_equal ["MASTER"], registry.worktree_proof_trees("MASTER", root: Master::ROOT)
+    assert_equal ["RAILS"], registry.worktree_proof_trees("RAILS/brgen", root: Master::ROOT)
   end
 
   def test_gated_command_handles_nil_ctx

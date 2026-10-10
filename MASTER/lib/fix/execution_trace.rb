@@ -106,9 +106,9 @@ module Master
       # ExecutionTrace always inventories from the pub4 repository root. Scope
       # names are git pathspecs, while an empty scope means the whole checkout.
       def scope_paths
-        scopes = Array(@scope).compact.flat_map { |scope| scope.to_s.split(/[\\s,]+/) }.reject(&:empty?)
+        scopes = Array(@scope).compact.flat_map { |scope| scope.to_s.split(/[\s,]+/) }.reject(&:empty?)
         return [] if scopes.empty?
-        return [] if (%w[MASTER RAILS OPENBSD STUDIO] - scopes.map(&:upcase)).empty?
+        return [] if scopes.uniq.sort == %w[MASTER OPENBSD RAILS STUDIO].sort
 
         repo = File.expand_path(@root)
         scopes.map do |scope|
@@ -116,6 +116,9 @@ module Master
           next if full == repo
           unless full.start_with?("#{repo}#{File::SEPARATOR}")
             raise ArgumentError, "execution trace scope outside repository: #{scope.inspect}"
+          end
+          unless File.exist?(full)
+            raise ArgumentError, "execution trace scope does not exist: #{scope.inspect}"
           end
           full.delete_prefix("#{repo}#{File::SEPARATOR}")
         end.compact.uniq
@@ -130,7 +133,11 @@ module Master
         output, status = Master::Io::Exec.capture2e(*args)
         raise "cannot inventory repository: #{output.to_s.lines.last.to_s.strip}" unless status.success?
 
-        output.split("\x00").reject(&:empty?).map { |path| File.join(@root, path) }.select { |path| File.file?(path) }
+        paths = output.split("\x00").reject(&:empty?).map { |path| File.join(@root, path) }.select { |path| File.file?(path) }
+        if scopes.any? && paths.empty?
+          raise ArgumentError, "execution trace scope contains no inventoried files: #{scopes.join(", ")}"
+        end
+        paths
       end
 
       def reread(files, failures)

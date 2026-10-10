@@ -2,6 +2,7 @@
 
 require_relative "test_helper"
 require_relative "../lib/fix/execution_trace"
+require "fileutils"
 
 class TestExecutionTrace < Minitest::Test
   def test_reread_hashes_every_supplied_file
@@ -33,9 +34,60 @@ class TestExecutionTrace < Minitest::Test
   end
 
   def test_single_absolute_scope_becomes_a_repository_relative_git_path
-    trace = Master::Fix::ExecutionTrace.new(root: "/tmp/pub4", scope: ["/tmp/pub4/RAILS"], ruby_checker: ->(_path) {})
+    Dir.mktmpdir("execution-trace-scope") do |root|
+      FileUtils.mkdir_p(File.join(root, "RAILS"))
+      trace = Master::Fix::ExecutionTrace.new(root:, scope: [File.join(root, "RAILS")], ruby_checker: ->(_path) {})
 
-    assert_equal ["RAILS"], trace.send(:scope_paths)
+      assert_equal ["RAILS"], trace.send(:scope_paths)
+    end
+  end
+
+  def test_nested_scope_paths_preserve_lowercase_s_and_commas
+    Dir.mktmpdir("execution-trace-nested-scope") do |root|
+      %w[STUDIO/dilla/livesets_midi RAILS/__shared].each do |path|
+        FileUtils.mkdir_p(File.join(root, path))
+      end
+      trace = Master::Fix::ExecutionTrace.new(
+        root:,
+        scope: ["STUDIO/dilla/livesets_midi, RAILS/__shared"],
+        ruby_checker: ->(_path) {},
+      )
+
+      assert_equal ["STUDIO/dilla/livesets_midi", "RAILS/__shared"], trace.send(:scope_paths)
+    end
+  end
+
+  def test_full_tree_scope_does_not_swallow_an_extra_token
+    Dir.mktmpdir("execution-trace-extra-scope") do |root|
+      %w[MASTER RAILS OPENBSD STUDIO].each { |path| FileUtils.mkdir_p(File.join(root, path)) }
+      trace = Master::Fix::ExecutionTrace.new(
+        root:,
+        scope: ["MASTER RAILS OPENBSD STUDIO,missing"],
+        ruby_checker: ->(_path) {},
+      )
+
+      error = assert_raises(ArgumentError) { trace.send(:scope_paths) }
+      assert_match(/scope does not exist/, error.message)
+    end
+  end
+
+  def test_empty_explicit_scope_inventory_is_a_failure
+    Dir.mktmpdir("execution-trace-empty-scope") do |root|
+      FileUtils.mkdir_p(File.join(root, "RAILS/empty"))
+      File.write(File.join(root, "outside.txt"), "outside scope\n")
+      system("git", "-C", root, "init", "-q", "--initial-branch=main")
+
+      trace = Master::Fix::ExecutionTrace.new(
+        root:,
+        scope: ["RAILS/empty"],
+        ruby_checker: ->(_path) {},
+      )
+      result = trace.run
+
+      refute result.clean?
+      assert result.failures.any? { |failure| failure.include?("scope contains no inventoried files") },
+             result.failures.inspect
+    end
   end
 
   def test_missing_boot_surface_and_configuration_is_a_failure

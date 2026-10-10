@@ -138,8 +138,9 @@ class TestFixLoopFileCollector < Minitest::Test
     end
   end
 
-  # soul.yml owns sacred paths; laws.yml is the law catalogue. /fix must never
-  # collect the constitutional data or core spine for repair.
+  # soul.yml owns sacred paths; laws.yml is the law catalogue. The repository
+  # root must resolve those paths through MASTER/, while authored core code remains
+  # eligible unless soul.yml explicitly protects it.
   def test_symlinks_are_never_fix_inputs
     Dir.mktmpdir do |dir|
       target = write(dir, "lib/real.rb")
@@ -156,7 +157,7 @@ class TestFixLoopFileCollector < Minitest::Test
 
     refute_includes files, "data/laws.yml"
     refute_includes files, "data/soul.yml"
-    refute(files.any? { |f| f.start_with?("lib/core/") })
+    assert_includes files, "lib/core/paths.rb"
     assert_includes files, "lib/fix/fix_loop.rb"
   end
 
