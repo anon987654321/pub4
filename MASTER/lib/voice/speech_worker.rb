@@ -64,7 +64,8 @@ module Master
         stream_socket_response(sock_path, req, audio_path, timeout, on_chunk)
         return audio_path if File.exist?(audio_path) && File.size(audio_path) > 0
 
-        warn_tts("edge socket produced empty audio")
+        # Say so only when the retry on the next worker has failed too; the first miss is handled.
+        warn_tts("edge socket produced empty audio") if retried
         cleanup_failed_audio(audio_path)
         # A worker can answer its health ping and still synthesise nothing; it then wins
         # every other round-robin turn, and each of its turns fell through to the older

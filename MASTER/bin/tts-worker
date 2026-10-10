@@ -187,10 +187,15 @@ ZERO_FRAME = "\x00".b * STREAM_FRAME_BYTES
 # before synthesis finishes instead of waiting for save_sync to collect the
 # whole mp3. The response still comes from a fork: the EM reactor cannot be
 # reused across requests (4b9da6d2d).
+NO_AUDIO = 2
+
 def synth_streamed(request, client)
   pid = Process.fork { stream_child(request, client) }
   _pid, status = Process.wait2(pid)
-  status.success?
+  return true if status.success?
+  return false unless status.exitstatus == NO_AUDIO
+
+  stream_from_subprocess(request, client)
 rescue NotImplementedError, StandardError => e
   Master::Trace::Dmesg.status("tts0", "stream fork unavailable, using subprocess, #{e.class}: #{e.message}", io: $stderr)
   out = "/tmp/m_tts_#{SecureRandom.hex(8)}.mp3"
@@ -210,13 +215,34 @@ def stream_child(request, client)
     nil
   end
   sent = stream_audio_frames(request, client)
+  # Nothing sent means nothing to close: the parent retries before any end frame is written,
+  # because a clean end after zero bytes read as a spoken utterance.
+  exit!(NO_AUDIO) unless sent
+
   client.write(ZERO_FRAME)
-  exit!(sent ? 0 : 1)
+  exit!(0)
 rescue Errno::ENOTCONN, Errno::EPIPE, Errno::ECONNRESET
   exit!(1)
 rescue StandardError => e
   Master::Trace::Dmesg.status("tts0", "stream fork child error, #{e.class}: #{e.message}", io: $stderr)
   exit!(1)
+end
+
+# The retry for a child that got no audio: the whole mp3 from a fresh interpreter, framed as one chunk.
+def stream_from_subprocess(request, client)
+  out = "/tmp/m_tts_#{SecureRandom.hex(8)}.mp3"
+  ok = synth_subprocess(request, out)
+  if ok
+    data = File.binread(out)
+    client.write([data.bytesize].pack("Q>"))
+    client.write(data)
+  end
+  client.write(ZERO_FRAME)
+  ok
+rescue Errno::ENOTCONN, Errno::EPIPE, Errno::ECONNRESET
+  false
+ensure
+  File.unlink(out) if defined?(out) && out && File.exist?(out)
 end
 
 def stream_audio_frames(request, client)
@@ -289,7 +315,11 @@ def synth_forked(request, out_path)
     end
   end
   _pid, status = Process.wait2(pid)
-  status.success? && File.exist?(out_path) && File.size(out_path) > 0
+  return true if status.success? && File.exist?(out_path) && File.size(out_path) > 0
+
+  # Edge answered the forked child with nothing. A fresh interpreter has made the audio
+  # when a child did not, so ask once that way before reporting an empty file.
+  synth_subprocess(request, out_path)
 rescue NotImplementedError, StandardError => e
   Master::Trace::Dmesg.status("tts0", "fork unavailable, using subprocess, #{e.class}: #{e.message}", io: $stderr)
   synth_subprocess(request, out_path)
