@@ -50,7 +50,9 @@ class LikeCountStreamTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_equal 1, record.reload.likes_count
     assert_select "turbo-stream[action=replace][target=?]", "like_post_#{record.id}" do
-      assert_select "template form#like_post_#{record.id} button", I18n.t("post.like_count", count: 1)
+      # The post button is an icon with the count beside it; its words are the aria-label.
+      assert_select "template form#like_post_#{record.id} button[aria-label=?]", I18n.t("post.like_count", count: 1)
+      assert_select "template form#like_post_#{record.id} button .feed-action-count", "1"
     end
   end
 

@@ -56,9 +56,16 @@ class ShopSmarterTest < ActionDispatch::IntegrationTest
   end
 
   test "ShopTheLook names why the remote feed cannot answer" do
-    # No token configured in test, so the first gate is the honest one.
-    assert_equal :no_token, ShopTheLook.remote_unavailable_reason
-    assert_not ShopTheLook.remote_available?
+    # The brgen catalog is a source in its own right (available over https, and
+    # in test), so the honest "none" needs it off and no TradeDoubler token.
+    BrgenCommerce.stub(:available?, false) do
+      ENV.stub(:[], lambda { |key|
+        key.to_s.start_with?("TRADEDOUBLER") ? nil : ENV.fetch(key, nil)
+      }) do
+        assert_equal :no_market_sources, ShopTheLook.remote_unavailable_reason
+        assert_not ShopTheLook.remote_available?
+      end
+    end
   end
 
   # This test used to assert :no_feed_client — the feed client lived in brgen's

@@ -66,7 +66,9 @@ class PwaServingTest < ActionDispatch::IntegrationTest
     assert_response :success
     body = response.body
     refute_includes body, "__CACHE_VERSION__"
-    assert_match(/pages-[0-9a-f]{12}/, body)
+    # amber ships a minified workbox bundle that builds `${APP}-pages-${version}`
+    # at runtime, so the derived 12-hex digest is the only literal to look for.
+    assert_match(/"[0-9a-f]{12}"/, body)
     assert_includes body, "caches.keys().then(names => Promise.all("
     assert_includes body, "name !== `${APP_NAME}-pages-${CACHE_VERSION}`"
   ensure

@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-require "minitest/autorun"
+require "test_helper"
 require "yaml"
 
 class AmberBacklogTest < Minitest::Test
-  ROOT = File.expand_path("../..", __dir__)
+  ROOT = Rails.root.to_s
 
   def read(relative)
     File.read(File.join(ROOT, relative))
@@ -69,7 +69,7 @@ class AmberBacklogTest < Minitest::Test
     generator = read("app/services/outfit_generation.rb")
     routes = read("config/routes.rb")
     item_form = read("app/views/items/_form.html.erb")
-    media_picker = File.read(File.join(ROOT, "..", "shared", "frontend", "media_picker_controller.js"))
+    media_picker = Shared::Engine.root.join("frontend/media_picker_controller.js").read
 
     assert_includes analytics, "never_worn"
     assert_includes analytics, "underused"
