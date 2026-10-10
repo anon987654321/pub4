@@ -63,7 +63,7 @@ module VoiceMeasure
   end
 
   def percentile(sorted, fraction)
-    return nil if sorted.empty?
+    return if sorted.empty?
 
     sorted[((sorted.size - 1) * fraction).round]
   end
@@ -92,13 +92,13 @@ module VoiceMeasure
 
   def samples(path)
     pcm, status = Open3.capture2("ffmpeg", "-v", "error", "-i", path, "-ac", "1", "-ar", RATE.to_s, "-f", "s16le", "-", binmode: true)
-    status.success? ? pcm.unpack("s<*").map { |v| v / 32768.0 } : []
+    status.success? ? pcm.unpack("s<*").map { |v| v / 32_768.0 } : []
   end
 
   # Lag with the strongest normalised autocorrelation, or nil for unvoiced.
   def f0(frame)
     energy = frame.sum { |v| v * v }
-    return nil if energy < 1e-4 * frame.size
+    return if energy < 1e-4 * frame.size
 
     best = nil
     best_r = 0.0
@@ -115,7 +115,7 @@ module VoiceMeasure
   end
 
   def stddev(values)
-    return nil if values.size < 3
+    return if values.size < 3
 
     mean = values.sum / values.size
     Math.sqrt(values.sum { |v| (v - mean)**2 } / values.size)
@@ -171,7 +171,7 @@ module VoiceMeasure
         separated: b[:f0_std_semitones].to_f > 5 * [a[:f0_std_semitones].to_f, 0.1].max,
         finds_600ms_pause: c[:pauses][:count] == 1 && (500..700).cover?(c[:pauses][:max_ms].to_i),
       }
-      { steady: a, swept: b, gapped: c, checks: checks, ok: checks.values.all? }
+      { steady: a, swept: b, gapped: c, checks:, ok: checks.values.all? }
     end
   end
 end
@@ -185,7 +185,11 @@ if $PROGRAM_NAME == __FILE__
 
   words_at = ARGV.index("--words")
   text_at = ARGV.index("--text")
-  words = words_at ? ARGV[words_at + 1].to_i : (text_at ? ARGV[text_at + 1].to_s.split.size : nil)
+  words = if words_at
+    ARGV[words_at + 1].to_i
+  elsif text_at
+    ARGV[text_at + 1].to_s.split.size
+  end
   files = ARGV.reject.with_index { |a, i| a.start_with?("--") || [words_at, text_at].compact.any? { |j| i == j + 1 } }
   abort("usage: voice_measure.rb clip [--words N | --text TEXT] | --selfcheck") if files.empty?
   files.each { |file| puts JSON.generate(VoiceMeasure.measure(file, words:)) }
