@@ -26,7 +26,7 @@
               class: "btn btn-ghost listing-buy-bar-secondary" %>
       <% else %>
         <%= button_to t("marketplace.add_to_cart"),
-              listing_orders_path(@listing),
+              listing_orders_path(buybar_listing),
               params: { quantity: 1 },
               class: "btn btn-primary listing-buy-bar-cta" %>
       <% end %>
