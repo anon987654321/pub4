@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "mechanical_autofix"
+require_relative "../../fix/scan/mechanical_autofix"
 
 module Master
   module Review

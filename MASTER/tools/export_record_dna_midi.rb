@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "../STUDIO/dilla/lib/groove"
+require_relative "../../STUDIO/dilla/lib/groove"
 require_relative "../lib/trace/dmesg"
 
 profile = ARGV.shift
