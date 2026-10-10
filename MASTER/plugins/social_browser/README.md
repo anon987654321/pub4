@@ -1,70 +1,51 @@
 # Social Browser
 
-## Canonical contract
+**Social Browser lets MASTER act in the one place an operator lives
+online, their own accounts, while the operator keeps every key, every consent
+and every consequence.**
 
+It drives a real browser, through the Ferrum gem, on accounts the operator owns
+or is authorized to run. Three sites are wired in today: OnlyFans, FetLife and
+Snapchat web. Each has an HTTPS start page and a short list of allowed hosts,
+and the plugin refuses any other destination. The status action reports whether
+the browser is available and which sites are known.
 
-## Purpose
+Logging in is the operator's work. The login action opens a visible browser and
+takes a screenshot; the operator types the password and any one-time code
+there. MASTER never receives passwords, codes, cookies or session credentials.
+The browser profile for each account lives under
+`~/.master/plugins/social_browser/accounts/`, with owner-only permissions, and
+never in the repository.
 
-Social Browser is a governed browser-automation plugin for authorized social
-accounts. It separates browser mechanics from MASTER's policy and approval
-boundary.
+Reading is open and writing is narrow. The inspect action returns the page
+title, the page text and a screenshot, and the text passes through MASTER's
+injection guard because a page is untrusted input and never an instruction. Two
+actions write: publish_owned posts to an account the caller declares owned, and
+reply_inbound answers a message that someone sent to that account. Each needs
+explicit consent in the call, and each does one thing per invocation. A message
+may not be empty or exceed 4,000 bytes. An account takes one write in any
+fifteen seconds, and a lock stops two runs from using the same account at once.
+Every write leaves three screenshots, before, typed and after.
 
-## Inputs
+A CAPTCHA or security challenge stops the run for a human, before and after a
+write. The plugin does not try to get past one. A missing composer, a missing
+submit button, an expired session or a changed page is reported as a failure,
+and the plugin never says an action is done because a click was attempted.
 
-- Explicitly authorized account/session state.
-- A bounded browser action requested by MASTER.
-- The plugin actions exposed by `social_browser.rb`.
+The law in `data/laws.yml` forbids what this plugin could otherwise be bent
+into: unsolicited bulk messaging, automated friend farming, automated
+following, deceiving anyone about identity, and getting around a challenge. A
+change that makes any of those easier does not belong here.
 
-## Outputs
+The manifest, `plugin.yml`, declares status and inspect as observable, so
+MASTER's guarded observation tool may call them. Login and the two writes run
+only through an explicit plugin run. The code is in `social_browser.rb`.
 
-- Structured observation of the requested page/action.
-- Explicit success or failure for each browser operation.
-- No claim of action completion unless the browser reports completion.
+## Use
 
-## Invocation
+Inside a MASTER session, the plugin command reaches it.
 
-The entrypoint is `MASTER/plugins/social_browser/social_browser.rb`.
-MASTER should dispatch actions through the plugin boundary rather than
-embedding browser-specific logic in core code.
-
-## Architecture
-
-`plugin.yml` is the manifest and `social_browser.rb` is the implementation
-boundary. The plugin remains outside MASTER core so browser dependencies and
-site-specific behavior do not leak into the governance runtime.
-
-## Data and state
-
-Browser sessions and credentials are external state. They must not be committed
-to the repository. Persist only the minimum metadata needed for an auditable
-authorized action.
-
-## Security boundary
-
-Only operate on accounts and content the operator is authorized to control.
-Keep credentials out of logs and prompts, validate destinations, bound uploads
-and downloads, and require explicit confirmation for consequential actions such
-as posting, deleting, following, messaging, or changing account settings.
-
-## Validation
-
-Unknown actions, missing sessions, invalid destinations, stale pages, and
-browser errors must remain explicit failures. Never report an action as done
-because a click was attempted.
-
-## MASTER integration
-
-Social Browser is a plugin, not a generic tool: it extends MASTER through a
-manifested capability boundary and remains independently replaceable.
-
-## Failure modes
-
-Authentication expiry, consent/authorization failure, browser startup failure,
-site navigation failure, DOM drift, rate limiting, or ambiguous post-action
-state must all be visible to the caller.
-
-## Examples
-
-```sh
-ruby MASTER/plugins/social_browser/social_browser.rb --help
+```text
+/plugin info social_browser
+/plugin run social_browser status
 ```

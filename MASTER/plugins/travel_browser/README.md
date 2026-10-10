@@ -1,41 +1,49 @@
 # Travel Browser
 
-Travel Browser gives MASTER a governed browser boundary for real travel bookings:
-flights, hotels, restaurants, tours, transfers and similar reservations.
+**Travel Browser lets MASTER do the searching, comparing and form-filling of a
+trip, and leaves the one act that spends money, and every secret on the way to
+it, in the hands of the person who is going.**
 
-The browser may research, navigate, log in, fill ordinary travel details and
-prepare a booking. Credentials, one-time codes, passport numbers and payment
-details stay in the visible browser and are entered by the operator. MASTER
-never stores them or asks the model to handle them.
+It drives a visible browser, through the Ferrum gem, for flights, hotels,
+restaurants, tours and transfers. It works on any site that has a page, because
+it automates the page and not a provider's private interface. A provider with a
+stable authenticated API and a stronger contract may get its own adapter later.
 
-A consequential purchase has a hard final gate. MASTER may not click the final
-purchase/charge/confirm control until the caller supplies `confirm_purchase: true`
-for that exact booking step. The booking response records the URL, visible page
-title, amount text when available, timestamp and screenshots; it never claims
-success merely because a click happened.
+The actions are status, inspect, open, login, fill, click and book. Open
+accepts HTTPS addresses only and passes them through the same guard that blocks
+loopback, private and reserved destinations. Inspect returns the page title,
+its text, up to 120 of its form controls and a screenshot. Page text passes
+through the injection guard and is treated as untrusted content, never as
+instruction. Each browser action keeps a named session, a profile stored under
+`~/.master/plugins/travel_browser/sessions/` with owner-only permissions. The
+repository holds no credentials and no booking state.
 
-The plugin accepts HTTPS destinations and rejects loopback, private and other
-reserved addresses through the existing SSRF guard. Page text is untrusted
-external content and must not become policy or instructions. CAPTCHA, security
-challenges and ambiguous post-submit state stop the operation for human action.
+Secrets stay with the operator. Login waits in the visible browser while the
+operator types credentials and one-time codes, and MASTER receives none of
+them. The fill action refuses any selector that names a password, one-time
+code, card, security code or passport field, so those fields can only be filled
+by hand. A CAPTCHA, an access-denied page or any other security challenge stops
+the run and waits for a person.
 
-Sessions live under `~/.master/plugins/travel_browser/sessions/` with restrictive
-permissions. The repository contains no credentials or booking state.
+The book action is the final gate. It does nothing unless the call carries
+confirm_purchase set to true, and it compares the total on the page with the
+expected total when the caller supplies one. A mismatch refuses the click. The
+result holds the URL, the page title, the visible total and screenshots from
+before and after. It states that the submission happened and that the
+confirmation page or the booking email must prove the rest. A click alone is
+never reported as a booking.
 
-Example flow:
+The rules are declared in `data/laws.yml` under the travel_browser policy, and
+the manifest, `plugin.yml`, marks only status and inspect as observable. The
+other five actions run only through an explicit plugin run. The code is in
+`travel_browser.rb`.
+
+## Use
+
+Inside a MASTER session, the plugin command reaches it.
 
 ```text
-MASTER: find me a flight to Malaysia next week
-MASTER: inspect candidate sites
-MASTER: open the selected airline/OTA
-MASTER: ask the operator to log in and enter sensitive details if needed
-MASTER: fill ordinary trip details
-MASTER: show the exact final itinerary and total
-MASTER: wait for explicit confirmation
-MASTER: click the final purchase control
-MASTER: verify the resulting confirmation page or reference
+/plugin info travel_browser
+/plugin run travel_browser status
+/plugin run travel_browser open {"session":"trip","url":"https://example.com"}
 ```
-
-This is intentionally a browser capability rather than a collection of brittle
-airline-specific APIs. Provider adapters can be added later when a provider has
-a stable authenticated API and a stronger contract than DOM automation.
