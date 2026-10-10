@@ -5,6 +5,8 @@
 
 CAPABILITY_STATUS_MUST_BE_TRUTHFUL:
   priority: 1
+  tier: constitutional
+  severity: error
   statement: Unavailable capabilities must never be reported as ready.
   applies_to:
   - security
@@ -14,6 +16,7 @@ CAPABILITY_STATUS_MUST_BE_TRUTHFUL:
 
 ROBUSTNESS:
   priority: 1
+  tier: constitutional
   statement: Errors fail safely; security first; handle edge cases.
   applies_to:
   - security
@@ -30,6 +33,7 @@ ROBUSTNESS:
 
 SINGULARITY:
   priority: 2
+  tier: constitutional
   statement: One source of truth; no duplication; data integrity.
   applies_to:
   - duplication
@@ -43,6 +47,7 @@ SINGULARITY:
 
 LINEARITY:
   priority: 3
+  tier: constitutional
   statement: Sequential flow; minimal branches; clear path.
   applies_to:
   - control_flow
@@ -56,6 +61,7 @@ LINEARITY:
 
 PROXIMITY:
   priority: 4
+  tier: constitutional
   statement: Related code together; cohesive modules.
   applies_to:
   - organization
@@ -69,6 +75,7 @@ PROXIMITY:
 
 ABSTRACTION:
   priority: 5
+  tier: constitutional
   statement: Right level; no leaky abstractions; appropriate hiding.
   applies_to:
   - interfaces
@@ -82,6 +89,7 @@ ABSTRACTION:
 
 DENSITY:
   priority: 6
+  tier: constitutional
   statement: Information dense; no noise; signal not noise.
   applies_to:
   - verbosity
@@ -95,6 +103,7 @@ DENSITY:
 
 RENDERED_VALUES:
   priority: 7
+  tier: constitutional
   statement: Rendered values are operator-owned.
   applies_to:
   - aesthetics
