@@ -31,7 +31,7 @@ class PostsController < ApplicationController
   def index
     scope = Post.sorted_lane(params[:sort], viewer: Current.user)
     scope = Post.visible_to(Current.user).merge(scope)
-    scope = scope.with_attached_image.includes(:user, :community, :votes)
+    scope = scope.with_attached_image.with_attached_images.includes(:user, :community, :votes)
     scope = apply_live_search(scope, columns: %w[title content], vertical: "feed") if live_search_query.present?
     @pagy, @posts = pagy(scope)
     finish_live_search(partial: "posts/live_search_results")
@@ -169,7 +169,7 @@ class PostsController < ApplicationController
     @post = find_by_slug_or_id(
       Post.includes(:user, :community).with_attached_image.with_attached_video.with_attached_audio,
       params[:id]
-    )
+    ).with_attached_images
     # A moderator-removed post is gone for everyone, including via direct link.
     raise ActiveRecord::RecordNotFound if @post&.removed_at?
   end
