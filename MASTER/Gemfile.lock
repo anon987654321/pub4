@@ -238,8 +238,8 @@ DEPENDENCIES
   faraday (>= 2.0)
   ferrum (~> 0.15)
   fiddle
-  mail (~> 2.9)
   json (= 2.18.0)
+  mail (~> 2.9)
   mcp (~> 1.6)
   midilib (~> 4.0)
   minitest (~> 5.25)
@@ -273,6 +273,7 @@ CHECKSUMS
   ast (2.4.3) sha256=954615157c1d6a382bc27d690d973195e79db7f55e9765ac7c481c60bdb4d383
   base64 (0.3.0) sha256=27337aeabad6ffae05c265c450490628ef3ebd4b67be58257393227588f5a97b
   bigdecimal (4.0.1) sha256=8b07d3d065a9f921c80ceaea7c9d4ae596697295b584c296fe599dd0ad01c4a7
+  bundler (4.0.22) sha256=d8d5ec84c8555e0af71db63ed7aee4d1a8fb839ec46d84212d61979242a5d75a
   color (1.8) sha256=0a8512ecf6a8fe14928707f7d2766680c955b3a2224de198c1e25c837cd36f82
   coltrane (2.1.5) sha256=dde5c071fac815a85414967c51ef90341e06a29dceb6b697788b9056c98d109e
   concurrent-ruby (1.3.6) sha256=6b56837e1e7e5292f9864f34b69c5a2cbc75c0cf5338f1ce9903d10fa762d5ab
