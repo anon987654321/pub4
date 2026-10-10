@@ -1,624 +1,156 @@
 # brgen
 
-**A social network with no global timeline, because the city you live in is the
-only feed that ever mattered.** brgen is one Rails process serving many hosts.
-Rails 8.2.0.alpha on SQLite behind Falcon, with Hotwire, Solid Queue, Solid Cache and
-relayd. `AGENTS.md` is the agent map.
+**A social network with no global timeline, because the city you live in is the only feed that
+ever mattered.** brgen is one Rails process that answers to many hosts, and the host you arrive
+on decides which city you are in and which part of the network you are using. It is a Rails
+8.2.0.alpha app on SQLite behind Falcon, with Hotwire, Solid Queue, Solid Cache and relayd, and
+it listens on port 38182. RAILS/brgen/AGENTS.md is the agent map.
 
 ## Brand
 
-Brgen is the city-first network: one living local identity spanning conversation,
-commerce, dating, food, maps, media and messaging. The missing vowel is the brand
-mechanic, not a gimmick; it makes every city apex recognizable while leaving the
-place itself in charge. Verticals borrow Brgen's identity and earn their own visual
-dialect only when the surface needs one.
+brgen is the city-first network: one living local identity that spans conversation, commerce,
+dating, food, maps, media and messaging. The missing vowel is the brand mechanic. It makes every
+city apex recognisable and leaves the place itself in charge. The verticals borrow brgen's
+identity and earn a visual dialect of their own only when the surface needs one. Design values
+come from MASTER/data/tokens.yml through Master.tokens, and the shared stylesheet is
+RAILS/__shared/README.md. The feature matrix is RAILS/apps.yml under brgen, and the parity gaps
+and unfinished work are in TODO.md at the repository root.
 
-A city is an apex, and the apex is the social feed. Each vertical is a namespaced
-subapp on a subdomain of *that* apex — not a path, and not a second deploy. That
-holds for every row in `Brgen::DomainRegistry::ENTRIES` and not only for Bergen
-and Los Angeles. An apex is the city with a vowel dropped: `brgen.no`,
-`oshlo.no`, `lsangeles.com`, `lndon.uk`, `chcago.us`.
+## Cities
 
-The host app serves the apex feed. Six mountable engines under `engines/` serve
-the rest: marketplace, dating, takeaway, tv, maps and playlist, each on the
-subdomain of its own name. Messenger is not an engine — it is host routes on
-`messenger.<apex>`. The marketplace subdomain is the one localised word,
-`markedsplass` in Norway, `marketplace` in the United States, `marktplatz` in
-Germany; the others are the same word everywhere. `ai.brgen.no` is MASTER and not
-a vertical at all.
+A city is an apex host, and the apex serves the social feed. The registry in
+Brgen::DomainRegistry lists forty-three apexes, each the city's name with a vowel dropped:
+brgen.no for Bergen, oshlo.no, lsangeles.com, lndon.uk, chcago.us. The footer links a smaller
+public network of eleven, and the registry counts only seven of the forty-three as holding a
+certificate on the box, so a link in the footer does not mean a city is served. The registry is
+the only list of hosts, and a host that is not in it does not exist. Local requests to 127.0.0.1
+or localhost resolve to Bergen.
 
-Tenancy is `acts_as_tenant` on `city_id`, taken from the apex.
-`Brgen::DomainRegistry` resolves the city from the hostname, and the footer links
-the public city network without merging tenants. Development defaults to Bergen. Shared concerns arrive through `pub4-shared`. The backlog is `apps.yml`
-under `brgen.features`; the parity gaps against the apps brgen is measured by,
-and the four features whose tables exist with nothing reading them, are in
-`../TODO.md`.
+Tenancy is acts_as_tenant on the city, taken from the Host header, so one deploy holds many
+cities that share users and sessions but not content. The apps default to Norwegian. Every city
+entry names its own language, but only two translations ship, nb and en, so the Nordic cities
+get Norwegian and every other city gets English. brgen.no is nb and lsangeles.com is en-US. A
+city that names Italian or Polish is still served in English, because a page with five
+translated words reads worse than an honest page in one language.
 
-Seeding draws curated Bergen content from `Brgen::BergenDemoSeeder` and its bulk
-volume from `Brgen::PlausibleContent` — Norwegian copy, real Bergen streets and
-bydeler, category-consistent listings — rather than raw Faker. `SEED_SCALE`
-defaults to 10 in development, and `SKIP_BERGEN_DEMO=1` leaves the curated set
-out. Per-city users get names in the city's own language through
-`Brgen::CityContent.with_faker_locale`. Set `Faker::Config.locale` on its own and
-you get English instead, because Faker's data is region-tagged as `nb-NO` while
-the app declares only bare locales.
+## Verticals
 
-`AffiliateProduct` is the persisted inventory, and the deals sidebar reads that
-table rather than calling out on every render. Real import is blocked until
-brgen.no is an approved TradeDoubler publisher — apply as a publisher first, then
-per advertiser programme — so `affiliate:import` needs `TRADEDOUBLER_TOKEN` and
-does nothing without it. `affiliate:health` reports counts, staleness and token
-status; `affiliate:seed_placeholders` and `affiliate:drop_placeholders` work
-offline. A placeholder row carries `placeholder: true`, is excluded from `.real`,
-and is labelled in the UI. It is never payable inventory.
+The host app holds the feed, communities, events, stories, direct messages and moderation. Every
+other part of the network is a mountable Rails engine in a directory beside RAILS/brgen, mounted
+at the root of a subdomain of the city apex: dating.brgen.no, markedsplass.brgen.no,
+tv.brgen.no, maps.brgen.no, radio.brgen.no, messenger.brgen.no. The same word works on every
+apex, so dating.oshlo.no and dating.lsangeles.com exist on the same rule.
 
-`bin/rails test` needs no environment variables. `MASTER/contracts/studio.rb` resolves the
-canonical STUDIO media entrypoints from the checkout. Set `PUB4_STUDIO_ROOT` only to point
-at a different Studio tree than the one the code was loaded from.
+The engines are brgen_dating, brgen_maps, brgen_marketplace, brgen_messenger, and brgen_radio,
+which holds two, tv and playlist. The playlist engine answers on radio.<apex>, and the public
+name changed to radio with no alias kept, so playlist.<apex> is gone. The marketplace is the one
+subdomain that is localised, because the word is part of the brand in each market: markedsplass
+in Norway, marketplace in the United States and Britain, marktplatz in Germany. Food ordering is
+the Takeaway engine, nested inside the marketplace engine and served at /food on the marketplace
+host. The old takeaway.<apex> host still resolves, as a compatibility mount of the same engine.
+Messenger is an engine whose routes are drawn in the host, under messenger.<apex>. ai.brgen.no
+is MASTER, a separate application with its own service, and is not a vertical.
 
-#
+Each engine includes Shared::VerticalEngine, which gives it autoload paths, its own migrations,
+views and JavaScript, and names its initializers after its namespace. Two details cost a boot
+each to find. The Gemfile line for an engine needs require: with the engine's own entry file,
+because Bundler would otherwise require the dashed gem name and the engine class would be
+undefined when routes are drawn. And the mount in config/routes.rb must sit at the top level
+with a constraints: keyword, never inside a constraints block, because a nested mount still
+routes but Rails then drops the mounted helper that host code calls, as in tv.channel_url.
+Applied migrations stay where they ran, and an engine owns its db/migrate only for new ones. The
+shared models, authentication and design system live in the pub4-shared engine, and no vertical
+redefines them.
 
-## Commerce distribution
+## Marketplace
 
-The marketplace exposes a Google Merchant Center product feed at
-`/merchant-feed.xml` on each marketplace host. It contains live first-party goods
-with a public landing page, product image, price, availability, condition and
-category when present. Affiliate inventory is deliberately excluded.
+Every listing in brgen is a Marketplace::Listing, which belongs to a store only optionally. A
+listing with a store is a shop's product, and one without is a person selling a chair. The host
+app has no listing model. Only the shop half is built out, with seeds, storefront and chrome. A
+listing has a kind, goods, job, housing or gig, and only goods require a price.
 
-Google Merchant Center can use the feed for Shopping ads and cost-free product
-listings when the account, domain, shipping and policy requirements are satisfied.
-The public marketplace listing pages already carry Product structured data; keep
-the feed values and landing-page values aligned when listing data changes.
+The marketplace host serves a Google Merchant Center product feed at /merchant-feed.xml. It
+lists goods that are publicly visible, priced and photographed, up to ten thousand of them, and
+it leaves affiliate inventory out on purpose. The listing pages carry Product structured data,
+and the feed and the pages should change together.
+
+Payments come from three providers. Stripe and Vipps webhooks are host routes at
+/webhooks/stripe and /webhooks/vipps, and both end in Webhooks::PaymentPaid, which marks the
+order paid and queues the Google conversion upload. Dintero lives inside the marketplace engine
+so that its callback and its webhook share the engine's subdomain constraints. Dintero is the
+source of truth for authorisation, capture and refund, and a browser redirect never settles
+money. The checkout adapter stays off until the operator sets DINTERO_CHECKOUT_ENABLED=1, which
+should wait until the test account has passed checkout, capture, refund, replay and
+payout-destination checks. bin/rails dintero:hooks:create registers the hook subscription.
+
+Solidus is an optional commerce kernel, staged and not live. Its gems enter the Gemfile only
+when SOLIDUS_MARKETPLACE=1, and the engine mounts at /solidus under the marketplace hosts only
+when the gems have loaded. The install, which creates the spree tables, belongs on a staging
+host with more memory, and not on the one-gigabyte box while master, brgen and amber are all
+running. Native Marketplace::* remains the public storefront until an explicit cutover, and the
+retired solidus_marketplace gem is not to be installed.
+
+## Seeding
+
+Seeds draw curated Bergen content from Brgen::BergenDemoSeeder and bulk volume from
+Brgen::PlausibleContent, which writes Norwegian copy with real Bergen streets and districts
+rather than raw Faker. SEED_SCALE defaults to 10 outside production and to 1 in production, and
+SKIP_BERGEN_DEMO=1 leaves the curated set out. Users in each city get names in that city's
+language through Brgen::CityContent.with_faker_locale. Setting Faker::Config.locale alone gives
+English, because Faker's data is tagged nb-NO while the app declares only bare locales. The
+photographs the seeds attach are described in config/demo_media/README.md.
+
+## Affiliate income
+
+AffiliateProduct is the stored inventory, and the deals sidebar reads that table and does not
+call out on every render. TradeDoubler import needs TRADEDOUBLER_TOKEN, which is issued only
+after brgen.no is an approved publisher and each advertiser programme has accepted it, so until
+then affiliate:import does nothing. affiliate:health reports counts, staleness and token status.
+affiliate:seed_placeholders and affiliate:drop_placeholders work offline. A placeholder row
+carries placeholder: true, is excluded from the real scope, is labelled in the interface, and is
+never payable inventory. To let TradeDoubler verify ownership, the footer shows
+TRADEDOUBLER_SITE_ID and SITE_CONTACT_EMAIL when they are set, whether or not the token exists.
+
+Amazon works in two stages. Each storefront needs its own Associates tag, set in
+AMAZON_ASSOCIATE_TAG_SE, _NL and _FR, and a tag from one storefront earns nothing on another's
+link, so there is no global fallback. AMAZON_MARKET names the default storefront, and Norway,
+which has no amazon.no, maps to Germany unless SE is chosen. With tags alone,
+affiliate:amazon_seed writes rows for ASINs the operator picks, and they reach the sidebar
+through the same Affiliate.deals path as TradeDoubler. The Creators API catalogue import waits
+on AMAZON_CREATORS_CLIENT_ID and AMAZON_CREATORS_CLIENT_SECRET, which Amazon issues after ten
+qualifying sales in thirty days. affiliate:amazon_status shows what is configured.
+
+Google conversions travel server to server. GoogleEnhancedConversions posts to the Data Manager
+API, the supported path since new adopters of the older upload service were blocked in June
+2026. It runs only when GOOGLE_ENHANCED_CONVERSIONS=1 and the Ads customer and conversion-action
+ids are set. Email and phone are hashed with SHA-256 and never sent raw, the order id is the
+dedupe key, and unpaid orders are never uploaded. Consent is sent only when the answer is known,
+and never assumed granted.
+
+## IRC bridge
+
+brgen can speak IRC. A pure-Ruby gateway maps the city channels onto the protocol, so someone on
+a public IRC network can point a client at brgen and land in the same #brgen room that a phone
+browser sees. Messages cross both ways, and the ops and voice modes and the roster map onto MODE
+and NAMES. Brgen::Irc has a message parser, a session state machine with no sockets, a bridge to
+the models, and a threaded socket server, and bin/irc-gateway boots it. test/lib/irc_test.rb
+covers the protocol and the full session flows.
+
+Channels are anonymous by design, so a web viewer sees an IRC poster as an anonymous handle,
+while the nick survives on the IRC side. Only the known city channels can be joined, and a
+guessed slug returns 403. The gateway binds 127.0.0.1:6667 and starts nothing on its own. To go
+public the operator enables irc_gateway in rc.conf.local, using OPENBSD/etc/rc.d/irc_gateway,
+and either terminates TLS on 6697 in relayd and forwards to the local port, or opens 6667 in pf
+with IRC_HOST set, which is cleartext. DNS for irc.brgen.no is a separate step. The known limits
+are real: there is no NickServ or SASL, web messages reach IRC by a two-second poll, direct
+messages are not bridged, and each bridged nick leaves a user row that wants a sweep like guest
+pruning.
 
 ## Bringing it up
 
 ```zsh
-doas zsh RAILS/brgen/brgen.sh
+MASTER/bin/operator triangle up brgen
 curl -fsS http://127.0.0.1:38182/up
-curl -fsS http://127.0.0.1:38182/health
+doas zsh RAILS/brgen/brgen.sh
+cd RAILS/brgen && bin/rails test
 ```
-
-## Vertical engines
-
-<!-- doc_paths: ignore -->
-
-# brgen verticals as mountable engines
-
-brgen is one Falcon process. The main feed lives at the city apex. Each vertical
-below is a **subdomain of that apex** — a namespaced engine, not a fourth Rails
-app. Every `Brgen::DomainRegistry::ENTRIES` city gets this, not only Bergen:
-`dating.oshlo.no`, `dating.lndon.uk`, `dating.lsangeles.com`. Apexes are usually
-the city with a vowel dropped. Topology: `AGENTS.md`.
-
-Subapp: marketplace; Engine: `engines/marketplace`; Subdomain (Bergen / LA): markedsplass.brgen.no / marketplace.lsangeles.com
-
-Subapp: dating; Engine: `engines/dating`; Subdomain (Bergen / LA): dating.\*
-
-Subapp: marketplace/food; Engine: `engines/takeaway` inside marketplace; Subdomain (Bergen / LA): markedsplass.brgen.no/food / marketplace.lsangeles.com/food
-
-Subapp: tv; Engine: `engines/tv`; Subdomain (Bergen / LA): tv.\*
-
-Subapp: maps; Engine: `engines/maps`; Subdomain (Bergen / LA): maps.\*
-
-Subapp: playlist; Engine: `engines/playlist`; Subdomain (Bergen / LA): playlist.\*
-
-Subapp: messenger; Engine: host `config/routes.rb` (not an engine); Subdomain (Bergen / LA): messenger.\*
-
-Marketplace is the only localized subdomain word. Messenger was never extracted.
-
-brgen main keeps the x.com-style social feed; the marketplace engine owns every
-listing there is, including food ordering; the remaining verticals have their own hosts.
-
-There is no listing model in the host app. Both tiers are one `Marketplace::Listing`, which
-`belongs_to :store, optional: true` — a listing with a store is a shop's
-product, a listing without one is a person selling a chair. The casual tier is
-therefore expressible but not built: no separate surface, no seeds that exercise
-it, and the storefront's own chrome around it. Building it out is a product
-decision; saying it already exists in a place it does not is how a reader goes
-looking for a model that was never there.
-
-`tv` was the pilot (2026-08-02). This is the recipe it proved — follow it
-exactly; the two starred steps are non-obvious and cost a boot each to find.
-
-## What stays in the host
-
-- Shared models (`User`, `Session`, `Community`, `Conversation`, `Message`),
-  auth, `acts_as_tenant`, the design system — these live in the `pub4-shared`
-  engine and every vertical engine depends on it. Engines never redefine them.
-- **Existing migrations.** They have already run; `schema.rb` is the truth. Do
-  NOT move applied migrations into an engine — you would risk re-running them or
-  breaking schema history. The engine owns its `db/migrate` only for *future*
-  migrations. Cross-vertical migrations (e.g. `add_city_scope_to_subapp_tables`)
-  were never a single vertical's to take.
-
-## Recipe (per vertical `v`, namespace `Ns`, e.g. tv/Tv)
-
-1. **Skeleton** under `engines/v/`:
-   - `brgen-v.gemspec` — `spec.name = "brgen-v"`, `spec.files =
-     Dir["{app,config,db,lib}/**/*"]`, `add_dependency "rails"`, `add_dependency
-     "pub4-shared"`.
-   - `lib/v.rb` — `require "v/version"; require "v/engine"`.
-   - `lib/v/version.rb`, `lib/v/engine.rb` — the engine class is
-     `isolate_namespace Ns` and `include Shared::VerticalEngine`, nothing else.
-     That module (`shared/lib/shared/vertical_engine.rb`) is the boot shape all
-     six verticals share: `<<` (never `+=`) on `config.autoload_paths` because
-     Rails 8.2.0.alpha freezes those arrays mid-boot, `config.paths["db/migrate"] <<`,
-     and initializers that `append_view_path` and push `app/javascript` onto
-     `config.assets.paths`. It derives every path from
-     the including class's own `root` and names its initializers after the
-     namespace, so `Dating::Engine` still registers `dating.view_paths`.
-     Each vertical wrote that body out by hand until 2026-08-28, when six
-     copies that differed only in the module name became one.
-
-2. **★ Gemfile** — `gem 'brgen-v', path: 'engines/v', require: 'v'`. The
-   `require:` is load-bearing. Bundler auto-requires a dashed path gem by its
-   dashed name (`brgen-v` → `brgen/v`), but the entry file is `lib/v.rb`, so
-   without `require: 'v'` the engine class is undefined when routes are drawn:
-   `uninitialized constant Ns::Engine`.
-
-3. **Move code** (preserve history with `git mv`):
-   - `app/{controllers,models,views}/v` →
-     `engines/v/app/{controllers,models,views}/v`
-   - vertical controllers (`v_*_controller.js`) → `engines/v/app/javascript/...`;
-     the vertical's styles stay in brgen's one `application.scss`, scoped under
-     `body.vertical-v`
-   - the vertical's tests → `engines/v/test/...`
-
-4. **Internal helper rename.** Under `isolate_namespace`, the engine's own
-   routes are unprefixed. Rewrite every `v_X_(path|url)` → `X_\2` inside
-   `engines/v/app`. (Do NOT touch `v_model:` form-param keys — those derive from
-   the class name, not routes, and keep the prefix.)
-
-5. **Engine routes** — move the vertical's route block into
-   `engines/v/config/routes.rb` as `Ns::Engine.routes.draw do … end`,
-   unprefixed.
-
-6. **★ Host mount** — in `config/routes.rb`, replace the `constraints(subdomain:
-   V_SUBDOMAINS) { scope module: "v" … }` block with a **top-level** mount:
-   `mount Ns::Engine, at: "/", as: "v", constraints: { subdomain: V_SUBDOMAINS
-   }`. Do NOT wrap the mount in a `constraints(subdomain:) do … end` block:
-   nested, the routes still work but Rails does not register the `as:`
-   mounted-helper proxy, and every host `v.X_url` silently breaks.
-
-7. **Host refs** — the handful of host files that link into the subdomain
-   (`application_helper`, `sitemaps_controller`, some tests) call `v_X_url` →
-   rewrite to `v.X_url`. These generate cross-subdomain URLs with
-   `host:`/`subdomain:` and now resolve through the mounted proxy, e.g.
-   `tv.channel_url("foo", host: "brgen.no", subdomain: "tv") →
-   http://tv.brgen.no/channels/foo`.
-
-8. **Gates are already engine-aware** — `coverage_ratchet_test` and
-   `turbo_broadcast_contract_test` glob `engines/*/app`, so no per-vertical gate
-   edits are needed EXCEPT: extracting a vertical can drop a host coverage floor
-   when a flat host test was basename-colliding with a same-named `Ns::` class
-   (that was a double-count, not coverage). Lower the floor to the true count
-   and say why in `FLOORS`.
-
-## Verify (do not skip — a code read is not enough here)
-
-```
-bundle install
-RAILS_ENV=test bundle exec rails runner 'Rails.application.reload_routes!
-  puts Ns::Channel.table_name          # -> v_channels  (isolate_namespace prefix)
-  o = Class.new { include Rails.application.routes.mounted_helpers }.new
-  puts o.v.some_url("x", host: "brgen.no", subdomain: "v")'
-ruby test/coverage_ratchet_test.rb ; ruby test/turbo_broadcast_contract_test.rb
-```
-
-`mounted_helpers` is built lazily — call `reload_routes!` first or a fresh
-`rails runner` will report the `v` helper missing when it is actually fine.
-
-## messenger is the exception
-
-messenger owns 0 models and 0 tables — it is `root "conversations#index"` over
-the host's shared `Conversation`/`Message`. Its engine is thin: routes + a
-controller or two reusing shared models, no migrations. Do steps 1, 2, 5, 6, 7
-only.
-
-## Not an engine: master
-
-`master` (ai.brgen.no) is a separate application with its own deploy, not a
-brgen vertical. It is already more separated than an engine; do not fold it into
-brgen.
-
-## IRC bridge
-
-A pure-Ruby IRC gateway that maps brgen's city channels onto the real IRC
-protocol, so someone on Libera.Chat / EFnet / Undernet / Newnet can point a
-client at brgen and land in the same `#brgen` room a phone browser sees.
-Messages cross both ways; the modes (`@` op / `+` voice) and roster we already
-built map straight onto IRC's `MODE` and `NAMES`.
-
-## What's built (and tested)
-
-- `lib/brgen/irc/message.rb` — parse/build one IRC protocol line.
-- `lib/brgen/irc/session.rb` — a connection state machine: `NICK`/`USER`
-  registration, `JOIN`, `PART`, `PRIVMSG`, `NAMES`, `PING`, `QUIT`, plus `#poll`
-  for relaying web-side messages. No sockets — unit-tested against a fake
-  bridge.
-- `lib/brgen/irc/bridge.rb` — the seam to brgen's models: channel lookup
-  (`Conversation.find_or_create_channel`), posting (`Message.create!` via a
-  per-nick bridged user), history, roster (with `@`/`+`), and web→IRC deltas.
-- `lib/brgen/irc/server.rb` — the socket harness (thread per client + a 2s poll
-  thread, write mutex, per-thread AR connection).
-- `bin/irc-gateway` — boots Rails and starts the server.
-- `test/lib/brgen/irc_test.rb` — protocol + full session flows (10 examples).
-
-brgen channels are anonymous by design, so a web viewer sees an IRC poster as an
-anon handle; the nick is preserved on the IRC side. Only the known city channels
-(`#brgen`, `#marketplace`, …) are joinable — a guessed `#slug` returns `403`.
-
-## Going live (deliberate operator steps — not enabled by default)
-
-The gateway binds `127.0.0.1:6667` and starts nothing on its own. To expose it:
-
-1. **Install nothing extra** — it's pure Ruby, runs on the app's own bundle.
-2. **Open a listener.** Either relayd-terminate TLS on 6697 and forward to
-   `127.0.0.1:6667` (recommended — gives `ircs://`), or add a pf pass rule for
-   6667 and set `IRC_HOST=0.0.0.0`. Plain 6667 is cleartext; prefer 6697.
-3. **Enable the service.** Add `irc_gateway` to `pkg_scripts` in
-   `/etc/rc.conf.local`, then `doas rcctl enable irc_gateway && doas rcctl start
-   irc_gateway`. The rc.d script is `OPENBSD/etc/rc.d/irc_gateway`.
-4. **DNS.** Point `irc.brgen.no` at the box so clients `/connect irc.brgen.no`.
-
-## Known limits / next
-
-- No `NICKSERV`/SASL auth — nicks are first-come per connection (fine for an
-  anonymous bridge; add collision handling before a busy launch).
-- Poll-based web→IRC relay (2s). A SolidCable/Redis subscription would cut
-  latency and DB load at scale.
-- DMs (`PRIVMSG` to a nick) aren't bridged yet — channels only.
-- Per-nick bridged `User` rows accumulate; add a sweep like guest pruning.
-
-## Goal
-
-Markedsplass (`marketplace.*` / `markedsplass.brgen.no`) keeps its seller and order
-domain in `Marketplace::*`. Solidus is an optional commerce kernel for catalog,
-cart and fulfillment, introduced by staged dual-write on a larger Postgres host.
-
-## Gems
-
-Gem: `solidus` (~> 4.7); Role: Core commerce (catalog, cart, checkout, admin); Note: Official
-
-Gem: `solidus_starter_frontend`; Role: Customer storefront (cart, product, checkout UI); Note: Official Nebulab starter
-
-Gem: `solidus_multi_domain` (optional); Role: Multi-store / multi-domain; Note: Aligns with city apexes
-
-Native `Marketplace::*` remains the public seller/order domain. Solidus is optional for the commerce kernel and can be introduced by dual-write on a larger Postgres host.
-
-## Amazon.com feature map
-
-Amazon surface: Product detail page (title, images, price, variants); Solidus target: Spree::Product / Variants + starter frontend PDP; Status: planned
-
-Amazon surface: Search + facets (category, brand, price); Solidus target: Solidus search + taxons; FTS bridge from live_search; Status: planned
-
-Amazon surface: Cart + checkout + payment; Solidus target: Solidus order state machine + payment methods; Status: planned
-
-Amazon surface: Seller / marketplace (1P + 3P); Solidus target: Solidus native marketplace features + BRGEN Marketplace::* seller/order state; Status: planned
-
-Amazon surface: Reviews + ratings; Solidus target: Spree reviews extension or keep Marketplace::Review; Status: planned
-
-Amazon surface: Order tracking / history; Solidus target: Spree::Order customer account; Status: planned
-
-Amazon surface: Wishlists / saved; Solidus target: Favorites → Solidus wishlist or keep listing_favorites; Status: planned
-
-Amazon surface: Recommendations; Solidus target: later (AI); Status: planned
-
-Amazon surface: City geo scoping; Solidus target: City tenant on Spree::Store / multi_domain; Status: planned
-
-## Mount plan (no big-bang)
-
-1. Add Solidus gems behind `SOLIDUS_MARKETPLACE=1` on the staging host.
-2. `bin/rails g solidus:install` offline / staging only (creates spree_* tables).
-3. Mount engines **only** under marketplace subdomain constraints.
-4. Keep native listings controllers until cutover; dual-write optional.
-5. Wire solidus_starter_frontend routes for storefront.
-6. Multi-vendor: evaluate Solidus native marketplace capabilities against BRGEN’s Seller/Store/Offer semantics; do not install the retired `solidus_marketplace` gem.
-
-## Staging enable (safe path)
-
-Gems are **already declared** in `Gemfile` behind `SOLIDUS_MARKETPLACE=1`.
-Initializer: `config/initializers/solidus_marketplace.rb` (`Brgen::SolidusMarketplace`).
-Routes mount `Spree::Core::Engine` at `/solidus` under marketplace subdomains only
-when `Brgen::SolidusMarketplace.mountable?` (flag + gems loaded).
-
-```bash
-cd RAILS/brgen
-export SOLIDUS_MARKETPLACE=1
-bundle install
-# Staging host only — not on hot 1GB vm23 with all apps up:
-bin/rails g solidus:install
-# Commit spree_* migrations; dual-run native listings until cutover.
-```
-
-Contract: `ruby RAILS/test/solidus_staging_contract_test.rb` (no gems required).
-
-## Production caution
-
-1 GB OpenBSD VPS cannot run Solidus install/migrate while master+brgen+amber are
-hot. Do Solidus schema work on a larger host or during a maintenance window with
-amber stopped (`ALLOW_AMBER_DOWN=1 sh OPENBSD/bin/deploy-smoke.sh` after).
-
-## Amazon Associates setup
-
-You already have Associates approval in **Sweden, Netherlands, France** (and others).
-PA-API is dead; we use **tags now** + **Creators API** once you have 10 qualifying sales / 30 days.
-
-## 1. ENV (VPS `/etc/brgen.env` or equivalent)
-
-### Required for tagging (do this first)
-
-```bash
-# One tag per marketplace you are approved in. NO global fallback.
-AMAZON_ASSOCIATE_TAG_SE=your-se-tag-21
-AMAZON_ASSOCIATE_TAG_NL=your-nl-tag-21
-AMAZON_ASSOCIATE_TAG_FR=your-fr-tag-21
-AMAZON_ASSOCIATE_TAG_DE=your-de-tag-21   # optional but useful for NO readers
-
-# Default market for imports / Nordic surface (SE is a real storefront)
-AMAZON_MARKET=SE
-```
-
-### Creators API (after 10 sales)
-
-```bash
-AMAZON_CREATORS_CLIENT_ID=amzn1.application-oa2-client.…
-AMAZON_CREATORS_CLIENT_SECRET=amzn1.oa2-cs.v1.…
-AMAZON_CREATORS_VERSION=3.2          # EU credentials
-```
-
-Legacy aliases still accepted: `AMAZON_ACCESS_KEY` / `AMAZON_SECRET_KEY` map to client id/secret.
-
-## 2. Install the adapter
-
-Replace:
-
-- `RAILS/__shared/app/services/shared/amazon_associates.rb` ← new file in this folder
-- Add `RAILS/brgen/lib/tasks/affiliate_amazon.rake` ← new rake tasks
-
-`Shared::AmazonMarketplace` already has SE/NL/FR/DE — no change required unless you want different SERVED_BY defaults.
-
-## 3. Phase 1 — earn with tags only (no API)
-
-```bash
-cd /home/brgen/app   # or your deploy path
-bin/rails affiliate:amazon_status
-
-# Seed real ASINs (you choose products that fit brgen)
-AMAZON_SEED_ASINS=B0xxxxx,B0yyyyy bin/rails affiliate:amazon_seed[SE]
-
-bin/rails affiliate:health
-```
-
-Or in console:
-
-```ruby
-AmazonAssociates.seed_asins!([
-  { asin: "B0XXXX", title: "Concrete product name", market: "SE", category: "electronics" },
-  { asin: "B0YYYY", title: "Another product", market: "NL", category: "home" },
-])
-```
-
-Links are built via `Shared::AmazonMarketplace.product_url` with the correct tag.
-They appear through the existing `Affiliate.deals` → sidebar like TradeDoubler.
-
-Drive traffic → get **10 qualifying sales in 30 days** → Creators API unlocks.
-
-## 4. Phase 2 — catalog import
-
-Once Creators credentials exist and eligibility is green:
-
-```bash
-bin/rails affiliate:amazon_status   # configured? should be true
-bin/rails affiliate:import          # pulls Amazon + TradeDoubler
-```
-
-`AmazonAssociates.import!` uses SearchItems; `deals` falls back to live search only if the table is empty.
-
-## 5. Norway readers
-
-- No `amazon.no`.
-- `Shared::AmazonMarketplace` maps `NO → DE` by default.
-- If you prefer SE for Nordic users, set `AMAZON_MARKET=SE` and ensure `AMAZON_ASSOCIATE_TAG_SE` is set (you have SE approval).
-
-## 6. Checklist
-
-- [ ] Set `AMAZON_ASSOCIATE_TAG_SE` / `_NL` / `_FR` (and DE if approved)
-- [ ] `bin/rails affiliate:amazon_status` shows tags
-- [ ] Seed a small set of high-intent ASINs
-- [ ] Confirm sidebar shows non-placeholder Amazon rows
-- [ ] Confirm a test click lands on the right storefront with `?tag=`
-- [ ] After 10 sales: create Creators API credential (EU / 3.2)
-- [ ] Set Creators ENV → `affiliate:import`
-
-## Files in this package
-
-File: `amazon_associates.rb`; Action: Replace `RAILS/__shared/app/services/shared/amazon_associates.rb`
-
-File: `affiliate_amazon.rake`; Action: Add as `RAILS/brgen/lib/tasks/affiliate_amazon.rake`
-
-File: `SETUP.md`; Action: This guide
-
-## Enhanced conversions
-
-## Why Data Manager API
-
-From **15 June 2026**, new adopters of offline / enhanced click conversion upload via Google Ads API `ConversionUploadService` are blocked (`CUSTOMER_NOT_ALLOWLISTED_FOR_THIS_FEATURE`).
-
-**Data Manager API** `events:ingest` is the supported path:
-
-```http
-POST https://datamanager.googleapis.com/v1/events:ingest
-```
-
-## Files
-
-File: `google_enhanced_conversions.rb`; Role: Hashing + event build + ingest
-
-File: `google_enhanced_conversions_job.rb`; Role: Async job on order paid
-
-## Google Ads setup
-
-1. Create a conversion action:
-   - Type / source: **Website (Import from clicks)** / `UPLOAD_CLICKS`
-   - Count: One
-   - Value: Use different values
-2. Note the **conversion action id** and **customer id** (10 digits).
-3. OAuth token (or service account) with permission to ingest events for that Ads account.
-4. Turn on enhanced conversions in the Ads UI (unified toggle).
-
-## ENV
-
-```bash
-GOOGLE_ENHANCED_CONVERSIONS=1
-GOOGLE_ADS_CUSTOMER_ID=1234567890
-GOOGLE_ADS_CONVERSION_ACTION_ID=9876543210
-GOOGLE_ADS_ACCESS_TOKEN=ya29.<oauth token>
-# optional MCC:
-# GOOGLE_ADS_LOGIN_CUSTOMER_ID=...
-```
-
-## Wire-up
-
-On payment success (after `paid_at` / `payment_status=paid`):
-
-```ruby
-GoogleEnhancedConversionsJob.perform_later(order.id)
-```
-
-Order should expose when possible:
-
-- `id` → `transactionId` (dedupe key)
-- `paid_at`
-- `total_cents` or `total`
-- `currency` (default NOK)
-- `gclid` (from session/cookie at landing or checkout)
-- `email` / `phone` (hashed; never sent raw)
-- `ad_user_data_consent` (true/false if known)
-- line items with `offer_id` like `brgen-123` (matches Merchant feed)
-
-Optional DB column:
-
-```ruby
-add_column :marketplace_orders, :google_conversion_uploaded_at, :datetime
-add_column :marketplace_orders, :gclid, :string
-```
-
-## Hashing rules
-
-- Email: lowercase, trim; for `@gmail.com` / `@googlemail.com` strip `.` in local part; SHA-256 hex
-- Phone: normalize to digits (prefer E.164 from your app); SHA-256 hex
-- Encoding declared as `HEX` on the ingest request
-
-## Consent
-
-Only send `consent.adUserData` when you know the answer.
-Do not default to `CONSENT_GRANTED`.
-
-## Validate
-
-```ruby
-GoogleEnhancedConversions.upload_purchase!(order, validate_only: true)
-```
-
-## Relation to browser tag
-
-- Browser gtag can still fire Purchase on the success page.
-- Server upload uses the same `transactionId` (order id) so Google can dedupe.
-- Server path is the source of truth for paid state (webhook), not thank-you JS.
-
-## Do not
-
-- Upload unpaid orders
-- Send plain-text email/phone
-- Reuse `transactionId` across different orders
-- Call legacy `UploadClickConversions` as a new adopter without allowlist
-
-## Install path
-
-```text
-RAILS/brgen/app/services/google_enhanced_conversions.rb
-RAILS/brgen/app/jobs/google_enhanced_conversions_job.rb
-```
-
-## Payment webhooks
-
-Stripe and Vipps keep their existing host routes. Dintero lives inside the
-marketplace engine so its callback and webhook route share the engine's
-subdomain constraints.
-
-## Dintero
-
-Item: Checkout; Value: Shopping API order/session + signed callback
-
-Item: Webhook; Value: `POST /webhooks/dintero`
-
-Item: Webhook secret; Value: `DINTERO_HOOK_SECRET` (HMAC-SHA1 over raw body)
-
-Item: Seller payout; Value: payout destination must report `ACTIVE`; each selected line carries its split
-
-Item: Capture/refund; Value: separate Dintero operations; local paid/refunded state follows webhook confirmation
-
-Create checkout sessions with an explicit `merchant_reference`. Keep the browser
-return separate from the signed callback. Dintero is the source of truth for
-authorization, capture, and refund; browser redirects never settle money.
-
-Operator enablement is explicit: set `DINTERO_CHECKOUT_ENABLED=1` only after the
-test account passes the checkout, capture, refund, replay, and payout-destination
-contracts. Register the hook subscription with `bin/rails dintero:hooks:create`.
-
-## Stripe
-
-Item: URL; Value: `https://<host>/webhooks/stripe`
-
-Item: Events; Value: `checkout.session.completed`, `checkout.session.async_payment_succeeded`
-
-Item: Secret; Value: `STRIPE_WEBHOOK_SECRET` (`whsec_…`)
-
-Verification:
-
-1. Parse `Stripe-Signature` → `t` + one or more `v1`
-2. Reject if `|now - t| > 300s`
-3. `HMAC_SHA256(secret, "#{t}.#{raw_body}")` hex vs any `v1` (constant-time)
-4. Multiple `v1` supported (key rotation)
-
-Order resolution: `client_reference_id` (`order_id:` / `checkout_id:`) or `metadata`.
-
-## Vipps
-
-Item: URL; Value: `https://<host>/webhooks/vipps`
-
-Item: Events; Value: at least `epayments.payment.authorized.v1`, `epayments.payment.captured.v1`
-
-Item: Secret; Value: `VIPPS_WEBHOOK_SECRET` (the secret returned by webhook registration)
-
-Register once:
-
-```bash
-curl -X POST https://api.vipps.no/webhooks/v1/webhooks \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Ocp-Apim-Subscription-Key: $VIPPS_SUBSCRIPTION_KEY" \
-  -H "Merchant-Serial-Number: $VIPPS_MSN" \
-  --data '{"url":"https://HOST/webhooks/vipps","events":["epayments.payment.authorized.v1","epayments.payment.captured.v1"]}'
-```
-
-Save returned `secret` → `VIPPS_WEBHOOK_SECRET`.
-
-Verification (Vipps docs):
-
-1. `x-ms-content-sha256` == base64(SHA256(raw_body))
-2. String to sign: `POST\n{pathAndQuery}\n{x-ms-date};{host};{content-hash}`
-3. HMAC-SHA256 with decoded webhook secret → base64 → match `Authorization` Signature=
-
-Paid events: `AUTHORIZED`, `CAPTURED` with `success: true`.
-
-Order resolution: reference `brgen-order-{id}-…` set by `VippsCheckout.start!`.
-
-## After paid (both)
-
-1. `mark_paid!` / payment_status fields (idempotent)
-2. Optional `gclid` from Stripe metadata
-3. `GoogleEnhancedConversionsJob` if `GOOGLE_ENHANCED_CONVERSIONS=1` and Ads ENV set
-
-## Shared helper
-`Webhooks::PaymentPaid` — used by both controllers so mark-paid + conversion enqueue stay in one place.
