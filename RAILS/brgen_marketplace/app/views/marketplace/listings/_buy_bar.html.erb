@@ -18,10 +18,10 @@
       <% elsif Marketplace::Payments::VippsCheckout.configured? %>
         <%= button_to t("marketplace.buy_now_vipps"),
               checkout_path,
-              params: { provider: "vipps", listing_id: @listing.id },
+              params: { provider: "vipps", listing_id: buybar_listing.id },
               class: "btn btn-primary listing-buy-bar-cta" %>
         <%= button_to t("marketplace.add_to_cart"),
-              listing_orders_path(@listing),
+              listing_orders_path(buybar_listing),
               params: { quantity: 1 },
               class: "btn btn-ghost listing-buy-bar-secondary" %>
       <% else %>
