@@ -299,7 +299,25 @@ module Master
         end
         return if blocks.empty?
 
-        "REFERENCE STUDY\n#{blocks.join("\n")}"
+        ["REFERENCE STUDY\n#{blocks.join("\n")}", family_shell_context(study), review_questions_context(study)]
+          .compact.join("\n")
+      end
+
+      # The geometry the verticals share, and the questions a visual change has
+      # to answer: both are declared in the study and both belong in front of the
+      # model that proposes the change.
+      def family_shell_context(study)
+        shell = study["family_shell"]
+        return unless shell.is_a?(Hash) && shell.any?
+
+        "FAMILY SHELL\n#{shell.map { |part, value| "#{part}: #{value}" }.join("; ")}"
+      end
+
+      def review_questions_context(study)
+        questions = Array(study["review_questions"])
+        return if questions.empty?
+
+        "REVIEW QUESTIONS\n#{questions.map { |question| "- #{question}" }.join("\n")}"
       end
 
       def fingerprint(payload)

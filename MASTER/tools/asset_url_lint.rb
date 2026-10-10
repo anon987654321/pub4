@@ -42,22 +42,9 @@ module Operator
     # production before and after: amber's `/fonts/lg.woff2` was 404 while
     # the stylesheet asking for it was 200, so every lightbox control in amber
     # rendered as a missing glyph. Four files copied into `shared/public`, which
-    # the engine's static middleware serves to all three apps.
-    #
-    # The 4 that remain are both deliberate:
-    #
-    # 3 are pp-neue-montreal-latin-{400,600,700}-normal.woff2, documented in
-    # brgen/app/assets/stylesheets/application.scss as a licensed face whose
-    # woff2 cannot be committed; the `src:` list starts with two `local()` entries
-    # and the marketplace surface names an Arial fallback, so the design already
-    # assumes the fetch fails. Recorded rather than removed: dropping the url()
-    # would silently break the documented plan of dropping the files in.
-    #
-    # 1 is `../fonts/lg.svg` in shared/public/lightgallery.css, lightGallery's
-    # IE9 fallback. It sits last in a `src:` list behind woff2/woff/ttf, all
-    # three of which are present, so no browser that exists asks for it and
-    # adding a file nothing requests is worse than recording it.
-    BASELINES = { "missing_asset" => 1 }.freeze
+    # the engine's static middleware serves to all three apps. Nothing is missing
+    # now, so the baseline is zero.
+    BASELINES = { "missing_asset" => 0 }.freeze
 
     Finding = Struct.new(:kind, :ref, :sheet, :tried)
 

@@ -12,15 +12,3 @@ world:
   prices: norwegian
   rhythm: circadian
   staleness: honest
-realism:
-  forbidden_strings:
-    - test
-    - lorem
-    - foo
-    - admin123
-  require_real_locality: true
-  require_image_provenance: generated
-grades:
-  - demo
-  - ci
-  - stress

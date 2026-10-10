@@ -858,7 +858,7 @@ pub4_source_ceilings:
   # 72 partials left the index and Operator::ScssRules joined it.
   # 1932 -> 1983: retired reference app adds 51 tracked source/docs files. The pre-existing
   # 47-file overage remains visible; only the named ERITEL addition is paid for.
-  RAILS: 1983
+  RAILS: 1981
   # 106 -> 107 is test/test_githooks.rb. dev/githooks holds the three guards
   # that are the whole defence against a shared index, and nothing tested any of
   # them — a hook that stopped firing looks exactly like a week in which nobody

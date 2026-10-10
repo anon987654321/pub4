@@ -96,9 +96,9 @@ class TestDataReachAttribution < Minitest::Test
       out, = capture_io { Tool.send(:report_new, ["kept.yml#a", "new.yml#c"]) }
 
       assert_match(/1 arrived/, out)
-      assert_match(/\+ new\.yml#c/, out)
+      assert_match(/arrived, new\.yml#c/, out)
       assert_match(/gone\.yml#b/, out)
-      refute_match(/\+ kept\.yml#a/, out, "a member that was already recorded was called new")
+      refute_match(/arrived, kept\.yml#a/, out, "a member that was already recorded was called new")
     end
   end
 
