@@ -73,7 +73,12 @@ def require_gate(row)
   require absolute
 end
 
+# Asks the same question the probes ask, so a Mac with Chrome in /Applications is not reported
+# as having no browser: the PATH-only check made every browser gate inconclusive there.
 def browser_available?
+  require File.join(GATES_DIR, "support", "cdp_session")
+  Deploy::CdpSession.available?
+rescue LoadError, StandardError
   %w[google-chrome chromium chromium-browser].any? do |command|
     system("command", "-v", command, out: File::NULL, err: File::NULL)
   end
