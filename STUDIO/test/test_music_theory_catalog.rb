@@ -5,7 +5,7 @@ require "yaml"
 
 class TestMusicTheoryCatalog < Minitest::Test
   ROOT = File.expand_path("../..", __dir__)
-  PATH = File.join(ROOT, "MASTER", "data", "music_theory", "chords.yml")
+  PATH = File.join(ROOT, "MASTER", "data", "music_theory_chords.yml")
 
   def catalog
     @catalog ||= YAML.safe_load_file(PATH, aliases: false)

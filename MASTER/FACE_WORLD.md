@@ -32,7 +32,7 @@ FaceState
 ```
 
 The source of truth is `MASTER/data/laws.yml#design_system.face_interface`.
-Ruby reads it through `MASTER/lib/face/contract.rb`. Browser code receives
+Ruby reads it through `MASTER/lib/face.rb`. Browser code receives
 the same block as `MASTER_FACE_CONTRACT` and keeps dynamic state in
 `MASTER_FACE_STATE`.
 

@@ -108,7 +108,7 @@ require "timeout"
 module DillaLofiMachine
   # The rich catalogue is canonical in MASTER/data; the legacy map remains
   # as a compatibility overlay for historically specific voicings.
-  CHORD_CATALOG_PATH = File.expand_path("../../../MASTER/data/music_theory/chords.yml", __dir__).freeze
+  CHORD_CATALOG_PATH = File.expand_path("../../../MASTER/data/music_theory_chords.yml", __dir__).freeze
   CHORD_CATALOG = YAML.safe_load_file(CHORD_CATALOG_PATH, aliases: false).freeze
   LEGACY_CHORD_TEMPLATES = {
     "maj" => [0, 4, 7],

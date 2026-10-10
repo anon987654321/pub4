@@ -3,7 +3,7 @@
 # One data file, one loader. A second reader is a second implementation.
 #
 # lib/trace/why_explainer.rb held its own copy of the rule-shard merge loop,
-# two directories from the real one in lib/boot/data.rb. The two agreed
+# two directories from the real one in lib/boot/data_loading.rb. The two agreed
 # perfectly for as long as the shards existed. On 2026-08-12 the shards were
 # folded into laws.yml, the copy's glob matched nothing, and it assigned {} over
 # the real rules — silently emptying /why for all 225 rules. Nothing failed. The

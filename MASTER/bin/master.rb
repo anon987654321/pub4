@@ -1,8 +1,9 @@
+#!/usr/bin/env ruby
 # frozen_string_literal: true
 
-require_relative "../trace/dmesg"
+require_relative "../lib/trace/dmesg"
 
-ROOT = File.expand_path("../../..", __dir__)
+ROOT = File.expand_path("../..", __dir__)
 MASTER = File.join(ROOT, "MASTER").freeze
 CLI = File.join(MASTER, "bin", "cli").freeze
 
@@ -41,7 +42,7 @@ if ARGV.first == "--help" || ARGV.first == "-h"
   exit 0
 end
 
-require_relative "../boot/entrypoint"
+require_relative "../lib/boot/entrypoint"
 Master::Boot::Entrypoint.prepare!(root: MASTER)
 
 unless File.file?(CLI)
@@ -57,8 +58,8 @@ elsif ENV["MASTER_INTERNAL_CHILD"] == "1"
   ENV.delete("MASTER_PROCESS_LOCK_FD")
 end
 
-require_relative "../master"
-require_relative "../ops"
+require_relative "../lib/master"
+require_relative "../lib/ops"
 
 $MASTER_PROCESS_LOCK = if ENV["MASTER_INTERNAL_CHILD"] == "1"
                          nil

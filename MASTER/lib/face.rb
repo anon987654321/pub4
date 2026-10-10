@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "../design"
+require_relative "design"
 
 module Master
   module Face

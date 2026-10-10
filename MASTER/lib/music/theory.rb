@@ -7,7 +7,7 @@ module Master
     # Small music-theory core: scales, chords, progressions.
     module Theory
       NOTE_NAMES = %w[C C# D D# E F F# G G# A A# B].freeze
-      CATALOG_PATH = File.expand_path("../../data/music_theory/chords.yml", __dir__).freeze
+      CATALOG_PATH = File.expand_path("../../data/music_theory_chords.yml", __dir__).freeze
       CATALOG = YAML.safe_load_file(CATALOG_PATH, aliases: false).freeze
       SCALES = {
         major: [0, 2, 4, 5, 7, 9, 11],

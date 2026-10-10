@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "../../face/contract"
+require_relative "../../face"
 
 # frozen_string_literal: true
 

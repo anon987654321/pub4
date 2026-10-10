@@ -76,7 +76,7 @@ autoload:
 
   # Loaded by hand because order matters or the entrypoint is a plain require.
   required_manually:
-    # boot/paths, boot/data, boot/runtime and boot/master_boot are required by
+    # boot/paths, boot/data_loading, boot/runtime and boot/master_boot are required by
     # name after loader.setup in lib/master.rb, and the order is load-bearing.
     - boot
     # The directory; llm_dispatcher.rb itself autoloads as LLMDispatcher.

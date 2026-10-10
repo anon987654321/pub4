@@ -1,7 +1,7 @@
 # One data file, one loader. The ceiling only ever goes down.
 #
 # lib/trace/why_explainer.rb held a second copy of the rule-shard merge loop,
-# two directories from the real one in lib/boot/data.rb. Both used the shared
+# two directories from the real one in lib/boot/data_loading.rb. Both used the shared
 # Master.load_yaml helper — what made the copy a second implementation was
 # building the path and composing the result itself. They agreed perfectly until
 # the shards were folded into laws.yml on 2026-08-12, at which point the copy's
