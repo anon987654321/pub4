@@ -277,6 +277,7 @@ MASTER/tools/lora/*/contact_sheet.jpg
 # datasets, source captures, retouched media, outputs and weights out of the
 # public repo at their actual path; deliberate publication still requires -f.
 STUDIO/lora/*/sources/
+STUDIO/lora/*/_previous/
 STUDIO/lora/*/dataset/
 STUDIO/lora/*/dataset_*/
 STUDIO/lora/*/retouched/
