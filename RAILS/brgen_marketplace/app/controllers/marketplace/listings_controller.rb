@@ -60,6 +60,8 @@ class Marketplace::ListingsController < Marketplace::BaseController
     authorize @listing
     return if redirect_id_to_slug(@listing)
 
+    @buy_box_result = Marketplace::BuyBoxSelector.for(@listing)
+    @buy_box_reasons = @buy_box_result&.reasons_for(@listing) if Current.user.present? && Current.user.id == @listing.user_id
     @listing.increment!(:views_count)
     @listing.record_event!("click", user: Current.user, metadata: { path: request.path })
     if Current.user.present? && Current.user == @listing.user
@@ -157,7 +159,7 @@ class Marketplace::ListingsController < Marketplace::BaseController
   def listing_params
     params.require(:listing).permit(
       :title, :description, :price_cents, :condition, :status, :location,
-      :latitude, :longitude, :category_id, :preset, :kind, :delivery_promise, :fulfilment_method, :source, :store_id, :video, photos: [],
+      :latitude, :longitude, :category_id, :preset, :kind, :delivery_promise, :fulfilment_method, :source, :store_id, :buy_box_key, :video, photos: [],
       job_detail_attributes: %i[employer employment_type salary_min_cents salary_max_cents remote],
       housing_detail_attributes: %i[rent_cents deposit_cents rooms size_sqm available_from housing_type],
       gig_detail_attributes: %i[pay_cents starts_at hours]
