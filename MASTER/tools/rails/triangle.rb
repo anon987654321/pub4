@@ -47,9 +47,15 @@ module Deploy
       File.file?(path) ? File.read(path).strip : ENV.fetch("RBENV_VERSION", "")
     end
 
+    # bin/operator runs under MASTER's own bundler environment, and a child `bundle exec`
+    # inherits BUNDLE_GEMFILE from it: every app then booted on MASTER/Gemfile and died with
+    # "cannot load bootsnap/setup" or "rails/commands". Each app is pinned to its own Gemfile
+    # and the parent's bundler state is dropped, so the same command works from any caller.
     def self.env_for(app)
       { "RBENV_VERSION" => ruby_version, "RAILS_ENV" => "development", "PORT" => app[:port].to_s,
-        "RAILS_LOG_LEVEL" => ENV.fetch("RAILS_LOG_LEVEL", "info") }
+        "RAILS_LOG_LEVEL" => ENV.fetch("RAILS_LOG_LEVEL", "info"),
+        "BUNDLE_GEMFILE" => File.join(app[:dir], "Gemfile"),
+        "BUNDLE_BIN_PATH" => nil, "BUNDLER_SETUP" => nil, "BUNDLER_VERSION" => nil, "RUBYOPT" => nil, "RUBYLIB" => nil }
     end
 
     def self.listening?(port)
