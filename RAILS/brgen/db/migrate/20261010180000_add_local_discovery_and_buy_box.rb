@@ -11,7 +11,7 @@ class AddLocalDiscoveryAndBuyBox < ActiveRecord::Migration[8.2]
 
     create_table :dating_location_pings do |t|
       t.references :city, null: false, foreign_key: true
-      t.references :user, null: false, foreign_key: { on_delete: :cascade }
+      t.references :user, null: false, index: false, foreign_key: { on_delete: :cascade }
       t.references :neighborhood, foreign_key: true
       t.decimal :latitude, precision: 8, scale: 3, null: false
       t.decimal :longitude, precision: 8, scale: 3, null: false
