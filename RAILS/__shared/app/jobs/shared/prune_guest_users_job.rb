@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
-require File.join(ENV.fetch("PUB4_ROOT", File.expand_path("../../../../../", __dir__)), "OPENBSD", "lib", "load_average")
+require "shared/contracts"
+require File.join(Shared::Contracts.root, "OPENBSD", "lib", "load_average")
 
 module Shared
   # Delete guest rows nobody is behind any more.

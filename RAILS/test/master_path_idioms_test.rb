@@ -43,5 +43,5 @@ class MasterPathIdiomsTest < Minitest::Test
 
   private
 
-  def offending = %r{\.\./[^"']*MASTER|MASTER[^"']*\.\./}
+  def offending = %r{\.\./[^"']*(MASTER|OPENBSD|STUDIO)|(MASTER|OPENBSD|STUDIO)[^"']*\.\./}
 end
