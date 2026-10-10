@@ -71,6 +71,11 @@ class TestErrClassification < Minitest::Test
     end
   end
 
+  def test_handler_exception_is_permanent
+    assert err(:handler_exception).permanent?
+    refute err(:handler_exception).retriable?
+  end
+
   def test_a_missing_key_is_not_something_to_retry_against
     assert err(:no_api_key).permanent?, "retrying a missing credential burns the retry budget on nothing"
   end
