@@ -238,5 +238,4 @@ class WardrobeAi
     Rails.logger.error("WardrobeAI error: #{e.class}: #{e.message}")
     fallback_response(prompt)
   end
-
 end
