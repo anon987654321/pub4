@@ -8,12 +8,12 @@ require_relative "script_dispatch"
 
 module Master
   module Io
-    # Plain-language requests for the person-LoRA tooling in STUDIO/lora:
+    # Plain-language requests for the person-LoRA tooling in STUDIO/replicate/lora:
     # "generate me a selfie", "train a lora of ragnhild", "make a video with the
     # lora of me", "lora status".
     #
     # Recognition, the subjects and the spending gate are data (data/lora.yml).
-    # This module turns a sentence into one argv for STUDIO/lora/lora.rb and runs
+    # This module turns a sentence into one argv for STUDIO/replicate/lora/lora.rb and runs
     # it through ScriptDispatch. Anything that spends money (a render, a training,
     # a clip) runs as a dry run unless the sentence also confirms it, so a request
     # is always safe to say and the plan is always shown first.

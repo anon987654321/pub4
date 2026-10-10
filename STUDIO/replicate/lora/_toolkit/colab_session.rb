@@ -16,7 +16,7 @@
 # profile in render_config.rb applies unchanged: fp16 because Turing has no
 # bf16, quantised because 16 GB will not hold FLUX.1-dev otherwise.
 #
-# Invoked as:  ruby STUDIO/lora/_toolkit/colab_session.rb <subject>
+# Invoked as:  ruby STUDIO/replicate/lora/_toolkit/colab_session.rb <subject>
 # Expects:     HF_TOKEN in the environment, put there by the notebook
 
 require "fileutils"
@@ -25,8 +25,8 @@ require "rbconfig"
 require "pathname"
 
 SUBJECT = ARGV.fetch(0) { abort "warn: usage: colab_session.rb <subject>" }
-REPO = Pathname.new(__dir__).join("../../..").expand_path
-SUBJECT_DIR = REPO.join("STUDIO/lora", SUBJECT)
+REPO = Pathname.new(__dir__).join("../../../..").expand_path
+SUBJECT_DIR = REPO.join("STUDIO/replicate/lora", SUBJECT)
 AI_TOOLKIT = Pathname.new(ENV.fetch("AI_TOOLKIT_ROOT", "/content/ai-toolkit"))
 
 # Colab keeps nothing when the runtime recycles, and a free session is capped

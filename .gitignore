@@ -235,24 +235,24 @@ MASTER/tools/dilla/venv-librosa/
 # Training caches, extracted frames, staging copies, and reproducible bundles.
 # <subject>/.cache/ is every lane's scratch: dataset zips, downloaded trainer
 # tars, staged Kaggle payloads.
-STUDIO/lora/**/.cache/
-STUDIO/lora/**/_frames/
-STUDIO/lora/**/_latent_cache/
-STUDIO/lora/**/.aitk_size.json
-STUDIO/lora/**/raw/
-STUDIO/lora/**/*.zip
-STUDIO/lora/**/*.pid
+STUDIO/replicate/lora/**/.cache/
+STUDIO/replicate/lora/**/_frames/
+STUDIO/replicate/lora/**/_latent_cache/
+STUDIO/replicate/lora/**/.aitk_size.json
+STUDIO/replicate/lora/**/raw/
+STUDIO/replicate/lora/**/*.zip
+STUDIO/replicate/lora/**/*.pid
 
 # ai-toolkit run artifacts: it writes samples and a copy of the config it was
 # handed into the training folder on every run.
-STUDIO/lora/*/train_run.log
-STUDIO/lora/*/weights/*/samples/
-STUDIO/lora/*/weights/*/config.yaml
+STUDIO/replicate/lora/*/train_run.log
+STUDIO/replicate/lora/*/weights/*/samples/
+STUDIO/replicate/lora/*/weights/*/config.yaml
 
 # Photographs of people, and everything derived from them.
 #
 # These were untracked because nobody had run `git add` on them, which is not
-# the same as being protected: one `git add STUDIO/lora` and seventeen
+# the same as being protected: one `git add STUDIO/replicate/lora` and seventeen
 # photographs of a real person are in a public repository's history forever.
 # lora/README.md has always said committing them publishes the face and that
 # deleting them later does not remove it — this is that sentence made
@@ -271,19 +271,19 @@ MASTER/tools/lora/*/out/
 MASTER/tools/lora/*/weights/
 MASTER/tools/lora/*/contact_sheet.jpg
 
-# --- STUDIO/lora privacy ----------------------------------------------------
+# --- STUDIO/replicate/lora privacy ----------------------------------------------------
 #
-# The live tool moved from MASTER/tools/lora to STUDIO/lora. Keep subject
+# The live tool moved from MASTER/tools/lora to STUDIO/replicate/lora. Keep subject
 # datasets, source captures, retouched media, outputs and weights out of the
 # public repo at their actual path; deliberate publication still requires -f.
-STUDIO/lora/*/sources/
-STUDIO/lora/*/_previous/
-STUDIO/lora/*/dataset/
-STUDIO/lora/*/dataset_*/
-STUDIO/lora/*/retouched/
-STUDIO/lora/*/out/
-STUDIO/lora/*/weights/
-STUDIO/lora/*/contact_sheet.jpg
+STUDIO/replicate/lora/*/sources/
+STUDIO/replicate/lora/*/_previous/
+STUDIO/replicate/lora/*/dataset/
+STUDIO/replicate/lora/*/dataset_*/
+STUDIO/replicate/lora/*/retouched/
+STUDIO/replicate/lora/*/out/
+STUDIO/replicate/lora/*/weights/
+STUDIO/replicate/lora/*/contact_sheet.jpg
 
 # Postpro's fetched model weights and the depth maps cached under them are
 # generated assets — the fetch command and sizes live in STUDIO/postpro/README.md.
@@ -302,7 +302,7 @@ STUDIO/postpro/postpro_*.jpg.json
 *_BACKUP.LOG
 *_BACKUP.INDEX
 
-# --- STUDIO/lora subject media ---
+# --- STUDIO/replicate/lora subject media ---
 # Subject media is private; deliberate publication requires git add -f.
-STUDIO/lora/*.mp4
-STUDIO/lora/*.mov
+STUDIO/replicate/lora/*.mp4
+STUDIO/replicate/lora/*.mov

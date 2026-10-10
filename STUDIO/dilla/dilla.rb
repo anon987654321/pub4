@@ -14080,7 +14080,7 @@ def wiring_dead_constants
     # a plain grep says everything is wired. `#{` is NOT a comment: a heredoc
     # line that is nothing but an interpolation starts with whitespace and a
     # hash, and stripping it hides a real reader. (Found by running the same
-    # rule over STUDIO/lora, where it reported token_block dead when line 315
+    # rule over STUDIO/replicate/lora, where it reported token_block dead when line 315
     # is `#{token_block(options)}`.)
     [path, text.gsub(/^\s*#(?!\{).*$/, "")]
   end

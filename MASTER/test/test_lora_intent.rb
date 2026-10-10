@@ -6,7 +6,7 @@ require "tmpdir"
 require "fileutils"
 require_relative "../lib/io/media_intent"
 
-# "generate me a selfie" has to reach STUDIO/lora/lora.rb with the right argv,
+# "generate me a selfie" has to reach STUDIO/replicate/lora/lora.rb with the right argv,
 # and a paid request has to stay a dry run until the sentence confirms it.
 class LoraIntentTest < Minitest::Test
   Lora = Master::Io::LoraIntent
@@ -63,10 +63,10 @@ class LoraIntentTest < Minitest::Test
 
   def test_relative_video_image_paths_resolve_from_the_requested_root
     Dir.mktmpdir do |dir|
-      still = File.join(dir, "STUDIO/lora/ragnhild/out/07.jpg")
+      still = File.join(dir, "STUDIO/replicate/lora/ragnhild/out/07.jpg")
       FileUtils.mkdir_p(File.dirname(still))
       File.write(still, "x")
-      _, calls = run_text("make a video of ragnhild from STUDIO/lora/ragnhild/out/07.jpg", root: dir)
+      _, calls = run_text("make a video of ragnhild from STUDIO/replicate/lora/ragnhild/out/07.jpg", root: dir)
       argv = calls.first[:argv]
 
       assert_equal still, argv[argv.index("--image") + 1]
@@ -159,7 +159,7 @@ class LoraIntentTest < Minitest::Test
 
   def test_the_data_file_names_only_subjects_that_have_a_wrapper
     cfg = Lora.config
-    studio = File.expand_path("../../STUDIO/lora", __dir__)
+    studio = File.expand_path("../../STUDIO/replicate/lora", __dir__)
 
     cfg.fetch("subjects").each_key { |name| assert File.file?(File.join(studio, name, "lora")), name }
     assert_includes cfg.fetch("subjects").keys, cfg.fetch("me")

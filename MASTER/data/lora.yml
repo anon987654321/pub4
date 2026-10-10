@@ -1,4 +1,4 @@
-# What MASTER knows about the person-LoRA tooling in STUDIO/lora, read by
+# What MASTER knows about the person-LoRA tooling in STUDIO/replicate/lora, read by
 # lib/io/lora_intent.rb. Recognition, subjects and the spending gate are data so
 # a new subject or a new phrase is an edit here and not in Ruby.
 #

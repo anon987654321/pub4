@@ -39,10 +39,10 @@ Law.define(:CLI_TREE_TARGET_RESOLUTION) do
   ask "When an operator explicitly names MASTER, RAILS, OPENBSD or STUDIO, does the command resolve that target from the repository root through the canonical target resolver rather than assuming the current working directory is MASTER? Return CLEAN when every explicit sibling-tree target follows the shared resolver contract."
   fix "Resolve explicit four-tree targets from Master::REPO_ROOT through TargetResolver; never reinterpret a sibling tree relative to MASTER/lib or the current process directory."
   bad <<~X
-    target = File.expand_path("STUDIO/lora", Dir.pwd)
+    target = File.expand_path("STUDIO/replicate/lora", Dir.pwd)
   X
   good <<~X
-    target = resolve_target("STUDIO/lora")
+    target = resolve_target("STUDIO/replicate/lora")
   X
 end
 

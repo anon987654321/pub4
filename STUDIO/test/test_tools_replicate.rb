@@ -369,7 +369,7 @@ class TestReplicate < Minitest::Test
 
   # lora's longest descriptor, read from the subjects, so the budget is measured
   # against the subject that spends the most of it as that subject stands today.
-  DESCRIPTOR = Dir[File.join(ToolTest::ROOT, "lora", "*", "subject.env")]
+  DESCRIPTOR = Dir[File.join(ToolTest::ROOT, "replicate", "lora", "*", "subject.env")]
                .filter_map { |path| File.read(path)[/^DESCRIPTOR="(.*)"$/, 1] }
                .max_by(&:length)
 

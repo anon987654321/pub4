@@ -11,7 +11,7 @@ module Studio
     class IdeaPicture
       FILM = "prunaai/p-video-2-pro"
       ROOT = File.expand_path("../..", __dir__)
-      SUBJECT = File.join(ROOT, "lora", "ragnhild")
+      SUBJECT = File.join(ROOT, "replicate", "lora", "ragnhild")
 
       def initialize(client: nil, directory: File.expand_path("~/ideas"))
         @client = client

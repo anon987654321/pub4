@@ -31,7 +31,7 @@ MODEL = ENV.fetch("MODEL") { abort "run a subject wrapper, not this script direc
 SUBJECT_DIR = Pathname.new(ENV.fetch("SUBJECT_DIR")).expand_path.freeze
 TOOLKIT = Pathname.new(__dir__).expand_path
 SIDECAR = SUBJECT_DIR.join("weights", MODEL, "replicate_training.json")
-REPO_ROOT = TOOLKIT.join("../../..").expand_path
+REPO_ROOT = TOOLKIT.join("../../../..").expand_path
 
 require_relative "preflight"
 require_relative "shoots"

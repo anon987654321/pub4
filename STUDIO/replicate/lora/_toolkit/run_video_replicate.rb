@@ -26,7 +26,7 @@ require "time"
 SUBJECT = ENV.fetch("SUBJECT") { abort "run a subject wrapper, not this script directly" }
 SUBJECT_DIR = Pathname.new(ENV.fetch("SUBJECT_DIR")).expand_path.freeze
 TOOLKIT = Pathname.new(__dir__).expand_path
-REPO_ROOT = TOOLKIT.join("../../..").expand_path
+REPO_ROOT = TOOLKIT.join("../../../..").expand_path
 OUT_DIR = SUBJECT_DIR.join("out", "video")
 LEDGER = SUBJECT_DIR.join("out", "ledger.jsonl")
 

@@ -40,7 +40,7 @@ class TreeContractTest < Minitest::Test
     RAILS/brgen/engines
     STUDIO
     STUDIO/dilla
-    STUDIO/lora
+    STUDIO/replicate/lora
     STUDIO/postpro
     STUDIO/replicate
   ].freeze
@@ -95,7 +95,7 @@ class TreeContractTest < Minitest::Test
   def test_studio_owns_media_tools_and_master_keeps_compatibility_links
     links = {
       "dilla" => "../../STUDIO/dilla",
-      "lora" => "../../STUDIO/lora",
+      "lora" => "../../STUDIO/replicate/lora",
       "postpro" => "../../STUDIO/postpro",
       "replicate" => "../../STUDIO/replicate",
     }

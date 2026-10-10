@@ -292,3 +292,8 @@ ruby STUDIO/replicate/replicate.rb vocab-check
 ruby STUDIO/replicate/replicate.rb generate --prompt "Bergen rain" --dry-run
 
 Use STUDIO/replicate in new scripts and documentation. STUDIO/replicate is a retired path.
+
+The `lora/` folder beside it trains a LoRA of a person, renders selfies with
+it and animates a still into a short clip, all through the same client, so one
+set of retries, spending caps and the billed-seconds ledger covers every paid
+call. Its README says how to use it.

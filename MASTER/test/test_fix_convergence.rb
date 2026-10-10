@@ -376,7 +376,7 @@ class TestFixConvergence < Minitest::Test
       "MASTER/lib" => Master::ROOT,
       "RAILS/__shared" => Master::RAILS_ROOT,
       "OPENBSD/etc" => File.join(Master::REPO_ROOT, "OPENBSD", "etc"),
-      "STUDIO/lora" => File.join(Master::REPO_ROOT, "STUDIO", "lora"),
+      "STUDIO/replicate/lora" => File.join(Master::REPO_ROOT, "STUDIO", "lora"),
     }.each do |target, expected_root|
       request = Master::CLI::Scan::Request.new(scanner: nil, root: Master::ROOT, arg: target)
       assert_equal expected_root, request.send(:target_arg), target

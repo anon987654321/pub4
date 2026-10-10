@@ -4,8 +4,8 @@ require "minitest/autorun"
 require "tmpdir"
 require "open3"
 require_relative "../replicate/client"
-require_relative "../lora/_toolkit/preflight"
-require_relative "../lora/_toolkit/video"
+require_relative "../replicate/lora/_toolkit/preflight"
+require_relative "../replicate/lora/_toolkit/video"
 
 # The paid half of lora, with the network cut out: what the client sends, how it
 # waits, and what preflight refuses before a run is billed.
@@ -218,7 +218,7 @@ class TestLoraReplicate < Minitest::Test
   # --- routing --------------------------------------------------------------
 
   def test_the_router_passes_lane_flags_through_to_the_subject
-    router = File.expand_path("../lora/lora.rb", __dir__)
+    router = File.expand_path("../replicate/lora/lora.rb", __dir__)
     out, = Open3.capture2e("ruby", router, "--subject", "johann", "--generate-replicate", "--dry-run")
 
     refute_match(/invalid option/, out)

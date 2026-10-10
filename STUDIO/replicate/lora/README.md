@@ -116,7 +116,7 @@ provider failures. Credentials are never repository outputs.
 
 ### Invocation
 
-Use the tool entrypoints under `STUDIO/lora/` or the documented helper
+Use the tool entrypoints under `STUDIO/replicate/lora/` or the documented helper
 scripts in `_toolkit/`. Provider work is explicit; local inspection stays
 possible without credentials.
 
@@ -461,9 +461,9 @@ GraphQL-specific controls belong at the API boundary: authenticate and authorize
 
 ## MASTER integration
 
-LoRA is a creative/model tool under STUDIO/lora. MASTER provides governance and invocation; LoRA owns model composition, prompt construction, adapter data, and artifact provenance.
+LoRA is a creative/model tool under STUDIO/replicate/lora. MASTER provides governance and invocation; LoRA owns model composition, prompt construction, adapter data, and artifact provenance.
 
-New automation should reference STUDIO/lora, never the retired MASTER/tools/lora path.
+New automation should reference STUDIO/replicate/lora, never the retired MASTER/tools/lora path.
 
 MASTER speaks to this tool in plain language. Saying "generate me a selfie",
 "make 3 selfies of ragnhild", "train a lora of me", "generate a video with the
@@ -477,21 +477,21 @@ the sentence names a still, and a sentence that names two people is refused.
 
 ## Commands
 
-One entry point per subject, and `./lora --help` lists the rest. The first line reads files only, and the prepare line writes only with `--write`. The second is the free local path. The third is the Replicate path in the order of the section above: a dry run, the paid training, the pickup of a long run, a cheap draft pass, the finals, and the clip.
+One entry point per subject, run from `STUDIO/replicate/lora`, and `./lora --help` lists the rest. The first line reads files only, and the prepare line writes only with `--write`. The second is the free local path. The third is the Replicate path in the order of the section above: a dry run, the paid training, the pickup of a long run, a cheap draft pass, the finals, and the clip.
 
 ```sh
-STUDIO/lora/lora.rb --status
-STUDIO/lora/ragnhild/lora --check
-STUDIO/lora/ragnhild/lora --prepare --write
-STUDIO/lora/ragnhild/lora --train
-STUDIO/lora/ragnhild/lora --generate
-STUDIO/lora/ragnhild/lora --all
-STUDIO/lora/ragnhild/lora --train-replicate --dry-run
-STUDIO/lora/ragnhild/lora --train-replicate --async
-STUDIO/lora/ragnhild/lora --train-replicate --resume TRAINING_ID
-STUDIO/lora/ragnhild/lora --generate-replicate --set selfies --draft
-STUDIO/lora/ragnhild/lora --generate-replicate --set selfies --max-seconds 600
-STUDIO/lora/ragnhild/lora --generate-replicate --set distance --dry-run
-STUDIO/lora/ragnhild/lora --video-replicate --image out/selfies/07.jpg --prompt "she turns and smiles" --dry-run
-STUDIO/lora/ragnhild/lora --video-replicate --image out/selfies/07.jpg --prompt "she turns and smiles" --preset draft
+STUDIO/replicate/lora/lora.rb --status
+ragnhild/lora --check
+ragnhild/lora --prepare --write
+ragnhild/lora --train
+ragnhild/lora --generate
+ragnhild/lora --all
+ragnhild/lora --train-replicate --dry-run
+ragnhild/lora --train-replicate --async
+ragnhild/lora --train-replicate --resume TRAINING_ID
+ragnhild/lora --generate-replicate --set selfies --draft
+ragnhild/lora --generate-replicate --set selfies --max-seconds 600
+ragnhild/lora --generate-replicate --set distance --dry-run
+ragnhild/lora --video-replicate --image out/selfies/07.jpg --prompt "she turns and smiles" --dry-run
+ragnhild/lora --video-replicate --image out/selfies/07.jpg --prompt "she turns and smiles" --preset draft
 ```

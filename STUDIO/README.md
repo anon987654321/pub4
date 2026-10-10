@@ -7,5 +7,5 @@ this tree.
 
 postpro/postpro.rb — film emulation and image grading
 replicate/replicate.rb — hosted image generation
-lora/lora.rb — governed LoRA subject workflow dispatcher
+replicate/lora/lora.rb — person LoRAs, selfies and video, on the replicate client
 dilla/dilla.rb — deterministic music generation and live playback

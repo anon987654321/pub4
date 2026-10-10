@@ -7,7 +7,7 @@ require "yaml"
 # lora trains on GPUs this suite never has, so what it can check is the part
 # that goes wrong without one: the files a run reads, and what gets committed.
 class TestLora < Minitest::Test
-  LORA = File.join(ToolTest::ROOT, "lora")
+  LORA = File.join(ToolTest::ROOT, "replicate", "lora")
 
   # Source captures remain private. The public `ideas/` gallery contains generated
   # or graded work by deliberate design; every other tracked subject-media file
@@ -15,20 +15,20 @@ class TestLora < Minitest::Test
   PUBLISHED_SUBJECT_MEDIA = [].freeze
 
   def test_no_private_subject_media_is_committed_without_being_named_here
-    tracked, status = Open3.capture2("git", "-C", ToolTest::ROOT, "ls-files", "--", "lora")
+    tracked, status = Open3.capture2("git", "-C", ToolTest::ROOT, "ls-files", "--", "replicate/lora")
     skip "not a git checkout" unless status.success?
 
     media = tracked.lines.map(&:strip).grep(/\.(jpe?g|png|heic|webp|mp4|mov|webm)\z/i)
-    subject_media = media.reject { |path| path.start_with?("lora/ideas/") }
+    subject_media = media.reject { |path| path.start_with?("replicate/lora/ideas/") }
     assert_empty subject_media - PUBLISHED_SUBJECT_MEDIA,
-                 "subject media is committed under lora/ without an explicit publication decision"
+                 "subject media is committed under replicate/lora/ without an explicit publication decision"
     assert_empty Dir[File.join(LORA, "johann", "dataset", "*")], "johann has no consented dataset"
   end
 
   # Written sittings and drawn scenarios go through the one composer replicate
   # owns, and the drawn set has no file for a glob to find.
   def test_scenarios_are_a_set_that_replicate_draws
-    require_relative "../lora/_toolkit/shoots"
+    require_relative "../replicate/lora/_toolkit/shoots"
 
     assert_includes available_sets, "scenarios"
     shoot, prompt = prompts_for("ragnhild", set: "scenarios", only: [3]).first
@@ -41,7 +41,7 @@ class TestLora < Minitest::Test
   # One file holds every written sitting, and best points into it rather than
   # copying prose that would then drift.
   def test_every_written_set_reads_from_ideas_yml
-    require_relative "../lora/_toolkit/shoots"
+    require_relative "../replicate/lora/_toolkit/shoots"
 
     assert_empty Dir[File.join(LORA, "shoots*.yml")], "a written set outside ideas.yml"
     assert_equal %w[best distance scenarios selfies shoots warp], available_sets
@@ -54,7 +54,7 @@ class TestLora < Minitest::Test
   end
 
   def test_selfies_and_the_distance_ladder_are_drawn_sets_with_their_caps
-    require_relative "../lora/_toolkit/shoots"
+    require_relative "../replicate/lora/_toolkit/shoots"
 
     assert_equal 48, prompts_for("ragnhild", set: "selfies").length
     assert_equal selfie_sitting(60), prompts_for("ragnhild", set: "selfies", only: [60]).first.first
@@ -88,7 +88,7 @@ class TestLora < Minitest::Test
   end
 
   def test_no_tracked_notebook_or_subject_file_carries_a_credential
-    tracked, status = Open3.capture2("git", "-C", ToolTest::ROOT, "ls-files", "--", "lora")
+    tracked, status = Open3.capture2("git", "-C", ToolTest::ROOT, "ls-files", "--", "replicate/lora")
     skip "not a git checkout" unless status.success?
 
     files = tracked.lines.map(&:strip).grep(/\.(?:ipynb|env|ya?ml|json|sh)\z|\/lora\z/).reject { |f| f.include?("/dataset/") }
@@ -189,7 +189,7 @@ class TestLora < Minitest::Test
   def curate_frames(dir)
     require "vips"
     require "tmpdir"
-    require_relative "../lora/_toolkit/curate"
+    require_relative "../replicate/lora/_toolkit/curate"
     scene = Studio.octave_scene(600, seed: 3)
     paths = {
       "a.jpg" => scene, "a_again.jpg" => (scene * 1.06).cast(:uchar),
