@@ -1,13 +1,17 @@
 # frozen_string_literal: true
 
-# Generates transport-safe source mirrors at the pub4 root:
-# snapshot_MASTER.md, snapshot_RAILS.md, snapshot_OPENBSD.md and snapshot_STUDIO.md.
-# Every included tracked text file is inlined exactly once across its multipart pack;
-# excluded paths and binary files are accounted for but not embedded.
+# Generates source snapshots at the pub4 root: snapshot_MASTER.md, snapshot_RAILS.md,
+# snapshot_OPENBSD.md and snapshot_STUDIO.md.
+#
+# The default (lib/operator/snapshot_pack.rb) is one file a tree, sized for another model's context,
+# deleting the tree's old snapshot files first. --mirror writes the byte-exact, rehydratable
+# multipart transport instead: every included tracked text file inlined exactly once,
+# excluded paths and binary files accounted for but not embedded.
 
 require "fileutils"
 require "open3"
 require_relative "../lib/trace/dmesg"
+require_relative "../lib/operator/snapshot_pack"
 
 module Operator
   module Snapshot
@@ -346,7 +350,9 @@ module Operator
       end
     end
 
-    def write(tree, io: $stdout)
+    def write(tree, io: $stdout, mirror: false, **options)
+      return SnapshotPack.write(self, tree, io:, **options) unless mirror
+
       excluded = excluded(tree)
       paths = tracked(tree)
       if paths.empty?
@@ -385,11 +391,27 @@ module Operator
       outputs
     end
 
-    def run(trees = TREES, io: $stdout)
-      trees.each { |t| write(t, io:) }
+    def run(trees = TREES, io: $stdout, mirror: false, **options)
+      trees.each { |t| write(t, io:, mirror:, **options) }
       0
+    end
+
+    # bin/operator snapshot [TREE...] [--mirror] [--budget=BYTES] [--only=a,b] [--tests]
+    def cli(argv)
+      mirror = argv.delete("--mirror")
+      tests = argv.delete("--tests")
+      budget = argv.grep(/\A--budget=\d+\z/).first&.split("=")&.last&.to_i
+      only = argv.grep(/\A--only=/).first&.split("=", 2)&.last&.split(",")
+      trees = argv.reject { |arg| arg.start_with?("--") }.map(&:upcase)
+      trees = TREES if trees.empty?
+      return run(trees, mirror: true) if mirror
+
+      options = { tests: !tests.nil? }
+      options[:budget] = budget if budget
+      options[:only] = only if only
+      run(trees, **options)
     end
   end
 end
 
-exit Operator::Snapshot.run(ARGV.empty? ? Operator::Snapshot::TREES : ARGV) if $PROGRAM_NAME == __FILE__
+exit Operator::Snapshot.cli(ARGV.dup) if $PROGRAM_NAME == __FILE__

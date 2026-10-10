@@ -205,7 +205,7 @@ module Master
         paths.map do |path|
           relative = path.delete_prefix("#{Master::REPO_ROOT}/")
           bytes = File.size(path)
-          "snapshot0: wrote root/#{relative} (#{bytes} bytes; max #{::Operator::Snapshot::MAX_BYTES})"
+          "snapshot0: wrote root/#{relative} (#{bytes} bytes, ~#{bytes / 4000}K tokens; budget #{::Operator::SnapshotPack::DEFAULT_BUDGET})"
         end.join("\n")
       rescue StandardError => e
         "snapshot0: failed — #{e.class}: #{e.message}"

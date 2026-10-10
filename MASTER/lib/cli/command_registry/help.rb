@@ -163,8 +163,9 @@ module Master
                    "/soul law protocol — the mandatory enforcement sequence."],
         },
         "snapshot" => {
-          summary: "write source snapshots for all four governed trees at the pub4 root",
-          detail: ["/snapshot — write snapshot_MASTER.md, snapshot_RAILS.md, snapshot_OPENBSD.md and snapshot_STUDIO.md at the pub4 root.",
+          summary: "write one source snapshot per governed tree at the pub4 root, sized for another model's context",
+          detail: ["/snapshot — write snapshot_MASTER.md, snapshot_RAILS.md, snapshot_OPENBSD.md and snapshot_STUDIO.md at the pub4 root, deleting the old ones first.",
+                   "Each is one file of about 95K tokens: a map of every file, then the most important source whole. For more of one area: bin/operator snapshot TREE --only=<dir>; for exact bytes: --mirror.",
                    "Snapshots are source packs, not runtime state; they are deliberately visible beside the trees they describe."],
         },
         "laws" => {
