@@ -7,8 +7,8 @@ ROOT = File.expand_path("..", __dir__)
 
 class TestFutureFaceContract < Minitest::Test
   def setup
-    @laws = YAML.safe_load_file(File.join(ROOT, "data", "laws.yml"), aliases: false)
-    @morphology = @laws.fetch("interface").fetch("spatial").fetch("morphology")
+    @tokens = YAML.safe_load_file(File.join(ROOT, "data", "tokens.yml"), aliases: true).fetch("tokens")
+    @morphology = @tokens.fetch("face_interface").fetch("spatial").fetch("morphology")
   end
 
   def test_future_profile_uses_structural_traits_not_skin_or_identity_traits
