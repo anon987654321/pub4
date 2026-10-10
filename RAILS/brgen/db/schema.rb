@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_10_09_121000) do
+ActiveRecord::Schema[8.2].define(version: 2026_10_10_180000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -387,6 +387,21 @@ ActiveRecord::Schema[8.2].define(version: 2026_10_09_121000) do
     t.index ["liker_id"], name: "index_dating_likes_on_liker_id"
   end
 
+  create_table "dating_location_pings", force: :cascade do |t|
+    t.integer "city_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "expires_at", null: false
+    t.decimal "latitude", precision: 8, scale: 3, null: false
+    t.decimal "longitude", precision: 8, scale: 3, null: false
+    t.integer "neighborhood_id"
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["city_id", "expires_at"], name: "index_dating_location_pings_on_city_id_and_expires_at"
+    t.index ["city_id"], name: "index_dating_location_pings_on_city_id"
+    t.index ["neighborhood_id"], name: "index_dating_location_pings_on_neighborhood_id"
+    t.index ["user_id"], name: "index_dating_location_pings_on_user_id", unique: true
+  end
+
   create_table "dating_matches", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "initiator_id", null: false
@@ -396,6 +411,25 @@ ActiveRecord::Schema[8.2].define(version: 2026_10_09_121000) do
     t.index ["initiator_id", "receiver_id"], name: "index_dating_matches_on_initiator_id_and_receiver_id", unique: true
     t.index ["initiator_id"], name: "index_dating_matches_on_initiator_id"
     t.index ["receiver_id"], name: "index_dating_matches_on_receiver_id"
+  end
+
+  create_table "dating_path_crossings", force: :cascade do |t|
+    t.decimal "approx_latitude", precision: 5, scale: 2
+    t.decimal "approx_longitude", precision: 5, scale: 2
+    t.datetime "crossed_at", null: false
+    t.date "crossing_on", null: false
+    t.integer "city_id", null: false
+    t.datetime "created_at", null: false
+    t.integer "neighborhood_id"
+    t.datetime "updated_at", null: false
+    t.integer "user_a_id", null: false
+    t.integer "user_b_id", null: false
+    t.index ["city_id", "crossed_at"], name: "index_dating_path_crossings_on_city_id_and_crossed_at"
+    t.index ["city_id", "user_a_id", "user_b_id", "crossing_on"], name: "index_dating_path_crossings_on_pair_and_day", unique: true
+    t.index ["city_id"], name: "index_dating_path_crossings_on_city_id"
+    t.index ["neighborhood_id"], name: "index_dating_path_crossings_on_neighborhood_id"
+    t.index ["user_a_id"], name: "index_dating_path_crossings_on_user_a_id"
+    t.index ["user_b_id"], name: "index_dating_path_crossings_on_user_b_id"
   end
 
   create_table "dating_profiles", force: :cascade do |t|
@@ -408,6 +442,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_10_09_121000) do
     t.datetime "last_active_at"
     t.decimal "latitude"
     t.string "location"
+    t.boolean "location_discovery_enabled", default: false, null: false
     t.decimal "longitude"
     t.string "looking_for"
     t.integer "neighborhood_id"
@@ -752,6 +787,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_10_09_121000) do
   end
 
   create_table "marketplace_listings", force: :cascade do |t|
+    t.string "buy_box_key"
     t.integer "category_id", null: false
     t.integer "city_id"
     t.string "condition"
@@ -782,6 +818,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_10_09_121000) do
     t.float "seller_score", default: 0.8, null: false
     t.index ["category_id"], name: "index_marketplace_listings_on_category_id"
     t.index ["city_id", "kind", "category_id"], name: "index_marketplace_listings_on_city_id_and_kind_and_category_id"
+    t.index ["city_id", "buy_box_key"], name: "index_marketplace_listings_on_city_and_buy_box_key", where: "buy_box_key IS NOT NULL"
     t.index ["city_id", "ranking_score"], name: "index_marketplace_listings_on_city_and_ranking"
     t.index ["city_id", "slug"], name: "index_marketplace_listings_on_city_and_slug", unique: true
     t.index ["city_id"], name: "index_marketplace_listings_on_city_id"
@@ -1408,6 +1445,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_10_09_121000) do
     t.decimal "latitude", precision: 10, scale: 6
     t.json "link_embed"
     t.decimal "longitude", precision: 10, scale: 6
+    t.integer "neighborhood_id"
     t.datetime "removed_at"
     t.integer "reposts_count", default: 0, null: false
     t.integer "score", default: 0, null: false
@@ -1421,6 +1459,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_10_09_121000) do
     t.index ["community_id"], name: "index_posts_on_community_id"
     t.index ["crossposted_from_id"], name: "index_posts_on_crossposted_from_id"
     t.index ["latitude", "longitude"], name: "index_posts_on_latitude_and_longitude"
+    t.index ["neighborhood_id"], name: "index_posts_on_neighborhood_id"
     t.index ["removed_at"], name: "index_posts_on_removed_at"
     t.index ["score", "created_at"], name: "index_posts_on_score_and_created_at"
     t.index ["user_id"], name: "index_posts_on_user_id"
@@ -1939,8 +1978,15 @@ ActiveRecord::Schema[8.2].define(version: 2026_10_09_121000) do
   add_foreign_key "dating_likes", "dating_prompts"
   add_foreign_key "dating_likes", "users", column: "likee_id"
   add_foreign_key "dating_likes", "users", column: "liker_id"
+  add_foreign_key "dating_location_pings", "cities"
+  add_foreign_key "dating_location_pings", "neighborhoods"
+  add_foreign_key "dating_location_pings", "users", on_delete: :cascade
   add_foreign_key "dating_matches", "users", column: "initiator_id"
   add_foreign_key "dating_matches", "users", column: "receiver_id"
+  add_foreign_key "dating_path_crossings", "cities"
+  add_foreign_key "dating_path_crossings", "neighborhoods"
+  add_foreign_key "dating_path_crossings", "users", column: "user_a_id", on_delete: :cascade
+  add_foreign_key "dating_path_crossings", "users", column: "user_b_id", on_delete: :cascade
   add_foreign_key "dating_profiles", "cities"
   add_foreign_key "dating_profiles", "neighborhoods", on_delete: :nullify
   add_foreign_key "dating_profiles", "users"
@@ -2052,6 +2098,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_10_09_121000) do
   add_foreign_key "playlist_tracks", "users"
   add_foreign_key "posts", "cities"
   add_foreign_key "posts", "communities"
+  add_foreign_key "posts", "neighborhoods"
   add_foreign_key "posts", "posts", column: "crossposted_from_id"
   add_foreign_key "posts", "users"
   add_foreign_key "reactions", "posts"
