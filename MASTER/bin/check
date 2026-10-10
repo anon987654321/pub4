@@ -105,7 +105,7 @@ end
 
 # rake audit already runs selftest, core_smoke and constitution, so full lists
 # the CI steps that audit does not cover rather than the whole of ci.
-full_ci = ci_steps.reject { |step| ["selftest", "core_smoke", "constitution"].include?(step.first) }
+full_ci = ci_steps.reject { |step| %w[selftest core_smoke constitution].include?(step.first) }
 
 PROFILES = {
   "operator"    => [law_syntax, rake["test"], rake["test:subsystems"], rake["security_sweep"],
