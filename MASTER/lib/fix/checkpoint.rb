@@ -19,8 +19,8 @@ module Master
       attr_reader :root, :dir
 
       def initialize(root: Master::ROOT, dir: File.join(Master::ROOT, ".master", "checkpoints"))
-        @root = root
-        @dir = dir
+        @root = File.expand_path(root)
+        @dir = File.expand_path(dir)
       end
 
       def create(label:, files: [])
@@ -104,19 +104,45 @@ module Master
         clean.gsub(/\A-|-\z/, "")[0, 48]
       end
 
+      # Expand lexically first, then reject symlinks in every existing path
+      # component. File.expand_path alone leaves a path such as root/link/file
+      # inside root even when link points outside it; restore would then write
+      # through that link. Refuse symlinks rather than trying to infer whether
+      # each target happens to remain inside the checkout.
       def normalize_relative(path)
-        full = File.expand_path(path.to_s, root)
-        unless full.start_with?(File.expand_path(root) + File::SEPARATOR)
+        canonical_root = File.realpath(root)
+        full = File.expand_path(path.to_s, canonical_root)
+        unless full.start_with?(canonical_root + File::SEPARATOR)
           raise ArgumentError, "checkpoint path escapes root: #{path}"
         end
 
-        full.delete_prefix(File.expand_path(root) + File::SEPARATOR)
+        relative = full.delete_prefix(canonical_root + File::SEPARATOR)
+        current = canonical_root
+        relative.split(File::SEPARATOR).each do |part|
+          current = File.join(current, part)
+          if File.symlink?(current)
+            raise ArgumentError, "checkpoint path traverses symlink: #{path}"
+          end
+        end
+        relative
       end
 
       def safe_checkpoint_dir(id)
-        path = File.expand_path(id.to_s, dir)
-        unless path.start_with?(File.expand_path(dir) + File::SEPARATOR)
+        base = File.expand_path(dir)
+        path = File.expand_path(id.to_s, base)
+        unless path.start_with?(base + File::SEPARATOR)
           raise ArgumentError, "checkpoint id escapes store: #{id}"
+        end
+
+        if File.symlink?(path)
+          raise ArgumentError, "checkpoint directory cannot be a symlink: #{id}"
+        end
+        if File.exist?(path)
+          real_base = File.realpath(base)
+          real_path = File.realpath(path)
+          unless real_path.start_with?(real_base + File::SEPARATOR)
+            raise ArgumentError, "checkpoint id escapes store: #{id}"
+          end
         end
 
         path
