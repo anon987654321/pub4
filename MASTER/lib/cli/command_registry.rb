@@ -225,14 +225,19 @@ module Master
 
           streamed
         end
+        # The face has its own terminal stream: sharing Reline's stdin let the
+        # line editor and the face read the same keys.
+        terminal = File.open("/dev/tty", "r+")
         Face::Window.new(
           turn:,
           event_bus: container[:bus],
-          input: $stdin,
-          output: $stdout,
+          input: terminal,
+          output: terminal,
         ).run
       rescue StandardError => e
         "face0: failed — #{e.class}: #{e.message}"
+      ensure
+        terminal&.close
       end
 
       def dispatch_device(_root, ctx: nil)
