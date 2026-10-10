@@ -465,6 +465,16 @@ LoRA is a creative/model tool under STUDIO/lora. MASTER provides governance and 
 
 New automation should reference STUDIO/lora, never the retired MASTER/tools/lora path.
 
+MASTER speaks to this tool in plain language. Saying "generate me a selfie",
+"make 3 selfies of ragnhild", "train a lora of me", "generate a video with the
+lora of me" or "lora status" to `MASTER/bin/master` reaches `lora.rb` through
+`MASTER/lib/io/lora_intent.rb`. The phrases, the people ("me" is the one named
+in `MASTER/data/lora.yml`) and the spending rule are data in that file. Anything
+that spends money runs as a dry run, showing the plan, until the same sentence
+also says "confirm" or "go ahead"; a confirmed training starts async, and
+`--resume ID` collects it. A video starts from the newest graded selfie unless
+the sentence names a still, and a sentence that names two people is refused.
+
 ## Commands
 
 One entry point per subject, and `./lora --help` lists the rest. The first line reads files only, and the prepare line writes only with `--write`. The second is the free local path. The third is the Replicate path in the order of the section above: a dry run, the paid training, the pickup of a long run, a cheap draft pass, the finals, and the clip.
