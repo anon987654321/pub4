@@ -59,11 +59,13 @@ bundle_config_once() { # dir key value
 bundle_config_once "$WEB" WITHOUT 'development:test'
 bundle_config_once "$WEB" PATH "$BUNDLE_PATH_DEV"
 export BUNDLE_WITHOUT=development:test BUNDLE_PATH="$BUNDLE_PATH_DEV"
-"$BUNDLE" check 2>/dev/null || "$BUNDLE" install
+# Always install, never `check || install`: on the box `bundle check` re-resolves offline and
+# writes a lockfile without the Rails git source; `install` resolves in full and keeps it.
+"$BUNDLE" install
 # The tts-worker and media tools boot from MASTER/Gemfile, not web's. rc.d/master
 # only checks it now, because it runs as root; installing belongs here, as dev.
 bundle_config_once "$ROOT/MASTER" PATH "$BUNDLE_PATH_DEV"
-(cd "$ROOT/MASTER" && { BUNDLE_GEMFILE=Gemfile "$BUNDLE" check >/dev/null 2>&1 || BUNDLE_GEMFILE=Gemfile "$BUNDLE" install; })
+(cd "$ROOT/MASTER" && BUNDLE_GEMFILE=Gemfile "$BUNDLE" install)
 
 echo "==> db prepare"
 BUNDLE_WITHOUT=development:test "$BUNDLE" exec rails db:prepare
