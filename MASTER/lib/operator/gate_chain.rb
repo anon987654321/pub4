@@ -5,6 +5,7 @@ require "rbconfig"
 require "operator/ruby_runner"
 require "bundler"
 require_relative "strict_mode"
+require_relative "gate_regression"
 require_relative "../trace/dmesg"
 
 module Operator
@@ -48,7 +49,7 @@ module Operator
     PICK_BUDGET = Integer(ENV.fetch("PUB4_GATE_COUNCIL_PICKS", "5"))
 
     # ok / failed / skipped; skipped is the one that matters.
-    Result = Struct.new(:stage, :state, :summary, :changed, keyword_init: true)
+    Result = Struct.new(:stage, :state, :summary, :changed, :body, keyword_init: true)
 
     # `mutates` is a claim, and the attribution below tests it: a stage declared
     # non-mutating that changes a file fails the run.
@@ -65,7 +66,36 @@ module Operator
     # /fix already owns observation, council critique and repair. Its verification
     # tail proves the repaired tree without recursively invoking /fix or debating
     # the same tree a second time.
-    def verify_fix(target:)
+    def verify_fix(target:, baseline: nil)
+      selected = verification_stages(target)
+      return [0, []] if selected.empty?
+
+      status, changed = report(selected, scan_only: true, trees: trees_for_target(target), return_results: true)
+      return [status, changed] unless status == 1 && baseline && changed.empty?
+
+      # Standing failures are not this run's to clear. A run passes when it adds
+      # no failure the tree did not already have; nothing is moved or relaxed.
+      regressions = GateRegression.new(baseline).regressions(@last_results)
+      if regressions.empty?
+        Master::Trace::Dmesg.status("gate0", "no regression against the starting baseline, #{baseline.size} stage(s) failed before this run")
+        return [0, changed]
+      end
+
+      regressions.each { |line| Master::Trace::Dmesg.status("gate0", "regression, #{line}") }
+      [status, changed]
+    end
+
+    # What already fails before /fix touches anything: stage name => failing lines.
+    # One scan-only ladder, remembered by commit so a second run reuses it.
+    def baseline(target:)
+      selected = verification_stages(target)
+      return {} if selected.empty?
+
+      report(selected, scan_only: true, trees: trees_for_target(target), return_results: true)
+      GateRegression.snapshot(@last_results)
+    end
+
+    def verification_stages(target)
       trees = trees_for_target(target)
       selected = stages(scan_only: true, trees:).reject { |stage| stage.name == "council" }
       # The Rails source stage now owns the complete Rails premerge proof
@@ -76,9 +106,7 @@ module Operator
       # a verification tail must never become a second repair pass under
       # another name. Council stays excluded because provider availability is
       # not a source-tree proof and can be separately reported by /critique.
-      return [0, []] if selected.empty?
-
-      report(selected, scan_only: true, trees:, return_results: true)
+      selected
     end
 
     def trees_for_target(target)
@@ -168,6 +196,7 @@ module Operator
         result
       end
       status = summarise(results, foreign)
+      @last_results = results
       return [status, results.flat_map(&:changed)] if return_results
 
       status
@@ -536,7 +565,7 @@ module Operator
       detail = body.last(state == "ok" ? 0 : 12)
       Master::Trace::Dmesg::Report.print(unit, detail.join("\n"), parent: "gate0") unless detail.empty?
       announce_changed(unit, stage, changed)
-      Result.new(stage: stage.name, state:, summary:, changed:)
+      Result.new(stage: stage.name, state:, summary:, changed:, body:)
     end
 
     def stage_unit(stage)

@@ -153,6 +153,9 @@ module Master
 
       def run_fix_target(scanner:, fix_loop:, root:, deliberation:, bus:, swarm:, target:,
                          writes_requested:, effective_critique:, critique:, aesthetic:, only:)
+        # What already fails, taken before any repair, so delivery can be judged on
+        # what the run added instead of on debt it did not create.
+        baseline = writes_requested ? ::Operator::GateChain.baseline(target:) : nil
         value = run_pass({ scanner:, fix_loop:, root:, deliberation:, bus:, swarm: },
                          target:, apply: writes_requested, critique: effective_critique,
                          aesthetic:, only:)
@@ -162,7 +165,7 @@ module Master
         gate_status = 0
         gate_changed = []
         loop do
-          gate_status, gate_changed = ::Operator::GateChain.verify_fix(target:)
+          gate_status, gate_changed = ::Operator::GateChain.verify_fix(target:, baseline:)
           gate_rounds += 1
           break if gate_status == 0 && gate_changed.empty?
           break if gate_changed.empty? || gate_rounds >= MAX_FIX_GATE_ROUNDS
