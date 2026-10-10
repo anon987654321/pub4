@@ -122,6 +122,7 @@ class TestFixConvergence < Minitest::Test
 
   def test_incremental_done_requires_a_full_target_proof
     loop = Master::Fix::FixLoop.allocate
+    loop.instance_variable_set(:@root, @root)
     full_files = [File.join(@root, "dummy.yml")]
     second = File.join(@root, "second.rb")
     File.write(second, "puts :second\\n")
