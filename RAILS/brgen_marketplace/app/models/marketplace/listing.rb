@@ -276,7 +276,7 @@ class Marketplace::Listing < ApplicationRecord
 
   def normalize_buy_box_key
     self.buy_box_key = nil if store_id.blank?
-    self.buy_box_key = buy_box_key.to_s.strip.upcase.gsub(/\\s+/, " ") if buy_box_key.present?
+    self.buy_box_key = buy_box_key.to_s.strip.upcase.gsub(/\s+/, " ") if buy_box_key.present?
   end
 
   def set_expiry
