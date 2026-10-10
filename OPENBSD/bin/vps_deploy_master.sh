@@ -49,13 +49,21 @@ echo "==> bundle"
 # path lives in each Gemfile's .bundle/config so rc.d's `bundle exec` as master
 # finds the same gems; /home/dev is group _pub4ci, which master belongs to.
 BUNDLE_PATH_DEV=/home/dev/.bundle/master
-"$BUNDLE" config set --local without 'development:test' 2>/dev/null || true
-"$BUNDLE" config set --local path "$BUNDLE_PATH_DEV"
-BUNDLE_WITHOUT=development:test "$BUNDLE" check 2>/dev/null || BUNDLE_WITHOUT=development:test "$BUNDLE" install
+# `bundle config set --local` makes Bundler 4 re-resolve and rewrite Gemfile.lock,
+# and on the box that rewrite dropped the Rails git source, so the next
+# `bundle exec` died with "git source ... is not yet checked out". Write a setting
+# only when it is absent; the environment carries it for this script's own calls.
+bundle_config_once() { # dir key value
+  grep -qs "^BUNDLE_$2:" "$1/.bundle/config" || (cd "$1" && "$BUNDLE" config set --local "$2" "$3")
+}
+bundle_config_once "$WEB" WITHOUT 'development:test'
+bundle_config_once "$WEB" PATH "$BUNDLE_PATH_DEV"
+export BUNDLE_WITHOUT=development:test BUNDLE_PATH="$BUNDLE_PATH_DEV"
+"$BUNDLE" check 2>/dev/null || "$BUNDLE" install
 # The tts-worker and media tools boot from MASTER/Gemfile, not web's. rc.d/master
 # only checks it now, because it runs as root; installing belongs here, as dev.
-(cd "$ROOT/MASTER" && "$BUNDLE" config set --local path "$BUNDLE_PATH_DEV" &&
-  { BUNDLE_GEMFILE=Gemfile "$BUNDLE" check >/dev/null 2>&1 || BUNDLE_GEMFILE=Gemfile "$BUNDLE" install; })
+bundle_config_once "$ROOT/MASTER" PATH "$BUNDLE_PATH_DEV"
+(cd "$ROOT/MASTER" && { BUNDLE_GEMFILE=Gemfile "$BUNDLE" check >/dev/null 2>&1 || BUNDLE_GEMFILE=Gemfile "$BUNDLE" install; })
 
 echo "==> db prepare"
 BUNDLE_WITHOUT=development:test "$BUNDLE" exec rails db:prepare
