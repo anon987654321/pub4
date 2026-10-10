@@ -30,9 +30,16 @@ module Master
         198.18.0.0/15
         198.51.100.0/24
         203.0.113.0/24
+        192.88.99.0/24
+        240.0.0.0/4
         ::/128
+        64:ff9b::/96
+        64:ff9b:1::/48
         100::/64
+        2001::/23
         2001:db8::/32
+        2002::/16
+        fec0::/10
       ].map { |cidr| IPAddr.new(cidr) }.freeze
 
       def self.safe_uri?(uri) = !pinned_address(uri).nil?
@@ -59,7 +66,9 @@ module Master
       DEFAULT_TIMEOUT_S = 15
 
       def self.http_for(uri, address, timeout: DEFAULT_TIMEOUT_S)
-        Net::HTTP.new(uri.host, uri.port).tap do |http|
+        # Net::HTTP defaults its proxy argument to :ENV. An ambient HTTP_PROXY or
+        # HTTPS_PROXY would move the socket to a proxy and defeat the IP pin.
+        Net::HTTP.new(uri.host, uri.port, nil).tap do |http|
           http.ipaddr = address
           http.use_ssl = uri.scheme == "https"
           http.open_timeout = timeout

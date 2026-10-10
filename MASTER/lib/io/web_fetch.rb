@@ -56,11 +56,20 @@ module Master
 
       def fetch_codepen(user, slug, full: false)
         base = "https://codepen.io/#{user}/pen/#{slug}"
-        parts = %w[html css js].map do |ext|
+        failures = []
+        parts = %w[html css js].filter_map do |ext|
           result = fetch_one("#{base}.#{ext}", full:)
-          result.is_a?(Master::Result) && result.ok? ? "// #{ext}\n#{result.value!}" : nil
+          if result.is_a?(Master::Result) && result.ok?
+            "// #{ext}\n#{result.value!}"
+          else
+            failures << ext
+            nil
+          end
         end
-        Result.ok(parts.compact.join("\n\n"))
+        return Result.err("web_fetch: CodePen fetch failed for all components", category: :infrastructure) if parts.empty?
+
+        note = failures.empty? ? "" : "// Unavailable CodePen components: #{failures.join(", ")}\n\n"
+        Result.ok(note + parts.join("\n\n"))
       end
 
       def fetch_one(url, full: false)

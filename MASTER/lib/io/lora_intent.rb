@@ -37,7 +37,7 @@ module Master
 
         name = subject&.value!
         confirmed = confirmed?(text, cfg)
-        built = build(intent, text, name, cfg)
+        built = build(intent, text, name, cfg, root:)
         return built unless built.ok?
 
         run(intent, built.value!, name, confirmed:, root:)
@@ -61,7 +61,13 @@ module Master
         nil
       end
 
-      def confirmed?(text, cfg) = text.match?(pattern(cfg, "confirm"))
+      NEGATED_CONFIRMATION = /\b(?:don't|dont|do not|never|not|no|without)\b.{0,32}\b(?:confirm(?:ed)?|for real|go ahead|bekreft\w*|kj[øo]r\s+p[åa]\s+ordentlig)\b/i.freeze
+
+      def confirmed?(text, cfg)
+        return false if text.match?(NEGATED_CONFIRMATION)
+
+        text.match?(pattern(cfg, "confirm"))
+      end
 
       # Named subjects win over "me". Two names in one request is refused: a
       # render, a training and a clip each belong to one person.
@@ -75,12 +81,12 @@ module Master
         Result.ok(cfg.fetch("me"))
       end
 
-      def build(intent, text, subject, cfg)
+      def build(intent, text, subject, cfg, root: MasterPaths.root)
         case intent
         when :status then Result.ok(["--status"])
         when :train then Result.ok(["--subject", subject, "--train-replicate"])
         when :selfie then Result.ok(selfie_args(text, subject, cfg))
-        when :video then video_args(text, subject, cfg)
+        when :video then video_args(text, subject, cfg, root:)
         end
       end
 
@@ -100,8 +106,8 @@ module Master
 
       # The still a clip starts from: a path in the sentence, else the newest
       # graded selfie, else the newest ungraded one.
-      def video_args(text, subject, cfg)
-        image = image_from(text) || latest_selfie(subject)
+      def video_args(text, subject, cfg, root: MasterPaths.root)
+        image = image_from(text, root:) || latest_selfie(subject)
         unless image
           return Result.err("lora: no selfie of #{subject} to animate yet; say \"generate me a selfie\" first, " \
                             "or give a path to a still", category: :validation)
@@ -112,11 +118,17 @@ module Master
                    "--preset", preset])
       end
 
-      def image_from(text)
+      def image_from(text, root: MasterPaths.root)
         extensions = IMAGE_EXTENSIONS.join("|")
         path = text[/["']([^"']+\.(?:#{extensions}))["']/i, 1] || text[/(\S+\.(?:#{extensions}))\b/i, 1]
-        path = File.expand_path(path) if path
-        path if path && File.file?(path)
+        return unless path
+
+        bases = [root, MasterPaths.repo, Dir.pwd].compact.map { |base| File.expand_path(base.to_s) }.uniq
+        bases.each do |base|
+          candidate = File.expand_path(path, base)
+          return candidate if File.file?(candidate)
+        end
+        nil
       end
 
       def latest_selfie(subject)
@@ -138,7 +150,11 @@ module Master
       # default for the subject's pronoun.
       def video_prompt(text, subject, cfg)
         spoken = text[/\b(?:where|that|showing|so that|in which)\s+(.+?)[.!?]?\z/i, 1]
-        return spoken if spoken
+        if spoken
+          options = [cfg.fetch("draft"), cfg.fetch("final"), cfg.fetch("kling"), cfg.fetch("confirm")].join("|")
+          spoken = spoken.sub(/\s*,?\s*(?:#{options})\s*\z/i, "").strip
+          return spoken unless spoken.empty?
+        end
 
         format(cfg.fetch("video_prompt"), he: cfg.fetch("subjects").fetch(subject).fetch("pronoun"))
       end

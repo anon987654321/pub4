@@ -85,7 +85,14 @@ class SsrfGuardTest < Minitest::Test
 
     assert_equal "93.184.216.34", http.ipaddr
     assert_equal "example.com", http.address
+    assert_nil http.proxy_address, "an environment proxy must not bypass the pinned destination"
     assert http.use_ssl?
+    %w[240.0.0.1 192.88.99.1].each do |address|
+      assert Guard.blocked_ip?(IPAddr.new(address)), "#{address} must be blocked"
+    end
+    %w[64:ff9b::a00:1 64:ff9b:1::a00:1 2002:0a00:0001::1].each do |address|
+      assert Guard.blocked_ip?(IPAddr.new(address)), "#{address} must be blocked"
+    end
   end
 
   def test_web_fetch_connects_through_the_pinned_address

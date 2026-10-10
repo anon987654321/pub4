@@ -3,6 +3,7 @@
 require_relative "test_helper"
 require "shellwords"
 require "tmpdir"
+require "fileutils"
 require_relative "../lib/io/media_intent"
 
 # "generate me a selfie" has to reach STUDIO/lora/lora.rb with the right argv,
@@ -52,6 +53,24 @@ class LoraIntentTest < Minitest::Test
     _, calls = run_text("generate me a selfie, confirm")
 
     refute_includes calls.first[:argv], "--dry-run"
+  end
+
+  def test_negated_confirmation_does_not_enable_paid_work
+    _, calls = run_text("generate me a selfie, do not confirm this")
+
+    assert_includes calls.first[:argv], "--dry-run"
+  end
+
+  def test_relative_video_image_paths_resolve_from_the_requested_root
+    Dir.mktmpdir do |dir|
+      still = File.join(dir, "STUDIO/lora/ragnhild/out/07.jpg")
+      FileUtils.mkdir_p(File.dirname(still))
+      File.write(still, "x")
+      _, calls = run_text("make a video of ragnhild from STUDIO/lora/ragnhild/out/07.jpg", root: dir)
+      argv = calls.first[:argv]
+
+      assert_equal still, argv[argv.index("--image") + 1]
+    end
   end
 
   def test_a_named_person_and_a_count_are_honoured_and_capped
@@ -105,7 +124,7 @@ class LoraIntentTest < Minitest::Test
       argv = calls.first[:argv]
 
       assert_equal still, argv[argv.index("--image") + 1]
-      assert_equal "she turns and smiles, final", argv[argv.index("--prompt") + 1]
+      assert_equal "she turns and smiles", argv[argv.index("--prompt") + 1]
       assert_equal "final", argv[argv.index("--preset") + 1]
       assert_includes argv, "--dry-run"
     end

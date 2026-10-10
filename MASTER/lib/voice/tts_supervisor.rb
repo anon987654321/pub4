@@ -40,6 +40,7 @@ module Master
       # pid of the daemon this process last spawned for each pool slot, so a
       # replacement can retire its predecessor instead of orphaning it.
       @daemon_pids = {}
+      @daemon_waiters = {}
       @busy_strikes = {}
 
       module_function
@@ -148,8 +149,8 @@ module Master
           env, RbConfig.ruby, worker, "--daemon", path,
           chdir: root, out: log, err: log, **Master::Ops::ProcessSpawn.options
         )
-        Process.detach(pid)
         @daemon_pids[index] = pid
+        @daemon_waiters[index] = Process.detach(pid)
       end
 
       # A worker that is synthesising cannot answer a health ping, because it is
@@ -180,19 +181,30 @@ module Master
       # Only ever touches a pid we spawned ourselves — never sweeps by process
       # name, so a worker belonging to another MASTER process is left alone.
       def retire_daemon(index)
-        pid = @daemon_pids[index]
+        pid = @daemon_pids.delete(index)
         return if pid.nil?
 
-        @daemon_pids.delete(index)
+        waiter = @daemon_waiters.delete(index)
         Process.kill("TERM", pid)
-        # It is mid-synthesis often enough to be worth a moment; the caller
-        # retries, and a stuck one must not survive as a memory leak.
-        20.times do
-          break if Process.waitpid(pid, Process::WNOHANG)
-
-          sleep POLL_INTERVAL_S
+        # Process.detach owns waitpid in another thread. Calling waitpid here raises
+        # ECHILD and used to skip the KILL escalation exactly when a worker was wedged.
+        if waiter
+          unless waiter.join(2.0)
+            Process.kill("KILL", pid) rescue Errno::ESRCH
+            waiter.join(1.0)
+          end
+        else
+          deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 2.0
+          while process_alive?(pid) && Process.clock_gettime(Process::CLOCK_MONOTONIC) < deadline
+            sleep POLL_INTERVAL_S
+          end
+          Process.kill("KILL", pid) if process_alive?(pid)
+          deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 1.0
+          while process_alive?(pid) && Process.clock_gettime(Process::CLOCK_MONOTONIC) < deadline
+            sleep POLL_INTERVAL_S
+          end
         end
-        Process.kill("KILL", pid) if process_alive?(pid)
+        nil
       rescue Errno::ESRCH, Errno::ECHILD
         nil
       rescue StandardError => e

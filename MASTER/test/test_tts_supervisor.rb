@@ -4,6 +4,7 @@ require_relative "test_helper"
 require "fileutils"
 require "socket"
 require "tmpdir"
+require "rbconfig"
 
 # Pins the two halves of the 2026-08-01 worker leak: a replacement must retire
 # its predecessor, and a merely-busy worker must not be mistaken for a dead one.
@@ -21,7 +22,8 @@ class TestTtsSupervisor < Minitest::Test
   def setup
     @pids = Sup.instance_variable_get(:@daemon_pids)
     @strikes = Sup.instance_variable_get(:@busy_strikes)
-    @saved = [@pids.dup, @strikes.dup]
+    @waiters = Sup.instance_variable_get(:@daemon_waiters)
+    @saved = [@pids.dup, @strikes.dup, @waiters.dup]
     @spawned = []
   end
 
@@ -33,6 +35,7 @@ class TestTtsSupervisor < Minitest::Test
     end
     @pids.replace(@saved[0])
     @strikes.replace(@saved[1])
+    @waiters.replace(@saved[2])
   end
 
   def stub_daemon
@@ -70,6 +73,29 @@ class TestTtsSupervisor < Minitest::Test
 
     refute Sup.process_alive?(pid), "retire_daemon left the old worker running — this is the leak"
     assert_nil @pids[slot], "retired slot must not keep pointing at a dead pid"
+  end
+
+  def test_retire_daemon_escalates_when_a_detached_worker_ignores_term
+    reader, writer = IO.pipe
+    pid = Process.spawn(
+      RbConfig.ruby, "-e", 'Signal.trap("TERM", "IGNORE"); puts "ready"; STDOUT.flush; sleep 60',
+      out: writer, err: File::NULL,
+    )
+    writer.close
+    assert_equal "ready\n", reader.gets, "worker must install its TERM handler before retirement"
+    Process.detach(pid)
+    @spawned << pid
+    slot = 95
+    @pids[slot] = pid
+
+    started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+    Sup.retire_daemon(slot)
+
+    refute Sup.process_alive?(pid), "retire_daemon must KILL a detached worker that ignores TERM"
+    assert_operator Process.clock_gettime(Process::CLOCK_MONOTONIC) - started, :<, 4.0
+  ensure
+    reader&.close
+    writer&.close
   end
 
   def test_retire_daemon_is_safe_when_nothing_was_spawned
