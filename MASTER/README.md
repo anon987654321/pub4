@@ -1,367 +1,177 @@
 # MASTER
 
-<!-- Two films, both rebuilt by MASTER/bin/loops.
-
-     loop1 is the face reading this file aloud, in the voice data/voice.yml
-     names, with the ai.brgen.no wordmark in the corner — recorded by
-     MASTER/gates/face_loop_record.rb. loop2 is a shell booting bin/cli,
-     cropped to the boot message and the prompt, recorded by
-     MASTER/gates/shell_loop_record.rb. Its banner is read from
-     Master::CLI::BootBanner at record time rather than pasted, so changing the
-     banner changes the film.
-
-     Each mp4 carries the sound and each gif is the same take without it: GIF
-     has no audio track at all, which is why the pair exists rather than one
-     file. The frame is the gif because GitHub's sanitizer strips <video> —
-     measured 2026-08-30 — so the mp4 is what the frame links to rather than
-     what it embeds: clicking either opens the take with its audio.
-
-     An inline player with sound needs the mp4 uploaded through GitHub's web UI
-     and its user-attachments URL pasted here. That upload is the operator's; a
-     repo-relative <video src="loop1.mp4"> renders as nothing. -->
-<a href="loop1.mp4"><img src="loop1.gif" width="360" alt="The MASTER face, reading this page aloud — click for sound"></a>
-<a href="loop2.mp4"><img src="loop2.gif" width="360" alt="MASTER booting on vm23 — click for sound"></a>
-
-**MASTER is the first artificial intelligence written in pure Ruby that governs
-itself by law, not by hope — grown in Norway, to run its own mind on power drawn
-from inside a fjord mountain.** Most systems let a model act first and inspect the
-wreckage after. MASTER inverts it: the model only proposes, and nothing touches
-disk until a written constitution approves it.
-
-This is both the project and its business plan — the case for building it here,
-with [Innovasjon Norge](https://en.innovasjonnorge.no/article/startups).
-
-## Durable work and small-model training
-
-A conversational task is durable work: the Fold is only one bounded attempt. An unfinished goal lives in `.master/mission.json`, and TaskSteward re-enters another bounded attempt when the mission is due, including after a process restart. Human approval is a real blocking state, not a reason to spin.
-
-The model trajectory contract is provider-neutral. `MASTER_LLM_RECORD=1` captures verified model/tool trajectories; the same benchmark can score, filter and export behavior from Llama, Qwen, Gemma, GLM, Phi, GPT-OSS, Nemotron or another model without tying the contract to a vendor. Training happens outside MASTER; only verified behavior returns.
-
-Research is a capability, not a prose promise. MASTER has local knowledge retrieval, web search and guarded source adapters for public URLs, including GitHub, arXiv-to-ar5iv, CodePen, GitHub Gists and available YouTube captions. The evidence router can use those paths for current, niche and research-shaped questions before answering; fetched third-party content remains untrusted.
+**MASTER is an artificial intelligence written in pure Ruby that governs itself
+by law instead of by hope, grown in Norway and meant to run its own mind on
+clean power drawn from inside a fjord mountain.** Most systems let a model act
+first and inspect the wreckage afterward. MASTER inverts the order. The model
+only proposes, and nothing touches a file until a written constitution admits
+it.
 
 ## The idea
 
-Ninety-nine percent of AI is written in Python, chosen for its libraries rather
-than its clarity. MASTER is written in pure Ruby, and that is the whole point. A
-law governs a system only when a human can read both the law and the code it
-judges. Ruby reads like intention, so the constitution stays legible: one
-unbreakable law, the working rules under it, and executable laws that carry their
-own examples and recheck themselves at every boot. Break one and you get a refusal
-with a reason, never a quiet patch.
+Most AI is written in Python, chosen for its libraries more than its clarity.
+MASTER is written in Ruby, and that is the point. A law governs a system only
+when a human can read both the law and the code it judges, and Ruby reads like
+intention. The constitution therefore stays legible. One kernel, `data/soul.yml`,
+holds the unbreakable rule: preserve, then improve, and never break. Under it,
+`data/laws.yml` declares the working laws. Under that, the files in `law/` carry
+each law as executable code, with one example it must flag and one it must
+spare. A break gets a refusal with a reason, never a quiet patch.
+
+The kernel also forbids simulation. MASTER may not claim it read a file without
+showing the content and its hash, claim a change without the diff, or claim
+completion without the command output. A model, a network or a speech worker
+that is unavailable makes the run degraded or failed. It never counts as a
+success.
 
 The law is not the only thing written down. Every measure that matters carries a
-number recorded in the tree — the files each tree holds, the lines the runtime is
-allowed, the findings its own rules produce against its own source. A number may
-fall and never rise. An improvement locks the moment someone makes it, and a
-regression fails the build instead of waiting to be noticed. This is the
-unglamorous half of governing by law, and it is the half that makes the claim
-checkable: one command prints every measure beside the number it must respect.
+number recorded in the tree: files per tree, lines the runtime may use,
+findings its own rules produce against its own source. A number may fall and
+never rise. An improvement locks the moment someone makes it, and a regression
+fails the build. Run `bin/operator measure` and every measure prints beside the
+ceiling it must respect.
 
-It can run offline when a local model and the required local capabilities are
-available; it deploys to OpenBSD and judges a codebase without requiring a cloud
-control plane.
+MASTER can run offline when a local model is available. It deploys to OpenBSD
+and judges a codebase without a cloud control plane.
 
-## Bounded recursive improvement
+## The loop
 
-MASTER is deliberately built around a small self-improving loop: observe,
-understand, change, test, learn, and observe again. The unusual part is that
-the machinery doing the inspection is itself inside the system being inspected.
-`/fix` can therefore repair a scanner, rerun the repaired scanner, repair the next
-layer it exposes, verify the result, and re-enter the same loop. This is not a
-claim of an unbounded technological singularity; it is a bounded engineering
-analogue of recursive self-improvement.
+The whole control flow is a fold that fits on one screen. The model proposes an
+effect. The constitution judges it and returns one of four verdicts. Allow lets
+the effect through. Revise rewrites it for the rules that come after, and never
+leaves the constitution. Block refuses it with a reason, which the model sees
+and can answer by choosing another route. Request stops to ask a person, and no
+answer counts as no. An admitted effect that can change the tree runs against a
+checkpoint, and an error undoes it. To add an ability, add an effect handler. To
+add a constraint, add a rule. The spine does not grow.
 
-The boundaries are deliberate. Laws, tests, transaction checkpoints, evidence
-requirements, capability boundaries, time budgets, and explicit human-blocking
-states constrain what the loop may change. An unavailable model, network, TTS
-worker, or other optional capability is a degraded or failed state, never
-automatic evidence of success.
+## Fixing
 
-The important unit of progress is therefore not merely a code change. It is an
-improvement in the system's ability to make correct, testable, reversible code
-changes. Human work moves upward from editing individual lines toward setting
-governance, judging evidence, and resolving the cases where the machine cannot
-prove its own next step.
-## Ruby 4 runtime
+`/fix [path]` is the one repair operation. It observes the target, critiques it,
+repairs what the laws find, observes again and verifies, until the tree
+converges, stops improving, or reaches a state MASTER may not settle alone.
+`/review` and `/critique` read and argue through the same pipeline without
+writing. A fix run is judged on what it adds against its own starting baseline,
+so old debt it did not touch is not charged to it.
 
-MASTER pins Ruby 4.0.7. Ruby 4 adds experimental `Ruby::Box` isolation, and MASTER exposes it through `Master::Runtime::Box` only when the Ruby process was started with `RUBY_BOX=1`; the adapter never pretends an in-process environment change can enable a box later. ZJIT is an explicit `MASTER_JIT=zjit` experiment, while automatic startup still prefers YJIT. MASTER's Ractor compute path uses `Ractor::Port` on Ruby 4 and keeps the older transport only for Rubies that still provide it. The Box boundary is intended for `/fix` experiments: load a candidate implementation into an isolated box, test it there, compare observable behavior, then promote only through the ordinary law and verification gates.
+Before it writes anything, `/fix` reads the working repository again, checks the
+syntax of every Ruby file, and confirms that the boot chain and the live scanner
+graph load. A pass is transactional: either its validated changes land as one
+unit, or the files return to the state observed before the pass. A concurrent
+edit is detected rather than overwritten. The run is journaled before the first
+pass, so a crashed run is replayed on the next start, not skipped.
 
-## The business, inside a mountain
+An unfinished goal is a durable mission. The record lives in
+`.master/mission.json`, and each run of the loop is one bounded attempt against
+it. A supervisor holds a lease, renews it during long model calls and restarts
+after a failure with bounded backoff. After a crash, the next process reclaims
+the expired lease and resumes the objective. A mission carries one of four modes,
+observe, plan, repair or deploy, chosen from the task's risk before the first
+effect. The mode picks a starting set of capabilities. It never outranks the
+law.
 
-The world spends more on machine intelligence than on almost anything else, and
-nearly all of it burns electricity in large buildings. Global data-centre spend
-runs past 250 billion dollars a year, and the binding constraint has moved from
-chips to clean power. That is the opening. A sovereign AI on cheap green
-electricity is the better product and the cheaper one.
+For the web, source-clean is not enough. When the target is under `RAILS/`, a
+pass renders the pages in a real browser, measures their geometry, and hands the
+screenshot and the measurements to a council. The council's chosen repairs
+become ordinary findings, and the next pass renders again. If the browser or the
+council cannot run, the pass says it is inconclusive and does not claim
+success.
 
-The heart of it sits inside a mountain on a Norwegian fjord, the model
-[Lefdal Mine](https://www.lefdalmine.com) and Green Mountain already prove.
-Norway's grid is ~98% renewable hydropower, among the cheapest in Europe, and
-fjord water near 8 °C cools the hall for free — power-usage effectiveness toward
-1.1 against a global 1.5, a third less energy and carbon. Edge nodes in
-California and Malaysia reach the American and South-East Asian markets. This is
-green by geography rather than by offset, and it keeps six to ten Norwegian jobs,
-the IP, and the export revenue here.
+## Research and training
 
-## The ask
+MASTER can look things up. It retrieves from local knowledge, searches the web,
+and fetches public pages through guarded adapters, including GitHub, arXiv by
+way of ar5iv, and CodePen. `web_browse` reads rendered pages and writes
+nothing. Whatever it brings back is untrusted until checked. Setting
+`MASTER_LLM_RECORD=1` records verified model and tool trajectories in a form
+independent of any model vendor, so the same record can score or filter any
+small model. Training happens outside MASTER, and only verified behavior comes
+back.
 
-Roughly **six million kroner from Innovasjon Norge** — Commercialisation Phase 1
-near one million, a path to Phase 2 up to four, the startup loan up to two. Three
-million covers the software and three to four engineers over two years. Two
-million funds the fjord feasibility study and a first pilot compute pod, a few
-hundred kilowatts proving the economics on real Norwegian power. One million
-stands up a 3D-printing and robotics bench where the embryo takes its first body.
-The full mountain datacentre is later-stage project finance in the tens of
-millions of euros, the roadmap this pilot unlocks.
+## Runtime
 
-## The horizon
+MASTER pins Ruby 4.0.7. Isolated execution through `Ruby::Box` is available only
+when the process was started with `RUBY_BOX=1`, and the adapter in
+`Master::Runtime::Box` does not pretend otherwise. Startup prefers YJIT, and
+`MASTER_JIT=zjit` selects ZJIT as an experiment. The parallel compute path uses
+`Ractor::Port`.
 
-MASTER is built like an embryo: one small core of identity, memory, and safety
-that takes on whatever body a mission needs. Today that body is software on green
-power. The same design reaches, with enormous engineering between, toward machines
-that clear orbital debris or microplastic from the sea. The saucer was never the
-goal, only a distant phenotype. What we ask Norway to fund is the first rung —
-the mind, and the clean ground it stands on.
+Speech is data. `data/voice.yml` names the voices, the processing chain applied
+after synthesis, and the bed under the speech, and the web face reads the same
+file so that it sounds like the server. The design tokens live in
+`data/tokens.yml`, read through `Master.tokens`.
 
-## Under the hood
+## Entering
 
-Wake it with one line and it comes up like an old Unix machine, telling you what
-it is and what it runs on.
+`bin/master "<instruction>"` runs one instruction across the repository, and
+bare `bin/master` opens a session. `bin/cli` is the same runtime without the
+repository-wide setup. `bin/operator` is the operator's surface: it runs the
+gate ladder, reports status, lints files by the laws with no model, runs the
+tests that prove a change, manages worktrees and the production box, boots the
+Rails apps with `triangle`, and writes snapshots. `bin/operator snapshot` writes
+one snapshot per tree for another model to read, and `--mirror` writes the
+byte-exact pack. `bin/check` runs the checks for a profile, among operator,
+contributor, agent, web, ci and full.
 
-```console
-$ cd MASTER && bin/cli
+The `gates` directory holds the Rails and web gates, and `tools` holds the
+scanners, audits and censuses behind the operator. Plugins in `plugins` extend
+MASTER without joining its core: a Wi-Fi and Bluetooth observer, and two
+governed browsers for social accounts and travel bookings. Each plugin runs
+under a policy declared in `data/laws.yml`.
 
-MASTER 1.0.0 (CONSTITUTIONAL) #8021: Fri Sep  4 17:39:16 CEST 2026
-    mac@Mac.lan:/Users/mac/Documents/GitHub/pub4/MASTER
-real memory = 8589934592 (8192MB)
-available memory = 1813561344 (1729MB)
-mainbus0 at root: Mac14,2
-cpu0 at mainbus0: Apple M2
-kern0 at mainbus0: Darwin 25.5.0 arm64
-ruby0 at mainbus0: ruby 4.0.7 arm64-darwin25
-shell0 at mainbus0: zsh, user mac
-release0 at mainbus0: pub4 1.0.0\nsoul0 at mainbus0: constitution rev 2.8.0
-soul0: imports soul rules limits state patterns openbsd
-soul0: 3 orders active
-model0 at mainbus0: nemotron-3-super-120b-a12b
-model0: openrouter, 128.0k context
-mode0 at mainbus0: safe, visitor, cli
-mode0: no-autofix, loop none, owner none, posture balanced
-aesthetic0 at mode0: brutalist
-module0 at mainbus0: boot builder cli core design fix ground io ops pub4 rails review trace voice
-web0 at mainbus0: https://ai.brgen.no
-pledge0 at mainbus0: unavailable
-root on master0 (169570c86) boot 2652ms
+On a phone, MASTER detects Android under Termux and exposes only what the
+Termux:API app reports, so a missing permission is reported as unavailable and
+never simulated. Location, camera and microphone are explicit operations and
+never boot probes. `/android` pairs the phone with its owner, and `/ios` starts
+the browser lane without claiming native hardware access.
 
-master@Mac.lan ready
-boot0: constitution ok, agent ok, scan active
-model nemotron-3-super-120b-a12b, ctx 0/128.0k
-~/Documents/GitHub/pub4/MASTER main (discover) %
-```
+Production is one OpenBSD box. A long-lived MASTER process there owns Git sync
+and deployment, and `/fix` takes the same execution slot, so repair cannot
+overlap a deploy.
 
-Every web change has one extra proof: the page is rendered in a real browser and the screenshot plus measured DOM geometry go back through the same council and fix loop. Source-clean is not visual-clean; `/fix RAILS` and `/fix RAILS/master_web` continue until the rendered surface converges or the run honestly plateaus.
+## Why Norway
 
-**vm23 control plane.** Production has one authoritative checkout at `/home/dev/pub4`. Keep the single long-lived MASTER process in `screen`: `MASTER/bin/master --daemon`. The operator wrappers are idempotent: `MASTER/bin/operator vps master status --remote`, `start --remote`, `stop --remote`, and `restart --remote`. The daemon owns Git sync and deployment; `/fix` claims the same execution slot, so repair cannot overlap sync or deploy. Tree-scoped `/fix` runs may use separate lock namespaces; the same tree remains single-writer.
+The world spends heavily on machine intelligence, and nearly all of it burns
+electricity in large buildings. The limit has moved from chips to clean power.
+Norway's grid is almost entirely hydropower and among the cheapest in Europe,
+and cold fjord water cools a hall at no cost. A sovereign AI on that power is a
+better product than one on rented heat. MASTER is the first rung of that plan:
+the mind, and the clean ground it stands on. The project is also its own
+business plan, put to Innovasjon Norge. Its full funding figures sit with the
+operator, not in this file.
 
-A successful interactive `/fix` also closes by surfacing the last substantive user question preserved in the session. The question is printed as a dim `next0:` line and spoken once, so the repair loop returns naturally to the human's unfinished thread rather than inventing a new one.
+The design is an embryo. A small core of identity, memory and safety takes on
+whatever body a mission needs. Today that body is software. The same core could
+one day serve machines that clear debris from the sea, but that is a horizon and
+not a claim.
 
-**Phoenix architecture.** The implementation is disposable; the boundaries are not. Four
-regeneration boundaries are declared in the existing constitutional registry:
-MASTER, RAILS, OPENBSD and MASTER/tools as STUDIO's replaceable tool plane. Each
-names its entrypoint, owner, dependencies and proof command. `rake architecture`
-checks the graph and its live paths without creating another configuration source.
+## In code
 
-A meaningful architectural change carries five facts in `.master/phoenix.ndjson`:
-goal, constraints, alternatives, evidence and decision. Existing fix-loop feedback
-writes those facts through the same ledger, so the reasoning behind a change is
-recorded beside the resulting commit instead of being lost in chat history.
-Production adapters can publish `production:evidence` and the ledger records the
-observation against the same boundary graph. Nothing claims production evidence
-when no producer has supplied it.
-
-The Fowler-style regeneration test is concrete: preserve the boundary contract,
-regenerate the implementation inside it, then re-run its proof command.
-
-Every change a model wants runs through one loop. It proposes an effect, the
-constitution admits it, and only an admitted effect touches a file.
+Every change a model wants runs through the loop below, from `lib/core/fold.rb`.
+Read [AGENTS](AGENTS.md) for the contract every agent works under, and the
+repository's single backlog in [backlog](../TODO.md). Licensed MIT.
 
 ```ruby
 def run(goal)
   @memory.note(:goal, goal)
 
   @max_turns.times do |turn|
-    effect = @model.propose(@memory.context, verbs: @world.verbs)
+    effect = @model.propose(@memory.context, verbs: @world.verbs, scope: @memory.proof.scope)
 
     case @law.admit(effect, @memory)
-    in Verdict::Block(reason:, by:)       then emit(turn, effect, refused(reason, by))
-    in Verdict::Request(effect:, prompt:) then return done if (done = approve(turn, effect, prompt:))
-    in Verdict::Allow(effect: admitted)   then return done if (done = apply(turn, admitted))
+    in Verdict::Block(reason:, by:)
+      observation = Observation.no("refused by #{by}: #{reason}")
+      @memory.record(effect, observation)
+      emit(turn, effect, observation)
+    in Verdict::Request(effect: asked, prompt:, reason:, by:)
+      done = approve(turn, asked, prompt:, reason:, by:)
+      return done if done
+    in Verdict::Allow(effect: admitted)
+      done = apply(turn, admitted)
+      return done if done
     end
   end
+
+  Done.new(reason: :max_turns, turns: @max_turns, summary: nil)
 end
 ```
-
-Three verdicts cross the loop, only three. Block refuses with a reason. Request stops to ask a
-person. Allow applies the effect against a checkpoint it undoes the moment the
-effect errs. A fourth verdict, Revise, rewrites the effect inside admit and
-never reaches the loop. Everything past that is detail.
-
-**Executable constitution.** `data/laws.yml` is the declarative policy catalogue: rule-system policy, architecture, runtime constraints, design tokens, and compatibility adapters. `law/` is the executable constitutional layer: detectors, semantic questions, practice guidance, remedies, and worked examples.
-
-Universal principles stay universal even when their detectors are domain-specific. The transformation algebra is declared once in `data/laws.yml`: inventory and classify first, then defragment, decouple, flatten, merge, split, relocate, rename, reorder, remove, reflow and simplify; recommend instead of guessing when proof is insufficient, then prove preservation. Existing structural and rename sweeps are adapters to that order rather than separate transformation systems.
-
-Every law carries its lifecycle and proof surface in the executable Law object. Proposed/proven/observed states cannot silently become enforcement; active and trusted rules may enforce, while advisory rules remain doctrine. Deterministic rules prove bad/good polarity offline; semantic rules carry worked examples into model evaluation. The derived `Law::Index` is generated from the executable objects, and self-test validates both the law index and the transformation policy. Before-and-after SHA-256 evidence accompanies successful multi-file restructures; the existing tree-specific proof remains the authority for semantic, loader, reference, test, and rendered-output preservation.
-
-Domain-specific lexical and structural detectors remain in their existing `law/ruby.rb`, `law/javascript.rb`, `law/shell.rb`, `law/css.rb`, and `law/html.rb` homes until those consumers are migrated without losing deterministic coverage.
-
-**Reliability kernel.** MASTER treats completion and survivability as separate claims.
-
-The constitutional core is designed to keep a truthful runtime alive when optional
-services fail. `/fix` journals its run before the first pass, records each pass
-durably, marks crashes explicitly, and replays an interrupted pass on the next
-invocation instead of silently skipping work. Concurrent fix runs for different
-targets are refused rather than sharing recovery state.
-
-Long-running budgets use a monotonic clock, so an NTP step or manual wall-clock
-change cannot extend a fix beyond its elapsed-time budget. File content still uses
-the existing atomic-write and checkpoint mechanisms; the journal records
-lifecycle state, not a second copy of repository contents.
-
-**Durable missions.** A long-running `/fix` objective is not tied to one Ruby
-process. The mission record under `.master/mission.json` is the durable objective;
-each `FixLoop` execution is one bounded attempt. A supervisor acquires a lease,
-runs the attempt, records completion/blocking/deferment, and wakes again when the
-mission is due. File changes wake the same supervisor rather than launching a
-second fix loop. A crashed process therefore loses an attempt, not the mission: the next MASTER
-process reclaims the expired lease and resumes the objective. During long model
-runs the supervisor renews the lease, and an unexpected in-process supervisor
-failure is restarted with bounded backoff before work is resumed.
-The same lifecycle and recovery contract is executable in `Master::Fix::Mission` and `Master::Fix::Supervisor`; README is the human-facing reference.
-
-The intended invariant is simple: MASTER may be **healthy**, **degraded**, or
-**failed**, but an unavailable model, TTS worker, network path, or other optional
-capability must never be reported as successful execution.
-
-A `/fix` pass is transactional across its owned files: either its validated changes
-are delivered as one unit, or the transaction restores the exact observed pre-pass
-state. A concurrent edit is detected rather than overwritten. Successful delivery
-promotes the resulting Git commit to a durable known-good runtime; `/status runtime rollback`
-only operates on a clean checkout and returns to that recorded commit.
-
-Optional services are supervised with a bounded restart budget, and expensive model
-work is shed when measured CPU load, RSS, file-descriptor, thread, or disk pressure
-reaches critical limits. Deterministic work can therefore continue under pressure
-without turning a resource emergency into a restart storm.
-
-**Deep `/fix` trace.** Before `/fix` is allowed to mutate, it rereads the whole working repository, including tracked and non-ignored untracked files, hashes every file, syntax-checks every file MASTER classifies as Ruby, verifies the boot entrypoint chain, reloads boot-critical YAML, and checks the live scanner/fix-loop/council/bus graph. A trace failure stops the repair before the first write; the gate and re-observation remain the final proof after repairs.
-
-**Rendered convergence.** Source-clean is not improvement-clean. Every `/fix` pass starts with deterministic
-observation and, for `RAILS/` or `RAILS/master_web`, a real rendered observation. MASTER captures real browser surfaces through the existing
-GeometryProbe/CDP gates, gives the screenshot and measured geometry to the UI
-council, turns the council's selected repairs into ordinary fix-loop findings,
-and renders again on the next pass. Typography, hierarchy, spacing,
-alignment, density, composition and responsive behavior are therefore part of
-convergence, not a final human-afterthought.
-
-A source-clean non-web target is treated the same way conceptually: MASTER makes
-one anchored Council improvement pass looking for real simplification, naming,
-duplication, complexity, prose, accessibility and layout-adjacent micro-smells,
-then feeds selected repairs through the ordinary LawLoop. Unanchored taste,
-speculative redesign and hallucinated defects never become automatic fixes.
-
-The browser is evidence, not decoration: when the capture or visual council
-cannot run, the pass says INCONCLUSIVE rather than claiming DONE.
-
-**Android and Termux.** MASTER detects Android/Termux at boot and exposes a truthful device capability layer through `Master::Device`. When the official Termux:API app and the `termux-api` package are installed, the runtime can query battery, camera information, sensors, audio information and location, and can explicitly capture a camera photo or microphone recording. The hardware layer never claims permission or hardware access merely because a command exists; failures are reported as unavailable instead of simulated success.
-
-Install both the Termux:API application and the `termux-api` package before expecting Android hardware access. The official Termux project documents the add-on and its command-line package separately.
-
-**The phone's first run.** Install Termux and the Termux:API app from the same place, F-Droid being the usual one. In Termux, install git, ruby, build-essential and sqlite with pkg, clone pub4 into the home directory rather than shared storage, which cannot hold an executable, and run `bin/deps install` inside MASTER. The dependency manager installs Bundler at the lockfile's version, runs `bundle check`, installs the bundle when needed, and adds platform build packages only when a native extension actually needs them. The Gemfile links the sqlite3 gem against Termux's own SQLite, so a current checkout needs no manual bundle config line. Then run bin/master. If bundle install stopped partway, bin/master names the missing gems and the one line that finishes the job instead of booting into a stack trace. The first boot prints a short checklist in the boot's own voice, each piece in place and each missing one beside the command that fixes it. It writes a commented env file at ~/.config/master/env and never puts a key in it. With no key MASTER still answers through LLM7's keyless free tier; an OpenRouter or Gemini key uncommented in that file, or a local Ollama model, gives it a better one. Later boots print only what is still missing.
-
-****The phone becomes a resident companion from one explicit mobile onboarding command.** On Android, the boot starts a lightweight `Device::Agent` beside the face. It keeps Cognition and owner-scoped StandingOrders alive at a bounded cadence, but a fresh phone remains unpaired and therefore runs no owner-scoped orders. Say `/android [name]` to make the phone personal and begin the owner conversation. On iPhone or iPad, `/ios` starts the browser/PWA onboarding lane without claiming native iOS hardware access. The same subject is reused across face worker threads, so personal USER.md and MEMORY.md do not disappear when a turn runs on a new thread.
-
-For a resident process that survives closing the face, run `bundle exec ruby bin/device-agent` under a Termux process supervisor. `MASTER/tools/termux_install_agent_service.sh` installs the runit service path and a Termux:Boot hook. The launcher keeps the same MASTER boot, but disables the web server and TTS service in that process. The agent does not infer who owns the phone, grant Android permissions or bypass Tool::Profile / Tool::Domain boundaries.
-
-The phone sets itself up to listen.** The terminal face hears speech through whisper.cpp running on the device itself, in Norwegian or English without being told which. On a new Termux install MASTER notices what the face's ear lacks and fetches it in the background while the session opens: the Termux packages for the microphone and sound, whisper.cpp built from source until Termux packages it, and the small multilingual model a phone's memory can hold. Each step prints one line as the boot does, a finished step is never repeated, and a failed build waits hours before it tries again and gives up after five tries. Until whisper is in place the face listens through Termux's own speech recogniser, and `bin/doctor` says where the setup stands. A laptop needs only whisper.cpp and a model on disk; Gemini transcribes only where neither exists.
-
-From Termux:
-
-```console
-pkg install termux-api
-cd ~/path/to/pub4/MASTER
-bin/deps install
-bin/cli
-```
-
-`bin/deps check` reports the exact Ruby, Bundler and bundle state without changing anything. `bin/deps boot` runs the real `bin/cli --fast` path, including bundle activation, `require "master"` and `Master.boot`, and succeeds only when the CLI reaches its `/status` path. `bin/deps system` installs the platform build prerequisites explicitly; `bin/deps update [GEM ...]` is the explicit lockfile-changing operation.
-
-Then:
-
-```text
-/doctor device
-/doctor device battery
-/doctor device camera
-/doctor device sensors
-/doctor device audio
-/doctor device wifi
-/doctor device volume
-/doctor device torch on
-/doctor device location gps
-```
-
-Location is explicit rather than a boot probe because it is a user-sensitive capability. Camera and microphone operations are explicit too. Termux:API itself mediates Android permissions; for example, camera access can trigger the Android camera permission flow.
-
-**Android perception.** On Android/Termux, MASTER can continuously publish normalized device observations onto the same EventBus consumed by cognition. The stream includes battery, Wi-Fi/network state, the available sensor inventory, and one-shot readings for accelerometer, gyroscope, magnetometer, light, and proximity when those sensors exist. Events are namespaced as `device:battery`, `device:network`, `device:sensors`, `device:accelerometer`, `device:gyroscope`, `device:magnetometer`, `device:light`, and `device:proximity`.
-
-The perception loop is bounded and stoppable. It does not automatically activate the camera, microphone, or location. Those remain explicit operations. Set `MASTER_DEVICE=0` to disable Android perception for a process.
-
-**Whole-tree verification.** From `MASTER/`, `rake test:all_trees` discovers the repository's top-level trees, checks Ruby syntax, parses YAML and JSON, and runs every discovered Ruby test file under a tree's `test/` directory. It is a smoke-and-contract gate across MASTER, OPENBSD and RAILS; MASTER/tools is governed inside MASTER; it does not pretend that syntax or smoke tests replace application-specific integration tests.
-
-**vm23 operator path.** From the authoritative OpenBSD checkout at `/home/dev/pub4`, run as `dev` rather than under `doas`:
-
-```console
-cd /home/dev/pub4 && git pull --ff-only origin main && ruby -c MASTER/lib/md.rb && ruby -c MASTER/lib/pdf.rb && zsh OPENBSD/bin/vps-deploy master
-```
-
-The Markdown infrastructure is landed, including `Master::MD`, `Master::PDF`, the constitutional Markdown style, and safe formatting cleanup. A semantic Strunk-and-White rewrite of every Markdown file is not yet claimed complete; commands, contracts, evidence logs, and historical records must survive that pass unchanged in meaning.
-
-**Documents.** Markdown is the canonical document source. `Master::MD` applies the house normalization without touching fenced code, while `Master::PDF` is a thin derived-output adapter for an operator-supplied PDF engine. No document is authored twice: HTML and PDF are renderings of the same Markdown source.
-
-**Snapshots.** Run `/snapshot` to write `snapshot_MASTER.md`, `snapshot_RAILS.md`, `snapshot_OPENBSD.md` and `snapshot_STUDIO.md` at the pub4 root. Snapshots include meaningful text source only: dot files and directories, temporary/generated/dependency trees, and binary/media files are excluded. The command is deterministic apart from files that change while it runs. Root snapshots are share-packs and are deliberately visible beside the trees they describe.
-
-**Aegis and cognition.** Aegis remains a design horizon, not a scaffold. The buildable part today is the drift model: a pure function from entry position, sea state, current and elapsed time to a probable-position ellipse, testable against published search-and-rescue drift data. Marine sensing stays deferred until there is real hardware and a reader for every proposed sensor; placeholder sensing would violate anti-simulation.
-
-The cognition layer observes EventBus activity, scores surprise and salience, keeps a bounded working set, maintains bounded affect and self-model state, learns first-order event transitions, and periodically writes reflections to long-term memory. These are engineering proxies, not evidence of consciousness. The self-model records phenomenal consciousness as unknown. Perception stays in memory; tick! is the writer and publisher, persistence is bounded, and state lives under .master/cognition/state.yml.
-
-**Contract examples.** A good MASTER change reads the target and nearby tests first, changes one concern, keeps existing naming and error style, adds the smallest relevant proof, and reports exact checks run. A bad change renames registries merely because they look alike, moves a live directory without tracing readers, skips checks because the change is called documentation, or marks backlog work complete without evidence.
-
-A finished TODO entry is deleted rather than ticked; evidence belongs in the commit and remaining work stays in the repo-root TODO.md. A proposed refactor is refused when its consumer graph or evidence argues against it. Scanner findings distinguish real violations from false positives instead of editing code merely to make a pattern disappear.
-
-The command and file surface is deliberately smaller than the implementation. When a detail becomes operationally important, put it in executable configuration, a test, or the nearest living README rather than creating another Markdown file.
-
-Read [AGENTS](AGENTS.md), which routes into the governing law and closes on what
-MASTER refuses and why. Anything strange on purpose says so in a comment beside
-it, and the open work lives in [one backlog](../TODO.md). Licensed MIT.
-
-### Cognitive judgment
-
-MASTER's reasoning habits are executable, not a second constitution. Master::Cognition::Intelligence
-keeps observation, hypothesis, falsifier, measurement, causal trace, uncertainty, leverage,
-conceptual equivalence, scale and creative-preservation vocabulary in one place. /fix
-persists its bounded decision frames through the existing .master/memory.yml store, and
-the model receives a compact recent reasoning history on the next turn. This is deliberately
-small: better judgment should reduce machinery, not create another orchestration layer.
-
-### Cognitive judgment
-
-MASTER's reasoning habits are executable, not a second constitution. Master::Cognition::Intelligence keeps observation, hypothesis, falsifier, measurement, causal trace, uncertainty, leverage, counterfactuals, conceptual equivalence, model-difference synthesis, taste and fertility in one place. /fix persists bounded decision frames through the existing .master/memory.yml store, while explicit operator feedback becomes durable taste memory. The model receives compact reasoning and taste context without another memory database or orchestration layer.
-
-### Operator execution modes
-
-Every Fold starts with an explicit operator mode: `observe`, `plan`, `repair`, or
-`deploy`. The mode is derived from task risk and intent before the first effect,
-stored inside `.master/mission.json`, and visible in mission status and trace.
-
-The mode selects a starting capability profile; it never outranks `soul.yml`,
-`laws.yml`, executable law, the sandbox, evidence rules or verification. Interrupted
-work resumes under the recorded contract instead of silently widening authority.
