@@ -7,6 +7,12 @@ module Shared
   class ChangelogController < ::ApplicationController
     include ActionController::Rendering
 
+    # The shared engine is namespace-isolated, so a controller in it sees the
+    # engine's route set, while the application layout it renders links to the
+    # host's routes (new_session_path). Without the host's helpers in its views
+    # the layout raised NameError and the page was a 500.
+    helper Rails.application.routes.url_helpers
+
     allow_unauthenticated_access only: :show
 
     def show
