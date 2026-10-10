@@ -1,17 +1,18 @@
-<%# Payment action is rendered only when its provider is actually configured. %>
-<% if @listing.buyable? && authenticated? && Current.user != @listing.user %>
+<%# Checkout always targets the currently selected shop offer. %>
+<% buybar_listing = local_assigns[:listing] || @listing %>
+<% if buybar_listing.buyable? && authenticated? && Current.user.id != buybar_listing.user_id %>
   <div class="listing-buy-bar" role="group" aria-label="<%= t("marketplace.buy_actions") %>">
     <div class="listing-buy-bar-actions">
       <% dintero_ready = Marketplace::Payments::DinteroCheckout.configured? &&
-           Marketplace::Payments::DinteroCheckout.supported_listing?(@listing) %>
+           Marketplace::Payments::DinteroCheckout.supported_listing?(buybar_listing) %>
       <% if dintero_ready %>
         <%= button_to t("marketplace.buy_now_dintero"),
               checkout_path,
-              params: { provider: "dintero", listing_id: @listing.id },
+              params: { provider: "dintero", listing_id: buybar_listing.id },
               class: "btn btn-primary listing-buy-bar-cta",
               form: { data: { turbo: false } } %>
         <%= button_to t("marketplace.add_to_cart"),
-              listing_orders_path(@listing),
+              listing_orders_path(buybar_listing),
               params: { quantity: 1 },
               class: "btn btn-ghost listing-buy-bar-secondary" %>
       <% elsif Marketplace::Payments::VippsCheckout.configured? %>
