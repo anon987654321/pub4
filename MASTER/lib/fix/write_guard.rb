@@ -30,7 +30,9 @@ module Master
           digest = ::Law::Contract.digest
           return @default if @default && @default_digest == digest
 
-          @default = new(laws: Master::Fix::Scanner.build(root: Master::ROOT).laws)
+          scanner = Master::Fix::Scanner.build(root: Master::ROOT)
+          laws = scanner.respond_to?(:laws) ? scanner.laws : scanner.rules
+          @default = new(laws:)
           @default_digest = digest
           @default
         end
