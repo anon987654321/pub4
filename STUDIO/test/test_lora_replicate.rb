@@ -5,6 +5,7 @@ require "tmpdir"
 require "open3"
 require_relative "../replicate/client"
 require_relative "../lora/_toolkit/preflight"
+require_relative "../lora/_toolkit/video"
 
 # The paid half of lora, with the network cut out: what the client sends, how it
 # waits, and what preflight refuses before a run is billed.
@@ -178,5 +179,40 @@ class TestLoraReplicate < Minitest::Test
       assert_empty Preflight.unsafe_tar_entries(good)
       refute_empty Preflight.unsafe_tar_entries(bad)
     end
+  end
+  # --- video presets --------------------------------------------------------
+
+  def test_every_preset_pins_a_version_and_names_its_first_frame_input
+    Video.presets.each do |name, spec|
+      assert_match(/\A[0-9a-f]{64}\z/, spec["version"], name)
+      assert_includes Video.model_id(spec), ":#{spec['version']}"
+      input = Video.build_input(spec, prompt: "p", image_url: "u")
+
+      assert_equal "u", input[spec["image_key"]], name
+      assert_equal "p", input["prompt"], name
+    end
+  end
+
+  def test_a_requested_length_becomes_the_nearest_the_model_offers
+    veo = Video.preset("final")
+    kling = Video.preset("kling")
+    wan = Video.preset("draft")
+
+    assert_equal 6, Video.seconds_input(veo, 5.4)["duration"]
+    assert_equal 8, Video.seconds_input(veo, 30)["duration"]
+    assert_equal 5, Video.seconds_input(kling, 7)["duration"]
+    assert_equal({ "num_frames" => 81, "frames_per_second" => 16 }, Video.seconds_input(wan, 1))
+    assert_equal 121, Video.seconds_input(wan, 60)["num_frames"]
+    assert_empty Video.seconds_input(veo, nil)
+  end
+
+  def test_a_model_without_a_seed_is_sent_none_and_audio_needs_a_switch
+    kling = Video.preset("kling")
+
+    refute_includes Video.build_input(kling, prompt: "p", image_url: "u", seed: 7).keys, "seed"
+    assert_includes Video.build_input(Video.preset("final"), prompt: "p", image_url: "u", seed: 7).keys, "seed"
+    assert_raises(ArgumentError) { Video.build_input(kling, prompt: "p", image_url: "u", audio: true) }
+    assert_equal true, Video.build_input(Video.preset("final"), prompt: "p", image_url: "u", audio: true)["generate_audio"]
+    assert_raises(ArgumentError) { Video.preset("nope") }
   end
 end

@@ -9,7 +9,7 @@ skip_postpro=0
 usage() {
   cat <<EOF
 Usage: lora [--check | --prepare | --train | --train-kaggle | --train-colab | --train-replicate
-             | --generate | --generate-replicate | --postpro | --all]
+             | --generate | --generate-replicate | --video-replicate | --postpro | --all]
 
   --check            HF FLUX gate, toolkit, dataset
   --prepare          Rank sources/, write dataset/ with stub captions (report only without --write)
@@ -20,6 +20,7 @@ Usage: lora [--check | --prepare | --train | --train-kaggle | --train-colab | --
   --generate         Sample from latest checkpoint, then optional postpro
   --generate-replicate  Render a prompt set on the Replicate-trained LoRA
                      (--set selfies|scenarios|distance|shoots, --only, --dry-run)
+  --video-replicate  One approved still becomes one short clip (--image, --prompt, --preset draft|final|kling)
   --postpro          Grade generated samples in out/ (POSTPRO_PRESET in subject.env, portrait unset)
   --all              check, generate, postpro (default) -- not train; needs
                      weights/$MODEL/*.safetensors from a train lane first
@@ -75,6 +76,7 @@ while [ $# -gt 0 ]; do
     --train-colab) mode="train-colab"; shift; break ;;
     --train-replicate) mode="train-replicate"; shift; break ;;
     --generate-replicate) mode="generate-replicate"; shift; break ;;
+    --video-replicate) mode="video-replicate"; shift; break ;;
     -h|--help) usage; exit 0 ;;
     *) echo "warn: unknown option $1" >&2; usage >&2; exit 1 ;;
   esac
@@ -169,6 +171,9 @@ case "$mode" in
     ;;
   generate-replicate)
     ruby "$SCRIPT_DIR/run_generate_replicate.rb" "$@"
+    ;;
+  video-replicate)
+    ruby "$SCRIPT_DIR/run_video_replicate.rb" "$@"
     ;;
   generate)
     run_gate_check

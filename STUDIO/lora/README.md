@@ -80,9 +80,22 @@ and graded by postpro beside the ungraded render. Set a spend ceiling with
 reaches it. Render Ragnhild at full strength and leave her age out of the
 prompt.
 
-The video stage is not built. A clip needs an image-to-video model chosen and
-its input schema read first, and the first frame should be an approved selfie.
-Until then the tool ends at the graded stills.
+Fifth comes the clip. `--video-replicate` takes one approved still as the first
+frame, so the trained LoRA keeps the face and the video model only moves it. Run
+`--dry-run` first to see the model, its pinned version and the exact input. Then
+render with `--preset draft`, a cheap 480p look at motion and framing from Wan
+2.2, to settle the prompt and the seed. When the motion is right, render again
+with `--preset final`, Veo 3.1 Fast at 720p, or with `--preset kling` for a
+second opinion. Pass `--seconds N` and the model's nearest offered length is
+used, since Veo allows 4, 6 or 8 and Kling 5 or 10. Veo takes only 16:9 or 9:16,
+so a 3:4 still is reframed to 9:16, and generated sound stays off unless you
+pass `--audio`. Presets, versions and quirks live in
+`_toolkit/video_models.yml`; the input keys are checked against the model's live
+schema before anything is spent, and each clip's billed seconds join the same
+ledger as the stills. A clip with two people needs a first frame with both in
+it, because the two LoRAs do not combine in one render. Stills of a scene
+without a trained face, such as composition or location tests, go through
+`STUDIO/replicate/replicate.rb`, which already carries the other image models.
 
 ## Canonical contract
 
@@ -454,7 +467,7 @@ New automation should reference STUDIO/lora, never the retired MASTER/tools/lora
 
 ## Commands
 
-One entry point per subject, and `./lora --help` lists the rest. The first line reads files only, and the prepare line writes only with `--write`. The second is the free local path. The third is the Replicate path in the order of the section above: a dry run, the paid training, the pickup of a long run, a cheap draft pass, and the finals.
+One entry point per subject, and `./lora --help` lists the rest. The first line reads files only, and the prepare line writes only with `--write`. The second is the free local path. The third is the Replicate path in the order of the section above: a dry run, the paid training, the pickup of a long run, a cheap draft pass, the finals, and the clip.
 
 ```sh
 STUDIO/lora/lora.rb --status
@@ -469,4 +482,6 @@ STUDIO/lora/ragnhild/lora --train-replicate --resume TRAINING_ID
 STUDIO/lora/ragnhild/lora --generate-replicate --set selfies --draft
 STUDIO/lora/ragnhild/lora --generate-replicate --set selfies --max-seconds 600
 STUDIO/lora/ragnhild/lora --generate-replicate --set distance --dry-run
+STUDIO/lora/ragnhild/lora --video-replicate --image out/selfies/07.jpg --prompt "she turns and smiles" --dry-run
+STUDIO/lora/ragnhild/lora --video-replicate --image out/selfies/07.jpg --prompt "she turns and smiles" --preset draft
 ```

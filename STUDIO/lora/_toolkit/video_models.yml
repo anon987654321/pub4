@@ -1,0 +1,53 @@
+# Image-to-video presets for run_video_replicate.rb.
+#
+# Each preset names a model pinned to the version whose input schema was read
+# live on 2026-10-10, so a later Replicate release cannot change what a clip
+# costs or looks like; bump `version` after reading the new schema. The script
+# also checks every input key against the model's live schema before it spends.
+#
+#   model      owner/name on Replicate
+#   version    the pinned version id
+#   image_key  the input that takes the first frame (it differs per model)
+#   input      defaults sent with every run
+#   seconds    how a --seconds request becomes input: `key` and the `allowed`
+#              values (the nearest is used), or `frames` for a model that counts
+#              frames at `fps`, clamped to min..max
+#   audio_key  the switch for generated sound, where the model has one
+#   seed       false where the model takes no seed (Kling), so none is sent
+
+draft:
+  note: Cheap look at motion and framing; 480p, no sound. Pick seeds and prompts here.
+  model: wan-video/wan-2.2-i2v-fast
+  version: 4eaf2b01d3bf70d8a2e00b219efeb7cb415855ad18b7dacdc4cae664a73a6eea
+  image_key: image
+  input:
+    resolution: 480p
+    go_fast: true
+  seconds:
+    frames: { key: num_frames, fps_key: frames_per_second, fps: 16, min: 81, max: 121 }
+
+final:
+  note: Veo 3.1 Fast. Takes 16:9 or 9:16 only, so a 3:4 selfie is reframed to 9:16.
+  model: google/veo-3.1-fast
+  version: ba987aceebef53bebfede32973f842fe3aa2301bf2585878181e7a7677052e36
+  image_key: image
+  input:
+    resolution: 720p
+    aspect_ratio: "9:16"
+    generate_audio: false
+  seconds:
+    key: duration
+    allowed: [4, 6, 8]
+  audio_key: generate_audio
+
+kling:
+  note: Kling 2.1 standard, an alternative second opinion to final.
+  model: kwaivgi/kling-v2.1
+  version: daad218feb714b03e2a1ac445986aebb9d05243cd00da2af17be2e4049f48f69
+  image_key: start_image
+  seed: false
+  input:
+    mode: standard
+  seconds:
+    key: duration
+    allowed: [5, 10]
