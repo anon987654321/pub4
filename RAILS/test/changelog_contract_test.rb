@@ -15,6 +15,20 @@ class ChangelogContractTest < Minitest::Test
     end
   end
 
+  # The controller loads the file with safe_load, which refuses any class it was
+  # not told about. The entries' unquoted `date:` values are Dates, so the file
+  # only loads where the controller permits Date; with none permitted /changelog
+  # raised on every request.
+  def test_the_changelog_loads_with_the_classes_its_controller_permits
+    require "yaml"
+    require "date"
+    controller = File.read(File.join(ROOT, "__shared/app/controllers/shared/changelog_controller.rb"))
+    assert_includes controller, "permitted_classes: [Date]"
+
+    data = YAML.safe_load_file(File.join(ROOT, "__shared/config/changelog.yml"), permitted_classes: [Date], aliases: false)
+    assert_kind_of Date, data.fetch("entries").first.fetch("date")
+  end
+
   def test_footer_publishes_build_identity
     footer = File.read(File.join(ROOT, "__shared/app/views/shared/_site_legal_footer.html.erb"))
     assert_includes footer, "app_version"
