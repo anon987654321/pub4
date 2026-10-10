@@ -9,7 +9,24 @@ const FACE_FUTURE_JAW_SOFTENING = futureFeatureScale('jaw_softening', 0.96);
 const FACE_FUTURE_BROW = futureFeatureScale('brow_scale', 0.90);
 const FACE_FUTURE_NOSE = futureFeatureScale('nasal_projection', futureFeatureScale('nose_scale', 0.94));
 
+// The future-face scales are JS numbers read from the contract; the vertex shader below uses the
+// same names, so they are declared in GLSL from those values. Undeclared, the shader failed to
+// compile ("FACE_FUTURE_CRANIAL_HEIGHT: undeclared identifier") and the canvas drew nothing.
+const FACE_GLSL_FLOAT = (value) => (Number.isFinite(Number(value)) ? Number(value) : 0).toFixed(5);
+
 const VERT_SHADER = `
+const float FACE_FUTURE_CRANIAL_HEIGHT = ${FACE_GLSL_FLOAT(FACE_FUTURE_CRANIAL_HEIGHT)};
+const float FACE_FUTURE_CRANIAL_WIDTH = ${FACE_GLSL_FLOAT(FACE_FUTURE_CRANIAL_WIDTH)};
+const float FACE_FUTURE_UPPER_FACE = ${FACE_GLSL_FLOAT(FACE_FUTURE_UPPER_FACE)};
+const float FACE_FUTURE_LOWER_FACE = ${FACE_GLSL_FLOAT(FACE_FUTURE_LOWER_FACE)};
+const float FACE_FUTURE_VERTICALIZATION = ${FACE_GLSL_FLOAT(FACE_FUTURE_VERTICALIZATION)};
+const float FACE_FUTURE_MASTICATORY = ${FACE_GLSL_FLOAT(FACE_FUTURE_MASTICATORY)};
+const float FACE_FUTURE_FACIAL_PROJECTION = ${FACE_GLSL_FLOAT(FACE_FUTURE_FACIAL_PROJECTION)};
+const float FACE_FUTURE_JAW_SOFTENING = ${FACE_GLSL_FLOAT(FACE_FUTURE_JAW_SOFTENING)};
+const float FACE_FUTURE_BROW = ${FACE_GLSL_FLOAT(FACE_FUTURE_BROW)};
+const float FACE_FUTURE_NOSE = ${FACE_GLSL_FLOAT(FACE_FUTURE_NOSE)};
+const float FACE_FUTURE_SIDE_BIAS_LEFT = ${FACE_GLSL_FLOAT(futureSideBias(-1))};
+const float FACE_FUTURE_SIDE_BIAS_RIGHT = ${FACE_GLSL_FLOAT(futureSideBias(1))};
 vec3 mod289v3(vec3 x){return x-floor(x*(1./289.))*289.;}
 vec4 mod289v4(vec4 x){return x-floor(x*(1./289.))*289.;}
 vec4 permute4(vec4 x){return mod289v4(((x*34.)+1.)*x);}
@@ -103,7 +120,7 @@ void main(){
   p.x *= mix(FACE_FUTURE_LOWER_FACE, FACE_FUTURE_UPPER_FACE * FACE_FUTURE_CRANIAL_WIDTH, faceBand);
   float jawBand = smoothstep(-0.80, -0.08, -position.y);
   p.z *= mix(FACE_FUTURE_FACIAL_PROJECTION, FACE_FUTURE_FACIAL_PROJECTION * FACE_FUTURE_MASTICATORY, jawBand);
-  p.x += futureSideBias(position.x < 0.0 ? -1.0 : 1.0) * 0.25;
+  p.x += (position.x < 0.0 ? FACE_FUTURE_SIDE_BIAS_LEFT : FACE_FUTURE_SIDE_BIAS_RIGHT) * 0.25;
   p.z += cheekRgn * (FACE_FUTURE_NOSE - 1.0) * 0.018;
   p.y -= jawRgn * (1.0 - FACE_FUTURE_JAW_SOFTENING) * 0.018;
   p.y += browRgn * (1.0 - FACE_FUTURE_BROW) * 0.012;
