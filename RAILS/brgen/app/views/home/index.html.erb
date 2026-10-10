@@ -42,6 +42,22 @@
   <% end %>
 </nav>
 
+<% if @neighborhoods.present? %>
+  <form class="home-neighborhood-filter" action="<%= root_path %>" method="get">
+    <% if params[:feed].present? %><input type="hidden" name="feed" value="<%= params[:feed] %>"><% end %>
+    <% if params[:sort].present? %><input type="hidden" name="sort" value="<%= params[:sort] %>"><% end %>
+    <% if params[:view].present? %><input type="hidden" name="view" value="<%= params[:view] %>"><% end %>
+    <label for="home-neighborhood"><%= t("home.neighborhood_filter", default: "Neighbourhood") %></label>
+    <select id="home-neighborhood" name="neighborhood_id">
+      <option value=""><%= t("home.citywide", default: "All of %{city}", city: city_name) %></option>
+      <% @neighborhoods.each do |neighborhood| %>
+        <option value="<%= neighborhood.id %>" <%= "selected" if @neighborhood_id.to_s == neighborhood.id.to_s %>><%= neighborhood.name %></option>
+      <% end %>
+    </select>
+    <button type="submit" class="btn btn-ghost btn-sm"><%= t("actions.apply", default: "Apply") %></button>
+  </form>
+<% end %>
+
 <section id="feed-panel" aria-label="<%= t("home.local_posts") %>" data-visitor-orientation
          data-controller="feed-updates"
          data-feed-updates-one-value="<%= t("home.new_posts.one") %>"
