@@ -10,6 +10,13 @@ module Master
       # %r{} because the path class holds a literal slash.
       REPOSITORY = %r{\b(?:repo(?:sitory)?|codebase|code|file|files|module|class|method|gemfile|rails|master|git|commit|branch|diff|source)\b|(?:^|\s)[\w./-]+\.(?:rb|yml|yaml|json|md|js|mjs|ts|tsx|erb|css|scss|sh|zsh)\b}i
       BROWSER = /\b(?:browser|web\s+page|navigate|click|log\s+in|login|open\s+(?:the\s+)?(?:site|website|page)|inspect\s+(?:the\s+)?(?:site|page|account)|onlyfans|fetlife|snapchat\s+account|telegram\s+account|whatsapp\s+account)\b/i
+      # An account on one of these is the governed social_browser's work; any other site is a
+      # page to render. Kept apart so a shopping request never runs a social-account preflight.
+      SOCIAL_ACCOUNTS = /\b(?:onlyfans|fetlife|snapchat\s+account|telegram\s+account|whatsapp\s+account)\b/i
+      # A named site (a URL, or a bare domain) plus something to do there. File names such as
+      # foo.rb or notes.md do not end in a registrable TLD, so they stay repository questions.
+      SITE = %r{\bhttps?://\S+|\bwww\.\S+|\b[a-z0-9][a-z0-9-]*\.(?:com|net|org|io|co|app|shop|store|no|se|dk|de|uk|fr|nl|eu)\b}i
+      SITE_INTENT = /\b(?:find|look(?:ing)?|search|browse|check|open|see|show|get|buy|price|prices|cheap(?:est)?|compare|reviews?|listings?|products?|deals?|order|what'?s\s+on)\b/i
       DEVICE = /\b(?:android|termux|wifi|wi-?fi|bluetooth|sensor|camera|microphone|battery|torch|location|device)\b/i
       CONVERSATION = /\A(?:hi|hello|hey|thanks?|thank\s+you|good\s+(?:morning|evening|night)|how\s+are\s+you)[!?.,\s]*\z/i
 
@@ -20,6 +27,7 @@ module Master
       def classify(text)
         value = text.to_s.strip
         return :conversation if value.match?(CONVERSATION)
+        return :browser if value.match?(SITE) && value.match?(SITE_INTENT)
         return :web_current if value.match?(CURRENT)
         return :deep_research if value.match?(RESEARCH)
         return :browser if value.match?(BROWSER)
@@ -43,7 +51,12 @@ module Master
         when :repository
           "Evidence rule: this turn concerns the repository. Read/search the actual files before making claims about its current state."
         when :browser
-          "Capability rule: this turn concerns browser interaction. Use the governed browser capability when an actual page interaction is required; WebFetch is not a substitute for clicking or session state."
+          "Capability rule: this turn concerns a website. You do have a browser. For a page you only need to read " \
+          "(a shop, a listing, a JavaScript site), call WebBrowse with the page URL; build the site's own search URL " \
+          "yourself, and use WebFetch only for static pages, because a script-built page comes back from it as an " \
+          "empty shell. Try WebBrowse before saying a site cannot be read; if the page shows a captcha, a login wall " \
+          "or nothing useful, say exactly what it returned. Clicking, logging in and session state belong to the " \
+          "governed browser plugins (social_browser, travel_browser)."
         when :device
           "Capability rule: this turn concerns local hardware. Use the governed device or wireless capability and report unavailable permissions or backends plainly."
         else

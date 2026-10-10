@@ -259,7 +259,11 @@ end
       end
 
       def evidence_preflight(message, mode)
-        return capability_preflight("social_browser", "status") if mode == :browser
+        if mode == :browser
+          return unless message.to_s.match?(Ground::EvidenceRouter::SOCIAL_ACCOUNTS)
+
+          return capability_preflight("social_browser", "status")
+        end
         return capability_preflight("air_superiority", "scan") if mode == :device
         return if mode == :repository || mode == :conversation
 
