@@ -55,7 +55,7 @@ module Master
         [err, status]
       end
 
-      def synthesize_edge_socket(text:, voice_name:, style_config:, audio_path:, on_chunk: nil)
+      def synthesize_edge_socket(text:, voice_name:, style_config:, audio_path:, on_chunk: nil, retried: false)
         sock_path = resolve_socket_path
         return unless sock_path
 
@@ -66,6 +66,13 @@ module Master
 
         warn_tts("edge socket produced empty audio")
         cleanup_failed_audio(audio_path)
+        # A worker can answer its health ping and still synthesise nothing; it then wins
+        # every other round-robin turn, and each of its turns fell through to the older
+        # voices. Retire it and ask the next worker once before giving up.
+        TtsSupervisor.retire_socket(sock_path)
+        return if retried
+
+        synthesize_edge_socket(text:, voice_name:, style_config:, audio_path:, on_chunk:, retried: true)
       rescue Timeout::Error
         warn_tts("edge socket timed out after #{timeout}s")
         cleanup_failed_audio(audio_path)
@@ -148,7 +155,13 @@ module Master
 
         req = build_socket_request(voice_name, style_config, text)
         target = StreamTarget.build(io:, stale_test:)
-        stream_socket_to_io(sock_path, req, worker_timeout(text.to_s.length), target)
+        result = stream_socket_to_io(sock_path, req, worker_timeout(text.to_s.length), target)
+        return result unless result.bytes.zero?
+
+        # Zero audio bytes is a failure however clean the end frame was: reporting it ok
+        # let the player run silent and counted the utterance as spoken.
+        TtsSupervisor.retire_socket(sock_path)
+        StreamResult.new(ok: false, bytes: 0)
       rescue Timeout::Error, StandardError => e
         warn_tts("edge stream error: #{e.class}: #{e.message}")
         StreamResult.new(ok: false, bytes: 0)

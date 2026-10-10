@@ -76,6 +76,21 @@ module Master
         path
       end
 
+      # Takes one pool worker out of rotation by its socket path. Its pid is only known
+      # to the process that spawned it, so the daemon is also found by its command line;
+      # the next next_socket call respawns the slot.
+      def retire_socket(path, root: Master::ROOT)
+        index = path.to_s[/tts-(\d+)\.sock\z/, 1].to_i
+        with_daemon_lock(root, index:) do
+          retire_daemon(index)
+          out, status = Master::Io::Exec.capture2("pgrep", "-f", "tts-worker --daemon #{path}")
+          out.split.map(&:to_i).each { |pid| Process.kill("TERM", pid) rescue nil } if status.success?
+          File.unlink(path) if File.exist?(path)
+        end
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "TtsSupervisor.retire_socket")
+      end
+
       def ensure_pool_worker!(root:, index:)
         path = socket_path(root, index:)
         if socket_alive?(path, root:)
