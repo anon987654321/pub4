@@ -2,6 +2,7 @@
 
 require "minitest/autorun"
 require "yaml"
+require "date"
 require "open3"
 
 class StaticSyntaxSpec < Minitest::Test

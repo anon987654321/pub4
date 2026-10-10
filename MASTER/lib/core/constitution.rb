@@ -44,8 +44,11 @@ module Master::Core
     # from the constitutional one, which is the path that actually runs unattended.
     def self.load(data_dir:, verify: nil, sandbox: nil, capabilities: Capabilities.for(:fix))
       rules_data = YAML.safe_load_file(File.join(data_dir, "laws.yml"), aliases: true)
-      sacred_paths = Paths.sacred_paths(root: File.dirname(data_dir))
-      rules = default_rules(rules_data, sacred_paths:)
+      master_root = File.expand_path(File.dirname(data_dir))
+      repo_root = File.basename(master_root) == "MASTER" ? File.dirname(master_root) : master_root
+      roots = [master_root, repo_root].uniq.freeze
+      sacred_paths = Paths.sacred_paths(root: master_root)
+      rules = default_rules(rules_data, sacred_paths:, roots:)
       rules += [scan_clean_rule(verify)] if verify
       rules += [sandboxed_exec_rule(sandbox)] if sandbox
       new(laws: rules, capabilities:)
@@ -60,7 +63,15 @@ module Master::Core
 
     # Fold the effect through every applicable rule. Total: returns Allow or Block.
     def admit(effect, memory)
-      unless @capabilities.allow?(effect.capability)
+      allowed = begin
+        @capabilities.allow?(effect.capability)
+      rescue StandardError => e
+        return Verdict::Block.new(
+          reason: "capability evaluation failed: #{e.class}",
+          by: :capability_evaluator_error,
+        )
+      end
+      unless allowed
         return Verdict::Block.new(
           reason: "capability refused: #{effect.capability}",
           by: :capability,
@@ -70,13 +81,30 @@ module Master::Core
       @laws.each do |law|
         next unless law.watches?(effect.verb)
 
-        case law.judge.call(effect, memory)
+        answer = begin
+          law.judge.call(effect, memory)
+        rescue StandardError => e
+          return Verdict::Block.new(
+            reason: "law evaluation failed: #{law.id} (#{e.class})",
+            by: :law_evaluator_error,
+          )
+        end
+
+        case answer
         in Verdict::Block => b then return b
         # Returned as it stands rather than carried on, because the rules after
         # this one would judge an effect a person has not agreed to yet.
         in Verdict::Request => r then return r
         in Verdict::Revise(effect: revised) then effect = revised
-        else next
+        else
+          # nil is the established "no finding" value for individual predicates.
+          # Any other unrecognized return is a broken evaluator, not approval.
+          next if answer.nil?
+
+          return Verdict::Block.new(
+            reason: "law evaluator returned invalid verdict: #{law.id} (#{answer.class})",
+            by: :law_evaluator_error,
+          )
         end
       end
       Verdict::Allow.new(effect:)
@@ -84,13 +112,13 @@ module Master::Core
 
     # The rules. Each is a few lines because the dangerous thing is expressed as
     # a predicate, not prose. Safety rules Block; hygiene rules Revise.
-    def self.default_rules(data, sacred_paths: [])
+    def self.default_rules(data, sacred_paths: [], roots: [])
       veto = (data["veto_patterns"] || {}).filter_map { |n, s| [n, safe_rx(s["detect"])] }.to_h
       immutable = Array(sacred_paths).map(&:to_s).freeze
 
       [
         no_secret_rule(veto),
-        immutable_paths_rule(immutable),
+        immutable_paths_rule(immutable, roots:),
         ruby_parses_rule,
         structured_exec_rule,
         safe_exec_rule(veto),
@@ -111,36 +139,60 @@ module Master::Core
     # catalogue remains descriptive and must not become a second write-protection list.
     # The agent may not rewrite the constitution it is judged by or the spine
     # that folds its effects. A write, or a git stage of such a path, is blocked.
-    def self.immutable_paths_rule(immutable)
+    def self.immutable_paths_rule(immutable, roots: [])
       Law.new(id: :immutable_paths, verbs: %i[write git], judge: lambda { |effect, _memory|
         targets = effect.verb == :write ? [effect.args[:path]] : Array(effect.args[:paths])
-        hit = targets.compact.map(&:to_s).find { |path| immutable_hit?(path, immutable) }
+        hit = targets.compact.map(&:to_s).find { |path| immutable_hit?(path, immutable, roots:) }
         next nil unless hit
 
         Verdict::Block.new(reason: "immutable path: #{hit}", by: :immutable_paths)
       })
     end
 
-    # Prefix match against the immutable list; a trailing "/" entry guards a
-    # whole subtree, a bare entry guards that exact path.
-    def self.immutable_hit?(path, immutable)
-      # Lexical match used to miss data/./soul.yml and data/foo/../soul.yml
-      # while World#within expands those to the real file and writes it.
-      norm = expand_guard_path(path)
+    # Compare workspace-relative paths, irrespective of whether an effect names
+    # a file relative to MASTER/, relative to the repository root, or absolutely.
+    # Roots come from Constitution.load's data_dir, not process working-directory
+    # assumptions. Expansion also collapses "." and ".." segments.
+    def self.immutable_hit?(path, immutable, roots: [])
+      targets = normalized_path_variants(path, roots:)
       immutable.any? do |guard|
-        target = expand_guard_path(guard)
-        if guard.to_s.end_with?("/")
-          norm == target || norm.start_with?("#{target}/")
-        else
-          norm == target
+        subtree = guard.to_s.end_with?("/")
+        guarded = normalized_path_variants(guard, roots:)
+        guarded.any? do |target|
+          targets.any? do |norm|
+            subtree ? norm == target || norm.start_with?("#{target}/") : norm == target
+          end
         end
       end
     end
 
-    def self.expand_guard_path(path)
-      File.expand_path(path.to_s.delete_prefix("./"), "/")
+    def self.normalized_path_variants(path, roots:)
+      text = path.to_s
+      bases = Array(roots).map { |root| File.expand_path(root.to_s) }.uniq
+      variants = []
+
+      if text.start_with?(File::SEPARATOR)
+        full = File.expand_path(text)
+        bases.each do |root|
+          next unless full == root || full.start_with?("#{root}#{File::SEPARATOR}")
+
+          variants << (full == root ? "" : full.delete_prefix("#{root}#{File::SEPARATOR}"))
+        end
+      elsif bases.empty?
+        variants << File.expand_path(text, File::SEPARATOR).delete_prefix(File::SEPARATOR)
+      else
+        bases.each do |root|
+          full = File.expand_path(text, root)
+          next unless full == root || full.start_with?("#{root}#{File::SEPARATOR}")
+
+          variants << (full == root ? "" : full.delete_prefix("#{root}#{File::SEPARATOR}"))
+        end
+      end
+
+      variants.map { |value| value.delete_prefix("MASTER/").delete_prefix("./") }
+              .reject(&:empty?).uniq
     end
-    private_class_method :expand_guard_path
+    private_class_method :normalized_path_variants
 
     # No credential ever reaches disk or the transcript.
     def self.no_secret_rule(veto)
@@ -440,6 +492,7 @@ module Master::Core
                          :operands_after_flags, :git_clean_all?, :forbidden_file_rule, :scope_creep_rule,
                          :two_hats_rule, :evidence_for_done_rule,
                          :git_commit_evidence_rule, :git_commit_scope_rule, :council_for_done_rule,
-                         :ideation_before_write_rule, :new_path_rule, :ruby_syntax_error, :safe_rx
+                         :ideation_before_write_rule, :new_path_rule, :ruby_syntax_error, :safe_rx,
+                         :normalized_path_variants
   end
 end

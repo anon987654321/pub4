@@ -10,7 +10,8 @@ class ImmutablePathsTest < Minitest::Test
   IMMUTABLE = %w[data/laws.yml data/soul.yml lib/core.rb lib/core/].freeze
 
   def constitution
-    rules = [Master::Core::Constitution.immutable_paths_rule(IMMUTABLE)]
+    roots = [Master::ROOT, Master::REPO_ROOT].uniq
+    rules = [Master::Core::Constitution.immutable_paths_rule(IMMUTABLE, roots:)]
     Master::Core::Constitution.new(laws: rules)
   end
 
@@ -44,6 +45,22 @@ class ImmutablePathsTest < Minitest::Test
     assert_blocked Master::Core::Effect.write("./data/soul.yml", "x"), by: :immutable_paths
   end
 
+  def test_absolute_master_root_path_is_blocked
+    path = File.join(Master::ROOT, "data/soul.yml")
+    assert_blocked Master::Core::Effect.write(path, "x"), by: :immutable_paths
+  end
+
+  def test_absolute_repository_path_with_master_prefix_is_blocked
+    path = File.join(Master::REPO_ROOT, "MASTER", "data", "laws.yml")
+    assert_blocked Master::Core::Effect.write(path, "x"), by: :immutable_paths
+  end
+
+  def test_absolute_git_stage_of_sacred_path_is_blocked
+    path = File.join(Master::REPO_ROOT, "MASTER", "lib", "core", "fold.rb")
+    effect = Master::Core::Effect.git(:stage, paths: [path])
+    assert_blocked effect, by: :immutable_paths
+  end
+
   def test_dot_and_parent_segments_cannot_walk_onto_an_immutable_file
     assert_blocked Master::Core::Effect.write("data/./soul.yml", "x"), by: :immutable_paths
     assert_blocked Master::Core::Effect.write("data/foo/../soul.yml", "x"), by: :immutable_paths
@@ -62,5 +79,34 @@ class ImmutablePathsTest < Minitest::Test
     # "lib/core/" guards the tree and "lib/core.rb" is an exact match; a file
     # merely prefixed "core" is neither.
     assert_allowed Master::Core::Effect.write("lib/coreish.rb", "A = 1\n")
+  end
+
+  def test_law_evaluator_exception_fails_closed
+    law = Master::Core::Constitution::Law.new(
+      id: :broken,
+      verbs: %i[write],
+      judge: ->(_effect, _memory) { raise "sensitive evaluator details" },
+    )
+    verdict = Master::Core::Constitution.new(laws: [law]).admit(
+      Master::Core::Effect.write("lib/app/thing.rb", "A = 1\n"), nil
+    )
+
+    assert_instance_of Master::Core::Verdict::Block, verdict
+    assert_equal :law_evaluator_error, verdict.by
+    refute_includes verdict.reason, "sensitive evaluator details"
+  end
+
+  def test_invalid_non_nil_law_result_fails_closed
+    law = Master::Core::Constitution::Law.new(
+      id: :broken,
+      verbs: %i[write],
+      judge: ->(_effect, _memory) { :allow },
+    )
+    verdict = Master::Core::Constitution.new(laws: [law]).admit(
+      Master::Core::Effect.write("lib/app/thing.rb", "A = 1\n"), nil
+    )
+
+    assert_instance_of Master::Core::Verdict::Block, verdict
+    assert_equal :law_evaluator_error, verdict.by
   end
 end
