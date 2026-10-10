@@ -235,19 +235,19 @@ MASTER/tools/dilla/venv-librosa/
 # Training caches, extracted frames, staging copies, and reproducible bundles.
 # <subject>/.cache/ is every lane's scratch: dataset zips, downloaded trainer
 # tars, staged Kaggle payloads.
-MASTER/tools/lora/**/.cache/
-MASTER/tools/lora/**/_frames/
-MASTER/tools/lora/**/_latent_cache/
-MASTER/tools/lora/**/.aitk_size.json
-MASTER/tools/lora/**/raw/
-MASTER/tools/lora/**/*.zip
-MASTER/tools/lora/**/*.pid
+STUDIO/lora/**/.cache/
+STUDIO/lora/**/_frames/
+STUDIO/lora/**/_latent_cache/
+STUDIO/lora/**/.aitk_size.json
+STUDIO/lora/**/raw/
+STUDIO/lora/**/*.zip
+STUDIO/lora/**/*.pid
 
 # ai-toolkit run artifacts: it writes samples and a copy of the config it was
 # handed into the training folder on every run.
-MASTER/tools/lora/*/train_run.log
-MASTER/tools/lora/*/weights/*/samples/
-MASTER/tools/lora/*/weights/*/config.yaml
+STUDIO/lora/*/train_run.log
+STUDIO/lora/*/weights/*/samples/
+STUDIO/lora/*/weights/*/config.yaml
 
 # Photographs of people, and everything derived from them.
 #

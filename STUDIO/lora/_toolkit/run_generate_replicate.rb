@@ -33,9 +33,12 @@ TOOLKIT = Pathname.new(__dir__).expand_path
 SIDECAR = SUBJECT_DIR.join("weights", MODEL, "replicate_training.json")
 REPO_ROOT = TOOLKIT.join("../../..").expand_path
 
+require_relative "preflight"
 require_relative "shoots"
 
 options = { set: "selfies", only: nil, side: nil, scale: 1.0, seed: 42, dry_run: false,
+            guidance: 3.0, steps: 28, draft: false,
+            max_seconds: ENV["LORA_MAX_SECONDS"].to_s.empty? ? nil : ENV["LORA_MAX_SECONDS"].to_f,
             model: ENV["LORA_REPLICATE_MODEL"].to_s.strip, grade: ENV.fetch("LORA_GRADE", "random") }
 OptionParser.new do |p|
   p.banner = "Usage: run_generate_replicate.rb [options]"
@@ -46,6 +49,10 @@ OptionParser.new do |p|
   p.on("--seed N", Integer, "Seed for sitting 1; sitting n uses seed + n - 1, the distance set holds it") { |v| options[:seed] = v }
   p.on("--model ID", "owner/name:version (default: the trained version)") { |v| options[:model] = v }
   p.on("--grade NAME", "postpro preset, or random (default), or none") { |v| options[:grade] = v }
+  p.on("--guidance X", Float, "guidance_scale (default 3.0, as the validation frames)") { |v| options[:guidance] = v }
+  p.on("--steps N", Integer, "num_inference_steps (default 28, as the validation frames)") { |v| options[:steps] = v }
+  p.on("--draft", "Cheap seed-picking pass: webp, go_fast, out/<set>_draft/, ungraded") { options[:draft] = true }
+  p.on("--max-seconds N", Float, "Stop once the ledger shows N billed seconds for this subject (env LORA_MAX_SECONDS)") { |v| options[:max_seconds] = v }
   p.on("--dry-run", "Print the prompts and the model; render nothing") { options[:dry_run] = true }
   p.on("-h", "--help") { puts p; exit 0 }
 end.parse!
@@ -67,10 +74,13 @@ FIXED_SEED_SETS = %w[distance].freeze
 
 # The settings the first twelve validation frames of this LoRA were rendered and
 # judged at, so a new set is comparable with them.
-def render_input(prompt, seed, scale)
-  { prompt:, model: "dev", lora_scale: scale, aspect_ratio: "3:4", num_outputs: 1,
-    guidance_scale: 3.0, num_inference_steps: 28, output_format: "jpg",
-    output_quality: 95, go_fast: false, seed: }
+def render_input(prompt, seed, options)
+  input = { prompt:, model: "dev", lora_scale: options[:scale], aspect_ratio: "3:4", num_outputs: 1,
+            guidance_scale: options[:guidance], num_inference_steps: options[:steps], output_format: "jpg",
+            output_quality: 95, go_fast: false, seed: }
+  # A draft picks seeds; it is not a take, so it trades the look for the price.
+  input.merge!(output_format: "webp", output_quality: 80, go_fast: true) if options[:draft]
+  input
 end
 
 # A throttle or a dropped connection is waited out; a safety refusal is one new
@@ -82,7 +92,7 @@ TRANSIENT = [Net::OpenTimeout, Net::ReadTimeout, OpenSSL::SSL::SSLError, Errno::
 
 def render(client, model, input, attempts: 4)
   attempts.times do |attempt|
-    return Array(client.predict(model, input, timeout: 900)).first
+    return client.run(model, input, timeout: 900)
   rescue *TRANSIENT, RuntimeError => e
     raise if attempt == attempts - 1
     raise if e.is_a?(RuntimeError) && !e.message.match?(/429|NSFW/)
@@ -129,10 +139,13 @@ model = options[:model].empty? ? trained_model : options[:model]
 sittings = prompts_for(SUBJECT, side: options[:side], only: options[:only], set: options[:set])
 abort "warn: set #{options[:set]} matched no sittings" if sittings.empty?
 
-out_dir = SUBJECT_DIR.join("out", options[:set])
+suffix = options[:draft] ? "_draft" : ""
+out_dir = SUBJECT_DIR.join("out", "#{options[:set]}#{suffix}")
 graded_dir = SUBJECT_DIR.join("out", "#{options[:set]}_postpro")
+extension = options[:draft] ? "webp" : "jpg"
+LEDGER = SUBJECT_DIR.join("out", "ledger.jsonl")
 puts "ok: model #{model}"
-puts "ok: #{sittings.length} sitting(s) -> #{out_dir}"
+puts "ok: #{sittings.length} sitting(s) -> #{out_dir}#{options[:draft] ? " (draft: webp, go_fast, ungraded)" : ""}"
 
 if options[:dry_run]
   sittings.each { |shoot, prompt| puts format("%02d  %s", shoot["n"], prompt) }
@@ -141,28 +154,49 @@ end
 
 require REPO_ROOT.join("STUDIO/replicate/client").to_s
 client = Studio::ReplicateClient.new
+
+# A key the model does not declare is dropped by the API without a word, which
+# is a differently-rendered picture and no error.
+declared = client.input_names(model.split(":").first)
+unknown = render_input("", 0, options).keys.map(&:to_s) - declared
+abort "warn: #{model} does not declare #{unknown.join(', ')}; fix the input or pass --model" if declared.any? && unknown.any?
+
 FileUtils.mkdir_p(out_dir)
 failed = 0
+spent = Preflight.ledger_seconds(LEDGER, "render")
 
 sittings.each do |shoot, prompt|
-  path = out_dir.join(format("%02d.jpg", shoot["n"]))
+  path = out_dir.join(format("%02d.%s", shoot["n"], extension))
   next puts("ok: have #{path.basename}") if path.file?
 
+  if options[:max_seconds] && spent >= options[:max_seconds]
+    warn "warn: ledger shows #{spent.round} billed seconds, at the ceiling #{options[:max_seconds].round}; stopping"
+    failed += 1
+    break
+  end
+
   seed = FIXED_SEED_SETS.include?(options[:set]) ? options[:seed] : options[:seed] + shoot["n"] - 1
-  input = render_input(prompt, seed, options[:scale])
+  input = render_input(prompt, seed, options)
   begin
-    client.download_url(render(client, model, input), path.to_s)
+    prediction = render(client, model, input)
+    # Outputs are deleted from Replicate an hour after the run, so the frame is
+    # on disk before anything else happens to it.
+    client.download_url(Array(prediction["output"]).first, path.to_s)
   rescue StandardError => e
     failed += 1
     next warn("warn: #{shoot['title']}: #{e.message[0, 200]}")
   end
-  preset = preset_for(options[:grade], shoot["n"])
+  seconds = prediction.dig("metrics", "predict_time").to_f
+  spent += seconds
+  Preflight.ledger_append(LEDGER, kind: "render", set: options[:set], n: shoot["n"], id: prediction["id"], seconds:)
+  preset = options[:draft] ? nil : preset_for(options[:grade], shoot["n"])
   grade(path, graded_dir, preset) if preset
   File.open(out_dir.join("prompts.jsonl"), "a") do |log|
     log.puts JSON.generate(n: shoot["n"], title: shoot["title"], prompt:, model:, input: input.except(:prompt),
+                           prediction: prediction["id"], predict_seconds: seconds,
                            grade: preset, rendered_at: Time.now.utc.iso8601)
   end
-  puts "ok: #{path}#{preset ? " + #{preset}" : ""}"
+  puts "ok: #{path}#{preset ? " + #{preset}" : ""} (#{seconds.round(1)} s)"
 end
 
 [out_dir, graded_dir].each do |dir|

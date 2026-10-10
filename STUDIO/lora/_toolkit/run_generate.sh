@@ -8,10 +8,11 @@ skip_postpro=0
 
 usage() {
   cat <<EOF
-Usage: lora [--check | --train | --train-kaggle | --train-colab | --train-replicate
+Usage: lora [--check | --prepare | --train | --train-kaggle | --train-colab | --train-replicate
              | --generate | --generate-replicate | --postpro | --all]
 
   --check            HF FLUX gate, toolkit, dataset
+  --prepare          Rank sources/, write dataset/ with stub captions (report only without --write)
   --train            Train LoRA locally / RunPod via ai-toolkit
   --train-kaggle     Train on a free Kaggle T4: push notebook, poll, pull weights
   --train-colab      Write a Colab notebook for a free T4 (no phone verification)
@@ -64,6 +65,7 @@ EOF
 while [ $# -gt 0 ]; do
   case "$1" in
     --check) mode="check"; shift ;;
+    --prepare) mode="prepare"; shift; break ;;
     --train) mode="train"; shift ;;
     --generate) mode="generate"; shift ;;
     --postpro) mode="postpro"; shift ;;
@@ -156,6 +158,9 @@ case "$mode" in
   train-colab)
     check_dataset
     ruby "$SCRIPT_DIR/run_train_colab.rb" "$@"
+    ;;
+  prepare)
+    ruby "$SCRIPT_DIR/prepare.rb" "$@"
     ;;
   train-replicate)
     check_dataset

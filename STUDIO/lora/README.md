@@ -1,5 +1,89 @@
 # Person-LoRA
 
+**Dette er ikke et filter lagt over et tilfeldig ansikt.** Det er et forsøk på å
+gi deg tilbake deg selv i lys som er snillere — norsk, voksen, varm, ekte — slik
+at et bilde kan kjennes som et bedre minne, ikke en fremmed versjon av deg.
+Målet er et lite sett portretter som tåler nær blikk: ansiktet ditt først,
+stemning og magi etterpå, aldri omvendt.
+
+FLUX.1-dev er valgt fordi den treffer et sjeldent punkt mellom fotorealisme og
+kontroll: en stor rectified-flow-transformer som forstår lys, hud, perspektiv og
+fotografisk språk bedre enn eldre diffusjonsmodeller, og som faktisk lytter til
+prompten i stedet for å levere generisk AI-glatthet. Den er åpen nok til at vi
+kan trene en personspesifikk LoRA oppå, sterk nok til at finjustering gir ekte
+likhet i stedet for bare stil, og presis nok til at vi kan variere location,
+objektiv og filmstock uten at ansiktet faller fra hverandre — det er derfor den
+slår raske generalist-generatorer når målet er ett navn, ett ansikt, mange
+verdener.
+
+Teknisk sett starter vi med kuraterte referansebilder med tekstcaptions, trener
+en lav-rang LoRA-adapter (rank 16) oppå diffusjonsmodellen
+`black-forest-labs/FLUX.1-dev` via flow-matching og ai-toolkit, slik at modellen
+lærer en personspesifikk representasjon i vektrommet i stedet for å gjette
+ansikt fra prompt alene; under trening caches latenter til disk, LoRA-vektene
+oppdateres over 1800 steg med AdamW 8-bit og EMA, validering skjer med 12 faste
+fotografiske prompts, og hele kjeden styres av Ruby — kun ai-toolkit sin
+`run.py` er Python-grensen. Det skiller seg fra generiske bildegeneratorer som
+Grok Imagine, GPT-image eller Google Imagen fordi de er generalistiske
+tekst-til-bilde-modeller uten persistent, personbundet finjustering: de kan lage
+plausible portretter fra beskrivelse, men holder sjelden stabil identitet på
+tvers av lys, vinkel, antrekk og stil, og de kan ikke trenes på godkjente
+kildebilder med en eksplisitt likeness-sløyfe. Her eies hele kjeden lokalt, kan
+reproduseres og forbedres iterativt. Spørsmålet er alltid det samme: er det
+Ragnhild? Er det Johann?
+
+## Using the system
+
+Start with `./lora.rb --status`. It reads files only, needs no credentials, and
+prints one block per subject: how many images the dataset holds, whether a
+trained version exists, how many billed seconds the ledger shows, and the one
+thing that blocks the next step. Run it first and again after every stage, since
+it is the cheapest way to know where you are.
+
+The order of work is fixed because each stage spends more than the one before
+it. First comes the dataset. Put twelve to eighteen varied photographs of one
+person, in different light, angles and expressions, into `<subject>/sources/`,
+then run `--prepare`. It judges each photograph for resolution, sharpness and
+blown highlights, spreads the pick so that ten frames of one moment count once,
+and prints a report without writing anything. Add `--write` and it creates
+`<subject>/dataset/` with 1024-pixel copies, each paired with a stub caption
+holding only the trigger word. Completing the stubs is the part left to a
+person. A caption names what varies, such as pose, clothing, light and setting,
+and never the face, the natural hair colour, the eye colour or the age, which
+belong to the trigger word.
+
+Second comes the dry run. `--train-replicate --dry-run` runs preflight, which
+checks the finished set against those same rules, zips the dataset and prints a
+cost estimate, and it uploads nothing and calls nothing. Read the problems it
+prints; each one is a reason the paid run would waste money. A problem stops a
+real run, and `--force` overrides that when you have judged the problem
+acceptable. The notes it prints are advice and never stop a run. The estimate
+gives two figures because the sources disagree: Replicate's guide says a
+thousand steps takes about two minutes and costs about one dollar and a half,
+while the one run logged here took fourteen minutes. The sidecar records the
+seconds Replicate actually billed.
+
+Third comes training, which is the first paid step. `--train-replicate` uploads
+the zip, pins the trainer version, trains, and writes
+`weights/<model>/replicate_training.json` with the trained version, the dataset
+hash and the exact trainer input. For a long run add `--async`, and later pick
+it up with `--resume ID`; `--cancel ID` stops a run that is going wrong. Every
+training appends its seconds to `<subject>/out/ledger.jsonl`.
+
+Fourth comes rendering. Begin with `--generate-replicate --draft --set selfies`,
+which renders cheaply as webp into `out/selfies_draft/` and skips the grade, so
+you can choose seeds and prompts without paying for finals. Then render the
+finals without `--draft`: each frame is pinned to the trained version, saved to
+disk the moment it arrives, because Replicate deletes API outputs after an hour,
+and graded by postpro beside the ungraded render. Set a spend ceiling with
+`--max-seconds N` or `LORA_MAX_SECONDS`, and the run stops when the ledger
+reaches it. Render Ragnhild at full strength and leave her age out of the
+prompt.
+
+The video stage is not built. A clip needs an image-to-video model chosen and
+its input schema read first, and the first frame should be an approved selfie.
+Until then the tool ends at the graded stills.
+
 ## Canonical contract
 
 ### Purpose
@@ -51,39 +135,6 @@ non-success states, not inferred passes.
 
 LoRA is a canonical STUDIO tool. MASTER provides governance; STUDIO owns the media workflow; LoRA
 owns the training/media workflow.
-
-
-**Dette er ikke et filter lagt over et tilfeldig ansikt.** Det er et forsøk på å
-gi deg tilbake deg selv i lys som er snillere — norsk, voksen, varm, ekte — slik
-at et bilde kan kjennes som et bedre minne, ikke en fremmed versjon av deg.
-Målet er et lite sett portretter som tåler nær blikk: ansiktet ditt først,
-stemning og magi etterpå, aldri omvendt.
-
-FLUX.1-dev er valgt fordi den treffer et sjeldent punkt mellom fotorealisme og
-kontroll: en stor rectified-flow-transformer som forstår lys, hud, perspektiv og
-fotografisk språk bedre enn eldre diffusjonsmodeller, og som faktisk lytter til
-prompten i stedet for å levere generisk AI-glatthet. Den er åpen nok til at vi
-kan trene en personspesifikk LoRA oppå, sterk nok til at finjustering gir ekte
-likhet i stedet for bare stil, og presis nok til at vi kan variere location,
-objektiv og filmstock uten at ansiktet faller fra hverandre — det er derfor den
-slår raske generalist-generatorer når målet er ett navn, ett ansikt, mange
-verdener.
-
-Teknisk sett starter vi med kuraterte referansebilder med tekstcaptions, trener
-en lav-rang LoRA-adapter (rank 32) oppå diffusjonsmodellen
-`black-forest-labs/FLUX.1-dev` via flow-matching og ai-toolkit, slik at modellen
-lærer en personspesifikk representasjon i vektrommet i stedet for å gjette
-ansikt fra prompt alene; under trening caches latenter til disk, LoRA-vektene
-oppdateres over 1800 steg med AdamW 8-bit og EMA, validering skjer med 12 faste
-fotografiske prompts, og hele kjeden styres av Ruby — kun ai-toolkit sin
-`run.py` er Python-grensen. Det skiller seg fra generiske bildegeneratorer som
-Grok Imagine, GPT-image eller Google Imagen fordi de er generalistiske
-tekst-til-bilde-modeller uten persistent, personbundet finjustering: de kan lage
-plausible portretter fra beskrivelse, men holder sjelden stabil identitet på
-tvers av lys, vinkel, antrekk og stil, og de kan ikke trenes på godkjente
-kildebilder med en eksplisitt likeness-sløyfe. Her eies hele kjeden lokalt, kan
-reproduseres og forbedres iterativt. Spørsmålet er alltid det samme: er det
-Ragnhild? Er det Johann?
 
 ## Four train lanes
 
@@ -163,6 +214,15 @@ Zips `dataset/`, uploads via the Files API, trains
 `output.weights` into `weights/$MODEL/`. Requires `REPLICATE_API_TOKEN`. Async
 via `--async` plus `REPLICATE_WEBHOOK_URL`.
 
+Nothing is uploaded until the dataset and the trigger pass `_toolkit/preflight.rb`:
+at least ten images, none under 512 on the short edge, no age in a caption, a
+trigger that is neither `TOK` nor an English word, and no frame that is a near
+copy of another. `--dry-run` prints that report with a cost estimate drawn from
+Replicate's published rate, and `--force` trains past a problem. The trainer
+version is pinned beside the weights, the dataset's SHA-256 is recorded, and
+every training and render appends its billed seconds to `<subject>/out/ledger.jsonl`.
+An `--async` training is picked up later with `--resume ID`, and `--cancel ID`
+stops one. `./lora.rb --status` reports, per subject, what blocks the next step.
 A LoRA trained this way is already a hosted model, so `--generate-replicate`
 renders on it without a GPU here. Every frame is graded as it lands: postpro
 draws a different preset per sitting and writes it to `out/<set>_postpro/`
@@ -371,22 +431,6 @@ Everything but the three `subject.env` values is shared. Environment knobs are
 subject and a knob named after one is not a knob. A `_toolkit/` script run
 directly refuses, since it cannot know which subject was meant.
 
-## Commands
-
-One entry point per subject, and `./lora --help` lists the rest. In order
-below: the Hugging Face gate, toolkit and dataset check; local or RunPod
-training; a sample from the newest checkpoint; check, generate and grade in one
-pass; and two Replicate renders, the second a dry run.
-
-```sh
-STUDIO/lora/ragnhild/lora --check
-STUDIO/lora/ragnhild/lora --train
-STUDIO/lora/ragnhild/lora --generate
-STUDIO/lora/ragnhild/lora --all
-STUDIO/lora/ragnhild/lora --generate-replicate --set selfies
-STUDIO/lora/ragnhild/lora --generate-replicate --set distance --dry-run
-```
-
 ## Security and trust boundaries
 
 LoRA tooling sits at the boundary between local prompt material, model assets, provider APIs, and generated artifacts. Provenance, credential isolation, remote-input validation, and deterministic local state are the important controls.
@@ -407,3 +451,22 @@ GraphQL-specific controls belong at the API boundary: authenticate and authorize
 LoRA is a creative/model tool under STUDIO/lora. MASTER provides governance and invocation; LoRA owns model composition, prompt construction, adapter data, and artifact provenance.
 
 New automation should reference STUDIO/lora, never the retired MASTER/tools/lora path.
+
+## Commands
+
+One entry point per subject, and `./lora --help` lists the rest. The first line reads files only, and the prepare line writes only with `--write`. The second is the free local path. The third is the Replicate path in the order of the section above: a dry run, the paid training, the pickup of a long run, a cheap draft pass, and the finals.
+
+```sh
+STUDIO/lora/lora.rb --status
+STUDIO/lora/ragnhild/lora --check
+STUDIO/lora/ragnhild/lora --prepare --write
+STUDIO/lora/ragnhild/lora --train
+STUDIO/lora/ragnhild/lora --generate
+STUDIO/lora/ragnhild/lora --all
+STUDIO/lora/ragnhild/lora --train-replicate --dry-run
+STUDIO/lora/ragnhild/lora --train-replicate --async
+STUDIO/lora/ragnhild/lora --train-replicate --resume TRAINING_ID
+STUDIO/lora/ragnhild/lora --generate-replicate --set selfies --draft
+STUDIO/lora/ragnhild/lora --generate-replicate --set selfies --max-seconds 600
+STUDIO/lora/ragnhild/lora --generate-replicate --set distance --dry-run
+```

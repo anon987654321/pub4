@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "fileutils"
 require "json"
 require "net/http"
 require "uri"
@@ -27,18 +28,40 @@ module Studio
         end
 
         # Fetch a prediction output URL (e.g. synthesized audio) to a local path.
-        def download_url(url, path)
+        # Streamed under a byte cap, so a response that misstates its size cannot
+        # fill the disk; the default is the largest thing a run fetches, a trainer
+        # tar. A failed fetch leaves no partial file.
+        def download_url(url, path, max_bytes: MAX_DOWNLOAD_BYTES)
           uri = URI(url)
           raise "refusing non-https download url: #{url}" unless uri.scheme == "https"
           raise "refusing download from untrusted host: #{uri.host}" unless uri.host.to_s.match?(ALLOWED_DOWNLOAD_HOST)
 
           Net::HTTP.start(uri.host, uri.port, use_ssl: true, read_timeout: 120) do |http|
-            res = http.get(uri.request_uri)
-            raise "download failed #{res.code}" unless res.code.to_i.between?(200, 299)
+            http.request_get(uri.request_uri) do |res|
+              raise "download failed #{res.code}" unless res.code.to_i.between?(200, 299)
+              raise "download over #{max_bytes} bytes" if res["content-length"].to_i > max_bytes
 
-            File.binwrite(path, res.body)
+              write_capped(res, path, max_bytes)
+            end
           end
           path
+        rescue StandardError
+          FileUtils.rm_f(path)
+          raise
+        end
+
+        private
+
+        def write_capped(res, path, max_bytes)
+          written = 0
+          File.open(path, "wb") do |file|
+            res.read_body do |chunk|
+              written += chunk.bytesize
+              raise "download over #{max_bytes} bytes" if written > max_bytes
+
+              file.write(chunk)
+            end
+          end
         end
       end
       # LoRA training lifecycle (ostris/flux-dev-lora-trainer): start, poll,
@@ -61,11 +84,12 @@ module Studio
           webhook: nil,
           webhook_events_filter: nil,
           wait: true,
-          extra_input: {}
+          extra_input: {},
+          version: nil
         )
           create_model(destination) unless model_exists?(destination)
           trainings_uri, body = build_training_request(
-            photos_zip_url, destination, trigger_word:, steps:, lora_rank:, webhook:, webhook_events_filter:, extra_input:
+            photos_zip_url, destination, trigger_word:, steps:, lora_rank:, webhook:, webhook_events_filter:, extra_input:, version:
           )
           training = post(trainings_uri, body)
           wait ? wait_for_training(training["id"], timeout:) : training
@@ -73,6 +97,22 @@ module Studio
 
         def get_training(id)
           get(URI("#{BASE}/trainings/#{id}"))
+        end
+
+        # The trainer version a run will use, so a sidecar can name it. A moving
+        # "latest" makes two trainings of one dataset incomparable.
+        def trainer_version
+          latest_version(LORA_TRAINER)
+        end
+
+        # Pick a training up by id after an --async start or an interrupted poll.
+        def resume_training(id, timeout: 3600)
+          training = get_training(id)
+          training["status"] == "succeeded" ? training : wait_for_training(id, timeout:)
+        end
+
+        def stop_training(id)
+          cancel_training(id)
         end
 
         def training_weights_url(training)
@@ -88,10 +128,9 @@ module Studio
 
         private
 
-        def build_training_request(photos_zip_url, destination, trigger_word:, steps:, lora_rank:, webhook:, webhook_events_filter:, extra_input:)
+        def build_training_request(photos_zip_url, destination, trigger_word:, steps:, lora_rank:, webhook:, webhook_events_filter:, extra_input:, version: nil)
           trainer_owner, trainer_name = LORA_TRAINER.split("/")
-          trainer_version = latest_version(LORA_TRAINER)
-          trainings_uri = URI("#{BASE}/models/#{trainer_owner}/#{trainer_name}/versions/#{trainer_version}/trainings")
+          trainings_uri = URI("#{BASE}/models/#{trainer_owner}/#{trainer_name}/versions/#{version || trainer_version}/trainings")
 
           input = {
             input_images: photos_zip_url,
@@ -109,8 +148,35 @@ module Studio
         end
       end
 
+      # One prediction with its metrics, and the schema check that guards it.
+      # Grouped apart from ReplicateClient for the same reason as Training: the
+      # class stays under the public-method ceiling.
+      module Prediction
+        # The whole prediction object: id and metrics ride with the output, so a
+        # caller can log what a frame cost. Prefer: wait holds the request for a
+        # sync answer, which suits models that take seconds; Cancel-After is the
+        # server-side deadline, so a stuck run stops billing even if this process
+        # dies.
+        def run(model_id, input, timeout: 600)
+          pinned = model_id.split(":", 2)[1]
+          version = pinned || latest_version(model_id)
+          headers = {
+            "Prefer" => "wait=#{[timeout, MAX_SYNC_WAIT].min}",
+            "Cancel-After" => "#{timeout.clamp(CANCEL_AFTER_RANGE)}s",
+          }
+          pred = post(URI("#{BASE}/predictions"), { version:, input: }, headers:)
+          settle(pred, timeout:)
+        end
+
+        # The input names a model declares, for refusing a key it would ignore.
+        def input_names(model_id)
+          input_keys(model_id)
+        end
+      end
+
       include AssetTransfer
       include Training
+      include Prediction
 
       # Raised for HTTP statuses worth a retry (rate limit, server-side fault).
       # A 4xx other than 429 means the request itself is wrong and retrying
@@ -129,6 +195,11 @@ module Studio
       BASE = "https://api.replicate.com/v1"
       LORA_TRAINER = "ostris/flux-dev-lora-trainer"
       TRANSIENT_STATUS = ((500..599).to_a << 429).freeze
+      MAX_DOWNLOAD_BYTES = 4 * 1024**3
+      # Replicate holds a sync request 60 seconds at most; Cancel-After takes
+      # 5 seconds to 24 hours.
+      MAX_SYNC_WAIT = 60
+      CANCEL_AFTER_RANGE = (5..86_400).freeze
       # replicate.delivery hosts prediction output blobs; replicate.com is the
       # API itself. Refuse to fetch a URL a compromised/odd response pointed
       # us at anywhere else.
@@ -170,10 +241,7 @@ module Studio
       # trained LoRA gains a version per training, and frames meant to compare
       # checkpoints have to name the one they came from.
       def predict(model_id, input, timeout: 600)
-        pinned = model_id.split(":", 2)[1]
-        version = pinned || latest_version(model_id)
-        pred = post(URI("#{BASE}/predictions"), { version:, input: })
-        wait_for(pred["id"], timeout:)
+        run(model_id, input, timeout:)["output"]
       end
 
       # Bounded catalog read used by Replicate search/sync. Replicate returns a
@@ -283,10 +351,11 @@ module Studio
         request(req, uri)
       end
 
-      def post(uri, body)
+      def post(uri, body, headers: {})
         req = Net::HTTP::Post.new(uri)
         req["Authorization"] = "Token #{@token}"
         req["Content-Type"] = "application/json"
+        headers.each { |name, value| req[name] = value }
         req.body = body.to_json
         request(req, uri)
       end
@@ -303,7 +372,7 @@ module Studio
           raise
         rescue TransientError, Net::OpenTimeout, Net::ReadTimeout, Errno::ECONNRESET, Errno::ETIMEDOUT => e
           last_error = e.message
-          sleep([2**attempt, 60].min) if attempt < attempts - 1
+          sleep(retry_delay(last_error, attempt)) if attempt < attempts - 1
         end
         raise last_error
       end
@@ -320,6 +389,13 @@ module Studio
         raise TransientError, message if TRANSIENT_STATUS.include?(code)
 
         raise message
+      end
+
+      # Replicate says when a throttle clears ("resets in ~30s"); waiting that
+      # long beats a blind exponential guess in both directions.
+      def retry_delay(message, attempt)
+        reset = message.to_s[/resets in ~?(\d+)s/, 1]
+        [reset ? reset.to_i + 1 : 2**attempt, 60].min
       end
 
       # 402 is unambiguous. Beyond it, the body is the only thing that
@@ -343,25 +419,30 @@ module Studio
         nil
       end
 
-      def wait_for(id, timeout:)
+      # A create answered under Prefer: wait may already be finished; otherwise
+      # poll the same prediction, easing off from 1s to 5s.
+      def settle(pred, timeout:)
         start = Time.now
+        delay = 1
         loop do
-          pred = get(URI("#{BASE}/predictions/#{id}"))
           case pred["status"]
-          when "succeeded" then return pred["output"]
+          when "succeeded" then return pred
           when "failed" then raise "prediction failed: #{pred['error']}"
           when "canceled" then raise "prediction canceled"
           end
           if Time.now - start > timeout
-            cancel_prediction(id)
+            cancel_prediction(pred["id"])
             raise "prediction timeout after #{timeout}s (canceled)"
           end
-          sleep 3
+          sleep delay
+          delay = [delay + 1, 5].min
+          pred = get(URI("#{BASE}/predictions/#{pred['id']}"))
         end
       end
 
       def wait_for_training(id, timeout: 3600)
         start = Time.now
+        delay = 5
         loop do
           training = get(URI("#{BASE}/trainings/#{id}"))
           case training["status"]
@@ -373,7 +454,8 @@ module Studio
             cancel_training(id)
             raise "training timeout after #{timeout}s (canceled)"
           end
-          sleep 5
+          sleep delay
+          delay = [delay + 2, 15].min
         end
       end
     end
