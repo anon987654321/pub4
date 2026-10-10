@@ -106,6 +106,12 @@
         <%= f.collection_select :community_id, Community.order(:name), :id, :name,
               { include_blank: t("posts.anywhere_in", city: Current.city_name) } %>
       </div>
+      <% if @neighborhoods.present? %>
+        <div class="field">
+          <%= f.label :neighborhood_id, t("home.neighborhood_filter", default: "Neighbourhood") %>
+          <%= f.collection_select :neighborhood_id, @neighborhoods, :id, :name, { include_blank: t("home.citywide", default: "City-wide") } %>
+        </div>
+      <% end %>
 
       <div class="field">
         <%= f.label :title %>
