@@ -630,7 +630,7 @@ architecture:
       check: MASTER/bin/check
     rails:
       path: RAILS
-      entry: RAILS/bin/triangle
+      entry: MASTER/bin/operator triangle
       owner: rails
       depends_on:
         - master

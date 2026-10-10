@@ -46,7 +46,7 @@ Reopen this file only when a current measurement identifies a new repository-act
 ## Canonical proof surfaces
 
 - MASTER: bin/operator measure, bin/gate, rake selftest, the relevant MASTER test suites, and /fix proof.
-- RAILS: RAILS/bin/ci, RAILS/test/run_all.rb, triangle/rendered gates, and the live/browser gates.
+- RAILS: MASTER/bin/operator ci, RAILS/test/run_all.rb, triangle/rendered gates, and the live/browser gates.
 - OPENBSD: OPENBSD/gates, OPENBSD/bin/vps-deploy, and watched vm23 state.
 - STUDIO: the Dilla/STUDIO test suites, source/provenance probes, and operator listening evidence.
 

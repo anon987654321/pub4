@@ -22,7 +22,7 @@ ruby MASTER/gates/runner.rb production     # one gate, or a composite
 ruby RAILS/test/<name>_test.rb            # one contract test — bare ruby, no bundle
 cd RAILS/<app> && bin/ci                  # per-app RuboCop, Brakeman, bundler-audit, tests
 cd RAILS/<app> && bin/rails test test/models/item_test.rb:42   # one app test
-RAILS/bin/triangle up                     # boot all 4 surfaces on the ports gates probe
+MASTER/bin/operator triangle up                     # boot all 4 surfaces on the ports gates probe
 npm ci && npm run build:pwa               # rebuild the Workbox service worker
 ```
 
@@ -34,7 +34,7 @@ cwd.
 
 Which check proves the work: source change → the gate that owns it (`runner.rb
 --list`); app code → that app's `bin/ci`; anything measuring rendered layout →
-`RAILS/bin/triangle up` first, or the live half silently passes having measured
+`MASTER/bin/operator triangle up` first, or the live half silently passes having measured
 nothing.
 
 ## Architecture

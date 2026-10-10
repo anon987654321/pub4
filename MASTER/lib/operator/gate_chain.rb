@@ -394,7 +394,7 @@ module Operator
       ok, body, status = rails_gates(scan_only:)
       return [ok, body, status] unless ok
 
-      premerge = File.join(ROOT, "RAILS", "bin", "premerge")
+      premerge = File.join(MASTER, "tools", "rails", "premerge.rb")
       return [false, body + ["rails premerge missing: #{premerge}"], 1] unless File.file?(premerge)
 
       verified, verification_body, verification_status = capture(

@@ -38,7 +38,7 @@ override executable law and never become a second copy of it.
 The four top-level trees, and how each is entered:
 
 - `MASTER/` — a constitutional AI runtime in pure Ruby. `MASTER/bin/master "<instruction>"`.
-- `RAILS/` — brgen (a city social network, verticals as mounted engines), amber, bsdports. `RAILS/bin/triangle up`.
+- `RAILS/` — brgen (a city social network, verticals as mounted engines), amber, bsdports. `MASTER/bin/operator triangle up`.
 - `OPENBSD/` — the deploy pipeline and the VPS runbook. Production is one box, vm23.
 - `STUDIO/` — media-production tools and their data/state.
 `STUDIO/` is the canonical media tool plane: dilla, postpro, replicate and lora. `MASTER/tools/` keeps compatibility symlinks.
@@ -440,7 +440,7 @@ and reports as skipped rather than clean. On a `laws.yml` row, `tier:` is the
 Law's category — `clean_code`, `style`, `safety` — and is what resolves a
 conflict between two Laws firing on one line.
 
-**The triangle** is `RAILS/bin/triangle`: brgen, amber, bsdports and the MASTER
+**The triangle** is `MASTER/bin/operator triangle`: brgen, amber, bsdports and the MASTER
 face, booted locally on the ports every gate probes. Without it the live half of
 the suite passes having measured nothing.
 

@@ -104,10 +104,10 @@ module Master
         return if rows.empty? && !File.file?(File.join(repo_root, "RAILS", "CLAUDE.md"))
 
         "rails: feature_truth=RAILS/apps.yml; architecture=RAILS/CLAUDE.md; " +
-        "shared=RAILS/__shared; tools=MASTER/tools/rails; design=MASTER/data/laws.yml; entry=RAILS/bin/triangle; " +
+        "shared=RAILS/__shared; tools=MASTER/tools/rails; design=MASTER/data/laws.yml; entry=MASTER/bin/operator triangle; " +
         "coupling=shared engine + sibling copy-tree affects every Rails app; " +
         "deployed_copy=/home/<app>/app + /home/<app>/shared; " +
-        "proof=MASTER/gates/gates.yml+RAILS/bin/triangle+<app>/bin/ci; " +
+        "proof=MASTER/gates/gates.yml+MASTER/bin/operator triangle+<app>/bin/ci; " +
         "live=OPENBSD/bin/check-vps+OPENBSD/bin/vps-state; " +
         "rendered=Chrome/CDP via rendered_suite; " +
         "visual_graph=MASTER/lib/fix/rails_visual_graph.rb; active_apps=#{rows.join(", ")}"

@@ -4,10 +4,10 @@ require "minitest/autorun"
 
 class TestTriangleRuntimeContract < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
-  SOURCE = File.read(File.join(ROOT, "bin", "triangle"), encoding: "UTF-8")
+  SOURCE = File.read(File.join(ROOT, "..", "MASTER", "tools", "rails", "triangle.rb"), encoding: "UTF-8")
 
   def test_triangle_uses_the_shared_runtime
-    assert_includes SOURCE, 'require_relative "../../MASTER/lib/operator/ruby_runner"'
+    assert_includes SOURCE, 'require_relative "../../lib/operator/ruby_runner"'
     assert_includes SOURCE, "RUBY = Operator::RubyRunner.ruby_cmd"
     assert_includes SOURCE, "BUNDLE = Operator::RubyRunner.bundle_cmd"
     refute_includes SOURCE, '"rbenv", "exec"'

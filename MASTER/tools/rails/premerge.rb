@@ -12,17 +12,17 @@
 #   3  a step could not run at all — nothing is claimed about the tree
 #
 # Usage:
-#   RAILS/bin/premerge              # everything
-#   RAILS/bin/premerge --apps       # per-app bin/ci only
-#   RAILS/bin/premerge --pwa       # executable PWA runtime tests only
-#   RAILS/bin/premerge --contracts  # isolated root contract suite only
-#   RAILS/bin/premerge --coverage   # full Rails coverage only
-#   RAILS/bin/premerge --gates      # layout_suite + inventory only
-#   RAILS/bin/premerge --list       # what would run, and skip nothing
+#   bin/operator premerge              # everything
+#   bin/operator premerge --apps       # per-app bin/ci only
+#   bin/operator premerge --pwa       # executable PWA runtime tests only
+#   bin/operator premerge --contracts  # isolated root contract suite only
+#   bin/operator premerge --coverage   # full Rails coverage only
+#   bin/operator premerge --gates      # layout_suite + inventory only
+#   bin/operator premerge --list       # what would run, and skip nothing
 
 require "yaml"
 
-ROOT = File.expand_path("..", __dir__)
+ROOT = File.expand_path("../../../RAILS", __dir__)
 $LOAD_PATH.unshift(File.join(ROOT, "..", "MASTER", "lib"))
 require "operator/ruby_runner"
 APPS = YAML.safe_load_file(File.join(ROOT, "apps.yml")).fetch("apps").filter_map do |name, app|
@@ -82,11 +82,11 @@ end
 
 def coverage_step
   Step.new(name: "full Rails coverage (line/branch/method)", group: :coverage, run: lambda {
-    runner = File.join(ROOT, "bin", "coverage")
-    next [BLOCKED, "RAILS/bin/coverage is missing"] unless File.file?(runner)
+    runner = File.join(__dir__, "coverage.rb")
+    next [BLOCKED, "MASTER/tools/rails/coverage.rb is missing"] unless File.file?(runner)
 
     ok = system(*RUBY, runner, chdir: ROOT)
-    ok ? [PASSED, nil] : [FAILED, "bin/coverage exited non-zero"]
+    ok ? [PASSED, nil] : [FAILED, "coverage.rb exited non-zero"]
   })
 end
 

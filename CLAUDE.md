@@ -26,7 +26,7 @@ renamed.
 | | what it is | entry point |
 |---|---|---|
 | `MASTER/` | A constitutional AI runtime in pure Ruby. The primary product. | `MASTER/bin/master "<instruction>"` |
-| `RAILS/` | Three Rails 8 apps: **brgen** (a city social network; its verticals are mounted engines), **amber** (wardrobe), **bsdports**. | `RAILS/bin/triangle up` |
+| `RAILS/` | Three Rails 8 apps: **brgen** (a city social network; its verticals are mounted engines), **amber** (wardrobe), **bsdports**. | `MASTER/bin/operator triangle up` |
 | `OPENBSD/` | The deploy pipeline and the VPS runbook. Production is one box, `vm23`. | `MASTER/bin/operator vps state` |
 | `STUDIO/` | Media production: dilla, postpro, replicate and lora. | `STUDIO/*/<tool>.rb` |
 

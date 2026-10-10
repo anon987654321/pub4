@@ -748,7 +748,7 @@ class TestFixConvergence < Minitest::Test
 
     assert_equal 2, calls.size
     assert calls.first[:cmd].any? { |arg| arg.to_s.end_with?("runner.rb") }
-    assert calls.last[:cmd].any? { |arg| arg.to_s.end_with?("RAILS/bin/premerge") }
+    assert calls.last[:cmd].any? { |arg| arg.to_s.end_with?("MASTER/tools/rails/premerge.rb") }
     assert_equal File.join(Master::REPO_ROOT, "RAILS"), calls.last[:chdir]
     assert_equal "1", calls.last[:env]["MASTER_FIX_VERIFY"]
   end

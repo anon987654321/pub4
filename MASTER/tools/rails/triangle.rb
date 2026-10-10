@@ -4,10 +4,10 @@
 # Boots brgen, amber, bsdports and the MASTER face on the ports every gate
 # probes, so the live half of the suite measures something.
 #
-#   RAILS/bin/triangle up      boot, migrate, wait for /up, print status
-#   RAILS/bin/triangle up bsdports   the same, for the named surfaces only
-#   RAILS/bin/triangle status  which ports answer
-#   RAILS/bin/triangle down    stop what this script started
+#   bin/operator triangle up      boot, migrate, wait for /up, print status
+#   bin/operator triangle up bsdports   the same, for the named surfaces only
+#   bin/operator triangle status  which ports answer
+#   bin/operator triangle down    stop what this script started
 #
 # Why this exists: the browser and live-HTTP gates belong on the deploy host,
 # and vm23 has no headroom to run them (TODO.md item 2). So they ran nowhere,
@@ -19,13 +19,13 @@
 
 require "fileutils"
 require "net/http"
-require_relative "../../MASTER/lib/io/exec"
+require_relative "../../lib/io/exec"
 require "yaml"
-require_relative "../../MASTER/lib/operator/ruby_runner"
+require_relative "../../lib/operator/ruby_runner"
 
 module Deploy
   module Triangle
-    ROOT = File.expand_path("../..", __dir__)
+    ROOT = File.expand_path("../../..", __dir__)
     RAILS_ROOT = File.join(ROOT, "RAILS")
     RUBY = Operator::RubyRunner.ruby_cmd
     BUNDLE = Operator::RubyRunner.bundle_cmd
@@ -188,6 +188,6 @@ when "status"
 when "down"
   Deploy::Triangle.down(ARGV.drop(1))
 else
-  warn "usage: RAILS/bin/triangle [up|status|down] [surface ...]"
+  warn "usage: bin/operator triangle [up|status|down] [surface ...]"
   exit 2
 end

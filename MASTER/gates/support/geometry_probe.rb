@@ -106,7 +106,7 @@ module Deploy
       # master is not a RAILS app, so RAILS/apps.yml -- which is what Inventory
       # reads -- does not and should not describe it. Its port comes from the
       # rc.d script that actually binds it, rather than becoming a fourth copy
-      # of 53187 beside rc.d, bin/triangle and relayd.conf.
+      # of 53187 beside rc.d, operator triangle and relayd.conf.
       def app_ports(root: ROOT)
         Inventory.new(root:).apps.to_h { |a| [a.name, a.port] }
                  .merge("master" => master_port(root))

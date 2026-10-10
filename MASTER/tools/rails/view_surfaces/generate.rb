@@ -3,7 +3,7 @@
 # Regenerates the generated block of gates/data/geometry_surfaces.yml: every
 # HTML GET route of amber, bsdports and brgen that renders for a guest.
 #
-#   RAILS/bin/triangle up
+#   MASTER/bin/operator triangle up
 #   ruby MASTER/tools/rails/view_surfaces/generate.rb
 #
 # Per app it lists the GET routes (list_get_routes.rb, under rails runner),

@@ -59,7 +59,7 @@ Rails.application.configure do
   # It does not suit a server left up for days answering gate probes: Rails 8.2
   # ships two debug-level view subscribers, the classic LogSubscriber and the
   # structured one, so every partial render costs two lines in a file nothing
-  # rotates. A long-lived caller says which it is; bin/triangle is one.
+  # rotates. A long-lived caller says which it is; operator triangle is one.
   config.log_level = ENV.fetch("RAILS_LOG_LEVEL", "debug").to_sym
 
   # Raise an error on page load if there are pending migrations.

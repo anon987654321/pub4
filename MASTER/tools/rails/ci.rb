@@ -9,7 +9,7 @@
 require "rbconfig"
 require "yaml"
 
-ROOT = File.expand_path("..", __dir__)
+ROOT = File.expand_path("../../../RAILS", __dir__)
 APPS = YAML.safe_load_file(File.join(ROOT, "apps.yml")).fetch("apps").filter_map do |name, app|
   directory = File.join(ROOT, name)
   name if app["public"] && File.file?(File.join(directory, "bin", "ci"))

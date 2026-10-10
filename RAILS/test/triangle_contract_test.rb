@@ -3,10 +3,14 @@
 require "minitest/autorun"
 
 class TriangleContractTest < Minitest::Test
+  # Minitest::Test has no `test "name" do`; without this Kernel#test swallowed the call
+  # and the file never ran.
+  def self.test(name, &block) = define_method("test_#{name.gsub(/\W+/, "_")}", &block)
+
   ROOT = File.expand_path("..", __dir__)
 
   def source
-    @source ||= File.read(File.join(ROOT, "bin", "triangle"))
+    @source ||= File.read(File.join(ROOT, "..", "MASTER", "tools", "rails", "triangle.rb"))
   end
 
   test "triangle derives app surfaces from apps.yml and keeps master explicit" do

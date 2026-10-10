@@ -128,7 +128,7 @@ deep_gates = [
 if profile == "full" || %w[1 true yes on].include?(ENV["CHECK_RAILS_DEEP"].to_s.strip.downcase)
   env = LIVE_ENV.merge("CONTRACT_REPLAY" => "1", "COVERAGE_SYSTEM" => (Deploy::Environment.on_vps? ? "0" : "1"))
   failures << "rails_coverage" unless runner.run(
-    "rails coverage", RUBY, "RAILS/bin/coverage", env: env
+    "rails coverage", RUBY, "MASTER/tools/rails/coverage.rb", env: env
   )
   failures << "rails_contract_replay" unless runner.run(
     "rails contract replay", RUBY, "RAILS/test/run_all.rb", env: env

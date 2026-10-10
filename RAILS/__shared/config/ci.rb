@@ -45,7 +45,7 @@ Operator::CiGuard.run! do
     # A step that could not run is not a step that passed. These else branches
     # used to `echo ... skipping`, which exits 0, so a checkout missing the CSS
     # builder or a design lint reported a full green CI having measured none of
-    # them. RAILS/bin/premerge's header argues exactly this and implements
+    # them. MASTER/bin/operator premerge's header argues exactly this and implements
     # exit-3 for it.
     if css_builder
       step "css_build", "#{RbConfig.ruby} #{css_builder} --app #{app}"
@@ -88,7 +88,7 @@ Operator::CiGuard.run! do
     # was not pointed.
     #
     # No `unless vps_host`: vm23 is where the deploy gate actually runs, so
-    # skipping it there left the only enforcement a local bin/ci or bin/premerge
+    # skipping it there left the only enforcement a local bin/ci or operator premerge
     # that nothing runs automatically. It is a source-text check needing no
     # browser and no database, so the reasons the system tests and the importmap
     # audit are skipped on the VPS do not apply to it.
