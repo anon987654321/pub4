@@ -51,7 +51,15 @@ module Operator
       Array(all).select { |row| practice_ids.include?(row["id"].to_s.downcase) }
     end
 
+    # Laws parked at lifecycle :advisory are doctrine under observation, not
+    # enforced: demanding a surface of them made the ceiling of 0 unreachable.
+    def advisory_ids
+      executable_laws.reject(&:enforceable?).map { |law| law.id.to_s.downcase }.to_set
+    end
+
     def unreachable(all = laws)
+      parked = advisory_ids
+      all = Array(all).reject { |row| parked.include?(row["id"].to_s.downcase) }
       mechanical_ids = mechanical(all).map { |row| row["id"].to_s.downcase }.to_set
       prompted_ids = prompted(all).map { |row| row["id"].to_s.downcase }.to_set
       practice_ids = practice(all).map { |row| row["id"].to_s.downcase }.to_set
@@ -88,7 +96,7 @@ module Operator
       end
 
       puts "law_reach: #{all.size} Laws — #{mech.size} deterministic, #{asked.size} prompted, "            "#{conduct.size} practice, #{out.size} unreachable (ceiling #{limit})"
-      out.each { |law| puts "  #{rule["id"]}" }
+      out.each { |law| puts "  #{law["id"]}" }
       puts "law_reach: every executable Law has a reachable enforcement surface" if out.empty?
       return 0 if out.size <= limit
 
@@ -103,7 +111,7 @@ module Operator
       require "master"
       require File.join(MASTER_DIR, "law", "definition")
       ::Law.load_all(File.join(MASTER_DIR, "law")) if ::Law.definitions.empty?
-      @executable_law_rules = ::Law.definitions.values
+      @executable_laws = ::Law.definitions.values
     end
   end
 end

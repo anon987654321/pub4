@@ -128,7 +128,7 @@ module Operator
 
     def law_saturation_and_silent_rows
       # Silent rules are observation-only: zero findings can mean a healthy
-      # corpus or an applicability gap, so they belong in RuleAudit output rather
+      # corpus or an applicability gap, so they belong in LawAudit output rather
       # than a monotonic ceiling.
       [master_row("law_audit.saturated", "data/laws.yml", "rules flagging most of what they read") do
          require File.join(MASTER, "lib/operator/law_audit")
@@ -203,14 +203,14 @@ module Operator
          $LOAD_PATH.unshift(File.join(MASTER, "lib")) unless $LOAD_PATH.include?(File.join(MASTER, "lib"))
          require "master"
          audit = Master::Review::Scan::LawRegistryAudit.new(root: MASTER)
-         ungraphed = audit.ungraphed_rule_ids
+         ungraphed = audit.ungraphed_law_ids
          [ungraphed.size, Master.law("law_ratchets", root: MASTER).dig("deps", "ungraphed"), ungraphed.map(&:to_s)]
        end]
     end
 
     # The row above read "what our own rules find in our own trees" and
     # counted the law alone, so this second population counts the 145 rules
-    # the scanner builds: rule_audit runs them over a sixth of the tree and
+    # the scanner builds: law_audit runs them over a sixth of the tree and
     # measures blindness, and bin/operator gate runs them over all four top-level trees
     # and records nothing.
     def self_findings_rows
@@ -269,7 +269,7 @@ module Operator
               source: "MASTER/#{relative}", note:, members:)
     rescue StandardError => e
       Row.new(name:, current: nil, ceiling: nil, direction: :down,
-              source: "MASTER/#{relative}", note: "unreadable: #{e.class}")
+              source: "MASTER/#{relative}", note: "unreadable: #{e.class}: #{e.message.lines.first.to_s.strip[0, 120]} @ #{e.backtrace&.first.to_s.sub(MASTER, 'MASTER')}")
     end
 
     # MASTER: the spine ratchet, read from data/spine.yml.
@@ -476,8 +476,8 @@ end
       "css_coverage" => "../MASTER/tools/css_coverage_lint.rb",
       "asset_url" => "../MASTER/tools/asset_url_lint.rb",
       "visual_contract" => "../MASTER/tools/visual_contract_lint.rb",
-      "model_contract" => "tools/operator/model_contract_lint.rb",
-      "destructive_action" => "tools/operator/destructive_action_lint.rb",
+      "model_contract" => "../MASTER/tools/rails/operator/model_contract_lint.rb",
+      "destructive_action" => "../MASTER/tools/rails/operator/destructive_action_lint.rb",
     }.freeze
 
     def rails_lint_rows
@@ -667,7 +667,7 @@ end
 
 def deep_rows
   # This ceiling belongs to the principle map, not this presentation layer.
-  law_trace_ceiling = YAML.safe_load_file(File.join(MASTER, "data", "laws.yml")).fetch("rule_trace_ceiling", nil)
+  law_trace_ceiling = YAML.safe_load_file(File.join(MASTER, "data", "laws.yml")).dig("law_map", "law_trace_ceiling")
 
   [
     # Deep because it parses every tracked Ruby file in four top-level trees with Prism.

@@ -280,7 +280,7 @@ end
     end
 
     def twin_status(id)
-      require "operator/rule_audit"
+      require "operator/law_audit"
       registry = load_registry.key?(id.to_s.downcase)
       law = load_law.key?(id.to_s.downcase)
       catalogue = catalogue_rows.key?(id.to_s.downcase)

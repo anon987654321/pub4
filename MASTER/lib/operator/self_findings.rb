@@ -14,7 +14,7 @@ require_relative "../io/exec"
 #
 # The second row arrived 2026-09-06. The first had been labelled "what our own
 # rules find in our own trees" while measuring the law alone, and nothing
-# anywhere counted what the registry finds: rule_audit runs those rules over a
+# anywhere counted what the registry finds: law_audit runs those rules over a
 # sixth of the tree and measures blindness rather than findings, and `bin/operator
 # gate` runs them over all four trees on every pass and records nothing.
 #
@@ -44,7 +44,7 @@ module Operator
     # RAILS/master_web joined 2026-09-07, and it is the primary product's face: a Rails
     # app, the WebGL runtime's five source parts, the chat surface. 164 tracked
     # source files that no census read — self_findings' list started at MASTER's
-    # Ruby directories and web was never added, while rule_audit reaches "a
+    # Ruby directories and web was never added, while law_audit reaches "a
     # little web JS" and measures blindness rather than findings. The laws that
     # looked silent were the tell: FOR_OF, TEMPLATE_LITERALS, ASYNC_AWAIT,
     # FACE_POINT_IS_ONE_PIXEL and NO_JQUERY all have their subject there and
@@ -126,7 +126,6 @@ module Operator
         listing, status = Master::Io::Exec.capture2("git", "-C", ROOT, "ls-files", "-z", "--cached", "--others",
                                                     "--exclude-standard", "--", *TREES)
         raise "self_findings: git ls-files failed in #{status.exitstatus || "signal #{status.termsig}"}" unless status.success?
-        raise "self_findings: git ls-files failed in #{ROOT}" unless $CHILD_STATUS.success?
 
         extensions = Master::FILE_LANGUAGE_MAP.keys
         listing.split("\0").filter_map do |relative|

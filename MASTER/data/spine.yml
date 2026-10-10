@@ -375,7 +375,7 @@ pub4_source_ceilings:
   # red. It folds into no existing test; nothing else here reads a laws.yml
   # section into a prompt and checks the file is the source.
   # 1046 -> 1047 is test/test_self_findings_drift.rb. Third census in this tree
-  # to record a bare integer, after data_reach and rule_audit, and the one where
+  # to record a bare integer, after data_reach and law_audit, and the one where
   # the detail already existed and was thrown away: by_rule has always returned
   # a rule => count hash. The test holds that a total-only baseline says
   # attribution is unavailable rather than "no rule moved", which are different

@@ -92,7 +92,7 @@ module Operator
     # below has already required the runtime by the time anything asks.
     def ceilings
       law
-      ::Master.law("rule_ratchets", root: MASTER).fetch("audit")
+      ::Master.law("law_ratchets", root: MASTER).fetch("audit")
     end
 
     def law
@@ -194,23 +194,23 @@ module Operator
       found = audit
       return (puts JSON.pretty_generate(found)) || found[:fixture_blindness].empty? if json
 
-      puts "rule_audit: #{found[:lexical]} with a detector + #{found[:semantic]} asked + #{found[:practice]} practice, over #{found[:corpus]} files"
+      puts "law_audit: #{found[:lexical]} with a detector + #{found[:semantic]} asked + #{found[:practice]} practice, over #{found[:corpus]} files"
 
       if found[:fixture_blindness].empty?
-        puts "rule_audit: every fixture survives being read as a real file"
+        puts "law_audit: every fixture survives being read as a real file"
       else
         found[:fixture_blindness].each do |f|
-          warn "rule_audit: #{f[:rule]} proves on \"-\" but not on #{f[:extension]} — #{f[:detail]}"
+          warn "law_audit: #{f[:rule]} proves on \"-\" but not on #{f[:extension]} — #{f[:detail]}"
         end
-        warn "rule_audit: a fixture read whole and a file read with its comments blanked are different inputs"
+        warn "law_audit: a fixture read whole and a file read with its comments blanked are different inputs"
       end
 
       found[:saturation].each do |r|
-        warn format("rule_audit: %s fires on %d of %d applicable files (%d%%) — describing the tree, not judging it",
+        warn format("law_audit: %s fires on %d of %d applicable files (%d%%) — describing the tree, not judging it",
                     r[:rule], r[:hits], r[:applicable], (r[:rate] * 100).round)
       end
 
-      puts "rule_audit: #{found[:silent].size} rule(s) fired on nothing here — #{found[:silent].join(', ')}" unless found[:silent].empty?
+      puts "law_audit: #{found[:silent].size} rule(s) fired on nothing here — #{found[:silent].join(', ')}" unless found[:silent].empty?
 
       found[:fixture_blindness].empty? && found[:saturation].empty?
     end

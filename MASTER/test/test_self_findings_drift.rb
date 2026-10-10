@@ -6,7 +6,7 @@ require "tmpdir"
 require_relative "../lib/operator/self_findings"
 
 # The third census in this tree to record a bare integer, after data_reach and
-# rule_audit. self_findings was 167 against a baseline of 154 and the number
+# law_audit. self_findings was 167 against a baseline of 154 and the number
 # said nothing else, so attributing the overage meant checking out 01d5cc414 —
 # the commit that set 154 — and diffing two full runs by hand. It came to eight
 # rules, led by SAFE_NAVIGATION 0 -> 4 in a probe and NO_MULTIPLE_LANGUAGES

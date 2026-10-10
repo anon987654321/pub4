@@ -69,7 +69,7 @@ module Operator
       Master.load_laws(root: MASTER)
     end
 
-    def Laws
+    def laws
       found = []
       walk = lambda do |node|
         case node
@@ -98,7 +98,7 @@ module Operator
     # A Law naming a transform is the one that mentions it; that mention must
     # not count as its implementation.
     def named_transforms
-      Laws.filter_map do |r|
+      laws.filter_map do |r|
         value = r["autofix"]
         next if [true, false, nil].include?(value)
 
@@ -120,7 +120,7 @@ module Operator
     end
 
     def bare_true
-      Laws.select { |r| r["autofix"] == true }.map do |r|
+      laws.select { |r| r["autofix"] == true }.map do |r|
         { Law: r["id"], detected: detectable_ids.include?(r["id"].to_s) }
       end
     end
