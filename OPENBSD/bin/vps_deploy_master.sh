@@ -44,11 +44,18 @@ export SECRET_KEY_BASE_DUMMY=1
 # added (ferrum-0.17.2, 2026-09-24) stopped the deploy there with GemNotFound
 # while the install that would have fixed it waited two steps later.
 echo "==> bundle"
+# dev cannot write the system gem directory, and Bundler falls back to it
+# (mkdir /usr/local/lib/ruby/gems/3.4/cache/bundler) unless a path is set. The
+# path lives in each Gemfile's .bundle/config so rc.d's `bundle exec` as master
+# finds the same gems; /home/dev is group _pub4ci, which master belongs to.
+BUNDLE_PATH_DEV=/home/dev/.bundle/master
 "$BUNDLE" config set --local without 'development:test' 2>/dev/null || true
+"$BUNDLE" config set --local path "$BUNDLE_PATH_DEV"
 BUNDLE_WITHOUT=development:test "$BUNDLE" check 2>/dev/null || BUNDLE_WITHOUT=development:test "$BUNDLE" install
 # The tts-worker and media tools boot from MASTER/Gemfile, not web's. rc.d/master
 # only checks it now, because it runs as root; installing belongs here, as dev.
-(cd "$ROOT/MASTER" && BUNDLE_GEMFILE=Gemfile "$BUNDLE" check >/dev/null 2>&1 || BUNDLE_GEMFILE=Gemfile "$BUNDLE" install)
+(cd "$ROOT/MASTER" && "$BUNDLE" config set --local path "$BUNDLE_PATH_DEV" &&
+  { BUNDLE_GEMFILE=Gemfile "$BUNDLE" check >/dev/null 2>&1 || BUNDLE_GEMFILE=Gemfile "$BUNDLE" install; })
 
 echo "==> db prepare"
 BUNDLE_WITHOUT=development:test "$BUNDLE" exec rails db:prepare
