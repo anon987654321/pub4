@@ -110,6 +110,7 @@ class Marketplace::Listing < ApplicationRecord
     self.latitude ||= Current.user&.latitude if defined?(Current) && Current.respond_to?(:user)
     self.longitude ||= Current.user&.longitude if defined?(Current) && Current.respond_to?(:user)
   end
+  before_validation :normalize_buy_box_key
 
   # Immediate, not later: the queue has no worker. Only searches that already
   # match this row, and only if they are due — a filtered index is not a
@@ -272,6 +273,11 @@ class Marketplace::Listing < ApplicationRecord
   end
 
   private
+
+  def normalize_buy_box_key
+    self.buy_box_key = nil if store_id.blank?
+    self.buy_box_key = buy_box_key.to_s.strip.upcase.gsub(/\\s+/, " ") if buy_box_key.present?
+  end
 
   def set_expiry
     self.expires_at ||= Time.current + LIFETIME
