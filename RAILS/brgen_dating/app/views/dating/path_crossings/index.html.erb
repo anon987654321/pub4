@@ -1,0 +1,56 @@
+<% content_for :title, t("dating.path_crossings_title", default: "Crossed paths") %>
+
+<div class="dating-app">
+  <header class="dating-page-intro">
+    <div>
+      <p><%= t("dating.local") %></p>
+      <h1><%= t("dating.path_crossings_title", default: "Crossed paths") %></h1>
+      <p><%= t("dating.path_crossings_intro", default: "People who opted in and were nearby while you were nearby. Exact locations are never shown.") %></p>
+    </div>
+    <nav aria-label="<%= t("dating.path_crossings_title", default: "Crossed paths") %>">
+      <%= link_to t("dating.discover"), dating.root_path, class: "btn btn-ghost" %>
+      <%= link_to t("dating.edit_profile"), edit_profile_path, class: "btn btn-ghost" %>
+    </nav>
+  </header>
+
+  <% if @location_enabled %>
+    <section class="dating-discover-panel" aria-labelledby="crossed-paths-locate-heading"
+             data-controller="dating-location"
+             data-dating-location-url-value="<%= locate_path_crossings_path %>">
+      <h2 id="crossed-paths-locate-heading"><%= t("dating.path_crossings_check_in", default: "Check for nearby crossings") %></h2>
+      <p><%= t("dating.path_crossings_check_in_hint", default: "Your browser asks for location only after you press this button. The app stores a coarse sample for five minutes.") %></p>
+      <button type="button" class="btn btn-primary" data-action="dating-location#locate">
+        <%= t("dating.path_crossings_locate", default: "Check my nearby area") %>
+      </button>
+      <p role="status" aria-live="polite" data-dating-location-target="status"></p>
+    </section>
+
+    <section class="section-divider" aria-label="<%= t("dating.path_crossings_title", default: "Crossed paths") %>">
+      <% if @crossings.any? %>
+        <% @crossings.each do |crossing| %>
+          <% profile = @profiles_by_user_id[crossing.other_user_id(Current.user.id)] %>
+          <% next unless profile %>
+          <article class="dating-crossing">
+            <% if profile.photos.attached? %>
+              <%= lazy_image_tag profile.photos.first, alt: t("dating.profile_photo"), class: "photo-thumb" %>
+            <% end %>
+            <div>
+              <h2><%= profile.name %></h2>
+              <p><%= crossing.neighborhood&.name || t("dating.path_crossings_approximate_area", default: "Nearby area") %> · <%= time_ago_in_words(crossing.crossed_at) %></p>
+              <%= button_to t("dating.like", default: "Like"), likes_path, params: { user_id: profile.user_id }, method: :post, class: "btn btn-primary btn-sm" %>
+            </div>
+          </article>
+        <% end %>
+      <% else %>
+        <%= render "shared/empty_state",
+              title: t("dating.path_crossings_empty_title", default: "No crossed paths yet"),
+              body: t("dating.path_crossings_empty_body", default: "Keep location sharing off until you need it. When enabled, this list only shows recent, approximate crossings with other verified members who opted in.") %>
+      <% end %>
+    </section>
+  <% else %>
+    <%= render "shared/empty_state",
+          title: t("dating.path_crossings_enable_title", default: "Turn on Crossed paths when you are ready"),
+          body: t("dating.path_crossings_enable_body", default: "Enable location discovery in your profile, keep your profile visible, and complete verification. Nothing is recorded until you request a nearby check."),
+          action: { label: t("dating.edit_profile"), path: edit_profile_path } %>
+  <% end %>
+</div>
