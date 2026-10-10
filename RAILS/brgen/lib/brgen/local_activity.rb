@@ -12,7 +12,7 @@ module Brgen
         .where("expires_at IS NULL OR expires_at > ?", Time.current)
         .order(created_at: :desc).first
       track = Playlist::Track.publicly_visible.unexpired
-        .where(user_id: User.where(city_id: city.id))
+        .joins(:user).where(users: { city_id: city.id })
         .order(created_at: :desc).first
 
       Result.new(listing:, track:)
