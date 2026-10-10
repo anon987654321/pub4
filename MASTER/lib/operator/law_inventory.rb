@@ -31,7 +31,7 @@ module Operator
         rule = law_rules[id]
         scan = registry[id]
         row = catalogue[id] || {}
-        {
+        [id, {
           id:,
           name: row["name"],
           tier: row["tier"],
@@ -53,7 +53,7 @@ module Operator
           source: rule&.source || row["source"],
           fix: rule&.fix || row["fix"],
           health: deep ? reach(id) : {},
-        }
+        }]
       end
     end
 

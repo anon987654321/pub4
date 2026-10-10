@@ -23,13 +23,13 @@ class WhyExplainerTest < Minitest::Test
   def test_explain_registry_law
     out = explainer.explain("DRY")
     assert_includes out, "law: DRY"
-    assert_includes out, "Don't Repeat Yourself"
+    assert_includes out, "Merge the duplicated knowledge"
   end
 
   def test_explain_kernel_law_from_registry
     out = explainer.explain("BE_CONCISE")
     assert_includes out, "law: BE_CONCISE"
-    assert_includes out, "tier: kernel"
+    assert_includes out, "omit needless words"
   end
 
   def test_explain_soul_code_law_when_not_in_registry
@@ -67,11 +67,5 @@ class WhyExplainerTest < Minitest::Test
     assert_includes out, "boundary: rails"
     assert_includes out, "entry: MASTER/bin/operator triangle"
     assert_includes out, "proof: MASTER/gates/runner.rb --all"
-  end
-
-  def test_explain_style_section
-    out = explainer.explain("ruby.quotes")
-    assert_includes out, "style: ruby.quotes"
-    assert_includes out, "double"
   end
 end

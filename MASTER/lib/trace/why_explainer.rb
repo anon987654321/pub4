@@ -26,8 +26,7 @@ module Master
           soul_law(key) ||
           executable_law(key) ||
           scan_law(key) ||
-          anti_pattern(key) ||
-          style_key(key)
+          anti_pattern(key)
       end
 
       private
@@ -72,10 +71,6 @@ module Master
 
       def soul
         @soul ||= Master.load_yaml(File.join(@root, "data", "soul.yml")) || {}
-      end
-
-      def style
-        @style ||= Master.law("style", root: @root)
       end
 
       def executable_law(key)
@@ -176,28 +171,6 @@ module Master
           end
         end
         nil
-      end
-
-      def style_key(key)
-        keys = key.downcase.split(/[.\/]/)
-        cursor = style
-        keys.each do |k|
-          return unless cursor.is_a?(Hash) && cursor.key?(k)
-
-          cursor = cursor[k]
-        end
-        "style: #{key}\n#{render(cursor, indent: 2).chomp}"
-      end
-
-      def render(node, indent: 0)
-        pad = " " * indent
-        case node
-        when Hash then node.map do |k, v|
-   "#{pad}#{k}: #{v.is_a?(Hash) || v.is_a?(Array) ? "\n" + render(v, indent: indent + 2) : v}" end.join("\n") + "\n"
-        when Array then node.map do |v|
-   "#{pad}- #{v.is_a?(Hash) ? "\n" + render(v, indent: indent + 2) : v}" end.join("\n") + "\n"
-        else node.to_s + "\n"
-        end
       end
     end
   end

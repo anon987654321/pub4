@@ -4,7 +4,7 @@ module Master
   module Trace
     # Joins existing constitutional sources. This class is a derived reader,
     # not another ownership, rule, architecture, or design registry.
-    class RuleLineage
+    class LawLineage
       Node = Data.define(
         :path, :boundary, :entry, :depends_on, :check, :ownership, :laws
       )
@@ -33,7 +33,7 @@ module Master
           constitutional_laws,
         ).then { |node| render(node) }
       rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "RuleLineage.explain", severity: :cosmetic)
+        Master::Ground::Swallow.log(e, context: "LawLineage.explain", severity: :cosmetic)
         inconclusive(path, e)
       end
 
