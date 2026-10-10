@@ -186,10 +186,10 @@ if $PROGRAM_NAME == __FILE__
   words_at = ARGV.index("--words")
   text_at = ARGV.index("--text")
   words = if words_at
-ARGV[words_at + 1].to_i
-else
-(text_at ? ARGV[text_at + 1].to_s.split.size : nil)
-end
+    ARGV[words_at + 1].to_i
+  elsif text_at
+    ARGV[text_at + 1].to_s.split.size
+  end
   files = ARGV.reject.with_index { |a, i| a.start_with?("--") || [words_at, text_at].compact.any? { |j| i == j + 1 } }
   abort("usage: voice_measure.rb clip [--words N | --text TEXT] | --selfcheck") if files.empty?
   files.each { |file| puts JSON.generate(VoiceMeasure.measure(file, words:)) }
