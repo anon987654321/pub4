@@ -21,6 +21,8 @@ Updated: 2026-10-11. Scope: the Ruby runtime, constitutional law, /fix, operator
 
 ## P2 — KISS and maintenance
 
+- [ ] Resolve the toolchain documentation drift: repository `.ruby-version` and `RAILS/CLAUDE.md` pin Ruby 4.0.5, while `MASTER/README.md` tells readers to use Ruby 4.0.7 and says MASTER pins 4.0.7. Choose the supported runtime, align the debugger example and all version claims, and test the documented command under that exact runtime.
+
 - [ ] Compare the overlapping `fix-dryrun-*`, `bughunt/*`, `master/final-*`, `master/convergence-*` and `sweep/todo-wishlist-20261007` branch candidates with current source and tests. Port only missing, valuable changes; do not merge stale branch histories wholesale.
 - [ ] Add a small repeatable benchmark for repair precision, regressions, wall time and model/tool spend. Compare identical fixtures and budgets; preserve raw outcomes so a lower score cannot be narrated as progress.
 - [ ] Keep each policy, command recipe, gate inventory and generated agent contract under its canonical owner. When simplifying, remove a second source of truth rather than adding another wrapper or registry.
