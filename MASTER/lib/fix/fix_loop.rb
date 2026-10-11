@@ -307,7 +307,7 @@ module Master
       # an earlier process left, then the passes, then the terminal state.
       def run_journaled(journal, files:, target:, max_passes:, budget_seconds:, mission:, requested:, incremental:)
         run_id = journal["id"]
-        RunBudget.begin_run(root: Master::ROOT, max_passes:)
+        RunBudget.begin_run(root: Master::ROOT, max_passes:, bus: @bus, target:)
         files = StreamCursor.order(@root, target, files)
         deadline = Ground::Reliability::Deadline.new(journal["remaining_seconds"].to_f)
         start_pass = @run_journal.next_pass(journal)
@@ -714,6 +714,7 @@ module Master
           consecutive_clean: state[:consecutive_clean],
           wishlist_proposals:, run_id:
         )
+        RunBudget.pass_end(pass)
         @convergence_discipline.note_progress! if @pass_runner.respond_to?(:pass_progress?) && @pass_runner.pass_progress?
         if %i[continue reloading].include?(result.status) && wishlist_proposals.any?
           @wishlist.mark_delivered(

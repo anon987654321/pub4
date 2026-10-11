@@ -21,6 +21,8 @@ module Operator
     JOURNAL = "MASTER/.master/fix_runs.json"
     MISSION = "MASTER/.master/mission.json"
     LOG_GLOB = "MASTER/.master/fix-*.log"
+    HEARTBEAT = %r{\Afix0: pass \d+/\d+ }
+    HEARTBEAT_WINDOW = 65_536
     TEMP_WORKTREE = /pub4-master-fix-/
 
     def initialize(root:, trees: [], now: Time.now)
@@ -40,6 +42,7 @@ module Operator
         retained: retained_rows,
         dead_lanes: ::Master::Io::LaneQuota.report,
         online: online_line,
+        heartbeat: heartbeat_line,
       }
     end
 
@@ -76,6 +79,7 @@ module Operator
                "files #{row[:files]} pid #{row[:pid]}#{row[:alive] ? " alive" : ""} started #{row[:started]}"
       end
       mission = data[:mission]
+      out << "heartbeat: #{data[:heartbeat] || "none yet"}"
       out << "mission: #{mission ? "#{mission[:state]}/#{mission[:stage]} #{mission[:scope]} attempt #{mission[:attempts]} artifacts #{mission[:artifacts]}" : "none"}"
       out << "logs:"
       out << "  none" if data[:logs].empty?
@@ -143,6 +147,18 @@ module Operator
 
         { name: File.basename(path), age: age(File.mtime(path)), last: last_line(path) }
       end.sort_by { |row| row[:name] }
+    end
+
+    # The newest RunPulse line in any tree's log: the run's own account of where it is.
+    def heartbeat_line
+      Dir.glob(File.join(@root, LOG_GLOB)).sort_by { |path| -File.mtime(path).to_f }.each do |path|
+        tail = File.open(path, "rb") { |file| file.seek([File.size(path) - HEARTBEAT_WINDOW, 0].max) && file.read }.to_s
+        line = tail.force_encoding("UTF-8").scrub.lines.reverse.find { |row| row.match?(HEARTBEAT) }
+        return line.strip if line
+      end
+      nil
+    rescue SystemCallError
+      nil
     end
 
     def commit_row

@@ -61,6 +61,21 @@ class TestFixStatus < Minitest::Test
     assert_equal before, Dir.glob(File.join(@root, "**", "*"), File::FNM_DOTMATCH).sort
   end
 
+  def test_status_and_tail_share_the_stream_and_show_the_latest_heartbeat
+    beat = "fix0: pass 2/8 scan0 files 812/2638 (31%) fixes 1 ok 0 failed tokens = 5 (5) elapsed = 60s (1m00s) eta ~3m load 1.0"
+    write("fix-RAILS.log", "#{beat.sub("812", "700")}\nscan0: 9/10 a.rb\n#{beat}\nbudget0: spent\n")
+
+    status = Operator::FixStatus.new(root: @root)
+
+    assert_equal beat, status.payload[:heartbeat]
+    assert_includes status.render, "heartbeat: #{beat}"
+    out = StringIO.new
+    require "operator/fix_tail"
+    Operator::FixTail.run(%w[--once --tail=2], roots: [File.join(@root, "MASTER")], io: out)
+    assert_equal "#{beat}\nbudget0: spent\n", out.string
+  end
+
+
   def test_trees_filter_narrows_runs_logs_and_mission
     write("fix_runs.json", JSON.generate("runs" => [run_record("RAILS"), run_record("STUDIO")]))
     write("mission.json", JSON.generate("state" => "running", "scope" => "STUDIO"))

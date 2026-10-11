@@ -1,18 +1,19 @@
 # frozen_string_literal: true
 
 require "json"
+require_relative "run_pulse"
 
 module Master
   module Fix
     # What one /fix run has spent: model dollars and tokens (read from the
     # costs ledger the session writes), wall time per dmesg unit, and an ETA
-    # from the passes already finished. It speaks at every pass boundary and
-    # when a stage goes quiet, and it stops the run, loudly, past either limit.
+    # from the passes already finished. It speaks at every pass boundary, prints
+    # a RunPulse line every HEARTBEAT_SECONDS so the run is never quiet, and it stops the run, loudly, past either limit.
     # ResourceBudget measures the host; this measures the run.
     class RunBudget
       DEFAULT_MAX_COST = 50.0
       DEFAULT_MAX_MINUTES = 480.0
-      STALL_SECONDS = 120
+      HEARTBEAT_SECONDS = 28
       WARN_SHARE = 0.8
       UNIT = "budget0"
       COSTS = File.join(".master", "costs.jsonl")
@@ -20,9 +21,13 @@ module Master
       class << self
         attr_reader :current
 
-        def begin_run(root:, max_passes:)
+        def begin_run(root:, max_passes:, bus: nil, target: nil)
           finish_run
-          @current = new(root:, max_passes:).start!
+          @current = new(root:, max_passes:).start!.tap { |run| run.announce(target:, bus:) }
+        end
+
+        def pass_end(pass)
+          @current&.pass_end(pass)
         end
 
         # A Result.err naming the exhausted limit, or nil while the run may go on.
@@ -42,7 +47,8 @@ module Master
       end
 
       def initialize(root:, max_passes:, env: ENV, clock: -> { Process.clock_gettime(Process::CLOCK_MONOTONIC) },
-                     wall: -> { Time.now }, out: nil, say: nil, stall_seconds: STALL_SECONDS, poll_seconds: 5)
+                     wall: -> { Time.now }, out: nil, say: nil, beat_seconds: HEARTBEAT_SECONDS, poll_seconds: 1)
+        @root = root
         @costs = File.join(root, COSTS)
         @max_passes = max_passes.to_i
         @max_cost = limit(env["MASTER_FIX_MAX_COST"], DEFAULT_MAX_COST)
@@ -51,7 +57,8 @@ module Master
         @wall = wall
         @out = out || ->(line) { Master::Trace::Dmesg.status(UNIT, line) }
         @say = say || ->(text) { Master::Trace::Dmesg.emit(text) }
-        @stall = stall_seconds
+        @beat_every = beat_seconds
+        @pulse = RunPulse.new(max_passes:, clock:, commits: method(:commit_count))
         @poll = poll_seconds
         @lock = Mutex.new
         @stages = Hash.new(0.0)
@@ -63,9 +70,10 @@ module Master
         @started = @clock.call
         @started_wall = @wall.call.to_i
         @last_output = @started
+        @last_beat = @started
         @last_unit = nil
         @last_text = nil
-        @reported_at = nil
+        @pass = 0
         @watchdog = Thread.new { watch } if @poll.positive?
         self
       end
@@ -85,8 +93,8 @@ module Master
           @last_output = now
           @last_unit = unit.to_s
           @last_text = text.to_s[0, 60]
-          @reported_at = nil
         end
+        @pulse.unit = unit
       end
 
       def spend
@@ -102,6 +110,7 @@ module Master
         cost, tokens = spend
         minutes = (@clock.call - @started) / 60.0
         @boundaries[pass] = @clock.call
+        @pass = pass
         @out.call(line(cost, tokens, minutes, pass))
         reason = exhausted(cost, minutes)
         warn_near(cost, minutes) unless reason
@@ -109,18 +118,27 @@ module Master
         reason
       end
 
-      # The watchdog calls this; a test drives it without a thread.
-      def check_stall
-        now = @clock.call
-        message = @lock.synchronize do
-          idle = now - @last_output
-          next if idle < @stall || @reported_at
+      # The dmesg banner, then the pulse listening to the bus.
+      def announce(target:, bus:)
+        limits = "budget #{show(@max_cost, "$")} / #{show(@max_minutes, "", "m")}"
+        RunPulse::Banner.lines(root: @root, target: target || @root, max_passes: @max_passes, limits:).each { |text| @say.call(text) }
+        @pulse.attach(bus) if bus
+      end
 
-          @reported_at = now
-          unit = @last_unit || "fix0"
-          "#{unit}: still working on #{@last_text || "the current stage"}, #{idle.round}s without output"
-        end
-        @say.call(message) if message
+      def pass_end(pass)
+        @pulse.pass_summary(pass, tokens: spend.last).each { |text| @say.call(text) }
+      end
+
+      # The watchdog calls this; a test drives it without a thread. One line
+      # per HEARTBEAT_SECONDS whatever else was said, so a run is never quiet
+      # for longer than that.
+      def beat
+        now = @clock.call
+        return if now - @last_beat < @beat_every
+
+        @last_beat = now
+        message = @pulse.line(elapsed: now - @started, tokens: spend.last, eta: eta_part)
+        @say.call(message)
         message
       end
 
@@ -129,7 +147,7 @@ module Master
       def watch
         loop do
           sleep @poll
-          check_stall
+          beat
         end
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "Fix::RunBudget.watch")
@@ -141,6 +159,17 @@ module Master
 
         value = raw.to_f
         value.positive? ? value : default
+      end
+
+      def eta_part
+        eta(@pass).sub("ETA ", "eta ")
+      end
+
+      def commit_count
+        out, status = Master::Io::Exec.capture2e("git", "-C", @root, "rev-list", "--count", "HEAD")
+        status.success? ? out.to_i : 0
+      rescue StandardError
+        0
       end
 
       def parse(line)
