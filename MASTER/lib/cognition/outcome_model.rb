@@ -106,23 +106,22 @@ module Master
         elsif root
           raise ArgumentError, "evidence SHA-256 must contain 64 hexadecimal characters" unless supplied.match?(/\A[0-9a-f]{64}\z/)
 
-          base = File.expand_path(root)
+          base = File.realpath(File.expand_path(root))
           path = File.expand_path(source, base)
           raise ArgumentError, "evidence path escapes its root" unless path.start_with?("#{base}/")
           raise ArgumentError, "evidence file is unavailable" unless File.file?(path)
 
-          real_base = File.realpath(base)
           real_path = File.realpath(path)
-          raise ArgumentError, "evidence symlink escapes its root" unless real_path.start_with?("#{real_base}/")
+          raise ArgumentError, "evidence symlink escapes its root" unless real_path.start_with?("#{base}/")
 
-          sha256 = Digest::SHA256.file(real_path).hexdigest
+          content = File.binread(real_path)
+          sha256 = Digest::SHA256.hexdigest(content)
           raise ArgumentError, "evidence file SHA-256 mismatch" unless supplied == sha256
         else
-          sha256 = supplied
-          raise ArgumentError, "evidence SHA-256 must contain 64 hexadecimal characters" unless sha256.match?(/\A[0-9a-f]{64}\z/)
+          raise ArgumentError, "evidence requires inline content or a verification root"
         end
 
-        { "source" => source, "sha256" => sha256 }.freeze
+        { "source" => source, "sha256" => sha256, "content" => content }.freeze
       end
 
       private
