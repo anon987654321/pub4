@@ -19,6 +19,7 @@ require_relative "law_loop/fix_verification"
 require_relative "law_loop/outcome_tracking"
 require_relative "visual_custody_blocking"
 require_relative "best_of_n"
+require_relative "tool_breaker"
 require_relative "../review/scan/law_health"
 require_relative "law_loop/autofix_policy"
 
@@ -189,7 +190,7 @@ else
 @model_failed ? :model_failed : :no_proposal
 end) if source.to_s.strip.empty?
 
-        source = BestOfN.pick(self, violation, source, custody: @visual_custody, root: @root) if BestOfN.active?(violation, @visual_custody)
+        source = BestOfN.pick(self, violation, source, custody: @visual_custody, root: @root) if BestOfN.active?(violation, @visual_custody, tool: @law.id)
         return :no_proposal if source.to_s.strip.empty?
 
         FixTrace.proposed(@law.id, violation[:file], source)

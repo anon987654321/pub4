@@ -19,12 +19,12 @@ module Master
         # documented (feedback_policy.rs, issue #236) after making the same
         # mistake. :skipped is still recorded (queryable) but excluded from
         # fix_quality's denominator entirely.
-        OUTCOMES = %i[applied commit_refused no_proposal model_failed reflexion_rejected consensus_rejected rejected skip_confidence skip_fingerprint needs_person].freeze
+        OUTCOMES = %i[applied commit_refused no_proposal model_failed reflexion_rejected consensus_rejected rejected skip_confidence skip_fingerprint skip_fused needs_person].freeze
 
         def fix_batch(violations)
           results = []
           violations.uniq { |violation| violation[:file] }.each do |violation|
-            result = fix_violation(violation)
+            result = attempt(violation)
             results << result
             break if immediate_delivery_boundary?(result)
           end
@@ -37,12 +37,18 @@ module Master
           results.count { |r| r == :applied || r == :commit_refused }
         end
 
-        # A single aggregate line per rule/pass, not one per violation --
-        # thousands of violations would otherwise flood the dmesg stream the
-        # way per-file rubocop output already did earlier this session. Every
-        # outcome appears, not just the skips: a pass that proposes nothing and
-        # a pass whose proposals all die in review are different problems, and
-        # "0 fixed" says neither.
+        # A tuple that already failed ToolBreaker::LIMIT times against an
+        # unchanged file is skipped, not asked again; a skip, so it does not
+        # poison the rule's quality score.
+        def attempt(violation)
+          state = ToolBreaker.state_of(violation)
+          return :skip_fused if ToolBreaker.refuse?(@law.id, violation, state)
+
+          result = fix_violation(violation)
+          ToolBreaker.record(@law.id, violation, state, result)
+          result
+        end
+
         def immediate_delivery_boundary?(result)
           return false unless @committer
           return false if stage_commit_mode?
@@ -50,6 +56,12 @@ module Master
           %i[applied commit_refused].include?(result)
         end
 
+        # A single aggregate line per rule/pass, not one per violation --
+        # thousands of violations would otherwise flood the dmesg stream the
+        # way per-file rubocop output already did earlier this session. Every
+        # outcome appears, not just the skips: a pass that proposes nothing and
+        # a pass whose proposals all die in review are different problems, and
+        # "0 fixed" says neither.
         def log_outcome_breakdown(results)
           @batch_breakdown = {}
           return if results.empty?

@@ -2,6 +2,7 @@
 
 require_relative "layout_score_render"
 require_relative "visual_quality_gates"
+require_relative "tool_breaker"
 
 module Master
   module Fix
@@ -31,7 +32,11 @@ module Master
 
       def n = Integer(ENV.fetch("MASTER_FIX_BEST_OF", "1")).clamp(1, MAX_N)
 
-      def active?(violation, custody)
+      # A tuple the ToolBreaker has fused gets no N-way fan-out either: N more model
+      # calls on a prompt that failed three times against this unchanged file.
+      def active?(violation, custody, tool: LAW_ID)
+        return false if ToolBreaker.refuse?(tool, violation, ToolBreaker.state_of(violation))
+
         n > 1 && custody && violation[:law].to_s == LAW_ID && STYLE_EXTENSIONS.include?(File.extname(violation[:file].to_s).downcase)
       end
 

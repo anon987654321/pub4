@@ -2,6 +2,7 @@
 
 require "json"
 require_relative "run_pulse"
+require_relative "tool_breaker"
 
 module Master
   module Fix
@@ -23,6 +24,7 @@ module Master
 
         def begin_run(root:, max_passes:, bus: nil, target: nil)
           finish_run
+          ToolBreaker.reset!
           @current = new(root:, max_passes:).start!.tap { |run| run.announce(target:, bus:) }
         end
 
@@ -126,7 +128,10 @@ module Master
       end
 
       def pass_end(pass)
-        @pulse.pass_summary(pass, tokens: spend.last).each { |text| @say.call(text) }
+        fused = ToolBreaker.fused_count
+        lines = @pulse.pass_summary(pass, tokens: spend.last)
+        lines << "fix0: pass #{pass} #{fused} tuples fused" if fused.positive?
+        lines.each { |text| @say.call(text) }
       end
 
       # The watchdog calls this; a test drives it without a thread. One line
@@ -138,6 +143,8 @@ module Master
 
         @last_beat = now
         message = @pulse.line(elapsed: now - @started, tokens: spend.last, eta: eta_part)
+        fused = ToolBreaker.fused_count
+        message = "#{message} #{fused} tuples fused" if fused.positive?
         @say.call(message)
         message
       end
