@@ -40,6 +40,22 @@ class TermuxInstallerTest < Minitest::Test
     assert_includes path_line, 'PATH="$HOME/.local/bin:$PATH"'
   end
 
+  def test_migration_filter_removes_only_the_malformed_path_export
+    line = source.lines.find { |row| row.include?("awk '$0 !=" }
+    refute_nil line
+    program = line[/awk '([^']+)'/, 1]
+    refute_nil program
+
+    malformed = "export PATH=\"\\$HOME/.local/bin:\\$PATH\"\n"
+    input = malformed + "export EDITOR=vi\n"
+    output, status = Open3.capture2("awk", program, stdin_data: input)
+
+    assert status.success?
+    refute_includes output, malformed
+    assert_includes output, "export EDITOR=vi\n"
+    assert_operator source.index(line), :<, source.index("if ! grep -Fq")
+  end
+
   def test_launcher_forwards_arguments_without_shell_interpolation
     assert_includes source, 'exec ruby bin/cli "$@"'
   end
