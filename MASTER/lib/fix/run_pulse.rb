@@ -19,8 +19,11 @@ module Master
       PHASES = {
         "fast_fixes" => "fast fixes", "structure" => "structure", "council" => "council", "council_improve" => "council",
         "model_fixes" => "fix", "improvements_fix" => "fix", "opportunities" => "opportunity", "visual" => "visual",
-        "wishlist" => "wish"
+        "wishlist" => "wish", "stream" => "scan + stream fixes"
       }.freeze
+      # Stages that make model calls themselves; in any other stage a call in
+      # flight is another activity, and the label says so.
+      MODEL_STAGES = %w[council model_fixes improvements_fix opportunities visual wishlist stream].freeze
       # Advisory stages: a stall here is cut short (PassClock.cancel!), never waited out.
       SKIPPABLE = %w[council council_improve opportunities wishlist].freeze
       NOT_SKIPS = %w[pass fixed clean applied ok].freeze
@@ -61,6 +64,7 @@ module Master
       end
 
       def attach(bus)
+        Master::Io::LaneSelection.watch_free_class!
         BUS_PATTERNS.each { |pattern| bus.subscribe(pattern) { |payload| observe(payload[:event], payload) } }
       end
 
@@ -193,7 +197,15 @@ module Master
         name == "fix" && @law ? "fix #{@law}#{@file ? " #{File.basename(@file)}" : ""}" : name
       end
 
-      def phase_part = (@stage ? "phase #{phase_name}" : nil)
+      def phase_part = (@stage ? "phase #{phase_name}#{in_flight_note}" : nil)
+
+      # The heartbeat names every activity in flight: a model call under a stage
+      # that makes none is said aloud, never hidden behind the stage.
+      def in_flight_note
+        return if @calls.empty? || MODEL_STAGES.any? { |stage| @stage.to_s.start_with?(stage) }
+
+        " + #{@calls.size} model #{@calls.size == 1 ? "call" : "calls"}"
+      end
 
       def ruled(payload)
         @law = payload[:law].to_s unless payload[:law].to_s.empty?
@@ -254,6 +266,7 @@ module Master
             "ncpu = #{Etc.nprocessors}",
             "fix0 at mainbus0: target #{target}, passes #{max_passes}, #{limits}",
             *lane_lines(probes[:states] || lane_states),
+            model_line(probes[:choice] || boot_choice),
             *triangle_lines(target, probes[:ports] || probe_ports),
           ]
         end
@@ -275,6 +288,27 @@ module Master
 
             "lane#{index += 1} at fix0: #{lane}"
           end
+        end
+
+        # The lane /fix starts on and what chose it, so a run on a free model
+        # shows its cause on the first screen.
+        def model_line(choice)
+          lane, source = choice
+          return "model0 at fix0: no live lane (source: #{source || "availability"})" if lane.to_s.empty?
+
+          "model0 at fix0: #{lane} (source: #{source == "MASTER_MODEL" ? "pinned (MASTER_MODEL), failover on" : source})"
+        end
+
+        def boot_choice
+          Master::Io::LaneSelection.boot_choice(saved: saved_model)
+        rescue StandardError
+          []
+        end
+
+        # The model the operator saved in config.yml, not the built-in default.
+        def saved_model
+          saved = Master::Ground::Config.new(Master::ROOT)["model"].to_s
+          saved == Master::Ground::Config::DEFAULTS["model"] ? nil : saved
         end
 
         def triangle_lines(target, ports)

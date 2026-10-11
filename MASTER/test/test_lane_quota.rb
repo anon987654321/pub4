@@ -109,7 +109,8 @@ class TestLaneQuota < Minitest::Test
 
   def test_selection_skips_a_quota_dead_lane_without_a_hand_entry
     models = %w[agy:auto claude-cli:claude-sonnet-5-5]
-    assert_equal "agy:auto", Master::Io::LaneSelection.first_live(models)
+    assert_equal "claude-cli:claude-sonnet-5-5", Master::Io::LaneSelection.first_live(models), "claude-cli leads agy"
+    assert_equal "agy:auto", Master::Io::LaneSelection.first_live(%w[agy:auto deepseek-chat])
 
     Quota.note("agy:auto", AGY_REPLY)
     assert_equal "claude-cli:claude-sonnet-5-5", Master::Io::LaneSelection.first_live(models)

@@ -17,11 +17,20 @@ module Master
         def routed_models(message = nil, task_type: nil)
           chain = routed_chain(message, task_type:)
           pin_boot_model_once!
-          return chain unless @pinned_model
+          return preference_led(chain) unless @pinned_model
           return chain if Io::ModelSkipCache.skipped?(@pinned_model)
           return chain unless pinned_model_reachable?
 
           ([@pinned_model] + chain).uniq
+        end
+
+        # The saved preference goes first while it is reachable (the boot probe)
+        # and no worse a class than the chain head; a free model never leads a
+        # live subscription lane.
+        def preference_led(chain)
+          return chain unless @preferred_model && Io::LaneSelection.no_worse_class?(@preferred_model, chain.first)
+
+          ([@preferred_model] + chain).uniq
         end
 
         def pinned_model_reachable?

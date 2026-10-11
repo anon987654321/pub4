@@ -148,6 +148,7 @@ module Master
         return refusal if refusal
 
         @bus&.publish("llm:send", model: selected_model)
+        Io::LaneSelection.note_use(selected_model, Fiber[:master_operation])
         cache_key = cache_key_for(messages.last[:content], messages[0...-1], selected_model, system, temperature)
         result = breaker_for(selected_model).call(estimate_cost(messages.last[:content], selected_model)) do
           Timeout.timeout(call_deadline_for(selected_model)) do
@@ -191,7 +192,10 @@ module Master
 
       # MASTER_MODEL first, then a vision model when an image rides along.
       def answering_model(selected_model, image)
-        model = [ModelPin.current, forced_model].find { |m| m && !Io::LaneQuota.dead?(m) } || selected_model
+        # A pin is the first choice, not the only one: a pinned lane that is quota-dead
+        # or has just failed (parked in the skip cache) yields to the router's lane,
+        # so a failover hop is not sent back to the lane that failed.
+        model = [ModelPin.current, forced_model].find { |m| m && !Io::LaneQuota.dead?(m) && !Io::ModelSkipCache.skipped?(m) } || selected_model
         image_present?(image) ? vision_model_for(model) : model
       end
 

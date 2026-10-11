@@ -41,8 +41,9 @@ module Master
 
         def rank(ids, task_type: :exploration, empirical_best: nil)
           candidates = Array(ids).filter_map { |id| candidate(id) }
-          candidates.sort_by { |entry| [-utility(entry, task_type:, empirical_best:), entry.id] }
-            .map(&:id)
+          ranked = candidates.sort_by { |entry| [-utility(entry, task_type:, empirical_best:), entry.id] }
+                             .map(&:id)
+          Io::LaneSelection.subscriptions_first(ranked, lead: Io::LaneSelection.route_lead(@rules, task_type))
         end
 
         def select(ids, task_type: :exploration, empirical_best: nil)
@@ -364,7 +365,7 @@ module Master
 
         def load_laws
           path = File.join(@root, "data", "models.yml")
-          return {} unless File.file?(path) && File.expand_path(@root) != File.expand_path(Master::ROOT)
+          return {} unless File.file?(path)
 
           rules = Master.load_yaml(path)
           raise "model routing policy missing or invalid: #{path}" unless rules.is_a?(Hash)

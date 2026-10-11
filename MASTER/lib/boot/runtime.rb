@@ -131,10 +131,14 @@ module Master
     end
 
     def default_model
-      # Antigravity is MASTER's primary subscription lane when its CLI is present.
-      # The router still health-checks it and walks to API/local/free lanes when
-      # agy is absent, rate-limited, unavailable or parked by observed failure.
-      return "agy:auto" if agy_cli_available?
+      # The first lane that can answer now, by Io::LaneSelection: the signed-in
+      # subscription CLIs (a quota-dead one such as agy is skipped), then the
+      # direct APIs, the paid tail, local models, and free models last. No saved
+      # model and no other process state decides it; the keys below are the floor
+      # for a machine where no catalogue lane is live.
+      lane = Master::Io::LaneSelection.live_lanes.first
+      return lane if lane
+
       return "grok-4.3" if api_key_present?("XAI_API_KEY") && !api_key_present?("OPENROUTER_API_KEY")
       return free_primary_model if api_key_present?("OPENROUTER_API_KEY")
       return "deepseek-chat" if api_key_present?("DEEPSEEK_API_KEY")

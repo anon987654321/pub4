@@ -28,6 +28,12 @@ module Master
       MODELS = File.expand_path("../../data/models.yml", __dir__)
       CLI_BINARIES = { "claude-cli" => "claude", "grok-cli" => "grok" }.freeze
       KIND_RANK = { remote: 0, paid_tail: 1, local: 2, free: 3 }.freeze
+      # The signed-in subscription CLIs lead the remote class, in this order: a
+      # flat-rate lane is spent before a metered API key is, and before any free
+      # or local model is asked to edit code.
+      SUBSCRIPTION_LANES = %w[claude-cli grok-cli codex-cli agy].freeze
+      FREE_CLASS_KINDS = %i[free local].freeze
+      NOT_SUBSCRIPTION = 10_000
       NEUTRAL_LATENCY_S = 45
       UNMEASURED_TIMEOUT_S = 60
       SLOW_S = 600
@@ -56,16 +62,44 @@ module Master
       # free tier on purpose (greetings, explanations), where only the dead go.
       # `latency` answers seconds for a model or nil when it was never measured.
       # `vision: true` puts the lanes that read images ahead of those that do not.
-      def order(models, free_last: true, latency: nil, vision: false, manual: LaneQuota.manual_dead)
+      def order(models, free_last: true, latency: nil, vision: false, manual: LaneQuota.manual_dead, lead: [])
         live = Array(models).map(&:to_s).reject(&:empty?).uniq.reject { |id| LaneQuota.dead?(id, manual:) || LaneHealth.dead?(id) }
         live = live.reject { |id| kind(id) == :paid_tail && !Io::PaidTail.enabled? }
         return live unless free_last
 
-        ranked = live.each_with_index.sort_by { |id, index| [KIND_RANK.fetch(kind(id)), free_latency(id, latency), index] }.map(&:first)
+        listed = (Array(lead) + catalogue).uniq
+        ranked = live.each_with_index.sort_by { |id, index| [KIND_RANK.fetch(kind(id)), subscription_rank(id, listed), free_latency(id, latency), index] }.map(&:first)
         return ranked unless vision
 
         sighted, blind = ranked.partition { |id| vision?(id) }
         sighted + blind
+      end
+
+      def subscription?(model) = SUBSCRIPTION_LANES.include?(LaneQuota.lane_of(model))
+
+      # Low for a subscription lane (its lane position, then its place in the
+      # catalogue so opus precedes sonnet as data/models.yml lists them), high
+      # for every other model, which keeps the order it arrived in.
+      def subscription_rank(id, listed)
+        return NOT_SUBSCRIPTION unless kind(id) == :remote && subscription?(id)
+
+        SUBSCRIPTION_LANES.index(LaneQuota.lane_of(id)) * 100 + (listed.index(id) || 99)
+      end
+
+      # The same ids with the live subscription lanes first, in their fixed order;
+      # every other id keeps its place. The pool's measured utility ranks within
+      # a class, never across it.
+      def subscriptions_first(ids, lead: [])
+        listed = (Array(lead) + catalogue).uniq
+        Array(ids).each_with_index.sort_by { |id, index| [subscription_rank(id, listed), index] }.map(&:first)
+      end
+
+      # The ids of the tier the rules route this task type to, in the order
+      # data/models.yml lists them: the lane order the route asks for, so a route
+      # to the fast tier leads with sonnet where the default tier leads with opus.
+      def route_lead(rules, task_type)
+        tier = rules.dig("routes", task_type.to_s)
+        Array(rules.dig("models", tier)).filter_map { |row| row["id"] if row.is_a?(Hash) }
       end
 
       def free_latency(id, latency)
@@ -131,7 +165,9 @@ module Master
         live = order(models, vision:)
         sighted = live.select { |id| vision?(id) }
         live = sighted if vision && sighted.any?
-        reps = live.select { |id| kind(id) == kind(live.first) }.group_by { |id| provider(id) }.values.map(&:first)
+        best = live.select { |id| kind(id) == kind(live.first) }
+        flat_rate = best.select { |id| subscription?(id) }
+        reps = (flat_rate.empty? ? best : flat_rate).group_by { |id| provider(id) }.values.map(&:first)
         Array(keys).each_with_index.to_h { |key, index| [key, reps.empty? ? nil : reps.fetch(index % reps.size)] }
       end
 
@@ -157,12 +193,25 @@ module Master
         id = model.to_s
         return false if Master::Io::ModelQuota.over_quota?(id)
 
-        binary = CLI_BINARIES[provider(id)]
-        return on_path?(binary) if binary
+        binary = CLI_BINARIES[LaneQuota.lane_of(id)]
+        return on_path?(binary) && ENV["MASTER_NO_#{binary.upcase}_CLI"] != "1" if binary
         return Master.agy_cli_available? if provider(id) == "agy"
         return ollama_alive?(id) if id.start_with?("ollama:")
 
-        Master.any_api_key_present?
+        key_present_for?(id)
+      end
+
+      # The key the model's own provider takes: an owner/name id goes through
+      # OpenRouter, a bare id through its vendor. Any key at all is the answer
+      # only for a vendor this table does not name.
+      API_KEYS = [
+        [%r{/}, %w[OPENROUTER_API_KEY]], [/\Adeepseek/, %w[DEEPSEEK_API_KEY]], [/\Agrok-\d/, %w[XAI_API_KEY]],
+        [/\Agemini/, %w[GOOGLE_API_KEY GEMINI_API_KEY]]
+      ].freeze
+
+      def key_present_for?(id)
+        _pattern, envs = API_KEYS.find { |pattern, _envs| pattern.match?(id) }
+        envs ? envs.any? { |env| Master.api_key_present?(env) } : Master.any_api_key_present?
       end
 
       # A local model needs the daemon, which this starts once when it is down.
@@ -182,6 +231,77 @@ module Master
       # "online: yes via X" or "online: NO (all lanes dead) ..." over the catalogue.
       def online_line(cfg: config)
         LaneHealth.line(catalogue(cfg:), refuses: ->(m) { LaneQuota.dead?(m) || !alive?(m) })
+      end
+
+      # The models that can answer now, in selection order: the catalogue minus
+      # the dead (quota, health, hand-kept list) and the lanes this machine lacks.
+      def live_lanes(cfg: config, alive: method(:alive?)) = order(catalogue(cfg:)).lazy.select { |id| alive.call(id) }
+
+      # The lane a run starts on and why. Availability decides; a saved model is
+      # a preference, honoured only while it is live and no worse a class than
+      # the best live lane, and MASTER_MODEL alone forces a lane.
+      def boot_choice(env: ENV, saved: nil, cfg: config, alive: method(:alive?))
+        forced = env["MASTER_MODEL"].to_s.strip
+        return [forced, "MASTER_MODEL"] unless forced.empty?
+
+        live = live_lanes(cfg:, alive:)
+        return [saved.to_s, "saved preference"] if preference_leads?(saved, live)
+
+        [live.first, "availability"]
+      end
+
+      def preference_leads?(model, live)
+        id = model.to_s
+        return false if id.empty? || !live.include?(id)
+
+        no_worse_class?(id, live.first)
+      end
+
+      # A model of the same class as the head, or better: a free preference never
+      # leads a live subscription.
+      def no_worse_class?(model, head)
+        KIND_RANK.fetch(kind(model)) <= KIND_RANK.fetch(kind(head))
+      end
+
+      # /fix turns the guard on: a free or local lane asked for a model call
+      # while a subscription or API lane is live is the defect that spent hours
+      # on a free model. One warning per lane.
+      def watch_free_class!(on = true)
+        @watching = on
+        @warned = {}
+      end
+
+      def free_class_warning(model, operation, cfg: config, alive: method(:alive?))
+        id = model.to_s
+        return unless @watching && FREE_CLASS_KINDS.include?(kind(id))
+        return if (@warned ||= {})[id]
+
+        better = live_lanes(cfg:, alive:).find { |candidate| !FREE_CLASS_KINDS.include?(kind(candidate)) }
+        return unless better
+
+        @warned[id] = true
+        "WARNING free-class lane #{id} used for #{operation || "a model call"} while #{better} is live"
+      rescue StandardError
+        nil
+      end
+
+      def note_use(model, operation)
+        text = free_class_warning(model, operation)
+        Master::Trace::Dmesg.status("fix0", text) if text
+      end
+
+      # What /model and fix status print: the effective #1 lane and why.
+      def primary_report(env: ENV, saved: nil, cfg: config, alive: method(:alive?))
+        lane, source = boot_choice(env:, saved:, cfg:, alive:)
+        return "primary: no live lane (every catalogue lane is dead or absent)" if lane.to_s.empty?
+
+        why = {
+          "MASTER_MODEL" => "pinned (MASTER_MODEL), failover on",
+          "saved preference" => "saved preference, live",
+          "availability" => "first live lane by availability (#{SUBSCRIPTION_LANES.join(" > ")}, then APIs, paid tail, local, free)"
+        }.fetch(source)
+        dead = catalogue(cfg:).select { |id| LaneQuota.dead?(id) }.map { |id| LaneQuota.lane_of(id) }.uniq
+        "primary: #{lane} (#{why}#{dead.empty? ? "" : "; dead: #{dead.join(", ")}"})"
       end
 
       # What /fix prints once at its start: the live pool in selection order.

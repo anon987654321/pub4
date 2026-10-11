@@ -108,7 +108,7 @@ class TestLanePool < Minitest::Test
 
   def test_the_paid_tail_sits_after_live_lanes_and_before_the_free_ones
     mixed = [SUPER, HAIKU, LOCAL, LUNA, DEEPSEEK, OPUS]
-    assert_equal [DEEPSEEK, OPUS, HAIKU, LUNA, LOCAL, SUPER], Selection.order(mixed)
+    assert_equal [OPUS, DEEPSEEK, HAIKU, LUNA, LOCAL, SUPER], Selection.order(mixed)
     assert_equal :paid_tail, Selection.kind(HAIKU)
   end
 
@@ -154,7 +154,7 @@ class TestLanePool < Minitest::Test
     Selection.stub(:catalog_modalities, nil) do
       mixed = [GROK, DEEPSEEK, SUPER, GEMMA, OPUS]
       assert_equal [OPUS, GEMMA, GROK, DEEPSEEK, SUPER], Selection.order(mixed, vision: true)
-      assert_equal [GROK, DEEPSEEK, OPUS, GEMMA, SUPER], Selection.order(mixed, vision: false).then { |o| o.first(2) + [OPUS, GEMMA, SUPER] }
+      assert_equal [OPUS, GROK, DEEPSEEK], Selection.order(mixed, vision: false).first(3)
     end
   end
 

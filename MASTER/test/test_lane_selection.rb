@@ -21,6 +21,7 @@ class TestLaneSelection < Minitest::Test
   DEEPSEEK = "deepseek-chat"
   AGY_REPLY = "agy: error: Individual quota reached. Please upgrade your subscription to increase your limits. Resets in 165h22m49s."
   CLAUDE_REPLY = "You've hit your session limit · resets 5pm (Europe/Oslo)"
+  ALL = ->(_model) { true }
   NOON = Time.utc(2026, 10, 11, 12, 0, 0).to_f
 
   def setup
@@ -47,7 +48,7 @@ class TestLaneSelection < Minitest::Test
 
   def test_first_live_of_the_tier_skips_a_quota_dead_lane
     tier = [AGY, OPUS, GROK, NEMOTRON]
-    assert_equal AGY, Selection.first_live(tier)
+    assert_equal OPUS, Selection.first_live(tier), "claude-cli leads the subscription lanes whatever order the list came in"
 
     Quota.note(AGY, AGY_REPLY)
     assert_equal OPUS, Selection.first_live(tier)
@@ -70,8 +71,40 @@ class TestLaneSelection < Minitest::Test
 
   def test_free_models_come_last_whatever_the_given_order
     mixed = [NEMOTRON, NANO, LOCAL, DEEPSEEK, GROK]
-    assert_equal [DEEPSEEK, GROK, LOCAL, NEMOTRON, NANO], Selection.order(mixed)
+    assert_equal [GROK, DEEPSEEK, LOCAL, NEMOTRON, NANO], Selection.order(mixed), "a subscription CLI precedes a metered API key"
     assert_equal [NEMOTRON, NANO, LOCAL, DEEPSEEK, GROK], Selection.order(mixed, free_last: false), "a free route keeps its order"
+  end
+
+  def test_subscription_lanes_lead_in_claude_grok_agy_order_ahead_of_api_keys
+    assert_equal [OPUS, GROK, AGY, DEEPSEEK, LOCAL, NEMOTRON], Selection.order([NEMOTRON, DEEPSEEK, AGY, GROK, LOCAL, OPUS])
+  end
+
+  def test_the_boot_choice_is_the_first_live_lane_and_names_its_source
+    assert_equal [OPUS, "availability"], Selection.boot_choice(env: {}, saved: nil, alive: ALL)
+    assert_equal [AGY, "MASTER_MODEL"], Selection.boot_choice(env: { "MASTER_MODEL" => AGY }, saved: nil, alive: ALL)
+
+    sonnet = "claude-cli:claude-sonnet-5-5"
+    assert_equal [sonnet, "saved preference"], Selection.boot_choice(env: {}, saved: sonnet, alive: ALL)
+    assert_equal [OPUS, "availability"], Selection.boot_choice(env: {}, saved: NEMOTRON, alive: ALL), "a saved free model never leads a live subscription"
+
+    Quota.note(OPUS, CLAUDE_REPLY)
+    assert_equal [GROK, "availability"], Selection.boot_choice(env: {}, saved: sonnet, alive: ALL), "a dead preference is not tried"
+  end
+
+  def test_the_primary_report_names_the_lane_and_why
+    Quota.note(AGY, AGY_REPLY)
+    assert_match(/\Aprimary: #{Regexp.escape(OPUS)} \(first live lane by availability.*; dead: agy/, Selection.primary_report(env: {}, alive: ALL))
+    assert_match(/pinned \(MASTER_MODEL\), failover on/, Selection.primary_report(env: { "MASTER_MODEL" => GROK }, alive: ALL))
+  end
+
+  def test_a_free_class_lane_warns_once_while_a_live_lane_exists
+    Selection.watch_free_class!
+    warning = Selection.free_class_warning(NEMOTRON, :file_write, alive: ALL)
+    assert_match(/WARNING free-class lane #{Regexp.escape(NEMOTRON)} used for file_write while claude-cli:claude-opus-5-5 is live/, warning)
+    assert_nil Selection.free_class_warning(NEMOTRON, :file_write, alive: ALL), "once per lane"
+    assert_nil Selection.free_class_warning(OPUS, :file_write, alive: ALL), "a subscription lane never warns"
+  ensure
+    Selection.watch_free_class!(false)
   end
 
   def test_when_every_lane_is_dead_the_list_comes_back_for_the_typed_offline
@@ -101,7 +134,7 @@ class TestLaneSelection < Minitest::Test
 
     lanes = Selection.spread(names, candidates)
 
-    assert_equal [OPUS, GROK, DEEPSEEK, OPUS, GROK, DEEPSEEK], lanes.values
+    assert_equal [OPUS, GROK, OPUS, GROK, OPUS, GROK], lanes.values
     assert(lanes.values.none? { |m| Selection.kind(m) == :free }, "no free model while a live lane exists")
     refute_includes lanes.values, AGY
   end

@@ -102,7 +102,7 @@ module Master
           chain = prefer_floor(chain, fresh, operation: task_type)
           ranked = @provider_health.rank(chain)
           ranked = @compute_pool.rank(ranked, task_type:)
-          Io::ModelSkipCache.filter(chitchat_head(Io::LaneSelection.order_or_all(ranked, free_last: !free_route?(task_type), latency: method(:latency_s)), task_type))
+          Io::ModelSkipCache.filter(chitchat_head(Io::LaneSelection.order_or_all(ranked, free_last: !free_route?(task_type), latency: method(:latency_s), lead: Io::LaneSelection.route_lead(@rules, task_type)), task_type))
         end
 
         # Greetings are explicitly routed to the free tier. A locally installed
@@ -126,16 +126,16 @@ module Master
           return preferred_local(task_type: operation) if local_only?
 
           constraint = @rules.dig("operation_constraints", operation.to_s)
-          return preferred unless constraint
+          return preferred(task_type: operation) unless constraint
 
           min_quality = constraint.fetch("min_quality", 0.0).to_f
           preferred_tier = constraint.fetch("preferred_tier", "strong")
           candidates = @rules.dig("models", preferred_tier).to_a
           qualified = healthy(candidates).select { |m| m.dig("score", "quality").to_f >= min_quality }
-          return preferred if qualified.empty?
+          return preferred(task_type: operation) if qualified.empty?
 
           ids = Io::LaneSelection.best_class(qualified.filter_map { |m| m["id"] })
-          @compute_pool.select(ids, task_type: operation) || preferred
+          @compute_pool.select(ids, task_type: operation) || preferred(task_type: operation)
         end
 
         INTENT_PATTERNS = {

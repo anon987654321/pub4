@@ -12,7 +12,7 @@ class TestKeylessRouting < Minitest::Test
     @saved_env = %w[
       XAI_API_KEY OPENROUTER_API_KEY ANTHROPIC_API_KEY OPENAI_API_KEY
       DEEPSEEK_API_KEY GOOGLE_API_KEY GEMINI_API_KEY MISTRAL_API_KEY
-      MASTER_KEYLESS MASTER_WEB_CHAT MASTER_NO_CLAUDE_CLI MASTER_NO_AGY_CLI MASTER_NO_OLLAMA
+      MASTER_KEYLESS MASTER_WEB_CHAT MASTER_NO_CLAUDE_CLI MASTER_NO_GROK_CLI MASTER_NO_AGY_CLI MASTER_NO_OLLAMA
     ].to_h { |key| [key, ENV[key]] }
     @saved_env.each_key { |key| ENV.delete(key) }
     # Neutralize both local subscription CLIs so these tests grade keyless and
@@ -20,6 +20,7 @@ class TestKeylessRouting < Minitest::Test
     # installed on the machine running them. agy's own routing is covered by
     # test_agy_reachability.
     ENV["MASTER_NO_CLAUDE_CLI"] = "1"
+    ENV["MASTER_NO_GROK_CLI"] = "1"
     ENV["MASTER_NO_AGY_CLI"] = "1"
     # The Ollama daemon too: this Mac serves granite and qwen models that no
     # tier names, and they led chains these tests grade. Ollama tests opt in.

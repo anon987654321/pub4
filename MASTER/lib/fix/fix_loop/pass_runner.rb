@@ -345,6 +345,7 @@ module Master
         def observe_pass(files, target, pass, deadline)
           @scan_total = files.size
           guarded(:fast_fixes, pass) { run_fast_stage(files, pass) }
+          enter_phase(:stream, pass)
           found, streamed = streaming_observation(files, target, pass, deadline)
           structure = files.empty? ? [] : guarded(:structure, pass, []) { structural_findings(files:) }
           [found + structure, streamed]

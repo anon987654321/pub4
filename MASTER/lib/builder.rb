@@ -93,7 +93,7 @@ module Master
 
     def build_infrastructure(root)
       config = Ground::Config.new(root)
-      config["model"] ||= Master.default_model
+      config["model"] = Master.default_model if config["model"].to_s.empty? || config["model"] == Ground::Config::DEFAULTS["model"]
       boot_config = config.freeze_boot
       trace = boot_trace(root:, config:)
       loop_c = boot_loop(root:, config:, bus: trace[:bus])

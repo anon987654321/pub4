@@ -73,6 +73,9 @@ module Master
 
         included = announce_dirty(worktree, include_dirty:)
 
+        carried = carry_availability_state(worktree)
+        announce("lane state carried: #{carried.join(", ")}") unless carried.empty?
+
         status, lines = run_child(worktree, command)
         unless status
           failed_head = rev_parse(worktree, "HEAD")

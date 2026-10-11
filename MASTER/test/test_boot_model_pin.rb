@@ -29,7 +29,9 @@ class TestBootModelPin < Minitest::Test
       @bus = nil
     end
 
-    def routed_chain(_message, task_type:) = %w[free/a free/b]
+    attr_writer :chain
+
+    def routed_chain(_message, task_type:) = @chain || %w[free/a free/b]
     def model = "free/a"
     attr_writer :local_only
 
@@ -50,18 +52,27 @@ class TestBootModelPin < Minitest::Test
   end
 
   # ask(..., operation:) takes this path, which is the one /fix's semantic laws and
-  # the council use. It read a pin only Session#run ever set, so everywhere else it
-  # fell to the operation's constrained lane.
-  def test_an_operation_call_uses_the_saved_model_not_the_constrained_lane
+  # the council use. A saved model is a preference, not a pin: availability and the
+  # operation's own constraint choose the lane, so a saved sonnet never forces every
+  # /fix call onto sonnet.
+  def test_an_operation_call_is_chosen_by_availability_not_the_saved_model
     agent = FakeAgent.new(saved: "claude-cli:claude-sonnet-5-5", router: FakeRouter.new(reachable: true))
 
-    assert_equal "claude-cli:claude-sonnet-5-5", agent.model_for(operation: :semantic_law)
+    assert_equal "agy:gemini-3.8-flash-medium", agent.model_for(operation: :semantic_law)
   end
 
-  def test_an_operation_call_falls_to_the_constrained_lane_when_the_saved_model_is_down
-    agent = FakeAgent.new(saved: "claude-cli:claude-sonnet-5-5", router: FakeRouter.new(reachable: false))
+  def test_an_explicit_model_choice_pins_the_operation_call
+    agent = FakeAgent.new(saved: "claude-cli:claude-sonnet-5-5", router: FakeRouter.new(reachable: true))
+    agent.model = "claude-cli:claude-opus-5-5"
 
-    assert_equal "agy:gemini-3.8-flash-medium", agent.model_for(operation: :semantic_law)
+    assert_equal "claude-cli:claude-opus-5-5", agent.model_for(operation: :semantic_law)
+  end
+
+  def test_a_saved_free_model_never_leads_a_live_subscription_chain
+    agent = FakeAgent.new(saved: "nvidia/nemotron-3-super-120b-a12b:free", router: FakeRouter.new(reachable: true))
+    agent.chain = %w[claude-cli:claude-opus-5-5 deepseek-chat]
+
+    assert_equal %w[claude-cli:claude-opus-5-5 deepseek-chat], agent.routed_models
   end
 
   def test_a_saved_cloud_model_is_never_pinned_in_local_only_mode

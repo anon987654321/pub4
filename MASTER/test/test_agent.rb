@@ -413,13 +413,15 @@ def test_a_failed_hard_compaction_refuses_the_turn
   assert_empty @agent.instance_variable_get(:@session).messages
 end
 
-  # MASTER_MODEL replaces every lane, so it is the one candidate: /fix read the
-  # routed free chain instead, found it all circuit-open and skipped every repair.
-  def test_candidate_models_is_the_forced_model_under_master_model
+  # MASTER_MODEL is the first candidate, with the routed chain behind it: /fix's
+  # circuit check reads the pin plus every lane it could fail over to.
+  def test_candidate_models_lead_with_the_forced_model_and_keep_the_chain_behind_it
     previous = ENV["MASTER_MODEL"]
     ENV["MASTER_MODEL"] = "claude-cli:claude-opus-5-5"
 
-    assert_equal ["claude-cli:claude-opus-5-5"], @agent.candidate_models
+    candidates = @agent.candidate_models
+    assert_equal "claude-cli:claude-opus-5-5", candidates.first
+    assert_equal candidates.uniq, candidates
   ensure
     ENV["MASTER_MODEL"] = previous
   end

@@ -44,6 +44,7 @@ module Operator
         retained: retained_rows,
         dead_lanes: ::Master::Io::LaneQuota.report,
         online: online_line,
+        primary: primary_line,
         heartbeat: heartbeat_line,
       }
     end
@@ -67,7 +68,7 @@ module Operator
     private
 
     def lines(data)
-      out = ["/fix status", data[:online]]
+      out = ["/fix status", data[:online], data[:primary]]
       out << "processes:"
       out << "  none running" if data[:processes].empty?
       data[:processes].each do |row|
@@ -108,6 +109,12 @@ module Operator
         health.dead?(model) || (health.local_model?(model) && !(daemon = daemon.nil? ? health.ollama_up? : daemon))
       end
       health.line(::Master::Io::LaneSelection.catalogue, refuses: down)
+    end
+
+    def primary_line
+      ::Master::Io::LaneSelection.primary_report(saved: ::Master::Ground::Config.new(::Master::ROOT)["model"])
+    rescue StandardError => e
+      "primary: unknown (#{e.class})"
     end
 
     def journal_runs

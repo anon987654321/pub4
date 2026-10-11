@@ -54,11 +54,12 @@ module Master
           false
         end
 
-        # The saved model leads every chain, not only the interactive session's:
-        # a one-shot instruction and a /fix pass build their own agent and never
-        # reach Session#run, so the pin they were saved for never applied. The
-        # reachability probe runs once per agent, whatever its answer. A saved
-        # cloud model never crosses the local-only boundary.
+        # The saved model is a preference, not a pin: it leads the routed chain
+        # while it is live and no worse a class than the best live lane, and an
+        # operation that asks the router for a lane (model_for) is chosen by
+        # availability alone. Only /model (model=) and MASTER_MODEL pin. A saved
+        # cloud model never crosses the local-only boundary. The reachability
+        # probe runs once per agent, whatever its answer.
         def pin_boot_model_once!
           return if @boot_pin_checked
           return if local_only?
@@ -72,7 +73,7 @@ module Master
           return if @pinned_model || saved.empty? || saved == Ground::Config::DEFAULTS["model"]
 
           reason = @model_router.unreachable_reason(saved, wait: true) if @model_router.respond_to?(:unreachable_reason)
-          return @pinned_model = saved unless reason
+          return @preferred_model = saved unless reason
 
           Trace::Dmesg.once("model0", "#{saved} unavailable; live pool selected")
         end
@@ -94,6 +95,7 @@ module Master
         end
 
         def model_for(operation:)
+          Fiber[:master_operation] = operation
           forced = ENV["MASTER_MODEL"].to_s.strip
           if !local_only? && !forced.empty? &&
              (!@model_router.respond_to?(:unreachable_reason) ||
@@ -113,13 +115,14 @@ module Master
         # not just the first candidate -- callers checking circuit-breaker
         # health need every candidate this dispatch could actually fall
         # back to, not only the one at the front of the chain.
-        # MASTER_MODEL replaces every lane at LLMDispatcher#forced_model, so it is
-        # the only candidate. Reporting the routed chain instead let /fix's
-        # circuit check skip every repair because free lanes it would never call
-        # were open, while claude-cli:claude-opus-5-5 stood ready.
+        # MASTER_MODEL leads every call at LLMDispatcher#answering_model and is
+        # the first candidate here, with the routed chain behind it: a pin is the
+        # first choice, so a pinned lane that is dead or errors fails over to the
+        # next live lane instead of ending the call.
         def candidate_models(message = nil, task_type: nil)
           forced = ENV["MASTER_MODEL"].to_s.strip
-          forced.empty? ? routed_models(message, task_type:) : [forced]
+          routed = routed_models(message, task_type:)
+          forced.empty? ? routed : ([forced] + routed).uniq
         end
 
         private

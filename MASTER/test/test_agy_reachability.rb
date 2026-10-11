@@ -27,7 +27,7 @@ class TestAgyReachability < Minitest::Test
   GUARDED = %w[
     XAI_API_KEY OPENROUTER_API_KEY ANTHROPIC_API_KEY OPENAI_API_KEY
     DEEPSEEK_API_KEY GOOGLE_API_KEY GEMINI_API_KEY MISTRAL_API_KEY
-    MASTER_KEYLESS MASTER_WEB_CHAT MASTER_NO_CLAUDE_CLI MASTER_NO_AGY_CLI AGY_BIN
+    MASTER_KEYLESS MASTER_WEB_CHAT MASTER_NO_CLAUDE_CLI MASTER_NO_GROK_CLI MASTER_NO_AGY_CLI AGY_BIN
   ].freeze
   OPENROUTER_KEY = "sk-or-v1-#{"a" * 64}"
   AGY = /\Aagy(?::|\z)/
@@ -36,6 +36,7 @@ class TestAgyReachability < Minitest::Test
     @saved = GUARDED.to_h { |key| [key, ENV[key]] }
     GUARDED.each { |key| ENV.delete(key) }
     ENV["MASTER_NO_CLAUDE_CLI"] = "1"
+    ENV["MASTER_NO_GROK_CLI"] = "1"
   end
 
   def teardown
