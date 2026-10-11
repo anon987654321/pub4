@@ -1,0 +1,10 @@
+Run options: --seed 18358
+
+# Running:
+
+...................
+
+Finished in 0.291636s, 65.1497 runs/s, 240.0252 assertions/s.
+
+19 runs, 70 assertions, 0 failures, 0 errors, 0 skips
+ruby -Ilib -Itest test/test_opencrabs_features.rb  0.91s user 0.32s system 85% cpu 1.452 total

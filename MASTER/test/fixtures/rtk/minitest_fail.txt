@@ -1,0 +1,49 @@
+Run options: --seed 43679
+
+# Running:
+
+.F.F.E.
+
+Finished in 0.001047s, 6685.7689 runs/s, 2865.3295 assertions/s.
+
+  1) Failure:
+TestRtkFail#test_a_equal [/private/tmp/claude-501/-Users-mac-Documents-GitHub-pub4/d13fe723-1a8d-424c-9ae9-09ef8350fbd5/scratchpad/test_rtk_fail.rb:4]:
+Expected: "alpha"
+  Actual: "beta"
+
+  2) Failure:
+TestRtkFail#test_c_nil [/private/tmp/claude-501/-Users-mac-Documents-GitHub-pub4/d13fe723-1a8d-424c-9ae9-09ef8350fbd5/scratchpad/test_rtk_fail.rb:6]:
+Expected 3 to be nil.
+
+  3) Error:
+TestRtkFail#test_b_raise:
+RuntimeError: deep boom
+    /private/tmp/claude-501/-Users-mac-Documents-GitHub-pub4/d13fe723-1a8d-424c-9ae9-09ef8350fbd5/scratchpad/test_rtk_fail.rb:3:in 'TestRtkFail#helper_deep'
+    /private/tmp/claude-501/-Users-mac-Documents-GitHub-pub4/d13fe723-1a8d-424c-9ae9-09ef8350fbd5/scratchpad/test_rtk_fail.rb:3:in 'TestRtkFail#helper_deep'
+    /private/tmp/claude-501/-Users-mac-Documents-GitHub-pub4/d13fe723-1a8d-424c-9ae9-09ef8350fbd5/scratchpad/test_rtk_fail.rb:3:in 'TestRtkFail#helper_deep'
+    /private/tmp/claude-501/-Users-mac-Documents-GitHub-pub4/d13fe723-1a8d-424c-9ae9-09ef8350fbd5/scratchpad/test_rtk_fail.rb:3:in 'TestRtkFail#helper_deep'
+    /private/tmp/claude-501/-Users-mac-Documents-GitHub-pub4/d13fe723-1a8d-424c-9ae9-09ef8350fbd5/scratchpad/test_rtk_fail.rb:3:in 'TestRtkFail#helper_deep'
+    /private/tmp/claude-501/-Users-mac-Documents-GitHub-pub4/d13fe723-1a8d-424c-9ae9-09ef8350fbd5/scratchpad/test_rtk_fail.rb:3:in 'TestRtkFail#helper_deep'
+    /private/tmp/claude-501/-Users-mac-Documents-GitHub-pub4/d13fe723-1a8d-424c-9ae9-09ef8350fbd5/scratchpad/test_rtk_fail.rb:3:in 'TestRtkFail#helper_deep'
+    /private/tmp/claude-501/-Users-mac-Documents-GitHub-pub4/d13fe723-1a8d-424c-9ae9-09ef8350fbd5/scratchpad/test_rtk_fail.rb:3:in 'TestRtkFail#helper_deep'
+    /private/tmp/claude-501/-Users-mac-Documents-GitHub-pub4/d13fe723-1a8d-424c-9ae9-09ef8350fbd5/scratchpad/test_rtk_fail.rb:3:in 'TestRtkFail#helper_deep'
+    /private/tmp/claude-501/-Users-mac-Documents-GitHub-pub4/d13fe723-1a8d-424c-9ae9-09ef8350fbd5/scratchpad/test_rtk_fail.rb:3:in 'TestRtkFail#helper_deep'
+    /private/tmp/claude-501/-Users-mac-Documents-GitHub-pub4/d13fe723-1a8d-424c-9ae9-09ef8350fbd5/scratchpad/test_rtk_fail.rb:3:in 'TestRtkFail#helper_deep'
+    /private/tmp/claude-501/-Users-mac-Documents-GitHub-pub4/d13fe723-1a8d-424c-9ae9-09ef8350fbd5/scratchpad/test_rtk_fail.rb:3:in 'TestRtkFail#helper_deep'
+    /private/tmp/claude-501/-Users-mac-Documents-GitHub-pub4/d13fe723-1a8d-424c-9ae9-09ef8350fbd5/scratchpad/test_rtk_fail.rb:3:in 'TestRtkFail#helper_deep'
+    /private/tmp/claude-501/-Users-mac-Documents-GitHub-pub4/d13fe723-1a8d-424c-9ae9-09ef8350fbd5/scratchpad/test_rtk_fail.rb:3:in 'TestRtkFail#helper_deep'
+    /private/tmp/claude-501/-Users-mac-Documents-GitHub-pub4/d13fe723-1a8d-424c-9ae9-09ef8350fbd5/scratchpad/test_rtk_fail.rb:3:in 'TestRtkFail#helper_deep'
+    /private/tmp/claude-501/-Users-mac-Documents-GitHub-pub4/d13fe723-1a8d-424c-9ae9-09ef8350fbd5/scratchpad/test_rtk_fail.rb:3:in 'TestRtkFail#helper_deep'
+    /private/tmp/claude-501/-Users-mac-Documents-GitHub-pub4/d13fe723-1a8d-424c-9ae9-09ef8350fbd5/scratchpad/test_rtk_fail.rb:3:in 'TestRtkFail#helper_deep'
+    /private/tmp/claude-501/-Users-mac-Documents-GitHub-pub4/d13fe723-1a8d-424c-9ae9-09ef8350fbd5/scratchpad/test_rtk_fail.rb:3:in 'TestRtkFail#helper_deep'
+    /private/tmp/claude-501/-Users-mac-Documents-GitHub-pub4/d13fe723-1a8d-424c-9ae9-09ef8350fbd5/scratchpad/test_rtk_fail.rb:3:in 'TestRtkFail#helper_deep'
+    /private/tmp/claude-501/-Users-mac-Documents-GitHub-pub4/d13fe723-1a8d-424c-9ae9-09ef8350fbd5/scratchpad/test_rtk_fail.rb:3:in 'TestRtkFail#helper_deep'
+    /private/tmp/claude-501/-Users-mac-Documents-GitHub-pub4/d13fe723-1a8d-424c-9ae9-09ef8350fbd5/scratchpad/test_rtk_fail.rb:3:in 'TestRtkFail#helper_deep'
+    /private/tmp/claude-501/-Users-mac-Documents-GitHub-pub4/d13fe723-1a8d-424c-9ae9-09ef8350fbd5/scratchpad/test_rtk_fail.rb:3:in 'TestRtkFail#helper_deep'
+    /private/tmp/claude-501/-Users-mac-Documents-GitHub-pub4/d13fe723-1a8d-424c-9ae9-09ef8350fbd5/scratchpad/test_rtk_fail.rb:3:in 'TestRtkFail#helper_deep'
+    /private/tmp/claude-501/-Users-mac-Documents-GitHub-pub4/d13fe723-1a8d-424c-9ae9-09ef8350fbd5/scratchpad/test_rtk_fail.rb:3:in 'TestRtkFail#helper_deep'
+    /private/tmp/claude-501/-Users-mac-Documents-GitHub-pub4/d13fe723-1a8d-424c-9ae9-09ef8350fbd5/scratchpad/test_rtk_fail.rb:3:in 'TestRtkFail#helper_deep'
+    /private/tmp/claude-501/-Users-mac-Documents-GitHub-pub4/d13fe723-1a8d-424c-9ae9-09ef8350fbd5/scratchpad/test_rtk_fail.rb:3:in 'TestRtkFail#helper_deep'
+    /private/tmp/claude-501/-Users-mac-Documents-GitHub-pub4/d13fe723-1a8d-424c-9ae9-09ef8350fbd5/scratchpad/test_rtk_fail.rb:5:in 'TestRtkFail#test_b_raise'
+
+7 runs, 3 assertions, 2 failures, 1 errors, 0 skips

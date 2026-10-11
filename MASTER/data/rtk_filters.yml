@@ -1,0 +1,41 @@
+# Per-command shell-output filters read by Io::OutputFilter (set MASTER_RTK=0 to bypass).
+# A line matching `protect` or the built-in error pattern is never dropped or elided.
+# match: regex tested against the command. drop: lines removed outright.
+# keep_only: when present, only matching (or protected) lines survive.
+# blocks: a line matching starts a kept block that runs to the next blank line.
+# max_lines: ceiling on unprotected lines; the rest become an "N lines elided" marker.
+filters:
+  - name: minitest
+    match: '\b(?:rake\s+test|minitest|ruby\s+(?:-\S+\s+)*\S*test\S*\.rb|rails\s+test)'
+    protect: ['^\s*\d+ runs,', '^Finished in', '^Run options', '^\s+\d+\) (?:Failure|Error)']
+    blocks: ['^\s+\d+\) (?:Failure|Error):']
+    keep_only: ['^\d+ runs,', '^Finished in', '^Run options']
+    collapse_repeats: true
+    max_lines: 30
+  - name: rubocop
+    match: '\brubocop\b'
+    protect: ['^\d+ files? inspected', '^[^\s:]+:\d+:\d+: [CWEF]:']
+    keep_only: ['^[^\s:]+:\d+:\d+: [CWEF]:', '^\d+ files? inspected']
+    max_lines: 80
+  - name: bundle
+    match: '\bbundle\s+(?:install|update|exec\s+bundle)'
+    protect: ['^Bundle complete', '^Bundled gems']
+    drop: ['^(?:Using|Fetching|Installing) ']
+    max_lines: 40
+  - name: node_packages
+    match: '\b(?:npm|pnpm|yarn)\s+(?:install|i|add|ci|update|run|test|build)'
+    protect: ['^(?:added|removed|changed) \d+', '^Done in', '^up to date']
+    drop: ['^npm (?:notice|http)', '^\s*[\\|/-]\s*$', '^Progress:', '^Packages:', '^Downloading ', '^\[\d/\d\]']
+    max_lines: 40
+  - name: docker
+    match: '\bdocker\b'
+    protect: ['^Successfully', '^Status:', '^Digest:']
+    drop: ['(?:Pulling fs layer|Waiting|Downloading|Extracting|Verifying Checksum|Download complete|Pull complete)\s*$', '^#\d+ (?:sha256:|DONE|CACHED)']
+    max_lines: 40
+  - name: curl
+    match: '\bcurl\b'
+    drop: ['^\s*% Total', '^\s+Dload', '^\s*\d+\s+\d+\s+\d+\s+\d+\s+\d+\s+\d+\s+\d+']
+    max_lines: 60
+  - name: search
+    match: '\b(?:grep|rg|find|ag)\b'
+    max_lines: 60

@@ -1,0 +1,27 @@
+Run options: -v --seed 60364
+
+# Running:
+
+Minitest::Spec#test_timeout = 0.00 s = .
+Minitest::Test#test_timeout = 0.00 s = .
+TestOpenCrabsFeatures#test_timeout = 0.00 s = .
+TestOpenCrabsFeatures#test_subagent_brief_names_the_tools_the_fiber_permits = 0.06 s = .
+TestOpenCrabsFeatures#test_read_only_subagents_cannot_call_a_writing_tool = 0.00 s = .
+TestOpenCrabsFeatures#test_nothing_phones_home = 0.28 s = .
+TestOpenCrabsFeatures#test_subagent_context_tracks_and_bounds_nesting = 0.00 s = .
+TestOpenCrabsFeatures#test_agent_pool_capacity = 0.01 s = .
+TestOpenCrabsFeatures#test_output_filter_truncates_long_listing = 0.00 s = .
+TestOpenCrabsFeatures#test_swarm_role_maps_to_taxonomy = 0.00 s = .
+TestOpenCrabsFeatures#test_hashline_format_and_validate = 0.00 s = .
+TestOpenCrabsFeatures#test_skills_body_for_returns_description_fallback = 0.00 s = .
+TestOpenCrabsFeatures#test_subagent_context_restricts_tools = 0.00 s = .
+TestOpenCrabsFeatures#test_subagent_policy_explore_allow_list = 0.00 s = .
+TestOpenCrabsFeatures#test_hashline_stale_anchor_rejects = 0.00 s = .
+TestOpenCrabsFeatures#test_read_file_full_mode_has_no_truncation_suffix_or_limit_error = 0.01 s = .
+TestOpenCrabsFeatures#test_subagent_policy_excludes_recursive_tools = 0.00 s = .
+TestOpenCrabsFeatures#test_active_plan_pin_and_read = 0.00 s = .
+TestOpenCrabsFeatures#test_phantom_repetition_detector = 0.00 s = .
+
+Finished in 0.363555s, 52.2617 runs/s, 192.5431 assertions/s.
+
+19 runs, 70 assertions, 0 failures, 0 errors, 0 skips

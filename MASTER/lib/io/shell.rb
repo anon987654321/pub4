@@ -126,9 +126,18 @@ module Master
         # the child, where Timeout.timeout around it left zsh running.
         result = @cmd.run!("zsh", input: wrapped_command(executable), timeout: TIMEOUT)
         @bus&.publish("tool:after", tool: NAME, exit_code: result.exit_status)
-        return failed_result("exit #{result.exit_status}: #{tail(result)}") unless result.success?
+        return failed_result("exit #{result.exit_status}: #{failure_text(executable, result)}") unless result.success?
 
         successful_result(executable, result.out.to_s.strip)
+      end
+
+      # A failing test run is the output the model most needs whole: the last 400
+      # characters of a rake or minitest failure are a backtrace and a summary, with
+      # every failure message above them cut away. A declared filter keeps those.
+      def failure_text(command, result)
+        combined = "#{result.err}#{result.out}".strip
+        compressed = OutputFilter.compress_failure(command:, output: combined)
+        compressed ? compressed.strip : tail(result)
       end
 
       def tail(result)

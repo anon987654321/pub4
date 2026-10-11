@@ -1,0 +1,150 @@
+lib/io/ssrf_guard.rb:9:module Master
+lib/io/ssrf_guard.rb:10:  module Io
+lib/io/ssrf_guard.rb:24:    module SsrfGuard
+lib/io/replicate_client.rb:16:module Master
+lib/io/replicate_client.rb:17:  module Io
+lib/io/replicate_client.rb:19:    class ReplicateClient
+lib/io/replicate_client.rb:22:      module AssetTransfer
+lib/io/replicate_client.rb:60:      module Training
+lib/io/replicate_client.rb:148:        @token = token || self.class.load_token
+lib/io/model_skip_cache.rb:5:module Master
+lib/io/model_skip_cache.rb:6:  module Io
+lib/io/model_skip_cache.rb:11:    module ModelSkipCache
+lib/io/model_skip_cache.rb:27:      module_function
+lib/io/model_skip_cache.rb:86:      private_class_method :models_failover_cfg
+lib/io/base.rb:3:module Master
+lib/io/base.rb:4:  module Io
+lib/io/base.rb:7:    # Tool classes include Base, set NAME/TIER, and call commit_write inside safely.
+lib/io/base.rb:8:    module Base
+lib/io/base.rb:14:        @governor.permit?(self.class::NAME, self.class::TIER, ctx)
+lib/io/base.rb:23:        @bus&.publish("tool:before", tool: self.class::NAME, path: written, bytes:, op: "write")
+lib/io/base.rb:29:        return @diff_stager.stage(path: full, new_content: content, tool: self.class::NAME) if @diff_stager
+lib/io/base.rb:37:        @bus&.publish("tool:after", tool: self.class::NAME, path: written, bytes:, op: "write")
+lib/io/base.rb:44:        Result.err("#{self.class::NAME}: #{e.message}", category: :unknown)
+lib/io/atomic_write.rb:6:module Master
+lib/io/atomic_write.rb:7:  module Io
+lib/io/atomic_write.rb:11:    module AtomicWrite
+lib/io/provider_registry.rb:3:module Master
+lib/io/provider_registry.rb:4:  module Io
+lib/io/provider_registry.rb:5:    module ProviderRegistry
+lib/io/provider_registry.rb:10:      module_function
+lib/io/feedback_record.rb:3:module Master
+lib/io/feedback_record.rb:4:  module Io
+lib/io/feedback_record.rb:6:    class FeedbackRecord
+lib/io/semantic_index.rb:3:module Master
+lib/io/semantic_index.rb:4:  module Io
+lib/io/semantic_index.rb:9:    class SemanticIndex
+lib/io/dynamic_tools.rb:3:module Master
+lib/io/dynamic_tools.rb:4:  module Io
+lib/io/dynamic_tools.rb:7:    module DynamicTools
+lib/io/dynamic_tools.rb:13:      module_function
+lib/io/whitespace_normalizer.rb:3:module Master
+lib/io/whitespace_normalizer.rb:4:  module Io
+lib/io/whitespace_normalizer.rb:8:    module WhitespaceNormalizer
+lib/io/whitespace_normalizer.rb:9:      module_function
+lib/io/symbol_lookup.rb:3:module Master
+lib/io/symbol_lookup.rb:4:  module Io
+lib/io/symbol_lookup.rb:6:    class SymbolLookup
+lib/io/symbol_lookup.rb:9:      DESCRIPTION = "Look up a Ruby class, module, or method in the codebase. " \
+lib/io/circuit_breaker_registry.rb:5:module Master
+lib/io/circuit_breaker_registry.rb:6:  module Io
+lib/io/circuit_breaker_registry.rb:8:    class CircuitBreakerRegistry
+lib/io/antigravity.rb:8:module Master
+lib/io/antigravity.rb:9:  module Io
+lib/io/antigravity.rb:20:    module Antigravity
+lib/io/antigravity.rb:23:      class JsonConfig
+lib/io/antigravity.rb:63:            loaded = self.class.load(resolve_path(path), workspace_root: @workspace_root, visited:)
+lib/io/antigravity.rb:119:      class Discovery
+lib/io/antigravity.rb:186:      class Skills
+lib/io/media_intent.rb:12:module Master
+lib/io/media_intent.rb:13:  module Io
+lib/io/media_intent.rb:16:    module MediaIntent
+lib/io/media_intent.rb:17:      module_function
+lib/io/model_quota.rb:9:module Master
+lib/io/model_quota.rb:10:  module Io
+lib/io/model_quota.rb:16:    module ModelQuota
+lib/io/model_quota.rb:24:      module_function
+lib/io/model_quota.rb:32:        raise "model quota policy unreadable: #{e.class}: #{e.message}"
+lib/io/model_quota.rb:51:        raise "model quota accounting failed: #{e.class}: #{e.message}"
+lib/io/model_quota.rb:119:        raise "model quota state unreadable: #{e.class}: #{e.message}"
+lib/io/model_quota.rb:145:        raise "model quota state unreadable: #{e.class}: #{e.message}"
+lib/io/read_file.rb:3:module Master
+lib/io/read_file.rb:4:  module Io
+lib/io/read_file.rb:6:    class ReadFile
+lib/io/path_guard.rb:3:module Master
+lib/io/path_guard.rb:4:  module Io
+lib/io/path_guard.rb:5:    module PathGuard
+lib/io/path_guard.rb:11:        raise "path guard: sacred-path policy unreadable: #{e.class}: #{e.message}"
+lib/io/web_search.rb:6:module Master
+lib/io/web_search.rb:7:  module Io
+lib/io/web_search.rb:8:    class WebSearch
+lib/io/write_file.rb:5:module Master
+lib/io/write_file.rb:6:  module Io
+lib/io/write_file.rb:7:    class WriteFile
+lib/io/ask_llm.rb:3:module Master
+lib/io/ask_llm.rb:4:  module Io
+lib/io/ask_llm.rb:6:    class AskLlm
+lib/io/natural_intent.rb:5:module Master
+lib/io/natural_intent.rb:6:  module Io
+lib/io/natural_intent.rb:9:    # Recognition vocabulary lives in data/patterns.yml. This class supplies the
+lib/io/natural_intent.rb:12:    module NaturalIntent
+lib/io/natural_intent.rb:13:      module_function
+lib/io/natural_intent.rb:147:      private_class_method :score_candidate, :extract_entities, :phrase_hits, :first_hit,
+lib/io/gist.rb:7:module Master
+lib/io/gist.rb:8:  module Io
+lib/io/gist.rb:9:    class Gist
+lib/io/hashline.rb:5:module Master
+lib/io/hashline.rb:6:  module Io
+lib/io/hashline.rb:8:    module Hashline
+lib/io/hashline.rb:11:      module_function
+lib/io/github_operations.rb:6:module Master
+lib/io/github_operations.rb:7:  module Io
+lib/io/github_operations.rb:14:    class GitHubOperations
+lib/io/github_operations.rb:100:        Result.new(false, "GitHub delivery failed: #{e.class}: #{e.message}", nil, nil, nil)
+lib/io/lane_quota.rb:7:module Master
+lib/io/lane_quota.rb:8:  module Io
+lib/io/lane_quota.rb:20:    module LaneQuota
+lib/io/web_chat.rb:6:module Master
+lib/io/web_chat.rb:7:  module Io
+lib/io/web_chat.rb:10:    class WebChat
+lib/io/code_pen.rb:7:module Master
+lib/io/code_pen.rb:8:  module Io
+lib/io/code_pen.rb:9:    class CodePen
+lib/io/plugin_observe.rb:6:module Master
+lib/io/plugin_observe.rb:7:  module Io
+lib/io/plugin_observe.rb:8:    class PluginObserve
+lib/io/semantic_cache.rb:11:module Master
+lib/io/semantic_cache.rb:12:  module Io
+lib/io/semantic_cache.rb:16:    class SemanticCache
+lib/io/semantic_cache.rb:179:        data = YAML.safe_load_file(@manifest_path, permitted_classes: [Symbol], aliases: false)
+lib/io/memory_record.rb:5:module Master
+lib/io/memory_record.rb:6:  module Io
+lib/io/memory_record.rb:9:    class MemoryRecord
+lib/io/constraint_dsl.rb:3:module Master
+lib/io/constraint_dsl.rb:4:  module Io
+lib/io/constraint_dsl.rb:13:    module ConstraintDSL
+lib/io/constraint_dsl.rb:14:      module_function
+lib/io/script_dispatch.rb:11:module Master
+lib/io/script_dispatch.rb:12:  module Io
+lib/io/script_dispatch.rb:14:    module ScriptDispatch
+lib/io/script_dispatch.rb:15:      module_function
+lib/io/script_dispatch.rb:37:        Result.err("#{tool}: #{e.class}: #{e.message}", category: :infrastructure)
+lib/io/mcp_coordinator.rb:7:module Master
+lib/io/mcp_coordinator.rb:8:  module Io
+lib/io/mcp_coordinator.rb:11:    class McpCoordinator
+lib/io/mcp_coordinator.rb:112:      class McpToolWrapper < ::RubyLLM::Tool
+lib/io/mcp_coordinator.rb:144:          "MCP tool error: #{e.class}: #{e.message}"
+lib/io/circuit_breaker.rb:9:module Master
+lib/io/circuit_breaker.rb:10:  module Io
+lib/io/circuit_breaker.rb:11:    class CircuitBreaker
+lib/io/circuit_breaker.rb:20:      class CircuitError < StandardError
+lib/io/subdomain_orchestrator.rb:8:module Master
+lib/io/subdomain_orchestrator.rb:9:  module Io
+lib/io/subdomain_orchestrator.rb:12:    class SubdomainOrchestrator
+lib/io/web_fetch.rb:5:module Master
+lib/io/web_fetch.rb:6:  module Io
+lib/io/web_fetch.rb:14:    class WebFetch
+lib/io/search_files.rb:3:module Master
+lib/io/search_files.rb:4:  module Io
+lib/io/search_files.rb:5:    class SearchFiles
+lib/io/llm.rb:7:module Master
