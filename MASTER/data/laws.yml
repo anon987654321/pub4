@@ -4508,4 +4508,22 @@ law_map:
       in_code: semantic markup, keyboard paths, no capability assumed
       in_prose: plain words before jargon
       in_visual: Fitts and von Restorff — targets big enough to hit, differences big enough to see
-  
+
+# BrowserAgent shares WebBrowse's pinned-address transport. Interactions are
+# a separate authority boundary: each action below needs fresh human consent.
+browser_policy:
+  description: "Governs the sessionful BrowserAgent tool."
+  forbidden_hosts:
+    - 127.0.0.1
+    - localhost
+    - 0.0.0.0
+    - 169.254.169.254
+  write_actions:
+    - click
+    - set
+    - type
+  consent_required: true
+  allowed_network_methods:
+    - GET
+    - HEAD
+  max_sessions: 4
