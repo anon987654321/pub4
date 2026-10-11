@@ -282,6 +282,7 @@ STUDIO/replicate/lora/*/dataset/
 STUDIO/replicate/lora/*/dataset_*/
 STUDIO/replicate/lora/*/retouched/
 STUDIO/replicate/lora/*/out/
+STUDIO/replicate/lora/out/
 STUDIO/replicate/lora/*/weights/
 STUDIO/replicate/lora/*/contact_sheet.jpg
 

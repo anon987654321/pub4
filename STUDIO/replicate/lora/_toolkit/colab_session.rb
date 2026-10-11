@@ -84,7 +84,7 @@ end
 
 MODEL = subject_env.fetch("MODEL")
 WEIGHTS_DIR = SUBJECT_DIR.join("weights", MODEL)
-OUT_DIR = SUBJECT_DIR.join("out")
+OUT_DIR = SUBJECT_DIR.join("..", "out", SUBJECT_DIR.basename.to_s)
 
 def prepare
   abort "warn: HF_TOKEN missing — the notebook did not set it" if ENV["HF_TOKEN"].to_s.strip.empty?

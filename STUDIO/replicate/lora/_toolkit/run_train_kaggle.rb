@@ -511,7 +511,7 @@ pulled.each { |name| puts "ok: weight #{WEIGHTS_DIR.join(name)}" }
 
 # The output is one flat directory, so the validation portraits arrive in the
 # weights dir. They are deliverables and belong with the rest of them.
-out_dir = SUBJECT_DIR.join("out")
+out_dir = SUBJECT_DIR.join("..", "out", SUBJECT_DIR.basename.to_s)
 portraits = WEIGHTS_DIR.children.select { |path| path.file? && IMAGE_EXT.include?(path.extname.downcase) }
 unless portraits.empty?
   out_dir.mkpath

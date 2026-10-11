@@ -51,7 +51,7 @@ WEIGHTS_DIR = SUBJECT_DIR.join("weights", MODEL)
 # which is why it is no longer called exports/.
 EXPORTS_DIR = SUBJECT_DIR.join(".cache")
 LOG_PATH = WEIGHTS_DIR.join("replicate_train.log")
-LEDGER_PATH = SUBJECT_DIR.join("out", "ledger.jsonl")
+LEDGER_PATH = SUBJECT_DIR.join("..", "out", SUBJECT_DIR.basename.to_s, "ledger.jsonl")
 
 MASTER_CLIENT = REPO_ROOT.join("STUDIO/replicate/client.rb")
 abort "warn: missing #{MASTER_CLIENT}" unless MASTER_CLIENT.file?

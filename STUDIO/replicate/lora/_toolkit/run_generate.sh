@@ -30,7 +30,7 @@ Anything after a lane flag (--train-kaggle, --train-colab, --train-replicate,
   ./lora --train-kaggle --dry-run --steps 600
   ./lora --train-replicate --dry-run
 
-Deliverables: $SUBJECT_DIR/out/
+Deliverables: $SUBJECT_DIR/../out/$(basename $SUBJECT_DIR)/
 Weights:      $SUBJECT_DIR/weights/$MODEL/
 
 Environment:

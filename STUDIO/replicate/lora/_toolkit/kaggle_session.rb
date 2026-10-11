@@ -28,7 +28,7 @@ SUBJECT_DIR = ROOT.join(PLAN.fetch("subject"))
 TOOLKIT_DIR = ROOT.join("_toolkit")
 DATASET_DIR = SUBJECT_DIR.join("dataset")
 WEIGHTS_DIR = SUBJECT_DIR.join("weights", PLAN.fetch("model"))
-OUT_DIR = SUBJECT_DIR.join("out")
+OUT_DIR = SUBJECT_DIR.join("..", "out", SUBJECT_DIR.basename.to_s)
 WORKING = Pathname.new(ENV.fetch("LORA_KAGGLE_WORKING", "/kaggle/working"))
 AI_TOOLKIT = Pathname.new(ENV.fetch("AI_TOOLKIT_ROOT", "/kaggle/tmp/ai-toolkit"))
 

@@ -140,10 +140,10 @@ sittings = prompts_for(SUBJECT, side: options[:side], only: options[:only], set:
 abort "warn: set #{options[:set]} matched no sittings" if sittings.empty?
 
 suffix = options[:draft] ? "_draft" : ""
-out_dir = SUBJECT_DIR.join("out", "#{options[:set]}#{suffix}")
-graded_dir = SUBJECT_DIR.join("out", "#{options[:set]}_postpro")
+out_dir = SUBJECT_DIR.join("..", "out", SUBJECT_DIR.basename.to_s, "#{options[:set]}#{suffix}")
+graded_dir = SUBJECT_DIR.join("..", "out", SUBJECT_DIR.basename.to_s, "#{options[:set]}_postpro")
 extension = options[:draft] ? "webp" : "jpg"
-LEDGER = SUBJECT_DIR.join("out", "ledger.jsonl")
+LEDGER = SUBJECT_DIR.join("..", "out", SUBJECT_DIR.basename.to_s, "ledger.jsonl")
 puts "ok: model #{model}"
 puts "ok: #{sittings.length} sitting(s) -> #{out_dir}#{options[:draft] ? " (draft: webp, go_fast, ungraded)" : ""}"
 
@@ -206,7 +206,7 @@ end
 [out_dir, graded_dir].each do |dir|
   next unless dir.directory?
 
-  sheet = SUBJECT_DIR.join("out", "#{dir.basename}_sheet.jpg")
+  sheet = SUBJECT_DIR.join("..", "out", SUBJECT_DIR.basename.to_s, "#{dir.basename}_sheet.jpg")
   system("ruby", TOOLKIT.join("contact_sheet.rb").to_s, dir.to_s, "--cols", "4", "--cell", "384",
          "--label", "--out", sheet.to_s)
 end

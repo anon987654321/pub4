@@ -27,8 +27,8 @@ SUBJECT = ENV.fetch("SUBJECT") { abort "run a subject wrapper, not this script d
 SUBJECT_DIR = Pathname.new(ENV.fetch("SUBJECT_DIR")).expand_path.freeze
 TOOLKIT = Pathname.new(__dir__).expand_path
 REPO_ROOT = TOOLKIT.join("../../../..").expand_path
-OUT_DIR = SUBJECT_DIR.join("out", "video")
-LEDGER = SUBJECT_DIR.join("out", "ledger.jsonl")
+OUT_DIR = SUBJECT_DIR.join("..", "out", SUBJECT_DIR.basename.to_s, "video")
+LEDGER = SUBJECT_DIR.join("..", "out", SUBJECT_DIR.basename.to_s, "ledger.jsonl")
 
 require_relative "preflight"
 require_relative "video"

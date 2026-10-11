@@ -20,8 +20,8 @@ def subject_status(name)
   sidecar = File.join(dir, "weights", File.read(File.join(dir, "subject.env"))[/^MODEL=(\S+)/, 1].to_s, "replicate_training.json")
   version = File.file?(sidecar) ? JSON.parse(File.read(sidecar))["version"] : nil
   weights = Dir[File.join(dir, "weights", "**", "*.safetensors")].length
-  spent = Preflight.ledger_seconds(File.join(dir, "out", "ledger.jsonl"), "render") +
-          Preflight.ledger_seconds(File.join(dir, "out", "ledger.jsonl"), "train")
+  spent = Preflight.ledger_seconds(File.join(ROOT, "out", name, "ledger.jsonl"), "render") +
+          Preflight.ledger_seconds(File.join(ROOT, "out", name, "ledger.jsonl"), "train")
   next_step = if report.nil? || report.images.empty? then "no dataset: curate photos into sources/, then dataset/"
               elsif !report.ok? then "dataset: #{report.problems.first}"
               elsif version.nil? then "ready to train: ./lora --subject #{name} --train-replicate --dry-run"
