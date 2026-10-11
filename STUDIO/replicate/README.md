@@ -1,299 +1,132 @@
 # Replicate
 
-## Canonical contract
+**A photograph is a set of decisions, and replicate makes each of them nameable.** Film
+stock, lens, light, weather, hour, distance and focus become words the tool knows, so a house
+style is a handful of flags and not a paragraph someone has to remember. The tool refuses what
+a model cannot do, and nothing leaves it ungraded unless you say so.
 
-### Purpose
+Replicate is STUDIO's noninteractive boundary to the Replicate image service. It generates
+images, downloads a result when an output path is asked for, searches the provider catalog,
+synchronises a bounded local copy of it, and reports statistics on that copy. It never
+installs gems, scrapes the website or stores credentials in the repository. Credentials come
+from `REPLICATE_API_TOKEN`, `REPLICATE_API_KEY` or `~/.config/replicate/config.json`, and the
+catalog cache defaults to `~/.cache/replicate/models.json`. MASTER usually chooses the tool
+from natural language, so nobody needs to type these commands; they stay useful for
+diagnostics, and the last section lists them.
 
-Construct governed image-generation requests from structured photographic
-vocabularies, model capabilities, and explicit operator choices.
-
-### Inputs
-
-Prompt text, named photographic vocabularies, model selection, optional source
-images for edits, deterministic batch settings, and provider credentials.
-
-### Outputs
-
-Provider results, downloaded local artifacts when requested, provenance
-sidecars, capability reports, and explicit provider failures.
-
-### Invocation
-
-Use `ruby STUDIO/replicate/replicate.rb <command>`.
-
-### Architecture
-
-`replicate.rb` is the request boundary. `lib/craft.rb` owns vocabulary and
-composition; provider/model data is declared in the tool and verified against
-live schemas when that check is deliberately run.
-
-### Data and state
-
-Prompts and manifests are source/provenance. Credentials, provider responses,
-temporary downloads, and caches stay outside the repository unless explicitly
-promoted.
-
-### Security boundary
-
-Treat provider schemas, URLs, prompts, images, and model identifiers as
-untrusted. Validate redirects and destinations, bound downloads and request
-size, use structured subprocesses, and never deserialize or execute remote data.
-
-### Validation
-
-Unknown vocabulary values, unsupported model inputs, missing source images,
-missing credentials, and provider failures must be explicit failures. Schema
-audits report inability to measure rather than passing silently.
-
-### MASTER integration
-
-Replicate is a canonical STUDIO tool. MASTER governs routing and lifecycle;
-Replicate owns photographic vocabulary, model mapping, request construction,
-and artifact provenance.
-
-
-**A photograph is a set of decisions, and replicate makes each of them
-nameable.** It is MASTER's noninteractive Replicate boundary: it generates
-images, downloads a result when an output path is asked for, searches the
-provider catalog, synchronises a bounded local one, and reports statistics on
-it. It never installs gems, scrapes the website, or stores credentials in the
-repository.
-
-MASTER usually chooses it from natural language, so nobody needs to type these
-commands. They stay useful for diagnostics, and the last section of this file
-lists them.
-
-Check the paths before you trust them. Every example in this file once named a
-script location the file had left days earlier, and one it had never had at all.
-The script's own requires were stale the same way and aborted it with a
-LoadError on line 12 — which is why nobody noticed the README.
+The entry point is `replicate.rb`. Beside it, `craft.rb` holds the vocabularies and the
+composers and makes no request, so a rented GPU with only the repository can still compose a
+prompt. The file `client.rb` is the provider client, with retries, spending caps and the
+billed-seconds ledger. The file `chain.rb` runs several models in a row, and `chains/` holds
+the chains that ship: `flux2_consistency.yml`, `relight_portrait.yml` and
+`structure_ladder.yml`. The `atomic_write.rb` and `script_dispatch.rb` files are small helpers
+for safe writes and for handing a finished file to another STUDIO tool. The `lora/` folder
+beside them has its own README.
 
 ## Structured fields
 
-The free-text `--prompt` is the subject. Everything else about the photograph
-composes onto it from named vocabularies, so a house style is a set of flags
-rather than a paragraph to remember:
+The free-text `--prompt` is the subject. Everything else about the photograph composes onto it
+from named vocabularies. `vocab-check` reports the current sizes, and at the time of writing
+there are twenty-three film stocks, fourteen lenses, twenty lighting setups, twelve kinds of
+weather, eleven times of day, eight distances, seven camera heights, six compositions and four
+focus modes. Spelling is normalised for case, hyphens and spaces, so `--time-of-day
+Golden-Hour` finds `golden_hour`. An unknown value aborts and prints the valid ones, because a
+silent no-op once produced a prompt with no film stock in it after the generation had been
+paid for.
 
-`--stock` 23 values, `--lens` 14, `--lighting` 20, `--weather` 12,
-`--time-of-day` 11, `--distance` 8, `--camera-height` 7, `--composition` 6 and
-`--focus` 4. Focus defaults to nothing, but every drawn scenario asks for sharp
-eyes, the feature portrait ratings follow most closely; composition names what
-the frame does for the subject, and thirds is on offer without being a default,
-because ratings barely follow it. A prompt that says "8k", "artstation",
-"octane render" or "flawless" is warned about, since those pull a picture
-toward concept art or retouched skin. Spelling is normalised
-for case, hyphens and spaces, so `--time-of-day Golden-Hour` finds
-`golden_hour`. An unknown value **aborts and prints the valid ones**: it used to
-be documented as "a no-op rather than a crash", which in practice meant
-`--stock portra400` produced a prompt with no film stock in it, silently, after
-the generation had been paid for and waited on.
+The distance also decides the aspect ratio unless `--aspect-ratio` overrides it, so a close-up
+is 4:5 and an establishing shot is 16:9. Two fields that describe incompatible light, such as
+golden hour at night, produce a warning and not a refusal, because a neon sign at midday is a
+real photograph. A prompt that says "8k", "artstation" or "flawless" is also warned about,
+since those words pull a picture toward concept art and retouched skin.
 
-`--distance` also decides the aspect ratio unless `--aspect-ratio` overrides it,
-so a `closeup` is 4:5 and an `establishing` shot is 16:9.
+The command `vocab-check` verifies all of this without an API call. Every key must be
+reachable after normalisation, every distance must map to a ratio, every model's negative
+prompt key must exist among its own input keys, and every declared input must be fillable by
+something in the request builder. It prints a count of models and problems and fails on any
+problem.
 
-Two fields describing incompatible light (`--lighting golden_hour` with
-`--time-of-day night`, `--lighting overcast` with `--weather clear`) produce a
-warning. Not a refusal — a neon sign at midday is a real photograph — but the
-model resolves the contradiction by honouring one and discarding the other, and
-does not say which.
+## Models and refusals
 
-`vocab-check` verifies all of the above without an API call: every key
-reachable after normalisation, every `--distance` mapped to a ratio, every
-model's `negative_prompt_key` present in its own `input_keys`, every declared
-input key fillable by something in `build_input`, and the batch diversity claim
-measured rather than asserted.
+`MODEL_CAPABILITIES` in `replicate.rb` records what each model accepts, checked against live
+schemas and not remembered. Its purpose is to refuse an unsupported option rather than accept
+it and ignore it, because a request that works while dropping a setting is far harder to
+notice than a rejection. The guidance and step knobs are model-relative: the models disagree
+on both the spelling and the range, and a figure outside the chosen model's range is a refusal
+and not a clamp. The edit model `flux-kontext-pro` requires `--image`, and a generate call
+without one fails and does not fall back to text-to-image.
 
-## Sampler knobs
+No model in the table takes a negative prompt. The tool asks for the opposite in the
+affirmative and says so on stderr, and the provenance sidecar records whether a negative was
+actually sent. The flag `--preview` swaps in a small fast model unless a model is named or
+`REPLICATE_MODEL` is set. The flag `--final` forces the highest-fidelity model in the table and
+overrides the environment variable, which is how one image leaves a preview session.
 
-`--guidance` and `--steps` are model-relative, because the models disagree on
-both the spelling and the range. On `flux-dev` they are `guidance` (0–10) and
-`num_inference_steps` (1–50); on `flux-schnell` the step ceiling is **4**; on
-`stable-diffusion-3.5-large` they are `cfg` (0–20) and `steps` (1–50);
-`flux-1.1-pro` and `flux-1.1-pro-ultra` have neither. A figure outside the
-chosen model's range is a refusal, not a clamp — clamping silently is how
-you pay for 28 steps on a four-step model and get four.
+The table goes stale silently, because the tests check it only against itself. Two rake tasks
+hold it against the network, `replicate:schema_audit` and `replicate:schema_suggest`, and
+neither runs as part of the default `rake` because both need a token. A check that cannot run
+says so and does not pass. Adopting a newer model decides what the pictures look like, so it
+stays an operator call; the suggest task exists so that when the decision is made, the input
+keys come off the provider and not out of somebody's memory.
 
-`--final` is `flux-2-max`. `--raw` / `--no-raw` reach the camera-look toggle
-on `flux-1.1-pro-ultra`, the one model that has it; `--stock` or `--lens`
-turns raw on there unless `--no-raw`. `--image PATH`
-is required on `flux-kontext-pro` (text-instructed edit); generate without
-one is a refusal, not a silent text-to-image fallback.
+## Batches, scenarios and chains
 
-Both knobs were read by `build_input` long before either had a flag: three
-declared capabilities with no way to reach them. `vocab-check` now fails on
-that shape.
+A batch cycles expression, pose, wardrobe and background pools of different lengths at strides
+coprime with each, so twenty consecutive indices give twenty distinct combinations. A scenario
+is a sitting drawn and not written: those pools, a light, a portrait lens, a distance of two
+metres or more, and a film stock by name. A place never receives a light it cannot have, and
+a number is the same sitting on every run. Selfies and the distance ladder are drawn the same
+way, and lora asks for them by name, so a subject adapter and a plain generation read one
+vocabulary and one budget against CLIP's seventy-seven tokens.
 
-## Negative prompts
+A chain passes a frame through several models that each hold a different invariant, such as
+depth, edges or a character across references. The command `chains` lists the shipped chains
+and their plans, and `chain NAME --dry-run` validates the whole chain before anything is spent,
+because a failure at stage six that stage two could have predicted is a real bill. A failed
+chain appends a row to a manifest with what it kept.
 
-**No model in the table takes a negative prompt.** Every Flux model, including
-the default `flux-2-pro`, has no such input, and `stable-diffusion-3.5-large`
-dropped the one SD3 had — its live schema is prompt / aspect_ratio / cfg /
-image / prompt_strength / steps / seed / output_format / output_quality, and
-nothing else. The capability table is the place that gets this wrong: while it
-claimed support for one model, that was the only entry whose positive fallback
-was suppressed, so a `negative_prompt` key the model does not have went out and
-the sidecar recorded `negative_prompt_sent: true` for it.
+## Grading and provenance
 
-Replicate assembles an anti-plastic-skin negative anyway, so it asks for the
-opposite in the affirmative (`POSITIVE_SKIN_GUIDANCE`) and says on stderr that
-it is doing so. The provenance sidecar records `negative_prompt_sent` alongside
-the text, because recording the negative on its own says nothing about whether
-`build_input`'s `input_keys` filter dropped it on the way out.
+Every output is graded by postpro unless you turn it off. The default preset is `portrait`,
+because replicate mostly makes faces and generated skin is too clean; the grain is the
+direct answer to that. Change it per run with `--postpro PRESET`, per shell with
+`REPLICATE_POSTPRO`, and switch it off with `--no-postpro` when another tool will grade the
+file later. The look itself is postpro's to define.
 
-## Preview and final
+Generation returns provider URLs unless `--output FILE` is supplied. Each saved output gets a
+content-addressed blob, a checksum, a provenance sidecar and a line in
+`.master/media/gallery.jsonl`. The gallery's alt text describes the subject, the crop, the
+camera height and the background, which is what the image is of, and not the compiled prompt,
+which is how it was made. Missing credentials, missing outputs, provider failures,
+cancellation and timeouts are explicit failures, and the tool never substitutes a model
+silently.
 
-`--preview` swaps in `flux-2-klein-4b` unless a model was named explicitly or
-`REPLICATE_MODEL` is set. `--final` forces `flux-2-max` and **does**
-override `REPLICATE_MODEL`, which is the asymmetry it exists for: the
-environment variable is how a session stays in preview, and `--final` is how
-one image leaves it for the highest-fidelity model in the table. `vocab-check`
-covers it, because `--final` spent a while parsed into
-an option nothing read.
+## Trust and MASTER
 
-## Batches
+Provider schemas, catalog entries, URLs, prompts, images and model identifiers are untrusted
+data. Downloads accept only HTTPS from an allowed host list, are streamed under a byte cap and
+leave no partial file on failure. Shell commands are never built from model identifiers,
+prompts or filenames. Tokens stay out of prompts, sidecars and command output, and artifacts
+and gallery records are written atomically so concurrent batches cannot leave a truncated one.
 
-`--batch N` cycles expression, pose, wardrobe and background pools of different
-lengths (7, 6, 8, 9) at strides coprime with each, so 20 consecutive indices
-give 20 distinct combinations and the tuple does not repeat for 504 images. The
-previous version read four same-length pools at the same index: `--batch 20`
-returned each of five combinations four times, every time.
+MASTER governs routing and lifecycle, and STUDIO owns dispatch and media production. Replicate
+owns vocabulary, model mapping, request construction and artifact provenance. The tool is
+reached at `STUDIO/replicate/replicate.rb`, and `MASTER/tools/replicate` is a compatibility
+symlink to it.
 
-## Scenarios, and lora
+## Commands
 
-The vocabularies, the pools and the composers live in `lib/craft.rb`, which makes no
-request and loads nothing from MASTER, so lora can compose on a rented GPU that
-has only the repository. lora's sittings go through `sitting_prompt` there, and
-its token count against CLIP's 77 does too, so a subject adapter and a
-generation read one vocabulary and one budget.
-
-A scenario is a sitting drawn rather than written: expression, pose, wardrobe
-and place from the batch pools, a light from `--lighting`, a portrait lens, a
-distance of two metres or more, and a film stock by name. Each field turns at
-its own stride, so neighbouring scenarios change the light and the place
-together. A number is the same sitting on every run. A place never gets a light
-it cannot have — no golden hour in a car park at night — because the model
-keeps one of the two and drops the other. lora asks for them as a prompt
-set named `scenarios`, twenty-four by default or any numbers you name.
-
-A selfie is drawn the same way with the geometry refused: the framing, the
-held gaze and the arm stay, the camera stands two or three metres back with the
-lens that holds the crop, and the bare word never reaches the prompt, since it
-asks for the distortion. Each draws an in-between moment, a place, a light the
-place can have and the catchlight that light makes, and neighbours never share
-a light. lora asks for forty-eight as `selfies`. The distance ladder is one
-sitting at six stated distances, asked for as `distance`, and `vocab-check`
-holds both tables to the questions it asks of the scenarios.
-
-## Everything else
-
-Credentials resolve from `REPLICATE_API_TOKEN`, `REPLICATE_API_KEY`, or
-`~/.config/replicate/config.json`. Catalog state defaults to
-`~/.cache/replicate/models.json`. MASTER routes explicit image-generation
-requests through this boundary; it does not claim a separate local
-identity-model path.
-
-Generation returns provider URLs unless `--output FILE` is supplied. Missing
-credentials, missing outputs, provider failures, cancellation, and timeouts are
-explicit failures; the tool does not silently substitute a model or claim a
-local file exists.
-
-Each saved output gets a content-addressed blob, a checksum, a provenance
-sidecar and a line in `.master/media/gallery.jsonl`. The gallery's alt text
-describes the subject, the crop, the camera height and the background — not the
-compiled prompt, which is how the image was made rather than what it is of.
-
-`--postpro PRESET` hands the finished file straight to
-`STUDIO/postpro/postpro.rb`. The `capabilities` command emits the executable
-60-item Replicate/LoRA contract as JSON.
-
-## Keeping the model table honest
-
-`MODEL_CAPABILITIES` is a second source of truth. It exists so an unsupported
-option is refused rather than accepted-and-ignored — a request that "works"
-while dropping a setting is much harder to notice than a 422 — and the cost of
-that is that it goes stale silently: the tests check the table against itself,
-so provider drift surfaces in production or not at all.
-
-Neither runs as part of `rake`. Both need the network and a token, and a check
-that cannot run says so rather than passing.
-
-**Surveyed 2026-08-25.** Nothing here is broken — `flux-1.1-pro` is live and
-carries no deprecation notice. But most of the declared models are a generation
-behind what Replicate now leads with, and none of these is named here:
-
-`black-forest-labs/flux-2-max` is BFL's current highest-fidelity image model.
-`bytedance/seedream-5-pro` is flagship text-to-image and editing in one.
-`google/nano-banana-2` generates fast and edits conversationally.
-`openai/gpt-image-2` renders sharp text inside the image. `krea/krea-2-medium`
-is expressive illustration, anime and painterly work. `prunaai/p-image`
-generates in under a second.
-
-The shape of the field moved as well as the names: editing is now a mode of the
-flagship models rather than a separate one, which is a different arrangement
-from the single `flux-kontext-pro` path here that requires `--image`. Recraft V4
-also emits editable SVG, which nothing in this tool can currently receive.
-
-Adopting any of them decides what the pictures look like, so it stays an
-operator call. `schema_suggest` is here so that when the decision is made, the
-input keys come off the provider instead of out of somebody's memory — the one
-thing that must never be guessed, since guessing them breaks the refusal that
-makes the table worth keeping.
-
-## Running it
-
-The last two commands, run from `STUDIO`, hold the model table against the live
-schemas and print an entry to paste for a model the table does not have.
+Run these from the repository root. The last two need a token and the network.
 
 ```sh
-ruby STUDIO/replicate/replicate.rb generate \
-  --prompt "Bergen rain, 35mm documentary photograph" --output .master/media/bergen.webp
+ruby STUDIO/replicate/replicate.rb generate --prompt "Bergen rain" --dry-run
+ruby STUDIO/replicate/replicate.rb generate --prompt "a fisherman on a dock" \
+  --stock hp5 --lens 85mm --distance portrait --lighting rembrandt --batch 6 --dry-run
+ruby STUDIO/replicate/replicate.rb vocab-check
+ruby STUDIO/replicate/replicate.rb capabilities
+ruby STUDIO/replicate/replicate.rb chains
 ruby STUDIO/replicate/replicate.rb search flux --limit 100
 ruby STUDIO/replicate/replicate.rb sync --limit 250
 ruby STUDIO/replicate/replicate.rb stats
-ruby STUDIO/replicate/replicate.rb capabilities
-ruby STUDIO/replicate/replicate.rb vocab-check
-
-ruby STUDIO/replicate/replicate.rb generate \
-  --prompt "a fisherman on a dock" \
-  --stock hp5 --lens 85mm --distance portrait --camera-height eye \
-  --lighting rembrandt --weather drizzle --time-of-day blue_hour \
-  --batch 6 --dry-run
-
-cd STUDIO
-rake replicate:schema_audit
-rake replicate:schema_suggest MODEL=black-forest-labs/flux-2-max
+cd STUDIO && rake replicate:schema_audit
 ```
-
-## Security and trust boundaries
-
-Replicate is MASTER's provider boundary for image generation. The sensitive edges are credentials, remote API requests, provider-returned URLs, downloaded media, model metadata, and local artifact storage.
-
-- Keep REPLICATE_API_TOKEN, REPLICATE_API_KEY, and equivalent credentials outside prompts, source files, git history, provenance text, and ordinary command output.
-- Treat provider catalog entries and schemas as untrusted remote data. Validate identifiers and capabilities before using them to construct requests.
-- If a provider returns an output URL that Replicate downloads, validate the URL and every redirect before connecting. Restrict schemes, block private/link-local destinations, enforce response-size and timeout limits, and never let a provider-controlled URL become an internal network request.
-- Never build shell commands from model IDs, prompts, filenames, or provider URLs. Use structured process arguments.
-- Write generated artifacts and provenance atomically. Concurrent batches must not produce duplicate or truncated gallery records.
-- Treat provider responses, downloaded images, and serialized sidecars as data. Never deserialize arbitrary Ruby objects or execute provider-supplied content.
-- If Replicate is behind a reverse proxy, the proxy and backend must agree on request framing; security controls must not depend on ambiguous HTTP/1.1 parsing.
-- If browser authentication is ever added, prefer server-side sessions. If JWTs are introduced, pin the accepted algorithm and key type rather than trusting alg from the token.
-- If GraphQL is introduced, bound depth and query cost, authorize fields, and rate-limit batched operations.
-- Provider outages, cancellation, and timeouts must remain explicit failures. Security boundaries must not silently fall back to an unexpected endpoint or model.
-
-Subdomain ownership is also part of deployment: hostnames used for generated-media callbacks, galleries, or provider integrations need lifecycle auditing so abandoned third-party DNS targets cannot become trusted-looking content origins.
-
-## MASTER integration
-
-Replicate lives at STUDIO/replicate and is the canonical image-generation boundary. MASTER owns governance; STUDIO owns dispatch and media production; Replicate owns vocabulary, provider capability mapping, request construction, generation, and artifact provenance.
-
-Canonical examples:
-
-ruby STUDIO/replicate/replicate.rb capabilities
-ruby STUDIO/replicate/replicate.rb vocab-check
-ruby STUDIO/replicate/replicate.rb generate --prompt "Bergen rain" --dry-run
-
-Use STUDIO/replicate in new scripts and documentation. STUDIO/replicate is a retired path.
-
-The `lora/` folder beside it trains a LoRA of a person, renders selfies with
-it and animates a still into a short clip, all through the same client, so one
-set of retries, spending caps and the billed-seconds ledger covers every paid
-call. Its README says how to use it.

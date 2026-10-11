@@ -1,501 +1,199 @@
 # postpro
 
-## Canonical contract
-
-### Purpose
-
-Grade and transform image media through named, measurable processing chains while
-preserving provenance and keeping media handling bounded.
-
-### Inputs
-
-Local images or directories, named presets/stocks/lenses, optional camera
-metadata, and explicit output destinations.
-
-### Outputs
-
-Processed images, measurements, exported LUT/CSS data where requested, and
-diagnostic/provenance output. No transformation is considered successful merely
-because the process exited zero.
-
-### Invocation
-
-Use `ruby STUDIO/postpro/postpro.rb <options>`.
-
-### Architecture
-
-`postpro.rb` is the orchestration boundary. `lib/` contains the image
-processing and analysis machinery, while the camera profile data remains
-declarative beside the tool.
-
-### Data and state
-
-Input media is external data. Temporary files are disposable; validated outputs
-are written atomically. Presets and camera profiles are tracked source.
-
-### Security boundary
-
-Treat images, EXIF, LUTs, profiles, and filenames as untrusted. Use structured
-subprocess arguments, bound dimensions/time/frame counts, validate output paths,
-avoid arbitrary deserialization, and keep remote fetching behind an explicit
-SSRF-safe boundary.
-
-### Validation
-
-Use vocabulary, measurement, and preset checks before trusting a result.
-Failures in media decoding, processing, or output replacement remain explicit.
-
-### Integration
-
-Postpro is a canonical STUDIO tool. MASTER and the RAILS applications reach it through explicit adapters; neither tree owns a second implementation.
-
-
-**Film is a physical process, and postpro models the process rather than
-imitating the result.** A filter is a lookup table with an opinion. This is an
-emulsion: crystals with a size and a statistics, a base that reflects light back
-into the layer it came through, a curve that spends contrast instead of adding
-it, and a print stock after that. It is the house grade for stills, and its
-entry point is `STUDIO/postpro/postpro.rb`.
-
-Give it `--input`, `--output` and `--preset` and it runs headless. Give it
-nothing and it opens the interactive menu — presets, random chains, or a custom
-JSON recipe. Give it a bare path and the path is the subject: an image goes
-through three to five random chains written beside it, a directory gives a few
-random picks from it, and a path that is neither file nor directory is named
-and refused. A preset grade in a script still wants the three flags; a random
-one wants only the path.
-
-Check the path before you trust it. This file once named a script location five
-days out of date, and the script's own `require_relative` pointed at a directory
-the move had removed, so every invocation aborted with a LoadError until somebody
-tried to run one. Paths in documentation rot exactly the way paths in code do,
-and neither announces it.
-
-### The check that catches what does not raise
-
-`--vocab-check` is the one to run after touching any table, and it takes under a
-second. It verifies that every preset names an effect with an implementation and
-a stock, lens and print stock that exist; that a stock has a row in every
-per-stock table its chain reads; that every key a preset declares — `stops:`,
-`age:`, `lens:`, `print_stock:`, `exposure_secs:`, `k1:`, `f_number:`,
-`tonemap:` — has a step in that chain that reads it; that every recipe-allowed
-effect is callable the way `recipe()` calls it; that every H&D curve is
-monotonic; that no stock is quoted at a granularity no scan has ever measured;
-and that nothing is defined which neither a preset nor a recipe can reach. It
-exits non-zero on a problem.
-
-It exists because none of those failures raise. An effect name with no
-implementation returned the image unchanged while the log reported the step as
-done. Five presets declared a lens no chain applied. Every stock carried a colour
-matrix nothing read. The failure mode of a table-driven pipeline is not a crash.
-It is a picture that came out slightly wrong and a log that agrees with the
-preset.
-
-The other introspection flags process no image and are equally cheap:
-`--list-presets`, `--list-stocks`, `--list-lenses`, `--describe-preset`,
-`--fit-grain`, `--export-lut`, `--css-filter` and `--capabilities`.
-
-### The model
-
-A preset is an ordered chain of effects plus the film it is shot on — `noir`, for
-instance, runs optical blur, tonemap, push-pull, film curve, bleach bypass,
-desaturate, shadow lift and grain over `tri_x` at 5600 K, intensity 0.90, pushed
-two stops.
-
-Per-stock data lives in six tables keyed by the same symbol: `STOCKS`, carrying
-granularity, box speed, colour matrix and per-channel H&D curve, then
-`GRAIN_CHAN_SCALE`, `FILM_BASE`, `PUSH_RESPONSE`, `RECIPROCITY_SHIFT` and
-`C41_STOCKS`. A stock missing from one of them does not fail. It quietly becomes
-a different stock, which is why `--vocab-check` refuses a gap.
-
-`stock_matrix` normalises its rows so the matrix does dye crosstalk and the H&D
-offsets do the colour cast, instead of both doing cast. A preset that sets
-`temp:` without a `spectral_temp` or `color_temp` step in its chain is a
-`--vocab-check` failure, under the same unread-key rule as `stops:`, `lens:` and
-`age:`. A Kelvin figure `--describe-preset` prints and the render never applies
-is a lie, not a look.
-
-### Grain, which is the argument
-
-Grain is a Boolean model. Silver halide crystals are disks dropped by a Poisson
-process whose density respects the local gray level, and the developed picture is
-what you see when you filter that binary field. Two things follow from it, and
-this file had both backwards until a reader said the grain looked thin and the
-measurement agreed with him.
-
-The filtered field has variance proportional to the gray level times one minus
-the gray level, so the amplitude, being a standard deviation, follows its square
-root. The envelope here was that variance curve used directly as an amplitude,
-which charged a highlight roughly three times the grain it should carry against a
-midtone, where film charges it 1.7. And the crystal radius and the blur it is
-observed through are independent — one belongs to the emulsion, the other to the
-enlarger, the scanner and the eye — while this file derived both from one cell
-size, so the filter always sat at about half the width of the grain it was
-filtering and no amplitude could survive it. Measured before the change, Portra
-at preset strength laid a quarter of a level of luma sigma on flat grey, against
-the three to eight a real 35 mm scan carries.
-
-Both are fixed at the mechanism rather than by turning a knob up. The crystal
-field is generated, clumped, made slightly anisotropic along the transport axis,
-blurred by the observer, and then normalised by its own measured deviation, so
-whatever the filter takes out the measurement puts back and the two constants
-stop fighting. Chroma grain is drawn correlated with luma grain rather than three
-independent times, because one crystal layer shadows the next.
-
-What this buys is a number that means something. `STOCKS[:grain]` is now the
-stock's peak luma sigma in eight-bit levels at mid-grey, times one scale factor:
-Portra reads 3.6, Tri-X 6.0, Delta 3200 9.1. Those are quantities an instrument
-can check, and `--fit-grain` is the instrument. Point it at a flat frame and it
-reports the sigma per tone, the correlation radius that implies a crystal size,
-and a set of knots ready to paste into a stock that disagrees with the model.
-Run against this file's own output at a known strength it reads about fifteen
-percent low, because its residual is a high-pass and the grain's coarsest octave
-goes out with the picture, so read the figures as a floor.
-
-Rated film keeps its own box speed. At box speed a stock comes out at its own
-granularity and each stop of push costs the square root of two more. Cell size
-scales with image width from a 2048 px reference, so a newsletter hero and a 4K
-print share an emulsion. And the finishing pass now stands down for any chain
-that grains itself, which is 57 of the 61 presets; two passes add in quadrature,
-and a stock quoted at six levels was arriving at eight and a half.
-
-Random chains ask for a third to two thirds of a stock's granularity rather than
-all of it, which is where the grain of a print sits rather than the grain of a
-negative seen at 1:1.
-
-### Halation is a ring
-
-Light that gets through the emulsion reflects off the rear face of the base and
-re-enters the emulsion a base-thickness away, so it re-exposes an annulus around
-a highlight rather than a halo centred on it. This summed a narrow and a wide
-Gaussian, which puts the most returned light exactly where the highlight already
-is, the one place it cannot land. Differencing them gives the ring, and the
-narrow lobe stays on as the scatter that never left the emulsion. Per-channel
-radii still model wavelength-dependent penetration, red furthest, which is why
-`cinestill_800t` blooms red and why halation is the point of that stock.
-
-### Light, and depth
-
-A grade cannot move a shadow to the other side of a nose. It can move the light
-that made the shadow, and until now this file could not do even that.
-
-`relight` splits the picture into illumination and reflectance — a heavy blur of
-the luminance is the light, and what is left over is the surface — then puts the
-light back differently and leaves the surface exactly alone. The correction
-rides as a ratio on all three channels, so texture, grain and hue survive it
-untouched; only the modelling moves. Measured on a portrait at full strength it
-deepens low-frequency contrast by twenty-one percent and moves texture by one.
-That is a power window done by arithmetic, and it is the whole of what
-relighting can honestly mean inside a grade. `shape` above one deepens the
-falloff the light already made, which is depth with no new contrast anywhere.
-`azimuth` swings the key around the frame. The ratio is bounded, because an
-unbounded division by a blurred luminance will find a black background and
-multiply it by four hundred.
-
-`aerial_depth` is the oldest depth cue in painting. Distance costs contrast,
-costs saturation and cools, because what sits between you and the far thing is
-air full of scattered skylight. Every other depth cue here is optical — defocus,
-vignette, tilt — and optics is where the amateur version lives, because a
-blurred background reads as a filter while haze reads as a room. What is near is
-what is sharp, so local high-frequency energy stands in for proximity. It is a
-proxy and it is named as one: it will read a sharp cloud as near. The mask is
-cubed before use, because straight off the acutance it covers half the frame at
-a mean of 0.57 and that is a global wash wearing a depth cue as a name; cubed it
-sits at 0.32 and lives where the detail is not. Over the sharpest fifth of a
-portrait it reads zero either way, so the face was never at risk — what the
-curve buys is the middle distance.
-
-The proxy loses to the instrument whenever the instrument is present. When the
-onnxruntime gem and the weights below are installed, `STUDIO/postpro/depth.rb`
-runs Depth Anything V2 (small) locally — 25M parameters, about twelve seconds
-of CPU per fresh frame — and both `relight` and `aerial_depth` take its map
-instead:
-the key lands on what the measuring eye says is near, and haze follows the
-measured distance rather than the sharpness. Inverse depth comes out of the
-model (a high reading means close), so `depth.rb` hands its callers a `near`
-map where 1.0 is the viewer's side of the plane, and no caller has to remember
-which way the tensor points. Without the gem or the weights everything falls
-back to the proxies above, one quiet log line, and nothing else changes.
-
-The weights are fetched out of band and never committed — `models/` is ignored,
-the generated planes cached under it with it. The export is
-`onnx-community/depth-anything-v2-small-ONNX`, fp16: an 180 kB graph and a
-50.4 MB external-data blob, fetched into `STUDIO/postpro/models/depth/`:
-
-```sh
-mkdir -p STUDIO/postpro/models/depth && cd STUDIO/postpro/models/depth
-curl -L -O https://huggingface.co/onnx-community/depth-anything-v2-small-ONNX/resolve/main/onnx/model_fp16.onnx
-curl -L -O https://huggingface.co/onnx-community/depth-anything-v2-small-ONNX/resolve/main/onnx/model_fp16.onnx_data
-```
-
-It processes square at 518 px with ImageNet normalisation, and writes each
-frame's plane to `models/depth/cache/` keyed on a 64-px fingerprint, so a
-re-run of the same picture pays eleven seconds once. The gems are
-`onnxruntime` plus `numo-narray`, install-time dependencies rather than
-`Gemfile` ones — the degradation contract says every other machine runs postpro
-untouched without them.
-
-### The tone scale
-
-`tonemap` carries five curves. The ACES one is the 2016 fit to the Academy's
-first rendering transform, and its highlight desaturation is the "ACES look" the
-Academy then spent years removing. Hable is Uncharted 2's S-curve and
-Hejl-Burgess-Dawson lifts the toe. Two are new and are what a colourist would
-expect today.
-
-AgX rotates into a narrower set of primaries, log-encodes, runs a sigmoid there
-and rotates back. The rotation is the point: it stops a channel reaching clip
-from dragging hue with it, which is exactly what a per-channel curve does to a
-saturated light source. The ACES 2 entry is that system's tone scale, a
-Michaelis-Menten curve with a flare term, which places mid-grey where the current
-standard places it. It is the tone scale alone — ACES 2 also carries chroma
-compression and gamut mapping in an appearance model, which is a colour pipeline
-rather than a curve, and AgX is the hue-preserving option here. A preset chooses
-with `tonemap:` and gets the ACES 2 scale if it says nothing.
-
-### Random chains, which are the opposite of a filter
-
-`--random` renders three to five pictures per run, each through its own chain,
-written beside the source — Downloads if there is one, the working directory
-otherwise, with a JSON sidecar naming every effect and the seed, because a chain
-nobody wrote down is a chain nobody can render again. A bare path reaches the
-same draw with the subject named: `postpro.rb photo.jpg` is `--random` on that
-one photograph.
-
-A chain is grown, not sampled. A random subset of seventy-three effects is the
-Photoshop filter menu and it looks like one: tilt-shift and selenium toning and
-teal-orange on the same frame, each at half strength, none of them agreeing
-about what the picture is. What makes a chain read as a grade instead is that
-its steps belong to one process — a stock, a development, a print, one way of
-having been damaged.
-
-Nobody declares those families. They are read off the sixty-one presets, which
-are sixty-one colourists' answers to the same question: a step may join only
-where some preset already puts it beside everything already picked, and it runs
-at the position those presets on average give it. The graph is dense enough to
-carry it, so the constraint buys coherence without costing variety.
-
-Three rules do the rest, and they are the difference between a grade and a
-stack. One or two steps carry the look, between 0.38 and 0.66, and everything
-else sits under 0.16 — nine effects at half strength each is mud, and it is the
-clearest tell of an amateur pass. Those numbers came down: a lead at 0.95
-announces itself, and the honest reading of subtlety is that a viewer should not
-be able to name the effect. Depth is not loudness.
-
-The wear shelf — dust, scanner noise, tape dropouts, fogged fixer, gate weave —
-is off entirely unless `--rough` asks for it. It may never lead, because dust at
-0.94 is the artefact becoming the picture, but the deeper problem is that it is
-loud by construction and reads as an effect where the rest of this file is
-trying to read as a photograph. With `--rough` it comes back capped at two
-marks, because two is a print that has been handled and five is a prop. The
-backbone never leads either — most presets carry optical blur, so leading with
-it is not a look, it is an out-of-focus photograph.
-
-Every chain shapes the light. One of `relight` or `aerial_depth` runs in every
-picture and it is one of the leads, because a chain that leaves the light alone
-is a chain about texture, and texture is the shallow half of a photograph.
-
-Then one step is allowed to disagree with the family, quietly, because a chain
-that is only coherent is a template and the interest is in the one thing that
-should not be there. Effects may repeat, a quarter of the way further along the
-process rather than back to back: two passes of halation at different radii is
-what a bright window through a thick base does, and the interest is in what
-happened between them. Grain is never optional. A chain with no crystals in it
-is a colour filter with opinions.
-
-Within a run, each picture is drawn against the ones already made — distinctive
-effects only, since sharing a backbone is not a resemblance — and each takes a
-stock no other picture in that run used. Every run picks a fresh seed and prints
-it, so the next run differs and any run can be had again by setting
-`POSTPRO_SEED`. `uplift` still stacks two presets over every file in the folder,
-which asks a different and narrower question.
-
-### Reading a frame, and a set
-
-A grade answers one of the four ways a photograph fails, and `--measure` and
-`--rescue` exist to say which one is in front of it. Two more readings come
-from MASTER's own laws, returned to the pictures they were borrowed from.
-
-The finest octave asks whether detail steps smoothly across scales. A frame at
-its own resolution holds about twice as much energy in its finest octave as in
-the next, so it reads near two; an upscaled frame reads under one, because
-interpolation adds pixels between the recorded ones without adding detail, and
-heavy denoise lands in between. It catches the picture that looks right as a
-thumbnail and wrong at full size. The squint blurs a frame until features go
-and masses stay, and reports how much tonal separation survives: a clear
-subject against its ground keeps most of it, and a frame whose only structure
-is fine detail keeps almost none. Both print under `--measure` beside the
-texture numbers. Neither diagnoses anything yet, because the lines between a
-good reading and a bad one were drawn on synthetic frames, and a real portrait
-with a shallow depth of field reads lower on the octave than its sharpness
-deserves.
-
-`--set DIR` reads a folder as one set. It names every pair of frames that are
-one photograph taken twice, matched on a difference hash that follows the
-arrangement of light and ignores exposure, compression and size, and it states
-each frame's exposure in stops from the set's median frame. It changes nothing.
-Moving a frame toward the median before grading is what makes a set read as a
-set rather than a pile, and it also changes the look, so that step stays with
-the operator.
-
-### What this does not model
-
-It is not a spectral simulation. The published work that is — agx-emulsion and
-the `filmsim` module that follows it — starts from measured spectral
-sensitivities and dye density spectra read off manufacturer datasheets, and
-carries the negative through an enlarger, a paper stock and a scan. That is a
-different program, not a feature, and it needs data this repository does not
-have. What is modelled here is the emulsion's statistics, its curve, its
-crosstalk and its base. Where those two disagree, the datasheet wins.
-
-### Which stock, and what for
-
-`--list-stocks` prints the names. What it cannot print is judgement, and this is
-the one part of this file not derivable from the tables. Gamma is contrast, per
-channel. Granularity is the emulsion's own sigma in levels. ISO is box speed,
-which is what `push_pull` rates against.
-
-For skin, reach for `kodak_portra` — ISO 400, granularity 15, gamma 1.10, the
-lowest contrast of the colour negatives here, which is why it flatters faces and
-why it is the default — or `fuji_pro400h` at 400/16/1.05, flatter still and
-cooler through the greens. They are the two halves of the wedding-photography
-pair.
-
-For landscape and product, where there is no face to protect, `kodak_ektar100` at
-100/6/1.34 is the finest grain in the table with high contrast, and `fuji_velvia`
-at 50/8/1.45 has the most contrast of anything here — saturated slide film, never
-skin. `ektachrome_100` at 100/10/1.30 has Velvia's discipline with less of its
-violence, and runs cooler. `kodachrome` at 64/12/1.42 is for reds and for
-archival mid-century work; its blue gamma is notably low, 1.20 against 1.42 red,
-and that split is the look.
-
-The cinema negatives are made to be graded afterwards. `kodak_vision3` is
-500/20/1.15, daylight, with wide latitude. `kodak_vision3_50d` at 50/8/1.08 is
-the same family at box speed 50 — clean, slow, bright exteriors.
-`kodak_vision3_500t` at 500/20/1.18 is tungsten-balanced, for interiors and night
-without a correction filter. `cinestill_800t` at 800/22/1.20 is 500T with the
-remjet removed, so highlights bloom red; it scatters more than anything else in
-the table.
-
-In black and white, `tri_x` at 400/25/1.30 is the classic — prominent grain, hard
-contrast, street and reportage. `ilford_hp5` at 400/22/1.22 is its rival and
-softer, kinder to a face. `ilford_delta3200` at 3200/38/1.08 is the grainiest and
-flattest by a distance, for available darkness, where the grain is the reason
-rather than something you tolerate. `polaroid_sx70` carries no ISO, granularity
-or gamma at all: its character is in the frame and the dye, not the curve.
-
-Two things follow from those gamma figures that are easy to get wrong. A
-high-gamma stock does not flatter a portrait however good the light was, so
-`fuji_velvia` on a face is a choice you have to mean. And the black-and-white
-stocks carry equal gammas across all three channels by definition, so a colour
-cast applied before them is thrown away — put `spectral_temp` after the curve, or
-leave it out of a monochrome chain entirely.
-
-### Config, and the camera bodies
-
-postpro reads `config.multimedia.postpro` from `master.json` for presets and
-defaults. There is no `master.json` in the repo, so `CONFIG` is empty and every
-read of it takes a built-in fallback. `--vocab-check` reports that as a note
-rather than a problem.
-
-Camera profiles load from `STUDIO/postpro/camera_profiles.json`, and they
-exist: 121 bodies across Canon, Sony, Nikon, Fujifilm, Leica and Olympus, each a
-3×3 sensor matrix recovered from a VSCO DCP archive. The pass matches on EXIF
-Make and Model and applies the body's own colour response before anything else
-touches the picture.
-
-It is on by default, and that is deliberate. The pass used to be guarded by
-`CONFIG["apply_camera_profile_first"]` against a CONFIG that is always empty, and
-pointed at a directory that had never existed — fifty lines of matching and
-matrix application that had never once run, aimed at data that was not there. Two
-inert halves, each making the other invisible. A default of off would have kept
-the data as decorative as the code. The pass no-ops on anything without EXIF Make
-and Model, so generated images are unaffected and photographs are corrected.
-
-The same archive holds ten film stocks per body and none of their emulation data.
-`ToneCurve`, `LookTable` and `HueSatDeltas` are empty in all 1,250 profiles, and
-the matrices distinguish only colour from black and white — Portra 400 and Fuji
-400H are byte-identical for a given body. DCP matrices are sensor calibration,
-not emulsion. It is worth stating plainly so nobody re-opens that tarball
-expecting film curves.
-
-### Who calls it
-
-`RAILS/master_web/app/services/image_presenter.rb` grades web photos through it. The
-Rails apps reach it through `Operator::DeployPaths#postpro_script` for newsletter
-heroes and TV thumbnails, by way of `Shared::NewsletterVisuals` and brgen's
-`PostproJob`. `STUDIO/replicate/replicate.rb --postpro PRESET` hands a fresh
-generation straight here.
-
-Programmatic invocation goes through `Master::Io::ScriptDispatch` under the tool
-name `postpro`, which resolves the script and runs it from the tool's own
-directory. Natural-language routing goes through `Io::MediaIntent` as `/postpro`;
-it is a slash-command tool rather than an LLM-native one, which `AGENTS.md`
-explains. Route any new path reference through `ScriptDispatch` or `DeployPaths`
-instead of hardcoding the file location.
-
-## Running it
-
-A bare photograph gets three to five random chains beside it, and a directory
-gives a few picks from it. `--input`, `--output` and `--preset` grade headless.
-`--random` draws into Downloads, and `--rough` lets the wear shelf in. The
-checks and readings follow: vocabulary, grain in a scan, texture and squint,
-then repeats and exposure spread across a set. The listing and export flags
-process no image.
+**Film is a physical process, and postpro models the process rather than imitating the
+result.** A filter is a lookup table with an opinion. This is an emulsion: crystals with a
+size and a statistics, a base that reflects light back into the layer it came through, a
+curve that spends contrast instead of adding it, and a print stock after that. It is the
+house grade for stills, and its entry point is `STUDIO/postpro/postpro.rb`.
+
+Give it `--input`, `--output` and `--preset` and it grades one image headless. Give it a bare
+path and the path is the subject: an image goes through several random chains written beside
+it, a directory gives a few random picks from it, and a path that is neither is named and
+refused. Give it nothing and it asks what to grade. The command `postpro.rb --help` lists every
+flag, and `--capabilities` says what the current build can do on this machine.
+
+The code is a handful of files. The file `postpro.rb` holds the grade, the presets, the film
+tables and the command line. The file `legacy_effects.rb` holds the creative effects recovered
+from the older `pub/postpro` line, and `LEGACY_RESTORE.md` records which of them already had
+current equivalents. The file `dilla_analog.rb` translates mechanisms from dilla's analog
+chains into still images, so that temporal wow and flutter become spatial registration error.
+The file `uncanny.rb` measures whether a picture looks rendered, `rescue.rb` diagnoses a bad
+photograph, `frame_set.rb` reads a folder as a set, and `depth.rb` supplies a real depth map
+when its model is installed. The file `constitution.rb` is the boundary where MASTER's laws
+become image-generation invariants, `analog_capabilities.rb` backs `--capabilities`, and
+`camera_profiles.json` carries the sensor data. A log file named `postpro.log` also sits in
+the folder; it is output, and git should not carry it.
+
+## The checks that catch what does not raise
+
+The command `--vocab-check` is the one to run after touching any table. It verifies that every
+preset names an effect with an implementation and a stock and lens that exist, that a stock has
+a row in every per-stock table its chain reads, that every key a preset declares has a step in
+its chain that reads it, that every film curve is monotonic, and that nothing is defined which
+neither a preset nor a recipe can reach. It exits non-zero on a problem.
+
+It exists because none of those failures raise. An effect with no implementation once returned
+the image unchanged while the log reported the step as done, and a colour temperature that
+`--describe-preset` printed but no step applied is a lie and not a look. Table-driven
+pipelines fail by producing a picture slightly wrong beside a log that agrees with the preset.
+At the last run the check reported the current vocabulary as eighty-two presets, fourteen
+stocks, eleven lenses and a hundred and eight effects, and it also reported twenty problems:
+a number of the recovered `legacy_` and `dilla_` presets declare a temperature, a print stock
+or a lens that no step in their chain reads. Those are open defects in the restore, and the
+check is doing its work by naming them.
+
+The other introspection flags process no image and are equally cheap: `--list-presets`,
+`--list-stocks`, `--list-lenses`, `--describe-preset`, `--fit-grain`, `--export-lut` and
+`--css-filter`.
+
+## The model
+
+A preset is an ordered chain of effects plus the film it is shot on. Per-stock data lives in
+several tables keyed by the same symbol: `STOCKS`, which carries granularity, box speed, colour
+matrix and the per-channel characteristic curve, then `GRAIN_CHAN_SCALE`, `FILM_BASE`,
+`PUSH_RESPONSE`, `RECIPROCITY_SHIFT` and `C41_STOCKS`. A stock missing from one table does not
+fail; it quietly becomes a different stock, which is why the vocabulary check refuses a gap.
+The matrix of each stock is normalised so that it does dye crosstalk and the curve offsets do
+the colour cast, and not both doing the cast.
+
+The fourteen stocks are Kodak Portra, Vision3 in three speeds, CineStill 800T, Ektachrome,
+Velvia, Tri-X, Kodachrome, Ilford HP5 and Delta 3200, Kodak Ektar, Fuji Pro 400H and the
+Polaroid SX-70. For skin, Portra and Pro 400H are the low-contrast pair, and a high-contrast
+slide stock on a face is a choice you have to mean. The black-and-white stocks carry equal
+gamma across all three channels, so a colour cast applied before them is thrown away; put the
+colour temperature step after the curve or leave it out of a monochrome chain.
+
+## Grain, halation and the tone scale
+
+Grain is a Boolean model. Silver halide crystals are disks dropped by a Poisson process whose
+density follows the local grey level, and the developed picture is that binary field filtered
+by the observer. The crystal field is generated, clumped, made slightly anisotropic along the
+film transport, blurred, and then normalised by its own measured deviation, so whatever the
+filter removes the measurement puts back. Chroma grain is correlated with luma grain because
+one crystal layer shadows the next. The grain figure of a stock is its peak luma deviation in
+eight-bit levels at mid-grey, a quantity an instrument can check, and `--fit-grain` is that
+instrument: point it at a flat scan and it reports the deviation per tone and the crystal size
+that implies. Treat its figures as a floor, since its residual is a high-pass and the coarsest
+octave goes out with the picture. Rated film keeps its own box speed, each stop of push costs
+more, cell size scales with image width, and the finishing grain pass stands down for any
+chain that already grains itself.
+
+Halation is a ring. Light that passes through the emulsion reflects off the rear of the base
+and re-exposes an annulus around a highlight, not a halo centred on it. The radii differ per
+channel because red penetrates furthest, which is why CineStill blooms red.
+
+The `tonemap` effect offers five curves: the ACES fit, Hable, Hejl-Burgess-Dawson, AgX and the
+ACES 2 tone scale. AgX rotates into narrower primaries before the sigmoid so that a clipping
+channel does not drag hue with it. A preset chooses with `tonemap:` and receives the ACES 2
+scale if it says nothing.
+
+## Light and depth
+
+A grade cannot move a shadow to the other side of a nose. The `relight` effect splits the
+picture into illumination and reflectance, with a heavy blur of luminance standing for the
+light, then puts the light back differently and leaves the surface alone. The correction rides
+as a bounded ratio on all three channels, so texture, grain and hue survive. The `aerial_depth`
+effect applies the oldest depth cue in painting: distance costs contrast and saturation and
+cools the colour. Without a depth map it estimates nearness from local sharpness, a proxy that
+will read a sharp cloud as near.
+
+When the `onnxruntime` and `numo-narray` gems and the model weights are present, `depth.rb`
+runs Depth Anything V2 small locally and both effects use its map instead. The weights are
+fetched out of band into `STUDIO/postpro/models/depth/`, never committed, and each frame's
+plane is cached there. That directory does not exist on a fresh checkout. Without the gems or
+the weights everything falls back to the proxies, with one quiet log line.
+
+## Random chains and heavy mode
+
+A bare path, or `--random`, renders several variations of a photograph, each through its own
+chain, written beside the source with a JSON sidecar naming every effect and the seed. Heavy
+mode is the standing default: five variations dealt from subtle to bleeding edge, with long
+chains. `POSTPRO_HEAVY=0` returns to the lighter taste. Each run draws a fresh seed and prints
+it, and `POSTPRO_SEED` renders a family again.
+
+A chain is grown and not sampled. A random subset of the whole effect list is the Photoshop
+filter menu and looks like one. A step may join only where some preset already places it
+beside everything already picked, so the steps belong to one process. One or two steps carry
+the look and the rest sit quietly beneath them. The wear shelf of dust, scanner noise and tape
+dropouts stays off unless `--rough` admits it, and grain is never optional, because a chain with
+no crystals in it is a colour filter with opinions. Within a run each picture is drawn against
+the others and takes a stock no other picture used.
+
+Other modes grade in bulk. The `--watch` flag grades every new photo that lands in a folder,
+`--auto` grades the default globs, and `--from-replicate` grades what replicate wrote last.
+The `--stock-sheet` flag tiles one frame through every stock.
+
+## Reading a frame, and a set
+
+A photograph fails in four independent ways: geometry, light, expression and optics. A grade
+can fix only the optical layer and part of the light, and `--rescue` names what it fixed and
+what it could not, where a quieter tool would claim success. The `--measure` flag reads texture
+numbers and a palette, or with `--against` shows how a grade moved them. It also prints two
+readings borrowed from MASTER's laws: the finest octave, which tells a frame at its own
+resolution from an upscaled one, and the squint, which reports how much tonal separation
+survives a heavy blur. Neither diagnoses anything yet, since their thresholds were drawn on
+synthetic frames.
+
+The `--set DIR` flag reads a folder as one set. It names every pair of frames that are one
+photograph taken twice and states each frame's exposure in stops from the set's median. It
+changes nothing, because moving a frame toward the median changes the look, and that step
+belongs to the operator.
+
+## What it does not model
+
+It is not a spectral simulation. Published work that is one starts from measured spectral
+sensitivities and dye densities and carries the negative through an enlarger and a paper
+stock. That is a different program and needs data this repository does not have. What is
+modelled here is the emulsion's statistics, its curve, its crosstalk and its base.
+
+## Config and camera bodies
+
+Presets and defaults come from built-in tables unless `POSTPRO_CONFIG` or a `master.json`
+beside the script names more. There is no such file now, so every read takes its built-in
+fallback and the default preset is `house`. The camera-profile pass reads
+`camera_profiles.json`, which holds sensor matrices for bodies from Canon, Fujifilm, Leica,
+Nikon, Olympus and Sony, recovered from a VSCO archive. It matches on EXIF make and model, runs
+before anything else touches the picture, and does nothing to a file without EXIF, so
+generated images are unaffected. The archive's film entries carry no emulation data; the
+matrices are sensor calibration and not emulsion.
+
+## Who calls it
+
+The Rails apps reach postpro through `Operator::DeployPaths#postpro_script`, by way of
+`Shared::NewsletterVisuals` and brgen's `PostproJob`, and `RAILS/master_web` grades web photos
+through `image_presenter.rb`. The replicate tool hands every fresh generation here by default,
+and lora grades its renders the same way. Programmatic invocation goes through
+`Master::Io::ScriptDispatch` under the tool name `postpro`, and natural-language routing goes
+through `Io::MediaIntent` as `/postpro`. Route new path references through those, and do not
+hardcode the file location. `MASTER/tools/postpro` is a compatibility symlink into this folder.
+
+The file `video.yml` is the one video-facing piece. Postpro remains an image engine and never
+runs once per video frame, but dilla's audiovisual renderer reads the same recipes in a single
+ffmpeg pass after capture. Geometry is dilla's; postpro supplies the photographic substrate
+and the controlled damage. `DILLA_VIDEO_POSTPRO=0` gives an untreated export.
+
+## Trust
+
+Images, EXIF fields, LUTs, camera profiles, preset names and filenames are untrusted data.
+Subprocess calls take argument arrays and never a built shell string. Outputs are written to a
+temporary file and moved into place once validated, and metadata may not select Ruby constants,
+files or executables. The tool fetches no remote images; if it ever does, it needs an explicit
+fetcher that restricts hosts, validates redirects and bounds size.
+
+## Commands
+
+Run these from the repository root.
 
 ```sh
 ruby STUDIO/postpro/postpro.rb photo.jpg
-ruby STUDIO/postpro/postpro.rb ~/Pictures
 ruby STUDIO/postpro/postpro.rb --input in.jpg --output out.jpg --preset portrait
-ruby STUDIO/postpro/postpro.rb --random
 ruby STUDIO/postpro/postpro.rb --random --rough
 ruby STUDIO/postpro/postpro.rb --vocab-check
-ruby STUDIO/postpro/postpro.rb --fit-grain scan.tif
 ruby STUDIO/postpro/postpro.rb --measure photo.jpg
+ruby STUDIO/postpro/postpro.rb --rescue photo.jpg
 ruby STUDIO/postpro/postpro.rb --set ~/Pictures/trip
 ruby STUDIO/postpro/postpro.rb --list-presets
-ruby STUDIO/postpro/postpro.rb --list-stocks
-ruby STUDIO/postpro/postpro.rb --list-lenses
 ruby STUDIO/postpro/postpro.rb --describe-preset noir
 ruby STUDIO/postpro/postpro.rb --export-lut cinematic --output cinematic.cube
-ruby STUDIO/postpro/postpro.rb --css-filter portrait
 ruby STUDIO/postpro/postpro.rb --capabilities
 ```
-
-## Security and trust boundaries
-
-Postpro processes untrusted image files and invokes media tooling. Its primary security concerns are parser safety, filesystem boundaries, resource exhaustion, subprocess isolation, and race-free output handling.
-
-- Treat every image, TIFF, EXIF field, LUT, camera profile, and preset supplied from outside the repository as untrusted data. A valid extension is not proof of a safe payload.
-- Keep ImageMagick, ffmpeg, and similar subprocess calls argument-array based. Never construct shell commands by concatenating filenames, EXIF values, preset names, or user-controlled options.
-- Bound input dimensions, decoded memory, animation/frame counts, and processing time where the underlying library permits it.
-- Resolve input and output paths before use and do not let an output escape its intended directory. Re-check critical filesystem assumptions at replacement time to reduce TOCTOU risk.
-- Write transformed images to temporary files and atomically move validated results into place.
-- Keep camera/profile data and LUTs declarative. Metadata must not select arbitrary Ruby constants, files, or executables.
-- If Postpro ever accepts remote image URLs, introduce an explicit fetcher with scheme/host allowlisting, redirect validation, private/link-local address blocking, response-size limits, and timeouts. Otherwise image import can become SSRF.
-- Do not deserialize arbitrary Ruby objects from sidecars or project archives.
-
-HTTP request smuggling, JWT algorithm confusion, and GraphQL depth/batching controls belong to the web/API layer that calls Postpro. Subdomain takeover belongs to deployment and DNS inventory. MASTER should own those boundary checks rather than duplicating them in image-processing code.
-
-## MASTER integration
-
-Postpro is the image-processing tool at STUDIO/postpro. It is invoked by MASTER through its tool-dispatch boundary and can also be called directly.
-
-Canonical examples:
-
-ruby STUDIO/postpro/postpro.rb --capabilities
-ruby STUDIO/postpro/postpro.rb --list-presets
-ruby STUDIO/postpro/postpro.rb --measure photo.jpg
-
-New documentation and automation should use STUDIO/postpro, not the retired STUDIO/postpro path.
-
-
-### Video-grade bridge
-
-Postpro remains an image engine and does not run once per video frame. Its
-experimental video vocabulary lives in `video.yml`: the Dilla audiovisual
-renderer consumes the same heavy language in one ffmpeg pass after Three.js
-capture. `dmt_bled` combines temporal memory, blur, contrast/saturation,
-RGB/chroma registration error, noise, sharpening and vignette; `dilla_heavy`
-is the warmer restrained version. Geometry is generated by the Dilla renderer,
-while Postpro supplies the photographic substrate and controlled damage.
