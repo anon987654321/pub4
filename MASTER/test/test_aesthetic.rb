@@ -26,7 +26,7 @@ class TestAesthetic < Minitest::Test
     end
   end
 
-  def test_unknown_mode_falls_back_to_brutalist
+  def test_unknown_mode_falls_back_to_phosphor
     with_env("MASTER_AESTHETIC" => "neon") do
       assert_equal "phosphor", Master::Voice::Aesthetic.mode
     end

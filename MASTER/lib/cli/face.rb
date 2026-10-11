@@ -5,10 +5,10 @@ module Master
     # The face drawn in text, for a window too small or too plain for WebGL:
     # Termux:Float on a phone. It is the web face itself, as ai.brgen.no draws
     # it: a cloud of points sampled from the same painted depth map
-    # (Face::Head), stippled grey to white on black, a void in the lower face
-    # where the points thin out, turned in 3D and projected onto Braille
-    # dots, two across and four down in every cell. Where points pile into
-    # one cell it burns brighter, in the 256-colour greys from 232 to 255.
+    # (Face::Head), stippled from slate to ice with small cyan/periwinkle
+    # accents on truecolor terminals, and a void in the lower face where the
+    # points thin out, turned in 3D and projected onto Braille dots, two
+    # across and four down in every cell. Monochrome terminals retain 256 greys.
     # Face::Motion keeps all of it moving.
     #
     # A frame is a function of state, size, time and events, with one small
