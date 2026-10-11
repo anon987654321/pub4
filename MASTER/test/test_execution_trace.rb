@@ -3,6 +3,7 @@
 require_relative "test_helper"
 require_relative "../lib/fix/execution_trace"
 require "fileutils"
+require "yaml"
 
 class TestExecutionTrace < Minitest::Test
   def test_reread_hashes_every_supplied_file
@@ -21,9 +22,11 @@ class TestExecutionTrace < Minitest::Test
         ruby_checker: ->(_path) {},
       )
       trace.send(:reread, paths, failures = [])
+      trace.send(:verify_snapshot, paths, failures)
 
       assert_empty failures
-      assert_equal paths.sort, seen.sort
+      assert_equal paths.sort, seen.uniq.sort
+      assert_equal paths.size * 2, seen.size
     end
   end
 

@@ -77,6 +77,63 @@ become ordinary findings, and the next pass renders again. If the browser or the
 council cannot run, the pass says it is inconclusive and does not claim
 success.
 
+
+## Debugging Ruby behavior
+
+Start with a reproducible failing test, then use the pinned Ruby debugger for
+live state and call-stack inspection:
+
+```zsh
+RBENV_VERSION=4.0.7 rbenv exec ruby -rdebug -Itest test/test_execution_trace.rb
+```
+
+Place `binding.break` at the narrowest useful line. Use `caller_locations(1, 8)`
+to inspect the caller chain, and `method(:call).source_location` /
+`method(:call).super_method&.source_location` to locate the active implementation
+and its next `super` implementation. Remove temporary breakpoints before
+committing; do not introduce a permanent Pry/byebug dependency just for debugging.
+
+For object collaboration problems, use the bounded
+`Master::Trace::ObjectProbe` with explicit receiver objects and a method filter.
+It captures call/return order, dispatch owner, source location and exception
+class, but deliberately omits arguments and return values. Its event limit is
+explicit, and `method_chain` reports prepended modules and superclass
+implementations. For mutation/lifetime bugs, compare
+`ObjectProbe.state_snapshot(object)` before and after a call, then inspect
+`ObjectProbe.state_diff(before, after)`; snapshots report object identities and
+container shapes, never stored values. Keep the scope narrow: TracePoint can add
+substantial overhead when enabled on busy objects.
+
+For a quick, temporary inspection, use `pp object` or `p object.instance_variables`
+at the narrowest point. A breakpoint can inspect locals without changing the
+return value:
+
+```ruby
+require "pp"
+pp service.instance_variables.to_h { |name| [name, service.instance_variable_get(name).class] }
+binding.break
+```
+
+Use `Master::Trace::ObjectProbe.state_snapshot(object)` before and after an
+operation to compare instance-variable identities, frozen state and basic
+container shapes without emitting the values. `state_diff(before, after)` names
+the shape changes. This is intentionally shallow: equal-length edits inside a
+container are not claimed as detected. For a likely allocation leak, enable
+`ObjectSpace.trace_object_allocations_start` before creating the suspect
+objects, then inspect allocation source locations; allocation tracing changes
+runtime memory and should be stopped after a narrow reproduction.
+
+Use `/diag`, the existing dmesg trace level and the per-turn trace when the
+failure depends on normal runtime behavior. For unhandled collaborations, inject
+a timeout, failed write, malformed reply, duplicate event or stale record through
+the existing dependency seam and verify the expected failure result. Compare old
+and new implementations against the same fixtures during refactors; add
+property-based tests for invariants across generated inputs and mutation testing
+when the repository's pinned toolchain supports it. Promote every confirmed
+defect to a minimal regression test. Never patch `NilClass` globally or install
+a permanent method wrapper just to inspect a call path, and never treat an
+unexecuted test, a surviving mutation, or an unavailable instrument as proof.
+
 ## Research and training
 
 MASTER can look things up. It retrieves from local knowledge, searches the web,
