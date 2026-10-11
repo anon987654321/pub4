@@ -17,6 +17,39 @@ require_relative "../lib/law_vocabulary"
 module Law
   Finding = Data.define(:id, :file, :line, :text)
 
+  # What every law asks of one subject, worked out once. The bridge hands the
+  # same text to each of a hundred laws in turn, and each re-split it into
+  # lines, re-found its comment spans and tested every line for the intentional
+  # marker; on a large stylesheet that was most of a scan. The view is held per
+  # thread for the text it was built from, so a different text or file rebuilds
+  # it and no law sees another subject's lines.
+  class SubjectView
+    INTENTIONAL = /scan:\s*intentional\b/
+
+    attr_reader :lines, :skipped, :intentional
+
+    def initialize(text:, file:, leaders:, continued:)
+      @text = text
+      @file = file
+      @size = text.bytesize
+      @lines = text.each_line.to_a
+      @intentional = Set.new
+      @skipped = Set.new(continued)
+      @lines.each_with_index do |line, index|
+        @intentional << index if line.match?(INTENTIONAL)
+        @skipped << index if @intentional.include?(index) || leaders.any? { |leader| line.lstrip.start_with?(leader) }
+      end
+      @continued = continued
+      @considered = {}
+    end
+
+    def fresh?(text, file) = @text.equal?(text) && @file == file && @size == text.bytesize
+
+    def continued?(index) = @continued.include?(index)
+
+    def considered(reads_comments) = @considered.fetch(reads_comments) { @considered[reads_comments] = yield }
+  end
+
   # A line-scoped detector reads code, and a comment naming a forbidden
   # construct is prose about it, not an instance of it — "# a bare rescue"
   # became an error-severity finding when FAIL_VISIBLY moved here from the
@@ -245,6 +278,20 @@ module Law
     # Comments and intentional-marked lines blanked, newlines kept, so a
     # multi-line detector still sees the file's shape.
     def considered_text(text, file)
+      subject_view(text, file).considered(reads_comments) { compute_considered_text(text, file) }
+    end
+
+    # Held for the text it was built from; see SubjectView.
+    def subject_view(text, file)
+      view = Thread.current[:law_subject_view]
+      return view if view&.fresh?(text, file)
+
+      Thread.current[:law_subject_view] = SubjectView.new(
+        text:, file:, leaders: Law.comment_leaders(file), continued: continued_comment_lines(text, file),
+      )
+    end
+
+    def compute_considered_text(text, file)
       leaders = reads_comments ? [] : Law.comment_leaders(file)
       continued = reads_comments ? [] : continued_comment_lines(text, file)
       return text if leaders.empty? && continued.empty? && !text.include?("scan:")
@@ -306,15 +353,15 @@ module Law
     end
 
     def scan_lines(text, file)
-      leaders = reads_comments ? [] : Law.comment_leaders(file)
-      continued = reads_comments ? [] : continued_comment_lines(text, file)
-      text.each_line.with_index(1).filter_map do |line, n|
-        next if continued.include?(n - 1)
-        next if leaders.any? { |leader| line.lstrip.start_with?(leader) }
-        # The registry's one-line opt-out, honoured here too: a line that
-        # declares itself intentional carries a reviewer's reason beside it.
-        next if line.match?(/scan:\s*intentional\b/)
-        Finding.new(id, file, n, line.chomp) if detect.call(line)
+      view = subject_view(text, file)
+      # A rule that reads comments still honours the registry's one-line
+      # opt-out: a line that declares itself intentional carries a reviewer's
+      # reason beside it.
+      skip = reads_comments ? view.intentional : view.skipped
+      view.lines.each_with_index.filter_map do |line, index|
+        next if skip.include?(index)
+
+        Finding.new(id, file, index + 1, line.chomp) if detect.call(line)
       end
     end
   end

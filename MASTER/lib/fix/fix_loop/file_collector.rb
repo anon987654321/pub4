@@ -94,7 +94,15 @@ module Master
           git_root || @root
         end
 
+        # Asked once per collector: skip_reason runs per file, and a git
+        # subprocess per file made a 2,600-file collection take minutes.
         def git_root
+          return @git_root if defined?(@git_root)
+
+          @git_root = lookup_git_root
+        end
+
+        def lookup_git_root
           out, err, status = Master::Io::Exec.capture3("git", "-C", @root, "rev-parse", "--show-toplevel")
           return out.to_s.strip.then { |path| path.empty? ? nil : File.expand_path(path) } if status.success?
           return unless checkout_present?
@@ -164,8 +172,8 @@ module Master
         # soul.yml is the constitutional source for sacred paths. The catalogue in
         # laws.yml describes laws; it does not own write protection.
         def immutable?(path)
-          policy_root = git_root || @root
-          Master::Core::Paths.sacred?(path, root: policy_root)
+          @sacred_paths ||= Master::Core::Paths.new(root: git_root || @root)
+          @sacred_paths.sacred?(path)
         end
 
         # Rails migrations are historical record, not repairable source. They

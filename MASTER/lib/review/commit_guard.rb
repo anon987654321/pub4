@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "open3"
+require "set"
 
 module Master
   module Review
@@ -13,6 +14,7 @@ module Master
       def initialize(root: Dir.pwd, depth: DEFAULT_DEPTH)
         @root = root
         @depth = depth
+        @history_mutex = Mutex.new
       end
 
       def check(paths: nil)
@@ -32,6 +34,7 @@ module Master
       def check_file(rel)
         full = File.join(@root, rel)
         return [] unless File.exist?(full)
+        return [] if unchanged_since_history?(rel, full)
         current = AstSignature.from_source(File.read(full))
         @depth.downto(1).flat_map do |n|
           hist = AstSignature.from_git(rel, ref: "HEAD~#{n}", root: @root)
@@ -39,6 +42,38 @@ module Master
             Omission.new(path: rel, name: s.name, type: s.type, last_seen_at: "HEAD~#{n}")
           end
         end.uniq { |o| [o.path, o.name] }
+      end
+
+      # A file whose bytes match HEAD~1..HEAD~depth has no history signature the
+      # working tree lacks, so the per-ref git show and parse are skipped. One
+      # git diff per depth answers for every file; a file touched after that
+      # answer was taken (mtime) goes through the full comparison.
+      def unchanged_since_history?(rel, full)
+        index = history_change_index
+        return false unless index
+
+        !index[:paths].include?(rel) && File.mtime(full) <= index[:taken_at]
+      rescue SystemCallError
+        false
+      end
+
+      def history_change_index
+        @history_mutex.synchronize do
+          @history_index = build_history_index unless defined?(@history_index)
+          @history_index
+        end
+      end
+
+      def build_history_index
+        taken_at = Time.now
+        paths = Set.new
+        @depth.downto(1) do |n|
+          out, st = Master::Io::Exec.capture2e("git", "diff", "--name-only", "--no-renames", "--relative", "HEAD~#{n}", chdir: @root)
+          return nil unless st.success?
+
+          out.each_line { |line| paths << line.chomp }
+        end
+        { paths:, taken_at: }
       end
 
       def changed_rb_files

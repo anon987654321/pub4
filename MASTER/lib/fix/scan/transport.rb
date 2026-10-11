@@ -51,8 +51,20 @@ module Master
           expanded_path == expanded_root || expanded_path.start_with?("#{expanded_root}#{File::SEPARATOR}")
         end
 
+        # Compute's own 30s deadline is for small jobs: it killed every scan of
+        # a few thousand files at the 30s mark and reported a timeout instead of
+        # findings. The scan's deadline is its own, in seconds.
+        SCAN_TIMEOUT_SECONDS = Integer(ENV.fetch("MASTER_SCAN_TIMEOUT_S", "3600"))
+
+        # One worker unless MASTER_SCAN_WORKERS says otherwise. The laws are pure
+        # Ruby, so threads share one GVL and contend on it: RAILS (2,637 files)
+        # took 71s on one worker and 158s on four.
+        def scan_workers
+          Integer(ENV.fetch("MASTER_SCAN_WORKERS", "1"))
+        end
+
         def parallel_map(items)
-          Master::Runtime::Compute.map(items, backend: :thread) do |item, index|
+          Master::Runtime::Compute.map(items, backend: :thread, workers: scan_workers, timeout: SCAN_TIMEOUT_SECONDS) do |item, index|
             maybe_gc(index)
             yield(item, index)
           rescue StandardError => e

@@ -4,6 +4,7 @@ require "digest"
 require "fileutils"
 require "prism"
 require "timeout"
+require_relative "law_timing"
 require_relative "../../review/scan/semantic_fingerprint"
 require_relative "../../review/scan/law_health"
 require_relative "../../operator/lock_sweep"
@@ -241,9 +242,11 @@ module Master
         end
 
         def run_law(law:, code:, ast:, path:)
-          return law.check(code, path:) unless ast && law.respond_to?(:check_ast)
+          LawTiming.measure(law) do
+            next law.check(code, path:) unless ast && law.respond_to?(:check_ast)
 
-          law.check_ast(ast, code, path:)
+            law.check_ast(ast, code, path:)
+          end
         end
 
         def publish_scan_result(path:, depth:, findings:)

@@ -8,6 +8,8 @@ module Master
     module Scan
       module ProgressReporter
         SCAN_HITS_MAX_BYTES = 25 * 1024 * 1024
+        # A checkpoint at least this often, so a slow stretch is never silent.
+        HEARTBEAT_SECONDS = 5
 
         private
 
@@ -25,6 +27,7 @@ module Master
             selected_law_count: Array(laws).size,
             unit: name,
             started_at: Process.clock_gettime(Process::CLOCK_MONOTONIC),
+            last_beat: Process.clock_gettime(Process::CLOCK_MONOTONIC),
           }
           $stdout.sync = true
           Master::Trace::Dmesg.attach(name, "master0", Master::Trace::Dmesg.counted(total, "file"))
@@ -106,7 +109,7 @@ module Master
 
         def log_scan_checkpoint(unit:, done:, total:, viol_total:, dirty:, top:, elapsed:, eta_s:)
           step = checkpoint_step(total)
-          return unless done == total || (done % step).zero?
+          return unless done == total || (done % step).zero? || heartbeat_due?
 
           parts = ["#{done}/#{total} files", tally(viol_total, dirty), "#{elapsed.round}s"]
           parts << "eta #{eta_s}s" if eta_s&.positive?
@@ -126,6 +129,24 @@ module Master
           skipped = Master::Io::QuotaGate.report
           parts << skipped if skipped
           Master::Trace::Dmesg.status(unit, parts.join(", "))
+          log_law_timing(unit)
+        end
+
+        def log_law_timing(unit)
+          return unless Master::Fix::Scan::LawTiming.enabled?
+
+          rows = Master::Fix::Scan::LawTiming.drain
+          Master::Trace::Dmesg.status(unit, "slowest laws: #{rows.join(", ")}") unless rows.empty?
+        end
+
+        def heartbeat_due?
+          now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+          @mutex.synchronize do
+            return false if now - @scan_progress[:last_beat] < HEARTBEAT_SECONDS
+
+            @scan_progress[:last_beat] = now
+            true
+          end
         end
 
         def law_scope_summary(laws)

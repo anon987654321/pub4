@@ -362,7 +362,7 @@ module Master
         # CrossFileAnalysis.new(root:).call(paths) and read the findings before
         # treating it as work.
         def build(rule, message, impact_radius: nil)
-          Finding.build(rule:, line: 1, severity: :warning, message:, tags: %i[DRY SPRAWL], impact_radius:)
+          Review::Scan::Finding.build(law: rule, line: 1, severity: :warning, message:, tags: %i[DRY SPRAWL], impact_radius:)
         end
 
         def rel(path)
