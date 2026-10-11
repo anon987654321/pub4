@@ -12,6 +12,7 @@ require_relative "pass_runner/evidence_stage"
 require_relative "pass_runner/stream_stage"
 require_relative "structural_stage"
 require_relative "../scan_phase"
+require_relative "../scan_skip_guard"
 require_relative "../transaction"
 require_relative "../resource_budget"
 require_relative "../wishlist"
@@ -45,6 +46,7 @@ module Master
           @agent = agent
           @scanner = scanner
           @scan_phase = ScanPhase.new(scanner:, root:, bus:)
+          @skip_guard = ScanSkipGuard.new
           @preflight = preflight || Preflight.new(root:, bus:)
           @learnings = learnings
           @preamble = preamble
@@ -115,6 +117,7 @@ module Master
 
         def reset_gaps!
           @uninspected = nil
+          @skip_guard.reset!
           @stage_failures = nil
           self
         end
@@ -148,6 +151,8 @@ module Master
         def skip_unreadable(path, result)
           relative = path.delete_prefix("#{@root}/")
           uninspected[relative] = result.message.to_s[0, 200]
+          @skip_guard.record(relative, result)
+          @skip_guard.check!(total: @scan_total.to_i)
           @bus&.publish("fix_loop:unreadable", file: relative, category: result.category, message: result.message)
           if uninspected.size <= MAX_UNINSPECTED_LINES
             Master::Trace::Dmesg.status("fix0", "scan skipped #{relative}: #{result.message}"[0, 180])
@@ -330,6 +335,7 @@ module Master
         end
 
         def observe_pass(files, target, pass, deadline)
+          @scan_total = files.size
           guarded(:fast_fixes, pass) { run_fast_stage(files, pass) }
           found, streamed = streaming_observation(files, target, pass, deadline)
           structure = files.empty? ? [] : guarded(:structure, pass, []) { structural_findings(files:) }
