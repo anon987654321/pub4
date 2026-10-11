@@ -37,6 +37,11 @@ class PathGuardTest < Minitest::Test
 
       assert tool.resolve("link/secret.txt").err?, "an existing link must not lead out"
       assert tool.resolve("link/new/deeper.txt").err?, "nor a not-yet-created path beneath it"
+      dangling = File.join(root, "dangling")
+      File.symlink(File.join(dir, "not-created"), dangling)
+      result = tool.resolve("dangling/new/deeper.txt")
+      assert result.err?, "a dangling link must not let a new path escape the root"
+      assert_match(/escapes project root/, result.message)
       assert tool.resolve("plain/new.txt").ok?, "a not-yet-created path under the real root is fine"
     end
   end
