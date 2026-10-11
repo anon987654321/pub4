@@ -91,6 +91,43 @@ end
     assert_equal "lib/cli", kept[:args]
   end
 
+  def test_fix_dry_run_suppresses_implicit_critique_but_honours_explicit_critique
+    saved = ENV["MASTER_FIX_DEEP_TRACE"]
+    ENV["MASTER_FIX_DEEP_TRACE"] = "0"
+    calls = []
+
+    Master::CLI::CommandRegistry.stub(
+      :run_pass,
+      ->(_deps, **args) {
+        calls << args
+        "preview"
+      },
+    ) do
+      Master::CLI::CommandRegistry.dispatch_fix(
+        scanner: Object.new,
+        fix_loop: Object.new,
+        deliberation: nil,
+        root: Master::ROOT,
+        bus: nil,
+        ctx: { args: "MASTER RAILS OPENBSD STUDIO --dry-run" },
+      )
+      Master::CLI::CommandRegistry.dispatch_fix(
+        scanner: Object.new,
+        fix_loop: Object.new,
+        deliberation: nil,
+        root: Master::ROOT,
+        bus: nil,
+        ctx: { args: "MASTER RAILS OPENBSD STUDIO --dry-run --critique" },
+      )
+    end
+
+    assert_equal 8, calls.size, "each dry-run should visit all four requested trees"
+    assert calls.take(4).all? { |call| call[:apply] == false && call[:critique] == false }
+    assert calls.drop(4).all? { |call| call[:apply] == false && call[:critique] == true }
+  ensure
+    saved.nil? ? ENV.delete("MASTER_FIX_DEEP_TRACE") : ENV["MASTER_FIX_DEEP_TRACE"] = saved
+  end
+
   def test_turn_router_itself_maps_to_master
     inferred = Master::CLI::TurnRouter.infer_operator_command(
       "run master through itself",
