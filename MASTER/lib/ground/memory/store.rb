@@ -168,7 +168,9 @@ module Master
 
         def by_type(type)
           @mutex.synchronize do
-            @store.select { |key, value| typed_entry?(key:, value:, type: type.to_s) }
+            @store.select do |key, value|
+              typed_entry?(key:, value:, type: type.to_s) && context_eligible?(key, value)
+            end
           end
         end
 

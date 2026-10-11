@@ -46,6 +46,25 @@ class TestMemoryReview < Minitest::Test
     refute_includes @memory.context_summary.to_s, "old_preference"
   end
 
+  def test_contradicted_structured_preferences_and_reasoning_stay_out_of_context
+    preference_key = @memory.remember_preference(
+      { domain: "music", preference: "use sparse arrangements", source: "operator" },
+      key: "preference/music",
+    )
+    @memory.review(preference_key, verdict: :contradicted,
+                   evidence: evidence("review:music"), reviewer: "operator")
+    assert_empty @memory.preferences(limit: 10)
+
+    reasoning_key = @memory.remember_reasoning(
+      { claim: "old assumption", selected: "discard", source: "test:reasoning" },
+      key: "reasoning/old",
+    )
+    @memory.review(reasoning_key, verdict: :obsolete,
+                   evidence: evidence("review:reasoning"), reviewer: "operator")
+    assert_empty @memory.reasoning(limit: 10)
+    refute_includes @memory.reasoning_context.to_s, "old assumption"
+  end
+
   def test_review_requires_evidence_and_known_verdict
     @memory.remember("fact", "value")
     assert_raises(ArgumentError) do
