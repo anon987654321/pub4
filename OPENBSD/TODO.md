@@ -23,7 +23,7 @@ Updated: 2026-10-11. Production truth is observed vm23 state; repository invento
 ## P2 — KISS and maintainability
 
 - [ ] Keep `OPENBSD/bin/vps-deploy` as the canonical serial deploy entrypoint and the operator recipes in their declared source. Remove redundant wrappers only after searching callers, installed paths and runbook references.
-- [ ] Review `fix-vps-deploy-contract-regex` against the current deploy test; retain only a demonstrable missing regression test or corrected contract, not a branch-only rewording.
+
 
 ## Proof surfaces
 

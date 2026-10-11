@@ -4,7 +4,7 @@ Updated: 2026-10-11. Feature truth remains `apps.yml`; the canonical design toke
 
 ## P0 — release confidence and isolation
 
-- [ ] Run `ruby RAILS/test/run_all.rb` and each app's `bin/ci` against current `main`. Fix every reproducible FAIL, HUNG or FLAKE; keep the per-file process isolation; make the printed test count reflect the files the runner actually selected.
+- [ ] Run `ruby RAILS/test/run_all.rb` and each app's `bin/ci` against current `main`. Fix every reproducible FAIL, HUNG or FLAKE and report the runner's selected-file count alongside its pass/fail summary; source currently calculates the summary from the selected result list, but that output still needs real execution.
 - [ ] Complete a fresh Chrome pass on brgen's front page and messenger at narrow phone, wide phone, tablet and desktop widths, in Norwegian and English and on at least two registered city hosts. Save screenshots and rendered geometry; source-only assertions are not visual proof.
 - [ ] Prove tenant isolation across feeds, direct/group conversations, inbox search, attachments, notifications, Turbo streams and background jobs. Unknown or malformed Host headers must fail closed; one city's records must not leak into another city's rendered pages, search results or realtime updates.
 - [ ] Verify the messenger's full journey in a browser: switch rooms without replacing the rail, open a conversation directly, send/receive while streaming, preserve the unread divider, follow the tail only when appropriate, use search and advanced settings by keyboard, and recover cleanly after a dropped/reconnected stream. Test the one-pane mobile layout as well as the four-pane desktop contract.
