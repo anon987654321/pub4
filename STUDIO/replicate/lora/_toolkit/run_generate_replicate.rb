@@ -149,6 +149,7 @@ puts "ok: #{sittings.length} sitting(s) -> #{out_dir}#{options[:draft] ? " (draf
 
 if options[:dry_run]
   sittings.each { |shoot, prompt| puts format("%02d  %s", shoot["n"], prompt) }
+  puts "ok: #{Preflight.render_estimate(sittings.length)}"
   exit 0
 end
 
@@ -163,6 +164,9 @@ abort "warn: #{model} does not declare #{unknown.join(', ')}; fix the input or p
 
 FileUtils.mkdir_p(out_dir)
 failed = 0
+start_usd = Preflight.ledger_usd(LEDGER)
+todo = sittings.count { |shoot, _| !out_dir.join(format("%02d.%s", shoot["n"], extension)).file? }
+puts "ok: #{Preflight.render_estimate(todo)}"
 spent = Preflight.ledger_seconds(LEDGER, "render")
 
 sittings.each do |shoot, prompt|
@@ -206,4 +210,6 @@ end
   system("ruby", TOOLKIT.join("contact_sheet.rb").to_s, dir.to_s, "--cols", "4", "--cell", "384",
          "--label", "--out", sheet.to_s)
 end
+puts format("ok: cost after: this run $%<run>.3f, subject ledger total $%<all>.2f (training at its own rate, renders at $%<rate>s/s)",
+            run: Preflight.ledger_usd(LEDGER) - start_usd, all: Preflight.ledger_usd(LEDGER), rate: Preflight::RENDER_USD_PER_SECOND)
 abort "warn: #{failed} sitting(s) did not render" if failed.positive?

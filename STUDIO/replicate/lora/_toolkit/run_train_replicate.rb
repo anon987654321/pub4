@@ -170,6 +170,8 @@ def finish_training(client, training, context)
   ])
   Preflight.ledger_append(LEDGER_PATH, kind: "train", id: training["id"], seconds:, steps: sidecar[:steps],
                                        usd: (seconds * Preflight::TRAIN_USD_PER_SECOND).round(2))
+  puts format("ok: cost after: %<s>.0f s billed, ~$%<u>.2f at $%<r>s/s", s: seconds, u: seconds * Preflight::TRAIN_USD_PER_SECOND,
+                                                                       r: Preflight::TRAIN_USD_PER_SECOND)
   puts "ok: done destination=#{sidecar[:destination]} weights_dir=#{WEIGHTS_DIR}"
   puts "tip: ./lora --generate   # local sample if .safetensors present"
   puts "tip: predict via Replicate on #{sidecar[:destination]} (include trigger word in prompts)"

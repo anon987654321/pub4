@@ -29,6 +29,12 @@ module Preflight
   GUIDE_SECONDS_PER_STEP = 0.12
   OBSERVED_SECONDS_PER_STEP = 0.84
 
+  # Stills and clips are billed by GPU time, not tokens. The rate is Replicate's
+  # published H100 price (replicate.com/pricing). That flux-dev-lora runs on an
+  # H100 is an assumption, and a clip's price per run is not in the API at all.
+  RENDER_USD_PER_SECOND = 0.001525
+  OBSERVED_RENDER_SECONDS = 3.0
+
   # Caption law (curate.rb): face shape, eye colour, natural hair colour and age
   # belong to the trigger token. A caption that names them spreads identity over
   # generic words.
@@ -185,6 +191,27 @@ module Preflight
     observed = steps * OBSERVED_SECONDS_PER_STEP
     format("estimate: %<g>d s ($%<gu>.2f) by the guide's example, %<o>d s ($%<ou>.2f) by the logged run", g: guide, gu: guide * TRAIN_USD_PER_SECOND,
                                                                                                            o: observed, ou: observed * TRAIN_USD_PER_SECOND)
+  end
+
+  def render_estimate(count)
+    seconds = count * OBSERVED_RENDER_SECONDS
+    format("cost before: %<n>d render(s) x ~%<s>.0f s = ~%<t>d s, ~$%<u>.3f at $%<r>s/s (billed by time, not tokens)",
+           n: count, s: OBSERVED_RENDER_SECONDS, t: seconds, u: seconds * RENDER_USD_PER_SECOND, r: RENDER_USD_PER_SECOND)
+  end
+
+  # What a subject has been billed in all: a training row carries its own usd, a
+  # render is its seconds at the render rate.
+  def ledger_usd(path)
+    return 0.0 unless File.file?(path)
+
+    File.readlines(path).sum do |line|
+      row = JSON.parse(line)
+      next row["usd"].to_f if row.key?("usd")
+
+      row["kind"] == "render" ? row["seconds"].to_f * RENDER_USD_PER_SECOND : 0.0
+    rescue JSON::ParserError
+      0.0
+    end
   end
 
   def sha256(path) = Digest::SHA256.file(path).hexdigest

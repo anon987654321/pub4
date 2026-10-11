@@ -66,6 +66,7 @@ input = Video.build_input(spec, prompt: options[:prompt], image_url: "<uploaded>
 puts "ok: #{options[:preset]}: #{model}"
 puts "ok: #{spec['note']}"
 puts "ok: input #{JSON.generate(input)}"
+puts "ok: cost before: billed by time on #{spec['model']}; the price per run is on its Replicate page, not in the API, so run a draft first"
 puts "note: #{image.basename} is #{size.join('x')}; #{spec['model']} reframes it" if input["aspect_ratio"]
 
 if options[:dry_run]
@@ -100,3 +101,4 @@ File.open(OUT_DIR.join("clips.jsonl"), "a") do |log|
                          prediction: prediction["id"], predict_seconds: seconds, rendered_at: Time.now.utc.iso8601)
 end
 puts "ok: #{path} (#{seconds.round(1)} s billed)"
+puts "ok: cost after: #{seconds.round(1)} s on #{spec['model']}; its dollars are not in the API, so read the Replicate bill (ledger counts clips in seconds only)"
