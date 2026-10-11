@@ -348,9 +348,9 @@ VAR_FALLBACK = /var\(\s*--[\w-]+\s*,[^()]*\)/
     # partial reads as empty, and a pen inside an app stylesheet leaves the rest
     # of that file measured.
     def without_pens(path, body)
-      return "" if path.match?(Shared::FrontendRuleSet::PRODUCT_PEN_FILES)
+      return "" if path.match?(Shared::FrontendLawSet::PRODUCT_PEN_FILES)
 
-      Operator::ScssRules.without(body, Shared::FrontendRuleSet::PRODUCT_PEN_SELECTORS)
+      Operator::ScssRules.without(body, Shared::FrontendLawSet::PRODUCT_PEN_SELECTORS)
     end
 
     def scan(path)

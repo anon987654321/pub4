@@ -51,7 +51,7 @@ module Deploy
             # search, jOxVvNE, Amazon's nav bar and logo — read with their rules
             # blanked. Flag everything else.
             forbidden: /box-shadow\s*:\s*(?!none\b)|text-shadow\s*:|backdrop-filter\s*:|filter\s*:[^;]*\bblur\(/i,
-            allow_path: Shared::FrontendRuleSet::PRODUCT_PEN_FILES,
+            allow_path: Shared::FrontendLawSet::PRODUCT_PEN_FILES,
             without_pens: true,
           },
           {
@@ -224,7 +224,7 @@ module Deploy
         body = File.read(path)
         return body unless contract[:without_pens] && path.match?(/\.s?css\z/)
 
-        Operator::ScssRules.without(body, Shared::FrontendRuleSet::PRODUCT_PEN_SELECTORS)
+        Operator::ScssRules.without(body, Shared::FrontendLawSet::PRODUCT_PEN_SELECTORS)
       end
 
       def scan_file_contract(path, rel, contract, label)

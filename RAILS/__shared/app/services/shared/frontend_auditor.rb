@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "frontend_rule_set"
+require_relative "frontend_law_set"
 require_relative "../../../lib/operator/scss"
 
 module Shared
@@ -141,11 +141,11 @@ body)
 "Physical left/right properties detected; prefer logical properties") if body.match?(LOGICAL_PROPERTY_PATTERN)
       if css_file_size_violation?(path, body)
         add(:warning, path, :css_file_size,
-"CSS file exceeds #{Shared::FrontendRuleSet::TYPOGRAPHY[:max_css_file_lines]} lines; split into smaller files")
+"CSS file exceeds #{Shared::FrontendLawSet::TYPOGRAPHY[:max_css_file_lines]} lines; split into smaller files")
       end
       add(:warning, path, :selector_specificity,
-"Selector exceeds #{Shared::FrontendRuleSet::TYPOGRAPHY[:max_selector_classes]} class selectors; flatten the selector chain") if selector_depths(body).any? { |depth|
- depth > Shared::FrontendRuleSet::TYPOGRAPHY[:max_selector_classes] }
+"Selector exceeds #{Shared::FrontendLawSet::TYPOGRAPHY[:max_selector_classes]} class selectors; flatten the selector chain") if selector_depths(body).any? { |depth|
+ depth > Shared::FrontendLawSet::TYPOGRAPHY[:max_selector_classes] }
       add(:warning, path, :will_change,
 "will-change detected; restrict it to active animations or component connect/disconnect hooks") if body.match?(WILL_CHANGE_PATTERN)
       add(:warning, path, :paint_cost,
@@ -164,10 +164,10 @@ body)
     # together were over the method length ceiling.
     def scan_style_measurements(path, body)
       body.scan(/font-size:\s*(\d+(?:\.\d+)?)px/i).flatten.each do |size|
-        add(:warning, path, :small_font, "Font size #{size}px is below 16px") if size.to_f < Shared::FrontendRuleSet::TYPOGRAPHY[:body_font_px][:min]
+        add(:warning, path, :small_font, "Font size #{size}px is below 16px") if size.to_f < Shared::FrontendLawSet::TYPOGRAPHY[:body_font_px][:min]
       end
       body.scan(LONG_TRANSITION_PATTERN).flatten.compact.each do |duration|
-        add(:warning, path, :no_long_transition, "Transition #{duration}ms exceeds 300ms budget") if duration.to_i > Shared::FrontendRuleSet::MOTION[:max_transition_ms]
+        add(:warning, path, :no_long_transition, "Transition #{duration}ms exceeds 300ms budget") if duration.to_i > Shared::FrontendLawSet::MOTION[:max_transition_ms]
       end
       if body.match?(/@keyframes|animation\s*:/i) && !body.match?(/prefers-reduced-motion:\s*reduce/i)
         add(:info, path, :reduced_motion, "Animation without prefers-reduced-motion override")
@@ -176,7 +176,7 @@ body)
         width = value.to_f
         next unless unit == "ch"
 
-        range = Shared::FrontendRuleSet::TYPOGRAPHY[:line_length]
+        range = Shared::FrontendLawSet::TYPOGRAPHY[:line_length]
         add(:warning, path, :line_length,
 "max-width #{width}ch outside #{range[:min]}-#{range[:max]}ch prose range") if width < range[:min] || width > range[:max]
       end
@@ -193,16 +193,16 @@ body)
     # own partial is skipped whole (nil), and a pen inside an app stylesheet is
     # blanked before the rest of that stylesheet is read.
     def without_product_pens(path, body)
-      if path.match?(Shared::FrontendRuleSet::PRODUCT_PEN_FILES)
+      if path.match?(Shared::FrontendLawSet::PRODUCT_PEN_FILES)
         add(:info, path, :product_pen, "Documented product pen — exact CSS preserved (constitution allow-list)")
         return nil
       end
 
-      pens = Operator::ScssRules.covered(body, Shared::FrontendRuleSet::PRODUCT_PEN_SELECTORS)
+      pens = Operator::ScssRules.covered(body, Shared::FrontendLawSet::PRODUCT_PEN_SELECTORS)
       return body if pens.empty?
 
       add(:info, path, :product_pen, "#{pens.size} product pen rule(s) — exact CSS preserved (constitution allow-list)")
-      Operator::ScssRules.without(body, Shared::FrontendRuleSet::PRODUCT_PEN_SELECTORS)
+      Operator::ScssRules.without(body, Shared::FrontendLawSet::PRODUCT_PEN_SELECTORS)
     end
 
     def important_violations?(body)
@@ -233,7 +233,7 @@ body)
     end
 
     def protected_stylesheet?(path)
-      Shared::FrontendRuleSet::PRESERVATION[:protected_stylesheet_files].any? { |name| path.end_with?(name) }
+      Shared::FrontendLawSet::PRESERVATION[:protected_stylesheet_files].any? { |name| path.end_with?(name) }
     end
 
     PUB4_STACK_PARTIAL_RE = %r{/_(?:minimal|tokens|animations|base|components|stack|shell)(?:_brgen)?\.scss\z}
@@ -242,7 +242,7 @@ body)
       return false if protected_stylesheet?(path)
       return false if path.match?(PUB4_STACK_PARTIAL_RE)
 
-      body.lines.size > Shared::FrontendRuleSet::TYPOGRAPHY[:max_css_file_lines]
+      body.lines.size > Shared::FrontendLawSet::TYPOGRAPHY[:max_css_file_lines]
     end
 
     def layout_missing_skip?(path, body)

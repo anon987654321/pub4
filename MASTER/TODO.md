@@ -14,18 +14,18 @@ Updated: 2026-10-11. Scope: the Ruby runtime, constitutional law, /fix, operator
 
 ## P1 — intelligence that earns its complexity
 
-- [ ] Review the unmerged cognition/memory candidates (`implement/cognitive-evidence-learning`, `recover/cognition-evidence-learning-20261011`, `recover/memory-governance-20261011`) against current `main`. Consolidate overlaps only after focused tests and a reproducible benchmark show that outcome feedback, memory retrieval/consolidation or the self-model improves results over a no-memory baseline.
+- [ ] Run `test_cognition_outcome_model.rb`, `test_memory_review.rb` and the current cognition suite on the pinned stack, then execute `MASTER/tools/cognition_benchmark.rb` against its no-learning baseline. OutcomeModel, evidence-backed review and a benchmark entrypoint already exist on current `main`; the old branches overlap and are far behind, so do not port their stale histories. Keep or simplify the model only after recorded metrics show whether it helps.
 - [ ] Bound memory learning with provenance, confidence, retention/deletion rules and tests for stale or contradictory observations. Separate an observed result from a model's explanation of that result; never treat self-reported confidence as evidence of capability.
-- [ ] Review `debugging/object-centric-probe` for useful caller/local-state inspection. Keep only a tested, opt-in debugger path; no permanent global monkey patches, method wrappers or mandatory debugging dependencies.
+- [ ] Run `test_object_probe.rb` and verify the current bounded, opt-in `ObjectProbe` implementation remains safe on exceptions, recursive capture attempts and non-owner threads. The old branch's `start_trace`/`finish_trace` patch does not match current `build_trace` structure, so do not port it without a failing current test.
 - [ ] Measure provider fallback, tool retry and voice interruption paths under failure. One audio playback owner must remain authoritative; a failed media attempt must not silently replay through another speech path.
 
 ## P2 — KISS and maintenance
 
 - [ ] Run the documented debugger command on a developer checkout under pinned Ruby 4.0.5 and confirm `-rdebug` is available. The README version mismatch is corrected, but this environment cannot execute the repository's test command.
 
-- [ ] Audit residual `rule`/`rules` naming in code, filenames, comments, docs and generated contracts against the canonical Law vocabulary. The header in `MASTER/law/universal.rb` still says “one `Law.define` per rule” and points to `ruby_rules.rb`, which was not found at that path; trace the actual owner and callers before renaming, update tests and generated files together, and ignore ordinary English uses where they are accurate.
+
 - [ ] Compare the overlapping `fix-dryrun-*`, `bughunt/*`, `master/final-*`, `master/convergence-*` and `sweep/todo-wishlist-20261007` branch candidates with current source and tests. Port only missing, valuable changes; do not merge stale branch histories wholesale.
-- [ ] Add a small repeatable benchmark for repair precision, regressions, wall time and model/tool spend. Compare identical fixtures and budgets; preserve raw outcomes so a lower score cannot be narrated as progress.
+- [ ] Run the existing cognition and repair benchmark entrypoints on identical fixtures and budgets; preserve raw outcomes, regressions, wall time and model/tool spend so a lower score cannot be narrated as progress.
 - [ ] Keep each policy, command recipe, gate inventory and generated agent contract under its canonical owner. When simplifying, remove a second source of truth rather than adding another wrapper or registry.
 - [ ] Verify the generated agent-contract workflow end to end: edit `MASTER/AGENTS.md`, regenerate with `rake docs:agent_contracts`, then require `rake lint:agent_contracts` to pass.
 - [ ] Replace manual worktree integration with a safe operator path that checks for dirty work, proves the candidate against current `origin/main`, lands only reviewed paths and reports each result. Never reset or overwrite an operator's dirty checkout.

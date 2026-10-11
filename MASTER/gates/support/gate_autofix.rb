@@ -119,7 +119,7 @@ module Deploy
       Array(failures).each do |msg|
         path = extract_path(msg)
         next unless path && File.file?(path)
-        next if path.match?(Shared::FrontendRuleSet::PRODUCT_PEN_FILES)
+        next if path.match?(Shared::FrontendLawSet::PRODUCT_PEN_FILES)
 
         original = File.read(path)
         body = outside_pens(original) { |text| fix_body(text, msg) }
@@ -162,7 +162,7 @@ module Deploy
     def outside_pens(body)
       return yield(body) unless body.match?(/[{}]/)
 
-      runs = Operator::ScssRules.partition(body, Shared::FrontendRuleSet::PRODUCT_PEN_SELECTORS)
+      runs = Operator::ScssRules.partition(body, Shared::FrontendLawSet::PRODUCT_PEN_SELECTORS)
       return yield(body) if runs.none?(&:last)
 
       runs.map { |text, pen| pen ? text : yield(text) }.join

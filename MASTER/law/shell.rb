@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# law/shell.rb — every shell law, one Law.define per rule.
+# law/shell.rb — every shell law, one Law.define per law.
 Law.define(:DOLLAR_PAREN) do
   source "ShellCheck SC2006 — $() over backticks"
   severity :warn

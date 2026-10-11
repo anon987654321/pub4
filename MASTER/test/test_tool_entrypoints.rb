@@ -16,6 +16,22 @@ class TestToolEntrypoints < Minitest::Test
     assert_empty missing, "Rakefile references missing tool file(s): #{missing.join(', ')}"
   end
 
+  def test_shared_css_and_frontend_policy_paths_use_canonical_names
+    scss_parser = File.join(ROOT, "lib", "fix", "scss_parser.rb")
+    old_scss_path = File.join(ROOT, "lib", "fix", "scss_rules.rb")
+    assert File.file?(scss_parser), "SCSS syntax parser is missing"
+    refute File.exist?(old_scss_path), "retired rules-named parser path returned"
+
+    repo_root = File.expand_path("../..", __dir__)
+    source = File.join(ROOT, "tools", "frontend_law_set.rb")
+    projection = File.join(repo_root, "RAILS", "__shared", "app", "services", "shared", "frontend_law_set.rb")
+    retired_projection = File.join(repo_root, "RAILS", "__shared", "app", "services", "shared", "frontend_rule_set.rb")
+
+    assert_match(/class FrontendLawSet/, File.read(source))
+    assert_match(/class FrontendLawSet/, File.read(projection))
+    refute File.exist?(retired_projection), "retired rules-named projection path returned"
+  end
+
   def test_flattened_tool_shelves_are_not_recreated
     expected = %w[
       tools/master_design.rb

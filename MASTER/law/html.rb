@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# law/html.rb — every html law, one Law.define per rule.
+# law/html.rb — every html law, one Law.define per law.
 #
 # IMG_ALT and LAZY_IMAGES live once, in the registry (web_laws.rb): both
 # judge attributes of a tag, and a tag is not a line — the attribute-per-line

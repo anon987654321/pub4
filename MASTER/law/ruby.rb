@@ -4,7 +4,7 @@
 # RuboCop Ruby Style Guide (live guide); RuboCop Rails Style Guide; Fowler, Refactoring, 2nd ed. (2018);
 # Martin, Clean Code, 2nd ed. (2025); Evans, Polished Ruby Programming, 2nd ed. (2026, Ruby 4.0).
 # Mechanical style belongs to RuboCop; these Laws cover project-specific semantics, safety and refactoring proof.
-# law/ruby.rb — every ruby law, one Law.define per rule.
+# law/ruby.rb — every ruby law, one Law.define per law.
 Law.define(:EACH_WITH_OBJECT) do
   source "Ruby Style Guide / RuboCop Style/EachWithObject"
   severity :warn

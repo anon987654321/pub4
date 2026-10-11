@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# law/css.rb — every css law, one Law.define per rule.
+# law/css.rb — every css law, one Law.define per law.
 # REDUCED_MOTION and NO_IMPORTANT live once, in the registry (web_laws.rb).
 # Both judge a FILE's posture — whether the reset block exists, whether an
 # !important erases or paints, whether it sits inside an override media —
@@ -67,7 +67,7 @@ Law.define(:NO_IMPORT_SCSS) do
 end
 
 Law.define(:NO_LONG_TRANSITION) do
-  source "style.yml motion budget / FrontendRuleSet MOTION"
+  source "style.yml motion budget / FrontendLawSet MOTION"
   severity :warn
   languages %i[css scss]
   detect { |line| line.match?(/transition(?:-duration)?\s*:[^;]*?\b(?:[4-9]\d\d|\d{4,})\s*ms/i) }

@@ -2,7 +2,7 @@
 
 require "fileutils"
 require "json"
-require_relative "scss_rules"
+require_relative "scss_parser"
 
 module Master
   module Fix

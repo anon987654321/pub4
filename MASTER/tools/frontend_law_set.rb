@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Shared
-  class FrontendRuleSet
+  class FrontendLawSet
     TYPOGRAPHY = {
       line_length: { min: 45, max: 75, ideal: 66, unit: "ch" },
       mobile_line_length: { min: 35, max: 50, unit: "ch" },

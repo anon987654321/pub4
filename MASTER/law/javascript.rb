@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# law/javascript.rb — every javascript law, one Law.define per rule.
+# law/javascript.rb — every javascript law, one Law.define per law.
 Law.define(:ASYNC_AWAIT) do
   source "ECMAScript 2017 — async/await over raw promises"
   severity :warn
