@@ -71,6 +71,9 @@ module Master
         return :brutal_minimal if source.match?(/brutal|minimal|motherfucking|content-first|black.?white/)
         return :substack if source.include?("substack") || source.include?("newsletter")
         return :tiktok if source.include?("tiktok") || source.include?("short video")
+        return :new_yorker if source.match?(/new.?yorker|editorial magazine|cultural authority/)
+        return :x if source.match?(/(?:\\bx\\b|twitter|timeline)\\b|feed-first|real.?time feed/)
+        return :medium if source.match?(/medium\\b|long.?form reading|article column/)
 
         :brutal_minimal
       end
