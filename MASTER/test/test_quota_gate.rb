@@ -37,7 +37,7 @@ class TestQuotaGate < Minitest::Test
     rule = Master::Review::Scan::Laws::AdversarialLaw.new.set_agent(agent)
 
     assert_empty rule.check("def a = 1\n", path: "x.rb")
-    assert_equal ["semantic rules"], Gate.skipped_tiers
+    assert_equal ["semantic Laws"], Gate.skipped_tiers
   end
 
   def test_individual_quota_reached_is_exhaustion
@@ -157,9 +157,9 @@ class TestQuotaGate < Minitest::Test
     assert_empty rule.check("def b = 2\n", path: "y.rb")
 
     assert_equal 1, asked.size, "the second call was guaranteed to fail; it must not be spent"
-    assert_includes Gate.skipped_tiers, "semantic rules",
+    assert_includes Gate.skipped_tiers, "semantic Laws",
                     "returning [] without naming the tier is what reads as a clean bill of health"
-    assert_match(/SKIPPED semantic rules/, Gate.report)
+    assert_match(/SKIPPED semantic Laws/, Gate.report)
   end
 
   # A rule that reaches the model and is told "no credit" trips the tier once,
