@@ -116,7 +116,7 @@ class TestLaneFailover < Minitest::Test
 
       result = ask(agent, door, models)
       assert_equal :offline, result.category
-      assert_match(/\Aoffline: no lane answers; .*ollama: quota spent/, result.message)
+      assert_match(/\Aoffline: no lane answers; .*ollama: unreachable/, result.message)
       assert_match(/claude-cli: quota spent, back in 3h/, result.message)
       assert_raises(Health::Offline) { agent.send(:raise_failure, result) }
 

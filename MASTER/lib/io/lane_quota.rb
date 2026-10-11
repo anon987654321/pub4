@@ -25,6 +25,13 @@ module Master
       MAX_WAIT_S = LaneReply::MAX_WAIT_S
       PROBE_EVERY_S = 600
       UNKNOWN_PREFIX = "unknown:"
+      REASON_PREFIX = "reason:"
+      REASON_TEXT = {
+        "quota" => "quota spent",
+        "unreachable" => "unreachable",
+        "login" => "login expired",
+        "guessed" => "quota spent, wait guessed",
+      }.freeze
       DATA = File.expand_path("../../data/model_roles.yml", __dir__)
 
       @mutex = Mutex.new
@@ -55,10 +62,20 @@ module Master
         @mutex.synchronize do
           rows = raw.merge(lane => deadline)
           rows.delete(UNKNOWN_PREFIX + lane)
+          rows[REASON_PREFIX + lane] = reason_of(verdict)
           rows[UNKNOWN_PREFIX + lane] = deadline if verdict.unknown
           write(rows)
         end
         deadline
+      end
+
+      # Why the lane died: the kind of reply, or a guessed wait for a spent one.
+      def reason_of(verdict)
+        case verdict.kind
+        when :unreachable then "unreachable"
+        when :auth then "login"
+        else verdict.unknown ? "guessed" : "quota"
+        end
       end
 
       # Lanes marked dead by a guessed wait that have been dead long enough to try again.
@@ -72,7 +89,7 @@ module Master
 
       # Clears a lane so the next call asks it; a lane still spent is marked again by that call.
       def revive(lane)
-        @mutex.synchronize { write(raw.reject { |key, _| key == lane || key == UNKNOWN_PREFIX + lane }) }
+        @mutex.synchronize { write(raw.reject { |key, _| [lane, UNKNOWN_PREFIX + lane, REASON_PREFIX + lane].include?(key) }) }
       end
 
       def dead?(model, manual: manual_dead) = until_for(model, manual:) != nil
@@ -85,11 +102,18 @@ module Master
       end
 
       # lane => deadline, expired rows dropped; the file is the shared truth.
-      def table = raw.reject { |key, _| key.start_with?(UNKNOWN_PREFIX) }
+      def table = raw.reject { |key, _| key.start_with?(UNKNOWN_PREFIX, REASON_PREFIX) }
+
+      # lane => reason for the lanes the file holds; a row with none reads as quota.
+      def reasons
+        raw.select { |key, _| key.start_with?(REASON_PREFIX) }.transform_keys { |key| key.delete_prefix(REASON_PREFIX) }
+      end
 
       def raw
         rows = YAML.safe_load_file(path) || {}
-        rows.select { |_lane, deadline| deadline.is_a?(Numeric) && deadline > @clock.call }
+        live = rows.select { |_lane, deadline| deadline.is_a?(Numeric) && deadline > @clock.call }
+        why = rows.select { |key, reason| key.start_with?(REASON_PREFIX) && reason.is_a?(String) && live.key?(key.delete_prefix(REASON_PREFIX)) }
+        live.merge(why)
       rescue Errno::ENOENT
         {}
       rescue StandardError => e
@@ -101,12 +125,13 @@ module Master
 
       # "agy: quota spent, back in 140h44m (2026-10-17 04:12)" lines for status output.
       def report
+        why = @mutex.synchronize { reasons }
         dead_lanes.map do |lane, deadline|
           next "#{lane}: dead by hand (data/model_roles.yml dead:)" if deadline == :manual
 
           left = (deadline - @clock.call).to_i
           back = Time.at(deadline).strftime("%Y-%m-%d %H:%M")
-          "#{lane}: quota spent, back in #{left / 3600}h#{left % 3600 / 60}m (#{back})"
+          "#{lane}: #{REASON_TEXT.fetch(why[lane], REASON_TEXT["quota"])}, back in #{left / 3600}h#{left % 3600 / 60}m (#{back})"
         end
       end
 

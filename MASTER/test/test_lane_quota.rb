@@ -69,6 +69,24 @@ class TestLaneQuota < Minitest::Test
     assert_equal "true", out.lines.last.to_s.strip
   end
 
+  def test_report_names_why_each_lane_died_and_the_file_keeps_it
+    Quota.note("agy:auto", AGY_REPLY)
+    Quota.note("lmstudio:qwen", "ollama unreachable at http://localhost:11434: Connection refused")
+    Quota.note("claude-cli:x", "Please run /login")
+    Quota.note("deepseek:chat", "HTTP 429")
+
+    rows = Quota.report.to_h { |row| row.split(": ", 2) }
+    assert_match(/\Aquota spent, back in 165h/, rows.fetch("agy"))
+    assert_match(/\Aunreachable, back in/, rows.fetch("lmstudio"))
+    assert_match(/\Alogin expired, back in/, rows.fetch("claude-cli"))
+    assert_match(/\Aquota spent, wait guessed, back in/, rows.fetch("deepseek"))
+    assert_equal "unreachable", YAML.safe_load_file(Quota.path).fetch("reason:lmstudio")
+
+    Quota.revive("lmstudio")
+    refute YAML.safe_load_file(Quota.path).key?("reason:lmstudio")
+    refute(Quota.report.any? { |row| row.start_with?("lmstudio:") })
+  end
+
   def test_expiry_revives_the_lane
     Quota.note("agy:auto", "quota reached, resets in 1h")
     @now += 3599
