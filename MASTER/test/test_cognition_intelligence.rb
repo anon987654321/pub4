@@ -120,9 +120,9 @@ class TestCognitionIntelligence < Minitest::Test
       selected: "verify callers first",
     )
 
-    assert_equal "the reader changed", frame["teaching"][:local]
-    assert_equal "MASTER/lib/core.rb", frame["teaching"][:boundary]
-    assert_equal "verify callers first", frame["teaching"][:next_step]
+    assert_equal "the reader changed", frame["teaching"]["local"]
+    assert_equal "MASTER/lib/core.rb", frame["teaching"]["boundary"]
+    assert_equal "verify callers first", frame["teaching"]["next_step"]
   end
 
   def test_fertility_does_not_call_inactivity_dead_without_enough_evidence
