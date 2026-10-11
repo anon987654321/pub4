@@ -73,13 +73,16 @@ module Preflight
   def jpeg_size(file)
     file.seek(2)
     loop do
-      marker = file.read(2)
-      return nil if marker.nil? || marker.bytesize < 2
-      return nil unless marker.getbyte(0) == 0xFF
+      prefix = file.read(1)
+      return nil unless prefix&.getbyte(0) == 0xFF
 
-      code = marker.getbyte(1)
+      marker = file.read(1)
+      marker = file.read(1) while marker&.getbyte(0) == 0xFF
+      return nil unless marker
+
+      code = marker.getbyte(0)
       return nil if code == 0xD8 || code == 0xD9
-      next if code == 0xFF || code == 0x01 || (0xD0..0xD7).cover?(code)
+      next if code == 0x01 || (0xD0..0xD7).cover?(code)
 
       length = file.read(2)&.unpack1("n") or return nil
       if (0xC0..0xCF).cover?(code) && ![0xC4, 0xC8, 0xCC].include?(code)
