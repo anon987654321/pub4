@@ -290,10 +290,10 @@ end)
       module ProviderFailure
         private
 
-        # The machine cannot reach the provider at all: the name did not resolve
-        # or no route exists. A refused connection is left out, because one
-        # provider refusing says nothing about the network. The local sender
-        # names its own failures and is not offline when its daemon is down.
+        # The lane cannot be reached at all: the name did not resolve, no route
+        # exists, the connection was refused or the local daemon is down. Each is
+        # an unreachable lane (LaneReply reads the same words), and the failover
+        # chain moves on and answers a typed Offline only when no lane is left.
         OFFLINE_SIGNS = ["getaddrinfo", "nodename nor servname", "name or service not known",
                          "temporary failure in name resolution", "network is unreachable",
                          "no route to host", "enetunreach", "ehostunreach",

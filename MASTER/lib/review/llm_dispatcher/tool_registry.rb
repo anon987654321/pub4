@@ -60,7 +60,9 @@ module Master
           base.to_h { |row| [row["name"].to_s, row] }
         end
 
-        def tool_available_for_context?(meta, active_file_types:)
+        # The file types are read once per tool set by the callers that loop; the
+        # ReAct prompt builder asks without them, so the default reads the session.
+        def tool_available_for_context?(meta, active_file_types: self.active_file_types)
           required = Array(meta["file_types"]).filter_map { |ext| normalize_file_type(ext) }
           return true if required.empty?
           return true if active_file_types.empty?

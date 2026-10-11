@@ -30,7 +30,9 @@ class TestLLMDispatcher < Minitest::Test
     end
   end
 
-  ReplyWithUsage = Struct.new(:input_tokens, :output_tokens, :cached_tokens, :cache_creation_tokens)
+  # RubyLLM 2 messages carry their usage in `tokens`.
+  Usage = Struct.new(:input, :output, :cache_read, :cache_write)
+  ReplyWithUsage = Struct.new(:tokens)
   ReplyWithContent = Struct.new(:content)
 
   # 2026-09-16: a /fix ran 194 model calls and 178 failed — the free tier out
@@ -86,7 +88,7 @@ class TestLLMDispatcher < Minitest::Test
 
   def test_record_usage_publishes_cost_transparency_line
     dispatcher, session, bus = build_dispatcher
-    reply = ReplyWithUsage.new(100, 50, 20, 10)
+    reply = ReplyWithUsage.new(Usage.new(100, 50, 20, 10))
 
     dispatcher.send(:record_usage, reply, "test-model")
 
@@ -178,9 +180,9 @@ class TestLLMDispatcher < Minitest::Test
     refute dispatcher.send(:rate_limit_error?, StandardError.new("connection reset"))
   end
 
-  # The breaker turns a resolver failure into :provider_error; with no network
-  # it is :offline, while a refused connection and the local sender's own
-  # failure stay what they were.
+  # The breaker turns a resolver failure into :provider_error; an unreachable
+  # lane (no network, a refused connection, a local daemon that is down) is
+  # :offline, and the failover chain decides whether another lane answers.
   def test_a_network_failure_classifies_as_offline
     dispatcher, = build_dispatcher
     dns = Master::Result.err("Failed to open TCP connection to openrouter.ai:443 (getaddrinfo: nodename nor servname provided, or not known)",
@@ -189,8 +191,8 @@ class TestLLMDispatcher < Minitest::Test
     local = Master::Result.err("ollama unreachable at http://gpu.lan:11434: getaddrinfo failed", category: :provider_error)
 
     assert_equal :offline, dispatcher.send(:reclassify_provider_error, dns).category
-    assert_equal :provider_error, dispatcher.send(:reclassify_provider_error, refused).category
-    assert_equal :provider_error, dispatcher.send(:reclassify_provider_error, local).category
+    assert_equal :offline, dispatcher.send(:reclassify_provider_error, refused).category
+    assert_equal :offline, dispatcher.send(:reclassify_provider_error, local).category
     assert_equal :offline, dispatcher.send(:classified_call_failure, SocketError.new("Network is unreachable")).category
   end
 
@@ -370,7 +372,7 @@ end
 
   # The gem answers each tool call by asking again with no limit of its own.
   class FakeChat
-    def on_end_message(&block) = @on_end = block
+    def after_message(&block) = @on_end = block
     def end_message(message) = @on_end.call(message)
   end
 
@@ -408,14 +410,14 @@ end
   # The flat rate is a ceiling for a model the registry cannot price, and a
   # row billed at it says so; a priced model's row does not.
   def test_a_flat_rate_charge_is_marked_approximate_and_a_priced_one_is_not
-    priced = Struct.new(:input_price_per_million, :output_price_per_million).new(3.0, 15.0)
+    priced = Struct.new(:input, :output) { def price(direction) = public_send(direction) }.new(3.0, 15.0)
     unpriced, unpriced_session, unpriced_bus = build_dispatcher
     Master::Review::LLMDispatcher.stub(:model_info, nil) do
-      unpriced.send(:record_usage, ReplyWithUsage.new(100, 50, 0, 0), "vendor/unlisted-model")
+      unpriced.send(:record_usage, ReplyWithUsage.new(Usage.new(100, 50, 0, 0)), "vendor/unlisted-model")
     end
     billed, billed_session, billed_bus = build_dispatcher
     Master::Review::LLMDispatcher.stub(:model_info, priced) do
-      billed.send(:record_usage, ReplyWithUsage.new(100, 50, 0, 0), "anthropic/claude-sonnet")
+      billed.send(:record_usage, ReplyWithUsage.new(Usage.new(100, 50, 0, 0)), "anthropic/claude-sonnet")
     end
 
     assert unpriced_session.costs.last[:approximate]
@@ -481,7 +483,7 @@ end
     openrouter_model = RubyLLM.models.all.find { |model| model.provider == "openrouter" }.id
     RubyLLM.config.openrouter_api_key = "key-before"
     chat = dispatcher.stub(:llm_tools, []) do
-      dispatcher.stub(:build_final_system, nil) do
+      dispatcher.stub(:build_final_system, []) do
         dispatcher.send(:build_chat_session, openrouter_model,[{ role: "user", content: "hi" }], sys: nil, image: nil)
       end
     end
@@ -503,8 +505,8 @@ end
     role = dispatcher.send(:build_final_system, "anthropic/claude-sonnet-4", "LAW\n\nanswer in JSON")
     persona = dispatcher.send(:build_final_system, "anthropic/claude-sonnet-4", "PERSONA\n\nTURN")
 
-    assert_equal ["LAW\n\nanswer in JSON"], role.value.map { |block| block[:text] }
-    assert_equal %w[PERSONA TURN], persona.value.map { |block| block[:text] }
+    assert_equal ["LAW\n\nanswer in JSON"], role.map { |block| block[:text] }
+    assert_equal %w[PERSONA TURN], persona.map { |block| block[:text] }
   end
   # A CLI lane without its binary answered ENOENT, a retriable provider_error,
   # so a chain slept through backoff on it once per file of a scan.
@@ -663,6 +665,7 @@ end
     bus = FakeBus.new
     dispatcher.instance_variable_set(:@session, session)
     dispatcher.instance_variable_set(:@bus, bus)
+    dispatcher.instance_variable_set(:@availability, Master::CLI::Routing::AvailabilityPolicy.new(config: {}))
     [dispatcher, session, bus]
   end
 
