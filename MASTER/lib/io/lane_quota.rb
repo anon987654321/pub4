@@ -92,6 +92,13 @@ module Master
         @mutex.synchronize { write(raw.reject { |key, _| [lane, UNKNOWN_PREFIX + lane, REASON_PREFIX + lane].include?(key) }) }
       end
 
+      # Seconds until the lane of `model` is asked again, or nil when no clock
+      # revives it (a hand-kept dead entry, or a lane that is live).
+      def revival_in(model)
+        deadline = @mutex.synchronize { table[lane_of(model)] }
+        deadline && [deadline - @clock.call, 1].max
+      end
+
       def dead?(model, manual: manual_dead) = until_for(model, manual:) != nil
 
       # Epoch deadline, :manual for the hand-kept list, or nil when the lane is live.

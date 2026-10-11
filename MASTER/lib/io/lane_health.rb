@@ -3,6 +3,7 @@
 require "net/http"
 require "uri"
 require "yaml"
+require_relative "../gap"
 require_relative "lane_quota"
 require_relative "../ops/process_spawn"
 
@@ -24,7 +25,16 @@ module Master
     module LaneHealth
       extend self
 
-      Offline = Class.new(StandardError)
+      # `gap` says when a lane comes back and what finding out costs.
+      class Offline < StandardError
+        attr_reader :gap
+
+        def initialize(message = nil, gap: nil)
+          super(message)
+          @gap = gap
+        end
+      end
+
       Ollama = Data.define(:state, :message)
 
       START_WAIT_S = 10
@@ -101,7 +111,17 @@ module Master
       end
 
       def offline_error(models, refuses: ->(model) { dead?(model) })
-        Offline.new("offline: no lane answers; #{states(models, refuses:).join("; ")}")
+        gap = gap_for(models)
+        Offline.new("offline: no lane answers; #{states(models, refuses:).join("; ")}. #{gap.clause}", gap:)
+      end
+
+      # The soonest a lane revives by its own clock, probed for in minutes; when
+      # no lane has a clock (all dead by hand or silent) only the operator revives one.
+      def gap_for(models)
+        waits = Array(models).filter_map { |model| LaneQuota.revival_in(model) }
+        return Master::Gap.new(horizon: waits.min, cost_to_check: :minutes) if waits.any?
+
+        Master::Gap.new(horizon: :operator, cost_to_check: :operator)
       end
 
       def local?(base) = URI(base).host.to_s.match?(/\A(?:localhost|127\.\d+\.\d+\.\d+|\[?::1\]?)\z/)

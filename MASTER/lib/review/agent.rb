@@ -198,7 +198,7 @@ end
       # model call already treats as "no model work this pass".
       def raise_failure(result)
         return unless result.is_a?(Master::Result::Err)
-        raise Master::Io::LaneHealth::Offline, result.message if result.category == :offline
+        raise Master::Io::LaneHealth::Offline.new(result.message, gap: result.gap) if result.category == :offline
 
         raise StandardError, result.message
       end
@@ -208,9 +208,9 @@ end
         models = [chosen, *single_call_fallback_models].uniq
         return last unless last.category == :offline || models.all? { |model| Master::Io::LaneHealth.dead?(model) }
 
-        message = Master::Io::LaneHealth.offline_error(models).message
-        Master::Trace::Dmesg.once("llm0-offline", message)
-        Master::Result.err(message, category: :offline)
+        offline = Master::Io::LaneHealth.offline_error(models)
+        Master::Trace::Dmesg.once("llm0-offline", offline.message)
+        Master::Result.err(offline.message, category: :offline, gap: offline.gap)
       end
 
       def single_call_fallback_models

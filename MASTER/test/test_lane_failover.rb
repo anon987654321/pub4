@@ -118,13 +118,28 @@ class TestLaneFailover < Minitest::Test
       assert_equal :offline, result.category
       assert_match(/\Aoffline: no lane answers; .*ollama: unreachable/, result.message)
       assert_match(/claude-cli: quota spent, back in 3h/, result.message)
-      assert_raises(Health::Offline) { agent.send(:raise_failure, result) }
+      assert_match(/gap: resolves alone in \d+m, checking costs minutes, a fact\z/, result.message)
+      assert_kind_of Master::Gap, result.gap
+      raised = assert_raises(Health::Offline) { agent.send(:raise_failure, result) }
+      assert_equal result.gap, raised.gap
 
       before = calls.size
       again = ask(agent, door, models)
       assert_equal :offline, again.category
       assert_equal before, calls.size, "nothing is asked of a dead lane"
     end
+  end
+
+  def test_a_lane_nothing_revives_waits_for_the_operator
+    gap = Health.gap_for(["ollama:none-dead-by-clock"])
+    assert_equal :operator, gap.horizon
+    assert_equal :operator, gap.cost_to_check
+  end
+
+  def test_the_soonest_revival_is_the_horizon
+    Quota.note("claude-cli:x", CLAUDE)
+    Quota.note("deepseek-chat", HTTP429)
+    assert_equal 3600, Health.gap_for(["claude-cli:x", "deepseek-chat"]).horizon
   end
 
   def test_the_real_spellings_are_read
