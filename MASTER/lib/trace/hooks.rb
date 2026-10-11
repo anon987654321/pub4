@@ -91,7 +91,7 @@ module Master
           session: Process.pid,
           file: payload[:path].to_s,
           count: payload[:count].to_i,
-          top_rules: payload.fetch(:top_rules, {}),
+          top_laws: payload.fetch(:top_laws, {}),
         }
         FileUtils.mkdir_p(File.dirname(path))
         Master::Trace::Log.rotate(path, VIOLATIONS_MAX_BYTES)

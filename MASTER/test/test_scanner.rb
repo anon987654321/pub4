@@ -77,9 +77,9 @@ class TestScanner < Minitest::Test
       bus = FakeBus.new
       scanner = Master::Fix::Scanner.new(laws: [build_rule(findings: [
         { law: "Style/One" },
-        { rule_id: "Lint/Two" },
+        { law_id: "Lint/Two" },
         { "law" => "Style/One" },
-        { "rule_id" => "Naming/Three" },
+        { "law_id" => "Naming/Three" },
         { law: "Lint/Two" },
         { law: "Metrics/Four" },
       ])], event_bus: bus)
@@ -88,7 +88,7 @@ class TestScanner < Minitest::Test
 
       assert result.ok?
       complete = bus.events.find { |name, _payload| name == "scan:complete" }
-      assert_equal({ "Lint/Two" => 2, "Style/One" => 2, "Metrics/Four" => 1 }, complete.last[:top_rules])
+      assert_equal({ "Lint/Two" => 2, "Style/One" => 2, "Metrics/Four" => 1 }, complete.last[:top_laws])
     end
   end
 
@@ -166,7 +166,7 @@ class TestScanner < Minitest::Test
       FileUtils.mkdir_p(File.join(dir, "runtime"))
       FileUtils.mkdir_p(File.join(dir, "web", "public", "assets"))
       FileUtils.mkdir_p(File.join(dir, "web", "public"))
-      FileUtils.mkdir_p(File.join(dir, "web", "script", "three_build"))
+      FileUtils.mkdir_p(File.join(dir, "RAILS", "master_web", "script", "three_build"))
       File.write(File.join(dir, "vendor", "bundle", "gems", "bad.rb"), "puts 'vendor'\n")
       File.write(File.join(dir, "app", "good.rb"), "puts 'app'\n")
       File.write(File.join(dir, "tmp", "scratch.rb"), "puts 'tmp'\n")
@@ -174,7 +174,7 @@ class TestScanner < Minitest::Test
       File.write(File.join(dir, "runtime", "event.rb"), "puts 'runtime'\n")
       File.write(File.join(dir, "web", "public", "assets", "face-123.js"), "console.log('asset')\n")
       File.write(File.join(dir, "web", "public", "face.js"), "console.log('source')\n")
-      File.write(File.join(dir, "web", "script", "three_build", "vendor.js"), "console.log('vendor')\n")
+      File.write(File.join(dir, "RAILS", "master_web", "script", "three_build", "vendor.js"), "console.log('vendor')\n")
       FileUtils.mkdir_p(File.join(dir, "RAILS", "amber", "public", "assets"))
       File.write(File.join(dir, "RAILS", "amber", "public", "assets", "application-1a2b.js"), "console.log('digest')\n")
       FileUtils.mkdir_p(File.join(dir, "db", "schema"))

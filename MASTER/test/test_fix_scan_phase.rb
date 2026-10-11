@@ -28,7 +28,8 @@ class TestFixScanPhase < Minitest::Test
       result = phase.call(File.join(root, "example.rb"))
 
       assert result.ok?
-      assert_equal "scan", events.fetch(0).first
+      assert_equal "fix:phase", events.fetch(0).first
+      assert_equal "scan", events.fetch(0).last.fetch(:phase)
       assert_equal "example.rb", events.fetch(0).last.fetch(:file)
     end
   end

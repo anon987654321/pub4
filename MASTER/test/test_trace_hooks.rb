@@ -66,13 +66,13 @@ class TestTraceHooks < Minitest::Test
 
   def test_a_scan_with_findings_appends_a_constitutional_violation
     attached
-    @bus.publish("scan:complete", path: "lib/example.rb", count: 3, top_rules: { "NO_PUTS" => 3 })
+    @bus.publish("scan:complete", path: "lib/example.rb", count: 3, top_laws: { "NO_PUTS" => 3 })
 
     assert_path_exists violations_file
     record = JSON.parse(File.read(violations_file).lines.last)
     assert_equal "lib/example.rb", record["file"]
     assert_equal 3, record["count"]
-    assert_equal({ "NO_PUTS" => 3 }, record["top_rules"])
+    assert_equal({ "NO_PUTS" => 3 }, record["top_laws"])
   end
 
   # The ledger is append-only for the life of the checkout; past the cap it
@@ -80,7 +80,7 @@ class TestTraceHooks < Minitest::Test
   def test_the_violation_ledger_rotates_past_its_cap
     File.write(violations_file, "x" * (Master::Trace::Hooks::VIOLATIONS_MAX_BYTES + 1))
     attached
-    @bus.publish("scan:complete", path: "lib/example.rb", count: 1, top_rules: {})
+    @bus.publish("scan:complete", path: "lib/example.rb", count: 1, top_laws: {})
 
     assert_path_exists "#{violations_file}.1"
     assert_equal 1, File.read(violations_file).lines.size
@@ -171,7 +171,7 @@ class TestTraceHooks < Minitest::Test
     Dir.mktmpdir("trace_boot_test") do |root|
       config = Struct.new(:budget_max, :req_max).new(10.0, 100)
       booted = Master::Builder::TraceBoot.new(root:, config:).call
-      booted[:bus].publish("scan:complete", path: "lib/example.rb", count: 2, top_rules: {})
+      booted[:bus].publish("scan:complete", path: "lib/example.rb", count: 2, top_laws: {})
 
       assert_path_exists File.join(root, ".constitutional_violations.jsonl"),
                          "TraceBoot stopped attaching Hooks — soul.yml's hooks fire through it and nothing else"
@@ -184,7 +184,7 @@ class TestTraceHooks < Minitest::Test
   def test_every_hook_soul_declares_produces_an_effect
     declared = Master.load_yaml(Master.data_path("soul.yml")).fetch("hooks")
     subject = hooks(config: declared, budget_max: 10.0)
-    payload = { path: "lib/example.rb", count: 1, top_rules: {}, total_cost: 9.0, max_per_session: 10.0 }
+    payload = { path: "lib/example.rb", count: 1, top_laws: {}, total_cost: 9.0, max_per_session: 10.0 }
     declared.each { |hook| subject.send(:publish_hook, hook["event"], payload) }
 
     declared.each do |hook|
