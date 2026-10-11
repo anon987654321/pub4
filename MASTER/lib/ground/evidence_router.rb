@@ -55,8 +55,9 @@ module Master
           "(a shop, a listing, a JavaScript site), call WebBrowse with the page URL; build the site's own search URL " \
           "yourself, and use WebFetch only for static pages, because a script-built page comes back from it as an " \
           "empty shell. Try WebBrowse before saying a site cannot be read; if the page shows a captcha, a login wall " \
-          "or nothing useful, say exactly what it returned. Clicking, logging in and session state belong to the " \
-          "governed browser plugins (social_browser, travel_browser)."
+          "or nothing useful, say exactly what it returned. Use BrowserAgent when session state " \
+          "or controlled interaction is necessary. Every click, set or type action requires " \
+          "fresh human approval; never submit credentials, payments or posts without explicit instruction."
         when :device
           "Capability rule: this turn concerns local hardware. Use the governed device or wireless capability and report unavailable permissions or backends plainly."
         else
