@@ -8,14 +8,14 @@ command -v pkg >/dev/null 2>&1 || fail "Run this inside Termux, not Android's sh
 pkg update
 command -v git >/dev/null 2>&1 || pkg install -y git
 
-ROOT="\${HOME}/pub4"
+ROOT="${HOME}/pub4"
 REPO="https://github.com/anon987654321/pub4.git"
 
 if [ -d "\${ROOT}/.git" ]; then
   actual_origin="$(git -C "$ROOT" remote get-url origin 2>/dev/null || true)"
   case "$actual_origin" in
     "$REPO"|https://github.com/anon987654321/pub4|git@github.com:anon987654321/pub4.git|ssh://git@github.com/anon987654321/pub4.git) ;;
-    *) fail "Existing checkout origin does not match pub4; refusing to run its installer. Found: \${actual_origin:-<none>}" ;;
+    *) fail "Existing checkout origin does not match pub4; refusing to run its installer. Found: ${actual_origin:-<none>}" ;;
   esac
   [ -f "$ROOT/MASTER/bin/deps" ] || fail "Existing checkout has no MASTER/bin/deps; refusing to continue."
   printf 'master-install0: using existing checkout %s (no automatic pull or overwrite)\n' "$ROOT"
