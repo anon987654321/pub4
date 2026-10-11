@@ -40,18 +40,21 @@ class TestBrowserAgent < Minitest::Test
     config = Struct.new(:automatic) { def auto? = automatic }.new(true)
     governor = Master::Fix::Governor.new(config:)
     prompts = []
+    choices = %w[allow approve approve]
     Fiber[:master_terminal_ask] = lambda do |prompt:, options:|
       prompts << { prompt:, options: }
-      "approve"
+      choices.shift
     end
 
     description = "interact set https://example.com selector=#search"
     governor.allow!("browser_agent", description)
+    assert governor.permit?("browser_agent", :dangerous, description).err?,
+           "a remembered allow response must not count as fresh consent"
     2.times do
       assert governor.permit?("browser_agent", :dangerous, description).ok?
     end
 
-    assert_equal 2, prompts.length
+    assert_equal 3, prompts.length
     prompts.each do |request|
       assert_includes request[:prompt], "browser_agent: interact set"
       refute request[:options].any? { |option| option[:value] == "allow" }
