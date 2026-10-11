@@ -20,7 +20,7 @@ fi
 
 cd "$ROOT/MASTER"
 pkg update
-pkg install -y ruby clang make cmake pkg-config sqlite openssl libffi
+pkg install -y ruby clang make cmake pkg-config sqlite openssl libffi termux-api
 if ! command -v ruby >/dev/null 2>&1; then
   fail "Ruby installation failed; run pkg install ruby and retry."
 fi
