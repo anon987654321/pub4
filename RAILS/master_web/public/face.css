@@ -1660,3 +1660,228 @@ body[data-mode="listening"] .mic-indicator {
   .brand-mark,
   .mic-indicator { transition: none; }
 }
+
+
+/* Motion-led face direction — intentional-colors: ink, ice, cyan and periwinkle.
+   Keep the existing scene, state model and animation budgets as the sole runtime. */
+:root {
+  --c-text: oklch(93% 0.025 250);
+  --x-text: #e7eeff;
+  --c-accent: oklch(82% 0.12 222);
+  --c-code: oklch(81% 0.10 268);
+  --face-bg: #050710;
+  --face-fg: #e7eeff;
+  --face-muted: #a1acc5;
+  --face-dim: rgb(176 194 232 / 18%);
+  --face-soft: rgb(176 194 232 / 7%);
+  --border-faint: rgb(164 190 244 / 16%);
+  --border-soft: rgb(164 190 244 / 23%);
+  --border-strong: rgb(175 202 255 / 34%);
+  --font-brand: Inter, "Helvetica Neue", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --radius-xs: 5px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-pill: 999px;
+  --face-bar-height: 64px;
+}
+
+html, body {
+  background: var(--face-bg);
+  color: var(--face-fg);
+  font-family: Inter, "Helvetica Neue", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  cursor: auto;
+  touch-action: auto;
+}
+body[data-aesthetic="phosphor"] { background: #050710; }
+
+canvas#face { background: #050710; }
+#cognition-ecology { opacity: 0.38; }
+
+.brand-mark {
+  min-block-size: 40px;
+  padding: 8px 0;
+  color: rgb(226 235 255 / 88%);
+  font-family: var(--font-brand);
+  font-size: clamp(0.95rem, 1.5vw, 1.12rem);
+  font-weight: 640;
+  letter-spacing: -0.045em;
+  text-transform: none;
+  opacity: 0.92;
+}
+.brand-mark:hover { opacity: 1; }
+
+.mic-indicator {
+  inset-block-start: var(--inset-t);
+  min-inline-size: 40px;
+  min-block-size: 40px;
+  color: rgb(170 190 228 / 78%);
+}
+body[data-mode="listening"] .mic-indicator { color: #86eaf1; }
+
+#primer {
+  padding: clamp(24px, 5vw, 64px);
+  background: rgb(5 7 16 / 80%);
+  backdrop-filter: blur(8px);
+}
+#primer h1 {
+  max-inline-size: 14ch;
+  font-family: var(--font-brand);
+  font-size: clamp(2.2rem, 6.8vw, 5.6rem);
+  font-weight: 560;
+  line-height: 0.98;
+  letter-spacing: -0.065em;
+  text-wrap: balance;
+}
+#primer .tagline {
+  max-inline-size: 46ch;
+  margin: 22px auto 0;
+  color: rgb(189 202 231 / 78%);
+  font: 400 clamp(0.95rem, 1.6vw, 1.08rem)/1.7 var(--font-brand);
+  text-wrap: pretty;
+}
+#primer .primer-consent {
+  max-inline-size: 44ch;
+  margin: 22px auto 0;
+  color: rgb(156 171 205 / 72%);
+  font: 400 0.75rem/1.6 var(--font-brand);
+}
+
+#chat-shell {
+  inset-block-end: calc(82px + var(--safe-bottom));
+  pointer-events: none;
+}
+#chat-log {
+  max-height: min(37dvh, 440px);
+  padding: 10px 22px 18px;
+  font-family: var(--font-brand);
+  line-height: 1.72;
+  scroll-snap-type: none;
+  scrollbar-width: thin;
+  scrollbar-color: rgb(142 170 225 / 26%) transparent;
+}
+.message {
+  max-inline-size: 68ch;
+  margin-block-end: 20px;
+  font-family: var(--font-brand);
+  font-size: clamp(0.98rem, 1.12vw, 1.08rem);
+  line-height: 1.72;
+  letter-spacing: -0.012em;
+  animation: msgIn 240ms cubic-bezier(.2,.75,.25,1) both;
+}
+.message.user .msg-prompt {
+  color: #94deef;
+  font: 650 0.72rem/1.5 var(--font-brand);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.message.assistant .msg-prompt {
+  color: #aab8db;
+  font: 650 0.72rem/1.5 var(--font-brand);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.msg-body {
+  color: rgb(226 233 250 / 92%);
+  font-family: var(--font-brand);
+  text-wrap: pretty;
+}
+.compaction-note, .message.system {
+  color: rgb(153 171 210 / 70%);
+  border-color: rgb(121 151 210 / 34%);
+}
+
+#zsh {
+  inset-inline: auto;
+  inset-inline-start: 50%;
+  inset-block-end: calc(14px + var(--safe-bottom));
+  width: min(920px, calc(100dvw - 32px - var(--safe-left) - var(--safe-right)));
+  height: auto;
+  min-height: 64px;
+  padding: 9px 12px;
+  gap: 8px;
+  transform: translate(-50%, 0);
+  border: 1px solid rgb(155 181 233 / 24%);
+  border-radius: 17px;
+  background: rgb(9 13 27 / 88%);
+  color: #e7eeff;
+  font: 400 1rem/1.5 var(--font-brand);
+  backdrop-filter: blur(18px) saturate(120%);
+  transition: opacity 180ms ease, border-color 180ms ease, background 180ms ease;
+  touch-action: auto;
+}
+body #zsh.live,
+body:not(.face-ready) #zsh.live {
+  transform: translate(-50%, 0);
+  background: rgb(9 13 27 / 88%);
+}
+body #zsh.live:focus-within {
+  background: rgb(12 18 35 / 96%);
+  border-color: rgb(137 195 255 / 52%);
+}
+body.zen #zsh {
+  opacity: 0.96;
+  pointer-events: auto;
+  transform: translate(-50%, 0);
+}
+body.zen.zen-hidden #zsh,
+body.zen[data-edge-hover="1"] #zsh { opacity: 0.96; pointer-events: auto; }
+body.zen #zsh.revealed { transform: translate(-50%, 0); }
+#zsh .pp { color: #8ce5ef; font-weight: 650; }
+#zsh .sep2 { color: rgb(151 180 232 / 72%); margin-inline-end: 0.15ch; }
+#zsh input, #zsh textarea {
+  min-height: 42px;
+  padding: 8px 0;
+  font: 400 1rem/1.5 var(--font-brand);
+  letter-spacing: -0.01em;
+  color: #edf2ff;
+  caret-color: #8ce5ef;
+  user-select: text;
+  -webkit-user-select: text;
+  touch-action: auto;
+}
+#zsh input::placeholder, #zsh textarea::placeholder { color: rgb(165 180 214 / 72%); }
+#photo-button, #music-btn, #spin-btn {
+  min-inline-size: 44px;
+  min-block-size: 44px;
+  border-radius: 12px;
+  color: rgb(171 194 235 / 84%);
+}
+#photo-button { border: 1px solid transparent; font-family: var(--font-brand); font-size: 1.35rem; }
+#photo-button:hover, #music-btn:hover, #spin-btn:hover {
+  background: rgb(149 183 255 / 8%);
+  color: #f0f5ff;
+}
+#music-btn::before {
+  inset: 15px;
+  border-radius: 3px;
+  border-color: currentColor;
+}
+#music-btn[aria-pressed="true"]::before { background: #8ce5ef; border-color: #8ce5ef; }
+#spin-btn { padding-inline: 8px; font-family: var(--font-brand); }
+#zsh-status { color: rgb(157 184 231 / 82%); font-size: 0.75rem; }
+
+@media (max-width: 640px) {
+  .brand-mark { inset-block-start: calc(var(--safe-top) + 7px); inset-inline-start: calc(var(--safe-left) + 15px); }
+  .mic-indicator { inset-block-start: calc(var(--safe-top) + 7px); inset-inline-end: calc(var(--safe-right) + 10px); }
+  #chat-shell { inset-block-end: calc(78px + var(--safe-bottom)); }
+  #chat-log { max-height: 36dvh; padding-inline: 18px; }
+  .message { margin-block-end: 16px; font-size: 0.98rem; }
+  #zsh { width: calc(100dvw - 22px - var(--safe-left) - var(--safe-right)); min-height: 58px; padding: 7px; gap: 5px; border-radius: 15px; }
+  #zsh .pp { display: none; }
+  #zsh .sep2 { display: none; }
+  #zsh input, #zsh textarea { font-size: 16px; }
+  #photo-button, #music-btn, #spin-btn { min-inline-size: 40px; min-block-size: 40px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .message { animation: none; }
+  #zsh { transition: none; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  #zsh { background: #090d1b; backdrop-filter: none; }
+}
+@media (forced-colors: active) {
+  #zsh { border: 1px solid CanvasText; background: Canvas; color: CanvasText; }
+  #zsh input, #zsh textarea { color: CanvasText; }
+}

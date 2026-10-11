@@ -21,6 +21,8 @@ module Master
         EXIT_WORDS = %w[/exit /quit exit quit].freeze
         DIM = "\e[2m"
         PLAIN = "\e[0m"
+        ACCENT = "\e[38;2;130;211;255m"
+        COOL = "\e[38;2;194;224;255m"
 
         WORDS = %w[/face face].freeze
         MESSAGE_FLAGS = %w[-m -p --message --prompt].freeze
@@ -110,13 +112,14 @@ module Master
           transcript = tail(column(jobs, words), transcript_rows, cols).map do |line|
             line.empty? ? line : "#{DIM}#{line}#{PLAIN}"
           end
+          color = @output.respond_to?(:tty?) && @output.tty? && ENV["NO_COLOR"] != "1"
 
           body = [
-            "face0 at master0: #{state}#{@ear.available? ? " · mic on" : " · mic off"}",
+            heading(state, color:),
             *face.first(content_rows).map { |line| center_line(line, cols) },
             *transcript,
             "#{DIM}#{status(state)[0, cols]}#{PLAIN}",
-            typed(draft, cols),
+            prompt_line(draft, cols, color:),
           ]
           body = body.first(rows)
           body += Array.new(rows - body.length, "") if body.length < rows
@@ -426,9 +429,25 @@ module Master
         end
         def change(&) = @lock.synchronize(&)
 
+        def heading(state, color:)
+          mic = @ear.available? ? "mic on" : "mic off"
+          label = "MASTER · face0 at master0: #{state}, #{mic}"
+          return label unless color
+
+          "#{ACCENT}MASTER#{PLAIN} #{DIM}·#{PLAIN} #{DIM}face0 at master0:#{PLAIN} #{COOL}#{state}#{PLAIN}#{DIM},#{PLAIN} #{COOL}#{mic}#{PLAIN}"
+        end
+
         def status(state)
           mic = @ear.available? ? "mic on" : "mic off"
           "#{state}, #{mic}, Enter sends, Ctrl-C interrupts, Ctrl-D quits"
+        end
+
+        def prompt_line(draft, cols, color:)
+          line = typed(draft, cols)
+          token = "#{Master::Face::Contract.user_token} "
+          return line unless color && line.start_with?(token)
+
+          "#{ACCENT}#{token}#{PLAIN}#{line.delete_prefix(token)}"
         end
 
         # The end of the line being typed, which is the part being typed into.

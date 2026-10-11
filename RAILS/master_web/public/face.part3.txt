@@ -624,7 +624,7 @@ function frame(t) {
     renderer.render(phosphorFadeScene, phosphorFadeCam);
   } else {
     renderer.autoClear = true;
-    renderer.setClearColor(0x000000, 1);
+    renderer.setClearColor(0x050710, 1);
     if (faceMat && phosphorOn) faceMat._phosphorPrimed = true;
   }
   if (window.MASTER_PHOSPHOR_TRAIL?.capture && renderer?.domElement && phosphorOn) {

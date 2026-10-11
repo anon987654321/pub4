@@ -3,12 +3,12 @@
 require_relative "test_helper"
 
 class TestAesthetic < Minitest::Test
-  def test_defaults_to_brutalist
+  def test_defaults_to_phosphor
     with_env("MASTER_AESTHETIC" => nil) do
-      assert_equal "brutalist", Master::Voice::Aesthetic.mode
-      assert Master::Voice::Aesthetic.brutalist?
+      assert_equal "phosphor", Master::Voice::Aesthetic.mode
+      assert Master::Voice::Aesthetic.phosphor?
+      refute Master::Voice::Aesthetic.brutalist?
       refute Master::Voice::Aesthetic.wscons?
-      refute Master::Voice::Aesthetic.phosphor?
     end
   end
 
@@ -28,7 +28,7 @@ class TestAesthetic < Minitest::Test
 
   def test_unknown_mode_falls_back_to_brutalist
     with_env("MASTER_AESTHETIC" => "neon") do
-      assert_equal "brutalist", Master::Voice::Aesthetic.mode
+      assert_equal "phosphor", Master::Voice::Aesthetic.mode
     end
   end
 

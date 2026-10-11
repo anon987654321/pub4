@@ -3,15 +3,15 @@
 module Master
   module Voice
     module Aesthetic
-      # brutalist = flat/minimalist (x.com-like), the house default. wscons (green
-      # terminal) and phosphor (glow) are the legacy retro modes, opt-in only.
+      # Phosphor is the motion-led house face; wscons and brutalist remain explicit
+      # low-distraction terminal profiles for operators who prefer them.
       MODES = %w[brutalist wscons phosphor].freeze
 
       module_function
 
       def mode
         raw = ENV["MASTER_AESTHETIC"].to_s.strip.downcase
-        MODES.include?(raw) ? raw : "brutalist"
+        MODES.include?(raw) ? raw : "phosphor"
       end
 
       def brutalist? = mode == "brutalist"

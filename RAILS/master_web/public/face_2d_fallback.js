@@ -19,7 +19,7 @@ function ensureFallbackCanvas() {
   canvas = document.createElement("canvas");
   canvas.id = "face-2d-fallback";
   canvas.setAttribute("aria-hidden", "true");
-  canvas.style.cssText = "position:fixed;inset:0;width:100%;height:100%;z-index:1;pointer-events:none;background:#000";
+  canvas.style.cssText = "position:fixed;inset:0;width:100%;height:100%;z-index:1;pointer-events:none;background:#050710";
   const face = document.getElementById("face");
   if (face?.parentNode) face.parentNode.insertBefore(canvas, face.nextSibling);
   else document.body.appendChild(canvas);
@@ -190,9 +190,9 @@ function start2DFallback() {
 
     const breath = 0.5 + 0.5 * Math.sin(phase * 0.9);
     const grad = ctx.createRadialGradient(w * 0.5, h * 0.45, 0, w * 0.5, h * 0.45, w * 0.42);
-    grad.addColorStop(0, `rgba(28,26,24,${0.55 + breath * 0.08})`);
-    grad.addColorStop(0.55, "#121110");
-    grad.addColorStop(1, "#000000");
+    grad.addColorStop(0, `rgba(21,34,61,${0.26 + breath * 0.06})`);
+    grad.addColorStop(0.55, "#080d1c");
+    grad.addColorStop(1, "#03050b");
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, w, h);
 
@@ -221,7 +221,7 @@ function start2DFallback() {
     // the one "future human" flourish, kept small and few so it reads as
     // augmentation, not decoration.
     const glow = 0.35 + 0.65 * (0.5 + 0.5 * Math.sin(phase * 1.3));
-    ctx.fillStyle = `rgba(110,170,200,${(glow * 0.8).toFixed(3)})`;
+    ctx.fillStyle = `rgba(112,191,255,${(glow * 0.72).toFixed(3)})`;
     accents.forEach(([ax, ay]) => {
       ctx.beginPath();
       ctx.arc(ax, ay, Math.max(1, w * 0.0022), 0, Math.PI * 2);

@@ -50,6 +50,9 @@ module Master
         BITS = [[0x01, 0x08], [0x02, 0x10], [0x04, 0x20], [0x40, 0x80]].freeze
         BASE = 0x2800
         GREYS = (232..255)
+        FACE_LOW = [38, 57, 83].freeze
+        FACE_HIGH = [226, 239, 255].freeze
+        SPECK_COLORS = [[111, 202, 255], [128, 231, 239], [174, 164, 255], [218, 233, 255]].freeze
         # A cell reads as fully lit from about three bright points.
         FULL = 2.5
 
@@ -61,6 +64,7 @@ module Master
           @bits = Array.new(@rows * @cols, 0)
           @light = Array.new(@rows * @cols, 0.0)
           @head = Array.new(@rows * @cols, false)
+          @speck = Array.new(@rows * @cols, false)
         end
 
         def dots_wide = cols * 2
@@ -76,7 +80,11 @@ module Master
 
           @bits[cell] |= BITS[y & 3][x & 1]
           @light[cell] += light
-          @head[cell] = true if head
+          if head
+            @head[cell] = true
+          else
+            @speck[cell] = true
+          end
         end
 
         def head?(col, row) = @head[(row * cols) + col]
@@ -98,15 +106,27 @@ module Master
         def line(row, color)
           text = +""
           grey = nil
+          rgb = nil
           (row * cols).upto(((row + 1) * cols) - 1) do |cell|
             bits = @bits[cell]
             next text << " " if bits.zero?
 
             shade = GREYS.min + ((@light[cell] / FULL).clamp(0.0, 1.0) * (GREYS.size - 1)).round
-            text << "\e[38;5;#{grey = shade}m" if color && shade != grey
+            if color
+              tone = if @speck[cell]
+                       SPECK_COLORS[((row * 3) + (cell * 5)) % SPECK_COLORS.size]
+                     else
+                       fraction = (shade - GREYS.min).to_f / (GREYS.size - 1)
+                       FACE_LOW.zip(FACE_HIGH).map { |low, high| (low + ((high - low) * fraction)).round }
+                     end
+              text << "\e[38;2;#{tone.join(";")}m" if tone != rgb
+              rgb = tone
+            else
+              text << "\e[38;5;#{grey = shade}m" if shade != grey
+            end
             text << (BASE + bits).chr(Encoding::UTF_8)
           end
-          color && grey ? "#{text}\e[0m" : text
+          color && (rgb || grey) ? "#{text}\e[0m" : text
         end
       end
 

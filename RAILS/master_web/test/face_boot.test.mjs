@@ -184,6 +184,19 @@ test("face.modules.bundle.js is generated from face module entry", () => {
   assert.match(bundle, /MASTER_FACE_BLEND|face_blendshape/);
 });
 
+test("the motion-led face profile is the default and has a readable composer", () => {
+  const aesthetic = readFileSync(join(root, "..", "..", "MASTER", "lib", "voice", "aesthetic.rb"), "utf8");
+  const css = readFileSync(join(publicDir, "face.css"), "utf8");
+  const fallback = readFileSync(join(publicDir, "face_2d_fallback.js"), "utf8");
+  const gravity = readFileSync(join(publicDir, "gravity_field.js"), "utf8");
+
+  assert.match(aesthetic, /MODES\.include\?\(raw\) \? raw : "phosphor"/);
+  assert.match(css, /body\[data-aesthetic="phosphor"\]/);
+  assert.match(css, /width: min\(920px, calc\(100dvw - 32px/);
+  assert.match(fallback, /#050710/);
+  assert.match(gravity, /PARTICLE_PALETTE/);
+});
+
 test("face mic state is explicit and self-healing", () => {
   const part5 = readFileSync(join(publicDir, "face.part5.txt"), "utf8");
   assert.match(part5, /function syncMicIndicator/);

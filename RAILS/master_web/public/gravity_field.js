@@ -25,6 +25,7 @@
   const particles = [];
   const TWO_PI = Math.PI * 2;
   const GOLDEN_ANGLE = 2.399963229728653;
+  const PARTICLE_PALETTE = Object.freeze(["#a8caff", "#8ce5ef", "#b9a9ff", "#e5edff"]);
 
   let width = 1;
   let height = 1;
@@ -216,7 +217,7 @@
         + local * pointer.active * 0.075;
 
       ctx.globalAlpha = Math.min(0.28, alpha);
-      ctx.fillStyle = accent;
+      ctx.fillStyle = PARTICLE_PALETTE[Math.floor(hash(particle.index, 83) * PARTICLE_PALETTE.length)] || accent;
       ctx.fillRect(Math.round(particle.x), Math.round(particle.y), 1, 1);
     }
     ctx.globalAlpha = 1;

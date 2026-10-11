@@ -36,6 +36,13 @@ class TestCliTerminalFace < Minitest::Test
     refute painted.any? { |text| text.include?("recent") }
   end
 
+  def test_face_specks_use_a_cool_accent_in_truecolor_terminals
+    grid = Master::CLI::Face::Braille.new(1, 2)
+    grid.dot(0, 0, 0.5, head: false)
+
+    assert_match(/\e\[38;2;\d+;\d+;\d+m/, grid.to_s(color: true))
+  end
+
   def test_every_row_of_the_window_is_painted
     assert_equal (1..30).to_a, rows_of(window.screen(30, 80, 2.0)).keys.sort
   end

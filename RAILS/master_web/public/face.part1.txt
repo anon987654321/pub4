@@ -647,7 +647,7 @@ if (_hasWebGL && THREE) {
     // came out dim and smeared rather than crisp. Multisampling a pixel-art
     // buffer costs bandwidth to destroy the thing being drawn.
     renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: false, alpha: false, depth: true, stencil: false, preserveDrawingBuffer: false, powerPreference: 'high-performance' });
-    renderer.setClearColor(0x000000, 1);
+    renderer.setClearColor(0x050710, 1);
     renderer.autoClear = true;
   } catch (e) {
     // A silently-swallowed failure here left `renderer` undefined forever:
