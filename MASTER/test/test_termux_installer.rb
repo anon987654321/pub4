@@ -22,7 +22,7 @@ class TermuxInstallerTest < Minitest::Test
 
   def test_never_uses_android_shared_storage_for_installation
     refute_match(%r{/storage/emulated/0|/sdcard}, source)
-    assert_includes source, 'ROOT="\${HOME}/pub4"'
+    assert_includes source, 'ROOT="${HOME}/pub4"'
   end
 
   def test_launcher_forwards_arguments_without_shell_interpolation
