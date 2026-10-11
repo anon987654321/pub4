@@ -1,12 +1,11 @@
 # frozen_string_literal: true
 
 require_relative "../io/exec"
-
-require "digest"
-require "yaml"
+require "timeout"
 require "tempfile"
 require "prism"
 require_relative "ast_fixer"
+require_relative "execution_snapshot"
 
 module Master
   module Fix
@@ -16,6 +15,7 @@ module Master
     # are parsed without executing them; the boot surface and its configuration
     # are checked explicitly.
     class ExecutionTrace
+      include ExecutionSnapshot
       BOOT_CHAIN = %w[
         MASTER/bin/ruby
         MASTER/bin/cli
@@ -63,19 +63,20 @@ module Master
         @scope = scope
         @dependencies = dependencies
         @digestor = digestor || ->(path) { Digest::SHA256.file(path) }
-        @ruby_checker = ruby_checker || ->(path) { RubyVM::InstructionSequence.compile_file(path) }
+        @ruby_checker = ruby_checker
       end
 
       def run
         phases = {}
         failures = []
         files = file_list
-        phases[:inventory] = "#{files.size} files"
+        observed_files = observation_paths(files)
+        phases[:inventory] = "#{files.size} scoped files"
 
-        bytes = reread(files, failures)
-        phases[:read] = "#{bytes} bytes"
+        bytes = reread(observed_files, failures)
+        phases[:read] = "#{bytes} bytes across #{observed_files.size} observed files"
 
-        ruby_files = files.select { |path| Master.language_for(path) == "ruby" }
+        ruby_files = files.select { |path| !File.symlink?(path) && Master.language_for(path) == "ruby" }
         syntax_check(ruby_files, failures)
         phases[:syntax] = "#{ruby_files.size} ruby files"
 
@@ -87,6 +88,10 @@ module Master
 
         verify_live_graph(failures)
         phases[:live_graph] = "scanner/fix_loop/council/bus"
+
+        verify_snapshot(@fingerprints.keys, failures)
+        verify_inventory(files, failures)
+        phases[:snapshot] = "#{@fingerprints.size} files checked"
 
         Result.new(
           ok: failures.empty?,
@@ -124,6 +129,13 @@ module Master
         end.compact.uniq
       end
 
+      # Scan scope stays narrow, but the governing boot chain and config are
+      # fingerprinted at the same starting point as the selected target.
+      def observation_paths(files)
+        required = (BOOT_CHAIN + BOOT_CONFIG.keys).map { |path| File.join(@root, path) }
+        (files + required).uniq
+      end
+
       def file_list
         return Array(@files).map { |path| File.expand_path(path, @root) } if @files
 
@@ -133,42 +145,58 @@ module Master
         output, status = Master::Io::Exec.capture2e(*args)
         raise "cannot inventory repository: #{output.to_s.lines.last.to_s.strip}" unless status.success?
 
-        paths = output.split("\x00").reject(&:empty?).map { |path| File.join(@root, path) }.select { |path| File.file?(path) }
+        paths = output.split("\x00").reject(&:empty?).map { |path| File.join(@root, path) }
+        paths = paths.select { |path| File.file?(path) || File.symlink?(path) || !File.exist?(path) }
         if scopes.any? && paths.empty?
           raise ArgumentError, "execution trace scope contains no inventoried files: #{scopes.join(", ")}"
         end
         paths
       end
 
-      def reread(files, failures)
-        files.sum do |path|
-          digest = @digestor.call(path)
-          digest.to_s.empty? ? 0 : File.size(path)
-        rescue StandardError => e
-          failures << "#{relative(path)}: reread failed: #{e.class}: #{e.message}"
-          0
-        end
+      # The scoped inventory remains separate from mandatory boot inputs:
+      # a scope may fingerprint more files without silently scanning more trees.
+      def verify_inventory(files, failures)
+        current = file_list
+        return if current.sort == files.sort
+
+        added = (current - files).map { |path| relative(path) }.first(5)
+        removed = (files - current).map { |path| relative(path) }.first(5)
+        changes = []
+        changes << "added: #{added.join(", ")}" unless added.empty?
+        changes << "removed: #{removed.join(", ")}" unless removed.empty?
+        failures << "file inventory changed during preflight (#{changes.join("; ")})"
+      rescue StandardError => e
+        failures << "file inventory verification failed: #{e.class}: #{e.message}"
       end
 
       def syntax_check(files, failures)
         files.each do |path|
+          resolve_inside_root(path)
           source = File.read(path, encoding: "UTF-8")
-          content = safe_transport_unwrap(source)
+          next unless content_matches_snapshot?(path, source, failures, phase: "syntax validation")
 
-          if content == source
-            @ruby_checker.call(path)
-          else
-            Tempfile.create(["execution-trace-", ".rb"], binmode: true) do |tmp|
-              tmp.write(content)
-              tmp.flush
-              @ruby_checker.call(tmp.path)
-            end
-          end
+          content = safe_transport_unwrap(source)
+          check_ruby_source(path, content)
         # SyntaxError descends from ScriptError, not StandardError — without
         # naming it here the unparseable file kills the whole check instead of
         # becoming the finding this preflight exists to report.
         rescue SyntaxError, StandardError => e
           failures << "#{relative(path)}: syntax failed: #{e.class}: #{e.message}"
+        end
+      end
+
+      # Parse the exact bytes already fingerprinted, not a second read of the
+      # live path. Test-injected checkers receive an isolated temporary file;
+      # the production path compiles the captured source with its real filename.
+      def check_ruby_source(path, content)
+        if @ruby_checker
+          Tempfile.create(["execution-trace-", ".rb"], binmode: true) do |tmp|
+            tmp.write(content)
+            tmp.flush
+            @ruby_checker.call(tmp.path)
+          end
+        else
+          RubyVM::InstructionSequence.compile(content, path, path, 1)
         end
       end
 
@@ -196,7 +224,15 @@ module Master
       def verify_boot_surface(failures)
         BOOT_CHAIN.each do |path|
           full = File.join(@root, path)
-          failures << "#{path}: missing" unless File.file?(full)
+          unless File.file?(full)
+            failures << "#{path}: missing"
+            next
+          end
+
+          resolve_inside_root(full)
+          @fingerprints[full] ||= fingerprint(full)
+        rescue StandardError => e
+          failures << "#{path}: boot surface unreadable: #{e.class}: #{e.message}"
         end
       end
 
@@ -208,7 +244,8 @@ module Master
             next
           end
 
-          body = Master.load_yaml(full)
+          body = configuration_body(path, full, failures)
+          next if body.nil?
           unless body.is_a?(Hash)
             failures << "#{path}: expected a hash"
             next
@@ -217,9 +254,22 @@ module Master
           required_sections.each do |section|
             failures << "#{path}: missing #{section}: section" unless body.key?(section)
           end
-        rescue StandardError => e
-          failures << "#{path}: unreadable: #{e.class}: #{e.message}"
         end
+      end
+
+      def configuration_body(path, full, failures)
+        resolve_inside_root(full)
+        @fingerprints[full] ||= fingerprint(full)
+        content = Master.read_yaml_content(full)
+
+        return unless content_matches_snapshot?(full, content, failures, phase: "configuration validation")
+        parsed = Timeout.timeout(Master::YAML_LOAD_TIMEOUT_S) do
+          Master.parse_yaml_content(content, source: full)
+        end
+        parsed.nil? ? {} : parsed
+      rescue StandardError => e
+        failures << "#{path}: unreadable: #{e.class}: #{e.message}"
+        nil
       end
 
       def verify_live_graph(failures)

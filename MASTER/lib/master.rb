@@ -6,6 +6,7 @@ require "zeitwerk"
 require "yaml"
 require_relative "security_error"
 require_relative "trace/dmesg"
+require_relative "trace/object_probe"
 
 begin
   require "openssl"

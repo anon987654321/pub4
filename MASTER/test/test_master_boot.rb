@@ -30,6 +30,39 @@ puts [broken, {}.dig(:missing, :nested).inspect, { outer: {} }.dig(:outer, :miss
     end
   end
 
+  def test_data_validation_reports_invalid_utf8_without_aborting_the_sweep
+    Dir.mktmpdir do |dir|
+      data = File.join(dir, "data")
+      FileUtils.mkdir_p(data)
+      path = File.join(data, "invalid.yml")
+      File.binwrite(path, [0xFF].pack("C"))
+
+      errors = Master.validate_data!(root: dir)
+
+      assert errors.key?("invalid.yml"), errors.inspect
+      assert_match(/invalid UTF-8/, errors.fetch("invalid.yml"))
+    end
+  end
+
+  def test_data_validation_detects_same_size_edits_with_restored_mtime
+    Dir.mktmpdir do |dir|
+      data = File.join(dir, "data")
+      FileUtils.mkdir_p(data)
+      path = File.join(data, "sample.yml")
+      File.write(path, "ok: true\n")
+      assert_empty Master.validate_data!(root: dir)
+      original = File.stat(path)
+
+      malformed = "x: [a,  \n"
+      assert_equal original.size, malformed.bytesize
+      File.write(path, malformed)
+      File.utime(original.atime, original.mtime, path)
+      errors = Master.validate_data!(root: dir)
+
+      assert errors.key?("sample.yml"), errors.inspect
+    end
+  end
+
   def test_a_missing_yaml_file_warns_once
     Dir.mktmpdir do |dir|
       missing = File.join(dir, "PATH_OWNERSHIP.yml")

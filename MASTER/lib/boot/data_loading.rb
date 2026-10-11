@@ -1,11 +1,33 @@
 # frozen_string_literal: true
 
 require "date"
+require "digest"
 
 module Master
   # YAML loading, validation, and rule-shard composition for Master.*.
   module DataLoading
     DEFAULT_YAML_VALUE = Object.new.freeze
+
+    # The single parser for both path-based loading and snapshot validation.
+    # Callers validating a measured source pass the captured content here rather
+    # than reopening a live path after its fingerprint has been recorded.
+    def parse_yaml_content(content, symbolize_names: false, source: "content")
+      raise "yaml too large: #{source}" if content.bytesize > MAX_CONSTITUTION_BYTES
+
+      YAML.safe_load(content, aliases: true, symbolize_names:, permitted_classes: [Date, Time])
+    end
+
+    # Read a bounded UTF-8 snapshot once so parser callers can validate exactly
+    # the bytes measured before this read, without allocating an unbounded file.
+    def read_yaml_content(path)
+      content = File.binread(path, MAX_CONSTITUTION_BYTES + 1)
+      raise "yaml too large: #{path}" if content.bytesize > MAX_CONSTITUTION_BYTES
+
+      content.force_encoding(Encoding::UTF_8)
+      raise EncodingError, "invalid UTF-8: #{path}" unless content.valid_encoding?
+
+      content
+    end
 
     # This ENOENT warning is load-bearing — keep it. A doubled path segment in
     # RuntimeCatalog#web_boot_payload_minimal ("OPENBSD/openbsd/vm_resource.yml")
@@ -29,7 +51,7 @@ module Master
 
       key = [File.expand_path(path), symbolize_names, stat.size, stat.ino, stat.mtime.to_r]
       parsed = yaml_parse_cache[key] ||= Timeout.timeout(YAML_LOAD_TIMEOUT_S) do
-        yaml_deep_freeze(YAML.safe_load_file(path, aliases: true, symbolize_names:, permitted_classes: [Date, Time]))
+        yaml_deep_freeze(parse_yaml_content(read_yaml_content(path), symbolize_names:, source: path))
       end
       parsed.nil? ? fallback : yaml_copy(parsed)
     rescue Errno::ENOENT, Errno::EACCES => e
@@ -60,15 +82,29 @@ module Master
 
     def validate_data!(root: ROOT, bus: nil)
       paths = Dir.glob(File.join(root, "data", "**/*.yml")).sort
-      signature = paths.to_h do |path|
-        stat = File.stat(path)
-        [path, [stat.size, stat.ino, stat.mtime.to_r]]
+      snapshots = {}
+      read_errors = {}
+
+      paths.each do |path|
+        snapshots[path] = read_yaml_content(path)
+      rescue StandardError => e
+        relative = path.delete_prefix(File.join(root, "data") + File::SEPARATOR)
+        read_errors[relative] = e.message.lines.first.to_s.strip
       end
+
+      signature = snapshots.to_h do |path, content|
+        [path, Digest::SHA256.hexdigest(content.b)]
+      end
+      signature = [signature, read_errors]
       cached = data_validation_cache[root]
       return cached[:errors] if cached && cached[:signature] == signature
 
-      errors = yaml_errors(paths, root)
-      data_validation_cache[root] = { signature:, errors: }
+      errors = yaml_errors(snapshots, root).merge(read_errors)
+      current_paths = Dir.glob(File.join(root, "data", "**/*.yml")).sort
+      inventory_changed = current_paths != paths
+      errors["data"] = "file inventory changed during validation" if inventory_changed
+
+      data_validation_cache[root] = { signature:, errors: } unless inventory_changed
       publish_yaml_errors(errors, bus)
       errors
     end
@@ -178,14 +214,13 @@ module Master
       value.freeze
     end
 
-    def yaml_errors(paths, root)
-      paths.each_with_object({}) do |path, errors|
-        # Same permitted classes as load_yaml — a file that loads must also
-        # validate, or a legitimate Date (data/recovery/legacy_manifest.yml)
-        # reads as a boot error on every start while loading fine.
-        YAML.safe_load_file(path, aliases: true, permitted_classes: [Date, Time])
-      rescue Psych::Exception => e
-        errors[path.delete_prefix("#{root}/")] = e.message.lines.first.to_s.strip
+    def yaml_errors(snapshots, root)
+      data_root = File.join(root, "data")
+      snapshots.each_with_object({}) do |(path, content), errors|
+        parse_yaml_content(content, source: path)
+      rescue StandardError => e
+        relative = path.delete_prefix("#{data_root}#{File::SEPARATOR}")
+        errors[relative] = e.message.lines.first.to_s.strip
       end
     end
 
