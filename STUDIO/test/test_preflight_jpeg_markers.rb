@@ -17,6 +17,12 @@ class PreflightJpegMarkerTest < Minitest::Test
     assert_equal [48, 32], jpeg_size(bytes)
   end
 
+  def test_repeated_marker_prefix_bytes_preserve_alignment
+    bytes = [0xFF, 0xD8, 0xFF, 0xFF] + SOF
+
+    assert_equal [48, 32], jpeg_size(bytes)
+  end
+
   def test_end_of_image_stops_the_marker_scan
     bytes = [0xFF, 0xD8, 0xFF, 0xD9] + SOF
 
