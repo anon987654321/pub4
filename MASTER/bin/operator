@@ -53,6 +53,7 @@ def usage
       bin/operator land -m <msg> <path>...  commit, rebase, re-check, push
       bin/operator worktree <name>|finish own checkout, or finish (rebase, push the branch, do not merge main)
       bin/operator triangle <up|status|down> [app...]  boot brgen, amber, bsdports and the master face on the ports the live gates probe
+      bin/operator visual review [--app A,B] [--surface ID] [--no-critique] [--no-open] [--out DIR]  read-only rendered review, no fixing
       bin/operator premerge [--apps|--pwa|--contracts|--coverage|--gates|--list]  the Rails premerge proof
       bin/operator ci | coverage          every app's bin/ci, the full Rails coverage run
       bin/operator doctor [--remote]      the environment traps, checked in seconds: disk, rubies, boot, worktrees, model lanes, stray processes
@@ -278,6 +279,11 @@ when "land"
 when "visual"
   # Blesses a parked chrome-geometry baseline; the /fix loop never does this itself.
   require File.join(ROOT, "MASTER", "lib", "fix", "visual_drift_budget")
+  if ARGV.first == "review"
+    require "master"
+    require "operator/visual_review"
+    exit Operator::VisualReview.main(ARGV.drop(1), root: ROOT)
+  end
   sub, surface = ARGV
   if sub == "taste"
     # The operator's verdict on a rendered layout; the loop never writes one.
