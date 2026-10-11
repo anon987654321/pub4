@@ -56,7 +56,7 @@ module Master
       end
 
       def yaml_finding(path)
-        Psych.parse_file(path, filename: path)
+        Psych.parse_file(path)
         nil
       rescue Psych::Exception => e
         finding(path:, line: psych_line(e), message: "YAML parse error: #{e.message.lines.first.to_s.strip}")

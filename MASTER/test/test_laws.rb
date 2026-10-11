@@ -52,7 +52,7 @@ class TestAxioms < Minitest::Test
       )
 
       laws = Master::Ground::Laws.new(root:)
-      assert_equal "temporary-root", laws.data(:voice).fetch("custom_marker")
+      assert_equal "temporary-root", laws.data(:voice).fetch("voice").fetch("custom_marker")
     end
   end
 
@@ -64,8 +64,8 @@ class TestAxioms < Minitest::Test
         File.write(File.join(data, "laws.yml"), {
           "TEMP_RULE" => {
             "priority" => 1,
-            "principle" => "temporary",
-            "tier" => "kernel",
+            "statement" => "temporary",
+            "tier" => "style",
             "name" => name,
           },
         }.to_yaml)

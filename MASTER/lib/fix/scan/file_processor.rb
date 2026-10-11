@@ -6,6 +6,7 @@ require "prism"
 require "timeout"
 require_relative "../../review/scan/semantic_fingerprint"
 require_relative "../../review/scan/law_health"
+require_relative "../../operator/lock_sweep"
 
 module Master
   module Fix
@@ -98,12 +99,13 @@ module Master
           Result.err("file validation failed: #{e.message}", category: :validation)
         end
 
-        # flock on a lockfile that is never deleted. The kernel drops the lock
-        # when its holder exits, so a crashed scan frees the file at once and no
-        # mtime guess can delete a lock another process still holds.
+        # flock on a lockfile that is not deleted after use. The kernel drops the lock
+        # when its holder exits, so a crashed scan frees the file at once; the files
+        # themselves are swept when a day old and not held (Operator::LockSweep).
         def with_file_lock(path)
           lock_path = lock_path_for(path)
           FileUtils.mkdir_p(File.dirname(lock_path))
+          Operator::LockSweep.sweep_once(File.dirname(lock_path))
           deadline = Time.now + LOCK_TIMEOUT
           File.open(lock_path, File::RDWR | File::CREAT, 0o600) do |file|
             until file.flock(File::LOCK_EX | File::LOCK_NB)

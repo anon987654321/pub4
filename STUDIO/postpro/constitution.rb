@@ -4,9 +4,19 @@
 # the catalogue; law/universal.rb carries the executable semantic laws after
 # their migration out of the catalogue. This adapter turns the applicable laws
 # into image-generation invariants rather than trying to lint aesthetics with regex.
+require "fileutils"
+
 module Postpro
   module Constitution
-    OUTPUT_DIR = File.expand_path(ENV.fetch("POSTPRO_OUTPUT_DIR", __dir__)).freeze
+    # Renders default to a dated folder outside the repository, the same place
+    # dilla writes, so a checkout never fills with images it did not make.
+    # POSTPRO_OUTPUT_DIR chooses another place.
+    def self.default_output_dir
+      base = ENV["XDG_DATA_HOME"].to_s.empty? ? File.expand_path("~/Documents") : ENV["XDG_DATA_HOME"]
+      File.join(base, "dilla-renders", Time.now.strftime("%Y%m%d"))
+    end
+
+    OUTPUT_DIR = File.expand_path(ENV.fetch("POSTPRO_OUTPUT_DIR") { default_output_dir }).freeze
     LAWS_PATH = File.expand_path("../../MASTER/data/laws.yml", __dir__).freeze
     LAW_PATHS = [
       File.expand_path("../../MASTER/law/universal.rb", __dir__),
@@ -79,6 +89,15 @@ module Postpro
       raise ArgumentError, "constitutional batch must generate five to ten variations per source by default"
     end
 
+    # Creates the output folder and says once where renders will land.
+    def announce_output_dir!
+      return if @announced_output_dir
+
+      FileUtils.mkdir_p(OUTPUT_DIR)
+      warn "postpro: renders go to #{OUTPUT_DIR} (set POSTPRO_OUTPUT_DIR to choose)"
+      @announced_output_dir = true
+    end
+
     def verify_output!(input_path:, output_path:)
       verify_law_catalog!
       input = File.expand_path(input_path)
@@ -86,6 +105,8 @@ module Postpro
       raise ArgumentError, "constitutional output would overwrite the source" if input == output
       raise ArgumentError, "constitutional output must stay in the Postpro output directory" unless File.dirname(output) == OUTPUT_DIR
       raise ArgumentError, "constitutional output must use postpro_ prefix" unless File.basename(output).start_with?("postpro_")
+
+      announce_output_dir!
       true
     end
   end

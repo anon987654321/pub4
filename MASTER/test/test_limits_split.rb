@@ -20,7 +20,8 @@ class TestLimitsSplit < Minitest::Test
   # `conflicts` and `sweep` had no reader at all and now live under guidance:;
   # `dmesg` and `validation` were pointed at files that never open limits.yml.
   READERS = {
-    "autoloop" => ["lib/fix/fix_loop/convergence_config.rb", "autoloop"],
+    "autoloop" => ["lib/fix/supervisor.rb", "autoloop"],
+    "convergence_discipline" => ["lib/fix/convergence_discipline.rb", "convergence_discipline"],
     # Renamed with its unit on 2026-08-25 — raw lines to body lines — which is
     # the mechanism lint:spine uses so a stale number cannot pass quietly.
     "loc_body_budgets" => %w[Rakefile loc_body_budgets],
@@ -78,10 +79,11 @@ class TestLimitsSplit < Minitest::Test
     # Both halves, or this is the same coincidence in the other direction: a
     # file must open limits AND name the key. scan/report.rb contains the word
     # "conflicts" and has never read limits.yml, which is exactly how the
-    # forward map came to carry four false claims.
+    # forward map came to carry four false claims. limits.yml is string-keyed,
+    # so only a quoted key is a read; a `:phases` symbol is some other hash.
     promoted = limits.fetch("guidance").keys.filter_map do |key|
       readers = bodies.select do |_, body|
-        body.match?(/(["':])#{Regexp.escape(key)}\b/) && body.match?(/limits/i)
+        body.match?(/["']#{Regexp.escape(key)}\b/) && body.match?(/limits/i)
       end.keys
       "#{key} → #{readers.first(2).join(", ")}" if readers.any?
     end

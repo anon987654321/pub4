@@ -36,6 +36,7 @@ def usage
     Usage:
       bin/operator gate [--scan-only] [--only=a,b] [--tree=T] [--list] [--release]  every gate in the repo, fixing as it goes
       bin/operator status [--json]
+      bin/operator fix status [--trees=A,B] [--json]  /fix runs, queue, pass, logs, commits and retained worktrees; read-only
       bin/operator vps state [--json] [--remote]
       bin/operator vps master <status|start|stop|restart> [--remote]
       bin/operator vps deploy <app|master> [--remote]
@@ -120,6 +121,17 @@ when "status", nil
   json = ARGV.include?("--json")
   output = Operator::StatusReport.new(root: ROOT).render(json:)
   json ? puts(output) : Master::Trace::Dmesg::Report.print("/status", output)
+when "fix"
+  # Read-only: /fix itself is started with bin/master "/fix <tree...>" (trees run
+  # in the order typed) or bin/fix-here. This only reports on what it wrote.
+  die("fix", "usage, bin/operator fix status [--trees=A,B] [--json]", 64) unless ARGV.shift == "status"
+
+  require "operator/fix_status"
+  json = !ARGV.delete("--json").nil?
+  trees = ARGV.filter_map { |arg| arg[/\A--trees=(.+)\z/, 1] }.flat_map { |value| value.split(",") }
+  trees << ARGV[ARGV.index("--trees") + 1].to_s if ARGV.include?("--trees")
+  output = Operator::FixStatus.new(root: ROOT, trees: trees).render(json:)
+  json ? puts(output) : Master::Trace::Dmesg::Report.print("/fix status", output)
 when "measure"
   # Every ratchet in the repo, current beside recorded. Non-zero when any is over
   # its ceiling OR slack beneath it, because a ceiling above the real number is

@@ -124,29 +124,24 @@ ROOT = File.expand_path(__dir__)
 # The entry script. The parts below cannot use __FILE__ for this: theirs is a
 # part, not the engine.
 ENGINE_FILE = File.expand_path(__FILE__)
-# Finished renders default to the invoking directory (override with
-# DILLA_OUTPUT_DIR). ROOT stays the base for samples/stems, which aren't
-# user output.
-#
-# With one refusal: the repo root. `ruby STUDIO/dilla/dilla.rb` typed from the
-# checkout is the natural invocation and the one nobody means literally, and
-# CLAUDE.md records a session whose renders sat at the root for weeks because of
-# it. Nothing at the root ignores a .wav, so those renders are also untracked
-# files in a shared checkout, which is how another session's `git status` fills
-# with audio it did not make.
-#
-# The invoking directory stays the default everywhere else. The refusal lands
-# beside dilla.rb, where every renderer already writes and where the operator
-# wants every render: no renders/ subdirectory, and STUDIO/dilla/.gitignore
-# already names the audio that lands there.
+# Finished renders default to a dated folder outside the repository, so a
+# checkout never fills with audio it did not make: one session's renders lived
+# at the repo root for weeks and another session's `git status` listed them.
+# DILLA_OUTPUT_DIR chooses another place. ROOT stays the base for
+# samples/stems, which aren't user output. The two canonical showcase files,
+# dilla.wav and dilla.mp4, are the exception: they name their own paths beside
+# dilla.rb and never pass through here.
 def default_output_dir
-  cwd = Dir.pwd
-  repo_root = File.expand_path("../..", ROOT)
-  return cwd unless File.expand_path(cwd) == repo_root
-
-  warn "dilla: refusing to write renders to the repo root; using #{ROOT} " \
-       "(set DILLA_OUTPUT_DIR to choose)"
-  ROOT
+  base = ENV["XDG_DATA_HOME"].to_s.empty? ? File.expand_path("~/Documents") : ENV["XDG_DATA_HOME"]
+  dir = File.join(base, "dilla-renders", Time.now.strftime("%Y%m%d"))
+  begin
+    FileUtils.mkdir_p(dir)
+  rescue SystemCallError
+    dir = File.join(Dir.tmpdir, "dilla-renders", Time.now.strftime("%Y%m%d"))
+    FileUtils.mkdir_p(dir)
+  end
+  warn "dilla: renders go to #{dir} (set DILLA_OUTPUT_DIR to choose)"
+  dir
 end
 
 OUTPUT_DIR = ENV.fetch("DILLA_OUTPUT_DIR") { default_output_dir }

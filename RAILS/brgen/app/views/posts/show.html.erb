@@ -90,6 +90,7 @@
         </button>
         <% if authenticated? %>
           <% if Current.user.bookmarked?(@post) %>
+            <%# destructive: no-confirm-ok — reversible — the post is saved again with one click %>
             <%= button_to t("bookmark.unsave"), unbookmark_post_path(@post), method: :delete, class: "btn btn-ghost btn-sm" %>
           <% else %>
             <%= button_to t("bookmark.save"), bookmark_post_path(@post), method: :post, class: "btn btn-ghost btn-sm" %>

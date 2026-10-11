@@ -32,6 +32,7 @@ class TestFixLoopCommitter < Minitest::Test
     end
 
     def push = @pushes += 1
+    def log_between(*) = ["abc1234 fix: ok"]
     def ahead_behind = [@ahead, 3]
 
     def changed_paths
@@ -203,12 +204,58 @@ class TestFixLoopCommitter < Minitest::Test
     git.ahead = 1
     bus = FakeBus.new
 
-    assert_raises(RuntimeError) { run_committer(git, bus, "fix: ok") }
+    with_push_env("each") do
+      assert_raises(RuntimeError) { run_committer(git, bus, "fix: ok") }
+    end
+    assert_equal 1, git.pushes
     assert(bus.events.any? { |event, _| event == "fix_loop:commit_error" })
     refute(bus.events.any? { |event, _| event == "ops:commit" })
   end
 
-  # A lint that did not pass blocks the commit. Io::Exec answers a timed-out
+# The default is one push at the end of the run, not one per commit.
+def test_commits_do_not_push_until_the_run_publishes
+  write_file("lib/ok.rb", "OK = 1\n")
+  git = FakeGit.new([], ["lib/ok.rb"])
+  bus = FakeBus.new
+  committer = Master::Fix::FixLoop::Committer.new(git:, bus:, root: @dir)
+  committer.baseline!
+  with_push_env(nil) { committer.commit_if_dirty("fix: ok") }
+
+  assert_equal 1, git.commits.size
+  assert_equal 0, git.pushes
+
+  git.ahead = 1
+  # Unpushed work remains after publish_pending! only if the push missed.
+  git.define_singleton_method(:push) { @pushes += 1; @ahead = 0 }
+  assert_equal :published, committer.publish_pending!
+  assert_equal 1, git.pushes
+end
+
+def test_each_mode_pushes_every_commit
+  write_file("lib/ok.rb", "OK = 1\n")
+  git = FakeGit.new([], ["lib/ok.rb"])
+  with_push_env("each") { run_committer(git, FakeBus.new, "fix: ok") }
+
+  assert_equal 1, git.pushes
+end
+
+def test_publish_pending_with_nothing_ahead_does_not_push
+  git = FakeGit.new([], [])
+  committer = Master::Fix::FixLoop::Committer.new(git:, bus: FakeBus.new, root: @dir)
+
+  assert_equal :nothing_to_publish, committer.publish_pending!
+  assert_equal 0, git.pushes
+end
+
+def with_push_env(value)
+  saved = ENV["MASTER_FIX_PUSH"]
+  value ? ENV["MASTER_FIX_PUSH"] = value : ENV.delete("MASTER_FIX_PUSH")
+  yield
+ensure
+  saved ? ENV["MASTER_FIX_PUSH"] = saved : ENV.delete("MASTER_FIX_PUSH")
+end
+
+# A lint that did not pass blocks the commit. Io::Exec answers a timed-out
   # rubocop with this same failed status; its own tests pin the timeout.
   def test_a_failed_lint_blocks_the_commit
     write_file("Gemfile", "source 'https://rubygems.org'\n")

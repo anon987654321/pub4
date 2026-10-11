@@ -19,11 +19,12 @@ automation should name the STUDIO path. Each tool is standalone: the entry point
 the MASTER process booted, and a gate refuses any file here that requires from MASTER, RAILS or
 OPENBSD. Read the README beside a tool before changing it.
 
-The tools hand work to each other by file. Replicate grades what it generates through postpro by
-default, lora grades its renders the same way, and dilla's video renderer reads recipes from
-postpro's `video.yml`. Render output belongs beside the tool that wrote it, never at the
-repository root, and renders are irreplaceable: nothing here should write over a take that
-matters.
+The tools hand work to each other by file. Replicate grades what it generates through
+postpro by default, lora grades its renders the same way, and dilla's video renderer reads
+recipes from postpro's `video.yml`. Render output goes to a dated folder under
+`~/Documents/dilla-renders`, never into the repository (only dilla's `dilla.wav` and
+`dilla.mp4` sit beside the tool), and renders are irreplaceable: nothing here should write
+over a take that matters.
 
 The folder `test/` holds every suite, one file per subject, and `Rakefile` runs them with one
 process per subject because the tools define constants at top level and would collide in a

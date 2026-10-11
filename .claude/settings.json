@@ -12,6 +12,19 @@
   },
   "comment": "Per MASTER2 LLM.md — bash permitted for git/ruby/bundle invocations only. All other shell ops use zsh. rbenv is allowed so Rails/MASTER commands can honor the repository's .ruby-version. vm23 ssh/curl deliberately NOT here: settings.local.json already grants Bash(ssh *) personally, and this file is committed — production access belongs in a per-operator file, not one that ships to whoever clones.",
   "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "ruby \"$CLAUDE_PROJECT_DIR/MASTER/tools/block_git_stash.rb\"",
+            "statusMessage": "Checking for a shared git stash",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
     "PostToolUse": [
       {
         "matcher": "Edit|Write",

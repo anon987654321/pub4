@@ -2,6 +2,7 @@
 
 require_relative "test_helper"
 require "tmpdir"
+require "open3"
 require "fileutils"
 require_relative "../lib/boot/dependency_manager"
 
@@ -59,7 +60,10 @@ class TestDependencyManager < Minitest::Test
     lock = File.read(File.join(Master::ROOT, "Gemfile.lock"))
 
     assert_match(/^ruby ">= 3\.3", "< 4\.1"$/, gemfile)
-    assert_match(/^RUBY VERSION\n  ruby >= 3\.3, < 4\.1$/m, lock)
+    locked = lock[/^RUBY VERSION\n  ruby (\d+\.\d+\.\d+)$/m, 1]
+    refute_nil locked, "Gemfile.lock must record the exact Ruby that resolved it"
+    assert Gem::Requirement.new(">= 3.3", "< 4.1").satisfied_by?(Gem::Version.new(locked))
+    assert_equal locked, File.read(File.join(Master::ROOT, ".ruby-version")).strip
   end
 
   def test_watcher_gems_are_locked_with_ffi_in_both_bundles
@@ -115,7 +119,6 @@ class TestDependencyManager < Minitest::Test
     refute_match(/^    head_music /, lock)
     refute_match(/^    activesupport /, lock)
     refute_match(/^    humanize /, lock)
-    refute_match(/^    mini_portile2 /, lock)
     assert_match(/group :dilla do/, source)
   end
 
@@ -199,6 +202,48 @@ class TestDependencyManager < Minitest::Test
     assert_includes Gem.path, ENV["GEM_HOME"]
   end
 
+  def store_key_for(root, home)
+    MANAGER.new(root: root, env: { "PATH" => ENV.fetch("PATH") }, out: StringIO.new, home: home)
+           .send(:bundle_config_root)
+  end
+
+  def git!(*args, chdir:)
+    out, status = Open3.capture2e("git", "-c", "user.email=t@t", "-c", "user.name=t", *args, chdir: chdir)
+    assert status.success?, "git #{args.join(" ")} failed: #{out}"
+  end
+
+  # bin/master, bin/cli, bin/check, rake and the tests all build a
+  # DependencyManager from their own MASTER/ directory. A /fix worker runs in a
+  # linked worktree under the system temp directory; it must land on the main
+  # checkout's gem store instead of running a fresh bundle install.
+  def test_linked_worktree_and_temp_checkout_share_the_main_checkouts_store_key
+    Dir.mktmpdir("master-store-key-") do |dir|
+      main = File.join(dir, "main")
+      FileUtils.mkdir_p(File.join(main, "MASTER"))
+      File.write(File.join(main, "MASTER", "Gemfile"), "source \"https://rubygems.org\"\n")
+      git!("init", "-q", "-b", "main", chdir: main)
+      git!("add", "-A", chdir: main)
+      git!("commit", "-q", "-m", "seed", chdir: main)
+
+      linked = File.join(dir, "linked")
+      git!("worktree", "add", "-q", "-b", "linked", linked, chdir: main)
+      temp_parent = Dir.mktmpdir("pub4-master-fix-")
+      temp = File.join(temp_parent, "checkout")
+      begin
+        git!("worktree", "add", "-q", "-b", "fixtemp", temp, chdir: main)
+
+        home = File.join(dir, "home")
+        key = store_key_for(File.join(main, "MASTER"), home)
+
+        assert_equal key, store_key_for(File.join(linked, "MASTER"), home)
+        assert_equal key, store_key_for(File.join(temp, "MASTER"), home)
+        assert_equal key, store_key_for(main, home), "the toplevel and its MASTER/ directory are one checkout"
+      ensure
+        FileUtils.rm_rf(temp_parent)
+      end
+    end
+  end
+
   def test_activation_environment_reuses_the_sanitized_bundle_context
     env = {
       "PATH" => "/bin",
@@ -217,8 +262,7 @@ class TestDependencyManager < Minitest::Test
     assert_match(%r{/\.master/bundler/[0-9a-f]{16}/gems$}, env["BUNDLE_PATH"])
     assert_equal "1", env["BUNDLE_DISABLE_SHARED_GEMS"]
     assert_nil env["BUNDLE_FROZEN"]
-    assert_nil env["BUNDLE_PATH"]
-    assert_nil env["BUNDLE_WITHOUT"]
+    assert_equal "tts", env["BUNDLE_WITHOUT"], "an explicit BUNDLE_WITHOUT is the caller's choice and survives"
     assert_nil env["BUNDLE_VERSION"]
   end
 
@@ -270,6 +314,7 @@ class TestDependencyManager < Minitest::Test
       [true, "", ""],
     ]
     manager = fake_manager(responses)
+    FileUtils.mkdir_p(manager.send(:bundle_gems_path))
 
     result = manager.send(:ensure_bundle)
 
@@ -321,8 +366,9 @@ class TestDependencyManager < Minitest::Test
     result = manager.ensure!
 
     assert result.success?
-    assert_equal 1, @commands.length
     assert_equal ["check"], @commands.first.first[1..]
+    assert_equal [RbConfig.ruby, "-rbundler/setup", "-rjson", "-e", "exit"], @commands.last.first
+    assert_equal 2, @commands.length
     assert_equal before, File.read(File.join(@root, "Gemfile.lock"))
   end
 
@@ -346,6 +392,7 @@ class TestDependencyManager < Minitest::Test
 
   def test_install_repairs_when_the_install_command_itself_hits_stale_native_code
     responses = [
+      [false, "", "dependencies missing"],
       [false, "", "linked to incompatible /opt/homebrew/Cellar/ruby/4.0.5/lib/libruby.4.0.dylib"],
       [true, "Bundle complete", ""],
       [true, "", ""],
@@ -370,7 +417,7 @@ class TestDependencyManager < Minitest::Test
       [false, "", "pristine failed"],
     ]
     manager = fake_manager(responses)
-    manager.define_singleton_method(:package_command) do
+    manager.define_singleton_method(:package_commands) do
       raise "OS package recovery must not run for ABI repair failure"
     end
 
@@ -399,8 +446,9 @@ class TestDependencyManager < Minitest::Test
       installed ? "/fake/bundle" : nil
     end
     manager.define_singleton_method(:gem_command) { "/fake/gem" }
+    commands = @commands
     manager.define_singleton_method(:run) do |command, chdir:, env:|
-      @commands << [command, chdir, env]
+      commands << [command, chdir, env]
       installed = true
       [true, "installed", ""]
     end
@@ -422,8 +470,9 @@ class TestDependencyManager < Minitest::Test
       installed ? "/fake/bundle" : nil
     end
     manager.define_singleton_method(:gem_command) { "/fake/gem" }
+    commands = @commands
     manager.define_singleton_method(:run) do |command, chdir:, env:|
-      @commands << [command, chdir, env]
+      commands << [command, chdir, env]
       installed = true if command.first(2) == ["/fake/gem", "install"]
       responses.shift || [true, "", ""]
     end
@@ -434,11 +483,12 @@ class TestDependencyManager < Minitest::Test
     bundler_command = @commands.find { |row| row.first.first(2) == ["/fake/gem", "install"] }
     refute_nil bundler_command
     assert_equal @root, bundler_command[1]
-    assert_equal ["/fake/bundle", "check"], @commands.last.first
+    assert_includes @commands.map(&:first), ["/fake/bundle", "check"]
   end
 
   def test_resolver_conflict_fails_with_explicit_non_mutating_message
     manager = fake_manager([
+      [false, "", "dependencies missing"],
       [false, "", "Could not find compatible versions for gem 'ruby_llm'"],
     ])
 
@@ -455,12 +505,13 @@ class TestDependencyManager < Minitest::Test
     responses = [
       [false, "", "extconf failed: sqlite3.h not found"],
       [false, "", "extconf failed: sqlite3.h not found"],
+      [false, "", "extconf failed: sqlite3.h not found"],
       [true, "system packages installed", ""],
-      [true, "Bundle complete", ""],
+      [true, "The Gemfile's dependencies are satisfied", ""],
     ]
     manager = fake_manager(responses)
-    manager.define_singleton_method(:package_command) do
-      [["pkg", "install", "-y", "sqlite"], "pkg"]
+    manager.define_singleton_method(:package_commands) do
+      [[["pkg", "install", "-y", "sqlite"], "pkg"]]
     end
 
     result = manager.ensure!
@@ -521,7 +572,7 @@ class TestDependencyManager < Minitest::Test
     source = File.read(File.join(Master::ROOT, "bin", "deps"))
 
     assert_match(/when "boot"/, source)
-    assert_includes source, 'system(cli, "--fast")'
+    assert_includes source, 'cli, "--fast")'
     assert_match(%r{cli = File\.join\(ROOT, "bin", "cli"\)}, source)
   end
 

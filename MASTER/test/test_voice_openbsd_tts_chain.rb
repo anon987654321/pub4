@@ -5,7 +5,9 @@ require_relative "test_helper"
 class TestOpenbsdTtsChain < Minitest::Test
   def test_openbsd_chain_constant_excludes_local_mlx
     chain = Master::Voice::Engines::OPENBSD_CHAIN
-    assert_includes chain, "replicate_kokoro"
+    # Kokoro is a network round-trip per phrase; the lead engines are local.
+    assert_equal %w[edge_melodic edge say], chain
+    refute_includes chain, "replicate_kokoro"
     refute_includes chain, "mlx"
     refute_includes chain, "chatterbox"
   end

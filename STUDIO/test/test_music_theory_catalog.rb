@@ -18,7 +18,8 @@ class TestMusicTheoryCatalog < Minitest::Test
   end
 
   def test_classic_jazz_and_neosoul_colours_have_interval_data
-    templates = catalog.fetch("templates")
+    # YAML reads the bare keys 5, 6 and 69 as integers; dilla stringifies them the same way.
+    templates = catalog.fetch("templates").transform_keys(&:to_s)
     %w[69 m69 maj9 m9 m11 m13 7b5 7b9 7#9 7#11 7alt 13b9 13#11 13sus4].each do |name|
       assert templates.key?(name), "missing chord template #{name}"
       assert templates.fetch(name).is_a?(Array)

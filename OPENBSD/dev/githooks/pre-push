@@ -29,6 +29,14 @@ if File.file?(snapshot_tool)
   system(RbConfig.ruby, snapshot_tool) or abort("pre-push: snapshot regeneration failed; push refused")
 end
 
+# A push that cannot boot the /fix container is refused: unit tests stub the
+# FixLoop, so only a real boot sees a reader of a method that no longer exists.
+boot_smoke = File.join(snapshot_root, "MASTER", "tools", "boot_smoke.rb")
+if File.file?(boot_smoke) && ENV["PUB4_SKIP_BOOT_SMOKE"] != "1"
+  system(File.join(snapshot_root, "MASTER", "bin", "ruby"), boot_smoke, out: $stderr) or
+    abort("pre-push: boot smoke failed; push refused (PUB4_SKIP_BOOT_SMOKE=1 to bypass)")
+end
+
 def commits(range)
   IO.popen(["git", "log", "--format=%h%x01%an%x01%ar%x01%s", range], &:read)
     .lines(chomp: true).reject(&:empty?).map { |line| line.split("\x01") }

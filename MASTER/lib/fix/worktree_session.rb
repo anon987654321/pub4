@@ -39,7 +39,7 @@ module Master
         @github = github || Master::Io::GitHubOperations.new(root: @repo_root, out: io)
       end
 
-      def run(command:, foreign_paths: [], proof_trees: nil)
+      def run(command:, foreign_paths: [], proof_trees: nil, include_dirty: false)
         validate_checkout!
 
         id = "pid#{Process.pid}-#{SecureRandom.hex(5)}"
@@ -65,16 +65,24 @@ module Master
         git!("worktree", "add", "-b", branch, worktree, base)
         git!("push", "-u", "origin", "HEAD:refs/heads/#{branch}", chdir: worktree)
 
+        included = announce_dirty(worktree, include_dirty:)
+
         status, lines = run_child(worktree, command)
         unless status
+          failed_head = rev_parse(worktree, "HEAD")
+          if failed_head == base && own_dirty(worktree, included).empty?
+            cleanup_success(worktree:, branch:)
+            announce("worker failed before writing anything, worktree and branch removed")
+            return Result.new(false, "worker failed; nothing was written, worktree removed", base, failed_head, branch, worktree)
+          end
           return preserve(
-            worktree:, branch:, base:, head: rev_parse(worktree, "HEAD"),
+            worktree:, branch:, base:, head: failed_head,
             summary: "worker failed; worktree and branch retained for recovery",
             lines:
           )
         end
 
-        if (dirty = status_paths(root: worktree)).any?
+        if (dirty = own_dirty(worktree, included)).any?
           return preserve(
             worktree:, branch:, base:, head: rev_parse(worktree, "HEAD"),
             summary: "#{dirty.size} uncommitted change(s) remain after worker; not published",
@@ -108,7 +116,7 @@ module Master
           )
         end
 
-        if (dirty = status_paths(root: worktree)).any?
+        if (dirty = own_dirty(worktree, included)).any?
           return preserve(
             worktree:, branch:, base:, head:,
             summary: "#{dirty.size} proof-time change(s) appeared; publication refused",
@@ -238,6 +246,10 @@ module Master
       def preserve(worktree:, branch:, base:, head:, summary:, lines:)
         announce(summary)
         Array(lines).last(12).each { |line| announce("worker| #{line}") }
+        announce("retained worktree: #{worktree}")
+        announce("retained branch: #{branch}")
+        announce("inspect: git -C #{worktree} status --short && git -C #{worktree} log --oneline #{base.to_s[0, 12]}..HEAD")
+        announce("discard: git -C #{@repo_root} worktree remove --force #{worktree} && git -C #{@repo_root} branch -D #{branch} && git -C #{@repo_root} push origin --delete #{branch}")
         Result.new(false, summary, base, head, branch, worktree)
       end
 
@@ -257,10 +269,16 @@ module Master
       end
 
       def git!(*args, chdir: @repo_root)
+        git_raw!(*args, chdir:).strip
+      end
+
+      # Porcelain status records begin with a significant space (" M path"), which
+      # strip would eat and shift every path by one character.
+      def git_raw!(*args, chdir: @repo_root)
         output, status = Open3.capture2e("git", "-C", chdir, *args)
         raise "git #{args.first} failed: #{output.strip}" unless status.success?
 
-        output.strip
+        output
       end
 
       def rev_parse(root, ref)
@@ -268,8 +286,74 @@ module Master
       end
 
       def status_paths(root:)
-        output = git!("status", "--porcelain=v1", "-z", "--untracked-files=all", chdir: root)
+        output = git_raw!("status", "--porcelain=v1", "-z", "--untracked-files=all", chdir: root)
         parse_nul_paths(output)
+      end
+
+      # Tracked files under the governed trees that differ from HEAD in the
+      # operator's checkout. The isolated checkout is built from origin/main, so
+      # none of these edits is in the run unless include_dirty copies them.
+      def tracked_dirty(root: @repo_root)
+        output = git_raw!("status", "--porcelain=v1", "-z", "--untracked-files=no", chdir: root)
+        records = output.to_s.split("\0")
+        entries = []
+        index = 0
+        while index < records.length
+          record = records[index]
+          break if record.empty?
+
+          code = record[0, 2].to_s
+          path = record[3..].to_s
+          if code.match?(/[RC]/)
+            index += 1
+            entries << [" D", records[index].to_s] if code.include?("R") && !records[index].to_s.empty?
+          end
+          entries << [code, path] if TREES.include?(path.split("/").first)
+          index += 1
+        end
+        entries
+      end
+
+      def announce_dirty(worktree, include_dirty:)
+        entries = tracked_dirty
+        return {} if entries.empty?
+
+        paths = entries.map(&:last)
+        shown = paths.first(8).join(", ") + (paths.size > 8 ? ", +#{paths.size - 8} more" : "")
+        unless include_dirty
+          announce("#{paths.size} uncommitted edit(s) in #{shown} are NOT in this run; --include-dirty copies them in")
+          return {}
+        end
+
+        announce("#{paths.size} uncommitted edit(s) in #{shown} copied into this run (--include-dirty), not committed")
+        copy_dirty(worktree, paths)
+      end
+
+      # Copies working-tree content of tracked files, never untracked ones, and
+      # returns each path's content digest so own_dirty can tell the copied
+      # baseline from what the worker changed.
+      def copy_dirty(worktree, paths)
+        paths.to_h do |path|
+          source = File.join(@repo_root, path)
+          target = File.join(worktree, path)
+          if File.file?(source)
+            FileUtils.mkdir_p(File.dirname(target))
+            FileUtils.cp(source, target, preserve: true)
+            [path, File.binread(target).hash]
+          else
+            FileUtils.rm_f(target)
+            [path, nil]
+          end
+        end
+      end
+
+      def own_dirty(worktree, included)
+        status_paths(root: worktree).reject do |path|
+          next false unless included.key?(path)
+
+          file = File.join(worktree, path)
+          included[path].nil? ? !File.exist?(file) : (File.file?(file) && File.binread(file).hash == included[path])
+        end
       end
 
       def diff_paths(root, base, head)

@@ -306,3 +306,10 @@ STUDIO/postpro/postpro_*.jpg.json
 # Subject media is private; deliberate publication requires git add -f.
 STUDIO/replicate/lora/*.mp4
 STUDIO/replicate/lora/*.mov
+
+# Stray render folders. Renders default to ~/Documents/dilla-renders; these names are
+# what a session hand-made inside the tree before that default existed.
+STUDIO/**/dilla-showcase-*/
+STUDIO/**/render-*/
+STUDIO/**/scratch-*/
+STUDIO/**/dilla-renders*/

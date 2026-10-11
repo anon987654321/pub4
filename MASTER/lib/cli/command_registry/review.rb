@@ -108,6 +108,8 @@ module Master
           failure = results.find { |result| result.is_a?(Master::Result::Err) }
           next failure if failure
 
+          # One push for the whole run, after every tree has verified.
+          fix_loop.publish_pending! if writes_requested
           results.join("\n")
           end
         end
@@ -128,10 +130,15 @@ module Master
           command: ["/fix", raw].reject(&:empty?).join(" "),
           foreign_paths: Master::Fix::WorktreeSession.foreign_paths(root:),
           proof_trees: worktree_proof_trees(target, root:),
+          include_dirty: include_dirty_requested?(raw),
         )
         return result.summary if result.ok
 
         Master::Result.err(result.summary, category: :validation)
+      end
+
+      def include_dirty_requested?(raw)
+        ENV["MASTER_FIX_INCLUDE_DIRTY"] == "1" || raw.to_s.split(/\s+/).any? { |token| token.casecmp?(INCLUDE_DIRTY_FLAG) }
       end
 
       def worktree_proof_trees(target, root:)
@@ -241,6 +248,9 @@ module Master
         "--trace" => "trace", "trace" => "trace"
       }.freeze
 
+      # Read by dispatch_fix_in_worktree; never a path.
+      INCLUDE_DIRTY_FLAG = "--include-dirty"
+
       PASS_FLAGS = {
         "--dry-run" => [:apply, false], "preview" => [:apply, false], "dry" => [:apply, false],
         "--no-autofix" => [:apply, false], "no-autofix" => [:apply, false],
@@ -260,7 +270,7 @@ module Master
         joined_only(raw.split(/\s+/)).each do |token|
           if (flag = PASS_FLAGS[token.downcase])
             flags[flag.first] = flag.last
-          elsif DMESG_FLAGS.key?(token.downcase)
+          elsif DMESG_FLAGS.key?(token.downcase) || token.casecmp?(INCLUDE_DIRTY_FLAG)
             next
           elsif token =~ ONLY_FLAG
             flags[:only] = Regexp.last_match(1)

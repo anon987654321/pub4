@@ -3,6 +3,7 @@
 require_relative "test_helper"
 require "tmpdir"
 require "json"
+require_relative "../lib/operator/gate_chain"
 
 # /fix is the whole improvement operation: it observes, lets the council argue,
 # repairs, and observes again, and it ends in a state that says what actually
@@ -21,7 +22,7 @@ class TestFixConvergence < Minitest::Test
 
   class ConstantScanner
     def initialize(violations) = @violations = violations
-    def scan(_path) = Master::Result.ok(@violations.map { |v| v.merge(severity: :warning) })
+    def scan(_path, depth: :deep, laws: nil) = Master::Result.ok(@violations.map { |v| v.merge(severity: :warning) })
   end
 
   class OpenCircuitAgent
@@ -32,6 +33,11 @@ class TestFixConvergence < Minitest::Test
 
     def circuit_breaker = Breaker.new(nil)
     def model = "stub-model"
+  end
+
+  class RecordingAgent
+    def initialize(reply) = @reply = reply
+    def ask(_prompt) = @reply
   end
 
   class StubGit
@@ -45,9 +51,14 @@ class TestFixConvergence < Minitest::Test
     @root = Dir.mktmpdir("fix_convergence")
     File.write(File.join(@root, "dummy.yml"), "---\n")
     @bus = FakeBus.new
+    # The real baseline runs every gate stage; this file asserts what /fix does
+    # with a baseline, not how one is measured (test_gate_chain.rb owns that).
+    @real_baseline = Operator::GateChain.method(:baseline)
+    Operator::GateChain.define_singleton_method(:baseline) { |**| {} }
   end
 
   def teardown
+    Operator::GateChain.define_singleton_method(:baseline, @real_baseline)
     @previous_deep_trace.nil? ? ENV.delete("MASTER_FIX_DEEP_TRACE") : ENV["MASTER_FIX_DEEP_TRACE"] = @previous_deep_trace
     FileUtils.remove_entry(@root) if @root && Dir.exist?(@root)
   end
@@ -82,7 +93,7 @@ class TestFixConvergence < Minitest::Test
     discipline = Master::Fix::ConvergenceDiscipline.new(root: @root, bus: @bus)
     discipline.begin_run([File.join(@root, "dummy.yml")])
 
-    assert_equal Float::INFINITY, discipline.best_state[:score]
+    assert_equal Master::Fix::ConvergenceDiscipline::UNMEASURED_SCORE, discipline.best_state[:score]
     assert_equal 0.0, discipline.quality_delta
     refute discipline.improving?
   end
@@ -98,6 +109,7 @@ class TestFixConvergence < Minitest::Test
     end
     loop.instance_variable_set(:@convergence_discipline, discipline)
     loop.instance_variable_set(:@wishlist, Object.new)
+    loop.instance_variable_set(:@root, @root)
     loop.define_singleton_method(:run_one_pass) do |i, **|
       calls << i
       nil
@@ -117,7 +129,7 @@ class TestFixConvergence < Minitest::Test
       run_id: "test-run",
     )
 
-    assert_equal %w[PLATEAU: pass limit (5) reached], [result.value!]
+    assert_equal ["PLATEAU: pass limit (5) reached"], [result.value!]
     assert_equal [0, 1, 2, 3, 4], calls
   end
 
@@ -138,7 +150,7 @@ class TestFixConvergence < Minitest::Test
     runner.define_singleton_method(:run_pass) { |**| pass_result }
     runner.define_singleton_method(:pass_progress?) { false }
     loop.instance_variable_set(:@pass_runner, runner)
-    loop.define_singleton_method(:structural_repair?) { |**| false }
+    loop.define_singleton_method(:structural_repair?) { |*, **| false }
 
     deadline = Object.new
     deadline.define_singleton_method(:expired?) { false }
@@ -244,8 +256,10 @@ class TestFixConvergence < Minitest::Test
   def test_convergence_discipline_reports_measured_improvement
     discipline = Master::Fix::ConvergenceDiscipline.new(root: Dir.mktmpdir("discipline"))
     discipline.begin_run([])
-    discipline.observe(pass: 1, findings: [1, 2], files: [], progressed: true)
-    discipline.observe(pass: 2, findings: [1], files: [], progressed: false)
+    first = { law: "TEST_RULE", file: "a.rb", line: 1, message: "one", severity: :warning }
+    second = { law: "TEST_RULE", file: "b.rb", line: 1, message: "two", severity: :warning }
+    discipline.observe(pass: 1, findings: [first, second], files: [], progressed: true)
+    discipline.observe(pass: 2, findings: [first], files: [], progressed: false)
 
     assert discipline.improving?
     assert_equal 0.5, discipline.quality_delta
@@ -335,13 +349,10 @@ class TestFixConvergence < Minitest::Test
 
   def test_unmeasured_proof_baseline_is_inconclusive_not_green
     pass = Master::CLI::Pipeline::Pass.allocate
-    after = Master::CLI::Pipeline::Proof::Reading.new(passed: 1, total: 1, failing: [], finished: 1)
-    baseline = Master::CLI::Pipeline::Proof::Reading.new(passed: 0, total: 0, failing: [], finished: 0)
+    baseline = Master::CLI::Pipeline::Proof::Reading.parse(false, ["proof suite MASTER: FAIL", "LoadError"])
 
-    held, verdict = Master::CLI::Pipeline::Proof.judge(after, baseline)
-
-    refute held
-    assert_match(/INCONCLUSIVE.*baseline/, verdict)
+    refute baseline.measured?
+    assert_match(/INCONCLUSIVE/, pass.send(:baseline_line, baseline))
   end
 
   def quiet_runner
@@ -503,7 +514,9 @@ end
 
     assert_equal Master::REPO_ROOT, resolver.resolve_target("../")
     assert_raises(ArgumentError) { resolver.resolve_target("../../") }
-    assert_raises(ArgumentError) { resolver.resolve_target("TODO.md") }
+    # A bare relative name resolves under MASTER/, so the fixture is an absolute
+    # path outside every tree that does not exist either.
+    assert_raises(ArgumentError) { resolver.resolve_target("/nonexistent/outside_every_tree.md") }
   end
 
   def test_fix_target_resolver_keeps_existing_governed_files
@@ -571,8 +584,8 @@ end
 
   def test_scan_request_resolves_all_four_trees_from_repo_root
     {
-      "MASTER/lib" => Master::ROOT,
-      "RAILS/__shared" => Master::RAILS_ROOT,
+      "MASTER/lib" => File.join(Master::ROOT, "lib"),
+      "RAILS/__shared" => File.join(Master::RAILS_ROOT, "__shared"),
       "OPENBSD/etc" => File.join(Master::REPO_ROOT, "OPENBSD", "etc"),
       "STUDIO/lora" => File.join(Master::REPO_ROOT, "STUDIO", "lora"),
     }.each do |target, expected_root|
@@ -613,6 +626,7 @@ end
 
   def test_dry_run_does_not_run_mutating_gate_verification
     fix_loop = Object.new
+    fix_loop.define_singleton_method(:publish_pending!) { :nothing_to_publish }
     fix_loop.define_singleton_method(:run) { |target, **| flunk("dry-run started the repair") }
     fix_loop.define_singleton_method(:preview) { |_| Master::Result.ok(total: 1, laws: { "RULE" => 1 }, files: {}) }
     scanner = Object.new
@@ -663,17 +677,18 @@ end
     assert_equal false, captured[:apply]
   end
 
-  def test_exact_all_tree_fix_command_targets_the_repo_and_preserves_gate_scope
+  def test_named_trees_fix_command_runs_each_tree_in_order_and_preserves_gate_scope
     repaired = []
     verified = []
     fix_loop = Object.new
+    fix_loop.define_singleton_method(:publish_pending!) { :nothing_to_publish }
     fix_loop.define_singleton_method(:run) { |target, **| repaired << target; Master::Result.ok("DONE: clean") }
     fix_loop.define_singleton_method(:preview) { |_| Master::Result.ok(total: 0, laws: {}, files: {}) }
     scanner = Object.new
     def scanner.scan(*) = Master::Result.ok([])
     def scanner.scan_dir(*) = Master::Result.ok([])
 
-    Operator::GateChain.stub(:verify_fix, ->(target:) { verified << target; [0, []] }) do
+    Operator::GateChain.stub(:verify_fix, ->(target:, baseline: nil) { verified << target; [0, []] }) do
       Master::CLI::CommandRegistry.stub(:observe, ->(*) { "clean" }) do
         Master::CLI::CommandRegistry.dispatch_fix(
           scanner:, fix_loop:, deliberation: nil, root: Master::ROOT, bus: nil,
@@ -682,21 +697,49 @@ end
       end
     end
 
-    assert_equal [Master::REPO_ROOT], repaired
-    assert_equal ["MASTER RAILS OPENBSD"], verified
+    # Named trees run one at a time in the order typed, each proved on its own.
+    assert_equal %w[MASTER RAILS OPENBSD].map { |tree| File.join(Master::REPO_ROOT, tree) }, repaired
+    assert_equal repaired, verified
+  end
+
+  # Commits stay local while the run works; the one push comes after every tree
+  # has verified, however many trees were named.
+  def test_a_multi_tree_fix_publishes_once_after_all_trees_verify
+    events = []
+    fix_loop = Object.new
+    fix_loop.define_singleton_method(:publish_pending!) { events << :publish }
+    fix_loop.define_singleton_method(:run) { |target, **| events << [:repair, File.basename(target)]; Master::Result.ok("DONE: clean") }
+    fix_loop.define_singleton_method(:preview) { |_| Master::Result.ok(total: 0, laws: {}, files: {}) }
+    scanner = Object.new
+    def scanner.scan(*) = Master::Result.ok([])
+    def scanner.scan_dir(*) = Master::Result.ok([])
+
+    Operator::GateChain.stub(:verify_fix, ->(target:, baseline: nil) { events << [:verify, File.basename(target)]; [0, []] }) do
+      Master::CLI::CommandRegistry.stub(:observe, ->(*) { "clean" }) do
+        Master::CLI::CommandRegistry.dispatch_fix(
+          scanner:, fix_loop:, deliberation: nil, root: Master::ROOT, bus: nil,
+          ctx: { args: "MASTER RAILS --no-aesthetic" }
+        )
+      end
+    end
+
+    assert_equal 1, events.count(:publish)
+    assert_equal :publish, events.last
+    assert_equal [[:verify, "MASTER"], [:verify, "RAILS"]], events.grep(Array).select { |e| e.first == :verify }
   end
 
   def test_fix_reenters_after_gate_repairs_until_the_tree_stabilises
     verified = []
     states = [[0, ["RAILS/app/models/item.rb"]], [0, []]]
     fix_loop = Object.new
+    fix_loop.define_singleton_method(:publish_pending!) { :nothing_to_publish }
     fix_loop.define_singleton_method(:run) { |target, **| Master::Result.ok("DONE: clean") }
     fix_loop.define_singleton_method(:preview) { |_| Master::Result.ok(total: 0, laws: {}, files: {}) }
     scanner = Object.new
     def scanner.scan(*) = Master::Result.ok([])
     def scanner.scan_dir(*) = Master::Result.ok([])
 
-    result = Operator::GateChain.stub(:verify_fix, ->(target:) { verified << target; states.shift }) do
+    result = Operator::GateChain.stub(:verify_fix, ->(target:, baseline: nil) { verified << target; states.shift }) do
       Master::CLI::CommandRegistry.stub(:observe, ->(*) { "clean" }) do
         Master::CLI::CommandRegistry.dispatch_fix(
           scanner:, fix_loop:, deliberation: nil, root: Master::ROOT, bus: nil,
@@ -713,6 +756,7 @@ end
   def test_critique_stage_calls_council_directly_without_reentering_pipeline
     captured = nil
     fix_loop = Object.new
+    fix_loop.define_singleton_method(:publish_pending!) { :nothing_to_publish }
     scanner = Object.new
     deliberation = Object.new
     bus = Object.new
@@ -752,6 +796,7 @@ end
     )
 
     fix_loop = Object.new
+    fix_loop.define_singleton_method(:publish_pending!) { :nothing_to_publish }
     fix_loop.define_singleton_method(:run) { |target, **| flunk("repair started after failed preflight") }
     scanner = Object.new
     scanner.define_singleton_method(:scan) { |*| Master::Result.ok([]) }
@@ -781,6 +826,7 @@ end
     end
 
     fix_loop = Object.new
+    fix_loop.define_singleton_method(:publish_pending!) { :nothing_to_publish }
     fix_loop.define_singleton_method(:run) do |target, **|
       order << :repair
       Master::Result.ok("DONE: clean")
@@ -818,13 +864,14 @@ end
   def test_fix_wraps_the_full_lifecycle_in_trace_verbosity
     levels = []
     fix_loop = Object.new
+    fix_loop.define_singleton_method(:publish_pending!) { :nothing_to_publish }
     fix_loop.define_singleton_method(:run) { |target, **| Master::Result.ok("DONE: clean") }
     scanner = Object.new
     def scanner.scan(*) = Master::Result.ok([])
     def scanner.scan_dir(*) = Master::Result.ok([])
 
     Master::Trace::Dmesg.stub(:with_verbosity, ->(level, &block) { levels << level; block.call }) do
-      Operator::GateChain.stub(:verify_fix, ->(target:) { [0, []] }) do
+      Operator::GateChain.stub(:verify_fix, ->(target:, baseline: nil) { [0, []] }) do
         Master::CLI::CommandRegistry.stub(:observe, ->(*) { "clean" }) do
           Master::CLI::CommandRegistry.dispatch_fix(
             scanner:, fix_loop:, deliberation: nil, root: Master::ROOT, bus: nil,
@@ -839,12 +886,13 @@ end
 
   def test_fix_surfaces_a_gate_failure_when_it_makes_no_changes
     fix_loop = Object.new
+    fix_loop.define_singleton_method(:publish_pending!) { :nothing_to_publish }
     fix_loop.define_singleton_method(:run) { |target, **| Master::Result.ok("DONE: clean") }
     scanner = Object.new
     def scanner.scan(*) = Master::Result.ok([])
     def scanner.scan_dir(*) = Master::Result.ok([])
 
-    result = Operator::GateChain.stub(:verify_fix, ->(target:) { [1, []] }) do
+    result = Operator::GateChain.stub(:verify_fix, ->(target:, baseline: nil) { [1, []] }) do
       Master::CLI::CommandRegistry.stub(:observe, ->(*) { "clean" }) do
         Master::CLI::CommandRegistry.dispatch_fix(
           scanner:, fix_loop:, deliberation: nil, root: Master::ROOT, bus: nil,
@@ -863,6 +911,7 @@ end
     seen = []
     repaired = []
     fix_loop = Object.new
+    fix_loop.define_singleton_method(:publish_pending!) { :nothing_to_publish }
     fix_loop.define_singleton_method(:run) { |target, **| repaired << target; Master::Result.ok("DONE: clean") }
     fix_loop.define_singleton_method(:preview) { |_| Master::Result.ok(total: 0, laws: {}, files: {}) }
     scanner = Object.new
@@ -872,19 +921,22 @@ end
     # The proof after a writing pass is MASTER's whole suite, which holds this
     # test; stubbed, so the test measures the pass rather than the suite.
     suites = ->(*) { [true, ["suites: 1/1 green"], 0] }
-    out = Operator::GateChain.stub(:suites, suites) do
-      Master::CLI::CommandRegistry.stub(:observe, ->(*, **kw) { seen << kw[:ctx][:args]; "clean" }) do
-        Master::CLI::CommandRegistry.dispatch_fix(
-          scanner:, fix_loop:, deliberation: nil, root: Master::ROOT, bus: nil,
-          ctx: { args: "lib/io --no-aesthetic" }
-        )
+    # verify_fix would run the real gate stages in a subprocess; this test is about the pass.
+    out = Operator::GateChain.stub(:verify_fix, ->(**) { [0, []] }) do
+      Operator::GateChain.stub(:suites, suites) do
+        Master::CLI::CommandRegistry.stub(:observe, ->(*, **kw) { seen << kw[:ctx][:args]; "clean" }) do
+          Master::CLI::CommandRegistry.dispatch_fix(
+            scanner:, fix_loop:, deliberation: nil, root: Master::ROOT, bus: nil,
+            ctx: { args: "lib/io --no-aesthetic" }
+          )
+        end
       end
     end
 
     assert_equal 2, seen.size, "a fix observes before and after the repair"
     assert_equal 1, repaired.size, "the repair runs between the two readings"
-    assert_includes out.lines.map(&:chomp), "observe"
-    assert_includes out.lines.map(&:chomp), "re-observe"
+    assert_match(/^obs0 at review0: observe$/, out.lines.map(&:chomp).join("\n"))
+    assert_match(/^obs1 at review0: re-observe$/, out.lines.map(&:chomp).join("\n"))
   end
 
   # A suite run as a proof holds tests that run /fix; their proof must not
@@ -1040,7 +1092,7 @@ end
     round = Master::Fix::FixLoop::CouncilRound.new(agent: nil, root: @root, bus: @bus)
     briefing = round.send(:hard_briefing, [File.join(@root, "dummy.yml")])
 
-    assert_includes briefing, "HARD REVIEW"
+    assert_includes briefing, "hard critique"
     assert_includes briefing, "authority"
     assert_includes briefing, "bypasses"
     assert_includes briefing, "verification"
@@ -1062,10 +1114,9 @@ end
   end
 
   def test_council_result_is_passed_into_the_repair_stage
+    findings = { feedback: [], cherry_picks: ["dummy.yml line 1: tighten the boundary"] }
     council = Object.new
-    council.define_singleton_method(:run) do |files:, pass:, deadline:|
-      { feedback: [], cherry_picks: ["dummy.yml line 1: tighten the boundary"] }
-    end
+    council.define_singleton_method(:run) { |files:, pass:, deadline:| findings }
     loop = build_loop(
       [{ rule: "TEST_RULE", file: File.join(@root, "dummy.yml"), line: 1, message: "x" }],
       council:,
@@ -1086,7 +1137,7 @@ end
       nil,
     )
 
-    assert_same council, received, "council findings must reach the repair stage as repair context"
+    assert_equal findings, received, "council findings must reach the repair stage as repair context"
   end
 
   def test_finish_run_only_closes_the_journal
@@ -1211,6 +1262,12 @@ end
   end
 
   def test_pending_wishlist_becomes_part_of_the_next_fix_mission
+    FileUtils.mkdir_p(File.join(@root, "lib"))
+    File.write(File.join(@root, "lib", "sample.rb"), "module Sample\nend\n")
+    # Proposals are claimed against a git HEAD, so the fixture is a repository.
+    system("git", "-C", @root, "init", "-q", "-b", "main")
+    system("git", "-C", @root, "add", ".")
+    system("git", "-C", @root, "-c", "user.name=t", "-c", "user.email=t@example.invalid", "commit", "-q", "-m", "fixture")
     wishlist = Master::Fix::Wishlist.new(root: @root, agent: RecordingAgent.new(<<~YAML))
       - id: boot_boundary
         title: Measure the boot boundary
@@ -1226,7 +1283,7 @@ end
     YAML
     wishlist.call(state: "done", target: @root, run_id: "r1")
 
-    plan = build_loop([]).send(:mission_plan)
+    plan = build_loop([]).send(:mission_plan, target: @root)
 
     assert_includes plan, "Pending automatic convergence proposals from the durable /fix ledger."
     assert_includes plan, "Measure the boot boundary"
@@ -1277,36 +1334,47 @@ end
   end
 
   # 7. Running out of passes is not finishing.
-  def test_structure_preflight_runs_before_the_first_repair_pass
+  # Structure is a post-delivery checkpoint: the first ordinary pass delivers its
+  # verified repair, then the bounded sweep runs on freshly observed files.
+  def test_structure_checkpoint_runs_after_the_first_repair_pass
     target = File.join(@root, "RAILS")
     FileUtils.mkdir_p(target)
 
     order = []
     loop = Master::Fix::FixLoop.allocate
     loop.instance_variable_set(:@root, @root)
+    discipline = Object.new
+    discipline.define_singleton_method(:improving?) { false }
+    loop.instance_variable_set(:@convergence_discipline, discipline)
     loop.define_singleton_method(:sweep_tree) do |target, run_id, phase:|
       order << [:structure, target, run_id, phase]
       []
     end
     loop.define_singleton_method(:run_one_pass) do |index, **|
       order << [:pass, index]
-      Master::Result.ok("DONE: stub")
+      nil
     end
+    deadline = Object.new
+    deadline.define_singleton_method(:expired?) { false }
 
+    saved = ENV["MASTER_FIX_STRUCTURAL"]
+    ENV["MASTER_FIX_STRUCTURAL"] = "1"
     result = loop.send(
       :run_passes,
       files: [],
       target:,
       max_passes: 1,
-      deadline: nil,
+      deadline:,
       budget_seconds: 60,
       start_pass: 1,
       run_id: "r1",
     )
 
-    assert_match(/\ADONE: /, result.value!)
-    assert_equal [:structure, target, "r1-structure-first", :structure_first], order.first
-    assert_equal [:pass, 0], order.last
+    assert_match(/\APLATEAU: /, result.value!)
+    assert_equal [:pass, 0], order.first
+    assert_equal [:structure, target, "r1-structure-checkpoint", :structure_first], order.last
+  ensure
+    saved.nil? ? ENV.delete("MASTER_FIX_STRUCTURAL") : ENV["MASTER_FIX_STRUCTURAL"] = saved
   end
 
   def test_structural_sweep_failure_is_not_swallowed
@@ -1403,7 +1471,7 @@ end
 
   def test_one_repair_is_not_repairs
     pass = Master::CLI::Pipeline::Pass.allocate
-    assert_equal "preview: 1 repair", pass.send(:preview_lines, total: 1, rules: {}, files: {})
+    assert_equal "preview: 1 repair", pass.send(:preview_lines, total: 1, rules: {}, files: {}).lines.first.chomp
   end
 
   def test_gate_chain_is_explicitly_top_level_from_master_namespace

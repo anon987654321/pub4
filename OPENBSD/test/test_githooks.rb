@@ -39,8 +39,10 @@ class TestGitHooks < Minitest::Test
 
   # --- helpers -------------------------------------------------------------
 
+  # The boot smoke has its own test (MASTER/test/test_boot_smoke.rb); here it would
+  # boot the real container on every push.
   def git(*args, env: {})
-    out, status = Open3.capture2e(env, "git", *args, chdir: @dir)
+    out, status = Open3.capture2e({ "PUB4_SKIP_BOOT_SMOKE" => "1" }.merge(env), "git", *args, chdir: @dir)
     [out, status]
   end
 

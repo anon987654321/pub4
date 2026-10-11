@@ -98,6 +98,7 @@ module Master
         end
 
         def pass_progress? = @pass_progress == true
+        def publish_pending! = @committer.publish_pending!
 
         # What this run could not inspect or run. A file whose scan fails, or a
         # stage that raises, costs that file or that stage and nothing else: the

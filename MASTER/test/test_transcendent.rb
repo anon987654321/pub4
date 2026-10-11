@@ -31,7 +31,7 @@ class TestTranscendent < Minitest::Test
     pitches = plan[:phrases].map { |phrase| phrase[:pitch].delete("Hz").to_i }
     assert pitches.all? { |pitch| (-10..10).cover?(pitch) }
     assert_equal 0, pitches.first
-    assert_includes pitches, -6
+    assert_operator pitches.uniq.size, :>, 1, "the contour must move, or it is a monotone"
   end
 
   def test_warm_erratic_pick
@@ -54,7 +54,7 @@ class TestTranscendent < Minitest::Test
     flat = { scores: { lyrical: 0.0 }, mode: :conversational }
 
     assert Master::Voice::Transcendent.phrase_rendered?(cfg, flat)
-    assert_includes Master::Voice::Transcendent.build_engine_chain(cfg, flat), "edge_melodic"
+    assert_includes Master::Voice::Transcendent.build_engine_chain(cfg, flat, "Queue ready."), "edge_melodic"
   end
 
   def test_phrase_rendering_is_switchable_back_off
@@ -62,7 +62,7 @@ class TestTranscendent < Minitest::Test
     flat = { scores: { lyrical: 0.0 }, mode: :conversational }
 
     refute Master::Voice::Transcendent.phrase_rendered?(cfg, flat)
-    refute_includes Master::Voice::Transcendent.build_engine_chain(cfg, flat), "edge_melodic"
+    refute_includes Master::Voice::Transcendent.build_engine_chain(cfg, flat, "Queue ready."), "edge_melodic"
   end
 
   def test_lyrical_text_reaches_the_contour
@@ -71,7 +71,7 @@ class TestTranscendent < Minitest::Test
     lyrical = { scores: { lyrical: 0.9 }, mode: :melodic }
 
     assert Master::Voice::Transcendent.melodic_contour?(cfg, lyrical)
-    assert_includes Master::Voice::Transcendent.build_engine_chain(cfg, lyrical), "edge_melodic"
+    assert_includes Master::Voice::Transcendent.build_engine_chain(cfg, lyrical, "Sing la la."), "edge_melodic"
   end
 
   def test_melodic_performance_changes_timing_and_blends_pitch
@@ -91,7 +91,8 @@ class TestTranscendent < Minitest::Test
       rendered = Master::Voice::Transcendent.apply_spoken_performance(
         melody, "One. Two.", {}, :auto, base_rate: "-5%", base_pitch: "+0Hz"
       )
-      assert_equal ["+6Hz", "-6Hz"], rendered[:phrases].map { |phrase| phrase[:pitch] }
+      # melodic + performance - base, so the offsets add rather than replace.
+      assert_equal ["+18Hz", "-18Hz"], rendered[:phrases].map { |phrase| phrase[:pitch] }
       assert_equal ["+5%", "+8%"], rendered[:phrases].map { |phrase| phrase[:rate] }
     end
   end

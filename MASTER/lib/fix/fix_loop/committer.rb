@@ -9,8 +9,9 @@ require_relative "../../operator/ratchet_sponsor"
 module Master
   module Fix
     class FixLoop
-      # Commits what an explicitly requested fix-loop pass owns, pushes it, and
-      # proves the push landed.
+      # Commits what an explicitly requested fix-loop pass owns. The push waits
+      # for publish_pending! unless MASTER_FIX_PUSH=each, and either way a push
+      # that was made is proved to have landed.
       #
       # The checkout is shared by several sessions and a human. The owned unit
       # is the pass's target files, less any already dirty when the pass began:
@@ -117,9 +118,39 @@ module Master
           end
         end
 
-        private
+# One push at the end of the run, after final verification. A fix is
+# committed the moment it validates, but publishing every one of them
+# sent each commit to the remote before the run had proved the whole
+# still passed. MASTER_FIX_PUSH=each restores the push per commit.
+# Names what would be published first, as the pre-push guard does.
+def publish_pending!
+  @commit_mutex.synchronize do
+    ahead, = @git.ahead_behind
+    return :nothing_to_publish if ahead.zero?
 
-        def stage_commit_mode?
+    @git.log_between("@{u}").each { |line| Master::Trace::Dmesg.status("deliver0", "publishing #{line}") }
+    @git.push
+    verify_push!(["#{ahead} commit(s)"])
+    @bus&.publish("fix_loop:published", commits: ahead)
+    :published
+  end
+end
+
+private
+
+def push_each?
+  ENV["MASTER_FIX_PUSH"] == "each"
+end
+
+def push_commit!(paths)
+  return unless push_each?
+
+  @git.push
+  verify_push!(paths)
+end
+
+def stage_commit_mode?
+
           ENV["MASTER_FIX_COMMIT_STAGE"] == "1"
         end
 
@@ -149,7 +180,7 @@ module Master
             raise checkpoint.message if checkpoint.err?
 
             Master::Trace::Dmesg.status(
-              "deliver0", "commit=#{@git.head} push=ok paths=#{paths.join(", ")}"
+              "deliver0", "commit=#{@git.head} push=#{push_each? ? "ok" : "deferred"} paths=#{paths.join(", ")}"
             )
             result
           rescue StandardError
@@ -214,11 +245,10 @@ module Master
           return :blocked unless validate_paths(message, paths)
 
           @git.commit(with_finding_ids(message, findings, paths), paths:)
-          @git.push
-          verify_push!(paths)
+          push_commit!(paths)
           promote_known_good(@git.head, paths)
           Master::Trace::Dmesg.status(
-            "deliver0", "commit=#{@git.head} push=ok paths=#{paths.join(", ")}"
+            "deliver0", "commit=#{@git.head} push=#{push_each? ? "ok" : "deferred"} paths=#{paths.join(", ")}"
           )
           @bus&.publish("ops:commit", message: message.to_s[0, 120], head: @git.head, paths:, findings:)
           Result.ok(:committed)
@@ -257,8 +287,7 @@ module Master
           @git.commit(with_finding_ids(message, findings, paths), paths:)
           head_after = @git.head
           transaction.delivery.record_commit!(head_after:)
-          @git.push
-          verify_push!(paths)
+          push_commit!(paths)
           promote_known_good(head_after, paths)
           @bus&.publish("ops:commit", message: message.to_s[0, 120], head: head_after, paths:, findings:)
           Result.ok(:committed)

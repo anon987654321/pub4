@@ -177,6 +177,11 @@ task :autoload do
   puts "autoload: clean"
 end
 
+desc "Boot the container and build the FixLoop (no model call)"
+task :boot_smoke do
+  sh RbConfig.ruby, File.join(__dir__, "tools", "boot_smoke.rb")
+end
+
 desc "Run test/test_core_smoke.rb — Effect → Constitution → World loop"
 task :core_smoke do
   sh RbConfig.ruby, "-I#{File.join(__dir__, "lib")}", File.join(__dir__, "test", "test_core_smoke.rb")

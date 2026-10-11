@@ -23,10 +23,10 @@ class EnhanceStageTest < Minitest::Test
       agent: Agent.new('{"enhanced":"","changed":true}'),
     )
 
-    result = stage.call(ctx("please explain this carefully"))
+    result = stage.call(ctx("please explain this method to me carefully"))
 
     assert result.ok?
-    assert_equal "please explain this carefully", result.value!.message
+    assert_equal "please explain this method to me carefully", result.value!.message
     refute result.value!.key?(:original_message)
   end
 
@@ -35,11 +35,11 @@ class EnhanceStageTest < Minitest::Test
       agent: Agent.new('{"enhanced":"explain this","changed":true}'),
     )
 
-    result = stage.call(ctx("please explain this carefully"))
+    result = stage.call(ctx("please explain this method to me carefully"))
 
     assert result.ok?
     assert_equal "explain this", result.value!.message
-    assert_equal "please explain this carefully", result.value!.original_message
+    assert_equal "please explain this method to me carefully", result.value!.original_message
   end
 
   def test_changed_false_editor_output_keeps_the_original_message
@@ -47,9 +47,9 @@ class EnhanceStageTest < Minitest::Test
       agent: Agent.new('{"enhanced":"ignored","changed":false}'),
     )
 
-    result = stage.call(ctx("please explain this carefully"))
+    result = stage.call(ctx("please explain this method to me carefully"))
 
     assert result.ok?
-    assert_equal "please explain this carefully", result.value!.message
+    assert_equal "please explain this method to me carefully", result.value!.message
   end
 end

@@ -242,6 +242,12 @@ module Master
         raise "structural sweep failed: #{details}"
       end
 
+      # The one push of a run: called after final verification, and a no-op when
+      # MASTER_FIX_PUSH=each already published every commit.
+      def publish_pending!
+        @pass_runner.publish_pending!
+      end
+
       def retry_delivery(transaction_id:, expected_head:)
         actual_head = @git.head
         return Result.err("delivery recovery HEAD mismatch", category: :policy) unless actual_head == expected_head
@@ -501,6 +507,7 @@ module Master
         first_index = start_pass - 1
         pass_limit = [max_passes.to_i, ABSOLUTE_MAX_PASSES].min
         first_limit = pass_limit
+        stop_reason = nil
 
         loop do
           remaining_passes = [pass_limit - first_index, 0].max

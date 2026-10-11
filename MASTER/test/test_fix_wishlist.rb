@@ -26,6 +26,10 @@ class TestFixWishlist < Minitest::Test
     @root = Dir.mktmpdir("wishlist_")
     FileUtils.mkdir_p(File.join(@root, "lib"))
     File.write(File.join(@root, "lib", "sample.rb"), "module Sample\nend\n")
+    # Proposals are claimed against a git HEAD, so the fixture is a repository.
+    system("git", "-C", @root, "init", "-q", "-b", "main")
+    system("git", "-C", @root, "add", ".")
+    system("git", "-C", @root, "-c", "user.name=t", "-c", "user.email=t@example.invalid", "commit", "-q", "-m", "fixture")
     @bus = Class.new do
       attr_reader :events
       def initialize = @events = []

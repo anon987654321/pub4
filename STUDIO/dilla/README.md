@@ -194,13 +194,15 @@ and renders from before provenance existed have no recorded seed. A liveset take
 `project/liveset.jsonl` naming its seed and every choice, and the line rebuilds the take on any
 machine that has the crate.
 
-Renders sit beside `dilla.rb` and never in a folder of their own, because the words `renders`,
-`crate` and `samples` were read as three places for one thing. When the script is run from the
-repository root it refuses to write there and falls back to its own folder, and
-`DILLA_OUTPUT_DIR` chooses another place. A render may not replace a named take unless
-`DILLA_OVERWRITE` says so. Before a render starts, the asset check refuses to proceed if a named
-sample or kit is missing, since the failure is a good-sounding beat that is not the one the
-recipe asked for; `DILLA_ASSET_CHECK=0` proceeds anyway.
+Renders land in a dated folder outside the repository, `~/Documents/dilla-renders/<date>` or
+the same folder under `XDG_DATA_HOME` when that is set, and the engine prints the path it
+chose. Only `dilla.wav` and `dilla.mp4`, the finished showcase, sit beside `dilla.rb`. The
+words `renders`, `crate` and `samples` were once read as three places for one thing, so no
+folder of renders lives in the tree. `DILLA_OUTPUT_DIR` chooses another place. A render may
+not replace a named take unless `DILLA_OVERWRITE` says so. Before a render starts, the asset
+check refuses to proceed if a named sample or kit is missing, since the failure is a
+good-sounding beat that is not the one the recipe asked for; `DILLA_ASSET_CHECK=0` proceeds
+anyway.
 
 ## The postpro bridge
 

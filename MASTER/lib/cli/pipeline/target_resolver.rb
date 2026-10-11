@@ -40,7 +40,7 @@ module Master
           # caller is the repository root. Resolve that shorthand before
           # declaring the target outside the four governed trees.
           master_relative = File.expand_path(text, Master::ROOT)
-          return master_relative if File.file?(master_relative) || File.directory?(master_relative)
+          return master_relative if governed_path?(master_relative) && (File.file?(master_relative) || File.directory?(master_relative))
 
           raise ArgumentError, "target outside pub4 trees: #{raw.inspect}"
         end

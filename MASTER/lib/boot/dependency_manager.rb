@@ -580,7 +580,9 @@ module Master
         output = IO.popen(["git", "-C", @root, "rev-parse", "--git-common-dir"], err: File::NULL, &:read)
         return unless $?.success?
 
-        File.expand_path(output.strip, @root)
+        # Resolved, because git reports /private/var for a linked worktree and
+        # /var for the main checkout when the system temp directory is a symlink.
+        File.realpath(File.expand_path(output.strip, @root))
       rescue StandardError
         nil
       end
@@ -600,7 +602,7 @@ module Master
 
       def discard_stale_native_bundle!
         path = bundle_gems_path
-        return false unless File.directory?(path)
+        return true unless File.directory?(path)
 
         report("discarding stale native bundle #{path}")
         FileUtils.rm_rf(path)
@@ -622,9 +624,20 @@ module Master
         @env["MASTER_LOW_RESOURCE"] == "1" ? 2 : 4
       end
 
+      # An ABI-stale bundle is repaired by wiping and reinstalling; only a
+      # toolchain or header failure that survives that rebuild needs OS packages.
+      SYSTEM_RECOVERY_MESSAGES = [
+        "bundle install failed",
+        "bundle install failed in user path",
+        "bundle native extension repair failed",
+      ].freeze
+      ABI_STALE_LINE = /linked\ to\ incompatible|incompatible\ architecture/i.freeze
+
       def system_recovery_failure?(result)
-        %w[bundle install failed bundle install failed in user path].include?(result.message) &&
-          native_build_failure?(result.output)
+        return false unless SYSTEM_RECOVERY_MESSAGES.include?(result.message)
+
+        toolchain = result.output.to_s.lines.reject { |line| line.match?(ABI_STALE_LINE) }
+        native_build_failure?(toolchain.join)
       end
 
       def dependency_conflict?(output) = output.to_s.match?(DEPENDENCY_CONFLICT)

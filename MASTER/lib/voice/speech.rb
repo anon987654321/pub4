@@ -441,6 +441,9 @@ module Master
 
       def synthesize_bytes(text, **opts)
         clear_last_error!
+        # Blank text has nothing to say, so it must not start a daemon pool to find out.
+        return if text.to_s.strip.empty?
+
         TtsSupervisor.ensure_daemon!
         audio = synthesize_audio(text, **opts)
         bytes = audio&.bytes

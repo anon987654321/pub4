@@ -2,6 +2,7 @@
 
 require_relative "test_helper"
 require "tmpdir"
+require_relative "../lib/boot/entrypoint"
 
 class TestBootEntrypoint < Minitest::Test
   SOURCE = File.read(File.expand_path("../lib/boot/entrypoint.rb", __dir__))
@@ -16,7 +17,7 @@ class TestBootEntrypoint < Minitest::Test
   end
 
   def test_dependency_bootstrap_activates_the_master_bundle
-    assert_match(/DependencyManager\.ensure!\(.*?\n.*?activate_bundle!\(root\)/m, SOURCE)
+    assert_match(/manager\.ensure!\n.*?manager\.activate_environment!\n.*?activate_bundle!\(root\)/m, SOURCE)
     assert_includes SOURCE, 'ENV["BUNDLE_GEMFILE"] = gemfile'
     assert_includes SOURCE, 'require "bundler/setup"'
   end
@@ -52,9 +53,13 @@ class TestBootEntrypoint < Minitest::Test
     end
   end
 
-  def test_android_accepts_supported_ruby_four_patch_release
-    assert_match(/ANDROID_RUBY_PATTERN/, SOURCE)
-    assert_includes SOURCE, 'RUBY_PLATFORM.include?("android")'
+  def test_supported_ruby_window_spans_openbsd_packages_and_ruby_four
+    env = Operator::Environment
+
+    %w[3.3.9 3.4.9 4.0.5 4.0.7].each do |version|
+      assert env::SUPPORTED_RUBY_MIN <= Gem::Version.new(version) && Gem::Version.new(version) < env::SUPPORTED_RUBY_MAX, version
+    end
+    refute env::SUPPORTED_RUBY_MIN <= Gem::Version.new("3.2.9")
   end
 
   def test_preloaded_wrong_bundler_reexecs_into_a_clean_process

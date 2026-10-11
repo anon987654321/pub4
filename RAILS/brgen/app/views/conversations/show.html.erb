@@ -98,17 +98,20 @@
                 thread; a group is left by leaving it. %>
             <section class="messenger-details-section">
               <% if @participant&.muted? %>
+                <%# destructive: no-confirm-ok — reversible — the thread is muted again with one click %>
                 <%= button_to t("messages.unmute"), conversation_mute_path(@conversation), method: :delete, class: "btn btn-ghost btn-sm" %>
               <% else %>
                 <%= button_to t("messages.mute"), conversation_mute_path(@conversation), class: "btn btn-ghost btn-sm" %>
               <% end %>
               <% if @participant&.archived? %>
+                <%# destructive: no-confirm-ok — reversible — the thread is archived again with one click %>
                 <%= button_to t("messages.unarchive"), conversation_archive_path(@conversation), method: :delete, class: "btn btn-ghost btn-sm" %>
               <% else %>
                 <%= button_to t("messages.archive"), conversation_archive_path(@conversation), class: "btn btn-ghost btn-sm", form: { data: { turbo_frame: "_top" } } %>
               <% end %>
               <% if @conversation.direct? && (blockee = @conversation.other_participants(Current.user).first) %>
                 <% if @blocked_by_me %>
+                  <%# destructive: no-confirm-ok — reversible — lifting a block loses nothing; the person can be blocked again %>
                   <%= button_to t("messages.unblock_user"), unblock_user_path(blockee), method: :delete, class: "btn btn-ghost btn-sm" %>
                 <% else %>
                   <%= button_to t("messages.block_user"), block_user_path(blockee), class: "btn btn-ghost btn-sm",

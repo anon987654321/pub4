@@ -11,22 +11,23 @@ require_relative "../lib/operator/ruby_runner"
 class TestBinRuby < Minitest::Test
   BIN = File.expand_path("../bin/ruby", __dir__)
 
-  def test_boot_accepts_packaged_openbsd_and_android_ruby_versions
-    require_relative "../lib/boot/entrypoint"
+  def test_supported_window_accepts_packaged_openbsd_and_ruby_four_versions
+    window = Operator::Environment
+    ok = ->(version) { window::SUPPORTED_RUBY_MIN <= Gem::Version.new(version) && Gem::Version.new(version) < window::SUPPORTED_RUBY_MAX }
 
-    assert Master::Boot::Entrypoint::OPENBSD_RUBY_PATTERN.match?("3.3.9")
-    assert Master::Boot::Entrypoint::OPENBSD_RUBY_PATTERN.match?("3.4.9")
-    refute Master::Boot::Entrypoint::OPENBSD_RUBY_PATTERN.match?("3.2.9")
-    assert Master::Boot::Entrypoint::ANDROID_RUBY_PATTERN.match?("4.0.5")
-    refute Master::Boot::Entrypoint::ANDROID_RUBY_PATTERN.match?("3.4.9")
+    %w[3.3.9 3.4.9 4.0.5 4.0.7].each { |version| assert ok.(version), version }
+    refute ok.("3.2.9")
+    refute ok.("4.1.0")
   end
 
-  def test_openbsd_lane_is_allowed_by_the_wrapper
+  def test_the_wrapper_window_matches_the_supported_window
     source = File.read(BIN)
+    min = Operator::Environment::SUPPORTED_RUBY_MIN.segments
+    max = Operator::Environment::SUPPORTED_RUBY_MAX.segments
 
-    assert_includes source, "$ACTUAL != $PINNED_VERSION"
-    assert_includes source, "$ACTUAL == 3.3.* || $ACTUAL == 3.4.*"
-    assert_includes source, "OpenBSD MASTER accepts ruby33/ruby34"
+    assert_includes source, "MIN_MAJOR=#{min[0]}\nMIN_MINOR=#{min[1]}"
+    # The wrapper's upper bound is inclusive (4.0), the module's exclusive (< 4.1).
+    assert_includes source, "MAX_MAJOR=#{max[0]}\nMAX_MINOR=#{max[1] - 1}"
   end
 
   def test_it_execs_a_ruby_with_the_arguments_intact
@@ -77,7 +78,7 @@ class TestBinRuby < Minitest::Test
       fake_bin = File.join(root, "bin")
       FileUtils.mkdir_p(fake_bin)
       ruby_path = File.join(root, "ruby-4.0.5")
-      File.write(ruby_path, "#!/usr/bin/env ruby\\n")
+      File.write(ruby_path, "#!/usr/bin/env ruby\n")
       File.chmod(0o755, ruby_path)
       rbenv = File.join(fake_bin, "rbenv")
       File.write(rbenv, <<~RUBY)
@@ -86,48 +87,13 @@ class TestBinRuby < Minitest::Test
         puts ENV.fetch("FAKE_RBENV_PATH")
       RUBY
       File.chmod(0o755, rbenv)
-      File.write(File.join(root, ".ruby-version"), "4.0.5\\n")
+      File.write(File.join(root, ".ruby-version"), "4.0.5\n")
 
       ENV["PATH"] = "#{fake_bin}#{File::PATH_SEPARATOR}#{old_path}"
       ENV["FAKE_RBENV_PATH"] = ruby_path
       ENV["RBENV_ROOT"] = File.join(root, "empty-rbenv")
 
       assert_equal ruby_path, Operator::RubyRunner.rbenv_path("ruby", root:)
-    ensure
-      ENV["PATH"] = old_path
-      ENV["FAKE_RBENV_PATH"] = old_fake_path
-      ENV["RBENV_ROOT"] = old_rbenv_root
-    end
-  end
-
-  def test_ruby_runner_prefers_the_pinned_rbenv_over_generic_versioned_ruby
-    old_path = ENV["PATH"]
-    old_fake_path = ENV["FAKE_RBENV_PATH"]
-    old_rbenv_root = ENV["RBENV_ROOT"]
-
-    Dir.mktmpdir do |root|
-      fake_bin = File.join(root, "bin")
-      FileUtils.mkdir_p(fake_bin)
-      ruby_path = File.join(root, "ruby-4.0.5")
-      File.write(ruby_path, "#!/usr/bin/env ruby\\n")
-      File.chmod(0o755, ruby_path)
-      rbenv = File.join(fake_bin, "rbenv")
-      File.write(rbenv, <<~RUBY)
-        #!/usr/bin/env ruby
-        abort "wrong version" unless ENV["RBENV_VERSION"] == "4.0.5"
-        puts ENV.fetch("FAKE_RBENV_PATH")
-      RUBY
-      File.chmod(0o755, rbenv)
-      generic = File.join(fake_bin, "ruby")
-      File.write(generic, "#!/bin/sh\\nexit 99\\n")
-      File.chmod(0o755, generic)
-      File.write(File.join(root, ".ruby-version"), "4.0.5\\n")
-
-      ENV["PATH"] = "#{fake_bin}#{File::PATH_SEPARATOR}#{old_path}"
-      ENV["FAKE_RBENV_PATH"] = ruby_path
-      ENV["RBENV_ROOT"] = File.join(root, "empty-rbenv")
-
-      assert_equal ruby_path, Operator::RubyRunner.ruby_cmd
     ensure
       ENV["PATH"] = old_path
       ENV["FAKE_RBENV_PATH"] = old_fake_path

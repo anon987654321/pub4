@@ -5,6 +5,20 @@ require "socket"
 require "tmpdir"
 
 class TestSpeech < Minitest::Test
+  # These tests exercise synthesis plumbing, not the machine's daemon pool. A
+  # real ensure_daemon! spawns tts-worker processes and waits for their sockets,
+  # so a checkout with no daemon running hung every test that reached it.
+  def setup
+    @supervisor = Master::Voice::TtsSupervisor.singleton_class
+    @supervisor.send(:alias_method, :real_ensure_daemon!, :ensure_daemon!)
+    @supervisor.send(:define_method, :ensure_daemon!) { |**| true }
+  end
+
+  def teardown
+    @supervisor.send(:alias_method, :ensure_daemon!, :real_ensure_daemon!)
+    @supervisor.send(:remove_method, :real_ensure_daemon!)
+  end
+
   # Offline, "edge socket produced empty audio" printed fourteen times running.
   # voice.yml declared the chain, Policy read it, Speech applied it — and the
   # live path never called it. synthesis_mode has been "transcendent" since
@@ -29,23 +43,24 @@ class TestSpeech < Minitest::Test
   def test_a_tts_failure_prints_once_and_stays_in_last_error
     speech = Master::Voice::Speech
     message = "probe failure #{Process.pid}"
-    _, err = capture_io { 3.times { speech.send(:warn_tts, message) } }
+    out, err = capture_io { 3.times { speech.send(:warn_tts, message) } }
 
-    assert_equal 1, err.lines.grep(/#{message}/).size
+    assert_equal 1, (out + err).lines.grep(/#{message}/).size
     assert_equal message, speech.instance_variable_get(:@last_error)
   end
 
-  def test_daemon_env_strips_web_bundle_pollution
+  # Entrypoint has already made the parent's bundle MASTER's own, so the daemon
+  # inherits that context; only the Gemfile is pinned to the daemon's root.
+  def test_daemon_env_carries_the_prepared_bundle_and_pins_the_gemfile
     Dir.mktmpdir("master_tts_env") do |root|
-      ENV["BUNDLE_PATH"] = "/wrong/web/vendor/bundle"
+      ENV["BUNDLE_PATH"] = "/prepared/bundle"
       ENV["BUNDLE_GEMFILE"] = "/wrong/web/Gemfile"
-      ENV["GEM_HOME"] = "/wrong/gems"
+      ENV["GEM_HOME"] = "/prepared/gems"
       env = Master::Voice::TtsSupervisor.daemon_env(root)
-      assert_nil env["BUNDLE_PATH"]
-      assert_nil env["GEM_HOME"]
+      assert_equal "/prepared/bundle", env["BUNDLE_PATH"]
+      assert_equal "/prepared/gems", env["GEM_HOME"]
       assert_equal File.join(root, "Gemfile"), env["BUNDLE_GEMFILE"]
       assert_equal ENV.fetch("HOME", ""), env["HOME"]
-      assert env.values.compact.size <= Master::Voice::TtsSupervisor::SPAWN_ENV_KEYS.size + 1
     end
   ensure
     ENV.delete("BUNDLE_PATH")
@@ -87,7 +102,7 @@ class TestSpeech < Minitest::Test
       responder = Thread.new do
         client = server.accept
         request = client.gets
-        client.write("ok\n")
+        client.write("ok #{Master::Voice::TtsSupervisor.worker_version(Master::ROOT)}\n")
         client.close
         request
       end
@@ -166,10 +181,12 @@ class TestSpeech < Minitest::Test
     original = ENV["MASTER_TTS_MODE"]
     ENV.delete("MASTER_TTS_MODE")
 
-    Master::Voice::Transcendent.stub(:load_config, { "fast_mode" => false, "default_mode" => "transcendent" }) do
-      assert_equal "transcendent", speech.synthesis_mode
-      ENV["MASTER_TTS_MODE"] = "classic"
-      assert_equal "classic", speech.synthesis_mode
+    Master::Voice::Transcendent.stub(:enabled?, true) do
+      Master::Voice::Transcendent.stub(:load_config, { "fast_mode" => false, "default_mode" => "transcendent" }) do
+        assert_equal "transcendent", speech.synthesis_mode
+        ENV["MASTER_TTS_MODE"] = "classic"
+        assert_equal "classic", speech.synthesis_mode
+      end
     end
   ensure
     ENV["MASTER_TTS_MODE"] = original
@@ -222,9 +239,9 @@ class TestSpeech < Minitest::Test
   end
 
   def test_native_audio_mime_types
-    assert_equal "audio/mpeg", Master::Voice::Speech.mime_type_for(".mp3")
-    assert_equal "audio/wav", Master::Voice::Speech.mime_type_for(".wav")
-    assert_equal "audio/mp4", Master::Voice::Speech.mime_type_for(".m4a")
+    assert_equal "audio/mpeg", Master::Voice::Speech.mime_type_for("a.mp3")
+    assert_equal "audio/wav", Master::Voice::Speech.mime_type_for("a.wav")
+    assert_equal "audio/mp4", Master::Voice::Speech.mime_type_for("a.m4a")
   end
 
   def test_clean_text_does_not_cut_the_tail
@@ -434,12 +451,14 @@ class TestSpeech < Minitest::Test
     File.delete(audio_path) if File.exist?(audio_path)
     server_thread = serve_once(server, client_io)
     result = Master::Voice::TtsSupervisor.stub(:next_socket, server.path) do
-      Master::Voice::Speech.synthesize_edge_socket(
-        text: "hello",
-        voice_name: "en-GB-RyanNeural",
-        style_config: { rate: "+0%", pitch: "+0Hz" },
-        audio_path:,
-      )
+      Master::Voice::TtsSupervisor.stub(:retire_socket, nil) do
+        Master::Voice::Speech.synthesize_edge_socket(
+          text: "hello",
+          voice_name: "en-GB-RyanNeural",
+          style_config: { rate: "+0%", pitch: "+0Hz" },
+          audio_path:,
+        )
+      end
     end
     server_thread.join
     [result, audio_path, audio_bytes(audio_path)]
@@ -453,13 +472,21 @@ class TestSpeech < Minitest::Test
     File.exist?(path) ? File.binread(path) : nil
   end
 
+  # An empty answer retires the worker and asks once more, so the stub serves a
+  # second connection when one arrives and stops when none does.
   def serve_once(server, client_io)
     Thread.new do
-      client = server.accept
-      client.gets
-      client_io.call(client)
-    ensure
-      client.close rescue nil
+      2.times do |turn|
+        break if turn.positive? && !IO.select([server], nil, nil, 0.5)
+
+        client = server.accept
+        begin
+          client.gets
+          client_io.call(client)
+        ensure
+          client.close rescue nil
+        end
+      end
     end
   end
 
@@ -488,19 +515,23 @@ class TestSpeech < Minitest::Test
 
   def test_synthesize_edge_warns_and_cleans_up_failed_worker_output
     status = Struct.new(:success?).new(false)
-    _out, err = capture_io do
-      Master::Voice::Speech.stub(:synthesize_edge_socket, nil) do
-        Master::Io::Exec.stub(:capture3, ["", "worker failed", status]) do
-          assert_nil Master::Voice::Speech.synthesize_edge(
-            "hello",
-            voice: :ryan,
-            style_config: { rate: "+0%", pitch: "+0Hz" },
-          )
+    capture_io do
+      # Fast mode skips the one-shot worker, which is the path under test.
+      Master::Voice::Speech.stub(:fast_tts_mode?, false) do
+        Master::Voice::Speech.stub(:synthesize_edge_socket, nil) do
+          Master::Io::Exec.stub(:capture3, ["", "worker failed #{Process.pid}", status]) do
+            assert_nil Master::Voice::Speech.synthesize_edge(
+              "hello",
+              voice: :ryan,
+              style_config: { rate: "+0%", pitch: "+0Hz" },
+            )
+          end
         end
       end
     end
 
-    assert_includes err, "tts: edge worker failed: worker failed"
+    # warn_tts keeps every failure in last_error even when the terminal is quiet.
+    assert_includes Master::Voice::Speech.instance_variable_get(:@last_error), "edge worker failed: worker failed #{Process.pid}"
   end
 
   def test_resolve_voice_accepts_neural_name_and_alias
@@ -520,11 +551,13 @@ class TestSpeech < Minitest::Test
   end
 
   def test_worker_timeout_scales_with_text_length
-    base = Master::Voice::Speech.send(:worker_timeout, 0)
-    long = Master::Voice::Speech.send(:worker_timeout, 4000)
-    assert_equal Master::Voice::Speech::WORKER_TIMEOUT, base
-    assert long > base, "a full MAX_CHARS utterance should get more time than an empty one"
-    assert long <= Master::Voice::Speech::WORKER_TIMEOUT_MAX
+    Master::Voice::Speech.stub(:fast_tts_mode?, false) do
+      base = Master::Voice::Speech.send(:worker_timeout, 0)
+      long = Master::Voice::Speech.send(:worker_timeout, 4000)
+      assert_equal Master::Voice::Speech::WORKER_TIMEOUT, base
+      assert long > base, "a 4000-character utterance should get more time than an empty one"
+      assert long <= Master::Voice::Speech::WORKER_TIMEOUT_MAX
+    end
   end
 
   def test_fast_tts_timeout_is_bounded_to_seconds_not_minutes
@@ -537,7 +570,7 @@ class TestSpeech < Minitest::Test
 
   def test_worker_timeout_respects_explicit_env_override_regardless_of_length
     ENV["MASTER_TTS_TIMEOUT"] = "7"
-    assert_equal 7, Master::Voice::Speech.send(:worker_timeout, Master::Voice::Speech::MAX_CHARS)
+    assert_equal 7, Master::Voice::Speech.send(:worker_timeout, 4000)
   ensure
     ENV.delete("MASTER_TTS_TIMEOUT")
   end
@@ -557,7 +590,7 @@ class TestSpeech < Minitest::Test
     assert_equal :question, speech.infer_style("Are you ready?")
     assert_equal :calm, speech.infer_style("No rush, we can take it one step at a time.")
     assert_equal :warm, speech.infer_style("Glad that makes sense — thanks.")
-    assert_equal :energetic, speech.infer_style("Great! We got it!")
+    assert_equal :energetic, speech.infer_style("We shipped it! Look at that go!")
     assert_equal :storyteller, speech.infer_style("Imagine this: a long night, a quiet street, and the whole city slowly waking up around us.")
     assert_equal :brief, speech.infer_style("Done now.")
     assert_equal :fail, speech.infer_style("The deploy failed.")

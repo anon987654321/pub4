@@ -2,6 +2,7 @@
 
 require "minitest/autorun"
 require "tmpdir"
+require "socket"
 require "yaml"
 
 # vps-deploy is the entrypoint for every production deploy and had no test.
@@ -91,7 +92,7 @@ class VpsDeployContractTest < Minitest::Test
     refute_nil guard_glob, "resource_guard no longer reads a deploy flag glob"
 
     Dir.mktmpdir do |repo|
-      script = "repo=#{repo}; app=bsdports\n#{flag_block}\nprint -r -- $deploy_flag\n[[ -e $deploy_flag ]] && print held\n"
+      script = "repo=#{repo}; app=bsdports\nrelease_deploy_lock() { :; }\n#{flag_block}\nprint -r -- $deploy_flag\n[[ -e $deploy_flag ]] && print held\n"
       out = IO.popen(["zsh", "-c", script], &:read).lines.map(&:chomp)
       flag = out.first
 
@@ -103,6 +104,85 @@ class VpsDeployContractTest < Minitest::Test
       rcd_flag = File.read(File.join(ROOT, "OPENBSD", "etc", "rc.d", "bsdports"))[%r{touch \S+/(\.deploying\S*)}, 1]
       refute_equal rcd_flag, File.basename(flag),
                    "rc.d removes its own flag after /up, so sharing its name drops the hold mid-deploy"
+    end
+  end
+
+  def lock_block
+    SOURCE[/^lock_dir=.*?^\[\[ -n \$\{VPS_DEPLOY_LOCK_HELD:-\} \]\] \|\| acquire_deploy_lock$/m]
+  end
+
+  # Runs the lock block alone in zsh against a scratch directory; returns [output, exit status].
+  def lock_run(dir, ttl: 7200, body: "print acquired")
+    script = "export VPS_DEPLOY_LOCK_DIR=#{dir}/deploy.lock VPS_DEPLOY_LOCK_TTL=#{ttl}\n#{lock_block}\n#{body}\n"
+    out = IO.popen(["zsh", "-c", script, { err: %i[child out] }], &:read)
+    [out, $?.exitstatus]
+  end
+
+  def test_a_lock_records_its_owner_and_is_released_on_exit
+    refute_nil lock_block, "the lock block is gone — the scan broke, or the lock did"
+    Dir.mktmpdir do |dir|
+      out, status = lock_run(dir, body: "print -r -- $(<$lock_dir/owner)\nrelease_deploy_lock")
+      pid, host, epoch = out.lines.last.split
+
+      assert_equal 0, status
+      assert_match(/\A\d+\z/, pid)
+      assert_equal Socket.gethostname.split(".").first, host
+      assert_in_delta Time.now.to_i, epoch.to_i, 30
+      refute Dir.exist?(File.join(dir, "deploy.lock")), "release left the lock behind"
+    end
+  end
+
+  def test_a_lock_whose_pid_is_gone_is_reaped_and_reported
+    Dir.mktmpdir do |dir|
+      lock = File.join(dir, "deploy.lock")
+      Dir.mkdir(lock)
+      File.write(File.join(lock, "owner"), "999999 #{Socket.gethostname.split(".").first} #{Time.now.to_i}\n")
+      out, status = lock_run(dir)
+
+      assert_equal 0, status
+      assert_includes out, "reaping stale lock"
+      assert_includes out, "owner pid 999999 is not running"
+      assert_includes out, "acquired"
+    end
+  end
+
+  def test_a_lock_older_than_the_ttl_is_reaped_even_when_its_pid_lives
+    Dir.mktmpdir do |dir|
+      lock = File.join(dir, "deploy.lock")
+      Dir.mkdir(lock)
+      File.write(File.join(lock, "owner"), "#{Process.pid} #{Socket.gethostname.split(".").first} #{Time.now.to_i - 9000}\n")
+      out, status = lock_run(dir)
+
+      assert_equal 0, status
+      assert_includes out, "past the 7200s TTL"
+    end
+  end
+
+  def test_a_live_fresh_lock_refuses_the_second_deploy
+    Dir.mktmpdir do |dir|
+      lock = File.join(dir, "deploy.lock")
+      Dir.mkdir(lock)
+      owner = "#{Process.pid} #{Socket.gethostname.split(".").first} #{Time.now.to_i}\n"
+      File.write(File.join(lock, "owner"), owner)
+      out, status = lock_run(dir)
+
+      assert_equal 75, status
+      assert_includes out, "another deploy owns"
+      assert_equal owner, File.read(File.join(lock, "owner")), "a live owner's record was disturbed"
+    end
+  end
+
+  def test_a_bare_fresh_lock_directory_is_left_alone_and_a_stale_one_is_reaped
+    Dir.mktmpdir do |dir|
+      lock = File.join(dir, "deploy.lock")
+      Dir.mkdir(lock)
+      _out, status = lock_run(dir)
+      assert_equal 75, status
+
+      File.utime(Time.now - 9000, Time.now - 9000, lock)
+      out, status = lock_run(dir)
+      assert_equal 0, status
+      assert_includes out, "no readable owner"
     end
   end
 
