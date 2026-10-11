@@ -2875,7 +2875,7 @@ SHOWCASE_MODES = {
          [12.0, { "patch" => "tape_choir" }],
          [18.0, { "patch" => "moog_brass" }]],
       ]
-    when "moog_strings", "moog_brass", "prophet_five", "memorymoog_organ", "minimoog_lead", "moog_flute", "prophet_pad", "poly_lead", "vapor_lead", "rhodes_tine", "tape_choir", "dangelo_velvet", "showcase_noir_pad", "shadow_lead", "vp330_ensemble", "soft_reed", "surreal_wash", "ringtone_lead"
+    when "moog_strings", "opus3_strings", "matriarch_stabs", "grandmother_sweep", "moog_brass", "prophet_five", "memorymoog_organ", "minimoog_lead", "moog_flute", "prophet_pad", "poly_lead", "vapor_lead", "rhodes_tine", "tape_choir", "dangelo_velvet", "showcase_noir_pad", "shadow_lead", "vp330_ensemble", "soft_reed", "vox_humana", "e_piano", "surreal_wash", "ringtone_lead"
       [Demo.new(name, rng:), [[2.5, { "knob" => "cutoff", "amount" => -0.1, "seconds" => 2.5 }]]]
     when "bach"
       path = BachMidi.source
