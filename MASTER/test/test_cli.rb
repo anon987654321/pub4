@@ -249,7 +249,7 @@ class TestCLI < Minitest::Test
     review = Master::CLI::CommandRegistry.help_text("review")
     fix = Master::CLI::CommandRegistry.help_text("fix")
 
-    assert_match(%r{^/fix +the convergence loop}, summary)
+    assert_match(%r{^write: +/fix is the write path}, summary)
     refute_includes summary, "--dry-run"
     assert_includes review, "/review [path]"
     assert_includes review, "--only", "the stages are the detail, not the summary"
@@ -368,11 +368,14 @@ end
   # come back as a row: a second entry in the list is a second command.
   def test_help_names_the_closed_set
     summary = Master::CLI::CommandRegistry.help_text
-    rows = summary.lines.grep(%r{\A/\w+ {2,}\S}).map { |line| line[%r{\A/(\w+)}, 1] }
-    %w[review status undo commit model pair doctor rules why orders soul help clear].each do |name|
-      assert_includes rows, name
-    end
-    assert_includes rows, "fix"
+rows = summary.scan(%r{(?<=\s)/(\w+)}).flatten
+%w[review status undo commit model doctor laws why orders soul help clear].each do |name|
+  assert_includes rows, name
+end
+assert_includes rows, "fix"
+# The list is the topics: a documented command missing from it is a command nobody finds.
+topics = Master::CLI::CommandRegistry::HELP_TOPICS.keys
+assert_empty topics - rows, "documented commands missing from the summary"
     refute_includes rows, "scan"
     refute_includes summary, "/orient"
     refute_includes summary, "/scan"
@@ -564,7 +567,7 @@ end
       scan
     }) do
       out, = capture_io { cli.send(:run_self_scan) }
-      assert_equal "dim:judge: lib/ 1 rules, 1 violations\n", out
+      assert_equal "scan0: judge: lib/ 1 rules, 1 violations\n", out
     end
     scan.verify
   end
@@ -611,17 +614,16 @@ end
       cli = Master::CLI::Session.new(container: @container.merge(config: {}, root:))
       cli.instance_variable_set(:@running, true)
 
-      @session.stub(:save!, -> { raise JSON::GeneratorError, "invalid UTF-8" }) do
-        @renderer.expect(:closing, "master0: closed")
+      @session.expect(:save!, nil) { raise JSON::GeneratorError, "invalid UTF-8" }
+      @renderer.expect(:closing, "master0: closed")
 
-        out, err = capture_io { cli.send(:handle_repl_line, "/exit") }
+      out, err = capture_io { cli.send(:handle_repl_line, "/exit") }
 
-        assert_match(/session0: save failed — JSON::GeneratorError: invalid UTF-8/, out + err)
-        assert_equal "master0: closed
-", out
-        refute cli.instance_variable_get(:@running)
-        @renderer.verify
-      end
+      assert_match(/session0: save failed — JSON::GeneratorError: invalid UTF-8/, out + err)
+      assert_equal "master0: closed\n", out
+      refute cli.instance_variable_get(:@running)
+      @renderer.verify
+      @session.verify
     end
   end
 

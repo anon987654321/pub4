@@ -256,7 +256,7 @@ module Master
         [
           "commands: /status /doctor /voice /model /deploy /play /size /events",
           "          /wake /review /critique /fix /face /wishlist /explain /prove",
-          "          /session /clear /undo /snapshot",
+          "          /session /clear /undo /commit /snapshot",
           "          /android /ios /orders",
           "          /soul /laws /why /plugin /help /exit /quit",
           "input:    !cmd governed shell, << multiline, /help X details",
