@@ -143,10 +143,12 @@ module Master
         end
 
         def context_eligible?(key, entry = nil)
+          return false if key.to_s.start_with?("archive/", "conflict/")
+
           row = entry
           row = @mutex.synchronize { @store[key.to_s] } if row.nil?
-          return false unless row.is_a?(Hash)
-          return false if key.to_s.start_with?("archive/", "conflict/")
+          return false if row.nil?
+          return true unless row.is_a?(Hash)
 
           provenance = row["provenance"]
           status = provenance.is_a?(Hash) ? provenance["status"].to_s : ""
