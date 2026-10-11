@@ -92,6 +92,22 @@ class TestMemoryReview < Minitest::Test
     ENV["MASTER_ZERO_EMBEDDINGS"] = previous_zero
   end
 
+  def test_legacy_scalar_memory_can_be_reviewed_without_losing_its_text
+    @memory.instance_variable_get(:@store)["legacy_scalar"] = "legacy route preference"
+    result = @memory.review(
+      "legacy_scalar",
+      verdict: :obsolete,
+      evidence: evidence("test:legacy-scalar", "reviewed legacy value"),
+      reviewer: "operator",
+    )
+
+    assert_equal "obsolete", result.fetch("status")
+    assert_equal "legacy route preference", @memory.recall("legacy_scalar")
+    refute @memory.context_eligible?("legacy_scalar")
+    refute @memory.keyword_recall("legacy route preference", top_n: 10)
+      .any? { |row| row[:key] == "legacy_scalar" }
+  end
+
   def test_review_recovers_from_malformed_legacy_provenance
     @memory.remember("legacy_fact", "a remembered value")
     entry = @memory.instance_variable_get(:@store).fetch("legacy_fact")
