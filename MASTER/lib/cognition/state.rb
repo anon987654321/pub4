@@ -40,9 +40,24 @@ module Master
           return false if raw.key?("workspace") && !raw["workspace"].is_a?(Array)
           return false if raw.key?("self_model") && !raw["self_model"].is_a?(Hash)
           return false if raw.key?("metrics") && !raw["metrics"].is_a?(Hash)
-          return false if raw.key?("outcomes") &&
-                          (!raw["outcomes"].is_a?(Hash) ||
-                           (raw["outcomes"].key?("records") && !raw["outcomes"]["records"].is_a?(Hash)))
+          if raw.key?("outcomes")
+            outcomes = raw["outcomes"]
+            return false unless outcomes.is_a?(Hash)
+            records = outcomes.fetch("records", {})
+            return false unless records.is_a?(Hash)
+            return false unless records.all? do |_key, record|
+              record.is_a?(Hash) &&
+                %w[successes failures inconclusive brier_count].all? do |counter|
+                  !record.key?(counter) || record[counter].is_a?(Numeric)
+                end &&
+                (!record.key?("observations") || record["observations"].is_a?(Array)) &&
+                (!record.key?("seen_receipts") || record["seen_receipts"].is_a?(Array))
+            end
+          end
+          if raw["self_model"].is_a?(Hash) && raw["self_model"].key?("assessments")
+            assessments = raw["self_model"]["assessments"]
+            return false unless assessments.is_a?(Hash) && assessments.values.all? { |row| row.is_a?(Hash) }
+          end
 
           true
         end

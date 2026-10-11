@@ -117,6 +117,21 @@ class TestCognitionFeedback < Minitest::Test
     assert_equal 0.0, loaded.metrics.fetch("continuity")
   end
 
+  def test_checkpoint_rejects_corrupt_nested_outcome_records
+    path = File.join(@root, Master::Cognition::Mind::STATE_PATH)
+    FileUtils.mkdir_p(File.dirname(path))
+    File.write(path, {
+      "ticks" => 3,
+      "identity" => { "name" => "MASTER" },
+      "predictions" => { "transitions" => {} },
+      "outcomes" => { "records" => { "bad" => "not a record" } },
+    }.to_yaml)
+
+    loaded = Master::Cognition::State.load(path)
+    refute loaded.checkpoint_valid
+    assert_empty loaded.outcomes.fetch("records")
+  end
+
   def test_checkpoint_continuity_is_not_a_monotonic_mood_proxy
     assert_equal 0.0, @mind.snapshot.dig("metrics", "continuity")
 
