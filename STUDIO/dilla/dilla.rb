@@ -102,6 +102,7 @@ require_relative "lib/harmony"
 require_relative "lib/ledger"
 require_relative "lib/beat_library"
 require_relative "lib/groove"
+require_relative "lib/techno_patterns"
 require_relative "lib/listen"
 require_relative "lib/midi_effects"
 require_relative "lib/scene"
@@ -30120,6 +30121,18 @@ def render_hate_techno(destination = File.join(ROOT, "hate_session.mp3"))
   metal_per_bar[1] = [7]; metal_per_bar[2] = [3, 11]; metal_per_bar[4] = [7, 13]; metal_per_bar[6] = [5]
   tom_per_bar = Array.new(HATE_CYCLE_BARS) { [] }
   tom_per_bar[5] = [9, 13]; tom_per_bar[7] = [6, 10]
+  rumble_per_bar = Array.new(HATE_CYCLE_BARS) { [] }
+
+  # The seeded drum profile replaces the tables above; HATE_MODERN and
+  # HATE_INTRICATE below remain explicit overrides on top of it.
+  pattern_name = techno_pattern_name
+  pattern_rows = DillaTechnoPatterns.cycle(pattern_name, seed_for("techno_pattern_cycle"))
+  { kick: kick_per_bar, ghost: ghost_per_bar, clap: clap_per_bar, hat: hat_per_bar, open: open_per_bar,
+    ride: ride_per_bar, metal: metal_per_bar, tom: tom_per_bar, rumble: rumble_per_bar }.each do |role, rows|
+    rows.replace(DillaTechnoPatterns.steps(pattern_rows, role))
+  end
+  kick_vels = DillaTechnoPatterns.velocities(pattern_rows, :kick)
+  dmesg("techno pattern: #{pattern_name}", unit: "techno0", parent: "dilla0")
 
   # HATE_MODERN=1 is the contemporary club pattern, not the industrial one.
   #
@@ -30224,7 +30237,7 @@ def render_hate_techno(destination = File.join(ROOT, "hate_session.mp3"))
   # and the error ffmpeg gives points at the expression, not at the flag.
   tone = lambda do |name, expr, chain|
     parts[name] = File.join(work, "#{name}.wav")
-    src = ["-f", "lavfi", "-i", "aevalsrc='#{expr}':s=#{SAMPLE_RATE}:d=#{cycle}"]
+    src = ["-f", "lavfi", "-i", "aevalsrc='#{expr.to_s.empty? ? '0' : expr}':s=#{SAMPLE_RATE}:d=#{cycle}"]
     body = "aformat=channel_layouts=stereo,#{chain}"
     args = if chain.include?("[")
              ["-filter_complex", "[0:a]#{body}[o]", "-map", "[o]"]
@@ -30252,8 +30265,9 @@ def render_hate_techno(destination = File.join(ROOT, "hate_session.mp3"))
   # Compressing a clean kick and distorting the result gives a loud clean kick,
   # which is not this genre. asubboost adds the sub the speaker cabinet would.
   tone.call(:kick,
-            gather.call(kick_per_bar, :kick).map { |t|
-              hit.call(t, 0.22, 0.98, 7, "sin(2*PI*(58*(t-#{t})+190*(t-#{t})*exp(-(t-#{t})*26)))")
+            gather.call(kick_per_bar, :kick).each_with_index.map { |t, i|
+              amp = (0.98 * (kick_vels[i] || 1.0)).round(3)
+              hit.call(t, 0.22, amp, 7, "sin(2*PI*(58*(t-#{t})+190*(t-#{t})*exp(-(t-#{t})*26)))")
             }.join("+"),
             "acrusher=bits=10:samples=1:mix=0.22," \
             "asoftclip=type=tanh:threshold=0.72:output=0.9:oversample=4," \
@@ -30274,8 +30288,9 @@ def render_hate_techno(destination = File.join(ROOT, "hate_session.mp3"))
   # bassline, which is a different instrument and not this one's job.
   sub_hz = (harmony_roots && techno_fold(harmony_roots.first, TECHNO_SUB_REGISTER)) || 41
   tone.call(:sub,
-            gather.call(kick_per_bar, :kick).map { |t|
-              hit.call(t, 0.42, 0.5, 4, "sin(2*PI*#{sub_hz}*(t-#{t}))")
+            (gather.call(kick_per_bar, :kick).map { |t| [t, 0.5] } +
+             gather.call(rumble_per_bar, :kick).map { |t| [t, 0.3] }).map { |t, amp|
+              hit.call(t, 0.42, amp, 4, "sin(2*PI*#{sub_hz}*(t-#{t}))")
             }.join("+"),
             "lowpass=f=90,virtualbass=cutoff=110:strength=0.6")
 
@@ -30713,6 +30728,15 @@ def render_semantic_techno(profile_name, destination = nil)
   destination
 end
 
+# The drum profile for this render: TECHNO_PATTERN=<name> names one, otherwise
+# the render seed picks, so one RENDER_SEED always gives one pattern.
+def techno_pattern_name
+  named = ENV["TECHNO_PATTERN"].to_s
+  return named.to_sym if DillaTechnoPatterns.names.include?(named.to_sym)
+
+  DillaTechnoPatterns.pick(seed_for("techno_pattern"))
+end
+
 # TECHNO_PROFILE=<name> puts a profile into hate's and industrial's own knobs
 # before they render. Opt-in, and a knob set by hand is left alone.
 def apply_techno_profile!
@@ -30732,14 +30756,13 @@ def render_techno(destination = File.join(OUTPUT_DIR, "techno_hate.mp3"))
   step = beat / 4
   total = (bar * n_bars).round(3)
 
-  kick_per_bar = Array.new(TECHNO_BARS) { [0, 4, 8, 12] }
-  kick_per_bar[7] = [0, 4, 8, 12, 14, 15]
-  clap_per_bar = Array.new(TECHNO_BARS) { [4, 12] }
-  clap_per_bar[3] = [4, 12, 14]; clap_per_bar[7] = [4, 10, 12, 14]
-  hat_per_bar = Array.new(TECHNO_BARS) { [2, 6, 10, 14] }
-  hat_per_bar[3] = []; hat_per_bar[5] = [0, 2, 4, 6, 8, 10, 12, 14]
-  open_per_bar = Array.new(TECHNO_BARS) { [] }
-  open_per_bar[3] = [14]; open_per_bar[7] = [14]
+  pattern_name = techno_pattern_name
+  pattern_rows = DillaTechnoPatterns.cycle(pattern_name, seed_for("techno_pattern_cycle"))
+  kick_per_bar = DillaTechnoPatterns.steps(pattern_rows, :kick)
+  clap_per_bar = DillaTechnoPatterns.steps(pattern_rows, :clap)
+  hat_per_bar = DillaTechnoPatterns.steps(pattern_rows, :hat)
+  open_per_bar = DillaTechnoPatterns.steps(pattern_rows, :open)
+  dmesg("techno pattern: #{pattern_name}", unit: "techno0", parent: "dilla0")
   acid_steps = [0, 3, 6, 8, 11, 14]
   bass_notes = [65.41, 65.41, 87.31, 65.41, 98.00, 98.00, 87.31, 65.41]
 
