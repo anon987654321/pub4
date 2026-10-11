@@ -24,7 +24,7 @@ module Deploy
     RAILS_ROOT = File.join(ROOT, "RAILS")
     MASTER = File.join(ROOT, "MASTER")
     DESIGN_RULES = File.join(MASTER, "data", "tokens.yml")
-    LAW_MAP = File.join(MASTER, "data", "tokens.yml")
+    LAW_MAP = File.join(MASTER, "data", "laws.yml")
     DESIGN_DOC = File.join(RAILS_ROOT, "__shared", "README.md")
 
     # Every directory that renders a view, the three apps plus brgen's engines.
@@ -123,9 +123,9 @@ module Deploy
 
     def load_master_context
       @design_rules = Operator::MasterDesign.blocks(DESIGN_RULES)
-      @law_map = File.file?(LAW_MAP) ? YAML.safe_load_file(LAW_MAP) : {}
+      @law_map = File.file?(LAW_MAP) ? (YAML.safe_load_file(LAW_MAP, aliases: true)["law_map"] || {}) : {}
       unless File.file?(DESIGN_RULES)
-        @result.fail("user_flow: missing MASTER/data/laws.yml")
+        @result.fail("user_flow: missing MASTER/data/tokens.yml")
       end
       unless File.file?(LAW_MAP)
         @result.fail("user_flow: missing MASTER/data/laws.yml#law_map")
@@ -133,8 +133,9 @@ module Deploy
       # Semantic anchors must exist so laws stay authoritative
       flat = @law_map.dig("laws", "flat_ui") || @law_map.dig("clusters", "aesthetic")
       @result.fail("user_flow: law_map missing aesthetic/flat_ui cluster") unless flat
-      touch = @design_rules.dig("layout_rules", "touch", "target_min_px")
-      @result.fail("user_flow: design_rules layout_rules.touch.target_min_px missing") unless touch.to_i >= 44
+      # The tap floor is the shared chrome token now; layout_rules.touch went with the rest of design_rules.
+      touch = @design_rules.dig("shared_chrome", "tap_min")
+      @result.fail("user_flow: tokens shared_chrome.tap_min missing or under 44px") unless touch.to_i >= 44
       @result.warn("user_flow: MASTER design_rules + law_map loaded (semantic floor)")
       @result.checked!(4)
     end

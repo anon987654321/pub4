@@ -123,4 +123,7 @@ Rails.application.configure do
   # it: probing the local server with its real Host header returned 403.
   config.hosts << "bsdports.org"
   config.hosts << /\A([a-z0-9-]+\.)*bsdports\.org\z/i
+  # amber is not a city either; its one name is amberapp.art, and the live gates probe it by that Host.
+  config.hosts << "amberapp.art"
+  config.hosts << /\A([a-z0-9-]+\.)*amberapp\.art\z/i
 end
