@@ -34,6 +34,22 @@ class TestCognitionOutcomeModel < Minitest::Test
     assert_operator prediction[:success_probability], :>, 0.8
   end
 
+  def test_a_receipt_is_counted_once_and_cannot_be_relabelled
+    state = { "records" => {} }
+    receipt = evidence("test:receipt", "same output")
+    2.times do
+      model.observe!(state, context: "task", action: "verify",
+                     outcome: "success", evidence: receipt)
+    end
+    assert_equal 1, model.predict(state, context: "task", action: "verify")[:successes]
+
+    assert_raises(ArgumentError) do
+      model.observe!(state, context: "task", action: "verify",
+                     outcome: "failure", evidence: receipt)
+    end
+    assert_equal 1, model.predict(state, context: "task", action: "verify")[:successes]
+  end
+
   def test_inconclusive_observations_do_not_change_success_probability
     state = { "records" => {} }
     3.times do |index|

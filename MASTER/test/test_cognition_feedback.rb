@@ -91,6 +91,10 @@ class TestCognitionFeedback < Minitest::Test
     assert_in_delta 0.49, @mind.predict_outcome(context: "target=MASTER", action: "/fix")[:brier_score], 0.001
     assert_in_delta 0.49, @mind.capability_report.fetch("fix/master").fetch(:brier_score), 0.001
 
+    @mind.send(:capture_fix_outcome, payload)
+    assert_equal 1, @mind.predict_outcome(context: "target=MASTER", action: "/fix")[:successes]
+    assert_equal 1, @mind.capability_report.fetch("fix/master").fetch(:samples)
+
     payload[:outcome_receipt][:sha256] = "0" * 64
     payload[:run_id] = "run-2"
     @mind.send(:capture_fix_outcome, payload)

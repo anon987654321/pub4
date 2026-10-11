@@ -12,6 +12,7 @@ module Master
       OUTCOMES = %w[success failure inconclusive].freeze
       MAX_RECORDS = 256
       MAX_OBSERVATIONS = 12
+      MAX_SEEN_RECEIPTS = 64
       LABEL_LIMIT = 160
       MIN_SAMPLES = 5
 
@@ -56,7 +57,18 @@ module Master
           "brier_sum" => 0.0,
           "brier_count" => 0,
           "observations" => [],
+          "seen_receipts" => [],
         }
+
+        seen = Array(record["seen_receipts"])
+        duplicate = seen.find do |item|
+          item["source"] == receipt.fetch("source") && item["sha256"] == receipt.fetch("sha256")
+        end
+        if duplicate
+          raise ArgumentError, "evidence receipt reused with a different outcome" unless duplicate["outcome"] == outcome
+
+          return predict(state, context:, action:)
+        end
 
         case outcome
         when "success" then record["successes"] = record.fetch("successes", 0).to_i + 1
@@ -80,6 +92,11 @@ module Master
             "observed_at" => stamp,
           }]
         ).last(MAX_OBSERVATIONS)
+        record["seen_receipts"] = (seen + [{
+          "source" => receipt.fetch("source"),
+          "sha256" => receipt.fetch("sha256"),
+          "outcome" => outcome,
+        }]).last(MAX_SEEN_RECEIPTS)
         record["last_source"] = receipt.fetch("source")
         record["last_sha256"] = receipt.fetch("sha256")
         record["updated_at"] = stamp
@@ -89,6 +106,24 @@ module Master
 
       # A receipt is either inline content whose digest is checked here, or a
       # file whose current digest is checked against a root-confined path.
+      # Event delivery is at-least-once in some adapters. A receipt may train a
+      # given task/action pair only once; a changed verdict for the same bytes is
+      # a contradiction, not a second independent observation.
+      def duplicate?(state, context:, action:, outcome:, evidence:)
+        receipt = self.class.validate_evidence!(evidence)
+        key = key_for(context:, action:)
+        record = state.fetch("records", {})[key]
+        return false unless record
+
+        seen = Array(record["seen_receipts"]).find do |item|
+          item["source"] == receipt.fetch("source") && item["sha256"] == receipt.fetch("sha256")
+        end
+        return false unless seen
+        raise ArgumentError, "evidence receipt reused with a different outcome" unless seen["outcome"] == outcome.to_s
+
+        true
+      end
+
       def self.validate_evidence!(evidence, root: nil)
         row = evidence.respond_to?(:to_h) ? evidence.to_h : nil
         raise ArgumentError, "evidence receipt must be a hash" unless row

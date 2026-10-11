@@ -161,11 +161,14 @@ module Master
           end
         end
         @mutex.synchronize do
+          duplicate = @outcome_model.duplicate?(
+            @state.outcomes, context:, action:, outcome:, evidence: receipt
+          )
           prediction = @outcome_model.observe!(
             @state.outcomes, context:, action:, outcome:, evidence: receipt,
             predicted_probability:
           )
-          if task_type && %w[success failure].include?(outcome.to_s)
+          if !duplicate && task_type && %w[success failure].include?(outcome.to_s)
             @self_model.record_assessment!(
               @state.self_model, task_type:, success: outcome.to_s == "success",
               confidence: confidence.nil? ? predicted_probability : confidence,
