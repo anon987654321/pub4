@@ -102,6 +102,21 @@ class TestCognitionOutcomeModel < Minitest::Test
     end
   end
 
+  def test_inline_evidence_requires_a_well_formed_matching_digest
+    assert_raises(ArgumentError) do
+      model.observe!({ "records" => {} }, context: "task", action: "verify",
+                     outcome: "success", evidence: { source: "test:empty", content: "body", sha256: "" })
+    end
+  end
+
+  def test_inline_evidence_has_a_bounded_size
+    oversized = "x" * (Master::Cognition::OutcomeModel::MAX_EVIDENCE_BYTES + 1)
+    receipt = { source: "test:oversized", content: oversized, sha256: Digest::SHA256.hexdigest(oversized) }
+    assert_raises(ArgumentError) do
+      model.observe!({ "records" => {} }, context: "task", action: "verify", outcome: "success", evidence: receipt)
+    end
+  end
+
   def test_benchmark_rejects_unverifiable_reference_only_evidence
     rows = [{
       context: "task", action: "verify", outcome: "success",
