@@ -41,18 +41,22 @@ class TermuxInstallerTest < Minitest::Test
   end
 
   def test_migration_filter_removes_only_the_malformed_path_export
-    line = source.lines.find { |row| row.include?("awk '$0 !=" }
+    line = source.lines.find { |row| row.start_with?("ruby -e 'path = File.join") }
     refute_nil line
-    program = line[/awk '([^']+)'/, 1]
+    program = line[/ruby -e '([^']+)'/, 1]
     refute_nil program
 
-    malformed = "export PATH=\"\\$HOME/.local/bin:\\$PATH\"\n"
-    input = malformed + "export EDITOR=vi\n"
-    output, status = Open3.capture2("awk", program, stdin_data: input)
+    Dir.mktmpdir("termux-path-migration") do |home|
+      malformed = %q{export PATH="\$HOME/.local/bin:\$PATH"} + "\n"
+      File.write(File.join(home, ".bashrc"), malformed + "export EDITOR=vi\n")
+      _output, status = Open3.capture2("ruby", "-e", program, env: { "HOME" => home })
+      assert status.success?
 
-    assert status.success?
-    refute_includes output, malformed
-    assert_includes output, "export EDITOR=vi\n"
+      result = File.read(File.join(home, ".bashrc"))
+      refute_includes result, malformed
+      assert_includes result, "export EDITOR=vi\n"
+      assert_equal 1, result.lines.count { |row| row.include?('PATH="$HOME/.local/bin:$PATH"') }
+    end
     assert_operator source.index(line), :<, source.index("if ! grep -Fq")
   end
 
