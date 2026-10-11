@@ -343,8 +343,8 @@ POSTPRO_USAGE = <<~TXT
     --compare                         side-by-side after a one-shot grade
     --random [--count N] [--rough]    five to ten analog variations per image
     --heavy                           five variations: lane deal subtle→bleeding edge,
-                                      12–24-step chains, bands lifted (default on,
-                                      POSTPRO_HEAVY=0 off, this flag outvotes it)
+                                      12–24-step chains, bands lifted (the default);
+                                      POSTPRO_HEAVY=0 opts out unless --heavy is passed
     --watch [DIR] [--preset NAME]     grade every new photo that lands in DIR
     --auto                            grade the default globs without prompting
     --from-replicate                   grade what replicate just wrote
@@ -364,8 +364,19 @@ if (ARGV & %w[-h --help]).any?
   exit 0
 end
 
-# Heavy is the standing default; the flag stands so POSTPRO_HEAVY=0 can be
-# outvoted for one run, the way --rough outvotes the wear shelf.
+# A lone --preset falls through to the interactive chooser and can look like a
+# hung non-interactive job. Named one-shot grades are only valid with input and
+# output paths; watch and stock-sheet have their own documented preset routes.
+has_preset = ARGV.include?("--preset")
+complete_one_shot = %w[--input --output --preset].all? { |flag| ARGV.include?(flag) }
+preset_mode = ARGV.include?("--watch") || ARGV.include?("--stock-sheet")
+if has_preset && !complete_one_shot && !preset_mode
+  PostproBootstrap.dmesg("ERROR --preset needs --input FILE and --output FILE (or use --watch/--stock-sheet)")
+  exit 2
+end
+
+# Heavy is the standing default; --heavy makes that choice explicit for a
+# single invocation, even when POSTPRO_HEAVY=0 is inherited from the environment.
 ENV["POSTPRO_HEAVY"] = "1" if ARGV.include?("--heavy")
 
 # What is wrong with this photograph, and which half a grade can reach.
@@ -3851,11 +3862,30 @@ def random_draw(rng, lane:)
   # rendered a picture whose whole grade was dual_base_density and grain. They
   # stay reachable as the wildcard, which is where a stranger belongs.
   seeds = random_seeds(lane)
-  seeds = random_pool(lane) if seeds.empty?
-  picked = [seeds.sample(random: rng)]
+  seeds = pool if seeds.empty?
   analog_pool = pool & (RANDOM_ANALOG_CORE - [RANDOM_ALWAYS])
+
+  # Start with a seed plus two analog steps that are pairwise supported by the
+  # observed preset graph. Adding arbitrary analog steps here broke the same
+  # co-occurrence invariant the growth loop below enforces.
+  picked = nil
+  seeds.shuffle(random: rng).each do |seed|
+    pairs = (analog_pool - [seed]).combination(2).select do |left, right|
+      [[seed, left], [seed, right], [left, right]].all? do |a, b|
+        random_affinity[[a, b].sort].positive?
+      end
+    end
+    next if pairs.empty?
+
+    picked = [seed, *pairs.sample(random: rng)]
+    break
+  end
+
+  picked ||= [seeds.sample(random: rng)]
   2.times do
-    analog = (analog_pool - picked).sample(random: rng)
+    analog = (analog_pool - picked).select do |candidate|
+      picked.all? { |held| random_affinity[[candidate, held].sort].positive? }
+    end.sample(random: rng)
     picked << analog if analog
   end
   while picked.length < target

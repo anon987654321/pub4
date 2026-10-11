@@ -393,13 +393,11 @@ class TestPostproFilm < Minitest::Test
   def test_every_step_co_occurs_with_every_other_in_some_preset
     40.times do |seed|
       names = random_chain(Random.new(seed)).map(&:first) - [RANDOM_ALWAYS] - RANDOM_SHAPES
-      # The wildcard is the one drawn step allowed to disagree, so drop the worst
-      # offender before judging the rest. The shape step is out already: it is
-      # appended rather than drawn, because every photograph has light in it.
+      # Only the optional wildcard may disagree with the affinity graph. The
+      # generator marks it indirectly, so identify the single highest-conflict
+      # effect and verify every remaining pair is supported by a real preset.
       stranger = names.max_by { |fx| (names - [fx]).count { |other| random_affinity[[fx, other].sort].zero? } }
       (names - [stranger]).combination(2) do |a, b|
-        next if a == b
-
         assert_operator random_affinity[[a, b].sort], :>, 0,
                         "no preset puts #{a} with #{b}: #{names.inspect}"
       end
@@ -520,13 +518,27 @@ class TestPostproFilm < Minitest::Test
   end
 
   # Quieter than it was, deliberately, and the wear shelf is out unless asked for.
-  def test_the_default_posture_is_subtle
+  def test_heavy_mode_is_the_documented_default
+    had_value = ENV.key?("POSTPRO_HEAVY")
+    value = ENV["POSTPRO_HEAVY"]
+    ENV.delete("POSTPRO_HEAVY")
+
+    assert heavy_mode?
+  ensure
+    had_value ? ENV["POSTPRO_HEAVY"] = value : ENV.delete("POSTPRO_HEAVY")
+  end
+
+  def test_the_subtle_lane_stays_subtle_when_heavy_mode_is_disabled
+    previous = ENV["POSTPRO_HEAVY"]
+    ENV["POSTPRO_HEAVY"] = "0"
     30.times do |seed|
-      chain = random_chain(Random.new(seed))
+      chain = random_chain(Random.new(seed), lane: :subtle_analog)
       assert_empty chain.map(&:first) & RANDOM_WEAR, "wear without --rough: #{random_chain_name(chain)}"
       assert_operator chain.last.last["intensity"], :<=, 0.65, "grain is loud again"
       assert_operator strengths(chain).map(&:last).max, :<=, RANDOM_LEAD_STRENGTH.last
     end
+  ensure
+    previous.nil? ? ENV.delete("POSTPRO_HEAVY") : ENV["POSTPRO_HEAVY"] = previous
   end
 
   # --- halation, tone scale, chains ---------------------------------------

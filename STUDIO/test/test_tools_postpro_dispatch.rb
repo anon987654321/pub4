@@ -39,6 +39,18 @@ class TestPostproDispatch < Minitest::Test
 
   # The bare path grades that one image, and --count beside it is honoured
   # rather than read as a second subject ("3" is a count, not a file).
+  def test_a_preset_without_one_shot_paths_fails_fast_instead_of_opening_a_menu
+    Dir.mktmpdir do |dir|
+      started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      out, status = run_postpro(dir, "--preset", "fx")
+      elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
+
+      refute status.success?
+      assert_includes out, "--input FILE"
+      assert_operator elapsed, :<, 5, "invalid named preset mode took #{elapsed.round(2)}s"
+    end
+  end
+
   def test_random_contract_has_five_to_ten_default_variations
     assert_equal(5..10, RANDOM_VARIATIONS)
     refute_empty RANDOM_LANES
