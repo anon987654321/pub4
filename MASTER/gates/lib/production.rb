@@ -18,7 +18,7 @@ module Deploy
     RAILS_ROOT = File.join(ROOT, "RAILS")
     APPS_YML = File.join(RAILS_ROOT, "apps.yml")
     SHARED_DEPLOY = File.join(RAILS_ROOT, "_deploy.sh")
-    RAILS_STACK = YAML.safe_load_file(File.join(ROOT, "MASTER", "data", "laws.yml")).fetch("rails_stack").freeze
+    RAILS_STACK = YAML.safe_load_file(File.join(ROOT, "MASTER", "data", "rails_stack.yml")).freeze
     RAILS_VERSION = Gem::Version.new(RAILS_STACK.fetch("rails"))
 
     def self.run(skip_nested: false)
@@ -121,16 +121,23 @@ module Deploy
       if File.file?(gemfile)
         gemfile_text = File.read(gemfile)
         @result.warn("#{name}: Gemfile has no explicit ruby version") unless gemfile_text.match?(/^ruby\s+/)
-        requirement_text = gemfile_text[/^gem ['"]rails['"],\s*['"]([^'"]+)['"]/, 1]
-        begin
-          requirement = requirement_text && Gem::Requirement.new(requirement_text)
-          fail_app!(app_failures, "Gemfile does not allow Rails #{RAILS_VERSION}") unless requirement&.satisfied_by?(RAILS_VERSION)
-        rescue ArgumentError
-          fail_app!(app_failures, "Gemfile has an invalid Rails requirement")
+        # The stack pins Rails from its git source at one ref; a version requirement is the
+        # fallback for an app that takes a released gem.
+        pinned_ref = gemfile_text[/^gem ["']rails["'],\s*github:\s*["'][^"']+["'],\s*ref:\s*["']([^"']+)["']/, 1]
+        if pinned_ref
+          fail_app!(app_failures, "Gemfile pins Rails at #{pinned_ref}, not #{RAILS_STACK.fetch("rails_ref")}") unless pinned_ref == RAILS_STACK.fetch("rails_ref")
+        else
+          requirement_text = gemfile_text[/^gem ['"]rails['"],\s*['"]([^'"]+)['"]/, 1]
+          begin
+            requirement = requirement_text && Gem::Requirement.new(requirement_text)
+            fail_app!(app_failures, "Gemfile does not allow Rails #{RAILS_VERSION}") unless requirement&.satisfied_by?(RAILS_VERSION)
+          rescue ArgumentError
+            fail_app!(app_failures, "Gemfile has an invalid Rails requirement")
+          end
         end
         lockfile = File.join(app_dir, "Gemfile.lock")
         if File.file?(lockfile)
-          locked = File.read(lockfile)[/^    rails \((\d+(?:\.\d+)+)\)$/m, 1]
+          locked = File.read(lockfile)[/^    rails \((\d+(?:\.\d+)+(?:\.[a-z][a-z0-9]*)?)\)$/m, 1]
           fail_app!(app_failures, "Gemfile.lock must resolve Rails #{RAILS_VERSION}") unless locked && Gem::Version.new(locked) == RAILS_VERSION
         else
           fail_app!(app_failures, "missing Gemfile.lock")

@@ -335,21 +335,19 @@ module Deploy
         "def espeak_path",
         "synthesize_espeak(text_str) if espeak_path",
       ],
+      # The daemon starts from an allowlisted environment (spawn_env), never the web app's.
       "MASTER/lib/voice/tts_supervisor.rb" => [
-        "BUNDLE_ISOLATION_KEYS",
-        "BUNDLE_ISOLATION_KEYS.each { |key| env[key] = nil }",
+        "def spawn_env(root)",
+        "def daemon_env(root)",
       ],
       "MASTER/bin/tts-worker" => [
         "tts-worker --daemon",
         "EventMachine SSL support unavailable",
-        "BUNDLE_ISOLATION_KEYS.each { |key| ENV.delete(key) }",
+        "unsetenv_others: true",
       ],
       "MASTER/bin/smoke" => [
         "tts-e2e poll",
         "tts-e2e",
-      ],
-      "OPENBSD/OPERATOR.sh" => [
-        "espeak",
       ],
       "OPENBSD/etc/rc.d/master" => [
         "Master::Voice::TtsSupervisor.ensure_daemon!",
