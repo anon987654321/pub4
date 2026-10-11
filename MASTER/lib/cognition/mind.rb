@@ -7,9 +7,9 @@ require_relative "outcome_model"
 module Master
   module Cognition
     # MASTER's persistent cognitive layer: recurrent perception, salience, a
-    # bounded working set, affect, self-modelling, prediction error and
-    # reflection and evidence-backed task learning, over one YAML file under
-    # .master/. Cognitive metrics are operational proxies, not consciousness tests.
+    # bounded working set, affect, self-modelling, prediction error, reflection
+    # and evidence-backed task learning over one YAML file under .master/.
+    # Cognitive metrics are operational proxies, not consciousness tests.
     #
     # Three things here are load-bearing and were each wrong once.
     #
@@ -59,6 +59,11 @@ module Master
         @path = File.join(root, STATE_PATH)
         @mutex = Mutex.new
         @state = State.load(@path)
+        unless @state.checkpoint_valid
+          @state.metrics["continuity"] = 0.0
+          @state.metrics["checkpoint_continuity"] = 0.0
+          @state.identity["continuity"] = 0.0
+        end
         @attention = Attention.new
         @affect = Affect.new
         @self_model = SelfModel.new
@@ -144,6 +149,14 @@ module Master
       def record_task_result(context:, action:, outcome:, evidence:, task_type: nil,
                              confidence: nil, predicted_probability: nil)
         receipt = OutcomeModel.validate_evidence!(evidence)
+        if task_type && %w[success failure].include?(outcome.to_s)
+          raise ArgumentError, "task type is required" if task_type.to_s.strip.empty?
+          probability = confidence.nil? ? predicted_probability : confidence
+          unless probability.nil?
+            probability = Float(probability)
+            raise ArgumentError, "confidence must be between 0 and 1" unless probability.between?(0.0, 1.0)
+          end
+        end
         @mutex.synchronize do
           prediction = @outcome_model.observe!(
             @state.outcomes, context:, action:, outcome:, evidence: receipt,

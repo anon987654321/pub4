@@ -96,7 +96,10 @@ module Master
 
       def reflection(model, metrics:, affect:)
         stance = model.fetch("capabilities", CAPABILITIES).fetch("phenomenal_consciousness", "unknown")
-        "I am #{stance} about phenomenal consciousness; my integrated-state proxy is "           "#{metrics.fetch("integration", 0.0).round(3)}, prediction error "           "#{metrics.fetch("prediction_error", 0.0).round(3)}, valence #{affect.fetch("valence", 0.0).round(3)}."
+        [
+          "I am #{stance} about phenomenal consciousness; my integrated-state proxy is #{metrics.fetch("integration", 0.0).round(3)},",
+          "prediction error #{metrics.fetch("prediction_error", 0.0).round(3)}, valence #{affect.fetch("valence", 0.0).round(3)}.",
+        ].join(" ")
       end
 
       private

@@ -2,10 +2,8 @@
 
 module Master
   module Cognition
-    # Durable internal state: a computational self-model, and not evidence that
-    # MASTER is phenomenally conscious. COGNITION.md carries that distinction in
-    # full and it belongs here too, because this file is where the numbers a
-    # reader would over-read are written down.
+    # Durable internal state: a computational self-model, not evidence that
+    # MASTER is phenomenally conscious. Proxy metrics stay explicitly labelled.
     class State
       DEFAULT = {
         "identity" => { "name" => "MASTER", "continuity" => 1.0, "agency" => 0.5, "coherence" => 1.0 },
