@@ -89,6 +89,9 @@ class VisualPassContractTest < Minitest::Test
 
   def test_visual_findings_enter_the_existing_ui_council_and_fix_protocol
     with_tmp do |dir|
+      # The rubric is read from the pass root's own data/, as it is when /fix runs on a MASTER root.
+      FileUtils.mkdir_p(File.join(dir, "data"))
+      FileUtils.cp(File.join(Master::ROOT, "data", "visual_rubric.yml"), File.join(dir, "data"))
       pass = Pass.new(agent: :agent, root: dir)
       pass.instance_variable_set(:@dir, dir)
       capture = { surface:, payload: { "elements" => [] }, screenshot: "x.png", journeys: [], platform: {} }
@@ -201,7 +204,7 @@ class VisualPassContractTest < Minitest::Test
       find = ->(pick) { pass.send(:finding_for, pick, [css, html], { ".hero" => css }) }
 
       by_selector = find.("surface: master/chat/mobile viewport: mobile .hero laws: #{law}")
-      assert_equal [Pass::RULE_ID, css, 2], [by_selector[:law], by_selector[:file], by_selector[:line]]
+      assert_equal [Pass::LAW_ID, css, 2], [by_selector[:law], by_selector[:file], by_selector[:line]]
       by_text = find.(%(surface: master/chat/mobile viewport: mobile text anchor: "Welcome home" laws: #{law}))
       assert_equal [html, 2], [by_text[:file], by_text[:line]]
       assert_nil find.("viewport: mobile .hero laws: #{law}"), "no surface, no finding"
