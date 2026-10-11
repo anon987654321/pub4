@@ -61,6 +61,12 @@ module Master
         end
       end
 
+      def save_convergence_state(run_id, checkpoint)
+        raise ArgumentError, "convergence checkpoint must be a hash" unless checkpoint.is_a?(Hash)
+
+        update(run_id) { |run| run["convergence_state"] = checkpoint }
+      end
+
       def pass_finish(run_id, pass, status:, message: nil)
         update(run_id) do |run|
           entry = Array(run["passes"]).reverse.find { |row| row["pass"].to_i == pass.to_i }

@@ -2,6 +2,7 @@
 
 require_relative "test_helper"
 require "tmpdir"
+require "json"
 
 # /fix is the whole improvement operation: it observes, lets the council argue,
 # repairs, and observes again, and it ends in a state that says what actually
@@ -153,7 +154,7 @@ class TestFixConvergence < Minitest::Test
       run_id: "human-decision-run",
     )
 
-    assert_match(/\\AHUMAN_DECISION: /, result.value!)
+    assert_match(/\AHUMAN_DECISION: /, result.value!)
     assert_equal 1, journal_events.count { |event| event.first == :start }
     assert_equal [:finish, "human-decision-run", 1, :human_decision, "operator review required"],
                  journal_events.last
@@ -262,6 +263,45 @@ class TestFixConvergence < Minitest::Test
 
     discipline.observe(pass: 2, findings: [finding], files: [File.join(@root, "dummy.yml")], progressed: true)
     refute discipline.improving?, "unchanged risk is not improvement, even when bytes changed"
+  end
+
+  def test_convergence_checkpoint_round_trip_preserves_measured_history
+    path = File.join(@root, "dummy.yml")
+    discipline = Master::Fix::ConvergenceDiscipline.new(root: @root, bus: @bus)
+    discipline.begin_run([path])
+    pair = [
+      { law: "TEST_RULE", file: "dummy.yml", line: 1, message: "one", severity: :warning },
+      { law: "TEST_RULE", file: "dummy.yml", line: 2, message: "two", severity: :warning },
+    ]
+    discipline.observe(pass: 1, findings: pair, files: [path], progressed: true)
+    discipline.observe(pass: 2, findings: pair.first(1), files: [path], progressed: false)
+    saved = JSON.parse(JSON.generate(discipline.checkpoint_state))
+
+    resumed = Master::Fix::ConvergenceDiscipline.new(root: @root, bus: @bus)
+    resumed.begin_run([path])
+    assert resumed.restore_checkpoint(saved)
+    assert resumed.improving?
+    assert_equal 2, resumed.receipt[:observations]
+    assert_equal 0.5, resumed.quality_delta
+    assert_equal discipline.checkpoint_state["authority_baseline"], resumed.checkpoint_state["authority_baseline"]
+  end
+
+  def test_invalid_convergence_checkpoint_is_rejected
+    discipline = Master::Fix::ConvergenceDiscipline.new(root: @root, bus: @bus)
+    discipline.begin_run([File.join(@root, "dummy.yml")])
+    refute discipline.restore_checkpoint({ "version" => 1, "baseline_present" => true,
+                                           "authority_baseline" => {}, "critical_baseline" => [],
+                                           "history" => [], "observation_count" => 0 })
+  end
+
+  def test_run_journal_persists_convergence_checkpoints
+    journal = Master::Fix::RunJournal.new(root: @root, bus: @bus)
+    run = journal.start_or_resume(target: @root, files: [File.join(@root, "dummy.yml")],
+                                  max_passes: 2, budget_seconds: 60)
+    journal.save_convergence_state(run["id"], { "version" => 1, "observations" => 4 })
+
+    saved = journal.history.find { |entry| entry["id"] == run["id"] }
+    assert_equal({ "version" => 1, "observations" => 4 }, saved["convergence_state"])
   end
 
   def test_unmeasured_proof_baseline_is_inconclusive_not_green

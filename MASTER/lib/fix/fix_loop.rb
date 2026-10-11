@@ -307,6 +307,12 @@ module Master
         resumed = resume_active_transaction(journal:, run_id:, start_pass:)
         return resumed.tap { mission.fail!(resumed.message) } if resumed.err?
 
+        if journal["resumed"] && journal["convergence_state"].is_a?(Hash) &&
+           @convergence_discipline.respond_to?(:restore_checkpoint)
+          restored = @convergence_discipline.restore_checkpoint(journal["convergence_state"])
+          Master::Trace::Dmesg.status("fix0", "convergence history #{restored ? "restored" : "rejected"}")
+        end
+
         result = run_passes(
           files:, target:, max_passes:, deadline:, budget_seconds:,
           start_pass: resumed.value!, run_id:, wishlist_proposals: []
@@ -653,6 +659,10 @@ module Master
           )
         end
         state[:consecutive_clean] = result.consecutive_clean
+        if @convergence_discipline.respond_to?(:checkpoint_state) &&
+           @run_journal.respond_to?(:save_convergence_state)
+          @run_journal.save_convergence_state(run_id, @convergence_discipline.checkpoint_state)
+        end
         return if structural_repair?(result, files:, target:, state:, run_id:, pass:)
 
         @run_journal.pass_finish(run_id, pass, status: result.status, message: result.message)

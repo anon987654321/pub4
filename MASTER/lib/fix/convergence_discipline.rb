@@ -13,6 +13,8 @@ module Master
     # document.
     class ConvergenceDiscipline
       UNMEASURED_SCORE = 1_000_000_000
+      CHECKPOINT_VERSION = 1
+      CHECKPOINT_HISTORY = 6
 
       DEFAULT_HYGIENE_PROMPT = <<~TEXT.strip
         fix hygiene contract (enforce on every mutation in this /fix pass):
@@ -50,6 +52,8 @@ module Master
         @best_state = nil
         @baseline = nil
         @critical_baseline = nil
+        @initial_score = nil
+        @observation_count = 0
         @reasoning_memory = nil
       end
 
@@ -63,6 +67,8 @@ module Master
         end
         @best_state = state_for(0, UNMEASURED_SCORE, @baseline)
         @history.clear
+        @initial_score = nil
+        @observation_count = 0
         emit("fix_loop:convergence_baseline", files: @baseline.size, digest: digest(@baseline),
                                                   authority_digest: digest_authorities(@authority_baseline),
                                                   critical_files: Array(@critical_baseline).size)
@@ -81,6 +87,8 @@ module Master
           risk_vector: risk_vector(findings),
         )
         previous = @history.last
+        @initial_score = state[:score] if @observation_count.zero?
+        @observation_count += 1
         @history << state.merge(progressed:)
         if @best_state.nil? || @best_state[:score] == UNMEASURED_SCORE || state_better?(state, @best_state)
           @best_state = state
@@ -144,7 +152,7 @@ module Master
       def quality_delta
         return 0.0 if @history.empty? || @baseline.nil?
 
-        initial = @history.first[:score]
+        initial = @initial_score || @history.first[:score]
         current = @history.last[:score]
         return 0.0 unless finite_score?(initial) && finite_score?(current)
         return 0.0 if initial.to_f.zero?
@@ -178,7 +186,7 @@ module Master
         latest = @history.last || {}
         {
           version: 1,
-          observations: @history.size,
+          observations: @observation_count,
           pass: latest[:pass],
           files_observed: latest[:captured_files],
           findings: latest[:score],
@@ -190,6 +198,106 @@ module Master
           authority_digest: digest_authorities(@authority_baseline),
         }.compact
       end
+
+
+      # Durable, bounded convergence evidence. Older observations retain their
+      # measurements; only the latest needs finding identities for the next diff.
+      def checkpoint_state
+        rows = @history.last(CHECKPOINT_HISTORY).map { |row| row.transform_keys(&:to_s) }
+        rows.each { |row| row.delete("finding_ids") }
+        rows[-1]["finding_ids"] = Array(@history.last[:finding_ids]) if rows.any? && @history.last
+        best = @best_state&.transform_keys(&:to_s)
+        best&.delete("finding_ids")
+        {
+          "version" => CHECKPOINT_VERSION,
+          "baseline_present" => !@baseline.nil?,
+          "authority_baseline" => @authority_baseline,
+          "critical_baseline" => Array(@critical_baseline).map { |row| row.transform_keys(&:to_s) },
+          "history" => rows,
+          "best_state" => best,
+          "initial_score" => @initial_score,
+          "observation_count" => @observation_count,
+        }
+      end
+
+      # Restore only known fields and only a structurally valid checkpoint.
+      # A rejected optional checkpoint leaves begin_run's fresh baseline intact.
+      def restore_checkpoint(checkpoint)
+        return false unless checkpoint.is_a?(Hash)
+        return false unless checkpoint["version"] == CHECKPOINT_VERSION
+        return false unless checkpoint["baseline_present"] == true
+
+        authorities = checkpoint["authority_baseline"]
+        return false unless authorities.is_a?(Hash) && !authorities.empty?
+        return false unless authorities.all? { |path, hash| path.is_a?(String) && hash.to_s.match?(/\A[0-9a-f]{64}\z/) }
+
+        critical = checkpoint["critical_baseline"]
+        return false unless critical.is_a?(Array) && critical.all? do |row|
+          row.is_a?(Hash) && row["path"].is_a?(String) && row["sha256"].to_s.match?(/\A[0-9a-f]{64}\z/)
+        end
+
+        history = checkpoint["history"]
+        return false unless history.is_a?(Array) && history.size <= CHECKPOINT_HISTORY
+        normalized_history = history.map { |row| normalize_checkpoint_observation(row) }
+        return false unless normalized_history.all? { |row| valid_checkpoint_observation?(row) }
+
+        best = checkpoint["best_state"] && normalize_checkpoint_observation(checkpoint["best_state"])
+        return false if best && !best[:score].is_a?(Numeric)
+
+        count = Integer(checkpoint["observation_count"])
+        return false if count.negative? || count < history.size
+        return false if count.positive? && (history.empty? || best.nil?)
+        initial_score = checkpoint["initial_score"]
+        return false unless initial_score.nil? || initial_score.is_a?(Numeric)
+        return false if count.positive? && initial_score.nil?
+
+        @baseline = []
+        @authority_baseline = authorities.dup
+        @critical_baseline = critical.map { |row| normalize_checkpoint_snapshot(row) }
+        @history = normalized_history
+        @best_state = best
+        @initial_score = initial_score
+        @observation_count = count
+        true
+      rescue ArgumentError, TypeError
+        false
+      end
+
+      private
+
+      def normalize_checkpoint_observation(row)
+        raise TypeError, "checkpoint observation must be a hash" unless row.is_a?(Hash)
+
+        allowed = %w[pass score snapshot_digest captured_files finding_ids finding_digest risk_vector progressed]
+        row.each_with_object({}) do |(key, value), out|
+          name = key.to_s
+          next unless allowed.include?(name)
+
+          out[name.to_sym] = value
+        end
+      end
+
+      def normalize_checkpoint_snapshot(row)
+        {
+          path: row["path"],
+          bytes: row["bytes"],
+          lines: row["lines"],
+          sha256: row["sha256"],
+        }
+      end
+
+      def valid_checkpoint_observation?(row)
+        row[:pass].is_a?(Integer) &&
+          row[:score].is_a?(Numeric) &&
+          row[:snapshot_digest].is_a?(String) &&
+          row[:captured_files].is_a?(Integer) &&
+          row[:risk_vector].is_a?(Array) &&
+          row[:risk_vector].size == 4 &&
+          row[:risk_vector].all? { |value| value.is_a?(Numeric) } &&
+          (!row.key?(:finding_ids) || (row[:finding_ids].is_a?(Array) && row[:finding_ids].all? { |id| id.is_a?(String) }))
+      end
+
+      public
 
       def note_progress!
         return false if @history.empty?
