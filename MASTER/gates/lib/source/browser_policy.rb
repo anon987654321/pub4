@@ -15,6 +15,9 @@ module Deploy
       missing_actions = REQUIRED_ACTIONS - Array(policy["write_actions"]).map(&:to_s)
       return GateResult.fail("browser policy missing write actions: #{missing_actions.join(", ")}") unless missing_actions.empty?
       return GateResult.fail("browser write consent must be required") unless policy["consent_required"] == true
+      methods = Array(policy["allowed_network_methods"]).map { |method| method.to_s.upcase }
+      return GateResult.fail("browser policy must allow only GET/HEAD browser requests") unless methods.sort == %w[GET HEAD]
+      return GateResult.fail("browser session limit must be four") unless policy["max_sessions"] == 4
 
       source = File.join(root, "lib", "io", "browser_agent.rb")
       return GateResult.fail("BrowserAgent tool missing") unless File.file?(source)
@@ -24,6 +27,12 @@ module Deploy
         return GateResult.fail("BrowserAgent security guard missing: #{guard}") unless content.include?(guard)
       end
       return GateResult.fail("BrowserAgent interaction consent boundary missing") unless content.include?('interact #{op}')
+      return GateResult.fail("BrowserAgent session limit disagrees with policy") unless content.include?("MAX_SESSIONS = #{policy["max_sessions"]}")
+
+      governor = File.read(File.join(root, "lib", "fix", "governor.rb"))
+      %w[human_consent_required? consent_required @auto].each do |guard|
+        return GateResult.fail("Governor consent boundary missing: #{guard}") unless governor.include?(guard)
+      end
 
       tools = YAML.safe_load_file(File.join(root, "data", "tools.yml"), aliases: true)
       registered = Array(tools).any? { |tool| tool["name"] == "BrowserAgent" && tool["default"] == true }
