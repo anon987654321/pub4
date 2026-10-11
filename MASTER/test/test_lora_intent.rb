@@ -130,6 +130,16 @@ class LoraIntentTest < Minitest::Test
     end
   end
 
+  def test_latest_selfie_reads_the_canonical_replicate_lora_tree
+    Dir.mktmpdir("lora-latest") do |root|
+      image = File.join(root, "STUDIO", "replicate", "lora", "johann", "out", "selfies_postpro", "07.jpg")
+      FileUtils.mkdir_p(File.dirname(image))
+      File.write(image, "fixture")
+
+      assert_equal image, Lora.latest_selfie("johann", root:)
+    end
+  end
+
   def test_the_latest_selfie_is_the_default_still_and_the_draft_preset_the_default
     Lora.stub(:latest_selfie, "/tmp/graded.jpg") do
       _, calls = run_text("generate a video with the lora of me")

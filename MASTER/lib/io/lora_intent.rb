@@ -107,7 +107,7 @@ module Master
       # The still a clip starts from: a path in the sentence, else the newest
       # graded selfie, else the newest ungraded one.
       def video_args(text, subject, cfg, root: MasterPaths.root)
-        image = image_from(text, root:) || latest_selfie(subject)
+        image = image_from(text, root:) || latest_selfie(subject, root: MasterPaths.repo)
         unless image
           return Result.err("lora: no selfie of #{subject} to animate yet; say \"generate me a selfie\" first, " \
                             "or give a path to a still", category: :validation)
@@ -131,8 +131,8 @@ module Master
         nil
       end
 
-      def latest_selfie(subject)
-        out = File.join(MasterPaths.repo, "STUDIO", "lora", subject, "out")
+      def latest_selfie(subject, root: MasterPaths.repo)
+        out = File.join(root, "STUDIO", "replicate", "lora", subject, "out")
         %w[selfies_postpro selfies].each do |dir|
           files = Dir[File.join(out, dir, "*.{#{IMAGE_EXTENSIONS.join(',')}}")]
           return files.max_by { |file| File.mtime(file) } unless files.empty?
