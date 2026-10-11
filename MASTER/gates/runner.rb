@@ -4,6 +4,7 @@
 # One gate runner for MASTER, RAILS and OPENBSD.
 # gates/gates.yml is the declaration surface; this file only executes it.
 
+require "json"
 require "open3"
 require "optparse"
 require "rbconfig"
@@ -34,6 +35,17 @@ def say(detail)
   puts Master::Trace::Dmesg.line(GATE_UNIT, GATE_PARENT, detail)
 rescue StandardError
   puts "#{GATE_UNIT} at #{GATE_PARENT}: #{detail}"
+end
+
+# The gate in hand, for whoever is waiting on this process with its output
+# captured (Operator::GateHeartbeat reads it on a timer).
+def note_progress(index, total, name)
+  path = ENV["GATE_PROGRESS_FILE"].to_s
+  return if path.empty?
+
+  File.write(path, JSON.generate("n" => index, "total" => total, "name" => name, "at" => Time.now.to_f))
+rescue SystemCallError
+  nil
 end
 
 def log_retired(line)
@@ -195,7 +207,8 @@ names = registry.keys if names.empty?
 started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
 results = {}
 
-names.each do |name|
+names.each_with_index do |name, index|
+  note_progress(index + 1, names.size, name)
   row = registry.fetch(name) || {}
   result, duration_ms, output = run_gate(name, row, options[:args])
   record(name, result, duration_ms)

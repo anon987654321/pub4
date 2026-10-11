@@ -6,6 +6,7 @@ require "operator/ruby_runner"
 require "bundler"
 require_relative "strict_mode"
 require_relative "gate_regression"
+require_relative "gate_heartbeat"
 require_relative "../trace/dmesg"
 
 module Operator
@@ -381,11 +382,13 @@ module Operator
     # Under the Ruby the repo pins, as the app suites below run. runner.rb refuses
     # any other, so launched with this process's Ruby every gate was skipped and
     # the stage reported one refusal as its whole result.
-    def rails_gates(scan_only:)
-      capture(RUBY, File.join(MASTER, "gates", "runner.rb"), "--all",
-              chdir: File.join(ROOT, "RAILS"),
-              env: strict_env.merge("GATE_AUTOFIX" => scan_only ? "0" : "1"))
-    end
+def rails_gates(scan_only:)
+  GateHeartbeat.around("rails gates") do |progress|
+    capture(RUBY, File.join(MASTER, "gates", "runner.rb"), "--all",
+            chdir: File.join(ROOT, "RAILS"),
+            env: strict_env.merge(progress).merge("GATE_AUTOFIX" => scan_only ? "0" : "1"))
+  end
+end
 
     # The repair-aware runner owns deterministic source/rendered corrections;
     # premerge is the read-only proof that every Rails test, coverage dimension
@@ -397,12 +400,9 @@ module Operator
       premerge = File.join(MASTER, "tools", "rails", "premerge.rb")
       return [false, body + ["rails premerge missing: #{premerge}"], 1] unless File.file?(premerge)
 
-      verified, verification_body, verification_status = capture(
-        RUBY,
-        premerge,
-        chdir: File.join(ROOT, "RAILS"),
-        env: strict_env.merge("MASTER_FIX_VERIFY" => "1"),
-      )
+verified, verification_body, verification_status = GateHeartbeat.around("rails premerge") do |_progress|
+  capture(RUBY, premerge, chdir: File.join(ROOT, "RAILS"), env: strict_env.merge("MASTER_FIX_VERIFY" => "1"))
+end
       [verified, body + ["rails premerge: #{verified ? "ok" : "FAIL"}"] + verification_body, verification_status]
     end
 
