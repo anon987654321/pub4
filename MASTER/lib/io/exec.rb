@@ -29,39 +29,26 @@ module Master
       DEFAULT_TIMEOUT = Integer(ENV.fetch("MASTER_EXEC_TIMEOUT", "120"))
       GRACE_S = 0.2
 
-      def capture3(*cmd, timeout: DEFAULT_TIMEOUT, **opts)
-        stdin_data, spawn_opts = split_opts(opts)
-        Open3.popen3(*cmd, **Master::Ops::ProcessSpawn.options(spawn_opts.merge(pgroup: true))) do |stdin, stdout, stderr, wait_thr|
-          out_reader = reader_for(stdout)
-          err_reader = reader_for(stderr)
-          writer = writer_for(stdin, stdin_data)
-          status = bounded_wait(wait_thr, timeout, [out_reader, err_reader])
-          writer&.join
-          [reap(out_reader), reap(err_reader), status]
-        end
-      end
+      def capture3(*cmd, timeout: DEFAULT_TIMEOUT, **opts) = run_capture(:popen3, cmd, timeout, opts)
 
-      def capture2e(*cmd, timeout: DEFAULT_TIMEOUT, **opts)
-        stdin_data, spawn_opts = split_opts(opts)
-        Open3.popen2e(*cmd, **Master::Ops::ProcessSpawn.options(spawn_opts.merge(pgroup: true))) do |stdin, stdout_err, wait_thr|
-          reader = reader_for(stdout_err)
-          writer = writer_for(stdin, stdin_data)
-          status = bounded_wait(wait_thr, timeout, [reader])
-          writer&.join
-          [reap(reader), status]
-        end
-      end
+      def capture2e(*cmd, timeout: DEFAULT_TIMEOUT, **opts) = run_capture(:popen2e, cmd, timeout, opts)
 
-      def capture2(*cmd, timeout: DEFAULT_TIMEOUT, **opts)
+      def capture2(*cmd, timeout: DEFAULT_TIMEOUT, **opts) = run_capture(:popen2, cmd, timeout, opts)
+
+      # The body the three captures share: spawn in its own process group, drain
+      # every output stream on a thread, feed stdin on another, wait with a bound
+      # and return the reaped streams in popen order followed by the status.
+      def run_capture(opener, cmd, timeout, opts)
         stdin_data, spawn_opts = split_opts(opts)
-        Open3.popen2(*cmd, **Master::Ops::ProcessSpawn.options(spawn_opts.merge(pgroup: true))) do |stdin, stdout, wait_thr|
-          reader = reader_for(stdout)
+        Open3.public_send(opener, *cmd, **Master::Ops::ProcessSpawn.options(spawn_opts.merge(pgroup: true))) do |stdin, *streams, wait_thr|
+          readers = streams.map { |stream| reader_for(stream) }
           writer = writer_for(stdin, stdin_data)
-          status = bounded_wait(wait_thr, timeout, [reader])
+          status = bounded_wait(wait_thr, timeout, readers)
           writer&.join
-          [reap(reader), status]
+          [*readers.map { |reader| reap(reader) }, status]
         end
       end
+      private_class_method :run_capture
 
       HOMEBREW_BINS = %w[/opt/homebrew/bin /usr/local/bin].freeze
 
