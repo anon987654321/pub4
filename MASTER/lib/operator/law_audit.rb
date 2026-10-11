@@ -130,10 +130,10 @@ module Operator
     # The check that would have caught all three. Prove the fixtures the way a
     # real file is read, not the way a fixture is.
     def fixture_blindness(law)
-      ext = realistic_extension(rule)
+      ext = realistic_extension(law)
       as_file = "fixture#{ext}"
-      bad_seen = !law.scan(rule.bad, file: as_file).empty?
-      good_seen = law.scan(rule.good, file: as_file).empty?
+      bad_seen = !law.scan(law.bad, file: as_file).empty?
+      good_seen = law.scan(law.good, file: as_file).empty?
       return if bad_seen && good_seen
 
       reason = []
@@ -160,12 +160,12 @@ module Operator
 
     def rates
       files = corpus.map { |path| [path, language_of(path), source_of(path)] }
-      law.values.select(&:scannable?).filter_map do |rule|
-        applicable = files.select { |path, lang, _| law.applies?(path, lang) }
+      law.values.select(&:scannable?).filter_map do |entry|
+        applicable = files.select { |path, lang, _| entry.applies?(path, lang) }
         next if applicable.empty?
 
-        hits = applicable.count { |path, _, text| !law.scan(text, file: path).empty? }
-        { law: law.id.to_s, hits:, applicable: applicable.size, rate: hits.fdiv(applicable.size) }
+        hits = applicable.count { |path, _, text| !entry.scan(text, file: path).empty? }
+        { law: entry.id.to_s, hits:, applicable: applicable.size, rate: hits.fdiv(applicable.size) }
       end
     end
 
@@ -186,7 +186,7 @@ module Operator
         corpus: corpus.size,
         fixture_blindness: blind,
         saturation: measured.select { |r| r[:rate] > SATURATION }.sort_by { |r| -r[:rate] },
-        silent: measured.select { |r| r[:hits].zero? }.map { |r| r[:rule] }.sort,
+        silent: measured.select { |r| r[:hits].zero? }.map { |r| r[:law] }.sort,
       }
     end
 

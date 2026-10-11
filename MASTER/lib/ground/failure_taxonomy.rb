@@ -2,7 +2,8 @@
 
 module Master
   module Ground
-    # laws.yml failure_taxonomy — classify errors and return retry strategy.
+    # Classify errors and return a retry strategy. DEFAULTS is the whole table;
+    # laws.yml carries no failure_taxonomy key, so `rules_data` is the only override.
     class FailureTaxonomy
       DEFAULTS = {
         # A paid provider spend limit. Distinct from transient because an
@@ -19,7 +20,7 @@ module Master
       SHARED_LOCK = Mutex.new
 
       def initialize(rules_data: nil)
-        raw = (rules_data || Master.load_yaml(Master::LAWS_PATH).fetch("failure_taxonomy", {}))
+        raw = rules_data || {}
         @categories = raw.transform_keys(&:to_s)
         @patterns = build_patterns
       end

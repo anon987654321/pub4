@@ -31,7 +31,7 @@ class TestScanEngines < Minitest::Test
   # The flattening masks move a wrapped tag onto its opening line, so they keep
   # line count but not length; every other mask keeps both.
   FLATTENING = %i[with_tags_flattened tag_source control_source].freeze
-  MASKS = %i[without_comment_lines without_rule_fixtures without_regex_literals without_erb_tags
+  MASKS = %i[without_comment_lines without_law_fixtures without_regex_literals without_erb_tags
              without_labelled_controls without_block_comments
              without_var_fallbacks without_erb_comments without_mask_gradients declaration_values_only
              without_override_media without_foreign_heredocs with_erb_output_as_text].freeze
@@ -57,7 +57,7 @@ class TestScanEngines < Minitest::Test
     refute_includes m.without_block_comments(SAMPLE), "#202020"
     refute_includes m.without_override_media(SAMPLE), "animation"
     refute_includes m.without_foreign_heredocs(SAMPLE), "primerFired"
-    refute_includes m.without_rule_fixtures(SAMPLE), "bad shape"
+    refute_includes m.without_law_fixtures(SAMPLE), "bad shape"
     assert_match(/<img src="\s+"\s+alt=/, m.tag_source(SAMPLE).lines[3]) # source-assertion: ok — the scanner's rendered tag, not a source file
   end
 
@@ -161,7 +161,7 @@ class TestScanEngines < Minitest::Test
 
     def initialize
       @mutex = Mutex.new
-      @scan_progress = { total: 3, done: 0, violations: 0, dirty_files: 0, rules: Hash.new(0) }
+      @scan_progress = { total: 3, done: 0, violations: 0, dirty_files: 0, laws: Hash.new(0) }
     end
     public :update_scan_progress_state, :checkpoint_step
   end

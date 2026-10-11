@@ -271,10 +271,6 @@ zeitwerk:
     git_context: GitContext
     ast_edit: AstEdit
     llm: LLM
-validation:
-  after_write: ruby -c lib/FILE.rb
-  after_commit: ruby -e "require_relative 'lib/master'; puts 'ok'"
-  scan_file: bundle exec ruby bin/cli scan lib/FILE.rb
 dmesg:
   enabled: true
   verbosity: normal

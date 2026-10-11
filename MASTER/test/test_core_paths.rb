@@ -10,10 +10,10 @@ class TestCorePaths < Minitest::Test
   end
 
   def test_soul_owns_the_sacred_paths
-    assert_includes paths.sacred_paths, "data"
+    assert_includes paths.sacred_paths, "data/"
     assert_includes paths.sacred_paths, "data/SOUL.md"
     assert_includes paths.sacred_paths, "data/project_context.yml"
-    assert_includes paths.sacred_paths, "lib/review/scan"
+    assert_includes paths.sacred_paths, "lib/review/scan/"
     assert_includes paths.sacred_paths, "bin/cli"
   end
 
@@ -31,7 +31,7 @@ class TestCorePaths < Minitest::Test
       )
       repo_paths = Master::Core::Paths.new(root:)
 
-      assert_includes repo_paths.sacred_paths, "MASTER/data"
+      assert_includes repo_paths.sacred_paths, "MASTER/data/"
       assert repo_paths.sacred?(File.join(root, "MASTER/data/laws.yml"))
       assert repo_paths.sacred?(File.join(root, "MASTER/bin/cli"))
       refute repo_paths.sacred?(File.join(root, "RAILS/app/models/post.rb"))

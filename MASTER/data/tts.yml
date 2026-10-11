@@ -24,10 +24,6 @@ transcendent:
   # measured emotion controls.
   phrase_rhythm_enabled: true
   phrase_language_switching: true
-  phrase_language_voices:
-    nb: pernille
-    ms: yasmin
-    en: jenny
   mlx_model: mlx-community/chatterbox-fp16
   mlx_voice: default
   mlx_speed: 1.0
@@ -40,5 +36,3 @@ transcendent:
   replicate_model: jaaari/kokoro-82m
   replicate_voice: af_bella
   replicate_speed: 1.05
-  replicate_exaggeration: 0.45
-  replicate_cfg_weight: 0.42

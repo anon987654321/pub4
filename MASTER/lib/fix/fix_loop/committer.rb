@@ -13,9 +13,9 @@ module Master
       # proves the push landed.
       #
       # The checkout is shared by several sessions and a human. The owned unit
-      # is the pass's target files: a change inside them belongs to the request
-      # that named them, whenever it was made, and a dirty path outside them is
-      # left alone. Without owned paths the pass owns what changed since
+      # is the pass's target files, less any already dirty when the pass began:
+      # that work is not the pass's to commit, and a dirty path outside the
+      # targets is left alone too. Without owned paths the pass owns what changed since
       # baseline!, and with no baseline nothing is known to be its own.
       #
       # A commit or push that fails raises after the event is published: a fix
@@ -47,6 +47,12 @@ module Master
         rescue StandardError => e
           @bus&.publish("fix_loop:commit_error", error: e.message)
           raise "cannot establish fix transaction baseline: #{e.class}: #{e.message}"
+        end
+
+        # A file dirty when the pass began holds someone else's uncommitted work;
+        # a fix landing on it cannot be committed apart from that work.
+        def dirty_at_baseline?(path)
+          Array(@baseline).include?(relative(path))
         end
 
         # findings are the violations the pass set out to fix; the ones in a
@@ -281,7 +287,10 @@ module Master
           changed = @git.changed_paths
           return @baseline ? changed - @baseline : [] if owned_paths.nil?
 
-          changed & Array(owned_paths).filter_map { |path| relative(path) }.uniq
+          owned = changed & Array(owned_paths).filter_map { |path| relative(path) }.uniq
+          held_back = owned & Array(@baseline)
+          @bus&.publish("fix_loop:baseline_dirty_excluded", paths: held_back) unless held_back.empty?
+          owned - held_back
         end
 
         # changed_paths are relative to the git -C root, which is @root.

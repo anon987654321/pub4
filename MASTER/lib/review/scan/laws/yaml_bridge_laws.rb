@@ -39,7 +39,7 @@ module Master
               # and a comment describing a shell interpolation is documentation.
               # (Written without naming the markers, since this rule reads it.)
               source = spec["reads_comments"] ? code : without_comment_lines(code)
-              source = without_rule_fixtures(source) if path.to_s.include?("/review/scan/rules/")
+              source = without_law_fixtures(source) if path.to_s.include?("/review/scan/rules/")
               scan_lines(source, regex, message: "veto: #{name} — #{spec["apply"] || "blocked"}")
             end
           end

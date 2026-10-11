@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "open3"
+require "prism"
 require "yaml"
 require_relative "capabilities"
 
@@ -126,7 +126,7 @@ module Master::Core
     # The rules. Each is a few lines because the dangerous thing is expressed as
     # a predicate, not prose. Safety rules Block; hygiene rules Revise.
     def self.default_rules(data, sacred_paths: [], master_root: nil, workspace_root: nil)
-      veto = (data["veto_patterns"] || {}).filter_map { |n, s| [n, safe_rx(s["detect"])] }.to_h
+      veto = (data["veto_patterns"] || {}).to_h { |n, s| [n, safe_rx(n, s["detect"])] }
       immutable = Array(sacred_paths).map(&:to_s).freeze
 
       [
@@ -436,28 +436,19 @@ module Master::Core
       reason_rule(:new_path_ask, %i[write]) { |effect, memory| new_path_reason(effect.args[:path], memory.proof) }
     end
 
-    # The fold blocks on this answer before it admits a write, so a parser that
-    # does not return holds up every write. join returns nil on timeout rather
-    # than raising, which is where the child gets killed.
-    SYNTAX_CHECK_TIMEOUT_S = 5
-
+    # Prism parses in-process and returns every syntax error, so no child
+    # process, PATH lookup or timeout stands between the fold and its next write.
     def self.ruby_syntax_error(content)
-      Open3.popen2e("ruby", "-c") do |stdin, out, wait_thr|
-        stdin.write(content)
-        stdin.close
-        unless wait_thr.join(SYNTAX_CHECK_TIMEOUT_S)
-          Process.kill("KILL", wait_thr.pid)
-          next "syntax check exceeded #{SYNTAX_CHECK_TIMEOUT_S}s"
-        end
-
-        wait_thr.value.success? ? nil : out.read.strip.lines.first&.strip
-      end
+      Prism.parse(content).errors.first&.message
     end
 
-    def self.safe_rx(pattern)
+    # A veto pattern that does not compile would leave its rule with nothing to
+    # match, so every secret or unsafe command would pass. Refuse to build the
+    # constitution instead.
+    def self.safe_rx(name, pattern)
       Regexp.new(pattern, Regexp::MULTILINE)
-    rescue RegexpError
-      nil
+    rescue RegexpError, TypeError => e
+      raise ArgumentError, "veto pattern #{name} is invalid: #{e.message}"
     end
 
     # The surface is load, admit, and immutable_paths_rule — which

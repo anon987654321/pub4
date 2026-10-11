@@ -20,6 +20,7 @@ module Master
 
         def strunk = voice["strunk"] || {}
         def preserve = voice["preserve"] || {}
+        def inverted_pyramid = Array(voice["inverted_pyramid"])
 
         # Lazy, for the same reason limits.yml stopped being parsed in the
         # constructor: `constitution` is the only reader, and every Laws built
@@ -53,8 +54,6 @@ module Master
             raise "laws registry unreadable: #{e.class}: #{e.message}"
           end
         end
-        def thresholds = laws_data["thresholds"] || {}
-        def languages_config = laws_data["languages"] || {}
       end
       # Markdown block rendering for system-prompt injection — a rendering
       # concern separate from Laws' own lookup/parsing responsibility.
@@ -118,12 +117,18 @@ module Master
         payload
       end
 
+      # The kernel is the set of Laws that came from soul.yml's absolute rules;
+      # laws.yml carries no `kernel` tier, so the source field is the marker.
+      KERNEL_SOURCE = /soul\.yml absolute/
+
       def kernel
-        all_laws = Master.law_entries(root: @root)
-        all_laws
-          .select { |law| law["tier"] == "kernel" }
-          .each_with_object({}) { |law, h| h[law["id"]] = law["name"] }
-          .freeze
+        @kernel ||= begin
+          laws
+          ::Law.definitions.values
+               .select { |law| law.source.to_s.match?(KERNEL_SOURCE) }
+               .to_h { |law| [law.id.to_s, (law.fix || law.practice).to_s.gsub(/\s+/, " ").strip] }
+               .freeze
+        end
       end
 
       def philosophy(limit: nil)

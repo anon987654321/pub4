@@ -222,7 +222,7 @@ module Master
     fires: "value = parse(raw) rescue nil\n",
     does_not_fire: "File.delete(path) rescue nil\n",
     description: "modifier rescue binds a discarded error to a name" do |src, path:|
-    scan_lines(without_rule_fixtures(without_comment_lines(without_regex_literals(src))),
+    scan_lines(without_law_fixtures(without_comment_lines(without_regex_literals(src))),
                MODIFIER_RESCUE_DISCARD, message: "modifier rescue binds nil on failure — bind a meaningful value")
   end
 

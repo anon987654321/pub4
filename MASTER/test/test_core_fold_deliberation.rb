@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "minitest/autorun"
+require_relative "test_helper"
 $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 require "master"
 require "cli/fold_risk"

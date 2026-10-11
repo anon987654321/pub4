@@ -20,13 +20,17 @@ module Master
       # can refuse it, so a file already carrying debt stays repairable.
       class MechanicalAutofix
         Applied = Struct.new(:path, :transforms, keyword_init: true)
+        # status is :unchanged, :dirty, :refused or :written; content is what the
+        # file holds after, reason says why a write was refused.
+        Rewrite = Struct.new(:status, :content, :transforms, :reason, keyword_init: true)
 
         def self.enabled?(env: ENV)
           env.fetch("MASTER_SCAN_AUTOFIX", "1") != "0"
         end
 
-        def initialize(scanner:, root:, event_bus: nil, write_guard: nil)
+        def initialize(scanner:, root:, event_bus: nil, write_guard: nil, dirty: nil)
           @scanner = scanner
+          @dirty = dirty
           @root = root.to_s
           @bus = event_bus
           @write_guard = write_guard
@@ -36,31 +40,44 @@ module Master
           autofixable_paths(pairs).filter_map { |path| fix_path(path) }
         end
 
+        # The one propose, guard, write pipeline. A file the dirty predicate
+        # names is left alone, so an autofix never entangles another session's
+        # uncommitted edit; the caller reports what the status means.
+        def rewrite(path, source)
+          return Rewrite.new(status: :dirty, content: source, transforms: []) if dirty?(path)
+
+          candidate = AstFixer.propose(path, source, event_bus: @bus)
+          return Rewrite.new(status: :unchanged, content: source, transforms: []) unless candidate&.changed
+
+          verdict = write_guard.verdict(path:, content: candidate.content)
+          return Rewrite.new(status: :refused, content: source, transforms: [], reason: verdict.reason) if verdict.blocked?
+
+          AstFixer.write(path, candidate.content, event_bus: @bus, transforms: candidate.transforms)
+          Rewrite.new(status: :written, content: candidate.content, transforms: candidate.transforms)
+        end
+
         private
 
         def fix_path(path)
           return unless File.file?(path)
-          # Shared-worktree safety: never rewrite a file that already has
-          # uncommitted MODIFICATIONS — autofixing on top of another agent's
-          # in-progress edits silently entangles them and can't be cleanly split
-          # at commit time. Untracked-new files are fine to fix (nothing to clobber).
-          return if uncommitted_modification?(path)
 
-          candidate = AstFixer.propose(path, File.read(path, encoding: "UTF-8"), event_bus: @bus)
-          return unless candidate&.changed
-
+          outcome = rewrite(path, File.read(path, encoding: "UTF-8"))
           rel = relative_path(path)
-          verdict = write_guard.verdict(path:, content: candidate.content)
-          if verdict.blocked?
-            @bus&.publish("scan_autofix:refused", path: rel, reason: verdict.reason)
-            return
+          case outcome.status
+          when :refused
+            @bus&.publish("scan_autofix:refused", path: rel, reason: outcome.reason)
+            nil
+          when :written
+            @bus&.publish("scan_autofix:applied", path: rel, transforms: outcome.transforms)
+            Applied.new(path: rel, transforms: outcome.transforms)
           end
+        end
 
-          transforms = candidate.transforms
-          AstFixer.write(path, candidate.content, event_bus: @bus, transforms:)
-          applied = Applied.new(path: rel, transforms:)
-          @bus&.publish("scan_autofix:applied", path: rel, transforms:)
-          applied
+        # Shared-worktree safety: never rewrite a file that already has
+        # uncommitted MODIFICATIONS. Untracked-new files are fine to fix
+        # (nothing to clobber).
+        def dirty?(path)
+          @dirty ? @dirty.call(path) : uncommitted_modification?(path)
         end
 
         def uncommitted_modification?(path)
@@ -92,7 +109,7 @@ module Master
         end
 
         def autofixable_finding?(finding)
-          law = laws_by_id[Finding.read(finding, :law).to_s]
+          law = laws_by_id[Master::Review::Scan::Finding.read(finding, :law).to_s]
           law&.auto_fix
         end
 

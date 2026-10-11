@@ -14,8 +14,6 @@ subjects:
   johann: { names: [johann], pronoun: he }
   ragnhild: { names: [ragnhild], pronoun: she }
 
-first_person: '\b(?:me|my|myself|mine|meg|min|mitt|mine)\b'
-
 # A paid request is planned and run as a dry run (preflight, estimate, the
 # prompt and the model) unless the sentence also carries one of these.
 confirm: '\b(?:confirm(?:ed)?|for real|go ahead|bekreft\w*|kj[øo]r\s+p[åa]\s+ordentlig)\b'

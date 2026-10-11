@@ -35,7 +35,7 @@ module Master
         def initialize(bus:, committer:, conflict_resolver:, llm_router:, root:,
                        laws:, agent:, scanner:, learnings:, preamble:,
                        clean_runs_required:, plateau_window:, ground_truth: nil, homeostat: nil, council: nil,
-                       visual_pass: nil, opportunity_pass: nil, preflight: nil, discipline: nil, wishlist: nil)
+                       visual_pass: nil, opportunity_pass: nil, preflight: nil, discipline:, wishlist:)
           @bus = bus
           @committer = committer
           @conflict_resolver = conflict_resolver
@@ -43,6 +43,7 @@ module Master
           @root = root
           @resource_budget = ResourceBudget.new(root:)
           @agent = agent
+          @scanner = scanner
           @scan_phase = ScanPhase.new(scanner:, root:, bus:)
           @preflight = preflight || Preflight.new(root:, bus:)
           @learnings = learnings
@@ -56,15 +57,15 @@ module Master
         def take_limits(clean_runs_required:, plateau_window:, ground_truth:, homeostat:, council:, visual_pass:, opportunity_pass:, discipline:, wishlist:)
           @clean_runs_required = clean_runs_required
           @plateau_window = plateau_window
-          @law_violation_counts = Hash.new(0)
+          @violation_counts = Hash.new(0)
           @law_recurrence = Hash.new(0)
           @ground_truth = ground_truth
           @homeostat = homeostat
           @council = council
           @visual_pass = visual_pass
           @opportunity_pass = opportunity_pass
-          @wishlist = wishlist || Wishlist.new(root: @root, agent: @agent, event_bus: @bus)
-          @discipline = discipline || ConvergenceDiscipline.new(root: @root, bus: @bus)
+          @wishlist = wishlist
+          @discipline = discipline
           @ground_truth_failures = 0
           emit_coverage = lambda do |target, pass|
             semantic = @scan_phase.semantic_full? ? "full" : "sampled clean-files"

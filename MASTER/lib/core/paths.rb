@@ -34,7 +34,10 @@ module Master
             soul = YAML.safe_load_file(File.join(manifest_root, MANIFEST), aliases: true) || {}
             prefix = manifest_root == @root ? "" : "MASTER/"
             Array(soul.dig("absolute", "sacred_paths")).map(&:to_s).map do |path|
-              normalize("#{prefix}#{path}")
+              entry = normalize("#{prefix}#{path}")
+              # normalize resolves the path and drops the slash that marks a subtree;
+              # Constitution.immutable_hit? reads that slash to guard everything below.
+              path.end_with?("/") ? "#{entry}/" : entry
             end.uniq.freeze
           else
             [].freeze

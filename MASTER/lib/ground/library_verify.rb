@@ -2,7 +2,7 @@
 
 module Master
   module Ground
-    # laws.yml library_verify — gem, path, and binary pre-flight checks.
+    # Gem, path, and binary pre-flight checks.
     class LibraryVerify
       def initialize(root: Master::ROOT)
         @root = root

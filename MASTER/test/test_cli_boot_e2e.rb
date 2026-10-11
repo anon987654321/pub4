@@ -10,7 +10,11 @@ class TestCliBootE2e < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
   CLI = File.join(ROOT, "bin", "cli")
   COMMAND_TIMEOUT = 45
+  # The booted child keeps the Ruby that runs this test: the entrypoint would
+  # otherwise re-exec into another installed Ruby that inherits this process's
+  # BUNDLE_PATH and cannot load gems built against this Ruby's libruby.
   BOOT_ENV = {
+    "MASTER_RUBY_REEXEC_DONE" => "1",
     "MASTER_FAST" => "1",
     "MASTER_SAFE_MODE" => "1",
     "MASTER_WEB" => "0",

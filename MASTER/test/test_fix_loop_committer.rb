@@ -142,8 +142,6 @@ class TestFixLoopCommitter < Minitest::Test
     assert_equal "fix_loop: llm-fix [pass 1]\n\nNO_PUTS lib/ok.rb:3\nLONG_LINE lib/ok.rb:9", git.commits.first.first
   end
 
-  # An explicit fix owns its target: a change already sitting in a target
-  # file is committed with the fix, and a dirty path outside it is not.
   def test_architecture_scope_blocks_an_unowned_path
     git = FakeGit.new([], ["RAILS/apps.yml", "TODO.md"])
     bus = FakeBus.new
@@ -179,15 +177,22 @@ class TestFixLoopCommitter < Minitest::Test
     assert_equal ["master"], event.last[:boundaries]
   end
 
-  def test_owned_paths_commit_prior_changes_inside_the_target_only
+  # A target file already dirty when the pass began holds someone else's
+  # uncommitted work; the fix must not ride into a commit with it.
+  def test_owned_paths_exclude_files_dirty_at_baseline
     write_file("lib/ok.rb", "OK = 1\n")
-    git = FakeGit.new(["lib/ok.rb", "lib/theirs.rb"], ["lib/ok.rb", "lib/theirs.rb"])
-    committer = Master::Fix::FixLoop::Committer.new(git:, bus: FakeBus.new, root: @dir)
+    write_file("lib/fresh.rb", "FRESH = 1\n")
+    git = FakeGit.new(["lib/ok.rb"], ["lib/ok.rb", "lib/fresh.rb"])
+    bus = FakeBus.new
+    committer = Master::Fix::FixLoop::Committer.new(git:, bus:, root: @dir)
     committer.baseline!
-    committer.commit_if_dirty("fix: ok", owned_paths: [File.join(@dir, "lib/ok.rb")])
+    committer.commit_if_dirty("fix: ok", owned_paths: [File.join(@dir, "lib/ok.rb"), File.join(@dir, "lib/fresh.rb")])
 
-    assert_equal [["fix: ok", ["lib/ok.rb"]]], git.commits
-    assert_equal 1, git.pushes
+    assert_equal [["fix: ok", ["lib/fresh.rb"]]], git.commits
+    assert committer.dirty_at_baseline?(File.join(@dir, "lib/ok.rb"))
+    refute committer.dirty_at_baseline?("lib/fresh.rb")
+    excluded = bus.events.find { |name, _| name == "fix_loop:baseline_dirty_excluded" }
+    assert_equal ["lib/ok.rb"], excluded.last[:paths]
   end
 
   # Behind is the remote moving on; only a commit still ahead means the push

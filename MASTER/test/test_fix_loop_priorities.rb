@@ -20,7 +20,8 @@ class TestFixLoopPriorities < Minitest::Test
       laws = [Law.new("GENERIC", :warning), *ids.map { |id| Law.new(id, :warning) }]
       loop = Master::Fix::FixLoop.new(laws:, agent: Agent.new, scanner: Scanner.new, root: dir)
 
-      ordered = loop.__send__(:ordered_laws).map(&:id)
+      order = loop.instance_variable_get(:@pass_runner).instance_variable_get(:@law_order)
+      ordered = order.ordered(violation_counts: {}).map(&:id)
 
       assert_equal ids.size, (ordered.first(ids.size) & ids).size
       assert_equal "GENERIC", ordered.last

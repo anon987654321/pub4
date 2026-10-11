@@ -251,7 +251,10 @@ module Master
           Preserve: reproduce shown code or text verbatim; never paraphrase.
           Diagnostic output: #{preserve["diagnostic_output"]}
           Minimize: #{preserve.dig("refinement_scope", "minimize")}
-          Inverted pyramid: lead with outcome, then evidence, then detail.
+          Inverted pyramid: #{@laws.inverted_pyramid.join(' ')}
+          Boot message: #{preserve["boot_message"]}
+          Help text: #{preserve["help_text"]}
+          Progress: #{preserve["spinner_feedback"]}
           Require evidence: modification claims show diff; completion claims show command output.
           </master_output_format>
         XML

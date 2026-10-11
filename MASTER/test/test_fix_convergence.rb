@@ -353,18 +353,29 @@ class TestFixConvergence < Minitest::Test
     assert_same plateau, loop.send(:blocked_by_gaps, plateau), "only DONE is downgraded"
   end
 
-  def test_manual_fix_upgrades_semantic_scanning_to_full
-    scanner = Object.new
-    called = false
-    scanner.define_singleton_method(:full_semantic!) { called = true; scanner }
-    runner = Master::Fix::FixLoop::PassRunner.allocate
-    runner.instance_variable_set(:@scanner, scanner)
+def test_manual_fix_upgrades_semantic_scanning_to_full
+  scanner = Object.new
+  called = false
+  scanner.define_singleton_method(:full_semantic!) { called = true; scanner }
+  runner = build_loop([]).then { |l| l.instance_variable_get(:@pass_runner) }
+  runner.instance_variable_set(:@scan_phase, Master::Fix::ScanPhase.new(scanner:, root: @root))
 
-    runner.full_semantic!
+  runner.full_semantic!
 
-    assert called
-    assert_same scanner, runner.instance_variable_get(:@scanner)
-  end
+  assert called
+end
+
+def test_builder_gives_the_pass_runner_its_scanner_and_violation_tally
+  scanner = ConstantScanner.new([])
+  loop = Master::Fix::FixLoop.new(
+    laws: [StubRule.new("TEST_RULE", :warning)], agent: OpenCircuitAgent.new,
+    scanner:, root: @root, bus: @bus, git: StubGit.new
+  )
+  runner = loop.instance_variable_get(:@pass_runner)
+
+  assert_same scanner, runner.instance_variable_get(:@scanner)
+  assert_equal 0, runner.instance_variable_get(:@violation_counts)["TEST_RULE"]
+end
 
   def test_scan_is_not_a_public_command
     assert_includes Master::CLI::TurnRouter::PIPELINE_SLASH, "scan"

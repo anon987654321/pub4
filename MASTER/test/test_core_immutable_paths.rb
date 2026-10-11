@@ -82,6 +82,21 @@ class ImmutablePathsTest < Minitest::Test
     assert_blocked effect, by: :immutable_paths
   end
 
+  # The manifest marks subtrees (data/, lib/review/scan/) with a trailing slash;
+  # Paths must hand that slash on or the subtree guard never matches.
+  def test_every_subtree_declared_in_the_real_manifest_blocks_its_children
+    sacred = Master::Core::Paths.sacred_paths(root: Master::ROOT)
+    subtrees = sacred.select { |entry| entry.end_with?("/") }
+    refute_empty subtrees, "soul.yml declares subtree sacred paths"
+    law = Master::Core::Constitution.immutable_paths_rule(
+      sacred, master_root: Master::ROOT, workspace_root: Master::ROOT
+    )
+    subtrees.each do |entry|
+      effect = Master::Core::Effect.write("#{entry}new_child_file.rb", "A = 1\n")
+      assert_instance_of Master::Core::Verdict::Block, law.judge.call(effect, nil), "#{entry} subtree is unguarded"
+    end
+  end
+
   def test_ordinary_write_passes
     assert_allowed Master::Core::Effect.write("lib/app/thing.rb", "A = 1\n")
   end

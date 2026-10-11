@@ -1,37 +1,11 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
-require "yaml"
 require "master"
 
-# The evidence weights live in exactly one Ruby place — Proof::SCORING — and the
-# lib spine still reads data/laws.yml's evidence_scoring. Until that spine is
-# severed the two must agree, or the agent is told one threshold and judged by
-# another. This test is the seam that keeps them honest.
+# The evidence weights live in exactly one place, Proof::SCORING, and the
+# model's prompt is built from it.
 class EvidencePolicyTest < Minitest::Test
-  DATA = YAML.safe_load_file(
-    File.expand_path("../data/laws.yml", __dir__), aliases: true
-  ).fetch("evidence_scoring")
-
-  def test_weights_match_rules_yaml
-    yaml_weights = DATA.fetch("weights").transform_keys(&:to_sym)
-    assert_equal Master::Core::Proof::SCORING, yaml_weights
-  end
-
-  def test_pass_threshold_matches_rules_yaml
-    assert_equal DATA.fetch("pass_threshold"), Master::Core::Proof::PASS_THRESHOLD
-  end
-
-  # Same seam as the weights: Ruby is the source, YAML mirrors it, and a
-  # disagreement means the agent is judged by one policy and told another.
-  def test_producers_match_rules_yaml
-    yaml = DATA.fetch("producers").transform_keys(&:to_sym).transform_values { |p| Regexp.new(p) }
-    ruby = Master::Core::Proof::PRODUCERS.transform_values { |r| Regexp.new(r.source.sub(/\A\\b\(\?:/, "").sub(/\)\z/, "")) }
-
-    assert_equal ruby.keys.sort, yaml.keys.sort
-    ruby.each_key { |kind| assert_equal ruby[kind].source, yaml[kind].source, "producer for #{kind} drifted" }
-  end
-
   # Every kind that scores must have a producer, or its weight is unreachable.
   def test_every_scored_kind_has_a_producer
     assert_equal Master::Core::Proof::SCORING.keys.sort, Master::Core::Proof::PRODUCERS.keys.sort

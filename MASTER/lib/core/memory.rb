@@ -71,20 +71,6 @@ module Master::Core
       @procedural = Types::Procedural.new
     end
 
-    def link_episode(episode)
-      @episodic = Types::Episodic.new(episode)
-    end
-
-    def seed_from_intent(intent)
-      note(:goal, intent.goal)
-      note(:approach, intent.approach) if intent.approach
-      note(:evidence, intent.evidence_summary) if intent.evidence_summary
-      # Proof takes its risk at construction and has no writer; seeding comes
-      # before any evidence, so a fresh Proof loses nothing.
-      @proof = Proof.new(risk: intent.risk)
-      self
-    end
-
     def note(kind, text)
       entry = Entry.new(role: :note, text: "#{kind}: #{text}")
       @goal = entry if kind.to_s == "goal"
@@ -128,10 +114,6 @@ module Master::Core
     def lock!
       view.lock!
       self
-    end
-
-    def memory_allowed?(path, mode = :read)
-      view.allowed?(path, mode)
     end
 
     private

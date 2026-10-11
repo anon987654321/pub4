@@ -4,8 +4,9 @@ require_relative "test_helper"
 
 # soul.yml declares seven hooks. Trace::Hooks is what fires them, and until
 # 2026-09-06 nothing called `attach`, so every one was dead on a bus already
-# carrying its trigger — scan:complete, law_loop:fix_applied, llm:cost,
-# phase:advanced and fix_loop:clean are all published by live code.
+# carrying its trigger — scan:complete, law_loop:fix_applied, llm:cost
+# and fix_loop:clean are all published by live code. soul.yml also declares
+# on_phase_transition; nothing publishes a phase event, so no subscriber feeds it.
 #
 # Two directions throughout. A hook that fires on the wrong event is as wrong as
 # one that never fires, and the cost hook has a threshold, which is where a rule

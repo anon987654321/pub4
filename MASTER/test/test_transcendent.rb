@@ -3,6 +3,12 @@
 require_relative "test_helper"
 
 class TestTranscendent < Minitest::Test
+  # tts.yml is parsed once per change, not once per call.
+  def test_file_section_is_memoized_until_the_file_changes
+    first = Master::Voice::Transcendent.file_section
+    assert_same first, Master::Voice::Transcendent.file_section
+  end
+
   def test_emotion_analyze_returns_profile
     e = Master::Voice::Emotion.analyze("Great, breakthrough done! lol wild")
     assert_includes %i[triumph humor wonder warm urgent comfort], e[:primary]

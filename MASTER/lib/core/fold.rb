@@ -90,13 +90,13 @@ private
         return Done.new(reason: :complete, turns: turn, summary: admitted.args[:summary])
       end
 
-      # Only an effect that can change the tree has anything to roll back. A
-      # checkpoint is a `git diff` per turn, and a failed read or ask came back
-      # carrying "rollback skipped" about a tree it never touched.
-      mutating = %i[write exec git].include?(admitted.verb)
-      checkpoint = @world.checkpoint if mutating
+      # Only a write has a path to roll back to; World#rollback skips exec and git
+      # for want of one. A checkpoint is a `git diff` per turn, so it is taken for
+      # writes alone rather than paid for by effects that cannot use it.
+      write = admitted.verb == :write
+      checkpoint = @world.checkpoint if write
       observation = @world.perform(admitted)
-      observation = undo(checkpoint, admitted, observation) if mutating && observation.err?
+      observation = undo(checkpoint, admitted, observation) if write && observation.err?
       @memory.record(admitted, observation)
       emit(turn, admitted, observation)
       nil
@@ -107,13 +107,10 @@ private
     # blast radius — which it used to do with a tree-wide reset.
     #
     # What rollback reports rides on the failure, because the agent's next move
-    # depends on it: a write that was undone left the tree as it was, and an
-    # effect that could not be undone did not. A clean rollback of anything but
-    # a write says nothing the agent needs.
+    # depends on it: a write that was undone left the tree as it was, and a
+    # write that could not be undone did not.
     def undo(checkpoint, effect, observation)
       undone = @world.rollback(checkpoint, effect)
-      return observation if undone.ok? && effect.verb != :write
-
       Observation.no("#{observation.message} [#{undone.message}]")
     end
 

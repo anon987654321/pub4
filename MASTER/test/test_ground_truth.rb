@@ -3,6 +3,18 @@
 require_relative "test_helper"
 
 class TestGroundTruth < Minitest::Test
+  # laws.yml has no ground_truth_check key, so the default window must be positive
+  # or every read is stale the moment it is recorded.
+  def test_default_window_keeps_a_just_read_file_fresh
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "sample.rb")
+      File.write(path, "x = 1\n")
+      gt = Master::Ground::GroundTruth.new
+      gt.record_read!(path)
+      assert gt.fresh?(path)
+    end
+  end
+
   def test_records_and_asserts_fresh_read
     Dir.mktmpdir do |dir|
       path = File.join(dir, "sample.rb")

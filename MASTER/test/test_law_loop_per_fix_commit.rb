@@ -133,6 +133,30 @@ class TestLawLoopPerFixCommit < Minitest::Test
     end
   end
 
+  class RaisingAfterWriteScanner
+    def initialize = @calls = 0
+    def scan(_path, **)
+      @calls += 1
+      raise "scanner died" if @calls > 1
+
+      Master::Result.ok([])
+    end
+  end
+
+  def test_apply_restores_the_original_when_a_step_after_the_write_raises
+    Dir.mktmpdir do |root|
+      path = File.join(root, "sample.rb")
+      File.write(path, "violation\n")
+      bus = FakeBus.new
+      loop = build_loop(root:, bus:, scanner: RaisingAfterWriteScanner.new, agent: FixingAgent.new)
+
+      refute loop.send(:apply, path, "model wrote this\n", violation_in(path))
+      assert_equal "violation\n", File.read(path)
+      rejected = bus.events.find { |event, _| event == "law_loop:fix_rejected" }
+      assert_equal "exception", rejected&.last&.fetch(:reason)
+    end
+  end
+
   # The fence could carry the refusal too: extract_code tested only the bare
   # spelling, so "```html\nUNCHANGED\n```" passed as file content.
   def test_extract_code_refuses_a_fenced_sentinel

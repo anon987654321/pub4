@@ -35,7 +35,7 @@ ownership:
     purpose: persistent perception, salience, affect and reflection
     risk: high
     check: bin/check --profile=agent
-  web/:
+  RAILS/master_web/:
     purpose: the Rails face — chat shell, TTS endpoints, WebGL face assets
     risk: high
     check: bin/check --profile=web
@@ -128,19 +128,19 @@ ownership:
     purpose: model and routing registry
     risk: high
     check: ruby -Ilib:test test/test_provider_config.rb
-  web/app/views/chat/index.html.erb:
+  RAILS/master_web/app/views/chat/index.html.erb:
     purpose: face boot shell and primer contract
     risk: critical
     check: bin/check --profile=web
-  web/public/face.js:
+  RAILS/master_web/public/face.js:
     purpose: deferred face loader
     risk: critical
     check: bin/check --profile=web
-  web/public/face.part*.txt:
+  RAILS/master_web/public/face.part*.txt:
     purpose: split face runtime payload
     risk: critical
     check: bin/check --profile=web
-  web/public/three.face.module.js:
+  RAILS/master_web/public/three.face.module.js:
     purpose: heavy WebGL dependency, deferred until tap
     risk: critical
     check: bin/check --profile=web

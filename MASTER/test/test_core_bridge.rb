@@ -3,6 +3,7 @@
 require "test_helper"
 require "cli/core_bridge"
 require "tmpdir"
+require "minitest/mock"
 
 # The bridge runs one goal through the core Fold from inside the CLI and streams
 # turns to the event bus. These pin that it works fully offline (scripted model),
@@ -101,6 +102,41 @@ class CoreBridgeTest < Minitest::Test
       undo.undo!
       assert_equal "before\n", File.read(note), "/undo should restore the file the fold wrote"
       assert_equal "kept\n", File.read(older), "/undo should leave the earlier session's file alone"
+    end
+  end
+
+  # Constitution and World each used to resolve the root on their own, so a
+  # relative path could name one file to the gate and another to the writer.
+  def test_the_constitution_and_the_world_share_the_resolved_workspace_root
+    Dir.mktmpdir do |given|
+      Dir.mktmpdir do |resolved|
+        seen = nil
+        real = Master::Core::Constitution.method(:load)
+        loader = ->(**kw) { seen = kw[:workspace_root]; real.call(**kw) }
+        Master::CLI::CoreBridge.stub(:workspace_root_for, resolved) do
+          Master::Core::Constitution.stub(:load, loader) do
+            Master::CLI::CoreBridge.run("goal", root: given, model: ScriptedModel.new, max_turns: 1)
+          end
+        end
+        assert_equal resolved, seen
+      end
+    end
+  end
+
+  # WriteGuard reads the file on disk as the "before" side, so it needs the
+  # path the World writes to rather than one relative to the process cwd.
+  def test_the_scan_verifier_hands_the_guard_the_absolute_path
+    Dir.mktmpdir do |root|
+      paths = []
+      guard = Object.new
+      guard.define_singleton_method(:verdict) do |path:, content:|
+        paths << path
+        Struct.new(:blocking).new([])
+      end
+      Master::Fix::WriteGuard.stub(:default, guard) do
+        Master::CLI::CoreBridge.scan_verifier(root:).call(path: "lib/a.rb", content: "A = 1\n")
+      end
+      assert_equal [File.join(root, "lib/a.rb")], paths
     end
   end
 
@@ -275,7 +311,7 @@ class CoreBridgeSandboxTest < Minitest::Test
   # which is the verdict the Fold pauses on rather than one it executes.
   def test_the_constitution_turns_a_recognised_ask_into_a_request
     law = Master::Core::Constitution.new(
-      rules: [Master::Core::Constitution.send(:sandboxed_exec_rule, sandbox)],
+      laws: [Master::Core::Constitution.send(:sandboxed_exec_rule, sandbox)],
     )
     verdict = law.admit(Master::Core::Effect.exec(%w[git push origin main]), nil)
 
@@ -285,17 +321,18 @@ class CoreBridgeSandboxTest < Minitest::Test
 
   def test_the_constitution_still_allows_an_unrecognised_command
     law = Master::Core::Constitution.new(
-      rules: [Master::Core::Constitution.send(:sandboxed_exec_rule, sandbox)],
+      laws: [Master::Core::Constitution.send(:sandboxed_exec_rule, sandbox)],
     )
     verdict = law.admit(Master::Core::Effect.exec(%w[bundle exec rake test]), nil)
 
     refute_kind_of Master::Core::Verdict::Request, verdict
     refute_kind_of Master::Core::Verdict::Block, verdict
   end
+
   def test_observe_mode_is_read_only
     Dir.mktmpdir do |root|
       File.write(File.join(root, "README.md"), "hello\n")
-      model = ScriptedModel.new(
+      model = CoreBridgeTest::ScriptedModel.new(
         Master::Core::Effect.read("README.md"),
         Master::Core::Effect.done("read-only assessment"),
       )
@@ -306,5 +343,4 @@ class CoreBridgeSandboxTest < Minitest::Test
       assert_equal "observe", result[:mission].dig("operator", "mode")
     end
   end
-
 end

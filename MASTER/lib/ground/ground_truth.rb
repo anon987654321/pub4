@@ -2,12 +2,14 @@
 
 module Master
   module Ground
-    # Enforces laws.yml ground_truth_check — fresh reads before claims/commits.
+    # Fresh reads before claims/commits. laws.yml carries no ground_truth_check
+    # key, so the age window is the constant below unless the caller passes one.
     class GroundTruth
       Entry = Data.define(:path, :sha256, :read_at)
+      DEFAULT_MAX_AGE_SECONDS = 300
 
       def initialize(max_age_seconds: nil, event_bus: nil)
-        @max_age = max_age_seconds || load_max_age
+        @max_age = max_age_seconds || DEFAULT_MAX_AGE_SECONDS
         @bus = event_bus
         @reads = {}
         @mutex = Mutex.new
@@ -62,15 +64,6 @@ module Master
 
       def reset!
         @mutex.synchronize { @reads.clear }
-      end
-
-      private
-
-      def load_max_age
-        data = Master.load_yaml(Master::LAWS_PATH) || {}
-        data.dig("ground_truth_check", "cache_max_age_seconds").to_i
-      rescue StandardError
-        5
       end
     end
   end

@@ -29,7 +29,6 @@ class TestLimitsSplit < Minitest::Test
     "process" => ["lib/ops.rb", "process"],
     "scan_profiles" => ["lib/cli/scan/request.rb", "scan_profiles"],
     "session_modes" => ["lib/ground/mode_posture.rb", "session_modes"],
-    "validation" => ["lib/ground/schema_check.rb", "validation"],
     "zeitwerk" => ["lib/master.rb", "zeitwerk"],
   }.freeze
 

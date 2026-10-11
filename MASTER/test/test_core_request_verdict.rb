@@ -57,7 +57,7 @@ class RequestVerdictTest < Minitest::Test
       judge: ->(_e, _m) { raise "a later rule ran after a Request" }
     )
     law = C::Constitution.new(
-      rules: [C::Constitution.send(:sandboxed_exec_rule, ->(_argv) { { ask: "check" } }), later],
+      laws: [C::Constitution.send(:sandboxed_exec_rule, ->(_argv) { { ask: "check" } }), later],
     )
 
     assert_kind_of C::Verdict::Request, law.admit(effect, nil)

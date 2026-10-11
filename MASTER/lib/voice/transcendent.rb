@@ -34,16 +34,28 @@ module Master
       end
 
       def load_config
-        path = Master.data_path("tts.yml")
-        raw = File.exist?(path) ? YAML.safe_load(File.read(path), permitted_classes: [Symbol]) : {}
-        section = raw.is_a?(Hash) ? (raw["transcendent"] || raw[:transcendent] || {}) : {}
-        cfg = DEFAULTS.merge(stringify_keys(section))
+        cfg = file_section.dup
         default_chain = Engines.openbsd? ? %w[chatterbox mlx edge_melodic edge say].join(",") : cfg["engine_chain"]
         cfg["engine_chain"] = ENV.fetch("MASTER_TTS_ENGINE_CHAIN", default_chain)
         cfg["reference_clip"] = ENV["MASTER_TTS_REFERENCE_CLIP"].to_s.strip unless ENV["MASTER_TTS_REFERENCE_CLIP"].to_s.strip.empty?
         cfg
       rescue StandardError
         DEFAULTS.dup
+      end
+
+      # The parsed tts.yml section, reparsed only when the file's mtime or size
+      # changes: synthesis asks for the config several times per utterance.
+      def file_section
+        path = Master.data_path("tts.yml")
+        stamp = File.exist?(path) ? [File.mtime(path), File.size(path)] : nil
+        cached = @file_section
+        return cached[1] if cached && cached[0] == [path, stamp]
+
+        raw = stamp ? YAML.safe_load(File.read(path), permitted_classes: [Symbol]) : {}
+        section = raw.is_a?(Hash) ? (raw["transcendent"] || raw[:transcendent] || {}) : {}
+        merged = DEFAULTS.merge(stringify_keys(section)).freeze
+        @file_section = [[path, stamp], merged]
+        merged
       end
 
       def stringify_keys(hash)

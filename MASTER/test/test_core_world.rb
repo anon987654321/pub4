@@ -198,10 +198,9 @@ class WorldTest < Minitest::Test
     capabilities = Master::Core::Capabilities.for(:fix).drop(:network)
     world = Master::Core::World.new(root:, capabilities:, network: ->(**) { flunk "network reached" })
 
-    result = world.perform(Master::Core::Effect.http("https://example.com"))
+    error = assert_raises(SecurityError) { world.perform(Master::Core::Effect.http("https://example.com")) }
 
-    refute result.ok?
-    assert_match(/capability refused: network/, result.message)
+    assert_match(/capability refused: network/, error.message)
   ensure
     FileUtils.remove_entry(root) if root
   end

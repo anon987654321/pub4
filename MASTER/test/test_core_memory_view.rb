@@ -8,10 +8,10 @@ class CoreMemoryViewTest < Minitest::Test
     memory = Master::Core::Memory.new
     memory.unveil("mission/current.json" => :read, "workspace" => :write)
 
-    assert memory.memory_allowed?("mission/current.json")
-    assert memory.memory_allowed?("workspace/file.rb", :read)
-    assert memory.memory_allowed?("workspace/file.rb", :write)
-    refute memory.memory_allowed?("owner/private.json")
+    assert memory.view.allowed?("mission/current.json")
+    assert memory.view.allowed?("workspace/file.rb", :read)
+    assert memory.view.allowed?("workspace/file.rb", :write)
+    refute memory.view.allowed?("owner/private.json")
   end
 
   def test_unveil_is_monotonic_after_lock

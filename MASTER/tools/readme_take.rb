@@ -173,8 +173,8 @@ def speakable(para)
   text.gsub(/\s+([,.])/, '\1').gsub(/\s+/, " ").strip
 end
 
-# One synthesis per paragraph: data/tts.yml caps an utterance at 900 characters,
-# and a paragraph break is the pause a listener expects anyway.
+# One synthesis per paragraph: a paragraph break is the pause a listener
+# expects anyway, and each call stays short enough for the worker timeout.
 # Who reads paragraph N.
 #
 # Policy.voice_for_utterance picks at random and says why: over a session of

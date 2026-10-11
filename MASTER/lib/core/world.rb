@@ -361,8 +361,6 @@ module Master::Core
       raw ? out : out.strip
     end
 
-    private
-
     # Bounded subprocess call with a hard timeout, which means killing the child
     # — not just abandoning it.
     #

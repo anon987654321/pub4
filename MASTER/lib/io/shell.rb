@@ -59,8 +59,6 @@ module Master
         capture_output(command)
       rescue Timeout::Error, TTY::Command::TimeoutExceeded
         failed_result("timed out after #{TIMEOUT}s")
-      rescue TTY::Command::ExitError => e
-        failed_result(e.message)
       rescue StandardError => e
         failed_result(e.message)
       end

@@ -28,6 +28,8 @@ module Master
 
       def initialize(laws: nil)
         @laws = laws || Ground::Laws.new
+        # The messages quote voice.yml's preserve block, so editing the rule edits what is reported.
+        @preserve = @laws.preserve
         soul = @laws.data(:soul) || {}
         # Under "absolute", where soul.yml actually nests it. There is no
         # top-level anti_simulation key, so this dug nothing and @evidence has
@@ -50,9 +52,9 @@ module Master
       def validate(text, context: :routine, writes: nil)
         issues = []
         issues << "edit claimed but nothing was written this turn" if writes&.empty? && text.to_s.match?(FIRST_PERSON_EDIT)
-        issues << "boot message must remain 5-line dmesg style" if context == :boot && boot_message_collapsed?(text)
+        issues << "boot message: #{@preserve["boot_message"]}" if context == :boot && boot_message_collapsed?(text)
         issues << "diagnostic output collapsed" if diagnostic_context?(context) && collapsed_diagnostic?(text)
-        issues << "help output missing syntax/example detail" if context == :help && incomplete_help?(text)
+        issues << "help output: #{@preserve["help_text"]}" if context == :help && incomplete_help?(text)
         issues << "minimize rule misapplied to diagnostic output" if minimize_misapplied?(text)
         issues << "modification claim without diff" if modification_claim?(text) && !diff_evidence?(text)
         issues << "completion claim without command output" if completion_claim?(text) && !command_evidence?(text)

@@ -757,8 +757,8 @@ end
     # (EXEMPTIONS_EXPIRE). "open:" entries are known debt with a collapse
     # recorded in TODO.md — tolerated so the gate can land, never permanent.
     known = {
-      "- web/app/views/chat/index.html.erb" =>
-        "shared file reference, not a fact — agent_map and council both point at the chat view",
+      "- RAILS/master_web/public/face.js" =>
+        "shared file reference, not a fact — agent_map lists the loader as a face file and patterns.yml names it as the target of four face patterns",
       "strategy: highest_priority_wins" =>
         "coincident strings for two different facts: limits.yml rule-conflict strategy, soul.yml conflict resolution",
       # The three "open:" entries that were here are gone rather than expired:

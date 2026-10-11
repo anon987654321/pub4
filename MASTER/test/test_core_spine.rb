@@ -136,6 +136,15 @@ class TestKernelSpine < Minitest::Test
     assert_equal :ruby_parses, verdict.by
   end
 
+  # A veto pattern that fails to compile used to be dropped, leaving its rule
+  # with nothing to match: every secret passed.
+  def test_an_invalid_veto_regex_refuses_to_build_the_constitution
+    data = { "veto_patterns" => { "secrets" => { "detect" => "sk-(" } } }
+
+    error = assert_raises(ArgumentError) { Master::Core::Constitution.send(:default_rules, data) }
+    assert_match(/secrets/, error.message)
+  end
+
   def test_world_blocks_path_escape
     Dir.mktmpdir do |dir|
       world = Master::Core::World.new(root: dir)
@@ -181,11 +190,12 @@ class TestKernelSpine < Minitest::Test
     assert_nil Master::Core::Constitution.forbidden_file_reason("MASTER/lib/core.rb")
   end
 
-  def test_third_top_level_tree_is_scope_creep
+  def test_fourth_top_level_tree_is_scope_creep
     memory = Master::Core::Memory.new
     memory.record(Master::Core::Effect.write("MASTER/a.rb", "x"), Master::Core::Observation.ok("ok"))
     memory.record(Master::Core::Effect.write("RAILS/b.rb", "x"), Master::Core::Observation.ok("ok"))
-    verdict = constitution.admit(Master::Core::Effect.write("OPENBSD/c.rb", "x"), memory)
+    memory.record(Master::Core::Effect.write("OPENBSD/c.rb", "x"), Master::Core::Observation.ok("ok"))
+    verdict = constitution.admit(Master::Core::Effect.write("STUDIO/d.rb", "x"), memory)
 
     assert_kind_of Master::Core::Verdict::Block, verdict
     assert_equal :scope_creep, verdict.by

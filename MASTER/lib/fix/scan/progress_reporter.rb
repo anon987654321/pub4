@@ -41,7 +41,7 @@ module Master
           findings = file_result.ok? ? Array(file_result.value!) : []
           count = findings.size
           rel = path.sub(dir, "").delete_prefix("/")
-          law_hits = findings.filter_map { |f| Finding.read(f, :law)&.to_s }
+          law_hits = findings.filter_map { |f| Master::Review::Scan::Finding.read(f, :law)&.to_s }
 
           done, total, viol_total, dirty, top = update_scan_progress_state(count, law_hits)
 
@@ -69,9 +69,9 @@ module Master
             findings.each do |finding|
               io.puts({
                 path: path.to_s,
-                line: Finding.read(finding, :line),
-                law: Finding.read(finding, :law)&.to_s,
-                message: Finding.read(finding, :message),
+                line: Master::Review::Scan::Finding.read(finding, :line),
+                law: Master::Review::Scan::Finding.read(finding, :law)&.to_s,
+                message: Master::Review::Scan::Finding.read(finding, :message),
               }.to_json)
             end
           end

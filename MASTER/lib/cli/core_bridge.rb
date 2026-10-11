@@ -46,7 +46,7 @@ module Master
           )
           world = build_world(root: workspace_root, container:, capabilities:, network: network_client(container))
           mission.transition!(:execute)
-          done = build_fold(root:, model:, memory:, world:, max_turns:, observer:, capabilities:).run(goal)
+          done = build_fold(root: workspace_root, model:, memory:, world:, max_turns:, observer:, capabilities:).run(goal)
           mission.transition!(:verify, summary: continuation_summary(done))
           settle_mission(mission, done)
 
@@ -65,7 +65,9 @@ module Master
                                 undo: container&.fetch(:undo, nil), capabilities:, network:)
       end
 
-      # A mission checkpoints the files it touches before the fold writes them.
+      # MASTER/ is the runtime's own root; the tree the fold edits is the repository
+      # around it. The Constitution and the World both take this one answer, so a
+      # relative path means the same file to the gate that judges it and the hand that writes it.
       def workspace_root_for(root)
         path = File.expand_path(root)
         path == Master::ROOT ? Master::REPO_ROOT : path
@@ -262,7 +264,7 @@ module Master
         Master::Core::Fold.new(
           model:,
           constitution: Master::Core::Constitution.load(data_dir: Master.data_path, workspace_root: root,
-                                                        verify: scan_verifier, sandbox: shell_sandbox(root:),
+                                                        verify: scan_verifier(root:), sandbox: shell_sandbox(root:),
                                                         capabilities:),
           world:,
           memory:,
@@ -275,8 +277,14 @@ module Master
       # same guard handed to it. Handed in as `verify:` rather than required by
       # Constitution, because a require puts lib/review/ inside the fold spine
       # (test_core_no_lib_backedges). Returns the blocking findings as strings.
-      def scan_verifier
+      #
+      # The effect's path is relative to the workspace, so the guard is given the
+      # absolute one: it reads the file's current content as the "before" side
+      # of the comparison, and a relative path would resolve against the process
+      # cwd and compare against the wrong file (or none).
+      def scan_verifier(root: nil)
         lambda do |path:, content:|
+          path = File.expand_path(path.to_s, root) if root
           Master::Fix::WriteGuard.default.verdict(path:, content:).blocking
                                           .map { |f| "#{f[:law]}:#{f[:line]} #{f[:message]}" }
         end

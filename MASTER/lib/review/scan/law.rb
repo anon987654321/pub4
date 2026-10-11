@@ -63,7 +63,7 @@ module Master
           @description = declared ? declared[:description] : ""
           @severity = declared ? declared[:severity] : :warning
           @law_tags = declared ? declared[:law_tags] : []
-          @auto_fix = declared ? declared[:auto_fix] : true
+          @auto_fix = declared ? declared[:auto_fix] : false
         end
 
         # Project the DSL declaration into the Law-facing metadata contract.

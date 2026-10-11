@@ -31,7 +31,6 @@ module Master
       MAX_FIX_RETRIES = 2
       RETRY_WAIT_SLICE = 0.25
       GENETIC_AUTOFIX_CANDIDATES = 3
-      CONVERGE_THRESHOLD = 0.05
 
       MIN_SEVERITY = :warning
       VISUAL_EXTENSIONS = %w[.css .scss .erb .html .htm .js .ts].freeze
@@ -272,7 +271,19 @@ end) if source.to_s.strip.empty?
         true
       rescue StandardError => e
         @bus&.publish("law_loop:write_error", law: @law.id, file: path, error: e.message)
+        restore_after_error(path, old_src, e)
         false
+      end
+
+      # Any exception after the write leaves the model-written file on disk;
+      # the original goes back and the fix counts as a rejection.
+      def restore_after_error(path, old_src, error)
+        return unless old_src
+
+        write_atomic(path, old_src)
+        @bus&.publish("law_loop:fix_rejected", law: @law.id, file: path, reason: "exception", error: error.message[0, 160])
+      rescue StandardError => restore_error
+        Master::Ground::Swallow.log(restore_error, context: "LawLoop.restore_after_error", event_bus: @bus, law: @law.id)
       end
 
       # Boyscout, line-scoped. The golden rule this loop runs under demands the
@@ -414,12 +425,6 @@ end) if source.to_s.strip.empty?
         return "#{code.strip}\n" if code
 
         "#{text.strip}\n"
-      end
-
-      def converged?(prev, current, threshold: CONVERGE_THRESHOLD)
-        return false unless prev
-
-        prev == current || (prev.length - current.length).abs < (prev.length * threshold)
       end
 
       def ext_language(ext)

@@ -10,6 +10,7 @@ require "open3"
 require "optparse"
 require "time"
 require_relative "../lib/trace/dmesg"
+require_relative "../lib/operator/lock_sweep"
 
 ROOT = File.expand_path("..", __dir__)
 REPO = File.expand_path("..", ROOT)
@@ -66,6 +67,10 @@ end
 candidates = Dir.glob(File.join(REPO, "test_*.jpg")).map { |path| path.sub(REPO + "/", "") }
 Master::Trace::Dmesg.status("cleanup0", candidates.empty? ? "no root test_*.jpg candidates" : "#{candidates.size} cleanup candidate(s)")
 candidates.each { |candidate| Master::Trace::Dmesg.status("cleanup0", candidate) }
+
+lock_dir = File.join(ROOT, ".constitutional_locks")
+swept = Operator::LockSweep.sweep(lock_dir, apply: options[:apply])
+Master::Trace::Dmesg.status("cleanup0", "#{swept} scan lock(s) older than a day#{options[:apply] ? " removed" : ", rerun with --apply to remove"}")
 
 if options[:apply]
   candidates.each { |rel| File.delete(File.join(REPO, rel)) if File.file?(File.join(REPO, rel)) } # scan: intentional — each candidate was listed above and --apply names them

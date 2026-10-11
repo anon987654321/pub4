@@ -23,7 +23,6 @@ module Master
         subscribe_scan_complete
         subscribe_fix_applied
         subscribe_cost
-        subscribe_phase
         subscribe_convergence
         publish_hook("on_session_start", {})
         at_exit { publish_hook("on_session_end", {}) }
@@ -53,10 +52,6 @@ module Master
 
           publish_hook(COST_EVENT, payload.merge(total_cost: @cost_total, max_per_session: budget_max))
         end
-      end
-
-      def subscribe_phase
-        bus.subscribe("phase:advanced") { |payload| publish_hook("on_phase_transition", payload) }
       end
 
       def subscribe_convergence

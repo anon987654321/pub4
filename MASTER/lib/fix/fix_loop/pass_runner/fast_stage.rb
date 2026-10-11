@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../../../operator/ruby_runner"
+require_relative "../../scan/mechanical_autofix"
 
 module Master
   module Fix
@@ -117,27 +118,29 @@ module Master
           end
 
           def apply_ast_fixes(path, src, rel)
-            fixed = 0
-            ast_result = Master::Fix::Scan::AstFixer.propose(
-              path,
-              src,
-              allow_deletions: Master::Fix::Scan::AstFixer.deletions_allowed?,
-              event_bus: @bus,
-            )
-            if ast_result&.changed
-              verdict = Master::Fix::WriteGuard.default.verdict(path:, content: ast_result.content)
-              if verdict.blocked?
-                @bus&.publish("fix_loop:ast_refused", file: rel, reason: verdict.reason)
-                Master::Trace::Dmesg.status(FAST_STAGE_UNIT, "ast fix refused, #{rel}: #{verdict.reason[0, 140]}")
-              else
-                Master::Fix::Scan::AstFixer.write(path, ast_result.content, event_bus: @bus, transforms: ast_result.transforms)
-                src = ast_result.content
-                fixed += ast_result.transforms.size
-                @bus&.publish("fix_loop:ast_fixed", file: rel, transforms: ast_result.transforms)
-                Master::Trace::Dmesg.status(FAST_STAGE_UNIT, "ast fix, #{rel}: #{ast_result.transforms.join(", ")}")
-              end
+            outcome = ast_autofix.rewrite(path, src)
+            case outcome.status
+            when :refused
+              @bus&.publish("fix_loop:ast_refused", file: rel, reason: outcome.reason)
+              Master::Trace::Dmesg.status(FAST_STAGE_UNIT, "ast fix refused, #{rel}: #{outcome.reason[0, 140]}")
+            when :dirty
+              @bus&.publish("fix_loop:ast_skipped_dirty", file: rel)
+              Master::Trace::Dmesg.status(FAST_STAGE_UNIT, "ast fix skipped, #{rel} was dirty before the pass")
+            when :written
+              @bus&.publish("fix_loop:ast_fixed", file: rel, transforms: outcome.transforms)
+              Master::Trace::Dmesg.status(FAST_STAGE_UNIT, "ast fix, #{rel}: #{outcome.transforms.join(", ")}")
+              return [outcome.transforms.size, outcome.content]
             end
-            [fixed, src]
+            [0, src]
+          end
+
+          # A file dirty at the pass baseline holds uncommitted work the commit
+          # would otherwise carry; the shared writer refuses it.
+          def ast_autofix
+            @ast_autofix ||= Master::Fix::Scan::MechanicalAutofix.new(
+              scanner: nil, root: @root, event_bus: @bus,
+              dirty: ->(path) { @committer.dirty_at_baseline?(path) }
+            )
           end
 
           def report_type_errors(path, src, rel)

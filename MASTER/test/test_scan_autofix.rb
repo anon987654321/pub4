@@ -7,11 +7,11 @@ class TestScanAutofix < Minitest::Test
   FakeRule = Struct.new(:id, :auto_fix)
 
   class FakeScanner
-    attr_reader :rules, :scan_calls
+    attr_reader :laws, :scan_calls
 
-    def initialize(findings_by_pass:, rules: [])
+    def initialize(findings_by_pass:, laws: [])
       @findings_by_pass = findings_by_pass
-      @rules = rules
+      @laws = laws
       @scan_calls = 0
     end
 
@@ -28,9 +28,20 @@ class TestScanAutofix < Minitest::Test
     end
   end
 
+# MechanicalAutofix leaves a file alone when git cannot say it is clean, so
+# a write test needs a repository to ask.
+def git_tmpdir(&block)
+  Dir.mktmpdir do |root|
+    _out, status = Master::Io::Exec.capture2e("git", "-C", root, "init", "-q")
+    raise "git init failed" unless status.success?
+
+    block.call(root)
+  end
+end
+
   def finding(rule)
     {
-      rule:,
+      law: rule,
       message: "missing frozen",
       line: 1,
       severity: :info,
@@ -51,7 +62,7 @@ class TestScanAutofix < Minitest::Test
   class RefusingGuard
     def verdict(path:, content:)
       Master::Fix::WriteGuard::Verdict.new(
-        introduced: [{ rule: :NO_GOD_CLASS, line: 1, message: "would introduce #{path}/#{content.size}", severity: :error }],
+        introduced: [{ law: :NO_GOD_CLASS, line: 1, message: "would introduce #{path}/#{content.size}", severity: :error }],
       )
     end
   end
@@ -62,7 +73,7 @@ class TestScanAutofix < Minitest::Test
       original = "class Example\nend\n"
       File.write(path, original)
       autofix = Master::Fix::Scan::MechanicalAutofix.new(
-        scanner: FakeScanner.new(findings_by_pass: [], rules: [FakeRule.new("FROZEN_LITERAL", true)]),
+        scanner: FakeScanner.new(findings_by_pass: [], laws: [FakeRule.new("FROZEN_LITERAL", true)]),
         root:,
         write_guard: RefusingGuard.new,
       )
@@ -77,11 +88,11 @@ class TestScanAutofix < Minitest::Test
   # And only what a fix introduces can refuse it, or the first repair of a file
   # carrying debt is the one thing the guard stops.
   def test_a_clean_candidate_still_lands
-    Dir.mktmpdir do |root|
+    git_tmpdir do |root|
       path = File.join(root, "example.rb")
       File.write(path, "class Example\nend\n")
       autofix = Master::Fix::Scan::MechanicalAutofix.new(
-        scanner: FakeScanner.new(findings_by_pass: [], rules: [FakeRule.new("FROZEN_LITERAL", true)]),
+        scanner: FakeScanner.new(findings_by_pass: [], laws: [FakeRule.new("FROZEN_LITERAL", true)]),
         root:,
       )
 
@@ -93,6 +104,34 @@ class TestScanAutofix < Minitest::Test
     end
   end
 
+  # The fix loop's fast stage and /scan share this one writer; a file the
+  # dirty predicate names is never touched.
+  def test_rewrite_leaves_a_dirty_file_alone
+    Dir.mktmpdir do |root|
+      path = File.join(root, "example.rb")
+      File.write(path, "class Example\nend\n")
+      autofix = Master::Fix::Scan::MechanicalAutofix.new(scanner: nil, root:, dirty: ->(candidate) { candidate == path })
+
+      outcome = autofix.rewrite(path, File.read(path))
+
+      assert_equal :dirty, outcome.status
+      assert_equal "class Example\nend\n", File.read(path)
+    end
+  end
+
+  def test_rewrite_writes_a_clean_file_and_reports_the_new_content
+    Dir.mktmpdir do |root|
+      path = File.join(root, "example.rb")
+      File.write(path, "class Example\nend\n")
+      autofix = Master::Fix::Scan::MechanicalAutofix.new(scanner: nil, root:, dirty: ->(_) { false })
+
+      outcome = autofix.rewrite(path, File.read(path))
+
+      assert_equal :written, outcome.status
+      assert_equal File.read(path), outcome.content
+    end
+  end
+
   def test_mechanical_autofix_enabled_by_default
     assert Master::Fix::Scan::MechanicalAutofix.enabled?(env: {})
     assert Master::Fix::Scan::MechanicalAutofix.enabled?(env: { "MASTER_SCAN_AUTOFIX" => "1" })
@@ -100,12 +139,12 @@ class TestScanAutofix < Minitest::Test
   end
 
   def test_observe_applies_ast_fixer_then_rescans
-    Dir.mktmpdir do |root|
+    git_tmpdir do |root|
       path = File.join(root, "example.rb")
       File.write(path, "class Example\nend\n")
       scanner = FakeScanner.new(
         findings_by_pass: [[finding("FROZEN_LITERAL")], []],
-        rules: [FakeRule.new("FROZEN_LITERAL", true)],
+        laws: [FakeRule.new("FROZEN_LITERAL", true)],
       )
 
       out = Master::CLI::CommandRegistry.observe(
@@ -129,7 +168,7 @@ class TestScanAutofix < Minitest::Test
       File.write(path, original)
       scanner = FakeScanner.new(
         findings_by_pass: [[finding("FROZEN_LITERAL")]],
-        rules: [FakeRule.new("FROZEN_LITERAL", true)],
+        laws: [FakeRule.new("FROZEN_LITERAL", true)],
       )
 
       snapshot = File.join(root, ".master", "scan_last.txt")
@@ -155,7 +194,7 @@ class TestScanAutofix < Minitest::Test
       File.write(path, original)
       scanner = FakeScanner.new(
         findings_by_pass: [[finding("FROZEN_LITERAL")]],
-        rules: [FakeRule.new("FROZEN_LITERAL", true)],
+        laws: [FakeRule.new("FROZEN_LITERAL", true)],
       )
 
       out = Master::CLI::CommandRegistry.observe(
@@ -178,14 +217,14 @@ class TestScanAutofix < Minitest::Test
   # A finding must be written on the file that just produced it, before the
   # walker moves on — otherwise the operator relocates it hours later.
   def test_scan_dir_writes_the_fix_before_returning_the_file
-    Dir.mktmpdir do |root|
+    git_tmpdir do |root|
       path = File.join(root, "example.rb")
       File.write(path, "class Example\nend\n")
-      scanner = Master::Fix::Scanner.new(rules: [FakeRule.new("FROZEN_LITERAL", true)])
+      scanner = Master::Fix::Scanner.new(laws: [FakeRule.new("FROZEN_LITERAL", true)])
       def scanner.scan(_path, depth: :deep, **)
         @scan_n = (@scan_n || 0) + 1
         if @scan_n.odd?
-          Master::Result.ok([{ rule: "FROZEN_LITERAL", message: "missing frozen", line: 1 }])
+          Master::Result.ok([{ law: "FROZEN_LITERAL", message: "missing frozen", line: 1 }])
         else
           Master::Result.ok([])
         end

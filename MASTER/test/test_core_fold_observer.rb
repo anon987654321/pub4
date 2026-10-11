@@ -49,7 +49,7 @@ class FoldObserverTest < Minitest::Test
       )
       fold = Master::Core::Fold.new(
         model: ScriptedModel.new(Master::Core::Effect.write("a", "b"), Master::Core::Effect.done),
-        constitution: Master::Core::Constitution.new(rules: [block_writes]),
+        constitution: Master::Core::Constitution.new(laws: [block_writes]),
         world: Master::Core::World.new(root:),
         memory: Master::Core::Memory.new,
         observer: ->(turn:, effect:, observation:) { seen << [effect.verb, observation.ok?] },
@@ -63,7 +63,13 @@ class FoldObserverTest < Minitest::Test
   class FailingWorld
     def initialize(rollback) = @rollback = rollback
     def verbs = Master::Core::VERBS
-    def checkpoint = { id: "cp1", patch: "" }
+    attr_reader :checkpoints
+
+  def checkpoint
+    @checkpoints = @checkpoints.to_i + 1
+    { id: "cp1", patch: "" }
+  end
+
     def perform(_effect) = Master::Core::Observation.no("boom")
     def rollback(_checkpoint, _effect) = @rollback
   end
@@ -72,7 +78,7 @@ class FoldObserverTest < Minitest::Test
     seen = []
     Master::Core::Fold.new(
       model: ScriptedModel.new(effect, Master::Core::Effect.done),
-      constitution: Master::Core::Constitution.new(rules: []),
+      constitution: Master::Core::Constitution.new(laws: []),
       world: FailingWorld.new(rollback),
       memory: Master::Core::Memory.new,
       observer: ->(turn:, effect:, observation:) { seen << observation },
@@ -84,10 +90,27 @@ class FoldObserverTest < Minitest::Test
   # drop that report, so the agent believed a failed effect left no trace.
   def test_a_rollback_that_could_not_undo_rides_on_the_failure
     skipped = Master::Core::Observation.no("rollback skipped cp1: no path to scope to")
-    observation = failed_observation(Master::Core::Effect.exec(["false"]), skipped)
+    observation = failed_observation(Master::Core::Effect.write("a.txt", "x"), skipped)
 
     refute_predicate observation, :ok?
     assert_match(/boom \[rollback skipped cp1/, observation.message)
+  end
+
+  # exec and git have no path to roll back to, so they cost no checkpoint.
+  def test_only_a_write_takes_a_checkpoint
+    taken = lambda do |effect|
+      world = FailingWorld.new(Master::Core::Observation.ok("clean"))
+      Master::Core::Fold.new(
+        model: ScriptedModel.new(effect, Master::Core::Effect.done),
+        constitution: Master::Core::Constitution.new(laws: []),
+        world:, memory: Master::Core::Memory.new
+      ).run("goal")
+      world.checkpoints.to_i
+    end
+
+    assert_equal 1, taken.call(Master::Core::Effect.write("a.txt", "x"))
+    assert_equal 0, taken.call(Master::Core::Effect.exec(["false"]))
+    assert_equal 0, taken.call(Master::Core::Effect.git(:diff))
   end
 
   def test_an_undone_write_says_so_and_a_clean_exec_adds_nothing

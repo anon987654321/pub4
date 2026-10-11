@@ -78,12 +78,6 @@ class TestTripleMemory < Minitest::Test
     @memory.procedural.register_recipe("simple_fix", steps)
     assert_equal steps, @memory.procedural.find_recipe("simple_fix")
   end
-
-  def test_episodic_linking
-    episode = Struct.new(:events).new(["turn 1", "turn 2"])
-    @memory.link_episode(episode)
-    assert_equal ["turn 1", "turn 2"], @memory.episodic.transcript
-  end
 end
 
 require "minitest/autorun"
@@ -91,13 +85,13 @@ class VerbClosureTest < Minitest::Test
   CLOSED = Master::Core::VERBS.freeze
 
   def test_closed_verb_set_matches_proposal
-    expected = %i[read write exec git ask note critique done]
+    expected = %i[read write exec git http ask note critique done]
     assert_equal expected.sort, CLOSED.sort
   end
 
   def test_model_system_prompt_lists_only_closed_verbs
     prompt = Master::Core::Model::SYSTEM
-    %w[read write exec git ask note critique done].each do |verb|
+    %w[read write exec git http ask note critique done].each do |verb|
       assert_match(/\b#{verb}\b/, prompt, "prompt must document #{verb}")
     end
   end
