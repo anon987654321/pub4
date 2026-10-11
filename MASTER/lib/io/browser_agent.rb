@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "ferrum"
 require "fileutils"
 require "json"
 require "securerandom"
