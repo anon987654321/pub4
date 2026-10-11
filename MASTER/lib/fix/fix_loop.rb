@@ -80,6 +80,7 @@ module Master
         @bus = bus
         @homeostat = homeostat
         @cognition = nil
+        @outcome_prior = nil
         @incremental = incremental
         @halted = false
         @halt_reason = nil
@@ -125,6 +126,7 @@ module Master
         @pass_runner&.reset_gaps!
         guidance = outcome_guidance(target:, incremental:)
         incremental = guidance.fetch(:incremental)
+        @outcome_prior = guidance[:prediction]
         ModelRoles.announce
         current_phase = :corpus
         files = incremental ? @file_collector.collect_changed(target) : @file_collector.collect(target)
@@ -336,6 +338,18 @@ module Master
         { incremental:, prediction: nil }
       end
 
+      def prior_receipt(prediction, target:)
+        return unless prediction.is_a?(Hash)
+
+        {
+          context: "target=#{target}",
+          action: "/fix",
+          status: prediction[:status].to_s,
+          samples: prediction[:samples].to_i,
+          success_probability: prediction[:success_probability].to_f.clamp(0.0, 1.0),
+        }
+      end
+
       def fix_target_label(target)
         absolute = File.expand_path(target.to_s, @root)
         return "." if absolute == @root
@@ -363,6 +377,7 @@ module Master
               finding_digest: best[:finding_digest],
               observations: Array(@convergence_discipline.history).size,
             },
+            outcome_prior: prior_receipt(@outcome_prior, target:),
           },
         )
         { source: receipt.fetch(:path).delete_prefix("#{@root}/"), sha256: receipt.fetch(:sha256) }

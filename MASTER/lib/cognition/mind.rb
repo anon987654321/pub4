@@ -211,11 +211,20 @@ module Master
         details = data["details"].is_a?(Hash) ? data["details"] : {}
         state = (payload[:state] || payload["state"]).to_s
         run_id = (payload[:run_id] || payload["run_id"]).to_s
+        event_target = (payload[:target] || payload["target"]).to_s
         return unless data["command"] == "/fix" && data["state"].to_s == state
         return unless details["run_id"].to_s == run_id
 
         target = details["target"].to_s
-        return if target.empty?
+        return if target.empty? || event_target != target
+        prior = details["outcome_prior"]
+        predicted_probability = if prior.is_a?(Hash) &&
+                                   prior["context"].to_s == "target=#{target}" &&
+                                   prior["action"].to_s == "/fix" &&
+                                   prior["success_probability"].is_a?(Numeric) &&
+                                   prior["success_probability"].between?(0.0, 1.0)
+                                  prior["success_probability"].to_f
+                                end
 
         tree = target.split("/").first
         tree = %w[MASTER RAILS OPENBSD STUDIO].include?(tree) ? tree.downcase : "other"
@@ -230,6 +239,7 @@ module Master
           outcome:,
           evidence: receipt.merge("content" => body),
           task_type: "fix/#{tree}",
+          predicted_probability:,
         )
       rescue StandardError => e
         Ground::Swallow.log(e, context: "cognition.fix_outcome", event_bus: @bus)

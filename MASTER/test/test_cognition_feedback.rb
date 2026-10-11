@@ -65,18 +65,31 @@ class TestCognitionFeedback < Minitest::Test
     body = JSON.generate({
       "command" => "/fix",
       "state" => "done",
-      "details" => { "run_id" => "run-1", "target" => "MASTER" },
+      "details" => {
+        "run_id" => "run-1",
+        "target" => "MASTER",
+        "outcome_prior" => {
+          "context" => "target=MASTER",
+          "action" => "/fix",
+          "status" => "learned",
+          "samples" => 5,
+          "success_probability" => 0.3,
+        },
+      },
     })
     File.write(path, body)
     digest = Digest::SHA256.hexdigest(body)
     payload = {
       state: "done",
       run_id: "run-1",
+      target: "MASTER",
       outcome_receipt: { source: ".master/receipts/convergence-test.json", sha256: digest },
     }
 
     @mind.send(:capture_fix_outcome, payload)
     assert_equal 1, @mind.predict_outcome(context: "target=MASTER", action: "/fix")[:successes]
+    assert_in_delta 0.49, @mind.predict_outcome(context: "target=MASTER", action: "/fix")[:brier_score], 0.001
+    assert_in_delta 0.49, @mind.capability_report.fetch("fix/master").fetch(:brier_score), 0.001
 
     payload[:outcome_receipt][:sha256] = "0" * 64
     payload[:run_id] = "run-2"
