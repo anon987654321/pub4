@@ -15,7 +15,7 @@ class TestCognitionFeedback < Minitest::Test
   end
 
   def evidence(source, body = source)
-    { source:, sha256: Digest::SHA256.hexdigest(body) }
+    { source:, content: body, sha256: Digest::SHA256.hexdigest(body) }
   end
 
   def test_verified_task_result_updates_prediction_and_self_calibration

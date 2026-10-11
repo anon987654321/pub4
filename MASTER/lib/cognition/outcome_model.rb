@@ -87,14 +87,38 @@ module Master
         predict(state, context:, action:)
       end
 
-      def self.validate_evidence!(evidence)
+      # A receipt is either inline content whose digest is checked here, or a
+      # file whose current digest is checked against a root-confined path.
+      def self.validate_evidence!(evidence, root: nil)
         row = evidence.respond_to?(:to_h) ? evidence.to_h : nil
         raise ArgumentError, "evidence receipt must be a hash" unless row
 
         source = (row[:source] || row["source"]).to_s.strip
-        sha256 = (row[:sha256] || row["sha256"]).to_s.downcase
+        supplied = (row[:sha256] || row["sha256"]).to_s.downcase
         raise ArgumentError, "evidence source is required" if source.empty?
-        raise ArgumentError, "evidence SHA-256 must contain 64 hexadecimal characters" unless sha256.match?(/\A[0-9a-f]{64}\z/)
+
+        if row.key?(:content) || row.key?("content")
+          content = (row[:content] || row["content"]).to_s
+          sha256 = Digest::SHA256.hexdigest(content)
+          raise ArgumentError, "evidence content SHA-256 mismatch" if !supplied.empty? && supplied != sha256
+        elsif root
+          raise ArgumentError, "evidence SHA-256 must contain 64 hexadecimal characters" unless supplied.match?(/\A[0-9a-f]{64}\z/)
+
+          base = File.expand_path(root)
+          path = File.expand_path(source, base)
+          raise ArgumentError, "evidence path escapes its root" unless path.start_with?("#{base}/")
+          raise ArgumentError, "evidence file is unavailable" unless File.file?(path)
+
+          real_base = File.realpath(base)
+          real_path = File.realpath(path)
+          raise ArgumentError, "evidence symlink escapes its root" unless real_path.start_with?("#{real_base}/")
+
+          sha256 = Digest::SHA256.file(real_path).hexdigest
+          raise ArgumentError, "evidence file SHA-256 mismatch" unless supplied == sha256
+        else
+          sha256 = supplied
+          raise ArgumentError, "evidence SHA-256 must contain 64 hexadecimal characters" unless sha256.match?(/\A[0-9a-f]{64}\z/)
+        end
 
         { "source" => source[0, LABEL_LIMIT], "sha256" => sha256 }.freeze
       end

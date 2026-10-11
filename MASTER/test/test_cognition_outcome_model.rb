@@ -9,7 +9,7 @@ class TestCognitionOutcomeModel < Minitest::Test
   def model = Master::Cognition::OutcomeModel.new
 
   def evidence(source, body = source)
-    { source:, sha256: Digest::SHA256.hexdigest(body) }
+    { source:, content: body, sha256: Digest::SHA256.hexdigest(body) }
   end
 
   def test_unknown_actions_start_uncertain_and_do_not_claim_learned_confidence
@@ -45,6 +45,14 @@ class TestCognitionOutcomeModel < Minitest::Test
     assert_equal 0, prediction[:samples]
     assert_equal 3, prediction[:inconclusive]
     assert_equal 0.5, prediction[:success_probability]
+  end
+
+  def test_receipts_reject_content_digest_mismatches
+    assert_raises(ArgumentError) do
+      model.observe!({ "records" => {} }, context: "task", action: "verify",
+                     outcome: "success", evidence: { source: "test:source", content: "different",
+                                                      sha256: Digest::SHA256.hexdigest("original") })
+    end
   end
 
   def test_records_require_a_source_and_a_valid_sha256
