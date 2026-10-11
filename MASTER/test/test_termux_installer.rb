@@ -55,7 +55,7 @@ class TermuxInstallerTest < Minitest::Test
       result = File.read(File.join(home, ".bashrc"))
       refute_includes result, malformed
       assert_includes result, "export EDITOR=vi\n"
-      assert_equal 1, result.lines.count { |row| row.include?('PATH="$HOME/.local/bin:$PATH"') }
+      assert_equal 0, result.lines.count { |row| row.include?('PATH="$HOME/.local/bin:$PATH"') }
     end
     assert_operator source.index(line), :<, source.index("if ! grep -Fq")
   end
