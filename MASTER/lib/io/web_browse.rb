@@ -56,7 +56,16 @@ module Master
             text: (a.innerText || a.getAttribute("aria-label") || "").trim().replace(/\s+/g, " ").slice(0, 120),
             href: a.href
           })).filter(l => l.text && /^https?:/.test(l.href));
-          return JSON.stringify({ title: document.title, url: location.href, text, links });
+          const forms = Array.from(document.querySelectorAll("form")).slice(0, 20).map(form => ({
+            action: form.action,
+            method: (form.method || "get").toUpperCase(),
+            inputs: Array.from(form.querySelectorAll("input, textarea, select")).slice(0, 20).map(input => ({
+              name: input.name || "",
+              type: input.type || input.tagName.toLowerCase(),
+              placeholder: input.placeholder || ""
+            }))
+          }));
+          return JSON.stringify({ title: document.title, url: location.href, text, links, forms });
         })()
       JS
 
@@ -79,6 +88,15 @@ module Master
       rescue StandardError => e
         Result.err("web_browse: #{e.class}: #{e.message.lines.first.to_s.strip[0, 200]}", category: :infrastructure)
       end
+
+      # Public, shared security setup: BrowserAgent uses the same fenced
+      # request path rather than letting a second Ferrum instance access the net.
+      def secure_page(page)
+        secure_page(page)
+        page
+      end
+
+      def deliver_snapshot(url, snapshot, links: true) = deliver(url, snapshot, links:)
 
       private
 
@@ -237,6 +255,15 @@ module Master
         if links && snapshot["links"].is_a?(Array) && !snapshot["links"].empty?
           list = snapshot["links"].uniq { |link| link["href"] }.first(MAX_LINKS).map { |link| "- #{link["text"]} → #{link["href"]}" }
           body << "\n\nLinks:\n#{list.join("\n")}"
+        end
+        if (forms = snapshot["forms"]).is_a?(Array) && !forms.empty?
+          lines = forms.first(10).map do |form|
+            fields = Array(form["inputs"]).first(20).map do |input|
+              [input["name"], input["type"], input["placeholder"]].map { |part| part.to_s[0, 80] }.reject(&:empty?).join(" / ")
+            end.reject(&:empty?)
+            " - #{form["method"].to_s.upcase[0, 8]} #{form["action"].to_s[0, 200]}#{fields.empty? ? "" : " (#{fields.join("; ")})"}"
+          end
+          body << "\n\nForms:\n#{lines.join("\n")}"
         end
         @bus&.publish("tool:after", tool: NAME, url:)
         @bus&.publish("tool:untrusted_output", tool: NAME, source: url)
