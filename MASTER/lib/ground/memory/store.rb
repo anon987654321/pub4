@@ -115,8 +115,17 @@ module Master
           raise ArgumentError, "reviewer is required" if reviewer.empty?
 
           @mutex.synchronize do
-            entry = @store[key.to_s]
-            return nil unless entry.is_a?(Hash) && entry.key?("value")
+            stored = @store[key.to_s]
+            return nil if stored.nil?
+            return nil if stored.is_a?(Hash) && !stored.key?("value")
+
+            # Older stores may still contain a plain scalar. Promote it without
+            # changing the recalled text so a review can govern it safely too.
+            entry = if stored.is_a?(Hash)
+              stored
+            else
+              @store[key.to_s] = { "value" => stored.to_s, "ts" => 0, "type" => "general" }
+            end
 
             prior = entry["provenance"]
             provenance = prior.is_a?(Hash) ? prior.dup : legacy_provenance(entry)
