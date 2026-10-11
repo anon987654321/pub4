@@ -29,7 +29,7 @@ The faces do not look like Johann or Ragnhild. The cause is the data. Johann's d
 
 ## Postpro
 
-- A caller passed the unsupported postpro preset `fx` (`Unknown preset: fx`); without `--output`, the same recorded command spins for over 2 minutes at full CPU. Postpro now refuses unknown preset names and prints the supported list. Trace/fix the caller and the no-output hang; neither has been reproduced in this environment.
+- Historical report: a caller passed `fx`, and an invocation without `--output` spun in the interactive path. Postpro now fails fast when `--preset` lacks its required `--input`/`--output`, and rejects unknown names. Run `test_tools_postpro_dispatch.rb` and reproduce the old command on the pinned stack; find/fix any live caller still passing `fx`.
 - Four tests in `test_tools_postpro.rb` fail before and after the 2026-10-11 work: `the_tools_own_self_check_passes`, `the_default_posture_is_subtle`, `a_graded_frame_records_its_version...`, `every_step_co_occurs_with_every_other...`.
 - Grades are liked but can improve: measure each preset against a reference stock's curve, not by eye.
 
