@@ -68,6 +68,7 @@ module Master
         Io::WebSearch => Io::LLM::WebSearch,
         Io::WebFetch => Io::LLM::WebFetch,
         Io::WebBrowse => Io::LLM::WebBrowse,
+        Io::BrowserAgent => Io::LLM::BrowserAgent,
         Io::CodePen => Io::LLM::CodePen,
         Io::Gist => Io::LLM::Gist,
         Io::YoutubeTranscript => Io::LLM::YoutubeTranscript,
