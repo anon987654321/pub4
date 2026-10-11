@@ -60,6 +60,16 @@ class PathGuardEscapeTest < Minitest::Test
 
   def read_file = Master::Io::ReadFile.new(root: @root, undo: nil)
 
+  def test_absolute_paths_outside_the_root_are_refused_for_reads_and_writes
+    refute read_file.call(path: File.join(@outside, "passwd")).ok?
+
+    writer = Master::Io::WriteFile.new(root: @root, undo: nil, governor: nil)
+    absolute_target = File.join(@outside, "absolute-planted.txt")
+    result = writer.call(path: absolute_target, content: "x")
+    refute result.ok?
+    refute File.exist?(absolute_target)
+  end
+
   def test_a_symlink_out_of_the_root_is_refused_for_reads_and_writes
     refute read_file.call(path: "link/passwd").ok?
     writer = Master::Io::WriteFile.new(root: @root, undo: nil, governor: nil)
