@@ -106,7 +106,7 @@ module Master
         def with_file_lock(path)
           lock_path = lock_path_for(path)
           FileUtils.mkdir_p(File.dirname(lock_path))
-          Operator::LockSweep.sweep_once(File.dirname(lock_path))
+          ::Operator::LockSweep.sweep_once(File.dirname(lock_path))
           deadline = Time.now + LOCK_TIMEOUT
           File.open(lock_path, File::RDWR | File::CREAT, 0o600) do |file|
             until file.flock(File::LOCK_EX | File::LOCK_NB)
