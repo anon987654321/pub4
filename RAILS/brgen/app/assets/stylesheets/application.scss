@@ -11374,9 +11374,9 @@ body:not([class*="vertical-"]) .chrome-corner .theme-toggle {
 @include endgame.brgen;
 
 
-/* Interaction polish: visible keyboard focus, calmer feed scanning, and a
-   composer that stays legible when mobile browsers resize the visual viewport. */
-.feed-tab:focus-visible,
+/* Interaction polish: feed controls use the live home-template classes, and
+   the composer remains usable as the visual viewport changes on a phone. */
+.home-feed-view:focus-visible,
 .feed-card a:focus-visible,
 .feed-card button:focus-visible,
 .messenger-window a:focus-visible,
@@ -11385,6 +11385,47 @@ body:not([class*="vertical-"]) .chrome-corner .theme-toggle {
 .messenger-window textarea:focus-visible {
   outline: var(--focus-ring);
   outline-offset: 2px;
+}
+
+/* The three home destinations must remain reachable at narrow widths and when
+   labels are translated. Wrap rather than silently hiding the final control. */
+.home-feed-views {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: var(--space-1);
+  inline-size: 100%;
+  max-inline-size: 100%;
+  min-inline-size: 0;
+}
+
+.home-feed-view {
+  flex: 0 1 auto;
+  justify-content: center;
+  min-inline-size: var(--tap-min);
+  max-inline-size: 100%;
+  line-height: 1.25;
+  text-decoration: none;
+}
+
+.home-feed-view + .home-feed-view {
+  border-inline-start: 0;
+}
+
+.home-feed-view:not(.is-active):hover {
+  background: var(--hover-subtle, var(--hover));
+  color: var(--text);
+  text-decoration: none;
+}
+
+.home-feed-view.is-active {
+  border-block-end-color: var(--accent);
+}
+
+#feed-panel,
+#home-feed,
+#home-feed > li {
+  min-inline-size: 0;
 }
 
 .post-feed .feed-card {
@@ -11409,12 +11450,20 @@ body:not([class*="vertical-"]) .chrome-corner .theme-toggle {
 }
 
 @media (max-width: 767px) {
-  .feed-header h1 {
-    padding-block-start: max(var(--space-4), env(safe-area-inset-top));
+  .compose-launcher {
+    margin-inline-start: max(var(--space-4), env(safe-area-inset-left));
+    margin-inline-end: max(var(--space-4), env(safe-area-inset-right));
   }
 
   .post-feed .feed-card {
-    padding-inline: max(var(--space-3), env(safe-area-inset-left));
+    padding-inline-start: max(var(--space-3), env(safe-area-inset-left));
+    padding-inline-end: max(var(--space-3), env(safe-area-inset-right));
+  }
+
+  /* Four tiny columns are a catalogue view, not a usable phone media wall. */
+  .brgen-media-wall {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-auto-rows: minmax(7rem, 34vw);
   }
 
   .messenger-window {
@@ -11434,7 +11483,7 @@ body:not([class*="vertical-"]) .chrome-corner .theme-toggle {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .feed-tab,
+  .home-feed-view,
   .feed-card {
     transition: none;
   }
