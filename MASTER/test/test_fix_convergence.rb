@@ -358,6 +358,7 @@ class TestFixConvergence < Minitest::Test
   def quiet_runner
     runner = Master::Fix::FixLoop::PassRunner.allocate
     runner.instance_variable_set(:@root, "/tmp")
+    runner.instance_variable_set(:@skip_guard, Master::Fix::ScanSkipGuard.new)
     runner.instance_variable_set(:@bus, Object.new.tap do |bus|
       bus.define_singleton_method(:publish) { |_event, _payload = {}| nil }
     end)
@@ -964,6 +965,9 @@ end
     pass = Master::CLI::Pipeline::Pass.allocate
     _name, runner = pass.send(:proof_runner, Master::RAILS_ROOT)
     previous_strict = ENV["GATE_STRICT_INCONCLUSIVE"]
+    # test_helper.rb sets MASTER_IN_PROOF for the whole suite; the ordinary
+    # call below must run outside a proof, so the flag is lifted for this test.
+    previous_proof = ENV.delete("MASTER_IN_PROOF")
     ENV.delete("GATE_STRICT_INCONCLUSIVE")
     strict_calls = []
     inconclusive = lambda do |strict_inconclusive: false, **|
@@ -988,6 +992,7 @@ end
     refute ok, "a failed gate passed the proof"
   ensure
     previous_strict.nil? ? ENV.delete("GATE_STRICT_INCONCLUSIVE") : ENV["GATE_STRICT_INCONCLUSIVE"] = previous_strict
+    ENV["MASTER_IN_PROOF"] = previous_proof if previous_proof
   end
 
   def test_rails_gates_launches_a_runner_that_exists
