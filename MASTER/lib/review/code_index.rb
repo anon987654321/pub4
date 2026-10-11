@@ -3,6 +3,7 @@
 require "prism"
 require "set"
 require "monitor"
+require_relative "code_index/brief"
 
 module Master
   module Review
@@ -35,13 +36,6 @@ module Master
           end
         end
 
-        # The class listing is the largest part of every turn's dynamic prompt
-        # and only changes when the graph does, so it is built once per graph
-        # state; build and reindex drop it.
-        def summary(limit: nil)
-          with_built_index { @summary ||= build_summary }
-        end
-
         def query(name)
           with_built_index do
             hits = find_locked(name)
@@ -60,11 +54,10 @@ module Master
       end
 
       include QueryApi
+      include Brief
 
       Symbol = Struct.new(:fqn, :type, :file, :line, :parent, :includes, keyword_init: true)
       Reference = Struct.new(:from_file, :from_line, :to_fqn, :ref_type, keyword_init: true)
-
-      SUMMARY_SKIP_NAMES = %w[Entry Message Symbol CircuitError].freeze
 
       attr_reader :symbols, :references, :built_at
 
@@ -88,7 +81,7 @@ module Master
           @built_at.nil? && !restored ? first_build(files) : incremental_build(files)
           save_snapshot if @store && path.nil?
           @built_at = Time.now
-          @summary = nil
+          @orientation = nil
           @bus&.publish("code_index:built", files: files.size, symbols: @symbols.size)
         end
         self
@@ -122,7 +115,7 @@ module Master
 
           index_file(full)
           @mtimes[full] = CodeIndexStore.signature(full)
-          @summary = nil
+          @orientation = nil
         end
       rescue StandardError => e
         @bus&.publish("code_index:reindex_error", path: file, error: e.message)
@@ -181,18 +174,11 @@ module Master
         @snapshot_tree = CodeIndexStore.tree_hash(@mtimes)
       end
 
-      def build_summary
-        classes = summary_classes
-        lib_count = @symbols.values.count { |s| s.file.include?("/lib/") }
-        stamp = @built_at&.strftime("%H:%M") || "never"
-        ["# Codebase: #{lib_count} lib symbols (indexed #{stamp})", "## Classes & Modules (#{classes.size})", *classes].join("\n")
-      end
-
       def purge_file(full)
         @symbols.delete_if { |_, s| s.file == full }
         @references.reject! { |r| r.from_file == full }
         @mtimes.delete(full)
-        @summary = nil
+        @orientation = nil
       end
 
       def references_for(fqn)
@@ -209,19 +195,6 @@ module Master
         return [exact] if exact
         suffix = name.to_s
         @symbols.values.select { |sym| fqn = sym.fqn; fqn.end_with?(suffix) || fqn.include?(suffix) }
-      end
-
-      def summary_class?(sym)
-        return false unless %i[class module].include?(sym.type)
-        return false if sym.file.include?("/OPENBSD/") || sym.file.match?(/fix_|patch_/)
-        SUMMARY_SKIP_NAMES.none? { |n| sym.fqn.end_with?("::#{n}") }
-      end
-
-      def summary_classes
-        @symbols.values
-                .select { |sym| summary_class?(sym) }
-                .sort_by(&:fqn)
-                .map { |sym| format_summary_entry(sym) }
       end
 
       def format_summary_entry(sym)

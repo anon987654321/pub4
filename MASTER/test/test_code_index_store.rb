@@ -95,19 +95,19 @@ class TestCodeIndexStore < Minitest::Test
 end
 
 class TestCodeIndexSummaryMemo < Minitest::Test
-  def test_summary_is_built_once_per_graph_state_and_rebuilt_after_reindex
+  def test_summary_orientation_is_stable_then_follows_a_reindex
     Dir.mktmpdir do |root|
       root = File.realpath(root)
       File.write(File.join(root, "a.rb"), "class Alpha\nend\n")
       index = Master::Review::CodeIndex.new(root:).build
 
-      assert_same index.summary, index.summary
+      assert_equal index.summary, index.summary
       before = index.summary
       File.write(File.join(root, "b.rb"), "class Beta\nend\n")
       index.reindex(File.join(root, "b.rb"))
 
       refute_equal before, index.summary
-      assert_includes index.summary, "Beta"
+      assert_includes index.summary, "2 symbols"
     end
   end
 end

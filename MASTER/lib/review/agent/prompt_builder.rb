@@ -81,7 +81,7 @@ module Master
           parts << Ground::Tool::Profile.session_note
           parts << Fiber[:master_evidence_note]
           parts << Ground::PersonalWorkspace.prompt_section(@config["root"] || Master::ROOT)
-          parts << @code_index.summary if @code_index&.built?
+          parts << @code_index.summary(focus: last_user_message) if @code_index&.built?
           parts << @memory.context_summary if @memory&.context_summary
           parts << @memory.reasoning_context if @memory&.respond_to?(:reasoning_context)
           parts << @memory.preference_context if @memory&.respond_to?(:preference_context)
