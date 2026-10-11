@@ -7,6 +7,15 @@ first and inspect the wreckage afterward. MASTER inverts the order. The model
 only proposes, and nothing touches a file until a written constitution admits
 it.
 
+### Cognitive judgment
+
+MASTER's reasoning habits are executable, not a second constitution. `Master::Cognition::Intelligence`
+keeps observation, hypothesis, falsifier, measurement, causal trace, uncertainty, leverage,
+conceptual equivalence, scale and creative-preservation vocabulary in one place. `/fix`
+persists its bounded decision frames through the existing `.master/memory.yml` store, and
+the model receives a compact recent reasoning history on the next turn. This is deliberately
+small: better judgment should reduce machinery, not create another orchestration layer.
+
 ## The idea
 
 Most AI is written in Python, chosen for its libraries more than its clarity.
