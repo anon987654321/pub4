@@ -2,15 +2,14 @@
 
 require "fileutils"
 require_relative "../io/atomic_write"
+require_relative "outcome_model"
 
 module Master
   module Cognition
     # MASTER's persistent cognitive layer: recurrent perception, salience, a
     # bounded working set, affect, self-modelling, prediction error and
-    # reflection, over one YAML file under .master/.
-    #
-    # The consciousness-adjacent numbers are proxies and are named as such
-    # everywhere they are written. COGNITION.md carries the argument.
+    # reflection and evidence-backed task learning, over one YAML file under
+    # .master/. Cognitive metrics are operational proxies, not consciousness tests.
     #
     # Three things here are load-bearing and were each wrong once.
     #
@@ -64,6 +63,7 @@ module Master
         @affect = Affect.new
         @self_model = SelfModel.new
         @prediction = Prediction.new
+        @outcome_model = OutcomeModel.new
         @since_tick = 0
         # From construction, not from the loaded state's `last_tick_at`: that one
         # is wall-clock from a previous process and is days stale after a restart,
@@ -132,6 +132,40 @@ module Master
         "reflection unavailable: #{e.message}"
       end
 
+      # Predict from verified task history. Sparse history remains explicitly
+      # insufficient; a prior is not presented as learned knowledge.
+      def predict_outcome(context:, action:)
+        @mutex.synchronize { @outcome_model.predict(@state.outcomes, context:, action:) }
+      end
+
+      # Canonical write path for outcome learning and capability calibration.
+      # Evidence must identify an artifact and its SHA-256; raw event payloads
+      # are deliberately not accepted as verified outcomes.
+      def record_task_result(context:, action:, outcome:, evidence:, task_type: nil,
+                             confidence: nil, predicted_probability: nil)
+        receipt = OutcomeModel.validate_evidence!(evidence)
+        @mutex.synchronize do
+          prediction = @outcome_model.observe!(
+            @state.outcomes, context:, action:, outcome:, evidence: receipt,
+            predicted_probability:
+          )
+          if task_type && %w[success failure].include?(outcome.to_s)
+            @self_model.record_assessment!(
+              @state.self_model, task_type:, success: outcome.to_s == "success",
+              confidence: confidence.nil? ? predicted_probability : confidence,
+              source: receipt.fetch("source"), evidence_sha256: receipt.fetch("sha256"),
+            )
+          end
+          @dirty = true
+          persist!
+          { prediction:, capabilities: @self_model.assessment_summary(@state.self_model) }
+        end
+      end
+
+      def capability_report
+        @mutex.synchronize { @self_model.assessment_summary(State.deep_dup(@state.self_model)) }
+      end
+
       def snapshot = @mutex.synchronize { State.deep_dup(@state.data) }
 
       private
@@ -180,10 +214,12 @@ module Master
         @state.data["workspace"] = @state.workspace.reject { |item| item["salience"].to_f < 0.03 }
       end
 
+      # This is checkpoint continuity, not a consciousness or identity score.
+      # It is true only when a valid prior state loaded or the current state saved.
       def update_continuity!
-        previous = @state.metrics.fetch("continuity", 1.0).to_f
-        continuity = @state.last_tick_at.to_i.zero? ? previous : (previous * 0.995 + 0.005).clamp(0.0, 1.0)
+        continuity = @state.checkpoint_valid ? 1.0 : 0.0
         @state.metrics["continuity"] = continuity
+        @state.metrics["checkpoint_continuity"] = continuity
         @state.identity["continuity"] = continuity
       end
 
@@ -192,6 +228,13 @@ module Master
 
         FileUtils.mkdir_p(File.dirname(@path))
         write_atomic(@path, @state.data.to_yaml, mode: 0o600)
+        @state.mark_checkpoint_valid!
+        unless @state.metrics.fetch("checkpoint_continuity", 0.0).to_f == 1.0
+          @state.metrics["continuity"] = 1.0
+          @state.metrics["checkpoint_continuity"] = 1.0
+          @state.identity["continuity"] = 1.0
+          write_atomic(@path, @state.data.to_yaml, mode: 0o600)
+        end
         @dirty = false
       end
     end

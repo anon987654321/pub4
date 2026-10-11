@@ -13,6 +13,7 @@ module Master
         "drives" => { "safety" => 1.0, "coherence" => 0.8, "curiosity" => 0.6, "agency" => 0.5, "affiliation" => 0.4 },
         "workspace" => [],
         "predictions" => { "transitions" => {}, "previous_event" => nil, "last_error" => 0.0 },
+        "outcomes" => { "records" => {} },
         "self_model" => {},
         "thoughts" => [],
         "metrics" => { "integration" => 0.0, "prediction_error" => 0.0, "continuity" => 1.0, "attention" => 0.0 },
@@ -25,8 +26,12 @@ module Master
 
       class << self
         def load(path)
-          raw = File.file?(path) ? Master.load_yaml(path) : {}
-          new(raw.is_a?(Hash) ? raw : {})
+          return new({}) unless File.file?(path)
+
+          raw = Master.load_yaml(path)
+          valid = raw.is_a?(Hash) && raw["ticks"].is_a?(Numeric) &&
+                  raw["identity"].is_a?(Hash) && raw["predictions"].is_a?(Hash)
+          new(raw.is_a?(Hash) ? raw : {}, checkpoint_valid: valid)
         rescue StandardError
           new({})
         end
@@ -46,13 +51,18 @@ module Master
         end
       end
 
-      attr_reader :data
+      attr_reader :data, :checkpoint_valid
 
       # DEFAULT is frozen and deep_dup'd on the way in, so a caller that passes
       # DEFAULT itself still gets a mutable state rather than a FrozenError two
       # layers down.
-      def initialize(data)
+      def initialize(data, checkpoint_valid: false)
         @data = self.class.deep_merge(self.class.deep_dup(DEFAULT), data)
+        @checkpoint_valid = checkpoint_valid == true
+      end
+
+      def mark_checkpoint_valid!
+        @checkpoint_valid = true
       end
 
       # One reader per section of the schema, from the schema. Nine of these were
