@@ -740,6 +740,9 @@ module Master
         end
       end
 
+      # Not Io::Exec.which: Exec loads Swallow, which loads json, and this runs
+      # before Bundler activates the locked graph (test_helper.rb needs that
+      # order). The one PATH lookup that must stay standalone.
       def which(name) = @env.fetch("PATH", "").split(File::PATH_SEPARATOR).lazy.map do |dir|
         path = File.join(dir, name)
         path if File.file?(path) && File.executable?(path)

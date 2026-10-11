@@ -160,7 +160,7 @@ module Master
       end
 
       def executable?(name)
-        system("which", name, out: File::NULL, err: File::NULL)
+        Master::Io::Exec.on_path?(name)
       end
     end
   end

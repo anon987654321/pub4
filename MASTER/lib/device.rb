@@ -133,12 +133,7 @@ module Master
         raise Error, "device: #{command} unavailable — install Termux:API and termux-api" unless executable?(command)
       end
 
-      def executable?(command)
-        ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).any? do |dir|
-          path = File.join(dir, command)
-          File.file?(path) && File.executable?(path)
-        end
-      end
+      def executable?(command) = Master::Io::Exec.on_path?(command)
 
       def json(*argv)
         output = run!(*argv)

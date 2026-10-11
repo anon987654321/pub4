@@ -78,14 +78,7 @@ module Master
         profiles.find { |lane| [lane["id"], lane["name"], lane["command"]].compact.map { |v| v.to_s.downcase }.include?(key) }
       end
 
-      def executable?(command)
-        cmd = command.to_s
-        return false if cmd.empty?
-        ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).any? do |dir|
-          path = File.join(dir, cmd)
-          File.file?(path) && File.executable?(path)
-        end
-      end
+      def executable?(command) = Master::Io::Exec.on_path?(command)
 
       def command_ok?(lane, args)
         return false if Array(args).empty?

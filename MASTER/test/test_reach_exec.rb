@@ -112,4 +112,34 @@ class TestReachExec < Minitest::Test
     assert_equal "ok", out
     assert_equal 0, children.kill_all
   end
+  def test_which_finds_an_executable_file_in_the_given_path_and_skips_directories
+    Dir.mktmpdir do |dir|
+      tool = File.join(dir, "tool")
+      File.write(tool, "#!/bin/sh\n")
+      File.chmod(0o755, tool)
+      Dir.mkdir(File.join(dir, "folder"))
+      File.write(File.join(dir, "plain"), "x")
+
+      assert_equal tool, E.which("tool", path: dir)
+      assert E.on_path?("tool", path: dir)
+      assert_nil E.which("folder", path: dir)
+      assert_nil E.which("plain", path: dir)
+      assert_nil E.which("tool", path: "/nonexistent")
+      assert_nil E.which("", path: dir)
+      assert_nil E.which(nil, path: dir)
+    end
+  end
+
+  def test_which_tries_the_preferred_directories_before_the_path
+    Dir.mktmpdir do |first|
+      Dir.mktmpdir do |second|
+        [first, second].each do |dir|
+          File.write(File.join(dir, "tool"), "x")
+          File.chmod(0o755, File.join(dir, "tool"))
+        end
+
+        assert_equal File.join(second, "tool"), E.which("tool", path: first, prefer: [second])
+      end
+    end
+  end
 end

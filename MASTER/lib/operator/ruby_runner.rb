@@ -113,13 +113,7 @@ module Operator
       nil
     end
 
-    def command_path(name)
-      path_entries = ENV.fetch("PATH", "").split(File::PATH_SEPARATOR)
-      path_entries.filter_map do |directory|
-        path = File.join(directory, name)
-        path if File.file?(path) && File.executable?(path)
-      end.first.to_s
-    end
+    def command_path(name) = Master::Io::Exec.which(name).to_s
 
     def pinned_version(root)
       path = File.join(root, ".ruby-version")
@@ -143,11 +137,6 @@ module Operator
       return if Environment.ruby_version_ok?
 
       Environment.ruby_mismatch_message
-    end
-
-    def executable?(name)
-      _, status = Master::Io::Exec.capture2e("command", "-v", name)
-      status.success?
     end
   end
 end

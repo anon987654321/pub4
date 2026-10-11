@@ -66,14 +66,7 @@ module Master
         @player = name && [path, PLAYERS.fetch(name)]
       end
 
-      def which(cmd)
-        candidates = [
-          "/opt/homebrew/bin/#{cmd}",
-          "/usr/local/bin/#{cmd}",
-          *ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).map { |dir| File.join(dir, cmd) },
-        ]
-        candidates.uniq.find { |path| File.executable?(path) && !File.directory?(path) }
-      end
+      def which(cmd) = Master::Io::Exec.which(cmd, prefer: Master::Io::Exec::HOMEBREW_BINS)
 
       def available?
         !player.nil? || native_say_available? || android_audio_available?

@@ -66,22 +66,7 @@ module Master
           raise ArgumentError, "unknown shape #{shape}; valid: #{SHAPES.join(', ')}"
         end
 
-        def tool_available?(name)
-          %W[/opt/homebrew/bin/#{name} /usr/local/bin/#{name}].any? { |path| File.executable?(path) } ||
-            ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).any? do |dir|
-              path = File.join(dir, name)
-              File.executable?(path) && !File.directory?(path)
-            end
-        end
-
-        def player_path(name)
-          candidates = [
-            "/opt/homebrew/bin/#{name}",
-            "/usr/local/bin/#{name}",
-            *ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).map { |dir| File.join(dir, name) },
-          ]
-          candidates.uniq.find { |path| File.executable?(path) && !File.directory?(path) }
-        end
+        def player_path(name) = Master::Io::Exec.which(name, prefer: Master::Io::Exec::HOMEBREW_BINS)
 
         def default_destination(shape)
           File.expand_path("~/master-#{shape}-#{Time.now.utc.strftime('%Y%m%dT%H%M%SZ')}.wav")

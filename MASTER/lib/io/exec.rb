@@ -63,6 +63,25 @@ module Master
         end
       end
 
+      HOMEBREW_BINS = %w[/opt/homebrew/bin /usr/local/bin].freeze
+
+      # The path of the first executable regular file called `name`: the
+      # `prefer` directories first, then each directory of `path`. nil when none
+      # is, or when `name` is blank. `path` takes a PATH string so a caller that
+      # runs a child under its own environment asks that environment's question.
+      def which(name, path: ENV.fetch("PATH", ""), prefer: [])
+        name = name.to_s
+        return nil if name.empty?
+
+        [*prefer, *path.to_s.split(File::PATH_SEPARATOR)].uniq.each do |dir|
+          candidate = File.join(dir, name)
+          return candidate if File.file?(candidate) && File.executable?(candidate)
+        end
+        nil
+      end
+
+      def on_path?(name, **) = !which(name, **).nil?
+
       # Open3.capture* treat stdin_data:/binmode: as capture options and pass the
       # rest to spawn; mirror that split so chdir:/env/redirects still forward.
       def split_opts(opts)

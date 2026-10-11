@@ -54,12 +54,7 @@ module Master
         }
       end
 
-      def executable?(command)
-        ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).any? do |dir|
-          path = File.join(dir, command)
-          File.file?(path) && File.executable?(path)
-        end
-      end
+      def executable?(command) = Master::Io::Exec.on_path?(command)
 
       def run(*argv)
         _stdout, _stderr, status = Open3.capture3(*argv)
