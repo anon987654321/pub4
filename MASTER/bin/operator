@@ -271,6 +271,15 @@ when "land"
     die("land", "green before rebase, off after it, origin/main moved under you")
   end
 
+  # And the runtime itself. Green ratchets say nothing about a require that the
+  # rebase left dangling (core/capabilities, twice in one day): only booting does.
+  smoke_out, smoke_ok = run!(File.join(__dir__, "ruby"), File.join(ROOT, "MASTER", "tools", "boot_smoke.rb"))
+  unless smoke_ok
+    Master::Trace::Dmesg::Report.print("boot_smoke", smoke_out, io: $stderr)
+    die("land", "the runtime does not boot after the rebase; nothing pushed")
+  end
+  Master::Trace::Dmesg.status("land0", "runtime boots")
+
   ahead, = run!("git", "log", "--oneline", "origin/main..HEAD")
   Master::Trace::Dmesg.attach("land0", "master0", "publishing")
   ahead.each_line { |line| Master::Trace::Dmesg.status("land0", line.chomp) }
