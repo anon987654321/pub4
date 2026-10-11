@@ -2,6 +2,7 @@
 
 require "yaml"
 require_relative "atomic_write"
+require_relative "lane_reply"
 
 module Master
   module Io
@@ -20,13 +21,10 @@ module Master
       extend self
       include ::Master::Io::AtomicWrite
 
-      UNKNOWN_WAIT_S = 3600
-      MAX_WAIT_S = 8 * 86_400
-      SPENT_RE = /quota\s+(?:reached|exceeded|exhausted|spent)|RESOURCE_EXHAUSTED|usage\s+limit|insufficient\s+(?:quota|credits?)|out\s+of\s+(?:quota|credits?)/i
-      UNITS = { "d" => 86_400, "h" => 3600, "m" => 60, "s" => 1 }.freeze
-      SPAN = /\d+\s*(?:days?|hours?|hrs?|minutes?|mins?|seconds?|secs?|[dhms])(?![a-z])/i
-      AFTER_RE = /(?:resets?|try\s+again|retry)\s+(?:in|after)\s+((?:#{SPAN}[\s,]*(?:and\s+)?)+)/i
-      RETRY_AFTER_RE = /retry-after\W+(\d+)/i
+      UNKNOWN_WAIT_S = LaneReply::UNKNOWN_WAIT_S
+      MAX_WAIT_S = LaneReply::MAX_WAIT_S
+      PROBE_EVERY_S = 600
+      UNKNOWN_PREFIX = "unknown:"
       DATA = File.expand_path("../../data/model_roles.yml", __dir__)
 
       @mutex = Mutex.new
@@ -40,26 +38,41 @@ module Master
       def lane_of(model) = model.to_s.split(":", 2).first.to_s
 
       # Seconds a reply says to wait; nil when it names none.
-      def wait_in(reply)
-        text = reply.to_s
-        if (span = text[AFTER_RE, 1])
-          return span.scan(/(\d+)\s*([a-z]+)/i).sum { |n, unit| n.to_i * UNITS.fetch(unit.downcase[0]) }
-        end
+      def wait_in(reply) = LaneReply.stated_wait(reply.to_s, @clock.call)
 
-        text[RETRY_AFTER_RE, 1]&.to_i
+      def spent?(reply) = !LaneReply.read(reply, now: @clock.call).nil?
+
+      # Marks the model's lane dead when the reply says its quota is spent, its
+      # session limit hit, its daemon unreachable or its login expired.
+      # Returns the deadline (epoch seconds) or nil when the reply says no such thing.
+      # A wait the reply did not state is marked, so `due_probes` can re-test it.
+      def note(model, reply)
+        verdict = LaneReply.read(reply, now: @clock.call)
+        return unless verdict
+
+        lane = lane_of(model)
+        deadline = @clock.call + verdict.wait
+        @mutex.synchronize do
+          rows = raw.merge(lane => deadline)
+          rows.delete(UNKNOWN_PREFIX + lane)
+          rows[UNKNOWN_PREFIX + lane] = deadline if verdict.unknown
+          write(rows)
+        end
+        deadline
       end
 
-      def spent?(reply) = SPENT_RE.match?(reply.to_s) || (wait_in(reply) && /\b429\b/.match?(reply.to_s)) || false
+      # Lanes marked dead by a guessed wait that have been dead long enough to try again.
+      def due_probes(every: PROBE_EVERY_S)
+        @mutex.synchronize { raw }.filter_map do |key, deadline|
+          next unless key.start_with?(UNKNOWN_PREFIX)
 
-      # Marks the model's lane dead when the reply says its quota is spent.
-      # Returns the deadline (epoch seconds) or nil when the reply says no such thing.
-      def note(model, reply)
-        return unless spent?(reply)
+          key.delete_prefix(UNKNOWN_PREFIX) if @clock.call - (deadline - UNKNOWN_WAIT_S) >= every
+        end
+      end
 
-        wait = (wait_in(reply) || UNKNOWN_WAIT_S).clamp(1, MAX_WAIT_S)
-        deadline = @clock.call + wait
-        @mutex.synchronize { write(table.merge(lane_of(model) => deadline)) }
-        deadline
+      # Clears a lane so the next call asks it; a lane still spent is marked again by that call.
+      def revive(lane)
+        @mutex.synchronize { write(raw.reject { |key, _| key == lane || key == UNKNOWN_PREFIX + lane }) }
       end
 
       def dead?(model, manual: manual_dead) = until_for(model, manual:) != nil
@@ -72,7 +85,9 @@ module Master
       end
 
       # lane => deadline, expired rows dropped; the file is the shared truth.
-      def table
+      def table = raw.reject { |key, _| key.start_with?(UNKNOWN_PREFIX) }
+
+      def raw
         rows = YAML.safe_load_file(path) || {}
         rows.select { |_lane, deadline| deadline.is_a?(Numeric) && deadline > @clock.call }
       rescue Errno::ENOENT

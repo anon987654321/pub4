@@ -24,6 +24,7 @@ module Master
           return "no agent" unless @agent
           return "no router" unless @router
 
+          retest_dead_lanes
           results = candidates.first(@max_providers).map { |model| probe(model) }
           passed = results.count { |result| result[:ok] }
           publish_summary(results)
@@ -58,6 +59,16 @@ module Master
         end
 
         private
+
+        # A lane marked dead on a guessed wait is asked again here: revived, then
+        # probed, and a lane still spent marks itself dead again from that reply.
+        def retest_dead_lanes
+          Master::Io::LaneQuota.due_probes.each do |lane|
+            model = Master::Io::LaneHealth.model_for_lane(lane)
+            Master::Io::LaneQuota.revive(lane)
+            probe(model) if model
+          end
+        end
 
         def probe(model)
           started = Process.clock_gettime(Process::CLOCK_MONOTONIC)

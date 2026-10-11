@@ -239,6 +239,18 @@ model_defs:
     <<: *model_defaults
     context_window: 128000
     score: { quality: 0.90, speed: 0.76, cost: 1.0 }
+  # The two small models installed on this machine: the tail of every tier and
+  # role list, because they need no network and no quota.
+  ollama_qwen_coder: &ollama_qwen_coder
+    id: ollama:qwen2.5-coder:3b
+    <<: *model_defaults
+    context_window: 32000
+    score: { quality: 0.70, speed: 0.90, cost: 1.0 }
+  ollama_granite: &ollama_granite
+    id: ollama:granite4.2:3b
+    <<: *model_defaults
+    context_window: 128000
+    score: { quality: 0.68, speed: 0.90, cost: 1.0 }
   ollama_nemotron: &ollama_nemotron
     id: ollama:nemotron-3.5-lightning
     <<: *model_defaults
@@ -268,10 +280,12 @@ models:
     - *claude_cli_opus
     - *claude_cli_sonnet
     - *agy_auto
-    - *ollama_gemma
     - *glm_5_3
     - *nemotron_super
     - *gemini_flash_openrouter
+    - *ollama_gemma
+    - *ollama_qwen_coder
+    - *ollama_granite
   primary:
     - *claude_cli_opus
     - *claude_cli_sonnet
@@ -279,11 +293,13 @@ models:
     - *claude_opus_api
     - *glm_5_3
     - *nemotron_super
+    - *ollama_gemma
+    - *ollama_qwen_coder
+    - *ollama_granite
   strong:
     - *claude_cli_opus
     - *claude_cli_sonnet
     - *ollama_glm_flash
-    - *ollama_gemma
     - *claude_opus_api
     - *deepseek_reasoner
     - *deepseek_chat
@@ -294,6 +310,9 @@ models:
     - *command_r_plus
     - *gemma_4_31b
     - *grok_cli_auto
+    - *ollama_gemma
+    - *ollama_qwen_coder
+    - *ollama_granite
   vision:
     - *gemini_flash
     - *claude_sonnet

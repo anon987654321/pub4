@@ -63,7 +63,7 @@ module Master
             lane = lane_of(model)
             return message(lane) if silent?(lane)
 
-            Master::Io::LaneQuota.report.find { |row| row.start_with?("#{lane}:") } || "#{lane}: dead (quota)"
+            Master::Io::LaneQuota.report.find { |row| row.start_with?("#{lane}: ") } || "#{lane}: dead (quota)"
           end
 
           def message(lane = ANY)

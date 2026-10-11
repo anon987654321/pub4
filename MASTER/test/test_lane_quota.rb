@@ -34,7 +34,8 @@ class TestLaneQuota < Minitest::Test
 
   def test_ordinary_failures_are_not_quota
     refute Quota.spent?("agy: timed out after 120s")
-    refute Quota.spent?("HTTP 429 too many requests")
+    refute Quota.spent?("line 429 of the report is wrong")
+    assert Quota.spent?("HTTP 429 too many requests"), "a bare 429 is a limit with no stated time"
     assert Quota.spent?("HTTP 429 Retry-After: 30")
   end
 

@@ -84,7 +84,7 @@ module Master
         result = @dispatcher.send_with_cache(selected_model, messages, stream: false, image:, temperature:)
         result = retry_on_broke_lane(result, selected_model, messages, image:, temperature:, promote: true)
         record_capability_outcome(operation:, selected_model:, result:)
-        raise StandardError, result.message if result.is_a?(Master::Result::Err)
+        raise_failure(result)
         result.to_s
       end
 
@@ -94,7 +94,7 @@ module Master
         sys = role_system(system, law:)
         result = @dispatcher.send_with_cache(chosen, messages, system: sys, stream: false, image:, temperature:, format:)
         result = retry_on_broke_lane(result, chosen, messages, system: sys, image:, temperature:, promote: model.nil?) if failover
-        raise StandardError, result.message if result.is_a?(Master::Result::Err)
+        raise_failure(result)
         result.to_s
       end
 
@@ -191,7 +191,26 @@ end
           break unless last.is_a?(Master::Result::Err)
         end
 
-        last
+        offline_when_exhausted(last, chosen)
+      end
+
+      # No lane answers: a typed Offline, which every rescue StandardError around a
+      # model call already treats as "no model work this pass".
+      def raise_failure(result)
+        return unless result.is_a?(Master::Result::Err)
+        raise Master::Io::LaneHealth::Offline, result.message if result.category == :offline
+
+        raise StandardError, result.message
+      end
+
+      # Every candidate dead is one condition with one line, not the last lane's error.
+      def offline_when_exhausted(last, chosen)
+        models = [chosen, *single_call_fallback_models].uniq
+        return last unless last.category == :offline || models.all? { |model| Master::Io::LaneHealth.dead?(model) }
+
+        message = Master::Io::LaneHealth.offline_error(models).message
+        Master::Trace::Dmesg.once("llm0-offline", message)
+        Master::Result.err(message, category: :offline)
       end
 
       def single_call_fallback_models

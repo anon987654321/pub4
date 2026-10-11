@@ -4,6 +4,7 @@ require "json"
 require "open3"
 require "time"
 require_relative "../io/lane_quota"
+require_relative "../io/lane_health"
 
 module Operator
   # One screen about /fix, read from what /fix already writes: the run journal
@@ -38,6 +39,7 @@ module Operator
         commits: commit_row,
         retained: retained_rows,
         dead_lanes: ::Master::Io::LaneQuota.report,
+        online: online_line,
       }
     end
 
@@ -60,7 +62,7 @@ module Operator
     private
 
     def lines(data)
-      out = ["/fix status"]
+      out = ["/fix status", data[:online]]
       out << "processes:"
       out << "  none running" if data[:processes].empty?
       data[:processes].each do |row|
@@ -90,6 +92,16 @@ module Operator
                "#{row[:pushed] ? "pushed" : "not pushed"}#{row[:dirty] ? ", #{row[:dirty]} dirty" : ""}"
       end
       out
+    end
+
+    # The first role-list lane that is neither dead nor a local model with its daemon down.
+    def online_line
+      health = ::Master::Io::LaneHealth
+      daemon = nil
+      down = lambda do |model|
+        health.dead?(model) || (health.local_model?(model) && !(daemon = daemon.nil? ? health.ollama_up? : daemon))
+      end
+      health.line(health.role_models, refuses: down)
     end
 
     def journal_runs

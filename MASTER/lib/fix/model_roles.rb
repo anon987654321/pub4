@@ -59,8 +59,23 @@ module Master
         binary = CLI_BINARIES[provider(id)]
         return on_path?(binary) if binary
         return Master.agy_cli_available? if provider(id) == "agy"
+        return ollama_alive?(id) if id.start_with?("ollama:")
 
-        true
+        Master.any_api_key_present?
+      end
+
+      # A local model needs the daemon, which this starts once when it is down; a
+      # cloud model through the daemon also needs the network, so it is judged by its lane.
+      def ollama_alive?(id)
+        return false if Master::Io::LaneQuota.dead?(id)
+
+        %i[up started].include?(Master::Io::LaneHealth.ensure_ollama.state)
+      end
+
+      # "online: yes via X" or "online: NO (all lanes dead) ..." over every role list.
+      def online_line(cfg: config)
+        models = cfg.fetch("roles", {}).values.flatten.map(&:to_s).uniq
+        Master::Io::LaneHealth.line(models, refuses: ->(m) { Master::Io::LaneQuota.dead?(m) || !alive?(m) })
       end
 
       def on_path?(binary)
@@ -80,6 +95,7 @@ module Master
       def current = @current ||= assign
 
       def log_assignment(assignment)
+        Master::Trace::Dmesg.status("roles0", online_line)
         Master::Trace::Dmesg.status("roles0", "critic=#{assignment.critic || "default"} fixer=#{assignment.fixer || "default"} wisher=#{assignment.wisher || "default"}")
         Master::Trace::Dmesg.status("roles0", "critic and fixer share #{assignment.fixer || "default routing"} (no alternative alive)") if assignment.shared? || assignment.fixer.nil?
       rescue StandardError, NameError

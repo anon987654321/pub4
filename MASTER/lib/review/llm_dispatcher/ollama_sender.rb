@@ -51,6 +51,7 @@ module Master
                    options: ollama_options(rows, temperature:, format:) }
           body[:format] = format if format
           response = ollama_post(body, stream:, &blk)
+          response = ollama_post(body, stream:, &blk) if ollama_down?(response) && ollama_daemon_started?
           return response unless response.ok?
 
           text, tokens = response.value!
@@ -71,6 +72,16 @@ module Master
           options[:temperature] = format ? 0 : temperature unless format.nil? && temperature.nil?
           options[:num_predict] = FORMAT_REPLY_TOKENS if format
           options
+        end
+
+        def ollama_down?(response) = !response.ok? && response.message.to_s.start_with?("ollama unreachable")
+
+        # The local tail is the lane that needs no network and no quota, so a
+        # daemon that is merely not running is started once instead of failing the call.
+        def ollama_daemon_started?
+          outcome = Io::LaneHealth.ensure_ollama(base: ollama_base_url)
+          Master::Trace::Dmesg.once("llm0-ollama-start", outcome.message) unless outcome.state == :up
+          outcome.state == :started
         end
 
         def ollama_setting(key, default) = LLMDispatcher.ollama_settings.fetch(key, default)

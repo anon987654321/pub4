@@ -1,23 +1,45 @@
 # Which model plays which part of a /fix run. The critic judges the render and
 # the fixer edits the CSS; one model grading its own edits agrees with itself,
 # so the critic is drawn from a different provider whenever one is alive.
-# Lists are in preference order; the first alive entry wins. Environment
+# Lists are in preference order; the first alive entry wins. Every list ends in
+# installed local Ollama models (no network, no quota) so a role is never
+# without a lane. web-chat:* lanes are left out: they drive a headless Chrome
+# against logged-in consumer sites (selectors best-effort, enabled only when
+# keyless), which is not a lane an unattended run can rely on. Environment
 # overrides: MASTER_FIX_CRITIC_MODEL, MASTER_FIX_FIXER_MODEL,
 # MASTER_FIX_WISHER_MODEL.
 schema: 1
 roles:
   critic:
-    - agy:auto
     - grok-cli:auto
     - claude-cli:claude-sonnet-5-5
+    - agy:auto
+    - anthropic/claude-opus-4.1
+    - deepseek-reasoner
+    - deepseek-chat
+    - ollama:gemma3:4b
+    - ollama:qwen2.5-coder:3b
+    - ollama:granite4.2:3b
   fixer:
     - claude-cli:claude-opus-5-5
     - claude-cli:claude-sonnet-5-5
+    - anthropic/claude-opus-4.1
+    - deepseek-reasoner
     - agy:auto
+    - grok-cli:auto
+    - deepseek-chat
+    - ollama:gemma3:4b
+    - ollama:qwen2.5-coder:3b
+    - ollama:granite4.2:3b
   wisher:
     - claude-cli:claude-sonnet-5-5
     - grok-cli:auto
     - agy:auto
+    - anthropic/claude-opus-4.1
+    - deepseek-chat
+    - ollama:gemma3:4b
+    - ollama:qwen2.5-coder:3b
+    - ollama:granite4.2:3b
 # Lane prefixes known to answer nothing right now (quota spent, or a CLI that
 # hangs); a lane here is never chosen. Remove an entry when the lane answers.
 dead:

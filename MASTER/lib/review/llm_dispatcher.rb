@@ -269,10 +269,10 @@ module Master
         reason = @model_router.unreachable_reason(id, wait: false)
         return if reason.to_s.empty? || reason.to_s.start_with?("checking ")
 
+        return revive_local_daemon(model, reason) if reason.start_with?("ollama unreachable")
+
         category =
-          if reason.start_with?("ollama unreachable")
-            :offline
-          elsif reason.start_with?("ollama pull")
+          if reason.start_with?("ollama pull")
             :model_missing
           else
             :provider_error
@@ -281,6 +281,16 @@ module Master
       rescue StandardError => e
         @bus&.publish("llm:preflight_error", model:, error: e.message)
         nil
+      end
+
+      # A local daemon that is down is started once; if it stays down the lane is
+      # dead for a minute, so failover does not ask it again on every call.
+      def revive_local_daemon(model, reason)
+        outcome = Io::LaneHealth.ensure_ollama(base: ollama_base_url)
+        return if %i[started up].include?(outcome.state)
+
+        Io::LaneQuota.note(model, reason)
+        { message: "#{reason}; #{outcome.message}", category: :offline }
       end
 
       # The circuit breaker returns provider failures as Err(:provider_error)
