@@ -199,7 +199,10 @@ module Master
             BODY
           )
           raise result.summary unless result.ok
-          return result.merged_sha
+          merged_sha = result.merged_sha.to_s
+          raise "GitHub reported MERGED without a valid merge commit SHA" unless merged_sha.match?(/\A[0-9a-f]{40}\z/i)
+
+          return merged_sha
         end
 
         # Local mirrors and integration fixtures keep a simple fast-forward path.

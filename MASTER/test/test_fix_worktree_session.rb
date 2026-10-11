@@ -112,7 +112,7 @@ class TestFixWorktreeSession < Minitest::Test
       github.define_singleton_method(:github_remote?) { true }
       github.define_singleton_method(:publish_and_merge!) do |**kwargs|
         calls << kwargs
-        Master::Io::GitHubOperations::Result.new(true, "merged", 99, "https://github.com/anon987654321/pub4/pull/99", "merged-sha")
+        Master::Io::GitHubOperations::Result.new(true, "merged", 99, "https://github.com/anon987654321/pub4/pull/99", "a" * 40)
       end
 
       result = Master::Fix::WorktreeSession.new(root:, github:).run(command: "/fix test", proof_trees: ["MASTER"])
@@ -121,7 +121,7 @@ class TestFixWorktreeSession < Minitest::Test
       assert_equal 1, calls.size
       assert_equal "main", calls.first[:base]
       assert_equal result.head, calls.first[:expected_head]
-      assert_includes result.summary, "as merged-sha to origin/main"
+      assert_includes result.summary, "as #{"a" * 12} to origin/main"
       assert_equal "base\n", git_output(root, "show", "origin/main:README")
       refute File.exist?(result.worktree)
     end
