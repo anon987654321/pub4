@@ -8,7 +8,7 @@ module Master
         sale: "marketplace_sale",
         offer: "marketplace_sale",
         promotion: "marketplace_sale",
-        editorial: "source_editorial",
+        editorial: "swiss_house",
         social: "swiss_house",
         cute: "playful_mona_hubot",
         toy: "playful_mona_hubot",
@@ -21,8 +21,8 @@ module Master
         social: "swiss_house",
         cute: "playful_mona_hubot",
         industrial: "terminal_mono",
-        luxury: "source_editorial",
-        editorial: "source_editorial",
+        luxury: "swiss_house",
+        editorial: "swiss_house",
       }.freeze
 
       module_function

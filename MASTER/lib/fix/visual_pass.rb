@@ -337,7 +337,7 @@ module Master
 
           #{HOSTILE_VISUAL_AUDIT}
 
-          #{Master::Design::VisualLanguage.context(captures)}
+          #{Master::Design::Typeface::HOUSE_RULE} #{Master::Design::VisualLanguage.context(captures)}
 
           #{composition_variant_context(captures)}
 

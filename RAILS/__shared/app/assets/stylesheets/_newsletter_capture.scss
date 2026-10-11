@@ -22,7 +22,7 @@
   padding: var(--space-4);
   background: var(--text);
   color: var(--surface);
-  font-family: Georgia, serif;
+  font-family: var(--font);
   font-size: clamp(5rem, 18vw, 9rem);
   line-height: 0.8;
 }
@@ -55,7 +55,7 @@
 .newsletter-capture h2 {
   margin: 0 0 var(--space-2);
   max-inline-size: 16ch;
-  font-family: Georgia, serif;
+  font-family: var(--font);
   font-size: clamp(2rem, 7vw, 3.5rem);
   line-height: 0.98;
 }

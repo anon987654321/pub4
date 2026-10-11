@@ -25,7 +25,7 @@ module Master
         },
         new_yorker: {
           philosophy: "editorial authority, strong type hierarchy, content as cultural object",
-          layout: %w[serif_editorial strong_headlines generous_margins disciplined_grid],
+          layout: %w[sans_editorial strong_headlines generous_margins disciplined_grid],
           avoid: %w[cheap_gradients excessive_chrome noisy_cards],
           metrics: { contrast: 4.5, font_families_max: 2 },
         },

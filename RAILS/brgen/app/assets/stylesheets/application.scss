@@ -3497,7 +3497,7 @@ a.deal-card,
 }
 
 /* Marketplace sale ads use one authoritative grotesk family. Character comes
-   from scale, weight, measure and alignment rather than an unrelated serif. */
+   from scale, weight, measure and alignment. */
 body.vertical-marketplace .top-offers-rail .sale-ad .deal-card-title {
   font-family: var(--font);
   font-size: var(--text-title);
@@ -11129,18 +11129,16 @@ body.vertical-marketplace .store-buybox .btn-primary {
 }
 
 /* Commerce typography
-   Functional shopping UI stays sans; campaign/display moments get a restrained
-   serif contrast. The pairing follows the practical/editorial split visible in
-   fashion-commerce publishing without turning catalogue metadata into magazine copy. */
+   Shopping UI and campaign moments share the one Swiss sans stack; contrast
+   comes from scale and weight. */
 body.vertical-marketplace {
   --font-commerce-sans: "Helvetica Neue", "Helvetica Neue Pro", Arial, sans-serif;
-  --font-commerce-display: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
 }
 
 body.vertical-marketplace .bol-market-hero-copy h2,
 body.vertical-marketplace .store-promo-art :is(h1, h2, h3),
 body.vertical-marketplace .store-heading {
-  font-family: var(--font-commerce-display);
+  font-family: var(--font);
   font-weight: 400;
   letter-spacing: -0.018em;
   text-wrap: balance;
@@ -11167,7 +11165,7 @@ body.vertical-marketplace :is(
 
 body.vertical-marketplace .store-pdp-info h1,
 body.vertical-marketplace .marketplace-listing-header h1 {
-  font-family: var(--font-commerce-display);
+  font-family: var(--font);
   font-size: clamp(2rem, 3.4vw, 3.5rem);
   font-weight: 400;
   line-height: 0.98;
@@ -11202,13 +11200,8 @@ body.vertical-marketplace .deal-price {
 
 
 /* BRGEN core + vertical typography pass
-   The shared Helvetica stack remains the working face for navigation, utility,
-   transactions and conversation. Editorial surfaces earn a serif only where
-   the reader is browsing stories, programmes or place-led features. This keeps
-   contrast purposeful rather than turning every screen into a magazine. */
-:root {
-  --font-brgen-editorial: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
-}
+   The shared Helvetica stack is the one face for navigation, utility,
+   transactions, conversation and editorial surfaces alike. */
 
 body:not([data-surface="luxury"]) {
   font-kerning: normal;
@@ -11221,7 +11214,7 @@ body:not([data-surface="luxury"]) :is(
   .post-reading-title,
   .page-header h1
 ) {
-  font-family: var(--font-brgen-editorial);
+  font-family: var(--font);
   font-weight: 400;
   line-height: 1.02;
   letter-spacing: -0.012em;
@@ -11256,7 +11249,7 @@ body.vertical-tv :is(
   .show-card h2,
   .tv-show-title
 ) {
-  font-family: var(--font-brgen-editorial);
+  font-family: var(--font);
   font-weight: 400;
   line-height: 1.04;
   letter-spacing: -0.012em;
@@ -11265,7 +11258,7 @@ body.vertical-tv :is(
 
 body.vertical-maps .place-card h2,
 body.vertical-maps article.place h1 {
-  font-family: var(--font-brgen-editorial);
+  font-family: var(--font);
   font-weight: 400;
   line-height: 1.08;
   letter-spacing: -0.01em;

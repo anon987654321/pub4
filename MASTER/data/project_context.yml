@@ -1,7 +1,7 @@
 ---
 meta:
   source: runtime authority — edit this file or use MemoryRecord; do not add data/claude/*.md
-  count: 21
+  count: 22
 entries:
 - key: personality_rb_comment_audit
   name: personality rb comment audit
@@ -292,3 +292,9 @@ entries:
     (the Boolean-disk reference). Applied same day: HEAVY_STRENGTH 2.0->1.35, HEAVY_AMPLITUDE_STRENGTH
     1.1 exempting grain+wear from widening, grain removed from all four lane pools
     (the always-grain is the only pass), vocab-check pin added.'
+- key: brgen_typography_swiss_only
+  name: brgen type is Swiss sans only
+  description: Operator directive 2026-10-11 — no serifs anywhere in brgen or the shared layer
+  type: project
+  body: |-
+    brgen and RAILS/__shared set type in the Helvetica Neue Pro, Helvetica Neue, Arial sans stack (var(--font)), plus one monospace stack (var(--font-mono)) for the terminal chats. No serif, no other family. Editorial and display moments get contrast from scale and weight, never a serif. Enforced by Operator::TypographyLint (kind serif_family, scope RAILS/brgen* and RAILS/__shared, lightgallery.css excepted as vendored), by Master::Design::Pairing routing editorial and luxury to the swiss_house pairing, and by Master::Design::Typeface::HOUSE_RULE in the /fix visual critique prompt. A council proposal that adds a serif or another family is refused.
