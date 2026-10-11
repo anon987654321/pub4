@@ -957,20 +957,32 @@ end
     ENV["MASTER_IN_PROOF"] = saved
   end
 
-  # runner.rb's exit 3 is "nothing failed, some gates measured nothing"; the
-  # proof passes on it and names the gap, and still fails on exit 1.
-  def test_rails_proof_passes_an_inconclusive_run_and_fails_a_failed_one
+  # Contribution gates may remain inconclusive outside /fix, but a proof that
+  # measured nothing cannot certify the repaired tree. The proof owns strictness
+  # for its duration and restores the environment afterwards.
+  def test_rails_proof_blocks_inconclusive_measurements_inside_a_proof
     pass = Master::CLI::Pipeline::Pass.allocate
     _name, runner = pass.send(:proof_runner, Master::RAILS_ROOT)
+    previous_strict = ENV["GATE_STRICT_INCONCLUSIVE"]
+    ENV.delete("GATE_STRICT_INCONCLUSIVE")
 
     inconclusive = ->(**) { [false, ["deploy_drift measured nothing"], 3] }
     ok, out = Operator::GateChain.stub(:rails_gates, inconclusive) { runner.call }
-    assert ok, "an inconclusive gate blocked the proof"
-    assert_match(/GATE_STRICT_INCONCLUSIVE/, out.last) # source-assertion: ok — the proof's own report line
+    assert ok, "ordinary contribution mode should preserve its inconclusive policy"
+    assert_match(/GATE_STRICT_INCONCLUSIVE/, out.last)
+
+    ok, out = pass.send(:inside_proof) do
+      Operator::GateChain.stub(:rails_gates, inconclusive) { runner.call }
+    end
+    refute ok, "an inconclusive gate passed a proof"
+    assert_match(/forbids passing/, out.last)
+    assert_nil ENV["GATE_STRICT_INCONCLUSIVE"], "the proof did not restore its strictness override"
 
     failed = ->(**) { [false, ["port_inventory failed"], 1] }
     ok, = Operator::GateChain.stub(:rails_gates, failed) { runner.call }
     refute ok, "a failed gate passed the proof"
+  ensure
+    previous_strict.nil? ? ENV.delete("GATE_STRICT_INCONCLUSIVE") : ENV["GATE_STRICT_INCONCLUSIVE"] = previous_strict
   end
 
   def test_rails_gates_launches_a_runner_that_exists
