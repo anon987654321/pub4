@@ -20,9 +20,9 @@ class GateContractSpec < Minitest::Test
   # list is something a stage says on its way out.
   def test_gate_runs_master_cli
     source = File.read(GATE)
-    assert_includes source, '"bin/cli"'
+    assert_includes source, 'File.join(ROOT, "bin", "master")'
     assert_match(/stdin_data|stdin\.puts/, source,
-                 "bin/gate must feed the command to bin/cli on stdin")
+                 "bin/gate must feed the command to bin/master on stdin")
     assert_includes source, "STAGE_TIMEOUT",
                     "bin/gate must bound how long it waits for a stage; a stage that never " \
                     "returns produces no output for INCONCLUSIVE to match on"
@@ -113,13 +113,12 @@ class GateContractSpec < Minitest::Test
     wrapper = File.read(File.join(ROOT, "bin", "ruby"))
     gemfile = File.read(File.join(ROOT, "Gemfile"))
 
-    [environment, deploy_environment, entrypoint].each do |source|
-      assert_includes source, "3\\.(?:3|4)"
-    end
+    assert_includes environment, 'SUPPORTED_RUBY_MIN = Gem::Version.new("3.3.0")'
+    assert_includes environment, 'SUPPORTED_RUBY_MAX = Gem::Version.new("4.1.0")'
+    assert_includes deploy_environment, 'OPENBSD_RUBY_PATTERN = /\A3\.(?:3|4)\.\d+\z/'
+    assert_includes entrypoint, "Operator::RubyRunner.best_available_ruby"
     assert_includes wrapper, "ruby34"
     assert_includes wrapper, "ruby33"
-    assert_includes wrapper, "3.4.*"
-    assert_includes wrapper, "3.3.*"
     assert_includes gemfile, 'ruby ">= 3.3", "< 4.1"'
   end
 
@@ -136,14 +135,14 @@ class GateContractSpec < Minitest::Test
     assert_includes source, "require_relative \"../lib/operator/ruby_runner\""
     assert_includes source, "Operator::RubyRunner.ruby_cmd"
     assert_includes source, "Operator::RubyRunner.bundle_cmd"
-    assert_includes source, "Open3.popen2e(SAFE_ENV, RUBY, BUNDLE, \"exec\", RUBY, \"bin/cli\""
+    assert_includes source, "Open3.popen2e(SAFE_ENV, File.join(ROOT, \"bin\", \"master\"), chdir: REPO)"
   end
 
   def test_operator_app_suites_use_the_shared_runtime
     source = File.read(File.join(ROOT, "bin", "operator"))
 
     assert_includes source, 'require "operator/ruby_runner"'
-    assert_includes source, "[RUBY, BUNDLE, \"exec\", RUBY, \"bin/rails\", \"test\"]"
+    assert_includes source, "[BUNDLE, \"exec\", RUBY, \"bin/rails\", \"test\"]"
     refute_includes source, "%w[rbenv exec bundle exec bin/rails test]"
     refute_includes source, "RBENV_VERSION"
   end
