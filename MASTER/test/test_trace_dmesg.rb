@@ -7,7 +7,7 @@ class TraceDmesgTest < Minitest::Test
     load File.expand_path("../lib/trace/logging.rb", __dir__)
 
     assert defined?(Master::Trace::DmesgUnit)
-    assert_equal "scan0", Master::Trace::DmesgUnit.name("scan")
+    assert_equal "scan0", Master::Trace::DmesgUnit.unit_name("scan")
     assert_includes Master::Trace::DmesgUnit::ATTACHED, "scan"
   end
 
