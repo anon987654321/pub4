@@ -6,7 +6,7 @@ require "yaml"
 
 class RailsStackContractTest < Minitest::Test
   REPO_ROOT = File.expand_path("../..", __dir__)
-  STACK = YAML.safe_load_file(File.join(REPO_ROOT, "MASTER", "data", "rails_stack.yml"))
+  STACK = YAML.safe_load_file(File.join(REPO_ROOT, "RAILS", "apps.yml")).fetch("rails_stack")
   RAILS_VERSION = Gem::Version.new(STACK.fetch("rails"))
   RAILS_SOURCE = STACK.fetch("rails_source")
   RAILS_REF = STACK.fetch("rails_ref")

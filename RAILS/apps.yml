@@ -12,6 +12,14 @@
 # Feature statuses are verified against landed code + TODO.md, not asserted from memory.
 # Planned/aspirational work lives in apps.horizon.yml (agent: ignore). Active apps: 0 port/missing gaps.
 
+# The stack every app pins. Read by the production gate, the stack contract test
+# (RAILS/test/rails_stack_contract_test.rb) and nothing else; the Gemfiles and
+# Gemfile.locks must agree with rails, rails_source and rails_ref.
+rails_stack:
+  rails: "8.2.0.alpha"
+  rails_source: "rails/rails"
+  rails_ref: "c9e85dbe297e248dd2f217d04f84a94881ac046a"
+
 owned_domain_facts:
   amberapp.art: { expires: '2027-09-25', renew: true, registrar: Domeneshop }
   amberapp.no: { expires: '2027-09-25', renew: true, registrar: Domeneshop }
