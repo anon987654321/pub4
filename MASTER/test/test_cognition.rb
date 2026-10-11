@@ -207,7 +207,8 @@ class TestCognition < Minitest::Test
       mind = Cognition::Mind.new(root:, bus:)
       bus.publish("fix_loop:pass_start", run_id: "run-1", pass: 1, file_count: 4)
       bus.publish("fix_loop:terminal", task_id: "run-1", capability: "code_repair", ok: true, state: :done)
-      mind.tick!
+      assert File.file?(File.join(root, Cognition::Mind::STATE_PATH)),
+             "a terminal repair outcome must flush cognition state immediately"
 
       snapshot = mind.snapshot
       predictor = Cognition::Prediction.new
