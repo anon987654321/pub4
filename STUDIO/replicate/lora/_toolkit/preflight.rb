@@ -78,7 +78,8 @@ module Preflight
       return nil unless marker.getbyte(0) == 0xFF
 
       code = marker.getbyte(1)
-      next if code == 0xFF || (0xD0..0xD9).cover?(code)
+      return nil if code == 0xD8 || code == 0xD9
+      next if code == 0xFF || code == 0x01 || (0xD0..0xD7).cover?(code)
 
       length = file.read(2)&.unpack1("n") or return nil
       if (0xC0..0xCF).cover?(code) && ![0xC4, 0xC8, 0xCC].include?(code)
