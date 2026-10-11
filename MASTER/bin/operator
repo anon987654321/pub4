@@ -54,6 +54,7 @@ def usage
       bin/operator worktree <name>|finish own checkout, or finish (rebase, push the branch, do not merge main)
       bin/operator triangle <up|status|down> [app...]  boot brgen, amber, bsdports and the master face on the ports the live gates probe
       bin/operator visual review [--app A,B] [--surface ID] [--no-critique] [--no-open] [--out DIR]  read-only rendered review, no fixing
+      bin/operator visual <seed [app...] [--yes]|unseed|status|approve <surface>>  believable local content for the visual pass, development database only
       bin/operator premerge [--apps|--pwa|--contracts|--coverage|--gates|--list]  the Rails premerge proof
       bin/operator ci | coverage          every app's bin/ci, the full Rails coverage run
       bin/operator doctor [--remote]      the environment traps, checked in seconds: disk, rubies, boot, worktrees, model lanes, stray processes
@@ -277,6 +278,8 @@ when "land"
   abort("land: push refused\n#{push_out}") unless pushed
   Master::Trace::Dmesg.status("land0", "on origin/main")
 when "visual"
+  # seed|unseed|status load local development content; approve blesses.
+  exec(RbConfig.ruby, File.join(ROOT, "MASTER", "tools", "rails", "visual_seed.rb"), *ARGV) if %w[seed unseed status].include?(ARGV.first)
   # Blesses a parked chrome-geometry baseline; the /fix loop never does this itself.
   require File.join(ROOT, "MASTER", "lib", "fix", "visual_drift_budget")
   if ARGV.first == "review"

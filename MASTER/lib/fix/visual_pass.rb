@@ -126,7 +126,7 @@ module Master
             next unless resting
 
             captures << resting
-            captures.concat(DeadCssCoverage.around(cdp, surface) { Deploy::CompositionProbe.capture(cdp, surface, dir: @dir, pass:, limit: MAX_COMPOSITION_STATES) })
+            captures.concat(DeadCssCoverage.around(cdp, surface) { VisualStress.captures(cdp, surface, dir: @dir, pass:, limit: MAX_COMPOSITION_STATES) })
           end
 
           # All app captures are complete before we navigate this browser to
@@ -339,7 +339,7 @@ module Master
 
           #{Master::Design::Typeface::HOUSE_RULE} #{Master::Design::VisualLanguage.context(captures)} #{VisualConformance.context(captures)}
 
-          #{composition_variant_context(captures)}
+          #{composition_variant_context(captures)} #{VisualStress.context(captures)}
 
           #{rows.join("\n")}
           #{drift_rows.join("\n")}

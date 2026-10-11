@@ -5,6 +5,7 @@ require_relative "cross_app_consistency"
 require_relative "visual_cross_page_overlay"
 require_relative "fix_trace"
 require_relative "layout_score_store"
+require_relative "visual_stress"
 
 module Master
   module Fix

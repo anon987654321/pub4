@@ -10,6 +10,10 @@ ENV["MASTER_NO_POOL_PROBES"] = "1"
 ENV["MASTER_IN_PROOF"] = "1"
 # Unit tests use the real checkout as their fixture; do not recursively create fix worktrees.
 ENV["MASTER_FIX_WORKTREE"] = "0"
+# Scripted CDP doubles answer only the verbs a test names; stress states and
+# extra engines are exercised by their own tests, which switch them on.
+ENV["MASTER_VISUAL_STRESS"] = "0"
+ENV["MASTER_VISUAL_ENGINES"] = "chrome"
 
 # Direct test entrypoints must use the same pinned, private bundle as bin/cli.
 # Otherwise RubyGems can select a host-installed Minitest (or a native gem
