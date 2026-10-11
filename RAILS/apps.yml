@@ -9,7 +9,7 @@
 #
 # Stack default: Rails 8.2.0.alpha, Ruby 4.0.5, SQLite, Falcon, Solid Queue/Cache, relayd TLS
 #
-# Feature statuses are verified against landed code + TODO.md, not asserted from memory.
+# Feature statuses are verified against landed code + RAILS/TODO.md, not asserted from memory.
 # Planned/aspirational work lives in apps.horizon.yml (agent: ignore). Active apps: 0 port/missing gaps.
 
 # The stack every app pins. Read by the production gate, the stack contract test
