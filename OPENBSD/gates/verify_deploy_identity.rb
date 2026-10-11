@@ -18,6 +18,10 @@ SHARED_FUNCTIONS = %w[deploy_tracked_app need_cmd bundle_install_as_app install_
 # in a function defined in a file _deploy.sh no longer sources, satisfied a
 # string search while every app deploy would have died on "command not found".
 # Sourcing is safe because the library files only define functions.
+def template_placeholders(content)
+  content.to_s.scan(/%[A-Z][A-Z0-9_]*%/).uniq
+end
+
 def shell_functions_missing(library, names)
   out, = Open3.capture2e("zsh", "-c", 'source "$1" && shift && whence -w "$@"', "zsh", library, *names)
   defined = out.scan(/^(\w+): function$/).flatten
@@ -101,7 +105,7 @@ metadata.each do |app, expected|
     failures << message unless content.include?(needle)
   end
 
-  failures << "template placeholder left in #{app}" if content.include?("%APP_NAME%") || content.include?("%")
+  failures << "template placeholder left in #{app}" unless template_placeholders(content).empty?
   failures << "deprecated bundler flags left in #{app}" if content.include?("bundle install --deployment --without")
   failures << "hard-coded amber bundle coupling left in #{app}" if content.include?("/home/amber/.bundle/gems") && app != "amber"
   failures << "unquoted cp source in #{app}" if content.include?("cp -R ${SRC_DIR}")
