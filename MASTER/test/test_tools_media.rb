@@ -53,6 +53,15 @@ class TestToolsMedia < Minitest::Test
     end
   end
 
+  def test_postpro_rejects_unknown_presets_instead_of_silently_returning_the_input
+    source = File.read(POSTPRO)
+    body = source[/^def preset\(image, name, stock: nil\).*?^end$/m]
+
+    assert body, "preset resolver must exist"
+    assert_match(/raise ArgumentError, "unknown preset/, body)
+    refute_match(/return image unless p/, body)
+  end
+
   def test_postpro_finishing_grain_uses_the_preset_stock
     source = File.read(POSTPRO)
     assert_includes source, "def apply_finishing_grain"

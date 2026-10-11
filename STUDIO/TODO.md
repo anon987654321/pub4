@@ -5,7 +5,7 @@ Updated: 2026-10-11. Delete an entry when it is done. Cross-tree coordination li
 ## P0 — privacy and broken paths
 
 - [ ] Re-run the private-media gate after this sweep removes the 17 tracked Ragnhild `retouched/` portraits from the current tree. Prior public commits still contain their historical blobs; history rewriting/force-pushing is intentionally not part of this commit and needs a separately reviewed, coordinated decision.
-- [ ] Fix postpro's missing `fx` preset or replace its callers with a real declared preset. Reproduce the command that consumes over two minutes of full CPU when `--output` is omitted; add a bounded timeout and a regression test so the CLI fails clearly instead of spinning.
+- [ ] Trace the caller that passes unsupported preset `fx`, replace it with a declared preset or correct its intent, and reproduce why the command consumes over two minutes of CPU without `--output`. Unknown preset names now fail fast with the valid preset list instead of silently returning the input; the caller and hang remain unverified.
 - [ ] Repair the four pre-existing failures in `test_tools_postpro.rb`: `the_tools_own_self_check_passes`, `the_default_posture_is_subtle`, the graded-frame version record test, and `every_step_co_occurs_with_every_other`. Re-run each failing test alone and the full subject suite.
 - [ ] Run the Dilla patch-only showcase regression and render `opus3_strings`, `matriarch_stabs`, `grandmother_sweep`, `vox_humana` and `e_piano` through the actual audio/video path. The score dispatcher now routes these declared patches to `Demo`; verify the generated output before closing this item.
 

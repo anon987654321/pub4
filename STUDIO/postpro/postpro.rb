@@ -3407,8 +3407,8 @@ end
 # `stock:` swaps the film under an otherwise unchanged chain, which is how the
 # stock sheet shows one grade on every emulsion.
 def preset(image, name, stock: nil)
-  p = PRESETS[name.to_sym]
-  return image unless p
+  p = PRESETS[name.to_sym] or
+    raise ArgumentError, "unknown preset #{name.inspect}; have #{PRESETS.keys.join(', ')}"
 
   p = p.merge(stock: stock) if stock
   processed = image
