@@ -10,7 +10,7 @@ module Master
     module Benchmark
       module_function
 
-      def evaluate(rows, learn: true)
+      def evaluate(rows, learn: true, root: nil)
         inputs = Array(rows)
         model = OutcomeModel.new
         state = { "records" => {} }
@@ -25,7 +25,7 @@ module Master
           outcome = fetch(row, :outcome).to_s
           evidence = fetch(row, :evidence)
           raise ArgumentError, "row #{index + 1} has an invalid outcome" unless OutcomeModel::OUTCOMES.include?(outcome)
-          receipt = OutcomeModel.validate_evidence!(evidence)
+          receipt = OutcomeModel.validate_evidence!(evidence, root:)
 
           prediction = model.predict(state, context:, action:)
           if %w[success failure].include?(outcome)

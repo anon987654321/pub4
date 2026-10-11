@@ -5,11 +5,20 @@ require "json"
 require_relative "../lib/cognition/outcome_model"
 require_relative "../lib/cognition/benchmark"
 
-path = ARGV.find { |arg| !arg.start_with?("--") }
-learn = !ARGV.include?("--no-learning")
-unknown = ARGV.reject { |arg| arg == path || arg == "--no-learning" }
-unless path && unknown.empty?
-  warn "usage: ruby tools/cognition_benchmark.rb [--no-learning] verified-outcomes.jsonl"
+args = ARGV.dup
+learn = !args.delete("--no-learning")
+root = nil
+if (root_index = args.index("--root"))
+  root = args[root_index + 1]
+  unless root && !root.start_with?("--")
+    warn "usage: ruby tools/cognition_benchmark.rb [--no-learning] [--root PATH] verified-outcomes.jsonl"
+    exit 64
+  end
+  args.slice!(root_index, 2)
+end
+path = args.shift
+unless path && args.empty?
+  warn "usage: ruby tools/cognition_benchmark.rb [--no-learning] [--root PATH] verified-outcomes.jsonl"
   exit 64
 end
 
@@ -26,7 +35,7 @@ begin
   end
   abort "cognition-benchmark: no outcome records" if rows.empty?
 
-  puts JSON.pretty_generate(Master::Cognition::Benchmark.evaluate(rows, learn:))
+  puts JSON.pretty_generate(Master::Cognition::Benchmark.evaluate(rows, learn:, root:))
 rescue ArgumentError, Errno::ENOENT, EncodingError => e
   warn "cognition-benchmark: #{e.message}"
   exit 2

@@ -62,6 +62,35 @@ class TestCognitionOutcomeModel < Minitest::Test
     end
   end
 
+  def test_benchmark_verifies_root_confined_file_receipts
+    Dir.mktmpdir("cognition-evidence") do |root|
+      body = "real task outcome output"
+      path = File.join(root, "outcome.log")
+      File.write(path, body)
+      receipt = { source: "outcome.log", sha256: Digest::SHA256.file(path).hexdigest }
+      rows = [{
+        context: "file-backed benchmark",
+        action: "verify output",
+        outcome: "success",
+        evidence: receipt,
+      }]
+
+      report = Master::Cognition::Benchmark.evaluate(rows, root:)
+      assert_equal 1, report.fetch("scored_outcomes")
+
+      rows.first[:evidence] = receipt.merge(sha256: "0" * 64)
+      assert_raises(ArgumentError) { Master::Cognition::Benchmark.evaluate(rows, root:) }
+    end
+  end
+
+  def test_benchmark_rejects_unverifiable_reference_only_evidence
+    rows = [{
+      context: "task", action: "verify", outcome: "success",
+      evidence: { source: "outcome.log", sha256: "a" * 64 },
+    }]
+    assert_raises(ArgumentError) { Master::Cognition::Benchmark.evaluate(rows) }
+  end
+
   def test_no_learning_ablation_stays_at_the_prior
     rows = 8.times.map do |index|
       { context: "repeatable task", action: "run verifier",
