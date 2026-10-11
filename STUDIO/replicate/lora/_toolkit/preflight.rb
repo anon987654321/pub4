@@ -33,7 +33,7 @@ module Preflight
   # published H100 price (replicate.com/pricing). That flux-dev-lora runs on an
   # H100 is an assumption, and a clip's price per run is not in the API at all.
   RENDER_USD_PER_SECOND = 0.001525
-  OBSERVED_RENDER_SECONDS = 3.0
+  OBSERVED_RENDER_SECONDS = 7.5
 
   # Caption law (curate.rb): face shape, eye colour, natural hair colour and age
   # belong to the trigger token. A caption that names them spreads identity over
