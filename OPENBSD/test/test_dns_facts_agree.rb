@@ -260,7 +260,12 @@ class OwnedDomainFactsAgreeTest < Minitest::Test
     inventory = YAML.safe_load_file(RAILS_APPS)
     assert_equal inventory.fetch("owned_domains").sort, inventory.fetch("owned_domain_facts").keys.sort
     assert_equal false, inventory.fetch("owned_domain_facts").fetch("foball.no").fetch("renew")
-    assert_equal "2026-09-06", inventory.fetch("owned_domain_facts").fetch("svalbrd.no").fetch("expires").to_s
+
+    # An expiry is operator data, not a permanent test fixture. Keep the
+    # schema valid without pinning a date that must change on renewal.
+    svalbrd = inventory.fetch("owned_domain_facts").fetch("svalbrd.no")
+    assert_equal true, svalbrd.fetch("renew")
+    assert_match(/\A\d{4}-\d{2}-\d{2}\z/, svalbrd.fetch("expires").to_s)
   end
 
   def test_openbsd_owned_domains_match_rails_inventory
