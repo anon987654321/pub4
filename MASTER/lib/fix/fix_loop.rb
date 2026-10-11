@@ -2,6 +2,9 @@
 
 require "set"
 require "time"
+require "json"
+require "fileutils"
+require_relative "../convergence/receipt"
 require_relative "scanner"
 require_relative "run_journal"
 require_relative "reachability"
@@ -202,7 +205,7 @@ module Master
         terminal(:blocked, "finished with gaps, #{parts.join("; ")}")
       end
 
-      def finish_run(result, _target, run_id, mission: nil, requested: false)
+      def finish_run(result, target, run_id, mission: nil, requested: false)
         RunBudget.finish_run
         result = blocked_by_gaps(result)
         state = terminal_state_for(result)
@@ -219,7 +222,12 @@ module Master
           mission&.defer!(reason: "attempt #{state}: #{result.to_s}")
         end
 
-        @bus&.publish("fix_loop:terminal", state:, message: result.to_s)
+        target_label = fix_target_label(target)
+        outcome_receipt = write_outcome_receipt(run_id:, target: target_label, state:, result:)
+        @bus&.publish(
+          "fix_loop:terminal", state:, message: result.to_s, target: target_label, run_id:,
+          outcome_receipt:,
+        )
 
         result
       end
@@ -294,6 +302,41 @@ module Master
       def self.preamble_from_soul = [LawLoop.soul_preamble, Protocol.instruction].join("\n\n")
 
       private
+
+      def fix_target_label(target)
+        absolute = File.expand_path(target.to_s, @root)
+        return "." if absolute == @root
+        return absolute.delete_prefix("#{@root}/") if absolute.start_with?("#{@root}/")
+
+        target.to_s[0, 240]
+      end
+
+      # Save an immutable, hashed record only for the canonical four-tree repo.
+      # Test roots and partial workspaces deliberately produce no learning receipt.
+      def write_outcome_receipt(run_id:, target:, state:, result:)
+        return unless %w[MASTER RAILS OPENBSD STUDIO].all? { |tree| File.directory?(File.join(@root, tree)) }
+
+        best = @convergence_discipline.best_state || {}
+        receipt = Master::Convergence::Receipt.write(
+          root: @root,
+          command: "/fix",
+          state: state,
+          details: {
+            run_id: run_id.to_s,
+            target:,
+            summary: result.to_s[0, 400],
+            convergence: {
+              best_score: best[:score],
+              finding_digest: best[:finding_digest],
+              observations: Array(@convergence_discipline.history).size,
+            },
+          },
+        )
+        { source: receipt.fetch(:path).delete_prefix("#{@root}/"), sha256: receipt.fetch(:sha256) }
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "fix_loop.outcome_receipt", event_bus: @bus)
+        nil
+      end
 
       # The look back over the tree after the repair passes: structural consolidation,
       # then naming cleanup. Both work from the repository root.

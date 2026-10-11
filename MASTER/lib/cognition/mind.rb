@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "fileutils"
+require "json"
 require_relative "../io/atomic_write"
 require_relative "outcome_model"
 
@@ -53,10 +54,11 @@ module Master
       attr_reader :state
 
       def initialize(root:, bus:, memory: nil)
-        @root = root
+        @root = File.expand_path(root)
+        @repo_root = @root == Master::ROOT ? Master::REPO_ROOT : @root
         @bus = bus
         @memory = memory
-        @path = File.join(root, STATE_PATH)
+        @path = File.join(@root, STATE_PATH)
         @mutex = Mutex.new
         @state = State.load(@path)
         unless @state.checkpoint_valid
@@ -148,7 +150,7 @@ module Master
       # are deliberately not accepted as verified outcomes.
       def record_task_result(context:, action:, outcome:, evidence:, task_type: nil,
                              confidence: nil, predicted_probability: nil)
-        receipt = OutcomeModel.validate_evidence!(evidence, root: @root)
+        receipt = OutcomeModel.validate_evidence!(evidence, root: @repo_root)
         if task_type && %w[success failure].include?(outcome.to_s)
           raise ArgumentError, "task type is required" if task_type.to_s.strip.empty?
           probability = confidence.nil? ? predicted_probability : confidence
@@ -185,8 +187,50 @@ module Master
 
       def subscribe!
         @bus&.subscribe("**") do |payload|
-          observe(event: payload[:event] || payload["event"] || "event", payload:)
+          event = payload[:event] || payload["event"] || "event"
+          observe(event:, payload:)
+          capture_fix_outcome(payload) if event == "fix_loop:terminal"
         end
+      end
+
+      # Learn from /fix only when the terminal event points to a durable receipt
+      # whose bytes and declared run/state match. Provider prose and ordinary bus
+      # events never qualify as task outcomes.
+      def capture_fix_outcome(payload)
+        envelope = payload[:outcome_receipt] || payload["outcome_receipt"]
+        return unless envelope.is_a?(Hash)
+
+        source = (envelope[:source] || envelope["source"]).to_s
+        digest = (envelope[:sha256] || envelope["sha256"]).to_s
+        receipt = OutcomeModel.validate_evidence!({ source:, sha256: digest }, root: @repo_root)
+        path = File.expand_path(receipt.fetch("source"), @repo_root)
+        data = JSON.parse(File.read(path, encoding: "UTF-8"))
+        details = data["details"].is_a?(Hash) ? data["details"] : {}
+        state = (payload[:state] || payload["state"]).to_s
+        run_id = (payload[:run_id] || payload["run_id"]).to_s
+        return unless data["command"] == "/fix" && data["state"].to_s == state
+        return unless details["run_id"].to_s == run_id
+
+        target = details["target"].to_s
+        return if target.empty?
+
+        tree = target.split("/").first
+        tree = %w[MASTER RAILS OPENBSD STUDIO].include?(tree) ? tree.downcase : "other"
+        outcome = case state
+                  when "done" then "success"
+                  when "failed", "crash", "validation_failed", "delivery_failed" then "failure"
+                  else "inconclusive"
+                  end
+        record_task_result(
+          context: "target=#{target}",
+          action: "/fix",
+          outcome:,
+          evidence: receipt,
+          task_type: "fix/#{tree}",
+        )
+      rescue StandardError => e
+        Ground::Swallow.log(e, context: "cognition.fix_outcome", event_bus: @bus)
+        nil
       end
 
       def tick_due?

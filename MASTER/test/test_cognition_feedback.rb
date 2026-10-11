@@ -58,6 +58,32 @@ class TestCognitionFeedback < Minitest::Test
     assert_equal 1, @mind.predict_outcome(context: "deploy", action: "probe")[:inconclusive]
   end
 
+  def test_fix_terminal_teaches_only_from_a_matching_durable_receipt
+    require "json"
+    path = File.join(@root, ".master", "receipts", "convergence-test.json")
+    FileUtils.mkdir_p(File.dirname(path))
+    body = JSON.generate({
+      "command" => "/fix",
+      "state" => "done",
+      "details" => { "run_id" => "run-1", "target" => "MASTER" },
+    })
+    File.write(path, body)
+    digest = Digest::SHA256.hexdigest(body)
+    payload = {
+      state: "done",
+      run_id: "run-1",
+      outcome_receipt: { source: ".master/receipts/convergence-test.json", sha256: digest },
+    }
+
+    @mind.send(:capture_fix_outcome, payload)
+    assert_equal 1, @mind.predict_outcome(context: "target=MASTER", action: "/fix")[:successes]
+
+    payload[:outcome_receipt][:sha256] = "0" * 64
+    payload[:run_id] = "run-2"
+    @mind.send(:capture_fix_outcome, payload)
+    assert_equal 1, @mind.predict_outcome(context: "target=MASTER", action: "/fix")[:successes]
+  end
+
   def test_checkpoint_continuity_is_not_a_monotonic_mood_proxy
     assert_equal 0.0, @mind.snapshot.dig("metrics", "continuity")
 
