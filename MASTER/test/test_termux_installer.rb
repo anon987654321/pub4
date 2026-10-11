@@ -49,7 +49,7 @@ class TermuxInstallerTest < Minitest::Test
     Dir.mktmpdir("termux-path-migration") do |home|
       malformed = %q{export PATH="\$HOME/.local/bin:\$PATH"} + "\n"
       File.write(File.join(home, ".bashrc"), malformed + "export EDITOR=vi\n")
-      _output, status = Open3.capture2("ruby", "-e", program, env: { "HOME" => home })
+      _output, status = Open3.capture2({ "HOME" => home }, "ruby", "-e", program)
       assert status.success?
 
       result = File.read(File.join(home, ".bashrc"))
