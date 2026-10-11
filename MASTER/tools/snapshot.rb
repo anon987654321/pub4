@@ -1,10 +1,12 @@
 # frozen_string_literal: true
 
-# Generates source snapshots at the pub4 root: snapshot_MASTER.md, snapshot_RAILS.md,
-# snapshot_OPENBSD.md and snapshot_STUDIO.md.
+# Generates source snapshots at the pub4 root: snapshot_<TREE>.md for a tree that fits one part, else
+# snapshot_<TREE>.partKK-of-NN.md, each the full source of the tree (and snapshot_<TREE>.code... for the
+# comment-free variant).
 #
-# The default (lib/operator/snapshot_pack.rb) is one file a tree, sized for another model's context,
-# deleting the tree's old snapshot files first. --mirror writes the byte-exact, rehydratable
+# The default (lib/operator/snapshot_pack.rb, snapshot_parts.rb) is parts of --part-bytes each, verified
+# against the tracked files after writing, deleting the tree's old snapshot files first. --budget writes
+# the one-file reading copy instead. --mirror writes the byte-exact, rehydratable
 # multipart transport instead: every included tracked text file inlined exactly once,
 # excluded paths and binary files accounted for but not embedded.
 
@@ -401,20 +403,55 @@ module Operator
       0
     end
 
-    # bin/operator snapshot [TREE...] [--mirror] [--budget=BYTES] [--only=a,b] [--tests]
+    USAGE = "usage: snapshot [TREE...] [--part-bytes=N] [--code | --code-only] [--verify] " \
+            "[--only=a,b] [--budget=BYTES] [--tests] [--mirror]"
+    FLAGS = %w[--mirror --tests --verify --code --code-only].freeze
+
+    # bin/operator snapshot [TREE...] [--part-bytes=N] [--code | --code-only] [--verify] [--budget=BYTES] [--only=a,b] [--tests] [--mirror]
+    #
+    # No budget writes the full source as numbered parts, exact by default, and verifies what it wrote.
+    # --code writes the comment-free variant as well, --code-only just that one; --verify checks the
+    # files already at the root without writing.
     def cli(argv)
-      mirror = argv.delete("--mirror")
-      tests = argv.delete("--tests")
+      flags = FLAGS.to_h { |flag| [flag, argv.delete(flag)] }
       budget = argv.grep(/\A--budget=\d+\z/).first&.split("=")&.last&.to_i
+      part_bytes = argv.grep(/\A--part-bytes=\d+\z/).first&.split("=")&.last&.to_i
       only = argv.grep(/\A--only=/).first&.split("=", 2)&.last&.split(",")
+      unknown = argv.select { |arg| arg.start_with?("--") && !arg.match?(/\A--(budget|part-bytes|only)=/) }
+      return usage_error("unknown option #{unknown.first}") if unknown.any?
+
       trees = argv.reject { |arg| arg.start_with?("--") }.map(&:upcase)
       trees = TREES if trees.empty?
-      return run(trees, mirror: true) if mirror
+      bad = trees - TREES
+      return usage_error("unknown tree #{bad.first}") if bad.any?
+      return run(trees, mirror: true) if flags["--mirror"]
+      return verify(trees, only:) if flags["--verify"]
 
-      options = { tests: !tests.nil?, full: budget.nil? }
+      options = { tests: !flags["--tests"].nil?, full: budget.nil?, only:, part_bytes:,
+                  variants: flags["--code-only"] ? [:code] : (flags["--code"] ? %i[exact code] : [:exact]) }
       options[:budget] = budget if budget
-      options[:only] = only if only
-      run(trees, **options)
+      run(trees, **options.compact)
+    rescue Operator::SnapshotVerify::Failed => e
+      warn e.message
+      1
+    end
+
+    def usage_error(message)
+      warn "snapshot: #{message}\n#{USAGE}"
+      2
+    end
+
+    # The variants a tree has at the root, each checked against the tracked files.
+    def verify(trees, only: nil, io: $stdout)
+      trees.each do |tree|
+        names = Dir.children(REPO).grep(Operator::SnapshotParts.stale_pattern(tree))
+        variants = names.map { |name| name.include?(".code") ? :code : :exact }.uniq
+        raise Operator::SnapshotVerify::Failed, "snapshot0: #{tree} has no snapshot files at the root" if variants.empty?
+
+        variants.each { |variant| Operator::SnapshotVerify.call(self, tree, variant:, only:, io:) }
+      end
+
+      0
     end
   end
 end

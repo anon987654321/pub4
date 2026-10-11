@@ -4,6 +4,8 @@ require "fileutils"
 require "set"
 require_relative "snapshot_map"
 require_relative "snapshot_minify"
+require_relative "snapshot_parts"
+require_relative "snapshot_verify"
 
 module Operator
 
@@ -120,7 +122,7 @@ module Operator
     end
 
     # What each file is: its text, its minified text, its block, and whether it may be inlined.
-    def files_for(host, paths, tests:, full: false)
+    def files_for(host, paths, tests:)
       files = []
       omitted = Hash.new { |hash, key| hash[key] = [] }
 
@@ -131,29 +133,29 @@ module Operator
         reason = omit_reason(path)
         next omitted[reason] << path if reason
 
-        files << file_entry(path, absolute, tests:, full:)
+        files << file_entry(path, absolute, tests:)
       end
 
       [rank_centrality(files), omitted]
     end
 
-    def file_entry(path, absolute, tests:, full: false)
+    def file_entry(path, absolute, tests:)
       original = File.read(absolute, encoding: "UTF-8", invalid: :replace, undef: :replace)
-      minified = full ? original : minify(path, original)
-      inlinable = full || (minified.bytesize <= FILE_CAP && (tests || !test_path?(path)))
+      minified = minify(path, original)
+      inlinable = minified.bytesize <= FILE_CAP && (tests || !test_path?(path))
 
       { path:, original:, minified:, block: block(path, minified), inlinable: }
     end
 
     # What one write is working on: where, what, how much room, and what came of it.
-    Job = Struct.new(:host, :tree, :budget, :only, :tests, :full, :files, :omitted, :chosen, keyword_init: true)
+    Job = Struct.new(:host, :tree, :budget, :only, :tests, :files, :omitted, :chosen, keyword_init: true)
 
     def header(job, sha)
       out = +"# #{job.tree} — source snapshot for another model\n\n"
       out << "Pack: tree=#{job.tree} git=#{sha} files=#{job.files.size} inlined=#{job.chosen.size} "
       out << "map_only=#{job.files.size - job.chosen.size} omitted=#{job.omitted.values.sum(&:size)} "
-      out << "budget=#{job.full ? 'full' : job.budget}\n\n"
-      out << (job.full ? full_explanation : explanation(job.tree))
+      out << "budget=#{job.budget}\n\n"
+      out << explanation(job.tree)
       out << omitted_note(job.omitted)
     end
 
@@ -161,16 +163,6 @@ module Operator
       return "" if omitted.empty?
 
       "Omitted: #{omitted.sort.map { |reason, list| "#{reason} (#{list.size})" }.join(', ')}.\n\n"
-    end
-
-    def full_explanation
-      [
-        "The full source: every tracked text file of the tree, byte for byte, tests included.",
-        "**Map** lists every file: name [lines] — purpose | what it declares. **Source** holds each file whole,",
-        "in reading order (the constitution and entry points first, tests last). Only files with no reading",
-        "value are left out, and the Omitted line names them. For a smaller reading copy use",
-        "`bin/operator snapshot --budget=BYTES`.\n\n",
-      ].join(" ")
     end
 
     def explanation(tree)
@@ -183,27 +175,31 @@ module Operator
         "`#{ask}`, which spends the whole budget on that scope.",
         "It is a reading copy, not a mirror: comments and blank lines are removed (a file's first comment stays",
         "as one line), JSON is compacted, and Ruby is changed only by removing comments and blank lines.",
-        "For exact bytes use `bin/operator snapshot --mirror`.\n\n",
+        "For the whole source use `bin/operator snapshot` with no budget.\n\n",
       ].join(" ")
     end
 
-    # Every snapshot file the tree has at the repo root, whichever kind wrote it: the single file or the
-    # byte-exact mirror's parts. The operator asked for the old ones to be deleted before
-    # a new pack is written, and a pack beside the old one's extra parts leaves a reader unable to
-    # tell which are current. Only files named snapshot_<TREE>*.md at the repo root match.
+    # Every snapshot file the tree has at the repo root, whichever kind wrote it: the single file, the
+    # numbered parts, the code variant or the byte-exact mirror's parts. The operator asked for the
+    # old ones to be deleted before a new pack is written, and a pack beside the old one's extra parts
+    # leaves a reader unable to tell which are current. Only files named snapshot_<TREE>*.md at the
+    # repo root match.
     def clear(host, tree, io: $stdout)
-      pattern = /\Asnapshot_#{Regexp.escape(tree)}(\.part\d+)?\.md\z/
-      old = Dir.children(host::REPO).grep(pattern).map { |name| File.join(host::REPO, name) }
+      old = Dir.children(host::REPO).grep(SnapshotParts.stale_pattern(tree)).map { |name| File.join(host::REPO, name) }
       FileUtils.rm_f(old)
       Master::Trace::Dmesg.status("snapshot0", "#{tree}, removed #{old.size} old snapshot file(s)", io:)
 
       old
     end
 
+    # The budgeted reading copy is one file. The full source is parts (SnapshotParts), the exact
+    # variant, the code variant, or both, each verified against the tree after it is written.
     def write(host, tree, io: $stdout, **options)
       clear(host, tree, io:)
+      return write_full(host, tree, io:, **options) if options[:full]
+
       job = Job.new(host:, tree:, budget: options.fetch(:budget, DEFAULT_BUDGET), only: options[:only],
-                    tests: options.fetch(:tests, false), full: options.fetch(:full, false))
+                    tests: options.fetch(:tests, false))
       paths = paths_for(host, tree, only: job.only)
       return nothing_matched(tree, io) if paths.empty?
 
@@ -215,13 +211,25 @@ module Operator
       [path]
     end
 
+    def write_full(host, tree, io:, only: nil, variants: [:exact], part_bytes: nil, **)
+      paths = paths_for(host, tree, only:)
+      return nothing_matched(tree, io) if paths.empty?
+
+      size = part_bytes || ENV.fetch("MASTER_SNAPSHOT_PART_BYTES", SnapshotParts::DEFAULT_PART_BYTES).to_i
+      variants.flat_map do |variant|
+        written = SnapshotParts.write(host, tree, paths:, variant:, part_bytes: size, io:)
+        SnapshotVerify.call(host, tree, variant:, only:, io:)
+        written
+      end
+    end
+
     # The whole file: header, map, then the chosen files whole. The room for source is what the
     # budget leaves after the header and the map, which both depend on the choice by a few bytes.
     def compose(job, paths)
       sha = job.host.head_sha
-      job.files, job.omitted = files_for(job.host, paths, tests: job.tests, full: job.full)
+      job.files, job.omitted = files_for(job.host, paths, tests: job.tests)
       job.chosen = Set.new
-      room = job.full ? Float::INFINITY : job.budget - header(job, sha).bytesize - SnapshotMap.map_text(job.files, job.chosen).bytesize - 40
+      room = job.budget - header(job, sha).bytesize - SnapshotMap.map_text(job.files, job.chosen).bytesize - 40
       job.chosen = choose(job.files, room)
       text = header(job, sha)
       text << "## Map\n\n#{SnapshotMap.map_text(job.files, job.chosen)}\n## Source\n\n"
@@ -237,7 +245,7 @@ module Operator
     end
 
     def report(job, path, text, io:)
-      over = !job.full && text.bytesize > job.budget ? " — OVER the budget: the map is too large, narrow with --only" : ""
+      over = text.bytesize > job.budget ? " — OVER the budget: the map is too large, narrow with --only" : ""
       Master::Trace::Dmesg.status(
         "snapshot0",
         "#{job.tree}, #{File.basename(path)}, #{text.bytesize} bytes (~#{text.bytesize / 4000}K tokens), " \

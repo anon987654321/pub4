@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "stringio"
 require_relative "../snapshot"
 require_relative "../../tools/snapshot"
 require "shellwords"
@@ -197,16 +198,20 @@ module Master
         end
       end
 
+      # The full source of each governed tree as exact parts of the default size, verified against the
+      # tracked files; bin/operator snapshot takes the other options (--code, --part-bytes, --verify).
       def dispatch_snapshot(_root, ctx: nil)
         arg = arg_for(ctx)
-        return "usage: /snapshot [no arguments]" unless arg.empty?
+        return "usage: /snapshot [no arguments]  (exact parts; bin/operator snapshot has --code, --part-bytes, --verify)" unless arg.empty?
 
-        paths = ::Operator::Snapshot::TREES.flat_map { |tree| Array(::Operator::Snapshot.write(tree, full: true)) }
-        paths.map do |path|
+        log = StringIO.new
+        paths = ::Operator::Snapshot::TREES.flat_map { |tree| Array(::Operator::Snapshot.write(tree, full: true, io: log)) }
+        wrote = paths.map do |path|
           relative = path.delete_prefix("#{Master::REPO_ROOT}/")
           bytes = File.size(path)
           "snapshot0: wrote root/#{relative} (#{bytes} bytes, ~#{bytes / 4000}K tokens; full source)"
-        end.join("\n")
+        end
+        (wrote + log.string.lines.grep(/verified/).map(&:chomp)).join("\n")
       rescue StandardError => e
         "snapshot0: failed — #{e.class}: #{e.message}"
       end

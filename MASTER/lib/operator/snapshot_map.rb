@@ -38,14 +38,15 @@ module Operator
       nil
     end
 
+    # A tag (the part number in a multipart pack) follows the length.
     # One line a file: name, length, its one-line purpose and what it declares. The whole tree's
     # map is a fraction of its source, so every file is present in a context that the source
     # never fits; the reader picks files from it and asks for them with --only.
-    def map_line(file, inlined: true)
+    def map_line(file, inlined: true, tag: nil)
       path = file.fetch(:path)
       mark = inlined ? "" : "~"
       count = file.fetch(:original).lines.size
-      line = +"#{mark}#{File.basename(path)} [#{count}L]"
+      line = +"#{mark}#{File.basename(path)} [#{count}L]#{" #{tag.call(file)}" if tag}"
       return line if SnapshotPack.test_path?(path)
 
       purpose = file.fetch(:minified).lines.first.to_s[/\A#\s+(.+)/, 1]
@@ -84,9 +85,9 @@ module Operator
       defs.size > MAP_NAMES ? "#{listed} +#{defs.size - MAP_NAMES}" : listed
     end
 
-    def map_text(files, chosen)
+    def map_text(files, chosen, tag: nil)
       by_dir = Hash.new { |hash, key| hash[key] = [] }
-      files.each { |f| by_dir[File.dirname(f[:path])] << map_line(f, inlined: chosen.include?(f[:path])) }
+      files.each { |f| by_dir[File.dirname(f[:path])] << map_line(f, inlined: chosen.include?(f[:path]), tag:) }
 
       "#{by_dir.sort.map { |dir, list| "#{dir}/\n#{list.join("\n")}" }.join("\n\n")}\n"
     end
