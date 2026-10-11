@@ -36,6 +36,30 @@ class TestBrowserAgent < Minitest::Test
     assert tool.call(action: "interact", operation: "click", selector: "#submit").err?
   end
 
+  def test_browser_interactions_require_fresh_human_consent_even_in_auto_mode
+    config = Struct.new(:automatic) { def auto? = automatic }.new(true)
+    governor = Master::Fix::Governor.new(config:)
+    prompts = []
+    Fiber[:master_terminal_ask] = lambda do |prompt:, options:|
+      prompts << { prompt:, options: }
+      "approve"
+    end
+
+    description = "interact set https://example.com selector=#search"
+    governor.allow!("browser_agent", description)
+    2.times do
+      assert governor.permit?("browser_agent", :dangerous, description).ok?
+    end
+
+    assert_equal 2, prompts.length
+    prompts.each do |request|
+      assert_includes request[:prompt], "browser_agent: interact set"
+      refute request[:options].any? { |option| option[:value] == "allow" }
+    end
+  ensure
+    Fiber[:master_terminal_ask] = nil
+  end
+
   def test_policy_and_runtime_registration_agree
     root = Master::ROOT
     policy = YAML.safe_load_file(File.join(root, "data", "laws.yml"), aliases: true).fetch("browser_policy")
