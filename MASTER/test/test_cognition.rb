@@ -176,10 +176,13 @@ class TestCognition < Minitest::Test
       ])
     end
     8.times do
+      # The test stream presents each task contiguously, unlike training's
+      # interleaved schedule. Contextual prediction should transfer; the shared
+      # stream has learned the interleaving instead.
       testing.concat([
         { context: "task-a", event: "repair:start" },
-        { context: "task-b", event: "repair:start" },
         { context: "task-a", event: "test:pass" },
+        { context: "task-b", event: "repair:start" },
         { context: "task-b", event: "test:fail" },
       ])
     end
