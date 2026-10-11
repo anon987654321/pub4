@@ -10252,7 +10252,7 @@ body.vertical-marketplace .listing-steps {
 }
 
 body.vertical-marketplace .listing-step-link {
-  min-height: 44px;
+  min-height: var(--tap-min);
   border: 1px solid var(--bol-rule);
   background: #fff;
   color: var(--bol-muted);
@@ -10322,7 +10322,7 @@ body.vertical-marketplace .listing-photo-camera small {
 }
 
 body.vertical-marketplace .listing-photo-gallery {
-  min-height: 44px;
+  min-height: var(--tap-min);
   margin-top: 8px;
   padding: 0 14px;
   border: 1px solid var(--bol-rule);
@@ -10436,7 +10436,7 @@ body.vertical-marketplace .listing-source-option {
   display: flex;
   align-items: center;
   gap: 8px;
-  min-height: 44px;
+  min-height: var(--tap-min);
   margin: 0;
   padding: 8px 10px;
   border: 1px solid var(--bol-rule);

@@ -103,17 +103,16 @@ class DesignContractTest < Minitest::Test
            "brgen-old sits inside a cascade layer, where the social stack's tokens can outrank it"
   end
 
-  # The dialect table once claimed brgen was `social` / 4-8-12-16 long after
+  # The dialect section once claimed brgen was `social` / 4-8-12-16 long after
   # brgen had moved to brgen_old, and nothing caught it because no check read
-  # the doc. This one does.
+  # the doc. This one does. The README states it in a sentence now (a table
+  # would break the one-voice README rule), so the sentence is what is read.
   def test_the_design_doc_records_the_dialect_brgen_actually_wears
     notes = File.read(File.join(SHARED, "README.md"))
-    worn = notes[/\*\*Worn at `:root`.*?\n\n/m]
+    sentence = notes.split(/(?<=\.)\s+/).find { |part| part.match?(/\bbrgen\b.*\bwear/m) }
 
-    assert worn, "shared/README.md must keep a 'Worn at :root' table — declared mixins are not worn dialects"
-    brgen_row = worn.lines.find { |line| line.start_with?("| brgen") }
-    assert brgen_row, "the worn table must have a brgen row"
-    assert_includes brgen_row, "brgen_old",
+    assert sentence, "shared/README.md must say which dialect brgen wears"
+    assert_includes sentence, "brgen_old",
                     "brgen renders brgen-old-*-tokens; saying `social` here sends CSS work at the wrong palette"
   end
 

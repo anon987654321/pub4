@@ -49,7 +49,7 @@ class PwaDesignContractTest < Minitest::Test
     assert_includes worker, 'new BackgroundSyncPlugin(FORM_QUEUE'
     assert_includes worker, 'self.addEventListener("periodicsync"'
     assert_includes worker, 'self.registration.showNotification'
-    assert_includes worker, 'clients.openWindow(o)'
+    assert_includes worker, 'clients.openWindow(target)'
   end
 
   def test_no_worker_precaches_a_fingerprinted_asset
@@ -199,7 +199,8 @@ class PwaDesignContractTest < Minitest::Test
     assert_includes chrome, "--nav-swiper-h"
     assert_includes chrome, "var(--safe-top)"
     assert_includes shell, "var(--safe-top)"
-    assert_includes shell, "var(--safe-bottom)"
+    # The bottom inset belongs to the layout chrome (tab bar and install prompt sit on it); the shell owns the top.
+    assert_includes chrome, "var(--safe-bottom)"
 
     assert_includes standalone, "(display-mode: standalone)"
     assert_includes standalone, "navigator.standalone"

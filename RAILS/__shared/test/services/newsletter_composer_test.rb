@@ -1,6 +1,10 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require "rails"
+require "logger"
+
+Rails.logger ||= Logger.new(File::NULL)
 require "ostruct"
 require_relative "../../app/services/shared/strunk_white_pass"
 require_relative "../../app/services/shared/newsletter_composer"

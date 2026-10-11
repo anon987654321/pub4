@@ -11,7 +11,7 @@ module Contracts
     module_function
 
     def configured?
-      !token.empty?
+      !token.nil?
     end
 
     def token

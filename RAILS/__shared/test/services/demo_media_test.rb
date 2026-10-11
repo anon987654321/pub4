@@ -1,6 +1,10 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require "rails"
+require "logger"
+
+Rails.logger ||= Logger.new(File::NULL)
 require "pathname"
 require "tmpdir"
 require "yaml"

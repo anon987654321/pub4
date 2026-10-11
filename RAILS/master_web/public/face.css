@@ -1537,7 +1537,7 @@ body.wscons-mode #face-phosphor-trail {
 .master-workspace-node {
   position: absolute;
   min-inline-size: 96px;
-  min-block-size: 44px;
+  min-block-size: var(--tap-min);
   padding: 8px 10px;
   border: 1px solid var(--border-soft);
   background: color-mix(in srgb, var(--face-bg) 92%, transparent);

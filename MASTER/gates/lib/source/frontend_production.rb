@@ -102,7 +102,7 @@ module Deploy
       if File.file?(chat_index)
         body = File.read(chat_index)
         result.fail("RAILS/master_web chat index: missing face asset path map") unless body.include?("MASTER_ASSET_PATHS")
-        result.fail("RAILS/master_web chat index: missing lazy face import") unless body.include?('import("<%= asset_path("face.js") %>")')
+        result.fail("RAILS/master_web chat index: missing lazy face import") unless body.match?(/import\("<%= (?:FaceAssets\.versioned\()?asset_path\("face\.js"\)/)
         result.fail("RAILS/master_web chat index: missing primer dismissal") unless body.include?("dismissPrimer")
         result.fail("RAILS/master_web chat index: missing prompt reveal") unless body.include?("revealPrompt")
         result.fail("RAILS/master_web chat index: missing error-live wiring") unless body.include?("error-live")

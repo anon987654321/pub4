@@ -4,14 +4,14 @@ require "minitest/autorun"
 
 class NewsletterCaptureContractTest < Minitest::Test
   ROOT = File.expand_path("../..", __dir__)
-  CONTROLLER = File.join(ROOT, "shared/frontend/newsletter_capture_controller.js")
-  VIEW = File.join(ROOT, "shared/app/views/shared/_newsletter_signup_popup.html.erb")
-  IMPORTMAP = File.join(ROOT, "shared/config/importmap_baseline.rb")
-  BOOT = File.join(ROOT, "shared/frontend/stimulus_boot.js")
-  FOOTER = File.join(ROOT, "shared/app/views/shared/_site_legal_footer.html.erb")
-  VISUALS = File.join(ROOT, "shared/app/services/shared/newsletter_visuals.rb")
-  COMPOSER = File.join(ROOT, "shared/app/services/shared/newsletter_composer.rb")
-  EDITION = File.join(ROOT, "shared/app/views/shared/newsletter/_edition.html.erb")
+  CONTROLLER = File.join(ROOT, "__shared/frontend/newsletter_capture_controller.js")
+  VIEW = File.join(ROOT, "__shared/app/views/shared/_newsletter_signup_popup.html.erb")
+  IMPORTMAP = File.join(ROOT, "__shared/config/importmap_baseline.rb")
+  BOOT = File.join(ROOT, "__shared/frontend/stimulus_boot.js")
+  FOOTER = File.join(ROOT, "__shared/app/views/shared/_site_legal_footer.html.erb")
+  VISUALS = File.join(ROOT, "__shared/app/services/shared/newsletter_visuals.rb")
+  COMPOSER = File.join(ROOT, "__shared/app/services/shared/newsletter_composer.rb")
+  EDITION = File.join(ROOT, "__shared/app/views/shared/newsletter/_edition.html.erb")
   MODEL = File.join(File.expand_path("../..", __dir__), "brgen/app/models/newsletter_edition.rb")
 
   def test_popup_is_shared_and_time_capped

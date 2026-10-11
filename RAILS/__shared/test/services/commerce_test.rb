@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require "active_support/core_ext/object/blank"
 require_relative "../../app/services/shared/commerce"
 
 class SharedCommerceTest < Minitest::Test

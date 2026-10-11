@@ -11,6 +11,8 @@
 en:
   marketplace:
     listing_steps_label: "Listing steps"
+    listing_published_heading: "Your listing is live."
+    list_another: "List another"
     listing_steps:
       photos: "Photos"
       details: "Details"

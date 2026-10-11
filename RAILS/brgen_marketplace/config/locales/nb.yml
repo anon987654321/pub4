@@ -11,6 +11,8 @@
 nb:
   marketplace:
     listing_steps_label: "Annonsesteg"
+    listing_published_heading: "Annonsen er publisert."
+    list_another: "Legg ut en annonse til"
     listing_steps:
       photos: "Bilder"
       details: "Detaljer"

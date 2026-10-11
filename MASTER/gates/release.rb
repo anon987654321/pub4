@@ -74,13 +74,13 @@ def bundle_cmd
   command_available?(path) ? [path] : nil
 end
 
-def run(label, command, chdir: ROOT)
+def run(label, command, chdir: ROOT, env: {})
   puts "release gate: #{label}"
   stdout = +""
   stderr = +""
   status = nil
 
-  Open3.popen3(*command, chdir:) do |stdin, out, err, wait_thread|
+  Open3.popen3(env, *command, chdir:) do |stdin, out, err, wait_thread|
     stdin.close
     stdout_reader = Thread.new { out.read }
     stderr_reader = Thread.new { err.read }
@@ -159,9 +159,20 @@ BOOTED_SHARED_TESTS, BARE_SHARED_TESTS =
   "master_web/test/pwa_master_contract_test.rb",
   "test/shared_social_routes_test.rb",
   "test/i18n_resolution_test.rb",
-  *BARE_SHARED_TESTS,
-].each do |test|
+  ].each do |test|
   run(test, [*RUBY, test], chdir: ROOT)
+end
+
+# The engine's bare tests load active_support, active_record and shared/*, which only a
+# bundle puts on the load path (Rails comes from a git source, so no ruby has it installed).
+# They run under brgen's, the app that mounts the engine.
+BARE_SHARED_TESTS.each do |test|
+  if BUNDLE
+    run(test, [*BUNDLE, "exec", *RUBY, test], chdir: ROOT,
+        env: { "BUNDLE_GEMFILE" => File.join(ROOT, "brgen", "Gemfile") })
+  else
+    UNCHECKED << "bundle not on PATH — #{test} skipped (it needs the bundle for active_support)"
+  end
 end
 
 if BUNDLE

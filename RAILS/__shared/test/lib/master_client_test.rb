@@ -43,7 +43,7 @@ class MasterClientTest < Minitest::Test
     ENV["MASTER_BRIDGE_TOKEN"] = "legacy-bridge-token"
     ENV["MASTER_INTERNAL_TOKEN"] = "internal-token"
 
-    assert_equal "", Contracts::MasterClient.token
+    assert_nil Contracts::MasterClient.token
     refute Contracts::MasterClient.configured?
   ensure
     previous.each { |k, v| v ? ENV[k] = v : ENV.delete(k) }

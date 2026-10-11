@@ -52,8 +52,7 @@ class I18nResolutionTest < Minitest::Test
   # config/locales/*.yml to I18n.load_path with no wiring, so a key defined
   # there resolves in the mounting app exactly like a host key.
   def app_keys(app, locale)
-    paths = Dir.glob(File.join(ROOT, "#{app}/config/locales/*#{locale}.yml")) +
-            Dir.glob(File.join(ROOT, "#{app}/engines/*/config/locales/*#{locale}.yml")) +
+    paths = ([app] + engine_dirs(app)).flat_map { |dir| Dir.glob(File.join(ROOT, dir, "config/locales/*#{locale}.yml")) } +
             Dir.glob(File.join(ROOT, "__shared/config/locales/*.#{locale}.yml"))
     paths.each_with_object({}) { |path, out| out.merge!(flat_keys(path.sub("#{ROOT}/", ""))) }
   end
@@ -66,13 +65,42 @@ class I18nResolutionTest < Minitest::Test
   def keys_used_by(app)
     @keys_used_by ||= {}
     @keys_used_by[app] ||= begin
-      globs = ["#{app}/app/views/**/*.erb", "#{app}/app/helpers/**/*.rb",
-               "#{app}/engines/*/app/views/**/*.erb", "#{app}/engines/*/app/helpers/**/*.rb",
-               "__shared/app/views/**/*.erb", "__shared/app/helpers/**/*.rb"]
-      globs.flat_map { |glob| Dir.glob(File.join(ROOT, glob)) }.each_with_object({}) do |path, found|
+      own = ([app] + engine_dirs(app)).flat_map do |dir|
+        Dir.glob(File.join(ROOT, dir, "app/{views,helpers}/**/*.{erb,rb}"))
+      end
+      paths = own + shared_reached_by(own) + Dir.glob(File.join(ROOT, "__shared/app/helpers/**/*.rb"))
+      paths.each_with_object({}) do |path, found|
         defaultless_keys(File.read(path)).each { |key| found[key] ||= path.sub("#{ROOT}/", "") }
       end
     end
+  end
+
+  # brgen's verticals are the engines that sit beside it as brgen_<name> (brgen_radio holds
+  # playlist and tv one level down); amber and bsdports mount none.
+  def engine_dirs(app)
+    return [] unless app == "brgen"
+
+    Dir.glob(File.join(ROOT, "brgen_*/{,*/,engines/*/}app")).map { |path| path.delete_prefix("#{ROOT}/").delete_suffix("/app") }.sort
+  end
+
+  # A shared view renders in an app only when the app's own source names it
+  # (render "shared/<name>"), directly or through another shared view it reaches. A shared
+  # partial no view of the app renders is not a missing translation in that app.
+  def shared_reached_by(own)
+    shared = Dir.glob(File.join(ROOT, "__shared/app/views/**/*.erb"))
+    reached, pending = shared.partition { |path| !File.basename(path).start_with?("_") }
+    text = (own + reached).map { |path| File.read(path) }.join("\n")
+    loop do
+      found, pending = pending.partition do |path|
+        name = path.delete_prefix("#{ROOT}/__shared/app/views/").sub(/\.html\.erb\z/, "").sub(%r{(\A|/)_}, "\1")
+        text.include?(name)
+      end
+      break if found.empty?
+
+      reached += found
+      text += "\n" + found.map { |path| File.read(path) }.join("\n")
+    end
+    reached
   end
 
   # Balanced-paren scan: t("a.b", default: t("c.d")) must count neither key as unresolved.
