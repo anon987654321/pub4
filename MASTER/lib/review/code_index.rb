@@ -178,8 +178,9 @@ module Master
 
       attr_reader :symbols, :references, :built_at
 
-      def initialize(root:, event_bus: nil)
+      def initialize(root:, event_bus: nil, persist: false)
         @root = File.expand_path(root)
+        @store = persist ? CodeIndexStore.new(root: @root) : nil
         @bus = event_bus
         @symbols = {}
         @references = []
@@ -193,7 +194,9 @@ module Master
         @lock.synchronize do
           target = path ? File.expand_path(path, @root) : @root
           files = Dir.glob(File.join(target, "**", "*.rb")).reject { |f| f.include?("/vendor/") }
-          @built_at.nil? ? first_build(files) : incremental_build(files)
+          restored = path.nil? && @built_at.nil? && restore_snapshot
+          @built_at.nil? && !restored ? first_build(files) : incremental_build(files)
+          save_snapshot if @store && path.nil?
           @built_at = Time.now
           @bus&.publish("code_index:built", files: files.size, symbols: @symbols.size)
         end
@@ -224,7 +227,10 @@ module Master
         @lock.synchronize do
           full = File.expand_path(file, @root)
           purge_file(full)
-          index_file(full) if File.file?(full)
+          return unless File.file?(full)
+
+          index_file(full)
+          @mtimes[full] = CodeIndexStore.signature(full)
         end
       rescue StandardError => e
         @bus&.publish("code_index:reindex_error", path: file, error: e.message)
@@ -243,7 +249,7 @@ module Master
         @mtimes.clear
         files.each do |f|
           index_file(f)
-          @mtimes[f] = (File.mtime(f) rescue nil)
+          @mtimes[f] = CodeIndexStore.signature(f)
         end
       end
 
@@ -254,10 +260,33 @@ module Master
       end
 
       def reindex_if_stale(file)
-        mt = (File.mtime(file) rescue nil)
-        return false if @mtimes[file] == mt
-        @mtimes[file] = mt
+        sig = CodeIndexStore.signature(file)
+        return false if @mtimes[file] == sig
+
+        purge_file(file)
+        index_file(file)
+        @mtimes[file] = sig
         true
+      end
+
+      # Loads the last boot's graph so incremental_build re-parses only the files
+      # whose mtime or size moved. True when a snapshot was loaded.
+      def restore_snapshot
+        snapshot = @store&.load
+        return false unless snapshot
+
+        snapshot[:symbols].each { |sym| @symbols[sym.fqn] = sym }
+        @references.concat(snapshot[:references])
+        @mtimes.merge!(snapshot[:signatures])
+        @snapshot_tree = snapshot[:tree_hash]
+        true
+      end
+
+      def save_snapshot
+        return if @snapshot_tree && @snapshot_tree == CodeIndexStore.tree_hash(@mtimes)
+
+        @store.save(symbols: @symbols.values, references: @references, signatures: @mtimes)
+        @snapshot_tree = CodeIndexStore.tree_hash(@mtimes)
       end
 
       def purge_file(full)
