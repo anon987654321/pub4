@@ -27,9 +27,17 @@ class DesignDirectionTest < Minitest::Test
     _, spec = Master::Design::Composition.for(school: :commerce_editorial, purpose: "marketplace sale")
     assert_equal %w[product price headline proof action], spec.fetch("focal_order")
   end
-end
 
   def test_measure_accessor_delegates_to_thresholds
     assert_equal Master::Design::Thresholds.measure_ideal_ch,
                  Master::Design.measure_ideal_ch
   end
+
+  def test_every_declared_editorial_profile_is_selectable_by_description
+    profiles = Master::Design::PlatformProfiles
+
+    assert_equal :medium, profiles.choose("Medium long-form reading")
+    assert_equal :new_yorker, profiles.choose("New Yorker editorial magazine")
+    assert_equal :x, profiles.choose("X real-time timeline")
+  end
+end
