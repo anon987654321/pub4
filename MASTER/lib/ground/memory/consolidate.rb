@@ -88,7 +88,9 @@ module Master
 
         def active_entries
           @mutex.synchronize do
-            @store.reject { |key, _| key.to_s.start_with?("archive/") || key == "_consolidated_summary" }
+            @store.reject do |key, value|
+              key == "_consolidated_summary" || !context_eligible?(key, value)
+            end
           end
         end
 
@@ -98,7 +100,6 @@ module Master
           current_type = nil
           ordered_entries(active).each do |key, value|
             type = entry_type(value)
-            next if type == "reasoning"
             next if type == "reasoning"
             lines << "[#{type}]" if type != current_type
             current_type = type
