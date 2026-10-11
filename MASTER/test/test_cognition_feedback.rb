@@ -84,6 +84,22 @@ class TestCognitionFeedback < Minitest::Test
     assert_equal 1, @mind.predict_outcome(context: "target=MASTER", action: "/fix")[:successes]
   end
 
+  def test_malformed_outcome_state_is_not_accepted_as_a_valid_checkpoint
+    path = File.join(@root, Master::Cognition::Mind::STATE_PATH)
+    FileUtils.mkdir_p(File.dirname(path))
+    File.write(path, {
+      "ticks" => 3,
+      "identity" => { "name" => "MASTER" },
+      "predictions" => { "transitions" => {} },
+      "outcomes" => "corrupted",
+    }.to_yaml)
+
+    loaded = Master::Cognition::State.load(path)
+    refute loaded.checkpoint_valid
+    assert_kind_of Hash, loaded.outcomes
+    assert_equal 0.0, loaded.metrics.fetch("continuity")
+  end
+
   def test_checkpoint_continuity_is_not_a_monotonic_mood_proxy
     assert_equal 0.0, @mind.snapshot.dig("metrics", "continuity")
 

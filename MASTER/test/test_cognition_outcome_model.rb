@@ -62,6 +62,20 @@ class TestCognitionOutcomeModel < Minitest::Test
     end
   end
 
+  def test_no_learning_ablation_stays_at_the_prior
+    rows = 8.times.map do |index|
+      { context: "repeatable task", action: "run verifier",
+        outcome: index.even? ? "success" : "failure",
+        evidence: evidence("fixture:#{index}", "outcome-#{index}") }
+    end
+
+    report = Master::Cognition::Benchmark.evaluate(rows, learn: false)
+    assert_equal "ablation_no_learning", report.fetch("mode")
+    assert_equal 0.25, report.fetch("learned_brier_score")
+    assert_equal 0.0, report.fetch("prediction_coverage")
+    assert_equal [0], report.fetch("rows").map { |row| row.fetch("prior_samples") }.uniq
+  end
+
   def test_predictions_are_scored_before_their_outcomes_are_learned
     rows = 10.times.map do |index|
       { context: "repeatable task", action: "run verifier",
