@@ -101,9 +101,14 @@ module Master
           @git_root = lookup_git_root
         end
 
+        # The root is spelled the way @root is: `--show-toplevel` answers the
+        # real path, /private/var/... for a checkout reached as /var/..., so
+        # every file joined from it fell outside the target the caller named
+        # and the collection came back empty. `--show-cdup` is relative to
+        # @root, so the spelling survives.
         def lookup_git_root
-          out, err, status = Master::Io::Exec.capture3("git", "-C", @root, "rev-parse", "--show-toplevel")
-          return out.to_s.strip.then { |path| path.empty? ? nil : File.expand_path(path) } if status.success?
+          out, err, status = Master::Io::Exec.capture3("git", "-C", @root, "rev-parse", "--show-cdup")
+          return File.expand_path(out.to_s.strip, @root) if status.success?
           return unless checkout_present?
 
           detail = err.to_s.strip
@@ -181,10 +186,8 @@ module Master
         # the deployed database.
         def rails_history?(path)
           absolute = File.expand_path(path)
-          if (root = git_root)
-            relative = absolute.delete_prefix("#{root}#{File::SEPARATOR}")
-            return true if relative.match?(%r{\ARAILS/(?:[^/]+/)*db/migrate(?:/|$)})
-          end
+          relative = absolute.delete_prefix("#{File.expand_path(path_policy_root)}#{File::SEPARATOR}")
+          return true if relative.match?(%r{\ARAILS/(?:[^/]+/)*db/migrate(?:/|$)})
 
           local_root = File.expand_path(@root)
           return false unless File.basename(local_root) == "RAILS"

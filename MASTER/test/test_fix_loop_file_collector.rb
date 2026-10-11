@@ -41,9 +41,9 @@ class TestFixLoopFileCollector < Minitest::Test
   def test_generated_and_vendored_paths_are_not_collected_for_fixing
     Dir.mktmpdir do |dir|
       authored = write(dir, "lib/thing.rb")
-      write(dir, "web/public/face.runtime.js", "const a = 1;\n")
-      write(dir, "web/public/three.face.module.js", "var b = 2;\n")
-      write(dir, "web/public/face_vision.bundle.js", "const c = 3;\n")
+      write(dir, "RAILS/master_web/public/face.runtime.js", "const a = 1;\n")
+      write(dir, "RAILS/master_web/public/three.face.module.js", "var b = 2;\n")
+      write(dir, "RAILS/master_web/public/face_vision.bundle.js", "const c = 3;\n")
       write(dir, "reports/run.yml", "a: 1\n")
       write(dir, "vendor/gem/lib/dep.rb")
 
@@ -58,17 +58,18 @@ class TestFixLoopFileCollector < Minitest::Test
     Dir.mktmpdir do |dir|
       bus = FakeBus.new
       write(dir, "lib/thing.rb")
-      write(dir, "web/public/face.runtime.js", "const a = 1;\n")
+      write(dir, "RAILS/master_web/public/face.runtime.js", "const a = 1;\n")
 
       collected = collector(dir, bus:).collect(dir)
 
       assert_equal 1, collected.size
-      assert_equal 1, collector(dir, bus:).collect(dir).size
+      counted = collector(dir, bus:)
+      assert_equal 1, counted.collect(dir).size
       skipped = bus.events.select { |name, _| name == "fix_loop:skipped" }
       refute_empty skipped, "narrowing the fix input must be announced"
       assert_equal 1, skipped.first.last[:count]
-      assert_includes skipped.first.last[:sample], "web/public/face.runtime.js"
-      assert_equal 2, collector(dir, bus:).candidate_count
+      assert_includes skipped.first.last[:sample], "RAILS/master_web/public/face.runtime.js"
+      assert_equal 2, counted.candidate_count
       assert_equal 1, bus.events.select { |name, _| name == "fix_loop:skipped" }.first.last[:count]
     end
   end
@@ -76,8 +77,8 @@ class TestFixLoopFileCollector < Minitest::Test
   def test_collector_and_scanner_agree_on_what_is_off_limits
     Dir.mktmpdir do |dir|
       %w[
-        web/public/three.face.module.js
-        web/public/face.runtime.js
+        RAILS/master_web/public/three.face.module.js
+        RAILS/master_web/public/face.runtime.js
         reports/run.yml
         vendor/gem/lib/dep.rb
         knowledge/note.md
@@ -157,7 +158,7 @@ class TestFixLoopFileCollector < Minitest::Test
 
     refute_includes files, "data/laws.yml"
     refute_includes files, "data/soul.yml"
-    assert_includes files, "lib/core/paths.rb"
+    assert_includes files, "lib/core/constitution.rb"
     assert_includes files, "lib/fix/fix_loop.rb"
   end
 
