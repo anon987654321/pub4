@@ -161,6 +161,11 @@ class Host
       Dir.glob("DEMO/**/*", base: repo).select { |p| File.file?(File.join(repo, p)) }.sort
     end
 
+    def all_tracked(_tree)
+      repo = Thread.current[:snapshot_repo]
+      Dir.glob("DEMO/**/*", File::FNM_DOTMATCH, base: repo).select { |p| File.file?(File.join(repo, p)) }.sort
+    end
+
     def binary?(_path) = false
     def head_sha = "abc1234"
   end
@@ -184,6 +189,45 @@ end
       assert_includes File.read(File.join(repo, "snapshot_DEMO.md")), "# Does a.\nputs 1", "the first comment stays as the purpose line"
     ensure
       Thread.current[:snapshot_repo] = nil
+    end
+  end
+
+  # A dotfile is source (.rubocop.yml, .ruby-version, .gitignore); only tool state and generated
+  # directories are left out, and the Omitted line names them.
+  def test_full_mode_keeps_dotfiles_and_names_what_it_leaves_out
+    Dir.mktmpdir do |repo|
+      Thread.current[:snapshot_repo] = repo
+      %w[DEMO/lib DEMO/.master DEMO/storage].each { |dir| FileUtils.mkdir_p(File.join(repo, dir)) }
+      File.write(File.join(repo, "DEMO/.rubocop.yml"), "AllCops:\n  NewCops: enable\n")
+      File.write(File.join(repo, "DEMO/lib/a.rb"), "puts 1\n")
+      File.write(File.join(repo, "DEMO/.master/state.json"), "{}\n")
+      File.write(File.join(repo, "DEMO/storage/blob.txt"), "x\n")
+
+      Pack.write(Host, "DEMO", io: StringIO.new, full: true)
+      text = File.read(File.join(repo, "snapshot_DEMO.md"))
+
+      assert_includes text, "### DEMO/.rubocop.yml"
+      refute_includes text, "### DEMO/.master/state.json"
+      refute_includes text, "### DEMO/storage/blob.txt"
+      assert_includes text, "tool state (1)"
+      assert_includes text, "generated or dependency directory (1)"
+    ensure
+      Thread.current[:snapshot_repo] = nil
+    end
+  end
+
+  # tools/snapshot.rb reads 8000 bytes to decide text or binary; a multibyte character cut at
+  # that boundary made four real source files look binary and dropped them from every pack.
+  def test_a_multibyte_character_cut_at_the_read_boundary_is_not_binary
+    require_relative "../tools/snapshot"
+    Dir.mktmpdir do |dir|
+      cut = File.join(dir, "cut.yml")
+      File.write(cut, ("a" * 7999) + "é" + ("b" * 50), encoding: "UTF-8")
+      real = File.join(dir, "real.bin")
+      File.binwrite(real, ("a" * 100) + "\xFF\xFE".b + ("b" * 9000))
+
+      refute Operator::Snapshot.binary?(cut), "a character split by the 8000-byte read is text"
+      assert Operator::Snapshot.binary?(real), "invalid bytes inside the read are binary"
     end
   end
 

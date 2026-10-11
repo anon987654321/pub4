@@ -76,10 +76,15 @@ module Operator
       head = File.binread(path, 8000).to_s
       return true if head.include?("\0")
 
-      head.force_encoding(Encoding::UTF_8)
-      !head.valid_encoding?
+      !utf8_prefix?(head, truncated: File.size(path) > head.bytesize)
     rescue StandardError
       true
+    end
+
+    # The 8000-byte read can end inside a multibyte character; that cut is not binary content.
+    def utf8_prefix?(head, truncated:)
+      cuts = truncated ? 0..3 : 0..0
+      cuts.any? { |n| head.byteslice(0, head.bytesize - n).force_encoding(Encoding::UTF_8).valid_encoding? }
     end
 
     def head_sha

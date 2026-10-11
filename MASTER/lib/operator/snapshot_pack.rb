@@ -28,6 +28,9 @@ module Operator
       [/\.bundle\.js\z/, "generated bundle"],
       [%r{(\A|/)three[^/]*\.js\z}, "vendored library"],
       [%r{(\A|/)vendor/}, "vendored library"],
+      [%r{(\A|/)(tmp|temp|generated|node_modules|coverage|storage|output|outputs|build|dist|renders|render|scratch|cache|three_build)/}, "generated or dependency directory"],
+      [%r{(\A|/)\.(git|master|bundle|claude|idea|vscode)/}, "tool state"],
+      [%r{/public/assets/|/app/assets/builds/}, "built assets"],
       [/\.map\z/, "source map"],
       [%r{/gates/data/layout_snapshots/}, "stored layout snapshots"],
       [%r{/dilla/project/}, "session state"],
@@ -106,7 +109,7 @@ module Operator
     def paths_for(host, tree, only:)
       base = host::TREE_PATHS.fetch(tree)
       names = Array(only).map { |prefix| prefix.to_s.delete_prefix("#{base}/").delete_suffix("/") }.reject(&:empty?)
-      paths = host.tracked(tree)
+      paths = host.respond_to?(:all_tracked) ? host.all_tracked(tree) : host.tracked(tree)
       return paths if names.empty?
 
       paths.select do |path|
