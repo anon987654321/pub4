@@ -1,6 +1,58 @@
 # frozen_string_literal: true
 
-puts [broken, {}.dig(:missing, :nested).inspect, { outer: {} }.dig(:outer, :missing, :nested).inspect,
+require_relative "test_helper"
+require "open3"
+
+class MasterBootTest < Minitest::Test
+  def test_boot_loader_requires_all_modules
+    assert defined?(MasterPaths)
+    assert defined?(Master::DataLoading)
+    assert defined?(Master::MasterRuntime)
+    assert defined?(Master::MasterBoot)
+  end
+
+  def test_master_paths_shim_matches_boot_paths
+    assert_equal MasterPaths::ROOT, File.expand_path("..", File.expand_path("../lib", __dir__))
+    assert MasterPaths.data("laws.yml").end_with?("/data/laws.yml")
+  end
+
+  def test_master_data_load_yaml_reads_canonical_laws
+    path = Master.data_path("laws.yml")
+
+    body = Master.load_yaml(path)
+    assert body.is_a?(Hash)
+    assert body.key?("CAPABILITY_STATUS_MUST_BE_TRUTHFUL")
+    assert body.key?("transformation_policy")
+  end
+
+  def test_master_runtime_process_defaults_constant
+    assert_includes Master::MasterRuntime::PROCESS_DEFAULTS, "MASTER_SAFE_MODE"
+    assert_equal "1", Master::MasterRuntime::PROCESS_DEFAULTS["MASTER_SAFE_MODE"]
+  end
+
+  def test_master_boot_module_exposes_boot_entrypoints
+    assert Master.respond_to?(:boot)
+    assert Master.respond_to?(:prepare_runtime!)
+    assert Master.respond_to?(:validate_data!)
+  end
+
+  # In a child process, because the install prepends onto Hash for good and
+  # this suite must keep MRI's dig. The child plants coltrane 2.1.5's
+  # replacement, shows it raising, then installs the compat twice.
+  COLTRANE_DIG_PROBE = <<~RUBY
+    require #{File.expand_path("../lib/boot/hash_dig_compat", __dir__).inspect}
+    class Hash
+      def dig(*args) = args.size > 1 ? self[args.shift].dig(*args) : self[args[0]]
+    end
+    broken = begin
+      {}.dig(:missing, :nested)
+      "no-raise"
+    rescue NoMethodError
+      "raised"
+    end
+    Master.install_hash_dig_compat!
+    Master.install_hash_dig_compat!
+    puts [broken, {}.dig(:missing, :nested).inspect, { outer: {} }.dig(:outer, :missing, :nested).inspect,
           { outer: { inner: "value" } }.dig(:outer, :inner),
           Hash.ancestors.count { |a| a == Master::HashDigCompat }].join(" ")
   RUBY
@@ -15,6 +67,7 @@ puts [broken, {}.dig(:missing, :nested).inspect, { outer: {} }.dig(:outer, :miss
   def test_the_suite_runs_on_mris_dig
     refute_includes Hash.ancestors.map(&:to_s), "Master::HashDigCompat"
   end
+
   def test_data_validation_detects_rapid_file_edits
     Dir.mktmpdir do |dir|
       data = File.join(dir, "data")
@@ -68,7 +121,7 @@ puts [broken, {}.dig(:missing, :nested).inspect, { outer: {} }.dig(:outer, :miss
       missing = File.join(dir, "PATH_OWNERSHIP.yml")
       _, err = capture_io { 3.times { assert_equal({}, Master.load_yaml(missing)) } }
 
-      assert_equal 1, err.lines.grep(/load_yaml: /).size, err
+      assert_equal 1, err.lines.grep(/\Aboot0: yaml .*PATH_OWNERSHIP\.yml/).size, err
     end
   end
 
@@ -85,6 +138,29 @@ puts [broken, {}.dig(:missing, :nested).inspect, { outer: {} }.dig(:outer, :miss
 
   # laws.yml needs aliases, which is why load_yaml allows them. Aliases are
   # references inside the document; a Ruby object tag is still refused.
+  def test_load_yaml_follows_aliases_and_refuses_ruby_objects
+    Dir.mktmpdir do |dir|
+      aliased = File.join(dir, "aliased.yml")
+      File.write(aliased, "base: &base\n  size: 3\ncopy: *base\n")
+      assert_equal({ "size" => 3 }, Master.load_yaml(aliased)["copy"])
+
+      recursive = File.join(dir, "recursive.yml")
+      File.write(recursive, "root: &root\n  name: root\n  self: *root\n")
+      first = Master.load_yaml(recursive)
+      second = Master.load_yaml(recursive)
+      assert_equal "root", first.dig("root", "name")
+      assert_same first["root"], first["root"]["self"]
+      refute_same first["root"], second["root"]
+      assert_same second["root"], second["root"]["self"]
+      first["root"]["name"] = "changed"
+      assert_equal "root", second["root"]["name"]
+
+      tagged = File.join(dir, "tagged.yml")
+      File.write(tagged, "--- !ruby/object:OpenStruct\ntable: {}\n")
+      assert_raises(Psych::DisallowedClass) { Master.load_yaml(tagged) }
+    end
+  end
+
   def test_load_yaml_preserves_false_root_values
     Dir.mktmpdir do |dir|
       path = File.join(dir, "false.yml")
@@ -94,3 +170,4 @@ puts [broken, {}.dig(:missing, :nested).inspect, { outer: {} }.dig(:outer, :miss
       assert_equal false, Master.load_yaml(path, default: "fallback")
     end
   end
+end
