@@ -5,7 +5,7 @@ require "digest"
 module Master
   module Fix
     Violation = Struct.new(:file, :line, :law, :message, :severity, :fix, :confidence, :ext, :fingerprint,
-                           :reversibility, :blast_radius, keyword_init: true) do
+                           :reversibility, :blast_radius, :anchor, keyword_init: true) do
       def self.from_finding(finding, file:, ext: nil)
         data = finding.respond_to?(:to_h) ? finding.to_h : finding
         new(
@@ -20,6 +20,7 @@ module Master
           fingerprint: data[:fingerprint] || data["fingerprint"],
           reversibility: data[:reversibility] || data["reversibility"],
           blast_radius: data[:blast_radius] || data["blast_radius"],
+          anchor: data[:anchor] || data["anchor"],
         )
       end
 
@@ -44,6 +45,7 @@ module Master
           fingerprint:,
           reversibility:,
           blast_radius:,
+          anchor:,
         }.compact
       end
     end

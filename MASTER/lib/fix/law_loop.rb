@@ -266,7 +266,7 @@ end) if source.to_s.strip.empty?
         end
 
         if @visual_custody && visual_source?(path)
-          custody = @visual_custody.verify!
+          custody = @visual_custody.verify!(anchors: [violation[:anchor]].compact)
           return reject_fix(path, old_src, "visual_regression", evidence: custody.message) unless custody.ok?
         end
 

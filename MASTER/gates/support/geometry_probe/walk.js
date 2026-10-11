@@ -279,7 +279,7 @@
     }
 
     out.push({
-      key: keyFor(selFor(el)),
+      key: (el.__gpKey = keyFor(selFor(el))),
       tag: el.tagName.toLowerCase(),
       role: el.getAttribute('role') || null,
       aria: el.getAttribute('aria-label') || null,

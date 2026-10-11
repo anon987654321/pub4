@@ -5,6 +5,8 @@ require "json"
 require_relative "../result"
 require_relative "visual_conformance"
 require_relative "visual_drift_budget"
+require_relative "visual_focus_order"
+require_relative "visual_i18n"
 
 module Master
   module Fix
@@ -13,22 +15,17 @@ module Master
     # worse than the surface's stored baseline; improvements move the baseline
     # forward, regressions leave it where it was.
     #
-    # Focus order is read from document order (the payload lists elements as the
-    # DOM does, which is the tab sequence absent positive tabindex), and the
-    # layout shift figure is a proxy: moved area times distance against the
-    # baseline render, because one capture cannot observe a shift in time.
+    # Focus order is read from the recorded Tab sequence against reading order
+    # (document order when none was recorded), and the layout shift figure is a
+    # proxy: moved area times distance against the baseline render, because one capture cannot observe a shift in time.
     module VisualQualityGates
       TAP_MIN_PX = 44
       MOBILE_MAX_VW = 600
       AA_TEXT = 4.5
       AA_LARGE = 3.0
-      FOCUS_JUMP_PX = 40
       SHIFT_GOOD = 0.1
       MOVE_TOLERANCE_PX = 0.5
       KEEP = 50
-      TLD = /\.(no|com|org|net|io|art|dev|app)\z/
-      I18N_MISSING = /translation[ _]missing/i
-      I18N_KEY = /\A[a-z][a-z0-9_]*(\.[a-z0-9_]+){2,}\z|\A[a-z]+(_[a-z0-9]+)+\.[a-z0-9_]+\z/
 
       module_function
 
@@ -44,9 +41,9 @@ module Master
         offenders = {
           "contrast" => els.select { |e| contrast_fail?(e) },
           "tap_target" => tap_fails(els, payload),
-          "focus_order" => focus_inversions(els),
+          "focus_order" => VisualFocusOrder.inversions(els, payload),
           "overflow" => overflow(payload),
-          "i18n" => els.select { |e| i18n_broken?(e) },
+          "i18n" => els.select { |e| i18n_broken?(e) } + VisualI18n.rows(payload),
           "directives" => VisualConformance.check_payload(surface, payload),
         }
         metrics = offenders.transform_values { |rows| rows.size }
@@ -86,23 +83,13 @@ module Master
         end
       end
 
-      # Adjacent tab stops where the next one sits well above the previous one.
-      def focus_inversions(els)
-        stops = els.select { |e| e["interactive"] && e["onscreen"] != false && e["position"] != "fixed" && e["rect"] }
-        stops.each_cons(2).filter_map { |a, b| b if b["rect"]["y"].to_f + FOCUS_JUMP_PX < a["rect"]["y"].to_f }
-      end
-
       def overflow(payload)
         rows = Array(payload["overflow"]).dup
         rows << { "sel" => "document" } if payload["scroll_width"].to_f > payload["client_width"].to_f + 1
         rows
       end
 
-      def i18n_broken?(el)
-        text = el["text"].to_s.strip
-        el["key"].to_s.include?("translation_missing") || text.match?(I18N_MISSING) ||
-          (text.match?(I18N_KEY) && !text.match?(TLD))
-      end
+      def i18n_broken?(el) = VisualI18n.broken?(el["text"], el["key"])
 
       # Sum of (moved area / viewport area) * (distance / viewport height) over
       # the largest moved boxes, skipping any box nested inside one counted.

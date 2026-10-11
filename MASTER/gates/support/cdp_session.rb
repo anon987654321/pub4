@@ -120,6 +120,9 @@ module Deploy
       send_cmd("Network.setExtraHTTPHeaders", headers: hash)
     end
 
+    # Raw protocol call for probes that need a domain this class has no verb for.
+    def command(method, **params) = send_cmd(method, **params)
+
     def clear_cookies
       send_cmd("Network.clearBrowserCookies")
     end

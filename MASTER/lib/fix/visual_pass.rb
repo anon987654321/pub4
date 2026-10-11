@@ -142,7 +142,7 @@ module Master
       # The surface as it loads, before any composition state is triggered;
       # nil when the geometry walk fails.
       def capture_resting(cdp, surface)
-        payload = Deploy::GeometryProbe.walk(cdp, surface)
+        payload = Deploy::SurfaceProbes.attach(cdp, surface, Deploy::GeometryProbe.walk(cdp, surface))
         return unless Deploy::GeometryProbe.ok?(payload)
 
         payload["composition"] = { "state" => "resting", "base_surface" => surface.id }
@@ -372,7 +372,7 @@ module Master
           file:,
           line:,
           severity: :warning,
-          confidence: 1.0,
+          confidence: 1.0, anchor: selector,
           message: "Rendered visual refinement: #{pick} — #{surface} / #{viewport} — laws: #{laws.join(", ")}",
           fix: "Use the attached rendered evidence as ground truth. Make the smallest source change that materially improves the cited visual issue while preserving accessibility, semantics and responsive behavior.",
         }

@@ -7,6 +7,7 @@ require_relative "crawl_support"
 require_relative "cdp_session"
 require_relative "brgen_vertical_surfaces"
 require_relative "geometry_type" # worn-type walk; see GeometryType.probe
+require_relative "painted_fonts" # the face Chrome painted per element
 
 module Deploy
   # The shared measurement substrate: one DOM walk per surface returning what
@@ -218,7 +219,7 @@ module Deploy
       return { "error" => "chrome error page — nothing answered at #{surface.url}" } if browser_error_page?(cdp)
 
       wait_for_fonts(cdp)
-      cdp.evaluate(WALK).merge(GeometryType.probe(cdp)).merge(glyph_coverage(cdp)).merge("status" => cdp.status)
+      cdp.evaluate(WALK).merge(GeometryType.probe(cdp)).merge(glyph_coverage(cdp)).merge(PaintedFonts.probe(cdp)).merge("status" => cdp.status)
     rescue CdpSession::Error => e
       { "error" => "#{e.class.name.split('::').last}: #{e.message}" }
     end

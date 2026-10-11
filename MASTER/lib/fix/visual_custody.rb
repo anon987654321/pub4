@@ -4,6 +4,7 @@ require "json"
 require_relative "../result"
 require_relative "visual_quality_gates"
 require_relative "../../gates/support/geometry_probe"
+require_relative "../../gates/support/surface_probes"
 require_relative "../../gates/lib/rendered/layout_snapshot"
 
 module Master
@@ -28,17 +29,17 @@ module Master
         compare_captures(Array(captures), "before visual fix")
       end
 
-      def verify!
+      def verify!(anchors: [])
         return Result.err("visual custody: no snapshot surfaces", category: :inconclusive) if @surfaces.empty?
         return unavailable unless Deploy::GeometryProbe.available?
 
         measured = []
         Deploy::GeometryProbe.with_browser(root: @root, warm: @surfaces) do |cdp|
           @surfaces.each do |surface|
-            measured << [surface, Deploy::GeometryProbe.walk(cdp, surface)]
+            measured << [surface, Deploy::SurfaceProbes.attach(cdp, surface, Deploy::GeometryProbe.walk(cdp, surface))]
           end
         end
-        VisualQualityGates.judge(measured, root: @root, prior: compare_payloads(measured, "after visual fix"))
+        VisualQualityGates.judge(measured, root: @root, prior: compare_payloads(measured, "after visual fix"), anchors:)
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "fix.visual_custody", event_bus: @bus)
         Result.err("visual custody: INCONCLUSIVE — #{e.class}: #{e.message}", category: :inconclusive)

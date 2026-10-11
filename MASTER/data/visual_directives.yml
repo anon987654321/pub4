@@ -42,6 +42,12 @@ rules:
     - consolas
     - courier new
     - courier
+    - liberation sans
+    - arimo
+    - sf pro
+    - sf pro text
+    - sf pro display
+    - .sf ns
     - apple color emoji
     - segoe ui emoji
     - noto color emoji
