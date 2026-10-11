@@ -142,6 +142,8 @@ module Master
             );
           SQL
           store.each do |key, data|
+            next unless context_eligible?(key, data)
+
             value = data.is_a?(Hash) ? data["value"].to_s : data.to_s
             db.execute("INSERT INTO memory_fts(key, value) VALUES (?, ?)", [key.to_s, value])
           end
