@@ -11,6 +11,7 @@ module Master
     class OutcomeModel
       OUTCOMES = %w[success failure inconclusive].freeze
       MAX_RECORDS = 256
+      MAX_EVIDENCE_BYTES = 2 * 1024 * 1024
       MAX_OBSERVATIONS = 12
       MAX_SEEN_RECEIPTS = 64
       LABEL_LIMIT = 160
@@ -136,8 +137,11 @@ module Master
         if row.key?(:content) || row.key?("content")
           content = row.key?(:content) ? row[:content] : row["content"]
           raise ArgumentError, "evidence content must be a string" unless content.is_a?(String)
+          raise ArgumentError, "evidence content exceeds #{MAX_EVIDENCE_BYTES} bytes" if content.bytesize > MAX_EVIDENCE_BYTES
+          raise ArgumentError, "evidence SHA-256 must contain 64 hexadecimal characters" unless supplied.match?(/\A[0-9a-f]{64}\z/)
+
           sha256 = Digest::SHA256.hexdigest(content)
-          raise ArgumentError, "evidence content SHA-256 mismatch" if !supplied.empty? && supplied != sha256
+          raise ArgumentError, "evidence content SHA-256 mismatch" unless supplied == sha256
         elsif root
           raise ArgumentError, "evidence SHA-256 must contain 64 hexadecimal characters" unless supplied.match?(/\A[0-9a-f]{64}\z/)
 
@@ -148,6 +152,7 @@ module Master
 
           real_path = File.realpath(path)
           raise ArgumentError, "evidence symlink escapes its root" unless real_path.start_with?("#{base}/")
+          raise ArgumentError, "evidence file exceeds #{MAX_EVIDENCE_BYTES} bytes" if File.size(real_path) > MAX_EVIDENCE_BYTES
 
           content = File.binread(real_path)
           sha256 = Digest::SHA256.hexdigest(content)
