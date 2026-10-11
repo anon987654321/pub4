@@ -66,7 +66,7 @@ def usage
       bin/operator readers <path>         who reaches this file, across all four governed trees
       bin/operator fix tail [--tail=N] [--transcript] [--once]  follow the newest /fix log and transcript
       bin/operator pushed? <path>...      is this content on origin/main, or only here
-      bin/operator snapshot [TREE...] [--part-bytes=N] [--code | --code-only] [--verify]  full source as numbered parts (default 1000000 bytes, exact; --code adds the comment-free variant), verified after writing; --verify checks the files at the root; --budget=BYTES [--only=a,b] [--tests] writes the one-file reading copy; deletes the old files first
+      bin/operator snapshot [TREE...] [--part-bytes=N] [--code | --code-only] [--verify]  full source as numbered parts (default 1000000 bytes, exact; --code adds the comment-free variant), verified after writing; --verify checks the files at the root; --budget=BYTES [--since=REF] [--only=a,b] [--tests] writes a reading pack; --since keeps the full Map but inlines changed tracked paths and reports deletions/renames; requires --budget
       bin/operator event-bus [--strict] [--json]  census Ruby publishers/subscribers and browser event references
       bin/operator wishlist [--all]     show the current bounded next-work queue
 

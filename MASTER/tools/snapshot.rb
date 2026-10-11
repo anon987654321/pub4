@@ -404,36 +404,57 @@ module Operator
     end
 
     USAGE = "usage: snapshot [TREE...] [--part-bytes=N] [--code | --code-only] [--verify] " \
-            "[--only=a,b] [--budget=BYTES] [--tests] [--mirror]"
+            "[--only=a,b] [--budget=BYTES] [--since=REF] [--tests] [--mirror]"
     FLAGS = %w[--mirror --tests --verify --code --code-only].freeze
 
     # bin/operator snapshot [TREE...] [--part-bytes=N] [--code | --code-only] [--verify] [--budget=BYTES] [--only=a,b] [--tests] [--mirror]
     #
     # No budget writes the full source as numbered parts, exact by default, and verifies what it wrote.
     # --code writes the comment-free variant as well, --code-only just that one; --verify checks the
-    # files already at the root without writing.
+    # files already at the root without writing. --since=REF keeps the complete current Map but
+    # selects source only from changed tracked paths; it requires --budget.
     def cli(argv)
       flags = FLAGS.to_h { |flag| [flag, argv.delete(flag)] }
-      budget = argv.grep(/\A--budget=\d+\z/).first&.split("=")&.last&.to_i
-      part_bytes = argv.grep(/\A--part-bytes=\d+\z/).first&.split("=")&.last&.to_i
-      only = argv.grep(/\A--only=/).first&.split("=", 2)&.last&.split(",")
-      unknown = argv.select { |arg| arg.start_with?("--") && !arg.match?(/\A--(budget|part-bytes|only)=/) }
+      budget_arg = argv.find { |arg| arg.start_with?("--budget=") }
+      part_bytes_arg = argv.find { |arg| arg.start_with?("--part-bytes=") }
+      only_arg = argv.find { |arg| arg.start_with?("--only=") }
+      since_arg = argv.find { |arg| arg.start_with?("--since=") }
+      return usage_error("--budget must be a positive integer") if budget_arg &&
+        (!budget_arg.match?(/\A--budget=\d+\z/) || budget_arg.split("=", 2).last.to_i <= 0)
+      return usage_error("--part-bytes must be a positive integer") if part_bytes_arg &&
+        (!part_bytes_arg.match?(/\A--part-bytes=\d+\z/) || part_bytes_arg.split("=", 2).last.to_i <= 0)
+      return usage_error("--only needs at least one non-empty path") if only_arg && only_arg.split("=", 2).last.to_s.split(",").all?(&:empty?)
+      return usage_error("--since needs a non-empty commit reference") if since_arg && since_arg.split("=", 2).last.to_s.empty?
+      budget = budget_arg&.split("=", 2)&.last&.to_i
+      part_bytes = part_bytes_arg&.split("=", 2)&.last&.to_i
+      only = only_arg&.split("=", 2)&.last&.split(",")
+      since = since_arg&.split("=", 2)&.last
+      unknown = argv.select { |arg| arg.start_with?("--") && !arg.match?(/\A--(budget|part-bytes|only|since)=/) }
       return usage_error("unknown option #{unknown.first}") if unknown.any?
 
       trees = argv.reject { |arg| arg.start_with?("--") }.map(&:upcase)
       trees = TREES if trees.empty?
       bad = trees - TREES
       return usage_error("unknown tree #{bad.first}") if bad.any?
+      if since && budget.nil?
+        return usage_error("--since requires --budget=BYTES; incremental packs are reading copies, not full mirrors")
+      end
+      if since && (flags["--mirror"] || flags["--verify"])
+        return usage_error("--since cannot be combined with --mirror or --verify")
+      end
       return run(trees, mirror: true) if flags["--mirror"]
       return verify(trees, only:) if flags["--verify"]
 
-      options = { tests: !flags["--tests"].nil?, full: budget.nil?, only:, part_bytes:,
+      options = { tests: !flags["--tests"].nil?, full: budget.nil?, only:, part_bytes:, since: since,
                   variants: flags["--code-only"] ? [:code] : (flags["--code"] ? %i[exact code] : [:exact]) }
       options[:budget] = budget if budget
       run(trees, **options.compact)
     rescue Operator::SnapshotVerify::Failed => e
       warn e.message
       1
+    rescue ArgumentError => e
+      warn e.message
+      2
     end
 
     def usage_error(message)

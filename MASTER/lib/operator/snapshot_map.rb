@@ -19,6 +19,8 @@ module Operator
       /\A(?:export\s+)?(?:default\s+)?((?:async\s+)?function\*?\s+\w+|class\s+\w+)/,
       /\A(?:export\s+)?(const\s+\w+\s*=\s*(?:async\s*)?(?:\(|function))/,
     ].freeze
+    MAGIC_COMMENT = /\A(?:frozen_string_literal|encoding|coding|warn_indent|shareable_constant_value)\s*:/i
+    SHELL_FUNCTION = /^\s*(?:function\s+([A-Za-z_][\w.-]*)\s*(?:\(\s*\))?|([A-Za-z_][\w.-]*)\s*\(\s*\))\s*\{/
     DECLARATIONS = {
       ".rb" => RUBY_DECLARATIONS, ".rake" => RUBY_DECLARATIONS,
       ".yml" => [/\A([A-Za-z_][\w.-]*):/], ".yaml" => [/\A([A-Za-z_][\w.-]*):/],
@@ -46,19 +48,154 @@ module Operator
       path = file.fetch(:path)
       mark = inlined ? "" : "~"
       count = file.fetch(:original).lines.size
-      line = +"#{mark}#{File.basename(path)} [#{count}L]#{" #{tag.call(file)}" if tag}"
+      tag_value = tag&.call(file)
+      line = +"#{mark}#{File.basename(path)} [#{count}L]#{" #{tag_value}" if tag_value && !tag_value.empty?}"
       return line if SnapshotPack.test_path?(path)
 
-      purpose = file.fetch(:minified).lines.first.to_s[/\A#\s+(.+)/, 1]
-      line << " — #{purpose[0, MAP_PURPOSE]}" if purpose
+      purpose = purpose_line(path, file.fetch(:original))
+      line << " — #{truncate_at_word(purpose, MAP_PURPOSE)}" if purpose
       shown = map_declarations(path, file.fetch(:original))
       line << " | #{shown}" unless shown.empty?
 
-      line.length > MAP_WIDTH ? "#{line[0, MAP_WIDTH - 1]}…" : line
+      truncate_at_word(line, MAP_WIDTH)
+    end
+
+    def purpose_line(path, original)
+      if File.extname(path).downcase == ".md"
+        headings = original.each_line.filter_map do |raw|
+          raw[/\A\s{0,3}#+\s+(.+?)\s*#*\s*\z/, 1]&.strip
+        end
+        return headings.find { |heading| !self_referential_purpose?(path, heading) }
+      end
+
+      extension = File.extname(path).downcase
+      original.each_line do |raw|
+        line = raw.strip
+        next if line.empty? || line.start_with?("#!")
+
+        comment = if line.start_with?("#")
+                    line.delete_prefix("#").strip
+                  elsif line.start_with?("//")
+                    line.delete_prefix("//").strip
+                  elsif line.start_with?("/*")
+                    line.delete_prefix("/*").sub(/\*\/\z/, "").strip
+                  elsif line.start_with?("<!--")
+                    line.delete_prefix("<!--").sub(/-->\z/, "").strip
+                  elsif extension == ".sql" && line.start_with?("--")
+                    line.delete_prefix("--").strip
+                  else
+                    break
+                  end
+        next if comment.empty? || MAGIC_COMMENT.match?(comment)
+        next if self_referential_purpose?(path, comment)
+
+        return comment
+      end
+
+      nil
+    end
+
+    def self_referential_purpose?(path, text)
+      value = text.downcase.gsub(/[^a-z0-9.]+/, "")
+      basename = File.basename(path).downcase
+      stem = basename.sub(/\.[^.]+\z/, "")
+      value == basename.gsub(/[^a-z0-9.]+/, "") || value == stem.gsub(/[^a-z0-9.]+/, "")
+    end
+
+    def truncate_at_word(text, width)
+      return text if text.length <= width
+
+      prefix = text[0, width - 1]
+      boundary = prefix.rindex(/\s/)
+      prefix = prefix[0...boundary] if boundary && boundary >= width / 2
+      "#{prefix.rstrip}…"
+    end
+
+    # Language-specific summaries stay intentionally shallow: they orient the reader without
+    # pretending a regex extractor is a full parser.
+    def map_declarations(path, original)
+      case File.extname(path).downcase
+      when ".scss", ".css" then style_declarations(original)
+      when ".erb" then erb_declarations(original)
+      when ".sh", ".zsh", ".ksh" then shell_declarations(original)
+      when ".js", ".mjs", ".ts", ".tsx", ".jsx"
+        stimulus_declarations(original) || generic_map_declarations(path, original)
+      else
+        generic_map_declarations(path, original)
+      end
+    end
+
+    def style_declarations(original)
+      mixins = []
+      placeholders = []
+      selectors = []
+      depth = 0
+
+      original.each_line do |raw|
+        visible = raw.sub(%r{/\*.*?\*/}, "").strip
+        if depth.zero? && !visible.empty?
+          mixin = visible.match(/\A@mixin\s+([\w-]+)/)
+          mixins << mixin[1] if mixin
+          placeholder = visible.match(/\A%([\w-]+)/)
+          placeholders << "%#{placeholder[1]}" if placeholder
+          if (match = visible.match(/\A([^@{};]+?)\s*\{\s*\z/))
+            selector = match[1].strip.gsub(/\s+/, " ")
+            selectors << selector unless selector.empty?
+          end
+        end
+
+        structural = raw.gsub(/"(?:\\.|[^"])*"|'(?:\\.|[^'])*'/, "")
+        structural = structural.gsub(%r{/\*.*?\*/}, "").sub(%r{/\*.*\z}, "")
+        depth = [depth + structural.count("{") - structural.count("}"), 0].max
+      end
+
+      parts = []
+      parts << "mixins: #{listed_names(mixins.uniq)}" unless mixins.empty?
+      parts << "placeholders: #{listed_names(placeholders.uniq)}" unless placeholders.empty?
+      parts << "selectors: #{listed_names(selectors.uniq)}" unless selectors.empty?
+      parts.join(" | ")
+    end
+
+    def erb_declarations(original)
+      renders = original.scan(/\brender\s+(?:partial:\s*)?["']([^"']+)["']/).flatten.uniq
+      forms = original.scan(/\b(simple_form_for|form_with|form_for|form_tag)\b/).flatten.uniq
+      frames = original.scan(/\bturbo_frame_tag\s+(?:["']([^"']+)["']|:(\w+))/)
+                       .map { |quoted, symbol| quoted || symbol }.uniq
+
+      parts = []
+      parts << "renders: #{listed_names(renders)}" unless renders.empty?
+      parts << "forms: #{listed_names(forms)}" unless forms.empty?
+      parts << "frames: #{listed_names(frames)}" unless frames.empty?
+      parts.join(" | ")
+    end
+
+    def shell_declarations(original)
+      names = original.scan(SHELL_FUNCTION).map { |named, paren| named || paren }.uniq
+      names.empty? ? "" : "functions: #{listed_names(names)}"
+    end
+
+    def stimulus_declarations(original)
+      target_body = original[/^\s*static\s+targets\s*=\s*\[([^\]]*)\]/, 1]
+      values_declared = original.match?(/^\s*static\s+values\s*=/)
+      targets = target_body ? target_body.scan(/["']([\w-]+)["']/).flatten.uniq : []
+      value_body = original[/static\s+values\s*=\s*\{(.*?)\}/m, 1] if values_declared
+      values = value_body ? value_body.scan(/(?:\A|[,\n])\s*([a-z][\w-]*)\s*:\s*(?:String|Number|Boolean|Array|Object)\b/).flatten.uniq : []
+      methods = original.scan(/^\s{2,}(?:async\s+)?([A-Za-z_$][\w$]*)\s*\([^\n;]*?\)\s*\{/)
+                       .flatten.uniq - %w[if for while switch catch function constructor]
+
+      return nil if targets.empty? && values.empty? && !values_declared
+
+      parts = []
+      parts << "targets: #{listed_names(targets)}" unless targets.empty?
+      parts << "values: #{listed_names(values)}" unless values.empty?
+      parts << "methods: #{listed_names(methods)}" unless methods.empty?
+      return nil if parts.empty?
+
+      parts.join(" | ")
     end
 
     # "Owner: a b c | Other: d e": the first few classes and what each defines.
-    def map_declarations(path, original)
+    def generic_map_declarations(path, original)
       groups = []
 
       original.each_line do |raw|
