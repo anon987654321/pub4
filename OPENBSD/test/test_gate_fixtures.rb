@@ -392,3 +392,15 @@ class DeploySmokeFixtureTest < Minitest::Test
     assert status.success?, out
   end
 end
+
+
+class DeployPlaceholderFixtureTest < Minitest::Test
+  def test_uppercase_template_tokens_are_detected
+    assert_equal ["%APP_NAME%", "%APP_PORT%"],
+                 template_placeholders("APP_NAME=%APP_NAME%\nAPP_PORT=%APP_PORT%\n")
+  end
+
+  def test_literal_percent_signs_are_not_template_placeholders
+    assert_empty template_placeholders("printf '%s' 100% ready\nURL=/path/%20value\n")
+  end
+end
