@@ -23,6 +23,7 @@ Updated: 2026-10-11. Scope: the Ruby runtime, constitutional law, /fix, operator
 
 - [ ] Resolve the toolchain documentation drift: repository `.ruby-version` and `RAILS/CLAUDE.md` pin Ruby 4.0.5, while `MASTER/README.md` tells readers to use Ruby 4.0.7 and says MASTER pins 4.0.7. Choose the supported runtime, align the debugger example and all version claims, and test the documented command under that exact runtime.
 
+- [ ] Audit residual `rule`/`rules` naming in code, filenames, comments, docs and generated contracts against the canonical Law vocabulary. The header in `MASTER/law/universal.rb` still says “one `Law.define` per rule” and points to `ruby_rules.rb`, which was not found at that path; trace the actual owner and callers before renaming, update tests and generated files together, and ignore ordinary English uses where they are accurate.
 - [ ] Compare the overlapping `fix-dryrun-*`, `bughunt/*`, `master/final-*`, `master/convergence-*` and `sweep/todo-wishlist-20261007` branch candidates with current source and tests. Port only missing, valuable changes; do not merge stale branch histories wholesale.
 - [ ] Add a small repeatable benchmark for repair precision, regressions, wall time and model/tool spend. Compare identical fixtures and budgets; preserve raw outcomes so a lower score cannot be narrated as progress.
 - [ ] Keep each policy, command recipe, gate inventory and generated agent contract under its canonical owner. When simplifying, remove a second source of truth rather than adding another wrapper or registry.
