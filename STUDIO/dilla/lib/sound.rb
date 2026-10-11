@@ -131,8 +131,13 @@ module AnalogSynth
   # State lives in the four `z` values, which is why this is a class rather than
   # a function -- a filter is a thing with a memory.
   class Ladder
-    def initialize(rate: RATE)
+    # `stage_sat` makes every pole saturate, not just the input: the Moog's
+    # transistor pairs each clip, so a driven ladder compresses and the
+    # resonance peak rounds off instead of tearing. Off, the arithmetic is the
+    # old straight cascade.
+    def initialize(rate: RATE, stage_sat: false)
       @rate = rate
+      @stage_sat = stage_sat
       @z = [0.0, 0.0, 0.0, 0.0]
     end
 
@@ -188,10 +193,17 @@ module AnalogSynth
       input = sample - (fb * @z[3])
       input = soft(input)
 
-      @z[0] += f * (input - @z[0])
-      @z[1] += f * (@z[0] - @z[1])
-      @z[2] += f * (@z[1] - @z[2])
-      @z[3] += f * (@z[2] - @z[3])
+      if @stage_sat
+        @z[0] += f * (input - Math.tanh(@z[0]))
+        @z[1] += f * (Math.tanh(@z[0]) - Math.tanh(@z[1]))
+        @z[2] += f * (Math.tanh(@z[1]) - Math.tanh(@z[2]))
+        @z[3] += f * (Math.tanh(@z[2]) - Math.tanh(@z[3]))
+      else
+        @z[0] += f * (input - @z[0])
+        @z[1] += f * (@z[0] - @z[1])
+        @z[2] += f * (@z[1] - @z[2])
+        @z[3] += f * (@z[2] - @z[3])
+      end
       @z[3]
     end
 
@@ -401,7 +413,7 @@ module AnalogSynth
     # as a plucked attack even though nothing was plucked.
     moog_bass: {
       waves: %i[saw saw saw], detune: [0.0, -7.0, 5.0], octaves: [0, 0, -1],
-      cutoff: 220.0, env_amount: 2400.0, resonance: 0.62, drive: 1.25,
+      cutoff: 220.0, env_amount: 2400.0, resonance: 0.62, drive: 1.25, ladder_sat: true,
       amp: Envelope.new(attack: 0.004, decay: 0.30, sustain: 0.55, release: 0.20),
       filter_env: Envelope.new(attack: 0.002, decay: 0.18, sustain: 0.12, release: 0.15),
     },
@@ -426,7 +438,7 @@ module AnalogSynth
     # doing all of the work.
     acid: {
       waves: %i[saw square], detune: [0.0, 0.0], octaves: [0, -1],
-      cutoff: 180.0, env_amount: 3200.0, resonance: 0.92, drive: 1.6,
+      cutoff: 180.0, env_amount: 3200.0, resonance: 0.92, drive: 1.6, ladder_sat: true,
       amp: Envelope.new(attack: 0.002, decay: 0.24, sustain: 0.25, release: 0.10),
       filter_env: Envelope.new(attack: 0.001, decay: 0.22, sustain: 0.05, release: 0.10),
     },
@@ -507,6 +519,7 @@ module AnalogSynth
     rhodes_tine: {
       waves: %i[sine sine triangle], detune: [0.0, 1.2, 0.0], octaves: [0, 0, 2],
       osc_decay: [nil, nil, 0.16], drift_cents: 0.6, lpg: 0.85,
+      pickup: 0.55, tremolo_hz: 4.7, tremolo_depth: 0.10,
       cutoff: 1400.0, env_amount: 1800.0, resonance: 0.10, drive: 1.06,
       amp: Envelope.new(attack: 0.004, decay: 2.6, sustain: 0.42, release: 1.4),
       filter_env: Envelope.new(attack: 0.002, decay: 0.8, sustain: 0.30, release: 0.9),
@@ -518,6 +531,7 @@ module AnalogSynth
     prophet_five: {
       waves: %i[saw saw square], detune: [-6.0, 6.0, 0.0], octaves: [0, 0, -1],
       drift_cents: 0.9, lpg: 0.35,
+      filter_drift: 0.05, env_variance: 0.08, poly_mod_cents: 9.0,
       cutoff: 380.0, env_amount: 2800.0, resonance: 0.28, drive: 1.0,
       amp: Envelope.new(attack: 0.05, decay: 1.4, sustain: 0.72, release: 1.0),
       filter_env: Envelope.new(attack: 0.20, decay: 1.8, sustain: 0.35, release: 1.0),
@@ -682,6 +696,7 @@ module AnalogSynth
     prophet_pad: {
       waves: %i[saw triangle saw], detune: [-5.0, 0.0, 7.0], octaves: [0, 1, 0],
       cutoff: 640.0, env_amount: 1100.0, resonance: 0.28, drive: 0.9,
+      filter_drift: 0.04, env_variance: 0.06,
       amp: Envelope.new(attack: 0.22, decay: 0.9, sustain: 0.75, release: 1.1),
       filter_env: Envelope.new(attack: 0.9, decay: 1.4, sustain: 0.5, release: 0.9),
     },
@@ -712,7 +727,7 @@ module AnalogSynth
     voice_drift = spread.positive? ? 2.0**(rng.rand(-spread..spread) / 1200.0) : 1.0
     phases = spec[:waves].map { rng.rand }
 
-    ladder = Ladder.new
+    ladder = Ladder.new(stage_sat: spec[:ladder_sat] == true)
     start = (at * RATE).to_i
     frames = (spec[:amp].total(held) * RATE).to_i
     return if frames < 2 || start >= left.length
@@ -752,10 +767,55 @@ module AnalogSynth
     flfo_hz = spec[:filter_lfo_hz].to_f
     flfo_amount = spec[:filter_lfo_amount].to_f
     lpg = spec[:lpg].to_f
-    two_pi = 2.0 * Math::PI
+two_pi = 2.0 * Math::PI
 
-    i = 0
-    while i < frames
+# Velocity is a gesture, and a harder one changes the tone, not only the
+# level: it opens the filter and pushes the oscillators into the drive. The
+# gain a caller passes is the only touch information that reaches here, so
+# it is read the way InstrumentPhysics reads it.
+vel = (gain.to_f.abs / 0.2).clamp(0.15, 1.0)
+bright = 0.8 + (0.4 * vel)
+push = spec[:drive] * (0.92 + (0.16 * vel))
+
+# Everything below is seeded from the voice's own rng, after the draws above,
+# so patches that declare none draw nothing new, and two renders with one
+# seed are the same samples.
+#
+#   PICKUP       a tine pickup is lopsided: the harder the note, the more the
+#                tine swings into the magnet and the more even harmonics bark.
+#   TREMOLO      the suitcase amp's tremolo is two unlocked wobbles, not a sine.
+#   FILTER DRIFT the Prophet's filter wanders a few percent of an octave per
+#                voice, on two unrelated slow rates.
+#   ENV VARIANCE no two voices share a filter envelope depth.
+#   POLY MOD     the filter envelope also bends oscillator A, so the attack
+#                scoops into pitch.
+#   SELF-OSC     a ladder past 1.0 rings with no input; one grain of seeded
+#                noise starts it.
+pickup = spec[:pickup].to_f
+trem_hz = spec[:tremolo_hz].to_f
+trem_depth = spec[:tremolo_depth].to_f
+trem_a = trem_b = trem_b_hz = 0.0
+if trem_hz.positive?
+  trem_a = rng.rand * two_pi
+  trem_b = rng.rand * two_pi
+  trem_b_hz = trem_hz * rng.rand(0.31..0.47)
+end
+fdrift = spec[:filter_drift].to_f
+fd_a = fd_b = fd_a_hz = fd_b_hz = 0.0
+if fdrift.positive?
+  fd_a = rng.rand * two_pi
+  fd_b = rng.rand * two_pi
+  fd_a_hz = rng.rand(0.05..0.13)
+  fd_b_hz = rng.rand(0.17..0.31)
+end
+env_var = spec[:env_variance].to_f
+env_scale = env_var.positive? ? 1.0 + rng.rand(-env_var..env_var) : 1.0
+poly_mod = spec[:poly_mod_cents].to_f
+self_osc = spec[:resonance] > 1.0
+dc = 0.0
+
+i = 0
+while i < frames
       dest = start + i
       break if dest >= left.length
 
@@ -764,7 +824,8 @@ module AnalogSynth
       # Oscillators, summed.
       raw = 0.0
       spec[:waves].each_with_index do |shape, k|
-        phases[k] = (phases[k] + (freqs[k] * bend / RATE)) % 1.0
+        pm = poly_mod.positive? && k.zero? ? 2.0**((poly_mod * spec[:filter_env].at(t, held)) / 1200.0) : 1.0
+        phases[k] = (phases[k] + (freqs[k] * bend * pm / RATE)) % 1.0
         if osc_step[k]
           raw += wave(shape, phases[k]) * level * osc_gain[k]
           osc_gain[k] *= osc_step[k]
@@ -781,11 +842,25 @@ module AnalogSynth
                   else
                     spec[:filter_env].at(t, held)
                   end
-      cutoff = spec[:cutoff] + (spec[:env_amount] * shape_env)
-      cutoff += flfo_amount * Math.sin(two_pi * flfo_hz * t) if flfo_hz.positive?
-      filtered = ladder.process(raw * spec[:drive], cutoff.clamp(30.0, 18_000.0), spec[:resonance])
+cutoff = (spec[:cutoff] + (spec[:env_amount] * env_scale * shape_env)) * bright
+cutoff += flfo_amount * Math.sin(two_pi * flfo_hz * t) if flfo_hz.positive?
+if fdrift.positive?
+  cutoff *= 2.0**(fdrift * ((0.6 * Math.sin((two_pi * fd_a_hz * t) + fd_a)) + (0.4 * Math.sin((two_pi * fd_b_hz * t) + fd_b))))
+end
+raw += (rng.rand - 0.5) * 1.0e-3 if self_osc
+filtered = ladder.process(raw * push, cutoff.clamp(30.0, 18_000.0), spec[:resonance])
 
-      amp = spec[:amp].at(t, held) * gain
+if pickup.positive?
+  y = filtered + (pickup * vel * vel * 1.6 * filtered * filtered)
+  dc += 0.002 * (y - dc)
+  filtered = y - dc
+end
+
+amp = spec[:amp].at(t, held) * gain
+if trem_hz.positive?
+  wobble = (0.5 + (0.5 * Math.sin((two_pi * trem_hz * t) + trem_a))) * (0.7 + (0.3 * Math.sin((two_pi * trem_b_hz * t) + trem_b)))
+  amp *= 1.0 - (trem_depth * wobble)
+end
       # A hair of stereo, from the drift rather than from a widener: the two
       # channels are the same voice at slightly different levels, which is
       # what two channels of an analogue desk actually were.
