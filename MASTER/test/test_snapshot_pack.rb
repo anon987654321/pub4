@@ -4,6 +4,7 @@ require_relative "test_helper"
 require "ripper"
 require "tmpdir"
 require "fileutils"
+require "open3"
 require_relative "../lib/operator/snapshot_pack"
 
 # The snapshot is the copy of a tree that fits another model's context. It may drop what a
@@ -176,6 +177,226 @@ end
     wrong_digest = "sha256=" + ("0" * 64)
     refute Pack.verify_text(sealed.sub(/sha256=[0-9a-f]{64}/, wrong_digest))
     refute Pack.verify_text(sealed.delete_suffix("\n"))
+  end
+  def test_map_skips_magic_comments_and_truncates_summaries_at_word_boundaries
+    long_purpose = Array.new(20, "completeword").join(" ")
+    truncated = Map.truncate_at_word(long_purpose, Map::MAP_PURPOSE)
+
+    assert truncated.end_with?("…")
+    assert_includes truncated, "completeword"
+    refute_includes truncated, "completewor…"
+
+    original = "# frozen_string_literal: true\n# Parses a stylesheet.\nmodule Example\n  def run\n  end\nend\n"
+    line = Map.map_line({ path: "lib/example.rb", original:, minified: Pack.minify("lib/example.rb", original) })
+
+    assert_includes line, "Parses a stylesheet."
+    refute_includes line, "frozen_string_literal"
+  end
+
+  def test_map_extracts_scss_mixins_placeholders_and_top_level_selectors
+    source = <<~SCSS
+      @mixin focus-ring { outline: 2px solid; }
+      %button-reset { border: 0; }
+      .card {
+        color: red;
+      }
+      @media (max-width: 600px) {
+        .nested {
+          color: blue;
+        }
+      }
+    SCSS
+
+    summary = Map.map_declarations("application.scss", source)
+
+    assert_includes summary, "mixins: focus-ring"
+    assert_includes summary, "placeholders: %button-reset"
+    assert_includes summary, "selectors: .card"
+    refute_includes summary, ".nested", "nested selectors are not presented as top-level"
+  end
+
+  def test_map_extracts_erb_partials_forms_and_turbo_targets
+    source = <<~ERB
+      <%= render "shared/message" %>
+      <%= form_with model: @message do |form| %>
+        <%= turbo_frame_tag "messages" do %>
+        <% end %>
+      <% end %>
+    ERB
+
+    summary = Map.map_declarations("app/views/messages/_form.html.erb", source)
+
+    assert_includes summary, "renders: shared/message"
+    assert_includes summary, "forms: form_with"
+    assert_includes summary, "frames: messages"
+  end
+
+  def test_map_extracts_shell_functions
+    source = <<~SH
+      open_browser() {
+        true
+      }
+      function install_dependencies {
+        true
+      }
+    SH
+
+    assert_equal "functions: open_browser install_dependencies", Map.map_declarations("bin/setup.sh", source)
+  end
+
+  def test_unknown_stimulus_value_types_fall_back_to_generic_declarations
+    source = <<~JS
+      class MessageController extends Controller {
+        static values = { changedAt: Date }
+        connect() {
+          this.element.focus()
+        }
+      }
+    JS
+
+    summary = Map.map_declarations("message_controller.js", source)
+
+    assert_includes summary, "MessageController"
+  end
+
+  def test_map_exposes_stimulus_targets_values_and_methods
+    source = <<~JS
+      export default class extends Controller {
+        static targets = ["message", "composer"]
+        static values = { unread: Boolean, roomId: String }
+
+        connect() {
+          this.messageTarget.focus()
+        }
+
+        focusLastMessage() {
+          this.messageTarget.focus()
+        }
+      }
+    JS
+
+    summary = Map.map_declarations("message_controller.js", source)
+
+    assert_includes summary, "targets: message composer"
+    assert_includes summary, "values: unread roomId"
+    assert_includes summary, "methods: connect focusLastMessage"
+  end
+  def git!(repo, *args)
+    output, status = Open3.capture2e("git", "-C", repo, *args)
+    raise "git #{args.join(" ")} failed: #{output}" unless status.success?
+
+    output
+  end
+
+  def init_snapshot_repo(repo)
+    git!(repo, "init", "-q", "-b", "main")
+    git!(repo, "config", "user.name", "snapshot test")
+    git!(repo, "config", "user.email", "snapshot@example.invalid")
+  end
+
+  def test_since_requires_a_budget_and_refuses_mirror_or_verify_modes
+    _out, err = capture_io do
+      assert_equal 2, Operator::Snapshot.cli(["MASTER", "--since=HEAD"])
+      assert_equal 2, Operator::Snapshot.cli(["MASTER", "--since=HEAD", "--budget=1000", "--mirror"])
+      assert_equal 2, Operator::Snapshot.cli(["MASTER", "--since=HEAD", "--budget=1000", "--verify"])
+      assert_equal 2, Operator::Snapshot.cli(["MASTER", "--budget=not-a-number"])
+      assert_equal 2, Operator::Snapshot.cli(["MASTER", "--budget=0"])
+      assert_equal 2, Operator::Snapshot.cli(["MASTER", "--part-bytes=invalid"])
+      assert_equal 2, Operator::Snapshot.cli(["MASTER", "--only="])
+      assert_equal 2, Operator::Snapshot.cli(["MASTER", "--since="])
+    end
+
+    assert_includes err, "--since requires --budget=BYTES"
+    assert_includes err, "--since cannot be combined with --mirror or --verify"
+    assert_includes err, "--budget must be a positive integer"
+    assert_includes err, "--part-bytes must be a positive integer"
+    assert_includes err, "--only needs at least one non-empty path"
+    assert_includes err, "--since needs a non-empty commit reference"
+  end
+  def test_incremental_pack_keeps_the_full_map_but_inlines_only_changed_tracked_source
+    Dir.mktmpdir("snapshot-since-") do |repo|
+      Thread.current[:snapshot_repo] = repo
+      FileUtils.mkdir_p(File.join(repo, "DEMO/lib"))
+      File.write(File.join(repo, "DEMO/lib/changed.rb"), "value = :before\n")
+      File.write(File.join(repo, "DEMO/lib/unchanged.rb"), "value = :unchanged\n")
+      init_snapshot_repo(repo)
+      git!(repo, "add", "DEMO")
+      git!(repo, "commit", "-q", "-m", "baseline")
+      File.write(File.join(repo, "DEMO/lib/changed.rb"), "value = :after\n")
+
+      Pack.write(Host, "DEMO", budget: 20_000, since: "HEAD", io: StringIO.new)
+      text = File.read(File.join(repo, "snapshot_DEMO.md"))
+
+      assert Pack.verify_text(text), "incremental packs retain the pack integrity marker"
+      assert_includes text, "## Changes since \"HEAD\""
+      assert_includes text, "changed=1"
+      assert_includes text, "changed.rb [1L] Δ"
+      assert_includes text, "value = :after"
+      refute_includes text, "value = :unchanged", "unchanged source must remain map-only"
+      assert_includes text, "unchanged.rb [1L]"
+      assert_raises(ArgumentError) { Pack.write(Host, "DEMO", budget: 20_000, since: "not-a-real-ref", io: StringIO.new) }
+      assert_equal text, File.read(File.join(repo, "snapshot_DEMO.md")), "an invalid base must not destroy the prior pack"
+    ensure
+      Thread.current[:snapshot_repo] = nil
+    end
+  end
+
+  def test_incremental_change_set_reports_deletions_and_renames_and_rejects_unknown_refs
+    Dir.mktmpdir("snapshot-diff-") do |repo|
+      Thread.current[:snapshot_repo] = repo
+      FileUtils.mkdir_p(File.join(repo, "DEMO/lib"))
+      File.write(File.join(repo, "DEMO/lib/old.rb"), "value = :move_me\n")
+      File.write(File.join(repo, "DEMO/lib/gone.rb"), "value = :gone\n")
+      File.write(File.join(repo, "DEMO/lib/edit.rb"), "value = :before\n")
+      init_snapshot_repo(repo)
+      git!(repo, "add", "DEMO")
+      git!(repo, "commit", "-q", "-m", "baseline")
+      File.rename(File.join(repo, "DEMO/lib/old.rb"), File.join(repo, "DEMO/lib/new.rb"))
+      File.delete(File.join(repo, "DEMO/lib/gone.rb"))
+      File.write(File.join(repo, "DEMO/lib/edit.rb"), "value = :after\n")
+      git!(repo, "add", "-A")
+
+      changes = Pack.change_set(Host, "DEMO", "HEAD")
+
+      assert_includes changes[:current], "DEMO/lib/new.rb"
+      assert_includes changes[:current], "DEMO/lib/edit.rb"
+      assert_includes changes[:deleted], "DEMO/lib/gone.rb"
+      assert_includes changes[:renamed], ["DEMO/lib/old.rb", "DEMO/lib/new.rb"]
+      scoped = Pack.change_set(Host, "DEMO", "HEAD", only: "lib/edit.rb")
+      assert_equal ["DEMO/lib/edit.rb"], scoped[:current]
+      assert_empty scoped[:deleted]
+      assert_empty scoped[:renamed]
+      assert_raises(ArgumentError) { Pack.change_set(Host, "DEMO", "no-such-snapshot-ref") }
+    ensure
+      Thread.current[:snapshot_repo] = nil
+    end
+  end
+  def test_budget_is_hard_and_failed_build_preserves_the_last_good_pack
+    Dir.mktmpdir("snapshot-budget-") do |repo|
+      Thread.current[:snapshot_repo] = repo
+      FileUtils.mkdir_p(File.join(repo, "DEMO/lib"))
+      File.write(File.join(repo, "DEMO/lib/example.rb"), "value = :stable\n")
+
+      Pack.write(Host, "DEMO", budget: 20_000, io: StringIO.new)
+      path = File.join(repo, "snapshot_DEMO.md")
+      previous = File.binread(path)
+      assert_operator previous.bytesize, :<=, 20_000
+
+      assert_raises(ArgumentError) do
+        Pack.write(Host, "DEMO", budget: 50, io: StringIO.new)
+      end
+      assert_equal previous, File.binread(path), "an impossible budget must not erase the previous valid pack"
+
+      35.times do |index|
+        File.write(File.join(repo, "DEMO/lib", "changed_#{index}.rb"), "value = #{index}\n")
+      end
+      Pack.write(Host, "DEMO", budget: 4_000, io: StringIO.new)
+      regenerated = File.binread(path)
+      assert_operator regenerated.bytesize, :<=, 4_000, "the final source blocks must fit the budget"
+      assert Pack.verify_text(regenerated)
+    ensure
+      Thread.current[:snapshot_repo] = nil
+    end
   end
   # A host standing in for tools/snapshot.rb: a repo root, its tracked files, the same predicates.
 class Host
