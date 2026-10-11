@@ -454,7 +454,7 @@ module Master
       end
 
       def shape_fingerprint(elements)
-        radii = elements.map { |e| radius_value(e["border_radius"]) }.compact
+        radii = elements.filter_map { |e| radius_value(e["border_radius"]) }
         rounded = radii.count { |value| value >= 8 }
         pills = radii.count { |value| value >= 999 }
         cards = elements.count { |e| card_like?(e) }

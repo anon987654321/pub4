@@ -95,7 +95,7 @@ module Master
 
         def record_improvement(payload)
           rule_id = payload[:rule] || payload["rule"] || "unknown"
-          files = Array(payload[:sample] || payload["sample"]).map { |row| row[:file] || row["file"] }.compact.uniq
+          files = Array(payload[:sample] || payload["sample"]).filter_map { |row| row[:file] || row["file"] }.uniq
           record(
             event_type: "fix_improvement",
             dimension: rule_id,

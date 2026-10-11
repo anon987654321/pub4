@@ -7,7 +7,7 @@ module Shared
   # MASTER. A task started as the app user without it (db:prepare and the asset
   # precompile in vps-deploy) has no PUB4_ROOT, and the repo-relative walk lands
   # on /home/MASTER, which killed the first deploy that reached the migration and
-  # left the app stopped. So the root is the first candidate that really holds
+  # left the app stopped. So the root is the first candidate that holds
   # MASTER/contracts: PUB4_ROOT, the repo root four levels above this file, then
   # the box's own checkout.
   module Contracts

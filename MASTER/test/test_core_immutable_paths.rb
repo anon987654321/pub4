@@ -85,7 +85,7 @@ class ImmutablePathsTest < Minitest::Test
   # The manifest marks subtrees (data/, lib/review/scan/) with a trailing slash;
   # Paths must hand that slash on or the subtree guard never matches.
   def test_every_subtree_declared_in_the_real_manifest_blocks_its_children
-    sacred = Master::Core::Paths.sacred_paths(root: Master::ROOT)
+    sacred = Master::Core::Constitution::Paths.sacred_paths(root: Master::ROOT)
     subtrees = sacred.select { |entry| entry.end_with?("/") }
     refute_empty subtrees, "soul.yml declares subtree sacred paths"
     law = Master::Core::Constitution.immutable_paths_rule(

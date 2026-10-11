@@ -8,7 +8,7 @@ module Master
       # The same three WriteGuard::BLOCKING refuses a write for. veto was missing
       # here, and it is the severity above error — laws.yml#veto_patterns calls
       # them unconditional merge blockers — so the fast gate reported clean while
-      # four vetoes stood in the tree it had just read. One severity set, two
+      # four vetoes stood in the tree it had read. One severity set, two
       # readers, is the shape that let them disagree.
       QUICK_SEVERITIES = %i[veto critical error].freeze
 

@@ -64,6 +64,9 @@ Law.define(:NULLISH_COALESCING) do
     next false if line.match?(/\b(?:if|while|switch)\s*\(/)
     next false unless line.match?(/=\s*[^=]*\|\|/)
     next false if line.match?(/[!<>=]=/)
+    # A numeric coercion answers NaN, not null, when its input is junk. `||` is
+    # the operator that turns NaN into the default; `??` would let it through.
+    next false if line.match?(/\b(?:Number|parseFloat|parseInt)\([^()]*\)\s*\|\|/)
 
     line.match?(/\|\|\s*(?:-?\d+(?:\.\d+)?|""|''|``)\s*[;,)\]}]?\s*$/)
   end

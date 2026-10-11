@@ -9,7 +9,7 @@ class TestGroundTruth < Minitest::Test
     Dir.mktmpdir do |dir|
       path = File.join(dir, "sample.rb")
       File.write(path, "x = 1\n")
-      gt = Master::Ground::GroundTruth.new
+      gt = Master::Ground::Truth.new
       gt.record_read!(path)
       assert gt.fresh?(path)
     end
@@ -19,7 +19,7 @@ class TestGroundTruth < Minitest::Test
     Dir.mktmpdir do |dir|
       path = File.join(dir, "sample.rb")
       File.write(path, "x = 1\n")
-      gt = Master::Ground::GroundTruth.new(max_age_seconds: 60)
+      gt = Master::Ground::Truth.new(max_age_seconds: 60)
       gt.record_read!(path)
       assert gt.fresh?(path)
       stale = gt.assert_fresh!(path, reason: "claim_task_complete")
@@ -31,7 +31,7 @@ class TestGroundTruth < Minitest::Test
   # file somebody changed afterwards is refused and a reread lets it through.
   def test_write_file_refuses_a_file_changed_since_it_was_read
     Dir.mktmpdir do |dir|
-      gt = Master::Ground::GroundTruth.new(max_age_seconds: 60)
+      gt = Master::Ground::Truth.new(max_age_seconds: 60)
       governor = Object.new
       def governor.permit?(*) = Master::Result.ok(true)
       undo = Master::Trace::Undo.new(session: Object.new.tap { |s| def s.snapshot(*) = nil }, root: dir)
@@ -58,7 +58,7 @@ class TestGroundTruth < Minitest::Test
     Dir.mktmpdir do |dir|
       path = File.join(dir, "sample.rb")
       File.write(path, "x = 1\n")
-      gt = Master::Ground::GroundTruth.new(max_age_seconds: 60)
+      gt = Master::Ground::Truth.new(max_age_seconds: 60)
       refute gt.fresh?(path)
       result = gt.assert_fresh!(path)
       assert result.err?

@@ -5,7 +5,7 @@
 # First: the deck was ORDER BY RANDOM(). Orientation, neighbourhood and a 20 km
 # radius filtered the pool and nothing ranked it, so someone who last opened the
 # app in March sat in the deck beside someone who is online now — and every
-# reload reshuffled, so nobody could find a profile they had just seen.
+# reload reshuffled, so nobody could find a profile they had seen.
 #
 # Second: prompts. The current shape of this category is Hinge, not Tinder —
 # you like a specific answer or photo and say something about it, rather than

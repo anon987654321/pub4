@@ -287,7 +287,7 @@ module Operator
 
     def retired_occurrences(data)
       retired = retired_topics
-      data.values.flat_map { |rows| rows.keys }.select { |topic| retired.include?(topic) }.uniq.sort
+      data.values.flat_map(&:keys).select { |topic| retired.include?(topic) }.uniq.sort
     end
 
     def missing_reference_anchors(data)

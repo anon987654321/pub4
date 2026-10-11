@@ -2,7 +2,7 @@
 
 require_relative "test_helper"
 
-# FixAttempt asks the model up to N times for a rewrite. A reply identical to
+# Attempt asks the model up to N times for a rewrite. A reply identical to
 # the source is not a fix, an error is retried or ends the run as on_error says,
 # and the wait hook runs before every attempt.
 class TestFixAttempt < Minitest::Test
@@ -17,7 +17,7 @@ class TestFixAttempt < Minitest::Test
   end
 
   def attempt(replies, attempts: 3, on_error: ->(_e) { :retry }, waits: [])
-    Master::Fix::FixAttempt.new(
+    Master::Fix::Attempt.new(
       agent: FakeAgent.new(replies, []), attempts:, wait: ->(n, ctx) { waits << [n, ctx] },
       extractor: ->(text, _ext) { text.empty? ? nil : text }, on_error:
     )
@@ -32,7 +32,7 @@ class TestFixAttempt < Minitest::Test
   def test_image_is_forwarded_without_changing_the_no_image_contract
     images = []
     agent = FakeAgent.new(["fixed"], images)
-    fixer = Master::Fix::FixAttempt.new(
+    fixer = Master::Fix::Attempt.new(
       agent:, attempts: 1, wait: ->(*) {},
       extractor: ->(text, _ext) { text }, on_error: ->(_) { :stop }
     )
@@ -79,7 +79,7 @@ class TestFixAttempt < Minitest::Test
   def test_rendered_evidence_is_forwarded_only_when_present
     images = []
     agent = FakeAgent.new(["fixed"], images)
-    fixer = Master::Fix::FixAttempt.new(
+    fixer = Master::Fix::Attempt.new(
       agent:, attempts: 1, wait: ->(*) {},
       extractor: ->(text, _ext) { text }, on_error: ->(_) { :stop }
     )

@@ -18,7 +18,7 @@ class SecurityAdvisoryRefreshJob < ApplicationJob
   #
   # The wrap is bounded too. When the cursor ran past the last id the batch came
   # back empty and the job restarted from the first row, forever, so it never
-  # idled — it just kept re-reading the same fifty ports at whatever interval it
+  # idled — it kept re-reading the same fifty ports at whatever interval it
   # was scheduled. One lap is the recycle; a second lap in the same run is a
   # loop, so the cursor resets and the job returns.
   def perform(batch_size: BATCH_SIZE)

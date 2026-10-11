@@ -2,7 +2,7 @@
 
 module Master
   module Fix
-    class FixAttempt
+    class Attempt
       def initialize(agent:, attempts:, wait:, extractor:, on_error:)
         @agent = agent
         @attempts = attempts

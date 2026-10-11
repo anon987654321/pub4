@@ -420,7 +420,7 @@ void main() {
   float near = clamp(1.0 - (z + uFov) / span, 0.0, 1.0);
 
   // Bass swells the ring, highs shimmer it per-particle. This is the audio
-  // reactivity that was previously impossible: a YouTube iframe is cross-origin
+  // reactivity a YouTube iframe forbids by default: it is cross-origin
   // so no AnalyserNode could see it, and the numbers driving this were a sine
   // wave. They are now real FFT bands.
   float shimmer = sin(aSeed * 6.2831 + uTime * 7.0) * uHigh * 0.05;

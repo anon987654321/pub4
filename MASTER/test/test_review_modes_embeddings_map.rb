@@ -4,10 +4,9 @@ require_relative "test_helper"
 require "json"
 require "net/http"
 
-# Three review helpers with no test of their own: Modes wraps a message in the
-# reasoning template for /reasoning, Embeddings is the optional Ollama vector
-# path memory search uses when it is up, and RepoMap ranks files by PageRank
-# over the code index's references to fit a token budget.
+# Two review helpers with no test of their own: Modes wraps a message in the
+# reasoning template for /reasoning, and Embeddings is the optional Ollama vector
+# path memory search uses when it is up.
 class TestReviewModesEmbeddingsMap < Minitest::Test
   def test_modes_wrap_with_the_selected_template_and_fall_back_to_direct
     root = Dir.mktmpdir("modes_")
@@ -74,43 +73,5 @@ class TestReviewModesEmbeddingsMap < Minitest::Test
       @sent = request
       @reply
     end
-  end
-
-  Sym = Struct.new(:fqn, :file, :type, :line)
-  Ref = Struct.new(:from_file, :to_fqn)
-
-  class Index
-    def initialize(root)
-      @symbols = {
-        core: Sym.new("Core", File.join(root, "core.rb"), :class, 1),
-        a: Sym.new("A", File.join(root, "a.rb"), :class, 1),
-        b: Sym.new("B", File.join(root, "b.rb"), :class, 1),
-      }
-      @refs = [Ref.new(File.join(root, "a.rb"), "Core"), Ref.new(File.join(root, "b.rb"), "Core")]
-    end
-
-    def ready? = true
-    def symbols = @symbols
-    def references = @refs
-    def symbols_in(path) = @symbols.values.select { |s| s.file == path }
-  end
-
-  def test_the_most_referenced_file_leads_the_map_and_the_budget_cuts_the_tail
-    root = "/repo"
-    full = Master::Review::RepoMap.new(code_index: Index.new(root), root:).render
-    sections = full.lines.grep(/^## /).map(&:strip)
-
-    assert_equal "## core.rb", sections.first
-    assert_equal 3, sections.size
-
-    tight = Master::Review::RepoMap.new(code_index: Index.new(root), root:, token_budget: 12).render
-    assert_equal ["## core.rb"], tight.lines.grep(/^## /).map(&:strip)
-  end
-
-  def test_focus_pulls_its_file_ahead_of_rank
-    root = "/repo"
-    map = Master::Review::RepoMap.new(code_index: Index.new(root), root:).render(focus: ["a.rb"])
-
-    assert_equal "## a.rb", map.lines.grep(/^## /).first.strip
   end
 end

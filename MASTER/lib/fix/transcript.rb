@@ -12,7 +12,7 @@ module Master
     # line per event; the reason behind a line lives here. Every string is
     # redacted before it is written, the run directory is capped, and only the
     # newest runs are kept, so a long run cannot fill the disk.
-    class FixTranscript
+    class Transcript
       DIR = ".master/fix_transcripts"
       MAX_BYTES = 50 * 1024 * 1024
       KEEP_RUNS = 10
@@ -43,7 +43,7 @@ module Master
           true
         end
       rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "FixTranscript.append") if defined?(Master::Ground::Swallow)
+        Master::Ground::Swallow.log(e, context: "Transcript.append") if defined?(Master::Ground::Swallow)
         false
       end
 

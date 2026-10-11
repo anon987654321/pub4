@@ -195,7 +195,7 @@ module Shared
     # Real browsers are persisted almost immediately and nothing about the
     # product changes for them: the page they land on fetches the ambient chat
     # frame, and that fetch is a second HTTP request carrying the cookie the
-    # first response just set.
+    # first response set.
     #
     # What needed care is the handful of places that need an id rather than a
     # user — Conversation#join!, mark_read_for!, anything building a row with a
@@ -245,8 +245,7 @@ module Shared
     end
 
     # An unsaved guest that a write persisted on its own has to be remembered, or
-    # the next request builds a fresh one and the author loses what they just
-    # wrote. `user: Current.user` is how every create site here attaches the
+    # the next request builds a fresh one and the author loses what they     # wrote. `user: Current.user` is how every create site here attaches the
     # actor, and ActiveRecord saves an unsaved belongs_to target before saving
     # the owner — so this fires even where ensure_guest_user! was never called.
     def remember_persisted_guest

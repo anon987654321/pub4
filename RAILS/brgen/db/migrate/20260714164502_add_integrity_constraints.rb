@@ -3,7 +3,7 @@
 # Backfills + adds NOT NULL constraints that already exist as `validates
 # presence:` in the models but were never enforced at the DB layer, adds
 # missing FK indexes, and deduplicates + adds unique indexes backing
-# `validates uniqueness:` checks that were previously app-only (a real race
+# `validates uniqueness:` checks that held only in the app (a real race
 # under concurrent requests — e.g. two taps on "like" landing at once).
 class AddIntegrityConstraints < ActiveRecord::Migration[8.1]
   def up

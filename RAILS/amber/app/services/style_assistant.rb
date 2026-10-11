@@ -14,7 +14,7 @@
 #     Julian number rotates the pick through a taste-ranked shortlist, so
 #     refreshing the page shows the same outfit and tomorrow shows a
 #     different one.
-#   * It rests what you just wore. A garment worn inside REST_DAYS is held
+#   * It rests what you wore. A garment worn inside REST_DAYS is held
 #     back unless its zone would otherwise be empty.
 #
 # Weather arrives as a parameter, never fetched here — the dashboard already

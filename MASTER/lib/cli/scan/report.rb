@@ -117,8 +117,8 @@ module Master
             confidences = cluster.map { |v| v[:confidence].to_f }.reject(&:zero?)
             cluster.first.merge(
               count: cluster.size,
-              files: cluster.map { |v| v[:file] }.compact.uniq,
-              lines: cluster.map { |v| v[:line] }.compact.uniq.sort,
+              files: cluster.filter_map { |v| v[:file] }.uniq,
+              lines: cluster.filter_map { |v| v[:line] }.uniq.sort,
               confidence: confidences.empty? ? cluster.first[:confidence] : confidences.sum / confidences.size.to_f,
               impact_radius: impact_radius(cluster),
               why: cluster.first.fetch(:why) { default_why(cluster.first) },
@@ -196,7 +196,7 @@ module Master
 
         def impact_radius(cluster)
           {
-            files_affected: Array(cluster.map { |v| v[:file] }.compact.uniq).size,
+            files_affected: Array(cluster.filter_map { |v| v[:file] }.uniq).size,
             occurrences: cluster.size,
             severity_multiplier: severity_multiplier(cluster.first[:severity]),
           }
@@ -228,7 +228,7 @@ module Master
           end
 
           by_signature.filter_map do |(rule, message, fix), cluster|
-            files = Array(cluster.map { |v| v[:file] }.compact.uniq)
+            files = Array(cluster.filter_map { |v| v[:file] }.uniq)
             next if files.size < 2 && cluster.size < 3
 
             {

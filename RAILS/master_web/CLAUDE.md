@@ -296,7 +296,7 @@ routed, dynamically-rendered response can.
 ## The VPS is genuinely small
 
 1 vCPU, ~1GB RAM, running `master`, `brgen`, `amber`, `bsdports`
-concurrently. A load average of 1.0 here means the single core is simply busy — not distress.
+concurrently. A load average of 1.0 here means the single core is busy — not distress.
 `resource_guard.sh` (cron, every 5 min) sheds `amber` then `bsdports` under
 sustained pressure and restores them when it clears. It is armed: the pause
 flag `/var/db/pub4_all_apps` is absent on vm23, and this paragraph said it was

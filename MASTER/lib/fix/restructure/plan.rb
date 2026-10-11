@@ -17,7 +17,7 @@ module Master
           end
           operations = text.to_s[/^OPERATIONS:[ \t]*(.+)$/, 1].to_s
                          .split(",")
-                         .map { |operation| operation.strip }
+                         .map(&:strip)
                          .reject(&:empty?)
           new(
             summary: text.to_s[/^SUMMARY:[ \t]*(.+)$/, 1].to_s.strip,

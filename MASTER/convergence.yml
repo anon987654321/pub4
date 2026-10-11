@@ -82,7 +82,7 @@ workstreams:
   - id: security_capability_graph
     state: partial
     title: Capability ownership and least-privilege graph
-    implementation: MASTER/lib/core/capabilities.rb
+    implementation: MASTER/lib/core.rb
     proof: MASTER/tools/capability_inventory.rb
   - id: event_replay
     state: partial

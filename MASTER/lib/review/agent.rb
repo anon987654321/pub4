@@ -169,7 +169,7 @@ end
       # Both single-shot doors — ask and ask_once — used to raise on the first
       # broke model. One hop to the claude_code chain head on any category a
       # retry cannot cure; the 2026-08-20 proof runs showed the error-severity
-      # rules die in ask (via FixAttempt) after ask_once was fixed alone.
+      # rules die in ask (via Attempt) after ask_once was fixed alone.
       def retry_on_broke_lane(result, chosen, messages, system: nil, image: nil, temperature: nil, promote: true)
         return result unless result.is_a?(Master::Result::Err)
 

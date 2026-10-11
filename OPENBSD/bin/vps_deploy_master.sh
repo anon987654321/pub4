@@ -41,7 +41,7 @@ export SECRET_KEY_BASE_DUMMY=1
 # db:prepare is idempotent: it creates the database when absent, loads the
 # schema when empty, and otherwise applies only pending migrations.
 # Gems first: db:prepare is the first `bundle exec`, and a gem the pull just
-# added (ferrum-0.17.2, 2026-09-24) stopped the deploy there with GemNotFound
+# added (ferrum-0.17.2) stopped the deploy there with GemNotFound
 # while the install that would have fixed it waited two steps later.
 echo "==> bundle"
 # dev cannot write the system gem directory, and Bundler falls back to it

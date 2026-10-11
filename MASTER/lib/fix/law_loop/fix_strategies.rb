@@ -174,7 +174,7 @@ module Master
         end
 
         def fix_attempt(violation, attempts: MAX_FIX_RETRIES, event:)
-          FixAttempt.new(
+          Attempt.new(
             agent: @agent,
             attempts:,
             wait: ->(attempt, context) { wait_before_retry(attempt, **context) },

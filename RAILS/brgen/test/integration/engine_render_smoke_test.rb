@@ -121,7 +121,7 @@ class EngineRenderSmokeTest < ActionDispatch::IntegrationTest
       cuisine_type: "Pizza",
       active: true
     )
-    item = restaurant.menu_items.create!(name: "Margherita", price_cents: 15900, available: true)
+    item = restaurant.menu_items.create!(name: "Margherita", price_cents: 15_900, available: true)
     attach_pixel(item.photo, "menu.png")
 
     host! "takeaway.brgen.no"

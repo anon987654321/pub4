@@ -4,7 +4,7 @@ module Master
   module Ground
     # Fresh reads before claims/commits. laws.yml carries no ground_truth_check
     # key, so the age window is the constant below unless the caller passes one.
-    class GroundTruth
+    class Truth
       Entry = Data.define(:path, :sha256, :read_at)
       DEFAULT_MAX_AGE_SECONDS = 300
 
@@ -39,7 +39,7 @@ module Master
           File.exist?(resolved) && Digest::SHA256.hexdigest(File.read(resolved)) == entry.sha256
         end
       rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "GroundTruth.fresh?")
+        Master::Ground::Swallow.log(e, context: "Truth.fresh?")
         false
       end
 

@@ -6,7 +6,7 @@ require "shared/contracts"
 
 module Shared
   module SeedForge
-    DEFAULT_SEED = 20260928
+    DEFAULT_SEED = 20_260_928
 
     class << self
       def boot!

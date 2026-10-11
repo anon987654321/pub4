@@ -102,7 +102,7 @@ module Master
           rows.sort_by.with_index { |row, index| [-row.fetch("weight", 1).to_i, index] }
         end
 
-        # Schema 1 rows predate attribution; they were drafted by one shared call.
+        # Schema 1 rows predate attribution; one shared call drafted them.
         def migrate!(ledger)
           ledger["proposals"].each do |row|
             row["proposed_by"] ||= ["shared"]

@@ -419,7 +419,7 @@ module Master
         end
 
         def unsubscribe_from_bus
-          @event_unsubscribers.each { |unsubscribe| unsubscribe.call }
+          @event_unsubscribers.each(&:call)
           @event_unsubscribers.clear
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "face.window.unsubscribe")

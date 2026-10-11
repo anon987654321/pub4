@@ -69,7 +69,7 @@ module Operator
     end
 
     def counts
-      findings.group_by { |finding| finding.kind }.transform_values(&:size)
+      findings.group_by(&:kind).transform_values(&:size)
     end
 
     def profiles

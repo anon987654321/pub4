@@ -1,12 +1,4 @@
 schema: 1
-checklist:
-  A: numeric ranks never coerce non-finite values
-  B: extracted source bodies are matched in their extracted representation
-  C: every new extractor has a fixture for a real surface form
-  D: bare-invoke/default behavior has one dispatch path and synchronized tests/comments
-  E: source pins assert stable public names or behavior, not whole large files
-  F: event topics come from deterministic literal publisher census and reject retired aliases
-  G: gates distinguish skipped, failed, inconclusive, and crashed execution
 
 llm_prompt: |
   fix hygiene contract (enforce on every mutation in this /fix pass):

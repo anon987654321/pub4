@@ -9,7 +9,7 @@ require "operator/fix_tail"
 
 class FixTraceTest < Minitest::Test
   Trace = Master::Fix::FixTrace
-  Transcript = Master::Fix::FixTranscript
+  Transcript = Master::Fix::Transcript
 
   def setup
     @root = Dir.mktmpdir("fixtrace")

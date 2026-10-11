@@ -94,7 +94,7 @@ EXCLUDED = %w[etc/relayd.conf etc/mail/smtpd.conf etc/litestream.yml etc/acme-cl
 
 # Root's crontab cannot join VERBATIM: OPERATOR.sh merges the tracked lines into
 # whatever is already there rather than overwriting the file, so a byte compare
-# would fail on every box that has ever been touched by hand. What is comparable
+# would fail on every box someone has touched by hand. What is comparable
 # is the set of commands, and that is the half worth comparing — a schedule the
 # repo declares and the box does not run is a capability that exists only in this
 # directory.

@@ -23,7 +23,7 @@ module Master
           # escalating twice asked for the same tier both times.
           # fallback_chain.rb:150 caps escalation depth at 2, which only means
           # something if the second step differs from the first; until now it
-          # re-requested the tier it had just been given, so a retry changed
+          # re-requested the tier it had been given, so a retry changed
           # nothing. ESCALATION_CHAIN exists to express exactly this and
           # next_escalation_tier walks it; neither had a caller.
           #

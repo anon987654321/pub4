@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "digest"
-require_relative "memory/view"
 
 module Master::Core
   # Memory — the unified cognitive architecture.
@@ -194,6 +193,111 @@ module Master::Core
       # The goal outlives compaction; everything else old is summarised.
       pinned = dropped.include?(@goal) ? [@goal] : []
       @entries = [*pinned, Entry.new(role: :note, text: @summarize.call(dropped - pinned)), *keep]
+    end
+
+    # The three channels Memory holds.
+    module Types
+      # The chronological record of this specific session, linked to the Episode Ledger.
+      class Episodic
+        attr_reader :episode
+
+        def initialize(episode)
+          @episode = episode
+        end
+
+        def transcript
+          @episode.events.map(&:to_s)
+        end
+      end
+
+      # The distilled knowledge and invariants: a world model that evolves as the agent learns.
+      class Semantic
+        attr_reader :knowledge_base
+
+        def initialize
+          @knowledge_base = {}
+        end
+
+        def learn(key, value)
+          @knowledge_base[key] = value
+        end
+
+        def query(key)
+          @knowledge_base[key]
+        end
+      end
+
+      # The how-to for specific domains: validated patterns, tool sequences and recovery recipes.
+      class Procedural
+        attr_reader :recipes
+
+        def initialize
+          @recipes = {}
+        end
+
+        def register_recipe(name, steps)
+          @recipes[name] = steps
+        end
+
+        def find_recipe(name)
+          @recipes[name]
+        end
+      end
+    end
+
+    class View
+      Permission = Data.define(:path, :mode)
+      MODES = %i[read write].freeze
+
+      def initialize
+        @entries = []
+        @locked = false
+      end
+
+      def unveil(paths, mode = :read)
+        raise SecurityError, "memory view is locked" if @locked
+
+        pairs = paths.is_a?(Hash) ? paths : { paths => mode }
+        pairs.each do |path, permission|
+          permission = permission.to_sym
+          raise ArgumentError, "unknown memory permission: #{permission}" unless MODES.include?(permission)
+
+          @entries << Permission.new(normalize(path), permission)
+        end
+        @entries.uniq!
+        self
+      end
+
+      def lock!
+        @locked = true
+        freeze
+      end
+
+      def locked? = @locked
+
+      def allowed?(path, mode = :read)
+        candidate = normalize(path)
+        requested = mode.to_sym
+        @entries.any? do |entry|
+          next false unless candidate == entry.path || candidate.start_with?("#{entry.path}/")
+          entry.mode == :write || entry.mode == requested
+        end
+      end
+
+      def require!(path, mode = :read)
+        return true if allowed?(path, mode)
+        raise SecurityError, "memory view refused: #{path}"
+      end
+
+      def paths = @entries.map(&:path).uniq.freeze
+
+      private
+
+      def normalize(path)
+        value = path.to_s.delete_prefix("./")
+        value = File.expand_path(value, "/")
+        value.delete_prefix("/")
+      end
     end
   end
 end

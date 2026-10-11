@@ -35,7 +35,7 @@ module Master
 
       def initialize(root:, paths:, id: SecureRandom.hex(10), bus: nil)
         @root = File.expand_path(root)
-        @paths = Array(paths).map { |path| normalize(path) }.compact.uniq
+        @paths = Array(paths).filter_map { |path| normalize(path) }.uniq
         @id = self.class.send(:normalize_id, id)
         @bus = bus
         @seen = Hash.new { |hash, path| hash[path] = [] }
@@ -90,7 +90,7 @@ module Master
       def checkpoint!(paths)
         raise "transaction not active" unless @active
 
-        selected = Array(paths).map { |path| normalize(path) }.compact.uniq
+        selected = Array(paths).filter_map { |path| normalize(path) }.uniq
         selected.each do |path|
           @snapshots[path] = snapshot(path)
           @seen[path] = [fingerprint(absolute(path))]

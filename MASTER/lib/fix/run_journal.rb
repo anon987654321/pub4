@@ -170,7 +170,7 @@ module Master
           "id" => SecureRandom.hex(10),
           "state" => "active",
           "target" => relative(target),
-          "files" => Array(files).map { |path| relative(path) }.compact.uniq.sort,
+          "files" => Array(files).filter_map { |path| relative(path) }.uniq.sort,
           "max_passes" => Integer(max_passes),
           "budget_seconds" => Integer(budget_seconds),
           "started_at" => now.iso8601,

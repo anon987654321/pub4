@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "open3"
-require_relative "../../core/paths"
 
 module Master
   module Fix
@@ -172,7 +171,7 @@ module Master
         # soul.yml is the constitutional source for sacred paths. The catalogue in
         # laws.yml describes laws; it does not own write protection.
         def immutable?(path)
-          @sacred_paths ||= Master::Core::Paths.new(root: git_root || @root)
+          @sacred_paths ||= Master::Core::Constitution::Paths.new(root: git_root || @root)
           @sacred_paths.sacred?(path)
         end
 

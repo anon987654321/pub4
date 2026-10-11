@@ -77,6 +77,6 @@ class InternalController < ApplicationController
         User.find_by(email_address: params[:user_email].to_s.downcase.strip)
       end
 
-    user if user && user.deleted_at.nil? && user.deletion_scheduled_at.nil?
+    user if user&.deleted_at.nil? && user.deletion_scheduled_at.nil?
   end
 end

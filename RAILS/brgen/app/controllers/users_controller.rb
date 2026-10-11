@@ -91,8 +91,7 @@ class UsersController < ApplicationController
 
   # Carry the guest's posts, comments and conversations onto the new account.
   # Must run before start_new_session_for, which resets the session holding the
-  # guest id. A failed merge must not cost the visitor the account they just
-  # made, so it is logged rather than raised. Returns true when a merge ran.
+  # guest id. A failed merge must not cost the visitor the account they   # made, so it is logged rather than raised. Returns true when a merge ran.
   def merge_guest_into(user, guest)
     return false unless guest
 

@@ -46,7 +46,7 @@ class Reaction < ApplicationRecord
   #
   # stream_name is per-target, which is right for a post — one page, one
   # subscription. A chat room renders 50+ messages, so per-target streams would
-  # mean 50+ Turbo subscriptions per reader just so a thumbs-up can appear. The
+  # mean 50+ Turbo subscriptions per reader so a thumbs-up can appear. The
   # room is already subscribed to its conversation, so reuse it: one extra
   # broadcast, no extra subscriptions, and reactions land live for everyone in
   # the room rather than only for people who happen to have that message open.

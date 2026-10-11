@@ -291,7 +291,7 @@ module Marketplace
         def session_payload(payable, return_url:, callback_url:)
           orders = payable.is_a?(Marketplace::Checkout) ?
             payable.order_lines.includes(listing: :store).to_a : [ payable ]
-          fee_splits = orders.map { |order| stored_split_contract!(order)[:fee_split] }.compact.uniq
+          fee_splits = orders.filter_map { |order| stored_split_contract!(order)[:fee_split] }.uniq
           raise SellerNotReady, "Dintero fee split changed within checkout" if fee_splits.size > 1
 
           {

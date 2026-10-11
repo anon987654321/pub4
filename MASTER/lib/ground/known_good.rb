@@ -44,7 +44,7 @@ module Master
         record = {
           "version" => VERSION,
           "commit" => sha,
-          "paths" => Array(paths).map { |path| relative(path) }.compact.uniq.sort,
+          "paths" => Array(paths).filter_map { |path| relative(path) }.uniq.sort,
           "constitution" => safe_digest,
           "promoted_at" => Time.now.utc.iso8601,
         }

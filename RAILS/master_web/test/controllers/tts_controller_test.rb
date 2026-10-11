@@ -7,7 +7,7 @@ class TtsControllerTest < ActionDispatch::IntegrationTest
   # TtsJob::CACHE_DIR is one directory shared by the whole process group, and
   # Rails parallelises across 8 forked workers once the suite passes 50 tests.
   # This setup used to `rm_f` every file in it, so one worker wiped the fixtures
-  # another had just written — the two status/destroy tests failed only in a full
+  # another had written — the two status/destroy tests failed only in a full
   # parallel run and passed in isolation at every seed.
   #
   # No wipe is needed: job ids are SHA256(voice|style|rate|pitch|text)[0,32], so
@@ -25,7 +25,7 @@ class TtsControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
-  # Records the id so teardown cleans up just this test's files.
+  # Records the id so teardown cleans up this test's files.
   def track(job)
     (@created_job_ids ||= []) << job.job_id
     job

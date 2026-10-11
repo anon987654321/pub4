@@ -148,7 +148,7 @@ module Operator
             content = pieces.first.fetch(4)
             content = content.delete_suffix("\n") if pieces.first.fetch(3).zero?
           else
-            total_fragments = pieces.map { |piece| piece.fetch(1) }.compact.uniq
+            total_fragments = pieces.filter_map { |piece| piece.fetch(1) }.uniq
             numbers = fragment_numbers.sort
             raise "snapshot extract: incomplete fragments for #{relative}" unless total_fragments.size == 1 && numbers == (1..total_fragments.first).to_a
             content = pieces.sort_by(&:first).map do |piece|

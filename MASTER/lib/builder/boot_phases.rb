@@ -105,7 +105,7 @@ module Master
         personality = Voice::Personality.new(@config["persona"]&.to_sym || Voice::Personality::DEFAULT,
                                              root: @root, homeostat: @homeostat)
         learnings = Ground::KnowledgeStore.new(root: @root)
-        ground_truth = Ground::GroundTruth.new(event_bus: nil)
+        ground_truth = Ground::Truth.new(event_bus: nil)
         library_verify = Ground::LibraryVerify.new(root: @root)
         law_resolver = Ground::LawResolver.new
         preserve_user_intent = Ground::PreserveUserIntent.new(root: @root)

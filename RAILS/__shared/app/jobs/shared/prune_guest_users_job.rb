@@ -117,7 +117,7 @@ module Shared
     #
     # The 5-minute average was 1.77 at that same moment: it describes the box
     # rather than the last thing to touch it. A prune that genuinely loads the
-    # machine still raises it, just over minutes instead of instantly, which is
+    # machine still raises it, over minutes instead of instantly, which is
     # the behaviour wanted from a brake. Operator::CiGuard gates on the same field.
     def busy?
       return false if Rails.env.test?

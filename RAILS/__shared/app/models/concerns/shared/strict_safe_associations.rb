@@ -10,7 +10,7 @@ module Shared
   #
   # That combination is a trap for state-changing methods that notify someone or
   # emit an activity event. They run `update!` first and then read an
-  # association to find the recipient. When the record was loaded by id — a
+  # association to find the recipient. When the caller loads the record by id — a
   # controller action, a PSP webhook, a background job — nothing is preloaded,
   # so the read raises *after* the write has already committed. The state change
   # sticks, the notification is silently lost, and the caller gets a 500. Live

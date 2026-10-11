@@ -11,7 +11,7 @@ class OmniauthCallbacksController < ::ApplicationController
   #
   # Deliberately loose. A person signs in once; 30 a minute from one address is
   # already far past that, and a tighter number would lock out an office or a
-  # campus behind one NAT for a threat this endpoint does not really face.
+  # campus behind one NAT for a threat this endpoint does not face.
   rate_limit to: 30, within: 1.minute, only: :create,
     with: -> { redirect_to new_session_path, alert: t("shared.flash.rate_limited") }
 

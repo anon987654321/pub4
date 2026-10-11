@@ -69,7 +69,7 @@ class NearbyWidgetTest < ActionDispatch::IntegrationTest
   # The composer that comes back after a send has to be usable for the *next*
   # send. create_widget.turbo_stream.erb passed the persisted @message straight
   # into form_with, so the reset form carried method="patch" and the text that
-  # had just been sent -- and routes.rb declares
+  # had been sent -- and routes.rb declares
   # `resources :messages, only: [ :create ]`, so there is no PATCH route for it
   # to post to. Every assertion in the test above passed while the second send
   # was impossible, which is why this one checks the form's shape.

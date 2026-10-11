@@ -90,7 +90,7 @@ module Operator
     def personas(text)
       return [] if text.to_s.empty?
 
-      YAML.safe_load(text, aliases: true).fetch("personas", []).map { |row| row["name"] }.compact.sort
+      YAML.safe_load(text, aliases: true).fetch("personas", []).filter_map { |row| row["name"] }.sort
     end
 
     def biases(text)

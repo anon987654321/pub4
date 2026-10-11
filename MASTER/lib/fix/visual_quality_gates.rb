@@ -47,7 +47,7 @@ module Master
           "i18n" => els.select { |e| i18n_broken?(e) } + VisualI18n.rows(payload),
           "directives" => VisualConformance.check_payload(surface, payload),
         }
-        metrics = offenders.transform_values { |rows| rows.size }
+        metrics = offenders.transform_values(&:size)
         metrics["layout_shift"] = shift(els, payload, baseline_rects)
         { "metrics" => metrics, "offenders" => offenders.transform_values { |rows| rows.map { |r| label(r) }.first(KEEP) },
           "rects" => rects(els) }

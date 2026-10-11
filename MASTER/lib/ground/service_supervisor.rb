@@ -46,7 +46,7 @@ module Master
 
       private
 
-      # Same loop as before the split, just spread across three names: try up
+      # Same loop as before the split, spread across three names: try up
       # to max_restarts times, each attempt recorded before it runs (so a
       # crash mid-start still counts against the budget), each followed by
       # the same wait-for-healthy poll. Returns the first real Result (from

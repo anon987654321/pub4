@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require_relative "../tribunal_feedback"
 require_relative "../../review/council/critique"
 require_relative "../../fix/execution_trace"
 require_relative "../../operator/gate_chain"

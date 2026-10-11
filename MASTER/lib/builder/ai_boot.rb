@@ -189,7 +189,7 @@ module Master
     # abort_on_exception is false on every background thread here, which is
     # right — a watcher falling over must not take the process with it. The rescue
     # is the other half: with report and abort both off and nothing rescuing, a
-    # thread simply stops, its feature quietly does nothing, and a dead WatchLoop is
+    # thread stops, its feature quietly does nothing, and a dead WatchLoop is
     # indistinguishable from a hang.
     #
     # So the exception is published on the bus and logged, and the thread still

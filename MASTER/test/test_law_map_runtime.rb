@@ -79,13 +79,6 @@ class TestLawMapRuntime < Minitest::Test
     assert face.end_with?("web/public")
   end
 
-  def test_bias_guard_detects_aesthetic_neglect
-    guard = Master::Ground::BiasGuard.new(root: @root)
-    proposal = Struct.new(:action, :reason, :confidence).new("edit view", "update erb scss layout", 0.9)
-    hits = guard.detect(proposal)
-    assert_includes hits, "aesthetic_neglect"
-  end
-
   def test_provenance_gaps_flags_entries_missing_source
     Dir.mktmpdir do |dir|
       FileUtils.mkdir_p(File.join(dir, "data"))

@@ -235,7 +235,7 @@ module Master
           Array(capture[:payload]["elements"]).flat_map do |element|
             [element["key"], element["aria"]].compact
           end
-        end.map { |token| token.to_s[/#[\w-]+|\.[\w-]+/] }.compact.uniq.first(50)
+        end.filter_map { |token| token.to_s[/#[\w-]+|\.[\w-]+/] }.uniq.first(50)
 
         anchors = {}
         tokens.each { |token| anchors[token] = grep_source(token, allowed: candidates) }

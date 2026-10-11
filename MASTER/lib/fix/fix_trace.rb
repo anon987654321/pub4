@@ -4,14 +4,14 @@ require "json"
 require "tmpdir"
 require_relative "../io/exec"
 require_relative "run_journal"
-require_relative "fix_transcript"
+require_relative "transcript"
 require_relative "../trace/dmesg"
 
 module Master
   module Fix
     # What /fix says while it works: one Dmesg line per council pick and per
     # model fix, written to stdout so the parent's run_stream forwards them,
-    # and a full NDJSON record of each beside it (FixTranscript). The lines
+    # and a full NDJSON record of each beside it (Transcript). The lines
     # are always on; MASTER_FIX_VERBOSE=1 adds a short diff under a fix.
     module FixTrace
       PICK_CHARS = 200
@@ -68,7 +68,7 @@ module Master
 
       def transcript
         id = run_id
-        @transcript = FixTranscript.new(root: transcript_root, run_id: id) unless @transcript && @transcript_id == id
+        @transcript = Transcript.new(root: transcript_root, run_id: id) unless @transcript && @transcript_id == id
         @transcript_id = id
         @transcript
       end

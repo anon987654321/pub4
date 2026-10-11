@@ -34,7 +34,7 @@ module Shared
     # carries a unique index. Two people posting the same tag in the same
     # instant lose the race, and the loser raises RecordNotUnique out of an
     # after_save, which rolls their post back. The retry reads what the other
-    # one just wrote.
+    # one wrote.
     def find_or_create_hashtag(name)
       Hashtag.find_or_create_by!(name:)
     rescue ActiveRecord::RecordNotUnique

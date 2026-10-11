@@ -238,7 +238,7 @@ return if collisions.any?
         moves: members.map { |f| move_for(f, name, kind) },
         evidence: {
           external_references: external_references(files, corpus_root:),
-          namespaced_members: files.map { |path| constant(path) }.compact,
+          namespaced_members: files.filter_map { |path| constant(path) },
         },
         check: [
           "every reference to the old constant updated — Zeitwerk resolves by path, so a stale one is a NameError at first use",

@@ -176,7 +176,7 @@ module Master
           # passes, because the result is valid JavaScript and a different
           # program — the worst shape this transform has. It reached
           # RAILS/gates/support/geometry_probe/walk.js on the trial run recorded
-          # in TODO.md and was reverted by hand.
+          # in TODO.md and a person reverted it by hand.
           TRAILING_ACCESS = ["(", "[", ".", "`"].freeze
           private_constant :TRAILING_ACCESS
 

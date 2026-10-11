@@ -62,7 +62,7 @@ module HistoryValuables
   end
 
   def archive_path?(path)
-    path && path.match?(ARCHIVE_PATTERN)
+    path&.match?(ARCHIVE_PATTERN)
   end
 
   def hits(log)

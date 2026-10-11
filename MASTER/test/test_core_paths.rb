@@ -1,12 +1,11 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-require_relative "../lib/core/paths"
 require "fileutils"
 
 class TestCorePaths < Minitest::Test
   def paths
-    Master::Core::Paths.new(root: Master::ROOT)
+    Master::Core::Constitution::Paths.new(root: Master::ROOT)
   end
 
   def test_soul_owns_the_sacred_paths
@@ -29,7 +28,7 @@ class TestCorePaths < Minitest::Test
         File.join(root, "MASTER/data/soul.yml"),
         "absolute:\n  sacred_paths:\n    - data/\n    - bin/cli\n",
       )
-      repo_paths = Master::Core::Paths.new(root:)
+      repo_paths = Master::Core::Constitution::Paths.new(root:)
 
       assert_includes repo_paths.sacred_paths, "MASTER/data/"
       assert repo_paths.sacred?(File.join(root, "MASTER/data/laws.yml"))
