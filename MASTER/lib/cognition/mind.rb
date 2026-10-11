@@ -64,7 +64,9 @@ module Master
         # non-reentrant Mutex deadlocks the publishing thread rather than
         # recursing. The bus itself is a Monitor and calls handlers unlocked, so
         # the tick's own publish from inside this one is safe.
-        tick! if tick_due?
+        # A terminal repair outcome feeds the next run's review strategy, so it
+        # must survive even when the process goes idle or restarts immediately.
+        tick! if event == "fix_loop:terminal" || tick_due?
       rescue StandardError => e
         Ground::Swallow.log(e, context: "cognition.observe", event_bus: @bus)
       end
