@@ -96,9 +96,11 @@ module Master
         source = (row[:source] || row["source"]).to_s.strip
         supplied = (row[:sha256] || row["sha256"]).to_s.downcase
         raise ArgumentError, "evidence source is required" if source.empty?
+        raise ArgumentError, "evidence source exceeds #{LABEL_LIMIT} characters" if source.length > LABEL_LIMIT
 
         if row.key?(:content) || row.key?("content")
-          content = (row[:content] || row["content"]).to_s
+          content = row.key?(:content) ? row[:content] : row["content"]
+          raise ArgumentError, "evidence content must be a string" unless content.is_a?(String)
           sha256 = Digest::SHA256.hexdigest(content)
           raise ArgumentError, "evidence content SHA-256 mismatch" if !supplied.empty? && supplied != sha256
         elsif root
@@ -120,7 +122,7 @@ module Master
           raise ArgumentError, "evidence SHA-256 must contain 64 hexadecimal characters" unless sha256.match?(/\A[0-9a-f]{64}\z/)
         end
 
-        { "source" => source[0, LABEL_LIMIT], "sha256" => sha256 }.freeze
+        { "source" => source, "sha256" => sha256 }.freeze
       end
 
       private

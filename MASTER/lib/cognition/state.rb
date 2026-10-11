@@ -70,6 +70,11 @@ module Master
       def initialize(data, checkpoint_valid: false)
         @data = self.class.deep_merge(self.class.deep_dup(DEFAULT), data)
         @checkpoint_valid = checkpoint_valid == true
+        unless @checkpoint_valid
+          @data["metrics"]["continuity"] = 0.0
+          @data["metrics"]["checkpoint_continuity"] = 0.0
+          @data["identity"]["continuity"] = 0.0
+        end
       end
 
       def mark_checkpoint_valid!
