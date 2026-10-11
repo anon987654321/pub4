@@ -153,24 +153,26 @@ class TestFixLoopOscillation < Minitest::Test
     assert_equal "fix loop oscillation", rollback[:payload][:reason]
   end
 
-  def test_progressed_pass_spares_oscillation_rollback
+  def test_progressed_pass_still_detects_an_identical_finding_snapshot
     loop, committer = build_loop([{ law: "TEST_RULE", file: "dummy.yml", line: 1, message: "osc" }])
     pass_runner = loop.instance_variable_get(:@pass_runner)
+    found = [{ law: "TEST_RULE", file: "dummy.yml", line: 1, message: "osc" }]
+    seen = Set.new([pass_runner.send(:violation_snapshot, found)])
 
     stagnant = pass_runner.send(
       :stagnant?,
       [],
-      ["snapshot"],
+      seen,
       Hash.new(0),
-      [{ law: "TEST_RULE", file: "dummy.yml", line: 1, message: "osc" }],
+      found,
       2,
       progressed: true,
     )
 
-    refute stagnant
-    assert_empty committer.calls
-    refute_includes @bus.events.map { |e| e[:event] }, "fix_loop:transaction_rollback"
-    assert_empty @bus.events.select { |e| e[:event] == "fix_loop:oscillation" }
+    assert stagnant
+    assert_equal [:abort], committer.calls
+    assert_includes @bus.events.map { |e| e[:event] }, "fix_loop:transaction_rollback"
+    assert_equal 1, @bus.events.count { |e| e[:event] == "fix_loop:oscillation" }
   end
 
   def test_oscillation_does_not_fire_when_violations_clear

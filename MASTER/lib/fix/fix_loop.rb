@@ -48,7 +48,8 @@ module Master
       TERMINAL_STATES = %i[done plateau crash skip blocked validation_failed delivery_failed timeout human_decision failed reloading].freeze
       # A pass status that ends the run, and the state it ends in.
       PASS_ENDINGS = { clean: :done, validation_failed: :validation_failed,
-                       delivery_failed: :delivery_failed, reloading: :reloading }.freeze
+                       delivery_failed: :delivery_failed, human_decision: :human_decision,
+                       reloading: :reloading }.freeze
 
       MAX_PASSES = 15
       ADAPTIVE_PASS_CHUNK = Integer(ENV.fetch("MASTER_FIX_ADAPTIVE_PASS_CHUNK", 3))

@@ -152,18 +152,16 @@ module Master
         ((initial.to_f - current.to_f) / initial.to_f).round(6)
       end
 
+      # Progress is activity; improvement is a measured reduction in risk.
+      # An initial observation or an unchanged risk vector cannot justify a
+      # larger pass budget merely because a file was written.
       def improving?
-        return false if @history.empty?
+        return false if @history.size < 2
 
         current = @history[-1]
-        return current[:progressed] == true if @history.size < 2
-
         before = @history[-2]
         comparison = current[:risk_vector] <=> before[:risk_vector]
-        return comparison.negative? if comparison && !comparison.zero?
-        return false if comparison&.positive?
-
-        current[:progressed] == true
+        comparison&.negative? == true
       end
 
       def adaptive_decision(deadline_expired:, pass_limit:, absolute_limit:)

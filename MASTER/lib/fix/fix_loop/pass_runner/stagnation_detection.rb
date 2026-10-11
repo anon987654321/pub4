@@ -12,9 +12,15 @@ module Master
           private
 
           def stagnant?(history, seen_snapshots, recurring_violations, found, pass, progressed: false)
-            return false if progressed
+            # A write cannot excuse an exact recurrence: streamed/model repairs
+            # may change bytes while leaving the observed finding set unchanged.
             return true if oscillating?(seen_snapshots, found, pass)
             return true if recurrence_cycle?(recurring_violations, found, pass)
+
+            # A changed file with a new finding set gets another observation;
+            # count-only plateau detection is reserved for passes that made no
+            # source progress.
+            return false if progressed
 
             history << found.size
             plateaued?(history, found, pass)

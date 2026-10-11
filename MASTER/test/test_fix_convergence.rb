@@ -120,6 +120,45 @@ class TestFixConvergence < Minitest::Test
     assert_equal [0, 1, 2, 3, 4], calls
   end
 
+  def test_human_decision_is_a_terminal_pass_outcome
+    loop = Master::Fix::FixLoop.allocate
+    journal_events = []
+    journal = Object.new
+    journal.define_singleton_method(:pass_start) { |run_id, pass, transaction_id:| journal_events << [:start, run_id, pass, transaction_id] }
+    journal.define_singleton_method(:pass_finish) do |run_id, pass, status:, message:|
+      journal_events << [:finish, run_id, pass, status, message]
+    end
+    loop.instance_variable_set(:@run_journal, journal)
+
+    pass_result = Master::Fix::FixLoop::PassRunner::PassResult.new(
+      status: :human_decision, consecutive_clean: 0, message: "operator review required"
+    )
+    runner = Object.new
+    runner.define_singleton_method(:run_pass) { |**| pass_result }
+    runner.define_singleton_method(:pass_progress?) { false }
+    loop.instance_variable_set(:@pass_runner, runner)
+    loop.define_singleton_method(:structural_repair?) { |**| false }
+
+    deadline = Object.new
+    deadline.define_singleton_method(:expired?) { false }
+    deadline.define_singleton_method(:at) { Time.now + 60 }
+
+    result = loop.send(
+      :run_passes,
+      files: [],
+      target: @root,
+      max_passes: 10,
+      deadline:,
+      budget_seconds: 60,
+      run_id: "human-decision-run",
+    )
+
+    assert_match(/\\AHUMAN_DECISION: /, result.value!)
+    assert_equal 1, journal_events.count { |event| event.first == :start }
+    assert_equal [:finish, "human-decision-run", 1, :human_decision, "operator review required"],
+                 journal_events.last
+  end
+
   def test_incremental_done_requires_a_full_target_proof
     loop = Master::Fix::FixLoop.allocate
     loop.instance_variable_set(:@root, @root)
@@ -209,6 +248,20 @@ class TestFixConvergence < Minitest::Test
 
     assert discipline.improving?
     assert_equal 0.5, discipline.quality_delta
+  end
+
+  def test_progress_without_measured_risk_reduction_is_not_improvement
+    discipline = Master::Fix::ConvergenceDiscipline.new(root: @root, bus: @bus)
+    discipline.begin_run([File.join(@root, "dummy.yml")])
+    finding = {
+      law: "TEST_RULE", file: "dummy.yml", line: 1, message: "same finding", severity: :warning
+    }
+
+    discipline.observe(pass: 1, findings: [finding], files: [File.join(@root, "dummy.yml")], progressed: true)
+    refute discipline.improving?, "a single observation has no measured comparison"
+
+    discipline.observe(pass: 2, findings: [finding], files: [File.join(@root, "dummy.yml")], progressed: true)
+    refute discipline.improving?, "unchanged risk is not improvement, even when bytes changed"
   end
 
   def test_unmeasured_proof_baseline_is_inconclusive_not_green
