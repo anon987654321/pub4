@@ -4,7 +4,7 @@ Updated: 2026-10-11. Production truth is observed vm23 state; repository invento
 
 ## P0 — production safety
 
-- [ ] Verify registrar and authoritative DNS status for `svalbrd.no`: `RAILS/apps.yml` records an expiry of 2026-09-06, which is in the past. Renew if required, then update the fact only from registrar evidence; check the nameserver, DNSSEC and certificate state independently.
+- [ ] Verify registrar and authoritative DNS status for `svalbrd.no`: `RAILS/apps.yml` records an expiry of 2026-09-06, which is in the past, and `OPENBSD/test/test_dns_facts_agree.rb` currently asserts that exact historical date. Renew if required, update the fact from registrar evidence, and rewrite the test to verify source consistency/current validity rather than blessing a stale literal; check nameserver, DNSSEC and certificate state independently.
 - [ ] Review the deploy lock's age-only stale rule. `OPENBSD/bin/vps-deploy` can reclaim a lock past its TTL even while its same-host owner PID is alive. Prefer an explicit heartbeat/lease or a live-owner-safe recovery path; add a concurrent-deploy test that proves a slow but active deploy cannot lose its lock.
 - [ ] Perform a watched vm23 deploy for each supported target and the full fleet. Record the commit, deploy log, pre/post service state, relayd checks, public health and ports 61352/47312; verify amber and bsdports are restored after the serial deployment.
 - [ ] Test deploy failure at each stage (pull, CI, sync, precompile, restart and post-deploy health). Locks and deploy flags must be released or deliberately retained with a clear recovery instruction; dependent services must not remain silently shed; the log must preserve the actual terminal result after SSH disconnect.
