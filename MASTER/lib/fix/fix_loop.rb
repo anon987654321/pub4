@@ -25,6 +25,7 @@ require_relative "transformation_plan"
 require_relative "convergence_discipline"
 require_relative "reflection"
 require_relative "run_budget"
+require_relative "model_roles"
 
 module Master
   module Fix
@@ -111,6 +112,7 @@ module Master
         return halted_result if halted? && !requested
 
         @pass_runner&.reset_gaps!
+        ModelRoles.announce
         current_phase = :corpus
         files = incremental ? @file_collector.collect_changed(target) : @file_collector.collect(target)
         coverage = {

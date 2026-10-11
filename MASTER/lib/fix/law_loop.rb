@@ -8,6 +8,9 @@ require_relative "constants"
 require_relative "fix_attempt"
 require_relative "fix_trace"
 require_relative "patch_applier"
+require_relative "model_roles"
+require_relative "primitive_first"
+require_relative "taste_memory"
 require_relative "severity"
 require_relative "violation"
 require_relative "law_loop/collapse_guard"
@@ -177,7 +180,9 @@ module Master
         @model_failed = false
         @model_unavailable = false
         return :model_unavailable unless @agent
-        source = violation[:severity].to_sym == :error ? council_fix(violation) : request_fix(violation)
+        source = Master::Fix::ModelRoles.pinned(:fixer, only: visual_source?(violation[:file])) do
+          violation[:severity].to_sym == :error ? council_fix(violation) : request_fix(violation)
+        end
         return (if @model_unavailable
 :model_unavailable
 else
@@ -269,6 +274,10 @@ end) if source.to_s.strip.empty?
           return reject_fix(path, old_src, "test_failed", test: failure)
         end
 
+        if (why = PrimitiveFirst.check(path, old_src, new_src, root: @root))
+          return reject_fix(path, old_src, "page_scoped_override", evidence: why)
+        end
+
         if @visual_custody && visual_source?(path)
           custody = @visual_custody.verify!(anchors: [violation[:anchor]].compact)
           return reject_fix(path, old_src, "visual_regression", evidence: custody.message) unless custody.ok?
@@ -353,6 +362,7 @@ end) if source.to_s.strip.empty?
         Line #{violation[:line]}: #{violation[:message]}
         #{ctx[:fix_line]}
         #{visual_fix_context}
+        #{PrimitiveFirst.hint(violation, root: @root)}
         #{Protocol.law_prompt(@law)}
 
         #{SEMANTIC_PASS_CHECKLIST}
@@ -368,7 +378,7 @@ end) if source.to_s.strip.empty?
       def visual_fix_context
         return "" unless @visual_image
 
-        "Rendered evidence is attached to this request. Treat the screenshot as ground truth for the visual finding; "           "do not invent geometry, typography, or composition that the capture does not support."
+        ["Rendered evidence is attached to this request. Treat the screenshot as ground truth for the visual finding; "           "do not invent geometry, typography, or composition that the capture does not support.", TasteMemory.summary(@root)].compact.join("\n")
       end
 
       def prompt_context_for(violation:, path:, style:)

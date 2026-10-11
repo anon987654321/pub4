@@ -1,0 +1,26 @@
+# Which model plays which part of a /fix run. The critic judges the render and
+# the fixer edits the CSS; one model grading its own edits agrees with itself,
+# so the critic is drawn from a different provider whenever one is alive.
+# Lists are in preference order; the first alive entry wins. Environment
+# overrides: MASTER_FIX_CRITIC_MODEL, MASTER_FIX_FIXER_MODEL,
+# MASTER_FIX_WISHER_MODEL.
+schema: 1
+roles:
+  critic:
+    - agy:auto
+    - grok-cli:auto
+    - claude-cli:claude-sonnet-5-5
+  fixer:
+    - claude-cli:claude-opus-5-5
+    - claude-cli:claude-sonnet-5-5
+    - agy:auto
+  wisher:
+    - claude-cli:claude-sonnet-5-5
+    - grok-cli:auto
+    - agy:auto
+# Lane prefixes known to answer nothing right now (quota spent, or a CLI that
+# hangs); a lane here is never chosen. Remove an entry when the lane answers.
+dead:
+  - codex-cli:
+  - gemini
+  - ollama:glm

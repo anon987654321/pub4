@@ -2,6 +2,8 @@
 
 require_relative "tribunal"
 require_relative "../challenges"
+require_relative "../../fix/model_roles"
+require_relative "../../fix/taste_memory"
 
 module Master
   module Review
@@ -26,7 +28,9 @@ module Master
           @speak_personas = speak_personas
         end
 
-        def run
+        def run = Master::Fix::ModelRoles.pinned(:critic) { run_panel }
+
+        def run_panel
           preset = load_preset
           panel = build_panel(preset)
           payload = build_payload(preset)
@@ -194,7 +198,8 @@ module Master
 
         def build_context
           base = Context.new(preset_key: @mode[:preset_key], quality_kind: @mode[:quality_kind]).to_s
-          [base, @briefing.empty? ? nil : "HARD REVIEW BRIEFING\n#{@briefing}"].compact.join("\n\n")
+          taste = @mode[:preset_key] == "ui_critique" ? Master::Fix::TasteMemory.summary(Master::ROOT) : nil
+          [base, @briefing.empty? ? nil : "HARD REVIEW BRIEFING\n#{@briefing}", taste].compact.join("\n\n")
         end
 
         def load_preset

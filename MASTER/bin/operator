@@ -279,6 +279,15 @@ when "visual"
   # Blesses a parked chrome-geometry baseline; the /fix loop never does this itself.
   require File.join(ROOT, "MASTER", "lib", "fix", "visual_drift_budget")
   sub, surface = ARGV
+  if sub == "taste"
+    # The operator's verdict on a rendered layout; the loop never writes one.
+    verdict, id = ARGV[1], ARGV[2]
+    note = ARGV[(ARGV.index("--note").to_i + 1)..].first if ARGV.include?("--note")
+    abort("usage: visual taste approve|reject <app/label/viewport> [--note TEXT]") unless %w[approve reject].include?(verdict) && id
+    entry = Master::Fix::TasteMemory.operator(root: ROOT, surface: id, verdict: verdict == "approve" ? "approved" : "rejected", note:)
+    puts "visual: #{id} #{entry["verdict"]} (#{entry["role"]}, #{entry["selectors"].size} selector(s))"
+    exit
+  end
   pending = Master::Fix::VisualDriftBudget.pending(ROOT)
   abort("usage: visual approve <surface>   (pending: #{pending.empty? ? "none" : pending.join(", ")})") unless sub == "approve" && surface
   blessed = Master::Fix::VisualDriftBudget.approve(surface, root: ROOT)

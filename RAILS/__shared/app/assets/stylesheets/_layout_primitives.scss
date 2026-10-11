@@ -1,0 +1,51 @@
+// Opt-in layout primitives after Every Layout. Nothing in the tree carries
+// these class names, so forwarding this partial changes no rendered value; a
+// page chooses one in its markup. .stack and .cluster live in _minimal (brgen
+// states its own .cluster), so they are not repeated here. Each primitive
+// declares its knobs with spacing tokens as defaults; an element overrides a
+// knob with an inline custom property.
+
+// Children sit side by side while they fit --switch-at, and stack below it.
+.switcher {
+  --layout-gap: var(--space-4);
+  --switch-at: 30rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--layout-gap);
+
+  > * {
+    flex-grow: 1;
+    flex-basis: calc((var(--switch-at) - 100%) * 999);
+  }
+}
+
+// A fixed-width side column beside a fluid main column; wraps when the main
+// column would fall under --main-min of the row.
+.with-sidebar {
+  --layout-gap: var(--space-4);
+  --side-width: 16rem;
+  --main-min: 50%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--layout-gap);
+
+  > :first-child {
+    flex-basis: var(--side-width);
+    flex-grow: 1;
+  }
+
+  > :last-child {
+    flex-basis: 0;
+    flex-grow: 999;
+    min-inline-size: var(--main-min);
+  }
+}
+
+// As many equal columns as fit --cell-min.
+.auto-grid {
+  --layout-gap: var(--space-4);
+  --cell-min: 14rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(var(--cell-min), 100%), 1fr));
+  gap: var(--layout-gap);
+}

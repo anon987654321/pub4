@@ -2,6 +2,7 @@
 
 require "fileutils"
 require "json"
+require_relative "taste_memory"
 
 module Master
   module Fix
@@ -83,6 +84,7 @@ module Master
         write(file(root, surface_id, "baseline"), rects)
         FileUtils.rm_f(pending)
         log("approved #{surface_id}: #{rects.size} chrome box(es) blessed")
+        TasteMemory.operator(root:, surface: surface_id, verdict: "approved", note: "chrome baseline blessed")
         rects.size
       end
 

@@ -48,6 +48,9 @@ module Master
         history = repair_history(root)
         parts << history if history
 
+        taste = taste_memory(root, target)
+        parts << taste if taste
+
         atlas = repository_atlas(repo_root)
         parts << atlas unless atlas.to_s.empty?
 
@@ -224,6 +227,11 @@ module Master
       def repair_history(root)
         require_relative "../fix/repair_outcomes"
         Master::Fix::RepairOutcomes.summary(root)
+      end
+
+      def taste_memory(root, target)
+        require_relative "../fix/taste_memory"
+        Master::Fix::TasteMemory.summary(root, target: target&.to_s)
       end
 
       def key_docs(repo_root)
