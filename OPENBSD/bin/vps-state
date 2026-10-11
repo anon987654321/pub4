@@ -166,7 +166,11 @@ else
   puts Deploy::Dmesg.line("vps0", "host", "name=#{payload[:host]}")
   puts Deploy::Dmesg.line("git0", "repo", "path=#{payload[:dev_repo]} sha=#{payload[:dev_sha]}")
   m = payload[:master]
-  puts Deploy::Dmesg.line("service0", "master", "state=#{m[:service]} port=#{m[:port]} port_state=#{m[:port_state]} tts=#{m[:tts_socket]}")
+  puts Deploy::Dmesg.line(
+    "service0",
+    "master",
+    "state=#{m[:service]} port=#{m[:port]} port_state=#{m[:port_state]} tts=#{m[:tts_socket]}",
+  )
   if m[:deploy_in_progress]
     status = m[:deploy_in_progress]
     state = status["stale"] ? "stale" : "running"
@@ -174,17 +178,26 @@ else
   end
   payload[:apps].each do |row|
     drift = row[:drift] ? "drift" : "sync"
-    puts Deploy::Dmesg.line("service0", row[:app],
-      "state=#{row[:service]} port=#{row[:port]} port_state=#{row[:port_state]} deployment=#{drift}")
+    puts Deploy::Dmesg.line(
+      "service0",
+      row[:app],
+      "state=#{row[:service]} port=#{row[:port]} port_state=#{row[:port_state]} deployment=#{drift}",
+    )
     if row[:last_deploy]
-      puts Deploy::Dmesg.line("deploy0", row[:app],
-        "sha=#{row[:last_deploy]['sha']} at=#{row[:last_deploy]['at']}")
+      puts Deploy::Dmesg.line(
+        "deploy0",
+        row[:app],
+        "sha=#{row[:last_deploy]['sha']} at=#{row[:last_deploy]['at']}",
+      )
     end
     if row[:deploy_in_progress]
       status = row[:deploy_in_progress]
       state = status["stale"] ? "stale" : "running"
-      puts Deploy::Dmesg.line("deploy0", row[:app],
-        "state=#{state} step=#{status['step']} pid=#{status['pid']}")
+      puts Deploy::Dmesg.line(
+        "deploy0",
+        row[:app],
+        "state=#{state} step=#{status['step']} pid=#{status['pid']}",
+      )
     end
   end
 end

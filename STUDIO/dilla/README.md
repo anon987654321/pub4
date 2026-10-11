@@ -31,8 +31,8 @@ score and not a spectrum display, and it passes through the shared postpro video
 default recipe is `dmt_bled`; `DILLA_VIDEO_POSTPRO` selects `architectural_clean`,
 `dilla_heavy`, or `0` for an untreated export. Bare `ruby dilla.rb` asks no question, because
 a render is reproduced from its knobs and its seed, and a question at the start is a step a
-script cannot answer. The `help` text still describes the older bare behaviour in one line;
-the dispatcher at the bottom of `dilla.rb` is the authority.
+script cannot answer. The dispatcher at the bottom of `dilla.rb` defines runtime behavior.
+Keep the command-help summary aligned with this bare-invocation contract.
 
 The command `live` is the endless performance mode. It enters the same showcase engine, with
 the same synths, effects, drum grids and source-backed progressions, and opens the local

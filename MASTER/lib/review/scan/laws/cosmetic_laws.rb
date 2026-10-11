@@ -319,9 +319,9 @@ module Master
               dense_count += 1
             end
           end
-          # A dense block that runs to end of file, with no trailing blank
-          # line to close it, never hit the check above — every file that
-          # simply ends mid-block (the common case) went unreported.
+          # A dense block that reaches end of file without a trailing blank
+          # line misses the check above — every file that reaches EOF mid-block
+          # (the common case) went unreported.
           if dense_count >= 10
             findings << finding(line: start_line, message: "suffocated block — add a blank line for breath")
           end

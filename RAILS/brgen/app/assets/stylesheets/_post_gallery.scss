@@ -19,7 +19,7 @@
   display: block;
   width: 100%;
   height: auto;
-  max-height: 34rem;
+  max-height: min(34rem, 72svh);
   object-fit: cover;
   border-radius: var(--radius-md, 0.5rem);
 }

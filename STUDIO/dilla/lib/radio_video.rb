@@ -262,13 +262,13 @@ module RadioVideo
           canvas { display: block; width: #{WIDTH}px; height: #{HEIGHT}px; }
           .hud {
             position: fixed; inset: 0; pointer-events: none; user-select: none;
-            color: rgba(230,234,236,.78); font: 500 13px/1.35 ui-monospace, SFMono-Regular, Menlo, monospace;
-            letter-spacing: .16em; text-transform: uppercase;
+            color: rgba(230,234,236,.84); font: 500 clamp(12px, 1.8vw, 16px)/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+            letter-spacing: .12em; text-transform: uppercase; font-variant-numeric: tabular-nums;
           }
-          .title { position:absolute; top:28px; left:32px; }
-          .state { position:absolute; right:30px; bottom:28px; text-align:right; }
-          .rule { position:absolute; left:32px; right:32px; bottom:22px; height:1px; background:rgba(210,214,218,.16); }
-          .title strong { font-weight:700; color:rgba(244,238,223,.92); }
+          .title { position: absolute; top: clamp(16px, 2.2vw, 28px); left: clamp(16px, 4.4vw, 32px); max-width: min(72vw, 40ch); }
+          .state { position: absolute; right: clamp(16px, 4.2vw, 30px); bottom: clamp(28px, 2.5vw, 32px); max-width: min(76vw, 48ch); text-align: right; overflow-wrap: anywhere; }
+          .rule { position: absolute; left: clamp(16px, 4.4vw, 32px); right: clamp(16px, 4.2vw, 30px); bottom: 22px; height: 1px; background: rgba(210,214,218,.16); }
+          .title strong { font-weight: 700; color: rgba(244,238,223,.96); letter-spacing: .16em; }
         </style>
       </head>
       <body>

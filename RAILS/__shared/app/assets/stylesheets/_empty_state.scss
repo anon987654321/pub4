@@ -51,10 +51,13 @@
 .empty-state-title {
   margin: 0;
   font-size: var(--text-title);
+  line-height: var(--leading-tight, 1.25);
   font-weight: var(--weight-bold);
   font-family: var(--font);
   color: var(--text);
   letter-spacing: var(--tracking-tight);
+  text-wrap: balance;
+  overflow-wrap: anywhere;
 }
 
 .empty-state-body,
@@ -62,6 +65,8 @@
   margin: 0;
   max-width: 28em;
   color: var(--text-secondary);
+  text-wrap: pretty;
+  overflow-wrap: anywhere;
 }
 
 /* :not(.btn) because this rule is more specific (0,1,1) than .btn-primary

@@ -173,3 +173,16 @@
     scroll-behavior: auto;
   }
 }
+
+/* Keep the dressing-room stage inside short phone viewports without shrinking
+   the model into an unusable sliver. Track controls retain a small touch gap. */
+@media (max-width: 520px) {
+  .amber-look-stage {
+    height: min(70svh, 520px);
+    min-height: min(360px, 55svh);
+  }
+
+  .amber-look-track {
+    gap: 6px;
+  }
+}

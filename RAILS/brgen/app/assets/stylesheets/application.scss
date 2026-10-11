@@ -1144,7 +1144,7 @@ body.vertical-messenger .layout > main#main-content > section.messenger-window {
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  min-height: var(--tap-min);
+  min-block-size: var(--tap-min);
 }
 
 // Search reads as a room you can go to rather than as a button, which is what it
@@ -1153,7 +1153,7 @@ body.vertical-messenger .layout > main#main-content > section.messenger-window {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  min-height: var(--tap-min);
+  min-block-size: var(--tap-min);
   padding-inline: var(--space-2);
   border-radius: var(--radius-sm);
   color: var(--text-secondary);
@@ -1197,7 +1197,7 @@ body.vertical-messenger .layout > main#main-content > section.messenger-window {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  min-height: var(--tap-min);
+  min-block-size: var(--tap-min);
   padding-inline: var(--space-2);
   border-radius: var(--radius-sm);
   color: var(--text-secondary);
@@ -1224,13 +1224,13 @@ body.vertical-messenger .layout > main#main-content > section.messenger-window {
 }
 
 // The name cell of a list row, wherever the window draws one: a room in the rail
-// and a person in the member list. min-width: 0 is the half that matters — a
-// flex item defaults to min-width: auto and will not shrink below its text, so
+// and a person in the member list. min-inline-size: 0 is the half that matters — a
+// flex item defaults to min-inline-size: auto and will not shrink below its text, so
 // without it the ellipsis never happens and the row overflows instead.
 .messenger-rail-name,
 .messenger-member-name {
   flex: 1;
-  min-width: 0;
+  min-inline-size: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1262,12 +1262,12 @@ body.vertical-messenger .layout > main#main-content > section.messenger-window {
 }
 
 // Name over preview. The row is a grid rather than a stack of two flex children
-// so the middle column can be the one that shrinks — min-width: 0 on a flex item
+// so the middle column can be the one that shrinks — min-inline-size: 0 on a flex item
 // is what lets an ellipsis happen at all.
 .messenger-room-copy {
   display: grid;
   flex: 1;
-  min-width: 0;
+  min-inline-size: 0;
 }
 
 .messenger-room-preview {
@@ -1329,7 +1329,7 @@ body.vertical-messenger .layout > main#main-content > section.messenger-window {
   align-items: center;
   gap: var(--space-2);
   inline-size: 100%;
-  min-height: var(--tap-min);
+  min-block-size: var(--tap-min);
   padding-block: var(--space-2);
   padding-inline: var(--space-2);
   border: 0;
@@ -1348,8 +1348,8 @@ body.vertical-messenger .layout > main#main-content > section.messenger-window {
 .messenger-pane {
   display: flex;
   flex-direction: column;
-  min-width: 0;
-  min-height: 0;
+  min-inline-size: 0;
+  min-block-size: 0;
   background: var(--bg);
 }
 
@@ -1358,7 +1358,7 @@ body.vertical-messenger .layout > main#main-content > section.messenger-window {
   align-items: center;
   gap: var(--space-2);
   flex: none;
-  min-height: 64px;
+  min-block-size: 64px;
   padding: var(--space-2) var(--space-3);
   background: var(--surface-elevated);
 }
@@ -1385,7 +1385,7 @@ body.vertical-messenger .layout > main#main-content > section.messenger-window {
 
 .messenger-header-identity {
   flex: 1;
-  min-width: 0;
+  min-inline-size: 0;
 }
 
 .messenger-header-identity h1 {
@@ -1403,6 +1403,7 @@ body.vertical-messenger .layout > main#main-content > section.messenger-window {
   color: var(--text-secondary);
   font-size: var(--text-xs);
   line-height: 1.25;
+  font-variant-numeric: lining-nums tabular-nums;
 }
 
 .messenger-header-actions {
@@ -1431,8 +1432,11 @@ body.vertical-messenger .layout > main#main-content > section.messenger-window {
   inset-inline-end: 0;
   inset-block-start: calc(100% + var(--space-1));
   inline-size: min(360px, calc(100vw - var(--space-8)));
-  max-block-size: 70vh;
+  max-block-size: min(70dvh, 32rem);
   overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  scrollbar-color: var(--border-strong) transparent;
   padding: var(--space-3);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
@@ -1461,7 +1465,7 @@ body.vertical-messenger .layout > main#main-content > section.messenger-window {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  min-height: var(--tap-min);
+  min-block-size: var(--tap-min);
 }
 
 .messenger-member-avatar {
@@ -1481,7 +1485,7 @@ body.vertical-messenger .layout > main#main-content > section.messenger-window {
   font-size: var(--text-xs);
 }
 
-.messenger-details-form input { min-height: var(--tap-min); }
+.messenger-details-form input { min-block-size: var(--tap-min); }
 .messenger-details-form .btn { justify-self: start; }
 
 // The log is the scrolling middle. overscroll-behavior stops a flick at the end
@@ -1490,14 +1494,16 @@ body.vertical-messenger .layout > main#main-content > section.messenger-window {
 .messenger-pane #message_log {
   display: flex;
   flex: 1;
-  min-height: 0;
+  min-block-size: 0;
 }
 
 .messenger-pane .conversation-log {
   flex: 1;
-  min-height: 0;
+  min-block-size: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  scrollbar-color: var(--border-strong) transparent;
   padding: var(--space-4) var(--space-3);
 }
 
@@ -1527,7 +1533,7 @@ body.vertical-messenger .layout > main#main-content > section.messenger-window {
 }
 
 .messenger-typing {
-  min-height: 16px;
+  min-block-size: 16px;
   margin: 0;
   color: var(--text-secondary);
   font-size: var(--text-xs);
@@ -1544,11 +1550,15 @@ body.vertical-messenger .layout > main#main-content > section.messenger-window {
   display: flex;
   align-items: flex-end;
   gap: var(--space-1);
-  min-height: 48px;
+  min-block-size: 48px;
   padding: var(--space-1);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   background: var(--bg);
+}
+
+.messenger-composer-box:focus-within {
+  border-color: var(--accent);
 }
 
 .messenger-composer-tool {
@@ -1571,13 +1581,16 @@ body.vertical-messenger .layout > main#main-content > section.messenger-window {
 }
 
 .messenger-composer-record-status {
+  max-inline-size: 12ch;
   color: var(--text-secondary);
   font-size: var(--text-xs);
+  line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 
 .messenger-composer-field {
   flex: 1;
-  min-width: 0;
+  min-inline-size: 0;
 }
 
 // The field has no edge of its own — the box carries it — and grows with what is
@@ -1585,8 +1598,8 @@ body.vertical-messenger .layout > main#main-content > section.messenger-window {
 .messenger-composer-field textarea {
   display: block;
   inline-size: 100%;
-  min-height: var(--tap-min);
-  max-height: 160px;
+  min-block-size: var(--tap-min);
+  max-block-size: 160px;
   margin: 0;
   padding: var(--space-2);
   border: 0;
@@ -1616,7 +1629,7 @@ body.vertical-messenger .layout > main#main-content > section.messenger-window {
 
 .messenger-composer-send {
   flex: none;
-  min-height: var(--tap-min);
+  min-block-size: var(--tap-min);
 }
 
 .messenger-edit-form {
@@ -1700,9 +1713,11 @@ body.vertical-messenger .layout > main#main-content > section.messenger-window {
 
 .messenger-inbox-pane-content {
   flex: 1;
-  min-height: 0;
+  min-block-size: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  scrollbar-color: var(--border-strong) transparent;
   padding: var(--space-3);
 }
 
@@ -1710,7 +1725,7 @@ body.vertical-messenger .layout > main#main-content > section.messenger-window {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  min-width: 0;
+  min-inline-size: 0;
 }
 
 .messenger-inbox-link {
@@ -1718,8 +1733,8 @@ body.vertical-messenger .layout > main#main-content > section.messenger-window {
   align-items: center;
   gap: var(--space-3);
   flex: 1;
-  min-width: 0;
-  min-height: 72px;
+  min-inline-size: 0;
+  min-block-size: 72px;
   padding: var(--space-2);
   border-radius: var(--radius-sm);
   color: var(--text);
@@ -1737,7 +1752,7 @@ body.vertical-messenger .layout > main#main-content > section.messenger-window {
 .messenger-inbox-main {
   display: grid;
   flex: 1;
-  min-width: 0;
+  min-inline-size: 0;
 }
 
 .messenger-inbox-name,
@@ -1763,7 +1778,9 @@ body.vertical-messenger .layout > main#main-content > section.messenger-window {
   background: var(--accent);
   color: var(--accent-ink);
   font-weight: var(--weight-bold);
+  font-variant-numeric: lining-nums tabular-nums;
   text-align: center;
+  white-space: nowrap;
 }
 
 @include meta.load-css("tiptap");
@@ -10578,6 +10595,11 @@ body.vertical-marketplace .listing-review-cover-image {
 .home-feed-views {
   display: inline-flex;
   align-items: center;
+  max-inline-size: 100%;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
   margin-block-end: var(--space-3);
   border-block-end: 1px solid var(--border);
 }
@@ -10585,10 +10607,12 @@ body.vertical-marketplace .listing-review-cover-image {
 .home-feed-view {
   display: inline-flex;
   align-items: center;
+  flex: none;
   min-height: var(--tap-min);
   padding-inline: var(--space-2);
   color: var(--text-secondary);
   text-decoration: none;
+  white-space: nowrap;
 }
 
 .home-feed-view + .home-feed-view {
@@ -10662,11 +10686,14 @@ body.vertical-marketplace .listing-review-cover-image {
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: var(--text-sm);
+  line-height: 1.3;
 }
 
 .brgen-media-caption span {
   color: var(--text-secondary);
   font-size: var(--text-xs);
+  line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 
 @media (max-width: 767px) {

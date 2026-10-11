@@ -615,14 +615,14 @@ body[data-mode="speaking"] #mic-dot {
 
 #chat-log:not(:empty) { pointer-events: auto; }
 /* TYPOGRAPHY.line_length: a reply is prose, 45–75ch, whatever the viewport. */
-.message { position:relative; max-inline-size: 66ch; margin-bottom: 8px; padding: 0; white-space: pre-wrap; word-break: break-word; scroll-snap-align: start; animation: msgIn 220ms var(--ease-spring) both; font: 1rem/1.5 var(--font-mono); }
+.message { position:relative; max-inline-size: 66ch; margin-bottom: 8px; padding: 0; white-space: pre-wrap; overflow-wrap: anywhere; scroll-snap-align: start; animation: msgIn 220ms var(--ease-spring) both; font: 1rem/1.5 var(--font-mono); }
 .message.user,
 .message.assistant { border: 0; border-radius: 0; background: transparent; }
 .message:focus-visible { outline: 1px solid var(--face-fg); outline-offset: 1px; }
 .msg-prompt { font-weight: 700; margin-inline-end: 0.35em; }
 .message.user .msg-prompt { color: var(--c-accent, var(--face-fg)); }
 .message.assistant .msg-prompt { color: var(--face-muted); }
-.msg-body { color: color-mix(in srgb, var(--c-text) 88%, transparent); font-feature-settings:'liga' 1,'kern' 1; }
+.msg-body { color: color-mix(in srgb, var(--c-text) 88%, transparent); font-feature-settings:'liga' 1,'kern' 1; text-wrap: pretty; }
 .cursor { display:inline-block; width:2px; height:1em; background:currentColor; vertical-align:text-bottom; animation:cursorBlink 900ms steps(2,end) infinite; margin-inline-start:1px; }
 .message.msg-error-flash .msg-body { outline: 1px solid color-mix(in srgb, var(--c-danger) 55%, transparent); outline-offset: 2px; }
 .message.msg-pass-flash { border-bottom: 1px solid var(--face-fg); }
@@ -934,8 +934,20 @@ body[data-mode="speaking"] #spin-btn { display: block; }
 @keyframes typingPulse { 0%, 80%, 100% { transform: translateY(0); opacity:.25; } 40% { transform: translateY(-2px); opacity:1; } }
 
 /* #39 Message timestamp on hover */
-.message[data-ts]::after { content:attr(data-ts); font-size: var(--text-meta); line-height:1.5; color:var(--face-muted); opacity:0; transition:opacity .15s; margin-inline-start:8px; display:inline-block; vertical-align:middle; }
-.message[data-ts]:hover::after { opacity:1; }
+.message[data-ts]::after {
+  content: attr(data-ts);
+  font-size: var(--text-meta);
+  line-height: 1.5;
+  color: var(--face-muted);
+  opacity: 0;
+  transition: opacity var(--transition-fast) var(--ease-out);
+  margin-inline-start: 8px;
+  display: inline-block;
+  vertical-align: middle;
+  font-variant-numeric: tabular-nums;
+}
+.message[data-ts]:hover::after,
+.message[data-ts]:focus-visible::after { opacity: 1; }
 
 /* #42 Edge hover reveal */
 body[data-edge-hover="1"] #zsh,
@@ -1031,6 +1043,7 @@ body[data-tts-loading="true"] canvas { filter: none; }
   background: color-mix(in srgb, var(--face-bg) 88%, transparent);
   color: var(--face-fg);
   font: var(--text-meta)/1.5 var(--font-mono);
+  overflow-wrap: anywhere;
   border-radius: var(--radius-md);
   pointer-events: none;
 }
@@ -1478,13 +1491,15 @@ body.wscons-mode #face-phosphor-trail {
   inset-inline-end: var(--inset-r);
   inset-block-start: calc(var(--inset-t) + 52px);
   z-index: var(--z-overlay);
-  width: min(320px, calc(100dvw - 2 * var(--inset-r)));
-  max-height: min(44dvh, 420px);
+  inline-size: min(320px, calc(100dvw - 2 * var(--inset-r)));
+  max-block-size: min(44dvh, 420px);
   overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-color: var(--border-strong) transparent;
   padding: 8px;
   border: 1px solid var(--border-soft);
   background: var(--face-bg);
-  font: 0.78rem/1.35 var(--font-mono);
+  font: 0.78rem/1.4 var(--font-mono);
 }
 .master-task {
   display: grid;
@@ -1545,10 +1560,12 @@ body.wscons-mode #face-phosphor-trail {
   font: 0.75rem/1.25 var(--font-mono);
   text-align: start;
 }
-.master-workspace-node:focus-visible,
 .master-workspace-node:hover {
   border-color: var(--border-strong);
-  outline: 1px solid var(--face-fg);
+}
+.master-workspace-node:focus-visible {
+  border-color: var(--border-strong);
+  outline: 2px solid var(--face-fg);
   outline-offset: 2px;
 }
 .master-workspace[data-selected] .master-workspace-node[data-node-id] {
@@ -1582,8 +1599,8 @@ body.wscons-mode #face-phosphor-trail {
 @media (max-width: 767px) {
   .master-task-rail {
     inset-inline: var(--inset-l) var(--inset-r);
-    width: auto;
-    max-height: 32dvh;
+    inline-size: auto;
+    max-block-size: 32dvh;
   }
 }
 
