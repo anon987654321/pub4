@@ -74,6 +74,21 @@ class TestCognitionOutcomeModel < Minitest::Test
     end
   end
 
+  def test_inline_evidence_requires_a_well_formed_matching_digest
+    assert_raises(ArgumentError) do
+      model.observe!({ "records" => {} }, context: "task", action: "verify",
+                     outcome: "success", evidence: { source: "test:empty", content: "body", sha256: "" })
+    end
+  end
+
+  def test_inline_evidence_has_a_bounded_size
+    oversized = "x" * (Master::Cognition::OutcomeModel::MAX_EVIDENCE_BYTES + 1)
+    assert_raises(ArgumentError) do
+      model.observe!({ "records" => {} }, context: "task", action: "verify",
+                     outcome: "success", evidence: evidence("test:oversized", oversized))
+    end
+  end
+
   def test_records_require_a_source_and_a_valid_sha256
     assert_raises(ArgumentError) do
       model.observe!({ "records" => {} }, context: "task", action: "verify",
