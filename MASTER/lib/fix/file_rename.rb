@@ -143,13 +143,19 @@ module Master
         # no longer exists; git mv has already staged its removal.
         @git.git!("add", "--", to, *edited)
         @git.git!("commit", "-m", message, "-m", Master::Core::World::COMMIT_TRAILER, "--", from, to, *edited)
-        head = @git.head
+        head = begin
+          @git.head
+        rescue StandardError => e
+          return Result.err("rename committed but HEAD is unreadable; delivery status unknown: #{e.message}",
+                            category: :infrastructure)
+        end
         begin
           @git.push
+          ahead, = @git.ahead_behind
         rescue StandardError => e
-          return Result.err("rename delivery pending: #{e.message} (commit #{head})", category: :infrastructure)
+          return Result.err("rename committed but delivery pending/unverified: #{e.message} (commit #{head})",
+                            category: :infrastructure)
         end
-        ahead, = @git.ahead_behind
         return Result.err(
           "rename #{from} -> #{File.basename(to)} committed but not delivered (#{ahead} commit(s) remain ahead)",
           category: :infrastructure,

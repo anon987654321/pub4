@@ -212,14 +212,19 @@ module Master
       def commit(plan, message, evidence:)
         @git.git!("add", "-A", "--", *plan.paths)
         @git.git!("commit", "-m", message, "-m", Master::Core::World::COMMIT_TRAILER, "--", *plan.paths)
-        head = @git.head
-        begin
-          @git.push
+        head = begin
+          @git.head
         rescue StandardError => e
-          return Result.err("restructure committed but delivery is pending: #{e.message} (commit #{head})",
+          return Result.err("restructure committed but HEAD is unreadable; files were left intact: #{e.message}",
                             category: :infrastructure)
         end
-        ahead, = @git.ahead_behind
+        begin
+          @git.push
+          ahead, = @git.ahead_behind
+        rescue StandardError => e
+          return Result.err("restructure committed but delivery pending/unverified: #{e.message} (commit #{head})",
+                            category: :infrastructure)
+        end
         return Result.err("restructure committed but not delivered: #{ahead} commit(s) remain ahead (commit #{head})",
                           category: :infrastructure) unless ahead.zero?
 
