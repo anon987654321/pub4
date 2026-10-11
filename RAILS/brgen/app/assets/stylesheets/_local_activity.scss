@@ -9,8 +9,10 @@
 
 .home-neighborhood-filter label,
 .local-activity-heading h2 {
+  margin: 0;
   font-size: var(--text-sm, 0.875rem);
   font-weight: 600;
+  line-height: 1.35;
 }
 
 .home-neighborhood-filter select {
@@ -34,14 +36,20 @@
 .local-activity-item {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
   gap: 0.25rem 0.75rem;
   padding-block: var(--space-2, 0.5rem);
 }
 
 .local-activity-item > span,
 .local-activity-item small {
-  color: inherit;
+  color: var(--text-secondary, inherit);
   font-size: var(--text-xs, 0.75rem);
+  line-height: 1.4;
+}
+
+.local-activity-item small {
+  font-variant-numeric: tabular-nums;
 }
 
 .local-activity-item > a {

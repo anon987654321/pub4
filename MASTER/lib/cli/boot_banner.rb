@@ -28,17 +28,19 @@ module Master
         budget = Master::Ops::ProcessBudget.status
         brutalist = ENV["MASTER_BRUTALIST"] == "1"
         aesthetic = Master::Voice::Aesthetic.mode
+        profile = "wscons" if aesthetic == "wscons"
+        profile ||= "brutalist" if brutalist
+        style = "style0 at master0: #{aesthetic}"
         [
           "boot0 at mainbus0: safe #{ENV.fetch("MASTER_SAFE_MODE", "1")}, web #{ENV.fetch("MASTER_WEB", "0")}",
           *security_lines,
           "loop0 at master0: #{status.fetch(:selected, "none")}, owner #{status.fetch(:owner, "none")}",
           "budget0 at master0: valid #{budget[:valid]}, slot #{budget.fetch(:slot, "unknown")}",
-          "style0 at master0: #{aesthetic}",
+          style,
           "motd0 at master0: #{motd_spotlight}",
           "master0: ready",
         ].tap do |lines|
-          if brutalist || aesthetic == "wscons"
-            profile = aesthetic == "wscons" ? "wscons" : "brutalist"
+          if profile
             lines << "style0 at master0: profile #{profile}, motion steps, typography mono"
             lines << "style0: entropy and confidence inspectable"
           end

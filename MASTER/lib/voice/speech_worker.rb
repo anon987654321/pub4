@@ -103,11 +103,11 @@ module Master
       end
 
       # Wire v2: 8-byte length-prefixed audio chunks, zero-length frame = clean
-      # end. A stream ending at EOF without the zero frame was truncated by the
-      # daemon mid-synthesis; those bytes are dropped so the caller falls back
-      # to whole-file synthesis instead of speaking a severed sentence. A
-      # legacy daemon ignores "stream" and answers with raw mp3, which misreads
-      # as an absurd frame header — detected and consumed raw.
+      # end. EOF without the zero frame means the daemon truncated mid-synthesis;
+      # discard those bytes so the caller falls back to whole-file synthesis
+      # instead of speaking a severed sentence. A legacy daemon ignores "stream"
+      # and answers with raw mp3, which looks like an absurd frame header —
+      # detect that form and consume the response as raw.
       FRAME_HEADER_S = 8
       FRAME_MAX_S = 1 << 23 # 8 MiB; an Edge chunk is kilobytes
 
@@ -199,9 +199,9 @@ module Master
 
       # The next frame from the wire: an integer-length body for the common
       # audio case, :clean for the zero terminator, :eof when the daemon hung
-      # up without one (a truncated stream), :raw when the bytes were really
-      # a legacy daemon's whole-file answer — which consume_raw_response has
-      # already forwarded untouched.
+      # up without one (a truncated stream), :raw when the bytes form a legacy
+      # daemon's whole-file answer — consume_raw_response has already
+      # forwarded them untouched.
       def read_frame(sock, sink)
         header = read_socket_fill(sock, FRAME_HEADER_S)
         return :eof unless header

@@ -8,10 +8,14 @@ the VPS configuration under `etc/`, `usr/` and `var/`, and the deploy tooling un
 scripts that vm23 still runs by their top-level paths, each of which says in its
 header which line on the box pins it.
 
+## Canonical operator path
+
 Start with `RUNBOOK.md`, the single operational companion for live VPS work. Read it
 before SSH, `doas`, deploy, DNS, relayd, NSD or recovery. `CLAUDE.md` holds the sharp
 edges that have burned agents here, and `PATH_OWNERSHIP.yml` says what every path is
 for. Read the man page for a file and its daemon before you change either.
+
+## Command entry points
 
 The commands live in one place. `data/operator.yml` is the source of the command
 recipes, so do not write another catalogue. From the repository root, the operator
@@ -23,6 +27,8 @@ restores them in the same pass. The gates that guard the pipeline sit in `gates/
 and the registry that runs them is `MASTER/gates/gates.yml`. Before a risky deploy,
 `bin/rehearse` shows how the repository layout will map onto the box, which has a
 different copy-tree layout.
+
+## Configuration ownership and secrets
 
 Domains and DNS come from one source. `RAILS/apps.yml` lists the owned domains, and
 the files in `data/` and the zone helpers derive from it. What is in `var/nsd/` is a

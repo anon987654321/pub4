@@ -766,6 +766,7 @@ main#main-content header > nav form {
 .item-card {
   display: flex;
   flex-direction: column;
+  min-inline-size: 0;
   gap: var(--space-2);
   padding: var(--space-3);
   border: 0;
@@ -785,6 +786,8 @@ main#main-content header > nav form {
 
 .item-card .item-title {
   font-weight: var(--weight-bold);
+  line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 
 /* A demo card has one destination and a 26px-tall title as its only way
@@ -1155,6 +1158,8 @@ main#main-content header > nav form {
 .dash-stats dd {
   font-size: var(--text-xl);
   font-weight: var(--weight-bold);
+  line-height: 1.25;
+  font-variant-numeric: lining-nums tabular-nums;
 }
 
 /* .plan-row / .cpw-row keep a query: stacking a row into a column is a layout
@@ -1186,6 +1191,8 @@ main#main-content header > nav form {
   border-bottom: 0;
   padding: var(--space-3) var(--space-6);
   font-size: var(--text-sm);
+  line-height: 1.4;
+  font-variant-numeric: lining-nums tabular-nums;
   color: var(--accent);
 }
 
@@ -2086,6 +2093,7 @@ main#main-content .amber-look-title {
 .wardrobe-card {
   display: flex;
   flex-direction: column;
+  min-inline-size: 0;
   gap: var(--space-1);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);

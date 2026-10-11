@@ -1,5 +1,5 @@
 ---
-findings: 224
+findings: 220
 by_rule:
   BARE_DIV_WRAPPER: 4
   BEM_IN_VIEWS: 12
@@ -19,9 +19,6 @@ by_rule:
   NO_INLINE_SCRIPT_BLOCK: 10
   NULLISH_COALESCING: 57
   OPTIONAL_CHAINING: 1
-  PROSE_ACTIVE_VOICE: 1
-  PROSE_ACTIVE_VOICE_NB: 1
-  PROSE_OMIT_QUALIFIERS: 2
   RUBY_NUMERIC_UNDERSCORE: 6
   SAFE_NAVIGATION: 1
   STRICT_MODE_ZSH: 4
@@ -222,10 +219,6 @@ finding_members:
   - NULLISH_COALESCING RAILS/master_web/public/visual_bridge.js:361
   - NULLISH_COALESCING RAILS/master_web/public/visual_governor.js:16
   - OPTIONAL_CHAINING RAILS/master_web/public/face_semantics.js:175
-  - PROSE_ACTIVE_VOICE MASTER/lib/voice/speech_worker.rb:106
-  - PROSE_ACTIVE_VOICE_NB RAILS/brgen/config/locales/nb.yml:1820
-  - PROSE_OMIT_QUALIFIERS MASTER/lib/review/scan/laws/cosmetic_laws.rb:324
-  - PROSE_OMIT_QUALIFIERS MASTER/lib/voice/speech_worker.rb:202
   - RUBY_NUMERIC_UNDERSCORE MASTER/lib/cli/face/ear.rb:23
   - RUBY_NUMERIC_UNDERSCORE MASTER/lib/music/audio_sink.rb:29
   - RUBY_NUMERIC_UNDERSCORE MASTER/lib/music/audio_sink.rb:30

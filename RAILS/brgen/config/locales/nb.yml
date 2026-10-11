@@ -1817,7 +1817,7 @@ nb:
     unsubscribed: Abonnementet er avsluttet.
     anonymous_post_limit: Registrer deg for å poste mer (%{limit} anonyme innlegg
       per nettleser).
-    post_blocked_by_moderation: Innlegget ble stoppet av moderering.
+    post_blocked_by_moderation: Modereringen stoppet innlegget.
     link_requires_verified_account: Logg inn og bekreft e-postadressen din for å legge
       ut lenker eller tilbud.
     checked_in_at: Sjekket inn på %{place}.

@@ -241,6 +241,8 @@
   flex: 1;
   overflow-y: auto;
   overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  scrollbar-color: var(--border-strong) transparent;
   padding: var(--space-2) var(--space-3);
   margin: 0;
   list-style: none;
@@ -275,8 +277,8 @@
 }
 
 .nearby-chat-widget-composer textarea:focus {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
+  outline: var(--focus-ring, 2px solid Highlight);
+  outline-offset: 2px;
 }
 
 .nearby-chat-widget-composer .btn {
@@ -330,6 +332,7 @@
   font-family: var(--font);
   font-size: var(--text-sm);
   line-height: 1.4;
+  overflow-wrap: anywhere;
   border-bottom: 1px solid var(--border);
   color: var(--text-secondary);
 }

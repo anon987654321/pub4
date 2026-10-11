@@ -151,10 +151,63 @@ module LiveAudiovisual
       <html lang="en"><head><meta charset="utf-8">
       <meta name="viewport" content="width=#{WIDTH},height=#{HEIGHT},initial-scale=1">
       <style>
-        html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#040509}
-        canvas{display:block;width:100%;height:100%}
-        .hud{position:fixed;inset:0;pointer-events:none;color:rgba(235,235,232,.72);font:500 12px/1.4 ui-monospace,Menlo,monospace;letter-spacing:.12em;text-transform:uppercase}
-        .title{position:absolute;left:24px;top:20px}.state{position:absolute;right:24px;bottom:20px;text-align:right}.name{color:rgba(243,232,204,.92);font-weight:700}
+        html,
+        body {
+          width: 100%;
+          height: 100%;
+          margin: 0;
+          overflow: hidden;
+          background: #040509;
+        }
+
+        canvas {
+          display: block;
+          width: 100%;
+          height: 100%;
+        }
+
+        .hud {
+          position: fixed;
+          inset: 0;
+          pointer-events: none;
+          color: rgba(235,235,232,.82);
+          font: 500 clamp(11px, 1vw, 14px)/1.5 ui-monospace, Menlo, monospace;
+          letter-spacing: .1em;
+          text-transform: uppercase;
+          font-variant-numeric: tabular-nums;
+        }
+
+        .title {
+          position: absolute;
+          left: clamp(16px, 2vw, 32px);
+          top: clamp(16px, 2vw, 28px);
+          max-width: min(72vw, 36rem);
+        }
+
+        .state {
+          position: absolute;
+          right: clamp(16px, 2vw, 32px);
+          bottom: clamp(16px, 2vw, 28px);
+          max-width: min(68vw, 48rem);
+          text-align: right;
+          overflow-wrap: anywhere;
+        }
+
+        .name {
+          color: rgba(243,232,204,.96);
+          font-weight: 700;
+          letter-spacing: .16em;
+        }
+
+        @media (max-width: 520px) {
+          .hud {
+            font-size: 11px;
+            letter-spacing: .07em;
+          }
+
+          .title { max-width: 68vw; }
+          .state { max-width: 76vw; }
+        }
       </style></head><body>
       <canvas id="dmt"></canvas>
       <div class="hud"><div class="title"><span class="name">DILLA TIME</span><br>LIVE / DEFRAGMENTING ARCHITECTURE</div><div id="state" class="state">BOOT / POCKET / SPACE</div></div>
