@@ -60,7 +60,7 @@ class TestOperatorMemoryReview < Minitest::Test
 
     assert_equal 0, status, @err.string
     assert_match(/memory0: reviewed deployment_target as confirmed/, @out.string)
-    assert_match(@sha256, @out.string)
+    assert_includes @out.string, @sha256
     provenance = @memory.provenance("deployment_target")
     assert_equal "confirmed", provenance.fetch("status")
     assert_equal "operator", provenance.fetch("reviews").last.fetch("reviewer")
