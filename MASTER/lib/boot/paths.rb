@@ -10,6 +10,8 @@ module MasterPaths
   DATA = File.join(ROOT, "data")
   REPORTS = File.join(ROOT, "reports")
   STATE = File.expand_path("~/.master")
+  # The four governed trees, the one list every caller reads.
+  TREES = %w[MASTER RAILS OPENBSD STUDIO].freeze
 
   module_function
 

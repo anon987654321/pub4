@@ -2,6 +2,7 @@
 
 require "json"
 require_relative "../convergence/receipt"
+require_relative "../boot/paths"
 
 module Master
   module Fix
@@ -11,7 +12,7 @@ module Master
     # trains only from a receipt whose bytes match. Poor outcomes never weaken
     # verification, they widen what the next attempt looks at.
     module OutcomeLearning
-      CANONICAL_TREES = %w[MASTER RAILS OPENBSD STUDIO].freeze
+      CANONICAL_TREES = MasterPaths::TREES
 
       # Boot wires the already-running cognitive service after restoring its
       # state. Serialized against active attempts so a run sees one reader.

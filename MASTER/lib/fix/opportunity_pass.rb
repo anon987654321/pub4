@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "../boot/paths"
+
 module Master
   module Fix
     # Finds high-confidence maintenance opportunities that a syntax/rule scan
@@ -8,7 +10,7 @@ module Master
     class OpportunityPass
       LAW_ID = "CONVERGENCE_OPPORTUNITY"
       TEXT_FILES = %w[.md .rb .rake .yml .yaml .erb .html .js .css .scss].freeze
-      SOURCE_ROOTS = %w[MASTER RAILS OPENBSD STUDIO].freeze
+      SOURCE_ROOTS = MasterPaths::TREES
       # %r{} delimiters, not /.../ -- the character class needs a literal /
       # (repo-relative paths), which /.../ regex literals cannot hold
       # unescaped. Same bug as visual_pass.rb's SURFACE_RE, same fix.

@@ -3,6 +3,7 @@
 require "digest"
 require_relative "name_review"
 require_relative "file_rename"
+require_relative "../boot/paths"
 
 module Master
   module Fix
@@ -46,12 +47,12 @@ module Master
 
       def sweep_targets(target)
         expanded = File.expand_path(target.to_s, @repo_root)
-        return %w[MASTER RAILS OPENBSD STUDIO].filter_map do |tree|
+        return MasterPaths::TREES.filter_map do |tree|
           path = File.join(@repo_root, tree)
           path if File.directory?(path)
         end if expanded == File.expand_path(@repo_root)
 
-        return [] unless %w[MASTER RAILS OPENBSD STUDIO].include?(File.basename(expanded))
+        return [] unless MasterPaths::TREES.include?(File.basename(expanded))
         return [] unless File.dirname(expanded) == File.expand_path(@repo_root)
 
         [expanded]

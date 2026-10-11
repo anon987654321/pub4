@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "set"
+require_relative "../boot/paths"
 
 module Operator
   # Who reaches a file, across all four governed trees, by every spelling this repo
@@ -26,7 +27,7 @@ module Operator
   # search alone finds none of the path-built requires; a `require_relative`
   # search alone finds none of the runtime `File.expand_path` ones.
   class Readers
-    TREES = %w[MASTER RAILS OPENBSD STUDIO].freeze
+    TREES = MasterPaths::TREES
 
     # knowledge/ and output/ are vendored or generated and are never committed;
     # a word in someone else's system prompt is not a reader.

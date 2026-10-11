@@ -9,6 +9,7 @@ require_relative "../io/github_operations"
 require_relative "../trace/dmesg"
 require_relative "worktree_child_process"
 require_relative "worktree_dirty_edits"
+require_relative "../boot/paths"
 
 module Master
   module Fix
@@ -21,7 +22,7 @@ module Master
     # branch only after a final read-only gate, then removes the worktree and
     # temporary branch.
     class WorktreeSession
-      TREES = %w[MASTER RAILS OPENBSD STUDIO].freeze
+      TREES = MasterPaths::TREES
       include ChildProcess
       include DirtyEdits
 

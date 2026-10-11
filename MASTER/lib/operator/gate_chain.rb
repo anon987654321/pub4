@@ -8,6 +8,7 @@ require_relative "strict_mode"
 require_relative "gate_regression"
 require_relative "gate_heartbeat"
 require_relative "../trace/dmesg"
+require_relative "../boot/paths"
 
 module Operator
   # Every gate in the repo, in one order, fixing as it goes.
@@ -62,7 +63,7 @@ module Operator
     # bin/operator calls. Everything below is a stage or a helper one of these three
     # reaches, so the file reads in the order the ladder runs rather than the
     # order it was written.
-    TREES = %w[MASTER RAILS OPENBSD STUDIO].freeze
+    TREES = MasterPaths::TREES
 
     # /fix already owns observation, council critique and repair. Its verification
     # tail proves the repaired tree without recursively invoking /fix or debating

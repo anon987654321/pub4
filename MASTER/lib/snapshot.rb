@@ -1,15 +1,11 @@
 # frozen_string_literal: true
 
 require "fileutils"
+require_relative "boot/paths"
 
 module Master
   class Snapshot
-    TREE_PATHS = {
-      "MASTER" => "MASTER",
-      "RAILS" => "RAILS",
-      "OPENBSD" => "OPENBSD",
-      "STUDIO" => "STUDIO",
-    }.freeze
+    TREE_PATHS = MasterPaths::TREES.to_h { |tree| [tree, tree] }.freeze
     DEFAULT_TREES = TREE_PATHS.keys.freeze
     DEFAULT_OUTPUT = File.join(REPO_ROOT, "snapshot_MASTER.md")
     SKIP = %w[.git .bundle node_modules vendor tmp temp log logs coverage storage cache dist build output generated].freeze

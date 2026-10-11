@@ -4,6 +4,7 @@ require_relative "../../review/council/critique"
 require_relative "../../fix/execution_trace"
 require_relative "../../operator/gate_chain"
 require_relative "../../fix/worktree_session"
+require_relative "../../boot/paths"
 
 module Master
   module CLI
@@ -142,7 +143,7 @@ module Master
 
       def worktree_proof_trees(target, root:)
         tokens = target.to_s.split(/\s+/)
-        trees = %w[MASTER RAILS OPENBSD STUDIO]
+        trees = MasterPaths::TREES.dup
         return tokens.uniq if tokens.size > 1 && tokens.all? { |token| trees.include?(token) }
         return trees if target.to_s.strip.empty?
 
@@ -203,7 +204,7 @@ module Master
         raw = target.to_s.strip
         return if raw.empty?
 
-        trees = %w[MASTER RAILS OPENBSD STUDIO]
+        trees = MasterPaths::TREES.dup
         tokens = raw.split(/\s+/)
         return tokens if tokens.size > 1 && tokens.all? { |token| trees.include?(token) }
 
@@ -212,7 +213,7 @@ module Master
 
       def fix_targets(target, root:)
         tokens = target.to_s.split(/\s+/)
-        trees = %w[MASTER RAILS OPENBSD STUDIO]
+        trees = MasterPaths::TREES.dup
         return [target] unless tokens.size > 1 && tokens.all? { |token| trees.include?(token) }
 
         repo_root = File.expand_path(root)

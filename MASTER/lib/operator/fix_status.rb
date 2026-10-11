@@ -6,6 +6,7 @@ require "time"
 require_relative "../io/lane_quota"
 require_relative "../io/lane_health"
 require_relative "../io/lane_selection"
+require_relative "../boot/paths"
 
 module Operator
   # One screen about /fix, read from what /fix already writes: the run journal
@@ -18,7 +19,7 @@ module Operator
   # arguments of the live /fix process the way dispatch_fix reads them: a
   # string of governed trees runs in the order it was typed.
   class FixStatus
-    TREES = %w[MASTER RAILS OPENBSD STUDIO].freeze
+    TREES = MasterPaths::TREES
     JOURNAL = "MASTER/.master/fix_runs.json"
     MISSION = "MASTER/.master/mission.json"
     LOG_GLOB = "MASTER/.master/fix-*.log"

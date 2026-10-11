@@ -1,10 +1,12 @@
 # frozen_string_literal: true
 
+require_relative "../../boot/paths"
+
 module Master
   module CLI
     class Pipeline
       module TargetResolver
-        ALL_TREE_NAMES = %w[MASTER RAILS OPENBSD STUDIO].freeze
+        ALL_TREE_NAMES = MasterPaths::TREES
 
         def resolve_target(raw)
           text = raw.to_s.strip

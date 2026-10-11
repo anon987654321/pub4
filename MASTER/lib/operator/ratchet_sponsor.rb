@@ -3,6 +3,7 @@
 require_relative "../io/exec"
 require "set"
 require "yaml"
+require_relative "../boot/paths"
 
 module Operator
   # A commit that changes a measured source population must carry the ceiling
@@ -12,7 +13,7 @@ module Operator
   module RatchetSponsor
     TREE_CEILING = "MASTER/data/spine.yml"
     SOURCE_EXTENSIONS = %w[.rb .rake .erb .scss .css .js .mjs .yml .yaml .md .sh .ksh .exp .html .json].freeze
-    TREES = %w[MASTER RAILS OPENBSD STUDIO].freeze
+    TREES = MasterPaths::TREES
     EXCLUDED_DIRS = %r{/(vendor|node_modules|tmp|coverage|log|\.master|knowledge|output|renders|samples)/}
 
     module_function

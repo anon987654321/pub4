@@ -2,6 +2,7 @@
 
 require "yaml"
 require_relative "fix_loop/file_collector"
+require_relative "../boot/paths"
 
 module Master
   module Fix
@@ -9,7 +10,7 @@ module Master
     # It proves the collector's complete writable corpus reaches the pass,
     # and that a RAILS run reaches every declared app and the canonical layout suite.
     class Reachability
-      TOP_LEVEL_TREES = %w[MASTER RAILS OPENBSD STUDIO].freeze
+      TOP_LEVEL_TREES = MasterPaths::TREES
 
       def initialize(root:, bus: nil)
         @root = File.expand_path(root)

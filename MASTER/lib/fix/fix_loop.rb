@@ -26,6 +26,7 @@ require_relative "transformation_plan"
 require_relative "convergence_discipline"
 require_relative "reflection"
 require_relative "run_budget"
+require_relative "../boot/paths"
 
 module Master
   module Fix
@@ -699,7 +700,7 @@ module Master
         expanded = File.expand_path(target.to_s)
         repo_root = File.basename(@root) == "MASTER" ? File.expand_path("..", @root) : File.expand_path(@root)
         return true if expanded == repo_root
-        return false unless %w[MASTER RAILS OPENBSD STUDIO].include?(File.basename(expanded))
+        return false unless MasterPaths::TREES.include?(File.basename(expanded))
 
         File.dirname(expanded) == repo_root
       end

@@ -6,6 +6,7 @@ require "tempfile"
 require "prism"
 require_relative "ast_fixer"
 require_relative "execution_snapshot"
+require_relative "../boot/paths"
 
 module Master
   module Fix
@@ -115,7 +116,7 @@ module Master
       def scope_paths
         scopes = Array(@scope).compact.flat_map { |scope| scope.to_s.split(/[\s,]+/) }.reject(&:empty?)
         return [] if scopes.empty?
-        return [] if scopes.uniq.sort == %w[MASTER OPENBSD RAILS STUDIO].sort
+        return [] if scopes.uniq.sort == MasterPaths::TREES.sort
 
         repo = File.expand_path(@root)
         scopes.map do |scope|
