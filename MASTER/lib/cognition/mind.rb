@@ -148,7 +148,7 @@ module Master
       # are deliberately not accepted as verified outcomes.
       def record_task_result(context:, action:, outcome:, evidence:, task_type: nil,
                              confidence: nil, predicted_probability: nil)
-        receipt = OutcomeModel.validate_evidence!(evidence)
+        receipt = OutcomeModel.validate_evidence!(evidence, root: @root)
         if task_type && %w[success failure].include?(outcome.to_s)
           raise ArgumentError, "task type is required" if task_type.to_s.strip.empty?
           probability = confidence.nil? ? predicted_probability : confidence

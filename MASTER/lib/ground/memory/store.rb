@@ -112,7 +112,7 @@ module Master
           allowed = %w[confirmed contradicted uncertain obsolete]
           raise ArgumentError, "unknown memory review verdict: #{verdict}" unless allowed.include?(verdict)
 
-          receipt = Master::Cognition::OutcomeModel.validate_evidence!(evidence)
+          receipt = Master::Cognition::OutcomeModel.validate_evidence!(evidence, root: @root)
           reviewer = reviewer.to_s.strip
           raise ArgumentError, "reviewer is required" if reviewer.empty?
 

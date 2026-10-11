@@ -15,7 +15,7 @@ class TestMemoryReview < Minitest::Test
   end
 
   def evidence(source, body = source)
-    { source:, sha256: Digest::SHA256.hexdigest(body) }
+    { source:, content: body, sha256: Digest::SHA256.hexdigest(body) }
   end
 
   def test_review_is_provenanced_and_preserves_audit_history
