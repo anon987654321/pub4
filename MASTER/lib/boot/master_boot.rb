@@ -40,8 +40,8 @@ module Master
       validate_data!(root:, bus: container[:bus])
       Ground::LawHandshake::Admission.enable!
       # After validation, so the first tick sees a container that finished
-      # building rather than one mid-assembly. The tick is what persists, so
-      # booting is also what restores continuity across restarts.
+      # building rather than one mid-assembly. The tick persists the loaded
+      # state; its restore status and schema completeness remain explicit evidence.
       container[:cognition] = Cognition::Mind.new(root:, bus: container[:bus], memory: container[:memory])
       container[:cognition].tick!
       start_task_steward(root, container)

@@ -1152,6 +1152,36 @@ end
     assert_equal findings, received, "council findings must reach the repair stage as repair context"
   end
 
+  def test_finish_run_publishes_machine_readable_repair_outcome
+    loop = build_loop([])
+    journal = Object.new
+    journal.define_singleton_method(:terminal) { |*| nil }
+    loop.instance_variable_set(:@run_journal, journal)
+
+    loop.send(:finish_run, Master::Result.ok("DONE: clean"), @root, "run-123", requested: true)
+    event = @bus.events.find { |row| row[:event] == "fix_loop:terminal" }
+
+    refute_nil event
+    assert_equal "run-123", event[:payload][:task_id]
+    assert_equal "code_repair", event[:payload][:capability]
+    assert_equal true, event[:payload][:ok]
+    assert_equal :done, event[:payload][:state]
+  end
+
+  def test_finish_run_does_not_label_human_escalation_as_a_failed_repair
+    loop = build_loop([])
+    journal = Object.new
+    journal.define_singleton_method(:terminal) { |*| nil }
+    loop.instance_variable_set(:@run_journal, journal)
+
+    loop.send(:finish_run, Master::Result.ok("HUMAN_DECISION: approval required"), @root, "run-human", requested: true)
+    event = @bus.events.find { |row| row[:event] == "fix_loop:terminal" }
+
+    refute_nil event
+    assert_equal :human_decision, event[:payload][:state]
+    refute event[:payload].key?(:ok), "human escalation is not evidence that repair capability failed"
+  end
+
   def test_finish_run_only_closes_the_journal
     calls = []
     journal = Object.new

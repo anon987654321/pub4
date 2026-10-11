@@ -53,6 +53,58 @@ class TestCognitionAffect < Minitest::Test
     assert_equal "unknown", model.dig("capabilities", "phenomenal_consciousness")
   end
 
+  def test_self_model_calibrates_only_against_observed_outcomes
+    model = {}
+    self_model.update!(model, event: "tool:after", payload: { capability: "code_repair", ok: true, predicted_confidence: 0.9 }, salience: 0.4)
+    self_model.update!(model, event: "tool:after", payload: { capability: "code_repair", ok: false, predicted_confidence: 0.9 }, salience: 0.4)
+
+    measured = self_model.performance(model, capability: "code_repair")
+    assert_equal 2, measured[:attempts]
+    assert_equal 1, measured[:successes]
+    assert_equal 1, measured[:failures]
+    assert_in_delta 0.5, measured[:accuracy]
+    assert_in_delta 0.9, measured[:mean_confidence]
+    assert_in_delta 0.41, measured[:brier_score]
+    assert_nil self_model.performance(model, capability: "unobserved")
+  end
+
+  def test_self_model_does_not_score_unlabelled_or_invalid_confidence
+    model = {}
+    self_model.update!(model, event: "tool:after", payload: { capability: "code_repair", confidence: 0.99 }, salience: 0.2)
+    self_model.update!(model, event: "tool:after", payload: { capability: "code_repair", ok: true, predicted_confidence: 1.5 }, salience: 0.2)
+
+    measured = self_model.performance(model, capability: "code_repair")
+    assert_equal 1, measured[:attempts]
+    assert_equal 0, measured[:confidence_observations]
+    assert_nil measured[:brier_score]
+  end
+
+  def test_decision_posture_requires_a_minimum_measured_sample
+    model = {}
+    self_model.update!(model, event: "fix_loop:terminal", payload: { capability: "code_repair", ok: true }, salience: 0.2)
+    early = self_model.decision_posture(model, capability: "code_repair")
+    assert_equal :insufficient_evidence, early[:posture]
+    assert_nil early[:strategy]
+
+    5.times do |i|
+      self_model.update!(model, event: "fix_loop:terminal", payload: { capability: "code_repair", ok: i == 0 }, salience: 0.2)
+    end
+    measured = self_model.decision_posture(model, capability: "code_repair")
+    assert_equal :measured, measured[:posture]
+    assert_equal :adversarial, measured[:strategy]
+    assert_equal 6, measured[:attempts]
+  end
+
+  def test_reflection_reports_observed_capability_outcomes_without_claiming_consciousness
+    model = {}
+    self_model.update!(model, event: "fix_loop:terminal", payload: { task_id: "run-1", capability: "code_repair", ok: true }, salience: 0.5)
+    self_model.update!(model, event: "fix_loop:terminal", payload: { task_id: "run-2", capability: "code_repair", ok: false }, salience: 0.5)
+
+    text = self_model.reflection(model, metrics: { "workspace_activity" => 0.2, "prediction_error" => 0.3 }, affect: { "valence" => 0.0 })
+    assert_match(/Observed outcomes \(descriptive\): code_repair 1\/2 successes\./, text)
+    assert_match(/unknown about phenomenal consciousness/, text)
+  end
+
   def test_self_model_prunes_to_the_newest_beliefs
     model = {}
     (Master::Cognition::SelfModel::MAX_BELIEFS + 5).times do |i|
@@ -66,10 +118,10 @@ class TestCognitionAffect < Minitest::Test
   end
 
   def test_reflection_states_the_stance_and_the_numbers
-    text = self_model.reflection({}, metrics: { "integration" => 0.5, "prediction_error" => 0.25 },
+    text = self_model.reflection({}, metrics: { "workspace_activity" => 0.5, "prediction_error" => 0.25 },
                                      affect: { "valence" => -0.1 })
 
-    assert_equal "I am unknown about phenomenal consciousness; my integrated-state proxy is 0.5, " \
+    assert_equal "I am unknown about phenomenal consciousness; my workspace-activity proxy is 0.5, " \
                  "prediction error 0.25, valence -0.1.", text
   end
 end

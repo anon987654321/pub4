@@ -52,6 +52,10 @@ module Master
       PASS_ENDINGS = { clean: :done, validation_failed: :validation_failed,
                        delivery_failed: :delivery_failed, human_decision: :human_decision,
                        reloading: :reloading }.freeze
+      MEASURED_REPAIR_OUTCOMES = {
+        done: true, plateau: false, crash: false, validation_failed: false,
+        delivery_failed: false, timeout: false, failed: false,
+      }.freeze
 
       MAX_PASSES = 15
       ADAPTIVE_PASS_CHUNK = Integer(ENV.fetch("MASTER_FIX_ADAPTIVE_PASS_CHUNK", 3))
@@ -73,6 +77,7 @@ module Master
         @axioms = axioms
         @agent = agent
         path_root = File.expand_path(root)
+        @cognition_root = path_root
         @root = path_root == Master::ROOT ? Master::REPO_ROOT : path_root
         @bus = bus
         @homeostat = homeostat
@@ -85,7 +90,7 @@ module Master
         @reachability = Reachability.new(root: @root, bus:)
         @transformation_plan = TransformationPlan.new(root: Master::ROOT)
         @wishlist = Wishlist.new(root: @root, agent: @agent, event_bus: @bus)
-        @convergence_discipline = ConvergenceDiscipline.new(root: @root, bus: @bus)
+        @convergence_discipline = ConvergenceDiscipline.new(root: @root, bus: @bus, cognition_root: @cognition_root)
         @reflection = Reflection.new(agent: @agent, root: @root, bus: @bus)
 
         @file_collector = FileCollector.new(root:, bus:)
@@ -219,7 +224,9 @@ module Master
           mission&.defer!(reason: "attempt #{state}: #{result.to_s}")
         end
 
-        @bus&.publish("fix_loop:terminal", state:, message: result.to_s)
+        outcome = { state:, message: result.to_s, task_id: run_id, capability: "code_repair" }
+        outcome[:ok] = MEASURED_REPAIR_OUTCOMES.fetch(state) if MEASURED_REPAIR_OUTCOMES.key?(state)
+        @bus&.publish("fix_loop:terminal", **outcome)
 
         result
       end
