@@ -41,7 +41,8 @@ class TestFixLoopObservability < Minitest::Test
       @result = result
     end
 
-    crash = bus.events.fetch(0)
+    crash = bus.events.find { |name, _| name == "fix_loop:crash" }
+    refute_nil crash, "the begin_run failure must publish fix_loop:crash"
 
     assert_equal "fix_loop:crash", crash.fetch(0)
     assert_equal "FloatDomainError", crash.fetch(1).fetch(:error_class)

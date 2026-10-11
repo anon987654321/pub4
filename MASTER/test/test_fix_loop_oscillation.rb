@@ -27,7 +27,7 @@ class TestFixLoopOscillation < Minitest::Test
       @violations = violations
     end
 
-    def scan(_path)
+    def scan(_path, depth: :deep)
       Master::Result.ok(@violations.map { |violation| violation.merge(severity: :warning) })
     end
   end
@@ -38,7 +38,7 @@ class TestFixLoopOscillation < Minitest::Test
       @index = 0
     end
 
-    def scan(_path)
+    def scan(_path, depth: :deep)
       scan = @scans.fetch(@index) { @scans.last }
       @index += 1
       Master::Result.ok(scan.map { |violation| violation.merge(severity: :warning) })
@@ -76,10 +76,18 @@ class TestFixLoopOscillation < Minitest::Test
       @calls = []
     end
 
-    def abort_transaction!
-      @calls << :abort
-      Master::Result.ok(:rolled_back)
-    end
+def abort_transaction!
+  @calls << :abort
+  Master::Result.ok(:rolled_back)
+end
+
+# The rest of the Committer surface a pass touches; none of it is under test here.
+def baseline!(scope: nil) = nil
+def begin_transaction!(_transaction) = nil
+def finish_transaction(_message, **) = Master::Result.ok(:committed)
+def commit_if_dirty(_message, **) = :noop
+def dirty_at_baseline?(_path) = false
+def publish_pending! = :nothing_to_publish
   end
 
   class StubGit
@@ -148,7 +156,8 @@ class TestFixLoopOscillation < Minitest::Test
     osc = @bus.events.select { |e| e[:event] == "fix_loop:oscillation" }
     assert_equal 1, osc.size
     assert_equal 1, osc.first[:payload][:violations]
-    assert_equal [:abort], committer.calls
+    # The rollback aborts, then the plateau result cleans up after it; the abort is idempotent.
+    assert_equal [:abort], committer.calls.uniq
     rollback = @bus.events.find { |e| e[:event] == "fix_loop:transaction_rollback" }
     assert_equal "fix loop oscillation", rollback[:payload][:reason]
   end
@@ -177,7 +186,7 @@ class TestFixLoopOscillation < Minitest::Test
 
   def test_oscillation_does_not_fire_when_violations_clear
     # Empty violation set -> clean path, no oscillation.
-    loop = build_loop([])
+    loop, = build_loop([])
     result = loop.run(@root)
 
     assert result.ok?
@@ -190,7 +199,7 @@ class TestFixLoopOscillation < Minitest::Test
 
   def test_oscillation_fires_once_not_every_pass
     # Even if max_passes is high, oscillation fires exactly once then stops.
-    loop = build_loop([{ law: "TEST_RULE", file: "dummy.yml", line: 1, message: "osc" }])
+    loop, = build_loop([{ law: "TEST_RULE", file: "dummy.yml", line: 1, message: "osc" }])
     loop.run(@root, max_passes: 10)
 
     osc = @bus.events.select { |e| e[:event] == "fix_loop:oscillation" }
@@ -210,14 +219,14 @@ class TestFixLoopOscillation < Minitest::Test
     cycles = @bus.events.select { |e| e[:event] == "fix_loop:cycle_detected" }
     assert_equal 1, cycles.size
     assert_equal 3, cycles.first[:payload][:threshold]
-    assert_equal persistent, cycles.first[:payload][:violation].to_h.slice(:file, :line, :rule, :message)
+    assert_equal persistent, cycles.first[:payload][:violation].to_h.slice(:file, :line, :law, :message)
   end
 
   def test_run_forever_owns_the_supervisor_not_a_cycle_bound
     mission = Master::Fix::Mission.new(root: @root)
     mission.ensure_queued!(goal: "fix #{@root}", scope: @root)
 
-    loop = build_loop([])
+    loop, = build_loop([])
     supervisor = Master::Fix::Supervisor.new(root: @root, target: @root, fix_loop: loop)
     assert_respond_to supervisor, :run_forever
     assert_respond_to supervisor, :wake!
@@ -225,7 +234,7 @@ class TestFixLoopOscillation < Minitest::Test
   end
 
   def test_halt_blocks_fix_loop_run
-    loop = build_loop([])
+    loop, = build_loop([])
 
     halt = loop.halt!(reason: "self_violation 2 violations")
     result = loop.run(@root)
@@ -240,7 +249,7 @@ class TestFixLoopOscillation < Minitest::Test
   # The boot scan halts the loop whenever lib/ carries a violation, which is
   # always; the operator's /fix exists to fix those, so it runs through a halt.
   def test_a_requested_run_proceeds_through_a_halt
-    loop = build_loop([])
+    loop, = build_loop([])
     loop.halt!(reason: "self_violation 1447 violations")
 
     result = loop.run(@root, requested: true)
@@ -249,7 +258,7 @@ class TestFixLoopOscillation < Minitest::Test
   end
 
   def test_fix_loop_streams_per_file_scan_progress
-    loop = build_loop([{ law: "TEST_RULE", line: 1, message: "boom" }])
+    loop, = build_loop([{ law: "TEST_RULE", line: 1, message: "boom" }])
 
     loop.preview(@root)
 
@@ -268,7 +277,7 @@ class TestFixLoopOscillation < Minitest::Test
     File.binwrite(binary_path, "\x00\x01\x02")
     system("git", "-C", @root, "add", ".")
 
-    files = build_loop([]).send(:collect_files, @root)
+    files = build_loop([]).first.send(:collect_files, @root)
 
     assert_includes files, text_path
     refute_includes files, binary_path
