@@ -133,13 +133,13 @@ module Master
           )
         end
 
-        publish!(worktree:, branch:, head:, base:)
+        published_head = publish!(worktree:, branch:, head:, base:)
         cleanup_success(worktree:, branch:)
-        announce("published #{head[0, 12]} to origin/main, worktree removed")
+        announce("published #{published_head.to_s[0, 12]} to origin/main (candidate #{head[0, 12]}), worktree removed")
 
         Result.new(
           true,
-          "worktree: published #{head[0, 12]} to origin/main; local checkout untouched",
+          "worktree: published candidate #{head[0, 12]} as #{published_head.to_s[0, 12]} to origin/main; local checkout untouched",
           base,
           head,
           branch,
@@ -199,11 +199,12 @@ module Master
             BODY
           )
           raise result.summary unless result.ok
-          return
+          return result.merged_sha
         end
 
         # Local mirrors and integration fixtures keep a simple fast-forward path.
         git!("push", "origin", "HEAD:refs/heads/main", chdir: worktree)
+        head
       end
 
       def cleanup_success(worktree:, branch:)

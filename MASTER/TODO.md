@@ -30,7 +30,7 @@ Updated: 2026-10-11. Scope: the Ruby runtime, constitutional law, /fix, operator
 - [ ] Run the existing cognition and repair benchmark entrypoints on identical fixtures and budgets; preserve raw outcomes, regressions, wall time and model/tool spend so a lower score cannot be narrated as progress.
 - [ ] Keep each policy, command recipe, gate inventory and generated agent contract under its canonical owner. When simplifying, remove a second source of truth rather than adding another wrapper or registry.
 - [ ] Verify the generated agent-contract workflow end to end: edit `MASTER/AGENTS.md`, regenerate with `rake docs:agent_contracts`, then require `rake lint:agent_contracts` to pass.
-- [ ] Replace manual worktree integration with a safe operator path that checks for dirty work, proves the candidate against current `origin/main`, lands only reviewed paths and reports each result. Never reset or overwrite an operator's dirty checkout.
+- [ ] Run `test_fix_worktree_session.rb` and the full `/fix` suite on pinned Ruby, then exercise worktree delivery against GitHub staging and a local mirror. Source now isolates changes, refuses divergent/overlapping work, runs read-only proof, preserves failed candidates for recovery, and reports the actual squash-merge SHA rather than the pre-squash branch SHA. Confirm every failure path preserves the operator checkout and reports cleanup/delivery state accurately.
 
 ## Proof surfaces
 

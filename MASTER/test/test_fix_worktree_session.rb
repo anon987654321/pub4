@@ -121,6 +121,7 @@ class TestFixWorktreeSession < Minitest::Test
       assert_equal 1, calls.size
       assert_equal "main", calls.first[:base]
       assert_equal result.head, calls.first[:expected_head]
+      assert_includes result.summary, "as merged-sha to origin/main"
       assert_equal "base\n", git_output(root, "show", "origin/main:README")
       refute File.exist?(result.worktree)
     end
