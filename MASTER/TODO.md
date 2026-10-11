@@ -1,6 +1,6 @@
 # MASTER TODO
 
-Updated: 2026-10-11. Scope: the Ruby runtime, constitutional law, /fix, operator tooling and device support. Cross-tree work is indexed in the repository-root `TODO.md`.
+Updated: 2026-10-12. Scope: the Ruby runtime, constitutional law, /fix, operator tooling and device support. Cross-tree work is indexed in the repository-root `TODO.md`.
 
 ## P0 — correctness and proof
 
@@ -21,7 +21,7 @@ Updated: 2026-10-11. Scope: the Ruby runtime, constitutional law, /fix, operator
 
 ## P2 — KISS and maintenance
 
-- [ ] Run `test_snapshot_pack.rb` with the integrity footer now added to reading packs. Each inlined file carries a SHA-256 of its normalized source, the entire pack has a terminal SHA-256, the footer is budgeted, and tests cover truncation/source tampering; verify the pack is still under budget on representative trees and ensure consumers reject failed verification.
+- [ ] Run `test_snapshot_pack.rb` on the pinned Ruby/Bundler stack. Current `main` includes per-file normalized-source and whole-pack SHA-256 checks; verify the byte cap and that consumers reject truncation/tampering. Draft PR #754 adds SCSS/CSS/ERB/shell/Stimulus map extraction, `--since=REF`, deletion/rename metadata and preservation of the previous pack on invalid input or impossible budgets; keep it unmerged until the focused suite passes, then check representative pack sizes and summary quality.
 
 - [ ] Run the documented debugger command on a developer checkout under pinned Ruby 4.0.5 and confirm `-rdebug` is available. The README version mismatch is corrected, but this environment cannot execute the repository's test command.
 
