@@ -130,11 +130,41 @@ module Master
         # row rejects the section, as it does for predictions.
         def valid_outcomes?(outcomes)
           records = outcomes["records"]
-          records.is_a?(Hash) && records.all? do |_key, record|
-            record.is_a?(Hash) &&
-              %w[successes failures inconclusive brier_count].all? { |counter| !record.key?(counter) || record[counter].is_a?(Integer) } &&
-              %w[brier_sum].all? { |field| !record.key?(field) || finite_number?(record[field]) } &&
-              %w[observations seen_receipts].all? { |field| !record.key?(field) || record[field].is_a?(Array) }
+          return false unless records.is_a?(Hash) && records.size <= 256
+
+          records.all? do |key, record|
+            next false unless key.is_a?(String) && key.match?(/\A[0-9a-f]{24}\z/) && record.is_a?(Hash)
+            next false unless %w[context action].all? { |field| record[field].is_a?(String) && !record[field].empty? }
+
+            counters_valid = %w[successes failures inconclusive brier_count].all? do |counter|
+              value = record.fetch(counter, 0)
+              value.is_a?(Integer) && value >= 0
+            end
+            next false unless counters_valid
+            brier_sum = record.fetch("brier_sum", 0.0)
+            next false unless finite_number?(brier_sum) && brier_sum.to_f >= 0.0
+
+            observations = record.fetch("observations", [])
+            receipts = record.fetch("seen_receipts", [])
+            next false unless observations.is_a?(Array) && observations.size <= 12
+            next false unless receipts.is_a?(Array) && receipts.size <= 64
+
+            observations_valid = observations.all? do |item|
+              item.is_a?(Hash) &&
+                %w[success failure inconclusive].include?(item["outcome"]) &&
+                item["source"].is_a?(String) &&
+                item["sha256"].to_s.match?(/\A[0-9a-f]{64}\z/) &&
+                (item["predicted_probability"].nil? ||
+                  (finite_number?(item["predicted_probability"]) && item["predicted_probability"].between?(0.0, 1.0))) &&
+                item["observed_at"].is_a?(String)
+            end
+            next false unless observations_valid
+
+            receipts.all? do |item|
+              item.is_a?(Hash) && item["source"].is_a?(String) &&
+                item["sha256"].to_s.match?(/\A[0-9a-f]{64}\z/) &&
+                %w[success failure inconclusive].include?(item["outcome"])
+            end
           end
         end
 
