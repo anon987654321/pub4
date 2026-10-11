@@ -135,7 +135,7 @@ module Deploy
         (shared_identifiers_for(app) + app_identifiers(app)).uniq.each { |id| registrations[id] << app }
       end
 
-      catalogue = Deploy::StimulusComponentsGate::REQUIRED_CONTROLLERS.to_set
+      catalogue = Deploy::StimulusComponentsGate::CATALOGUE.to_set
 
       registrations.each do |id, apps|
         result.checked!
@@ -164,7 +164,7 @@ module Deploy
     # Where an app's elements can come from: its views and its engines' views,
     # its helpers and scripts, and everything shared renders or ships.
     def mount_sources(app)
-      views(app) + Dir.glob(File.join(@rails_root, "{#{app},#{app}/engines/*,__shared}/app/{helpers,components,javascript}/**/*.{rb,js,erb}")) +
+      views(app) + Dir.glob(File.join(@rails_root, "{#{([app] + engine_dirs(app) + ["__shared"]).join(",")}}/app/{helpers,components,javascript}/**/*.{rb,js,erb}")) +
         Dir.glob(File.join(@rails_root, "__shared/frontend/**/*.js"))
     end
 
@@ -178,8 +178,8 @@ module Deploy
     end
 
     def identifiers_in(text)
-      (text.scan(/application\.register\("([a-z0-9-]+)"/).flatten +
-       text.scan(/^\s*\["([a-z0-9-]+)",/).flatten).uniq
+      (text.scan(/application\.register\(\s*"([a-z0-9-]+)"/).flatten +
+       text.scan(/^\s*\[\s*"([a-z0-9-]+)"\s*,/).flatten).uniq
     end
 
     # eagerLoadControllersFrom("controllers") turns foo_bar_controller.js into
@@ -188,8 +188,7 @@ module Deploy
     # it: an engine view naming an engine controller is correctly wired, and a
     # glob that sees one side but not the other reports it as broken.
     def app_identifiers(app)
-      (Dir.glob(File.join(@rails_root, app, "app/javascript/controllers/*_controller.js")) +
-       Dir.glob(File.join(@rails_root, app, "engines/*/app/javascript/controllers/*_controller.js")))
+      ([app] + engine_dirs(app)).flat_map { |dir| Dir.glob(File.join(@rails_root, dir, "app/javascript/controllers/*_controller.js")) }
         .map { |path| File.basename(path, "_controller.js").tr("_", "-") }
         .reject { |name| name == "application" }
     end
@@ -278,17 +277,56 @@ module Deploy
     # extracted on 2026-08-12 and checks_ran fell from over 400 to 391. The
     # floor assertion in stimulus_wiring_gate_test is there to catch exactly
     # that, and it did.
+    # The verticals are engines that sit beside brgen as RAILS/brgen_<name> (brgen_radio holds
+    # playlist and tv one level down), pinned into brgen's importmap and mounted in its routes,
+    # so their views, helpers and controllers belong to brgen. amber and bsdports have none.
+    def engine_dirs(app)
+      return [] unless app == "brgen"
+
+      Dir.glob(File.join(@rails_root, "brgen_*/{,*/,engines/*/}app"))
+         .map { |path| path.delete_prefix("#{@rails_root}/").delete_suffix("/app") }.sort
+    end
+
     def views(app)
-      Dir.glob(File.join(@rails_root, app, "app/views/**/*.erb")) +
-        Dir.glob(File.join(@rails_root, app, "engines/*/app/views/**/*.erb")) +
-        Dir.glob(File.join(@rails_root, "__shared/app/views/**/*.erb"))
+      own = ([app] + engine_dirs(app)).flat_map { |dir| Dir.glob(File.join(@rails_root, dir, "app/views/**/*.erb")) }
+      own + shared_views_reaching(app, own)
+    end
+
+    # A shared view renders inside an app when something the app owns names it: a routed
+    # shared view (no leading underscore) always, a partial only when the app's views,
+    # helpers, controllers or another reached shared view say render "shared/<name>". Demanding every
+    # shared partial's controllers of every app made bsdports answer for the affiliate unit
+    # it never renders.
+    def shared_views_reaching(app, own)
+      @shared_views_reaching ||= {}
+      @shared_views_reaching[app] ||= begin
+        shared = Dir.glob(File.join(@rails_root, "__shared/app/views/**/*.erb"))
+        reached, partials = shared.partition { |path| !File.basename(path).start_with?("_") }
+        helpers = ([app] + engine_dirs(app)).flat_map { |dir| Dir.glob(File.join(@rails_root, dir, "app/{helpers,components,controllers}/**/*.rb")) } +
+                  Dir.glob(File.join(@rails_root, "__shared/app/{helpers,components,controllers}/**/*.rb"))
+        text = (own + reached + helpers).map { |path| File.read(path) }.join("\n")
+        loop do
+          found, partials = partials.partition { |path| text.include?(partial_name(path)) }
+          break if found.empty?
+
+          reached += found
+          text += "\n" + found.map { |path| File.read(path) }.join("\n")
+        end
+        reached
+      end
+    end
+
+    # __shared/app/views/shared/newsletter/_footer.html.erb is rendered as "shared/newsletter/footer".
+    def partial_name(path)
+      path.delete_prefix("#{@rails_root}/__shared/app/views/").sub(/\.html\.erb\z|\.erb\z/, "").sub(%r{(?:\A|/)_([^/]+)\z}) { |m| m.start_with?("/") ? "/#{$1}" : $1 }
     end
 
     def helper_or_component?(path)
       normalized = path.delete_prefix("#{@rails_root}/")
       normalized.start_with?("__shared/app/helpers/", "__shared/app/components/") ||
         normalized.start_with?("#{normalized.split("/").first}/app/helpers/") ||
-        normalized.match?(%r{\A(?:amber|brgen|bsdports)/engines/[^/]+/app/helpers/})
+        normalized.match?(%r{\A(?:amber|brgen|bsdports)/engines/[^/]+/app/helpers/}) ||
+        normalized.match?(%r{\Abrgen_[^/]+/(?:[^/]+/)?(?:engines/[^/]+/)?app/helpers/})
     end
 
     # A shared helper is a method every app could call, but its markup reaches
@@ -305,7 +343,7 @@ module Deploy
       method = at && text[0, at].scan(/^\s*def\s+(?:self\.)?([a-z_]\w*[?!]?)/).flatten.last
       return false unless method
 
-      callers = views(app) + Dir.glob(File.join(@rails_root, "{#{app},#{app}/engines/*}/app/helpers/**/*.rb"))
+      callers = views(app) + ([app] + engine_dirs(app)).flat_map { |dir| Dir.glob(File.join(@rails_root, dir, "app/helpers/**/*.rb")) }
       callers.none? { |caller| File.read(caller).match?(/\b#{Regexp.escape(method)}\b/) }
     end
 

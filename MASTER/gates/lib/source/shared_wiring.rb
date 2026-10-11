@@ -47,8 +47,9 @@ module Deploy
       # autosave, draft-store, media-picker and feed-compose register in
       # stimulus_boot_social.js, not stimulus_boot.js — brgen and amber
       # mount them, bsdports does not, so they moved out of the file every
-      # app imports. The two texts are checked together below.
-      boot_files = %w[stimulus_boot.js stimulus_boot_social.js].map { |f| File.join(RAILS_ROOT, "__shared/frontend", f) }
+      # app imports; post-progressive is brgen's own, in stimulus_boot_brgen.js.
+      # The three texts are checked together below.
+      boot_files = %w[stimulus_boot.js stimulus_boot_social.js stimulus_boot_brgen.js].map { |f| File.join(RAILS_ROOT, "__shared/frontend", f) }
 
       result.fail("missing shared importmap baseline") unless File.file?(baseline)
       boot_files.each { |f| result.fail("missing #{File.basename(f)}") unless File.file?(f) }

@@ -40,7 +40,7 @@ class StimulusWiringGateTest < Minitest::Test
   end
 
   def test_reports_an_unregistered_engine_helper_controller
-    failures = with_file("brgen/engines/maps/app/helpers/stimulus_wiring_probe_helper.rb",
+    failures = with_file("brgen_maps/app/helpers/stimulus_wiring_probe_helper.rb",
                          %(tag.div(data: { controller: "totally-absent-engine-helper" }))) do
       Deploy::StimulusWiringGate.run.failures.select { |f| f.include?("stimulus_wiring_probe_helper") }
     end
@@ -74,11 +74,11 @@ class StimulusWiringGateTest < Minitest::Test
   end
 
   def test_reports_a_missing_engine_action_method
-    with_file("brgen/engines/playlist/app/javascript/controllers/stimulus_mount_probe_controller.js",
+    with_file("brgen_radio/playlist/app/javascript/controllers/stimulus_mount_probe_controller.js",
               %(import { Controller } from "@hotwired/stimulus"
 export default class extends Controller {}
 )) do
-      failures = with_file("brgen/engines/playlist/app/views/stimulus_wiring_probe.html.erb",
+      failures = with_file("brgen_radio/playlist/app/views/stimulus_wiring_probe.html.erb",
                            %(<button data-action="click->stimulus-mount-probe#noSuchMethod">x</button>)) do
         Deploy::StimulusWiringGate.run.failures.select { |f| f.include?("stimulus_mount_probe") }
       end

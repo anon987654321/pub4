@@ -37,9 +37,13 @@ module Deploy
       animated-number auto-submit carousel character-counter chartjs checkbox-select-all clipboard
       color-picker confirmation content-loader dialog dropdown glow hotkey lightbox notification
       password-visibility places-autocomplete popover prefetch rails-nested-form read-more remote-rails
-      reveal-controller scroll-progress scroll-reveal scroll-to sortable sound speech-recognition
+      reveal scroll-progress scroll-reveal scroll-to sortable sound speech-recognition
       textarea-autogrow timeago
     ].freeze
+
+    # The identifiers the boot files register for the whole catalogue: the upstream package
+    # names, minus the "rails-" prefix the nested-form package carries.
+    CATALOGUE = (UPSTREAM_COMPONENTS.map { |name| name.delete_prefix("rails-") } + REQUIRED_CONTROLLERS).uniq.freeze
 
     COMPONENT_PACKAGES = {
       "animated-number" => "@stimulus-components/animated-number",
@@ -65,7 +69,7 @@ module Deploy
       "rails-nested-form" => "@stimulus-components/rails-nested-form",
       "read-more" => "@stimulus-components/read-more",
       "remote-rails" => "@stimulus-components/remote-rails",
-      "reveal-controller" => "@stimulus-components/reveal",
+      "reveal" => "@stimulus-components/reveal",
       "scroll-progress" => "@stimulus-components/scroll-progress",
       "scroll-reveal" => "@stimulus-components/scroll-reveal",
       "scroll-to" => "@stimulus-components/scroll-to",
@@ -92,7 +96,7 @@ module Deploy
       "dialog" => /showModal\(\)|<dialog|aria-modal/i,
       "content-loader" => /fetch\(|Turbo\.visit|turbo-frame/i,
       "confirmation" => /confirm\(|data-confirm|confirmation/i,
-      "reveal-controller" => /IntersectionObserver|intersection.*reveal/i,
+      "reveal" => /IntersectionObserver|intersection.*reveal/i,
       "scroll-to" => /scrollIntoView\(|window\.scrollTo\(/,
       "scroll-progress" => /scrollY|scrollTop.*scrollHeight/i,
     }.freeze

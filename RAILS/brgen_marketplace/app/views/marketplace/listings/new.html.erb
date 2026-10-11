@@ -28,7 +28,7 @@
           } do |f| %>
       <%= render "shared/errors", object: @listing %>
 
-      <nav class="listing-steps" aria-label="<%= t("marketplace.listing_steps_label") %>" data-listing-form-target="steps">
+      <nav class="listing-steps" aria-label="<%= t("marketplace.listing_steps_label") %>">
         <% %w[photos details location review].each_with_index do |step, index| %>
           <button type="button" class="listing-step-link<%= " is-active" if index.zero? %>"
                   data-listing-form-target="stepLink"
