@@ -534,6 +534,12 @@ def postpro_seed(offset = 0)
   (($postpro_seed || 0) + offset).abs % 2_147_483_647
 end
 
+# A generator for one effect, derived from the run seed, so the same seed lays
+# the same dust, the same weave and the same dropout twice.
+def postpro_rng(offset)
+  Random.new(postpro_seed(offset))
+end
+
 # Per-stock data: grain sigma (legacy), 3x3 colour matrix, and characteristic
 # curve [Dmin, Dmax, pivot, gamma] per R/G/B. Dmin lifts shadows (base+fog),
 # Dmax caps highlights (shoulder), pivot is the linear midtone fulcrum (≈0.18),
@@ -2547,18 +2553,19 @@ end
 # at random positions; dark specks more common than bright (dust blocks light).
 def dust_and_hair(image, intensity = 0.50)
   w, h = image.width, image.height
+  rng = postpro_rng(41)
   overlay = Vips::Image.black(w, h, bands: 3).cast("float")
   (intensity * 14).round.times do
-    x = rand(w)
-    y = rand(h)
-    val = rand > 0.65 ? [230.0, 228.0, 225.0] : [8.0, 6.0, 5.0]
-    overlay = overlay.draw_circle(val, x, y, 1 + rand(2), fill: true)
+    x = rng.rand(w)
+    y = rng.rand(h)
+    val = rng.rand > 0.65 ? [230.0, 228.0, 225.0] : [8.0, 6.0, 5.0]
+    overlay = overlay.draw_circle(val, x, y, 1 + rng.rand(2), fill: true)
   end
   (intensity * 2).round.times do
-    x1 = rand(w)
-    y1 = rand(h)
-    angle = rand * Math::PI * 2
-    len = 30 + rand(110)
+    x1 = rng.rand(w)
+    y1 = rng.rand(h)
+    angle = rng.rand * Math::PI * 2
+    len = 30 + rng.rand(110)
     x2 = (x1 + len * Math.cos(angle)).to_i.clamp(0, w - 1)
     y2 = (y1 + len * Math.sin(angle)).to_i.clamp(0, h - 1)
     overlay = overlay.draw_line([14.0, 12.0, 10.0], x1, y1, x2, y2)
@@ -2632,8 +2639,8 @@ def vhs_head_switch_band(image, intensity = 0.40)
   top = image.crop(0, 0, w, h - band_h)
   band = image.crop(0, h - band_h, w, band_h)
   shift = (6 + intensity * 18).round
-  jittered = band.embed(rand(-shift..shift), 0, w, band_h)
-  noisy = jittered.cast("float") + rgb_bands(Vips::Image.gaussnoise(w, band_h, sigma: 30 * intensity))
+  jittered = band.embed(postpro_rng(43).rand(-shift..shift), 0, w, band_h)
+  noisy = jittered.cast("float") + rgb_bands(Vips::Image.gaussnoise(w, band_h, sigma: 30 * intensity, seed: postpro_seed(43)))
   safe_cast(top.join(clamp01(noisy / 255.0) * 255.0, :vertical))
 rescue StandardError => e
   $logger.error "vhs_head_switch_band: #{e.message}"; image
@@ -2706,12 +2713,13 @@ end
 def minidv_block_dropout(image, intensity = 0.35)
   w, h = image.width, image.height
   processed = image
+  rng = postpro_rng(47)
   (intensity * 6).round.times do
-    bw = 8 + rand(w / 12)
-    bh = 8 + rand(h / 20)
-    x = rand([w - bw, 1].max)
-    y = rand([h - bh, 1].max)
-    shade = rand < 0.5 ? [20, 20, 24] : [180, 180, 190]
+    bw = 8 + rng.rand(w / 12)
+    bh = 8 + rng.rand(h / 20)
+    x = rng.rand([w - bw, 1].max)
+    y = rng.rand([h - bh, 1].max)
+    shade = rng.rand < 0.5 ? [20, 20, 24] : [180, 180, 190]
     processed = processed.draw_rect(shade, x, y, bw, bh, fill: true)
   end
   processed
@@ -2916,12 +2924,13 @@ end
 
 def gate_weave(image, intensity = 0.40)
   w, h = image.width, image.height
-  dx = (rand - 0.5) * intensity * w * 0.004
-  dy = (rand - 0.5) * intensity * h * 0.002
+  rng = postpro_rng(53)
+  dx = (rng.rand - 0.5) * intensity * w * 0.004
+  dy = (rng.rand - 0.5) * intensity * h * 0.002
   x = Vips::Image.xyz(w, h).extract_band(0).linear([1.0], [-dx])
   y = Vips::Image.xyz(w, h).extract_band(1).linear([1.0], [-dy])
   coords = x.bandjoin(y)
-  image.mapim(coords)
+  image.mapim(coords, extend: :copy)
 rescue StandardError => e
   $logger.error "gate_weave: #{e.message}"; image
 end

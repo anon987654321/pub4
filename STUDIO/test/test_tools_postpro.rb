@@ -550,6 +550,49 @@ class TestPostproFilm < Minitest::Test
                     "the halo peaks inside the highlight at #{profile.index(profile.max)} px, source lit to #{lit}"
   end
 
+  # The red layer sits deepest, so the returned light is red-biased on a
+  # neutral highlight, never grey.
+  def test_halation_returns_more_red_than_blue
+    width = 400
+    spot = Vips::Image.gaussmat(width / 12.0, 0.001, separable: false, precision: :float)
+    spot = spot.linear([320.0 / spot.max], [0]).embed((width - spot.width) / 2, (width - spot.height) / 2, width, width)
+    probe = ((Vips::Image.black(width, width) + 40) + spot).cast("uchar")
+    probe = probe.bandjoin([probe, probe]).copy(interpretation: :srgb)
+    delta = halation(probe, 1.0).cast("float") - probe.cast("float")
+    red, _green, blue = delta.bandsplit.map(&:avg)
+    assert_operator red, :>, blue * 2, "red #{red.round(3)} should dominate blue #{blue.round(3)}"
+  end
+
+  # An S-shaped scale: the toe is flatter than the midtones and the shoulder
+  # ends under paper white (Dmax), with every step still ordered.
+  def test_film_curve_has_a_toe_and_a_shoulder_ceiling
+    inputs = [0, 16, 64, 128, 192, 255]
+    out = inputs.map do |value|
+      flat = (Vips::Image.black(16, 16) + value).cast("uchar")
+      film_curve(flat.bandjoin([flat, flat]).copy(interpretation: :srgb), :kodak_portra, 1.0).colourspace("b-w").avg
+    end
+    assert_equal out.sort, out, "not monotonic: #{out.inspect}"
+    toe = (out[1] - out[0]) / 16.0
+    mid = (out[3] - out[2]) / 64.0
+    assert_operator toe, :<, mid, "toe #{toe.round(2)} is not flatter than the midtones #{mid.round(2)}"
+    assert_operator out.last, :<, 254.0, "white is not capped by Dmax: #{out.last}"
+  end
+
+  # Weave, dust and dropout draw from the run seed, so one seed is one picture.
+  def test_seeded_analog_effects_repeat_exactly
+    ramp = Vips::Image.xyz(96, 64).extract_band(0).linear([2.0], [0]).cast("uchar")
+    probe = ramp.bandjoin([ramp, ramp]).copy(interpretation: :srgb)
+    previous = $postpro_seed
+    $postpro_seed = 1234
+    %i[gate_weave dust_and_hair minidv_block_dropout vhs_head_switch_band].each do |effect|
+      first = send(effect, probe, 0.8)
+      second = send(effect, probe, 0.8)
+      assert_equal 0.0, (first.cast("float") - second.cast("float")).abs.max, "#{effect} is not repeatable"
+    end
+  ensure
+    $postpro_seed = previous
+  end
+
   def test_every_tone_curve_is_monotonic_and_lands_mid_grey_somewhere_sane
     %i[aces hable hbd agx aces2].each do |type|
       encoded = [0.02, 0.09, 0.18, 0.4, 1.0, 4.0].map do |scene|
