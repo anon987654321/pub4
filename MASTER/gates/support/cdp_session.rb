@@ -200,14 +200,17 @@ module Deploy
       nil
     end
 
-    def back(settle: 0.2)
-      send_cmd("Page.goBack")
-      wait_for_ready
-      sleep settle if settle.positive?
-    end
+    def back(settle: 0.2) = step_history(-1, settle)
 
-    def forward(settle: 0.2)
-      send_cmd("Page.goForward")
+    def forward(settle: 0.2) = step_history(1, settle)
+
+    # CDP has no Page.goBack or Page.goForward; history moves by entry id.
+    def step_history(offset, settle)
+      history = send_cmd("Page.getNavigationHistory")
+      entry = history.fetch("entries")[history.fetch("currentIndex") + offset]
+      return unless entry
+
+      send_cmd("Page.navigateToHistoryEntry", entryId: entry.fetch("id"))
       wait_for_ready
       sleep settle if settle.positive?
     end
