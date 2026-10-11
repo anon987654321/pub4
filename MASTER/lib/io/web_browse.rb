@@ -92,7 +92,10 @@ module Master
       # Public, shared security setup: BrowserAgent uses the same fenced
       # request path rather than letting a second Ferrum instance access the net.
       def secure_page(page)
-        secure_page(page)
+        page.command("Page.addScriptToEvaluateOnNewDocument", source: NETWORK_SANDBOX_SCRIPT)
+        page.command("Network.setCacheDisabled", cacheDisabled: true)
+        page.command("Network.setBypassServiceWorker", bypass: true)
+        guard_requests(page, budget: new_budget)
         page
       end
 
@@ -106,10 +109,7 @@ module Master
         browser = Ferrum::Browser.new(headless: true, timeout: TIMEOUT, process_timeout: TIMEOUT,
                                       browser_options: BROWSER_OPTIONS)
         page = browser.create_page
-        page.command("Page.addScriptToEvaluateOnNewDocument", source: NETWORK_SANDBOX_SCRIPT)
-        page.command("Network.setCacheDisabled", cacheDisabled: true)
-        page.command("Network.setBypassServiceWorker", bypass: true)
-        guard_requests(page, budget: new_budget)
+        secure_page(page)
         page.go_to(uri.to_s)
         sleep wait
         JSON.parse(page.evaluate(SCRIPT))
