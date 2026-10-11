@@ -51,6 +51,9 @@ module Master
       "WebFetch" => ->(r, i) { Io::WebFetch.new(governor: i[:governor], event_bus: i[:bus]) },
       "WebSearch" => ->(r, i) { Io::WebSearch.new(governor: i[:governor], event_bus: i[:bus]) },
       "WebBrowse" => ->(_r, i) { Io::WebBrowse.new(governor: i[:governor], event_bus: i[:bus]) },
+      "BrowserAgent" => ->(r, i) {
+        Io::BrowserAgent.new(root: i.fetch(:workspace_root, r), governor: i[:governor], event_bus: i[:bus])
+      },
       "CodePen" => ->(_r, i) { Io::CodePen.new(governor: i[:governor], event_bus: i[:bus]) },
       "Gist" => ->(_r, i) { Io::Gist.new(governor: i[:governor], event_bus: i[:bus]) },
       "YouTubeTranscript" => ->(_r, i) { Io::YoutubeTranscript.new(governor: i[:governor], event_bus: i[:bus]) },
