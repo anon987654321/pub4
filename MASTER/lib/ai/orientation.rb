@@ -45,6 +45,9 @@ module Master
         wishes = pending_wishes(root)
         parts << "pending wishes: #{wishes.join(", ")}" unless wishes.empty?
 
+        history = repair_history(root)
+        parts << history if history
+
         atlas = repository_atlas(repo_root)
         parts << atlas unless atlas.to_s.empty?
 
@@ -216,6 +219,11 @@ module Master
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "AI::Orientation.pending_wishes")
         []
+      end
+
+      def repair_history(root)
+        require_relative "../fix/repair_outcomes"
+        Master::Fix::RepairOutcomes.summary(root)
       end
 
       def key_docs(repo_root)

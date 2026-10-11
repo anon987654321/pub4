@@ -24,6 +24,7 @@ require_relative "protocol"
 require_relative "transformation_plan"
 require_relative "convergence_discipline"
 require_relative "reflection"
+require_relative "run_budget"
 
 module Master
   module Fix
@@ -200,6 +201,7 @@ module Master
       end
 
       def finish_run(result, _target, run_id, mission: nil, requested: false)
+        RunBudget.finish_run
         result = blocked_by_gaps(result)
         state = terminal_state_for(result)
         evidence = @convergence_discipline.receipt if @convergence_discipline.respond_to?(:receipt)
@@ -297,6 +299,7 @@ module Master
       # an earlier process left, then the passes, then the terminal state.
       def run_journaled(journal, files:, target:, max_passes:, budget_seconds:, mission:, requested:, incremental:)
         run_id = journal["id"]
+        RunBudget.begin_run(root: Master::ROOT, max_passes:)
         files = StreamCursor.order(@root, target, files)
         deadline = Ground::Reliability::Deadline.new(journal["remaining_seconds"].to_f)
         start_pass = @run_journal.next_pass(journal)
@@ -692,6 +695,8 @@ module Master
 
         @homeostat&.observe(:tool_call) # a pass is loop overhead distinct from the LLM call inside it
         return timed_out(i, pass, budget_seconds) if deadline.expired?
+        over_budget = RunBudget.pass_boundary(pass)
+        return over_budget if over_budget
 
         result = @pass_runner.run_pass(
           files:, target:, pass:, deadline: deadline.at, transaction_id:,

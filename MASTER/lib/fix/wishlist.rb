@@ -11,6 +11,7 @@ require_relative "../io/git_operations"
 require_relative "../review/scan/semantic_fingerprint"
 require_relative "../master/time"
 require_relative "wishlist/proof_contract"
+require_relative "wishlist/personas"
 
 module Master
   module Fix
@@ -21,7 +22,8 @@ module Master
       include ::Master::Io::AtomicWrite
 
       LEDGER_PATH = ".master/fix_wishlist.json"
-      SCHEMA = 1
+      SCHEMA = 2
+      READABLE_SCHEMAS = [1, 2].freeze
       MAX_NEW_ITEMS = 12
       MAX_PROPOSALS = 96
       BATCH_SIZE = 6
@@ -45,8 +47,10 @@ module Master
         return "wishlist: skipped — no model" unless @agent.respond_to?(:ask)
 
         orientation = Master::AI::Orientation.render(root: @root, target:, depth: 2, max_entries: 80)
-        response = @agent.ask(prompt(orientation:, state:, target:, run_id:))
-        items = normalize(parse(response))
+        base = prompt(orientation:, state:, target:, run_id:)
+        items = Personas.collect(agent: @agent, base:, parse: method(:parse), normalize: method(:normalize))
+        items = normalize(parse(@agent.ask(base))) if items.empty?
+        items = items.first(MAX_NEW_ITEMS)
         ledger = load_ledger
         added = merge_new_items!(ledger, items, state:, target:, run_id:)
         save_ledger(ledger)
@@ -126,7 +130,7 @@ module Master
 
           next if run_id && proposal["last_attempt_run"].to_s == run_id.to_s
           proposal
-        end.first(limit.to_i)
+        end.then { |rows| Personas.order(rows) }.first(limit.to_i)
 
         save_ledger(ledger) if changed
         rows
@@ -365,10 +369,10 @@ module Master
         return { "schema" => SCHEMA, "proposals" => [] } unless File.file?(ledger_path)
 
         data = JSON.parse(File.read(ledger_path, encoding: "UTF-8"))
-        raise "wishlist ledger schema #{data["schema"]} is unsupported" unless data["schema"].to_i == SCHEMA
+        raise "wishlist ledger schema #{data["schema"]} is unsupported" unless READABLE_SCHEMAS.include?(data["schema"].to_i)
         raise "wishlist ledger proposals must be an array" unless data["proposals"].is_a?(Array)
 
-        data
+        data["schema"].to_i == SCHEMA ? data : Personas.migrate!(data)
       rescue JSON::ParserError => e
         raise "wishlist ledger is corrupt: #{e.message}"
       end
@@ -386,10 +390,7 @@ module Master
         items.each do |item|
           anchor = item["anchor"].to_s
           fingerprint = proposal_fingerprint(item)
-          next if ledger["proposals"].any? do |existing|
-            existing["fingerprint"].to_s == fingerprint &&
-              !%w[stale rejected superseded].include?(existing["status"].to_s)
-          end
+          next if Personas.absorb!(ledger["proposals"], item.merge("fingerprint" => fingerprint))
 
           ledger["proposals"] << item.merge(
             "uid" => "#{item["id"]}-#{fingerprint[0, 12]}",

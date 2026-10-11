@@ -3,6 +3,7 @@
 require "digest"
 require "fileutils"
 require "json"
+require_relative "repair_outcomes"
 
 module Master
   module Fix
@@ -81,6 +82,7 @@ module Master
           remember_file(data, path, law_ids, verdict)
           save(data)
         end
+        RepairOutcomes.new(root: @root).record(path, law_ids, outcomes)
       end
 
       private

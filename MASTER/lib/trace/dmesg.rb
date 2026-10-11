@@ -110,6 +110,7 @@ module Master
       end
 
       def status(unit, msg, io: $stdout)
+        Master::Fix::RunBudget.note_output(unit, msg) if defined?(Master::Fix::RunBudget)
         emit("#{unit}: #{msg}", io:)
       end
 
