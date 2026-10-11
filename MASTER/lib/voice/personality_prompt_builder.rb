@@ -55,8 +55,32 @@ module Master
         add_rules(sections)
         add_attention(sections)
         add_language_style(sections)
+        add_lyrical_constraints(sections)
         add_markdown_style(sections)
         add_design_rules(sections)
+      end
+
+      # Creative-writing techniques are conditional prompt data, not an unconditional persona.
+      def add_lyrical_constraints(sections)
+        style = @laws.voice["lyrical_constraints"]
+        return unless style.is_a?(Hash)
+
+        rules = Array(style["rules"]).map { |rule| rule.to_s.strip }.reject(&:empty?)
+        return if rules.empty?
+
+        safeguards = Array(style["safeguards"]).map { |rule| rule.to_s.strip }.reject(&:empty?)
+        lines = [
+          "<master_lyrical_style>",
+          style["activation"].to_s.strip,
+          ("Style: #{style["style"]}." if style["style"]),
+          ("Cadence: #{style["cadence"]}." if style["cadence"]),
+          *rules.map { |rule| "- #{rule}" },
+          *safeguards.map { |rule| "- Safeguard: #{rule}" },
+          "</master_lyrical_style>",
+        ].compact
+        sections["master_lyrical_style"] = lines.join("\n")
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "PromptBuilder.add_lyrical_constraints", severity: :cosmetic)
       end
 
       # The markdown_style section of data/laws.yml, which had no reader.
@@ -81,7 +105,7 @@ module Master
 
         aesthetic = style["aesthetic"].to_s.tr("_", " ").strip
         heading = aesthetic.empty? ? "Markdown you write:" : "Markdown you write follows the #{aesthetic} aesthetic:"
-        lines = [heading, *rules.map { |law| "- #{rule}" }]
+        lines = [heading, *rules.map { |rule| "- #{rule}" }]
         sections["master_style"] = [sections["master_style"], lines.join("\n")].compact.join("\n")
       end
 

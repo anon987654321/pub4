@@ -46,6 +46,7 @@ prompt_ordering:
   - master_refusal_policy
   - master_attention
   - master_style
+  - master_lyrical_style
 
 negotiable:
   style: sentence_case

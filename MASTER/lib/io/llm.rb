@@ -236,7 +236,7 @@ module Master
 
       class BrowserAgent < RubyLLM::Tool
         include ToolForwarding
-        description "Use a sessionful, SSRF-guarded browser. navigate/extract are read-oriented; every click, set, or type operation requires live human approval. No login, payment, posting, or submission without explicit instruction."
+        description "Use a sessionful, SSRF-guarded browser. Navigation/extraction are read-oriented; every click, set, or type operation requires fresh human approval. Do not disguise automation or conceal AI identity. External communication requires recipient consent and per-action human approval."
         parameter :action, description: "navigate, extract, interact, or close", required: true
         parameter :session, description: "Session id (letters, digits, underscore, hyphen; default default)", required: false
         parameter :url, description: "Public http(s) URL for action=navigate", required: false

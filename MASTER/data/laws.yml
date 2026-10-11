@@ -4527,3 +4527,8 @@ browser_policy:
     - GET
     - HEAD
   max_sessions: 4
+  external_interactions:
+    ai_identity_disclosure_required: true
+    recipient_consent_required: true
+    per_action_human_approval_required: true
+    browser_fingerprint_spoofing: forbidden

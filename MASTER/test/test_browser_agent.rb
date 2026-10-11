@@ -68,6 +68,11 @@ class TestBrowserAgent < Minitest::Test
     policy = YAML.safe_load_file(File.join(root, "data", "laws.yml"), aliases: true).fetch("browser_policy")
     assert_equal true, policy.fetch("consent_required")
     assert_includes policy.fetch("write_actions"), "click"
+    interactions = policy.fetch("external_interactions")
+    assert_equal true, interactions.fetch("ai_identity_disclosure_required")
+    assert_equal true, interactions.fetch("recipient_consent_required")
+    assert_equal true, interactions.fetch("per_action_human_approval_required")
+    assert_equal "forbidden", interactions.fetch("browser_fingerprint_spoofing")
     assert Master::Builder::DEFAULT_TOOL_MAP.key?("BrowserAgent")
     assert_equal Master::Io::LLM::BrowserAgent, Master::Review::LLMDispatcher::LLM_TOOL_MAP.fetch(Master::Io::BrowserAgent)
     tools = YAML.safe_load_file(File.join(root, "data", "tools.yml"), aliases: true)

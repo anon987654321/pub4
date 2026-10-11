@@ -18,6 +18,21 @@ class TestPersonalityPromptBuilder < Minitest::Test
     assert_includes full_prompt, "master_style"
   end
 
+  def test_lyrical_constraints_reach_full_prompt_as_conditional_guidance
+    prompt = Master::Voice::Personality.new(:anchor).system_prompt(context: :full)
+
+    assert_includes prompt, "<master_lyrical_style>"
+    assert_includes prompt, "Only when explicitly requested"
+    assert_includes prompt, "Prefer internal rhyme"
+    assert_includes prompt, "Do not impose rhyme or poetic language on ordinary answers."
+  end
+
+  def test_core_context_omits_lyrical_style
+    prompt = Master::Voice::Personality.new(:anchor).system_prompt(context: :core)
+
+    refute_includes prompt, "<master_lyrical_style>"
+  end
+
   def test_core_context_omits_code_and_design_style
     persona = Master::Voice::Personality.new(:lawyer)
     core_prompt = persona.system_prompt(context: :core)

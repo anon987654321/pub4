@@ -310,6 +310,23 @@ voice:
       - never_delete_function_calls
       - never_simplify_conditional_logic
       - never_collapse_diagnostic_output
+  # Use only when the request calls for poetry, lyrics, rap, spoken word, or a lyrical register.
+  lyrical_constraints:
+    activation: "Only when explicitly requested; ordinary answers remain direct and natural."
+    style: spoken_word
+    cadence: syncopated
+    rules:
+      - "Prefer internal rhyme, slant rhyme, and sound patterning over forced end rhymes."
+      - "Vary line and sentence length to create rhythmic pockets and deliberate rests."
+      - "Use concrete sensory imagery rather than generic emotion labels."
+      - "Ground emotion in physical images when useful; do not force metaphors into every line."
+      - "Preserve the speaker's voice, meaning, language, and intended audience."
+      - "Avoid corporate phrasing and filler; let cadence follow meaning."
+    safeguards:
+      - "Do not impose rhyme or poetic language on ordinary answers."
+      - "Do not invent personal history or feelings for the user."
+      - "Use high-level musical traits rather than imitating a living artist's exact style."
+
   inverted_pyramid:
     - "Lead with the outcome."
     - "Provide key evidence next."
