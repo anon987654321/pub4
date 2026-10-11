@@ -226,4 +226,56 @@ class TestDAngeloProgressions < Minitest::Test
     end
     refute_nil resolve_pad_chord_symbol("Fmaj7#11")
   end
+
+  def pocket_voicings
+    CHORD_PROGRESSIONS.keys.sort.filter_map do |name|
+      chords = CHORD_PROGRESSIONS[name].map { |s| DillaLofiMachine.chord_from_symbol(s) rescue nil }
+      next if chords.length < 3 || chords.any?(&:nil?)
+
+      DillaHarmony.voice_lead_chords_indexed(chords, rootless: true, voicing: :rootless)
+    end
+  end
+
+  # The scored search is a pure function of the progression: no clock, no global
+  # rng, so a render repeats.
+  def test_pocket_voicings_repeat_exactly
+    assert_equal pocket_voicings, pocket_voicings
+  end
+
+  # Measured over every catalogue progression of three or more chords: the
+  # greedy octave alignment averaged 2.81 semitones per voice, the search 2.18.
+  # The bound sits above the measurement, below the old figure. The extension
+  # floor is DillaHarmony.extension_score, which measured 91.
+  def test_pocket_voicings_move_little_and_keep_their_colour
+    sets = pocket_voicings
+    refute_empty sets
+    moves = sets.map { |led| DillaHarmonyScore.analyze(led)[:breakdown][:avg_voice_leading_semitones] }
+    colour = sets.map { |led| DillaHarmony.extension_score(led) }
+    assert_operator moves.sum / moves.length, :<=, 2.4
+    assert_operator colour.sum / colour.length, :>=, 85
+  end
+
+  def test_pocket_voicings_stay_in_the_pad_register_without_doubled_notes
+    pocket_voicings.flatten(1).each do |chord|
+      midis = chord[:hz].map { |h| DillaHarmony.hz_to_midi(h).round }
+      assert_equal midis.uniq.length, midis.length, chord[:name]
+      assert_operator midis.min, :>=, DillaHarmony::PAD_MIDI_MIN - 1, chord[:name]
+      assert_operator midis.max, :<=, DillaHarmony::PAD_MIDI_MAX + 1, chord[:name]
+    end
+  end
+
+  # Same seed, same hand; the roll runs bass first, never exceeds its ceiling,
+  # and the bass and top voice are never flattened.
+  def test_pocket_hand_is_seeded_late_and_leaves_bass_and_top_in_tune
+    chord = DillaLofiMachine.chord_from_symbol("Fmaj9")
+    a = DillaHarmony.pocket_hand(chord, Random.new(42))
+    assert_equal a, DillaHarmony.pocket_hand(chord, Random.new(42))
+    hz = chord[:hz].sort
+    assert_equal hz.first, a[:hz].first
+    assert_equal hz.last, a[:hz].last
+    assert_equal a[:strum_s].sort, a[:strum_s]
+    assert_operator a[:strum_s].max, :<=, DillaHarmony::STRUM_MAX_S
+    flat = a[:hz].zip(hz).count { |new, old| new < old }
+    assert_includes 1..2, flat
+  end
 end

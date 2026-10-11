@@ -894,6 +894,70 @@ module DillaHarmony
     midis.empty? ? nil : midis.sum / midis.length
   end
 
+# Scored voicing search. The per-voice octave alignment above is greedy: it
+# minimises each voice's own leap and cannot see that two of them now run in
+# parallel fifths, that a pair has settled into the mud below middle C, or that
+# holding one note would have kept the hand still. Here the aligned voicing is
+# the seed and every displacement of a voice by one octave either way
+# (3**n candidates, n <= MAX_PAD_VOICES) is scored; the lowest cost wins and
+# ties keep the earliest candidate, so one input gives one answer. The seed
+# always competes, so the search can only improve on it.
+#
+# Cost, in semitones: mean nearest-voice movement; +3 per parallel fifth or
+# octave between the same two voice slots; +4 per pair closer than a minor
+# third under MIDI 55 (a fifth under 48); -1 per held note; -1 when the top
+# voice is a colour tone above the bass (b9, 9, #11, 13, b7, 7); 0.3 per
+# semitone the mean sits from the progression's register centre.
+PARALLEL_INTERVALS = [0, 7].freeze
+COLOUR_ABOVE_BASS = [1, 2, 6, 9, 10, 11].freeze
+
+def voicing_cost(cand, prev, centre, bass_pc)
+  return 0.0 if prev.empty?
+
+  move = cand.sum { |n| prev.map { |p| (n - p).abs }.min } / cand.length
+  cost = move
+  slots = [cand.length, prev.length].min
+  slots.times do |i|
+    (i + 1...slots).each do |j|
+      di = cand[i] - prev[i]
+      dj = cand[j] - prev[j]
+      next if di.zero? || dj.zero? || (di <=> 0) != (dj <=> 0)
+
+      same = ((cand[j] - cand[i]) % 12).round
+      cost += 3.0 if PARALLEL_INTERVALS.include?(same) && same == ((prev[j] - prev[i]) % 12).round
+    end
+  end
+  cand.each_cons(2) do |a, b|
+    gap = b - a
+    cost += 4.0 if (a < 55 && gap < 3) || (a < 48 && gap < 7)
+  end
+  cost -= cand.count { |n| prev.any? { |p| (n - p).abs < 0.5 } }
+  cost -= 1.0 if bass_pc && COLOUR_ABOVE_BASS.include?(((cand.last - bass_pc) % 12).round)
+  cost + (centre ? 0.3 * ((cand.sum / cand.length) - centre).abs : 0.0)
+end
+
+def search_voicing(seed, prev, centre, bass_pc: nil)
+  return seed if seed.length < 2 || prev.empty?
+
+  sorted = seed.sort
+  best = sorted
+  best_cost = voicing_cost(sorted, prev, centre, bass_pc)
+  [0.0, -12.0, 12.0].repeated_permutation(sorted.length) do |shifts|
+    cand = sorted.zip(shifts).map { |m, s| m + s }.sort
+    next if cand == sorted
+    next if cand.first < PAD_MIDI_MIN - MIDI_TOL || cand.last > PAD_MIDI_MAX + MIDI_TOL
+    next if cand.map(&:round).uniq.length < cand.length
+    next if cand.each_cons(2).any? { |a, b| (b - a) < min_voice_gap(a) }
+
+    cost = voicing_cost(cand, prev, centre, bass_pc)
+    next unless cost < best_cost - 1e-9
+
+    best = cand
+    best_cost = cost
+  end
+  best
+end
+
   def chord_intervals(hz)
     midis = hz.map { |h| hz_to_midi(h) }.sort
     root = midis.first
@@ -1225,6 +1289,8 @@ module DillaHarmony
         target + (((anchor - target) / 12.0).round * 12.0)
       end
       voiced = anchor_register(clamp_register(open_spacing(voiced)), centre)
+      bass_pc = hz_to_midi(nxt[:bass_hz] || nxt[:hz].min).round % 12
+      voiced = search_voicing(voiced, prev, centre, bass_pc:)
       prev = voiced
       hz = dedupe_by_pitch(voiced).first(MAX_PAD_VOICES).map { |m| midi_to_hz(m) }
       led << { name: nxt[:name], hz:, bass_hz: nxt[:bass_hz] || nxt[:hz].min }
@@ -1393,6 +1459,34 @@ module DillaHarmony
     mul *= 1.04 if soul_profile?(cfg[:track]) && section == :main
     mul
   end
+
+# A hand, not a grid. A player rolls a chord low to high instead of striking
+# it, and leaves one or two inner notes a few cents under the pitch. Seeded by
+# the caller's per-chord rng, so a render repeats. Only chords of three or more
+# voices are touched. The roll spreads up to STRUM_MAX_S over the stack, bass
+# first, each later voice a little behind its neighbour. The top voice is never
+# flattened (the ear tunes to it) and neither is the bass. Roughly one chord in
+# five does not roll and plays as a block: a gap left on purpose.
+#
+# Returns the chord with :strum_s (seconds late, one per voice in ascending
+# pitch order) and the flattened :hz. A renderer that honours :strum_s delays
+# each voice; one that does not plays the flattened chord together.
+STRUM_MAX_S = 0.032
+FLAT_CENTS = (3.0..9.0)
+
+def pocket_hand(chord, rng)
+  hz = Array(chord[:hz]).sort
+  return chord if hz.length < 3
+
+  flats = (1...hz.length - 1).to_a.sample(rng.rand(1..2), random: rng)
+  cents = hz.each_index.map { |i| flats.include?(i) ? -rng.rand(FLAT_CENTS) : 0.0 }
+  rolled = rng.rand >= 0.2
+  strum = hz.each_index.map do |i|
+    rolled ? (i.to_f / (hz.length - 1)) * STRUM_MAX_S * rng.rand(0.55..1.0) : 0.0
+  end
+  flat_hz = hz.zip(cents).map { |h, c| (h * (2.0**(c / 1200.0))).round(4) }
+  chord.merge(hz: flat_hz, strum_s: strum.map { |s| s.round(5) })
+end
 
   def pad_entry_late(cfg, feel, step_p)
     return step_p * 2 + 0.012 if feel == :syncopated_slash_ninth

@@ -23067,6 +23067,9 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
                 end
     pad_chord = DillaHarmony.fix_chord_for_schedule(pad_chord, prev_pad_chord, curated: curated_sched)
     cvar = dilla_chord_change_variation(chord_change_i, bar, section, feel, step_p, pad_chord)
+    if DillaHarmony.soul_profile?(cfg_sched[:track]) && ENV.fetch("POCKET_HAND", "1") != "0"
+      pad_chord = DillaHarmony.pocket_hand(pad_chord, chord_variation_rng(cfg_sched, chord_change_i, pad_chord, salt: 5521))
+    end
     pad_t = base + cvar[:pad_offset] + dilla_timing_ms(:pad, bar, 0, timing, beat_p) / 1000.0
     if composition_enabled? && instance_variable_defined?(:@composition_session) && @composition_session
       lead_role = DillaComposition::Conversation.turn_order(bar).first
@@ -24501,6 +24504,15 @@ def native_pad_voice_expression(hz, amp, voice_i, pan, phase_seed, native_patch:
    "#{(amp * pad_gain).round(6)}*#{(0.5 + pan * 0.5).round(4)}*#{env}*#{body}"]
 end
 
+# A rolled chord starts each voice late: silence the voice until its
+# :strum_s offset (DillaHarmony.pocket_hand), leave a block chord untouched.
+def pad_strum_gate(pair, chord, voice_i)
+  delay = Array(chord[:strum_s])[voice_i].to_f
+  return pair unless delay.positive?
+
+  pair.map { |expr| "gte(t,#{delay.round(5)})*#{expr}" }
+end
+
 def render_native_pad_wav(path, pad_events, duration)
   filters = []
   labels = []
@@ -24513,6 +24525,7 @@ def render_native_pad_wav(path, pad_events, duration)
       amp = velocity * (0.058 + voice_i * 0.0048)
       pair = native_pad_voice_expression(hz, amp, voice_i, pan, event_i * 0.55 + voice_i * 0.9,
                                         event_i:, velocity:, sustain:)
+      pair = pad_strum_gate(pair, chord, voice_i)
       left_parts << pair[0]
       right_parts << pair[1]
       next unless voice_i.zero?
@@ -24561,6 +24574,7 @@ def render_native_pad_layer!(voice_path, pad_events, duration, patch)
       amp = velocity * (0.058 + voice_i * 0.0048) * (patch[:mix] || 1.0)
       pair = native_pad_voice_expression(hz, amp, voice_i, pan, event_i * 0.55 + voice_i * 0.9,
                                         native_patch: patch, event_i:, velocity:, sustain:)
+      pair = pad_strum_gate(pair, chord, voice_i)
       left_parts << pair[0]
       right_parts << pair[1]
     end
