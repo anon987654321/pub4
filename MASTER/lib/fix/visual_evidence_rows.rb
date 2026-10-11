@@ -4,6 +4,7 @@ require_relative "dead_css_coverage"
 require_relative "cross_app_consistency"
 require_relative "visual_cross_page_overlay"
 require_relative "fix_trace"
+require_relative "layout_score_store"
 
 module Master
   module Fix
@@ -65,6 +66,11 @@ module Master
 
       # One line per surface whose ghost stack measured movement; nil otherwise.
       def drift_row(capture)
+        rows = [LayoutScoreStore.row(capture, root: repo_root), measured_drift_row(capture)].compact
+        rows.join("\n") unless rows.empty?
+      end
+
+      def measured_drift_row(capture)
         drift = Array(capture.dig(:visual_evidence, :drift))
         design = Array(capture.dig(:visual_evidence, :design_drift))
         return if drift.empty? && design.empty?

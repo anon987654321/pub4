@@ -7,6 +7,7 @@ require_relative "visual_conformance"
 require_relative "visual_drift_budget"
 require_relative "visual_focus_order"
 require_relative "visual_i18n"
+require_relative "layout_score_store"
 
 module Master
   module Fix
@@ -149,6 +150,7 @@ module Master
         rows.each do |c|
           save(root, c[:surface], measure(c[:surface], c[:payload]))
           VisualDriftBudget.seed(c[:surface], c[:payload], root:)
+          LayoutScoreStore.seed(c[:surface], c[:payload], root:)
         end
         log("baseline: #{rows.size} surface(s) recorded")
       end
@@ -167,11 +169,13 @@ module Master
           cur = measure(surface, payload, baseline_rects: base && base["rects"])
           bad = base ? worse(base, cur) : []
           drift = VisualDriftBudget.check(surface, payload, root:, anchors:)
+          bad += LayoutScoreStore.judge(surface, payload, root:)
           problems << "#{surface.id}: #{bad.join("; ")}" unless bad.empty?
           problems << "#{surface.id}: chrome drift #{drift.first(3).join(", ")} (bin/operator visual approve #{surface.id})" unless drift.empty?
           accepted << [surface, cur]
         end
         accepted.each { |surface, cur| save(root, surface, cur) } if problems.empty?
+        LayoutScoreStore.settle(measured, root:) if problems.empty?
         log("verdict: #{problems.empty? ? "no metric worse" : "regression"} over #{measured.size} surface(s)")
         return prior if problems.empty?
 
