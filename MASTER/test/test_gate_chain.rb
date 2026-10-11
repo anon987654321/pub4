@@ -100,6 +100,20 @@ class TestGateChain < Minitest::Test
     assert_equal %w[source], captured.map(&:name)
   end
 
+  # Rails verification delegates to premerge without narrowing flags. Keep its
+  # default group set observable so a future --apps-only default cannot silently
+  # turn a full /fix proof into a smaller one.
+  def test_rails_premerge_default_lists_every_verification_group
+    script = File.join(G::ROOT, "MASTER", "tools", "rails", "premerge.rb")
+    ok, lines, status = G.capture(G::RUBY, script, "--list", chdir: G::ROOT)
+    assert_equal 0, status, lines.join("\n")
+
+    output = lines.join("\n")
+    %w[apps pwa contracts coverage gates].each do |group|
+      assert_match(/^\s*#{Regexp.escape(group)}\s/m, output, "premerge default omitted #{group}")
+    end
+  end
+
   def test_master_fix_verification_reaches_the_constitutional_self_test
     suite = G.suite_jobs(%w[MASTER]).find { |job| job.first == "MASTER" }
     assert_equal [G::RUBY, File.join(G::MASTER, "bin", "check"), "--profile=ci"], suite[1]

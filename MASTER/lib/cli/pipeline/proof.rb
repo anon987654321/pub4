@@ -30,11 +30,12 @@ module Master
 
         # runner.rb exits 3 when no gate failed and some measured nothing — off
         # the deploy host that is deploy_drift's stamps, and the rendered half
-        # when Chrome or the apps are absent. GateResult's standing decision is
-        # that "could not measure" blocks only under GATE_STRICT_INCONCLUSIVE,
-        # which the runner itself turns into exit 1, so the proof passes on 3
-        # and says what it did not see rather than failing every local repair.
+        # when Chrome or the apps are absent. A normal contribution gate may
+        # report that state without blocking, but /fix cannot call an unmeasured
+        # proof green. Set strict inconclusive handling only inside the proof
+        # and restore the caller's policy afterwards.
         RUNNER_INCONCLUSIVE = 3
+        STRICT_ENV = "GATE_STRICT_INCONCLUSIVE"
 
         PROOF_ROOTS = {
           "MASTER" => ::Operator::GateChain::MASTER,
@@ -193,16 +194,23 @@ module Master
         def rails_proof(ok, out, status)
           return [ok, out] unless !ok && status == RUNNER_INCONCLUSIVE
 
-          [true, Array(out) + ["proof: no gate failed; the inconclusive gates above measured nothing here " \
-                               "(GATE_STRICT_INCONCLUSIVE=1 blocks on them)"]]
+          if ENV[STRICT_ENV] == "1"
+            [false, Array(out) + ["proof: gates measured nothing and #{STRICT_ENV}=1 forbids passing on that"]]
+          else
+            [true, Array(out) + ["proof: no gate failed; the inconclusive gates above measured nothing here " \
+                                 "(#{STRICT_ENV}=1 blocks on them)"]]
+          end
         end
 
         def inside_proof
           previous = ENV[PROOF_ENV]
+          previous_strict = ENV[STRICT_ENV]
           ENV[PROOF_ENV] = "1"
+          ENV[STRICT_ENV] = "1"
           yield
         ensure
           ENV[PROOF_ENV] = previous
+          ENV[STRICT_ENV] = previous_strict
         end
 
         def proof_body(held, out)
