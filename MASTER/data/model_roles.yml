@@ -24,3 +24,4 @@ dead:
   - codex-cli:
   - gemini
   - ollama:glm
+  - agy: # quota spent until about 2026-10-18
