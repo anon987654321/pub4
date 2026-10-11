@@ -74,7 +74,12 @@ module Master
       private
 
       def stamp
-        @stamp ||= [SCHEMA, Prism::VERSION, Digest::SHA256.file(File.join(__dir__, "code_index.rb")).hexdigest[0, 16]]
+        @stamp ||= [SCHEMA, Prism::VERSION, parser_digest]
+      end
+
+      def parser_digest
+        sources = [File.join(__dir__, "code_index.rb"), File.join(__dir__, "code_index", "symbol_visitor.rb")]
+        Digest::SHA256.hexdigest(sources.map { |file| File.read(file) }.join)[0, 16]
       end
 
       def symbol(row, files)
