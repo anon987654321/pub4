@@ -88,7 +88,7 @@ module Master
 
         def vector_recall(qvec:, top_n:, store:)
           store.filter_map do |key, data|
-            next if key.to_s.start_with?("conflict/")
+            next unless context_eligible?(key, data)
             next unless data.is_a?(Hash) && data["vec"].is_a?(Array)
 
             score = Review::Embeddings.cosine(qvec, data["vec"])
@@ -103,7 +103,7 @@ module Master
           return [] if terms.empty?
 
           store.filter_map do |key, data|
-            next if key.to_s.start_with?("conflict/")
+            next unless context_eligible?(key, data)
             value = data.is_a?(Hash) ? data["value"].to_s : data.to_s
             score = tfidf_score(terms, tokenize("#{key} #{value}"))
             next if score.zero?
@@ -142,6 +142,8 @@ module Master
             );
           SQL
           store.each do |key, data|
+            next unless context_eligible?(key, data)
+
             value = data.is_a?(Hash) ? data["value"].to_s : data.to_s
             db.execute("INSERT INTO memory_fts(key, value) VALUES (?, ?)", [key.to_s, value])
           end

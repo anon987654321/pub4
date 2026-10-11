@@ -88,7 +88,9 @@ module Master
 
         def active_entries
           @mutex.synchronize do
-            @store.reject { |key, _| key.to_s.start_with?("archive/") || key == "_consolidated_summary" }
+            @store.reject do |key, value|
+              key == "_consolidated_summary" || !context_eligible?(key, value)
+            end
           end
         end
 
