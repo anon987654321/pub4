@@ -120,7 +120,8 @@ module Master
             entry = @store[key.to_s]
             return nil unless entry.is_a?(Hash) && entry.key?("value")
 
-            provenance = (entry["provenance"] || legacy_provenance(entry)).dup
+            prior_provenance = entry["provenance"]
+            provenance = prior_provenance.is_a?(Hash) ? prior_provenance.dup : legacy_provenance(entry)
             reviews = Array(provenance["reviews"])
             reviews << {
               "verdict" => verdict,
@@ -133,8 +134,8 @@ module Master
             provenance["status"] = verdict
             provenance["reviewed_at"] = reviews.last["reviewed_at"]
             entry["provenance"] = provenance
-            # The prior summary may already repeat a now-contradicted fact.
-            # Invalidate it on every review; the next summary uses eligible rows. 
+            # The prior summary may repeat a now-contradicted fact. Invalidate it
+            # on every review; the next summary uses eligible rows.
             @store.delete("_consolidated_summary")
             persist
             provenance.dup

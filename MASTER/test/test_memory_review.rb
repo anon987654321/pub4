@@ -67,6 +67,18 @@ class TestMemoryReview < Minitest::Test
     refute_includes @memory.reasoning_context.to_s, "old assumption"
   end
 
+  def test_review_recovers_from_malformed_legacy_provenance
+    @memory.remember("legacy_fact", "a remembered value")
+    entry = @memory.instance_variable_get(:@store).fetch("legacy_fact")
+    entry["provenance"] = "corrupted"
+    result = @memory.review("legacy_fact", verdict: :uncertain,
+                            evidence: evidence("test:legacy"), reviewer: "operator")
+
+    assert_equal "uncertain", result.fetch("status")
+    assert_equal "legacy", result.fetch("source")
+    assert_equal "a remembered value", @memory.recall("legacy_fact")
+  end
+
   def test_review_requires_evidence_and_known_verdict
     @memory.remember("fact", "value")
     assert_raises(ArgumentError) do
