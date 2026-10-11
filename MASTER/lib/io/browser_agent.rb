@@ -98,13 +98,29 @@ module Master
         return Result.err("browser_agent: no open session: #{key}", category: :validation) unless state
 
         state.mutex.synchronize do
-          # Governor treats this exact tool/action as a human-consent boundary;
-          # automatic mode and cached "always allow" decisions cannot bypass it.
-          permission = @governor.permit?(NAME, :dangerous, "interact #{op} #{state.page.url} selector=#{css}")
-          return permission if permission.err?
-
           node = state.page.at_css(css)
           return Result.err("browser_agent: element not found: #{css}", category: :validation) unless node
+
+          # The consent prompt shows which control will be touched and a bounded
+          # preview of visible text. Password/token fields never echo the value.
+          label = [node.text, node.attribute("aria-label"), node.attribute("title"),
+                   node.attribute("name"), node.attribute("type")].compact.map(&:to_s)
+            .map { |part| part.gsub(/[[:cntrl:]]/, " ").gsub(/\\s+/, " ").strip }
+            .find { |part| !part.empty? }.to_s[0, 100]
+          sensitive = node.attribute("type").to_s.casecmp("password").zero? ||
+                      node.attribute("name").to_s.match?(/password|token|secret|credential|otp|auth/i)
+          preview = if op == "click"
+                      ""
+                    else
+                      text = sensitive ? "[redacted]" : value.to_s.gsub(/[[:cntrl:]]/, " ")[0, 120].inspect
+                      " value=#{text}"
+                    end
+          page_url = URI(state.page.url)
+          page_url.query = nil
+          page_url.fragment = nil
+          description = "interact #{op} #{page_url} selector=#{css} target=#{label.inspect}#{preview}"
+          permission = @governor.permit?(NAME, :dangerous, description)
+          return permission if permission.err?
 
           case op
           when "click" then node.click
