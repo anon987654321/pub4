@@ -15,7 +15,8 @@ module Operator
     USAGE = [
       "usage: bin/operator memory review <key> <confirmed|contradicted|uncertain|obsolete>",
       "--evidence <repo-relative-path> --sha256 <64-hex-digest> --reviewer <name> --confirm",
-    ].join(" ").freeze    MAX_KEY_CHARS = 200
+    ].join(" ").freeze
+    MAX_KEY_CHARS = 200
     MAX_REVIEWER_CHARS = 120
 
     def self.run(argv, root: ROOT, memory: nil, out: $stdout, err: $stderr)
