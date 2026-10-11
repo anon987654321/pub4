@@ -329,7 +329,7 @@ module Master
           action = guarded ? "full-scope collection after low prior success" : "requested scope retained"
           Master::Trace::Dmesg.status(
             "fix0",
-            "outcome prior target=#{label} samples=#{prediction[:samples]} "             "success_probability=#{prediction[:success_probability]} action=#{action}",
+            "outcome prior target=#{label} samples=#{prediction[:samples]} success_probability=#{prediction[:success_probability]} action=#{action}",
           )
         end
         { incremental: guarded ? false : incremental, prediction: }
