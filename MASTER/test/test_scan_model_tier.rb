@@ -1,0 +1,89 @@
+# frozen_string_literal: true
+
+require "test_helper"
+require "tmpdir"
+
+# A tree-wide scan walks thousands of files. The model tier was reached from the
+# lexical pass (AdversarialLaw, CommentDriftLaw) and from every file with a
+# finding, which on RAILS is three files in four: about 5,000 model calls of a
+# minute each inside one walk, an estimated 62 hours for a scan that measures
+# 75 seconds without them.
+class ScanModelTierTest < Minitest::Test
+  class ModelLaw
+    attr_reader :calls
+
+    def initialize = @calls = 0
+    def id = "model_stub"
+    def set_agent(_agent) = self
+    def check(_code, path:) = (@calls += 1; [])
+  end
+
+  class CheapLaw
+    def initialize(findings) = @findings = findings
+    def id = "cheap_stub"
+    def check(_code, path:) = @findings
+  end
+
+  FINDING = { law: "CHEAP", severity: :warning, line: 1, message: "m" }.freeze
+
+  def setup
+    @dir = Dir.mktmpdir("model-tier")
+    @path = File.join(@dir, "note.md")
+    File.write(@path, "# Note\n")
+  end
+
+  def teardown = FileUtils.rm_rf(@dir)
+
+  def scanner(model, findings: [])
+    Master::Fix::Scanner.new(laws: [CheapLaw.new(findings), model])
+  end
+
+  def test_a_model_law_never_runs_in_the_lexical_pass_of_a_clean_file
+    model = ModelLaw.new
+    assert scanner(model).scan(@path).ok?
+    assert_equal 0, model.calls
+  end
+
+  def test_a_file_with_a_finding_still_reaches_the_model_tier_in_a_writing_run
+    model = ModelLaw.new
+    scanner(model, findings: [FINDING]).scan(@path)
+    assert_equal 1, model.calls
+  end
+
+  def test_a_mechanical_reading_skips_the_model_tier_and_restores_it
+    model = ModelLaw.new
+    sc = scanner(model, findings: [FINDING])
+    sc.mechanical_only { assert_equal 1, sc.scan(@path).value!.size }
+    assert_equal 0, model.calls
+    sc.scan(@path)
+    assert_equal 1, model.calls
+  end
+
+  def test_full_semantic_coverage_wins_over_a_mechanical_reading
+    model = ModelLaw.new
+    sc = scanner(model)
+    sc.full_semantic!
+    sc.mechanical_only { sc.scan(@path) }
+    assert_equal 1, model.calls
+  end
+
+  # The budget: the real law set over a real prose file, behind an agent that
+  # would take half a second a call. Under the old routing this took two calls.
+  def test_the_real_law_set_scans_a_prose_file_inside_the_budget
+    slow = Class.new do
+      attr_reader :asked
+
+      def ask(*, **) = (@asked = @asked.to_i + 1; sleep 0.5; "CLEAN")
+    end.new
+    sc = Master::Fix::Scanner.build(root: Master::ROOT, agent: slow)
+    sc.set_agent(slow)
+    File.write(@path, "# Note\n\n#{"A line of prose that runs on and on. " * 40}\n\n\n\nEnd\n")
+
+    started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+    sc.mechanical_only { assert sc.scan(@path).ok? }
+    elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
+
+    assert_nil slow.asked
+    assert_operator elapsed, :<, 2.0
+  end
+end

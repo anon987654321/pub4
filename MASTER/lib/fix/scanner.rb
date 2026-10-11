@@ -134,6 +134,12 @@ module Master
           @file_processor.skip_semantic! if @file_processor.respond_to?(:skip_semantic!)
         end
 
+        def mechanical_only(&)
+          return yield unless @file_processor.respond_to?(:mechanical_only)
+
+          @file_processor.mechanical_only(&)
+        end
+
         def full_semantic!
           @file_processor.full_semantic! if @file_processor.respond_to?(:full_semantic!)
           self

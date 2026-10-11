@@ -46,6 +46,19 @@ module Master
 
         def semantic_full? = @semantic_sample_override.to_f >= 1.0
 
+        # The model tier off for the length of one block, then back as it was.
+        # A tree-wide observation is a mechanical reading: 75% of RAILS files
+        # carry a finding, so "run the model when the cheap passes found
+        # something" put about 5,000 model calls of 50 to 190 seconds each
+        # inside one walk. Asking for full semantic coverage still wins.
+        def mechanical_only
+          previous = @skip_semantic
+          @skip_semantic = true unless semantic_full?
+          yield
+        ensure
+          @skip_semantic = previous
+        end
+
         def call(path:, depth:, laws:)
           with_file_lock(path) do
             code = read_file(path)
@@ -210,10 +223,16 @@ module Master
         # review/scan/law_dsl has loaded the registry. Naming it unguarded
         # turned every scan on that path into "scan failed: uninitialized
         # constant", which reads as a broken file rather than a missing require.
+        #
+        # A law that takes a model (set_agent, as Laws::NeedsModel declares) is
+        # a semantic law whatever its class: AdversarialLaw and CommentDriftLaw
+        # sat in the lexical pass, so every file, clean ones included, paid a
+        # model call and the clean-file sample gated nothing.
         def semantic_law?(law)
           semantic_class = defined?(Master::Review::Scan::Laws::SemanticLaw) &&
                            Master::Review::Scan::Laws::SemanticLaw
           return true if semantic_class && law.is_a?(semantic_class)
+          return true if law.respond_to?(:set_agent)
 
           law.respond_to?(:id) && law.id.to_s == "semantic"
         end

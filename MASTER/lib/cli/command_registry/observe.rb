@@ -25,8 +25,18 @@ module Master
         _arg, dry_run, no_autofix, clean_arg, do_autofix = parse_scan_args(ctx)
 
         Scan::Live.with_interrupt_dump(root:, snapshot: !dry_run) do |holder|
-          scan_pass(scanner:, root:, clean_arg:, dry_run:, no_autofix:, do_autofix:, holder:, on_total:)
+          mechanically(scanner) do
+            scan_pass(scanner:, root:, clean_arg:, dry_run:, no_autofix:, do_autofix:, holder:, on_total:)
+          end
         end
+      end
+
+      # The reading is mechanical; the model tier belongs to the fix passes that
+      # follow, on the files they work.
+      def mechanically(scanner, &)
+        return yield unless scanner.respond_to?(:mechanical_only)
+
+        scanner.mechanical_only(&)
       end
 
       def parse_scan_args(ctx)
