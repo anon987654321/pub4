@@ -91,9 +91,29 @@ workstreams:
     proof: MASTER/tools/event_bus_reach.rb
   - id: memory_governance
     state: partial
-    title: Durable memory provenance, contradiction and forgetting
-    implementation: MASTER/lib/core/memory
-    proof: MASTER/test
+    title: Durable memory provenance, review history, contradiction and forgetting
+    implementation: MASTER/lib/ground/memory
+    proof: MASTER/test/test_memory_review.rb
+  - id: task_outcome_learning
+    state: partial
+    title: Evidence-backed task outcome prediction scored before learning
+    implementation: MASTER/lib/cognition/outcome_model.rb
+    proof: MASTER/test/test_cognition_outcome_model.rb
+  - id: self_model_calibration
+    state: partial
+    title: Task-type reliability and confidence calibration from verified outcomes
+    implementation: MASTER/lib/cognition/self_model.rb
+    proof: MASTER/test/test_cognition_feedback.rb
+  - id: cognition_checkpoint_continuity
+    state: partial
+    title: Continuity reflects checkpoint validity rather than a monotonic proxy
+    implementation: MASTER/lib/cognition/state.rb
+    proof: MASTER/test/test_cognition_feedback.rb
+  - id: cognition_learning_benchmark
+    state: partial
+    title: Prequential outcome benchmark compared with a constant-probability baseline
+    implementation: MASTER/lib/cognition/benchmark.rb
+    proof: MASTER/test/test_cognition_outcome_model.rb
   - id: model_laboratory
     state: landed
     title: Provider/model outcome history and routing evidence
