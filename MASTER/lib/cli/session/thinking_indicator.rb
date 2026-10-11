@@ -113,8 +113,9 @@ module Master
         $stdout.flush
       end
 
+      # Detailed dmesg is the default; MASTER_CLI_QUIET=1 is the opt-out.
       def verbose_output?
-        ENV["MASTER_CLI_VERBOSE"] == "1" || ENV["MASTER_CLI_TRACE"] == "1"
+        ENV["MASTER_CLI_QUIET"] != "1"
       end
 
       def units_console?

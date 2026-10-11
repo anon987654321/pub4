@@ -463,7 +463,32 @@ def test_a_turn_prints_its_units_and_nothing_else
   ], lines
 end
 
-  def test_ctrl_c_at_the_prompt_raises_interrupt_for_repl_loop_to_close
+def test_master_cli_quiet_silences_the_unit_lines
+  silent_log = Object.new.tap { |log| log.define_singleton_method(:append) { |*| nil } }
+  bus = Master::Trace::EventBus.new(event_log: silent_log)
+  logging = Master::Trace::Logging.new(ring_buffer: [], event_bus: bus)
+  renderer = Object.new
+  renderer.define_singleton_method(:render) { |text, mode:| text }
+  cli = Master::CLI::Session.new(container: @container.merge(bus:, renderer:, logging:, root: Dir.mktmpdir))
+  previous = ENV["MASTER_CLI_QUIET"]
+  ENV["MASTER_CLI_QUIET"] = "1"
+  out, err = capture_io do
+    Master::Trace::Dmesg.with_verbosity("normal") do
+      cli.send(:init_thinking_state!)
+      publish_a_call_and_a_fetch(bus)
+      cli.send(:close_unit_console)
+    end
+  end
+  assert_empty (out + err).strip
+ensure
+  ENV["MASTER_CLI_QUIET"] = previous
+end
+
+def test_the_fix_help_names_the_quiet_opt_out
+  assert_includes Master::CLI::CommandRegistry.help_text("fix"), "MASTER_CLI_QUIET=1"
+end
+
+def test_ctrl_c_at_the_prompt_raises_interrupt_for_repl_loop_to_close
     assert_raises(Interrupt) { @cli.send(:on_int) }
   end
 

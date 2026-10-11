@@ -88,7 +88,7 @@ def parse_initial_message_options(argv)
     opts.on("--web") { ENV["MASTER_WEB"] = "1" }
     opts.on("--no-web") { ENV["MASTER_WEB"] = "0" }
     opts.on("--boot-status") { ENV["MASTER_BOOT_STATUS"] = "1" }
-    opts.on("--verbose", "show live dmesg/tool progress while turns run") { ENV["MASTER_CLI_VERBOSE"] = "1" }
+    opts.on("--verbose", "show verbose status and boot detail (unit lines print by default; MASTER_CLI_QUIET=1 hides them)") { ENV["MASTER_CLI_VERBOSE"] = "1" }
     opts.on("--trace", "show verbose progress and full boot diagnostics") do
       ENV["MASTER_CLI_TRACE"] = "1"
       ENV["MASTER_CLI_VERBOSE"] = "1"
