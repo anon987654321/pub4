@@ -87,6 +87,18 @@ module Master
           end
         end
 
+        # Seconds a call to this model takes, from the calls that answered; nil
+        # when none has. A model that only ever failed is as slow as the slowest
+        # deadline, so a free lane that timed out sorts behind one nobody has tried.
+        def latency_s(model)
+          stat = @mutex.synchronize { @stats[model.to_s]&.dup }
+          return unless stat
+
+          return stat[:latency_ms].to_f / 1000 if stat[:successes].to_i.positive? && stat[:latency_ms].to_f.positive?
+
+          Master::Io::LaneSelection::SLOW_S if stat[:failures].to_i.positive?
+        end
+
         def snapshot
           @mutex.synchronize do
             @stats.each_with_object({}) do |(model, stat), copy|

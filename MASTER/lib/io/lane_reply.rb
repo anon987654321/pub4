@@ -36,12 +36,25 @@ module Master
       def read(reply, now: Time.now.to_f)
         text = reply.to_s
         stated = stated_wait(text, now)
+        stated ||= daily_reset(text, now)
         spent = SPENT_RE.match?(text) || (LIMIT_429_RE.match?(text) && !UNREACHABLE_RE.match?(text))
         return verdict(:spent, stated) if spent || (stated && /\b429\b/.match?(text))
         return Verdict.new(:unreachable, UNREACHABLE_WAIT_S, false) if UNREACHABLE_RE.match?(text)
         return Verdict.new(:auth, UNKNOWN_WAIT_S, true) if AUTH_RE.match?(text)
 
         nil
+      end
+
+      # OpenRouter's free-model day ends at 00:00 UTC; its reply says "free-models-per-day"
+      # without a time, and X-RateLimit-Reset (epoch milliseconds) when it sends headers.
+      def daily_reset(text, now)
+        if (reset = text[/X-RateLimit-Reset"?\W+(\d{13})/i, 1])
+          return [(reset.to_i / 1000.0 - now).ceil, 1].max
+        end
+        return unless /free-models-per-day/i.match?(text)
+
+        midnight = Time.at(now).utc.then { |t| Time.utc(t.year, t.month, t.day) + 86_400 }
+        (midnight.to_f - now).ceil
       end
 
       # Seconds the reply states, or nil.

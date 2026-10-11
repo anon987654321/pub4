@@ -409,7 +409,7 @@ module Master
           # when the first comes back refused can be spared their own refusal.
           return quota_skipped(persona) if Io::QuotaGate.blocked?
 
-          model = lane_for(persona)
+          model = lane_for(persona, image:)
           temperature = persona.respond_to?(:temperature) ? persona.temperature : nil
           prompt = build_prompt(persona:, code:, context:)
           response = if model
@@ -431,12 +431,12 @@ module Master
         # panel is spread over the live providers (Io::LaneSelection.spread),
         # dead lanes and free models excluded while a live lane exists. nil
         # leaves the choice to the agent, as for an agent with no lane list.
-        def lane_for(persona)
+        def lane_for(persona, image: nil)
           return if ENV["MASTER_LOCAL_ONLY"] == "1" || !@agent.respond_to?(:candidate_models)
 
           @persona_failures_lock.synchronize { @lane_candidates ||= Array(@agent.candidate_models(task_type: :review)) }
           names = (@personas.map(&:name) | [persona.name])
-          Io::LaneSelection.spread(names, @lane_candidates)[persona.name]
+          Io::LaneSelection.spread(names, @lane_candidates, vision: !image.nil? && image != "")[persona.name]
         end
 
         # A persona that never got asked. Tallied apart from the ones that did,

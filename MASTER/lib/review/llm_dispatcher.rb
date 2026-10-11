@@ -150,7 +150,7 @@ module Master
         @bus&.publish("llm:send", model: selected_model)
         cache_key = cache_key_for(messages.last[:content], messages[0...-1], selected_model, system, temperature)
         result = breaker_for(selected_model).call(estimate_cost(messages.last[:content], selected_model)) do
-          Timeout.timeout(PassClock.call_deadline(@availability.dispatch_deadline_s)) do
+          Timeout.timeout(call_deadline_for(selected_model)) do
             @cache.fetch(cache_key, selected_model) do
               send_llm_request(selected_model, messages, system:, stream:, image:, temperature:, format:, &blk)
             end
@@ -222,6 +222,16 @@ module Master
         id = model_id.to_s
         return false if NON_VISION_RE.match?(id)
         VISION_RE.match?(id)
+      end
+
+      # The dispatcher's deadline, tightened inside a council, and tighter again
+      # for a free model nobody has timed: it gets the short unmeasured timeout.
+      def call_deadline_for(model)
+        deadline = PassClock.call_deadline(@availability.dispatch_deadline_s)
+        return deadline unless Io::LaneSelection.kind(model) == :free
+        return deadline unless @model_router.respond_to?(:latency_s) && @model_router.latency_s(model).nil?
+
+        [deadline, Io::LaneSelection.unmeasured_timeout_s].min
       end
 
       # A call past its hard deadline inside a council: the lane is silent for the

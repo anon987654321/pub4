@@ -586,3 +586,22 @@ ollama:
 # directly), the TTS slug in voice/engines.rb, and replicate carries its own
 # image models in MASTER/tools/replicate — this block was a declaration with no reader,
 # claiming a routing that never existed.
+
+# Free models are the floor. Among them the fastest recently-answering one goes
+# first (Io::LaneSelection); a model nobody has measured is assumed to take
+# neutral_latency_s and is cut off after unmeasured_timeout_s, so one slow free
+# model cannot cost a council 150 seconds a call.
+free_tier:
+  neutral_latency_s: 45
+  unmeasured_timeout_s: 60
+
+# The paid tail: cheap OpenRouter models from the live provider catalog, after
+# every live subscription and direct-API lane and before the free models. Io::PaidTail
+# lists them and counts what they cost; at run_cap_usd the tail turns itself off
+# for the rest of the run. MASTER_PAID_TAIL=0 turns it off outright.
+paid_tail:
+  enabled: true
+  max_prompt_usd_per_m: 1.0
+  max_completion_usd_per_m: 3.0
+  run_cap_usd: 5.0
+  max_models: 12

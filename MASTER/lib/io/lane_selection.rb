@@ -12,10 +12,13 @@ module Master
     # dead list), and use the first that is left. A failure falls to the next
     # live one (Agent#retry_on_broke_lane walks the same order).
     #
-    # Free models sort last: an unmetered model is a floor to stand on when
-    # every other lane is gone, never a lane to prefer, and a free nemotron
-    # call cost 150 to 190 seconds against seconds on a live subscription CLI.
-    # Local Ollama models sit between, the always-online tail.
+    # After the live subscription and direct-API lanes come the cheap paid models
+    # of the capped tail (Io::PaidTail), then the local Ollama models (the
+    # always-online floor), then the free models: an unmetered model is a floor to
+    # stand on, never a lane to prefer, and a free nemotron call cost 150 to 190
+    # seconds against seconds on a live subscription CLI. Among the free ones the
+    # fastest recently-answering goes first; an unmeasured one is assumed neutral.
+    # A call that carries an image tries the vision-capable lanes first.
     #
     # The council spreads its personas over the live providers with `spread`,
     # so one dead lane never decides what the whole panel sounds like.
@@ -24,7 +27,10 @@ module Master
 
       MODELS = File.expand_path("../../data/models.yml", __dir__)
       CLI_BINARIES = { "claude-cli" => "claude", "grok-cli" => "grok" }.freeze
-      KIND_RANK = { remote: 0, local: 1, free: 2 }.freeze
+      KIND_RANK = { remote: 0, paid_tail: 1, local: 2, free: 3 }.freeze
+      NEUTRAL_LATENCY_S = 45
+      UNMEASURED_TIMEOUT_S = 60
+      SLOW_S = 600
       CATALOGUE_TIERS = %w[default strong local].freeze
 
       # The lane a model id travels: the text before ":" for CLI lanes, else the
@@ -38,6 +44,7 @@ module Master
 
       def kind(model)
         id = model.to_s
+        return :paid_tail if Io::PaidTail.member?(id)
         return :free if id.end_with?(":free", ":cloud", "-cloud") || id.start_with?("web-chat:")
         return :local if id.start_with?("ollama:", "ollama/", "local:")
 
@@ -47,11 +54,55 @@ module Master
       # Live models, remote before local before free, each group in the order given.
       # `free_last: false` keeps the given order, for the routes that choose the
       # free tier on purpose (greetings, explanations), where only the dead go.
-      def order(models, free_last: true, manual: LaneQuota.manual_dead)
+      # `latency` answers seconds for a model or nil when it was never measured.
+      # `vision: true` puts the lanes that read images ahead of those that do not.
+      def order(models, free_last: true, latency: nil, vision: false, manual: LaneQuota.manual_dead)
         live = Array(models).map(&:to_s).reject(&:empty?).uniq.reject { |id| LaneQuota.dead?(id, manual:) || LaneHealth.dead?(id) }
+        live = live.reject { |id| kind(id) == :paid_tail && !Io::PaidTail.enabled? }
         return live unless free_last
 
-        live.each_with_index.sort_by { |id, index| [KIND_RANK.fetch(kind(id)), index] }.map(&:first)
+        ranked = live.each_with_index.sort_by { |id, index| [KIND_RANK.fetch(kind(id)), free_latency(id, latency), index] }.map(&:first)
+        return ranked unless vision
+
+        sighted, blind = ranked.partition { |id| vision?(id) }
+        sighted + blind
+      end
+
+      def free_latency(id, latency)
+        return 0.0 unless kind(id) == :free
+
+        (latency&.call(id) || free_tier.fetch("neutral_latency_s", NEUTRAL_LATENCY_S)).to_f
+      end
+
+      def free_tier = config.fetch("free_tier", {})
+
+      def unmeasured_timeout_s = Integer(free_tier.fetch("unmeasured_timeout_s", UNMEASURED_TIMEOUT_S))
+
+      # Whether a lane reads images: the catalog row's input modalities when it
+      # has one, else the dispatcher's own list of vision families.
+      def vision?(model)
+        id = model.to_s
+        row = catalog_modalities(id)
+        return row.include?("image") if row
+
+        d = Master::Review::LLMDispatcher
+        !d::NON_VISION_RE.match?(id) && d::VISION_RE.match?(id)
+      end
+
+      def catalog_modalities(id)
+        @modalities ||= begin
+          require_relative "catalog_index"
+          db = Master::Io::CatalogIndex::DEFAULT_DB
+          File.file?(db) ? Master::Io::CatalogIndex.new(db_path: db).search(nil, source: "openrouter", limit: 5_000).to_h { |r| [r["id"], r["input_modalities"].to_s.split(",").map(&:strip)] } : {}
+        rescue StandardError
+          {}
+        end
+        @modalities[id]
+      end
+
+      # Every id models.yml names in any tier.
+      def explicit_models(cfg: config)
+        cfg.fetch("models", {}).values.flatten.filter_map { |row| row["id"] if row.is_a?(Hash) }.uniq
       end
 
       # The first live model of the list, or nil when every lane is dead.
@@ -59,16 +110,16 @@ module Master
 
       # `order`, except that when every model is dead the list comes back as it
       # was, so the dispatcher can refuse it with the typed Offline that says why.
-      def order_or_all(models, free_last: true)
-        live = order(models, free_last:)
+      def order_or_all(models, free_last: true, **rest)
+        live = order(models, free_last:, **rest)
         live.empty? ? Array(models) : live
       end
 
       # The live models of the best class that has any: a pool may rank them by
       # measured utility, but never trades a live subscription for a free model.
       # All dead: the list as given, for the dispatcher to refuse with the typed Offline.
-      def best_class(models, free_last: true)
-        live = order_or_all(models, free_last:)
+      def best_class(models, free_last: true, **rest)
+        live = order_or_all(models, free_last:, **rest)
         return live unless free_last
 
         live.select { |id| kind(id) == kind(live.first) }
@@ -76,8 +127,10 @@ module Master
 
       # One model per key, drawn from the best class that has a live lane and
       # spread across its distinct providers; a single provider is reused.
-      def spread(keys, models)
-        live = order(models)
+      def spread(keys, models, vision: false)
+        live = order(models, vision:)
+        sighted = live.select { |id| vision?(id) }
+        live = sighted if vision && sighted.any?
         reps = live.select { |id| kind(id) == kind(live.first) }.group_by { |id| provider(id) }.values.map(&:first)
         Array(keys).each_with_index.to_h { |key, index| [key, reps.empty? ? nil : reps.fetch(index % reps.size)] }
       end

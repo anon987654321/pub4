@@ -44,7 +44,7 @@ module Master
           # Every reachable model, strongest lanes first: what /model list shows.
           def pool(wait: false)
             start_pool_probes
-            lanes = [primary_models, cli_lane_models(wait:), agy_catalog_models, tier_ids, continuity_models,
+            lanes = [primary_models, cli_lane_models(wait:), agy_catalog_models, tier_ids, Master::Io::PaidTail.models, continuity_models,
                      ollama_cloud_catalog, ollama_cloud_models, local_server_models, hosted_models,
                      live_catalog_models, replicate_models, local_models]
             lanes.flatten.uniq.select { |id| unreachable_reason(id, wait:).nil? }

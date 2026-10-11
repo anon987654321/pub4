@@ -102,13 +102,16 @@ module Master
           chain = prefer_floor(chain, fresh, operation: task_type)
           ranked = @provider_health.rank(chain)
           ranked = @compute_pool.rank(ranked, task_type:)
-          Io::ModelSkipCache.filter(chitchat_head(Io::LaneSelection.order_or_all(ranked, free_last: !free_route?(task_type)), task_type))
+          Io::ModelSkipCache.filter(chitchat_head(Io::LaneSelection.order_or_all(ranked, free_last: !free_route?(task_type), latency: method(:latency_s)), task_type))
         end
 
         # Greetings are explicitly routed to the free tier. A locally installed
         # subscription CLI used to jump ahead of `pref`, contradicting the route
         # table and spending the strongest lane on “hello”. Keep it available as
         # fallback, but let the task-specific preference lead.
+        # Seconds a model took when it last answered, nil when never measured.
+        def latency_s(model_id) = (@compute_pool.latency_s(model_id) if @compute_pool.respond_to?(:latency_s))
+
         def chain_for(task_type)
           return local_only_chain(task_type:) if local_only?
 
@@ -116,7 +119,7 @@ module Master
                     free: continuity_models + ollama_cloud_models + local_server_models + hosted_models,
                     subscription: agy_catalog_models + Ground::AuthProfileLane.models_for_router(self) + primary_models + cli_lane_models }
           order = task_type.to_sym == :chitchat ? %i[pref tiers free subscription] : %i[subscription pref tiers free]
-          order.flat_map { |lane| lanes.fetch(lane) } + replicate_models + local_models + [@config.model]
+          order.flat_map { |lane| lanes.fetch(lane) } + Io::PaidTail.models + replicate_models + local_models + [@config.model]
         end
 
         def constrained_for(operation:)
