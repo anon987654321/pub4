@@ -1,20 +1,32 @@
 # OPENBSD
 
 **Production is one box, and this tree is everything that puts it there and keeps
-it honest.** It holds the VPS configuration under `etc/`, `usr/` and `var/`, and
-the deploy tooling under `bin/`, `lib/` and `gates/`. The top of the tree keeps
-the installer, `OPERATOR.sh`, the DNS helpers it sources, a few one-off Ruby
-tools, and two scripts vm23 still runs by their top-level paths, each of which
-says in its header which line on the box pins it.
+it honest.** The box is vm23, and it runs every app behind relayd. This tree holds
+the VPS configuration under `etc/`, `usr/` and `var/`, and the deploy tooling under
+`bin/`, `lib/`, `gates/` and `test/`. The top of the tree keeps the installer,
+`OPERATOR.sh`, the DNS helpers it sources, a few one-off Ruby tools, and two
+scripts that vm23 still runs by their top-level paths, each of which says in its
+header which line on the box pins it.
 
-Start here. `RUNBOOK.md` is the single operational companion for live VPS work;
-read it before SSH, `doas`, deploy, DNS, relayd, NSD or recovery.
-`OPENBSD/bin/check` is the local gate and `OPENBSD/bin/check-vps` checks vm23.
-`OPENBSD/data/operator.yml` is the command and recipe source, so do not create
-another command catalogue. `CLAUDE.md` holds the sharp edges that have burned
-agents here, and `PATH_OWNERSHIP.yml` says what every path is for.
+Start with `RUNBOOK.md`, the single operational companion for live VPS work. Read it
+before SSH, `doas`, deploy, DNS, relayd, NSD or recovery. `CLAUDE.md` holds the sharp
+edges that have burned agents here, and `PATH_OWNERSHIP.yml` says what every path is
+for. Read the man page for a file and its daemon before you change either.
 
-What is in `var/nsd/` is a mirror of the NSD configuration templates and nothing
-more. The live signed zones sit on vm23 under `/var/nsd/` and are deliberately
-not in git, because a signed zone in a shared checkout is a key in a shared
-checkout.
+The commands live in one place. `data/operator.yml` is the source of the command
+recipes, so do not write another catalogue. From the repository root, the operator
+reaches the box with `MASTER/bin/operator vps state` and `MASTER/bin/operator vps
+deploy`. In this tree `bin/check` is the local gate, `bin/check-vps` checks vm23,
+and `bin/vps-deploy` deploys. It deploys master, brgen, amber and bsdports in that
+order, because every deploy sheds amber and bsdports and deploying them last
+restores them in the same pass. The gates that guard the pipeline sit in `gates/`,
+and the registry that runs them is `MASTER/gates/gates.yml`. Before a risky deploy,
+`bin/rehearse` shows how the repository layout will map onto the box, which has a
+different copy-tree layout.
+
+Domains and DNS come from one source. `RAILS/apps.yml` lists the owned domains, and
+the files in `data/` and the zone helpers derive from it. What is in `var/nsd/` is a
+mirror of the NSD configuration templates and nothing more. The live signed zones
+sit on vm23 under `/var/nsd/` and are deliberately not in git, because a signed zone
+in a shared checkout is a key in a shared checkout. Secrets live in `/etc/*.env` on
+the box and never in this tree.
