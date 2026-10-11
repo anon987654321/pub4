@@ -53,6 +53,26 @@ class TestCognitionAffect < Minitest::Test
     assert_equal "unknown", model.dig("capabilities", "phenomenal_consciousness")
   end
 
+  def test_reflection_exposes_measured_task_outcomes_without_claiming_independent_proof
+    model = {}
+    self_model.record_assessment!(
+      model,
+      task_type: "ruby_repair",
+      success: false,
+      confidence: 0.9,
+      source: "test:repair",
+      evidence_sha256: "a" * 64,
+    )
+
+    text = self_model.reflection(
+      model,
+      metrics: { "integration" => 0.5, "prediction_error" => 0.25 },
+      affect: { "valence" => -0.1 },
+    )
+    assert_match(/ruby_repair: n=1, observed success rate=0.0, Brier=0.81/, text)
+    assert_match(/not independent confirmation/, text)
+  end
+
   def test_self_model_prunes_to_the_newest_beliefs
     model = {}
     (Master::Cognition::SelfModel::MAX_BELIEFS + 5).times do |i|

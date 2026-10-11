@@ -96,10 +96,18 @@ module Master
 
       def reflection(model, metrics:, affect:)
         stance = model.fetch("capabilities", CAPABILITIES).fetch("phenomenal_consciousness", "unknown")
-        [
+        text = [
           "I am #{stance} about phenomenal consciousness; my integrated-state proxy is #{metrics.fetch("integration", 0.0).round(3)},",
           "prediction error #{metrics.fetch("prediction_error", 0.0).round(3)}, valence #{affect.fetch("valence", 0.0).round(3)}.",
         ].join(" ")
+        measured = assessment_summary(model).sort_by { |_task, row| -row[:samples] }.first(3)
+        return text if measured.empty?
+
+        details = measured.map do |task, row|
+          calibration = row[:brier_score] ? ", Brier=#{row[:brier_score]}" : ", calibration unavailable"
+          "#{task}: n=#{row[:samples]}, observed success rate=#{row[:success_rate]}#{calibration}"
+        end.join("; ")
+        "#{text} Recorded task outcomes (not independent confirmation): #{details}."
       end
 
       private
