@@ -21,10 +21,11 @@ class TestDoctor < Minitest::Test
 
   def test_doctor_runs_and_reports_every_check
     out, = run_doctor
-    assert_match(/\AMASTER doctor/, out)
+    assert_match(/^doctor0 at master0: MASTER doctor, \d+ checks$/, out)
     %w[content-dedup api-keys tts-socket web-token key-rotator
        model-quota cache-efficiency provider-catalog].each do |name|
-      assert_match(/^(OK|FAIL|SKIP) #{Regexp.escape(name)}:/, out, "doctor did not report #{name}")
+      assert_match(/^doctor\d+ at doctor0: #{Regexp.escape(name)}, (ok|fail|skip)$/, out,
+                   "doctor did not report #{name}")
     end
   end
 
@@ -41,7 +42,7 @@ class TestDoctor < Minitest::Test
 
   def test_unmeasured_is_printed_and_counted_but_does_not_fail_the_host
     source = File.read(DOCTOR)
-    assert_match(/check\(s\) measured nothing, and why/, source,
+    assert_match(/#\{unmeasured_checks\.size\} checks measured nothing/, source,
                  "unmeasured checks are not named in the output")
     assert_match(/def ok = state != :fail/, source,
                  "unmeasured must not count as a failure for the exit code")
