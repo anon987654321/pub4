@@ -30,7 +30,7 @@ class TestScanOutput < Minitest::Test
 
   def finding(rule, line: 1)
     {
-      rule:,
+      law: rule,
       message: "issue #{rule}",
       line:,
       severity: :info,
