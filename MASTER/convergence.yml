@@ -91,9 +91,9 @@ workstreams:
     proof: MASTER/tools/event_bus_reach.rb
   - id: memory_governance
     state: partial
-    title: Durable memory provenance, contradiction and forgetting
+    title: Durable memory provenance, review history, contradiction and forgetting
     implementation: MASTER/lib/ground/memory
-    proof: MASTER/test/test_memory.rb
+    proof: MASTER/test/test_memory_review.rb
   - id: task_scoped_prediction
     state: partial
     title: Keep event prediction streams separate across correlated tasks
