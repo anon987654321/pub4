@@ -442,3 +442,8 @@ pwa_installable:
   require: lib/source/pwa_installable
   class: Deploy::PwaInstallable
   pass: "ok: three manifests installable, icons resolve, brgen follows its host"
+
+browser_policy:
+  require: lib/source/browser_policy
+  class: Deploy::BrowserPolicyGate
+  pass: "browser policy intact"
