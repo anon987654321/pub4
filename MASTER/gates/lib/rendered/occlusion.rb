@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../../support/gate_result"
+require_relative "../../../lib/gap"
 require_relative "../../support/geometry_probe"
 
 module Deploy
@@ -137,7 +138,7 @@ module Deploy
     def run
       @result = GateResult.new
       unless GeometryProbe.available?
-        @result.inconclusive!("occlusion: no Chrome/Chromium — nothing was pressed")
+        @result.inconclusive!("occlusion: no Chrome/Chromium — nothing was pressed", gap: Master::Gap::NO_BROWSER)
         return @result
       end
 

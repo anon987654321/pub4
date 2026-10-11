@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../../support/gate_result"
+require_relative "../../../lib/gap"
 require_relative "../../support/cdp_session"
 require_relative "../../support/geometry_probe"
 require_relative "../../support/crawl_support"
@@ -108,7 +109,7 @@ module Deploy
     def surfaces = self.class::SURFACES
 
     def unavailable
-      @result.inconclusive!("viewport_spill: no Chrome, so no surface was measured at #{WIDTH}px")
+      @result.inconclusive!("viewport_spill: no Chrome, so no surface was measured at #{WIDTH}px", gap: Master::Gap::NO_BROWSER)
       @result
     end
 

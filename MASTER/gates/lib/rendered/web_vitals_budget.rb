@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "json"
+require_relative "../../../lib/gap"
 require_relative "../../support/gate_result"
 require_relative "../../support/geometry_probe"
 
@@ -78,7 +79,7 @@ module Deploy
 
     def measure_live
       unless GeometryProbe.available?
-        @result.inconclusive!("web_vitals_budget: no Chrome/Chromium — LCP and CLS not measured")
+        @result.inconclusive!("web_vitals_budget: no Chrome/Chromium — LCP and CLS not measured", gap: Master::Gap::NO_BROWSER)
         return
       end
 

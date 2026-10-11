@@ -153,6 +153,8 @@ stimulus_components:
 visual_contract:
   needs: [browser]
   script: visual_contract.rb
+  # Exit 3 is "no state navigated": it waits for VISUAL_CAPTURE=1 and a booted app.
+  gap: { horizon: operator, cost_to_check: minutes, decidability: fact }
 
 user_flow:
   require: lib/live/user_flow

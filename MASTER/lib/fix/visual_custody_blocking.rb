@@ -26,6 +26,9 @@ module Master
         OPERATOR_OWNED_RULE_IDS.include?(rule_id.to_s)
       end
 
+      # The gap a blocked finding carries: no measurement settles it, a person decides.
+      def gap_for(rule_id) = (Master::Gap::OPERATOR_DECISION if fix_blocking_rule?(rule_id))
+
       # User-facing reason why the repair is blocked.
       def blocking_reason(rule_id)
         if fix_blocking_rule?(rule_id)

@@ -25,6 +25,7 @@ $LOAD_PATH.unshift(ROOT, GATES_DIR)
 require File.join(ROOT, "MASTER", "gates", "support", "gate_result")
 require File.join(ROOT, "MASTER", "gates", "support", "gate_ledger")
 require File.join(ROOT, "MASTER", "lib", "trace", "dmesg")
+require File.join(ROOT, "MASTER", "lib", "gap")
 
 GATES_FILE = ENV.fetch("GATES_FILE", REGISTRY_DEFAULT)
 GATES = YAML.safe_load_file(GATES_FILE).freeze
@@ -101,16 +102,23 @@ def precondition_result(name, row)
   return unless needs.include?("browser")
   return if browser_available?
 
-  Deploy::GateResult.new.inconclusive!("#{name}: browser/Chromium unavailable")
+  Deploy::GateResult.new.inconclusive!("#{name}: browser/Chromium unavailable", gap: Master::Gap::NO_BROWSER)
 end
 
-def run_script(path, args)
+# A script gate cannot hand a Gap through its exit code, so gates.yml declares
+# the one its exit 3 means (gap: {horizon:, cost_to_check:, decidability:}).
+def declared_gap(row)
+  spec = row["gap"]
+  spec && Master::Gap.new(**spec.to_h { |key, value| [key.to_sym, value.is_a?(String) ? value.to_sym : value] })
+end
+
+def run_script(path, args, gap: nil)
   command = [RbConfig.ruby, path, *args]
   stdout, status = Open3.capture2e(ENV.to_h, *command, chdir: ROOT)
   stdout.to_s.lines.each { |line| log_retired(line.chomp) }
   result = Deploy::GateResult.new
   if status.exitstatus == SUBPROCESS_INCONCLUSIVE
-    result.inconclusive!("#{File.basename(path)}: subprocess measured nothing")
+    result.inconclusive!("#{File.basename(path)}: subprocess measured nothing", gap:)
   elsif status.success?
     result.checked!
   else
@@ -131,7 +139,7 @@ def run_gate(name, row, args)
       require_gate(row)
       if row["script"]
         path = File.join(GATES_DIR, row["script"].to_s)
-        result, output = run_script(path, args)
+        result, output = run_script(path, args, gap: declared_gap(row))
       else
         klass = constant_for(row.fetch("class"))
         result = klass.run
@@ -219,7 +227,8 @@ names.each_with_index do |name, index|
     log_retired("#{GATE_UNIT} at #{GATE_PARENT}: #{name} passed")
   else
     result.render
-    say("#{name} #{outcome == :errored ? 'errored, blocked nothing' : outcome}")
+    verdict = outcome == :errored ? 'errored, blocked nothing' : outcome
+    say(["#{name} #{verdict}", (result.gaps.values.first&.clause if outcome == :inconclusive)].compact.join(", "))
   end
 end
 

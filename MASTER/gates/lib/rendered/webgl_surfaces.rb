@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../../support/gate_result"
+require_relative "../../../lib/gap"
 require_relative "../../support/cdp_session"
 require_relative "../../support/geometry_probe"
 require_relative "../../support/crawl_support"
@@ -77,7 +78,7 @@ private
 def surfaces = self.class::SURFACES
 
     def unavailable
-      @result.inconclusive!("webgl_surfaces: no Chrome, so no WebGL surface was measured")
+      @result.inconclusive!("webgl_surfaces: no Chrome, so no WebGL surface was measured", gap: Master::Gap::NO_BROWSER)
       @result
     end
 

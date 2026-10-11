@@ -76,15 +76,22 @@ module Master
           fixed = @pass_fixed
           fixes = "fixes = #{@pass_ok} ok #{@pass_failed} failed #{@skips.sum { |_, n| n }} skipped"
           skipped = @skips.map { |reason, count| "#{reason} #{count}" }.join(", ")
-          [
+          lines = [
             "fix0: pass #{pass} done, violations = #{@pass_found} before #{[@pass_found - fixed, 0].max} after",
             "fix0: pass #{pass} #{fixes}#{skipped.empty? ? "" : " (#{skipped})"}",
             "fix0: pass #{pass} commits = #{[@commits.call - @commits_at_start, 0].max} tokens = #{tokens} (#{self.class.human_count(tokens)})",
           ]
+          lines.insert(2, listed_line(pass)) if @listed.any?
+          lines
         end
       end
 
       private
+
+      # Findings whose repair is the operator's call: listed, never attempted.
+      def listed_line(pass)
+        "fix0: pass #{pass} listed for the operator, not attempted = #{@listed.sum { |_, n| n }} (#{@listed.map { |law, n| "#{law} #{n}" }.join(", ")})"
+      end
 
       # One-minute load: /proc where it exists, vm.loadavg on the BSDs and macOS.
       def load_average
@@ -106,6 +113,7 @@ module Master
         when "fix_loop:skip_breakdown" then skipped(payload)
         when "law_loop:fix_applied", "fix_loop:ast_fixed" then count_fix(:ok)
         when "law_loop:fix_rejected" then count_fix(:failed)
+        when "law_loop:operator_gap" then @listed[payload[:law].to_s] += 1
         end
       end
 
@@ -131,6 +139,7 @@ module Master
         @pass_ok = 0
         @pass_failed = 0
         @skips = Hash.new(0)
+        @listed = Hash.new(0)
         @commits_at_start = 0
       end
 

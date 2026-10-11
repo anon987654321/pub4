@@ -5,6 +5,7 @@ require "yaml"
 require "open3"
 require_relative "../../support/gate_result"
 require_relative "../../support/bounded_command"
+require_relative "../../../lib/gap"
 
 module Deploy
   # Is what is committed actually running?
@@ -57,6 +58,7 @@ module Deploy
         result.inconclusive!(
           "deploy_drift: no deploy stamps under #{STAMP_DIR} — this gate only has something to " \
           "compare on the deploy host",
+          gap: Master::Gap::DEPLOY_HOST_ONLY,
         )
         return result
       end

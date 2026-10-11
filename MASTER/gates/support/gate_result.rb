@@ -64,6 +64,7 @@ module Deploy
       @warnings = []
       @soft_failures = []
       @unchecked = []
+      @gaps = {}
       @errors = []
       @checks_ran = 0
       @live_skips = 0
@@ -139,10 +140,18 @@ module Deploy
     # A check that could not run. Name the missing precondition, not the check:
     # "no Chrome/Chromium" reads as a fixable environment fact, "geometry not
     # measured" reads as a mystery.
-    def inconclusive!(reason)
+    #
+    # gap: is a Master::Gap (duck-typed: anything with #clause) saying whether
+    # the check resolves alone, what it costs, and whose call it is. This file
+    # does not load it: OPENBSD/lib carries a copy and must not reach into MASTER.
+    def inconclusive!(reason, gap: nil)
       @unchecked << reason
+      @gaps[reason] = gap if gap
       self
     end
+
+    # reason => gap, for the reasons that came with one.
+    attr_reader :gaps
 
     # Count a check that actually ran, so a gate can say how much it measured.
     #
@@ -229,6 +238,7 @@ module Deploy
       Array(other.warnings).each { |w| @warnings << "#{tag}#{w}" }
       Array(other.soft_failures).each { |m| @soft_failures << "#{tag}#{m}" }
       Array(other.unchecked).each { |m| @unchecked << "#{tag}#{m}" }
+      other.gaps.each { |m, gap| @gaps["#{tag}#{m}"] = gap } if other.respond_to?(:gaps)
       # Without this a composite swallows a leaf that crashed: the leaf's errors
       # would be neither failures nor unchecked, so the composite would report
       # PASSED for a leaf that never ran. That is the same false green the third
@@ -248,7 +258,7 @@ module Deploy
     # same rendering. Pass no success_message when the caller prints its own.
     def render(success_message = nil)
       emit("Warnings:", @warnings)
-      emit("Not checked:", @unchecked)
+      emit("Not checked:", @unchecked.map { |reason| @gaps[reason] ? "#{reason} (#{@gaps[reason].clause})" : reason })
       emit("Gate errors (fail-open — nothing was blocked by these):", @errors)
       emit("Failures:", @failures)
 

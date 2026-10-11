@@ -161,11 +161,12 @@ module Master
       # were rejected on re-scan — every non-apply collapsed to `false` before
       # the one line anyone reads. The tally of these symbols is that line.
       def fix_violation(violation)
-        if VisualCustodyBlocking.fix_blocking_rule?(violation[:law])
+        if (gap = VisualCustodyBlocking.gap_for(violation[:law]))
           @person_required = true
           review = VisualCustodyBlocking.prepare_operator_review(violation)
           @bus&.publish("fix:requires_operator_decision", finding: review)
-          Master::Trace::Dmesg.status("fix0", "#{violation[:law]} blocked, operator-owned rendered value: #{violation[:file]}")
+          @bus&.publish("law_loop:operator_gap", law: violation[:law], file: violation[:file], gap:)
+          Master::Trace::Dmesg.gap("fix0", "#{violation[:law]} listed, not attempted, operator-owned rendered value: #{violation[:file]}", gap)
           return :needs_person
         end
         if needs_a_person?(violation) && !deletions_allowed?
@@ -281,7 +282,7 @@ end) if source.to_s.strip.empty?
 
         if @visual_custody && visual_source?(path)
           custody = @visual_custody.verify!(anchors: [violation[:anchor]].compact)
-          return reject_fix(path, old_src, "visual_regression", evidence: custody.message) unless custody.ok?
+          return reject_fix(path, old_src, "visual_regression", evidence: [custody.message, custody.gap&.clause].compact.join(", ")) unless custody.ok?
         end
 
         @bus&.publish("law_loop:fix_applied", law: @law.id, file: path)

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../../support/gate_result"
+require_relative "../../../lib/gap"
 require_relative "../../support/geometry_probe"
 require_relative "../../support/geometry_autofix"
 require_relative "../../support/gate_autofix"
@@ -119,7 +120,7 @@ module Deploy
     def run
       @result = Result.new
       unless GeometryProbe.available?
-        @result.inconclusive!("reflow: no Chrome/Chromium — width sweep not run")
+        @result.inconclusive!("reflow: no Chrome/Chromium — width sweep not run", gap: Master::Gap::NO_BROWSER)
         return @result
       end
 

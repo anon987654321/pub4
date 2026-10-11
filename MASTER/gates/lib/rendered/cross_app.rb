@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../../support/gate_result"
+require_relative "../../../lib/gap"
 require_relative "../../support/geometry_probe"
 
 module Deploy
@@ -54,7 +55,7 @@ module Deploy
       end
 
       unless GeometryProbe.available?
-        @result.inconclusive!("cross_app: no Chrome/Chromium — shared chrome not compared")
+        @result.inconclusive!("cross_app: no Chrome/Chromium — shared chrome not compared", gap: Master::Gap::NO_BROWSER)
         return @result
       end
 

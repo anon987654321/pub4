@@ -2,6 +2,7 @@
 
 require "json"
 require_relative "../result"
+require_relative "../gap"
 require_relative "visual_quality_gates"
 require_relative "../../gates/support/geometry_probe"
 require_relative "../../gates/support/surface_probes"
@@ -15,6 +16,10 @@ module Master
     # the proposal is written. A mismatch restores the old source through
     # LawLoop#reject_fix instead of blessing the new render.
     class VisualCustody
+      # Nothing was measured and no measurement here will change that without
+      # someone fixing the setup: a fact, not a decision.
+      UNMEASURABLE = Gap.new(horizon: :never, cost_to_check: :minutes)
+
       attr_reader :surfaces
 
       def initialize(root:, surfaces:, bus: nil)
@@ -30,7 +35,7 @@ module Master
       end
 
       def verify!(anchors: [])
-        return Result.err("visual custody: no snapshot surfaces", category: :inconclusive) if @surfaces.empty?
+        return Result.err("visual custody: no snapshot surfaces", category: :inconclusive, gap: UNMEASURABLE) if @surfaces.empty?
         return unavailable unless Deploy::GeometryProbe.available?
 
         measured = []
@@ -42,7 +47,7 @@ module Master
         VisualQualityGates.judge(measured, root: @root, prior: compare_payloads(measured, "after visual fix"), anchors:)
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "fix.visual_custody", event_bus: @bus)
-        Result.err("visual custody: INCONCLUSIVE — #{e.class}: #{e.message}", category: :inconclusive)
+        Result.err("visual custody: INCONCLUSIVE — #{e.class}: #{e.message}", category: :inconclusive, gap: UNMEASURABLE)
       end
 
       private
@@ -58,7 +63,7 @@ module Master
       end
 
       def compare_payloads(rows, label)
-        return Result.err("visual custody: no rendered snapshot payloads", category: :inconclusive) if rows.empty?
+        return Result.err("visual custody: no rendered snapshot payloads", category: :inconclusive, gap: UNMEASURABLE) if rows.empty?
 
         checked = 0
         missing = []
@@ -85,6 +90,7 @@ module Master
         return Result.err(
           "visual custody: #{label} has no committed baseline — #{missing.join(" / ")}",
           category: :inconclusive,
+          gap: Gap::OPERATOR_DECISION, # a baseline is a rendered value; seeding one is the operator's call
         ) if missing.any?
 
         return Result.ok(state: :preserved, checked:, label:) if failures.empty?
@@ -93,9 +99,10 @@ module Master
         Result.err(
           "visual custody: #{label} differs from committed baseline — #{failures.join(" / ")}",
           category: :policy,
+          gap: Gap::OPERATOR_DECISION, # keep the change by blessing a new baseline, or revert it
         )
       rescue JSON::ParserError => e
-        Result.err("visual custody: committed baseline unreadable: #{e.message}", category: :inconclusive)
+        Result.err("visual custody: committed baseline unreadable: #{e.message}", category: :inconclusive, gap: UNMEASURABLE)
       end
 
       def baseline_path(surface)
@@ -107,7 +114,7 @@ module Master
       end
 
       def unavailable
-        Result.err("visual custody: no Chrome/Chromium — rendered baseline cannot be verified", category: :inconclusive)
+        Result.err("visual custody: no Chrome/Chromium — rendered baseline cannot be verified", category: :inconclusive, gap: Gap::NO_BROWSER)
       end
     end
   end

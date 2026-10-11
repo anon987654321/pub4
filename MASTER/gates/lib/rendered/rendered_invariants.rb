@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../../support/cdp_session"
+require_relative "../../../lib/gap"
 require_relative "../../support/gate_result"
 
 module Deploy
@@ -116,7 +117,7 @@ module Deploy
       # gate went inconclusive with an empty reason list and the runner printed
       # "exit 3, no reason given (subprocess gate)" for an in-process gate.
       unless CdpSession.available?
-        @result.inconclusive!("no Chrome/Chromium — theme, chat corner and top band not measured")
+        @result.inconclusive!("no Chrome/Chromium — theme, chat corner and top band not measured", gap: Master::Gap::NO_BROWSER)
         return @result
       end
 

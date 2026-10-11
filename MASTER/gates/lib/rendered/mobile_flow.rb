@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../../support/gate_result"
+require_relative "../../../lib/gap"
 require_relative "../../support/geometry_probe"
 require_relative "../../support/brgen_vertical_surfaces"
 
@@ -102,7 +103,7 @@ module Deploy
     def run
       @result = GateResult.new
       unless GeometryProbe.available?
-        @result.inconclusive!("mobile_flow: no Chrome/Chromium — phone viewport not measured")
+        @result.inconclusive!("mobile_flow: no Chrome/Chromium — phone viewport not measured", gap: Master::Gap::NO_BROWSER)
         return @result
       end
 

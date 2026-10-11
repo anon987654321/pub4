@@ -82,10 +82,12 @@ module Master
       value.nil? ? err(err_msg, category:, context:) : ok(value)
     end
 
-    def self.err(msg, category: :unknown, context: nil)
+    # `gap` is a Master::Gap when the failure is one that may resolve, or wait
+    # on a person; Trace::Dmesg.gap prints it and /fix reads its decidability.
+    def self.err(msg, category: :unknown, context: nil, gap: nil)
       raise ArgumentError, "unknown category: #{category}" unless category == :unknown || CATEGORIES.key?(category)
 
-      Err.new(msg, category, error_context(msg, context, caller_locations(1, 1).first))
+      Err.new(msg, category, error_context(msg, context, caller_locations(1, 1).first), gap)
     end
 
     def self.error_context(msg, context, location)
@@ -128,15 +130,16 @@ module Master
       include ErrChaining
       include ErrClassification
 
-      attr_reader :message, :category, :context
+      attr_reader :message, :category, :context, :gap
 
-      def initialize(message, category = :unknown, context = nil)
+      def initialize(message, category = :unknown, context = nil, gap = nil)
         raise ArgumentError, "message cannot be nil" if message.nil?
         raise ArgumentError, "category must be a symbol" unless category.is_a?(Symbol)
 
         @message = message
         @category = category
         @context = context
+        @gap = gap
         freeze
       end
 
@@ -146,7 +149,7 @@ module Master
       def unwrap = value!
       def value_or(default) = default
 
-      def deconstruct_keys(_keys) = { message: @message, category: @category, context: @context }
+      def deconstruct_keys(_keys) = { message: @message, category: @category, context: @context, gap: @gap }
       def to_s = @message
       def inspect = @context ? "Err(#{@category}: #{@message} @ #{@context})" : "Err(#{@category}: #{@message})"
     end

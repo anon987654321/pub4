@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../../support/rendered_contrast_checks"
+require_relative "../../../lib/gap"
 require_relative "../../support/rendered_geometry/token_checks"
 require_relative "../../support/rendered_geometry/placement_checks"
 require_relative "../../support/rendered_geometry/composition_checks"
@@ -65,7 +66,7 @@ module Deploy
       load_design_rules
 
       unless GeometryProbe.available?
-        @result.inconclusive!("geometry: no Chrome/Chromium — rendered geometry not measured (set CHROME_PATH)")
+        @result.inconclusive!("geometry: no Chrome/Chromium — rendered geometry not measured (set CHROME_PATH)", gap: Master::Gap::NO_BROWSER)
         return @result
       end
 

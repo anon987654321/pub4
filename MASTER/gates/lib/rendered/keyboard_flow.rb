@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../../support/gate_result"
+require_relative "../../../lib/gap"
 require_relative "../../support/geometry_probe"
 
 module Deploy
@@ -74,7 +75,7 @@ module Deploy
     def run
       @result = GateResult.new
       unless GeometryProbe.available?
-        @result.inconclusive!("keyboard_flow: no Chrome/Chromium — tab order not walked")
+        @result.inconclusive!("keyboard_flow: no Chrome/Chromium — tab order not walked", gap: Master::Gap::NO_BROWSER)
         return @result
       end
 

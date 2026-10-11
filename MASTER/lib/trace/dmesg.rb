@@ -114,6 +114,12 @@ module Master
         emit("#{unit}: #{msg}", io:)
       end
 
+      # A line that ends in what is known about its gap: whether it resolves on
+      # its own, what checking costs, and whose call it is. No gap, no clause.
+      def gap(unit, msg, gap, io: $stdout)
+        status(unit, gap ? "#{msg}, #{gap.clause}" : msg, io:)
+      end
+
       # Finished command and stage reports use the same grammar as live events.
       # Existing dmesg lines pass through unchanged; plain lines attach to one
       # unit instead of inventing headings, gutters or column alignment.

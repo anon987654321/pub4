@@ -142,7 +142,9 @@ module Master
 
         def review(code, context: nil, personas: nil, image: nil)
           active = active_personas(personas)
-          return Result.err("council: no personas, or no provider reached", category: :validation) if active.empty? || !Deliberation.reachable_for?(@agent)
+          if active.empty? || !Deliberation.reachable_for?(@agent)
+            return unconvened("council: no personas, or no provider reached", :validation, Gap.new(horizon: :never, cost_to_check: :minutes))
+          end
 
           # The gate answers before the panel is convened, not per persona.
           # Blocked here means the provider said "out of credit" recently
@@ -245,11 +247,10 @@ module Master
           # "this tier could not run" instead of parsing prose, and so the
           # verdict never folds "could not run" into "timed out".
           limited = Io::QuotaGate.tripped?
-          Result.err(
-            "council: quorum not reached (#{feedback.size}/#{@personas.size})" \
-            "#{failure_summary}#{quota_note}",
-            category: limited ? Io::QuotaGate::CATEGORY : :timeout,
-          )
+          message = "council: quorum not reached (#{feedback.size}/#{@personas.size})#{failure_summary}#{quota_note}"
+          return unconvened(message, Io::QuotaGate::CATEGORY, spend_gap) if limited
+
+          Result.err(message, category: :timeout)
         end
 
         # The council did not run and the answer is not "clean". Carries the
@@ -257,7 +258,19 @@ module Master
         # verdict rather than living only in a log line.
         def exhausted_error
           Io::QuotaGate.skipped("council")
-          Result.err("council: #{Io::QuotaGate.report}", category: Io::QuotaGate::CATEGORY)
+          unconvened("council: #{Io::QuotaGate.report}", Io::QuotaGate::CATEGORY, spend_gap)
+        end
+
+        # Credits are money, so the operator restores them; the gate re-probes on its own clock.
+        def spend_gap
+          wait = Io::QuotaGate.seconds_until_probe
+          Gap.new(horizon: wait ? [wait, 1].max : :operator, cost_to_check: :operator)
+        end
+
+        # The council did not sit. The error carries the gap and one dmesg line says it.
+        def unconvened(message, category, gap)
+          Master::Trace::Dmesg.once("council0", "cannot convene, #{gap.clause}")
+          Result.err(message, category:, gap:)
         end
 
         # A panel that answered on a stand-in model declares it on the pass as
