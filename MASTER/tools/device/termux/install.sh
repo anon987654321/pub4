@@ -25,7 +25,7 @@ if ! command -v ruby >/dev/null 2>&1; then
   fail "Ruby installation failed; run pkg install ruby and retry."
 fi
 
-ruby -e 'abort "MASTER needs Ruby 3.4 or newer; found #{RUBY_VERSION}" if RUBY_VERSION < "3.4"'
+ruby -rrubygems -e 'required = Gem::Requirement.new(">= 3.3.0", "< 4.1.0"); actual = Gem::Version.new(RUBY_VERSION); abort "MASTER requires #{required}; found #{actual}" unless required.satisfied_by?(actual)'
 printf 'master-install0: installing locked Ruby dependencies\n'
 ruby bin/deps install
 printf 'master-install0: checking dependency state\n'
