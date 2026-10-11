@@ -105,10 +105,10 @@ module Master
           # preview of visible text. Password/token fields never echo the value.
           label = [node.text, node.attribute("aria-label"), node.attribute("title"),
                    node.attribute("name"), node.attribute("type")].compact.map(&:to_s)
-            .map { |part| part.gsub(/[[:cntrl:]]/, " ").gsub(/\\s+/, " ").strip }
+            .map { |part| part.gsub(/[[:cntrl:]]/, " ").gsub(/\s+/, " ").strip }
             .find { |part| !part.empty? }.to_s[0, 100]
           sensitive = node.attribute("type").to_s.casecmp("password").zero? ||
-                      node.attribute("name").to_s.match?(/password|token|secret|credential|otp|auth/i)
+                      node.attribute("name").to_s.match?(/password|token|secret|credential|otp|auth|verification|code/i)
           preview = if op == "click"
                       ""
                     else
