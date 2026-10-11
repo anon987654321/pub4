@@ -1436,7 +1436,6 @@ body.vertical-messenger .layout > main#main-content > section.messenger-window {
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-gutter: stable;
-  scrollbar-color: var(--border-strong) transparent;
   padding: var(--space-3);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
@@ -1503,7 +1502,6 @@ body.vertical-messenger .layout > main#main-content > section.messenger-window {
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-gutter: stable;
-  scrollbar-color: var(--border-strong) transparent;
   padding: var(--space-4) var(--space-3);
 }
 
@@ -1717,7 +1715,6 @@ body.vertical-messenger .layout > main#main-content > section.messenger-window {
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-gutter: stable;
-  scrollbar-color: var(--border-strong) transparent;
   padding: var(--space-3);
 }
 
@@ -10599,7 +10596,6 @@ body.vertical-marketplace .listing-review-cover-image {
   overflow-x: auto;
   overscroll-behavior-inline: contain;
   scrollbar-width: thin;
-  scrollbar-color: var(--border-strong) transparent;
   margin-block-end: var(--space-3);
   border-block-end: 1px solid var(--border);
 }
