@@ -43,6 +43,14 @@ if [ "${1:-}" = "finish" ]; then
       ;;
   esac
   git -C "$repo" rebase origin/main
+  # A rebase can leave a require pointing at a file another commit moved, and no
+  # unit test sees it. Boot the runtime before anything is published.
+  if [ -f "$repo/MASTER/tools/boot_smoke.rb" ]; then
+    if ! "$repo/MASTER/bin/ruby" "$repo/MASTER/tools/boot_smoke.rb"; then
+      echo "worktree finish: the runtime does not boot after the rebase; nothing pushed" >&2
+      exit 1
+    fi
+  fi
   git -C "$repo" push -u origin "HEAD:${branch}"
   echo "worktree finish: ${branch} pushed. It is not on main."
   echo "worktree finish: publish with: git push origin HEAD:main"
