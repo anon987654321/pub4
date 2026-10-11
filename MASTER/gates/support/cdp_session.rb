@@ -7,6 +7,7 @@ require "base64"
 require "digest/sha1"
 require "securerandom"
 require_relative "cdp_framing"
+require_relative "cdp_budget"
 require_relative "chrome_process"
 require "tmpdir"
 require "fileutils"
@@ -32,6 +33,7 @@ module Deploy
     include CdpConsole
 
     include CdpFraming
+    include CdpBudget
     include ChromeProcess
     extend ChromeProcess::Discovery
 
@@ -359,6 +361,7 @@ module Deploy
     end
 
     def dispatch(method, params)
+      check_budget!(method)
       @id += 1
       id = @id
       payload = JSON.generate(params.empty? ? { id:, method: } : { id:, method:, params: })
@@ -388,7 +391,7 @@ module Deploy
     end
 
     def await_response(id, method)
-      deadline = monotonic + @timeout
+      deadline = [monotonic + @timeout, @budget_deadline].compact.min
       loop do
         if (cached = @pending.delete(id))
           return unwrap(cached, method)

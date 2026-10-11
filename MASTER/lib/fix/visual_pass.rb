@@ -121,18 +121,18 @@ module Master
       def capture_surfaces(surfaces, pass:)
         captures = []
         Deploy::GeometryProbe.with_browser(root: repo_root, warm: surfaces) do |cdp|
-          surfaces.each do |surface|
-            resting = capture_resting(cdp, surface)
-            next unless resting
-
-            captures << resting
-            captures.concat(DeadCssCoverage.around(cdp, surface) { VisualStress.captures(cdp, surface, dir: @dir, pass:, limit: MAX_COMPOSITION_STATES) })
+          surfaces.each_with_index do |surface, index|
+            VisualSurfaceBudget.run(cdp, surface, index, surfaces.size) do
+              next unless (resting = capture_resting(cdp, surface))
+              captures << resting
+              captures.concat(DeadCssCoverage.around(cdp, surface) { VisualStress.captures(cdp, surface, dir: @dir, pass:, limit: MAX_COMPOSITION_STATES) })
+            end
           end
 
           # All app captures are complete before we navigate this browser to
           # local evidence pages. One CDP session serves the entire sweep.
-          captures.each do |capture|
-            capture[:visual_evidence] = @ghost_stack.capture(capture, pass:, cdp:)
+          captures.each_with_index do |capture, index|
+            capture[:visual_evidence] = VisualSurfaceBudget.evidence(cdp, capture, index, captures.size) { @ghost_stack.capture(capture, pass:, cdp:) }
           end
           cross_page_overlay.capture(captures, cdp:).tap { CrossAppConsistency.write_for(captures) }
         end

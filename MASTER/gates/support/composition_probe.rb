@@ -227,11 +227,13 @@ module Deploy
         return [] unless after && same_surface?(cdp, surface)
 
         state_surface = derived_surface(surface, "#{surface.label}__pair_#{index + 1}")
-        Array(record(cdp, surface, state_surface, dir:) do
+        # [x].compact, not Array(x): Array() turns the capture Hash into its
+        # key/value pairs, and the caller then holds arrays where it expects captures.
+        [record(cdp, surface, state_surface, dir:) do
           { "state" => "interaction_pair", "base_surface" => surface.id,
             "triggers" => [first.fetch("label"), second.fetch("label")],
             "trigger_selectors" => [first.fetch("selector"), second.fetch("selector")], "state_signature" => after }
-        end)
+        end].compact
       end
 
       # A copy of the base surface under a new label, never snapshotted: these

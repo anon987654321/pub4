@@ -6,6 +6,7 @@ require_relative "visual_cross_page_overlay"
 require_relative "fix_trace"
 require_relative "layout_score_store"
 require_relative "visual_stress"
+require_relative "visual_surface_budget"
 
 module Master
   module Fix

@@ -92,8 +92,14 @@ module Deploy
       opcode = b0 & 0x0F
       masked = (b1 & 0x80) != 0
       len = b1 & 0x7F
-      len = read_exactly(2, deadline).unpack1("n") if len == 126
-      len = read_exactly(8, deadline).unpack1("Q>") if len == 127
+      # elsif, not two ifs: a 126-form frame carrying exactly 127 bytes would
+      # otherwise satisfy the second test and swallow eight payload bytes as a
+      # 64-bit length.
+      if len == 126
+        len = read_exactly(2, deadline).unpack1("n")
+      elsif len == 127
+        len = read_exactly(8, deadline).unpack1("Q>")
+      end
       if len > MAX_FRAME_BYTES
         @desync = true
         raise CdpSession::Desync, "implausible frame length #{len} — the read stream is out of sync"

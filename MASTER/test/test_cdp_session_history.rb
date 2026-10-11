@@ -44,3 +44,18 @@ class TestCdpSessionHistory < Minitest::Test
     end
   end
 end
+
+# SVG elements have no innerText; a tall inline SVG made the platform probe throw
+# and ended a whole brgen review at surface 149 of 154.
+class TestWebPlatformProbeOnSvg < Minitest::Test
+  def test_a_tall_inline_svg_does_not_break_the_probe
+    skip "no headless Chrome" unless Deploy::CdpSession.available?
+    require File.expand_path("../gates/support/web_platform_probe", __dir__)
+    surface = Struct.new(:viewport).new("mobile")
+    html = "<body><svg width='300' height='260' style='height:260px'><rect width='9' height='9'/></svg></body>"
+    Deploy::CdpSession.open do |cdp|
+      cdp.navigate("data:text/html,#{URI.encode_www_form_component(html).gsub('+', '%20')}")
+      assert_kind_of Hash, Deploy::WebPlatformProbe.run(cdp, surface)
+    end
+  end
+end

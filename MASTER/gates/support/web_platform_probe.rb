@@ -26,7 +26,7 @@ module Deploy
           fixed_height_containers: all.filter(el => {
             const s = getComputedStyle(el);
             return visible(el) && s.height.endsWith("px") &&
-              parseFloat(s.height) >= 200 && (el.scrollHeight > el.clientHeight || el.innerText.length > 160);
+              parseFloat(s.height) >= 200 && (el.scrollHeight > el.clientHeight || (el.innerText || "").length > 160);
           }).length,
           fixed_width_containers: all.filter(el => {
             const s = getComputedStyle(el);

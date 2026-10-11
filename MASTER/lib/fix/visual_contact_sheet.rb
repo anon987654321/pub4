@@ -18,17 +18,36 @@ module Master
         html_path = File.join(@dir, "rendered-ui-contact-sheet.html")
         File.write(html_path, page(captures))
         screenshot = File.join(@dir, "rendered-ui-contact-sheet.png")
-        Deploy::GeometryProbe.with_browser(root: @root, warm: []) do |cdp|
-          cdp.viewport(1800, 1400, mobile: false)
-          cdp.navigate("file://#{html_path}")
-          cdp.screenshot(screenshot, capture_beyond_viewport: true)
-        end
+        shoot(html_path, screenshot)
         screenshot
       end
 
+      # Chrome refuses a texture taller than about 16k px ("Page is too large"),
+      # and a full-page figure per state does not fit once a sweep holds hundreds.
+      # Figures are capped, resting renders first, and a sheet that is still too
+      # tall is shot again with every figure cropped to its top.
+      MAX_FIGURES = Integer(ENV.fetch("MASTER_VISUAL_SHEET_FIGURES", "40"))
+
       private
 
+      def shoot(html_path, screenshot)
+        Deploy::GeometryProbe.with_browser(root: @root, warm: []) do |cdp|
+          cdp.viewport(1800, 1400, mobile: false)
+          cdp.navigate("file://#{html_path}")
+          begin
+            cdp.screenshot(screenshot, capture_beyond_viewport: true)
+          rescue Deploy::CdpSession::Error => e
+            raise unless e.message.include?("too large")
+
+            cdp.evaluate("document.body.classList.add('cropped')")
+            cdp.screenshot(screenshot, capture_beyond_viewport: true)
+          end
+        end
+      end
+
       def page(captures)
+        ordered = captures.each_with_index.sort_by { |capture, i| [capture.dig(:payload, "composition", "state") == "resting" ? 0 : 1, i] }.map(&:first)
+        figures = ordered.lazy.flat_map { |capture| items(capture) }.first(MAX_FIGURES)
         <<~HTML
           <!doctype html>
           <html><head><meta charset="utf-8"><style>
@@ -39,9 +58,10 @@ module Master
           .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
           figure { margin: 0; min-width: 0; } figcaption { margin: 0 0 8px; font-weight: 700; }
           img { display: block; width: 100%; height: auto; border: 1px solid #bbb; }
+          .cropped img { max-height: 700px; object-fit: cover; object-position: top; }
           </style></head><body>
-          <h1>MASTER rendered visual evidence: #{captures.length} surfaces</h1>
-          <div class="grid">#{(captures.flat_map { |capture| items(capture) } + cross_page_items(captures)).join("\n")}</div>
+          <h1>MASTER rendered visual evidence: #{captures.length} surfaces#{figures.length >= MAX_FIGURES ? " (first #{MAX_FIGURES} figures)" : ""}</h1>
+          <div class="grid">#{(figures + cross_page_items(captures)).join("\n")}</div>
           </body></html>
         HTML
       end

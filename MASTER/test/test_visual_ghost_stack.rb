@@ -28,6 +28,8 @@ class VisualGhostStackContractTest < Minitest::Test
       @viewports = []
     end
 
+    def with_budget(*) = yield
+
     def viewport(width, height, mobile:) = @viewports << [width, height, mobile]
     def navigate(url) = @navigated << url
     def screenshot(path, capture_beyond_viewport:) = File.binwrite(path, VisualGhostStackContractTest.png(1800, 1400))

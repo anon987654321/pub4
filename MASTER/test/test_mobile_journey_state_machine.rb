@@ -266,13 +266,18 @@ class TestMobileJourneyStateMachine < Minitest::Test
   def test_cdp_back_and_forward_drive_browser_history
     cdp = Class.new(Deploy::CdpSession) do
       def sent = (@sent ||= [])
-      def send_cmd(method, **) = sent << method
+      def send_cmd(method, **params)
+        sent << [method, params[:entryId]]
+        method == "Page.getNavigationHistory" ? { "currentIndex" => 1, "entries" => [{ "id" => 10 }, { "id" => 11 }, { "id" => 12 }] } : {}
+      end
+
       def evaluate(*) = "complete"
     end.new
 
     cdp.back(settle: 0)
     cdp.forward(settle: 0)
 
-    assert_equal %w[Page.goBack Page.goForward], cdp.sent
+    assert_equal [["Page.navigateToHistoryEntry", 10], ["Page.navigateToHistoryEntry", 12]],
+                 cdp.sent.reject { |method, _| method == "Page.getNavigationHistory" }
   end
 end

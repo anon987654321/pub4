@@ -55,7 +55,7 @@ class VisualPassContractTest < Minitest::Test
       def ghosts.capture(*, **) = { ghost: nil }
       pass.instance_variable_set(:@ghost_stack, ghosts)
       limits = []
-      captured = Probe.stub(:with_browser, ->(**, &blk) { blk.call(Object.new.tap { |c| def c.screenshot(*, **) = nil }) }) do
+      captured = Probe.stub(:with_browser, ->(**, &blk) { blk.call(Object.new.tap { |c| def c.screenshot(*, **) = nil; def c.with_budget(*) = yield }) }) do
         Probe.stub(:walk, { "elements" => [] }) do
           Probe.stub(:ok?, true) do
             Deploy::CompositionProbe.stub(:capture, ->(_cdp, _s, dir:, pass:, limit:) { limits << limit; [] }) do
@@ -162,6 +162,23 @@ class VisualPassContractTest < Minitest::Test
     assert_equal %w[chat__interaction_1 chat__interaction_1__input], measured
     assert_equal %w[interaction interaction_input], captures.map { |c| c.dig(:payload, "composition", "state") }
     assert_equal Integer(ENV.fetch("MASTER_VISUAL_COMPOSITION_PAIRS", "4")), Deploy::CompositionProbe::MAX_PAIRS
+  end
+
+  def test_a_pair_state_comes_back_as_a_capture_hash_not_key_value_pairs
+    candidates = [{ "selector" => "#a", "label" => "A", "stateful" => true },
+                  { "selector" => "#b", "label" => "B", "stateful" => true }]
+    cdp = ScriptedCdp.new(url: surface.url, candidates:)
+    captures = with_tmp do |dir|
+      Probe.stub(:measure_current, { "elements" => [] }) do
+        Probe.stub(:ok?, true) do
+          Deploy::WebPlatformProbe.stub(:run, {}) { Deploy::CompositionProbe.capture(cdp, surface, dir:, pass: 1) }
+        end
+      end
+    end
+    pair = captures.find { |c| c.is_a?(Hash) && c.dig(:payload, "composition", "state") == "interaction_pair" }
+
+    assert pair, "the pair state is captured"
+    assert captures.all?(Hash), "every capture is a Hash"
   end
 
   def test_composition_probe_fails_closed_on_bad_discovery
