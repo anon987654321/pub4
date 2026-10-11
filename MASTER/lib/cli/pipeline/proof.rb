@@ -173,7 +173,9 @@ module Master
         def proof_runner(abs)
           chain = ::Operator::GateChain
           if abs == Master::RAILS_ROOT || abs.start_with?("#{Master::RAILS_ROOT}/")
-            return ["rails gates", -> { rails_proof(*chain.rails_gates(scan_only: true)) }]
+            return ["rails gates", -> {
+              rails_proof(*chain.rails_gates(scan_only: true, strict_inconclusive: ENV[PROOF_ENV] == "1"))
+            }]
           end
 
           tree = PROOF_ROOTS.find { |_name, root| abs == root || abs.start_with?("#{root}/") }&.first
