@@ -93,6 +93,11 @@ nb:
       payment_confirmed_body: "Betalingen din for %{title} er bekreftet."
       on_its_way: "På vei"
       delivered: "Levert"
+    buy_box_reason:
+      price: "Prisen din er %{percent} % høyere enn det valgte tilbudet."
+      delivery: "Levering er tregere (%{current} mot %{winner})."
+      performance: "Selgerscoren din er %{score} %."
+      combined: "Det valgte tilbudet scorer bedre på pris, levering, lager, ekspedering og selgerkvalitet."
     delivery_promise:
       same_day_bergen: "I dag i Bergen"
       next_day_bergen: "I morgen i Bergen"

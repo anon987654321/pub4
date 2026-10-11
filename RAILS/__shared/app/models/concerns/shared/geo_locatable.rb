@@ -33,6 +33,17 @@ module Shared
       "#{cell_lat}:#{cell_lng}"
     end
 
+    # Great-circle distance in km. A module method so non-model callers need no including class.
+    def self.haversine(lat1, lng1, lat2, lng2)
+      dlat = (lat2.to_f - lat1.to_f) * Math::PI / 180.0
+      dlng = (lng2.to_f - lng1.to_f) * Math::PI / 180.0
+      a = Math.sin(dlat / 2)**2 +
+          Math.cos(lat1.to_f * Math::PI / 180.0) *
+          Math.cos(lat2.to_f * Math::PI / 180.0) *
+          Math.sin(dlng / 2)**2
+      EARTH_KM * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+    end
+
     class_methods do
       # Bbox-filtered nearby (fast, chainable like .nearby(lat, lng, 5).limit(20).includes(...) ).
       # For high precision on small result sets, post-filter with haversine or call .select.
@@ -54,15 +65,7 @@ module Shared
       end
 
       # Accurate haversine in km. Use for post-filter or distance checks.
-      def haversine(lat1, lng1, lat2, lng2)
-        dlat = (lat2.to_f - lat1.to_f) * Math::PI / 180.0
-        dlng = (lng2.to_f - lng1.to_f) * Math::PI / 180.0
-        a = Math.sin(dlat / 2)**2 +
-            Math.cos(lat1.to_f * Math::PI / 180.0) *
-            Math.cos(lat2.to_f * Math::PI / 180.0) *
-            Math.sin(dlng / 2)**2
-        EARTH_KM * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-      end
+      def haversine(lat1, lng1, lat2, lng2) = Shared::GeoLocatable.haversine(lat1, lng1, lat2, lng2)
     end
 
     def geo?

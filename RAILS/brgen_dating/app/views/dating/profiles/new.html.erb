@@ -50,6 +50,8 @@
         <%= f.select :neighborhood_id, @neighborhoods.map { |n| [n.name, n.id] }, { include_blank: "—" } %>
       </div>
       <div class="field field--check"><%= f.check_box :visible %><%= f.label :visible, t("dating.visible_label") %></div>
+      <div class="field field--check"><%= f.check_box :location_discovery_enabled %><%= f.label :location_discovery_enabled, t("dating.path_crossings_consent", default: "Allow people I pass nearby to appear in Crossed paths") %></div>
+      <p class="form-help"><%= t("dating.path_crossings_privacy", default: "Off by default. Requires a visible, verified profile. Location samples are approximate and expire after five minutes.") %></p>
     </details>
 
     <div class="field">

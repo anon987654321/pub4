@@ -51,7 +51,7 @@ class Dating::ProfilesController < Dating::BaseController
   end
 
   def profile_params
-    params.require(:profile).permit(:bio, :gender, :looking_for, :age, :location, :neighborhood_id, :bydel, :visible)
+    params.require(:profile).permit(:bio, :gender, :looking_for, :age, :location, :neighborhood_id, :bydel, :visible, :location_discovery_enabled)
   end
 
   # Photos stay out of profile_params because assigning a has_many_attached

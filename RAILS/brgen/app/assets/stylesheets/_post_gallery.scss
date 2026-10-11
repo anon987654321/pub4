@@ -1,0 +1,31 @@
+.post-images {
+  display: flex;
+  gap: var(--space-2, 0.5rem);
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  padding-block: 0.25rem;
+  scroll-snap-type: x proximity;
+}
+
+.post-images > a {
+  display: block;
+  flex: 0 0 min(82%, 32rem);
+  min-width: 0;
+  scroll-snap-align: start;
+}
+
+.post-images .post-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 34rem;
+  object-fit: cover;
+  border-radius: var(--radius-md, 0.5rem);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .post-images {
+    scroll-behavior: auto;
+  }
+}

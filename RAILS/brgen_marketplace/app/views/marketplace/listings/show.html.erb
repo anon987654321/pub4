@@ -151,6 +151,15 @@
       <%= link_to t("marketplace.variants"), listing_variants_path(@listing), class: "chip" %>
     </div>
 
+    <% if @buy_box_reasons.present? %>
+      <section class="buy-box-reasons" aria-label="<%= t("marketplace.buy_box_seller_feedback", default: "How to improve your shop offer") %>">
+        <h3><%= t("marketplace.buy_box_seller_feedback", default: "How to improve your shop offer") %></h3>
+        <ul><% @buy_box_reasons.each do |reason| %><li><%= reason %></li><% end %></ul>
+        <% if (score = @buy_box_result&.score_for(@listing)) %>
+          <p><%= t("marketplace.buy_box_score", default: "Your current Buy Box score: %{score}%", score: (score.total * 100).round) %></p>
+        <% end %>
+      </section>
+    <% end %>
     <% if @seller_performance %>
       <p class="deal-meta"><%= t("marketplace.seller_performance_window") %></p>
       <div class="chips">

@@ -31,7 +31,7 @@ class PostsController < ApplicationController
   def index
     scope = Post.sorted_lane(params[:sort], viewer: Current.user)
     scope = Post.visible_to(Current.user).merge(scope)
-    scope = scope.with_attached_image.includes(:user, :community, :votes)
+    scope = scope.with_attached_image.with_attached_images.includes(:user, :community, :votes)
     scope = apply_live_search(scope, columns: %w[title content], vertical: "feed") if live_search_query.present?
     @pagy, @posts = pagy(scope)
     finish_live_search(partial: "posts/live_search_results")
@@ -84,6 +84,7 @@ class PostsController < ApplicationController
     end
 
     @post = Post.new(post_params.except(:nearby))
+    @neighborhoods = Neighborhood.where(city_id: ActsAsTenant.current_tenant&.id).order(:name)
     @post.user = Current.user
     @post.anonymous = true if Current.user.guest? || ActiveModel::Type::Boolean.new.cast(post_params[:anonymous])
     stamp_nearby!
@@ -113,6 +114,7 @@ class PostsController < ApplicationController
       PostproJob.perform_later(@post.to_gid.to_s, preset) if preset && @post.image.attached?
       redirect_to @post, notice: t("flash.posted")
     else
+      @neighborhoods = Neighborhood.where(city_id: ActsAsTenant.current_tenant&.id).order(:name)
       render :new, status: :unprocessable_entity
     end
   end
@@ -167,7 +169,7 @@ class PostsController < ApplicationController
     @post = find_by_slug_or_id(
       Post.includes(:user, :community).with_attached_image.with_attached_video.with_attached_audio,
       params[:id]
-    )
+    ).with_attached_images
     # A moderator-removed post is gone for everyone, including via direct link.
     raise ActiveRecord::RecordNotFound if @post&.removed_at?
   end
@@ -187,7 +189,14 @@ class PostsController < ApplicationController
   end
 
   def post_params
-    params.require(:post).permit(:title, :content, :community_id, :anonymous, :image, :video, :audio, :preset, :flair, :nearby)
+    permitted = params.require(:post).permit(:title, :content, :community_id, :neighborhood_id, :anonymous, :image, :video, :audio, :preset, :flair, :nearby, images: [])
+    # A multi-file field sends [""] when untouched; do not replace existing
+    # gallery attachments with that empty sentinel during an edit.
+    if permitted[:images].present?
+      permitted[:images] = permitted[:images].reject(&:blank?)
+      permitted.delete(:images) if permitted[:images].empty?
+    end
+    permitted
   end
 
   # What is left of the Live layer, and the only part of it the front page did

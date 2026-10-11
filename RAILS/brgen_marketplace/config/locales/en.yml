@@ -93,6 +93,11 @@ en:
       payment_confirmed_body: "Your payment for %{title} is confirmed."
       on_its_way: "On its way"
       delivered: "Delivered"
+    buy_box_reason:
+      price: "Your listed price is %{percent}% higher than the selected offer."
+      delivery: "Delivery is slower (%{current} versus %{winner})."
+      performance: "Your seller-performance score is %{score}%."
+      combined: "The selected offer scores better across price, delivery, stock, fulfilment, and seller performance."
     delivery_promise:
       same_day_bergen: "Today in Bergen"
       next_day_bergen: "Tomorrow in Bergen"

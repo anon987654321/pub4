@@ -33,7 +33,8 @@
               sentinel_id: "home-feed-sentinel",
               q: params[:q],
               feed: params[:feed],
-              sort: params[:sort] %>
+              sort: params[:sort],
+              data: { neighborhood_id: params[:neighborhood_id] } %>
  <% end %>
  <% end %>
 <% else %>

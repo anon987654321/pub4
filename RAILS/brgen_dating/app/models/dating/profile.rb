@@ -5,6 +5,7 @@ class Dating::Profile < ApplicationRecord
 
   tracks_activity created: "DatingProfileCreated", updated: "DatingProfileUpdated", source_vertical: "dating", visibility: "private", actor: :user
   include Shared::GeoLocatable
+  after_commit :clear_location_ping_when_not_discoverable
   include Shared::MediaProcessable
   include Shared::Reactable
   belongs_to :user
@@ -111,6 +112,12 @@ class Dating::Profile < ApplicationRecord
   # the background and would otherwise read as someone being around.
   def touch_activity!
     update_columns(last_active_at: Time.current, updated_at: Time.current)
+  end
+
+  def clear_location_ping_when_not_discoverable
+    return if visible? && location_discovery_enabled? && verified_at.present?
+
+    Dating::LocationPing.where(user_id: user_id).delete_all
   end
   # nearby (bbox) + haversine provided by concern; old approx replaced for consistency
   scope :in_neighborhood, ->(neigh) { neigh ? where(neighborhood_id: neigh.id) : all }
