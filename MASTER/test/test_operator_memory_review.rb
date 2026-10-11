@@ -133,6 +133,7 @@ class TestOperatorMemoryReview < Minitest::Test
     assert_match(/unknown memory review verdict/, @err.string)
     assert_nil @memory.provenance("deployment_target")["status"]
   end
+
   def test_operator_script_routes_the_memory_subcommand_to_this_handler
     script = File.read(File.expand_path("../bin/operator", __dir__))
 
