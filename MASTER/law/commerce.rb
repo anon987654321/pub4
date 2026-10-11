@@ -17,7 +17,7 @@ Law.define(:COMMERCE_BRGEN_DOES_NOT_OWN_AMBER) do
   source "pub4 commerce boundary — Amber owns wardrobe intelligence; BRGEN owns transactions"
   severity :error
   mode :violation
-  path "RAILS/brgen/engines/marketplace/"
+  path "RAILS/brgen_marketplace/"
   detect { |line| line.match?(/\b(?:TasteRanker|WardrobeGap|ShopTheLook|WardrobeItem)\b/) }
   fix "Keep wardrobe ranking and wardrobe records in Amber; expose only commerce references and catalog facts across the boundary."
   bad "TasteRanker.new(Current.user).rank(listings)"
