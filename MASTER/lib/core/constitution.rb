@@ -2,7 +2,6 @@
 
 require "prism"
 require "yaml"
-require_relative "../boot/paths"
 
 module Master::Core
   # Constitution — the single gate. Every Effect the agent proposes folds
