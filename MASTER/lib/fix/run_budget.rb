@@ -17,6 +17,8 @@ module Master
       HEARTBEAT_SECONDS = 28
       WARN_SHARE = 0.8
       UNIT = "budget0"
+      DEFAULT_LAW_SHARE = 0.10 # data/limits.yml#fix_budget overrides both
+      DEFAULT_RUN_TOKENS = 10_000_000
       COSTS = File.join(".master", "costs.jsonl")
 
       class << self
@@ -46,10 +48,17 @@ module Master
         def note_output(unit, text)
           @current&.note_output(unit, text)
         end
+
+        def run_spend = @current&.spend || [0.0, 0]
+
+        def note_law_cost(law_id, usd, tokens = 0) = @current&.note_law_cost(law_id, usd, tokens)
+
+        def law_limit_exceeded?(law_id) = @current&.law_limit_exceeded?(law_id) || false
       end
 
       def initialize(root:, max_passes:, env: ENV, clock: -> { Process.clock_gettime(Process::CLOCK_MONOTONIC) },
-                     wall: -> { Time.now }, out: nil, say: nil, beat_seconds: HEARTBEAT_SECONDS, poll_seconds: 1)
+                     wall: -> { Time.now }, out: nil, say: nil, beat_seconds: HEARTBEAT_SECONDS, poll_seconds: 1,
+                     limits: nil)
         @root = root
         @costs = File.join(root, COSTS)
         @max_passes = max_passes.to_i
@@ -66,6 +75,11 @@ module Master
         @stages = Hash.new(0.0)
         @boundaries = {}
         @warned = false
+        @fix_budget = limits || fix_budget_limits
+        @law_spend = Hash.new { |hash, law| hash[law] = [0.0, 0] }
+        @laws_over = {}
+        @offset = 0
+        @ledger = [0.0, 0]
       end
 
       def start!
@@ -99,12 +113,42 @@ module Master
         @pulse.unit = unit
       end
 
+      # Reads only the ledger lines written since the last call: the per-law
+      # check asks after every violation, and the file grows with the run.
       def spend
-        rows = File.file?(@costs) ? File.foreach(@costs).filter_map { |line| parse(line) } : []
-        mine = rows.select { |row| row["ts"].to_i >= @started_wall }
-        [mine.sum { |row| row["amount"].to_f }, mine.sum { |row| row["tokens"].to_i }]
+        return @ledger unless File.file?(@costs)
+
+        File.open(@costs) do |io|
+          io.seek(@offset)
+          while (line = io.gets)
+            break unless line.end_with?("\n")
+
+            @offset = io.pos
+            row = parse(line)
+            next unless row && row["ts"].to_i >= @started_wall
+
+            @ledger = [@ledger.first + row["amount"].to_f, @ledger.last + row["tokens"].to_i]
+          end
+        end
+        @ledger
       rescue SystemCallError
-        [0.0, 0]
+        @ledger
+      end
+
+      def note_law_cost(law_id, usd, tokens = 0)
+        @lock.synchronize do
+          sum = @law_spend[law_id.to_s]
+          @law_spend[law_id.to_s] = [sum.first + usd.to_f, sum.last + tokens.to_i]
+        end
+      end
+
+      # A law may spend its share of the run's dollars or of its token budget:
+      # subscription lanes bill $0.00 and still burn tokens (342191 tokens at
+      # $0.00 in one measured run), so dollars alone would never trip.
+      def law_limit_exceeded?(law_id)
+        usd, tokens = @lock.synchronize { @law_spend[law_id.to_s] }
+        share = law_share(law_id)
+        (usd > @max_cost * share || tokens > run_tokens * share).tap { |over| announce_law_over(law_id, usd, tokens, share) if over }
       end
 
       # Prints the budget line; returns the reason to stop, or nil.
@@ -131,6 +175,7 @@ module Master
         fused = ToolBreaker.fused_count
         lines = @pulse.pass_summary(pass, tokens: spend.last)
         lines << "fix0: pass #{pass} #{fused} tuples fused" if fused.positive?
+        lines << "fix0: pass #{pass} #{@laws_over.size} laws over budget" if @laws_over.any?
         lines.each { |text| @say.call(text) }
       end
 
@@ -150,6 +195,27 @@ module Master
       end
 
       private
+
+      def fix_budget_limits
+        data = Master.load_yaml(Master.limits_path, default: {}) || {}
+        data["fix_budget"].is_a?(Hash) ? data["fix_budget"] : {}
+      rescue StandardError
+        {}
+      end
+
+      def law_share(law_id)
+        Float(@fix_budget.dig("law_shares", law_id.to_s) || @fix_budget["law_share"] || DEFAULT_LAW_SHARE)
+      end
+
+      def run_tokens = Integer(@fix_budget["run_tokens"] || DEFAULT_RUN_TOKENS)
+
+      def announce_law_over(law_id, usd, tokens, share)
+        return if @laws_over.key?(law_id.to_s)
+
+        @laws_over[law_id.to_s] = true
+        @out.call("#{law_id} not configured, law budget spent: $#{format("%.2f", usd)} and #{tokens} tokens " \
+                  "past #{(share * 100).round}% of the run; skipped until the run ends")
+      end
 
       def watch
         loop do

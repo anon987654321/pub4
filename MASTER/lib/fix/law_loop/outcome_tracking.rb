@@ -19,7 +19,7 @@ module Master
         # documented (feedback_policy.rs, issue #236) after making the same
         # mistake. :skipped is still recorded (queryable) but excluded from
         # fix_quality's denominator entirely.
-        OUTCOMES = %i[applied commit_refused no_proposal model_failed reflexion_rejected consensus_rejected rejected skip_confidence skip_fingerprint skip_fused needs_person].freeze
+        OUTCOMES = %i[applied commit_refused no_proposal model_failed reflexion_rejected consensus_rejected rejected skip_confidence skip_fingerprint skip_fused skip_law_budget needs_person].freeze
 
         def fix_batch(violations)
           results = []
@@ -37,15 +37,20 @@ module Master
           results.count { |r| r == :applied || r == :commit_refused }
         end
 
-        # A tuple that already failed ToolBreaker::LIMIT times against an
-        # unchanged file is skipped, not asked again; a skip, so it does not
-        # poison the rule's quality score.
+        # Two refusals stand between a violation and the model, both skips so
+        # neither poisons the rule's quality score: a tuple that already failed
+        # ToolBreaker::LIMIT times against an unchanged file, and a law past its
+        # RunBudget share. What the attempt then costs is billed to its law.
         def attempt(violation)
           state = ToolBreaker.state_of(violation)
           return :skip_fused if ToolBreaker.refuse?(@law.id, violation, state)
+          return :skip_law_budget if RunBudget.law_limit_exceeded?(@law.id)
 
+          usd, tokens = RunBudget.run_spend
           result = fix_violation(violation)
           ToolBreaker.record(@law.id, violation, state, result)
+          after_usd, after_tokens = RunBudget.run_spend
+          RunBudget.note_law_cost(@law.id, after_usd - usd, after_tokens - tokens)
           result
         end
 

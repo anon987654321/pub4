@@ -183,4 +183,70 @@ class TestFixRunBudget < Minitest::Test
   ensure
     Budget.finish_run
   end
+
+  Rule = Struct.new(:id, :severity)
+
+  # Every attempt writes a ledger row of 400 tokens at $0.00, as a subscription lane does.
+  class BillingLoop < Master::Fix::LawLoop
+    attr_reader :asked
+
+    def initialize(ledger:, **)
+      super(**)
+      @ledger = ledger
+    end
+
+    def fix_violation(_violation)
+      @asked = @asked.to_i + 1
+      File.open(@ledger, "a") { |f| f.puts(JSON.generate(ts: 1001, amount: 0.0, tokens: 400)) }
+      :applied
+    end
+  end
+
+  def test_a_law_over_its_share_is_skipped_once_and_counted
+    run = budget({}, max_passes: 3)
+    run.instance_variable_set(:@fix_budget, { "law_share" => 0.1, "run_tokens" => 2000, "law_shares" => { "BIG" => 0.5 } })
+    Budget.instance_variable_set(:@current, run)
+    ledger = File.join(@root, ".master", "costs.jsonl")
+    make = ->(id) { BillingLoop.new(ledger:, law: Rule.new(id, :warning), agent: Object.new, scanner: Object.new, root: Master::ROOT) }
+    file = File.join(@root, "a.rb")
+    File.write(file, "x\n")
+    violation = ->(n) { { file:, law: "TINY", message: "m#{n}", severity: :warning } }
+
+    tiny = make.call("TINY")
+    capture_io { 3.times { |n| tiny.send(:fix_batch, [violation.call(n)]) } }
+    assert_equal 1, tiny.asked, "400 tokens against a 200-token share: one attempt, then skipped"
+    assert_equal [{ skip_law_budget: 1 }], [tiny.instance_variable_get(:@batch_breakdown)]
+    assert_equal 1, @lines.grep(/TINY not configured, law budget spent: \$0.00 and 400 tokens past 10%/).size
+
+    big = make.call("BIG")
+    capture_io { 3.times { |n| big.send(:fix_batch, [violation.call(n)]) } }
+    assert_equal 3, big.asked, "the override gives BIG half the run's 2000 tokens"
+
+    run.pass_end(1)
+    assert_includes @said, "fix0: pass 1 1 laws over budget"
+  ensure
+    Budget.instance_variable_set(:@current, nil)
+  end
+
+  def test_dollars_trip_the_share_too
+    run = budget({ "MASTER_FIX_MAX_COST" => "10" })
+    run.note_law_cost("PRICEY", 0.5)
+    refute run.law_limit_exceeded?("PRICEY")
+    run.note_law_cost("PRICEY", 0.6)
+    assert run.law_limit_exceeded?("PRICEY")
+    refute run.law_limit_exceeded?("OTHER")
+  end
+
+  def test_with_no_run_nothing_is_ever_over
+    refute Budget.law_limit_exceeded?("ANY")
+    assert_equal [0.0, 0], Budget.run_spend
+  end
+
+  def test_spend_reads_only_what_was_appended
+    run = budget
+    cost(1.0, 10)
+    assert_equal [1.0, 10], run.spend
+    cost(2.0, 5)
+    assert_equal [3.0, 15], run.spend
+  end
 end

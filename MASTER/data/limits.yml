@@ -1053,6 +1053,16 @@ convergence_discipline:
   alternatives_max: 20
   observation_to_mutation_ratio: 10
 
+# What one law may spend of a /fix run before it is skipped for the rest of it.
+# Reader: Master::Fix::RunBudget#law_limit_exceeded?. law_share is a fraction of
+# the run's dollars (MASTER_FIX_MAX_COST) and of run_tokens, whichever trips
+# first; law_shares overrides it for one law id. run_tokens exists only as the
+# base for that share: subscription lanes bill $0.00 and still spend tokens.
+fix_budget:
+  law_share: 0.10
+  run_tokens: 10000000
+  law_shares: {}
+
 # Loop/process budgets — moved from data/ops/process.yml; reader is Ops::ProcessBudget.
 process:
   defaults:

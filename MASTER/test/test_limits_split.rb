@@ -26,6 +26,7 @@ class TestLimitsSplit < Minitest::Test
     # the mechanism lint:spine uses so a stale number cannot pass quietly.
     "loc_body_budgets" => %w[Rakefile loc_body_budgets],
     "dmesg" => ["lib/trace/dmesg.rb", "dmesg"],
+    "fix_budget" => ["lib/fix/run_budget.rb", "fix_budget"],
     "law_groups" => ["lib/cli/scan/request.rb", "law_groups"],
     "process" => ["lib/ops.rb", "process"],
     "scan_profiles" => ["lib/cli/scan/request.rb", "scan_profiles"],
