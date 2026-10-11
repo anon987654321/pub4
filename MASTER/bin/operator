@@ -41,6 +41,8 @@ def usage
       bin/operator vps master <status|start|stop|restart> [--remote]
       bin/operator vps deploy <app|master> [--remote]
       bin/operator vps logs <app> [--lines N] [--remote]
+      bin/operator vps canary [--remote] [--app a,b] [--budget-ms N]  post-deploy probe: ports, rcctl, every public GET route (--remote runs on the box, otherwise the public domains)
+      bin/operator vps rollback <sha>     prints the manual rollback; vps-deploy takes no SHA, so nothing is run
       bin/operator vps admin <status|services|service|pf|disk|memory|swap|dmesg|packages|updates|upgrade|reboot> [args] [--remote]
       bin/operator post-pull
       bin/operator measure [--deep] [--json]
@@ -715,6 +717,22 @@ when "vps"
     else
       exec(File.join(OPENBSD_OPS, "bin", "vps_admin.rb"), *args)
     end
+  when "canary"
+    if ARGV.delete("--remote")
+      ssh_run(remote_ruby("OPENBSD/bin/canary", "--local", *ARGV))
+    else
+      exec(File.join(OPENBSD_OPS, "bin", "canary"), "--public", *ARGV)
+    end
+  when "rollback"
+    # vps-deploy takes only an app name and starts with `git pull --ff-only
+    # origin main`, so it cannot deploy an older SHA. Until it can, this prints
+    # the revert procedure and runs nothing against the box.
+    sha = ARGV.shift.to_s
+    die("vps", "usage, bin/operator vps rollback <sha>", 64) unless sha.match?(/\A\h{7,40}\z/)
+    warn "vps rollback #{sha}: not automated. vps-deploy has no SHA argument; its pull returns the box to origin/main."
+    warn "  git revert --no-edit #{sha}..HEAD && git push origin main"
+    warn "  bin/operator vps deploy <app> --remote"
+    exit 2
   when "logs"
     app = ARGV.shift
     abort(usage) if app.to_s.empty?

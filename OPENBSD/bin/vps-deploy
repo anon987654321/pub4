@@ -487,5 +487,8 @@ if ! doas rcctl check "$app" >/dev/null 2>&1; then
   exit 1
 fi
 
+# PUB4_DEPLOY_CANARY=1 runs the post-deploy canary, report-only, until it has been reviewed.
+[[ -z ${PUB4_DEPLOY_CANARY:-} ]] || "$RUBY" "$repo/OPENBSD/bin/canary" --local --app "$app" || true
+
 print "vps-deploy: $app ok"
 write_stamp "$app" ok

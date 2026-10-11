@@ -1,0 +1,16 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Post-deploy canary: ports, rcctl services, every public GET route from the
+# route manifest, and deploy-smoke.sh. Reads and reports; on failure it prints
+# the previous deployed SHA and the manual rollback, and runs nothing.
+#
+#   OPENBSD/bin/canary [--local | --public] [--app brgen,amber] [--budget-ms N] [--no-smoke] [--json]
+#
+# --local (default) is for the box: loopback ports with each app's Host header.
+# --public probes the real domains over TLS from anywhere. Exit 0 only when
+# every check passes. Never run against the real box from an agent session.
+
+require_relative "../../MASTER/lib/operator/canary"
+
+exit Operator::Canary.main(ARGV)

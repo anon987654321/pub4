@@ -126,7 +126,7 @@ module Master
             next unless resting
 
             captures << resting
-            captures.concat(Deploy::CompositionProbe.capture(cdp, surface, dir: @dir, pass:, limit: MAX_COMPOSITION_STATES))
+            captures.concat(DeadCssCoverage.around(cdp, surface) { Deploy::CompositionProbe.capture(cdp, surface, dir: @dir, pass:, limit: MAX_COMPOSITION_STATES) })
           end
 
           # All app captures are complete before we navigate this browser to
@@ -134,7 +134,7 @@ module Master
           captures.each do |capture|
             capture[:visual_evidence] = @ghost_stack.capture(capture, pass:, cdp:)
           end
-          cross_page_overlay.capture(captures, cdp:)
+          cross_page_overlay.capture(captures, cdp:).tap { CrossAppConsistency.write_for(captures) }
         end
         captures
       end

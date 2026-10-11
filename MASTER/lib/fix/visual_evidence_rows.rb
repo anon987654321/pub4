@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "dead_css_coverage"
+require_relative "cross_app_consistency"
 require_relative "visual_cross_page_overlay"
 require_relative "fix_trace"
 

@@ -288,6 +288,10 @@ module Deploy
       true
     end
 
+    # A raw DevTools command, for callers that need a domain this class has no
+    # verb for (CSS rule-usage tracking).
+    def command(method, **params) = send_cmd(method, **params)
+
     # --- transport ----------------------------------------------------------
 
     private
