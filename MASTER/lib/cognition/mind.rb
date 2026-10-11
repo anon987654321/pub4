@@ -3,6 +3,8 @@
 require "fileutils"
 require_relative "../io/atomic_write"
 require_relative "state"
+require_relative "outcome_model"
+require_relative "fix_outcome"
 require_relative "prediction"
 require_relative "self_model"
 
@@ -14,6 +16,7 @@ module Master
     # named for the behaviour they measure and do not imply subjective experience.
     class Mind
       include ::Master::Io::AtomicWrite
+      include FixOutcome
       STATE_PATH = State::PATH
       TICK_EVERY_S = 60
       TICK_EVERY_OBSERVATIONS = 256
@@ -24,6 +27,7 @@ module Master
 
       def initialize(root:, bus:, memory: nil)
         @root = root
+        @repo_root = File.expand_path(root) == Master::ROOT ? Master::REPO_ROOT : File.expand_path(root)
         @bus = bus
         @memory = memory
         @path = File.join(root, STATE_PATH)
@@ -34,6 +38,7 @@ module Master
         @affect = Affect.new
         @self_model = SelfModel.new
         @prediction = Prediction.new
+        @outcome_model = OutcomeModel.new
         @since_tick = 0
         # From construction, not from the loaded state's `last_tick_at`: that one
         # is wall-clock from a previous process and is days stale after a restart,
@@ -108,13 +113,35 @@ module Master
         "reflection unavailable: #{e.message}"
       end
 
+      # Predict from verified task history. Sparse history stays explicitly
+      # insufficient; a prior is not presented as learned knowledge.
+      def predict_outcome(context:, action:)
+        @mutex.synchronize { @outcome_model.predict(@state.outcomes, context:, action:) }
+      end
+
+      # The write path for outcome learning. Evidence must identify an artifact
+      # and its SHA-256; raw event payloads are not accepted as verified outcomes.
+      def record_task_result(context:, action:, outcome:, evidence:, predicted_probability: nil)
+        receipt = OutcomeModel.validate_evidence!(evidence, root: @repo_root)
+        @mutex.synchronize do
+          prediction = @outcome_model.observe!(
+            @state.outcomes, context:, action:, outcome:, evidence: receipt, predicted_probability:
+          )
+          @dirty = true
+          persist!
+          prediction
+        end
+      end
+
       def snapshot = @mutex.synchronize { State.deep_dup(@state.data) }
 
       private
 
       def subscribe!
         @bus&.subscribe("**") do |payload|
-          observe(event: payload[:event] || payload["event"] || "event", payload:)
+          event = payload[:event] || payload["event"] || "event"
+          observe(event:, payload:)
+          capture_fix_outcome(payload) if event == "fix_loop:terminal"
         end
       end
 

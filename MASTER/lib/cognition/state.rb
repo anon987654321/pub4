@@ -19,6 +19,7 @@ module Master
         "drives" => { "safety" => 1.0, "coherence" => 0.8, "curiosity" => 0.6, "agency" => 0.5, "affiliation" => 0.4 },
         "workspace" => [],
         "predictions" => { "transitions" => {}, "previous_event" => nil, "last_error" => 0.0 },
+        "outcomes" => { "records" => {} },
         "self_model" => {},
         "thoughts" => [],
         "metrics" => { "workspace_activity" => 0.0, "prediction_error" => 0.0, "restore_completeness" => 0.0, "attention" => 0.0 },
@@ -91,6 +92,7 @@ module Master
 
             return valid_predictions?(actual) if expected.equal?(DEFAULT["predictions"])
             return valid_self_model?(actual) if expected.equal?(DEFAULT["self_model"])
+            return valid_outcomes?(actual) if expected.equal?(DEFAULT["outcomes"])
             true
           when Array
             return false unless actual.is_a?(Array)
@@ -121,6 +123,18 @@ module Master
               (!stream.key?("observations") || (stream["observations"].is_a?(Integer) && stream["observations"] >= 0)) &&
               (!stream.key?("last_observed_at") || stream["last_observed_at"].is_a?(Integer)) &&
               (!stream.key?("transitions") || valid_transition_table?(stream["transitions"]))
+          end
+        end
+
+        # A corrupt record would train every later prediction, so one malformed
+        # row rejects the section, as it does for predictions.
+        def valid_outcomes?(outcomes)
+          records = outcomes["records"]
+          records.is_a?(Hash) && records.all? do |_key, record|
+            record.is_a?(Hash) &&
+              %w[successes failures inconclusive brier_count].all? { |counter| !record.key?(counter) || record[counter].is_a?(Integer) } &&
+              %w[brier_sum].all? { |field| !record.key?(field) || finite_number?(record[field]) } &&
+              %w[observations seen_receipts].all? { |field| !record.key?(field) || record[field].is_a?(Array) }
           end
         end
 

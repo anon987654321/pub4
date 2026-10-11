@@ -14,6 +14,7 @@ require_relative "fix_loop/pass_runner"
 require_relative "fix_loop/convergence_config"
 require_relative "fix_loop/background_runner"
 require_relative "fix_loop/pass_runner_builder"
+require_relative "outcome_learning"
 require_relative "visual_pass"
 require_relative "opportunity_pass"
 require_relative "rename_sweep"
@@ -39,6 +40,7 @@ module Master
       include ConvergenceConfig
       include BackgroundRunner
       include PassRunnerBuilder
+      include OutcomeLearning
 
       # How a run is allowed to end, and every ending says which it was. DONE is
       # the only one that claims the work is finished: the tree observed clean
@@ -81,6 +83,8 @@ module Master
         @root = path_root == Master::ROOT ? Master::REPO_ROOT : path_root
         @bus = bus
         @homeostat = homeostat
+        @cognition = nil
+        @outcome_prior = nil
         @incremental = incremental
         @halted = false
         @halt_reason = nil
@@ -117,6 +121,9 @@ module Master
         return halted_result if halted? && !requested
 
         @pass_runner&.reset_gaps!
+        guidance = outcome_guidance(target:, incremental:)
+        incremental = guidance.fetch(:incremental)
+        @outcome_prior = guidance[:prediction]
         ModelRoles.announce
         current_phase = :corpus
         files = incremental ? @file_collector.collect_changed(target) : @file_collector.collect(target)
@@ -207,7 +214,7 @@ module Master
         terminal(:blocked, "finished with gaps, #{parts.join("; ")}")
       end
 
-      def finish_run(result, _target, run_id, mission: nil, requested: false)
+      def finish_run(result, target, run_id, mission: nil, requested: false)
         RunBudget.finish_run
         result = blocked_by_gaps(result)
         state = terminal_state_for(result)
@@ -224,7 +231,9 @@ module Master
           mission&.defer!(reason: "attempt #{state}: #{result.to_s}")
         end
 
-        outcome = { state:, message: result.to_s, task_id: run_id, capability: "code_repair" }
+        target_label = fix_target_label(target)
+        outcome = { state:, message: result.to_s, task_id: run_id, capability: "code_repair", target: target_label, run_id: }
+        outcome[:outcome_receipt] = write_outcome_receipt(run_id:, target: target_label, state:, result:, convergence: evidence)
         outcome[:ok] = MEASURED_REPAIR_OUTCOMES.fetch(state) if MEASURED_REPAIR_OUTCOMES.key?(state)
         @bus&.publish("fix_loop:terminal", **outcome)
 

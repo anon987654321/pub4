@@ -1173,6 +1173,65 @@ end
     assert_equal :done, event[:payload][:state]
   end
 
+  def test_a_canonical_repo_leaves_a_hashed_outcome_receipt_the_terminal_event_names
+    %w[MASTER RAILS OPENBSD STUDIO].each { |tree| FileUtils.mkdir_p(File.join(@root, tree)) }
+    loop = build_loop([])
+    journal = Object.new
+    journal.define_singleton_method(:terminal) { |*| nil }
+    loop.instance_variable_set(:@run_journal, journal)
+
+    loop.send(:finish_run, Master::Result.ok("DONE: clean"), File.join(@root, "MASTER"), "run-9", requested: true)
+    payload = @bus.events.find { |row| row[:event] == "fix_loop:terminal" }[:payload]
+    receipt = payload[:outcome_receipt]
+
+    assert_equal "MASTER", payload[:target]
+    assert_equal "run-9", payload[:run_id]
+    body = File.binread(File.join(@root, receipt[:source]))
+    assert_equal Digest::SHA256.hexdigest(body), receipt[:sha256]
+    assert_equal "run-9", JSON.parse(body).dig("details", "run_id")
+  end
+
+  def test_a_partial_workspace_leaves_no_outcome_receipt
+    loop = build_loop([])
+    journal = Object.new
+    journal.define_singleton_method(:terminal) { |*| nil }
+    loop.instance_variable_set(:@run_journal, journal)
+
+    loop.send(:finish_run, Master::Result.ok("DONE: clean"), @root, "run-10", requested: true)
+
+    assert_nil @bus.events.find { |row| row[:event] == "fix_loop:terminal" }[:payload][:outcome_receipt]
+  end
+
+  def test_low_learned_fix_success_probability_forces_full_scope_on_incremental_runs
+    loop = build_loop([])
+    seen = []
+    cognition = Object.new
+    cognition.define_singleton_method(:predict_outcome) do |context:, action:|
+      seen << [context, action]
+      { status: :learned, samples: 6, success_probability: 0.3 }
+    end
+    loop.wire_cognition(cognition)
+
+    guidance = loop.send(:outcome_guidance, target: "MASTER", incremental: true)
+
+    assert_equal [["target=MASTER", "/fix"]], seen
+    assert_equal false, guidance[:incremental]
+    assert_equal :learned, guidance[:prediction][:status]
+  end
+
+  def test_sparse_fix_outcome_history_does_not_change_requested_scope
+    loop = build_loop([])
+    cognition = Object.new
+    cognition.define_singleton_method(:predict_outcome) do |context:, action:|
+      { status: :insufficient_data, samples: 2, success_probability: 0.25 }
+    end
+    loop.wire_cognition(cognition)
+
+    guidance = loop.send(:outcome_guidance, target: "MASTER", incremental: true)
+
+    assert_equal true, guidance[:incremental]
+  end
+
   def test_finish_run_does_not_label_human_escalation_as_a_failed_repair
     loop = build_loop([])
     journal = Object.new

@@ -119,6 +119,16 @@ workstreams:
     title: Report workspace activity and saved-state restoration completeness without consciousness claims
     implementation: MASTER/lib/cognition/mind.rb
     proof: MASTER/test/test_cognition.rb
+  - id: task_outcome_learning
+    state: partial
+    title: Per-target /fix outcome prediction from hashed terminal receipts, scored before learning
+    implementation: MASTER/lib/cognition/outcome_model.rb
+    proof: MASTER/test/test_cognition_feedback.rb
+  - id: cognition_learning_benchmark
+    state: partial
+    title: Prequential outcome benchmark with a no-learning ablation and a constant baseline
+    implementation: MASTER/lib/cognition/benchmark.rb
+    proof: MASTER/test/test_cognition_outcome_model.rb
   - id: model_laboratory
     state: landed
     title: Provider/model outcome history and routing evidence
