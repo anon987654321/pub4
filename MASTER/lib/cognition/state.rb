@@ -27,11 +27,24 @@ module Master
           return new({}) unless File.file?(path)
 
           raw = Master.load_yaml(path)
-          valid = raw.is_a?(Hash) && raw["ticks"].is_a?(Numeric) &&
-                  raw["identity"].is_a?(Hash) && raw["predictions"].is_a?(Hash)
-          new(raw.is_a?(Hash) ? raw : {}, checkpoint_valid: valid)
+          valid = valid_checkpoint?(raw)
+          new(valid ? raw : {}, checkpoint_valid: valid)
         rescue StandardError
           new({})
+        end
+
+        def valid_checkpoint?(raw)
+          return false unless raw.is_a?(Hash)
+          return false unless raw["ticks"].is_a?(Numeric)
+          return false unless raw["identity"].is_a?(Hash) && raw["predictions"].is_a?(Hash)
+          return false if raw.key?("workspace") && !raw["workspace"].is_a?(Array)
+          return false if raw.key?("self_model") && !raw["self_model"].is_a?(Hash)
+          return false if raw.key?("metrics") && !raw["metrics"].is_a?(Hash)
+          return false if raw.key?("outcomes") &&
+                          (!raw["outcomes"].is_a?(Hash) ||
+                           (raw["outcomes"].key?("records") && !raw["outcomes"]["records"].is_a?(Hash)))
+
+          true
         end
 
         def deep_dup(value)

@@ -10,7 +10,7 @@ module Master
     module Benchmark
       module_function
 
-      def evaluate(rows)
+      def evaluate(rows, learn: true)
         inputs = Array(rows)
         model = OutcomeModel.new
         state = { "records" => {} }
@@ -25,6 +25,7 @@ module Master
           outcome = fetch(row, :outcome).to_s
           evidence = fetch(row, :evidence)
           raise ArgumentError, "row #{index + 1} has an invalid outcome" unless OutcomeModel::OUTCOMES.include?(outcome)
+          receipt = OutcomeModel.validate_evidence!(evidence)
 
           prediction = model.predict(state, context:, action:)
           if %w[success failure].include?(outcome)
@@ -36,11 +37,13 @@ module Master
               "brier" => (prediction.fetch(:success_probability) - actual)**2,
               "baseline_brier" => 0.25,
               "prior_samples" => prediction.fetch(:samples),
-              "source" => (evidence[:source] || evidence["source"]).to_s,
+              "source" => receipt.fetch("source"),
             }
           end
-          model.observe!(state, context:, action:, outcome:, evidence:,
-                         predicted_probability: prediction.fetch(:success_probability))
+          if learn
+            model.observe!(state, context:, action:, outcome:, evidence: receipt,
+                           predicted_probability: prediction.fetch(:success_probability))
+          end
         end
 
         learned_brier = mean(scored.map { |row| row["brier"] })
@@ -51,6 +54,7 @@ module Master
         end
 
         {
+          "mode" => learn ? "learning" : "ablation_no_learning",
           "observations" => inputs.size,
           "scored_outcomes" => scored.size,
           "learned_brier_score" => learned_brier,
