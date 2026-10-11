@@ -183,11 +183,15 @@ module Master
         end
 
         def suite_proof(chain, tree)
-          runs = chain.suite_jobs([tree]).map do |name, cmd, dir, env, _tree, unbundled|
-            # bin/check prints a passing step's output only when asked, and a
-            # suite that passed must still count as one that finished.
-            ok, out = chain.capture(*cmd, chdir: dir, env: env.merge("CHECK_VERBOSE" => "1"), unbundled:)
-            [name, ok, out]
+          # A suite runs minutes with its output captured; the heartbeat keeps
+          # the terminal saying so, as it does for the rails gates.
+          runs = ::Operator::GateHeartbeat.around("#{tree} suites") do |_progress|
+            chain.suite_jobs([tree]).map do |name, cmd, dir, env, _tree, unbundled|
+              # bin/check prints a passing step's output only when asked, and a
+              # suite that passed must still count as one that finished.
+              ok, out = chain.capture(*cmd, chdir: dir, env: env.merge("CHECK_VERBOSE" => "1"), unbundled:)
+              [name, ok, out]
+            end
           end
           framed = runs.flat_map { |name, ok, out| ["proof suite #{name}: #{ok ? "ok" : "FAIL"}", *out] }
           [runs.all? { |_name, ok, _out| ok }, framed]

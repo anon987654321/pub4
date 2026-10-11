@@ -139,6 +139,24 @@ class TestProofBaseline < Minitest::Test
 
   private
 
+  # A baseline suite proof runs minutes with its output captured: it speaks on
+  # the gate heartbeat cadence like the rails gates do.
+  def test_a_suite_proof_runs_under_the_gate_heartbeat
+    chain = Object.new
+    chain.define_singleton_method(:suite_jobs) { |_trees| [["suite MASTER", ["true"], "/", {}, "MASTER", false]] }
+    chain.define_singleton_method(:capture) { |*, **| [true, ["fine"]] }
+    labels = []
+    around = ->(label, **, &block) { labels << label; block.call({}) }
+
+    ok, framed = Operator::GateHeartbeat.stub(:around, around) do
+      Master::CLI::Pipeline::Pass.allocate.send(:suite_proof, chain, "MASTER")
+    end
+
+    assert ok
+    assert_equal ["MASTER suites"], labels
+    assert_includes framed, "proof suite suite MASTER: ok"
+  end
+
   def pass_with(out)
     delivered = @delivered
     pass = Master::CLI::Pipeline::Pass.allocate
