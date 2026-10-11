@@ -11,12 +11,12 @@ module Deploy
     ROOT = File.expand_path("../../../..", __dir__)
     RAILS = File.join(ROOT, "RAILS")
 
-    # The vertical-as-engine split moved marketplace's controllers, views and
-    # routes to engines/marketplace/ and left the payment *services* in the host.
+    # Marketplace's controllers, views and routes live in the brgen_marketplace
+    # engine, a sibling of brgen, and the payment *services* stayed in the host.
     # This gate kept the pre-split paths, so it failed on "missing" files that had
     # only moved — and would have gone on failing identically had the checkout
     # actually been deleted. Engine paths below; host paths for what stayed.
-    ENGINE = "brgen/engines/marketplace"
+    ENGINE = "brgen_marketplace"
 
     REQUIRED = {
       "brgen/app/services/marketplace/payments/not_configured.rb" => /NotConfigured/,

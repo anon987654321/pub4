@@ -55,8 +55,8 @@ module Deploy
       notes = File.read(@design_doc)
       @result.checked!(3)
       @result.fail("dialect_purity: __shared/README.md lost the dialect table") unless notes.match?(/social|luxury|openbsd_wscons|face_root/i)
-      @result.fail("dialect_purity: __shared/README.md lost the Flat rule") unless notes.match?(/Flat rule|box-shadow/i)
-      @result.fail("dialect_purity: __shared/README.md lost the vertical accents rule") unless notes.match?(/vertical_accents|_vertical_shell/i)
+      @result.fail("dialect_purity: __shared/README.md lost the Flat rule") unless notes.match?(/Flat rule|box-shadow|interface is flat/i)
+      @result.fail("dialect_purity: __shared/README.md lost the vertical accents rule") unless notes.match?(/vertical_accents|_vertical_shell|per-vertical accent/i)
     end
 
     # brgen sets --accent in one place: the map over $vertical-accents, which
@@ -92,12 +92,12 @@ module Deploy
 
     def brgen_stylesheets
       Dir.glob(File.join(@rails, "brgen/app/assets/stylesheets/**/*.scss")) +
-        Dir.glob(File.join(@rails, "brgen/engines/*/app/assets/stylesheets/**/*.scss"))
+        Dir.glob(File.join(@rails, "brgen_*/{,*/,engines/*/}app/assets/stylesheets/**/*.scss"))
     end
 
     def check_no_twitter_blue
-      sheets = Dir.glob(File.join(@rails, "{brgen,amber,bsdports,shared}/app/assets/stylesheets/**/*.{scss,css}")) +
-               Dir.glob(File.join(@rails, "brgen/engines/*/app/assets/stylesheets/**/*.{scss,css}"))
+      sheets = Dir.glob(File.join(@rails, "{brgen,amber,bsdports,__shared}/app/assets/stylesheets/**/*.{scss,css}")) +
+               Dir.glob(File.join(@rails, "brgen_*/{,*/,engines/*/}app/assets/stylesheets/**/*.{scss,css}"))
       sheets.each do |path|
         next if path.include?("/builds/")
 

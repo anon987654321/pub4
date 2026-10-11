@@ -360,7 +360,11 @@ module Deploy
 
     def check_readmes(result, apps)
       root_readme = File.read(RAILS_README)
-      result.fail("RAILS/README.md active app count must mirror apps.yml") unless root_readme.include?("#{apps.size} active production Rails")
+      # The README states the count in words, once, in its opening line; apps.yml
+      # holds everything else. A phrase pinned to one sentence broke when the README
+      # was rewritten, so the check is the number itself.
+      count_word = %w[Zero One Two Three Four Five Six Seven Eight Nine Ten].fetch(apps.size, apps.size.to_s)
+      result.fail("RAILS/README.md app count must mirror apps.yml (#{count_word} Rails apps)") unless root_readme.match?(/\b#{count_word} Rails apps\b/)
 
       apps.each do |app|
         readme_path = File.join(ROOT, app.deploy_root, "README.md")
@@ -371,8 +375,8 @@ module Deploy
 
         readme = File.read(readme_path)
         result.fail("#{app.name}: README must point humans to apps.yml feature matrix") unless readme.include?("apps.yml")
-        result.fail("#{app.name}: README deploy command must mirror apps.yml") unless readme.include?(app.deploy_script)
-        result.fail("#{app.name}: README health check must mirror apps.yml port") unless readme.include?("127.0.0.1:#{app.port}/up")
+        result.fail("#{app.name}: README deploy command must mirror apps.yml") unless readme.include?(File.basename(app.deploy_script))
+        result.fail("#{app.name}: README health check must mirror apps.yml port") unless readme.include?("127.0.0.1:#{app.port}")
       end
     end
 

@@ -103,7 +103,7 @@ module Deploy
             id: :single_h1_marketplace_listings,
             principle: "hierarchy / clarity",
             meaning: "Marketplace listings index exposes exactly one document h1",
-            paths: %w[brgen/engines/marketplace/app/views/marketplace/listings/index.html.erb],
+            paths: %w[brgen_marketplace/app/views/marketplace/listings/index.html.erb],
             required_all: [/<h1\b/i],
             max_h1: 1,
           },
@@ -154,7 +154,7 @@ module Deploy
         # The flat rule in shared/README.md is the product constitution for non-pen CSS.
         return unless File.file?(DESIGN_DOC)
           notes = File.read(DESIGN_DOC)
-          @result.fail("user_flow: shared/README.md lost the Flat rule") unless notes.match?(/Flat rule|box-shadow/i)
+          @result.fail("user_flow: shared/README.md lost the Flat rule") unless notes.match?(/Flat rule|box-shadow|interface is flat/i)
 
       end
 

@@ -181,6 +181,9 @@ schemas:
       - pattern: '<button(?![^>]*aria-label=)[^>]*>\s*</button>'
         principle: accessibility
         note: button with no accessible name
+      - pattern: 'Sign in to continue'
+        principle: clarity
+        note: guest-open surface must not auth-wall browse
     markers:
       main_landmark:
         pattern: '<main\b|role="main"'

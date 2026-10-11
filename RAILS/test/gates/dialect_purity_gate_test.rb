@@ -19,7 +19,7 @@ class DialectPurityGateTest < Minitest::Test
   GATE = Deploy::DialectPurityGate
 
   MASTER_RULES = <<~YAML
-    design_system:
+    tokens:
       social:
         accent: "#1b7f4f"
       luxury:
@@ -110,7 +110,7 @@ class DialectPurityGateTest < Minitest::Test
   # files and called that the dialect.
   def test_a_vertical_sheet_under_an_engine_is_read_too
     result = gate_over do |dir|
-      plant(dir, "RAILS/brgen/engines/tv/app/assets/stylesheets/_vertical_tv.scss",
+      plant(dir, "RAILS/brgen_radio/tv/app/assets/stylesheets/_vertical_tv.scss",
             ".tv { --accent: #226; }\n")
     end
 
@@ -124,7 +124,7 @@ class DialectPurityGateTest < Minitest::Test
     end
 
     refute result.ok?, "twitter blue passed"
-    assert_match(%r{twitter blue in shared/app/assets/stylesheets/_links\.scss}, result.failures.first)
+    assert_match(%r{twitter blue in __shared/app/assets/stylesheets/_links\.scss}, result.failures.first)
   end
 
   def test_a_missing_vertical_accent_entry_fails
@@ -142,7 +142,7 @@ class DialectPurityGateTest < Minitest::Test
     end
 
     refute result.ok?, "a missing dialect passed"
-    assert_match(/MASTER design_system missing luxury/, result.failures.first)
+    assert_match(/MASTER tokens missing luxury/, result.failures.first)
   end
 
   def test_a_design_doc_that_lost_the_flat_rule_fails
@@ -160,6 +160,6 @@ class DialectPurityGateTest < Minitest::Test
     end
 
     refute result.ok?, "missing MASTER design rules passed"
-    assert_match(/missing MASTER\/data\/rules\.yml design_system/, result.failures.first)
+    assert_match(/missing MASTER\/data\/tokens\.yml/, result.failures.first)
   end
 end

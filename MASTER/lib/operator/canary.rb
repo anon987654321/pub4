@@ -12,7 +12,7 @@ module Operator
   # The post-deploy canary. It answers one question after vps-deploy: is the box
   # serving what it should, and if not, exactly what is not.
   #
-  #   ports      amber 61352 and bsdports 47312 are the ports a deploy sheds and
+  #   ports      amber's and bsdports' ports are the ones a deploy sheds and
   #              relayd keeps answering TLS without, so a dead app looks like a
   #              hang; brgen and master are checked with them.
   #   services   rcctl check for each daemon.

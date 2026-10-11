@@ -51,7 +51,8 @@ YAML.load_file(manifest_path).then { |manifest| manifest["gates"] || manifest }
       require full_path
     end
 
-ROOT = File.expand_path("..", __dir__)
+# RAILS/, where the apps, the shared engine and the contract tests live.
+ROOT = File.expand_path("../../RAILS", __dir__)
 APPS = %w[amber brgen bsdports].freeze
 FAILURES = [] # scan: intentional — this script's accumulator, appended to by every step below
 STEP_TIMEOUT = Integer(ENV.fetch("RELEASE_GATE_STEP_TIMEOUT", "180"))
@@ -141,7 +142,7 @@ else
                "(set BUNDLE_CMD to the intended Bundler executable)"
 end
 
-# Every shared/test file, globbed so a new one cannot fall out of a list.
+# Every __shared/test file, globbed so a new one cannot fall out of a list.
 #
 # The engine has no runner of its own: shared/ has no Gemfile and no
 # application, because it is mounted by path into each app, so this is the
@@ -149,13 +150,13 @@ end
 # app and runs through brgen's bundle; the rest run under bare ruby, beside the
 # RAILS contract tests that guard the engine's wiring.
 BOOTED_SHARED_TESTS, BARE_SHARED_TESTS =
-  Dir.glob("shared/test/**/*_test.rb", base: ROOT).sort
+  Dir.glob("__shared/test/**/*_test.rb", base: ROOT).sort
      .partition { |test| File.read(File.join(ROOT, test)).match?(/^require "test_helper"/) }
 
 [
   "test/pwa_design_contract_test.rb",
   "test/design_contract_test.rb",
-  "../RAILS/master_web/test/pwa_master_contract_test.rb",
+  "master_web/test/pwa_master_contract_test.rb",
   "test/shared_social_routes_test.rb",
   "test/i18n_resolution_test.rb",
   *BARE_SHARED_TESTS,

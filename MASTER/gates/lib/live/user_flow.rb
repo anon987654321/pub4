@@ -93,10 +93,10 @@ module Deploy
       }
     end.freeze
 
-    # Marketplace controllers/views live in engines/marketplace since the
-    # vertical-as-engine split; only the payment services stayed in the host app.
-    # These are relative to RAILS/<app>, so the engine prefix rides along here.
-    MP = "engines/marketplace/app"
+    # Marketplace controllers/views live in the brgen_marketplace engine, a sibling
+    # of brgen; only the payment services stayed in the host app. These are
+    # relative to RAILS/<app>, so the engine prefix rides along here.
+    MP = "../brgen_marketplace/app"
 
     SOURCE_FLOW_MARKERS = {
       "brgen" => {

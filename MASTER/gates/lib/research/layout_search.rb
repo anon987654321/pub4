@@ -11,10 +11,10 @@ module Deploy
   class LayoutSearchGate
     ROOT = File.expand_path("../../../..", __dir__)
     RAILS = File.join(ROOT, "RAILS")
-    # Views moved to engines/marketplace in the vertical-as-engine split. The
+    # Views live in the brgen_marketplace engine, a sibling of brgen. The
     # styles live in brgen's one application.scss, and the card's CSS is the
     # rules there whose selectors name .deal-card.
-    ENGINE = File.join(RAILS, "brgen/engines/marketplace")
+    ENGINE = File.join(RAILS, "brgen_marketplace")
     CARD = File.join(ENGINE, "app/views/marketplace/listings/_card.html.erb")
     CARDS_CSS = File.join(RAILS, "brgen/app/assets/stylesheets/application.scss")
     # The #navBar markup is the storefront header marketplace shares with takeaway.

@@ -71,7 +71,8 @@ module Master
 
         rows.each do |boundary|
           path = File.join(repo_root(root), boundary.path)
-          entry = File.join(repo_root(root), boundary.entry)
+          # An entry is a command: the program is the file, whatever follows it is an argument.
+          entry = File.join(repo_root(root), boundary.entry.to_s.split.first.to_s)
           failures << "#{boundary.name}: missing path #{boundary.path}" unless File.directory?(path)
           failures << "#{boundary.name}: missing entry #{boundary.entry}" unless File.file?(entry)
           boundary.depends_on.each do |dependency|
