@@ -204,7 +204,10 @@ module Master
         digest = (envelope[:sha256] || envelope["sha256"]).to_s
         receipt = OutcomeModel.validate_evidence!({ source:, sha256: digest }, root: @repo_root)
         path = File.expand_path(receipt.fetch("source"), @repo_root)
-        data = JSON.parse(File.read(path, encoding: "UTF-8"))
+        body = File.read(path, encoding: "UTF-8")
+        raise ArgumentError, "fix receipt changed after digest verification" unless Digest::SHA256.hexdigest(body) == receipt.fetch("sha256")
+
+        data = JSON.parse(body)
         details = data["details"].is_a?(Hash) ? data["details"] : {}
         state = (payload[:state] || payload["state"]).to_s
         run_id = (payload[:run_id] || payload["run_id"]).to_s
@@ -225,7 +228,7 @@ module Master
           context: "target=#{target}",
           action: "/fix",
           outcome:,
-          evidence: receipt,
+          evidence: receipt.merge("content" => body),
           task_type: "fix/#{tree}",
         )
       rescue StandardError => e
