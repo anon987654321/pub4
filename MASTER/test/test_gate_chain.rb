@@ -259,7 +259,7 @@ class TestGateChain < Minitest::Test
   end
 
   def test_dirty_parser_keeps_both_sides_of_a_rename
-    status = "R  old.rb\\0new.rb\\0 M changed.rb\\0?? new.txt\\0"
+    status = "R  old.rb\0new.rb\0 M changed.rb\0?? new.txt\0"
 
     assert_equal ["old.rb", "new.rb", "changed.rb", "new.txt"], G.send(:parse_dirty_paths, status)
   end
