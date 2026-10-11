@@ -103,6 +103,58 @@ module Master
           []
         end
 
+        # Reviews affect context eligibility without erasing the original memory.
+        # Contradicted/obsolete entries remain auditable through #recall.
+        def review(key, verdict:, evidence:, reviewer:)
+          verdict = verdict.to_s
+          allowed = %w[confirmed contradicted uncertain obsolete]
+          raise ArgumentError, "unknown memory review verdict: #{verdict}" unless allowed.include?(verdict)
+
+          receipt = Master::Cognition::OutcomeModel.validate_evidence!(evidence, root: @root)
+          reviewer = reviewer.to_s.strip
+          raise ArgumentError, "reviewer is required" if reviewer.empty?
+
+          @mutex.synchronize do
+            entry = @store[key.to_s]
+            return nil unless entry.is_a?(Hash) && entry.key?("value")
+
+            prior = entry["provenance"]
+            provenance = prior.is_a?(Hash) ? prior.dup : legacy_provenance(entry)
+            reviews = Array(provenance["reviews"]).select { |row| row.is_a?(Hash) }
+            reviews << {
+              "verdict" => verdict,
+              "source" => receipt.fetch("source"),
+              "sha256" => receipt.fetch("sha256"),
+              "reviewer" => reviewer[0, 120],
+              "reviewed_at" => Time.now.utc.iso8601,
+            }
+            provenance["reviews"] = reviews.last(8)
+            provenance["status"] = verdict
+            provenance["reviewed_at"] = reviews.last.fetch("reviewed_at")
+            entry["provenance"] = provenance
+            # A consolidated summary may repeat a fact now marked obsolete.
+            # Invalidate both its durable copy and the in-memory summary.
+            @store.delete("_consolidated_summary")
+            @context_summary_cache = nil
+            persist
+            provenance.dup
+          end
+        end
+
+        def context_eligible?(key, entry = nil)
+          name = key.to_s
+          return false if name.start_with?("archive/", "conflict/") || name == "_consolidated_summary"
+
+          row = entry
+          row = @mutex.synchronize { @store[name] } if row.nil?
+          return false if row.nil?
+          return true unless row.is_a?(Hash)
+
+          provenance = row["provenance"]
+          status = provenance.is_a?(Hash) ? provenance["status"].to_s : ""
+          !%w[contradicted obsolete].include?(status)
+        end
+
         def provenance(key)
           @mutex.synchronize do
             value = @store[key.to_s]
@@ -122,7 +174,9 @@ module Master
 
         def by_type(type)
           @mutex.synchronize do
-            @store.select { |key, value| typed_entry?(key:, value:, type: type.to_s) }
+            @store.select do |key, value|
+              typed_entry?(key:, value:, type: type.to_s) && context_eligible?(key, value)
+            end
           end
         end
 
