@@ -268,8 +268,8 @@ module Operator
       Row.new(name:, current:, ceiling:, direction: :down,
               source: "MASTER/#{relative}", note:, members:)
     rescue StandardError => e
-      Row.new(name:, current: nil, ceiling: nil, direction: :down,
-              source: "MASTER/#{relative}", note: "unreadable: #{e.class}: #{e.message.lines.first.to_s.strip[0, 120]} @ #{e.backtrace&.first.to_s.sub(MASTER, 'MASTER')}")
+      unreadable_row(name, "MASTER/#{relative}",
+                     "#{e.class}: #{e.message.lines.first.to_s.strip[0, 120]} @ #{e.backtrace&.first.to_s.sub(MASTER, 'MASTER')}")
     end
 
     # MASTER: the spine ratchet, read from data/spine.yml.
@@ -290,8 +290,7 @@ module Operator
                 note: "the recursive invariant: nested core structure is not free"),
       ]
     rescue StandardError => e
-      [Row.new(name: "spine", current: nil, ceiling: nil, direction: :down,
-               source: "MASTER/data/spine.yml", note: "unreadable: #{e.class}")]
+      [unreadable_row("spine", "MASTER/data/spine.yml", e.class)]
     end
 
     def core_files
@@ -347,8 +346,7 @@ module Operator
                 members: files)
       end
     rescue StandardError => e
-      [Row.new(name: "growth", current: nil, ceiling: nil, direction: :down,
-               source: "MASTER/data/spine.yml", note: "unreadable: #{e.class}")]
+      [unreadable_row("growth", "MASTER/data/spine.yml", e.class)]
     end
 
     # The count CLAUDE.md's "two surfaces, no third" asserts. It was prose, so it
@@ -368,8 +366,7 @@ module Operator
                note: "names saying which drawer, not what (ruby MASTER/tools/rename.rb)",
                members: rows.map { |row| "#{row.constant} -> #{row.proposal || '?'} (#{row.reason})" })]
     rescue StandardError => e
-      [Row.new(name: "name_candidates", current: nil, ceiling: nil, direction: :down,
-               source: "MASTER/data/spine.yml", note: "unreadable: #{e.class}")]
+      [unreadable_row("name_candidates", "MASTER/data/spine.yml", e.class)]
     end
 
 # Every name a person or a model can type, across the three surfaces that
@@ -390,8 +387,7 @@ def command_rows
            note: "names a person or a model can type; an alias is a name",
            members: names)]
 rescue StandardError => e
-  [Row.new(name: "command_surface", current: nil, ceiling: nil, direction: :down,
-           source: "MASTER/data/spine.yml", note: "unreadable: #{e.class}")]
+  [unreadable_row("command_surface", "MASTER/data/spine.yml", e.class)]
 end
 
 def command_surface_names
@@ -418,8 +414,7 @@ end
                 members: doors)
       end
     rescue StandardError => e
-      [Row.new(name: "entrypoints", current: nil, ceiling: nil, direction: :down,
-               source: "MASTER/data/spine.yml", note: "unreadable: #{e.class}")]
+      [unreadable_row("entrypoints", "MASTER/data/spine.yml", e.class)]
     end
 
     # Tracked, not on-disk: an untracked script in a shared checkout is another
@@ -512,8 +507,7 @@ end
                 members: findings.map { |finding| describe_finding(finding) })
       end
     rescue StandardError => e
-      Row.new(name:, current: nil, ceiling: nil, direction: :down,
-              source: relative_to_root(path), note: "unreadable: #{e.class}: #{e.message}")
+      unreadable_row(name, relative_to_root(path), "#{e.class}: #{e.message}")
     end
 
     # Eight lints, eight different Finding structs — file/line here, sheet/ref
@@ -550,9 +544,7 @@ end
                 note: "current value is --deep (runs css_constitution)")
       end
     rescue StandardError => e
-      [Row.new(name: "css_budget", current: nil, ceiling: nil, direction: :down,
-              source: "MASTER/gates/data/css_budget.yml",
-              note: "unreadable: #{e.class}")]
+      [unreadable_row("css_budget", "MASTER/gates/data/css_budget.yml", e.class)]
     end
 
     # Ceilings a test file owns.

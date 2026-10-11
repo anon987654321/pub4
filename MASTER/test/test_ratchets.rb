@@ -64,6 +64,25 @@ class TestRatchets < Minitest::Test
     Operator::Ratchets.define_singleton_method(:lint_module, finder) if finder
   end
 
+  def test_a_spine_reader_that_raises_leaves_one_unreadable_row
+    ratchets = Operator::Ratchets
+    { spine_rows: "spine", pub4_growth_rows: "growth", name_rows: "name_candidates",
+      command_rows: "command_surface", entrypoint_rows: "entrypoints" }.each do |reader, name|
+      real = YAML.method(:safe_load_file)
+      YAML.define_singleton_method(:safe_load_file) { |*| raise Errno::ENOENT, "spine.yml" }
+      row = ratchets.public_send(reader).fetch(0)
+
+      assert_equal name, row.name, reader
+      assert_nil row.current
+      assert_nil row.ceiling
+      assert_equal :down, row.direction
+      assert_equal "MASTER/data/spine.yml", row.source
+      assert_equal "unreadable: Errno::ENOENT", row.note
+    ensure
+      YAML.define_singleton_method(:safe_load_file, real)
+    end
+  end
+
   def test_missing_css_budget_is_not_silently_omitted
     fast, deep = with_rails(Dir.mktmpdir) do
       [Operator::Ratchets.css_budget_rows, Operator::Ratchets.css_constitution_rows]
