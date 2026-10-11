@@ -67,6 +67,13 @@ class TestMemoryReview < Minitest::Test
     refute_includes @memory.reasoning_context.to_s, "old assumption"
   end
 
+  def test_legacy_scalar_memories_remain_searchable
+    @memory.instance_variable_get(:@store)["legacy_scalar"] = "remember the quiet route"
+
+    assert @memory.context_eligible?("legacy_scalar")
+    assert @memory.keyword_recall("quiet route", top_n: 10).any? { |row| row[:key] == "legacy_scalar" }
+  end
+
   def test_review_recovers_from_malformed_legacy_provenance
     @memory.remember("legacy_fact", "a remembered value")
     entry = @memory.instance_variable_get(:@store).fetch("legacy_fact")
