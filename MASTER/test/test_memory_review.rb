@@ -85,8 +85,7 @@ class TestMemoryReview < Minitest::Test
     @memory.review("obsolete_deploy_host", verdict: :contradicted,
                    evidence: evidence("test:fts-review", "reviewed host"), reviewer: "operator")
 
-    refute @memory.fts5_recall("obsolete deploy host silver harbor", top_n: 10)
-      .any? { |row| row[:key] == "obsolete_deploy_host" }
+    refute @memory.fts5_recall("obsolete deploy host silver harbor", top_n: 10).any? { |row| row[:key] == "obsolete_deploy_host" }
   ensure
     ENV["MASTER_MEMORY_SEARCH"] = previous_search
     ENV["MASTER_ZERO_EMBEDDINGS"] = previous_zero
@@ -104,8 +103,7 @@ class TestMemoryReview < Minitest::Test
     assert_equal "obsolete", result.fetch("status")
     assert_equal "legacy route preference", @memory.recall("legacy_scalar")
     refute @memory.context_eligible?("legacy_scalar")
-    refute @memory.keyword_recall("legacy route preference", top_n: 10)
-      .any? { |row| row[:key] == "legacy_scalar" }
+    refute @memory.keyword_recall("legacy route preference", top_n: 10).any? { |row| row[:key] == "legacy_scalar" }
   end
 
   def test_review_recovers_from_malformed_legacy_provenance
