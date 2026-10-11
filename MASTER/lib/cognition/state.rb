@@ -45,14 +45,14 @@ module Master
             return false unless outcomes.is_a?(Hash)
             records = outcomes.fetch("records", {})
             return false unless records.is_a?(Hash)
-            return false unless records.all? do |_key, record|
+            return false unless records.all? { |_key, record|
               record.is_a?(Hash) &&
-                %w[successes failures inconclusive brier_count].all? do |counter|
+                %w[successes failures inconclusive brier_count].all? { |counter|
                   !record.key?(counter) || record[counter].is_a?(Numeric)
-                end &&
+                } &&
                 (!record.key?("observations") || record["observations"].is_a?(Array)) &&
                 (!record.key?("seen_receipts") || record["seen_receipts"].is_a?(Array))
-            end
+            }
           end
           if raw["self_model"].is_a?(Hash) && raw["self_model"].key?("assessments")
             assessments = raw["self_model"]["assessments"]
