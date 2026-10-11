@@ -1,0 +1,2 @@
+# Chain renders land beside replicate.rb and are never tracked.
+chain-*

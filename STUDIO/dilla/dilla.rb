@@ -124,28 +124,12 @@ ROOT = File.expand_path(__dir__)
 # The entry script. The parts below cannot use __FILE__ for this: theirs is a
 # part, not the engine.
 ENGINE_FILE = File.expand_path(__FILE__)
-# Finished renders default to a dated folder outside the repository, so a
-# checkout never fills with audio it did not make: one session's renders lived
-# at the repo root for weeks and another session's `git status` listed them.
-# DILLA_OUTPUT_DIR chooses another place. ROOT stays the base for
-# samples/stems, which aren't user output. The two canonical showcase files,
-# dilla.wav and dilla.mp4, are the exception: they name their own paths beside
-# dilla.rb and never pass through here.
-def default_output_dir
-  base = ENV["XDG_DATA_HOME"].to_s.empty? ? File.expand_path("~/Documents") : ENV["XDG_DATA_HOME"]
-  dir = File.join(base, "dilla-renders", Time.now.strftime("%Y%m%d"))
-  begin
-    FileUtils.mkdir_p(dir)
-  rescue SystemCallError
-    dir = File.join(Dir.tmpdir, "dilla-renders", Time.now.strftime("%Y%m%d"))
-    FileUtils.mkdir_p(dir)
-  end
-  warn "dilla: renders go to #{dir} (set DILLA_OUTPUT_DIR to choose)"
-  dir
-end
-
-OUTPUT_DIR = ENV.fetch("DILLA_OUTPUT_DIR") { default_output_dir }
-# Every cache and temp file the engine writes lives here — never loose
+# Finished renders land beside dilla.rb, as dilla.wav and dilla.mp4 already do,
+# so every output of the tool is in one place and a named render overwrites its
+# predecessor instead of piling up: a dated folder under ~/Documents grew to
+# 668 MB unnoticed. DILLA_OUTPUT_DIR chooses another place. ROOT stays the base
+# for samples/stems, which are not user output.
+OUTPUT_DIR = ENV.fetch("DILLA_OUTPUT_DIR") { File.dirname(ENGINE_FILE) }# Every cache and temp file the engine writes lives here — never loose
 # dotfiles in the invoking directory or next to the source. Safe to wipe,
 # with one exception: the progressions log (see log_progression!) is the
 # only record of generated progressions, which never repeat.

@@ -733,7 +733,7 @@ when "chain"
   abort "replicate: chain #{name} needs REPLICATE_API_TOKEN to run; --dry-run validates without it" if
     Studio::ReplicateClient.load_token.to_s.strip.empty?
 
-  base = options[:output] || "chain-#{name}.jpg"
+  base = options[:output] || File.join(__dir__, "chain-#{name}.jpg")
   ext = File.extname(base)
   ext = ".jpg" if ext.empty?
   stem = base.sub(/#{Regexp.escape(File.extname(base))}\z/, "")

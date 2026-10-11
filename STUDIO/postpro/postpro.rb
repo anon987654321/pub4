@@ -4174,7 +4174,6 @@ def process_file(file, variations, preset_name = nil, recipe_data = nil, random_
       grained = recipe_data&.any? { |fx, _| fx.to_s == RANDOM_ALWAYS }
       processed = apply_finishing_grain(processed, preset_name, grained:)
       processed = rgb_bands(processed)
-      timestamp = Time.now.strftime("%Y%m%d%H%M%S")
       lane = recipe_data ? random_chain_lane(recipe_data) : nil
       suffix = preset_name || (recipe_data ? "#{lane}_#{random_chain_name(recipe_data)[0, 50]}" : "processed")
       # Built from dirname + basename, not String#sub on the extension: sub
@@ -4185,7 +4184,7 @@ def process_file(file, variations, preset_name = nil, recipe_data = nil, random_
       safe_stem = File.basename(file, ext).gsub(/[^0-9A-Za-z_-]+/, "_")
       output_ext = ARGV.include?("--tiff16") ? ".tif" : ext
       output = File.join(Postpro::Constitution::OUTPUT_DIR,
-                         "postpro_#{safe_stem}_#{suffix}_v#{i + 1}_#{timestamp}#{output_ext}")
+                         "postpro_#{safe_stem}_#{suffix}_v#{i + 1}#{output_ext}")
       Postpro::Constitution.verify_output!(input_path: file, output_path: output)
       Postpro::Constitution.verify_chain!(chain: recipe_data, stage_rank: random_stage_rank) if recipe_data
 
@@ -4945,7 +4944,7 @@ def run_uplift(dir, files)
       ext = File.extname(file)
       safe_stem = File.basename(file, ext).gsub(/[^0-9A-Za-z_-]+/, "_")
       output = File.join(Postpro::Constitution::OUTPUT_DIR,
-                         "postpro_#{safe_stem}_#{base}+#{layer}_v#{i + 1}_#{Time.now.strftime("%Y%m%d%H%M%S")}#{ext}")
+                         "postpro_#{safe_stem}_#{base}+#{layer}_v#{i + 1}#{ext}")
       Postpro::Constitution.verify_output!(input_path: file, output_path: output)
       processed.write_to_file(output, Q: CONFIG["jpeg_quality"] || 95)
       write_grade_sidecar(file, output, [base, layer], image, processed)

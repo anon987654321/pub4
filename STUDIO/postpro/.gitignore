@@ -1,0 +1,3 @@
+# Renders land beside postpro.rb and are never tracked.
+postpro_*
+*.tif

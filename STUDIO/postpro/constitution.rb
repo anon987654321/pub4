@@ -8,15 +8,10 @@ require "fileutils"
 
 module Postpro
   module Constitution
-    # Renders default to a dated folder outside the repository, the same place
-    # dilla writes, so a checkout never fills with images it did not make.
-    # POSTPRO_OUTPUT_DIR chooses another place.
-    def self.default_output_dir
-      base = ENV["XDG_DATA_HOME"].to_s.empty? ? File.expand_path("~/Documents") : ENV["XDG_DATA_HOME"]
-      File.join(base, "dilla-renders", Time.now.strftime("%Y%m%d"))
-    end
-
-    OUTPUT_DIR = File.expand_path(ENV.fetch("POSTPRO_OUTPUT_DIR") { default_output_dir }).freeze
+    # Renders land beside postpro.rb and a rerun of the same source and chain
+    # overwrites its predecessor, so nothing piles up. POSTPRO_OUTPUT_DIR
+    # chooses another place.
+    OUTPUT_DIR = File.expand_path(ENV.fetch("POSTPRO_OUTPUT_DIR") { __dir__ }).freeze
     LAWS_PATH = File.expand_path("../../MASTER/data/laws.yml", __dir__).freeze
     LAW_PATHS = [
       File.expand_path("../../MASTER/law/universal.rb", __dir__),
