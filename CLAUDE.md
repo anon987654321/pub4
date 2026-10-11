@@ -40,8 +40,10 @@ tool plane; `MASTER/tools/` keeps compatibility symlinks. (`WISHLIST.md` folded 
 on 2026-09-06 — one backlog, forward work as its last section.) Build output
 never sits at the root whatever the tool's default: dilla writes to `$PWD`
 unless `DILLA_OUTPUT_DIR` says otherwise, and one session's renders lived at the
-root for weeks because of it. They belong beside `STUDIO/dilla/dilla.rb`, which
-is where dilla falls back when invoked from the root.
+root for weeks because of it. Renders belong outside the repo, under
+`${XDG_DATA_HOME:-~/Documents}/dilla-renders/<date>`, which is where dilla and
+postpro fall back; only `dilla.wav` and `dilla.mp4` may sit in `STUDIO/dilla`
+(the operator's call, 2026-10-11).
 
 ## Commands
 

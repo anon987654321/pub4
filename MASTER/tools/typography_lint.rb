@@ -44,10 +44,10 @@ module Operator
       File.join("RAILS", "master_web", "src"),
     ].freeze
 
-    # Operator directive 2026-10-11: brgen and the shared layer are Swiss sans
+    # Operator directive 2026-10-11: brgen, amber and the shared layer are Swiss sans
     # only. The vendored lightgallery sheet is third-party and not ours to edit.
     SERIF_FAMILY = /\A(?:serif|ui-serif|georgia|times(?: new roman)?|garamond|palatino(?: linotype)?|iowan old style|baskerville|playfair display|merriweather|didot|bodoni(?: 72)?|book antiqua)\z/i
-    SERIF_SCOPES = %w[brgen* __shared].freeze
+    SERIF_SCOPES = %w[brgen* __shared amber].freeze
     SERIF_VENDORED = %w[lightgallery.css].freeze
 
     def initialize(root:)

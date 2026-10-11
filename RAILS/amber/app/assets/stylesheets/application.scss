@@ -2514,13 +2514,11 @@ body[data-surface="luxury"] .commerce-handoff-note {
 }
 
 /* Fashion/beauty typography
-   AMBER keeps the existing Caprasimo wordmark. Page typography uses a high-contrast
-   editorial serif for display and a compact sans for navigation, product data and
-   interaction. That contrast gives the page a Vogue-like editorial voice while
-   retaining the scanning speed a beauty catalogue needs. */
+   AMBER keeps the existing Caprasimo wordmark. Page typography is Swiss sans throughout
+   (operator rule, 2026-10-11: no serifs); display headings differ from body by weight,
+   size and tracking, not by face. */
 body[data-surface="luxury"] {
-  --font-beauty-sans: "Helvetica Neue", "Helvetica Neue Pro", Arial, sans-serif;
-  --font-editorial: "Bodoni 72", "Didot", "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --font-beauty-sans: "Helvetica Neue Pro", "Helvetica Neue", Arial, sans-serif;
   font-family: var(--font-beauty-sans);
   font-optical-sizing: auto;
 }
@@ -2532,7 +2530,7 @@ body[data-surface="luxury"] :is(
   .amber-look-title,
   .post-reading-title
 ) {
-  font-family: var(--font-editorial);
+  font-family: var(--font-beauty-sans);
   font-weight: 400;
   letter-spacing: -0.015em;
   line-height: 0.98;

@@ -4,7 +4,7 @@ module Master
   module Design
     module Typeface
       # Operator directive 2026-10-11, read by the /fix visual critique.
-      HOUSE_RULE = "TYPEFACE RULE: brgen and its shared layer use Swiss typography only, the Helvetica Neue Pro, Helvetica Neue, Arial sans stack; never propose a serif or any other family. The monospace stack of the terminal chats is the only exception.".freeze
+      HOUSE_RULE = "TYPEFACE RULE: brgen, amber and their shared layer use Swiss typography only, the Helvetica Neue Pro, Helvetica Neue, Arial sans stack; never propose a serif or any other family. The monospace stack of the terminal chats is the only exception.".freeze
 
       module_function
 
