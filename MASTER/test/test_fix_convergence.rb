@@ -1401,6 +1401,19 @@ end
     refute_includes plan, "### 1."
   end
 
+  def test_structural_sweeps_normalise_each_tree_root_to_the_repository
+    fix_loop = Master::Fix::FixLoop.allocate
+    fix_loop.instance_variable_set(:@root, Master::RAILS_ROOT)
+
+    sweeps = fix_loop.send(:build_sweeps, agent: nil, root: Master::RAILS_ROOT, bus: nil)
+
+    restructure = sweeps.find { |sweep| sweep.is_a?(Master::Fix::RestructureSweep) }
+    rename = sweeps.find { |sweep| sweep.is_a?(Master::Fix::RenameSweep) }
+
+    assert_equal Master::REPO_ROOT, restructure.instance_variable_get(:@root)
+    assert_equal Master::REPO_ROOT, rename.instance_variable_get(:@repo_root)
+  end
+
   def test_a_converged_run_is_done
     result = build_loop([]).run(@root)
 

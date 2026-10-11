@@ -314,7 +314,12 @@ module Master
       # The look back over the tree after the repair passes: structural consolidation,
       # then naming cleanup. Both work from the repository root.
       def build_sweeps(agent:, root:, bus:, ground_truth: nil, preserve_user_intent: nil)
-        repo_root = File.basename(root) == "MASTER" ? File.expand_path("..", root) : root
+        expanded_root = File.expand_path(root)
+        repo_root = if MasterPaths::TREES.include?(File.basename(expanded_root))
+                      File.expand_path("..", expanded_root)
+                    else
+                      expanded_root
+                    end
         restructure = RestructureSweep.new(
           agent:, repo_root:, bus:, transformation_plan: @transformation_plan, ground_truth:, preserve_user_intent:
         )
