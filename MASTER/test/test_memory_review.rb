@@ -74,6 +74,24 @@ class TestMemoryReview < Minitest::Test
     assert @memory.keyword_recall("quiet route", top_n: 10).any? { |row| row[:key] == "legacy_scalar" }
   end
 
+  def test_fts5_search_excludes_contradicted_memories
+    skip "sqlite3 gem unavailable" unless defined?(SQLite3::Database)
+
+    previous_search = ENV["MASTER_MEMORY_SEARCH"]
+    previous_zero = ENV["MASTER_ZERO_EMBEDDINGS"]
+    ENV["MASTER_MEMORY_SEARCH"] = "fts5"
+    ENV["MASTER_ZERO_EMBEDDINGS"] = "1"
+    @memory.remember("obsolete_deploy_host", "obsolete deploy host silver harbor", source: "legacy")
+    @memory.review("obsolete_deploy_host", verdict: :contradicted,
+                   evidence: evidence("test:fts-review", "reviewed host"), reviewer: "operator")
+
+    refute @memory.fts5_recall("obsolete deploy host silver harbor", top_n: 10)
+      .any? { |row| row[:key] == "obsolete_deploy_host" }
+  ensure
+    ENV["MASTER_MEMORY_SEARCH"] = previous_search
+    ENV["MASTER_ZERO_EMBEDDINGS"] = previous_zero
+  end
+
   def test_review_recovers_from_malformed_legacy_provenance
     @memory.remember("legacy_fact", "a remembered value")
     entry = @memory.instance_variable_get(:@store).fetch("legacy_fact")
