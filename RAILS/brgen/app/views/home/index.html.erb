@@ -47,14 +47,14 @@
     <% if params[:feed].present? %><input type="hidden" name="feed" value="<%= params[:feed] %>"><% end %>
     <% if params[:sort].present? %><input type="hidden" name="sort" value="<%= params[:sort] %>"><% end %>
     <% if params[:view].present? %><input type="hidden" name="view" value="<%= params[:view] %>"><% end %>
-    <label for="home-neighborhood"><%= t("home.neighborhood_filter", default: "Neighbourhood") %></label>
+    <label for="home-neighborhood"><%= t("home.neighborhood_filter") %></label>
     <select id="home-neighborhood" name="neighborhood_id">
-      <option value=""><%= t("home.citywide", default: "All of %{city}", city: city_name) %></option>
+      <option value=""><%= t("home.citywide", city: city_name) %></option>
       <% @neighborhoods.each do |neighborhood| %>
         <option value="<%= neighborhood.id %>" <%= "selected" if @neighborhood_id.to_s == neighborhood.id.to_s %>><%= neighborhood.name %></option>
       <% end %>
     </select>
-    <button type="submit" class="btn btn-ghost btn-sm"><%= t("actions.apply", default: "Apply") %></button>
+    <button type="submit" class="btn btn-ghost btn-sm"><%= t("actions.apply") %></button>
   </form>
 <% end %>
 

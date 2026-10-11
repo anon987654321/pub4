@@ -324,7 +324,7 @@ end) if source.to_s.strip.empty?
 
       def visual_source?(path)
         VISUAL_EXTENSIONS.include?(File.extname(path).downcase) &&
-          path.to_s.include?("/RAILS/")
+          path.to_s.include?("/RAILS/") && !path.to_s.include?("/RAILS/master_web/")
       end
 
       def reject_fix(path, original, reason, **details)
@@ -395,7 +395,7 @@ end) if source.to_s.strip.empty?
       end
 
       def preamble
-        @injected_preamble || self.class.soul_preamble(root: @root)
+        @injected_preamble || self.class.soul_preamble
       end
 
       def extract_code(text, ext = nil)

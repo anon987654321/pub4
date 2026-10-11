@@ -8,6 +8,7 @@ module Master
   module Trace
     class Hooks
       DEFAULT_VIOLATIONS_PATH = ".constitutional_violations.jsonl"
+      VIOLATIONS_MAX_BYTES = 5 * 1024 * 1024
       COST_EVENT = "on_cost_threshold"
 
       def initialize(root:, event_bus:, config: nil, budget_max: nil)
@@ -93,6 +94,7 @@ module Master
           top_rules: payload.fetch(:top_rules, {}),
         }
         FileUtils.mkdir_p(File.dirname(path))
+        Master::Trace::Log.rotate(path, VIOLATIONS_MAX_BYTES)
         File.write(path, "#{JSON.generate(record)}\n", mode: "a")
       end
 

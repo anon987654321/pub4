@@ -42,8 +42,7 @@ module Master
         # the same five things through the same names.
         #
         # autofix defaults to false because a law that names no transform
-        # cannot apply one; the base default stays true for a law that declares
-        # nothing at all, which is what an undeclared subclass has always got.
+        # cannot apply one, and a subclass that declares nothing gets false too.
         def self.declare(id:, description: "", severity: :warning, tags: [], autofix: false)
           @declaration = { id: id.to_s, description: description.to_s, severity:,
                            law_tags: Array(tags), auto_fix: autofix }

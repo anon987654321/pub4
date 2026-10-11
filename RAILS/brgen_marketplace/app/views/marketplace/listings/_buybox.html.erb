@@ -18,9 +18,9 @@
   <p><%= tag.strong(t("marketplace.sold_by", name: (buybox_listing.store&.name || buybox_listing.user&.display_name || t("chat.anon")))) %> · <%= buybox_listing.store_id.present? ? t("marketplace.shop_seller") : t("marketplace.private_seller") %><% if buybox_listing.reviews_count.to_i.positive? %> · <%= t("marketplace.seller_rating", rating: number_with_precision(buybox_listing.rating, precision: 1)) %><% end %></p>
   <p><%= t("marketplace.views", count: buybox_listing.views_count.to_i) %> · <%= t("marketplace.saves", count: buybox_listing.favorites.size) %></p>
   <% if @buy_box_result && @buy_box_result.offers.size > 1 %>
-    <p class="listing-status"><%= t("marketplace.buy_box_heading", default: "Recommended shop offer") %></p>
+    <p class="listing-status"><%= t("marketplace.buy_box_heading") %></p>
     <details class="buy-box-offers">
-      <summary><%= t("marketplace.more_shop_offers", default: "Compare %{count} shop offers", count: @buy_box_result.offers.size) %></summary>
+      <summary><%= t("marketplace.more_shop_offers", count: @buy_box_result.offers.size) %></summary>
       <ul>
         <% @buy_box_result.offers.each do |offer| %>
           <li>

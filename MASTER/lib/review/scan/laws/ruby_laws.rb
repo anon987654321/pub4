@@ -168,7 +168,7 @@ module Master
         # :warn and one at :info, and every 3+-positional def carried both.
 
         LawDSL.law :DEAD_CODE,
-          severity: :warning, tags: %i[CLEAN_CODE], applies_to: %i[ruby],
+          severity: :warning, autofix: "remove_immediate_dead_code", tags: %i[CLEAN_CODE], applies_to: %i[ruby],
           fires: "  return value\n  log(value)\n",
           # A guard clause keeps the next line reachable, which is the shape a bare
           # \b(return|raise)\b read as unreachable across the whole tree.

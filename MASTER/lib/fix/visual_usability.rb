@@ -61,7 +61,7 @@ module Master
       end
 
       # law/ keys its registry by symbol. DENSITY, PROXIMITY, LINEARITY,
-      # ABSTRACTION and SINGULARITY are the constitutional_laws under laws.yml `laws:`, not
+      # ABSTRACTION and SINGULARITY are top-level entries of laws.yml, not
       # law/ files, so they are read from there.
       def load_laws!
         require File.expand_path("../../law/definition", __dir__)
@@ -71,7 +71,7 @@ module Master
       end
 
       def constitutional_laws
-        @constitutional_laws ||= Master.load_yaml(Master::LAWS_PATH).fetch("laws", {})
+        @constitutional_laws ||= Master.law_entries.to_h { |entry| [entry.fetch("id"), entry] }
       end
 
       def line(id)

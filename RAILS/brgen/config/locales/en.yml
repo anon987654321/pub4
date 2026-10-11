@@ -110,6 +110,12 @@ en:
     follow_sign_in: Sign in
     follow_hint: " to see posts from people you follow."
     local_posts: Local posts
+    local_activity: Local activity
+    local_marketplace: New in the marketplace
+    local_radio: New in Radio
+    neighborhood_filter: Neighbourhood
+    citywide: All of %{city}
+    citywide_option: City-wide
   auth:
     honeypot_label: Leave this field empty
     sign_in: Sign in
@@ -780,6 +786,7 @@ en:
     video_coming_soon: "Video coming soon"
     video_coming_soon_body: "This episode is not ready to play."
   actions:
+    apply: Apply
     close: Close
     load_more: Older posts
     add_one: Add one

@@ -162,6 +162,8 @@ module Master
         end
 
         def semantic_sample
+          return @semantic_sample_override if @semantic_sample_override
+
           ENV.fetch("MASTER_SCAN_SEMANTIC_SAMPLE", SEMANTIC_SAMPLE.to_s).to_f
         end
 

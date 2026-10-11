@@ -137,6 +137,8 @@ class TestDependencyManager < Minitest::Test
         "PATH" => "/bin",
         "MASTER_AUTO_INSTALL" => "1",
         "MASTER_AUTO_BUNDLE" => "1",
+        "RUBYOPT" => "-rbundler/setup",
+        "RUBYLIB" => "/ambient/bundler/lib",
         "BUNDLE_FROZEN" => "1",
         "BUNDLE_DEPLOYMENT" => "1",
         "BUNDLE_PATH" => "/tmp/wrong-bundle",
@@ -161,10 +163,12 @@ class TestDependencyManager < Minitest::Test
     %w[
       BUNDLE_FROZEN
       BUNDLE_DEPLOYMENT
-      BUNDLE_PATH
-      BUNDLE_WITHOUT
       BUNDLE_VERSION
+      RUBYOPT
+      RUBYLIB
     ].each { |key| assert_nil bundle_env[key], "#{key} must not leak into MASTER boot" }
+    # Named with a nil value: the runner unsets an inherited key only when it is listed.
+    %w[RUBYOPT RUBYLIB].each { |key| assert bundle_env.key?(key), "#{key} must be unset for the child bundle" }
     assert_equal File.join(@root, "Gemfile"), bundle_env["BUNDLE_GEMFILE"]
     assert_match(%r{/\.master/bundler/[0-9a-f]{16}/gems$}, bundle_env["GEM_HOME"])
     assert_includes bundle_env["GEM_PATH"], bundle_env["GEM_HOME"]
@@ -172,6 +176,18 @@ class TestDependencyManager < Minitest::Test
     assert_match(%r{/\.master/bundler/[0-9a-f]{16}/global$}, bundle_env["BUNDLE_USER_CONFIG"])
     assert_match(%r{/\.master/bundler/[0-9a-f]{16}/gems$}, bundle_env["BUNDLE_PATH"])
     assert_equal "1", bundle_env["BUNDLE_DISABLE_SHARED_GEMS"]
+  end
+
+  # The store key hashes the git common dir, so a process that has not loaded
+  # open3 must still find it; otherwise it keys a second, empty store and
+  # reinstalls every gem there.
+  def test_the_store_key_reads_the_git_common_dir_in_a_bare_process
+    lib = File.expand_path("../lib", __dir__)
+    script = 'require "boot/dependency_manager"; ' \
+             "print Master::Boot::DependencyManager.new(root: ARGV[0]).send(:git_common_dir).inspect"
+    out = IO.popen({ "RUBYOPT" => nil, "RUBYLIB" => nil }, [RbConfig.ruby, "-I", lib, "-e", script, Master::ROOT], err: File::NULL, &:read)
+
+    refute_equal "nil", out
   end
 
   def test_activation_refreshes_rubygems_to_the_master_bundle

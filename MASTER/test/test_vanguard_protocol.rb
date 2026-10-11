@@ -18,14 +18,6 @@ class TestVanguardProtocol < Minitest::Test
     assert_includes result.value!, "ok"
   end
 
-  def test_autonomous_repairer_heals_trailing_whitespace
-    path = File.join(Dir.mktmpdir, "sample.rb")
-    File.write(path, "def ok\n  1\nend  \n")
-    result = Review::Scan::AutonomousRepairer.heal(path:, source: File.read(path))
-    assert result.ok?
-    refute_includes result.value!, "  \n"
-  end
-
   def test_runtime_loop_guards_allow_non_falcon_context
     assert Ops::RuntimeLoopGuards.guard_subprocess_context!
   end

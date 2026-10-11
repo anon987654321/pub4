@@ -93,6 +93,12 @@ en:
       payment_confirmed_body: "Your payment for %{title} is confirmed."
       on_its_way: "On its way"
       delivered: "Delivered"
+    buy_box_heading: "Recommended shop offer"
+    more_shop_offers: "Compare %{count} shop offers"
+    buy_box_key: "Shared product key (shop offers)"
+    buy_box_key_hint: "Use the same exact EAN, SKU, or model-and-variant key for identical shop offers. Leave blank to keep this offer separate. Private listings never compete."
+    buy_box_seller_feedback: "How to improve your shop offer"
+    buy_box_score: "Your current Buy Box score: %{score}%"
     buy_box_reason:
       price: "Your listed price is %{percent}% higher than the selected offer."
       delivery: "Delivery is slower (%{current} versus %{winner})."

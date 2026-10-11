@@ -40,7 +40,7 @@
 
 .local-activity-item > span,
 .local-activity-item small {
-  color: var(--ink-muted);
+  color: inherit;
   font-size: var(--text-xs, 0.75rem);
 }
 

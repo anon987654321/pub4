@@ -95,4 +95,12 @@ class TestModernWebPlatformEvidence < Minitest::Test
       assert_match(/^#{id}: #{Regexp.escape(law.ask)} Fix: /, context)
     end
   end
+
+  def test_context_resolves_laws_that_only_laws_yml_declares
+    context = Master::Fix::VisualUsability.context
+
+    %w[DENSITY PROXIMITY LINEARITY ABSTRACTION SINGULARITY].each do |id|
+      assert_match(/^#{id}: \S/, context)
+    end
+  end
 end

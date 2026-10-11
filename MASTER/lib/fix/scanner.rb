@@ -13,7 +13,7 @@ require_relative "scan/mechanical_autofix"
 module Master
   module Fix
     class Scanner
-              def self.build(root:, agent: nil, bus: nil, ecology: nil)
+      def self.build(root:, agent: nil, bus: nil, ecology: nil)
         agent = nil if ENV["MASTER_SCAN_DETERMINISTIC"] == "1"
         Review::Scan::LawDSL
         wf = Master.load_yaml(Master.limits_path) rescue {}
@@ -298,31 +298,11 @@ module Master
           end.freeze
         end
 
-        def prediction_thresholds
-          path = Master::LAWS_PATH
-          stat = File.stat(path)
-          stamp = [stat.size, stat.ino, stat.mtime.to_r]
-          return @prediction_thresholds if @prediction_thresholds_stamp == stamp
-
-          laws = Master.load_yaml(path) || {}
-          prediction = laws["prediction_engine"]
-          prediction = {} unless prediction.is_a?(Hash)
-
-          # prediction_engine was retired; an absent policy means no additional
-          # confidence threshold. The law/autofix policy remains authoritative.
-          @prediction_thresholds_stamp = stamp
-          @prediction_thresholds = prediction.freeze
-        rescue StandardError => e
-          Master::Ground::Swallow.log(e, context: "Scanner.prediction_thresholds")
-          raise "scanner: prediction policy unreadable: #{e.class}: #{e.message}"
-        end
-
         # An autofix that takes code out is a different risk from one that puts an
-        # attribute in, and no confidence score says which. Four rules declare a
-        # transform: add_html_lang, add_lazy_loading and add_trailing_commas each
-        # add something a reader sees in the diff, and remove_immediate_dead_code
-        # deletes, where a wrong call is invisible to anyone who does not already
-        # know what stood there.
+        # attribute in, and no confidence score says which. A law may name a
+        # transform: most add something a reader sees in the diff, and
+        # remove_immediate_dead_code deletes, where a wrong call is invisible to
+        # anyone who does not already know what stood there.
         #
         # Deletion waits for a person. The word is /fix, and an unattended pass —
         # bin/gate over all four governed trees — adds without deleting.
@@ -335,34 +315,24 @@ module Master
           Master::Fix::Scan::AstFixer::DELETING_TRANSFORMS.include?(transform.to_s)
         end
 
+        # The transform a law names is declared on its class (`autofix: "name"`),
+        # so the registry is the one place that says which laws edit and how.
         def law_transforms
-          path = Master::LAWS_PATH
-          stat = File.stat(path)
-          stamp = [stat.size, stat.ino, stat.mtime.to_r]
-          return @law_transforms if @law_transforms_stamp == stamp
-
-          laws = Master.law_entries(root: Master::ROOT)
-          @law_transforms_stamp = stamp
-          @law_transforms = laws.each_with_object({}) do |law, index|
-            transform = law["autofix"]
-            index[law["id"].to_s] = transform if transform
+          Review::Scan::LawDSL
+          @law_transforms ||= Review::Scan::Law.registry.each_with_object({}) do |klass, index|
+            transform = klass.dsl_autofix if klass.respond_to?(:dsl_autofix)
+            index[klass.dsl_id.to_s] = transform if transform.is_a?(String)
           end.freeze
-        rescue StandardError => e
-          Master::Ground::Swallow.log(e, context: "Scanner.law_transforms")
-          raise "scanner: autofix transform policy unreadable: #{e.class}: #{e.message}"
         end
 
         # Confidence answers "did it find the thing", never "is fixing it safe".
         # A deterministic finding carries no confidence at all and Fix::LawLoop
         # reads the absence as 1.0, so a threshold here would wave through exactly
         # the findings nobody scored.
-        def should_autofix?(law_id, observed_conf, allow_deletions: false)
+        def should_autofix?(law_id, _observed_conf, allow_deletions: false)
           return false if !allow_deletions && deleting_law?(law_id)
 
-          threshold = prediction_thresholds[law_id.to_s] || prediction_thresholds[law_id]
-          return true unless threshold && threshold["confidence"]
-
-          observed_conf.to_f >= threshold["confidence"].to_f
+          true
         end
       end
     end

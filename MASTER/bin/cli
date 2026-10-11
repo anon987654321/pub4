@@ -21,6 +21,7 @@ Master::Ground::EnvLoader.load!
 
 require "optparse"
 require "master"
+require "ops"
 
 if !$stdin.tty? && ENV["MASTER_FAST"] == "1"
   $stdin.each_line do |line|

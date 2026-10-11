@@ -89,10 +89,7 @@ module Master
             touched = streamed.map(&:first).uniq
             return found if touched.empty?
 
-            fresh = touched.flat_map do |relative|
-              path = File.expand_path(relative, @root)
-              File.exist?(path) ? violations_for(path) : []
-            end
+            fresh = touched.flat_map { |relative| violations_for(File.expand_path(relative, @root)) }
             untouched = found.reject { |finding| touched.include?(finding[:file].to_s) }
             resolve_violations(untouched + fresh)
           end

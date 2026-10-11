@@ -51,8 +51,8 @@ module Master
               instance_exec(code, path:, &self.class.dsl_block) || []
             end
           end
-          dsl_law_attrs(cls, block:, langs: applies_to, autofix:, fires:, does_not_fire:, example_path:, detect_semantic:, detect_structural:)
-          cls.class_eval { class << self; attr_reader :dsl_block, :dsl_langs, :dsl_autofix, :dsl_fires, :dsl_does_not_fire, :dsl_example_path, :dsl_detect_semantic, :dsl_detect_structural; end }
+          dsl_law_attrs(cls, id: dsl_id, block:, langs: applies_to, autofix:, fires:, does_not_fire:, example_path:, detect_semantic:, detect_structural:)
+          cls.class_eval { class << self; attr_reader :dsl_id, :dsl_block, :dsl_langs, :dsl_autofix, :dsl_fires, :dsl_does_not_fire, :dsl_example_path, :dsl_detect_semantic, :dsl_detect_structural; end }
           cls
         end
 

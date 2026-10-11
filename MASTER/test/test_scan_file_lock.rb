@@ -27,10 +27,17 @@ class ScanFileLockTest < Minitest::Test
     original = "def broken(  \n  value = 1   \n"
     File.write(@target, original)
 
-    result = @processor.call(path: @target, depth: :deep, rules: [])
+    result = @processor.call(path: @target, depth: :deep, laws: [])
 
     assert result.ok?
     assert_equal original, File.read(@target)
+  end
+
+  def test_a_writing_fix_asks_every_clean_file_and_a_skip_still_wins
+    @processor.full_semantic!
+    assert @processor.send(:semantic_due?, [], "lib/fix/protocol.rb")
+    @processor.skip_semantic!
+    refute @processor.send(:semantic_due?, [], "lib/fix/protocol.rb")
   end
 
   def test_a_crashed_holder_frees_the_lock_at_once

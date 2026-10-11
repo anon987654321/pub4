@@ -109,8 +109,8 @@
       </div>
       <% if @neighborhoods.present? %>
         <div class="field">
-          <%= f.label :neighborhood_id, t("home.neighborhood_filter", default: "Neighbourhood") %>
-          <%= f.collection_select :neighborhood_id, @neighborhoods, :id, :name, { include_blank: t("home.citywide", default: "City-wide") } %>
+          <%= f.label :neighborhood_id, t("home.neighborhood_filter") %>
+          <%= f.collection_select :neighborhood_id, @neighborhoods, :id, :name, { include_blank: t("home.citywide_option") } %>
         </div>
       <% end %>
 

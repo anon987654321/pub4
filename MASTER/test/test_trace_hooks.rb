@@ -75,6 +75,17 @@ class TestTraceHooks < Minitest::Test
     assert_equal({ "NO_PUTS" => 3 }, record["top_rules"])
   end
 
+  # The ledger is append-only for the life of the checkout; past the cap it
+  # rolls to .1 instead of growing without bound.
+  def test_the_violation_ledger_rotates_past_its_cap
+    File.write(violations_file, "x" * (Master::Trace::Hooks::VIOLATIONS_MAX_BYTES + 1))
+    attached
+    @bus.publish("scan:complete", path: "lib/example.rb", count: 1, top_rules: {})
+
+    assert_path_exists "#{violations_file}.1"
+    assert_equal 1, File.read(violations_file).lines.size
+  end
+
   # A clean scan is not a violation. The guard is `count.positive?`, and without
   # it every scan of a clean tree would append a row saying nothing happened.
   def test_a_clean_scan_appends_nothing

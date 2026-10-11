@@ -113,6 +113,12 @@ nb:
     follow_sign_in: Logg inn
     follow_hint: " for å se innlegg fra folk du følger."
     local_posts: Lokale innlegg
+    local_activity: Lokal aktivitet
+    local_marketplace: Nytt i markedet
+    local_radio: Nytt i radioen
+    neighborhood_filter: Nabolag
+    citywide: Hele %{city}
+    citywide_option: Hele byen
   auth:
     honeypot_label: La dette feltet stå tomt
     sign_in: Logg inn
@@ -784,6 +790,7 @@ nb:
     video_coming_soon: "Video kommer snart"
     video_coming_soon_body: "Denne episoden er ikke klar for avspilling."
   actions:
+    apply: Bruk
     close: Lukk
     load_more: Eldre innlegg
     add_one: Legg til en

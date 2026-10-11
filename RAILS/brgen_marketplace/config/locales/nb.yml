@@ -93,6 +93,12 @@ nb:
       payment_confirmed_body: "Betalingen din for %{title} er bekreftet."
       on_its_way: "På vei"
       delivered: "Levert"
+    buy_box_heading: "Anbefalt butikktilbud"
+    more_shop_offers: "Sammenlign %{count} butikktilbud"
+    buy_box_key: "Felles produktnøkkel (butikktilbud)"
+    buy_box_key_hint: "Bruk nøyaktig samme EAN, SKU eller modell-og-variant-nøkkel for identiske butikktilbud. La feltet stå tomt for å holde tilbudet separat. Private annonser konkurrerer aldri."
+    buy_box_seller_feedback: "Slik forbedrer du butikktilbudet ditt"
+    buy_box_score: "Din nåværende Buy Box-score: %{score} %"
     buy_box_reason:
       price: "Prisen din er %{percent} % høyere enn det valgte tilbudet."
       delivery: "Levering er tregere (%{current} mot %{winner})."

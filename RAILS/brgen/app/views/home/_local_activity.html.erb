@@ -1,16 +1,16 @@
 <% if @local_activity && (@local_activity.listing || @local_activity.track) %>
   <aside class="local-activity" data-controller="local-activity"
-         aria-label="<%= t("home.local_activity", default: "Local activity") %>">
+         aria-label="<%= t("home.local_activity") %>">
     <div class="local-activity-heading">
-      <h2><%= t("home.local_activity", default: "Local activity") %></h2>
+      <h2><%= t("home.local_activity") %></h2>
       <button type="button" class="btn btn-ghost btn-sm"
               data-action="click->local-activity#dismiss">
-        <%= t("actions.dismiss", default: "Dismiss") %>
+        <%= t("actions.dismiss") %>
       </button>
     </div>
     <% if @local_activity.listing %>
       <article class="local-activity-item">
-        <span><%= t("home.local_marketplace", default: "New in the marketplace") %></span>
+        <span><%= t("home.local_marketplace") %></span>
         <%= link_to @local_activity.listing.title,
               Marketplace::Engine.routes.url_helpers.listing_url(
                 @local_activity.listing, host: marketplace_host, protocol: "https"
@@ -20,7 +20,7 @@
     <% end %>
     <% if @local_activity.track %>
       <article class="local-activity-item">
-        <span><%= t("home.local_radio", default: "New in Radio") %></span>
+        <span><%= t("home.local_radio") %></span>
         <%= link_to [@local_activity.track.title, @local_activity.track.artist.presence].compact.join(" · "),
               Playlist::Engine.routes.url_helpers.hosted_track_url(
                 @local_activity.track, host: "radio.#{Current.domain}", protocol: "https"

@@ -539,7 +539,10 @@ module Master
         # BUNDLE_PATH can silently change what boot installs or loads. MASTER
         # owns its dependency context, while still allowing explicit credential
         # and build variables outside this list to flow through.
-        BUNDLE_CONTEXT_KEYS.each { |key| env[key] = nil }
+        # A parent that ran bundler/setup leaves RUBYOPT and RUBYLIB pointing at
+        # its own Bundler; the pinned `bundle` then loads a second copy beside it
+        # and Bundler::Thor dies with a superclass mismatch.
+        (BUNDLE_CONTEXT_KEYS + %w[RUBYOPT RUBYLIB]).each { |key| env[key] = nil }
         env.merge!(
           "BUNDLE_GEMFILE" => File.join(@root, "Gemfile"),
           "BUNDLE_RETRY" => "3",
@@ -574,8 +577,8 @@ module Master
       end
 
       def git_common_dir
-        output, status = Open3.capture2e("git", "-C", @root, "rev-parse", "--git-common-dir")
-        return unless status.success?
+        output = IO.popen(["git", "-C", @root, "rev-parse", "--git-common-dir"], err: File::NULL, &:read)
+        return unless $?.success?
 
         File.expand_path(output.strip, @root)
       rescue StandardError

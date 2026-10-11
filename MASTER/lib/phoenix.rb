@@ -41,11 +41,8 @@ module Master
 
       def boundary_for(path, root: Master::ROOT)
         absolute = File.expand_path(path.to_s, root)
-        found = boundaries(root:).max_by do |boundary|
-          base = File.join(repo_root(root), boundary.path)
-          path_within?(absolute, base) ? base.length : -1
-        end
-        found&.name
+        containing = boundaries(root:).select { |boundary| path_within?(absolute, File.join(repo_root(root), boundary.path)) }
+        containing.max_by { |boundary| File.join(repo_root(root), boundary.path).length }&.name
       end
 
       # A target owns its direct boundary roots. A target that contains a nested
