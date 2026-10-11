@@ -1,8 +1,10 @@
 # frozen_string_literal: true
 
 require "digest"
+require "time"
 require "json"
 require_relative "../../cognition/intelligence"
+require_relative "../../cognition/outcome_model"
 
 module Master
   module Ground
@@ -103,6 +105,56 @@ module Master
           []
         end
 
+        # Reviews affect context eligibility without erasing the original memory.
+        # Contradicted/obsolete entries remain auditable through #recall.
+        def review(key, verdict:, evidence:, reviewer:)
+          verdict = verdict.to_s
+          allowed = %w[confirmed contradicted uncertain obsolete]
+          raise ArgumentError, "unknown memory review verdict: #{verdict}" unless allowed.include?(verdict)
+
+          receipt = Master::Cognition::OutcomeModel.validate_evidence!(evidence, root: @root)
+          reviewer = reviewer.to_s.strip
+          raise ArgumentError, "reviewer is required" if reviewer.empty?
+
+          @mutex.synchronize do
+            entry = @store[key.to_s]
+            return nil unless entry.is_a?(Hash) && entry.key?("value")
+
+            prior_provenance = entry["provenance"]
+            provenance = prior_provenance.is_a?(Hash) ? prior_provenance.dup : legacy_provenance(entry)
+            reviews = Array(provenance["reviews"])
+            reviews << {
+              "verdict" => verdict,
+              "source" => receipt.fetch("source"),
+              "sha256" => receipt.fetch("sha256"),
+              "reviewer" => reviewer[0, 120],
+              "reviewed_at" => Time.now.utc.iso8601,
+            }
+            provenance["reviews"] = reviews.last(8)
+            provenance["status"] = verdict
+            provenance["reviewed_at"] = reviews.last["reviewed_at"]
+            entry["provenance"] = provenance
+            # The prior summary may repeat a now-contradicted fact. Invalidate it
+            # on every review; the next summary uses eligible rows.
+            @store.delete("_consolidated_summary")
+            persist
+            provenance.dup
+          end
+        end
+
+        def context_eligible?(key, entry = nil)
+          return false if key.to_s.start_with?("archive/", "conflict/")
+
+          row = entry
+          row = @mutex.synchronize { @store[key.to_s] } if row.nil?
+          return false if row.nil?
+          return true unless row.is_a?(Hash)
+
+          provenance = row["provenance"]
+          status = provenance.is_a?(Hash) ? provenance["status"].to_s : ""
+          !%w[contradicted obsolete].include?(status)
+        end
+
         def provenance(key)
           @mutex.synchronize do
             value = @store[key.to_s]
@@ -122,7 +174,9 @@ module Master
 
         def by_type(type)
           @mutex.synchronize do
-            @store.select { |key, value| typed_entry?(key:, value:, type: type.to_s) }
+            @store.select do |key, value|
+              typed_entry?(key:, value:, type: type.to_s) && context_eligible?(key, value)
+            end
           end
         end
 
@@ -194,6 +248,8 @@ module Master
               "source" => source.to_s,
               "captured_at" => ts,
               "confidence" => confidence,
+              "status" => "unreviewed",
+              "reviews" => [],
             },
           }
           entry["vec"] = vec if embed && (vec = Review::Embeddings.embed("#{key} #{value}"))
