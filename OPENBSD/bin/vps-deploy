@@ -61,9 +61,11 @@ lock_owner=0
 # and epoch seconds. A bare directory could not tell a running deploy from the
 # remains of one killed by a dropped session or a reboot, and an operator had to
 # guess before removing it. Now a lock is reaped here, with the reason printed,
-# when its pid is gone from this box or it is older than the TTL (default two
-# hours; a full deploy takes well under one). A lock held by another host, or
-# whose owner file is unreadable, ages out on the TTL alone.
+# when its same-host owner PID is gone. Age alone never steals a lock from a
+# live local deployment: a slow or stalled deploy requires operator inspection,
+# not a second deploy running beside it. A remote-host or unreadable lock may
+# be reaped only after the recorded TTL, because this checkout cannot inspect
+# the other host's process.
 lock_read_owner() {
   lock_pid= lock_host= lock_epoch=
   [[ -r $lock_dir/owner ]] || return 1
@@ -74,9 +76,14 @@ lock_read_owner() {
 lock_stale_reason() {
   local now=$(date +%s)
   if lock_read_owner; then
-    if [[ $lock_host == $(hostname -s) ]] && ! ps -p "$lock_pid" >/dev/null 2>&1; then
-      print -r -- "owner pid $lock_pid is not running on $lock_host"
-      return 0
+    if [[ $lock_host == $(hostname -s) ]]; then
+      if ! ps -p "$lock_pid" >/dev/null 2>&1; then
+        print -r -- "owner pid $lock_pid is not running on $lock_host"
+        return 0
+      fi
+      # A live same-host owner is authoritative even after the TTL. Never
+      # overlap an active deploy just because a slow command exceeded its budget.
+      return 1
     fi
     if (( now - lock_epoch > lock_ttl )); then
       print -r -- "held $(( (now - lock_epoch) / 60 )) minutes by pid $lock_pid on $lock_host, past the ${lock_ttl}s TTL"

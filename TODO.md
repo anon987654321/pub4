@@ -8,7 +8,7 @@ This is the cross-tree coordination queue. Each top-level tree owns its detailed
 
 ## Cross-tree priorities
 
-- [ ] Reconcile the 35 non-`main` remote branches against current `main` before any branch deletion. The 2026-10-11 comparison found 34 divergent branches and one behind-only branch; divergent tips range from 1 to 173 commits ahead and 43 to 2,949 behind. Several branch families overlap. Review their unique patches and tests, selectively port missing improvements onto current `main`, record each branch's disposition, then archive/delete only when no unique work remains. Never merge a stale history wholesale.
+- [ ] Re-fetch all non-`main` remote branch tips against the current `main` before branch disposition. The previous 2026-10-11 comparison found 35 non-main branches, mostly divergent and overlapping, with some tips thousands of commits behind. Recompute ahead/behind counts, inspect unique patches and tests, selectively port only missing improvements, record each branch's disposition, then archive/delete only when no unique work remains. Never merge a stale history wholesale.
 - [ ] After branch disposition and tree-backlog work, run one fresh acceptance sweep from the current checkout: `MASTER/bin/operator measure`, `MASTER/bin/operator gate`, `cd MASTER && rake test`, `ruby RAILS/test/run_all.rb`, each Rails app's `bin/ci`, `ruby OPENBSD/bin/check --profile=full`, and `cd STUDIO/test && rake`. Fix reproducible failures; report skipped/inconclusive browser, hardware, provider, DNS, backup or VPS checks explicitly.
 
 ## Tree queues

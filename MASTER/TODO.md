@@ -9,7 +9,7 @@ Updated: 2026-10-11. Scope: the Ruby runtime, constitutional law, /fix, operator
 - [ ] Run the current MASTER test suite and operator gates on the pinned Ruby/Bundler stack; fix each reproducible failure and classify every skipped or inconclusive gate honestly. Repeat the focused test alone when order-dependent behavior is suspected.
 - [ ] Exercise every `Master::Fix::FixLoop` terminal state with real fixtures: clean convergence, plateau, blocked, human decision, validation failure, delivery failure, timeout, crash/reload and recovery after a concurrent edit. Confirm the final status agrees with the files and gates actually observed.
 - [ ] Validate Termux on a real Android device, not only by reading the installer: fresh install and existing-checkout update, native gem installation, internal-storage restrictions, no-key/local-model fallback, configured provider, microphone permission, Norwegian and English transcription, playback and interruption. Record device/Android/Ruby versions and exact command output.
-- [ ] Trace and fix the reported intent-routing case where “make a video with the lora of me” ran `make` as a shell command; add a regression test proving natural-language intent cannot escape into arbitrary command execution.
+- [ ] Run the new `TurnRouterTest` regression for “make a video with the lora of me” on the pinned Ruby stack, then verify an end-to-end transcript routes to the LoRA tool and never to shell inference. The route-order and regression test are now in source; runtime proof is still outstanding.
 - [ ] Give the “generate me a selfie” route one live end-to-end test in addition to unit coverage. Report unavailable providers, credentials and network as explicit inconclusive/blocked outcomes, never as success.
 
 ## P1 — intelligence that earns its complexity
@@ -21,7 +21,7 @@ Updated: 2026-10-11. Scope: the Ruby runtime, constitutional law, /fix, operator
 
 ## P2 — KISS and maintenance
 
-- [ ] Resolve the toolchain documentation drift: repository `.ruby-version` and `RAILS/CLAUDE.md` pin Ruby 4.0.5, while `MASTER/README.md` tells readers to use Ruby 4.0.7 and says MASTER pins 4.0.7. Choose the supported runtime, align the debugger example and all version claims, and test the documented command under that exact runtime.
+- [ ] Run the documented debugger command on a developer checkout under pinned Ruby 4.0.5 and confirm `-rdebug` is available. The README version mismatch is corrected, but this environment cannot execute the repository's test command.
 
 - [ ] Audit residual `rule`/`rules` naming in code, filenames, comments, docs and generated contracts against the canonical Law vocabulary. The header in `MASTER/law/universal.rb` still says “one `Law.define` per rule” and points to `ruby_rules.rb`, which was not found at that path; trace the actual owner and callers before renaming, update tests and generated files together, and ignore ordinary English uses where they are accurate.
 - [ ] Compare the overlapping `fix-dryrun-*`, `bughunt/*`, `master/final-*`, `master/convergence-*` and `sweep/todo-wishlist-20261007` branch candidates with current source and tests. Port only missing, valuable changes; do not merge stale branch histories wholesale.

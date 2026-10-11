@@ -35,6 +35,6 @@ The faces do not look like Johann or Ragnhild. The cause is the data. Johann's d
 
 ## Cleanup
 
-- Seventeen tracked Ragnhild `retouched/` portraits still violate the private-media test.
+Privacy note: the 17 tracked `ragnhild/retouched/` portraits are removed from the current tree by this sweep. Older Git commits still contain their blobs; history rewriting is not performed here.
 - Pre-existing failing suites: `test_tools_lora`, `test_tools_replicate`, `test_gate_chain`, `test_review_inference`, `test_fix_convergence`, `test_tree_contract`.
-- MASTER's "make a video with the lora of me" ran `make` as a shell command; find the interception. Review `d91e67941`'s edit to `lora_intent.rb`.
+- MASTER's "make a video with the lora of me" now has a `TurnRouterTest` regression that checks it reaches the LoRA tool before command inference. Run the regression on the pinned Ruby stack and confirm end-to-end behavior before closing it.

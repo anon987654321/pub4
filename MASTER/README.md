@@ -93,7 +93,7 @@ Start with a reproducible failing test, then use the pinned Ruby debugger for
 live state and call-stack inspection:
 
 ```zsh
-RBENV_VERSION=4.0.7 rbenv exec ruby -rdebug -Itest test/test_execution_trace.rb
+RBENV_VERSION=4.0.5 rbenv exec ruby -rdebug -Itest test/test_execution_trace.rb
 ```
 
 Place `binding.break` at the narrowest useful line. Use `caller_locations(1, 8)`
@@ -156,7 +156,7 @@ back.
 
 ## Runtime
 
-MASTER pins Ruby 4.0.7. Isolated execution through `Ruby::Box` is available only
+MASTER pins Ruby 4.0.5. Isolated execution through `Ruby::Box` is available only
 when the process was started with `RUBY_BOX=1`, and the adapter in
 `Master::Runtime::Box` does not pretend otherwise. Startup prefers YJIT, and
 `MASTER_JIT=zjit` selects ZJIT as an experiment. The parallel compute path uses

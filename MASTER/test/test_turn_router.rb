@@ -1,9 +1,12 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
+require "fileutils"
+require "shellwords"
+require "tmpdir"
 
 class TurnRouterTest < Minitest::Test
-  def build_container(commands: nil)
+  def build_container(commands: nil, root: Dir.pwd)
     renderer = Object.new
     renderer.define_singleton_method(:render) { |text, **| text }
     {
@@ -11,7 +14,7 @@ class TurnRouterTest < Minitest::Test
       agent: Struct.new(:model).new("test-model"),
       renderer:,
       commands: commands || { "status" => Master::CLI::CommandRegistry::Command.new { "status-ok" } },
-      root: Dir.pwd,
+      root:,
       bus: nil,
     }
   end
@@ -239,4 +242,36 @@ end
       end
     end
   end
+  # Regression: this natural-language media request must not fall through into
+  # operator-command inference, where the opening word "make" was once treated
+  # as a shell command. A paid video remains a dry run until confirmed.
+  def test_lora_video_request_is_dispatched_before_command_inference
+    Dir.mktmpdir("turn-router-lora") do |root|
+      still = File.join(root, "STUDIO", "replicate", "lora", "johann", "out", "07.jpg")
+      FileUtils.mkdir_p(File.dirname(still))
+      File.write(still, "fixture")
+
+      calls = []
+      fake_dispatch = lambda do |root:, tool:, arg:, env: {}|
+        calls << { root:, tool:, argv: Shellwords.split(arg) }
+        Master::Result.ok("lora: planned")
+      end
+
+      Master::Io::ScriptDispatch.stub(:run, fake_dispatch) do
+        Master::CLI::TurnRouter.stub(:infer_operator_command, ->(*) { raise "media intent fell through to command inference" }) do
+          result = Master::CLI::TurnRouter.call(
+            message: "make a video with the lora of me from #{still}",
+            container: build_container(root:)
+          )
+          assert result.ok?, -> { result.message.to_s }
+        end
+      end
+
+      assert_equal 1, calls.length
+      assert_equal "lora", calls.first[:tool]
+      assert_includes calls.first[:argv], "--video-replicate"
+      assert_includes calls.first[:argv], "--dry-run"
+    end
+  end
+
 end

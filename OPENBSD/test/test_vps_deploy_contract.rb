@@ -146,15 +146,17 @@ class VpsDeployContractTest < Minitest::Test
     end
   end
 
-  def test_a_lock_older_than_the_ttl_is_reaped_even_when_its_pid_lives
+  def test_a_live_local_owner_is_not_reaped_just_because_the_ttl_elapsed
     Dir.mktmpdir do |dir|
       lock = File.join(dir, "deploy.lock")
       Dir.mkdir(lock)
-      File.write(File.join(lock, "owner"), "#{Process.pid} #{Socket.gethostname.split(".").first} #{Time.now.to_i - 9000}\n")
+      owner = "#{Process.pid} #{Socket.gethostname.split(".").first} #{Time.now.to_i - 9000}\n"
+      File.write(File.join(lock, "owner"), owner)
       out, status = lock_run(dir)
 
-      assert_equal 0, status
-      assert_includes out, "past the 7200s TTL"
+      assert_equal 75, status
+      assert_includes out, "another deploy owns"
+      assert_equal owner, File.read(File.join(lock, "owner")), "a live owner's stale timestamp must not let a second deploy steal its lock"
     end
   end
 
