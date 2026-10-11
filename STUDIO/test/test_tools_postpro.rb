@@ -703,20 +703,39 @@ class TestPostproFilm < Minitest::Test
     path
   end
 
+  # process_file writes to the constitution-owned output directory. Tests
+  # redirect that single constant into their own temporary directory and put
+  # it back even if grading or sidecar creation raises.
+  def with_postpro_output_dir(path)
+    owner = Postpro::Constitution
+    original = owner.const_get(:OUTPUT_DIR)
+    owner.send(:remove_const, :OUTPUT_DIR)
+    owner.const_set(:OUTPUT_DIR, File.expand_path(path).freeze)
+    yield
+  ensure
+    if owner && defined?(original) && original
+      owner.send(:remove_const, :OUTPUT_DIR) if owner.const_defined?(:OUTPUT_DIR, false)
+      owner.const_set(:OUTPUT_DIR, original)
+    end
+  end
+
   # Every path that writes a graded frame says which grade, from which code, and
   # what it did to the picture. process_file and the watch path wrote none.
   def test_a_graded_frame_records_its_version_and_the_uncanny_readings_either_side
     Dir.mktmpdir do |dir|
-      input = probe_file(dir)
-      assert_equal 1, process_file(input, 1, "portrait")
+      with_postpro_output_dir(dir) do
+        input = probe_file(dir)
+        assert_equal 1, process_file(input, 1, "portrait")
 
-      out = Dir[File.join(dir, "frame_portrait_v1_*.jpg")].first
-      sidecar = JSON.parse(File.read("#{out}.json"))
-      assert_equal "postpro.grade.v2", sidecar["schema"]
-      assert_equal GRADE_VERSION, sidecar["grade_version"]
-      assert_match(/\A\h{12}\z/, GRADE_VERSION)
-      assert_equal %w[before after], sidecar["uncanny"].keys
-      assert_operator sidecar.dig("uncanny", "after", "texture"), :>, 0
+        out = File.join(dir, "postpro_frame_portrait_v1.jpg")
+        assert File.file?(out), "process_file did not write its declared output #{out}"
+        sidecar = JSON.parse(File.read("#{out}.json"))
+        assert_equal "postpro.grade.v2", sidecar["schema"]
+        assert_equal GRADE_VERSION, sidecar["grade_version"]
+        assert_match(/\A\h{12}\z/, GRADE_VERSION)
+        assert_equal %w[before after], sidecar["uncanny"].keys
+        assert_operator sidecar.dig("uncanny", "after", "texture"), :>, 0
+      end
     end
   end
 
