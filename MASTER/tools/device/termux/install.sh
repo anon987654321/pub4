@@ -51,6 +51,16 @@ exec ruby bin/cli "$@"
 LAUNCHER
 chmod 700 "$HOME/.local/bin/master"
 
+# Earlier installer versions escaped the dollar signs, which wrote literal
+# $HOME/$PATH into .bashrc and could discard the inherited PATH. Remove only
+# that exact generated line before ensuring the correct export is present.
+if [ -f "$HOME/.bashrc" ]; then
+  path_tmp="$HOME/.bashrc.master.$"
+  awk '$0 != "export PATH=\"\\$HOME/.local/bin:\\$PATH\"" { print }' "$HOME/.bashrc" > "$path_tmp"
+  cat "$path_tmp" > "$HOME/.bashrc"
+  rm -f "$path_tmp"
+fi
+
 if ! grep -Fq 'export PATH="$HOME/.local/bin:$PATH"' "$HOME/.bashrc" 2>/dev/null; then
   printf '\nexport PATH="$HOME/.local/bin:$PATH"\n' >> "$HOME/.bashrc"
 fi
