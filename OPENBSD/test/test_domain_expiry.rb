@@ -45,6 +45,32 @@ class TestDomainExpiry < Minitest::Test
     nil
   end
 
+  # DomainWatch also watches owner-held names that are not DNS zones. A
+  # stale snapshot which omits a newly owned/renewable name used to make both
+  # expiry assertions pass, because the missing name never entered @rows.
+  def test_every_owned_renewable_domain_has_a_registered_expiry_snapshot
+    inventory = YAML.safe_load_file(Deploy::DomainWatch::RAILS_APPS)
+    snapshot = YAML.safe_load_file(SNAPSHOT)
+    facts = inventory.fetch("owned_domain_facts")
+    released = YAML.safe_load_file(RELEASED) || {}
+
+    missing = inventory.fetch("owned_domains").filter_map do |domain|
+      fact = facts.fetch(domain)
+      next if fact["renew"] == false || released.key?(domain)
+
+      row = snapshot[domain]
+      next if row.is_a?(Hash) && row["state"] == "registered" && expiry_for(row)
+
+      state = row.is_a?(Hash) ? row.fetch("state", "unknown") : "missing"
+      "#{domain}: no registered snapshot row with an expiry (state=#{state})"
+    end
+
+    assert_empty missing,
+                 "renewable owned domains absent from the expiry gate; refresh using " \
+                 "OPENBSD/bin/domain_watch.rb --update and verify the registrar results:\n  " \
+                 "#{missing.join("\n  ")}"
+  end
+
   def test_no_domain_is_past_expiry
     expired = @rows.filter_map do |domain, row|
       date = expiry_for(row)
