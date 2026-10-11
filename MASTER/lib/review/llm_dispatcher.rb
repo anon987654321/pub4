@@ -235,7 +235,8 @@ module Master
       # quiet, and this model unreachable. Both answer :no_api_key, which callers
       # treat as permanent and skip rather than retry.
       def refusal_before_send(selected_model)
-        return Result.err(LaneSilence.message, category: :no_api_key) if LaneSilence.silent?
+        lane = LaneSilence.lane_of(selected_model)
+        return Result.err(LaneSilence.message(lane), category: :no_api_key) if LaneSilence.silent?(lane)
 
         reason = forced_lane_unavailable(selected_model)
         return Result.err(reason[:message], category: reason[:category]) if reason
@@ -294,7 +295,7 @@ module Master
       # the model that was actually asked rather than the one the caller passed.
       def settle(result, selected_model, started)
         result = reclassify_provider_error(result)
-        note_lane_silence(result)
+        note_lane_silence(result, selected_model)
         record_provider_result(model: selected_model, result:, started:)
         result.is_a?(Master::Result::Ok) ? result.with_model(selected_model) : result
       end
@@ -303,11 +304,13 @@ module Master
       # its own words: "not wired to any LLM" read false while OpenRouter answered.
       # One line when the last lane goes quiet, so the operator learns it once
       # rather than reading it two hundred times.
-      def note_lane_silence(result)
-        return unless LaneSilence.record(Result.wrap(result).ok?)
+      def note_lane_silence(result, model)
+        outcome = Result.wrap(result)
+        lane = LaneSilence.lane_of(model)
+        return unless LaneSilence.record(outcome.ok?, lane, reason: outcome.ok? ? nil : outcome.message)
 
-        Master::Trace::Dmesg.once("llm0", LaneSilence.message)
-        @bus&.publish("llm:lanes_silent", after: LaneSilence::SILENT_AFTER)
+        Master::Trace::Dmesg.once("llm0-#{lane}", LaneSilence.message(lane))
+        @bus&.publish("llm:lanes_silent", lane:, after: LaneSilence::SILENT_AFTER)
       end
 
       def key_refusal(err)

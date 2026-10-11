@@ -10,51 +10,65 @@ module Master
       # semantic rule still walked all four lanes, so an hour of wall clock
       # bought nothing but a longer log.
       #
-      # After SILENT_AFTER consecutive failures with no answer in between, the
-      # door refuses for SILENCE_COOLOFF_S and says so once. One success from
-      # any lane clears it, so a provider coming back needs no restart. The
-      # refusal is :no_api_key, which callers already treat as permanent and
-      # skip rather than retry.
+      # After SILENT_AFTER consecutive failures of one lane with no answer from it
+      # in between, that lane refuses for SILENCE_COOLOFF_S and says so once, with
+      # the lane's last words. One success from the lane clears it, so a provider
+      # coming back needs no restart. The refusal is :no_api_key, which callers
+      # already treat as permanent and skip rather than retry.
+      #
+      # Per lane, because on 2026-10-11 a /fix council spent agy's weekly quota on
+      # 26 persona calls, the twelve failures tripped one shared door, and the claude
+      # lane (which answers in four seconds) was refused before it was ever asked:
+      # "no lane answered" with $0.00 spent. A spent lane is not a silent door.
       #
       # Process-wide, and its own module because the state is: the dispatcher is
       # built per session and the lanes are shared by all of them.
       module LaneSilence
         SILENT_AFTER = 12
         SILENCE_COOLOFF_S = 300
+        ANY = "any"
 
         @mutex = Mutex.new
-        @consecutive_failures = 0
-        @silent_until = 0.0
+        @lanes = {}
 
         class << self
-          def silent?
-            sync { @silent_until > Process.clock_gettime(Process::CLOCK_MONOTONIC) }
+          # The provider half of a model id: "claude-cli:claude-opus-5-5" is lane "claude-cli".
+          def lane_of(model) = model.to_s.split(":", 2).first.to_s.then { |lane| lane.empty? ? ANY : lane }
+
+          def silent?(lane = ANY)
+            sync { (@lanes[lane] || {}).fetch(:silent_until, 0.0) > now }
           end
 
-          # True only on the call that trips it, so the caller says it once.
-          def record(answered)
+          # True only on the call that trips the lane, so the caller says it once.
+          def record(answered, lane = ANY, reason: nil)
             sync do
-              next clear if answered
+              next clear(lane) if answered
 
-              @consecutive_failures += 1
-              next false if @consecutive_failures < SILENT_AFTER
+              state = (@lanes[lane] ||= { failures: 0, silent_until: 0.0 })
+              state[:reason] = reason.to_s.strip unless reason.to_s.strip.empty?
+              state[:failures] += 1
+              next false if state[:failures] < SILENT_AFTER
 
-              @silent_until = Process.clock_gettime(Process::CLOCK_MONOTONIC) + SILENCE_COOLOFF_S
-              @consecutive_failures = 0
+              state[:silent_until] = now + SILENCE_COOLOFF_S
+              state[:failures] = 0
               true
             end
           end
 
-          def message
-            "no lane answered #{SILENT_AFTER} calls in a row; model work is skipped for " \
-              "#{SILENCE_COOLOFF_S / 60} minutes. /model list says what each lane needs."
+          def message(lane = ANY)
+            said = sync { @lanes.dig(lane, :reason) }
+            "no #{lane} answer in #{SILENT_AFTER} calls in a row; #{lane} is skipped for " \
+              "#{SILENCE_COOLOFF_S / 60} minutes#{say(said)}. /model list says what each lane needs."
           end
 
           private
 
-          def clear
-            @consecutive_failures = 0
-            @silent_until = 0.0
+          def say(reason) = reason ? " (last: #{reason.lines.first.to_s.strip[0, 200]})" : ""
+
+          def now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+
+          def clear(lane)
+            @lanes.delete(lane)
             false
           end
 

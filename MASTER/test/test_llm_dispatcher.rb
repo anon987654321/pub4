@@ -36,26 +36,39 @@ class TestLLMDispatcher < Minitest::Test
   # 2026-09-16: a /fix ran 194 model calls and 178 failed — the free tier out
   # for the day, Gemini out of quota, the claude binary hung and killed, a 3B
   # local model timing out at 250s — and every rule still walked all four lanes.
-  def test_the_door_stops_asking_once_no_lane_answers
+  def test_the_door_stops_asking_once_a_lane_stops_answering
     dispatcher, = build_dispatcher
     door = Master::Review::LLMDispatcher::LaneSilence
-    door.record(true)
+    door.record(true, "any-model")
 
-    refute door.silent?, "silent before anything failed"
-    (door::SILENT_AFTER - 1).times { door.record(false) }
-    refute door.silent?, "tripped early"
-    assert door.record(false), "the last failure must report the trip"
-    assert door.silent?
+    refute door.silent?("any-model"), "silent before anything failed"
+    (door::SILENT_AFTER - 1).times { door.record(false, "any-model", reason: "agy: quota reached") }
+    refute door.silent?("any-model"), "tripped early"
+    assert door.record(false, "any-model", reason: "agy: quota reached"), "the last failure must report the trip"
+    assert door.silent?("any-model")
 
     refused = dispatcher.send_with_cache("any-model", [{ role: "user", content: "hi" }])
     assert_predicate refused, :err?
     assert_equal :no_api_key, refused.category
-    assert_match(/no lane answered/, refused.message)
+    assert_match(/no any-model answer.*last: agy: quota reached/, refused.message)
 
-    door.record(true)
-    refute door.silent?, "one answer must clear it without a restart"
+    door.record(true, "any-model")
+    refute door.silent?("any-model"), "one answer must clear it without a restart"
   ensure
-    Master::Review::LLMDispatcher::LaneSilence.record(true)
+    Master::Review::LLMDispatcher::LaneSilence.record(true, "any-model")
+  end
+
+  # 2026-10-11: agy's spent quota failed twelve council calls and the shared
+  # door refused claude-cli, which answers in four seconds, before it was asked.
+  def test_a_spent_lane_does_not_silence_the_others
+    door = Master::Review::LLMDispatcher::LaneSilence
+    door::SILENT_AFTER.times { door.record(false, "agy", reason: "Individual quota reached") }
+
+    assert door.silent?("agy")
+    refute door.silent?("claude-cli"), "agy's quota must not refuse claude-cli"
+    assert_equal "claude-cli", door.lane_of("claude-cli:claude-opus-5-5")
+  ensure
+    door.record(true, "agy")
   end
 
   # "claude-cli:" and a blank, a hundred and seventy-eight times: `claude
