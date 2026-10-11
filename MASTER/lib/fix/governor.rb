@@ -29,19 +29,20 @@ module Master
           return rate_err
         end
 
+        consent_required = human_consent_required?(tool_name, description)
         decision = @decisions[decision_key(tool_name, description)]
         return Result.err("denied by policy", category: :validation) if decision == :deny
-        return Result.ok(true) if decision == :allow
+        return Result.ok(true) if decision == :allow && !consent_required
 
         case tier
         when :safe then return Result.ok(true)
         when :guarded then return Result.ok(true) if @auto
         when :dangerous
-          return Result.ok(true) if @auto
-          return Result.ok(true) unless needs_human?(description)
+          return Result.ok(true) if @auto && !consent_required
+          return Result.ok(true) unless needs_human?(description) || consent_required
         end
 
-        ask_user(tool_name:, tier:, description:)
+        ask_user(tool_name:, tier:, description:, one_time: consent_required)
       rescue StandardError => e
         Result.err(e.message, category: :validation)
       end
@@ -67,6 +68,12 @@ module Master
         description.to_s.match?(PRIVILEGE_RE)
       end
 
+      # Browser writes are never approved by unattended mode or a remembered
+      # "always allow" choice. Consent covers one concrete interaction only.
+      def human_consent_required?(tool_name, description)
+        tool_name.to_s == "browser_agent" && description.to_s.start_with?("interact ")
+      end
+
       def check_rate_limit!(tier)
         limit = TIER_RATE_LIMITS[tier]
         return unless limit
@@ -89,23 +96,24 @@ module Master
         { name: "quit", value: "quit" },
       ].freeze
 
-      def ask_user(tool_name:, tier:, description:)
+      def ask_user(tool_name:, tier:, description:, one_time: false)
         label = description ? "#{tool_name}: #{description}" : tool_name
         if (asker = Fiber[:master_terminal_ask])
-          return ask_via_terminal(asker, tool_name:, tier:, description:, label:)
+          return ask_via_terminal(asker, tool_name:, tier:, description:, label:, one_time:)
         end
         return Result.err("non-TTY: cannot prompt for approval", category: :validation) unless @prompt
-        choice = @prompt.select("#{tier_icon(tier)} #{label}", [
+        choices = [
           { name: "approve once", value: :approve },
-          { name: "always allow this request", value: :allow },
           { name: "deny this request", value: :deny },
           { name: "quit", value: :quit },
-        ])
+        ]
+        choices.insert(1, { name: "always allow this request", value: :allow }) unless one_time
+        choice = @prompt.select("#{tier_icon(tier)} #{label}", choices)
 
         case choice
         when :approve then Result.ok(true)
         when :allow
-          allow!(tool_name, description)
+          allow!(tool_name, description) unless one_time
           Result.ok(true)
         when :deny
           deny!(tool_name, description)
@@ -118,12 +126,13 @@ module Master
         Result.err("input interrupted", category: :shutdown)
       end
 
-      def ask_via_terminal(asker, tool_name:, tier:, description:, label:)
-        choice = asker.call(prompt: "#{tier_icon(tier)} #{label}", options: APPROVAL_OPTIONS)
+      def ask_via_terminal(asker, tool_name:, tier:, description:, label:, one_time: false)
+        options = one_time ? APPROVAL_OPTIONS.reject { |option| option[:value] == "allow" } : APPROVAL_OPTIONS
+        choice = asker.call(prompt: "#{tier_icon(tier)} #{label}", options:)
         case choice.to_s
         when "approve" then Result.ok(true)
         when "allow"
-          allow!(tool_name, description)
+          allow!(tool_name, description) unless one_time
           Result.ok(true)
         when "deny"
           deny!(tool_name, description)
