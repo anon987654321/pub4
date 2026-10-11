@@ -97,6 +97,30 @@ class TestCognitionFeedback < Minitest::Test
     assert_equal 1, mind.predict_outcome(context: "target=STUDIO", action: "/fix")[:successes]
   end
 
+  def test_outcome_checkpoint_rejects_unbounded_receipt_history
+    path = File.join(@root, Master::Cognition::Mind::STATE_PATH)
+    FileUtils.mkdir_p(File.dirname(path))
+    receipts = Array.new(65) do |index|
+      { "source" => "receipt:#{index}", "sha256" => "a" * 64, "outcome" => "success" }
+    end
+    record = {
+      "context" => "task", "action" => "/fix",
+      "successes" => 1, "failures" => 0, "inconclusive" => 0,
+      "brier_sum" => 0.0, "brier_count" => 0,
+      "observations" => [], "seen_receipts" => receipts,
+    }
+    File.write(path, {
+      "ticks" => 3,
+      "identity" => { "name" => "MASTER" },
+      "predictions" => { "transitions" => {} },
+      "outcomes" => { "records" => { "a" * 24 => record } },
+    }.to_yaml)
+
+    loaded = Master::Cognition::State.load(path)
+    assert_equal "invalid", loaded.load_status
+    assert_empty loaded.outcomes.fetch("records")
+  end
+
   def test_malformed_outcome_state_is_not_accepted
     path = File.join(@root, Master::Cognition::Mind::STATE_PATH)
     FileUtils.mkdir_p(File.dirname(path))
