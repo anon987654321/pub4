@@ -8,7 +8,6 @@ require_relative "constants"
 require_relative "attempt"
 require_relative "fix_trace"
 require_relative "patch_applier"
-require_relative "model_roles"
 require_relative "primitive_first"
 require_relative "taste_memory"
 require_relative "severity"
@@ -182,9 +181,7 @@ module Master
         @model_failed = false
         @model_unavailable = false
         return :model_unavailable unless @agent
-        source = Master::Fix::ModelRoles.pinned(:fixer, only: visual_source?(violation[:file])) do
-          violation[:severity].to_sym == :error ? council_fix(violation) : request_fix(violation)
-        end
+        source = violation[:severity].to_sym == :error ? council_fix(violation) : request_fix(violation)
         return (if @model_unavailable
 :model_unavailable
 else

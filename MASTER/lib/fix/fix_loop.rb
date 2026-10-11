@@ -26,7 +26,6 @@ require_relative "transformation_plan"
 require_relative "convergence_discipline"
 require_relative "reflection"
 require_relative "run_budget"
-require_relative "model_roles"
 
 module Master
   module Fix
@@ -124,7 +123,7 @@ module Master
         guidance = outcome_guidance(target:, incremental:)
         incremental = guidance.fetch(:incremental)
         @outcome_prior = guidance[:prediction]
-        ModelRoles.announce
+        Master::Io::LaneSelection.announce
         current_phase = :corpus
         files = incremental ? @file_collector.collect_changed(target) : @file_collector.collect(target)
         coverage = {

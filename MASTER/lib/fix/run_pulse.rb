@@ -13,7 +13,16 @@ module Master
     class RunPulse
       WAITING_AFTER = 5
       FILE_CHARS = 24
-      BUS_PATTERNS = %w[llm:* fix_loop:* law_loop:* scan:*].freeze
+      BUS_PATTERNS = %w[llm:* fix_loop:* law_loop:* scan:* council:*].freeze
+      STALL_SECONDS = 600
+      # The stages that name themselves with a "fix_loop:phase" event, as the log words them.
+      PHASES = {
+        "fast_fixes" => "fast fixes", "structure" => "structure", "council" => "council", "council_improve" => "council",
+        "model_fixes" => "fix", "improvements_fix" => "fix", "opportunities" => "opportunity", "visual" => "visual",
+        "wishlist" => "wish"
+      }.freeze
+      # Advisory stages: a stall here is cut short (PassClock.cancel!), never waited out.
+      SKIPPABLE = %w[council council_improve opportunities wishlist].freeze
       NOT_SKIPS = %w[pass fixed clean applied ok].freeze
 
       def self.human_count(count)
@@ -42,6 +51,10 @@ module Master
         @pass = 0
         @unit = "fix0"
         @last_call_end = nil
+        @pass_started_at = clock.call
+        @stage = nil
+        @law = nil
+        @council = nil
         @model = nil
         @fixes = { ok: 0, failed: 0 }
         reset_pass
@@ -62,11 +75,25 @@ module Master
       # The line itself. `eta` and `tokens` come from RunBudget, which owns the ledger.
       def line(elapsed:, tokens:, eta:)
         @lock.synchronize do
-          parts = ["fix0: pass #{@pass}/#{@max_passes}", @unit, files_part, fixes_part, lane_part(elapsed),
+          parts = ["fix0: pass #{@pass}/#{@max_passes}", @unit, phase_part, files_part, fixes_part, lane_part(elapsed),
                    "tokens = #{tokens} (#{self.class.human_count(tokens)})",
                    "elapsed = #{elapsed.round}s (#{self.class.human_time(elapsed)})", eta,
                    "load #{format("%.1f", @load.call)}"]
           parts.compact.join(" ")
+        end
+      end
+
+      # Set when a pass has run past MASTER_FIX_STALL_S with no fix attempted:
+      # { line:, skippable: } to print every heartbeat, else nil. A skippable
+      # phase is advisory, so the caller ends it rather than wait.
+      def stall(now = @clock.call)
+        @lock.synchronize do
+          seconds = Integer(ENV.fetch("MASTER_FIX_STALL_S", STALL_SECONDS.to_s), exception: false) || STALL_SECONDS
+          waited = now - @pass_started_at
+          next unless @pass.positive? && waited > seconds && (@pass_ok + @pass_failed).zero?
+
+          { line: "fix0: STALLED pass #{@pass} phase #{phase_name} for #{(waited / 60).floor}m, 0 files attempted",
+            skippable: SKIPPABLE.include?(@stage) }
         end
       end
 
@@ -108,6 +135,8 @@ module Master
         when "llm:send" then @calls[Thread.current.object_id] = [payload[:model].to_s, @clock.call]
         when "llm:provider_outcome" then finish_call(payload)
         when "fix_loop:pass_start" then start_pass(payload)
+        when "fix_loop:phase" then enter_phase(payload)
+        when "council:progress" then @council = [payload[:answered].to_i, payload[:total].to_i]
         when "scan:progress" then scanned(payload)
         when "fix_loop:rule_result", "law_loop:pass" then ruled(payload)
         when "fix_loop:skip_breakdown" then skipped(payload)
@@ -126,6 +155,9 @@ module Master
       def start_pass(payload)
         @pass = payload[:pass].to_i
         reset_pass
+        @pass_started_at = @clock.call
+        @stage = "scan"
+        @council = nil
         @file_total = payload[:file_count].to_i
         @commits_at_start = @commits.call
       end
@@ -149,7 +181,22 @@ module Master
         @file = payload[:path].to_s
       end
 
+      def enter_phase(payload)
+        @stage = payload[:stage].to_s
+        @council = nil if @stage.start_with?("council")
+      end
+
+      def phase_name
+        return "council (#{@council[0]} of #{@council[1]} personas answered)" if @stage.to_s.start_with?("council") && @council
+
+        name = PHASES.fetch(@stage.to_s, @stage.to_s)
+        name == "fix" && @law ? "fix #{@law}#{@file ? " #{File.basename(@file)}" : ""}" : name
+      end
+
+      def phase_part = (@stage ? "phase #{phase_name}" : nil)
+
       def ruled(payload)
+        @law = payload[:law].to_s unless payload[:law].to_s.empty?
         @pass_found += payload[:violations].to_i
         @pass_fixed += payload[:fixed].to_i
       end
@@ -251,7 +298,7 @@ module Master
 
         def lane_states
           health = Master::Io::LaneHealth
-          health.states(health.role_models)
+          health.states(Master::Io::LaneSelection.order(Master::Io::LaneSelection.catalogue))
         rescue StandardError
           []
         end

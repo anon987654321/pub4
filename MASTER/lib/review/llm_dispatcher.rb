@@ -7,6 +7,7 @@ require "open3"
 require "timeout"
 require_relative "llm_dispatcher/cli_sender"
 require_relative "llm_dispatcher/model_pin"
+require_relative "llm_dispatcher/pass_clock"
 require_relative "llm_dispatcher/react_loop"
 require_relative "llm_dispatcher/ollama_sender"
 require_relative "llm_dispatcher/ruby_llm_sender"
@@ -149,7 +150,7 @@ module Master
         @bus&.publish("llm:send", model: selected_model)
         cache_key = cache_key_for(messages.last[:content], messages[0...-1], selected_model, system, temperature)
         result = breaker_for(selected_model).call(estimate_cost(messages.last[:content], selected_model)) do
-          Timeout.timeout(@availability.dispatch_deadline_s) do
+          Timeout.timeout(PassClock.call_deadline(@availability.dispatch_deadline_s)) do
             @cache.fetch(cache_key, selected_model) do
               send_llm_request(selected_model, messages, system:, stream:, image:, temperature:, format:, &blk)
             end
@@ -159,6 +160,10 @@ module Master
       rescue Io::CircuitBreaker::CircuitError => err
         record_provider_outcome(selected_model, err.category, latency_ms: elapsed_ms(started), error: err.message)
         Result.err(redact_secrets(err.message), category: err.category)
+      rescue Timeout::Error => err
+        return classified_call_failure(err) unless PassClock.active?
+
+        call_deadline_exceeded(selected_model, started)
       rescue StandardError => err
         record_provider_outcome(selected_model, :llm_call_failure, latency_ms: elapsed_ms(started), error: err.message)
         classified_call_failure(err)
@@ -219,6 +224,17 @@ module Master
         VISION_RE.match?(id)
       end
 
+      # A call past its hard deadline inside a council: the lane is silent for the
+      # cool-off, so nothing else asks it this run, and the next lane answers.
+      def call_deadline_exceeded(model, started)
+        seconds = elapsed_ms(started) / 1000
+        lane = LaneSilence.lane_of(model)
+        LaneSilence.silence(lane, reason: "no answer in #{seconds}s")
+        record_provider_outcome(model, :timeout, latency_ms: elapsed_ms(started), error: "deadline")
+        Master::Trace::Dmesg.status("council0", "#{model} gave no answer in #{seconds}s; #{lane} is skipped for #{LaneSilence::SILENCE_COOLOFF_S / 60} minutes")
+        Result.err("#{model} exceeded its #{PassClock.call_timeout_s}s call deadline", category: :timeout)
+      end
+
       # A billing or rate-limit refusal cannot succeed on an in-place retry,
       # and :llm_call_failure is not in fallback_policy.on — classified as
       # :budget / :rate_limit, the chain and the single-shot hop walk on.
@@ -236,6 +252,7 @@ module Master
       # quiet, and this model unreachable. Both answer :no_api_key, which callers
       # treat as permanent and skip rather than retry.
       def refusal_before_send(selected_model)
+        return Result.err(PassClock.refusal, category: :timeout) if PassClock.expired?
         return Result.err(LaneSilence.refusal(selected_model), category: :no_api_key) if LaneSilence.refuses?(selected_model)
 
         reason = forced_lane_unavailable(selected_model)

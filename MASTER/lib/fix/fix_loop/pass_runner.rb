@@ -164,6 +164,7 @@ module Master
         # where the final verdict reads it, published, and printed once; the
         # caller continues with the fallback it named.
         def guarded(stage, pass, fallback = nil)
+          enter_phase(stage)
           yield
         rescue StandardError => e
           stage_failures[stage] << "pass #{pass}: #{e.class}: #{e.message.to_s[0, 160]}"
@@ -171,6 +172,12 @@ module Master
           Master::Trace::Dmesg.status("fix0", "pass #{pass}, #{stage} failed, carrying on: #{e.class}: #{e.message}"[0, 200])
           Master::Ground::Swallow.log(e, context: "fix_loop.stage.#{stage}", event_bus: @bus, severity: :load_bearing)
           fallback
+        end
+
+        # Names the stage in the heartbeat, and lifts a cancel left by the last one.
+        def enter_phase(stage, pass = nil)
+          Master::Review::LLMDispatcher::PassClock.reset_cancel!
+          @bus&.publish("fix_loop:phase", stage:, pass:)
         end
 
         def run_pass(files:, target:, pass:, deadline:, transaction_id:, history:, seen_snapshots:,
@@ -278,6 +285,7 @@ module Master
             return [found, shed]
           end
 
+          enter_phase(:council_improve, pass)
           [found + Array(@council&.improve(files:, pass:, deadline:)), nil]
         end
 

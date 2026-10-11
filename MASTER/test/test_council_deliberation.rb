@@ -90,15 +90,15 @@ class TestCouncilDeliberation < Minitest::Test
     old.nil? ? ENV.delete("MASTER_COUNCIL_LOCAL") : ENV["MASTER_COUNCIL_LOCAL"] = old
   end
 
-  def test_local_only_ignores_a_persona_cloud_model
+  def test_local_only_ignores_a_cloud_lane
     old = ENV["MASTER_LOCAL_ONLY"]
     ENV["MASTER_LOCAL_ONLY"] = "1"
     asked = []
 
     persona = Persona.new(name: "Architect", role: "r", bias: "b", prompt: "p")
-    persona.define_singleton_method(:model) { "anthropic/claude-sonnet-4" }
 
     agent = Object.new
+    agent.define_singleton_method(:candidate_models) { |*, **| ["anthropic/claude-sonnet-4"] }
     agent.define_singleton_method(:ask) { |_prompt, **_kwargs| asked << :local; "looks good" }
     agent.define_singleton_method(:ask_once) { |_prompt, **_kwargs| raise "cloud persona model was used" }
 

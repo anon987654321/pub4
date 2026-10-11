@@ -15,8 +15,8 @@ module Master
     # deadline is written under .master so a new process starts knowing.
     #
     # `dead?` is the one reader. It folds in the hand-kept `dead:` list of
-    # data/model_roles.yml, so role resolution, the dispatcher door, failover and
-    # the pinned council critic all ask the same question.
+    # data/lanes.yml, so LaneSelection, the dispatcher door and failover all ask
+    # the same question.
     module LaneQuota
       extend self
       include ::Master::Io::AtomicWrite
@@ -32,7 +32,7 @@ module Master
         "login" => "login expired",
         "guessed" => "quota spent, wait guessed",
       }.freeze
-      DATA = File.expand_path("../../data/model_roles.yml", __dir__)
+      DATA = File.expand_path("../../data/lanes.yml", __dir__)
 
       @mutex = Mutex.new
       @clock = -> { Time.now.to_f }
@@ -134,7 +134,7 @@ module Master
       def report
         why = @mutex.synchronize { reasons }
         dead_lanes.map do |lane, deadline|
-          next "#{lane}: dead by hand (data/model_roles.yml dead:)" if deadline == :manual
+          next "#{lane}: dead by hand (data/lanes.yml dead:)" if deadline == :manual
 
           left = (deadline - @clock.call).to_i
           back = Time.at(deadline).strftime("%Y-%m-%d %H:%M")

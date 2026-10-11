@@ -191,7 +191,18 @@ module Master
         fused = ToolBreaker.fused_count
         message = "#{message} #{fused} tuples fused" if fused.positive?
         @say.call(message)
+        watch_for_stall
         message
+      end
+
+      # A pass with no fix attempted past MASTER_FIX_STALL_S says so on every
+      # heartbeat, and an advisory phase is cut short rather than waited out.
+      def watch_for_stall
+        stalled = @pulse.stall(@clock.call)
+        return unless stalled
+
+        @say.call(stalled[:line])
+        Master::Review::LLMDispatcher::PassClock.cancel!("stalled") if stalled[:skippable]
       end
 
       private

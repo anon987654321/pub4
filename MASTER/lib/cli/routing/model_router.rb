@@ -84,12 +84,13 @@ module Master
 
           ids = healthy(candidates).filter_map { |model| model["id"] }
           ids = floor_candidates(candidates, operation: task_type).filter_map { |model| model["id"] } if ids.empty?
-          @compute_pool.select(ids, task_type:, empirical_best:) ||
+          @compute_pool.select(Io::LaneSelection.best_class(ids, free_last: !free_route?(task_type)), task_type:, empirical_best:) ||
             ids.first ||
             live_config_model(task_type:)
         end
 
-        # Only models the pool can reach. Free cloud lanes follow the tiers and
+        # Only models the pool can reach, the dead lanes dropped and free models
+        # last (Io::LaneSelection). Free cloud lanes follow the tiers and
         # paid Replicate follows those. A discovered local model may join the
         # same live chain; local availability is not an offline contract.
         def fallback_chain(task_type: :exploration)
@@ -101,7 +102,7 @@ module Master
           chain = prefer_floor(chain, fresh, operation: task_type)
           ranked = @provider_health.rank(chain)
           ranked = @compute_pool.rank(ranked, task_type:)
-          Io::ModelSkipCache.filter(chitchat_head(ranked, task_type))
+          Io::ModelSkipCache.filter(chitchat_head(Io::LaneSelection.order_or_all(ranked, free_last: !free_route?(task_type)), task_type))
         end
 
         # Greetings are explicitly routed to the free tier. A locally installed
@@ -130,7 +131,7 @@ module Master
           qualified = healthy(candidates).select { |m| m.dig("score", "quality").to_f >= min_quality }
           return preferred if qualified.empty?
 
-          ids = qualified.filter_map { |m| m["id"] }
+          ids = Io::LaneSelection.best_class(qualified.filter_map { |m| m["id"] })
           @compute_pool.select(ids, task_type: operation) || preferred
         end
 
@@ -165,6 +166,10 @@ module Master
         def enabled?
           @rules.dig("routing", "enabled") != false
         end
+
+        # Greetings and explanations are routed to the free tier on purpose;
+        # every other route keeps free models last.
+        def free_route?(task_type) = @rules.dig("routes", task_type.to_s) == "free"
 
         def reachable_candidates(task_type)
           tier = @rules.dig("routes", task_type.to_s) || @rules.dig("routes", "fallback_default") || "cheap"

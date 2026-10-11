@@ -5,14 +5,14 @@ require "minitest/mock"
 require "tmpdir"
 
 # The always-online guarantee. Every remote lane is exhausted in turn with the
-# reply that provider really sends, the next lane in the role list answers, and
+# reply that provider really sends, the next lane in the tier answers, and
 # a counting stub proves no call goes to a lane already dead. When the last lane
 # (a local Ollama model) is dead too, the answer is a typed Offline, not a crash.
 class TestLaneFailover < Minitest::Test
   Quota = Master::Io::LaneQuota
   Health = Master::Io::LaneHealth
   Silence = Master::Review::LLMDispatcher::LaneSilence
-  Roles = Master::Fix::ModelRoles
+  Selection = Master::Io::LaneSelection
 
   CLAUDE = "You've hit your session limit · resets 5pm (Europe/Oslo)"
   AGY = "agy: error: Individual quota reached. Please upgrade your subscription to increase your limits. Resets in 165h22m49s."
@@ -27,7 +27,7 @@ class TestLaneFailover < Minitest::Test
     @now = NOON
     Quota.path = File.join(@dir, "lane_quota.yml")
     Quota.clock = -> { @now }
-    @lists = YAML.safe_load_file(Roles::DATA).fetch("roles")
+    @lists = %w[default primary strong].to_h { |tier| [tier, Selection.tier(tier)] }
   end
 
   def teardown
@@ -78,10 +78,11 @@ class TestLaneFailover < Minitest::Test
     agent.send(:retry_on_broke_lane, first, models.first, [{ role: "user", content: "hi" }])
   end
 
-  def test_each_role_list_survives_losing_its_lanes_one_at_a_time
+  def test_each_tier_survives_losing_its_lanes_one_at_a_time
     Master.stub(:llm_reachable?, true) do
-      @lists.each do |role, models|
-        Quota.path = File.join(@dir, "#{role}.yml")
+      @lists.each do |tier, tier_models|
+        Quota.path = File.join(@dir, "#{tier}.yml")
+        models = Selection.order(tier_models)
         lanes = models.map { |m| Quota.lane_of(m) }.uniq
         calls = []
         failing = []
@@ -91,7 +92,7 @@ class TestLaneFailover < Minitest::Test
           door = dispatcher(calls, failing)
           result = ask(agent_over(door, models), door, models)
           expected = models.find { |m| !failing.include?(Quota.lane_of(m)) }
-          assert_equal "ok from #{expected}", result.to_s, "#{role}: after #{lane} died, #{expected} answers"
+          assert_equal "ok from #{expected}", result.to_s, "#{tier}: after #{lane} died, #{expected} answers"
           died[lane] = calls.size
           assert_equal index + 1, failing.size
         end
@@ -99,16 +100,16 @@ class TestLaneFailover < Minitest::Test
         assert_equal failing.sort, dead_calls.map { |m| Quota.lane_of(m) }.uniq.sort
         failing.each do |lane|
           later = calls.drop(died.fetch(lane)).select { |m| Quota.lane_of(m) == lane }
-          assert_empty later, "#{role}: #{lane} is never asked after it died"
+          assert_empty later, "#{tier}: #{lane} is never asked after it died"
         end
-        assert_equal "ollama", Quota.lane_of(models.last), "#{role} ends in a local lane"
+        assert_equal "ollama", Quota.lane_of(tier_models.last), "#{tier} ends in a local lane"
       end
     end
   end
 
   def test_with_the_local_lane_dead_too_the_answer_is_a_typed_offline
     Master.stub(:llm_reachable?, true) do
-      models = @lists.fetch("fixer")
+      models = @lists.fetch("strong")
       calls = []
       lanes = models.map { |m| Quota.lane_of(m) }.uniq
       door = dispatcher(calls, lanes)
@@ -194,35 +195,28 @@ class TestLaneFailover < Minitest::Test
     assert_equal "true", out.lines.last.to_s.strip
   end
 
-  # Instrument check: the new lists are what assign, the role tails and the tiers read.
-  def test_assign_reads_the_new_lists_and_lands_on_the_local_tail
-    asked = []
-    alive = ->(id) { asked << id; true }
-    @lists.values.flatten.map { |m| Quota.lane_of(m) }.uniq.reject { |l| l == "ollama" }.each { |lane| Quota.note("#{lane}:x", CLAUDE) }
+  # Instrument check: the selection reads the live tiers and lands on the local tail.
+  def test_selection_lands_on_the_local_tail_when_every_remote_lane_is_dead
+    models = Selection.catalogue
+    models.map { |m| Quota.lane_of(m) }.uniq.reject { |l| l == "ollama" }.each { |lane| Quota.note("#{lane}:x", CLAUDE) }
 
-    picked = Roles.assign(env: {}, alive:)
-    assert_equal %w[ollama:qwen2.5-coder:3b ollama:gemma3:4b ollama:gemma3:4b], [picked.critic, picked.fixer, picked.wisher], "critic is another model on the lane when no other provider lives"
-    assert_equal @lists.values.flatten.uniq.select { |m| Quota.lane_of(m) == "ollama" }.first(1), asked.uniq.first(1)
-    assert(asked.all? { |m| @lists.values.flatten.include?(m) }, "assign asked only about listed models")
-    assert_match(/\Aonline: yes via ollama:gemma3:4b/, Health.line(@lists.values.flatten.uniq, refuses: ->(m) { Quota.dead?(m) }))
+    live = Selection.order(models)
+    assert Health.local_model?(live.first), "a local model leads: #{live}"
+    assert(live.none? { |m| Selection.kind(m) == :remote }, "no remote model is left")
+    assert_match(/\Aonline: yes via ollama:/, Health.line(models, refuses: ->(m) { Quota.dead?(m) }))
   end
 
   def test_with_everything_dead_the_status_line_says_so
-    models = @lists.values.flatten.uniq
+    models = Selection.catalogue
     models.map { |m| Quota.lane_of(m) }.uniq.each { |lane| Quota.note("#{lane}:x", AGY) }
     line = Health.line(models, refuses: ->(m) { Quota.dead?(m) })
     assert_match(/\Aonline: NO \(all lanes dead\) /, line)
     assert_match(/ollama: quota spent, back in 165h/, line)
-    picked = Roles.assign(env: {}, alive: ->(_) { true })
-    assert_nil picked.fixer
+    assert_nil Selection.first_live(models)
   end
 
-  def test_every_list_and_tier_ends_in_a_local_model
-    @lists.each { |role, models| assert Health.local_model?(models.last), "#{role} ends local" }
-    tiers = Master.models_config.fetch("models")
-    %w[default primary strong].each do |tier|
-      assert Health.local_model?(tiers.fetch(tier).last.fetch("id")), "#{tier} ends local"
-    end
+  def test_every_tier_ends_in_a_local_model
+    @lists.each { |tier, models| assert Health.local_model?(models.last), "#{tier} ends local" }
   end
 
   def test_the_daemon_is_started_once_and_a_failed_start_is_not_repeated

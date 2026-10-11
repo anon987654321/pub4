@@ -5,6 +5,7 @@ require "open3"
 require "time"
 require_relative "../io/lane_quota"
 require_relative "../io/lane_health"
+require_relative "../io/lane_selection"
 
 module Operator
   # One screen about /fix, read from what /fix already writes: the run journal
@@ -98,14 +99,14 @@ module Operator
       out
     end
 
-    # The first role-list lane that is neither dead nor a local model with its daemon down.
+    # The first catalogue lane that is neither dead nor a local model with its daemon down.
     def online_line
       health = ::Master::Io::LaneHealth
       daemon = nil
       down = lambda do |model|
         health.dead?(model) || (health.local_model?(model) && !(daemon = daemon.nil? ? health.ollama_up? : daemon))
       end
-      health.line(health.role_models, refuses: down)
+      health.line(::Master::Io::LaneSelection.catalogue, refuses: down)
     end
 
     def journal_runs

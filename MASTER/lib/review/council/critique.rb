@@ -2,7 +2,6 @@
 
 require_relative "tribunal"
 require_relative "../challenges"
-require_relative "../../fix/model_roles"
 require_relative "../../fix/taste_memory"
 
 module Master
@@ -16,7 +15,7 @@ module Master
       class Critique
         MODES = Modes::TABLE
 
-        def initialize(mode:, agent:, event_bus: nil, audio_path: nil, files: nil, visual_image: nil, visual_images: nil, visual_context: nil, briefing: nil, speak_personas: false)
+        def initialize(budget: nil, mode:, agent:, event_bus: nil, audio_path: nil, files: nil, visual_image: nil, visual_images: nil, visual_context: nil, briefing: nil, speak_personas: false)
           @mode = MODES.fetch(mode) { raise ArgumentError, "unknown critique mode: #{mode}" }
           @agent = agent
           @bus = event_bus
@@ -26,9 +25,12 @@ module Master
           @visual_context = visual_context
           @briefing = briefing.to_s.strip
           @speak_personas = speak_personas
+          @budget = budget
         end
 
-        def run = Master::Fix::ModelRoles.pinned(:critic) { run_panel }
+        # One council is one wall-clock budget (PassClock): a panel that has not
+        # finished by then has said what it will say.
+        def run = Master::Review::LLMDispatcher::PassClock.within(@budget) { run_panel }
 
         def run_panel
           preset = load_preset
@@ -113,6 +115,8 @@ module Master
         end
 
         def ideate(preset, feedback: nil)
+          return Master::Result.err(Master::Review::LLMDispatcher::PassClock.refusal, category: :timeout) if Master::Review::LLMDispatcher::PassClock.expired?
+
           Ideation.new(agent: @agent, event_bus: @bus).ideate(
             ideation_prompt(feedback),
             constraints: @mode[:constraints],

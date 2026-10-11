@@ -39,7 +39,18 @@ module Master
             sync { (@lanes[lane] || {}).fetch(:silent_until, 0.0) > now }
           end
 
-          # True only on the call that trips the lane, so the caller says it once.
+# A lane that blew a hard call deadline is silent at once for the cool-off:
+# twelve more calls at the full deadline would cost the run its hour.
+def silence(lane, reason: nil)
+  sync do
+    state = (@lanes[lane] ||= { failures: 0, silent_until: 0.0 })
+    state[:reason] = reason.to_s.strip unless reason.to_s.strip.empty?
+    state[:failures] = 0
+    state[:silent_until] = now + SILENCE_COOLOFF_S
+  end
+end
+
+# True only on the call that trips the lane, so the caller says it once.
           def record(answered, lane = ANY, reason: nil)
             sync do
               next clear(lane) if answered

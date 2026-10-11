@@ -6,7 +6,6 @@ require "json"
 require "time"
 require "yaml"
 require_relative "../ai/orientation"
-require_relative "model_roles"
 require_relative "../io/atomic_write"
 require_relative "../io/git_operations"
 require_relative "../review/scan/semantic_fingerprint"
@@ -49,7 +48,7 @@ module Master
 
         orientation = Master::AI::Orientation.render(root: @root, target:, depth: 2, max_entries: 80)
         base = prompt(orientation:, state:, target:, run_id:)
-        items = ModelRoles.pinned(:wisher) { Personas.collect(agent: @agent, base:, parse: method(:parse), normalize: method(:normalize)) }
+        items = Personas.collect(agent: @agent, base:, parse: method(:parse), normalize: method(:normalize))
         items = normalize(parse(@agent.ask(base))) if items.empty?
         items = items.first(MAX_NEW_ITEMS)
         ledger = load_ledger

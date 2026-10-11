@@ -1,0 +1,9 @@
+# Lane prefixes known to answer nothing right now (quota spent, or a CLI that
+# hangs); a lane here is never chosen. Remove an entry when the lane answers.
+# Io::LaneQuota reads this beside the deaths it learns from provider replies,
+# so every selection path asks one question: is this lane dead.
+schema: 1
+dead:
+  - codex-cli
+  - gemini
+  - ollama:glm

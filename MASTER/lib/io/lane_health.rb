@@ -11,7 +11,7 @@ module Master
   module Io
     # MASTER's model layer answers when any lane can. Remote lanes die of quota,
     # network or an expired login (LaneQuota knows when each is back); the last
-    # lane of every role list is a local Ollama model that needs neither. This
+    # lane of every tier is a local Ollama model that needs neither. This
     # module is the part that keeps that lane honest and says so when it is not:
     #
     #   ensure_ollama  starts `ollama serve` once when the daemon is down
@@ -44,7 +44,6 @@ module Master
 
       @mutex = Mutex.new
       @failed_at = nil
-      DATA = File.expand_path("../../data/model_roles.yml", __dir__)
       @clock = -> { Process.clock_gettime(Process::CLOCK_MONOTONIC) }
 
       attr_writer :clock
@@ -73,14 +72,8 @@ module Master
         @mutex.synchronize { attempt_start(base, up:, spawn:, binary:) }
       end
 
-      # Every model the role lists name, in order, once.
-      def role_models(path = DATA)
-        roles = YAML.safe_load_file(path)&.fetch("roles", nil) || {}
-        roles.values.flatten.map(&:to_s).uniq
-      end
-
-      # The first role-list model on a lane, for a probe of that lane.
-      def model_for_lane(lane, path = DATA) = role_models(path).find { |model| LaneQuota.lane_of(model) == lane }
+      # The first catalogue model on a lane, for a probe of that lane.
+      def model_for_lane(lane) = LaneSelection.catalogue.find { |model| LaneQuota.lane_of(model) == lane }
 
       def online_via(models, refuses: ->(model) { dead?(model) })
         Array(models).find { |model| !refuses.call(model) }

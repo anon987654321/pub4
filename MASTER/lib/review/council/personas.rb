@@ -5,7 +5,7 @@ module Master
     module Council
       module Personas
         Persona = Data.define(:name, :role, :bias, :prompt, :veto_role,
-                              :emphasizes, :temperature, :aliases, :question, :cognitive_lens, :model) do
+                              :emphasizes, :temperature, :aliases, :question, :cognitive_lens) do
           def veto? = veto_role == true
         end
 
@@ -16,7 +16,6 @@ module Master
           aliases: [].freeze,
           question: nil,
           cognitive_lens: nil,
-          model: nil,
         }.freeze
 
         DEFAULTS = [

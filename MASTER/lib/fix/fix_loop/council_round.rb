@@ -36,9 +36,9 @@ module Master
         # nil when there is nothing to argue about or nobody to argue with, so
         # the caller can treat "no council" and "council said nothing" alike.
         def run(files:, pass:, deadline:)
-          return if @agent.nil? || files.empty? || Time.now >= deadline
+          return if !council_enabled? || @agent.nil? || files.empty? || Time.now >= deadline
 
-          result = critique(files.first(FILES_PER_ROUND))
+          result = critique(files.first(FILES_PER_ROUND), budget: before_fixes_budget)
           return unless result&.ok?
 
           value = result.value!
@@ -55,7 +55,7 @@ module Master
         # Only the first clean streak pass asks, so the next pass can confirm the
         # result without paying for the same exploratory review twice.
         def improve(files:, pass:, deadline:)
-          return if @agent.nil? || files.empty? || Time.now >= deadline
+          return if !council_enabled? || @agent.nil? || files.empty? || Time.now >= deadline
 
           selected = rotating_files(files, pass)
           result = critique(selected)
@@ -112,7 +112,15 @@ module Master
           Prefer the smallest existing primitive that can enforce the property.
         TEXT
 
-        def critique(files)
+        def council_enabled? = Master::Review::LLMDispatcher::PassClock.council_enabled?
+
+        # The council ahead of the fixes is advisory: the fix stream starts within
+        # this many seconds whatever the panel has said.
+        def before_fixes_budget
+          [Master::Review::LLMDispatcher::PassClock.pass_budget_s, Integer(ENV.fetch("MASTER_COUNCIL_BEFORE_FIXES_S", "120"), exception: false) || 120].min
+        end
+
+        def critique(files, budget: nil)
           return Master::Result.ok(feedback: [], issues: [], cherry_picks: [], ideas: [], mode: :general) unless hard_critique_enabled?
 
           briefing = hard_briefing(files)
@@ -123,6 +131,7 @@ module Master
             files:,
             briefing:,
             speak_personas: true,
+            budget:,
           ).run
           unless result.ok?
             @bus&.publish("fix_loop:hard_critique_inconclusive", files: files.size, error: result.message.to_s[0, 180])

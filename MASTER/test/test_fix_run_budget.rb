@@ -116,11 +116,11 @@ class TestFixRunBudget < Minitest::Test
     line = run.beat
 
     assert_equal [line], @said
-    assert_match(/\Afix0: pass 2\/8 scan0 files 812\/2638 \(31%\) run_pulse\.rb fixes 1 ok 1 failed /, line)
+    assert_match(/\Afix0: pass 2\/8 scan0 phase scan files 812\/2638 \(31%\) run_pulse\.rb fixes 1 ok 1 failed /, line)
     assert_includes line, "lane claude-cli:claude-opus-5-5 last call 2412s ago"
     assert_includes line, "tokens = 342191 (342K) elapsed = 2412s (40m12s)"
     assert_match(/ eta (~\d+m|unknown) load \d+\.\d\z/, line)
-    assert_operator line.length, :<, 195 # long lane ids and a six-digit token count are the worst case
+    assert_operator line.length, :<, 215 # long lane ids, a six-digit token count and a named phase are the worst case
   end
 
   def test_a_blocked_model_call_names_its_lane_and_the_wait

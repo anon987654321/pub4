@@ -154,7 +154,10 @@ module Master
           return exhausted_error if Io::QuotaGate.blocked? && !local_floor_available?
 
           context = reflexion_context(context)
+          @panel_size = active.size
           feedback = collect_feedback(active, code, context, image:)
+          return deadline_result(feedback) if Master::Review::LLMDispatcher::PassClock.expired?
+
           speak_persona_feedback(feedback) if @voice_personas
           quorum = quorum_error(feedback)
           return quorum if quorum
@@ -175,6 +178,16 @@ module Master
         end
 
         private
+
+        # The council ran out of clock. Whoever answered is the verdict; the pass
+        # goes on to its fixes instead of waiting for the rest.
+        def deadline_result(feedback)
+          Master::Trace::Dmesg.status("council0", "skipped, deadline #{Master::Review::LLMDispatcher::PassClock.budget_s || "cancelled"}s (#{feedback.size} of #{@panel_size} personas answered)")
+          @bus&.publish(:council_timeout, completed: feedback.size, total: @panel_size)
+          return Result.err("council: skipped, deadline (0 of #{@panel_size} answered)", category: :timeout) if feedback.empty?
+
+          Result.ok(feedback)
+        end
 
         def review_round(code, context, round, maximum, image: nil)
           @bus&.publish(:council_round_start, round:, max: maximum)
@@ -333,12 +346,12 @@ module Master
         def collect_parallel(code:, context:, personas: @personas, image: nil)
           return [] if circuit_open? || Io::QuotaGate.blocked?
 
-          deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + TOTAL_BUDGET_S
+          deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + [TOTAL_BUDGET_S, Master::Review::LLMDispatcher::PassClock.remaining || TOTAL_BUDGET_S].min
           personas.each_slice(MAX_CONCURRENT).each_with_object([]) do |batch, feedback|
             # A batch already in flight cannot be recalled, but the batches
             # after it can: one confirmed spend limit ends the round rather
             # than buying the same refusal 22 more times.
-            break feedback if Io::QuotaGate.blocked?
+            break feedback if Io::QuotaGate.blocked? || Master::Review::LLMDispatcher::PassClock.expired?
 
             threads = batch.map do |persona|
               Thread.new { ask_persona(persona:, code:, context:, image:) }
@@ -350,7 +363,7 @@ module Master
         def collect_sequential(code:, context:, personas: @personas, image: nil)
           deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + TOTAL_BUDGET_S
           personas.each_with_object([]) do |persona, feedback|
-            break feedback if Io::QuotaGate.blocked?
+            break feedback if Io::QuotaGate.blocked? || Master::Review::LLMDispatcher::PassClock.expired?
             break feedback if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline || circuit_open?(persona)
 
             turn_context = feedback.empty? ? context : "#{context}\n\nprior turns:\n#{format_prior_turns(feedback)}"
@@ -360,11 +373,11 @@ module Master
         end
 
         # Only genuinely blocked if every model this call could fall back to
-        # has an open breaker. A persona with its own fixed model override
-        # has no fallback of its own; a persona without one shares the
-        # agent's full fallback chain -- an unrelated model at the front of
-        # that chain being down must not abort deliberation for every
-        # persona when a healthy fallback further down is still usable.
+        # has an open breaker. A persona speaks through a lane chosen at call
+        # time (lane_for) but fails over along the agent's full chain -- an
+        # unrelated model at the front of that chain being down must not abort
+        # deliberation for every persona when a healthy fallback further down
+        # is still usable.
         def circuit_open?(persona = nil)
           breaker = @agent.respond_to?(:circuit_breaker) ? @agent.circuit_breaker : nil
           return false unless breaker
@@ -385,8 +398,6 @@ module Master
             return Array(router.local_models) + Array(router.local_server_models) if router
           end
 
-          override = persona&.respond_to?(:model) ? persona.model : nil
-          return [override] if override
           return Array(@agent.candidate_models) if @agent.respond_to?(:candidate_models)
 
           @agent.respond_to?(:model) ? Array(@agent.model) : []
@@ -398,8 +409,7 @@ module Master
           # when the first comes back refused can be spared their own refusal.
           return quota_skipped(persona) if Io::QuotaGate.blocked?
 
-          model = persona.respond_to?(:model) ? persona.model : nil
-          model = nil if ENV["MASTER_LOCAL_ONLY"] == "1"
+          model = lane_for(persona)
           temperature = persona.respond_to?(:temperature) ? persona.temperature : nil
           prompt = build_prompt(persona:, code:, context:)
           response = if model
@@ -409,10 +419,24 @@ module Master
                      end
           entry = persona_entry(persona, response, model)
           @bus&.publish(:council_feedback, entry)
+          answered = @persona_failures_lock.synchronize { @answered = @answered.to_i + 1 }
+          @bus&.publish("council:progress", answered:, total: @panel_size || @personas.size)
           entry
         rescue StandardError => e
           note_persona_failure(persona, e)
           nil
+        end
+
+        # The lane this persona speaks through, resolved when it is asked: the
+        # panel is spread over the live providers (Io::LaneSelection.spread),
+        # dead lanes and free models excluded while a live lane exists. nil
+        # leaves the choice to the agent, as for an agent with no lane list.
+        def lane_for(persona)
+          return if ENV["MASTER_LOCAL_ONLY"] == "1" || !@agent.respond_to?(:candidate_models)
+
+          @persona_failures_lock.synchronize { @lane_candidates ||= Array(@agent.candidate_models(task_type: :review)) }
+          names = (@personas.map(&:name) | [persona.name])
+          Io::LaneSelection.spread(names, @lane_candidates)[persona.name]
         end
 
         # A persona that never got asked. Tallied apart from the ones that did,
@@ -432,7 +456,7 @@ module Master
           @bus&.publish("council:persona_error", persona: persona.name, error: error.message)
           limited = Io::QuotaGate.trip_if_limited(
             source: "council persona #{persona.name}", message: error.message,
-            model: (persona.model if persona.respond_to?(:model))
+            model: lane_for(persona)
           )
           unless limited
             Master::Trace::Dmesg.status(

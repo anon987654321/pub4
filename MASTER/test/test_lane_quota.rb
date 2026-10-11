@@ -107,12 +107,12 @@ class TestLaneQuota < Minitest::Test
     assert_equal :manual, Quota.until_for("ollama:glm-4", manual:)
   end
 
-  def test_roles_skip_a_quota_dead_lane_without_a_hand_entry
-    cfg = { "roles" => { "critic" => %w[agy:auto claude-cli:claude-sonnet-5-5], "fixer" => %w[claude-cli:claude-opus-5-5] } }
-    assert_equal "agy:auto", Master::Fix::ModelRoles.assign(env: {}, alive: ->(_) { true }, cfg:).critic
+  def test_selection_skips_a_quota_dead_lane_without_a_hand_entry
+    models = %w[agy:auto claude-cli:claude-sonnet-5-5]
+    assert_equal "agy:auto", Master::Io::LaneSelection.first_live(models)
 
     Quota.note("agy:auto", AGY_REPLY)
-    assert_equal "claude-cli:claude-sonnet-5-5", Master::Fix::ModelRoles.assign(env: {}, alive: ->(_) { true }, cfg:).critic
+    assert_equal "claude-cli:claude-sonnet-5-5", Master::Io::LaneSelection.first_live(models)
   end
 
   def test_the_real_data_file_names_dead_lanes_as_strings
