@@ -38,7 +38,7 @@ module Deploy
       return GateResult.fail("BrowserAgent tool missing") unless File.file?(source)
 
       content = File.read(source)
-      evasion_patterns = /navigator\\.webdriver|AutomationControlled|browse_randomly|humanize_mouse|stealth_script|user_agents\\s*:/i
+      evasion_patterns = /navigator\.webdriver|AutomationControlled|browse_randomly|humanize_mouse|stealth_script|user_agents\s*:/i
       browser_config = File.join(root, "data", "browser_agents.yml")
       sources = [content, (File.read(browser_config) if File.file?(browser_config))].compact
       if sources.any? { |text| text.match?(evasion_patterns) }
