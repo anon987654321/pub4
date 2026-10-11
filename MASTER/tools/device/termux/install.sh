@@ -54,13 +54,7 @@ chmod 700 "$HOME/.local/bin/master"
 # Earlier installer versions escaped the dollar signs, which wrote literal
 # $HOME/$PATH into .bashrc and could discard the inherited PATH. Remove only
 # that exact generated line before ensuring the correct export is present.
-if [ -f "$HOME/.bashrc" ]; then
-  path_tmp="$HOME/.bashrc.master.$"
-  awk '$0 != "export PATH=\"\\$HOME/.local/bin:\\$PATH\"" { print }' "$HOME/.bashrc" > "$path_tmp"
-  cat "$path_tmp" > "$HOME/.bashrc"
-  rm -f "$path_tmp"
-fi
-
+ruby -e 'path = File.join(ENV.fetch("HOME"), ".bashrc"); if File.file?(path); malformed = %q{export PATH="\$HOME/.local/bin:\$PATH"}; lines = File.readlines(path); filtered = lines.reject { |line| line.chomp == malformed }; File.write(path, filtered.join) if filtered.length != lines.length; end'
 if ! grep -Fq 'export PATH="$HOME/.local/bin:$PATH"' "$HOME/.bashrc" 2>/dev/null; then
   printf '\nexport PATH="$HOME/.local/bin:$PATH"\n' >> "$HOME/.bashrc"
 fi
