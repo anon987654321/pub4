@@ -117,7 +117,7 @@ module Operator
     end
 
     # What each file is: its text, its minified text, its block, and whether it may be inlined.
-    def files_for(host, paths, tests:)
+    def files_for(host, paths, tests:, full: false)
       files = []
       omitted = Hash.new { |hash, key| hash[key] = [] }
 
@@ -128,29 +128,29 @@ module Operator
         reason = omit_reason(path)
         next omitted[reason] << path if reason
 
-        files << file_entry(path, absolute, tests:)
+        files << file_entry(path, absolute, tests:, full:)
       end
 
       [rank_centrality(files), omitted]
     end
 
-    def file_entry(path, absolute, tests:)
+    def file_entry(path, absolute, tests:, full: false)
       original = File.read(absolute, encoding: "UTF-8", invalid: :replace, undef: :replace)
-      minified = minify(path, original)
-      inlinable = minified.bytesize <= FILE_CAP && (tests || !test_path?(path))
+      minified = full ? original : minify(path, original)
+      inlinable = full || (minified.bytesize <= FILE_CAP && (tests || !test_path?(path)))
 
       { path:, original:, minified:, block: block(path, minified), inlinable: }
     end
 
     # What one write is working on: where, what, how much room, and what came of it.
-    Job = Struct.new(:host, :tree, :budget, :only, :tests, :files, :omitted, :chosen, keyword_init: true)
+    Job = Struct.new(:host, :tree, :budget, :only, :tests, :full, :files, :omitted, :chosen, keyword_init: true)
 
     def header(job, sha)
       out = +"# #{job.tree} — source snapshot for another model\n\n"
       out << "Pack: tree=#{job.tree} git=#{sha} files=#{job.files.size} inlined=#{job.chosen.size} "
       out << "map_only=#{job.files.size - job.chosen.size} omitted=#{job.omitted.values.sum(&:size)} "
-      out << "budget=#{job.budget}\n\n"
-      out << explanation(job.tree)
+      out << "budget=#{job.full ? 'full' : job.budget}\n\n"
+      out << (job.full ? full_explanation : explanation(job.tree))
       out << omitted_note(job.omitted)
     end
 
@@ -158,6 +158,16 @@ module Operator
       return "" if omitted.empty?
 
       "Omitted: #{omitted.sort.map { |reason, list| "#{reason} (#{list.size})" }.join(', ')}.\n\n"
+    end
+
+    def full_explanation
+      [
+        "The full source: every tracked text file of the tree, byte for byte, tests included.",
+        "**Map** lists every file: name [lines] — purpose | what it declares. **Source** holds each file whole,",
+        "in reading order (the constitution and entry points first, tests last). Only files with no reading",
+        "value are left out, and the Omitted line names them. For a smaller reading copy use",
+        "`bin/operator snapshot --budget=BYTES`.\n\n",
+      ].join(" ")
     end
 
     def explanation(tree)
@@ -190,7 +200,7 @@ module Operator
     def write(host, tree, io: $stdout, **options)
       clear(host, tree, io:)
       job = Job.new(host:, tree:, budget: options.fetch(:budget, DEFAULT_BUDGET), only: options[:only],
-                    tests: options.fetch(:tests, false))
+                    tests: options.fetch(:tests, false), full: options.fetch(:full, false))
       paths = paths_for(host, tree, only: job.only)
       return nothing_matched(tree, io) if paths.empty?
 
@@ -206,13 +216,13 @@ module Operator
     # budget leaves after the header and the map, which both depend on the choice by a few bytes.
     def compose(job, paths)
       sha = job.host.head_sha
-      job.files, job.omitted = files_for(job.host, paths, tests: job.tests)
+      job.files, job.omitted = files_for(job.host, paths, tests: job.tests, full: job.full)
       job.chosen = Set.new
-      room = job.budget - header(job, sha).bytesize - SnapshotMap.map_text(job.files, job.chosen).bytesize - 40
+      room = job.full ? Float::INFINITY : job.budget - header(job, sha).bytesize - SnapshotMap.map_text(job.files, job.chosen).bytesize - 40
       job.chosen = choose(job.files, room)
       text = header(job, sha)
       text << "## Map\n\n#{SnapshotMap.map_text(job.files, job.chosen)}\n## Source\n\n"
-      job.files.select { |f| job.chosen.include?(f[:path]) }.each { |f| text << f[:block] << "\n" }
+      job.files.sort_by { |f| reading_order(f) }.select { |f| job.chosen.include?(f[:path]) }.each { |f| text << f[:block] << "\n" }
 
       text
     end
@@ -224,7 +234,7 @@ module Operator
     end
 
     def report(job, path, text, io:)
-      over = text.bytesize > job.budget ? " — OVER the budget: the map is too large, narrow with --only" : ""
+      over = !job.full && text.bytesize > job.budget ? " — OVER the budget: the map is too large, narrow with --only" : ""
       Master::Trace::Dmesg.status(
         "snapshot0",
         "#{job.tree}, #{File.basename(path)}, #{text.bytesize} bytes (~#{text.bytesize / 4000}K tokens), " \

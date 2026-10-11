@@ -406,7 +406,7 @@ module Operator
       trees = TREES if trees.empty?
       return run(trees, mirror: true) if mirror
 
-      options = { tests: !tests.nil? }
+      options = { tests: !tests.nil?, full: budget.nil? }
       options[:budget] = budget if budget
       options[:only] = only if only
       run(trees, **options)

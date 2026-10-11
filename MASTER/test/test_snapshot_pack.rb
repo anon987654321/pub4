@@ -186,4 +186,31 @@ end
       Thread.current[:snapshot_repo] = nil
     end
   end
+
+  # /snapshot writes the full source: comments, tests and files over FILE_CAP all come in whole.
+  def test_full_mode_inlines_every_text_file_byte_for_byte
+    Dir.mktmpdir do |repo|
+      Thread.current[:snapshot_repo] = repo
+      FileUtils.mkdir_p(File.join(repo, "DEMO/lib"))
+      FileUtils.mkdir_p(File.join(repo, "DEMO/test"))
+      source = "# Does a.\n# A second comment.\n\nputs 1\n"
+      big = "x = 1\n" * (Pack::FILE_CAP / 6 + 10)
+      File.write(File.join(repo, "DEMO/lib/a.rb"), source)
+      File.write(File.join(repo, "DEMO/lib/big.rb"), big)
+      File.write(File.join(repo, "DEMO/test/a_test.rb"), "# a test\nassert true\n")
+      File.write(File.join(repo, "DEMO/Gemfile.lock"), "locked\n")
+
+      Pack.write(Host, "DEMO", io: StringIO.new, full: true)
+      text = File.read(File.join(repo, "snapshot_DEMO.md"))
+
+      assert_includes text, source, "comments and blank lines stay"
+      assert_includes text, big, "a file over FILE_CAP is inlined whole"
+      assert_includes text, "# a test\nassert true", "tests are source"
+      refute_includes text, "locked", "a lockfile is still left out, and named"
+      assert_includes text, "budget=full"
+      assert_includes text, "lockfile (1)"
+    ensure
+      Thread.current[:snapshot_repo] = nil
+    end
+  end
 end

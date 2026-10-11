@@ -201,11 +201,11 @@ module Master
         arg = arg_for(ctx)
         return "usage: /snapshot [no arguments]" unless arg.empty?
 
-        paths = ::Operator::Snapshot::TREES.flat_map { |tree| Array(::Operator::Snapshot.write(tree)) }
+        paths = ::Operator::Snapshot::TREES.flat_map { |tree| Array(::Operator::Snapshot.write(tree, full: true)) }
         paths.map do |path|
           relative = path.delete_prefix("#{Master::REPO_ROOT}/")
           bytes = File.size(path)
-          "snapshot0: wrote root/#{relative} (#{bytes} bytes, ~#{bytes / 4000}K tokens; budget #{::Operator::SnapshotPack::DEFAULT_BUDGET})"
+          "snapshot0: wrote root/#{relative} (#{bytes} bytes, ~#{bytes / 4000}K tokens; full source)"
         end.join("\n")
       rescue StandardError => e
         "snapshot0: failed — #{e.class}: #{e.message}"
