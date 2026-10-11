@@ -12,6 +12,7 @@ module Master
         @max_age = max_age_seconds || DEFAULT_MAX_AGE_SECONDS
         @bus = event_bus
         @reads = {}
+        @contents = Io::ContentCache.new
         @mutex = Mutex.new
       end
 
@@ -20,6 +21,7 @@ module Master
         body = content || File.read(resolved)
         entry = Entry.new(path: resolved, sha256: Digest::SHA256.hexdigest(body), read_at: Time.now.to_f)
         @mutex.synchronize { @reads[resolved] = entry }
+        @contents.record(resolved, entry.sha256)
         @bus&.publish("ground_truth:read", path: resolved, sha256: entry.sha256)
         entry
       rescue StandardError => e
@@ -52,7 +54,7 @@ module Master
         return false unless entry
         return true unless File.exist?(resolved)
 
-        Digest::SHA256.hexdigest(File.read(resolved)) != entry.sha256
+        @contents.digest(resolved) != entry.sha256
       end
 
       def assert_fresh!(path, reason: "claim_task_complete")
@@ -64,6 +66,7 @@ module Master
 
       def reset!
         @mutex.synchronize { @reads.clear }
+        @contents.clear
       end
     end
   end
