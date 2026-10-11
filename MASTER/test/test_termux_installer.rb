@@ -25,6 +25,15 @@ class TermuxInstallerTest < Minitest::Test
     assert_includes source, 'ROOT="${HOME}/pub4"'
   end
 
+  def test_path_setup_appends_expandable_shell_variables
+    path_line = source.lines.find { |line| line.include?("printf") && line.include?(".local/bin") }
+
+    refute_nil path_line
+    refute_includes path_line, '\$HOME'
+    refute_includes path_line, '\$PATH'
+    assert_includes path_line, 'PATH="$HOME/.local/bin:$PATH"'
+  end
+
   def test_launcher_forwards_arguments_without_shell_interpolation
     assert_includes source, 'exec ruby bin/cli "$@"'
   end
