@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "../core/capabilities"
+require_relative "../core"
 require_relative "../ground/pledge"
 
 module Master

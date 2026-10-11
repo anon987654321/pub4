@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../ground/pledge"
-require_relative "../core/capabilities"
+require_relative "../core"
 require_relative "../voice/aesthetic"
 require_relative "../trace/dmesg"
 
