@@ -101,7 +101,7 @@ module Master
         @pass_runner = build_pass_runner(laws:, agent:, scanner:, root:, bus:, learnings:,
           ground_truth:, preserve_user_intent:, law_resolver:, homeostat: @homeostat,
           discipline: @convergence_discipline, wishlist: @wishlist)
-        @sweeps = build_sweeps(agent:, root:, bus:)
+        @sweeps = build_sweeps(agent:, root:, bus:, ground_truth:, preserve_user_intent:)
       end
 
       # A halt stops the runs nobody asked for, the background runner and the
@@ -313,10 +313,12 @@ module Master
 
       # The look back over the tree after the repair passes: structural consolidation,
       # then naming cleanup. Both work from the repository root.
-      def build_sweeps(agent:, root:, bus:)
+      def build_sweeps(agent:, root:, bus:, ground_truth: nil, preserve_user_intent: nil)
         repo_root = File.basename(root) == "MASTER" ? File.expand_path("..", root) : root
-        restructure = RestructureSweep.new(agent:, repo_root:, bus:, transformation_plan: @transformation_plan)
-        [restructure, RenameSweep.new(agent:, repo_root:, bus:)]
+        restructure = RestructureSweep.new(
+          agent:, repo_root:, bus:, transformation_plan: @transformation_plan, ground_truth:, preserve_user_intent:
+        )
+        [restructure, RenameSweep.new(agent:, repo_root:, bus:, ground_truth:, preserve_user_intent:)]
       end
 
       # The run once its journal is open and a mission records it: resume what

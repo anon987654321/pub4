@@ -30,6 +30,7 @@ class TestRestructure < Minitest::Test
     sh("git", "add", "-A", chdir: @repo)
     sh("git", "commit", "-m", "first", chdir: @repo)
     sh("git", "push", "-u", "origin", "main", chdir: @repo)
+    File.open(File.join(@repo, ".git", "info", "exclude"), "a") { |file| file.puts("/.master/") }
   end
 
   def teardown = FileUtils.remove_entry(@tmp)
@@ -128,8 +129,22 @@ class TestRestructure < Minitest::Test
     assert_equal original, read("MASTER/lib/tiny.rb")
   end
 
+  def test_a_failed_delivery_safety_check_rolls_back_the_whole_plan
+    Operator::RatchetSponsor.stub(:validate!, ->(**_kwargs) { raise "ratchet sponsorship required" }) do
+      result = restructure.call(split_plan, message: "refactor: split Big", review: ->(_diff) {})
+      refute result.ok?
+      assert_match(/delivery safety: RuntimeError: ratchet sponsorship required/, result.message)
+    end
+
+    assert_equal "TINY = 1\n", read("MASTER/lib/tiny.rb")
+    refute File.exist?(File.join(@repo, "MASTER/lib/big/second.rb"))
+    assert_empty sh("git", "status", "--porcelain", chdir: @repo).strip
+  end
+
   def test_an_approved_restructure_is_committed_and_pushed
-    result = restructure.call(split_plan, message: "refactor: split Big", review: ->(_diff) {})
+    result = Operator::RatchetSponsor.stub(:validate!, true) do
+      restructure.call(split_plan, message: "refactor: split Big", review: ->(_diff) {})
+    end
 
     assert result.ok?, -> { result.message }
     refute File.exist?(File.join(@repo, "MASTER/lib/tiny.rb"))
@@ -139,7 +154,9 @@ class TestRestructure < Minitest::Test
   end
 
   def test_an_approved_restructure_returns_before_and_after_hash_evidence
-    result = restructure.call(split_plan, message: "refactor: split Big", review: ->(_diff) {})
+    result = Operator::RatchetSponsor.stub(:validate!, true) do
+      restructure.call(split_plan, message: "refactor: split Big", review: ->(_diff) {})
+    end
 
     assert result.ok?, -> { result.message }
     evidence = result.value!.fetch(:evidence)

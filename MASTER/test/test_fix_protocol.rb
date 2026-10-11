@@ -8,6 +8,22 @@ require_relative "../lib/master"
 require_relative "../lib/fix/protocol"
 
 class TestFixProtocol < Minitest::Test
+  def test_structural_delivery_paths_share_fix_safety_and_delivery_contracts
+    restructure = File.read(File.join(Master::ROOT, "lib/fix/restructure.rb"), encoding: "UTF-8")
+    rename = File.read(File.join(Master::ROOT, "lib/fix/file_rename.rb"), encoding: "UTF-8")
+    fix_loop = File.read(File.join(Master::ROOT, "lib/fix/fix_loop.rb"), encoding: "UTF-8")
+
+    [restructure, rename].each do |source|
+      assert_includes source, "Operator::RatchetSponsor.validate!"
+      assert_includes source, "Ground::PreserveUserIntent"
+      assert_includes source, "@ground_truth"
+      assert_includes source, "@git.push"
+      assert_includes source, "@known_good.promote!"
+      assert_includes source, "delivery pending"
+    end
+    assert_includes fix_loop, "ground_truth:, preserve_user_intent:"
+  end
+
   def test_instruction_distinguishes_fix_from_dry_run
     text = Master::Fix::Protocol.instruction
 

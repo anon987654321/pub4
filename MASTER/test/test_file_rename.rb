@@ -30,6 +30,7 @@ class TestFileRename < Minitest::Test
     system("git", "-C", @remote, "init", "--bare", "-q", "--initial-branch=main")
     git("remote", "add", "origin", @remote)
     git("push", "-q", "-u", "origin", "main")
+    File.open(File.join(@root, ".git", "info", "exclude"), "a") { |file| file.puts("/.master/") }
   end
 
   def teardown
@@ -53,6 +54,18 @@ class TestFileRename < Minitest::Test
     assert_empty git("status", "--porcelain").strip
     assert_match(/_zen_thing\.scss is _thing\.scss/, git("log", "-1", "--format=%B"))
     assert_equal git("rev-parse", "HEAD").strip, git("rev-parse", "origin/main").strip
+  end
+
+  def test_a_failed_delivery_safety_check_puts_everything_back
+    Operator::RatchetSponsor.stub(:validate!, ->(**_kwargs) { raise "ratchet sponsorship required" }) do
+      result = rename.call(PARTIAL, "_thing.scss", reason: "test")
+      refute result.ok?
+      assert_match(/delivery safety: RuntimeError: ratchet sponsorship required/, result.message)
+    end
+
+    assert File.exist?(File.join(@root, PARTIAL))
+    refute File.exist?(File.join(@root, "RAILS/__shared/app/assets/stylesheets/_thing.scss"))
+    assert_empty git("status", "--porcelain").strip
   end
 
   def test_a_failed_proof_puts_everything_back

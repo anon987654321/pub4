@@ -10,6 +10,10 @@ require_relative "restructure/proof"
 require_relative "restructure/master_proof"
 require_relative "restructure/rails_proof"
 require_relative "restructure/script_proof"
+require_relative "../ground/preserve_user_intent"
+require_relative "../ground/known_good"
+require_relative "../operator/ratchet_sponsor"
+require_relative "../io/exec"
 
 module Master
   module Fix
@@ -47,12 +51,16 @@ module Master
         end].uniq
       end
 
-      def initialize(repo_root:, tree: "MASTER", git: nil, proof: nil, transformation_plan: nil)
+      def initialize(repo_root:, tree: "MASTER", git: nil, proof: nil, transformation_plan: nil,
+                     ground_truth: nil, preserve_user_intent: nil)
         @root = repo_root
         @tree = tree
         @git = git || Io::GitOperations.new(repo_root)
         @proof = proof || Proof.for(tree, repo_root)
         @transformation_plan = transformation_plan || TransformationPlan.new(root: Master::ROOT)
+        @ground_truth = ground_truth
+        @preserve_user_intent = preserve_user_intent || Ground::PreserveUserIntent.new(root: repo_root)
+        @known_good = Ground::KnownGood.new(root: repo_root)
       end
 
       # review takes the applied diff and answers nil to approve, or a reason.
@@ -70,7 +78,9 @@ module Master
         before = @proof.baseline(plan)
         originals = snapshot(plan)
         apply(plan)
-        failure = review.call(diff(plan, originals)) || @proof.failure(plan, before)
+        reviewed_diff = diff(plan, originals)
+        failure = review.call(reviewed_diff) || @proof.failure(plan, before)
+        failure ||= delivery_safety_failure(plan, message, reviewed_diff)
         return undo(originals, failure) if failure
 
         commit(plan, message, evidence: preservation_evidence(plan, originals))
@@ -176,11 +186,40 @@ module Master
         }
       end
 
+      # Multi-file proposals do not get a weaker delivery boundary than
+      # single-file repairs. Check the complete diff before staging, and roll
+      # the files back together when any check is inconclusive.
+      def delivery_safety_failure(plan, message, diff_text)
+        Operator::RatchetSponsor.validate!(root: @root, changed_paths: plan.paths)
+        preserved = @preserve_user_intent&.assert_preserved!(diff_text, message:)
+        return preserved.message if preserved&.err?
+
+        stale = if @ground_truth
+                  plan.paths.select { |path| path.end_with?(".rb") }
+                      .reject { |path| @ground_truth.fresh?(File.join(@root, path)) }
+                else
+                  []
+                end
+        stale.empty? ? nil : "ground_truth: stale read required for #{stale.join(", ")} before restructure commit"
+      rescue StandardError => e
+        "delivery safety: #{e.class}: #{e.message}"
+      end
       def commit(plan, message, evidence:)
         @git.git!("add", "-A", "--", *plan.paths)
         @git.git!("commit", "-m", message, "-m", Master::Core::World::COMMIT_TRAILER, "--", *plan.paths)
-        @git.push
-        Result.ok(summary: plan.summary, files: plan.paths.size, head: @git.head, evidence:)
+        head = @git.head
+        begin
+          @git.push
+        rescue StandardError => e
+          return Result.err("restructure committed but delivery is pending: #{e.message} (commit #{head})",
+                            category: :infrastructure)
+        end
+        ahead, = @git.ahead_behind
+        return Result.err("restructure committed but not delivered: #{ahead} commit(s) remain ahead (commit #{head})",
+                          category: :infrastructure) unless ahead.zero?
+
+        @known_good.promote!(commit: head, paths: plan.paths)
+        Result.ok(summary: plan.summary, files: plan.paths.size, head:, evidence:)
       end
 
       # The whole change as one unified diff, new and deleted files included.
