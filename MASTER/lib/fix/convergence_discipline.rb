@@ -3,6 +3,8 @@
 require "digest"
 require "json"
 require_relative "../cognition/intelligence"
+require_relative "../cognition/state"
+require_relative "../cognition/self_model"
 
 module Master
   module Fix
@@ -45,8 +47,9 @@ module Master
         "observation_to_mutation_ratio" => 10,
       }.freeze
 
-      def initialize(root:, bus: nil)
+      def initialize(root:, bus: nil, cognition_root: nil)
         @root = File.expand_path(root)
+        @cognition_root = File.expand_path(cognition_root || root)
         @bus = bus
         @history = []
         @best_state = nil
@@ -386,11 +389,29 @@ module Master
         laws = Array(findings).map { |finding| finding[:law].to_s.downcase }
         return :adversarial if laws.any? { |law| law.include?("security") || law.include?("injection") || law.include?("auth") }
 
+        historical_strategy = measured_repair_strategy
+        return :adversarial if historical_strategy == :adversarial
+
         languages = Array(files).map { |path| File.extname(path).downcase }.reject(&:empty?).uniq
         return :ensemble if languages.size > 1 || Array(files).size > limits["working_memory_items"].to_i
+        return :ensemble if historical_strategy == :ensemble
         return :incremental if Array(findings).size > limits["decision_choices"].to_i
 
         :consensus
+      end
+
+      # Only a structurally valid, restored state with enough labelled outcomes
+      # may change council strategy. Missing, corrupt, or sparse history is not a
+      # negative or positive signal; the established default remains in force.
+      def measured_repair_strategy
+        path = File.join(@cognition_root, Master::Cognition::State::PATH)
+        state = Master::Cognition::State.load(path)
+        return unless state.load_status == "restored"
+
+        assessment = Master::Cognition::SelfModel.new.decision_posture(state.self_model, capability: "code_repair")
+        assessment[:strategy] if assessment[:posture] == :measured
+      rescue StandardError
+        nil
       end
 
       def remember_reasoning(pass:, findings:, files:, progressed:, top:)

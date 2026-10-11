@@ -92,8 +92,33 @@ workstreams:
   - id: memory_governance
     state: partial
     title: Durable memory provenance, contradiction and forgetting
-    implementation: MASTER/lib/core/memory
-    proof: MASTER/test
+    implementation: MASTER/lib/ground/memory
+    proof: MASTER/test/test_memory.rb
+  - id: task_scoped_prediction
+    state: partial
+    title: Keep event prediction streams separate across correlated tasks
+    implementation: MASTER/lib/cognition/prediction.rb
+    proof: MASTER/test/test_cognition.rb
+  - id: prediction_evaluation
+    state: partial
+    title: Compare contextual event prediction with a shared-stream baseline using walk-forward scoring
+    implementation: MASTER/lib/cognition/prediction.rb
+    proof: MASTER/test/test_cognition.rb
+  - id: measured_repair_outcomes
+    state: partial
+    title: Feed terminal /fix outcomes into the evidence-based self-model
+    implementation: MASTER/lib/fix/fix_loop.rb
+    proof: MASTER/test/test_fix_convergence.rb
+  - id: self_model_calibration
+    state: partial
+    title: Measure capability outcomes and confidence calibration from explicit evidence
+    implementation: MASTER/lib/cognition/self_model.rb
+    proof: MASTER/test/test_cognition_affect.rb
+  - id: cognition_measurement
+    state: partial
+    title: Report workspace activity and saved-state restoration completeness without consciousness claims
+    implementation: MASTER/lib/cognition/mind.rb
+    proof: MASTER/test/test_cognition.rb
   - id: model_laboratory
     state: landed
     title: Provider/model outcome history and routing evidence

@@ -2,6 +2,7 @@
 
 require_relative "test_helper"
 require "tmpdir"
+require "yaml"
 
 # The cognitive layer, held to the two things that were wrong in its first draft
 # and would each have made it look wired while doing nothing.
@@ -144,8 +145,166 @@ class TestCognition < Minitest::Test
     assert_equal "tool:before", model.expected(predictions, event: "chat:message")
   end
 
-  # And the expectation survives the process, which the recurrence clock could
-  # not: it lived in an ivar and the state file held no trace of it.
+  # Correlated task streams prevent unrelated concurrent work from teaching one
+  # another's event transitions.
+  def test_prediction_streams_do_not_cross_train_different_tasks
+    model = Cognition::Prediction.new
+    predictions = Cognition::State.new({}).predictions
+
+    6.times do
+      model.observe!(predictions, event: "repair:start", context: "task-a")
+      model.observe!(predictions, event: "test:pass", context: "task-a")
+      model.observe!(predictions, event: "repair:start", context: "task-b")
+      model.observe!(predictions, event: "test:fail", context: "task-b")
+    end
+
+    assert_equal "test:pass", model.expected(predictions, event: "repair:start", context: "task-a")
+    assert_equal "test:fail", model.expected(predictions, event: "repair:start", context: "task-b")
+    assert_nil model.expected(predictions, event: "repair:start"), "scoped evidence must not leak into the legacy stream"
+    assert_operator predictions.fetch("streams").size, :<=, Cognition::Prediction::MAX_STREAMS
+  end
+
+  def test_walk_forward_evaluation_measures_task_scope_against_shared_stream
+    training = []
+    testing = []
+    16.times do
+      training.concat([
+        { context: "task-a", event: "repair:start" },
+        { context: "task-b", event: "repair:start" },
+        { context: "task-a", event: "test:pass" },
+        { context: "task-b", event: "test:fail" },
+      ])
+    end
+    8.times do
+      testing.concat([
+        { context: "task-a", event: "repair:start" },
+        { context: "task-b", event: "repair:start" },
+        { context: "task-a", event: "test:pass" },
+        { context: "task-b", event: "test:fail" },
+      ])
+    end
+
+    scoped = Cognition::Prediction.evaluate(training:, testing:, scoped: true)
+    shared = Cognition::Prediction.evaluate(training:, testing:, scoped: false)
+
+    assert_equal :measured, scoped[:state]
+    assert_equal :walk_forward, scoped[:protocol]
+    assert_equal 1.0, scoped[:top1_accuracy]
+    assert_operator scoped[:top1_accuracy], :>, shared[:top1_accuracy]
+    assert_equal 32, scoped[:attempts]
+  end
+
+  def test_walk_forward_evaluation_is_inconclusive_without_predictive_context
+    report = Cognition::Prediction.evaluate(training: [], testing: [{ context: "task-a", event: "repair:start" }])
+
+    assert_equal :inconclusive, report[:state]
+    assert_nil report[:top1_accuracy]
+  end
+
+  def test_fix_loop_events_train_the_same_stream_and_record_observed_outcome
+    Dir.mktmpdir("cognition-fix-outcome") do |root|
+      bus = Bus.new
+      mind = Cognition::Mind.new(root:, bus:)
+      bus.publish("fix_loop:pass_start", run_id: "run-1", pass: 1, file_count: 4)
+      bus.publish("fix_loop:terminal", task_id: "run-1", capability: "code_repair", ok: true, state: :done)
+      mind.tick!
+
+      snapshot = mind.snapshot
+      predictor = Cognition::Prediction.new
+      assert_equal "fix_loop:terminal", predictor.expected(
+        snapshot.fetch("predictions"), event: "fix_loop:pass_start", context: "work:run-1"
+      )
+      stats = Cognition::SelfModel.new.performance(snapshot.fetch("self_model"), capability: "code_repair")
+      assert_equal 1, stats[:attempts]
+      assert_equal 1, stats[:successes]
+    end
+  end
+
+  def test_mind_uses_task_context_for_prediction_streams
+    Dir.mktmpdir("cognition-task-context") do |root|
+      mind = Cognition::Mind.new(root:, bus: Bus.new)
+      mind.observe(event: "repair:start", payload: { task_id: "task-a" })
+      mind.observe(event: "test:pass", payload: { task_id: "task-a" })
+      mind.observe(event: "repair:start", payload: { task_id: "task-b" })
+      mind.observe(event: "test:fail", payload: { task_id: "task-b" })
+
+      mind.tick!
+      reloaded = Cognition::Mind.new(root:, bus: Bus.new)
+      predictions = reloaded.snapshot.fetch("predictions")
+      predictor = Cognition::Prediction.new
+      assert_equal "test:pass", predictor.expected(predictions, event: "repair:start", context: "work:task-a")
+      assert_equal "test:fail", predictor.expected(predictions, event: "repair:start", context: "work:task-b")
+    end
+  end
+
+  def test_invalid_state_is_preserved_for_diagnosis
+    Dir.mktmpdir("cognition-invalid-state") do |root|
+      path = File.join(root, Cognition::Mind::STATE_PATH)
+      FileUtils.mkdir_p(File.dirname(path))
+      [
+        "not: [valid",
+        { "metrics" => "not-a-hash" }.to_yaml,
+        { "predictions" => { "transitions" => { "chat" => "not-a-transition-table" } } }.to_yaml,
+        { "workspace" => ["not-an-entry"] }.to_yaml,
+        { "self_model" => { "performance" => { "bad name" => { "attempts" => 1 } } } }.to_yaml,
+      ].each do |original|
+        File.write(path, original)
+        Cognition::Mind.new(root:, bus: Bus.new).tick!
+        assert_equal original, File.read(path), "default state must not silently replace corrupt evidence"
+      end
+    end
+  end
+
+  def test_mind_persists_capability_outcomes_and_confidence_calibration
+    Dir.mktmpdir("cognition-calibration") do |root|
+      mind = Cognition::Mind.new(root:, bus: Bus.new)
+      mind.observe(event: "repair:start", payload: { task_id: "repair-7" })
+      mind.observe(event: "tool:after", payload: {
+        task_id: "repair-7", capability: "code_repair", ok: true, predicted_confidence: 0.9,
+      })
+      mind.tick!
+
+      reloaded = Cognition::Mind.new(root:, bus: Bus.new)
+      model = reloaded.snapshot.fetch("self_model")
+      measured = Cognition::SelfModel.new.performance(model, capability: "code_repair")
+      assert_equal 1, measured[:attempts]
+      assert_equal 1, measured[:successes]
+      assert_in_delta 0.9, measured[:mean_confidence]
+      assert_in_delta 0.01, measured[:brier_score]
+    end
+  end
+
+  def test_state_migrates_formula_driven_proxy_metrics
+    state = Cognition::State.new({
+      "identity" => { "continuity" => 1.0 },
+      "metrics" => { "integration" => 0.9, "continuity" => 1.0 },
+    })
+
+    refute state.identity.key?("continuity")
+    refute state.metrics.key?("continuity")
+    refute state.metrics.key?("integration")
+    assert state.metrics.key?("workspace_activity")
+  end
+
+  def test_state_restore_completeness_reports_source_shape_not_defaulted_shape
+    Dir.mktmpdir("cognition-restore") do |root|
+      path = File.join(root, "state.yml")
+      File.write(path, { "identity" => { "name" => "MASTER" } }.to_yaml)
+
+      restored = Cognition::State.load(path)
+      assert_equal "restored", restored.load_status
+      assert_operator restored.restore_completeness, :>, 0.0
+      assert_operator restored.restore_completeness, :<, 1.0
+
+      File.write(path, "not: [valid")
+      invalid = Cognition::State.load(path)
+      assert_equal "invalid", invalid.load_status
+      assert_equal 0.0, invalid.restore_completeness
+    end
+  end
+
+  # Unscoped observations remain restart-persistent for compatibility. They
+  # represent temporal adjacency only, not causal evidence.
   def test_the_learned_expectation_survives_a_restart
     Dir.mktmpdir("cognition") do |root|
       first = Cognition::Mind.new(root:, bus: Bus.new)

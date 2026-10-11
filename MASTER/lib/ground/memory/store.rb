@@ -151,8 +151,20 @@ module Master
           @mutex.synchronize { @store.dig(key.to_s, "value") }
         end
 
+        # Explicit forgetting removes every retained copy owned by this key,
+        # including archived entries and contradiction records. It does not
+        # affect unrelated keys that merely share a prefix.
         def forget(key)
-          @mutex.synchronize { @store.delete(key.to_s); persist }
+          name = key.to_s
+          @mutex.synchronize do
+            @store.delete_if do |stored_key, _|
+              path = stored_key.to_s
+              path == name || path == "archive/#{name}" || path == "_consolidated_summary" ||
+                path.start_with?("conflict/#{name}/", "archive/conflict/#{name}/")
+            end
+            @context_summary_cache = nil
+            persist
+          end
         end
 
         def all

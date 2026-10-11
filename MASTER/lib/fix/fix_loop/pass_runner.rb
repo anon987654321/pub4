@@ -173,7 +173,7 @@ module Master
           pass_mtimes = mtimes(files)
           @pass_progress = false
           @coverage_reporter&.call(target, pass)
-          start_pass_transaction(files:, target:, pass:, transaction_id:)
+          start_pass_transaction(files:, target:, pass:, transaction_id:, run_id:)
           found, streamed = observe_pass(files, target, pass, deadline)
 
           visual, opportunities, found = guarded(:evidence, pass, [nil, nil, found]) do
@@ -242,13 +242,13 @@ module Master
           finish_transaction(files, pass, result)
         end
 
-        def start_pass_transaction(files:, target:, pass:, transaction_id:)
+        def start_pass_transaction(files:, target:, pass:, transaction_id:, run_id: nil)
           boundary_scope = Master::Phoenix.scope_for(target, root: @root)
           @committer.baseline!(scope: boundary_scope)
           @bus&.publish("fix_loop:boundary_scope", target:, boundaries: boundary_scope)
           transaction = Transaction.new(root: @root, paths: files, id: transaction_id, bus: @bus)
           @committer.begin_transaction!(transaction)
-          @bus&.publish("fix_loop:pass_start", pass:, target:, file_count: files.size)
+          @bus&.publish("fix_loop:pass_start", pass:, target:, file_count: files.size, run_id:)
         end
 
         def plateau_result

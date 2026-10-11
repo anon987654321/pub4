@@ -28,6 +28,25 @@ class TestMemory < Minitest::Test
     assert_nil @mem.recall("bye")
   end
 
+  def test_forget_removes_archived_copy_and_conflict_history
+    @mem.remember("deadline", "Friday", source: "conversation:1", confidence: 0.8)
+    @mem.remember("deadline", "Monday", source: "conversation:2", confidence: 0.7)
+    store = @mem.instance_variable_get(:@store)
+    store["archive/deadline"] = { "value" => "Friday", "ts" => Time.now.to_i, "type" => "user" }
+    store["archive/conflict/deadline/older"] = { "previous" => "Friday", "incoming" => "Monday", "ts" => Time.now.to_i }
+    store["_consolidated_summary"] = { "value" => "The deadline used to be Friday.", "ts" => Time.now.to_i, "type" => "general" }
+
+    assert_equal 1, @mem.conflicts_for("deadline").size
+    @mem.forget("deadline")
+
+    assert_nil @mem.recall("deadline")
+    assert_nil @mem.recall("archive/deadline")
+    refute @mem.instance_variable_get(:@store).key?("archive/conflict/deadline/older")
+    assert_nil @mem.recall("_consolidated_summary")
+    assert_empty @mem.conflicts_for("deadline")
+    assert_equal 0, @mem.type_counts["user"]
+  end
+
   def test_type_filtering
     @mem.remember("user_fact", "engineer", type: "user")
     @mem.remember("proj_fact", "deadline friday", type: "project")

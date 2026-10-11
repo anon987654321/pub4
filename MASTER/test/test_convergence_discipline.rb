@@ -2,6 +2,7 @@
 
 require_relative "test_helper"
 require "tmpdir"
+require "yaml"
 require_relative "../lib/fix/convergence_discipline"
 
 class TestConvergenceDiscipline < Minitest::Test
@@ -19,6 +20,57 @@ class TestConvergenceDiscipline < Minitest::Test
 
   def teardown
     FileUtils.remove_entry(@root) if @root && Dir.exist?(@root)
+  end
+
+  def write_repair_history(successes:, failures:)
+    state_path = File.join(@root, Master::Cognition::State::PATH)
+    FileUtils.mkdir_p(File.dirname(state_path))
+    attempts = successes + failures
+    state = Master::Cognition::State.new({
+      "self_model" => {
+        "performance" => {
+          "code_repair" => {
+            "attempts" => attempts, "successes" => successes, "failures" => failures,
+            "confidence_observations" => 0, "confidence_sum" => 0.0, "brier_sum" => 0.0,
+            "last_at" => Time.now.to_i,
+          },
+        },
+      },
+    })
+    File.write(state_path, state.data.to_yaml)
+  end
+
+  def test_missing_history_keeps_the_default_review_strategy
+    assert_equal :consensus, @discipline.strategy_for(files: [@path], findings: [])
+  end
+
+  def write_repair_history(successes:, failures:)
+    state_path = File.join(@root, Master::Cognition::State::PATH)
+    FileUtils.mkdir_p(File.dirname(state_path))
+    state = Master::Cognition::State.new({
+      "self_model" => {
+        "performance" => {
+          "code_repair" => {
+            "attempts" => successes + failures, "successes" => successes, "failures" => failures,
+            "confidence_observations" => 0, "confidence_sum" => 0.0, "brier_sum" => 0.0,
+            "last_at" => Time.now.to_i,
+          },
+        },
+      },
+    })
+    File.write(state_path, state.data.to_yaml)
+  end
+
+  def test_missing_history_keeps_the_default_review_strategy
+    assert_equal :consensus, @discipline.strategy_for(files: [@path], findings: [])
+  end
+
+  def test_historical_repair_outcomes_increase_review_depth_only_with_enough_evidence
+    write_repair_history(successes: 1, failures: 5)
+    assert_equal :adversarial, @discipline.strategy_for(files: [@path], findings: [])
+
+    write_repair_history(successes: 4, failures: 2)
+    assert_equal :ensemble, @discipline.strategy_for(files: [@path], findings: [])
   end
 
   def test_begin_run_records_read_evidence_and_observe_tracks_best_state

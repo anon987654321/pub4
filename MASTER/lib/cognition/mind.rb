@@ -2,50 +2,19 @@
 
 require "fileutils"
 require_relative "../io/atomic_write"
+require_relative "state"
+require_relative "prediction"
+require_relative "self_model"
 
 module Master
   module Cognition
-    # MASTER's persistent cognitive layer: recurrent perception, salience, a
-    # bounded working set, affect, self-modelling, prediction error and
-    # reflection, over one YAML file under .master/.
-    #
-    # The consciousness-adjacent numbers are proxies and are named as such
-    # everywhere they are written. COGNITION.md carries the argument.
-    #
-    # Three things here are load-bearing and were each wrong once.
-    #
-    # The subscription is `**`, not `*`. EventBus compiles `*` to `[^:]*` and
-    # `**` to `.*`, so `*` matches only colon-free event names, and every row in
-    # Attention's weight table carries a colon. Under `*` the layer sees none of
-    # the events it weighs and still looks wired.
-    #
-    # And nothing writes to disk from `observe`. A bus handler runs inside every
-    # publish, a scan publishes thousands of events, and a YAML dump of the whole
-    # state per eight of them is a scan that spends its time serialising a mood.
-    # Perception marks the state dirty; `tick!` is what persists. The cost is
-    # bounded: a crash loses the events since the last tick, which are in the
-    # workspace and nowhere else by design.
-    #
-    # The third thing was worse than either, and invisible for the same reason
-    # both of those were: perception ran and the loop did not. `tick!` had one
-    # caller in the tree — boot/master_boot.rb:40, once, at startup — so the
-    # workspace never decayed, continuity never moved, nothing after the boot
-    # snapshot was ever written, and `REFLECT_EVERY` could not fire because
-    # `ticks` stopped at 1 and `1 % 16` is not zero. MASTER perceived for the
-    # life of the process and thought once, before anything had happened.
-    #
-    # So the cadence lives here rather than in a caller. The heartbeat was the
-    # obvious home and is the wrong one: it is off by default, off in
-    # boot/runtime.rb's guard list, and commented out in master.env.sample, so
-    # hanging the loop there would have been the same defect wearing a schedule.
-    # Perception is the one path every turn, scan, tool and daemon already
-    # reaches — it subscribes to `**` — so the layer paces itself from what it
-    # sees: a tick once a minute of activity, or every 256 observations,
-    # whichever comes first. Idle costs nothing, because an idle bus makes no
-    # observations to be due for.
+    # A bounded observer over the event bus. Observations update prediction,
+    # attention, affect and self-model state in memory; tick! persists it atomically.
+    # The subscription uses ** because event topics are namespaced. Metrics are
+    # named for the behaviour they measure and do not imply subjective experience.
     class Mind
       include ::Master::Io::AtomicWrite
-      STATE_PATH = ".master/cognition/state.yml"
+      STATE_PATH = State::PATH
       TICK_EVERY_S = 60
       TICK_EVERY_OBSERVATIONS = 256
       WORKSPACE_HALF_LIFE_S = 900.0
@@ -60,6 +29,7 @@ module Master
         @path = File.join(root, STATE_PATH)
         @mutex = Mutex.new
         @state = State.load(@path)
+        @state.metrics["restore_completeness"] = @state.restore_completeness
         @attention = Attention.new
         @affect = Affect.new
         @self_model = SelfModel.new
@@ -78,7 +48,7 @@ module Master
         return if event.start_with?("cognition:")
 
         @mutex.synchronize do
-          error = @prediction.observe!(@state.predictions, event:)
+          error = @prediction.observe!(@state.predictions, event:, context: prediction_context(payload))
           salience = @attention.score(event:, payload:, prediction_error: error, affect: @state.affect)
           @affect.update!(@state.affect, prediction_error: error, salience:, **outcome(payload))
           @self_model.update!(@state.self_model, event:, payload:, salience:)
@@ -105,13 +75,17 @@ module Master
       def tick!
         @mutex.synchronize do
           decay_workspace!
-          update_continuity!
           @state.tick!
           @since_tick = 0
           @ticked_at = Time.now.to_i
           persist!
         end
-        @bus&.publish("cognition:tick", metrics: @state.metrics.dup, workspace: @state.workspace.size)
+        @bus&.publish(
+          "cognition:tick",
+          metrics: @state.metrics.dup,
+          restoration: { status: @state.load_status, completeness: @state.restore_completeness },
+          workspace: @state.workspace.size,
+        )
         reflect! if (@state.ticks.to_i % REFLECT_EVERY).zero?
         @state.data
       rescue StandardError => e
@@ -148,23 +122,40 @@ module Master
         @since_tick >= TICK_EVERY_OBSERVATIONS || Time.now.to_i - @ticked_at >= TICK_EVERY_S
       end
 
-      # The bus merges symbol keys, so only a symbol lookup can hit. The first
-      # draft also read payload["ok"], which nothing could ever set.
+      # Prefer task-scoped streams when events carry an explicit correlation
+      # identifier. Unscoped events remain supported but are only temporal
+      # adjacency evidence; their order must not be interpreted as causation.
+      def prediction_context(payload)
+        return unless payload.is_a?(Hash)
+
+        %i[task_id run_id mission_id].each do |key|
+          value = payload[key] || payload[key.to_s]
+          next if value.nil? || value.to_s.strip.empty?
+
+          # Run/task/mission identifiers describe one work stream even when
+          # publishers use different field names for the same identifier.
+          return "work:#{value.to_s.strip[0, 128]}"
+        end
+        nil
+      end
+
       def outcome(payload)
-        success = payload[:ok] if payload.is_a?(Hash)
-        success.nil? ? {} : { success: }
+        return {} unless payload.is_a?(Hash)
+
+        success = payload.key?(:ok) ? payload[:ok] : payload["ok"]
+        success == true || success == false ? { success: } : {}
       end
 
       def update_metrics!(salience:, error:)
         @state.metrics["prediction_error"] = @state.metrics.fetch("prediction_error", 0.0).to_f * 0.9 + error * 0.1
         @state.metrics["attention"] = salience
-        @state.metrics["integration"] = integration
+        @state.metrics["workspace_activity"] = workspace_activity
+        @state.metrics["restore_completeness"] = @state.restore_completeness
       end
 
-      # How much of the working set is active, and how many distinct kinds of
-      # thing are in it. Both halves matter: twelve copies of one event is a
-      # busy workspace and an undifferentiated one.
-      def integration
+      # A bounded activity/diversity proxy for the working set. It is not a
+      # measure of integrated information, selfhood, or subjective experience.
+      def workspace_activity
         active = @state.workspace.sum { |item| item["salience"].to_f }
         kinds = @state.workspace.map { |item| item["event"].to_s }.uniq.size
         span = [State::MAX_WORKSPACE, 1].max
@@ -180,14 +171,10 @@ module Master
         @state.data["workspace"] = @state.workspace.reject { |item| item["salience"].to_f < 0.03 }
       end
 
-      def update_continuity!
-        previous = @state.metrics.fetch("continuity", 1.0).to_f
-        continuity = @state.last_tick_at.to_i.zero? ? previous : (previous * 0.995 + 0.005).clamp(0.0, 1.0)
-        @state.metrics["continuity"] = continuity
-        @state.identity["continuity"] = continuity
-      end
-
       def persist!
+        # Never replace unreadable state with defaulted state automatically. Keep
+        # the source intact for diagnosis; the restoration event exposes the fault.
+        return if @state.load_status == "invalid"
         return unless @dirty || @state.ticks.to_i.positive?
 
         FileUtils.mkdir_p(File.dirname(@path))
