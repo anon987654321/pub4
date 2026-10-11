@@ -1,7 +1,7 @@
 # pub4 TODO
 
 Status: BACKLOG_REOPENED  
-Updated: 2026-10-11  
+Updated: 2026-10-12  
 Authority: `MASTER/data/soul.yml` > `MASTER/data/laws.yml` > executable laws and gates > tree contracts > git history.
 
 This is the cross-tree coordination queue. Each top-level tree owns its detailed backlog in its own `TODO.md`; avoid duplicating those items here. A task is closed only by landing a verified change or recording the real-world evidence it requires.
