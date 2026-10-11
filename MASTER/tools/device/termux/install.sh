@@ -52,7 +52,7 @@ LAUNCHER
 chmod 700 "$HOME/.local/bin/master"
 
 if ! grep -Fq 'export PATH="$HOME/.local/bin:$PATH"' "$HOME/.bashrc" 2>/dev/null; then
-  printf '\nexport PATH="\$HOME/.local/bin:\$PATH"\n' >> "$HOME/.bashrc"
+  printf '\nexport PATH="$HOME/.local/bin:$PATH"\n' >> "$HOME/.bashrc"
 fi
 
 printf 'master-install0: checking boot path\n'
