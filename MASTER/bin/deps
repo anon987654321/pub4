@@ -41,5 +41,13 @@ if result.respond_to?(:success?)
   exit(result.success? ? 0 : 1)
 end
 
-Master::Trace::Dmesg.status("deps0", result[:ok] ? "system dependencies ready" : result[:output])
-exit(result[:ok] ? 0 : 1)
+if result.is_a?(Hash)
+  Master::Trace::Dmesg.status("deps0", result[:ok] ? "system dependencies ready" : result[:output].to_s)
+  exit(result[:ok] ? 0 : 1)
+end
+
+# "boot" returns Kernel#system and "check"/"status" return :bundle_ok: both
+# are booleans, not result hashes. Keep the exit contract without indexing them.
+ok = !!result
+Master::Trace::Dmesg.status("deps0", ok ? "system dependencies ready" : "system probe failed")
+exit(ok ? 0 : 1)
