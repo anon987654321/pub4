@@ -62,7 +62,7 @@ module Master
         ].each { |key| clean_env.delete(key) }
         clean_env["MASTER_BUNDLER_REEXEC_DONE"] = "1"
         Master::Trace::Dmesg.status("bundler0", "switching #{active} to #{lock_version}", io: out)
-        exec(clean_env, File.expand_path(program), *argv)
+        exec(clean_env, File.expand_path(program), *argv, unsetenv_others: true)
       rescue Errno::ENOENT => e
         Master::Trace::Dmesg.status("bundler0", "cannot re-exec #{program}, #{e.message}", io: out)
         exit 78
@@ -97,10 +97,16 @@ module Master
           "switching #{RUBY_VERSION} to #{candidate[:version]} (#{candidate[:path]})",
           io: out,
         )
+        # GEM_HOME, GEM_PATH, BUNDLE_* and BUNDLER_* (BUNDLER_SETUP alone preloads
+        # bundler/setup from the old store) name the store of the Ruby
+        # being left; the new Ruby must derive its own, or it loads native gems
+        # linked to the old libruby.
         clean_env = env.to_h.dup
-        %w[RUBYOPT RUBYLIB].each { |key| clean_env.delete(key) }
+        (%w[RUBYOPT RUBYLIB GEM_HOME GEM_PATH] + DependencyManager::BUNDLE_CONTEXT_KEYS).each { |key| clean_env.delete(key) }
+        clean_env.delete_if { |key, _| key.start_with?("BUNDLER_") || key == "BUNDLE_BIN_PATH" }
         clean_env["MASTER_RUBY_REEXEC_DONE"] = "1"
-        exec(clean_env, candidate[:path], File.expand_path(program), *argv)
+        # exec merges env into the inherited one; only unsetenv_others drops the keys deleted above.
+        exec(clean_env, candidate[:path], File.expand_path(program), *argv, unsetenv_others: true)
       rescue ArgumentError => e
         Master::Trace::Dmesg.status("ruby0", "Ruby selection failed, #{e.message}", io: out)
         exit 78

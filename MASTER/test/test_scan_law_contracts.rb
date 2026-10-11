@@ -2,7 +2,7 @@
 
 require_relative "test_helper"
 require "review/scan/law_dsl"
-require "review/scan/laws/structural_rules"
+require "review/scan/laws/structural_laws"
 
 class TestScanRuleContracts < Minitest::Test
   Rules = Master::Review::Scan::Laws

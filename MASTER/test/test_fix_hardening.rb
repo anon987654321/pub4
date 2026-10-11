@@ -57,7 +57,7 @@ class FixHardeningTest < Minitest::Test
     assert_equal "measurement", matrix.fetch("MAGIC_COLOR").fetch("enforcement")
     assert_equal true, matrix.fetch("MAGIC_COLOR").fetch("measurement_mode")
     assert_equal "blocking", matrix.fetch("ROBUSTNESS").fetch("enforcement")
-    assert_equal 2, Master::Fix::ProtocolDetectorMatrix.summary(matrix).fetch("total_rules")
+    assert_equal 2, Master::Fix::ProtocolDetectorMatrix.summary(matrix).fetch("total_laws")
   end
 
   def test_measurement_only_finding_is_not_repaired_in_law_loop

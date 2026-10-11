@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-require_relative "../lib/review/scan/rule_dsl"
+require_relative "../lib/review/scan/law_dsl"
 
 # Both rules were near-total noise under /fix: every sampled SIMULATION
 # finding was a conditional ("this test would pass having measured nothing"),

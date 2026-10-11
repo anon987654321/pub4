@@ -2,7 +2,7 @@
 
 require_relative "test_helper"
 require "master"
-require "review/scan/ast_fixer"
+require_relative "../lib/fix/ast_fixer"
 
 # Guards AstFixer against the regression where line-heuristic transforms
 # (add_trailing_commas) turned valid multi-line Ruby into unparseable code and

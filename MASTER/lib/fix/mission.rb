@@ -196,6 +196,8 @@ module Master
       # Turn a wake received during an attempt into durable work for
       # the next attempt without treating an external event as a retry failure.
       def requeue_if_requested!
+        # reason is read by the emit after with_lock returns; a block-local would not survive.
+        reason = nil
         with_lock do
           load_current_unlocked!
           return false unless @record && @record["wake_requested"]

@@ -137,7 +137,7 @@ end
   end
 
   def test_rails_rules_registered
-    require_relative "../lib/review/scan/rule_dsl"
+    require_relative "../lib/review/scan/law_dsl"
     ids = Master::Review::Scan::Law.registry.filter_map do |k|
       begin
         k.auto_build? ? k.new.id.to_s.upcase : nil

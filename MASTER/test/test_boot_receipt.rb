@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-require "review/scan/rule_dsl"
+require "review/scan/law_dsl"
 
 # MASTER-101. Nothing emitted one deterministic answer to "what is in force
 # right now": boot_checks.rb proves the files parse, bin/doctor probes the host,

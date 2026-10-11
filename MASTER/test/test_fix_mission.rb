@@ -189,6 +189,7 @@ class FixMissionTest < Minitest::Test
 
       migrated = Master::Fix::Mission.current(root:)
       assert_equal "repair", migrated.dig("operator", "mode")
+      Master::Fix::Mission.new(root:).wake!(reason: "check")
       assert File.read(path).include?("\"operator\"")
     end
   end

@@ -134,12 +134,12 @@ module Master
       # True when the run was released.
       def release_elsewhere(run, target)
         return false if run["target"] == relative(target)
-        return true if run["process_token"].to_s == self.class.instance_id
-        return false if process_alive?(run["pid"])
+        same_process = run["process_token"].to_s == self.class.instance_id
+        return false if !same_process && process_alive?(run["pid"])
 
         previous = run["state"]
         run["state"] = "interrupted"
-        run["message"] = "left #{previous}; #{relative(target)} started while its process was gone"
+        run["message"] = same_process ? "left #{previous}; #{relative(target)} followed in the same process" : "left #{previous}; #{relative(target)} started while its process was gone"
         run["finished_at"] = Time.now.utc.iso8601
         emit("fix:interrupted", run_id: run["id"], target: run["target"], previous_state: previous)
         true

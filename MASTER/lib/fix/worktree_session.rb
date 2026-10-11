@@ -7,6 +7,8 @@ require "stringio"
 require "tmpdir"
 require_relative "../io/github_operations"
 require_relative "../trace/dmesg"
+require_relative "worktree_child_process"
+require_relative "worktree_dirty_edits"
 
 module Master
   module Fix
@@ -20,6 +22,9 @@ module Master
     # temporary branch.
     class WorktreeSession
       TREES = %w[MASTER RAILS OPENBSD STUDIO].freeze
+      include ChildProcess
+      include DirtyEdits
+
       Result = Data.define(:ok, :summary, :base, :head, :branch, :worktree)
 
       def self.foreign_paths(root:)
@@ -166,41 +171,6 @@ module Master
         git!("fetch", "origin", "main")
       end
 
-      def run_child(worktree, command)
-        env = ENV.to_h.merge(
-          "MASTER_INTERNAL_CHILD" => "1",
-          "MASTER_FIX_WORKTREE_CHILD" => "1",
-          "MASTER_PROCESS_LOCK_FD" => nil,
-          "MASTER_CONTROL_PLANE" => nil,
-        )
-        run_stream(env, File.join(worktree, "MASTER", "bin", "master"), command, chdir: worktree)
-      end
-
-      def run_proof(worktree, proof_trees:)
-        command = File.join(worktree, "MASTER", "bin", "operator")
-        args = ["gate", "--scan-only"]
-        trees = Array(proof_trees).map(&:to_s).select { |tree| TREES.include?(tree) }.uniq
-        args << "--tree=#{trees.join(",")}" unless trees.empty? || trees.sort == TREES.sort
-        run_stream(ENV.to_h.merge("MASTER_INTERNAL_CHILD" => "1"), command, *args, chdir: worktree)
-      end
-
-      def run_stream(env, command, *args, chdir:)
-        lines = []
-        status = nil
-        Open3.popen2e(env, command, *args, chdir:) do |stdin, io, wait_thr|
-          stdin.close
-          io.each_line do |line|
-            clean = line.to_s.scrub.gsub(Master::Trace::Dmesg::ANSI, "").delete("\r")
-            next if clean.empty?
-
-            Master::Trace::Dmesg.forward(clean, io: @io)
-            lines << clean.chomp
-          end
-          status = wait_thr.value
-        end
-        [status.success?, lines]
-      end
-
       def publish!(worktree:, branch:, head:, base:)
         fetch_main!
         upstream = git!("rev-parse", "origin/main")
@@ -285,101 +255,9 @@ module Master
         git!("rev-parse", ref, chdir: root)
       end
 
-      def status_paths(root:)
-        output = git_raw!("status", "--porcelain=v1", "-z", "--untracked-files=all", chdir: root)
-        parse_nul_paths(output)
-      end
-
-      # Tracked files under the governed trees that differ from HEAD in the
-      # operator's checkout. The isolated checkout is built from origin/main, so
-      # none of these edits is in the run unless include_dirty copies them.
-      def tracked_dirty(root: @repo_root)
-        output = git_raw!("status", "--porcelain=v1", "-z", "--untracked-files=no", chdir: root)
-        records = output.to_s.split("\0")
-        entries = []
-        index = 0
-        while index < records.length
-          record = records[index]
-          break if record.empty?
-
-          code = record[0, 2].to_s
-          path = record[3..].to_s
-          if code.match?(/[RC]/)
-            index += 1
-            entries << [" D", records[index].to_s] if code.include?("R") && !records[index].to_s.empty?
-          end
-          entries << [code, path] if TREES.include?(path.split("/").first)
-          index += 1
-        end
-        entries
-      end
-
-      def announce_dirty(worktree, include_dirty:)
-        entries = tracked_dirty
-        return {} if entries.empty?
-
-        paths = entries.map(&:last)
-        shown = paths.first(8).join(", ") + (paths.size > 8 ? ", +#{paths.size - 8} more" : "")
-        unless include_dirty
-          announce("#{paths.size} uncommitted edit(s) in #{shown} are NOT in this run; --include-dirty copies them in")
-          return {}
-        end
-
-        announce("#{paths.size} uncommitted edit(s) in #{shown} copied into this run (--include-dirty), not committed")
-        copy_dirty(worktree, paths)
-      end
-
-      # Copies working-tree content of tracked files, never untracked ones, and
-      # returns each path's content digest so own_dirty can tell the copied
-      # baseline from what the worker changed.
-      def copy_dirty(worktree, paths)
-        paths.to_h do |path|
-          source = File.join(@repo_root, path)
-          target = File.join(worktree, path)
-          if File.file?(source)
-            FileUtils.mkdir_p(File.dirname(target))
-            FileUtils.cp(source, target, preserve: true)
-            [path, File.binread(target).hash]
-          else
-            FileUtils.rm_f(target)
-            [path, nil]
-          end
-        end
-      end
-
-      def own_dirty(worktree, included)
-        status_paths(root: worktree).reject do |path|
-          next false unless included.key?(path)
-
-          file = File.join(worktree, path)
-          included[path].nil? ? !File.exist?(file) : (File.file?(file) && File.binread(file).hash == included[path])
-        end
-      end
-
       def diff_paths(root, base, head)
         output = git!("diff", "--name-only", "-z", base, head, "--", chdir: root)
         output.split("\0").reject(&:empty?)
-      end
-
-      def parse_nul_paths(output)
-        records = output.to_s.split("\0")
-        paths = []
-        index = 0
-        while index < records.length
-          record = records[index]
-          break if record.empty?
-
-          status = record[0, 2].to_s
-          path = record[3..].to_s
-          paths << path unless path.empty?
-          if status.match?(/[RC]/)
-            index += 1
-            renamed = records[index].to_s
-            paths << renamed unless renamed.empty?
-          end
-          index += 1
-        end
-        paths
       end
 
       def announce(message)

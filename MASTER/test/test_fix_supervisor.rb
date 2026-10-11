@@ -148,7 +148,7 @@ class FixSupervisorTest < Minitest::Test
       supervisor.run_forever
 
       assert_equal 1, calls
-      assert_equal "completed", Master::Fix::Mission.current(root)["state"]
+      assert_equal "completed", Master::Fix::Mission.current(root:)["state"]
     end
   end
 
@@ -165,6 +165,10 @@ class FixSupervisorTest < Minitest::Test
         effort: "high",
         plan: "observe, repair, verify",
       )
+
+      record = Master::Fix::Mission.current(root:)
+      record["lease_owner"] = "other-host:1234:deadbeefdeadbeef"
+      File.write(File.join(root, ".master", "mission.json"), JSON.pretty_generate(record) + "\n")
 
       error = assert_raises(RuntimeError) do
         Master::Fix::Mission.new(root:).start_or_resume!(
@@ -203,7 +207,7 @@ class FixSupervisorTest < Minitest::Test
       end
 
       assert_match(/mission already active for MASTER/, error.message)
-      assert_equal "MASTER", Master::Fix::Mission.current(root)["scope"]
+      assert_equal "MASTER", Master::Fix::Mission.current(root:)["scope"]
     end
   end
 end

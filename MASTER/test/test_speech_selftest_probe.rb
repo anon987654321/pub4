@@ -38,9 +38,9 @@ class TestSpeechSelftestProbe < Minitest::Test
     out, err, status = Open3.capture3(RbConfig.ruby, Speech::WORKER, "--selftest", chdir: Master::ROOT)
 
     assert status.success?, "worker --selftest failed: #{err}"
-    assert_match(/\Atts-worker: ok /, out)
-    assert_match(/rb_edge_tts=/, out, "the gem the cheap probe cannot see must be named")
-    assert_match(/eventmachine=/, out)
+    assert_match(/\Atts0: selftest ok, /, out)
+    assert_match(/rb_edge_tts \d/, out, "the gem the cheap probe cannot see must be named")
+    assert_match(/eventmachine \d/, out)
   end
 
   def test_ready_agrees_with_the_worker_and_reports_no_blocker

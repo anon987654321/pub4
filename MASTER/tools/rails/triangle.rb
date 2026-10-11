@@ -55,7 +55,9 @@ module Deploy
       { "RBENV_VERSION" => ruby_version, "RAILS_ENV" => "development", "PORT" => app[:port].to_s,
         "RAILS_LOG_LEVEL" => ENV.fetch("RAILS_LOG_LEVEL", "info"),
         "BUNDLE_GEMFILE" => File.join(app[:dir], "Gemfile"),
-        "BUNDLE_BIN_PATH" => nil, "BUNDLER_SETUP" => nil, "BUNDLER_VERSION" => nil, "RUBYOPT" => nil, "RUBYLIB" => nil }
+        "BUNDLE_BIN_PATH" => nil, "BUNDLER_SETUP" => nil, "BUNDLER_VERSION" => nil, "RUBYOPT" => nil, "RUBYLIB" => nil,
+        "GEM_HOME" => nil, "GEM_PATH" => nil, "BUNDLE_PATH" => nil, "BUNDLE_APP_CONFIG" => nil,
+        "BUNDLE_USER_CONFIG" => nil, "BUNDLE_DISABLE_SHARED_GEMS" => nil, "BUNDLE_LOCKFILE" => nil }
     end
 
     def self.listening?(port)

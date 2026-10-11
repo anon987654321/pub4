@@ -6,7 +6,7 @@ require "fileutils"
 
 $LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
 require "master"
-require "review/scan/laws/meta_rules"
+require "review/scan/laws/meta_laws"
 
 class LearnedSmellsRuleSpec < Minitest::Test
   def test_learned_smell_rules_are_loaded_from_laws_yml

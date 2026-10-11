@@ -219,13 +219,15 @@ class TestMasterLoop < Minitest::Test
       two = File.join(workspace, "two", "data")
       FileUtils.mkdir_p(one)
       FileUtils.mkdir_p(two)
-      File.write(File.join(one, "models.yml"), "openrouter:\n  default_model: one-default\nmodels:\n  grok_primary:\n    - id: one-model\n")
-      File.write(File.join(two, "models.yml"), "openrouter:\n  default_model: two-default\nmodels:\n  grok_primary:\n    - id: two-model\n")
+      File.write(File.join(one, "providers.yml"), "openrouter:\n  default_model: one-default\n")
+      File.write(File.join(one, "models.yml"), "models:\n  grok_primary:\n    - id: one-model\n")
+      File.write(File.join(two, "providers.yml"), "openrouter:\n  default_model: two-default\n")
+      File.write(File.join(two, "models.yml"), "models:\n  grok_primary:\n    - id: two-model\n")
 
-      assert_equal "one-default", Master::MasterRuntime.openrouter_default(root: workspace + "/one")
-      assert_equal "two-default", Master::MasterRuntime.openrouter_default(root: workspace + "/two")
-      assert_equal "one-model", Master::MasterRuntime.free_primary_model(root: workspace + "/one")
-      assert_equal "two-model", Master::MasterRuntime.free_primary_model(root: workspace + "/two")
+      assert_equal "one-default", Master.openrouter_default(root: workspace + "/one")
+      assert_equal "two-default", Master.openrouter_default(root: workspace + "/two")
+      assert_equal "one-model", Master.free_primary_model(root: workspace + "/one")
+      assert_equal "two-model", Master.free_primary_model(root: workspace + "/two")
     end
   end
 
@@ -264,8 +266,8 @@ class TestMasterLoop < Minitest::Test
     refute File.exist?(Master.data_path("style.yml"))
     refute File.exist?(Master.data_path("operator_principles.yml"))
     assert File.exist?(Master.data_path("laws.yml"))
-    assert Master.law("style").key?("typography")
-    assert Master.tokens.key?("worn_type")
+    assert Master.law("RENDERED_VALUES").key?("statement")
+    assert Master.tokens.key?("scale")
   end
 
   # The operator's standing orders live in soul.yml, not in the catalogue the
@@ -275,7 +277,7 @@ class TestMasterLoop < Minitest::Test
   # whole through PersonalityPromptBuilder#add_rules; Ground::Constitution cut
   # them to 480 characters, which took 358 off FLAT_HIERARCHY alone.
   def test_operator_conduct_is_a_rule_like_any_other
-    rules = Master::Ground::Laws.new.rules
+    rules = Master::Ground::Laws.new.laws
 
     %w[OPERATOR_AUTONOMY EXECUTE_NOT_INSTRUCT SHELL_DISCIPLINE VPS_SERIAL_TRUTH NO_NEW_FILES
        STRUNK_WHITE FLAT_PIXELS VOICE_TERSE_UNIX MICRO_REFINEMENTS].each do |id|

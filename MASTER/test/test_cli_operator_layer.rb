@@ -30,13 +30,11 @@ class TestCliOperatorLayer < Minitest::Test
   def test_connection_refused_and_ollama_unreachable_are_offline
     dispatcher = Master::Review::LLMDispatcher.allocate
 
-    [
-      "Failed to open TCP connection to localhost:11434",
-      "ollama unreachable at http://127.0.0.1:11434: connection refused",
-    ].each do |message|
-      error = StandardError.new(message)
-      assert dispatcher.send(:offline_error?, error), message
-    end
+    message = "ollama unreachable at http://127.0.0.1:11434: connection refused"
+    assert dispatcher.send(:offline_error?, StandardError.new(message)), message
+
+    # A bare refused TCP open names one provider, not the network.
+    refute dispatcher.send(:offline_error?, StandardError.new("Failed to open TCP connection to localhost:11434"))
   end
 
   def test_invalid_parameter_failure_is_not_retried_as_a_provider_problem
@@ -49,7 +47,7 @@ class TestCliOperatorLayer < Minitest::Test
   def test_cli_reply_display_is_wired_to_voice_playback
     source = File.read(File.join(Master::ROOT, "lib", "cli", "session", "result_display.rb"))
 
-    assert_includes source, "Master::Voice::Playback.speak(spoken_form(text))"
+    assert_includes source, "Master::Voice::Playback.speak(spoken)"
   end
 
   def test_streamed_bridge_footer_does_not_speak_the_reply_twice
@@ -86,7 +84,7 @@ class TestCliOperatorLayer < Minitest::Test
   def test_short_cli_replies_are_not_silenced
     source = File.read(File.join(Master::ROOT, "lib", "cli", "session", "result_display.rb"))
 
-    assert_includes source, "Master::Voice::Playback.speak(spoken_form(text))"
+    assert_includes source, "Master::Voice::Playback.speak(spoken)"
     refute_match(/Playback\.speak\(spoken_form\(text\)\)\s+unless\s+routine/, source)
   end
 
@@ -98,14 +96,13 @@ class TestCliOperatorLayer < Minitest::Test
     assert_includes source, 'when "test"'
     assert_includes source, "Voice::Playback.speak_now"
     assert_includes source, "voice0 at mainbus0: test passed"
-    assert_includes source, "voice0: test passed"
   end
 
   def test_casual_chat_does_not_run_evidence_preflight
     agent = Master::Review::Agent.allocate
     evidence = false
 
-    agent.define_singleton_method(:prepare_chat_turn) { nil }
+    agent.define_singleton_method(:prepare_chat_turn) { |_message| nil }
     agent.define_singleton_method(:prepare_evidence) { |_message| evidence = true }
     agent.define_singleton_method(:prepare_chat_dispatch) do |_message, _task_type|
       { selected_model: "test", candidate_models: ["test"], prompt: "hi", context: [] }
