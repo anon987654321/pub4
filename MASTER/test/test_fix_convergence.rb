@@ -286,6 +286,23 @@ class TestFixConvergence < Minitest::Test
     assert_equal discipline.checkpoint_state["authority_baseline"], resumed.checkpoint_state["authority_baseline"]
   end
 
+  def test_pass_state_restore_preserves_cycle_detection
+    loop = Master::Fix::FixLoop.allocate
+    checkpoint = {
+      "version" => 1,
+      "history" => [3, 2, 1],
+      "seen_snapshots" => ["a" * 64, "b" * 64],
+      "recurring_violations" => { "same-finding" => 2 },
+      "consecutive_clean" => 1,
+    }
+
+    state = loop.send(:restore_pass_state, checkpoint)
+    assert_equal [3, 2, 1], state[:history]
+    assert_equal 2, state[:seen_snapshots].size
+    assert_equal 2, state[:recurring_violations]["same-finding"]
+    assert_equal 1, state[:consecutive_clean]
+  end
+
   def test_invalid_convergence_checkpoint_is_rejected
     discipline = Master::Fix::ConvergenceDiscipline.new(root: @root, bus: @bus)
     discipline.begin_run([File.join(@root, "dummy.yml")])
@@ -298,10 +315,22 @@ class TestFixConvergence < Minitest::Test
     journal = Master::Fix::RunJournal.new(root: @root, bus: @bus)
     run = journal.start_or_resume(target: @root, files: [File.join(@root, "dummy.yml")],
                                   max_passes: 2, budget_seconds: 60)
-    journal.save_convergence_state(run["id"], { "version" => 1, "observations" => 4 })
+    journal.save_convergence_state(
+      run["id"],
+      { "version" => 1, "observations" => 4 },
+      pass_state: {
+        "version" => 1,
+        "history" => [2, 1],
+        "seen_snapshots" => ["a" * 64],
+        "recurring_violations" => { "finding-a" => 2 },
+        "consecutive_clean" => 1,
+      },
+    )
 
     saved = journal.history.find { |entry| entry["id"] == run["id"] }
     assert_equal({ "version" => 1, "observations" => 4 }, saved["convergence_state"])
+    assert_equal [2, 1], saved.dig("pass_state", "history")
+    assert_equal ["a" * 64], saved.dig("pass_state", "seen_snapshots")
   end
 
   def test_unmeasured_proof_baseline_is_inconclusive_not_green

@@ -315,7 +315,8 @@ module Master
 
         result = run_passes(
           files:, target:, max_passes:, deadline:, budget_seconds:,
-          start_pass: resumed.value!, run_id:, wishlist_proposals: []
+          start_pass: resumed.value!, run_id:, wishlist_proposals: [],
+          resume_state: journal["resumed"] ? journal["pass_state"] : nil
         )
         result = verify_incremental_scope(
           result, incremental:, journal:, target:, files:, max_passes:, deadline:, budget_seconds:, run_id:
@@ -442,9 +443,57 @@ module Master
 
       # start_pass is the number of the first pass to run, 1-based like the
       # journal's next_pass; run_one_pass takes the 0-based index.
+
+      def durable_pass_state(state)
+        {
+          "version" => 1,
+          "history" => Array(state[:history]).last(PLATEAU_WINDOW),
+          "seen_snapshots" => Array(state[:seen_snapshots].to_a).last(ABSOLUTE_MAX_PASSES),
+          "recurring_violations" => state[:recurring_violations].to_h,
+          "consecutive_clean" => state[:consecutive_clean].to_i,
+        }
+      end
+
+      def restore_pass_state(checkpoint)
+        fresh = {
+          history: [],
+          seen_snapshots: Set.new,
+          recurring_violations: Hash.new(0),
+          consecutive_clean: 0,
+        }
+        return fresh if checkpoint.nil?
+        unless checkpoint.is_a?(Hash) && checkpoint["version"] == 1
+          Master::Trace::Dmesg.status("fix0", "invalid pass history checkpoint; starting a fresh cycle window")
+          return fresh
+        end
+
+        history = checkpoint["history"]
+        snapshots = checkpoint["seen_snapshots"]
+        recurring = checkpoint["recurring_violations"]
+        clean = checkpoint["consecutive_clean"]
+        valid = history.is_a?(Array) && history.size <= PLATEAU_WINDOW &&
+                history.all? { |count| count.is_a?(Integer) && count >= 0 } &&
+                snapshots.is_a?(Array) && snapshots.size <= ABSOLUTE_MAX_PASSES &&
+                snapshots.all? { |digest| digest.is_a?(String) && digest.match?(/\A[0-9a-f]{64}\z/) } &&
+                recurring.is_a?(Hash) &&
+                recurring.all? { |key, count| key.is_a?(String) && count.is_a?(Integer) && count >= 0 } &&
+                clean.is_a?(Integer) && clean >= 0
+        unless valid
+          Master::Trace::Dmesg.status("fix0", "malformed pass history checkpoint; starting a fresh cycle window")
+          return fresh
+        end
+
+        {
+          history: history.dup,
+          seen_snapshots: Set.new(snapshots),
+          recurring_violations: Hash.new(0).merge(recurring),
+          consecutive_clean: clean,
+        }
+      end
+
       def run_passes(files:, target:, max_passes:, deadline:, budget_seconds:, start_pass: 1, run_id:,
-                     wishlist_proposals: [])
-        state = { history: [], seen_snapshots: Set.new, recurring_violations: Hash.new(0), consecutive_clean: 0 }
+                     wishlist_proposals: [], resume_state: nil)
+        state = restore_pass_state(resume_state)
 
         first_index = start_pass - 1
         pass_limit = [max_passes.to_i, ABSOLUTE_MAX_PASSES].min
@@ -659,11 +708,16 @@ module Master
           )
         end
         state[:consecutive_clean] = result.consecutive_clean
+        structural = structural_repair?(result, files:, target:, state:, run_id:, pass:)
         if @convergence_discipline.respond_to?(:checkpoint_state) &&
            @run_journal.respond_to?(:save_convergence_state)
-          @run_journal.save_convergence_state(run_id, @convergence_discipline.checkpoint_state)
+          @run_journal.save_convergence_state(
+            run_id,
+            @convergence_discipline.checkpoint_state,
+            pass_state: durable_pass_state(state),
+          )
         end
-        return if structural_repair?(result, files:, target:, state:, run_id:, pass:)
+        return if structural
 
         @run_journal.pass_finish(run_id, pass, status: result.status, message: result.message)
         ending = PASS_ENDINGS[result.status]
