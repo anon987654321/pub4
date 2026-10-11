@@ -11,7 +11,7 @@ command -v git >/dev/null 2>&1 || pkg install -y git
 ROOT="${HOME}/pub4"
 REPO="https://github.com/anon987654321/pub4.git"
 
-if [ -d "\${ROOT}/.git" ]; then
+if [ -d "${ROOT}/.git" ]; then
   actual_origin="$(git -C "$ROOT" remote get-url origin 2>/dev/null || true)"
   case "$actual_origin" in
     "$REPO"|https://github.com/anon987654321/pub4|git@github.com:anon987654321/pub4.git|ssh://git@github.com/anon987654321/pub4.git) ;;

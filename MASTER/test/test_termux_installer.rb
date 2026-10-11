@@ -14,6 +14,12 @@ class TermuxInstallerTest < Minitest::Test
     assert_match(/Run this inside Termux/, source)
   end
 
+  def test_existing_checkout_detection_expands_root
+    line = source.lines.find { |row| row.start_with?("if [ -d") && row.include?(".git") }
+
+    assert_equal 'if [ -d "${ROOT}/.git" ]; then', line.strip
+    refute_includes line, '\\${ROOT}'
+  end
   def test_existing_checkout_origin_is_validated_before_running_project_code
     assert_match(/remote get-url origin/, source)
     assert_match(/refusing to run its installer/, source)
