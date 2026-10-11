@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "digest"
 require "fileutils"
 require "set"
 require_relative "snapshot_map"
@@ -21,6 +22,8 @@ module Operator
     DEFAULT_BUDGET = 380_000
     # A file larger than this after minifying is described in the map and never inlined.
     FILE_CAP = 60_000
+    INTEGRITY_PREFIX = "## END OF PACK\nsha256="
+    INTEGRITY_FOOTER_BYTES = INTEGRITY_PREFIX.bytesize + 64 + 1
 
     # Kinds of file left out entirely: bytes that carry no reading value.
     OMIT = [
@@ -56,13 +59,27 @@ module Operator
 
     def minify(path, text) = SnapshotMinify.call(path, text)
 
-    def block(path, body)
-      longest = body.scan(/^`{3,}/).map(&:length).max.to_i
-      fence = "`" * [3, longest + 1].max
-
-      "### #{path}\n#{fence}#{FENCE_LANG.fetch(File.extname(path).downcase, '')}\n#{body.chomp}\n#{fence}\n"
+    def block(path, body, digest: nil)
+      longest = body.scan(/^\x60{3,}/).map(&:length).max.to_i
+      fence = "\x60" * [3, longest + 1].max
+      out = +"### #{path}\n"
+      out << "SHA-256 (normalized source): #{digest}\n" if digest
+      out << "#{fence}#{FENCE_LANG.fetch(File.extname(path).downcase, '')}\n#{body.chomp}\n#{fence}\n"
+      out
     end
 
+    # The footer digest covers every byte before the END OF PACK heading.
+    # A missing footer or changed byte makes the reading copy unverifiable.
+    def seal_text(text)
+      text + "#{INTEGRITY_PREFIX}#{Digest::SHA256.hexdigest(text)}\n"
+    end
+
+    def verify_text(text)
+      match = text.match(/^## END OF PACK\nsha256=([0-9a-f]{64})\n\z/)
+      return false unless match
+
+      Digest::SHA256.hexdigest(text[0...match.begin(0)]) == match[1]
+    end
     # Lower is read first: the documents that say what the tree is, then the entry points, then
     # the top of lib, and tests last because a test is evidence about code, not the code.
     def priority(path)
@@ -142,9 +159,11 @@ module Operator
     def file_entry(path, absolute, tests:)
       original = File.read(absolute, encoding: "UTF-8", invalid: :replace, undef: :replace)
       minified = minify(path, original)
+      rendered_source = "#{minified.chomp}\n"
+      digest = Digest::SHA256.hexdigest(rendered_source)
       inlinable = minified.bytesize <= FILE_CAP && (tests || !test_path?(path))
 
-      { path:, original:, minified:, block: block(path, minified), inlinable: }
+      { path:, original:, minified:, digest:, block: block(path, minified, digest:), inlinable: }
     end
 
     # What one write is working on: where, what, how much room, and what came of it.
@@ -229,13 +248,14 @@ module Operator
       sha = job.host.head_sha
       job.files, job.omitted = files_for(job.host, paths, tests: job.tests)
       job.chosen = Set.new
-      room = job.budget - header(job, sha).bytesize - SnapshotMap.map_text(job.files, job.chosen).bytesize - 40
+      room = job.budget - header(job, sha).bytesize - SnapshotMap.map_text(job.files, job.chosen).bytesize -
+        "\n## Map\n\n\n## Source\n\n".bytesize - INTEGRITY_FOOTER_BYTES - 80
       job.chosen = choose(job.files, room)
       text = header(job, sha)
       text << "## Map\n\n#{SnapshotMap.map_text(job.files, job.chosen)}\n## Source\n\n"
       job.files.sort_by { |f| reading_order(f) }.select { |f| job.chosen.include?(f[:path]) }.each { |f| text << f[:block] << "\n" }
 
-      text
+      seal_text(text)
     end
 
     def nothing_matched(tree, io)

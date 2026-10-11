@@ -149,6 +149,34 @@ end
     assert_equal "~foo_test.rb [4L]", Map.map_line(file, inlined: false)
   end
 
+  def test_reading_pack_integrity_detects_truncation_and_changed_source
+    Dir.mktmpdir do |repo|
+      Thread.current[:snapshot_repo] = repo
+      FileUtils.mkdir_p(File.join(repo, "DEMO/lib"))
+      File.write(File.join(repo, "DEMO/lib/a.rb"), "# A sample.\nputs 1\n")
+
+      Pack.write(Host, "DEMO", io: StringIO.new)
+      text = File.read(File.join(repo, "snapshot_DEMO.md"))
+
+      assert Pack.verify_text(text), "a complete reading pack verifies"
+      assert_includes text, "## END OF PACK\nsha256="
+      assert_match(/SHA-256 \(normalized source\): [0-9a-f]{64}/, text)
+      refute Pack.verify_text(text.sub("puts 1", "puts 2")), "changed source must fail the pack digest"
+      refute Pack.verify_text(text.sub(/## END OF PACK\nsha256=[0-9a-f]{64}\n\z/, "")),
+             "a missing terminal marker must fail verification"
+    ensure
+      Thread.current[:snapshot_repo] = nil
+    end
+  end
+
+  def test_integrity_helper_rejects_a_changed_footer_digest
+    sealed = Pack.seal_text("# sample pack\n")
+
+    assert Pack.verify_text(sealed)
+    wrong_digest = "sha256=" + ("0" * 64)
+    refute Pack.verify_text(sealed.sub(/sha256=[0-9a-f]{64}/, wrong_digest))
+    refute Pack.verify_text(sealed.delete_suffix("\n"))
+  end
   # A host standing in for tools/snapshot.rb: a repo root, its tracked files, the same predicates.
 class Host
   TREE_PATHS = { "DEMO" => "DEMO" }.freeze
