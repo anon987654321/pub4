@@ -382,11 +382,15 @@ module Operator
     # Under the Ruby the repo pins, as the app suites below run. runner.rb refuses
     # any other, so launched with this process's Ruby every gate was skipped and
     # the stage reported one refusal as its whole result.
-def rails_gates(scan_only:)
+def rails_gates(scan_only:, strict_inconclusive: false)
   GateHeartbeat.around("rails gates") do |progress|
+    env = strict_env.merge(progress).merge("GATE_AUTOFIX" => scan_only ? "0" : "1")
+    # A proof cannot pass a gate that measured nothing. The normal contribution
+    # mode remains permissive; /fix opts into strict inconclusive handling here
+    # because this child environment is constructed explicitly.
+    env["GATE_STRICT_INCONCLUSIVE"] = "1" if strict_inconclusive
     capture(RUBY, File.join(MASTER, "gates", "runner.rb"), "--all",
-            chdir: File.join(ROOT, "RAILS"),
-            env: strict_env.merge(progress).merge("GATE_AUTOFIX" => scan_only ? "0" : "1"))
+            chdir: File.join(ROOT, "RAILS"), env:)
   end
 end
 
