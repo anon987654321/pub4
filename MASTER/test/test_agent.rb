@@ -86,7 +86,7 @@ class TestAgent < Minitest::Test
     observe.define_singleton_method(:class) { Class.new { def self.name = "Master::Io::PluginObserve" } }
     agent.instance_variable_set(:@tools, [observe])
 
-    agent.send(:prepare_evidence, "Open Snapchat and inspect the account page.")
+    agent.send(:prepare_evidence, "Open my Snapchat account and inspect the page.")
 
     assert_equal ["social_browser", "status", {}], seen
     assert_equal :browser, Fiber[:master_evidence_mode]

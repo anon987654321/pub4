@@ -21,7 +21,7 @@ class ProviderCanaryTest < Minitest::Test
       @models << [kwargs.fetch(:model), kwargs.fetch(:failover), kwargs.fetch(:law)]
       return "wrong response" if @response_mode == :wrong
 
-      prompt.sub(/Reply with (.+) and nothing else./, "\1")
+      prompt.sub(/Reply with (.+) and nothing else./, '\1')
     end
   end
 
