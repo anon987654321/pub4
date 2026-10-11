@@ -89,6 +89,37 @@ class TestFixConvergence < Minitest::Test
   # spelling only long enough to rewrite it to /fix, so no separate scan
   # dispatcher, help topic, or pipeline stage can survive.
 
+  def test_low_learned_fix_success_probability_forces_full_scope_on_incremental_runs
+    loop = build_loop([])
+    seen = []
+    cognition = Object.new
+    cognition.define_singleton_method(:predict_outcome) do |context:, action:|
+      seen << [context, action]
+      { status: :learned, samples: 6, success_probability: 0.3 }
+    end
+    loop.wire_cognition(cognition)
+
+    guidance = loop.send(:outcome_guidance, target: "MASTER", incremental: true)
+
+    assert_equal [["target=MASTER", "/fix"]], seen
+    assert_equal false, guidance[:incremental]
+    assert_equal :learned, guidance[:prediction][:status]
+  end
+
+  def test_sparse_fix_outcome_history_does_not_change_requested_scope
+    loop = build_loop([])
+    cognition = Object.new
+    cognition.define_singleton_method(:predict_outcome) do |context:, action:|
+      { status: :insufficient_data, samples: 2, success_probability: 0.25 }
+    end
+    loop.wire_cognition(cognition)
+
+    guidance = loop.send(:outcome_guidance, target: "MASTER", incremental: true)
+
+    assert_equal true, guidance[:incremental]
+    assert_equal :insufficient_data, guidance[:prediction][:status]
+  end
+
   def test_convergence_accepts_non_finite_baseline_without_coercion_crash
     discipline = Master::Fix::ConvergenceDiscipline.new(root: @root, bus: @bus)
     discipline.begin_run([File.join(@root, "dummy.yml")])

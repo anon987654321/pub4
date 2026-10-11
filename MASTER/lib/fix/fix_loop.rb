@@ -79,6 +79,7 @@ module Master
         @root = path_root == Master::ROOT ? Master::REPO_ROOT : path_root
         @bus = bus
         @homeostat = homeostat
+        @cognition = nil
         @incremental = incremental
         @halted = false
         @halt_reason = nil
@@ -102,6 +103,13 @@ module Master
       # watcher, when MASTER's own tree reads red. An operator's /fix is the
       # request to repair exactly that tree; halting it too refused every fix
       # while a single violation stood, so "fix and commit" scanned and stopped.
+      # Boot wires the already-running cognitive service after restoring its
+      # state. Serialize wiring against active attempts so a run sees one reader.
+      def wire_cognition(cognition)
+        @run_mutex.synchronize { @cognition = cognition }
+        self
+      end
+
       def run(target = @root, max_passes: max_passes_default, budget_seconds: RUN_BUDGET_SECONDS,
               incremental: @incremental, requested: false)
         @run_mutex.synchronize do
@@ -115,6 +123,8 @@ module Master
         return halted_result if halted? && !requested
 
         @pass_runner&.reset_gaps!
+        guidance = outcome_guidance(target:, incremental:)
+        incremental = guidance.fetch(:incremental)
         ModelRoles.announce
         current_phase = :corpus
         files = incremental ? @file_collector.collect_changed(target) : @file_collector.collect(target)
@@ -302,6 +312,29 @@ module Master
       def self.preamble_from_soul = [LawLoop.soul_preamble, Protocol.instruction].join("\n\n")
 
       private
+
+      # Poor measured outcomes never weaken verification. They disable incremental
+      # collection so the next attempt observes its full target. Sparse or unknown
+      # history leaves the operator's requested scope unchanged.
+      def outcome_guidance(target:, incremental:)
+        return { incremental:, prediction: nil } unless @cognition
+
+        label = fix_target_label(target)
+        prediction = @cognition.predict_outcome(context: "target=#{label}", action: "/fix")
+        guarded = incremental && prediction[:status] == :learned &&
+                  prediction[:success_probability].to_f < 0.5
+        if prediction[:samples].to_i.positive?
+          action = guarded ? "full-scope collection after low prior success" : "requested scope retained"
+          Master::Trace::Dmesg.status(
+            "fix0",
+            "outcome prior target=#{label} samples=#{prediction[:samples]} "             "success_probability=#{prediction[:success_probability]} action=#{action}",
+          )
+        end
+        { incremental: guarded ? false : incremental, prediction: }
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "fix_loop.outcome_guidance", event_bus: @bus)
+        { incremental:, prediction: nil }
+      end
 
       def fix_target_label(target)
         absolute = File.expand_path(target.to_s, @root)

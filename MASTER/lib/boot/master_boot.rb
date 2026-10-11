@@ -43,6 +43,7 @@ module Master
       # building rather than one mid-assembly. The tick is what persists, so
       # booting is also what restores continuity across restarts.
       container[:cognition] = Cognition::Mind.new(root:, bus: container[:bus], memory: container[:memory])
+      container[:fix_loop]&.wire_cognition(container[:cognition])
       container[:cognition].tick!
       start_task_steward(root, container)
       Device::Agent.start!(root:, bus: container[:bus], cognition: container[:cognition],
