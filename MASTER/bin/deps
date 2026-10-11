@@ -5,7 +5,7 @@ require_relative "../lib/boot/entrypoint"
 require_relative "../lib/trace/dmesg"
 
 ROOT = File.expand_path("..", __dir__)
-Master::Boot::Entrypoint.reexec_pinned_ruby!(root: ROOT, env: ENV, out: $stderr, argv: ARGV, program: $PROGRAM_NAME)
+Master::Boot::Entrypoint.reexec_best_ruby!(root: ROOT, env: ENV, out: $stderr, argv: ARGV, program: $PROGRAM_NAME)
 
 manager = Master::Boot::DependencyManager.new(root: ROOT)
 

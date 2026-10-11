@@ -52,9 +52,10 @@ class TestExecutionTraceSnapshot < Minitest::Test
       )
       result = trace.run
 
-      assert result.failures.any? do |failure|
-        failure.include?("MASTER/lib/master.rb: changed during preflight")
-      end, result.failures.inspect
+      assert(
+        result.failures.any? { |failure| failure.include?("MASTER/lib/master.rb: changed during preflight") },
+        result.failures.inspect,
+      )
     end
   end
 

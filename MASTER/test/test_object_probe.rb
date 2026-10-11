@@ -47,8 +47,9 @@ class TestObjectProbe < Minitest::Test
     other = ObjectProbeFixtures::Worker.new
     probe = Probe.new(receivers: [selected], methods: %i[call helper])
 
-    result = probe.capture do
-      selected.call("sensitive argument")
+    result = nil
+    probe.capture do
+      result = selected.call("sensitive argument")
       other.call("not observed")
     end
 
