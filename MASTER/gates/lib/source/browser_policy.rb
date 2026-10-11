@@ -9,8 +9,12 @@ module Deploy
     REQUIRED_INTERACTION_POLICY = {
       "ai_identity_disclosure_required" => true,
       "recipient_consent_required" => true,
+      "recipient_opt_out_required" => true,
       "per_action_human_approval_required" => true,
+      "unsolicited_bulk_outreach" => "forbidden",
+      "autonomous_message_sending" => "forbidden",
       "browser_fingerprint_spoofing" => "forbidden",
+      "platform_evasion" => "forbidden",
     }.freeze
 
     def self.run
@@ -34,6 +38,12 @@ module Deploy
       return GateResult.fail("BrowserAgent tool missing") unless File.file?(source)
 
       content = File.read(source)
+      evasion_patterns = /navigator\\.webdriver|AutomationControlled|browse_randomly|humanize_mouse|stealth_script|user_agents\\s*:/i
+      browser_config = File.join(root, "data", "browser_agents.yml")
+      sources = [content, (File.read(browser_config) if File.file?(browser_config))].compact
+      if sources.any? { |text| text.match?(evasion_patterns) }
+        return GateResult.fail("BrowserAgent must not disguise automation or simulate random browsing")
+      end
       %w[SsrfGuard.pinned_address secure_page :dangerous].each do |guard|
         return GateResult.fail("BrowserAgent security guard missing: #{guard}") unless content.include?(guard)
       end

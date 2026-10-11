@@ -4530,5 +4530,9 @@ browser_policy:
   external_interactions:
     ai_identity_disclosure_required: true
     recipient_consent_required: true
+    recipient_opt_out_required: true
     per_action_human_approval_required: true
+    unsolicited_bulk_outreach: forbidden
+    autonomous_message_sending: forbidden
     browser_fingerprint_spoofing: forbidden
+    platform_evasion: forbidden
