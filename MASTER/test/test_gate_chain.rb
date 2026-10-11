@@ -100,6 +100,19 @@ class TestGateChain < Minitest::Test
     assert_equal %w[source], captured.map(&:name)
   end
 
+  def test_rails_gates_can_force_inconclusive_blocking_for_proofs
+    captured_envs = []
+    capture = ->(*_args, **kwargs) { captured_envs << kwargs.fetch(:env); [true, [], 0] }
+
+    G.stub(:capture, capture) do
+      G.rails_gates(scan_only: true)
+      G.rails_gates(scan_only: true, strict_inconclusive: true)
+    end
+
+    assert_equal G.send(:strict_env).fetch("GATE_STRICT_INCONCLUSIVE"), captured_envs[0].fetch("GATE_STRICT_INCONCLUSIVE")
+    assert_equal "1", captured_envs[1].fetch("GATE_STRICT_INCONCLUSIVE")
+  end
+
   # Rails verification delegates to premerge without narrowing flags. Keep its
   # default group set observable so a future --apps-only default cannot silently
   # turn a full /fix proof into a smaller one.
