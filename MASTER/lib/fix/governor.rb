@@ -132,7 +132,9 @@ module Master
         case choice.to_s
         when "approve" then Result.ok(true)
         when "allow"
-          allow!(tool_name, description) unless one_time
+          return Result.err("remembered approval is forbidden for this action", category: :validation) if one_time
+
+          allow!(tool_name, description)
           Result.ok(true)
         when "deny"
           deny!(tool_name, description)
