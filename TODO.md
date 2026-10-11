@@ -43,12 +43,6 @@ No source mutation is permitted merely to turn any of those evidence gates green
 
 Reopen this file only when a current measurement identifies a new repository-actionable defect. Close it by landing the code and its proof, then remove the item. Do not preserve completed tasks here as a second changelog.
 
-## Current source finding — checkpoint restore integrity
-
-- [ ] Prove checkpoint integrity before restoration: add a focused test that tampers with a saved checkpoint file or manifest and establishes whether `Master::Fix::Checkpoint#restore` detects it. If tampering is accepted, add per-file integrity metadata and verify it before any restore writes; retain explicit compatibility for existing checkpoints. Keep restore failure atomic and never overwrite live files after an integrity failure.
-  - Origin: triage of the externally generated 450-item micro-refinement list, proposal #131.
-  - Scope decision: do not bulk-import the list. Its confirmed `handler_exception` classification typo is already fixed on main; multiple proposals are duplicates or already implemented, and speculative refactors remain excluded until a reproducible gap is demonstrated.
-
 ## Canonical proof surfaces
 
 - MASTER: bin/operator measure, bin/gate, rake selftest, the relevant MASTER test suites, and /fix proof.
