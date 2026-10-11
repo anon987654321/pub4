@@ -2,6 +2,7 @@
 
 require "json"
 require_relative "../result"
+require_relative "visual_quality_gates"
 require_relative "../../gates/support/geometry_probe"
 require_relative "../../gates/lib/rendered/layout_snapshot"
 
@@ -23,6 +24,7 @@ module Master
       end
 
       def preflight!(captures)
+        VisualQualityGates.record(captures, root: @root)
         compare_captures(Array(captures), "before visual fix")
       end
 
@@ -36,7 +38,7 @@ module Master
             measured << [surface, Deploy::GeometryProbe.walk(cdp, surface)]
           end
         end
-        compare_payloads(measured, "after visual fix")
+        VisualQualityGates.judge(measured, root: @root, prior: compare_payloads(measured, "after visual fix"))
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "fix.visual_custody", event_bus: @bus)
         Result.err("visual custody: INCONCLUSIVE — #{e.class}: #{e.message}", category: :inconclusive)

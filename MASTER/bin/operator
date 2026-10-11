@@ -261,6 +261,15 @@ when "land"
   push_out, pushed = run!("git", "push", "origin", "HEAD:main")
   abort("land: push refused\n#{push_out}") unless pushed
   Master::Trace::Dmesg.status("land0", "on origin/main")
+when "visual"
+  # Blesses a parked chrome-geometry baseline; the /fix loop never does this itself.
+  require File.join(ROOT, "MASTER", "lib", "fix", "visual_drift_budget")
+  sub, surface = ARGV
+  pending = Master::Fix::VisualDriftBudget.pending(ROOT)
+  abort("usage: visual approve <surface>   (pending: #{pending.empty? ? "none" : pending.join(", ")})") unless sub == "approve" && surface
+  blessed = Master::Fix::VisualDriftBudget.approve(surface, root: ROOT)
+  abort("visual: nothing pending for #{surface}") unless blessed
+  puts "visual: #{surface} baseline now #{blessed} chrome box(es)"
 when "snapshot"
   # Regenerates snapshot_<TREE>.md — the verbatim packs handed to another model
   # when it needs the whole tree rather than a summary. The generator that made

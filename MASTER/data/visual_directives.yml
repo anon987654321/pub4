@@ -1,0 +1,48 @@
+---
+# Rendered-conformance rules for VisualConformance. Each rule names the
+# project_context.yml directive it enforces, the surfaces it covers (an
+# app-id regexp), a probe that reads one value from a measured element, and
+# the checks that value must pass. Probes and checks are registered in
+# lib/fix/visual_conformance.rb; adding a directive means adding a rule here.
+rules:
+- id: swiss_sans_only
+  directive: brgen_typography_swiss_only
+  scope: '\A(brgen|__shared)'
+  probe: font_family
+  checks:
+    forbid_generic: [serif]
+    forbid_named:
+    - georgia
+    - times
+    - times new roman
+    - garamond
+    - palatino
+    - baskerville
+    - cambria
+    - playfair display
+    - source serif pro
+    - merriweather
+    - lora
+    - noto serif
+    - didot
+    - bodoni
+    head_in:
+    - helvetica neue pro
+    - helvetica neue
+    - helvetica
+    - arial
+    - sans-serif
+    - system-ui
+    - -apple-system
+    - monospace
+    - ui-monospace
+    - sf mono
+    - menlo
+    - monaco
+    - consolas
+    - courier new
+    - courier
+    - apple color emoji
+    - segoe ui emoji
+    - noto color emoji
+    monospace_only_in: 'chat|terminal|irc|(^|[>.#\s])(pre|code|kbd|samp)([>.#\s\[]|$)'
