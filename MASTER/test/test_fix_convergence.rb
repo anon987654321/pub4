@@ -965,8 +965,12 @@ end
     _name, runner = pass.send(:proof_runner, Master::RAILS_ROOT)
     previous_strict = ENV["GATE_STRICT_INCONCLUSIVE"]
     ENV.delete("GATE_STRICT_INCONCLUSIVE")
+    strict_calls = []
+    inconclusive = lambda do |strict_inconclusive: false, **|
+      strict_calls << strict_inconclusive
+      [false, ["deploy_drift measured nothing"], 3]
+    end
 
-    inconclusive = ->(**) { [false, ["deploy_drift measured nothing"], 3] }
     ok, out = Operator::GateChain.stub(:rails_gates, inconclusive) { runner.call }
     assert ok, "ordinary contribution mode should preserve its inconclusive policy"
     assert_match(/GATE_STRICT_INCONCLUSIVE/, out.last)
@@ -976,6 +980,7 @@ end
     end
     refute ok, "an inconclusive gate passed a proof"
     assert_match(/forbids passing/, out.last)
+    assert_equal [false, true], strict_calls, "the proof did not request strict child-gate handling"
     assert_nil ENV["GATE_STRICT_INCONCLUSIVE"], "the proof did not restore its strictness override"
 
     failed = ->(**) { [false, ["port_inventory failed"], 1] }
