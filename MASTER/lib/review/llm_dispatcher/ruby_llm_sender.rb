@@ -83,7 +83,18 @@ module Master
           return [last_text, nil, nil] unless has_image
 
           attachment, temp_file = build_image_attachment(image)
-          [last_text, attachment, temp_file]
+          [last_text, with_extra_attachments(attachment, image), temp_file]
+        end
+
+        # image[:extra] holds further on-disk images; the gem takes a list.
+        def with_extra_attachments(attachment, image)
+          extras = Array(image[:extra]).filter_map do |extra|
+            path = extra[:path].to_s
+            next unless File.file?(path)
+
+            RubyLLM::Attachment.new(path, filename: (extra[:name].to_s.empty? ? File.basename(path) : extra[:name].to_s))
+          end
+          extras.empty? ? attachment : [attachment, *extras]
         end
 
         def build_image_attachment(image)

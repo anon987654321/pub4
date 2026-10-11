@@ -14,13 +14,13 @@ module Master
       class Critique
         MODES = Modes::TABLE
 
-        def initialize(mode:, agent:, event_bus: nil, audio_path: nil, files: nil, visual_image: nil, visual_context: nil, briefing: nil, speak_personas: false)
+        def initialize(mode:, agent:, event_bus: nil, audio_path: nil, files: nil, visual_image: nil, visual_images: nil, visual_context: nil, briefing: nil, speak_personas: false)
           @mode = MODES.fetch(mode) { raise ArgumentError, "unknown critique mode: #{mode}" }
           @agent = agent
           @bus = event_bus
           @audio_path = audio_path
           @files_override = files
-          @visual_image = visual_image
+          @visual_image = with_extra_images(visual_image, visual_images)
           @visual_context = visual_context
           @briefing = briefing.to_s.strip
           @speak_personas = speak_personas
@@ -180,6 +180,16 @@ module Master
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "Critique.harvest", severity: :load_bearing)
           nil
+        end
+
+        # Extra images ride on the primary image's :extra list, so the one-image
+        # contract through Tribunal, Deliberation and the dispatcher is unchanged.
+        def with_extra_images(primary, extras)
+          extras = Array(extras).compact
+          return primary if extras.empty?
+          return primary.merge(extra: Array(primary[:extra]) + extras) if primary
+
+          extras.first.merge(extra: extras.drop(1))
         end
 
         def build_context

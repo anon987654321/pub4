@@ -3,6 +3,7 @@
 require "fileutils"
 require "json"
 require "time"
+require_relative "visual_cross_page_overlay"
 
 module Master
   module Fix
@@ -31,6 +32,9 @@ module Master
 
         entries = []
         add(entries, contact_sheet, dir, label: "contact-sheet", surface: "all", kind: "contact_sheet")
+        VisualCrossPageOverlay.collect(captures).each do |overlay|
+          add(entries, overlay[:screenshot], dir, label: "cross-page-#{overlay[:key]}", surface: "all", kind: "cross_page")
+        end
         Array(captures).each { |capture| add_capture(entries, capture, dir) }
         manifest_path = write_manifest(dir, target:, pass:, entries:)
         FileUtils.ln_sf(File.basename(dir), File.join(File.dirname(dir), "latest"))

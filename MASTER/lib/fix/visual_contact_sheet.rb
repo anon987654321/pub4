@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "base64"
+require_relative "visual_cross_page_overlay"
 
 module Master
   module Fix
@@ -40,7 +41,7 @@ module Master
           img { display: block; width: 100%; height: auto; border: 1px solid #bbb; }
           </style></head><body>
           <h1>MASTER rendered visual evidence: #{captures.length} surfaces</h1>
-          <div class="grid">#{captures.flat_map { |capture| items(capture) }.join("\n")}</div>
+          <div class="grid">#{(captures.flat_map { |capture| items(capture) } + cross_page_items(captures)).join("\n")}</div>
           </body></html>
         HTML
       end
@@ -51,6 +52,15 @@ module Master
         [item(capture), *visual_evidence_items(capture)] + Array(capture[:journeys]).filter_map do |journey|
           next unless journey["screenshot"]
           journey_item(capture[:surface], journey)
+        end
+      end
+
+      # Each overlay once, however many of its member surfaces carry it.
+      def cross_page_items(captures)
+        VisualCrossPageOverlay.collect(captures).filter_map do |overlay|
+          next unless overlay[:screenshot]
+
+          image_item(overlay[:screenshot], "cross-page overlay | #{overlay[:label]} | #{overlay[:layers]} pages")
         end
       end
 

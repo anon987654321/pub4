@@ -134,6 +134,7 @@ module Master
           captures.each do |capture|
             capture[:visual_evidence] = @ghost_stack.capture(capture, pass:, cdp:)
           end
+          cross_page_overlay.capture(captures, cdp:)
         end
         captures
       end
@@ -162,6 +163,7 @@ module Master
           event_bus: @bus,
           files: sources,
           visual_image: image,
+          visual_images: fullres_images(captures),
           visual_context: context,
         ).run
         [critique, image]
@@ -318,7 +320,7 @@ module Master
         mapped = anchors.values.compact.uniq.first(12)
         <<~TEXT
           RENDERED EVIDENCE
-          The attached image is a contact sheet containing every captured surface and exercised mobile state in this pass. Each surface also has a persistent ghost stack: aligned renders from recent /fix passes are layered at low opacity, with a difference view for the newest two. Use these to spot optical drift and one-to-few-pixel misalignment before proposing a source change. The measurements below were
+          The first attached image is a contact sheet containing every captured surface, exercised mobile state and cross-page overlay in this pass; further attached images are full-resolution overlays and renders. Each surface also has a persistent ghost stack: aligned renders from recent /fix passes are layered at low opacity, with a difference view for the newest two. Use these to spot optical drift and one-to-few-pixel misalignment before proposing a source change. The measurements below were
           collected from the same browser session across the listed surfaces.
           Mobile is the primary composition: every mobile surface is exercised through safe, non-destructive focus, validation, disclosure, and same-origin navigation journeys when those states exist. Navigation journeys include return-path evidence; journey screenshots are evidence, not a score. Treat web-platform probe findings as evidence about layout primitives, not automatic prescriptions; choose the smallest modern primitive that fits the rendered behavior and browser support.
           Judge the render first. Source is supporting evidence.
@@ -326,6 +328,7 @@ module Master
           #{Master::Fix::VisualUsability.context}
           #{visual_rubric_context}
           #{Master::Fix::VisualReference.context}
+          #{cross_page_context(captures)}
           Every actionable issue must name the applicable law id(s), surface/viewport, and a stable selector or visible text anchor.
           Use the ghost stack for visual alignment, the difference view for changed pixels, and geometry drift for stable-element movement. A difference image proves change, not that the change is wrong. Look for actual opportunities in hierarchy, typography, measure, leading,
           whitespace, alignment, grouping, density, proportion, responsive composition,
