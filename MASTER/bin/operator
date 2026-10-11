@@ -19,6 +19,7 @@ require "operator/ruby_runner"
 require "operator/status_report"
 require "operator/strict_mode"
 require "operator/law_inventory"
+require "operator/memory_review"
 require_relative "../lib/trace/dmesg"
 
 RUBY = Operator::RubyRunner.ruby_cmd
@@ -58,6 +59,7 @@ def usage
       bin/operator premerge [--apps|--pwa|--contracts|--coverage|--gates|--list]  the Rails premerge proof
       bin/operator ci | coverage          every app's bin/ci, the full Rails coverage run
       bin/operator doctor [--remote]      the environment traps, checked in seconds: disk, rubies, boot, worktrees, model lanes, stray processes
+      bin/operator memory review <key> <verdict> --evidence <path> --sha256 <hex> --reviewer <name> --confirm
       bin/operator laws <ID> [--card] [--health] [--deep] [--json] [--corpus MASTER|all] [path...]
                                       the rule, its exemption, then what it finds
       bin/operator hooks                  install the shared-tree commit guard
@@ -376,6 +378,8 @@ when "law:matrix"
   output = Operator::LawInventory.render_collection(:matrix, json: ARGV.include?("--json"))
   Master::Trace::Dmesg::Report.print(command.to_s, output) if output
   exit 0
+when "memory"
+  exit Operator::MemoryReview.run(ARGV, root: ROOT)
 when "laws"
   # One law: what it says, what it spares, and what it finds — in that order.
   # The same word as the CLI's /laws, which lists them; this is one in full.
