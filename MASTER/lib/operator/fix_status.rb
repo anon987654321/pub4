@@ -3,6 +3,7 @@
 require "json"
 require "open3"
 require "time"
+require_relative "../io/lane_quota"
 
 module Operator
   # One screen about /fix, read from what /fix already writes: the run journal
@@ -36,6 +37,7 @@ module Operator
         logs: log_rows,
         commits: commit_row,
         retained: retained_rows,
+        dead_lanes: ::Master::Io::LaneQuota.report,
       }
     end
 
@@ -78,6 +80,9 @@ module Operator
       data[:logs].each { |row| out << "  #{row[:name]} #{row[:age]} ago: #{row[:last]}" }
       commits = data[:commits]
       out << "commits: #{commits[:ahead]} ahead of origin/main on #{commits[:branch]}, #{commits[:pushed] ? "pushed" : "not pushed"}"
+      out << "dead lanes:"
+      out << "  none" if data[:dead_lanes].empty?
+      data[:dead_lanes].each { |row| out << "  #{row}" }
       out << "retained:"
       out << "  no temp worktrees or branches" if data[:retained].empty?
       data[:retained].each do |row|

@@ -179,9 +179,7 @@ end
           # A silent lane refuses every hop, so walking it would only publish
           # one failover event per catalogue model for each call.
           silence = Master::Review::LLMDispatcher::LaneSilence
-          fallback = single_call_fallback_models.reject do |model|
-            attempted.include?(model) || silence.silent?(silence.lane_of(model))
-          end.first
+          fallback = single_call_fallback_models.reject { |model| attempted.include?(model) || silence.refuses?(model) }.first
           break unless fallback
 
           attempted << fallback

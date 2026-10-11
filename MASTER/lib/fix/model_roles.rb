@@ -36,9 +36,9 @@ module Master
       end
 
       def assign(env: ENV, alive: method(:alive?), cfg: config)
-        dead = Array(cfg["dead"]).map(&:to_s)
+        dead = Master::Io::LaneQuota.manual_dead(cfg)
         usable = lambda do |role|
-          Array(cfg.dig("roles", role.to_s)).map(&:to_s).select { |id| dead.none? { |d| id.start_with?(d) } && alive.call(id) }
+          Array(cfg.dig("roles", role.to_s)).map(&:to_s).select { |id| !Master::Io::LaneQuota.dead?(id, manual: dead) && alive.call(id) }
         end
         pick = ->(role) { env["MASTER_FIX_#{role.upcase}_MODEL"].to_s.strip.then { |v| v.empty? ? nil : v } }
 

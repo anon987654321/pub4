@@ -185,7 +185,7 @@ module Master
 
       # MASTER_MODEL first, then a vision model when an image rides along.
       def answering_model(selected_model, image)
-        model = ModelPin.current || forced_model || selected_model
+        model = [ModelPin.current, forced_model].find { |m| m && !Io::LaneQuota.dead?(m) } || selected_model
         image_present?(image) ? vision_model_for(model) : model
       end
 
@@ -235,8 +235,7 @@ module Master
       # quiet, and this model unreachable. Both answer :no_api_key, which callers
       # treat as permanent and skip rather than retry.
       def refusal_before_send(selected_model)
-        lane = LaneSilence.lane_of(selected_model)
-        return Result.err(LaneSilence.message(lane), category: :no_api_key) if LaneSilence.silent?(lane)
+        return Result.err(LaneSilence.refusal(selected_model), category: :no_api_key) if LaneSilence.refuses?(selected_model)
 
         reason = forced_lane_unavailable(selected_model)
         return Result.err(reason[:message], category: reason[:category]) if reason
@@ -306,6 +305,7 @@ module Master
       # rather than reading it two hundred times.
       def note_lane_silence(result, model)
         outcome = Result.wrap(result)
+        Io::LaneQuota.note(model, outcome.message) unless outcome.ok?
         lane = LaneSilence.lane_of(model)
         return unless LaneSilence.record(outcome.ok?, lane, reason: outcome.ok? ? nil : outcome.message)
 

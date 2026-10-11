@@ -55,6 +55,17 @@ module Master
             end
           end
 
+          # Silent from failures, or dead because its provider said the quota is spent.
+          def refuses?(model) = silent?(lane_of(model)) || Master::Io::LaneQuota.dead?(model)
+
+          # A lane that is down says why and when it is back; otherwise the silence message.
+          def refusal(model)
+            lane = lane_of(model)
+            return message(lane) if silent?(lane)
+
+            Master::Io::LaneQuota.report.find { |row| row.start_with?("#{lane}:") } || "#{lane}: dead (quota)"
+          end
+
           def message(lane = ANY)
             said = sync { @lanes.dig(lane, :reason) }
             "no #{lane} answer in #{SILENT_AFTER} calls in a row; #{lane} is skipped for " \

@@ -21,7 +21,6 @@ roles:
 # Lane prefixes known to answer nothing right now (quota spent, or a CLI that
 # hangs); a lane here is never chosen. Remove an entry when the lane answers.
 dead:
-  - codex-cli:
+  - codex-cli
   - gemini
   - ollama:glm
-  - agy: # quota spent until about 2026-10-18
