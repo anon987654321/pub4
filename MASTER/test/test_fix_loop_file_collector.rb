@@ -25,7 +25,23 @@ class TestFixLoopFileCollector < Minitest::Test
     File.write(path, body)
     path
   end
+  def init_repo(root)
+    return if File.exist?(File.join(root, ".git"))
 
+    success = system("git", "-C", root, "init", "-q", "--initial-branch=main", out: File::NULL, err: File::NULL)
+    raise "test fixture could not initialise Git repo #{root}" unless success
+  end
+
+  def test_collection_without_a_git_root_fails_closed
+    Dir.mktmpdir do |dir|
+      source = write(dir, "lib/thing.rb")
+
+      error = assert_raises(RuntimeError) { collector(dir).collect(dir) }
+
+      assert_match(/git inventory unavailable: no Git checkout/, error.message)
+      refute_nil source
+    end
+  end
   def test_git_inventory_failure_does_not_fall_back_to_unrestricted_walk
     Dir.mktmpdir do |dir|
       FileUtils.mkdir_p(File.join(dir, ".git"))
@@ -46,6 +62,7 @@ class TestFixLoopFileCollector < Minitest::Test
       write(dir, "RAILS/master_web/public/face_vision.bundle.js", "const c = 3;\n")
       write(dir, "reports/run.yml", "a: 1\n")
       write(dir, "vendor/gem/lib/dep.rb")
+      init_repo(dir)
 
       collected = collector(dir).collect(dir)
 
@@ -59,6 +76,7 @@ class TestFixLoopFileCollector < Minitest::Test
       bus = FakeBus.new
       write(dir, "lib/thing.rb")
       write(dir, "RAILS/master_web/public/face.runtime.js", "const a = 1;\n")
+      init_repo(dir)
 
       collected = collector(dir, bus:).collect(dir)
 
@@ -188,6 +206,7 @@ class TestFixLoopFileCollector < Minitest::Test
   def test_skip_reason_census_counts_every_dropped_candidate
     Dir.mktmpdir do |dir|
       path = write(dir, "RAILS/brgen/app/models/post.rb")
+      init_repo(dir)
       collector_instance = collector(dir)
 
       Master::Fix::Scanner.stub(:skip_path?, ->(_path, root:) { true }) do

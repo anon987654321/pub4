@@ -34,7 +34,8 @@ module Master
 
         def collect(target)
           candidates = repository_files(target)
-          candidates = Dir.glob(File.join(target, "**", "*")).select { |file| File.file?(file) } if candidates.nil?
+          raise "git inventory unavailable: no Git checkout for #{target}" if candidates.nil?
+
           retain(candidates)
         end
 
