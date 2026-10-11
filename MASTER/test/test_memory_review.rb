@@ -40,10 +40,12 @@ class TestMemoryReview < Minitest::Test
 
   def test_obsolete_memory_is_excluded_from_consolidated_context
     @memory.remember("old_preference", "use the old route", source: "operator", confidence: 0.8)
+    @memory.remember("_consolidated_summary", "Prior summary repeats the old route")
     @memory.review("old_preference", verdict: :obsolete,
                    evidence: evidence("test:expiry"), reviewer: "operator")
 
     refute_includes @memory.context_summary.to_s, "old_preference"
+    refute_includes @memory.context_summary.to_s, "Prior summary repeats the old route"
   end
 
   def test_contradicted_structured_preferences_and_reasoning_stay_out_of_context

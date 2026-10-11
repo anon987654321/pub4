@@ -133,6 +133,9 @@ module Master
             provenance["status"] = verdict
             provenance["reviewed_at"] = reviews.last["reviewed_at"]
             entry["provenance"] = provenance
+            # The prior summary may already repeat a now-contradicted fact.
+            # Invalidate it on every review; the next summary uses eligible rows. 
+            @store.delete("_consolidated_summary")
             persist
             provenance.dup
           end

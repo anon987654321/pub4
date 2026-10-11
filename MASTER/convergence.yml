@@ -111,7 +111,7 @@ workstreams:
     proof: MASTER/test/test_cognition_feedback.rb
   - id: cognition_learning_benchmark
     state: partial
-    title: Prequential outcome benchmark compared with a constant-probability baseline
+    title: Prequential outcome benchmark with explicit no-learning ablation and baseline
     implementation: MASTER/lib/cognition/benchmark.rb
     proof: MASTER/test/test_cognition_outcome_model.rb
   - id: model_laboratory
