@@ -74,6 +74,8 @@ module Master
         plan = ratcheted_plan(plan)
         refusal = refusal_for(plan)
         return Result.err("restructure refused: #{refusal}", category: :policy) if refusal
+        stale = ground_truth_failure(plan)
+        return Result.err(stale, category: :policy) if stale
 
         before = @proof.baseline(plan)
         originals = snapshot(plan)
@@ -194,15 +196,18 @@ module Master
         preserved = @preserve_user_intent&.assert_preserved!(diff_text, message:)
         return preserved.message if preserved&.err?
 
-        stale = if @ground_truth
-                  plan.paths.select { |path| path.end_with?(".rb") }
-                      .reject { |path| @ground_truth.fresh?(File.join(@root, path)) }
-                else
-                  []
-                end
-        stale.empty? ? nil : "ground_truth: stale read required for #{stale.join(", ")} before restructure commit"
+        nil
       rescue StandardError => e
         "delivery safety: #{e.class}: #{e.message}"
+      end
+      # Validate existing source reads before mutation. New output files have
+      # no prior read; checking freshness after apply would reject the expected edit.
+      def ground_truth_failure(plan)
+        return unless @ground_truth
+
+        existing = plan.paths.select { |path| path.end_with?(".rb") && File.file?(full(path)) }
+        stale = existing.reject { |path| @ground_truth.fresh?(full(path)) }
+        stale.empty? ? nil : "ground_truth: stale read required for #{stale.join(", ")} before restructure"
       end
       def commit(plan, message, evidence:)
         @git.git!("add", "-A", "--", *plan.paths)

@@ -48,6 +48,8 @@ module Master
         kind = self.class.kind(from)
         return Result.err("rename: #{from} is not a kind FileRename can prove", category: :policy) unless kind
         return Result.err("rename: #{from} or its readers have uncommitted changes", category: :policy) unless clean?(from, to)
+        stale = ground_truth_failure(from, to)
+        return Result.err(stale, category: :policy) if stale
 
         before = kind == :stylesheet ? @css_rules.call(@root) : nil
         edited = move_and_rewrite(from, to)
@@ -109,15 +111,22 @@ module Master
         )
         return preserved.message if preserved&.err?
 
-        stale = if @ground_truth
-                  paths.select { |path| path.end_with?(".rb") }
-                       .reject { |path| @ground_truth.fresh?(File.join(@root, path)) }
-                else
-                  []
-                end
-        stale.empty? ? nil : "ground_truth: stale read required for #{stale.join(", ")} before rename commit"
+        nil
       rescue StandardError => e
         "delivery safety: #{e.class}: #{e.message}"
+      end
+      # Check Ruby readers before changing them; after the rewrite their bytes
+      # should differ from the version read to form the proposal.
+      def ground_truth_failure(from, to)
+        return unless @ground_truth
+
+        affected = References.each_file(@root).filter_map do |path|
+          next unless path.end_with?(".rb") && References.rewrite(read(path), from, to)
+
+          relative(path)
+        end
+        stale = affected.reject { |path| @ground_truth.fresh?(File.join(@root, path)) }
+        stale.empty? ? nil : "ground_truth: stale read required for #{stale.join(", ")} before rename"
       end
       def undo(from, to, edited, failure)
         @git.git!("reset", "-q", "--", from, to, *edited)

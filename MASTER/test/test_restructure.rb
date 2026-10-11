@@ -129,6 +129,21 @@ class TestRestructure < Minitest::Test
     assert_equal original, read("MASTER/lib/tiny.rb")
   end
 
+  def test_stale_reads_block_a_restructure_before_any_file_is_changed
+    truth = Object.new
+    truth.define_singleton_method(:fresh?) { |_path| false }
+    result = Restructure.new(repo_root: @repo, ground_truth: truth).call(
+      split_plan, message: "refactor: split Big", review: ->(_diff) {}
+    )
+
+    refute result.ok?
+    assert_match(/ground_truth: stale read required/, result.message)
+    assert_equal "TINY = 1\n", read("MASTER/lib/tiny.rb")
+    assert_equal "class Big\n  def a = 1\n  def b = 2\nend\n", read("MASTER/lib/big.rb")
+    refute File.exist?(File.join(@repo, "MASTER/lib/big/second.rb"))
+    assert_empty sh("git", "status", "--porcelain", chdir: @repo).strip
+  end
+
   def test_a_failed_delivery_safety_check_rolls_back_the_whole_plan
     Operator::RatchetSponsor.stub(:validate!, ->(**_kwargs) { raise "ratchet sponsorship required" }) do
       result = restructure.call(split_plan, message: "refactor: split Big", review: ->(_diff) {})
