@@ -64,9 +64,11 @@ module Master
         @dependencies = dependencies
         @digestor = digestor || ->(path) { Digest::SHA256.file(path) }
         @ruby_checker = ruby_checker
+        @fingerprints = {}
       end
 
       def run
+        @fingerprints = {}
         phases = {}
         failures = []
         files = file_list
