@@ -1,0 +1,84 @@
+# Boom-bap / Dilla drum pattern library. Steps are 16ths (0..15, 4 per beat).
+# Offsets are whole ticks at 96 PPQ (MPC3000 nudge resolution; one 16th = 24
+# ticks). Positive drags, negative pushes. Each instrument keeps its own repeating
+# offset, its own per-step nudges and its own extra swing on the odd 16ths, so
+# kick, snare and hat sit on three different grids and the bar wobbles by design.
+# Sources: Ethan Hein "Dilla Time" essay, Sasha Frere-Jones on Dilla Time,
+# MPC3000 write-ups. Pattern names carry "_style": these are idiomatic shapes
+# in the manner of those records, not transcriptions.
+bounds:
+  kick: [-5, 5]
+  snare: [0, 8]
+  hat: [-3, 6]
+  ghost: [-2, 6]
+patterns:
+  boom_bap_classic:
+    family: boom_bap
+    swing: 54
+    kicks: [[0, 7, 10], [0, 7, 10], [0, 10, 15], [0, 2, 10]]
+    snares: [[4, 12]]
+    hats: [[0, 2, 4, 6, 8, 10, 12, 14]]
+    ghosts: [[15], [3, 15], [15], [9, 15]]
+    ticks: {kick: -1, snare: 4, hat: 1, ghost: 2}
+    swing_ticks: {kick: 0, snare: 0, hat: 2, ghost: 2}
+    nudge: {kick: {7: -2}}
+  donuts_style:
+    family: dilla
+    swing: 56
+    kicks: [[0, 11], [0, 11], [0, 6, 11], [0, 11, 14]]
+    snares: [[4, 12]]
+    hats: [[0, 2, 6, 8, 10, 14]]
+    ghosts: [[7], [7], [7, 15], [7]]
+    ticks: {kick: -2, snare: 5, hat: 1, ghost: 3}
+    swing_ticks: {kick: 0, snare: 0, hat: 3, ghost: 3}
+    nudge: {kick: {11: 2}}
+  workinonit_style:
+    family: dilla
+    swing: 55
+    kicks: [[0, 3, 6, 10, 13], [0, 3, 7, 10], [0, 3, 6, 10, 13], [0, 3, 10, 14]]
+    snares: [[4, 12]]
+    hats: [[0, 2, 4, 6, 8, 10, 12, 14, 11], [0, 2, 4, 6, 8, 10, 12, 14]]
+    ghosts: [[2, 10], [2, 10, 15], [2, 10], [2, 6, 10]]
+    ticks: {kick: -3, snare: 4, hat: 2, ghost: 2}
+    swing_ticks: {kick: 0, snare: 0, hat: 2, ghost: 2}
+    nudge: {kick: {3: 3, 13: -3}}
+  waves_style:
+    family: dilla
+    swing: 54
+    kicks: [[0, 5, 8, 13], [0, 5, 8, 13, 15], [0, 5, 9, 13], [0, 5, 8, 12]]
+    snares: [[4, 12]]
+    hats: [[0, 3, 6, 8, 11, 14], [0, 2, 3, 6, 8, 10, 11, 14]]
+    ghosts: [[7, 15], [2, 7, 15], [7, 11], [7, 15]]
+    ticks: {kick: -2, snare: 6, hat: 0, ghost: 3}
+    swing_ticks: {kick: 0, snare: 0, hat: 3, ghost: 2}
+    nudge: {kick: {5: 3, 13: -2}}
+  premier_knock:
+    family: boom_bap
+    swing: 52
+    kicks: [[0, 2, 10], [0, 2, 10, 13], [0, 10], [0, 2, 8, 10]]
+    snares: [[4, 12]]
+    hats: [[0, 4, 8, 12], [0, 2, 4, 6, 8, 10, 12, 14]]
+    ghosts: [[]]
+    ticks: {kick: 0, snare: 2, hat: 0, ghost: 0}
+    swing_ticks: {kick: 0, snare: 0, hat: 1, ghost: 0}
+    nudge: {}
+  lazy_sixteenth_hats:
+    family: boom_bap
+    swing: 56
+    kicks: [[0, 6, 10], [0, 7, 10, 14], [0, 6, 10], [0, 3, 10]]
+    snares: [[4, 12]]
+    hats: [[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]]
+    ghosts: [[9], [9, 15], [9], [7, 9]]
+    ticks: {kick: -1, snare: 5, hat: 2, ghost: 3}
+    swing_ticks: {kick: 0, snare: 0, hat: 4, ghost: 3}
+    nudge: {hat: {15: 2}}
+  drunk_ghost_funk:
+    family: dilla
+    swing: 57
+    kicks: [[0, 3, 6, 10, 13], [0, 3, 10, 11], [0, 6, 10, 13], [0, 3, 6, 10]]
+    snares: [[4, 12], [4, 7, 12], [4, 12, 15], [4, 12]]
+    hats: [[0, 2, 3, 5, 6, 8, 9, 11, 12, 14, 15]]
+    ghosts: [[5, 14], [5, 9, 14], [2, 5, 14], [5, 14]]
+    ticks: {kick: -3, snare: 6, hat: 3, ghost: 3}
+    swing_ticks: {kick: 0, snare: 0, hat: 3, ghost: 3}
+    nudge: {kick: {3: 2, 13: -2}, snare: {7: -2}}

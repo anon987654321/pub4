@@ -100,6 +100,7 @@ require_relative "lib/sound"
 require_relative "lib/sampling"
 require_relative "lib/harmony"
 require_relative "lib/ledger"
+require_relative "lib/beat_library"
 require_relative "lib/groove"
 require_relative "lib/listen"
 require_relative "lib/midi_effects"
@@ -22060,6 +22061,9 @@ def drum_pattern_seed(feel)
 end
 
 def drum_pattern_pick(bar, feel, role)
+  if (library = DillaBeatLibrary.steps_for(role, bar))
+    return library
+  end
   if (learned = learned_drum_steps(role))&.any?
     return learned.dup
   end
@@ -23183,6 +23187,8 @@ end
 def pick_render_seed!
   DillaSeeds.apply!
   @render_seed = DillaSeeds.render_seed
+  # render_hiphop sets BEAT_LIBRARY=1; any other render keeps its own feel.
+  ENV["BEAT_LIBRARY"] == "1" ? DillaBeatLibrary.activate!(@render_seed) : DillaBeatLibrary.deactivate!
   reset_render_patches!
   # Bridge into ENV so lib modules (DillaGroove) that don't share this
   # top-level instance variable can still vary their per-bar phrase/pattern
@@ -29683,12 +29689,14 @@ end
 
 # Full-length MPC hip-hop: Slum Village Vol. 1/2 presets via TRACK= env.
 def render_hiphop(destination = File.join(OUTPUT_DIR, "hiphop.mp3"))
-  prev = %w[BPM BARS TRACK PROGRESSION SWING].each_with_object({}) { |k, h| h[k] = ENV[k] }
+  prev = %w[BPM BARS TRACK PROGRESSION SWING BEAT_LIBRARY].each_with_object({}) { |k, h| h[k] = ENV[k] }
   ENV["TRACK"] ||= "syncopated_slash_ninth"
   ENV["BARS"] ||= "63"
+  ENV["BEAT_LIBRARY"] ||= "1"
   render_dilla(destination, bars)
 ensure
   prev.each { |k, v| v ? ENV[k] = v : ENV.delete(k) }
+  DillaBeatLibrary.deactivate!
 end
 
 # --------------------------------------------------------------------------

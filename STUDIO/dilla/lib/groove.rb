@@ -2490,9 +2490,14 @@ module DillaGroove
     GROOVE_FEELS.fetch(key, GROOVE_FEELS[:dilla_drag])
   end
 
-  def role_timing_offset(role, beat_p, _bar, _step)
+  def role_timing_offset(role, beat_p, _bar, step)
     return 0.0 unless enabled?
     tick = beat_p / 96.0
+    # An active library pattern owns its kit's tick offsets: each instrument
+    # repeats its own lean, so the layers conflict by design.
+    if (library_ticks = DillaBeatLibrary.tick_offset(role, step))
+      return tick * library_ticks
+    end
     feel = groove_feel
     case role.to_sym
     when :snare
