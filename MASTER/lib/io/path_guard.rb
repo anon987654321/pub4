@@ -23,7 +23,15 @@ module Master
         return false unless inside_root?(full, root)
 
         existing = full
-        existing = File.dirname(existing) until File.exist?(existing)
+        until File.exist?(existing) || File.symlink?(existing)
+          parent = File.dirname(existing)
+          return false if parent == existing
+
+          existing = parent
+        end
+        # File.exist? is false for a dangling symlink. Stop at the link itself
+        # so File.realpath rejects it instead of walking past it to an in-root
+        # ancestor and accidentally blessing a path outside the repository.
         inside_root?(File.realpath(existing), root)
       rescue SystemCallError
         false
