@@ -10,8 +10,7 @@ so that a fix made once is made everywhere.
 This README is the entry to the tree. Feature truth is `apps.yml`, which also
 holds the ports, the domains and the stack versions, so nothing here restates
 them. Planned work that is not yet real sits in `apps.horizon.yml` and is
-marked for agents to ignore. The backlog is the file `TODO.md` at the repository
-root. Rules for working in the tree are in `CLAUDE.md` beside this file, and each
+marked for agents to ignore. The cross-tree queue is the repository-root `TODO.md`; the RAILS-specific backlog is `RAILS/TODO.md`. Rules for working in the tree are in `CLAUDE.md` beside this file, and each
 app keeps its own notes in an `AGENTS.md`.
 
 brgen is not a folder of apps. Every city apex in `Brgen::DomainRegistry` serves
