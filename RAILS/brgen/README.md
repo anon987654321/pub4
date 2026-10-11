@@ -14,7 +14,7 @@ city apex recognisable and leaves the place itself in charge. The verticals borr
 identity and earn a visual dialect of their own only when the surface needs one. Design values
 come from MASTER/data/tokens.yml through Master.tokens, and the shared stylesheet is
 RAILS/__shared/README.md. The feature matrix is RAILS/apps.yml under brgen, and the parity gaps
-and unfinished work are in TODO.md at the repository root.
+and unfinished work are in `RAILS/TODO.md` (cross-tree coordination is in the repository-root `TODO.md`).
 
 ## Cities
 
