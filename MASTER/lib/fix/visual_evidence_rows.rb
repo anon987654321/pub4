@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "visual_cross_page_overlay"
+require_relative "fix_trace"
 
 module Master
   module Fix

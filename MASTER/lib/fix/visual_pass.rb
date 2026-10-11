@@ -165,7 +165,7 @@ module Master
           visual_image: image,
           visual_images: fullres_images(captures),
           visual_context: context,
-        ).run
+        ).run.then { |result| FixTrace.round(result, captures:, images: [image, *fullres_images(captures)], context:) }
         [critique, image]
       end
 
@@ -195,7 +195,7 @@ module Master
       # when it picked something and none of it could be anchored.
       def anchored_findings(critique, sources, anchors)
         picks = Array(critique.value![:cherry_picks]).map(&:to_s).reject(&:empty?)
-        findings = picks.filter_map { |pick| finding_for(pick, sources, anchors) }
+        findings = picks.filter_map { |pick| FixTrace.pick(pick, finding_for(pick, sources, anchors), sources, anchors) }
         return findings unless picks.any? && findings.empty?
 
         Result.err(

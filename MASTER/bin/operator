@@ -57,6 +57,7 @@ def usage
                                       the rule, its exemption, then what it finds
       bin/operator hooks                  install the shared-tree commit guard
       bin/operator readers <path>         who reaches this file, across all four governed trees
+      bin/operator fix tail [--tail=N] [--transcript] [--once]  follow the newest /fix log and transcript
       bin/operator pushed? <path>...      is this content on origin/main, or only here
       bin/operator snapshot [TREE...] [--only=a,b] [--budget=BYTES] [--tests] [--mirror]  one snapshot file a tree for another model; deletes the old ones first
       bin/operator event-bus [--strict] [--json]  census Ruby publishers/subscribers and browser event references
@@ -542,6 +543,17 @@ when "readers"
   Master::Trace::Dmesg.status("readers0", "#{hard} references would break on delete or move")
   exit(hard.zero? ? 0 : 1)
 
+when "fix"
+  # `fix tail` and `fix status --tail/--transcript` are one follower: the newest
+  # /fix log beside the newest run's transcript. The main checkout is searched
+  # too, because a /fix child writes its transcript there and not in its worktree.
+  require "operator/fix_tail"
+  sub = ARGV.shift
+  die("fix", "usage, bin/operator fix tail|status [--tail[=N]] [--transcript] [--once]", 64) unless %w[tail status].include?(sub)
+  die("fix", "status takes --tail or --transcript", 64) if sub == "status" && ARGV.none? { |arg| arg == "--transcript" || arg.start_with?("--tail") }
+  common = Master::Io::Exec.capture2e("git", "-C", ROOT, "rev-parse", "--path-format=absolute", "--git-common-dir").first.strip
+  roots = [File.join(ROOT, "MASTER"), File.join(File.dirname(common), "MASTER")].uniq
+  exit Operator::FixTail.run(ARGV, roots:)
 when "hooks"
   # core.hooksPath rather than copying into .git/hooks: a copy is a second
   # implementation that drifts from the tracked one, silently, which is the

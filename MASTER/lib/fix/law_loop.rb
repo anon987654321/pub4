@@ -6,6 +6,7 @@ require_relative "../io/atomic_write"
 require_relative "conflict_resolver"
 require_relative "constants"
 require_relative "fix_attempt"
+require_relative "fix_trace"
 require_relative "patch_applier"
 require_relative "severity"
 require_relative "violation"
@@ -171,6 +172,7 @@ module Master
         return :skip_fingerprint unless fingerprint_matches?(violation)
 
         note_unverified_fix(violation)
+        FixTrace.begin_attempt(@law.id, violation[:file])
         @model_failed = false
         @model_unavailable = false
         return :model_unavailable unless @agent
@@ -181,9 +183,10 @@ else
 @model_failed ? :model_failed : :no_proposal
 end) if source.to_s.strip.empty?
 
+        FixTrace.proposed(@law.id, violation[:file], source)
         verified = reflexion_verify(violation, source)
-        return :reflexion_rejected unless verified
-        return :consensus_rejected unless consensus_approves?(violation, verified)
+        return (FixTrace.rejected(@law.id, violation[:file], "reflexion verifier refused") && :reflexion_rejected) unless verified
+        return (FixTrace.rejected(@law.id, violation[:file], "consensus refused") && :consensus_rejected) unless consensus_approves?(violation, verified)
 
         applied = apply(violation[:file], verified, violation)
         return :skip_fingerprint if applied == :stale
@@ -268,6 +271,7 @@ end) if source.to_s.strip.empty?
         end
 
         @bus&.publish("law_loop:fix_applied", law: @law.id, file: path)
+        FixTrace.accepted(@law.id, path)
         true
       rescue StandardError => e
         @bus&.publish("law_loop:write_error", law: @law.id, file: path, error: e.message)
@@ -282,6 +286,7 @@ end) if source.to_s.strip.empty?
 
         write_atomic(path, old_src)
         @bus&.publish("law_loop:fix_rejected", law: @law.id, file: path, reason: "exception", error: error.message[0, 160])
+        FixTrace.rejected(@law.id, path, "exception #{error.class}, restored: #{error.message[0, 120]}")
       rescue StandardError => restore_error
         Master::Ground::Swallow.log(restore_error, context: "LawLoop.restore_after_error", event_bus: @bus, law: @law.id)
       end
@@ -330,13 +335,13 @@ end) if source.to_s.strip.empty?
       def reject_fix(path, original, reason, **details)
         write_atomic(path, original)
         @bus&.publish("law_loop:fix_rejected", law: @law.id, file: path, reason:, **details)
-        Master::Trace::Dmesg.status("fix0", "#{@law.id} fix rejected, #{File.basename(path)}: #{reason}")
+        FixTrace.rejected(@law.id, path, [reason, *details.except(:before, :after).values.map { |v| v.to_s[0, 120] }].join(" "))
         false
       end
 
       def build_prompt_for(violation:, src:, path:, style: :file)
         ctx = prompt_context_for(violation:, path:, style:)
-        <<~PROMPT
+        FixTrace.prompt(<<~PROMPT)
         #{preamble}
 
         File: #{File.basename(path)} (#{ctx[:lang]})
@@ -399,6 +404,7 @@ end) if source.to_s.strip.empty?
       end
 
       def extract_code(text, ext = nil)
+        FixTrace.reply(text)
         return if text.nil? || text.strip.empty? || CollapseGuard.sentinel?(text)
         # A refusal with its reasons: "UNCHANGED" and then why. Taken whole, it
         # was proposed as data/CANON.md, data/lexicon.yml and five other files,
