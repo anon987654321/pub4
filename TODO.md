@@ -19,7 +19,6 @@ This is the cross-tree coordination queue. Each top-level tree owns its detailed
 - [RAILS/TODO.md](RAILS/TODO.md) — Rails contract suite, multi-city isolation, payment proof, rendered UX and PWA.
 - [OPENBSD/TODO.md](OPENBSD/TODO.md) — domain/DNS facts, deploy-lock correctness, vm23 health and restore drills.
 - [STUDIO/TODO.md](STUDIO/TODO.md) — Dilla rendering/listening, failing media tests, postpro performance and private-media hygiene.
-- [STUDIO/replicate/lora/TODO.md](STUDIO/replicate/lora/TODO.md) — likeness data, reference-image route, video, postpro and paid-provider safeguards.
 
 ## Evidence discipline
 
