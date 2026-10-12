@@ -900,7 +900,8 @@
   // (near bold, far dim) in the face's own colour, one fillText per row per tone.
   // The constitution's ranked law glyphs are applied after the head is rendered.
   // Occupied facial cells win; a glyph never overwrites an eye, contour, or mouth.
-  let lawFieldVisible = true;
+  const lawFieldConfig = root.MASTER_FACE_LAW_FIELD || {};
+  let lawFieldVisible = lawFieldConfig.enabled !== false;
   function paintLawField(lines, depth, laws) {
     const cells = lines.map((line) => (Array.isArray(line) ? line.slice() : Array.from(String(line))));
     const tones = (depth || cells.map((row) => row.map(() => 1))).map((row) => row.slice());
@@ -1087,8 +1088,10 @@
   }
 
   function setLawField(enabled) {
-    lawFieldVisible = !!enabled;
+    const config = root.MASTER_FACE_LAW_FIELD || {};
+    lawFieldVisible = config.enabled === false ? false : !!enabled;
     if (overlayView) overlayView.lastText = "";
+    return lawFieldVisible;
   }
 
   function setGlyphMode(enabled) {
@@ -1108,10 +1111,12 @@
     if (String(event.key).toLowerCase() !== key) return;
     const target = event.target;
     if (target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName))) return;
-    setGlyphMode(!glyphMode);
+    setLawField(!lawFieldVisible);
     const status = root.document.getElementById("master-face-ascii-status");
-    if (status) status.textContent = glyphMode ? "ASCII face mode enabled" : "ASCII face overlay enabled";
-    update(root.performance ? root.performance.now() : Date.now());
+    if (status) status.textContent = lawFieldVisible
+      ? "Constitutional law glyphs visible"
+      : "Constitutional law glyphs hidden";
+    if (overlayView) update(root.performance ? root.performance.now() : Date.now());
   }
 
   const api = { build, createView, kbSum, paintLawField, update, resize, setLawField, setGlyphMode };
