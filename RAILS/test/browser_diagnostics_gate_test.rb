@@ -198,7 +198,7 @@ class BrowserDiagnosticsGateTest < Minitest::Test
 
   def test_pixel_baselines_are_separate_and_approval_is_explicit
     tracked = SURFACE.dup
-    tracked.snapshot = true
+    tracked.pixel_snapshot = true
     path = Deploy::BrowserDiagnosticsGate.visual_baseline_path(tracked)
 
     assert_match(%r{/MASTER/gates/data/visual_baselines/brgen-marketplace_listings-mobile\.png\z}, path)
@@ -213,6 +213,20 @@ class BrowserDiagnosticsGateTest < Minitest::Test
       assert_raises(ArgumentError, value) do
         Deploy::BrowserDiagnosticsGate.pixel_diff_max_ratio("GATE_PIXEL_DIFF_MAX_RATIO" => value)
       end
+    end
+  end
+
+  def test_pixel_reference_inventory_is_deliberately_smaller_than_structural_inventory
+    surfaces = Deploy::GeometryProbe.surfaces
+    pixel_surfaces = surfaces.select(&:pixel_snapshot)
+    structural_surfaces = surfaces.select(&:snapshot)
+
+    assert_operator pixel_surfaces.size, :>, 0
+    assert_operator pixel_surfaces.size, :<, structural_surfaces.size
+    %w[master/chat amber/home amber/wardrobe bsdports/home bsdports/ports_index
+       brgen/core brgen/marketplace brgen/dating brgen/maps brgen/messenger].each do |key|
+      app, label = key.split("/", 2)
+      assert pixel_surfaces.any? { |surface| surface.app == app && surface.label == label }, key
     end
   end
 
