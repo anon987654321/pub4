@@ -1,61 +1,29 @@
 # Dilla
 
-**A small room that plays a chord progression soft and a little late, with a drum kit that never
-sits on the grid.** Dilla is one Ruby file and one data file. It reads a progression as a list of
-chord names, works out the voicing itself, plays the chords as stacks of sine waves, and writes a
-wav. Add a drum pattern and a groove profile and the kick, the snare and the hats fall a few
-milliseconds early or late, each in its own direction, the way a person leaning on a machine would
-play them.
+**A small room that plays a chord progression soft and a little late, with a drum kit that leans on the beat the way a person would, and a rack of old analogue colour to dirty it all up.** Dilla is one Ruby file and one data file. It reads a progression as a list of chord names, works out the voicing itself, plays the chords or an arpeggio or a rhythm of stabs through a chosen voice, adds drums and effects, and writes a wav, or plays forever.
 
-The engine is `dilla.rb`, about five hundred lines of plain Ruby with nothing beyond the standard
-library, and the data is `dilla.json`, which sits beside it. Run `ruby dilla.rb --list` to see the
-numbered progressions, the drum patterns and the groove profiles. Run `ruby dilla.rb --progression
-3 --drums offbeat_inversion --profile early_snare_late_hats --out out/three.wav` to render one,
-add `--midi out/three.mid` to write the same chords and drums as a Standard MIDI File, and run
-`ruby dilla.rb --random` to let the seed choose all three. The same seed always makes the same
-render, and the seed is printed. Renders are sixteen-bit mono at 44.1 kilohertz. The folder `out/`
-is ignored by git, because audio is not tracked, and a render that matters belongs outside the
-repository, in the dilla-renders folder under your documents.
+The engine is `dilla.rb`, plain Ruby with nothing beyond the standard library, and the data is `dilla.json`, which sits beside it. Run `ruby dilla.rb --list` to see the numbered progressions, the drum patterns and the groove profiles. Run `ruby dilla.rb --progression 3 --drums offbeat_inversion --out out/three.wav` to render one, add `--midi out/three.mid` to write the chords and drums as a Standard MIDI File, and run `ruby dilla.rb --random` to let the seed choose the progression and the drums. The same seed always makes the same render, and the seed is printed. Renders are sixteen-bit mono at 44.1 kilohertz. The folder `out/` is ignored by git, because audio is not tracked, and a render that matters belongs outside the repository, in the dilla-renders folder under your documents.
 
-The data holds a flat list of progressions, each one a list of chord names such as Fm9, Bbm9, Eb13
-and Abmaj9, with nothing else attached: no tempo, no names, no frequencies. The voicer reads the
-name. It puts the root, or the bass of a slash chord, in the low octave, leaves the root out of
-the upper structure, keeps the third and the seventh, drops the fifth when the chord is crowded,
-and places every note as near as it can to where the last chord sat, so the voices glide. It reads
-minor and major ninths, elevenths and thirteenths, added and suspended tones, altered fifths and
-ninths, and slash chords, and a test maps every voicing back to the spelling it came from. Every
-chord holds the same number of beats, four unless `--beats` says otherwise, and the tempo is 88
-unless `--bpm` says otherwise.
+The data holds a flat list of progressions, each a list of chord names such as Fm9, Bbm9, Eb13 and Abmaj9, with nothing else attached: no tempo, no names, no frequencies. The first hundred and five were picked by hand. The rest were read as plain text out of the old engine's progression table, its sourced reference file and its set files, parsed with the voicer, respelled with flats and deduped by spelling, which brings the list to four hundred and seven. An essential list marks the staples by their root motion, such as the minor two-five-one, the one-six-two-five, the one-four-five and the one-flat-six-flat-seven, and `--play` draws only from those unless `--pool all` says otherwise.
 
-A groove profile says how a render is played, and its name says what it does: soft_swing, lush and
-dry are texture and swing only, while early_snare_late_hats, late_snare, behind_the_beat,
-loose_pocket and pump move the drums. A profile holds a swing for the second chord of each pair, a
-swing for each drum role on the off-beat eighths and sixteenths, an offset in seconds for the
-kick, the snare and the hats, and a separate offset for the first kick. It may hold a drunk
-amount, which nudges every hit by a seeded random amount, and a sidechain, which dips the chords
-on every kick like a gain envelope and has no oscillator in it. Nothing is ever moved more than
-thirty-five milliseconds from its place. The single knob `--groove`, from nought to one and a
-half, scales the whole profile: nought is the grid, one is the profile as written, and one and a
-half is the profile leaning harder. The drum patterns are rows of sixteen steps, and a pattern
-repeats bar after bar until the chords end, so a long progression is not left drumless after the
-first bar.
+The voicer reads the name. It puts the root, or the bass of a slash chord, in the low octave and the other tones above. Each upper note starts as near as it can be to the one before it. A search then tries every octave shift on every voice and keeps the voicing that moves least, keeps the top line smooth, and leaves no two neighbours closer than a whole tone. Measured over the first hundred and five progressions, leaps in the top line of more than a major third fell from a third of all chord changes to about a twentieth. Spacing never throws a chord tone away: when a chord is over the five-voice cap the perfect fifth goes first, then an altered fifth, then the root if the bass already plays it, and the third, the seventh and every named extension stay. A slash chord keeps its root above the separate bass. `--no-voice-search` switches the search off.
 
-The timing ideas come from a summary the operator pasted in, which says that hats on the off-beat
-sixteenths sit slightly late, the snare and clap slightly early and the kick mostly late except
-the first, that a deliberate collision between a straight grid and a swung one is what gives the
-feel, and that a window of about thirty milliseconds is the point. That summary has not been
-checked against any record, so read every number as a starting point to be corrected by ear. The
-progressions are hand-picked starting points too, merged from several lists and removed of
-duplicates, and nobody has verified the spellings.
+A groove profile says how a render is played. Soft_swing, lush and dry are texture and swing only, and early_snare_late_hats, late_snare, behind_the_beat, loose_pocket and pump move the drums by milliseconds. The default is straight_hats_snare_ahead, which measures its leans in shares of a sixteenth step, so they follow the tempo. The hats hold the grid. The snare sits ahead of them by about three tenths of a step. The kick holds the downbeat and lags a little after it everywhere else. A snare off the backbeat is a ghost and lags further than the kick. The lean of each voice on each step in the bar is drawn once from the seed, so every bar leans exactly as the first did. The same share is a different number of milliseconds at each tempo: at 88 beats a minute a tenth of a step is seventeen milliseconds, at 70 it is twenty-one. Nothing moves more than thirty-five milliseconds from its place, and at the usual tempos that clamp binds the snare, which would otherwise lean fifty milliseconds at 88. The single knob `--groove` scales the whole profile: nought is the grid, one is the profile as written. Voices the pocket does not own keep their placement. The previous default was soft_swing, which moved no drum at all.
 
-The engine is small on purpose, and its limits are plain. The chords play through once and the
-render ends. Every note is a stack of four sine partials, so the sound is thin and organ-like, and
-the only motion is the detune and the swing: there is no LFO, no wow, no flutter and no crackle.
-The drums are three short synthesised sounds. A render takes about four tenths of its own length
-to compute.
+The drum patterns are rows of steps, and a pattern repeats until the chords end. The mix gives the kick six decibels and the snare and clap ten over the old levels and takes three from the chords when drums play, and `--kick-db`, `--snare-db`, `--hat-db` and `--chords-db` change them. A soft limiter bends only the samples above seven tenths, so the sum never reaches full scale and a loud kick stays loud. The kick is added after the sidechain, so the pump never dips it.
 
-The old engine, which was far larger, is not lost. The tag `dilla-engine-final` marks the last
-commit that carried all of it, `git checkout dilla-engine-final -- STUDIO/dilla` brings it back,
-and `git show dilla-engine-final:STUDIO/dilla/lib/sound.rb` reads one file from it. Its large data
-files, the MIDI library, the sample worth scores and the crate records all stay recoverable from
-that tag in the same way.
+Chords can be played three ways. A held pad is the default. `--arp` plays each chord one note at a time, lowest voice first, in a named pattern: up, down, updown, converge, random_seeded, broken_pairs, thumb_pattern, pedal_arp or spread_roll. The pace, gate and octave span come from a style in the data, chosen with `--arp-style` and nudged with `--arp-rate`, which counts sixteenths per note, so 3 is a dotted eighth and 3T a triplet. `--repeat` strikes the whole voicing again on the steps of a style instead, such as quarter stabs, off-beat skanks, a dotted-eighth push or a long-short figure. Both read the groove profile's swing, and both take the same small modifiers, listed by name in the data: a euclidean mask, a chance of dropping a note, repeats, ratchets on accented notes, a little humanize that stays inside the clamp, and grace notes that land on the next chord tone below. `--strum` staggers the voices of a plain chord, lowest first.
+
+The old arp effect was not an arpeggiator. It sorted a chord's notes by pitch, handed each event one of them in turn, and delayed it by a sixteenth of the time a note was held, so the notes started a few milliseconds apart: a strum. It had no rate, no pattern, no gate, no octave span and no direction. The new arp keeps the idea as the explicit strum option and takes the small modifiers, note repeat, euclidean mask, probability, ratchet, humanize and grace, from the same family, rewritten to act on the note stream.
+
+A voice is a row of the data. The sine voice is a stack of four sine partials. The moog voices are detuned saw and pulse oscillators on phase accumulators into a four-pole ladder lowpass with a drive, a resonance and an envelope that sweeps the cutoff, so every note begins bright and darkens. The rhodes voices are frequency-modulated electric pianos: a body pair near one to one, a bell pair at fourteen to one whose index dies away in a few tenths of a second, a soft hammer click, and a brighter touch for a harder note. The dfam voice is a percussive pair of oscillators with a pitch sweep, modulation between them and a little noise, through the same ladder. Nothing moves except by envelope: there is no tremolo, no chorus, no wow, no flutter and no LFO anywhere. `--voice` picks one for any profile.
+
+The tape space echo has three playback heads at one, two and three times a base delay, which is a dotted eighth unless `--echo-time` says milliseconds. The heads in use are summed, darkened by a lowpass and a mild saturation, and fed back, so each repeat is quieter and duller than the last. Intensity is clamped to nine tenths so the loop cannot run away. At every chord change the heads are cleared, so the repeats of one chord never sound over the next, and after the last chord the repeats ring on and die away of themselves. `--echo`, `--echo-mix`, `--echo-feedback` and `--echo-time` set it.
+
+Sonitex and nasty_vcs are two colour chains on the voice bus. Sonitex is the twelve-bit sampler lineage: a drive into a hard band limit, bit and sample-rate reduction, a little hiss and dust, a compressor and a limiter, with seven presets from classic to heavy. One instance is a colour and three are a sound, so `--sonitex-instances` runs it up to three times. The vcs is a summing colour, a soft knee with a touch of low warmth and unity gain for small signals, applied to the voice bus, to the drum bus and to the master sum. Both are off unless asked for with `--sonitex`, `--vcs`, or a profile that carries them, such as rhodes_sonitex and sampler_glue.
+
+`--transpose` moves every note by that many semitones before synthesis, and `--octaves` is sugar for twelve times that. Nothing is resampled, and tempo and echo timing do not change. A note whose fundamental lies above forty-five hundredths of the sample rate is dropped rather than folded back down, and a warning says how many were lost. Twelve octaves up puts every chord far past the limit, so the honest result is silence. `--transpose-wrap` instead folds each note down by octaves until it is under fourteen kilohertz, the highest audible register.
+
+`--play`, also spelled `--endless`, never stops. It renders the next progression while the current one plays through the system player. Every kind of choice comes out of its own shuffle bag: the progression, the mode, the arp or repeat style, the voice family, a patch of that family and the profile. A bag plays everything once before anything repeats and never opens with the last item of the one before. The bags are saved in `out/play/` between runs, so a restart goes on with the cycle. Each pass prints its progression and position in the bag, mode, style, voice and profile.
+
+The engine is small on purpose, and its limits are plain. The moog and dfam waves are naive and alias at very high pitch. A render takes about a fifth to a third of its own length to compute, more with the echo and the colour chains on. The old engine, which was far larger, is not lost. The tag `dilla-engine-final` marks the last commit that carried all of it, `git checkout dilla-engine-final -- STUDIO/dilla` brings it back, and `git show dilla-engine-final:STUDIO/dilla/lib/sound.rb` reads one file from it.

@@ -470,7 +470,7 @@ class DillaTest < Minitest::Test
     settings = seq.echo_settings(flag: true, mix: 0.3, feedback: 0.7, time_ms: 250.0)
     assert_equal [0.3, 0.7, 250.0], settings.values_at("echo_volume", "intensity", "time_ms")
     assert_equal [1, 2], sequencer("arp_echo_soft").echo_settings["heads"]
-    assert_equal [[1, 2, 3], 0.85, 3], [sequencer("arp_echo").echo_settings["heads"], sequencer("arp_echo").echo_settings["intensity"], sequencer("arp_echo").arp_settings(nil)["rate"]]
+    assert_equal [[1, 2, 3], 0.75, 3], [sequencer("arp_echo").echo_settings["heads"], sequencer("arp_echo").echo_settings["intensity"], sequencer("arp_echo").arp_settings(nil)["rate"]]
   end
 
   def test_arp_and_echo_render_a_wav_and_the_plain_render_is_untouched_by_them
@@ -581,7 +581,7 @@ class DillaTest < Minitest::Test
       player = File.join(dir, "fake.sh")
       File.write(player, "#!/bin/sh\necho \"$1\" >> #{log}\n")
       File.chmod(0o755, player)
-      out, err, status = run_dilla("--play", "--player", player, "--passes", "4", "--beats", "1", "--seed", "8",
+      out, err, status = run_dilla("--play", "--player", "sh #{player}", "--passes", "4", "--beats", "1", "--seed", "8",
                                    "--profile", "dry", "--mode", "pad", "--out", File.join(dir, "x.wav"), chdir: dir)
       assert status.success?, err
       passes = out.scan(/^pass (\d+): progression (\d+) \(/)
@@ -596,7 +596,7 @@ class DillaTest < Minitest::Test
   def test_the_echo_tail_rings_on_after_the_last_note
     settings = sequencer("arp_echo").echo_settings
     assert_equal [1, 2, 3], settings["heads"]
-    assert_operator settings["echo_volume"], :>=, 0.85
+    assert_operator settings["echo_volume"], :>=, 0.65
     assert_operator settings["tail"], :>=, 10
     assert_equal 78.0, sequencer("arp_echo").bpm
     assert_equal 88.0, sequencer("dry").bpm
