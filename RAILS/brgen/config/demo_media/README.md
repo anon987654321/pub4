@@ -32,3 +32,16 @@ they can be made again from source. These cannot: a render costs money and never
 same twice, and the deploy copies only tracked files to the box, where the seeds read them. So
 the app keeps the small copy, and the full renders and their ungraded originals stay out of git
 on the machine that made them.
+
+
+Unprocessed sources receive one Postpro pass during the curated seed run. `preset: "random"`
+chooses a valid preset deterministically from the seed key; repeating the seed does not change the
+grade simply because the random number generator changed. A row marked `graded: true` is already
+processed and must not receive a second pass.
+
+For each new locally supplied image, record its source URL, source name, photographer,
+photographer URL, license and/or required credit in the catalogue. Those details are copied to the
+Active Storage blob metadata, and post cards/post pages can display a credit when one exists.
+Do not bulk scrape Unsplash: its license excludes compiling its images to reproduce a similar or
+competing service. Use the existing generated frames, the credited Wikimedia Commons sources, or
+another source whose license permits the specific intended use.
