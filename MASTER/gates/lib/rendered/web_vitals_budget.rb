@@ -41,16 +41,6 @@ module Deploy
     # over the page's life, and reading it at first paint reports the shift that
     # has not happened yet as zero.
     SETTLE_S = 2.0
-    # One mobile first screen per product. A single brgen page previously stood
-    # in for the whole fleet, allowing regressions in Amber, BSDPorts and the
-    # MASTER face to pass the budget without being visited.
-    SURFACE_IDS = %w[
-      brgen/core/mobile
-      amber/home/mobile
-      bsdports/home/mobile
-      master/chat/mobile
-    ].freeze
-
     def self.run = new.run
 
     def run
@@ -113,15 +103,21 @@ module Deploy
 
     def selected_surfaces
       rows = GeometryProbe.surfaces
-      # Honor focused runs such as GATE_SURFACES=amber/wardrobe. Outside a
-      # scoped run, the four canonical first screens represent the product fleet.
-      if ENV["GATE_SURFACES"].to_s.strip.empty?
-        SURFACE_IDS.filter_map { |id| rows.find { |surface| surface.id == id } }
-      else
-        rows.group_by(&:app).values.map do |app_rows|
-          app_rows.find { |surface| surface.viewport == "mobile" } || app_rows.first
-        end
-      end
+      # Honor focused runs such as GATE_SURFACES=amber/wardrobe. Otherwise use
+      # the canonical pixel_snapshot declarations and pick one mobile first
+      # screen per app, so the same inventory governs visuals and performance.
+      selected = if ENV["GATE_SURFACES"].to_s.strip.empty?
+                   rows.select(&:pixel_snapshot).select { |surface| surface.viewport == "mobile" }
+                       .group_by(&:app).keys.sort.filter_map do |app|
+                     rows.find { |surface| surface.app == app && surface.pixel_snapshot && surface.viewport == "mobile" }
+                   end
+                 else
+                   rows.group_by(&:app).keys.sort.filter_map do |app|
+                     app_rows = rows.select { |surface| surface.app == app }
+                     app_rows.find { |surface| surface.viewport == "mobile" } || app_rows.first
+                   end
+                 end
+      selected
     end
 
     def judge(cdp, surface)
