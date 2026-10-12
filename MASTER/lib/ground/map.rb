@@ -90,6 +90,10 @@ module Master
             laws.select { |_, e| e.status == "gap" }
           end
 
+          def unmapped
+            laws.select { |_, e| e.status == "unmapped" }
+          end
+
           def by_tag(tag)
             laws.select { |_, e| e.tags.map(&:to_s).include?(tag.to_s) }
           end
@@ -205,8 +209,9 @@ module Master
         def summary_line
           c = covered.size
           g = gaps.size
+          u = unmapped.size
           a = aesthetic.size
-          "law_map #{version}: #{laws.size} laws (#{c} covered, #{g} gap, #{a} aesthetic/ui)"
+          "law_map #{version}: #{laws.size} concepts (#{c} covered, #{g} gap, #{u} unmapped, #{a} aesthetic/ui)"
         end
 
         # Entries with no `source:` (why this law exists -- what
