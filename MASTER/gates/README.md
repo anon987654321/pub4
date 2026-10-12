@@ -57,11 +57,12 @@ changes always fail. Missing baselines are clearly reported as soft findings
 until `GATE_PIXEL_BASELINE_STRICT=1` is enabled; corrupt or unsupported images
 are never treated as equal.
 
-PNG approval is separate from autofix. After reviewing the screenshots, run
-`GATE_PIXEL_BASELINE_APPROVE=1 ruby MASTER/gates/runner.rb browser_diagnostics`
-and inspect `MASTER/gates/data/visual_baselines` before committing. Only
-successfully rendered surfaces without blocking runtime defects are written.
-See `data/visual_baselines/README.md` for the baseline workflow.
+PNG approval is separate from autofix. Run diagnostics first, inspect the
+captured screenshots and manifest, then promote the exact files reviewed with
+`ruby MASTER/tools/approve_visual_baselines.rb --manifest PATH`. The tool checks
+the capture hash, dimensions, route inventory and runtime status, and refuses to
+overwrite an existing reference unless `--replace` is explicit. See
+`data/visual_baselines/README.md` for the workflow.
 
 Uncaught JavaScript exceptions, document HTTP errors, first-party server errors,
 failed first-party scripts/stylesheets, and missing screenshot evidence fail the
