@@ -14,6 +14,7 @@ require_relative "visual_evidence_rows"
 require_relative "visual_artifact"
 require_relative "visual_custody"
 require_relative "../design/visual_language"
+require_relative "visual_runtime"
 require_relative "../../gates/support/mobile_journey_probe"
 require_relative "../../gates/support/composition_probe"
 require_relative "../../gates/support/web_platform_probe"
@@ -62,6 +63,7 @@ module Master
         @bus = bus
         @dir = nil
         @custody = nil
+        @runtime = VisualRuntime.new(root:, bus:)
       end
 
       def applicable?(target)
@@ -82,6 +84,9 @@ module Master
         return inconclusive("source graph discovery failed: #{graph.errors.first(4).join("; ")}") if graph&.errors&.any?
         surfaces = selected_surfaces(target:, pass:)
         return inconclusive("no declared surfaces") if surfaces.empty?
+
+        runtime = @runtime.ensure_running!(surfaces.map(&:app))
+        return inconclusive(runtime.message) unless runtime.ok?
 
         captures = capture_surfaces(surfaces, pass:)
         return inconclusive("no surface was measured") if captures.empty?
@@ -112,6 +117,13 @@ module Master
       ensure
         @dir = nil
         @custody = nil
+      end
+
+      # Servers live across visual passes so each repair can be remeasured
+      # without repeating Rails boot/migration work. FixLoop calls this once at
+      # the end of the full /fix run.
+      def stop_runtime!
+        @runtime&.stop_owned!
       end
 
       private
@@ -206,8 +218,18 @@ module Master
 
       def selected_surfaces(target:, pass:)
         rows = Deploy::GeometryProbe.surfaces(root: repo_root)
-        master = repo_relative(target).start_with?("RAILS/master_web")
-        rows = rows.select { |s| master ? s.app == "master" : s.app != "master" }
+        relative = repo_relative(target)
+        master = relative == "RAILS/master_web" || relative.start_with?("RAILS/master_web/")
+        app_names = rows.map(&:app).uniq - ["master"]
+        target_app = relative.delete_prefix("RAILS/").split("/").first unless relative == "RAILS"
+        target_app = nil unless app_names.include?(target_app)
+        rows = if master
+          rows.select { |surface| surface.app == "master" }
+        elsif target_app
+          rows.select { |surface| surface.app == target_app }
+        else
+          rows.reject { |surface| surface.app == "master" }
+        end
         grouped = rows.group_by(&:app)
 
         core = grouped.keys.sort.flat_map do |app|

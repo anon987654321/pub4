@@ -4,6 +4,7 @@ require "json"
 require "digest"
 require_relative "../ai/orientation"
 require_relative "protocol_detector_matrix"
+require_relative "four_stream_assessment"
 require_relative "../ground/law_resolver"
 
 module Master
@@ -59,16 +60,33 @@ module Master
           immediately and the eligible corpus is refreshed. This stage may
           legitimately keep nothing.
 
-          5. SCAN
-          For every active Law and every applicable file, inspect source
-          lexically and structurally. Verify each detector against its worked
-          positive and negative examples before trusting its findings.
+          5. SCAN — FOUR INDEPENDENT ASSESSMENT STREAMS
+          The assessment unit is a Law × stream × applicable surface cell.
+          Run lexical_violations, lexical_opportunities, semantic_violations,
+          and semantic_opportunities independently. Lexical and semantic are
+          not interchangeable: one uses deterministic evidence and relevant
+          parsers; the other judges meaning and design intent. A result in one
+          stream does not satisfy any of the other three. Keep violations and
+          opportunities distinct in prompts, findings, caches, events, repairs
+          and reports.
+
+          Inspect relevant artifact surfaces, not just source lines: repository
+          and directory topology, paths and filenames, whole-file contents,
+          sections and lines, syntax trees, cross-file relationships, structured
+          data and documentation, media/compiled assets where adapters exist,
+          rendered UI, interactive behavior, tests, runtime and deployment
+          evidence. Select the correct parser or probe for each type. Never feed
+          an unsupported type to a mismatched detector and call it clean.
+          Missing adapters and skipped assessments are explicit coverage gaps.
 
           6. SEMANTIC
-          Semantic ask Laws are executable. The model is the semantic analyst,
-          not a spectator. Read the actual file, its surrounding code, callers
-          and relevant related files before deciding whether the rule is
-          violated.
+          For each active Law and relevant surface, assess violations and
+          opportunities in separate semantic requests. Read the actual artifact
+          and, when relevant, its surrounding sections, callers, dependents,
+          sibling files, design tokens, rendered page and runtime evidence.
+          The model is the semantic analyst, not a spectator. A provider failure,
+          quota pause, timeout, missing agent, or skipped file is INCONCLUSIVE,
+          not CLEAN.
 
           7. REPAIR
           Attempt a repair for every actionable finding. Use the smallest
@@ -77,12 +95,13 @@ module Master
           "No deterministic fixer exists" is not a terminal state.
 
           8. VERIFY
-          Reread the changed file, re-run the affected Law, and run the
-          narrowest behavioral or surface check that proves the repair. A failed
-          verification rejects or rolls back that repair. Incremental mode may
-          narrow repair work, but never completion proof: before DONE, recollect
-          the complete eligible target and obtain the required clean proof over
-          that full scope.
+          Reread changed artifacts and reassess every affected law/stream/surface
+          cell, including related files and rendered behavior. A failed verification
+          rejects or rolls back that repair. After the last mutation, every applicable
+          cell needs two consecutive evidence-backed clean readings. A finding resets
+          convergence for affected cells. Incremental mode may narrow repair work,
+          but never completion proof: before DONE, recollect the complete eligible
+          target and prove full matrix coverage over that scope.
 
           9. REPEAT
           Rescan filenames, contents, semantic rules, and prior failures after
@@ -91,11 +110,13 @@ module Master
           it does not mean the mission is complete.
 
           10. REPORT
-          Report commands, corpus, findings before and after, repairs attempted,
-          repairs rejected, verification output, and unresolved findings. Keep
-          a compact evidence receipt linked to the durable run record. Never
-          convert an unmeasured state into a pass and never describe a future
-          action as completed.
+          Report commands, eligible corpus and exclusions, findings before and
+          after, repairs attempted/rejected, verification output and unresolved
+          findings. Include the law × four streams × surfaces matrix, evidence
+          references, generation/iteration counts, and every INCONCLUSIVE or
+          not-applicable cell with its reason. DONE requires full applicable matrix
+          coverage and two consecutive clean readings after the last mutation.
+          Never convert unsupported or unmeasured work into a pass.
 
           /fix and --dry-run are distinct. /fix writes and verifies. --dry-run
           performs the same inventory, analysis and repair planning but writes
@@ -136,7 +157,38 @@ module Master
           "semantic_laws_without_deterministic_detector" => values.select do |entry|
             entry["semantic"] && !entry["scannable"]
           end.map { |entry| entry["id"] },
+          "four_stream_law_coverage" => four_stream_law_coverage(eligible),
           "verification_runtime" => "not_measured",
+        }
+      end
+
+      # Reports declaration reach, not runtime assessment. A law's current
+      # single mode does not automatically provide both lexical streams, and a
+      # semantic prompt being declared is not proof that a model call succeeded.
+      def four_stream_law_coverage(laws)
+        rows = Array(laws).select { |law| !law.respond_to?(:enforceable?) || law.enforceable? }
+        stream_reach = {
+          "lexical_violations" => ->(law) { law.respond_to?(:scannable?) && law.scannable? && law.mode.to_sym == :violation },
+          "lexical_opportunities" => ->(law) { law.respond_to?(:scannable?) && law.scannable? && law.mode.to_sym == :opportunity },
+          "semantic_violations" => ->(law) { law.respond_to?(:semantic?) && law.semantic? },
+          "semantic_opportunities" => ->(law) { law.respond_to?(:semantic?) && law.semantic? },
+        }
+        streams = stream_reach.to_h do |stream, reachable|
+          reached, missing = rows.partition(&reachable)
+          [stream, {
+            declared_reach: reached.size,
+            missing_count: missing.size,
+            missing_law_sample: missing.first(20).map { |law| law.id.to_s },
+          }]
+        end
+        missing_cells = streams.values.sum { |entry| entry[:missing_count] }
+        {
+          law_population: rows.size,
+          streams: streams,
+          declaration_status: missing_cells.zero? ? "declared_reach_complete" : "incomplete",
+          missing_law_stream_pairs: missing_cells,
+          runtime_status: "not_measured",
+          note: "Declaration reach only. Per-surface assessors and actual evidence are required before this can become runtime coverage.",
         }
       end
 
@@ -234,6 +286,8 @@ end
           "laws" => full ? law_rows : law_rows.map { |entry| entry.slice("id", "severity", "mode", "languages", "question", "fix", "enforcement", "fix_strategy", "verify_strategy") },
           "detector_matrix" => detector_matrix,
           "detector_summary" => ProtocolDetectorMatrix.summary(detector_matrix),
+          "assessment_contract" => FourStreamAssessment.contract,
+          "four_stream_law_coverage" => four_stream_law_coverage(laws),
         }
         JSON.pretty_generate(payload)
       end

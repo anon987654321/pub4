@@ -154,7 +154,10 @@ module Master
           findings = []
           findings.concat(run_law_pass(pass: :lexical, laws: lexical, code:, ast:, path:))
           findings.concat(run_law_pass(pass: :structural, laws: structural, code:, ast:, path:))
-          return findings if lexical_error?(findings)
+          # Keep semantic violations/opportunities independent from lexical
+          # findings. A fatal deterministic hit must not suppress meaning-based
+          # assessment of the same file; otherwise one early result can hide the
+          # other streams.
           return skip_semantic(path:, laws: semantic, findings:) unless semantic_due?(findings, path)
 
           findings.concat(run_law_pass(pass: :semantic, laws: semantic, code:, ast:, path:))

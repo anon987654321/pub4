@@ -70,23 +70,28 @@ module Master
           @discipline = discipline
           @ground_truth_failures = 0
           emit_coverage = lambda do |target, pass|
-            semantic = @scan_phase.semantic_full? ? "full" : "sampled clean-files"
+            semantic = @scan_phase.semantic_full? ? "full" : "conditional/sampled"
             abstract = @council ? "bounded clean-streak review" : "unavailable"
             visual = @visual_pass&.applicable?(target) ? "rendered" : "not-applicable"
-            opportunity = @opportunity_pass&.applicable?(target) ? "bounded" : "not-applicable"
+            lexical_opportunities = @opportunity_pass&.applicable?(target) ? "bounded-tree-heuristics" : "no-universal-adapter"
             @bus&.publish(
               "fix_loop:coverage",
               pass:,
-              lexical: "full",
-              structural: "full",
+              lexical: "mechanical+structural-full-eligible-corpus",
+              structural: "full-eligible-corpus",
+              lexical_violations: "fixture-backed deterministic detectors; universal tree coverage not measured",
+              lexical_opportunities: "declared opportunity-mode detectors plus bounded tree heuristics; universal per-law coverage not measured",
+              semantic_violations: semantic == "full" ? "separate violation request per applicable recognized-language file; surface matrix not measured" : semantic,
+              semantic_opportunities: semantic == "full" ? "separate opportunity request per applicable recognized-language file; surface matrix not measured" : semantic,
               semantic:,
               abstract:,
-              opportunity:,
+              opportunity: lexical_opportunities,
               visual:,
+              assessment_matrix: "contract_only_not_measurement",
             )
             Master::Trace::Dmesg.status(
               "fix0",
-              "pass #{pass}, coverage lexical=full structural=full semantic=#{semantic} abstract=#{abstract} opportunity=#{opportunity} visual=#{visual}",
+              "pass #{pass}, coverage lexical-violations=mechanical+structural lexical-opportunities=#{lexical_opportunities} semantic-violations=#{semantic} semantic-opportunities=#{semantic} visual=#{visual} law-stream-surface-matrix=NOT_MEASURED",
             )
           end
           @coverage_reporter = emit_coverage
@@ -120,6 +125,12 @@ module Master
           @skip_guard.reset!
           @stage_failures = nil
           self
+        end
+
+        # A visual pass owns screenshots per iteration, while any app servers
+        # it had to boot are leased until the complete /fix run ends.
+        def cleanup_visual_runtime
+          @visual_pass&.stop_runtime!
         end
 
         def violations(files) = resolve_violations(files.flat_map { |path| violations_for(path) })
