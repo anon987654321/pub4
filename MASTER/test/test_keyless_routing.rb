@@ -320,7 +320,7 @@ class TestKeylessRouting < Minitest::Test
         headers = []
         headers << socket.gets.to_s.strip until headers.last == ""
         seen << [request, headers]
-        socket.print("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: #{body.bytesize}\r\n" \\
+        socket.print("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: #{body.bytesize}\r\nConnection: close\r\n\r\n#{body}")
                      "Connection: close\r\n\r\n#{body}")
         socket.close
       end
