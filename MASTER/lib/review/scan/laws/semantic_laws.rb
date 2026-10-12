@@ -168,13 +168,18 @@ module Master
             scoped = laws_for(lang)
             return [] if scoped.empty?
 
-            cache_key = semantic_cache_key(path, code)
-            return @cache[cache_key] if @cache.key?(cache_key)
+            base_key = semantic_cache_key(path, code)
+            # Keep violation detection and improvement discovery as distinct
+            # model calls, cache entries, operations, prompts and verdicts. A
+            # combined CLEAN reply previously hid whether both questions ran.
+            %i[violation opportunity].flat_map do |stream|
+              cache_key = "#{base_key}:#{stream}"
+              next @cache[cache_key] if @cache.key?(cache_key)
 
-            response = ask_without_tools(build_prompt(code, path, scoped), operation: :scan_semantic)
-            findings = parse_findings(response, scoped)
-            @cache[cache_key] = findings
-            findings
+              operation = stream == :violation ? :scan_semantic_violations : :scan_semantic_opportunities
+              response = ask_without_tools(build_prompt(code, path, scoped, mode: stream), operation:)
+              @cache[cache_key] = parse_findings(response, scoped, mode: stream)
+            end
           rescue StandardError => e
             offline = e.message.to_s =~ OFFLINE_ERRORS_PATTERN
             limited = note_model_failure(e)
@@ -263,11 +268,27 @@ module Master
             raise
           end
 
-          def build_prompt(code, path, scoped)
+          def build_prompt(code, path, scoped, mode:)
+            heading, empty_response, instruction = case mode.to_sym
+            when :violation
+              ["SEMANTIC VIOLATIONS", "CLEAN",
+               "Find only clear breaches of the stated laws. Do not list improvements."]
+            when :opportunity
+              ["SEMANTIC OPPORTUNITIES", "NONE",
+               "Independently find specific improvements that better satisfy the stated laws, even when the current code is not in violation. Do not relabel existing violations as opportunities."]
+            else
+              raise ArgumentError, "unknown semantic assessment mode: #{mode.inspect}"
+            end
+            rules = scoped.map { |id, axiom| "#{id}: #{axiom[:prompt]}" }.join("\\n")
             <<~PROMPT
-            Review #{File.basename(path)}.
+            #{heading}: review #{File.basename(path)}.
 
-            #{prompt_frame_for(scoped, language(path))}
+            #{instruction}
+            Return only LAW_ID:LINE:description records for the rules listed below.
+            If no result exists for this stream, return exactly #{empty_response}.
+            Do not return the other stream's verdict in this response.
+
+            #{rules}
 
             Code (first #{CODE_SNIPPET_LIMIT} chars):
             #{code[0, CODE_SNIPPET_LIMIT]}
@@ -309,12 +330,12 @@ module Master
           # of them: a model handed a css frame that answers RAILS_VIEW_PURITY has
           # invented a rule for this file, and accepting it would put the scope
           # back where it was.
-          def parse_findings(response, scoped)
+          def parse_findings(response, scoped, mode: nil)
             response.lines.filter_map do |line|
               stripped = line.strip
               next if stripped.empty? || %w[CLEAN NONE].include?(stripped.upcase)
 
-              match = stripped.match(/\A([A-Z_][A-Z0-9_]*):(\d+):(.+)\z/)
+              match = stripped.match(/\\A([A-Z_][A-Z0-9_]*):(\\d+):(.+)\\z/)
               next unless match && scoped.key?(match[1])
 
               axiom = scoped[match[1]]
@@ -324,13 +345,12 @@ module Master
                 line: match[2].to_i,
                 severity: axiom[:severity],
                 fix: nil,
-                tags: [match[1].to_sym, axiom[:mode]],
+                tags: [match[1].to_sym, (mode || axiom[:mode])],
                 reversibility: axiom[:reversibility],
                 blast_radius: axiom[:blast_radius],
               )
             end
           end
-
         end
 
         # Comments above method defs that no longer describe what the code does.
