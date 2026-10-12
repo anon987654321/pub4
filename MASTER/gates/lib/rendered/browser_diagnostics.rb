@@ -148,6 +148,10 @@ module Deploy
 
       measured = rows.count { |row| %w[PASS FAIL].include?(row.fetch("status")) }
       @result.checked!(measured)
+      if measured.zero?
+        @result.inconclusive!("browser_diagnostics: no route produced a conclusive browser result")
+        return @result
+      end
       @result.warn("browser_diagnostics: #{measured}/#{rows.size} route/viewport cells measured")
       @result.warn("browser_diagnostics: evidence manifest #{manifest}")
       @result
@@ -172,10 +176,10 @@ module Deploy
     end
 
     def capture_surface(cdp, surface, screenshot_dir, settle_ms)
-      cdp.clear_events
       cdp.viewport(surface.width, surface.height, mobile: surface.width < 500)
       cdp.headers(GeometryProbe::PROBE_HEADERS)
       cdp.clear_cookies
+      cdp.clear_events
 
       navigation_error = nil
       begin
@@ -187,6 +191,13 @@ module Deploy
       status = safely { cdp.status }
       title = safely { cdp.evaluate("document.title") }
       browser_error = safely { cdp.evaluate("location.protocol === 'chrome-error:'") } == true
+      slug = [surface.app, surface.label, surface.viewport].map { |part| safe_slug(part) }.join("-")
+      screenshot = File.join(screenshot_dir, "#{slug}.png")
+      screenshot_error = capture_screenshot(cdp, screenshot)
+      screenshot_sha256 = Digest::SHA256.file(screenshot).hexdigest if File.file?(screenshot)
+
+      # Screenshot CDP itself drains the event stream; read the evidence after it
+      # so late asset failures and uncaught exceptions are not lost to a race.
       messages = cdp.console_messages
       http_errors = cdp.http_failures
       request_errors = cdp.request_failures
@@ -200,14 +211,8 @@ module Deploy
       )
 
       verdict[:hard] << "navigation failed: #{navigation_error}" if navigation_error
-      verdict[:hard].uniq!
-
-      slug = [surface.app, surface.label, surface.viewport].map { |part| safe_slug(part) }.join("-")
-      screenshot = File.join(screenshot_dir, "#{slug}.png")
-      screenshot_error = capture_screenshot(cdp, screenshot)
-      screenshot_sha256 = Digest::SHA256.file(screenshot).hexdigest if File.file?(screenshot)
-
       verdict[:hard] << "screenshot failed: #{screenshot_error}" if screenshot_error
+      verdict[:hard].uniq!
       status_label = verdict[:hard].empty? ? "PASS" : "FAIL"
       verdict[:soft].each { |message| @result.fail("browser_diagnostics: #{surface.id} — #{message}", severity: :soft) }
       verdict[:hard].each { |message| @result.fail("browser_diagnostics: #{surface.id} — #{message}") }
