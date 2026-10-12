@@ -200,3 +200,42 @@ test("reduced motion holds the head still: the same text a second later is not r
   assert.equal(view.draw(2500, { state: "listening", reduced: true }), false);
   assert.equal(calls.length, painted);
 });
+
+
+test("ranked constitutional glyphs orbit the head without replacing face cells", () => {
+  const laws = [
+    { id: "CAPABILITY_STATUS_MUST_BE_TRUTHFUL", glyph: "@" },
+    { id: "ROBUSTNESS", glyph: "#" },
+    { id: "SINGULARITY", glyph: "%" },
+    { id: "LINEARITY", glyph: "&" },
+    { id: "PROXIMITY", glyph: "*" },
+    { id: "ABSTRACTION", glyph: "+" },
+    { id: "DENSITY", glyph: "=" },
+    { id: "RENDERED_VALUES", glyph: ":" },
+  ];
+  const lines = Array.from({ length: 24 }, () => " ".repeat(64));
+  const depth = lines.map((line) => Array(line.length).fill(1));
+  const field = ascii.paintLawField(lines, depth, laws);
+  const painted = field.lines.join("");
+
+  assert.ok(laws.every((law) => painted.includes(law.glyph)));
+  assert.equal(painted.split("").filter((char) => laws.some((law) => law.glyph === char)).length, laws.length);
+  assert.ok(lines.every((line) => line.trim() === ""), "the input frame must remain untouched");
+
+  const obstructed = lines.map((line) => line.split(""));
+  obstructed[1][32] = "o";
+  const blocked = ascii.paintLawField(obstructed, depth, laws);
+  assert.equal(blocked.lines[1][32], "o", "the first law marker must yield to the portrait");
+  assert.ok(!blocked.lines.join("").includes("@"), "an occupied landmark stays visible");
+});
+
+test("the browser overlay uses the existing face frame clock, with no second animation loop", () => {
+  const source = readFileSync(sourcePath, "utf8");
+  const frame = readFileSync(join(here, "..", "public", "face.part3.txt"), "utf8");
+  const fallback = readFileSync(join(here, "..", "public", "face_2d_fallback.js"), "utf8");
+  assert.equal(typeof ascii.update, "function");
+  assert.equal(typeof ascii.createView, "function");
+  assert.match(frame, /MASTER_FACE_ASCII\\?\.update/);
+  assert.match(fallback, /MASTER_FACE_ASCII\.createView/);
+  assert.doesNotMatch(source, /requestAnimationFrame/);
+});
