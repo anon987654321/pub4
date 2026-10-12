@@ -121,7 +121,7 @@ class CritiqueImplementationTest < Minitest::Test
 
   def test_amber_product_detail_uses_photo_first_editorial_geometry
     show = read("amber/app/views/items/show.html.erb")
-    css = read("amber/app/assets/stylesheets/application.scss")
+    css = read("amber/app/assets/stylesheets/application.scss") + read("amber/app/assets/stylesheets/_amber_shared_overrides.scss")
 
     assert_includes show, 'class="luxury-detail-grid"'
     assert_includes show, 'class="luxury-photos"'
@@ -161,7 +161,7 @@ class CritiqueImplementationTest < Minitest::Test
   def test_yep_search_is_the_shared_rails_search_default
     shared_stack = read("__shared/app/assets/stylesheets/_stack.scss")
     brgen_stack = read("__shared/app/assets/stylesheets/_stack_brgen.scss")
-    amber = read("amber/app/assets/stylesheets/application.scss")
+    amber = read("amber/app/assets/stylesheets/application.scss") + read("amber/app/assets/stylesheets/_amber_shared_overrides.scss")
     bsdports = read("bsdports/app/assets/stylesheets/application.scss")
     brgen = read("brgen/app/assets/stylesheets/application.scss")
 
@@ -248,7 +248,7 @@ class CritiqueImplementationTest < Minitest::Test
   def test_yep_search_is_the_shared_rails_search_default
     shared_stack = read("shared/app/assets/stylesheets/_stack.scss")
     brgen_stack = read("shared/app/assets/stylesheets/_stack_brgen.scss")
-    amber = read("amber/app/assets/stylesheets/application.scss")
+    amber = read("amber/app/assets/stylesheets/application.scss") + read("amber/app/assets/stylesheets/_amber_shared_overrides.scss")
     bsdports = read("bsdports/app/assets/stylesheets/application.scss")
     brgen = read("brgen/app/assets/stylesheets/application.scss")
 
@@ -264,7 +264,7 @@ class CritiqueImplementationTest < Minitest::Test
     mannequin = read("amber/app/javascript/controllers/mannequin_3d_controller.js")
     carousel = read("amber/app/javascript/controllers/wardrobe_carousel_controller.js")
     dressing = read("amber/app/views/shared/_dressing_room.html.erb")
-    css = read("amber/app/assets/stylesheets/application.scss")
+    css = read("amber/app/assets/stylesheets/application.scss") + read("amber/app/assets/stylesheets/_amber_shared_overrides.scss")
 
     assert_includes looks, 'data-controller="mannequin-3d"'
     assert_includes looks, "data-mannequin-3d-slides-value"
@@ -282,7 +282,7 @@ class CritiqueImplementationTest < Minitest::Test
   end
 
   def test_amber_mannequin_particles_are_sparse_cool_and_open
-    css = read("amber/app/assets/stylesheets/application.scss")
+    css = read("amber/app/assets/stylesheets/application.scss") + read("amber/app/assets/stylesheets/_amber_shared_overrides.scss")
     renderer = read("amber/app/javascript/controllers/mannequin_3d_controller.js")
     mannequin_css = read("amber/app/assets/stylesheets/_mannequin_3d.scss")
 
@@ -297,7 +297,7 @@ class CritiqueImplementationTest < Minitest::Test
   def test_commerce_polish_keeps_marketplace_and_amber_distinct
     brgen_css = read("brgen/app/assets/stylesheets/application.scss") + read("brgen/app/assets/stylesheets/_brgen_shared_overrides.scss")
     brgen_polish = read("brgen/app/assets/stylesheets/_commerce_polish.scss")
-    amber_css = read("amber/app/assets/stylesheets/application.scss")
+    amber_css = read("amber/app/assets/stylesheets/application.scss") + read("amber/app/assets/stylesheets/_amber_shared_overrides.scss")
     amber_polish = read("amber/app/assets/stylesheets/_commerce_polish.scss")
     seller = read("brgen/engines/marketplace/app/views/marketplace/stores/show.html.erb")
     item = read("amber/app/views/items/show.html.erb")
@@ -425,7 +425,7 @@ class CritiqueImplementationTest < Minitest::Test
   def test_amber_post_feed_and_detail_share_the_reading_anatomy
     feed = read("amber/app/views/posts/_post.html.erb")
     show = read("amber/app/views/posts/show.html.erb")
-    css = read("amber/app/assets/stylesheets/application.scss")
+    css = read("amber/app/assets/stylesheets/application.scss") + read("amber/app/assets/stylesheets/_amber_shared_overrides.scss")
 
     assert_includes feed, 'variant: :prose'
     assert_includes feed, 'show_votes: true'
