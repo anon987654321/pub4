@@ -2,6 +2,7 @@
 
 require_relative "../support/gate_result"
 require_relative "../support/gate_autofix"
+require_relative "rendered/browser_diagnostics"
 require_relative "rendered/rendered_geometry"
 require_relative "rendered/layout_snapshot"
 require_relative "rendered/journey_invariant"
@@ -24,6 +25,7 @@ module Deploy
   # re-runs everything once more if anything was patched.
   class RenderedSuiteGate
     LEAVES = [
+      BrowserDiagnosticsGate,
       RenderedGeometryGate,
       ReflowGate,
       KeyboardFlowGate,
