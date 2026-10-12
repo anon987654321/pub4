@@ -84,11 +84,18 @@ module Master
                 "Electronic Music Producer", "Sound Engineer", "Label Executive", "Graphic Designer",
                 "Web Designer", "Sound Designer", "Organ Composer", "Hip-Hop Producer", "Skeptic"
               ],
-# dilla.rb is the whole engine and dilla.json its data; the panel
-# reads both, and the voice tables MASTER keeps for timing.
+# The executable is thin; critique the engine modules and canonical data too.
 files: %w[
   ../STUDIO/dilla/dilla.rb
-  ../STUDIO/dilla/dilla.json
+  ../STUDIO/dilla/data/dilla.json
+  ../STUDIO/dilla/data/music_theory.json
+  ../STUDIO/dilla/lib/dilla/engine.rb
+  ../STUDIO/dilla/lib/dilla/sequencer.rb
+  ../STUDIO/dilla/lib/dilla/chords.rb
+  ../STUDIO/dilla/lib/dilla/synthesis.rb
+  ../STUDIO/dilla/lib/dilla/voices.rb
+  ../STUDIO/dilla/lib/dilla/drums.rb
+  ../STUDIO/dilla/lib/dilla/effects.rb
   lib/voice/dilla.rb lib/voice/production_dna.rb
   lib/io/analog_capabilities.rb
 ],
