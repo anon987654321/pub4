@@ -67,6 +67,27 @@ class TestRuns < Minitest::Test
                     "the Dilla and tool suites must be part of the runner census"
   end
 
+  def test_node_and_shell_test_files_are_in_the_same_reachability_census
+    targets = {
+      "RAILS/master_web/test/face_boot.test.mjs" => "MASTER/bin/check",
+      "RAILS/test/pwa_offline_store.test.mjs" => "MASTER/tools/rails/premerge.rb",
+      "RAILS/test/stimulus_components_runtime_contract.test.mjs" => "MASTER/tools/rails/premerge.rb",
+      "OPENBSD/test/resource_guard_test.sh" => "OPENBSD/bin/check-openbsd",
+    }
+
+    targets.each do |path, runner|
+      assert_includes Operator::Runs.test_files, path, "#{path} was omitted from test discovery"
+      assert_includes Operator::Runs.who_runs(path), runner,
+                      "#{path} is not reachable from #{runner}"
+    end
+
+    cross_language = Operator::Runs.test_files.select do |path|
+      path.end_with?(".test.mjs", "_test.sh")
+    end
+    assert_operator cross_language.size, :>=, 24,
+                    "only #{cross_language.size} Node/shell tests are in the reachability census"
+  end
+
   def test_studio_is_in_the_census_and_its_named_runner_counts
     studio = Operator::Runs.test_files.select { |path| path.start_with?("STUDIO/") }
 
