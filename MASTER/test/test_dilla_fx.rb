@@ -5,10 +5,9 @@ require "open3"
 require "json"
 require "minitest/mock"
 
-# The default English voice is Christopher, and the voice carries dilla's rack.
-# The rack is data (voice.yml tts.dilla_fx); these tests hold it to dilla's own
-# source so a default cannot be invented, and run the chain through ffmpeg so a
-# filter this build rejects cannot ship.
+# The default English voice is Christopher; everyday speech is clean, and the
+# named dilla profile restores the sound-design rack and room. These tests hold
+# every filter to dilla's own source and run it through ffmpeg before it ships.
 class TestDillaFx < Minitest::Test
   Policy = Master::Voice::Policy
   SOUND = File.expand_path("../../STUDIO/dilla/lib/sound.rb", __dir__)
@@ -20,6 +19,16 @@ class TestDillaFx < Minitest::Test
     yield
   ensure
     saved.each { |key, value| ENV[key] = value }
+  end
+
+  def with_profile(name)
+    saved = ENV.fetch("MASTER_TTS_PROFILE", nil)
+    name ? ENV["MASTER_TTS_PROFILE"] = name : ENV.delete("MASTER_TTS_PROFILE")
+    Policy.reload!
+    yield
+  ensure
+    saved ? ENV["MASTER_TTS_PROFILE"] = saved : ENV.delete("MASTER_TTS_PROFILE")
+    Policy.reload!
   end
 
   def ffmpeg_ok?(chain, seconds: 1)
@@ -114,26 +123,27 @@ class TestDillaFx < Minitest::Test
   end
 
   def test_the_rack_is_on_and_ordered_and_switchable
-    assert Policy.fx_enabled?
-    stages = Policy.fx_units.map { |unit| unit["stage"] }.uniq
-    assert_equal %w[dynamics tone saturation modulation time stereo], stages
-    chain = Policy.shaped_chain
-    assert chain.start_with?(Policy.post_chain)
-    assert_includes chain, "alimiter=limit=0.8:level=disabled"
-    with_env("MASTER_TTS_FX" => "0") do
-      refute Policy.fx_enabled?
-      assert_equal [Policy.post_chain, Policy.room_chain].join(","), Policy.shaped_chain
-      assert_equal({ enabled: false, units: [] }, Policy.fx_payload)
-    end
-    off = Policy.data.merge("dilla_fx" => Policy.fx_config.merge("enabled" => false))
-    Policy.stub(:data, off) { refute Policy.fx_enabled? }
-    one = Policy.fx_config.merge("units" => Policy.fx_config["units"].map { |u| u["id"] == "la2a" ? u.merge("enabled" => false) : u })
-    Policy.stub(:data, Policy.data.merge("dilla_fx" => one)) do
-      refute_includes Policy.fx_units.map { |u| u["id"] }, "la2a"
-      assert_includes Policy.fx_units.map { |u| u["id"] }, "fet1176"
+    with_profile("dilla") do
+      assert Policy.fx_enabled?
+      stages = Policy.fx_units.map { |unit| unit["stage"] }.uniq
+      assert_equal %w[dynamics tone saturation modulation time stereo], stages
+      chain = Policy.shaped_chain
+      assert chain.start_with?(Policy.post_chain)
+      assert_includes chain, "alimiter=limit=0.8:level=disabled"
+      with_env("MASTER_TTS_FX" => "0") do
+        refute Policy.fx_enabled?
+        assert_equal [Policy.post_chain, Policy.room_chain].join(","), Policy.shaped_chain
+        assert_equal({ enabled: false, units: [] }, Policy.fx_payload)
+      end
+      off = Policy.data.merge("dilla_fx" => Policy.fx_config.merge("enabled" => false))
+      Policy.stub(:data, off) { refute Policy.fx_enabled? }
+      one = Policy.fx_config.merge("units" => Policy.fx_config["units"].map { |u| u["id"] == "la2a" ? u.merge("enabled" => false) : u })
+      Policy.stub(:data, Policy.data.merge("dilla_fx" => one)) do
+        refute_includes Policy.fx_units.map { |u| u["id"] }, "la2a"
+        assert_includes Policy.fx_units.map { |u| u["id"] }, "fet1176"
+      end
     end
   end
-
   def test_asmr_human_and_dry_profiles_do_not_get_the_rack
     %w[asmr human dry].each do |name|
       with_env("MASTER_TTS_PROFILE" => name) do
@@ -146,38 +156,41 @@ class TestDillaFx < Minitest::Test
   end
 
   def test_the_payload_carries_the_rack_and_the_character_list
-    payload = Policy.browser_payload
-    assert_equal Policy.fx_units.size, payload.fetch(:dilla_fx).fetch(:units).size
-    assert_equal({ in_db: -8.3 }, payload.fetch(:dilla_fx).slice(:in_db))
-    assert_equal [], payload.fetch(:character)
-    runtime = File.read(File.expand_path("../../RAILS/master_web/public/face_speech_runtime.js", __dir__))
-    assert_includes runtime, "function buildFxRack"
-    assert_includes runtime, "MASTER_VOICE_POLICY?.dilla_fx"
-  end
-
-  def test_the_whole_chain_runs_in_ffmpeg
-    skip "ffmpeg missing" unless FFMPEG
-
-    assert ffmpeg_ok?(Policy.shaped_chain, seconds: 2), "shaped_chain rejected by ffmpeg"
-    Policy.fx_units.each do |unit|
-      chain = unit["region"] == "stereo" ? "pan=stereo|c0=c0|c1=c0,#{unit['filter']}" : unit["filter"]
-      assert ffmpeg_ok?(chain), "#{unit['id']} rejected by ffmpeg"
+    with_profile("dilla") do
+      payload = Policy.browser_payload
+      assert_equal Policy.fx_units.size, payload.fetch(:dilla_fx).fetch(:units).size
+      assert_equal({ in_db: -8.3 }, payload.fetch(:dilla_fx).slice(:in_db))
+      assert_equal [], payload.fetch(:character)
+      runtime = File.read(File.expand_path("../../RAILS/master_web/public/face_speech_runtime.js", __dir__))
+      assert_includes runtime, "function buildFxRack"
+      assert_includes runtime, "MASTER_VOICE_POLICY?.dilla_fx"
     end
   end
-
-  def test_peaks_stay_under_minus_one_dbtp_and_the_level_is_stable
-    skip "ffmpeg missing" unless FFMPEG
-
-    out, = Open3.capture2e("ffmpeg", "-hide_banner", "-nostats", "-f", "lavfi", "-i",
-                           "sine=f=220:d=3:r=24000,tremolo=f=3:d=0.6", "-af", "#{Policy.shaped_chain},ebur128=peak=sample+true",
-                           "-f", "null", "-")
-    peaks = out.scan(/Peak:\s+(-?[\d.]+) dBFS/).flatten.map(&:to_f)
-    refute_empty peaks
-    assert_operator peaks.max, :<=, -1.0, "true peak #{peaks.max} dBFS"
-    loudness = out.scan(/I:\s+(-?[\d.]+) LUFS/).last.first.to_f
-    assert_operator loudness, :>, -40.0, "the rack swallowed the tone (#{loudness} LUFS)"
+  def test_the_whole_chain_runs_in_ffmpeg
+    with_profile("dilla") do
+      skip "ffmpeg missing" unless FFMPEG
+  
+      assert ffmpeg_ok?(Policy.shaped_chain, seconds: 2), "shaped_chain rejected by ffmpeg"
+      Policy.fx_units.each do |unit|
+        chain = unit["region"] == "stereo" ? "pan=stereo|c0=c0|c1=c0,#{unit['filter']}" : unit["filter"]
+        assert ffmpeg_ok?(chain), "#{unit['id']} rejected by ffmpeg"
+      end
+    end
   end
-
+  def test_peaks_stay_under_minus_one_dbtp_and_the_level_is_stable
+    with_profile("dilla") do
+      skip "ffmpeg missing" unless FFMPEG
+  
+      out, = Open3.capture2e("ffmpeg", "-hide_banner", "-nostats", "-f", "lavfi", "-i",
+                             "sine=f=220:d=3:r=24000,tremolo=f=3:d=0.6", "-af", "#{Policy.shaped_chain},ebur128=peak=sample+true",
+                             "-f", "null", "-")
+      peaks = out.scan(/Peak:\s+(-?[\d.]+) dBFS/).flatten.map(&:to_f)
+      refute_empty peaks
+      assert_operator peaks.max, :<=, -1.0, "true peak #{peaks.max} dBFS"
+      loudness = out.scan(/I:\s+(-?[\d.]+) LUFS/).last.first.to_f
+      assert_operator loudness, :>, -40.0, "the rack swallowed the tone (#{loudness} LUFS)"
+    end
+  end
   def test_character_presets_are_off_unless_selected
     names = Policy.data.fetch("character").keys
     assert_equal %w[robot formant doubler glitch shimmer], names
