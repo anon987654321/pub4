@@ -135,4 +135,37 @@ class TestCommandRegistryDispatch < Minitest::Test
     %w[sessions continue resume fork].each { |gone| refute built.key?(gone), "/#{gone} is /session #{gone}" }
     assert_includes Registry.help_text("session"), "/session fork"
   end
+  def test_voice_controls_have_sensible_defaults_and_plain_language_presets
+    original_mode = ENV.fetch("MASTER_TTS_MODE", nil)
+    original_profile = ENV.fetch("MASTER_TTS_PROFILE", nil)
+    ENV.delete("MASTER_TTS_MODE")
+    ENV.delete("MASTER_TTS_PROFILE")
+    Master::Voice::Policy.reload!
+
+    assert_equal "classic", Master::Voice::Speech.synthesis_mode
+    assert_match(/profile=natural/, Registry.dispatch_voice(ctx: { args: "status" }))
+    assert_match(/natural speech selected/, Registry.dispatch_voice(ctx: { args: "natural" }))
+    assert_equal "classic", Master::Voice::Speech.synthesis_mode
+
+    assert_match(/Dilla profile selected/, Registry.dispatch_voice(ctx: { args: "dilla" }))
+    assert_equal "dilla", Master::Voice::Policy.profile_name
+    assert_match(/expressive speech selected/, Registry.dispatch_voice(ctx: { args: "expressive" }))
+    assert_equal "transcendent", Master::Voice::Speech.synthesis_mode
+
+    Registry.dispatch_voice(ctx: { args: "natural" })
+    assert_equal "classic", Master::Voice::Speech.synthesis_mode
+    assert_equal "", Master::Voice::Policy.profile_name
+  ensure
+    original_mode ? ENV["MASTER_TTS_MODE"] = original_mode : ENV.delete("MASTER_TTS_MODE")
+    original_profile ? ENV["MASTER_TTS_PROFILE"] = original_profile : ENV.delete("MASTER_TTS_PROFILE")
+    Master::Voice::Policy.reload!
+  end
+
+  def test_voice_help_explains_the_default_and_optional_presets
+    help = Registry.help_text("voice")
+    ["/voice natural", "/voice expressive", "/voice dilla", "/voice timing", "/voice test"].each do |command|
+      assert_includes help, command
+    end
+  end
+
 end
