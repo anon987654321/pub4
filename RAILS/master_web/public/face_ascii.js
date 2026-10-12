@@ -1114,8 +1114,15 @@
     setLawField(!lawFieldVisible);
     const status = root.document.getElementById("master-face-ascii-status")
       || root.document.getElementById("ui-status");
+    const legend = Array.isArray(field.laws)
+      ? field.laws.map((law) => {
+        const glyph = String(law.glyph || "").slice(0, 1);
+        const name = String(law.id || "").toLowerCase().split("_")[0];
+        return glyph && name ? `${glyph} ${name}` : "";
+      }).filter(Boolean).join(", ")
+      : "";
     if (status) status.textContent = lawFieldVisible
-      ? "Constitutional law glyphs visible"
+      ? `Constitutional law glyphs visible${legend ? ` in priority order: ${legend}` : ""}`
       : "Constitutional law glyphs hidden";
     // The regular face loop observes lawFieldVisible and repaints only changed
     // glyph cells. Calling update() here would create a second canvas on the
