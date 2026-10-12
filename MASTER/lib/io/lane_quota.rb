@@ -48,7 +48,6 @@ module Master
       # free-pool limit, so their vendor slug is not an independent quota lane.
       def lane_of(model)
         id = model.to_s
-        return "openrouter-free" if id.end_with?(":free")
         return "ollama" if id.start_with?("ollama:", "ollama/")
         return id.split(":", 2).first.to_s if id.include?(":")
         return id.split("/", 2).first.to_s if id.include?("/")
