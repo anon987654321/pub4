@@ -1,0 +1,13 @@
+// BSDPorts stylesheet module; loaded by application.scss in cascade order.
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  // Phone first: the primary nav wraps onto two rows with the brand alone on
+  // the first, so body clears 104px; from 640px it clears 64px.
+  padding-block-start: 104px;
+}
+
+kbd { padding: var(--space-0-5) 4px; border: 1px solid var(--border); border-bottom-width: 2px; border-radius: var(--radius-xs); font-family: var(--font-mono); }
+
