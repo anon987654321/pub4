@@ -527,6 +527,12 @@ tokens:
     #  speaking opens the mouth by 0.7*|sin(1.1*k)| + 0.15*(k mod 3), k = floor(20*t).
     ascii:
       chars: " .:;=*%#@"
+      # Named alternatives remain ordered subsets of the calibrated ink ramp.
+      # Web keyboard controls and MASTER_FACE_RAMP use this same catalogue.
+      ramps:
+        sculpt: " .:;=*%#@"
+        high_contrast: " .;=#@"
+        fine_detail: " .:;=*#@"
       # Ink: each ramp glyph's share of one character cell, measured.
       ink: { " ": 0.0, ".": 0.0362, ":": 0.0576, ";": 0.0753, "=": 0.0910, "*": 0.1103, "%": 0.1456, "#": 0.1797, "@": 0.2099 }
       mode: dark
