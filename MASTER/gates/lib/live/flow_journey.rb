@@ -87,9 +87,12 @@ module Deploy
     # in the same report as the city apex rather than disappearing inside app=brgen.
     def surface_coverage_line(flow, app, state, detail = nil)
       steps = Array(flow["steps"])
-      hosts = steps.map { |step| surface_host(step, app) }.reject(&:empty?).uniq
+      surfaces = steps.group_by { |step| surface_host(step, app) }.map do |host, host_steps|
+        paths = host_steps.map { |step| step["get"] || step["post"] || "(unknown path)" }.uniq
+        host.empty? ? paths.join(", ") : "#{host} [#{paths.join(", ")}]"
+      end
       description = "#{steps.size} step(s)"
-      description += " on #{hosts.join(', ')}" unless hosts.empty?
+      description += " — #{surfaces.join('; ')}" unless surfaces.empty?
       description += " — #{detail}" if detail && !detail.to_s.empty?
       "surface0: #{app}/#{flow["id"]} #{state.to_s.upcase} — #{description}"
     end
