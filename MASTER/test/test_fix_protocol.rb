@@ -28,7 +28,7 @@ class TestFixProtocol < Minitest::Test
     text = Master::Fix::Protocol.instruction
 
     assert_includes text, "/fix and --dry-run are distinct"
-    assert_includes text, "Semantic ask rules are executable"
+    assert_includes text, "Semantic ask Laws are executable"
     assert_includes text, "No deterministic fixer exists"
   end
 
@@ -80,11 +80,11 @@ class TestFixProtocol < Minitest::Test
     end
   end
 
-  def test_rule_metadata_exposes_machine_readable_repair_and_verification
-    law = Master::Fix::Protocol.rules.find(&:semantic?)
+  def test_law_metadata_exposes_machine_readable_repair_and_verification
+    law = Master::Fix::Protocol.laws.find(&:semantic?)
 
     refute_nil law
-    entry = Master::Fix::Protocol.rule_entry(law)
+    entry = Master::Fix::Protocol.law_entry(law)
 
     assert entry.key?("fix_strategy")
     assert entry.key?("verify_strategy")
@@ -120,10 +120,10 @@ class TestFixProtocol < Minitest::Test
     assert_equal "manual_conduct_evidence", protocol.verification_for(practice)
 
     assert_equal "deterministic_or_ast_or_model_repair", protocol.strategy_for(detector)
-    assert_equal "rule_rescan_plus_behavior_or_test", protocol.verification_for(detector)
+    assert_equal "law_rescan_plus_behavior_or_test", protocol.verification_for(detector)
 
     assert_equal "model_or_human_analysis", protocol.strategy_for(residual)
-    assert_equal "rule_rescan_plus_behavior_or_test", protocol.verification_for(residual)
+    assert_equal "law_rescan_plus_behavior_or_test", protocol.verification_for(residual)
   end
 
   def test_render_has_live_corpus_and_terminal_states
@@ -151,8 +151,8 @@ class TestFixProtocol < Minitest::Test
       report = payload.fetch("capability_report")
 
       assert_kind_of Array, report.fetch("measurement_only_detectors")
-      assert_kind_of Array, report.fetch("advisory_rules")
-      assert_kind_of Array, report.fetch("semantic_rules_without_deterministic_detector")
+      assert_kind_of Array, report.fetch("advisory_laws")
+      assert_kind_of Array, report.fetch("semantic_laws_without_deterministic_detector")
       assert_equal "not_measured", report.fetch("verification_runtime")
     end
   end
