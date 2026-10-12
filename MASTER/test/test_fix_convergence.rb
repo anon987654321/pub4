@@ -2,6 +2,7 @@
 
 require_relative "test_helper"
 require "tmpdir"
+require "digest"
 require "json"
 require_relative "../lib/operator/gate_chain"
 
@@ -625,6 +626,33 @@ end
     assert_equal [%w[split simplify]], result.value!.fetch(:structure).map { |row| row.fetch(:candidate_operations) }
     assert_equal %w[defragment decouple flatten merge split relocate rename reorder remove reflow simplify recommend],
                  result.value!.fetch(:transformation_order)
+  end
+
+  # Every byte of the checkout, .git included (HEAD, refs, index). mtimes are
+  # left out on purpose: a read may touch an atime, but no content may change.
+  def checkout_digest(root)
+    Dir.glob(File.join(root, "**", "*"), File::FNM_DOTMATCH).sort.filter_map do |path|
+      next if File.directory?(path)
+
+      [path.delete_prefix(root), Digest::SHA256.file(path).hexdigest]
+    end
+  end
+
+  def commit_fixture!
+    system("git", "-C", @root, "add", "-A", out: File::NULL, err: File::NULL)
+    system("git", "-C", @root, "-c", "user.name=t", "-c", "user.email=t@example.test",
+           "commit", "-qm", "base", out: File::NULL, err: File::NULL)
+  end
+
+  def test_preview_leaves_the_checkout_byte_identical
+    File.write(File.join(@root, "tracked.rb"), "puts 1\n")
+    commit_fixture!
+    File.write(File.join(@root, "untracked.rb"), "puts 2\n")
+    loop = build_loop([{ rule: "TEST_RULE", file: File.join(@root, "tracked.rb"), line: 1, message: "x" }])
+    before = checkout_digest(@root)
+
+    assert loop.preview(@root).ok?
+    assert_equal before, checkout_digest(@root), "preview changed the checkout"
   end
 
   def test_dry_run_does_not_run_mutating_gate_verification
