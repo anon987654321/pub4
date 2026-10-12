@@ -11,7 +11,7 @@ module Master
       Operation = Data.define(:name, :position, :purpose)
 
       REQUIRED = %w[
-        defragment decouple flatten merge split relocate rename reorder remove
+        defragment decouple flatten merge split hoist relocate rename reorder remove
         reflow simplify recommend
       ].freeze
 
