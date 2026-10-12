@@ -51,7 +51,7 @@ module Deploy
     def self.visual_baseline_path(surface)
       return unless surface.snapshot
 
-      slug = [surface.app, surface.label, surface.viewport].map { |part| part.to_s.gsub(/[^a-zA-Z0-9_-]+/, "_").sub(/\\A_+/, "").sub(/_+\\z/, "") }.join("-")
+      slug = [surface.app, surface.label, surface.viewport].map { |part| part.to_s.gsub(/[^a-zA-Z0-9_-]+/, "_").sub(/\A_+/, "").sub(/_+\z/, "") }.join("-")
       File.join(VISUAL_BASELINE_DIR, "#{slug}.png")
     end
 
