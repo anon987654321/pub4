@@ -2,6 +2,7 @@
 
 require "minitest/autorun"
 require_relative "../../../MASTER/gates/support/geometry_type"
+require_relative "../../../MASTER/gates/support/geometry_probe"
 require_relative "../../../OPENBSD/lib/gate_result"
 
 class GeometryTypographyTest < Minitest::Test
@@ -25,6 +26,22 @@ class GeometryTypographyTest < Minitest::Test
     )
 
     assert result.soft_failures.any? { |message| message.include?("geometry rag") }
+  end
+
+  def test_unavailable_glyph_probe_is_inconclusive_not_a_clean_glyph_result
+    cdp = Object.new
+    def cdp.evaluate(*, **)
+      nil
+    end
+
+    payload = Deploy::GeometryProbe.glyph_coverage(cdp)
+    result = Deploy::GateResult.new
+    Deploy::GeometryType.check_glyphs(result, surface, payload)
+
+    assert_match(/unverified/, payload.fetch("glyphs_status"))
+    assert result.incomplete?
+    assert_equal :inconclusive, result.outcome
+    assert_match(/geometry glyphs: test coverage not measured/, result.unchecked.join)
   end
 
   def test_micro_typography_failure_is_inconclusive_not_silent
