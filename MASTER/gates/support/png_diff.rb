@@ -65,7 +65,7 @@ module Deploy
           end
         end
 
-        heatmap << 0 << pixel_row
+        heatmap << pixel_row
         base_previous = base_row
         current_previous = current_row
       end
