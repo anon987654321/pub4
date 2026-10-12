@@ -11,11 +11,19 @@ class TestTokenReads < Minitest::Test
   TR = Deploy::TokenReads
 
   def setup
+    @previous_strict_inconclusive = ENV.delete("GATE_STRICT_INCONCLUSIVE")
     TR.reset!
     @map = TR.wrap("typography" => { "hierarchy" => { "max_font_weights" => 3 } }, "flag" => false)
   end
 
-  def teardown = TR.reset!
+  def teardown
+    TR.reset!
+    if @previous_strict_inconclusive.nil?
+      ENV.delete("GATE_STRICT_INCONCLUSIVE")
+    else
+      ENV["GATE_STRICT_INCONCLUSIVE"] = @previous_strict_inconclusive
+    end
+  end
 
   def test_a_read_that_resolves_passes_and_returns_the_value
     assert_equal 3, @map.dig("typography", "hierarchy", "max_font_weights")
