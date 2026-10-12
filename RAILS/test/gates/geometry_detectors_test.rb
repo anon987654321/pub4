@@ -106,6 +106,20 @@ class GeometryDetectorsTest < Minitest::Test
     Deploy::GeometryProbe.walk(cdp, surface)
   end
 
+  def test_measurement_stops_when_fonts_never_settle
+    cdp = GateProbe::FakeCdp.new do |js, _awaited|
+      next false if js.include?("location.protocol")
+      next false if js.include?("document.fonts.status")
+
+      raise "geometry should not be measured before fonts settle"
+    end
+
+    payload = Deploy::GeometryProbe.measure_current(cdp, surface, font_timeout: 0)
+
+    assert_match(/font readiness timeout/, payload.fetch("error"))
+    refute payload.key?("elements"), "unsettled fonts must not produce layout measurements"
+  end
+
   def test_walk_awaits_the_glyph_probe_and_merges_its_rows
     payload = walk_with(->(awaited) { { "glyphs" => [{ "family" => "Inter", "covered" => awaited }] } })
 
