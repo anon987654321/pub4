@@ -11,7 +11,7 @@ class TestVoiceDisfluency < Minitest::Test
     cfg = Master::Voice::Policy.data.fetch("disfluencies")
     assert_equal true, cfg.fetch("enabled")
     assert_operator cfg.fetch("probability"), :<=, 0.25
-    assert_equal 1, D::DEFAULTS.fetch("min_words").positive? ? 1 : 0
+    assert_operator D::DEFAULTS.fetch("min_words"), :>, 0
   end
 
   def test_hedged_first_person_speech_can_have_a_natural_hesitation
