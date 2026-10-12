@@ -30,7 +30,7 @@ class PublicErrorPagesTest < Minitest::Test
 
     refute_empty paths, "no public error pages found — the inventory stopped matching"
     paths.each do |path|
-      assert_no_match(/href\\s*=\\s*["']\\s*javascript:/i, File.read(path),
+      assert_no_match(/href\s*=\s*["']\s*javascript:/i, File.read(path),
                       "#{path.delete_prefix("#{ROOT}/")}: use a real destination, not a javascript: URL")
     end
   end
