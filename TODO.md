@@ -18,7 +18,7 @@ This is the cross-tree coordination queue. Each top-level tree owns its detailed
 - [MASTER/TODO.md](MASTER/TODO.md) — law enforcement, /fix proof, debugging, intelligence and Termux.
 - [RAILS/TODO.md](RAILS/TODO.md) — Rails contract suite, multi-city isolation, payment proof, rendered UX and PWA.
 - [OPENBSD/TODO.md](OPENBSD/TODO.md) — domain/DNS facts, deploy-lock correctness, vm23 health and restore drills.
-- [STUDIO/TODO.md](STUDIO/TODO.md) — Dilla rendering/listening, failing media tests, postpro performance and private-media hygiene.
+- [STUDIO/TODO.md](STUDIO/TODO.md) — the pasted Dilla engine, failing media tests, postpro performance and private-media hygiene.
 
 ## Evidence discipline
 
