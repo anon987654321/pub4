@@ -3,6 +3,7 @@
 require "digest"
 require "tempfile"
 require_relative "../io/atomic_write"
+require_relative "../design/authoring"
 require_relative "conflict_resolver"
 require_relative "constants"
 require_relative "attempt"
@@ -361,6 +362,7 @@ end) if source.to_s.strip.empty?
         Line #{violation[:line]}: #{violation[:message]}
         #{ctx[:fix_line]}
         #{visual_fix_context}
+        #{Master::Design::Authoring.context(path:, root: @root)}
         #{PrimitiveFirst.hint(violation, root: @root)}
         #{Protocol.law_prompt(@law)}
 
