@@ -46,7 +46,7 @@ module Master
       end
 
       # White, because both consumers band-limit it first and white leaves about
-      # 8 dB more of the band than pink does: measured against a Jenny sentence,
+      # 8 dB more of the band than pink does: measured against a Christopher sentence,
       # that is the difference between a whisper 23 dB under the voice and one
       # at the 14 dB the profile declares.
       def noise_source(seed, seconds)
