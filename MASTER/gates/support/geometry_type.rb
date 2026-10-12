@@ -157,6 +157,12 @@ module Deploy
     # whether it drew the letters itself; a stack with no named face the
     # browser has renders in a generic, which covers them, and is not reported.
     def check_glyphs(result, surface, data)
+      status = data["glyphs_status"].to_s
+      if status.start_with?("unverified:")
+        result.incomplete!("geometry glyphs: #{surface.id} coverage not measured — #{status.delete_prefix("unverified:").strip}")
+        return
+      end
+
       missing = Array(data["glyphs"]).select { |row| row["family"] && row["covered"] == false }
       return if missing.empty?
 
