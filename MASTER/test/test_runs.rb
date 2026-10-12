@@ -21,6 +21,15 @@ class TestRuns < Minitest::Test
     @report = self.class.report
   end
 
+  def test_every_declared_runner_is_a_tracked_file
+    missing = Operator::Runs::RUNNERS.reject do |runner|
+      File.file?(File.join(Operator::Runs::ROOT, runner))
+    end
+
+    assert_empty missing,
+                 "the runner census names files that do not exist: #{missing.join(', ')}"
+  end
+
   def test_every_test_file_is_reachable_from_an_entrypoint
     assert_empty @report[:orphans],
                  "test files no entrypoint runs. Wire them into a runner, or delete them:\n  " +
