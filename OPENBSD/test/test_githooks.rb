@@ -192,7 +192,7 @@ class TestGitHooks < Minitest::Test
 
   # --- 4b. the dilla engine must parse before it lands ----------------------
   #
-  # A syntax error in dilla.rb or lib/ stops every render at load; one shipped
+  # A syntax error in dilla.rb stops every render at load; one shipped
   # on 2026-09-19 and nothing noticed until renders died at boot. The hook
   # parses staged engine files, so the same incident cannot land again unseen.
 
@@ -206,8 +206,8 @@ class TestGitHooks < Minitest::Test
   end
 
   def test_a_staged_engine_file_that_parses_commits
-    write("STUDIO/dilla/lib/knob.rb", "# frozen_string_literal: true\n\n# a knob\n")
-    git!("add", "STUDIO/dilla/lib/knob.rb")
+    write("STUDIO/dilla/dilla.rb", "# frozen_string_literal: true\n\n# a knob\n")
+    git!("add", "STUDIO/dilla/dilla.rb")
     out, status = commit("a knob that parses")
 
     assert status.success?, "a parsing engine file was refused:\n#{out}"
