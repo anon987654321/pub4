@@ -343,4 +343,22 @@ class CoreBridgeSandboxTest < Minitest::Test
       assert_equal "observe", result[:mission].dig("operator", "mode")
     end
   end
+  def test_repeated_constitutional_blocks_stop_and_block_the_mission
+    Dir.mktmpdir do |root|
+      blocked = Master::Core::Effect.exec(%w[echo inspect])
+      model = ScriptedModel.new(*Array.new(8) { blocked })
+
+      result = Master::CLI::CoreBridge.run(
+        "inspect the repository", root:, model:, mode: :observe, max_turns: 20
+      )
+
+      assert_equal :blocked, result[:reason]
+      assert_equal 3, result[:turns]
+      assert_match(/stopped after 3 constitutional blocks/, result[:summary])
+      assert_equal 3, result[:transcript].size
+      assert_equal "blocked", result[:mission]["state"]
+    end
+  end
+
+
 end
