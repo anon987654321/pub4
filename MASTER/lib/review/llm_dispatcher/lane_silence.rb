@@ -32,8 +32,10 @@ module Master
         @lanes = {}
 
         class << self
-          # The provider half of a model id: "claude-cli:claude-opus-5-5" is lane "claude-cli".
-          def lane_of(model) = model.to_s.split(":", 2).first.to_s.then { |lane| lane.empty? ? ANY : lane }
+          # Quota and silence must agree about shared provider boundaries.
+          def lane_of(model)
+            Master::Io::LaneQuota.lane_of(model).then { |lane| lane.empty? ? ANY : lane }
+          end
 
           def silent?(lane = ANY)
             sync { (@lanes[lane] || {}).fetch(:silent_until, 0.0) > now }
