@@ -536,7 +536,7 @@ form > :is(.actions, .field--actions, .post-progressive-actions) {
 .post-reading-layout {
 
   /* srf:125 */
-  grid-template-columns: 48px minmax(0, 1fr);
+  grid-template-columns: var(--vote-target) minmax(0, 1fr);
 
   /* srf:126 */
   gap: clamp(var(--space-2), 2vw, var(--space-4));
@@ -587,7 +587,7 @@ form > :is(.actions, .field--actions, .post-progressive-actions) {
 .post-vote-rail {
 
   /* srf:137 */
-  inline-size: 48px;
+  inline-size: var(--vote-target);
 
   /* srf:138 */
   top: calc(var(--top-band-block, 0px) + var(--space-3));
@@ -604,10 +604,10 @@ form > :is(.actions, .field--actions, .post-progressive-actions) {
 .post-vote-btn {
 
   /* srf:141 */
-  inline-size: var(--tap-min);
+  inline-size: var(--vote-target);
 
   /* srf:142 */
-  block-size: var(--tap-min);
+  block-size: var(--vote-target);
 
   /* srf:143 */
   border: 0;

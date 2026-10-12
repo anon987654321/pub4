@@ -1,7 +1,7 @@
 // Shared post voting and reading geometry. Dialects own colour; this file owns structure.
 .post-reading-layout {
   display: grid;
-  grid-template-columns: 48px minmax(0, 1fr);
+  grid-template-columns: var(--vote-target) minmax(0, 1fr);
   gap: var(--space-3);
   align-items: start;
 }
@@ -12,25 +12,33 @@
   display: grid;
   justify-items: center;
   gap: 0;
-  inline-size: 48px;
+  inline-size: var(--vote-target);
 }
 .post-vote-form { margin: 0; }
 .post-vote-btn {
   display: grid;
   place-items: center;
-  inline-size: var(--tap-min);
-  min-inline-size: var(--tap-min);
-  block-size: var(--tap-min);
-  min-block-size: var(--tap-min);
+  inline-size: var(--vote-target);
+  min-inline-size: var(--vote-target);
+  block-size: var(--vote-target);
+  min-block-size: var(--vote-target);
   border: 0;
   border-radius: 50%;
   background: transparent;
   color: var(--text-secondary);
   cursor: pointer;
 }
+/* The arrow fills most of its target. Drawn by the icon set at 18px; sized here
+   so a retune is the token's, and the SVG attribute loses to this rule. */
+.post-vote-btn svg {
+  inline-size: var(--vote-icon);
+  block-size: var(--vote-icon);
+}
+/* Colour answers a hover; a filled disc behind an arrow this large is chrome.
+   Keyboard focus keeps the shared focus ring (_focus_ring.scss). */
 .post-vote-btn:hover,
 .post-vote-btn:focus-visible {
-  background: var(--hover-subtle);
+  background: transparent;
   color: var(--text);
 }
 .post-vote-btn.is-active {
@@ -40,20 +48,20 @@
 .post-vote-score {
   display: grid;
   place-items: center;
-  min-inline-size: var(--tap-min);
-  min-block-size: 30px;
-  padding-inline: 2px;
-  font-size: var(--text-base);
+  min-inline-size: var(--vote-target);
+  min-block-size: var(--vote-target);
+  font-size: var(--vote-score-size);
   font-weight: var(--weight-heavy);
-  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  line-height: var(--leading-none);
+  color: var(--text);
 }
 @media (max-width: 479px) {
   .post-reading-layout {
-    grid-template-columns: 44px minmax(0, 1fr);
+    grid-template-columns: var(--vote-target) minmax(0, 1fr);
     gap: var(--space-2);
   }
-  .post-vote-rail { inline-size: 44px; }
 }
 
-.post-vote-frame { display: block; inline-size: 48px; }
-@media (max-width: 479px) { .post-vote-frame { inline-size: 44px; } }
+.post-vote-frame { display: block; inline-size: var(--vote-target); }

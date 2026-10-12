@@ -213,6 +213,18 @@ $vertical-accent-ink: #110f19;
   // size, so it has no reason to scale with the root in the first place.
   --chrome-inset: 12px;
   --tap-min: 44px;
+  // The two controls the operator ordered large (2026-10-12): brgen's main nav
+  // and the vote arrows with their score. Targets far above the 44px floor, in
+  // px like --tap-min because a hit box is a distance, not a reading size, and
+  // whole numbers so nothing paints on a fractional pixel. --nav-target opens
+  // from 64px on a phone to 72px from md up (the media rule below). --nav-text
+  // and --vote-score-size name the type steps those controls read at, so a
+  // retune is one line here.
+  --nav-target: 64px;
+  --vote-target: 64px;
+  --vote-icon: 32px;
+  --nav-text: var(--text-xl);
+  --vote-score-size: var(--text-xl);
   --bar-height: 44px;
   --tab-bar-h: var(--bar-height);
   --page-gutter: clamp(16px, 5vw, 48px);
@@ -228,4 +240,7 @@ $vertical-accent-ink: #110f19;
   --signal-warning: var(--color-warning);
   --signal-error: var(--danger);
   --signal-info: var(--color-info);
+  @media (min-width: 768px) {
+    --nav-target: 72px;
+  }
 }

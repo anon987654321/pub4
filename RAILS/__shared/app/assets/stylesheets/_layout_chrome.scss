@@ -208,7 +208,7 @@ main[role="main"] {
      composition (a 44px tap target plus its block padding, plus the safe area
      the bar itself adds) rather than restated as a constant: at an 18px root a
      hardcoded 3.5rem measured 63px against a 62px bar and left a 1px seam. */
-  --nav-swiper-h: calc(var(--tap-min) + (var(--space-2) * 2) + var(--safe-top));
+  --nav-swiper-h: calc(var(--nav-target, var(--tap-min)) + (var(--space-2) * 2) + var(--safe-top));
   /* --z-brand moved to _tokens.scss, where the rest of the ladder lives. It was
      declared here, which made the ladder two sources: a reader sizing a new
      layer against _tokens saw --z-overlay: 100 then --z-modal: 1000 and could
