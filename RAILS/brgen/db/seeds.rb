@@ -5,28 +5,39 @@
 # Idempotent with find_or_create_by! where possible. Run: bin/rails db:seed
 
 require 'faker'
+require 'brgen/demo_mode'
 
 # Ensure Cities exist for automatic TLD/domain-based resolution.
 # City network links do not change the tenant isolation of each apex.
 Brgen::CitySeed.sync! if defined?(Brgen::CitySeed) && ActiveRecord::Base.connection.table_exists?(:cities)
 
-# Scale for "wildly popular" impression in dev/demo: SEED_SCALE=50 for thousands of users/posts
-# with high engagement counters. Keep small for prod/demo.
+# Scale controls synthetic development/test fixture volume only; it is not a public audience metric.
 SEED_SCALE = [ 1, (ENV['SEED_SCALE'] || (Rails.env.production? ? 1 : 10)).to_i ].max
 
-if Rails.env.production? && City.table_exists?
-  puts "Production seed: Bergen demo only (skipping Faker flood)."
-  User.find_or_create_by!(email_address: "admin@brgen.no") do |u|
-    u.username = "admin"
-    u.password = u.password_confirmation = ENV["ADMIN_SEED_PASSWORD"].to_s.tap { |p| raise "set ADMIN_SEED_PASSWORD" if p.empty? || p == "password123" }
+unless Rails.env.development? || Rails.env.test?
+  if Rails.env.production?
+    raise "City table is missing; refusing to run bulk seed" unless City.table_exists?
+
+    puts "Production seed: creating/verifying operator account."
+    User.find_or_create_by!(email_address: "admin@brgen.no") do |u|
+      u.username = "admin"
+      u.password = u.password_confirmation =
+        ENV["ADMIN_SEED_PASSWORD"].to_s.tap do |password|
+          raise "set ADMIN_SEED_PASSWORD" if password.empty? || password == "password123"
+        end
+    end
   end
-  if (bergen = City.find_by(domain: "brgen.no"))
+
+  if Brgen::DemoMode.seed_allowed? && City.table_exists? &&
+      (bergen = City.find_by(domain: "brgen.no"))
+    puts "Disclosed demo seed enabled."
     Brgen::BergenDemoSeeder.new(bergen).seed!
     puts "Bergen demo: #{Post.where(city: bergen).count} posts"
+  else
+    puts "Synthetic seed skipped; existing content was not changed."
   end
   exit 0
 end
-
 if City.table_exists?
   puts 'Seeding flagship per-city content (brgen.no, lsangeles.com, amstrdam.nl, oshlo.no)...'
   City.where(domain: %w[brgen.no lsangeles.com amstrdam.nl oshlo.no]).find_each do |city|
@@ -192,8 +203,7 @@ listings = stores.flat_map do |store|
       latitude: bergen_lat + rand(-0.05..0.05),
       longitude: bergen_lng + rand(-0.06..0.06),
       status: 'active',
-      created_at: rand(1..60).days.ago,
-      views_count: rand((100 * SEED_SCALE)..(10_000 * SEED_SCALE))
+      created_at: rand(1..60).days.ago
     ).tap do |listing|
       # One generated photograph per leaf category, catalogue only.
       Brgen::DemoMedia.attach_catalog!(listing, :photos, seed: "listing-#{leaf_slug}")
@@ -279,7 +289,7 @@ dating_profiles = users.sample(num_dating).map do |user|
   profile
 end
 
-# Generate many likes for popular feel
+# Generate sample relationships for local demo/test fixtures only.
 dating_profiles.each_cons(3) do |a, b, c|
   Dating::Like.find_or_create_by!(liker: a.user, likee: b.user)
   Dating::Like.find_or_create_by!(liker: b.user, likee: c.user)
@@ -294,8 +304,6 @@ playlists = users.sample(num_play).map do |user|
     user: user,
     name: "#{Faker::Music.genre} #{Faker::Music.album}",
     description: Faker::Lorem.sentence,
-    tracks_count: rand(5..25),
-    plays_count: rand((100 * SEED_SCALE)..(100_000 * SEED_SCALE)),
     collaborative: [ true, false ].sample
   )
 end
