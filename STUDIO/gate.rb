@@ -10,7 +10,10 @@ module Studio
     ROOT = File.expand_path(__dir__)
     VENDORED = %r{/(?:.git|node_modules|tmp|.cache|storage|output|renders|samples|weights)/}
     FILES = -> { Dir.glob(File.join(ROOT, "**", "*.rb")).reject { |path| "/#{path.delete_prefix(ROOT + "/")}" =~ VENDORED }.sort }
-    ENTRYPOINTS = %w[dilla/dilla.rb postpro/postpro.rb replicate/replicate.rb photograph.rb].freeze
+    ENTRYPOINTS = %w[postpro/postpro.rb replicate/replicate.rb photograph.rb].freeze
+    # A script, not a library: dilla.rb is a command that runs when it is loaded, so
+    # it has to exist and parse, and it carries no PROGRAM_NAME guard to look for.
+    SCRIPTS = %w[dilla/dilla.rb].freeze
     FORBIDDEN = %r{require(?:_relative)?\s+["'][^"']*(?:MASTER|RAILS|OPENBSD)/(?:lib|app|tools|shared|engines)[^"']*["']}
 
     def self.run = new.run
@@ -26,6 +29,7 @@ module Studio
 
       files.each { |path| parse(path) }
       files.each { |path| boundary(path) }
+      SCRIPTS.each { |entry| @failures << "missing script #{entry}" unless File.file?(File.join(ROOT, entry)) }
       ENTRYPOINTS.each { |entry| guarded(entry) }
       result
     end

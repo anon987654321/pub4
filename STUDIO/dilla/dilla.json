@@ -1,0 +1,207 @@
+{
+  "meta": {
+    "name": "dilla.rb data",
+    "version": "1.0",
+    "notes": "Frequencies in Hz, A4=440. Progressions derived from Slum Village Fantastic Vol.1/2 sample sources and transcription notes. Frequencies are starting voicings; edit freely."
+  },
+
+  "fx": {
+    "dilla_butter": {
+      "swing": 0.542,
+      "detune": 0.005,
+      "reverb": 0.25,
+      "lowpass": 8000
+    },
+    "analog_lush": {
+      "swing": 0.540,
+      "detune": 0.008,
+      "reverb": 0.45,
+      "lowpass": 6000
+    },
+    "dry": {
+      "swing": 0.500,
+      "detune": 0.000,
+      "reverb": 0.00,
+      "lowpass": 12000
+    }
+  },
+
+  "drums": {
+    "boom_bap": {
+      "kick":  [1,0,0,0, 0,0,0,1, 0,0,0,0, 0,0,0,0],
+      "snare": [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+      "hat":   [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,1]
+    },
+    "dilla_swing": {
+      "kick":  [1,0,0,1, 0,0,1,0, 0,0,1,0, 0,0,0,0],
+      "snare": [0,0,0,0, 1,0,0,0, 0,0,0,1, 0,1,0,0],
+      "hat":   [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0]
+    },
+    "sparse": {
+      "kick":  [1,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0],
+      "snare": [0,0,0,0, 1,0,0,0, 0,0,0,0, 0,0,0,0],
+      "hat":   [1,0,1,0, 0,0,1,0, 1,0,1,0, 0,0,1,0]
+    }
+  },
+
+  "progressions": {
+    "sv_intro": {
+      "name": "Slum Village – Fantastic Vol. 2 Intro",
+      "artist": "Slum Village / J Dilla",
+      "theory": "D minor, minor ii–V motion (F7–Dm7–Gm7). From Chordify transcription.",
+      "chords": ["F7", "Dm7", "Gm7"],
+      "freqs": [
+        [349.23, 440.00, 523.25, 622.25],
+        [293.66, 349.23, 440.00, 523.25],
+        [196.00, 233.08, 293.66, 349.23]
+      ],
+      "tempo": 90,
+      "duration": 2.0,
+      "fx": "dilla_butter"
+    },
+
+    "sv_fantastic": {
+      "name": "Slum Village – 'Fantastic' (Vol.1)",
+      "artist": "Slum Village / J Dilla",
+      "theory": "Inspired by Herbie Hancock – 'You'll Know When You Get There'. Modal D minor, quartal upper voicings.",
+      "chords": ["Dm9", "Gm9", "Bbmaj7", "A7sus4"],
+      "freqs": [
+        [293.66, 349.23, 440.00, 523.25, 659.26],
+        [196.00, 233.08, 293.66, 349.23, 440.00],
+        [233.08, 293.66, 349.23, 440.00],
+        [220.00, 293.66, 329.63, 392.00]
+      ],
+      "tempo": 88,
+      "duration": 2.0,
+      "fx": "analog_lush"
+    },
+
+    "sv_keep_it_on": {
+      "name": "Slum Village – 'Keep It On' (Vol.1)",
+      "artist": "Slum Village / J Dilla",
+      "theory": "Inspired by Gil Evans – 'Snowflake Bop'. Approximate ii–V–I–IV in C major.",
+      "chords": ["Dm7", "G7", "Cmaj7", "Fmaj7"],
+      "freqs": [
+        [293.66, 349.23, 440.00, 523.25],
+        [196.00, 246.94, 293.66, 349.23],
+        [261.63, 329.63, 392.00, 493.88],
+        [349.23, 440.00, 523.25, 659.26]
+      ],
+      "tempo": 92,
+      "duration": 2.0,
+      "fx": "dilla_butter"
+    },
+
+    "sv_look_of_love": {
+      "name": "Slum Village – 'Look of Love (Remix)' (Vol.1)",
+      "artist": "Slum Village / J Dilla",
+      "theory": "Inspired by Minnie Riperton – 'Inside My Love'. Slow Ab major, extended 9th voicings.",
+      "chords": ["Abmaj7", "Fm9", "Dbmaj7", "Eb7"],
+      "freqs": [
+        [207.65, 261.63, 311.13, 392.00],
+        [174.61, 207.65, 261.63, 311.13, 392.00],
+        [277.18, 349.23, 415.30, 523.25],
+        [311.13, 392.00, 466.16, 554.37]
+      ],
+      "tempo": 76,
+      "duration": 2.0,
+      "fx": "analog_lush"
+    },
+
+    "sv_estimate": {
+      "name": "Slum Village – 'Estimate' (Vol.1)",
+      "artist": "Slum Village / J Dilla",
+      "theory": "Inspired by Clare Fischer – 'You Call It Madness'. Eb major, chromatic turnaround.",
+      "chords": ["Ebmaj7", "Cm7", "Fm7", "Bb7"],
+      "freqs": [
+        [311.13, 392.00, 466.16, 587.33],
+        [261.63, 311.13, 392.00, 466.16],
+        [349.23, 415.30, 523.25, 622.25],
+        [233.08, 293.66, 349.23, 415.30]
+      ],
+      "tempo": 84,
+      "duration": 2.0,
+      "fx": "dilla_butter"
+    },
+
+    "sv_conant_gardens": {
+      "name": "Slum Village – 'Conant Gardens' (Vol.2)",
+      "artist": "Slum Village / J Dilla",
+      "theory": "Interpolates Willie Hale – 'A Tribute To Wes'. Soul-jazz F major with 13th color.",
+      "chords": ["Fmaj9", "Dm9", "Gm9", "C13"],
+      "freqs": [
+        [349.23, 440.00, 523.25, 659.26, 783.99],
+        [293.66, 349.23, 440.00, 523.25, 659.26],
+        [196.00, 233.08, 293.66, 349.23, 440.00],
+        [261.63, 329.63, 392.00, 466.16, 587.33]
+      ],
+      "tempo": 94,
+      "duration": 2.0,
+      "fx": "dilla_butter"
+    },
+
+    "sv_get_dis_money": {
+      "name": "Slum Village – 'Get Dis Money' (Vol.2)",
+      "artist": "Slum Village / J Dilla",
+      "theory": "Inspired by Herbie Hancock – 'Come Running To Me'. Bb major, lush 9ths.",
+      "chords": ["Ebmaj7", "Cm9", "Abmaj7", "Bb7"],
+      "freqs": [
+        [311.13, 392.00, 466.16, 587.33],
+        [261.63, 311.13, 392.00, 466.16, 587.33],
+        [207.65, 261.63, 311.13, 392.00],
+        [233.08, 293.66, 349.23, 415.30]
+      ],
+      "tempo": 96,
+      "duration": 2.0,
+      "fx": "analog_lush"
+    },
+
+    "sv_fall_in_love": {
+      "name": "Slum Village – 'Fall In Love' (Vol.2)",
+      "artist": "Slum Village / J Dilla",
+      "theory": "Inspired by The Singers Unlimited – 'Clair'. F major, classic I–vi–ii–V.",
+      "chords": ["Fmaj7", "Dm7", "Gm7", "C7"],
+      "freqs": [
+        [349.23, 440.00, 523.25, 659.26],
+        [293.66, 349.23, 440.00, 523.25],
+        [196.00, 233.08, 293.66, 349.23],
+        [261.63, 329.63, 392.00, 466.16]
+      ],
+      "tempo": 86,
+      "duration": 2.0,
+      "fx": "dilla_butter"
+    },
+
+    "sv_jealousy": {
+      "name": "Slum Village – 'Jealousy' (Vol.2)",
+      "artist": "Slum Village / J Dilla",
+      "theory": "Interpolates Bill Evans – 'Are You All The Things'. C minor, minor 9th chain.",
+      "chords": ["Cm9", "Fm9", "Bbm9", "Ebmaj7"],
+      "freqs": [
+        [261.63, 311.13, 392.00, 466.16, 587.33],
+        [174.61, 207.65, 261.63, 311.13, 392.00],
+        [233.08, 277.18, 349.23, 415.30, 523.25],
+        [311.13, 392.00, 466.16, 587.33]
+      ],
+      "tempo": 82,
+      "duration": 2.0,
+      "fx": "analog_lush"
+    },
+
+    "dilla_life": {
+      "name": "Reference – 'Life' progression",
+      "artist": "J Dilla / Slum Village",
+      "theory": "Extended 9th chords with Dorian ii–V movement. Included as a baseline.",
+      "chords": ["Bbm9", "C7", "Fm9", "Bbm9"],
+      "freqs": [
+        [116.54, 174.61, 220.00, 261.63, 329.63],
+        [130.81, 164.81, 196.00, 233.08],
+        [174.61, 207.65, 261.63, 311.13, 392.00],
+        [116.54, 174.61, 220.00, 261.63, 329.63]
+      ],
+      "tempo": 90,
+      "duration": 2.0,
+      "fx": "dilla_butter"
+    }
+  }
+}

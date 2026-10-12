@@ -41,3 +41,6 @@ tools/
 renders/
 /ears/
 /project/imported/
+
+# Renders: dilla.rb writes to out/ unless told otherwise, and audio never goes into git.
+out/

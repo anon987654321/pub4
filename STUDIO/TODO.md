@@ -7,17 +7,11 @@ Updated: 2026-10-12. Delete an entry when it is done. Cross-tree coordination li
 - [ ] Re-run the private-media gate and confirm the 17 tracked Ragnhild `retouched/` portraits are absent from the current tree. Prior public commits still contain historical blobs; history rewriting/force-pushing is outside this cleanup and needs a separate coordinated decision.
 - [ ] Run `test_tools_postpro_dispatch.rb` and reproduce the former `--preset fx` invocation with and without `--output` on the pinned Ruby/libvips stack. Source now exits early when `--preset` is supplied without the required `--input` and `--output`, and reports unknown names; confirm bounded exit and fix any real caller still sending `fx`.
 - [ ] Run the postpro regression suite after this sweep. Source changes now prevent arbitrary forced analog steps from violating the measured preset co-occurrence graph, split the heavy-default contract from the subtle-lane test, and add a bounded failure for `--preset` without required input/output paths. Also classify the reported failures in `the_tools_own_self_check_passes`, `the_default_posture_is_subtle`, `a_graded_frame_records_its_version...`, and `every_step_co_occurs_with_every_other...`. No source-level claim substitutes for real suite output.
-- [ ] Run the Dilla patch-only showcase regression and render `opus3_strings`, `matriarch_stabs`, `grandmother_sweep`, `vox_humana` and `e_piano` through the actual audio/video path. The score dispatcher now routes these declared patches to `Demo`; verify the generated output before closing this item.
 
-## Dilla — correctness before extra polish
+## Dilla
 
-- [ ] Reproduce and fix the recorded failures in `test_dilla_engine_probes` (6 failures, 2 errors), `test_dilla_composer_mind` (1 failure), and `test_dilla_musical_grammar` (1 failure, 2 errors). The assembly-offset/recipe test also errors alone while passing in the full file; remove test-order dependence and prove isolated execution.
-- [ ] Render—not just syntax-check—the rolled hand's ffmpeg expression containing `gte(t,…)`. Verify timing, audio continuity and video output with a short deterministic fixture.
-- [ ] Either use the Moog `ladder_sat` self-oscillation in a deliberate patch with a regression fixture, or remove the dead path. Add the missing hat-accent velocities to the boom-bap library and test velocity-to-audio behavior.
-- [ ] Render a short A/B take for each 2026-10-11 change before keeping it: velocity-shaped synth timbre, Rhodes pickup bark and uneven tremolo, seeded Prophet drift/poly-mod, Moog ladder saturation, scored chord voicings/seeded rolled hand, boom-bap patterns and the `hate`/`techno` profiles. Nobody's source-level claim substitutes for listening; keep or revert each change on evidence.
-- [ ] Compare reproducible renders with `data/dilla_reference.yml` for loudness and spectrum. Check mix glue (shared room, restrained tape saturation and bus compression) and SP-1200-style drum conversion/noise against the reference, not just by taste; preserve seed, settings and the original take.
-- [ ] Read the missing style references before revising the hip-hop and techno patterns: Hein's Dilla-time essay, Frere-Jones's writing, and the relevant artists' own mixes. Record provenance and distinguish historical reference from an unverified imitation claim.
-- [ ] Recheck live playback's declared sample rate, latency and interruption behavior on target hardware. Render and live modes must share the same timing/gain contract, without duplicate playback owners or speech overlap.
+- [ ] Listen to a full run of `ruby dilla.rb` and keep or change the patch pool and the effects chain in `default_liveset.yml`; the operator's ear decides, and nothing here has been heard by an agent.
+- [ ] Merge the researched progressions into `dilla/chords.yml` and name the ones the liveset plays.
 
 ## Replicate, LoRA and postpro
 
@@ -49,11 +43,11 @@ Updated: 2026-10-12. Delete an entry when it is done. Cross-tree coordination li
 
 ## Tooling, outputs and KISS
 
-- [ ] Check output defaults for `visual/`, `photograph.rb`, `gate.rb` and `isolation.rb` against the rule that tools render beside their own Ruby file, while dated/irreplaceable deliverables remain outside the repository. Add path tests for relative paths and invocation from another working directory.
-- [ ] Redo the Dilla, postpro and Replicate READMEs: explain canonical entrypoints, where outputs land, the current pattern files, provider cost behavior and safe reruns.
+- [ ] Check output defaults for `visual/`, `photograph.rb` and `gate.rb` against the rule that tools render beside their own Ruby file, while dated/irreplaceable deliverables remain outside the repository. Add path tests for relative paths and invocation from another working directory.
+- [ ] Redo the postpro and Replicate READMEs: explain canonical entrypoints, where outputs land, the current pattern files, provider cost behavior and safe reruns.
 - [ ] Verify MASTER's “generate me a selfie” route end to end once its intent/provider path is fixed; keep command routing and shell-safety work in [MASTER/TODO.md](../MASTER/TODO.md).
 - [ ] Keep test isolation by subject because top-level constants collide across tool suites. Fix order-dependent fixtures rather than loading everything into one process or adding permanent global shims.
 
 ## Proof surfaces
 
-`cd STUDIO/test && rake`, isolated Dilla/postpro/Replicate subject suites, `STUDIO/test/gate.rb`, source/provenance checks, actual rendered files, provider cost ledger and operator listening evidence.
+`cd STUDIO/test && rake`, isolated postpro/Replicate subject suites, `STUDIO/test/gate.rb`, source/provenance checks, actual rendered files, provider cost ledger and operator listening evidence.

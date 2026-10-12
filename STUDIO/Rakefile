@@ -4,36 +4,15 @@ require "rake/testtask"
 
 # One process per subject, because every subject here defines its constants and
 # methods at top level on Object and the names collide. postpro and replicate
-# both define `vocab_check`; dilla, postpro and replicate all define PRESETS.
+# both define `vocab_check`; postpro and replicate both define PRESETS.
 # Rake::TestTask runs the files it is given in a single process, so isolation
 # has to come from the task split. The tools get one task each -- grouping them
 # was enough to make replicate's self-check assertion read postpro's method.
 #
-# dilla's files get one process each too. Sharing one saved half a second of
-# engine load per file and cost the isolation the name promised: ENV pins and
-# session.json mtimes leaked from file to file, and EnvSandbox restores ENV but
-# not the constants dilla computes from it at load, such as the acapella
-# ONLY/EXCLUDE lists. `rake isolation` still runs them together, on purpose, to
-# find the tests that only pass in company.
-DILLA_SUITES = FileList["test/test_dilla_*.rb"].map { |path| File.basename(path, ".rb").sub(/\Atest_dilla_/, "") }
-
-DILLA_SUITES.each do |suite|
-  Rake::TestTask.new("test:dilla:#{suite}") do |t|
-    t.libs << "test"
-    t.test_files = ["test/test_dilla_#{suite}.rb"]
-    t.warning = false
-  end
-end
-
-desc "dilla's suite, one process per file"
-task "test:dilla" => DILLA_SUITES.map { |suite| "test:dilla:#{suite}" }
-
-
-# Tests outside the Dilla/tool naming families still belong to the default
-# suite. Keep each in its own process so a top-level constant from one subject
+# Tests outside the tool naming family still belong to the default suite. Keep each in its own process so a top-level constant from one subject
 # cannot become an accidental dependency of the next.
 GENERAL_TEST_SUITES = FileList["test/*_test.rb"]
-  .reject { |path| File.basename(path).match?(/\Atest_(?:dilla|tools)_/) }
+  .reject { |path| File.basename(path).match?(/\Atest_tools_/) }
   .reject { |path| File.basename(path) == "test_studio_gate.rb" }
   .map { |path| File.basename(path, ".rb") }
 
@@ -66,8 +45,8 @@ Rake::TestTask.new("test:gate") do |t|
   t.warning = false
 end
 
-desc "Studio suite — Dilla engine arithmetic, media tools, and the Studio gate itself"
-task test: ["test:gate", "test:dilla", "test:general", *TOOL_SUITES.map { |tool| "test:#{tool}" }]
+desc "Studio suite — dilla, the media tools, and the Studio gate itself"
+task test: ["test:gate", "test:general", *TOOL_SUITES.map { |tool| "test:#{tool}" }]
 
 desc "The STUDIO parse/boundary gate"
 task :gate do
@@ -236,18 +215,6 @@ namespace :replicate do
     puts "replicate: ranges and defaults above are placeholders — the schema gives names, not"
     puts "replicate: what is musical for this model. Read the model page before pasting."
   end
-end
-
-desc "Find Dilla tests that only pass in company, or only alone (TEST=substring to narrow)"
-task :isolation do
-  # Runs dilla's files together, then each test alone, and names every test
-  # whose answer depends on its company. Three defects had that shape and all
-  # three were found by running one test on its own after a hunch; this does it
-  # for all of them. Not part of `rake`: one process per test is minutes, and
-  # a check nobody will wait for is a check nobody runs.
-  require_relative "isolation"
-  failures = StudioIsolation.run(pattern: ENV["TEST"])
-  exit(1) unless failures.zero?
 end
 
 task default: %i[gate test]
