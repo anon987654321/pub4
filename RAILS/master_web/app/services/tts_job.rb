@@ -7,7 +7,7 @@ require "json"
 class TtsJob
   CACHE_DIR = Rails.root.join("tmp", "tts_cache")
   AUDIO_EXTENSIONS = %w[.mp3 .m4a .wav .aiff .aif].freeze
-  CACHE_VERSION = "native-audio-v2-fast"
+  CACHE_VERSION = "native-audio-v3-christopher-vocal-character"
 
   # Lower number is spoken sooner. The client already ranks its playback lanes
   # error > response > nudge (face_speech_runtime.js), but this queue was plain
