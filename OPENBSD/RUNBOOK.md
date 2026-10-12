@@ -217,6 +217,29 @@ rotates the last fourteen. `ruby OPENBSD/bin/dr-pull --check` reports the newest
 pull and its age, and fails when the newest is stale — read that rather than the
 launchd exit status, because a snapshot that has stopped working exits 0.
 
+Each pull also records `SHA256SUMS`, taken from vm23's own `sha256` before the
+stream and compared on arrival, and copies the newest Active Storage blobs (the
+two-character directories beside the databases) to `~/pub4-dr/blobs/<app>`.
+`ruby OPENBSD/bin/dr-pull --drill` is the restore test: it copies the newest pull
+to a scratch directory, checks the bytes against `SHA256SUMS`, runs
+`integrity_check` on the copy, reads the migration version, table count and user
+count, prints the seconds, and removes the scratch. Run on 2026-10-12 against
+pull `20261011-0330` it restored and read back all three databases in 1.3 s
+(amber 303 users, brgen 11316, bsdports 0; integrity ok; the pull predates
+`SHA256SUMS`, so that run checked integrity only). The 11 pulls from 1 to 11
+October sit on the operator Mac under launchd job `no.brgen.pub4-dr`, which
+makes the Mac the only copy off vm23.
+
+**Restored separately.** `dr-pull` holds databases and uploads, nothing else, and
+no script in this repository copies the following off the box. After a rebuild
+they come from the operator's own records: `/etc/master.env` and
+`/etc/<app>.env` for brgen, amber and bsdports; the DNSSEC keys
+`K<zone>.+013+ksk.*` and `K<zone>.+013+zsk.*` in `/var/nsd/zones/master` (lose
+the KSK and every signed zone fails validation until new DS records are
+published at the registrars); the DKIM key `/etc/mail/dkim/private.rsa.key`; the
+ssh host keys; and the acme-client account key. Certificates and their domain
+keys under `/etc/ssl` are reissued by `acme-client`, once DNS answers.
+
 **Litestream replicates nothing and never has.** It is not in OpenBSD ports, so
 `pkg_add litestream` cannot install it, `/usr/local/bin/litestream` does not
 exist, and `/var/backups/litestream/` has been empty since the day it was

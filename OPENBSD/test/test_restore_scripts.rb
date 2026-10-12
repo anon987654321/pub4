@@ -114,4 +114,94 @@ class RestoreScriptsTest < Minitest::Test
     assert_match(/css_href.*\n.*write_stamp "\$app" failed/m.freeze, source[/if \[\[ -n \$css_href \]\].*?^fi/m].to_s,
                  "a 404 stylesheet must fail the deploy, not warn")
   end
+
+  # dr-pull against a fake ssh that plays vm23: three SQLite databases, a
+  # sha256 -r listing and a tar stream, all in a scratch directory. Nothing here
+  # touches the box or the operator's real ~/pub4-dr.
+  FAKE_SSH = <<~'RUBY'
+    #!/usr/bin/env ruby
+    require "digest"
+    require "fileutils"
+    remote = ENV.fetch("FAKE_VM23")
+    cmd = ARGV.last.to_s
+    case cmd
+    when /VACUUM INTO/
+      FileUtils.mkdir_p(remote)
+      %w[brgen amber bsdports].each do |app|
+        db = File.join(remote, "#{app}-production.sqlite3")
+        system("sqlite3", db, "CREATE TABLE IF NOT EXISTS schema_migrations(version); INSERT INTO schema_migrations VALUES ('20260928090000'); CREATE TABLE users(id integer); INSERT INTO users VALUES (1);")
+      end
+      puts "total 0"
+    when /sha256 -r/
+      Dir[File.join(remote, "*.sqlite3")].sort.each { |p| puts "#{Digest::SHA256.file(p).hexdigest} #{File.basename(p)}" }
+    when %r{/home/(\w+)/app/storage}
+      app = $1
+      src = File.join(ENV.fetch("FAKE_VM23_BLOBS"), app)
+      if app == "brgen"
+        FileUtils.mkdir_p(File.join(src, "ab"))
+        File.write(File.join(src, "ab", "blob"), "uploaded")
+        exec("tar", "-C", src, "-cf", "-", "ab")
+      end
+    when /tar -C/
+      exec("tar", "-C", remote, "-cf", "-", ".")
+    end
+  RUBY
+
+  def dr_env(dir)
+    bin = File.join(dir, "bin")
+    FileUtils.mkdir_p(bin)
+    File.write(File.join(bin, "ssh"), FAKE_SSH)
+    File.chmod(0o755, File.join(bin, "ssh"))
+    { "PATH" => "#{bin}:#{ENV['PATH']}", "FAKE_VM23" => File.join(dir, "vm23"), "FAKE_VM23_BLOBS" => File.join(dir, "vm23blobs"),
+      "PUB4_DR_DIR" => File.join(dir, "dr"), "PUB4_SSH_KEY" => File.join(dir, "key") }
+  end
+
+  def dr_pull(env, *args)
+    Open3.capture3(env, RbConfig.ruby, File.join(ROOT, "bin", "dr-pull"), *args)
+  end
+
+  def test_dr_pull_records_vm23s_checksums_and_the_drill_reads_the_pull_back
+    skip "sqlite3 CLI missing" unless system("sqlite3", "-version", out: File::NULL, err: File::NULL)
+
+    Dir.mktmpdir do |dir|
+      env = dr_env(dir)
+      out, err, status = dr_pull(env)
+      assert status.success?, "pull failed: #{out}#{err}"
+      pull = Dir[File.join(dir, "dr", "2*")].first
+      sums = File.read(File.join(pull, "SHA256SUMS"))
+      assert_equal 3, sums.lines.size
+      assert_match(/\A\h{64}  amber-production\.sqlite3$/, sums.lines.first)
+
+      assert File.file?(File.join(dir, "dr", "blobs", "brgen", "ab", "blob")), "uploaded files were not pulled"
+      refute Dir.exist?(File.join(dir, "dr", "blobs", "amber")), "an app with no uploads gets no blob directory"
+
+      out, err, status = dr_pull(env, "--drill")
+      assert status.success?, "drill failed: #{out}#{err}"
+      assert_includes out, "brgen blobs: 1 file(s)"
+      assert_includes out, "matches the pull"
+      assert_includes out, "brgen: integrity ok, migration 20260928090000"
+      assert_includes out, "restores and reads back"
+      assert Dir.exist?(pull), "the drill must leave the pull itself alone"
+
+      File.open(File.join(pull, "amber-production.sqlite3"), "ab") { |f| f.write("x") }
+      out, err, status = dr_pull(env, "--drill")
+      refute status.success?, "a pull altered after the fact must fail the drill"
+      assert_includes out, "MISMATCH"
+      assert_includes err, "checksum"
+    end
+  end
+
+  def test_dr_pull_refuses_a_stream_whose_bytes_differ_from_vm23s_checksum
+    skip "sqlite3 CLI missing" unless system("sqlite3", "-version", out: File::NULL, err: File::NULL)
+
+    Dir.mktmpdir do |dir|
+      env = dr_env(dir)
+      bin = File.join(dir, "bin", "ssh")
+      File.write(bin, File.read(bin).sub('exec("tar", "-C", remote, "-cf", "-", ".")',
+                                         'File.open(File.join(remote, "brgen-production.sqlite3"), "ab") { |f| f.write("torn") }; exec("tar", "-C", remote, "-cf", "-", ".")'))
+      _, err, status = dr_pull(env)
+      refute status.success?
+      assert_includes err, "checksum differs from vm23's"
+    end
+  end
 end
