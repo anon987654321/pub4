@@ -6,12 +6,21 @@
   <meta name="robots" content="noindex">
   <title>Midlertidig utilgjengelig</title>
   <style>
-    :root { color-scheme: light dark; font-family: system-ui, sans-serif; }
-    body { margin: 0; min-height: 100vh; display: grid; place-items: center; }
-    main { max-width: 36rem; padding: 3rem 1.25rem; }
-    p { max-width: 34rem; line-height: 1.55; }
+    :root {
+      color-scheme: light dark;
+      font-family: "Helvetica Neue Pro", "Helvetica Neue", Arial, sans-serif;
+    }
+    body {
+      display: grid;
+      min-height: 100dvh;
+      margin: 0;
+      padding: env(safe-area-inset-top, 0px) 1.25rem env(safe-area-inset-bottom, 0px);
+      place-items: center;
+    }
+    main { width: 100%; max-width: 36rem; padding-block: 3rem; }
+    p { max-width: 34rem; line-height: 1.5; }
     a { color: inherit; }
-    .code { font: 700 0.8rem/1.2 ui-monospace, monospace; letter-spacing: .08em; }
+    .code { font: 700 0.8rem/1.25 ui-monospace, monospace; letter-spacing: .08em; }
   </style>
 </head>
 <body>
