@@ -79,6 +79,13 @@ module Master
         record = Mission.current(root: @root)
         return :idle unless eligible?(record)
 
+        if continuation_only?(record)
+          reason = "auto-continue blocked: #{record["goal"].to_s.inspect} is a continuation, not a durable task; submit the resolved objective"
+          Mission.new(root: @root, bus: @bus).block!(reason:)
+          @bus&.publish("task_steward:blocked", mission: record["id"], reason:)
+          return Master::Result.err(reason, category: :validation)
+        end
+
         goal = record["goal"].to_s
         @bus&.publish("task_steward:run", mission: record["id"], goal:, attempt: record["attempt_count"].to_i + 1)
         result = @runner.call(goal:, mission: record)
@@ -103,6 +110,16 @@ module Master
           wait_for_wake
         end
         @bus&.publish("task_steward:stop")
+      end
+
+      # Continuation needs the live conversation; a background worker cannot reconstruct it.
+      CONTEXTLESS_GOALS = ["do it", "lets do it"].freeze
+
+      def continuation_only?(record)
+        goal = record["goal"].to_s.downcase.strip.split.join(" ")
+        goal = goal[0...-1] while %w[! . ? …].include?(goal[-1])
+        intent = record.dig("operator", "intent").to_s
+        intent == "continue_prior_plan" || CONTEXTLESS_GOALS.include?(goal.delete("'"))
       end
 
       def eligible?(record)
