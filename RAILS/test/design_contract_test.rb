@@ -101,6 +101,66 @@ class DesignContractTest < Minitest::Test
     assert_operator app.lines.count, :<, 50, "application.scss should remain an entrypoint, not a second monolith"
   end
 
+  def test_amber_feature_styles_are_loaded_at_their_original_boundaries
+    app = File.read(File.join(ROOT, "amber", "app", "assets", "stylesheets", "application.scss"))
+    styles_dir = File.join(ROOT, "amber", "app", "assets", "stylesheets")
+    feature_paths = Dir.glob(File.join(styles_dir, "_amber_*.scss")).sort
+    names = %w[
+      amber_chrome
+      amber_guest_compose
+      amber_layout
+      amber_wardrobe
+      amber_item_forms
+      amber_dashboard
+      amber_dressing_room
+      amber_looks
+      amber_jox_logo
+      amber_editorial_feed
+      amber_shared_overrides
+    ]
+    positions = names.map { |name| app.index(%(@include meta.load-css("#{name}");)) }
+
+    assert positions.all?, "every Amber feature module must be loaded by its entrypoint"
+    assert_equal positions.sort, positions, "Amber module order is a cascade contract"
+    assert_operator app.lines.count, :<, 300, "application.scss should remain an entrypoint, not another monolith"
+
+    reachable = []
+    pending = [app]
+    until pending.empty?
+      source = pending.shift
+      source.scan(/@include meta\.load-css\(["']([^"']+)["']\)/).flatten.each do |module_name|
+        candidate = File.join(styles_dir, "_#{module_name}.scss")
+        next unless File.file?(candidate)
+        next if reachable.include?(candidate)
+
+        reachable << candidate
+        pending << File.read(candidate)
+      end
+    end
+
+    feature_paths.each do |feature|
+      assert_includes reachable, feature, "#{File.basename(feature)} is not reachable from the Amber entrypoint"
+      refute_empty File.read(feature), "#{File.basename(feature)} must not be empty"
+    end
+
+    expected_rules = {
+      "_amber_guest_compose.scss" => ".amber-compose-box",
+      "_amber_wardrobe.scss" => ".item-grid",
+      "_amber_item_forms.scss" => ".form .field",
+      "_amber_dashboard.scss" => ".dash-stats dl",
+      "_amber_dressing_room.scss" => ".viz-rows",
+      "_amber_looks.scss" => ".amber-looks",
+      "_amber_jox_logo.scss" => ".jox-logo",
+      "_amber_editorial_feed.scss" => ".feed-post"
+    }
+    expected_rules.each do |name, selector|
+      assert_includes File.read(File.join(styles_dir, name)), selector, "#{name} lost its feature rule"
+    end
+
+    refute_match(/min-height:\\s*v\\s*\\/\\/|font-siz\\s*\\/\\//, app,
+                 "entrypoint contains a stylesheet fragment split across an import")
+  end
+
   # amber wears luxury, and stack's social light outranks a plain :root.
   #
   # `_tokens.scss` (via `@use "stack"`) emits light-tokens at
