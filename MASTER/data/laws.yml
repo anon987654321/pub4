@@ -4539,6 +4539,7 @@ face_ascii:
   max_laws: 8
   law_glyphs: ["@", "#", "%", "&", "*", "+", "=", ":"]
   terminal_law_ring: true
+  terminal_toggle_key: ctrl-v
   web_overlay: true
   web_toggle_key: v
   browser_point_budget: 1100
