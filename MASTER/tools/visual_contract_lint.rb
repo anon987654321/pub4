@@ -331,15 +331,14 @@ end
     # --- compose costume ------------------------------------------------------
 
     def costume_findings
-      rel = "brgen/app/assets/stylesheets/application.scss"
-      path = File.join(RAILS_ROOT, rel)
-      return [ Finding.new("compose_costume", rel, "brgen has no application.scss to read") ] unless File.file?(path)
+      brgen_bundle_sources.flat_map do |path|
+        src = File.read(path, encoding: "UTF-8")
+        src.scan(/^([^{\n]*\.city-today[^{\n]*)\{([^}]*)\}/m).filter_map do |(selector, body)|
+          next unless costume?(selector, body)
 
-      src = File.read(path, encoding: "UTF-8")
-      src.scan(/^([^{\n]*\.city-today[^{\n]*)\{([^}]*)\}/m).filter_map do |(selector, body)|
-        next unless costume?(selector, body)
-
-        Finding.new("compose_costume", rel, "#{selector.strip} wears the compose pill again")
+          rel = path.sub("#{RAILS_ROOT}/", "")
+          Finding.new("compose_costume", rel, "#{selector.strip} wears the compose pill again")
+        end
       end
     end
 
