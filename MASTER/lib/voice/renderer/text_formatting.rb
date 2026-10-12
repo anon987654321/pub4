@@ -27,10 +27,13 @@ module Master
         # second parser dependency. Fences, tables, indented examples and record
         # lines keep their data shape; ordinary prose is wrapped to terminal width.
         def terminal_markdown(text, width: MEASURE)
+          # The CLI's presentation path must retain the same evidence guard as
+          # Renderer#render; Markdown cleanup is not a second trust boundary.
+          source = output_guard.sanitize(text.to_s, context: :routine)
           rows = []
           fenced = false
 
-          text.to_s.lines.each do |line|
+          source.lines.each do |line|
             body = line.chomp
             if body.lstrip.start_with?("```")
               fenced = !fenced
@@ -69,7 +72,7 @@ module Master
             rows.concat(measure(body, width:).lines(chomp: true))
           end
 
-          rows.join("\n") + (text.to_s.end_with?("\n") ? "\n" : "")
+          rows.join("\n") + (source.end_with?("\n") ? "\n" : "")
         end
 
         def format_dmesg(line) = @p.dim(line.to_s)
